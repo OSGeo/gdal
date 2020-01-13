@@ -48,7 +48,11 @@ static void osr_proj_logger(void * /* user_data */,
     }
     else if( level == PJ_LOG_DEBUG )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "PROJ: %s", message);
+        CPLDebug("PROJ", "%s", message);
+    }
+    else if( level == PJ_LOG_TRACE )
+    {
+        CPLDebug("PROJ_TRACE", "%s", message);
     }
 }
 

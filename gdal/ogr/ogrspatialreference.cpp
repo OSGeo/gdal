@@ -1354,6 +1354,44 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult ) const
 }
 
 /************************************************************************/
+/*                GDAL_proj_crs_create_bound_crs_to_WGS84()             */
+/************************************************************************/
+
+static PJ* GDAL_proj_crs_create_bound_crs_to_WGS84(PJ_CONTEXT* ctx, PJ* pj,
+                                                   bool onlyIfEPSGCode)
+{
+    PJ* ret = nullptr;
+    if( proj_get_type(pj) == PJ_TYPE_COMPOUND_CRS )
+    {
+        auto horizCRS = proj_crs_get_sub_crs(ctx, pj, 0);
+        auto vertCRS = proj_crs_get_sub_crs(ctx, pj, 1);
+        if( horizCRS && proj_get_type(horizCRS) != PJ_TYPE_BOUND_CRS && vertCRS &&
+            (!onlyIfEPSGCode || proj_get_id_auth_name(horizCRS, 0) != nullptr) )
+        {
+            auto boundHoriz = proj_crs_create_bound_crs_to_WGS84(
+                ctx, horizCRS, nullptr);
+            if( boundHoriz )
+            {
+                ret = proj_create_compound_crs(
+                        ctx, proj_get_name(pj),
+                        boundHoriz,
+                        vertCRS);
+            }
+            proj_destroy(boundHoriz);
+        }
+        proj_destroy(horizCRS);
+        proj_destroy(vertCRS);
+    }
+    else if( proj_get_type(pj) != PJ_TYPE_BOUND_CRS &&
+             (!onlyIfEPSGCode || proj_get_id_auth_name(pj, 0) != nullptr) )
+    {
+        ret = proj_crs_create_bound_crs_to_WGS84(
+                ctx, pj, nullptr);
+    }
+    return ret;
+}
+
+/************************************************************************/
 /*                            exportToWkt()                             */
 /************************************************************************/
 
@@ -1380,6 +1418,11 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult ) const
  *     WKT2 will default to the latest revision implemented (currently WKT2_2018)
  * </li>
  * </ul>
+ *
+ * Starting with GDAL 3.0.3, if the OSR_ADD_TOWGS84_ON_EXPORT_TO_WKT1 configuration
+ * option is set to YES, when exporting to WKT1_GDAL, this method will try
+ * to add a TOWGS84[] node, if there's none attached yet to the SRS and if the SRS has a EPSG code.
+ * See the AddGuessedTOWGS84() method for how this TOWGS84[] node may be added.
  *
  * @return OGRERR_NONE if successful.
  * @since GDAL 3.0
@@ -1460,13 +1503,25 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
     aosOptions.SetNameValue("MULTILINE",
                     CSLFetchNameValueDef(papszOptions, "MULTILINE", "NO"));
 
+
+    PJ* boundCRS = nullptr;
+    if( wktFormat == PJ_WKT1_GDAL &&
+        CPLTestBool(
+            CSLFetchNameValueDef(papszOptions, "ADD_TOWGS84_ON_EXPORT_TO_WKT1",
+                                    CPLGetConfigOption("OSR_ADD_TOWGS84_ON_EXPORT_TO_WKT1", "NO"))) )
+    {
+        boundCRS = GDAL_proj_crs_create_bound_crs_to_WGS84(
+            d->getPROJContext(), d->m_pj_crs, true);
+    }
+
     const char* pszWKT = proj_as_wkt(
-        ctxt, d->m_pj_crs,
+        ctxt, boundCRS ? boundCRS : d->m_pj_crs,
         wktFormat, aosOptions.List());
 
     if( !pszWKT )
     {
         *ppszResult = CPLStrdup("");
+        proj_destroy(boundCRS);
         return OGRERR_FAILURE;
     }
 
@@ -1486,10 +1541,12 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
             eErr = oRoot.exportToPrettyWkt( ppszResult, 1 );
         else
             eErr = oRoot.exportToWkt( ppszResult );
+        proj_destroy(boundCRS);
         return eErr;
     }
 
     *ppszResult = CPLStrdup( pszWKT );
+    proj_destroy(boundCRS);
     return OGRERR_NONE;
 }
 
@@ -3068,7 +3125,7 @@ OGRErr OGRSpatialReference::SetWellKnownGeogCS( const char * pszName )
         pszWKT =
             "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\","
             "SPHEROID[\"WGS 72\",6378135,298.26,AUTHORITY[\"EPSG\",\"7043\"]],"
-            "TOWGS84[0,0,4.5,0,0,0.554,0.2263],AUTHORITY[\"EPSG\",\"6322\"]],"
+            "AUTHORITY[\"EPSG\",\"6322\"]],"
             "PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],"
             "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST],"
             "AUTHORITY[\"EPSG\",\"4322\"]]";
@@ -9973,6 +10030,12 @@ OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS,
  * set to YES, the PROJ definition built from the SRS will use the +approx flag
  * for the tmerc and utm projection methods, rather than the more accurate method.
  *
+ * Starting with GDAL 3.0.3, this method will try to add a +towgs84 parameter,
+ * if there's none attached yet to the SRS and if the SRS has a EPSG code.
+ * See the AddGuessedTOWGS84() method for how this +towgs84 parameter may be added.
+ * This automatic addition may be disabled by setting the
+ * OSR_ADD_TOWGS84_ON_EXPORT_TO_PROJ4 configuration option to NO.
+ *
  * This method is the equivalent of the C function OSRExportToProj4().
  *
  * @param ppszProj4 pointer to which dynamically allocated PROJ definition
@@ -10025,14 +10088,33 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         bForceApproxTMerc ? "USE_APPROX_TMERC=YES" : nullptr,
         nullptr
     };
+
     const char* projString = proj_as_proj_string(d->getPROJContext(),
-                                                     d->m_pj_crs, PJ_PROJ_4, options);
+                                                 d->m_pj_crs, PJ_PROJ_4, options);
+
+    PJ* boundCRS = nullptr;
+    if( projString &&
+        strstr(projString, "+datum=") == nullptr &&
+        CPLTestBool(
+            CPLGetConfigOption("OSR_ADD_TOWGS84_ON_EXPORT_TO_PROJ4", "YES")) )
+    {
+        boundCRS = GDAL_proj_crs_create_bound_crs_to_WGS84(
+            d->getPROJContext(), d->m_pj_crs, true);
+        if( boundCRS )
+        {
+            projString = proj_as_proj_string(d->getPROJContext(),
+                                             boundCRS, PJ_PROJ_4, options);
+        }
+    }
+
     if( projString == nullptr )
     {
         *ppszProj4 = CPLStrdup("");
+        proj_destroy(boundCRS);
         return OGRERR_FAILURE;
     }
     *ppszProj4 = CPLStrdup(projString);
+    proj_destroy(boundCRS);
     char* pszTypeCrs = strstr(*ppszProj4, " +type=crs");
     if( pszTypeCrs )
         *pszTypeCrs = '\0';
@@ -10247,11 +10329,13 @@ OGRSpatialReferenceH* OGRSpatialReference::FindMatches(
  *
  * Since GDAL 3.0, this method is identical to importFromEPSG().
  *
- * This method try to attach a 3-parameter or 7-parameter Helmert transformation
- * to WGS84 when there is one and only one such method available for the CRS.
+ * Before GDAL 3.0.3, this method try to attach a 3-parameter or 7-parameter
+ * Helmert transformation to WGS84 when there is one and only one such method
+ * available for the CRS.
  * This behaviour might not always be desirable, so starting with GDAL 3.0.3,
- * the OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG configuration option can be set to
- * NO to disable this behaviour.
+ * this is no longer done. However the OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG
+ * configuration option can be set to YES to enable past behaviour.
+ * The AddGuessedTOWGS84() method can also be used for that purpose.
  *
  * This method is the same as the C function OSRImportFromEPSGA().
  *
@@ -10268,7 +10352,7 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
     const bool bUseNonDeprecated = CPLTestBool(
                 CPLGetConfigOption("OSR_USE_NON_DEPRECATED", "YES"));
     const bool bAddTOWGS84 = CPLTestBool(
-            CPLGetConfigOption("OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG", "YES"));
+            CPLGetConfigOption("OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG", "NO"));
     auto tlsCache = OSRGetProjTLSCache();
     if( tlsCache )
     {
@@ -10328,6 +10412,61 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
     }
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          AddGuessedTOWGS84()                         */
+/************************************************************************/
+
+/**
+ * \brief  Try to add a a 3-parameter or 7-parameter Helmert transformation
+ * to WGS84.
+ *
+ * This method try to attach a 3-parameter or 7-parameter Helmert transformation
+ * to WGS84 when there is one and only one such method available for the CRS.
+ * Note: this is more restrictive to how GDAL < 3 worked.
+ *
+ * This method is the same as the C function OSRAddGuessedTOWGS84().
+ *
+ * @return OGRERR_NONE on success, or an error code on failure (the CRS has
+ * already a transformation to WGS84 or none matching could be found).
+ *
+ * @since GDAL 3.0.3
+ */
+OGRErr OGRSpatialReference::AddGuessedTOWGS84()
+{
+    d->refreshProjObj();
+    if( !d->m_pj_crs )
+        return OGRERR_FAILURE;
+    auto boundCRS = GDAL_proj_crs_create_bound_crs_to_WGS84(
+        d->getPROJContext(), d->m_pj_crs, false);
+    if( !boundCRS )
+    {
+        return OGRERR_FAILURE;
+    }
+    d->setPjCRS(boundCRS);
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         OSRImportFromEPSGA()                         */
+/************************************************************************/
+
+/**
+ * \brief  Try to add a a 3-parameter or 7-parameter Helmert transformation
+ * to WGS84.
+ *
+ * This function is the same as OGRSpatialReference::AddGuessedTOWGS84().
+ *
+ * @since GDAL 3.0.3
+ */
+
+OGRErr OSRAddGuessedTOWGS84( OGRSpatialReferenceH hSRS)
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRAddGuessedTOWGS84", OGRERR_FAILURE );
+
+    return OGRSpatialReference::FromHandle(hSRS)->AddGuessedTOWGS84();
 }
 
 /************************************************************************/

@@ -96,7 +96,7 @@ RUN mkdir mongocxx \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build tiledb
-ARG TILEDB_VERSION=1.5.0
+ARG TILEDB_VERSION=1.7.2
 RUN mkdir tiledb \
     && wget -q https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz -O - \
         | tar xz -C tiledb --strip-components=1 \
@@ -250,7 +250,7 @@ RUN date
 RUN apt-get update; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libsqlite3-0 \
-        curl unzip
+        curl unzip ca-certificates
 
 # GDAL dependencies
 RUN apt-get update; \
@@ -260,7 +260,7 @@ RUN apt-get update; \
         libcurl4 libxml2 libexpat1 \
         libxerces-c3.2 libnetcdf-c++4 netcdf-bin libpoppler73 libspatialite7 gpsbabel \
         libhdf4-0-alt libhdf5-100 libhdf5-cpp-100 poppler-utils libfreexl1 unixodbc libwebp6 \
-        libepsilon1 liblcms2-2 libpcre3 libcrypto++ libdap25 libdapclient6v5 libfyba0 \
+        libepsilon1 liblcms2-2 libpcre3 libcrypto++6 libdap25 libdapclient6v5 libfyba0 \
         libkmlbase1 libkmlconvenience1 libkmldom1 libkmlengine1 libkmlregionator1 libkmlxsd1 \
         libmysqlclient20 libogdi3.2 libcfitsio5 openjdk-8-jre \
         libzstd1 bash bash-completion libpq5 libssl1.1 \

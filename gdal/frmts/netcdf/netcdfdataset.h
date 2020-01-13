@@ -33,10 +33,12 @@
 #include <ctime>
 #include <cfloat>
 #include <cstdlib>
+#include <functional>
 #include <map>
 #include <memory>
 #include <vector>
 
+#include "cpl_mem_cache.h"
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
@@ -878,9 +880,49 @@ class netCDFDataset final: public GDALPamDataset
     int          nCreateMode;
     bool         bSignedData;
 
-    std::vector<std::shared_ptr<netCDFLayer>> papoLayers;
+    std::vector<std::shared_ptr<OGRLayer>> papoLayers;
 
     netCDFWriterConfiguration oWriterConfig;
+
+    struct ChunkKey
+    {
+        size_t xChunk; // netCDF chunk number along X axis
+        size_t yChunk; // netCDF chunk number along Y axis
+        int    nBand;
+
+        ChunkKey(size_t xChunkIn, size_t yChunkIn, int nBandIn):
+            xChunk(xChunkIn), yChunk(yChunkIn), nBand(nBandIn) {}
+
+        bool operator==(const ChunkKey &other) const {
+            return xChunk == other.xChunk &&
+                   yChunk == other.yChunk &&
+                   nBand == other.nBand;
+        }
+
+        bool operator!=(const ChunkKey &other) const {
+            return !(operator==(other));
+        }
+    };
+
+    struct KeyHasher {
+        std::size_t operator()(const ChunkKey &k) const {
+            return std::hash<size_t>{}(k.xChunk) ^
+                   (std::hash<size_t>{}(k.yChunk) << 1) ^
+                   (std::hash<size_t>{}(k.nBand) << 2);
+        }
+    };
+
+    typedef lru11::Cache<
+        ChunkKey,
+        std::shared_ptr<std::vector<GByte>>,
+        lru11::NullLock,
+        std::unordered_map<
+            ChunkKey,
+            typename std::list<lru11::KeyValuePair<
+                ChunkKey, std::shared_ptr<std::vector<GByte>>>>::iterator,
+            KeyHasher>> ChunkCacheType;
+
+    std::unique_ptr<ChunkCacheType> poChunkCache;
 
     static double       rint( double );
 
@@ -919,6 +961,10 @@ class netCDFDataset final: public GDALPamDataset
     static bool CloneGrp(int nOldGrpId, int nNewGrpId, bool bIsNC4, int nLayerId,
                          int nDimIdToGrow, size_t nNewSize);
     bool GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize);
+
+#ifdef NETCDF_HAS_NC4
+    void   ProcessSentinel3_SRAL_MWR();
+#endif
 
     CPLErr FilterVars( int nCdfId, bool bKeepRasters, bool bKeepVectors,
                        char **papszIgnoreVars, int *pnRasterVars,

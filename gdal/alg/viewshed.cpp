@@ -128,8 +128,10 @@ inline static double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode)
  * generated in a single scan.
  * The gdal/apps/gdal_viewshed.cpp mainline can be used as an example of
  * how to use this function.
+ * The output raster will be of type Byte.
  *
- * ALGORITHM RULES
+ * \note The algorithm as implemented currently will only output meaningful results
+ * if the georeferencing is in a projected coordinate reference system.
  *
  * @param hBand The band to read the DEM data from. Only the part of the raster
  * within the specified maxdistance around the observer point is processed.
@@ -148,14 +150,17 @@ inline static double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode)
  *
  * @param dfTargetHeight The height of the target above the DEM surface. (default 0)
  *
- * @param  dfVisibleVal pixel value for visibility (default 0)
+ * @param dfVisibleVal pixel value for visibility (default 255)
  *
- * @param dfInvisibleVal pixel value for invisibility (default 255)
+ * @param dfInvisibleVal pixel value for invisibility (default 0)
  *
  * @param dfOutOfRangeVal The value to be set for the cells that fall outside of the
  * range specified by dfMaxDistance.
  *
  * @param dfNoDataVal The value to be set for the cells that have no data.
+ *                    If set to a negative value, nodata is not set.
+ *                    Note: currently, no special processing of input cells at a nodata
+ *                    value is done (which may result in erroneous results).
  *
  * @param dfCurvCoeff Coefficient to consider the effect of the curvature and refraction.
  * The height of the DEM is corrected according to the following formula:
@@ -165,7 +170,10 @@ inline static double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode)
  * @param eMode The mode of the viewshed calculation.
  * Possible values GVM_Diagonal = 1, GVM_Edge = 2 (default), GVM_Max = 3, GVM_Min = 4.
  *
- * @param dfMaxDistance maximum distance range to compute viewshed
+ * @param dfMaxDistance maximum distance range to compute viewshed.
+ *                      It is also used to clamp the extent of the output raster.
+ *                      If set to 0, then unlimited range is assumed, that is to say the
+ *                      computation is performed on the extent of the whole raster.
  *
  * @param pfnProgress A GDALProgressFunc that may be used to report progress
  * to the user, or to interrupt the algorithm.  May be NULL if not required.
@@ -175,6 +183,8 @@ inline static double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode)
  * @param papszExtraOptions Future extra options. Must be set to NULL currently.
  *
  * @return not NULL output dataset on success (to be closed with GDALClose()) or NULL if an error occurs.
+ *
+ * @since GDAL 3.1
  */
 
 GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
@@ -202,10 +212,10 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
         return nullptr;
     }
 
-    GByte byNoDataVal = dfNoDataVal >= 0 ? static_cast<GByte>(dfNoDataVal) : 0;
-    GByte byVisibleVal = dfVisibleVal >= 0 ? static_cast<GByte>(dfVisibleVal) : 255;
-    GByte byInvisibleVal = dfInvisibleVal >= 0 ? static_cast<GByte>(dfInvisibleVal) : 0;
-    GByte byOutOfRangeVal = dfOutOfRangeVal >= 0 ? static_cast<GByte>(dfOutOfRangeVal) : 0;
+    const GByte byNoDataVal = dfNoDataVal >= 0 && dfNoDataVal <= 255 ? static_cast<GByte>(dfNoDataVal) : 0;
+    const GByte byVisibleVal = dfVisibleVal >= 0 && dfVisibleVal <= 255 ? static_cast<GByte>(dfVisibleVal) : 255;
+    const GByte byInvisibleVal = dfInvisibleVal >= 0 && dfInvisibleVal <= 255 ? static_cast<GByte>(dfInvisibleVal) : 0;
+    const GByte byOutOfRangeVal = dfOutOfRangeVal >= 0 && dfOutOfRangeVal <= 255 ? static_cast<GByte>(dfOutOfRangeVal) : 0;
 
     /* set up geotransformation */
     std::array<double, 6> adfGeoTransform {{0.0, 1.0, 0.0, 0.0, 0.0, 1.0}};
@@ -294,10 +304,10 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
         poDstDS->SetSpatialRef(GDALDataset::FromHandle(hSrcDS)->GetSpatialRef());
 
     std::array<double, 6> adfDstGeoTransform;
-    adfDstGeoTransform[0] = adfGeoTransform[0] + adfGeoTransform[1] * nXStart;
+    adfDstGeoTransform[0] = adfGeoTransform[0] + adfGeoTransform[1] * nXStart + adfGeoTransform[2] * nYStart;
     adfDstGeoTransform[1] = adfGeoTransform[1];
     adfDstGeoTransform[2] = adfGeoTransform[2];
-    adfDstGeoTransform[3] = adfGeoTransform[3] + adfGeoTransform[5] * nYStart;
+    adfDstGeoTransform[3] = adfGeoTransform[3] + adfGeoTransform[4] * nXStart + adfGeoTransform[5] * nYStart;
     adfDstGeoTransform[4] = adfGeoTransform[4];
     adfDstGeoTransform[5] = adfGeoTransform[5];
     poDstDS->SetGeoTransform(adfDstGeoTransform.data());
@@ -322,10 +332,9 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
         return nullptr;
     }
 
-    double dfZObserver = dfObserverHeight + padfFirstLineVal[nX];
+    const double dfZObserver = dfObserverHeight + padfFirstLineVal[nX];
     double dfZ = 0.0;
-    int iPixel, iLine;
-    double dfDistance2 = dfMaxDistance * dfMaxDistance;
+    const double dfDistance2 = dfMaxDistance * dfMaxDistance;
 
     /* If we can't get a SemiMajor axis from the SRS, it will be
      * SRS_WGS84_SEMIMAJOR
@@ -373,7 +382,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
     }
 
     /* process left direction */
-    for (iPixel = nX - 2; iPixel >= 0; iPixel--)
+    for (int iPixel = nX - 2; iPixel >= 0; iPixel--)
     {
         bool adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                             nX - iPixel,
@@ -402,7 +411,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
         }
     }
     /* process right direction */
-    for (iPixel = nX + 2; iPixel < nXSize; iPixel++)
+    for (int iPixel = nX + 2; iPixel < nXSize; iPixel++)
     {
         bool adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                             iPixel - nX,
@@ -444,7 +453,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
     std::copy(vFirstLineVal.begin(),
               vFirstLineVal.end(),
               vLastLineVal.begin());
-    for (iLine = nY - 1; iLine >= nYStart && eErr == CE_None; iLine--)
+    for (int iLine = nY - 1; iLine >= nYStart && eErr == CE_None; iLine--)
     {
         if (GDALRasterIO(hBand, GF_Read, nXStart, iLine, nXSize, 1,
             padfThisLineVal, nXSize, 1, GDT_Float64, 0, 0))
@@ -481,7 +490,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
         }
 
         /* process left direction */
-        for (iPixel = nX - 1; iPixel >= 0; iPixel--)
+        for (int iPixel = nX - 1; iPixel >= 0; iPixel--)
         {
             bool left_adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                                      nX - iPixel,
@@ -530,7 +539,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
             }
         }
         /* process right direction */
-        for (iPixel = nX + 1; iPixel < nXSize; iPixel++)
+        for (int iPixel = nX + 1; iPixel < nXSize; iPixel++)
         {
             bool right_adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                                       iPixel - nX,
@@ -599,7 +608,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
     }
     /* scan downwards */
     memcpy(padfLastLineVal, padfFirstLineVal, nXSize * sizeof(double));
-    for(iLine = nY + 1; iLine < nYStop && eErr == CE_None; iLine++ )
+    for(int iLine = nY + 1; iLine < nYStop && eErr == CE_None; iLine++ )
     {
         if (GDALRasterIO( hBand, GF_Read, nXStart, iLine, nXStop - nXStart, 1,
             padfThisLineVal, nXStop - nXStart, 1, GDT_Float64, 0, 0 ))
@@ -632,11 +641,11 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
         }
         else
         {
-            pabyResult[iPixel] = byOutOfRangeVal;
+            pabyResult[nX] = byOutOfRangeVal;
         }
 
         /* process left direction */
-        for (iPixel = nX - 1; iPixel >= 0; iPixel--)
+        for (int iPixel = nX - 1; iPixel >= 0; iPixel--)
         {
             bool left_adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                                      nX - iPixel,
@@ -682,7 +691,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
             }
         }
         /* process right direction */
-        for (iPixel = nX + 1; iPixel < nXSize; iPixel++)
+        for (int iPixel = nX + 1; iPixel < nXSize; iPixel++)
         {
             bool right_adjusted = AdjustHeightInRange(adfGeoTransform.data(),
                                                       iPixel - nX,

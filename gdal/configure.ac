@@ -33,6 +33,7 @@ define([AC_CACHE_SAVE], )
 
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(GDALmake.opt.in)
+AC_SUBST(PACKAGE, gdal)
 AC_CONFIG_MACRO_DIR(m4)
 AC_CONFIG_HEADERS([port/cpl_config.h:port/cpl_config.h.in])
 AH_BOTTOM([#include "cpl_config_extras.h"])
@@ -1185,6 +1186,24 @@ if test "$am_func_iconv" = "yes"; then
     rm -f testiconv.*
 
     AC_DEFINE_UNQUOTED(ICONV_CPP_CONST,$ICONV_CPP_CONST, [For.cpp files, define as const if the declaration of iconv() needs const.])
+fi
+
+dnl ---------------------------------------------------------------------------
+dnl Bash completions
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH([bash-completion],
+  AS_HELP_STRING([--with-bash-completion[=ARG]],
+    [Install Bash completions (ARG=yes or path)]),,)
+
+if test "x$with_bash_completion" = "xno" -o "x$with_bash_completion" = "x"; then
+  AC_MSG_NOTICE([Bash completions not requested])
+elif test "x$with_bash_completion" = "xyes"; then
+  PKG_CHECK_VAR(bashcompdir, [bash-completion], [completionsdir], ,
+    bashcompdir="${sysconfdir}/bash_completion.d")
+  AC_SUBST(bashcompdir)
+else
+  AC_SUBST(bashcompdir, $with_bash_completion)
 fi
 
 dnl ---------------------------------------------------------------------------
@@ -5148,25 +5167,6 @@ fi
 export BINTRUE
 
 AC_SUBST(BINTRUE,$BINTRUE)
-
-dnl ---------------------------------------------------------------------------
-dnl If datadir is set to @prefix@/share, the modify it to be
-dnl @prefix@/share/gdal.  I wish we could default this.
-dnl ---------------------------------------------------------------------------
-if test "$datadir" = '${prefix}/share' ; then
-  datadir='${prefix}/share/gdal'
-fi
-
-if test "$datadir" = '${datarootdir}' \
-     -a "$datarootdir" = '${prefix}/share' ; then
-  datarootdir='${prefix}/share/gdal'
-fi
-
-dnl ---------------------------------------------------------------------------
-dnl By default mandir is $datarootdir/man which would be
-dnl /usr/local/share/gdal/man but we want man pages in /usr/local/man.
-dnl ---------------------------------------------------------------------------
-mandir='${prefix}/man'
 
 dnl ---------------------------------------------------------------------------
 dnl Capture GDAL_PREFIX for the cpl_config.h include file.

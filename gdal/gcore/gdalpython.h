@@ -197,7 +197,7 @@ namespace GDALPy
     CPLString GetPyExceptionString();
     bool ErrOccurredEmitCPLError();
 
-}; // namespace GDALPy
+} // namespace GDALPy
 
 //! @endcond
 

@@ -224,7 +224,10 @@ void netCDFDataset::SGCommitPendingTransaction()
             // Go through all the layers and resize dimensions accordingly
             for(size_t layerInd = 0; layerInd < papoLayers.size(); layerInd++)
             {
-                nccfdriver::ncLayer_SG_Metadata& layerMD = papoLayers[layerInd]->getLayerSGMetadata();
+                auto poLayer = dynamic_cast<netCDFLayer*>(papoLayers[layerInd].get());
+                if( !poLayer )
+                    continue;
+                nccfdriver::ncLayer_SG_Metadata& layerMD = poLayer->getLayerSGMetadata();
                 nccfdriver::geom_t wType = layerMD.getWritableType();
 
                 // Resize node coordinates

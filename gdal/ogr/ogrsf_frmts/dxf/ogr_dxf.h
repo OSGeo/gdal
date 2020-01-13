@@ -149,6 +149,10 @@ public:
         return oResult;
     }
 
+    OGRCoordinateTransformation* Clone() const override {
+        return new OGRDXFInsertTransformer(*this);
+    }
+
     OGRSpatialReference *GetSourceCS() override { return nullptr; }
     OGRSpatialReference *GetTargetCS() override { return nullptr; }
 
@@ -271,6 +275,10 @@ public:
         double *adfX, double *adfY, double *adfZ );
 
     void ComposeOnto( OGRDXFAffineTransform& poCT ) const;
+
+    OGRCoordinateTransformation* Clone() const override {
+        return new OGRDXFOCSTransformer(*this);
+    }
 };
 
 /************************************************************************/

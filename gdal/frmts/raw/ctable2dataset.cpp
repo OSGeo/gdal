@@ -235,6 +235,7 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
                            8, -8 * nRasterXSize,
                            GDT_Float32, CPL_IS_LSB, RawRasterBand::OwnFP::NO );
     poBand->SetDescription( "Longitude Offset (radians)" );
+    poBand->SetMetadataItem("positive_value", "west");
     poDS->SetBand( 2, poBand );
     if( CPLGetLastErrorType() != CE_None )
     {

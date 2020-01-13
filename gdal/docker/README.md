@@ -7,7 +7,7 @@ Each directory contains a `./build.sh` for convenient building of the image.
 Note: the mention of the overall licensing terms of the GDAL build is to the
 best of our knowledge and not guaranteed. Users should check by themselves.
 
-# Alpine based (3.10)
+# Alpine based (3.11)
 
 ## Ultra small: `osgeo/gdal:alpine-ultrasmall-latest`
 
@@ -63,7 +63,7 @@ See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
 
 ## Full: `osgeo/gdal:ubuntu-full-latest`
 
-* Image size: ~ 1.8 GB
+* Image size: ~ 1.5 GB
 * Raster drivers: all based on almost all possible free and open-source dependencies
 * Vector drivers: all based on almost all possible free and open-source dependencies
 * External libraries enabled: small + libnetcdf, libhdf4, libhdf5, libtiledb, libkea,

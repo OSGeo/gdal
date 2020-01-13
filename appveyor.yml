@@ -137,11 +137,11 @@ install:
       $env:NMAKE_LOCAL+="NETCDF_INC_DIR=`$(SDK_INC)`n"
       $env:NMAKE_LOCAL+="NETCDF_HAS_NC4 = yes`n"
       $env:NMAKE_LOCAL+="PROJ_INCLUDE=-I$env:APPVEYOR_BUILD_FOLDER\install-proj\include`n"
-      $env:NMAKE_LOCAL+="PROJ_LIBRARY=$env:APPVEYOR_BUILD_FOLDER\install-proj\lib\proj_6_2.lib`n"
+      $env:NMAKE_LOCAL+="PROJ_LIBRARY=$env:APPVEYOR_BUILD_FOLDER\install-proj\lib\proj.lib`n"
       $env:NMAKE_LOCAL | Set-Content "$env:APPVEYOR_BUILD_FOLDER\gdal\nmake.local"
       #
       cd $env:APPVEYOR_BUILD_FOLDER
-      exec { git clone --depth=1 -b 6.2 https://github.com/OSGeo/proj.4 proj }
+      exec { git clone --depth=1 -b 6.3 https://github.com/OSGeo/proj.4 proj }
       cd proj
       exec { mkdir build }
       cd build
@@ -160,7 +160,7 @@ install:
       exec { 7z x proj-datumgrid-1.8.zip -aoa }
       #
       cd $env:APPVEYOR_BUILD_FOLDER\gdal
-      exec { copy $env:APPVEYOR_BUILD_FOLDER\install-proj\bin\proj_6_2.dll . }
+      exec { copy $env:APPVEYOR_BUILD_FOLDER\install-proj\bin\*.dll . }
       exec { nmake /f makefile.vc MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS=/WX }
       cd apps
       exec { nmake /f makefile.vc test_ogrsf.exe MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS=/WX }

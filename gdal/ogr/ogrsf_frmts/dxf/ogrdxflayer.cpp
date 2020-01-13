@@ -2110,8 +2110,16 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
             break;
 
           case 40:
-            adfKnots.push_back( CPLAtof(szLineBuf) );
+          {
+            double dfVal = CPLAtof(szLineBuf);
+            // Ad-hoc fix for https://github.com/OSGeo/gdal/issues/1969
+            // where the first knot is at a very very close to zero negative
+            // value and following knots are at 0.
+            if( dfVal < 0 && dfVal > -1.0e-10 )
+                dfVal = 0;
+            adfKnots.push_back(dfVal);
             break;
+          }
 
           case 41:
             adfWeights.push_back( CPLAtof(szLineBuf) );

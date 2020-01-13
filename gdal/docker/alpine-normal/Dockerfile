@@ -5,7 +5,7 @@
 # Public domain
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG ALPINE_VERSION=3.10
+ARG ALPINE_VERSION=3.11
 FROM alpine:${ALPINE_VERSION} as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
@@ -28,7 +28,7 @@ RUN apk add --no-cache \
     curl-dev \
     zlib-dev zstd-dev \
     libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev \
-    py-numpy-dev python3-dev py3-numpy \
+    py3-numpy-dev python3-dev py3-numpy \
     ${POPPLER_DEV} postgresql-dev \
     # For spatialite (and GDAL)
     libxml2-dev \
@@ -99,7 +99,7 @@ RUN if test "${HDF5_VERSION}" != ""; then ( \
     ); fi
 
 # Build netCDF
-ARG NETCDF_VERSION=4.7.2
+ARG NETCDF_VERSION=4.7.3
 RUN if test "${NETCDF_VERSION}" != ""; then ( \
     wget -q https://github.com/Unidata/netcdf-c/archive/v${NETCDF_VERSION}.tar.gz \
     && tar xzf v${NETCDF_VERSION}.tar.gz \
@@ -340,13 +340,13 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && mkdir -p /build_gdal_python/usr/lib \
     && mkdir -p /build_gdal_python/usr/bin \
     && mkdir -p /build_gdal_version_changing/usr/include \
-    && mv /build/usr/lib/python3.7          /build_gdal_python/usr/lib \
+    && mv /build/usr/lib/python3.8          /build_gdal_python/usr/lib \
     && mv /build/usr/lib                    /build_gdal_version_changing/usr \
     && mv /build/usr/include/gdal_version.h /build_gdal_version_changing/usr/include \
     && mv /build/usr/bin/*.py               /build_gdal_python/usr/bin \
     && mv /build/usr/bin                    /build_gdal_version_changing/usr \
     && for i in /build_gdal_version_changing/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_gdal_python/usr/lib/python3.7/site-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_gdal_python/usr/lib/python3.8/site-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done \
     # Remove resource files of uncompiled drivers
     && (for i in \

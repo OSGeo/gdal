@@ -1403,7 +1403,7 @@ pseudo panchromatic intensity, but not bound to an output band.
         </PansharpeningOptions>
     </VRTDataset>
 
-Multidimensionnal VRT
+Multidimensional VRT
 ---------------------
 
 .. versionadded:: 3.1

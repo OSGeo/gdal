@@ -95,7 +95,7 @@ bool CPLHaveRuntimeSSE()
 /*                         CPLHaveRuntimeSSSE3()                        */
 /************************************************************************/
 
-static inline bool CPLDetectSSE3()
+static inline bool CPLDetectSSSE3()
 {
     int cpuinfo[4] = { 0, 0, 0, 0 };
     CPL_CPUID(1, cpuinfo);
@@ -103,11 +103,11 @@ static inline bool CPLDetectSSE3()
 }
 
 #if defined(__GNUC__) && !defined(DEBUG)
-bool bCPLHasSSE3 = false;
+bool bCPLHasSSSE3 = false;
 static void CPLHaveRuntimeSSSE3Initialize() __attribute__ ((constructor));
 static void CPLHaveRuntimeSSSE3Initialize()
 {
-    bCPLHasSSE3 = CPLDetectSSE3();
+    bCPLHasSSSE3 = CPLDetectSSSE3();
 }
 #else
 bool CPLHaveRuntimeSSSE3()
@@ -116,7 +116,7 @@ bool CPLHaveRuntimeSSSE3()
     if( !CPLTestBool(CPLGetConfigOption("GDAL_USE_SSSE3", "YES")) )
         return false;
 #endif
-    return CPLDetectSSE3();
+    return CPLDetectSSSE3();
 }
 #endif
 

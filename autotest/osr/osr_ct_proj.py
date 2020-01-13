@@ -131,7 +131,17 @@ transform_list = [
      'EPSG:4326', (49.9988573027651,9.99881145557889, 0.0), 1e-8,
      'DHDN -> WGS84 using BETA2007', None, 'GRID:BETA2007.gsb'),
 
-    ('EPSG:4314', (50, 10, 0.0), 1e-8,
+    ("""GEOGCS["DHDN",
+    DATUM["Deutsches_Hauptdreiecksnetz",
+        SPHEROID["Bessel 1841",6377397.155,299.1528128,
+            AUTHORITY["EPSG","7004"]],
+        TOWGS84[598.1,73.7,418.2,0.202,0.045,-2.455,6.7],
+        AUTHORITY["EPSG","6314"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["degree",0.0174532925199433,
+        AUTHORITY["EPSG","9122"]],
+    AUTHORITY["EPSG","4314"]]""", (50, 10, 0.0), 1e-8,
      'EPSG:4326', (49.9988572643058,9.99881392529464,0), 1e-8,
      'DHDN -> WGS84 using TOWGS84 automatically set', 'OSR_CT_USE_DEFAULT_EPSG_TOWGS84=YES', None),
 

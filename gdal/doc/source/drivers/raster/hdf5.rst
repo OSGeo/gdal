@@ -207,6 +207,14 @@ several files using the 'family' HDF5 file driver. For that, GDAL must be
 provided with the filename of the first part, containing in it a single '0'
 (zero) character, or ending with 0.h5 or 0.hdf5
 
+Multidimensional API support
+----------------------------
+
+.. versionadded:: 3.1
+
+The HDF5 driver supports the :ref:`multidim_raster_data_model` for reading
+operations.
+
 Driver building
 ---------------
 

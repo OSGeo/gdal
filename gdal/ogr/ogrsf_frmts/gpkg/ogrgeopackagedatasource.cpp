@@ -849,7 +849,7 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
 
 bool GDALGeoPackageDataset::ICanIWriteBlock()
 {
-    if( !bUpdate )
+    if( !GetUpdate() )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "IWriteBlock() not supported on dataset opened in read-only mode");
@@ -1044,7 +1044,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     {
         char** papszTokens = CSLTokenizeString2(poOpenInfo->pszFilename, ":", 0);
         int nCount = CSLCount(papszTokens);
-        if( nCount != 3 && nCount != 4 )
+        if( nCount < 3 )
         {
             CSLDestroy(papszTokens);
             return FALSE;
@@ -1059,6 +1059,18 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                   (papszTokens[2][0] == '/' || papszTokens[2][0] == '\\') )
         {
             osFilename = CPLString(papszTokens[1]) + ":" + papszTokens[2];
+        }
+        // GPKG:/vsicurl/http[s]://[user:passwd@]example.com[:8080]/foo.gpkg:bar
+        else if ( nCount >= 4 &&
+                  (EQUAL(papszTokens[1], "/vsicurl/http") ||
+                   EQUAL(papszTokens[1], "/vsicurl/https")) )
+        {
+            osFilename = CPLString(papszTokens[1]);
+            for( int i = 2; i < nCount - 1; i++ )
+            {
+                osFilename += ':';
+                osFilename += papszTokens[i];
+            }
         }
         osSubdatasetTableName = papszTokens[nCount-1];
 
@@ -1080,8 +1092,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                                     poOpenInfo->nHeaderBytes);
     }
 
-    bUpdate = poOpenInfo->eAccess == GA_Update;
-    eAccess = poOpenInfo->eAccess; /* hum annoying duplication */
+    eAccess = poOpenInfo->eAccess;
     m_pszFilename = CPLStrdup( osFilename );
 
 #ifdef ENABLE_SQL_GPKG_FORMAT
@@ -1187,7 +1198,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         }
 
         /* See if we can open the SQLite database */
-        if( !OpenOrCreateDB(bUpdate
+        if( !OpenOrCreateDB(GetUpdate()
                         ? SQLITE_OPEN_READWRITE
                         : SQLITE_OPEN_READONLY) )
             return FALSE;
@@ -1660,7 +1671,7 @@ bool GDALGeoPackageDataset::AllocCachedTiles()
 
     const int nCacheCount =
         (m_nShiftXPixelsMod != 0 || m_nShiftYPixelsMod != 0) ? 4 :
-        (bUpdate && m_eDT == GDT_Byte) ? 2 : 1;
+        (GetUpdate() && m_eDT == GDT_Byte) ? 2 : 1;
 
     m_pabyCachedTiles = (GByte*) VSI_MALLOC3_VERBOSE(
         nCacheCount * (m_eDT == GDT_Byte ? 4 : 1) * m_nDTSize,
@@ -1723,7 +1734,6 @@ bool GDALGeoPackageDataset::InitRaster( GDALGeoPackageDataset* poParentDS,
     if( poParentDS )
     {
         m_poParentDS = poParentDS;
-        bUpdate = poParentDS->bUpdate;
         eAccess = poParentDS->eAccess;
         hDB = poParentDS->hDB;
         m_eTF = poParentDS->m_eTF;
@@ -1992,7 +2002,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     const char* pszZoomLevel =  CSLFetchNameValue(papszOpenOptionsIn, "ZOOM_LEVEL");
     if( pszZoomLevel )
     {
-        if( bUpdate )
+        if( GetUpdate() )
             osSQL += CPLSPrintf(" AND zoom_level <= %d", atoi(pszZoomLevel));
         else
         {
@@ -2001,7 +2011,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         }
     }
     // In read-only mode, only lists non empty zoom levels
-    else if( !bUpdate )
+    else if( !GetUpdate() )
     {
         osSQL += CPLSPrintf(" AND EXISTS(SELECT 1 FROM %s WHERE zoom_level = tm.zoom_level LIMIT 1)",
                             osQuotedTableName.c_str());
@@ -2025,7 +2035,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
             SQLResultFree(&oResult);
             osSQL = pszSQL;
             osSQL += " ORDER BY zoom_level DESC";
-            if( !bUpdate )
+            if( !GetUpdate() )
                 osSQL += " LIMIT 1";
             err = SQLQuery(hDB, osSQL.c_str(), &oResult);
         }
@@ -2159,7 +2169,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     const char* pszTF = CSLFetchNameValue(papszOpenOptionsIn, "TILE_FORMAT");
     if( pszTF )
     {
-        if( !bUpdate )
+        if( !GetUpdate() )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "TILE_FORMAT open option ignored in read-only mode");
@@ -3773,8 +3783,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
     }
     m_pszFilename = CPLStrdup(pszFilename);
     m_bNew = true;
-    bUpdate = TRUE;
-    eAccess = GA_Update; /* hum annoying duplication */
+    eAccess = GA_Update;
 
     // for test/debug purposes only. true is the nominal value
     m_bPNGSupports2Bands = CPLTestBool(CPLGetConfigOption("GPKG_PNG_SUPPORTS_2BANDS", "TRUE"));
@@ -5094,7 +5103,7 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Verify we are in update mode.                                   */
 /* -------------------------------------------------------------------- */
-    if( !bUpdate )
+    if( !GetUpdate() )
     {
         CPLError( CE_Failure, CPLE_NoWriteAccess,
                   "Data source %s opened read-only.\n"
@@ -5378,7 +5387,7 @@ OGRErr GDALGeoPackageDataset::DeleteLayerCommon(const char* pszLayerName)
 
 OGRErr GDALGeoPackageDataset::DeleteLayer( int iLayer )
 {
-    if( !bUpdate || iLayer < 0 || iLayer >= m_nLayers )
+    if( !GetUpdate() || iLayer < 0 || iLayer >= m_nLayers )
         return OGRERR_FAILURE;
 
     m_papoLayers[iLayer]->ResetReading();
@@ -5551,14 +5560,14 @@ int GDALGeoPackageDataset::TestCapability( const char * pszCap )
          EQUAL(pszCap,ODsCDeleteLayer) ||
          EQUAL(pszCap,"RenameLayer") )
     {
-         return bUpdate;
+         return GetUpdate();
     }
     else if( EQUAL(pszCap,ODsCCurveGeometries) )
         return TRUE;
     else if( EQUAL(pszCap,ODsCMeasuredGeometries) )
         return TRUE;
     else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
-        return bUpdate;
+        return GetUpdate();
 
     return OGRSQLiteBaseDataSource::TestCapability(pszCap);
 }

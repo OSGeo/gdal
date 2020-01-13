@@ -1841,3 +1841,27 @@ def test_ogr_sql_sqlite_31():
 
 
 
+###############################################################################
+# Test flattening of geometry collection inside geometry collection
+
+
+def test_ogr_sql_sqlite_geomcollection_in_geomcollection():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbLineStringM)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (MULTIPOINT(1 2,3 4),MULTILINESTRING((5 6,7 8),(9 10,11 12)))'))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('MULTILINESTRING ((5 6,7 8),(9 10,11 12))'))
+    lyr.CreateFeature(f)
+    f = None
+    sql_lyr = ds.ExecuteSQL('select * from test', dialect='SQLite')
+    f = sql_lyr.GetNextFeature()
+    got_wkt_1 = f.GetGeometryRef().ExportToIsoWkt()
+    f = sql_lyr.GetNextFeature()
+    got_wkt_2 = f.GetGeometryRef().ExportToIsoWkt()
+    ds.ReleaseResultSet(sql_lyr)
+
+    assert got_wkt_1 == 'GEOMETRYCOLLECTION (POINT (1 2),POINT (3 4),LINESTRING (5 6,7 8),LINESTRING (9 10,11 12))'
+    assert got_wkt_2 == 'MULTILINESTRING ((5 6,7 8),(9 10,11 12))'

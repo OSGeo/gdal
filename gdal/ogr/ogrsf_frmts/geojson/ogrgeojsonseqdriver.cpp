@@ -95,7 +95,7 @@ class OGRGeoJSONSeqLayer final: public OGRLayer
         GIntBig m_nTotalFeatures = 0;
         GIntBig m_nNextFID = 0;
 
-        json_object* GetNextObject();
+        json_object* GetNextObject(bool bLooseIdentification);
 
     public:
         OGRGeoJSONSeqLayer(OGRGeoJSONSeqDataSource* poDS,
@@ -103,7 +103,7 @@ class OGRGeoJSONSeqLayer final: public OGRLayer
                            VSILFILE* fp);
         ~OGRGeoJSONSeqLayer();
 
-        bool Init();
+        bool Init(bool bLooseIdentification);
 
         void ResetReading() override;
         OGRFeature* GetNextFeature() override;
@@ -280,7 +280,7 @@ OGRGeoJSONSeqLayer::~OGRGeoJSONSeqLayer()
 /*                               Init()                                 */
 /************************************************************************/
 
-bool OGRGeoJSONSeqLayer::Init()
+bool OGRGeoJSONSeqLayer::Init(bool bLooseIdentification)
 {
     if( STARTS_WITH(m_poDS->GetDescription(), "/vsimem/") ||
         !STARTS_WITH(m_poDS->GetDescription(), "/vsi") )
@@ -293,7 +293,7 @@ bool OGRGeoJSONSeqLayer::Init()
 
     while( true )
     {
-        auto poObject = GetNextObject();
+        auto poObject = GetNextObject(bLooseIdentification);
         if( !poObject )
             break;
         if( OGRGeoJSONGetType(poObject) == GeoJSONObject::eFeature )
@@ -337,7 +337,7 @@ void OGRGeoJSONSeqLayer::ResetReading()
 /*                           GetNextObject()                            */
 /************************************************************************/
 
-json_object* OGRGeoJSONSeqLayer::GetNextObject()
+json_object* OGRGeoJSONSeqLayer::GetNextObject(bool bLooseIdentification)
 {
     m_osFeatureBuffer.clear();
     while( true )
@@ -402,6 +402,12 @@ json_object* OGRGeoJSONSeqLayer::GetNextObject()
             }
         }
 
+        while( !m_osFeatureBuffer.empty() &&
+               (m_osFeatureBuffer.back() == '\r' ||
+                m_osFeatureBuffer.back() == '\n')  )
+        {
+            m_osFeatureBuffer.resize(m_osFeatureBuffer.size()-1);
+        }
         if( !m_osFeatureBuffer.empty() )
         {
             json_object* poObject = nullptr;
@@ -413,6 +419,10 @@ json_object* OGRGeoJSONSeqLayer::GetNextObject()
                 return poObject;
             }
             json_object_put(poObject);
+            if( bLooseIdentification )
+            {
+                return nullptr;
+            }
         }
     }
 }
@@ -425,7 +435,7 @@ OGRFeature* OGRGeoJSONSeqLayer::GetNextFeature()
 {
     while( true )
     {
-        auto poObject = GetNextObject();
+        auto poObject = GetNextObject(false);
         if( !poObject )
             return nullptr;
         OGRFeature* poFeature;
@@ -726,12 +736,15 @@ bool OGRGeoJSONSeqDataSource::Open( GDALOpenInfo* poOpenInfo,
     }
     SetDescription( poOpenInfo->pszFilename );
     auto poLayer = new OGRGeoJSONSeqLayer(this, osLayerName.c_str(), fp);
-    if( nSrcType == eGeoJSONSourceService )
+    const bool bLooseIdentification =
+        nSrcType == eGeoJSONSourceService &&
+        !STARTS_WITH_CI(poOpenInfo->pszFilename, "GeoJSONSeq:");
+    if( bLooseIdentification )
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
     }
-    auto ret = poLayer->Init();
-    if( nSrcType == eGeoJSONSourceService )
+    auto ret = poLayer->Init(bLooseIdentification);
+    if( bLooseIdentification )
     {
         CPLPopErrorHandler();
         CPLErrorReset();

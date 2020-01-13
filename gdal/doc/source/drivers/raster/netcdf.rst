@@ -426,6 +426,14 @@ NetCDF-4 groups on reading:
    `Support of groups in
    CF <https://github.com/cf-convention/cf-conventions/issues/144>`__
 
+Multidimensional API support
+----------------------------
+
+.. versionadded:: 3.1
+
+The netCDF driver supports the :ref:`multidim_raster_data_model` for reading and
+creation operations.
+
 Driver building
 ---------------
 

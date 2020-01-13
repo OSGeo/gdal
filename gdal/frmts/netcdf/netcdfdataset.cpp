@@ -180,6 +180,10 @@ class netCDFRasterBand final: public GDALPamRasterBand
                                         bool bCheckIsNan=false );
     void            SetBlockSize();
 
+    bool            FetchNetcdfChunk( size_t xstart,
+                                      size_t ystart,
+                                      void* pImage );
+
   protected:
     CPLXMLNode *SerializeToXML( const char *pszVRTPath ) override;
 
@@ -627,12 +631,30 @@ void netCDFRasterBand::SetBlockSize()
     }
 #endif
 
-    // Force block size to 1 scanline for bottom-up datasets if
-    // nBlockYSize != 1.
-    if( static_cast<netCDFDataset*>(poDS)->bBottomUp && nBlockYSize != 1 )
+    // Deal with bottom-up datasets and nBlockYSize != 1.
+    auto poGDS = static_cast<netCDFDataset*>(poDS);
+    if( poGDS->bBottomUp && nBlockYSize != 1 && poGDS->poChunkCache == nullptr )
     {
-        nBlockXSize = nRasterXSize;
-        nBlockYSize = 1;
+        if( poGDS->eAccess == GA_ReadOnly )
+        {
+            // Try to cache 1 or 2 'rows' of netCDF chunks along the whole
+            // width of the raster
+            size_t nChunks = static_cast<size_t>(DIV_ROUND_UP(nRasterXSize, nBlockXSize));
+            if( (nRasterYSize % nBlockYSize) != 0 )
+                nChunks *= 2;
+            const size_t nChunkSize = static_cast<size_t>(GDALGetDataTypeSizeBytes(eDataType))
+                * nBlockXSize * nBlockYSize;
+            constexpr size_t MAX_CACHE_SIZE = 100 * 1024 * 1024;
+            nChunks = std::min(nChunks, MAX_CACHE_SIZE / nChunkSize);
+            if( nChunks )
+            {
+                poGDS->poChunkCache.reset(new netCDFDataset::ChunkCacheType(nChunks));
+            }
+        }
+        else
+        {
+            nBlockYSize = 1;
+        }
     }
 }
 
@@ -1677,72 +1699,23 @@ void netCDFRasterBand::CheckDataCpx( void *pImage, void *pImageNC,
 }
 
 /************************************************************************/
-/*                             IReadBlock()                             */
+/*                         FetchNetcdfChunk()                           */
 /************************************************************************/
 
-CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                     void *pImage )
-
+bool netCDFRasterBand::FetchNetcdfChunk( size_t xstart,
+                                         size_t ystart,
+                                         void* pImage )
 {
-    CPLMutexHolderD(&hNCMutex);
-
-    int nd = 0;
-    nc_inq_varndims(cdfid, nZId, &nd);
-
-#ifdef NCDF_DEBUG
-    if( (nBlockYOff == 0) || (nBlockYOff == nRasterYSize - 1) )
-        CPLDebug("GDAL_netCDF",
-                 "netCDFRasterBand::IReadBlock( %d, %d, ...) nBand=%d nd=%d",
-                 nBlockXOff, nBlockYOff, nBand, nd);
-#endif
-
-    // Locate X, Y and Z position in the array.
-
     size_t start[MAX_NC_DIMS] = {};
-    start[nBandXPos] = nBlockXOff * nBlockXSize;
-
-    // Check y order.
-    if( nBandYPos >= 0 )
-    {
-        if( static_cast<netCDFDataset *>(poDS)->bBottomUp )
-        {
-#ifdef NCDF_DEBUG
-            if( (nBlockYOff == 0) || (nBlockYOff == nRasterYSize - 1) )
-                CPLDebug(
-                    "GDAL_netCDF",
-                    "reading bottom-up dataset, nBlockYSize=%d nRasterYSize=%d",
-                    nBlockYSize, nRasterYSize);
-#endif
-            // Check block size - return error if not 1.
-            // reading upside-down rasters with nBlockYSize!=1 needs further
-            // development.  perhaps a simple solution is to invert geotransform and
-            // not use bottom-up.
-            if( nBlockYSize == 1 )
-            {
-                start[nBandYPos] = nRasterYSize - 1 - nBlockYOff;
-            }
-            else
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                        "nBlockYSize = %d, only 1 supported when "
-                        "reading bottom-up dataset",
-                        nBlockYSize);
-                return CE_Failure;
-            }
-        }
-        else
-        {
-            start[nBandYPos] = nBlockYOff * nBlockYSize;
-        }
-    }
-
     size_t edge[MAX_NC_DIMS] = {};
 
+    start[nBandXPos] = xstart;
     edge[nBandXPos] = nBlockXSize;
     if( (start[nBandXPos] + edge[nBandXPos]) > (size_t)nRasterXSize )
         edge[nBandXPos] = nRasterXSize - start[nBandXPos];
     if( nBandYPos >= 0 )
     {
+        start[nBandYPos] = ystart;
         edge[nBandYPos] = nBlockYSize;
         if( (start[nBandYPos] + edge[nBandYPos]) > (size_t)nRasterYSize )
             edge[nBandYPos] = nRasterYSize - start[nBandYPos];
@@ -1757,6 +1730,8 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                   ((netCDFDataset *)poDS)->bBottomUp);
 #endif
 
+    int nd = 0;
+    nc_inq_varndims(cdfid, nZId, &nd);
     if( nd == 3 )
     {
         start[panBandZPos[0]] = nLevel;  // z
@@ -1930,12 +1905,122 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( status != NC_NOERR )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "netCDF scanline fetch failed: #%d (%s)", status,
+                 "netCDF chunk fetch failed: #%d (%s)", status,
                  nc_strerror(status));
-        return CE_Failure;
+        return false;
+    }
+    return true;
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                     void *pImage )
+
+{
+    CPLMutexHolderD(&hNCMutex);
+
+    // Locate X, Y and Z position in the array.
+
+    size_t xstart = nBlockXOff * nBlockXSize;
+    size_t ystart = 0;
+
+    // Check y order.
+    if( nBandYPos >= 0 )
+    {
+        auto poGDS = static_cast<netCDFDataset *>(poDS);
+        if( poGDS->bBottomUp )
+        {
+            if( nBlockYSize == 1 )
+            {
+                ystart = nRasterYSize - 1 - nBlockYOff;
+            }
+            else
+            {
+                // in GDAL space
+                ystart = nBlockYOff * nBlockYSize;
+                const size_t yend = std::min(ystart + nBlockYSize - 1,
+                                             static_cast<size_t>(nRasterYSize - 1));
+                // in netCDF space
+                const size_t nFirstChunkLine = nRasterYSize - 1 - yend;
+                const size_t nLastChunkLine = nRasterYSize - 1 - ystart;
+                const size_t nFirstChunkBlock = nFirstChunkLine / nBlockYSize;
+                const size_t nLastChunkBlock = nLastChunkLine / nBlockYSize;
+
+                const auto firstKey = netCDFDataset::ChunkKey(
+                    nBlockXOff, nFirstChunkBlock, nBand);
+                const auto secondKey = netCDFDataset::ChunkKey(
+                    nBlockXOff, nLastChunkBlock, nBand);
+
+                // Retrieve data from the one or 2 needed netCDF chunks
+                std::shared_ptr<std::vector<GByte>> firstChunk;
+                std::shared_ptr<std::vector<GByte>> secondChunk;
+                if( poGDS->poChunkCache )
+                {
+                    poGDS->poChunkCache->tryGet(firstKey, firstChunk);
+                    if( firstKey != secondKey )
+                        poGDS->poChunkCache->tryGet(secondKey, secondChunk);
+                }
+                const size_t nChunkLineSize = static_cast<size_t>(
+                    GDALGetDataTypeSizeBytes(eDataType)) * nBlockXSize;
+                const size_t nChunkSize = nChunkLineSize * nBlockYSize;
+                if( !firstChunk )
+                {
+                    firstChunk.reset(new std::vector<GByte>(nChunkSize));
+                    if( !FetchNetcdfChunk( xstart,
+                                           nFirstChunkBlock * nBlockYSize,
+                                           firstChunk.get()->data() ) )
+                        return CE_Failure;
+                    if( poGDS->poChunkCache )
+                        poGDS->poChunkCache->insert(firstKey, firstChunk);
+                }
+                if( !secondChunk && firstKey != secondKey )
+                {
+                    secondChunk.reset(new std::vector<GByte>(nChunkSize));
+                    if( !FetchNetcdfChunk( xstart,
+                                           nLastChunkBlock * nBlockYSize,
+                                           secondChunk.get()->data() ) )
+                        return CE_Failure;
+                    if( poGDS->poChunkCache )
+                        poGDS->poChunkCache->insert(secondKey, secondChunk);
+                }
+
+                // Assemble netCDF chunks into GDAL block
+                GByte* pabyImage = static_cast<GByte*>(pImage);
+                const size_t nFirstChunkBlockLine = nFirstChunkBlock * nBlockYSize;
+                const size_t nLastChunkBlockLine = nLastChunkBlock * nBlockYSize;
+                for( size_t iLine = ystart; iLine <= yend; iLine ++ )
+                {
+                    const size_t nLineFromBottom = nRasterYSize - 1 - iLine;
+                    const size_t nChunkY = nLineFromBottom / nBlockYSize;
+                    if( nChunkY == nFirstChunkBlock )
+                    {
+                        memcpy(pabyImage + nChunkLineSize * (iLine - ystart),
+                               firstChunk.get()->data() +
+                                    (nLineFromBottom - nFirstChunkBlockLine) * nChunkLineSize,
+                               nChunkLineSize);
+                    }
+                    else
+                    {
+                        CPLAssert(nChunkY == nLastChunkBlock);
+                        memcpy(pabyImage + nChunkLineSize * (iLine - ystart),
+                               secondChunk.get()->data() +
+                                    (nLineFromBottom - nLastChunkBlockLine) * nChunkLineSize,
+                               nChunkLineSize);
+                    }
+                }
+                return CE_None;
+            }
+        }
+        else
+        {
+            ystart = nBlockYOff * nBlockYSize;
+        }
     }
 
-    return CE_None;
+    return FetchNetcdfChunk( xstart, ystart, pImage ) ? CE_None : CE_Failure;
 }
 
 /************************************************************************/
@@ -6323,11 +6408,15 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
 
         for(int i = 0; i < this->GetLayerCount(); i++)
         {
-            char szGroupName[NC_MAX_NAME + 1];
-            szGroupName[0] = 0;
-            status = nc_inq_grpname(papoLayers[i]->GetCDFID(), szGroupName);
-            NCDF_ERR(status);
-            oListGrpName.push_back(szGroupName);
+            auto poLayer = dynamic_cast<netCDFLayer*>(papoLayers[i].get());
+            if( poLayer )
+            {
+                char szGroupName[NC_MAX_NAME + 1];
+                szGroupName[0] = 0;
+                status = nc_inq_grpname(poLayer->GetCDFID(), szGroupName);
+                NCDF_ERR(status);
+                oListGrpName.push_back(szGroupName);
+            }
         }
     }
 #endif
@@ -6365,11 +6454,15 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
     {
         for(int i = 0; i < this->GetLayerCount(); i++)
         {
-            int nNewLayerCDFID = -1;
-            status =
-                nc_inq_ncid(cdfid, oListGrpName[i].c_str(), &nNewLayerCDFID);
-            NCDF_ERR(status);
-            papoLayers[i]->SetCDFID(nNewLayerCDFID);
+            auto poLayer = dynamic_cast<netCDFLayer*>(papoLayers[i].get());
+            if( poLayer )
+            {
+                int nNewLayerCDFID = -1;
+                status =
+                    nc_inq_ncid(cdfid, oListGrpName[i].c_str(), &nNewLayerCDFID);
+                NCDF_ERR(status);
+                poLayer->SetCDFID(nNewLayerCDFID);
+            }
         }
     }
     else
@@ -6377,7 +6470,9 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
     {
         for(int i = 0; i < this->GetLayerCount(); i++)
         {
-            papoLayers[i]->SetCDFID(cdfid);
+            auto poLayer = dynamic_cast<netCDFLayer*>(papoLayers[i].get());
+            if( poLayer )
+                poLayer->SetCDFID(cdfid);
         }
     }
 
@@ -7450,10 +7545,30 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     int nIgnoredVars = 0;
     int nGroupID = -1;
     int nVarID = -1;
-    poDS->FilterVars(cdfid, (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0,
-                     (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0,
-                     papszIgnoreVars, &nRasterVars, &nGroupID, &nVarID,
-                     &nIgnoredVars);
+
+#ifdef NETCDF_HAS_NC4
+    if( (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 &&
+        STARTS_WITH(CSLFetchNameValueDef(poDS->papszMetadata, "NC_GLOBAL#mission_name", ""), "Sentinel 3") &&
+        EQUAL(CSLFetchNameValueDef(poDS->papszMetadata, "NC_GLOBAL#altimeter_sensor_name", ""), "SRAL") &&
+        EQUAL(CSLFetchNameValueDef(poDS->papszMetadata, "NC_GLOBAL#radiometer_sensor_name", ""), "MWR") )
+    {
+        if( poDS->eAccess == GA_Update )
+        {
+            CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
+                                        // with GDALDataset own mutex.
+            delete poDS;
+            return nullptr;
+        }
+        poDS->ProcessSentinel3_SRAL_MWR();
+    }
+    else
+#endif
+    {
+        poDS->FilterVars(cdfid, (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0,
+                        (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0,
+                        papszIgnoreVars, &nRasterVars, &nGroupID, &nVarID,
+                        &nIgnoredVars);
+    }
     CSLDestroy(papszIgnoreVars);
 
     // Case where there is no raster variable

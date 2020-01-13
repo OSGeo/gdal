@@ -3467,8 +3467,8 @@ static OGRGeometry* OGRGeometryRebuildCurves( const OGRGeometry* poGeom,
 {
     if( poOGRProduct != nullptr &&
         wkbFlatten(poOGRProduct->getGeometryType()) != wkbPoint &&
-        (poGeom->hasCurveGeometry() ||
-         (poOtherGeom && poOtherGeom->hasCurveGeometry())) )
+        (poGeom->hasCurveGeometry(true) ||
+         (poOtherGeom && poOtherGeom->hasCurveGeometry(true))) )
     {
         OGRGeometry* poCurveGeom = poOGRProduct->getCurveGeometry();
         delete poOGRProduct;

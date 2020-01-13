@@ -177,10 +177,6 @@ def test_tiledb_write_subdatasets():
     new_ds = None
     src_ds = None
 
-    src_ds = gdal.Open('tmp/test_sds_array')
-    assert 'tmp/test_sds_array/test_sds_array.tdb.aux.xml' in src_ds.GetFileList()
-    src_ds = None
-  
     src_ds = gdal.Open('TILEDB:"tmp/test_sds_array":viewing_zenith_angle')
     assert src_ds.GetRasterBand(1).Checksum() == 42472
     src_ds = None

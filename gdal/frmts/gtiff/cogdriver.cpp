@@ -678,8 +678,22 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     aosOptions.SetNameValue("TILED", "YES");
     aosOptions.SetNameValue("BLOCKXSIZE", osBlockSize);
     aosOptions.SetNameValue("BLOCKYSIZE", osBlockSize);
-    if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "PREDICTOR", "FALSE")) )
+    const char* pszPredictor = CSLFetchNameValueDef(papszOptions, "PREDICTOR", "FALSE");
+    if( EQUAL(pszPredictor, "YES") || EQUAL(pszPredictor, "ON") || EQUAL(pszPredictor, "TRUE") )
+    {
+        if( GDALDataTypeIsFloating(poSrcDS->GetRasterBand(1)->GetRasterDataType()) )
+            aosOptions.SetNameValue("PREDICTOR", "3");
+        else
+            aosOptions.SetNameValue("PREDICTOR", "2");
+    }
+    else if( EQUAL(pszPredictor, "STANDARD") || EQUAL(pszPredictor, "2") )
+    {
         aosOptions.SetNameValue("PREDICTOR", "2");
+    }
+    else if( EQUAL(pszPredictor, "FLOATING_POINT") || EQUAL(pszPredictor, "3") )
+    {
+        aosOptions.SetNameValue("PREDICTOR", "3");
+    }
     const char* pszQuality = CSLFetchNameValue(papszOptions, "QUALITY");
     if( EQUAL(osCompress, "JPEG") )
     {
@@ -795,7 +809,12 @@ void GDALRegister_COG()
     {
         osOptions += "   <Option name='LEVEL' type='int' "
             "description='DEFLATE/ZSTD compression level: 1 (fastest)'/>";
-        osOptions += "   <Option name='PREDICTOR' type='boolean' default='FALSE'/>";
+        osOptions += "   <Option name='PREDICTOR' type='string-select' default='FALSE'>"
+                     "     <Value>YES</Value>"
+                     "     <Value>NO</Value>"
+                     "     <Value alias='2'>STANDARD</Value>"
+                     "     <Value alias='3'>FLOATING_POINT</Value>"
+                     "   </Option>";
     }
     if( bHasJPEG || bHasWebP )
     {

@@ -929,6 +929,10 @@ public:
     return OSRGetTOWGS84( self, argout, 7 );
   }
 
+  OGRErr AddGuessedTOWGS84() {
+    return OSRAddGuessedTOWGS84( self );
+  }
+
   OGRErr SetLocalCS( const char *pszName ) {
     return OSRSetLocalCS( self, pszName );
   }

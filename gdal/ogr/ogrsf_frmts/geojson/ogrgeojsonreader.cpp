@@ -200,6 +200,15 @@ void OGRGeoJSONBaseReader::SetArrayAsString( bool bArrayAsString )
 }
 
 /************************************************************************/
+/*                           SetDateAsString                           */
+/************************************************************************/
+
+void OGRGeoJSONBaseReader::SetDateAsString( bool bDateAsString )
+{
+    bDateAsString_ = bDateAsString;
+}
+
+/************************************************************************/
 /*                           OGRGeoJSONReader                           */
 /************************************************************************/
 
@@ -1653,6 +1662,7 @@ void OGRGeoJSONReaderAddOrUpdateField(
     bool bFlattenNestedAttributes,
     char chNestedAttributeSeparator,
     bool bArrayAsString,
+    bool bDateAsString,
     std::set<int>& aoSetUndeterminedTypeFields )
 {
     if( bFlattenNestedAttributes &&
@@ -1675,6 +1685,7 @@ void OGRGeoJSONReaderAddOrUpdateField(
                                                  true,
                                                  chNestedAttributeSeparator,
                                                  bArrayAsString,
+                                                 bDateAsString,
                                                  aoSetUndeterminedTypeFields);
             }
             else
@@ -1682,6 +1693,7 @@ void OGRGeoJSONReaderAddOrUpdateField(
                 OGRGeoJSONReaderAddOrUpdateField(poDefn, osAttrName, it.val,
                                                  false, 0,
                                                  bArrayAsString,
+                                                 bDateAsString,
                                                  aoSetUndeterminedTypeFields);
             }
         }
@@ -1698,7 +1710,7 @@ void OGRGeoJSONReaderAddOrUpdateField(
         fldDefn.SetSubType(eSubType);
         if( eSubType == OFSTBoolean )
             fldDefn.SetWidth(1);
-        if( fldDefn.GetType() == OFTString )
+        if( fldDefn.GetType() == OFTString && !bDateAsString )
         {
             fldDefn.SetType(GeoJSONStringPropertyToFieldType( poVal ));
         }
@@ -1719,7 +1731,7 @@ void OGRGeoJSONReaderAddOrUpdateField(
                 GeoJSONPropertyToFieldType( poVal, eSubType, bArrayAsString );
             poFDefn->SetSubType(OFSTNone);
             poFDefn->SetType(eNewType);
-            if( poFDefn->GetType() == OFTString )
+            if( poFDefn->GetType() == OFTString && !bDateAsString )
             {
                 poFDefn->SetType(GeoJSONStringPropertyToFieldType( poVal ));
             }
@@ -1899,7 +1911,7 @@ void OGRGeoJSONReaderAddOrUpdateField(
             OGRFieldSubType eSubType;
             OGRFieldType eNewType =
                 GeoJSONPropertyToFieldType( poVal, eSubType, bArrayAsString );
-            if( eNewType == OFTString )
+            if( eNewType == OFTString && !bDateAsString )
                 eNewType = GeoJSONStringPropertyToFieldType( poVal );
             if( eType != eNewType )
             {
@@ -2107,6 +2119,7 @@ bool OGRGeoJSONBaseReader::GenerateFeatureDefn( OGRLayer* poLayer,
                                              bFlattenNestedAttributes_,
                                              chNestedAttributeSeparator_,
                                              bArrayAsString_,
+                                             bDateAsString_,
                                              aoSetUndeterminedTypeFields_);
         }
 
@@ -2141,6 +2154,7 @@ bool OGRGeoJSONBaseReader::GenerateFeatureDefn( OGRLayer* poLayer,
                                                     bFlattenNestedAttributes_,
                                                     chNestedAttributeSeparator_,
                                                     bArrayAsString_,
+                                                    bDateAsString_,
                                                     aoSetUndeterminedTypeFields_);
                 }
             }

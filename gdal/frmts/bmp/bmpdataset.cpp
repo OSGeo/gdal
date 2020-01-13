@@ -1144,7 +1144,15 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
         VSIFReadL( &poDS->sInfoHeader.iHeight, 1, 4, poDS->fp );
         VSIFReadL( &poDS->sInfoHeader.iPlanes, 1, 2, poDS->fp );
         VSIFReadL( &poDS->sInfoHeader.iBitCount, 1, 2, poDS->fp );
-        VSIFReadL( &poDS->sInfoHeader.iCompression, 1, 4, poDS->fp );
+        unsigned int iCompression;
+        VSIFReadL( &iCompression, 1, 4, poDS->fp );
+        if( iCompression > BMPC_PNG )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Unsupported compression");
+            delete poDS;
+            return nullptr;
+        }
+        poDS->sInfoHeader.iCompression = static_cast<BMPComprMethod>(iCompression);
         VSIFReadL( &poDS->sInfoHeader.iSizeImage, 1, 4, poDS->fp );
         VSIFReadL( &poDS->sInfoHeader.iXPelsPerMeter, 1, 4, poDS->fp );
         VSIFReadL( &poDS->sInfoHeader.iYPelsPerMeter, 1, 4, poDS->fp );
