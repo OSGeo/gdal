@@ -253,7 +253,15 @@ class gdal_ext(build_ext):
             # the gdal-config location given in setup.cfg is
             # incorrect, or possibly the default -- ../../apps/gdal-config
             # We'll try to use the gdal-config that might be on the path.
-            return fetch_config(option)
+            try:
+                return fetch_config(option)
+            except gdal_config_error as e:
+                msg = 'Could not find gdal-config. Make sure you have installed the GDAL native library and development headers.'
+                import sys
+                import traceback
+                traceback_string = ''.join(traceback.format_exception(*sys.exc_info()))
+                raise gdal_config_error(traceback_string + '\n' + msg)
+
 
     def build_extensions(self):
 
