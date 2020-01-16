@@ -53,7 +53,6 @@ public:
  * OGRNGWDataset()
  */
 OGRNGWDataset::OGRNGWDataset() :
-    bReadWrite(false),
     nBatchSize(-1),
     nPageSize(-1),
     bFetchedPermissions(false),
@@ -100,12 +99,12 @@ void OGRNGWDataset::FetchPermissions()
         return;
     }
 
-    if( bReadWrite )
+    if( IsUpdateMode() )
     {
         // Check connection and is it read only.
         char **papszHTTPOptions = GetHeaders();
         stPermissions = NGWAPI::CheckPermissions( osUrl, osResourceId,
-            papszHTTPOptions, bReadWrite );
+            papszHTTPOptions, IsUpdateMode() );
         CSLDestroy( papszHTTPOptions );
     }
     else
@@ -175,7 +174,7 @@ bool OGRNGWDataset::Open( const std::string &osUrlIn,
     osUrl = osUrlIn;
     osResourceId = osResourceIdIn;
 
-    bReadWrite = bUpdateIn;
+    eAccess = bUpdateIn ? GA_Update : GA_ReadOnly;
 
     osUserPwd = CSLFetchNameValueDef( papszOpenOptionsIn, "USERPWD",
         CPLGetConfigOption("NGW_USERPWD", ""));
@@ -552,7 +551,7 @@ OGRLayer *OGRNGWDataset::ICreateLayer( const char *pszNameIn,
                                            OGRwkbGeometryType eGType,
                                            char **papszOptions )
 {
-    if( !bReadWrite )
+    if( !IsUpdateMode() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Operation not available in read-only mode");
@@ -644,7 +643,7 @@ OGRLayer *OGRNGWDataset::ICreateLayer( const char *pszNameIn,
  */
 OGRErr OGRNGWDataset::DeleteLayer( int iLayer )
 {
-    if( !bReadWrite )
+    if( !IsUpdateMode() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Operation not available in read-only mode.");
