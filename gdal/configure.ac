@@ -4078,27 +4078,30 @@ LIBXML2_INC=
 LIBXML2_LIB=
 
 AC_ARG_WITH(xml2,
-    [  --with-xml2[=ARG]       Include libxml2 (ARG=path to xml2-config.)],,,)
+    [  --with-xml2[=ARG]       Include libxml2 (ARG=yes/no)],,,)
 
-if test "`basename xx/$with_xml2`" = "xml2-config" ; then
-  LIBXML2_CONFIG="$with_xml2"
-elif test "$with_xml2" = "no" ; then
-  LIBXML2_CONFIG=no
-else
-  AC_PATH_PROG(LIBXML2_CONFIG, xml2-config, no)
-fi
+if test "x$with_xml2" = "xyes" -o "x$with_xml2" = "x" ; then
 
-if test "$LIBXML2_CONFIG" != "no" ; then
+  PKG_PROG_PKG_CONFIG([0.21])
+  PKG_CHECK_MODULES(LIBXML2,[libxml-2.0], [HAVE_LIBXML2=yes], [HAVE_LIBXML2=no])
 
-  AC_CHECK_LIB(xml2,xmlParseDoc,HAVE_LIBXML2=yes,HAVE_LIBXML2=no,`$LIBXML2_CONFIG --libs`)
+  if test "${HAVE_LIBXML2}" = "yes"; then
+    SAVED_LIBS="${LIBS}"
+    LIBS="${LIBXML2_LIBS}"
+    AC_CHECK_LIB(xml2,xmlParseDoc,HAVE_LIBXML2=yes,HAVE_LIBXML2=no)
+    LIBS="${SAVED_LIBS}"
+  fi
 
-fi
-
-if test "$HAVE_LIBXML2" = "yes" ; then
-
-  LIBXML2_INC=`$LIBXML2_CONFIG --cflags`
-  LIBXML2_LIB=`$LIBXML2_CONFIG --libs`
-
+  if test "${HAVE_LIBXML2}" = "yes"; then
+    LIBXML2_INC="${LIBXML2_CFLAGS}"
+    LIBXML2_LIB="${LIBXML2_LIBS}"
+  else
+    if test "x$with_xml2" = "xyes"; then
+      AC_MSG_ERROR([--with-xml2 was requested, but libxml2 is not available])
+    fi
+  fi
+elif test "x$with_xml2" != "xno"; then
+  AC_MSG_ERROR([Only --with-xml2=yes/no supported])
 fi
 
 AC_SUBST(HAVE_LIBXML2,$HAVE_LIBXML2)
