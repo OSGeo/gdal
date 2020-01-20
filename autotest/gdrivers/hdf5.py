@@ -452,3 +452,14 @@ def test_hdf5(downloadURL, fileName, subdatasetname, checksum, download_size):
 
 def test_hdf5_dimension_labels_with_null():
     assert gdal.Open('data/dimension_labels_with_null.h5')
+
+
+def test_hdf5_single_dim():
+
+    ds = gdal.Open('HDF5:data/byte_chunked_multiple.nc://x')
+    assert ds
+    b = ds.GetRasterBand(1)
+    assert b.YSize == 1
+    assert b.XSize == 20
+    assert b.GetBlockSize() == [20, 1]
+    assert b.Checksum() == 231
