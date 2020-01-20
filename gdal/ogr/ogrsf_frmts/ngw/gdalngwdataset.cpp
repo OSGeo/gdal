@@ -572,7 +572,8 @@ OGRLayer *OGRNGWDataset::ICreateLayer( const char *pszNameIn,
     }
 
     // Check input parameters.
-    if( eGType < wkbPoint || eGType > wkbMultiPolygon )
+    if( (eGType < wkbPoint || eGType > wkbMultiPolygon) && 
+        (eGType < wkbPoint25D || eGType > wkbMultiPolygon25D) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Unsupported geometry type: %s", OGRGeometryTypeToName(eGType));

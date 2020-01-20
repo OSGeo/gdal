@@ -247,13 +247,13 @@ def test_ogr_ngw_5():
 
     add_metadata(lyr)
 
-    lyr = gdaltest.ngw_ds.CreateLayer('test_ln_layer', srs=sr, geom_type=ogr.wkbMultiLineString, options=['OVERWRITE=YES', 'DESCRIPTION=Test point layer'])
+    lyr = gdaltest.ngw_ds.CreateLayer('test_ln_layer', srs=sr, geom_type=ogr.wkbMultiLineString, options=['OVERWRITE=YES', 'DESCRIPTION=Test line layer'])
     assert lyr is not None, 'Create layer failed.'
 
     create_fields(lyr)
     add_metadata(lyr)
 
-    lyr = gdaltest.ngw_ds.CreateLayer('test_pl_layer', srs=sr, geom_type=ogr.wkbMultiPolygon, options=['OVERWRITE=YES', 'DESCRIPTION=Test point layer'])
+    lyr = gdaltest.ngw_ds.CreateLayer('test_pl_layer', srs=sr, geom_type=ogr.wkbMultiPolygon, options=['OVERWRITE=YES', 'DESCRIPTION=Test polygon layer'])
     assert lyr is not None, 'Create layer failed.'
 
     create_fields(lyr)
@@ -266,23 +266,30 @@ def test_ogr_ngw_5():
     create_fields(lyr)
     add_metadata(lyr)
 
-    lyr = gdaltest.ngw_ds.CreateLayer('test_ln_layer', srs=sr, geom_type=ogr.wkbLineString, options=['OVERWRITE=YES', 'DESCRIPTION=Test point layer'])
+    lyr = gdaltest.ngw_ds.CreateLayer('test_ln_layer', srs=sr, geom_type=ogr.wkbLineString, options=['OVERWRITE=YES', 'DESCRIPTION=Test line layer'])
     assert lyr is not None, 'Create layer failed.'
 
     create_fields(lyr)
     add_metadata(lyr)
 
-    lyr = gdaltest.ngw_ds.CreateLayer('test_pl_layer', srs=sr, geom_type=ogr.wkbPolygon, options=['OVERWRITE=YES', 'DESCRIPTION=Test point layer'])
+    lyr = gdaltest.ngw_ds.CreateLayer('test_pl_layer', srs=sr, geom_type=ogr.wkbPolygon, options=['OVERWRITE=YES', 'DESCRIPTION=Test polygon layer'])
     assert lyr is not None, 'Create layer failed.'
 
     create_fields(lyr)
     add_metadata(lyr)
 
     # Test without overwrite
-    lyr = gdaltest.ngw_ds.CreateLayer('test_pl_layer', srs=sr, geom_type=ogr.wkbMultiPolygon, options=['OVERWRITE=NO', 'DESCRIPTION=Test point layer 1'])
+    lyr = gdaltest.ngw_ds.CreateLayer('test_pl_layer', srs=sr, geom_type=ogr.wkbMultiPolygon, options=['OVERWRITE=NO', 'DESCRIPTION=Test polygon layer 1'])
     assert lyr is None, 'Create layer without overwrite should fail.'
     lyr = gdaltest.ngw_ds.CreateLayer('test_pl_layer', srs=sr, geom_type=ogr.wkbMultiPolygon, options=['DESCRIPTION=Test point layer 1'])
     assert lyr is None, 'Create layer without overwrite should fail.'
+
+    # Test geometry with Z
+    lyr = gdaltest.ngw_ds.CreateLayer('test_plz_layer', srs=sr, geom_type=ogr.wkbMultiPolygon25D, options=['OVERWRITE=YES', 'DESCRIPTION=Test polygonz layer'])
+    assert lyr is not None, 'Create layer failed.'
+
+    create_fields(lyr)
+    add_metadata(lyr)
 
     ds_resource_id = gdaltest.ngw_ds.GetMetadataItem('id', '')
     gdaltest.ngw_ds = None
@@ -292,7 +299,7 @@ def test_ogr_ngw_5():
     gdaltest.ngw_ds = gdal.OpenEx(url, gdal.OF_UPDATE) # gdaltest.ngw_drv.Open(url, update=1)
     assert gdaltest.ngw_ds is not None, 'Open datasource failed.'
 
-    for layer_name in ['test_pt_layer', 'test_ln_layer', 'test_pl_layer']:
+    for layer_name in ['test_pt_layer', 'test_ln_layer', 'test_pl_layer', 'test_plz_layer']:
         lyr = gdaltest.ngw_ds.GetLayerByName(layer_name)
         assert lyr is not None, 'Get layer {} failed.'.format(layer_name)
 
@@ -310,6 +317,8 @@ def test_ogr_ngw_5():
 
         resource_type = lyr.GetMetadataItem('resource_type', '')
         assert resource_type is not None, 'Did not get expected layer metadata item. Resourse type should be present.'
+
+        assert lyr.GetGeomType() != ogr.wkbUnknown and lyr.GetGeomType() != ogr.wkbNone
 
 ###############################################################################
 # Check open single vector layer.
