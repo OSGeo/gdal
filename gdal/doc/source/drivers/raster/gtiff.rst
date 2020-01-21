@@ -14,7 +14,7 @@ and somewhat less varieties can be written.
 GDAL also supports reading and writing BigTIFF files (evolution of the TIFF format
 to support files larger than 4 GB).
 
-Currently band types of Byte, UInt16, Int16, UInt32, Int32, Float32,
+Currently band types of byte: UInt16, Int16, UInt32, Int32, Float32,
 Float64, CInt16, CInt32, CFloat32 and CFloat64 are supported for reading
 and writing. Paletted images will return palette information associated
 with the band. The compression formats listed below should be supported
