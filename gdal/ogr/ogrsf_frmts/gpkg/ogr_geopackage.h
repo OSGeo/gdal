@@ -92,6 +92,7 @@ class OGRGeoPackageTableLayer;
 class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALGPKGMBTilesLikePseudoDataset
 {
     friend class GDALGeoPackageRasterBand;
+    friend class OGRGeoPackageLayer;
     friend class OGRGeoPackageTableLayer;
 
     GUInt32             m_nApplicationId;
@@ -220,6 +221,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
                                                 const char* pszLayerName );
 
         bool                ConvertGpkgSpatialRefSysToExtensionWkt2();
+
+        std::map<int, bool> m_oSetGPKGLayerWarnings{};
 
     public:
                             GDALGeoPackageDataset();
