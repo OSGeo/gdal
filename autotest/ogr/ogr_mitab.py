@@ -2402,6 +2402,69 @@ def test_ogr_mitab_custom_datum_export():
     proj =  sr.ExportToMICoordSys()
     assert proj == 'Earth Projection 8, 9999, 42, 1, 2, 3, -4, -5, -6, -7, 0, "m", 15, 0, 0.9996, 500000, 0'
 
+###############################################################################
+# Check write/read description
+
+def test_ogr_mitab_description():
+    filename = '/vsimem/test_description.tab'
+
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
+    assert ds is not None, ('Can\'t create dataset: ' + filename)
+
+    test_description = 'Состав данных: Топокарты (растр) 1:50К, 100К, 250К, 500К, Топокарты (вектор) 1:100К, 1:250К, ЦМР 10м, Реестр географических названий 1:100000, АТД 1:10000, лидарная съемка, ортофото. Лицензия: на геоданные - ограничительная, не соответствующая определению "открытых данных", так как запрещено распространение данных.'
+
+    lyr = ds.CreateLayer('test_description', options=['ENCODING=CP1251', 'DESCRIPTION={}'.format(test_description)])
+    assert lyr is not None, ('Can\'t create layer "test_description"')
+    if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
+        pytest.skip('skipping test: recode is not possible')
+    
+    lyr.CreateField(ogr.FieldDefn('feature_id', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('other_field', ogr.OFTInteger))
+
+    # Check description truncate.
+    check_text = 'Состав данных: Топокарты (растр) 1:50К, 100К, 250К, 500К, Топокарты (вектор) 1:100К, 1:250К, ЦМР 10м, Реестр географических названий 1:100000, АТД 1:10000, лидарная съемка, ортофото. Лицензия: на геоданные - ограничительная, не соответствующая определению "открытых данных", так как запрещено распростр'
+    assert check_text == lyr.GetMetadataItem('DESCRIPTION')
+    ds = None
+
+    # Check storing description in tab file.
+    ds = ogr.Open(filename, update=1)
+    assert ds is not None, ('Can\'t open dataset: ' + filename)
+    lyr = ds.GetLayer(0)
+    assert lyr is not None, ('Can\'t get layer 0 from ' + filename)
+    assert check_text == lyr.GetMetadataItem('DESCRIPTION')
+
+    # Check update description in tab file.
+    check_short_text = 'Состав данных: Топокарты (растр) 1:50К, 100К, 250К, 500К'
+    lyr.SetMetadataItem('DESCRIPTION', check_short_text)
+    ds = None
+
+    ds = ogr.Open(filename)
+    assert ds is not None, ('Can\'t open dataset: ' + filename)
+    lyr = ds.GetLayer(0)
+    assert lyr is not None, ('Can\'t get layer 0 from ' + filename)
+    assert check_short_text == lyr.GetMetadataItem('DESCRIPTION')
+    ds = None
+
+    # Check line breaks and double quotes
+    test_description = 'Состав данных: "Топокарты (растр)"\n1:50К,\n100К,\n250К,\n500К\r\n"new line"'
+    check_description = 'Состав данных: "Топокарты (растр)" 1:50К, 100К, 250К, 500К  "new line"'
+
+    ds = ogr.Open(filename, update=1)
+    assert ds is not None, ('Can\'t open dataset: ' + filename)
+    lyr = ds.GetLayer(0)
+    assert lyr is not None, ('Can\'t get layer 0 from ' + filename)
+    lyr.SetMetadataItem('DESCRIPTION', test_description)
+    ds = None
+
+    ds = ogr.Open(filename)
+    assert ds is not None, ('Can\'t open dataset: ' + filename)
+    lyr = ds.GetLayer(0)
+    assert lyr is not None, ('Can\'t get layer 0 from ' + filename)
+    assert check_description == lyr.GetMetadataItem('DESCRIPTION')
+    ds = None
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
+
 
 ###############################################################################
 #

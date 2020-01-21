@@ -159,8 +159,8 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
         else
         {
             TABFile *poTabFile = new TABFile;
-            if( poTabFile->Open(m_pszName, TABWrite, FALSE,
-                                m_nBlockSize, pszCharset) != 0 )
+            if( poTabFile->Open( m_pszName, TABWrite, FALSE,
+                                 m_nBlockSize, pszCharset) != 0 )
             {
                 delete poTabFile;
                 return FALSE;
@@ -318,7 +318,7 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
 
     const char *pszEncoding = CSLFetchNameValue( papszOptions, "ENCODING" );
     const char *pszCharset( IMapInfoFile::EncodingToCharset( pszEncoding ) );
-
+    const char *pszDescription( CSLFetchNameValue(papszOptions, "DESCRIPTION") );
 
     if( m_bSingleFile )
     {
@@ -335,6 +335,9 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
         poFile = m_papoLayers[0];
         if( pszEncoding )
             poFile->SetCharset( pszCharset );
+
+        if(poFile->GetFileClass() == TABFC_TABFile)
+            poFile->SetMetadataItem( "DESCRIPTION", pszDescription );
     }
 
     else
@@ -369,6 +372,7 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
                 return nullptr;
             }
             poFile = poTABFile;
+            poFile->SetMetadataItem( "DESCRIPTION", pszDescription );
         }
 
         m_nLayerCount++;
