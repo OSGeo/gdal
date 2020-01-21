@@ -8,7 +8,7 @@
 ################################################################################
 #  The MIT License (MIT)
 #
-#  Copyright (c) 2018-2019, NextGIS <info@nextgis.com>
+#  Copyright (c) 2018-2020, NextGIS <info@nextgis.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy
 #  of this software and associated documentation files (the "Software"), to deal
@@ -65,6 +65,8 @@ def check_availability(url):
             return False
         limit = quota_json['limit']
         count = quota_json['count']
+        if limit is None or count is None:
+            return True
         return limit - count > 10
     except:
         return False
@@ -84,7 +86,7 @@ def test_ogr_ngw_1():
     if gdaltest.ngw_drv is None:
         pytest.skip()
 
-    gdaltest.ngw_test_server = 'http://dev.nextgis.com/sandbox'
+    gdaltest.ngw_test_server = 'https://sandbox.nextgis.com'
 
     if check_availability(gdaltest.ngw_test_server) == False:
         gdaltest.ngw_drv = None
