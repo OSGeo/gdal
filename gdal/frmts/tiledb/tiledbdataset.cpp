@@ -262,6 +262,14 @@ CPLErr TileDBRasterBand::IReadBlock( int nBlockXOff,
                                     int nBlockYOff,
                                     void * pImage )
 {
+    if( poGDS->eAccess == GA_Update )
+    {
+        memset( pImage, 0,
+                nBlockXSize * nBlockYSize
+                * GDALGetDataTypeSizeBytes(eDataType) );
+        return CE_None;
+    }
+
     int nStartX = nBlockXSize * nBlockXOff;
     int nStartY = nBlockYSize * nBlockYOff;
     uint64_t nEndX =  nStartX + nBlockXSize;
