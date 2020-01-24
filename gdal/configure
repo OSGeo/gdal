@@ -28680,6 +28680,8 @@ fi
 
 if test "x$with_pg" = "xyes" -o "x$with_pg" = "x" ; then
   PG_CONFIG=yes
+elif test "x$with_pg" != "xno"; then
+  as_fn_error $? "Only --with-pg=yes/no supported" "$LINENO" 5
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PostgreSQL" >&5

@@ -1578,6 +1578,8 @@ AC_ARG_WITH(pg,
 
 if test "x$with_pg" = "xyes" -o "x$with_pg" = "x" ; then
   PG_CONFIG=yes
+elif test "x$with_pg" != "xno"; then
+  AC_MSG_ERROR([Only --with-pg=yes/no supported])
 fi
 
 AC_MSG_CHECKING([for PostgreSQL])
