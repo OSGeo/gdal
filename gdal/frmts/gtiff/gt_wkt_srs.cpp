@@ -1588,7 +1588,16 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
     int nVerticalCSKeyValue = 0;
     bool hasEllipsoidHeight = !poSRS->IsCompound() &&
             poSRS->IsGeographic() && poSRS->GetAxesCount() == 3;
-    if( nGCS != KvUserDefined )
+    if( nGCS == 4937 && eVersion >= GEOTIFF_VERSION_1_1 )
+    {
+        // Workaround a bug of PROJ 6.3.0
+        // See https://github.com/OSGeo/PROJ/pull/1880
+        // EPSG:4937 = ETRS89 3D
+        hasEllipsoidHeight = true;
+        nVerticalCSKeyValue = nGCS;
+        nGCS = 4258; // ETRS89 2D
+    }
+    else if( nGCS != KvUserDefined )
     {
         OGRSpatialReference oGeogCRS;
         if( oGeogCRS.importFromEPSG(nGCS) == OGRERR_NONE &&

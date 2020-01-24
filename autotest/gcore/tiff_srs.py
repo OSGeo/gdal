@@ -569,6 +569,22 @@ def test_tiff_srs_write_epsg4979_geotiff1_1():
     _create_geotiff1_1_from_copy_and_compare('data/epsg4979_geotiff1_1.tif')
 
 
+def test_tiff_srs_write_epsg4937_etrs89_3D_geotiff1_1():
+    if int(gdal.GetDriverByName('GTiff').GetMetadataItem('LIBGEOTIFF')) < 1600:
+        pytest.skip()
+    tmpfile = '/vsimem/tmp.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(tmpfile, 1, 1)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4937)
+    ds.SetSpatialRef(sr)
+    ds = None
+    ds = gdal.Open(tmpfile)
+    assert sr.GetName() == 'ETRS89'
+    assert sr.GetAuthorityCode(None) == '4937'
+    ds = None
+    gdal.Unlink(tmpfile)
+
+
 # Deprecated way of conveying GeographicCRS 3D
 def test_tiff_srs_read_epsg4326_5030_geotiff1_1():
     ds = gdal.Open('data/epsg4326_5030_geotiff1_1.tif')
