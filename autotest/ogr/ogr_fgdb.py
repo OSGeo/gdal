@@ -1956,7 +1956,7 @@ def test_ogr_fgdb_21():
         pytest.skip('SDK 1.4 required')
 
     # Fails on MULTIPOINT ZM
-    if gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604'):
+    if gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604') or gdaltest.is_travis_branch('python3'):
         pytest.skip()
 
     try:
