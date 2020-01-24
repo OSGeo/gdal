@@ -9,7 +9,7 @@ options to the build-time configure script. Runtime configuration options apply
 on all platforms, and are evaluated at runtime. They can be set programmatically,
 by commandline switches or in the environment by the user.
 
-Configuration optoins are normally used to alter the default behavior of GDAL/OGR
+Configuration options are normally used to alter the default behavior of GDAL/OGR
 drivers and in some cases the GDAL/OGR core. They are essentially global
 variables the user can set.
 
