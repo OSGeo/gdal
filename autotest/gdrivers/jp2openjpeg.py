@@ -37,9 +37,6 @@ from osgeo import ogr
 from osgeo import osr
 import pytest
 
-sys.path.append('../ogr')
-sys.path.append('../../gdal/swig/python/samples')
-
 import gdaltest
 
 ###############################################################################
@@ -809,6 +806,10 @@ def test_jp2openjpeg_25():
 
 
 def validate(filename, expected_gmljp2=True, return_error_count=False, oidoc=None, inspire_tg=True):
+
+    for path in ('../ogr', '../../gdal/swig/python/samples'):
+        if path not in sys.path:
+            sys.path.append(path)
 
     try:
         import validate_jp2

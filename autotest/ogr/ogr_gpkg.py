@@ -52,6 +52,7 @@ def _validate_check(filename):
     try:
         import validate_gpkg
     except ImportError:
+        print('Cannot import validate_gpkg')
         return
     validate_gpkg.check(filename)
 

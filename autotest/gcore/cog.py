@@ -36,13 +36,14 @@ from osgeo import gdal
 
 import gdaltest
 
-sys.path.append('../../gdal/swig/python/samples') # For validate_cloud_optimized_geotiff
-
 ###############################################################################
 
 
 def _check_cog(filename):
 
+    path = '../../gdal/swig/python/samples'
+    if path not in sys.path:
+        sys.path.append(path)
     import validate_cloud_optimized_geotiff
     try:
         _, errors, _ = validate_cloud_optimized_geotiff.validate(filename, full_check=True)
