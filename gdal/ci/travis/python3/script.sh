@@ -33,7 +33,7 @@ unzip PGeoTest.zip
 cd ../../..
 
 # install test dependencies
-curl -sSL 'https://bootstrap.pypa.io/get-pip.py' | sudo python3
+curl -sSL 'https://bootstrap.pypa.io/3.4/get-pip.py' | sudo python3
 sudo -H pip3 install -U -r ./requirements.txt
 
 PYTEST="python3 $(which pytest) -vv -p no:sugar --color=no"
