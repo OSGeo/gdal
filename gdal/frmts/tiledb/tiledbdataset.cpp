@@ -68,7 +68,9 @@ class TileDBDataset final: public GDALPamDataset
         CPLString     osMetaDoc;
 
         std::unique_ptr<tiledb::Context> m_ctx;
+        std::unique_ptr<tiledb::Context> m_roCtx;
         std::unique_ptr<tiledb::Array> m_array;
+        std::unique_ptr<tiledb::Array> m_roArray;
         std::unique_ptr<tiledb::ArraySchema> m_schema;
         std::unique_ptr<tiledb::FilterList> m_filterList;
 
@@ -124,6 +126,7 @@ class TileDBRasterBand final: public GDALPamRasterBand
         bool bStats;
         CPLString osAttrName;
         std::unique_ptr<tiledb::Query> m_query;
+        std::unique_ptr<tiledb::Query> m_roQuery;
         void   Finalize( );
     public:
         TileDBRasterBand( TileDBDataset *, int, CPLString = TILEDB_VALUES );
@@ -212,7 +215,13 @@ TileDBRasterBand::TileDBRasterBand(
     nBlockYSize = poGDS->nBlockYSize;
 
     m_query.reset(new tiledb::Query( *poGDS->m_ctx, *poGDS->m_array ) );
-    
+
+    if ( ( eAccess == GA_Update ) && ( poGDS->m_roArray ) )
+    {
+        m_roQuery.reset( new tiledb::Query( *poGDS->m_roCtx, *poGDS->m_roArray ) );
+        m_roQuery->set_layout( TILEDB_ROW_MAJOR );
+    }
+
     if ( poGDS->bGlobalOrder ) 
     {
         m_query->set_layout( TILEDB_GLOBAL_ORDER );
@@ -262,14 +271,6 @@ CPLErr TileDBRasterBand::IReadBlock( int nBlockXOff,
                                     int nBlockYOff,
                                     void * pImage )
 {
-    if( poGDS->eAccess == GA_Update )
-    {
-        memset( pImage, 0,
-                nBlockXSize * nBlockYSize
-                * GDALGetDataTypeSizeBytes(eDataType) );
-        return CE_None;
-    }
-
     int nStartX = nBlockXSize * nBlockXOff;
     int nStartY = nBlockYSize * nBlockYOff;
     uint64_t nEndX =  nStartX + nBlockXSize;
@@ -284,24 +285,30 @@ CPLErr TileDBRasterBand::IReadBlock( int nBlockXOff,
                                     (uint64_t) nStartX,
                                     (uint64_t) nEndX - 1 };
 
+    tiledb::Query* q;
+    if ( ( eAccess == GA_Update ) && ( poGDS->m_roArray ) )
+        q = m_roQuery.get();
+    else
+        q = m_query.get();
+
     if ( poGDS->m_array->schema().domain().ndim() == 3 )
     {
-        m_query->set_subarray( oaSubarray );
+        q->set_subarray( oaSubarray );
     }
     else
     {
-        m_query->set_subarray( std::vector<uint64_t> (
+        q->set_subarray( std::vector<uint64_t> (
                                     oaSubarray.cbegin() + 2,
                                     oaSubarray.cend() ) );
     }
 
-    SetBuffer(m_query.get(), eDataType, osAttrName, 
+    SetBuffer(q, eDataType, osAttrName, 
                      pImage, nBlockXSize * nBlockYSize );
 
     if ( bStats )
         tiledb::Stats::enable();
 
-    auto status = m_query->submit();
+    auto status = q->submit();
 
     if ( bStats )
     {
@@ -738,12 +745,9 @@ CPLErr TileDBDataset::TryLoadCachedXML( char ** /*papszSiblingFiles*/, bool bRel
                 tiledb_datatype_t v_type = TILEDB_UINT8; // CPLSerializeXMLTree returns char*
                 const void* v_r = nullptr;
                 uint32_t v_num = 0;
-                if ( eAccess == GA_Update )
+                if ( ( eAccess == GA_Update ) && ( m_roArray ) )
                 {
-                    auto oMeta = std::unique_ptr<tiledb::Array>( 
-                        new tiledb::Array( *m_ctx, m_array->uri(), TILEDB_READ )
-                    );
-                    oMeta->get_metadata("_gdal", &v_type, &v_num, &v_r);
+                    m_roArray->get_metadata("_gdal", &v_type, &v_num, &v_r);
                     if ( v_r )
                     {
                         osMetaDoc = static_cast<const char*>( v_r );
@@ -1002,10 +1006,6 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
 
         std::unique_ptr<TileDBDataset> poDS(new TileDBDataset());
 
-        tiledb_query_type_t eMode = TILEDB_READ;
-        if ( poOpenInfo->eAccess == GA_Update )
-            eMode = TILEDB_WRITE;
-
         const char* pszConfig = CSLFetchNameValue(
                                     poOpenInfo->papszOpenOptions,
                                     "TILEDB_CONFIG" );
@@ -1062,6 +1062,16 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetPhysicalFilename( CPLFormFilename( osArrayPath, osAux, nullptr ) );
         // Initialize any PAM information.
         poDS->SetDescription( osArrayPath );
+
+        tiledb_query_type_t eMode = TILEDB_READ;
+        if ( poOpenInfo->eAccess == GA_Update )
+        {
+            eMode = TILEDB_WRITE;
+            poDS->m_roCtx.reset(new tiledb::Context( poDS->m_ctx->config() ) );
+            poDS->m_roArray.reset(
+                new tiledb::Array( *poDS->m_roCtx, osArrayPath, TILEDB_READ )
+            );
+        }
 
         poDS->m_array.reset(
             new tiledb::Array( *poDS->m_ctx, osArrayPath, eMode ) );

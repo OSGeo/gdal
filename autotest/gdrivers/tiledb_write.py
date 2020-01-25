@@ -30,6 +30,7 @@
 ###############################################################################
 
 from osgeo import gdal
+import numpy as np
 import pytest
 
 import gdaltest
@@ -73,22 +74,19 @@ def test_tiledb_write_custom_blocksize():
 def test_tiledb_write_update():
     gdaltest.tiledb_drv = gdal.GetDriverByName('TileDB')
 
-    src_ds = gdal.Open('../gcore/data/byte.tif')
-    array = src_ds.ReadAsArray()
-
-    new_ds = gdaltest.tiledb_drv.Create('tmp/tiledb_update', src_ds.RasterYSize,
-                                         src_ds.RasterXSize)
+    new_ds = gdaltest.tiledb_drv.Create('tmp/tiledb_update', 20, 20, 1, gdal.GDT_Byte)
+    new_ds.GetRasterBand(1).WriteArray(np.zeros((20, 20)))
     del new_ds
 
     update_ds = gdal.Open('tmp/tiledb_update', gdal.GA_Update)
-    update_bnd = update_ds.GetRasterBand(1)    
-    # this write is in TileDB row major order
-    update_bnd.WriteArray(array)
+    update_bnd = update_ds.GetRasterBand(1)
+    # make a partial block write
+    update_bnd.WriteArray(np.ones((10, 10)) * 255)
     update_bnd = None
     update_ds = None
 
     test_ds = gdal.Open('tmp/tiledb_update')
-    assert test_ds.GetRasterBand(1).Checksum() == 4672, 'Didnt get expected checksum on file update' 
+    assert test_ds.GetRasterBand(1).Checksum() == 1217, 'Didnt get expected checksum on file update' 
     test_ds = None
 
     gdaltest.tiledb_drv.Delete('tmp/tiledb_update')
