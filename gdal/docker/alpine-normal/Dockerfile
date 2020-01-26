@@ -21,11 +21,11 @@ RUN \
     && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/usr/share/proj \
     && rm -f *.zip
 
-# For GDAL
+# For PROJ and GDAL
 ARG POPPLER_DEV=poppler-dev
 RUN apk add --no-cache \
     linux-headers \
-    curl-dev \
+    curl-dev tiff-dev \
     zlib-dev zstd-dev \
     libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev \
     py3-numpy-dev python3-dev py3-numpy \
@@ -37,7 +37,7 @@ RUN apk add --no-cache \
 # Build xerces-c
 ARG XERCESC_VERSION=3.2.2
 RUN if test "${XERCESC_VERSION}" != ""; then ( \
-    wget -q http://mirror.ibcp.fr/pub/apache/xerces/c/3/sources/xerces-c-${XERCESC_VERSION}.zip \
+    wget -q https://www-eu.apache.org/dist//xerces/c/3//sources/xerces-c-${XERCESC_VERSION}.zip \
     && unzip -q xerces-c-${XERCESC_VERSION}.zip  \
     && rm -f xerces-c-${XERCESC_VERSION}.zip \
     && cd xerces-c-${XERCESC_VERSION} \
@@ -365,7 +365,7 @@ ARG POPPLER=poppler
 RUN apk add --no-cache \
         libstdc++ \
         sqlite-libs \
-        libcurl \
+        libcurl tiff \
         zlib zstd-libs\
         libjpeg-turbo libpng libwebp expat \
         python3 py3-numpy ${POPPLER} pcre libpq libxml2 portablexdr openjpeg \
