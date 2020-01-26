@@ -990,6 +990,7 @@ enable_rpath
 with_libiconv_prefix
 with_bash_completion
 with_proj
+with_proj_extra_lib_for_test
 with_liblzma
 with_zstd
 enable_all_optional_drivers
@@ -2128,6 +2129,7 @@ Optional Packages:
   --with-bash-completion=ARG
                           Install Bash completions (ARG=yes or path)
   --with-proj=ARG Compile with PROJ.x (ARG=yes or path)
+  --with-proj-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (i.e. -lcurl -ltiff ...). Mainly for static libproj
   --with-liblzma=ARG       Include liblzma support (ARG=yes/no)
   --with-zstd=ARG       Include zstd support (ARG=yes/no/installation_prefix)
   --with-pg=ARG           Include PostgreSQL GDAL/OGR Support (ARG=yes,no)
@@ -24019,6 +24021,13 @@ if test "${with_proj+set}" = set; then :
 fi
 
 
+
+# Check whether --with-proj-extra-lib-for-test was given.
+if test "${with_proj_extra_lib_for_test+set}" = set; then :
+  withval=$with_proj_extra_lib_for_test;
+fi
+
+
 PROJ_INCLUDE=""
 if test "x$with_proj" = "xno" ; then
 
@@ -24224,9 +24233,8 @@ $as_echo "$as_me: proj.h found" >&6;}
         as_fn_error $? "proj.h not found" "$LINENO" 5
     fi
   else
-
     ORIG_LIBS="$LIBS"
-    LIBS="-L$with_proj/lib -lproj $ORIG_LIBS"
+    LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
     ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -24282,7 +24290,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     if test "$PROJ_FOUND" = "no"; then
-        LIBS="-L$with_proj/lib -lproj -lsqlite3 $ORIG_LIBS"
+        LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         unset ac_cv_lib_proj_proj_create_from_wkt
         ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -24340,7 +24348,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     fi
     if test "$PROJ_FOUND" = "no"; then
-        LIBS="-L$with_proj/lib -lproj $ORIG_LIBS"
+        LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -24396,7 +24404,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
         if test "$PROJ_FOUND" = "no"; then
-            LIBS="-L$with_proj/lib -lproj -lsqlite3 $ORIG_LIBS"
+            LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
             unset ac_cv_lib_proj_internal_proj_create_from_wkt
             ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -24458,7 +24466,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
         fi
     fi
     if test "$PROJ_FOUND" = "no"; then
-        LIBS="-L$with_proj/lib -linternalproj $ORIG_LIBS"
+        LIBS="-L$with_proj/lib -linternalproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -24514,7 +24522,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
         if test "$PROJ_FOUND" = "no"; then
-            LIBS="-L$with_proj/lib -linternalproj -lsqlite3 $ORIG_LIBS"
+            LIBS="-L$with_proj/lib -linternalproj -lsqlite3 $with_proj_extra_lib_for_test  $ORIG_LIBS"
             unset ac_cv_lib_internal_proj_internal_proj_create_from_wkt
             ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
