@@ -30,7 +30,6 @@
 ###############################################################################
 
 from osgeo import gdal
-import numpy as np
 import pytest
 
 import gdaltest
@@ -72,6 +71,11 @@ def test_tiledb_write_custom_blocksize():
 
 @pytest.mark.require_driver('TileDB')
 def test_tiledb_write_update():
+    try:
+        import numpy as np
+    except (ImportError):
+        pytest.skip()
+
     gdaltest.tiledb_drv = gdal.GetDriverByName('TileDB')
 
     new_ds = gdaltest.tiledb_drv.Create('tmp/tiledb_update', 20, 20, 1, gdal.GDT_Byte)
