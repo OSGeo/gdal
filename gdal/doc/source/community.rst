@@ -49,11 +49,11 @@ communication channels in most situations.
 Conference
 ----------
 
-.. image:: ../images/foss4g2019.png
-   :alt:     FOSS4G 2019
-   :target:  https://2019.foss4g.org/
+.. image:: ../images/foss4g2020.png
+   :alt:     FOSS4G 2020
+   :target:  https://2020.foss4g.org/
 
-`FOSS4G 2019 <https://2019.foss4g.org/>`_ is the leading annual conference for free and open source geospatial software. It will include presentations related to GDAL/OGR, and some of the GDAL/OGR development community will be attending. It is the event for those interested in GDAL/OGR, other FOSS geospatial technologies and the community around them. The conference will be held in Bucharest, Romania, August 26th - August 30th, 2019.
+`FOSS4G 2020 <https://2020.foss4g.org/>`_ is the leading annual conference for free and open source geospatial software. It will include presentations related to GDAL/OGR, and some of the GDAL/OGR development community will be attending. It is the event for those interested in GDAL/OGR, other FOSS geospatial technologies and the community around them. The conference will be held in Calgary, Canada, August 24th - August 29th, 2020.
 
 
 Governance and Community Participation
