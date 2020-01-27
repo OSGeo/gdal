@@ -897,15 +897,78 @@ std::vector<std::string> netCDFGroup::GetMDArrayNames(CSLConstList papszOptions)
     NCDF_ERR(nc_inq_varids(m_gid, nullptr, &anVarIds[0]));
     std::vector<std::string> names;
     names.reserve(nVars);
+    const bool bAll = CPLTestBool(CSLFetchNameValueDef(papszOptions, "SHOW_ALL", "NO"));
+    const bool bZeroDim = bAll || CPLTestBool(CSLFetchNameValueDef(papszOptions, "SHOW_ZERO_DIM", "NO"));
+    const bool bCoordinates = bAll || CPLTestBool(CSLFetchNameValueDef(papszOptions, "SHOW_COORDINATES", "YES"));
+    const bool bBounds = bAll || CPLTestBool(CSLFetchNameValueDef(papszOptions, "SHOW_BOUNDS", "YES"));
+    const bool bIndexing = bAll || CPLTestBool(CSLFetchNameValueDef(papszOptions, "SHOW_INDEXING", "YES"));
+    const bool bTime = bAll || CPLTestBool(CSLFetchNameValueDef(papszOptions, "SHOW_TIME", "YES"));
+    std::set<std::string> blackList;
+    if( !bCoordinates || !bBounds )
+    {
+        for( const auto& varid: anVarIds )
+        {
+            char **papszTokens = nullptr;
+            if( !bCoordinates )
+            {
+                char *pszTemp = nullptr;
+                if( NCDFGetAttr(m_gid, varid, "coordinates", &pszTemp) == CE_None )
+                    papszTokens = CSLTokenizeString2(pszTemp, " ", 0);
+                CPLFree(pszTemp);
+            }
+            if( !bBounds )
+            {
+                char *pszTemp = nullptr;
+                if( NCDFGetAttr(m_gid, varid, "bounds", &pszTemp) == CE_None &&
+                    pszTemp != nullptr && !EQUAL(pszTemp, "") )
+                    papszTokens = CSLAddString( papszTokens, pszTemp );
+                CPLFree(pszTemp);
+            }
+            for( char** iter = papszTokens; iter && iter[0]; ++iter )
+                blackList.insert(*iter);
+            CSLDestroy(papszTokens);
+        }
+    }
     for( const auto& varid: anVarIds )
     {
         int nVarDims = 0;
         NCDF_ERR(nc_inq_varndims(m_gid, varid, &nVarDims));
-        if( nVarDims != 0 ||
-            CPLTestBool(CSLFetchNameValueDef(papszOptions, "SHOW_ALL", "NO")) )
+        if( nVarDims == 0 &&! bZeroDim )
         {
-            char szName[NC_MAX_NAME + 1] = {};
-            NCDF_ERR(nc_inq_varname(m_gid, varid, szName));
+            continue;
+        }
+
+        char szName[NC_MAX_NAME + 1] = {};
+        NCDF_ERR(nc_inq_varname(m_gid, varid, szName));
+        if( !bIndexing && nVarDims == 1 )
+        {
+            int nDimId = 0;
+            NCDF_ERR(nc_inq_vardimid(m_gid, varid, &nDimId));
+            char szDimName[NC_MAX_NAME+1] = {};
+            NCDF_ERR(nc_inq_dimname(m_gid, nDimId, szDimName));
+            if( strcmp(szDimName, szName) == 0 )
+            {
+                continue;
+            }
+        }
+
+        if( !bTime )
+        {
+            char *pszTemp = nullptr;
+            bool bSkip = false;
+            if( NCDFGetAttr(m_gid, varid, "standard_name", &pszTemp) == CE_None )
+            {
+                bSkip = pszTemp && strcmp(pszTemp, "time") == 0;
+            }
+            CPLFree(pszTemp);
+            if( bSkip )
+            {
+                continue;
+            }
+        }
+
+        if( blackList.find(szName) == blackList.end() )
+        {
             names.emplace_back(szName);
         }
     }
