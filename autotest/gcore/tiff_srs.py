@@ -730,3 +730,19 @@ def test_tiff_srs_towgs84_with_epsg_code_but_non_default_TOWGS84():
     srs = ds.GetSpatialRef()
     assert srs.GetTOWGS84() == (1,2,3,4,5,6,7)
 
+
+def test_tiff_srs_write_epsg3857():
+    tmpfile = '/vsimem/tmp.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(tmpfile, 1, 1)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(3857)
+    ds.SetSpatialRef(sr)
+    ds = None
+    ds = gdal.Open(tmpfile)
+    assert sr.GetName() == 'WGS 84 / Pseudo-Mercator'
+    assert sr.GetAuthorityCode(None) == '3857'
+    f = gdal.VSIFOpenL(tmpfile, 'rb')
+    data = gdal.VSIFReadL(1, 100000, f)
+    gdal.VSIFCloseL(f)
+    gdal.Unlink(tmpfile)
+    assert b"ESRI PE String" not in data
