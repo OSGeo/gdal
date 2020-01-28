@@ -47,6 +47,7 @@ struct GDALMultiDimInfoOptions
     bool bDetailed = false;
     bool bPretty = true;
     size_t nLimitValuesByDim = 0;
+    CPLStringList aosArrayOptions{};
     std::string osArrayName{};
 };
 
@@ -790,7 +791,7 @@ static void DumpGroup(std::shared_ptr<GDALGroup> group,
         DumpDimensions(dims, serializer, psOptions, alreadyDumpedDimensions);
     }
 
-    CPLStringList aosOptionsGetArray;
+    CPLStringList aosOptionsGetArray(psOptions->aosArrayOptions);
     if( psOptions->bDetailed )
         aosOptionsGetArray.SetNameValue("SHOW_ALL", "YES");
     auto arrayNames = group->GetMDArrayNames(aosOptionsGetArray.List());
@@ -992,6 +993,11 @@ GDALMultiDimInfoOptions *GDALMultiDimInfoOptionsNew(
         {
             ++i;
             psOptions->osArrayName = papszArgv[i];
+        }
+        else if( EQUAL(papszArgv[i], "-arrayoption") && papszArgv[i+1] != nullptr )
+        {
+            ++i;
+            psOptions->aosArrayOptions.AddString(papszArgv[i]);
         }
         else if( EQUAL(papszArgv[i], "-limit") && papszArgv[i+1] != nullptr )
         {
