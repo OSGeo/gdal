@@ -1,3 +1,41 @@
+= GDAL/OGR 3.0.4 Release Notes =
+
+The 3.0.4 release is a bug fix release.
+
+== Build ==
+
+ * Fix build against Poppler 0.85dev
+ * Fix build against latest librasterlite2
+
+== Other ==
+
+ * Remove execution right from ogr/*.png (#2184)
+
+== GDAL utilities ==
+
+ * gdalinfo: fix axis order issue in lon,lat corner coordinates, in particular when reading from a .aux.xml with a ProjectedCRS (#2195)
+
+== GDAL drivers ==
+
+GTiff driver:
+ * Do not write by default EPSG:3857/WebMercator as a ESRI PE string. Fixes 3.0 regression
+
+HDF5 driver:
+ * fix reading single dimension dataset (#2180)
+
+PDF driver:
+ * fix null pointer dereference or infinite recursion/stack overflow on corrupted file. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=20033
+ * fix excessive memory consumption on corrupted files
+
+== OGR drivers ==
+
+MTAB driver:
+ * Fix dataset access mode (#2170)
+
+NGW driver:
+ * Fix dataset access mode
+ * Add support for layers geometry types with Z
+
 = GDAL/OGR 3.0.3 Release Notes =
 
 The 3.0.3 release is a bug fix release.
