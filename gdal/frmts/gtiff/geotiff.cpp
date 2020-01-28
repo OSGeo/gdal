@@ -12910,7 +12910,7 @@ void GTiffDataset::ApplyPamInfo()
         m_bLookedForProjection = true;
     }
 
-    if( m_nPAMGeorefSrcIndex >= 0 && m_nGCPCount == 0 )
+    if( m_nPAMGeorefSrcIndex >= 0 )
     {
         CPLXMLNode *psValueAsXML = nullptr;
         CPLXMLNode *psGeodataXform = nullptr;
@@ -12960,6 +12960,13 @@ void GTiffDataset::ApplyPamInfo()
                 if( adfSourceGCPs.size() == adfTargetGCPs.size() &&
                     (adfSourceGCPs.size() % 2) == 0 )
                 {
+                    if( m_nGCPCount > 0 )
+                    {
+                        GDALDeinitGCPs( m_nGCPCount, m_pasGCPList );
+                        CPLFree( m_pasGCPList );
+                        m_pasGCPList = nullptr;
+                        m_nGCPCount = 0;
+                    }
                     m_nGCPCount = static_cast<int>(
                                             adfSourceGCPs.size() / 2);
                     m_pasGCPList = static_cast<GDAL_GCP *>(
