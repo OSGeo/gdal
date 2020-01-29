@@ -53,7 +53,7 @@ static int OGRFlatGeobufDriverIdentify(GDALOpenInfo* poOpenInfo){
     if( pabyHeader[0] == 0x66 &&
         pabyHeader[1] == 0x67 &&
         pabyHeader[2] == 0x62 ) {
-        if (pabyHeader[3] == 0x02) {
+        if (pabyHeader[3] == 0x03) {
             CPLDebug("FlatGeobuf", "Verified magicbytes");
             return TRUE;
         } else {
@@ -300,18 +300,10 @@ bool OGRFlatGeobufDataset::OpenFile(const char* pszFilename, VSILFILE* fp, bool 
         }
     }
 
-    uint64_t offsetIndices = 0;
-    if (featuresCount > 0 && index_node_size > 0) {
-        CPLDebug("FlatGeobuf", "Feature indices start at offset (%lu)", static_cast<long unsigned int>(offset));
-        offsetIndices = offset;
-        offset += featuresCount * 8;
-        CPLDebug("FlatGeobuf", "Add featuresCount * 8 to offset (%lu)", static_cast<long unsigned int>(featuresCount * 8));
-    }
-
     CPLDebug("FlatGeobuf", "Features start at offset (%lu)", static_cast<long unsigned int>(offset));
 
     auto poLayer = std::unique_ptr<OGRFlatGeobufLayer>(
-        new OGRFlatGeobufLayer(header, buf.release(), pszFilename, fp, offset, offsetIndices));
+        new OGRFlatGeobufLayer(header, buf.release(), pszFilename, fp, offset));
     poLayer->VerifyBuffers(bVerifyBuffers);
 
     m_apoLayers.push_back(std::move(poLayer));
