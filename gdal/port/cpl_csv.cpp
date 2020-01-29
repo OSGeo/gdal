@@ -274,35 +274,17 @@ void CSVDeaccess( const char * pszFilename )
 /*      semantics.                                                      */
 /************************************************************************/
 
-static char **CSVSplitLine( CSVTable* psTable,
+static char **CSVSplitLine( CSVTable*,
                             const char *pszString, char chDelimiter )
 
 {
-
-    char *pszToken = static_cast<char *>( VSI_CALLOC_VERBOSE( 10, 1 ) );
-    if( pszToken == nullptr )
-        return nullptr;
-
-    int nTokenMax = 10;
-    char **papszRetList = nullptr;
-    int nListSize = 0;
-    int nListAlloc = 0;
-    if( psTable )
-    {
-        papszRetList = static_cast<char**>(
-            VSI_CALLOC_VERBOSE( psTable->nFields + 1, sizeof(char*) ));
-        if( papszRetList == nullptr )
-        {
-            VSIFree(pszToken);
-            return nullptr;
-        }
-        nListAlloc = psTable->nFields;
-    }
+    std::string osToken;
+    CPLStringList aosList;
 
     while( pszString != nullptr && *pszString != '\0' )
     {
         bool bInString = false;
-        int nTokenLen = 0;
+        osToken.clear();
 
         /* Try to find the next delimiter, marking end of token */
         for( ; *pszString != '\0'; pszString++ )
@@ -328,72 +310,21 @@ static char **CSVSplitLine( CSVTable* psTable,
                 }
             }
 
-            if( nTokenLen >= nTokenMax-2 )
-            {
-                nTokenMax = nTokenMax * 2 + 10;
-                char* pszTokenNew = static_cast<char *>(
-                    VSI_REALLOC_VERBOSE( pszToken, nTokenMax ) );
-                if( pszTokenNew == nullptr )
-                {
-                    VSIFree(pszToken);
-                    CSLDestroy(papszRetList);
-                    return nullptr;
-                }
-                pszToken = pszTokenNew;
-            }
-
-            pszToken[nTokenLen] = *pszString;
-            nTokenLen++;
+            osToken += *pszString;
         }
-
-        pszToken[nTokenLen] = '\0';
-        if( nListSize + 1 >= nListAlloc )
-        {
-            nListAlloc = 10 + 2 * nListAlloc;
-            char** papszRetListNew = static_cast<char**>(
-                VSI_REALLOC_VERBOSE(papszRetList,
-                                    (nListAlloc + 1) * sizeof(char*)));
-            if( papszRetListNew == nullptr )
-            {
-                CSLDestroy(papszRetList);
-                VSIFree(pszToken);
-                return nullptr;
-            }
-            papszRetList = papszRetListNew;
-        }
-
-        papszRetList[nListSize] = VSI_STRDUP_VERBOSE(pszToken);
-        if( papszRetList[nListSize] == nullptr )
-        {
-            CSLDestroy(papszRetList);
-            VSIFree(pszToken);
-            return nullptr;
-        }
-        nListSize ++;
-        papszRetList[nListSize] = nullptr;
-
+        aosList.AddString(osToken.c_str());
 
         /* If the last token is an empty token, then we have to catch
          * it now, otherwise we won't reenter the loop and it will be lost.
          */
         if( *pszString == '\0' && *(pszString-1) == chDelimiter )
         {
-            papszRetList[nListSize] = VSI_STRDUP_VERBOSE("");
-            if( papszRetList[nListSize] == nullptr )
-            {
-                CSLDestroy(papszRetList);
-                VSIFree(pszToken);
-                return nullptr;
-            }
-            nListSize ++;
-            papszRetList[nListSize] = nullptr;
+            aosList.AddString("");
             break;
         }
     }
 
-    VSIFree( pszToken );
-
-    return papszRetList;
+    return aosList.StealList();
 }
 
 /************************************************************************/
