@@ -787,7 +787,8 @@ int ISGDataset::ParseHeader(const char *pszHeader, const char *)
     const int nRows = atoi(osRows);
     const int nCols = atoi(osCols);
     if( nRows <= 0 || nCols <= 0 ||
-        !(dfDeltaLat > 0 && dfDeltaLon > 0) )
+        !(dfDeltaLat > 0 && dfDeltaLon > 0 &&
+          dfDeltaLat < 180 && dfDeltaLon < 360) )
     {
         return FALSE;
     }
