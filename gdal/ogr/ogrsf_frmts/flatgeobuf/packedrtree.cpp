@@ -172,7 +172,7 @@ std::vector<std::pair<uint64_t, uint64_t>> PackedRTree::generateLevelBounds(cons
         numNodes += n;
         levelNumNodes.push_back(n);
     } while (n != 1);
-    
+
     // bounds per level in reversed storage order (top-down)
     std::vector<uint64_t> levelOffsets;
     n = numNodes;

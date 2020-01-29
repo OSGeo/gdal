@@ -72,6 +72,7 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
 
     m_featuresCount = m_poHeader->features_count();
     m_geometryType = m_poHeader->geometry_type();
+    m_indexNodeSize = m_poHeader->index_node_size();
     m_hasZ = m_poHeader->hasZ();
     m_hasM = m_poHeader->hasM();
     m_hasT = m_poHeader->hasT();
@@ -332,6 +333,13 @@ void OGRFlatGeobufLayer::Create() {
 
     CPLDebug("FlatGeobuf", "Sorting items for Packed R-tree");
     hilbertSort(m_featureItems);
+    CPLDebug("FlatGeobuf", "Calc new feature offsets");
+    auto featureOffset = 0;
+    for (auto item : m_featureItems) {
+        auto featureItem = std::static_pointer_cast<FeatureItem>(item);
+        featureItem->node.offset = featureOffset;
+        featureOffset += featureItem->size;
+    }
     CPLDebug("FlatGeobuf", "Creating Packed R-tree");
     c = 0;
     try {
@@ -399,10 +407,15 @@ OGRFlatGeobufLayer::~OGRFlatGeobufLayer()
 }
 
 OGRErr OGRFlatGeobufLayer::readFeatureOffset(uint64_t index, uint64_t &featureOffset) {
-    throw new std::runtime_error("Not implemented yet");
-    if (VSIFSeekL(m_poFp, (index * sizeof(featureOffset)), SEEK_SET) == -1)
+    auto levelBounds = PackedRTree::generateLevelBounds(m_featuresCount, m_indexNodeSize);
+    for (auto bounds : levelBounds)
+        CPLDebug("FlatGeobuf", "bounds.first: %zu", bounds.first);
+    auto bottomLevelOffset = m_offset + levelBounds.front().first;
+    auto nodeItemOffset = bottomLevelOffset + (index * sizeof(Node));
+    auto featureOffsetOffset = nodeItemOffset + (sizeof(double) * 4) + sizeof(uint64_t);
+    if (VSIFSeekL(m_poFp, featureOffsetOffset, SEEK_SET) == -1)
         return CPLErrorIO("seeking feature offset");
-    if (VSIFReadL(&featureOffset, sizeof(featureOffset), 1, m_poFp) != 1)
+    if (VSIFReadL(&featureOffset, sizeof(uint64_t), 1, m_poFp) != 1)
         return CPLErrorIO("reading feature offset");
     #if !CPL_IS_LSB
         CPL_LSBPTR64(&featureOffset);
