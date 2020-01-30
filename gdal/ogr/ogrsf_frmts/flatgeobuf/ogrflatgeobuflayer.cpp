@@ -326,7 +326,7 @@ void OGRFlatGeobufLayer::Create() {
         return;
     }
 
-    Node extent = calcExtent(m_featureItems);
+    NodeItem extent = calcExtent(m_featureItems);
     auto extentVector = extent.toVector();
 
     writeHeader(m_poFp, m_featuresCount, &extentVector);
@@ -337,7 +337,7 @@ void OGRFlatGeobufLayer::Create() {
     auto featureOffset = 0;
     for (auto item : m_featureItems) {
         auto featureItem = std::static_pointer_cast<FeatureItem>(item);
-        featureItem->node.offset = featureOffset;
+        featureItem->nodeItem.offset = featureOffset;
         featureOffset += featureItem->size;
     }
     CPLDebug("FlatGeobuf", "Creating Packed R-tree");
@@ -409,9 +409,9 @@ OGRFlatGeobufLayer::~OGRFlatGeobufLayer()
 OGRErr OGRFlatGeobufLayer::readFeatureOffset(uint64_t index, uint64_t &featureOffset) {
     auto treeSize = PackedRTree::size(m_featuresCount, m_indexNodeSize);
     auto levelBounds = PackedRTree::generateLevelBounds(m_featuresCount, m_indexNodeSize);
-    auto bottomLevelOffset = m_offset - treeSize + (levelBounds.front().first * sizeof(Node));
-    auto nodeItemOffset = bottomLevelOffset + (index * sizeof(Node));
-    auto featureOffsetOffset = nodeItemOffset + (sizeof(double) * 4) + sizeof(uint64_t);
+    auto bottomLevelOffset = m_offset - treeSize + (levelBounds.front().first * sizeof(NodeItem));
+    auto nodeItemOffset = bottomLevelOffset + (index * sizeof(NodeItem));
+    auto featureOffsetOffset = nodeItemOffset + (sizeof(double) * 4);
     if (VSIFSeekL(m_poFp, featureOffsetOffset, SEEK_SET) == -1)
         return CPLErrorIO("seeking feature offset");
     if (VSIFReadL(&featureOffset, sizeof(uint64_t), 1, m_poFp) != 1)
@@ -473,7 +473,7 @@ OGRErr OGRFlatGeobufLayer::readIndex()
             CPLDebug("FlatGeobuf", "Attempting spatial index query");
             OGREnvelope env;
             m_poFilterGeom->getEnvelope(&env);
-            Node n { env.MinX, env.MinY, env.MaxX, env.MaxY };
+            NodeItem n { env.MinX, env.MinY, env.MaxX, env.MaxY };
             CPLDebug("FlatGeobuf", "Spatial index search on %f,%f,%f,%f", env.MinX, env.MinY, env.MaxX, env.MaxY);
             const auto treeOffset = sizeof(magicbytes) + sizeof(uoffset_t) + headerSize;
             const auto readNode = [this, treeOffset] (uint8_t *buf, size_t i, size_t s) {
@@ -482,8 +482,8 @@ OGRErr OGRFlatGeobufLayer::readIndex()
                 if (VSIFReadL(buf, 1, s, m_poFp) != s)
                     throw std::runtime_error("I/O read file");
             };
-            m_foundNodes = PackedRTree::streamSearch(featuresCount, indexNodeSize, n, readNode);
-            m_featuresCount = m_foundNodes.size();
+            m_foundItems = PackedRTree::streamSearch(featuresCount, indexNodeSize, n, readNode);
+            m_featuresCount = m_foundItems.size();
             CPLDebug("FlatGeobuf", "%lu features found in spatial index search", static_cast<long unsigned int>(m_featuresCount));
 
             m_queriedSpatialIndex = true;
@@ -565,14 +565,15 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
     GIntBig fid;
     auto seek = false;
     if (m_queriedSpatialIndex && !m_ignoreSpatialFilter) {
-        const auto node = m_foundNodes[m_featuresPos];
-        m_offset = m_offsetFeatures + node.offset;
-        fid = node.index;
+        const auto item = m_foundItems[m_featuresPos];
+        m_offset = m_offsetFeatures + item.nodeItem.offset;
+        fid = item.index;
         seek = true;
     } else {
         fid = m_featuresPos;
     }
     poFeature->SetFID(fid);
+
 
     //CPLDebug("FlatGeobuf", "m_featuresPos: %lu", static_cast<long unsigned int>(m_featuresPos));
 
@@ -893,7 +894,7 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
         const auto item = std::make_shared<FeatureItem>();
         item->size = static_cast<uint32_t>(fbb.GetSize());
         item->offset = m_writeOffset;
-        item->node = {
+        item->nodeItem = {
             psEnvelope.MinX,
             psEnvelope.MinY,
             psEnvelope.MaxX,
@@ -947,7 +948,7 @@ void OGRFlatGeobufLayer::ResetReading()
     CPLDebug("FlatGeobuf", "ResetReading");
     m_offset = m_offsetFeatures;
     m_featuresPos = 0;
-    m_foundNodes.clear();
+    m_foundItems.clear();
     m_featuresCount = m_poHeader ? m_poHeader->features_count() : 0;
     m_queriedSpatialIndex = false;
     m_ignoreSpatialFilter = false;

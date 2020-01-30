@@ -82,7 +82,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         size_t m_featuresPos = 0; // current iteration position
         uint64_t m_offset = 0; // current read offset
         uint64_t m_offsetFeatures = 0; // offset of feature data
-        std::vector<FlatGeobuf::Node> m_foundNodes; // found node items in spatial index search
+        std::vector<FlatGeobuf::SearchResultItem> m_foundItems; // found node items in spatial index search
         bool m_queriedSpatialIndex = false;
         bool m_ignoreSpatialFilter = false;
         bool m_ignoreAttributeFilter = false;
