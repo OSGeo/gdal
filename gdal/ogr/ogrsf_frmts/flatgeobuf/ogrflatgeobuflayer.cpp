@@ -407,10 +407,9 @@ OGRFlatGeobufLayer::~OGRFlatGeobufLayer()
 }
 
 OGRErr OGRFlatGeobufLayer::readFeatureOffset(uint64_t index, uint64_t &featureOffset) {
+    auto treeSize = PackedRTree::size(m_featuresCount, m_indexNodeSize);
     auto levelBounds = PackedRTree::generateLevelBounds(m_featuresCount, m_indexNodeSize);
-    for (auto bounds : levelBounds)
-        CPLDebug("FlatGeobuf", "bounds.first: %zu", bounds.first);
-    auto bottomLevelOffset = m_offset + levelBounds.front().first;
+    auto bottomLevelOffset = m_offset - treeSize + (levelBounds.front().first * sizeof(Node));
     auto nodeItemOffset = bottomLevelOffset + (index * sizeof(Node));
     auto featureOffsetOffset = nodeItemOffset + (sizeof(double) * 4) + sizeof(uint64_t);
     if (VSIFSeekL(m_poFp, featureOffsetOffset, SEEK_SET) == -1)
