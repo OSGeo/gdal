@@ -473,7 +473,7 @@ OGRErr OGRFlatGeobufLayer::readIndex()
             CPLDebug("FlatGeobuf", "Attempting spatial index query");
             OGREnvelope env;
             m_poFilterGeom->getEnvelope(&env);
-            NodeItem n { env.MinX, env.MinY, env.MaxX, env.MaxY };
+            NodeItem n { env.MinX, env.MinY, env.MaxX, env.MaxY, 0 };
             CPLDebug("FlatGeobuf", "Spatial index search on %f,%f,%f,%f", env.MinX, env.MinY, env.MaxX, env.MaxY);
             const auto treeOffset = sizeof(magicbytes) + sizeof(uoffset_t) + headerSize;
             const auto readNode = [this, treeOffset] (uint8_t *buf, size_t i, size_t s) {
@@ -898,7 +898,8 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
             psEnvelope.MinX,
             psEnvelope.MinY,
             psEnvelope.MaxX,
-            psEnvelope.MaxY
+            psEnvelope.MaxY,
+            0
         };
         m_featureItems.push_back(item);
     }
