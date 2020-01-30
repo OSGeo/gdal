@@ -222,7 +222,7 @@ PackedRTree::PackedRTree(const std::vector<std::shared_ptr<Item>> &items, const 
     init(nodeSize);
     for (size_t i = 0; i < _numItems; i++) {
         _nodes[_numNodes - _numItems + i] = items[i]->node;
-        _nodes[_numNodes - _numItems + i].index = _numNodes - _numItems + i;
+        _nodes[_numNodes - _numItems + i].index = _numNodes - _numItems + i - 1;
     }
     generateNodes();
 }
@@ -234,7 +234,7 @@ PackedRTree::PackedRTree(const std::vector<Node> &nodes, const Node& extent, con
     init(nodeSize);
     for (size_t i = 0; i < _numItems; i++) {
         _nodes[_numNodes - _numItems + i] = nodes[i];
-        _nodes[_numNodes - _numItems + i].index = _numNodes - _numItems + i;
+        _nodes[_numNodes - _numItems + i].index = _numNodes - _numItems + i - 1;
     }
     generateNodes();
 }
