@@ -2300,21 +2300,26 @@ aws_secret_access_key = bar
 # a non default profile
 
 
-def test_vsis3_read_credentials_config_file_non_default():
+def test_vsis3_read_credentials_config_file_non_default_profile(tmpdir, monkeypatch):
 
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
     gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('AWS_ACCESS_KEY_ID', '')
-
-    gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', '/vsimem/aws_credentials')
-    gdal.SetConfigOption('AWS_CONFIG_FILE', '/vsimem/aws_config')
+    gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', None)
+    gdal.SetConfigOption('AWS_CONFIG_FILE', None)
     gdal.SetConfigOption('AWS_DEFAULT_PROFILE', 'myprofile')
+
+    if sys.platform == 'win32':
+        monkeypatch.setenv('USERPROFILE', str(tmpdir))
+    else:
+        monkeypatch.setenv('HOME', str(tmpdir))
+    os_aws = tmpdir.mkdir(".aws")
 
     gdal.VSICurlClearCache()
 
-    gdal.FileFromMemBuffer('/vsimem/aws_credentials', """
+    os_aws.join('credentials').write("""
 [unrelated]
 aws_access_key_id = foo
 aws_secret_access_key = bar
@@ -2326,7 +2331,7 @@ aws_access_key_id = foo
 aws_secret_access_key = bar
 """)
 
-    gdal.FileFromMemBuffer('/vsimem/aws_config', """
+    os_aws.join('config').write("""
 [unrelated]
 aws_access_key_id = foo
 aws_secret_access_key = bar
@@ -2347,10 +2352,6 @@ aws_secret_access_key = bar
 
     assert data == 'foo'
 
-    gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', '')
-    gdal.Unlink('/vsimem/aws_credentials')
-    gdal.SetConfigOption('AWS_CONFIG_FILE', '')
-    gdal.Unlink('/vsimem/aws_config')
     gdal.SetConfigOption('AWS_DEFAULT_PROFILE', '')
 
 ###############################################################################
