@@ -2300,7 +2300,7 @@ aws_secret_access_key = bar
 # a non default profile
 
 
-def test_vsis3_read_credentials_config_file_non_default_profile(tmpdir, monkeypatch):
+def test_vsis3_read_credentials_config_file_non_default_profile(tmpdir):
 
     if gdaltest.webserver_port == 0:
         pytest.skip()
@@ -2311,10 +2311,6 @@ def test_vsis3_read_credentials_config_file_non_default_profile(tmpdir, monkeypa
     gdal.SetConfigOption('AWS_CONFIG_FILE', None)
     gdal.SetConfigOption('AWS_DEFAULT_PROFILE', 'myprofile')
 
-    if sys.platform == 'win32':
-        monkeypatch.setenv('USERPROFILE', str(tmpdir))
-    else:
-        monkeypatch.setenv('HOME', str(tmpdir))
     os_aws = tmpdir.mkdir(".aws")
 
     gdal.VSICurlClearCache()
@@ -2345,7 +2341,10 @@ aws_secret_access_key = bar
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_fake_bucket/resource', custom_method=get_s3_fake_bucket_resource_method)
     with webserver.install_http_handler(handler):
-        f = open_for_read('/vsis3/s3_fake_bucket/resource')
+        with gdaltest.config_option(
+            'USERPROFILE' if sys.platform == 'win32' else 'HOME', str(tmpdir)
+        ):
+            f = open_for_read('/vsis3/s3_fake_bucket/resource')
         assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode('ascii')
         gdal.VSIFCloseL(f)
