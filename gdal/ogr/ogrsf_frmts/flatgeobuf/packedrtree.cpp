@@ -352,7 +352,7 @@ void PackedRTree::streamWrite(const std::function<void(uint8_t *, size_t)> &writ
 #if !CPL_IS_LSB
     // Note: we should normally revert endianness after writing, but as we no longer
     // use the data structures this is not needed.
-    for( size_t i = 0; i < _nodeItems.size(); i++ )
+    for( size_t i = 0; i < _numItems; i++ )
     {
         CPL_LSBPTR64(&_nodeItems[i].minX);
         CPL_LSBPTR64(&_nodeItems[i].minY);
