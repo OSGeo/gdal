@@ -1,3 +1,9 @@
+#ifdef GDAL_COMPILATION
+#include "cpl_port.h"
+#else
+#define CPL_IS_LSB 1
+#endif
+
 #include "packedrtree.h"
 
 #include <map>
@@ -295,6 +301,17 @@ std::vector<SearchResultItem> PackedRTree::streamSearch(
         uint64_t end = std::min(static_cast<uint64_t>(nodeIndex + nodeSize), levelBounds[static_cast<size_t>(level)].second);
         uint64_t length = end - nodeIndex;
         readNode(nodesBuf, static_cast<size_t>(nodeIndex * sizeof(NodeItem)), static_cast<size_t>(length * sizeof(NodeItem)));
+#if !CPL_IS_LSB
+        for( size_t i = 0; i < static_cast<size_t>(length); i++ )
+        {
+            CPL_LSBPTR64(&nodeItems[i].minX);
+            CPL_LSBPTR64(&nodeItems[i].minY);
+            CPL_LSBPTR64(&nodeItems[i].maxX);
+            CPL_LSBPTR64(&nodeItems[i].maxY);
+            CPL_LSBPTR64(&nodeItems[i].maxY);
+            CPL_LSBPTR64(&nodeItems[i].offset);
+        }
+#endif
         // search through child nodes
         for (uint64_t pos = nodeIndex; pos < end; pos++) {
             uint64_t nodePos = pos - nodeIndex;
@@ -332,6 +349,18 @@ uint64_t PackedRTree::size(const uint64_t numItems, const uint16_t nodeSize)
 }
 
 void PackedRTree::streamWrite(const std::function<void(uint8_t *, size_t)> &writeData) {
+#if !CPL_IS_LSB
+    // Note: we should normally revert endianness after writing, but as we no longer
+    // use the data structures this is not needed.
+    for( size_t i = 0; i < _nodeItems.size(); i++ )
+    {
+        CPL_LSBPTR64(&_nodeItems[i].minX);
+        CPL_LSBPTR64(&_nodeItems[i].minY);
+        CPL_LSBPTR64(&_nodeItems[i].maxX);
+        CPL_LSBPTR64(&_nodeItems[i].maxY);
+        CPL_LSBPTR64(&_nodeItems[i].offset);
+    }
+#endif
     writeData(reinterpret_cast<uint8_t *>(_nodeItems), _numNodes * sizeof(NodeItem));
 }
 
