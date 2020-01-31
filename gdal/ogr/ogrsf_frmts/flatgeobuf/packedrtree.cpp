@@ -252,7 +252,7 @@ PackedRTree::PackedRTree(const void *data, const uint64_t numItems, const uint16
 
 std::vector<SearchResultItem> PackedRTree::search(double minX, double minY, double maxX, double maxY) const
 {
-    NodeItem n { minX, minY, maxX, maxY };
+    NodeItem n { minX, minY, maxX, maxY, 0 };
     std::vector<SearchResultItem> results;
     std::unordered_map<uint64_t, uint64_t> queue;
     queue.insert(std::pair<uint64_t, uint64_t>(0, _levelBounds.size() - 1));
