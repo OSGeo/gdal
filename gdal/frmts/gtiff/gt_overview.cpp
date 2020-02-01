@@ -631,6 +631,7 @@ GTIFFBuildOverviews( const char * pszFilename,
     VSIStatBufL sStatBuf;
     VSILFILE* fpL = nullptr;
 
+    bool bCreateBigTIFF = false;
     if( VSIStatExL( pszFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG ) != 0 )
     {
     /* -------------------------------------------------------------------- */
@@ -672,7 +673,6 @@ GTIFFBuildOverviews( const char * pszFilename,
         if( pszBIGTIFF == nullptr )
             pszBIGTIFF = "IF_SAFER";
 
-        bool bCreateBigTIFF = false;
         if( EQUAL(pszBIGTIFF,"IF_NEEDED") )
         {
             if( nCompression == COMPRESSION_NONE
@@ -747,7 +747,13 @@ GTIFFBuildOverviews( const char * pszFilename,
         if( fpL == nullptr )
             hOTIFF = nullptr;
         else
+        {
+            GByte abyBuffer[4] = { 0 };
+            VSIFReadL(abyBuffer, 1, 4, fpL);
+            VSIFSeekL(fpL, 0, SEEK_SET);
+            bCreateBigTIFF = abyBuffer[2] == 43 || abyBuffer[3] == 43;
             hOTIFF = VSI_TIFFOpen( pszFilename, "r+", fpL );
+        }
         if( hOTIFF == nullptr )
         {
             if( CPLGetLastErrorNo() == 0 )
@@ -845,7 +851,20 @@ GTIFFBuildOverviews( const char * pszFilename,
         const int nOYSize = (nYSize + panOverviewList[iOverview] - 1)
             / panOverviewList[iOverview];
 
-        GTIFFWriteDirectory( hOTIFF, FILETYPE_REDUCEDIMAGE,
+        unsigned nTileXCount = DIV_ROUND_UP(nOXSize, nOvrBlockXSize);
+        unsigned nTileYCount = DIV_ROUND_UP(nOYSize, nOvrBlockYSize);
+        // libtiff implementation limitation
+        if( nTileXCount > 0x80000000U / (bCreateBigTIFF ? 8 : 4) / nTileYCount )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "File too large regarding tile size. This would result "
+                     "in a file with tile arrays larger than 2GB");
+            XTIFFClose( hOTIFF );
+            VSIFCloseL(fpL);
+            return CE_Failure;
+        }
+
+        if( GTIFFWriteDirectory( hOTIFF, FILETYPE_REDUCEDIMAGE,
                              nOXSize, nOYSize, nBitsPerPixel,
                              nPlanarConfig, nBands,
                              nOvrBlockXSize, nOvrBlockYSize, TRUE, nCompression,
@@ -858,7 +877,12 @@ GTIFFBuildOverviews( const char * pszFilename,
                              CPLGetConfigOption( "JPEG_TABLESMODE_OVERVIEW", nullptr ),
                              pszNoData,
                              nullptr
-                           );
+                           ) == 0 )
+        {
+            XTIFFClose( hOTIFF );
+            VSIFCloseL(fpL);
+            return CE_Failure;
+        }
     }
 
     if( panRed )
