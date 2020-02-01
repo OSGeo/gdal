@@ -887,7 +887,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     {
         osConfig = osDotAws;
         osConfig += SEP_STRING;
-        osConfig += "credentials";
+        osConfig += "config";
     }
     fp = VSIFOpenL( osConfig, "rb" );
     if( fp != nullptr )
