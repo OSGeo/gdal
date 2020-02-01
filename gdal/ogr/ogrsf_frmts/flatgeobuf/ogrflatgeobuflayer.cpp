@@ -407,11 +407,11 @@ OGRFlatGeobufLayer::~OGRFlatGeobufLayer()
 }
 
 OGRErr OGRFlatGeobufLayer::readFeatureOffset(uint64_t index, uint64_t &featureOffset) {
-    auto treeSize = PackedRTree::size(m_featuresCount, m_indexNodeSize);
-    auto levelBounds = PackedRTree::generateLevelBounds(m_featuresCount, m_indexNodeSize);
-    auto bottomLevelOffset = m_offset - treeSize + (levelBounds.front().first * sizeof(NodeItem));
-    auto nodeItemOffset = bottomLevelOffset + (index * sizeof(NodeItem));
-    auto featureOffsetOffset = nodeItemOffset + (sizeof(double) * 4);
+    const auto treeSize = PackedRTree::size(m_featuresCount, m_indexNodeSize);
+    const auto levelBounds = PackedRTree::generateLevelBounds(m_featuresCount, m_indexNodeSize);
+    const auto bottomLevelOffset = m_offset - treeSize + (levelBounds.front().first * sizeof(NodeItem));
+    const auto nodeItemOffset = bottomLevelOffset + (index * sizeof(NodeItem));
+    const auto featureOffsetOffset = nodeItemOffset + (sizeof(double) * 4);
     if (VSIFSeekL(m_poFp, featureOffsetOffset, SEEK_SET) == -1)
         return CPLErrorIO("seeking feature offset");
     if (VSIFReadL(&featureOffset, sizeof(uint64_t), 1, m_poFp) != 1)
@@ -870,7 +870,7 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
     }
 
     GeometryWriter writer { fbb, ogrGeometry, m_geometryType, m_hasZ, m_hasM };
-    auto geometryOffset = writer.write(0);
+    const auto geometryOffset = writer.write(0);
     const auto pProperties = properties.empty() ? nullptr : &properties;
     const auto feature = CreateFeatureDirect(fbb, geometryOffset, pProperties);
     fbb.FinishSizePrefixed(feature);
