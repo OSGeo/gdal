@@ -156,7 +156,7 @@ void PackedRTree::init(const uint16_t nodeSize)
     _nodeSize = std::min(std::max(nodeSize, static_cast<uint16_t>(2)), static_cast<uint16_t>(65535));
     _levelBounds = generateLevelBounds(_numItems, _nodeSize);
     _numNodes = _levelBounds.front().second;
-    _nodeItems = new NodeItem[_numNodes];
+    _nodeItems = new NodeItem[static_cast<size_t>(_numNodes)];
 }
 
 std::vector<std::pair<uint64_t, uint64_t>> PackedRTree::generateLevelBounds(const uint64_t numItems, const uint16_t nodeSize) {
