@@ -691,7 +691,7 @@ GDALDefaultOverviews::BuildOverviews(
 
         if( abValidLevel[i] )
         {
-            const double dfArea = 1.0 / (panOverviewList[i] * panOverviewList[i]);
+            const double dfArea = 1.0 / (static_cast<double>(panOverviewList[i]) * panOverviewList[i]);
             dfAreaRefreshedOverviews += dfArea;
             if( !abRequireRefresh[i] )
             {
