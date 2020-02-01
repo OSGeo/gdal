@@ -308,7 +308,6 @@ std::vector<SearchResultItem> PackedRTree::streamSearch(
             CPL_LSBPTR64(&nodeItems[i].minY);
             CPL_LSBPTR64(&nodeItems[i].maxX);
             CPL_LSBPTR64(&nodeItems[i].maxY);
-            CPL_LSBPTR64(&nodeItems[i].maxY);
             CPL_LSBPTR64(&nodeItems[i].offset);
         }
 #endif
