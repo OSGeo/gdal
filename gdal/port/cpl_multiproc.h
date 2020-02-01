@@ -227,6 +227,7 @@ class CPL_DLL CPLLockHolder
 #define CTLS_VSIERRORCONTEXT            16         /* cpl_vsi_error.cpp */
 #define CTLS_ERRORHANDLERACTIVEDATA     17         /* cpl_error.cpp */
 #define CTLS_PROJCONTEXTHOLDER          18         /* ogr_proj_p.cpp */
+#define CTLS_GDALDEFAULTOVR_ANTIREC     19         /* gdaldefaultoverviews.cpp */
 
 #define CTLS_MAX                        32
 
