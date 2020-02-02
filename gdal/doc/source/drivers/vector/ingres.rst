@@ -66,7 +66,7 @@ given time.
 
 By default, SQL statements are passed directly to the INGRES database
 engine. It's also possible to request the driver to handle SQL commands
-with `OGR SQL <ogr_sql.html>`__ engine, by passing **"OGRSQL"** string
+with `OGR SQL <ogr_sql_dialect>`__ engine, by passing **"OGRSQL"** string
 to the ExecuteSQL() method, as name of the SQL dialect.
 
 The INGRES driver supports OGC SFSQL 1.1 compliant spatial types and

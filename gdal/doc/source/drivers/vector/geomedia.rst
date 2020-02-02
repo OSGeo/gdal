@@ -37,7 +37,7 @@ spatial indexes for fast spatial queries.
 
 By default, SQL statements are passed directly to the MDB database
 engine. It's also possible to request the driver to handle SQL commands
-with `OGR SQL <ogr_sql.html>`__ engine, by passing **"OGRSQL"** string
+with `OGR SQL <ogr_sql_dialect>`__ engine, by passing **"OGRSQL"** string
 to the ExecuteSQL() method, as name of the SQL dialect.
 
 Driver capabilities
