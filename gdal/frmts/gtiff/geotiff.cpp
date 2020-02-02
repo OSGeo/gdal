@@ -15436,16 +15436,6 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 
         if( l_nBlockYSize == 0 )
             l_nBlockYSize = 256;
-
-        unsigned nTileXCount = DIV_ROUND_UP(nXSize, l_nBlockXSize);
-        unsigned nTileYCount = DIV_ROUND_UP(nYSize, l_nBlockYSize);
-        if( nTileXCount > UINT_MAX / nTileYCount )
-        {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "File too large regarding tile size. This would result "
-                     "in a file with more than 4 billion tiles");
-            return nullptr;
-        }
     }
 
     int nPlanar = 0;
@@ -15555,32 +15545,6 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         + dfExtraSpaceForOverviews;
 
 /* -------------------------------------------------------------------- */
-/*      Check free space (only for big, non sparse, uncompressed)       */
-/* -------------------------------------------------------------------- */
-    if( l_nCompression == COMPRESSION_NONE &&
-        dfUncompressedImageSize >= 1e9 &&
-        !CPLFetchBool(papszParmList, "SPARSE_OK", false) &&
-        osOriFilename != "/vsistdout/" &&
-        osOriFilename != "/vsistdout_redirect/" &&
-        CPLTestBool(CPLGetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")) )
-    {
-        GIntBig nFreeDiskSpace =
-            VSIGetDiskFreeSpace(CPLGetDirname(pszFilename));
-        if( nFreeDiskSpace >= 0 &&
-            nFreeDiskSpace < dfUncompressedImageSize )
-        {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Free disk space available is " CPL_FRMT_GIB " bytes, "
-                      "whereas " CPL_FRMT_GIB " are at least necessary. "
-                      "You can disable this check by defining the "
-                      "CHECK_DISK_FREE_SPACE configuration option to FALSE.",
-                      nFreeDiskSpace,
-                      static_cast<GIntBig>(dfUncompressedImageSize) );
-            return nullptr;
-        }
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Should the file be created as a bigtiff file?                   */
 /* -------------------------------------------------------------------- */
     const char *pszBIGTIFF = CSLFetchNameValue(papszParmList, "BIGTIFF");
@@ -15616,6 +15580,49 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 
     if( bCreateBigTIFF )
         CPLDebug( "GTiff", "File being created as a BigTIFF." );
+
+/* -------------------------------------------------------------------- */
+/*      Sanity check.                                                   */
+/* -------------------------------------------------------------------- */
+    if( bTiled )
+    {
+        unsigned nTileXCount = DIV_ROUND_UP(nXSize, l_nBlockXSize);
+        unsigned nTileYCount = DIV_ROUND_UP(nYSize, l_nBlockYSize);
+        // libtiff implementation limitation
+        if( nTileXCount > 0x80000000U / (bCreateBigTIFF ? 8 : 4) / nTileYCount )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "File too large regarding tile size. This would result "
+                     "in a file with tile arrays larger than 2GB");
+            return nullptr;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check free space (only for big, non sparse, uncompressed)       */
+/* -------------------------------------------------------------------- */
+    if( l_nCompression == COMPRESSION_NONE &&
+        dfUncompressedImageSize >= 1e9 &&
+        !CPLFetchBool(papszParmList, "SPARSE_OK", false) &&
+        osOriFilename != "/vsistdout/" &&
+        osOriFilename != "/vsistdout_redirect/" &&
+        CPLTestBool(CPLGetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")) )
+    {
+        GIntBig nFreeDiskSpace =
+            VSIGetDiskFreeSpace(CPLGetDirname(pszFilename));
+        if( nFreeDiskSpace >= 0 &&
+            nFreeDiskSpace < dfUncompressedImageSize )
+        {
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Free disk space available is " CPL_FRMT_GIB " bytes, "
+                      "whereas " CPL_FRMT_GIB " are at least necessary. "
+                      "You can disable this check by defining the "
+                      "CHECK_DISK_FREE_SPACE configuration option to FALSE.",
+                      nFreeDiskSpace,
+                      static_cast<GIntBig>(dfUncompressedImageSize) );
+            return nullptr;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Check if the user wishes a particular endianness                */
