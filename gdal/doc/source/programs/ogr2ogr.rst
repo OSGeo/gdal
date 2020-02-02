@@ -38,7 +38,7 @@ Synopsis
             [-clipdstwhere expression]
             [-wrapdateline] [-datelineoffset val]
             [[-simplify tolerance] | [-segmentize max_dist]]
-            [-addfields] [-unsetFid]
+            [-addfields] [-unsetFid] [-emptyStrAsNull]
             [-relaxedFieldNameMatch] [-forceNullable] [-unsetDefault]
             [-fieldTypeToString All|(type1[,type2]*)] [-unsetFieldWidth]
             [-mapFieldType type1|All=type2[,type3=type4]*]
@@ -398,6 +398,10 @@ output coordinate system or even reprojecting the features during translation.
     Can be specify to prevent the name of the source FID column and source
     feature IDs from being re-used for the target layer. This option can for
     example be useful if selecting source features with a ORDER BY clause.
+
+.. option:: -emptyStrAsNull
+
+    Treat empty string values as null.
 
 .. option:: -nomd
 

@@ -90,7 +90,7 @@ static void Usage( const char* pszAdditionalMsg = nullptr, bool bShort = true )
         "               [-clipdstwhere expression]\n"
         "               [-wrapdateline][-datelineoffset val]\n"
         "               [[-simplify tolerance] | [-segmentize max_dist]]\n"
-        "               [-addfields] [-unsetFid]\n"
+        "               [-addfields] [-unsetFid] [-emptyStrAsNull]\n"
         "               [-relaxedFieldNameMatch] [-forceNullable] [-unsetDefault]\n"
         "               [-fieldTypeToString All|(type1[,type2]*)] [-unsetFieldWidth]\n"
         "               [-mapFieldType srctype|All=dsttype[,srctype2=dsttype2]*]\n"
