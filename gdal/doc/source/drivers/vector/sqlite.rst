@@ -41,7 +41,7 @@ default.
 
 By default, SQL statements are passed directly to the SQLite database
 engine. It's also possible to request the driver to handle SQL commands
-with :ref:`OGR SQL <ogr_sql_dialect>` engine, by passing **"OGRSQL"** string
+with :ref:`OGR SQL <ogr_sql_dialect>`_ engine, by passing **"OGRSQL"** string
 to the ExecuteSQL() method, as name of the SQL dialect.
 
 The OGR_SQLITE_SYNCHRONOUS configuration option

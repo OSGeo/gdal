@@ -53,8 +53,8 @@ check to a layer. Internally these pseudo-commands are translated into
 more complex SQL commands for Oracle.
 
 It is also possible to request the driver to handle SQL commands with
-`OGR SQL <ogr_sql_dialect>`__ engine, by passing **"OGRSQL"** string to the
-ExecuteSQL() method, as name of the SQL dialect.
+:ref:`OGR SQL <ogr_sql_dialect>`_ engine, by passing **"OGRSQL"**
+string to the ExecuteSQL() method, as name of the SQL dialect.
 
 Caveats
 -------
