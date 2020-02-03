@@ -583,6 +583,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_SIGDEM();
 #endif
 
+#ifdef FRMT_exr
+    GDALRegister_EXR();
+#endif
+
     // NOTE: you need to generally your own driver before that line.
 
 /* -------------------------------------------------------------------- */

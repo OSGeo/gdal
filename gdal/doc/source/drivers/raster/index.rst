@@ -63,6 +63,7 @@ Raster drivers
    epsilon
    esat
    ers
+   exr
    fast
    fit
    fits
