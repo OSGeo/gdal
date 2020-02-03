@@ -103,8 +103,8 @@ for statement derived results. Some limitations may apply for SQL
 derived layers. Starting with OGR 1.10, an optional **dialect**
 attribute can be specified on the SrcSQL element to specify which SQL
 "dialect" should be used : possible values are currently
-:ref:`OGR SQL <ogr_sql_dialect>`_ or :ref:`SQLITE
-<sql_sqlite_dialect>`_. If *dialect* is not specified, the default
+:ref:`OGR SQL <ogr_sql_dialect>` or :ref:`SQLITE
+<sql_sqlite_dialect>`. If *dialect* is not specified, the default
 dialect of the datasource will be used.
 
 | 
