@@ -181,5 +181,5 @@ functionality.
 Documentation
 -------------
 
-The :ref:`OGR SQL <ogr_sql_dialect>`_ document will be
+The :ref:`OGR SQL <ogr_sql_dialect>` document will be
 extended to describe the new capabilities.
