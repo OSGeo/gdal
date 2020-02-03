@@ -3909,10 +3909,17 @@ TIFFReadDirectory(TIFF* tif)
 					    case TIFF_LONG8:
 					        break;
 					    default:
-						fip = TIFFFieldWithTag(tif,dp->tdir_tag);
-						TIFFWarningExt(tif->tif_clientdata,module,
-								"Invalid data type for tag %s",
-								fip ? fip->field_name : "unknown tagname");
+                                                /* Warn except if directory typically created with TIFFDeferStrileArrayWriting() */
+                                                if( !(tif->tif_mode == O_RDWR &&
+                                                      dp->tdir_count == 0 &&
+                                                      dp->tdir_type == 0 &&
+                                                      dp->tdir_offset.toff_long8 == 0) )
+                                                {
+                                                    fip = TIFFFieldWithTag(tif,dp->tdir_tag);
+                                                    TIFFWarningExt(tif->tif_clientdata,module,
+                                                                   "Invalid data type for tag %s",
+                                                                   fip ? fip->field_name : "unknown tagname");
+                                                }
                                                 break;
                                         }
 					_TIFFmemcpy( &(tif->tif_dir.td_stripoffset_entry),
@@ -3927,10 +3934,17 @@ TIFFReadDirectory(TIFF* tif)
 					    case TIFF_LONG8:
 					        break;
 					    default:
-						fip = TIFFFieldWithTag(tif,dp->tdir_tag);
-						TIFFWarningExt(tif->tif_clientdata,module,
-								"Invalid data type for tag %s",
-								fip ? fip->field_name : "unknown tagname");
+						/* Warn except if directory typically created with TIFFDeferStrileArrayWriting() */
+                                                if( !(tif->tif_mode == O_RDWR &&
+                                                      dp->tdir_count == 0 &&
+                                                      dp->tdir_type == 0 &&
+                                                      dp->tdir_offset.toff_long8 == 0) )
+                                                {
+                                                    fip = TIFFFieldWithTag(tif,dp->tdir_tag);
+                                                    TIFFWarningExt(tif->tif_clientdata,module,
+                                                                   "Invalid data type for tag %s",
+                                                                   fip ? fip->field_name : "unknown tagname");
+                                                }
                                                 break;
                                         }
 					_TIFFmemcpy( &(tif->tif_dir.td_stripbytecount_entry),

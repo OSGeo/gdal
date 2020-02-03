@@ -52,6 +52,7 @@ def _validate_check(filename):
     try:
         import validate_gpkg
     except ImportError:
+        print('Cannot import validate_gpkg')
         return
     validate_gpkg.check(filename)
 
@@ -4021,6 +4022,79 @@ def test_ogr_gpkg_json():
     ds = None
 
     gdal.Unlink(filename)
+
+###############################################################################
+# Test invalid/non-standard content in records
+
+
+def test_ogr_gpkg_invalid_values_in_records():
+
+    if gdaltest.gpkg_dr is None:
+        pytest.skip()
+
+    filename = '/vsimem/test_ogr_gpkg_invalid_date_content.gpkg'
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    lyr = ds.CreateLayer('test')
+
+    fld_defn = ogr.FieldDefn('dt', ogr.OFTDateTime)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn('d', ogr.OFTDate)
+    lyr.CreateField(fld_defn)
+
+    for i in range(6):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        lyr.CreateFeature(f)
+    ds.ExecuteSQL("UPDATE test SET dt = 'foo' WHERE fid = 1")
+    ds.ExecuteSQL("UPDATE test SET d = 'bar' WHERE fid = 2")
+    ds.ExecuteSQL("UPDATE test SET dt = 3 WHERE fid = 3")
+    ds.ExecuteSQL("UPDATE test SET d = 4 WHERE fid = 4")
+    ds.ExecuteSQL("UPDATE test SET dt = '2020/01/21 12:34:56+01' WHERE fid = 5")
+    ds.ExecuteSQL("UPDATE test SET d = '2020/01/21' WHERE fid = 6")
+
+    lyr.ResetReading()
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
+    assert gdal.GetLastErrorMsg() == 'Invalid content for record 1 in column dt: foo'
+    assert not f.IsFieldSet('dt')
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
+    assert gdal.GetLastErrorMsg() == 'Invalid content for record 2 in column d: bar'
+    assert not f.IsFieldSet('d')
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
+    assert gdal.GetLastErrorMsg() == 'Unexpected data type for record 3 in column dt'
+    assert not f.IsFieldSet('dt')
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
+    assert gdal.GetLastErrorMsg() == 'Unexpected data type for record 4 in column d'
+    assert not f.IsFieldSet('d')
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
+    assert gdal.GetLastErrorMsg() == 'Non-conformant content for record 5 in column dt, 2020/01/21 12:34:56+01, successfully parsed'
+    assert f.IsFieldSet('dt')
+    assert f['dt'] == '2020/01/21 12:34:56+01'
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
+    assert gdal.GetLastErrorMsg() == 'Non-conformant content for record 6 in column d, 2020/01/21, successfully parsed'
+    assert f.IsFieldSet('d')
+    assert f['d'] == '2020/01/21'
+
+    ds = None
+
+    gdal.Unlink(filename)
+
 
 ###############################################################################
 # Remove the test db from the tmp directory

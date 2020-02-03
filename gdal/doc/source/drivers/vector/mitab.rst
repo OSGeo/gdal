@@ -131,16 +131,20 @@ Layer Creation Options
    supported by CPLRecode (e.g. ISO-8859-1, CP1251, CP1252 ...) and
    internally converted to MapInfo charsets names. Default value is ''
    that equals to 'Neutral' MapInfo charset.
+-  **DESCRIPTION=**\ *value*: (GDAL >= 3.1.0) Friendly layer name (only for
+   TAB format). Friendly names can be up to 256 characters long and can include
+   most ASCII characters. Supported by MapInfo Pro v15.0 or higher.
 
 Configuration options
 ~~~~~~~~~~~~~~~~~~~~~
 
--  :decl_configoption:`MITAB_SET_TOWGS84_ON_KNOWN_DATUM` =YES/NO: (GDAL >= 3.0.3).
-   The default behaviour, starting with GDAL 3.0.3, is NO. That is,
-   the TOWGS84 parameters read from the .tab header will *not* be set on the
-   Datum object of the CRS, when the datum can be inferred.
+-  :decl_configoption:`MITAB_SET_TOWGS84_ON_KNOWN_DATUM` =YES/NO:
+   (GDAL >= 3.0.3). The default behaviour, starting with GDAL 3.0.3, is NO.
+   That is, the TOWGS84 parameters read from the .tab header will *not* be set
+   on the Datum object of the CRS, when the datum can be inferred.
 
 See Also
 ~~~~~~~~
 
 -  `MITAB Page <http://mitab.maptools.org/>`__
+-  `About friendly layer names <https://support.pitneybowes.com/SearchArticles/VFP05_KnowledgeWithSidebarHowTo?id=kA180000000CtuHCAS&popup=false&lang=en_US>`__

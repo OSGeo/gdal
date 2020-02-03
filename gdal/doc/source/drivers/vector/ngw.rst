@@ -314,6 +314,7 @@ group with name "new group" and parent identifier 1730. New vector layer name
 will be "some new name":
 
 ::
+
        ogr2ogr -f NGW -nln "Название на русском языке" -dsco "BATCH_SIZE=100" -t_srs EPSG:3857 "NGW:https://demo.nextgis.com/resource/1730/new group" myshapefile.shp
 
 See also

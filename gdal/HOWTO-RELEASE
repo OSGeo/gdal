@@ -323,12 +323,18 @@ e) Click the "Release" button and that is it! The release should be available in
    Maven Central shortly. You can verify this by going to search.maven.org and
    searching for "gdal".
 
-19) Regenerate Docker images
+19) Create a release on GitHub
+    Go to https://github.com/OSGeo/gdal/releases/new
+    And create a release for the vX.Y.Z tag
+    Attach the gdal-X.Y.Z.tar.gz, gdal-X.Y.Z.tar.gz.md5, gdalXYZ.zip, gdalXYZ.zip.md5 and gdalautotest-X.Y.Z.zip files
+
+20) Regenerate Docker images
 
     e.g
         ./docker/build-all.sh --tag 3.0.2 --gdal v3.0.2 --proj 6.2.1 --release --push
 
-19) Announce release to :
+
+21) Announce release to :
     - major release: gdal-dev@lists.osgeo.org, gdal-announce@lists.osgeo.org, news_item@osgeo.org.
     - bugfix release: gdal-dev@lists.osgeo.org, gdal-announce@lists.osgeo.org
 

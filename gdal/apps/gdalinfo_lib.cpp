@@ -593,7 +593,6 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
             bTransformToWGS84 = true;
             hLatLong = OSRNewSpatialReference( nullptr );
             OSRSetWellKnownGeogCS( hLatLong, "WGS84" );
-            OSRSetAxisMappingStrategy(hLatLong, OAMS_TRADITIONAL_GIS_ORDER);
         }
         else
         {
@@ -607,6 +606,7 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
 
         if( hLatLong != nullptr )
         {
+            OSRSetAxisMappingStrategy(hLatLong, OAMS_TRADITIONAL_GIS_ORDER);
             CPLPushErrorHandler( CPLQuietErrorHandler );
             hTransform = OCTNewCoordinateTransformation( hProj, hLatLong );
             CPLPopErrorHandler();

@@ -17,8 +17,8 @@ Synopsis
 
 .. code-block::
 
-    gdalmdiminfo [--help-general] [-oo NAME=VALUE]* [-detailed]
-                 [-nopretty] [-array {array_name}] [-limit {number}]
+    gdalmdiminfo [--help-general] [-oo NAME=VALUE]* [-arrayoption NAME=VALUE]*
+                 [-detailed] [-nopretty] [-array {array_name}] [-limit {number}]
                  <datasetname>
 
 Description
@@ -53,6 +53,13 @@ The following command line parameters can appear in any order
 .. option:: -oo <NAME=VALUE>
 
     Dataset open option (format specific).
+    This option may be used several times.
+
+.. option:: -arrayoption <NAME=VALUE>
+
+    Option passed to :cpp:func:`GDALGroup::GetMDArrayNames` to filter reported
+    arrays. Such option is format specific. Consult driver documentation.
+    This option may be used several times.
 
 C API
 -----

@@ -61,7 +61,7 @@ See [alpine-normal/Dockerfile](alpine-normal/Dockerfile)
 
 See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
 
-## Full: `osgeo/gdal:ubuntu-full-latest`
+## Full: `osgeo/gdal:ubuntu-full-latest` (aliased to `osgeo/gdal`)
 
 * Image size: ~ 1.5 GB
 * Raster drivers: all based on almost all possible free and open-source dependencies

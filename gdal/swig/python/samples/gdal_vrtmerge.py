@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright (c) 2000, Atlantis Scientific Inc. (www.atlsci.com)
 # Copyright (C) 2005  Gabriel Ebner <ge@gabrielebner.at>

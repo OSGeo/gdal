@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # ******************************************************************************
 #  $Id$
@@ -1433,6 +1433,9 @@ class GDAL2Tiles(object):
             zoom_min, zoom_max = minmax[:2]
             self.tminz = int(zoom_min)
             if zoom_max:
+                if int(zoom_max) < self.tminz:
+                    raise Exception('max zoom (%d) less than min zoom (%d)' %
+                                    (int(zoom_max), self.tminz))
                 self.tmaxz = int(zoom_max)
             else:
                 self.tmaxz = int(zoom_min)
