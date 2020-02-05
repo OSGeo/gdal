@@ -1039,7 +1039,7 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
 /*      Handle command line arguments.                                  */
 /* -------------------------------------------------------------------- */
     const int argc = CSLCount(papszArgv);
-    for( int i = 0; papszArgv != nullptr && i < argc; i++ )
+    for( int i = 0; i < argc && papszArgv != nullptr && papszArgv[i] != nullptr; i++ )
     {
         if( i < argc-1 && (EQUAL(papszArgv[i],"-of") || EQUAL(papszArgv[i],"-f")) )
         {
@@ -1092,8 +1092,11 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
 
         else if( i+2 < argc && EQUAL(papszArgv[i],"-outsize") )
         {
-            psOptions->nXSize = atoi(papszArgv[++i]);
-            psOptions->nYSize = atoi(papszArgv[++i]);
+            CPLAssert(papszArgv[i+1]);
+            CPLAssert(papszArgv[i+2]);
+            psOptions->nXSize = atoi(papszArgv[i+1]);
+            psOptions->nYSize = atoi(papszArgv[i+2]);
+            i += 2;
         }
 
         else if( i+1 < argc && EQUAL(papszArgv[i],"-co") )

@@ -571,6 +571,8 @@ bool CntZImage::writeTiles(bool zPart, double maxZError, bool cntsNoIntIn,
   numBytes = 0;
   maxValInImg = -FLT_MAX;
 
+  if( numTilesVert == 0 )
+    return false;
   for (int iTile = 0; iTile <= numTilesVert; iTile++)
   {
     int tileH = static_cast<int>(height_ / numTilesVert);
@@ -629,6 +631,8 @@ bool CntZImage::readTiles(bool zPart, double maxZErrorInFile,
 {
   Byte* ptr = bArr;
 
+  if( numTilesVert == 0 )
+    return false;
   for (int iTile = 0; iTile <= numTilesVert; iTile++)
   {
     int tileH = static_cast<int>(height_ / numTilesVert);

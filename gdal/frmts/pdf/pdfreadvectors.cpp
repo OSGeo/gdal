@@ -28,6 +28,8 @@
 
 #include "gdal_pdf.h"
 
+#include <array>
+
 #define SQUARE(x) ((x)*(x))
 #define EPSILON 1e-5
 
@@ -351,9 +353,9 @@ OGRGeometry* PDFDataset::GetGeometryFromMCID(int nMCID)
 class GraphicState
 {
     public:
-        double adfCM[6];
-        double adfStrokeColor[3];
-        double adfFillColor[3];
+        std::array<double,6> adfCM;
+        std::array<double,3> adfStrokeColor;
+        std::array<double,3> adfFillColor;
 
         GraphicState()
         {
@@ -1217,7 +1219,7 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
                 }
                 else if( EQUAL2(szToken, "RG") || EQUAL2(szToken, "rg") )
                 {
-                    double* padf = ( EQUAL2(szToken, "RG") ) ? oGS.adfStrokeColor : oGS.adfFillColor;
+                    double* padf = ( EQUAL2(szToken, "RG") ) ? &oGS.adfStrokeColor[0] : &oGS.adfFillColor[0];
                     if (!UnstackTokens(szToken, 3, aszTokenStack, nTokenStackSize, padf))
                     {
                         CPLDebug("PDF", "Should not happen at line %d", __LINE__);
@@ -1473,14 +1475,14 @@ OGRGeometry* PDFDataset::BuildGeometry(std::vector<double>& oCoords,
                 {
                     poLS->closeRings();
 
-                    OGRPoint* poCenter = nullptr;
+                    std::unique_ptr<OGRPoint> poCenter;
 
                    if (nPolys == 0 &&
                         poLS &&
                         poLS->getNumPoints() == 1 + BEZIER_STEPS * 4 )
                    {
                         // Recognize points as written by GDAL (ogr-sym-3 : circle (filled))
-                        poCenter = PDFGetCircleCenter(poLS);
+                        poCenter.reset(PDFGetCircleCenter(poLS));
                    }
 
                     if (nPolys == 0 &&
@@ -1489,7 +1491,7 @@ OGRGeometry* PDFDataset::BuildGeometry(std::vector<double>& oCoords,
                         poLS->getNumPoints() == 5)
                     {
                         // Recognize points as written by GDAL (ogr-sym-5: square (filled))
-                        poCenter = PDFGetSquareCenter(poLS);
+                        poCenter.reset(PDFGetSquareCenter(poLS));
 
                         /* ESRI points */
                         if (poCenter == nullptr &&
@@ -1499,8 +1501,8 @@ OGRGeometry* PDFDataset::BuildGeometry(std::vector<double>& oCoords,
                             poLS->getY(2) == poLS->getY(3) &&
                             poLS->getX(3) == poLS->getX(0))
                         {
-                            poCenter = new OGRPoint((poLS->getX(0) + poLS->getX(1)) / 2,
-                                                    (poLS->getY(0) + poLS->getY(2)) / 2);
+                            poCenter.reset(new OGRPoint((poLS->getX(0) + poLS->getX(1)) / 2,
+                                                    (poLS->getY(0) + poLS->getY(2)) / 2));
                         }
                     }
                     // Recognize points as written by GDAL (ogr-sym-7: triangle (filled))
@@ -1508,19 +1510,20 @@ OGRGeometry* PDFDataset::BuildGeometry(std::vector<double>& oCoords,
                              poLS &&
                              poLS->getNumPoints() == 4)
                     {
-                        poCenter = PDFGetTriangleCenter(poLS);
+                        poCenter.reset(PDFGetTriangleCenter(poLS));
                     }
                     // Recognize points as written by GDAL (ogr-sym-9: star (filled))
                     else if (nPolys == 0 &&
                              poLS &&
                              poLS->getNumPoints() == 11)
                     {
-                        poCenter = PDFGetStarCenter(poLS);
+                        poCenter.reset(PDFGetStarCenter(poLS));
                     }
 
                     if (poCenter)
                     {
-                        poGeom = poCenter;
+                        delete poGeom;
+                        poGeom = poCenter.release();
                         break;
                     }
 

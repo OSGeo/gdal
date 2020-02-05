@@ -31,6 +31,7 @@
 #include "ogr_spatialref.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstring>
 #include <limits>
@@ -948,7 +949,7 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
                  m_bReversePj ? "(reversed) " : "");
 #endif
     }
-    else if( !bWebMercatorToWGS84LongLat )
+    else if( !bWebMercatorToWGS84LongLat && poSRSSource && poSRSTarget )
     {
         const auto CanUseAuthorityDef = [](const OGRSpatialReference* poSRS1,
                                            OGRSpatialReference* poSRSFromAuth,
@@ -1064,7 +1065,7 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
         CPLFree(pszTargetSRS);
     }
 
-    if( options.d->osCoordOperation.empty() )
+    if( options.d->osCoordOperation.empty() && poSRSSource && poSRSTarget )
     {
         // Determine if we can skip the transformation completely.
         bNoTransform = !bSourceWrap && !bTargetWrap &&
@@ -1549,6 +1550,7 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
     if( bSourceLatLong && bSourceWrap )
     {
         OGRAxisOrientation orientation;
+        assert( poSRSSource );
         poSRSSource->GetAxis(nullptr, 0, &orientation);
         if( orientation == OAO_East )
         {
@@ -1961,6 +1963,7 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
     if( bTargetLatLong && bTargetWrap )
     {
         OGRAxisOrientation orientation;
+        assert( poSRSTarget );
         poSRSTarget->GetAxis(nullptr, 0, &orientation);
         if( orientation == OAO_East )
         {

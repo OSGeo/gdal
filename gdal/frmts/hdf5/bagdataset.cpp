@@ -41,6 +41,7 @@
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 
+#include <cassert>
 #include <algorithm>
 #include <limits>
 #include <utility>
@@ -900,6 +901,7 @@ CPLErr BAGResampledBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     std::vector<int> counts;
     if( poGDS->m_bMask )
     {
+        CPLAssert(pImage); // to make CLang Static Analyzer happy
         memset(pImage, 0, nBlockXSize * nBlockYSize);
     }
     else if( poGDS->m_ePopulation == BAGDataset::Population::MEAN )
