@@ -5189,17 +5189,11 @@ export BINTRUE
 
 AC_SUBST(BINTRUE,$BINTRUE)
 
-dnl ---------------------------------------------------------------------------
-dnl If datadir is set to @prefix@/share, the modify it to be
-dnl @prefix@/share/gdal.  I wish we could default this.
-dnl ---------------------------------------------------------------------------
-if test "$datadir" = '${prefix}/share' ; then
-  datadir='${prefix}/share/gdal'
-fi
-
-if test "$datadir" = '${datarootdir}' \
-     -a "$datarootdir" = '${prefix}/share' ; then
-  datarootdir='${prefix}/share/gdal'
+# @datadir@ is meant for application specific readonly arch-independent
+# data. We wanna have this in an application specific subdir of the
+# datarootdir - unless something else is specified explicitly.
+if test "$datadir" = '${datarootdir}' ; then
+    AC_SUBST([datadir], ['${datarootdir}/gdal-3.0'])dnl
 fi
 
 dnl ---------------------------------------------------------------------------
