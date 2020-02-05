@@ -16,7 +16,7 @@ header fields are returned dataset level metadata.
 Driver capabilities
 -------------------
 
-.. supports_create::
+.. supports_createcopy::
 
 .. supports_georeferencing::
 
