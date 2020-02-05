@@ -365,13 +365,16 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
             if ( pszWKT != nullptr )
             {
                 OGRSpatialReference oSRS;
-                OGRSpatialReference *poLatLong = nullptr;
+                OGRSpatialReference *poLongLat = nullptr;
                 if ( OGRERR_NONE == oSRS.importFromWkt ( pszWKT ))
-                    poLatLong = oSRS.CloneGeogCS();
-                if ( poLatLong )
-                    poTransform = OGRCreateCoordinateTransformation( poLatLong, &oSRS );
-                if ( poLatLong )
-                    delete poLatLong;
+                    poLongLat = oSRS.CloneGeogCS();
+                if ( poLongLat )
+                {
+                    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                    poLongLat->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                    poTransform = OGRCreateCoordinateTransformation( poLongLat, &oSRS );
+                    delete poLongLat;
+                }
             }
 
             for ( int iLine = 10; iLine < nLines; iLine++ )

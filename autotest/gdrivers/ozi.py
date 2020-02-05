@@ -4,10 +4,10 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  OZI Testing.
-# Author:   Even Rouault <even dot rouault at mines dash paris dot org>
+# Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2011, Even Rouault <even dot rouault at mines-paris dot org>
+# Copyright (c) 2011, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -65,7 +65,7 @@ def test_ozi_online_1():
 
         expected_gt = (-1841870.2731215316, 3310.9550245520159, -13.025246304875619, 8375316.4662204208, -16.912440131236657, -3264.1162527118681)
         for i in range(6):
-            assert abs(gt[i] - expected_gt[i]) <= 1e-7, 'bad geotransform'
+            assert gt[i] == pytest.approx(expected_gt[i], abs=1e-7), 'bad geotransform'
 
     else:
         gcps = ds.GetGCPs()
@@ -73,7 +73,7 @@ def test_ozi_online_1():
         assert len(gcps) == 4, 'did not get expected gcp count.'
 
         gcp0 = gcps[0]
-        assert gcp0.GCPPixel == 61 and gcp0.GCPLine == 436 and abs(gcp0.GCPX - (9112088.39654255)) <= 0.001 and abs(gcp0.GCPY - -999503.568004833) <= 0.001, \
+        assert gcp0.GCPPixel == 61 and gcp0.GCPLine == 436 and gcp0.GCPX == pytest.approx(-1653990.4525324, abs=0.001) and gcp0.GCPY == pytest.approx(6950885.0402214, abs=0.001), \
             'did not get expected gcp.'
 
         wkt = ds.GetGCPProjection()

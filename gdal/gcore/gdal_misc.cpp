@@ -1459,12 +1459,15 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
                 // coordinates.
                 if ( eErr == OGRERR_NONE )
                 {
-                    OGRSpatialReference *poLatLong = oSRS.CloneGeogCS();
+                    OGRSpatialReference *poLongLat = oSRS.CloneGeogCS();
 
-                    if ( poLatLong )
+                    if ( poLongLat )
                     {
+                        oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                        poLongLat->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
                         OGRCoordinateTransformation *poTransform =
-                            OGRCreateCoordinateTransformation( poLatLong,
+                            OGRCreateCoordinateTransformation( poLongLat,
                                                                &oSRS );
                         if ( poTransform )
                         {
@@ -1472,7 +1475,7 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
                                 poTransform->Transform( 1, &dfLon, &dfLat ));
                             delete poTransform;
                         }
-                        delete poLatLong;
+                        delete poLongLat;
                     }
                 }
             }
