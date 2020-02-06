@@ -5896,6 +5896,43 @@ else
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Detect OpenEXR
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(exr,[  --with-exr            Include EXR support via OpenEXR library],,)
+
+HAVE_EXR=no
+EXR_CFLAGS=""
+
+if test "$with_exr" = "no" ; then
+
+  AC_MSG_NOTICE([EXR support disabled.])
+
+else
+
+  PKG_PROG_PKG_CONFIG([0.21])
+  PKG_CHECK_MODULES([EXR], [OpenEXR >= 2.2], [HAVE_EXR=yes], [HAVE_EXR=no])
+
+  if test -n "$EXR_CFLAGS"; then
+
+    # Test that the package found is for the right architecture
+    saved_LIBS="$LIBS"
+    LIBS="$EXR_LIBS"
+    AC_CHECK_LIB(IlmImf,ImfTiledInputReadTile, [HAVE_EXR=yes], [HAVE_EXR=no])
+    LIBS="$saved_LIBS"
+
+    if test "$HAVE_EXR" = "yes"; then
+        OPT_GDAL_FORMATS="exr $OPT_GDAL_FORMATS"
+        LIBS="$EXR_LIBS $LIBS"
+    else
+        EXR_CFLAGS=""
+    fi
+  fi
+fi
+
+AC_SUBST(EXR_CFLAGS,$EXR_CFLAGS)
+
+dnl ---------------------------------------------------------------------------
 dnl Test if sprintf can be overloaded with _XOPEN_SOURCE being defined or other,
 dnl includes being included before, which mingw64 4.8 doesn't like (#6390)
 dnl ---------------------------------------------------------------------------
@@ -6041,6 +6078,7 @@ LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])
 LOC_MSG([  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}])
 LOC_MSG([  HDFS support:              ${HDFS_ENABLED}])
 LOC_MSG([  TileDB support:            ${TILEDB_SETTING}])
+LOC_MSG([  EXR support:               ${HAVE_EXR}])
 LOC_MSG([  userfaultfd support:       ${ENABLE_UFFD}])
 LOC_MSG([  misc. gdal formats:       ${GDALFORMATS_ENABLED}])
 LOC_MSG([  disabled gdal formats:    ${GDALFORMATS_DISABLED}])
