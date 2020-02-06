@@ -47,7 +47,7 @@ namespace PCIDSK
 /************************************************************************/
 /*                             CPCIDSKFile                              */
 /************************************************************************/
-    class CPCIDSKFile : public PCIDSKFile
+    class CPCIDSKFile final: public PCIDSKFile
     {
         friend PCIDSKFile PCIDSK_DLL *Open( std::string filename, 
             std::string access, const PCIDSKInterfaces *interfaces );
