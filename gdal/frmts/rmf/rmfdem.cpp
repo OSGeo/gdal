@@ -670,7 +670,7 @@ size_t RMFDataset::DEMCompress(const GByte* pabyIn, GUInt32 nSizeIn,
         if(nRecordSize == 1)
         {
             eRecordType = eCurrType;
-            nRecordElementSize = anDeltaTypeSize[eCurrType >> 5];
+            //nRecordElementSize = anDeltaTypeSize[eCurrType >> 5];
             continue;
         }
 

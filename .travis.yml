@@ -139,7 +139,7 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: required
-      dist: trusty
+      dist: xenial
       cache:
         apt: true
       env:
@@ -150,7 +150,7 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: required
-      dist: trusty
+      dist: xenial
       cache:
         apt: true
       env:

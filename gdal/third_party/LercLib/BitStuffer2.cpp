@@ -481,7 +481,10 @@ void BitStuffer2::BitStuff(Byte** ppByte, const vector<unsigned int>& dataVec, i
 
   // copy the bytes to the outgoing byte stream
   size_t numBytesUsed = numBytes - NumTailBytesNotNeeded(numElements, numBits);
-  memcpy(*ppByte, &m_tmpBitStuffVec[0], numBytesUsed);
+#ifdef CSA_BUILD
+  assert( numElements );
+#endif
+  memcpy(*ppByte, m_tmpBitStuffVec.data(), numBytesUsed);
 
   *ppByte += numBytesUsed;
 }

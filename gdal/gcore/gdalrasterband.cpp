@@ -4794,7 +4794,9 @@ inline double GetPixelValue( GDALDataType eDataType,
             }
             break;
         default:
+#ifndef CSA_BUILD
             dfValue = 0.0;
+#endif
             CPLAssert( false );
     }
 

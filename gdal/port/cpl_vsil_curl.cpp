@@ -31,6 +31,7 @@
 #include "cpl_vsil_curl_class.h"
 
 #include <algorithm>
+#include <array>
 #include <set>
 #include <map>
 #include <memory>
@@ -1741,20 +1742,16 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
 #endif
 
     std::vector<CURL*> aHandles;
-    std::vector<WriteFuncStruct> asWriteFuncData;
-    std::vector<WriteFuncStruct> asWriteFuncHeaderData;
+    std::vector<WriteFuncStruct> asWriteFuncData(nRanges);
+    std::vector<WriteFuncStruct> asWriteFuncHeaderData(nRanges);
     std::vector<char*> apszRanges;
     std::vector<struct curl_slist*> aHeaders;
 
     struct CurlErrBuffer
     {
-        char szCurlErrBuf[CURL_ERROR_SIZE+1];
+        std::array<char,CURL_ERROR_SIZE+1> szCurlErrBuf;
     };
-    std::vector<CurlErrBuffer> asCurlErrors;
-
-    asWriteFuncData.resize(nRanges);
-    asWriteFuncHeaderData.resize(nRanges);
-    asCurlErrors.resize(nRanges);
+    std::vector<CurlErrBuffer> asCurlErrors(nRanges);
 
     const bool bMergeConsecutiveRanges = CPLTestBool(CPLGetConfigOption(
         "GDAL_HTTP_MERGE_CONSECUTIVE_RANGES", "TRUE"));
@@ -1831,7 +1828,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
 
         asCurlErrors[iRequest].szCurlErrBuf[0] = '\0';
         curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER,
-                         asCurlErrors[iRequest].szCurlErrBuf );
+                         &asCurlErrors[iRequest].szCurlErrBuf[0] );
 
         headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET", headers));
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -1874,7 +1871,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
                      osURL.c_str(),
                      rangeStr,
                      static_cast<int>(response_code),
-                     asCurlErrors[iRange].szCurlErrBuf);
+                     &asCurlErrors[iRange].szCurlErrBuf[0]);
         }
 
         if( (response_code != 206 && response_code != 225) ||

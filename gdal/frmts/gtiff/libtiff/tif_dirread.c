@@ -5180,6 +5180,7 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 				if (err==TIFFReadDirEntryErrOk)
 				{
 					int m;
+                                        assert(data); /* avoid CLang static Analyzer false positive */
 					m=TIFFSetField(tif,dp->tdir_tag,data[0],data[1]);
 					_TIFFfree(data);
 					if (!m)

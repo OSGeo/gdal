@@ -3243,6 +3243,10 @@ GDALCopyWords64( const void * CPL_RESTRICT pSrcData,
 
         if( nWordCount == 1 )
         {
+#ifdef CSA_BUILD
+            // Avoid false positives...
+            memcpy(pDstData, pSrcData, nSrcDataTypeSize);
+#else
             if( nSrcDataTypeSize == 2 )
                 memcpy(pDstData, pSrcData, 2);
             else if( nSrcDataTypeSize == 4 )
@@ -3251,6 +3255,7 @@ GDALCopyWords64( const void * CPL_RESTRICT pSrcData,
                 memcpy(pDstData, pSrcData, 8 );
             else /* if( eSrcType == GDT_CFloat64 ) */
                 memcpy(pDstData, pSrcData, 16);
+#endif
             return;
         }
 

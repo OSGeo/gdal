@@ -257,7 +257,8 @@ void OGRXPlaneAptReader::Read()
                 }
                 return;
             }
-            else if( nTokens == 0 || !assertMinCol(2) )
+            else if( papszTokens == nullptr || papszTokens[0] == nullptr ||
+                     !assertMinCol(2) )
             {
                 break;
             }
