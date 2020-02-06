@@ -34,7 +34,8 @@ RUN apt-get update -y \
        libkml-dev libmysqlclient-dev libogdi3.2-dev \
        libcfitsio-dev openjdk-8-jdk libzstd1-dev \
        libpq-dev libssl-dev libboost-dev \
-       autoconf automake bash-completion libarmadillo-dev
+       autoconf automake bash-completion libarmadillo-dev \
+       libopenexr-dev
 
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 ARG PROJ_INSTALL_PREFIX
@@ -265,7 +266,7 @@ RUN apt-get update; \
         libkmlbase1 libkmlconvenience1 libkmldom1 libkmlengine1 libkmlregionator1 libkmlxsd1 \
         libmysqlclient20 libogdi3.2 libcfitsio5 openjdk-8-jre \
         libzstd1 bash bash-completion libpq5 libssl1.1 \
-        libarmadillo8 libpython3.6
+        libarmadillo8 libpython3.6 libopenexr22
 
 # Order layers starting with less frequently varying ones
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
