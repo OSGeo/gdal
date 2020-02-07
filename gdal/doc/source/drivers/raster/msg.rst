@@ -37,6 +37,10 @@ Build Instructions
 
 Clone the EUMETSAT library for wavelet decompression into ``frmts/msg``.
 
+If you are building with Visual Studio 6.0, extract the .vc makefiles
+for the PublicDecompWT from the file `PublicDecompWTMakefiles.zip`
+stored in that directory.
+
 If you build using the GNUMakefile, use *--with-msg* option to enable
 MSG driver:
 
