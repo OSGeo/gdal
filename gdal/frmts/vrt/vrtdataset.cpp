@@ -86,7 +86,9 @@ VRTDataset::VRTDataset( int nXSize, int nYSize ) :
 VRTDatasetH CPL_STDCALL VRTCreate(int nXSize, int nYSize)
 
 {
-    return new VRTDataset(nXSize, nYSize);
+    auto poDS = new VRTDataset(nXSize, nYSize);
+    poDS->eAccess = GA_Update;
+    return poDS;
 }
 
 /*! @cond Doxygen_Suppress */
@@ -1914,6 +1916,15 @@ VRTDataset::IBuildOverviews( const char *pszResampling,
                              GDALProgressFunc pfnProgress,
                              void * pProgressData )
 {
+    if( !oOvManager.IsInitialized() )
+    {
+        const char* pszDesc = GetDescription();
+        if( pszDesc[0] )
+        {
+            oOvManager.Initialize( this, pszDesc );
+        }
+    }
+
     // Make implicit overviews invisible, but do not destroy them in case they
     // are already used.  Should the client do that?  Behaviour might undefined
     // in GDAL API?
