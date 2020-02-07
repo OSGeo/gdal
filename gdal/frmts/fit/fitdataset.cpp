@@ -1196,7 +1196,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
     unsigned long bytesPerPixel = nBands * nDTSize;
 
     size_t pageBytes = blockX * blockY * bytesPerPixel;
-    char *output = (char *) malloc(pageBytes);
+    char *output = (char *) calloc(1, pageBytes);
     if (! output)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
