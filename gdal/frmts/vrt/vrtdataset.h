@@ -164,6 +164,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL: public GDALDataset
     friend struct VRTFlushCacheStruct<VRTWarpedDataset>;
     friend struct VRTFlushCacheStruct<VRTPansharpenedDataset>;
     friend class VRTSourcedRasterBand;
+    friend VRTDatasetH CPL_STDCALL VRTCreate(int nXSize, int nYSize);
 
     OGRSpatialReference* m_poSRS = nullptr;
 
