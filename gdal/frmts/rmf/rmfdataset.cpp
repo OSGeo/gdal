@@ -966,6 +966,7 @@ do {                                                    \
             CPLCalloc( sHeader.nExtHdrSize, 1 ) );
 
         RMF_WRITE_LONG( pabyExtHeader, sExtHeader.nEllipsoid, 24 );
+        RMF_WRITE_LONG( pabyExtHeader, sExtHeader.nVertDatum, 28 );
         RMF_WRITE_LONG( pabyExtHeader, sExtHeader.nDatum, 32 );
         RMF_WRITE_LONG( pabyExtHeader, sExtHeader.nZone, 36 );
 
@@ -1345,6 +1346,7 @@ do {                                                                    \
         if( poDS->sHeader.nExtHdrSize >= 36 + 4 )
         {
             RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nEllipsoid, 24 );
+            RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nVertDatum, 28 );
             RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nDatum, 32 );
             RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nZone, 36 );
         }
