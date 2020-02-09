@@ -96,6 +96,8 @@ constexpr long PAN_ELLIPSOID_KRASSOVSKY  = 1L;  // Krassovsky, 1940
 // constexpr long PAN_ELLIPSOID_BESSEL1841  = 7L;  // Bessel, 1841
 // constexpr long PAN_ELLIPSOID_AIRY1830    = 8L;  // Airy, 1830
 constexpr long PAN_ELLIPSOID_WGS84       = 9L;  // WGS, 1984 (GPS)
+constexpr long PAN_ELLIPSOID_GSK2011     = 46L;   // GSK-2011
+constexpr long PAN_ELLIPSOID_PZ90        = 47L;   // PZ90
 
 /************************************************************************/
 /*  Correspondence between "Panorama" and EPSG datum codes.             */
@@ -435,6 +437,18 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
             OGRSpatialReference oGCS;
             oGCS.importFromEPSG( aoDatums[iDatum] );
             CopyGeogCSFrom( &oGCS );
+        }
+        else if( iEllips == PAN_ELLIPSOID_GSK2011 )
+        {
+            OGRSpatialReference oGCS;
+            oGCS.importFromEPSG( 7683 );
+            CopyGeogCSFrom( &oGCS );
+        }
+        else if( iEllips == PAN_ELLIPSOID_PZ90 )
+        {
+            SetGeogCS( "PZ-90.11", "Parametry_Zemli_1990_11",
+                       "PZ-90", 6378136, 298.257839303);
+            SetAuthority( "SPHEROID", "EPSG", 7054 );
         }
         else if( iEllips > 0
                  && iEllips < NUMBER_OF_ELLIPSOIDS
