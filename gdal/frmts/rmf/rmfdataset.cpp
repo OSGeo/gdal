@@ -1725,7 +1725,17 @@ do {                                                                    \
         if(poDS->sHeader.iEPSGCode > RMF_EPSG_MIN_CODE &&
            (OGRERR_NONE != res || oSRS.IsLocal()))
         {
-            oSRS.importFromEPSG(poDS->sHeader.iEPSGCode);
+            res = oSRS.importFromEPSG(poDS->sHeader.iEPSGCode);
+        }
+
+        const char* pszSetVertCS =
+            CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                                "RMF_SET_VERTCS",
+                                 CPLGetConfigOption("RMF_SET_VERTCS", "NO"));
+        if(CPLTestBool(pszSetVertCS) && res == OGRERR_NONE && 
+           poDS->sExtHeader.nVertDatum > 0)
+        {
+            oSRS.importVertCSFromPanorama(poDS->sExtHeader.nVertDatum);
         }
 
         if( poDS->pszProjection )
@@ -3088,6 +3098,10 @@ void GDALRegister_RMF()
     poDriver->pfnIdentify = RMFDataset::Identify;
     poDriver->pfnOpen = RMFDataset::Open;
     poDriver->pfnCreate = RMFDataset::Create;
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='RMF_SET_VERTCS' type='string' description='Layers spatial reference will include vertical coordinate system description if exist' default='NO'/>"
+        "</OpenOptionList>");
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
