@@ -37,14 +37,6 @@ RUN apt-get update -y \
        autoconf automake bash-completion libarmadillo-dev \
        libopenexr-dev
 
-ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
-ARG PROJ_INSTALL_PREFIX
-RUN \
-    mkdir -p /build_projgrids/${PROJ_INSTALL_PREFIX}/share/proj \
-    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
-    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/${PROJ_INSTALL_PREFIX}/share/proj \
-    && rm -f *.zip
-
 # Build likbkea
 ARG KEA_VERSION=c6d36f3db5e4
 RUN wget -q https://bitbucket.org/chchrsc/kealib/get/${KEA_VERSION}.zip \
@@ -140,6 +132,7 @@ ARG RSYNC_REMOTE
 
 # Build PROJ
 ARG PROJ_VERSION=master
+ARG PROJ_INSTALL_PREFIX
 RUN mkdir proj \
     && wget -q https://github.com/OSGeo/proj.4/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
@@ -252,7 +245,7 @@ RUN date
 RUN apt-get update; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libsqlite3-0 libtiff5 libcurl4 \
-        curl unzip ca-certificates
+        wget curl unzip ca-certificates
 
 # GDAL dependencies
 RUN apt-get update; \
@@ -272,18 +265,12 @@ RUN apt-get update; \
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 ARG PROJ_INSTALL_PREFIX
 RUN \
-    mkdir -p ${PROJ_INSTALL_PREFIX}/share/proj \
-    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
-    && unzip -j -u -o proj-datumgrid-latest.zip  -d ${PROJ_INSTALL_PREFIX}/share/proj \
-    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-europe-latest.zip \
-    && unzip -j -u -o proj-datumgrid-europe-latest.zip -d ${PROJ_INSTALL_PREFIX}/share/proj \
-    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-oceania-latest.zip \
-    && unzip -j -u -o proj-datumgrid-oceania-latest.zip -d ${PROJ_INSTALL_PREFIX}/share/proj \
-    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-world-latest.zip  \
-    && unzip -j -u -o proj-datumgrid-world-latest.zip -d ${PROJ_INSTALL_PREFIX}/share/proj \
-    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-north-america-latest.zip \
-    && unzip -j -u -o proj-datumgrid-north-america-latest.zip -d ${PROJ_INSTALL_PREFIX}/share/proj  \
-    && rm -f *.zip
+    mkdir -p ${PROJ_INSTALL_PREFIX}/share/proj; \
+    wget --no-verbose --mirror https://cdn.proj.org/; \
+    rm -f cdn.proj.org/*.js; \
+    rm -f cdn.proj.org/*.css; \
+    mv cdn.proj.org/* ${PROJ_INSTALL_PREFIX}/share/proj/; \
+    rmdir cdn.proj.org
 
 COPY --from=builder  /build_thirdparty/usr/ /usr/
 
