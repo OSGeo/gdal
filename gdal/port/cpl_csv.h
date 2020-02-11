@@ -66,6 +66,8 @@ int CPL_DLL CSVGetFieldId( FILE *, const char * );
 int CPL_DLL CSVGetFieldIdL( VSILFILE *, const char * );
 int CPL_DLL CSVGetFileFieldId( const char *, const char * );
 
+void CPL_DLL CSVIngest( const char *pszFilename );
+
 void CPL_DLL CSVDeaccess( const char * );
 
 const char CPL_DLL *CSVGetField( const char *, const char *, const char *,

@@ -476,7 +476,7 @@ static void CSVIngest( CSVTable *psTable )
     psTable->fp = nullptr;
 }
 
-static void CSVIngest( const char *pszFilename )
+void CSVIngest( const char *pszFilename )
 
 {
     CSVTable *psTable = CSVAccess( pszFilename );
