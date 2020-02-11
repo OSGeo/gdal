@@ -420,6 +420,7 @@ static CPLString GetEncodingFromLDIDNumber(int nLDID)
 
 static CPLString GetEncodingFromCPG( const char* pszCPG )
 {
+    // see https://support.esri.com/en/technical-article/000013192
     CPLString osEncodingFromCPG;
     const int nCPG = atoi(pszCPG);
     if( (nCPG >= 437 && nCPG <= 950)
@@ -434,7 +435,8 @@ static CPLString GetEncodingFromCPG( const char* pszCPG )
         else
             osEncodingFromCPG.Printf( "ISO-8859-%s", pszCPG + 4 );
     }
-    else if( STARTS_WITH_CI(pszCPG, "UTF-8") )
+    else if( STARTS_WITH_CI(pszCPG, "UTF-8") ||
+             STARTS_WITH_CI(pszCPG, "UTF8") )
         osEncodingFromCPG =  CPL_ENC_UTF8;
     else if( STARTS_WITH_CI(pszCPG, "ANSI 1251") )
         osEncodingFromCPG = "CP1251";
