@@ -4339,9 +4339,11 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
         {
             // Remove DST_WKT from option list to prevent warning from driver.
             const int nSRSPos = CSLFindName(papszOptions, "DST_SRSWKT");
-            papszOptions = CSLRemoveStrings(papszOptions, nSRSPos, 1, nullptr);
+            CPLStringList aosOptionsWithoutDstSRSWKT(
+                CSLRemoveStrings(CSLDuplicate(papszOptions), nSRSPos, 1, nullptr));
             poDstLayer = ICreateLayer(pszNewName, &oDstSpaRef,
-                                      poSrcDefn->GetGeomType(), papszOptions);
+                                      poSrcDefn->GetGeomType(),
+                                      aosOptionsWithoutDstSRSWKT.List());
         }
     }
 
