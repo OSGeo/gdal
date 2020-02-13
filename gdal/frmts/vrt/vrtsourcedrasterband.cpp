@@ -193,7 +193,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             else
             {
                 VRTSimpleSource* const poSource
-                    = reinterpret_cast<VRTSimpleSource *>( papoSources[i] );
+                    = static_cast<VRTSimpleSource *>( papoSources[i] );
                 // The window we will actually request from the source raster band.
                 double dfReqXOff = 0.0;
                 double dfReqYOff = 0.0;
@@ -256,7 +256,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         {
             for( int iLine = 0; iLine < nBufYSize; iLine++ )
             {
-                memset( reinterpret_cast<GByte *>( pData )
+                memset( static_cast<GByte *>( pData )
                         + static_cast<GIntBig>(iLine) * nLineSpace,
                         0,
                         static_cast<size_t>(nBufXSize * nPixelSpace) );
@@ -272,7 +272,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         for( int iLine = 0; iLine < nBufYSize; iLine++ )
         {
             GDALCopyWords( &dfWriteValue, GDT_Float64, 0,
-                           reinterpret_cast<GByte *>( pData )
+                           static_cast<GByte *>( pData )
                            + static_cast<GIntBig>( nLineSpace ) * iLine,
                            eBufType, static_cast<int>(nPixelSpace), nBufXSize );
         }
@@ -362,7 +362,7 @@ int  VRTSourcedRasterBand::IGetDataCoverageStatus( int nXOff,
             return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED |
                    GDAL_DATA_COVERAGE_STATUS_DATA;
         }
-        VRTSimpleSource* poSS = reinterpret_cast<VRTSimpleSource*>(papoSources[iSource]);
+        VRTSimpleSource* poSS = static_cast<VRTSimpleSource*>(papoSources[iSource]);
         // Check if the AOI is fully inside the source
         if( nXOff >= poSS->m_dfDstXOff &&
             nYOff >= poSS->m_dfDstYOff &&
@@ -408,7 +408,7 @@ int  VRTSourcedRasterBand::IGetDataCoverageStatus( int nXOff,
                 else if( poRes != nullptr && poRes->getGeometryType() == wkbPolygon )
                 {
                     delete poPolyNonCoveredBySources;
-                    poPolyNonCoveredBySources = reinterpret_cast<OGRPolygon*>(poRes);
+                    poPolyNonCoveredBySources = poRes->toPolygon();
                 }
                 else
                 {
@@ -490,7 +490,7 @@ bool VRTSourcedRasterBand::CanUseSourcesMinMaxImplementations()
         if( !(papoSources[iSource]->IsSimpleSource()) )
             return false;
         VRTSimpleSource * const poSimpleSource
-            = reinterpret_cast<VRTSimpleSource *>( papoSources[iSource] );
+            = static_cast<VRTSimpleSource *>( papoSources[iSource] );
         GDALRasterBand* poBand = poSimpleSource->GetBand();
         if( poBand == nullptr )
             return false;
@@ -908,11 +908,11 @@ CPLErr VRTSourcedRasterBand::AddSource( VRTSource *poNewSource )
         CPLRealloc( papoSources, sizeof(void*) * nSources ) );
     papoSources[nSources-1] = poNewSource;
 
-    reinterpret_cast<VRTDataset *>( poDS )->SetNeedsFlush();
+    static_cast<VRTDataset *>( poDS )->SetNeedsFlush();
 
     if( poNewSource->IsSimpleSource() )
     {
-        VRTSimpleSource* poSS = reinterpret_cast<VRTSimpleSource*>( poNewSource );
+        VRTSimpleSource* poSS = static_cast<VRTSimpleSource*>( poNewSource );
         if( GetMetadataItem("NBITS", "IMAGE_STRUCTURE") != nullptr)
         {
             int nBits = atoi(GetMetadataItem("NBITS", "IMAGE_STRUCTURE"));
@@ -970,7 +970,7 @@ CPLErr VRTSourcedRasterBand::XMLInit( CPLXMLNode * psTree,
 /* -------------------------------------------------------------------- */
 /*      Process sources.                                                */
 /* -------------------------------------------------------------------- */
-    VRTDriver * const poDriver = reinterpret_cast<VRTDriver *>(
+    VRTDriver * const poDriver = static_cast<VRTDriver *>(
         GDALGetDriverByName( "VRT" ) );
 
     for( CPLXMLNode *psChild = psTree->psChild;
@@ -1444,7 +1444,7 @@ const char *VRTSourcedRasterBand::GetMetadataItem( const char * pszName,
                 continue;
 
             VRTSimpleSource * const poSrc
-                = reinterpret_cast<VRTSimpleSource *>( papoSources[iSource] );
+                = static_cast<VRTSimpleSource *>( papoSources[iSource] );
 
             double dfReqXOff = 0.0;
             double dfReqYOff = 0.0;
@@ -1561,7 +1561,7 @@ CPLErr VRTSourcedRasterBand::SetMetadataItem( const char *pszName,
     if( pszDomain != nullptr
         && EQUAL(pszDomain,"new_vrt_sources") )
     {
-        VRTDriver * const poDriver = reinterpret_cast<VRTDriver *>(
+        VRTDriver * const poDriver = static_cast<VRTDriver *>(
             GDALGetDriverByName( "VRT" ) );
 
         CPLXMLNode * const psTree = CPLParseXMLString( pszValue );
@@ -1594,7 +1594,7 @@ CPLErr VRTSourcedRasterBand::SetMetadataItem( const char *pszName,
             return CE_Failure;
         }
 
-        VRTDriver * const poDriver = reinterpret_cast<VRTDriver *>(
+        VRTDriver * const poDriver = static_cast<VRTDriver *>(
             GDALGetDriverByName( "VRT" ) );
 
         CPLXMLNode * const psTree = CPLParseXMLString( pszValue );
@@ -1611,7 +1611,7 @@ CPLErr VRTSourcedRasterBand::SetMetadataItem( const char *pszName,
         {
             delete papoSources[iSource];
             papoSources[iSource] = poSource;
-            reinterpret_cast<VRTDataset *>( poDS )->SetNeedsFlush();
+            static_cast<VRTDataset *>( poDS )->SetNeedsFlush();
             return CE_None;
         }
 
@@ -1633,7 +1633,7 @@ CPLErr VRTSourcedRasterBand::SetMetadata( char **papszNewMD, const char *pszDoma
             || EQUAL(pszDomain,"vrt_sources")) )
     {
         VRTDriver * const poDriver
-            = reinterpret_cast<VRTDriver *>( GDALGetDriverByName( "VRT" ) );
+            = static_cast<VRTDriver *>( GDALGetDriverByName( "VRT" ) );
 
         if( EQUAL(pszDomain,"vrt_sources") )
         {

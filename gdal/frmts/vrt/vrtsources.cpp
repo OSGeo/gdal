@@ -1367,7 +1367,7 @@ VRTSimpleSource::RasterIO( GDALDataType eBandDataType,
                     eBandDataType, 0, 0, psExtraArg );
             if( eErr == CE_None )
             {
-                GByte* pabyTemp = reinterpret_cast<GByte*>(pTemp);
+                GByte* pabyTemp = static_cast<GByte*>(pTemp);
                 for( int iY = 0; iY < nOutYSize; iY++ )
                 {
                     GDALCopyWords(pabyTemp + static_cast<size_t>(iY) *
@@ -1730,7 +1730,7 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
                 0, 0, 0, psExtraArg );
             if( eErr == CE_None )
             {
-                GByte* pabyTemp = reinterpret_cast<GByte*>(pTemp);
+                GByte* pabyTemp = static_cast<GByte*>(pTemp);
                 const size_t nSrcBandSpace = static_cast<size_t>(nOutYSize) *
                                                 nOutXSize * nBandDTSize;
                 for( int iBand = 0; iBand < nBandCount; iBand ++ )
