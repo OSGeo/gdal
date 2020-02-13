@@ -566,7 +566,7 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
     auto seek = false;
     if (m_queriedSpatialIndex && !m_ignoreSpatialFilter) {
         const auto item = m_foundItems[m_featuresPos];
-        m_offset = m_offsetFeatures + item.nodeItem.offset;
+        m_offset = m_offsetFeatures + item.offset;
         fid = item.index;
         seek = true;
     } else {
