@@ -687,7 +687,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
             {
                 poSrcDS = static_cast<GDALDataset *>( GDALOpenEx(
                         osSrcDSName, nOpenFlags, nullptr,
-                        (const char* const* )papszOpenOptions, nullptr ) );
+                        papszOpenOptions, nullptr ) );
                 if( poSrcDS )
                 {
                     bAddToMapIfOk = true;
@@ -698,7 +698,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
         {
             poSrcDS = static_cast<GDALDataset *>( GDALOpenEx(
                         osSrcDSName, nOpenFlags, nullptr,
-                        (const char* const* )papszOpenOptions, nullptr ) );
+                        papszOpenOptions, nullptr ) );
         }
     }
     else
@@ -1172,7 +1172,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
         else if( dfOutXOff > INT_MAX )
             *pnOutXOff = INT_MAX;
         else
-            *pnOutXOff = (int) (dfOutXOff+0.001);
+            *pnOutXOff = static_cast<int>(dfOutXOff+0.001);
 
         // Apply correction on floating-point source window
         {
@@ -1188,7 +1188,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
             return FALSE;
         if( dfOutRightXOff > INT_MAX )
             dfOutRightXOff = INT_MAX;
-        *pnOutXSize = (int) ceil(dfOutRightXOff-0.001) - *pnOutXOff;
+        *pnOutXSize = static_cast<int>(ceil(dfOutRightXOff-0.001) - *pnOutXOff);
 
         if( *pnOutXSize > INT_MAX - *pnOutXOff ||
             *pnOutXOff + *pnOutXSize > nBufXSize )
@@ -1709,7 +1709,7 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
     GByte* pabyOut =
         static_cast<unsigned char *>(pData)
         + nOutXOff * nPixelSpace
-        + (GPtrDiff_t)nOutYOff * nLineSpace;
+        + static_cast<GPtrDiff_t>(nOutYOff) * nLineSpace;
 
     CPLErr eErr = CE_Failure;
 

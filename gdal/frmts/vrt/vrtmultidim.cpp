@@ -42,6 +42,9 @@
 
 struct VRTArrayDatasetWrapper
 {
+    VRTArrayDatasetWrapper(const VRTArrayDatasetWrapper&) = delete;
+    VRTArrayDatasetWrapper& operator= (const VRTArrayDatasetWrapper&) = delete;
+
     GDALDataset* m_poDS;
 
     explicit VRTArrayDatasetWrapper(GDALDataset* poDS): m_poDS(poDS)

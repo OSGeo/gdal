@@ -186,11 +186,11 @@ class CPL_DLL VRTDataset CPL_NON_FINAL: public GDALDataset
     int            CheckCompatibleForDatasetIO();
     void           ExpandProxyBands();
 
-    std::vector<GDALDataset*> m_apoOverviews;
-    std::vector<GDALDataset*> m_apoOverviewsBak;
+    std::vector<GDALDataset*> m_apoOverviews{};
+    std::vector<GDALDataset*> m_apoOverviewsBak{};
     char         **m_papszXMLVRTMetadata;
 
-    std::map<CPLString, GDALDataset*> m_oMapSharedSources;
+    std::map<CPLString, GDALDataset*> m_oMapSharedSources{};
     std::shared_ptr<VRTGroup> m_poRootGroup{};
 
     VRTRasterBand*      InitBand(const char* pszSubclass, int nBand,
@@ -302,13 +302,13 @@ class CPL_DLL VRTWarpedDataset final: public VRTDataset
 
     struct VerticalShiftGrid
     {
-        CPLString osVGrids;
-        int       bInverse;
-        double    dfToMeterSrc;
-        double    dfToMeterDest;
-        CPLStringList aosOptions;
+        CPLString osVGrids{};
+        int       bInverse = false;
+        double    dfToMeterSrc = 0.0;
+        double    dfToMeterDest = 0.0;
+        CPLStringList aosOptions{};
     };
-    std::vector<VerticalShiftGrid> m_aoVerticalShiftGrids;
+    std::vector<VerticalShiftGrid> m_aoVerticalShiftGrids{};
 
     friend class VRTWarpedRasterBand;
 
@@ -372,9 +372,9 @@ class VRTPansharpenedDataset final: public VRTDataset
     int               m_nBlockYSize;
     GDALPansharpenOperation* m_poPansharpener;
     VRTPansharpenedDataset* m_poMainDataset;
-    std::vector<VRTPansharpenedDataset*> m_apoOverviewDatasets;
+    std::vector<VRTPansharpenedDataset*> m_apoOverviewDatasets{};
     // Map from absolute to relative.
-    std::map<CPLString,CPLString> m_oMapToRelativeFilenames;
+    std::map<CPLString,CPLString> m_oMapToRelativeFilenames{};
 
     int               m_bLoadingOtherBands;
 
@@ -388,7 +388,7 @@ class VRTPansharpenedDataset final: public VRTDataset
     GTAdjustment      m_eGTAdjustment;
     int               m_bNoDataDisabled;
 
-    std::vector<GDALDataset*> m_apoDatasetsToClose;
+    std::vector<GDALDataset*> m_apoDatasetsToClose{};
 
     CPL_DISALLOW_COPY_ASSIGN(VRTPansharpenedDataset)
 
@@ -445,7 +445,7 @@ class CPL_DLL VRTRasterBand CPL_NON_FINAL: public GDALRasterBand
     int            m_bHideNoDataValue;
     double         m_dfNoDataValue;
 
-    std::unique_ptr<GDALColorTable> m_poColorTable;
+    std::unique_ptr<GDALColorTable> m_poColorTable{};
 
     GDALColorInterp m_eColorInterp;
 
@@ -459,11 +459,11 @@ class CPL_DLL VRTRasterBand CPL_NON_FINAL: public GDALRasterBand
 
     void           Initialize( int nXSize, int nYSize );
 
-    std::vector<VRTOverviewInfo> m_apoOverviews;
+    std::vector<VRTOverviewInfo> m_apoOverviews{};
 
     VRTRasterBand *m_poMaskBand;
 
-    std::unique_ptr<GDALRasterAttributeTable> m_poRAT;
+    std::unique_ptr<GDALRasterAttributeTable> m_poRAT{};
 
     CPL_DISALLOW_COPY_ASSIGN(VRTRasterBand)
 
@@ -554,7 +554,7 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL: public VRTRasterBand
 {
   private:
     int            m_nRecursionCounter;
-    CPLString      m_osLastLocationInfo;
+    CPLString      m_osLastLocationInfo{};
     char         **m_papszSourceList;
 
     bool           CanUseSourcesMinMaxImplementations();
@@ -883,12 +883,12 @@ protected:
 
     int                 m_bNoDataSet;
     double              m_dfNoDataValue;
-    CPLString           m_osResampling;
+    CPLString           m_osResampling{};
 
     int                 m_nMaxValue;
 
     int                 m_bRelativeToVRTOri;
-    CPLString           m_osSourceFileNameOri;
+    CPLString           m_osSourceFileNameOri{};
     int                 m_nExplicitSharedStatus; // -1 unknown, 0 = unshared, 1 = shared
 
     int                 NeedMaxValAdjustment() const;

@@ -1179,7 +1179,7 @@ GDALRasterBand *VRTRasterBand::GetOverview( int iOverview )
 
             if (m_apoOverviews[iOverview].poBand == nullptr)
             {
-                GDALClose( (GDALDatasetH)poSrcDS );
+                GDALClose( GDALDataset::ToHandle(poSrcDS) );
             }
         }
 
