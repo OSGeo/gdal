@@ -781,10 +781,9 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
         double yOff = CPLAtof(CPLGetXMLValue(psSrcRect,"yOff","-1"));
         double xSize = CPLAtof(CPLGetXMLValue(psSrcRect,"xSize","-1"));
         double ySize = CPLAtof(CPLGetXMLValue(psSrcRect,"ySize","-1"));
-        if( !CPLIsFinite(xOff) || !CPLIsFinite(yOff) ||
-            !CPLIsFinite(xSize) || !CPLIsFinite(ySize) ||
-            xOff < INT_MIN || xOff > INT_MAX ||
-            yOff < INT_MIN || yOff > INT_MAX ||
+        // Test written that way to catch NaN values
+        if( !(xOff >= INT_MIN && xOff <= INT_MAX) ||
+            !(yOff >= INT_MIN && yOff <= INT_MAX) ||
             !(xSize > 0 || xSize == -1) || xSize > INT_MAX ||
             !(ySize > 0 || ySize == -1) || ySize > INT_MAX )
         {
@@ -808,10 +807,9 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
         double yOff = CPLAtof(CPLGetXMLValue(psDstRect,"yOff","-1"));
         double xSize = CPLAtof(CPLGetXMLValue(psDstRect,"xSize","-1"));
         double ySize = CPLAtof(CPLGetXMLValue(psDstRect,"ySize","-1"));
-        if( !CPLIsFinite(xOff) || !CPLIsFinite(yOff) ||
-            !CPLIsFinite(xSize) || !CPLIsFinite(ySize) ||
-            xOff < INT_MIN || xOff > INT_MAX ||
-            yOff < INT_MIN || yOff > INT_MAX ||
+        // Test written that way to catch NaN values
+        if( !(xOff >= INT_MIN && xOff <= INT_MAX) ||
+            !(yOff >= INT_MIN && yOff <= INT_MAX) ||
             !(xSize > 0 || xSize == -1) || xSize > INT_MAX ||
             !(ySize > 0 || ySize == -1) || ySize > INT_MAX )
         {
