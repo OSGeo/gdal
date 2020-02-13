@@ -270,7 +270,7 @@ std::vector<SearchResultItem> PackedRTree::search(double minX, double minY, doub
             if (!n.intersects(nodeItem))
                 continue;
             if (isLeafNode)
-                results.push_back({ nodeItem, pos - 1 });
+                results.push_back({ nodeItem.offset, pos - 1 });
             else
                 queue.insert(std::pair<uint64_t, uint64_t>(nodeItem.offset, level - 1));
         }
@@ -318,7 +318,7 @@ std::vector<SearchResultItem> PackedRTree::streamSearch(
             if (!item.intersects(nodeItem))
                 continue;
             if (isLeafNode)
-                results.push_back({ nodeItem, pos - 1 });
+                results.push_back({ nodeItem.offset, pos - 1 });
             else
                 queue.insert(std::pair<uint64_t, uint64_t>(nodeItem.offset, level - 1));
         }

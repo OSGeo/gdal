@@ -31,7 +31,7 @@ struct Item {
 };
 
 struct SearchResultItem {
-    NodeItem nodeItem;
+    uint64_t offset;
     uint64_t index;
 };
 
