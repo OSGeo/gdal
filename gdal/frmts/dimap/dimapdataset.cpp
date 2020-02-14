@@ -147,7 +147,7 @@ DIMAPDataset::~DIMAPDataset()
 
     CPLDestroyXMLNode( psProduct );
 
-    if( psProductDim != nullptr )
+    if( psProductDim != nullptr && psProductDim != psProduct )
         CPLDestroyXMLNode( psProductDim );
     if( psProductStrip != nullptr )
         CPLDestroyXMLNode( psProductStrip );
@@ -566,12 +566,13 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else  // DIMAP2.
     {
+        //Verify if the opened file is not already a product dimap
         if( CPLGetXMLNode(psDoc, "Raster_Data") )
         {
+            psProductDim = psProduct;
             osDIMAPFilename = osMDFilename;
         }
-
-        if (osDIMAPFilename.empty()) {
+        else {
             // Verify the presence of the DIMAP product file.
             CPLXMLNode *psDatasetComponents =
                 CPLGetXMLNode(psDoc, "Dataset_Content.Dataset_Components");
@@ -628,13 +629,13 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
                     }
                 }
             }
-        }
 
-        psProductDim = CPLParseXMLFile( osDIMAPFilename );
-        if( psProductDim == nullptr )
-        {
-            CPLDestroyXMLNode(psProduct);
-            return nullptr;
+            psProductDim = CPLParseXMLFile( osDIMAPFilename );
+            if( psProductDim == nullptr )
+            {
+                CPLDestroyXMLNode(psProduct);
+                return nullptr;
+            }
         }
 
         // We need the {STRIP|RPC}_<product_id>.XML file for a few metadata.
