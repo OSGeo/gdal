@@ -663,16 +663,19 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 
                     if( strlen(pszHref) > 0 )  // STRIP product found.
                     {
+                        VSIStatBufL sStat;
                         CPLString osPath = CPLGetPath(osDIMAPFilename);
                         osSTRIPFilename =
                             CPLFormCIFilename( osPath, pszHref, nullptr );
-
-                        break;
+                        if (VSIStatL(osSTRIPFilename, &sStat) == 0)
+                        {
+                            psProductStrip = CPLParseXMLFile(osSTRIPFilename);
+                            break;
+                        }
                     }
                 }
             }
 
-            psProductStrip = CPLParseXMLFile( osSTRIPFilename );
         }
 
         CPLXMLNode *psDatasetRFMComponents =
