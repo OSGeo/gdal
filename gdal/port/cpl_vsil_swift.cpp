@@ -267,6 +267,7 @@ class VSISwiftHandle final : public IVSIS3LikeHandle
     struct curl_slist* GetCurlHeaders(
         const CPLString& osVerb,
         const struct curl_slist* psExistingHeaders ) override;
+    virtual bool Authenticate() override;
 
   public:
     VSISwiftHandle( VSISwiftFSHandler* poFS,
@@ -682,6 +683,15 @@ struct curl_slist* VSISwiftHandle::GetCurlHeaders( const CPLString& osVerb,
                                 const struct curl_slist* psExistingHeaders )
 {
     return m_poHandleHelper->GetCurlHeaders(osVerb, psExistingHeaders);
+}
+
+/************************************************************************/
+/*                           Authenticate()                             */
+/************************************************************************/
+
+bool VSISwiftHandle::Authenticate()
+{
+    return m_poHandleHelper->Authenticate();
 }
 
 

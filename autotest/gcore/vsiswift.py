@@ -36,6 +36,7 @@ from osgeo import gdal
 import gdaltest
 import webserver
 import pytest
+import json
 
 
 def open_for_read(uri):
@@ -205,6 +206,96 @@ def test_vsiswift_fake_auth_v1_url():
         gdal.VSIFCloseL(f)
 
     assert data == 'bar'
+
+
+###############################################################################
+# Test authentication with OS_IDENTITY_API_VERSION=3 OS_AUTH_URL + OS_USERNAME + OS_PASSWORD
+
+
+def test_vsiswift_fake_auth_v3_url():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+    gdal.SetConfigOption('OS_IDENTITY_API_VERSION', '3')
+    gdal.SetConfigOption('OS_AUTH_URL', 'http://127.0.0.1:%d/v3' % gdaltest.webserver_port)
+    gdal.SetConfigOption('OS_USERNAME', 'my_user')
+    gdal.SetConfigOption('OS_USER_DOMAIN_NAME', 'test_user_domain')
+    gdal.SetConfigOption('OS_PROJECT_NAME', 'test_proj')
+    gdal.SetConfigOption('OS_PROJECT_DOMAIN_NAME', 'test_project_domain')
+    gdal.SetConfigOption('OS_REGION_NAME', 'Test')
+    gdal.SetConfigOption('OS_PASSWORD', 'pwd')
+    gdal.SetConfigOption('SWIFT_STORAGE_URL', '')
+    gdal.SetConfigOption('SWIFT_AUTH_TOKEN', '')
+
+    handler = webserver.SequentialHandler()
+
+    def method(request):
+
+        request.protocol_version = 'HTTP/1.1'
+        h = request.headers
+
+        if 'Content-Type' not in h or h['Content-Type'] != 'application/json':
+            sys.stderr.write('Bad headers: %s\n' % str(h))
+            request.send_response(403)
+            return
+
+        request_len = int(h['Content-Length'])
+        request_body = request.rfile.read(request_len).decode()
+        request_json = json.loads(request_body)
+        password = request_json['auth']['identity']['password']['user']['password']
+        assert password == 'pwd'
+
+        content = """{
+             "token" : {
+               "catalog" : [
+                 {
+                  "endpoints" : [
+                     {
+                        "region" : "Test",
+                        "url" : "http://127.0.0.1:%d/v1/AUTH_something"
+                     }
+                  ],
+                  "name" : "swift"
+                 }
+               ]
+             }
+          }""" % gdaltest.webserver_port
+        content = content.encode('ascii')
+        request.send_response(200)
+        request.send_header('Content-Length', len(content))
+        request.send_header('Content-Type', 'application/json')
+        request.send_header('X-Subject-Token', 'my_auth_token')
+        request.end_headers()
+        request.wfile.write(content)
+
+    handler.add('POST', '/v3/auth/tokens', custom_method=method)
+
+    def method(request):
+
+        request.protocol_version = 'HTTP/1.1'
+        h = request.headers
+        if 'x-auth-token' not in h or \
+           h['x-auth-token'] != 'my_auth_token':
+            sys.stderr.write('Bad headers: %s\n' % str(h))
+            request.send_response(403)
+            return
+        request.send_response(200)
+        request.send_header('Content-type', 'text/plain')
+        request.send_header('Content-Length', 3)
+        request.send_header('Connection', 'close')
+        request.end_headers()
+        request.wfile.write('foo'.encode('ascii'))
+
+    handler.add('GET', '/v1/AUTH_something/foo/bar', custom_method=method)
+    with webserver.install_http_handler(handler):
+        f = open_for_read('/vsiswift/foo/bar')
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+        assert data == 'foo'
+        gdal.VSIFCloseL(f)
+
 
 ###############################################################################
 # Test authentication with SWIFT_STORAGE_URL + SWIFT_AUTH_TOKEN
