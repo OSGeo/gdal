@@ -1052,6 +1052,9 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->SetSubdatasetName( pszAttr );
             }
 
+        if ( STARTS_WITH_CI( poOpenInfo->pszFilename, "/VSIS3/") )
+            osArrayPath.Printf("s3://%s", poOpenInfo->pszFilename + 7);
+        else
             osArrayPath = poOpenInfo->pszFilename;
         }
 
