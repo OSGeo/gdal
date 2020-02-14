@@ -84,7 +84,7 @@ static PyObject* GDALCreateNumpyArray(PyObject* pCreateArray,
     {
         // Python 3
         Py_buffer pybuffer;
-        if( PyBuffer_FillInfo(&pybuffer, nullptr, (char*)pBuffer,
+        if( PyBuffer_FillInfo(&pybuffer, nullptr, static_cast<char*>(pBuffer),
                               nSize,
                               0, PyBUF_FULL) != 0)
         {
@@ -133,8 +133,11 @@ static PyObject* GDALCreateNumpyArray(PyObject* pCreateArray,
 
 class VRTDerivedRasterBandPrivateData
 {
+        VRTDerivedRasterBandPrivateData(const VRTDerivedRasterBandPrivateData&) = delete;
+        VRTDerivedRasterBandPrivateData& operator= (const VRTDerivedRasterBandPrivateData&) = delete;
+
     public:
-        CPLString m_osCode;
+        CPLString m_osCode{};
         CPLString m_osLanguage;
         int       m_nBufferRadius;
         PyObject* m_poGDALCreateNumpyArray;
@@ -143,7 +146,7 @@ class VRTDerivedRasterBandPrivateData
         bool      m_bPythonInitializationSuccess;
         bool      m_bExclusiveLock;
         bool      m_bFirstTime;
-        std::vector< std::pair<CPLString,CPLString> > m_oFunctionArgs;
+        std::vector< std::pair<CPLString,CPLString> > m_oFunctionArgs{};
 
         VRTDerivedRasterBandPrivateData():
             m_osLanguage("C"),

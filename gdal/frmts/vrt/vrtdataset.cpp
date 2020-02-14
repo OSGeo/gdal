@@ -735,7 +735,7 @@ int VRTDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
     if( poOpenInfo->nHeaderBytes > 20
-         && strstr((const char *)poOpenInfo->pabyHeader,"<VRTDataset") != nullptr )
+         && strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader),"<VRTDataset") != nullptr )
         return TRUE;
 
     if( strstr(poOpenInfo->pszFilename,"<VRTDataset") != nullptr )
