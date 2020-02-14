@@ -566,63 +566,66 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else  // DIMAP2.
     {
-        // Verify the presence of the DIMAP product file.
-        CPLXMLNode *psDatasetComponents =
-            CPLGetXMLNode(psDoc, "Dataset_Content.Dataset_Components");
-
-        if( psDatasetComponents == nullptr )
-        {
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                      "Failed to find <Dataset_Components> in document." );
-            CPLDestroyXMLNode(psProduct);
-            return nullptr;
-        }
-
         if( CPLGetXMLNode(psDoc, "Raster_Data") )
         {
             osDIMAPFilename = osMDFilename;
         }
 
-        for( CPLXMLNode *psDatasetComponent = psDatasetComponents->psChild;
-             osDIMAPFilename.empty() && psDatasetComponent != nullptr;
-             psDatasetComponent = psDatasetComponent->psNext )
-        {
-            const char* pszComponentType =
-                CPLGetXMLValue(psDatasetComponent, "COMPONENT_TYPE","");
-            if( strcmp(pszComponentType, "DIMAP") == 0 )
+        if (osDIMAPFilename.empty()) {
+            // Verify the presence of the DIMAP product file.
+            CPLXMLNode *psDatasetComponents =
+                CPLGetXMLNode(psDoc, "Dataset_Content.Dataset_Components");
+
+            if( psDatasetComponents == nullptr )
             {
-                const char *pszHref = CPLGetXMLValue(
-                        psDatasetComponent, "COMPONENT_PATH.href", "" );
+                CPLError( CE_Failure, CPLE_OpenFailed,
+                        "Failed to find <Dataset_Components> in document." );
+                CPLDestroyXMLNode(psProduct);
+                return nullptr;
+            }
 
-                if( strlen(pszHref) > 0 )  // DIMAP product found.
+
+            for( CPLXMLNode *psDatasetComponent = psDatasetComponents->psChild;
+                osDIMAPFilename.empty() && psDatasetComponent != nullptr;
+                psDatasetComponent = psDatasetComponent->psNext )
+            {
+                const char* pszComponentType =
+                    CPLGetXMLValue(psDatasetComponent, "COMPONENT_TYPE","");
+                if( strcmp(pszComponentType, "DIMAP") == 0 )
                 {
-                    if( poOpenInfo->bIsDirectory )
-                    {
-                        osDIMAPFilename =
-                            CPLFormCIFilename( poOpenInfo->pszFilename,
-                                               pszHref, nullptr );
-                    }
-                    else
-                    {
-                        CPLString osPath = CPLGetPath(osMDFilename);
-                        osDIMAPFilename =
-                            CPLFormFilename( osPath, pszHref, nullptr );
-                    }
+                    const char *pszHref = CPLGetXMLValue(
+                            psDatasetComponent, "COMPONENT_PATH.href", "" );
 
-                    // Data file might be specified there.
-                    const char *pszDataFileHref = CPLGetXMLValue(
-                        psDatasetComponent,
-                        "Data_Files.Data_File.DATA_FILE_PATH.href",
-                        "" );
-
-                    if( strlen(pszDataFileHref) > 0 )
+                    if( strlen(pszHref) > 0 )  // DIMAP product found.
                     {
-                        CPLString osPath = CPLGetPath(osMDFilename);
-                        osImageDSFilename =
-                            CPLFormFilename( osPath, pszDataFileHref, nullptr );
-                    }
+                        if( poOpenInfo->bIsDirectory )
+                        {
+                            osDIMAPFilename =
+                                CPLFormCIFilename( poOpenInfo->pszFilename,
+                                                pszHref, nullptr );
+                        }
+                        else
+                        {
+                            CPLString osPath = CPLGetPath(osMDFilename);
+                            osDIMAPFilename =
+                                CPLFormFilename( osPath, pszHref, nullptr );
+                        }
 
-                    break;
+                        // Data file might be specified there.
+                        const char *pszDataFileHref = CPLGetXMLValue(
+                            psDatasetComponent,
+                            "Data_Files.Data_File.DATA_FILE_PATH.href",
+                            "" );
+
+                        if( strlen(pszDataFileHref) > 0 )
+                        {
+                            CPLString osPath = CPLGetPath(osMDFilename);
+                            osImageDSFilename =
+                                CPLFormFilename( osPath, pszDataFileHref, nullptr );
+                        }
+
+                        break;
+                    }
                 }
             }
         }
