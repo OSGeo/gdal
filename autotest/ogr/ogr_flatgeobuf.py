@@ -416,6 +416,20 @@ def test_ogr_flatgeobuf_datatypes():
     assert f['string'] == 'my string'
     assert f['datetime'] == '2019/10/15 12:34:56.789+00'
 
+def test_ogr_flatgeobuf_mixed():
+    ds = ogr.Open('data/testfgb/testmixed.geojson')
+    lyr = ds.GetLayer(0)
+    f1 = lyr.GetNextFeature()
+    f2 = lyr.GetNextFeature()
+
+    ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource('/vsimem/test.fgb')
+    fgblyr = ds.CreateLayer('test', None, ogr.wkbUnknown, [])
+    fgblyr.CreateFeature(f1)
+    fgblyr.CreateFeature(f2)
+    ds = None
+
+    ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
+    assert not gdal.VSIStatL('/vsimem/test.fgb')
 
 ###############################################################################
 do_log = False
