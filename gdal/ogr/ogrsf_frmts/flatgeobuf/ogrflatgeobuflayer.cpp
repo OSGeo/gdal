@@ -143,8 +143,6 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
     if (pszFilename)
         m_osFilename = pszFilename;
     m_geometryType = GeometryWriter::translateOGRwkbGeometryType(eGType);
-    if (m_geometryType == GeometryType::Unknown)
-        m_bCanCreate = false;
     if wkbHasZ(eGType)
         m_hasZ = true;
     if wkbHasM(eGType)
@@ -618,7 +616,10 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
     const auto feature = GetRoot<Feature>(m_featureBuf);
     const auto geometry = feature->geometry();
     if (!m_poFeatureDefn->IsGeometryIgnored() && geometry != nullptr) {
-        GeometryReader reader { geometry, m_geometryType, m_hasZ, m_hasM };
+        auto geometryType = m_geometryType;
+        if (geometryType == GeometryType::Unknown)
+            geometryType = geometry->type();
+        GeometryReader reader { geometry, geometryType, m_hasZ, m_hasM };
         OGRGeometry *poOGRGeometry = reader.read();
         if (poOGRGeometry == nullptr) {
             CPLError(CE_Failure, CPLE_AppDefined, "Failed to read geometry");
@@ -655,6 +656,7 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
             //CPLDebug("FlatGeobuf", "DEBUG parseFeature: i: %hu", i);
             offset += sizeof(uint16_t);
             //CPLDebug("FlatGeobuf", "DEBUG parseFeature: offset: %du", offset);
+            // TODO: use columns from feature if defined
             const auto columns = m_poHeader->columns();
             if (columns == nullptr) {
                 CPLErrorInvalidPointer("columns");
@@ -864,7 +866,7 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
 #endif
     if (ogrGeometry == nullptr || ogrGeometry->IsEmpty())
         return OGRERR_NONE;
-    if (ogrGeometry->getGeometryType() != m_eGType) {
+    if (m_geometryType != GeometryType::Unknown && ogrGeometry->getGeometryType() != m_eGType) {
         CPLError(CE_Failure, CPLE_AppDefined, "ICreateFeature: Mismatched geometry type");
         return OGRERR_FAILURE;
     }
@@ -872,6 +874,7 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
     GeometryWriter writer { fbb, ogrGeometry, m_geometryType, m_hasZ, m_hasM };
     const auto geometryOffset = writer.write(0);
     const auto pProperties = properties.empty() ? nullptr : &properties;
+    // TODO: write columns if mixed schema in collection
     const auto feature = CreateFeatureDirect(fbb, geometryOffset, pProperties);
     fbb.FinishSizePrefixed(feature);
 
