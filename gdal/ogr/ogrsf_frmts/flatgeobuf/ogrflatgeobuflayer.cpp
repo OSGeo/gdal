@@ -943,6 +943,8 @@ int OGRFlatGeobufLayer::TestCapability(const char *pszCap)
         return m_sExtent.IsInit();
     else if (EQUAL(pszCap, OLCFastSpatialFilter))
         return true;
+    else if (EQUAL(pszCap, OLCStringsAsUTF8))
+        return true;
     else
         return false;
 }
