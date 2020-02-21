@@ -254,6 +254,10 @@ for f in `find . -type f` ; do
 done
 set -x
 
+%if 0%{?rhel} > 7
+find . -name "*.py" | xargs sed -i '1s/env *python/env python2/'
+%endif
+
 # Fix mandir
 sed -i "s|^mandir=.*|mandir='\${prefix}/share/man'|" configure
 
