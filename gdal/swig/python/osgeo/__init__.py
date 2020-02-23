@@ -12,16 +12,16 @@ if version_info >= (3, 8, 0) and platform == 'win32':
 if version_info >= (2, 6, 0):
     def swig_import_helper():
         from os.path import dirname
-        import imp
-        fp = None
+        import importlib.machinery
+        spec = None
         try:
-            fp, pathname, description = imp.find_module('_gdal', [dirname(__file__)])
+            spec = importlib.machinery.PathFinder().find_spec('_gdal', [dirname(__file__)])
         except ImportError:
             import _gdal
             return _gdal
-        if fp is not None:
+        if spec is not None:
             try:
-                _mod = imp.load_module('_gdal', fp, pathname, description)
+                _mod = spec.loader.load_module()
             except ImportError as e:
                 if version_info >= (3, 8, 0) and platform == 'win32':
                     import os
@@ -35,8 +35,6 @@ if version_info >= (2, 6, 0):
                         traceback_string = ''.join(traceback.format_exception(*sys.exc_info()))
                         raise ImportError(traceback_string + '\n' + msg)
                 raise
-            finally:
-                fp.close()
             return _mod
     _gdal = swig_import_helper()
     del swig_import_helper
