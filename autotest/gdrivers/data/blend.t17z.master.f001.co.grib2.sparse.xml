@@ -1,0 +1,20 @@
+<VSISparseFile>
+    <!-- From https://nomads.ncep.noaa.gov/pub/data/nccf/com/blend/prod/blend.20200224/17/grib2/blend.t17z.master.f001.co.grib2 -->
+  <Length>1558505</Length>
+  <SubfileRegion>
+    <Filename relative="1">blend.t17z.master.f001.co.grib2.head</Filename>
+    <DestinationOffset>0</DestinationOffset>
+    <SourceOffset>0</SourceOffset>
+    <RegionLength>2000</RegionLength>
+  </SubfileRegion>
+  <ConstantRegion>
+    <DestinationOffset>2000</DestinationOffset>
+    <RegionLength>1556501</RegionLength>
+    <Value>0</Value>
+  </ConstantRegion>
+  <ConstantRegion>
+    <DestinationOffset>1558501</DestinationOffset>
+    <RegionLength>4</RegionLength>
+    <Value>55</Value>
+  </ConstantRegion>
+</VSISparseFile>
