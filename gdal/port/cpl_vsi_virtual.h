@@ -100,6 +100,7 @@ public:
                       {(void)pszDirname; (void)nMode; errno=ENOENT; return -1;}
     virtual int Rmdir( const char *pszDirname )
                       { (void) pszDirname; errno=ENOENT; return -1; }
+    virtual int RmdirRecursive( const char *pszDirname );
     virtual char **ReadDir( const char *pszDirname )
                       { (void) pszDirname; return nullptr; }
     virtual char **ReadDirEx( const char *pszDirname, int /* nMaxFiles */ )

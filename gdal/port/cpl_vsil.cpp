@@ -702,13 +702,16 @@ int VSIRmdir( const char * pszDirname )
 }
 
 /************************************************************************/
-/*                              VSIRmdir()                              */
+/*                         VSIRmdirRecursive()                          */
 /************************************************************************/
 
 /**
  * \brief Delete a directory recursively
  *
  * Deletes a directory object and its content from the file system.
+ *
+ * Starting with GDAL 3.1, /vsis3/ has an efficient implementation of this
+ * function.
  *
  * @return 0 on success or -1 on an error.
  * @since GDAL 2.3
@@ -721,40 +724,9 @@ int VSIRmdirRecursive( const char* pszDirname )
     {
         return -1;
     }
-    char** papszFiles = VSIReadDir(pszDirname);
-    for( char** papszIter = papszFiles; papszIter && *papszIter; ++papszIter )
-    {
-        if( (*papszIter)[0] == '\0' ||
-            strcmp(*papszIter, ".") == 0 ||
-            strcmp(*papszIter, "..") == 0 )
-        {
-            continue;
-        }
-        VSIStatBufL sStat;
-        const CPLString osFilename(
-            CPLFormFilename(pszDirname, *papszIter, nullptr));
-        if( VSIStatL(osFilename, &sStat) == 0 )
-        {
-            if( VSI_ISDIR(sStat.st_mode) )
-            {
-                if( VSIRmdirRecursive(osFilename) != 0 )
-                {
-                    CSLDestroy(papszFiles);
-                    return -1;
-                }
-            }
-            else
-            {
-                if( VSIUnlink(osFilename) != 0 )
-                {
-                    CSLDestroy(papszFiles);
-                    return -1;
-                }
-            }
-        }
-    }
-    CSLDestroy(papszFiles);
-    return VSIRmdir(pszDirname);
+    VSIFilesystemHandler *poFSHandler =
+        VSIFileManager::GetHandler( pszDirname );
+    return poFSHandler->RmdirRecursive( pszDirname );
 }
 
 /************************************************************************/
@@ -1439,6 +1411,48 @@ int* VSIFilesystemHandler::UnlinkBatch( CSLConstList papszFiles )
         panRet[i] = VSIUnlink(papszFiles[i]) == 0;
     }
     return panRet;
+}
+
+/************************************************************************/
+/*                          RmdirRecursive()                            */
+/************************************************************************/
+
+int VSIFilesystemHandler::RmdirRecursive( const char* pszDirname )
+{
+    char** papszFiles = VSIReadDir(pszDirname);
+    for( char** papszIter = papszFiles; papszIter && *papszIter; ++papszIter )
+    {
+        if( (*papszIter)[0] == '\0' ||
+            strcmp(*papszIter, ".") == 0 ||
+            strcmp(*papszIter, "..") == 0 )
+        {
+            continue;
+        }
+        VSIStatBufL sStat;
+        const CPLString osFilename(
+            CPLFormFilename(pszDirname, *papszIter, nullptr));
+        if( VSIStatL(osFilename, &sStat) == 0 )
+        {
+            if( VSI_ISDIR(sStat.st_mode) )
+            {
+                if( RmdirRecursive(osFilename) != 0 )
+                {
+                    CSLDestroy(papszFiles);
+                    return -1;
+                }
+            }
+            else
+            {
+                if( VSIUnlink(osFilename) != 0 )
+                {
+                    CSLDestroy(papszFiles);
+                    return -1;
+                }
+            }
+        }
+    }
+    CSLDestroy(papszFiles);
+    return VSIRmdir(pszDirname);
 }
 
 #endif

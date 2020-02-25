@@ -1428,6 +1428,96 @@ def test_vsis3_unlink_batch():
     assert not ret
 
 ###############################################################################
+# Test RmdirRecursive() with a fake AWS server
+
+
+def test_vsis3_rmdir_recursive():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test_rmdir_recursive/?prefix=somedir%2F', 200, {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix>somedir/</Prefix>
+                <Marker/>
+                <Contents>
+                    <Key>somedir/test.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>40</Size>
+                </Contents>
+                <Contents>
+                    <Key>somedir/subdir/</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>0</Size>
+                </Contents>
+                <Contents>
+                    <Key>somedir/subdir/test.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>5</Size>
+                </Contents>
+            </ListBucketResult>
+        """)
+
+    def method(request):
+        content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
+        if content != """<?xml version="1.0" encoding="UTF-8"?>
+<Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Object>
+    <Key>somedir/test.txt</Key>
+  </Object>
+  <Object>
+    <Key>somedir/subdir/</Key>
+  </Object>
+</Delete>
+""":
+            sys.stderr.write('Did not get expected content: %s\n' % content)
+            request.send_response(403)
+            return
+
+        request.protocol_version = 'HTTP/1.1'
+        request.send_response(200)
+        response = """<DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Deleted><Key>somedir/test.txt</Key></Deleted><Deleted><Key>somedir/subdir/</Key></Deleted></DeleteResult>"""
+        request.send_header('Content-Length', len(response))
+        request.send_header('Connection', 'close')
+        request.end_headers()
+        request.wfile.write(response.encode('ascii'))
+
+    handler.add('POST', '/test_rmdir_recursive/?delete', custom_method=method)
+
+    def method(request):
+        content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
+        if content != """<?xml version="1.0" encoding="UTF-8"?>
+<Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Object>
+    <Key>somedir/subdir/test.txt</Key>
+  </Object>
+  <Object>
+    <Key>somedir/</Key>
+  </Object>
+</Delete>
+""":
+            sys.stderr.write('Did not get expected content: %s\n' % content)
+            request.send_response(403)
+            return
+
+        request.protocol_version = 'HTTP/1.1'
+        request.send_response(200)
+        response = """<DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Deleted><Key>somedir/subdir/test.txt</Key></Deleted><Deleted><Key>somedir/</Key></Deleted></DeleteResult>"""
+        request.send_header('Content-Length', len(response))
+        request.send_header('Connection', 'close')
+        request.end_headers()
+        request.wfile.write(response.encode('ascii'))
+
+    handler.add('POST', '/test_rmdir_recursive/?delete', custom_method=method)
+
+    with gdaltest.config_option('CPL_VSIS3_UNLINK_BATCH_SIZE', '2'):
+        with webserver.install_http_handler(handler):
+            assert gdal.RmdirRecursive('/vsis3/test_rmdir_recursive/somedir') == 0
+
+
+###############################################################################
 # Test multipart upload with a fake AWS server
 
 

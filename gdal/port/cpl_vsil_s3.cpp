@@ -78,6 +78,7 @@ struct VSIDIRS3: public VSIDIR
     IVSIS3LikeFSHandler* poS3FS = nullptr;
     IVSIS3LikeHandleHelper* poS3HandleHelper = nullptr;
     int nMaxFiles = 0;
+    bool bCacheEntries = true;
 
     explicit VSIDIRS3(IVSIS3LikeFSHandler *poFSIn): poFS(poFSIn), poS3FS(poFSIn) {}
     explicit VSIDIRS3(VSICurlFilesystemHandler *poFSIn): poFS(poFSIn) {}
@@ -251,7 +252,7 @@ bool VSIDIRS3::AnalyseS3FileList(
                         entry->bMTimeKnown = true;
                     }
 
-                    if( nMaxFiles != 1 )
+                    if( nMaxFiles != 1 && bCacheEntries )
                     {
                         FileProp prop;
                         prop.eExists = EXIST_YES;
@@ -301,7 +302,7 @@ bool VSIDIRS3::AnalyseS3FileList(
                         entry->nMode = S_IFDIR;
                         entry->bModeKnown = true;
 
-                        if( nMaxFiles != 1 )
+                        if( nMaxFiles != 1 && bCacheEntries )
                         {
                             FileProp prop;
                             prop.eExists = EXIST_YES;
@@ -350,7 +351,7 @@ bool VSIDIRS3::AnalyseS3FileList(
                     entry->nMode = S_IFDIR;
                     entry->bModeKnown = true;
 
-                    if( nMaxFiles != 1 )
+                    if( nMaxFiles != 1 && bCacheEntries )
                     {
                         FileProp prop;
                         prop.eExists = EXIST_YES;
@@ -590,6 +591,7 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
     char* GetSignedURL( const char* pszFilename, CSLConstList papszOptions ) override;
 
     int* UnlinkBatch( CSLConstList papszFiles ) override;
+    int RmdirRecursive( const char* pszDirname ) override;
 };
 
 /************************************************************************/
@@ -1957,6 +1959,53 @@ int* VSIS3FSHandler::UnlinkBatch( CSLConstList papszFiles )
 }
 
 /************************************************************************/
+/*                           RmdirRecursive()                           */
+/************************************************************************/
+
+int VSIS3FSHandler::RmdirRecursive( const char* pszDirname )
+{
+    CPLString osDirnameWithoutEndSlash(pszDirname);
+    if( !osDirnameWithoutEndSlash.empty() && osDirnameWithoutEndSlash.back() == '/' )
+        osDirnameWithoutEndSlash.resize( osDirnameWithoutEndSlash.size() - 1 );
+
+    CPLStringList aosOptions;
+    aosOptions.SetNameValue("CACHE_ENTRIES", "FALSE");
+    auto poDir = std::unique_ptr<VSIDIR>(OpenDir(osDirnameWithoutEndSlash, -1, aosOptions.List()));
+    if( !poDir )
+        return -1;
+    CPLStringList aosList;
+    // For debug / testing only
+    const int nBatchSize = atoi(CPLGetConfigOption("CPL_VSIS3_UNLINK_BATCH_SIZE", "1000"));
+    while( true )
+    {
+        auto entry = poDir->NextDirEntry();
+        if( entry )
+        {
+            CPLString osFilename(osDirnameWithoutEndSlash + '/' + entry->pszName);
+            if( entry->nMode == S_IFDIR )
+                osFilename += '/';
+            aosList.AddString(osFilename);
+        }
+        if( entry == nullptr || aosList.size() == nBatchSize )
+        {
+            if( entry == nullptr && !osDirnameWithoutEndSlash.empty() )
+            {
+                aosList.AddString( (osDirnameWithoutEndSlash + '/').c_str() );
+            }
+            int* ret = UnlinkBatch(aosList.List());
+            if( ret == nullptr )
+                return -1;
+            CPLFree(ret);
+            aosList.Clear();
+        }
+        if( entry == nullptr )
+            break;
+    }
+    PartialClearCache(osDirnameWithoutEndSlash);
+    return 0;
+}
+
+/************************************************************************/
 /*                            DeleteObjects()                           */
 /************************************************************************/
 
@@ -2760,6 +2809,8 @@ VSIDIR* IVSIS3LikeFSHandler::OpenDir( const char *pszPath,
     dir->osBucket = osBucket;
     dir->osObjectKey = osObjectKey;
     dir->nMaxFiles = atoi(CSLFetchNameValueDef(papszOptions, "MAXFILES", "0"));
+    dir->bCacheEntries = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "CACHE_ENTRIES", "TRUE"));
     if( !dir->IssueListDir() )
     {
         delete dir;
