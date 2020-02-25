@@ -1595,6 +1595,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
     int32	i32;
     int     bAppendToLastRecord = FALSE;
     int     bAppendToFile = FALSE;
+    int     bFirstFeature = (psSHP->nRecords == 0);
 
     psSHP->bUpdated = TRUE;
 
@@ -1979,10 +1980,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /* -------------------------------------------------------------------- */
 /*	Expand file wide bounds based on this shape.			*/
 /* -------------------------------------------------------------------- */
-    if( psSHP->adBoundsMin[0] == 0.0
-        && psSHP->adBoundsMax[0] == 0.0
-        && psSHP->adBoundsMin[1] == 0.0
-        && psSHP->adBoundsMax[1] == 0.0 )
+    if( bFirstFeature )
     {
         if( psObject->nSHPType == SHPT_NULL || psObject->nVertices == 0 )
         {
