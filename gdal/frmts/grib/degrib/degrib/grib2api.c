@@ -1183,6 +1183,7 @@ void unpk_g2ncep(CPL_UNUSED sInt4 *kfildo, float *ain, sInt4 *iain, sInt4 *nd2x3
       {
           is3[scanIndex] = GRIB2BIT_2 + (is3[scanIndex] & 0x0f);
       }
+
       g2_free(gfld);
       return;
    }
