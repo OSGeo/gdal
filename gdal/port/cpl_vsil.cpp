@@ -506,6 +506,48 @@ int VSIUnlink( const char * pszFilename )
 }
 
 /************************************************************************/
+/*                           VSIUnlinkBatch()                           */
+/************************************************************************/
+
+/**
+ * \brief Delete several files, possibly in a batch.
+ *
+ * All files should belong to the same file system handler.
+ *
+ * @param papszFiles NULL terminated list of files. UTF-8 encoded.
+ *
+ * @return an array of size CSLCount(papszFiles), whose values are TRUE or FALSE
+ * depending on the success of deletion of the corresponding file. The array
+ * should be freed with VSIFree().
+ * NULL might be return in case of a more general error (for example,
+ * files belonging to different file system handlers)
+ *
+ * @since GDAL 3.1
+ */
+
+int *VSIUnlinkBatch( CSLConstList papszFiles )
+{
+    VSIFilesystemHandler *poFSHandler = nullptr;
+    for( CSLConstList papszIter = papszFiles;
+            papszIter && *papszIter; ++papszIter )
+    {
+        auto poFSHandlerThisFile = VSIFileManager::GetHandler( *papszIter );
+        if( poFSHandler == nullptr )
+            poFSHandler = poFSHandlerThisFile;
+        else if( poFSHandler != poFSHandlerThisFile )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Files belong to different file system handlers");
+            poFSHandler = nullptr;
+            break;
+        }
+    }
+    if( poFSHandler == nullptr )
+        return nullptr;
+    return poFSHandler->UnlinkBatch(papszFiles);
+}
+
+/************************************************************************/
 /*                             VSIRename()                              */
 /************************************************************************/
 
@@ -1384,6 +1426,20 @@ const VSIDIREntry* VSIDIRGeneric::NextDirEntry()
     return &(entry);
 }
 
+/************************************************************************/
+/*                           UnlinkBatch()                              */
+/************************************************************************/
+
+int* VSIFilesystemHandler::UnlinkBatch( CSLConstList papszFiles )
+{
+    int* panRet = static_cast<int*>(
+        CPLMalloc(sizeof(int) * CSLCount(papszFiles)));
+    for( int i = 0; papszFiles && papszFiles[i]; ++i )
+    {
+        panRet[i] = VSIUnlink(papszFiles[i]) == 0;
+    }
+    return panRet;
+}
 
 #endif
 

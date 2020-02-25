@@ -4267,6 +4267,24 @@ void wrapper_VSIFileFromMemBuffer( const char* utf8_path, GIntBig nBytes, const 
 }
 
 
+bool wrapper_VSIUnlinkBatch(char** files)
+{
+    int* success = VSIUnlinkBatch(files);
+    if( !success )
+        return false;
+    int bRet = true;
+    for( int i = 0; files && files[i]; i++ )
+    {
+        if( !success[i] ) {
+            bRet = false;
+            break;
+        }
+    }
+    VSIFree(success);
+    return bRet;
+}
+
+
 int wrapper_HasThreadSupport()
 {
     return strcmp(CPLGetThreadingModel(), "stub") != 0;
@@ -10624,6 +10642,56 @@ fail:
   {
     /* %typemap(freearg) (const char *utf8_path) */
     GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_UnlinkBatch(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char **arg1 = (char **) 0 ;
+  PyObject * obj0 = 0 ;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:UnlinkBatch",&obj0)) SWIG_fail;
+  {
+    /* %typemap(in) char **options */
+    int bErr = FALSE;
+    arg1 = CSLFromPySequence(obj0, &bErr);
+    if( bErr )
+    {
+      SWIG_fail;
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)wrapper_VSIUnlinkBatch(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg1 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg1 );
   }
   return NULL;
 }
@@ -41005,6 +41073,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"CPLHexToBinary", _wrap_CPLHexToBinary, METH_VARARGS, (char *)"CPLHexToBinary(char const * pszHex, int * pnBytes) -> GByte *"},
 	 { (char *)"FileFromMemBuffer", _wrap_FileFromMemBuffer, METH_VARARGS, (char *)"FileFromMemBuffer(char const * utf8_path, GIntBig nBytes)"},
 	 { (char *)"Unlink", _wrap_Unlink, METH_VARARGS, (char *)"Unlink(char const * utf8_path) -> VSI_RETVAL"},
+	 { (char *)"UnlinkBatch", _wrap_UnlinkBatch, METH_VARARGS, (char *)"UnlinkBatch(char ** files) -> bool"},
 	 { (char *)"HasThreadSupport", _wrap_HasThreadSupport, METH_VARARGS, (char *)"HasThreadSupport() -> int"},
 	 { (char *)"Mkdir", _wrap_Mkdir, METH_VARARGS, (char *)"Mkdir(char const * utf8_path, int mode) -> VSI_RETVAL"},
 	 { (char *)"Rmdir", _wrap_Rmdir, METH_VARARGS, (char *)"Rmdir(char const * utf8_path) -> VSI_RETVAL"},

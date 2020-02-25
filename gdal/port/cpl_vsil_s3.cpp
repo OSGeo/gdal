@@ -557,6 +557,8 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
 
     std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params{};
 
+    std::set<CPLString> DeleteObjects(const char* pszBucket, const char* pszXML);
+
   protected:
     VSICurlHandle* CreateFileHandle( const char* pszFilename ) override;
     CPLString GetURLFromFilename( const CPLString& osFilename ) override;
@@ -586,6 +588,8 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
     const char* GetOptions() override;
 
     char* GetSignedURL( const char* pszFilename, CSLConstList papszOptions ) override;
+
+    int* UnlinkBatch( CSLConstList papszFiles ) override;
 };
 
 /************************************************************************/
@@ -1852,6 +1856,260 @@ char* VSIS3FSHandler::GetSignedURL(const char* pszFilename, CSLConstList papszOp
 
     delete poS3HandleHelper;
     return CPLStrdup(osRet);
+}
+
+
+/************************************************************************/
+/*                           UnlinkBatch()                              */
+/************************************************************************/
+
+int* VSIS3FSHandler::UnlinkBatch( CSLConstList papszFiles )
+{
+    // Implemented using https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObjects.html
+
+    int* panRet = static_cast<int*>(
+        CPLCalloc(sizeof(int), CSLCount(papszFiles)));
+    CPLStringList aosList;
+    CPLString osCurBucket;
+    int iStartIndex = -1;
+    // For debug / testing only
+    const int nBatchSize = atoi(CPLGetConfigOption("CPL_VSIS3_UNLINK_BATCH_SIZE", "1000"));
+    for( int i = 0; papszFiles && papszFiles[i]; i++ )
+    {
+        CPLAssert( STARTS_WITH_CI(papszFiles[i], GetFSPrefix()) );
+        const char* pszFilenameWithoutPrefix = papszFiles[i] + GetFSPrefix().size();
+        const char* pszSlash = strchr(pszFilenameWithoutPrefix, '/');
+        if( !pszSlash )
+            return panRet;
+        CPLString osBucket;
+        osBucket.assign(pszFilenameWithoutPrefix, pszSlash - pszFilenameWithoutPrefix);
+        bool bBucketChanged = false;
+        if( (osCurBucket.empty() || osCurBucket == osBucket) )
+        {
+            if( osCurBucket.empty() )
+            {
+                iStartIndex = i;
+                osCurBucket = osBucket;
+            }
+            aosList.AddString(pszSlash + 1);
+        }
+        else
+        {
+            bBucketChanged = true;
+        }
+        while( bBucketChanged || aosList.size() == nBatchSize ||
+               papszFiles[i+1] == nullptr )
+        {
+            // Compose XML post content
+            CPLXMLNode* psXML = CPLCreateXMLNode(nullptr, CXT_Element, "?xml");
+            CPLAddXMLAttributeAndValue(psXML, "version", "1.0");
+            CPLAddXMLAttributeAndValue(psXML, "encoding", "UTF-8");
+            CPLXMLNode* psDelete = CPLCreateXMLNode(nullptr, CXT_Element, "Delete");
+            psXML->psNext = psDelete;
+            CPLAddXMLAttributeAndValue(psDelete, "xmlns",
+                                       "http://s3.amazonaws.com/doc/2006-03-01/");
+            CPLXMLNode* psLastChild = psDelete->psChild;
+            CPLAssert(psLastChild != nullptr);
+            CPLAssert(psLastChild->psNext == nullptr);
+            std::map<CPLString, int> mapKeyToIndex;
+            for( int j = 0; aosList[j]; ++j )
+            {
+                CPLXMLNode* psObject =
+                    CPLCreateXMLNode(nullptr, CXT_Element, "Object");
+                mapKeyToIndex[aosList[j]] = iStartIndex + j;
+                CPLCreateXMLElementAndValue(psObject, "Key", aosList[j]);
+                psLastChild->psNext = psObject;
+                psLastChild = psObject;
+            }
+
+            // Run request
+            char* pszXML = CPLSerializeXMLTree(psXML);
+            CPLDestroyXMLNode(psXML);
+            auto oDeletedKeys = DeleteObjects(osCurBucket.c_str(), pszXML);
+            CPLFree(pszXML);
+
+            // Mark delete file
+            for( const auto& osDeletedKey: oDeletedKeys )
+            {
+                auto mapKeyToIndexIter = mapKeyToIndex.find(osDeletedKey);
+                if( mapKeyToIndexIter != mapKeyToIndex.end() )
+                {
+                    panRet[mapKeyToIndexIter->second] = true;
+                }
+            }
+
+            osCurBucket.clear();
+            aosList.Clear();
+            if( bBucketChanged )
+            {
+                iStartIndex = i;
+                osCurBucket = osBucket;
+                aosList.AddString(pszSlash + 1);
+                bBucketChanged = false;
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+    return panRet;
+}
+
+/************************************************************************/
+/*                            DeleteObjects()                           */
+/************************************************************************/
+
+std::set<CPLString> VSIS3FSHandler::DeleteObjects(const char* pszBucket,
+                                                  const char* pszXML)
+{
+    auto poS3HandleHelper = std::unique_ptr<VSIS3HandleHelper>(
+        VSIS3HandleHelper::BuildFromURI(pszBucket,
+                                        GetFSPrefix().c_str(), true));
+    if( !poS3HandleHelper )
+        return std::set<CPLString>();
+
+    std::set<CPLString> oDeletedKeys;
+    bool bRetry;
+    double dfRetryDelay = CPLAtof(CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
+                                CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
+    const int nMaxRetry = atoi(CPLGetConfigOption("GDAL_HTTP_MAX_RETRY",
+                                   CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)));
+    int nRetryCount = 0;
+
+    CPLString osContentMD5;
+    struct CPLMD5Context context;
+    CPLMD5Init(&context);
+    CPLMD5Update(&context, reinterpret_cast<unsigned char const *>(pszXML),
+                  static_cast<int>(strlen(pszXML)));
+    unsigned char hash[16];
+    CPLMD5Final(hash, &context);
+    char* pszBase64 = CPLBase64Encode(16, hash);
+    osContentMD5.Printf("Content-MD5: %s", pszBase64);
+    CPLFree(pszBase64);
+
+    do
+    {
+        bRetry = false;
+        CURL* hCurlHandle = curl_easy_init();
+        poS3HandleHelper->AddQueryParameter("delete", "");
+        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_easy_setopt(hCurlHandle, CURLOPT_POSTFIELDS, pszXML );
+
+        struct curl_slist* headers = static_cast<struct curl_slist*>(
+            CPLHTTPSetOptions(hCurlHandle,
+                              poS3HandleHelper->GetURL().c_str(),
+                              nullptr));
+        headers = curl_slist_append(headers, "Content-Type: application/xml");
+        headers = curl_slist_append(headers, osContentMD5.c_str());
+        headers = VSICurlMergeHeaders(headers,
+                        poS3HandleHelper->GetCurlHeaders("POST", headers,
+                                                         pszXML,
+                                                         strlen(pszXML)));
+        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+
+        poS3HandleHelper->ResetQueryParameters();
+
+        WriteFuncStruct sWriteFuncData;
+        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
+        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+                         VSICurlHandleWriteFunc);
+
+        WriteFuncStruct sWriteFuncHeaderData;
+        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+                         VSICurlHandleWriteFunc);
+
+        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
+        szCurlErrBuf[0] = '\0';
+        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+
+        MultiPerform(GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
+                     hCurlHandle);
+
+        VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
+
+        curl_slist_free_all(headers);
+
+        long response_code = 0;
+        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
+        if( response_code != 200 || sWriteFuncData.pBuffer == nullptr )
+        {
+            // Look if we should attempt a retry
+            const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
+                static_cast<int>(response_code), dfRetryDelay,
+                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
+            if( dfNewRetryDelay > 0 &&
+                nRetryCount < nMaxRetry )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                            "HTTP error code: %d - %s. "
+                            "Retrying again in %.1f secs",
+                            static_cast<int>(response_code),
+                            poS3HandleHelper->GetURL().c_str(),
+                            dfRetryDelay);
+                CPLSleep(dfRetryDelay);
+                dfRetryDelay = dfNewRetryDelay;
+                nRetryCount++;
+                bRetry = true;
+            }
+            else if( sWriteFuncData.pBuffer != nullptr &&
+                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
+                                                      sWriteFuncHeaderData.pBuffer,
+                                                      false) )
+            {
+                UpdateMapFromHandle(poS3HandleHelper.get());
+                bRetry = true;
+            }
+            else
+            {
+                CPLDebug(GetDebugKey(), "%s",
+                         sWriteFuncData.pBuffer
+                         ? sWriteFuncData.pBuffer
+                         : "(null)");
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "DeleteObjects failed");
+            }
+        }
+        else
+        {
+            CPLXMLNode* psXML = CPLParseXMLString(sWriteFuncData.pBuffer);
+            if( psXML )
+            {
+                CPLXMLNode* psDeleteResult =
+                    CPLGetXMLNode(psXML, "=DeleteResult");
+                if( psDeleteResult )
+                {
+                    for( CPLXMLNode* psIter = psDeleteResult->psChild;
+                                        psIter; psIter = psIter->psNext )
+                    {
+                        if( psIter->eType == CXT_Element &&
+                            strcmp(psIter->pszValue, "Deleted") == 0 )
+                        {
+                            CPLString osKey = CPLGetXMLValue(psIter, "Key", "");
+                            oDeletedKeys.insert(osKey);
+
+                            InvalidateCachedData(
+                                (poS3HandleHelper->GetURL() + osKey).c_str() );
+
+                            InvalidateDirContent( CPLGetDirname(
+                                (GetFSPrefix() + pszBucket + "/" + osKey).c_str()) );
+                        }
+                    }
+                }
+                CPLDestroyXMLNode(psXML);
+            }
+        }
+
+        CPLFree(sWriteFuncData.pBuffer);
+        CPLFree(sWriteFuncHeaderData.pBuffer);
+
+        curl_easy_cleanup(hCurlHandle);
+    }
+    while( bRetry );
+    return oDeletedKeys;
 }
 
 /************************************************************************/

@@ -1372,6 +1372,62 @@ def test_vsis3_5():
     assert ret == 0
 
 ###############################################################################
+# Test DeleteObjects with a fake AWS server
+
+
+def test_vsis3_unlink_batch():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    def method(request):
+        if request.headers['Content-MD5'] != 'Ze0X4LdlTwCsT+WpNxD9FA==':
+            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+            request.send_response(403)
+            return
+
+        content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
+        if content != """<?xml version="1.0" encoding="UTF-8"?>
+<Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Object>
+    <Key>foo</Key>
+  </Object>
+  <Object>
+    <Key>bar/baz</Key>
+  </Object>
+</Delete>
+""":
+            sys.stderr.write('Did not get expected content: %s\n' % content)
+            request.send_response(403)
+            return
+
+        request.protocol_version = 'HTTP/1.1'
+        request.send_response(200)
+        response = """<DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Deleted><Key>foo</Key></Deleted><Deleted><Key>bar/baz</Key></Deleted></DeleteResult>"""
+        request.send_header('Content-Length', len(response))
+        request.send_header('Connection', 'close')
+        request.end_headers()
+        request.wfile.write(response.encode('ascii'))
+
+    handler = webserver.SequentialHandler()
+    handler.add('POST', '/unlink_batch/?delete', custom_method=method)
+    handler.add('POST', '/unlink_batch/?delete', 200, {},
+                """<DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Deleted><Key>baw</Key></Deleted></DeleteResult>""")
+
+    with gdaltest.config_option('CPL_VSIS3_UNLINK_BATCH_SIZE', '2'):
+        with webserver.install_http_handler(handler):
+            ret = gdal.UnlinkBatch(['/vsis3/unlink_batch/foo', '/vsis3/unlink_batch/bar/baz', '/vsis3/unlink_batch/baw'])
+    assert ret
+
+    handler = webserver.SequentialHandler()
+    handler.add('POST', '/unlink_batch/?delete', 200, {},
+                """<DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Failed><Key>foo</Key></Failed></DeleteResult>""")
+
+    with webserver.install_http_handler(handler):
+        ret = gdal.UnlinkBatch(['/vsis3/unlink_batch/foo'])
+    assert not ret
+
+###############################################################################
 # Test multipart upload with a fake AWS server
 
 
