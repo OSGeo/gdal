@@ -805,6 +805,12 @@ public:
     return GDALMDArrayTranspose(self, nList, pList);
   }
 
+%newobject GetUnscaled;
+  GDALMDArrayHS* GetUnscaled()
+  {
+    return GDALMDArrayGetUnscaled(self);
+  }
+
 %newobject AsClassicDataset;
   GDALDatasetShadow* AsClassicDataset(size_t iXDim, size_t iYDim)
   {

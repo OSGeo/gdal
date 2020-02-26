@@ -33,6 +33,7 @@ from osgeo import osr
 
 import array
 import gdaltest
+import math
 import pytest
 import struct
 import sys
@@ -1337,6 +1338,219 @@ def test_mem_md_array_single_dim_non_contiguous_copy():
         got_data = struct.unpack('B' * len(got_data), got_data)
         for i in range(nvalues):
             assert got_data[i * spacing] == i
+
+
+def test_mem_md_array_get_unscaled_0dim():
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.CreateMultiDimensional('myds')
+    rg = ds.GetRootGroup()
+    myarray = rg.CreateMDArray("myarray", [],
+                               gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    assert myarray
+
+    data = array.array('B', [1])
+    if sys.version_info >= (3, 0, 0):
+        data = data.tobytes()
+    else:
+        data = data.tostring()
+    assert myarray.Write(data) == gdal.CE_None
+
+    myarray.SetOffset(1.5)
+    myarray.SetScale(200.5)
+
+    unscaled = myarray.GetUnscaled()
+    assert unscaled.GetDataType().GetNumericDataType() == gdal.GDT_Float64
+    assert struct.unpack('d' * 1, unscaled.Read())[0] == 1 * 200.5 + 1.5
+    assert struct.unpack('f' * 1, unscaled.Read(buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_Float32)))[0] == 1 * 200.5 + 1.5
+
+
+def test_mem_md_array_get_unscaled_0dim_complex():
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.CreateMultiDimensional('myds')
+    rg = ds.GetRootGroup()
+    myarray = rg.CreateMDArray("myarray", [],
+                               gdal.ExtendedDataType.Create(gdal.GDT_CInt16))
+    assert myarray
+
+    data = array.array('H', [1, 2])
+    if sys.version_info >= (3, 0, 0):
+        data = data.tobytes()
+    else:
+        data = data.tostring()
+    assert myarray.Write(data) == gdal.CE_None
+
+    myarray.SetOffset(1.5)
+    myarray.SetScale(200.5)
+
+    unscaled = myarray.GetUnscaled()
+    assert unscaled.GetDataType().GetNumericDataType() == gdal.GDT_CFloat64
+    assert struct.unpack('d' * 2, unscaled.Read()) == (1 * 200.5 + 1.5,  2 * 200.5 + 1.5)
+    assert struct.unpack('f' * 2, unscaled.Read(buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_CFloat32))) == (1 * 200.5 + 1.5,  2 * 200.5 + 1.5)
+
+
+def test_mem_md_array_get_unscaled_0dim_non_matching_nodata():
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.CreateMultiDimensional('myds')
+    rg = ds.GetRootGroup()
+    myarray = rg.CreateMDArray("myarray", [],
+                               gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    assert myarray
+
+    data = array.array('B', [1])
+    if sys.version_info >= (3, 0, 0):
+        data = data.tobytes()
+    else:
+        data = data.tostring()
+    assert myarray.Write(data) == gdal.CE_None
+
+    myarray.SetOffset(1.5)
+    myarray.SetScale(200.5)
+    myarray.SetNoDataValueDouble(3)
+
+    unscaled = myarray.GetUnscaled()
+    assert unscaled.GetDataType().GetNumericDataType() == gdal.GDT_Float64
+    assert math.isnan(unscaled.GetNoDataValueAsDouble())
+    assert struct.unpack('d' * 1, unscaled.Read())[0] == 1 * 200.5 + 1.5
+    assert struct.unpack('f' * 1, unscaled.Read(buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_Float32)))[0] == 1 * 200.5 + 1.5
+
+
+def test_mem_md_array_get_unscaled_0dim_matching_nodata():
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.CreateMultiDimensional('myds')
+    rg = ds.GetRootGroup()
+    myarray = rg.CreateMDArray("myarray", [],
+                               gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    assert myarray
+
+    data = array.array('B', [1])
+    if sys.version_info >= (3, 0, 0):
+        data = data.tobytes()
+    else:
+        data = data.tostring()
+    assert myarray.Write(data) == gdal.CE_None
+
+    myarray.SetOffset(1.5)
+    myarray.SetScale(200.5)
+    myarray.SetNoDataValueDouble(1)
+
+    unscaled = myarray.GetUnscaled()
+    assert unscaled.GetDataType().GetNumericDataType() == gdal.GDT_Float64
+    assert math.isnan(unscaled.GetNoDataValueAsDouble())
+    assert math.isnan(struct.unpack('d' * 1, unscaled.Read())[0])
+
+
+def test_mem_md_array_get_unscaled_0dim_matching_nodata_complex():
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.CreateMultiDimensional('myds')
+    rg = ds.GetRootGroup()
+    myarray = rg.CreateMDArray("myarray", [],
+                               gdal.ExtendedDataType.Create(gdal.GDT_CInt16))
+    assert myarray
+
+    data = array.array('H', [1, 2])
+    if sys.version_info >= (3, 0, 0):
+        data = data.tobytes()
+    else:
+        data = data.tostring()
+    assert myarray.Write(data) == gdal.CE_None
+
+    myarray.SetOffset(1.5)
+    myarray.SetScale(200.5)
+    myarray.SetNoDataValueRaw(struct.pack('H' * 2, 1, 2))
+
+    unscaled = myarray.GetUnscaled()
+    assert unscaled.GetDataType().GetNumericDataType() == gdal.GDT_CFloat64
+    assert math.isnan(unscaled.GetNoDataValueAsDouble())
+    assert math.isnan(struct.unpack('d' * 2, unscaled.Read())[0])
+    assert math.isnan(struct.unpack('d' * 2, unscaled.Read())[1])
+
+
+def test_mem_md_array_get_unscaled_3dim():
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.CreateMultiDimensional('myds')
+    rg = ds.GetRootGroup()
+    dim0 = rg.CreateDimension("dim0", None, None, 2)
+    dim1 = rg.CreateDimension("dim1", None, None, 3)
+    dim2 = rg.CreateDimension("dim2", None, None, 4)
+    myarray = rg.CreateMDArray("myarray", [ dim0, dim1, dim2 ],
+                               gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    assert myarray
+
+    data = array.array('B', [i for i in range(24)])
+    if sys.version_info >= (3, 0, 0):
+        data = data.tobytes()
+    else:
+        data = data.tostring()
+    assert myarray.Write(data) == gdal.CE_None
+
+    assert myarray.GetUnscaled().Read() == myarray.Read()
+
+    myarray.SetOffset(1.5)
+    myarray.SetScale(200.5)
+
+    unscaled = myarray.GetUnscaled()
+    assert unscaled.GetOffset() is None
+    assert unscaled.GetScale() is None
+    with gdaltest.error_handler():
+        assert unscaled.Write(unscaled.Read()) == gdal.CE_Failure
+    assert unscaled.GetNoDataValueAsRaw() is None
+    assert unscaled.GetSpatialRef() is None
+    assert unscaled.GetUnit() == myarray.GetUnit()
+    assert unscaled.GetBlockSize() == myarray.GetBlockSize()
+    assert [x.GetSize() for x in unscaled.GetDimensions()] == [x.GetSize() for x in myarray.GetDimensions() ]
+    assert unscaled.GetDataType().GetNumericDataType() == gdal.GDT_Float64
+    expected_data = [x * 200.5 + 1.5 for x in struct.unpack('B' * 24, myarray.Read())]
+    assert [x for x in struct.unpack('d' * 24, unscaled.Read())] == expected_data
+    assert [x for x in struct.unpack('f' * 24, unscaled.Read(buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_Float32)))] == expected_data
+
+    myarray.SetNoDataValueDouble(1)
+    unscaled = myarray.GetUnscaled()
+    assert math.isnan(unscaled.GetNoDataValueAsDouble())
+    got_data = [x for x in struct.unpack('d' * 24, unscaled.Read())]
+    expected_data = [float('nan') if x == 1 else x * 200.5 + 1.5 for x in struct.unpack('B' * 24, myarray.Read())]
+    for i in range(24):
+        if math.isnan(expected_data[i]):
+            assert math.isnan(got_data[i])
+        else:
+            assert got_data[i] == expected_data[i]
+
+
+def test_mem_md_array_get_unscaled_1dim_complex():
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.CreateMultiDimensional('myds')
+    rg = ds.GetRootGroup()
+    dim0 = rg.CreateDimension("dim0", None, None, 2)
+    myarray = rg.CreateMDArray("myarray", [ dim0 ],
+                               gdal.ExtendedDataType.Create(gdal.GDT_CInt16))
+    assert myarray
+
+    data = array.array('H', [1, 2, 3, 4])
+    if sys.version_info >= (3, 0, 0):
+        data = data.tobytes()
+    else:
+        data = data.tostring()
+    assert myarray.Write(data) == gdal.CE_None
+
+    assert myarray.GetUnscaled().Read() == myarray.Read()
+
+    myarray.SetOffset(1.5)
+    myarray.SetScale(200.5)
+    myarray.SetNoDataValueRaw(struct.pack('H' * 2, 1, 2))
+
+    unscaled = myarray.GetUnscaled()
+    assert unscaled.GetDataType().GetNumericDataType() == gdal.GDT_CFloat64
+    got_data = [x for x in struct.unpack('d' * 4, unscaled.Read())]
+    assert math.isnan(got_data[0])
+    assert math.isnan(got_data[1])
+    assert got_data[2] == 3 * 200.5 + 1.5
+    assert got_data[3] == 4 * 200.5 + 1.5
 
 
 def XX_test_all_forever():
