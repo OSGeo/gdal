@@ -2914,7 +2914,7 @@ def multi_threaded_tiling(input_file, output_folder, options):
 
     # TODO: gbataille - check the confs for which each element is an array... one useless level?
     # TODO: gbataille - assign an ID to each job for print in verbose mode "ReadRaster Extent ..."
-    for _ in pool.imap_unordered(partial(create_base_tile, conf), tile_details, chunksize=128):
+    for _ in pool.imap_unordered(partial(create_base_tile, conf), tile_details, chunksize=4):
         if not options.verbose and not options.quiet:
             progress_bar.log_progress()
 
