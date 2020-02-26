@@ -212,7 +212,7 @@ Creating a layer from an OGR data source
 
       ogr2ogr -overwrite -f MSSQLSpatial "MSSQL:server=.\MSSQLSERVER2008;database=geodb;trusted_connection=yes" "rivers.tab"
 
-      ogr2ogr -overwrite -f MSSQLSpatial 'MSSQL:server=127.0.0.1;database=TestDB;UID=SA;PWD=DummyPassw0rd' "rivers.gpkg"
+      ogr2ogr -overwrite -f MSSQLSpatial "MSSQL:server=127.0.0.1;database=TestDB;UID=SA;PWD=DummyPassw0rd" "rivers.gpkg"
       
 Connecting to a layer and dump the contents
 
@@ -220,7 +220,7 @@ Connecting to a layer and dump the contents
 
       ogrinfo -al "MSSQL:server=.\MSSQLSERVER2008;database=geodb;tables=rivers;trusted_connection=yes"
       
-      ogrinfo -al 'MSSQL:server=127.0.0.1;database=TestDB;driver=ODBC Driver 17 for SQL Server;UID=SA;PWD=DummyPassw0rd'
+      ogrinfo -al "MSSQL:server=127.0.0.1;database=TestDB;driver=ODBC Driver 17 for SQL Server;UID=SA;PWD=DummyPassw0rd"
 
 Creating a spatial index
 
