@@ -846,3 +846,21 @@ def test_vsitar_verylongfilename():
     data = gdal.VSIFReadL(1, 3, f).decode('ascii')
     gdal.VSIFCloseL(f)
     assert data == 'bar'
+
+
+def test_unlink_batch():
+
+    gdal.FileFromMemBuffer('/vsimem/foo', 'foo')
+    gdal.FileFromMemBuffer('/vsimem/bar', 'bar')
+    assert gdal.UnlinkBatch(['/vsimem/foo', '/vsimem/bar'])
+    assert not gdal.VSIStatL('/vsimem/foo')
+    assert not gdal.VSIStatL('/vsimem/bar')
+
+    assert not gdal.UnlinkBatch([])
+
+    gdal.FileFromMemBuffer('/vsimem/foo', 'foo')
+    open('tmp/bar', 'wt').write('bar')
+    with gdaltest.error_handler():
+        assert not gdal.UnlinkBatch(['/vsimem/foo', 'tmp/bar'])
+    gdal.Unlink('/vsimem/foo')
+    gdal.Unlink('tmp/bar')

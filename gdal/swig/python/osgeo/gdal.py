@@ -1630,6 +1630,10 @@ def Unlink(*args):
     """Unlink(char const * utf8_path) -> VSI_RETVAL"""
     return _gdal.Unlink(*args)
 
+def UnlinkBatch(*args):
+    """UnlinkBatch(char ** files) -> bool"""
+    return _gdal.UnlinkBatch(*args)
+
 def HasThreadSupport(*args):
     """HasThreadSupport() -> int"""
     return _gdal.HasThreadSupport(*args)
