@@ -1553,6 +1553,101 @@ def test_mem_md_array_get_unscaled_1dim_complex():
     assert got_data[3] == 4 * 200.5 + 1.5
 
 
+def test_mem_md_array_get_mask():
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.CreateMultiDimensional('myds')
+    rg = ds.GetRootGroup()
+
+    myarray = rg.CreateMDArray("myarray_emptydim", [],
+                               gdal.ExtendedDataType.Create(gdal.GDT_Int16))
+    # No-dim array unsupported
+    with gdaltest.error_handler():
+        assert not myarray.GetMask()
+
+    dim0 = rg.CreateDimension("dim0", None, None, 2)
+    dim1 = rg.CreateDimension("dim1", None, None, 3)
+    dim2 = rg.CreateDimension("dim2", None, None, 4)
+    myarray = rg.CreateMDArray("myarray_string", [dim0],
+                               gdal.ExtendedDataType.CreateString())
+    # Non-numeric array unsupported
+    with gdaltest.error_handler():
+        assert not myarray.GetMask()
+
+    myarray = rg.CreateMDArray("myarray", [ dim0, dim1, dim2 ],
+                               gdal.ExtendedDataType.Create(gdal.GDT_Int32))
+    data = array.array('I', [i for i in range(24)])
+    if sys.version_info >= (3, 0, 0):
+        data = data.tobytes()
+    else:
+        data = data.tostring()
+    assert myarray.Write(data) == gdal.CE_None
+
+    mask = myarray.GetMask()
+    assert mask.GetOffset() is None
+    assert mask.GetScale() is None
+    with gdaltest.error_handler():
+        assert mask.Write(mask.Read()) == gdal.CE_Failure
+    assert mask.GetNoDataValueAsRaw() is None
+    assert mask.GetSpatialRef() is None
+    assert mask.GetUnit() == myarray.GetUnit()
+    assert mask.GetBlockSize() == myarray.GetBlockSize()
+    assert [x.GetSize() for x in mask.GetDimensions()] == [x.GetSize() for x in myarray.GetDimensions() ]
+    assert mask.GetDataType().GetNumericDataType() == gdal.GDT_Byte
+    assert [x for x in struct.unpack('B' * 24, mask.Read())] == [ 1 ] * 24
+    assert [x for x in struct.unpack('H' * 24, mask.Read(buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_Int16)))] == [ 1 ] * 24
+
+    # Test no data value
+    myarray.SetNoDataValueDouble(10)
+    expected_data = [ 1 ] * 24
+    expected_data[10] = 0
+    assert [x for x in struct.unpack('B' * 24, mask.Read())] == expected_data
+
+    # Test missing_value, _FillValue, valid_min, valid_max
+    bytedt = gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    attr = myarray.CreateAttribute('missing_value', [1], bytedt)
+    assert attr.Write(8) == gdal.CE_None
+    attr = myarray.CreateAttribute('_FillValue', [1], bytedt)
+    assert attr.Write(9) == gdal.CE_None
+    attr = myarray.CreateAttribute('valid_min', [1], bytedt)
+    assert attr.Write(2) == gdal.CE_None
+    attr = myarray.CreateAttribute('valid_max', [1], bytedt)
+    assert attr.Write(22) == gdal.CE_None
+    expected_data = [ 1 ] * 24
+    expected_data[0] = 0
+    expected_data[1] = 0
+    expected_data[8] = 0
+    expected_data[9] = 0
+    expected_data[10] = 0
+    expected_data[23] = 0
+    assert [x for x in struct.unpack('B' * 24, mask.Read())] == expected_data
+
+    # Test valid_range
+    myarray = rg.CreateMDArray("myarray_valid_range", [ dim0, dim1, dim2 ],
+                               gdal.ExtendedDataType.Create(gdal.GDT_Int16))
+    data = array.array('H', [i for i in range(24)])
+    if sys.version_info >= (3, 0, 0):
+        data = data.tobytes()
+    else:
+        data = data.tostring()
+    assert myarray.Write(data) == gdal.CE_None
+    attr = myarray.CreateAttribute('valid_range', [2], bytedt)
+    assert attr.Write([1,22]) == gdal.CE_None
+    mask = myarray.GetMask()
+    expected_data = [ 1 ] * 24
+    expected_data[0] = 0
+    expected_data[23] = 0
+    assert [x for x in struct.unpack('B' * 24, mask.Read())] == expected_data
+
+    # Test array with nan
+    myarray = rg.CreateMDArray("myarray_with_nan", [ dim0 ],
+                               gdal.ExtendedDataType.Create(gdal.GDT_Float32))
+    assert myarray.Write(struct.pack('f' * 2, 0, float('nan'))) == gdal.CE_None
+
+    mask = myarray.GetMask()
+    assert [x for x in struct.unpack('B' * 2, mask.Read())] == [1, 0]
+
+
 def XX_test_all_forever():
     while True:
         test_mem_md_basic()

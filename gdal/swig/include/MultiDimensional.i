@@ -811,6 +811,14 @@ public:
     return GDALMDArrayGetUnscaled(self);
   }
 
+%newobject GetMask;
+%apply (char **CSL) {char **};
+  GDALMDArrayHS* GetMask(char** options = 0)
+  {
+    return GDALMDArrayGetMask(self, options);
+  }
+%clear char **;
+
 %newobject AsClassicDataset;
   GDALDatasetShadow* AsClassicDataset(size_t iXDim, size_t iYDim)
   {
