@@ -2846,6 +2846,16 @@ class MDArray(_object):
         return _gdal.MDArray_Transpose(self, *args)
 
 
+    def GetUnscaled(self, *args):
+        """GetUnscaled(MDArray self) -> MDArray"""
+        return _gdal.MDArray_GetUnscaled(self, *args)
+
+
+    def GetMask(self, *args):
+        """GetMask(MDArray self, char ** options=None) -> MDArray"""
+        return _gdal.MDArray_GetMask(self, *args)
+
+
     def AsClassicDataset(self, *args):
         """AsClassicDataset(MDArray self, size_t iXDim, size_t iYDim) -> Dataset"""
         return _gdal.MDArray_AsClassicDataset(self, *args)
