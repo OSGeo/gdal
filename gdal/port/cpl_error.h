@@ -174,6 +174,18 @@ void CPL_DLL CPL_STDCALL CPLDebug(const char *, CPL_FORMAT_STRING(const char *),
     CPL_PRINT_FUNC_FORMAT(2, 3);
 #endif
 
+#ifdef DEBUG
+/** Same as CPLDebug(), but expands to nothing for non-DEBUG builds.
+ * @since GDAL 3.1
+ */
+#define CPLDebugOnly(...) CPLDebug(__VA_ARGS__)
+#else
+/** Same as CPLDebug(), but expands to nothing for non-DEBUG builds.
+ * @since GDAL 3.1
+ */
+#define CPLDebugOnly(...)
+#endif
+
 void CPL_DLL CPL_STDCALL _CPLAssert( const char *, const char *, int ) CPL_NO_RETURN;
 
 #if defined(DEBUG) && !defined(CPPCHECK)
