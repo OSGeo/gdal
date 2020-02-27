@@ -349,9 +349,7 @@ uint64_t PackedRTree::size(const uint64_t numItems, const uint16_t nodeSize)
 
 void PackedRTree::streamWrite(const std::function<void(uint8_t *, size_t)> &writeData) {
 #if !CPL_IS_LSB
-    // Note: we should normally revert endianness after writing, but as we no longer
-    // use the data structures this is not needed.
-    for( size_t i = 0; i < static_cast<size_t>(_numItems); i++ )
+    for( size_t i = 0; i < static_cast<size_t>(_numNodes); i++ )
     {
         CPL_LSBPTR64(&_nodeItems[i].minX);
         CPL_LSBPTR64(&_nodeItems[i].minY);
@@ -361,6 +359,16 @@ void PackedRTree::streamWrite(const std::function<void(uint8_t *, size_t)> &writ
     }
 #endif
     writeData(reinterpret_cast<uint8_t *>(_nodeItems), static_cast<size_t>(_numNodes * sizeof(NodeItem)));
+#if !CPL_IS_LSB
+    for( size_t i = 0; i < static_cast<size_t>(_numNodes); i++ )
+    {
+        CPL_LSBPTR64(&_nodeItems[i].minX);
+        CPL_LSBPTR64(&_nodeItems[i].minY);
+        CPL_LSBPTR64(&_nodeItems[i].maxX);
+        CPL_LSBPTR64(&_nodeItems[i].maxY);
+        CPL_LSBPTR64(&_nodeItems[i].offset);
+    }
+#endif
 }
 
 NodeItem PackedRTree::getExtent() const { return _extent; }
