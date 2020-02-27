@@ -487,7 +487,8 @@ CPLString IVSIS3LikeHandleHelper::BuildCanonicalizedHeaders(
     const struct curl_slist* psIter = psExistingHeaders;
     for(; psIter != nullptr; psIter = psIter->next)
     {
-        if( STARTS_WITH_CI(psIter->data, pszHeaderPrefix) )
+        if( STARTS_WITH_CI(psIter->data, pszHeaderPrefix) ||
+            STARTS_WITH_CI(psIter->data, "Content-MD5") )
         {
             const char* pszColumn = strstr(psIter->data, ":");
             if( pszColumn )

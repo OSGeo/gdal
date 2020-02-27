@@ -146,6 +146,9 @@ class OGRGeoJSONWriteLayer final: public OGRLayer
     OGRErr ICreateFeature( OGRFeature* poFeature ) override;
     OGRErr CreateField( OGRFieldDefn* poField, int bApproxOK ) override;
     int TestCapability( const char* pszCap ) override;
+    OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
+        { return iGeomField == 0 ? OGRGeoJSONWriteLayer::GetExtent(psExtent, bForce) : OGRERR_FAILURE; }
 
   private:
     OGRGeoJSONDataSource* poDS_;

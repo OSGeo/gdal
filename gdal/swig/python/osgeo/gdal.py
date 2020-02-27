@@ -1630,6 +1630,10 @@ def Unlink(*args):
     """Unlink(char const * utf8_path) -> VSI_RETVAL"""
     return _gdal.Unlink(*args)
 
+def UnlinkBatch(*args):
+    """UnlinkBatch(char ** files) -> bool"""
+    return _gdal.UnlinkBatch(*args)
+
 def HasThreadSupport(*args):
     """HasThreadSupport() -> int"""
     return _gdal.HasThreadSupport(*args)
@@ -2840,6 +2844,16 @@ class MDArray(_object):
     def Transpose(self, *args):
         """Transpose(MDArray self, int nList) -> MDArray"""
         return _gdal.MDArray_Transpose(self, *args)
+
+
+    def GetUnscaled(self, *args):
+        """GetUnscaled(MDArray self) -> MDArray"""
+        return _gdal.MDArray_GetUnscaled(self, *args)
+
+
+    def GetMask(self, *args):
+        """GetMask(MDArray self, char ** options=None) -> MDArray"""
+        return _gdal.MDArray_GetMask(self, *args)
 
 
     def AsClassicDataset(self, *args):

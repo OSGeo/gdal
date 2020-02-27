@@ -1178,6 +1178,12 @@ void unpk_g2ncep(CPL_UNUSED sInt4 *kfildo, float *ain, sInt4 *iain, sInt4 *nd2x3
 
    if( ain == NULL && iain == NULL )
    {
+      /* Simulate effect of TransferInt / TransferFloat on the scan flag */
+      if( scanIndex >= 0 && (is3[scanIndex] & 0xf0) != GRIB2BIT_2 )
+      {
+          is3[scanIndex] = GRIB2BIT_2 + (is3[scanIndex] & 0x0f);
+      }
+
       g2_free(gfld);
       return;
    }

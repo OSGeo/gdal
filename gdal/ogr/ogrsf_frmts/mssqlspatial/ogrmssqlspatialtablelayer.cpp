@@ -31,6 +31,8 @@
 #include "ogr_mssqlspatial.h"
 #include "ogr_p.h"
 
+#include <memory>
+
 CPL_CVSID("$Id$")
 
 #define UNSUPPORTED_OP_READ_ONLY "%s : unsupported operation on a read-only datasource."
@@ -712,34 +714,34 @@ OGRErr OGRMSSQLSpatialTableLayer::GetExtent(int iGeomField, OGREnvelope *psExten
     if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY || nGeomColumnType == MSSQLCOLTYPE_GEOMETRY)
     {
         // Prepare statement
-        poStmt = new CPLODBCStatement(poDS->GetSession());
+        auto poStatement = std::unique_ptr<CPLODBCStatement>(new CPLODBCStatement(poDS->GetSession()));
 
         if (poDS->sMSSQLVersion.nMajor >= 11) {
             // SQLServer 2012 or later:
             // geography is converted to geometry to obtain the rectangular envelope
             if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
-                poStmt->Appendf("WITH extent(extentcol) AS (SELECT geometry::EnvelopeAggregate(geometry::STGeomFromWKB(%s.STAsBinary(), %s.STSrid).MakeValid()) as extentcol FROM [%s].[%s])", pszGeomColumn, pszGeomColumn, pszSchemaName, pszTableName);
+                poStatement->Appendf("WITH extent(extentcol) AS (SELECT geometry::EnvelopeAggregate(geometry::STGeomFromWKB(%s.STAsBinary(), %s.STSrid).MakeValid()) as extentcol FROM [%s].[%s])", pszGeomColumn, pszGeomColumn, pszSchemaName, pszTableName);
             else
-                poStmt->Appendf("WITH extent(extentcol) AS (SELECT geometry::EnvelopeAggregate(%s.MakeValid()) AS extentcol FROM [%s].[%s])", pszGeomColumn, pszSchemaName, pszTableName);
+                poStatement->Appendf("WITH extent(extentcol) AS (SELECT geometry::EnvelopeAggregate(%s.MakeValid()) AS extentcol FROM [%s].[%s])", pszGeomColumn, pszSchemaName, pszTableName);
 
-            poStmt->Appendf("SELECT extentcol.STPointN(1).STX, extentcol.STPointN(1).STY,");
-            poStmt->Appendf("extentcol.STPointN(3).STX, extentcol.STPointN(3).STY FROM extent;");
+            poStatement->Appendf("SELECT extentcol.STPointN(1).STX, extentcol.STPointN(1).STY,");
+            poStatement->Appendf("extentcol.STPointN(3).STX, extentcol.STPointN(3).STY FROM extent;");
         }
         else
         {
             // Before 2012 use two CTE's:
             // geography is converted to geometry to obtain the envelope
             if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
-                poStmt->Appendf("WITH ENVELOPE as (SELECT geometry::STGeomFromWKB(%s.STAsBinary(), %s.STSrid).MakeValid().STEnvelope() as envelope from [%s].[%s]),", pszGeomColumn, pszGeomColumn, pszSchemaName, pszTableName);
+                poStatement->Appendf("WITH ENVELOPE as (SELECT geometry::STGeomFromWKB(%s.STAsBinary(), %s.STSrid).MakeValid().STEnvelope() as envelope from [%s].[%s]),", pszGeomColumn, pszGeomColumn, pszSchemaName, pszTableName);
             else
-                poStmt->Appendf("WITH ENVELOPE as (SELECT %s.MakeValid().STEnvelope() as envelope from [%s].[%s]),", pszGeomColumn, pszSchemaName, pszTableName);
+                poStatement->Appendf("WITH ENVELOPE as (SELECT %s.MakeValid().STEnvelope() as envelope from [%s].[%s]),", pszGeomColumn, pszSchemaName, pszTableName);
             
-            poStmt->Appendf(" CORNERS as (SELECT envelope.STPointN(1) as point from ENVELOPE UNION ALL select envelope.STPointN(3) from ENVELOPE)");
-            poStmt->Appendf("SELECT MIN(point.STX), MIN(point.STY), MAX(point.STX), MAX(point.STY) FROM CORNERS;");
+            poStatement->Appendf(" CORNERS as (SELECT envelope.STPointN(1) as point from ENVELOPE UNION ALL select envelope.STPointN(3) from ENVELOPE)");
+            poStatement->Appendf("SELECT MIN(point.STX), MIN(point.STY), MAX(point.STX), MAX(point.STY) FROM CORNERS;");
         }
 
         // Execute
-        if (!poStmt->ExecuteSQL())
+        if (!poStatement->ExecuteSQL())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                 "Error getting extents, %s",
@@ -748,12 +750,12 @@ OGRErr OGRMSSQLSpatialTableLayer::GetExtent(int iGeomField, OGREnvelope *psExten
         else
         {
             // Try to update
-            while (poStmt->Fetch()) {
+            while (poStatement->Fetch()) {
 
-                const char *minx = poStmt->GetColData(0);
-                const char *miny = poStmt->GetColData(1);
-                const char *maxx = poStmt->GetColData(2);
-                const char *maxy = poStmt->GetColData(3);
+                const char *minx = poStatement->GetColData(0);
+                const char *miny = poStatement->GetColData(1);
+                const char *maxx = poStatement->GetColData(2);
+                const char *maxy = poStatement->GetColData(3);
 
                 if (!(minx == nullptr || miny == nullptr || maxx == nullptr || maxy == nullptr)) {
                     psExtent->MinX = CPLAtof(minx);
@@ -855,8 +857,6 @@ GIntBig OGRMSSQLSpatialTableLayer::GetFeatureCount( int bForce )
 
     if( TestCapability(OLCFastFeatureCount) == FALSE )
         return OGRMSSQLSpatialLayer::GetFeatureCount( bForce );
-
-    ClearStatement();
 
     CPLODBCStatement* poStatement = BuildStatement( "count(*)" );
 

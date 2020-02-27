@@ -2969,7 +2969,7 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
                          * missing values. */
    uInt4 scanIndex;     /* Where we are in the original grid. */
    sInt4 x, y;          /* Where we are in a grid of scan value 0100 */
-   sInt4 newIndex;      /* x,y in a 1 dimensional array. */
+   uInt4 newIndex;      /* x,y in a 1 dimensional array. */
    double value;        /* The data in the new units. */
    /* A pointer to Grib_Data for ease of manipulation. */
    double *grib_Data = nullptr;
@@ -3013,8 +3013,12 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
       }
 
       *grib_DataLen = subNxNy;
-      double* newData = (double *) realloc ((void *) (*Grib_Data),
+      double* newData = nullptr;
+      if( *grib_DataLen <= std::numeric_limits<size_t>::max() / sizeof(double) )
+      {
+        newData = (double *) realloc ((void *) (*Grib_Data),
                                        (*grib_DataLen) * sizeof (double));
+      }
       if( newData == nullptr )
       {
           errSprintf ("Memory allocation failed");
@@ -3109,7 +3113,7 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
          }
          ScanIndex2XY (scanIndex, &x, &y, scan, Nx, Ny);
          /* ScanIndex returns value as if scan was 0100 */
-         newIndex = (x - 1) + (y - 1) * Nx;
+         newIndex = (uInt4)(x - 1) + (uInt4)(y - 1) * Nx;
          grib_Data[newIndex] = value;
       }
    }
@@ -3142,7 +3146,7 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
       for (scanIndex = 0; scanIndex < (uInt4)nd2x3 && scanIndex < Nx * Ny; scanIndex++) {
          ScanIndex2XY (scanIndex, &x, &y, scan, Nx, Ny);
          /* ScanIndex returns value as if scan was 0100 */
-         newIndex = (x - 1) + (y - 1) * Nx;
+         newIndex = (uInt4)(x - 1) + (uInt4)(y - 1) * Nx;
          if (attrib->fieldType) {
             value = iain[scanIndex];
          } else {
@@ -3178,7 +3182,7 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
          for (scanIndex = 0; scanIndex < (uInt4)nd2x3 && scanIndex < Nx * Ny; scanIndex++) {
             ScanIndex2XY (scanIndex, &x, &y, scan, Nx, Ny);
             /* ScanIndex returns value as if scan was 0100 */
-            newIndex = (x - 1) + (y - 1) * Nx;
+            newIndex = (uInt4)(x - 1) + (uInt4)(y - 1) * Nx;
             /* Corrected this on 5/10/2004 */
             if (ib[scanIndex] != 1) {
                grib_Data[newIndex] = xmissp;
