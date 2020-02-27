@@ -384,6 +384,9 @@ TIFFInitZIP(TIFF* tif, int scheme)
 
 	assert( (scheme == COMPRESSION_DEFLATE)
 		|| (scheme == COMPRESSION_ADOBE_DEFLATE));
+#ifdef NDEBUG
+	(void)scheme;
+#endif
 
 	/*
 	 * Merge codec-specific tag information.
