@@ -28,7 +28,7 @@ if version_info >= (2, 7, 0):
                     import traceback
                     traceback_string = ''.join(traceback.format_exception(*sys.exc_info()))
                     raise ImportError(traceback_string + '\n' + msg)
-            return importlib.import_module('_gdal', pkg)
+            return importlib.import_module('_gdal')
     _gdal = swig_import_helper()
     del swig_import_helper
 elif version_info >= (2, 6, 0):
