@@ -2839,7 +2839,7 @@ void DoubleToRational(double value, uint32 *num, uint32 *denom)
 		return;
 	}
 	/*-- Check for easy integer numbers -- */
-	if (value == (unsigned long)(value)) {
+	if (value == (uint32)(value)) {
 		*num = (uint32)value;
 		*denom = 1;
 		return;
@@ -2903,8 +2903,8 @@ void DoubleToSrational(double value, int32 *num, int32 *denom)
 		return;
 	}
 	/*-- Check for easy numbers -- */
-	if (value == (long)(value)) {
-		*num = (long)value;
+	if (value == (uint32)(value)) {
+		*num = (uint32)value;
 		*denom = 1;
 		return;
 	}
