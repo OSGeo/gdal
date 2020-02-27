@@ -4106,7 +4106,9 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
     // payload.
     auto OptimizedRetrievalhOfOffsetSize = [&](int nBlockId,
                                                vsi_l_offset& nOffset,
-                                               vsi_l_offset& nSize)
+                                               vsi_l_offset& nSize,
+                                               size_t nTotalSize,
+                                               size_t nMaxRawBlockCacheSize)
     {
         bool bTryMask = m_poGDS->m_bMaskInterleavedWithImagery;
         nOffset = TIFFGetStrileOffset(m_poGDS->m_hTIFF, nBlockId);
@@ -4170,11 +4172,14 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
             {
                 nOffset -= 4;
                 nSize += 4;
-                StrileData data;
-                data.nOffset = nOffset;
-                data.nByteCount = nSize;
-                data.bTryMask = bTryMask;
-                oMapStrileToOffsetByteCount[nBlockId] = data;
+                if( nTotalSize + nSize < nMaxRawBlockCacheSize )
+                {
+                    StrileData data;
+                    data.nOffset = nOffset;
+                    data.nByteCount = nSize;
+                    data.bTryMask = bTryMask;
+                    oMapStrileToOffsetByteCount[nBlockId] = data;
+                }
             }
         }
         else
@@ -4330,9 +4335,10 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
         const unsigned int nMaxRawBlockCacheSize =
             atoi(CPLGetConfigOption("GDAL_MAX_RAW_BLOCK_CACHE_SIZE",
                                     "10485760"));
-        for( int iY = nBlockY1; iY <= nBlockY2; iY ++)
+        bool bGoOn = true;
+        for( int iY = nBlockY1; bGoOn && iY <= nBlockY2; iY ++)
         {
-            for( int iX = nBlockX1; iX <= nBlockX2; iX ++)
+            for( int iX = nBlockX1; bGoOn && iX <= nBlockX2; iX ++)
             {
                 GDALRasterBlock* poBlock = TryGetLockedBlockRef(iX, iY);
                 if( poBlock != nullptr )
@@ -4351,7 +4357,7 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
                     !m_poGDS->m_bStreamingIn &&
                     m_poGDS->m_bBlockOrderRowMajor && m_poGDS->m_bLeaderSizeAsUInt4 )
                 {
-                    OptimizedRetrievalhOfOffsetSize(nBlockId, nOffset, nSize);
+                    OptimizedRetrievalhOfOffsetSize(nBlockId, nOffset, nSize, nTotalSize, nMaxRawBlockCacheSize);
                 }
                 else
 #endif
@@ -4374,6 +4380,10 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
                             std::pair<vsi_l_offset, size_t>
                                 (nOffset, static_cast<size_t>(nSize)) );
                         nTotalSize += static_cast<size_t>(nSize);
+                    }
+                    else
+                    {
+                        bGoOn = false;
                     }
                 }
             }
