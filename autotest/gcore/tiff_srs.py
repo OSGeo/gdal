@@ -517,7 +517,7 @@ def _create_geotiff1_1_from_copy_and_compare(srcfilename, options = []):
 
     src_ds = gdal.Open(srcfilename)
     tmpfile = '/vsimem/tmp.tif'
-    gdal.GetDriverByName('GTiff').CreateCopy(tmpfile, src_ds, options = options)
+    gdal.GetDriverByName('GTiff').CreateCopy(tmpfile, src_ds, options = options + ['ENDIANNESS=LITTLE'])
     f = gdal.VSIFOpenL(tmpfile, 'rb')
     data = gdal.VSIFReadL(1, 100000, f)
     gdal.VSIFCloseL(f)
