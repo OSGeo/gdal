@@ -5264,10 +5264,33 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 				assert(fip->field_readcount>=1);
 				assert(fip->field_passcount==0);
 				if (dp->tdir_count!=(uint64)fip->field_readcount)
-                                    /* corrupt file */;
+					/* corrupt file */;
 				else
 				{
 					err=TIFFReadDirEntryFloatArray(tif,dp,&data);
+					if (err==TIFFReadDirEntryErrOk)
+					{
+						int m;
+						m=TIFFSetField(tif,dp->tdir_tag,data);
+						if (data!=0)
+							_TIFFfree(data);
+						if (!m)
+							return(0);
+					}
+				}
+			}
+			break;
+		/*--: Rational2Double: Extend for Double Arrays and Rational-Arrays read into Double-Arrays. */
+		case TIFF_SETGET_C0_DOUBLE:
+			{
+				double* data;
+				assert(fip->field_readcount>=1);
+				assert(fip->field_passcount==0);
+				if (dp->tdir_count!=(uint64)fip->field_readcount)
+					/* corrupt file */;
+				else
+				{
+					err=TIFFReadDirEntryDoubleArray(tif,dp,&data);
 					if (err==TIFFReadDirEntryErrOk)
 					{
 						int m;

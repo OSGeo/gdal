@@ -29,6 +29,7 @@
  * (and also some miscellaneous stuff)
  */
 #include "tiffiop.h"
+#include <float.h>	/*--: for Rational2Double */
 
 /*
  * These are used in the backwards compatibility code...
@@ -559,6 +560,10 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 		 * Set custom value ... save a copy of the custom tag value.
 		 */
 		tv_size = _TIFFDataSize(fip->field_type);
+		/*--: Rational2Double: For Rationals evaluate "set_field_type" to determine internal storage size. */
+		if (fip->field_type == TIFF_RATIONAL || fip->field_type == TIFF_SRATIONAL) {
+			tv_size = _TIFFSetGetFieldSize(fip->set_field_type);
+		}
 		if (tv_size == 0) {
 			status = 0;
 			TIFFErrorExt(tif->tif_clientdata, module,
@@ -638,6 +643,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 				  || fip->field_writecount == TIFF_VARIABLE2
 				  || fip->field_writecount == TIFF_SPP
 				  || tv->count > 1) {
+			  /*--: Rational2Double: For Rationals tv_size is set above to 4 or 8 according to fip->set_field_type! */
 				_TIFFmemcpy(tv->value, va_arg(ap, void *),
 				    tv->count * tv_size);
 			} else {
@@ -698,6 +704,22 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 					break;
 				case TIFF_RATIONAL:
 				case TIFF_SRATIONAL:
+					/*-- Rational2Double: For Rationals tv_size is set above to 4 or 8 according to fip->set_field_type! */
+					{
+						if (tv_size == 8) {
+							double v2 = va_arg(ap, double);
+							_TIFFmemcpy(val, &v2, tv_size);
+						} else {
+							/*-- default schould be tv_size == 4 */
+							float v3 = (float)va_arg(ap, double);
+							_TIFFmemcpy(val, &v3, tv_size);
+							/*-- ToDo: After Testing, this should be removed and tv_size==4 should be set as default. */
+							if (tv_size != 4) {
+								TIFFErrorExt(0,"TIFFLib: _TIFFVSetField()", "Rational2Double: .set_field_type in not 4 but %d", tv_size); 
+							}
+						}
+					}
+					break;
 				case TIFF_FLOAT:
 					{
 						float v2 = _TIFFClampDoubleToFloat(va_arg(ap, double));
@@ -1200,6 +1222,23 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 								break;
 							case TIFF_RATIONAL:
 							case TIFF_SRATIONAL:
+								{
+									/*-- Rational2Double: For Rationals evaluate "set_field_type" to determine internal storage size and return value size. */
+									int tv_size = _TIFFSetGetFieldSize(fip->set_field_type);
+									if (tv_size == 8) {
+										*va_arg(ap, double*) = *(double *)val;
+										ret_val = 1;
+									} else {
+										/*-- default schould be tv_size == 4  */
+										*va_arg(ap, float*) = *(float *)val;
+										ret_val = 1;
+										/*-- ToDo: After Testing, this should be removed and tv_size==4 should be set as default. */
+										if (tv_size != 4) {
+											TIFFErrorExt(0,"TIFFLib: _TIFFVGetField()", "Rational2Double: .set_field_type in not 4 but %d", tv_size); 
+										}
+									}
+								}
+								break;
 							case TIFF_FLOAT:
 								*va_arg(ap, float*) =
 									*(float *)val;
