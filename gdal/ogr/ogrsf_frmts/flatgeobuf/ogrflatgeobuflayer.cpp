@@ -865,7 +865,10 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
     //CPLDebugOnly("FlatGeobuf", "poNewFeature as wkt: %s", wkt);
 #endif
     if (ogrGeometry == nullptr || ogrGeometry->IsEmpty())
+    {
+        CPLDebug("FlatGeobuf", "Skip writting feature without geometry");
         return OGRERR_NONE;
+    }
     if (m_geometryType != GeometryType::Unknown && ogrGeometry->getGeometryType() != m_eGType) {
         CPLError(CE_Failure, CPLE_AppDefined, "ICreateFeature: Mismatched geometry type");
         return OGRERR_FAILURE;
