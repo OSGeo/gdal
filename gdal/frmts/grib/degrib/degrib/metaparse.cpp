@@ -2958,7 +2958,7 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
                          * missing values. */
    uInt4 scanIndex;     /* Where we are in the original grid. */
    sInt4 x, y;          /* Where we are in a grid of scan value 0100 */
-   sInt4 newIndex;      /* x,y in a 1 dimensional array. */
+   uInt4 newIndex;      /* x,y in a 1 dimensional array. */
    double value;        /* The data in the new units. */
    /* A pointer to Grib_Data for ease of manipulation. */
    double *grib_Data = nullptr;
@@ -2981,17 +2981,18 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
        *Grib_Data = nullptr;
        return;
    }
-   
-   if (subNx * subNy > *grib_DataLen) {
 
-      if( subNx * subNy > 100 * 1024 * 1024 )
+   const uInt4 subNxNy = subNx * subNy;
+   if (subNxNy > *grib_DataLen) {
+
+      if( subNxNy > 100 * 1024 * 1024 )
       {
           vsi_l_offset curPos = VSIFTellL(fp);
           VSIFSeekL(fp, 0, SEEK_END);
           vsi_l_offset fileSize = VSIFTellL(fp);
           VSIFSeekL(fp, curPos, SEEK_SET);      
           // allow a compression ratio of 1:1000
-          if( subNx * subNy / 1000 > fileSize )
+          if( subNxNy / 1000 > fileSize )
           {
             errSprintf ("ERROR: File too short\n");
             *grib_DataLen = 0;
@@ -3000,9 +3001,12 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
           }
       }
 
-      *grib_DataLen = subNx * subNy;
-      double* newData = (double *) realloc ((void *) (*Grib_Data),
-                                       (*grib_DataLen) * sizeof (double));
+      double* newData = nullptr;
+      const size_t nBufferSize = subNxNy * sizeof (double);
+      if( nBufferSize / sizeof(double) == subNxNy )
+      {
+        newData = (double *) realloc ((void *) (*Grib_Data), nBufferSize);
+      }
       if( newData == nullptr )
       {
           errSprintf ("Memory allocation failed");
@@ -3011,6 +3015,7 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
           *grib_DataLen = 0;
           return;
       }
+      *grib_DataLen = subNxNy;
       *Grib_Data = newData;
    }
    grib_Data = *Grib_Data;
@@ -3097,7 +3102,7 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
          }
          ScanIndex2XY (scanIndex, &x, &y, scan, Nx, Ny);
          /* ScanIndex returns value as if scan was 0100 */
-         newIndex = (x - 1) + (y - 1) * Nx;
+         newIndex = (uInt4)(x - 1) + (uInt4)(y - 1) * Nx;
          grib_Data[newIndex] = value;
       }
    }
@@ -3130,7 +3135,7 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
       for (scanIndex = 0; scanIndex < (uInt4)nd2x3 && scanIndex < Nx * Ny; scanIndex++) {
          ScanIndex2XY (scanIndex, &x, &y, scan, Nx, Ny);
          /* ScanIndex returns value as if scan was 0100 */
-         newIndex = (x - 1) + (y - 1) * Nx;
+         newIndex = (uInt4)(x - 1) + (uInt4)(y - 1) * Nx;
          if (attrib->fieldType) {
             value = iain[scanIndex];
          } else {
@@ -3166,7 +3171,7 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
          for (scanIndex = 0; scanIndex < (uInt4)nd2x3 && scanIndex < Nx * Ny; scanIndex++) {
             ScanIndex2XY (scanIndex, &x, &y, scan, Nx, Ny);
             /* ScanIndex returns value as if scan was 0100 */
-            newIndex = (x - 1) + (y - 1) * Nx;
+            newIndex = (uInt4)(x - 1) + (uInt4)(y - 1) * Nx;
             /* Corrected this on 5/10/2004 */
             if (ib[scanIndex] != 1) {
                grib_Data[newIndex] = xmissp;
