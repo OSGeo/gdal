@@ -2101,17 +2101,13 @@ OGRGeometryFactory::createFromGEOS(
     {
         poGeometry = nullptr;
     }
-
-    if( pabyBuf != nullptr )
-    {
-        // Since GEOS 3.1.1, so we test 3.2.0.
+    // Since GEOS 3.1.1, so we test 3.2.0.
 #if GEOS_CAPI_VERSION_MAJOR >= 2 || \
     (GEOS_CAPI_VERSION_MAJOR == 1 && GEOS_CAPI_VERSION_MINOR >= 6)
-        GEOSFree_r( hGEOSCtxt, pabyBuf );
+    GEOSFree_r( hGEOSCtxt, pabyBuf );
 #else
-        free( pabyBuf );
+    free( pabyBuf );
 #endif
-    }
 
     return poGeometry;
 

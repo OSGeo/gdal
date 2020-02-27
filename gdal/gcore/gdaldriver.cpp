@@ -1030,7 +1030,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
         CSLPartialFindString(papszOptions, "QUIET_DELETE_ON_CREATE_COPY=");
     if( iIdxQuietDeleteOnCreateCopy >= 0 )
     {
-        if( papszOptionsToDelete == nullptr )
+        //if( papszOptionsToDelete == nullptr )
             papszOptionsToDelete = CSLDuplicate(papszOptions);
         papszOptions =
             CSLRemoveStrings(papszOptionsToDelete, iIdxQuietDeleteOnCreateCopy,

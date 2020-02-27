@@ -404,7 +404,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
             }
 
             //Check logic for top right pixel
-            if (((iBMX+1) >= 0) && (iBMY >= 0) &&
+            if ((iBMY >= 0) &&
                 (static_cast<size_t>(iBMX+1) < nBMXSize) &&
                 (static_cast<size_t>(iBMY) < nBMYSize))
             {
@@ -426,8 +426,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
             }
 
             //Check logic for bottom right pixel
-            if (((iBMX+1) >= 0) && ((iBMY+1) >= 0) &&
-                (static_cast<size_t>(iBMX+1) < nBMXSize) &&
+            if ((static_cast<size_t>(iBMX+1) < nBMXSize) &&
                 (static_cast<size_t>(iBMY+1) < nBMYSize))
             {
                 const double tempwt = fracBMX * fracBMY;
@@ -447,7 +446,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
             }
 
             //Check logic for bottom left pixel
-            if ((iBMX >= 0) && ((iBMY+1) >= 0) &&
+            if ((iBMX >= 0) &&
                 (static_cast<size_t>(iBMX) < nBMXSize) &&
                 (static_cast<size_t>(iBMY+1) < nBMYSize))
             {

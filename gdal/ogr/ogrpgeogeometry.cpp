@@ -515,12 +515,7 @@ OGRGeometry* OGRCreateFromMultiPatch       ( int nParts,
                 if( oSetDuplicated.find(iPart) != oSetDuplicated.end() )
                     continue;
 
-                int nPartStart = 0;
-                if( panPartStart != nullptr )
-                {
-                    nPartStart = panPartStart[iPart];
-                }
-
+                const int nPartStart = panPartStart[iPart];
                 OGRPoint oPoint1  (padfX[nPartStart],
                                    padfY[nPartStart],
                                    padfZ[nPartStart]);

@@ -248,8 +248,6 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
         return nullptr;
     }
 
-    CPLErr eErr = CE_None;
-
     /* calculate the area of interest */
     int nXStart = dfMaxDistance > 0? (std::max)(0, static_cast<int>(std::floor(nX - adfInvGeoTransform[1] * dfMaxDistance))) : 0;
     int nXStop = dfMaxDistance > 0? (std::min)(nXSize, static_cast<int>(std::ceil(nX + adfInvGeoTransform[1] * dfMaxDistance) + 1)) : nXSize;
@@ -453,7 +451,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
     std::copy(vFirstLineVal.begin(),
               vFirstLineVal.end(),
               vLastLineVal.begin());
-    for (int iLine = nY - 1; iLine >= nYStart && eErr == CE_None; iLine--)
+    for (int iLine = nY - 1; iLine >= nYStart; iLine--)
     {
         if (GDALRasterIO(hBand, GF_Read, nXStart, iLine, nXSize, 1,
             padfThisLineVal, nXSize, 1, GDT_Float64, 0, 0))
@@ -608,7 +606,7 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
     }
     /* scan downwards */
     memcpy(padfLastLineVal, padfFirstLineVal, nXSize * sizeof(double));
-    for(int iLine = nY + 1; iLine < nYStop && eErr == CE_None; iLine++ )
+    for(int iLine = nY + 1; iLine < nYStop; iLine++ )
     {
         if (GDALRasterIO( hBand, GF_Read, nXStart, iLine, nXStop - nXStart, 1,
             padfThisLineVal, nXStop - nXStart, 1, GDT_Float64, 0, 0 ))

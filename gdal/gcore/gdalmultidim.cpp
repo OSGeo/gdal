@@ -3963,15 +3963,12 @@ bool GDALMDArrayUnscaled::IRead(const GUInt64* arrayStartIdx,
         actualBufferStrideVector.resize(nDims);
         for( size_t i = 0; i < nDims; i++ )
             nElts *= count[i];
-        if( nDims )
+        actualBufferStrideVector.back() = 1;
+        for( size_t i = nDims - 1; i > 0; )
         {
-            actualBufferStrideVector.back() = 1;
-            for( size_t i = nDims - 1; i > 0; )
-            {
-                --i;
-                actualBufferStrideVector[i] =
-                    actualBufferStrideVector[i+1] * count[i+1];
-            }
+            --i;
+            actualBufferStrideVector[i] =
+                actualBufferStrideVector[i+1] * count[i+1];
         }
         actualBufferStridePtr = actualBufferStrideVector.data();
         pTempBuffer = VSI_MALLOC2_VERBOSE(nDTSize, nElts);

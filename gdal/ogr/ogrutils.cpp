@@ -377,17 +377,17 @@ std::string OGRMakeWktCoordinateM(double x, double y, double z, double m,
     opts.format = OGRWktFormat::G;
     if( hasZ )
     {
-        if( opts.format == OGRWktFormat::Default && CPLIsDoubleAnInt(z) )
+        /*if( opts.format == OGRWktFormat::Default && CPLIsDoubleAnInt(z) )
             wkt += " " + std::to_string(static_cast<int>(z));
-        else
+        else*/
             wkt += " " + OGRFormatDouble(z, opts);
     }
 
     if( hasM )
     {
-        if( opts.format == OGRWktFormat::Default && CPLIsDoubleAnInt(m) )
+        /*if( opts.format == OGRWktFormat::Default && CPLIsDoubleAnInt(m) )
             wkt += " " + std::to_string(static_cast<int>(m));
-        else
+        else*/
             wkt += " " + OGRFormatDouble(m, opts);
     }
     return wkt;

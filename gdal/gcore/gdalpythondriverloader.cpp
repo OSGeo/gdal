@@ -346,7 +346,7 @@ class PythonPluginLayer final: public OGRLayer
 
     public:
 
-        PythonPluginLayer(PyObject* poLayer);
+        explicit PythonPluginLayer(PyObject* poLayer);
         ~PythonPluginLayer();
 
         const char* GetName() override;

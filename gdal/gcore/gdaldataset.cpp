@@ -865,7 +865,7 @@ const char *GDALDataset::GetProjectionRefFromSpatialRef(const OGRSpatialReferenc
     {
         return "";
     }
-    if( pszWKT && m_poPrivate->m_pszWKTCached &&
+    if( m_poPrivate->m_pszWKTCached &&
         strcmp(pszWKT, m_poPrivate->m_pszWKTCached) == 0 )
     {
         CPLFree(pszWKT);
@@ -1553,7 +1553,7 @@ const char *GDALDataset::GetGCPProjectionFromSpatialRef(const OGRSpatialReferenc
     {
         return "";
     }
-    if( pszWKT && m_poPrivate->m_pszWKTGCPCached &&
+    if( m_poPrivate->m_pszWKTGCPCached &&
         strcmp(pszWKT, m_poPrivate->m_pszWKTGCPCached) == 0 )
     {
         CPLFree(pszWKT);
