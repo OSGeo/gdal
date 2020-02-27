@@ -3864,9 +3864,9 @@ protected:
         GDALMDArray(std::string(), "Unscaled view of " + poParent->GetName()),
         m_poParent(std::move(poParent)),
         m_dt(GDALExtendedDataType::Create(GDALDataTypeIsComplex(
-            poParent->GetDataType().GetNumericDataType()) ?
+            m_poParent->GetDataType().GetNumericDataType()) ?
                 GDT_CFloat64 : GDT_Float64)),
-        m_bHasNoData( poParent->GetRawNoDataValue() != nullptr )
+        m_bHasNoData( m_poParent->GetRawNoDataValue() != nullptr )
     {
     }
 
