@@ -3020,12 +3020,11 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
           }
       }
 
-      *grib_DataLen = subNxNy;
       double* newData = nullptr;
-      if( *grib_DataLen <= std::numeric_limits<size_t>::max() / sizeof(double) )
+      const size_t nBufferSize = subNxNy * sizeof (double);
+      if( nBufferSize / sizeof(double) == subNxNy )
       {
-        newData = (double *) realloc ((void *) (*Grib_Data),
-                                       (*grib_DataLen) * sizeof (double));
+        newData = (double *) realloc ((void *) (*Grib_Data), nBufferSize);
       }
       if( newData == nullptr )
       {
@@ -3035,6 +3034,7 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
           *grib_DataLen = 0;
           return;
       }
+      *grib_DataLen = subNxNy;
       *Grib_Data = newData;
    }
    grib_Data = *Grib_Data;
