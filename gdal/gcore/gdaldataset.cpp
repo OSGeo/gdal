@@ -2817,6 +2817,82 @@ GDALDatasetAdviseRead( GDALDatasetH hDS,
 }
 
 /************************************************************************/
+/*                         AntiRecursionStruct                          */
+/************************************************************************/
+
+namespace {
+// Prevent infinite recursion.
+struct AntiRecursionStruct
+{
+    struct DatasetContext
+    {
+        std::string osFilename;
+        int         nOpenFlags;
+        int         nSizeAllowedDrivers;
+
+        DatasetContext(const std::string& osFilenameIn,
+                        int nOpenFlagsIn,
+                        int nSizeAllowedDriversIn) :
+            osFilename(osFilenameIn),
+            nOpenFlags(nOpenFlagsIn),
+            nSizeAllowedDrivers(nSizeAllowedDriversIn) {}
+    };
+
+    struct DatasetContextCompare {
+        bool operator() (const DatasetContext& lhs, const DatasetContext& rhs) const {
+            return lhs.osFilename < rhs.osFilename ||
+                    (lhs.osFilename == rhs.osFilename &&
+                    (lhs.nOpenFlags < rhs.nOpenFlags ||
+                        (lhs.nOpenFlags == rhs.nOpenFlags &&
+                        lhs.nSizeAllowedDrivers < rhs.nSizeAllowedDrivers)));
+        }
+    };
+
+    std::set<DatasetContext, DatasetContextCompare> aosDatasetNamesWithFlags{};
+    int nRecLevel = 0;
+};
+} // namespace
+
+#ifdef WIN32
+// Currently thread_local and C++ objects don't work well with DLL on Windows
+static void FreeAntiRecursion( void* pData )
+{
+    delete static_cast<AntiRecursionStruct*>(pData);
+}
+
+static AntiRecursionStruct& GetAntiRecursion()
+{
+    static AntiRecursionStruct dummy;
+    int bMemoryErrorOccurred = false;
+    void* pData = CPLGetTLSEx(CTLS_GDALOPEN_ANTIRECURSION, &bMemoryErrorOccurred);
+    if( bMemoryErrorOccurred )
+    {
+        return dummy;
+    }
+    if( pData == nullptr)
+    {
+        auto pAntiRecursion = new AntiRecursionStruct();
+        CPLSetTLSWithFreeFuncEx( CTLS_GDALOPEN_ANTIRECURSION,
+                                 pAntiRecursion,
+                                 FreeAntiRecursion, &bMemoryErrorOccurred );
+        if( bMemoryErrorOccurred )
+        {
+            delete pAntiRecursion;
+            return dummy;
+        }
+        return *pAntiRecursion;
+    }
+    return *static_cast<AntiRecursionStruct*>(pData);
+}
+#else
+static thread_local AntiRecursionStruct g_tls_antiRecursion;
+static AntiRecursionStruct& GetAntiRecursion()
+{
+    return g_tls_antiRecursion;
+}
+#endif
+
+/************************************************************************/
 /*                            GetFileList()                             */
 /************************************************************************/
 
@@ -2858,6 +2934,15 @@ char **GDALDataset::GetFileList()
     if( bMainFileReal )
         papszList = CSLAddString(papszList, osMainFilename);
 
+    AntiRecursionStruct& sAntiRecursion = GetAntiRecursion();
+    if( sAntiRecursion.nRecLevel == 100 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "GetFileList() called with too many recursion levels");
+        return papszList;
+    }
+    ++sAntiRecursion.nRecLevel;
+
 /* -------------------------------------------------------------------- */
 /*      Do we have a known overview file?                               */
 /* -------------------------------------------------------------------- */
@@ -2883,6 +2968,8 @@ char **GDALDataset::GetFileList()
         }
         CSLDestroy(papszMskList);
     }
+
+    --sAntiRecursion.nRecLevel;
 
     return papszList;
 }
@@ -3038,82 +3125,6 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
         GDALOpenEx(pszFilename, nOpenFlags, nullptr, nullptr, nullptr);
     return hDataset;
 }
-
-/************************************************************************/
-/*                         AntiRecursionStruct                          */
-/************************************************************************/
-
-namespace {
-// Prevent infinite recursion.
-struct AntiRecursionStruct
-{
-    struct DatasetContext
-    {
-        std::string osFilename;
-        int         nOpenFlags;
-        int         nSizeAllowedDrivers;
-
-        DatasetContext(const std::string& osFilenameIn,
-                        int nOpenFlagsIn,
-                        int nSizeAllowedDriversIn) :
-            osFilename(osFilenameIn),
-            nOpenFlags(nOpenFlagsIn),
-            nSizeAllowedDrivers(nSizeAllowedDriversIn) {}
-    };
-
-    struct DatasetContextCompare {
-        bool operator() (const DatasetContext& lhs, const DatasetContext& rhs) const {
-            return lhs.osFilename < rhs.osFilename ||
-                    (lhs.osFilename == rhs.osFilename &&
-                    (lhs.nOpenFlags < rhs.nOpenFlags ||
-                        (lhs.nOpenFlags == rhs.nOpenFlags &&
-                        lhs.nSizeAllowedDrivers < rhs.nSizeAllowedDrivers)));
-        }
-    };
-
-    std::set<DatasetContext, DatasetContextCompare> aosDatasetNamesWithFlags{};
-    int nRecLevel = 0;
-};
-} // namespace
-
-#ifdef WIN32
-// Currently thread_local and C++ objects don't work well with DLL on Windows
-static void FreeAntiRecursion( void* pData )
-{
-    delete static_cast<AntiRecursionStruct*>(pData);
-}
-
-static AntiRecursionStruct& GetAntiRecursion()
-{
-    static AntiRecursionStruct dummy;
-    int bMemoryErrorOccurred = false;
-    void* pData = CPLGetTLSEx(CTLS_GDALOPEN_ANTIRECURSION, &bMemoryErrorOccurred);
-    if( bMemoryErrorOccurred )
-    {
-        return dummy;
-    }
-    if( pData == nullptr)
-    {
-        auto pAntiRecursion = new AntiRecursionStruct();
-        CPLSetTLSWithFreeFuncEx( CTLS_GDALOPEN_ANTIRECURSION,
-                                 pAntiRecursion,
-                                 FreeAntiRecursion, &bMemoryErrorOccurred );
-        if( bMemoryErrorOccurred )
-        {
-            delete pAntiRecursion;
-            return dummy;
-        }
-        return *pAntiRecursion;
-    }
-    return *static_cast<AntiRecursionStruct*>(pData);
-}
-#else
-static thread_local AntiRecursionStruct g_tls_antiRecursion;
-static AntiRecursionStruct& GetAntiRecursion()
-{
-    return g_tls_antiRecursion;
-}
-#endif
 
 /************************************************************************/
 /*                             GDALOpenEx()                             */
