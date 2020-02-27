@@ -162,10 +162,12 @@ static int TIFFWriteDirectoryTagRationalDoubleArray(TIFF* tif, uint32* ndir, TIF
 static int TIFFWriteDirectoryTagSrationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value);
 static int TIFFWriteDirectoryTagCheckedRationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value);
 static int TIFFWriteDirectoryTagCheckedSrationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value);
-void DoubleToRational(double f, uint32 *num, uint32 *denom);
-void DoubleToSrational(double f, int32 *num, int32 *denom);
-void DoubleToRational_direct(double value, unsigned long *num, unsigned long *denom);
-void DoubleToSrational_direct(double value, long *num, long *denom);
+static void DoubleToRational(double f, uint32 *num, uint32 *denom);
+static void DoubleToSrational(double f, int32 *num, int32 *denom);
+#if 0
+static void DoubleToRational_direct(double value, unsigned long *num, unsigned long *denom);
+static void DoubleToSrational_direct(double value, long *num, long *denom);
+#endif
 
 #ifdef notdef
 static int TIFFWriteDirectoryTagCheckedFloat(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, float value);
@@ -2609,7 +2611,8 @@ TIFFWriteDirectoryTagCheckedSrationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDi
 	return(o);
 } /*--- TIFFWriteDirectoryTagCheckedSrationalDoubleArray() -------- */
 
-
+#if 0
+static
 void DoubleToRational_direct(double value, unsigned long *num, unsigned long *denom)
 {
 	/*--- OLD Code for debugging and comparison  ---- */
@@ -2639,8 +2642,10 @@ void DoubleToRational_direct(double value, unsigned long *num, unsigned long *de
 		*denom=(uint32)((double)0xFFFFFFFFU/(value));
 	}
 }  /*-- DoubleToRational_direct() -------------- */
+#endif
 
-
+#if 0
+static
 void DoubleToSrational_direct(double value,  long *num,  long *denom)
 {
 	/*--- OLD Code for debugging and comparison -- SIGNED-version ----*/
@@ -2686,7 +2691,7 @@ void DoubleToSrational_direct(double value,  long *num,  long *denom)
 			}
 		}
 }  /*-- DoubleToSrational_direct() --------------*/
-
+#endif
 
 //#define DOUBLE2RAT_DEBUGOUTPUT
 /** -----  Rational2Double: Double To Rational Conversion ----------------------------------------------------------
@@ -2813,6 +2818,7 @@ void ToRationalEuclideanGCD(double value, int blnUseSignedRange, int blnUseSmall
 * for UN-SIGNED rationals,
 * using the Euclidean algorithm to find the greatest common divisor (GCD)
 ------------------------------------------------------------------------*/
+static
 void DoubleToRational(double value, uint32 *num, uint32 *denom)
 {
 	/*---- UN-SIGNED RATIONAL ---- */
@@ -2828,20 +2834,20 @@ void DoubleToRational(double value, uint32 *num, uint32 *denom)
 
 	/*-- Check for too big numbers (> ULONG_MAX) -- */
 	if (value > 0xFFFFFFFFUL) {
-		*num = 0xFFFFFFFFUL;
+		*num = 0xFFFFFFFFU;
 		*denom = 0;
 		return;
 	}
 	/*-- Check for easy integer numbers -- */
 	if (value == (unsigned long)(value)) {
-		*num = (unsigned long)value;
+		*num = (uint32)value;
 		*denom = 1;
 		return;
 	}
 	/*-- Check for too small numbers for "unsigned long" type rationals -- */
 	if (value < 1.0 / (double)0xFFFFFFFFUL) {
 		*num = 0;
-		*denom = 0xFFFFFFFFUL;
+		*denom = 0xFFFFFFFFU;
 		return;
 	}
 
@@ -2853,7 +2859,11 @@ void DoubleToRational(double value, uint32 *num, uint32 *denom)
 	ToRationalEuclideanGCD(value, FALSE, TRUE, &ullNum2, &ullDenom2);
 	/*-- Double-Check, that returned values fit into ULONG :*/
 	if (ullNum > 0xFFFFFFFFUL || ullDenom > 0xFFFFFFFFUL || ullNum2 > 0xFFFFFFFFUL || ullDenom2 > 0xFFFFFFFFUL) {
+#if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
+		TIFFErrorExt(0, "TIFFLib: DoubeToRational()", " Num or Denom exceeds ULONG: val=%14.6f, num=%I64u, denom=%I64u | num2=%I64u, denom2=%I64u", value, ullNum, ullDenom, ullNum2, ullDenom2);
+#else
 		TIFFErrorExt(0, "TIFFLib: DoubeToRational()", " Num or Denom exceeds ULONG: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu", value, ullNum, ullDenom, ullNum2, ullDenom2);
+#endif
 		assert(0);
 	}
 
@@ -2861,12 +2871,12 @@ void DoubleToRational(double value, uint32 *num, uint32 *denom)
 	dblDiff = fabs(value - ((double)ullNum / (double)ullDenom));
 	dblDiff2 = fabs(value - ((double)ullNum2 / (double)ullDenom2));
 	if (dblDiff < dblDiff2) {
-		*num = (unsigned long)ullNum;
-		*denom = (unsigned long)ullDenom;
+		*num = (uint32)ullNum;
+		*denom = (uint32)ullDenom;
 	}
 	else {
-		*num = (unsigned long)ullNum2;
-		*denom = (unsigned long)ullDenom2;
+		*num = (uint32)ullNum2;
+		*denom = (uint32)ullDenom2;
 	}
 }  /*-- DoubleToRational() -------------- */
 
@@ -2875,6 +2885,7 @@ void DoubleToRational(double value, uint32 *num, uint32 *denom)
 * for SIGNED rationals,
 * using the Euclidean algorithm to find the greatest common divisor (GCD)
 ------------------------------------------------------------------------*/
+static
 void DoubleToSrational(double value, int32 *num, int32 *denom)
 {
 	/*---- SIGNED RATIONAL ----*/
@@ -2913,7 +2924,11 @@ void DoubleToSrational(double value, int32 *num, int32 *denom)
 	ToRationalEuclideanGCD(value, TRUE, TRUE, &ullNum2, &ullDenom2);
 	/*-- Double-Check, that returned values fit into LONG :*/
 	if (ullNum > 0x7FFFFFFFL || ullDenom > 0x7FFFFFFFL || ullNum2 > 0x7FFFFFFFL || ullDenom2 > 0x7FFFFFFFL) {
+#if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
+		TIFFErrorExt(0, "TIFFLib: DoubeToSrational()", " Num or Denom exceeds LONG: val=%14.6f, num=%I64u, denom=%I64u | num2=%I64u, denom2=%I64u", neg*value, ullNum, ullDenom, ullNum2, ullDenom2);
+#else
 		TIFFErrorExt(0, "TIFFLib: DoubeToSrational()", " Num or Denom exceeds LONG: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu", neg*value, ullNum, ullDenom, ullNum2, ullDenom2);
+#endif
 		assert(0);
 	}
 
@@ -2921,12 +2936,12 @@ void DoubleToSrational(double value, int32 *num, int32 *denom)
 	dblDiff = fabs(value - ((double)ullNum / (double)ullDenom));
 	dblDiff2 = fabs(value - ((double)ullNum2 / (double)ullDenom2));
 	if (dblDiff < dblDiff2) {
-		*num = (long)(neg * (long)ullNum);
-		*denom = (long)ullDenom;
+		*num = (uint32)(neg * (long)ullNum);
+		*denom = (uint32)ullDenom;
 	}
 	else {
-		*num = (long)(neg * (long)ullNum2);
-		*denom = (long)ullDenom2;
+		*num = (uint32)(neg * (long)ullNum2);
+		*denom = (uint32)ullDenom2;
 	}
 }  /*-- DoubleToSrational() --------------*/
 
