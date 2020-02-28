@@ -463,7 +463,8 @@ setup_kwargs = dict(
     data_files=data_files,
     ext_modules=ext_modules,
     scripts=glob('scripts/*.py'),
-    cmdclass={'build_ext': gdal_ext}
+    cmdclass={'build_ext': gdal_ext},
+    extras_require={'numpy': ['numpy > 1.0.0']},
 )
 
 # This section can be greatly simplified with python >= 3.5 using **
