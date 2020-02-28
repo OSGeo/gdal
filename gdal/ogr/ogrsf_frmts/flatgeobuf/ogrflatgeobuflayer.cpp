@@ -1047,7 +1047,7 @@ int OGRFlatGeobufLayer::TestCapability(const char *pszCap)
     else if (EQUAL(pszCap, OLCFastGetExtent))
         return m_sExtent.IsInit();
     else if (EQUAL(pszCap, OLCFastSpatialFilter))
-        return true;
+        return m_poHeader != nullptr && m_poHeader->index_node_size() > 0;
     else if (EQUAL(pszCap, OLCStringsAsUTF8))
         return true;
     else
