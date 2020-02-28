@@ -2542,7 +2542,7 @@ OGRErr OGRSQLiteLayer::GetSpatialiteGeometryHeader( const GByte *pabyData,
                  nBytes >= 44 + 4 )
             {
                 int nCount = 0;
-                memcpy( &nSpliteType, pabyData + 43, 4 );
+                memcpy( &nCount, pabyData + 43, 4 );
                 if (NEED_SWAP_SPATIALITE())
                     CPL_SWAP32PTR( &nCount );
                 *pbIsEmpty = (nCount == 0);
