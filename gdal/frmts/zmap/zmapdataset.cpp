@@ -306,6 +306,7 @@ GDALDataset *ZMapDataset::Open( GDALOpenInfo * poOpenInfo )
         else
             break;
     }
+    // cppcheck-suppress knownConditionTrueFalse
     if (pszLine == nullptr)
     {
         VSIFCloseL(poOpenInfo->fpL);

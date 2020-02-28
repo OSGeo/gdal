@@ -108,8 +108,7 @@ bool OGRDXFDataSource::ReadBlocksSection()
         if( EQUAL(szLineBuf,"ENDBLK") )
             continue;
 
-        if (nCode >= 0)
-            UnreadValue();
+        UnreadValue();
 
         if( oBlockMap.find(osBlockName) != oBlockMap.end() )
         {

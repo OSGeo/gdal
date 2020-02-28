@@ -363,7 +363,7 @@ bool netCDFLayer::Create(char **papszOptions,
 
             }
 
-            else if (poSRS != nullptr && poSRS->IsProjected())
+            else if (poSRS->IsProjected())
             {
                 // Deal with potentional issues of multiple groups
                 NCDFWriteXYVarsAttributes(layerVID, m_nXVarID, m_nYVarID,

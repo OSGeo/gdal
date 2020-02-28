@@ -290,7 +290,7 @@ char *OGRFMEDataSource::PromptForSource()
     poSourceFormat = poSession->createString();
     poSourceDSName = poSession->createString();
 
-    if( poSession->createDialog( poDialog ) != 0 )
+    if( poSession->createDialog( poDialog ) != 0 || poDialog == nullptr )
         return NULL;
 
     poUserDirectives->append( "SPATIAL_SETTINGS" );

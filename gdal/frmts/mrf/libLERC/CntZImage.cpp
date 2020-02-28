@@ -1043,6 +1043,7 @@ bool CntZImage::readCntTile(Byte** ppByte, size_t& nRemainingBytesInOut, int i0,
   {
     // read cnt's as int arr bit stuffed
     int bits67 = comprFlag >> 6;
+    // cppcheck-suppress knownConditionTrueFalse
     int n = (bits67 == 0) ? 4 : 3 - bits67;
 
     float offset = 0;

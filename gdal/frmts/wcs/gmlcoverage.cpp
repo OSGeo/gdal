@@ -122,7 +122,6 @@ CPLErr WCSParseGMLCoverage( CPLXMLNode *psXML,
     OGRPoint *poOriginGeometry = nullptr;
     const char *pszSRSName = nullptr;
 
-    if( psOriginPoint != nullptr )
     {
         bool bOldWrap = false;
 

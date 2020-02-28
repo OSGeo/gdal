@@ -426,8 +426,7 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(
         if( psSubNode->eType != CXT_Element )
             continue;
 
-        if( psSubNode->eType == CXT_Element &&
-            EQUAL(psSubNode->pszValue, "Field") )
+        if( EQUAL(psSubNode->pszValue, "Field") )
         {
             // Field name.
             const char *l_pszName = CPLGetXMLValue(psSubNode, "name", nullptr);

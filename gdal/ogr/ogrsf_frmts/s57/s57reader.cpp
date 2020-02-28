@@ -377,7 +377,7 @@ bool S57Reader::SetOptions( char ** papszOptionsIn )
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_UPDATES );
     if( pszOptionValue == nullptr )
         /* no change */;
-    else if( pszOptionValue != nullptr && !EQUAL(pszOptionValue,"APPLY") )
+    else if( !EQUAL(pszOptionValue,"APPLY") )
         nOptionFlags &= ~S57M_UPDATES;
     else
         nOptionFlags |= S57M_UPDATES;
@@ -2142,7 +2142,7 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
             int nVC_RCID_firstnode = 0;
             int nVC_RCID_lastnode = 0;
 
-            if( poVRPT != nullptr && poVRPT->GetRepeatCount() == 1 )
+            if( poVRPT->GetRepeatCount() == 1 )
             {
                 nVC_RCID_firstnode = ParseName( poVRPT );
                 poVRPT = poSRecord->FindField( "VRPT", 1 );

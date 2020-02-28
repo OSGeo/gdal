@@ -496,7 +496,7 @@ CPLErr VRTKernelFilteredSource::FilterData( int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Float32 case.                                                   */
 /* -------------------------------------------------------------------- */
-    if( eType == GDT_Float32 )
+    // if( eType == GDT_Float32 )
     {
         float *pafSrcData = reinterpret_cast<float *>( pabySrcData );
         float *pafDstData = reinterpret_cast<float *>( pabyDstData );

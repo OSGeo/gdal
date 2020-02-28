@@ -154,7 +154,6 @@ bool OGRAmigoCloudDataSource::ListDatasets()
         return false;
     }
 
-    if( result != nullptr )
     {
         auto type = json_object_get_type(result);
         if(type == json_type_object)
@@ -559,7 +558,7 @@ bool OGRAmigoCloudDataSource::waitForJobToFinish(const char* jobId)
             return false;
         }
 
-        if (result != nullptr) {
+        {
             int type = json_object_get_type(result);
             if (type == json_type_object) {
                 json_object *poStatus = CPL_json_object_object_get(result, "status");
