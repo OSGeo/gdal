@@ -172,7 +172,7 @@ OGRwkbGeometryType OGRFlatGeobufLayer::getOGRwkbGeometryType()
     return ogrType;
 }
 
-ColumnType OGRFlatGeobufLayer::toColumnType(OGRFieldType type, OGRFieldSubType subType)
+static ColumnType toColumnType(OGRFieldType type, OGRFieldSubType subType)
 {
     switch (type) {
         case OGRFieldType::OFTInteger:
@@ -190,7 +190,7 @@ ColumnType OGRFlatGeobufLayer::toColumnType(OGRFieldType type, OGRFieldSubType s
     return ColumnType::String;
 }
 
-OGRFieldType OGRFlatGeobufLayer::toOGRFieldType(ColumnType type, OGRFieldSubType& eSubType)
+static OGRFieldType toOGRFieldType(ColumnType type, OGRFieldSubType& eSubType)
 {
     eSubType = OFSTNone;
     switch (type) {
