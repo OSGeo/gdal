@@ -107,7 +107,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         OGRErr ensureFeatureBuf(uint32_t featureSize);
         OGRErr parseFeature(OGRFeature *poFeature);
         FlatGeobuf::ColumnType toColumnType(OGRFieldType fieldType, OGRFieldSubType subType);
-        static OGRFieldType toOGRFieldType(FlatGeobuf::ColumnType type);
+        static OGRFieldType toOGRFieldType(FlatGeobuf::ColumnType type, OGRFieldSubType& eSubType);
         const std::vector<flatbuffers::Offset<FlatGeobuf::Column>> writeColumns(flatbuffers::FlatBufferBuilder &fbb);
         void readColumns();
         OGRErr readIndex();

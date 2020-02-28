@@ -172,12 +172,14 @@ OGRwkbGeometryType OGRFlatGeobufLayer::getOGRwkbGeometryType()
     return ogrType;
 }
 
-ColumnType OGRFlatGeobufLayer::toColumnType(OGRFieldType type, OGRFieldSubType /* subType */)
+ColumnType OGRFlatGeobufLayer::toColumnType(OGRFieldType type, OGRFieldSubType subType)
 {
     switch (type) {
-        case OGRFieldType::OFTInteger: return ColumnType::Int;
+        case OGRFieldType::OFTInteger:
+            return subType == OFSTInt16 ? ColumnType::Short : ColumnType::Int;
         case OGRFieldType::OFTInteger64: return ColumnType::Long;
-        case OGRFieldType::OFTReal: return ColumnType::Double;
+        case OGRFieldType::OFTReal:
+            return subType == OFSTFloat32 ? ColumnType::Float : ColumnType::Double;
         case OGRFieldType::OFTString: return ColumnType::String;
         case OGRFieldType::OFTDate: return ColumnType::DateTime;
         case OGRFieldType::OFTTime: return ColumnType::DateTime;
@@ -188,11 +190,14 @@ ColumnType OGRFlatGeobufLayer::toColumnType(OGRFieldType type, OGRFieldSubType /
     return ColumnType::String;
 }
 
-OGRFieldType OGRFlatGeobufLayer::toOGRFieldType(ColumnType type)
+OGRFieldType OGRFlatGeobufLayer::toOGRFieldType(ColumnType type, OGRFieldSubType& eSubType)
 {
+    eSubType = OFSTNone;
     switch (type) {
         case ColumnType::Int: return OGRFieldType::OFTInteger;
+        case ColumnType::Short: eSubType = OFSTInt16; return OGRFieldType::OFTInteger;
         case ColumnType::Long: return OGRFieldType::OFTInteger64;
+        case ColumnType::Float: eSubType = OFSTFloat32; return OGRFieldType::OFTReal;
         case ColumnType::Double: return OGRFieldType::OFTReal;
         case ColumnType::String: return OGRFieldType::OFTString;
         case ColumnType::DateTime: return OGRFieldType::OFTDateTime;
@@ -226,8 +231,10 @@ void OGRFlatGeobufLayer::readColumns()
     for (uint32_t i = 0; i < columns->size(); i++) {
         const auto column = columns->Get(i);
         const auto name = column->name()->c_str();
-        const auto type = toOGRFieldType(column->type());
+        OGRFieldSubType eSubType = OFSTNone;
+        const auto type = toOGRFieldType(column->type(), eSubType);
         OGRFieldDefn field(name, type);
+        field.SetSubType(eSubType);
         m_poFeatureDefn->AddFieldDefn(&field);
         //CPLDebugOnly("FlatGeobuf", "DEBUG readColumns: Read column %s added as index %d", name, i);
     }
@@ -679,6 +686,18 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
             }
 
             switch (type) {
+                case ColumnType::Short:
+                    if (offset + sizeof(int16_t) > size)
+                        return CPLErrorInvalidSize("int16 value");
+                    if (!isIgnored)
+                    {
+                        short s;
+                        memcpy(&s, data + offset, sizeof(int16_t));
+                        CPL_LSBPTR16(&s);
+                        ogrField->Integer = s;
+                    }
+                    offset += sizeof(int16_t);
+                    break;
                 case ColumnType::Int:
                     if (offset + sizeof(int32_t) > size)
                         return CPLErrorInvalidSize("int32 value");
@@ -699,6 +718,19 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
                     }
                     offset += sizeof(int64_t);
                     break;
+                case ColumnType::Float:
+                    if (offset + sizeof(float) > size)
+                        return CPLErrorInvalidSize("float value");
+                    if (!isIgnored)
+                    {
+                        float f;
+                        memcpy(&f, data + offset, sizeof(float));
+                        CPL_LSBPTR32(&f);
+                        ogrField->Real = f;
+                    }
+                    offset += sizeof(float);
+                    break;
+
                 case ColumnType::Double:
                     if (offset + sizeof(double) > size)
                         return CPLErrorInvalidSize("double value");
@@ -829,12 +861,22 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
         std::copy(reinterpret_cast<const uint8_t *>(&column_index_le), reinterpret_cast<const uint8_t *>(&column_index_le + 1), std::back_inserter(properties));
 
         const auto fieldType = fieldDef->GetType();
+        const auto fieldSubType = fieldDef->GetSubType();
         const auto field = poNewFeature->GetRawFieldRef(i);
         switch (fieldType) {
             case OGRFieldType::OFTInteger: {
                 int nVal = field->Integer;
-                CPL_LSBPTR32(&nVal);
-                std::copy(reinterpret_cast<const uint8_t *>(&nVal), reinterpret_cast<const uint8_t *>(&nVal + 1), std::back_inserter(properties));
+                if( fieldSubType == OFSTInt16 )
+                {
+                    short sVal = static_cast<short>(nVal);
+                    CPL_LSBPTR16(&sVal);
+                    std::copy(reinterpret_cast<const uint8_t *>(&sVal), reinterpret_cast<const uint8_t *>(&sVal + 1), std::back_inserter(properties));
+                }
+                else
+                {
+                    CPL_LSBPTR32(&nVal);
+                    std::copy(reinterpret_cast<const uint8_t *>(&nVal), reinterpret_cast<const uint8_t *>(&nVal + 1), std::back_inserter(properties));
+                }
                 break;
             }
             case OGRFieldType::OFTInteger64: {
@@ -845,8 +887,17 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
             }
             case OGRFieldType::OFTReal: {
                 double dfVal = field->Real;
-                CPL_LSBPTR64(&dfVal);
-                std::copy(reinterpret_cast<const uint8_t *>(&dfVal), reinterpret_cast<const uint8_t *>(&dfVal + 1), std::back_inserter(properties));
+                if( fieldSubType == OFSTFloat32 )
+                {
+                    float fVal = static_cast<float>(dfVal);
+                    CPL_LSBPTR32(&fVal);
+                    std::copy(reinterpret_cast<const uint8_t *>(&fVal), reinterpret_cast<const uint8_t *>(&fVal + 1), std::back_inserter(properties));
+                }
+                else
+                {
+                    CPL_LSBPTR64(&dfVal);
+                    std::copy(reinterpret_cast<const uint8_t *>(&dfVal), reinterpret_cast<const uint8_t *>(&dfVal + 1), std::back_inserter(properties));
+                }
                 break;
             }
             case OGRFieldType::OFTDate:
