@@ -182,6 +182,7 @@ ColumnType OGRFlatGeobufLayer::toColumnType(OGRFieldType type, OGRFieldSubType /
         case OGRFieldType::OFTDate: return ColumnType::DateTime;
         case OGRFieldType::OFTTime: return ColumnType::DateTime;
         case OGRFieldType::OFTDateTime: return ColumnType::DateTime;
+        case OGRFieldType::OFTBinary: return ColumnType::Binary;
         default: CPLError(CE_Failure, CPLE_AppDefined, "toColumnType: Unknown OGRFieldType %d", type);
     }
     return ColumnType::String;
@@ -195,6 +196,7 @@ OGRFieldType OGRFlatGeobufLayer::toOGRFieldType(ColumnType type)
         case ColumnType::Double: return OGRFieldType::OFTReal;
         case ColumnType::String: return OGRFieldType::OFTString;
         case ColumnType::DateTime: return OGRFieldType::OFTDateTime;
+        case ColumnType::Binary: return OGRFieldType::OFTBinary;
         default: CPLError(CE_Failure, CPLE_AppDefined, "toOGRFieldType: Unknown ColumnType %d", (int) type);
     }
     return OGRFieldType::OFTString;
@@ -750,6 +752,27 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
                     offset += len;
                     break;
                 }
+                case ColumnType::Binary: {
+                    if (offset + sizeof(uint32_t) > size)
+                        return CPLErrorInvalidSize("binary length");
+                    uint32_t len;
+                    memcpy(&len, data + offset, sizeof(int32_t));
+                    CPL_LSBPTR32(&len);
+                    offset += sizeof(uint32_t);
+                    if (len > static_cast<uint32_t>(INT_MAX) || len > size - offset)
+                        return CPLErrorInvalidSize("binary value");
+                    if (!isIgnored )
+                    {
+                        GByte *binary = static_cast<GByte*>(VSI_MALLOC_VERBOSE(len ? len : 1));
+                        if (binary == nullptr)
+                            return CPLErrorMemoryAllocation("string value");
+                        memcpy(binary, data + offset, len);
+                        ogrField->Binary.nCount = static_cast<int>(len);
+                        ogrField->Binary.paData = binary;
+                    }
+                    offset += len;
+                    break;
+                }
                 default:
                     CPLError(CE_Failure, CPLE_AppDefined, "GetNextFeature: Unknown column->type: %d", (int) type);
             }
@@ -850,6 +873,20 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
                 std::copy(field->String, field->String + len, std::back_inserter(properties));
                 break;
             }
+
+            case OGRFieldType::OFTBinary: {
+                size_t len = field->Binary.nCount;
+                if (len >= feature_max_buffer_size) {
+                    CPLError(CE_Failure, CPLE_AppDefined, "ICreateFeature: Binary too long");
+                    return OGRERR_FAILURE;
+                }
+                uint32_t l_le = static_cast<uint32_t>(len);
+                CPL_LSBPTR32(&l_le);
+                std::copy(reinterpret_cast<const uint8_t *>(&l_le), reinterpret_cast<const uint8_t *>(&l_le + 1), std::back_inserter(properties));
+                std::copy(field->Binary.paData, field->Binary.paData + len, std::back_inserter(properties));
+                break;
+            }
+
             default:
                 CPLError(CE_Failure, CPLE_AppDefined, "ICreateFeature: Missing implementation for OGRFieldType %d", fieldType);
                 return OGRERR_FAILURE;
@@ -931,8 +968,6 @@ int OGRFlatGeobufLayer::TestCapability(const char *pszCap)
     if (EQUAL(pszCap, OLCCreateField))
         return m_create;
     else if (EQUAL(pszCap, OLCSequentialWrite))
-        return m_create;
-    else if (EQUAL(pszCap, OLCCreateGeomField))
         return m_create;
     else if (EQUAL(pszCap, OLCIgnoreFields))
         return true;

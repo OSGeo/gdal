@@ -524,3 +524,32 @@ def test_ogr_wfs_fake_wfs_server():
         pytest.fail('did not get expected feature')
 
     webserver.server_stop(process, port)
+
+
+def test_ogr_flatgeobuf_binary():
+    ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource('/vsimem/test.fgb')
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn('bin', ogr.OFTBinary))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFieldBinaryFromHexString('bin', '01FF')
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (0 0)'))
+    lyr.CreateFeature(f)
+
+    # Field of size 0
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFieldBinaryFromHexString('bin', '')
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (0 0)'))
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open('/vsimem/test.fgb')
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTBinary
+    f = lyr.GetNextFeature()
+    assert f.GetFieldAsBinary('bin') == b'\x01\xFF'
+    f = lyr.GetNextFeature()
+    assert f.GetFieldAsBinary('bin') == b''
+    ds = None
+
+    ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
+    assert not gdal.VSIStatL('/vsimem/test.fgb')
