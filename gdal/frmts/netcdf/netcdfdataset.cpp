@@ -11504,7 +11504,7 @@ CPLErr netCDFDataset::CreateGrpVectorLayers( int nCdfId,
 {
     char *pszGroupName = nullptr;
     NCDFGetGroupFullName(nCdfId, &pszGroupName);
-    if( pszGroupName && pszGroupName[0] == '\0' )
+    if( pszGroupName || pszGroupName[0] == '\0' )
     {
         CPLFree(pszGroupName);
         pszGroupName = CPLStrdup(CPLGetBasename(osFilename));

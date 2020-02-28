@@ -1867,11 +1867,12 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
                     asWriteFuncHeaderData[iReq].nStartOffset,
                     asWriteFuncHeaderData[iReq].nEndOffset);
 
+            const char* pszErrorMsg = &asCurlErrors[iRange].szCurlErrBuf[0];
             CPLDebug("VSICURL", "ReadMultiRange(%s), %s: response_code=%d, msg=%s",
                      osURL.c_str(),
                      rangeStr,
                      static_cast<int>(response_code),
-                     &asCurlErrors[iRange].szCurlErrBuf[0]);
+                     pszErrorMsg);
         }
 
         if( (response_code != 206 && response_code != 225) ||

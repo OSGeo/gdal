@@ -2020,6 +2020,7 @@ std::set<CPLString> VSIS3FSHandler::DeleteObjects(const char* pszBucket,
 
     std::set<CPLString> oDeletedKeys;
     bool bRetry;
+    // coverity[tainted_data]
     double dfRetryDelay = CPLAtof(CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
                                 CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
     const int nMaxRetry = atoi(CPLGetConfigOption("GDAL_HTTP_MAX_RETRY",

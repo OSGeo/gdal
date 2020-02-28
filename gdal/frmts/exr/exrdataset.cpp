@@ -731,6 +731,7 @@ GDALDataset* GDALEXRDataset::Open(GDALOpenInfo* poOpenInfo)
                     }
                     auto poOvrDS =
                         std::unique_ptr<GDALEXRDataset>(new GDALEXRDataset());
+                    // coverity[escape]
                     poOvrDS->m_poParent = poDS.get();
                     poOvrDS->m_iLevel = iLevel;
                     poOvrDS->nRasterXSize = nOvrWidth;

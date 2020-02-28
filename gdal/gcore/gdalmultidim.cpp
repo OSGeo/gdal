@@ -4276,6 +4276,8 @@ bool GDALMDArrayMask::IRead(const GUInt64* arrayStartIdx,
     CPLAssert(nBufferDTSize <= 16);
     for( GByte flag = 0; flag <= 1; flag++ )
     {
+        // Coverity misses that m_dt is of type Byte
+        // coverity[overrun-buffer-val]
         GDALExtendedDataType::CopyValue(&flag, m_dt,
                                         abyZeroOrOne[flag], bufferDataType);
     }

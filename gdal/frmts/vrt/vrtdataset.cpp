@@ -968,6 +968,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol( const char* pszSpec )
                             CPLError(CE_Failure, CPLE_IllegalArg,
                                     "Invalid band number: %s", aosBands[j]);
                             poSrcDS->ReleaseRef();
+                            CPLFree(pszKey);
                             return nullptr;
                         }
                         anBands.push_back(nBand);
@@ -979,6 +980,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol( const char* pszSpec )
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "Unknown option: %s", pszKey);
                 poSrcDS->ReleaseRef();
+                CPLFree(pszKey);
                 return nullptr;
             }
         }

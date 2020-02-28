@@ -2770,7 +2770,7 @@ void ToRationalEuclideanGCD(double value, int blnUseSignedRange, int blnUseSmall
 		/* if bigDenom is not zero, calculate integer part of fraction. */
 		if (bigDenom == 0) {
 			val = 0;
-			if (i > 0) break;	/* if bigDenom is zero, exit loop, but execute loop just once */
+			break;
 		}
 		else {
 			val = bigNum / bigDenom;
