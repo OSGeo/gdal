@@ -618,6 +618,7 @@ CPLErr TileDBDataset::TrySaveXML()
         bSaved = true;
 #endif
 
+        // cppcheck-suppress knownConditionTrueFalse
         if (!bSaved)
         {
             vfs.touch( psPam->pszPamFilename );

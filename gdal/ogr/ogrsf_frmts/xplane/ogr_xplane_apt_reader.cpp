@@ -1223,7 +1223,7 @@ bool OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
                                dfLatBezier, dfLonBezier,
                                dfLat, dfLon);
             }
-            else if (!bIsFirst && !(dfLastLat == dfLat && dfLastLon == dfLon))
+            else if (!(dfLastLat == dfLat && dfLastLon == dfLon))
             {
                 double dfCtrLatBezier = dfLat - (dfLatBezier - dfLat);
                 double dfCtrLonBezier = dfLon - (dfLonBezier - dfLon);
@@ -1573,7 +1573,7 @@ bool OGRXPlaneAptReader::ParseLinearGeometry(
                                dfLatBezier, dfLonBezier,
                                dfLat, dfLon);
             }
-            else if (!bIsFirst && !(dfLastLat == dfLat && dfLastLon == dfLon))
+            else if (!(dfLastLat == dfLat && dfLastLon == dfLon))
             {
                 double dfCtrLatBezier = dfLat - (dfLatBezier - dfLat);
                 double dfCtrLonBezier = dfLon - (dfLonBezier - dfLon);

@@ -692,11 +692,9 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
             crn_compress_block(pContext, pixels, static_cast<crn_uint8 *>(pCompressed_data) + block_x * bytesPerBlock);
         }
 
-        if (eErr == CE_None)
-            VSIFWriteL(pCompressed_data, 1, total_compressed_size, fpImage);
+        VSIFWriteL(pCompressed_data, 1, total_compressed_size, fpImage);
 
-        if (eErr == CE_None
-            && !pfnProgress( (iLine+1) / (double) nYNumBlocks,
+        if (!pfnProgress( (iLine+1) / (double) nYNumBlocks,
                              nullptr, pProgressData))
         {
             eErr = CE_Failure;

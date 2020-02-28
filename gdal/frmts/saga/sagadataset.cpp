@@ -441,7 +441,7 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
             return nullptr; //empty zip file
 
         CPLString file;
-        for (int iFile = 0; filesinzip != nullptr && filesinzip[iFile] != nullptr; iFile++)
+        for (int iFile = 0; filesinzip[iFile] != nullptr; iFile++)
         {
             if (EQUAL(CPLGetExtension(filesinzip[iFile]), "sdat"))
             {

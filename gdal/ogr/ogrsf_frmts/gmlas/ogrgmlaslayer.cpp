@@ -328,15 +328,11 @@ void OGRGMLASLayer::ProcessDataRecordCreateFields(
                 poFieldDescFeature->SetField( szFIELD_INDEX, m_nMaxFieldIndex);
                 poFieldDescFeature->SetField( szFIELD_NAME,
                                                 oFieldDefn.GetNameRef() );
-                if( psChildNode )
-                {
-                    poFieldDescFeature->SetField( szFIELD_TYPE, psChildNode->pszValue );
-                }
+                poFieldDescFeature->SetField( szFIELD_TYPE, psChildNode->pszValue );
                 poFieldDescFeature->SetField( szFIELD_IS_LIST, 0 );
                 poFieldDescFeature->SetField( szFIELD_MIN_OCCURS, 0 );
                 poFieldDescFeature->SetField( szFIELD_MAX_OCCURS, 1 );
                 poFieldDescFeature->SetField( szFIELD_CATEGORY, szSWE_FIELD );
-                if( psChildNode )
                 {
                     CPLXMLNode* psDupTree = CPLCloneXMLTree(psChildNode);
                     CPLXMLNode* psValue = CPLGetXMLNode(psDupTree, "value");

@@ -2016,7 +2016,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         osSQL += CPLSPrintf(" AND EXISTS(SELECT 1 FROM %s WHERE zoom_level = tm.zoom_level LIMIT 1)",
                             osQuotedTableName.c_str());
     }
-    else if( pszZoomLevel == nullptr )
+    else // if( pszZoomLevel == nullptr )
     {
         osSQL += CPLSPrintf(" AND zoom_level <= (SELECT MAX(zoom_level) FROM %s)",
                             osQuotedTableName.c_str());

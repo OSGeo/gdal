@@ -775,7 +775,7 @@ CPLErr GDALWMSRasterBand::ReadBlockFromDataset(GDALDataset *ds, int x,
                                 ret = CE_Failure;
                             }
                         }
-                        else if( bandmap != nullptr && bandmap[ib - 1] == 0 )
+                        else // if( bandmap != nullptr && bandmap[ib - 1] == 0 )
                         {  // parent expects 4 bands but file has fewer count so generate a all "opaque" 4th band
                             GByte *byte_buffer = reinterpret_cast<GByte *>(p);
                             for (int l_y = 0; l_y < sy; ++l_y)
@@ -786,13 +786,6 @@ CPLErr GDALWMSRasterBand::ReadBlockFromDataset(GDALDataset *ds, int x,
                                     byte_buffer[offset] = 255;  // fill with opaque
                                 }
                             }
-                        }
-                        else
-                        {  // we should never get here because this case was caught above
-                            CPLError(CE_Failure, CPLE_AppDefined,
-                                     "GDALWMS: Incorrect bands count %d in downloaded block, expected %d.",
-                                     ds->GetRasterCount(), m_parent_dataset->nBands);
-                            ret = CE_Failure;
                         }
                     }
                     else if( ib <= 4 )

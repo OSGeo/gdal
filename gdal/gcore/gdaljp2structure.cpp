@@ -1137,6 +1137,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             READ_MARKER_FIELD_UINT32("YTOSiz");
             Csiz = READ_MARKER_FIELD_UINT16("Csiz");
             bError = false;
+            // cppcheck-suppress knownConditionTrueFalse
             for(int i=0;i<Csiz && !bError;i++)
             {
                 READ_MARKER_FIELD_UINT8(CPLSPrintf("Ssiz%d", i), [](GByte v) {

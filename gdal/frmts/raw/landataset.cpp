@@ -478,6 +478,7 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
+    // cppcheck-suppress knownConditionTrueFalse
     if( nPixelOffset != -1 &&
         poDS->nRasterXSize > INT_MAX / (nPixelOffset * nBandCount) )
     {

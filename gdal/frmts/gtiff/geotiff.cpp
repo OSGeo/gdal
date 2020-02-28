@@ -9094,6 +9094,7 @@ void GTiffDataset::WriteRawStripOrTile( int nStripOrTile,
     if( bWriteLeader &&
         static_cast<GUIntBig>(nCompressedBufferSize) <= 0xFFFFFFFFU )
     {
+        // cppcheck-suppress knownConditionTrueFalse
         if( bWriteAtEnd )
         {
             VSI_TIFFSeek( m_hTIFF, 0, SEEK_END );
@@ -9112,6 +9113,7 @@ void GTiffDataset::WriteRawStripOrTile( int nStripOrTile,
             bWriteTrailer = bWriteLeader;
             VSI_TIFFSeek( m_hTIFF, panOffsets[nStripOrTile] - 4, SEEK_SET );
         }
+        // cppcheck-suppress knownConditionTrueFalse
         if( bWriteLeader )
         {
             uint32 nSize = static_cast<uint32>(nCompressedBufferSize);

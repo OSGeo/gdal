@@ -1859,7 +1859,7 @@ void OGRGeoJSONReaderAddOrUpdateField(
                     poFDefn->SetSubType(OFSTNone);
                 }
             }
-            else if( eNewType != OFTInteger )
+            else
             {
                 poFDefn->SetSubType(OFSTNone);
                 poFDefn->SetType(OFTString);

@@ -707,21 +707,10 @@ bool OGRMVTLayer::QuickScanFeature(const GByte* pabyData,
                 READ_SIZE(pabyData, pabyDataFeatureEnd, nGeometrySize);
                 const GByte* pabyDataGeometryEnd = pabyData + nGeometrySize;
                 OGRwkbGeometryType eType = wkbUnknown;
+
                 if( nGeomType == knGEOM_TYPE_POINT )
                 {
                     eType = wkbPoint;
-                }
-                else if( nGeomType == knGEOM_TYPE_LINESTRING )
-                {
-                    eType = wkbLineString;
-                }
-                else if( nGeomType == knGEOM_TYPE_POLYGON )
-                {
-                    eType = wkbPolygon;
-                }
-
-                if( eType == wkbPoint )
-                {
                     unsigned int nCmdCountCombined = 0;
                     READ_VARUINT32(pabyData, pabyDataGeometryEnd,
                                     nCmdCountCombined);
@@ -731,8 +720,9 @@ bool OGRMVTLayer::QuickScanFeature(const GByte* pabyData,
                         eType = wkbMultiPoint;
                     }
                 }
-                else if( eType == wkbLineString )
+                else if( nGeomType == knGEOM_TYPE_LINESTRING )
                 {
+                    eType = wkbLineString;
                     for( int iIter = 0;
                             pabyData < pabyDataGeometryEnd; iIter++ )
                     {
@@ -756,8 +746,9 @@ bool OGRMVTLayer::QuickScanFeature(const GByte* pabyData,
                         }
                     }
                 }
-                else if( eType == wkbPolygon )
+                else if( nGeomType == knGEOM_TYPE_POLYGON )
                 {
+                    eType = wkbPolygon;
                     for( int iIter = 0;
                             pabyData < pabyDataGeometryEnd; iIter++ )
                     {
