@@ -176,7 +176,7 @@ ColumnType OGRFlatGeobufLayer::toColumnType(OGRFieldType type, OGRFieldSubType s
 {
     switch (type) {
         case OGRFieldType::OFTInteger:
-            return subType == OFSTInt16 ? ColumnType::Short : ColumnType::Int;
+            return subType == OFSTBoolean ? ColumnType::Bool : subType == OFSTInt16 ? ColumnType::Short : ColumnType::Int;
         case OGRFieldType::OFTInteger64: return ColumnType::Long;
         case OGRFieldType::OFTReal:
             return subType == OFSTFloat32 ? ColumnType::Float : ColumnType::Double;
@@ -194,6 +194,7 @@ OGRFieldType OGRFlatGeobufLayer::toOGRFieldType(ColumnType type, OGRFieldSubType
 {
     eSubType = OFSTNone;
     switch (type) {
+        case ColumnType::Bool: eSubType = OFSTBoolean; return OGRFieldType::OFTInteger;
         case ColumnType::Int: return OGRFieldType::OFTInteger;
         case ColumnType::Short: eSubType = OFSTInt16; return OGRFieldType::OFTInteger;
         case ColumnType::Long: return OGRFieldType::OFTInteger64;
@@ -686,6 +687,16 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
             }
 
             switch (type) {
+                case ColumnType::Bool:
+                    if (offset + sizeof(unsigned char) > size)
+                        return CPLErrorInvalidSize("bool value");
+                    if (!isIgnored)
+                    {
+                        ogrField->Integer = *(data + offset);
+                    }
+                    offset += sizeof(unsigned char);
+                    break;
+
                 case ColumnType::Short:
                     if (offset + sizeof(int16_t) > size)
                         return CPLErrorInvalidSize("int16 value");
@@ -866,7 +877,12 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
         switch (fieldType) {
             case OGRFieldType::OFTInteger: {
                 int nVal = field->Integer;
-                if( fieldSubType == OFSTInt16 )
+                if( fieldSubType == OFSTBoolean )
+                {
+                    GByte byVal = static_cast<GByte>(nVal);
+                    std::copy(reinterpret_cast<const uint8_t *>(&byVal), reinterpret_cast<const uint8_t *>(&byVal + 1), std::back_inserter(properties));
+                }
+                else if( fieldSubType == OFSTInt16 )
                 {
                     short sVal = static_cast<short>(nVal);
                     CPL_LSBPTR16(&sVal);

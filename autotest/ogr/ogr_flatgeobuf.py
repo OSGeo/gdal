@@ -526,9 +526,14 @@ def test_ogr_wfs_fake_wfs_server():
     webserver.server_stop(process, port)
 
 
-def test_ogr_flatgeobuf_short_float_binary():
+def test_ogr_flatgeobuf_bool_short_float_binary():
     ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource('/vsimem/test.fgb')
     lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint)
+
+    fld_defn = ogr.FieldDefn('bool', ogr.OFTInteger)
+    fld_defn.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(fld_defn)
+
     fld_defn = ogr.FieldDefn('short', ogr.OFTInteger)
     fld_defn.SetSubType(ogr.OFSTInt16)
     lyr.CreateField(fld_defn)
@@ -540,6 +545,7 @@ def test_ogr_flatgeobuf_short_float_binary():
     lyr.CreateField(ogr.FieldDefn('bin', ogr.OFTBinary))
 
     f = ogr.Feature(lyr.GetLayerDefn())
+    f['bool'] = True
     f['short'] = -32768;
     f['float'] = 1.5;
     f.SetFieldBinaryFromHexString('bin', '01FF')
@@ -556,11 +562,14 @@ def test_ogr_flatgeobuf_short_float_binary():
     ds = ogr.Open('/vsimem/test.fgb')
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTInt16
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTReal
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetSubType() == ogr.OFSTFloat32
-    assert lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTBinary
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTBoolean
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTInteger
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetSubType() == ogr.OFSTInt16
+    assert lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTReal
+    assert lyr.GetLayerDefn().GetFieldDefn(2).GetSubType() == ogr.OFSTFloat32
+    assert lyr.GetLayerDefn().GetFieldDefn(3).GetType() == ogr.OFTBinary
     f = lyr.GetNextFeature()
+    assert f['bool'] == True
     assert f['short'] == -32768
     assert f['float'] == 1.5
     assert f.GetFieldAsBinary('bin') == b'\x01\xFF'
