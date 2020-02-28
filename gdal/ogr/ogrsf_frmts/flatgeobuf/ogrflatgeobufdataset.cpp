@@ -137,6 +137,10 @@ void RegisterOGRFlatGeobuf()
 "<LayerCreationOptionList>"
 "  <Option name='SPATIAL_INDEX' type='boolean' description='Whether to create a spatial index' default='YES'/>"
 "</LayerCreationOptionList>");
+    poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"  <Option name='VERIFY_BUFFERS' type='boolean' description='Verify flatbuffers integrity' default='YES'/>"
+"</OpenOptionList>");
 
     poDriver->pfnOpen = OGRFlatGeobufDataset::Open;
     poDriver->pfnCreate = OGRFlatGeobufDataset::Create;
