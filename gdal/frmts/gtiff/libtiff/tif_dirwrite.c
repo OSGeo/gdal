@@ -162,8 +162,8 @@ static int TIFFWriteDirectoryTagRationalDoubleArray(TIFF* tif, uint32* ndir, TIF
 static int TIFFWriteDirectoryTagSrationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value);
 static int TIFFWriteDirectoryTagCheckedRationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value);
 static int TIFFWriteDirectoryTagCheckedSrationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value);
-static void DoubleToRational(double f, uint32 *num, uint32 *denom);
-static void DoubleToSrational(double f, int32 *num, int32 *denom);
+static void DoubleToRational(double value, uint32 *num, uint32 *denom);
+static void DoubleToSrational(double value, int32 *num, int32 *denom);
 #if 0
 static void DoubleToRational_direct(double value, unsigned long *num, unsigned long *denom);
 static void DoubleToSrational_direct(double value, long *num, long *denom);
@@ -2893,7 +2893,7 @@ void DoubleToSrational(double value, int32 *num, int32 *denom)
 	double dblDiff, dblDiff2;
 	unsigned long long ullNum, ullDenom, ullNum2, ullDenom2;
 
-	/*-- Check for negative values and use then the positive one for internal calculations. */
+	/*-- Check for negative values and use then the positive one for internal calculations, but take the sign into account before returning. */
 	if (value < 0) { neg = -1; value = -value; }
 
 	/*-- Check for too big numbers (> LONG_MAX) -- */
@@ -2903,8 +2903,8 @@ void DoubleToSrational(double value, int32 *num, int32 *denom)
 		return;
 	}
 	/*-- Check for easy numbers -- */
-	if (value == (uint32)(value)) {
-		*num = (uint32)value;
+	if (value == (int32)(value)) {
+		*num = (int32)(neg * value);
 		*denom = 1;
 		return;
 	}
@@ -2936,12 +2936,12 @@ void DoubleToSrational(double value, int32 *num, int32 *denom)
 	dblDiff = fabs(value - ((double)ullNum / (double)ullDenom));
 	dblDiff2 = fabs(value - ((double)ullNum2 / (double)ullDenom2));
 	if (dblDiff < dblDiff2) {
-		*num = (uint32)(neg * (long)ullNum);
-		*denom = (uint32)ullDenom;
+		*num = (int32)(neg * (long)ullNum);
+		*denom = (int32)ullDenom;
 	}
 	else {
-		*num = (uint32)(neg * (long)ullNum2);
-		*denom = (uint32)ullDenom2;
+		*num = (int32)(neg * (long)ullNum2);
+		*denom = (int32)ullDenom2;
 	}
 }  /*-- DoubleToSrational() --------------*/
 
