@@ -432,28 +432,37 @@ OGRLayer* OGRFlatGeobufDataset::ICreateLayer( const char *pszLayerName,
     bool bCreateSpatialIndexAtClose = CPLFetchBool( papszOptions, "SPATIAL_INDEX", true );
 
     VSILFILE *poFpWrite;
-    std::string oTempFile;
+    std::string osTempFile;
+    int savedErrno;
     if (bCreateSpatialIndexAtClose) {
         CPLDebug("FlatGeobuf", "Spatial index requested will write to temp file and do second pass on close");
         const CPLString osDirname(CPLGetPath(osFilename.c_str()));
         const CPLString osBasename(CPLGetBasename(osFilename.c_str()));
-        oTempFile = CPLFormFilename(osDirname, osBasename, nullptr);
-        oTempFile += "_temp.fgb";
-        poFpWrite = VSIFOpenL(oTempFile.c_str(), "w+b");
+        osTempFile = (STARTS_WITH(osFilename, "/vsi") &&
+                      !STARTS_WITH(osFilename, "/vsimem/")) ?
+            CPLGenerateTempFilename(osBasename) :
+            CPLFormFilename(osDirname, osBasename, nullptr);
+        osTempFile += "_temp.fgb";
+        poFpWrite = VSIFOpenL(osTempFile.c_str(), "w+b");
+        savedErrno = errno;
+        // Unlink it now to avoid stale temporary file if killing the process
+        // (only works on Unix)
+        VSIUnlink(osTempFile.c_str());
     } else {
         CPLDebug("FlatGeobuf", "No spatial index will write directly to output");
-        poFpWrite = VSIFOpenL(osFilename.c_str(), "w+b");
+        poFpWrite = VSIFOpenL(osFilename.c_str(), "wb");
+        savedErrno = errno;
     }
     if (poFpWrite == nullptr) {
         CPLError(CE_Failure, CPLE_OpenFailed,
                     "Failed to create %s:\n%s",
-                    osFilename.c_str(), VSIStrerror(errno));
+                    osFilename.c_str(), VSIStrerror(savedErrno));
         return nullptr;
     }
 
     // Create a layer.
     auto poLayer = std::unique_ptr<OGRFlatGeobufLayer>(
-        new OGRFlatGeobufLayer(pszLayerName, osFilename, poSpatialRef, eGType, poFpWrite, oTempFile, bCreateSpatialIndexAtClose));
+        new OGRFlatGeobufLayer(pszLayerName, osFilename, poSpatialRef, eGType, poFpWrite, osTempFile, bCreateSpatialIndexAtClose));
 
     m_apoLayers.push_back(std::move(poLayer));
 

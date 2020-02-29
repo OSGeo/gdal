@@ -579,3 +579,25 @@ def test_ogr_flatgeobuf_bool_short_float_binary():
 
     ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
     assert not gdal.VSIStatL('/vsimem/test.fgb')
+
+
+@pytest.mark.parametrize("options",
+                         [[], ['SPATIAL_INDEX=NO']],
+                         ids=['spatial_index', 'no_spatial_index'])
+def test_ogr_flatgeobuf_write_to_vsizip(options):
+
+    srcDS = gdal.OpenEx('data/poly.shp')
+    destDS = gdal.VectorTranslate('/vsizip//vsimem/test.fgb.zip/test.fgb',
+                                  srcDS=srcDS,
+                                  format='FlatGeobuf',
+                                  layerCreationOptions=options)
+    assert destDS is not None
+    destDS = None
+    destDS = ogr.Open('/vsizip//vsimem/test.fgb.zip/test.fgb')
+    srcLyr = srcDS.GetLayer(0)
+    dstLyr = destDS.GetLayer(0)
+    assert dstLyr.GetFeatureCount() == srcLyr.GetFeatureCount()
+    dstF = dstLyr.GetNextFeature()
+    assert dstF is not None
+    destDS = None
+    gdal.Unlink('/vsimem/test.fgb.zip')
