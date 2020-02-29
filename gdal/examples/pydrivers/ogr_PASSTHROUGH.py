@@ -80,7 +80,7 @@ class Layer(BaseLayer):
         return False
 
     def extent(self, force_computation):
-        # Impedence mismatch between SWIG GetExtent() and the Python
+        # Impedance mismatch between SWIG GetExtent() and the Python
         # driver API
         minx, maxx, miny, maxy = self.gdal_layer.GetExtent(force_computation)
         return [minx, miny, maxx, maxy]

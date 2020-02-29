@@ -116,7 +116,7 @@ struct TooManyLevelsException : public std::exception
     }
 };
 
-// Arbitrary theshold to avoid too much computation time and memory
+// Arbitrary threshold to avoid too much computation time and memory
 // consumption
 constexpr int knMAX_NUMBER_LEVELS = 100*1000;
 
@@ -165,7 +165,7 @@ struct IntervalLevelRangeIterator
         }
         Iterator e( *this, i2 );
 
-        // Arbitrary theshold to avoid too much computation time and memory
+        // Arbitrary threshold to avoid too much computation time and memory
         // consumption
         if( i2 > i1 + static_cast<double>(knMAX_NUMBER_LEVELS) )
             throw TooManyLevelsException();
@@ -216,7 +216,7 @@ public:
             i2 = index2( l2 );
         Iterator e( *this, i2 );
 
-        // Arbitrary theshold to avoid too much computation time and memory
+        // Arbitrary threshold to avoid too much computation time and memory
         // consumption
         if( i2 > i1 + static_cast<double>(knMAX_NUMBER_LEVELS) )
             throw TooManyLevelsException();

@@ -710,7 +710,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 							double v2 = va_arg(ap, double);
 							_TIFFmemcpy(val, &v2, tv_size);
 						} else {
-							/*-- default schould be tv_size == 4 */
+							/*-- default should be tv_size == 4 */
 							float v3 = (float)va_arg(ap, double);
 							_TIFFmemcpy(val, &v3, tv_size);
 							/*-- ToDo: After Testing, this should be removed and tv_size==4 should be set as default. */
@@ -1229,7 +1229,7 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 										*va_arg(ap, double*) = *(double *)val;
 										ret_val = 1;
 									} else {
-										/*-- default schould be tv_size == 4  */
+										/*-- default should be tv_size == 4  */
 										*va_arg(ap, float*) = *(float *)val;
 										ret_val = 1;
 										/*-- ToDo: After Testing, this should be removed and tv_size==4 should be set as default. */

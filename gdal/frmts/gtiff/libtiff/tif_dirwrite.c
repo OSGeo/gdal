@@ -819,7 +819,7 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64* pdiroff)
 							if (!TIFFWriteDirectoryTagRationalDoubleArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
 								goto bad;
 						} else {
-							/*-- default schould be tv_size == 4 */
+							/*-- default should be tv_size == 4 */
 							if (!TIFFWriteDirectoryTagRationalArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
 								goto bad;
 							/*-- ToDo: After Testing, this should be removed and tv_size==4 should be set as default. */
@@ -838,7 +838,7 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64* pdiroff)
 							if (!TIFFWriteDirectoryTagSrationalDoubleArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
 								goto bad;
 						} else {
-							/*-- default schould be tv_size == 4 */
+							/*-- default should be tv_size == 4 */
 							if (!TIFFWriteDirectoryTagSrationalArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
 								goto bad;
 							/*-- ToDo: After Testing, this should be removed and tv_size==4 should be set as default. */
@@ -2556,7 +2556,7 @@ TIFFWriteDirectoryTagCheckedSrationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry
 	return(o);
 }
 
-/*-- Rational2Double: additonal write functions for double arrays */
+/*-- Rational2Double: additional write functions for double arrays */
 static int
 TIFFWriteDirectoryTagCheckedRationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value)
 {

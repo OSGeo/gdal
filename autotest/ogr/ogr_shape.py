@@ -4784,7 +4784,7 @@ def test_ogr_shape_116_invalid_layer_name():
 
 
 ###############################################################################
-# Test case where a file with LDID/87 is overriden by a .cpg file
+# Test case where a file with LDID/87 is overridden by a .cpg file
 
 
 def test_ogr_shape_ldid_and_cpg():

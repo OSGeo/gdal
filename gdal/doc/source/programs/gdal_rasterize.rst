@@ -164,7 +164,7 @@ raster data is only supported since GDAL 2.1.0.
 .. option:: -optim {[AUTO]/VECTOR/RASTER}}
 
     Force the algorithm used (results are identical). The raster mode is used in most cases and
-    optimise read/write operations. The vector mode is usefull with a decent amount of input 
+    optimise read/write operations. The vector mode is useful with a decent amount of input 
     features and optimise the CPU use. That mode have to be used with tiled images to be 
     efficient. The auto mode (the default) will chose the algorithm based on input and output 
     properties.
