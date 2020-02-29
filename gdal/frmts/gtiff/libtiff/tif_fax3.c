@@ -1453,6 +1453,13 @@ Fax4Decode(TIFF* tif, uint8* buf, tmsize_t occ, uint16 s)
 		EXPAND2D(EOFG4);
                 if (EOLcnt)
                     goto EOFG4;
+		if (((lastx + 7) >> 3) > (int)occ)	/* check for buffer overrun */
+		{
+			TIFFErrorExt(tif->tif_clientdata, module,
+			             "Buffer overrun detected : %d bytes available, %d bits needed",
+			             (int)occ, lastx);
+			return -1;
+		}
 		(*sp->fill)(buf, thisrun, pa, lastx);
 		SETVALUE(0);		/* imaginary change for reference */
 		SWAP(uint32*, sp->curruns, sp->refruns);
@@ -1468,6 +1475,13 @@ Fax4Decode(TIFF* tif, uint8* buf, tmsize_t occ, uint16 s)
                     fputs( "Bad EOFB\n", stderr );
 #endif                
                 ClrBits( 13 );
+		if (((lastx + 7) >> 3) > (int)occ)	/* check for buffer overrun */
+		{
+			TIFFErrorExt(tif->tif_clientdata, module,
+			             "Buffer overrun detected : %d bytes available, %d bits needed",
+			             (int)occ, lastx);
+			return -1;
+		}
 		(*sp->fill)(buf, thisrun, pa, lastx);
 		UNCACHE_STATE(tif, sp);
 		return ( sp->line ? 1 : -1);	/* don't error on badly-terminated strips */
