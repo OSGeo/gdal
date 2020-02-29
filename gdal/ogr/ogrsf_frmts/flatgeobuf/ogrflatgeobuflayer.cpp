@@ -1036,6 +1036,8 @@ int OGRFlatGeobufLayer::TestCapability(const char *pszCap)
         return m_create;
     else if (EQUAL(pszCap, OLCSequentialWrite))
         return m_create;
+    else if (EQUAL(pszCap, OLCRandomRead))
+        return m_poHeader != nullptr && m_poHeader->index_node_size() > 0;
     else if (EQUAL(pszCap, OLCIgnoreFields))
         return true;
     else if (EQUAL(pszCap, OLCMeasuredGeometries))
