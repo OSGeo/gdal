@@ -841,6 +841,12 @@ OGRErr OGRFlatGeobufLayer::CreateField(OGRFieldDefn *poField, int /* bApproxOK *
         return OGRERR_FAILURE;
     }
 
+    if (m_poFeatureDefn->GetFieldCount() > std::numeric_limits<uint16_t>::max()) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot create features with more than 65536 columns");
+        return OGRERR_FAILURE;
+    }
+
     m_poFeatureDefn->AddFieldDefn(poField);
 
     return OGRERR_NONE;
@@ -855,16 +861,9 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
 
     const auto fieldCount = m_poFeatureDefn->GetFieldCount();
 
-    if (fieldCount >= std::numeric_limits<uint16_t>::max()) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot create features with more than 65536 columns");
-        return OGRERR_FAILURE;
-    }
-
     std::vector<uint8_t> properties;
     properties.reserve(1024 * 4);
     FlatBufferBuilder fbb;
-
-    //CPLDebugOnly("FlatGeobuf", "DEBUG ICreateFeature: fieldCount: %d", fieldCount);
 
     for (int i = 0; i < fieldCount; i++) {
         const auto fieldDef = m_poFeatureDefn->GetFieldDefn(i);

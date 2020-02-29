@@ -258,7 +258,7 @@ bool OGRFlatGeobufDataset::OpenFile(const char* pszFilename, VSILFILE* fp, bool 
     CPL_LSBPTR32(&headerSize);
     CPLDebug("FlatGeobuf", "headerSize: %d", headerSize);
     if (headerSize > header_max_buffer_size) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Header size too large (> 1MB)");
+        CPLError(CE_Failure, CPLE_AppDefined, "Header size too large (> 10 MB)");
         return false;
     }
     std::unique_ptr<GByte, CPLFreeReleaser> buf(static_cast<GByte*>(VSIMalloc(headerSize)));

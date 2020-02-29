@@ -601,3 +601,27 @@ def test_ogr_flatgeobuf_write_to_vsizip(options):
     assert dstF is not None
     destDS = None
     gdal.Unlink('/vsimem/test.fgb.zip')
+
+
+def test_ogr_flatgeobuf_huge_number_of_columns():
+    ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource('/vsimem/test.fgb')
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint)
+    for i in range(65536):
+        assert lyr.CreateField(ogr.FieldDefn('col%d' % i, ogr.OFTInteger)) == ogr.OGRERR_NONE, i
+    with gdaltest.error_handler():
+        assert lyr.CreateField(ogr.FieldDefn('col65536', ogr.OFTInteger)) == ogr.OGRERR_FAILURE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (0 0)'))
+    for i in range(65536):
+        f.SetField(i, i)
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open('/vsimem/test.fgb')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    for i in range(65536):
+        assert f.GetField(i) == i
+    ds = None
+
+    ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
