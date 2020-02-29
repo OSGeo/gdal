@@ -461,6 +461,13 @@ OGRErr OGRFlatGeobufLayer::readIndex()
 {
     if (m_queriedSpatialIndex || !m_poFilterGeom)
         return OGRERR_NONE;
+    if( m_sFilterEnvelope.IsInit() &&
+        m_sExtent.IsInit() &&
+        m_sFilterEnvelope.MinX <= m_sExtent.MinX &&
+        m_sFilterEnvelope.MinY <= m_sExtent.MinY &&
+        m_sFilterEnvelope.MaxX >= m_sExtent.MaxX &&
+        m_sFilterEnvelope.MaxY >= m_sExtent.MaxY )
+        return OGRERR_NONE;
     const auto indexNodeSize = m_poHeader->index_node_size();
     if (indexNodeSize == 0)
         return OGRERR_NONE;
@@ -1036,6 +1043,8 @@ int OGRFlatGeobufLayer::TestCapability(const char *pszCap)
         return m_create;
     else if (EQUAL(pszCap, OLCSequentialWrite))
         return m_create;
+    else if (EQUAL(pszCap, OLCRandomRead))
+        return m_poHeader != nullptr && m_poHeader->index_node_size() > 0;
     else if (EQUAL(pszCap, OLCIgnoreFields))
         return true;
     else if (EQUAL(pszCap, OLCMeasuredGeometries))
