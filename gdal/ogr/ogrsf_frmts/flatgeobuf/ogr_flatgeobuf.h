@@ -36,12 +36,16 @@
 #include "feature_generated.h"
 #include "packedrtree.h"
 
+#include <limits>
+
 class OGRFlatGeobufDataset;
 
 static constexpr uint8_t magicbytes[8] = { 0x66, 0x67, 0x62, 0x03, 0x66, 0x67, 0x62, 0x00 };
 
 static constexpr uint32_t header_max_buffer_size = 1048576 * 10;
-static constexpr uint32_t feature_max_buffer_size = 2147483648 - 1;
+
+// Cannot be larger than that, due to a x2 logic done in ensureFeatureBuf()
+static constexpr uint32_t feature_max_buffer_size = static_cast<uint32_t>(std::numeric_limits<int32_t>::max());
 
 // holds feature meta needed to build spatial index
 struct FeatureItem : FlatGeobuf::Item {
@@ -64,6 +68,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         std::string m_osLayerName;
 
         VSILFILE *m_poFp = nullptr;
+        vsi_l_offset m_nFileSize = 0;
 
         const FlatGeobuf::Header *m_poHeader = nullptr;
         GByte *m_headerBuf = nullptr;

@@ -565,18 +565,21 @@ OGRFeature *OGRFlatGeobufLayer::GetNextFeature()
 
 OGRErr OGRFlatGeobufLayer::ensureFeatureBuf(uint32_t featureSize) {
     if (m_featureBufSize == 0) {
-        m_featureBufSize = std::max(1024U * 32U, featureSize);
-        CPLDebugOnly("FlatGeobuf", "ensureFeatureBuf: m_featureBufSize: %d", m_featureBufSize);
-        m_featureBuf = static_cast<GByte *>(VSIMalloc(m_featureBufSize));
+        const auto newBufSize = std::max(1024U * 32U, featureSize);
+        CPLDebugOnly("FlatGeobuf", "ensureFeatureBuf: newBufSize: %d", newBufSize);
+        m_featureBuf = static_cast<GByte *>(VSIMalloc(newBufSize));
         if (m_featureBuf == nullptr)
             return CPLErrorMemoryAllocation("initial feature buffer");
+        m_featureBufSize = newBufSize;
     } else if (m_featureBufSize < featureSize) {
-        m_featureBufSize = std::max(m_featureBufSize * 2, featureSize);
-        CPLDebugOnly("FlatGeobuf", "ensureFeatureBuf: m_featureBufSize: %d", m_featureBufSize);
-        const auto featureBuf = static_cast<GByte *>(VSIRealloc(m_featureBuf, m_featureBufSize));
+        // Do not increase this x2 factor without modifying feature_max_buffer_size
+        const auto newBufSize = std::max(m_featureBufSize * 2, featureSize);
+        CPLDebugOnly("FlatGeobuf", "ensureFeatureBuf: newBufSize: %d", newBufSize);
+        const auto featureBuf = static_cast<GByte *>(VSIRealloc(m_featureBuf, newBufSize));
         if (featureBuf == nullptr)
             return CPLErrorMemoryAllocation("feature buffer resize");
         m_featureBuf = featureBuf;
+        m_featureBufSize = newBufSize;
     }
     return OGRERR_NONE;
 }
@@ -606,21 +609,40 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
         return CPLErrorIO("seeking to feature location");
     }
     uint32_t featureSize;
-    if (VSIFReadL(&featureSize, sizeof(uoffset_t), 1, m_poFp) != 1) {
+    if (VSIFReadL(&featureSize, sizeof(featureSize), 1, m_poFp) != 1) {
         if (VSIFEofL(m_poFp))
             return OGRERR_NONE;
         return CPLErrorIO("reading feature size");
     }
     CPL_LSBPTR32(&featureSize);
-    if (featureSize > feature_max_buffer_size)
-        return CPLErrorInvalidSize("feature");
+
+    // Sanity check to avoid allocated huge amount of memory on corrupted
+    // feature
+    if (featureSize > 100 * 1024 * 1024 )
+    {
+        if (featureSize > feature_max_buffer_size)
+            return CPLErrorInvalidSize("feature");
+
+        if( m_nFileSize == 0 )
+        {
+            VSIStatBufL sStatBuf;
+            if( VSIStatL(m_osFilename.c_str(), &sStatBuf) == 0 )
+            {
+                m_nFileSize = sStatBuf.st_size;
+            }
+        }
+        if( m_offset + featureSize > m_nFileSize )
+        {
+            return CPLErrorIO("reading feature size");
+        }
+    }
 
     const auto err = ensureFeatureBuf(featureSize);
     if (err != OGRERR_NONE)
         return err;
     if (VSIFReadL(m_featureBuf, 1, featureSize, m_poFp) != featureSize)
         return CPLErrorIO("reading feature");
-    m_offset += featureSize + sizeof(uoffset_t);
+    m_offset += featureSize + sizeof(featureSize);
 
     if (m_bVerifyBuffers) {
         const auto vBuf = const_cast<const uint8_t *>(reinterpret_cast<uint8_t *>(m_featureBuf));
