@@ -387,6 +387,11 @@ done1d:									\
  */
 #define EXPAND2D(eoflab) do {						\
     while (a0 < lastx) {						\
+	if (pa >= thisrun + sp->nruns) {				\
+		TIFFErrorExt(tif->tif_clientdata, module, "Buffer overflow at line %u of %s %u",	\
+		             sp->line, isTiled(tif) ? "tile" : "strip", isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);	\
+		break;					\
+	}									\
 	LOOKUP8(7, TIFFFaxMainTable, eof2d);				\
 	switch (TabEnt->State) {					\
 	case S_Pass:							\
@@ -478,11 +483,9 @@ done1d:									\
 	    break;							\
 	case S_VL:							\
 	    CHECK_b1;							\
-	    if (b1 <= (int) (a0 + TabEnt->Param)) {			\
-		if (b1 < (int) (a0 + TabEnt->Param) || pa != thisrun) {	\
-		    unexpected("VL", a0);				\
-		    goto eol2d;						\
-		}							\
+	    if (b1 < (int) (a0 + TabEnt->Param)) {			\
+		unexpected("VL", a0);				\
+		goto eol2d;						\
 	    }								\
 	    SETVALUE(b1 - a0 - TabEnt->Param);				\
 	    b1 -= *--pb;						\

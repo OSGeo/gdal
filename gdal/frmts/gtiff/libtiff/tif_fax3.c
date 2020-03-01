@@ -73,6 +73,7 @@ typedef struct {
 	int	EOLcnt;			/* count of EOL codes recognized */
 	TIFFFaxFillFunc fill;		/* fill routine */
 	uint32*	runs;			/* b&w runs for current/previous row */
+	uint32	nruns;			/* size of the refruns / curruns arrays */
 	uint32*	refruns;		/* runs for reference line */
 	uint32*	curruns;		/* runs for current line */
 
@@ -506,7 +507,7 @@ Fax3SetupState(TIFF* tif)
 	int needsRefLine;
 	Fax3CodecState* dsp = (Fax3CodecState*) Fax3State(tif);
 	tmsize_t rowbytes;
-	uint32 rowpixels, nruns;
+	uint32 rowpixels;
 
 	if (td->td_bitspersample != 1) {
 		TIFFErrorExt(tif->tif_clientdata, module,
@@ -539,26 +540,26 @@ Fax3SetupState(TIFF* tif)
 	  TIFFroundup and TIFFSafeMultiply return zero on integer overflow
 	*/
 	dsp->runs=(uint32*) NULL;
-	nruns = TIFFroundup_32(rowpixels,32);
+	dsp->nruns = TIFFroundup_32(rowpixels,32);
 	if (needsRefLine) {
-		nruns = TIFFSafeMultiply(uint32,nruns,2);
+		dsp->nruns = TIFFSafeMultiply(uint32,dsp->nruns,2);
 	}
-	if ((nruns == 0) || (TIFFSafeMultiply(uint32,nruns,2) == 0)) {
+	if ((dsp->nruns == 0) || (TIFFSafeMultiply(uint32,dsp->nruns,2) == 0)) {
 		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
 			     "Row pixels integer overflow (rowpixels %u)",
 			     rowpixels);
 		return (0);
 	}
 	dsp->runs = (uint32*) _TIFFCheckMalloc(tif,
-					       TIFFSafeMultiply(uint32,nruns,2),
+					       TIFFSafeMultiply(uint32,dsp->nruns,2),
 					       sizeof (uint32),
 					       "for Group 3/4 run arrays");
 	if (dsp->runs == NULL)
 		return (0);
-	memset( dsp->runs, 0, TIFFSafeMultiply(uint32,nruns,2)*sizeof(uint32));
+	memset( dsp->runs, 0, TIFFSafeMultiply(uint32,dsp->nruns,2)*sizeof(uint32));
 	dsp->curruns = dsp->runs;
 	if (needsRefLine)
-		dsp->refruns = dsp->runs + nruns;
+		dsp->refruns = dsp->runs + dsp->nruns;
 	else
 		dsp->refruns = NULL;
 	if (td->td_compression == COMPRESSION_CCITTFAX3
