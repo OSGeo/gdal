@@ -8330,7 +8330,11 @@ netCDFDataset::Create( const char *pszFilename,
 
     bool legacyCreateMode = false;
 
-    if (legacyCreationOp_s == "CF_1.8")
+    if (nXSize != 0 || nYSize != 0 || nBands != 0 )
+    {
+        legacyCreateMode = true;
+    }
+    else if (legacyCreationOp_s == "CF_1.8")
     {
         legacyCreateMode = false;
     }

@@ -4903,6 +4903,20 @@ def test_netcdf_chunked_not_multiple():
     assert ds.GetRasterBand(1).GetBlockSize() == [15, 6]
     assert ds.GetRasterBand(1).Checksum() == 4672
 
+
+def test_netcdf_create():
+
+    ds = gdaltest.netcdf_drv.Create('tmp/test_create.nc', 2, 2)
+    ds.SetGeoTransform([2, 0.1, 0, 49, 0, -0.1])
+    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 2, b'ABCD')
+    ds = None
+    ds = gdal.Open('tmp/test_create.nc')
+    assert ds.GetGeoTransform() == pytest.approx([2, 0.1, 0, 49, 0, -0.1], rel=1e-10)
+    assert ds.GetRasterBand(1).ReadRaster() == b'ABCD'
+    ds = None
+    gdal.Unlink('tmp/test_create.nc')
+
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
