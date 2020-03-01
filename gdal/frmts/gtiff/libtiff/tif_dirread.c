@@ -4441,6 +4441,7 @@ TIFFReadCustomDirectory(TIFF* tif, toff_t diroff,
 	uint16 di;
 	const TIFFField* fip;
 	uint32 fii;
+        (*tif->tif_cleanup)(tif);   /* cleanup any previous compression state */
 	_TIFFSetupFields(tif, infoarray);
 	dircount=TIFFFetchDirectory(tif,diroff,&dir,NULL);
 	if (!dircount)
