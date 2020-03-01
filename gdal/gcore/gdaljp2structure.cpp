@@ -1125,12 +1125,10 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         else if( abyMarker[1] == 0x50 ) /* CAP (HTJ2K) */
         {
              const GUInt32 Pcap = READ_MARKER_FIELD_UINT32("Pcap");
-             int nCount = 0;
              for( int i = 0; i < 32; i++ )
              {
                  if( (Pcap >> (31 - i)) & 1 )
                  {
-                     nCount ++;
                      READ_MARKER_FIELD_UINT16(CPLSPrintf("Scap_P%d", i+1));
                  }
              }
