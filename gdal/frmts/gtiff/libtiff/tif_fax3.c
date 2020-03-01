@@ -73,6 +73,7 @@ typedef struct {
 	int	EOLcnt;			/* count of EOL codes recognized */
 	TIFFFaxFillFunc fill;		/* fill routine */
 	uint32*	runs;			/* b&w runs for current/previous row */
+	uint32	nruns;			/* size of the refruns / curruns arrays */
 	uint32*	refruns;		/* runs for reference line */
 	uint32*	curruns;		/* runs for current line */
 
@@ -506,7 +507,7 @@ Fax3SetupState(TIFF* tif)
 	int needsRefLine;
 	Fax3CodecState* dsp = (Fax3CodecState*) Fax3State(tif);
 	tmsize_t rowbytes;
-	uint32 rowpixels, nruns;
+	uint32 rowpixels;
 
 	if (td->td_bitspersample != 1) {
 		TIFFErrorExt(tif->tif_clientdata, module,
@@ -539,26 +540,26 @@ Fax3SetupState(TIFF* tif)
 	  TIFFroundup and TIFFSafeMultiply return zero on integer overflow
 	*/
 	dsp->runs=(uint32*) NULL;
-	nruns = TIFFroundup_32(rowpixels,32);
+	dsp->nruns = TIFFroundup_32(rowpixels,32);
 	if (needsRefLine) {
-		nruns = TIFFSafeMultiply(uint32,nruns,2);
+		dsp->nruns = TIFFSafeMultiply(uint32,dsp->nruns,2);
 	}
-	if ((nruns == 0) || (TIFFSafeMultiply(uint32,nruns,2) == 0)) {
+	if ((dsp->nruns == 0) || (TIFFSafeMultiply(uint32,dsp->nruns,2) == 0)) {
 		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
 			     "Row pixels integer overflow (rowpixels %u)",
 			     rowpixels);
 		return (0);
 	}
 	dsp->runs = (uint32*) _TIFFCheckMalloc(tif,
-					       TIFFSafeMultiply(uint32,nruns,2),
+					       TIFFSafeMultiply(uint32,dsp->nruns,2),
 					       sizeof (uint32),
 					       "for Group 3/4 run arrays");
 	if (dsp->runs == NULL)
 		return (0);
-	memset( dsp->runs, 0, TIFFSafeMultiply(uint32,nruns,2)*sizeof(uint32));
+	memset( dsp->runs, 0, TIFFSafeMultiply(uint32,dsp->nruns,2)*sizeof(uint32));
 	dsp->curruns = dsp->runs;
 	if (needsRefLine)
-		dsp->refruns = dsp->runs + nruns;
+		dsp->refruns = dsp->runs + dsp->nruns;
 	else
 		dsp->refruns = NULL;
 	if (td->td_compression == COMPRESSION_CCITTFAX3
@@ -1453,6 +1454,13 @@ Fax4Decode(TIFF* tif, uint8* buf, tmsize_t occ, uint16 s)
 		EXPAND2D(EOFG4);
                 if (EOLcnt)
                     goto EOFG4;
+		if (((lastx + 7) >> 3) > (int)occ)	/* check for buffer overrun */
+		{
+			TIFFErrorExt(tif->tif_clientdata, module,
+			             "Buffer overrun detected : %d bytes available, %d bits needed",
+			             (int)occ, lastx);
+			return -1;
+		}
 		(*sp->fill)(buf, thisrun, pa, lastx);
 		SETVALUE(0);		/* imaginary change for reference */
 		SWAP(uint32*, sp->curruns, sp->refruns);
@@ -1468,6 +1476,13 @@ Fax4Decode(TIFF* tif, uint8* buf, tmsize_t occ, uint16 s)
                     fputs( "Bad EOFB\n", stderr );
 #endif                
                 ClrBits( 13 );
+		if (((lastx + 7) >> 3) > (int)occ)	/* check for buffer overrun */
+		{
+			TIFFErrorExt(tif->tif_clientdata, module,
+			             "Buffer overrun detected : %d bytes available, %d bits needed",
+			             (int)occ, lastx);
+			return -1;
+		}
 		(*sp->fill)(buf, thisrun, pa, lastx);
 		UNCACHE_STATE(tif, sp);
 		return ( sp->line ? 1 : -1);	/* don't error on badly-terminated strips */

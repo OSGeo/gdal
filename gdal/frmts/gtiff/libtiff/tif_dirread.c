@@ -44,6 +44,11 @@
 #define IGNORE 0          /* tag placeholder used below */
 #define FAILED_FII    ((uint32) -1)
 
+/*
+ * Largest 64-bit signed integer value.
+ */
+#define TIFF_INT64_MAX ((int64)(TIFF_UINT64_MAX >> 1))
+
 #ifdef HAVE_IEEEFP
 # define TIFFCvtIEEEFloatToNative(tif, n, fp)
 # define TIFFCvtIEEEDoubleToNative(tif, n, dp)
@@ -3288,11 +3293,6 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryCheckRangeLongSlong(int32 value)
 		return(TIFFReadDirEntryErrOk);
 }
 
-/*
- * Largest 32-bit unsigned integer value.
- */
-#define TIFF_UINT32_MAX 0xFFFFFFFFU
-
 static enum TIFFReadDirEntryErr
 TIFFReadDirEntryCheckRangeLongLong8(uint64 value)
 {
@@ -3310,8 +3310,6 @@ TIFFReadDirEntryCheckRangeLongSlong8(int64 value)
 	else
 		return(TIFFReadDirEntryErrOk);
 }
-
-#undef TIFF_UINT32_MAX
 
 static enum TIFFReadDirEntryErr
 TIFFReadDirEntryCheckRangeSlongLong(uint32 value)
@@ -3378,11 +3376,6 @@ TIFFReadDirEntryCheckRangeLong8Slong8(int64 value)
 		return(TIFFReadDirEntryErrOk);
 }
 
-/*
- * Largest 64-bit signed integer value.
- */
-#define TIFF_INT64_MAX ((int64)(((uint64) ~0) >> 1))
-
 static enum TIFFReadDirEntryErr
 TIFFReadDirEntryCheckRangeSlong8Long8(uint64 value)
 {
@@ -3391,8 +3384,6 @@ TIFFReadDirEntryCheckRangeSlong8Long8(uint64 value)
 	else
 		return(TIFFReadDirEntryErrOk);
 }
-
-#undef TIFF_INT64_MAX
 
 static enum TIFFReadDirEntryErr
 TIFFReadDirEntryData(TIFF* tif, uint64 offset, tmsize_t size, void* dest)
@@ -3406,13 +3397,13 @@ TIFFReadDirEntryData(TIFF* tif, uint64 offset, tmsize_t size, void* dest)
 	} else {
 		size_t ma,mb;
 		ma=(size_t)offset;
+                if( (uint64)ma!=offset ||
+                    ma > (~(size_t)0) - (size_t)size )
+                {
+                    return TIFFReadDirEntryErrIo;
+                }
 		mb=ma+size;
-		if (((uint64)ma!=offset)
-		    || (mb < ma)
-		    || (mb - ma != (size_t) size)
-		    || (mb < (size_t)size)
-		    || (mb > (size_t)tif->tif_size)
-		    )
+		if (mb > (size_t)tif->tif_size)
 			return(TIFFReadDirEntryErrIo);
 		_TIFFmemcpy(dest,tif->tif_base+ma,size);
 	}
@@ -4530,6 +4521,8 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 				    dp->tdir_type);
 				return -1;
 			}
+			if( dp->tdir_count > TIFF_UINT64_MAX / typewidth )
+                            return -1;
 			datasize=(uint64)typewidth*dp->tdir_count;
 			if (!(tif->tif_flags&TIFF_BIGTIFF))
 			{
@@ -4541,6 +4534,8 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 				if (datasize<=8)
 					datasize=0;
 			}
+			if( space > TIFF_UINT64_MAX - datasize )
+                            return -1;
 			space+=datasize;
 		}
 		if( filesize < space )
@@ -4560,8 +4555,16 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 		 * of data in the strip and trim this number back accordingly.
 		 */
 		strip--;
-		if (td->td_stripoffset[strip]+td->td_stripbytecount[strip] > filesize)
-			td->td_stripbytecount[strip] = filesize - td->td_stripoffset[strip];
+                if (td->td_stripoffset[strip] > TIFF_UINT64_MAX - td->td_stripbytecount[strip])
+                    return -1;
+		if (td->td_stripoffset[strip]+td->td_stripbytecount[strip] > filesize) {
+                    if( td->td_stripoffset[strip] >= filesize ) {
+                        /* Not sure what we should in that case... */
+                        td->td_stripbytecount[strip] = 0;
+                    } else {
+                        td->td_stripbytecount[strip] = filesize - td->td_stripoffset[strip];
+                    }
+                }
 	} else if (isTiled(tif)) {
 		uint64 bytespertile = TIFFTileSize64(tif);
 
@@ -4571,7 +4574,11 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 		uint64 rowbytes = TIFFScanlineSize64(tif);
 		uint32 rowsperstrip = td->td_imagelength/td->td_stripsperimage;
 		for (strip = 0; strip < td->td_nstrips; strip++)
-			td->td_stripbytecount[strip] = rowbytes * rowsperstrip;
+                {
+                    if( rowbytes > 0 && rowsperstrip > TIFF_UINT64_MAX / rowbytes )
+                        return -1;
+                    td->td_stripbytecount[strip] = rowbytes * rowsperstrip;
+                }
 	}
 	TIFFSetFieldBit(tif, FIELD_STRIPBYTECOUNTS);
 	if (!TIFFFieldSet(tif, FIELD_ROWSPERSTRIP))
@@ -4765,12 +4772,13 @@ TIFFFetchDirectory(TIFF* tif, uint64 diroff, TIFFDirEntry** pdir,
 		}
 	} else {
 		tmsize_t m;
-		tmsize_t off = (tmsize_t) tif->tif_diroff;
-		if ((uint64)off!=tif->tif_diroff)
+		tmsize_t off;
+		if (tif->tif_diroff > (uint64)TIFF_INT64_MAX)
 		{
 			TIFFErrorExt(tif->tif_clientdata,module,"Can not read TIFF directory count");
 			return(0);
 		}
+		off = (tmsize_t) tif->tif_diroff;
 
 		/*
 		 * Check for integer overflow when validating the dir_off,
@@ -4902,6 +4910,7 @@ TIFFFetchDirectory(TIFF* tif, uint64 diroff, TIFFDirEntry** pdir,
 				TIFFSwabLong((uint32*)ma);
 			mb->tdir_count=(uint64)(*(uint32*)ma);
 			ma+=sizeof(uint32);
+			mb->tdir_offset.toff_long8=0;
 			*(uint32*)(&mb->tdir_offset)=*(uint32*)ma;
 			ma+=sizeof(uint32);
 		}
