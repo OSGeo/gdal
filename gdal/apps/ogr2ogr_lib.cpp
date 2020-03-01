@@ -2405,6 +2405,8 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                                     poDS->TestCapability(ODsCRandomLayerRead));
     if( bRandomLayerReading &&
         !poODS->TestCapability(ODsCRandomLayerWrite) &&
+        CSLCount(psOptions->papszLayers) != 1 &&
+        psOptions->pszSQLStatement == nullptr &&
         !psOptions->bQuiet )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
