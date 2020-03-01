@@ -194,16 +194,21 @@ static OGRFieldType toOGRFieldType(ColumnType type, OGRFieldSubType& eSubType)
 {
     eSubType = OFSTNone;
     switch (type) {
+        case ColumnType::Byte: return OGRFieldType::OFTInteger;
+        case ColumnType::UByte: return OGRFieldType::OFTInteger;
         case ColumnType::Bool: eSubType = OFSTBoolean; return OGRFieldType::OFTInteger;
-        case ColumnType::Int: return OGRFieldType::OFTInteger;
         case ColumnType::Short: eSubType = OFSTInt16; return OGRFieldType::OFTInteger;
+        case ColumnType::UShort: return OGRFieldType::OFTInteger;
+        case ColumnType::Int: return OGRFieldType::OFTInteger;
+        case ColumnType::UInt: return OGRFieldType::OFTInteger64;
         case ColumnType::Long: return OGRFieldType::OFTInteger64;
+        case ColumnType::ULong: return OGRFieldType::OFTReal;
         case ColumnType::Float: eSubType = OFSTFloat32; return OGRFieldType::OFTReal;
         case ColumnType::Double: return OGRFieldType::OFTReal;
         case ColumnType::String: return OGRFieldType::OFTString;
+        case ColumnType::Json: return OGRFieldType::OFTString;
         case ColumnType::DateTime: return OGRFieldType::OFTDateTime;
         case ColumnType::Binary: return OGRFieldType::OFTBinary;
-        default: CPLError(CE_Failure, CPLE_AppDefined, "toOGRFieldType: Unknown ColumnType %d", (int) type);
     }
     return OGRFieldType::OFTString;
 }
@@ -704,9 +709,31 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
                     offset += sizeof(unsigned char);
                     break;
 
+                case ColumnType::Byte:
+                    if (offset + sizeof(signed char) > size)
+                        return CPLErrorInvalidSize("byte value");
+                    if (!isIgnored)
+                    {
+                        ogrField->Integer =
+                            *reinterpret_cast<const signed char*>(data + offset);
+                    }
+                    offset += sizeof(signed char);
+                    break;
+
+                case ColumnType::UByte:
+                    if (offset + sizeof(unsigned char) > size)
+                        return CPLErrorInvalidSize("ubyte value");
+                    if (!isIgnored)
+                    {
+                        ogrField->Integer =
+                            *reinterpret_cast<const unsigned char*>(data + offset);
+                    }
+                    offset += sizeof(unsigned char);
+                    break;
+
                 case ColumnType::Short:
                     if (offset + sizeof(int16_t) > size)
-                        return CPLErrorInvalidSize("int16 value");
+                        return CPLErrorInvalidSize("short value");
                     if (!isIgnored)
                     {
                         short s;
@@ -716,6 +743,20 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
                     }
                     offset += sizeof(int16_t);
                     break;
+
+                case ColumnType::UShort:
+                    if (offset + sizeof(uint16_t) > size)
+                        return CPLErrorInvalidSize("ushort value");
+                    if (!isIgnored)
+                    {
+                        uint16_t s;
+                        memcpy(&s, data + offset, sizeof(uint16_t));
+                        CPL_LSBPTR16(&s);
+                        ogrField->Integer = s;
+                    }
+                    offset += sizeof(uint16_t);
+                    break;
+
                 case ColumnType::Int:
                     if (offset + sizeof(int32_t) > size)
                         return CPLErrorInvalidSize("int32 value");
@@ -726,6 +767,20 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
                     }
                     offset += sizeof(int32_t);
                     break;
+
+                case ColumnType::UInt:
+                    if (offset + sizeof(uint32_t) > size)
+                        return CPLErrorInvalidSize("uint value");
+                    if (!isIgnored)
+                    {
+                        uint32_t v;
+                        memcpy(&v, data + offset, sizeof(int32_t));
+                        CPL_LSBPTR32(&v);
+                        ogrField->Integer64 = v;
+                    }
+                    offset += sizeof(int32_t);
+                    break;
+
                 case ColumnType::Long:
                     if (offset + sizeof(int64_t) > size)
                         return CPLErrorInvalidSize("int64 value");
@@ -736,6 +791,20 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
                     }
                     offset += sizeof(int64_t);
                     break;
+
+                case ColumnType::ULong:
+                    if (offset + sizeof(uint64_t) > size)
+                        return CPLErrorInvalidSize("uint64 value");
+                    if (!isIgnored)
+                    {
+                        uint64_t v;
+                        memcpy(&v, data + offset, sizeof(v));
+                        CPL_LSBPTR64(&v);
+                        ogrField->Real = static_cast<double>(v);
+                    }
+                    offset += sizeof(int64_t);
+                    break;
+
                 case ColumnType::Float:
                     if (offset + sizeof(float) > size)
                         return CPLErrorInvalidSize("float value");
@@ -759,6 +828,31 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
                     }
                     offset += sizeof(double);
                     break;
+
+                case ColumnType::String:
+                case ColumnType::Json:
+                {
+                    if (offset + sizeof(uint32_t) > size)
+                        return CPLErrorInvalidSize("string length");
+                    uint32_t len;
+                    memcpy(&len, data + offset, sizeof(int32_t));
+                    CPL_LSBPTR32(&len);
+                    offset += sizeof(uint32_t);
+                    if (len > size - offset)
+                        return CPLErrorInvalidSize("string value");
+                    if (!isIgnored )
+                    {
+                        char *str = static_cast<char*>(VSI_MALLOC_VERBOSE(len + 1));
+                        if (str == nullptr)
+                            return CPLErrorMemoryAllocation("string value");
+                        memcpy(str, data + offset, len);
+                        str[len] = '\0';
+                        ogrField->String = str;
+                    }
+                    offset += len;
+                    break;
+                }
+
                 case ColumnType::DateTime: {
                     if (offset + sizeof(uint32_t) > size)
                         return CPLErrorInvalidSize("datetime length ");
@@ -781,27 +875,7 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
                     offset += len;
                     break;
                 }
-                case ColumnType::String: {
-                    if (offset + sizeof(uint32_t) > size)
-                        return CPLErrorInvalidSize("string length");
-                    uint32_t len;
-                    memcpy(&len, data + offset, sizeof(int32_t));
-                    CPL_LSBPTR32(&len);
-                    offset += sizeof(uint32_t);
-                    if (len > size - offset)
-                        return CPLErrorInvalidSize("string value");
-                    if (!isIgnored )
-                    {
-                        char *str = static_cast<char*>(VSI_MALLOC_VERBOSE(len + 1));
-                        if (str == nullptr)
-                            return CPLErrorMemoryAllocation("string value");
-                        memcpy(str, data + offset, len);
-                        str[len] = '\0';
-                        ogrField->String = str;
-                    }
-                    offset += len;
-                    break;
-                }
+
                 case ColumnType::Binary: {
                     if (offset + sizeof(uint32_t) > size)
                         return CPLErrorInvalidSize("binary length");
@@ -823,8 +897,6 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
                     offset += len;
                     break;
                 }
-                default:
-                    CPLError(CE_Failure, CPLE_AppDefined, "GetNextFeature: Unknown column->type: %d", (int) type);
             }
         }
     }

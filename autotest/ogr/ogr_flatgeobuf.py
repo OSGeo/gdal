@@ -416,6 +416,27 @@ def test_ogr_flatgeobuf_datatypes():
     assert f['string'] == 'my string'
     assert f['datetime'] == '2019/10/15 12:34:56.789+00'
 
+
+def test_ogr_flatgeobuf_alldatatypes():
+    ds = ogr.Open('data/testfgb/alldatatypes.fgb')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f['byte'] == -1
+    assert f['ubyte'] == 255
+    assert f['bool'] == 1
+    assert f['short'] == -1
+    assert f['ushort'] == 65535
+    assert f['int'] == -1
+    assert f['uint'] == 4294967295
+    assert f['long'] == -1
+    assert f['ulong'] == float(2**64 - 1)
+    assert f['float'] == 0
+    assert f['double'] == 0
+    assert f['string'] == 'X'
+    assert f['json'] == 'X'
+    assert f['datetime'] == '2020/02/29 12:34:56+00'
+    assert f.GetFieldAsBinary('binary') == b'\x58'
+
 def test_ogr_flatgeobuf_mixed():
     srcDS = gdal.OpenEx('data/testfgb/testmixed.geojson')
     destDS = gdal.VectorTranslate('/vsimem/test.fgb', srcDS=srcDS, format = 'FlatGeobuf', layerCreationOptions = ['SPATIAL_INDEX=NO'])
