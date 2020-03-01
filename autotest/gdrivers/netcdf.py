@@ -4917,6 +4917,20 @@ def test_netcdf_create():
     gdal.Unlink('tmp/test_create.nc')
 
 
+def test_netcdf_sg1_8_max_variable_with_max_width_string_field_no_warning():
+
+    gdal.VectorTranslate("tmp/poly.nc", "../ogr/data/poly.shp", format="netCDF")
+
+    gdal.ErrorReset()
+    # Check that opening in raster/vector mode doesn't emit warning
+    ds = gdal.OpenEx("tmp/poly.nc")
+    assert gdal.GetLastErrorType() == 0
+    assert ds
+    assert ds.GetLayerCount() == 1
+    ds = None
+    gdal.Unlink('tmp/poly.nc')
+
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
