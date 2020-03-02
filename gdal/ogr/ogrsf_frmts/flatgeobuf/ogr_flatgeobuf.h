@@ -102,6 +102,7 @@ class OGRFlatGeobufLayer final : public OGRLayer
         uint64_t m_writeOffset = 0; // current write offset
         uint16_t m_indexNodeSize = 0;
         std::string m_oTempFile; // holds generated temp file name for two pass writing
+        uint32_t m_maxFeatureSize  = 0;
 
         // shared
         GByte *m_featureBuf = nullptr; // reusable/resizable feature data buffer
