@@ -1152,7 +1152,10 @@ int ReadGrib2Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
 
       /* Note we are getting data back either as a float or an int, but not
        * both, so we don't need to allocated room for both. */
-      unpk_g2ncep (&kfildo, (float *) (IS->iain), IS->iain, &(IS->nd2x3),
+      unpk_g2ncep (&kfildo,
+                   j == subgNum ? (float *) (IS->iain) : nullptr,
+                   j == subgNum ? IS->iain : nullptr,
+                  &(IS->nd2x3),
                   IS->idat, &(IS->nidat), IS->rdat, &(IS->nrdat), IS->is[0],
                   &(IS->ns[0]), IS->is[1], &(IS->ns[1]), IS->is[2],
                   &(IS->ns[2]), IS->is[3], &(IS->ns[3]), IS->is[4],

@@ -439,7 +439,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unp
         //   bitmap before the requested field.
         //
         if (isecnum == 6) {
-          if (unpack) {   // unpack bitmap
+          if (numfld==ifldnum && unpack) {   // unpack bitmap
             iofst=iofst-40;           // reset offset to beginning of section
             bmpsave=lgfld->bmap;      // save pointer to previous bitmap
             jerr=g2_unpack6(cgrib,cgrib_length,&iofst,lgfld->ngrdpts,&lgfld->ibmap,
