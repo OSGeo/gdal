@@ -806,7 +806,12 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
             // into account
             const char* pszUnitsName = nullptr;
             double dfUOMLengthInMeters = oSRS.GetLinearUnits( &pszUnitsName );
-            if( dfUOMLengthInMeters != oSRSTmp.GetLinearUnits(nullptr) )
+            // Non exact comparision, as there's a slight difference between
+            // the evaluation of US Survey foot harcoded in geo_normalize.c to
+            // 12.0 / 39.37, and the corresponding value returned by
+            // PROJ >= 6.0.0 and <= 7.0.0 for EPSG:9003
+            if( fabs(dfUOMLengthInMeters - oSRSTmp.GetLinearUnits(nullptr)) >
+                    1e-15 * dfUOMLengthInMeters )
             {
                 CPLDebug( "GTiff", "Modify EPSG:%d to have %s linear units...",
                           psDefn->PCS,
