@@ -136,6 +136,7 @@ void RegisterOGRFlatGeobuf()
     poDriver->SetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='SPATIAL_INDEX' type='boolean' description='Whether to create a spatial index' default='YES'/>"
+"  <Option name='TEMPORARY_DIR' type='string' description='Directory where temporary file should be created'/>"
 "</LayerCreationOptionList>");
     poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
@@ -438,8 +439,11 @@ OGRLayer* OGRFlatGeobufDataset::ICreateLayer( const char *pszLayerName,
         CPLDebug("FlatGeobuf", "Spatial index requested will write to temp file and do second pass on close");
         const CPLString osDirname(CPLGetPath(osFilename.c_str()));
         const CPLString osBasename(CPLGetBasename(osFilename.c_str()));
-        osTempFile = (STARTS_WITH(osFilename, "/vsi") &&
-                      !STARTS_WITH(osFilename, "/vsimem/")) ?
+        const char* pszTempDir = CSLFetchNameValue(papszOptions, "TEMPORARY_DIR");
+        osTempFile = pszTempDir ?
+            CPLFormFilename(pszTempDir, osBasename, nullptr) :
+            (STARTS_WITH(osFilename, "/vsi") &&
+            !STARTS_WITH(osFilename, "/vsimem/")) ?
             CPLGenerateTempFilename(osBasename) :
             CPLFormFilename(osDirname, osBasename, nullptr);
         osTempFile += "_temp.fgb";

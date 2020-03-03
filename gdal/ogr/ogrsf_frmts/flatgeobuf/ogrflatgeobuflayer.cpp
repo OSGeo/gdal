@@ -38,6 +38,8 @@
 #include "geometryreader.h"
 #include "geometrywriter.h"
 
+#include <algorithm>
+
 using namespace flatbuffers;
 using namespace FlatGeobuf;
 using namespace ogr_flatgeobuf;
@@ -329,6 +331,7 @@ void OGRFlatGeobufLayer::Create() {
 
     CPLDebugOnly("FlatGeobuf", "Writing second pass sorted by spatial index");
 
+    const uint64_t nTempFileSize = m_writeOffset;
     m_writeOffset = 0;
     m_indexNodeSize = 16;
 
@@ -367,25 +370,139 @@ void OGRFlatGeobufLayer::Create() {
     m_writeOffset += c;
 
     CPLDebugOnly("FlatGeobuf", "Writing feature buffers at offset %lu", static_cast<long unsigned int>(m_writeOffset));
+
     c = 0;
-    for (size_t i = 0; i < m_featuresCount; i++) {
-        const auto item = std::static_pointer_cast<FeatureItem>(m_featureItems[i]);
-        const auto featureSize = item->size;
-        const auto err = ensureFeatureBuf(featureSize);
+
+    // For temporary files not in memory, we use a batch strategy to write the
+    // final file. That is to say we try to separate reads in the source temporary
+    // file and writes in the target file as much as possible, and by reading
+    // source features in increasing offset within a batch.
+    const bool bUseBatchStragegy = !STARTS_WITH(m_oTempFile.c_str(), "/vsimem/");
+    if( bUseBatchStragegy )
+    {
+        const uint32_t nMaxBufferSize = std::max(m_maxFeatureSize,
+            static_cast<uint32_t>(std::min(
+                static_cast<uint64_t>(100 * 1024 * 1024), nTempFileSize)));
+        if( ensureFeatureBuf(nMaxBufferSize) != OGRERR_NONE )
+            return;
+        uint32_t offsetInBuffer = 0;
+        struct BatchItem
+        {
+            size_t   featureIdx; // index of m_featureItems[]
+            uint32_t offsetInBuffer;
+        };
+        std::vector<BatchItem> batch;
+
+        const auto flushBatch = [this, &batch, &offsetInBuffer]()
+        {
+            // Sort by increasing source offset
+            std::sort(
+                batch.begin(), batch.end(),
+                [this](const BatchItem& a, const BatchItem& b)
+                {
+                    return std::static_pointer_cast<FeatureItem>(
+                                m_featureItems[a.featureIdx])->offset
+                           < std::static_pointer_cast<FeatureItem>(
+                                m_featureItems[b.featureIdx])->offset;
+                }
+            );
+
+            // Read source features
+            for( const auto& batchItem: batch )
+            {
+                const auto item = std::static_pointer_cast<FeatureItem>(
+                    m_featureItems[batchItem.featureIdx]);
+                if (VSIFSeekL(m_poFpWrite, item->offset, SEEK_SET) == -1) {
+                    CPLErrorIO("seeking to temp feature location");
+                    return false;
+                }
+                if (VSIFReadL(m_featureBuf + batchItem.offsetInBuffer, 1,
+                              item->size, m_poFpWrite) != item->size) {
+                    CPLErrorIO("reading temp feature");
+                    return false;
+                }
+            }
+
+            // Sort by increasing target offset
+            std::sort(
+                batch.begin(), batch.end(),
+                [](const BatchItem& a, const BatchItem& b)
+                {
+                    return a.featureIdx < b.featureIdx;
+                }
+            );
+
+            // Write target features
+            for( const auto& batchItem: batch )
+            {
+                const auto item = std::static_pointer_cast<FeatureItem>(
+                    m_featureItems[batchItem.featureIdx]);
+                if( VSIFWriteL(m_featureBuf + batchItem.offsetInBuffer, 1,
+                               item->size, m_poFp) != item->size ) {
+                    CPLErrorIO("writing feature");
+                    return false;
+                }
+            }
+
+            batch.clear();
+            offsetInBuffer = 0;
+            return true;
+        };
+
+        for (size_t i = 0; i < m_featuresCount; i++)
+        {
+            const auto featureItem = std::static_pointer_cast<FeatureItem>(m_featureItems[i]);
+            const auto featureSize = featureItem->size;
+
+            if( offsetInBuffer + featureSize > m_featureBufSize )
+            {
+                if( !flushBatch() )
+                {
+                    return;
+                }
+            }
+
+            BatchItem bachItem;
+            bachItem.offsetInBuffer = offsetInBuffer;
+            bachItem.featureIdx = i;
+            batch.emplace_back(bachItem);
+            offsetInBuffer += featureSize;
+            c += featureSize;
+        }
+
+        if( !flushBatch() )
+        {
+            return;
+        }
+    }
+    else
+    {
+        const auto err = ensureFeatureBuf(m_maxFeatureSize);
         if (err != OGRERR_NONE)
             return;
-        //CPLDebugOnly("FlatGeobuf", "item->offset: %lu", static_cast<long unsigned int>(item->offset));
-        //CPLDebugOnly("FlatGeobuf", "featureSize: %d", featureSize);
-        if (VSIFSeekL(m_poFpWrite, item->offset, SEEK_SET) == -1) {
-            CPLErrorIO("seeking to temp feature location");
-            return;
+
+        for (const std::shared_ptr<FlatGeobuf::Item>& item: m_featureItems) {
+            const auto featureItem = std::static_pointer_cast<FeatureItem>(item);
+            const auto featureSize = featureItem->size;
+
+            //CPLDebugOnly("FlatGeobuf", "featureItem->offset: %lu", static_cast<long unsigned int>(featureItem->offset));
+            //CPLDebugOnly("FlatGeobuf", "featureSize: %d", featureSize);
+            if (VSIFSeekL(m_poFpWrite, featureItem->offset, SEEK_SET) == -1) {
+                CPLErrorIO("seeking to temp feature location");
+                return;
+            }
+            if (VSIFReadL(m_featureBuf, 1, featureSize, m_poFpWrite) != featureSize) {
+                CPLErrorIO("reading temp feature");
+                return;
+            }
+            if( VSIFWriteL(m_featureBuf, 1, featureSize, m_poFp) != featureSize ) {
+                CPLErrorIO("writing feature");
+                return;
+            }
+            c += featureSize;
         }
-        if (VSIFReadL(m_featureBuf, 1, featureSize, m_poFpWrite) != featureSize) {
-            CPLErrorIO("reading temp feature");
-            return;
-        }
-        c += VSIFWriteL(m_featureBuf, 1, featureSize, m_poFp);
     }
+
     CPLDebugOnly("FlatGeobuf", "Wrote feature buffers (%lu bytes)", static_cast<long unsigned int>(c));
     m_writeOffset += c;
 
@@ -1097,6 +1214,7 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
         CPLDebugOnly("FlatGeobuf", "Writing first feature at offset: %lu", static_cast<long unsigned int>(m_writeOffset));
     }
 
+    m_maxFeatureSize = std::max(m_featureBufSize, static_cast<uint32_t>(fbb.GetSize()));
     size_t c = VSIFWriteL(fbb.GetBufferPointer(), 1, fbb.GetSize(), m_poFpWrite);
     if (c == 0)
         return CPLErrorIO("writing feature");
