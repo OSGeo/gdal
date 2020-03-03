@@ -746,3 +746,9 @@ def test_tiff_srs_write_epsg3857():
     gdal.VSIFCloseL(f)
     gdal.Unlink(tmpfile)
     assert b"ESRI PE String" not in data
+
+
+def test_tiff_srs_read_epsg26730_with_linear_units_set():
+    ds = gdal.Open('data/epsg26730_with_linear_units_set.tif')
+    sr = ds.GetSpatialRef()
+    assert sr.GetAuthorityCode(None) == '26730'
