@@ -12,12 +12,11 @@
  * New OGR drivers:
    - FlatGeoBuf: read-support and creation (#1742)
  * Improved drivers:
-   - netCDF vector: read/write support for CF-1.8 Encoded Geometries (#1287)
- * Improved drivers:
+  - OAPIF driver (renamed from WFS3): updated to OGC API - Features 1.0 core spec
   - GTiff: improve performance of internal overview creation
   - GTiff: GeoTIFF 1.1 support
   - Shapefile driver: add read/creation/update support for .shz and .shp.zip
-  - OAPIF driver (renamed from WFS3): updated to OGC API - Features 1.0 core spec
+  - netCDF vector: read/write support for CF-1.8 Encoded Geometries (#1287)
   - VICAR: multiple improvements and write support (#1855)
   - DDS: add read support
  * Other improvements:
