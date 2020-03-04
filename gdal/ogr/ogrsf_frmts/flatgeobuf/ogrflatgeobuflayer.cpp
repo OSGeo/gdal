@@ -423,25 +423,12 @@ void OGRFlatGeobufLayer::Create() {
                 }
             }
 
-            // Sort by increasing target offset
-            std::sort(
-                batch.begin(), batch.end(),
-                [](const BatchItem& a, const BatchItem& b)
-                {
-                    return a.featureIdx < b.featureIdx;
-                }
-            );
-
             // Write target features
-            for( const auto& batchItem: batch )
-            {
-                const auto item = std::static_pointer_cast<FeatureItem>(
-                    m_featureItems[batchItem.featureIdx]);
-                if( VSIFWriteL(m_featureBuf + batchItem.offsetInBuffer, 1,
-                               item->size, m_poFp) != item->size ) {
-                    CPLErrorIO("writing feature");
-                    return false;
-                }
+            if( offsetInBuffer > 0 &&
+                VSIFWriteL(m_featureBuf, 1, offsetInBuffer, m_poFp) !=
+                                                            offsetInBuffer ) {
+                CPLErrorIO("writing feature");
+                return false;
             }
 
             batch.clear();
