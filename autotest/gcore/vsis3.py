@@ -1995,13 +1995,23 @@ def test_vsis3_sync_etag():
     handler.add('PUT', '/out/testsync.txt', custom_method=method)
 
     gdal.FileFromMemBuffer('/vsimem/testsync.txt', 'foo')
+
+    def cbk(pct, _, tab):
+        assert pct > tab[0]
+        tab[0] = pct
+        return True
+
+    tab = [ 0 ]
     with webserver.install_http_handler(handler):
-        assert gdal.Sync('/vsimem/testsync.txt', '/vsis3/out', options=options)
+        assert gdal.Sync('/vsimem/testsync.txt', '/vsis3/out', options=options,
+                         callback=cbk, callback_data=tab)
+    assert tab[0] == 1.0
 
     # Re-try with cached ETag. Should generate no network access
     handler = webserver.SequentialHandler()
     with webserver.install_http_handler(handler):
         assert gdal.Sync('/vsimem/testsync.txt', '/vsis3/out', options=options)
+        assert gdal.Sync('/vsimem/testsync.txt', '/vsis3/out/testsync.txt', options=options)
 
     gdal.VSICurlClearCache()
 
@@ -2017,6 +2027,7 @@ def test_vsis3_sync_etag():
     # Shouldn't do any copy, but hard to verify
     with webserver.install_http_handler(webserver.SequentialHandler()):
         assert gdal.Sync( '/vsis3/out/testsync.txt', '/vsimem/', options=options)
+        assert gdal.Sync( '/vsis3/out/testsync.txt', '/vsimem/testsync.txt', options=options)
 
     # Modify target file, and redo synchronization
     gdal.FileFromMemBuffer('/vsimem/testsync.txt', 'bar')
@@ -2066,10 +2077,12 @@ def test_vsis3_sync_etag():
     gdal.Mkdir('/vsimem/subdir', 0)
     gdal.FileFromMemBuffer('/vsimem/subdir/testsync.txt', 'foo')
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/out/?delimiter=%2F', 200, {},
+    handler.add('GET', '/out/', 200, {},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
-                        <Prefix></Prefix>
+                        <Prefix/>
+                        <Marker/>
+                        <IsTruncated>false</IsTruncated>
                         <Contents>
                             <Key>testsync.txt</Key>
                             <LastModified>1970-01-01T00:00:01.000Z</LastModified>

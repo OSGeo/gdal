@@ -1224,6 +1224,21 @@ VSIDIREntry::VSIDIREntry(): pszName(nullptr), nMode(0), nSize(0), nMTime(0),
 }
 
 /************************************************************************/
+/*                            VSIDIREntry()                             */
+/************************************************************************/
+
+VSIDIREntry::VSIDIREntry(const VSIDIREntry& other):
+    pszName(VSIStrdup(other.pszName)),
+    nMode(other.nMode),
+    nSize(other.nSize),
+    nMTime(other.nMTime),
+    bModeKnown(other.bModeKnown),
+    bSizeKnown(other.bSizeKnown),
+    bMTimeKnown(other.bMTimeKnown),
+    papszExtra(CSLDuplicate(other.papszExtra))
+{}
+
+/************************************************************************/
 /*                           ~VSIDIREntry()                             */
 /************************************************************************/
 

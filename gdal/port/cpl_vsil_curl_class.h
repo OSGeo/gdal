@@ -365,6 +365,14 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(IVSIS3LikeFSHandler)
 
+    bool CopyFile(VSILFILE* fpIn,
+                     vsi_l_offset nSourceSize,
+                     const char* pszSource,
+                     const char* pszTarget,
+                     GDALProgressFunc pProgressFunc,
+                     void *pProgressData);
+    int MkdirInternal( const char *pszDirname, bool bDoStatCheck );
+
   protected:
     char** GetFileList( const char *pszFilename,
                         int nMaxFiles,
