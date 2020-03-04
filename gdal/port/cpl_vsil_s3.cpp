@@ -26,10 +26,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_atomic_ops.h"
 #include "cpl_port.h"
 #include "cpl_http.h"
 #include "cpl_md5.h"
 #include "cpl_minixml.h"
+#include "cpl_multiproc.h"
 #include "cpl_time.h"
 #include "cpl_vsil_curl_priv.h"
 #include "cpl_vsil_curl_class.h"
@@ -3232,6 +3234,131 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                 anIndexToCopy.push_back(iFile);
                 nTotalSize += entry.nSize;
             }
+        }
+
+        const int nThreads = std::min(
+            std::max(1, atoi(CSLFetchNameValueDef(
+                papszOptions, "NUM_THREADS", "1"))),
+                static_cast<int>(anIndexToCopy.size()));
+        if( nThreads > 1 )
+        {
+            struct JobQueue
+            {
+                IVSIS3LikeFSHandler* poFS;
+                const std::vector<VSIDIREntry>& aoSrcEntries;
+                const std::vector<size_t>& anIndexToCopy;
+                volatile int iCurIdx = 0;
+                volatile bool ret = true;
+                volatile bool stop = false;
+                CPLString osSourceDir{};
+                CPLString osTargetDir{};
+                std::mutex sMutex{};
+                uint64_t nTotalCopied = 0;
+
+                JobQueue(IVSIS3LikeFSHandler* poFSIn,
+                         const std::vector<VSIDIREntry>& aoSrcEntriesIn,
+                         const std::vector<size_t>& anIndexToCopyIn,
+                         const CPLString& osSourceDirIn,
+                         const CPLString& osTargetDirIn):
+                    poFS(poFSIn),
+                    aoSrcEntries(aoSrcEntriesIn),
+                    anIndexToCopy(anIndexToCopyIn),
+                    osSourceDir(osSourceDirIn),
+                    osTargetDir(osTargetDirIn) {}
+
+                JobQueue(const JobQueue&) = delete;
+                JobQueue& operator=(const JobQueue&) = delete;
+            };
+            const auto threadFunc = [](void* pDataIn)
+            {
+                struct ProgressData
+                {
+                    uint64_t nFileSize;
+                    double dfLastPct;
+                    JobQueue* queue;
+                };
+
+                JobQueue* queue = static_cast<JobQueue*>(pDataIn);
+                while( !queue->stop )
+                {
+                    const int idx = CPLAtomicInc(&(queue->iCurIdx)) - 1;
+                    if( static_cast<size_t>(idx) >= queue->anIndexToCopy.size() )
+                    {
+                        queue->stop = true;
+                        break;
+                    }
+                    const auto& entry = queue->aoSrcEntries[queue->anIndexToCopy[idx]];
+                    const CPLString osSubSource(
+                        CPLFormFilename(queue->osSourceDir, entry.pszName, nullptr) );
+                    const CPLString osSubTarget(
+                        CPLFormFilename(queue->osTargetDir, entry.pszName, nullptr) );
+
+                    const auto progressFunc = [](double pct, const char*, void* pProgressDataIn)
+                    {
+                        ProgressData* pProgress = static_cast<ProgressData*>(pProgressDataIn);
+                        const auto nInc = static_cast<uint64_t>(
+                            (pct - pProgress->dfLastPct) * pProgress->nFileSize + 0.5);
+                        pProgress->queue->sMutex.lock();
+                        pProgress->queue->nTotalCopied += nInc;
+                        pProgress->queue->sMutex.unlock();
+                        pProgress->dfLastPct = pct;
+                        return TRUE;
+                    };
+                    ProgressData progressData;
+                    progressData.nFileSize = entry.nSize;
+                    progressData.dfLastPct = 0;
+                    progressData.queue = queue;
+                    if( !queue->poFS->CopyFile(nullptr, entry.nSize,
+                                  osSubSource, osSubTarget,
+                                  progressFunc, &progressData) )
+                    {
+                        queue->ret = false;
+                        queue->stop = true;
+                    }
+                }
+            };
+
+            JobQueue sJobQueue(this, aoSrcEntries, anIndexToCopy,
+                               osSourceWithoutSlash, osTargetDir);
+
+            std::vector<CPLJoinableThread*> ahThreads;
+            for( int i = 0; i < nThreads; i++ )
+            {
+                auto hThread = CPLCreateJoinableThread(threadFunc, &sJobQueue);
+                if( !hThread )
+                {
+                    sJobQueue.ret = false;
+                    sJobQueue.stop = true;
+                    break;
+                }
+                ahThreads.push_back(hThread);
+            }
+            if( pProgressFunc )
+            {
+                while( !sJobQueue.stop )
+                {
+                    CPLSleep(0.1);
+                    sJobQueue.sMutex.lock();
+                    const auto nTotalCopied = sJobQueue.nTotalCopied;
+                    sJobQueue.sMutex.unlock();
+                    // coverity[divide_by_zero]
+                    if( !pProgressFunc(double(nTotalCopied) / nTotalSize,
+                                       "", pProgressData) )
+                    {
+                        sJobQueue.ret = false;
+                        sJobQueue.stop = true;
+                    }
+                }
+                if( sJobQueue.ret )
+                {
+                    pProgressFunc(1.0, "", pProgressData);
+                }
+            }
+            for( auto hThread: ahThreads )
+            {
+                CPLJoinThread(hThread);
+            }
+            return sJobQueue.ret;
         }
 
         // Proceed to file copy

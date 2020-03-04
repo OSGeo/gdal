@@ -88,6 +88,33 @@ def test_vsis3_no_sign_request():
         pytest.fail()
     gdal.VSIFCloseL(f)
 
+
+###############################################################################
+# Test Sync() and multithreading
+
+
+def test_vsis3_sync_multithreaded():
+
+    if not gdaltest.built_against_curl():
+        pytest.skip()
+
+    def cbk(pct, _, tab):
+        assert pct >= tab[0]
+        tab[0] = pct
+        return True
+
+    tab = [ -1 ]
+    # Use a public bucket with /test_dummy/foo and /test_dummy/bar files
+    with gdaltest.config_option('AWS_NO_SIGN_REQUEST', 'YES'):
+        assert gdal.Sync('/vsis3/cdn.proj.org/test_dummy',
+                         '/vsimem/test_vsis3_no_sign_request_sync',
+                         options=['NUM_THREADS=2'],
+                         callback=cbk, callback_data=tab)
+    assert tab[0] == 1.0
+    assert gdal.VSIStatL('/vsimem/test_vsis3_no_sign_request_sync/test_dummy/foo').size == 4
+    assert gdal.VSIStatL('/vsimem/test_vsis3_no_sign_request_sync/test_dummy/bar').size == 4
+    gdal.RmdirRecursive('/vsimem/test_vsis3_no_sign_request_sync')
+
 ###############################################################################
 # Error cases
 
