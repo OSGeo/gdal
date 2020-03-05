@@ -354,6 +354,13 @@ typedef enum {
     GVM_Min = 4
 } GDALViewshedMode;
 
+/** Viewshed output types */
+typedef enum {
+    GVOT_NORMAL = 1,
+    GVOT_MIN_TARGET_HEIGHT_FROM_DEM = 2,
+    GVOT_MIN_TARGET_HEIGHT_FROM_GROUND = 3
+} GDALViewshedOutputType;
+
 GDALDatasetH CPL_DLL
 GDALViewshedGenerate(GDALRasterBandH hBand,
                      const char* pszDriverName,
@@ -364,7 +371,7 @@ GDALViewshedGenerate(GDALRasterBandH hBand,
                      double dfOutOfRangeVal, double dfNoDataVal, double dfCurvCoeff,
                      GDALViewshedMode eMode, double dfMaxDistance,
                      GDALProgressFunc pfnProgress, void *pProgressArg,
-                     CSLConstList papszExtraOptions);
+                     GDALViewshedOutputType heightMode, CSLConstList papszExtraOptions);
 
 /************************************************************************/
 /*      Rasterizer API - geometries burned into GDAL raster.            */
