@@ -514,7 +514,9 @@ done1d:									\
 	    goto eol2d;							\
 	eof2d:								\
 	    prematureEOF(a0);						\
-	    CLEANUP_RUNS();						\
+		if (pa < thisrun + sp->nruns) {	\
+		    CLEANUP_RUNS();					\
+		}								\
 	    goto eoflab;						\
 	}								\
     }									\
