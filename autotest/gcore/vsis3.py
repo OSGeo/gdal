@@ -390,6 +390,8 @@ def test_vsis3_2():
         pytest.fail(data)
 
     # Test region and endpoint 'redirects'
+    gdal.VSICurlClearCache()
+
     handler.req_count = 0
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsis3_streaming/s3_fake_bucket/redirect')

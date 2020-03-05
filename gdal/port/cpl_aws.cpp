@@ -1487,6 +1487,58 @@ CPLString VSIS3HandleHelper::GetSignedURL(CSLConstList papszOptions)
     return m_osURL;
 }
 
+/************************************************************************/
+/*                        UpdateMapFromHandle()                         */
+/************************************************************************/
+
+std::mutex VSIS3UpdateParams::gsMutex{};
+std::map< CPLString, VSIS3UpdateParams > VSIS3UpdateParams::goMapBucketsToS3Params{};
+
+void VSIS3UpdateParams::UpdateMapFromHandle( IVSIS3LikeHandleHelper* poHandleHelper )
+{
+    std::lock_guard<std::mutex> guard(gsMutex);
+
+    VSIS3HandleHelper * poS3HandleHelper =
+        dynamic_cast<VSIS3HandleHelper *>(poHandleHelper);
+    CPLAssert( poS3HandleHelper );
+    if( !poS3HandleHelper )
+        return;
+    goMapBucketsToS3Params[ poS3HandleHelper->GetBucket() ] =
+        VSIS3UpdateParams ( poS3HandleHelper );
+}
+
+/************************************************************************/
+/*                         UpdateHandleFromMap()                        */
+/************************************************************************/
+
+void VSIS3UpdateParams::UpdateHandleFromMap( IVSIS3LikeHandleHelper* poHandleHelper )
+{
+    std::lock_guard<std::mutex> guard(gsMutex);
+
+    VSIS3HandleHelper * poS3HandleHelper =
+        dynamic_cast<VSIS3HandleHelper *>(poHandleHelper);
+    CPLAssert( poS3HandleHelper );
+    if( !poS3HandleHelper )
+        return;
+    std::map< CPLString, VSIS3UpdateParams>::iterator oIter =
+        goMapBucketsToS3Params.find(poS3HandleHelper->GetBucket());
+    if( oIter != goMapBucketsToS3Params.end() )
+    {
+        oIter->second.UpdateHandlerHelper(poS3HandleHelper);
+    }
+}
+
+/************************************************************************/
+/*                            ClearCache()                              */
+/************************************************************************/
+
+void VSIS3UpdateParams::ClearCache()
+{
+    std::lock_guard<std::mutex> guard(gsMutex);
+
+    goMapBucketsToS3Params.clear();
+}
+
 #endif
 
 //! @endcond

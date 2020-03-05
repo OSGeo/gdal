@@ -559,8 +559,6 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIS3FSHandler)
 
-    std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params{};
-
     std::set<CPLString> DeleteObjects(const char* pszBucket, const char* pszXML);
 
   protected:
@@ -1789,7 +1787,7 @@ void VSIS3FSHandler::ClearCache()
 {
     VSICurlFilesystemHandler::ClearCache();
 
-    oMapBucketsToS3Params.clear();
+    VSIS3UpdateParams::ClearCache();
 
     VSIS3HandleHelper::ClearCache();
 }
@@ -3493,15 +3491,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
 
 void VSIS3FSHandler::UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelper )
 {
-    CPLMutexHolder oHolder( &hMutex );
-
-    VSIS3HandleHelper * poS3HandleHelper =
-        dynamic_cast<VSIS3HandleHelper *>(poHandleHelper);
-    CPLAssert( poS3HandleHelper );
-    if( !poS3HandleHelper )
-        return;
-    oMapBucketsToS3Params[ poS3HandleHelper->GetBucket() ] =
-        VSIS3UpdateParams ( poS3HandleHelper );
+    VSIS3UpdateParams::UpdateMapFromHandle(poHandleHelper);
 }
 
 /************************************************************************/
@@ -3510,19 +3500,7 @@ void VSIS3FSHandler::UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelpe
 
 void VSIS3FSHandler::UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelper )
 {
-    CPLMutexHolder oHolder( &hMutex );
-
-    VSIS3HandleHelper * poS3HandleHelper =
-        dynamic_cast<VSIS3HandleHelper *>(poHandleHelper);
-    CPLAssert( poS3HandleHelper );
-    if( !poS3HandleHelper )
-        return;
-    std::map< CPLString, VSIS3UpdateParams>::iterator oIter =
-        oMapBucketsToS3Params.find(poS3HandleHelper->GetBucket());
-    if( oIter != oMapBucketsToS3Params.end() )
-    {
-        oIter->second.UpdateHandlerHelper(poS3HandleHelper);
-    }
+    VSIS3UpdateParams::UpdateHandleFromMap(poHandleHelper);
 }
 
 /************************************************************************/
