@@ -24,15 +24,15 @@ Synopsis
                  [-vv <visibility>] [-iv <invisibility>]
                  [-ov <out_of_range>] [-cc <curvature_coef>]
                  [[-co NAME=VALUE] ...]
-                 [-q]
+                 [-q] [-om <output mode>]
                  <src_filename> <dst_filename>
 
 Description
 -----------
 
-The :program:`gdal_viewshed` generates a binary visibility raster from one band
+By default the :program:`gdal_viewshed` generates a binary visibility raster from one band
 of the input raster elevation model (DEM). The output raster will be of type
-Byte.
+Byte. With the -mode flag can also return a minimum visible height raster of type Float64.
 
 .. note::
     The algorithm as implemented currently will only output meaningful results
@@ -100,6 +100,20 @@ Byte.
 .. option:: -vv <value>
 
    Pixel value to set for visible areas. Default: 255
+
+.. option:: -om <output mode>
+
+  Sets what information the output contains.
+
+  Possible values: VISIBLE, DEM, GROUND
+ 
+  VISIBLE returns a raster of type Byte containing visible locations.
+ 
+  DEM and GROUND will return a raster of type Float64 containing the minimum target
+  height for target to be visible from the DEM surface or ground level respectively.
+  Flags -tz, -iv and -vv will be ignored.
+
+  Default VISIBLE
 
 C API
 -----

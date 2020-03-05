@@ -4010,9 +4010,12 @@ GVM_Diagonal = _gdal.GVM_Diagonal
 GVM_Edge = _gdal.GVM_Edge
 GVM_Max = _gdal.GVM_Max
 GVM_Min = _gdal.GVM_Min
+GVOT_NORMAL = _gdal.GVOT_NORMAL
+GVOT_MIN_TARGET_HEIGHT_FROM_DEM = _gdal.GVOT_MIN_TARGET_HEIGHT_FROM_DEM
+GVOT_MIN_TARGET_HEIGHT_FROM_GROUND = _gdal.GVOT_MIN_TARGET_HEIGHT_FROM_GROUND
 
 def ViewshedGenerate(*args, **kwargs):
-    """ViewshedGenerate(Band srcBand, char const * driverName, char const * targetRasterName, char ** creationOptions, double observerX, double observerY, double observerHeight, double targetHeight, double visibleVal, double invisibleVal, double outOfRangeVal, double noDataVal, double dfCurvCoeff, GDALViewshedMode mode, double maxDistance, GDALProgressFunc callback=0, void * callback_data=None, char ** papszOptions=None) -> Dataset"""
+    """ViewshedGenerate(Band srcBand, char const * driverName, char const * targetRasterName, char ** creationOptions, double observerX, double observerY, double observerHeight, double targetHeight, double visibleVal, double invisibleVal, double outOfRangeVal, double noDataVal, double dfCurvCoeff, GDALViewshedMode mode, double maxDistance, GDALProgressFunc callback=0, void * callback_data=None, GDALViewshedOutputType heightMode=GVOT_NORMAL, char ** papszOptions=None) -> Dataset"""
     return _gdal.ViewshedGenerate(*args, **kwargs)
 
 def AutoCreateWarpedVRT(*args):
