@@ -2968,6 +2968,68 @@ bool IVSIS3LikeFSHandler::CopyFile(VSILFILE* fpIn,
 }
 
 /************************************************************************/
+/*                          CopyChunk()                                 */
+/************************************************************************/
+
+static bool CopyChunk(const char* pszSource,
+                      const char* pszTarget,
+                      vsi_l_offset nStartOffset,
+                      size_t nChunkSize)
+{
+    VSILFILE* fpIn = VSIFOpenExL(pszSource, "rb", TRUE);
+    if( fpIn == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s", pszSource);
+        return false;
+    }
+
+    VSILFILE* fpOut = VSIFOpenExL(pszTarget, "wb+", TRUE);
+    if( fpOut == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", pszTarget);
+        VSIFCloseL(fpIn);
+        return false;
+    }
+
+    bool ret = true;
+    if( VSIFSeekL(fpIn, nStartOffset, SEEK_SET) < 0 ||
+        VSIFSeekL(fpOut, nStartOffset, SEEK_SET) < 0 )
+    {
+        ret = false;
+    }
+    else
+    {
+        void* pBuffer = VSI_MALLOC_VERBOSE(nChunkSize);
+        if( pBuffer == nullptr )
+        {
+            ret = false;
+        }
+        else
+        {
+            if( VSIFReadL(pBuffer, 1, nChunkSize, fpIn) != nChunkSize ||
+                VSIFWriteL(pBuffer, 1, nChunkSize, fpOut) != nChunkSize )
+            {
+                ret = false;
+            }
+        }
+        VSIFree(pBuffer);
+    }
+
+    VSIFCloseL(fpIn);
+    if( VSIFCloseL(fpOut) != 0 )
+    {
+        ret = false;
+    }
+    if( !ret )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                    "Copying of %s to %s failed",
+                    pszSource, pszTarget);
+    }
+    return ret;
+}
+
+/************************************************************************/
 /*                               Sync()                                 */
 /************************************************************************/
 
@@ -3150,8 +3212,23 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
         }
 
         // Enumerate source files and directories
-        std::vector<VSIDIREntry> aoSrcEntries;
+        struct ChunkToCopy
+        {
+            CPLString    osFilename{};
+            GIntBig      nMTime = 0;
+            CPLString    osETag{};
+            vsi_l_offset nTotalSize = 0;
+            vsi_l_offset nStartOffset = 0;
+            vsi_l_offset nSize = 0;
+        };
+        std::vector<ChunkToCopy> aoChunksToCopy;
         std::set<CPLString> aoSetDirsToCreate;
+        const char* pszChunkSize = CSLFetchNameValue(papszOptions, "CHUNK_SIZE");
+        const int nRequestedThreads = atoi(CSLFetchNameValueDef(papszOptions, "NUM_THREADS", "1"));
+        const size_t nMaxChunkSize =
+            bDownloadFromNetworkToLocal && pszChunkSize && nRequestedThreads > 1 ?
+                static_cast<size_t>(std::min(1024 * 1024 * 1024,
+                                    std::max(1, atoi(pszChunkSize)))): 0;
         while( true )
         {
             const auto entry = VSIGetNextDirEntry(poSourceDir.get());
@@ -3168,7 +3245,30 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
             }
             else
             {
-                aoSrcEntries.push_back(*entry);
+                // Split file in possibly multiple chunks
+                const vsi_l_offset nChunksLarge = nMaxChunkSize == 0 ? 1 :
+                        (entry->nSize + nMaxChunkSize - 1) / nMaxChunkSize;
+                if( nChunksLarge > 1000 )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Too small CHUNK_SIZE w.r.t file size");
+                    return false;
+                }
+                ChunkToCopy chunk;
+                chunk.osFilename = entry->pszName;
+                chunk.nMTime = entry->nMTime;
+                chunk.nTotalSize = entry->nSize;
+                chunk.osETag = CSLFetchNameValueDef(entry->papszExtra, "ETag", "");
+                const size_t nChunks = static_cast<size_t>(nChunksLarge);
+                for( size_t iChunk = 0; iChunk < nChunks; iChunk++ )
+                {
+                    chunk.nStartOffset = iChunk * nMaxChunkSize;
+                    chunk.nSize = nChunks == 1 ? entry->nSize:
+                        std::min(entry->nSize - chunk.nStartOffset,
+                                 static_cast<vsi_l_offset>(nMaxChunkSize));
+                    aoChunksToCopy.push_back(chunk);
+                    chunk.osETag.clear();
+                }
             }
         }
         poSourceDir.reset();
@@ -3190,32 +3290,33 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
         }
 
         // Collect source files to copy
-        const size_t nFileCount = aoSrcEntries.size();
+        const size_t nChunkCount = aoChunksToCopy.size();
         uint64_t nTotalSize = 0;
-        std::vector<size_t> anIndexToCopy; // points to aoSrcEntries
-        for( size_t iFile = 0; iFile < nFileCount; ++iFile )
+        std::vector<size_t> anIndexToCopy; // points to aoChunksToCopy
+        for( size_t iChunk = 0; iChunk < nChunkCount; ++iChunk )
         {
-            const auto& entry = aoSrcEntries[iFile];
+            const auto& chunk = aoChunksToCopy[iChunk];
+            if( chunk.nStartOffset != 0 )
+                continue;
             const CPLString osSubSource(
-                CPLFormFilename(osSourceWithoutSlash, entry.pszName, nullptr) );
+                CPLFormFilename(osSourceWithoutSlash, chunk.osFilename, nullptr) );
             const CPLString osSubTarget(
-                CPLFormFilename(osTargetDir, entry.pszName, nullptr) );
+                CPLFormFilename(osTargetDir, chunk.osFilename, nullptr) );
             bool bSkip = false;
-            const auto oIterExistingTarget = oMapExistingTargetFiles.find(entry.pszName);
+            const auto oIterExistingTarget = oMapExistingTargetFiles.find(chunk.osFilename);
             if( oIterExistingTarget != oMapExistingTargetFiles.end() &&
-                oIterExistingTarget->second.nSize == entry.nSize )
+                oIterExistingTarget->second.nSize == chunk.nTotalSize )
             {
                 if( bDownloadFromNetworkToLocal )
                 {
                     if( CanSkipDownloadFromNetworkToLocal(
                         osSubSource,
                         osSubTarget,
-                        entry.nMTime,
+                        chunk.nMTime,
                         oIterExistingTarget->second.nMTime,
-                        [&entry](const char*)
+                        [&chunk](const char*)
                         {
-                            return CPLString(
-                                CSLFetchNameValueDef(entry.papszExtra, "ETag", ""));
+                            return chunk.osETag;
                         }) )
                     {
                         bSkip = true;
@@ -3228,7 +3329,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                         fpIn,
                         osSubSource,
                         osSubTarget,
-                        entry.nMTime,
+                        chunk.nMTime,
                         oIterExistingTarget->second.nMTime,
                         [&oIterExistingTarget](const char*)
                         {
@@ -3245,21 +3346,33 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
 
             if( !bSkip )
             {
-                anIndexToCopy.push_back(iFile);
-                nTotalSize += entry.nSize;
+                anIndexToCopy.push_back(iChunk);
+                nTotalSize += chunk.nTotalSize;
+                if( chunk.nSize < chunk.nTotalSize )
+                {
+                    // Suppress target file as we're going to open in wb+ mode
+                    // for parallelized writing
+                    VSIUnlink(osSubTarget);
+
+                    // Include all remaining chunks of the same file
+                    while( iChunk + 1 < nChunkCount &&
+                        aoChunksToCopy[iChunk + 1].nStartOffset > 0 )
+                    {
+                        ++iChunk;
+                        anIndexToCopy.push_back(iChunk);
+                    }
+                }
             }
         }
 
-        const int nThreads = std::min(
-            std::max(1, atoi(CSLFetchNameValueDef(
-                papszOptions, "NUM_THREADS", "1"))),
-                static_cast<int>(anIndexToCopy.size()));
+        const int nThreads = std::min(std::max(1, nRequestedThreads),
+                                        static_cast<int>(anIndexToCopy.size()));
         if( nThreads > 1 )
         {
             struct JobQueue
             {
                 IVSIS3LikeFSHandler* poFS;
-                const std::vector<VSIDIREntry>& aoSrcEntries;
+                const std::vector<ChunkToCopy>& aoChunksToCopy;
                 const std::vector<size_t>& anIndexToCopy;
                 volatile int iCurIdx = 0;
                 volatile bool ret = true;
@@ -3270,12 +3383,12 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                 uint64_t nTotalCopied = 0;
 
                 JobQueue(IVSIS3LikeFSHandler* poFSIn,
-                         const std::vector<VSIDIREntry>& aoSrcEntriesIn,
+                         const std::vector<ChunkToCopy>& aoChunksToCopyIn,
                          const std::vector<size_t>& anIndexToCopyIn,
                          const CPLString& osSourceDirIn,
                          const CPLString& osTargetDirIn):
                     poFS(poFSIn),
-                    aoSrcEntries(aoSrcEntriesIn),
+                    aoChunksToCopy(aoChunksToCopyIn),
                     anIndexToCopy(anIndexToCopyIn),
                     osSourceDir(osSourceDirIn),
                     osTargetDir(osTargetDirIn) {}
@@ -3301,11 +3414,11 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                         queue->stop = true;
                         break;
                     }
-                    const auto& entry = queue->aoSrcEntries[queue->anIndexToCopy[idx]];
+                    const auto& chunk = queue->aoChunksToCopy[queue->anIndexToCopy[idx]];
                     const CPLString osSubSource(
-                        CPLFormFilename(queue->osSourceDir, entry.pszName, nullptr) );
+                        CPLFormFilename(queue->osSourceDir, chunk.osFilename, nullptr) );
                     const CPLString osSubTarget(
-                        CPLFormFilename(queue->osTargetDir, entry.pszName, nullptr) );
+                        CPLFormFilename(queue->osTargetDir, chunk.osFilename, nullptr) );
 
                     const auto progressFunc = [](double pct, const char*, void* pProgressDataIn)
                     {
@@ -3319,20 +3432,35 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                         return TRUE;
                     };
                     ProgressData progressData;
-                    progressData.nFileSize = entry.nSize;
+                    progressData.nFileSize = chunk.nSize;
                     progressData.dfLastPct = 0;
                     progressData.queue = queue;
-                    if( !queue->poFS->CopyFile(nullptr, entry.nSize,
-                                  osSubSource, osSubTarget,
-                                  progressFunc, &progressData) )
+                    if( chunk.nSize < chunk.nTotalSize )
                     {
-                        queue->ret = false;
-                        queue->stop = true;
+                        if( !CopyChunk(osSubSource, osSubTarget,
+                                       chunk.nStartOffset,
+                                       static_cast<size_t>(chunk.nSize)) )
+                        {
+                            queue->ret = false;
+                            queue->stop = true;
+                        }
+                        progressFunc(1.0, "", &progressData);
+                    }
+                    else
+                    {
+                        CPLAssert( chunk.nStartOffset == 0 );
+                        if( !queue->poFS->CopyFile(nullptr, chunk.nTotalSize,
+                                    osSubSource, osSubTarget,
+                                    progressFunc, &progressData) )
+                        {
+                            queue->ret = false;
+                            queue->stop = true;
+                        }
                     }
                 }
             };
 
-            JobQueue sJobQueue(this, aoSrcEntries, anIndexToCopy,
+            JobQueue sJobQueue(this, aoChunksToCopy, anIndexToCopy,
                                osSourceWithoutSlash, osTargetDir);
 
             std::vector<CPLJoinableThread*> ahThreads;
@@ -3378,18 +3506,19 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
         // Proceed to file copy
         bool ret = true;
         uint64_t nAccSize = 0;
-        for( const size_t iFile: anIndexToCopy )
+        for( const size_t iChunk: anIndexToCopy )
         {
-            const auto& entry = aoSrcEntries[iFile];
+            const auto& chunk = aoChunksToCopy[iChunk];
+            CPLAssert(chunk.nStartOffset == 0);
             const CPLString osSubSource(
-                CPLFormFilename(osSourceWithoutSlash, entry.pszName, nullptr) );
+                CPLFormFilename(osSourceWithoutSlash, chunk.osFilename, nullptr) );
             const CPLString osSubTarget(
-                CPLFormFilename(osTargetDir, entry.pszName, nullptr) );
+                CPLFormFilename(osTargetDir, chunk.osFilename, nullptr) );
             // coverity[divide_by_zero]
             void* pScaledProgress = GDALCreateScaledProgress(
-                double(nAccSize) / nTotalSize, double(nAccSize + entry.nSize) / nTotalSize,
+                double(nAccSize) / nTotalSize, double(nAccSize + chunk.nSize) / nTotalSize,
                 pProgressFunc, pProgressData);
-            ret = CopyFile(nullptr, entry.nSize,
+            ret = CopyFile(nullptr, chunk.nSize,
                            osSubSource, osSubTarget,
                            GDALScaledProgress, pScaledProgress);
             GDALDestroyScaledProgress(pScaledProgress);
@@ -3397,7 +3526,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
             {
                 break;
             }
-            nAccSize += entry.nSize;
+            nAccSize += chunk.nSize;
         }
 
         return ret;
