@@ -922,6 +922,19 @@ def nb_data_bands(dataset):
         return dataset.RasterCount - 1
     return dataset.RasterCount
 
+
+def find_alpha_band(dataset):
+    """
+    Return the alpha band number if present or None
+    """
+    for band_num in range(1, dataset.RasterCount + 1):
+        band = dataset.GetRasterBand(band_num)
+        if band.GetColorInterpretation() == gdal.GCI_AlphaBand:
+            return band_num
+
+    return None
+
+
 def create_base_tile(tile_job_info, tile_detail):
 
     dataBandsCount = tile_job_info.nb_data_bands
@@ -941,7 +954,12 @@ def create_base_tile(tile_job_info, tile_detail):
 
     mem_drv = gdal.GetDriverByName('MEM')
     out_drv = gdal.GetDriverByName(tile_job_info.tile_driver)
-    alphaband = ds.GetRasterBand(1).GetMaskBand()
+
+    # Use explicit alpha band if present, else, use mask band
+    if tile_job_info.alpha_band is not None:
+        alphaband = ds.GetRasterBand(tile_job_info.alpha_band)
+    else:
+        alphaband = ds.GetRasterBand(1).GetMaskBand()
 
     tx = tile_detail.tx
     ty = tile_detail.ty
@@ -1024,7 +1042,6 @@ def create_base_tile(tile_job_info, tile_detail):
                     tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
                     get_tile_swne(tile_job_info, options), tile_job_info.options
                 ).encode('utf-8'))
-
 
 
 def create_overview_tiles(tile_job_info, output_folder, options):
@@ -1329,6 +1346,7 @@ class TileJobInfo(object):
     """
     src_file = ""
     nb_data_bands = 0
+    alpha_band = None
     output_file_path = ""
     tile_extension = ""
     tile_size = 0
@@ -1553,7 +1571,7 @@ class GDAL2Tiles(object):
                                                self.warped_input_dataset)
 
         # Get alpha band (either directly or from NODATA value)
-        self.alphaband = self.warped_input_dataset.GetRasterBand(1).GetMaskBand()
+        self.alphaband = find_alpha_band(self.warped_input_dataset)
         self.dataBandsCount = nb_data_bands(self.warped_input_dataset)
 
         # KML test
@@ -1922,6 +1940,7 @@ class GDAL2Tiles(object):
         conf = TileJobInfo(
             src_file=self.tmp_vrt_filename,
             nb_data_bands=self.dataBandsCount,
+            alpha_band=self.alphaband,
             output_file_path=self.output_folder,
             tile_extension=self.tileext,
             tile_driver=self.tiledriver,
