@@ -2885,8 +2885,9 @@ bool IVSIS3LikeFSHandler::CopyFile(VSILFILE* fpIn,
     CPLString osMsg;
     osMsg.Printf("Copying of %s", pszSource);
 
-    if( STARTS_WITH(pszSource, GetFSPrefix()) &&
-        STARTS_WITH(pszTarget, GetFSPrefix()) )
+    const CPLString osPrefix(GetFSPrefix());
+    if( STARTS_WITH(pszSource, osPrefix) &&
+        STARTS_WITH(pszTarget, osPrefix) )
     {
         bool bRet = CopyObject(pszSource, pszTarget) == 0;
         if( pProgressFunc )
@@ -2898,7 +2899,22 @@ bool IVSIS3LikeFSHandler::CopyFile(VSILFILE* fpIn,
 
     if( fpIn == nullptr )
     {
-        fpIn = VSIFOpenExL(pszSource, "rb", TRUE);
+        if( STARTS_WITH(pszSource, osPrefix) &&
+            (EQUAL(osPrefix, "/vsis3/") ||
+             EQUAL(osPrefix, "/vsioss/") ||
+             EQUAL(osPrefix, "/vsigs/") ||
+             EQUAL(osPrefix, "/vsiaz/") ||
+             EQUAL(osPrefix, "/vsiswift/")) )
+        {
+            // Transform /vsis3/foo insto /vsis3_streaming/foo
+            const size_t nPrefixLen = osPrefix.size();
+            fpIn = VSIFOpenExL(
+                (osPrefix.substr(0, nPrefixLen-1) +
+                    "_streaming/"  +
+                    (pszSource + nPrefixLen)).c_str(), "rb", TRUE);
+        }
+        else
+            fpIn = VSIFOpenExL(pszSource, "rb", TRUE);
     }
     if( fpIn == nullptr )
     {

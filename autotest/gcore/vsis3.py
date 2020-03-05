@@ -2060,21 +2060,8 @@ def test_vsis3_sync_etag():
     gdal.FileFromMemBuffer('/vsimem/testsync.txt', 'bar')
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/out/?delimiter=%2F', 200, {},
-                """<?xml version="1.0" encoding="UTF-8"?>
-                    <ListBucketResult>
-                        <Prefix></Prefix>
-                        <Contents>
-                            <Key>testsync.txt</Key>
-                            <LastModified>1970-01-01T00:00:01.000Z</LastModified>
-                            <Size>3</Size>
-                            <ETag>"acbd18db4cc2f85cedef654fccc4a4d8"</ETag>
-                        </Contents>
-                    </ListBucketResult>
-                """)
-    handler.add('GET', '/out/testsync.txt', 206,
+    handler.add('GET', '/out/testsync.txt', 200,
                 { 'Content-Length' : '3',
-                  'Content-Range': 'bytes 0-2/3',
                   'ETag' : '"acbd18db4cc2f85cedef654fccc4a4d8"' }, "foo")
     with webserver.install_http_handler(handler):
         assert gdal.Sync( '/vsis3/out/testsync.txt', '/vsimem/', options=options)
@@ -2142,10 +2129,8 @@ def test_vsis3_sync_timestamp():
                 { 'Content-Length' : '3',
                   'Content-Range': 'bytes 0-2/3',
                   'Last-Modified': 'Mon, 01 Jan 1970 00:00:01 GMT' }, "foo")
-    handler.add('GET', '/out/?delimiter=%2F', 404)
-    handler.add('GET', '/out/testsync.txt', 206,
+    handler.add('GET', '/out/testsync.txt', 200,
                 { 'Content-Length' : '3',
-                  'Content-Range': 'bytes 0-2/3',
                   'Last-Modified': 'Mon, 01 Jan 1970 00:00:01 GMT' }, "foo")
     with webserver.install_http_handler(handler):
         assert gdal.Sync( '/vsis3/out/testsync.txt', '/vsimem/',
