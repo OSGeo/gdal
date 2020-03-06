@@ -173,7 +173,7 @@ _gdal_edit.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general -ro -a_srs -a_ullr -tr -unsetgt -unsetrpc -a_nodata -unsetnodata -offset -scale -colorinterp_X -unsetstats -stats -approx_stats -setstats -gcp -unsetmd -oo -mo --version --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general -ro -a_srs -a_ullr -a_ulurll -tr -unsetgt -unsetrpc -a_nodata -unsetnodata -offset -scale -colorinterp_X -unsetstats -stats -approx_stats -setstats -gcp -unsetmd -oo -mo --version --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;

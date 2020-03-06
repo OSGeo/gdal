@@ -132,6 +132,7 @@ All:
 * gdal2tiles.py: check that min zoom <= max zoom (#2161)
 * gdal_translate / gdalwarp / ogrct: allow dealing with non-WKT1 representable SRS (#1856)
 * gdal_edit.py: add a -units switch
+* gdal_edit.py: add -a_ulurll switch
 * gdal_fillnodata.py/GDALFillNodata: fix crash when smooth_iterations is used, and with some progress functions such as the one used by Python (#1184)
 * Python scripts and samples: use python3 for shebang (#2168)
 
