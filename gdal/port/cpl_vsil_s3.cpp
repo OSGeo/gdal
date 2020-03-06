@@ -742,28 +742,31 @@ size_t VSIS3WriteHandle::Read( void * /* pBuffer */, size_t /* nSize */,
 /*                        InitiateMultipartUpload()                     */
 /************************************************************************/
 
-bool VSIS3WriteHandle::InitiateMultipartUpload()
+CPLString IVSIS3LikeFSHandler::InitiateMultipartUpload(
+            const std::string& osFilename,
+            IVSIS3LikeHandleHelper *poS3HandleHelper,
+            int nMaxRetry,
+            double dfRetryDelay)
 {
-    bool bSuccess = true;
+    CPLString osUploadID;
     bool bRetry;
-    double dfRetryDelay = m_dfRetryDelay;
     int nRetryCount = 0;
     do
     {
         bRetry = false;
         CURL* hCurlHandle = curl_easy_init();
-        m_poS3HandleHelper->AddQueryParameter("uploads", "");
+        poS3HandleHelper->AddQueryParameter("uploads", "");
         curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "POST");
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(hCurlHandle,
-                              m_poS3HandleHelper->GetURL().c_str(),
+                              poS3HandleHelper->GetURL().c_str(),
                               nullptr));
         headers = VSICurlMergeHeaders(headers,
-                        m_poS3HandleHelper->GetCurlHeaders("POST", headers));
+                        poS3HandleHelper->GetCurlHeaders("POST", headers));
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        m_poS3HandleHelper->ResetQueryParameters();
+        poS3HandleHelper->ResetQueryParameters();
 
         WriteFuncStruct sWriteFuncData;
         VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
@@ -781,7 +784,7 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
         szCurlErrBuf[0] = '\0';
         curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
-        MultiPerform(m_poFS->GetCurlMultiHandleFor(m_poS3HandleHelper->GetURL()),
+        MultiPerform(GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
                      hCurlHandle);
 
         VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
@@ -797,13 +800,13 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
                 static_cast<int>(response_code), dfRetryDelay,
                 sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
-                nRetryCount < m_nMaxRetry )
+                nRetryCount < nMaxRetry )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                             "HTTP error code: %d - %s. "
                             "Retrying again in %.1f secs",
                             static_cast<int>(response_code),
-                            m_poS3HandleHelper->GetURL().c_str(),
+                            poS3HandleHelper->GetURL().c_str(),
                             dfRetryDelay);
                 CPLSleep(dfRetryDelay);
                 dfRetryDelay = dfNewRetryDelay;
@@ -811,49 +814,47 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
                 bRetry = true;
             }
             else if( sWriteFuncData.pBuffer != nullptr &&
-                m_poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
+                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
                                                       sWriteFuncHeaderData.pBuffer,
                                                       false) )
             {
-                m_poFS->UpdateMapFromHandle(m_poS3HandleHelper);
+                UpdateMapFromHandle(poS3HandleHelper);
                 bRetry = true;
             }
             else
             {
-                CPLDebug(m_poFS->GetDebugKey(), "%s",
+                CPLDebug(GetDebugKey(), "%s",
                          sWriteFuncData.pBuffer
                          ? sWriteFuncData.pBuffer
                          : "(null)");
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "InitiateMultipartUpload of %s failed",
-                         m_osFilename.c_str());
-                bSuccess = false;
+                         osFilename.c_str());
             }
         }
         else
         {
-            m_poFS->InvalidateCachedData(
-                m_poS3HandleHelper->GetURL().c_str());
-            m_poFS->InvalidateDirContent( CPLGetDirname(m_osFilename) );
+            InvalidateCachedData(
+                poS3HandleHelper->GetURL().c_str());
+            InvalidateDirContent( CPLGetDirname(osFilename.c_str()) );
 
             CPLXMLNode* psNode =
                 CPLParseXMLString( sWriteFuncData.pBuffer );
             if( psNode )
             {
-                m_osUploadID =
+                osUploadID =
                     CPLGetXMLValue(
                         psNode, "=InitiateMultipartUploadResult.UploadId", "");
-                CPLDebug(m_poFS->GetDebugKey(),
-                         "UploadId: %s", m_osUploadID.c_str());
+                CPLDebug(GetDebugKey(),
+                         "UploadId: %s", osUploadID.c_str());
                 CPLDestroyXMLNode(psNode);
             }
-            if( m_osUploadID.empty() )
+            if( osUploadID.empty() )
             {
                 CPLError(
                     CE_Failure, CPLE_AppDefined,
                     "InitiateMultipartUpload of %s failed: cannot get UploadId",
-                    m_osFilename.c_str());
-                bSuccess = false;
+                    osFilename.c_str());
             }
         }
 
@@ -863,25 +864,7 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
         curl_easy_cleanup(hCurlHandle);
     }
     while( bRetry );
-    return bSuccess;
-}
-
-/************************************************************************/
-/*                         ReadCallBackBuffer()                         */
-/************************************************************************/
-
-size_t VSIS3WriteHandle::ReadCallBackBuffer( char *buffer, size_t size,
-                                             size_t nitems, void *instream )
-{
-    VSIS3WriteHandle* poThis = static_cast<VSIS3WriteHandle *>(instream);
-    const int nSizeMax = static_cast<int>(size * nitems);
-    const int nSizeToWrite =
-        std::min(nSizeMax,
-                 poThis->m_nBufferOff - poThis->m_nBufferOffReadCallback);
-    memcpy(buffer, poThis->m_pabyBuffer + poThis->m_nBufferOffReadCallback,
-           nSizeToWrite);
-    poThis->m_nBufferOffReadCallback += nSizeToWrite;
-    return nSizeToWrite;
+    return osUploadID;
 }
 
 /************************************************************************/
@@ -902,36 +885,83 @@ bool VSIS3WriteHandle::UploadPart()
             m_osFilename.c_str());
         return false;
     }
+    const CPLString osEtag =
+        m_poFS->UploadPart(m_osFilename, m_nPartNumber, m_osUploadID,
+                           m_pabyBuffer, m_nBufferOff,
+                           m_poS3HandleHelper,
+                           m_nMaxRetry, m_dfRetryDelay);
+    m_nBufferOff = 0;
+    if( !osEtag.empty() )
+    {
+        m_aosEtags.push_back(osEtag);
+    }
+    return !osEtag.empty();
+}
+
+namespace {
+    struct PutData
+    {
+        const GByte* pabyData;
+        size_t       nOff;
+        size_t       nTotalSize;
+
+        static size_t ReadCallBackBuffer( char *buffer, size_t size,
+                                          size_t nitems, void *instream )
+        {
+            PutData* poThis = static_cast<PutData *>(instream);
+            const size_t nSizeMax = size * nitems;
+            const size_t nSizeToWrite =
+                std::min(nSizeMax, poThis->nTotalSize - poThis->nOff);
+            memcpy(buffer, poThis->pabyData + poThis->nOff, nSizeToWrite);
+            poThis->nOff += nSizeToWrite;
+            return nSizeToWrite;
+        }
+    };
+}
+
+CPLString IVSIS3LikeFSHandler::UploadPart(const CPLString& osFilename,
+                                          int nPartNumber,
+                                          const std::string& osUploadID,
+                                          const void* pabyBuffer,
+                                          size_t nBufferSize,
+                                          IVSIS3LikeHandleHelper *poS3HandleHelper,
+                                          int nMaxRetry,
+                                          double dfRetryDelay)
+{
 
     bool bRetry;
-    double dfRetryDelay = m_dfRetryDelay;
     int nRetryCount = 0;
-    bool bSuccess = true;
+    CPLString osEtag;
+
     do
     {
         bRetry = false;
 
-        m_nBufferOffReadCallback = 0;
         CURL* hCurlHandle = curl_easy_init();
-        m_poS3HandleHelper->AddQueryParameter("partNumber",
-                                            CPLSPrintf("%d", m_nPartNumber));
-        m_poS3HandleHelper->AddQueryParameter("uploadId", m_osUploadID);
+        poS3HandleHelper->AddQueryParameter("partNumber",
+                                            CPLSPrintf("%d", nPartNumber));
+        poS3HandleHelper->AddQueryParameter("uploadId", osUploadID);
         curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
-        curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION, ReadCallBackBuffer);
-        curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, this);
-        curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, m_nBufferOff);
+        curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION,
+                         PutData::ReadCallBackBuffer);
+        PutData putData;
+        putData.pabyData = static_cast<const GByte*>(pabyBuffer);
+        putData.nOff = 0;
+        putData.nTotalSize = nBufferSize;
+        curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, &putData);
+        curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, nBufferSize);
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(hCurlHandle,
-                            m_poS3HandleHelper->GetURL().c_str(),
+                            poS3HandleHelper->GetURL().c_str(),
                             nullptr));
         headers = VSICurlMergeHeaders(headers,
-                        m_poS3HandleHelper->GetCurlHeaders("PUT", headers,
-                                                            m_pabyBuffer,
-                                                            m_nBufferOff));
+                        poS3HandleHelper->GetCurlHeaders("PUT", headers,
+                                                            pabyBuffer,
+                                                            nBufferSize));
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        m_poS3HandleHelper->ResetQueryParameters();
+        poS3HandleHelper->ResetQueryParameters();
 
         WriteFuncStruct sWriteFuncData;
         VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
@@ -949,7 +979,7 @@ bool VSIS3WriteHandle::UploadPart()
         szCurlErrBuf[0] = '\0';
         curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
-        MultiPerform(m_poFS->GetCurlMultiHandleFor(m_poS3HandleHelper->GetURL()),
+        MultiPerform(GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
                         hCurlHandle);
 
         VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
@@ -965,13 +995,13 @@ bool VSIS3WriteHandle::UploadPart()
                 static_cast<int>(response_code), dfRetryDelay,
                 sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
-                nRetryCount < m_nMaxRetry )
+                nRetryCount < nMaxRetry )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                             "HTTP error code: %d - %s. "
                             "Retrying again in %.1f secs",
                             static_cast<int>(response_code),
-                            m_poS3HandleHelper->GetURL().c_str(),
+                            poS3HandleHelper->GetURL().c_str(),
                             dfRetryDelay);
                 CPLSleep(dfRetryDelay);
                 dfRetryDelay = dfNewRetryDelay;
@@ -980,11 +1010,10 @@ bool VSIS3WriteHandle::UploadPart()
             }
             else
             {
-                CPLDebug(m_poFS->GetDebugKey(), "%s",
+                CPLDebug(GetDebugKey(), "%s",
                         sWriteFuncData.pBuffer ? sWriteFuncData.pBuffer : "(null)");
                 CPLError(CE_Failure, CPLE_AppDefined, "UploadPart(%d) of %s failed",
-                            m_nPartNumber, m_osFilename.c_str());
-                bSuccess = false;
+                            nPartNumber, osFilename.c_str());
             }
         }
         else
@@ -993,20 +1022,18 @@ bool VSIS3WriteHandle::UploadPart()
             size_t nPos = osHeader.ifind("ETag: ");
             if( nPos != std::string::npos )
             {
-                CPLString osEtag(osHeader.substr(nPos + strlen("ETag: ")));
+                osEtag = osHeader.substr(nPos + strlen("ETag: "));
                 const size_t nPosEOL = osEtag.find("\r");
                 if( nPosEOL != std::string::npos )
                     osEtag.resize(nPosEOL);
-                CPLDebug(m_poFS->GetDebugKey(), "Etag for part %d is %s",
-                        m_nPartNumber, osEtag.c_str());
-                m_aosEtags.push_back(osEtag);
+                CPLDebug(GetDebugKey(), "Etag for part %d is %s",
+                         nPartNumber, osEtag.c_str());
             }
             else
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "UploadPart(%d) of %s (uploadId = %s) failed",
-                        m_nPartNumber, m_osFilename.c_str(), m_osUploadID.c_str());
-                bSuccess = false;
+                        nPartNumber, osFilename.c_str(), osUploadID.c_str());
             }
         }
 
@@ -1017,7 +1044,7 @@ bool VSIS3WriteHandle::UploadPart()
     }
     while( bRetry );
 
-    return bSuccess;
+    return osEtag;
 }
 
 /************************************************************************/
@@ -1296,7 +1323,10 @@ VSIS3WriteHandle::Write( const void *pBuffer, size_t nSize, size_t nMemb )
         {
             if( m_nCurOffset == static_cast<vsi_l_offset>(m_nBufferSize) )
             {
-                if( !InitiateMultipartUpload() )
+                m_osUploadID = m_poFS->InitiateMultipartUpload(
+                        m_osFilename, m_poS3HandleHelper,
+                        m_nMaxRetry, m_dfRetryDelay);
+                if( m_osUploadID.empty() )
                 {
                     m_bError = true;
                     return 0;
@@ -1347,14 +1377,20 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
     bool bRetry;
     double dfRetryDelay = m_dfRetryDelay;
     int nRetryCount = 0;
+
     do
     {
         bRetry = false;
-        m_nBufferOffReadCallback = 0;
+
+        PutData putData;
+        putData.pabyData = m_pabyBuffer;
+        putData.nOff = 0;
+        putData.nTotalSize = m_nBufferOff;
+
         CURL* hCurlHandle = curl_easy_init();
         curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
-        curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION, ReadCallBackBuffer);
-        curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, this);
+        curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION, PutData::ReadCallBackBuffer);
+        curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, &putData);
         curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, m_nBufferOff);
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
@@ -1469,71 +1505,61 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
 }
 
 /************************************************************************/
-/*                            ReadCallBackXML()                         */
-/************************************************************************/
-
-size_t VSIS3WriteHandle::ReadCallBackXML( char *buffer, size_t size,
-                                          size_t nitems, void *instream )
-{
-    VSIS3WriteHandle* poThis = static_cast<VSIS3WriteHandle *>(instream);
-    const int nSizeMax = static_cast<int>(size * nitems);
-    const int nSizeToWrite =
-        std::min(nSizeMax,
-                 static_cast<int>(poThis->m_osXML.size()) -
-                 poThis->m_nOffsetInXML);
-    memcpy(buffer, poThis->m_osXML.c_str() + poThis->m_nOffsetInXML,
-           nSizeToWrite);
-    poThis->m_nOffsetInXML += nSizeToWrite;
-    return nSizeToWrite;
-}
-
-/************************************************************************/
 /*                        CompleteMultipart()                           */
 /************************************************************************/
 
-bool VSIS3WriteHandle::CompleteMultipart()
+bool IVSIS3LikeFSHandler::CompleteMultipart(const CPLString& osFilename,
+                                            const CPLString& osUploadID,
+                                            const std::vector<CPLString> aosEtags,
+                                            IVSIS3LikeHandleHelper *poS3HandleHelper,
+                                            int nMaxRetry,
+                                            double dfRetryDelay)
 {
     bool bSuccess = true;
 
-    m_osXML = "<CompleteMultipartUpload>\n";
-    for( size_t i = 0; i < m_aosEtags.size(); i++ )
+    CPLString osXML = "<CompleteMultipartUpload>\n";
+    for( size_t i = 0; i < aosEtags.size(); i++ )
     {
-        m_osXML += "<Part>\n";
-        m_osXML += CPLSPrintf("<PartNumber>%d</PartNumber>",
+        osXML += "<Part>\n";
+        osXML += CPLSPrintf("<PartNumber>%d</PartNumber>",
                               static_cast<int>(i+1));
-        m_osXML += "<ETag>" + m_aosEtags[i] + "</ETag>";
-        m_osXML += "</Part>\n";
+        osXML += "<ETag>" + aosEtags[i] + "</ETag>";
+        osXML += "</Part>\n";
     }
-    m_osXML += "</CompleteMultipartUpload>\n";
+    osXML += "</CompleteMultipartUpload>\n";
 
-    m_nOffsetInXML = 0;
-
-    double dfRetryDelay = m_dfRetryDelay;
     int nRetryCount = 0;
     bool bRetry;
     do
     {
         bRetry = false;
+
+        PutData putData;
+        putData.pabyData = reinterpret_cast<const GByte*>(osXML.data());
+        putData.nOff = 0;
+        putData.nTotalSize = osXML.size();
+
         CURL* hCurlHandle = curl_easy_init();
-        m_poS3HandleHelper->AddQueryParameter("uploadId", m_osUploadID);
+        poS3HandleHelper->AddQueryParameter("uploadId", osUploadID);
         curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
-        curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION, ReadCallBackXML);
-        curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, this);
+        curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION,
+                         PutData::ReadCallBackBuffer);
+        curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, &putData);
         curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE,
-                        static_cast<int>(m_osXML.size()));
+                        static_cast<int>(osXML.size()));
         curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "POST");
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(hCurlHandle,
-                            m_poS3HandleHelper->GetURL().c_str(),
+                            poS3HandleHelper->GetURL().c_str(),
                             nullptr));
         headers = VSICurlMergeHeaders(headers,
-                        m_poS3HandleHelper->GetCurlHeaders("POST", headers,
-                                                            m_osXML.c_str(),
-                                                            m_osXML.size()));
+                        poS3HandleHelper->GetCurlHeaders("POST", headers,
+                                                            osXML.c_str(),
+                                                            osXML.size()));
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        m_poS3HandleHelper->ResetQueryParameters();
+        poS3HandleHelper->ResetQueryParameters();
 
         WriteFuncStruct sWriteFuncData;
         VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
@@ -1551,7 +1577,7 @@ bool VSIS3WriteHandle::CompleteMultipart()
         szCurlErrBuf[0] = '\0';
         curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
-        MultiPerform(m_poFS->GetCurlMultiHandleFor(m_poS3HandleHelper->GetURL()),
+        MultiPerform(GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
                     hCurlHandle);
 
         curl_slist_free_all(headers);
@@ -1565,13 +1591,13 @@ bool VSIS3WriteHandle::CompleteMultipart()
                 static_cast<int>(response_code), dfRetryDelay,
                 sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
-                nRetryCount < m_nMaxRetry )
+                nRetryCount < nMaxRetry )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                             "HTTP error code: %d - %s. "
                             "Retrying again in %.1f secs",
                             static_cast<int>(response_code),
-                            m_poS3HandleHelper->GetURL().c_str(),
+                            poS3HandleHelper->GetURL().c_str(),
                             dfRetryDelay);
                 CPLSleep(dfRetryDelay);
                 dfRetryDelay = dfNewRetryDelay;
@@ -1584,13 +1610,9 @@ bool VSIS3WriteHandle::CompleteMultipart()
                     sWriteFuncData.pBuffer ? sWriteFuncData.pBuffer : "(null)");
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "CompleteMultipart of %s (uploadId=%s) failed",
-                        m_osFilename.c_str(), m_osUploadID.c_str());
+                        osFilename.c_str(), osUploadID.c_str());
                 bSuccess = false;
             }
-        }
-        else
-        {
-            InvalidateParentDirectory();
         }
 
         CPLFree(sWriteFuncData.pBuffer);
@@ -1607,29 +1629,32 @@ bool VSIS3WriteHandle::CompleteMultipart()
 /*                          AbortMultipart()                            */
 /************************************************************************/
 
-bool VSIS3WriteHandle::AbortMultipart()
+bool IVSIS3LikeFSHandler::AbortMultipart(const CPLString& osFilename,
+                                         const CPLString& osUploadID,
+                                         IVSIS3LikeHandleHelper *poS3HandleHelper,
+                                         int nMaxRetry,
+                                         double dfRetryDelay)
 {
     bool bSuccess = true;
 
-    double dfRetryDelay = m_dfRetryDelay;
     int nRetryCount = 0;
     bool bRetry;
     do
     {
         bRetry = false;
         CURL* hCurlHandle = curl_easy_init();
-        m_poS3HandleHelper->AddQueryParameter("uploadId", m_osUploadID);
+        poS3HandleHelper->AddQueryParameter("uploadId", osUploadID);
         curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "DELETE");
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(hCurlHandle,
-                            m_poS3HandleHelper->GetURL().c_str(),
+                            poS3HandleHelper->GetURL().c_str(),
                             nullptr));
         headers = VSICurlMergeHeaders(headers,
-                        m_poS3HandleHelper->GetCurlHeaders("DELETE", headers));
+                        poS3HandleHelper->GetCurlHeaders("DELETE", headers));
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        m_poS3HandleHelper->ResetQueryParameters();
+        poS3HandleHelper->ResetQueryParameters();
 
         WriteFuncStruct sWriteFuncData;
         VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
@@ -1647,8 +1672,8 @@ bool VSIS3WriteHandle::AbortMultipart()
         szCurlErrBuf[0] = '\0';
         curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
-        MultiPerform(m_poFS->GetCurlMultiHandleFor(m_poS3HandleHelper->GetURL()),
-                    hCurlHandle);
+        MultiPerform(GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
+                     hCurlHandle);
 
         curl_slist_free_all(headers);
 
@@ -1661,13 +1686,13 @@ bool VSIS3WriteHandle::AbortMultipart()
                 static_cast<int>(response_code), dfRetryDelay,
                 sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
-                nRetryCount < m_nMaxRetry )
+                nRetryCount < nMaxRetry )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                             "HTTP error code: %d - %s. "
                             "Retrying again in %.1f secs",
                             static_cast<int>(response_code),
-                            m_poS3HandleHelper->GetURL().c_str(),
+                            poS3HandleHelper->GetURL().c_str(),
                             dfRetryDelay);
                 CPLSleep(dfRetryDelay);
                 dfRetryDelay = dfNewRetryDelay;
@@ -1680,7 +1705,7 @@ bool VSIS3WriteHandle::AbortMultipart()
                         sWriteFuncData.pBuffer ? sWriteFuncData.pBuffer : "(null)");
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "AbortMultipart of %s (uploadId=%s) failed",
-                        m_osFilename.c_str(), m_osUploadID.c_str());
+                        osFilename.c_str(), osUploadID.c_str());
                 bSuccess = false;
             }
         }
@@ -1718,12 +1743,21 @@ int VSIS3WriteHandle::Close()
         {
             if( m_bError )
             {
-                if( !AbortMultipart() )
+                if( !m_poFS->AbortMultipart(m_osFilename, m_osUploadID,
+                                            m_poS3HandleHelper,
+                                            m_nMaxRetry, m_dfRetryDelay) )
                     nRet = -1;
             }
             else if( m_nBufferOff > 0 && !UploadPart() )
                 nRet = -1;
-            else if( !CompleteMultipart() )
+            else if( m_poFS->CompleteMultipart(
+                                     m_osFilename, m_osUploadID,
+                                     m_aosEtags, m_poS3HandleHelper,
+                                     m_nMaxRetry, m_dfRetryDelay) )
+            {
+                InvalidateParentDirectory();
+            }
+            else
                 nRet = -1;
         }
     }
