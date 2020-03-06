@@ -635,7 +635,10 @@ int VSIRename( const char * oldpath, const char * newpath )
  *     Since GDAL 3.1</li>
  * <li>CHUNK_SIZE=integer. Maximum size of chunk (in bytes) to use to split
  *     large objects when downloading them from /vsis3/, /vsigs/ or /vsiaz/ to
- *     local file system. Only used if NUM_THREADS > 1. Since GDAL 3.1</li>
+ *     local file system, or for upload to /vsis3/ from local file system.
+ *     Only used if NUM_THREADS > 1.
+ *     For upload to /vsis3/, this chunk size will be set at least to 5 MB.
+ *     Since GDAL 3.1</li>
  * </ul>
  * @param pProgressFunc Progress callback, or NULL.
  * @param pProgressData User data of progress callback, or NULL.
