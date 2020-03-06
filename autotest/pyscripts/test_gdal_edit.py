@@ -94,6 +94,28 @@ def test_gdal_edit_py_1():
     assert units == 'metre'
 
 ###############################################################################
+# Test -a_ulurll
+
+def test_gdal_edit_py_1b():
+
+    script = 'gdal_edit'
+    folder = test_py_scripts.get_py_script(script)
+    if folder is None:
+        pytest.skip()
+
+    image = 'tmp/test_gdal_edit_py.tif'
+    shutil.copy('../gcore/data/byte.tif', image)
+
+    for points, expected in (
+        ('2 50 3 50 2 49', (2, 0.05, 0, 50, 0, -0.05)),  # not rotated
+        ('25 70 55 80 35 40', (25, 1.5, 0.5, 70, 0.5, -1.5)),  # rotated CCW
+        ('25 70 55 65 20 40', (25, 1.5, -0.25, 70, -0.25, -1.5)),  # rotated CW
+    ):
+        arguments = image + ' -a_ulurll ' + points
+        assert test_py_scripts.run_py_script(folder, script, arguments) == ''
+        assert gdal.Open(image).GetGeoTransform() == pytest.approx(expected)
+
+###############################################################################
 # Test -unsetgt
 
 
