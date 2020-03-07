@@ -365,6 +365,14 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(IVSIS3LikeFSHandler)
 
+    bool CopyFile(VSILFILE* fpIn,
+                     vsi_l_offset nSourceSize,
+                     const char* pszSource,
+                     const char* pszTarget,
+                     GDALProgressFunc pProgressFunc,
+                     void *pProgressData);
+    int MkdirInternal( const char *pszDirname, bool bDoStatCheck );
+
   protected:
     char** GetFileList( const char *pszFilename,
                         int nMaxFiles,
@@ -400,6 +408,32 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
 
     VSIDIR* OpenDir( const char *pszPath, int nRecurseDepth,
                              const char* const *papszOptions) override;
+
+    // Multipart upload
+    CPLString InitiateMultipartUpload(
+                                const std::string& osFilename,
+                                IVSIS3LikeHandleHelper *poS3HandleHelper,
+                                int nMaxRetry,
+                                double dfRetryDelay);
+    CPLString UploadPart(const CPLString& osFilename,
+                         int nPartNumber,
+                         const std::string& osUploadID,
+                         const void* pabyBuffer,
+                         size_t nBufferSize,
+                         IVSIS3LikeHandleHelper *poS3HandleHelper,
+                         int nMaxRetry,
+                         double dfRetryDelay);
+    bool CompleteMultipart(const CPLString& osFilename,
+                           const CPLString& osUploadID,
+                           const std::vector<CPLString> aosEtags,
+                           IVSIS3LikeHandleHelper *poS3HandleHelper,
+                           int nMaxRetry,
+                           double dfRetryDelay);
+    bool AbortMultipart(const CPLString& osFilename,
+                        const CPLString& osUploadID,
+                        IVSIS3LikeHandleHelper *poS3HandleHelper,
+                        int nMaxRetry,
+                        double dfRetryDelay);
 };
 
 /************************************************************************/
@@ -448,14 +482,11 @@ class VSIS3WriteHandle final : public VSIVirtualHandle
     vsi_l_offset        m_nCurOffset = 0;
     int                 m_nBufferOff = 0;
     int                 m_nBufferSize = 0;
-    int                 m_nBufferOffReadCallback = 0;
     bool                m_bClosed = false;
     GByte              *m_pabyBuffer = nullptr;
     CPLString           m_osUploadID{};
     int                 m_nPartNumber = 0;
     std::vector<CPLString> m_aosEtags{};
-    CPLString           m_osXML{};
-    int                 m_nOffsetInXML = 0;
     bool                m_bError = false;
 
     CURLM              *m_hCurlMulti = nullptr;
@@ -469,14 +500,7 @@ class VSIS3WriteHandle final : public VSIVirtualHandle
     double              m_dfRetryDelay = 0.0;
     WriteFuncStruct     m_sWriteFuncHeaderData{};
 
-    static size_t       ReadCallBackBuffer( char *buffer, size_t size,
-                                            size_t nitems, void *instream );
-    bool                InitiateMultipartUpload();
     bool                UploadPart();
-    static size_t       ReadCallBackXML( char *buffer, size_t size,
-                                         size_t nitems, void *instream );
-    bool                CompleteMultipart();
-    bool                AbortMultipart();
     bool                DoSinglePartPUT();
 
     static size_t       ReadCallBackBufferChunked( char *buffer, size_t size,

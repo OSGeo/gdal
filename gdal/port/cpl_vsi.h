@@ -340,7 +340,7 @@ struct VSIDIREntry
 /*! @cond Doxygen_Suppress */
     VSIDIREntry();
     ~VSIDIREntry();
-    VSIDIREntry(const VSIDIREntry&) = delete;
+    VSIDIREntry(const VSIDIREntry&);
     VSIDIREntry& operator=(VSIDIREntry&) = delete;
 /*! @endcond */
 #endif

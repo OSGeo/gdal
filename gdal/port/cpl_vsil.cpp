@@ -629,8 +629,16 @@ int VSIRename( const char * oldpath, const char * newpath )
  *     for files not using KMS server side encryption and uploaded in a single
  *     PUT operation (so smaller than 50 MB given the default used by GDAL).
  *     Only to be used for /vsis3/, /vsigs/ or other filesystems using a
- *     MD5Sum as ETAG.
- * </li>
+ *     MD5Sum as ETAG.</li>
+ * <li>NUM_THREADS=integer. Number of threads to use for parallel file copying.
+ *     Only use for when /vsis3/, /vsigs/ or /vsiaz/ is in source or target.
+ *     Since GDAL 3.1</li>
+ * <li>CHUNK_SIZE=integer. Maximum size of chunk (in bytes) to use to split
+ *     large objects when downloading them from /vsis3/, /vsigs/ or /vsiaz/ to
+ *     local file system, or for upload to /vsis3/ from local file system.
+ *     Only used if NUM_THREADS > 1.
+ *     For upload to /vsis3/, this chunk size will be set at least to 5 MB.
+ *     Since GDAL 3.1</li>
  * </ul>
  * @param pProgressFunc Progress callback, or NULL.
  * @param pProgressData User data of progress callback, or NULL.
@@ -1222,6 +1230,21 @@ VSIDIREntry::VSIDIREntry(): pszName(nullptr), nMode(0), nSize(0), nMTime(0),
                    papszExtra(nullptr)
 {
 }
+
+/************************************************************************/
+/*                            VSIDIREntry()                             */
+/************************************************************************/
+
+VSIDIREntry::VSIDIREntry(const VSIDIREntry& other):
+    pszName(VSIStrdup(other.pszName)),
+    nMode(other.nMode),
+    nSize(other.nSize),
+    nMTime(other.nMTime),
+    bModeKnown(other.bModeKnown),
+    bSizeKnown(other.bSizeKnown),
+    bMTimeKnown(other.bMTimeKnown),
+    papszExtra(CSLDuplicate(other.papszExtra))
+{}
 
 /************************************************************************/
 /*                           ~VSIDIREntry()                             */
