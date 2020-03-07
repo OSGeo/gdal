@@ -119,6 +119,11 @@ typedef struct {
  * Tag data type information.
  *
  * Note: RATIONALs are the ratio of two 32-bit integer values.
+ *--:
+ * Note2: TIFF_IFD8 data type is used in tiffFields[]-tag definition in order to distinguish the write-handling 
+          of those tags between ClassicTIFF and BigTiff:
+		  For ClassicTIFF libtiff writes a 32-bit value and the TIFF_IFD type-id into the file
+		  For BigTIFF     libtiff writes a 64-bit value and the TIFF_IFD8 type-id into the file
  */
 typedef enum {
 	TIFF_NOTYPE = 0,      /* placeholder */
@@ -626,8 +631,8 @@ typedef enum {
 #define EXIFTAG_EXPOSUREPROGRAM		34850	/* Exposure program */
 #define EXIFTAG_SPECTRALSENSITIVITY	34852	/* Spectral sensitivity */
 #define EXIFTAG_ISOSPEEDRATINGS		34855	/* ISO speed rating */
-#define EXIFTAG_OECF			34856	/* Optoelectric conversion
-						   factor */
+#define EXIFTAG_PHOTOGRAPHICSENSITIVITY	34855 /* Photographic Sensitivity (new name for tag 34855) */
+#define EXIFTAG_OECF			34856	/* Optoelectric conversion factor */
 #define EXIFTAG_EXIFVERSION		36864	/* Exif version */
 #define EXIFTAG_DATETIMEORIGINAL	36867	/* Date and time of original
 						   data generation */
@@ -679,9 +684,70 @@ typedef enum {
 #define EXIFTAG_SHARPNESS		41994	/* Sharpness */
 #define EXIFTAG_DEVICESETTINGDESCRIPTION 41995	/* Device settings description */
 #define EXIFTAG_SUBJECTDISTANCERANGE	41996	/* Subject distance range */
-#define EXIFTAG_GAINCONTROL		41991	/* Gain control */
-#define EXIFTAG_GAINCONTROL		41991	/* Gain control */
 #define EXIFTAG_IMAGEUNIQUEID		42016	/* Unique image ID */
+
+/*--: New for EXIF-Version 2.32, May 2019 ... */
+#define EXIFTAG_SENSITIVITYTYPE		34864		/* The SensitivityType tag indicates which one of the parameters of ISO12232 is the PhotographicSensitivity tag. */
+#define EXIFTAG_STANDARDOUTPUTSENSITIVITY		34865		/* This tag indicates the standard output sensitivity value of a camera or input device defined in ISO 12232. */
+#define EXIFTAG_RECOMMENDEDEXPOSUREINDEX		34866		/* recommended exposure index */
+#define EXIFTAG_ISOSPEED		34867		/* ISO speed value */
+#define EXIFTAG_ISOSPEEDLATITUDEYYY		34868		/* ISO speed latitude yyy */
+#define EXIFTAG_ISOSPEEDLATITUDEZZZ		34869		/* ISO speed latitude zzz */
+#define EXIFTAG_OFFSETTIME		36880		/* offset from UTC of the time of DateTime tag. */
+#define EXIFTAG_OFFSETTIMEORIGINAL		36881		/* offset from UTC of the time of DateTimeOriginal tag. */
+#define EXIFTAG_OFFSETTIMEDIGITIZED		36882		/* offset from UTC of the time of DateTimeDigitized tag. */
+#define EXIFTAG_TEMPERATURE		37888		/* Temperature as the ambient situation at the shot in dergee Celsius */
+#define EXIFTAG_HUMIDITY		37889		/* Humidity as the ambient situation at the shot in percent */
+#define EXIFTAG_PRESSURE		37890		/* Pressure as the ambient situation at the shot hecto-Pascal (hPa) */
+#define EXIFTAG_WATERDEPTH		37891		/* WaterDepth as the ambient situation at the shot in meter (m) */
+#define EXIFTAG_ACCELERATION		37892		/* Acceleration (a scalar regardless of direction) as the ambient situation at the shot in units of mGal (10-5 m/s^2) */
+#define EXIFTAG_CAMERAELEVATIONANGLE		37893		/* Elevation/depression. angle of the orientation of the camera(imaging optical axis) as the ambient situation at the shot in degree(°) from -180° to +180°. */
+#define EXIFTAG_CAMERAOWNERNAME		42032		/* owner of a camera */
+#define EXIFTAG_BODYSERIALNUMBER		42033		/* serial number of the body of the camera */
+#define EXIFTAG_LENSSPECIFICATION		42034		/* minimum focal length (in mm), maximum focal length (in mm), minimum F number in the minimum focal length, and minimum F number in the maximum focal length, */
+#define EXIFTAG_LENSMAKE		42035		/* the lens manufacturer */
+#define EXIFTAG_LENSMODEL		42036		/* the lens’s model name and model number */
+#define EXIFTAG_LENSSERIALNUMBER		42037		/* the serial number of the interchangeable lens */
+#define EXIFTAG_GAMMA		42240		/* value of coefficient gamma */
+#define EXIFTAG_COMPOSITEIMAGE		42080	/* composite image */
+#define EXIFTAG_SOURCEIMAGENUMBEROFCOMPOSITEIMAGE		42081	/* source image number of composite image */
+#define EXIFTAG_SOURCEEXPOSURETIMESOFCOMPOSITEIMAGE		42082	/* source exposure times of composite image */
+
+/*
+ * EXIF-GPS tags  (Version 2.31, July 2016)
+ */
+#define		GPSTAG_VERSIONID		0			/* 	Indicates the version of GPSInfoIFD.	 */
+#define		GPSTAG_LATITUDEREF		1			/* 	Indicates whether the latitude is north or south latitude.	 */
+#define		GPSTAG_LATITUDE		2			/* 	Indicates the latitude.	 */
+#define		GPSTAG_LONGITUDEREF		3			/* 	Indicates whether the longitude is east or west longitude.	 */
+#define		GPSTAG_LONGITUDE		4			/* 	Indicates the longitude.	 */
+#define		GPSTAG_ALTITUDEREF		5			/* 	Indicates the altitude used as the reference altitude.	 */
+#define		GPSTAG_ALTITUDE		6			/* 	Indicates the altitude based on the reference in GPSAltitudeRef.	 */
+#define		GPSTAG_TIMESTAMP		7			/* 	Indicates the time as UTC (Coordinated Universal Time).	 */
+#define		GPSTAG_SATELLITES		8			/* 	Indicates the GPS satellites used for measurements.	 */
+#define		GPSTAG_STATUS		9			/* 	Indicates the status of the GPS receiver when the image is recorded.	 */
+#define		GPSTAG_MEASUREMODE		10			/* 	Indicates the GPS measurement mode.	 */
+#define		GPSTAG_DOP		11			/* 	Indicates the GPS DOP (data degree of precision).	 */
+#define		GPSTAG_SPEEDREF		12			/* 	Indicates the unit used to express the GPS receiver speed of movement.	 */
+#define		GPSTAG_SPEED		13			/* 	Indicates the speed of GPS receiver movement.	 */
+#define		GPSTAG_TRACKREF		14			/* 	Indicates the reference for giving the direction of GPS receiver movement.	 */
+#define		GPSTAG_TRACK		15			/* 	Indicates the direction of GPS receiver movement.	 */
+#define		GPSTAG_IMGDIRECTIONREF		16			/* 	Indicates the reference for giving the direction of the image when it is captured.	 */
+#define		GPSTAG_IMGDIRECTION		17			/* 	Indicates the direction of the image when it was captured.	 */
+#define		GPSTAG_MAPDATUM		18			/* 	Indicates the geodetic survey data used by the GPS receiver. (e.g. WGS-84)	 */
+#define		GPSTAG_DESTLATITUDEREF		19			/* 	Indicates whether the latitude of the destination point is north or south latitude.	 */
+#define		GPSTAG_DESTLATITUDE		20			/* 	Indicates the latitude of the destination point.	 */
+#define		GPSTAG_DESTLONGITUDEREF		21			/* 	Indicates whether the longitude of the destination point is east or west longitude.	 */
+#define		GPSTAG_DESTLONGITUDE		22			/* 	Indicates the longitude of the destination point.	 */
+#define		GPSTAG_DESTBEARINGREF		23			/* 	Indicates the reference used for giving the bearing to the destination point.	 */
+#define		GPSTAG_DESTBEARING		24			/* 	Indicates the bearing to the destination point.	 */
+#define		GPSTAG_DESTDISTANCEREF		25			/* 	Indicates the unit used to express the distance to the destination point.	 */
+#define		GPSTAG_DESTDISTANCE		26			/* 	Indicates the distance to the destination point.	 */
+#define		GPSTAG_PROCESSINGMETHOD		27			/* 	A character string recording the name of the method used for location finding.	 */
+#define		GPSTAG_AREAINFORMATION		28			/* 	A character string recording the name of the GPS area.	 */
+#define		GPSTAG_DATESTAMP		29			/* 	A character string recording date and time information relative to UTC (Coordinated Universal Time).	 */
+#define		GPSTAG_DIFFERENTIAL		30			/* 	Indicates whether differential correction is applied to the GPS receiver.	 */
+#define		GPSTAG_GPSHPOSITIONINGERROR		31			/* Indicates horizontal positioning errors in meters.		 */
 
 #endif /* _TIFF_ */
 
