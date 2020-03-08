@@ -1236,10 +1236,6 @@ _TIFFCheckFieldIsValidForCodec(TIFF *tif, ttag_t tag)
 		if (tag == TIFFTAG_LERC_PARAMETERS)
 		    return 1;
 		break;
-		  case COMPRESSION_WEBP:
-		if (tag == TIFFTAG_PREDICTOR)
-				return 1;
-		break;
 	}
 	return 0;
 }
