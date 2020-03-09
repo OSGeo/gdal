@@ -378,10 +378,20 @@ Recognized filenames are of the form :file:`/vsiswift/bucket/key` where ``bucket
 
 The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
 
-Two authentication methods are possible, and are attempted in the following order:
+Three authentication methods are possible, and are attempted in the following order:
 
 1. The :decl_configoption:`SWIFT_STORAGE_URL` and :decl_configoption:`SWIFT_AUTH_TOKEN` configuration options are set respectively to the storage URL (e.g http://127.0.0.1:12345/v1/AUTH_something) and the value of the x-auth-token authorization token.
 2. The :decl_configoption:`SWIFT_AUTH_V1_URL`, :decl_configoption:`SWIFT_USER` and :decl_configoption:`SWIFT_KEY` configuration options are set respectively to the endpoint of the Auth V1 authentication (e.g http://127.0.0.1:12345/auth/v1.0), the user name and the key/password. This authentication endpoint will be used to retrieve the storage URL and authorization token mentioned in the first authentication method.
+3. Authentication with Keystone v3 is using the same options as python-swiftclient, see https://docs.openstack.org/python-swiftclient/latest/cli/index.html#authentication for more details. GDAL (>= 3.1) supports the following options:
+
+   - `OS_IDENTITY_API_VERSION=3`
+   - `OS_AUTH_URL`
+   - `OS_USERNAME`
+   - `OS_PASSWORD`
+   - `OS_USER_DOMAIN_NAME`
+   - `OS_PROJECT_NAME`
+   - `OS_PROJECT_DOMAIN_NAME`
+   - `OS_REGION_NAME`
 
 This file system handler also allows sequential writing of files (no seeks or read operations are then allowed)
 
