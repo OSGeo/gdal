@@ -1638,3 +1638,8 @@ def test_osr_create_in_one_thread_destroy_in_other():
     assert arg[0]
     del arg[0]
 
+
+def test_osr_SpatialReference_invalid_wkt_in_constructor():
+
+    with pytest.raises(RuntimeError):
+        osr.SpatialReference('invalid')
