@@ -917,6 +917,7 @@ def test_ogr_mysql_longlat():
 ###############################################################################
 # Test writing and reading back geometries
 
+@pytest.mark.xfail(reason="MariaDB has a known issue MDEV-21401")
 def test_ogr_mysql_28():
 
     if gdaltest.mysql_ds is None:
