@@ -78,6 +78,7 @@
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#include "cpl_vsil_curl_priv.h"
 
 #ifdef DEBUG
 #define OGRAPISPY_ENABLED
@@ -1799,6 +1800,18 @@ CPLGetThreadLocalConfigOption( const char *pszKey, const char *pszDefault )
 }
 
 /************************************************************************/
+/*                  NotifyOtherComponentsConfigOptionChanged()          */
+/************************************************************************/
+
+static void NotifyOtherComponentsConfigOptionChanged( const char *pszKey,
+                                                      const char * /*pszValue*/ )
+{
+    // Hack
+    if( STARTS_WITH_CI(pszKey, "AWS_") )
+        VSICurlAuthParametersChanged();
+}
+
+/************************************************************************/
 /*                         CPLSetConfigOption()                         */
 /************************************************************************/
 
@@ -1832,6 +1845,8 @@ void CPL_STDCALL
 CPLSetConfigOption( const char *pszKey, const char *pszValue )
 
 {
+    NotifyOtherComponentsConfigOptionChanged(pszKey, pszValue);
+
 #ifdef DEBUG_CONFIG_OPTIONS
     CPLAccessConfigOption(pszKey, FALSE);
 #endif
@@ -1885,6 +1900,8 @@ void CPL_STDCALL
 CPLSetThreadLocalConfigOption( const char *pszKey, const char *pszValue )
 
 {
+    NotifyOtherComponentsConfigOptionChanged(pszKey, pszValue);
+
 #ifdef DEBUG_CONFIG_OPTIONS
     CPLAccessConfigOption(pszKey, FALSE);
 #endif

@@ -69,6 +69,7 @@ typedef enum
 class FileProp
 {
   public:
+    unsigned int    nGenerationAuthParameters = 0;
     ExistStatus     eExists = EXIST_UNKNOWN;
     vsi_l_offset    fileSize = 0;
     time_t          mTime = 0;
@@ -83,6 +84,7 @@ class FileProp
 typedef struct
 {
     bool            bGotFileList = false;
+    unsigned int    nGenerationAuthParameters = 0;
     CPLStringList   oFileList{}; /* only file name without path */
 } CachedDirList;
 
@@ -244,7 +246,7 @@ public:
     bool                GetCachedFileProp( const char* pszURL,
                                            FileProp& oFileProp );
     void                SetCachedFileProp( const char* pszURL,
-                                           const FileProp& oFileProp );
+                                           FileProp& oFileProp );
     void                InvalidateCachedData( const char* pszURL );
 
     CURLM              *GetCurlMultiHandleFor( const CPLString& osURL );
@@ -256,7 +258,7 @@ public:
     bool                GetCachedDirList( const char* pszURL,
                                           CachedDirList& oCachedDirList );
     void                SetCachedDirList( const char* pszURL,
-                                          const CachedDirList& oCachedDirList );
+                                          CachedDirList& oCachedDirList );
     bool ExistsInCacheDirList( const CPLString& osDirname, bool *pbIsDir );
 
     virtual CPLString GetURLFromFilename( const CPLString& osFilename );

@@ -65,6 +65,11 @@ void VSICurlPartialClearCache(const char* )
     // Not supported.
 }
 
+void VSICurlAuthParametersChanged()
+{
+    // Not supported.
+}
+
 /************************************************************************/
 /*                      VSICurlInstallReadCbk()                         */
 /************************************************************************/
@@ -96,6 +101,17 @@ int VSICurlUninstallReadCbk( VSILFILE* /* fp */ )
 
 static int N_MAX_REGIONS = 1000;
 static int DOWNLOAD_CHUNK_SIZE = 16384;
+
+/***********************************************************ù************/
+/*                    VSICurlAuthParametersChanged()                    */
+/************************************************************************/
+
+static unsigned int gnGenerationAuthParameters = 0;
+
+void VSICurlAuthParametersChanged()
+{
+    gnGenerationAuthParameters++;
+}
 
 namespace cpl {
 
@@ -2550,7 +2566,10 @@ VSICurlFilesystemHandler::GetCachedFileProp( const char* pszURL,
 {
     CPLMutexHolder oHolder( &hMutex );
 
-    return oCacheFileProp.tryGet(std::string(pszURL), oFileProp);
+    return oCacheFileProp.tryGet(std::string(pszURL), oFileProp) &&
+            // Let a chance to use new auth parameters
+           !(oFileProp.eExists == EXIST_NO &&
+             gnGenerationAuthParameters != oFileProp.nGenerationAuthParameters);
 }
 
 /************************************************************************/
@@ -2559,10 +2578,11 @@ VSICurlFilesystemHandler::GetCachedFileProp( const char* pszURL,
 
 void
 VSICurlFilesystemHandler::SetCachedFileProp( const char* pszURL,
-                                             const FileProp& oFileProp )
+                                             FileProp& oFileProp )
 {
     CPLMutexHolder oHolder( &hMutex );
 
+    oFileProp.nGenerationAuthParameters = gnGenerationAuthParameters;
     oCacheFileProp.insert(std::string(pszURL), oFileProp);
 }
 
@@ -2576,7 +2596,9 @@ VSICurlFilesystemHandler::GetCachedDirList( const char* pszURL,
 {
     CPLMutexHolder oHolder( &hMutex );
 
-    return oCacheDirList.tryGet(std::string(pszURL), oCachedDirList);
+    return oCacheDirList.tryGet(std::string(pszURL), oCachedDirList) &&
+            // Let a chance to use new auth parameters
+           gnGenerationAuthParameters == oCachedDirList.nGenerationAuthParameters;
 }
 
 /************************************************************************/
@@ -2585,7 +2607,7 @@ VSICurlFilesystemHandler::GetCachedDirList( const char* pszURL,
 
 void
 VSICurlFilesystemHandler::SetCachedDirList( const char* pszURL,
-                                            const CachedDirList& oCachedDirList )
+                                            CachedDirList& oCachedDirList )
 {
     CPLMutexHolder oHolder( &hMutex );
 
@@ -2606,6 +2628,7 @@ VSICurlFilesystemHandler::SetCachedDirList( const char* pszURL,
         nCachedFilesInDirList -= oldValue.oFileList.size();
         oCacheDirList.remove(oldestKey);
     }
+    oCachedDirList.nGenerationAuthParameters = gnGenerationAuthParameters;
 
     nCachedFilesInDirList += oCachedDirList.oFileList.size();
     oCacheDirList.insert(key, oCachedDirList);
