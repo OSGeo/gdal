@@ -107,18 +107,7 @@ bool VSISwiftHandleHelper::GetConfiguration(CPLString& osStorageURL,
         return true;
     }
 
-    CPLString osAuthV1URL = CPLGetConfigOption("SWIFT_AUTH_V1_URL", "");
-    if ( ! osAuthV1URL.empty() )
-    {
-        if( ! CheckCredentialsV1() )
-            return false;
-        if( GetCached("SWIFT_AUTH_V1_URL", "SWIFT_USER", "SWIFT_KEY", osStorageURL, osAuthToken) )
-            return true;
-        if( AuthV1(osStorageURL, osAuthToken) )
-            return true;
-    }
-
-    CPLString osAuthVersion = CPLGetConfigOption("OS_IDENTITY_API_VERSION", "");
+    const CPLString osAuthVersion = CPLGetConfigOption("OS_IDENTITY_API_VERSION", "");
     if ( osAuthVersion == "3" )
     {
         if( ! CheckCredentialsV3() )
@@ -127,6 +116,19 @@ bool VSISwiftHandleHelper::GetConfiguration(CPLString& osStorageURL,
             return true;
         if( AuthV3(osStorageURL, osAuthToken) )
             return true;
+    }
+    else
+    {
+        const CPLString osAuthV1URL = CPLGetConfigOption("SWIFT_AUTH_V1_URL", "");
+        if ( ! osAuthV1URL.empty() )
+        {
+            if( ! CheckCredentialsV1() )
+                return false;
+            if( GetCached("SWIFT_AUTH_V1_URL", "SWIFT_USER", "SWIFT_KEY", osStorageURL, osAuthToken) )
+                return true;
+            if( AuthV1(osStorageURL, osAuthToken) )
+                return true;
+        }
     }
 
     const char* pszMsg = "Missing SWIFT_STORAGE_URL+SWIFT_AUTH_TOKEN or "
