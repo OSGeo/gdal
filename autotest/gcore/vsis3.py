@@ -1350,8 +1350,9 @@ def test_vsis3_write_single_put_retry():
         handler.add('PUT', '/s3_fake_bucket3/put_with_retry.bin', 502)
         handler.add('PUT', '/s3_fake_bucket3/put_with_retry.bin', custom_method=method)
 
-        with webserver.install_http_handler(handler):
-            gdal.VSIFCloseL(f)
+        with gdaltest.error_handler():
+            with webserver.install_http_handler(handler):
+                gdal.VSIFCloseL(f)
 
 
 ###############################################################################
@@ -1804,8 +1805,9 @@ def test_vsis3_write_multipart_retry():
                     'ETag': '"first_etag"',
                     'Connection': 'close'}, {})
 
-        with webserver.install_http_handler(handler):
-            ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
+        with gdaltest.error_handler():
+            with webserver.install_http_handler(handler):
+                ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
         assert ret == size
         handler = webserver.SequentialHandler()
 
@@ -1819,8 +1821,9 @@ def test_vsis3_write_multipart_retry():
                     {'Content-Length': '0',
                     'Connection': 'close'}, {})
 
-        with webserver.install_http_handler(handler):
-            gdal.VSIFCloseL(f)
+        with gdaltest.error_handler():
+            with webserver.install_http_handler(handler):
+                gdal.VSIFCloseL(f)
 
 
 ###############################################################################
@@ -2213,11 +2216,14 @@ def test_vsis3_sync_source_target_in_vsis3():
 
     gdal.VSICurlClearCache()
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/in/testsync.txt', 206,
+    handler.add('GET', '/in/testsync.txt', 200,
                 { 'Content-Length' : '3',
                   'Content-Range': 'bytes 0-2/3',
                   'Last-Modified': 'Mon, 01 Jan 1970 00:00:01 GMT' }, "foo")
     handler.add('GET', '/out/', 200)
+    handler.add('GET', '/out/testsync.txt', 200,
+                { 'Content-Length' : '3',
+                  'Last-Modified': 'Mon, 01 Jan 1970 00:00:01 GMT' }, "foo")
 
     def method(request):
         if request.headers['Content-Length'] != '0':
@@ -2251,6 +2257,8 @@ def test_vsis3_fake_rename():
     handler.add('GET', '/test/source.txt', 206,
                 { 'Content-Length' : '3',
                   'Content-Range': 'bytes 0-2/3' }, "foo")
+    handler.add('GET', '/test/target.txt', 404)
+    handler.add('GET', '/test/?delimiter=%2F&max-keys=100&prefix=target.txt%2F', 200)
 
     def method(request):
         if request.headers['Content-Length'] != '0':
@@ -2312,6 +2320,8 @@ def test_vsis3_fake_rename_dir():
         request.end_headers()
 
     handler.add('PUT', '/test/target_dir/', custom_method=method)
+    handler.add('GET', '/test/target_dir/test.txt', 404)
+    handler.add('GET', '/test/?delimiter=%2F&max-keys=100&prefix=target_dir%2Ftest.txt%2F', 200)
 
     def method(request):
         if request.headers['Content-Length'] != '0':
@@ -2860,6 +2870,12 @@ def test_vsis3_read_credentials_ec2_expiration():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/latest/meta-data/iam/security-credentials/expire_in_past/', 200, {}, 'myprofile')
+    handler.add('GET', '/latest/meta-data/iam/security-credentials/expire_in_past/myprofile', 200, {},
+                """{
+                "AccessKeyId": "AWS_ACCESS_KEY_ID",
+                "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
+                "Expiration": "1970-01-01T00:00:00Z"
+                }""")
     handler.add('GET', '/latest/meta-data/iam/security-credentials/expire_in_past/myprofile', 200, {},
                 """{
                 "AccessKeyId": "AWS_ACCESS_KEY_ID",

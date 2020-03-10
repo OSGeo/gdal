@@ -453,9 +453,10 @@ def test_vsigs_write_retry():
         handler.add('PUT', '/test_write_retry/put_with_retry.bin', 502)
         handler.add('PUT', '/test_write_retry/put_with_retry.bin', custom_method=method)
 
-        with webserver.install_http_handler(handler):
-            assert gdal.VSIFWriteL('foo', 1, 3, f) == 3
-            gdal.VSIFCloseL(f)
+        with gdaltest.error_handler():
+            with webserver.install_http_handler(handler):
+                assert gdal.VSIFWriteL('foo', 1, 3, f) == 3
+                gdal.VSIFCloseL(f)
 
 ###############################################################################
 # Test rename
@@ -470,6 +471,8 @@ def test_vsigs_fake_rename():
     handler.add('GET', '/test/source.txt', 206,
                 { 'Content-Length' : '3',
                   'Content-Range': 'bytes 0-2/3' }, "foo")
+    handler.add('GET', '/test/target.txt', 404)
+    handler.add('GET', '/test/?delimiter=%2F&max-keys=100&prefix=target.txt%2F', 200)
 
     def method(request):
         if request.headers['Content-Length'] != '0':
