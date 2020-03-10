@@ -1263,15 +1263,12 @@ OJPEGWriteHeaderInfo(TIFF* tif)
 	}
 	if (jpeg_start_decompress_encap(sp,&(sp->libjpeg_jpeg_decompress_struct))==0)
 		return(0);
-        if(sp->libjpeg_jpeg_decompress_struct.image_width != sp->strile_width ||
-           sp->libjpeg_jpeg_decompress_struct.image_height < sp->strile_length) {
+        if(sp->libjpeg_jpeg_decompress_struct.image_width != sp->strile_width ) {
             TIFFErrorExt(tif->tif_clientdata,module,
-                         "jpeg_start_decompress() returned image_width = %d "
-                         "and image_height = %d, expected %d and %d",
+                         "jpeg_start_decompress() returned image_width = %d, "
+                         "expected %d",
                          sp->libjpeg_jpeg_decompress_struct.image_width,
-                         sp->libjpeg_jpeg_decompress_struct.image_height,
-                         sp->strile_width,
-                         sp->strile_length);
+                         sp->strile_width);
             return 0;
         }
         if(sp->libjpeg_jpeg_decompress_struct.max_h_samp_factor != sp->subsampling_hor ||
