@@ -52,7 +52,7 @@ RUN if test "${XERCESC_VERSION}" != ""; then ( \
     ); fi
 
 # Build geos
-ARG GEOS_VERSION=3.8.0
+ARG GEOS_VERSION=3.8.1
 RUN if test "${GEOS_VERSION}" != ""; then ( \
     wget -q http://download.osgeo.org/geos/geos-${GEOS_VERSION}.tar.bz2 \
     && tar xjf geos-${GEOS_VERSION}.tar.bz2  \
