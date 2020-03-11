@@ -924,7 +924,6 @@ def test_ogr_mysql_28():
         pytest.skip()
 
     wkts = ogrtest.get_wkt_data_series(with_z=True, with_m=True, with_gc=True, with_circular=True, with_surface=False)
-    print('ogr_mysql_28: total %d geometries' % len(wkts))
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
 
@@ -952,7 +951,6 @@ def test_ogr_mysql_29():
         pytest.skip()
 
     wkts = ogrtest.get_wkt_data_series(with_z=False, with_m=False, with_gc=False, with_circular=False, with_surface=True)
-    print('ogr_mysql_29: total %d geometries' % len(wkts))
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
 
