@@ -626,6 +626,50 @@ def test_vsis3_2():
     assert data == 'bar'
 
 ###############################################################################
+# Test re-opening after chaning configuration option (#2294)
+
+
+def test_vsis3_open_after_config_option_chage():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test_vsis3_change_config_options/?delimiter=%2F', 403)
+    handler.add('GET', '/test_vsis3_change_config_options/test.bin', 403)
+    with webserver.install_http_handler(handler):
+        with gdaltest.error_handler():
+            f = open_for_read('/vsis3/test_vsis3_change_config_options/test.bin')
+        assert f is None
+
+    # Does not attempt any network access since we didn't change significant
+    # parameters
+    f = open_for_read('/vsis3/test_vsis3_change_config_options/test.bin')
+    assert f is None
+
+    with gdaltest.config_option('AWS_ACCESS_KEY_ID', 'another_key_id'):
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/test_vsis3_change_config_options/?delimiter=%2F', 200,
+            {'Content-type': 'application/xml'},
+            """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix></Prefix>
+                <Contents>
+                    <Key>test.bin</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>123456</Size>
+                </Contents>
+            </ListBucketResult>
+        """)
+        with webserver.install_http_handler(handler):
+            f = open_for_read('/vsis3/test_vsis3_change_config_options/test.bin')
+            assert f is not None
+            gdal.VSIFCloseL(f)
+
+
+###############################################################################
 # Test ReadDir() with a fake AWS server
 
 
