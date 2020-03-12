@@ -528,7 +528,7 @@ Fax3SetupState(TIFF* tif)
 		rowbytes = TIFFScanlineSize(tif);
 		rowpixels = td->td_imagewidth;
 	}
-	if (rowbytes < (rowpixels + 7) / 8)
+	if ((uint64)rowbytes < ((uint64)rowpixels + 7) / 8)
 	{
 		TIFFErrorExt(tif->tif_clientdata, module,
 			"Inconsistent number of bytes per row : rowbytes=%lu rowpixels=%lu",
