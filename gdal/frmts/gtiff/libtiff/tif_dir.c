@@ -1033,19 +1033,19 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 			*va_arg(ap, uint16*) = td->td_halftonehints[1];
 			break;
 		case TIFFTAG_COLORMAP:
-			*va_arg(ap, uint16**) = td->td_colormap[0];
-			*va_arg(ap, uint16**) = td->td_colormap[1];
-			*va_arg(ap, uint16**) = td->td_colormap[2];
+			*va_arg(ap, const uint16**) = td->td_colormap[0];
+			*va_arg(ap, const uint16**) = td->td_colormap[1];
+			*va_arg(ap, const uint16**) = td->td_colormap[2];
 			break;
 		case TIFFTAG_STRIPOFFSETS:
 		case TIFFTAG_TILEOFFSETS:
 			_TIFFFillStriles( tif );
-			*va_arg(ap, uint64**) = td->td_stripoffset_p;
+			*va_arg(ap, const uint64**) = td->td_stripoffset_p;
 			break;
 		case TIFFTAG_STRIPBYTECOUNTS:
 		case TIFFTAG_TILEBYTECOUNTS:
 			_TIFFFillStriles( tif );
-			*va_arg(ap, uint64**) = td->td_stripbytecount_p;
+			*va_arg(ap, const uint64**) = td->td_stripbytecount_p;
 			break;
 		case TIFFTAG_MATTEING:
 			*va_arg(ap, uint16*) =
@@ -1054,7 +1054,7 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 			break;
 		case TIFFTAG_EXTRASAMPLES:
 			*va_arg(ap, uint16*) = td->td_extrasamples;
-			*va_arg(ap, uint16**) = td->td_sampleinfo;
+			*va_arg(ap, const uint16**) = td->td_sampleinfo;
 			break;
 		case TIFFTAG_TILEWIDTH:
 			*va_arg(ap, uint32*) = td->td_tilewidth;
@@ -1089,7 +1089,7 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 			break;
 		case TIFFTAG_SUBIFD:
 			*va_arg(ap, uint16*) = td->td_nsubifd;
-			*va_arg(ap, uint64**) = td->td_subifd;
+			*va_arg(ap, const uint64**) = td->td_subifd;
 			break;
 		case TIFFTAG_YCBCRPOSITIONING:
 			*va_arg(ap, uint16*) = td->td_ycbcrpositioning;
@@ -1099,20 +1099,20 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 			*va_arg(ap, uint16*) = td->td_ycbcrsubsampling[1];
 			break;
 		case TIFFTAG_TRANSFERFUNCTION:
-			*va_arg(ap, uint16**) = td->td_transferfunction[0];
+			*va_arg(ap, const uint16**) = td->td_transferfunction[0];
 			if (td->td_samplesperpixel - td->td_extrasamples > 1) {
-				*va_arg(ap, uint16**) = td->td_transferfunction[1];
-				*va_arg(ap, uint16**) = td->td_transferfunction[2];
+				*va_arg(ap, const uint16**) = td->td_transferfunction[1];
+				*va_arg(ap, const uint16**) = td->td_transferfunction[2];
 			} else {
-				*va_arg(ap, uint16**) = NULL;
-				*va_arg(ap, uint16**) = NULL;
+				*va_arg(ap, const uint16**) = NULL;
+				*va_arg(ap, const uint16**) = NULL;
 			}
 			break;
 		case TIFFTAG_REFERENCEBLACKWHITE:
-			*va_arg(ap, float**) = td->td_refblackwhite;
+			*va_arg(ap, const float**) = td->td_refblackwhite;
 			break;
 		case TIFFTAG_INKNAMES:
-			*va_arg(ap, char**) = td->td_inknames;
+			*va_arg(ap, const char**) = td->td_inknames;
 			break;
 		default:
 			{
@@ -1154,7 +1154,7 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 							*va_arg(ap, uint32*) = (uint32)tv->count;
 						else  /* Assume TIFF_VARIABLE */
 							*va_arg(ap, uint16*) = (uint16)tv->count;
-						*va_arg(ap, void **) = tv->value;
+						*va_arg(ap, const void **) = tv->value;
 						ret_val = 1;
 					} else if (fip->field_tag == TIFFTAG_DOTRANGE
 						   && strcmp(fip->field_name,"DotRange") == 0) {

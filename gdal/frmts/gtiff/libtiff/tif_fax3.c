@@ -219,8 +219,12 @@ Fax3PrematureEOF(const char* module, TIFF* tif, uint32 line, uint32 a0)
 
 #define	Nop
 
-/*
+/**
  * Decode the requested amount of G3 1D-encoded data.
+ * @param buf destination buffer
+ * @param occ available bytes in destination buffer
+ * @param s number of planes (ignored)
+ * @returns 1 for success, -1 in case of error
  */
 static int
 Fax3Decode1D(TIFF* tif, uint8* buf, tmsize_t occ, uint16 s)
@@ -523,6 +527,13 @@ Fax3SetupState(TIFF* tif)
 	} else {
 		rowbytes = TIFFScanlineSize(tif);
 		rowpixels = td->td_imagewidth;
+	}
+	if (rowbytes < (rowpixels + 7) / 8)
+	{
+		TIFFErrorExt(tif->tif_clientdata, module,
+			"Inconsistent number of bytes per row : rowbytes=%lu rowpixels=%lu",
+			(unsigned long)(rowbytes), (unsigned long)(rowpixels));
+		return (0);
 	}
 	sp->rowbytes = rowbytes;
 	sp->rowpixels = rowpixels;

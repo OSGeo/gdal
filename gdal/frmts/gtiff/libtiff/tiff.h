@@ -380,6 +380,7 @@ typedef enum {
 						   January 2004 */
 #define TIFFTAG_OPIIMAGEID		32781	/* %OPI ImageID
 						   [Adobe TIFF technote] */
+#define	TIFFTAG_TIFFANNOTATIONDATA	32932	/* http://web.archive.org/web/20050309141348/http://www.kofile.com/support%20pro/faqs/annospec.htm */
 /* tags 32952-32956 are private tags registered to Island Graphics */
 #define TIFFTAG_REFPTS			32953	/* image reference points */
 #define TIFFTAG_REGIONTACKPOINT		32954	/* region-xform tack point */
@@ -414,8 +415,23 @@ typedef enum {
 #define TIFFTAG_CFAPATTERN		33422	/* color filter array pattern */
 /* tag 33432 is listed in the 6.0 spec w/ unknown ownership */
 #define	TIFFTAG_COPYRIGHT		33432	/* copyright string */
+/* Tags 33445-33452 are used for GEL fileformat, see
+ * http://research.stowers-institute.org/mcm/efg/ScientificSoftware/Utility/TiffTags/GEL-FileFormat.pdf
+ */
+#define	TIFFTAG_MD_FILETAG		33445	/* http://research.stowers-institute.org/mcm/efg/ScientificSoftware/Utility/TiffTags/GEL-FileFormat.pdf */
+#define	TIFFTAG_MD_SCALEPIXEL	33446	/* http://research.stowers-institute.org/mcm/efg/ScientificSoftware/Utility/TiffTags/GEL-FileFormat.pdf */
+#define	TIFFTAG_MD_COLORTABLE	33447	/* http://research.stowers-institute.org/mcm/efg/ScientificSoftware/Utility/TiffTags/GEL-FileFormat.pdf */
+#define	TIFFTAG_MD_LABNAME	33448	/* http://research.stowers-institute.org/mcm/efg/ScientificSoftware/Utility/TiffTags/GEL-FileFormat.pdf */
+#define	TIFFTAG_MD_SAMPLEINFO	33449	/* http://research.stowers-institute.org/mcm/efg/ScientificSoftware/Utility/TiffTags/GEL-FileFormat.pdf */
+#define	TIFFTAG_MD_PREPDATE	33450	/* http://research.stowers-institute.org/mcm/efg/ScientificSoftware/Utility/TiffTags/GEL-FileFormat.pdf */
+#define	TIFFTAG_MD_PREPTIME	33451	/* http://research.stowers-institute.org/mcm/efg/ScientificSoftware/Utility/TiffTags/GEL-FileFormat.pdf */
+#define	TIFFTAG_MD_FILEUNITS	33452	/* http://research.stowers-institute.org/mcm/efg/ScientificSoftware/Utility/TiffTags/GEL-FileFormat.pdf */
 /* IPTC TAG from RichTIFF specifications */
 #define TIFFTAG_RICHTIFFIPTC		33723
+#define	TIFFTAG_INGR_PACKET_DATA_TAG	33918	/* Intergraph Application specific storage. */
+#define	TIFFTAG_INGR_FLAG_REGISTERS	33919	/* Intergraph Application specific flags. */
+#define	TIFFTAG_IRASB_TRANSORMATION_MATRIX	33920	/* Originally part of Intergraph's GeoTIFF tags, but likely understood by IrasB only. */
+#define	TIFFTAG_MODELTIEPOINTTAG	33922	/* GeoTIFF */
 /* 34016-34029 are reserved for ANSI IT8 TIFF/IT <dkelly@apago.com) */
 #define TIFFTAG_IT8SITE			34016	/* site name */
 #define TIFFTAG_IT8COLORSEQUENCE	34017	/* color seq. [RGB,CMYK,etc] */
@@ -437,6 +453,7 @@ typedef enum {
 #define TIFFTAG_IT8CMYKEQUIVALENT	34032	/* CMYK color equivalents */
 /* tags 34232-34236 are private tags registered to Texas Instruments */
 #define TIFFTAG_FRAMECOUNT              34232   /* Sequence Frame Count */
+#define TIFFTAG_MODELTRANSFORMATIONTAG	34264	/* Used in interchangeable GeoTIFF files */
 /* tag 34377 is private tag registered to Adobe for PhotoShop */
 #define TIFFTAG_PHOTOSHOP		34377 
 /* tags 34665, 34853 and 40965 are documented in EXIF specification */
@@ -456,7 +473,15 @@ typedef enum {
 #define TIFFTAG_STONITS			37439	/* Sample value to Nits */
 /* tag 34929 is a private tag registered to FedEx */
 #define	TIFFTAG_FEDEX_EDR		34929	/* unknown use */
+#define	TIFFTAG_IMAGESOURCEDATA		37724	/* http://justsolve.archiveteam.org/wiki/PSD, http://www.adobe.com/devnet-apps/photoshop/fileformatashtml/ */
 #define TIFFTAG_INTEROPERABILITYIFD	40965	/* Pointer to Interoperability private directory */
+#define	TIFFTAG_GDAL_METADATA		42112	/* Used by the GDAL library */
+#define	TIFFTAG_GDAL_NODATA		42113	/* Used by the GDAL library */
+#define	TIFFTAG_OCE_SCANJOB_DESCRIPTION	50215	/* Used in the Oce scanning process */
+#define	TIFFTAG_OCE_APPLICATION_SELECTOR	50216	/* Used in the Oce scanning process. */
+#define	TIFFTAG_OCE_IDENTIFICATION_NUMBER	50217
+#define	TIFFTAG_OCE_IMAGELOGIC_CHARACTERISTICS	50218
+
 /* tags 50674 to 50677 are reserved for ESRI */
 #define TIFFTAG_LERC_PARAMETERS         50674   /* Stores LERC version and additional compression method */
 /* Adobe Digital Negative (DNG) format tags */
@@ -540,6 +565,17 @@ typedef enum {
 						   into ICC profile space */
 #define TIFFTAG_CURRENTICCPROFILE	50833	/* & */
 #define TIFFTAG_CURRENTPREPROFILEMATRIX	50834	/* & */
+
+#define TIFFTAG_RPCCOEFFICIENT          50844   /* Define by GDAL for geospatial georeferencing through RPC: http://geotiff.maptools.org/rpc_prop.html */
+
+#define	TIFFTAG_ALIAS_LAYER_METADATA	50784	/* Alias Sketchbook Pro layer usage description. */
+
+/* GeoTIFF DGIWG */
+#define TIFFTAG_TIFF_RSID               50908   /* https://www.awaresystems.be/imaging/tiff/tifftags/tiff_rsid.html */
+#define TIFFTAG_GEO_METADATA            50909   /* https://www.awaresystems.be/imaging/tiff/tifftags/geo_metadata.html */
+
+#define TIFFTAG_EXTRACAMERAPROFILES 50933  /* http://wwwimages.adobe.com/www.adobe.com/content/dam/Adobe/en/products/photoshop/pdfs/dng_spec_1.4.0.0.pdf */
+
 /* tag 65535 is an undefined tag used by Eastman Kodak */
 #define TIFFTAG_DCSHUESHIFTVALUES       65535   /* hue shift correction data */
 
