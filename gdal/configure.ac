@@ -5384,7 +5384,7 @@ if test -z "$with_hdfs" -o "$with_hdfs" = "no" ; then
      AC_MSG_RESULT([HDFS support not requested.])
 else
      if test "$JAVA_HOME"; then
-          JNI_LIB="-L$(find $JAVA_HOME | grep libjvm | head -1 | sed "s/[[^\/]]*$//") -ljvm"
+          JNI_LIB="-L$(find $JAVA_HOME | grep libjvm | head -1 | sed "s/[[^/]]*$//") -ljvm"
      else
           AC_MSG_ERROR([HDFS support requires java support (--with-java). $JAVA_HOME])
      fi
