@@ -3913,7 +3913,7 @@ GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray, bool binterleave )
 
     poDS->psArray = psArray;
 
-    poDS->eAccess = GA_ReadOnly;
+    poDS->eAccess = (PyArray_FLAGS(psArray) & NPY_ARRAY_WRITEABLE) ? GA_Update : GA_ReadOnly;
 
 /* -------------------------------------------------------------------- */
 /*      Add a reference to the array.                                   */
