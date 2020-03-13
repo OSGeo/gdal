@@ -730,6 +730,32 @@ def test_numpy_rw_failure_in_readasarray():
     assert exception_raised
 
 
+###############################################################################
+# Test permission handling
+
+
+def test_numpy_rw_gdal_array_openarray_permissions():
+
+    if gdaltest.numpy_drv is None:
+        pytest.skip()
+
+    import numpy
+    from osgeo import gdal_array
+
+    # Writeable array
+    ar = numpy.zeros([1, 1], dtype=numpy.uint8)
+    ds = gdal_array.OpenArray(ar)
+    assert ds.GetRasterBand(1).Fill(1) == 0
+    assert ds.GetRasterBand(1).Checksum() != 0
+
+    # Non-writeable array
+    ar = numpy.zeros([1, 1], dtype=numpy.uint8)
+    ar.setflags(write=False)
+    ds = gdal_array.OpenArray(ar)
+    with gdaltest.error_handler():
+        assert ds.GetRasterBand(1).Fill(1) != 0
+    assert ds.GetRasterBand(1).Checksum()  == 0
+
 
 def test_numpy_rw_cleanup():
     gdaltest.numpy_drv = None
