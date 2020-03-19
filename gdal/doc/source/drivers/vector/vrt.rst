@@ -374,7 +374,7 @@ definitions:
    <OGRVRTDataSource>
        <OGRVRTLayer name="remapped_layer">
            <SrcDataSource>your_source.shp</SrcDataSource>
-           <SrcLayer>your_source</SrcSQL>
+           <SrcLayer>your_source</SrcLayer>
            <Field name="name" src="src_field_1" />
            <Field name="desc" src="src_field_2" type="String" width="45" />
        </OGRVRTLayer>
