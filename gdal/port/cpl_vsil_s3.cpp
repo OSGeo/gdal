@@ -386,7 +386,6 @@ bool VSIDIRS3::AnalyseS3FileList(
 
 bool VSIDIRS3::IssueListDir()
 {
-    WriteFuncStruct sWriteFuncData;
     CPLString osMaxKeys = CPLGetConfigOption("AWS_MAX_KEYS", "");
     if( nMaxFiles > 0 && nMaxFiles <= 100 &&
         (osMaxKeys.empty() || nMaxFiles < atoi(osMaxKeys)) )
@@ -400,9 +399,8 @@ bool VSIDIRS3::IssueListDir()
     while( true )
     {
         poS3HandleHelper->ResetQueryParameters();
-        CPLString osBaseURL(poS3HandleHelper->GetURL());
+        const CPLString osBaseURL(poS3HandleHelper->GetURL());
 
-        CURLM* hCurlMultiHandle = poFS->GetCurlMultiHandleFor(osBaseURL);
         CURL* hCurlHandle = curl_easy_init();
 
         if( !osBucket.empty() )
@@ -419,66 +417,42 @@ bool VSIDIRS3::IssueListDir()
 
         struct curl_slist* headers =
             VSICurlSetOptions(hCurlHandle, poS3HandleHelper->GetURL(), nullptr);
+
+        headers = VSICurlMergeHeaders(headers,
+                               poS3HandleHelper->GetCurlHeaders("GET", headers));
         // Disable automatic redirection
         curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0 );
 
         curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
 
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
-                         VSICurlHandleWriteFunc);
+        CurlRequestHelper requestHelper;
+        const long response_code =
+            requestHelper.perform(hCurlHandle, headers, poFS, poS3HandleHelper);
 
-        WriteFuncStruct sWriteFuncHeaderData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
-                         VSICurlHandleWriteFunc);
-
-        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
-
-        headers = VSICurlMergeHeaders(headers,
-                               poS3HandleHelper->GetCurlHeaders("GET", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
-
-        MultiPerform(hCurlMultiHandle, hCurlHandle);
-
-        VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
-
-        curl_slist_free_all(headers);
-
-        if( sWriteFuncData.pBuffer == nullptr)
+        if( requestHelper.sWriteFuncData.pBuffer == nullptr)
         {
             curl_easy_cleanup(hCurlHandle);
-            CPLFree(sWriteFuncHeaderData.pBuffer);
             return false;
         }
 
-        long response_code = 0;
-        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
         if( response_code != 200 )
         {
             bool bUpdateMap = true;
-            if( sWriteFuncData.pBuffer != nullptr &&
-                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
-                                                    sWriteFuncHeaderData.pBuffer,
+            if( requestHelper.sWriteFuncData.pBuffer != nullptr &&
+                poS3HandleHelper->CanRestartOnError(requestHelper.sWriteFuncData.pBuffer,
+                                                    requestHelper.sWriteFuncHeaderData.pBuffer,
                                                     false, &bUpdateMap) )
             {
                 if( bUpdateMap )
                 {
                     poS3FS->UpdateMapFromHandle(poS3HandleHelper);
                 }
-                CPLFree(sWriteFuncData.pBuffer);
-                CPLFree(sWriteFuncHeaderData.pBuffer);
             }
             else
             {
                 CPLDebug(poS3FS->GetDebugKey(), "%s",
-                         sWriteFuncData.pBuffer
-                         ? sWriteFuncData.pBuffer : "(null)");
-                CPLFree(sWriteFuncData.pBuffer);
-                CPLFree(sWriteFuncHeaderData.pBuffer);
+                         requestHelper.sWriteFuncData.pBuffer
+                         ? requestHelper.sWriteFuncData.pBuffer : "(null)");
                 curl_easy_cleanup(hCurlHandle);
                 return false;
             }
@@ -489,12 +463,9 @@ bool VSIDIRS3::IssueListDir()
                 CPLGetConfigOption("CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE", "YES"));
             bool bIsTruncated;
             bool ret = AnalyseS3FileList( osBaseURL,
-                                          sWriteFuncData.pBuffer,
+                                          requestHelper.sWriteFuncData.pBuffer,
                                           bIgnoreGlacier,
                                           bIsTruncated );
-
-            CPLFree(sWriteFuncData.pBuffer);
-            CPLFree(sWriteFuncHeaderData.pBuffer);
 
             curl_easy_cleanup(hCurlHandle);
             return ret;
@@ -774,41 +745,17 @@ CPLString IVSIS3LikeFSHandler::InitiateMultipartUpload(
                               nullptr));
         headers = VSICurlMergeHeaders(headers,
                         poS3HandleHelper->GetCurlHeaders("POST", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        poS3HandleHelper->ResetQueryParameters();
+        CurlRequestHelper requestHelper;
+        const long response_code =
+            requestHelper.perform(hCurlHandle, headers, this, poS3HandleHelper);
 
-        WriteFuncStruct sWriteFuncData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
-                         VSICurlHandleWriteFunc);
-
-        WriteFuncStruct sWriteFuncHeaderData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
-                         VSICurlHandleWriteFunc);
-
-        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-        szCurlErrBuf[0] = '\0';
-        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
-
-        MultiPerform(GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
-                     hCurlHandle);
-
-        VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
-
-        curl_slist_free_all(headers);
-
-        long response_code = 0;
-        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
-        if( response_code != 200 || sWriteFuncData.pBuffer == nullptr )
+        if( response_code != 200 || requestHelper.sWriteFuncData.pBuffer == nullptr )
         {
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
+                requestHelper.sWriteFuncHeaderData.pBuffer, requestHelper.szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < nMaxRetry )
             {
@@ -823,10 +770,10 @@ CPLString IVSIS3LikeFSHandler::InitiateMultipartUpload(
                 nRetryCount++;
                 bRetry = true;
             }
-            else if( sWriteFuncData.pBuffer != nullptr &&
-                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
-                                                      sWriteFuncHeaderData.pBuffer,
-                                                      false) )
+            else if( requestHelper.sWriteFuncData.pBuffer != nullptr &&
+                poS3HandleHelper->CanRestartOnError(requestHelper.sWriteFuncData.pBuffer,
+                                                    requestHelper.sWriteFuncHeaderData.pBuffer,
+                                                    false) )
             {
                 UpdateMapFromHandle(poS3HandleHelper);
                 bRetry = true;
@@ -834,8 +781,8 @@ CPLString IVSIS3LikeFSHandler::InitiateMultipartUpload(
             else
             {
                 CPLDebug(GetDebugKey(), "%s",
-                         sWriteFuncData.pBuffer
-                         ? sWriteFuncData.pBuffer
+                         requestHelper.sWriteFuncData.pBuffer
+                         ? requestHelper.sWriteFuncData.pBuffer
                          : "(null)");
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "InitiateMultipartUpload of %s failed",
@@ -849,7 +796,7 @@ CPLString IVSIS3LikeFSHandler::InitiateMultipartUpload(
             InvalidateDirContent( CPLGetDirname(osFilename.c_str()) );
 
             CPLXMLNode* psNode =
-                CPLParseXMLString( sWriteFuncData.pBuffer );
+                CPLParseXMLString( requestHelper.sWriteFuncData.pBuffer );
             if( psNode )
             {
                 osUploadID =
@@ -867,9 +814,6 @@ CPLString IVSIS3LikeFSHandler::InitiateMultipartUpload(
                     osFilename.c_str());
             }
         }
-
-        CPLFree(sWriteFuncData.pBuffer);
-        CPLFree(sWriteFuncHeaderData.pBuffer);
 
         curl_easy_cleanup(hCurlHandle);
     }
@@ -970,41 +914,17 @@ CPLString IVSIS3LikeFSHandler::UploadPart(const CPLString& osFilename,
                         poS3HandleHelper->GetCurlHeaders("PUT", headers,
                                                             pabyBuffer,
                                                             nBufferSize));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        poS3HandleHelper->ResetQueryParameters();
+        CurlRequestHelper requestHelper;
+        const long response_code =
+            requestHelper.perform(hCurlHandle, headers, this, poS3HandleHelper);
 
-        WriteFuncStruct sWriteFuncData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
-                        VSICurlHandleWriteFunc);
-
-        WriteFuncStruct sWriteFuncHeaderData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
-                        VSICurlHandleWriteFunc);
-
-        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-        szCurlErrBuf[0] = '\0';
-        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
-
-        MultiPerform(GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
-                        hCurlHandle);
-
-        VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
-
-        curl_slist_free_all(headers);
-
-        long response_code = 0;
-        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
-        if( response_code != 200 || sWriteFuncHeaderData.pBuffer == nullptr )
+        if( response_code != 200 || requestHelper.sWriteFuncHeaderData.pBuffer == nullptr )
         {
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
+                requestHelper.sWriteFuncHeaderData.pBuffer, requestHelper.szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < nMaxRetry )
             {
@@ -1022,14 +942,15 @@ CPLString IVSIS3LikeFSHandler::UploadPart(const CPLString& osFilename,
             else
             {
                 CPLDebug(GetDebugKey(), "%s",
-                        sWriteFuncData.pBuffer ? sWriteFuncData.pBuffer : "(null)");
+                        requestHelper.sWriteFuncData.pBuffer ?
+                        requestHelper.sWriteFuncData.pBuffer : "(null)");
                 CPLError(CE_Failure, CPLE_AppDefined, "UploadPart(%d) of %s failed",
                             nPartNumber, osFilename.c_str());
             }
         }
         else
         {
-            CPLString osHeader(sWriteFuncHeaderData.pBuffer);
+            CPLString osHeader(requestHelper.sWriteFuncHeaderData.pBuffer);
             size_t nPos = osHeader.ifind("ETag: ");
             if( nPos != std::string::npos )
             {
@@ -1047,9 +968,6 @@ CPLString IVSIS3LikeFSHandler::UploadPart(const CPLString& osFilename,
                         nPartNumber, osFilename.c_str(), osUploadID.c_str());
             }
         }
-
-        CPLFree(sWriteFuncData.pBuffer);
-        CPLFree(sWriteFuncHeaderData.pBuffer);
 
         curl_easy_cleanup(hCurlHandle);
     }
@@ -1413,39 +1331,17 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
                                                            m_pabyBuffer,
                                                            m_nBufferOff));
         headers = curl_slist_append(headers, "Expect: 100-continue");
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        WriteFuncStruct sWriteFuncData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
-                         VSICurlHandleWriteFunc);
+        CurlRequestHelper requestHelper;
+        const long response_code =
+            requestHelper.perform(hCurlHandle, headers, m_poFS, m_poS3HandleHelper);
 
-        WriteFuncStruct sWriteFuncHeaderData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
-                         VSICurlHandleWriteFunc);
-
-        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-        szCurlErrBuf[0] = '\0';
-        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
-
-        MultiPerform(m_poFS->GetCurlMultiHandleFor(m_poS3HandleHelper->GetURL()),
-                     hCurlHandle);
-
-        VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
-
-        curl_slist_free_all(headers);
-
-        long response_code = 0;
-        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
         if( response_code != 200 && response_code != 201 )
         {
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
+                requestHelper.sWriteFuncHeaderData.pBuffer, requestHelper.szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < m_nMaxRetry )
             {
@@ -1460,9 +1356,9 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
                 nRetryCount++;
                 bRetry = true;
             }
-            else if( sWriteFuncData.pBuffer != nullptr &&
-                m_poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
-                                                      sWriteFuncHeaderData.pBuffer,
+            else if( requestHelper.sWriteFuncData.pBuffer != nullptr &&
+                m_poS3HandleHelper->CanRestartOnError(requestHelper.sWriteFuncData.pBuffer,
+                                                      requestHelper.sWriteFuncHeaderData.pBuffer,
                                                       false) )
             {
                 m_poFS->UpdateMapFromHandle(m_poS3HandleHelper);
@@ -1471,8 +1367,8 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
             else
             {
                 CPLDebug("S3", "%s",
-                         sWriteFuncData.pBuffer
-                         ? sWriteFuncData.pBuffer
+                         requestHelper.sWriteFuncData.pBuffer
+                         ? requestHelper.sWriteFuncData.pBuffer
                          : "(null)");
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "DoSinglePartPUT of %s failed",
@@ -1485,10 +1381,10 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
             InvalidateParentDirectory();
         }
 
-        if( sWriteFuncHeaderData.pBuffer != nullptr )
+        if( requestHelper.sWriteFuncHeaderData.pBuffer != nullptr )
         {
             const char* pzETag = strstr(
-                sWriteFuncHeaderData.pBuffer, "ETag: \"");
+                requestHelper.sWriteFuncHeaderData.pBuffer, "ETag: \"");
             if( pzETag )
             {
                 pzETag += strlen("ETag: \"");
@@ -1505,9 +1401,6 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
                 }
             }
         }
-
-        CPLFree(sWriteFuncData.pBuffer);
-        CPLFree(sWriteFuncHeaderData.pBuffer);
 
         curl_easy_cleanup(hCurlHandle);
     }
@@ -1568,39 +1461,17 @@ bool IVSIS3LikeFSHandler::CompleteMultipart(const CPLString& osFilename,
                         poS3HandleHelper->GetCurlHeaders("POST", headers,
                                                             osXML.c_str(),
                                                             osXML.size()));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        poS3HandleHelper->ResetQueryParameters();
+        CurlRequestHelper requestHelper;
+        const long response_code =
+            requestHelper.perform(hCurlHandle, headers, this, poS3HandleHelper);
 
-        WriteFuncStruct sWriteFuncData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
-                        VSICurlHandleWriteFunc);
-
-        WriteFuncStruct sWriteFuncHeaderData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
-                         VSICurlHandleWriteFunc);
-
-        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-        szCurlErrBuf[0] = '\0';
-        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
-
-        MultiPerform(GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
-                    hCurlHandle);
-
-        curl_slist_free_all(headers);
-
-        long response_code = 0;
-        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
         if( response_code != 200 )
         {
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
+                requestHelper.sWriteFuncHeaderData.pBuffer, requestHelper.szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < nMaxRetry )
             {
@@ -1618,16 +1489,13 @@ bool IVSIS3LikeFSHandler::CompleteMultipart(const CPLString& osFilename,
             else 
             {
                 CPLDebug("S3", "%s",
-                    sWriteFuncData.pBuffer ? sWriteFuncData.pBuffer : "(null)");
+                    requestHelper.sWriteFuncData.pBuffer ? requestHelper.sWriteFuncData.pBuffer : "(null)");
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "CompleteMultipart of %s (uploadId=%s) failed",
                         osFilename.c_str(), osUploadID.c_str());
                 bSuccess = false;
             }
         }
-
-        CPLFree(sWriteFuncData.pBuffer);
-        CPLFree(sWriteFuncHeaderData.pBuffer);
 
         curl_easy_cleanup(hCurlHandle);
     }
@@ -1663,39 +1531,17 @@ bool IVSIS3LikeFSHandler::AbortMultipart(const CPLString& osFilename,
                             nullptr));
         headers = VSICurlMergeHeaders(headers,
                         poS3HandleHelper->GetCurlHeaders("DELETE", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        poS3HandleHelper->ResetQueryParameters();
+        CurlRequestHelper requestHelper;
+        const long response_code =
+            requestHelper.perform(hCurlHandle, headers, this, poS3HandleHelper);
 
-        WriteFuncStruct sWriteFuncData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
-                        VSICurlHandleWriteFunc);
-
-        WriteFuncStruct sWriteFuncHeaderData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
-                         VSICurlHandleWriteFunc);
-
-        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-        szCurlErrBuf[0] = '\0';
-        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
-
-        MultiPerform(GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
-                     hCurlHandle);
-
-        curl_slist_free_all(headers);
-
-        long response_code = 0;
-        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
         if( response_code != 204 )
         {
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
+                requestHelper.sWriteFuncHeaderData.pBuffer, requestHelper.szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < nMaxRetry )
             {
@@ -1713,16 +1559,13 @@ bool IVSIS3LikeFSHandler::AbortMultipart(const CPLString& osFilename,
             else 
             {
                 CPLDebug("S3", "%s",
-                        sWriteFuncData.pBuffer ? sWriteFuncData.pBuffer : "(null)");
+                        requestHelper.sWriteFuncData.pBuffer ? requestHelper.sWriteFuncData.pBuffer : "(null)");
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "AbortMultipart of %s (uploadId=%s) failed",
                         osFilename.c_str(), osUploadID.c_str());
                 bSuccess = false;
             }
         }
-
-        CPLFree(sWriteFuncData.pBuffer);
-        CPLFree(sWriteFuncHeaderData.pBuffer);
 
         curl_easy_cleanup(hCurlHandle);
     }
@@ -2102,41 +1945,17 @@ std::set<CPLString> VSIS3FSHandler::DeleteObjects(const char* pszBucket,
                         poS3HandleHelper->GetCurlHeaders("POST", headers,
                                                          pszXML,
                                                          strlen(pszXML)));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        poS3HandleHelper->ResetQueryParameters();
+        CurlRequestHelper requestHelper;
+        const long response_code =
+            requestHelper.perform(hCurlHandle, headers, this, poS3HandleHelper.get());
 
-        WriteFuncStruct sWriteFuncData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
-                         VSICurlHandleWriteFunc);
-
-        WriteFuncStruct sWriteFuncHeaderData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
-                         VSICurlHandleWriteFunc);
-
-        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-        szCurlErrBuf[0] = '\0';
-        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
-
-        MultiPerform(GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
-                     hCurlHandle);
-
-        VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
-
-        curl_slist_free_all(headers);
-
-        long response_code = 0;
-        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
-        if( response_code != 200 || sWriteFuncData.pBuffer == nullptr )
+        if( response_code != 200 || requestHelper.sWriteFuncData.pBuffer == nullptr )
         {
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
+                requestHelper.sWriteFuncHeaderData.pBuffer, requestHelper.szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < nMaxRetry )
             {
@@ -2151,9 +1970,9 @@ std::set<CPLString> VSIS3FSHandler::DeleteObjects(const char* pszBucket,
                 nRetryCount++;
                 bRetry = true;
             }
-            else if( sWriteFuncData.pBuffer != nullptr &&
-                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
-                                                      sWriteFuncHeaderData.pBuffer,
+            else if( requestHelper.sWriteFuncData.pBuffer != nullptr &&
+                poS3HandleHelper->CanRestartOnError(requestHelper.sWriteFuncData.pBuffer,
+                                                      requestHelper.sWriteFuncHeaderData.pBuffer,
                                                       false) )
             {
                 UpdateMapFromHandle(poS3HandleHelper.get());
@@ -2162,8 +1981,8 @@ std::set<CPLString> VSIS3FSHandler::DeleteObjects(const char* pszBucket,
             else
             {
                 CPLDebug(GetDebugKey(), "%s",
-                         sWriteFuncData.pBuffer
-                         ? sWriteFuncData.pBuffer
+                         requestHelper.sWriteFuncData.pBuffer
+                         ? requestHelper.sWriteFuncData.pBuffer
                          : "(null)");
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "DeleteObjects failed");
@@ -2171,7 +1990,7 @@ std::set<CPLString> VSIS3FSHandler::DeleteObjects(const char* pszBucket,
         }
         else
         {
-            CPLXMLNode* psXML = CPLParseXMLString(sWriteFuncData.pBuffer);
+            CPLXMLNode* psXML = CPLParseXMLString(requestHelper.sWriteFuncData.pBuffer);
             if( psXML )
             {
                 CPLXMLNode* psDeleteResult =
@@ -2198,9 +2017,6 @@ std::set<CPLString> VSIS3FSHandler::DeleteObjects(const char* pszBucket,
                 CPLDestroyXMLNode(psXML);
             }
         }
-
-        CPLFree(sWriteFuncData.pBuffer);
-        CPLFree(sWriteFuncHeaderData.pBuffer);
 
         curl_easy_cleanup(hCurlHandle);
     }
@@ -2252,41 +2068,16 @@ char** VSIS3FSHandler::GetFileMetadata( const char* pszFilename,
                               nullptr));
         headers = VSICurlMergeHeaders(headers,
                         poS3HandleHelper->GetCurlHeaders("GET", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        poS3HandleHelper->ResetQueryParameters();
-
-        WriteFuncStruct sWriteFuncData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
-                         VSICurlHandleWriteFunc);
-
-        WriteFuncStruct sWriteFuncHeaderData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
-                         VSICurlHandleWriteFunc);
-
-        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-        szCurlErrBuf[0] = '\0';
-        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
-
-        MultiPerform(GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
-                     hCurlHandle);
-
-        VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
-
-        curl_slist_free_all(headers);
-
-        long response_code = 0;
-        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
-        if( response_code != 200 || sWriteFuncData.pBuffer == nullptr )
+        CurlRequestHelper requestHelper;
+        const long response_code =
+            requestHelper.perform(hCurlHandle, headers, this, poS3HandleHelper.get());
+        if( response_code != 200 || requestHelper.sWriteFuncData.pBuffer == nullptr )
         {
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
+                requestHelper.sWriteFuncHeaderData.pBuffer, requestHelper.szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < nMaxRetry )
             {
@@ -2301,9 +2092,9 @@ char** VSIS3FSHandler::GetFileMetadata( const char* pszFilename,
                 nRetryCount++;
                 bRetry = true;
             }
-            else if( sWriteFuncData.pBuffer != nullptr &&
-                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
-                                                      sWriteFuncHeaderData.pBuffer,
+            else if( requestHelper.sWriteFuncData.pBuffer != nullptr &&
+                poS3HandleHelper->CanRestartOnError(requestHelper.sWriteFuncData.pBuffer,
+                                                      requestHelper.sWriteFuncHeaderData.pBuffer,
                                                       false) )
             {
                 UpdateMapFromHandle(poS3HandleHelper.get());
@@ -2312,8 +2103,8 @@ char** VSIS3FSHandler::GetFileMetadata( const char* pszFilename,
             else
             {
                 CPLDebug(GetDebugKey(), "%s",
-                         sWriteFuncData.pBuffer
-                         ? sWriteFuncData.pBuffer
+                         requestHelper.sWriteFuncData.pBuffer
+                         ? requestHelper.sWriteFuncData.pBuffer
                          : "(null)");
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "GetObjectTagging failed");
@@ -2321,7 +2112,7 @@ char** VSIS3FSHandler::GetFileMetadata( const char* pszFilename,
         }
         else
         {
-            CPLXMLNode* psXML = CPLParseXMLString(sWriteFuncData.pBuffer);
+            CPLXMLNode* psXML = CPLParseXMLString(requestHelper.sWriteFuncData.pBuffer);
             if( psXML )
             {
                 CPLXMLNode* psTagSet =
@@ -2343,9 +2134,6 @@ char** VSIS3FSHandler::GetFileMetadata( const char* pszFilename,
                 CPLDestroyXMLNode(psXML);
             }
         }
-
-        CPLFree(sWriteFuncData.pBuffer);
-        CPLFree(sWriteFuncHeaderData.pBuffer);
 
         curl_easy_cleanup(hCurlHandle);
     }
@@ -2467,42 +2255,18 @@ bool VSIS3FSHandler::SetFileMetadata( const char * pszFilename,
             headers = VSICurlMergeHeaders(headers,
                             poS3HandleHelper->GetCurlHeaders("DELETE", headers));
         }
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        poS3HandleHelper->ResetQueryParameters();
+        CurlRequestHelper requestHelper;
+        const long response_code =
+            requestHelper.perform(hCurlHandle, headers, this, poS3HandleHelper.get());
 
-        WriteFuncStruct sWriteFuncData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
-                         VSICurlHandleWriteFunc);
-
-        WriteFuncStruct sWriteFuncHeaderData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
-                         VSICurlHandleWriteFunc);
-
-        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-        szCurlErrBuf[0] = '\0';
-        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
-
-        MultiPerform(GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
-                     hCurlHandle);
-
-        VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
-
-        curl_slist_free_all(headers);
-
-        long response_code = 0;
-        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
         if( (!osXML.empty() && response_code != 200) ||
             (osXML.empty() && response_code != 204) )
         {
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
+                requestHelper.sWriteFuncHeaderData.pBuffer, requestHelper.szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < nMaxRetry )
             {
@@ -2517,9 +2281,9 @@ bool VSIS3FSHandler::SetFileMetadata( const char * pszFilename,
                 nRetryCount++;
                 bRetry = true;
             }
-            else if( sWriteFuncData.pBuffer != nullptr &&
-                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
-                                                      sWriteFuncHeaderData.pBuffer,
+            else if( requestHelper.sWriteFuncData.pBuffer != nullptr &&
+                poS3HandleHelper->CanRestartOnError(requestHelper.sWriteFuncData.pBuffer,
+                                                      requestHelper.sWriteFuncHeaderData.pBuffer,
                                                       false) )
             {
                 UpdateMapFromHandle(poS3HandleHelper.get());
@@ -2528,8 +2292,8 @@ bool VSIS3FSHandler::SetFileMetadata( const char * pszFilename,
             else
             {
                 CPLDebug(GetDebugKey(), "%s",
-                         sWriteFuncData.pBuffer
-                         ? sWriteFuncData.pBuffer
+                         requestHelper.sWriteFuncData.pBuffer
+                         ? requestHelper.sWriteFuncData.pBuffer
                          : "(null)");
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "PutObjectTagging failed");
@@ -2539,9 +2303,6 @@ bool VSIS3FSHandler::SetFileMetadata( const char * pszFilename,
         {
             bRet = true;
         }
-
-        CPLFree(sWriteFuncData.pBuffer);
-        CPLFree(sWriteFuncHeaderData.pBuffer);
 
         curl_easy_cleanup(hCurlHandle);
     }
@@ -2859,8 +2620,8 @@ int IVSIS3LikeFSHandler::CopyObject( const char *oldpath, const char *newpath,
                                      CSLConstList papszMetadata )
 {
     CPLString osTargetNameWithoutPrefix = newpath + GetFSPrefix().size();
-    IVSIS3LikeHandleHelper* poS3HandleHelper =
-        CreateHandleHelper(osTargetNameWithoutPrefix, false);
+    std::unique_ptr<IVSIS3LikeHandleHelper> poS3HandleHelper(
+        CreateHandleHelper(osTargetNameWithoutPrefix, false));
     if( poS3HandleHelper == nullptr )
     {
         return -1;
@@ -2879,7 +2640,7 @@ int IVSIS3LikeFSHandler::CopyObject( const char *oldpath, const char *newpath,
     else
         osSourceHeader += (oldpath + GetFSPrefix().size());
 
-    UpdateHandleFromMap(poS3HandleHelper);
+    UpdateHandleFromMap(poS3HandleHelper.get());
 
     int nRet = 0;
 
@@ -2921,39 +2682,17 @@ int IVSIS3LikeFSHandler::CopyObject( const char *oldpath, const char *newpath,
         }
         headers = VSICurlMergeHeaders(headers,
                         poS3HandleHelper->GetCurlHeaders("PUT", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        WriteFuncStruct sWriteFuncData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
-                         VSICurlHandleWriteFunc);
+        CurlRequestHelper requestHelper;
+        const long response_code =
+            requestHelper.perform(hCurlHandle, headers, this, poS3HandleHelper.get());
 
-        WriteFuncStruct sWriteFuncHeaderData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
-                         VSICurlHandleWriteFunc);
-
-        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-        szCurlErrBuf[0] = '\0';
-        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
-
-        MultiPerform(GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
-                     hCurlHandle);
-
-        VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
-
-        curl_slist_free_all(headers);
-
-        long response_code = 0;
-        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
         if( response_code != 200)
         {
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
+                requestHelper.sWriteFuncHeaderData.pBuffer, requestHelper.szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < nMaxRetry )
             {
@@ -2968,19 +2707,19 @@ int IVSIS3LikeFSHandler::CopyObject( const char *oldpath, const char *newpath,
                 nRetryCount++;
                 bRetry = true;
             }
-            else if( sWriteFuncData.pBuffer != nullptr &&
-                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
-                                                    sWriteFuncHeaderData.pBuffer,
+            else if( requestHelper.sWriteFuncData.pBuffer != nullptr &&
+                poS3HandleHelper->CanRestartOnError(requestHelper.sWriteFuncData.pBuffer,
+                                                    requestHelper.sWriteFuncHeaderData.pBuffer,
                                                     false) )
             {
-                UpdateMapFromHandle(poS3HandleHelper);
+                UpdateMapFromHandle(poS3HandleHelper.get());
                 bRetry = true;
             }
             else
             {
                 CPLDebug(GetDebugKey(), "%s",
-                         sWriteFuncData.pBuffer
-                         ? sWriteFuncData.pBuffer
+                         requestHelper.sWriteFuncData.pBuffer
+                         ? requestHelper.sWriteFuncData.pBuffer
                          : "(null)");
                 CPLError(CE_Failure, CPLE_AppDefined, "Copy of %s to %s failed",
                          oldpath, newpath);
@@ -2998,14 +2737,10 @@ int IVSIS3LikeFSHandler::CopyObject( const char *oldpath, const char *newpath,
             InvalidateDirContent( CPLGetDirname(osFilenameWithoutSlash) );
         }
 
-        CPLFree(sWriteFuncData.pBuffer);
-        CPLFree(sWriteFuncHeaderData.pBuffer);
-
         curl_easy_cleanup(hCurlHandle);
     }
     while( bRetry );
 
-    delete poS3HandleHelper;
     return nRet;
 }
 
@@ -3046,40 +2781,18 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
                               nullptr));
         headers = VSICurlMergeHeaders(headers,
                         poS3HandleHelper->GetCurlHeaders("DELETE", headers));
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        WriteFuncStruct sWriteFuncData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
-                         VSICurlHandleWriteFunc);
+        CurlRequestHelper requestHelper;
+        const long response_code =
+            requestHelper.perform(hCurlHandle, headers, this, poS3HandleHelper);
 
-        WriteFuncStruct sWriteFuncHeaderData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
-                         VSICurlHandleWriteFunc);
-
-        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-        szCurlErrBuf[0] = '\0';
-        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
-
-        MultiPerform(GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
-                     hCurlHandle);
-
-        VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
-
-        curl_slist_free_all(headers);
-
-        long response_code = 0;
-        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
         // S3 and GS respond with 204. Azure with 202
         if( response_code != 204 && response_code != 202)
         {
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
+                requestHelper.sWriteFuncHeaderData.pBuffer, requestHelper.szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < nMaxRetry )
             {
@@ -3094,9 +2807,9 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
                 nRetryCount++;
                 bRetry = true;
             }
-            else if( sWriteFuncData.pBuffer != nullptr &&
-                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
-                                                    sWriteFuncHeaderData.pBuffer,
+            else if( requestHelper.sWriteFuncData.pBuffer != nullptr &&
+                poS3HandleHelper->CanRestartOnError(requestHelper.sWriteFuncData.pBuffer,
+                                                    requestHelper.sWriteFuncHeaderData.pBuffer,
                                                     false) )
             {
                 UpdateMapFromHandle(poS3HandleHelper);
@@ -3105,8 +2818,8 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
             else
             {
                 CPLDebug(GetDebugKey(), "%s",
-                         sWriteFuncData.pBuffer
-                         ? sWriteFuncData.pBuffer
+                         requestHelper.sWriteFuncData.pBuffer
+                         ? requestHelper.sWriteFuncData.pBuffer
                          : "(null)");
                 CPLError(CE_Failure, CPLE_AppDefined, "Delete of %s failed",
                          pszFilename);
@@ -3123,9 +2836,6 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
 
             InvalidateDirContent( CPLGetDirname(osFilenameWithoutSlash) );
         }
-
-        CPLFree(sWriteFuncData.pBuffer);
-        CPLFree(sWriteFuncHeaderData.pBuffer);
 
         curl_easy_cleanup(hCurlHandle);
     }

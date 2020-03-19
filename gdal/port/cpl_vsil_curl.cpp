@@ -4279,6 +4279,63 @@ int VSIAppendWriteHandle::Close()
     return nRet;
 }
 
+/************************************************************************/
+/*                         CurlRequestHelper()                          */
+/************************************************************************/
+
+CurlRequestHelper::CurlRequestHelper()
+{
+    VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
+    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
+}
+
+/************************************************************************/
+/*                        ~CurlRequestHelper()                          */
+/************************************************************************/
+
+CurlRequestHelper::~CurlRequestHelper()
+{
+    CPLFree(sWriteFuncData.pBuffer);
+    CPLFree(sWriteFuncHeaderData.pBuffer);
+}
+
+/************************************************************************/
+/*                             perform()                                */
+/************************************************************************/
+
+long CurlRequestHelper::perform(CURL* hCurlHandle,
+                struct curl_slist* headers,
+                VSICurlFilesystemHandler *poFS,
+                IVSIS3LikeHandleHelper *poS3HandleHelper)
+{
+    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+
+    poS3HandleHelper->ResetQueryParameters();
+
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+                        VSICurlHandleWriteFunc);
+
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+                        VSICurlHandleWriteFunc);
+
+    szCurlErrBuf[0] = '\0';
+    curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+
+    MultiPerform(poFS->GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
+                    hCurlHandle);
+
+    VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
+
+    curl_slist_free_all(headers);
+
+    long response_code = 0;
+    curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
+    return response_code;
+}
+
+
 } /* end of namespace cpl */
 
 /************************************************************************/

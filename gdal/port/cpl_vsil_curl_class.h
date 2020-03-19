@@ -581,6 +581,24 @@ class VSIAppendWriteHandle : public VSIVirtualHandle
         bool              IsOK() { return m_pabyBuffer != nullptr; }
 };
 
+/************************************************************************/
+/*                         CurlRequestHelper                            */
+/************************************************************************/
+
+struct CurlRequestHelper
+{
+    WriteFuncStruct sWriteFuncData{};
+    WriteFuncStruct sWriteFuncHeaderData{};
+    char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
+
+    CurlRequestHelper();
+    ~CurlRequestHelper();
+    long perform(CURL* hCurlHandle,
+                 struct curl_slist* headers, // ownership transfered
+                 VSICurlFilesystemHandler *poFS,
+                 IVSIS3LikeHandleHelper *poS3HandleHelper);
+};
+
 int VSICURLGetDownloadChunkSize();
 
 void VSICURLInitWriteFuncStruct( WriteFuncStruct   *psStruct,
