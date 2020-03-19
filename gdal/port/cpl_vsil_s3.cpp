@@ -595,6 +595,14 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
 
     int* UnlinkBatch( CSLConstList papszFiles ) override;
     int RmdirRecursive( const char* pszDirname ) override;
+
+    char** GetFileMetadata( const char * pszFilename, const char* pszDomain,
+                            CSLConstList papszOptions ) override;
+
+    bool   SetFileMetadata( const char * pszFilename,
+                            CSLConstList papszMetadata,
+                            const char* pszDomain,
+                            CSLConstList papszOptions ) override;
 };
 
 /************************************************************************/
@@ -2201,6 +2209,347 @@ std::set<CPLString> VSIS3FSHandler::DeleteObjects(const char* pszBucket,
 }
 
 /************************************************************************/
+/*                          GetFileMetadata()                           */
+/************************************************************************/
+
+char** VSIS3FSHandler::GetFileMetadata( const char* pszFilename,
+                                        const char* pszDomain,
+                                        CSLConstList papszOptions )
+{
+    if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
+        return nullptr;
+
+    if( pszDomain == nullptr || !EQUAL(pszDomain, "TAGS") )
+    {
+        return VSICurlFilesystemHandler::GetFileMetadata(
+                    pszFilename, pszDomain, papszOptions);
+    }
+
+    auto poS3HandleHelper = std::unique_ptr<VSIS3HandleHelper>(
+        VSIS3HandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
+                                        GetFSPrefix().c_str(), false));
+    if( !poS3HandleHelper )
+        return nullptr;
+
+    bool bRetry;
+    // coverity[tainted_data]
+    double dfRetryDelay = CPLAtof(CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
+                                CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
+    const int nMaxRetry = atoi(CPLGetConfigOption("GDAL_HTTP_MAX_RETRY",
+                                   CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)));
+    int nRetryCount = 0;
+
+    CPLStringList aosTags;
+    do
+    {
+        bRetry = false;
+        CURL* hCurlHandle = curl_easy_init();
+        poS3HandleHelper->AddQueryParameter("tagging", "");
+
+        struct curl_slist* headers = static_cast<struct curl_slist*>(
+            CPLHTTPSetOptions(hCurlHandle,
+                              poS3HandleHelper->GetURL().c_str(),
+                              nullptr));
+        headers = VSICurlMergeHeaders(headers,
+                        poS3HandleHelper->GetCurlHeaders("GET", headers));
+        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+
+        poS3HandleHelper->ResetQueryParameters();
+
+        WriteFuncStruct sWriteFuncData;
+        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
+        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+                         VSICurlHandleWriteFunc);
+
+        WriteFuncStruct sWriteFuncHeaderData;
+        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+                         VSICurlHandleWriteFunc);
+
+        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
+        szCurlErrBuf[0] = '\0';
+        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+
+        MultiPerform(GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
+                     hCurlHandle);
+
+        VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
+
+        curl_slist_free_all(headers);
+
+        long response_code = 0;
+        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
+        if( response_code != 200 || sWriteFuncData.pBuffer == nullptr )
+        {
+            // Look if we should attempt a retry
+            const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
+                static_cast<int>(response_code), dfRetryDelay,
+                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
+            if( dfNewRetryDelay > 0 &&
+                nRetryCount < nMaxRetry )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                            "HTTP error code: %d - %s. "
+                            "Retrying again in %.1f secs",
+                            static_cast<int>(response_code),
+                            poS3HandleHelper->GetURL().c_str(),
+                            dfRetryDelay);
+                CPLSleep(dfRetryDelay);
+                dfRetryDelay = dfNewRetryDelay;
+                nRetryCount++;
+                bRetry = true;
+            }
+            else if( sWriteFuncData.pBuffer != nullptr &&
+                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
+                                                      sWriteFuncHeaderData.pBuffer,
+                                                      false) )
+            {
+                UpdateMapFromHandle(poS3HandleHelper.get());
+                bRetry = true;
+            }
+            else
+            {
+                CPLDebug(GetDebugKey(), "%s",
+                         sWriteFuncData.pBuffer
+                         ? sWriteFuncData.pBuffer
+                         : "(null)");
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "GetObjectTagging failed");
+            }
+        }
+        else
+        {
+            CPLXMLNode* psXML = CPLParseXMLString(sWriteFuncData.pBuffer);
+            if( psXML )
+            {
+                CPLXMLNode* psTagSet =
+                    CPLGetXMLNode(psXML, "=Tagging.TagSet");
+                if( psTagSet )
+                {
+                    for( CPLXMLNode* psIter = psTagSet->psChild;
+                                        psIter; psIter = psIter->psNext )
+                    {
+                        if( psIter->eType == CXT_Element &&
+                            strcmp(psIter->pszValue, "Tag") == 0 )
+                        {
+                            CPLString osKey = CPLGetXMLValue(psIter, "Key", "");
+                            CPLString osValue = CPLGetXMLValue(psIter, "Value", "");
+                            aosTags.SetNameValue(osKey, osValue);
+                        }
+                    }
+                }
+                CPLDestroyXMLNode(psXML);
+            }
+        }
+
+        CPLFree(sWriteFuncData.pBuffer);
+        CPLFree(sWriteFuncHeaderData.pBuffer);
+
+        curl_easy_cleanup(hCurlHandle);
+    }
+    while( bRetry );
+    return CSLDuplicate(aosTags.List());
+}
+
+/************************************************************************/
+/*                          SetFileMetadata()                           */
+/************************************************************************/
+
+bool VSIS3FSHandler::SetFileMetadata( const char * pszFilename,
+                                      CSLConstList papszMetadata,
+                                      const char* pszDomain,
+                                      CSLConstList /* papszOptions */ )
+{
+    if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
+        return false;
+
+    if( pszDomain == nullptr ||
+        !(EQUAL(pszDomain, "HEADERS") || EQUAL(pszDomain, "TAGS")) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Only HEADERS and TAGS domain are supported");
+        return false;
+    }
+
+    if( EQUAL(pszDomain, "HEADERS") )
+    {
+        return CopyObject(pszFilename, pszFilename, papszMetadata) == 0;
+    }
+
+    auto poS3HandleHelper = std::unique_ptr<VSIS3HandleHelper>(
+        VSIS3HandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
+                                        GetFSPrefix().c_str(), false));
+    if( !poS3HandleHelper )
+        return false;
+
+    bool bRetry;
+    // coverity[tainted_data]
+    double dfRetryDelay = CPLAtof(CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
+                                CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
+    const int nMaxRetry = atoi(CPLGetConfigOption("GDAL_HTTP_MAX_RETRY",
+                                   CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)));
+    int nRetryCount = 0;
+
+    // Compose XML post content
+    CPLString osXML;
+    if( papszMetadata != nullptr && papszMetadata[0] != nullptr )
+    {
+        CPLXMLNode* psXML = CPLCreateXMLNode(nullptr, CXT_Element, "?xml");
+        CPLAddXMLAttributeAndValue(psXML, "version", "1.0");
+        CPLAddXMLAttributeAndValue(psXML, "encoding", "UTF-8");
+        CPLXMLNode* psTagging = CPLCreateXMLNode(nullptr, CXT_Element, "Tagging");
+        psXML->psNext = psTagging;
+        CPLAddXMLAttributeAndValue(psTagging, "xmlns",
+                                    "http://s3.amazonaws.com/doc/2006-03-01/");
+        CPLXMLNode* psTagSet = CPLCreateXMLNode(psTagging, CXT_Element, "TagSet");
+        for( int i = 0; papszMetadata && papszMetadata[i]; ++i )
+        {
+            char* pszKey = nullptr;
+            const char* pszValue = CPLParseNameValue(papszMetadata[i], &pszKey);
+            if( pszKey && pszValue )
+            {
+                CPLXMLNode* psTag =
+                    CPLCreateXMLNode(psTagSet, CXT_Element, "Tag");
+                CPLCreateXMLElementAndValue(psTag, "Key", pszKey);
+                CPLCreateXMLElementAndValue(psTag, "Value", pszValue);
+            }
+            CPLFree(pszKey);
+        }
+
+        osXML = CPLSerializeXMLTree(psXML);
+        CPLDestroyXMLNode(psXML);
+    }
+
+    CPLString osContentMD5;
+    if( !osXML.empty() )
+    {
+        struct CPLMD5Context context;
+        CPLMD5Init(&context);
+        CPLMD5Update(&context, reinterpret_cast<unsigned char const *>(osXML.c_str()),
+                    static_cast<int>(osXML.size()));
+        unsigned char hash[16];
+        CPLMD5Final(hash, &context);
+        char* pszBase64 = CPLBase64Encode(16, hash);
+        osContentMD5.Printf("Content-MD5: %s", pszBase64);
+        CPLFree(pszBase64);
+    }
+
+    bool bRet = false;
+
+    do
+    {
+        bRetry = false;
+        CURL* hCurlHandle = curl_easy_init();
+        poS3HandleHelper->AddQueryParameter("tagging", "");
+        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, osXML.empty() ? "DELETE" : "PUT");
+        if( !osXML.empty() )
+        {
+            curl_easy_setopt(hCurlHandle, CURLOPT_POSTFIELDS, osXML.c_str() );
+        }
+
+        struct curl_slist* headers = static_cast<struct curl_slist*>(
+            CPLHTTPSetOptions(hCurlHandle,
+                              poS3HandleHelper->GetURL().c_str(),
+                              nullptr));
+        if( !osXML.empty() )
+        {
+            headers = curl_slist_append(headers, "Content-Type: application/xml");
+            headers = curl_slist_append(headers, osContentMD5.c_str());
+            headers = VSICurlMergeHeaders(headers,
+                            poS3HandleHelper->GetCurlHeaders("PUT", headers,
+                                                            osXML.c_str(),
+                                                            osXML.size()));
+        }
+        else
+        {
+            headers = VSICurlMergeHeaders(headers,
+                            poS3HandleHelper->GetCurlHeaders("DELETE", headers));
+        }
+        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+
+        poS3HandleHelper->ResetQueryParameters();
+
+        WriteFuncStruct sWriteFuncData;
+        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
+        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+                         VSICurlHandleWriteFunc);
+
+        WriteFuncStruct sWriteFuncHeaderData;
+        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+                         VSICurlHandleWriteFunc);
+
+        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
+        szCurlErrBuf[0] = '\0';
+        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+
+        MultiPerform(GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
+                     hCurlHandle);
+
+        VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
+
+        curl_slist_free_all(headers);
+
+        long response_code = 0;
+        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
+        if( (!osXML.empty() && response_code != 200) ||
+            (osXML.empty() && response_code != 204) )
+        {
+            // Look if we should attempt a retry
+            const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
+                static_cast<int>(response_code), dfRetryDelay,
+                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
+            if( dfNewRetryDelay > 0 &&
+                nRetryCount < nMaxRetry )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                            "HTTP error code: %d - %s. "
+                            "Retrying again in %.1f secs",
+                            static_cast<int>(response_code),
+                            poS3HandleHelper->GetURL().c_str(),
+                            dfRetryDelay);
+                CPLSleep(dfRetryDelay);
+                dfRetryDelay = dfNewRetryDelay;
+                nRetryCount++;
+                bRetry = true;
+            }
+            else if( sWriteFuncData.pBuffer != nullptr &&
+                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
+                                                      sWriteFuncHeaderData.pBuffer,
+                                                      false) )
+            {
+                UpdateMapFromHandle(poS3HandleHelper.get());
+                bRetry = true;
+            }
+            else
+            {
+                CPLDebug(GetDebugKey(), "%s",
+                         sWriteFuncData.pBuffer
+                         ? sWriteFuncData.pBuffer
+                         : "(null)");
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "PutObjectTagging failed");
+            }
+        }
+        else
+        {
+            bRet = true;
+        }
+
+        CPLFree(sWriteFuncData.pBuffer);
+        CPLFree(sWriteFuncHeaderData.pBuffer);
+
+        curl_easy_cleanup(hCurlHandle);
+    }
+    while( bRetry );
+    return bRet;
+}
+
+/************************************************************************/
 /*                               Mkdir()                                */
 /************************************************************************/
 
@@ -2494,7 +2843,7 @@ int IVSIS3LikeFSHandler::Rename( const char *oldpath, const char *newpath )
             errno = ENOTEMPTY;
             return -1;
         }
-        if( CopyObject(oldpath, newpath) != 0 )
+        if( CopyObject(oldpath, newpath, nullptr) != 0 )
         {
             return -1;
         }
@@ -2506,7 +2855,8 @@ int IVSIS3LikeFSHandler::Rename( const char *oldpath, const char *newpath )
 /*                            CopyObject()                              */
 /************************************************************************/
 
-int IVSIS3LikeFSHandler::CopyObject( const char *oldpath, const char *newpath )
+int IVSIS3LikeFSHandler::CopyObject( const char *oldpath, const char *newpath,
+                                     CSLConstList papszMetadata )
 {
     CPLString osTargetNameWithoutPrefix = newpath + GetFSPrefix().size();
     IVSIS3LikeHandleHelper* poS3HandleHelper =
@@ -2554,6 +2904,21 @@ int IVSIS3LikeFSHandler::CopyObject( const char *oldpath, const char *newpath )
                               nullptr));
         headers = curl_slist_append(headers, osSourceHeader.c_str());
         headers = curl_slist_append(headers, "Content-Length: 0"); // Required by GCS, but not by S3
+        if( papszMetadata && papszMetadata[0] )
+        {
+            headers = curl_slist_append(headers, "x-amz-metadata-directive: REPLACE");
+        }
+        for( int i = 0; papszMetadata && papszMetadata[i]; i++ )
+        {
+            char* pszKey = nullptr;
+            const char* pszValue = CPLParseNameValue(papszMetadata[i], &pszKey);
+            if( pszKey && pszValue )
+            {
+                headers = curl_slist_append(headers,
+                                            CPLSPrintf("%s: %s", pszKey, pszValue));
+            }
+            CPLFree(pszKey);
+        }
         headers = VSICurlMergeHeaders(headers,
                         poS3HandleHelper->GetCurlHeaders("PUT", headers));
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -2924,7 +3289,7 @@ bool IVSIS3LikeFSHandler::CopyFile(VSILFILE* fpIn,
     if( STARTS_WITH(pszSource, osPrefix) &&
         STARTS_WITH(pszTarget, osPrefix) )
     {
-        bool bRet = CopyObject(pszSource, pszTarget) == 0;
+        bool bRet = CopyObject(pszSource, pszTarget, nullptr) == 0;
         if( pProgressFunc )
         {
             bRet = pProgressFunc(1.0, osMsg.c_str(), pProgressData) != 0;

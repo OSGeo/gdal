@@ -123,6 +123,14 @@ public:
 
     virtual VSIDIR* OpenDir( const char *pszPath, int nRecurseDepth,
                              const char* const *papszOptions);
+
+    virtual char** GetFileMetadata( const char * pszFilename, const char* pszDomain,
+                                    CSLConstList papszOptions );
+
+    virtual bool   SetFileMetadata( const char * pszFilename,
+                                    CSLConstList papszMetadata,
+                                    const char* pszDomain,
+                                    CSLConstList papszOptions );
 };
 #endif /* #ifndef DOXYGEN_SKIP */
 

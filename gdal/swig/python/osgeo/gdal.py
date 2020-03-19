@@ -1734,6 +1734,14 @@ def VSIStatL(*args):
     """VSIStatL(char const * utf8_path, int nFlags=0) -> int"""
     return _gdal.VSIStatL(*args)
 
+def GetFileMetadata(*args):
+    """GetFileMetadata(char const * utf8_path, char const * domain, char ** options=None) -> char **"""
+    return _gdal.GetFileMetadata(*args)
+
+def SetFileMetadata(*args):
+    """SetFileMetadata(char const * utf8_path, char ** metadata, char const * domain, char ** options=None) -> bool"""
+    return _gdal.SetFileMetadata(*args)
+
 def VSIFOpenL(*args):
     """VSIFOpenL(char const * utf8_path, char const * pszMode) -> VSILFILE"""
     return _gdal.VSIFOpenL(*args)
