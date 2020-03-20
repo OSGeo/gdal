@@ -2242,9 +2242,6 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                     s = (nVal & 0x80000000UL) >> 31;
                     e = (nVal & 0x7F800000UL) >> 23;
                     f = (nVal & 0x007FFFFFUL);
-                    printf("s=%i\n", s);
-                    printf("e=%i\n", e);
-                    printf("f=%li\n", f);
                     if (e == 255 && f != 0) {
                         /* NaN (Not a Number) */
                         sprintf(pszVal, "%f",0.0/0.0);
