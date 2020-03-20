@@ -695,8 +695,14 @@ def setup_no_data_values(input_dataset, options):
             in_nodata = nds
     else:
         for i in range(1, input_dataset.RasterCount + 1):
-            raster_no_data = input_dataset.GetRasterBand(i).GetNoDataValue()
+            band = input_dataset.GetRasterBand(i)
+            raster_no_data = band.GetNoDataValue()
             if raster_no_data is not None:
+                # Ignore nodata values that are not in the range of the band data type (see https://github.com/OSGeo/gdal/pull/2299)
+                if band.DataType == gdal.GDT_Byte and (raster_no_data != int(raster_no_data) or raster_no_data < 0 or raster_no_data > 255):
+                    # We should possibly do similar check for other data types
+                    in_nodata = []
+                    break
                 in_nodata.append(raster_no_data)
 
     if options.verbose:

@@ -283,12 +283,6 @@ bool AOToOGRSpatialReference(esriGeometry::ISpatialReference* pSR, OGRSpatialRef
 
   esriGeometry::IESRISpatialReferenceGEN2Ptr ipSRGen = pSR;
 
-  if (ipSRGen == NULL)
-  {
-    CPLError( CE_Warning, CPLE_AppDefined, "ESRI Spatial Reference is Unknown");
-    return false;
-  }
-
   long bufferSize = 0;
   if (FAILED(hr = ipSRGen->get_ESRISpatialReferenceSize(&bufferSize)) || bufferSize == 0)
     return false; //should never happen

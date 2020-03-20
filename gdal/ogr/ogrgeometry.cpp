@@ -5197,7 +5197,7 @@ OGRErr OGRGeometry::Centroid( OGRPoint *poPoint ) const
             return OGRERR_FAILURE;
         }
 
-        if( poCentroidGeom != nullptr && getSpatialReference() != nullptr )
+        if( getSpatialReference() != nullptr )
             poCentroidGeom->assignSpatialReference(getSpatialReference());
 
         OGRPoint *poCentroid = poCentroidGeom->toPoint();
@@ -5340,7 +5340,7 @@ OGRGeometryH OGR_G_PointOnSurface( OGRGeometryH hGeom )
             return nullptr;
         }
 
-        if( poInsidePointGeom != nullptr && poThis->getSpatialReference() != nullptr )
+        if( poThis->getSpatialReference() != nullptr )
             poInsidePointGeom->
                 assignSpatialReference(poThis->getSpatialReference());
 

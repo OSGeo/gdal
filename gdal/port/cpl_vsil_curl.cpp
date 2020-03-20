@@ -31,6 +31,7 @@
 #include "cpl_vsil_curl_class.h"
 
 #include <algorithm>
+#include <array>
 #include <set>
 #include <map>
 #include <memory>
@@ -60,6 +61,11 @@ void VSICurlClearCache( void )
 }
 
 void VSICurlPartialClearCache(const char* )
+{
+    // Not supported.
+}
+
+void VSICurlAuthParametersChanged()
 {
     // Not supported.
 }
@@ -95,6 +101,17 @@ int VSICurlUninstallReadCbk( VSILFILE* /* fp */ )
 
 static int N_MAX_REGIONS = 1000;
 static int DOWNLOAD_CHUNK_SIZE = 16384;
+
+/***********************************************************ù************/
+/*                    VSICurlAuthParametersChanged()                    */
+/************************************************************************/
+
+static unsigned int gnGenerationAuthParameters = 0;
+
+void VSICurlAuthParametersChanged()
+{
+    gnGenerationAuthParameters++;
+}
 
 namespace cpl {
 
@@ -1347,6 +1364,18 @@ retry:
         goto retry;
     }
 
+    if( response_code == 401 && nRetryCount < m_nMaxRetry )
+    {
+        CPLDebug("VSICURL", "Unauthorized, trying to authenticate");
+        CPLFree(sWriteFuncData.pBuffer);
+        CPLFree(sWriteFuncHeaderData.pBuffer);
+        curl_easy_cleanup(hCurlHandle);
+        nRetryCount++;
+        if( Authenticate() )
+            goto retry;
+        return std::string();
+    }
+
     CPLString osEffectiveURL;
     {
         char *pszEffectiveURL = nullptr;
@@ -1741,20 +1770,16 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
 #endif
 
     std::vector<CURL*> aHandles;
-    std::vector<WriteFuncStruct> asWriteFuncData;
-    std::vector<WriteFuncStruct> asWriteFuncHeaderData;
+    std::vector<WriteFuncStruct> asWriteFuncData(nRanges);
+    std::vector<WriteFuncStruct> asWriteFuncHeaderData(nRanges);
     std::vector<char*> apszRanges;
     std::vector<struct curl_slist*> aHeaders;
 
     struct CurlErrBuffer
     {
-        char szCurlErrBuf[CURL_ERROR_SIZE+1];
+        std::array<char,CURL_ERROR_SIZE+1> szCurlErrBuf;
     };
-    std::vector<CurlErrBuffer> asCurlErrors;
-
-    asWriteFuncData.resize(nRanges);
-    asWriteFuncHeaderData.resize(nRanges);
-    asCurlErrors.resize(nRanges);
+    std::vector<CurlErrBuffer> asCurlErrors(nRanges);
 
     const bool bMergeConsecutiveRanges = CPLTestBool(CPLGetConfigOption(
         "GDAL_HTTP_MERGE_CONSECUTIVE_RANGES", "TRUE"));
@@ -1831,7 +1856,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
 
         asCurlErrors[iRequest].szCurlErrBuf[0] = '\0';
         curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER,
-                         asCurlErrors[iRequest].szCurlErrBuf );
+                         &asCurlErrors[iRequest].szCurlErrBuf[0] );
 
         headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET", headers));
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -1870,11 +1895,12 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
                     asWriteFuncHeaderData[iReq].nStartOffset,
                     asWriteFuncHeaderData[iReq].nEndOffset);
 
+            const char* pszErrorMsg = &asCurlErrors[iRange].szCurlErrBuf[0];
             CPLDebug("VSICURL", "ReadMultiRange(%s), %s: response_code=%d, msg=%s",
                      osURL.c_str(),
                      rangeStr,
                      static_cast<int>(response_code),
-                     asCurlErrors[iRange].szCurlErrBuf);
+                     pszErrorMsg);
         }
 
         if( (response_code != 206 && response_code != 225) ||
@@ -2540,7 +2566,10 @@ VSICurlFilesystemHandler::GetCachedFileProp( const char* pszURL,
 {
     CPLMutexHolder oHolder( &hMutex );
 
-    return oCacheFileProp.tryGet(std::string(pszURL), oFileProp);
+    return oCacheFileProp.tryGet(std::string(pszURL), oFileProp) &&
+            // Let a chance to use new auth parameters
+           !(oFileProp.eExists == EXIST_NO &&
+             gnGenerationAuthParameters != oFileProp.nGenerationAuthParameters);
 }
 
 /************************************************************************/
@@ -2549,10 +2578,11 @@ VSICurlFilesystemHandler::GetCachedFileProp( const char* pszURL,
 
 void
 VSICurlFilesystemHandler::SetCachedFileProp( const char* pszURL,
-                                             const FileProp& oFileProp )
+                                             FileProp& oFileProp )
 {
     CPLMutexHolder oHolder( &hMutex );
 
+    oFileProp.nGenerationAuthParameters = gnGenerationAuthParameters;
     oCacheFileProp.insert(std::string(pszURL), oFileProp);
 }
 
@@ -2566,7 +2596,9 @@ VSICurlFilesystemHandler::GetCachedDirList( const char* pszURL,
 {
     CPLMutexHolder oHolder( &hMutex );
 
-    return oCacheDirList.tryGet(std::string(pszURL), oCachedDirList);
+    return oCacheDirList.tryGet(std::string(pszURL), oCachedDirList) &&
+            // Let a chance to use new auth parameters
+           gnGenerationAuthParameters == oCachedDirList.nGenerationAuthParameters;
 }
 
 /************************************************************************/
@@ -2575,7 +2607,7 @@ VSICurlFilesystemHandler::GetCachedDirList( const char* pszURL,
 
 void
 VSICurlFilesystemHandler::SetCachedDirList( const char* pszURL,
-                                            const CachedDirList& oCachedDirList )
+                                            CachedDirList& oCachedDirList )
 {
     CPLMutexHolder oHolder( &hMutex );
 
@@ -2596,6 +2628,7 @@ VSICurlFilesystemHandler::SetCachedDirList( const char* pszURL,
         nCachedFilesInDirList -= oldValue.oFileList.size();
         oCacheDirList.remove(oldestKey);
     }
+    oCachedDirList.nGenerationAuthParameters = gnGenerationAuthParameters;
 
     nCachedFilesInDirList += oCachedDirList.oFileList.size();
     oCacheDirList.insert(key, oCachedDirList);

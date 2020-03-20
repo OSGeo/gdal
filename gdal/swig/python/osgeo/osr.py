@@ -1015,6 +1015,24 @@ class SpatialReference(_object):
         """PromoteTo3D(SpatialReference self, char const * name=None) -> OGRErr"""
         return _osr.SpatialReference_PromoteTo3D(self, *args)
 
+
+
+    def __init__(self, *args, **kwargs):
+        """__init__(OSRSpatialReferenceShadow self, char const * wkt) -> SpatialReference"""
+        oldval = _osr.GetUseExceptions()
+        if not oldval:
+            _osr.UseExceptions()
+        try:
+            this = _osr.new_SpatialReference(*args, **kwargs)
+        finally:
+            if not oldval:
+                _osr.DontUseExceptions()
+        try:
+            self.this.append(this)
+        except __builtin__.Exception:
+            self.this = this
+
+
 SpatialReference_swigregister = _osr.SpatialReference_swigregister
 SpatialReference_swigregister(SpatialReference)
 

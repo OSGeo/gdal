@@ -95,10 +95,12 @@ public:
     virtual int Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags) = 0;
     virtual int Unlink( const char *pszFilename )
                       { (void) pszFilename; errno=ENOENT; return -1; }
+    virtual int* UnlinkBatch( CSLConstList papszFiles );
     virtual int Mkdir( const char *pszDirname, long nMode )
                       {(void)pszDirname; (void)nMode; errno=ENOENT; return -1;}
     virtual int Rmdir( const char *pszDirname )
                       { (void) pszDirname; errno=ENOENT; return -1; }
+    virtual int RmdirRecursive( const char *pszDirname );
     virtual char **ReadDir( const char *pszDirname )
                       { (void) pszDirname; return nullptr; }
     virtual char **ReadDirEx( const char *pszDirname, int /* nMaxFiles */ )

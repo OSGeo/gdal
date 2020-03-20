@@ -797,7 +797,7 @@ int ISGDataset::ParseHeader(const char *pszHeader, const char *)
 
     const double dfRoundedDeltaLon =
         ( osDeltaLon == "0.0167" ||
-          fabs(1. / dfDeltaLon - floor(1. / dfDeltaLon + 0.5)) < 0.06 ) ?
+          (dfDeltaLon < 1 && fabs(1. / dfDeltaLon - floor(1. / dfDeltaLon + 0.5)) < 0.06 )) ?
             1. / floor(1. / dfDeltaLon + 0.5) : dfDeltaLon;
     if( dfRoundedDeltaLon != dfDeltaLon &&
         fabs(fabs(dfLonMin / dfRoundedDeltaLon) - (floor(fabs(dfLonMin / dfRoundedDeltaLon)) + 0.5)) < 0.02 &&
@@ -830,7 +830,7 @@ int ISGDataset::ParseHeader(const char *pszHeader, const char *)
 
     const double dfRoundedDeltaLat =
         ( osDeltaLat == "0.0167" ||
-          fabs(1. / dfDeltaLat - floor(1. / dfDeltaLat + 0.5)) < 0.06 ) ?
+          (dfDeltaLat < 1 && fabs(1. / dfDeltaLat - floor(1. / dfDeltaLat + 0.5)) < 0.06 )) ?
             1. / floor(1. / dfDeltaLat + 0.5) : dfDeltaLat;
     if( dfRoundedDeltaLat != dfDeltaLat &&
         fabs(fabs(dfLatMin / dfRoundedDeltaLat) - (floor(fabs(dfLatMin / dfRoundedDeltaLat)) + 0.5)) < 0.02 &&

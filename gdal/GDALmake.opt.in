@@ -555,6 +555,12 @@ HAVE_FREEXL = @HAVE_FREEXL@
 FREEXL_INCLUDE = @FREEXL_INCLUDE@
 
 #
+# EXR stuff
+#
+
+EXR_CFLAGS = @EXR_CFLAGS@
+
+#
 # cryptopp stuff
 #
 HAVE_CRYPTOPP    =       @HAVE_CRYPTOPP@

@@ -498,15 +498,15 @@ OJPEGVGetField(TIFF* tif, uint32 tag, va_list ap)
 			break;
 		case TIFFTAG_JPEGQTABLES:
 			*va_arg(ap,uint32*)=(uint32)sp->qtable_offset_count;
-			*va_arg(ap,void**)=(void*)sp->qtable_offset; 
+			*va_arg(ap,const void**)=(const void*)sp->qtable_offset;
 			break;
 		case TIFFTAG_JPEGDCTABLES:
 			*va_arg(ap,uint32*)=(uint32)sp->dctable_offset_count;
-			*va_arg(ap,void**)=(void*)sp->dctable_offset;  
+			*va_arg(ap,const void**)=(const void*)sp->dctable_offset;
 			break;
 		case TIFFTAG_JPEGACTABLES:
 			*va_arg(ap,uint32*)=(uint32)sp->actable_offset_count;
-			*va_arg(ap,void**)=(void*)sp->actable_offset;
+			*va_arg(ap,const void**)=(const void*)sp->actable_offset;
 			break;
 		case TIFFTAG_JPEGPROC:
 			*va_arg(ap,uint16*)=(uint16)sp->jpeg_proc;
@@ -1263,15 +1263,12 @@ OJPEGWriteHeaderInfo(TIFF* tif)
 	}
 	if (jpeg_start_decompress_encap(sp,&(sp->libjpeg_jpeg_decompress_struct))==0)
 		return(0);
-        if(sp->libjpeg_jpeg_decompress_struct.image_width != sp->strile_width ||
-           sp->libjpeg_jpeg_decompress_struct.image_height < sp->strile_length) {
+        if(sp->libjpeg_jpeg_decompress_struct.image_width != sp->strile_width ) {
             TIFFErrorExt(tif->tif_clientdata,module,
-                         "jpeg_start_decompress() returned image_width = %d "
-                         "and image_height = %d, expected %d and %d",
+                         "jpeg_start_decompress() returned image_width = %d, "
+                         "expected %d",
                          sp->libjpeg_jpeg_decompress_struct.image_width,
-                         sp->libjpeg_jpeg_decompress_struct.image_height,
-                         sp->strile_width,
-                         sp->strile_length);
+                         sp->strile_width);
             return 0;
         }
         if(sp->libjpeg_jpeg_decompress_struct.max_h_samp_factor != sp->subsampling_hor ||

@@ -84,7 +84,7 @@ static PyObject* GDALCreateNumpyArray(PyObject* pCreateArray,
     {
         // Python 3
         Py_buffer pybuffer;
-        if( PyBuffer_FillInfo(&pybuffer, nullptr, (char*)pBuffer,
+        if( PyBuffer_FillInfo(&pybuffer, nullptr, static_cast<char*>(pBuffer),
                               nSize,
                               0, PyBUF_FULL) != 0)
         {
@@ -133,8 +133,11 @@ static PyObject* GDALCreateNumpyArray(PyObject* pCreateArray,
 
 class VRTDerivedRasterBandPrivateData
 {
+        VRTDerivedRasterBandPrivateData(const VRTDerivedRasterBandPrivateData&) = delete;
+        VRTDerivedRasterBandPrivateData& operator= (const VRTDerivedRasterBandPrivateData&) = delete;
+
     public:
-        CPLString m_osCode;
+        CPLString m_osCode{};
         CPLString m_osLanguage;
         int       m_nBufferRadius;
         PyObject* m_poGDALCreateNumpyArray;
@@ -143,7 +146,7 @@ class VRTDerivedRasterBandPrivateData
         bool      m_bPythonInitializationSuccess;
         bool      m_bExclusiveLock;
         bool      m_bFirstTime;
-        std::vector< std::pair<CPLString,CPLString> > m_oFunctionArgs;
+        std::vector< std::pair<CPLString,CPLString> > m_oFunctionArgs{};
 
         VRTDerivedRasterBandPrivateData():
             m_osLanguage("C"),
@@ -798,7 +801,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         {
             GDALCopyWords(
                 &dfWriteValue, GDT_Float64, 0,
-                reinterpret_cast<GByte *>( pData ) + nLineSpace * iLine,
+                static_cast<GByte *>( pData ) + nLineSpace * iLine,
                 eBufType, static_cast<int>(nPixelSpace), nBufXSize );
         }
     }
@@ -850,7 +853,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     const int nExtBufXSize = nBufXSize + 2 * nBufferRadius;
     const int nExtBufYSize = nBufYSize + 2 * nBufferRadius;
     void **pBuffers
-        = reinterpret_cast<void **>( CPLMalloc(sizeof(void *) * nSources) );
+        = static_cast<void **>( CPLMalloc(sizeof(void *) * nSources) );
     for( int iSource = 0; iSource < nSources; iSource++ ) {
         pBuffers[iSource] =
             VSI_MALLOC3_VERBOSE(nSrcTypeSize, nExtBufXSize, nExtBufYSize);
@@ -877,7 +880,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         else
         {
             GDALCopyWords( &m_dfNoDataValue, GDT_Float64, 0,
-                           reinterpret_cast<GByte *>( pBuffers[iSource] ),
+                           static_cast<GByte *>( pBuffers[iSource] ),
                            eSrcType, nSrcTypeSize,
                            nExtBufXSize * nExtBufYSize );
         }
@@ -951,8 +954,8 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     // Load values for sources into packed buffers.
     CPLErr eErr = CE_None;
     for( int iSource = 0; iSource < nSources && eErr == CE_None; iSource++ ) {
-        GByte* pabyBuffer = reinterpret_cast<GByte*>(pBuffers[iSource]);
-        eErr = reinterpret_cast<VRTSource *>( papoSources[iSource] )->RasterIO(
+        GByte* pabyBuffer = static_cast<GByte*>(pBuffers[iSource]);
+        eErr = static_cast<VRTSource *>( papoSources[iSource] )->RasterIO(
             eSrcType,
             nXOffExt, nYOffExt, nXSizeExt, nYSizeExt,
             pabyBuffer + (nYShiftInBuffer * nExtBufXSize +
@@ -1039,7 +1042,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             nPixelSpace != nBufTypeSize ||
             nLineSpace != static_cast<GSpacing>(nBufTypeSize) * nBufXSize )
         {
-            pabyTmpBuffer = reinterpret_cast<GByte*>(VSI_CALLOC_VERBOSE(
+            pabyTmpBuffer = static_cast<GByte*>(VSI_CALLOC_VERBOSE(
                             static_cast<size_t>(nExtBufXSize) * nExtBufYSize,
                             GDALGetDataTypeSizeBytes(eDataType)));
             if( !pabyTmpBuffer )
@@ -1070,7 +1073,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         PyObject* pyArgInputArray = PyTuple_New(nSources);
         for( int i = 0; i < nSources; i++ )
         {
-            GByte* pabyBuffer = reinterpret_cast<GByte*>(pBuffers[i]);
+            GByte* pabyBuffer = static_cast<GByte*>(pBuffers[i]);
             PyObject* poPySrcArray = GDALCreateNumpyArray(
                         m_poPrivate->m_poGDALCreateNumpyArray,
                         pabyBuffer,
@@ -1150,7 +1153,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 GDALCopyWords(pabyTmpBuffer + nSrcOffset,
                               eDataType,
                               GDALGetDataTypeSizeBytes(eDataType),
-                              reinterpret_cast<GByte*>(pData) + iY * nLineSpace,
+                              static_cast<GByte*>(pData) + iY * nLineSpace,
                               eBufType,
                               static_cast<int>(nPixelSpace),
                               nBufXSize);
@@ -1160,7 +1163,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         }
     }
     else if( eErr == CE_None && pfnPixelFunc != nullptr ) {
-        eErr = pfnPixelFunc( reinterpret_cast<void **>( pBuffers ), nSources,
+        eErr = pfnPixelFunc( static_cast<void **>( pBuffers ), nSources,
                              pData, nBufXSize, nBufYSize,
                              eSrcType, eBufType, static_cast<int>(nPixelSpace),
                              static_cast<int>(nLineSpace) );

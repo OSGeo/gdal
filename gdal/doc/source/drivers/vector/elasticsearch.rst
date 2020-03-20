@@ -286,13 +286,14 @@ options:
 -  **INDEX_DEFINITION**\ =filename or JSon. (GDAL >= 2.4) Filename from
    which to read a user-defined index definition, or inlined index
    definition as serialized JSon.
--  **MAPPING_NAME=**\ =name. Name of the mapping type within the index.
+-  **MAPPING_NAME=**\ =name. (Elasticsearch < 7) Name of the mapping type within the index.
    By default, the mapping name is "FeatureCollection" and the documents
    will be written as GeoJSON Feature objects. If another mapping name
-   is chosen, a more "flat" structure will be used.
--  **MAPPING**\ =filename or JSon. Filename from which to read a
-   user-defined mapping, or mapping as serialized JSon. This option is
+   is chosen, a more "flat" structure will be used.  This option is
    ignored when converting to Elasticsearch >=7 (see `Removal of mapping types <https://www.elastic.co/guide/en/elasticsearch/reference/current/removal-of-types.html>`__).
+   With ElasticSearch 7 or later, a "flat" structure is always used.
+-  **MAPPING**\ =filename or JSon. Filename from which to read a
+   user-defined mapping, or mapping as serialized JSon.
 -  **WRITE_MAPPING**\ =filename. Creates a mapping file that can be
    modified by the user prior to insert in to the index. No feature will
    be written. This option is exclusive with MAPPING.

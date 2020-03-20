@@ -651,6 +651,9 @@ def test_ogr_geojson_23():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2 20)'))
     lyr.CreateFeature(feat)
+    assert lyr.GetExtent() == (1.0, 2.0, 10.0, 20.0)
+    assert lyr.GetExtent(geom_field=0) == (1.0, 2.0, 10.0, 20.0)
+    assert lyr.GetExtent(geom_field=1, can_return_null=True) is None
     lyr = None
     ds = None
 

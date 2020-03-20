@@ -1887,7 +1887,7 @@ int OGRDB2DataSource::OpenRaster( const char* pszTableName,
                            "WHERE zoom_level = tm.zoom_level FETCH FIRST ROW ONLY)",
                            pszTableName);
     }
-    else if( pszZoomLevel == nullptr )
+    else // if( pszZoomLevel == nullptr )
     {
         oStatement.Appendf(" AND zoom_level <= (SELECT MAX(zoom_level) FROM %s)",
                            pszTableName);

@@ -29,7 +29,7 @@ no effort is made to preserve styles and annotations.
 Currently the OGR Walk driver does not take advantage of spatial indexes
 for fast spatial queries.
 
-By default, SQL statements are handled by `OGR SQL <ogr_sql.html>`__
+By default, SQL statements are handled by :ref:`OGR SQL <ogr_sql_dialect>`
 engine. SQL commands can also be passed directly to the ODBC database
 engine when SQL dialect is not "OGRSQL". In that case, the queries will
 deal with tables (such as "XXXXFeatures", where XXXX is the name of a

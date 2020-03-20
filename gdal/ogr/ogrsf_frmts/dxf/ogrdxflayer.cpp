@@ -1350,7 +1350,7 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
             poLR->set3D(TRUE);
             if (vertexIndex71 != 0 && vertexIndex71 <= nPoints)
             {
-                if (startPoint == -1)
+                //if (startPoint == -1)
                     startPoint = vertexIndex71-1;
                 poLR->setPoint(iPoint,papoPoints[vertexIndex71-1]);
                 iPoint++;

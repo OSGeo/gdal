@@ -45,7 +45,7 @@ namespace PCIDSK
 /*      segments.  Imagery may be compressed.                           */
 /************************************************************************/
 
-    class CTiledChannel : public CPCIDSKChannel
+    class CTiledChannel final: public CPCIDSKChannel
     {
 
     public:

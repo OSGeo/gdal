@@ -589,7 +589,6 @@ static void basic_decode(const unsigned char* code,
                          unsigned char* buf,
                          int ns, int wid)
 {
-    unsigned char val = code[0];
     int runInt = -3;
     unsigned char runChar;
     unsigned int nval = 999999;
@@ -609,7 +608,7 @@ static void basic_decode(const unsigned char* code,
                 runInt--;
                 continue; 
             }
-            val = grab1(3, code, code_size, buffer_pos, bit1ptr);
+            unsigned char val = grab1(3, code, code_size, buffer_pos, bit1ptr);
 
             if (val<7)
             {

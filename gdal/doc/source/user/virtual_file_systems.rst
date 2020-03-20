@@ -274,7 +274,7 @@ Several authentication methods are possible, and are attempted in the following 
 1. The :decl_configoption:`GS_SECRET_ACCESS_KEY` and :decl_configoption:`GS_ACCESS_KEY_ID` configuration options can be set for AWS-style authentication
 2. The :decl_configoption:`GDAL_HTTP_HEADER_FILE` configuration option to point to a filename of a text file with "key: value" headers. Typically, it must contain a "Authorization: Bearer XXXXXXXXX" line.
 3. (GDAL >= 2.3) The :decl_configoption:`GS_OAUTH2_REFRESH_TOKEN` configuration option can be set to use OAuth2 client authentication. See http://code.google.com/apis/accounts/docs/OAuth2.html This refresh token can be obtained with the ``gdal_auth.py -s storage`` or ``gdal_auth.py -s storage-rw`` script Note: instead of using the default GDAL application credentials, you may define the :decl_configoption:`GS_OAUTH2_CLIENT_ID` and :decl_configoption:`GS_OAUTH2_CLIENT_SECRET` configuration options (need to be defined both for gdal_auth.py and later execution of /vsigs)
-4. (GDAL >= 2.3) The :decl_configoption:`GOOGLE_APPLICATION_CREDENTIALS` configuration option an be set to point to a JSon file containing OAuth2 service account credentials, in particular a private key and a client email. See https://developers.google.com/identity/protocols/OAuth2ServiceAccount for more details on this authentication method. The bucket must grant the "Storage Legacy Bucket Owner" or "Storage Legacy Bucket Reader" permissions to the service account. The :decl_configoption:`GS_OAUTH2_SCOPE` configuration option can be set to change the default permission scope from "https://www.googleapis.com/auth/devstorage.read_write" to "https://www.googleapis.com/auth/devstorage.read_only" if needed.
+4. (GDAL >= 2.3) The :decl_configoption:`GOOGLE_APPLICATION_CREDENTIALS` configuration option can be set to point to a JSON file containing OAuth2 service account credentials, in particular a private key and a client email. See https://developers.google.com/identity/protocols/OAuth2ServiceAccount for more details on this authentication method. The bucket must grant the "Storage Legacy Bucket Owner" or "Storage Legacy Bucket Reader" permissions to the service account. The :decl_configoption:`GS_OAUTH2_SCOPE` configuration option can be set to change the default permission scope from "https://www.googleapis.com/auth/devstorage.read_write" to "https://www.googleapis.com/auth/devstorage.read_only" if needed.
 5. (GDAL >= 2.3) Variant of the previous method. The :decl_configoption:`GS_OAUTH2_PRIVATE_KEY` (or :decl_configoption:`GS_OAUTH2_PRIVATE_KEY_FILE)` and :decl_configoption:`GS_OAUTH2_CLIENT_EMAIL` can be set to use OAuth2 service account authentication. See https://developers.google.com/identity/protocols/OAuth2ServiceAccount for more details on this authentication method. The :decl_configoption:`GS_OAUTH2_PRIVATE_KEY` configuration option must contain the private key as a inline string, starting with "-----BEGIN PRIVATE KEY-----" Alternatively the :decl_configoption:`GS_OAUTH2_PRIVATE_KEY_FILE` configuration option can be set to indicate a filename that contains such a private key. The bucket must grant the "Storage Legacy Bucket Owner" or "Storage Legacy Bucket Reader" permissions to the service account. The :decl_configoption:`GS_OAUTH2_SCOPE` configuration option can be set to change the default permission scope from "https://www.googleapis.com/auth/devstorage.read_write" to "https://www.googleapis.com/auth/devstorage.read_only" if needed.
 6. (GDAL >= 2.3) An alternate way of providing credentials similar to what the "gsutil" command line utility or Boto3 support can be used. If the above mentioned environment variables are not provided, the :file:`~/.boto` or :file:`UserProfile%/.boto` file will be read (or the file pointed by :decl_configoption:`CPL_GS_CREDENTIALS_FILE`) for the gs_secret_access_key and gs_access_key_id entries for AWS style authentication. If not found, it will look for the gs_oauth2_refresh_token (and optionally client_id and client_secret) entry for OAuth2 client authentication.
 7. (GDAL >= 2.3) Finally if none of the above method succeeds, the code will check if the current machine is a Google Compute Engine instance, and if so will use the permissions associated to it (using the default service account associated with the VM). To force a machine to be detected as a GCE instance (for example for code running in a container with no access to the boot logs), you can set :decl_configoption:`CPL_MACHINE_IS_GCE` to ``YES``.
@@ -378,10 +378,20 @@ Recognized filenames are of the form :file:`/vsiswift/bucket/key` where ``bucket
 
 The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
 
-Two authentication methods are possible, and are attempted in the following order:
+Three authentication methods are possible, and are attempted in the following order:
 
 1. The :decl_configoption:`SWIFT_STORAGE_URL` and :decl_configoption:`SWIFT_AUTH_TOKEN` configuration options are set respectively to the storage URL (e.g http://127.0.0.1:12345/v1/AUTH_something) and the value of the x-auth-token authorization token.
 2. The :decl_configoption:`SWIFT_AUTH_V1_URL`, :decl_configoption:`SWIFT_USER` and :decl_configoption:`SWIFT_KEY` configuration options are set respectively to the endpoint of the Auth V1 authentication (e.g http://127.0.0.1:12345/auth/v1.0), the user name and the key/password. This authentication endpoint will be used to retrieve the storage URL and authorization token mentioned in the first authentication method.
+3. Authentication with Keystone v3 is using the same options as python-swiftclient, see https://docs.openstack.org/python-swiftclient/latest/cli/index.html#authentication for more details. GDAL (>= 3.1) supports the following options:
+
+   - `OS_IDENTITY_API_VERSION=3`
+   - `OS_AUTH_URL`
+   - `OS_USERNAME`
+   - `OS_PASSWORD`
+   - `OS_USER_DOMAIN_NAME`
+   - `OS_PROJECT_NAME`
+   - `OS_PROJECT_DOMAIN_NAME`
+   - `OS_REGION_NAME`
 
 This file system handler also allows sequential writing of files (no seeks or read operations are then allowed)
 

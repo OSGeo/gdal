@@ -259,7 +259,7 @@ static void ApplyErrorHandler( CPLErrorContext *psCtx, CPLErr eErrClass,
                 pfnErrorHandler(eErrClass, err_no, pszMessage);
             }
         }
-        else if( eErrClass == CE_Debug )
+        else /* if( eErrClass == CE_Debug ) */
         {
             // for CPLDebug messages we propagate to the default error handler
             pActiveUserData = nullptr;

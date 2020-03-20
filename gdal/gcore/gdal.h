@@ -1516,6 +1516,8 @@ GDALMDArrayH CPL_DLL GDALMDArrayGetView(GDALMDArrayH hArray, const char* pszView
 GDALMDArrayH CPL_DLL GDALMDArrayTranspose(GDALMDArrayH hArray,
                                             size_t nNewAxisCount,
                                             const int *panMapNewAxisToOldAxis);
+GDALMDArrayH CPL_DLL GDALMDArrayGetUnscaled(GDALMDArrayH hArray);
+GDALMDArrayH CPL_DLL GDALMDArrayGetMask(GDALMDArrayH hArray, CSLConstList papszOptions);
 GDALDatasetH CPL_DLL GDALMDArrayAsClassicDataset(GDALMDArrayH hArray,
                                                  size_t iXDim, size_t iYDim);
 

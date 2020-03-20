@@ -1,3 +1,33 @@
+/******************************************************************************
+ *
+ * Project:  FlatGeobuf
+ * Purpose:  Packed RTree management
+ * Author:   Björn Harrtell <bjorn at wololo dot org>
+ *
+ ******************************************************************************
+ * Copyright (c) 2018-2020, Björn Harrtell <bjorn at wololo dot org>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
+
+// NOTE: The upstream of this file is in https://github.com/bjornharrtell/flatgeobuf/tree/master/src/cpp
+
 #ifdef GDAL_COMPILATION
 #include "cpl_port.h"
 #else
@@ -252,6 +282,7 @@ PackedRTree::PackedRTree(const void *data, const uint64_t numItems, const uint16
 
 std::vector<SearchResultItem> PackedRTree::search(double minX, double minY, double maxX, double maxY) const
 {
+    uint64_t leafNodesOffset = _levelBounds.front().first;
     NodeItem n { minX, minY, maxX, maxY, 0 };
     std::vector<SearchResultItem> results;
     std::unordered_map<uint64_t, uint64_t> queue;
@@ -270,7 +301,7 @@ std::vector<SearchResultItem> PackedRTree::search(double minX, double minY, doub
             if (!n.intersects(nodeItem))
                 continue;
             if (isLeafNode)
-                results.push_back({ nodeItem, pos - 1 });
+                results.push_back({ nodeItem.offset, pos - leafNodesOffset });
             else
                 queue.insert(std::pair<uint64_t, uint64_t>(nodeItem.offset, level - 1));
         }
@@ -283,6 +314,7 @@ std::vector<SearchResultItem> PackedRTree::streamSearch(
     const std::function<void(uint8_t *, size_t, size_t)> &readNode)
 {
     auto levelBounds = generateLevelBounds(numItems, nodeSize);
+    uint64_t leafNodesOffset = levelBounds.front().first;
     uint64_t numNodes = levelBounds.front().second;
     std::vector<NodeItem> nodeItems;
     nodeItems.reserve(nodeSize);
@@ -318,7 +350,7 @@ std::vector<SearchResultItem> PackedRTree::streamSearch(
             if (!item.intersects(nodeItem))
                 continue;
             if (isLeafNode)
-                results.push_back({ nodeItem, pos - 1 });
+                results.push_back({ nodeItem.offset, pos - leafNodesOffset });
             else
                 queue.insert(std::pair<uint64_t, uint64_t>(nodeItem.offset, level - 1));
         }
@@ -349,9 +381,7 @@ uint64_t PackedRTree::size(const uint64_t numItems, const uint16_t nodeSize)
 
 void PackedRTree::streamWrite(const std::function<void(uint8_t *, size_t)> &writeData) {
 #if !CPL_IS_LSB
-    // Note: we should normally revert endianness after writing, but as we no longer
-    // use the data structures this is not needed.
-    for( size_t i = 0; i < static_cast<size_t>(_numItems); i++ )
+    for( size_t i = 0; i < static_cast<size_t>(_numNodes); i++ )
     {
         CPL_LSBPTR64(&_nodeItems[i].minX);
         CPL_LSBPTR64(&_nodeItems[i].minY);
@@ -361,6 +391,16 @@ void PackedRTree::streamWrite(const std::function<void(uint8_t *, size_t)> &writ
     }
 #endif
     writeData(reinterpret_cast<uint8_t *>(_nodeItems), static_cast<size_t>(_numNodes * sizeof(NodeItem)));
+#if !CPL_IS_LSB
+    for( size_t i = 0; i < static_cast<size_t>(_numNodes); i++ )
+    {
+        CPL_LSBPTR64(&_nodeItems[i].minX);
+        CPL_LSBPTR64(&_nodeItems[i].minY);
+        CPL_LSBPTR64(&_nodeItems[i].maxX);
+        CPL_LSBPTR64(&_nodeItems[i].maxY);
+        CPL_LSBPTR64(&_nodeItems[i].offset);
+    }
+#endif
 }
 
 NodeItem PackedRTree::getExtent() const { return _extent; }

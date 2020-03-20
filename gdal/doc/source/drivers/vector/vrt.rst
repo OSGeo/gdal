@@ -103,9 +103,9 @@ for statement derived results. Some limitations may apply for SQL
 derived layers. Starting with OGR 1.10, an optional **dialect**
 attribute can be specified on the SrcSQL element to specify which SQL
 "dialect" should be used : possible values are currently
-`OGRSQL <ogr_sql.html>`__ or `SQLITE <ogr_sql_sqlite.html>`__. If
-*dialect* is not specified, the default dialect of the datasource will
-be used.
+:ref:`OGR SQL <ogr_sql_dialect>` or :ref:`SQLITE
+<sql_sqlite_dialect>`. If *dialect* is not specified, the default
+dialect of the datasource will be used.
 
 | 
 
@@ -374,7 +374,7 @@ definitions:
    <OGRVRTDataSource>
        <OGRVRTLayer name="remapped_layer">
            <SrcDataSource>your_source.shp</SrcDataSource>
-           <SrcLayer>your_source</SrcSQL>
+           <SrcLayer>your_source</SrcLayer>
            <Field name="name" src="src_field_1" />
            <Field name="desc" src="src_field_2" type="String" width="45" />
        </OGRVRTLayer>

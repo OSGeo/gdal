@@ -193,9 +193,9 @@ VRTCreateCopy( const char * pszFilename,
     /*      Convert tree to a single block of XML text.                     */
     /* -------------------------------------------------------------------- */
         char *pszVRTPath = CPLStrdup(CPLGetPath(pszFilename));
-        reinterpret_cast<VRTDataset *>(
+        static_cast<VRTDataset *>(
             poSrcDS )->UnsetPreservedRelativeFilenames();
-        CPLXMLNode *psDSTree = reinterpret_cast<VRTDataset *>(
+        CPLXMLNode *psDSTree = static_cast<VRTDataset *>(
             poSrcDS )->SerializeToXML( pszVRTPath );
 
         char *pszXML = CPLSerializeXMLTree( psDSTree );
@@ -268,7 +268,7 @@ VRTCreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create the virtual dataset.                                     */
 /* -------------------------------------------------------------------- */
-    VRTDataset *poVRTDS = reinterpret_cast<VRTDataset *>(
+    VRTDataset *poVRTDS = static_cast<VRTDataset *>(
         VRTDataset::Create( pszFilename,
                             poSrcDS->GetRasterXSize(),
                             poSrcDS->GetRasterYSize(),
@@ -334,7 +334,7 @@ VRTCreateCopy( const char * pszFilename,
         poVRTDS->AddBand( poSrcBand->GetRasterDataType(), nullptr );
 
         VRTSourcedRasterBand *poVRTBand
-            = reinterpret_cast<VRTSourcedRasterBand *>(
+            = static_cast<VRTSourcedRasterBand *>(
                 poVRTDS->GetRasterBand( iBand+1 ) );
 
 /* -------------------------------------------------------------------- */

@@ -40,6 +40,12 @@ Metadata
 -  **ELEVATION_TYPE**: Could be either 0 (absolute elevation) or 1
    (total elevation). MTW only.
 
+Open Options
+------------
+- **RMF_SET_VERTCS**: set to ON, the layers spatial reference
+   will include vertical coordinate system description if exist.
+   This feature can be enabled via config option with same name.
+
 Creation Options
 ----------------
 

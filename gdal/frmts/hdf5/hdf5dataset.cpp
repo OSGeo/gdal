@@ -1111,7 +1111,7 @@ CPLErr HDF5Dataset::CreateMetadata( HDF5GroupObjects *poH5Object, int nType)
 
     poH5CurrentObject = poH5Object;
 
-    if( poH5Object->pszPath == nullptr || EQUAL(poH5Object->pszPath, "") )
+    if( EQUAL(poH5Object->pszPath, "") )
         return CE_None;
 
     HDF5Dataset *const poDS = this;

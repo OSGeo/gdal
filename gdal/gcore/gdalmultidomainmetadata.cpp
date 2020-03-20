@@ -347,7 +347,7 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
                 while( psLastChild->psNext != nullptr )
                     psLastChild = psLastChild->psNext;
             }
-            for( int i = 0; papszMD != nullptr && papszMD[i] != nullptr; i++ )
+            for( int i = 0; papszMD[i] != nullptr; i++ )
             {
                 char *pszKey = nullptr;
 

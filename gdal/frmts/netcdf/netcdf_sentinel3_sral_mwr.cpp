@@ -467,7 +467,7 @@ void netCDFDataset::ProcessSentinel3_SRAL_MWR()
         status = nc_inq_dimname(cdfid, dimIds[i], szDimName);
         NCDF_ERR(status);
         if( status != NC_NOERR )
-            return;
+            break;
         std::string name(CPLGetBasename(GetDescription()));
         name += '_';
         name += szDimName;

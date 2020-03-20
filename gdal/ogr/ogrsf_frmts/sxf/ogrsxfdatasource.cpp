@@ -42,40 +42,6 @@
 
 CPL_CVSID("$Id$")
 
-constexpr long aoVCS[] =
-{
-    0,
-    5705,   //1
-    5711,   //2
-    0,      //3
-    5710,   //4
-    5710,   //5
-    0,      //6
-    0,      //7
-    0,      //8
-    0,      //9
-    5716,   //10
-    5733,   //11
-    0,      //12
-    0,      //13
-    0,      //14
-    0,      //15
-    5709,   //16
-    5776,   //17
-    0,      //18
-    0,      //19
-    5717,   //20
-    5613,   //21
-    0,      //22
-    5775,   //23
-    5702,   //24
-    0,      //25
-    0,      //26
-    5714    //27
-};
-
-#define NUMBER_OF_VERTICALCS    (sizeof(aoVCS)/sizeof(aoVCS[0]))
-
 // EPSG code range http://gis.stackexchange.com/a/18676/9904
 constexpr int MIN_EPSG = 1000;
 constexpr int MAX_EPSG = 32768;
@@ -502,38 +468,9 @@ void OGRSXFDataSource::SetVertCS(const long iVCS, SXFPassport& passport,
     if (!CPLTestBool(pszSetVertCS))
         return;
 
-
-    const int nEPSG = static_cast<int>(aoVCS[iVCS]);
-
-    if (nEPSG < MIN_EPSG || nEPSG > MAX_EPSG)
-    {
-        CPLError(CE_Warning, CPLE_NotSupported, "SXF. Vertical coordinate system (SXF index %ld) not supported", iVCS);
-        return;
-    }
-
-    OGRSpatialReference sr;
-    sr.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    OGRErr eImportFromEPSGErr = sr.importFromEPSG(nEPSG);
-    if (eImportFromEPSGErr != OGRERR_NONE)
-    {
-        CPLError( CE_Warning, CPLE_None, "SXF. Vertical coordinate system (SXF index %ld, EPSG %d) import from EPSG error", iVCS, nEPSG);
-        return;
-    }
-
-    if (sr.IsVertical() != 1)
-    {
-        CPLError( CE_Warning, CPLE_None, "SXF. Coordinate system (SXF index %ld, EPSG %d) is not Vertical", iVCS, nEPSG);
-        return;
-    }
-
-    //passport.stMapDescription.pSpatRef->SetVertCS("Baltic", "Baltic Sea");
-    OGRErr eSetVertCSErr = passport.stMapDescription.pSpatRef->SetVertCS(sr.GetAttrValue("VERT_CS"), sr.GetAttrValue("VERT_DATUM"));
-    if (eSetVertCSErr != OGRERR_NONE)
-    {
-        CPLError(CE_Warning, CPLE_None, "SXF. Vertical coordinate system (SXF index %ld, EPSG %d) set error", iVCS, nEPSG);
-        return;
-    }
+    passport.stMapDescription.pSpatRef->importVertCSFromPanorama(static_cast<int>(iVCS));
 }
+
 OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& passport,
                                                const char* const* papszOpenOpts)
 {

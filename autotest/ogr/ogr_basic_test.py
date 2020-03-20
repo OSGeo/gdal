@@ -35,6 +35,7 @@ import gdaltest
 import ogrtest
 from osgeo import gdal
 from osgeo import ogr
+from osgeo import osr
 import pytest
 
 ###############################################################################
@@ -690,6 +691,19 @@ def test_ogr_basic_feature_iterator():
     for f in lyr:
         count += 1
     assert count == 10
+
+
+def test_ogr_basic_dataset_copy_layer_dst_srswkt():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    src_lyr = ds.CreateLayer('lyr1')
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('WGS84')
+    sr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    out_lyr = ds.CopyLayer(src_lyr, 'lyr2',
+                           options=['DST_SRSWKT=' + sr.ExportToWkt()])
+    assert out_lyr.GetSpatialRef() is not None
+    assert out_lyr.GetSpatialRef().IsSame(sr)
 
 
 ###############################################################################

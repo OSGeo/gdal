@@ -687,7 +687,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
             {
                 poSrcDS = static_cast<GDALDataset *>( GDALOpenEx(
                         osSrcDSName, nOpenFlags, nullptr,
-                        (const char* const* )papszOpenOptions, nullptr ) );
+                        papszOpenOptions, nullptr ) );
                 if( poSrcDS )
                 {
                     bAddToMapIfOk = true;
@@ -698,7 +698,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
         {
             poSrcDS = static_cast<GDALDataset *>( GDALOpenEx(
                         osSrcDSName, nOpenFlags, nullptr,
-                        (const char* const* )papszOpenOptions, nullptr ) );
+                        papszOpenOptions, nullptr ) );
         }
     }
     else
@@ -781,10 +781,9 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
         double yOff = CPLAtof(CPLGetXMLValue(psSrcRect,"yOff","-1"));
         double xSize = CPLAtof(CPLGetXMLValue(psSrcRect,"xSize","-1"));
         double ySize = CPLAtof(CPLGetXMLValue(psSrcRect,"ySize","-1"));
-        if( !CPLIsFinite(xOff) || !CPLIsFinite(yOff) ||
-            !CPLIsFinite(xSize) || !CPLIsFinite(ySize) ||
-            xOff < INT_MIN || xOff > INT_MAX ||
-            yOff < INT_MIN || yOff > INT_MAX ||
+        // Test written that way to catch NaN values
+        if( !(xOff >= INT_MIN && xOff <= INT_MAX) ||
+            !(yOff >= INT_MIN && yOff <= INT_MAX) ||
             !(xSize > 0 || xSize == -1) || xSize > INT_MAX ||
             !(ySize > 0 || ySize == -1) || ySize > INT_MAX )
         {
@@ -808,10 +807,9 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
         double yOff = CPLAtof(CPLGetXMLValue(psDstRect,"yOff","-1"));
         double xSize = CPLAtof(CPLGetXMLValue(psDstRect,"xSize","-1"));
         double ySize = CPLAtof(CPLGetXMLValue(psDstRect,"ySize","-1"));
-        if( !CPLIsFinite(xOff) || !CPLIsFinite(yOff) ||
-            !CPLIsFinite(xSize) || !CPLIsFinite(ySize) ||
-            xOff < INT_MIN || xOff > INT_MAX ||
-            yOff < INT_MIN || yOff > INT_MAX ||
+        // Test written that way to catch NaN values
+        if( !(xOff >= INT_MIN && xOff <= INT_MAX) ||
+            !(yOff >= INT_MIN && yOff <= INT_MAX) ||
             !(xSize > 0 || xSize == -1) || xSize > INT_MAX ||
             !(ySize > 0 || ySize == -1) || ySize > INT_MAX )
         {
@@ -1174,7 +1172,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
         else if( dfOutXOff > INT_MAX )
             *pnOutXOff = INT_MAX;
         else
-            *pnOutXOff = (int) (dfOutXOff+0.001);
+            *pnOutXOff = static_cast<int>(dfOutXOff+0.001);
 
         // Apply correction on floating-point source window
         {
@@ -1190,7 +1188,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
             return FALSE;
         if( dfOutRightXOff > INT_MAX )
             dfOutRightXOff = INT_MAX;
-        *pnOutXSize = (int) ceil(dfOutRightXOff-0.001) - *pnOutXOff;
+        *pnOutXSize = static_cast<int>(ceil(dfOutRightXOff-0.001) - *pnOutXOff);
 
         if( *pnOutXSize > INT_MAX - *pnOutXOff ||
             *pnOutXOff + *pnOutXSize > nBufXSize )
@@ -1369,7 +1367,7 @@ VRTSimpleSource::RasterIO( GDALDataType eBandDataType,
                     eBandDataType, 0, 0, psExtraArg );
             if( eErr == CE_None )
             {
-                GByte* pabyTemp = reinterpret_cast<GByte*>(pTemp);
+                GByte* pabyTemp = static_cast<GByte*>(pTemp);
                 for( int iY = 0; iY < nOutYSize; iY++ )
                 {
                     GDALCopyWords(pabyTemp + static_cast<size_t>(iY) *
@@ -1711,7 +1709,7 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
     GByte* pabyOut =
         static_cast<unsigned char *>(pData)
         + nOutXOff * nPixelSpace
-        + (GPtrDiff_t)nOutYOff * nLineSpace;
+        + static_cast<GPtrDiff_t>(nOutYOff) * nLineSpace;
 
     CPLErr eErr = CE_Failure;
 
@@ -1732,7 +1730,7 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
                 0, 0, 0, psExtraArg );
             if( eErr == CE_None )
             {
-                GByte* pabyTemp = reinterpret_cast<GByte*>(pTemp);
+                GByte* pabyTemp = static_cast<GByte*>(pTemp);
                 const size_t nSrcBandSpace = static_cast<size_t>(nOutYSize) *
                                                 nOutXSize * nBandDTSize;
                 for( int iBand = 0; iBand < nBandCount; iBand ++ )

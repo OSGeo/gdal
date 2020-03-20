@@ -361,11 +361,8 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
     // set to none for now... if we have a geometry column it will be set layer.
     poDefn->SetGeomType( wkbNone );
 
-    if( hResult != nullptr )
-    {
-        mysql_free_result( hResult );
-        hResultSet = nullptr;
-    }
+    mysql_free_result( hResult );
+    hResult = nullptr;
 
     if( bHasFid )
         CPLDebug( "MySQL", "table %s has FID column %s.",
@@ -391,7 +388,6 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
             osCommand.Printf("SELECT GEOMETRY_TYPE_NAME FROM INFORMATION_SCHEMA.ST_GEOMETRY_COLUMNS "
                              "WHERE TABLE_NAME = '%s'", pszTable);
 
-        hResult = nullptr;
         if( !mysql_query( poDS->GetConn(), osCommand ) )
             hResult = mysql_store_result( poDS->GetConn() );
 
@@ -1218,9 +1214,7 @@ GIntBig OGRMySQLTableLayer::GetFeatureCount( CPL_UNUSED int bForce )
     if( papszRow != nullptr && papszRow[0] != nullptr )
         nCount = CPLAtoGIntBig(papszRow[0]);
 
-    if( hResult != nullptr )
-        mysql_free_result( hResult );
-    hResult = nullptr;
+    mysql_free_result( hResult );
 
     return nCount;
 }
@@ -1293,12 +1287,12 @@ OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForc
 
             if ( poGeometry != nullptr )
             {
-                if (poGeometry && !bExtentSet)
+                if (!bExtentSet)
                 {
                     poGeometry->getEnvelope(psExtent);
                     bExtentSet = TRUE;
                 }
-                else if (poGeometry)
+                else
                 {
                     poGeometry->getEnvelope(&oEnv);
                     if (oEnv.MinX < psExtent->MinX)

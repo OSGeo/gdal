@@ -666,7 +666,7 @@ CPLSpawnedProcess* CPLSpawnAsync( int (*pfnMain)(CPL_FILE_HANDLE,
 
         if( bDup2In )
         {
-            if( !bHasActions ) posix_spawn_file_actions_init(&actions);
+            /*if( !bHasActions )*/ posix_spawn_file_actions_init(&actions);
             posix_spawn_file_actions_adddup2(&actions, pipe_in[IN_FOR_PARENT],
                                              fileno(stdin));
             posix_spawn_file_actions_addclose(&actions,

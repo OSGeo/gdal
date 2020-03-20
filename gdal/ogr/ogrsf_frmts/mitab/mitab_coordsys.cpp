@@ -347,8 +347,7 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
             }
         }
 
-        if( asDatumInfoList[iDatum].nMapInfoDatumID == -1 &&
-            nDatum != 999 && nDatum != 9999 )
+        if( asDatumInfoList[iDatum].nMapInfoDatumID == -1 )
         {
             // Use WGS84.
             psDatumInfo = asDatumInfoList + 0;

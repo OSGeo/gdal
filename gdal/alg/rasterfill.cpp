@@ -661,8 +661,7 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 /* -------------------------------------------------------------------- */
 /*      report progress.                                                */
 /* -------------------------------------------------------------------- */
-        if( eErr == CE_None &&
-            !pfnProgress(
+        if( !pfnProgress(
                 dfProgressRatio * (0.5*(iY+1) /
                                    static_cast<double>(nYSize)),
                 "Filling...", pProgressArg ) )
@@ -853,8 +852,7 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 /* -------------------------------------------------------------------- */
 /*      report progress.                                                */
 /* -------------------------------------------------------------------- */
-        if( eErr == CE_None &&
-            !pfnProgress(
+        if( !pfnProgress(
                 dfProgressRatio*(0.5+0.5*(nYSize-iY) /
                                  static_cast<double>(nYSize)),
                 "Filling...", pProgressArg) )

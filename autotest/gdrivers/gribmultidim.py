@@ -74,7 +74,7 @@ def test_grib_multidim_grib2_3d_same_ref_time_different_forecast_time():
     assert struct.unpack('d' * 2, dims[0].GetIndexingVariable().Read()) == pytest.approx((1203681600.0, 1203768000.0))
     assert dims[1].GetFullName() == '/Y'
     assert dims[1].GetSize() == 129
-    assert struct.unpack('d' * 129, dims[1].GetIndexingVariable().Read())[0:2] == pytest.approx((1464311.461394906, 1466811.461394906))
+    assert struct.unpack('d' * 129, dims[1].GetIndexingVariable().Read())[0:2] == pytest.approx((1784311.461394906, 1786811.461394906))
     assert dims[2].GetFullName() == '/X'
     assert dims[2].GetSize() == 177
     assert struct.unpack('d' * 177, dims[2].GetIndexingVariable().Read())[0:2] == pytest.approx((-7125887.299303299, -7123387.299303299))

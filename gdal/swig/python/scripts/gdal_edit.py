@@ -35,7 +35,8 @@ from osgeo import osr
 
 
 def Usage():
-    print('Usage: gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]')
+    print('Usage: gdal_edit [--help-general] [-ro] [-a_srs srs_def]')
+    print('                 [-a_ullr ulx uly lrx lry] [-a_ulurll ulx uly urx ury llx lly]')
     print('                 [-tr xres yres] [-unsetgt] [-unsetrpc] [-a_nodata value] [-unsetnodata]')
     print('                 [-offset value] [-scale value] [-units value]')
     print('                 [-colorinterp_X red|green|blue|alpha|gray|undefined]*')
@@ -69,6 +70,10 @@ def gdal_edit(argv):
     srs = None
     ulx = None
     uly = None
+    urx = None
+    ury = None
+    llx = None
+    lly = None
     lrx = None
     lry = None
     nodata = None
@@ -107,6 +112,19 @@ def gdal_edit(argv):
             lrx = float(argv[i + 1])
             i = i + 1
             lry = float(argv[i + 1])
+            i = i + 1
+        elif argv[i] == '-a_ulurll' and i < len(argv) - 6:
+            ulx = float(argv[i + 1])
+            i = i + 1
+            uly = float(argv[i + 1])
+            i = i + 1
+            urx = float(argv[i + 1])
+            i = i + 1
+            ury = float(argv[i + 1])
+            i = i + 1
+            llx = float(argv[i + 1])
+            i = i + 1
+            lly = float(argv[i + 1])
             i = i + 1
         elif argv[i] == '-tr' and i < len(argv) - 2:
             xres = float(argv[i + 1])
@@ -238,12 +256,14 @@ def gdal_edit(argv):
     exclusive_option = 0
     if lry is not None:
         exclusive_option = exclusive_option + 1
+    if lly is not None:  # -a_ulurll
+        exclusive_option = exclusive_option + 1
     if yres is not None:
         exclusive_option = exclusive_option + 1
     if unsetgt:
         exclusive_option = exclusive_option + 1
     if exclusive_option > 1:
-        print('-a_ullr, -tr and -unsetgt options are exclusive.')
+        print('-a_ullr, -a_ulurll, -tr and -unsetgt options are exclusive.')
         print('')
         return Usage()
 
@@ -301,6 +321,11 @@ def gdal_edit(argv):
     if lry is not None:
         gt = [ulx, (lrx - ulx) / ds.RasterXSize, 0,
               uly, 0, (lry - uly) / ds.RasterYSize]
+        ds.SetGeoTransform(gt)
+
+    elif lly is not None:  # -a_ulurll
+        gt = [ulx, (urx - ulx) / ds.RasterXSize, (llx - ulx) / ds.RasterYSize,
+              uly, (ury - uly) / ds.RasterXSize, (lly - uly) / ds.RasterYSize]
         ds.SetGeoTransform(gt)
 
     if yres is not None:

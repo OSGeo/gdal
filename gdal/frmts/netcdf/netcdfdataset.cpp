@@ -7820,51 +7820,54 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     // poDS->papszDimName is indexed by dim IDs, so it must contains all IDs
     // [0..max(panDimIds)], but they are not all useful so we fill names
     // of useless dims with empty string.
-    int nMaxDimId = -1;
-    for( int i = 0; i < ndims; i++ )
+    if( panDimIds )
     {
-        nMaxDimId = std::max(nMaxDimId, panDimIds[i]);
-    }
-    for( int j = 0; j <= nMaxDimId; j++ ){
-        // Is j dim used?
-        int i;
-        for( i = 0; i < ndims; i++ )
+        int nMaxDimId = -1;
+        for( int i = 0; i < ndims; i++ )
         {
-            if( panDimIds[i] == j )
-                break;
+            nMaxDimId = std::max(nMaxDimId, panDimIds[i]);
         }
-        if( i < ndims )
-        {
-            // Useful dim.
-            char szTemp[NC_MAX_NAME + 1] = {};
-            status = nc_inq_dimname(cdfid, panDimIds[i], szTemp);
-            if( status != NC_NOERR )
+        for( int j = 0; j <= nMaxDimId; j++ ){
+            // Is j dim used?
+            int i;
+            for( i = 0; i < ndims; i++ )
             {
-                CPLFree(paDimIds);
-                CPLFree(panBandDimPos);
-                CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-                                            // deadlock with GDALDataset own
-                                            // mutex.
-                delete poDS;
-                CPLAcquireMutex(hNCMutex, 1000.0);
-                return nullptr;
+                if( panDimIds[i] == j )
+                    break;
             }
-            poDS->papszDimName.AddString(szTemp);
-            int nDimGroupId = -1;
-            int nDimVarId = -1;
-            if( NCDFResolveVar(cdfid, poDS->papszDimName[j],
-                               &nDimGroupId, &nDimVarId) == CE_None )
+            if( i < ndims )
             {
-                poDS->ReadAttributes(nDimGroupId, nDimVarId);
+                // Useful dim.
+                char szTemp[NC_MAX_NAME + 1] = {};
+                status = nc_inq_dimname(cdfid, panDimIds[i], szTemp);
+                if( status != NC_NOERR )
+                {
+                    CPLFree(paDimIds);
+                    CPLFree(panBandDimPos);
+                    CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
+                                                // deadlock with GDALDataset own
+                                                // mutex.
+                    delete poDS;
+                    CPLAcquireMutex(hNCMutex, 1000.0);
+                    return nullptr;
+                }
+                poDS->papszDimName.AddString(szTemp);
+                int nDimGroupId = -1;
+                int nDimVarId = -1;
+                if( NCDFResolveVar(cdfid, poDS->papszDimName[j],
+                                &nDimGroupId, &nDimVarId) == CE_None )
+                {
+                    poDS->ReadAttributes(nDimGroupId, nDimVarId);
+                }
+            }
+            else
+            {
+                // Useless dim.
+                poDS->papszDimName.AddString("");
             }
         }
-        else
-        {
-            // Useless dim.
-            poDS->papszDimName.AddString("");
-        }
+        CPLFree(panDimIds);
     }
-    CPLFree(panDimIds);
 
     // Set projection info.
     if( nd > 1)
@@ -8327,7 +8330,11 @@ netCDFDataset::Create( const char *pszFilename,
 
     bool legacyCreateMode = false;
 
-    if (legacyCreationOp_s == "CF_1.8")
+    if (nXSize != 0 || nYSize != 0 || nBands != 0 )
+    {
+        legacyCreateMode = true;
+    }
+    else if (legacyCreationOp_s == "CF_1.8")
     {
         legacyCreateMode = false;
     }
@@ -8573,9 +8580,12 @@ netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
                      papszExtraDimNames[i]);
             papszExtraDimValues =
                 NCDFTokenizeArray(poSrcDS->GetMetadataItem(szTemp, ""));
-            const int nDimSize = atoi(papszExtraDimValues[0]);
+            const int nDimSize = papszExtraDimValues && papszExtraDimValues[0] ?
+                atoi(papszExtraDimValues[0]) : 0;
             // nc_type is an enum in netcdf-3, needs casting.
-            nVarType = static_cast<nc_type>(atol(papszExtraDimValues[1]));
+            nVarType = static_cast<nc_type>(
+                papszExtraDimValues && papszExtraDimValues[0] &&
+                papszExtraDimValues[1] ? atol(papszExtraDimValues[1]) : 0);
             CSLDestroy(papszExtraDimValues);
             panBandZLev[i] = nDimSize;
             panBandDimPos[i + 2] = i;  // Save Position of ZDim.
@@ -10677,7 +10687,8 @@ static int NCDFDoesVarContainAttribVal( int nCdfId,
     if( nVarId == -1 ) return -1;
 
     bool bFound = false;
-    for( int i = 0; !bFound && i < CSLCount(papszAttribNames); i++ )
+    for( int i = 0; !bFound && papszAttribNames != nullptr &&
+                    papszAttribNames[i] != nullptr; i++ )
     {
         char *pszTemp = nullptr;
         if( NCDFGetAttr(nCdfId, nVarId, papszAttribNames[i], &pszTemp) ==
@@ -10744,7 +10755,7 @@ static bool NCDFEqual( const char *papszName, const char *const *papszValues )
     if( papszName == nullptr || EQUAL(papszName, "") )
         return false;
 
-    for( int i = 0; i < CSLCount(papszValues); ++i )
+    for( int i = 0; papszValues && papszValues[i]; ++i )
     {
         if( EQUAL(papszName, papszValues[i]) )
             return true;
@@ -11312,6 +11323,12 @@ CPLErr netCDFDataset::FilterVars( int nCdfId, bool bKeepRasters,
         szTemp[0] = '\0';
         NCDF_ERR_RET(nc_inq_varname(nCdfId, v, szTemp));
 
+        if( strstr(szTemp, "_node_coordinates") || strstr(szTemp, "_node_count") )
+        {
+            // Ignore CF-1.8 Simple Geometries helper variables
+            continue;
+        }
+
         if( nVarDims == 1 && (NCDFIsVarLongitude(nCdfId, -1, szTemp) ||
                               NCDFIsVarProjectionX(nCdfId, -1, szTemp)) )
         {
@@ -11346,7 +11363,7 @@ CPLErr netCDFDataset::FilterVars( int nCdfId, bool bKeepRasters,
             // Only accept 2+D vars.
             else if( nVarDims >= 2 )
             {
-
+                bool bRasterCandidate = true;
                 // Identify variables that might be vector variables
                 if( nVarDims == 2 )
                 {
@@ -11356,22 +11373,26 @@ CPLErr netCDFDataset::FilterVars( int nCdfId, bool bKeepRasters,
                     nc_type vartype = NC_NAT;
                     nc_inq_vartype(nCdfId, v, &vartype);
 
-                    char szDimNameX[NC_MAX_NAME + 1];
-                    char szDimNameY[NC_MAX_NAME + 1];
-                    szDimNameX[0] = '\0';
-                    szDimNameY[0] = '\0';
+                    char szDimNameFirst[NC_MAX_NAME + 1];
+                    char szDimNameSecond[NC_MAX_NAME + 1];
+                    szDimNameFirst[0] = '\0';
+                    szDimNameSecond[0] = '\0';
                     if( vartype == NC_CHAR &&
-                        nc_inq_dimname(nCdfId, anDimIds[0], szDimNameY) ==
+                        nc_inq_dimname(nCdfId, anDimIds[0], szDimNameFirst) ==
                             NC_NOERR &&
-                        nc_inq_dimname(nCdfId, anDimIds[1], szDimNameX) ==
+                        nc_inq_dimname(nCdfId, anDimIds[1], szDimNameSecond) ==
                             NC_NOERR &&
-                        !NCDFIsVarLongitude(nCdfId, -1, szDimNameX) &&
-                        !NCDFIsVarProjectionX(nCdfId, -1, szDimNameX) &&
-                        !NCDFIsVarLatitude(nCdfId, -1, szDimNameY) &&
-                        !NCDFIsVarProjectionY(nCdfId, -1, szDimNameY) )
+                        !NCDFIsVarLongitude(nCdfId, -1, szDimNameSecond) &&
+                        !NCDFIsVarProjectionX(nCdfId, -1, szDimNameSecond) &&
+                        !NCDFIsVarLatitude(nCdfId, -1, szDimNameFirst) &&
+                        !NCDFIsVarProjectionY(nCdfId, -1, szDimNameFirst) )
                     {
                         anPotentialVectorVarID.push_back(v);
                         oMapDimIdToCount[anDimIds[0]]++;
+                        if( strstr( szDimNameSecond, "_max_width") )
+                        {
+                            bRasterCandidate = false;
+                        }
                     }
                     else
                     {
@@ -11382,7 +11403,7 @@ CPLErr netCDFDataset::FilterVars( int nCdfId, bool bKeepRasters,
                 {
                     bIsVectorOnly = false;
                 }
-                if( bKeepRasters )
+                if( bKeepRasters && bRasterCandidate )
                 {
                     *pnGroupId = nCdfId;
                     *pnVarId = v;
@@ -11497,7 +11518,7 @@ CPLErr netCDFDataset::CreateGrpVectorLayers( int nCdfId,
 {
     char *pszGroupName = nullptr;
     NCDFGetGroupFullName(nCdfId, &pszGroupName);
-    if( pszGroupName[0] == '\0' )
+    if( pszGroupName == nullptr || pszGroupName[0] == '\0' )
     {
         CPLFree(pszGroupName);
         pszGroupName = CPLStrdup(CPLGetBasename(osFilename));
@@ -11740,7 +11761,7 @@ static CPLErr NCDFGetCoordAndBoundVarFullNames( int nCdfId,
             pszTemp != nullptr && !EQUAL(pszTemp, "") )
             papszTokens = CSLAddString( papszTokens, pszTemp );
         CPLFree(pszTemp);
-        for( int i = 0; i < CSLCount(papszTokens); i++ )
+        for( int i = 0; papszTokens != nullptr && papszTokens[i] != nullptr; i++ )
         {
             char *pszVarFullName = nullptr;
             if( NCDFResolveVarFullName(nCdfId, papszTokens[i],

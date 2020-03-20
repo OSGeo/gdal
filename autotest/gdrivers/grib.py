@@ -1215,9 +1215,6 @@ def test_grib_grib2_write_temperatures():
 
 def test_grib_grib2_write_nodata():
 
-    if gdaltest.grib_drv is None:
-        pytest.skip()
-
     for src_type in [ gdal.GDT_Byte, gdal.GDT_Float32 ]:
         src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, src_type)
         src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
@@ -1267,9 +1264,6 @@ def test_grib_online_grib2_jpeg2000_single_line():
 
 def test_grib_grib2_derived_forecast_spread():
 
-    if gdaltest.grib_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/grib/template_4_12_spread.grb2')
     band = ds.GetRasterBand(1)
     assert band.GetMetadataItem('GRIB_UNIT') == '[spread]'
@@ -1290,11 +1284,20 @@ def test_grib_grib2_derived_forecast_spread():
 
 def test_grib_grib2_template_4_48():
 
-    if gdaltest.grib_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/grib/template_4_48.grb2')
     band = ds.GetRasterBand(1)
     assert band.GetMetadataItem('GRIB_UNIT') == '[1/kg]'
     assert band.GetMetadataItem('GRIB_ELEMENT') == 'ASNCON'
     assert band.GetMetadataItem('GRIB_SHORT_NAME') == '0-EATM'
+
+
+
+###############################################################################
+# Test reading product whose scan flag is not 64
+
+def test_grib_grib2_scan_flag_not_64():
+
+    ds = gdal.Open('/vsisparse/data/blend.t17z.master.f001.co.grib2.sparse.xml')
+    gt = ds.GetGeoTransform()
+    expected_gt = (-3272421.457337171, 2539.703, 0.0, 3790842.1060354356, 0.0, -2539.703)
+    assert gt == pytest.approx(expected_gt, rel=1e-6)

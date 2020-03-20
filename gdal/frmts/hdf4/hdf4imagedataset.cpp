@@ -2930,6 +2930,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
+        CPLAssert( papszSubdatasetName[3] );
         poDS->iDataset = atoi( papszSubdatasetName[3] );
     }
     CSLDestroy( papszSubdatasetName );

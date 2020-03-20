@@ -42,6 +42,9 @@
 
 struct VRTArrayDatasetWrapper
 {
+    VRTArrayDatasetWrapper(const VRTArrayDatasetWrapper&) = delete;
+    VRTArrayDatasetWrapper& operator= (const VRTArrayDatasetWrapper&) = delete;
+
     GDALDataset* m_poDS;
 
     explicit VRTArrayDatasetWrapper(GDALDataset* poDS): m_poDS(poDS)
@@ -1862,7 +1865,7 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64* arrayStartIdx,
         {
             // For negative step request, temporarily simulate a positive step
             start_i = start_i - (m_anCount[i]-1) * (-step_i);
-            step_i = -step_i;
+            //step_i = -step_i;
         }
         if( start_i >= m_anDstOffset[i] + m_anCount[i] )
         {

@@ -2314,7 +2314,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
 /*      Handle command line arguments.                                  */
 /* -------------------------------------------------------------------- */
     const int argc = CSLCount(papszArgv);
-    for( int i = 0; papszArgv != nullptr && i < argc; i++ )
+    for( int i = 0; i < argc && papszArgv != nullptr && papszArgv[i] != nullptr; i++ )
     {
         if( i < argc-1 && (EQUAL(papszArgv[i],"-of") || EQUAL(papszArgv[i],"-f")) )
         {

@@ -914,6 +914,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                                 eDT = GDT_Float32;
                             }
                             else if ((eDT == GDT_Byte || eDT == GDT_Int16)
+                                    // cppcheck-suppress knownConditionTrueFalse
                                      && (nZ < 0 || nZ > 255))
                             {
                                 if (nZ < -32768 || nZ > 32767)

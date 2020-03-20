@@ -74,8 +74,8 @@ The DB2 driver passes SQL statements directly to DB2 by default, rather
 than evaluating them internally when using the ExecuteSQL() call on the
 OGRDataSource, or the -sql command option to ogr2ogr. Attribute query
 expressions are also passed directly through to DB2. It's also possible
-to request the OGR DB2 driver to handle SQL commands with the `OGR
-SQL <ogr_sql.html>`__ engine, by passing **"OGRSQL"** string to the
+to request the OGR DB2 driver to handle SQL commands with the :ref:`OGR
+SQL <ogr_sql_dialect>` engine, by passing **"OGRSQL"** string to the
 ExecuteSQL() method, as the name of the SQL dialect.
 
 The DB2 driver in OGR supports the OGRLayer::StartTransaction(),

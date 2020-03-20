@@ -328,10 +328,6 @@ a ``__iter__`` method.
 
 The iterator must return a dictionary with the feature content.
 
-If self.iterator_honour_attribute_filter or self.iterator_honour_spatial_filter
-are set to True, the attribute filter and/or spatial filter must be honoured
-by this method.
-
 Two keys allowed in the returned dictionary are:
 
 .. py:attribute:: id
@@ -355,6 +351,34 @@ Two keys allowed in the returned dictionary are:
 .. py:attribute:: style
 
     Optional. The value must be a string conforming to the :ref:`ogr_feature_style`.
+
+Filtering
++++++++++
+
+By default, any attribute or spatial filter set by the user of the OGR API will
+be evaluated by the generic C++ side of the driver, by iterating over all features of the
+layer.
+
+If the ``iterator_honour_attribute_filter`` (resp. ``iterator_honour_spatial_filter``)
+attribute of the layer object is set to ``True``, the attribute filter (resp.
+spatial filter) must be honoured by the feature iterator method.
+
+The attribute filter is set in the ``attribute_filter`` attribute of the
+layer object. It is a string conforming to :ref:`OGR SQL <ogr_sql_dialect>`.
+When the attribute filter is changed by the OGR API, the ``attribute_filter_changed``
+optional method is called (see below paragraph about optional methods).
+An implementation of ``attribute_filter_changed`` may decide to fallback on
+evaluation by the generic C++ side of the driver by calling the ``SetAttributeFilter``
+method (see below passthrough example)
+
+The geometry filter is set in the ``spatial_filter`` attribute of the
+layer object. It is a string encoding as ISO WKT. It is the responsibility of
+the user of the OGR API to express it in the CRS of the layer.
+When the attribute filter is changed by the OGR API, the ``spatial_filter_changed``
+optional method is called (see below paragraph about optional methods).
+An implementation of ``spatial_filter_changed`` may decide to fallback on
+evaluation by the generic C++ side of the driver by calling the ``SetSpatialFilter``
+method (see below passthrough example)
 
 Optional methods
 ++++++++++++++++
@@ -406,7 +430,14 @@ Full example
 ------------
 
 The following example is a passthrough driver that forwards the calls to the
-SWIG Python GDAL API.
+SWIG Python GDAL API. It has no practical use, and is just intended to show
+case most possible uses of the API. A real-world driver will only use part of the
+API demonstrated. For example, the passthrough driver implements attribute and
+spatial filters in a completely dummy way, by calling back the C++ part of the
+driver. The ``iterator_honour_attribute_filter`` and ``iterator_honour_spatial_filter``
+attributes, and the ``attribute_filter_changed`` and ``spatial_filter_changed``
+method implementations, could have omitted with the same result.
+
 The connection strings recognized by the drivers are
 "PASSHTROUGH:connection_string_supported_by_non_python_drivers". Note that
 the prefixing by the driver name is absolutely not a requirement, but something
@@ -484,15 +515,18 @@ not need it.
             return [minx, miny, maxx, maxy]
 
         def feature_count(self, force_computation):
+            # Dummy implementation: we call back the generic C++ implementation
             return self.gdal_layer.GetFeatureCount(True)
 
         def attribute_filter_changed(self):
+            # Dummy implementation: we call back the generic C++ implementation
             if self.attribute_filter:
                 self.gdal_layer.SetAttributeFilter(str(self.attribute_filter))
             else:
                 self.gdal_layer.SetAttributeFilter(None)
 
         def spatial_filter_changed(self):
+            # Dummy implementation: we call back the generic C++ implementation
             # the 'inf' test is just for a test_ogrsf oddity
             if self.spatial_filter and 'inf' not in self.spatial_filter:
                 self.gdal_layer.SetSpatialFilter(

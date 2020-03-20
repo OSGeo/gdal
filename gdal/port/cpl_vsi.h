@@ -340,7 +340,7 @@ struct VSIDIREntry
 /*! @cond Doxygen_Suppress */
     VSIDIREntry();
     ~VSIDIREntry();
-    VSIDIREntry(const VSIDIREntry&) = delete;
+    VSIDIREntry(const VSIDIREntry&);
     VSIDIREntry& operator=(VSIDIREntry&) = delete;
 /*! @endcond */
 #endif
@@ -354,6 +354,7 @@ int CPL_DLL VSIMkdirRecursive( const char * pszPathname, long mode );
 int CPL_DLL VSIRmdir( const char * pszDirname );
 int CPL_DLL VSIRmdirRecursive( const char * pszDirname );
 int CPL_DLL VSIUnlink( const char * pszFilename );
+int CPL_DLL *VSIUnlinkBatch( CSLConstList papszFiles );
 int CPL_DLL VSIRename( const char * oldpath, const char * newpath );
 int CPL_DLL VSISync( const char* pszSource, const char* pszTarget,
                       const char* const * papszOptions,

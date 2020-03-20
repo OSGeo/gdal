@@ -349,7 +349,7 @@ CPLErr PNGDataset::IRasterIO( GDALRWFlag eRWFlag,
        (eBufType == GDT_Byte) &&
        (eBufType == GetRasterBand(1)->GetRasterDataType()) &&
        (pData != nullptr) &&
-       (panBandMap != nullptr) && IsFullBandMap(panBandMap, nBands))
+       IsFullBandMap(panBandMap, nBands))
     {
         // Pixel interleaved case.
         if( nBandSpace == 1 )

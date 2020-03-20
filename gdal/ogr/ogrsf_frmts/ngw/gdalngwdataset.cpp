@@ -627,16 +627,11 @@ OGRLayer *OGRNGWDataset::ICreateLayer( const char *pszNameIn,
     // Create layer.
     std::string osKey = CSLFetchNameValueDef( papszOptions, "KEY", "");
     std::string osDesc = CSLFetchNameValueDef( papszOptions, "DESCRIPTION", "");
-    OGRSpatialReference* poSRSClone = poSpatialRef;
-    if( poSRSClone )
-    {
-        poSRSClone = poSRSClone->Clone();
-        poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    }
+    OGRSpatialReference* poSRSClone = poSpatialRef->Clone();
+    poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     OGRNGWLayer *poLayer = new OGRNGWLayer( this, pszNameIn, poSRSClone, eGType,
         osKey, osDesc );
-    if( poSRSClone )
-        poSRSClone->Release();
+    poSRSClone->Release();
     papoLayers = (OGRNGWLayer**) CPLRealloc(papoLayers, (nLayers + 1) *
         sizeof(OGRNGWLayer*));
     papoLayers[nLayers++] = poLayer;

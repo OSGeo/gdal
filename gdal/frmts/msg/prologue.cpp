@@ -85,48 +85,27 @@ int size_Correction()
 static
 double iReadDouble(std::ifstream & ifile)
 {
-  // will use 8 bytes from the file to read a DOUBLE (according to the MSG definition of DOUBLE)
-    unsigned char buf [8];
-
-    ifile.read((char*)buf, 8);
     double rVal;
-    ((char*)(&rVal))[0] = buf[7];
-    ((char*)(&rVal))[1] = buf[6];
-    ((char*)(&rVal))[2] = buf[5];
-    ((char*)(&rVal))[3] = buf[4];
-    ((char*)(&rVal))[4] = buf[3];
-    ((char*)(&rVal))[5] = buf[2];
-    ((char*)(&rVal))[6] = buf[1];
-    ((char*)(&rVal))[7] = buf[0];
-
+    ifile.read(reinterpret_cast<char*>(&rVal), 8);
+    CPL_MSBPTR64(&rVal);
     return rVal;
 }
 
 static
 double iReadReal(std::ifstream & ifile)
 {
-  // will use 4 bytes from the file to read a REAL (according to the MSG definition of REAL)
-    unsigned char buf [4];
-
-    ifile.read((char*)buf, 4);
-    float rVal;
-    ((char*)(&rVal))[0] = buf[3];
-    ((char*)(&rVal))[1] = buf[2];
-    ((char*)(&rVal))[2] = buf[1];
-    ((char*)(&rVal))[3] = buf[0];
-
-    return rVal;
+    float fVal;
+    ifile.read(reinterpret_cast<char*>(&fVal), 4);
+    CPL_MSBPTR32(&fVal);
+    return fVal;
 }
 
 static
 int iReadInt(std::ifstream & ifile)
 {
-  // will use 4 bytes from the file to read an int (according to the MSG definition of int)
-    unsigned char buf [4];
-
-    ifile.read((char*)buf, 4);
-    int iResult = (buf[0]<<24)+(buf[1]<<16)+(buf[2]<<8)+buf[3];
-
+    int iResult;
+    ifile.read(reinterpret_cast<char*>(&iResult), 4);
+    CPL_MSBPTR32(&iResult);
     return iResult;
 }
 

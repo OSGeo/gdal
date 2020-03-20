@@ -118,7 +118,7 @@ typedef enum
     NCDF_FORMAT_NC4C    = 4,   /* netCDF version 4 (classic) */
 /* HDF files (HDF5 or HDF4) not supported because of lack of support */
 /* in libnetcdf installation or conflict with other drivers */
-    NCDF_FORMAT_HDF5    = 5,   /* HDF4 file, not supported */
+    NCDF_FORMAT_HDF5    = 5,   /* HDF5 file, not supported */
     NCDF_FORMAT_HDF4    = 6,   /* HDF4 file, not supported */
     NCDF_FORMAT_UNKNOWN = 10  /* Format not determined (yet) */
 } NetCDFFormatEnum;

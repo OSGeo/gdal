@@ -51,7 +51,7 @@ static void Usage(const char* pszErrorMsg = nullptr)
        "              [-vv <visibility>] [-iv <invisibility>]\n"
        "              [-ov <out_of_range>] [-cc <curvature_coef>]\n"
        "              [[-co NAME=VALUE] ...]\n"
-       "              [-q]\n"
+       "              [-q] [-om <output mode>]\n"
        "              <src_filename> <dst_filename>\n");
 
     if( pszErrorMsg != nullptr )
@@ -97,6 +97,7 @@ MAIN_START(argc, argv)
     bool bQuiet = false;
     GDALProgressFunc pfnProgress = nullptr;
     char** papszCreateOptions = nullptr;
+    const char *pszOutputMode = nullptr;
 
     GDALAllRegister();
 
@@ -184,6 +185,11 @@ MAIN_START(argc, argv)
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             nBandIn = atoi(argv[++i]);
         }
+        else if( EQUAL(argv[i],"-om") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            pszOutputMode = argv[++i];
+        }
         else if ( EQUAL(argv[i],"-q") || EQUAL(argv[i],"-quiet") )
         {
             bQuiet = TRUE;
@@ -233,6 +239,26 @@ MAIN_START(argc, argv)
         }
     }
 
+    GDALViewshedOutputType outputMode = GVOT_NORMAL;
+    if(pszOutputMode != nullptr)
+    {
+        if(EQUAL(pszOutputMode, "NORMAL"))
+        {
+        }
+        else if(EQUAL(pszOutputMode, "DEM"))
+        {
+            outputMode = GVOT_MIN_TARGET_HEIGHT_FROM_DEM;
+        }
+        else if(EQUAL(pszOutputMode, "GROUND"))
+        {
+            outputMode = GVOT_MIN_TARGET_HEIGHT_FROM_GROUND;
+        }
+        else
+        {
+            Usage("-om must be either NORMAL, DEM or GROUND");
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Open source raster file.                                        */
 /* -------------------------------------------------------------------- */
@@ -260,7 +286,7 @@ MAIN_START(argc, argv)
                          dfVisibleVal, dfInvisibleVal,
                          dfOutOfRangeVal, dfNoDataVal, dfCurvCoeff,
                          GVM_Edge, dfMaxDistance,
-                         pfnProgress, nullptr, nullptr);
+                         pfnProgress, nullptr, outputMode, nullptr);
     bool bSuccess = hDstDS != nullptr;
     GDALClose( hSrcDS );
     GDALClose( hDstDS );

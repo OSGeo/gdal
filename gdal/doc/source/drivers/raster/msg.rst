@@ -10,23 +10,18 @@ MSG -- Meteosat Second Generation
 
 This driver implements reading support for Meteosat Second Generation
 files. These are files with names like
-H-000-MSG1\_\_-MSG1\_\_\_\_\_\_\_\_-HRV\_\_\_\_\_\_-000007\_\_\_-200405311115-C\_, commonly
-distributed into a folder structure with dates (e.g. 2004\05\31 for the
+``H-000-MSG1\_\_-MSG1\_\_\_\_\_\_\_\_-HRV\_\_\_\_\_\_-000007\_\_\_-200405311115-C\_``, commonly
+distributed into a folder structure with dates (e.g. ``2004\05\31`` for the
 file mentioned).
 
 The MSG files are wavelet-compressed. A decompression library licensed
 from `EUMETSAT <http://www.eumetsat.int/>`__ is needed (`Public Wavelet
 Transform Decompression Library
-Software <http://www.eumetsat.int/Home/Main/Access_to_Data/User_Support/SP_1117714787347>`__,
+Software <https://gitlab.eumetsat.int/open-source/PublicDecompWT>`__,
 shorter *Wavelet Transform Software*). The software is compilable on
 Microsoft Windows, Linux and Solaris Operating Systems, and it works on
-32 bits and 64 bits as well as mixed architectures. It is a licensed
-software and available free to download upon acceptance of the WaveLet
-Transform Software Licence during electronic registration process.
-
-Part of the source of the file xrithdr_extr.c from XRIT2PIC is used to
-parse MSG headers. This source is licensed under the terms of the GNU
-General Public License as published by the Free Software Foundation.
+32 bits and 64 bits as well as mixed architectures. It is licensed
+under Apache v2.
 
 | This driver is not "enabled" by default. See `Build
   Instructions <#MSG_Build_Instructions>`__ on how to include this
@@ -40,12 +35,11 @@ Driver capabilities
 Build Instructions
 ------------------
 
-Download the Eumetsat library for wavelet decompression. This is a file
-named PublicDecompWT.zip. Extract the content in a subdirectory with the
-same name (under frmts/msg).
+Clone the EUMETSAT library for wavelet decompression into ``frmts/msg``.
 
 If you are building with Visual Studio 6.0, extract the .vc makefiles
-for the PublicDecompWT from the file PublicDecompWTMakefiles.zip.
+for the PublicDecompWT from the file `PublicDecompWTMakefiles.zip`
+stored in that directory.
 
 If you build using the GNUMakefile, use *--with-msg* option to enable
 MSG driver:
@@ -54,8 +48,8 @@ MSG driver:
 
    ./configure --with-msg
 
-If find that some adjustments are needed in the makefile and/or the msg
-source files, please "commit" them. The Eumetsat library promises to be
+If you find that some adjustments are needed in the makefile and/or the msg
+source files, please "commit" them. The EUMETSAT library promises to be
 "platform independent", but as we are working with Microsoft Windows and
 Visual Studio 6.0, we did not have the facilities to check if the rest
 of the msg driver is. Furthermore, apply steps 4 to 7 from the :ref:`raster_driver_tut`, section "Adding

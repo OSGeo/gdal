@@ -307,7 +307,7 @@ group with identifier 1730. New vector layer name will be "some new name":
    layers spatial reference in NextGIS Web can be only in EPSG:3857.
 
 .. note::
-   The `-doo "BATCH_SIZE=100"` key is recommended for speed up feature transfering.
+   The `-doo "BATCH_SIZE=100"` key is recommended for speed up feature transferring.
 
 Creating and populating a vector layer from a shapefile in new resource
 group with name "new group" and parent identifier 1730. New vector layer name

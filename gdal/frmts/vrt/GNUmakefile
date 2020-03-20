@@ -6,6 +6,7 @@ OBJ += vrtwarped.o vrtderivedrasterband.o vrtpansharpened.o
 OBJ += pixelfunctions.o vrtmultidim.o
 
 CPPFLAGS := $(CPPFLAGS)
+CXXFLAGS := $(WARN_EFFCPLUSPLUS) $(WARN_OLD_STYLE_CAST) $(CXXFLAGS)
 
 ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS        :=      -DHAVE_GEOS=1 $(CPPFLAGS)
