@@ -325,17 +325,22 @@ GDALPansharpenOperation::Initialize( const GDALPansharpenOptions* psOptionsIn )
             for( int i = 0; i < psOptions->nInputSpectralBands; i++ )
             {
                 GDALRasterBand* poSrcBand = aMSBands[i];
+                int iVRTBand;
                 if( anInputBands.empty() || i == 0 )
                 {
                     poVDS = new VRTDataset(poSrcBand->GetXSize(), poSrcBand->GetYSize());
                     aVDS.push_back(poVDS);
+                    iVRTBand = 1;
                 }
-                if( !anInputBands.empty() )
+                else
+                {
                     anInputBands[i] = i + 1;
+                    iVRTBand = i + 1;
+                }
                 poVDS->AddBand(poSrcBand->GetRasterDataType(), nullptr);
                 VRTSourcedRasterBand* poVRTBand =
                     dynamic_cast<VRTSourcedRasterBand*>(
-                        poVDS->GetRasterBand(i + 1));
+                        poVDS->GetRasterBand(iVRTBand));
                 if( poVRTBand == nullptr )
                     return CE_Failure;
                 aMSBands[i] = poVRTBand;
