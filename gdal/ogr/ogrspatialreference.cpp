@@ -309,7 +309,6 @@ void OGRSpatialReference::Private::refreshRootFromProjObj()
                                   aosOptions.List());
              m_bNodesWKT2 = true;
         }
-        CPLPopErrorHandler();
         if( pszWKT )
         {
             auto root = new OGR_SRSNode();
