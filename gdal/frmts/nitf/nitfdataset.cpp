@@ -2281,7 +2281,7 @@ CPLErr NITFDataset::_SetProjection(const char* _pszProjection)
     return CE_None;
 }
 
-#ifdef ESRI_BUILD
+//#ifdef ESRI_BUILD
 /************************************************************************/
 /*                       InitializeNITFDESMetadata()                    */
 /************************************************************************/
@@ -2548,7 +2548,7 @@ void NITFDataset::InitializeNITFTREs()
             oSpecialMD.SetMetadata( aosList.List(), pszTREsDomain );
     }
 }
-#endif
+//#endif
 
 /************************************************************************/
 /*                       InitializeNITFMetadata()                        */
@@ -3065,7 +3065,7 @@ char **NITFDataset::GetMetadata( const char * pszDomain )
         return oSpecialMD.GetMetadata( pszDomain );
     }
 
-#ifdef ESRI_BUILD
+//#ifdef ESRI_BUILD
     if( pszDomain != NULL && EQUAL(pszDomain,"NITF_DES") )
     {
         // InitializeNITFDESs retrieves all the DES file headers (NOTE: The returned strings are base64-encoded).
@@ -3101,7 +3101,7 @@ char **NITFDataset::GetMetadata( const char * pszDomain )
         InitializeNITFTREs();
         return oSpecialMD.GetMetadata( pszDomain );
     }
-#endif
+//#endif
 
     if( pszDomain != nullptr && EQUAL(pszDomain,"CGM") )
     {
@@ -3146,7 +3146,7 @@ const char *NITFDataset::GetMetadataItem(const char * pszName,
         return oSpecialMD.GetMetadataItem( pszName, pszDomain );
     }
 
-#ifdef ESRI_BUILD
+//#ifdef ESRI_BUILD
     if( pszDomain != NULL && EQUAL(pszDomain,"NITF_DES_METADATA") )
     {
         // InitializeNITFDESs retrieves all the DES file headers (NOTE: The returned strings are base64-encoded).
@@ -3174,7 +3174,7 @@ const char *NITFDataset::GetMetadataItem(const char * pszName,
         InitializeNITFTREs();
         return oSpecialMD.GetMetadataItem( pszName, pszDomain );
     }
-#endif
+//#endif
 
     if( pszDomain != nullptr && EQUAL(pszDomain,"CGM") )
     {

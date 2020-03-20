@@ -1772,8 +1772,8 @@
         <field name="COUNT" length="5" type="string"/>
         <field name="RADIOMETRIC_QUANTITY" length="24" type="string"/>
         <field name="RADIOMETRIC_QUANTITY_UNIT" length="1" type="string"/>
-        <field name="SCALE_FACTOR" length="4" type="real"/>
-        <field name="ADDITIVE_FACTOR" length="4" type="real"/>
+        <field name="SCALE_FACTOR" length="4" type="IEEE754"/>
+        <field name="ADDITIVE_FACTOR" length="4" type="IEEE754"/>
         <field name="ROW_GSD" length="7" type="string"/>
         <field name="ROW_GSD_UNIT" length="1" type="string"/>
         <field name="COL_GSD" length="7" type="string"/>
@@ -1782,10 +1782,10 @@
         <field name="SPT_RESP_UNIT_ROW" length="1" type="string"/>
         <field name="SPT_RESP_COL" length="7" type="string"/>
         <field name="SPT_RESP_UNIT_COL" length="1" type="string"/>
-        <field name="DATA_FIELD_1" length="48" type="integer"/>
-        <field name="EXISTENCE_MASK" length="4" type="integer"/>
+        <field name="DATA_FIELD_1" length="48" type="UINT"/>
+        <field name="EXISTENCE_MASK" length="4" type="UINT"/>
         <field name="RADIOMETRIC_ADJUSTMENT_SURFACE" length="24" type="string"/>
-        <field name="ATMOSPHERIC_ADJUSTMENT_ALTITUDE" length="4" type="real"/>
+        <field name="ATMOSPHERIC_ADJUSTMENT_ALTITUDE" length="4" type="IEEE754"/>
         <field name="WAVE_LENGTH_UNIT" length="1" type="string"/>
         <loop counter="COUNT" name="BANDS" md_prefix="BAND_%02d_">
             <field name="BAD_BAND" length="1" type="string"/>
