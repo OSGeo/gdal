@@ -1066,6 +1066,11 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
     eErr = m_poPansharpener->Initialize(psPanOptions);
     if( eErr != CE_None )
     {
+        // Delete the pansharper object before closing the dataset
+        // because it may have warped the bands into an intermediate VRT
+        delete m_poPansharpener;
+        m_poPansharpener = nullptr;
+
         // Close in reverse order (VRT firsts and real datasets after)
         for( int i = static_cast<int>( m_apoDatasetsToClose.size() ) - 1;
              i >= 0;
@@ -1074,9 +1079,6 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
             GDALClose(m_apoDatasetsToClose[i]);
         }
         m_apoDatasetsToClose.resize(0);
-
-        delete m_poPansharpener;
-        m_poPansharpener = nullptr;
     }
     GDALDestroyPansharpenOptions(psPanOptions);
 

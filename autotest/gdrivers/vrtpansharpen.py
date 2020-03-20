@@ -1764,6 +1764,37 @@ def test_vrtpansharpen_11():
     assert vrt_ds is None
 
 ###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/2328
+
+
+def test_vrtpansharpen_nodata_multiple_spectral_bands():
+
+    gdal.Translate('/vsimem/b1.tif', 'data/small_world.tif')
+    gdal.Translate('/vsimem/b2.tif', 'data/small_world.tif')
+
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
+  <PansharpeningOptions>
+      <NoData>0</NoData>
+    <PanchroBand>
+      <SourceFilename>data/small_world.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </PanchroBand>
+    <SpectralBand dstBand="1">
+      <SourceFilename>/vsimem/b1.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SpectralBand>
+    <SpectralBand dstBand="2">
+      <SourceFilename>/vsimem/b2.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SpectralBand>
+  </PansharpeningOptions>
+</VRTDataset>""")
+    assert vrt_ds
+
+    gdal.Unlink('/vsimem/b1.tif')
+    gdal.Unlink('/vsimem/b2.tif')
+
+###############################################################################
 # Cleanup
 
 
