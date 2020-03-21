@@ -266,12 +266,13 @@ for a COG file with a transparency mask, those strings will be:
     - A space character is inserted after the newline following `KNOWN_INCOMPATIBLE_EDITION=NO`
     - For a COG without mask, the `MASK_INTERLEAVED_WITH_IMAGERY` item will not be present of course.
 
-The ghost area starts with GDAL_STRUCTURAL_METADATA_SIZE=XXXXXX bytes\n where XXXXXX 
-describes the size of this whole section (starting at the beginning of 
-GDAL_STRUCTURAL_METADATA_SIZE).
+The ghost area starts with ``GDAL_STRUCTURAL_METADATA_SIZE=XXXXXX bytes\n`` (of
+a fixed size of 43 bytes) where XXXXXX is a 6-digit number indicating the remaining
+size of the section (that is starting after the linefeed character of this starting
+line).
 
 - ``LAYOUT=IFDS_BEFORE_DATA``: the IFDs are located at the beginning of the file. 
-  GDAL with this PR will also makes sure that the tile index arrays are written 
+  GDAL will also makes sure that the tile index arrays are written
   just after the IFDs and before the imagery, so that a first range request of 
   16 KB will always get all the IFDs
 
