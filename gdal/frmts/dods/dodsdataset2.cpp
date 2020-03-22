@@ -1717,7 +1717,7 @@ void GDALRegister_DODS()
     poDriver->SetDescription( "DODS" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "DAP 3.x servers" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#DODS" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/dods.html" );
 
     poDriver->pfnOpen = DODSDataset::Open;
 

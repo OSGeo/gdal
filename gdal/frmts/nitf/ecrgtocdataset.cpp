@@ -1190,7 +1190,7 @@ void GDALRegister_ECRGTOC()
     poDriver->pfnOpen = ECRGTOCDataset::Open;
 
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#ECRGTOC" );
+                               "drivers/raster/ecrgtoc.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xml" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );

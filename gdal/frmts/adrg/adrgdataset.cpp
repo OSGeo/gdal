@@ -2377,7 +2377,7 @@ void GDALRegister_ADRG()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "ARC Digitized Raster Graphics" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#ADRG" );
+                               "drivers/raster/adrg.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gen" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte" );

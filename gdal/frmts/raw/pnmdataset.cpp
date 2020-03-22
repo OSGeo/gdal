@@ -425,7 +425,7 @@ void GDALRegister_PNM()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Portable Pixmap Format (netpbm)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#PNM" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/pnm.html" );
     // pgm : grey
     // ppm : RGB
     // pnm : ??

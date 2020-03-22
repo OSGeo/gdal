@@ -978,7 +978,7 @@ void GDALRegister_BT()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "VTP .bt (Binary Terrain) 1.3 Format" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_various.html#BT" );
+                                   "drivers/raster/bt.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bt" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Int16 Int32 Float32" );

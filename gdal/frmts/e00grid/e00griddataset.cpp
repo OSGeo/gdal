@@ -921,7 +921,7 @@ void GDALRegister_E00GRID()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Arc/Info Export E00 GRID" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#E00GRID" );
+                               "drivers/raster/e00grid.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "e00" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
