@@ -1027,6 +1027,7 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
    meta->gds.lat2 = meta->gds.lon2 = 0;
    switch (is3[12]) {
       case GS3_LATLON: /* 0: Regular lat/lon grid. */
+      case GS3_ROTATED_LATLON: // 1: Rotated lat/lon grid
       case GS3_GAUSSIAN_LATLON:  /* 40: Gaussian lat/lon grid. */
          if (ns3 < 72) {
             return -1;
@@ -1066,6 +1067,15 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
          meta->gds.scan = (uChar) is3[71];
          meta->gds.meshLat = 0;
          meta->gds.orientLon = 0;
+         if( is3[12] == GS3_ROTATED_LATLON ) {
+             if( ns3 < 84 ) {
+                 return -1;
+             }
+             meta->gds.f_typeLatLon = 3;
+             meta->gds.southLat = is3[73-1] * unit;
+             meta->gds.southLon = is3[77-1] * unit;
+             meta->gds.angleRotate = is3[81-1] * unit;
+         }
          /* Resolve resolution flag(bit 3,4).  Copy Dx,Dy as appropriate. */
          if ((meta->gds.resFlag & GRIB2BIT_3) &&
              (!(meta->gds.resFlag & GRIB2BIT_4))) {
