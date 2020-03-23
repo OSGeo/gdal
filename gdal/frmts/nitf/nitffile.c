@@ -2138,6 +2138,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                                                  const char* pszMDPrefix,
                                                  int *pbError)
 {
+
     CPLXMLNode* psIter;
     for(psIter = psTreNode->psChild;
         psIter != NULL && *pbError == FALSE;
@@ -2151,6 +2152,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
             const char* pszLongName = CPLGetXMLValue(psIter, "longname", NULL);
             const char* pszLength = CPLGetXMLValue(psIter, "length", NULL);
             const char* pszType = CPLGetXMLValue(psIter, "type", "string");
+            
             int nLength = -1;
             if (pszLength != NULL)
                 nLength = atoi(pszLength);
@@ -2191,7 +2193,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
             {
                 char* pszMDItemName;
                 char** papszTmp = NULL;
-
+                
                 if (*pnTreOffset + nLength > nTRESize)
                 {
                     *pbError = TRUE;
@@ -2290,7 +2292,8 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
 
                 
                 if (psOutXMLNode != NULL)
-                {                    CPLXMLNode* psFieldNode;
+                {
+                    CPLXMLNode* psFieldNode;
                     CPLXMLNode* psNameNode;
                     CPLXMLNode* psValueNode;
 
@@ -2559,7 +2562,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                         psIndexNode = CPLCreateXMLNode(psGroupNode, CXT_Attribute, "index");
                         CPLCreateXMLNode(psIndexNode, CXT_Text, CPLSPrintf("%d", iIter));
                     }
-
+                    
                     papszMD = NITFGenericMetadataReadTREInternal(papszMD,
                                                                  pnMDSize,
                                                                  pnMDAlloc,
