@@ -22,12 +22,12 @@ I386_PACKAGES="zlib1g-dev:i386 libexpat-dev:i386 liblzma-dev:i386 \
               libxerces-c-dev:i386 libpng12-dev:i386 libgif-dev:i386 \
               libwebp-dev:i386 libicu-dev:i386 libnetcdf-dev:i386 \
               libssl-dev:i386 libsqlite3-dev:i386 \
-              libfreetype6-dev:i386 libfontconfig1-dev:i386"
+              libfreetype6-dev:i386 libfontconfig1-dev:i386 libtiff5-dev:i386"
 X64_PACKAGES="zlib1g-dev libexpat-dev liblzma-dev \
               libxerces-c-dev libpng12-dev libgif-dev \
               libwebp-dev libicu-dev libnetcdf-dev \
               libssl-dev libsqlite3-dev \
-              libfreetype6-dev libfontconfig1-dev"
+              libfreetype6-dev libfontconfig1-dev libtiff5-dev"
 
 if [ "$ARCHITECTURE" = "i386" ]; then
     apt-get install -y $I386_PACKAGES
@@ -76,19 +76,19 @@ make -j$(nproc) -s
 make install
 cd ../..
 
-# build libproj.a (proj master required)
-cd proj
-./autogen.sh
-SQLITE3_CFLAGS=-I/usr/include SQLITE3_LIBS=-lsqlite3 ./configure --disable-shared --prefix=$SRC/install
+# build libcurl.a (builing against Ubuntu libcurl.a doesn't work easily)
+cd curl
+./buildconf
+./configure --disable-shared --prefix=$SRC/install
 make clean -s
 make -j$(nproc) -s
 make install
 cd ..
 
-# build libcurl.a (builing against Ubuntu libcurl.a doesn't work easily)
-cd curl
-./buildconf
-./configure --disable-shared --prefix=$SRC/install
+# build libproj.a (proj master required)
+cd proj
+./autogen.sh
+SQLITE3_CFLAGS=-I/usr/include SQLITE3_LIBS=-lsqlite3 TIFF_CFLAGS=-I/usr/include TIFF_LIBS=-ltiff ./configure --disable-shared --prefix=$SRC/install --with-curl=$SRC/install/bin/curl-config
 make clean -s
 make -j$(nproc) -s
 make install
@@ -113,17 +113,21 @@ fi
 
 cd gdal
 export LDFLAGS=${CXXFLAGS}
-PKG_CONFIG_PATH=$SRC/install/lib/pkgconfig ./configure --without-libtool --with-liblzma --with-expat --with-sqlite3 --with-xerces --with-webp --with-netcdf=$SRC/install --with-curl=$SRC/install/bin/curl-config --without-hdf5 --with-jpeg=internal --with-proj=$SRC/install --with-poppler
+PKG_CONFIG_PATH=$SRC/install/lib/pkgconfig ./configure --without-libtool --with-liblzma --with-expat --with-sqlite3 --with-xerces --with-webp --with-netcdf=$SRC/install --with-curl=$SRC/install/bin/curl-config --without-hdf5 --with-jpeg=internal --with-proj=$SRC/install -with-proj-extra-lib-for-test="-L$SRC/install/lib -lcurl -lssl -lcrypto -lz -ltiff" --with-poppler --with-libtiff=internal --with-rename-internal-libtiff-symbols
+sed -i "s/POPPLER_MINOR_VERSION = 84/POPPLER_MINOR_VERSION = 85/" GDALmake.opt # temporary hack until poppler 0.85 is released
 make clean -s
 make -j$(nproc) -s static-lib
 
-export EXTRA_LIBS="-Wl,-Bstatic -lproj -lwebp -llzma -lexpat -lsqlite3 -lgif -lpng12 -lz"
+export EXTRA_LIBS="-Wl,-Bstatic "
+# curl related
+export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lcurl -lssl -lcrypto -lz"
+# PROJ
+export EXTRA_LIBS="$EXTRA_LIBS -ltiff -lproj "
+export EXTRA_LIBS="$EXTRA_LIBS -lwebp -llzma -lexpat -lsqlite3 -lgif -lpng12 -lz"
 # Xerces-C related
 export EXTRA_LIBS="$EXTRA_LIBS -lxerces-c -licuuc -licudata"
 # netCDF related
 export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lnetcdf -lhdf5_serial_hl -lhdf5_serial -lsz -laec -lz"
-# curl related
-export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lcurl -lssl -lcrypto -lz"
 # poppler related
 export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lpoppler -lfreetype -lfontconfig"
 export EXTRA_LIBS="$EXTRA_LIBS -Wl,-Bdynamic -ldl -lpthread"

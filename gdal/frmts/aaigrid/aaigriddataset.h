@@ -66,7 +66,8 @@
 typedef enum
 {
     FORMAT_AAIG,
-    FORMAT_GRASSASCII
+    FORMAT_GRASSASCII,
+    FORMAT_ISG,
 } GridFormat;
 
 /************************************************************************/
@@ -100,6 +101,7 @@ class AAIGDataset CPL_NON_FINAL: public GDALPamDataset
     double      adfGeoTransform[6];
     bool        bNoDataSet;
     double      dfNoDataValue;
+    CPLString   osUnits{};
 
     virtual int ParseHeader(const char* pszHeader, const char* pszDataType);
 
@@ -142,6 +144,23 @@ class GRASSASCIIDataset final: public AAIGDataset
   public:
     GRASSASCIIDataset() : AAIGDataset() {}
     ~GRASSASCIIDataset() override {}
+
+    static GDALDataset *Open( GDALOpenInfo * );
+    static int          Identify( GDALOpenInfo * );
+};
+
+/************************************************************************/
+/* ==================================================================== */
+/*                           ISGDataset                                 */
+/* ==================================================================== */
+/************************************************************************/
+
+class ISGDataset final: public AAIGDataset
+{
+    int ParseHeader(const char* pszHeader, const char* pszDataType) override;
+
+  public:
+    ISGDataset() : AAIGDataset() {}
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );

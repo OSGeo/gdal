@@ -31,6 +31,7 @@
 from osgeo import gdal
 from osgeo import osr
 from gdrivers.netcdf import netcdf_setup  # noqa
+netcdf_setup; # to please pyflakes
 
 import gdaltest
 import pytest
@@ -1230,3 +1231,36 @@ def test_netcdf_multidim_dims_with_same_name_different_size(netcdf_setup):  # no
     check()
 
     gdal.Unlink(tmpfilename)
+
+def test_netcdf_multidim_getmdarraynames_options(netcdf_setup):  # noqa
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    ds = gdal.OpenEx('data/with_bounds.nc', gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    assert rg.GetMDArrayNames() == [ 'lat', 'lat_bnds' ]
+    assert rg.GetMDArrayNames(['SHOW_BOUNDS=NO']) == [ 'lat' ]
+    assert rg.GetMDArrayNames(['SHOW_INDEXING=NO']) == [ 'lat_bnds' ]
+
+    ds = gdal.OpenEx('data/bug5118.nc', gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    assert rg.GetMDArrayNames() == [ 'height_above_ground1',
+                                     'time',
+                                     'v-component_of_wind_height_above_ground',
+                                     'x',
+                                     'y' ]
+    assert rg.GetMDArrayNames(['SHOW_COORDINATES=NO']) == \
+                                [ 'v-component_of_wind_height_above_ground' ]
+
+
+    ds = gdal.OpenEx('data/sen3_sral_mwr_fake_standard_measurement.nc',
+                     gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    assert 'time_01' in rg.GetMDArrayNames()
+    assert 'time_01' not in rg.GetMDArrayNames(['SHOW_TIME=NO'])
+
+    ds = gdal.OpenEx('data/byte_no_cf.nc', gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    assert 'mygridmapping' not in rg.GetMDArrayNames()
+    assert 'mygridmapping' in rg.GetMDArrayNames(['SHOW_ZERO_DIM=YES'])

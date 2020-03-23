@@ -6,6 +6,8 @@ GXF -- Grid eXchange File
 
 .. shortname:: GXF
 
+.. built_in_by_default::
+
 This is a raster exchange format propagated by Geosoft, and made a
 standard in the gravity/magnetics field. GDAL supports reading (but not
 writing) GXF-3 files, including support for georeferencing information,

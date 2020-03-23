@@ -69,6 +69,7 @@ typedef enum
 class FileProp
 {
   public:
+    unsigned int    nGenerationAuthParameters = 0;
     ExistStatus     eExists = EXIST_UNKNOWN;
     vsi_l_offset    fileSize = 0;
     time_t          mTime = 0;
@@ -83,6 +84,7 @@ class FileProp
 typedef struct
 {
     bool            bGotFileList = false;
+    unsigned int    nGenerationAuthParameters = 0;
     CPLStringList   oFileList{}; /* only file name without path */
 } CachedDirList;
 
@@ -244,7 +246,7 @@ public:
     bool                GetCachedFileProp( const char* pszURL,
                                            FileProp& oFileProp );
     void                SetCachedFileProp( const char* pszURL,
-                                           const FileProp& oFileProp );
+                                           FileProp& oFileProp );
     void                InvalidateCachedData( const char* pszURL );
 
     CURLM              *GetCurlMultiHandleFor( const CPLString& osURL );
@@ -256,7 +258,7 @@ public:
     bool                GetCachedDirList( const char* pszURL,
                                           CachedDirList& oCachedDirList );
     void                SetCachedDirList( const char* pszURL,
-                                          const CachedDirList& oCachedDirList );
+                                          CachedDirList& oCachedDirList );
     bool ExistsInCacheDirList( const CPLString& osDirname, bool *pbIsDir );
 
     virtual CPLString GetURLFromFilename( const CPLString& osFilename );
@@ -304,7 +306,7 @@ class VSICurlHandle : public VSIVirtualHandle
 
     bool            bEOF = false;
 
-    virtual bool            DownloadRegion(vsi_l_offset startOffset, int nBlocks);
+    virtual std::string DownloadRegion(vsi_l_offset startOffset, int nBlocks);
 
     bool                m_bUseHead = false;
 
@@ -323,6 +325,7 @@ class VSICurlHandle : public VSIVirtualHandle
     virtual bool IsDirectoryFromExists( const char* /*pszVerb*/, int /*response_code*/ ) { return false; }
     virtual void ProcessGetFileSizeResult(const char* /* pszContent */ ) {}
     void SetURL(const char* pszURL);
+    virtual bool Authenticate() { return false; }
 
   public:
 
@@ -365,6 +368,14 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(IVSIS3LikeFSHandler)
 
+    bool CopyFile(VSILFILE* fpIn,
+                     vsi_l_offset nSourceSize,
+                     const char* pszSource,
+                     const char* pszTarget,
+                     GDALProgressFunc pProgressFunc,
+                     void *pProgressData);
+    int MkdirInternal( const char *pszDirname, bool bDoStatCheck );
+
   protected:
     char** GetFileList( const char *pszFilename,
                         int nMaxFiles,
@@ -372,6 +383,8 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
 
     virtual IVSIS3LikeHandleHelper* CreateHandleHelper(
             const char* pszURI, bool bAllowNoObject) = 0;
+
+    virtual int      CopyObject( const char *oldpath, const char *newpath );
 
     IVSIS3LikeFSHandler() = default;
 
@@ -381,6 +394,7 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
     int Rmdir( const char *pszDirname ) override;
     int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
               int nFlags ) override;
+    int Rename( const char *oldpath, const char *newpath ) override;
 
     virtual int      DeleteObject( const char *pszFilename );
 
@@ -397,6 +411,32 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
 
     VSIDIR* OpenDir( const char *pszPath, int nRecurseDepth,
                              const char* const *papszOptions) override;
+
+    // Multipart upload
+    CPLString InitiateMultipartUpload(
+                                const std::string& osFilename,
+                                IVSIS3LikeHandleHelper *poS3HandleHelper,
+                                int nMaxRetry,
+                                double dfRetryDelay);
+    CPLString UploadPart(const CPLString& osFilename,
+                         int nPartNumber,
+                         const std::string& osUploadID,
+                         const void* pabyBuffer,
+                         size_t nBufferSize,
+                         IVSIS3LikeHandleHelper *poS3HandleHelper,
+                         int nMaxRetry,
+                         double dfRetryDelay);
+    bool CompleteMultipart(const CPLString& osFilename,
+                           const CPLString& osUploadID,
+                           const std::vector<CPLString> aosEtags,
+                           IVSIS3LikeHandleHelper *poS3HandleHelper,
+                           int nMaxRetry,
+                           double dfRetryDelay);
+    bool AbortMultipart(const CPLString& osFilename,
+                        const CPLString& osUploadID,
+                        IVSIS3LikeHandleHelper *poS3HandleHelper,
+                        int nMaxRetry,
+                        double dfRetryDelay);
 };
 
 /************************************************************************/
@@ -445,14 +485,11 @@ class VSIS3WriteHandle final : public VSIVirtualHandle
     vsi_l_offset        m_nCurOffset = 0;
     int                 m_nBufferOff = 0;
     int                 m_nBufferSize = 0;
-    int                 m_nBufferOffReadCallback = 0;
     bool                m_bClosed = false;
     GByte              *m_pabyBuffer = nullptr;
     CPLString           m_osUploadID{};
     int                 m_nPartNumber = 0;
     std::vector<CPLString> m_aosEtags{};
-    CPLString           m_osXML{};
-    int                 m_nOffsetInXML = 0;
     bool                m_bError = false;
 
     CURLM              *m_hCurlMulti = nullptr;
@@ -466,14 +503,7 @@ class VSIS3WriteHandle final : public VSIVirtualHandle
     double              m_dfRetryDelay = 0.0;
     WriteFuncStruct     m_sWriteFuncHeaderData{};
 
-    static size_t       ReadCallBackBuffer( char *buffer, size_t size,
-                                            size_t nitems, void *instream );
-    bool                InitiateMultipartUpload();
     bool                UploadPart();
-    static size_t       ReadCallBackXML( char *buffer, size_t size,
-                                         size_t nitems, void *instream );
-    bool                CompleteMultipart();
-    bool                AbortMultipart();
     bool                DoSinglePartPUT();
 
     static size_t       ReadCallBackBufferChunked( char *buffer, size_t size,

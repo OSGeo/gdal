@@ -5,6 +5,8 @@ GTM - GPS TrackMaker
 
 .. shortname:: GTM
 
+.. built_in_by_default::
+
 `GPSTrackMaker <http://www.gpstm.com/>`__ is a program that is
 compatible with more than 160 GPS models. It allows you to create your
 own maps. It supports vector maps and images.

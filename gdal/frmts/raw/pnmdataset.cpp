@@ -337,6 +337,23 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
 
         return nullptr;
     }
+    const CPLString osExt( CPLGetExtension(pszFilename) );
+    if( nBands == 1 )
+    {
+        if( !EQUAL(osExt, "PGM") )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Extension for a 1-band netpbm file should be .pgm");
+        }
+    }
+    else /* if( nBands == 3 ) */
+    {
+        if( !EQUAL(osExt, "PPM") )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Extension for a 3-band netpbm file should be .ppm");
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try to create the file.                                         */
@@ -387,8 +404,9 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
 
     if( !bOK )
         return nullptr;
-    return
-        reinterpret_cast<GDALDataset *>( GDALOpen( pszFilename, GA_Update ) );
+
+    GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
+    return Open(&oOpenInfo);
 }
 
 /************************************************************************/

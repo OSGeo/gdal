@@ -5,7 +5,9 @@ FlatGeobuf
 
 .. versionadded:: 3.1
 
-.. shortname:: ``FlatGeobuf``
+.. shortname:: FlatGeobuf
+
+.. built_in_by_default::
 
 This driver implements read/write support for access to features encoded
 in `FlatGeobuf <https://github.com/bjornharrtell/flatgeobuf>`__ format, a
@@ -49,6 +51,12 @@ Layer Creation Options
 
 -  **SPATIAL_INDEX=**\ *YES/NO*: Set to YES to create a
    spatial index. Defaults to YES.
+-  **TEMPORARY_DIR=**\ path: Path to an existing directory where temporary
+   files should be created. Only used if SPATIAL_INDEX=YES. If not specified,
+   the directory of the output file will be used for regular filenames. For
+   other VSI file systems, the temporary directory will be the one decided by
+   the :cpp:func:`CPLGenerateTempFilename` function.
+   "/vsimem/" can be used for in-memory temporary files.
 
 Examples
 --------

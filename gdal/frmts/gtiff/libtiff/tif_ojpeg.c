@@ -498,15 +498,15 @@ OJPEGVGetField(TIFF* tif, uint32 tag, va_list ap)
 			break;
 		case TIFFTAG_JPEGQTABLES:
 			*va_arg(ap,uint32*)=(uint32)sp->qtable_offset_count;
-			*va_arg(ap,void**)=(void*)sp->qtable_offset; 
+			*va_arg(ap,const void**)=(const void*)sp->qtable_offset;
 			break;
 		case TIFFTAG_JPEGDCTABLES:
 			*va_arg(ap,uint32*)=(uint32)sp->dctable_offset_count;
-			*va_arg(ap,void**)=(void*)sp->dctable_offset;  
+			*va_arg(ap,const void**)=(const void*)sp->dctable_offset;
 			break;
 		case TIFFTAG_JPEGACTABLES:
 			*va_arg(ap,uint32*)=(uint32)sp->actable_offset_count;
-			*va_arg(ap,void**)=(void*)sp->actable_offset;
+			*va_arg(ap,const void**)=(const void*)sp->actable_offset;
 			break;
 		case TIFFTAG_JPEGPROC:
 			*va_arg(ap,uint16*)=(uint16)sp->jpeg_proc;
@@ -837,36 +837,6 @@ OJPEGDecodeRaw(TIFF* tif, uint8* buf, tmsize_t cc)
 	{
 		if (sp->subsampling_convert_state==0)
 		{
-			const jpeg_decompress_struct* cinfo = &sp->libjpeg_jpeg_decompress_struct;
-			int width = 0;
-			int last_col_width = 0;
-			int jpeg_bytes;
-			int expected_bytes;
-			int i;
-			if (cinfo->MCUs_per_row == 0)
-			{
-				sp->error_in_raw_data_decoding = 1;
-				return 0;
-			}
-			for (i = 0; i < cinfo->comps_in_scan; ++i)
-			{
-				const jpeg_component_info* info = cinfo->cur_comp_info[i];
-#if JPEG_LIB_VERSION >= 70
-				width += info->MCU_width * info->DCT_h_scaled_size;
-				last_col_width += info->last_col_width * info->DCT_h_scaled_size;
-#else
-				width += info->MCU_width * info->DCT_scaled_size;
-				last_col_width += info->last_col_width * info->DCT_scaled_size;
-#endif
-			}
-			jpeg_bytes = (cinfo->MCUs_per_row - 1) * width + last_col_width;
-			expected_bytes = sp->subsampling_convert_clinelenout * sp->subsampling_ver * sp->subsampling_hor;
-			if (jpeg_bytes != expected_bytes)
-			{
-				TIFFErrorExt(tif->tif_clientdata,module,"Inconsistent number of MCU in codestream");
-				sp->error_in_raw_data_decoding = 1;
-				return(0);
-			}
 			if (jpeg_read_raw_data_encap(sp,&(sp->libjpeg_jpeg_decompress_struct),sp->subsampling_convert_ycbcrimage,sp->subsampling_ver*8)==0)
 			{
 				sp->error_in_raw_data_decoding = 1;
@@ -1094,6 +1064,8 @@ OJPEGReadHeaderInfo(TIFF* tif)
 	{
 		sp->strile_width=sp->image_width;
 		sp->strile_length=tif->tif_dir.td_rowsperstrip;
+                if( sp->strile_length == (uint32)-1 )
+                    sp->strile_length = sp->image_length;
 		sp->strile_length_total=sp->image_length;
 	}
 	if (tif->tif_dir.td_samplesperpixel==1)
@@ -1291,6 +1263,26 @@ OJPEGWriteHeaderInfo(TIFF* tif)
 	}
 	if (jpeg_start_decompress_encap(sp,&(sp->libjpeg_jpeg_decompress_struct))==0)
 		return(0);
+        if(sp->libjpeg_jpeg_decompress_struct.image_width != sp->strile_width ) {
+            TIFFErrorExt(tif->tif_clientdata,module,
+                         "jpeg_start_decompress() returned image_width = %d, "
+                         "expected %d",
+                         sp->libjpeg_jpeg_decompress_struct.image_width,
+                         sp->strile_width);
+            return 0;
+        }
+        if(sp->libjpeg_jpeg_decompress_struct.max_h_samp_factor != sp->subsampling_hor ||
+           sp->libjpeg_jpeg_decompress_struct.max_v_samp_factor != sp->subsampling_ver) {
+            TIFFErrorExt(tif->tif_clientdata,module,
+                         "jpeg_start_decompress() returned max_h_samp_factor = %d "
+                         "and max_v_samp_factor = %d, expected %d and %d",
+                         sp->libjpeg_jpeg_decompress_struct.max_h_samp_factor,
+                         sp->libjpeg_jpeg_decompress_struct.max_v_samp_factor,
+                         sp->subsampling_hor,
+                         sp->subsampling_ver);
+            return 0;
+        }
+
 	sp->writeheader_done=1;
 	return(1);
 }

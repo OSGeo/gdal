@@ -73,6 +73,9 @@ CPLString CPL_DLL GTiffGetCompressValues(bool& bHasLZW,
                                  bool& bHasWebP,
                                  bool bForCOG);
 
+#if !defined(TIFFTAG_GDAL_METADATA)
+// The following 5 tags are now defined in tiff.h of libtiff > 4.1.0
+
 #define TIFFTAG_GDAL_METADATA  42112
 #define TIFFTAG_GDAL_NODATA    42113
 #define TIFFTAG_RPCCOEFFICIENT 50844
@@ -82,6 +85,8 @@ CPLString CPL_DLL GTiffGetCompressValues(bool& bHasLZW,
 #define TIFFTAG_TIFF_RSID      50908
 /* https://www.awaresystems.be/imaging/tiff/tifftags/geo_metadata.html */
 #define TIFFTAG_GEO_METADATA   50909
+
+#endif
 
 #if !defined(PREDICTOR_NONE)
 #define PREDICTOR_NONE 1

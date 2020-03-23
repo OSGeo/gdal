@@ -5,7 +5,7 @@
 # Public domain
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG ALPINE_VERSION=3.10
+ARG ALPINE_VERSION=3.11
 FROM alpine:${ALPINE_VERSION} as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
@@ -14,10 +14,10 @@ MAINTAINER Even Rouault <even.rouault@spatialys.com>
 # Setup build env for PROJ
 RUN apk add --no-cache wget curl unzip make libtool autoconf automake pkgconfig g++ sqlite sqlite-dev
 
-# For GDAL
+# For PROJ and GDAL
 RUN apk add --no-cache \
     linux-headers \
-    curl-dev \
+    curl-dev tiff-dev \
     zlib-dev zstd-dev \
     libjpeg-turbo-dev libpng-dev libwebp-dev expat-dev postgresql-dev openjpeg-dev
 
@@ -156,7 +156,7 @@ RUN date
 RUN apk add --no-cache \
         libstdc++ \
         sqlite-libs \
-        libcurl \
+        libcurl tiff \
         zlib zstd-libs\
         libjpeg-turbo libpng openjpeg libwebp expat libpq \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*

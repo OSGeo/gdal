@@ -3846,6 +3846,569 @@ std::shared_ptr<GDALMDArray> GDALMDArray::Transpose(
 }
 
 /************************************************************************/
+/*                      GDALMDArrayTransposed                           */
+/************************************************************************/
+
+class GDALMDArrayUnscaled final: public GDALMDArray
+{
+private:
+    std::shared_ptr<GDALMDArray> m_poParent{};
+    GDALExtendedDataType m_dt;
+    bool m_bHasNoData;
+    double m_adfNoData[2]{ std::numeric_limits<double>::quiet_NaN(),
+                           std::numeric_limits<double>::quiet_NaN() };
+
+protected:
+    explicit GDALMDArrayUnscaled(const std::shared_ptr<GDALMDArray>& poParent):
+        GDALAbstractMDArray(std::string(), "Unscaled view of " + poParent->GetName()),
+        GDALMDArray(std::string(), "Unscaled view of " + poParent->GetName()),
+        m_poParent(std::move(poParent)),
+        m_dt(GDALExtendedDataType::Create(GDALDataTypeIsComplex(
+            m_poParent->GetDataType().GetNumericDataType()) ?
+                GDT_CFloat64 : GDT_Float64)),
+        m_bHasNoData( m_poParent->GetRawNoDataValue() != nullptr )
+    {
+    }
+
+    bool IRead(const GUInt64* arrayStartIdx,
+                      const size_t* count,
+                      const GInt64* arrayStep,
+                      const GPtrDiff_t* bufferStride,
+                      const GDALExtendedDataType& bufferDataType,
+                      void* pDstBuffer) const override;
+
+public:
+    static std::shared_ptr<GDALMDArrayUnscaled> Create(
+                    const std::shared_ptr<GDALMDArray>& poParent)
+    {
+        auto newAr(std::shared_ptr<GDALMDArrayUnscaled>(new GDALMDArrayUnscaled(
+            poParent)));
+        newAr->SetSelf(newAr);
+        return newAr;
+    }
+
+    bool IsWritable() const override { return false; }
+
+    const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_poParent->GetDimensions(); }
+
+    const GDALExtendedDataType &GetDataType() const override { return m_dt; }
+
+    const std::string& GetUnit() const override { return m_poParent->GetUnit(); }
+
+    std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override { return m_poParent->GetSpatialRef(); }
+
+    const void* GetRawNoDataValue() const override { return m_bHasNoData ? &m_adfNoData[0] : nullptr; }
+
+    std::vector<GUInt64> GetBlockSize() const override { return m_poParent->GetBlockSize(); }
+};
+
+/************************************************************************/
+/*                             IRead()                                  */
+/************************************************************************/
+
+bool GDALMDArrayUnscaled::IRead(const GUInt64* arrayStartIdx,
+                              const size_t* count,
+                              const GInt64* arrayStep,
+                              const GPtrDiff_t* bufferStride,
+                              const GDALExtendedDataType& bufferDataType,
+                              void* pDstBuffer) const
+{
+    const double dfScale = m_poParent->GetScale();
+    const double dfOffset = m_poParent->GetOffset();
+    const bool bDTIsComplex = m_dt.GetNumericDataType() == GDT_CFloat64;
+    const size_t nDTSize = m_dt.GetSize();
+    const bool bTempBufferNeeded = ( m_dt != bufferDataType );
+
+    double adfSrcNoData[2] = { 0, 0 };
+    if( m_bHasNoData )
+    {
+        GDALExtendedDataType::CopyValue(m_poParent->GetRawNoDataValue(),
+                                        m_poParent->GetDataType(),
+                                        &adfSrcNoData[0], m_dt);
+    }
+
+    const auto nDims = GetDimensions().size();
+    if( nDims == 0 )
+    {
+        double adfVal[2];
+        if( !m_poParent->Read(arrayStartIdx, count, arrayStep, bufferStride,
+                              m_dt, &adfVal[0]) )
+        {
+            return false;
+        }
+        if( !m_bHasNoData || adfVal[0] != adfSrcNoData[0] )
+        {
+            adfVal[0] = adfVal[0] * dfScale + dfOffset;
+            if( bDTIsComplex )
+            {
+                adfVal[1] = adfVal[1] * dfScale + dfOffset;
+            }
+            GDALExtendedDataType::CopyValue(&adfVal[0], m_dt,
+                                            pDstBuffer, bufferDataType);
+        }
+        else
+        {
+            GDALExtendedDataType::CopyValue(&m_adfNoData[0], m_dt,
+                                            pDstBuffer, bufferDataType);
+        }
+        return true;
+    }
+
+    std::vector<GPtrDiff_t> actualBufferStrideVector;
+    const GPtrDiff_t* actualBufferStridePtr = bufferStride;
+    void* pTempBuffer = pDstBuffer;
+    if( bTempBufferNeeded )
+    {
+        size_t nElts = 1;
+        actualBufferStrideVector.resize(nDims);
+        for( size_t i = 0; i < nDims; i++ )
+            nElts *= count[i];
+        actualBufferStrideVector.back() = 1;
+        for( size_t i = nDims - 1; i > 0; )
+        {
+            --i;
+            actualBufferStrideVector[i] =
+                actualBufferStrideVector[i+1] * count[i+1];
+        }
+        actualBufferStridePtr = actualBufferStrideVector.data();
+        pTempBuffer = VSI_MALLOC2_VERBOSE(nDTSize, nElts);
+        if( !pTempBuffer )
+            return false;
+    }
+    if( !m_poParent->Read(arrayStartIdx,
+                          count,
+                          arrayStep,
+                          actualBufferStridePtr,
+                          m_dt,
+                          pTempBuffer) )
+    {
+        if( bTempBufferNeeded )
+            VSIFree(pTempBuffer);
+        return false;
+    }
+
+    struct Stack
+    {
+        size_t       nIters = 0;
+        double*      src_ptr = nullptr;
+        GByte*       dst_ptr = nullptr;
+        GPtrDiff_t   src_inc_offset = 0;
+        GPtrDiff_t   dst_inc_offset = 0;
+    };
+    std::vector<Stack> stack(nDims);
+    const size_t nBufferDTSize = bufferDataType.GetSize();
+    for( size_t i = 0; i < nDims; i++ )
+    {
+        stack[i].src_inc_offset = actualBufferStridePtr[i] *
+                                        (bDTIsComplex ? 2 : 1);
+        stack[i].dst_inc_offset = static_cast<GPtrDiff_t>(
+            bufferStride[i] * nBufferDTSize);
+    }
+    stack[0].src_ptr = static_cast<double*>(pTempBuffer);
+    stack[0].dst_ptr = static_cast<GByte*>(pDstBuffer);
+
+    size_t dimIdx = 0;
+    const size_t nDimsMinus1 = nDims - 1;
+    GByte abyDstNoData[16];
+    CPLAssert(nBufferDTSize <= sizeof(abyDstNoData));
+    GDALExtendedDataType::CopyValue(&m_adfNoData[0], m_dt,
+                                    abyDstNoData, bufferDataType);
+
+lbl_next_depth:
+    if( dimIdx == nDimsMinus1 )
+    {
+        auto nIters = count[dimIdx];
+        double* padfVal = stack[dimIdx].src_ptr;
+        GByte* dst_ptr = stack[dimIdx].dst_ptr;
+        while(true)
+        {
+            if( !m_bHasNoData || padfVal[0] != adfSrcNoData[0] )
+            {
+                padfVal[0] = padfVal[0] * dfScale + dfOffset;
+                if( bDTIsComplex )
+                {
+                    padfVal[1] = padfVal[1] * dfScale + dfOffset;
+                }
+                if( bTempBufferNeeded )
+                {
+                    GDALExtendedDataType::CopyValue(&padfVal[0], m_dt,
+                                                    dst_ptr,
+                                                    bufferDataType);
+                }
+            }
+            else
+            {
+                memcpy(dst_ptr, abyDstNoData, nBufferDTSize);
+            }
+
+            if( (--nIters) == 0 )
+                break;
+            padfVal += stack[dimIdx].src_inc_offset;
+            dst_ptr += stack[dimIdx].dst_inc_offset;
+        }
+    }
+    else
+    {
+        stack[dimIdx].nIters = count[dimIdx];
+        while(true)
+        {
+            dimIdx ++;
+            stack[dimIdx].src_ptr = stack[dimIdx-1].src_ptr;
+            stack[dimIdx].dst_ptr = stack[dimIdx-1].dst_ptr;
+            goto lbl_next_depth;
+lbl_return_to_caller:
+            dimIdx --;
+            if( (--stack[dimIdx].nIters) == 0 )
+                break;
+            stack[dimIdx].src_ptr += stack[dimIdx].src_inc_offset;
+            stack[dimIdx].dst_ptr += stack[dimIdx].dst_inc_offset;
+        }
+    }
+    if( dimIdx > 0 )
+        goto lbl_return_to_caller;
+
+    if( bTempBufferNeeded )
+        VSIFree(pTempBuffer);
+    return true;
+}
+
+/************************************************************************/
+/*                           GetUnscaled()                              */
+/************************************************************************/
+
+/** Return an array that is the unscaled version of the current one.
+ *
+ * That is each value of the unscaled array will be
+ * unscaled_value = raw_value * GetScale() + GetOffset()
+ *
+ * This is the same as the C function GDALMDArrayGetUnscaled().
+ *
+ * @return a new array, that holds a reference to the original one, and thus is
+ * a view of it (not a copy), or nullptr in case of error.
+ */
+std::shared_ptr<GDALMDArray> GDALMDArray::GetUnscaled() const
+{
+    auto self = std::dynamic_pointer_cast<GDALMDArray>(m_pSelf.lock());
+    if( !self )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Driver implementation issue: m_pSelf not set !");
+        return nullptr;
+    }
+    if( GetDataType().GetClass() != GEDTC_NUMERIC )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GetUnscaled() only supports numeric data type");
+        return nullptr;
+    }
+    const double dfScale = GetScale();
+    const double dfOffset = GetOffset();
+    if( dfScale == 1.0 && dfOffset == 0.0 )
+        return self;
+
+    return GDALMDArrayUnscaled::Create(self);
+}
+
+/************************************************************************/
+/*                      GDALMDArrayTransposed                           */
+/************************************************************************/
+
+class GDALMDArrayMask final: public GDALMDArray
+{
+private:
+    std::shared_ptr<GDALMDArray> m_poParent{};
+    GDALExtendedDataType m_dt {GDALExtendedDataType::Create(GDT_Byte) };
+
+protected:
+    explicit GDALMDArrayMask(const std::shared_ptr<GDALMDArray>& poParent):
+        GDALAbstractMDArray(std::string(), "Mask of " + poParent->GetName()),
+        GDALMDArray(std::string(), "Mask of " + poParent->GetName()),
+        m_poParent(std::move(poParent))
+    {
+    }
+
+    bool IRead(const GUInt64* arrayStartIdx,
+                      const size_t* count,
+                      const GInt64* arrayStep,
+                      const GPtrDiff_t* bufferStride,
+                      const GDALExtendedDataType& bufferDataType,
+                      void* pDstBuffer) const override;
+
+public:
+    static std::shared_ptr<GDALMDArrayMask> Create(
+                    const std::shared_ptr<GDALMDArray>& poParent)
+    {
+        auto newAr(std::shared_ptr<GDALMDArrayMask>(new GDALMDArrayMask(
+            poParent)));
+        newAr->SetSelf(newAr);
+        return newAr;
+    }
+
+    bool IsWritable() const override { return false; }
+
+    const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_poParent->GetDimensions(); }
+
+    const GDALExtendedDataType &GetDataType() const override { return m_dt; }
+
+    std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override { return m_poParent->GetSpatialRef(); }
+
+    std::vector<GUInt64> GetBlockSize() const override { return m_poParent->GetBlockSize(); }
+};
+
+/************************************************************************/
+/*                             IRead()                                  */
+/************************************************************************/
+
+bool GDALMDArrayMask::IRead(const GUInt64* arrayStartIdx,
+                              const size_t* count,
+                              const GInt64* arrayStep,
+                              const GPtrDiff_t* bufferStride,
+                              const GDALExtendedDataType& bufferDataType,
+                              void* pDstBuffer) const
+{
+    size_t nElts = 1;
+    const size_t nDims = GetDimensionCount();
+    CPLAssert(nDims >= 1);
+    std::vector<GPtrDiff_t> tmpBufferStrideVector(nDims);
+    for( size_t i = 0; i < nDims; i++ )
+        nElts *= count[i];
+    tmpBufferStrideVector.back() = 1;
+    for( size_t i = nDims - 1; i > 0; )
+    {
+        --i;
+        tmpBufferStrideVector[i] =
+            tmpBufferStrideVector[i+1] * count[i+1];
+    }
+
+    bool bTmpBufferAsDouble = CPL_TO_BOOL(GDALDataTypeIsFloating(
+        m_poParent->GetDataType().GetNumericDataType()));
+
+    const auto GetSingleValNumericAttr = [this, &bTmpBufferAsDouble]
+        (const char* pszAttrName, bool& bHasVal, double& dfVal)
+    {
+        auto poAttr = m_poParent->GetAttribute(pszAttrName);
+        if( poAttr && poAttr->GetDimensionsSize().size() == 1 &&
+            poAttr->GetDimensionsSize()[0] == 1 &&
+            poAttr->GetDataType().GetClass() == GEDTC_NUMERIC )
+        {
+            bTmpBufferAsDouble = true;
+            bHasVal = true;
+            dfVal = poAttr->ReadAsDouble();
+        }
+    };
+
+    double dfMissingValue = 0.0;
+    bool bHasMissingValue = false;
+    GetSingleValNumericAttr("missing_value", bHasMissingValue, dfMissingValue);
+
+    double dfFillValue = 0.0;
+    bool bHasFillValue = false;
+    GetSingleValNumericAttr("_FillValue", bHasFillValue, dfFillValue);
+
+    double dfValidMin = 0.0;
+    bool bHasValidMin = false;
+    GetSingleValNumericAttr("valid_min", bHasValidMin, dfValidMin);
+
+    double dfValidMax = 0.0;
+    bool bHasValidMax = false;
+    GetSingleValNumericAttr("valid_max", bHasValidMax, dfValidMax);
+
+    {
+        auto poValidRange = m_poParent->GetAttribute("valid_range");
+        if( poValidRange && poValidRange->GetDimensionsSize().size() == 1 &&
+            poValidRange->GetDimensionsSize()[0] == 2 &&
+            poValidRange->GetDataType().GetClass() == GEDTC_NUMERIC )
+        {
+            bTmpBufferAsDouble = true;
+            bHasValidMin = true;
+            bHasValidMax = true;
+            auto vals = poValidRange->ReadAsDoubleArray();
+            CPLAssert(vals.size() == 2);
+            dfValidMin = vals[0];
+            dfValidMax = vals[1];
+        }
+    }
+
+    const auto oTmpBufferDT = bTmpBufferAsDouble ?
+        GDALExtendedDataType::Create(GDT_Float64) :
+        m_poParent->GetDataType();
+    const size_t nTmpBufferDTSize = oTmpBufferDT.GetSize();
+    void *pTempBuffer = VSI_MALLOC2_VERBOSE(nTmpBufferDTSize, nElts);
+    if( !pTempBuffer )
+        return false;
+    if( !m_poParent->Read(arrayStartIdx,
+                          count,
+                          arrayStep,
+                          tmpBufferStrideVector.data(),
+                          oTmpBufferDT,
+                          pTempBuffer) )
+    {
+        VSIFree(pTempBuffer);
+        return false;
+    }
+
+    struct Stack
+    {
+        size_t       nIters = 0;
+        const GByte* src_ptr = nullptr;
+        GByte*       dst_ptr = nullptr;
+        GPtrDiff_t   src_inc_offset = 0;
+        GPtrDiff_t   dst_inc_offset = 0;
+    };
+    std::vector<Stack> stack(nDims);
+    const size_t nBufferDTSize = bufferDataType.GetSize();
+    for( size_t i = 0; i < nDims; i++ )
+    {
+        stack[i].src_inc_offset = static_cast<GPtrDiff_t>(
+            tmpBufferStrideVector[i] * nTmpBufferDTSize);
+        stack[i].dst_inc_offset = static_cast<GPtrDiff_t>(
+            bufferStride[i] * nBufferDTSize);
+    }
+    stack[0].src_ptr = static_cast<const GByte*>(pTempBuffer);
+    stack[0].dst_ptr = static_cast<GByte*>(pDstBuffer);
+
+    size_t dimIdx = 0;
+    const size_t nDimsMinus1 = nDims - 1;
+    const void* pSrcRawNoDataValue = m_poParent->GetRawNoDataValue();
+    const double dfNoDataValue = m_poParent->GetNoDataValueAsDouble();
+    const bool bBufferDataTypeIsDT = bufferDataType == m_dt;
+    GByte abyZeroOrOne[2][16]; // 16 is sizeof GDT_CFloat64
+    CPLAssert(nBufferDTSize <= 16);
+    for( GByte flag = 0; flag <= 1; flag++ )
+    {
+        // Coverity misses that m_dt is of type Byte
+        // coverity[overrun-buffer-val]
+        GDALExtendedDataType::CopyValue(&flag, m_dt,
+                                        abyZeroOrOne[flag], bufferDataType);
+    }
+
+lbl_next_depth:
+    if( dimIdx == nDimsMinus1 )
+    {
+        auto nIters = count[dimIdx];
+        const GByte* src_ptr = stack[dimIdx].src_ptr;
+        GByte* dst_ptr = stack[dimIdx].dst_ptr;
+
+        while(true)
+        {
+            GByte flag = 1;
+            // Only valid when bTmpBufferAsDouble is set
+            const double* pSrcDouble = reinterpret_cast<const double*>(src_ptr);
+            if( bTmpBufferAsDouble && std::isnan(*pSrcDouble) )
+            {
+                flag = 0;
+            }
+            else if( pSrcRawNoDataValue &&
+                     (bTmpBufferAsDouble ?
+                        *pSrcDouble == dfNoDataValue :
+                        memcmp(src_ptr, pSrcRawNoDataValue, nTmpBufferDTSize) == 0) )
+            {
+                flag = 0;
+            }
+            else if( bHasMissingValue && *pSrcDouble == dfMissingValue )
+            {
+                flag = 0;
+            }
+            else if( bHasFillValue && *pSrcDouble == dfFillValue )
+            {
+                flag = 0;
+            }
+            else if( bHasValidMin && *pSrcDouble < dfValidMin )
+            {
+                flag = 0;
+            }
+            else if( bHasValidMax && *pSrcDouble > dfValidMax )
+            {
+                flag = 0;
+            }
+
+            if( bBufferDataTypeIsDT )
+            {
+                *dst_ptr = flag;
+            }
+            else
+            {
+                memcpy(dst_ptr, abyZeroOrOne[flag], nBufferDTSize);
+            }
+
+            if( (--nIters) == 0 )
+                break;
+            src_ptr += stack[dimIdx].src_inc_offset;
+            dst_ptr += stack[dimIdx].dst_inc_offset;
+        }
+    }
+    else
+    {
+        stack[dimIdx].nIters = count[dimIdx];
+        while(true)
+        {
+            dimIdx ++;
+            stack[dimIdx].src_ptr = stack[dimIdx-1].src_ptr;
+            stack[dimIdx].dst_ptr = stack[dimIdx-1].dst_ptr;
+            goto lbl_next_depth;
+lbl_return_to_caller:
+            dimIdx --;
+            if( (--stack[dimIdx].nIters) == 0 )
+                break;
+            stack[dimIdx].src_ptr += stack[dimIdx].src_inc_offset;
+            stack[dimIdx].dst_ptr += stack[dimIdx].dst_inc_offset;
+        }
+    }
+    if( dimIdx > 0 )
+        goto lbl_return_to_caller;
+
+
+    VSIFree(pTempBuffer);
+    return true;
+}
+
+/************************************************************************/
+/*                            GetMask()                                 */
+/************************************************************************/
+
+/** Return an array that is a mask for the current array
+ *
+ * This array will be of type Byte, with values set to 0 to indicate invalid
+ * pixels of the current array, and values set to 1 to indicate valid pixels.
+ *
+ * The generic implementation honours the NoDataValue, as well as various
+ * netCDF CF attributes: missing_value, _FillValue, valid_min, valid_max
+ * and valid_range.
+ *
+ * This is the same as the C function GDALMDArrayGetMask().
+ *
+ * @param papszOptions NULL-terminated list of options, or NULL.
+ *
+ * @return a new array, that holds a reference to the original one, and thus is
+ * a view of it (not a copy), or nullptr in case of error.
+ */
+std::shared_ptr<GDALMDArray> GDALMDArray::GetMask(CPL_UNUSED
+                                                  CSLConstList papszOptions) const
+{
+    auto self = std::dynamic_pointer_cast<GDALMDArray>(m_pSelf.lock());
+    if( !self )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Driver implementation issue: m_pSelf not set !");
+        return nullptr;
+    }
+    if( GetDataType().GetClass() != GEDTC_NUMERIC )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GetMask() only supports numeric data type");
+        return nullptr;
+    }
+    if( GetDimensionCount() == 0 )
+    {
+        // Limitation for the sake of implementation simplicity
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GetMask() only supports non-scalar arrays");
+        return nullptr;
+    }
+    return GDALMDArrayMask::Create(self);
+}
+
+/************************************************************************/
 /*                         GDALDatasetFromArray()                       */
 /************************************************************************/
 
@@ -6171,6 +6734,50 @@ GDALMDArrayH GDALMDArrayTranspose(GDALMDArrayH hArray,
     if( !reordered )
         return nullptr;
     return new GDALMDArrayHS(reordered);
+}
+
+/************************************************************************/
+/*                      GDALMDArrayGetUnscaled()                        */
+/************************************************************************/
+
+/** Return an array that is the unscaled version of the current one.
+ *
+ * That is each value of the unscaled array will be
+ * unscaled_value = raw_value * GetScale() + GetOffset()
+ *
+ * The returned object should be released with GDALMDArrayRelease().
+ *
+ * This is the same as the C++ method GDALMDArray::GetUnscaled().
+ */
+GDALMDArrayH GDALMDArrayGetUnscaled(GDALMDArrayH hArray)
+{
+    VALIDATE_POINTER1( hArray, __func__, nullptr );
+    auto unscaled = hArray->m_poImpl->GetUnscaled();
+    if( !unscaled )
+        return nullptr;
+    return new GDALMDArrayHS(unscaled);
+}
+
+/************************************************************************/
+/*                          GDALMDArrayGetMask()                         */
+/************************************************************************/
+
+/** Return an array that is a mask for the current array
+ *
+ * This array will be of type Byte, with values set to 0 to indicate invalid
+ * pixels of the current array, and values set to 1 to indicate valid pixels.
+ *
+ * The returned object should be released with GDALMDArrayRelease().
+ *
+ * This is the same as the C++ method GDALMDArray::GetMask().
+ */
+GDALMDArrayH GDALMDArrayGetMask(GDALMDArrayH hArray, CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1( hArray, __func__, nullptr );
+    auto unscaled = hArray->m_poImpl->GetMask(papszOptions);
+    if( !unscaled )
+        return nullptr;
+    return new GDALMDArrayHS(unscaled);
 }
 
 /************************************************************************/

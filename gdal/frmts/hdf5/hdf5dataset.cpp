@@ -507,6 +507,15 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
 
     poDS->SetMetadata(poDS->papszMetadata);
 
+    if( STARTS_WITH(CSLFetchNameValueDef(poDS->papszMetadata, "mission_name", ""), "Sentinel 3") &&
+        EQUAL(CSLFetchNameValueDef(poDS->papszMetadata, "altimeter_sensor_name", ""), "SRAL") &&
+        EQUAL(CSLFetchNameValueDef(poDS->papszMetadata, "radiometer_sensor_name", ""), "MWR") &&
+        GDALGetDriverByName("netCDF") != nullptr )
+    {
+        delete poDS;
+        return nullptr;
+    }
+
     if ( CSLCount(poDS->papszSubDatasets) / 2 >= 1 )
         poDS->SetMetadata(poDS->papszSubDatasets, "SUBDATASETS");
 
@@ -1102,7 +1111,7 @@ CPLErr HDF5Dataset::CreateMetadata( HDF5GroupObjects *poH5Object, int nType)
 
     poH5CurrentObject = poH5Object;
 
-    if( poH5Object->pszPath == nullptr || EQUAL(poH5Object->pszPath, "") )
+    if( EQUAL(poH5Object->pszPath, "") )
         return CE_None;
 
     HDF5Dataset *const poDS = this;

@@ -6,6 +6,8 @@ Rasterlite - Rasters in SQLite DB
 
 .. shortname:: Rasterlite
 
+.. build_dependencies:: libsqlite3
+
 The Rasterlite driver allows reading and
 creating Rasterlite databases.
 

@@ -58,8 +58,10 @@ class OGRTABDataSource : public OGRDataSource
     int                 m_bSingleFile;
     int                 m_bSingleLayerAlreadyCreated;
     GBool               m_bQuickSpatialIndexMode;
-    int                 m_bUpdate;
     int                 m_nBlockSize;
+    
+  private:  
+    inline bool         GetUpdate() const { return eAccess == GA_Update; }
 
   public:
                 OGRTABDataSource();

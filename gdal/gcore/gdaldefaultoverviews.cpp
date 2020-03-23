@@ -29,12 +29,14 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
+#include "cpl_multiproc.h"
 #include "gdal_priv.h"
 
 #include <cstdlib>
 #include <cstring>
 
 #include <algorithm>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -180,6 +182,46 @@ void GDALDefaultOverviews::TransferSiblingFiles( char** papszSiblingFiles )
     papszInitSiblingFiles = papszSiblingFiles;
 }
 
+
+namespace {
+// Prevent infinite recursion.
+struct AntiRecursionStruct
+{
+    int nRecLevel = 0;
+    std::set<CPLString> oSetFiles{};
+};
+}
+
+static void FreeAntiRecursion( void* pData )
+{
+    delete static_cast<AntiRecursionStruct*>(pData);
+}
+
+static AntiRecursionStruct& GetAntiRecursion()
+{
+    static AntiRecursionStruct dummy;
+    int bMemoryErrorOccurred = false;
+    void* pData = CPLGetTLSEx(CTLS_GDALDEFAULTOVR_ANTIREC, &bMemoryErrorOccurred);
+    if( bMemoryErrorOccurred )
+    {
+        return dummy;
+    }
+    if( pData == nullptr)
+    {
+        auto pAntiRecursion = new AntiRecursionStruct();
+        CPLSetTLSWithFreeFuncEx( CTLS_GDALDEFAULTOVR_ANTIREC,
+                                 pAntiRecursion,
+                                 FreeAntiRecursion, &bMemoryErrorOccurred );
+        if( bMemoryErrorOccurred )
+        {
+            delete pAntiRecursion;
+            return dummy;
+        }
+        return *pAntiRecursion;
+    }
+    return *static_cast<AntiRecursionStruct*>(pData);
+}
+
 /************************************************************************/
 /*                            OverviewScan()                            */
 /*                                                                      */
@@ -196,21 +238,23 @@ void GDALDefaultOverviews::OverviewScan()
         return;
 
     bCheckedForOverviews = true;
+    if( pszInitName == nullptr )
+        pszInitName = CPLStrdup(poDS->GetDescription());
 
-    static thread_local int nAntiRecursionCounter = 0;
-    // arbitrary number. 32 should be enough to handle a .ovr.ovr.ovr...
-    if( nAntiRecursionCounter == 64 )
+    AntiRecursionStruct& antiRec = GetAntiRecursion();
+    // 32 should be enough to handle a .ovr.ovr.ovr...
+    if( antiRec.nRecLevel == 32 )
         return;
-    ++nAntiRecursionCounter;
+    if( antiRec.oSetFiles.find(pszInitName) != antiRec.oSetFiles.end() )
+        return;
+    antiRec.oSetFiles.insert(pszInitName);
+    ++antiRec.nRecLevel;
 
     CPLDebug( "GDAL", "GDALDefaultOverviews::OverviewScan()" );
 
 /* -------------------------------------------------------------------- */
 /*      Open overview dataset if it exists.                             */
 /* -------------------------------------------------------------------- */
-    if( pszInitName == nullptr )
-        pszInitName = CPLStrdup(poDS->GetDescription());
-
     if( !EQUAL(pszInitName,":::VIRTUAL:::") &&
         GDALCanFileAcceptSidecarFile(pszInitName) )
     {
@@ -359,7 +403,9 @@ void GDALDefaultOverviews::OverviewScan()
         }
     }
 
-    --nAntiRecursionCounter;
+    // Undo anti recursion protection
+    antiRec.oSetFiles.erase(pszInitName);
+    --antiRec.nRecLevel;
 }
 
 /************************************************************************/
@@ -691,7 +737,7 @@ GDALDefaultOverviews::BuildOverviews(
 
         if( abValidLevel[i] )
         {
-            const double dfArea = 1.0 / (panOverviewList[i] * panOverviewList[i]);
+            const double dfArea = 1.0 / (static_cast<double>(panOverviewList[i]) * panOverviewList[i]);
             dfAreaRefreshedOverviews += dfArea;
             if( !abRequireRefresh[i] )
             {

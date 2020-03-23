@@ -107,8 +107,6 @@ VSIPDFFileStream::~VSIPDFFileStream()
     if (poParent == nullptr)
     {
         delete poFilename;
-        if (f)
-            VSIFCloseL(f);
     }
 }
 
@@ -170,6 +168,9 @@ getStart_ret_type VSIPDFFileStream::getStart()
 /************************************************************************/
 
 StreamKind VSIPDFFileStream::getKind()
+#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 83
+                                        const
+#endif
 {
     return strFile;
 }
@@ -218,11 +219,12 @@ int VSIPDFFileStream::FillBuffer()
     // and liberation of VSIPDFFileStream as PDFDoc::str member.
     if( nCurrentPos == 0 || nCurrentPos == VSI_L_OFFSET_MAX )
     {
-        for(int i=0;i<nToRead-(int)strlen("/Linearized ");i++)
+        for(int i=0;i<nBufferLength-(int)strlen("/Linearized ");i++)
         {
             if( memcmp(abyBuffer + i, "/Linearized ",
                        strlen("/Linearized ")) == 0 )
             {
+                bFoundLinearizedHint = true;
                 memcpy(abyBuffer + i, "/XXXXXXXXXX ", strlen("/Linearized "));
                 break;
             }

@@ -6,6 +6,8 @@ ILWIS -- Raster Map
 
 .. shortname:: ILWIS
 
+.. built_in_by_default::
+
 This driver implements reading and writing of ILWIS raster maps and map
 lists. Select the raster files with ``the.mpr`` (for raster map) or
 ``the.mpl`` (for maplist) extensions.

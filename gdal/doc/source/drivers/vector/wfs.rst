@@ -5,15 +5,17 @@ WFS - OGC WFS service
 
 .. shortname:: WFS
 
+.. build_dependencies:: libcurl
+
 This driver can connect to a OGC WFS service. It supports WFS 1.0, 1.1
-and 2.0 protocols. GDAL/OGR must be built with Curl support in order to
+and 2.0 protocols. GDAL/OGR must be built with Curl support in order for
 the WFS driver to be compiled. Usually WFS requests return results in
 GML format, so the GML driver should generally be set-up for read
 support (thus requiring GDAL/OGR to be built with Xerces or Expat
 support). It is sometimes possible to use alternate underlying formats
 when the server supports them (such as OUTPUTFORMAT=json).
 
-The driver supports read-only services, as well as Transactionnal ones
+The driver supports read-only services, as well as transactional ones
 (WFS-T).
 
 Driver capabilities

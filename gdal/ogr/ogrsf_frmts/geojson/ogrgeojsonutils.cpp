@@ -544,8 +544,7 @@ GeoJSONSourceType ESRIJSONDriverGetSourceType( GDALOpenInfo* poOpenInfo )
     // By default read first 6000 bytes.
     // 6000 was chosen as enough bytes to
     // enable all current tests to pass.
-    if( poOpenInfo->fpL == nullptr ||
-        !poOpenInfo->TryToIngest(6000) )
+    if( !poOpenInfo->TryToIngest(6000) )
     {
         return eGeoJSONSourceUnknown;
     }
@@ -603,8 +602,7 @@ GeoJSONSourceType TopoJSONDriverGetSourceType( GDALOpenInfo* poOpenInfo )
     // By default read first 6000 bytes.
     // 6000 was chosen as enough bytes to
     // enable all current tests to pass.
-    if( poOpenInfo->fpL == nullptr ||
-        !poOpenInfo->TryToIngest(6000) )
+    if( !poOpenInfo->TryToIngest(6000) )
     {
         return eGeoJSONSourceUnknown;
     }

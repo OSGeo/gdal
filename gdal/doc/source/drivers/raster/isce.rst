@@ -6,6 +6,8 @@ ISCE -- ISCE
 
 .. shortname:: ISCE
 
+.. built_in_by_default::
+
 Driver for the image formats used in the JPL's Interferometric synthetic
 aperture radar Scientific Computing Environment (ISCE). Only images with
 data types mappable to GDAL data types are supported.

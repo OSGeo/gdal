@@ -6,6 +6,8 @@ CAD -- AutoCAD DWG
 
 .. shortname:: CAD
 
+.. build_dependencies:: (internal libopencad provided)
+
 OGR DWG support is based on libopencad, so the list of supported DWG (DXF)
 versions can be seen in libopencad documentation. All drawing entities are
 separated into layers as they are in DWG file, not in 1 layer as DXF Driver

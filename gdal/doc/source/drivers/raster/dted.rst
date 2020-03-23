@@ -6,6 +6,8 @@ DTED -- Military Elevation Data
 
 .. shortname:: DTED
 
+.. built_in_by_default::
+
 GDAL supports DTED Levels 0, 1, and 2 elevation data for read access.
 Elevation data is returned as 16 bit signed integer. Appropriate
 projection and georeferencing information is also returned. A variety of
@@ -14,7 +16,7 @@ header fields are returned dataset level metadata.
 Driver capabilities
 -------------------
 
-.. supports_create::
+.. supports_createcopy::
 
 .. supports_georeferencing::
 

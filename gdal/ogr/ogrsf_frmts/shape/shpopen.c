@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, 2001, Frank Warmerdam
- * Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2011-2019, Even Rouault <even dot rouault at spatialys.com>
  *
  * This software is available under the following "MIT Style" license,
  * or at the option of the licensee under the LGPL (see COPYING).  This
@@ -32,260 +32,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log: shpopen.c,v $
- * Revision 1.75  2016-12-05 12:44:05  erouault
- * * Major overhaul of Makefile build system to use autoconf/automake.
- *
- * * Warning fixes in contrib/
- *
- * Revision 1.74  2016-12-04 15:30:15  erouault
- * * shpopen.c, dbfopen.c, shptree.c, shapefil.h: resync with
- * GDAL Shapefile driver. Mostly cleanups. SHPObject and DBFInfo
- * structures extended with new members. New functions:
- * DBFSetLastModifiedDate, SHPOpenLLEx, SHPRestoreSHX,
- * SHPSetFastModeReadObject
- *
- * * sbnsearch.c: new file to implement original ESRI .sbn spatial
- * index reading. (no write support). New functions:
- * SBNOpenDiskTree, SBNCloseDiskTree, SBNSearchDiskTree,
- * SBNSearchDiskTreeInteger, SBNSearchFreeIds
- *
- * * Makefile, makefile.vc, CMakeLists.txt, shapelib.def: updates
- * with new file and symbols.
- *
- * * commit: helper script to cvs commit
- *
- * Revision 1.73  2012-01-24 22:33:01  fwarmerdam
- * fix memory leak on failure to open .shp (gdal #4410)
- *
- * Revision 1.72  2011-12-11 22:45:28  fwarmerdam
- * fix failure return from SHPOpenLL.
- *
- * Revision 1.71  2011-09-15 03:33:58  fwarmerdam
- * fix missing cast (#2344)
- *
- * Revision 1.70  2011-07-24 05:59:25  fwarmerdam
- * minimize use of CPLError in favor of SAHooks.Error()
- *
- * Revision 1.69  2011-07-24 03:24:22  fwarmerdam
- * fix memory leaks in error cases creating shapefiles (#2061)
- *
- * Revision 1.68  2010-08-27 23:42:52  fwarmerdam
- * add SHPAPI_CALL attribute in code
- *
- * Revision 1.67  2010-07-01 08:15:48  fwarmerdam
- * do not error out on an object with zero vertices
- *
- * Revision 1.66  2010-07-01 07:58:57  fwarmerdam
- * minor cleanup of error handling
- *
- * Revision 1.65  2010-07-01 07:27:13  fwarmerdam
- * white space formatting adjustments
- *
- * Revision 1.64  2010-01-28 11:34:34  fwarmerdam
- * handle the shape file length limits more gracefully (#3236)
- *
- * Revision 1.63  2010-01-28 04:04:40  fwarmerdam
- * improve numerical accuracy of SHPRewind() algs (gdal #3363)
- *
- * Revision 1.62  2010-01-17 05:34:13  fwarmerdam
- * Remove asserts on x/y being null (#2148).
- *
- * Revision 1.61  2010-01-16 05:07:42  fwarmerdam
- * allow 0/nulls in shpcreateobject (#2148)
- *
- * Revision 1.60  2009-09-17 20:50:02  bram
- * on Win32, define snprintf as alias to _snprintf
- *
- * Revision 1.59  2008-03-14 05:25:31  fwarmerdam
- * Correct crash on buggy geometries (gdal #2218)
- *
- * Revision 1.58  2008/01/08 23:28:26  bram
- * on line 2095, use a float instead of a double to avoid a compiler warning
- *
- * Revision 1.57  2007/12/06 07:00:25  fwarmerdam
- * dbfopen now using SAHooks for fileio
- *
- * Revision 1.56  2007/12/04 20:37:56  fwarmerdam
- * preliminary implementation of hooks api for io and errors
- *
- * Revision 1.55  2007/11/21 22:39:56  fwarmerdam
- * close shx file in readonly mode (GDAL #1956)
- *
- * Revision 1.54  2007/11/15 00:12:47  mloskot
- * Backported recent changes from GDAL (Ticket #1415) to Shapelib.
- *
- * Revision 1.53  2007/11/14 22:31:08  fwarmerdam
- * checks after mallocs to detect for corrupted/voluntary broken shapefiles.
- * http://trac.osgeo.org/gdal/ticket/1991
- *
- * Revision 1.52  2007/06/21 15:58:33  fwarmerdam
- * fix for SHPRewindObject when rings touch at one vertex (gdal #976)
- *
- * Revision 1.51  2006/09/04 15:24:01  fwarmerdam
- * Fixed up log message for 1.49.
- *
- * Revision 1.50  2006/09/04 15:21:39  fwarmerdam
- * fix of last fix
- *
- * Revision 1.49  2006/09/04 15:21:00  fwarmerdam
- * MLoskot: Added stronger test of Shapefile reading failures, e.g. truncated
- * files.  The problem was discovered by Tim Sutton and reported here
- *   https://svn.qgis.org/trac/ticket/200
- *
- * Revision 1.48  2006/01/26 15:07:32  fwarmerdam
- * add bMeasureIsUsed flag from Craig Bruce: Bug 1249
- *
- * Revision 1.47  2006/01/04 20:07:23  fwarmerdam
- * In SHPWriteObject() make sure that the record length is updated
- * when rewriting an existing record.
- *
- * Revision 1.46  2005/02/11 17:17:46  fwarmerdam
- * added panPartStart[0] validation
- *
- * Revision 1.45  2004/09/26 20:09:48  fwarmerdam
- * const correctness changes
- *
- * Revision 1.44  2003/12/29 00:18:39  fwarmerdam
- * added error checking for failed IO and optional CPL error reporting
- *
- * Revision 1.43  2003/12/01 16:20:08  warmerda
- * be careful of zero vertex shapes
- *
- * Revision 1.42  2003/12/01 14:58:27  warmerda
- * added degenerate object check in SHPRewindObject()
- *
- * Revision 1.41  2003/07/08 15:22:43  warmerda
- * avoid warning
- *
- * Revision 1.40  2003/04/21 18:30:37  warmerda
- * added header write/update public methods
- *
- * Revision 1.39  2002/08/26 06:46:56  warmerda
- * avoid c++ comments
- *
- * Revision 1.38  2002/05/07 16:43:39  warmerda
- * Removed debugging printf()
- *
- * Revision 1.37  2002/04/10 17:35:22  warmerda
- * fixed bug in ring reversal code
- *
- * Revision 1.36  2002/04/10 16:59:54  warmerda
- * added SHPRewindObject
- *
- * Revision 1.35  2001/12/07 15:10:44  warmerda
- * fix if .shx fails to open
- *
- * Revision 1.34  2001/11/01 16:29:55  warmerda
- * move pabyRec into SHPInfo for thread safety
- *
- * Revision 1.33  2001/07/03 12:18:15  warmerda
- * Improved cleanup if SHX not found, provided by Riccardo Cohen.
- *
- * Revision 1.32  2001/06/22 01:58:07  warmerda
- * be more careful about establishing initial bounds in face of NULL shapes
- *
- * Revision 1.31  2001/05/31 19:35:29  warmerda
- * added support for writing null shapes
- *
- * Revision 1.30  2001/05/28 12:46:29  warmerda
- * Add some checking on reasonableness of record count when opening.
- *
- * Revision 1.29  2001/05/23 13:36:52  warmerda
- * added use of SHPAPI_CALL
- *
- * Revision 1.28  2001/02/06 22:25:06  warmerda
- * fixed memory leaks when SHPOpen() fails
- *
- * Revision 1.27  2000/07/18 15:21:33  warmerda
- * added better enforcement of -1 for append in SHPWriteObject
- *
- * Revision 1.26  2000/02/16 16:03:51  warmerda
- * added null shape support
- *
- * Revision 1.25  1999/12/15 13:47:07  warmerda
- * Fixed record size settings in .shp file (was 4 words too long)
- * Added stdlib.h.
- *
- * Revision 1.24  1999/11/05 14:12:04  warmerda
- * updated license terms
- *
- * Revision 1.23  1999/07/27 00:53:46  warmerda
- * added support for rewriting shapes
- *
- * Revision 1.22  1999/06/11 19:19:11  warmerda
- * Cleanup pabyRec static buffer on SHPClose().
- *
- * Revision 1.21  1999/06/02 14:57:56  kshih
- * Remove unused variables
- *
- * Revision 1.20  1999/04/19 21:04:17  warmerda
- * Fixed syntax error.
- *
- * Revision 1.19  1999/04/19 21:01:57  warmerda
- * Force access string to binary in SHPOpen().
- *
- * Revision 1.18  1999/04/01 18:48:07  warmerda
- * Try upper case extensions if lower case doesn't work.
- *
- * Revision 1.17  1998/12/31 15:29:39  warmerda
- * Disable writing measure values to multipatch objects if
- * DISABLE_MULTIPATCH_MEASURE is defined.
- *
- * Revision 1.16  1998/12/16 05:14:33  warmerda
- * Added support to write MULTIPATCH.  Fixed reading Z coordinate of
- * MULTIPATCH. Fixed record size written for all feature types.
- *
- * Revision 1.15  1998/12/03 16:35:29  warmerda
- * r+b is proper binary access string, not rb+.
- *
- * Revision 1.14  1998/12/03 15:47:56  warmerda
- * Fixed setting of nVertices in SHPCreateObject().
- *
- * Revision 1.13  1998/12/03 15:33:54  warmerda
- * Made SHPCalculateExtents() separately callable.
- *
- * Revision 1.12  1998/11/11 20:01:50  warmerda
- * Fixed bug writing ArcM/Z, and PolygonM/Z for big endian machines.
- *
- * Revision 1.11  1998/11/09 20:56:44  warmerda
- * Fixed up handling of file wide bounds.
- *
- * Revision 1.10  1998/11/09 20:18:51  warmerda
- * Converted to support 3D shapefiles, and use of SHPObject.
- *
- * Revision 1.9  1998/02/24 15:09:05  warmerda
- * Fixed memory leak.
- *
- * Revision 1.8  1997/12/04 15:40:29  warmerda
- * Fixed byte swapping of record number, and record length fields in the
- * .shp file.
- *
- * Revision 1.7  1995/10/21 03:15:58  warmerda
- * Added support for binary file access, the magic cookie 9997
- * and tried to improve the int32 selection logic for 16bit systems.
- *
- * Revision 1.6  1995/09/04  04:19:41  warmerda
- * Added fix for file bounds.
- *
- * Revision 1.5  1995/08/25  15:16:44  warmerda
- * Fixed a couple of problems with big endian systems ... one with bounds
- * and the other with multipart polygons.
- *
- * Revision 1.4  1995/08/24  18:10:17  warmerda
- * Switch to use SfRealloc() to avoid problems with pre-ANSI realloc()
- * functions (such as on the Sun).
- *
- * Revision 1.3  1995/08/23  02:23:15  warmerda
- * Added support for reading bounds, and fixed up problems in setting the
- * file wide bounds.
- *
- * Revision 1.2  1995/08/04  03:16:57  warmerda
- * Added header.
- *
- */
+ ******************************************************************************/
 
 #include "shapefil.h"
 
@@ -1589,12 +1336,14 @@ int SHPAPI_CALL
 SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 
 {
-    unsigned int	       	nRecordOffset, nRecordSize=0;
+    SAOffset nRecordOffset;
+    unsigned int nRecordSize=0;
     int i;
     uchar	*pabyRec;
     int32	i32;
     int     bAppendToLastRecord = FALSE;
     int     bAppendToFile = FALSE;
+    int     bFirstFeature = (psSHP->nRecords == 0);
 
     psSHP->bUpdated = TRUE;
 
@@ -1933,18 +1682,25 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /* -------------------------------------------------------------------- */
 /*      Write out record.                                               */
 /* -------------------------------------------------------------------- */
-    if( psSHP->sHooks.FSeek( psSHP->fpSHP, nRecordOffset, 0 ) != 0 )
-    {
-        char szErrorMsg[200];
 
-        snprintf( szErrorMsg, sizeof(szErrorMsg),
-                 "Error in psSHP->sHooks.FSeek() while writing object to .shp file: %s",
-                  strerror(errno) );
-        szErrorMsg[sizeof(szErrorMsg)-1] = '\0';
-        psSHP->sHooks.Error( szErrorMsg );
+/* -------------------------------------------------------------------- */
+/*      Guard FSeek with check for whether we're already at position;   */
+/*      no-op FSeeks defeat network filesystems' write buffering.       */
+/* -------------------------------------------------------------------- */
+    if ( psSHP->sHooks.FTell( psSHP->fpSHP ) != nRecordOffset ) {
+        if( psSHP->sHooks.FSeek( psSHP->fpSHP, nRecordOffset, 0 ) != 0 )
+        {
+            char szErrorMsg[200];
 
-        free( pabyRec );
-        return -1;
+            snprintf( szErrorMsg, sizeof(szErrorMsg),
+                     "Error in psSHP->sHooks.FSeek() while writing object to .shp file: %s",
+                      strerror(errno) );
+            szErrorMsg[sizeof(szErrorMsg)-1] = '\0';
+            psSHP->sHooks.Error( szErrorMsg );
+
+            free( pabyRec );
+            return -1;
+        }
     }
     if( psSHP->sHooks.FWrite( pabyRec, nRecordSize, 1, psSHP->fpSHP ) < 1 )
     {
@@ -1979,10 +1735,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /* -------------------------------------------------------------------- */
 /*	Expand file wide bounds based on this shape.			*/
 /* -------------------------------------------------------------------- */
-    if( psSHP->adBoundsMin[0] == 0.0
-        && psSHP->adBoundsMax[0] == 0.0
-        && psSHP->adBoundsMin[1] == 0.0
-        && psSHP->adBoundsMax[1] == 0.0 )
+    if( bFirstFeature )
     {
         if( psObject->nSHPType == SHPT_NULL || psObject->nVertices == 0 )
         {

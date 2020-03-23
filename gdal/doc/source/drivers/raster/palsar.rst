@@ -6,6 +6,8 @@ JAXA PALSAR Processed Products
 
 .. shortname:: JAXAPALSAR
 
+.. built_in_by_default::
+
 This driver provides enhanced support for processed PALSAR products from
 the JAXA PALSAR processor. This encompasses products acquired from the
 following organizations:

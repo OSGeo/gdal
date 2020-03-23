@@ -28,6 +28,8 @@
  * Directory Write Support Routines.
  */
 #include "tiffiop.h"
+#include <float.h>		/*--: for Rational2Double */
+#include <math.h>		/*--: for Rational2Double */
 
 #ifdef HAVE_IEEEFP
 #define TIFFCvtNativeToIEEEFloat(tif, n, fp)
@@ -154,6 +156,19 @@ static int TIFFWriteDirectoryTagCheckedSlong8Array(TIFF* tif, uint32* ndir, TIFF
 static int TIFFWriteDirectoryTagCheckedRational(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, double value);
 static int TIFFWriteDirectoryTagCheckedRationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, float* value);
 static int TIFFWriteDirectoryTagCheckedSrationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, float* value);
+
+/*--: Rational2Double: New functions to support true double-precision for custom rational tag types. */
+static int TIFFWriteDirectoryTagRationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value);
+static int TIFFWriteDirectoryTagSrationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value);
+static int TIFFWriteDirectoryTagCheckedRationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value);
+static int TIFFWriteDirectoryTagCheckedSrationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value);
+static void DoubleToRational(double value, uint32 *num, uint32 *denom);
+static void DoubleToSrational(double value, int32 *num, int32 *denom);
+#if 0
+static void DoubleToRational_direct(double value, unsigned long *num, unsigned long *denom);
+static void DoubleToSrational_direct(double value, long *num, long *denom);
+#endif
+
 #ifdef notdef
 static int TIFFWriteDirectoryTagCheckedFloat(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, float value);
 #endif
@@ -796,12 +811,42 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64* pdiroff)
 						goto bad;
 					break;
 				case TIFF_RATIONAL:
-					if (!TIFFWriteDirectoryTagRationalArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
-						goto bad;
+					{
+						/*-- Rational2Double: For Rationals evaluate "set_field_type" to determine internal storage size. */
+						int tv_size;
+						tv_size = _TIFFSetGetFieldSize(tif->tif_dir.td_customValues[m].info->set_field_type);
+						if (tv_size == 8) {
+							if (!TIFFWriteDirectoryTagRationalDoubleArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
+								goto bad;
+						} else {
+							/*-- default should be tv_size == 4 */
+							if (!TIFFWriteDirectoryTagRationalArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
+								goto bad;
+							/*-- ToDo: After Testing, this should be removed and tv_size==4 should be set as default. */
+							if (tv_size != 4) {
+								TIFFErrorExt(0,"TIFFLib: _TIFFWriteDirectorySec()", "Rational2Double: .set_field_type in not 4 but %d", tv_size); 
+							}
+						}
+					}
 					break;
 				case TIFF_SRATIONAL:
-					if (!TIFFWriteDirectoryTagSrationalArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
-						goto bad;
+					{
+						/*-- Rational2Double: For Rationals evaluate "set_field_type" to determine internal storage size. */
+						int tv_size;
+						tv_size = _TIFFSetGetFieldSize(tif->tif_dir.td_customValues[m].info->set_field_type);
+						if (tv_size == 8) {
+							if (!TIFFWriteDirectoryTagSrationalDoubleArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
+								goto bad;
+						} else {
+							/*-- default should be tv_size == 4 */
+							if (!TIFFWriteDirectoryTagSrationalArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
+								goto bad;
+							/*-- ToDo: After Testing, this should be removed and tv_size==4 should be set as default. */
+							if (tv_size != 4) {
+								TIFFErrorExt(0,"TIFFLib: _TIFFWriteDirectorySec()", "Rational2Double: .set_field_type in not 4 but %d", tv_size); 
+							}
+						}
+					}
 					break;
 				case TIFF_FLOAT:
 					if (!TIFFWriteDirectoryTagFloatArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
@@ -1558,6 +1603,29 @@ TIFFWriteDirectoryTagSrationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, 
 		return(1);
 	}
 	return(TIFFWriteDirectoryTagCheckedSrationalArray(tif,ndir,dir,tag,count,value));
+}
+
+/*-- Rational2Double: additional write functions */
+static int
+TIFFWriteDirectoryTagRationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value)
+{
+	if (dir==NULL)
+	{
+		(*ndir)++;
+		return(1);
+	}
+	return(TIFFWriteDirectoryTagCheckedRationalDoubleArray(tif,ndir,dir,tag,count,value));
+}
+
+static int
+TIFFWriteDirectoryTagSrationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value)
+{
+	if (dir==NULL)
+	{
+		(*ndir)++;
+		return(1);
+	}
+	return(TIFFWriteDirectoryTagCheckedSrationalDoubleArray(tif,ndir,dir,tag,count,value));
 }
 
 #ifdef notdef
@@ -2318,19 +2386,20 @@ TIFFWriteDirectoryTagCheckedSlong8Array(TIFF* tif, uint32* ndir, TIFFDirEntry* d
 static int
 TIFFWriteDirectoryTagCheckedRational(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, double value)
 {
-        static const char module[] = "TIFFWriteDirectoryTagCheckedRational";
+	static const char module[] = "TIFFWriteDirectoryTagCheckedRational";
 	uint32 m[2];
 	assert(sizeof(uint32)==4);
-        if( value < 0 )
-        {
-            TIFFErrorExt(tif->tif_clientdata,module,"Negative value is illegal");
-            return 0;
-        }
-        else if( value != value )
-        {
-            TIFFErrorExt(tif->tif_clientdata,module,"Not-a-number value is illegal");
-            return 0;
-        }
+	if (value < 0) 
+	{
+		TIFFErrorExt(tif->tif_clientdata, module, "Negative value is illegal");
+		return 0;
+	} 
+	else if (value != value) 
+	{
+		TIFFErrorExt(tif->tif_clientdata, module, "Not-a-number value is illegal");
+		return 0;
+	}
+#ifdef not_def
 	else if (value==0.0)
 	{
 		m[0]=0;
@@ -2351,6 +2420,15 @@ TIFFWriteDirectoryTagCheckedRational(TIFF* tif, uint32* ndir, TIFFDirEntry* dir,
 		m[0]=0xFFFFFFFF;
 		m[1]=(uint32)(0xFFFFFFFF/value);
 	}
+#else
+	/*--Rational2Double: New function also used for non-custom rational tags. 
+	 *  However, could be omitted here, because TIFFWriteDirectoryTagCheckedRational() is not used by code for custom tags,
+	 *  only by code for named-tiff-tags like FIELD_RESOLUTION and FIELD_POSITION */
+	else {
+	DoubleToRational(value, &m[0], &m[1]);
+	}
+#endif
+
 	if (tif->tif_flags&TIFF_SWAB)
 	{
 		TIFFSwabLong(&m[0]);
@@ -2377,6 +2455,7 @@ TIFFWriteDirectoryTagCheckedRationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry*
 	}
 	for (na=value, nb=m, nc=0; nc<count; na++, nb+=2, nc++)
 	{
+#ifdef not_def
 		if (*na<=0.0 || *na != *na)
 		{
 			nb[0]=0;
@@ -2398,6 +2477,10 @@ TIFFWriteDirectoryTagCheckedRationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry*
 			nb[0]=0xFFFFFFFF;
 			nb[1]=(uint32)((double)0xFFFFFFFF/(*na));
 		}
+#else
+		/*-- Rational2Double: Also for float precision accuracy is sometimes enhanced --*/
+		DoubleToRational(*na, &nb[0], &nb[1]);
+#endif
 	}
 	if (tif->tif_flags&TIFF_SWAB)
 		TIFFSwabArrayOfLong(m,count*2);
@@ -2424,6 +2507,7 @@ TIFFWriteDirectoryTagCheckedSrationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry
 	}
 	for (na=value, nb=m, nc=0; nc<count; na++, nb+=2, nc++)
 	{
+#ifdef not_def
 		if (*na<0.0)
 		{
 			if (*na==(int32)(*na))
@@ -2460,6 +2544,10 @@ TIFFWriteDirectoryTagCheckedSrationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry
 				nb[1]=(int32)((double)0x7FFFFFFF/(*na));
 			}
 		}
+#else
+		/*-- Rational2Double: Also for float precision accuracy is sometimes enhanced --*/
+		DoubleToSrational(*na, &nb[0], &nb[1]);
+#endif
 	}
 	if (tif->tif_flags&TIFF_SWAB)
 		TIFFSwabArrayOfLong((uint32*)m,count*2);
@@ -2467,6 +2555,399 @@ TIFFWriteDirectoryTagCheckedSrationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry
 	_TIFFfree(m);
 	return(o);
 }
+
+/*-- Rational2Double: additional write functions for double arrays */
+static int
+TIFFWriteDirectoryTagCheckedRationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value)
+{
+	static const char module[] = "TIFFWriteDirectoryTagCheckedRationalDoubleArray";
+	uint32* m;
+	double* na;
+	uint32* nb;
+	uint32 nc;
+	int o;
+	assert(sizeof(uint32)==4);
+	m=_TIFFmalloc(count*2*sizeof(uint32));
+	if (m==NULL)
+	{
+		TIFFErrorExt(tif->tif_clientdata,module,"Out of memory");
+		return(0);
+	}
+	for (na=value, nb=m, nc=0; nc<count; na++, nb+=2, nc++)
+	{
+		DoubleToRational(*na, &nb[0], &nb[1]);
+	}
+	if (tif->tif_flags&TIFF_SWAB)
+		TIFFSwabArrayOfLong(m,count*2);
+	o=TIFFWriteDirectoryTagData(tif,ndir,dir,tag,TIFF_RATIONAL,count,count*8,&m[0]);
+	_TIFFfree(m);
+	return(o);
+} /*-- TIFFWriteDirectoryTagCheckedRationalDoubleArray() ------- */
+
+static int
+TIFFWriteDirectoryTagCheckedSrationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value)
+{
+	static const char module[] = "TIFFWriteDirectoryTagCheckedSrationalDoubleArray";
+	int32* m;
+	double* na;
+	int32* nb;
+	uint32 nc;
+	int o;
+	assert(sizeof(int32)==4);
+	m=_TIFFmalloc(count*2*sizeof(int32));
+	if (m==NULL)
+	{
+		TIFFErrorExt(tif->tif_clientdata,module,"Out of memory");
+		return(0);
+	}
+	for (na=value, nb=m, nc=0; nc<count; na++, nb+=2, nc++)
+	{
+		DoubleToSrational(*na, &nb[0], &nb[1]);
+	}
+	if (tif->tif_flags&TIFF_SWAB)
+		TIFFSwabArrayOfLong((uint32*)m,count*2);
+	o=TIFFWriteDirectoryTagData(tif,ndir,dir,tag,TIFF_SRATIONAL,count,count*8,&m[0]);
+	_TIFFfree(m);
+	return(o);
+} /*--- TIFFWriteDirectoryTagCheckedSrationalDoubleArray() -------- */
+
+#if 0
+static
+void DoubleToRational_direct(double value, unsigned long *num, unsigned long *denom)
+{
+	/*--- OLD Code for debugging and comparison  ---- */
+	/* code merged from TIFFWriteDirectoryTagCheckedRationalArray() and TIFFWriteDirectoryTagCheckedRational() */
+
+	/* First check for zero and also check for negative numbers (which are illegal for RATIONAL) 
+	 * and also check for "not-a-number". In each case just set this to zero to support also rational-arrays.
+	  */
+	if (value<=0.0 || value != value)
+	{
+		*num=0;
+		*denom=1;
+	}
+	else if (value <= 0xFFFFFFFFU &&  (value==(double)(uint32)(value)))	/* check for integer values */
+	{
+		*num=(uint32)(value);
+		*denom=1;
+	}
+	else if (value<1.0)
+	{
+		*num = (uint32)((value) * (double)0xFFFFFFFFU);
+		*denom=0xFFFFFFFFU;
+	}
+	else
+	{
+		*num=0xFFFFFFFFU;
+		*denom=(uint32)((double)0xFFFFFFFFU/(value));
+	}
+}  /*-- DoubleToRational_direct() -------------- */
+#endif
+
+#if 0
+static
+void DoubleToSrational_direct(double value,  long *num,  long *denom)
+{
+	/*--- OLD Code for debugging and comparison -- SIGNED-version ----*/
+	/*  code was amended from original TIFFWriteDirectoryTagCheckedSrationalArray() */
+
+	/* First check for zero and also check for negative numbers (which are illegal for RATIONAL)
+	 * and also check for "not-a-number". In each case just set this to zero to support also rational-arrays.
+	  */
+	if (value<0.0)
+		{
+			if (value==(int32)(value))
+			{
+				*num=(int32)(value);
+				*denom=1;
+			}
+			else if (value>-1.0)
+			{
+				*num=-(int32)((-value) * (double)0x7FFFFFFF);
+				*denom=0x7FFFFFFF;
+			}
+			else
+			{
+				*num=-0x7FFFFFFF;
+				*denom=(int32)((double)0x7FFFFFFF / (-value));
+			}
+		}
+		else
+		{
+			if (value==(int32)(value))
+			{
+				*num=(int32)(value);
+				*denom=1;
+			}
+			else if (value<1.0)
+			{
+				*num=(int32)((value)  *(double)0x7FFFFFFF);
+				*denom=0x7FFFFFFF;
+			}
+			else
+			{
+				*num=0x7FFFFFFF;
+				*denom=(int32)((double)0x7FFFFFFF / (value));
+			}
+		}
+}  /*-- DoubleToSrational_direct() --------------*/
+#endif
+
+//#define DOUBLE2RAT_DEBUGOUTPUT
+/** -----  Rational2Double: Double To Rational Conversion ----------------------------------------------------------
+* There is a mathematical theorem to convert real numbers into a rational (integer fraction) number.
+* This is called "continuous fraction" which uses the Euclidean algorithm to find the greatest common divisor (GCD).
+*  (ref. e.g. https://de.wikipedia.org/wiki/Kettenbruch or https://en.wikipedia.org/wiki/Continued_fraction
+*             https://en.wikipedia.org/wiki/Euclidean_algorithm)
+* The following functions implement the
+* - ToRationalEuclideanGCD()		auxiliary function which mainly implements euclidian GCD
+* - DoubleToRational()			conversion function for un-signed rationals
+* - DoubleToSrational()			conversion function for signed rationals
+------------------------------------------------------------------------------------------------------------------*/
+
+/**---- ToRationalEuclideanGCD() -----------------------------------------
+* Calculates the rational fractional of a double input value
+* using the Euclidean algorithm to find the greatest common divisor (GCD)
+------------------------------------------------------------------------*/
+static
+void ToRationalEuclideanGCD(double value, int blnUseSignedRange, int blnUseSmallRange, unsigned long long *ullNum, unsigned long long *ullDenom)
+{
+	/* Internally, the integer variables can be bigger than the external ones,
+	* as long as the result will fit into the external variable size.
+	*/
+	unsigned long long val, numSum[3] = { 0, 1, 0 }, denomSum[3] = { 1, 0, 0 };
+	unsigned long long aux, bigNum, bigDenom;
+	unsigned long long returnLimit;
+	int i;
+	unsigned long long nMax;
+	double fMax;
+	unsigned long maxDenom;
+	/*-- nMax and fMax defines the initial accuracy of the starting fractional,
+	*   or better, the highest used integer numbers used within the starting fractional (bigNum/bigDenom).
+	*   There are two approaches, which can accidentially lead to different accuracies just depending on the value.
+	*   Therefore, blnUseSmallRange steers this behaviour.
+	*   For long long nMax = ((9223372036854775807-1)/2); for long nMax = ((2147483647-1)/2);
+	*/
+	if (blnUseSmallRange) {
+		nMax = (unsigned long long)((2147483647 - 1) / 2); /* for ULONG range */
+	}
+	else {
+		nMax = ((9223372036854775807 - 1) / 2);				/* for ULLONG range */
+	}
+	fMax = (double)nMax;
+
+	/*-- For the Euclidean GCD define the denominator range, so that it stays within size of unsigned long variables.
+	*   maxDenom should be LONG_MAX for negative values and ULONG_MAX for positive ones.
+	*   Also the final returned value of ullNum and ullDenom is limited according to signed- or unsigned-range.
+	*/
+	if (blnUseSignedRange) {
+		maxDenom = 2147483647UL;  /*LONG_MAX = 0x7FFFFFFFUL*/
+		returnLimit = maxDenom;
+	}
+	else {
+		maxDenom = 0xFFFFFFFFUL;  /*ULONG_MAX = 0xFFFFFFFFUL*/
+		returnLimit = maxDenom;
+	}
+
+	/*-- First generate a rational fraction (bigNum/bigDenom) which represents the value
+	*   as a rational number with the highest accuracy. Therefore, unsigned long long (uint64) is needed.
+	*   This rational fraction is then reduced using the Euclidean algorithm to find the greatest common divisor (GCD).
+	*   bigNum   = big numinator of value without fraction (or cut residual fraction)
+	*   bigDenom = big denominator of value
+	*-- Break-criteria so that uint64 cast to "bigNum" introduces no error and bigDenom has no overflow,
+	*   and stop with enlargement of fraction when the double-value of it reaches an integer number without fractional part.
+	*/
+	bigDenom = 1;
+	while ((value != floor(value)) && (value < fMax) && (bigDenom < nMax)) {
+		bigDenom <<= 1;
+		value *= 2;
+	}
+	bigNum = (unsigned long long)value;
+
+	/*-- Start Euclidean algorithm to find the greatest common divisor (GCD) -- */
+#define MAX_ITERATIONS 64
+	for (i = 0; i < MAX_ITERATIONS; i++) {
+		/* if bigDenom is not zero, calculate integer part of fraction. */
+		if (bigDenom == 0) {
+			val = 0;
+			break;
+		}
+		else {
+			val = bigNum / bigDenom;
+		}
+
+		/* Set bigDenom to reminder of bigNum/bigDenom and bigNum to previous denominator bigDenom. */
+		aux = bigNum;
+		bigNum = bigDenom;
+		bigDenom = aux % bigDenom;
+
+		/* calculate next denominator and check for its given maximum */
+		aux = val;
+		if (denomSum[1] * val + denomSum[0] >= maxDenom) {
+			aux = (maxDenom - denomSum[0]) / denomSum[1];
+			if (aux * 2 >= val || denomSum[1] >= maxDenom)
+				i = (MAX_ITERATIONS + 1);			/* exit but execute rest of for-loop */
+			else
+				break;
+		}
+		/* calculate next numerator to numSum2 and save previous one to numSum0; numSum1 just copy of numSum2. */
+		numSum[2] = aux * numSum[1] + numSum[0];
+		numSum[0] = numSum[1];
+		numSum[1] = numSum[2];
+		/* calculate next denominator to denomSum2 and save previous one to denomSum0; denomSum1 just copy of denomSum2. */
+		denomSum[2] = aux * denomSum[1] + denomSum[0];
+		denomSum[0] = denomSum[1];
+		denomSum[1] = denomSum[2];
+	}
+
+	/*-- Check and adapt for final variable size and return values; reduces internal accuracy; denominator is kept in ULONG-range with maxDenom -- */
+	while (numSum[1] > returnLimit || denomSum[1] > returnLimit) {
+		numSum[1] = numSum[1] / 2;
+		denomSum[1] = denomSum[1] / 2;
+	}
+
+	/* return values */
+	*ullNum = numSum[1];
+	*ullDenom = denomSum[1];
+
+}  /*-- ToRationalEuclideanGCD() -------------- */
+
+
+/**---- DoubleToRational() -----------------------------------------------
+* Calculates the rational fractional of a double input value
+* for UN-SIGNED rationals,
+* using the Euclidean algorithm to find the greatest common divisor (GCD)
+------------------------------------------------------------------------*/
+static
+void DoubleToRational(double value, uint32 *num, uint32 *denom)
+{
+	/*---- UN-SIGNED RATIONAL ---- */
+	double dblDiff, dblDiff2;
+	unsigned long long ullNum, ullDenom, ullNum2, ullDenom2;
+
+	/*-- Check for negative values. If so it is an error. */
+	if (value < 0) {
+		*num = *denom = 0;
+		TIFFErrorExt(0, "TIFFLib: DoubeToRational()", " Negative Value for Unsigned Rational given.");
+		return;
+	}
+
+	/*-- Check for too big numbers (> ULONG_MAX) -- */
+	if (value > 0xFFFFFFFFUL) {
+		*num = 0xFFFFFFFFU;
+		*denom = 0;
+		return;
+	}
+	/*-- Check for easy integer numbers -- */
+	if (value == (uint32)(value)) {
+		*num = (uint32)value;
+		*denom = 1;
+		return;
+	}
+	/*-- Check for too small numbers for "unsigned long" type rationals -- */
+	if (value < 1.0 / (double)0xFFFFFFFFUL) {
+		*num = 0;
+		*denom = 0xFFFFFFFFU;
+		return;
+	}
+
+	/*-- There are two approaches using the Euclidean algorithm,
+	*   which can accidentially lead to different accuracies just depending on the value.
+	*   Try both and define which one was better.
+	*/
+	ToRationalEuclideanGCD(value, FALSE, FALSE, &ullNum, &ullDenom);
+	ToRationalEuclideanGCD(value, FALSE, TRUE, &ullNum2, &ullDenom2);
+	/*-- Double-Check, that returned values fit into ULONG :*/
+	if (ullNum > 0xFFFFFFFFUL || ullDenom > 0xFFFFFFFFUL || ullNum2 > 0xFFFFFFFFUL || ullDenom2 > 0xFFFFFFFFUL) {
+#if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
+		TIFFErrorExt(0, "TIFFLib: DoubeToRational()", " Num or Denom exceeds ULONG: val=%14.6f, num=%I64u, denom=%I64u | num2=%I64u, denom2=%I64u", value, ullNum, ullDenom, ullNum2, ullDenom2);
+#else
+		TIFFErrorExt(0, "TIFFLib: DoubeToRational()", " Num or Denom exceeds ULONG: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu", value, ullNum, ullDenom, ullNum2, ullDenom2);
+#endif
+		assert(0);
+	}
+
+	/* Check, which one has higher accuracy and take that. */
+	dblDiff = fabs(value - ((double)ullNum / (double)ullDenom));
+	dblDiff2 = fabs(value - ((double)ullNum2 / (double)ullDenom2));
+	if (dblDiff < dblDiff2) {
+		*num = (uint32)ullNum;
+		*denom = (uint32)ullDenom;
+	}
+	else {
+		*num = (uint32)ullNum2;
+		*denom = (uint32)ullDenom2;
+	}
+}  /*-- DoubleToRational() -------------- */
+
+/**---- DoubleToSrational() -----------------------------------------------
+* Calculates the rational fractional of a double input value
+* for SIGNED rationals,
+* using the Euclidean algorithm to find the greatest common divisor (GCD)
+------------------------------------------------------------------------*/
+static
+void DoubleToSrational(double value, int32 *num, int32 *denom)
+{
+	/*---- SIGNED RATIONAL ----*/
+	int neg = 1;
+	double dblDiff, dblDiff2;
+	unsigned long long ullNum, ullDenom, ullNum2, ullDenom2;
+
+	/*-- Check for negative values and use then the positive one for internal calculations, but take the sign into account before returning. */
+	if (value < 0) { neg = -1; value = -value; }
+
+	/*-- Check for too big numbers (> LONG_MAX) -- */
+	if (value > 0x7FFFFFFFL) {
+		*num = 0x7FFFFFFFL;
+		*denom = 0;
+		return;
+	}
+	/*-- Check for easy numbers -- */
+	if (value == (int32)(value)) {
+		*num = (int32)(neg * value);
+		*denom = 1;
+		return;
+	}
+	/*-- Check for too small numbers for "long" type rationals -- */
+	if (value < 1.0 / (double)0x7FFFFFFFL) {
+		*num = 0;
+		*denom = 0x7FFFFFFFL;
+		return;
+	}
+
+	/*-- There are two approaches using the Euclidean algorithm,
+	*   which can accidentially lead to different accuracies just depending on the value.
+	*   Try both and define which one was better.
+	*   Furthermore, set behaviour of ToRationalEuclideanGCD() to the range of signed-long.
+	*/
+	ToRationalEuclideanGCD(value, TRUE, FALSE, &ullNum, &ullDenom);
+	ToRationalEuclideanGCD(value, TRUE, TRUE, &ullNum2, &ullDenom2);
+	/*-- Double-Check, that returned values fit into LONG :*/
+	if (ullNum > 0x7FFFFFFFL || ullDenom > 0x7FFFFFFFL || ullNum2 > 0x7FFFFFFFL || ullDenom2 > 0x7FFFFFFFL) {
+#if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
+		TIFFErrorExt(0, "TIFFLib: DoubeToSrational()", " Num or Denom exceeds LONG: val=%14.6f, num=%I64u, denom=%I64u | num2=%I64u, denom2=%I64u", neg*value, ullNum, ullDenom, ullNum2, ullDenom2);
+#else
+		TIFFErrorExt(0, "TIFFLib: DoubeToSrational()", " Num or Denom exceeds LONG: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu", neg*value, ullNum, ullDenom, ullNum2, ullDenom2);
+#endif
+		assert(0);
+	}
+
+	/* Check, which one has higher accuracy and take that. */
+	dblDiff = fabs(value - ((double)ullNum / (double)ullDenom));
+	dblDiff2 = fabs(value - ((double)ullNum2 / (double)ullDenom2));
+	if (dblDiff < dblDiff2) {
+		*num = (int32)(neg * (long)ullNum);
+		*denom = (int32)ullDenom;
+	}
+	else {
+		*num = (int32)(neg * (long)ullNum2);
+		*denom = (int32)ullDenom2;
+	}
+}  /*-- DoubleToSrational() --------------*/
+
+
+
+
 
 #ifdef notdef
 static int

@@ -39,6 +39,7 @@ void CPL_DLL GDALRegister_GXF(void);
 void CPL_DLL GDALRegister_HFA(void);
 void CPL_DLL GDALRegister_AAIGrid(void);
 void CPL_DLL GDALRegister_GRASSASCIIGrid(void);
+void CPL_DLL GDALRegister_ISG(void);
 void CPL_DLL GDALRegister_AIGrid(void);
 // void CPL_DLL GDALRegister_AIGrid2(void);
 void CPL_DLL GDALRegister_CEOS(void);
@@ -202,6 +203,7 @@ void CPL_DLL GDALRegister_TileDB(void);
 void CPL_DLL GDALRegister_DAAS(void);
 void CPL_DLL GDALRegister_COG(void);
 void CPL_DLL GDALRegister_RDB(void);
+void CPL_DLL GDALRegister_EXR(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */

@@ -962,6 +962,7 @@ void HDF5Array::InstantiateDimensions(const std::string& osParentName,
     }
 
     std::map<std::string, std::shared_ptr<GDALDimension>> oMapFullNameToDim;
+    // cppcheck-suppress knownConditionTrueFalse
     if( poGroup && !mapDimIndexToDimFullName.empty() )
     {
         auto groupDims = poGroup->GetDimensions();

@@ -8,6 +8,8 @@ EEDAI - Google Earth Engine Data API Image
 
 .. versionadded:: 2.4
 
+.. build_dependencies:: libcurl
+
 The driver supports read-only operations to access image content, using
 Google Earth Engine REST API.
 

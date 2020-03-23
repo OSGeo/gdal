@@ -573,7 +573,7 @@ int OGRIngresDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         {
             CPLDebug("INGRES", "No rows exists matching EPSG:%s in spatial_ref_sys", pszAuthID );
         }
-        else if( papszRow != NULL && papszRow[0] != NULL )
+        else if( papszRow[0] != NULL )
         {
             nSRSId = *((II_INT4 *)papszRow[0]);
             return nSRSId;
@@ -610,7 +610,7 @@ int OGRIngresDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         {
             CPLDebug("INGRES", "No rows exist currently exist in spatial_ref_sys");
         }
-        else if( papszRow != NULL && papszRow[0] != NULL )
+        else if( papszRow[0] != NULL )
         {
             nSRSId = *((II_INT4 *)papszRow[0]);
             return nSRSId;

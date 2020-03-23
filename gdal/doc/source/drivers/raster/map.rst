@@ -1,10 +1,12 @@
 .. _raster.map:
 
 ================================================================================
-MAP --- OziExplorer .MAP
+MAP -- OziExplorer .MAP
 ================================================================================
 
 .. shortname:: MAP
+
+.. built_in_by_default::
 
 OziExplorer MAP files.
 

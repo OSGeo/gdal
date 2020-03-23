@@ -50,4 +50,6 @@ int VSICurlInstallReadCbk( VSILFILE* fp, VSICurlReadCbkFunc pfnReadCbk,
                            int bStopOnInterruptUntilUninstall );
 int VSICurlUninstallReadCbk( VSILFILE* fp );
 
+void VSICurlAuthParametersChanged();
+
 #endif // CPL_VSIL_CURL_PRIV_H_INCLUDED

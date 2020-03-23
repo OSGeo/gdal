@@ -6,6 +6,8 @@ Norwegian SOSI Standard
 
 .. shortname:: SOSI
 
+.. build_dependencies:: FYBA library
+
 This driver requires the FYBA library.
 
 Open options

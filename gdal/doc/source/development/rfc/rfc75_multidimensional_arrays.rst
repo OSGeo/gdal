@@ -68,7 +68,7 @@ rasters:
 
 A new open flag, ``GDAL_OF_MULTIDIM_RASTER``, for :cpp:func:`GDALOpenEx`
 will be added. When this is specified, drivers supporting multidimensional
-raster will return a root GDALGroup. Otherwise their current traditionnal 2D
+raster will return a root GDALGroup. Otherwise their current traditional 2D
 mode will still be used.
 
 New creation options metadata items are added to documents multidimensional dataset,
@@ -169,7 +169,7 @@ Driver changes
 New Utilities
 ~~~~~~~~~~~~~
 
-- A new gdalmdiminfo utility is added to report the hierachical structure and content.
+- A new gdalmdiminfo utility is added to report the hierarchical structure and content.
   Its output format is JSON. See https://github.com/rouault/gdal/blob/rfc75/gdal/doc/source/programs/gdalmdiminfo.rst
   for its documentation.
 

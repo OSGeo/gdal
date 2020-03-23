@@ -5,6 +5,8 @@ GPX - GPS Exchange Format
 
 .. shortname:: GPX
 
+.. build_dependencies:: (read support needs libexpat) 
+
 GPX (the GPS Exchange Format) is a light-weight XML data format for the
 interchange of GPS data (waypoints, routes, and tracks) between
 applications and Web services on the Internet.

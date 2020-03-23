@@ -6,6 +6,8 @@ JPEGLS
 
 .. shortname:: JPEGLS
 
+.. build_dependencies:: CharLS library
+
 This driver is an implementation of a JPEG-LS reader/writer based on the
 Open Source CharLS library (BSD style license).
 

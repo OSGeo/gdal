@@ -31,6 +31,7 @@
 #include "cpl_minixml.h"
 #include "cpl_http.h"
 #include "ogr_swq.h"
+#include "parsexsd.h"
 
 #include <algorithm>
 #include <memory>
@@ -45,7 +46,9 @@ extern "C" void RegisterOGROAPIF();
 #define MEDIA_TYPE_OAPI_3_0_ALT  "application/openapi+json;version=3.0"
 #define MEDIA_TYPE_JSON          "application/json"
 #define MEDIA_TYPE_GEOJSON       "application/geo+json"
-#define MEDIA_TYPE_XML           "text/xml"
+#define MEDIA_TYPE_TEXT_XML      "text/xml"
+#define MEDIA_TYPE_APPLICATION_XML "application/xml"
+#define MEDIA_TYPE_JSON_SCHEMA     "application/schema+json"
 
 /************************************************************************/
 /*                           OGROAPIFDataset                             */
@@ -68,6 +71,8 @@ class OGROAPIFDataset final: public GDALDataset
 
         bool                                   m_bLandingPageDocLoaded = false;
         CPLJSONDocument                        m_oLandingPageDoc;
+
+        bool                                   m_bIgnoreSchema = false;
 
         bool                    Download(
             const CPLString& osURL,
@@ -122,22 +127,34 @@ class OGROAPIFLayer final: public OGRLayer
         bool            m_bFilterMustBeClientSideEvaluated = false;
         bool            m_bGotQueriableAttributes = false;
         std::set<CPLString> m_aoSetQueriableAttributes;
+        bool            m_bHasCQLText = false;
+        // https://github.com/tschaub/ogcapi-features/blob/json-array-expression/extensions/cql/jfe/readme.md
+        bool            m_bHasJSONFilterExpression = false;
         GIntBig         m_nTotalFeatureCount = -1;
         bool            m_bHasIntIdMember = false;
         bool            m_bHasStringIdMember = false;
+        std::vector<std::unique_ptr<OGRFieldDefn>> m_apoFieldsFromSchema{};
+        CPLString       m_osDescribedByURL{};
+        CPLString       m_osDescribedByType{};
+        bool            m_bDescribedByIsXML = false;
+        CPLString       m_osQueryablesURL{};
 
         void            EstablishFeatureDefn();
         OGRFeature     *GetNextRawFeature();
         CPLString       AddFilters(const CPLString& osURL);
         CPLString       BuildFilter(const swq_expr_node* poNode);
+        CPLString       BuildFilterCQLText(const swq_expr_node* poNode);
+        CPLString       BuildFilterJSONFilterExpr(const swq_expr_node* poNode);
         bool            SupportsResultTypeHits();
         void            GetQueriableAttributes();
+        void            GetSchema();
 
     public:
         OGROAPIFLayer(OGROAPIFDataset* poDS,
                      const CPLString& osName,
                      const CPLJSONArray& oBBOX,
-                     const CPLJSONArray& oCRS);
+                     const CPLJSONArray& oCRS,
+                     const CPLJSONArray& oLinks);
 
        ~OGROAPIFLayer();
 
@@ -329,7 +346,16 @@ bool OGROAPIFDataset::Download(
 
     if( strstr(pszAccept, "xml") &&
         psResult->pszContentType != nullptr &&
-        CheckContentType(psResult->pszContentType, MEDIA_TYPE_XML) )
+        (CheckContentType(psResult->pszContentType, MEDIA_TYPE_TEXT_XML) ||
+         CheckContentType(psResult->pszContentType, MEDIA_TYPE_APPLICATION_XML)) )
+    {
+        bFoundExpectedContentType = true;
+    }
+
+    if( strstr(pszAccept, MEDIA_TYPE_JSON_SCHEMA) &&
+        psResult->pszContentType != nullptr &&
+        (CheckContentType(psResult->pszContentType, MEDIA_TYPE_JSON) ||
+         CheckContentType(psResult->pszContentType, MEDIA_TYPE_JSON_SCHEMA)) )
     {
         bFoundExpectedContentType = true;
     }
@@ -526,8 +552,9 @@ bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject& oCollection)
         oBBOX = oCollection.GetArray("extent/spatial");
 #endif
     CPLJSONArray oCRS = oCollection.GetArray("crs");
+    const auto oLinks = oCollection.GetArray("links");
     std::unique_ptr<OGROAPIFLayer> poLayer( new
-        OGROAPIFLayer(this, osName, oBBOX, oCRS) );
+        OGROAPIFLayer(this, osName, oBBOX, oCRS, oLinks) );
     if( !osTitle.empty() )
         poLayer->SetMetadataItem("TITLE", osTitle.c_str());
     if( !osDescription.empty() )
@@ -634,6 +661,21 @@ bool OGROAPIFDataset::LoadJSONCollections(const CPLString& osResultIn)
 }
 
 /************************************************************************/
+/*                         ConcatenateURLParts()                        */
+/************************************************************************/
+
+static std::string ConcatenateURLParts(const std::string& osPart1,
+                                       const std::string& osPart2)
+{
+    if( !osPart1.empty() && osPart1.back() == '/' &&
+        !osPart2.empty() && osPart2.front() == '/' )
+    {
+        return osPart1.substr(0, osPart1.size() - 1) + osPart2;
+    }
+    return osPart1 + osPart2;
+}
+
+/************************************************************************/
 /*                              Open()                                  */
 /************************************************************************/
 
@@ -661,6 +703,9 @@ bool OGROAPIFDataset::Open(GDALOpenInfo* poOpenInfo)
         m_osRootURL.resize(nCollectionsPos);
     }
 
+    m_bIgnoreSchema = CPLTestBool(
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "IGNORE_SCHEMA",
+                             "FALSE"));
     m_nPageSize = atoi( CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
                             "PAGE_SIZE",CPLSPrintf("%d", m_nPageSize)) );
     m_osUserPwd =
@@ -684,7 +729,7 @@ bool OGROAPIFDataset::Open(GDALOpenInfo* poOpenInfo)
         return LoadJSONCollection(oRoot);
     }
 
-    if( !Download(m_osRootURL + "/collections",
+    if( !Download(ConcatenateURLParts(m_osRootURL, "/collections"),
             MEDIA_TYPE_JSON, osResult, osContentType) )
     {
         return false;
@@ -727,7 +772,8 @@ static int OGROAPIFDriverIdentify( GDALOpenInfo* poOpenInfo )
 OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
                            const CPLString& osName,
                            const CPLJSONArray& oBBOX,
-                           const CPLJSONArray& /* oCRS */) :
+                           const CPLJSONArray& /* oCRS */,
+                           const CPLJSONArray& oLinks) :
     m_poDS(poDS)
 {
     m_poFeatureDefn = new OGRFeatureDefn(osName);
@@ -773,10 +819,54 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
     m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
     poSRS->Release();
 
+    if( oLinks.IsValid() )
+    {
+        for( int i = 0; i < oLinks.Size(); i++ )
+        {
+            CPLJSONObject oLink = oLinks[i];
+            if( !oLink.IsValid() ||
+                oLink.GetType() != CPLJSONObject::Type::Object )
+            {
+                continue;
+            }
+            const auto osRel(oLink.GetString("rel"));
+            const auto osURL = oLink.GetString("href");
+            const auto type = oLink.GetString("type");
+            if( osRel == "describedBy" )
+            {
+                if (type == MEDIA_TYPE_TEXT_XML ||
+                    type == MEDIA_TYPE_APPLICATION_XML )
+                {
+                    m_osDescribedByURL = osURL;
+                    m_osDescribedByType = type;
+                    m_bDescribedByIsXML = true;
+                }
+                else if( type == MEDIA_TYPE_JSON_SCHEMA &&
+                         m_osDescribedByURL.empty() )
+                {
+                    m_osDescribedByURL = osURL;
+                    m_osDescribedByType = type;
+                    m_bDescribedByIsXML = false;
+                }
+            }
+            else if( osRel == "queryables" )
+            {
+                if( type == MEDIA_TYPE_JSON || m_osQueryablesURL.empty() )
+                {
+                    m_osQueryablesURL = m_poDS->ReinjectAuthInURL(osURL);
+                }
+            }
+        }
+        if( !m_osDescribedByURL.empty() )
+        {
+            m_osDescribedByURL = m_poDS->ReinjectAuthInURL(m_osDescribedByURL);
+        }
+    }
+
     m_bIsGeographicCRS = true;
 
     // We might check in the links, but the spec mandates that construct of URL
-    m_osURL = m_poDS->m_osRootURL + "/collections/" + osName + "/items";
+    m_osURL = ConcatenateURLParts(m_poDS->m_osRootURL, "/collections/" + osName + "/items");
     m_osPath = "/collections/" + osName + "/items";
 
     OGROAPIFLayer::ResetReading();
@@ -789,6 +879,285 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
 OGROAPIFLayer::~OGROAPIFLayer()
 {
     m_poFeatureDefn->Release();
+}
+
+/************************************************************************/
+/*                            ResolveRefs()                             */
+/************************************************************************/
+
+static CPLJSONObject ResolveRefs(const CPLJSONObject& oRoot,
+                                 const CPLJSONObject& oObj)
+{
+     const auto osRef = oObj.GetString("$ref");
+    if( osRef.empty() )
+        return oObj;
+    if( STARTS_WITH(osRef.c_str(), "#/") )
+    {
+        return oRoot.GetObj(osRef.c_str() + 2);
+    }
+    CPLJSONObject oInvalid;
+    oInvalid.Deinit();
+    return oInvalid;
+}
+
+/************************************************************************/
+/*                      BuildExampleRecursively()                       */
+/************************************************************************/
+
+static bool BuildExampleRecursively(CPLJSONObject& oRes,
+                             const CPLJSONObject& oRoot,
+                             const CPLJSONObject& oObjIn)
+{
+    auto oResolvedObj = ResolveRefs(oRoot, oObjIn);
+    if( !oResolvedObj.IsValid() )
+        return false;
+    const auto osType = oResolvedObj.GetString("type");
+    if( osType == "object" )
+    {
+        const auto oAllOf = oResolvedObj.GetArray("allOf");
+        const auto oProperties = oResolvedObj.GetObj("properties");
+        if( oAllOf.IsValid() )
+        {
+            for( int i = 0; i < oAllOf.Size(); i++ )
+            {
+                CPLJSONObject oChildRes;
+                if( BuildExampleRecursively(oChildRes, oRoot, oAllOf[i]) &&
+                    oChildRes.GetType() == CPLJSONObject::Type::Object )
+                {
+                    auto oChildren = oChildRes.GetChildren();
+                    for( const auto& oChild: oChildren )
+                    {
+                        oRes.Add( oChild.GetName(), oChild );
+                    }
+                }
+            }
+        }
+        else if( oProperties.IsValid() )
+        {
+            auto oChildren = oProperties.GetChildren();
+            for( const auto& oChild: oChildren )
+            {
+                CPLJSONObject oChildRes;
+                if( BuildExampleRecursively(oChildRes, oRoot, oChild) )
+                {
+                    oRes.Add( oChild.GetName(), oChildRes );
+                }
+                else
+                {
+                    oRes.Add( oChild.GetName(), "unknown type" );
+                }
+            }
+        }
+        return true;
+    }
+    else if( osType == "array" )
+    {
+        CPLJSONArray oArray;
+        const auto oItems = oResolvedObj.GetObj("items");
+        if( oItems.IsValid() )
+        {
+            CPLJSONObject oChildRes;
+            if( BuildExampleRecursively(oChildRes, oRoot, oItems) )
+            {
+                oArray.Add(oChildRes);
+            }
+        }
+        oRes = oArray;
+        return true;
+    }
+    else if( osType == "string" )
+    {
+        CPLJSONObject oTemp;
+        const auto osFormat = oResolvedObj.GetString("format");
+        if( !osFormat.empty() )
+            oTemp.Set("_", osFormat);
+        else
+            oTemp.Set("_", "string");
+        oRes = oTemp.GetObj("_");
+        return true;
+    }
+    else if( osType == "number" )
+    {
+        CPLJSONObject oTemp;
+        oTemp.Set("_", 1.25);
+        oRes = oTemp.GetObj("_");
+        return true;
+    }
+    else if( osType == "integer" )
+    {
+        CPLJSONObject oTemp;
+        oTemp.Set("_", 1);
+        oRes = oTemp.GetObj("_");
+        return true;
+    }
+    else if( osType == "boolean" )
+    {
+        CPLJSONObject oTemp;
+        oTemp.Set("_", true);
+        oRes = oTemp.GetObj("_");
+        return true;
+    }
+    else if( osType == "null" )
+    {
+        CPLJSONObject oTemp;
+        oTemp.SetNull("_");
+        oRes = oTemp.GetObj("_");
+        return true;
+    }
+
+    return false;
+}
+
+/************************************************************************/
+/*                     GetObjectExampleFromSchema()                     */
+/************************************************************************/
+
+static CPLJSONObject GetObjectExampleFromSchema(const std::string& osJSONSchema)
+{
+    CPLJSONDocument oDoc;
+    if( !oDoc.LoadMemory(osJSONSchema) )
+    {
+        CPLJSONObject oInvalid;
+        oInvalid.Deinit();
+        return oInvalid;
+    }
+    const auto& oRoot = oDoc.GetRoot();
+    CPLJSONObject oRes;
+    BuildExampleRecursively(oRes, oRoot, oRoot);
+    return oRes;
+}
+
+/************************************************************************/
+/*                            GetSchema()                               */
+/************************************************************************/
+
+void OGROAPIFLayer::GetSchema()
+{
+    if( m_osDescribedByURL.empty() || m_poDS->m_bIgnoreSchema )
+        return;
+
+    CPLErrorHandlerPusher oErrorHandlerPusher(CPLQuietErrorHandler);
+    CPLErrorStateBackuper oErrorStateBackuper;
+
+    if( m_bDescribedByIsXML )
+    {
+        std::vector<GMLFeatureClass*> aosClasses;
+        bool bFullyUnderstood = false;
+        bool bHaveSchema = GMLParseXSD( m_osDescribedByURL, aosClasses,
+                                        bFullyUnderstood );
+        if (bHaveSchema && aosClasses.size() == 1)
+        {
+            CPLDebug("OAPIF", "Using XML schema");
+            const auto poGMLFeatureClass = aosClasses[0];
+            if( poGMLFeatureClass->GetGeometryPropertyCount() ==  1 )
+            {
+                // Force linear type as we work with GeoJSON data
+                m_poFeatureDefn->SetGeomType(OGR_GT_GetLinear(
+                    static_cast<OGRwkbGeometryType>(
+                        poGMLFeatureClass->GetGeometryProperty(0)->GetType())));
+            }
+
+            const int nPropertyCount = poGMLFeatureClass->GetPropertyCount();
+            // This is a hack for http://www.pvretano.com/cubewerx/cubeserv/default/wfs/3.0.0/framework/collections/UNINCORPORATED_PL/schema
+            // The GML representation has attributes starting all with "UNINCORPORATED_PL." whereas the GeoJSON output not
+            CPLString osPropertyNamePrefix(GetName());
+            osPropertyNamePrefix += '.';
+            bool bAllPrefixed = true;
+            for( int iField = 0; iField < nPropertyCount; iField++ )
+            {
+                const auto poProperty = poGMLFeatureClass->GetProperty( iField );
+                if( !STARTS_WITH(poProperty->GetName(), osPropertyNamePrefix.c_str()) )
+                {
+                    bAllPrefixed = false;
+                }
+            }
+            for( int iField = 0; iField < nPropertyCount; iField++ )
+            {
+                const auto poProperty = poGMLFeatureClass->GetProperty( iField );
+                OGRFieldSubType eSubType = OFSTNone;
+                const OGRFieldType eFType = GML_GetOGRFieldType(poProperty->GetType(), eSubType);
+
+                const char* pszName = poProperty->GetName() + (bAllPrefixed ? osPropertyNamePrefix.size() : 0);
+                std::unique_ptr<OGRFieldDefn> oField(new OGRFieldDefn( pszName, eFType ));
+                oField->SetSubType(eSubType);
+                m_apoFieldsFromSchema.emplace_back(std::move(oField));
+            }
+        }
+    }
+    else
+    {
+        CPLString osContentType;
+        CPLString osResult;
+        if( !m_poDS->Download(m_osDescribedByURL, m_osDescribedByType,
+                              osResult, osContentType) )
+        {
+            CPLDebug("OAPIF", "Could not download schema");
+        }
+        else
+        {
+            const auto oExample = GetObjectExampleFromSchema(osResult);
+            //CPLDebug("OAPIF", "Example from schema: %s",
+            //         oExample.Format(CPLJSONObject::PrettyFormat::Pretty).c_str());
+            if( oExample.IsValid() && oExample.GetType() == CPLJSONObject::Type::Object )
+            {
+                const auto oProperties = oExample.GetObj("properties");
+                if( oProperties.IsValid() && oProperties.GetType() == CPLJSONObject::Type::Object )
+                {
+                    CPLDebug("OAPIF", "Using JSON schema");
+                    const auto oProps = oProperties.GetChildren();
+                    for( const auto& oProp: oProps )
+                    {
+                        OGRFieldType eType = OFTString;
+                        OGRFieldSubType eSubType = OFSTNone;
+                        const auto oType = oProp.GetType();
+                        if( oType == CPLJSONObject::Type::String )
+                        {
+                            if( oProp.ToString() == "date-time" )
+                            {
+                                eType = OFTDateTime;
+                            }
+                            else if( oProp.ToString() == "date" )
+                            {
+                                eType = OFTDate;
+                            }
+                        }
+                        else if( oType == CPLJSONObject::Type::Boolean )
+                        {
+                            eType = OFTInteger;
+                            eSubType = OFSTBoolean;
+                        }
+                        else if( oType == CPLJSONObject::Type::Double )
+                        {
+                            eType = OFTReal;
+                        }
+                        else if( oType == CPLJSONObject::Type::Integer )
+                        {
+                            eType = OFTInteger;
+                        }
+                        else if( oType == CPLJSONObject::Type::Long )
+                        {
+                            eType = OFTInteger64;
+                        }
+                        else if( oType == CPLJSONObject::Type::Array )
+                        {
+                            const auto oArray = oProp.ToArray();
+                            if( oArray.Size() > 0 )
+                            {
+                                if( oArray[0].GetType() == CPLJSONObject::Type::String )
+                                    eType = OFTStringList;
+                                else if( oArray[0].GetType() == CPLJSONObject::Type::Integer )
+                                    eType = OFTIntegerList;
+                            }
+                        }
+
+                        std::unique_ptr<OGRFieldDefn> oField(new OGRFieldDefn( oProp.GetName().c_str(), eType ));
+                        oField->SetSubType(eSubType);
+                        m_apoFieldsFromSchema.emplace_back(std::move(oField));
+                    }
+                }
+            }
+        }
+    }
 }
 
 /************************************************************************/
@@ -811,6 +1180,8 @@ void OGROAPIFLayer::EstablishFeatureDefn()
     CPLAssert(!m_bFeatureDefnEstablished);
     m_bFeatureDefnEstablished = true;
 
+    GetSchema();
+
     CPLJSONDocument oDoc;
     CPLString osURL(m_osURL);
     osURL = CPLURLAddKVP(osURL, "limit",
@@ -831,10 +1202,37 @@ void OGROAPIFLayer::EstablishFeatureDefn()
     if( !poLayer )
         return;
     OGRFeatureDefn* poFeatureDefn = poLayer->GetLayerDefn();
-    m_poFeatureDefn->SetGeomType( poFeatureDefn->GetGeomType() );
-    for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    if( m_poFeatureDefn->GetGeomType() == wkbUnknown )
     {
-        m_poFeatureDefn->AddFieldDefn( poFeatureDefn->GetFieldDefn(i) );
+        m_poFeatureDefn->SetGeomType( poFeatureDefn->GetGeomType() );
+    }
+    if( m_apoFieldsFromSchema.empty() )
+    {
+        for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+        {
+            m_poFeatureDefn->AddFieldDefn( poFeatureDefn->GetFieldDefn(i) );
+        }
+    }
+    else
+    {
+        if( poFeatureDefn->GetFieldCount() > 0 &&
+            strcmp(poFeatureDefn->GetFieldDefn(0)->GetNameRef(), "id") == 0 )
+        {
+            m_poFeatureDefn->AddFieldDefn( poFeatureDefn->GetFieldDefn(0) );
+        }
+        for( const auto& poField: m_apoFieldsFromSchema )
+        {
+            m_poFeatureDefn->AddFieldDefn( poField.get() );
+        }
+        // In case there would be properties found in sample, but not in schema...
+        for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+        {
+            auto poFDefn = poFeatureDefn->GetFieldDefn(i);
+            if( m_poFeatureDefn->GetFieldIndex(poFDefn->GetNameRef()) < 0 )
+            {
+                m_poFeatureDefn->AddFieldDefn( poFDefn );
+            }
+        }
     }
 
     const auto& oRoot = oDoc.GetRoot();
@@ -1194,7 +1592,7 @@ GIntBig OGROAPIFLayer::GetFeatureCount(int bForce)
         {
             CPLString osResult;
             CPLString osContentType;
-            if( m_poDS->Download(osURL, MEDIA_TYPE_XML, osResult, osContentType) )
+            if( m_poDS->Download(osURL, MEDIA_TYPE_TEXT_XML, osResult, osContentType) )
             {
                 CPLXMLNode* psDoc = CPLParseXMLString(osResult);
                 if( psDoc )
@@ -1292,7 +1690,7 @@ static CPLString SerializeDateTime(int nDateComponents,
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
+/*                            BuildFilter()                             */
 /************************************************************************/
 
 CPLString OGROAPIFLayer::BuildFilter(const swq_expr_node* poNode)
@@ -1464,6 +1862,313 @@ CPLString OGROAPIFLayer::BuildFilter(const swq_expr_node* poNode)
 }
 
 /************************************************************************/
+/*                       BuildFilterCQLText()                           */
+/************************************************************************/
+
+CPLString OGROAPIFLayer::BuildFilterCQLText(const swq_expr_node* poNode)
+{
+    if( poNode->eNodeType == SNT_OPERATION &&
+        poNode->nOperation == SWQ_AND && poNode->nSubExprCount == 2 )
+    {
+        const auto leftExpr = poNode->papoSubExpr[0];
+        const auto rightExpr = poNode->papoSubExpr[1];
+
+         // For AND, we can deal with a failure in one of the branch
+        // since client-side will do that extra filtering
+        CPLString osFilter1 = BuildFilterCQLText(leftExpr);
+        CPLString osFilter2 = BuildFilterCQLText(rightExpr);
+        if( !osFilter1.empty() && !osFilter2.empty() )
+        {
+            return '(' + osFilter1 + ") AND (" + osFilter2 + ')';
+        }
+        else if( !osFilter1.empty() )
+            return osFilter1;
+        else
+            return osFilter2;
+    }
+    else if( poNode->eNodeType == SNT_OPERATION &&
+             poNode->nOperation == SWQ_OR && poNode->nSubExprCount == 2 )
+    {
+        const auto leftExpr = poNode->papoSubExpr[0];
+        const auto rightExpr = poNode->papoSubExpr[1];
+
+        CPLString osFilter1 = BuildFilterCQLText(leftExpr);
+        CPLString osFilter2 = BuildFilterCQLText(rightExpr);
+        if( !osFilter1.empty() && !osFilter2.empty() )
+        {
+            return '(' + osFilter1 + ") OR (" + osFilter2 + ')';
+        }
+    }
+    else if( poNode->eNodeType == SNT_OPERATION &&
+             poNode->nOperation == SWQ_NOT && poNode->nSubExprCount == 1 )
+    {
+        const auto childExpr = poNode->papoSubExpr[0];
+        CPLString osFilterChild = BuildFilterCQLText(childExpr);
+        if( !osFilterChild.empty() )
+        {
+            return "NOT (" + osFilterChild + ')';
+        }
+    }
+    else if( poNode->eNodeType == SNT_OPERATION &&
+             poNode->nOperation == SWQ_ISNULL &&
+             poNode->nSubExprCount == 1 &&
+             poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN )
+    {
+        const int nFieldIdx = poNode->papoSubExpr[0]->field_index;
+        const OGRFieldDefn* poFieldDefn = GetLayerDefn()->GetFieldDefn(nFieldIdx);
+        if( poFieldDefn )
+        {
+            return CPLString("(") + poFieldDefn->GetNameRef() + " IS NULL)";
+        }
+    }
+    else if (poNode->eNodeType == SNT_OPERATION &&
+             (poNode->nOperation == SWQ_EQ ||
+              poNode->nOperation == SWQ_NE ||
+              poNode->nOperation == SWQ_GT ||
+              poNode->nOperation == SWQ_GE ||
+              poNode->nOperation == SWQ_LT ||
+              poNode->nOperation == SWQ_LE ||
+              poNode->nOperation == SWQ_LIKE ||
+              poNode->nOperation == SWQ_ILIKE) &&
+             poNode->nSubExprCount == 2 &&
+             poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
+             poNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT )
+    {
+        const int nFieldIdx = poNode->papoSubExpr[0]->field_index;
+        const OGRFieldDefn* poFieldDefn = GetLayerDefn()->GetFieldDefn(nFieldIdx);
+        if( m_bHasStringIdMember &&
+            poNode->nOperation == SWQ_EQ &&
+            strcmp(poFieldDefn->GetNameRef(), "id") == 0 &&
+            poNode->papoSubExpr[1]->field_type == SWQ_STRING )
+        {
+            m_osGetID = poNode->papoSubExpr[1]->string_value;
+        }
+        else if( poFieldDefn &&
+                 m_aoSetQueriableAttributes.find(poFieldDefn->GetNameRef()) !=
+                    m_aoSetQueriableAttributes.end() )
+        {
+            CPLString osRet(poFieldDefn->GetNameRef());
+            switch(poNode->nOperation )
+            {
+                case SWQ_EQ: osRet += " = "; break;
+                case SWQ_NE: osRet += " <> "; break;
+                case SWQ_GT: osRet += " > "; break;
+                case SWQ_GE: osRet += " >= "; break;
+                case SWQ_LT: osRet += " < "; break;
+                case SWQ_LE: osRet += " <= "; break;
+                case SWQ_LIKE: osRet += " LIKE "; break;
+                case SWQ_ILIKE: osRet += " ILIKE "; break;
+                default: CPLAssert(false); break;
+            }
+            if( poNode->papoSubExpr[1]->field_type == SWQ_STRING )
+            {
+                osRet += '\'';
+                osRet += CPLString(poNode->papoSubExpr[1]->string_value).replaceAll('\'', "''");
+                osRet += '\'';
+                return osRet;
+            }
+            if( poNode->papoSubExpr[1]->field_type == SWQ_INTEGER ||
+                poNode->papoSubExpr[1]->field_type == SWQ_INTEGER64 )
+            {
+                osRet += CPLSPrintf(CPL_FRMT_GIB,
+                                    poNode->papoSubExpr[1]->int_value);
+                return osRet;
+            }
+            if( poNode->papoSubExpr[1]->field_type == SWQ_FLOAT )
+            {
+                osRet += CPLSPrintf("%.16g",
+                                    poNode->papoSubExpr[1]->float_value);
+                return osRet;
+            }
+            if( poNode->papoSubExpr[1]->field_type == SWQ_TIMESTAMP )
+            {
+                int nDateComponents;
+                int nYear = 0, nMonth = 0, nDay = 0, nHour = 0, nMinute = 0, nSecond = 0;
+                if( (poFieldDefn->GetType() == OFTDate ||
+                     poFieldDefn->GetType() == OFTDateTime) &&
+                    (nDateComponents = OGRWF3ParseDateTime(
+                        poNode->papoSubExpr[1]->string_value,
+                        nYear, nMonth, nDay, nHour, nMinute, nSecond)) >= 3 )
+                {
+                    CPLString osDT(SerializeDateTime(nDateComponents,
+                                        nYear, nMonth, nDay, nHour, nMinute, nSecond));
+                    osRet += '\'';
+                    osRet += osDT;
+                    osRet += '\'';
+                    return osRet;
+                }
+            }
+        }
+    }
+
+    m_bFilterMustBeClientSideEvaluated = true;
+    return CPLString();
+}
+
+/************************************************************************/
+/*                     BuildFilterJSONFilterExpr()                      */
+/************************************************************************/
+
+CPLString OGROAPIFLayer::BuildFilterJSONFilterExpr(const swq_expr_node* poNode)
+{
+    if( poNode->eNodeType == SNT_OPERATION &&
+        poNode->nOperation == SWQ_AND && poNode->nSubExprCount == 2 )
+    {
+        const auto leftExpr = poNode->papoSubExpr[0];
+        const auto rightExpr = poNode->papoSubExpr[1];
+
+         // For AND, we can deal with a failure in one of the branch
+        // since client-side will do that extra filtering
+        CPLString osFilter1 = BuildFilterJSONFilterExpr(leftExpr);
+        CPLString osFilter2 = BuildFilterJSONFilterExpr(rightExpr);
+        if( !osFilter1.empty() && !osFilter2.empty() )
+        {
+            return "[\"all\"," + osFilter1 + ',' + osFilter2 + ']';
+        }
+        else if( !osFilter1.empty() )
+            return osFilter1;
+        else
+            return osFilter2;
+    }
+    else if( poNode->eNodeType == SNT_OPERATION &&
+             poNode->nOperation == SWQ_OR && poNode->nSubExprCount == 2 )
+    {
+        const auto leftExpr = poNode->papoSubExpr[0];
+        const auto rightExpr = poNode->papoSubExpr[1];
+
+        CPLString osFilter1 = BuildFilterJSONFilterExpr(leftExpr);
+        CPLString osFilter2 = BuildFilterJSONFilterExpr(rightExpr);
+        if( !osFilter1.empty() && !osFilter2.empty() )
+        {
+            return "[\"any\"," + osFilter1 + ',' + osFilter2 + ']';
+        }
+    }
+    else if( poNode->eNodeType == SNT_OPERATION &&
+             poNode->nOperation == SWQ_NOT && poNode->nSubExprCount == 1 )
+    {
+        const auto childExpr = poNode->papoSubExpr[0];
+        CPLString osFilterChild = BuildFilterJSONFilterExpr(childExpr);
+        if( !osFilterChild.empty() )
+        {
+            return "[\"!\"," + osFilterChild + ']';
+        }
+    }
+    else if( poNode->eNodeType == SNT_OPERATION &&
+             poNode->nOperation == SWQ_ISNULL && poNode->nSubExprCount == 1 )
+    {
+        const auto childExpr = poNode->papoSubExpr[0];
+        CPLString osFilterChild = BuildFilterJSONFilterExpr(childExpr);
+        if( !osFilterChild.empty() )
+        {
+            return "[\"==\"," + osFilterChild + ",null]";
+        }
+    }
+    else if (poNode->eNodeType == SNT_OPERATION &&
+             (poNode->nOperation == SWQ_EQ ||
+              poNode->nOperation == SWQ_NE ||
+              poNode->nOperation == SWQ_GT ||
+              poNode->nOperation == SWQ_GE ||
+              poNode->nOperation == SWQ_LT ||
+              poNode->nOperation == SWQ_LE ||
+              poNode->nOperation == SWQ_LIKE) &&
+             poNode->nSubExprCount == 2  )
+    {
+        if( m_bHasStringIdMember &&
+            poNode->nOperation == SWQ_EQ &&
+            poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
+            poNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT &&
+            poNode->papoSubExpr[1]->field_type == SWQ_STRING )
+        {
+            const int nFieldIdx = poNode->papoSubExpr[0]->field_index;
+            const OGRFieldDefn* poFieldDefn = GetLayerDefn()->GetFieldDefn(nFieldIdx);
+            if( strcmp(poFieldDefn->GetNameRef(), "id") == 0 )
+            {
+                m_osGetID = poNode->papoSubExpr[1]->string_value;
+                return CPLString();
+            }
+        }
+
+        CPLString osRet("[\"");
+        switch(poNode->nOperation )
+        {
+            case SWQ_EQ: osRet += "=="; break;
+            case SWQ_NE: osRet += "!="; break;
+            case SWQ_GT: osRet += ">"; break;
+            case SWQ_GE: osRet += ">="; break;
+            case SWQ_LT: osRet += "<"; break;
+            case SWQ_LE: osRet += "<="; break;
+            case SWQ_LIKE: osRet += "like"; break;
+            default: CPLAssert(false); break;
+        }
+        osRet += "\",";
+        CPLString osFilter1 = BuildFilterJSONFilterExpr(poNode->papoSubExpr[0]);
+        CPLString osFilter2 = BuildFilterJSONFilterExpr(poNode->papoSubExpr[1]);
+        if( !osFilter1.empty() && !osFilter2.empty() )
+        {
+            osRet += osFilter1;
+            osRet += ',';
+            osRet += osFilter2;
+            osRet += ']';
+            return osRet;
+        }
+    }
+    else if( poNode->eNodeType == SNT_COLUMN )
+    {
+        const int nFieldIdx = poNode->field_index;
+        const OGRFieldDefn* poFieldDefn = GetLayerDefn()->GetFieldDefn(nFieldIdx);
+        if( poFieldDefn &&
+            m_aoSetQueriableAttributes.find(poFieldDefn->GetNameRef()) !=
+            m_aoSetQueriableAttributes.end() )
+        {
+            CPLString osRet("[\"get\",\"");
+            osRet += CPLString(poFieldDefn->GetNameRef()).replaceAll('\\',"\\\\").replaceAll('"',"\\\"");
+            osRet += "\"]";
+            return osRet;
+        }
+    }
+    else if( poNode->eNodeType == SNT_CONSTANT )
+    {
+        if( poNode->field_type == SWQ_STRING )
+        {
+            CPLString osRet("\"");
+            osRet += CPLString(poNode->string_value).replaceAll('\\',"\\\\").replaceAll('"',"\\\"");
+            osRet += '"';
+            return osRet;
+        }
+        if( poNode->field_type == SWQ_INTEGER ||
+            poNode->field_type == SWQ_INTEGER64 )
+        {
+            return CPLSPrintf(CPL_FRMT_GIB,
+                                poNode->int_value);
+        }
+        if( poNode->field_type == SWQ_FLOAT )
+        {
+            return CPLSPrintf("%.16g",
+                                poNode->float_value);
+        }
+        if( poNode->field_type == SWQ_TIMESTAMP )
+        {
+            int nYear = 0, nMonth = 0, nDay = 0, nHour = 0, nMinute = 0, nSecond = 0;
+            const int nDateComponents =  OGRWF3ParseDateTime(
+                    poNode->string_value,
+                    nYear, nMonth, nDay, nHour, nMinute, nSecond);
+            if( nDateComponents >= 3 )
+            {
+                CPLString osDT(SerializeDateTime(nDateComponents,
+                                    nYear, nMonth, nDay, nHour, nMinute, nSecond));
+                CPLString osRet("\"");
+                osRet += osDT;
+                osRet += '"';
+                return osRet;
+            }
+        }
+    }
+
+    m_bFilterMustBeClientSideEvaluated = true;
+    return CPLString();
+}
+
+/************************************************************************/
 /*                        GetQueriableAttributes()                      */
 /************************************************************************/
 
@@ -1472,29 +2177,76 @@ void OGROAPIFLayer::GetQueriableAttributes()
     if( m_bGotQueriableAttributes )
         return;
     m_bGotQueriableAttributes = true;
-    CPLJSONDocument oDoc = m_poDS->GetAPIDoc();
-    if( oDoc.GetRoot().GetString("openapi").empty() )
+    CPLJSONDocument oAPIDoc = m_poDS->GetAPIDoc();
+    if( oAPIDoc.GetRoot().GetString("openapi").empty() )
         return;
 
-    CPLJSONArray oParameters = oDoc.GetRoot().GetObj("paths")
-                                  .GetObj(m_osPath)
+    CPLJSONObject oPaths = oAPIDoc.GetRoot().GetObj("paths");
+    CPLJSONArray oParameters = oPaths.GetObj(m_osPath)
                                   .GetObj("get")
                                   .GetArray("parameters");
     if( !oParameters.IsValid() )
-        return;
+    {
+        oParameters = oPaths.GetObj("/collections/{collectionId}/items")
+                                  .GetObj("get")
+                                  .GetArray("parameters");
+    }
     for( int i = 0; i < oParameters.Size(); i++ )
     {
         CPLJSONObject oParam = oParameters[i];
         CPLString osRef = oParam.GetString("$ref");
         if( !osRef.empty() && osRef.find("#/") == 0 )
         {
-            oParam = oDoc.GetRoot().GetObj(osRef.substr(2));
+            oParam = oAPIDoc.GetRoot().GetObj(osRef.substr(2));
         }
-        if( oParam.GetString("in") == "query" &&
-            GetLayerDefn()->GetFieldIndex(
-                                oParam.GetString("name").c_str()) >= 0 )
+        if( oParam.GetString("in") == "query" )
         {
-            m_aoSetQueriableAttributes.insert(oParam.GetString("name"));
+            const auto osName(oParam.GetString("name"));
+            if( osName == "filter-lang" )
+            {
+                const auto oEnums = oParam.GetObj("schema").GetArray("enum");
+                for( int j = 0; j < oEnums.Size(); j++ )
+                {
+                    if( oEnums[j].ToString() == "cql-text" )
+                    {
+                        m_bHasCQLText = true;
+                        CPLDebug("OAPIF", "CQL text detected");
+                    }
+                    else if( oEnums[j].ToString() == "json-filter-expr" )
+                    {
+                        m_bHasJSONFilterExpression = true;
+                        CPLDebug("OAPIF", "JSON Filter expression detected");
+                    }
+                }
+            }
+            else if( GetLayerDefn()->GetFieldIndex(osName.c_str()) >= 0 )
+            {
+                m_aoSetQueriableAttributes.insert(osName);
+            }
+        }
+    }
+
+    // HACK
+    if( CPLTestBool(CPLGetConfigOption("OGR_OAPIF_ALLOW_CQL_TEXT", "NO")) )
+        m_bHasCQLText = true;
+
+    if( m_bHasCQLText || m_bHasJSONFilterExpression )
+    {
+        if( !m_osQueryablesURL.empty() )
+        {
+            CPLJSONDocument oDoc;
+            if( m_poDS->DownloadJSon(m_osQueryablesURL, oDoc) )
+            {
+                auto oQueryables = oDoc.GetRoot().GetArray("queryables");
+                for( int i = 0; i < oQueryables.Size(); i++ )
+                {
+                    const auto osId = oQueryables[i].GetString("id");
+                    if( !osId.empty() )
+                    {
+                        m_aoSetQueriableAttributes.insert(osId);
+                    }
+                }
+            }
         }
     }
 }
@@ -1525,7 +2277,36 @@ OGRErr OGROAPIFLayer::SetAttributeFilter( const char *pszQuery )
 
         poNode->ReplaceBetweenByGEAndLERecurse();
 
-        m_osAttributeFilter = BuildFilter(poNode);
+        if( m_bHasCQLText )
+        {
+            m_osAttributeFilter = BuildFilterCQLText(poNode);
+            if( !m_osAttributeFilter.empty() )
+            {
+                char* pszEscaped = CPLEscapeString(
+                    m_osAttributeFilter, -1, CPLES_URL);
+                m_osAttributeFilter = "filter=";
+                m_osAttributeFilter += pszEscaped;
+                m_osAttributeFilter += "&filter-lang=cql-text";
+                CPLFree(pszEscaped);
+            }
+        }
+        else if( m_bHasJSONFilterExpression )
+        {
+            m_osAttributeFilter = BuildFilterJSONFilterExpr(poNode);
+            if( !m_osAttributeFilter.empty() )
+            {
+                char* pszEscaped = CPLEscapeString(
+                    m_osAttributeFilter, -1, CPLES_URL);
+                m_osAttributeFilter = "filter=";
+                m_osAttributeFilter += pszEscaped;
+                m_osAttributeFilter += "&filter-lang=json-filter-expr";
+                CPLFree(pszEscaped);
+            }
+        }
+        else
+        {
+            m_osAttributeFilter = BuildFilter(poNode);
+        }
         if( m_osAttributeFilter.empty() )
         {
             CPLDebug("OAPIF",
@@ -1609,6 +2390,8 @@ void RegisterOGROAPIF()
         "description='Maximum number of features to retrieve in a single request'/>"
 "  <Option name='USERPWD' type='string' "
         "description='Basic authentication as username:password'/>"
+"  <Option name='IGNORE_SCHEMA' type='boolean' "
+        "description='Whether the XML Schema or JSON Schema should be ignored' default='NO'/>"
 "</OpenOptionList>" );
 
     poDriver->pfnIdentify = OGROAPIFDriverIdentify;

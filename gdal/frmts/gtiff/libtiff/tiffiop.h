@@ -367,6 +367,9 @@ extern uint32 _TIFFDefaultStripSize(TIFF* tif, uint32 s);
 extern void _TIFFDefaultTileSize(TIFF* tif, uint32* tw, uint32* th);
 extern int _TIFFDataSize(TIFFDataType type);
 
+/*--: Rational2Double: Return size of TIFFSetGetFieldType in bytes. */
+extern int _TIFFSetGetFieldSize(TIFFSetGetFieldType setgettype);
+
 extern void _TIFFsetByteArray(void**, void*, uint32);
 extern void _TIFFsetString(char**, char*);
 extern void _TIFFsetShortArray(uint16**, uint16*, uint32);

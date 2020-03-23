@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ###############################################################################
 # $Id$
 #
@@ -166,7 +166,7 @@ if not connected:
             if ct is not None:
                 err = geom.Transform(ct)
 
-            if err is 0:
+            if err == 0:
                 feat.SetGeometry(geom)
                 layer.CreateFeature(feat)
 
@@ -182,7 +182,7 @@ if not connected:
             if ct is not None:
                 err = geom.Transform(ct)
 
-            if err is 0:
+            if err == 0:
                 feat.SetGeometry(geom)
                 layer.CreateFeature(feat)
 
@@ -208,7 +208,7 @@ if connected:
         if ct is not None:
             err = geom.Transform(ct)
 
-        if err is 0:
+        if err == 0:
             feat.SetGeometry(geom)
             layer.CreateFeature(feat)
 
@@ -226,7 +226,7 @@ if connected:
         if ct is not None:
             err = geom.Transform(ct)
 
-        if err is 0:
+        if err == 0:
             feat.SetGeometry(geom)
             layer.CreateFeature(feat)
 

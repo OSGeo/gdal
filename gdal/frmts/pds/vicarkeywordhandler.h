@@ -53,7 +53,7 @@ public:
     VICARKeywordHandler();
     ~VICARKeywordHandler();
 
-    bool    Ingest( VSILFILE *fp, GByte *pabyHeader );
+    bool    Ingest( VSILFILE *fp, const GByte *pabyHeader );
 
     const char *GetKeyword( const char *pszPath, const char *pszDefault ) const;
     const CPLJSONObject& GetJsonObject() const { return oJSon; }

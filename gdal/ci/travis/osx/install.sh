@@ -23,13 +23,15 @@ $SCRIPT_DIR/../common_install.sh
 
 # Build proj
 (cd proj;  ./autogen.sh && CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' PKG_CONFIG_PATH="/usr/local/opt/sqlite/lib/pkgconfig" ./configure --disable-static --prefix=/tmp/install && make -j3 && make -j3 install)
+rm /tmp/install/lib/libproj.la
 rm /tmp/install/lib/libproj.dylib
 mv /tmp/install/lib/libproj.15.dylib /tmp/install/lib/libinternalproj.15.dylib
 ln -s libinternalproj.15.dylib /tmp/install/lib/libinternalproj.dylib
+find /tmp/install/lib
 
 # build GDAL
 cd gdal
-./configure --prefix=$HOME/install-gdal --enable-debug --with-jpeg12 --with-geotiff=internal --with-png=internal --with-proj=/tmp/install --with-sqlite3=/usr/local/opt/sqlite
+./configure --prefix=$HOME/install-gdal --enable-debug --with-jpeg12 --with-geotiff=internal --with-png=internal --with-proj=/tmp/install --with-sqlite3=/usr/local/opt/sqlite --without-pg --without-jasper --without-webp
 make USER_DEFS="-Wextra -Werror" -j3
 cd apps
 make USER_DEFS="-Wextra -Werror" test_ogrsf

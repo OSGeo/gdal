@@ -56,17 +56,23 @@ GNM_ENABLED = @GNM_ENABLED@
 OSX_FRAMEWORK_PREFIX = /Library/Frameworks/GDAL.framework
 OSX_VERSION_FRAMEWORK_PREFIX = ${OSX_FRAMEWORK_PREFIX}/Versions/@GDAL_VERSION_MAJOR@.@GDAL_VERSION_MINOR@
 
+PACKAGE = @PACKAGE@
+
 prefix		=	@prefix@
 exec_prefix	=	@exec_prefix@
+datarootdir	=	@datarootdir@
+docdir	=	@docdir@
+htmldir	=	@htmldir@
 INST_PREFIX	=	@exec_prefix@
 INST_INCLUDE	=	@includedir@
-INST_DATA 	=	@datadir@
+INST_DATA 	=	@datadir@/gdal
 INST_LIB	=	@libdir@
 INST_BIN	=	@bindir@
+INST_BASH_COMPLETION	=	@bashcompdir@
 INST_PYMOD      =       @pymoddir@
-INST_DOCS	=	@exec_prefix@/doc
+INST_DOCS	=	@htmldir@
 INST_MAN	=	@mandir@
-INST_HTML	=	$(HOME)/www/gdal
+INST_WEB	=	$(HOME)/www/gdal
 
 CPPFLAGS	:= @CPPFLAGS@ -I$(GDAL_ROOT)/port @EXTRA_INCLUDES@ -DGDAL_COMPILATION
 CFLAGS		= @CFLAGS@ @C_WFLAGS@ $(USER_DEFS)
@@ -547,6 +553,12 @@ JNI_LIB = @JNI_LIB@
 
 HAVE_FREEXL = @HAVE_FREEXL@
 FREEXL_INCLUDE = @FREEXL_INCLUDE@
+
+#
+# EXR stuff
+#
+
+EXR_CFLAGS = @EXR_CFLAGS@
 
 #
 # cryptopp stuff

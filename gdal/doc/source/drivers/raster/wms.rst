@@ -6,6 +6,8 @@ WMS -- Web Map Services
 
 .. shortname:: WMS
 
+.. build_dependencies:: libcurl
+
 Accessing several different types of web image services is possible
 using the WMS format in GDAL.
 

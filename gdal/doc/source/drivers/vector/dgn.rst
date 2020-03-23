@@ -5,6 +5,8 @@ Microstation DGN
 
 .. shortname:: DGN
 
+.. built_in_by_default::
+
 Microstation DGN files from Microstation versions predating version 8.0
 are supported for reading (a :ref:`DGNv8 driver <vector.dgnv8>`, using
 Teigha libraries, is available to read and write DGN v8 files). The

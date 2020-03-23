@@ -36,13 +36,14 @@ from osgeo import gdal
 
 import gdaltest
 
-sys.path.append('../../gdal/swig/python/samples') # For validate_cloud_optimized_geotiff
-
 ###############################################################################
 
 
 def _check_cog(filename):
 
+    path = '../../gdal/swig/python/samples'
+    if path not in sys.path:
+        sys.path.append(path)
     import validate_cloud_optimized_geotiff
     try:
         _, errors, _ = validate_cloud_optimized_geotiff.validate(filename, full_check=True)
@@ -364,7 +365,7 @@ def test_cog_byte_to_web_mercator():
     for i in range(6):
         if gt[i] != pytest.approx(expected_gt[i], abs=1e-10 * abs(expected_gt[i])):
             assert False, gt
-    assert ds.GetRasterBand(1).Checksum() == 4363
+    assert ds.GetRasterBand(1).Checksum() in (4363, 4264) # 4264 on Mac
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 4356
     assert ds.GetRasterBand(1).GetOverviewCount() == 2
     ds = None
@@ -412,7 +413,7 @@ def test_cog_byte_to_web_mercator_manual():
     for i in range(6):
         if gt[i] != pytest.approx(expected_gt[i], abs=1e-10 * abs(expected_gt[i])):
             assert False, gt
-    assert ds.GetRasterBand(1).Checksum() == 4363
+    assert ds.GetRasterBand(1).Checksum() in (4363, 4264) # 4264 on Mac
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 4356
     assert ds.GetRasterBand(1).GetOverviewCount() == 2
     ds = None
@@ -534,7 +535,7 @@ def test_cog_overviews_co():
 # Test editing and invalidating a COG file
 
 
-def test_cog_invalidation():
+def test_cog_invalidation_by_data_change():
 
     filename = '/vsimem/cog.tif'
     src_ds = gdal.GetDriverByName('MEM').Create('', 100, 100)
@@ -558,6 +559,30 @@ def test_cog_invalidation():
 
     with pytest.raises(AssertionError, match='KNOWN_INCOMPATIBLE_EDITION=YES is declared in the file'):
         _check_cog(filename)
+
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('GTiff').Delete(filename)
+
+###############################################################################
+# Test editing and invalidating a COG file
+
+
+def test_cog_invalidation_by_metadata_change():
+
+    filename = '/vsimem/cog.tif'
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+                                                options = ['COMPRESS=DEFLATE'])
+    ds = None
+
+    ds = gdal.Open(filename, gdal.GA_Update)
+    ds.GetRasterBand(1).ComputeStatistics(False)
+    ds = None
+
+    with gdaltest.error_handler():
+        ds = gdal.Open(filename)
+    assert ds.GetMetadataItem('LAYOUT', 'IMAGE_STRUCTURE') is None
+    ds = None
 
     with gdaltest.error_handler():
         gdal.GetDriverByName('GTiff').Delete(filename)

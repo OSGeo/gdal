@@ -33,6 +33,7 @@ define([AC_CACHE_SAVE], )
 
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(GDALmake.opt.in)
+AC_SUBST(PACKAGE, gdal)
 AC_CONFIG_MACRO_DIR(m4)
 AC_CONFIG_HEADERS([port/cpl_config.h:port/cpl_config.h.in])
 AH_BOTTOM([#include "cpl_config_extras.h"])
@@ -125,7 +126,6 @@ dnl C++ specific stuff
 
 AC_LANG_PUSH([C++])
 AX_CHECK_COMPILE_FLAG([-Wunused-private-field], [CXX_WFLAGS="$CXX_WFLAGS -Wunused-private-field"],,[$ERROR_ON_UNKNOWN_OPTIONS])
-AX_CHECK_COMPILE_FLAG([-Wmissing-prototypes], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-prototypes"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 AX_CHECK_COMPILE_FLAG([-Wmissing-declarations], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-declarations"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 AX_CHECK_COMPILE_FLAG([-Wnon-virtual-dtor], [CXX_WFLAGS="$CXX_WFLAGS -Wnon-virtual-dtor" NO_NON_VIRTUAL_DTOR_FLAG="-Wno-non-virtual-dtor"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 AX_CHECK_COMPILE_FLAG([-Wold-style-cast], [WARN_OLD_STYLE_CAST="-Wold-style-cast"],,[$ERROR_ON_UNKNOWN_OPTIONS])
@@ -1188,12 +1188,33 @@ if test "$am_func_iconv" = "yes"; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Bash completions
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH([bash-completion],
+  AS_HELP_STRING([--with-bash-completion[=ARG]],
+    [Install Bash completions (ARG=yes or path)]),,)
+
+if test "x$with_bash_completion" = "xno" -o "x$with_bash_completion" = "x"; then
+  AC_MSG_NOTICE([Bash completions not requested])
+elif test "x$with_bash_completion" = "xyes"; then
+  PKG_CHECK_VAR(bashcompdir, [bash-completion], [completionsdir], ,
+    bashcompdir="${sysconfdir}/bash_completion.d")
+  AC_SUBST(bashcompdir)
+else
+  AC_SUBST(bashcompdir, $with_bash_completion)
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl PROJ.6 related stuff
 dnl ---------------------------------------------------------------------------
 
 AC_MSG_CHECKING([for PROJ >= 6 library])
 
 AC_ARG_WITH(proj,[  --with-proj=ARG Compile with PROJ.x (ARG=yes or path)],,)
+
+AC_ARG_WITH(proj-extra-lib-for-test,
+    [  --with-proj-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (i.e. -lcurl -ltiff ...). Mainly for static libproj],,,)
 
 PROJ_INCLUDE=""
 if test "x$with_proj" = "xno" ; then
@@ -1235,26 +1256,25 @@ else
         AC_MSG_ERROR([proj.h not found])
     fi
   else
-
     ORIG_LIBS="$LIBS"
-    LIBS="-L$with_proj/lib -lproj $ORIG_LIBS"
+    LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
     AC_LANG_PUSH([C++])
     AC_CHECK_LIB(proj,proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
     AC_LANG_POP([C++])
     if test "$PROJ_FOUND" = "no"; then
-        LIBS="-L$with_proj/lib -lproj -lsqlite3 $ORIG_LIBS"
+        LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         unset ac_cv_lib_proj_proj_create_from_wkt
         AC_LANG_PUSH([C++])
         AC_CHECK_LIB(proj,proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
         AC_LANG_POP([C++])
     fi
     if test "$PROJ_FOUND" = "no"; then
-        LIBS="-L$with_proj/lib -lproj $ORIG_LIBS"
+        LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         AC_LANG_PUSH([C++])
         AC_CHECK_LIB(proj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
         AC_LANG_POP([C++])
         if test "$PROJ_FOUND" = "no"; then
-            LIBS="-L$with_proj/lib -lproj -lsqlite3 $ORIG_LIBS"
+            LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
             unset ac_cv_lib_proj_internal_proj_create_from_wkt
             AC_LANG_PUSH([C++])
             AC_CHECK_LIB(proj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
@@ -1265,12 +1285,12 @@ else
         fi
     fi
     if test "$PROJ_FOUND" = "no"; then
-        LIBS="-L$with_proj/lib -linternalproj $ORIG_LIBS"
+        LIBS="-L$with_proj/lib -linternalproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         AC_LANG_PUSH([C++])
         AC_CHECK_LIB(internalproj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
         AC_LANG_POP([C++])
         if test "$PROJ_FOUND" = "no"; then
-            LIBS="-L$with_proj/lib -linternalproj -lsqlite3 $ORIG_LIBS"
+            LIBS="-L$with_proj/lib -linternalproj -lsqlite3 $with_proj_extra_lib_for_test  $ORIG_LIBS"
             unset ac_cv_lib_internal_proj_internal_proj_create_from_wkt
             AC_LANG_PUSH([C++])
             AC_CHECK_LIB(internalproj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
@@ -1361,7 +1381,7 @@ AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp bsb cals ceo
 AC_DEFUN([INTERNAL_OPT_FORMATS],[grib ozi pdf rik])
 AC_DEFUN([INTERNAL_DRIVERS],[aeronavfaa arcgen avc bna cad csv dgn dxf edigeo flatgeobuf geoconcept georss gml gmt gpsbabel gpx gtm htf jml mvt ntf openair openfilegdb pgdump rec s57 segukooa segy selafin shape sua svg sxf tiger vdv wasp xplane])dnl
 AC_DEFUN([CURL_FORMATS],[eeda plmosaic rda wcs wms wmts daas])dnl
-AC_DEFUN([CURL_DRIVERS],[amigocloud carto cloudant couchdb csw elastic gft ngw plscenes wfs])dnl
+AC_DEFUN([CURL_DRIVERS],[amigocloud carto cloudant couchdb csw elastic ngw plscenes wfs])dnl
 AC_DEFUN([SQLITE_FORMATS],[rasterlite mbtiles])dnl
 AC_DEFUN([SQLITE_DRIVERS],[gpkg vfk osm])dnl
 AC_DEFUN([EXPAT_DRIVERS],[ods xlsx])dnl
@@ -1559,6 +1579,8 @@ AC_ARG_WITH(pg,
 
 if test "x$with_pg" = "xyes" -o "x$with_pg" = "x" ; then
   PG_CONFIG=yes
+elif test "x$with_pg" != "xno"; then
+  AC_MSG_ERROR([Only --with-pg=yes/no supported])
 fi
 
 AC_MSG_CHECKING([for PostgreSQL])
@@ -4059,27 +4081,30 @@ LIBXML2_INC=
 LIBXML2_LIB=
 
 AC_ARG_WITH(xml2,
-    [  --with-xml2[=ARG]       Include libxml2 (ARG=path to xml2-config.)],,,)
+    [  --with-xml2[=ARG]       Include libxml2 (ARG=yes/no)],,,)
 
-if test "`basename xx/$with_xml2`" = "xml2-config" ; then
-  LIBXML2_CONFIG="$with_xml2"
-elif test "$with_xml2" = "no" ; then
-  LIBXML2_CONFIG=no
-else
-  AC_PATH_PROG(LIBXML2_CONFIG, xml2-config, no)
-fi
+if test "x$with_xml2" = "xyes" -o "x$with_xml2" = "x" ; then
 
-if test "$LIBXML2_CONFIG" != "no" ; then
+  PKG_PROG_PKG_CONFIG([0.21])
+  PKG_CHECK_MODULES(LIBXML2,[libxml-2.0], [HAVE_LIBXML2=yes], [HAVE_LIBXML2=no])
 
-  AC_CHECK_LIB(xml2,xmlParseDoc,HAVE_LIBXML2=yes,HAVE_LIBXML2=no,`$LIBXML2_CONFIG --libs`)
+  if test "${HAVE_LIBXML2}" = "yes"; then
+    SAVED_LIBS="${LIBS}"
+    LIBS="${LIBXML2_LIBS}"
+    AC_CHECK_LIB(xml2,xmlParseDoc,HAVE_LIBXML2=yes,HAVE_LIBXML2=no)
+    LIBS="${SAVED_LIBS}"
+  fi
 
-fi
-
-if test "$HAVE_LIBXML2" = "yes" ; then
-
-  LIBXML2_INC=`$LIBXML2_CONFIG --cflags`
-  LIBXML2_LIB=`$LIBXML2_CONFIG --libs`
-
+  if test "${HAVE_LIBXML2}" = "yes"; then
+    LIBXML2_INC="${LIBXML2_CFLAGS}"
+    LIBXML2_LIB="${LIBXML2_LIBS}"
+  else
+    if test "x$with_xml2" = "xyes"; then
+      AC_MSG_ERROR([--with-xml2 was requested, but libxml2 is not available])
+    fi
+  fi
+elif test "x$with_xml2" != "xno"; then
+  AC_MSG_ERROR([Only --with-xml2=yes/no supported])
 fi
 
 AC_SUBST(HAVE_LIBXML2,$HAVE_LIBXML2)
@@ -5150,25 +5175,6 @@ export BINTRUE
 AC_SUBST(BINTRUE,$BINTRUE)
 
 dnl ---------------------------------------------------------------------------
-dnl If datadir is set to @prefix@/share, the modify it to be
-dnl @prefix@/share/gdal.  I wish we could default this.
-dnl ---------------------------------------------------------------------------
-if test "$datadir" = '${prefix}/share' ; then
-  datadir='${prefix}/share/gdal'
-fi
-
-if test "$datadir" = '${datarootdir}' \
-     -a "$datarootdir" = '${prefix}/share' ; then
-  datarootdir='${prefix}/share/gdal'
-fi
-
-dnl ---------------------------------------------------------------------------
-dnl By default mandir is $datarootdir/man which would be
-dnl /usr/local/share/gdal/man but we want man pages in /usr/local/man.
-dnl ---------------------------------------------------------------------------
-mandir='${prefix}/man'
-
-dnl ---------------------------------------------------------------------------
 dnl Capture GDAL_PREFIX for the cpl_config.h include file.
 dnl ---------------------------------------------------------------------------
 
@@ -5378,7 +5384,7 @@ if test -z "$with_hdfs" -o "$with_hdfs" = "no" ; then
      AC_MSG_RESULT([HDFS support not requested.])
 else
      if test "$JAVA_HOME"; then
-          JNI_LIB="-L$(find $JAVA_HOME | grep libjvm.so | head -1 | sed 's/libjvm.so$//') -ljvm"
+          JNI_LIB="-L$(find $JAVA_HOME | grep libjvm | head -1 | sed "s/[[^/]]*$//") -ljvm"
      else
           AC_MSG_ERROR([HDFS support requires java support (--with-java). $JAVA_HOME])
      fi
@@ -5395,7 +5401,7 @@ else
                AC_MSG_ERROR([HDFS support not enabled.])
           fi
      else
-          AC_MSG_ERROR([Unable to find libjvm.so.])
+          AC_MSG_ERROR([Unable to find libjvm.])
      fi
 fi
 
@@ -5890,6 +5896,43 @@ else
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Detect OpenEXR
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(exr,[  --with-exr            Include EXR support via OpenEXR library],,)
+
+HAVE_EXR=no
+EXR_CFLAGS=""
+
+if test "$with_exr" = "no" ; then
+
+  AC_MSG_NOTICE([EXR support disabled.])
+
+else
+
+  PKG_PROG_PKG_CONFIG([0.21])
+  PKG_CHECK_MODULES([EXR], [OpenEXR >= 2.2], [HAVE_EXR=yes], [HAVE_EXR=no])
+
+  if test -n "$EXR_CFLAGS"; then
+
+    # Test that the package found is for the right architecture
+    saved_LIBS="$LIBS"
+    LIBS="$EXR_LIBS"
+    AC_CHECK_LIB(IlmImf,ImfTiledInputReadTile, [HAVE_EXR=yes], [HAVE_EXR=no])
+    LIBS="$saved_LIBS"
+
+    if test "$HAVE_EXR" = "yes"; then
+        OPT_GDAL_FORMATS="exr $OPT_GDAL_FORMATS"
+        LIBS="$EXR_LIBS $LIBS"
+    else
+        EXR_CFLAGS=""
+    fi
+  fi
+fi
+
+AC_SUBST(EXR_CFLAGS,$EXR_CFLAGS)
+
+dnl ---------------------------------------------------------------------------
 dnl Test if sprintf can be overloaded with _XOPEN_SOURCE being defined or other,
 dnl includes being included before, which mingw64 4.8 doesn't like (#6390)
 dnl ---------------------------------------------------------------------------
@@ -6035,6 +6078,7 @@ LOC_MSG([  MongoDB support:           ${MONGODB_ENABLED}])
 LOC_MSG([  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}])
 LOC_MSG([  HDFS support:              ${HDFS_ENABLED}])
 LOC_MSG([  TileDB support:            ${TILEDB_SETTING}])
+LOC_MSG([  EXR support:               ${HAVE_EXR}])
 LOC_MSG([  userfaultfd support:       ${ENABLE_UFFD}])
 LOC_MSG([  misc. gdal formats:       ${GDALFORMATS_ENABLED}])
 LOC_MSG([  disabled gdal formats:    ${GDALFORMATS_DISABLED}])

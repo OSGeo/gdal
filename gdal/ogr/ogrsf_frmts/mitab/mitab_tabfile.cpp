@@ -61,6 +61,107 @@ CPL_CVSID("$Id$")
 static const char UNSUPPORTED_OP_READ_ONLY[] =
   "%s : unsupported operation on a read-only datasource.";
 
+constexpr const char *DESCRIPTION_KEY = "DESCRIPTION";
+// Tab file allow to store description longer than 255 characters.
+// But only 255 will shown in MapInfo layer list.
+constexpr int MAX_DESCRIPTION_LEN = 254 * 2;
+
+static char *EscapeString( const char *pszInput, bool bEscapeDoubleQuotes = false )
+{
+    if( nullptr == pszInput )
+    {
+        return nullptr;
+    }
+
+    auto nLength = CPLStrnlen(pszInput, MAX_DESCRIPTION_LEN);
+    char *pszOutput = static_cast<char*>( CPLMalloc( nLength * 2 + 1 ) );
+    int iOut = 0;
+    int nDoubleQuotesCount = 0;
+    for( int iIn = 0; iIn < static_cast<int>(nLength + 1); ++iIn )
+    {
+        if( pszInput[iIn] == '"')
+        {
+            if( bEscapeDoubleQuotes )
+            {
+                pszOutput[iOut++] = '"';
+                pszOutput[iOut++] = '"';
+            }
+            else
+            {
+                nDoubleQuotesCount++;
+                pszOutput[iOut++] = pszInput[iIn];
+            }
+            
+        }
+        else if( pszInput[iIn] == '\n' || pszInput[iIn] == '\r' )
+        {
+            pszOutput[iOut++] = ' ';
+        }
+        else
+        {
+            if ((pszInput[iIn] & 0xc0) != 0x80)
+            {
+                // Stop at the start of the character just beyond the maximum accepted
+                if( iOut >= MAX_DESCRIPTION_LEN - nDoubleQuotesCount )
+                {
+                    break;
+                }
+            }
+            pszOutput[iOut++] = pszInput[iIn];
+        }
+    }
+
+    pszOutput[iOut] = '\0';
+    return pszOutput;
+}
+
+static char *UnescapeString( const char *pszInput )
+{
+    if( nullptr == pszInput )
+    {
+        return nullptr;
+    }
+
+    auto nLength = CPLStrnlen(pszInput, MAX_DESCRIPTION_LEN);
+    char *pszOutput = static_cast<char *>( CPLMalloc( nLength * 2 + 1 ) );
+    int iOut = 0;
+    for( int iIn = 0; iIn < static_cast<int>(nLength + 1); ++iIn )
+    {
+        if( pszInput[iIn] == '"' && pszInput[iIn+1] == '"' )
+        {
+            ++iIn;
+            pszOutput[iOut++] = pszInput[iIn];
+        }
+        else
+        {
+            if ((pszInput[iIn] & 0xc0) != 0x80)
+            {
+                // Stop at the start of the character just beyond the maximum accepted
+                if( iOut >= MAX_DESCRIPTION_LEN )
+                {
+                    break;
+                }
+            }
+            pszOutput[iOut++] = pszInput[iIn];
+        }
+    }
+    pszOutput[iOut] = '\0';
+    return pszOutput;
+}
+
+static std::string GetTabDescription( const char *pszLine )
+{
+    CPLString osDescriptionLine(pszLine);
+    auto nStart = osDescriptionLine.find_first_of('"') + 1;
+    if(nStart != std::string::npos)
+    {
+        auto nEnd = osDescriptionLine.find_last_of('"');
+        auto nLen = nEnd == std::string::npos ? nEnd : nEnd - nStart;
+        return osDescriptionLine.substr(nStart, nLen);
+    }
+    return "";
+}
+
 /*=====================================================================
  *                      class TABFile
  *====================================================================*/
@@ -604,6 +705,33 @@ int TABFile::ParseTABFileFirstPass(GBool bTestOpenNoError)
             }
         }
         else if (bInsideTableDef && !bFoundTableFields &&
+                 EQUAL(papszTok[0], "Description") )
+        {
+            auto osDescription = GetTabDescription( m_papszTABFile[iLine] );
+            if( !osDescription.empty() )
+            {
+                const char *pszEncoding = GetEncoding();
+                if (pszEncoding == nullptr || EQUAL(pszEncoding, ""))
+                {
+                    std::shared_ptr<char> oUnescapedDescription(
+                            UnescapeString( osDescription.c_str() ), CPLFree);
+                    IMapInfoFile::SetMetadataItem( DESCRIPTION_KEY,
+                                                oUnescapedDescription.get() );
+                }
+                else
+                {
+                    std::shared_ptr<char> oEncodedDescription(
+                        CPLRecode(osDescription.c_str(), pszEncoding,
+                        CPL_ENC_UTF8), CPLFree);
+
+                    std::shared_ptr<char> oUnescapedDescription(
+                            UnescapeString( oEncodedDescription.get() ), CPLFree);
+                    IMapInfoFile::SetMetadataItem( DESCRIPTION_KEY,
+                                                   oUnescapedDescription.get() );
+                }
+            }
+        }
+        else if (bInsideTableDef && !bFoundTableFields &&
                  (EQUAL(papszTok[0],"Fields") || EQUAL(papszTok[0],"FIELDS:")))
         {
             /*---------------------------------------------------------
@@ -978,6 +1106,24 @@ int TABFile::WriteTABFile()
         {
             VSIFPrintfL(fp, "Definition Table\n");
             VSIFPrintfL(fp, "  Type NATIVE Charset \"%s\"\n", m_pszCharset);
+            const char *pszDescription = GetMetadataItem(DESCRIPTION_KEY);
+            if (nullptr != pszDescription)
+            {
+                std::shared_ptr<char> oEscapedDescription(
+                    EscapeString( pszDescription, true ), CPLFree);
+                const char *pszEncoding = GetEncoding();
+                if (nullptr == pszEncoding || EQUAL(pszEncoding, ""))
+                {
+                    VSIFPrintfL(fp, "  Description \"%s\"\n", oEscapedDescription.get());
+                }
+                else
+                {
+                    std::shared_ptr<char> oEncodedDescription(
+                        CPLRecode(oEscapedDescription.get(), CPL_ENC_UTF8,
+                                  pszEncoding), CPLFree);
+                    VSIFPrintfL(fp, "  Description \"%s\"\n", oEncodedDescription.get());
+                }
+            }
             VSIFPrintfL(fp, "  Fields %d\n", m_poDefn->GetFieldCount());
 
             for( int iField = 0; iField < m_poDefn->GetFieldCount(); iField++ )
@@ -2825,3 +2971,29 @@ void TABFile::Dump(FILE *fpOut /*=NULL*/)
 }
 
 #endif // DEBUG
+
+/*
+ * SetMetadataItem()
+ */
+CPLErr TABFile::SetMetadataItem( const char * pszName, const char * pszValue,
+                                 const char * pszDomain )
+{
+    if(EQUAL(DESCRIPTION_KEY, pszName) && EQUAL(pszDomain, ""))
+    {
+        if(m_eAccessMode == TABRead)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "Description will not save in TAB file in readonly mode.");
+        }
+
+        m_bNeedTABRewrite = TRUE;
+        std::shared_ptr<char> oEscapedString(EscapeString( pszValue ), CPLFree);
+        auto result = IMapInfoFile::SetMetadataItem( DESCRIPTION_KEY, 
+                                                     oEscapedString.get() );
+        if(oEscapedString)
+        {
+            CPLDebug("MITAB", "Set description to '%s'", oEscapedString.get());
+        }
+        return result;
+    }
+    return IMapInfoFile::SetMetadataItem(pszName, pszValue, pszDomain);
+}

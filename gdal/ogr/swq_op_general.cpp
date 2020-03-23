@@ -54,7 +54,7 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 static int swq_test_like( const char *input, const char *pattern,
-                          char chEscape )
+                          char chEscape, bool insensitive )
 
 {
     if( input == nullptr || pattern == nullptr )
@@ -70,8 +70,11 @@ static int swq_test_like( const char *input, const char *pattern,
             pattern++;
             if( *pattern == '\0' )
                 return 0;
-            if( tolower(*pattern) != tolower(*input) )
+            if( (!insensitive && *pattern != *input) ||
+                (insensitive && tolower(*pattern) != tolower(*input)) )
+            {
                 return 0;
+            }
             else
             {
                 input++;
@@ -92,7 +95,7 @@ static int swq_test_like( const char *input, const char *pattern,
             // Try eating varying amounts of the input till we get a positive.
             for( int eat = 0; input[eat] != '\0'; eat++ )
             {
-                if( swq_test_like(input + eat, pattern + 1, chEscape) )
+                if( swq_test_like(input + eat, pattern + 1, chEscape, insensitive) )
                     return 1;
             }
 
@@ -100,8 +103,11 @@ static int swq_test_like( const char *input, const char *pattern,
         }
         else
         {
-            if( tolower(*pattern) != tolower(*input) )
+            if( (!insensitive && *pattern != *input) ||
+                (insensitive && tolower(*pattern) != tolower(*input)) )
+            {
                 return 0;
+            }
             else
             {
                 input++;
@@ -829,9 +835,22 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             char chEscape = '\0';
             if( node->nSubExprCount == 3 )
                 chEscape = sub_node_values[2]->string_value[0];
+            const bool bInsensitive =
+                CPLTestBool(CPLGetConfigOption("OGR_SQL_LIKE_AS_ILIKE", "FALSE"));
             poRet->int_value = swq_test_like(sub_node_values[0]->string_value,
                                              sub_node_values[1]->string_value,
-                                             chEscape);
+                                             chEscape, bInsensitive);
+            break;
+          }
+
+          case SWQ_ILIKE:
+          {
+            char chEscape = '\0';
+            if( node->nSubExprCount == 3 )
+                chEscape = sub_node_values[2]->string_value[0];
+            poRet->int_value = swq_test_like(sub_node_values[0]->string_value,
+                                             sub_node_values[1]->string_value,
+                                             chEscape, true);
             break;
           }
 
@@ -1147,6 +1166,7 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode,
         break;
 
       case SWQ_LIKE:
+      case SWQ_ILIKE:
         if( !SWQCheckSubExprAreNotGeometries(poNode) )
             return SWQ_ERROR;
         eRetType = SWQ_BOOLEAN;

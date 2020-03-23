@@ -240,7 +240,7 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
         else if( EQUAL(osToken, "LIKE") )
             nReturn = SWQT_LIKE;
         else if( EQUAL(osToken, "ILIKE") )
-            nReturn = SWQT_LIKE;
+            nReturn = SWQT_ILIKE;
         else if( EQUAL(osToken, "ESCAPE") )
             nReturn = SWQT_ESCAPE;
         else if( EQUAL(osToken, "NULL") )

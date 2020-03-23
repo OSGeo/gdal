@@ -198,7 +198,7 @@ static GDALDataset *OGRSQLiteDriverOpen( GDALOpenInfo* poOpenInfo )
         poDS->ExecuteSQL(pszSQL, nullptr, nullptr);
         CPLFree(pszSQL);
         CPLFree(pszSQLiteFilename);
-        poDS->SetUpdate(FALSE);
+        poDS->DisableUpdate();
         return poDS;
     }
 

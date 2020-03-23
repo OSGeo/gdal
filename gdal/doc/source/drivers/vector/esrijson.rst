@@ -5,6 +5,8 @@ ESRIJSON / FeatureService driver
 
 .. shortname:: ESRIJSON
 
+.. built_in_by_default::
+
 (Note: prior to GDAL 2.3, the functionality of this driver was available
 in the GeoJSON driver. They are now distinct drivers)
 

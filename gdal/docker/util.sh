@@ -180,7 +180,12 @@ stop_rsync_host()
     fi
 }
 
-PROJ_DATUMGRID_LATEST_LAST_MODIFIED=$(curl -Is http://download.osgeo.org/proj/proj-datumgrid-latest.zip | grep Last-Modified)
+if test "${BASE_IMAGE_NAME}" = "osgeo/gdal:ubuntu-full"; then
+    PROJ_DATUMGRID_LATEST_LAST_MODIFIED=$(curl -Is https://cdn.proj.org/index.html | grep Last-Modified)
+else
+    PROJ_DATUMGRID_LATEST_LAST_MODIFIED=$(curl -Is http://download.osgeo.org/proj/proj-datumgrid-latest.zip | grep Last-Modified)
+fi
+echo "Using PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}"
 
 if test "${PROJ_VERSION}" = "" -o "${PROJ_VERSION}" = "master"; then
     PROJ_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/proj.4/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
@@ -209,6 +214,10 @@ if test "${RELEASE}" = "yes"; then
     docker build "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
 
     check_image "${IMAGE_NAME}"
+
+    if test "x${PUSH_GDAL_DOCKER_IMAGE}" = "xyes"; then
+        docker push "${IMAGE_NAME}"
+    fi
 
 else
 
@@ -283,8 +292,15 @@ EOF
 
     check_image "${IMAGE_NAME}"
 
+    if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest"; then
+        docker image tag "${IMAGE_NAME}" "osgeo/gdal:latest"
+    fi
+
     if test "x${PUSH_GDAL_DOCKER_IMAGE}" = "xyes"; then
         docker push "${IMAGE_NAME}"
+        if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest"; then
+            docker push osgeo/gdal:latest
+        fi
     fi
 
     # Cleanup previous images

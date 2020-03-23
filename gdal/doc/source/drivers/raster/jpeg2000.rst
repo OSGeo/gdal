@@ -6,6 +6,8 @@ JPEG2000 -- Implementation of the JPEG-2000 part 1
 
 .. shortname:: JPEG2000
 
+.. build_dependencies:: libjasper
+
 This implementation based on JasPer software (see below).
 
 XMP metadata can be extracted from JPEG2000
@@ -299,7 +301,7 @@ See Also
 -  Implemented as ``gdal/frmts/jpeg2000/jpeg2000dataset.cpp``.
 -  You need modified JasPer library to build this driver with GeoJP2
    support enabled. Modified version can be downloaded from
-   `http://download.osgeo.org/gdal/jasper-1.900.1.uuid.tar.gz <http://download.osgeo.org/gdal/jasper-1.900.1.uuid.tar.gz%20%20>`__
+   `http://download.osgeo.org/gdal/jasper-1.900.1.uuid.tar.gz <http://download.osgeo.org/gdal/jasper-1.900.1.uuid.tar.gz>`__
 -  `Official JPEG-2000 page <http://www.jpeg.org/JPEG2000.html>`__
 -  `The JasPer Project Home
    Page <http://www.ece.uvic.ca/~mdadams/jasper/>`__

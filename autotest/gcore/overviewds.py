@@ -29,9 +29,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import gdaltest
 import os
 import shutil
-
+import struct
 
 from osgeo import gdal
 import pytest
@@ -81,6 +82,8 @@ def test_overviewds_2():
     expected_data = src_ds.ReadRaster(0, 0, 20, 20, 5, 5)
     got_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 5, 5)
     assert expected_data == got_data
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_ALL_VALID
+    assert ds.GetRasterBand(1).GetMaskBand()
     assert ds.GetMetadata() == src_ds.GetMetadata()
     assert ds.GetMetadataItem('AREA_OR_POINT') == src_ds.GetMetadataItem('AREA_OR_POINT')
     assert not ds.GetMetadata('RPC')
@@ -249,6 +252,37 @@ def test_overviewds_6():
     got_cs = ds.GetRasterBand(1).Checksum()
     assert got_cs == expected_cs
     ds = None
+
+###############################################################################
+# Dataset with a mask
+
+def test_overviewds_mask():
+
+    with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+        src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/test.tif', 4, 4)
+        src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+        src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 2, 4, b'\xFF' * 8)
+        src_ds.BuildOverviews('NEAR', [2, 4])
+        src_ds = None
+
+    ovr_ds = gdal.OpenEx('/vsimem/test.tif', open_options=['OVERVIEW_LEVEL=0'])
+    assert ovr_ds
+    assert ovr_ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
+    ovrmaskband = ovr_ds.GetRasterBand(1).GetMaskBand()
+    assert struct.unpack('B' * 4, ovrmaskband.ReadRaster()) == (255, 0, 255, 0)
+
+    # Mask of mask
+    assert ovrmaskband.GetMaskFlags() == gdal.GMF_ALL_VALID
+    assert struct.unpack('B' * 4, ovrmaskband.GetMaskBand().ReadRaster()) == (255, 255, 255, 255)
+
+    # Overview of overview of mask
+    assert ovrmaskband.GetOverviewCount() == 1
+    ovrofovrmaskband = ovrmaskband.GetOverview(0)
+    assert struct.unpack('B' * 1, ovrofovrmaskband.ReadRaster()) == (255,)
+
+    ovr_ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/test.tif')
 
 ###############################################################################
 # Cleanup

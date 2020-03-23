@@ -1,10 +1,12 @@
 .. _raster.postgisraster:
 
 ================================================================================
-PostGISRaster --- PostGIS Raster driver
+PostGISRaster -- PostGIS Raster driver
 ================================================================================
 
 .. shortname:: PostGISRaster
+
+.. build_dependencies:: PostgreSQL library
 
 PostGIS Raster (previously known as WKT Raster) is the project that
 provides raster support on PostGIS. Since September 26st, 2010, is an

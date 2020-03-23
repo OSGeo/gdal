@@ -1,30 +1,30 @@
 include GDALmake.opt
 
-GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
-			$(GDAL_ROOT)/gcore/*.o \
-			$(GDAL_ROOT)/port/*.o \
-			$(GDAL_ROOT)/alg/*.o \
-			$(GDAL_ROOT)/apps/commonutils.o \
-			$(GDAL_ROOT)/apps/gdalinfo_lib.o \
-			$(GDAL_ROOT)/apps/gdalmdiminfo_lib.o \
-			$(GDAL_ROOT)/apps/gdal_translate_lib.o \
-			$(GDAL_ROOT)/apps/gdalmdimtranslate_lib.o \
-			$(GDAL_ROOT)/apps/gdalwarp_lib.o \
-			$(GDAL_ROOT)/apps/ogr2ogr_lib.o \
-			$(GDAL_ROOT)/apps/gdaldem_lib.o \
-			$(GDAL_ROOT)/apps/nearblack_lib.o \
-			$(GDAL_ROOT)/apps/gdal_grid_lib.o \
-			$(GDAL_ROOT)/apps/gdal_rasterize_lib.o \
-			$(GDAL_ROOT)/apps/gdalbuildvrt_lib.o
+GDAL_OBJ	=	frmts/o/*.o \
+			gcore/*.o \
+			port/*.o \
+			alg/*.o \
+			apps/commonutils.o \
+			apps/gdalinfo_lib.o \
+			apps/gdalmdiminfo_lib.o \
+			apps/gdal_translate_lib.o \
+			apps/gdalmdimtranslate_lib.o \
+			apps/gdalwarp_lib.o \
+			apps/ogr2ogr_lib.o \
+			apps/gdaldem_lib.o \
+			apps/nearblack_lib.o \
+			apps/gdal_grid_lib.o \
+			apps/gdal_rasterize_lib.o \
+			apps/gdalbuildvrt_lib.o
 
-GDAL_OBJ += $(GDAL_ROOT)/ogr/ogrsf_frmts/o/*.o
+GDAL_OBJ += ogr/ogrsf_frmts/o/*.o
 
 ifeq ($(GNM_ENABLED),yes)
-   GDAL_OBJ += $(GDAL_ROOT)/gnm/*.o $(GDAL_ROOT)/gnm/gnm_frmts/o/*.o
+   GDAL_OBJ += gnm/*.o gnm/gnm_frmts/o/*.o
 endif
 
 ifeq ($(HAVE_LERC),yes)
-   GDAL_OBJ += $(GDAL_ROOT)/third_party/o/*.o
+   GDAL_OBJ += third_party/o/*.o
 endif
 
 include ./ogr/file.lst
@@ -174,16 +174,16 @@ man:
 all:	default ogr-all
 
 install-docs:
-	$(INSTALL_DIR) $(DESTDIR)$(INST_DOCS)/gdal
-	cp -r doc/build/html/* $(DESTDIR)$(INST_DOCS)/gdal
+	$(INSTALL_DIR) $(DESTDIR)$(INST_DOCS)
+	cp -r doc/build/html/* $(DESTDIR)$(INST_DOCS)
 
 install-man:
 	$(INSTALL_DIR) $(DESTDIR)$(INST_MAN)/man1
 	for f in $(wildcard doc/build/man/*.1) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_MAN)/man1 ; done
 
 web-update:	docs
-	$(INSTALL_DIR) $(INST_HTML)
-	cp html/*.* $(INST_HTML)
+	$(INSTALL_DIR) $(INST_WEB)
+	cp html/*.* $(INST_WEB)
 
 install:	install-actions
 
@@ -229,7 +229,9 @@ endif
 ifneq ($(BINDINGS),)
 	(cd swig; $(MAKE) install)
 endif
+ifdef INST_BASH_COMPLETION
 	(cd scripts; $(MAKE) install)
+endif
 	for f in LICENSE.TXT data/*.* ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_DATA) ; done
 	$(LIBTOOL_FINISH) $(DESTDIR)$(INST_LIB)
 	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)/pkgconfig

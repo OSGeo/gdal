@@ -304,7 +304,6 @@ def test_ogr_gml_10():
     field_defn = ogr.FieldDefn('string', ogr.OFTString)
     field_defn.SetWidth(100)
     lyr.CreateField(field_defn)
-    lyr.CreateField(ogr.FieldDefn('date', ogr.OFTDate))
     field_defn = ogr.FieldDefn('real', ogr.OFTReal)
     field_defn.SetWidth(4)
     field_defn.SetPrecision(2)
@@ -313,13 +312,18 @@ def test_ogr_gml_10():
     field_defn = ogr.FieldDefn('integer', ogr.OFTInteger)
     field_defn.SetWidth(5)
     lyr.CreateField(field_defn)
+    lyr.CreateField(ogr.FieldDefn('date', ogr.OFTDate))
+    lyr.CreateField(ogr.FieldDefn('time', ogr.OFTTime))
+    lyr.CreateField(ogr.FieldDefn('datetime', ogr.OFTDateTime))
 
     dst_feat = ogr.Feature(lyr.GetLayerDefn())
     dst_feat.SetField('string', 'test string of length 24')
-    dst_feat.SetField('date', '2003/04/22')
     dst_feat.SetField('real', 12.34)
     dst_feat.SetField('float', 1234.5678)
     dst_feat.SetField('integer', '1234')
+    dst_feat.SetField('date', '2019/11/06')
+    dst_feat.SetField('time', '12:34:56')
+    dst_feat.SetField('datetime', '2019/11/06 12:34:56+00')
 
     ret = lyr.CreateFeature(dst_feat)
 
@@ -333,22 +337,24 @@ def test_ogr_gml_10():
 
     assert feat.GetFieldDefnRef(feat.GetFieldIndex('string')).GetType() == ogr.OFTString, \
         ('String type is reported wrong. Got ' + str(feat.GetFieldDefnRef(feat.GetFieldIndex('string')).GetType()))
-    assert feat.GetFieldDefnRef(feat.GetFieldIndex('date')).GetType() == ogr.OFTString, \
-        ('Date type is not reported as OFTString. Got ' + str(feat.GetFieldDefnRef(feat.GetFieldIndex('date')).GetType()))
     assert feat.GetFieldDefnRef(feat.GetFieldIndex('real')).GetType() == ogr.OFTReal, \
         ('Real type is reported wrong. Got ' + str(feat.GetFieldDefnRef(feat.GetFieldIndex('real')).GetType()))
     assert feat.GetFieldDefnRef(feat.GetFieldIndex('float')).GetType() == ogr.OFTReal, \
         ('Float type is not reported as OFTReal. Got ' + str(feat.GetFieldDefnRef(feat.GetFieldIndex('float')).GetType()))
     assert feat.GetFieldDefnRef(feat.GetFieldIndex('integer')).GetType() == ogr.OFTInteger, \
         ('Integer type is reported wrong. Got ' + str(feat.GetFieldDefnRef(feat.GetFieldIndex('integer')).GetType()))
+    assert feat.GetFieldDefnRef(feat.GetFieldIndex('date')).GetType() == ogr.OFTDate
+    assert feat.GetFieldDefnRef(feat.GetFieldIndex('time')).GetType() == ogr.OFTTime
+    assert feat.GetFieldDefnRef(feat.GetFieldIndex('datetime')).GetType() == ogr.OFTDateTime
 
     assert feat.GetField('string') == 'test string of length 24', \
         ('Unexpected string content.' + feat.GetField('string'))
-    assert feat.GetField('date') == '2003/04/22', \
-        ('Unexpected string content.' + feat.GetField('date'))
     assert feat.GetFieldAsDouble('real') == 12.34, 'Unexpected real content.'
     assert feat.GetField('float') == 1234.5678, 'Unexpected float content.'
     assert feat.GetField('integer') == 1234, 'Unexpected integer content.'
+    assert feat.GetField('date') == '2019/11/06'
+    assert feat.GetField('time') == '12:34:56'
+    assert feat.GetField('datetime') == '2019/11/06 12:34:56+00'
 
     assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('string')).GetWidth() == 100, \
         'Unexpected width of string field.'

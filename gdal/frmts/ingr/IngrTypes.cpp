@@ -1161,6 +1161,7 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
             bHeader = false;
             break;
         }
+        // cppcheck-suppress knownConditionTrueFalse
         if( nWordsInScanline < 4 )
             return 0;
 

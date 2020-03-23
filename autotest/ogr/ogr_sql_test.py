@@ -212,17 +212,60 @@ def test_ogr_sql_9():
 # Test the ILIKE operator.
 
 
-def test_ogr_sql_10():
+def test_ogr_sql_ilike():
 
-    expect = [170]
+    ds = ogr.Open('data/prime_meridian.csv')
+    sql_lyr = ds.ExecuteSQL("select * from prime_meridian where PRIME_MERIDIAN_NAME ilike 'GREEN%'")
+    count = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
 
-    sql_lyr = gdaltest.ds.ExecuteSQL("select eas_id from poly where prfedea ilike '%413'")
+    assert count == 1
 
-    tr = ogrtest.check_features_against_list(sql_lyr, 'eas_id', expect)
+    ds = ogr.Open('data/prime_meridian.csv')
+    sql_lyr = ds.ExecuteSQL("select * from prime_meridian where PRIME_MERIDIAN_NAME ilike '%WICH'")
+    count = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
 
-    gdaltest.ds.ReleaseResultSet(sql_lyr)
+    assert count == 1
 
-    assert tr
+    sql_lyr = ds.ExecuteSQL("select * from prime_meridian where PRIME_MERIDIAN_NAME ilike 'FOO%'")
+    count = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+
+    assert count == 0
+
+###############################################################################
+# Test the LIKE operator.
+
+
+def test_ogr_sql_like():
+
+    ds = ogr.Open('data/prime_meridian.csv')
+    sql_lyr = ds.ExecuteSQL("select * from prime_meridian where PRIME_MERIDIAN_NAME like 'Green%'")
+    count = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+
+    assert count == 1
+
+    ds = ogr.Open('data/prime_meridian.csv')
+    sql_lyr = ds.ExecuteSQL("select * from prime_meridian where PRIME_MERIDIAN_NAME like '%wich'")
+    count = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+
+    assert count == 1
+
+    sql_lyr = ds.ExecuteSQL("select * from prime_meridian where PRIME_MERIDIAN_NAME like 'GREEN%'")
+    count = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+
+    assert count == 0
+
+    with gdaltest.config_option('OGR_SQL_LIKE_AS_ILIKE', 'YES'):
+        sql_lyr = ds.ExecuteSQL("select * from prime_meridian where PRIME_MERIDIAN_NAME like 'GREEN%'")
+        count = sql_lyr.GetFeatureCount()
+        ds.ReleaseResultSet(sql_lyr)
+
+    assert count == 1
 
 ###############################################################################
 # Test MAX() on empty dataset.

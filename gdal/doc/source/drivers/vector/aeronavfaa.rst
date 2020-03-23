@@ -6,6 +6,8 @@ Aeronav FAA
 
 .. shortname:: AERONAVFAA
 
+.. built_in_by_default::
+
 This driver reads text files describing aeronav information - obstacles,
 navaids and routes - as provided by the FAA.
 

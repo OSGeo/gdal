@@ -7,6 +7,8 @@ NGW -- NextGIS Web
 
 .. shortname:: NGW
 
+.. build_dependencies:: libcurl
+
 NextGIS Web - is a server GIS, which allows to store and edit geodata
 and to display maps in web browser. Also NextGIS Web can share geodata
 with other NextGIS software.
@@ -19,9 +21,9 @@ NextGIS Web has the following features:
 -  Load geodata from PostGIS or import from GIS formats (ESRI Shape,
    GeoJSON or GeoTIFF)
 -  Load vector geodata in the following formats: GeoJSON, CSV, ESRI
-   Shape
+   Shape, Mapinfo tab
 -  Import map styles from QGIS project or set them manually
--  Act as a server for TMS, WMS, WFS
+-  Act as a server for TMS, WMS, MVT, WFS
 -  Act as a client for WMS
 -  User can add photos to records, change record attributes via web
    interface or WFS-T protocol
@@ -38,10 +40,9 @@ Driver capabilities
 Driver
 ------
 
-This driver can
-connect to the services implementing the NextGIS Web API. GDAL/OGR must
-be built with Curl support in order for the NGW driver to be compiled.
-The driver supports read and write operations.
+The driver can connect to the services implementing the NextGIS Web REST API.
+NGW driver requires cURL support in GDAL. The driver supports read and write
+operations.
 
 Dataset name syntax
 -------------------
@@ -49,17 +50,16 @@ Dataset name syntax
 The minimal syntax to open a NGW datasource is: NGW:[NextGIS Web
 URL][/resource/][resource identifier]
 
--  **NextGIS Web URL** may be an url to nextgis.com cloud service (for
-   example, https://demo.nextgis.com), or some other url including port
+-  **NextGIS Web URL** may be an URL to nextgis.com cloud service (for
+   example, https://demo.nextgis.com), or some other URL including port
    and additional path (for example, http://192.168.1.1:8000/test).
 -  **resource** is mandatory keyword dividing resource identifier from
    the rest of URL.
 -  **resource identifier** this is positive number from 0 and above.
    This may be a resource group, vector, PostGIS or raster layer, style.
 
-If identifier is resource group, all vector layers, PostGIS, raster
-layers, styles will listed as child resources. In other case this will
-be a separate layer.
+All vector layers, PostGIS, raster layers, styles will list as child resources
+if identifier is resource group. In other case this will be a separate layer.
 
 Configuration options
 ---------------------
@@ -91,13 +91,12 @@ Feature
 -------
 
 If the NATIVE_DATA open option is set to YES, the *extensions* json
-object will be stored as a serialized json object in the NativeData
+object will store as a serialized json object in the NativeData
 property of the OGRFeature object (and "application/json" in the
-NativeMediaType property). On write, if a OGRFeature to be written has
-its NativeMediaType property set to "application/json" and its
-NativeData property set to a string that is a serialized json object,
-then members of this object will be set to *extensions* json object of
-feature.
+NativeMediaType property). If writing OGRFeature has NativeMediaType property
+set to "application/json" and its NativeData property set to serialized json
+object the new NGW feature *extensions* json object will fill from this json
+object.
 
 Extensions json object structure see in `NextGIS Web API
 documentation <http://docs.nextgis.comu/docs_ngweb_dev/doc/developer/resource.html#feature>`__
@@ -114,6 +113,8 @@ is Web Mercator (EPSG:3857). The following geometry types are available:
 -  MULTIPOINT
 -  MULTILINESTRING
 -  MULTIPOLYGON
+
+Geometry with Z value also supported.
 
 Field data types
 ----------------
@@ -132,7 +133,7 @@ Paging
 ------
 
 Features can retrieved from NextGIS Web by chunks if supported by server
-(available since NextGIS Web 3.1). This chunk size can be altered with
+(available since NextGIS Web 3.1). The chunk size can be altered with
 the NGW_PAGE_SIZE configuration option or PAGE_SIZE open option.
 
 Write support
@@ -140,8 +141,8 @@ Write support
 
 Datasource and layers creation and deletion is possible. Write support
 is only enabled when the datasource is opened in update mode and user
-has permissions. Vector and PostGIS layers insert and update operations
-may be cached if BATCH_SIZE is greater 0. Delete operation executes
+has appropriate permissions. Vector and PostGIS layers insert and update operations
+are cached if BATCH_SIZE is greater 0. Delete operation executes
 immediately.
 
 Open options
@@ -200,7 +201,7 @@ raster layers and styles. Metadata are stored at specific domain "NGW".
 NextGIS Web supported metadata are strings and numbers. Metadata keys
 with decimal numbers will have suffix **.d** and for real numbers -
 **.f**. To create new metadata item, add new key=value pair in NGW
-domain use the *SetMetadataItem* function and appropriate suffix. During
+domain using the *SetMetadataItem* function and appropriate suffix. During
 transferring to NextGIS Web, suffix will be omitted. You must ensure
 that numbers correctly transform from string to number.
 
@@ -225,13 +226,23 @@ visibility) map to layer metadata the following way:
 Filters
 -------
 
-Vector and PostGIS layers support SetIgnoredFields method. Any cached
-features will be freed then this method executed.
+Vector and PostGIS layers support SetIgnoredFields method. When this method
+executes any cached features will be freed.
 
 Vector and PostGIS layers support SetAttributeFilter and
-SetSpatialFilter methods. The SetAttributeFilter method accepts only
-field equal value condition and AND operator without brackets. For
-example,
+SetSpatialFilter methods. The attribute filter will evaluate at server side
+if condition is one of following comparison operators:
+
+ - greater (>)
+ - lower (<)
+ - greater or equal (>=)
+ - lower or equal (<=)
+ - equal (=)
+ - not equal (!=)
+ - LIKE SQL statement (for strings compare)
+ - ILIKE SQL statement (for strings compare)
+
+Also only AND operator without brackets supported between comparison. For example,
 
 ::
 
@@ -239,16 +250,16 @@ example,
 
 ::
 
-   FIELD_1 = 'Value 1' AND FIELD_2 = 'Value 2'
+   FIELD_1 = 'Value 1' AND FIELD_2 > Value 2
 
-In other cases attribute filter will be evaluated on client side.
+In other cases attribute filter will evaluate on client side.
 
 You can set attribute filter using NextGIS Web native format. For
 example,
 
 ::
 
-   NGW:fld_FIELD_1=Value 1&fld_FIELD_2=Value 2
+   NGW:fld_FIELD_1=Value 1&fld_FIELD_2__gt=Value 2
 
 Don't forget to add 'NGW:' perefix to where clause and 'fld\_' prefix to
 field name.
@@ -270,24 +281,41 @@ clause has same limitations as SetAttributeFilter method input.
 Examples
 --------
 
-Read datasource contensts (1730 is resource group identifier):
+Read datasource contents (1730 is resource group identifier):
 
 ::
 
        ogrinfo -ro NGW:https://demo.nextgis.com/resource/1730
 
-Read layer details (1730 is resource group identifier):
+Read layer details (`1730` is resource group identifier, `Parks` is vecror layer
+name):
 
 ::
 
        ogrinfo -ro -so NGW:https://demo.nextgis.com/resource/1730 Parks
 
-Creating and populating a vector layer from a shapefile in resource
-group with identifier 1730. NEw vector layer name will be "myshapefile":
+Creating and populating a vector layer from a shapefile in existing resource
+group with identifier 1730. New vector layer name will be "some new name":
 
 ::
 
-       ogr2ogr -f NGW "NGW:https://demo.nextgis.com/resource/1730/myshapefile" myshapefile.shp
+       ogr2ogr -f NGW -nln "some new name" -update -doo "BATCH_SIZE=100" -t_srs EPSG:3857 "NGW:https://demo.nextgis.com/resource/1730" myshapefile.shp
+
+.. warning::
+   The `-update` key is mandatory, otherwise the destination datasource will
+   silently delete. The `-t_srs EPSG:3857` key is mandatory because vector
+   layers spatial reference in NextGIS Web can be only in EPSG:3857.
+
+.. note::
+   The `-doo "BATCH_SIZE=100"` key is recommended for speed up feature transferring.
+
+Creating and populating a vector layer from a shapefile in new resource
+group with name "new group" and parent identifier 1730. New vector layer name
+will be "some new name":
+
+::
+
+       ogr2ogr -f NGW -nln "Название на русском языке" -dsco "BATCH_SIZE=100" -t_srs EPSG:3857 "NGW:https://demo.nextgis.com/resource/1730/new group" myshapefile.shp
 
 See also
 --------

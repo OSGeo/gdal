@@ -28,9 +28,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
-
+from osgeo import gdal
 import gdaltest
+import pytest
 
 ###############################################################################
 # Read Test grayscale (PGM)
@@ -72,6 +72,10 @@ def test_pnm_4():
 
     return tst.testCreateCopy()
 
-
-
-
+@pytest.mark.parametrize("nbands", [1, 3])
+def test_pnm_write_non_standard_extension(nbands):
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('PNM').Create('foo.foo', 1, 1, nbands)
+    assert gdal.GetLastErrorType() != 0
+    gdal.Unlink('foo.foo')

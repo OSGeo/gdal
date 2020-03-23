@@ -28,6 +28,7 @@
 #ifndef MARCHING_SQUARE_LEVEL_GENERATOR_H
 #define MARCHING_SQUARE_LEVEL_GENERATOR_H
 
+#include <climits>
 #include <vector>
 #include <limits>
 #include <cmath>
@@ -107,6 +108,18 @@ private:
     double maxLevel_;
 };
 
+struct TooManyLevelsException : public std::exception
+{
+    const char * what () const throw () override
+    {
+        return "Input values and/or interval settings would lead to too many levels";
+    }
+};
+
+// Arbitrary threshold to avoid too much computation time and memory
+// consumption
+constexpr int knMAX_NUMBER_LEVELS = 100*1000;
+
 struct IntervalLevelRangeIterator
 {
     typedef RangeIterator<IntervalLevelRangeIterator> Iterator;
@@ -120,22 +133,43 @@ struct IntervalLevelRangeIterator
             std::swap(min, max);
 
         // compute the min index, adjusted to the fudged value if needed
-        int i1 = static_cast<int>(ceil((min - offset_) / interval_));
+        double df_i1 = ceil((min - offset_) / interval_);
+        if( !(df_i1 >= INT_MIN && df_i1 < INT_MAX) )
+            throw TooManyLevelsException();
+        int i1 = static_cast<int>(df_i1);
         double l1 = fudge( level( i1 ), min );
         if ( l1 > min )
-            i1 = static_cast<int>(ceil((l1 - offset_) / interval_));
+        {
+            df_i1 = ceil((l1 - offset_) / interval_);
+            if( !(df_i1 >= INT_MIN && df_i1 < INT_MAX) )
+                throw TooManyLevelsException();
+            i1 = static_cast<int>(df_i1);
+        }
         Iterator b( *this, i1 );
 
         if ( min == max )
             return Range<Iterator>( b, b );
 
         // compute the max index, adjusted to the fudged value if needed
-        int i2 = static_cast<int>(floor((max - offset_) / interval_)+1);
+        double df_i2 = floor((max - offset_) / interval_)+1;
+        if( !(df_i2 >= INT_MIN && df_i2 < INT_MAX) )
+            throw TooManyLevelsException();
+        int i2 = static_cast<int>(df_i2);
         double l2 = fudge( level( i2 ), max );
         if ( l2 > max )
-            i2 = static_cast<int>(floor((l2 - offset_) / interval_)+1);
+        {
+            df_i2 = floor((l2 - offset_) / interval_)+1;
+            if( !(df_i2 >= INT_MIN && df_i2 < INT_MAX) )
+                throw TooManyLevelsException();
+            i2 = static_cast<int>(df_i2);
+        }
         Iterator e( *this, i2 );
-        
+
+        // Arbitrary threshold to avoid too much computation time and memory
+        // consumption
+        if( i2 > i1 + static_cast<double>(knMAX_NUMBER_LEVELS) )
+            throw TooManyLevelsException();
+
         return Range<Iterator>( b, e );
     }
 
@@ -182,6 +216,11 @@ public:
             i2 = index2( l2 );
         Iterator e( *this, i2 );
 
+        // Arbitrary threshold to avoid too much computation time and memory
+        // consumption
+        if( i2 > i1 + static_cast<double>(knMAX_NUMBER_LEVELS) )
+            throw TooManyLevelsException();
+
         return Range<Iterator>( b, e );
     }
 
@@ -190,13 +229,19 @@ private:
     {
         if ( plevel < 1.0 )
             return 1;
-        return static_cast<int>(ceil(std::log( plevel ) / base_ln_))+1;
+        const double dfVal = ceil(std::log( plevel ) / base_ln_)+1;
+        if( !(dfVal >= INT_MIN && dfVal < INT_MAX) )
+            throw TooManyLevelsException();
+        return static_cast<int>(dfVal);
     }
     int index2( double plevel ) const
     {
         if ( plevel < 1.0 )
             return 0;
-        return static_cast<int>(floor(std::log( plevel ) / base_ln_)+1)+1;
+        const double dfVal = floor(std::log( plevel ) / base_ln_)+1+1;
+        if( !(dfVal >= INT_MIN && dfVal < INT_MAX) )
+            throw TooManyLevelsException();
+        return static_cast<int>(dfVal);
     }
 
     // exponentation base

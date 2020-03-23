@@ -37,6 +37,7 @@ constexpr double NULL3 = -32768.0;
 #include "cpl_vax.h"
 #include "cpl_vsi_error.h"
 #include "vicardataset.h"
+#include "nasakeywordhandler.h"
 #include "vicarkeywordhandler.h"
 
 #include <exception>
@@ -588,7 +589,6 @@ static void basic_decode(const unsigned char* code,
                          unsigned char* buf,
                          int ns, int wid)
 {
-    unsigned char val = code[0];
     int runInt = -3;
     unsigned char runChar;
     unsigned int nval = 999999;
@@ -608,7 +608,7 @@ static void basic_decode(const unsigned char* code,
                 runInt--;
                 continue; 
             }
-            val = grab1(3, code, code_size, buffer_pos, bit1ptr);
+            unsigned char val = grab1(3, code, code_size, buffer_pos, bit1ptr);
 
             if (val<7)
             {
@@ -879,15 +879,15 @@ CPLErr VICARBASICRasterBand::IReadBlock( int /*nXBlock*/, int nYBlock, void *pIm
         GUInt32 nSize;
         VSIFReadL( &nSize, 1, sizeof(nSize), poGDS->fpImage);
         CPL_LSBPTR32(&nSize);
-        if( poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC)
+        if( (poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC &&
+             nSize < sizeof(GUInt32)) ||
+            (poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC2 &&
+             nSize == 0) )
         {
-            if( nSize < sizeof(GUInt32) )
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                        "Wrong size at record %d",
-                        poGDS->m_nLastRecordOffset);
-                return CE_Failure;
-            }
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Wrong size at record %d",
+                    poGDS->m_nLastRecordOffset);
+            return CE_Failure;
         }
 
         poGDS->m_anRecordOffsets[poGDS->m_nLastRecordOffset+1] =
@@ -1126,35 +1126,60 @@ CPLErr VICARDataset::SetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                              Identify()                              */
+/*                         GetLabelOffset()                             */
 /************************************************************************/
 
-int VICARDataset::Identify( GDALOpenInfo * poOpenInfo )
+int VICARDataset::GetLabelOffset( GDALOpenInfo * poOpenInfo )
 
 {
-    if( poOpenInfo->pabyHeader == nullptr )
-        return FALSE;
+    if( poOpenInfo->pabyHeader == nullptr || poOpenInfo->fpL == nullptr )
+        return -1;
 
+    std::string osHeader;
     const char *pszHeader = reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
+    // Some PDS3 images include a VICAR header pointed by ^IMAGE_HEADER.
+    // If the user sets GDAL_TRY_PDS3_WITH_VICAR=YES, then we will gracefully
+    // hand over the file to the VICAR dataset.
+    vsi_l_offset nOffset = 0;
+    if( CPLTestBool(CPLGetConfigOption("GDAL_TRY_PDS3_WITH_VICAR", "NO")) &&
+        !STARTS_WITH(poOpenInfo->pszFilename, "/vsisubfile/") &&
+        (nOffset = VICARDataset::GetVICARLabelOffsetFromPDS3(pszHeader, poOpenInfo->fpL, osHeader)) > 0 )
+    {
+        pszHeader = osHeader.c_str();
+    }
+
     if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
         (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 )
     {
         // If opening in vector-only mode, then check when have NBB != 0
         const char* pszNBB = strstr(pszHeader, "NBB");
         if( pszNBB == nullptr )
-            return false;
+            return -1;
         const char* pszEqualSign = strchr(pszNBB, '=');
         if( pszEqualSign == nullptr )
-            return false;
+            return -1;
         if( atoi(pszEqualSign+1) == 0 )
-            return false;
+            return -1;
     }
-    return
-        strstr(pszHeader, "LBLSIZE") != nullptr &&
+    if( strstr(pszHeader, "LBLSIZE") != nullptr &&
         strstr(pszHeader, "FORMAT") != nullptr &&
         strstr(pszHeader, "NL") != nullptr &&
         strstr(pszHeader, "NS") != nullptr &&
-        strstr(pszHeader, "NB") != nullptr;
+        strstr(pszHeader, "NB") != nullptr )
+    {
+        return static_cast<int>(nOffset);
+    }
+    return -1;
+}
+
+/************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int VICARDataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+    return GetLabelOffset(poOpenInfo) >= 0;
 }
 
 /************************************************************************/
@@ -1563,7 +1588,7 @@ void VICARDataset::BuildLabel()
         oLabel = CPLJSONObject();
     }
 
-    oLabel.Set("LBLSIZE", 0); // to be overriden later
+    oLabel.Set("LBLSIZE", 0); // to be overridden later
 
     if( !oLabel.GetObj("TYPE").IsValid() )
         oLabel.Set("TYPE", "IMAGE");
@@ -1771,8 +1796,18 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Does this look like a VICAR dataset?                            */
 /* -------------------------------------------------------------------- */
-    if( !Identify( poOpenInfo ) || poOpenInfo->fpL == nullptr )
+    const int nLabelOffset = GetLabelOffset( poOpenInfo );
+    if( nLabelOffset < 0 )
         return nullptr;
+    if( nLabelOffset > 0 )
+    {
+        CPLString osSubFilename;
+        osSubFilename.Printf("/vsisubfile/%d,%s",
+                             nLabelOffset,
+                             poOpenInfo->pszFilename);
+        GDALOpenInfo oOpenInfo(osSubFilename.c_str(), poOpenInfo->eAccess);
+        return Open(&oOpenInfo);
+    }
 
     VICARDataset *poDS = new VICARDataset();
     poDS->fpImage = poOpenInfo->fpL;
@@ -2832,6 +2867,43 @@ GDALDataset* VICARDataset::CreateCopy( const char *pszFilename,
     }
 
     return poDS;
+}
+
+/************************************************************************/
+/*                     GetVICARLabelOffsetFromPDS3()                    */
+/************************************************************************/
+
+vsi_l_offset VICARDataset::GetVICARLabelOffsetFromPDS3(const char* pszHdr,
+                                                       VSILFILE* fp,
+                                                       std::string& osVICARHeader)
+{
+    const char* pszPDSVersionID = strstr(pszHdr,"PDS_VERSION_ID");
+    int nOffset = 0;
+    if (pszPDSVersionID)
+        nOffset = static_cast<int>(pszPDSVersionID - pszHdr);
+
+    NASAKeywordHandler  oKeywords;
+    if( oKeywords.Ingest( fp, nOffset ) )
+    {
+        const int nRecordBytes = atoi(oKeywords.GetKeyword("RECORD_BYTES", "0"));
+        const int nImageHeader = atoi(oKeywords.GetKeyword("^IMAGE_HEADER", "0"));
+        if( nRecordBytes > 0 && nImageHeader > 0 )
+        {
+            const auto nImgHeaderOffset =
+                static_cast<vsi_l_offset>(nImageHeader - 1) * nRecordBytes;
+            osVICARHeader.resize(1024);
+            size_t nMemb;
+            if( VSIFSeekL( fp, nImgHeaderOffset, SEEK_SET ) == 0 &&
+                (nMemb = VSIFReadL( &osVICARHeader[0], 1,
+                            osVICARHeader.size(), fp )) != 0 &&
+                osVICARHeader.find("LBLSIZE") != std::string::npos )
+            {
+                osVICARHeader.resize(nMemb);
+                return nImgHeaderOffset;
+            }
+        }
+    }
+    return 0;
 }
 
 /************************************************************************/

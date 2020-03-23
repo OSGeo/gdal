@@ -201,6 +201,8 @@ private:
 
   DataType GetDataTypeUsed(int typeCode) const;
 
+  static DataType ValidateDataType(int dt);
+
   static bool WriteVariableDataType(Byte** ppByte, double z, DataType dtUsed);
 
   static double ReadVariableDataType(const Byte** ppByte, DataType dtUsed);
@@ -1274,6 +1276,8 @@ bool Lerc2::ReadTile(const Byte** ppByte, size_t& nBytesRemainingInOut, T* data,
   {
     // read z's as int arr bit stuffed
     DataType dtUsed = GetDataTypeUsed(bits67);
+    if( dtUsed == DT_Undefined )
+      return false;
     size_t n = GetDataTypeSize(dtUsed);
     if (nBytesRemaining < n)
       return false;
@@ -1301,7 +1305,7 @@ bool Lerc2::ReadTile(const Byte** ppByte, size_t& nBytesRemainingInOut, T* data,
 
       double invScale = 2 * hd.maxZError;    // for int types this is int
       double zMax = (hd.version >= 4 && nDim > 1) ? m_zMaxVec[iDim] : hd.zMax;
-      unsigned int* srcPtr = &bufferVec[0];
+      const unsigned int* srcPtr = bufferVec.data();
 
       if (bufferVec.size() == maxElementCount)    // all valid
       {
@@ -1429,6 +1433,15 @@ int Lerc2::TypeCode(T z, DataType& dtUsed) const
 
 // -------------------------------------------------------------------------- ;
 
+inline Lerc2::DataType Lerc2::ValidateDataType(int dt)
+{
+  if( dt >= DT_Char && dt <= DT_Double )
+    return static_cast<DataType>(dt);
+  return DT_Undefined;
+}
+
+// -------------------------------------------------------------------------- ;
+
 inline
 Lerc2::DataType Lerc2::GetDataTypeUsed(int tc) const
 {
@@ -1436,11 +1449,11 @@ Lerc2::DataType Lerc2::GetDataTypeUsed(int tc) const
   switch (dt)
   {
     case DT_Short:
-    case DT_Int:     return (DataType)(dt - tc);
+    case DT_Int:     return ValidateDataType(dt - tc);
     case DT_UShort:
-    case DT_UInt:    return (DataType)(dt - 2 * tc);
+    case DT_UInt:    return ValidateDataType(dt - 2 * tc);
     case DT_Float:   return tc == 0 ? dt : (tc == 1 ? DT_Short : DT_Byte);
-    case DT_Double:  return tc == 0 ? dt : (DataType)(dt - 2 * tc + 1);
+    case DT_Double:  return tc == 0 ? dt : ValidateDataType(dt - 2 * tc + 1);
     default:
       return dt;
   }

@@ -3413,3 +3413,18 @@ def test_tiff_GetMetadataDomainList():
     assert mdd1_set == set(['', 'DERIVED_SUBDATASETS', 'IMAGE_STRUCTURE'])
     mdd2_set = set([x for x in ds.GetMetadataDomainList()])
     assert mdd1_set == mdd2_set
+
+
+###############################################################################
+# Test reading a file with SLONG8 data type for StripOffsets
+
+
+def test_tiff_read_bigtiff_invalid_slong8_for_stripoffsets():
+
+    if not check_libtiff_internal_or_at_least(4, 1, 1):
+        pytest.skip()
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/byte_bigtiff_invalid_slong8_for_stripoffsets.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == 4672

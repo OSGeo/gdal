@@ -8,7 +8,7 @@
  *  The MIT License (MIT)
  *
  *  Copyright (c) 2016 Alexandr Borzykh
- *  Copyright (c) 2016, NextGIS <info@nextgis.com>
+ *  Copyright (c) 2016-2019, NextGIS <info@nextgis.com>
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -41,7 +41,7 @@
 #define FIELD_NAME_TEXT "text"
 
 constexpr double DEG2RAD = M_PI / 180.0;
-// UNUSED constexpr double RAD2DEG = 1.0 / DEG2RAD;
+constexpr double RAD2DEG = 1.0 / DEG2RAD;
 
 OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, OGRSpatialReference *poSR,
                           int nEncoding) :
@@ -360,8 +360,8 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             OGRCircularString * poCircle = new OGRCircularString();
 
             // Need at least 3 points in arc
-            double dfStartAngle = poCADArc->getStartingAngle() * DEG2RAD;
-            double dfEndAngle = poCADArc->getEndingAngle() * DEG2RAD;
+            double dfStartAngle = poCADArc->getStartingAngle() * RAD2DEG;
+            double dfEndAngle = poCADArc->getEndingAngle() * RAD2DEG;
             double dfMidAngle = (dfEndAngle + dfStartAngle) / 2;
             CADVector stCircleCenter = poCADArc->getPosition();
 
@@ -568,7 +568,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
                      * Get arc's starting angle.
                      */
                     double dfA = atan2( ( stOgrArcCenter.getY() - stCurrentVertex.getY() ),
-                                        ( stOgrArcCenter.getX() - stCurrentVertex.getX() ) ) * DEG2RAD;
+                                        ( stOgrArcCenter.getX() - stCurrentVertex.getX() ) ) * RAD2DEG;
                     if( bClockwise && ( dfLineDir == 1.0 ) )
                         dfA += ( dfLineDir * 180.0 );
 
@@ -579,7 +579,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
                      * Get arc's ending angle.
                      */
                     dfA = atan2( ( stOgrArcCenter.getY() - stNextVertex.getY() ),
-                                 ( stOgrArcCenter.getX() - stNextVertex.getX() ) ) * DEG2RAD;
+                                 ( stOgrArcCenter.getX() - stNextVertex.getX() ) ) * RAD2DEG;
                     if( bClockwise && ( dfLineDir == 1.0 ) )
                         dfA += ( dfLineDir * 180.0 );
 
@@ -707,16 +707,15 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
 
             // FIXME: Start/end angles should be swapped to work exactly as DXF driver.
             // is it correct?
-            double dfStartAngle = -1 * poCADEllipse->getEndingAngle() * DEG2RAD;
-            double dfEndAngle = -1 * poCADEllipse->getStartingAngle() * DEG2RAD;
+            double dfStartAngle = poCADEllipse->getStartingAngle() * RAD2DEG;
+            double dfEndAngle = poCADEllipse->getEndingAngle() * RAD2DEG;
+            if( dfStartAngle > dfEndAngle )
+            {
+                dfEndAngle += 360.0;
+            }
             double dfAxisRatio = poCADEllipse->getAxisRatio();
 
-            dfStartAngle = fmod(dfStartAngle, 360.0);
-            dfEndAngle = fmod(dfEndAngle, 360.0);
-            if( dfStartAngle > dfEndAngle )
-                dfEndAngle += 360.0;
-
-            CADVector vectPosition = poCADEllipse->getPosition();
+            CADVector stEllipseCenter = poCADEllipse->getPosition();
             CADVector vectSMAxis = poCADEllipse->getSMAxis();
             double dfPrimaryRadius, dfSecondaryRadius;
             double dfRotation;
@@ -726,11 +725,52 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
 
             dfSecondaryRadius = dfAxisRatio * dfPrimaryRadius;
 
-            dfRotation = -1 * atan2( vectSMAxis.getY(), vectSMAxis.getX() ) * DEG2RAD;
+            dfRotation = -1 * atan2( vectSMAxis.getY(), vectSMAxis.getX() ) * RAD2DEG;
+            /* NOTE: alternative way:
+            OGRCircularString * poEllipse = new OGRCircularString();
+            OGRPoint  oEllipsePoint1;
+            oEllipsePoint1.setX( stEllipseCenter.getX() - dfPrimaryRadius *
+                                                            cos( dfRotation ) );
+            oEllipsePoint1.setY( stEllipseCenter.getY() + dfPrimaryRadius *
+                                                            sin( dfRotation ) );
+            oEllipsePoint1.setZ( stEllipseCenter.getZ() );
+            poEllipse->addPoint( &oEllipsePoint1 );
 
-            OGRGeometry *poEllipse =
-                OGRGeometryFactory::approximateArcAngles(
-                    vectPosition.getX(), vectPosition.getY(), vectPosition.getZ(),
+            OGRPoint  oEllipsePoint2;
+            oEllipsePoint2.setX( stEllipseCenter.getX() + dfSecondaryRadius *
+                                                            cos( dfRotation ) );
+            oEllipsePoint2.setY( stEllipseCenter.getY() + dfSecondaryRadius *
+                                                            sin( dfRotation ) );
+            oEllipsePoint2.setZ( stEllipseCenter.getZ() );
+            poEllipse->addPoint( &oEllipsePoint2 );
+
+            OGRPoint  oEllipsePoint3;
+            oEllipsePoint3.setX( stEllipseCenter.getX() + dfPrimaryRadius *
+                                                            cos( dfRotation ) );
+            oEllipsePoint3.setY( stEllipseCenter.getY() - dfPrimaryRadius *
+                                                            sin( dfRotation ) );
+            oEllipsePoint3.setZ( stEllipseCenter.getZ() );
+            poEllipse->addPoint( &oEllipsePoint3 );
+
+            OGRPoint  oEllipsePoint4;
+            oEllipsePoint4.setX( stEllipseCenter.getX() - dfSecondaryRadius *
+                                                            cos( dfRotation ) );
+            oEllipsePoint4.setY( stEllipseCenter.getY() - dfSecondaryRadius *
+                                                            sin( dfRotation ) );
+            oEllipsePoint4.setZ( stEllipseCenter.getZ() );
+            poEllipse->addPoint( &oEllipsePoint4 );
+
+            // Close the ellipse
+            poEllipse->addPoint( &oEllipsePoint1 );
+            */
+
+            CPLDebug("CAD", "Position: %f, %f, %f, radius %f/%f, start angle: %f, end angle: %f, rotation: %f",
+                stEllipseCenter.getX(), stEllipseCenter.getY(), stEllipseCenter.getZ(),
+                dfPrimaryRadius, dfSecondaryRadius, dfStartAngle, dfEndAngle, dfRotation
+            );
+            OGRGeometry *poEllipse = OGRGeometryFactory::approximateArcAngles(
+                    stEllipseCenter.getX(), stEllipseCenter.getY(),
+                    stEllipseCenter.getZ(),
                     dfPrimaryRadius, dfSecondaryRadius, dfRotation,
                     dfStartAngle, dfEndAngle, 0.0 );
 

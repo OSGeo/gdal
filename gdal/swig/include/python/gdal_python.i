@@ -1243,7 +1243,7 @@ def Info(ds, **kwargs):
     return ret
 
 
-def MultiDimInfoOptions(options=None, detailed=False, array=None, limit=None, as_text=False):
+def MultiDimInfoOptions(options=None, detailed=False, array=None, arrayoptions=None, limit=None, as_text=False):
     """ Create a MultiDimInfoOptions() object that can be passed to gdal.MultiDimInfo()
         options can be be an array of strings, a string or let empty and filled from other keywords."""
 
@@ -1259,6 +1259,9 @@ def MultiDimInfoOptions(options=None, detailed=False, array=None, limit=None, as
             new_options += ['-array', array]
         if limit:
             new_options += ['-limit', str(limit)]
+        if arrayoptions:
+            for option in arrayoptions:
+                new_options += ['-arrayoption', option]
 
     return GDALMultiDimInfoOptions(new_options), as_text
 
@@ -1471,7 +1474,7 @@ def WarpOptions(options=None, format=None,
           workingType --- working type (gdalconst.GDT_Byte, etc...)
           warpOptions --- list of warping options
           errorThreshold --- error threshold for approximation transformer (in pixels)
-          warpMemoryLimit --- size of working buffer in bytes
+          warpMemoryLimit --- size of working buffer in MB
           resampleAlg --- resampling mode
           creationOptions --- list of creation options
           srcNodata --- source nodata value(s)

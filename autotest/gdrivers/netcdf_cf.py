@@ -32,6 +32,7 @@
 import os
 import imp  # for netcdf_cf_setup()
 from gdrivers.netcdf import netcdf_setup, netcdf_test_copy  # noqa
+netcdf_setup; # to please pyflakes
 from osgeo import gdal
 from osgeo import osr
 

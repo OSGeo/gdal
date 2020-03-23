@@ -34,8 +34,6 @@ import sys
 from osgeo import gdal
 import pytest
 
-sys.path.append('../../gdal/swig/python/samples')
-
 import gdaltest
 
 ###############################################################################
@@ -48,6 +46,11 @@ def test_validate_jp2_1():
     gdaltest.jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
     if gdaltest.jp2openjpeg_drv is None:
         pytest.skip()
+
+
+    path = '../../gdal/swig/python/samples'
+    if path not in sys.path:
+        sys.path.append(path)
 
     try:
         import validate_jp2
@@ -77,6 +80,10 @@ def validate(filename, inspire_tg=True, expected_gmljp2=True, oidoc=None):
             xmlvalidate.validate  # to make pyflakes happy
         except (ImportError, AttributeError):
             ogc_schemas_location = 'disabled'
+
+    path = '../../gdal/swig/python/samples'
+    if path not in sys.path:
+        sys.path.append(path)
 
     import validate_jp2
     error_report = validate_jp2.ErrorReport(collect_internally=True)

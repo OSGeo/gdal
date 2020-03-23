@@ -6,6 +6,8 @@ Epsilon - Wavelet compressed images
 
 .. shortname:: EPSILON
 
+.. build_dependencies:: epsilon 0.9.1
+
 GDAL can read and write wavelet-compressed
 images through the Epsilon library. epsilon 0.9.1 is required.
 

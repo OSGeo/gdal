@@ -264,7 +264,7 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     lyr.CreateFeature(feat)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField("photooverlay", "http://tile.openstreetmap.org/$[level]/$[x]/$[y].png")
+    feat.SetField("photooverlay", "http://even.rouault.free.fr/kml/gdalicon_$[level]_$[x]_$[y].png")
     feat.SetField("imagepyramid_tilesize", 256)
     feat.SetField("imagepyramid_maxwidth", 512)
     feat.SetField("imagepyramid_maxheight", 512)

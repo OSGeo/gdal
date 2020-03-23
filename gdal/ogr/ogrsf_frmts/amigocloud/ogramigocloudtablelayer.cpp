@@ -1075,7 +1075,6 @@ bool OGRAmigoCloudTableLayer::IsDatasetExists()
     if( result == nullptr )
         return false;
 
-    if( result != nullptr )
     {
         int type = json_object_get_type(result);
         if(type == json_type_object)

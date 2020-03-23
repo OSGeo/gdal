@@ -5,6 +5,8 @@ OSM - OpenStreetMap XML and PBF
 
 .. shortname:: OSM
 
+.. build_dependencies:: libsqlite3 (and libexpat for OSM XML)
+
 This driver reads OpenStreetMap files, in .osm (XML based) and .pbf
 (optimized binary) formats.
 

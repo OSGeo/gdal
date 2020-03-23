@@ -96,6 +96,8 @@ constexpr long PAN_ELLIPSOID_KRASSOVSKY  = 1L;  // Krassovsky, 1940
 // constexpr long PAN_ELLIPSOID_BESSEL1841  = 7L;  // Bessel, 1841
 // constexpr long PAN_ELLIPSOID_AIRY1830    = 8L;  // Airy, 1830
 constexpr long PAN_ELLIPSOID_WGS84       = 9L;  // WGS, 1984 (GPS)
+constexpr long PAN_ELLIPSOID_GSK2011     = 46L;   // GSK-2011
+constexpr long PAN_ELLIPSOID_PZ90        = 47L;   // PZ90
 
 /************************************************************************/
 /*  Correspondence between "Panorama" and EPSG datum codes.             */
@@ -147,6 +149,44 @@ constexpr int aoEllips[] =
 };
 
 constexpr int NUMBER_OF_ELLIPSOIDS = static_cast<int>(CPL_ARRAYSIZE(aoEllips));
+
+/************************************************************************/
+/*  Correspondence between "Panorama" and EPSG vertical CS.             */
+/************************************************************************/
+
+constexpr int aoVCS[] =
+{
+    0,
+    8357,   //1
+    5711,   //2
+    0,      //3
+    5710,   //4
+    5710,   //5
+    0,      //6
+    0,      //7
+    0,      //8
+    0,      //9
+    5716,   //10
+    5733,   //11
+    0,      //12
+    0,      //13
+    0,      //14
+    0,      //15
+    5709,   //16
+    5776,   //17
+    0,      //18
+    0,      //19
+    5717,   //20
+    5613,   //21
+    0,      //22
+    5775,   //23
+    5702,   //24
+    5705,   //25
+    0,      //26
+    5714    //27
+};
+
+constexpr int NUMBER_OF_VERTICALCS = (sizeof(aoVCS)/sizeof(aoVCS[0]));
 
 /************************************************************************/
 /*                        OSRImportFromPanorama()                       */
@@ -436,6 +476,18 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
             oGCS.importFromEPSG( aoDatums[iDatum] );
             CopyGeogCSFrom( &oGCS );
         }
+        else if( iEllips == PAN_ELLIPSOID_GSK2011 )
+        {
+            OGRSpatialReference oGCS;
+            oGCS.importFromEPSG( 7683 );
+            CopyGeogCSFrom( &oGCS );
+        }
+        else if( iEllips == PAN_ELLIPSOID_PZ90 )
+        {
+            SetGeogCS( "PZ-90.11", "Parametry_Zemli_1990_11",
+                       "PZ-90", 6378136, 298.257839303);
+            SetAuthority( "SPHEROID", "EPSG", 7054 );
+        }
         else if( iEllips > 0
                  && iEllips < NUMBER_OF_ELLIPSOIDS
                  && aoEllips[iEllips] )
@@ -487,6 +539,76 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
     if( bProjAllocated && padfPrjParams )
         CPLFree( padfPrjParams );
 
+    return OGRERR_NONE;
+}
+
+/**
+ * Import vertical coordinate system from "Panorama" GIS projection definition.
+ *
+ * @param iVCS Input vertical coordinate system ID.
+ *
+ * <h4>Supported VCS</h4>
+ * \code{.unparsed}
+ *   1: Baltic 1977 height (EPSG:5705)
+ *   2: AHD height (EPSG:5711)
+ *   4: Ostend height (EPSG:5710)
+ *   5: Ostend height (EPSG:5710)
+ *  10: Piraeus height (EPSG:5716)
+ *  11: DNN height (EPSG:5733)
+ *  16: NAP height (EPSG:5709)
+ *  17: NN54 height (EPSG:5776)
+ *  20: N60 height (EPSG:5717)
+ *  21: RH2000 height (EPSG:5613)
+ *  23: Antalya height (EPSG:5775)
+ *  24: NGVD29 height (ftUS) (EPSG:5702)
+ *  25: Baltic 1977 height (EPSG:5705)
+ *  27: MSL height (EPSG:5714)
+ * \endcode   
+ */
+OGRErr OGRSpatialReference::importVertCSFromPanorama(int iVCS)
+{
+    if(iVCS < 0 || iVCS >= NUMBER_OF_VERTICALCS)
+    {
+        return OGRERR_CORRUPT_DATA;
+    }
+
+    const int nEPSG = aoVCS[iVCS];
+
+    if(nEPSG == 0 )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported, 
+                 "Vertical coordinate system (Panorama index %d) not supported", iVCS);
+        return OGRERR_UNSUPPORTED_SRS;
+    }
+
+    OGRSpatialReference sr;
+    sr.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    OGRErr eImportFromEPSGErr = sr.importFromEPSG(nEPSG);
+    if(eImportFromEPSGErr != OGRERR_NONE)
+    {
+        CPLError(CE_Warning, CPLE_None, 
+                 "Vertical coordinate system (Panorama index %d, EPSG %d) "
+                 "import from EPSG error", iVCS, nEPSG);
+        return OGRERR_UNSUPPORTED_SRS;
+    }
+
+    if(sr.IsVertical() != 1)
+    {
+        CPLError(CE_Warning, CPLE_None, 
+                 "Coordinate system (Panorama index %d, EPSG %d) "
+                 "is not Vertical", iVCS, nEPSG);
+        return OGRERR_UNSUPPORTED_SRS;
+    }
+
+    OGRErr eSetVertCSErr = SetVertCS(sr.GetAttrValue("VERT_CS"), 
+                                     sr.GetAttrValue("VERT_DATUM"));
+    if(eSetVertCSErr != OGRERR_NONE)
+    {
+        CPLError(CE_Warning, CPLE_None, 
+                "Vertical coordinate system (Panorama index %d, EPSG %d) "
+                "set error", iVCS, nEPSG);
+        return eSetVertCSErr;
+    }
     return OGRERR_NONE;
 }
 

@@ -6,6 +6,8 @@ PCRaster -- PCRaster raster file format
 
 .. shortname:: PCRaster
 
+.. build_dependencies:: (internal libcf provided)
+
 GDAL includes support for reading and writing PCRaster raster files.
 PCRaster is a dynamic modeling system for distributed simulation models.
 The main applications of PCRaster are found in environmental modeling:

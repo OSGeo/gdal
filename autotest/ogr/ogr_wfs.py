@@ -1673,7 +1673,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 
     f = lyr.GetNextFeature()
     if f.gml_id != 'my_layer.1' or f.boolean != 1 or f.str != 'str' or f.short != 1 or \
-       f.int != 123456789 or f.float != 1.2 or f.double != 1.23 or f.dt != '2015-04-17T12:34:56Z' or \
+       f.int != 123456789 or f.float != 1.2 or f.double != 1.23 or f.dt != '2015/04/17 12:34:56+00' or \
        f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
         pytest.fail()
@@ -1987,7 +1987,7 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_filter(with_and_without_streaming):
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
     lyr = ds.GetLayer(0)
 
-    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3CAnd%3E%3CAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Estr%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Eshort%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3C%2FAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Efloat%3C%2FPropertyName%3E%3CLiteral%3E1.2%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3C%2FAnd%3E%3CPropertyIsLike%20wildCard%3D%27%2A%27%20singleChar%3D%27_%27%20escapeChar%3D%27%21%27%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Est%2A%3C%2FLiteral%3E%3C%2FPropertyIsLike%3E%3C%2FOr%3E%3CNot%3E%3CPropertyIsNull%3E%3CPropertyName%3Eboolean%3C%2FPropertyName%3E%3C%2FPropertyIsNull%3E%3C%2FNot%3E%3C%2FOr%3E%3CPropertyIsGreaterThan%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsGreaterThan%3E%3C%2FOr%3E%3CPropertyIsGreaterThanOrEqualTo%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsGreaterThanOrEqualTo%3E%3C%2FOr%3E%3CPropertyIsNotEqualTo%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E2%3C%2FLiteral%3E%3C%2FPropertyIsNotEqualTo%3E%3C%2FOr%3E%3CPropertyIsLessThan%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E2000000000%3C%2FLiteral%3E%3C%2FPropertyIsLessThan%3E%3C%2FOr%3E%3CPropertyIsLessThanOrEqualTo%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E2000000000%3C%2FLiteral%3E%3C%2FPropertyIsLessThanOrEqualTo%3E%3C%2FOr%3E%3C%2FFilter%3E',
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3CAnd%3E%3CAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Estr%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Eshort%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3C%2FAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Efloat%3C%2FPropertyName%3E%3CLiteral%3E1.2%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3C%2FAnd%3E%3CPropertyIsLike%20wildCard%3D%27%2A%27%20singleChar%3D%27_%27%20escapeChar%3D%27%21%27%20matchCase%3D%27true%27%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Est%2A%3C%2FLiteral%3E%3C%2FPropertyIsLike%3E%3C%2FOr%3E%3CNot%3E%3CPropertyIsNull%3E%3CPropertyName%3Eboolean%3C%2FPropertyName%3E%3C%2FPropertyIsNull%3E%3C%2FNot%3E%3C%2FOr%3E%3CPropertyIsGreaterThan%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsGreaterThan%3E%3C%2FOr%3E%3CPropertyIsGreaterThanOrEqualTo%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsGreaterThanOrEqualTo%3E%3C%2FOr%3E%3CPropertyIsNotEqualTo%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E2%3C%2FLiteral%3E%3C%2FPropertyIsNotEqualTo%3E%3C%2FOr%3E%3CPropertyIsLessThan%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E2000000000%3C%2FLiteral%3E%3C%2FPropertyIsLessThan%3E%3C%2FOr%3E%3CPropertyIsLessThanOrEqualTo%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E2000000000%3C%2FLiteral%3E%3C%2FPropertyIsLessThanOrEqualTo%3E%3C%2FOr%3E%3C%2FFilter%3E',
                            """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
@@ -3083,7 +3083,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 
     f = lyr.GetNextFeature()
     if f.gml_id != 'my_layer.1' or f.boolean != 1 or f.str != 'str' or f.short != 1 or \
-       f.int != 123456789 or f.float != 1.2 or f.double != 1.23 or f.dt != '2015-04-17T12:34:56Z' or \
+       f.int != 123456789 or f.float != 1.2 or f.double != 1.23 or f.dt != '2015/04/17 12:34:56+00' or \
        f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
         f.DumpReadable()
         pytest.fail()

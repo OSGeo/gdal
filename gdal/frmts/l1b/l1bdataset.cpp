@@ -3032,8 +3032,7 @@ L1BFileFormat L1BDataset::DetectFormat( const char* pszFilename,
         return L1B_NONE;
 
     // try NOAA-18 formats
-    if ( nHeaderBytes > 22 + 10
-        && *(pabyHeader + 0) == '\0'
+    if (  *(pabyHeader + 0) == '\0'
         && *(pabyHeader + 1) == '\0'
         && *(pabyHeader + 2) == '\0'
         && *(pabyHeader + 3) == '\0'

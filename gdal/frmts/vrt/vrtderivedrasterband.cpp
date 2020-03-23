@@ -32,15 +32,7 @@
 #include "cpl_string.h"
 #include "vrtdataset.h"
 #include "cpl_multiproc.h"
-#include "cpl_spawn.h"
-
-#if !defined(WIN32)
-  #include <sys/stat.h>
-  #include <sys/types.h>
-  #ifdef HAVE_UNISTD_H
-    #include <unistd.h>
-  #endif
-#endif
+#include "gdalpython.h"
 
 #include <algorithm>
 #include <map>
@@ -51,8 +43,9 @@
 
 CPL_CVSID("$Id$")
 
+using namespace GDALPy;
+
 // #define GDAL_VRT_DISABLE_PYTHON
-// #define PYTHONSO_DEFAULT "libpython2.7.so"
 
 #ifndef GDAL_VRT_ENABLE_PYTHON_DEFAULT
 // Can be YES, NO or TRUSTED_MODULES
@@ -60,50 +53,6 @@ CPL_CVSID("$Id$")
 #endif
 
 static std::map<CPLString, GDALDerivedPixelFunc> osMapPixelFunction;
-static bool gbHasInitializedPython = false;
-static int gnPythonInstanceCounter = 0;
-static CPLMutex* ghMutex = nullptr;
-
-// Subset of Python API defined as function of pointers
-typedef struct PyObject_t PyObject;
-#define Py_file_input 257
-static void (*Py_SetProgramName)(const char*) = nullptr;
-static PyObject* (*PyBuffer_FromReadWriteMemory)(void*, size_t) = nullptr;
-static PyObject* (*PyTuple_New)(size_t) = nullptr;
-static PyObject* (*PyInt_FromLong)(long) = nullptr;
-static PyObject* (*PyFloat_FromDouble)(double) = nullptr;
-static PyObject* (*PyObject_Call)(PyObject*, PyObject*, PyObject*) = nullptr;
-static void (*Py_IncRef)(PyObject*) = nullptr;
-static void (*Py_DecRef)(PyObject*) = nullptr;
-static PyObject* (*PyErr_Occurred)(void) = nullptr;
-static void (*PyErr_Print)(void) = nullptr;
-static int (*Py_IsInitialized)(void) = nullptr;
-static void (*Py_InitializeEx)(int) = nullptr;
-static void (*PyEval_InitThreads)(void) = nullptr;
-typedef struct PyThreadState_t PyThreadState;
-static PyThreadState* (*PyEval_SaveThread)(void) = nullptr;
-static void (*PyEval_RestoreThread)(PyThreadState*) = nullptr;
-static void (*Py_Finalize)(void) = nullptr;
-static PyObject* (*Py_CompileString)(const char*, const char*, int) = nullptr;
-static PyObject* (*PyImport_ExecCodeModule)(const char*, PyObject*) = nullptr;
-static PyObject* (*PyObject_GetAttrString)(PyObject*, const char*) = nullptr;
-static int (*PyTuple_SetItem)(PyObject *, size_t, PyObject *) = nullptr;
-static void (*PyObject_Print)(PyObject*,FILE*,int) = nullptr;
-static PyObject* (*PyString_FromStringAndSize)(const void*, size_t) = nullptr;
-static PyObject* (*PyImport_ImportModule)(const char*) = nullptr;
-static int (*PyCallable_Check)(PyObject*) = nullptr;
-static PyObject* (*PyDict_New)(void) = nullptr;
-static int (*PyDict_SetItemString)(PyObject *p, const char *key,
-                                   PyObject *val) = nullptr;
-static void (*PyErr_Fetch)(PyObject **poPyType, PyObject **poPyValue,
-                           PyObject **poPyTraceback) = nullptr;
-static void (*PyErr_Clear)(void) = nullptr;
-static const char* (*PyString_AsString)(PyObject*) = nullptr;
-static const char* (*Py_GetVersion)(void) = nullptr;
-
-typedef int PyGILState_STATE;
-static PyGILState_STATE (*PyGILState_Ensure)(void) = nullptr;
-static void (*PyGILState_Release)(PyGILState_STATE) = nullptr;
 
 /* Flags for getting buffers */
 #define PyBUF_WRITABLE 0x0001
@@ -112,17 +61,6 @@ static void (*PyGILState_Release)(PyGILState_STATE) = nullptr;
 #define PyBUF_STRIDES (0x0010 | PyBUF_ND)
 #define PyBUF_INDIRECT (0x0100 | PyBUF_STRIDES)
 #define PyBUF_FULL (PyBUF_INDIRECT | PyBUF_WRITABLE | PyBUF_FORMAT)
-
-typedef struct
-{
-    //cppcheck-suppress unusedStructMember
-    char big_enough[256];
-} Py_buffer;
-static int (*PyBuffer_FillInfo)(Py_buffer *view, PyObject *obj, void *buf,
-                                size_t len, int readonly, int infoflags) = nullptr;
-static PyObject* (*PyMemoryView_FromBuffer)(Py_buffer *view) = nullptr;
-
-static PyThreadState* gphThreadState = nullptr;
 
 /************************************************************************/
 /*                        GDALCreateNumpyArray()                        */
@@ -146,7 +84,7 @@ static PyObject* GDALCreateNumpyArray(PyObject* pCreateArray,
     {
         // Python 3
         Py_buffer pybuffer;
-        if( PyBuffer_FillInfo(&pybuffer, nullptr, (char*)pBuffer,
+        if( PyBuffer_FillInfo(&pybuffer, nullptr, static_cast<char*>(pBuffer),
                               nSize,
                               0, PyBUF_FULL) != 0)
         {
@@ -187,671 +125,6 @@ static PyObject* GDALCreateNumpyArray(PyObject* pCreateArray,
     return poNumpyArray;
 }
 
-/* MinGW32 might define HAVE_DLFCN_H, so skip the unix implementation */
-#if defined(HAVE_DLFCN_H) && !defined(WIN32)
-
-#include <dlfcn.h>
-
-typedef void* LibraryHandle;
-
-#define LOAD_NOCHECK_WITH_NAME(libHandle, x, name) \
-    do { \
-            void* ptr = dlsym(libHandle, name); \
-            memcpy(&x, &ptr, sizeof(void*)); \
-    } while(0)
-
-#elif defined(WIN32)
-
-#include <windows.h>
-#include <psapi.h>
-
-typedef HMODULE LibraryHandle;
-
-#define LOAD_NOCHECK_WITH_NAME(libHandle, x, name) \
-    do { \
-            FARPROC ptr = GetProcAddress(libHandle, name); \
-            memcpy(&x, &ptr, sizeof(void*)); \
-    } while(0)
-
-#endif
-
-#define STRINGIFY(x) #x
-
-#define LOAD_NOCHECK(libHandle, x) LOAD_NOCHECK_WITH_NAME(libHandle, x, STRINGIFY(x))
-#define LOAD_WITH_NAME(libHandle, x, name) \
-    do { \
-            LOAD_NOCHECK_WITH_NAME(libHandle, x, name); \
-            if (!x) \
-            { \
-                CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s", name); \
-                return false; \
-            } \
-    } while(0)
-#define LOAD(libHandle, x) LOAD_WITH_NAME(libHandle, x, STRINGIFY(x))
-
-/************************************************************************/
-/*                          LoadPythonAPI()                             */
-/************************************************************************/
-
-#if defined(LOAD_NOCHECK_WITH_NAME) && defined(HAVE_DLFCN_H) && !defined(WIN32)
-static LibraryHandle libHandleStatic = nullptr;
-#endif
-
-/** Load the subset of the Python C API that we need */
-static bool LoadPythonAPI()
-{
-    CPLMutexHolder oHolder(&ghMutex);
-
-    static bool bInit = false;
-    if( bInit )
-        return true;
-
-#ifdef LOAD_NOCHECK_WITH_NAME
-    // The static here is just to avoid Coverity warning about resource leak.
-    LibraryHandle libHandle = nullptr;
-    CPL_IGNORE_RET_VAL(libHandle);
-
-    const char* pszPythonSO = CPLGetConfigOption("PYTHONSO", nullptr);
-#if defined(HAVE_DLFCN_H) && !defined(WIN32)
-
-    // First try in the current process in case the python symbols would
-    // be already loaded
-    libHandle = dlopen(nullptr, RTLD_LAZY);
-    libHandleStatic = libHandle;
-    if( libHandle != nullptr &&
-        dlsym(libHandle, "Py_SetProgramName") != nullptr )
-    {
-        CPLDebug("VRT", "Current process has python symbols loaded");
-    }
-    else
-    {
-        libHandle = nullptr;
-    }
-
-    // Then try the user provided shared object name
-    if( libHandle == nullptr && pszPythonSO != nullptr )
-    {
-        // coverity[tainted_string]
-        libHandle = dlopen(pszPythonSO, RTLD_NOW | RTLD_GLOBAL);
-        if( libHandle == nullptr )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot load %s",
-                     pszPythonSO);
-            return false;
-        }
-        if( dlsym(libHandle, "Py_SetProgramName") == nullptr )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot find Py_SetProgramName symbol in %s",
-                     pszPythonSO);
-            return false;
-        }
-    }
-
-    // Then try the PYTHONSO_DEFAULT if defined at compile time
-#ifdef PYTHONSO_DEFAULT
-    if( libHandle == NULL )
-    {
-        libHandle = dlopen(PYTHONSO_DEFAULT, RTLD_NOW | RTLD_GLOBAL);
-        if( !libHandle )
-        {
-            CPLDebug("VRT", "%s found", PYTHONSO_DEFAULT);
-        }
-    }
-#endif
-
-#if defined(__MACH__) && defined(__APPLE__)
-#define SO_EXT "dylib"
-#else
-#define IS_SO_EXT
-#define SO_EXT "so"
-#endif
-
-    const auto tryDlopen = [](CPLString osPythonSO)
-    {
-        CPLDebug("VRT", "Trying %s", osPythonSO.c_str());
-        auto l_libHandle = dlopen(osPythonSO.c_str(), RTLD_NOW | RTLD_GLOBAL);
-#ifdef IS_SO_EXT
-        if( l_libHandle == nullptr )
-        {
-            osPythonSO += ".1.0";
-            CPLDebug("VRT", "Trying %s", osPythonSO.c_str());
-            l_libHandle = dlopen(osPythonSO.c_str(), RTLD_NOW | RTLD_GLOBAL);
-        }
-#endif
-        return l_libHandle;
-    };
-
-    // Then try to find the libpython that corresponds to the python binary
-    // in the PATH
-    if( libHandle == nullptr )
-    {
-        CPLString osVersion;
-        char* pszPath = getenv("PATH");
-        if( pszPath != nullptr
-#ifdef DEBUG
-           // For testing purposes
-           && CPLTestBool( CPLGetConfigOption(
-                                    "VRT_ENABLE_PYTHON_PATH", "YES") )
-#endif
-          )
-        {
-            char** papszTokens = CSLTokenizeString2(pszPath, ":", 0);
-            for( int iTry = 0; iTry < 2; ++iTry )
-            {
-                for( char** papszIter = papszTokens;
-                        papszIter != nullptr && *papszIter != nullptr;
-                        ++papszIter )
-                {
-                    struct stat sStat;
-                    CPLString osPythonBinary(
-                        CPLFormFilename(*papszIter, "python", nullptr));
-                    if( iTry == 1 )
-                        osPythonBinary += "3";
-                    if( lstat(osPythonBinary, &sStat) != 0 )
-                        continue;
-
-                    CPLDebug("VRT", "Found %s", osPythonBinary.c_str());
-
-                    if( S_ISLNK(sStat.st_mode)
-#ifdef DEBUG
-                        // For testing purposes
-                        && CPLTestBool( CPLGetConfigOption(
-                                    "VRT_ENABLE_PYTHON_SYMLINK", "YES") )
-#endif
-                        )
-                    {
-                        // If this is a symlink, hopefully the resolved
-                        // name will be like "python2.7"
-                        const int nBufSize = 2048;
-                        std::vector<char> oFilename(nBufSize);
-                        char *szPointerFilename = &oFilename[0];
-                        int nBytes = static_cast<int>(
-                            readlink( osPythonBinary, szPointerFilename,
-                                      nBufSize ) );
-                        if (nBytes != -1)
-                        {
-                            szPointerFilename[std::min(nBytes,
-                                                       nBufSize - 1)] = 0;
-                            CPLString osFilename(
-                                            CPLGetFilename(szPointerFilename));
-                            CPLDebug("VRT", "Which is an alias to: %s",
-                                     szPointerFilename);
-                            if( STARTS_WITH(osFilename, "python") )
-                            {
-                                osVersion = osFilename.substr(strlen("python"));
-                                CPLDebug("VRT",
-                                         "Python version from binary name: %s",
-                                         osVersion.c_str());
-                            }
-                        }
-                        else
-                        {
-                            CPLDebug("VRT", "realink(%s) failed",
-                                        osPythonBinary.c_str());
-                        }
-                    }
-
-                    // Otherwise, expensive way: start the binary and ask
-                    // it for its version...
-                    if( osVersion.empty() )
-                    {
-                        const char* pszPrintVersion =
-                            "import sys; print(str(sys.version_info[0]) +"
-                            "'.' + str(sys.version_info[1]))";
-                        const char* const apszArgv[] = {
-                                osPythonBinary.c_str(), "-c",
-                                pszPrintVersion,
-                                nullptr };
-                        const CPLString osTmpFilename(
-                                        "/vsimem/LoadPythonAPI/out.txt");
-                        VSILFILE* fout = VSIFOpenL( osTmpFilename, "wb+");
-                        if( CPLSpawn( apszArgv, nullptr, fout, FALSE ) == 0 )
-                        {
-                            char* pszStr = reinterpret_cast<char*>(
-                                VSIGetMemFileBuffer( osTmpFilename,
-                                                        nullptr, FALSE ));
-                            osVersion = pszStr;
-                            if( !osVersion.empty() &&
-                                osVersion.back() == '\n' )
-                            {
-                                osVersion.resize(osVersion.size() - 1);
-                            }
-                            CPLDebug("VRT", "Python version from binary: %s",
-                                        osVersion.c_str());
-                        }
-                        VSIFCloseL(fout);
-                        VSIUnlink(osTmpFilename);
-                    }
-                    break;
-                }
-                if( !osVersion.empty() )
-                    break;
-            }
-            CSLDestroy(papszTokens);
-        }
-
-        if( !osVersion.empty() )
-        {
-            libHandle = tryDlopen("libpython" + osVersion + "." SO_EXT);
-            if( libHandle != nullptr )
-            {
-                CPLDebug("VRT", "... success");
-            }
-            else if( osVersion[0] == '3' )
-            {
-                libHandle = tryDlopen("libpython" + osVersion + "m." SO_EXT);
-                if( libHandle != nullptr )
-                {
-                    CPLDebug("VRT", "... success");
-                }
-            }
-        }
-    }
-
-    // Otherwise probe a few known objects.
-    // Note: update doc/source/drivers/raster/vrt.rst if change
-    if( libHandle == nullptr )
-    {
-        const char* const apszPythonSO[] = { "libpython2.7." SO_EXT,
-                                                "libpython2.6." SO_EXT,
-                                                "libpython3.4m." SO_EXT,
-                                                "libpython3.5m." SO_EXT,
-                                                "libpython3.6m." SO_EXT,
-                                                "libpython3.7m." SO_EXT,
-                                                "libpython3.3." SO_EXT,
-                                                "libpython3.2." SO_EXT };
-        for( size_t i = 0; libHandle == nullptr &&
-                            i < CPL_ARRAYSIZE(apszPythonSO); ++i )
-        {
-            libHandle = tryDlopen(apszPythonSO[i]);
-            if( libHandle != nullptr )
-                CPLDebug("VRT", "... success");
-        }
-    }
-
-#elif defined(WIN32)
-
-    // First try in the current process in case the python symbols would
-    // be already loaded
-    HANDLE hProcess = GetCurrentProcess();
-    const size_t nMaxModules = 10000;
-    HMODULE* pahModules = static_cast<HMODULE*>(
-        CPLMalloc(nMaxModules * sizeof(HMODULE)));
-    DWORD nSizeNeeded = 0;
-
-    EnumProcessModules(hProcess, pahModules, nMaxModules * sizeof(HMODULE),
-                        &nSizeNeeded);
-
-    const size_t nModules =
-        std::min(nMaxModules,
-                 static_cast<size_t>(nSizeNeeded) / sizeof(HMODULE));
-    for( size_t i = 0; i < nModules; i++ )
-    {
-        if( GetProcAddress(pahModules[i], "Py_SetProgramName") )
-        {
-            libHandle = pahModules[i];
-            CPLDebug("VRT", "Current process has python symbols loaded");
-            break;
-        }
-    }
-    CPLFree(pahModules);
-
-    // Then try the user provided shared object name
-    if( libHandle == nullptr && pszPythonSO != nullptr )
-    {
-        UINT        uOldErrorMode;
-        /* Avoid error boxes to pop up (#5211, #5525) */
-        uOldErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX |
-                                     SEM_FAILCRITICALERRORS);
-
-#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
-        if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
-        {
-            wchar_t *pwszFilename =
-                CPLRecodeToWChar( pszPythonSO, CPL_ENC_UTF8, CPL_ENC_UCS2 );
-            libHandle = LoadLibraryW(pwszFilename);
-            CPLFree( pwszFilename );
-        }
-        else
-#endif
-        {
-            libHandle = LoadLibrary(pszPythonSO);
-        }
-
-        SetErrorMode(uOldErrorMode);
-
-        if( libHandle == nullptr )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot load %s",
-                     pszPythonSO);
-            return false;
-        }
-        if( GetProcAddress(libHandle, "Py_SetProgramName") == nullptr )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot find Py_SetProgramName symbol in %s",
-                     pszPythonSO);
-            return false;
-        }
-    }
-
-    // Then try the PYTHONSO_DEFAULT if defined at compile time
-#ifdef PYTHONSO_DEFAULT
-    if( libHandle == nullptr )
-    {
-        UINT        uOldErrorMode;
-        uOldErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX |
-                                        SEM_FAILCRITICALERRORS);
-
-        libHandle = LoadLibrary(PYTHONSO_DEFAULT);
-        SetErrorMode(uOldErrorMode);
-        if( !libHandle )
-        {
-            CPLDebug("VRT", "%s found", PYTHONSO_DEFAULT);
-        }
-    }
-#endif
-
-    // Then try to find the pythonXY.dll that corresponds to the python binary
-    // in the PATH
-    if( libHandle == nullptr )
-    {
-        CPLString osDLLName;
-        char* pszPath = getenv("PATH");
-        if( pszPath != nullptr
-#ifdef DEBUG
-           // For testing purposes
-           && CPLTestBool( CPLGetConfigOption(
-                                    "VRT_ENABLE_PYTHON_PATH", "YES") )
-#endif
-          )
-        {
-            char** papszTokens = CSLTokenizeString2(pszPath, ";", 0);
-            for( int iTry = 0; iTry < 2; ++iTry )
-            {
-                for( char** papszIter = papszTokens;
-                        papszIter != nullptr && *papszIter != nullptr;
-                        ++papszIter )
-                {
-                    VSIStatBufL sStat;
-                    CPLString osPythonBinary(
-                            CPLFormFilename(*papszIter, "python.exe", nullptr));
-                    if( iTry == 1 )
-                        osPythonBinary += "3";
-                    if( VSIStatL(osPythonBinary, &sStat) != 0 )
-                        continue;
-
-                    CPLDebug("VRT", "Found %s", osPythonBinary.c_str());
-
-                    // In python2.7, the dll is in the same directory as the exe
-                    char** papszFiles = VSIReadDir(*papszIter);
-                    for( char** papszFileIter = papszFiles;
-                                papszFileIter != nullptr && *papszFileIter != nullptr;
-                                ++papszFileIter )
-                    {
-                        if( STARTS_WITH_CI(*papszFileIter, "python") &&
-                            EQUAL(CPLGetExtension(*papszFileIter), "dll") )
-                        {
-                            osDLLName = CPLFormFilename(*papszIter,
-                                                        *papszFileIter,
-                                                        nullptr);
-                            break;
-                        }
-                    }
-                    CSLDestroy(papszFiles);
-
-                    // In python3.2, the dll is in the DLLs subdirectory
-                    if( osDLLName.empty() )
-                    {
-                        CPLString osDLLsDir(
-                                CPLFormFilename(*papszIter, "DLLs", nullptr));
-                        papszFiles = VSIReadDir( osDLLsDir );
-                        for( char** papszFileIter = papszFiles;
-                                    papszFileIter != nullptr && *papszFileIter != nullptr;
-                                    ++papszFileIter )
-                        {
-                            if( STARTS_WITH_CI(*papszFileIter, "python") &&
-                                EQUAL(CPLGetExtension(*papszFileIter), "dll") )
-                            {
-                                osDLLName = CPLFormFilename(osDLLsDir,
-                                                            *papszFileIter,
-                                                            nullptr);
-                                break;
-                            }
-                        }
-                        CSLDestroy(papszFiles);
-                    }
-
-                    break;
-                }
-                if( !osDLLName.empty() )
-                    break;
-            }
-            CSLDestroy(papszTokens);
-        }
-
-        if( !osDLLName.empty() )
-        {
-            //CPLDebug("VRT", "Trying %s", osDLLName.c_str());
-            UINT        uOldErrorMode;
-            uOldErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX |
-                                            SEM_FAILCRITICALERRORS);
-            libHandle = LoadLibrary(osDLLName);
-            SetErrorMode(uOldErrorMode);
-            if( libHandle != nullptr )
-            {
-                CPLDebug("VRT", "%s loaded", osDLLName.c_str());
-            }
-        }
-    }
-
-    // Otherwise probe a few known objects
-    // Note: update vrt_tutorial.dox if change
-    if( libHandle == nullptr )
-    {
-        const char* const apszPythonSO[] = { "python27.dll",
-                                            "python26.dll",
-                                            "python34.dll",
-                                            "python35.dll",
-                                            "python36.dll",
-                                            "python37.dll",
-                                            "python33.dll",
-                                            "python32.dll" };
-        UINT        uOldErrorMode;
-        uOldErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX |
-                                        SEM_FAILCRITICALERRORS);
-
-        for( size_t i = 0; libHandle == nullptr &&
-                            i < CPL_ARRAYSIZE(apszPythonSO); ++i )
-        {
-            CPLDebug("VRT", "Trying %s", apszPythonSO[i]);
-            libHandle = LoadLibrary(apszPythonSO[i]);
-            if( libHandle != nullptr )
-                CPLDebug("VRT", "... success");
-        }
-        SetErrorMode(uOldErrorMode);
-    }
-#endif
-    if( !libHandle )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot find python/libpython. You can set the PYTHONSO "
-                 "configuration option to point to the a python .so/.dll/.dylib");
-        return false;
-    }
-
-    LOAD(libHandle, Py_SetProgramName);
-    LOAD_NOCHECK(libHandle, PyBuffer_FromReadWriteMemory);
-    LOAD_NOCHECK(libHandle, PyBuffer_FillInfo);
-    LOAD_NOCHECK(libHandle, PyMemoryView_FromBuffer);
-    if( PyBuffer_FromReadWriteMemory == nullptr &&
-        (PyBuffer_FillInfo == nullptr || PyMemoryView_FromBuffer == nullptr) )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot find PyBuffer_FillInfo or "
-                 "PyBuffer_FillInfo+PyMemoryView_FromBuffer\n");
-        return false;
-    }
-    LOAD(libHandle, PyTuple_New);
-    if( PyBuffer_FromReadWriteMemory )
-    {
-        // Python 2
-        LOAD(libHandle, PyInt_FromLong);
-        LOAD(libHandle, PyString_FromStringAndSize);
-        LOAD(libHandle, PyString_AsString);
-    }
-    else
-    {
-        // Python 3
-        LOAD_WITH_NAME(libHandle, PyInt_FromLong, "PyLong_FromLong");
-        LOAD_WITH_NAME(libHandle, PyString_FromStringAndSize,
-                                        "PyBytes_FromStringAndSize");
-        LOAD_WITH_NAME(libHandle, PyString_AsString, "PyBytes_AsString");
-    }
-    LOAD(libHandle, PyFloat_FromDouble);
-    LOAD(libHandle, PyObject_Call);
-    LOAD(libHandle, Py_IncRef);
-    LOAD(libHandle, Py_DecRef);
-    LOAD(libHandle, PyErr_Occurred);
-    LOAD(libHandle, PyErr_Print);
-    LOAD(libHandle, Py_IsInitialized);
-    LOAD(libHandle, Py_InitializeEx);
-    LOAD(libHandle, PyEval_InitThreads);
-    LOAD(libHandle, PyEval_SaveThread);
-    LOAD(libHandle, PyEval_RestoreThread);
-    LOAD(libHandle, Py_Finalize);
-    LOAD(libHandle, Py_CompileString);
-    LOAD(libHandle, PyImport_ExecCodeModule);
-    LOAD(libHandle, PyObject_GetAttrString);
-    LOAD(libHandle, PyTuple_SetItem);
-    LOAD(libHandle, PyObject_Print);
-    LOAD(libHandle, PyImport_ImportModule);
-    LOAD(libHandle, PyCallable_Check);
-    LOAD(libHandle, PyDict_New);
-    LOAD(libHandle, PyDict_SetItemString);
-    LOAD(libHandle, PyGILState_Ensure);
-    LOAD(libHandle, PyGILState_Release);
-    LOAD(libHandle, PyErr_Fetch);
-    LOAD(libHandle, PyErr_Clear);
-    LOAD(libHandle, Py_GetVersion);
-
-    CPLString osPythonVersion(Py_GetVersion());
-    osPythonVersion.replaceAll("\r\n", ' ');
-    osPythonVersion.replaceAll('\n', ' ');
-    CPLDebug("VRT", "Python version used: %s", osPythonVersion.c_str());
-
-#else // LOAD_NOCHECK_WITH_NAME
-    CPLError(CE_Failure, CPLE_AppDefined,
-             "This platform doesn't support dynamic loading of libraries")
-    return false;
-#endif // LOAD_NOCHECK_WITH_NAME
-
-    bInit = true;
-    return true;
-}
-
-/************************************************************************/
-/*                      GetPyExceptionString()                          */
-/************************************************************************/
-
-static CPLString GetPyExceptionString()
-{
-    PyObject *poPyType = nullptr;
-    PyObject *poPyValue = nullptr;
-    PyObject *poPyTraceback = nullptr;
-
-    PyErr_Fetch(&poPyType, &poPyValue, &poPyTraceback);
-    if( poPyType )
-        Py_IncRef(poPyType);
-    if( poPyValue )
-        Py_IncRef(poPyValue);
-    if( poPyTraceback )
-        Py_IncRef(poPyTraceback);
-
-    // This is a mess. traceback.format_exception/format_exception_only
-    // sometimes throw exceptions themselves !
-    CPLString osPythonCode(
-        "import traceback\n"
-        "\n"
-        "def GDALFormatException2(etype, value):\n"
-        "    try:\n"
-        "       return ''.join(traceback.format_exception_only(etype, value)).encode('UTF-8')\n"
-        "    except:\n"
-        "       return (str(etype) + ', ' + str(value)).encode('UTF-8')\n"
-        "\n"
-        "def GDALFormatException3(etype, value, tb):\n"
-        //"    print(etype, value, tb)\n"
-        "    try:\n"
-        "       return ''.join(traceback.format_exception(etype, value, tb)).encode('UTF-8')\n"
-        "    except:\n"
-        "       return (str(etype) + ', ' + str(value)).encode('UTF-8')\n");
-
-    CPLString osRet("An exception occurred in exception formatting code...");
-
-    static int nCounter = 0;
-    CPLString osModuleName( CPLSPrintf("gdal_exception_%d", nCounter));
-    PyObject* poCompiledString = Py_CompileString(osPythonCode,
-                                                  osModuleName, Py_file_input);
-    if( poCompiledString == nullptr || PyErr_Occurred() )
-    {
-        PyErr_Print();
-    }
-    else
-    {
-        PyObject* poModule =
-            PyImport_ExecCodeModule(osModuleName, poCompiledString);
-        CPLAssert(poModule);
-
-        Py_DecRef(poCompiledString);
-
-        PyObject* poPyGDALFormatException2 = PyObject_GetAttrString(poModule,
-                                                "GDALFormatException2" );
-        CPLAssert(poPyGDALFormatException2);
-
-        PyObject* poPyGDALFormatException3 = PyObject_GetAttrString(poModule,
-                                                "GDALFormatException3" );
-        CPLAssert(poPyGDALFormatException3);
-
-        Py_DecRef(poModule);
-
-        PyObject* pyArgs = PyTuple_New( poPyTraceback ? 3 : 2);
-        PyTuple_SetItem(pyArgs, 0, poPyType);
-        PyTuple_SetItem(pyArgs, 1, poPyValue);
-        if( poPyTraceback )
-            PyTuple_SetItem(pyArgs, 2, poPyTraceback );
-        PyObject* poPyRet = PyObject_Call(
-            poPyTraceback ? poPyGDALFormatException3 : poPyGDALFormatException2,
-            pyArgs, nullptr );
-        Py_DecRef(pyArgs);
-
-        if( PyErr_Occurred() )
-        {
-            osRet = "An exception occurred in exception formatting code...";
-            PyErr_Print();
-        }
-        else
-        {
-            osRet = PyString_AsString(poPyRet);
-            Py_DecRef(poPyRet);
-        }
-
-        Py_DecRef(poPyGDALFormatException2);
-        Py_DecRef(poPyGDALFormatException3);
-    }
-
-    if( poPyType )
-        Py_DecRef(poPyType);
-    if( poPyValue )
-        Py_DecRef(poPyValue);
-    if( poPyTraceback )
-        Py_DecRef(poPyTraceback);
-
-    return osRet;
-}
-
 /************************************************************************/
 /* ==================================================================== */
 /*                     VRTDerivedRasterBandPrivateData                  */
@@ -860,8 +133,11 @@ static CPLString GetPyExceptionString()
 
 class VRTDerivedRasterBandPrivateData
 {
+        VRTDerivedRasterBandPrivateData(const VRTDerivedRasterBandPrivateData&) = delete;
+        VRTDerivedRasterBandPrivateData& operator= (const VRTDerivedRasterBandPrivateData&) = delete;
+
     public:
-        CPLString m_osCode;
+        CPLString m_osCode{};
         CPLString m_osLanguage;
         int       m_nBufferRadius;
         PyObject* m_poGDALCreateNumpyArray;
@@ -870,7 +146,7 @@ class VRTDerivedRasterBandPrivateData
         bool      m_bPythonInitializationSuccess;
         bool      m_bExclusiveLock;
         bool      m_bFirstTime;
-        std::vector< std::pair<CPLString,CPLString> > m_oFunctionArgs;
+        std::vector< std::pair<CPLString,CPLString> > m_oFunctionArgs{};
 
         VRTDerivedRasterBandPrivateData():
             m_osLanguage("C"),
@@ -890,52 +166,8 @@ class VRTDerivedRasterBandPrivateData
                 Py_DecRef(m_poGDALCreateNumpyArray);
             if( m_poUserFunction )
                 Py_DecRef(m_poUserFunction);
-
-            CPLMutexHolder oHolder(&ghMutex);
-            gnPythonInstanceCounter --;
         }
 };
-
-/************************************************************************/
-/* ==================================================================== */
-/*                            VRT_GIL_Holder                            */
-/* ==================================================================== */
-/************************************************************************/
-
-class VRT_GIL_Holder
-{
-        bool             m_bExclusiveLock;
-        PyGILState_STATE m_eState;
-
-    public:
-
-        explicit VRT_GIL_Holder(bool bExclusiveLock);
-        virtual ~VRT_GIL_Holder();
-};
-
-VRT_GIL_Holder::VRT_GIL_Holder(bool bExclusiveLock):
-    m_bExclusiveLock(bExclusiveLock)
-{
-    if( bExclusiveLock )
-    {
-        if( ghMutex )
-            CPLAcquireMutex( ghMutex, 1000.0 );
-    }
-    m_eState = PyGILState_Ensure();
-}
-
-VRT_GIL_Holder::~VRT_GIL_Holder()
-{
-    PyGILState_Release(m_eState);
-    if( m_bExclusiveLock )
-    {
-        if( ghMutex )
-            CPLReleaseMutex( ghMutex );
-    }
-    else
-    {
-    }
-}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -988,23 +220,6 @@ VRTDerivedRasterBand::~VRTDerivedRasterBand()
 
 void VRTDerivedRasterBand::Cleanup()
 {
-    if( ghMutex )
-        CPLDestroyMutex(ghMutex);
-    ghMutex = nullptr;
-
-    if( gnPythonInstanceCounter == 0 && gbHasInitializedPython &&
-        CPLTestBool(CPLGetConfigOption("GDAL_VRT_ENABLE_PYTHON_FINALIZE",
-                                       "YES")) )
-    {
-        // We call Py_Finalize at driver destruction, rather at dataset
-        // destruction, since numpy crashes when it is reloaded after the next
-        // Py_Initialize
-        CPLDebug("VRT", "Py_Finalize() = %p", Py_Finalize);
-        PyEval_RestoreThread(gphThreadState);
-        Py_Finalize();
-        gbHasInitializedPython = false;
-        gphThreadState = nullptr;
-    }
 }
 
 /************************************************************************/
@@ -1377,23 +592,8 @@ bool VRTDerivedRasterBand::InitializePython()
         return false;
     }
 
-    if( !LoadPythonAPI() )
+    if( !GDALPythonInitialize() )
         return false;
-
-    // Make sure the python interpreter is initialized
-    {
-        CPLMutexHolder oHolder(&ghMutex);
-        int bIsInitialized = Py_IsInitialized();
-        if( !bIsInitialized)
-        {
-            gbHasInitializedPython = true;
-            Py_InitializeEx(0);
-            CPLDebug("VRT", "Py_Initialize()");
-            PyEval_InitThreads();
-            gphThreadState = PyEval_SaveThread();
-        }
-        gnPythonInstanceCounter ++;
-    }
 
     // Whether we should just use our own global mutex, in addition to Python
     // GIL locking.
@@ -1406,7 +606,7 @@ bool VRTDerivedRasterBand::InitializePython()
     // regular files
     const bool bUseExclusiveLock = m_poPrivate->m_bExclusiveLock ||
                     m_poPrivate->m_osCode.find("@jit") != std::string::npos;
-    VRT_GIL_Holder oHolder(bUseExclusiveLock);
+    GIL_Holder oHolder(bUseExclusiveLock);
 
     // As we don't want to depend on numpy C API/ABI, we use a trick to build
     // a numpy array object. We define a Python function to which we pass a
@@ -1601,7 +801,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         {
             GDALCopyWords(
                 &dfWriteValue, GDT_Float64, 0,
-                reinterpret_cast<GByte *>( pData ) + nLineSpace * iLine,
+                static_cast<GByte *>( pData ) + nLineSpace * iLine,
                 eBufType, static_cast<int>(nPixelSpace), nBufXSize );
         }
     }
@@ -1653,7 +853,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     const int nExtBufXSize = nBufXSize + 2 * nBufferRadius;
     const int nExtBufYSize = nBufYSize + 2 * nBufferRadius;
     void **pBuffers
-        = reinterpret_cast<void **>( CPLMalloc(sizeof(void *) * nSources) );
+        = static_cast<void **>( CPLMalloc(sizeof(void *) * nSources) );
     for( int iSource = 0; iSource < nSources; iSource++ ) {
         pBuffers[iSource] =
             VSI_MALLOC3_VERBOSE(nSrcTypeSize, nExtBufXSize, nExtBufYSize);
@@ -1680,7 +880,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         else
         {
             GDALCopyWords( &m_dfNoDataValue, GDT_Float64, 0,
-                           reinterpret_cast<GByte *>( pBuffers[iSource] ),
+                           static_cast<GByte *>( pBuffers[iSource] ),
                            eSrcType, nSrcTypeSize,
                            nExtBufXSize * nExtBufYSize );
         }
@@ -1754,8 +954,8 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     // Load values for sources into packed buffers.
     CPLErr eErr = CE_None;
     for( int iSource = 0; iSource < nSources && eErr == CE_None; iSource++ ) {
-        GByte* pabyBuffer = reinterpret_cast<GByte*>(pBuffers[iSource]);
-        eErr = reinterpret_cast<VRTSource *>( papoSources[iSource] )->RasterIO(
+        GByte* pabyBuffer = static_cast<GByte*>(pBuffers[iSource]);
+        eErr = static_cast<VRTSource *>( papoSources[iSource] )->RasterIO(
             eSrcType,
             nXOffExt, nYOffExt, nXSizeExt, nYSizeExt,
             pabyBuffer + (nYShiftInBuffer * nExtBufXSize +
@@ -1842,7 +1042,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             nPixelSpace != nBufTypeSize ||
             nLineSpace != static_cast<GSpacing>(nBufTypeSize) * nBufXSize )
         {
-            pabyTmpBuffer = reinterpret_cast<GByte*>(VSI_CALLOC_VERBOSE(
+            pabyTmpBuffer = static_cast<GByte*>(VSI_CALLOC_VERBOSE(
                             static_cast<size_t>(nExtBufXSize) * nExtBufYSize,
                             GDALGetDataTypeSizeBytes(eDataType)));
             if( !pabyTmpBuffer )
@@ -1854,7 +1054,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     ( m_poPrivate->m_bFirstTime &&
                     m_poPrivate->m_osCode.find("@jit") != std::string::npos);
         m_poPrivate->m_bFirstTime = false;
-        VRT_GIL_Holder oHolder(bUseExclusiveLock);
+        GIL_Holder oHolder(bUseExclusiveLock);
 
         // Prepare target numpy array
         PyObject* poPyDstArray = GDALCreateNumpyArray(
@@ -1873,7 +1073,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         PyObject* pyArgInputArray = PyTuple_New(nSources);
         for( int i = 0; i < nSources; i++ )
         {
-            GByte* pabyBuffer = reinterpret_cast<GByte*>(pBuffers[i]);
+            GByte* pabyBuffer = static_cast<GByte*>(pBuffers[i]);
             PyObject* poPySrcArray = GDALCreateNumpyArray(
                         m_poPrivate->m_poGDALCreateNumpyArray,
                         pabyBuffer,
@@ -1930,10 +1130,9 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         Py_DecRef(pyArgs);
         Py_DecRef(pyKwargs);
 
-        if (PyErr_Occurred())
+        if( ErrOccurredEmitCPLError() )
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "%s", GetPyExceptionString().c_str());
+            // do nothing
         }
         else
         {
@@ -1954,7 +1153,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 GDALCopyWords(pabyTmpBuffer + nSrcOffset,
                               eDataType,
                               GDALGetDataTypeSizeBytes(eDataType),
-                              reinterpret_cast<GByte*>(pData) + iY * nLineSpace,
+                              static_cast<GByte*>(pData) + iY * nLineSpace,
                               eBufType,
                               static_cast<int>(nPixelSpace),
                               nBufXSize);
@@ -1964,7 +1163,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         }
     }
     else if( eErr == CE_None && pfnPixelFunc != nullptr ) {
-        eErr = pfnPixelFunc( reinterpret_cast<void **>( pBuffers ), nSources,
+        eErr = pfnPixelFunc( static_cast<void **>( pBuffers ), nSources,
                              pData, nBufXSize, nBufYSize,
                              eSrcType, eBufType, static_cast<int>(nPixelSpace),
                              static_cast<int>(nLineSpace) );

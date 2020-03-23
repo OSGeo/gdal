@@ -47,14 +47,13 @@ def test_osr_epsg_1():
     assert srs.GetAuthorityCode(None) == '3003'
 
 ###############################################################################
-# Check that EPSG:4312 lookup has the towgs84 values set properly
-# from gcs.override.csv.
-
+# Check that EPSG:4312 w.r.t towgs84 values
 
 def test_osr_epsg_2():
 
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4312)
+    with gdaltest.config_option('OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG', 'YES'):
+        srs.ImportFromEPSG(4312)
 
     if float(srs.GetAttrValue('TOWGS84', 6)) != pytest.approx(2.4232, abs=0.0005):
         print(srs.ExportToPrettyWkt())
@@ -71,6 +70,7 @@ def test_osr_epsg_3():
     for epsg in [3120, 2172, 2173, 2174, 2175, 3328]:
         srs = osr.SpatialReference()
         srs.ImportFromEPSG(epsg)
+        srs.AddGuessedTOWGS84()
 
         expected_towgs84 = [33.4, -146.6, -76.3, -0.359, -0.053, 0.844, -0.84]
 

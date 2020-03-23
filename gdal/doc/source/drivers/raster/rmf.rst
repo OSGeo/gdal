@@ -1,10 +1,12 @@
 .. _raster.rmf:
 
 ================================================================================
-RMF --- Raster Matrix Format
+RMF -- Raster Matrix Format
 ================================================================================
 
 .. shortname:: RMF
+
+.. built_in_by_default::
 
 RMF is a simple tiled raster format used in the GIS "Integration" and
 "Panorama" GIS. The format itself has very poor capabilities.
@@ -37,6 +39,12 @@ Metadata
    (millimeters).
 -  **ELEVATION_TYPE**: Could be either 0 (absolute elevation) or 1
    (total elevation). MTW only.
+
+Open Options
+------------
+- **RMF_SET_VERTCS**: set to ON, the layers spatial reference
+   will include vertical coordinate system description if exist.
+   This feature can be enabled via config option with same name.
 
 Creation Options
 ----------------

@@ -9,15 +9,15 @@ cd gdal
 cd ../autotest
 
 # Don't run these
-rm ogr/ogr_fgdb.py ogr/ogr_pgeo.py
+rm -f ogr/ogr_fgdb.py ogr/ogr_pgeo.py
 
 # Too old spatialite version
-rm ogr/ogr_sqlite.py gdrivers/rasterlite.py
+rm -f ogr/ogr_sqlite.py gdrivers/rasterlite.py
 
 # install test dependencies
 sudo -H pip install -U pip
 sudo -H pip install -U -r ./requirements.txt
-sudo apt-get remove python-numpy
+sudo apt-get remove -y python-numpy
 sudo -H pip install -U numpy
 
 # Run each module in its own pytest process.
@@ -26,7 +26,7 @@ sudo -H pip install -U numpy
 # Unfortunately it's also a reasonably large slowdown since we have to wait
 # for a python interpreter and all modules to load between each module.
 # (and add a grep to get rid of the extra pytest header headers/etc)
-# 
+#
 # NOTE: `find ... -exec` always exits with 0 even when the tests failed.
 # That turns out to be what we want here though, since we want
 # to not fail when the address sanitizer finds errors.
@@ -45,7 +45,7 @@ chmod +x pytest_wrapper.sh
 
 find \
     ogr gcore gdrivers osr alg gnm utilities pyscripts \
-    -name '*.py' ! -name netcdf_cfchecks.py ! -name "__init__.py" \
+    -name '*.py' ! -name netcdf_cfchecks.py ! -name "__init__.py" ! -path 'ogr/data/*' \
     -print \
     -exec ./pytest_wrapper.sh {} \; \
     | tee ./test-output.txt

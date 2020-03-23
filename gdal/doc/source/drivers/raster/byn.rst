@@ -6,6 +6,8 @@ BYN - Natural Resources Canada's Geoid file format (.byn)
 
 .. shortname:: BYN
 
+.. built_in_by_default:: 
+
 Files with extension ".byn" have a binary format. The format includes
 two sections which are the Header and the Data. The data are stored by
 rows starting from the north. Each row is stored from the west to the

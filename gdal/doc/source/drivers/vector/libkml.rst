@@ -5,13 +5,14 @@ LIBKML Driver (.kml .kmz)
 
 .. shortname:: LIBKML
 
+.. build_dependencies:: libkml
+
 The LIBKML driver is a client of
-`Libkml <https://github.com/google/libkml>`__ from Google, a reference
+`Libkml <https://github.com/libkml/libkml>`__ , a reference
 implementation of `KML <http://www.opengeospatial.org/standards/kml/>`__
 reading and writing, in the form of a cross platform C++ library. You
 must build and install Libkml in order to use this OGR driver. Note: you
-need to build libkml from its latest SVN version (libkml 1.2 isn't
-enough).
+need to build libkml 1.3 or master.
 
 Note that if you build and include this LIBKML driver, it will become
 the default reader of KML for ogr, overriding the previous :ref:`KML

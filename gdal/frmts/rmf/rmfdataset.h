@@ -130,6 +130,7 @@ typedef struct
 typedef struct
 {
     GInt32      nEllipsoid;
+    GInt32      nVertDatum;
     GInt32      nDatum;
     GInt32      nZone;
 } RMFExtHeader;

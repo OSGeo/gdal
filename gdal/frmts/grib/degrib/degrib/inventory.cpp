@@ -525,9 +525,10 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
        && (templat != GS4_RADAR) && (templat != GS4_SATELLITE)
        && (templat != GS4_SATELLITE_SYNTHETIC)
        && (templat != GS4_DERIVED_INTERVAL)
-       && (templat != GS4_ANALYSIS_CHEMICAL) ) {
+       && (templat != GS4_ANALYSIS_CHEMICAL)
+       && (templat != GS4_OPTICAL_PROPERTIES_AEROSOL) ) {
       errSprintf ("This was only designed for templates 0, 1, 2, 5, 6, 7, 8, 9, "
-                  "10, 11, 12, 15, 20, 30, 32, 40. Template found = %d\n", templat);
+                  "10, 11, 12, 15, 20, 30, 32, 40, 48. Template found = %d\n", templat);
 
       inv->validTime = 0;
       inv->foreSec = 0;
@@ -557,19 +558,22 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
         }
         return 1;
    }
-   if( secLen < 19 - 5 + 4 )
+
+   unsigned nOffset = 0;
+   if( templat == GS4_ANALYSIS_CHEMICAL ) {
+       nOffset = 16 - 14;
+   }
+   else if( templat == GS4_OPTICAL_PROPERTIES_AEROSOL )
+   {
+       nOffset = 38 - 14;
+   }
+
+   if( secLen < nOffset + 19 - 5 + 4 )
        return -8;
 
    cat = (*buffer)[10 - 5];
    subcat = (*buffer)[11 - 5];
-   if( templat == GS4_ANALYSIS_CHEMICAL )
-   {
-        if( secLen < 21 - 5 + 4 )
-            return -8;
-        genProcess = (*buffer)[14 - 5];
-   }
-   else
-        genProcess = (*buffer)[12 - 5];
+   genProcess = (*buffer)[nOffset + 12 - 5];
    genID = 0;
    probType = 0;
    lowerProb = 0;
@@ -582,10 +586,6 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
       timeRangeUnit = 255;
       lenTime = 0;
    } else {
-      int nOffset = 0;
-      if( templat == GS4_ANALYSIS_CHEMICAL ) {
-          nOffset = 2;
-      }
       genID = (*buffer)[nOffset + 14 - 5];
       /* Compute forecast time. */
       foreTimeUnit = (*buffer)[nOffset + 18 - 5];
@@ -729,6 +729,22 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
       }
    }
 
+   uChar derivedFcst = (uChar)-1; // not determined
+   switch (templat) {
+       case GS4_DERIVED:
+       case GS4_DERIVED_CLUSTER_RECTANGULAR_AREA:
+       case GS4_DERIVED_CLUSTER_CIRCULAR_AREA:
+       case GS4_DERIVED_INTERVAL:
+       case GS4_DERIVED_INTERVAL_CLUSTER_RECTANGULAR_AREA:
+       case GS4_DERIVED_INTERVAL_CLUSTER_CIRCULAR_AREA:
+           if( secLen >= 35 ) {
+               derivedFcst = (uChar) (*buffer)[35 - 5];
+           }
+           break;
+       default:
+           break;
+   }
+
    if (timeRangeUnit == 255) {
       timeRangeUnit = 1;
       lenTime = DoubleToSInt4Clamp(
@@ -821,11 +837,6 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
       sndSurfValue = 0;
       f_sndValue = 0;
    } else {
-      unsigned int nOffset = 0;
-      if( templat == GS4_ANALYSIS_CHEMICAL ) {
-          nOffset = 2;
-      }
-
       if( secLen < nOffset + 31 - 5 + 4)
             return -8;
       fstSurfType = (*buffer)[nOffset + 23 - 5];
@@ -860,7 +871,9 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
    /* Find out what the name of this variable is. */
    ParseElemName (mstrVersion, center, subcenter, prodType, templat, cat, subcat,
                   lenTime, timeRangeUnit, statProcessID, timeIncrType, genID, probType, lowerProb,
-                  upperProb, &(inv->element), &(inv->comment),
+                  upperProb,
+                  derivedFcst,
+                  &(inv->element), &(inv->comment),
                   &(inv->unitName), &convert, percentile, genProcess,
                   f_fstValue, fstSurfValue, f_sndValue, sndSurfValue);
 

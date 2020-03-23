@@ -5,6 +5,8 @@ MSSQLSpatial - Microsoft SQL Server Spatial Database
 
 .. shortname:: MSSQLSpatial
 
+.. build_dependencies:: ODBC library
+
 This driver implements support for access to spatial tables in Microsoft
 SQL Server 2008+ which contains the geometry and geography data types to
 represent the geometry columns.
@@ -79,7 +81,7 @@ default, rather than evaluating them internally when using the
 ExecuteSQL() call on the OGRDataSource, or the -sql command option to
 ogr2ogr. Attribute query expressions are also passed directly through to
 MSSQL. It's also possible to request the OGR MSSQL driver to handle SQL
-commands with the `OGR SQL <ogr_sql.html>`__ engine, by passing
+commands with the :ref:`OGR SQL <ogr_sql_dialect>` engine, by passing
 **"OGRSQL"** string to the ExecuteSQL() method, as the name of the SQL
 dialect.
 
@@ -210,11 +212,15 @@ Creating a layer from an OGR data source
 
       ogr2ogr -overwrite -f MSSQLSpatial "MSSQL:server=.\MSSQLSERVER2008;database=geodb;trusted_connection=yes" "rivers.tab"
 
+      ogr2ogr -overwrite -f MSSQLSpatial "MSSQL:server=127.0.0.1;database=TestDB;UID=SA;PWD=DummyPassw0rd" "rivers.gpkg"
+      
 Connecting to a layer and dump the contents
 
    ::
 
       ogrinfo -al "MSSQL:server=.\MSSQLSERVER2008;database=geodb;tables=rivers;trusted_connection=yes"
+      
+      ogrinfo -al "MSSQL:server=127.0.0.1;database=TestDB;driver=ODBC Driver 17 for SQL Server;UID=SA;PWD=DummyPassw0rd"
 
 Creating a spatial index
 

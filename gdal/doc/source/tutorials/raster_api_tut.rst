@@ -336,7 +336,7 @@ In Python:
     if metadata.get(gdal.DCAP_CREATE) == "YES":
         print("Driver {} supports Create() method.".format(fileformat))
 
-    if metadata.get(gdal.DCAP_CREATE) == "YES":
+    if metadata.get(gdal.DCAP_CREATECOPY) == "YES":
         print("Driver {} supports CreateCopy() method.".format(fileformat))
 
 Note that a number of drivers are read-only and won't support Create() or CreateCopy().

@@ -202,7 +202,7 @@ typedef enum
     /*! Cyan band of CMYK image */                        GCI_CyanBand=10,
     /*! Magenta band of CMYK image */                     GCI_MagentaBand=11,
     /*! Yellow band of CMYK image */                      GCI_YellowBand=12,
-    /*! Black band of CMLY image */                       GCI_BlackBand=13,
+    /*! Black band of CMYK image */                       GCI_BlackBand=13,
     /*! Y Luminance */                                    GCI_YCbCr_YBand=14,
     /*! Cb Chroma */                                      GCI_YCbCr_CbBand=15,
     /*! Cr Chroma */                                      GCI_YCbCr_CrBand=16,
@@ -1516,6 +1516,8 @@ GDALMDArrayH CPL_DLL GDALMDArrayGetView(GDALMDArrayH hArray, const char* pszView
 GDALMDArrayH CPL_DLL GDALMDArrayTranspose(GDALMDArrayH hArray,
                                             size_t nNewAxisCount,
                                             const int *panMapNewAxisToOldAxis);
+GDALMDArrayH CPL_DLL GDALMDArrayGetUnscaled(GDALMDArrayH hArray);
+GDALMDArrayH CPL_DLL GDALMDArrayGetMask(GDALMDArrayH hArray, CSLConstList papszOptions);
 GDALDatasetH CPL_DLL GDALMDArrayAsClassicDataset(GDALMDArrayH hArray,
                                                  size_t iXDim, size_t iYDim);
 

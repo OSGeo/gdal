@@ -992,7 +992,10 @@ def test_hfa_write_tmso_projection():
 
 def test_hfa_read_homva_projection():
     exp_wkt = 'PROJCS["Hotine Oblique Mercator (Variant A)",GEOGCS["GDM 2000",DATUM["Geodetic_Datum_of_Malaysia_2000",SPHEROID["GRS 1980",6378137,298.257222096042],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Hotine_Oblique_Mercator"],PARAMETER["latitude_of_center",4],PARAMETER["longitude_of_center",115],PARAMETER["azimuth",53.31580995],PARAMETER["rectified_grid_angle",53.1301023611111],PARAMETER["scale_factor",0.99984],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["meters",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
-    return hfa_verify_dataset_projection('../gcore/data/3376.tif', exp_wkt)
+    ds = gdal.Open('../gcore/data/3376.tif')
+    srs_wkt = ds.GetProjectionRef()
+    assert gdaltest.equal_srs_from_wkt(srs_wkt, exp_wkt, verbose=False) or \
+           gdaltest.equal_srs_from_wkt(srs_wkt, exp_wkt.replace('Geodetic_Datum_of_Malaysia_2000', 'GDM 2000'), verbose=False), srs_wkt
 
 ###############################################################################
 # Verify can write  Hotine Oblique Mercator (Variant A) projections to aux files
@@ -1003,7 +1006,7 @@ def test_hfa_write_homva_projection():
     out_ds = gdal.GetDriverByName('HFA').Create(dataset_path, 1, 1)
     gt = (0, 1, 0, 0, 0, 1)
     out_ds.SetGeoTransform(gt)
-    out_ds.SetProjection('PROJCS["Hotine Oblique Mercator (Variant A)",GEOGCS["GDM 2000",DATUM["GDM 2000",SPHEROID["GRS 1980",6378137,298.2572220960422],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Hotine_Oblique_Mercator"],PARAMETER["latitude_of_center",4],PARAMETER["longitude_of_center",115],PARAMETER["azimuth",53.31580995],PARAMETER["rectified_grid_angle",53.13010236111111],PARAMETER["scale_factor",0.99984],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["meters",1]]')
+    out_ds.SetProjection('PROJCS["Hotine Oblique Mercator (Variant A)",GEOGCS["GDM 2000",DATUM["GDM_2000",SPHEROID["GRS 1980",6378137,298.2572220960422],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Hotine_Oblique_Mercator"],PARAMETER["latitude_of_center",4],PARAMETER["longitude_of_center",115],PARAMETER["azimuth",53.31580995],PARAMETER["rectified_grid_angle",53.13010236111111],PARAMETER["scale_factor",0.99984],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["meters",1]]')
     out_ds = None
     exp_wkt = 'PROJCS["Hotine Oblique Mercator (Variant A)",GEOGCS["GDM_2000",DATUM["GDM_2000",SPHEROID["GRS 1980",6378137,298.257222096042],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Hotine_Oblique_Mercator"],PARAMETER["latitude_of_center",4],PARAMETER["longitude_of_center",115],PARAMETER["azimuth",53.31580995],PARAMETER["rectified_grid_angle",53.1301023611111],PARAMETER["scale_factor",0.99984],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["meters",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
     ret = hfa_verify_dataset_projection(dataset_path, exp_wkt)

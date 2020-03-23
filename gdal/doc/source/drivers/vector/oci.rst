@@ -5,6 +5,8 @@ Oracle Spatial
 
 .. shortname:: OCI
 
+.. build_dependencies:: OCI library
+
 This driver supports reading and writing data in Oracle Spatial (8.1.7
 or later) Object-Relational format. The Oracle Spatial driver is not
 normally built into OGR, but may be built in on platforms where the
@@ -51,8 +53,8 @@ check to a layer. Internally these pseudo-commands are translated into
 more complex SQL commands for Oracle.
 
 It is also possible to request the driver to handle SQL commands with
-`OGR SQL <ogr_sql.html>`__ engine, by passing **"OGRSQL"** string to the
-ExecuteSQL() method, as name of the SQL dialect.
+:ref:`OGR SQL <ogr_sql_dialect>` engine, by passing **"OGRSQL"**
+string to the ExecuteSQL() method, as name of the SQL dialect.
 
 Caveats
 -------

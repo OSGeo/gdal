@@ -226,6 +226,7 @@ class CPL_DLL OGRSpatialReference
                                 double *padfPrjParams, long iDatum,
                                 int nUSGSAngleFormat = USGS_ANGLE_PACKEDDMS );
     OGRErr      importFromPanorama( long, long, long, double* );
+    OGRErr      importVertCSFromPanorama( int );
     OGRErr      importFromOzi( const char * const* papszLines );
     OGRErr      importFromWMSAUTO( const char *pszAutoDef );
     OGRErr      importFromXML( const char * );
@@ -358,6 +359,7 @@ class CPL_DLL OGRSpatialReference
                                const OGRSpatialReference *poHorizSRS,
                                const OGRSpatialReference *poVertSRS );
 
+    // cppcheck-suppress functionStatic
     OGRErr      PromoteTo3D( const char* pszName );
 
     OGRErr      SetFromUserInput( const char * );
@@ -366,6 +368,7 @@ class CPL_DLL OGRSpatialReference
                             double = 0.0, double = 0.0, double = 0.0,
                             double = 0.0 );
     OGRErr      GetTOWGS84( double *padfCoef, int nCoeff = 7 ) const;
+    OGRErr      AddGuessedTOWGS84();
 
     double      GetSemiMajor( OGRErr * = nullptr ) const;
     double      GetSemiMinor( OGRErr * = nullptr ) const;
@@ -647,6 +650,13 @@ class CPL_DLL OGRSpatialReference
                                         double dfFalseEasting,
                                         double dfFalseNorthing);
 
+    /** Pole rotation (GRIB convention) */
+    OGRErr      SetDerivedGeogCRSWithPoleRotationGRIBConvention(
+                                               const char* pszCRSName,
+                                               double dfSouthPoleLat,
+                                               double dfSouthPoleLon,
+                                               double dfAxisRotation );
+
     /** State Plane */
     OGRErr      SetStatePlane( int nZone, int bNAD83 = TRUE,
                                const char *pszOverrideUnitName = nullptr,
@@ -772,6 +782,11 @@ public:
      */
     static inline OGRCoordinateTransformation* FromHandle(OGRCoordinateTransformationH hCT)
         { return reinterpret_cast<OGRCoordinateTransformation*>(hCT); }
+
+    /** Clone
+     * @since GDAL 3.1
+     */
+    virtual OGRCoordinateTransformation* Clone() const = 0;
 };
 
 OGRCoordinateTransformation CPL_DLL *
@@ -796,6 +811,8 @@ private:
 
 public:
     OGRCoordinateTransformationOptions();
+    OGRCoordinateTransformationOptions(const OGRCoordinateTransformationOptions&);
+    OGRCoordinateTransformationOptions& operator= (const OGRCoordinateTransformationOptions&);
     ~OGRCoordinateTransformationOptions();
 
     bool SetAreaOfInterest(double dfWestLongitudeDeg,

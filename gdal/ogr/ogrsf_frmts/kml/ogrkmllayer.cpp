@@ -445,7 +445,6 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
         VSIFPrintfL( fp, "\t<Style>");
         if( poPen != nullptr )
         {
-            bool bHasWidth = false;
             GBool bDefault = FALSE;
 
             /* Require width to be returned in pixel */
@@ -453,8 +452,6 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
             double fW = poPen->Width(bDefault);
             if( bDefault )
                 fW = 1;
-            else
-                bHasWidth = true;
             const char* pszColor = poPen->Color(bDefault);
             const int nColorLen = static_cast<int>(CPLStrnlen(pszColor, 10));
             if( pszColor != nullptr &&
@@ -480,8 +477,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
                 acColor[6] = pszColor[1]; /* R */
                 acColor[7] = pszColor[2];
                 VSIFPrintfL( fp, "<LineStyle><color>%s</color>", acColor);
-                if (bHasWidth)
-                    VSIFPrintfL( fp, "<width>%g</width>", fW);
+                VSIFPrintfL( fp, "<width>%g</width>", fW);
                 VSIFPrintfL( fp, "</LineStyle>");
             }
             else

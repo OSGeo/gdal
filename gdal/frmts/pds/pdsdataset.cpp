@@ -47,6 +47,7 @@ constexpr double NULL3 = -3.4028226550889044521e+38;
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 #include "cpl_safemaths.hpp"
+#include "vicardataset.h"
 
 CPL_CVSID("$Id$")
 
@@ -1259,13 +1260,31 @@ int PDSDataset::ParseCompressedImage()
 int PDSDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
-    if( poOpenInfo->pabyHeader == nullptr )
+    if( poOpenInfo->pabyHeader == nullptr || poOpenInfo->fpL == nullptr )
         return FALSE;
 
-    return strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ),
-                  "PDS_VERSION_ID") != nullptr ||
-           strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ),
-                  "ODL_VERSION_ID") != nullptr;
+    const char* pszHdr = reinterpret_cast<char *>( poOpenInfo->pabyHeader );
+    if( strstr(pszHdr, "PDS_VERSION_ID") == nullptr &&
+        strstr(pszHdr, "ODL_VERSION_ID") == nullptr )
+    {
+        return FALSE;
+    }
+
+    // Some PDS3 images include a VICAR header pointed by ^IMAGE_HEADER.
+    // If the user sets GDAL_TRY_PDS3_WITH_VICAR=YES, then we will gracefully
+    // hand over the file to the VICAR dataset.
+    std::string unused;
+    if( CPLTestBool(CPLGetConfigOption("GDAL_TRY_PDS3_WITH_VICAR", "NO")) &&
+        !STARTS_WITH(poOpenInfo->pszFilename, "/vsisubfile/") &&
+        VICARDataset::GetVICARLabelOffsetFromPDS3(pszHdr, poOpenInfo->fpL, unused) > 0 )
+    {
+        CPLDebug("PDS3",
+                    "File is detected to have a VICAR header. "
+                    "Handing it over to the VICAR driver");
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -1274,12 +1293,12 @@ int PDSDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    if( !Identify( poOpenInfo ) || poOpenInfo->fpL == nullptr )
+    if( !Identify( poOpenInfo ) )
         return nullptr;
 
-    if( strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ),
-                  "PDS_VERSION_ID") != nullptr &&
-        strstr((const char *)poOpenInfo->pabyHeader,"PDS3") == nullptr )
+    const char* pszHdr = reinterpret_cast<char *>( poOpenInfo->pabyHeader );
+    if( strstr(pszHdr, "PDS_VERSION_ID") != nullptr &&
+        strstr(pszHdr, "PDS3") == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "It appears this is an older PDS image type.  Only PDS_VERSION_ID = PDS3 are currently supported by this gdal PDS reader.");
@@ -1297,10 +1316,10 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->eAccess = poOpenInfo->eAccess;
 
-    const char* pszPDSVersionID = strstr((const char *)poOpenInfo->pabyHeader,"PDS_VERSION_ID");
+    const char* pszPDSVersionID = strstr(pszHdr,"PDS_VERSION_ID");
     int nOffset = 0;
     if (pszPDSVersionID)
-        nOffset = static_cast<int>(pszPDSVersionID - (const char *)poOpenInfo->pabyHeader);
+        nOffset = static_cast<int>(pszPDSVersionID - pszHdr);
 
     if( ! poDS->oKeywords.Ingest( fpQube, nOffset ) )
     {

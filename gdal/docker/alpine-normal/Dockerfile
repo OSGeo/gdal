@@ -5,7 +5,7 @@
 # Public domain
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG ALPINE_VERSION=3.10
+ARG ALPINE_VERSION=3.11
 FROM alpine:${ALPINE_VERSION} as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
@@ -21,15 +21,16 @@ RUN \
     && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/usr/share/proj \
     && rm -f *.zip
 
-# For GDAL
+# For PROJ and GDAL
 ARG POPPLER_DEV=poppler-dev
 RUN apk add --no-cache \
     linux-headers \
-    curl-dev \
+    curl-dev tiff-dev \
     zlib-dev zstd-dev \
     libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev \
-    py-numpy-dev python3-dev py3-numpy \
+    py3-numpy-dev python3-dev py3-numpy \
     ${POPPLER_DEV} postgresql-dev \
+    openexr-dev \
     # For spatialite (and GDAL)
     libxml2-dev \
     && mkdir -p /build_thirdparty/usr/lib
@@ -37,7 +38,7 @@ RUN apk add --no-cache \
 # Build xerces-c
 ARG XERCESC_VERSION=3.2.2
 RUN if test "${XERCESC_VERSION}" != ""; then ( \
-    wget -q http://mirror.ibcp.fr/pub/apache/xerces/c/3/sources/xerces-c-${XERCESC_VERSION}.zip \
+    wget -q https://www-eu.apache.org/dist//xerces/c/3//sources/xerces-c-${XERCESC_VERSION}.zip \
     && unzip -q xerces-c-${XERCESC_VERSION}.zip  \
     && rm -f xerces-c-${XERCESC_VERSION}.zip \
     && cd xerces-c-${XERCESC_VERSION} \
@@ -51,7 +52,7 @@ RUN if test "${XERCESC_VERSION}" != ""; then ( \
     ); fi
 
 # Build geos
-ARG GEOS_VERSION=3.7.1
+ARG GEOS_VERSION=3.8.1
 RUN if test "${GEOS_VERSION}" != ""; then ( \
     wget -q http://download.osgeo.org/geos/geos-${GEOS_VERSION}.tar.bz2 \
     && tar xjf geos-${GEOS_VERSION}.tar.bz2  \
@@ -99,7 +100,7 @@ RUN if test "${HDF5_VERSION}" != ""; then ( \
     ); fi
 
 # Build netCDF
-ARG NETCDF_VERSION=4.6.3
+ARG NETCDF_VERSION=4.7.3
 RUN if test "${NETCDF_VERSION}" != ""; then ( \
     wget -q https://github.com/Unidata/netcdf-c/archive/v${NETCDF_VERSION}.tar.gz \
     && tar xzf v${NETCDF_VERSION}.tar.gz \
@@ -340,13 +341,13 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && mkdir -p /build_gdal_python/usr/lib \
     && mkdir -p /build_gdal_python/usr/bin \
     && mkdir -p /build_gdal_version_changing/usr/include \
-    && mv /build/usr/lib/python3.7          /build_gdal_python/usr/lib \
+    && mv /build/usr/lib/python3.8          /build_gdal_python/usr/lib \
     && mv /build/usr/lib                    /build_gdal_version_changing/usr \
     && mv /build/usr/include/gdal_version.h /build_gdal_version_changing/usr/include \
     && mv /build/usr/bin/*.py               /build_gdal_python/usr/bin \
     && mv /build/usr/bin                    /build_gdal_version_changing/usr \
     && for i in /build_gdal_version_changing/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_gdal_python/usr/lib/python3.7/site-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_gdal_python/usr/lib/python3.8/site-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done \
     # Remove resource files of uncompiled drivers
     && (for i in \
@@ -365,10 +366,11 @@ ARG POPPLER=poppler
 RUN apk add --no-cache \
         libstdc++ \
         sqlite-libs \
-        libcurl \
+        libcurl tiff \
         zlib zstd-libs\
         libjpeg-turbo libpng libwebp expat \
         python3 py3-numpy ${POPPLER} pcre libpq libxml2 portablexdr openjpeg \
+        openexr \
     # Remove /usr/lib/libopenjp2.so.2.3.0 since we are building v2.3.1 manually
     # && rm -f /usr/lib/libopenjp2.so.2.3.0 \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*

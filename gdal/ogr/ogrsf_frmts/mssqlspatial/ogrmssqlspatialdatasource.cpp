@@ -919,7 +919,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
     if (papszTableNames != nullptr && bUseGeometryColumns)
     {
         for( int iTable = 0;
-            papszTableNames != nullptr && papszTableNames[iTable] != nullptr;
+            papszTableNames[iTable] != nullptr;
             iTable++ )
         {
             CPLODBCStatement oStmt( &oSession );

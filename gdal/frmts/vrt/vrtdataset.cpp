@@ -33,15 +33,17 @@
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "ogr_spatialref.h"
+#include "gdal_utils.h"
 
 #include <algorithm>
 #include <typeinfo>
 #include "gdal_proxy.h"
 
-
 /*! @cond Doxygen_Suppress */
 
 CPL_CVSID("$Id$")
+
+#define VRT_PROTOCOL_PREFIX "vrt://"
 
 /************************************************************************/
 /*                            VRTDataset()                             */
@@ -70,7 +72,7 @@ VRTDataset::VRTDataset( int nXSize, int nYSize ) :
 
     GDALRegister_VRT();
 
-    poDriver = reinterpret_cast<GDALDriver *>( GDALGetDriverByName( "VRT" ) );
+    poDriver = static_cast<GDALDriver *>( GDALGetDriverByName( "VRT" ) );
 }
 
 /*! @endcond */
@@ -86,7 +88,9 @@ VRTDataset::VRTDataset( int nXSize, int nYSize ) :
 VRTDatasetH CPL_STDCALL VRTCreate(int nXSize, int nYSize)
 
 {
-    return new VRTDataset(nXSize, nYSize);
+    auto poDS = new VRTDataset(nXSize, nYSize);
+    poDS->eAccess = GA_Update;
+    return poDS;
 }
 
 /*! @cond Doxygen_Suppress */
@@ -262,7 +266,7 @@ void CPL_STDCALL VRTFlushCache( VRTDatasetH hDataset )
 {
     VALIDATE_POINTER0( hDataset, "VRTFlushCache" );
 
-    reinterpret_cast<VRTDataset *>( hDataset )->FlushCache();
+    static_cast<VRTDataset *>(GDALDataset::FromHandle(hDataset))->FlushCache();
 }
 
 /*! @cond Doxygen_Suppress */
@@ -358,7 +362,7 @@ CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPathIn )
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
         CPLXMLNode *psBandTree =
-            reinterpret_cast<VRTRasterBand *>(
+            static_cast<VRTRasterBand *>(
                 papoBands[iBand])->SerializeToXML( pszVRTPathIn );
 
         if( psBandTree != nullptr )
@@ -401,8 +405,8 @@ CPLXMLNode * CPL_STDCALL VRTSerializeToXML( VRTDatasetH hDataset,
 {
     VALIDATE_POINTER1( hDataset, "VRTSerializeToXML", nullptr );
 
-    return reinterpret_cast<VRTDataset *>(
-        hDataset )->SerializeToXML(pszVRTPath);
+    return static_cast<VRTDataset *>(GDALDataset::FromHandle(
+        hDataset))->SerializeToXML(pszVRTPath);
 }
 /*! @cond Doxygen_Suppress */
 
@@ -731,10 +735,13 @@ int VRTDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
     if( poOpenInfo->nHeaderBytes > 20
-         && strstr((const char *)poOpenInfo->pabyHeader,"<VRTDataset") != nullptr )
+         && strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader),"<VRTDataset") != nullptr )
         return TRUE;
 
     if( strstr(poOpenInfo->pszFilename,"<VRTDataset") != nullptr )
+        return TRUE;
+
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, VRT_PROTOCOL_PREFIX) )
         return TRUE;
 
     return FALSE;
@@ -753,6 +760,9 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( !Identify( poOpenInfo ) )
         return nullptr;
+
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, VRT_PROTOCOL_PREFIX) )
+        return OpenVRTProtocol(poOpenInfo->pszFilename);
 
 /* -------------------------------------------------------------------- */
 /*      Try to read the whole file into memory.                         */
@@ -859,7 +869,7 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Turn the XML representation into a VRTDataset.                  */
 /* -------------------------------------------------------------------- */
-    VRTDataset *poDS = reinterpret_cast<VRTDataset *>(
+    VRTDataset *poDS = static_cast<VRTDataset *>(
         OpenXML( pszXML, pszVRTPath, poOpenInfo->eAccess ) );
 
     if( poDS != nullptr )
@@ -903,6 +913,105 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->m_poRootGroup->SetFilename(poOpenInfo->pszFilename);
     }
 
+    return poDS;
+}
+
+/************************************************************************/
+/*                         OpenVRTProtocol()                            */
+/*                                                                      */
+/*      Create an open VRTDataset from a vrt:// string.                 */
+/************************************************************************/
+
+GDALDataset *VRTDataset::OpenVRTProtocol( const char* pszSpec )
+
+{
+    CPLAssert( STARTS_WITH_CI(pszSpec, VRT_PROTOCOL_PREFIX) );
+    CPLString osFilename(pszSpec + strlen(VRT_PROTOCOL_PREFIX) );
+    const auto nPosQuotationMark = osFilename.find('?');
+    CPLString osQueryString;
+    if( nPosQuotationMark != std::string::npos )
+    {
+        osQueryString = osFilename.substr(nPosQuotationMark+1);
+        osFilename.resize(nPosQuotationMark);
+    }
+    auto poSrcDS =
+        GDALDataset::Open(osFilename, GDAL_OF_RASTER | GDAL_OF_SHARED,
+                          nullptr, nullptr, nullptr);
+    if( poSrcDS == nullptr )
+    {
+        return nullptr;
+    }
+
+    // Parse query string
+    CPLStringList aosTokens(CSLTokenizeString2(osQueryString, "&", 0));
+    std::vector<int> anBands;
+    for( int i = 0; i < aosTokens.size(); i++ )
+    {
+        char* pszKey = nullptr;
+        const char* pszValue = CPLParseNameValue(aosTokens[i], &pszKey);
+        if( pszKey && pszValue )
+        {
+            if( EQUAL(pszKey, "bands") )
+            {
+                CPLStringList aosBands(CSLTokenizeString2(pszValue, ",", 0));
+                for( int j = 0; j < aosBands.size(); j++ )
+                {
+                    if( EQUAL(aosBands[j], "mask") )
+                    {
+                        anBands.push_back(0);
+                    }
+                    else
+                    {
+                        const int nBand = atoi(aosBands[j]);
+                        if( nBand <= 0 || nBand > poSrcDS->GetRasterCount() )
+                        {
+                            CPLError(CE_Failure, CPLE_IllegalArg,
+                                    "Invalid band number: %s", aosBands[j]);
+                            poSrcDS->ReleaseRef();
+                            CPLFree(pszKey);
+                            return nullptr;
+                        }
+                        anBands.push_back(nBand);
+                    }
+                }
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Unknown option: %s", pszKey);
+                poSrcDS->ReleaseRef();
+                CPLFree(pszKey);
+                return nullptr;
+            }
+        }
+        CPLFree(pszKey);
+    }
+
+    CPLStringList argv;
+    argv.AddString("-of");
+    argv.AddString("VRT");
+
+    for( const int nBand: anBands )
+    {
+        argv.AddString("-b");
+        argv.AddString(nBand == 0 ? "mask" : CPLSPrintf("%d", nBand));
+    }
+
+    GDALTranslateOptions* psOptions = GDALTranslateOptionsNew(argv.List(), nullptr);
+
+    auto hRet = GDALTranslate("", GDALDataset::ToHandle(poSrcDS),
+                              psOptions, nullptr);
+
+    GDALTranslateOptionsFree( psOptions );
+
+    poSrcDS->ReleaseRef();
+
+    auto poDS = cpl::down_cast<VRTDataset*>(GDALDataset::FromHandle(hRet));
+    if( poDS )
+    {
+        poDS->SetDescription(pszSpec);
+        poDS->SetWritable(false);
+    }
     return poDS;
 }
 
@@ -1190,8 +1299,8 @@ int CPL_STDCALL VRTAddBand( VRTDatasetH hDataset, GDALDataType eType,
 {
     VALIDATE_POINTER1( hDataset, "VRTAddBand", 0 );
 
-    return reinterpret_cast<VRTDataset *>(
-        hDataset )->AddBand( eType, papszOptions );
+    return static_cast<VRTDataset *>(GDALDataset::FromHandle(
+        hDataset))->AddBand( eType, papszOptions );
 }
 /*! @cond Doxygen_Suppress */
 /************************************************************************/
@@ -1284,7 +1393,7 @@ char** VRTDataset::GetFileList()
 
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
-      reinterpret_cast<VRTRasterBand *>(
+      static_cast<VRTRasterBand *>(
           papoBands[iBand])->GetFileList(
               &papszFileList, &nSize, &nMaxSize, hSetFiles );
     }
@@ -1364,7 +1473,7 @@ int VRTDataset::CloseDependentDatasets()
 
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
-        bHasDroppedRef |= reinterpret_cast<VRTRasterBand *>(
+        bHasDroppedRef |= static_cast<VRTRasterBand *>(
             papoBands[iBand] )->CloseDependentDatasets();
     }
 
@@ -1393,12 +1502,12 @@ int VRTDataset::CheckCompatibleForDatasetIO()
 
     for(int iBand = 0; iBand < nBands; iBand++)
     {
-        if( !reinterpret_cast<VRTRasterBand *>(
+        if( !static_cast<VRTRasterBand *>(
                 papoBands[iBand] )->IsSourcedRasterBand() )
             return FALSE;
 
         VRTSourcedRasterBand* poBand
-            = reinterpret_cast<VRTSourcedRasterBand*>( papoBands[iBand] );
+            = static_cast<VRTSourcedRasterBand*>( papoBands[iBand] );
 
         // Do not allow VRTDerivedRasterBand for example
         if( typeid(*poBand) != typeid(VRTSourcedRasterBand) )
@@ -1413,7 +1522,7 @@ int VRTDataset::CheckCompatibleForDatasetIO()
                 if( !papoSources[iSource]->IsSimpleSource() )
                     return FALSE;
 
-                VRTSimpleSource* poSource = reinterpret_cast<VRTSimpleSource *>(
+                VRTSimpleSource* poSource = static_cast<VRTSimpleSource *>(
                     papoSources[iSource] );
                 if( !EQUAL(poSource->GetType(), "SimpleSource") )
                     return FALSE;
@@ -1441,10 +1550,10 @@ int VRTDataset::CheckCompatibleForDatasetIO()
                 if( !poBand->papoSources[iSource]->IsSimpleSource() )
                     return FALSE;
                 VRTSimpleSource* poRefSource
-                    = reinterpret_cast<VRTSimpleSource *>(
+                    = static_cast<VRTSimpleSource *>(
                         papoSources[iSource] );
 
-                VRTSimpleSource* poSource = reinterpret_cast<VRTSimpleSource *>(
+                VRTSimpleSource* poSource = static_cast<VRTSimpleSource *>(
                     poBand->papoSources[iSource] );
                 if( !EQUAL(poSource->GetType(), "SimpleSource") )
                     return FALSE;
@@ -1480,7 +1589,7 @@ int VRTDataset::CheckCompatibleForDatasetIO()
  */
 void VRTDataset::ExpandProxyBands()
 {
-    VRTSourcedRasterBand * poLastBand = reinterpret_cast<VRTSourcedRasterBand*>(papoBands[nBands - 1]);
+    VRTSourcedRasterBand * poLastBand = static_cast<VRTSourcedRasterBand*>(papoBands[nBands - 1]);
 
     CPLAssert(poLastBand != nullptr); // CheckCompatibleForDatasetIO()
 
@@ -1488,7 +1597,7 @@ void VRTDataset::ExpandProxyBands()
 
     for (int iSource = 0; iSource < nSources; iSource++)
     {
-        VRTSimpleSource* poSource = reinterpret_cast<VRTSimpleSource *>(poLastBand->papoSources[iSource]);
+        VRTSimpleSource* poSource = static_cast<VRTSimpleSource *>(poLastBand->papoSources[iSource]);
 
         CPLAssert(poSource != nullptr); // CheckCompatibleForDatasetIO()
 
@@ -1506,8 +1615,8 @@ void VRTDataset::ExpandProxyBands()
 
         for (int iBand = 1; iBand <= nBands - 1; iBand++ )
         {
-            VRTSourcedRasterBand * srcband = reinterpret_cast<VRTSourcedRasterBand *>(papoBands[iBand - 1]);
-            VRTSimpleSource* src = reinterpret_cast<VRTSimpleSource *>(srcband->papoSources[iSource]);
+            VRTSourcedRasterBand * srcband = static_cast<VRTSourcedRasterBand *>(papoBands[iBand - 1]);
+            VRTSimpleSource* src = static_cast<VRTSimpleSource *>(srcband->papoSources[iSource]);
             GDALRasterBand * rasterband = src->GetBand();
 
             int nBlockXSize, nBlockYSize;
@@ -1537,11 +1646,11 @@ GDALDataset* VRTDataset::GetSingleSimpleSource()
         return nullptr;
 
     VRTSourcedRasterBand* poVRTBand
-        = reinterpret_cast<VRTSourcedRasterBand *>( papoBands[0] );
+        = static_cast<VRTSourcedRasterBand *>( papoBands[0] );
     if( poVRTBand->nSources != 1 )
         return nullptr;
 
-    VRTSimpleSource* poSource = reinterpret_cast<VRTSimpleSource *>(
+    VRTSimpleSource* poSource = static_cast<VRTSimpleSource *>(
         poVRTBand->papoSources[0] );
 
     GDALRasterBand* poBand = poSource->GetBand();
@@ -1606,11 +1715,11 @@ CPLErr VRTDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
         return CE_None;
 
     VRTSourcedRasterBand* poVRTBand
-        = reinterpret_cast<VRTSourcedRasterBand *>( papoBands[0] );
+        = static_cast<VRTSourcedRasterBand *>( papoBands[0] );
     if( poVRTBand->nSources != 1 )
         return CE_None;
 
-    VRTSimpleSource* poSource = reinterpret_cast<VRTSimpleSource *>(
+    VRTSimpleSource* poSource = static_cast<VRTSimpleSource *>(
         poVRTBand->papoSources[0] );
 
     GDALRasterBand* poBand = poSource->GetBand();
@@ -1682,7 +1791,7 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
         for(int iBand = 0; iBand < nBands; iBand++)
         {
             VRTSourcedRasterBand* poBand
-                = reinterpret_cast<VRTSourcedRasterBand *>( papoBands[iBand] );
+                = static_cast<VRTSourcedRasterBand *>( papoBands[iBand] );
 
             // If there are overviews, let VRTSourcedRasterBand::IRasterIO()
             // do the job.
@@ -1703,7 +1812,7 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
         for( int iBandIndex=0; iBandIndex<nBandCount; iBandIndex++ )
         {
             VRTSourcedRasterBand* poBand =
-                reinterpret_cast<VRTSourcedRasterBand*>(
+                static_cast<VRTSourcedRasterBand*>(
                     GetRasterBand(panBandMap[iBandIndex]) );
             int bHasNoData = FALSE;
             const double dfNoDataValue = poBand->GetNoDataValue(&bHasNoData);
@@ -1712,7 +1821,7 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
                 for( int i = 0; i < poBand->nSources; i++ )
                 {
                     VRTSimpleSource* poSource
-                        = reinterpret_cast<VRTSimpleSource *>(
+                        = static_cast<VRTSimpleSource *>(
                             poBand->papoSources[i] );
                     int bSrcHasNoData = FALSE;
                     const double dfSrcNoData
@@ -1738,7 +1847,7 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
         for(int iBandIndex=0; iBandIndex<nBandCount; iBandIndex++)
         {
             VRTSourcedRasterBand* poBand
-                = reinterpret_cast<VRTSourcedRasterBand *>(
+                = static_cast<VRTSourcedRasterBand *>(
                     GetRasterBand( panBandMap[iBandIndex] ) );
 
             /* Dirty little trick to initialize the buffer without doing */
@@ -1747,7 +1856,7 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
             poBand->nSources = 0;
 
             GByte *pabyBandData
-                = reinterpret_cast<GByte *>( pData ) + iBandIndex * nBandSpace;
+                = static_cast<GByte *>( pData ) + iBandIndex * nBandSpace;
 
             poBand->IRasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize,
                                 pabyBandData, nBufXSize, nBufYSize,
@@ -1763,7 +1872,7 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
 
         // Use the last band, because when sources reference a GDALProxyDataset,
         // they don't necessary instantiate all underlying rasterbands.
-        VRTSourcedRasterBand* poBand = reinterpret_cast<VRTSourcedRasterBand *>(
+        VRTSourcedRasterBand* poBand = static_cast<VRTSourcedRasterBand *>(
             papoBands[nBands - 1] );
         for( int iSource = 0;
              eErr == CE_None && iSource < poBand->nSources;
@@ -1777,7 +1886,7 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
                     pfnProgressGlobal,
                     pProgressDataGlobal );
 
-            VRTSimpleSource* poSource = reinterpret_cast<VRTSimpleSource *>(
+            VRTSimpleSource* poSource = static_cast<VRTSimpleSource *>(
                 poBand->papoSources[iSource] );
 
             eErr = poSource->DatasetRasterIO( poBand->GetRasterDataType(),
@@ -1814,12 +1923,12 @@ void VRTDataset::UnsetPreservedRelativeFilenames()
 {
     for(int iBand = 0; iBand < nBands; iBand++)
     {
-        if( !reinterpret_cast<VRTRasterBand *>(
+        if( !static_cast<VRTRasterBand *>(
                papoBands[iBand] )->IsSourcedRasterBand() )
             continue;
 
         VRTSourcedRasterBand* poBand
-            = reinterpret_cast<VRTSourcedRasterBand *>( papoBands[iBand] );
+            = static_cast<VRTSourcedRasterBand *>( papoBands[iBand] );
         const int nSources = poBand->nSources;
         VRTSource** papoSources = poBand->papoSources;
         for(int iSource = 0; iSource < nSources; iSource++)
@@ -1827,7 +1936,7 @@ void VRTDataset::UnsetPreservedRelativeFilenames()
             if( !papoSources[iSource]->IsSimpleSource() )
                 continue;
 
-            VRTSimpleSource* poSource = reinterpret_cast<VRTSimpleSource *>(
+            VRTSimpleSource* poSource = static_cast<VRTSimpleSource *>(
                 papoSources[iSource] );
             poSource->UnsetPreservedRelativeFilenames();
         }
@@ -1848,27 +1957,29 @@ void VRTDataset::BuildVirtualOverviews()
 
     int nOverviews = 0;
     GDALRasterBand* poFirstBand = nullptr;
-    for( int iBand = 0; iBand < nBands; iBand++ )
+
+    const auto CheckBandForOverview =
+        [&nOverviews, &poFirstBand, this](GDALRasterBand* poBand)
     {
-        if( !reinterpret_cast<VRTRasterBand *>(
-               papoBands[iBand] )->IsSourcedRasterBand())
-            return;
+        if( !cpl::down_cast<VRTRasterBand *>(poBand)->IsSourcedRasterBand())
+            return false;
 
         VRTSourcedRasterBand* poVRTBand
-            = reinterpret_cast<VRTSourcedRasterBand *>( papoBands[iBand] );
+            = cpl::down_cast<VRTSourcedRasterBand *>(poBand);
         if( poVRTBand->nSources != 1 )
-            return;
+            return false;
         if( !poVRTBand->papoSources[0]->IsSimpleSource() )
-            return;
+            return false;
 
         VRTSimpleSource* poSource
-            = reinterpret_cast<VRTSimpleSource *>( poVRTBand->papoSources[0] );
+            = cpl::down_cast<VRTSimpleSource *>( poVRTBand->papoSources[0] );
         if( !EQUAL(poSource->GetType(), "SimpleSource") &&
             !EQUAL(poSource->GetType(), "ComplexSource") )
-            return;
-        GDALRasterBand* poSrcBand = poSource->GetBand();
+            return false;
+        GDALRasterBand* poSrcBand =
+            poBand->GetBand() == 0 ? poSource->GetMaskBandMainBand() : poSource->GetBand();
         if( poSrcBand == nullptr )
-            return;
+            return false;
 
         // To prevent recursion
         m_apoOverviewsBak.push_back(nullptr);
@@ -1876,16 +1987,29 @@ void VRTDataset::BuildVirtualOverviews()
         m_apoOverviewsBak.resize(0);
 
         if( nOvrCount == 0 )
-            return;
-        if( iBand == 0 )
+            return false;
+        if( poFirstBand == nullptr )
         {
             if( poSrcBand->GetXSize() == 0 || poSrcBand->GetYSize() == 0 )
-                return;
+                return false;
             poFirstBand = poSrcBand;
             nOverviews = nOvrCount;
         }
         else if( nOvrCount < nOverviews )
             nOverviews = nOvrCount;
+        return true;
+    };
+
+    for( int iBand = 0; iBand < nBands; iBand++ )
+    {
+        if( !CheckBandForOverview(papoBands[iBand]) )
+            return;
+    }
+
+    if( m_poMaskBand )
+    {
+        if( !CheckBandForOverview(m_poMaskBand) )
+            return;
     }
 
     for( int j = 0; j < nOverviews; j++)
@@ -1904,19 +2028,19 @@ void VRTDataset::BuildVirtualOverviews()
         VRTDataset* poOvrVDS = new VRTDataset(nOvrXSize, nOvrYSize);
         m_apoOverviews.push_back(poOvrVDS);
 
-        for( int i = 0; i < nBands; i++ )
+        const auto CreateOverviewBand =
+            [&poOvrVDS, nOvrXSize, nOvrYSize, dfXRatio, dfYRatio]
+            (GDALRasterBand* poBand)
         {
             VRTSourcedRasterBand* poVRTBand
-                = reinterpret_cast<VRTSourcedRasterBand *>(
-                    GetRasterBand(i+1) );
+                = cpl::down_cast<VRTSourcedRasterBand *>(poBand);
             VRTSourcedRasterBand* poOvrVRTBand = new VRTSourcedRasterBand(
                 poOvrVDS,
-                poOvrVDS->GetRasterCount() + 1,
+                poBand->GetBand(),
                 poVRTBand->GetRasterDataType(),
                 nOvrXSize, nOvrYSize);
-            poOvrVDS->SetBand( poOvrVDS->GetRasterCount() + 1, poOvrVRTBand );
 
-            VRTSimpleSource* poSrcSource = reinterpret_cast<VRTSimpleSource *>(
+            VRTSimpleSource* poSrcSource = cpl::down_cast<VRTSimpleSource *>(
                 poVRTBand->papoSources[0] );
             VRTSimpleSource* poNewSource = nullptr;
             if( EQUAL(poSrcSource->GetType(), "SimpleSource") )
@@ -1927,7 +2051,7 @@ void VRTDataset::BuildVirtualOverviews()
             else if( EQUAL(poSrcSource->GetType(), "ComplexSource") )
             {
               poNewSource = new VRTComplexSource(
-                  reinterpret_cast<VRTComplexSource *>( poSrcSource ),
+                  cpl::down_cast<VRTComplexSource *>( poSrcSource ),
                   dfXRatio, dfYRatio );
             }
             else
@@ -1936,10 +2060,28 @@ void VRTDataset::BuildVirtualOverviews()
             }
             if( poNewSource )
             {
-                if( poNewSource->GetBand()->GetDataset() )
-                    poNewSource->GetBand()->GetDataset()->Reference();
+                auto poNewSourceBand = poBand->GetBand() == 0 ?
+                    poNewSource->GetMaskBandMainBand() :
+                    poNewSource->GetBand();
+                CPLAssert(poNewSourceBand);
+                auto poNewSourceBandDS = poNewSourceBand->GetDataset();
+                if( poNewSourceBandDS )
+                    poNewSourceBandDS->Reference();
                 poOvrVRTBand->AddSource(poNewSource);
             }
+
+            return poOvrVRTBand;
+        };
+
+        for( int i = 0; i < nBands; i++ )
+        {
+            poOvrVDS->SetBand( poOvrVDS->GetRasterCount() + 1,
+                               CreateOverviewBand(GetRasterBand(i+1)) );
+        }
+
+        if( m_poMaskBand )
+        {
+            poOvrVDS->SetMaskBand( CreateOverviewBand(m_poMaskBand) );
         }
     }
 }
@@ -1957,6 +2099,15 @@ VRTDataset::IBuildOverviews( const char *pszResampling,
                              GDALProgressFunc pfnProgress,
                              void * pProgressData )
 {
+    if( !oOvManager.IsInitialized() )
+    {
+        const char* pszDesc = GetDescription();
+        if( pszDesc[0] )
+        {
+            oOvManager.Initialize( this, pszDesc );
+        }
+    }
+
     // Make implicit overviews invisible, but do not destroy them in case they
     // are already used.  Should the client do that?  Behaviour might undefined
     // in GDAL API?

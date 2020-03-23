@@ -56,7 +56,6 @@ OGRTABDataSource::OGRTABDataSource() :
     m_bSingleFile(FALSE),
     m_bSingleLayerAlreadyCreated(FALSE),
     m_bQuickSpatialIndexMode(-1),
-    m_bUpdate(FALSE),
     m_nBlockSize(512)
 {}
 
@@ -90,7 +89,7 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
 
     m_pszName = CPLStrdup(pszName);
     m_papszOptions = CSLDuplicate(papszOptions);
-    m_bUpdate = TRUE;
+    eAccess = GA_Update;
 
     const char *pszOpt = CSLFetchNameValue(papszOptions, "FORMAT");
     if( pszOpt != nullptr && EQUAL(pszOpt, "MIF") )
@@ -160,8 +159,8 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
         else
         {
             TABFile *poTabFile = new TABFile;
-            if( poTabFile->Open(m_pszName, TABWrite, FALSE,
-                                m_nBlockSize, pszCharset) != 0 )
+            if( poTabFile->Open( m_pszName, TABWrite, FALSE,
+                                 m_nBlockSize, pszCharset) != 0 )
             {
                 delete poTabFile;
                 return FALSE;
@@ -192,13 +191,13 @@ int OGRTABDataSource::Open( GDALOpenInfo *poOpenInfo, int bTestOpen )
     CPLAssert(m_pszName == nullptr);
 
     m_pszName = CPLStrdup(poOpenInfo->pszFilename);
-    m_bUpdate = poOpenInfo->eAccess == GA_Update;
+    eAccess = poOpenInfo->eAccess;
 
     // If it is a file, try to open as a Mapinfo file.
     if( !poOpenInfo->bIsDirectory )
     {
         IMapInfoFile *poFile =
-            IMapInfoFile::SmartOpen(m_pszName, m_bUpdate, bTestOpen);
+            IMapInfoFile::SmartOpen(m_pszName, GetUpdate(), bTestOpen);
         if( poFile == nullptr )
             return FALSE;
 
@@ -235,7 +234,7 @@ int OGRTABDataSource::Open( GDALOpenInfo *poOpenInfo, int bTestOpen )
                 CPLFormFilename(m_pszDirectory, papszFileList[iFile], nullptr));
 
             IMapInfoFile *poFile =
-                IMapInfoFile::SmartOpen(pszSubFilename, m_bUpdate, bTestOpen);
+                IMapInfoFile::SmartOpen(pszSubFilename, GetUpdate(), bTestOpen);
             CPLFree(pszSubFilename);
 
             if( poFile == nullptr )
@@ -304,7 +303,7 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
                                 char **papszOptions )
 
 {
-    if( !m_bUpdate )
+    if( !GetUpdate() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                     "Cannot create layer on read-only dataset.");
@@ -319,7 +318,7 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
 
     const char *pszEncoding = CSLFetchNameValue( papszOptions, "ENCODING" );
     const char *pszCharset( IMapInfoFile::EncodingToCharset( pszEncoding ) );
-
+    const char *pszDescription( CSLFetchNameValue(papszOptions, "DESCRIPTION") );
 
     if( m_bSingleFile )
     {
@@ -336,6 +335,9 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
         poFile = m_papoLayers[0];
         if( pszEncoding )
             poFile->SetCharset( pszCharset );
+
+        if(poFile->GetFileClass() == TABFC_TABFile)
+            poFile->SetMetadataItem( "DESCRIPTION", pszDescription );
     }
 
     else
@@ -370,6 +372,7 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
                 return nullptr;
             }
             poFile = poTABFile;
+            poFile->SetMetadataItem( "DESCRIPTION", pszDescription );
         }
 
         m_nLayerCount++;
@@ -453,9 +456,9 @@ int OGRTABDataSource::TestCapability( const char *pszCap )
 
 {
     if( EQUAL(pszCap, ODsCCreateLayer) )
-        return m_bUpdate && (!m_bSingleFile || !m_bSingleLayerAlreadyCreated);
+        return GetUpdate() && (!m_bSingleFile || !m_bSingleLayerAlreadyCreated);
     else if( EQUAL(pszCap, ODsCRandomLayerWrite) )
-        return m_bUpdate;
+        return GetUpdate();
     else
         return FALSE;
 }

@@ -2922,7 +2922,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
                               "Got %.500s geometry as Member instead of %s.",
-                              poGeom ? poGeom->getGeometryName() : "NULL",
+                              poGeom->getGeometryName(),
                               bGetSecondaryGeometry?"MULTIPOINT":"LINESTRING");
                     delete poGeom;
                     if( bGetSecondaryGeometry )
@@ -3380,7 +3380,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             return poResultPoly;
         else if( poResultPoly == nullptr )
             return poResultTri;
-        else if( poResultTri != nullptr && poResultPoly != nullptr )
+        else
         {
             poGC = new OGRGeometryCollection();
             poGC->addGeometryDirectly(poResultTri);
@@ -3463,8 +3463,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             // This is empty PolyhedralSurface.
             return new OGRPolyhedralSurface();
         }
-        else if( psChild != nullptr &&
-                 !EQUAL(BareGMLElement(psChild->pszValue), "PolygonPatch") )
+        else if( !EQUAL(BareGMLElement(psChild->pszValue), "PolygonPatch") )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Missing <PolygonPatch> for %s.", pszBaseGeometry );

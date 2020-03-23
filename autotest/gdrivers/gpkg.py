@@ -38,42 +38,43 @@ if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
     if os.path.dirname(sys.argv[0]) != '':
         os.chdir(os.path.dirname(sys.argv[0]))
 
-sys.path.append('../../gdal/swig/python/samples')
-
 from osgeo import osr, gdal, ogr
 import gdaltest
 
 ###############################################################################
 # Validate a geopackage
 
-try:
-    import validate_gpkg
-    has_validate = True
-except ImportError:
-    has_validate = False
-
 
 def validate(filename, quiet=False):
-    if has_validate:
-        my_filename = filename
-        if my_filename.startswith('/vsimem/'):
-            my_filename = 'tmp/validate.gpkg'
-            f = gdal.VSIFOpenL(filename, 'rb')
-            if f is None:
-                print('Cannot open %s' % filename)
-                return False
-            content = gdal.VSIFReadL(1, 10000000, f)
-            gdal.VSIFCloseL(f)
-            open(my_filename, 'wb').write(content)
-        try:
-            validate_gpkg.check(my_filename)
-        except Exception as e:
-            if not quiet:
-                print(e)
+
+    path = '../../gdal/swig/python/samples'
+    if path not in sys.path:
+        sys.path.append(path)
+    try:
+        import validate_gpkg
+    except ImportError:
+        print('Cannot import validate_gpkg')
+        return True
+
+    my_filename = filename
+    if my_filename.startswith('/vsimem/'):
+        my_filename = 'tmp/validate.gpkg'
+        f = gdal.VSIFOpenL(filename, 'rb')
+        if f is None:
+            print('Cannot open %s' % filename)
             return False
-        finally:
-            if my_filename != filename:
-                os.unlink(my_filename)
+        content = gdal.VSIFReadL(1, 10000000, f)
+        gdal.VSIFCloseL(f)
+        open(my_filename, 'wb').write(content)
+    try:
+        validate_gpkg.check(my_filename)
+    except Exception as e:
+        if not quiet:
+            print(e)
+        return False
+    finally:
+        if my_filename != filename:
+            os.unlink(my_filename)
     return True
 
 ###############################################################################

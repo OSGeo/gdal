@@ -273,6 +273,8 @@ BSBInfo *BSBOpen( const char *pszFilename )
                                                     FALSE,FALSE);
             nCount = CSLCount(papszTokens);
         }
+        if( papszTokens == NULL )
+            continue;
 
         if( STARTS_WITH_CI(szLine, "BSB/") )
         {
@@ -306,7 +308,9 @@ BSBInfo *BSBOpen( const char *pszFilename )
             psInfo->nXSize = atoi(papszTokens[nRAIndex+3]);
             psInfo->nYSize = atoi(papszTokens[nRAIndex+4]);
         }
-        else if( EQUALN(szLine, pszPalette, 3) && szLine[3] == '/'
+        else if( EQUALN(szLine, pszPalette, 3)
+                 && szLine[0] != '\0' && szLine[1] != '\0' && szLine[2] != '\0'
+                 && szLine[3] == '/'
                  && nCount >= 4 )
         {
             int	iPCT = atoi(papszTokens[0]);

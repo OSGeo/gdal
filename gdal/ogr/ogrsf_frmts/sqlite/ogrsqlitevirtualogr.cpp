@@ -1129,12 +1129,10 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
     }
 
     if( pMyCursor->poLayer->TestCapability(OLCFastFeatureCount) )
-    {
         pMyCursor->nFeatureCount = pMyCursor->poLayer->GetFeatureCount();
-        pMyCursor->poLayer->ResetReading();
-    }
     else
         pMyCursor->nFeatureCount = -1;
+    pMyCursor->poLayer->ResetReading();
 
     if( pMyCursor->nFeatureCount < 0 )
     {

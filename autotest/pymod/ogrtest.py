@@ -181,7 +181,75 @@ def compare_layers(lyr, lyr_ref, excluded_fields=None):
     if f is not None:
         f.DumpReadable()
         pytest.fail()
-    
+
+###############################################################################
+
+
+def get_wkt_data_series(with_z, with_m, with_gc, with_circular, with_surface):
+    basic_wkts = [
+        'POINT (1 1)',
+        'POINT (1.1234 1.4321)',
+        'POINT (1.12345678901234 1.4321)',
+        'POINT (1.2 -2.1)',
+        'MULTIPOINT ((10 40),(40 30),(20 20),(30 10))',
+        'LINESTRING (1.2 -2.1,2.4 -4.8)',
+        'MULTILINESTRING ((10 10,20 20,10 40),(40 40,30 30,40 20,30 10),(50 50,60 60,50 90))',
+        'MULTILINESTRING ((1.2 -2.1,2.4 -4.8))',
+        'POLYGON ((30 10,40 40,20 40,10 20,30 10))',
+        'POLYGON ((35 10,45 45,15 40,10 20,35 10),(20 30,35 35,30 20,20 30))',
+        'MULTIPOLYGON (((30 20,45 40,10 40,30 20)),((15 5,40 10,10 20,5 10,15 5)))',
+        'MULTIPOLYGON (((40 40,20 45,45 30,40 40)),((20 35,10 30,10 10,30 5,45 20,20 35),(30 20,20 15,20 25,30 20)))',
+        'MULTIPOLYGON (((30 20,45 40,10 40,30 20)))',
+        'MULTIPOLYGON (((35 10,45 45,15 40,10 20,35 10),(20 30,35 35,30 20,20 30)))',
+    ]
+    gc_wkts = [
+        'GEOMETRYCOLLECTION (POINT (4 6),LINESTRING (4 6,7 10))',
+        'GEOMETRYCOLLECTION (POINT (4 6),GEOMETRYCOLLECTION (POINT (4 6),LINESTRING (4 6,7 10)))'
+    ]
+    circular_wkts = [
+        'CIRCULARSTRING (0 0,1 1,1 0)',
+        'COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,1 0),(1 0,0 1))',
+        'CURVEPOLYGON (CIRCULARSTRING (0 0,4 0,4 4,0 4,0 0),(1 1,3 3,3 1,1 1))',
+        'MULTICURVE ((0 0,5 5),CIRCULARSTRING (4 0,4 4,8 4))',
+        'MULTISURFACE (CURVEPOLYGON (CIRCULARSTRING (0 0,4 0,4 4,0 4,0 0),(1 1,3 3,3 1,1 1)),((10 10,14 12,11 10,10 10),(11 11,11.5 11.0,11.0 11.5,11 11)))',
+    ]
+    surface_wkts = [
+        'POLYHEDRALSURFACE Z (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0)),((0 0 0,1 0 0,1 0 1,0 0 1,0 0 0)),((1 1 0,1 1 1,1 0 1,1 0 0,1 1 0)),((0 1 0,0 1 1,1 1 1,1 1 0,0 1 0)),((0 0 1,1 0 1,1 1 1,0 1 1,0 0 1)))',
+        'TRIANGLE ((0 0,0 9,9 0,0 0))',
+        'TIN Z (((0 0 0,0 0 1,0 1 0,0 0 0)))',
+        'TIN Z (((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))',
+    ]
+
+    wkts = basic_wkts
+    wkts_with_z = []
+    wkts_with_m = []
+    wkts_with_zm = []
+    if with_gc:
+        wkts.extend(gc_wkts)
+    if with_circular:
+        wkts.extend(circular_wkts)
+    if with_z or with_m:
+        for i, wkt in enumerate(wkts):
+            if with_z:
+                g = ogr.CreateGeometryFromWkt(wkt)
+                g.Set3D(True)
+                wkts_with_z.extend([g.ExportToIsoWkt()])
+            if with_z:
+                g = ogr.CreateGeometryFromWkt(wkt)
+                g.SetMeasured(True)
+                wkts_with_m.extend([g.ExportToIsoWkt()])
+            if with_z and with_m:
+                g = ogr.CreateGeometryFromWkt(wkt)
+                g.Set3D(True)
+                g.SetMeasured(True)
+                wkts_with_zm.extend([g.ExportToIsoWkt()])
+    wkts.extend(wkts_with_z)
+    wkts.extend(wkts_with_m)
+    wkts.extend(wkts_with_zm)
+    if with_surface:
+        wkts.extend(surface_wkts)
+    return wkts
+
 ###############################################################################
 
 

@@ -489,6 +489,8 @@ OGRCompoundCurve* OGRMSSQLGeometryParser::ReadCompoundCurve(int iFigure)
     // adding the last curve
     if (iPoint == iNextPoint)
         AddCurveSegment(poCompoundCurve, poCurve, iPoint - nPointsPrepared, iPoint + 1);
+    else
+        delete poCurve;
 
     return poCompoundCurve;
 }

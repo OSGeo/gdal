@@ -35,8 +35,6 @@
 #include <algorithm>
 #include <exception>
 
-#include <debug.h>
-
 #include "libdap_headers.h"
 
 #include "cpl_string.h"

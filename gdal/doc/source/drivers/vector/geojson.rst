@@ -5,6 +5,8 @@ GeoJSON
 
 .. shortname:: GeoJSON
 
+.. built_in_by_default::
+
 This driver implements read/write support for access to features encoded
 in `GeoJSON <http://geojson.org/>`__ format. GeoJSON is a dialect based
 on the `JavaScript Object Notation (JSON) <http://json.org/>`__. JSON is
@@ -172,6 +174,12 @@ Open options
 -  **ARRAY_AS_STRING** = YES/NO: (GDAL >= 2.1) Whether to expose JSon
    arrays of strings, integers or reals as a OGR String. Default is NO.
    Can also be set with the OGR_GEOJSON_ARRAY_AS_STRING configuration
+   option.
+-  **DATE_AS_STRING** = YES/NO: (GDAL >= 3.0.3) Whether to expose
+   date/time/date-time content using dedicated OGR date/time/date-time types
+   or as a OGR String. Default is NO (that is date/time/date-time are
+   detected as such).
+   Can also be set with the OGR_GEOJSON_DATE_AS_STRING configuration
    option.
 
 To explain FLATTEN_NESTED_ATTRIBUTES, consider the following GeoJSON

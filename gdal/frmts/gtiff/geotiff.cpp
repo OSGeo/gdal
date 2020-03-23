@@ -4106,7 +4106,9 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
     // payload.
     auto OptimizedRetrievalhOfOffsetSize = [&](int nBlockId,
                                                vsi_l_offset& nOffset,
-                                               vsi_l_offset& nSize)
+                                               vsi_l_offset& nSize,
+                                               size_t nTotalSize,
+                                               size_t nMaxRawBlockCacheSize)
     {
         bool bTryMask = m_poGDS->m_bMaskInterleavedWithImagery;
         nOffset = TIFFGetStrileOffset(m_poGDS->m_hTIFF, nBlockId);
@@ -4170,11 +4172,14 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
             {
                 nOffset -= 4;
                 nSize += 4;
-                StrileData data;
-                data.nOffset = nOffset;
-                data.nByteCount = nSize;
-                data.bTryMask = bTryMask;
-                oMapStrileToOffsetByteCount[nBlockId] = data;
+                if( nTotalSize + nSize < nMaxRawBlockCacheSize )
+                {
+                    StrileData data;
+                    data.nOffset = nOffset;
+                    data.nByteCount = nSize;
+                    data.bTryMask = bTryMask;
+                    oMapStrileToOffsetByteCount[nBlockId] = data;
+                }
             }
         }
         else
@@ -4330,9 +4335,10 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
         const unsigned int nMaxRawBlockCacheSize =
             atoi(CPLGetConfigOption("GDAL_MAX_RAW_BLOCK_CACHE_SIZE",
                                     "10485760"));
-        for( int iY = nBlockY1; iY <= nBlockY2; iY ++)
+        bool bGoOn = true;
+        for( int iY = nBlockY1; bGoOn && iY <= nBlockY2; iY ++)
         {
-            for( int iX = nBlockX1; iX <= nBlockX2; iX ++)
+            for( int iX = nBlockX1; bGoOn && iX <= nBlockX2; iX ++)
             {
                 GDALRasterBlock* poBlock = TryGetLockedBlockRef(iX, iY);
                 if( poBlock != nullptr )
@@ -4351,7 +4357,7 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
                     !m_poGDS->m_bStreamingIn &&
                     m_poGDS->m_bBlockOrderRowMajor && m_poGDS->m_bLeaderSizeAsUInt4 )
                 {
-                    OptimizedRetrievalhOfOffsetSize(nBlockId, nOffset, nSize);
+                    OptimizedRetrievalhOfOffsetSize(nBlockId, nOffset, nSize, nTotalSize, nMaxRawBlockCacheSize);
                 }
                 else
 #endif
@@ -4374,6 +4380,10 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
                             std::pair<vsi_l_offset, size_t>
                                 (nOffset, static_cast<size_t>(nSize)) );
                         nTotalSize += static_cast<size_t>(nSize);
+                    }
+                    else
+                    {
+                        bGoOn = false;
                     }
                 }
             }
@@ -9084,6 +9094,7 @@ void GTiffDataset::WriteRawStripOrTile( int nStripOrTile,
     if( bWriteLeader &&
         static_cast<GUIntBig>(nCompressedBufferSize) <= 0xFFFFFFFFU )
     {
+        // cppcheck-suppress knownConditionTrueFalse
         if( bWriteAtEnd )
         {
             VSI_TIFFSeek( m_hTIFF, 0, SEEK_END );
@@ -9102,6 +9113,7 @@ void GTiffDataset::WriteRawStripOrTile( int nStripOrTile,
             bWriteTrailer = bWriteLeader;
             VSI_TIFFSeek( m_hTIFF, panOffsets[nStripOrTile] - 4, SEEK_SET );
         }
+        // cppcheck-suppress knownConditionTrueFalse
         if( bWriteLeader )
         {
             uint32 nSize = static_cast<uint32>(nCompressedBufferSize);
@@ -9943,6 +9955,20 @@ void GTiffDataset::FlushDirectory()
                 TIFFRewriteDirectory( m_hTIFF );
 
                 TIFFSetSubDirectory( m_hTIFF, m_nDirOffset );
+
+                if( m_bLayoutIFDSBeforeData &&
+                    m_bBlockOrderRowMajor &&
+                    m_bLeaderSizeAsUInt4 &&
+                    m_bTrailerRepeatedLast4BytesRepeated &&
+                    !m_bKnownIncompatibleEdition &&
+                    !m_bWriteKnownIncompatibleEdition )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                                "The IFD has been rewritten at the end of "
+                                "the file, which breaks COG layout.");
+                    m_bKnownIncompatibleEdition = true;
+                    m_bWriteKnownIncompatibleEdition = true;
+                }
             }
             m_bNeedsRewrite = false;
         }
@@ -12714,29 +12740,12 @@ void GTiffDataset::LookForProjection()
 
         if( GTIFGetDefn( hGTIF, psGTIFDefn ) )
         {
-            char* pszProjection = GTIFGetOGISDefn( hGTIF, psGTIFDefn );
-            if( pszProjection )
+            OGRSpatialReferenceH hSRS = GTIFGetOGISDefnAsOSR( hGTIF, psGTIFDefn );
+            if( hSRS )
             {
-                m_oSRS.SetFromUserInput(pszProjection);
-                double adfTOWGS84[7];
-                bool bHasTOWGS84 = m_oSRS.GetTOWGS84(&adfTOWGS84[0], 7) == OGRERR_NONE;
-                const char* pszCode = m_oSRS.GetAuthorityCode(nullptr);
-                if( pszCode )
-                {
-                    m_oSRS.importFromEPSG(atoi(pszCode));
-                    if( bHasTOWGS84 )
-                    {
-                        m_oSRS.SetTOWGS84(adfTOWGS84[0],
-                                        adfTOWGS84[1],
-                                        adfTOWGS84[2],
-                                        adfTOWGS84[3],
-                                        adfTOWGS84[4],
-                                        adfTOWGS84[5],
-                                        adfTOWGS84[6]);
-                    }
-                }
+                m_oSRS = *(OGRSpatialReference::FromHandle(hSRS));
+                OSRDestroySpatialReference(hSRS);
             }
-            CPLFree(pszProjection);
 
             if( m_oSRS.IsCompound() )
             {
@@ -12913,7 +12922,7 @@ void GTiffDataset::ApplyPamInfo()
         m_bLookedForProjection = true;
     }
 
-    if( m_nPAMGeorefSrcIndex >= 0 && m_nGCPCount == 0 )
+    if( m_nPAMGeorefSrcIndex >= 0 )
     {
         CPLXMLNode *psValueAsXML = nullptr;
         CPLXMLNode *psGeodataXform = nullptr;
@@ -12963,6 +12972,13 @@ void GTiffDataset::ApplyPamInfo()
                 if( adfSourceGCPs.size() == adfTargetGCPs.size() &&
                     (adfSourceGCPs.size() % 2) == 0 )
                 {
+                    if( m_nGCPCount > 0 )
+                    {
+                        GDALDeinitGCPs( m_nGCPCount, m_pasGCPList );
+                        CPLFree( m_pasGCPList );
+                        m_pasGCPList = nullptr;
+                        m_nGCPCount = 0;
+                    }
                     m_nGCPCount = static_cast<int>(
                                             adfSourceGCPs.size() / 2);
                     m_pasGCPList = static_cast<GDAL_GCP *>(
@@ -15432,16 +15448,6 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 
         if( l_nBlockYSize == 0 )
             l_nBlockYSize = 256;
-
-        unsigned nTileXCount = DIV_ROUND_UP(nXSize, l_nBlockXSize);
-        unsigned nTileYCount = DIV_ROUND_UP(nYSize, l_nBlockYSize);
-        if( nTileXCount > UINT_MAX / nTileYCount )
-        {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "File too large regarding tile size. This would result "
-                     "in a file with more than 4 billion tiles");
-            return nullptr;
-        }
     }
 
     int nPlanar = 0;
@@ -15551,32 +15557,6 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         + dfExtraSpaceForOverviews;
 
 /* -------------------------------------------------------------------- */
-/*      Check free space (only for big, non sparse, uncompressed)       */
-/* -------------------------------------------------------------------- */
-    if( l_nCompression == COMPRESSION_NONE &&
-        dfUncompressedImageSize >= 1e9 &&
-        !CPLFetchBool(papszParmList, "SPARSE_OK", false) &&
-        osOriFilename != "/vsistdout/" &&
-        osOriFilename != "/vsistdout_redirect/" &&
-        CPLTestBool(CPLGetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")) )
-    {
-        GIntBig nFreeDiskSpace =
-            VSIGetDiskFreeSpace(CPLGetDirname(pszFilename));
-        if( nFreeDiskSpace >= 0 &&
-            nFreeDiskSpace < dfUncompressedImageSize )
-        {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Free disk space available is " CPL_FRMT_GIB " bytes, "
-                      "whereas " CPL_FRMT_GIB " are at least necessary. "
-                      "You can disable this check by defining the "
-                      "CHECK_DISK_FREE_SPACE configuration option to FALSE.",
-                      nFreeDiskSpace,
-                      static_cast<GIntBig>(dfUncompressedImageSize) );
-            return nullptr;
-        }
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Should the file be created as a bigtiff file?                   */
 /* -------------------------------------------------------------------- */
     const char *pszBIGTIFF = CSLFetchNameValue(papszParmList, "BIGTIFF");
@@ -15612,6 +15592,49 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 
     if( bCreateBigTIFF )
         CPLDebug( "GTiff", "File being created as a BigTIFF." );
+
+/* -------------------------------------------------------------------- */
+/*      Sanity check.                                                   */
+/* -------------------------------------------------------------------- */
+    if( bTiled )
+    {
+        unsigned nTileXCount = DIV_ROUND_UP(nXSize, l_nBlockXSize);
+        unsigned nTileYCount = DIV_ROUND_UP(nYSize, l_nBlockYSize);
+        // libtiff implementation limitation
+        if( nTileXCount > 0x80000000U / (bCreateBigTIFF ? 8 : 4) / nTileYCount )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "File too large regarding tile size. This would result "
+                     "in a file with tile arrays larger than 2GB");
+            return nullptr;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check free space (only for big, non sparse, uncompressed)       */
+/* -------------------------------------------------------------------- */
+    if( l_nCompression == COMPRESSION_NONE &&
+        dfUncompressedImageSize >= 1e9 &&
+        !CPLFetchBool(papszParmList, "SPARSE_OK", false) &&
+        osOriFilename != "/vsistdout/" &&
+        osOriFilename != "/vsistdout_redirect/" &&
+        CPLTestBool(CPLGetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")) )
+    {
+        GIntBig nFreeDiskSpace =
+            VSIGetDiskFreeSpace(CPLGetDirname(pszFilename));
+        if( nFreeDiskSpace >= 0 &&
+            nFreeDiskSpace < dfUncompressedImageSize )
+        {
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Free disk space available is " CPL_FRMT_GIB " bytes, "
+                      "whereas " CPL_FRMT_GIB " are at least necessary. "
+                      "You can disable this check by defining the "
+                      "CHECK_DISK_FREE_SPACE configuration option to FALSE.",
+                      nFreeDiskSpace,
+                      static_cast<GIntBig>(dfUncompressedImageSize) );
+            return nullptr;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Check if the user wishes a particular endianness                */

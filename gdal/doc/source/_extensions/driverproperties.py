@@ -3,6 +3,7 @@
 import sphinx.locale
 import docutils.statemachine
 sphinx.locale.admonitionlabels['shortname'] = u''
+sphinx.locale.admonitionlabels['built_in_by_default'] = u'' #u'Built-in by default'
 sphinx.locale.admonitionlabels['supports_create'] = u'' #u'Supports Create()'
 sphinx.locale.admonitionlabels['supports_createcopy'] = u'' #u'Supports CreateCopy()'
 sphinx.locale.admonitionlabels['supports_georeferencing'] = u'' #u'Supports georeferencing'
@@ -14,6 +15,18 @@ def setup(app):
                  latex=(visit_admonition, depart_node),
                  text=(visit_admonition, depart_node))
     app.add_directive('shortname', ShortName)
+
+    app.add_node(built_in_by_default,
+                 html=(visit_built_in_by_default_node, depart_node),
+                 latex=(visit_admonition, depart_node),
+                 text=(visit_admonition, depart_node))
+    app.add_directive('built_in_by_default', BuiltInByDefault)
+
+    app.add_node(build_dependencies,
+                 html=(visit_build_dependencies_node, depart_node),
+                 latex=(visit_admonition, depart_node),
+                 text=(visit_admonition, depart_node))
+    app.add_directive('build_dependencies', BuildDependencies)
 
     app.add_node(supports_create,
                  html=(visit_supports_create_node, depart_node),
@@ -51,12 +64,26 @@ def visit_admonition(self, node):
 def depart_node(self, node):
     self.depart_admonition(node)
 
-class shortname(nodes.General, nodes.Element):
+class shortname(nodes.Admonition, nodes.Element):
     pass
 
 def visit_shortname_node(self, node):
     self.body.append(self.starttag(
             node, 'div', CLASS=('admonition shortname')))
+
+class built_in_by_default(nodes.Admonition, nodes.Element):
+    pass
+
+def visit_built_in_by_default_node(self, node):
+    self.body.append(self.starttag(
+            node, 'div', CLASS=('admonition built_in_by_default')))
+
+class build_dependencies(nodes.Admonition, nodes.Element):
+    pass
+
+def visit_build_dependencies_node(self, node):
+    self.body.append(self.starttag(
+            node, 'div', CLASS=('admonition build_dependencies')))
 
 class supports_create(nodes.Admonition, nodes.Element):
     pass
@@ -121,10 +148,39 @@ class ShortName(Directive):
 
     def run(self):
 
-        node = supports_create('\n'.join(self.content))
+        node = shortname('\n'.join(self.content))
         node += nodes.title(_('Driver short name'), _('Driver short name'))
 
         return finish_directive(self, 'shortname', node)
+
+
+class BuiltInByDefault(Directive):
+
+    # this enables content in the directive
+    has_content = True
+
+    def run(self):
+
+        if not self.content:
+            self.content = docutils.statemachine.StringList(['This driver is built-in by default'])
+        node = built_in_by_default('\n'.join(self.content))
+        node += nodes.title(_('Driver built-in by default'), _('Driver built-in by default'))
+
+        return finish_directive(self, 'built_in_by_default', node)
+
+
+class BuildDependencies(Directive):
+
+    # this enables content in the directive
+    has_content = True
+
+    def run(self):
+
+        assert self.content, "Content should be defined for build_dependencies directive"
+        node = build_dependencies('\n'.join(self.content))
+        node += nodes.title(_('Build dependencies'), _('Build dependencies'))
+
+        return finish_directive(self, 'build_dependencies', node)
 
 
 class CreateDirective(Directive):
@@ -135,7 +191,7 @@ class CreateDirective(Directive):
     def run(self):
 
         if not self.content:
-            self.content = docutils.statemachine.StringList(['This driver supports the :cpp:func:`GDALDriver::Create` operation']) + self.content
+            self.content = docutils.statemachine.StringList(['This driver supports the :cpp:func:`GDALDriver::Create` operation'])
         node = supports_create('\n'.join(self.content))
         node += nodes.title(_('Supports Create()'), _('Supports Create()'))
 
@@ -188,6 +244,8 @@ class VirtualIODirective(Directive):
 
 def purge_driverproperties(app, env, docname):
     for directive in ['all_shortname',
+                      'all_built_in_by_default',
+                      'all_build_dependencies',
                       'all_supports_create',
                       'all_supports_createcopy',
                       'all_supports_georeferencing',

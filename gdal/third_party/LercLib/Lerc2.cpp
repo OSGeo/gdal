@@ -259,7 +259,10 @@ bool Lerc2::ReadHeader(const Byte** ppByte, size_t& nBytesRemainingInOut, struct
   hd.numValidPixel  = intVec[i++];
   hd.microBlockSize = intVec[i++];
   hd.blobSize       = intVec[i++];
-  hd.dt             = static_cast<DataType>(intVec[i++]);
+  const int dt      = intVec[i++];
+  if( dt < DT_Char || dt > DT_Undefined )
+    return false;
+  hd.dt             = static_cast<DataType>(dt);
 
   hd.maxZError      = dblVec[0];
   hd.zMin           = dblVec[1];
@@ -335,8 +338,16 @@ bool Lerc2::ReadMask(const Byte** ppByte, size_t& nBytesRemainingInOut)
   ptr += sizeof(int);
   nBytesRemaining -= sizeof(int);
 
-  if ((numValid == 0 || numValid == w * h) && (numBytesMask != 0))
-    return false;
+  if (numValid == 0 || numValid == w * h)
+  {
+    if (numBytesMask != 0)
+      return false;
+  }
+  else
+  {
+    if (numBytesMask <= 0)
+      return false;
+  }
 
   if (!m_bitMask.SetSize(w, h))
     return false;

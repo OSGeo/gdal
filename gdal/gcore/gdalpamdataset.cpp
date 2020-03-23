@@ -508,6 +508,56 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
                     psPam->poSRS = nullptr;
                 }
             }
+
+            // Parse GCPs
+            const CPLXMLNode* psSourceGCPS = CPLGetXMLNode(psGeodataXform, "SourceGCPs");
+            const CPLXMLNode* psTargetGCPs = CPLGetXMLNode(psGeodataXform, "TargetGCPs");
+            if( psSourceGCPS && psTargetGCPs && !psPam->bHaveGeoTransform )
+            {
+                std::vector<double> adfSource;
+                std::vector<double> adfTarget;
+                bool ySourceAllNegative = true;
+                for( auto psIter = psSourceGCPS->psChild; psIter; psIter = psIter->psNext )
+                {
+                    if( psIter->eType == CXT_Element && strcmp(psIter->pszValue, "Double") == 0 )
+                    {
+                        adfSource.push_back(CPLAtof(CPLGetXMLValue(psIter, nullptr, "0")));
+                        if( (adfSource.size() % 2) == 0 && adfSource.back() > 0 )
+                            ySourceAllNegative = false;
+                    }
+                }
+                for( auto psIter = psTargetGCPs->psChild; psIter; psIter = psIter->psNext )
+                {
+                    if( psIter->eType == CXT_Element && strcmp(psIter->pszValue, "Double") == 0 )
+                    {
+                        adfTarget.push_back(CPLAtof(CPLGetXMLValue(psIter, nullptr, "0")));
+                    }
+                }
+                if( !adfSource.empty() &&
+                    adfSource.size() == adfTarget.size() &&
+                    (adfSource.size() % 2) == 0 )
+                {
+                    std::vector<GDAL_GCP> asGCPs;
+                    asGCPs.resize(adfSource.size() / 2);
+                    char szEmptyString[] = { 0 };
+                    for( size_t i = 0; i+1 < adfSource.size(); i+= 2 )
+                    {
+                        asGCPs[i/2].pszId = szEmptyString;
+                        asGCPs[i/2].pszInfo = szEmptyString;
+                        asGCPs[i/2].dfGCPPixel = adfSource[i];
+                        asGCPs[i/2].dfGCPLine =
+                            ySourceAllNegative ? -adfSource[i+1] : adfSource[i+1];
+                        asGCPs[i/2].dfGCPX = adfTarget[i];
+                        asGCPs[i/2].dfGCPY = adfTarget[i+1];
+                        asGCPs[i/2].dfGCPZ = 0;
+                    }
+                    GDALPamDataset::SetGCPs( static_cast<int>(asGCPs.size()),
+                                             &asGCPs[0],
+                                             psPam->poSRS );
+                    delete psPam->poSRS;
+                    psPam->poSRS = nullptr;
+                }
+            }
         }
         if( psValueAsXML )
             CPLDestroyXMLNode(psValueAsXML);

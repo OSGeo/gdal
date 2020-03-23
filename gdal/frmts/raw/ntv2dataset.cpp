@@ -653,23 +653,24 @@ int NTv2Dataset::OpenGrid( char *pachHeader, vsi_l_offset nGridOffsetIn )
     {
         GetRasterBand(1)->SetDescription( "Latitude Offset (arc seconds)" );
         GetRasterBand(2)->SetDescription( "Longitude Offset (arc seconds)" );
+        GetRasterBand(2)->SetMetadataItem("positive_value", "west");
         GetRasterBand(3)->SetDescription( "Latitude Error" );
         GetRasterBand(4)->SetDescription( "Longitude Error" );
     }
     else
     {
-        // A bit surprising that the order is long, lat here, contrary to the
+        // A bit surprising that the order is easting, northing here, contrary to the
         // classic NTv2 order.... Verified on
         // NAD83v70VG.gvb (https://webapp.geod.nrcan.gc.ca/geod/process/download-helper.php?file_id=NAD83v70VG)
         // against the TRX software (https://webapp.geod.nrcan.gc.ca/geod/process/download-helper.php?file_id=trx)
         // https://webapp.geod.nrcan.gc.ca/geod/tools-outils/nad83-docs.php
         // Unfortunately I couldn't find an official documentation of the format !
-        GetRasterBand(1)->SetDescription( "Longitude Offset" );
-        GetRasterBand(2)->SetDescription( "Latitude Offset" );
-        GetRasterBand(3)->SetDescription( "Height Offset" );
-        GetRasterBand(4)->SetDescription( "Longitude Error" );
-        GetRasterBand(5)->SetDescription( "Latitude Error" );
-        GetRasterBand(6)->SetDescription( "Height Error" );
+        GetRasterBand(1)->SetDescription( "East velocity (mm/year)" );
+        GetRasterBand(2)->SetDescription( "North velocity (mm/year)" );
+        GetRasterBand(3)->SetDescription( "Up velocity (mm/year)" );
+        GetRasterBand(4)->SetDescription( "East velocity Error (mm/year)" );
+        GetRasterBand(5)->SetDescription( "North velocity Error (mm/year)" );
+        GetRasterBand(6)->SetDescription( "Up velocity Error (mm/year)" );
     }
 
 /* -------------------------------------------------------------------- */

@@ -2,8 +2,24 @@
 
 set -e
 
-if grep -r "\\.c" gdal/scanbuildoutput | grep "<string>" | grep -v -e "<key>" -e degrib -e libjpeg -e libpng -e EHapi -e GDapi -e SWapi -e osr_cs_wkt_parser -e ods_formula_parser -e swq_parser; then
-    echo error && /bin/false
-else
-    echo ok
+sudo apt-get install jq
+
+rm -f filtered_scanbuild.txt
+files=$(find gdal/scanbuildoutput -name "*.sarif")
+for f in $files; do
+    jq '.runs[].results[] | (if .locations[].physicalLocation.fileLocation.uri | (contains("/usr/include") or contains("degrib") or contains("libpng") or contains("libjpeg") or contains("EHapi") or contains("GDapi") or contains("SWapi") or contains("osr_cs_wkt_parser") or contains("ods_formula_parser") or contains("swq_parser") or contains("json_tokener") ) then empty else { "uri": .locations[].physicalLocation.fileLocation.uri, "msg": .message.text, "location": .codeFlows[-1].threadFlows[-1].locations[-1] } end)' < $f > tmp.txt
+    if [ -s tmp.txt ]; then
+        echo "Errors from $f: "
+        cat $f
+        echo ""
+        cat tmp.txt >> filtered_scanbuild.txt
+    fi
+done
+if [ -s filtered_scanbuild.txt ]; then
+    echo ""
+    echo ""
+    echo "========================"
+    echo "Summary of errors found:"
+    cat filtered_scanbuild.txt
+    /bin/false
 fi

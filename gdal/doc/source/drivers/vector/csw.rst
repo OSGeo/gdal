@@ -5,6 +5,8 @@ CSW - OGC CSW (Catalog Service for the Web)
 
 .. shortname:: CSW
 
+.. build_dependencies:: libcurl
+
 This driver can connect to a OGC CSW service. It supports CSW 2.0.2
 protocol. GDAL/OGR must be built with Curl support in order to the CSW
 driver to be compiled. And the GML driver should be set-up for read
