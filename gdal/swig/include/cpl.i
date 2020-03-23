@@ -675,6 +675,20 @@ int wrapper_VSIStatL( const char * utf8_path, StatBuf *psStatBufOut, int nFlags 
 
 #endif
 
+%rename (GetFileMetadata) VSIGetFileMetadata;
+%apply (char **dict) { char ** };
+char** VSIGetFileMetadata( const char *utf8_path, const char* domain,
+                           char** options = NULL );
+%clear char **;
+
+%rename (SetFileMetadata) VSISetFileMetadata;
+%apply (char **dict) { char ** metadata };
+bool VSISetFileMetadata( const char * utf8_path,
+                         char** metadata,
+                         const char* domain,
+                         char** options = NULL );
+%clear char **;
+
 %apply Pointer NONNULL {VSILFILE* fp};
 
 %rename (VSIFOpenL) wrapper_VSIFOpenL;

@@ -11865,6 +11865,286 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_GetFileMetadata(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char *arg1 = (char *) 0 ;
+  char *arg2 = (char *) 0 ;
+  char **arg3 = (char **) NULL ;
+  int bToFree1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  char **result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO|O:GetFileMetadata",&obj0,&obj1,&obj2)) SWIG_fail;
+  {
+    /* %typemap(in) (const char *utf8_path) */
+    arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
+    if (arg1 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
+  }
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "GetFileMetadata" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  if (obj2) {
+    {
+      /* %typemap(in) char **options */
+      int bErr = FALSE;
+      arg3 = CSLFromPySequence(obj2, &bErr);
+      if( bErr )
+      {
+        SWIG_fail;
+      }
+    }
+  }
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char **)VSIGetFileMetadata((char const *)arg1,(char const *)arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) char **dict */
+    char **stringarray = result;
+    resultobj = PyDict_New();
+    if ( stringarray != NULL ) {
+      while (*stringarray != NULL ) {
+        char const *valptr;
+        char *keyptr;
+        const char* pszSep = strchr( *stringarray, '=' );
+        if ( pszSep != NULL) {
+          keyptr = CPLStrdup(*stringarray);
+          keyptr[pszSep - *stringarray] = '\0';
+          valptr = pszSep + 1;
+          PyObject *nm = GDALPythonObjectFromCStr( keyptr );
+          PyObject *val = GDALPythonObjectFromCStr( valptr );
+          PyDict_SetItem(resultobj, nm, val );
+          Py_DECREF(nm);
+          Py_DECREF(val);
+          CPLFree( keyptr );
+        }
+        stringarray++;
+      }
+    }
+  }
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg3 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg3 );
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SetFileMetadata(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char *arg1 = (char *) 0 ;
+  char **arg2 = (char **) 0 ;
+  char *arg3 = (char *) 0 ;
+  char **arg4 = (char **) NULL ;
+  int bToFree1 = 0 ;
+  int res3 ;
+  char *buf3 = 0 ;
+  int alloc3 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOO|O:SetFileMetadata",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  {
+    /* %typemap(in) (const char *utf8_path) */
+    arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
+    if (arg1 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(in) char **dict */
+    arg2 = NULL;
+    if ( PySequence_Check( obj1 ) ) {
+      Py_ssize_t size = PySequence_Size(obj1);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
+        PyObject* pyObj = PySequence_GetItem(obj1,i);
+        int bFreeStr;
+        char* pszStr = GDALPythonObjectToCStr(pyObj, &bFreeStr);
+        if ( pszStr == NULL ) {
+          Py_DECREF(pyObj);
+          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+          SWIG_fail;
+        }
+        arg2 = CSLAddString( arg2, pszStr );
+        GDALPythonFreeCStr(pszStr, bFreeStr);
+        Py_DECREF(pyObj);
+      }
+    }
+    else if ( PyMapping_Check( obj1 ) ) {
+      /* We need to use the dictionary form. */
+      Py_ssize_t size = PyMapping_Length( obj1 );
+      if ( size > 0 && size == (int)size) {
+#if PY_VERSION_HEX < 0x03000000
+        // PyMapping_Items also work with python 2.x  but throws a warning about
+        // -Wwrite-strings warning
+        PyObject *item_list = PyObject_CallMethod(obj1,const_cast<char*>("items"),NULL);
+#else
+        PyObject *item_list = PyMapping_Items( obj1 );
+#endif
+        for( int i=0; i<(int)size; i++ ) {
+          PyObject *it = PySequence_GetItem( item_list, i );
+          
+          PyObject *k, *v;
+          if ( ! PyArg_ParseTuple( it, "OO", &k, &v ) ) {
+            Py_DECREF(it);
+            PyErr_SetString(PyExc_TypeError,"Dictionary must contain tuples of strings");
+            SWIG_fail;
+          }
+          
+          int bFreeK, bFreeV;
+          char* pszK = GDALPythonObjectToCStr(k, &bFreeK);
+          char* pszV = GDALPythonObjectToCStr(v, &bFreeV);
+          if( pszK == NULL || pszV == NULL )
+          {
+            GDALPythonFreeCStr(pszK, bFreeK);
+            GDALPythonFreeCStr(pszV, bFreeV);
+            Py_DECREF(it);
+            PyErr_SetString(PyExc_TypeError,"Dictionary must contain tuples of strings");
+            SWIG_fail;
+          }
+          arg2 = CSLAddNameValue( arg2, pszK, pszV );
+          
+          GDALPythonFreeCStr(pszK, bFreeK);
+          GDALPythonFreeCStr(pszV, bFreeV);
+          Py_DECREF(it);
+        }
+        Py_DECREF(item_list);
+      }
+    }
+    else {
+      PyErr_SetString(PyExc_TypeError,"Argument must be dictionary or sequence of strings");
+      SWIG_fail;
+    }
+  }
+  res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "SetFileMetadata" "', argument " "3"" of type '" "char const *""'");
+  }
+  arg3 = reinterpret_cast< char * >(buf3);
+  if (obj3) {
+    {
+      /* %typemap(in) char **options */
+      int bErr = FALSE;
+      arg4 = CSLFromPySequence(obj3, &bErr);
+      if( bErr )
+      {
+        SWIG_fail;
+      }
+    }
+  }
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)VSISetFileMetadata((char const *)arg1,arg2,(char const *)arg3,arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  {
+    /* %typemap(freearg) char **dict */
+    CSLDestroy( arg2 );
+  }
+  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg4 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  {
+    /* %typemap(freearg) char **dict */
+    CSLDestroy( arg2 );
+  }
+  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg4 );
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_VSIFOpenL(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   char *arg1 = (char *) 0 ;
@@ -41215,6 +41495,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"StatBuf_IsDirectory", _wrap_StatBuf_IsDirectory, METH_VARARGS, (char *)"StatBuf_IsDirectory(StatBuf self) -> int"},
 	 { (char *)"StatBuf_swigregister", StatBuf_swigregister, METH_VARARGS, NULL},
 	 { (char *)"VSIStatL", _wrap_VSIStatL, METH_VARARGS, (char *)"VSIStatL(char const * utf8_path, int nFlags=0) -> int"},
+	 { (char *)"GetFileMetadata", _wrap_GetFileMetadata, METH_VARARGS, (char *)"GetFileMetadata(char const * utf8_path, char const * domain, char ** options=None) -> char **"},
+	 { (char *)"SetFileMetadata", _wrap_SetFileMetadata, METH_VARARGS, (char *)"SetFileMetadata(char const * utf8_path, char ** metadata, char const * domain, char ** options=None) -> bool"},
 	 { (char *)"VSIFOpenL", _wrap_VSIFOpenL, METH_VARARGS, (char *)"VSIFOpenL(char const * utf8_path, char const * pszMode) -> VSILFILE"},
 	 { (char *)"VSIFOpenExL", _wrap_VSIFOpenExL, METH_VARARGS, (char *)"VSIFOpenExL(char const * utf8_path, char const * pszMode, int bSetError) -> VSILFILE"},
 	 { (char *)"VSIFEofL", _wrap_VSIFEofL, METH_VARARGS, (char *)"VSIFEofL(VSILFILE fp) -> int"},

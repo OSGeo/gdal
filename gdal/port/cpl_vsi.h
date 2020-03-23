@@ -226,6 +226,14 @@ char CPL_DLL **VSIGetFileSystemsPrefixes( void );
 
 void CPL_DLL   *VSIFGetNativeFileDescriptorL( VSILFILE* );
 
+char CPL_DLL  **VSIGetFileMetadata( const char * pszFilename, const char* pszDomain,
+                                    CSLConstList papszOptions ) CPL_WARN_UNUSED_RESULT;
+
+int CPL_DLL VSISetFileMetadata( const char * pszFilename,
+                                CSLConstList papszMetadata,
+                                const char* pszDomain,
+                                CSLConstList papszOptions );
+
 /* ==================================================================== */
 /*      Memory allocation                                               */
 /* ==================================================================== */

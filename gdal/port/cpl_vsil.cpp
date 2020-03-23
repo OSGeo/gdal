@@ -828,6 +828,77 @@ int VSIStatExL( const char * pszFilename, VSIStatBufL *psStatBuf, int nFlags )
     return poFSHandler->Stat( pszFilename, psStatBuf, nFlags );
 }
 
+
+/************************************************************************/
+/*                       VSIGetFileMetadata()                           */
+/************************************************************************/
+
+/**
+ * \brief Get metadata on files.
+ *
+ * Implemented currently only for network-like filesystems.
+ *
+ * @param pszFilename the path of the filesystem object to be queried.
+ * UTF-8 encoded.
+ * @param pszDomain Metadata domain to query. Depends on the file system.
+ * The following are supported:
+ * <ul>
+ * <li>HEADERS: to get HTTP headers for network-like filesystems (/vsicurl/, /vsis3/, etc)</li>
+ * <li>TAGS: specific to /vsis3/: to get S3 Object tagging information</li>
+ * </ul>
+ * @param papszOptions Unused. Should be set to NULL.
+ *
+ * @return a NULL-terminated list of key=value strings, to be freed with CSLDestroy()
+ * or NULL in case of error / empty list.
+ *
+ * @since GDAL 3.1.0
+ */
+
+char** VSIGetFileMetadata( const char * pszFilename, const char* pszDomain,
+                           CSLConstList papszOptions )
+{
+    VSIFilesystemHandler *poFSHandler =
+        VSIFileManager::GetHandler( pszFilename );
+    return poFSHandler->GetFileMetadata( pszFilename, pszDomain, papszOptions );
+}
+
+/************************************************************************/
+/*                       VSISetFileMetadata()                           */
+/************************************************************************/
+
+/**
+ * \brief Set metadata on files.
+ *
+ * Implemented currently only for /vsis3/
+ *
+ * @param pszFilename the path of the filesystem object to be queried.
+ * UTF-8 encoded.
+ * @param papszMetadata NULL-terminated list of key=value strings.
+ * @param pszDomain Metadata domain to set. Depends on the file system.
+ * The following are supported:
+ * <ul>
+ * <li>HEADERS: to set HTTP header</li>
+ * <li>TAGS: to set S3 Object tagging information</li>
+ * </ul>
+ * @param papszOptions Unused. Should be set to NULL.
+ *
+ * @return TRUE in case of success.
+ *
+ * @since GDAL 3.1.0
+ */
+
+int VSISetFileMetadata( const char * pszFilename,
+                           CSLConstList papszMetadata,
+                           const char* pszDomain,
+                           CSLConstList papszOptions )
+{
+    VSIFilesystemHandler *poFSHandler =
+        VSIFileManager::GetHandler( pszFilename );
+    return poFSHandler->SetFileMetadata( pszFilename, papszMetadata, pszDomain,
+                                         papszOptions ) ? 1 : 0;
+}
+
+
 /************************************************************************/
 /*                       VSIIsCaseSensitiveFS()                         */
 /************************************************************************/
@@ -1476,6 +1547,29 @@ int VSIFilesystemHandler::RmdirRecursive( const char* pszDirname )
     }
     CSLDestroy(papszFiles);
     return VSIRmdir(pszDirname);
+}
+
+/************************************************************************/
+/*                          GetFileMetadata()                           */
+/************************************************************************/
+
+char** VSIFilesystemHandler::GetFileMetadata( const char * /* pszFilename*/, const char* /*pszDomain*/,
+                                    CSLConstList /*papszOptions*/ )
+{
+    return nullptr;
+}
+
+/************************************************************************/
+/*                          SetFileMetadata()                           */
+/************************************************************************/
+
+bool VSIFilesystemHandler::SetFileMetadata( const char * /* pszFilename*/,
+                                    CSLConstList /* papszMetadata */,
+                                    const char* /* pszDomain */,
+                                    CSLConstList /* papszOptions */ )
+{
+    CPLError(CE_Failure, CPLE_NotSupported, "SetFileMetadata() not supported");
+    return false;
 }
 
 #endif
