@@ -2150,6 +2150,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
             const char* pszName = CPLGetXMLValue(psIter, "name", NULL);
             const char* pszLongName = CPLGetXMLValue(psIter, "longname", NULL);
             const char* pszLength = CPLGetXMLValue(psIter, "length", NULL);
+            const char* pszType = CPLGetXMLValue(psIter, "type", "string");
             int nLength = -1;
             if (pszLength != NULL)
                 nLength = atoi(pszLength);
@@ -2216,7 +2217,77 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 (*pnMDSize) ++;
                 papszTmp[0] = NULL;
                 CPLFree(papszTmp);
+                const char* pszVal = strchr(papszMD[(*pnMDSize) - 1], '=') + 1;
+                
+				if (strcmp(pszType, "IEEE754") == 0)
+				{
+                    int len = strlen(pszVal);
+                    unsigned char *cVal = pszVal;
+                    unsigned char ncVal[4] = {0x0,0x0,0x0,0x0};
+                    int i;
+                    for (i = 0; i< len; i++)
+                    {
+                        ncVal[i] = cVal[i];
+                    }
+                    /*https://bytes.com/topic/c/answers/212667-convert-unsigned-char-array-float*/
+                    unsigned int nVal = ((unsigned int)ncVal[0]<<24) |
+                        ((unsigned int)ncVal[1]<<16) |
+                        ((unsigned int)ncVal[2]<<8) |
+                        ((unsigned int)ncVal[3]);
+                    
+                    int s,e;
+                    long f;
+                    s = (nVal & 0x80000000UL) >> 31;
+                    e = (nVal & 0x7F800000UL) >> 23;
+                    f = (nVal & 0x007FFFFFUL);
+                    if (e == 255 && f != 0) {
+                        /* NaN (Not a Number) */
+                        sprintf(pszVal, "%f",0.0/0.0);
+                    }
+                    else if (e == 255 && f == 0 && s == 1) {
+                        /* Negative infinity */
+                        sprintf(pszVal, "%f",-0.0/0.0);
+                    }
+                    else if (e == 255 && f == 0 && s == 0) {
+                        /* Positive infinity */
+                        sprintf(pszVal, "%f",1.0/0.0);
+                    }
+                    else if (e > 0 && e < 255) {
+                        /* Normal number */
+                        f += 0x00800000UL;
+                        if (s) {f = -f;}
+                        sprintf(pszVal, "%f", ldexp(f, e - 150));
+                    }
+                    else if (e == 0 && f != 0) {
+                        /* Denormal number */
+                        if (s) {f = -f;}
+                        sprintf(pszVal, "%f",ldexp(f, -149));
+                    }
+                    else if (e == 0 && f == 0 && s == 1) {
+                        /* Negative zero */
+                        sprintf(pszVal, "%f", 0.0);
+                    }
+                    else if (e == 0 && f == 0 && s == 0) {
+                        /* Positive zero */
+                        sprintf(pszVal, "%f",0.0);
+                    }
+				} else if (strcmp(pszType, "UINT") == 0) {
+                    int len = strlen(pszVal);
+                    unsigned char *cVal = pszVal;
+                    unsigned char ncVal[4] = {0x0,0x0,0x0,0x0};
+                    int i;
+                    for (i = 0; i< len; i++)
+                    {
+                        ncVal[i] = cVal[i];
+                    }
 
+                    unsigned int nVal = ((unsigned int)ncVal[0]<<24) |
+                        ((unsigned int)ncVal[1]<<16) |
+                        ((unsigned int)ncVal[2]<<8) |
+                        ((unsigned int)ncVal[3]);
+                    
+					sprintf(pszVal, "%u",nVal);
+				} 
                 if (psOutXMLNode != NULL)
                 {
                     const char* pszVal = strchr(papszMD[(*pnMDSize) - 1], '=') + 1;
