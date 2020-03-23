@@ -130,8 +130,8 @@
                     <xs:enumeration value="string"/>
                     <xs:enumeration value="integer"/>
                     <xs:enumeration value="real"/>
-                    <xs:enumeration value="UINT"/>
                     <xs:enumeration value="IEEE754"/>
+                    <xs:enumeration value="UINT"/>
                 </xs:restriction>
             </xs:simpleType>
         </xs:attribute>

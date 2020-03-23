@@ -111,7 +111,7 @@ AX_CHECK_COMPILE_FLAG([-Wdocumentation -Wno-documentation-deprecated-sync], [C_W
 dnl gnu89 is a reasonable target to get MSVC compatibility.
 dnl but only apply it with gcc, since clang will throw a lot of warnings
 SAVED_CFLAGS=$CFLAGS
-CFLAGS="$CFLAGS $ERROR_ON_UNKNOWN_OPTIONS -std=c11"
+CFLAGS="$CFLAGS $ERROR_ON_UNKNOWN_OPTIONS -std=gnu89"
 AC_MSG_CHECKING([if -std=gnu89 can be enabled])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
   [[#if defined(__clang__) || !defined(__GNUC__)

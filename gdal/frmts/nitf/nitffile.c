@@ -2227,7 +2227,8 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                     int len = strlen(pszVal);
                     unsigned char *cVal = pszVal;
                     unsigned char ncVal[4] = {0x0,0x0,0x0,0x0};
-                    for (int i = 0; i< len; i++)
+                    int i;
+                    for (i = 0; i< len; i++)
                     {
                         ncVal[i] = cVal[i];
                     }
@@ -2277,7 +2278,8 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                     int len = strlen(pszVal);
                     unsigned char *cVal = pszVal;
                     unsigned char ncVal[4] = {0x0,0x0,0x0,0x0};
-                    for (int i = 0; i< len; i++)
+                    int i;
+                    for (i = 0; i< len; i++)
                     {
                         ncVal[i] = cVal[i];
                     }

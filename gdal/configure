@@ -5571,8 +5571,8 @@ fi
 
 
 SAVED_CFLAGS=$CFLAGS
-CFLAGS="$CFLAGS $ERROR_ON_UNKNOWN_OPTIONS -std=c11"
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if -std=c11 can be enabled" >&5
+CFLAGS="$CFLAGS $ERROR_ON_UNKNOWN_OPTIONS -std=gnu89"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if -std=gnu89 can be enabled" >&5
 $as_echo_n "checking if -std=gnu89 can be enabled... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -5588,7 +5588,7 @@ main ()
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  C_WFLAGS="$C_WFLAGS -std=c11"
+  C_WFLAGS="$C_WFLAGS -std=gnu89"
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 else

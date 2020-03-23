@@ -86,11 +86,11 @@ class NITFDataset final: public GDALPamDataset
 
     GDALMultiDomainMetadata oSpecialMD;
 
-//#ifdef ESRI_BUILD
+#ifdef ESRI_BUILD
     void         InitializeNITFDESMetadata();
     void         InitializeNITFDESs();
     void         InitializeNITFTREs();
-//#endif
+#endif
     void         InitializeNITFMetadata();
     void         InitializeCGMMetadata();
     void         InitializeTextMetadata();
