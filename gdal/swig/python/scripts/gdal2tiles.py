@@ -1192,6 +1192,9 @@ def optparse_init():
                  dest="nb_processes",
                  type='int',
                  help="Number of processes to use for tiling")
+    p.add_option("--tilesize", dest="tilesize", default=256,
+                 type='int',
+                 help="Tile size in pixel of a tile")
 
     # KML options
     g = OptionGroup(p, "KML (Google Earth) options",
@@ -1400,6 +1403,8 @@ class GDAL2Tiles(object):
 
         # Tile format
         self.tile_size = 256
+        if options.tilesize:
+            self.tile_size = options.tilesize
         self.tiledriver = 'PNG'
         self.tileext = 'png'
         self.tmp_dir = tempfile.mkdtemp()
@@ -1598,7 +1603,7 @@ class GDAL2Tiles(object):
         # Calculating ranges for tiles in different zoom levels
         if self.options.profile == 'mercator':
 
-            self.mercator = GlobalMercator()
+            self.mercator = GlobalMercator(tile_size=self.tile_size)
 
             # Function which generates SWNE in LatLong for given tile
             self.tileswne = self.mercator.TileLatLonBounds
@@ -1641,7 +1646,7 @@ class GDAL2Tiles(object):
 
         if self.options.profile == 'geodetic':
 
-            self.geodetic = GlobalGeodetic(self.options.tmscompatible)
+            self.geodetic = GlobalGeodetic(self.options.tmscompatible, tile_size=self.tile_size)
 
             # Function which generates SWNE in LatLong for given tile
             self.tileswne = self.geodetic.TileLatLonBounds
