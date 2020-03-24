@@ -92,7 +92,7 @@ can publish a picture without proper georeferencing too.
 
   Pixel size of the tiles.
 
-  .. versionadded:: 3.0.5
+  .. versionadded:: 3.1
 
 .. option:: -h, --help
 
