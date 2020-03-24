@@ -82,6 +82,7 @@ typedef enum
     GTC_PROMOTE_TO_MULTI,
     GTC_CONVERT_TO_LINEAR,
     GTC_CONVERT_TO_CURVE,
+    GTC_PROMOTE_TO_MULTI_AND_CONVERT_TO_LINEAR,
 } GeomTypeConversion;
 
 #define GEOMTYPE_UNCHANGED  -2
@@ -3331,22 +3332,30 @@ static OGRwkbGeometryType ConvertType(GeomTypeConversion eGeomTypeConversion,
                                       OGRwkbGeometryType eGType)
 {
     OGRwkbGeometryType eRetType = eGType;
-    if ( eGeomTypeConversion == GTC_PROMOTE_TO_MULTI )
+
+    if ( eGeomTypeConversion == GTC_CONVERT_TO_LINEAR ||
+         eGeomTypeConversion == GTC_PROMOTE_TO_MULTI_AND_CONVERT_TO_LINEAR )
     {
-        if( eGType == wkbTriangle || eGType == wkbTIN ||
-            eGType == wkbPolyhedralSurface )
+        eRetType = OGR_GT_GetLinear(eRetType);
+    }
+
+    if ( eGeomTypeConversion == GTC_PROMOTE_TO_MULTI ||
+         eGeomTypeConversion == GTC_PROMOTE_TO_MULTI_AND_CONVERT_TO_LINEAR )
+    {
+        if( eRetType == wkbTriangle || eRetType == wkbTIN ||
+            eRetType == wkbPolyhedralSurface )
         {
             eRetType = wkbMultiPolygon;
         }
-        else if( !OGR_GT_IsSubClassOf(eGType, wkbGeometryCollection) )
+        else if( !OGR_GT_IsSubClassOf(eRetType, wkbGeometryCollection) )
         {
-            eRetType = OGR_GT_GetCollection(eGType);
+            eRetType = OGR_GT_GetCollection(eRetType);
         }
     }
-    else if ( eGeomTypeConversion == GTC_CONVERT_TO_LINEAR )
-        eRetType = OGR_GT_GetLinear(eGType);
+
     if ( eGeomTypeConversion == GTC_CONVERT_TO_CURVE )
-        eRetType = OGR_GT_GetCurve(eGType);
+        eRetType = OGR_GT_GetCurve(eRetType);
+
     return eRetType;
 }
 
@@ -4822,6 +4831,7 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                 }
                 else if( m_eGeomTypeConversion == GTC_PROMOTE_TO_MULTI ||
                          m_eGeomTypeConversion == GTC_CONVERT_TO_LINEAR ||
+                         m_eGeomTypeConversion == GTC_PROMOTE_TO_MULTI_AND_CONVERT_TO_LINEAR ||
                          m_eGeomTypeConversion == GTC_CONVERT_TO_CURVE )
                 {
                     if( poDstGeometry != nullptr )
@@ -5167,9 +5177,19 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
             else if( EQUAL(osGeomName,"GEOMETRY") )
                 psOptions->eGType = wkbUnknown;
             else if( EQUAL(osGeomName,"PROMOTE_TO_MULTI") )
-                psOptions->eGeomTypeConversion = GTC_PROMOTE_TO_MULTI;
+            {
+                if( psOptions->eGeomTypeConversion == GTC_CONVERT_TO_LINEAR )
+                    psOptions->eGeomTypeConversion = GTC_PROMOTE_TO_MULTI_AND_CONVERT_TO_LINEAR;
+                else
+                    psOptions->eGeomTypeConversion = GTC_PROMOTE_TO_MULTI;
+            }
             else if( EQUAL(osGeomName,"CONVERT_TO_LINEAR") )
-                psOptions->eGeomTypeConversion = GTC_CONVERT_TO_LINEAR;
+            {
+                if( psOptions->eGeomTypeConversion == GTC_PROMOTE_TO_MULTI )
+                    psOptions->eGeomTypeConversion = GTC_PROMOTE_TO_MULTI_AND_CONVERT_TO_LINEAR;
+                else
+                    psOptions->eGeomTypeConversion = GTC_CONVERT_TO_LINEAR;
+            }
             else if( EQUAL(osGeomName,"CONVERT_TO_CURVE") )
                 psOptions->eGeomTypeConversion = GTC_CONVERT_TO_CURVE;
             else
