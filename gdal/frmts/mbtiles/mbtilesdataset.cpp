@@ -3543,7 +3543,7 @@ void GDALRegister_MBTiles()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MBTiles" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_mbtiles.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/mbtiles.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mbtiles" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 

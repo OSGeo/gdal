@@ -567,7 +567,7 @@ void GDALRegister_COASP()
                                "DRDC COASP SAR Processor Raster" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION,
                                "hdr" );
-    // poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_coasp.html");
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/coasp.html");
     poDriver->pfnIdentify = COASPDataset::Identify;
     poDriver->pfnOpen = COASPDataset::Open;
     GetGDALDriverManager()->RegisterDriver( poDriver );

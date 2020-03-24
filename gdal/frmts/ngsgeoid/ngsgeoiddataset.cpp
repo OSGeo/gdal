@@ -467,7 +467,7 @@ void GDALRegister_NGSGEOID()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "NOAA NGS Geoid Height Grids" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_ngsgeoid.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/ngsgeoid.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bin" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

@@ -99,7 +99,7 @@ void GDALRegister_SIGDEM() {
         poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
                 "Scaled Integer Gridded DEM .sigdem");
         poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-                "frmt_various.html#SIGDEM");
+                "drivers/raster/sigdem.html");
         poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "sigdem");
 
         poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");

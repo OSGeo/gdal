@@ -3070,7 +3070,7 @@ void GDALRegister_RMF()
     poDriver->SetDescription( "RMF" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Raster Matrix Format" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_rmf.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/rmf.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "rsw" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 Int32 Float64" );

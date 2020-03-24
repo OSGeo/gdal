@@ -1393,7 +1393,7 @@ void GDALRegister_JPEG2000()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "JPEG-2000 part 1 (ISO/IEC 15444-1), "
                                "based on Jasper library" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jpeg2000.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/jpeg2000.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 UInt16 Int32 UInt32" );
     poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jp2" );

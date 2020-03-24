@@ -658,7 +658,7 @@ void GDALRegister_PALSARJaxa()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "JAXA PALSAR Product Reader (Level 1.1/1.5)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_palsar.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/palsar.html" );
 
     poDriver->pfnOpen = PALSARJaxaDataset::Open;
     poDriver->pfnIdentify = PALSARJaxaDataset::Identify;

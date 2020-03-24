@@ -4495,7 +4495,7 @@ void GDALRegister_BAG()
     poDriver->SetDescription("BAG");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Bathymetry Attributed Grid");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_bag.html");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/bag.html");
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "bag");
 

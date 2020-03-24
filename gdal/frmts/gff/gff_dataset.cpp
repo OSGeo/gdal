@@ -345,7 +345,7 @@ void GDALRegister_GFF()
     poDriver->SetMetadataItem(
         GDAL_DMD_LONGNAME,
         "Ground-based SAR Applications Testbed File Format (.gff)");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_various.html#GFF");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/gff.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "gff");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->pfnOpen = GFFDataset::Open;

@@ -387,7 +387,7 @@ void GDALRegister_BIGGIF()
      poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                 "Graphics Interchange Format (.gif)" );
      poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                "frmt_gif.html" );
+                                "drivers/raster/gif.html" );
      poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gif" );
      poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/gif" );
      poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

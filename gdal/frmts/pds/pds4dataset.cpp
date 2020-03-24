@@ -4554,7 +4554,7 @@ void GDALRegister_PDS4()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "NASA Planetary Data System 4" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_pds4.html" );
+                               "drivers/raster/pds4.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xml" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte UInt16 Int16 UInt32 Int32 Float32 "

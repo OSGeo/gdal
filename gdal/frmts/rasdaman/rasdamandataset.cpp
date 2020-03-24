@@ -709,7 +709,7 @@ void GDALRegister_RASDAMAN()
   poDriver->SetDescription( "RASDAMAN" );
   poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
   poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "RASDAMAN" );
-  poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_rasdaman.html" );
+  poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/rasdaman.html" );
 
   poDriver->pfnOpen = RasdamanDataset::Open;
 

@@ -602,7 +602,7 @@ void GDALRegister_R()
     poDriver->SetDescription("R");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "R Object Data Store");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_r.html");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/r.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "rda");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Float32");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,

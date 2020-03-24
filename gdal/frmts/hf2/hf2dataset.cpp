@@ -1175,7 +1175,7 @@ void GDALRegister_HF2()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "HF2/HFZ heightfield raster" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_hf2.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/hf2.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "hf2" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"

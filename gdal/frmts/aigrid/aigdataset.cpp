@@ -1067,7 +1067,7 @@ void GDALRegister_AIGrid()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Arc/Info Binary Grid" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#AIG" );
+                               "drivers/raster/aig.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = AIGDataset::Open;

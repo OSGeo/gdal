@@ -1609,7 +1609,7 @@ void GDALRegister_BMP()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "MS Windows Device Independent Bitmap" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_bmp.html" );
+                               "drivers/raster/bmp.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bmp" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,

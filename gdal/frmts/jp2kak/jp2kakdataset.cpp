@@ -2703,7 +2703,7 @@ void GDALRegister_JP2KAK()
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
     poDriver->SetMetadataItem(
         GDAL_DMD_LONGNAME, "JPEG-2000 (based on Kakadu " KDU_CORE_VERSION ")");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_jp2kak.html");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/jp2kak.html");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte Int16 UInt16");
     poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/jp2");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "jp2 j2k");

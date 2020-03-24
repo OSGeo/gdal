@@ -1088,7 +1088,7 @@ void GDALRegister_IDA()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Image Data and Analysis" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#IDA" );
+                               "drivers/raster/ida.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

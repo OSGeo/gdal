@@ -1559,7 +1559,7 @@ void GDALRegister_RRASTER()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grd" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "R Raster" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#RRASTER" );
+                               "drivers/raster/rraster.html" );
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
                               "Byte Int16 UInt16 Int32 UInt32 Float32 Float64");
 

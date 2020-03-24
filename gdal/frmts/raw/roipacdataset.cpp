@@ -941,7 +941,7 @@ void GDALRegister_ROIPAC()
     poDriver->SetDescription( "ROI_PAC" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ROI_PAC raster" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#ROI_PAC" );
+                               "drivers/raster/roi_pac.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

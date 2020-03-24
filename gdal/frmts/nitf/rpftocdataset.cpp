@@ -1344,7 +1344,7 @@ void GDALRegister_RPFTOC()
     poDriver->pfnOpen = RPFTOCDataset::Open;
 
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#RPFTOC" );
+                               "drivers/raster/rpftoc.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "toc" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );

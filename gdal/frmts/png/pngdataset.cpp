@@ -2071,7 +2071,7 @@ void GDALRegister_PNG()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Portable Network Graphics" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#PNG" );
+                               "drivers/raster/png.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "png" );
     poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/png" );
 
