@@ -3359,6 +3359,9 @@ class OGRMVTWriterDataset final: public GDALDataset
                                          GIntBig nSerial,
                                          OGRGeometry* poGeom);
 
+        virtual OGRErr      StartTransaction(CPL_UNUSED int bForce ) override;
+        virtual OGRErr      CommitTransaction() override;
+
         static GDALDataset* Create( const char * pszFilename,
                                    int nXSize,
                                    int nYSize,
@@ -5925,6 +5928,54 @@ OGRLayer* OGRMVTWriterDataset::ICreateLayer( const char* pszLayerName,
 
     m_apoLayers.push_back( std::unique_ptr<OGRMVTWriterLayer>(poLayer) );
     return m_apoLayers.back().get();
+}
+
+/************************************************************************/
+/*                         StartTransaction()                           */
+/************************************************************************/
+
+OGRErr OGRMVTWriterDataset::StartTransaction(CPL_UNUSED int bForce)
+{
+	if(m_hDBMBTILES)
+	{
+		char* pszErrMsg = nullptr;
+		const int rc = sqlite3_exec(m_hDBMBTILES, "BEGIN", nullptr, nullptr, &pszErrMsg);
+		if (rc != SQLITE_OK)
+		{
+			CPLError(CE_Failure, CPLE_AppDefined,
+					"%s transaction failed: %s",
+					"BEGIN", pszErrMsg);
+			sqlite3_free(pszErrMsg);
+			return OGRERR_FAILURE;
+		}
+
+		return OGRERR_NONE;
+	}
+	return OGRERR_UNSUPPORTED_OPERATION;
+}
+
+/************************************************************************/
+/*                         CommitTransaction()                          */
+/************************************************************************/
+
+OGRErr OGRMVTWriterDataset::CommitTransaction()
+{
+	if(m_hDBMBTILES)
+	{
+		char* pszErrMsg = nullptr;
+		const int rc = sqlite3_exec(m_hDBMBTILES, "COMMIT", nullptr, nullptr, &pszErrMsg);
+		if (rc != SQLITE_OK)
+		{
+			CPLError(CE_Failure, CPLE_AppDefined,
+				"%s transaction failed: %s",
+				"COMMIT", pszErrMsg);
+			sqlite3_free(pszErrMsg);
+			return OGRERR_FAILURE;
+		}
+
+		return OGRERR_NONE;
+	}
+	return OGRERR_UNSUPPORTED_OPERATION;
 }
 
 /************************************************************************/
