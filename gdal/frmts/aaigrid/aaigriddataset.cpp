@@ -1576,7 +1576,7 @@ void GDALRegister_ISG()
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "International Service for the Geoid");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-                              "isg.html");
+                              "drivers/raster/isg.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "isg");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");

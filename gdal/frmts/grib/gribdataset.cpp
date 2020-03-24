@@ -2258,7 +2258,7 @@ GDALGRIBDriver::GDALGRIBDriver() : bHasFullInitMetadata(false)
 {
     aosMetadata.SetNameValue(GDAL_DCAP_RASTER, "YES");
     aosMetadata.SetNameValue(GDAL_DMD_LONGNAME, "GRIdded Binary (.grb, .grb2)");
-    aosMetadata.SetNameValue(GDAL_DMD_HELPTOPIC, "frmt_grib.html");
+    aosMetadata.SetNameValue(GDAL_DMD_HELPTOPIC, "drivers/raster/grib.html");
     aosMetadata.SetNameValue(GDAL_DMD_EXTENSIONS, "grb grb2 grib2");
     aosMetadata.SetNameValue(GDAL_DCAP_VIRTUALIO, "YES");
 

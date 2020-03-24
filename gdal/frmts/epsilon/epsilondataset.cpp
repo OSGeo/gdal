@@ -1006,7 +1006,7 @@ void GDALRegister_EPSILON()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Epsilon wavelets" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_epsilon.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/epsilon.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 
     CPLString osMethods;

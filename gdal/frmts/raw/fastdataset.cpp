@@ -1207,7 +1207,7 @@ void GDALRegister_FAST()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "EOSAT FAST Format" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_fast.html" );
+                               "drivers/raster/fast.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = FASTDataset::Open;

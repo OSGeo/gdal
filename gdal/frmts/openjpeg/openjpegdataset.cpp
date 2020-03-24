@@ -4102,7 +4102,7 @@ void GDALRegister_JP2OpenJPEG()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "JPEG-2000 driver based on OpenJPEG library" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jp2openjpeg.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/jp2openjpeg.html" );
     poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jp2" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "jp2 j2k" );

@@ -778,7 +778,7 @@ void GDALRegister_RDB()
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "RIEGL RDB Map Pixel (.mpx)");
     // TODO:
     // poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-    //                          "");
+    //                          "drivers/raster/");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "mpx");
     poDriver->pfnOpen = rdb::RDBDataset::Open;
     poDriver->pfnIdentify = rdb::RDBDataset::Identify;

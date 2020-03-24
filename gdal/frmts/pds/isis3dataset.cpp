@@ -4341,7 +4341,7 @@ void GDALRegister_ISIS3()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "USGS Astrogeology ISIS cube (Version 3)" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_isis3.html" );
+                               "drivers/raster/isis3.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "lbl cub" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,

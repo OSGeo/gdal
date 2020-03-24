@@ -680,7 +680,7 @@ void GDALRegister_OZI()
     poDriver->SetDescription( "OZI" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "OziExplorer Image File" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_ozi.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/ozi.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = OZIDataset::Open;

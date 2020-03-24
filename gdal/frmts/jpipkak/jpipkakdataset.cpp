@@ -1506,7 +1506,7 @@ void GDALRegister_JPIPKAK()
     poDriver->SetDescription( "JPIPKAK" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "JPIP (based on Kakadu)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jpipkak.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/jpipkak.html" );
     poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jpp-stream" );
 
     poDriver->pfnOpen = JPIPKAKDataset::Open;

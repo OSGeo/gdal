@@ -585,7 +585,7 @@ void GDALRegister_GRASS()
     poDriver->SetDescription( "GRASS" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GRASS Database Rasters" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_grass.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/grass.html" );
 
     poDriver->pfnOpen = GRASSDataset::Open;
 

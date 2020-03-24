@@ -3527,7 +3527,7 @@ void GDALRegister_JPEG()
     poDriver->SetDescription("JPEG");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "JPEG JFIF");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_jpeg.html");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/jpeg.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "jpg");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "jpg jpeg");
     poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/jpeg");
