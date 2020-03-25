@@ -3624,6 +3624,27 @@ def test_ogr_dxf_very_close_neg_to_zero_knot():
     assert extent == pytest.approx((163.0306017054786, 166.6530957511469,
                                     78.40469559017359, 81.82569418640966), abs=1e-5)
 
+###############################################################################
+
+
+def test_ogr_dxf_polygon_3D():
+
+
+    tmpfile = '/vsimem/test_ogr_dxf_polygon_3D.dxf'
+    ds = ogr.GetDriverByName('DXF').CreateDataSource(tmpfile)
+    lyr = ds.CreateLayer('test')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    g = ogr.CreateGeometryFromWkt('POLYGON((0 0 10,0 1 10,1 1 10,0 0 10))')
+    f.SetGeometry(g)
+    lyr.CreateFeature(f)
+    ds = None
+    ds = ogr.Open(tmpfile)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    got_g = f.GetGeometryRef()
+    assert got_g.Equals(g)
+    gdal.Unlink(tmpfile)
+
 
 ###############################################################################
 # cleanup
