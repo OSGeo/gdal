@@ -624,7 +624,7 @@ def test_tiff_ProjectedCSTypeGeoKey_only():
 def test_tiff_GTModelTypeGeoKey_only():
 
     ds = gdal.Open('data/GTModelTypeGeoKey_only.tif')
-    assert ds.GetProjectionRef().find('LOCAL_CS["unnamed"]') == 0
+    assert ds.GetProjectionRef() in ('LOCAL_CS["unnamed"]', 'LOCAL_CS["unnamed",UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]')
     ds = None
 
 ###############################################################################
@@ -2234,7 +2234,9 @@ def test_tiff_read_nogeoref():
                 print('Expected ' + str(expected_gt))
                 pytest.fail('Iteration %d, did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s,copy_tabfile=%s' % (iteration, config_option_value, str(copy_pam), str(copy_worldfile), str(copy_tabfile)))
 
-            if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and expected_srs not in srs_wkt):
+            if expected_srs == 'LOCAL_CS["PAM"]' and srs_wkt == 'LOCAL_CS["PAM",UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]':
+                pass # ok
+            elif (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and expected_srs not in srs_wkt):
                 print('Got ' + srs_wkt)
                 print('Expected ' + expected_srs)
                 pytest.fail('Iteration %d, did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s,copy_tabfile=%s' % (iteration, config_option_value, str(copy_pam), str(copy_worldfile), str(copy_tabfile)))
@@ -2292,7 +2294,9 @@ def test_tiff_read_inconsistent_georef():
                 print('Expected ' + str(expected_gt))
                 pytest.fail('Iteration %d, did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s,copy_tabfile=%s' % (iteration, config_option_value, str(copy_pam), str(copy_worldfile), str(copy_tabfile)))
 
-            if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and expected_srs not in srs_wkt):
+            if expected_srs == 'LOCAL_CS["PAM"]' and srs_wkt == 'LOCAL_CS["PAM",UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]':
+                pass # ok
+            elif (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and expected_srs not in srs_wkt):
                 print('Got ' + srs_wkt)
                 print('Expected ' + expected_srs)
                 pytest.fail('Iteration %d, did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s,copy_tabfile=%s' % (iteration, config_option_value, str(copy_pam), str(copy_worldfile), str(copy_tabfile)))
@@ -2340,7 +2344,9 @@ def test_tiff_read_gcp_internal_and_auxxml():
                 print('Expected ' + str(expected_gcp_count))
                 pytest.fail('Iteration %d, did not get expected gcp count for %s,copy_pam=%s' % (iteration, config_option_value, str(copy_pam)))
 
-            if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and expected_srs not in srs_wkt):
+            if expected_srs == 'LOCAL_CS["PAM"]' and srs_wkt == 'LOCAL_CS["PAM",UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]':
+                pass # ok
+            elif (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and expected_srs not in srs_wkt):
                 print('Got ' + srs_wkt)
                 print('Expected ' + expected_srs)
                 pytest.fail('Iteration %d, did not get expected SRS for %s,copy_pam=%s' % (iteration, config_option_value, str(copy_pam)))
