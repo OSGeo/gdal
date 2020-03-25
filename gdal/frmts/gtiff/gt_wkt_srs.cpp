@@ -1555,12 +1555,17 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
     }
 
     OGRErr eErr = OGRERR_NONE;
-    double dfSemiMajor = poSRS->GetSemiMajor( &eErr );
-    double dfInvFlattening = poSRS->GetInvFlattening( &eErr );
-    if( eErr != OGRERR_NONE )
+    double dfSemiMajor = 0;
+    double dfInvFlattening = 0;
+    if( !poSRS->IsLocal() )
     {
-        dfSemiMajor = 0.0;
-        dfInvFlattening = 0.0;
+        dfSemiMajor = poSRS->GetSemiMajor( &eErr );
+        dfInvFlattening = poSRS->GetInvFlattening( &eErr );
+        if( eErr != OGRERR_NONE )
+        {
+            dfSemiMajor = 0.0;
+            dfInvFlattening = 0.0;
+        }
     }
 
 /* -------------------------------------------------------------------- */
