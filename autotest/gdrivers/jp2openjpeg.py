@@ -3122,6 +3122,19 @@ def test_jp2openjpeg_odd_dimensions_overviews():
     ds = None
 
 ###############################################################################
+# Test reading an image whose origin is not (0,0)
+
+
+def test_jp2openjpeg_image_origin_not_zero():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/byte_image_origin_not_zero.jp2')
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    assert ds.GetRasterBand(1).ReadRaster(0,0,20,20,10,10) is not None
+
+###############################################################################
 
 
 def test_jp2openjpeg_cleanup():

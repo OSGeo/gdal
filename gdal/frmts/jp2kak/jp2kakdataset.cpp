@@ -1371,8 +1371,8 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
         poCodeStream->apply_input_restrictions(0, 0, nDiscardLevels, 0, nullptr);
         kdu_dims l_dims;
         poCodeStream->get_dims(0, l_dims);
-        const int nOvrXSize = l_dims.size.x;
-        const int nOvrYSize = l_dims.size.y;
+        const int nOvrCanvasXSize = l_dims.pos.x + l_dims.size.x;
+        const int nOvrCanvasYSize = l_dims.pos.y + l_dims.size.y;
 
         l_dims.pos.x = l_dims.pos.x + nXOff / nResMult;
         l_dims.pos.y = l_dims.pos.y + nYOff / nResMult;
@@ -1393,10 +1393,10 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
         {
             l_dims.size.y = nBufYSize;
         }
-        if( l_dims.pos.x + l_dims.size.x > nOvrXSize )
-            l_dims.size.x = nOvrXSize - l_dims.pos.x;
-        if( l_dims.pos.y + l_dims.size.y > nOvrYSize )
-            l_dims.size.y = nOvrYSize - l_dims.pos.y;
+        if( l_dims.pos.x + l_dims.size.x > nOvrCanvasXSize )
+            l_dims.size.x = nOvrCanvasXSize - l_dims.pos.x;
+        if( l_dims.pos.y + l_dims.size.y > nOvrCanvasYSize )
+            l_dims.size.y = nOvrCanvasYSize - l_dims.pos.y;
 
         kdu_dims l_dims_roi;
 
