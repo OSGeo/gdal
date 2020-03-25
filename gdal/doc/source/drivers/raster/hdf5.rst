@@ -194,10 +194,6 @@ and some of these are supported by GDAL. Currently supported are
 -  HDF5 OMI/Aura Ozone (O3) Total Column 1-Orbit L2 Swath 13x24km
    (**Level-2 OMTO3**)
 
-Metadata
---------
-
-No Metadata are read at this time from the HDF5 files.
 
 Multi-file support
 ------------------
