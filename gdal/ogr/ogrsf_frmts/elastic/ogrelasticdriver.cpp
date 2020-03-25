@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Project:  ElasticSearch Translator
+ * Project:  Elasticsearch Translator
  * Purpose:
  * Author:
  *
@@ -32,23 +32,23 @@
 CPL_CVSID("$Id$")
 
 /************************************************************************/
-/*                   OGRElasticSearchDriverIdentify()                   */
+/*                   OGRElasticsearchDriverIdentify()                   */
 /************************************************************************/
 
-static int OGRElasticSearchDriverIdentify( GDALOpenInfo* poOpenInfo )
+static int OGRElasticsearchDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
     return STARTS_WITH_CI(poOpenInfo->pszFilename, "ES:");
 }
 
 /************************************************************************/
-/*                  OGRElasticSearchDriverOpen()                        */
+/*                  OGRElasticsearchDriverOpen()                        */
 /************************************************************************/
 
-static GDALDataset* OGRElasticSearchDriverOpen( GDALOpenInfo* poOpenInfo )
+static GDALDataset* OGRElasticsearchDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    if( !OGRElasticSearchDriverIdentify(poOpenInfo) )
+    if( !OGRElasticsearchDriverIdentify(poOpenInfo) )
         return nullptr;
 
     OGRElasticDataSource *poDS = new OGRElasticDataSource();
@@ -61,9 +61,9 @@ static GDALDataset* OGRElasticSearchDriverOpen( GDALOpenInfo* poOpenInfo )
 }
 
 /************************************************************************/
-/*                     OGRElasticSearchDriverCreate()                   */
+/*                     OGRElasticsearchDriverCreate()                   */
 /************************************************************************/
-static GDALDataset* OGRElasticSearchDriverCreate( const char * pszName,
+static GDALDataset* OGRElasticsearchDriverCreate( const char * pszName,
                                                   CPL_UNUSED int nXSize,
                                                   CPL_UNUSED int nYSize,
                                                   CPL_UNUSED int nBands,
@@ -88,12 +88,12 @@ void RegisterOGRElastic() {
     if (!GDAL_CHECK_VERSION("OGR/Elastic Search driver"))
         return;
 
-    if( GDALGetDriverByName( "ElasticSearch" ) != nullptr )
+    if( GDALGetDriverByName( "Elasticsearch" ) != nullptr )
       return;
 
     GDALDriver  *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "ElasticSearch" );
+    poDriver->SetDescription( "Elasticsearch" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Elastic Search" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_elasticsearch.html" );
@@ -151,9 +151,9 @@ void RegisterOGRElastic() {
                                "Time IntegerList Integer64List RealList "
                                "StringList Binary" );
 
-    poDriver->pfnIdentify = OGRElasticSearchDriverIdentify;
-    poDriver->pfnOpen = OGRElasticSearchDriverOpen;
-    poDriver->pfnCreate = OGRElasticSearchDriverCreate;
+    poDriver->pfnIdentify = OGRElasticsearchDriverIdentify;
+    poDriver->pfnOpen = OGRElasticsearchDriverOpen;
+    poDriver->pfnCreate = OGRElasticsearchDriverCreate;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
