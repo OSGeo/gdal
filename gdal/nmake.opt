@@ -712,6 +712,15 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 !ENDIF
 !ENDIF
 
+#MRR_PLUGIN = YES
+#MRR_ENABLED = YES
+#MRR_VERSION=1
+#MRR_SDK = C:\MRRSDK\sdk
+#MRR_INC = $(MRR_SDK)\include 
+#MRR_LIB = $(MRR_SDK)\lib\pe$(MRR_VERSION).lib \
+#          $(MRR_SDK)\lib\sde$(MRR_VERSION).lib $(MRR_SDK)\lib\sg$(MRR_VERSION).lib
+
+
 #FGDB_ENABLED = YES
 #FGDB_PLUGIN = YES
 #FGDB_SDK = C:\Users\rburhum\Desktop\FileGDB_API_VS2008_1_0beta3
