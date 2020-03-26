@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<MIRasterPreferences version="9.1">
+  <MIRasterHandler separateCache="0" includeFieldBand="0" blockAccess="1">
+    <DisplayMode>2</DisplayMode>
+    <ColorTable>Pseudocolor.lut</ColorTable>
+    <ColorPalettesPath>./ColorPalettes/</ColorPalettesPath>
+    <Underviews>0</Underviews>
+    <AlphaRender>1</AlphaRender>
+    <SunShade enabled="1">
+      <Angle>45</Angle>
+      <Elevation>45</Elevation>
+      <Intensity>50</Intensity>
+      <Saturation>50</Saturation>
+      <Shadow>50</Shadow>
+      <SunHighlight enabled="1">
+        <Angle>45</Angle>
+        <Elevation>45</Elevation>
+        <Intensity>50</Intensity>
+      </SunHighlight>
+    </SunShade>
+    <DisplayQualityMode>2</DisplayQualityMode>
+    <DisplayQualityThreshold>268435456</DisplayQualityThreshold>
+    <separateCacheSize>512</separateCacheSize>
+    <RasterFormats>
+      <Driver Type="Native">
+		<Vehicles>
+			<Vehicle Name="MRR" desc="MapInfo Multi-Resolution Raster (.mrr)" ext=".mrr" RenderEnabled="true" ProcessingEnabled="true"/>
+			<Vehicle Name="MRR 16" desc="MapInfo (Version 16) Multi-Resolution Raster (.mrr)" ext=".mrr" RenderEnabled="false" ProcessingEnabled="false"/>
+			<Vehicle Name="MRR Point" desc="MapInfo Point Storage (.mrrpnt)" ext=".mrrpnt" RenderEnabled="false" ProcessingEnabled="true"/>
+			<Vehicle Name="GeoTIFF" desc="TIFF, BigTIFF, GeoTIFF Rasters (.tif)" ext=".tif;.tiff" RenderEnabled="true" ProcessingEnabled="true"/>
+			<Vehicle Name="Band Interleaved Image" desc="Band Interleaved Raster (.bil;.bip;.bsq;.hdr)" ext=".bil;.bip;.bsq;.hdr;.zip" RenderEnabled="true" ProcessingEnabled="true"/>
+			<Vehicle Name="ESRI Grid" desc="ESRI Grid (.adf)" ext=".adf" RenderEnabled="true" ProcessingEnabled="true"/>
+			<Vehicle Name="ESRI Float Grid" desc="ESRI Float Grid (.flt;.hdr)" ext=".flt;.hdr;.zip" RenderEnabled="true" ProcessingEnabled="true"/>
+			<Vehicle Name="ESRI ASCII Grid" desc="ESRI ASCII Grid (.asc)" ext=".asc;.zip" RenderEnabled="true" ProcessingEnabled="true"/>
+			<Vehicle Name="ERDAS ECW/JP2" desc="ERDAS ECW and JPEG2000 (.ecw;.jp2)" ext=".ecw;.jp2;.j2k;.j2c;.jpc;.jpx;.jpf" RenderEnabled="true" ProcessingEnabled="true"/>
+			<Vehicle Name="Image" desc="Raster Imagery (.png;.jpg)" ext=".png;.jpg;.jpeg;.jfi;.jfif" RenderEnabled="false" ProcessingEnabled="false"/>
+			<Vehicle Name="GDAL" desc="GDAL Multi-Format Driver" ext=".img;.dat;.dem;.dt0;.dt1;.dt2;.tif;.vrt;.ecw;.xyz;.grd;.asc;.ers;.jp2;.gxf;.kap;.sid;.mrr" RenderEnabled="true" ProcessingEnabled="true"/>
+			<Vehicle Name="MapInfo Virtual Raster" desc="MapInfo Virtual Raster (.mvr)" ext=".mvr;.xml" RenderEnabled="true" ProcessingEnabled="true"/>
+			<Vehicle Name="MapInfo Render Algorithm" desc="MapInfo Render Algorithm (.mrd)" ext=".mrd;.xml" RenderEnabled="true" ProcessingEnabled="true"/>
+			<Vehicle Name="ERMapper ERS" desc="ERMapper Multi-Banded Grid (.ers)" ext=".ers;.zip" RenderEnabled="true" ProcessingEnabled="true"/>
+			<Vehicle Name="Vertical Mapper" desc="Vertical Mapper Grid (.grd;.grc)" ext=".grd;.grc;.zip" RenderEnabled="true" ProcessingEnabled="true"/>
+			<Vehicle Name="Surfer Binary Grid" desc="Surfer Binary Grid (.grd)" ext=".grd;.zip" RenderEnabled="true" ProcessingEnabled="true"/>
+			<Vehicle Name="Surfer ASCII Grid" desc="Surfer ASCII Grid (.grd)" ext=".grd;.zip" RenderEnabled="true" ProcessingEnabled="true"/>
+			<Vehicle Name="Geosoft Oasis Montaj Grid" desc="Geosoft Oasis Montaj Grid (.grd)" ext=".grd;.zip" RenderEnabled="true" ProcessingEnabled="true"/>
+			<Vehicle Name="Encom Grid" desc="Encom Float Grid (.grd)" ext=".grd;.zip" RenderEnabled="true" ProcessingEnabled="true"/>
+		</Vehicles>
+      </Driver>
+      <Driver Type="GDAL" RestrictFormats="true">
+        <Formats>
+          <format desc="Erdas Imagine (.img)" ext="img" GDALCode="HFA" ProcessingEnabled="true" RenderEnabled="true" />
+          <format desc="ENVI .hdr Labelled Raster" ext="dat" GDALCode="ENVI" ProcessingEnabled="true" RenderEnabled="true" />
+          <format desc="First Generation USGS DOQ (.doq)" ext="dem" GDALCode="DOQ1" ProcessingEnabled="true" RenderEnabled="true" />
+          <format desc="New Labelled USGS DOQ (.doq)" ext="dem" GDALCode="DOQ2" ProcessingEnabled="true" RenderEnabled="true" />
+          <format desc="Military Elevation Data (.dt0)" ext="dt0" GDALCode="DTED" ProcessingEnabled="true" RenderEnabled="true" />
+          <format desc="Military Elevation Data (.dt1)" ext="dt1" GDALCode="DTED" ProcessingEnabled="true" RenderEnabled="true" />
+          <format desc="Military Elevation Data (.dt2)" ext="dt2" GDALCode="DTED" ProcessingEnabled="true" RenderEnabled="true" />
+          <format desc="GeoTiff (*.tif)" ext="tif" GDALCode="GTiff" ProcessingEnabled="true" RenderEnabled="true" />
+          <format desc="GDAL Virtual Raster Dataset (.vrt)" ext="vrt" GDALCode="VRT" ProcessingEnabled="true" RenderEnabled="true"/>
+          <format desc="ERDAS Enhanced Compressed Wavelets (.ecw)" ext="ecw" GDALCode="ECW" ProcessingEnabled="true" RenderEnabled="false"/>
+          <format desc="ASCII Gridded XYZ (.xyz)" ext="xyz" GDALCode="XYZ" ProcessingEnabled="true" RenderEnabled="true"/>
+          <format desc="Surfer Binary Grid (.grd)" ext="grd" GDALCode="GSBG" ProcessingEnabled="true" RenderEnabled="true"/>
+          <format desc="ArcInfo ASCII Grid (.asc)" ext="asc" GDALCode="AAIGrid" ProcessingEnabled="true" RenderEnabled="true"/>
+          <format desc="ERMapper (.ers)" ext="ers" GDALCode="ERS" ProcessingEnabled="true" RenderEnabled="true"/>
+          <format desc="JPEG2000 (.jp2)" ext="jp2" GDALCode="JP2ECW" ProcessingEnabled="true" RenderEnabled="false"/>
+          <format desc="Grid eXchange File (.gxf)" ext="gxf" GDALCode="GXF" ProcessingEnabled="true" RenderEnabled="true"/>
+          <format desc="BSB NOAA Nautical Chart (.kap)" ext="kap" GDALCode="BSB" ProcessingEnabled="true" RenderEnabled="true"/>
+          <format desc="Multi-resolution Seamless Image Database (*.sid *.SID)" ext="sid" GDALCode="MrSID" ProcessingEnabled="true" RenderEnabled="true"/>
+          <format desc="MapInfo Multi Resolution Raster (.mrr)" ext="mrr" GDALCode="MRR" ProcessingEnabled="true" RenderEnabled="true"/>
+        </Formats>
+      </Driver>
+    </RasterFormats>
+  </MIRasterHandler>
+  <MIRasterCommon>
+    <LogFilePath>./MIRaster.log</LogFilePath>
+    <LogFileSize>10000000</LogFileSize>
+    <LogFileCount>3</LogFileCount>
+    <LogMsgQSize>4096</LogMsgQSize>
+    <LogLevel>3</LogLevel>
+    <TempDir></TempDir>
+  </MIRasterCommon>
+  <MIRasterIO>
+    <CacheSize>1024</CacheSize>
+  </MIRasterIO>
+  <MIRasterProcessing>
+    <FinalizationOptions></FinalizationOptions>
+    <CreationPrefs>
+      <Continuous>
+        <CompressionMethod>50</CompressionMethod>
+        <CompressionLevel>3</CompressionLevel>
+      </Continuous>
+      <Image>
+        <CompressionMethod>53</CompressionMethod>
+        <CompressionLevel>3</CompressionLevel>
+      </Image>
+      <EncodingType>-1</EncodingType>
+    </CreationPrefs>
+  </MIRasterProcessing>
+  <MIRasterAnalysis>
+    <ExtendedTABSupport>false</ExtendedTABSupport>
+  </MIRasterAnalysis>
+  <MIRasterColor enabled="1">
+    <LegendMapping>1</LegendMapping>
+  </MIRasterColor>
+</MIRasterPreferences>
