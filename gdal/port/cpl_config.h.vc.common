@@ -86,9 +86,6 @@
 # define SIZEOF_VOIDP 4
 #endif
 
-/* Set the native cpu bit order */
-#define HOST_FILLORDER FILLORDER_LSB2MSB
-
 /* Define as 0 or 1 according to the floating point format supported by the
    machine */
 #define HAVE_IEEEFP 1
