@@ -2009,9 +2009,10 @@ GByte* GDALColorReliefPrecompute(GDALRasterBandH hSrcBand,
     const int nIndexOffset = (eDT == GDT_Int16) ? 32768 : 0;
     *pnIndexOffset = nIndexOffset;
     const int nXSize = GDALGetRasterBandXSize(hSrcBand);
-    const int nYSize = GDALGetRasterBandXSize(hSrcBand);
+    const int nYSize = GDALGetRasterBandYSize(hSrcBand);
     if( eDT == GDT_Byte ||
-        ((eDT == GDT_Int16 || eDT == GDT_UInt16) && nXSize * nYSize > 65536) )
+        ((eDT == GDT_Int16 || eDT == GDT_UInt16) &&
+         static_cast<GIntBig>(nXSize) * nYSize > 65536) )
     {
         const int iMax = (eDT == GDT_Byte) ? 256: 65536;
         pabyPrecomputed = static_cast<GByte *>(VSI_MALLOC2_VERBOSE(4, iMax));
