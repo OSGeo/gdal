@@ -33,7 +33,7 @@ CPL_CVSID("$Id$")
 
 // constructor
 KEAMaskBand::KEAMaskBand(GDALRasterBand *pParent,
-                kealib::KEAImageIO *pImageIO, int *pRefCount)
+                kealib::KEAImageIO *pImageIO, LockedRefCount *pRefCount)
 {
     m_nSrcBand = pParent->GetBand();
     poDS = nullptr;
@@ -48,9 +48,9 @@ KEAMaskBand::KEAMaskBand(GDALRasterBand *pParent,
 
     // grab the imageio class and its refcount
     this->m_pImageIO = pImageIO;
-    this->m_pnRefCount = pRefCount;
+    this->m_pRefCount = pRefCount;
     // increment the refcount as we now have a reference to imageio
-    (*this->m_pnRefCount)++;
+    this->m_pRefCount->IncRef();
 }
 
 KEAMaskBand::~KEAMaskBand()
@@ -59,8 +59,7 @@ KEAMaskBand::~KEAMaskBand()
     this->FlushCache();
 
     // decrement the recount and delete if needed
-    (*m_pnRefCount)--;
-    if( *m_pnRefCount == 0 )
+    if( m_pRefCount->DecRef() )
     {
         try
         {
@@ -70,7 +69,7 @@ KEAMaskBand::~KEAMaskBand()
         {
         }
         delete m_pImageIO;
-        delete m_pnRefCount;
+        delete m_pRefCount;
     }
 }
 

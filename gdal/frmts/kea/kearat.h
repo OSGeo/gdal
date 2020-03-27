@@ -43,6 +43,7 @@ private:
     std::vector<kealib::KEAATTField> m_aoFields;
     CPLString osWorkingResult;
     KEARasterBand *m_poBand;
+    CPLMutex            *m_hMutex;
 
 public:
     KEARasterAttributeTable(kealib::KEAAttributeTable *poKEATable, KEARasterBand *poBand);
