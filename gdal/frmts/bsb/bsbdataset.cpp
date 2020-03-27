@@ -62,6 +62,8 @@ class BSBDataset final: public GDALPamDataset
     void        ScanForGCPsNos( const char *pszFilename );
     void        ScanForGCPsBSB();
 
+    void        ScanForCutline();
+
     static int IdentifyInternal( GDALOpenInfo *, bool & isNosOut );
 
   public:
@@ -691,6 +693,54 @@ void BSBDataset::ScanForGCPsBSB()
 }
 
 /************************************************************************/
+/*                            ScanForCutline()                          */
+/************************************************************************/
+
+void BSBDataset::ScanForCutline()
+{
+/* PLY: Border Polygon Record - coordinates of the panel within the 
+ * raster image, given in chart datum lat/long. Any shape polygon.
+ * They look like:
+ *      PLY/1,32.346666666667,-60.881666666667 
+ *      PLY/n,lat,long 
+ *
+ * If found then we return it via a BSB_CUTLINE metadata item as a WKT POLYGON.
+ */
+  
+    int numPoints=0;
+    std::string wkt;
+    
+    for( int i = 0; psInfo->papszHeader[i] != nullptr; i++ )
+    {
+      
+        if( !STARTS_WITH_CI(psInfo->papszHeader[i], "PLY/") )
+            continue;
+
+        char **papszTokens
+            = CSLTokenizeStringComplex( psInfo->papszHeader[i]+4, ",",
+                                        FALSE, FALSE );
+
+        if( CSLCount(papszTokens) >= 3 )
+        {
+	    if (numPoints == 0)
+              wkt = std::string("POLYGON(( ") + papszTokens[2] + ' ' + papszTokens[1];
+	    else
+              wkt += std::string(", ") + papszTokens[2] + ' ' + papszTokens[1];
+            
+            numPoints++;
+        }
+        CSLDestroy( papszTokens );
+    }
+
+    if (numPoints > 0)
+    {
+      wkt += " ))";
+      this->SetMetadataItem("BSB_CUTLINE", wkt.c_str());
+    }
+    
+}
+
+/************************************************************************/
 /*                          IdentifyInternal()                          */
 /************************************************************************/
 
@@ -795,6 +845,11 @@ GDALDataset *BSBDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetBand( 1, new BSBRasterBand( poDS ));
 
     poDS->ScanForGCPs( isNos, poOpenInfo->pszFilename );
+    
+/* -------------------------------------------------------------------- */
+/*      Set CUTLINE metadata if a bounding polygon is available         */
+/* -------------------------------------------------------------------- */
+    poDS->ScanForCutline();
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
