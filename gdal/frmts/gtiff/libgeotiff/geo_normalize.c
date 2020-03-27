@@ -157,6 +157,9 @@ int GTIFGetPCSInfoEx( void* ctxIn,
         }
     }
 
+    if( nPCSCode == KvUserDefined )
+        return FALSE;
+
     {
         char szCode[12];
         PJ* proj_crs;
@@ -446,6 +449,10 @@ int GTIFGetGCSInfoEx( void* ctxIn,
         return TRUE;
     }
 
+
+    if( nGCSCode == KvUserDefined )
+        return FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Search the database.                                            */
 /* -------------------------------------------------------------------- */
@@ -634,6 +641,9 @@ int GTIFGetEllipsoidInfoEx( void* ctxIn,
         return TRUE;
     }
 
+    if( nEllipseCode == KvUserDefined )
+        return FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Search the database.                                            */
 /* -------------------------------------------------------------------- */
@@ -705,6 +715,10 @@ int GTIFGetPMInfoEx( void* ctxIn,
             *ppszName = CPLStrdup( "Greenwich" );
         return TRUE;
     }
+
+
+    if( nPMCode == KvUserDefined )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Search the database.                                            */
@@ -804,6 +818,9 @@ int GTIFGetDatumInfoEx( void* ctxIn,
 
         return TRUE;
     }
+
+    if( nDatumCode == KvUserDefined )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Search the database.                                            */
@@ -919,6 +936,9 @@ int GTIFGetUOMLengthInfoEx( void* ctxIn,
 
         return TRUE;
     }
+
+    if( nUOMLengthCode == KvUserDefined )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Search the units database for this unit.  If we don't find      */
@@ -1427,6 +1447,9 @@ int GTIFGetProjTRFInfoEx( void* ctxIn,
 
         return TRUE;
     }
+
+    if( nProjTRFCode == KvUserDefined )
+        return FALSE;
 
     {
         int     nProjMethod, i, anEPSGCodes[7];
