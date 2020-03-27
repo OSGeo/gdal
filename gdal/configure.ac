@@ -2898,7 +2898,7 @@ else
     NETCDF_VERSION=`$NETCDF_NCCONFIG --version`
     NETCDF_PREFIX=`$NETCDF_NCCONFIG --prefix`
     NETCDF_INCLUDEDIR=`$NETCDF_NCCONFIG --includedir`
-    NETCDF_LIBS=`$NETCDF_NCCONFIG --libs`
+    NETCDF_LIBS=`$NETCDF_NCCONFIG --libs | sed -e 's:-L/usr/lib64 ::' -e 's:-L/usr/lib ::'`
     echo ""
     AC_MSG_RESULT([ got version="$NETCDF_VERSION", prefix="$NETCDF_PREFIX",
  libs="$NETCDF_LIBS", includedir="$NETCDF_INCLUDEDIR"])
@@ -4558,6 +4558,7 @@ HAVE_GEOS_RESULT="no"
 if test "${HAVE_GEOS}" = "yes" ; then
 
   AC_MSG_NOTICE([Using C API from GEOS $GEOS_VERSION])
+  GEOS_LIBS=`echo $GEOS_LIBS | sed -e 's:-L/usr/lib64 ::' -e 's:-L/usr/lib ::'`
   LIBS="${GEOS_LIBS} ${LIBS}"
   HAVE_GEOS_RESULT="yes"
 fi
