@@ -754,6 +754,79 @@ CPLErr swq_expr_compile( const char *where_clause,
 }
 
 /************************************************************************/
+/*                       swq_fixup_expression()                         */
+/************************************************************************/
+
+static void swq_fixup_expression(swq_expr_node* node)
+{
+    if( node->eNodeType == SNT_OPERATION )
+    {
+        if( node->nOperation == SWQ_OR && node->nSubExprCount > 2 )
+        {
+            std::vector<swq_expr_node*> exprs;
+            for( int i = 0; i < node->nSubExprCount; i++ )
+                exprs.push_back(node->papoSubExpr[i]);
+            node->nSubExprCount = 0;
+            CPLFree( node->papoSubExpr );
+            node->papoSubExpr = nullptr;
+
+            while(exprs.size() > 2)
+            {
+                std::vector<swq_expr_node*> new_exprs;
+                for(size_t i = 0; i < exprs.size(); i++ )
+                {
+                    if( i + 1 < exprs.size() )
+                    {
+                        auto cur_expr = new swq_expr_node( SWQ_OR );
+                        cur_expr->field_type = SWQ_BOOLEAN;
+                        cur_expr->PushSubExpression(exprs[i]);
+                        cur_expr->PushSubExpression(exprs[i+1]);
+                        i++;
+                        new_exprs.push_back(cur_expr);
+                    }
+                    else
+                    {
+                        new_exprs.push_back(exprs[i]);
+                    }
+                }
+                exprs = std::move(new_exprs);
+            }
+            CPLAssert(exprs.size() == 2);
+            node->PushSubExpression(exprs[0]);
+            node->PushSubExpression(exprs[1]);
+        }
+        else
+        {
+            for( int i = 0; i < node->nSubExprCount; i++ )
+            {
+                swq_fixup_expression(node->papoSubExpr[i]);
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                       swq_fixup_expression()                         */
+/************************************************************************/
+
+void swq_fixup(swq_parse_context* psParseContext)
+{
+    if( psParseContext->poRoot )
+    {
+        swq_fixup_expression(psParseContext->poRoot);
+    }
+    auto psSelect = psParseContext->poCurSelect;
+    while( psSelect )
+    {
+        if( psSelect->where_expr )
+        {
+            swq_fixup_expression(psSelect->where_expr);
+        }
+        psSelect = psSelect->poOtherSelect;
+    }
+}
+
+/************************************************************************/
 /*                         swq_expr_compile2()                          */
 /************************************************************************/
 
