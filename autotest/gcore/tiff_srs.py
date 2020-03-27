@@ -752,3 +752,14 @@ def test_tiff_srs_read_epsg26730_with_linear_units_set():
     ds = gdal.Open('data/epsg26730_with_linear_units_set.tif')
     sr = ds.GetSpatialRef()
     assert sr.GetAuthorityCode(None) == '26730'
+
+
+def test_tiff_srs_read_user_defined_geokeys():
+    if int(gdal.GetDriverByName('GTiff').GetMetadataItem('LIBGEOTIFF')) < 1600:
+        pytest.skip()
+
+    gdal.ErrorReset()
+    ds = gdal.Open('data/byte_user_defined_geokeys.tif')
+    sr = ds.GetSpatialRef()
+    assert gdal.GetLastErrorMsg() == ''
+    assert sr is not None
