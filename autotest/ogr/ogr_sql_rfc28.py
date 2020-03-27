@@ -1333,7 +1333,28 @@ def test_ogr_rfc28_int_overflows():
         assert f.GetField(0) == res, (sql, res, f.GetField(0))
         ds.ReleaseResultSet(sql_lyr)
 
-    
+
+###############################################################################
+
+def test_ogr_rfc28_many_or():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('lyr')
+    fld_defn = ogr.FieldDefn('val', ogr.OFTInteger)
+    lyr.CreateField(fld_defn)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('val', -15)
+    lyr.CreateFeature(feat)
+
+    sql = '1 = 1 AND (' + ' OR '.join('val = %d' % i for i in range(1024)) + ')'
+    assert lyr.SetAttributeFilter(sql) == 0
+    f = lyr.GetNextFeature()
+    assert f is None
+
+    sql = '1 = 1 AND (' + ' OR '.join('val = %d' % (i - 100) for i in range(1024)) + ')'
+    assert lyr.SetAttributeFilter(sql) == 0
+    f = lyr.GetNextFeature()
+    assert f is not None
 
 ###############################################################################
 

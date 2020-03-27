@@ -124,11 +124,13 @@ input:
     | SWQT_VALUE_START value_expr
         {
             context->poRoot = $2;
+            swq_fixup(context);
         }
 
     | SWQT_SELECT_START select_statement
         {
             context->poRoot = $2;
+            swq_fixup(context);
         }
 
 value_expr:
@@ -149,8 +151,24 @@ value_expr:
         {
             $$ = new swq_expr_node( SWQ_OR );
             $$->field_type = SWQ_BOOLEAN;
-            $$->PushSubExpression( $1 );
-            $$->PushSubExpression( $3 );
+
+            if( $1->eNodeType == SNT_OPERATION &&
+                $1->nOperation == SWQ_OR  )
+            {
+                // Temporary non-binary formulation
+                $$->nSubExprCount = $1->nSubExprCount;
+                $$->papoSubExpr = $1->papoSubExpr;
+                $$->PushSubExpression( $3 );
+
+                $1->nSubExprCount = 0;
+                $1->papoSubExpr= nullptr;
+                delete $1;
+            }
+            else
+            {
+                $$->PushSubExpression( $1 );
+                $$->PushSubExpression( $3 );
+            }
         }
 
     | SWQT_NOT value_expr
