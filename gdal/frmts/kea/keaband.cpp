@@ -374,6 +374,7 @@ CPLErr KEARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff, void * pImage
 
 void KEARasterBand::SetDescription(const char *pszDescription)
 {
+    CPLMutexHolderD( &m_hMutex );
     try
     {
         this->m_pImageIO->setImageBandDescription(this->nBand, pszDescription);
