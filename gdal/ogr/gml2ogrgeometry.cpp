@@ -1756,8 +1756,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                        // Not sure of angle conversion here.
                        90.0 - dfAngle,
                        &dfLat, &dfLong);
-                    p.setY( dfLat );
-                    p.setX( dfLong );
+                    p.setX( dfLat ); // yes, external code will do the swap later
+                    p.setY( dfLong );
                 }
                 else
                 {
@@ -1779,8 +1779,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                                          // Not sure of angle conversion here.
                                          90.0 - dfEndAngle,
                                          &dfLat, &dfLong);
-                p.setY( dfLat );
-                p.setX( dfLong );
+                p.setX( dfLat ); // yes, external code will do the swap later
+                p.setY( dfLong );
             }
             else
             {
@@ -1876,8 +1876,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     OGR_GreatCircle_ExtendPosition(dfCenterX, dfCenterY,
                                              dfDistance, dfAngle,
                                              &dfLat, &dfLong);
-                    p.setY( dfLat );
-                    p.setX( dfLong );
+                    p.setX( dfLat ); // yes, external code will do the swap later
+                    p.setY( dfLong );
                 }
                 else
                 {
