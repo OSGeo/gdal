@@ -1065,10 +1065,11 @@ def create_overview_tiles(tile_job_info, output_folder, options):
             for tx in range(tminx, tmaxx + 1):
 
                 ti += 1
+                ytile = GDAL2Tiles.getYTile(ty, tz, options)
                 tilefilename = os.path.join(output_folder,
                                             str(tz),
                                             str(tx),
-                                            "%s.%s" % (ty, tile_job_info.tile_extension))
+                                            "%s.%s" % (ytile, tile_job_info.tile_extension))
 
                 if options.verbose:
                     print(ti, '/', tcount, tilefilename)
@@ -1179,6 +1180,9 @@ def optparse_init():
     p.add_option('-d', '--tmscompatible', dest="tmscompatible", action="store_true",
                  help=("When using the geodetic profile, specifies the base resolution "
                        "as 0.703125 or 2 tiles at zoom level 0."))
+    p.add_option('--xyz',
+                 action='store_true', dest='xyz',
+                 help="Use XYZ tile numbering (OSM Slippy Map tiles) instead of TMS")
     p.add_option("-v", "--verbose",
                  action="store_true", dest="verbose",
                  help="Print status messages to stdout")
@@ -1856,8 +1860,9 @@ class GDAL2Tiles(object):
             for tx in range(tminx, tmaxx + 1):
 
                 ti += 1
+                ytile = GDAL2Tiles.getYTile(ty, tz, self.options)
                 tilefilename = os.path.join(
-                    self.output_folder, str(tz), str(tx), "%s.%s" % (ty, self.tileext))
+                    self.output_folder, str(tz), str(tx), "%s.%s" % (ytile, self.tileext))
                 if self.options.verbose:
                     print(ti, '/', tcount, tilefilename)
 
@@ -1925,7 +1930,7 @@ class GDAL2Tiles(object):
                 # geo_query
                 tile_details.append(
                     TileDetail(
-                        tx=tx, ty=ty, tz=tz, rx=rx, ry=ry, rxsize=rxsize, rysize=rysize, wx=wx,
+                        tx=tx, ty=ytile, tz=tz, rx=rx, ry=ry, rxsize=rxsize, rysize=rysize, wx=wx,
                         wy=wy, wxsize=wxsize, wysize=wysize, querysize=querysize,
                     )
                 )
@@ -2589,8 +2594,22 @@ class GDAL2Tiles(object):
                   // Create OSM layer
                   var osm = new OpenLayers.Layer.OSM("OpenStreetMap");
 
+            """ % args    # noqa
+
+            if self.options.xyz:
+                s += """
                   // create TMS Overlay layer
-                   var tmsoverlay = new OpenLayers.Layer.TMS("TMS Overlay", "",
+                  var tmsoverlay = new OpenLayers.Layer.XYZ("XYZ Overlay",
+                      "${z}/${x}/${y}.png", {
+                      transitionEffect: 'resize',
+                      isBaseLayer: false
+                  });
+
+                """ % args    # noqa
+            else:
+                s += """
+                  // create TMS Overlay layer
+                  var tmsoverlay = new OpenLayers.Layer.TMS("TMS Overlay", "",
                   {
                       serviceVersion: '.',
                       layername: '.',
@@ -2599,6 +2618,10 @@ class GDAL2Tiles(object):
                       isBaseLayer: false,
                       getURL: getURL
                   });
+
+                """ % args    # noqa
+
+            s += """
                   if (OpenLayers.Util.alphaHack() == false) {
                       tmsoverlay.setOpacity(0.7);
                   }
@@ -2612,7 +2635,7 @@ class GDAL2Tiles(object):
                   switcherControl.maximizeControl();
 
                   map.zoomToExtent(mapBounds.transform(map.displayProjection, map.projection));
-          """ % args    # noqa
+        """ % args    # noqa
 
         elif self.options.profile == 'geodetic':
             s += """
@@ -2650,7 +2673,7 @@ class GDAL2Tiles(object):
                   switcherControl.maximizeControl();
 
                   map.zoomToExtent(mapBounds);
-           """ % args   # noqa
+            """ % args   # noqa
 
         elif self.options.profile == 'raster':
             s += """
@@ -2674,7 +2697,7 @@ class GDAL2Tiles(object):
 
                   map.addLayer(layer);
                   map.zoomToExtent(mapBounds);
-        """ % args    # noqa
+            """ % args    # noqa
 
         s += """
                   map.addControls([new OpenLayers.Control.PanZoomBar(),
@@ -2685,7 +2708,7 @@ class GDAL2Tiles(object):
               }
         """ % args
 
-        if self.options.profile == 'mercator':
+        if self.options.profile == 'mercator' and self.options.xyz is None:
             s += """
               function getURL(bounds) {
                   bounds = this.adjustBounds(bounds);
@@ -2703,9 +2726,8 @@ class GDAL2Tiles(object):
                   }
                   if (mapBounds.intersectsBounds(bounds) && (z >= mapMinZoom) && (z <= mapMaxZoom)) {
                       return url + path;
-                  } else {
-                      return emptyTileURL;
                   }
+                  return emptyTileURL;
               }
             """ % args    # noqa
 
@@ -2724,9 +2746,8 @@ class GDAL2Tiles(object):
                   }
                   if (mapBounds.intersectsBounds(bounds) && (z >= mapMinZoom) && (z <= mapMaxZoom)) {
                       return url + path;
-                  } else {
-                      return emptyTileURL;
                   }
+                  return emptyTileURL;
               }
             """ % args    # noqa
 
@@ -2745,63 +2766,74 @@ class GDAL2Tiles(object):
                   }
                   if (mapBounds.intersectsBounds(bounds) && (z >= mapMinZoom) && (z <= mapMaxZoom)) {
                       return url + path;
-                  } else {
-                      return emptyTileURL;
                   }
+                  return emptyTileURL;
               }
             """ % args    # noqa
 
         s += """
-           function getWindowHeight() {
+            function getWindowHeight() {
                 if (self.innerHeight) return self.innerHeight;
-                    if (document.documentElement && document.documentElement.clientHeight)
-                        return document.documentElement.clientHeight;
-                    if (document.body) return document.body.clientHeight;
-                        return 0;
-                }
+                if (document.documentElement && document.documentElement.clientHeight)
+                    return document.documentElement.clientHeight;
+                if (document.body) return document.body.clientHeight;
+                return 0;
+            }
 
-                function getWindowWidth() {
-                    if (self.innerWidth) return self.innerWidth;
-                    if (document.documentElement && document.documentElement.clientWidth)
-                        return document.documentElement.clientWidth;
-                    if (document.body) return document.body.clientWidth;
-                        return 0;
-                }
+            function getWindowWidth() {
+                if (self.innerWidth) return self.innerWidth;
+                if (document.documentElement && document.documentElement.clientWidth)
+                    return document.documentElement.clientWidth;
+                if (document.body) return document.body.clientWidth;
+                return 0;
+            }
 
-                function resize() {
-                    var map = document.getElementById("map");
-                    var header = document.getElementById("header");
-                    var subheader = document.getElementById("subheader");
-                    map.style.height = (getWindowHeight()-80) + "px";
-                    map.style.width = (getWindowWidth()-20) + "px";
-                    header.style.width = (getWindowWidth()-20) + "px";
-                    subheader.style.width = (getWindowWidth()-20) + "px";
-                    if (map.updateSize) { map.updateSize(); };
-                }
+            function resize() {
+                var map = document.getElementById("map");
+                var header = document.getElementById("header");
+                var subheader = document.getElementById("subheader");
+                map.style.height = (getWindowHeight()-80) + "px";
+                map.style.width = (getWindowWidth()-20) + "px";
+                header.style.width = (getWindowWidth()-20) + "px";
+                subheader.style.width = (getWindowWidth()-20) + "px";
+                if (map.updateSize) { map.updateSize(); };
+            }
 
-                onresize=function(){ resize(); };
+            onresize=function(){ resize(); };
 
-                </script>
-              </head>
-              <body onload="init()">
-                <div id="header"><h1>%(title)s</h1></div>
-                <div id="subheader">Generated by <a href="http://www.klokan.cz/projects/gdal2tiles/">GDAL2Tiles</a>, Copyright &copy; 2008 <a href="http://www.klokan.cz/">Klokan Petr Pridal</a>,  <a href="http://www.gdal.org/">GDAL</a> &amp; <a href="http://www.osgeo.org/">OSGeo</a> <a href="http://code.google.com/soc/">GSoC</a>
-                <!-- PLEASE, LET THIS NOTE ABOUT AUTHOR AND PROJECT SOMEWHERE ON YOUR WEBSITE, OR AT LEAST IN THE COMMENT IN HTML. THANK YOU -->
-                </div>
-                <div id="map"></div>
-                <script type="text/javascript" >resize()</script>
-              </body>
-            </html>""" % args   # noqa
+            </script>
+            </head>
+            <body onload="init()">
+            <div id="header"><h1>%(title)s</h1></div>
+            <div id="subheader">Generated by <a href="http://www.klokan.cz/projects/gdal2tiles/">GDAL2Tiles</a>, Copyright &copy; 2008 <a href="http://www.klokan.cz/">Klokan Petr Pridal</a>,  <a href="http://www.gdal.org/">GDAL</a> &amp; <a href="http://www.osgeo.org/">OSGeo</a> <a href="http://code.google.com/soc/">GSoC</a>
+            <!-- PLEASE, LET THIS NOTE ABOUT AUTHOR AND PROJECT SOMEWHERE ON YOUR WEBSITE, OR AT LEAST IN THE COMMENT IN HTML. THANK YOU -->
+            </div>
+            <div id="map"></div>
+            <script type="text/javascript" >resize()</script>
+            </body>
+        </html>""" % args   # noqa
 
         return s
 
+    @staticmethod
+    def getYTile(ty, tz, options):
+        """
+        Calculates the y-tile number based on whether XYZ or TMS (default) system is used
+        :param ty: The y-tile number
+        :param tz: The z-tile number
+        :return: The transformed y-tile number
+        """
+        if options.xyz:
+            return (2**tz - 1) - ty  # Convert from TMS to XYZ numbering system
+        return ty
+
 
 def worker_tile_details(input_file, output_folder, options):
-      gdal2tiles = GDAL2Tiles(input_file, output_folder, options)
-      gdal2tiles.open_input()
-      gdal2tiles.generate_metadata()
-      tile_job_info, tile_details = gdal2tiles.generate_base_tiles()
-      return tile_job_info, tile_details
+    gdal2tiles = GDAL2Tiles(input_file, output_folder, options)
+    gdal2tiles.open_input()
+    gdal2tiles.generate_metadata()
+    tile_job_info, tile_details = gdal2tiles.generate_base_tiles()
+    return tile_job_info, tile_details
 
 class ProgressBar(object):
 
