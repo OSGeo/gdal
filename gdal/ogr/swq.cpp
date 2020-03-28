@@ -32,6 +32,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <queue>
 #include <string>
 
 #include "cpl_error.h"
@@ -759,47 +760,54 @@ CPLErr swq_expr_compile( const char *where_clause,
 
 static void swq_fixup_expression(swq_expr_node* node)
 {
-    if( node->eNodeType == SNT_OPERATION )
+    std::queue<swq_expr_node*> nodes;
+    nodes.push(node);
+    while( !nodes.empty() )
     {
-        if( node->nOperation == SWQ_OR && node->nSubExprCount > 2 )
+        node = nodes.front();
+        nodes.pop();
+        if( node->eNodeType == SNT_OPERATION )
         {
-            std::vector<swq_expr_node*> exprs;
-            for( int i = 0; i < node->nSubExprCount; i++ )
-                exprs.push_back(node->papoSubExpr[i]);
-            node->nSubExprCount = 0;
-            CPLFree( node->papoSubExpr );
-            node->papoSubExpr = nullptr;
+            if( node->nOperation == SWQ_OR && node->nSubExprCount > 2 )
+            {
+                std::vector<swq_expr_node*> exprs;
+                for( int i = 0; i < node->nSubExprCount; i++ )
+                    exprs.push_back(node->papoSubExpr[i]);
+                node->nSubExprCount = 0;
+                CPLFree( node->papoSubExpr );
+                node->papoSubExpr = nullptr;
 
-            while(exprs.size() > 2)
-            {
-                std::vector<swq_expr_node*> new_exprs;
-                for(size_t i = 0; i < exprs.size(); i++ )
+                while(exprs.size() > 2)
                 {
-                    if( i + 1 < exprs.size() )
+                    std::vector<swq_expr_node*> new_exprs;
+                    for(size_t i = 0; i < exprs.size(); i++ )
                     {
-                        auto cur_expr = new swq_expr_node( SWQ_OR );
-                        cur_expr->field_type = SWQ_BOOLEAN;
-                        cur_expr->PushSubExpression(exprs[i]);
-                        cur_expr->PushSubExpression(exprs[i+1]);
-                        i++;
-                        new_exprs.push_back(cur_expr);
+                        if( i + 1 < exprs.size() )
+                        {
+                            auto cur_expr = new swq_expr_node( SWQ_OR );
+                            cur_expr->field_type = SWQ_BOOLEAN;
+                            cur_expr->PushSubExpression(exprs[i]);
+                            cur_expr->PushSubExpression(exprs[i+1]);
+                            i++;
+                            new_exprs.push_back(cur_expr);
+                        }
+                        else
+                        {
+                            new_exprs.push_back(exprs[i]);
+                        }
                     }
-                    else
-                    {
-                        new_exprs.push_back(exprs[i]);
-                    }
+                    exprs = std::move(new_exprs);
                 }
-                exprs = std::move(new_exprs);
+                CPLAssert(exprs.size() == 2);
+                node->PushSubExpression(exprs[0]);
+                node->PushSubExpression(exprs[1]);
             }
-            CPLAssert(exprs.size() == 2);
-            node->PushSubExpression(exprs[0]);
-            node->PushSubExpression(exprs[1]);
-        }
-        else
-        {
-            for( int i = 0; i < node->nSubExprCount; i++ )
+            else
             {
-                swq_fixup_expression(node->papoSubExpr[i]);
+                for( int i = 0; i < node->nSubExprCount; i++ )
+                {
+                    nodes.push(node->papoSubExpr[i]);
+                }
             }
         }
     }
