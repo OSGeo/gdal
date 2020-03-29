@@ -19,7 +19,7 @@ Synopsis
     gdal2tiles.py [-p profile] [-r resampling] [-s srs] [-z zoom]
                   [-e] [-a nodata] [-v] [-q] [-h] [-k] [-n] [-u url]
                   [-w webviewer] [-t title] [-c copyright]
-                  [--processes=NB_PROCESSES]
+                  [--processes=NB_PROCESSES] [--xyz]
                   --tilesize=TILESIZE
                   [-g googlekey] [-b bingkey] input_file [output_dir]
 
@@ -59,6 +59,12 @@ can publish a picture without proper georeferencing too.
 .. option:: -s <SRS>, --s_srs=<SRS>
 
   The spatial reference system used for the source input data.
+
+.. option:: --xyz
+
+  Generate XYZ tiles (OSM Slippy Map standard) instead of TSM
+
+  .. versionadded:: 3.1
 
 .. option:: -z <ZOOM>, --zoom=<ZOOM>
 

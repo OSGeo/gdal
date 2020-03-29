@@ -735,7 +735,9 @@ def setup_input_srs(input_dataset, options):
             input_srs = osr.SpatialReference()
             input_srs.ImportFromWkt(input_srs_wkt)
 
-    input_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    if input_srs is not None:
+        input_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    
     return input_srs, input_srs_wkt
 
 

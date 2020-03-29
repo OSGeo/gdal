@@ -56,6 +56,9 @@ def test_gdal2tiles_py_simple():
     os.unlink('tmp/out_gdal2tiles_smallworld.tif')
 
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/0/0/0.png')
+    
+    if ds is None:
+        pytest.fail('cannot open output file(s)')
 
     expected_cs = [25314, 28114, 6148, 59026]
     for i in range(4):
@@ -89,6 +92,9 @@ def test_gdal2tiles_py_zoom_option():
         '-q --force-kml --processes=2 -z 0-1 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
 
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/1/0/0.png')
+    
+    if ds is None:
+        pytest.fail('cannot open output file(s)')
 
     expected_cs = [8130, 10496, 65274, 63715]
     for i in range(4):
@@ -139,6 +145,40 @@ def test_gdal2tiles_py_resampling_option():
             pytest.fail('resample option {0!r} failed'.format(resample))
         ds = None
 
+
+def test_gdal2tiles_py_xyz():
+    script_path = test_py_scripts.get_py_script('gdal2tiles')
+    if script_path is None:
+        pytest.skip()
+
+    shutil.copy('../gdrivers/data/small_world.tif', 'tmp/out_gdal2tiles_smallworld_xyz.tif')
+
+    os.chdir('tmp')
+    test_py_scripts.run_py_script(
+        script_path,
+        'gdal2tiles',
+        '-q --xyz --zoom=1 --webviewer=none out_gdal2tiles_smallworld_xyz.tif')
+    os.chdir('..')
+
+    os.unlink('tmp/out_gdal2tiles_smallworld_xyz.tif')
+
+    ds = gdal.Open('tmp/out_gdal2tiles_smallworld_xyz/1/0/0.png')
+    
+    if ds is None:
+        pytest.fail('cannot open output file(s)')
+
+    expected_cs = [25095, 27337, 10068, 63699]
+    for i in range(4):
+        if ds.GetRasterBand(i + 1).Checksum() != expected_cs[i]:
+            for j in range(4):
+                print(ds.GetRasterBand(j + 1).Checksum())
+            pytest.fail('wrong checksum for band %d' % (i + 1))
+
+    ds = None
+
+    for filename in ['googlemaps.html', 'leaflet.html', 'openlayers.html', 'tilemapresource.xml']:
+        assert os.path.exists('tmp/out_gdal2tiles_smallworld_xyz/' + filename), \
+            ('%s missing' % filename)
 
 def test_does_not_error_when_source_bounds_close_to_tiles_bound():
     """
