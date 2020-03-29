@@ -3582,6 +3582,27 @@ def test_ogr_dxf_53():
         pytest.fail('Wrong feature geometry')
 
     
+###############################################################################
+# Test frozen and off layers
+
+
+def test_ogr_dxf_54():
+
+    gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', 'FALSE')
+    ds = ogr.Open('data/frozen-off.dxf')
+    gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', None)
+    lyr = ds.GetLayer(0)
+
+    # Features should be visible/hidden in the following order:
+    featureVisibility = '.hhh..hhh..hhhhhhhhhhhhhh.hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh.hhh..hhhhhhhhhhhhhh.hhh'
+
+    for number, h in enumerate(featureVisibility):
+        f = lyr.GetNextFeature()
+        isFeatureVisible = '#000000)' in f.GetStyleString() or '#ff0000)' in f.GetStyleString()
+        if isFeatureVisible == (h == 'h'):
+            f.DumpReadable()
+            pytest.fail('Wrong visibility on feature %d' % number)
+
 
 ###############################################################################
 def test_ogr_dxf_insert_too_many_errors():
