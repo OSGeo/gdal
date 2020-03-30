@@ -40,6 +40,7 @@ from osgeo import ogr
 from osgeo import osr
 import gdaltest
 
+pytestmark = pytest.mark.require_driver('GPKG')
 
 ###############################################################################
 # Validate a geopackage
@@ -89,8 +90,6 @@ def test_ogr_gpkg_1():
     gdaltest.gpkg_dr = None
 
     gdaltest.gpkg_dr = ogr.GetDriverByName('GPKG')
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     try:
         os.remove('tmp/gpkg_test.gpkg')
@@ -115,9 +114,6 @@ def test_ogr_gpkg_1():
 
 
 def test_ogr_gpkg_2():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open('tmp/gpkg_test.gpkg', update=1)
 
@@ -147,9 +143,6 @@ def test_ogr_gpkg_2():
 
 def test_ogr_gpkg_3():
 
-    if gdaltest.gpkg_dr is None or gdaltest.gpkg_ds is None:
-        pytest.skip()
-
     # Test invalid FORMAT
     # gdal.PushErrorHandler('CPLQuietErrorHandler')
     srs4326 = osr.SpatialReference()
@@ -170,9 +163,6 @@ def test_ogr_gpkg_3():
 
 
 def test_ogr_gpkg_4():
-
-    if gdaltest.gpkg_dr is None or gdaltest.gpkg_ds is None:
-        pytest.skip()
 
     gdaltest.gpkg_ds = None
 
@@ -224,9 +214,6 @@ def test_ogr_gpkg_4():
 
 def test_ogr_gpkg_5():
 
-    if gdaltest.gpkg_dr is None or gdaltest.gpkg_ds is None:
-        pytest.skip()
-
     assert gdaltest.gpkg_ds.GetLayerCount() == 2, 'unexpected number of layers'
 
     with gdaltest.error_handler():
@@ -248,9 +235,6 @@ def test_ogr_gpkg_5():
 # Add fields
 
 def test_ogr_gpkg_6():
-
-    if gdaltest.gpkg_dr is None or gdaltest.gpkg_ds is None:
-        pytest.skip()
 
     srs4326 = osr.SpatialReference()
     srs4326.ImportFromEPSG(4326)
@@ -288,9 +272,6 @@ def test_ogr_gpkg_6():
 # Add a feature / read a feature / delete a feature
 
 def test_ogr_gpkg_7():
-
-    if gdaltest.gpkg_dr is None or gdaltest.gpkg_ds is None:
-        pytest.skip()
 
     lyr = gdaltest.gpkg_ds.GetLayerByName('field_test_layer')
     geom = ogr.CreateGeometryFromWkt('POINT(10 10)')
@@ -370,9 +351,6 @@ def test_ogr_gpkg_8():
     #     pass
     # gdaltest.gpkg_dr = ogr.GetDriverByName( 'GPKG' )
     # gdaltest.gpkg_ds = gdaltest.gpkg_dr.CreateDataSource( 'tmp/gpkg_test.gpkg' )
-
-    if gdaltest.gpkg_dr is None or gdaltest.gpkg_ds is None:
-        pytest.skip()
 
     srs = osr.SpatialReference()
     # Test a non-default SRS
@@ -486,9 +464,6 @@ def test_ogr_gpkg_8():
 
 def test_ogr_gpkg_9():
 
-    if gdaltest.gpkg_dr is None or gdaltest.gpkg_ds is None:
-        pytest.skip()
-
     lyr = gdaltest.gpkg_ds.GetLayerByName('tbl_linestring')
     extent = lyr.GetExtent()
     assert extent == (5.0, 10.0, 5.0, 10.0), 'got bad extent'
@@ -501,9 +476,6 @@ def test_ogr_gpkg_9():
 
 
 def test_ogr_gpkg_11():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     gdaltest.gpkg_ds = None
     gdaltest.gpkg_ds = ogr.Open('tmp/gpkg_test.gpkg', update=1)
@@ -523,9 +495,6 @@ def test_ogr_gpkg_11():
 
 
 def test_ogr_gpkg_12():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     sql_lyr = gdaltest.gpkg_ds.ExecuteSQL('SELECT * FROM tbl_linestring_renamed')
     assert sql_lyr.GetFIDColumn() == 'fid'
@@ -599,9 +568,6 @@ def test_ogr_gpkg_12():
 
 def test_ogr_gpkg_13():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     lyr = gdaltest.gpkg_ds.CreateLayer('non_spatial', geom_type=ogr.wkbNone, options=['ASPATIAL_VARIANT=OGR_ASPATIAL'])
     feat = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(feat)
@@ -646,9 +612,6 @@ def test_ogr_gpkg_13():
 
 
 def test_ogr_gpkg_14():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32631)
@@ -730,9 +693,6 @@ def test_ogr_gpkg_14():
 
 
 def test_ogr_gpkg_15():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     sql_lyr = gdaltest.gpkg_ds.ExecuteSQL(
         'SELECT ST_IsEmpty(geom), ST_SRID(geom), ST_GeometryType(geom), ' +
@@ -1093,9 +1053,6 @@ def test_ogr_gpkg_15():
 
 def test_ogr_gpkg_16():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpk_16.gpkg')
     ds.CreateLayer('foo')
     ds.ExecuteSQL("INSERT INTO gpkg_extensions ( table_name, column_name, " +
@@ -1198,9 +1155,6 @@ def test_ogr_gpkg_16():
 
 def test_ogr_gpkg_17():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_17.gpkg')
     sql_lyr = ds.ExecuteSQL("SELECT ogr_version()", dialect='INDIRECT_SQLITE')
     f = sql_lyr.GetNextFeature()
@@ -1215,9 +1169,6 @@ def test_ogr_gpkg_17():
 
 
 def test_ogr_gpkg_18():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_18.gpkg')
     lyr = ds.CreateLayer('wkbCircularString', geom_type=ogr.wkbCircularString)
@@ -1311,9 +1262,6 @@ def test_ogr_gpkg_18():
 
 def test_ogr_gpkg_19():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_19.gpkg')
     assert not ds.GetMetadata()
     lyr = ds.CreateLayer('test_without_md')
@@ -1397,9 +1345,6 @@ def test_ogr_gpkg_19():
 
 
 def test_ogr_gpkg_20():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_20.gpkg')
 
@@ -1491,9 +1436,6 @@ def test_ogr_gpkg_20():
 
 def test_ogr_gpkg_srs_non_duplication_custom_crs():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_20.gpkg')
     srs = osr.SpatialReference()
     srs.SetFromUserInput("""GEOGCS["my custom geogcs",
@@ -1557,9 +1499,6 @@ def test_ogr_gpkg_srs_non_duplication_custom_crs():
 
 
 def test_ogr_gpkg_srs_non_consistent_with_official_definition():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_20.gpkg')
     test_fake_4267 = osr.SpatialReference()
@@ -1631,9 +1570,6 @@ def test_ogr_gpkg_srs_non_consistent_with_official_definition():
 
 
 def test_ogr_gpkg_21():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_21.gpkg')
     lyr = ds.CreateLayer('test')
@@ -1708,9 +1644,6 @@ def test_ogr_gpkg_21():
 
 def test_ogr_gpkg_22():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_22.gpkg')
     lyr = ds.CreateLayer('test')
     field_defn = ogr.FieldDefn('foo', ogr.OFTString)
@@ -1737,9 +1670,6 @@ def test_ogr_gpkg_22():
 
 
 def test_ogr_gpkg_23():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_23.gpkg')
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
@@ -1890,9 +1820,6 @@ def test_ogr_gpkg_23():
 
 def test_ogr_gpkg_24():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_24.gpkg')
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
 
@@ -1999,9 +1926,6 @@ def test_ogr_gpkg_24():
 
 def test_ogr_gpkg_25():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_25.gpkg')
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone, options=['FID=myfid'])
 
@@ -2077,9 +2001,6 @@ def test_ogr_gpkg_25():
 
 
 def test_ogr_gpkg_26():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_26.gpkg')
 
@@ -2197,9 +2118,6 @@ def test_ogr_gpkg_26():
 
 def test_ogr_gpkg_27():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_27.gpkg')
     gdal.PushErrorHandler()
     sql_lyr = ds.ExecuteSQL("SELECT GeomFromGPB(null)")
@@ -2231,9 +2149,6 @@ def test_ogr_gpkg_27():
 
 def test_ogr_gpkg_28():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
     ds = gdal.VectorTranslate('/vsimem/ogr_gpkg_28.gpkg', srcDS, format='GPKG', dstSRS='EPSG:4326')
     assert str(ds.GetLayer(0).GetSpatialRef()).find('1984') != -1
@@ -2246,9 +2161,6 @@ def test_ogr_gpkg_28():
 
 
 def test_ogr_gpkg_29():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_29.gpkg')
     assert ds.TestCapability(ogr.ODsCMeasuredGeometries) == 1
@@ -2313,9 +2225,6 @@ def test_ogr_gpkg_29():
 
 def test_ogr_gpkg_30():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     with gdaltest.error_handler():
         ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_30.geopkg')
     assert ds is not None
@@ -2337,9 +2246,6 @@ def test_ogr_gpkg_30():
 
 
 def test_ogr_gpkg_31():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_31.gpkg')
     lyr = ds.CreateLayer('curve', geom_type=ogr.wkbCurve)
@@ -2376,9 +2282,6 @@ def test_ogr_gpkg_31():
 
 def test_ogr_gpkg_32():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_32.gpkg')
     ds.CreateLayer('aspatial', geom_type=ogr.wkbNone, options=['ASPATIAL_VARIANT=NOT_REGISTERED'])
     ds = None
@@ -2406,9 +2309,6 @@ def test_ogr_gpkg_32():
 
 def test_ogr_gpkg_33():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     gdal.SetConfigOption('OGR_CURRENT_DATE', '2000-01-01T:00:00:00.000Z')
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_33.gpkg')
     ds.CreateLayer('test', geom_type=ogr.wkbNone)
@@ -2428,9 +2328,6 @@ def test_ogr_gpkg_33():
 # Test rename and delete a layer registered in extensions, metadata, spatial index etc
 
 def test_ogr_gpkg_34():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     layer_name = """weird'layer"name"""
 
@@ -2539,9 +2436,6 @@ def test_ogr_gpkg_34():
 
 def test_ogr_gpkg_35():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     dbname = '/vsimem/ogr_gpkg_35.gpkg'
     ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbPolygon)
@@ -2637,9 +2531,6 @@ def test_ogr_gpkg_35():
 
 
 def test_ogr_gpkg_36():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     dbname = '/vsimem/ogr_gpkg_36.gpkg'
     ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
@@ -2764,9 +2655,6 @@ def test_ogr_gpkg_36():
 
 def test_ogr_gpkg_37():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     dbname = '/vsimem/ogr_gpkg_37.gpkg'
     ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbPolygon)
@@ -2833,9 +2721,6 @@ def test_ogr_gpkg_37():
 
 
 def test_ogr_gpkg_38(options=['SPATIAL_INDEX=YES']):
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     dbname = '/vsimem/ogr_gpkg_38.gpkg'
     ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
@@ -2916,9 +2801,6 @@ def test_ogr_gpkg_38_nospi():
 
 def test_ogr_gpkg_39():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     dbname = '/vsimem/ogr_gpkg_39.gpkg'
     ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
 
@@ -2954,9 +2836,6 @@ def test_ogr_gpkg_39():
 
 def test_ogr_gpkg_40():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_40.gpkg')
     ds.CreateLayer('aspatial', geom_type=ogr.wkbNone, options=['ASPATIAL_VARIANT=GPKG_ATTRIBUTES'])
     ds = None
@@ -2983,9 +2862,6 @@ def test_ogr_gpkg_40():
 
 
 def test_ogr_gpkg_41():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_41.gpkg')
     ds.ExecuteSQL('CREATE TABLE foo (mycol VARCHAR_ILLEGAL)')
@@ -3037,9 +2913,6 @@ def get_feature_count_from_gpkg_contents(ds):
 
 
 def test_ogr_gpkg_42():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_42.gpkg')
     lyr = ds.CreateLayer('foo', geom_type=ogr.wkbNone)
@@ -3172,9 +3045,6 @@ def test_ogr_gpkg_42():
 
 def test_ogr_gpkg_43():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_43.gpkg')
     ds.StartTransaction()
     for i in range(1001):
@@ -3207,9 +3077,6 @@ def test_ogr_gpkg_43():
 # Test GeoPackage without metadata table
 
 def test_ogr_gpkg_44():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     gdal.SetConfigOption('CREATE_METADATA_TABLES', 'NO')
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_44.gpkg')
@@ -3247,9 +3114,6 @@ def test_ogr_gpkg_44():
 
 def test_ogr_gpkg_45():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_45.gpkg')
     ds.ExecuteSQL('CREATE TABLE test (a INTEGER, b INTEGER, CONSTRAINT pkid_constraint PRIMARY KEY (a, b))')
     ds.ExecuteSQL("INSERT INTO gpkg_contents ( table_name, identifier, data_type ) VALUES ( 'test', 'test', 'attributes' )")
@@ -3267,9 +3131,6 @@ def test_ogr_gpkg_45():
 
 
 def test_ogr_gpkg_46():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_46.gpkg')
     lyr = ds.CreateLayer('foo')
@@ -3360,9 +3221,6 @@ def test_ogr_gpkg_46():
 
 
 def test_ogr_gpkg_47():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg')
     # Set wrong application_id
@@ -3481,9 +3339,6 @@ def test_ogr_gpkg_47():
 
 def test_ogr_gpkg_48():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_48.gpkg')
     lyr = ds.CreateLayer('foo')
     lyr.CreateField(ogr.FieldDefn('a'))
@@ -3536,9 +3391,6 @@ def test_ogr_gpkg_48():
 
 def test_ogr_gpkg_49():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_49.gpkg')
 
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone,
@@ -3559,9 +3411,6 @@ def test_ogr_gpkg_49():
 
 
 def test_ogr_gpkg_50():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     gdal.SetConfigOption('GPKG_ADD_DEFINITION_12_063', 'YES')
     gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_50.gpkg')
@@ -3602,9 +3451,6 @@ def test_ogr_gpkg_50():
 
 def test_ogr_gpkg_51():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     if gdaltest.gpkg_dr.GetMetadataItem("ENABLE_SQL_GPKG_FORMAT") != 'YES':
         pytest.skip()
 
@@ -3619,9 +3465,6 @@ def test_ogr_gpkg_51():
 
 def test_ogr_gpkg_52():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     ds = ogr.Open('data/poly_non_conformant.gpkg')
     lyr = ds.GetLayer(0)
     with gdaltest.error_handler():
@@ -3633,9 +3476,6 @@ def test_ogr_gpkg_52():
 
 
 def test_ogr_gpkg_53():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     if gdaltest.gpkg_dr.GetMetadataItem("ENABLE_SQL_GPKG_FORMAT") != 'YES':
         pytest.skip()
@@ -3658,9 +3498,6 @@ def test_ogr_gpkg_53():
 
 
 def test_ogr_gpkg_54():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     # Must be on a real file system to demonstrate potential locking
     # issue
@@ -3724,9 +3561,6 @@ def test_ogr_gpkg_54():
 
 def test_ogr_gpkg_55():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     tmpfile = '/vsimem/ogr_gpkg_55.gpkg'
     ds = ogr.GetDriverByName('GPKG').CreateDataSource(tmpfile)
     lyr = ds.CreateLayer('layer1', geom_type=ogr.wkbLineString)
@@ -3753,9 +3587,6 @@ def test_ogr_gpkg_55():
 
 def test_ogr_gpkg_56():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     ds = gdal.VectorTranslate('/vsimem/ogr_gpkg_56.gpkg', 'data/poly.shp', format='GPKG')
     lyr = ds.ExecuteSQL('select a.fid as fid1, b.fid as fid2 from poly a, poly b order by fid1, fid2')
     lyr.GetNextFeature()
@@ -3772,9 +3603,6 @@ def test_ogr_gpkg_56():
 
 
 def test_ogr_gpkg_57():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     if gdaltest.gpkg_dr.GetMetadataItem("ENABLE_SQL_GPKG_FORMAT") != 'YES':
         pytest.skip()
@@ -3807,9 +3635,6 @@ CREATE TABLE "poly"("fid" INTEGER PRIMARY KEY, "geom" POLYGON);
 
 def test_ogr_gpkg_58():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     out_filename = '/vsimem/ogr_gpkg_58.gpkg'
     gdal.VectorTranslate(out_filename, 'data/poly.shp', format='GPKG')
     gdal.VectorTranslate(out_filename, 'data/poly.shp', format='GPKG',
@@ -3830,9 +3655,6 @@ def test_ogr_gpkg_58():
 
 def test_ogr_gpkg_59():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     out_filename = '/vsimem/ogr_gpkg_59.gpkg'
     gdal.VectorTranslate(out_filename, 'data/poly.shp', format='GPKG',
                          layerCreationOptions=['SPATIAL_INDEX=NO'])
@@ -3851,9 +3673,6 @@ def test_ogr_gpkg_59():
 
 
 def test_ogr_gpkg_savepoint():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     filename = '/vsimem/ogr_gpkg_savepoint.gpkg'
     ds = gdaltest.gpkg_dr.CreateDataSource(filename)
@@ -3888,9 +3707,6 @@ def test_ogr_gpkg_savepoint():
 
 
 def test_ogr_gpkg_wal():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_ogrinfo_path() is None:
@@ -3932,9 +3748,6 @@ def test_ogr_gpkg_wal():
 
 def test_ogr_gpkg_test_ogrsf():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     # Do integrity check first
     sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("PRAGMA integrity_check")
     feat = sql_lyr.GetNextFeature()
@@ -3961,9 +3774,6 @@ def test_ogr_gpkg_test_ogrsf():
 
 
 def test_ogr_gpkg_json():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     filename = '/vsimem/ogr_gpkg_json.gpkg'
     ds = gdaltest.gpkg_dr.CreateDataSource(filename)
@@ -4029,9 +3839,6 @@ def test_ogr_gpkg_json():
 
 def test_ogr_gpkg_invalid_values_in_records():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     filename = '/vsimem/test_ogr_gpkg_invalid_date_content.gpkg'
     ds = gdaltest.gpkg_dr.CreateDataSource(filename)
     lyr = ds.CreateLayer('test')
@@ -4095,15 +3902,47 @@ def test_ogr_gpkg_invalid_values_in_records():
 
     gdal.Unlink(filename)
 
+###############################################################################
+# Test creating a table with layer geometry type unknown/GEOMETRY and
+# geometries of mixed dimensionality
+
+
+def test_ogr_gpkg_mixed_dimensionality_unknown_layer_geometry_type():
+
+    filename = '/vsimem/test_ogr_gpkg_mixed_dimensionality_unknown_layer_geometry_type.gpkg'
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    lyr = ds.CreateLayer('test')
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (1 2)'))
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (1 2 3)'))
+    lyr.CreateFeature(f)
+
+    ds = None
+
+    assert validate(filename), 'validation failed'
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == ogr.wkbUnknown
+
+    sql_lyr = ds.ExecuteSQL('SELECT z FROM gpkg_geometry_columns')
+    f = sql_lyr.GetNextFeature()
+    assert f.GetField(0) == 2
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    gdal.Unlink(filename)
+
 
 ###############################################################################
 # Remove the test db from the tmp directory
 
 
 def test_ogr_gpkg_cleanup():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     gdaltest.gpkg_ds = None
 
