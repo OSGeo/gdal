@@ -1432,23 +1432,10 @@ CPLXMLNode* GMLHandler::ParseAIXMElevationPoint(CPLXMLNode *psGML)
 
     const char* pszPos = CPLGetXMLValue( psGML, "pos", nullptr );
     const char* pszCoordinates = CPLGetXMLValue( psGML, "coordinates", nullptr );
-    if (pszPos != nullptr)
+    if (pszPos != nullptr || pszCoordinates != nullptr)
     {
-        char* pszGeometry = CPLStrdup(CPLSPrintf(
-            "<gml:Point><gml:pos>%s</gml:pos></gml:Point>",
-                                                    pszPos));
-        CPLDestroyXMLNode(psGML);
-        psGML = CPLParseXMLString(pszGeometry);
-        CPLFree(pszGeometry);
-    }
-    else if (pszCoordinates != nullptr)
-    {
-        char* pszGeometry = CPLStrdup(CPLSPrintf(
-            "<gml:Point><gml:coordinates>%s</gml:coordinates></gml:Point>",
-                                            pszCoordinates));
-        CPLDestroyXMLNode(psGML);
-        psGML = CPLParseXMLString(pszGeometry);
-        CPLFree(pszGeometry);
+        CPLFree(psGML->pszValue);
+        psGML->pszValue = CPLStrdup("gml:Point");
     }
     else
     {

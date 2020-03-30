@@ -1740,6 +1740,67 @@ def test_gml_CircleByCenterPoint():
     assert ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (-1 2,3 2,-1 2)')) == 0
 
 ###############################################################################
+# Test GML CircleByCenterPoint with uom="m"
+
+
+def test_gml_CircleByCenterPoint_srs_geog_uom_m():
+
+    gml = '<gml:CircleByCenterPoint srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos><gml:radius uom="m">2000</gml:radius></gml:CircleByCenterPoint>'
+    geom1 = ogr.CreateGeometryFromGML(gml)
+    geom1.SwapXY()
+
+    gml = '<gml:CircleByCenterPoint srsName="URN:OGC:DEF:CRS:OGC:1.3:CRS84"><gml:pos>2 49</gml:pos><gml:radius uom="m">2000</gml:radius></gml:CircleByCenterPoint>'
+    geom2 = ogr.CreateGeometryFromGML(gml)
+
+    assert ogrtest.check_feature_geometry(geom1, geom2) == 0
+
+
+###############################################################################
+# Test compound curve of ArcByCenterPoint whose ends don't exactly match
+# with ends of neighbouring curves, as found in some AIXM files
+# with all curves in the same <segment> element as found in #2356)
+
+def test_gml_CompoundCurve_of_ArcByCenterPoint_curve_in_same_segments():
+
+    geom = ogr.CreateGeometryFromGML("""
+        <aixm:Surface srsName="urn:ogc:def:crs:EPSG::4326" gml:id="ID_249">
+            <gml:patches>
+                <gml:PolygonPatch>
+                    <gml:exterior>
+                        <gml:Ring>
+                            <gml:curveMember>
+                                <gml:Curve gml:id="ID_250">
+                                    <gml:segments>
+                                        <gml:GeodesicString>
+                                            <gml:posList>55.233333333333334
+                                            -36.166666666666664 55.23116372807667
+                                            -36.89437337916484</gml:posList>
+                                        </gml:GeodesicString>
+                                        <gml:ArcByCenterPoint numArc="1">
+                                            <gml:posList>55.2333333333333
+                                            -36.166666666666664</gml:posList>
+                                            <gml:radius uom="NM">25.0</gml:radius>
+                                            <gml:startAngle uom="deg">270.0</gml:startAngle>
+                                            <gml:endAngle uom="deg">497.0</gml:endAngle>
+                                        </gml:ArcByCenterPoint>
+                                        <gml:GeodesicString>
+                                            <gml:posList>54.92816350530716 -35.674116070018954
+                                            55.233333333333334
+                                            -36.166666666666664</gml:posList>
+                                        </gml:GeodesicString>
+                                    </gml:segments>
+                                </gml:Curve>
+                            </gml:curveMember>
+                        </gml:Ring>
+                    </gml:exterior>
+                </gml:PolygonPatch>
+            </gml:patches>
+            <aixm:horizontalAccuracy uom="KM">2.0</aixm:horizontalAccuracy>
+        </aixm:Surface>""")
+
+    assert ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('POLYGON ((55.2333333333333 -36.1666666666667,55.2311637280767 -36.8943733791648,55.2602248071013 -36.8960852160185,55.2891782700249 -36.8912782655051,55.3178697537514 -36.88292675789,55.3461587637071 -36.8710639413776,55.3739064765608 -36.8557405708675,55.4009764350458 -36.8370248014709,55.4272352367262 -36.8150019876212,55.4525532129231 -36.7897743859994,55.476805093957 -36.7614607612323,55.4998706568286 -36.7301958939182,55.5216353514589 -36.6961299915025,55.5419909016414 -36.6594280032268,55.5608358769213 -36.6202688413925,55.5780762317212 -36.5788445119267,55.5936258081681 -36.5353591583435,55.6074067992521 -36.4900280239174,55.6193501691593 -36.4430763379496,55.6293960278662 -36.3947381326996,55.6374939573672 -36.3452549984946,55.6436032872147 -36.2948747851727,55.6476933173936 -36.2438502586493,55.6497434869178 -36.19243772209,55.6497434869178 -36.1408956112433,55.6476933173936 -36.089483074684,55.6436032872147 -36.0384585481606,55.6374939573672 -35.9880783348387,55.6293960278662 -35.9385952006337,55.6193501691593 -35.8902569953837,55.6074067992521 -35.8433053094159,55.5936258081681 -35.7979741749898,55.5780762317212 -35.7544888214066,55.5608358769213 -35.7130644919408,55.5419909016414 -35.6739053301065,55.5216353514589 -35.6372033418322,55.4998706568286 -35.6031374394151,55.476805093957 -35.571872572101,55.4525532129231 -35.5435589473339,55.4272352367262 -35.5183313457121,55.4009764350458 -35.4963085318624,55.3739064765608 -35.4775927624659,55.3461587637071 -35.4622693919557,55.3178697537514 -35.4504065754433,55.2891782700249 -35.4420550678282,55.2602248071013 -35.4372481173149,55.2311508336186 -35.4360014509317,55.2020980963355 -35.4383133491681,55.1732079288891 -35.4441648063421,55.1446205685763 -35.4535197729773,55.1164744843283 -35.4663254761286,55.0889057188812 -35.4825128133848,55.0620472479757 -35.5019968161103,55.0360283592393 -35.524677177381,55.0109740532301 -35.5504388400636,54.9870044689367 -35.5791526404379,54.9642343358562 -35.6106760028906,54.9427724545944 -35.6448536812344,54.9281635053072 -35.674116070019,55.2333333333333 -36.1666666666667))')) == 0
+
+###############################################################################
 # Test GML Circle
 
 
