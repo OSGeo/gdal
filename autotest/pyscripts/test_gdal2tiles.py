@@ -175,25 +175,35 @@ def test_gdal2tiles_py_xyz():
 
 def test_gdal2tiles_py_invalid_srs():
     """
-    Case where the input .tif image is not georeferenced, i.e. it's missing the SRS info,
+    Case where the input image is not georeferenced, i.e. it's missing the SRS info,
     and no --s_srs option is provided. The script should fail validation and terminate.
     """
     script_path = test_py_scripts.get_py_script('gdal2tiles')
     if script_path is None:
         pytest.skip()
 
-    shutil.copy('../gdrivers/data/small_world_no_srs.tif', 'tmp/out_gdal2tiles_smallworld_nosrs.tif')
+    shutil.copy('../gdrivers/data/test_nosrs.vrt', 'tmp/out_gdal2tiles_test_nosrs.vrt')
+    shutil.copy('../gdrivers/data/byte.tif', 'tmp/byte.tif')
 
     os.chdir('tmp')
+    # try running on image with missing SRS
     ret = test_py_scripts.run_py_script(
         script_path,
         'gdal2tiles',
-        '-q --xyz --zoom=0-1 out_gdal2tiles_smallworld_nosrs.tif')
+        '-q --zoom=0-1 out_gdal2tiles_test_nosrs.vrt')
+
+    # this time pass the spatial reference system via cli options
+    ret2 = test_py_scripts.run_py_script(
+        script_path,
+        'gdal2tiles',
+        '-q --zoom=0-1 --s_srs EPSG:4326 out_gdal2tiles_test_nosrs.vrt')
     os.chdir('..')
 
-    os.unlink('tmp/out_gdal2tiles_smallworld_nosrs.tif')
+    os.unlink('tmp/out_gdal2tiles_test_nosrs.vrt')
+    os.unlink('tmp/byte.tif')
 
     assert 'ERROR ret code = 2' in ret
+    assert 'ERROR ret code' not in ret2
 
 def test_does_not_error_when_source_bounds_close_to_tiles_bound():
     """
