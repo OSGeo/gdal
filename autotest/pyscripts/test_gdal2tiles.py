@@ -157,7 +157,7 @@ def test_gdal2tiles_py_xyz():
     test_py_scripts.run_py_script(
         script_path,
         'gdal2tiles',
-        '-q --xyz --zoom=1 --webviewer=none out_gdal2tiles_smallworld_xyz.tif')
+        '-q --xyz --zoom=1 out_gdal2tiles_smallworld_xyz.tif')
     os.chdir('..')
 
     os.unlink('tmp/out_gdal2tiles_smallworld_xyz.tif')
