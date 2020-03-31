@@ -1103,8 +1103,9 @@ def create_overview_tiles(tile_job_info, output_folder, options):
                     for x in range(2 * tx, 2 * tx + 2):
                         minx, miny, maxx, maxy = tile_job_info.tminmax[tz + 1]
                         if x >= minx and x <= maxx and y >= miny and y <= maxy:
+                            ytile2 = GDAL2Tiles.getYTile(y, tz+1, options)
                             base_tile_path = os.path.join(output_folder, str(tz + 1), str(x),
-                                                          "%s.%s" % (y, tile_job_info.tile_extension))
+                                                          "%s.%s" % (ytile2, tile_job_info.tile_extension))
                             if not os.path.isfile(base_tile_path):
                                 continue
 
@@ -2948,7 +2949,7 @@ def multi_threaded_tiling(input_file, output_folder, options):
     if options.verbose:
         print("Begin tiles details calc")
 
-    conf, tile_details = pool.apply(worker_tile_details, [input_file, output_folder, options])
+    conf, tile_details = worker_tile_details(input_file, output_folder, options)
 
     if options.verbose:
         print("Tiles details calc complete.")
