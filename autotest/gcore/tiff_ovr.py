@@ -197,7 +197,7 @@ def test_tiff_ovr_4(both_endian):
             total += ord(ovimage[i])
 
     average = total / pix_count
-    exp_average = 153.0656
+    exp_average = 154.0992
     assert average == pytest.approx(exp_average, abs=0.1), 'got wrong average for overview image'
 
     # Read base band as overview resolution and verify we aren't getting
@@ -1257,7 +1257,7 @@ def test_tiff_ovr_40(both_endian):
             total += ord(ovimage[i])
 
     average = total / pix_count
-    exp_average = 153.0656
+    exp_average = 154.0992
     assert average == pytest.approx(exp_average, abs=0.1), 'got wrong average for overview image'
 
     # Read base band as overview resolution and verify we aren't getting

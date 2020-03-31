@@ -791,6 +791,32 @@ cellsize     0
     data = struct.unpack('B' * 1, data)
     assert data[0] == 50
 
+
+###############################################################################
+# Test average downsampling by a non-integer factor
+
+
+def test_rasterio_average_4by4_to_3by3():
+
+    gdal.FileFromMemBuffer('/vsimem/test_rasterio_average_4by4_to_3by3.asc',
+                           """ncols        4
+nrows        4
+xllcorner    0
+yllcorner    0
+cellsize     1
+ 1.0 5 9 13
+ 2 6 10 14
+ 3 7 11 15
+ 4 8 12 16""")
+
+    ds = gdal.Translate('', '/vsimem/test_rasterio_average_4by4_to_3by3.asc', options='-ot Float32 -f MEM -r average -outsize 3 3')
+    data = ds.GetRasterBand(1).ReadRaster()
+    assert struct.unpack('f' * 9, data) == (2.25, 7.25, 12.25,
+                                            3.5, 8.5, 13.5,
+                                            4.75, 9.75, 14.75)
+
+    gdal.Unlink('/vsimem/test_rasterio_average_4by4_to_3by3.asc')
+
 ###############################################################################
 # Test average oversampling by an integer factor (should behave like nearest)
 
