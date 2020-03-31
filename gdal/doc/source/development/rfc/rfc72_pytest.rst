@@ -185,7 +185,7 @@ Progress at `pull request
    by default.
 
 -  Use `pytest-sugar <https://pivotfinland.com/pytest-sugar/>`__ to make
-   test output pretty. Disable it in CI since it doesnt' work well with
+   test output pretty. Disable it in CI since it doesn't work well with
    travis CI's output buffering.
 
 -  Move environment-specific test-skipping from CI to the test suite,
