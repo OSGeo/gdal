@@ -93,6 +93,7 @@ static const int anGWKFilterRadius[] =
     0,  // Med
     0,  // Q1
     0,  // Q3
+    0,  // Sum
 };
 
 static double GWKBilinear(double dfX);
@@ -115,6 +116,7 @@ static const FilterFuncType apfGWKFilter[] =
     nullptr,  // Med
     nullptr,  // Q1
     nullptr,  // Q3
+    nullptr,  // Sum
 };
 
 // TODO(schwehr): Can we make these functions have a const * const arg?
@@ -138,6 +140,7 @@ static const FilterFunc4ValuesType apfGWKFilter4Values[] =
     nullptr,  // Med
     nullptr,  // Q1
     nullptr,  // Q3
+    nullptr,  // Sum
 };
 
 int GWKGetFilterRadius(GDALResampleAlg eResampleAlg)
@@ -657,7 +660,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  * Resampling algorithm.
  *
  * The resampling algorithm to use.  One of GRA_NearestNeighbour, GRA_Bilinear,
- * GRA_Cubic, GRA_CubicSpline, GRA_Lanczos, GRA_Average, or GRA_Mode.
+ * GRA_Cubic, GRA_CubicSpline, GRA_Lanczos, GRA_Average, GRA_Mode or GRA_Sum.
  *
  * This field is required. GDT_NearestNeighbour may be used as a default
  * value.
@@ -1312,6 +1315,9 @@ CPLErr GDALWarpKernel::PerformWarp()
         return GWKAverageOrMode( this );
 
     if( eResample == GRA_Q3 )
+        return GWKAverageOrMode( this );
+
+    if( eResample == GRA_Sum )
         return GWKAverageOrMode( this );
 
     if (!GDALDataTypeIsComplex(eWorkingDataType))
@@ -5846,6 +5852,10 @@ static void GWKAverageOrModeThread( void* pData)
         nAlgo = GWKAOM_Quant;
         quant = 0.75;
     }
+    else if( poWK->eResample == GRA_Sum )
+    {
+        nAlgo = GWKAOM_Sum;
+    }
     else
     {
         // Other resample algorithms not permitted here.
@@ -5943,7 +5953,52 @@ static void GWKAverageOrModeThread( void* pData)
 
             if( !pabSuccess[iDstX] || !pabSuccess2[iDstX] )
                 continue;
+
+            if( padfX[iDstX] < poWK->nSrcXOff - 1 ||
+                padfX2[iDstX] < poWK->nSrcXOff - 1 ||
+                padfY[iDstX] < poWK->nSrcYOff - 1 ||
+                padfY2[iDstX] < poWK->nSrcYOff -1 ||
+                padfX[iDstX] > nSrcXSize + poWK->nSrcXOff + 1 ||
+                padfX2[iDstX] > nSrcXSize + poWK->nSrcXOff + 1 ||
+                padfY[iDstX] > nSrcYSize + poWK->nSrcYOff + 1 ||
+                padfY2[iDstX] > nSrcYSize + poWK->nSrcYOff + 1 )
+            {
+                continue;
+            }
+
             const GPtrDiff_t iDstOffset = iDstX + static_cast<GPtrDiff_t>(iDstY) * nDstXSize;
+
+            // Compute corners in source crs.
+
+            // The transformation might not have preserved ordering of
+            // coordinates so do the necessary swapping (#5433).
+            // NOTE: this is really an approximative fix. To do something
+            // more precise we would for example need to compute the
+            // transformation of coordinates in the
+            // [iDstX,iDstY]x[iDstX+1,iDstY+1] square back to source
+            // coordinates, and take the bounding box of the got source
+            // coordinates.
+            const double dfXMin = std::min(padfX[iDstX],padfX2[iDstX]);
+            int iSrcXMin =
+                std::max(static_cast<int>(floor(dfXMin + 1e-10)) -
+                            poWK->nSrcXOff, 0);
+            const double dfXMax = std::max(padfX[iDstX],padfX2[iDstX]);
+            int iSrcXMax =
+                std::min(static_cast<int>(ceil(dfXMax - 1e-10)) -
+                            poWK->nSrcXOff, nSrcXSize);
+            const double dfYMin = std::min(padfY[iDstX],padfY2[iDstX]);
+            int iSrcYMin =
+                std::max(static_cast<int>(floor(dfYMin + 1e-10)) -
+                            poWK->nSrcYOff, 0);
+            const double dfYMax = std::max(padfY[iDstX],padfY2[iDstX]);
+            int iSrcYMax =
+                std::min(static_cast<int>(ceil(dfYMax - 1e-10)) -
+                            poWK->nSrcYOff, nSrcYSize);
+
+            if( iSrcXMin == iSrcXMax && iSrcXMax < nSrcXSize )
+                iSrcXMax++;
+            if( iSrcYMin == iSrcYMax && iSrcYMax < nSrcYSize )
+                iSrcYMax++;
 
 /* ==================================================================== */
 /*      Loop processing each band.                                      */
@@ -5960,37 +6015,6 @@ static void GWKAverageOrModeThread( void* pData)
 /* -------------------------------------------------------------------- */
 /*      Collect the source value.                                       */
 /* -------------------------------------------------------------------- */
-                // Compute corners in source crs.
-
-                // The transformation might not have preserved ordering of
-                // coordinates so do the necessary swapping (#5433).
-                // NOTE: this is really an approximative fix. To do something
-                // more precise we would for example need to compute the
-                // transformation of coordinates in the
-                // [iDstX,iDstY]x[iDstX+1,iDstY+1] square back to source
-                // coordinates, and take the bounding box of the got source
-                // coordinates.
-                const double dfXMin = std::min(padfX[iDstX],padfX2[iDstX]);
-                int iSrcXMin =
-                    std::max(static_cast<int>(floor(dfXMin + 1e-10)) -
-                             poWK->nSrcXOff, 0);
-                const double dfXMax = std::max(padfX[iDstX],padfX2[iDstX]);
-                int iSrcXMax =
-                    std::min(static_cast<int>(ceil(dfXMax - 1e-10)) -
-                             poWK->nSrcXOff, nSrcXSize);
-                const double dfYMin = std::min(padfY[iDstX],padfY2[iDstX]);
-                int iSrcYMin =
-                    std::max(static_cast<int>(floor(dfYMin + 1e-10)) -
-                             poWK->nSrcYOff, 0);
-                const double dfYMax = std::max(padfY[iDstX],padfY2[iDstX]);
-                int iSrcYMax =
-                    std::min(static_cast<int>(ceil(dfYMax - 1e-10)) -
-                             poWK->nSrcYOff, nSrcYSize);
-
-                if( iSrcXMin == iSrcXMax && iSrcXMax < nSrcXSize )
-                    iSrcXMax++;
-                if( iSrcYMin == iSrcYMax && iSrcYMax < nSrcYSize )
-                    iSrcYMax++;
 
                 // Loop over source lines and pixels - 3 possible algorithms.
 
@@ -6056,6 +6080,54 @@ static void GWKAverageOrModeThread( void* pData)
                         bHasFoundDensity = true;
                     }
                 }  // GRA_Average.
+                else if( nAlgo == GWKAOM_Sum )
+                // poWK->eResample == GRA_Sum
+                {
+                    double dfTotalReal = 0.0;
+                    double dfTotalImag = 0.0;
+                    bool bFoundValid = false;
+
+                    for( int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
+                    {
+                        const double dfWeightY = COMPUTE_WEIGHT_Y(iSrcY);
+                        iSrcOffset = iSrcXMin + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+                        for( int iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++, iSrcOffset++ )
+                        {
+                            if( poWK->panUnifiedSrcValid != nullptr
+                                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
+                                     & (0x01 << (iSrcOffset & 0x1f))) )
+                            {
+                                continue;
+                            }
+
+                            if( GWKGetPixelValue(
+                                    poWK, iBand, iSrcOffset,
+                                    &dfBandDensity, &dfValueRealTmp,
+                                    &dfValueImagTmp ) &&
+                                dfBandDensity > BAND_DENSITY_THRESHOLD )
+                            {
+                                const double dfWeight = COMPUTE_WEIGHT(iSrcX, dfWeightY);
+                                bFoundValid = true;
+                                dfTotalReal += dfValueRealTmp * dfWeight;
+                                if (bIsComplex)
+                                {
+                                    dfTotalImag += dfValueImagTmp * dfWeight;
+                                }
+                            }
+                        }
+                    }
+
+                    if( bFoundValid )
+                    {
+                        dfValueReal = dfTotalReal;
+                        if (bIsComplex)
+                        {
+                            dfValueImag = dfTotalImag;
+                        }
+                        dfBandDensity = 1;
+                        bHasFoundDensity = true;
+                    }
+                }  // GRA_Sum.
                 else if( nAlgo == GWKAOM_Imode || nAlgo == GWKAOM_Fmode )
                 // poWK->eResample == GRA_Mode
                 {
