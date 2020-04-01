@@ -5955,6 +5955,38 @@ static void GWKAverageOrModeThread( void* pData)
                 continue;
             const GPtrDiff_t iDstOffset = iDstX + static_cast<GPtrDiff_t>(iDstY) * nDstXSize;
 
+            // Compute corners in source crs.
+
+            // The transformation might not have preserved ordering of
+            // coordinates so do the necessary swapping (#5433).
+            // NOTE: this is really an approximative fix. To do something
+            // more precise we would for example need to compute the
+            // transformation of coordinates in the
+            // [iDstX,iDstY]x[iDstX+1,iDstY+1] square back to source
+            // coordinates, and take the bounding box of the got source
+            // coordinates.
+            const double dfXMin = std::min(padfX[iDstX],padfX2[iDstX]);
+            int iSrcXMin =
+                std::max(static_cast<int>(floor(dfXMin + 1e-10)) -
+                            poWK->nSrcXOff, 0);
+            const double dfXMax = std::max(padfX[iDstX],padfX2[iDstX]);
+            int iSrcXMax =
+                std::min(static_cast<int>(ceil(dfXMax - 1e-10)) -
+                            poWK->nSrcXOff, nSrcXSize);
+            const double dfYMin = std::min(padfY[iDstX],padfY2[iDstX]);
+            int iSrcYMin =
+                std::max(static_cast<int>(floor(dfYMin + 1e-10)) -
+                            poWK->nSrcYOff, 0);
+            const double dfYMax = std::max(padfY[iDstX],padfY2[iDstX]);
+            int iSrcYMax =
+                std::min(static_cast<int>(ceil(dfYMax - 1e-10)) -
+                            poWK->nSrcYOff, nSrcYSize);
+
+            if( iSrcXMin == iSrcXMax && iSrcXMax < nSrcXSize )
+                iSrcXMax++;
+            if( iSrcYMin == iSrcYMax && iSrcYMax < nSrcYSize )
+                iSrcYMax++;
+
 /* ==================================================================== */
 /*      Loop processing each band.                                      */
 /* ==================================================================== */
@@ -5970,37 +6002,6 @@ static void GWKAverageOrModeThread( void* pData)
 /* -------------------------------------------------------------------- */
 /*      Collect the source value.                                       */
 /* -------------------------------------------------------------------- */
-                // Compute corners in source crs.
-
-                // The transformation might not have preserved ordering of
-                // coordinates so do the necessary swapping (#5433).
-                // NOTE: this is really an approximative fix. To do something
-                // more precise we would for example need to compute the
-                // transformation of coordinates in the
-                // [iDstX,iDstY]x[iDstX+1,iDstY+1] square back to source
-                // coordinates, and take the bounding box of the got source
-                // coordinates.
-                const double dfXMin = std::min(padfX[iDstX],padfX2[iDstX]);
-                int iSrcXMin =
-                    std::max(static_cast<int>(floor(dfXMin + 1e-10)) -
-                             poWK->nSrcXOff, 0);
-                const double dfXMax = std::max(padfX[iDstX],padfX2[iDstX]);
-                int iSrcXMax =
-                    std::min(static_cast<int>(ceil(dfXMax - 1e-10)) -
-                             poWK->nSrcXOff, nSrcXSize);
-                const double dfYMin = std::min(padfY[iDstX],padfY2[iDstX]);
-                int iSrcYMin =
-                    std::max(static_cast<int>(floor(dfYMin + 1e-10)) -
-                             poWK->nSrcYOff, 0);
-                const double dfYMax = std::max(padfY[iDstX],padfY2[iDstX]);
-                int iSrcYMax =
-                    std::min(static_cast<int>(ceil(dfYMax - 1e-10)) -
-                             poWK->nSrcYOff, nSrcYSize);
-
-                if( iSrcXMin == iSrcXMax && iSrcXMax < nSrcXSize )
-                    iSrcXMax++;
-                if( iSrcYMin == iSrcYMax && iSrcYMax < nSrcYSize )
-                    iSrcYMax++;
 
                 // Loop over source lines and pixels - 3 possible algorithms.
 
