@@ -5943,6 +5943,19 @@ static void GWKAverageOrModeThread( void* pData)
 
             if( !pabSuccess[iDstX] || !pabSuccess2[iDstX] )
                 continue;
+
+            if( padfX[iDstX] < poWK->nSrcXOff - 1 ||
+                padfX2[iDstX] < poWK->nSrcXOff - 1 ||
+                padfY[iDstX] < poWK->nSrcYOff - 1 ||
+                padfY2[iDstX] < poWK->nSrcYOff -1 ||
+                padfX[iDstX] > nSrcXSize + poWK->nSrcXOff + 1 ||
+                padfX2[iDstX] > nSrcXSize + poWK->nSrcXOff + 1 ||
+                padfY[iDstX] > nSrcYSize + poWK->nSrcYOff + 1 ||
+                padfY2[iDstX] > nSrcYSize + poWK->nSrcYOff + 1 )
+            {
+                continue;
+            }
+
             const GPtrDiff_t iDstOffset = iDstX + static_cast<GPtrDiff_t>(iDstY) * nDstXSize;
 
 /* ==================================================================== */
