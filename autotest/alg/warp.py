@@ -1333,6 +1333,24 @@ def test_warp_weighted_average():
     assert maxdiff <= 1, 'Image too different from reference'
 
 ###############################################################################
+# test sum
+
+
+def test_warp_sum():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
+    if gdaltest.tiff_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/3by3_sum.vrt')
+    ref_ds = gdal.Open('data/3by3_sum.tif')
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+
+    assert maxdiff <= 1, 'Image too different from reference'
+
+###############################################################################
 # test GDALSuggestedWarpOutput (#5693)
 
 
