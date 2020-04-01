@@ -5960,13 +5960,6 @@ static void GWKAverageOrModeThread( void* pData)
 /* -------------------------------------------------------------------- */
 /*      Collect the source value.                                       */
 /* -------------------------------------------------------------------- */
-                double dfTotalReal = 0.0;
-                double dfTotalImag = 0.0;
-                // Count of pixels used to compute average/mode.
-                int nCount = 0;
-                // Count of all pixels sampled, including nodata.
-                int nCount2 = 0;
-
                 // Compute corners in source crs.
 
                 // The transformation might not have preserved ordering of
@@ -5977,17 +5970,21 @@ static void GWKAverageOrModeThread( void* pData)
                 // [iDstX,iDstY]x[iDstX+1,iDstY+1] square back to source
                 // coordinates, and take the bounding box of the got source
                 // coordinates.
+                const double dfXMin = std::min(padfX[iDstX],padfX2[iDstX]);
                 int iSrcXMin =
-                    std::max(static_cast<int>(floor(std::min(padfX[iDstX],padfX2[iDstX]) + 1e-10)) -
+                    std::max(static_cast<int>(floor(dfXMin + 1e-10)) -
                              poWK->nSrcXOff, 0);
+                const double dfXMax = std::max(padfX[iDstX],padfX2[iDstX]);
                 int iSrcXMax =
-                    std::min(static_cast<int>(ceil(std::max(padfX[iDstX],padfX2[iDstX]) - 1e-10)) -
+                    std::min(static_cast<int>(ceil(dfXMax - 1e-10)) -
                              poWK->nSrcXOff, nSrcXSize);
+                const double dfYMin = std::min(padfY[iDstX],padfY2[iDstX]);
                 int iSrcYMin =
-                    std::max(static_cast<int>(floor(std::min(padfY[iDstX],padfY2[iDstX]) + 1e-10)) -
+                    std::max(static_cast<int>(floor(dfYMin + 1e-10)) -
                              poWK->nSrcYOff, 0);
+                const double dfYMax = std::max(padfY[iDstX],padfY2[iDstX]);
                 int iSrcYMax =
-                    std::min(static_cast<int>(ceil(std::max(padfY[iDstX],padfY2[iDstX]) - 1e-10)) -
+                    std::min(static_cast<int>(ceil(dfYMax - 1e-10)) -
                              poWK->nSrcYOff, nSrcYSize);
 
                 if( iSrcXMin == iSrcXMax && iSrcXMax < nSrcXSize )
@@ -5997,17 +5994,33 @@ static void GWKAverageOrModeThread( void* pData)
 
                 // Loop over source lines and pixels - 3 possible algorithms.
 
+#define COMPUTE_WEIGHT_Y(iSrcY) \
+    ((iSrcY == iSrcYMin) ? \
+        ((iSrcYMin + 1 == iSrcYMax) ? 1.0 : 1 - (dfYMin - iSrcYMin)): \
+     (iSrcY + 1 == iSrcYMax) ? 1 - (iSrcYMax - dfYMax): \
+     1.0)
+
+#define COMPUTE_WEIGHT(iSrcX, dfWeightY) \
+    ((iSrcX == iSrcXMin) ? \
+        ((iSrcXMin + 1 == iSrcXMax) ? dfWeightY : dfWeightY * (1 - (dfXMin - iSrcXMin))): \
+     (iSrcX + 1 == iSrcXMax) ? dfWeightY * (1 - (iSrcXMax - dfXMax)): \
+     dfWeightY)
+
                 // poWK->eResample == GRA_Average.
                 if( nAlgo == GWKAOM_Average )
                 {
+                    double dfTotalReal = 0.0;
+                    double dfTotalImag = 0.0;
+                    double dfTotalWeight = 0.0;
+
                     // This code adapted from GDALDownsampleChunk32R_AverageT()
                     // in gcore/overview.cpp.
                     for( int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
                     {
-                        for( int iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++ )
+                        const double dfWeightY = COMPUTE_WEIGHT_Y(iSrcY);
+                        iSrcOffset = iSrcXMin + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+                        for( int iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++, iSrcOffset++ )
                         {
-                            iSrcOffset = iSrcX + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
-
                             if( poWK->panUnifiedSrcValid != nullptr
                                 && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
                                      & (0x01 << (iSrcOffset & 0x1f))) )
@@ -6015,29 +6028,29 @@ static void GWKAverageOrModeThread( void* pData)
                                 continue;
                             }
 
-                            nCount2++;
                             if( GWKGetPixelValue(
                                     poWK, iBand, iSrcOffset,
                                     &dfBandDensity, &dfValueRealTmp,
                                     &dfValueImagTmp ) &&
                                 dfBandDensity > BAND_DENSITY_THRESHOLD )
                             {
-                                nCount++;
-                                dfTotalReal += dfValueRealTmp;
+                                const double dfWeight = COMPUTE_WEIGHT(iSrcX, dfWeightY);
+                                dfTotalWeight += dfWeight;
+                                dfTotalReal += dfValueRealTmp * dfWeight;
                                 if (bIsComplex)
                                 {
-                                    dfTotalImag += dfValueImagTmp;
+                                    dfTotalImag += dfValueImagTmp * dfWeight;
                                 }
                             }
                         }
                     }
 
-                    if( nCount > 0 )
+                    if( dfTotalWeight > 0 )
                     {
-                        dfValueReal = dfTotalReal / nCount;
+                        dfValueReal = dfTotalReal / dfTotalWeight;
                         if (bIsComplex)
                         {
-                            dfValueImag = dfTotalImag / nCount;
+                            dfValueImag = dfTotalImag / dfTotalWeight;
                         }
                         dfBandDensity = 1;
                         bHasFoundDensity = true;
@@ -6071,15 +6084,12 @@ static void GWKAverageOrModeThread( void* pData)
                                          & (0x01 << (iSrcOffset & 0x1f))) )
                                     continue;
 
-                                nCount2++;
                                 if( GWKGetPixelValue(
                                         poWK, iBand, iSrcOffset,
                                         &dfBandDensity, &dfValueRealTmp,
                                         &dfValueImagTmp ) &&
                                     dfBandDensity > BAND_DENSITY_THRESHOLD )
                                 {
-                                    nCount++;
-
                                     const float fVal =
                                         static_cast<float>(dfValueRealTmp);
 
@@ -6134,15 +6144,12 @@ static void GWKAverageOrModeThread( void* pData)
                                          & (0x01 << (iSrcOffset & 0x1f))) )
                                     continue;
 
-                                nCount2++;
                                 if( GWKGetPixelValue(
                                         poWK, iBand, iSrcOffset,
                                         &dfBandDensity, &dfValueRealTmp,
                                         &dfValueImagTmp ) &&
                                     dfBandDensity > BAND_DENSITY_THRESHOLD )
                                 {
-                                    nCount++;
-
                                     const int nVal =
                                         static_cast<int>(dfValueRealTmp);
                                     if( ++panVals[nVal+nBinsOffset] > nMaxVal )
@@ -6167,7 +6174,8 @@ static void GWKAverageOrModeThread( void* pData)
                 else if( nAlgo == GWKAOM_Max )
                 // poWK->eResample == GRA_Max.
                 {
-                    dfTotalReal = std::numeric_limits<double>::lowest();
+                    bool bFoundValid = false;
+                    double dfTotalReal = std::numeric_limits<double>::lowest();
                     // This code adapted from nAlgo 1 method, GRA_Average.
                     for( int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
                     {
@@ -6189,7 +6197,7 @@ static void GWKAverageOrModeThread( void* pData)
                                     &dfValueImagTmp ) &&
                                 dfBandDensity > BAND_DENSITY_THRESHOLD )
                             {
-                                nCount++;
+                                bFoundValid = true;
                                 if( dfTotalReal < dfValueRealTmp )
                                 {
                                     dfTotalReal = dfValueRealTmp;
@@ -6198,7 +6206,7 @@ static void GWKAverageOrModeThread( void* pData)
                         }
                     }
 
-                    if( nCount > 0 )
+                    if( bFoundValid )
                     {
                         dfValueReal = dfTotalReal;
                         dfBandDensity = 1;
@@ -6208,7 +6216,8 @@ static void GWKAverageOrModeThread( void* pData)
                 else if( nAlgo == GWKAOM_Min )
                 // poWK->eResample == GRA_Min.
                 {
-                    dfTotalReal = std::numeric_limits<double>::max();
+                    bool bFoundValid = false;
+                    double dfTotalReal = std::numeric_limits<double>::max();
                     // This code adapted from nAlgo 1 method, GRA_Average.
                     for( int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
                     {
@@ -6230,7 +6239,7 @@ static void GWKAverageOrModeThread( void* pData)
                                     &dfValueImagTmp ) &&
                                 dfBandDensity > BAND_DENSITY_THRESHOLD )
                             {
-                                nCount++;
+                                bFoundValid = true;
                                 if( dfTotalReal > dfValueRealTmp )
                                 {
                                     dfTotalReal = dfValueRealTmp;
@@ -6239,7 +6248,7 @@ static void GWKAverageOrModeThread( void* pData)
                         }
                     }
 
-                    if( nCount > 0 )
+                    if( bFoundValid )
                     {
                         dfValueReal = dfTotalReal;
                         dfBandDensity = 1;
@@ -6249,6 +6258,7 @@ static void GWKAverageOrModeThread( void* pData)
                 else if( nAlgo == GWKAOM_Quant )
                 // poWK->eResample == GRA_Med | GRA_Q1 | GRA_Q3.
                 {
+                    bool bFoundValid = false;
                     std::vector<double> dfRealValuesTmp;
 
                     // This code adapted from nAlgo 1 method, GRA_Average.
@@ -6272,13 +6282,13 @@ static void GWKAverageOrModeThread( void* pData)
                                     &dfValueImagTmp ) &&
                                 dfBandDensity > BAND_DENSITY_THRESHOLD )
                             {
-                                nCount++;
+                                bFoundValid = true;
                                 dfRealValuesTmp.push_back(dfValueRealTmp);
                             }
                         }
                     }
 
-                    if( nCount > 0 )
+                    if( bFoundValid )
                     {
                         std::sort(dfRealValuesTmp.begin(), dfRealValuesTmp.end());
                         int quantIdx = static_cast<int>(
