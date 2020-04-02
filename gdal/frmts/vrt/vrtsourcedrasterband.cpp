@@ -31,6 +31,7 @@
 #include "gdal_vrt.h"
 #include "vrtdataset.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
