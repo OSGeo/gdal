@@ -1214,3 +1214,20 @@ def test_vrt_invalid_dstrect():
     </VRTRasterBand>
     </VRTDataset>"""
     assert gdal.Open(vrt_text) is None
+
+
+def test_vrt_source_no_dstrect():
+
+    vrt_text = """<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
+"""
+    filename = '/vsimem/out.tif'
+    ds = gdal.Translate(filename, vrt_text)
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    ds = None
+    gdal.Unlink(filename)
