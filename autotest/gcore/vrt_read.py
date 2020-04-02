@@ -1308,3 +1308,20 @@ def test_vrt_shared_no_proxy_pool_error():
     with gdaltest.error_handler():
         ds = gdal.Open(vrt_text)
     assert not ds
+
+
+def test_vrt_source_no_dstrect():
+
+    vrt_text = """<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
+"""
+    filename = '/vsimem/out.tif'
+    ds = gdal.Translate(filename, vrt_text)
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    ds = None
+    gdal.Unlink(filename)
