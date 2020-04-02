@@ -939,7 +939,17 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
     }
 
 #if !defined(GEO_NORMALIZE_DISABLE_TOWGS84)
-    if( psDefn->TOWGS84Count > 0 )
+    if( psDefn->TOWGS84Count > 0 &&
+        bGotFromEPSG  &&
+        CPLTestBool(CPLGetConfigOption("OSR_STRIP_TOWGS84", "YES")) )
+    {
+        CPLDebug("OSR", "TOWGS84 information has been removed. "
+                 "It can be kept by setting the OSR_STRIP_TOWGS84 "
+                 "configuration option to NO");
+    }
+    else if( psDefn->TOWGS84Count > 0 &&
+        (!bGotFromEPSG ||
+         !CPLTestBool(CPLGetConfigOption("OSR_STRIP_TOWGS84", "YES"))) )
     {
         if( bGotFromEPSG )
         {
@@ -1380,6 +1390,8 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
         }
         CPLFree(pszWKT);
     }
+
+    oSRS.StripTOWGS84IfKnownDatumAndAllowed();
 
     return OGRSpatialReference::ToHandle(oSRS.Clone());
 }

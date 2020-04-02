@@ -323,6 +323,7 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId)
     }
 
     SQLResultFree(&oResult);
+    poSpatialRef->StripTOWGS84IfKnownDatumAndAllowed();
     m_oMapSrsIdToSrs[iSrsId] = poSpatialRef;
     poSpatialRef->Reference();
     return poSpatialRef;
