@@ -37,15 +37,11 @@
 #include <algorithm>
 #include <set>
 #include <utility>
+#include <vector>
 
 #include "gdal_alg.h"
 
 CPL_CVSID("$Id$")
-
-static int llCompareInt(const void *a, const void *b)
-{
-    return *static_cast<const int*>(a) - *static_cast<const int*>(b);
-}
 
 /************************************************************************/
 /*                       dllImageFilledPolygon()                        */
@@ -60,23 +56,11 @@ static int llCompareInt(const void *a, const void *b)
 /*      NEW: Nodes' coordinate are kept as double  in order             */
 /*      to compute accurately the intersections with the lines          */
 /*                                                                      */
-/*      Two methods for determining the border pixels:                  */
-/*                                                                      */
-/*      1) method = 0                                                   */
-/*         Inherits algorithm from version above but with several bugs  */
-/*         fixed except for the cone facing down.                       */
-/*         A pixel on which a line intersects a segment of a            */
-/*         polygon will always be considered as inside the shape.       */
-/*         Note that we only compute intersections with lines that      */
-/*         passes through the middle of a pixel (line coord = 0.5,      */
-/*         1.5, 2.5, etc.)                                              */
-/*                                                                      */
-/*      2) method = 1:                                                  */
-/*         A pixel is considered inside a polygon if its center         */
-/*         falls inside the polygon. This is somehow more robust unless */
-/*         the nodes are placed in the center of the pixels in which    */
-/*         case, due to numerical inaccuracies, it's hard to predict    */
-/*         if the pixel will be considered inside or outside the shape. */
+/*      A pixel is considered inside a polygon if its center            */
+/*      falls inside the polygon. This is robust unless                 */
+/*      the nodes are placed in the center of the pixels in which       */
+/*      case, due to numerical inaccuracies, it's hard to predict       */
+/*      if the pixel will be considered inside or outside the shape.    */
 /************************************************************************/
 
 /*
@@ -90,17 +74,11 @@ static int llCompareInt(const void *a, const void *b)
  */
 
 void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize,
-                               int nPartCount, int *panPartSize,
-                               double *padfX, double *padfY,
-                               double *dfVariant,
+                               int nPartCount, const int *panPartSize,
+                               const double *padfX, const double *padfY,
+                               const double *dfVariant,
                                llScanlineFunc pfnScanlineFunc, void *pCBData )
 {
-/*************************************************************************
-2nd Method (method=1):
-=====================
-No known bug
-*************************************************************************/
-
     if( !nPartCount )
     {
         return;
@@ -110,8 +88,7 @@ No known bug
     for( int part = 0; part < nPartCount; part++ )
         n += panPartSize[part];
 
-    // +1 to make clang static analyzer not warn about potential malloc(0).
-    int *polyInts = static_cast<int *>(malloc(sizeof(int) * (n + 1)));
+    std::vector<int> polyInts(n);
 
     double dminy = padfY[0];
     double dmaxy = padfY[0];
@@ -146,9 +123,6 @@ No known bug
 
         int part = 0;
         int ints = 0;
-
-        // Initialize polyInts, otherwise it can sometimes causes a seg fault.
-        memset(polyInts, -1, sizeof(int) * n);
 
         for( int i = 0; i < n; i++ )
         {
@@ -186,8 +160,7 @@ No known bug
             }
             else if( dy1 > dy2 )
             {
-                dy2 = padfY[ind1];
-                dy1 = padfY[ind2];
+                std::swap(dy1, dy2);
                 dx2 = padfX[ind1];
                 dx1 = padfX[ind2];
             }
@@ -225,16 +198,9 @@ No known bug
             }
         }
 
-        // It would be more efficient to do this inline, to avoid
-        // a function call for each comparison.
-        // NOTE - mloskot: make llCompareInt a functor and use std
-        // algorithm and it will be optimized and expanded
-        // automatically in compile-time, with modularity preserved.
-        //
-        // TODO(schwehr): Use std::sort.
-        qsort(polyInts, ints, sizeof(int), llCompareInt);
+        std::sort (polyInts.begin(), polyInts.begin()+ints);
 
-        for( int i = 0; i < ints; i += 2 )
+        for( int i = 0; i + 1 < ints; i += 2 )
         {
             if( polyInts[i] <= maxx && polyInts[i+1] > minx )
             {
@@ -243,8 +209,6 @@ No known bug
             }
         }
     }
-
-    free( polyInts );
 }
 
 /************************************************************************/
@@ -253,8 +217,9 @@ No known bug
 
 void GDALdllImagePoint( int nRasterXSize, int nRasterYSize,
                         int nPartCount,
-                        CPL_UNUSED int *panPartSize,
-                        double *padfX, double *padfY, double *padfVariant,
+                        const int * /*panPartSize*/,
+                        const double *padfX, const double *padfY,
+                        const double *padfVariant,
                         llPointFunc pfnPointFunc, void *pCBData )
 {
     for( int i = 0; i < nPartCount; i++ )
@@ -275,8 +240,9 @@ void GDALdllImagePoint( int nRasterXSize, int nRasterYSize,
 /************************************************************************/
 
 void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
-                       int nPartCount, int *panPartSize,
-                       double *padfX, double *padfY, double *padfVariant,
+                       int nPartCount, const int *panPartSize,
+                       const double *padfX, const double *padfY,
+                       const double *padfVariant,
                        llPointFunc pfnPointFunc, void *pCBData )
 {
     if( !nPartCount )
@@ -409,8 +375,9 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
 
 void
 GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
-                            int nPartCount, int *panPartSize,
-                            double *padfX, double *padfY, double *padfVariant,
+                            int nPartCount, const int *panPartSize,
+                            const double *padfX, const double *padfY,
+                            const double *padfVariant,
                             llPointFunc pfnPointFunc, void *pCBData,
                             int bAvoidBurningSamePoints )
 
