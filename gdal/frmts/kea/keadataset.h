@@ -32,8 +32,10 @@
 #define KEADATASET_H
 
 #include "gdal_pam.h"
-
+#include "cpl_multiproc.h"
 #include "libkea_headers.h"
+
+class LockedRefCount;
 
 // class that implements a GDAL dataset
 class KEADataset final: public GDALPamDataset
@@ -114,10 +116,11 @@ protected:
 private:
     // pointer to KEAImageIO class and the refcount for it
     kealib::KEAImageIO  *m_pImageIO;
-    int                 *m_pnRefcount;
+    LockedRefCount      *m_pRefcount;
     char               **m_papszMetadataList; // CSLStringList for metadata
     GDAL_GCP            *m_pGCPs;
     char                *m_pszGCPProjection;
+    CPLMutex            *m_hMutex;
 };
 
 // conversion functions
@@ -126,5 +129,43 @@ kealib::KEADataType GDAL_to_KEA_Type( GDALDataType egdalType );
 
 // For unloading the VFL
 void KEADatasetDriverUnload(GDALDriver*);
+
+// A thresafe reference count. Used to manage shared pointer to
+// the kealib::KEAImageIO instance between bands and dataset.
+class LockedRefCount
+{
+private:
+    int m_nRefCount;
+    CPLMutex *m_hMutex;
+
+    CPL_DISALLOW_COPY_ASSIGN(LockedRefCount)
+
+public:
+    explicit LockedRefCount(int initCount=1)
+    {
+        m_nRefCount = initCount;
+        m_hMutex = CPLCreateMutex();
+        CPLReleaseMutex( m_hMutex );
+    }
+    ~LockedRefCount()
+    {
+        CPLDestroyMutex( m_hMutex );
+        m_hMutex = nullptr;
+    }
+
+    void IncRef()
+    {
+        CPLMutexHolderD( &m_hMutex );
+        m_nRefCount++;
+    }
+
+    // returns true if reference count now 0
+    bool DecRef()
+    {
+        CPLMutexHolderD( &m_hMutex );
+        m_nRefCount--;
+        return m_nRefCount <= 0;
+    }
+};
 
 #endif //KEADATASET_H

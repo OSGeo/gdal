@@ -27,6 +27,7 @@
 
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
+#include "ogr_spatialref.h"
 
 #include <algorithm>
 #include <cmath>
@@ -341,5 +342,77 @@ namespace tut
         CPLFree(wkt1);
     }
 
+    // Test StripTOWGS84IfKnownDatum
+    template<>
+    template<>
+    void object::test<8 >()
+    {
+        // Not a boundCRS
+        {
+            OGRSpatialReference oSRS;
+            oSRS.importFromEPSG(4326);
+            ensure(!oSRS.StripTOWGS84IfKnownDatum());
+        }
+        // Custom boundCRS --> do not strip TOWGS84
+        {
+            OGRSpatialReference oSRS;
+            oSRS.SetFromUserInput("+proj=longlat +ellps=GRS80 +towgs84=1,2,3,4,5,6,7");
+            ensure(!oSRS.StripTOWGS84IfKnownDatum());
+            double vals[7] = { 0 };
+            ensure(oSRS.GetTOWGS84(vals, 7) == OGRERR_NONE);
+        }
+        // BoundCRS whose base CRS has a known code --> strip TOWGS84
+        {
+            OGRSpatialReference oSRS;
+            oSRS.importFromEPSG(4326);
+            oSRS.SetTOWGS84(1,2,3,4,5,6,7);
+            ensure(oSRS.StripTOWGS84IfKnownDatum());
+            double vals[7] = { 0 };
+            ensure(oSRS.GetTOWGS84(vals, 7) != OGRERR_NONE);
+        }
+        // BoundCRS whose datum code is known --> strip TOWGS84
+        {
+            OGRSpatialReference oSRS;
+            oSRS.SetFromUserInput(
+                "GEOGCS[\"bar\","
+                "DATUM[\"foo\","
+                "SPHEROID[\"WGS 84\",6378137,298.257223563],"
+                "TOWGS84[1,2,3,4,5,6,7],"
+                "AUTHORITY[\"FOO\",\"1\"]],"
+                "PRIMEM[\"Greenwich\",0],"
+                "UNIT[\"degree\",0.0174532925199433]]");
+            ensure(oSRS.StripTOWGS84IfKnownDatum());
+            double vals[7] = { 0 };
+            ensure(oSRS.GetTOWGS84(vals, 7) != OGRERR_NONE);
+        }
+        // BoundCRS whose datum name is known --> strip TOWGS84
+        {
+            OGRSpatialReference oSRS;
+            oSRS.SetFromUserInput(
+                "GEOGCS[\"WGS 84\","
+                "DATUM[\"WGS_1984\","
+                "SPHEROID[\"WGS 84\",6378137,298.257223563],"
+                "TOWGS84[1,2,3,4,5,6,7]],"
+                "PRIMEM[\"Greenwich\",0],"
+                "UNIT[\"degree\",0.0174532925199433]]");
+            ensure(oSRS.StripTOWGS84IfKnownDatum());
+            double vals[7] = { 0 };
+            ensure(oSRS.GetTOWGS84(vals, 7) != OGRERR_NONE);
+        }
+        // BoundCRS whose datum name is unknown --> do not strip TOWGS84
+        {
+            OGRSpatialReference oSRS;
+            oSRS.SetFromUserInput(
+                "GEOGCS[\"WGS 84\","
+                "DATUM[\"i am unknown\","
+                "SPHEROID[\"WGS 84\",6378137,298.257223563],"
+                "TOWGS84[1,2,3,4,5,6,7]],"
+                "PRIMEM[\"Greenwich\",0],"
+                "UNIT[\"degree\",0.0174532925199433]]");
+            ensure(!oSRS.StripTOWGS84IfKnownDatum());
+            double vals[7] = { 0 };
+            ensure(oSRS.GetTOWGS84(vals, 7) == OGRERR_NONE);
+        }
+    }
 
 } // namespace tut

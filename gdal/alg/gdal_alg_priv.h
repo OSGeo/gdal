@@ -80,26 +80,28 @@ typedef void (*llScanlineFunc)( void *, int, int, int, double );
 typedef void (*llPointFunc)( void *, int, int, double );
 
 void GDALdllImagePoint( int nRasterXSize, int nRasterYSize,
-                        int nPartCount, int *panPartSize,
-                        double *padfX, double *padfY, double *padfVariant,
+                        int nPartCount, const int *panPartSize,
+                        const double *padfX, const double *padfY,
+                        const double *padfVariant,
                         llPointFunc pfnPointFunc, void *pCBData );
 
 void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
-                       int nPartCount, int *panPartSize,
-                       double *padfX, double *padfY, double *padfVariant,
+                       int nPartCount, const int *panPartSize,
+                       const double *padfX, const double *padfY,
+                       const double *padfVariant,
                        llPointFunc pfnPointFunc, void *pCBData );
 
 void GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
-                                 int nPartCount, int *panPartSize,
-                                 double *padfX, double *padfY,
-                                 double *padfVariant,
+                                 int nPartCount, const int *panPartSize,
+                                 const double *padfX, const double *padfY,
+                                 const double *padfVariant,
                                  llPointFunc pfnPointFunc, void *pCBData,
                                  int bAvoidBurningSamePoints );
 
 void GDALdllImageFilledPolygon( int nRasterXSize, int nRasterYSize,
-                                int nPartCount, int *panPartSize,
-                                double *padfX, double *padfY,
-                                double *padfVariant,
+                                int nPartCount, const int *panPartSize,
+                                const double *padfX, const double *padfY,
+                                const double *padfVariant,
                                 llScanlineFunc pfnScanlineFunc, void *pCBData );
 
 CPL_C_END

@@ -411,6 +411,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     bool                        m_bIsInGpkgContents;
     bool                        m_bFeatureDefnCompleted;
     int                         m_iSrs;
+    int                         m_nZFlag = 0;
+    int                         m_nMFlag = 0;
     OGREnvelope*                m_poExtent;
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     GIntBig                     m_nTotalFeatureCount;

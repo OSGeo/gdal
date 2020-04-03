@@ -34,14 +34,15 @@
 #include "gdal_priv.h"
 
 #include "libkea_headers.h"
+#include "keadataset.h"
 
 class KEAMaskBand final: public GDALRasterBand
 {
     int m_nSrcBand;
     kealib::KEAImageIO  *m_pImageIO; // our image access pointer - refcounted
-    int                 *m_pnRefCount; // reference count of m_pImageIO
+    LockedRefCount      *m_pRefCount; // reference count of m_pImageIO
 public:
-    KEAMaskBand(GDALRasterBand *pParent, kealib::KEAImageIO *pImageIO, int *pRefCount );
+    KEAMaskBand(GDALRasterBand *pParent, kealib::KEAImageIO *pImageIO, LockedRefCount *pRefCount );
     ~KEAMaskBand();
 
 protected:

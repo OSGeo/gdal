@@ -248,6 +248,9 @@ class CPL_DLL OGRSpatialReference
     OGRErr      Validate() const;
     OGRErr      StripVertical();
 
+    bool        StripTOWGS84IfKnownDatumAndAllowed();
+    bool        StripTOWGS84IfKnownDatum();
+
     int         EPSGTreatsAsLatLong() const;
     int         EPSGTreatsAsNorthingEasting() const;
     int         GetAxesCount() const;
