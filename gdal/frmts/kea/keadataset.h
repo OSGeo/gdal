@@ -141,7 +141,7 @@ private:
     CPL_DISALLOW_COPY_ASSIGN(LockedRefCount)
 
 public:
-    LockedRefCount(int initCount=1)
+    explicit LockedRefCount(int initCount=1)
     {
         m_nRefCount = initCount;
         m_hMutex = CPLCreateMutex();
