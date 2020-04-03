@@ -612,6 +612,14 @@ GRIB_SETTING=yes
 #SDE_LIB = $(SDE_SDK)\lib\pe$(SDE_VERSION).lib \
 #          $(SDE_SDK)\lib\sde$(SDE_VERSION).lib $(SDE_SDK)\lib\sg$(SDE_VERSION).lib      
 
+#MRR_PLUGIN = YES
+#MRR_ENABLED = YES
+#MRR_VERSION=1
+#MRR_SDK = C:\MRRSDK\sdk
+#MRR_INC = $(MRR_SDK)\include 
+#MRR_LIB = $(MRR_SDK)\lib\pe$(MRR_VERSION).lib \
+#          $(MRR_SDK)\lib\sde$(MRR_VERSION).lib $(MRR_SDK)\lib\sg$(MRR_VERSION).lib
+
 
 #FGDB_ENABLED = YES
 #FGDB_PLUGIN = YES
