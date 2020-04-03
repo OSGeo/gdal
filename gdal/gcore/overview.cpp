@@ -488,7 +488,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
         double dfSrcYOff = dfSrcYDelta + iDstLine * dfYRatioDstToSrc;
         int nSrcYOff = static_cast<int>(dfSrcYOff + 1e-8);
         if( nSrcYOff < nChunkYOff )
-            dfSrcYOff = nChunkYOff;
+            nSrcYOff = nChunkYOff;
 
         double dfSrcYOff2 = dfSrcYDelta + (iDstLine+1) * dfYRatioDstToSrc;
         int nSrcYOff2 = static_cast<int>(ceil(dfSrcYOff2 - 1e-8));
