@@ -42,9 +42,12 @@
 CPL_CVSID("$Id$")
 
 // constructor
-KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAccessIn, kealib::KEAImageIO *pImageIO, int *pRefCount ):
+KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAccessIn, kealib::KEAImageIO *pImageIO, LockedRefCount *pRefCount ):
     m_eKEADataType(pImageIO->getImageBandDataType(nSrcBand)) // get the data type as KEA enum
 {
+    this->m_hMutex = CPLCreateMutex();
+    CPLReleaseMutex( this->m_hMutex );
+
     this->poDS = pDataset; // our pointer onto the dataset
     this->nBand = nSrcBand; // this is the band we are
     this->eDataType = KEA_to_GDAL_Type( m_eKEADataType );       // convert to GDAL enum
@@ -66,9 +69,9 @@ KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAc
 
     // grab the imageio class and its refcount
     this->m_pImageIO = pImageIO;
-    this->m_pnRefCount = pRefCount;
+    this->m_pRefCount = pRefCount;
     // increment the refcount as we now have a reference to imageio
-    (*this->m_pnRefCount)++;
+    this->m_pRefCount->IncRef();
 
     // Initialize overview variables
     m_nOverviews = 0;
@@ -93,32 +96,34 @@ KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAc
 // destructor
 KEARasterBand::~KEARasterBand()
 {
-    // destroy RAT if any
-    delete this->m_pAttributeTable;
-    // destroy color table if any
-    delete this->m_pColorTable;
-    // destroy the metadata
-    CSLDestroy(this->m_papszMetadataList);
-    if( this->m_pszHistoBinValues != nullptr )
     {
-        // histogram bin values as a string
-        CPLFree(this->m_pszHistoBinValues);
-    }
-    // delete any overview bands
-    this->deleteOverviewObjects();
+        CPLMutexHolderD( &m_hMutex );
+        // destroy RAT if any
+        delete this->m_pAttributeTable;
+        // destroy color table if any
+        delete this->m_pColorTable;
+        // destroy the metadata
+        CSLDestroy(this->m_papszMetadataList);
+        if( this->m_pszHistoBinValues != nullptr )
+        {
+            // histogram bin values as a string
+            CPLFree(this->m_pszHistoBinValues);
+        }
+        // delete any overview bands
+        this->deleteOverviewObjects();
 
-    // if GDAL created the mask it will delete it
-    if( m_bMaskBandOwned )
-    {
-        delete m_pMaskBand;
+        // if GDAL created the mask it will delete it
+        if( m_bMaskBandOwned )
+        {
+            delete m_pMaskBand;
+        }
     }
 
     // according to the docs, this is required
     this->FlushCache();
 
     // decrement the recount and delete if needed
-    (*m_pnRefCount)--;
-    if( *m_pnRefCount == 0 )
+    if( m_pRefCount->DecRef() )
     {
         try
         {
@@ -128,13 +133,14 @@ KEARasterBand::~KEARasterBand()
         {
         }
         delete m_pImageIO;
-        delete m_pnRefCount;
+        delete m_pRefCount;
     }
 }
 
 // internal method that updates the metadata into m_papszMetadataList
 void KEARasterBand::UpdateMetadataList()
 {
+    CPLMutexHolderD( &m_hMutex );
     std::vector< std::pair<std::string, std::string> > data;
 
     // get all the metadata and iterate through
@@ -157,16 +163,18 @@ void KEARasterBand::UpdateMetadataList()
 
     // STATISTICS_HISTONUMBINS
     const GDALRasterAttributeTable *pTable = KEARasterBand::GetDefaultRAT();
-    CPLString osWorkingResult;
-    osWorkingResult.Printf( "%lu", (unsigned long)pTable->GetRowCount());
-    m_papszMetadataList = CSLSetNameValue(m_papszMetadataList, "STATISTICS_HISTONUMBINS", osWorkingResult);
-
-    // attribute table chunksize
-    if( this->m_nAttributeChunkSize != -1 )
+    if( pTable != nullptr )
     {
-        char szTemp[100];
-        snprintf(szTemp, 100, "%d", this->m_nAttributeChunkSize );
-        m_papszMetadataList = CSLSetNameValue(m_papszMetadataList, "ATTRIBUTETABLE_CHUNKSIZE", szTemp );
+        CPLString osWorkingResult;
+        osWorkingResult.Printf( "%lu", (unsigned long)pTable->GetRowCount());
+        m_papszMetadataList = CSLSetNameValue(m_papszMetadataList, "STATISTICS_HISTONUMBINS", osWorkingResult);
+
+        // attribute table chunksize
+        if( this->m_nAttributeChunkSize != -1 )
+        {
+            osWorkingResult.Printf( "%d", this->m_nAttributeChunkSize );
+            m_papszMetadataList = CSLSetNameValue(m_papszMetadataList, "ATTRIBUTETABLE_CHUNKSIZE", osWorkingResult );
+        }
     }
 }
 
@@ -189,6 +197,9 @@ CPLErr KEARasterBand::SetHistogramFromString(const char *pszString)
     }
 
     GDALRasterAttributeTable *pTable = this->GetDefaultRAT();
+    if( pTable == nullptr )
+        return CE_Failure;
+        
     // find histogram column if it exists
     int nCol = pTable->GetColOfUsage(GFU_PixelCount);
     if( nCol == -1 )
@@ -227,8 +238,9 @@ CPLErr KEARasterBand::SetHistogramFromString(const char *pszString)
 char *KEARasterBand::GetHistogramAsString()
 {
     const GDALRasterAttributeTable *pTable = this->GetDefaultRAT();
+    if( pTable == nullptr )
+        return nullptr;
     int nRows = pTable->GetRowCount();
-
     // find histogram column if it exists
     int nCol = pTable->GetColOfUsage(GFU_PixelCount);
     if( nCol == -1 )
@@ -267,6 +279,7 @@ char *KEARasterBand::GetHistogramAsString()
 // internal method to create the overviews
 void KEARasterBand::CreateOverviews(int nOverviews, int *panOverviewList)
 {
+    CPLMutexHolderD( &m_hMutex );
     // delete any existing overview bands
     this->deleteOverviewObjects();
 
@@ -288,7 +301,7 @@ void KEARasterBand::CreateOverviews(int nOverviews, int *panOverviewList)
 
         // create one of our objects to represent it
         m_panOverviewBands[nCount] = new KEAOverview((KEADataset*)this->poDS, this->nBand, GA_Update,
-                                        this->m_pImageIO, this->m_pnRefCount, nCount + 1, nXSize, nYSize);
+                                        this->m_pImageIO, this->m_pRefCount, nCount + 1, nXSize, nYSize);
     }
 }
 
@@ -361,6 +374,7 @@ CPLErr KEARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff, void * pImage
 
 void KEARasterBand::SetDescription(const char *pszDescription)
 {
+    CPLMutexHolderD( &m_hMutex );
     try
     {
         this->m_pImageIO->setImageBandDescription(this->nBand, pszDescription);
@@ -375,6 +389,7 @@ void KEARasterBand::SetDescription(const char *pszDescription)
 // set a metadata item
 CPLErr KEARasterBand::SetMetadataItem(const char *pszName, const char *pszValue, const char *pszDomain)
 {
+    CPLMutexHolderD( &m_hMutex );
     // only deal with 'default' domain - no geolocation etc
     if( ( pszDomain != nullptr ) && ( *pszDomain != '\0' ) )
         return CE_Failure;
@@ -407,7 +422,8 @@ CPLErr KEARasterBand::SetMetadataItem(const char *pszName, const char *pszValue,
         else if( EQUAL( pszName, "STATISTICS_HISTONUMBINS" ) )
         {
             GDALRasterAttributeTable *pTable = this->GetDefaultRAT();
-            pTable->SetRowCount(atoi(pszValue));
+            if( pTable != nullptr )
+                pTable->SetRowCount(atoi(pszValue));
             // leave to update m_papszMetadataList below
         }
         else
@@ -428,6 +444,7 @@ CPLErr KEARasterBand::SetMetadataItem(const char *pszName, const char *pszValue,
 // get a single metdata item
 const char *KEARasterBand::GetMetadataItem (const char *pszName, const char *pszDomain)
 {
+    CPLMutexHolderD( &m_hMutex );
     // only deal with 'default' domain - no geolocation etc
     if( ( pszDomain != nullptr ) && ( *pszDomain != '\0' ) )
         return nullptr;
@@ -460,6 +477,7 @@ char **KEARasterBand::GetMetadata(const char *pszDomain)
 // set the metdata as a CSLStringList
 CPLErr KEARasterBand::SetMetadata(char **papszMetadata, const char *pszDomain)
 {
+    CPLMutexHolderD( &m_hMutex );
     // only deal with 'default' domain - no geolocation etc
     if( ( pszDomain != nullptr ) && ( *pszDomain != '\0' ) )
         return CE_Failure;
@@ -612,6 +630,8 @@ CPLErr KEARasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
         // I've used the RAT interface here as it deals with data type
         // conversions. Would be nice to have GUIntBig support in RAT though...
         GDALRasterAttributeTable *pTable = this->GetDefaultRAT();
+        if( pTable == nullptr )
+            return CE_Failure;
         int nRows = pTable->GetRowCount();
 
         // find histogram column if it exists
@@ -661,6 +681,8 @@ CPLErr KEARasterBand::SetDefaultHistogram( double /*dfMin*/, double /*dfMax*/,
 {
 
     GDALRasterAttributeTable *pTable = this->GetDefaultRAT();
+    if( pTable == nullptr )
+        return CE_Failure;
     int nRows = pTable->GetRowCount();
 
     // find histogram column if it exists
@@ -702,11 +724,13 @@ CPLErr KEARasterBand::SetDefaultHistogram( double /*dfMin*/, double /*dfMax*/,
 
 GDALRasterAttributeTable *KEARasterBand::GetDefaultRAT()
 {
+    CPLMutexHolderD( &m_hMutex );
     if( this->m_pAttributeTable == nullptr )
     {
         try
         {
             // we assume this is never NULL - creates a new one if none exists
+            // (or raises exception)
             kealib::KEAAttributeTable *pKEATable = this->m_pImageIO->getAttributeTable(kealib::kea_att_file, this->nBand);
             this->m_pAttributeTable = new KEARasterAttributeTable(pKEATable, this);
         }
@@ -726,7 +750,9 @@ CPLErr KEARasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
     try
     {
         KEARasterAttributeTable *pKEATable = (KEARasterAttributeTable*)this->GetDefaultRAT();
-
+        if( pKEATable == nullptr )
+            return CE_Failure;
+            
         int numRows = poRAT->GetRowCount();
         pKEATable->SetRowCount(numRows);
 
@@ -818,6 +844,7 @@ CPLErr KEARasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
 
 GDALColorTable *KEARasterBand::GetColorTable()
 {
+    CPLMutexHolderD( &m_hMutex );
     if( this->m_pColorTable == nullptr )
     {
         try
@@ -877,9 +904,12 @@ CPLErr KEARasterBand::SetColorTable(GDALColorTable *poCT)
     if( poCT == nullptr )
         return CE_Failure;
 
+    CPLMutexHolderD( &m_hMutex );
     try
     {
         GDALRasterAttributeTable *pKEATable = this->GetDefaultRAT();
+        if( pKEATable == nullptr )
+            return CE_Failure;
         int nRedIdx = -1;
         int nGreenIdx = -1;
         int nBlueIdx = -1;
@@ -1110,6 +1140,7 @@ CPLErr KEARasterBand::SetColorInterpretation(GDALColorInterp egdalinterp)
 }
 
 // clean up our overview objects
+// assumes mutex being held by caller
 void KEARasterBand::deleteOverviewObjects()
 {
     // deletes the objects - not the overviews themselves
@@ -1126,6 +1157,7 @@ void KEARasterBand::deleteOverviewObjects()
 // read in any overviews in the file into our array of objects
 void KEARasterBand::readExistingOverviews()
 {
+    CPLMutexHolderD( &m_hMutex );
     // delete any existing overview bands
     this->deleteOverviewObjects();
 
@@ -1137,7 +1169,7 @@ void KEARasterBand::readExistingOverviews()
     {
         this->m_pImageIO->getOverviewSize(this->nBand, nCount + 1, &nXSize, &nYSize);
         m_panOverviewBands[nCount] = new KEAOverview((KEADataset*)this->poDS, this->nBand, GA_ReadOnly,
-                                        this->m_pImageIO, this->m_pnRefCount, nCount + 1, nXSize, nYSize);
+                                        this->m_pImageIO, this->m_pRefCount, nCount + 1, nXSize, nYSize);
     }
 }
 
@@ -1162,6 +1194,7 @@ GDALRasterBand* KEARasterBand::GetOverview(int nOverview)
 
 CPLErr KEARasterBand::CreateMaskBand(int)
 {
+    CPLMutexHolderD( &m_hMutex );
     if( m_bMaskBandOwned )
         delete m_pMaskBand;
     m_pMaskBand = nullptr;
@@ -1179,13 +1212,14 @@ CPLErr KEARasterBand::CreateMaskBand(int)
 
 GDALRasterBand* KEARasterBand::GetMaskBand()
 {
+    CPLMutexHolderD( &m_hMutex );
     if( m_pMaskBand == nullptr )
     {
         try
         {
             if( this->m_pImageIO->maskCreated(this->nBand) )
             {
-                m_pMaskBand = new KEAMaskBand(this, this->m_pImageIO, this->m_pnRefCount);
+                m_pMaskBand = new KEAMaskBand(this, this->m_pImageIO, this->m_pRefCount);
                 m_bMaskBandOwned = true;
             }
             else

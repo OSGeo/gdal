@@ -423,12 +423,14 @@ GDALDataset *KEADataset::CreateCopy( const char * pszFilename, GDALDataset *pSrc
 // constructor
 KEADataset::KEADataset( H5::H5File *keaImgH5File, GDALAccess eAccessIn )
 {
+    this->m_hMutex = CPLCreateMutex();
+    CPLReleaseMutex( this->m_hMutex );
     try
     {
         // Create the image IO and initialize the refcount.
         m_pImageIO = new kealib::KEAImageIO();
-        m_pnRefcount = new int(1);
-
+        m_pRefcount = new LockedRefCount();
+        
         // NULL until we read them in.
         m_papszMetadataList = nullptr;
         m_pGCPs = nullptr;
@@ -450,7 +452,7 @@ KEADataset::KEADataset( H5::H5File *keaImgH5File, GDALAccess eAccessIn )
             // Note: GDAL uses indices starting at 1 and so does kealib.
             // Create band object.
             KEARasterBand *pBand = new KEARasterBand(
-                this, nCount + 1, eAccess, m_pImageIO, m_pnRefcount );
+                this, nCount + 1, eAccess, m_pImageIO, m_pRefcount );
             // read in overviews
             pBand->readExistingOverviews();
             // set the band into this dataset
@@ -470,11 +472,14 @@ KEADataset::KEADataset( H5::H5File *keaImgH5File, GDALAccess eAccessIn )
 
 KEADataset::~KEADataset()
 {
-    // destroy the metadata
-    CSLDestroy(m_papszMetadataList);
-    // decrement the refcount and delete if needed
-    (*m_pnRefcount)--;
-    if( *m_pnRefcount == 0 )
+    {
+        CPLMutexHolderD( &m_hMutex );
+        // destroy the metadata
+        CSLDestroy(m_papszMetadataList);
+        this->DestroyGCPs();
+        CPLFree( m_pszGCPProjection );
+    }
+    if( m_pRefcount->DecRef() )
     {
         try
         {
@@ -484,15 +489,17 @@ KEADataset::~KEADataset()
         {
         }
         delete m_pImageIO;
-        delete m_pnRefcount;
+        delete m_pRefcount;
     }
-    this->DestroyGCPs();
-    CPLFree( m_pszGCPProjection );
+    
+    CPLDestroyMutex( m_hMutex );
+    m_hMutex = nullptr;
 }
 
 // read in the metadata into our CSLStringList
 void KEADataset::UpdateMetadataList()
 {
+    CPLMutexHolderD( &m_hMutex );
     std::vector< std::pair<std::string, std::string> > odata;
     // get all the metadata
     odata = this->m_pImageIO->getImageMetaData();
@@ -632,6 +639,7 @@ CPLErr KEADataset::IBuildOverviews(const char *pszResampling, int nOverviews, in
 // set a single metadata item
 CPLErr KEADataset::SetMetadataItem(const char *pszName, const char *pszValue, const char *pszDomain)
 {
+    CPLMutexHolderD( &m_hMutex );
     // only deal with 'default' domain - no geolocation etc
     if( ( pszDomain != nullptr ) && ( *pszDomain != '\0' ) )
         return CE_Failure;
@@ -654,6 +662,7 @@ CPLErr KEADataset::SetMetadataItem(const char *pszName, const char *pszValue, co
 // get a single metadata item
 const char *KEADataset::GetMetadataItem (const char *pszName, const char *pszDomain)
 {
+    CPLMutexHolderD( &m_hMutex );
     // only deal with 'default' domain - no geolocation etc
     if( ( pszDomain != nullptr ) && ( *pszDomain != '\0' ) )
         return nullptr;
@@ -661,7 +670,7 @@ const char *KEADataset::GetMetadataItem (const char *pszName, const char *pszDom
     return CSLFetchNameValue(m_papszMetadataList, pszName);
 }
 
-// get the whole metadata as CSLStringList
+// get the whole metadata as CSLStringList - note may be thread safety issues
 char **KEADataset::GetMetadata(const char *pszDomain)
 {
     // only deal with 'default' domain - no geolocation etc
@@ -674,6 +683,7 @@ char **KEADataset::GetMetadata(const char *pszDomain)
 // set the whole metadata as a CSLStringList
 CPLErr KEADataset::SetMetadata(char **papszMetadata, const char *pszDomain)
 {
+    CPLMutexHolderD( &m_hMutex );
     // only deal with 'default' domain - no geolocation etc
     if( ( pszDomain != nullptr ) && ( *pszDomain != '\0' ) )
         return CE_Failure;
@@ -756,7 +766,7 @@ CPLErr KEADataset::AddBand(GDALDataType eType, char **papszOptions)
     // create a new band and add it to the dataset
     // note GDAL uses indices starting at 1 and so does kealib
     KEARasterBand *pBand = new KEARasterBand(this, this->nBands+1, this->eAccess,
-            m_pImageIO, m_pnRefcount);
+            m_pImageIO, m_pRefcount);
     this->SetBand(this->nBands+1, pBand);
 
     return CE_None;
@@ -776,6 +786,7 @@ int KEADataset::GetGCPCount()
 
 const char* KEADataset::_GetGCPProjection()
 {
+    CPLMutexHolderD( &m_hMutex );
     if( m_pszGCPProjection == nullptr )
     {
         try
@@ -793,6 +804,7 @@ const char* KEADataset::_GetGCPProjection()
 
 const GDAL_GCP* KEADataset::GetGCPs()
 {
+    CPLMutexHolderD( &m_hMutex );
     if( m_pGCPs == nullptr )
     {
         // convert to GDAL data structures
@@ -829,6 +841,7 @@ const GDAL_GCP* KEADataset::GetGCPs()
 
 CPLErr KEADataset::_SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList, const char *pszGCPProjection)
 {
+    CPLMutexHolderD( &m_hMutex );
     this->DestroyGCPs();
     CPLFree( m_pszGCPProjection );
     m_pszGCPProjection = nullptr;
@@ -871,6 +884,7 @@ CPLErr KEADataset::_SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList, const cha
 
 void KEADataset::DestroyGCPs()
 {
+    CPLMutexHolderD( &m_hMutex );
     if( m_pGCPs != nullptr )
     {
         // we assume this is always the same as the internal list...
