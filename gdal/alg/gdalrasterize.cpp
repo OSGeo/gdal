@@ -253,6 +253,57 @@ static void GDALCollectRingsFromGeometry(
             //    aPointVariant.push_back( poPoint->getM() );
         }
     }
+    else if( EQUAL(poShape->getGeometryName(), "LINEARRING") )
+    {
+        const auto poRing = poShape->toLinearRing();
+        const int nCount = poRing->getNumPoints();
+        const size_t nNewCount = aPointX.size() + static_cast<size_t>(nCount);
+
+        aPointX.reserve( nNewCount );
+        aPointY.reserve( nNewCount );
+        if( eBurnValueSrc != GBV_UserBurnValue )
+            aPointVariant.reserve( nNewCount );
+        if( poRing->isClockwise() )
+        {
+            for( int i = 0; i < nCount; i++ )
+            {
+                aPointX.push_back( poRing->getX(i) );
+                aPointY.push_back( poRing->getY(i) );
+                if( eBurnValueSrc != GBV_UserBurnValue )
+                {
+                    /*switch( eBurnValueSrc )
+                    {
+                    case GBV_Z:*/
+                        aPointVariant.push_back( poRing->getZ(i) );
+                        /*break;
+                    case GBV_M:
+                        aPointVariant.push_back( poRing->getM(i) );
+                    }*/
+                }
+            }
+        }
+        else
+        {
+            for( int i = nCount - 1; i >= 0; i-- )
+            {
+                aPointX.push_back( poRing->getX(i) );
+                aPointY.push_back( poRing->getY(i) );
+                if( eBurnValueSrc != GBV_UserBurnValue )
+                {
+                    /*switch( eBurnValueSrc )
+                    {
+                    case GBV_Z:*/
+                        aPointVariant.push_back( poRing->getZ(i) );
+                        /*break;
+                    case GBV_M:
+                        aPointVariant.push_back( poRing->getM(i) );
+                    }*/
+                }
+
+            }
+        }
+        aPartSize.push_back( nCount );
+    }
     else if( eFlatType == wkbLineString )
     {
         const auto poLine = poShape->toLineString();
@@ -278,35 +329,6 @@ static void GDALCollectRingsFromGeometry(
                         aPointVariant.push_back( poLine->getM(i) );
                 }*/
             }
-        }
-        aPartSize.push_back( nCount );
-    }
-    else if( EQUAL(poShape->getGeometryName(), "LINEARRING") )
-    {
-        const auto poRing = poShape->toLinearRing();
-        const int nCount = poRing->getNumPoints();
-        const size_t nNewCount = aPointX.size() + static_cast<size_t>(nCount);
-
-        aPointX.reserve( nNewCount );
-        aPointY.reserve( nNewCount );
-        if( eBurnValueSrc != GBV_UserBurnValue )
-            aPointVariant.reserve( nNewCount );
-        int i = nCount - 1;  // Used after for.
-        for( ; i >= 0; i-- )
-        {
-            aPointX.push_back( poRing->getX(i) );
-            aPointY.push_back( poRing->getY(i) );
-        }
-        if( eBurnValueSrc != GBV_UserBurnValue )
-        {
-            /*switch( eBurnValueSrc )
-            {
-            case GBV_Z:*/
-                aPointVariant.push_back( poRing->getZ(i) );
-                /*break;
-            case GBV_M:
-                aPointVariant.push_back( poRing->getM(i) );
-            }*/
         }
         aPartSize.push_back( nCount );
     }
