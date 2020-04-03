@@ -3731,6 +3731,9 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
         }
     }
 
+    if( poSRS )
+        poSRS->StripTOWGS84IfKnownDatumAndAllowed();
+
 /* -------------------------------------------------------------------- */
 /*      Add to the cache.                                               */
 /* -------------------------------------------------------------------- */

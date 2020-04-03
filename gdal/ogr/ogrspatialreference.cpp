@@ -7848,6 +7848,123 @@ OGRErr OGRSpatialReference::StripVertical()
 }
 
 /************************************************************************/
+/*                   StripTOWGS84IfKnownDatumAndAllowed()               */
+/************************************************************************/
+
+/**
+ * \brief Remove TOWGS84 information if the CRS has a known horizontal datum
+ *        and this is allowed by the user.
+ *
+ * The default behaviour is to remove TOWGS84 information if the CRS has a
+ * known horizontal datum. This can be disabled by setting the
+ * OSR_STRIP_TOWGS84 configuration option to NO.
+ *
+ * @return true if TOWGS84 has been removed.
+ * @since OGR 3.1.0
+ */
+
+bool OGRSpatialReference::StripTOWGS84IfKnownDatumAndAllowed()
+{
+    if( CPLTestBool(CPLGetConfigOption("OSR_STRIP_TOWGS84", "YES")) )
+    {
+        if( StripTOWGS84IfKnownDatum() )
+        {
+            CPLDebug("OSR", "TOWGS84 information has been removed. "
+                     "It can be kept by setting the OSR_STRIP_TOWGS84 "
+                     "configuration option to NO");
+            return true;
+        }
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                      StripTOWGS84IfKnownDatum()                      */
+/************************************************************************/
+
+/**
+ * \brief Remove TOWGS84 information if the CRS has a known horizontal datum
+ *
+ * @return true if TOWGS84 has been removed.
+ * @since OGR 3.1.0
+ */
+
+bool OGRSpatialReference::StripTOWGS84IfKnownDatum()
+
+{
+    d->refreshProjObj();
+    if( !d->m_pj_crs || d->m_pjType != PJ_TYPE_BOUND_CRS )
+    {
+        return false;
+    }
+    auto ctxt = d->getPROJContext();
+    auto baseCRS = proj_get_source_crs(ctxt, d->m_pj_crs);
+    if( proj_get_type(baseCRS) == PJ_TYPE_COMPOUND_CRS )
+    {
+        proj_destroy(baseCRS);
+        return false;
+    }
+
+    // Known base CRS code ? Return base CRS
+    const char* pszCode = proj_get_id_code(baseCRS, 0);
+    if( pszCode )
+    {
+        d->setPjCRS(baseCRS);
+        return true;
+    }
+
+    auto datum = proj_crs_get_datum(ctxt, baseCRS);
+    if( !datum )
+    {
+        proj_destroy(baseCRS);
+        return false;
+    }
+
+    // Known datum code ? Return base CRS
+    pszCode = proj_get_id_code(datum, 0);
+    if( pszCode )
+    {
+        proj_destroy(datum);
+        d->setPjCRS(baseCRS);
+        return true;
+    }
+
+    const char* name = proj_get_name(datum);
+    if( EQUAL(name, "unknown") )
+    {
+        proj_destroy(datum);
+        proj_destroy(baseCRS);
+        return false;
+    }
+    const PJ_TYPE type = PJ_TYPE_GEODETIC_REFERENCE_FRAME;
+    PJ_OBJ_LIST* list = proj_create_from_name(ctxt, nullptr,
+                                              name,
+                                              &type, 1,
+                                              false,
+                                              1,
+                                              nullptr);
+
+    bool knownDatumName = false;
+    if( list )
+    {
+        if( proj_list_get_count(list) == 1 )
+        {
+            knownDatumName = true;
+        }
+        proj_list_destroy(list);
+    }
+
+    proj_destroy(datum);
+    if( knownDatumName )
+    {
+        d->setPjCRS(baseCRS);
+        return true;
+    }
+    proj_destroy(baseCRS);
+    return false;
+}
+
+/************************************************************************/
 /*                             IsCompound()                             */
 /************************************************************************/
 
