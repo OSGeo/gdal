@@ -54,7 +54,7 @@ General creation options
    * ``ZSTD`` is available when using internal libtiff and if GDAL built against 
      libzstd >=1.0, or if built against external libtiff with zstd support.
 
-   * ``LERC`` is available when sing internal libtiff.
+   * ``LERC`` is available when using internal libtiff.
 
    * ``LERC_ZSTD`` is available when ``LERC`` and ``ZSTD`` are available.
 
@@ -154,7 +154,7 @@ Reprojection related creation options
 *************************************
 
 - **TILING_SCHEME=CUSTOM/GoogleMapsCompatible**: If set to ``GoogleMapsCompatible``,
-  reprojection to EPSG:3857 using a GoogleMapsCompatible tiling schme will be
+  reprojection to EPSG:3857 using a GoogleMapsCompatible tiling scheme will be
   automatically done. The default block size in that case will be 256. If
   explicitly setting another block size, this one will be taken into account
   (that is if setting a higher value than 256, the original GoogleMapsCompatible
@@ -315,7 +315,7 @@ Each tile data is immediately preceded by a leader, consisting of a unsigned 4-b
 in little endian order, giving the number of bytes of *payload* of the tile data
 that follows it. This leader is *ghost* in the sense that the
 TileOffsets[] array does not point to it, but points to the real payload. Hence
-the offset of the leader is TileOffsets[i]-4).
+the offset of the leader is TileOffsets[i]-4.
 
 An optimized reader seeing the ``BLOCK_LEADER=SIZE_AS_UINT4`` metadata item will thus look for TileOffset[i] 
 and TileOffset[i+1] to deduce it must fetch the data starting at 
