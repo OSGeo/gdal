@@ -1117,7 +1117,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
 
         for( auto&& poMember: poGC )
         {
-            if( poMember->getGeometryType() != wkbLineString )
+            if( wkbFlatten(poMember->getGeometryType()) != wkbLineString )
             {
                 return poGeom;
             }
