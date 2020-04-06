@@ -38,19 +38,19 @@ RUN apt-get update -y \
        libopenexr-dev
 
 # Build likbkea
-ARG KEA_VERSION=c6d36f3db5e4
-RUN wget -q https://bitbucket.org/chchrsc/kealib/get/${KEA_VERSION}.zip \
-    && unzip -q ${KEA_VERSION}.zip \
-    && rm -f ${KEA_VERSION}.zip \
-    && cd chchrsc-kealib-${KEA_VERSION}/trunk \
+ARG KEA_VERSION=1.4.12
+RUN wget -q https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
+    && unzip -q kealib-${KEA_VERSION}.zip \
+    && rm -f kealib-${KEA_VERSION}.zip \
+    && cd kealib-kealib-${KEA_VERSION} \
     && cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr -DHDF5_INCLUDE_DIR=/usr/include/hdf5/serial \
         -DHDF5_LIB_PATH=/usr/lib/x86_64-linux-gnu/hdf5/serial -DLIBKEA_WITH_GDAL=OFF \
     && make -j$(nproc) \
     && make install DESTDIR="/build_thirdparty" \
     && make install \
-    && cd ../.. \
-    && rm -rf chchrsc-kealib-${KEA_VERSION} \
+    && cd .. \
+    && rm -rf kealib-kealib-${KEA_VERSION} \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
@@ -90,7 +90,7 @@ RUN mkdir mongocxx \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build tiledb
-ARG TILEDB_VERSION=1.7.2
+ARG TILEDB_VERSION=1.7.7
 RUN mkdir tiledb \
     && wget -q https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz -O - \
         | tar xz -C tiledb --strip-components=1 \
