@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('_extensions'))
 # -- Project information -----------------------------------------------------
 
 project = 'GDAL'
-copyright = f"1998-{datetime.date.today().year}"
+copyright = '1998-' + str(datetime.date.today().year)
 author = 'Frank Warmerdam, Even Rouault, and others'
 
 
