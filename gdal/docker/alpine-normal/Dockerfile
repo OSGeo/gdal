@@ -12,7 +12,7 @@ FROM alpine:${ALPINE_VERSION} as builder
 MAINTAINER Even Rouault <even.rouault@spatialys.com>
 
 # Setup build env for PROJ
-RUN apk add --no-cache wget curl unzip -q make libtool autoconf automake pkgconfig g++ sqlite sqlite-dev
+RUN apk add --no-cache wget curl unzip make libtool autoconf automake pkgconfig g++ sqlite sqlite-dev
 
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 RUN \
