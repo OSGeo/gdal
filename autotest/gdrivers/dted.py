@@ -289,14 +289,13 @@ def test_dted_15():
 
 def test_dted_16():
 
-    gdal.SetConfigOption('DTED_APPLY_PIXEL_IS_POINT', 'TRUE')
-    ds = gdal.Open('data/n43.dt0')
-    assert ds is not None
+    with gdaltest.config_option('DTED_APPLY_PIXEL_IS_POINT', 'TRUE'):
+        ds = gdal.Open('data/n43.dt0')
+        assert ds is not None
 
-    max_error = 0.000001
-    gt = ds.GetGeoTransform()
-    assert gt[0] == pytest.approx((-80.00), abs=max_error) and gt[1] == pytest.approx(0.0083333333333333332, abs=max_error) and gt[2] == pytest.approx(0, abs=max_error) and gt[3] == pytest.approx(44.00, abs=max_error) and gt[4] == pytest.approx(0, abs=max_error) and gt[5] == pytest.approx((-0.0083333333333333332), abs=max_error), \
-        'DTED geotransform wrong.'
+        max_error = 0.000001
+        gt = ds.GetGeoTransform()
+        assert gt == pytest.approx((-80.0, 0.0083333333333333332, 0, 44.0, 0, -0.0083333333333333332), abs=max_error)
 
 
 ###############################################################################

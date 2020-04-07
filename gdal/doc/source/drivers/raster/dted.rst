@@ -90,7 +90,8 @@ GeoTransform
 ------------
 
 The ``DTED_APPLY_PIXEL_IS_POINT=TRUE`` environment variable can be set (GDAL >=
-3.1) to apply a pixel-is-point geotransform to the data.
+3.1) to apply a pixel-is-point interpretation to the data when reading
+the geotransform.
 
 See Also
 --------
