@@ -1211,11 +1211,14 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                 }
             }
             if( bSRSUnitIsDegree && pszUnits != nullptr &&
-                (EQUAL(pszUnits, "m") || EQUAL(pszUnits, "nm") ||
-                    EQUAL(pszUnits, "mi") || EQUAL(pszUnits, "ft")) )
+                (EQUAL(pszUnits, "m") ||
+                 EQUAL(pszUnits, "nm") ||
+                 EQUAL(pszUnits, "[nmi_i]") ||
+                 EQUAL(pszUnits, "mi") ||
+                 EQUAL(pszUnits, "ft")) )
             {
                 bIsApproximateArc = true;
-                if( EQUAL(pszUnits, "nm") )
+                if( EQUAL(pszUnits, "nm") || EQUAL(pszUnits, "[nmi_i]"))
                     dfRadius *= CPLAtof(SRS_UL_INTL_NAUT_MILE_CONV);
                 else if( EQUAL(pszUnits, "mi") )
                     dfRadius *= CPLAtof(SRS_UL_INTL_STAT_MILE_CONV);
@@ -1341,6 +1344,11 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         bool bLastCurveWasApproximateArcInvertedAxisOrder = false;
         double dfLastCurveApproximateArcRadius = 0.0;
 
+        bool bIsFirstChild = true;
+        bool bFirstChildIsApproximateArc = false;
+        double dfFirstChildApproximateArcRadius = 0.0;
+        bool bFirstChildWasApproximateArcInvertedAxisOrder = false;
+
         for( const CPLXMLNode *psChild = psNode->psChild;
              psChild != nullptr;
              psChild = psChild->psNext )
@@ -1402,18 +1410,29 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                 // with consecutive curves, as found in some AIXM files.
                 bool bIsApproximateArc = false;
                 const CPLXMLNode* psChild2, *psChild3;
-                if( strcmp(psCurveChild->pszValue, "Curve") == 0 &&
+                if( strcmp(BareGMLElement(psCurveChild->pszValue), "Curve") == 0 &&
                     (psChild2 = GetChildElement(psCurveChild)) != nullptr &&
-                    strcmp(psChild2->pszValue, "segments") == 0 &&
+                    strcmp(BareGMLElement(psChild2->pszValue), "segments") == 0 &&
                     (psChild3 = GetChildElement(psChild2)) != nullptr &&
-                    strcmp(psChild3->pszValue, "ArcByCenterPoint") == 0 )
+                    strcmp(BareGMLElement(psChild3->pszValue), "ArcByCenterPoint") == 0 )
                 {
                     storeArcByCenterPointParameters(psChild3,
                                                pszSRSName,
                                                bIsApproximateArc,
                                                dfLastCurveApproximateArcRadius,
                                                bLastCurveWasApproximateArcInvertedAxisOrder);
+                    if( bIsFirstChild && bIsApproximateArc )
+                    {
+                        bFirstChildIsApproximateArc = true;
+                        dfFirstChildApproximateArcRadius = dfLastCurveApproximateArcRadius;
+                        bFirstChildWasApproximateArcInvertedAxisOrder = bLastCurveWasApproximateArcInvertedAxisOrder;
+                    }
+                    else if( psChild3->psNext )
+                    {
+                        bIsApproximateArc = false;
+                    }
                 }
+                bIsFirstChild = false;
 
                 if( poCC == nullptr && poRing == nullptr )
                 {
@@ -1461,6 +1480,38 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
 
         if( poRing )
         {
+            if( poRing->getNumPoints() >= 2 &&
+                bFirstChildIsApproximateArc && !poRing->get_IsClosed() &&
+                wkbFlatten(poRing->getGeometryType()) == wkbLineString )
+            {
+                OGRLineString* poLS = poRing->toLineString();
+
+                OGRPoint p;
+                OGRPoint p2;
+                poLS->StartPoint(&p);
+                poLS->EndPoint(&p2);
+                double dfDistance = 0.0;
+                if( bFirstChildWasApproximateArcInvertedAxisOrder )
+                    dfDistance =
+                        OGR_GreatCircle_Distance(
+                            p.getX(), p.getY(),
+                            p2.getX(), p2.getY());
+                else
+                    dfDistance =
+                        OGR_GreatCircle_Distance(
+                            p.getY(), p.getX(),
+                            p2.getY(), p2.getX());
+                if( dfDistance <
+                    dfFirstChildApproximateArcRadius / 5.0 )
+                {
+                    CPLDebug("OGR",
+                             "Moving approximate start of "
+                             "ArcByCenterPoint to end of "
+                             "curve");
+                    poLS->setPoint(0, &p2);
+                }
+            }
+
             if( poRing->getNumPoints() < 2 || !poRing->get_IsClosed() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Non-closed ring");
@@ -1756,15 +1807,18 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         const double dfCenterY = p.getY();
 
         if( bSRSUnitIsDegree && pszUnits != nullptr &&
-            (EQUAL(pszUnits, "m") || EQUAL(pszUnits, "nm") ||
-             EQUAL(pszUnits, "mi") || EQUAL(pszUnits, "ft")) )
+            (EQUAL(pszUnits, "m") ||
+             EQUAL(pszUnits, "nm") ||
+             EQUAL(pszUnits, "[nmi_i]") ||
+             EQUAL(pszUnits, "mi") ||
+             EQUAL(pszUnits, "ft")) )
         {
             OGRLineString* poLS = new OGRLineString();
             // coverity[tainted_data]
             const double dfStep =
                 CPLAtof(CPLGetConfigOption("OGR_ARC_STEPSIZE", "4"));
             double dfDistance = dfRadius;
-            if( EQUAL(pszUnits, "nm") )
+            if( EQUAL(pszUnits, "nm") || EQUAL(pszUnits, "[nmi_i]") )
                 dfDistance *= CPLAtof(SRS_UL_INTL_NAUT_MILE_CONV);
             else if( EQUAL(pszUnits, "mi") )
                 dfDistance *= CPLAtof(SRS_UL_INTL_STAT_MILE_CONV);
@@ -1882,14 +1936,17 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         const double dfCenterY = p.getY();
 
         if( bSRSUnitIsDegree && pszUnits != nullptr &&
-            (EQUAL(pszUnits, "m") || EQUAL(pszUnits, "nm") ||
-             EQUAL(pszUnits, "mi") || EQUAL(pszUnits, "ft")) )
+            (EQUAL(pszUnits, "m") ||
+             EQUAL(pszUnits, "nm") ||
+             EQUAL(pszUnits, "[nmi_i]") ||
+             EQUAL(pszUnits, "mi") ||
+             EQUAL(pszUnits, "ft")) )
         {
             OGRLineString* poLS = new OGRLineString();
             const double dfStep =
                 CPLAtof(CPLGetConfigOption("OGR_ARC_STEPSIZE", "4"));
             double dfDistance = dfRadius;
-            if( EQUAL(pszUnits, "nm") )
+            if( EQUAL(pszUnits, "nm") || EQUAL(pszUnits, "[nmi_i]") )
                 dfDistance *= CPLAtof(SRS_UL_INTL_NAUT_MILE_CONV);
             else if( EQUAL(pszUnits, "mi") )
                 dfDistance *= CPLAtof(SRS_UL_INTL_STAT_MILE_CONV);
