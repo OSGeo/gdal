@@ -506,14 +506,33 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
 CPLErr DTEDDataset::GetGeoTransform( double * padfTransform )
 
 {
-    padfTransform[0] = psDTED->dfULCornerX;
-    padfTransform[1] = psDTED->dfPixelSizeX;
-    padfTransform[2] = 0.0;
-    padfTransform[3] = psDTED->dfULCornerY;
-    padfTransform[4] = 0.0;
-    padfTransform[5] = psDTED->dfPixelSizeY * -1;
 
-    return CE_None;
+    bool bPixelIsPoint(true);
+    bool bApplyPixelIsPoint =
+         CPLTestBool( CPLGetConfigOption( "DTED_APPLY_PIXEL_IS_POINT",
+                                          "FALSE") );
+    if (!bApplyPixelIsPoint)
+    {
+        padfTransform[0] = psDTED->dfULCornerX;
+        padfTransform[1] = psDTED->dfPixelSizeX;
+        padfTransform[2] = 0.0;
+        padfTransform[3] = psDTED->dfULCornerY;
+        padfTransform[4] = 0.0;
+        padfTransform[5] = psDTED->dfPixelSizeY * -1;
+
+        return CE_None;
+
+    } else
+    {
+        padfTransform[0] = psDTED->dfULCornerX + (0.5 * psDTED->dfPixelSizeX);
+        padfTransform[1] = psDTED->dfPixelSizeX;
+        padfTransform[2] = 0.0;
+        padfTransform[3] = psDTED->dfULCornerY - (0.5 * psDTED->dfPixelSizeY) ;
+        padfTransform[4] = 0.0;
+        padfTransform[5] = psDTED->dfPixelSizeY * -1;
+
+        return CE_None;
+    }
 }
 
 /************************************************************************/

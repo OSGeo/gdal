@@ -286,6 +286,19 @@ def test_dted_15():
     gdal.SetConfigOption('GDAL_DTED_SINGLE_BLOCK', None)
     return ret
 
+
+def test_dted_16():
+
+    gdal.SetConfigOption('DTED_APPLY_PIXEL_IS_POINT', 'TRUE')
+    ds = gdal.Open('data/n43.dt0')
+    assert ds is not None
+
+    max_error = 0.000001
+    gt = ds.GetGeoTransform()
+    assert gt[0] == pytest.approx((-80.00), abs=max_error) and gt[1] == pytest.approx(0.0083333333333333332, abs=max_error) and gt[2] == pytest.approx(0, abs=max_error) and gt[3] == pytest.approx(44.00, abs=max_error) and gt[4] == pytest.approx(0, abs=max_error) and gt[5] == pytest.approx((-0.0083333333333333332), abs=max_error), \
+        'DTED geotransform wrong.'
+
+
 ###############################################################################
 # Cleanup.
 
@@ -303,7 +316,7 @@ def test_dted_cleanup():
         os.remove('tmp/n43.dt2')
     except OSError:
         pass
-    
+
 
 
 
