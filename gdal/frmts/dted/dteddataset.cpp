@@ -507,7 +507,6 @@ CPLErr DTEDDataset::GetGeoTransform( double * padfTransform )
 
 {
 
-    bool bPixelIsPoint(true);
     bool bApplyPixelIsPoint =
          CPLTestBool( CPLGetConfigOption( "DTED_APPLY_PIXEL_IS_POINT",
                                           "FALSE") );
