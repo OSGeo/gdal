@@ -473,6 +473,16 @@ static const char* const apszGMLGeometryElements[] =
     static_cast<int>(sizeof(apszGMLGeometryElements) / \
                      sizeof(apszGMLGeometryElements[0]))
 
+bool OGRGMLIsGeometryElement(const char* pszElement)
+{
+    for( const auto& pszGMLElement: apszGMLGeometryElements )
+    {
+        if( strcmp(pszElement, pszGMLElement) == 0 )
+            return true;
+    }
+    return false;
+}
+
 struct _GeometryNamesStruct {
     unsigned long nHash;
     const char   *pszName;

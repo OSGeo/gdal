@@ -49,6 +49,7 @@
 #include "gmlutils.h"
 #include "ogr_p.h"
 #include "parsexsd.h"
+#include "../mem/ogr_mem.h"
 
 CPL_CVSID("$Id$")
 
@@ -673,8 +674,27 @@ bool OGRGMLDataSource::Open( GDALOpenInfo *poOpenInfo )
         poOpenInfo->papszOpenOptions, "GML_ATTRIBUTES_TO_OGR_FIELDS",
         CPLTestBool(CPLGetConfigOption("GML_ATTRIBUTES_TO_OGR_FIELDS", "NO"))));
 
-    // Find <gml:description>, <gml:name> and <gml:boundedBy>
+    // Find <gml:description>, <gml:name> and <gml:boundedBy> and if it is
+    // a standalone geometry
     FindAndParseTopElements(fp);
+
+    if( m_poStandaloneGeom )
+    {
+        papoLayers = static_cast<OGRLayer **>(CPLMalloc(sizeof(OGRLayer *)));
+        nLayers = 1;
+        auto poLayer = new OGRMemLayer(
+            "geometry",
+            m_oStandaloneGeomSRS.IsEmpty() ? nullptr : &m_oStandaloneGeomSRS,
+            m_poStandaloneGeom->getGeometryType());
+        papoLayers[0] = poLayer;
+        OGRFeature* poFeature = new OGRFeature(poLayer->GetLayerDefn());
+        poFeature->SetGeometryDirectly(m_poStandaloneGeom.release());
+        CPL_IGNORE_RET_VAL(poLayer->CreateFeature(poFeature));
+        delete poFeature;
+        poLayer->SetUpdatable(false);
+        VSIFCloseL(fp);
+        return true;
+    }
 
     if( szSRSName[0] != '\0' )
         poReader->SetGlobalSRSName(szSRSName);
@@ -1272,8 +1292,8 @@ bool OGRGMLDataSource::Open( GDALOpenInfo *poOpenInfo )
     }
 
     // Translate the GMLFeatureClasses into layers.
-    papoLayers = static_cast<OGRGMLLayer **>(
-        CPLCalloc(sizeof(OGRGMLLayer *), poReader->GetClassCount()));
+    papoLayers = static_cast<OGRLayer **>(
+        CPLCalloc(sizeof(OGRLayer *), poReader->GetClassCount()));
     nLayers = 0;
 
     if (poReader->GetClassCount() == 1 && nNumberOfFeatures != 0)
@@ -1920,8 +1940,8 @@ OGRGMLDataSource::ICreateLayer(const char *pszLayerName,
     CPLFree(pszCleanLayerName);
 
     // Add layer to data source layer list.
-    papoLayers = static_cast<OGRGMLLayer **>(
-        CPLRealloc(papoLayers, sizeof(OGRGMLLayer *) * (nLayers + 1)));
+    papoLayers = static_cast<OGRLayer **>(
+        CPLRealloc(papoLayers, sizeof(OGRLayer *) * (nLayers + 1)));
 
     papoLayers[nLayers++] = poLayer;
 
@@ -2694,7 +2714,15 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE *fp)
         if (pszStartTag != nullptr)
         {
             pszStartTag++;
-            const char *pszEndTag = strchr(pszStartTag, ' ');
+            const char *pszEndTag = nullptr;
+            for( const char *pszIter = pszStartTag; *pszIter != '\0'; pszIter++ )
+            {
+                if( isspace(*pszIter) || *pszIter == '>' )
+                {
+                    pszEndTag = pszIter;
+                    break;
+                }
+            }
             if (pszEndTag != nullptr && pszEndTag - pszStartTag < 128 )
             {
                 memcpy(szStartTag, pszStartTag, pszEndTag - pszStartTag);
@@ -2706,6 +2734,67 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE *fp)
     }
 
     const char *pszFeatureMember = strstr(pszXML, "<gml:featureMember");
+
+    // Is it a standalone geometry ?
+    if( pszFeatureMember == nullptr && pszStartTag != nullptr )
+    {
+        const char* pszElement = szStartTag;
+        const char* pszColon = strchr(pszElement, ':');
+        if( pszColon )
+            pszElement = pszColon + 1;
+        if( OGRGMLIsGeometryElement(pszElement) )
+        {
+            VSIFSeekL(fp, 0, SEEK_END);
+            const auto nLen = VSIFTellL(fp);
+            if( nLen < 10 * 1024 * 1024U )
+            {
+                VSIFSeekL(fp, 0, SEEK_SET);
+                std::string osBuffer;
+                try
+                {
+                    osBuffer.resize(static_cast<size_t>(nLen));
+                    VSIFReadL(&osBuffer[0], 1, osBuffer.size(), fp);
+                }
+                catch( const std::exception& )
+                {
+                }
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+                CPLXMLNode* psTree = CPLParseXMLString(osBuffer.data());
+                CPLPopErrorHandler();
+                CPLErrorReset();
+                if( psTree )
+                {
+                    m_poStandaloneGeom.reset(GML2OGRGeometry_XMLNode(
+                        psTree,
+                        false,
+                        0, 0, false, true,
+                        false));
+
+                    if( m_poStandaloneGeom )
+                    {
+                        for( CPLXMLNode* psCur = psTree; psCur; psCur = psCur->psNext )
+                        {
+                            if( psCur->eType == CXT_Element &&
+                                strcmp(psCur->pszValue, szStartTag) == 0 )
+                            {
+                                const char* pszSRSName = CPLGetXMLValue(psCur, "srsName", nullptr);
+                                if( pszSRSName )
+                                {
+                                    m_oStandaloneGeomSRS.SetFromUserInput(pszSRSName);
+                                    m_oStandaloneGeomSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                                    if( GML_IsSRSLatLongOrder(pszSRSName) )
+                                        m_poStandaloneGeom->swapXY();
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    CPLDestroyXMLNode(psTree);
+                }
+            }
+        }
+    }
+
     const char *pszDescription = strstr(pszXML, "<gml:description>");
     if( pszDescription && (pszFeatureMember == nullptr || pszDescription < pszFeatureMember) )
     {
