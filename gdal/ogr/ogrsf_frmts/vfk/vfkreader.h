@@ -257,6 +257,8 @@ protected:
     virtual int        LoadGeometryLineStringHP() = 0;
     virtual int        LoadGeometryPolygon() = 0;
 
+    static void        FillPointList(PointList* poList, const OGRLineString *poLine);
+
 public:
     IVFKDataBlock(const char *, const IVFKReader *);
     virtual ~IVFKDataBlock();
