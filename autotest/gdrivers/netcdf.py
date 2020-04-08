@@ -2596,8 +2596,8 @@ def test_netcdf_71():
 
     ds = gdal.Open('data/test_coord_scale_offset.nc')
     gt = ds.GetGeoTransform()
-    expected_gt = (-690769.999174516, 1015.8812500000931, 0.0, 2040932.1838741193, 0.0, 1015.8812499996275)
-    assert max(abs(gt[i] - expected_gt[i]) for i in range(6)) <= 1e-3
+    expected_gt = (-690769.999174516, 1015.8812500000931, 0.0, 2042963.9463741186, 0.0, -1015.8812499996275)
+    assert gt == pytest.approx(expected_gt, abs=1e-3)
 
 ###############################################################################
 # test int64 attributes / dim
@@ -2626,8 +2626,8 @@ def test_netcdf_73():
 
     ds = gdal.Open('data/geos_rad.nc')
     gt = ds.GetGeoTransform()
-    expected_gt = (-5979486.362104082, 1087179.4077774752, 0.0, -5979487.123448145, 0.0, 1087179.4077774752)
-    assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1
+    expected_gt = (-5979486.362104082, 1087179.4077774752, 0.0, 5979486.362104082, 0.0, -1087179.4077774752)
+    assert gt == pytest.approx(expected_gt, abs=1e-3)
 
 ###############################################################################
 # test geostationary with microradian units (https://github.com/OSGeo/gdal/pull/220)
@@ -2640,8 +2640,8 @@ def test_netcdf_74():
 
     ds = gdal.Open('data/geos_microradian.nc')
     gt = ds.GetGeoTransform()
-    expected_gt = (-5739675.119757546, 615630.8078590936, 0.0, -1032263.7666924844, 0.0, 615630.8078590936)
-    assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1
+    expected_gt = (-5739675.119757546, 615630.8078590936, 0.0, 5739675.119757546, 0.0, -615630.8078590936)
+    assert gt == pytest.approx(expected_gt, abs=1e-3)
 
 ###############################################################################
 # test opening a ncdump file
