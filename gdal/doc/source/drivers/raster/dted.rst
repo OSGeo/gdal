@@ -65,12 +65,14 @@ the default behaviour of the DTED driver.
    stripping the vertical CS of compound CS when reading the SRS of a
    file. Default value : FALSE
 
+
+
 Checksum Issues
 ~~~~~~~~~~~~~~~
 
-The default behaviour of the DTED driver is to ignore the checksum while
+The default behavior of the DTED driver is to ignore the checksum while
 reading data from the files. However, you may specify the environment
-variable DTED_VERIFY_CHECKSUM=YES if you want the checksums to be
+variable ``DTED_VERIFY_CHECKSUM=YES`` if you want the checksums to be
 verified. In some cases, the checksum written in the DTED file is wrong
 (the data producer did a wrong job). This will be reported as a warning.
 If the checksum written in the DTED file and the checksum computed from
@@ -82,6 +84,14 @@ Creation Issues
 The DTED driver does support creating new files, but the input data must
 be exactly formatted as a Level 0, 1 or 2 cell. That is the size, and
 bounds must be appropriate for a cell.
+
+
+GeoTransform
+------------
+
+The ``DTED_APPLY_PIXEL_IS_POINT=TRUE`` environment variable can be set (GDAL >=
+3.1) to apply a pixel-is-point interpretation to the data when reading
+the geotransform.
 
 See Also
 --------

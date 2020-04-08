@@ -456,7 +456,9 @@ Creation Options
 
 -  **WEBP_LOSSLESS=True/False**: (GDAL >= 2.4.0 and libwebp >= 0.1.4):
    By default, lossy compression is used. If set to True, lossless
-   compression will be used.
+   compression will be used. There is a significant time penalty for each
+   tile/strip with lossless WebP compression, so you may want to increase the
+   BLOCKYSIZE value for strip layout.
 
 -  **PHOTOMETRIC=[MINISBLACK/MINISWHITE/RGB/CMYK/YCBCR/CIELAB/ICCLAB/ITULAB]**:
    Set the photometric interpretation tag. Default is MINISBLACK, but if

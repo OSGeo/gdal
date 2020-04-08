@@ -1081,6 +1081,8 @@ public:
     OGRSpatialReference *GetSourceCS() override { return nullptr; }
     OGRSpatialReference *GetTargetCS() override { return nullptr; }
 
+    OGRCoordinateTransformation* Clone() const override { return new GeometryInsertTransformer(*this); }
+
     int Transform( int nCount,
                      double *x, double *y, double *z = nullptr,
                      double * /*t*/ = nullptr,

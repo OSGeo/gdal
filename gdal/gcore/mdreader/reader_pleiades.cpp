@@ -84,7 +84,6 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
     if(!bHasRowColPart || sscanf (pszBaseName + nLastUnderline + 5U, "R%uC%u",
         &iRow, &iCol) != 2)
     {
-        CPLDebug( "MDReaderPleiades", "Not a Pleiades product" );
         return;
     }
 

@@ -10,6 +10,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import datetime
 import os
 import sys
 sys.path.insert(0, os.path.abspath('_extensions'))
@@ -18,7 +19,7 @@ sys.path.insert(0, os.path.abspath('_extensions'))
 # -- Project information -----------------------------------------------------
 
 project = 'GDAL'
-copyright = '1998-2019'
+copyright = '1998-' + str(datetime.date.today().year)
 author = 'Frank Warmerdam, Even Rouault, and others'
 
 

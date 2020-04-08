@@ -371,7 +371,8 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
                         int nBands, GDALDataType eType,
                         int nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
                         int bAllTouched,
-                        OGRGeometry *poShape, double *padfBurnValue,
+                        const OGRGeometry *poShape,
+                        const double *padfBurnValue,
                         GDALBurnValueSrc eBurnValueSrc,
                         GDALRasterMergeAlg eMergeAlg,
                         GDALTransformerFunc pfnTransformer,
@@ -380,6 +381,32 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
 {
     if( poShape == nullptr || poShape->IsEmpty() )
         return;
+    const auto eGeomType = wkbFlatten(poShape->getGeometryType());
+
+    if( (eGeomType == wkbMultiLineString ||
+         eGeomType == wkbMultiPolygon ||
+         eGeomType == wkbGeometryCollection) &&
+        eMergeAlg == GRMA_Replace )
+    {
+        // Speed optimization: in replace mode, we can rasterize each part of
+        // a geometry collection separately.
+        const auto poGC = poShape->toGeometryCollection();
+        for( const auto poPart: *poGC )
+        {
+            gv_rasterize_one_shape(pabyChunkBuf, nXOff, nYOff,
+                                   nXSize, nYSize,
+                                   nBands, eType,
+                                   nPixelSpace, nLineSpace, nBandSpace,
+                                   bAllTouched,
+                                   poPart,
+                                   padfBurnValue,
+                                   eBurnValueSrc,
+                                   eMergeAlg,
+                                   pfnTransformer,
+                                   pTransformArg);
+        }
+        return;
+    }
 
     if(nPixelSpace == 0)
     {
@@ -429,7 +456,7 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
 
         // TODO: We need to add all appropriate error checking at some point.
         pfnTransformer( pTransformArg, FALSE, static_cast<int>(aPointX.size()),
-                        &(aPointX[0]), &(aPointY[0]), nullptr, panSuccess );
+                        aPointX.data(), aPointY.data(), nullptr, panSuccess );
         CPLFree( panSuccess );
     }
 
@@ -447,21 +474,15 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
 /*      stored in continuous memory block.                              */
 /* -------------------------------------------------------------------- */
 
-    // TODO - mloskot: Check if vectors are empty, otherwise it may
-    // lead to undefined behavior by returning non-referencable pointer.
-    // if( !aPointX.empty() )
-    //    // Fill polygon.
-    // else
-    //    // How to report this problem?
-    switch( wkbFlatten(poShape->getGeometryType()) )
+    switch( eGeomType )
     {
       case wkbPoint:
       case wkbMultiPoint:
         GDALdllImagePoint( sInfo.nXSize, nYSize,
-                           static_cast<int>(aPartSize.size()), &(aPartSize[0]),
-                           &(aPointX[0]), &(aPointY[0]),
+                           static_cast<int>(aPartSize.size()), aPartSize.data(),
+                           aPointX.data(), aPointY.data(),
                            (eBurnValueSrc == GBV_UserBurnValue)?
-                           nullptr : &(aPointVariant[0]),
+                           nullptr : aPointVariant.data(),
                            gvBurnPoint, &sInfo );
         break;
       case wkbLineString:
@@ -470,19 +491,19 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
           if( bAllTouched )
               GDALdllImageLineAllTouched( sInfo.nXSize, nYSize,
                                           static_cast<int>(aPartSize.size()),
-                                          &(aPartSize[0]),
-                                          &(aPointX[0]), &(aPointY[0]),
+                                          aPartSize.data(),
+                                          aPointX.data(), aPointY.data(),
                                           (eBurnValueSrc == GBV_UserBurnValue)?
-                                          nullptr : &(aPointVariant[0]),
+                                          nullptr : aPointVariant.data(),
                                           gvBurnPoint, &sInfo,
                                           eMergeAlg == GRMA_Add );
           else
               GDALdllImageLine( sInfo.nXSize, nYSize,
                                 static_cast<int>(aPartSize.size()),
-                                &(aPartSize[0]),
-                                &(aPointX[0]), &(aPointY[0]),
+                                aPartSize.data(),
+                                aPointX.data(), aPointY.data(),
                                 (eBurnValueSrc == GBV_UserBurnValue)?
-                                nullptr : &(aPointVariant[0]),
+                                nullptr : aPointVariant.data(),
                                 gvBurnPoint, &sInfo );
       }
       break;
@@ -491,10 +512,10 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
       {
           GDALdllImageFilledPolygon(
               sInfo.nXSize, nYSize,
-              static_cast<int>(aPartSize.size()), &(aPartSize[0]),
-              &(aPointX[0]), &(aPointY[0]),
+              static_cast<int>(aPartSize.size()), aPartSize.data(),
+              aPointX.data(), aPointY.data(),
               (eBurnValueSrc == GBV_UserBurnValue)?
-              nullptr : &(aPointVariant[0]),
+              nullptr : aPointVariant.data(),
               gvBurnScanline, &sInfo );
           if( bAllTouched )
           {
@@ -506,8 +527,8 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
               {
                   GDALdllImageLineAllTouched(
                       sInfo.nXSize, nYSize,
-                      static_cast<int>(aPartSize.size()), &(aPartSize[0]),
-                      &(aPointX[0]), &(aPointY[0]),
+                      static_cast<int>(aPartSize.size()), aPartSize.data(),
+                      aPointX.data(), aPointY.data(),
                       nullptr,
                       gvBurnPoint, &sInfo,
                       eMergeAlg == GRMA_Add );
@@ -524,9 +545,9 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
 
                   GDALdllImageLineAllTouched(
                       sInfo.nXSize, nYSize,
-                      static_cast<int>(aPartSize.size()), &(aPartSize[0]),
-                      &(aPointX[0]), &(aPointY[0]),
-                      &(aPointVariant[0]),
+                      static_cast<int>(aPartSize.size()), aPartSize.data(),
+                      aPointX.data(), aPointY.data(),
+                      aPointVariant.data(),
                       gvBurnPoint, &sInfo,
                       eMergeAlg == GRMA_Add );
               }

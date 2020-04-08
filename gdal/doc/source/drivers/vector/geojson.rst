@@ -319,7 +319,7 @@ The differences between the 2 versions are mentioned in `Appendix B of
 RFC 7946 <https://tools.ietf.org/html/rfc7946#appendix-B>`__ and
 recalled here for what matters to the driver:
 
--  Coordinates must be in longitude/latitude over the WGS 84 ellipsoid,
+-  Coordinates must be geographic over the WGS 84 ellipsoid,
    hence if the spatial reference system specified at layer creation
    time is not EPSG:4326, on-the-fly reprojection will be done by the
    driver.

@@ -182,5 +182,12 @@ def test_bsb_tmerc():
        gcps[0].GCPY == pytest.approx(6538920.57567595, abs=1e-5) and \
        gcps[0].GCPZ == 0
 
+###############################################################################
 
 
+def test_bsb_cutline():
+    if gdaltest.bsb_dr is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/australia4c.kap')
+    assert ds.GetMetadataItem('BSB_CUTLINE') == 'POLYGON ((112.72859333333334 -8.25404666666667,156.57827333333333 -7.66159166666667,164.28394166666666 -40.89653000000000,106.53042166666667 -41.14970000000000))'

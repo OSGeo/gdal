@@ -12,7 +12,7 @@ FROM alpine:${ALPINE_VERSION} as builder
 MAINTAINER Even Rouault <even.rouault@spatialys.com>
 
 # Setup build env for PROJ
-RUN apk add --no-cache wget curl unzip -q make libtool autoconf automake pkgconfig g++ sqlite sqlite-dev
+RUN apk add --no-cache wget curl unzip make libtool autoconf automake pkgconfig g++ sqlite sqlite-dev
 
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 RUN \
@@ -152,20 +152,20 @@ RUN if test "${FREEXL_VERSION}" != ""; then ( \
     ); fi
 
 # Build likbkea
-ARG KEA_VERSION=c6d36f3db5e4
+ARG KEA_VERSION=1.4.12
 RUN if test "${KEA_VERSION}" != ""; then ( \
     apk add --no-cache cmake \
-    && wget -q https://bitbucket.org/chchrsc/kealib/get/${KEA_VERSION}.zip \
-    && unzip -q ${KEA_VERSION}.zip \
-    && rm -f ${KEA_VERSION}.zip \
-    && cd chchrsc-kealib-${KEA_VERSION}/trunk \
+    && wget -q https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
+    && unzip -q kealib-${KEA_VERSION}.zip \
+    && rm -f kealib-${KEA_VERSION}.zip \
+    && cd kealib-kealib-${KEA_VERSION} \
     && cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr -DHDF5_INCLUDE_DIR=/usr/include/hdf5 \
         -DHDF5_LIB_PATH=/usr/lib -DLIBKEA_WITH_GDAL=OFF \
     && make -j$(nproc) \
     && make install \
-    && cd ../.. \
-    && rm -rf chchrsc-kealib-${KEA_VERSION} \
+    && cd .. \
+    && rm -rf kealib-kealib-${KEA_VERSION} \
     && cp -P /usr/lib/libkea*.so* /build_thirdparty/usr/lib \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && apk del cmake \
