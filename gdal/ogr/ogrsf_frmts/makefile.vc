@@ -83,7 +83,7 @@ PLUGIN_PG_DIR = pg
 !ENDIF
 !ENDIF
 
-!IFDEF TD_LIBDIR
+!IFDEF TD_LIBS
 !IF "$(TD_PLUGIN)" != "YES"
 DWGDIR = dwg
 DWG_OBJ = dwg\*.obj
