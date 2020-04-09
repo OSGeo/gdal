@@ -9984,66 +9984,6 @@ OGRErr OSRImportFromProj4( OGRSpatialReferenceH hSRS, const char *pszProj4 )
  * Example:
  *   pszProj4 = "+proj=utm +zone=11 +datum=WGS84"
  *
- * Some parameters, such as grids, recognized by PROJ may not be well
- * understood and translated into the OGRSpatialReference model. It is possible
- * to add the +wktext parameter which is a special keyword that OGR recognized
- * as meaning "embed the entire PROJ string in the WKT and use it literally
- * when converting back to PROJ format".
- *
- * For example:
- * "+proj=nzmg +lat_0=-41 +lon_0=173 +x_0=2510000 +y_0=6023150 +ellps=intl
- *  +units=m +nadgrids=nzgd2kgrid0005.gsb +wktext"
- *
- * will be translated as :
- * \code
- * PROJCS["unnamed",
- *    GEOGCS["International 1909 (Hayford)",
- *        DATUM["unknown",
- *            SPHEROID["intl",6378388,297]],
- *        PRIMEM["Greenwich",0],
- *        UNIT["degree",0.0174532925199433]],
- *    PROJECTION["New_Zealand_Map_Grid"],
- *    PARAMETER["latitude_of_origin",-41],
- *    PARAMETER["central_meridian",173],
- *    PARAMETER["false_easting",2510000],
- *    PARAMETER["false_northing",6023150],
- *    UNIT["Meter",1],
- *    EXTENSION["PROJ4","+proj=nzmg +lat_0=-41 +lon_0=173 +x_0=2510000
- *               +y_0=6023150 +ellps=intl  +units=m +nadgrids=nzgd2kgrid0005.gsb +wktext"]]
- * \endcode
- *
- * Special processing for 'etmerc': if +proj=etmerc is found
- * in the passed string, the SRS built will use the WKT representation for a
- * standard Transverse Mercator, but will aso include a PROJ4 EXTENSION node to
- * preserve the etmerc projection method.
- *
- * For example:
- * "+proj=etmerc +lat_0=0 +lon_0=9 +k=0.9996 +units=m +x_0=500000 +datum=WGS84"
- *
- * will be translated as :
- * \code
- * PROJCS["unnamed",
- *     GEOGCS["WGS 84",
- *         DATUM["WGS_1984",
- *             SPHEROID["WGS 84",6378137,298.257223563,
- *                 AUTHORITY["EPSG","7030"]],
- *             TOWGS84[0,0,0,0,0,0,0],
- *             AUTHORITY["EPSG","6326"]],
- *         PRIMEM["Greenwich",0,
- *             AUTHORITY["EPSG","8901"]],
- *         UNIT["degree",0.0174532925199433,
- *             AUTHORITY["EPSG","9108"]],
- *         AUTHORITY["EPSG","4326"]],
- *     PROJECTION["Transverse_Mercator"],
- *     PARAMETER["latitude_of_origin",0],
- *     PARAMETER["central_meridian",9],
- *     PARAMETER["scale_factor",0.9996],
- *     PARAMETER["false_easting",500000],
- *     PARAMETER["false_northing",0],
- *     UNIT["Meter",1],
- *     EXTENSION["PROJ4","+proj=etmerc +lat_0=0 +lon_0=9 +k=0.9996 +units=m +x_0=500000 +datum=WGS84 +nodefs"]]
- * \endcode
- *
  * It is also possible to import "+init=epsg:n" style definitions. Those are
  * a legacy syntax that should be avoided in the future. In particular they will
  * result in CRS objects whose axis order might not correspond to the official
