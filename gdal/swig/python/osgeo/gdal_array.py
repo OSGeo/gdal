@@ -283,10 +283,12 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
         interleave = True
         xdim = 2
         ydim = 1
+        banddim = 0
     elif interleave == 'pixel':
         interleave = False
         xdim = 1
         ydim = 0
+        banddim = 2
     else:
         raise ValueError('Interleave should be band or pixel')
 
@@ -334,8 +336,8 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
             raise ValueError('Specified buf_xsize not consistent with array shape')
         if buf_ysize is not None and buf_ysize != shape_buf_ysize:
             raise ValueError('Specified buf_ysize not consistent with array shape')
-        if buf_obj.shape[0] != ds.RasterCount:
-            raise ValueError('Array should have space for %d bands' % ds.RasterCount)
+        if buf_obj.shape[banddim] != ds.RasterCount:
+            raise ValueError('Dimension %d of array should have size %d to store bands)' % (banddim, ds.RasterCount))
 
         datatype = NumericTypeCodeToGDALTypeCode(buf_obj.dtype.type)
         if not datatype:

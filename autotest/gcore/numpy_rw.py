@@ -474,7 +474,11 @@ def test_numpy_rw_13():
     with pytest.raises(Exception, match='Specified buf_xsize not consistent '
                              'with array shape'):
         ds.ReadAsArray(buf_obj=ar, buf_xsize=1, buf_ysize=1)
-    
+
+    ar = numpy.empty([1, 2, 3], dtype=numpy.uint8)
+    with pytest.raises(Exception, match='Specified buf_xsize not consistent '
+                             'with array shape'):
+        ds.ReadAsArray(buf_obj=ar, buf_xsize=1, buf_ysize=1, interleave='pixel')
 
     # Inconsistent data type
     ar = numpy.empty([3, 1, 2], dtype=numpy.uint8)
@@ -484,9 +488,13 @@ def test_numpy_rw_13():
 
     # Not enough space in first dimension
     ar = numpy.empty([2, 1, 2], dtype=numpy.uint8)
-    with pytest.raises(Exception, match='Array should have space for 3 bands'):
+    with pytest.raises(Exception, match='Dimension 0 of array should have size 3 to store bands'):
         ds.ReadAsArray(buf_obj=ar)
-    
+
+    # Not enough space in third dimension
+    ar = numpy.empty([1, 2, 2], dtype=numpy.uint8)
+    with pytest.raises(Exception, match='Dimension 2 of array should have size 3 to store bands'):
+        ds.ReadAsArray(buf_obj=ar, interleave='pixel')
 
     # This one should be OK !
     ar = numpy.zeros([3, 1, 2], dtype=numpy.uint8)
@@ -700,6 +708,10 @@ def test_numpy_rw_18():
     assert numpy.all(img == res)
 
     res = ds.ReadAsArray(interleave='pixel')
+    assert numpy.all(img == res)
+
+    res = numpy.zeros([256, 200, 3])
+    ds.ReadAsArray(buf_obj=res, interleave='pixel')
     assert numpy.all(img == res)
 
 ###############################################################################
