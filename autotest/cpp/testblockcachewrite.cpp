@@ -31,6 +31,7 @@
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "gdal_priv.h"
+#include "test_data.h"
 
 #include <cassert>
 
@@ -112,7 +113,7 @@ static void test1()
 static void thread_func2(void* /* unused */)
 {
     printf("begin thread %p\n", (void*)CPLGetPID());
-    GDALDatasetH hDS = GDALOpen("data/byte.tif", GA_ReadOnly);
+    GDALDatasetH hDS = GDALOpen(TUT_ROOT_DATA_DIR "/byte.tif", GA_ReadOnly);
     GByte c = 0;
     CPL_IGNORE_RET_VAL(GDALDataset::FromHandle(hDS)->GetRasterBand(1)->RasterIO(GF_Read, 0,0,1,1,&c,1,1,GDT_Byte,0,0,nullptr));
     GDALClose(hDS);
