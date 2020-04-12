@@ -1090,6 +1090,24 @@ AC_DEFINE_UNQUOTED(HAVE_SC_PHYS_PAGES, 1,
 AC_MSG_RESULT([no])
 ])
 
+dnl '---------------------------------------------------------------------------
+dnl Remove possible system library paths from a *_LIB variable to prevent other, perhaps unrelated, system libraries
+dnl from shadowing custom libraries of the same name the user might have installed e.g. under /usr/local.
+dnl System library paths are things like /lib, /usr/lib, /lib64, /usr/lib64, and /usr/lib/x86_64-linux-gnu.
+dnl There may be others as well, that will need be addressed as they arise. We avoid wildcards such as
+dnl /usr/lib/* to avoid potential cases such as /usr/lib/mysql/lib, which might not have an /etc/ld.so.conf.d
+dnl entry and would not shadow any possible custom installs anyway:
+AC_DEFUN([STRIP_SYSTEM_LIBRARY_PATHS],[
+        STRIPPED_LIBRARY_NAME=`echo [$1] | sed -E -e 's:-L/(usr/)?(lib(64)?/*|lib/x86_64-linux-gnu) : :'`
+        dnl If the above command did not remove the leading -L<libdir>, then <libdir> is a custom directory,
+        dnl about which we might inform the linker.
+        dnl "replace -L(non-space-chars)(space-chars)(anything) with just the first (non-space-chars)"
+        custom_libdir=`echo "$STRIPPED_LIBRARY_NAME" | sed -E -e 's:-L(\S+)\s+.*:\1:'`
+        if test -n "$custom_libdir" ; then
+           STRIPPED_LIBRARY_NAME="-Wl,-rpath=$custom_libdir $STRIPPED_LIBRARY_NAME"
+        fi
+])
+
 dnl ---------------------------------------------------------------------------
 dnl Check if libz is available.
 dnl ---------------------------------------------------------------------------
@@ -1243,6 +1261,7 @@ else
     fi
   else
     ORIG_LIBS="$LIBS"
+    proj_libdir=$with_proj/lib
     LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
     AC_LANG_PUSH([C++])
     AC_CHECK_LIB(proj,proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
@@ -1255,6 +1274,7 @@ else
         AC_LANG_POP([C++])
     fi
     if test "$PROJ_FOUND" = "no"; then
+        proj_libdir=$with_proj/lib64
         LIBS="-L$with_proj/lib64 -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         unset ac_cv_lib_proj_proj_create_from_wkt
         AC_LANG_PUSH([C++])
@@ -1262,6 +1282,7 @@ else
         AC_LANG_POP([C++])
     fi
     if test "$PROJ_FOUND" = "no"; then
+        proj_libdir=$with_proj/lib
         LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         AC_LANG_PUSH([C++])
         AC_CHECK_LIB(proj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
@@ -1278,6 +1299,7 @@ else
         fi
     fi
     if test "$PROJ_FOUND" = "no"; then
+        proj_libdir=$with_proj/lib
         LIBS="-L$with_proj/lib -linternalproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         AC_LANG_PUSH([C++])
         AC_CHECK_LIB(internalproj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
@@ -1295,6 +1317,8 @@ else
     fi
     if test "$PROJ_FOUND" = "no"; then
         AC_MSG_ERROR([PROJ 6 symbols not found])
+    elif test x$with_proj != x/usr -a x$with_proj != x/ ; then
+        LIBS="-Wl,-rpath=$proj_libdir $LIBS"
     fi
     if test -r "$with_proj/include/proj.h" ; then
         PROJ_INCLUDE="$PROJ_INCLUDE -I$with_proj/include"
@@ -2905,7 +2929,9 @@ else
     NETCDF_VERSION=`$NETCDF_NCCONFIG --version`
     NETCDF_PREFIX=`$NETCDF_NCCONFIG --prefix`
     NETCDF_INCLUDEDIR=`$NETCDF_NCCONFIG --includedir`
-    NETCDF_LIBS=`$NETCDF_NCCONFIG --libs | sed -e 's:-L/usr/lib64 ::' -e 's:-L/usr/lib ::'`
+    NETCDF_LIBS=`$NETCDF_NCCONFIG --libs`
+    STRIP_SYSTEM_LIBRARY_PATHS("${NETCDF_LIBS}")
+    NETCDF_LIBS=$STRIPPED_LIBRARY_NAME
     echo ""
     AC_MSG_RESULT([ got version="$NETCDF_VERSION", prefix="$NETCDF_PREFIX",
  libs="$NETCDF_LIBS", includedir="$NETCDF_INCLUDEDIR"])
@@ -3716,7 +3742,9 @@ else
     AC_MSG_RESULT([no, mysql is pre-4.x])
   else
       HAVE_MYSQL=yes
-      MYSQL_LIB="`$MYSQL_CONFIG --libs`"
+      MYSQL_LIB=`$MYSQL_CONFIG --libs`
+      STRIP_SYSTEM_LIBRARY_PATHS("${MYSQL_LIB}")
+      MYSQL_LIB=$STRIPPED_LIBRARY_NAME
       MYSQL_INC="`$MYSQL_CONFIG --include`"
       AC_MSG_RESULT([yes])
   fi
@@ -4565,7 +4593,8 @@ HAVE_GEOS_RESULT="no"
 if test "${HAVE_GEOS}" = "yes" ; then
 
   AC_MSG_NOTICE([Using C API from GEOS $GEOS_VERSION])
-  GEOS_LIBS=`echo $GEOS_LIBS | sed -e 's:-L/usr/lib64 ::' -e 's:-L/usr/lib ::'`
+  STRIP_SYSTEM_LIBRARY_PATHS("${GEOS_LIBS}")
+  GEOS_LIBS=$STRIPPED_LIBRARY_NAME
   LIBS="${GEOS_LIBS} ${LIBS}"
   HAVE_GEOS_RESULT="yes"
 fi

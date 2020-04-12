@@ -22653,6 +22653,8 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 
 
+
+
 # Check whether --with-libz was given.
 if test "${with_libz+set}" = set; then :
   withval=$with_libz;
@@ -24210,6 +24212,7 @@ $as_echo "$as_me: proj.h found" >&6;}
     fi
   else
     ORIG_LIBS="$LIBS"
+    proj_libdir=$with_proj/lib
     LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
     ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -24324,6 +24327,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     fi
     if test "$PROJ_FOUND" = "no"; then
+        proj_libdir=$with_proj/lib64
         LIBS="-L$with_proj/lib64 -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         unset ac_cv_lib_proj_proj_create_from_wkt
         ac_ext=cpp
@@ -24382,6 +24386,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     fi
     if test "$PROJ_FOUND" = "no"; then
+        proj_libdir=$with_proj/lib
         LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -24500,6 +24505,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
         fi
     fi
     if test "$PROJ_FOUND" = "no"; then
+        proj_libdir=$with_proj/lib
         LIBS="-L$with_proj/lib -linternalproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -24619,6 +24625,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
     fi
     if test "$PROJ_FOUND" = "no"; then
         as_fn_error $? "PROJ 6 symbols not found" "$LINENO" 5
+    elif test x$with_proj != x/usr -a x$with_proj != x/ ; then
+        LIBS="-Wl,-rpath=$proj_libdir $LIBS"
     fi
     if test -r "$with_proj/include/proj.h" ; then
         PROJ_INCLUDE="$PROJ_INCLUDE -I$with_proj/include"
@@ -32322,7 +32330,15 @@ $as_echo_n "checking libnetcdf compiler and linker flags with nc-config... " >&6
     NETCDF_VERSION=`$NETCDF_NCCONFIG --version`
     NETCDF_PREFIX=`$NETCDF_NCCONFIG --prefix`
     NETCDF_INCLUDEDIR=`$NETCDF_NCCONFIG --includedir`
-    NETCDF_LIBS=`$NETCDF_NCCONFIG --libs | sed -e 's:-L/usr/lib64 ::' -e 's:-L/usr/lib ::'`
+    NETCDF_LIBS=`$NETCDF_NCCONFIG --libs`
+
+        STRIPPED_LIBRARY_NAME=`echo "${NETCDF_LIBS}" | sed -E -e 's:-L/(usr/)?(lib(64)?/*|lib/x86_64-linux-gnu) : :'`
+                                custom_libdir=`echo "$STRIPPED_LIBRARY_NAME" | sed -E -e 's:-L(\S+)\s+.*:\1:'`
+        if test -n "$custom_libdir" ; then
+           STRIPPED_LIBRARY_NAME="-Wl,-rpath=$custom_libdir $STRIPPED_LIBRARY_NAME"
+        fi
+
+    NETCDF_LIBS=$STRIPPED_LIBRARY_NAME
     echo ""
     { $as_echo "$as_me:${as_lineno-$LINENO}: result:  got version=\"$NETCDF_VERSION\", prefix=\"$NETCDF_PREFIX\",
  libs=\"$NETCDF_LIBS\", includedir=\"$NETCDF_INCLUDEDIR\"" >&5
@@ -34297,7 +34313,15 @@ $as_echo "no" >&6; }
 $as_echo "no, mysql is pre-4.x" >&6; }
   else
       HAVE_MYSQL=yes
-      MYSQL_LIB="`$MYSQL_CONFIG --libs`"
+      MYSQL_LIB=`$MYSQL_CONFIG --libs`
+
+        STRIPPED_LIBRARY_NAME=`echo $MYSQL_LIB | sed -E -e 's:-L/(usr/)?(lib(64)?/*|lib/x86_64-linux-gnu) : :'`
+                                custom_libdir=`echo "$STRIPPED_LIBRARY_NAME" | sed -E -e 's:-L(\S+)\s+.*:\1:'`
+        if test -n "$custom_libdir" ; then
+           STRIPPED_LIBRARY_NAME="-Wl,-rpath=$custom_libdir $STRIPPED_LIBRARY_NAME"
+        fi
+
+      MYSQL_LIB=$STRIPPED_LIBRARY_NAME
       MYSQL_INC="`$MYSQL_CONFIG --include`"
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
@@ -39051,7 +39075,14 @@ if test "${HAVE_GEOS}" = "yes" ; then
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: Using C API from GEOS $GEOS_VERSION" >&5
 $as_echo "$as_me: Using C API from GEOS $GEOS_VERSION" >&6;}
-  GEOS_LIBS=`echo $GEOS_LIBS | sed -e 's:-L/usr/lib64 ::' -e 's:-L/usr/lib ::'`
+
+        STRIPPED_LIBRARY_NAME=`echo "${GEOS_LIBS}" | sed -E -e 's:-L/(usr/)?(lib(64)?/*|lib/x86_64-linux-gnu) : :'`
+                                custom_libdir=`echo "$STRIPPED_LIBRARY_NAME" | sed -E -e 's:-L(\S+)\s+.*:\1:'`
+        if test -n "$custom_libdir" ; then
+           STRIPPED_LIBRARY_NAME="-Wl,-rpath=$custom_libdir $STRIPPED_LIBRARY_NAME"
+        fi
+
+  GEOS_LIBS=$STRIPPED_LIBRARY_NAME
   LIBS="${GEOS_LIBS} ${LIBS}"
   HAVE_GEOS_RESULT="yes"
 fi
