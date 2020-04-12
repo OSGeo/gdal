@@ -404,10 +404,97 @@ JPEG12_SUPPORTED = 1
 #		/DLIBECWJ2 /DWIN32 /D_WINDLL -DNO_X86_MMI
 
 # DWG support using the Open Design Alliance Teigha Libraries
+# Two versions are supported:
+# - ODA >= 2021 (tested with 2021.2), defined immediately
+# - Teigha 4.2, see a bit below
 
-#TD_BASE = C:\warmerda\pkg\td_vc9
-#TD_FLAGS = -D_TOOLKIT_IN_DLL_
-#TD_INCLUDE = -I$(TD_BASE)\TD\Include -I$(TD_BASE)\TD\Extensions\ExServices
+# For ODA >= 2021, you must define appropriately the following variables
+# TD_ACTIVATION_FILE_DIRECTORY: path to a directory where the "OdActivationInfo" file is.
+# TD_DRAWINGS_BASE: path where the Drawings component is installed (it has among others the Dgn, lib, Kernel and KernelBase subdirectories)
+# TD_KERNEL_BASE: path where the Kernel component is installed (it has among others the lib subdirectories)
+# TD_PLATFORM: suffix indicating the architecture, compiler version and uild type. For example "vc15dll", "vc15md". This is the suffix found at the end of TD_KERNEL_BASE and TD_DRAWINGS_BASE
+# And only when linking against a DLL build of ODA,
+# TD_DLL_FLAGS: to uncomment only when linking against a DLL build of ODA.
+#
+# Example:
+# TD_ACTIVATION_FILE_DIRECTORY = C:\dev\oda
+# TD_KERNEL_BASE = C:\dev\oda\Kernel_vc15dll
+# TD_DRAWINGS_BASE = C:\dev\oda\Drawings_vc15dll
+# TD_PLATFORM = vc15dll
+# TD_DLL_FLAGS = /D_TOOLKIT_IN_DLL_
+
+# Logic to define TD_INCLUDE and TD_LIBS for ODA >= 2020
+!IFDEF TD_PLATFORM
+!IFNDEF TD_INCLUDE
+TD_INCLUDE = $(TD_DLL_FLAGS)\
+             -I$(TD_ACTIVATION_FILE_DIRECTORY) \
+             -I$(TD_DRAWINGS_BASE)\KernelBase\Include \
+			 -I$(TD_DRAWINGS_BASE)\Kernel\Include \
+			 -I$(TD_DRAWINGS_BASE)\Kernel\Extensions\ExServices \
+			 -I$(TD_DRAWINGS_BASE)\Drawing\Include \
+			 -I$(TD_DRAWINGS_BASE)\Drawing\Extensions\ExServices \
+			 -I$(TD_DRAWINGS_BASE)\Dgn\include \
+			 -I$(TD_DRAWINGS_BASE)\Dgn\Extensions\ExServices
+!ENDIF
+
+!IFNDEF TD_LIBS
+TD_DRAWINGS_LIBDIR = $(TD_DRAWINGS_BASE)\lib\$(TD_PLATFORM)
+TD_KERNEL_LIBDIR = $(TD_KERNEL_BASE)\lib\$(TD_PLATFORM)
+
+TD_LIBS =  \
+    $(TD_DRAWINGS_LIBDIR)/TD_Db.lib \
+    $(TD_DRAWINGS_LIBDIR)/TD_DbCore.lib \
+    $(TD_DRAWINGS_LIBDIR)/TD_DbEntities.lib \
+    $(TD_DRAWINGS_LIBDIR)/TD_DrawingsExamplesCommon.lib \
+    $(TD_DRAWINGS_LIBDIR)/TG_Db.lib \
+    $(TD_DRAWINGS_LIBDIR)/TG_ExamplesCommon.lib \
+    $(TD_KERNEL_LIBDIR)/TD_Alloc.lib \
+    $(TD_KERNEL_LIBDIR)/TD_DbRoot.lib \
+    $(TD_KERNEL_LIBDIR)/TD_ExamplesCommon.lib \
+    $(TD_KERNEL_LIBDIR)/TD_Ge.lib \
+    $(TD_KERNEL_LIBDIR)/TD_Root.lib \
+    advapi32.lib
+
+!IFDEF TD_DLL_FLAGS
+# Additional libs specific to ODA DLL builds
+TD_LIBS = $(TD_LIBS) \
+    $(TD_DRAWINGS_LIBDIR)/TD_Key.lib
+!ELSE
+# Additional libs specific to ODA static builds
+TD_LIBS = $(TD_LIBS) \
+    $(TD_KERNEL_LIBDIR)/TD_Gi.lib \
+    $(TD_KERNEL_LIBDIR)/tinyxml.lib \
+    $(TD_KERNEL_LIBDIR)/TD_Zlib.lib \
+    $(TD_DRAWINGS_LIBDIR)/TD_DbIO.lib \
+    $(TD_DRAWINGS_LIBDIR)/ISM.lib \
+    $(TD_DRAWINGS_LIBDIR)/WipeOut.lib \
+    $(TD_DRAWINGS_LIBDIR)/RText.lib \
+    $(TD_DRAWINGS_LIBDIR)/ATEXT.lib \
+    $(TD_DRAWINGS_LIBDIR)/SCENEOE.lib \
+    $(TD_DRAWINGS_LIBDIR)/ACCAMERA.lib \
+    $(TD_DRAWINGS_LIBDIR)/AcMPolygonObj15.lib \
+    $(TD_KERNEL_LIBDIR)/TD_Gs.lib \
+    $(TD_KERNEL_LIBDIR)/TD_SpatialIndex.lib \
+    $(TD_KERNEL_LIBDIR)/oless.lib \
+    $(TD_KERNEL_LIBDIR)/UTF.lib \
+    $(TD_KERNEL_LIBDIR)/WinBitmap.lib \
+    $(TD_KERNEL_LIBDIR)/OdBrepModeler.lib \
+    $(TD_KERNEL_LIBDIR)/TD_Br.lib \
+    $(TD_KERNEL_LIBDIR)/TD_AcisBuilder.lib \
+    $(TD_KERNEL_LIBDIR)/TD_BrepBuilder.lib \
+    $(TD_KERNEL_LIBDIR)/TD_BrepBuilderFiller.lib \
+    $(TD_KERNEL_LIBDIR)/TD_BrepRenderer.lib \
+    $(TD_DRAWINGS_LIBDIR)/ModelerGeometry.lib \
+    $(TD_DRAWINGS_LIBDIR)/RecomputeDimBlock.lib \
+    crypt32.lib \
+    secur32.lib \
+    user32.lib \
+    gdi32.lib \
+    ole32.lib
+!ENDIF  # TD_DLL_FLAGS
+!ENDIF  # TD_LIBS
+!ENDIF  # TD_PLATFORM
+
 # The following works for Teigha 4.2.2
 # In TD_INCLUDE, add /D_TOOLKIT_IN_DLL_ if linking against the .dll
 #TD_INCLUDE = -I$(TD_BASE)\Core\Include -I$(TD_BASE)\Core\Extensions\ExServices -I$(TD_BASE)\Dgn\include -I$(TD_BASE)\Dgn\Extensions\ExServices
