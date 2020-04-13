@@ -110,6 +110,9 @@ class TileDBDataset final: public GDALPamDataset
         static void             SetBlockSize( GDALRasterBand* poBand,
                                                 char ** &papszOptions );
 
+        virtual void            FlushCache( void ) override;
+
+
 };
 
 /************************************************************************/
@@ -125,6 +128,8 @@ class TileDBRasterBand final: public GDALPamRasterBand
         TileDBDataset  *poGDS;
         bool bStats;
         CPLString osAttrName;
+        int nCurrBlockX = 0;
+        int nCurrBlockY = 0;
         std::unique_ptr<tiledb::Query> m_query;
         std::unique_ptr<tiledb::Query> m_roQuery;
         void   Finalize( );
@@ -359,6 +364,23 @@ CPLErr TileDBRasterBand::IWriteBlock( int nBlockXOff,
 
         m_query->set_subarray( oaSubarray );
     }
+    else
+    {
+        // global order requires ordered blocks (see FlushCache())
+        if ( ( nCurrBlockX != nBlockXOff ) || ( nCurrBlockY != nBlockYOff ) )
+        {   CPLError( CE_Failure, CPLE_AppDefined,
+                    "Non-sequential global write to TileDB.\n");
+            return CE_Failure;
+        }
+        else
+        {
+            if ( ++nCurrBlockX == poGDS->nBlocksX )
+            {
+                nCurrBlockX = 0;
+                nCurrBlockY++;
+            }
+        }
+    }
 
     std::vector<std::unique_ptr<void, decltype(&VSIFree)>> aBlocks;
 
@@ -494,6 +516,16 @@ TileDBDataset::~TileDBDataset()
     CPLDestroyXMLNode( psSubDatasetsTree );
     CSLDestroy( papszSubDatasets );
     CSLDestroy( papszAttributes );
+}
+
+/************************************************************************/
+/*                             FlushCache()                             */
+/************************************************************************/
+
+void TileDBDataset::FlushCache()
+
+{
+    BlockBasedFlushCache();
 }
 
 /************************************************************************/
@@ -2095,7 +2127,7 @@ void GDALRegister_TileDB()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_SUBCREATECOPY, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "TileDB" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_tiledb.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/tiledb.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte UInt16 Int16 UInt32 Int32 Float32 "
                                "Float64 CInt16 CInt32 CFloat32 CFloat64" );

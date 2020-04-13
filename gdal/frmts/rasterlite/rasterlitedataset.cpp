@@ -1471,7 +1471,7 @@ void GDALRegister_Rasterlite()
     poDriver->SetDescription( "Rasterlite" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Rasterlite" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_rasterlite.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/rasterlite.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sqlite" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,

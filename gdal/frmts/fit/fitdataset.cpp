@@ -1350,7 +1350,7 @@ void GDALRegister_FIT()
     poDriver->SetDescription( "FIT" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "FIT Image" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/fit.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

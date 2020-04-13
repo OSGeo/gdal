@@ -2639,7 +2639,7 @@ void GDALRegister_DAAS()
                                "Airbus DS Intelligence "
                                "Data As A Service driver" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_daas.html" );
+                               "drivers/raster/daas.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"

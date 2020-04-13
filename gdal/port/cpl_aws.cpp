@@ -1256,7 +1256,8 @@ bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
     if( pbUpdateMap != nullptr )
         *pbUpdateMap = true;
 
-    if( !STARTS_WITH(pszErrorMsg, "<?xml") )
+    if( !STARTS_WITH(pszErrorMsg, "<?xml") &&
+        !STARTS_WITH(pszErrorMsg, "<Error>") )
     {
         if( bSetError )
         {

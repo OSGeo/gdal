@@ -1036,7 +1036,7 @@ void GDALRegister_NWT_GRD() {
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
             "Northwood Numeric Grid Format .grd/.tab");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_nwtgrd.html");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/nwtgrd.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "grd");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Float32");

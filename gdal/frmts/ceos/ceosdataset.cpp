@@ -232,7 +232,7 @@ void GDALRegister_CEOS()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "CEOS Image" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#CEOS" );
+                               "drivers/raster/ceos.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = CEOSDataset::Open;

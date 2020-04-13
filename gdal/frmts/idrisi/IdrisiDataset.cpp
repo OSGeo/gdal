@@ -3429,7 +3429,7 @@ void GDALRegister_IDRISI()
     poDriver->SetDescription( "RST" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, rstVERSION );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_Idrisi.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/Idrisi.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, extRST );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 Float32" );

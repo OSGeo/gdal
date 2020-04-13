@@ -422,7 +422,7 @@ int VSICurlHandle::Seek( vsi_l_offset nOffset, int nWhence )
     }
     else
     {
-        curOffset = GetFileSize() + nOffset;
+        curOffset = GetFileSize(false) + nOffset;
     }
     bEOF = false;
     return 0;
@@ -760,12 +760,12 @@ void VSICURLResetHeaderAndWriterFunctions(CURL* hCurlHandle)
 }
 
 /************************************************************************/
-/*                           GetFileSize()                              */
+/*                     GetFileSizeOrHeaders()                           */
 /************************************************************************/
 
-vsi_l_offset VSICurlHandle::GetFileSize( bool bSetError )
+vsi_l_offset VSICurlHandle::GetFileSizeOrHeaders( bool bSetError, bool bGetHeaders )
 {
-    if( oFileProp.bHasComputedFileSize )
+    if( oFileProp.bHasComputedFileSize && !bGetHeaders )
         return oFileProp.fileSize;
 
     oFileProp.bHasComputedFileSize = true;
@@ -1001,6 +1001,22 @@ retry:
                     oFileProp.ETag.assign(pzETag, pszEndOfETag - pzETag);
                 }
             }
+
+            if( bGetHeaders )
+            {
+                char** papszHeaders = CSLTokenizeString2(sWriteFuncHeaderData.pBuffer, "\r\n", 0);
+                for( int i = 0; papszHeaders[i]; ++i )
+                {
+                    char* pszKey = nullptr;
+                    const char* pszValue = CPLParseNameValue(papszHeaders[i], &pszKey);
+                    if( pszKey && pszValue )
+                    {
+                        m_aosHeaders.SetNameValue(pszKey, pszValue);
+                    }
+                    CPLFree(pszKey);
+                }
+                CSLDestroy(papszHeaders);
+            }
         }
 
         if( UseLimitRangeGetInsteadOfHead() && response_code == 206 )
@@ -1094,7 +1110,7 @@ retry:
                 CPLFree(sWriteFuncData.pBuffer);
                 CPLFree(sWriteFuncHeaderData.pBuffer);
                 curl_easy_cleanup(hCurlHandle);
-                return GetFileSize(bSetError);
+                return GetFileSizeOrHeaders(bSetError, bGetHeaders);
             }
 
             // If there was no VSI error thrown in the process,
@@ -3924,7 +3940,7 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename,
          CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_SLOW_GET_SIZE",
                                         "YES"))) )
     {
-        pStatBuf->st_size = poHandle->GetFileSize();
+        pStatBuf->st_size = poHandle->GetFileSize(false);
     }
 
     const int nRet =
@@ -4090,6 +4106,23 @@ char** VSICurlFilesystemHandler::ReadDirEx( const char *pszDirname,
 }
 
 /************************************************************************/
+/*                          GetFileMetadata()                           */
+/************************************************************************/
+
+char** VSICurlFilesystemHandler::GetFileMetadata( const char* pszFilename,
+                                                  const char* pszDomain,
+                                                  CSLConstList )
+{
+    if( pszDomain == nullptr || !EQUAL(pszDomain, "HEADERS") )
+        return nullptr;
+    std::unique_ptr<VSICurlHandle> poHandle(CreateFileHandle(pszFilename));
+    if( poHandle == nullptr )
+        return nullptr;
+    poHandle->GetFileSizeOrHeaders(true, true);
+    return CSLDuplicate(poHandle->GetHeaders().List());
+}
+
+/************************************************************************/
 /*                       VSIAppendWriteHandle()                         */
 /************************************************************************/
 
@@ -4245,6 +4278,63 @@ int VSIAppendWriteHandle::Close()
     }
     return nRet;
 }
+
+/************************************************************************/
+/*                         CurlRequestHelper()                          */
+/************************************************************************/
+
+CurlRequestHelper::CurlRequestHelper()
+{
+    VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
+    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
+}
+
+/************************************************************************/
+/*                        ~CurlRequestHelper()                          */
+/************************************************************************/
+
+CurlRequestHelper::~CurlRequestHelper()
+{
+    CPLFree(sWriteFuncData.pBuffer);
+    CPLFree(sWriteFuncHeaderData.pBuffer);
+}
+
+/************************************************************************/
+/*                             perform()                                */
+/************************************************************************/
+
+long CurlRequestHelper::perform(CURL* hCurlHandle,
+                struct curl_slist* headers,
+                VSICurlFilesystemHandler *poFS,
+                IVSIS3LikeHandleHelper *poS3HandleHelper)
+{
+    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+
+    poS3HandleHelper->ResetQueryParameters();
+
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+                        VSICurlHandleWriteFunc);
+
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+                        VSICurlHandleWriteFunc);
+
+    szCurlErrBuf[0] = '\0';
+    curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+
+    MultiPerform(poFS->GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
+                    hCurlHandle);
+
+    VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
+
+    curl_slist_free_all(headers);
+
+    long response_code = 0;
+    curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
+    return response_code;
+}
+
 
 } /* end of namespace cpl */
 

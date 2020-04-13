@@ -2251,7 +2251,7 @@ void GDALRegister_PCIDSK()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "PCIDSK Database File" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_pcidsk.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/pcidsk.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pix" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,

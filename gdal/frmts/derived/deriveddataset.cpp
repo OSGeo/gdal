@@ -213,7 +213,7 @@ void GDALRegister_Derived()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
 #endif
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Derived datasets using VRT pixel functions" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_derived.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/derived.html" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "NO" );
 
     poDriver->pfnOpen = DerivedDataset::Open;

@@ -36,6 +36,8 @@
 #include "gmlreader.h"
 #include "gmlutils.h"
 
+#include <memory>
+
 class OGRGMLDataSource;
 
 typedef enum
@@ -103,7 +105,7 @@ class OGRGMLLayer final: public OGRLayer
 
 class OGRGMLDataSource final: public OGRDataSource
 {
-    OGRGMLLayer     **papoLayers;
+    OGRLayer          **papoLayers;
     int                 nLayers;
 
     char                *pszName;
@@ -155,6 +157,9 @@ class OGRGMLDataSource final: public OGRDataSource
     OGRGMLLayer        *poLastReadLayer;
 
     bool                bEmptyAsNull;
+
+    OGRSpatialReference m_oStandaloneGeomSRS{};
+    std::unique_ptr<OGRGeometry> m_poStandaloneGeom{};
 
     void                FindAndParseTopElements(VSILFILE* fp);
     void                SetExtents(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);

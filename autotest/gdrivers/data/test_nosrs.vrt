@@ -1,0 +1,17 @@
+<VRTDataset rasterXSize="20" rasterYSize="20">
+    <VRTRasterBand dataType="Byte" band="1">
+        <ColorInterp>Gray</ColorInterp>
+        <SimpleSource>
+        <SourceFilename relativeToVRT="1">byte.tif</SourceFilename>
+        <SourceBand>1</SourceBand>
+        <SrcRect xOff="0" yOff="0" xSize="20" ySize="20"/>
+        <DstRect xOff="0" yOff="0" xSize="20" ySize="20"/>
+        </SimpleSource>
+    </VRTRasterBand>
+    <GCPList>
+        <GCP Id="1" Pixel="0" Line="0" X="0" Y="0"/>
+        <GCP Id="2" Pixel="0" Line="50" X="0" Y="50"/>
+        <GCP Id="3" Pixel="50" Line="50" X="50" Y="50"/>
+        <GCP Id="4" Pixel="50" Line="0" X="50" Y="0"/>
+    </GCPList>
+</VRTDataset>

@@ -457,7 +457,6 @@ class OGRPGDataSource final: public OGRDataSource
     int                 nLayers;
 
     char               *pszName;
-    char               *pszDBName;
 
     int                 bDSUpdate;
     int                 bHavePostGIS;

@@ -1004,7 +1004,7 @@ CPLErr GDALDataset::SetProjection( const char *pszProjection )
     {
         OGRSpatialReference oSRS;
         oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        if( oSRS.importFromWkt(pszProjection) != OGRERR_NONE )
+        if( oSRS.SetFromUserInput(pszProjection) != OGRERR_NONE )
         {
             return CE_Failure;
         }

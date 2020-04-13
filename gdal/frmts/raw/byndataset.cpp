@@ -894,7 +894,7 @@ void GDALRegister_BYN()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Natural Resources Canada's Geoid" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "byn err" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_byn.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/byn.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Int16 Int32" );
 
     poDriver->pfnOpen = BYNDataset::Open;

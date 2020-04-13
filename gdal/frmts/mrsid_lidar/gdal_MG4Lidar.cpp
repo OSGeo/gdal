@@ -927,7 +927,7 @@ void GDALRegister_MG4Lidar()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "MrSID Generation 4 / Lidar (.sid)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,  "frmt_mrsid_lidar.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,  "drivers/raster/mg4lidar.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "view" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Float64" );

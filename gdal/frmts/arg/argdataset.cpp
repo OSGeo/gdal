@@ -804,7 +804,7 @@ void GDALRegister_ARG()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Azavea Raster Grid format" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#ARG" );
+                               "drivers/raster/arg.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnIdentify = ARGDataset::Identify;

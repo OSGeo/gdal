@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Project:  ElasticSearch Translator
+ * Project:  Elasticsearch Translator
  * Purpose:
  * Author:
  *

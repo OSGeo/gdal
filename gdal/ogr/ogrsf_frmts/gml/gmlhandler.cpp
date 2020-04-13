@@ -473,6 +473,16 @@ static const char* const apszGMLGeometryElements[] =
     static_cast<int>(sizeof(apszGMLGeometryElements) / \
                      sizeof(apszGMLGeometryElements[0]))
 
+bool OGRGMLIsGeometryElement(const char* pszElement)
+{
+    for( const auto& pszGMLElement: apszGMLGeometryElements )
+    {
+        if( strcmp(pszElement, pszGMLElement) == 0 )
+            return true;
+    }
+    return false;
+}
+
 struct _GeometryNamesStruct {
     unsigned long nHash;
     const char   *pszName;
@@ -1432,23 +1442,10 @@ CPLXMLNode* GMLHandler::ParseAIXMElevationPoint(CPLXMLNode *psGML)
 
     const char* pszPos = CPLGetXMLValue( psGML, "pos", nullptr );
     const char* pszCoordinates = CPLGetXMLValue( psGML, "coordinates", nullptr );
-    if (pszPos != nullptr)
+    if (pszPos != nullptr || pszCoordinates != nullptr)
     {
-        char* pszGeometry = CPLStrdup(CPLSPrintf(
-            "<gml:Point><gml:pos>%s</gml:pos></gml:Point>",
-                                                    pszPos));
-        CPLDestroyXMLNode(psGML);
-        psGML = CPLParseXMLString(pszGeometry);
-        CPLFree(pszGeometry);
-    }
-    else if (pszCoordinates != nullptr)
-    {
-        char* pszGeometry = CPLStrdup(CPLSPrintf(
-            "<gml:Point><gml:coordinates>%s</gml:coordinates></gml:Point>",
-                                            pszCoordinates));
-        CPLDestroyXMLNode(psGML);
-        psGML = CPLParseXMLString(pszGeometry);
-        CPLFree(pszGeometry);
+        CPLFree(psGML->pszValue);
+        psGML->pszValue = CPLStrdup("gml:Point");
     }
     else
     {

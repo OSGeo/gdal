@@ -1755,7 +1755,11 @@ def VectorTranslateOptions(options=None, format=None,
         if layerName is not None:
             new_options += ['-nln', layerName]
         if geometryType is not None:
-            new_options += ['-nlt', geometryType]
+            if _is_str_or_unicode(geometryType):
+                new_options += ['-nlt', geometryType]
+            else:
+                for opt in geometryType:
+                    new_options += ['-nlt', opt]
         if dim is not None:
             new_options += ['-dim', dim]
         if zField is not None:
@@ -2065,6 +2069,7 @@ def RasterizeOptions(options=None, format=None,
          bands=None, inverse=False, allTouched=False,
          burnValues=None, attribute=None, useZ=False, layers=None,
          SQLStatement=None, SQLDialect=None, where=None, optim=None,
+         add=None,
          callback=None, callback_data=None):
     """ Create a RasterizeOptions() object that can be passed to gdal.Rasterize()
         Keyword arguments are :
@@ -2091,6 +2096,8 @@ def RasterizeOptions(options=None, format=None,
           SQLStatement --- SQL statement to apply to the source dataset
           SQLDialect --- SQL dialect ('OGRSQL', 'SQLITE', ...)
           where --- WHERE clause to apply to source layer(s)
+          optim --- optimization mode ('RASTER', 'VECTOR')
+          add --- set to True to use additive mode instead of replace when burning values
           callback --- callback method
           callback_data --- user data for callback
     """
@@ -2161,6 +2168,8 @@ def RasterizeOptions(options=None, format=None,
             new_options += ['-where', str(where)]
         if optim is not None:
             new_options += ['-optim', str(optim)]
+        if add:
+            new_options += ['-add']
 
     return (GDALRasterizeOptions(new_options), callback, callback_data)
 

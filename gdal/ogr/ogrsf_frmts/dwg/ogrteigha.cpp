@@ -61,8 +61,14 @@ static void OGRTEIGHAErrorHandler( OdResult oResult )
 #ifndef _TOOLKIT_IN_DLL_
 // Define module map for statically linked modules:
 ODRX_DECLARE_STATIC_MODULE_ENTRY_POINT(OdDgnModule);
+ODRX_DECLARE_STATIC_MODULE_ENTRY_POINT(BitmapModule);
+ODRX_DECLARE_STATIC_MODULE_ENTRY_POINT(OdRecomputeDimBlockModule);
+ODRX_DECLARE_STATIC_MODULE_ENTRY_POINT(ModelerModule);
 ODRX_BEGIN_STATIC_MODULE_MAP()
-ODRX_DEFINE_STATIC_APPMODULE(L"TG_Db", OdDgnModule)
+    ODRX_DEFINE_STATIC_APPMODULE(L"TG_Db", OdDgnModule)
+    ODRX_DEFINE_STATIC_APPMODULE(OdWinBitmapModuleName, BitmapModule)
+    ODRX_DEFINE_STATIC_APPMODULE(OdRecomputeDimBlockModuleName, OdRecomputeDimBlockModule)
+    ODRX_DEFINE_STATIC_APPMODULE(OdModelerGeometryModuleName, ModelerModule)
 ODRX_END_STATIC_MODULE_MAP()
 #endif
 
@@ -99,6 +105,11 @@ bool OGRTEIGHAInitialize()
         ::odrxDynamicLinker()->loadModule(L"TG_Db", false);
 
         bInitSuccess = true;
+    }
+    catch ( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "An exception occurred in OGRTEIGHAInitialize(): %S", e.what());
     }
     catch ( ... )
     {

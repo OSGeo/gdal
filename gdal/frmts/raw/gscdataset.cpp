@@ -227,8 +227,8 @@ void GDALRegister_GSC()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "GSC Geogrid" );
-    // poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-    //                            "frmt_various.html#GSC" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                               "drivers/raster/gsc.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = GSCDataset::Open;

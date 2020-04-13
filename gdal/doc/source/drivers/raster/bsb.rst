@@ -34,3 +34,18 @@ Driver capabilities
 .. supports_georeferencing::
 
 .. supports_virtualio::
+
+Metadata
+--------
+
+The following metadata items may be reported:
+
+- **BSB_KNP**: content of the KNP/ header field, giving information on the
+  coordinate reference system.
+
+- **BSB_KNQ**: content of the KNQ/ header field, giving information on the
+  coordinate reference system.
+
+- **BSB_CUTLINE**: (starting with GDAL 3.1). When PLY/ header is present,
+  Well-Known text representation of a polygon with coordinates in longitude,
+  latitude order, representing the cutline of the chart.

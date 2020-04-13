@@ -3555,7 +3555,7 @@ void GDALRegister_ECW()
     osLongName += ")";
 
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, osLongName );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_ecw.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/ecw.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ecw" );
 
     poDriver->pfnIdentify = ECWDataset::IdentifyECW;
@@ -3652,7 +3652,7 @@ void GDALRegister_JP2ECW()
     osLongName += ")";
 
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, osLongName );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jp2ecw.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/jp2ecw.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

@@ -913,7 +913,7 @@ void GDALRegister_GenBin()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Generic Binary (.hdr Labelled)" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#GenBin" );
+                               "drivers/raster/genbin.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = GenBinDataset::Open;

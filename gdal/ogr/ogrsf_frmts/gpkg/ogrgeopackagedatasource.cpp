@@ -323,6 +323,7 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId)
     }
 
     SQLResultFree(&oResult);
+    poSpatialRef->StripTOWGS84IfKnownDatumAndAllowed();
     m_oMapSrsIdToSrs[iSrsId] = poSpatialRef;
     poSpatialRef->Reference();
     return poSpatialRef;
@@ -1394,12 +1395,21 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                 const char* pszM = SQLResultGetValue(&oResult, 6, i);
                 bool bIsInGpkgContents = CPL_TO_BOOL(SQLResultGetValueAsInteger(&oResult, 11, i));
                 OGRGeoPackageTableLayer *poLayer = new OGRGeoPackageTableLayer(this, pszTableName);
+                bool bHasZ = pszZ && atoi(pszZ) > 0;
+                bool bHasM = pszM && atoi(pszM) > 0;
+                if( pszGeomType && EQUAL(pszGeomType, "GEOMETRY") )
+                {
+                    if( pszZ && atoi(pszZ) == 2 )
+                        bHasZ = false;
+                    if( pszM && atoi(pszM) == 2 )
+                        bHasM = false;
+                }
                 poLayer->SetOpeningParameters(bIsInGpkgContents,
                                               bIsSpatial,
                                               pszGeomColName,
                                               pszGeomType,
-                                              pszZ && atoi(pszZ) > 0,
-                                              pszM && atoi(pszM) > 0);
+                                              bHasZ,
+                                              bHasM);
                 m_papoLayers[m_nLayers++] = poLayer;
             }
         }

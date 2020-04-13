@@ -324,20 +324,6 @@ dnl We need the following lines for libtiff too.
 HAVE_IEEEFP=1
 AC_DEFINE_UNQUOTED(HAVE_IEEEFP, $HAVE_IEEEFP, [Define as 0 or 1 according to the floating point format supported by the machine])
 
-dnl Check the native cpu bit order (also libtiff stuff).
-AC_MSG_CHECKING([native cpu bit order])
-case "$host_cpu" in
-    i*86*|x86_64*)
-        HOST_FILLORDER=FILLORDER_LSB2MSB
-	AC_MSG_RESULT([lsb2msb])
-	;;
-    *)
-	HOST_FILLORDER=FILLORDER_MSB2LSB
-	AC_MSG_RESULT([msb2lsb])
-        ;;
-esac
-AC_DEFINE_UNQUOTED(HOST_FILLORDER, $HOST_FILLORDER, [Set the native cpu bit order (FILLORDER_LSB2MSB or FILLORDER_MSB2LSB)])
-
 dnl Checks for library functions.
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(snprintf vsnprintf)
@@ -1263,6 +1249,13 @@ else
     AC_LANG_POP([C++])
     if test "$PROJ_FOUND" = "no"; then
         LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
+        unset ac_cv_lib_proj_proj_create_from_wkt
+        AC_LANG_PUSH([C++])
+        AC_CHECK_LIB(proj,proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
+        AC_LANG_POP([C++])
+    fi
+    if test "$PROJ_FOUND" = "no"; then
+        LIBS="-L$with_proj/lib64 -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         unset ac_cv_lib_proj_proj_create_from_wkt
         AC_LANG_PUSH([C++])
         AC_CHECK_LIB(proj,proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)

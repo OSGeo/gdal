@@ -153,7 +153,7 @@ struct GDALWarpAppOptions
 
     /*! the resampling method. Available methods are: near, bilinear,
         cubic, cubicspline, lanczos, average, mode, max, min, med,
-        q1, q3 */
+        q1, q3, sum */
     GDALResampleAlg eResampleAlg;
 
     /*! nodata masking values for input bands (different values can be supplied
@@ -4344,6 +4344,8 @@ static bool GetResampleAlg(const char* pszResampling,
         eResampleAlg = GRA_Q1;
     else if ( EQUAL(pszResampling, "q3") )
         eResampleAlg = GRA_Q3;
+    else if ( EQUAL(pszResampling, "sum") )
+        eResampleAlg = GRA_Sum;
     else
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Unknown resampling method: %s.",

@@ -1490,7 +1490,7 @@ void GDALRegister_PLMOSAIC()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Planet Labs Mosaics API" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_plmosaic.html" );
+                               "drivers/raster/plmosaic.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "PLMOSAIC:" );
 

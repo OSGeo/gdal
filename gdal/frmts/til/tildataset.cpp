@@ -489,7 +489,7 @@ void GDALRegister_TIL()
     poDriver->SetDescription( "TIL" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "EarthWatch .TIL" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_til.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/til.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = TILDataset::Open;

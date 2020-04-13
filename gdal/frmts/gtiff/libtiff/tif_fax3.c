@@ -305,7 +305,9 @@ Fax3Decode2D(TIFF* tif, uint8* buf, tmsize_t occ, uint16 s)
 		else
 			EXPAND2D(EOF2Da);
 		(*sp->fill)(buf, thisrun, pa, lastx);
-		SETVALUE(0);		/* imaginary change for reference */
+		if (pa < thisrun + sp->nruns) {
+			SETVALUE(0);	/* imaginary change for reference */
+		}
 		SWAP(uint32*, sp->curruns, sp->refruns);
 		buf += sp->b.rowbytes;
 		occ -= sp->b.rowbytes;

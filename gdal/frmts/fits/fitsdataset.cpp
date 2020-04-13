@@ -1579,7 +1579,7 @@ void GDALRegister_FITS()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Flexible Image Transport System" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#FITS" );
+                               "drivers/raster/fits.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte UInt16 Int16 UInt32 Int32 Float32 Float64" );
 

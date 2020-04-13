@@ -474,6 +474,19 @@ def test_jp2kak_odd_dimensions():
 
     assert cs == 29642
 
+###############################################################################
+# Test reading an image whose origin is not (0,0)
+
+
+def test_jp2kak_image_origin_not_zero():
+
+    if gdaltest.jp2kak_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/byte_image_origin_not_zero.jp2')
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    assert ds.GetRasterBand(1).ReadRaster(0,0,20,20,10,10) is not None
+
 
 ###############################################################################
 # Cleanup.

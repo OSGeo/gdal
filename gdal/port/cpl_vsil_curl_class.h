@@ -228,6 +228,9 @@ public:
 
     const char* GetOptions() override;
 
+    char** GetFileMetadata( const char * pszFilename, const char* pszDomain,
+                            CSLConstList papszOptions ) override;
+
     char **ReadDirInternal( const char *pszDirname, int nMaxFiles,
                             bool* pbGotFileList );
     void InvalidateDirContent( const char *pszDirname );
@@ -295,6 +298,8 @@ class VSICurlHandle : public VSIVirtualHandle
     int                 m_nMaxRetry = 0;
     double              m_dfRetryDelay = 0.0;
 
+    CPLStringList       m_aosHeaders{};
+
     void                DownloadRegionPostProcess( const vsi_l_offset startOffset,
                                                    const int nBlocks,
                                                    const char* pBuffer,
@@ -346,11 +351,12 @@ class VSICurlHandle : public VSIVirtualHandle
     int Close() override;
 
     bool IsKnownFileSize() const { return oFileProp.bHasComputedFileSize; }
-    vsi_l_offset         GetFileSize() { return GetFileSize(false); }
-    virtual vsi_l_offset GetFileSize( bool bSetError );
+    vsi_l_offset         GetFileSizeOrHeaders(bool bSetError, bool bGetHeaders);
+    virtual vsi_l_offset GetFileSize( bool bSetError ) { return GetFileSizeOrHeaders(bSetError, false); }
     bool                 Exists( bool bSetError );
     bool                 IsDirectory() const { return oFileProp.bIsDirectory; }
     time_t               GetMTime() const { return oFileProp.mTime; }
+    const CPLStringList& GetHeaders() { return m_aosHeaders; }
 
     int                  InstallReadCbk( VSICurlReadCbkFunc pfnReadCbk,
                                          void* pfnUserData,
@@ -384,7 +390,8 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
     virtual IVSIS3LikeHandleHelper* CreateHandleHelper(
             const char* pszURI, bool bAllowNoObject) = 0;
 
-    virtual int      CopyObject( const char *oldpath, const char *newpath );
+    virtual int      CopyObject( const char *oldpath, const char *newpath,
+                                 CSLConstList papszMetadata );
 
     IVSIS3LikeFSHandler() = default;
 
@@ -572,6 +579,24 @@ class VSIAppendWriteHandle : public VSIVirtualHandle
         int  Close() override;
 
         bool              IsOK() { return m_pabyBuffer != nullptr; }
+};
+
+/************************************************************************/
+/*                         CurlRequestHelper                            */
+/************************************************************************/
+
+struct CurlRequestHelper
+{
+    WriteFuncStruct sWriteFuncData{};
+    WriteFuncStruct sWriteFuncHeaderData{};
+    char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
+
+    CurlRequestHelper();
+    ~CurlRequestHelper();
+    long perform(CURL* hCurlHandle,
+                 struct curl_slist* headers, // ownership transfered
+                 VSICurlFilesystemHandler *poFS,
+                 IVSIS3LikeHandleHelper *poS3HandleHelper);
 };
 
 int VSICURLGetDownloadChunkSize();

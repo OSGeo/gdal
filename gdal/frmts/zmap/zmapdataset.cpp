@@ -724,7 +724,7 @@ void GDALRegister_ZMap()
     poDriver->SetDescription( "ZMap" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ZMap Plus Grid" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#ZMap" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/zmap.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dat" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

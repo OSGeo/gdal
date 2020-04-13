@@ -1556,7 +1556,7 @@ def test_ogr_mitab_35():
     assert coordsys == 'CoordSys NonEarth Units "m"'
     srs = get_srs_from_coordsys(coordsys)
     wkt = srs.ExportToWkt()
-    assert wkt == 'LOCAL_CS["Nonearth",UNIT["Meter",1]]'
+    assert wkt in ('LOCAL_CS["Nonearth",UNIT["Meter",1]]', 'LOCAL_CS["Nonearth",UNIT["Meter",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]')
 
     # Test units
     for mif_unit in ['mi', 'km', 'in', 'ft', 'yd', 'mm', 'cm', 'm', 'survey ft', 'nmi', 'li', 'ch', 'rd']:
@@ -1637,7 +1637,7 @@ def test_ogr_mitab_35():
     assert coordsys == 'CoordSys Earth Projection 1, 103'
     srs = get_srs_from_coordsys(coordsys)
     wkt = srs.ExportToWkt()
-    assert wkt == 'GEOGCS["unnamed",DATUM["WGS_1972",SPHEROID["WGS 72",6378135,298.26]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]'
+    assert wkt in ('GEOGCS["unnamed",DATUM["WGS_1972",SPHEROID["WGS 72",6378135,298.26]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]', 'GEOGCS["unnamed",DATUM["World_Geodetic_System_1972",SPHEROID["WGS 72",6378135,298.26]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]')
     coordsys = get_coordsys_from_srs(srs)
     assert coordsys == 'CoordSys Earth Projection 1, 103'
 

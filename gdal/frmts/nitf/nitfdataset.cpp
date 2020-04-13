@@ -6162,7 +6162,7 @@ void GDALRegister_NITF()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "National Imagery Transmission Format" );
 
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_nitf.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/nitf.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ntf" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,

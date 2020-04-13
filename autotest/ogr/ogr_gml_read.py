@@ -3597,6 +3597,20 @@ def test_ogr_gml_featuretype_suffix_in_xsd():
     gdal.Unlink('data/arcgis-world-wfs.gfs')
 
 ###############################################################################
+
+
+def test_ogr_gml_standalone_geom():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    ds = ogr.Open('data/standalone_geometry.gml')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == 'POLYGON ((2 49,3 49,3 48,2 48,2 49))'
+
+
+###############################################################################
 #  Cleanup
 
 

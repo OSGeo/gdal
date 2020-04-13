@@ -19926,7 +19926,7 @@ void GDALRegister_GTiff()
     poDriver->SetDescription( "GTiff" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoTIFF" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_gtiff.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/gtiff.html" );
     poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/tiff" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "tif" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "tif tiff" );

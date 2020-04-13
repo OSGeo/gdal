@@ -362,13 +362,23 @@ def test_tiff_srs_imagine_localcs_citation():
 # override the default coming from EPSG
 
 
-def test_tiff_srs_towgs84_override():
+def test_tiff_srs_towgs84_override_OSR_STRIP_TOWGS84_NO():
+
+    with gdaltest.config_option('OSR_STRIP_TOWGS84', 'NO'):
+        ds = gdal.Open('data/gtiff_towgs84_override.tif')
+        wkt = ds.GetProjectionRef()
+    ds = None
+
+    assert 'TOWGS84[584.8,67,400.3,0.105,0.013,-2.378,10.29]' in wkt, wkt
+
+
+def test_tiff_srs_towgs84_override_OSR_STRIP_TOWGS84_default():
 
     ds = gdal.Open('data/gtiff_towgs84_override.tif')
     wkt = ds.GetProjectionRef()
     ds = None
 
-    assert 'TOWGS84[584.8,67,400.3,0.105,0.013,-2.378,10.29]' in wkt, wkt
+    assert 'TOWGS84' not in wkt
 
 ###############################################################################
 # Test reading PCSCitationGeoKey (#7199)
@@ -689,9 +699,10 @@ def test_tiff_srs_towgs84_from_epsg_force_write_it():
         ds.SetSpatialRef(srs_in)
         ds = None
 
-    ds = gdal.Open(filename)
-    with gdaltest.config_option('OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG', 'NO'):
-        srs = ds.GetSpatialRef()
+    with gdaltest.config_option('OSR_STRIP_TOWGS84', 'NO'):
+        ds = gdal.Open(filename)
+        with gdaltest.config_option('OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG', 'NO'):
+            srs = ds.GetSpatialRef()
     assert srs.HasTOWGS84()
 
 
@@ -726,8 +737,9 @@ def test_tiff_srs_towgs84_with_epsg_code_but_non_default_TOWGS84():
     ds.SetSpatialRef(srs_in)
     ds = None
 
-    ds = gdal.Open(filename)
-    srs = ds.GetSpatialRef()
+    with gdaltest.config_option('OSR_STRIP_TOWGS84', 'NO'):
+        ds = gdal.Open(filename)
+        srs = ds.GetSpatialRef()
     assert srs.GetTOWGS84() == (1,2,3,4,5,6,7)
 
 
@@ -752,3 +764,14 @@ def test_tiff_srs_read_epsg26730_with_linear_units_set():
     ds = gdal.Open('data/epsg26730_with_linear_units_set.tif')
     sr = ds.GetSpatialRef()
     assert sr.GetAuthorityCode(None) == '26730'
+
+
+def test_tiff_srs_read_user_defined_geokeys():
+    if int(gdal.GetDriverByName('GTiff').GetMetadataItem('LIBGEOTIFF')) < 1600:
+        pytest.skip()
+
+    gdal.ErrorReset()
+    ds = gdal.Open('data/byte_user_defined_geokeys.tif')
+    sr = ds.GetSpatialRef()
+    assert gdal.GetLastErrorMsg() == ''
+    assert sr is not None

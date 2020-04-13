@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Project:  ElasticSearch Translator
+ * Project:  Elasticsearch Translator
  * Purpose:
  * Author:
  *
@@ -2093,7 +2093,7 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                     {
                         json_object *geometry = json_object_new_object();
                         json_object_object_add(poContainer, pszLastComponent, geometry);
-                        json_object_object_add(geometry, "type", json_object_new_string("POINT"));
+                        json_object_object_add(geometry, "type", json_object_new_string("Point"));
                         json_object_object_add(geometry, "coordinates", coordinates);
                     }
                     else
@@ -3187,7 +3187,7 @@ OGRErr OGRElasticLayer::SetAttributeFilter(const char* pszFilter)
         if( !m_osESSearch.empty() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                "Setting an ElasticSearch filter on a resulting layer "
+                "Setting an Elasticsearch filter on a resulting layer "
                 "is not supported");
             return OGRERR_FAILURE;
         }

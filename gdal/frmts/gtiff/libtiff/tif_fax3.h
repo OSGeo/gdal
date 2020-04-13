@@ -390,8 +390,8 @@ done1d:									\
 	if (pa >= thisrun + sp->nruns) {				\
 		TIFFErrorExt(tif->tif_clientdata, module, "Buffer overflow at line %u of %s %u",	\
 		             sp->line, isTiled(tif) ? "tile" : "strip", isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);	\
-		break;					\
-	}									\
+		return (-1);						\
+	}								\
 	LOOKUP8(7, TIFFFaxMainTable, eof2d);				\
 	switch (TabEnt->State) {					\
 	case S_Pass:							\
@@ -514,9 +514,9 @@ done1d:									\
 	    goto eol2d;							\
 	eof2d:								\
 	    prematureEOF(a0);						\
-		if (pa < thisrun + sp->nruns) {	\
+		if (pa < thisrun + sp->nruns) {				\
 		    CLEANUP_RUNS();					\
-		}								\
+		}							\
 	    goto eoflab;						\
 	}								\
     }									\
@@ -531,9 +531,12 @@ done1d:									\
 	SETVALUE(0);							\
     }									\
 eol2d:									\
-    CLEANUP_RUNS();							\
+    if (pa < thisrun + sp->nruns) {					\
+	CLEANUP_RUNS();							\
+    }									\
 } while (0)
 #endif /* _FAX3_ */
+/* vim: set ts=8 sts=4 sw=4 noet: */
 /*
  * Local Variables:
  * mode: c

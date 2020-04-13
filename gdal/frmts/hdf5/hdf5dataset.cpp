@@ -99,7 +99,7 @@ void GDALRegister_HDF5()
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
                               "Hierarchical Data Format Release 5");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_hdf5.html");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/hdf5.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "h5 hdf5");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

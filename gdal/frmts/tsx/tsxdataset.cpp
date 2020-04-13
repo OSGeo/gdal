@@ -802,7 +802,7 @@ void GDALRegister_TSX()
     poDriver->SetDescription( "TSX" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "TerraSAR-X Product" );
-    // poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_tsx.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/tsx.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = TSXDataset::Open;

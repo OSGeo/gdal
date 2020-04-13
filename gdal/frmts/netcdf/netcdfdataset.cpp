@@ -3485,13 +3485,6 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
 
         if( !poDS->bSwitchedXY )
         {
-            // Check for bottom-up from the Y-axis order.
-            // See bugs #4284 and #4251.
-            poDS->bBottomUp = (pdfYCoord[0] <= pdfYCoord[1]);
-
-            CPLDebug("GDAL_netCDF", "set bBottomUp = %d from Y axis",
-                    static_cast<int>(poDS->bBottomUp));
-
             // Convert ]180,540] longitude values to ]-180,0].
             if( NCDFIsVarLongitude(nGroupDimXID, nVarDimXID, nullptr) &&
                 CPLTestBool(CPLGetConfigOption("GDAL_NETCDF_CENTERLONG_180",
@@ -3706,14 +3699,6 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                 node_offset = 0;
             }
 
-            // Check for reverse order of y-coordinate.
-            if( !bSwitchedXY && yMinMax[0] > yMinMax[1] )
-            {
-                const double dfTmp = yMinMax[0];
-                yMinMax[0] = yMinMax[1];
-                yMinMax[1] = dfTmp;
-            }
-
             double dfCoordOffset = 0.0;
             double dfCoordScale = 1.0;
             if( !nc_get_att_double(nGroupId, nVarDimXID,
@@ -3734,6 +3719,17 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                 yMinMax[1] = dfCoordOffset + yMinMax[1] * dfCoordScale;
             }
 
+            // Check for reverse order of y-coordinate.
+            if( !bSwitchedXY )
+            {
+                poDS->bBottomUp = (yMinMax[0] <= yMinMax[1]);
+                CPLDebug("GDAL_netCDF", "set bBottomUp = %d from Y axis",
+                        static_cast<int>(poDS->bBottomUp));
+                if( !poDS->bBottomUp )
+                {
+                    std::swap(yMinMax[0], yMinMax[1]);
+                }
+            }
 
             // Geostationary satellites can specify units in (micro)radians
             // So we check if they do, and if so convert to linear units (meters)
@@ -9102,7 +9098,7 @@ void GDALRegister_netCDF()
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Network Common Data Format");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_netcdf.html");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/netcdf.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "nc");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"

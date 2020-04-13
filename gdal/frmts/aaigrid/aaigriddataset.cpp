@@ -1506,7 +1506,7 @@ void GDALRegister_AAIGrid()
     poDriver->SetDescription("AAIGrid");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Arc/Info ASCII Grid");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_various.html#AAIGrid");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/aaigrid.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "asc");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
                               "Byte UInt16 Int16 Int32 Float32");
@@ -1550,7 +1550,7 @@ void GDALRegister_GRASSASCIIGrid()
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "GRASS ASCII Grid");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-                              "frmt_various.html#GRASSASCIIGrid");
+                              "drivers/raster/grassasciigrid.html");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
@@ -1576,7 +1576,7 @@ void GDALRegister_ISG()
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "International Service for the Geoid");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-                              "isg.html");
+                              "drivers/raster/isg.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "isg");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");

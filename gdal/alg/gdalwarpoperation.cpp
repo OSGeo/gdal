@@ -267,7 +267,8 @@ int GDALWarpOperation::ValidateOptions()
         && psOptions->eResampleAlg != GRA_Min
         && psOptions->eResampleAlg != GRA_Med
         && psOptions->eResampleAlg != GRA_Q1
-        && psOptions->eResampleAlg != GRA_Q3)
+        && psOptions->eResampleAlg != GRA_Q3
+        && psOptions->eResampleAlg != GRA_Sum)
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "GDALWarpOptions.Validate(): "

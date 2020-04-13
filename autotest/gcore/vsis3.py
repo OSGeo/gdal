@@ -2573,6 +2573,95 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size_failure():
     gdal.RmdirRecursive('/vsimem/test')
 
 ###############################################################################
+# Test reading/writing metadata
+
+
+def test_vsis3_metadata():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    # Read HEADERS domain
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test_metadata/foo.txt', 200, {'foo': 'bar'})
+    with webserver.install_http_handler(handler):
+        md = gdal.GetFileMetadata('/vsis3/test_metadata/foo.txt', 'HEADERS')
+    assert 'foo' in md and md['foo'] == 'bar'
+
+    # Read TAGS domain
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test_metadata/foo.txt?tagging', 200, {},
+                """<Tagging><TagSet><Tag><Key>foo</Key><Value>bar</Value></Tag></TagSet></Tagging>""")
+    with webserver.install_http_handler(handler):
+        md = gdal.GetFileMetadata('/vsis3/test_metadata/foo.txt', 'TAGS')
+    assert 'foo' in md and md['foo'] == 'bar'
+
+    # Write HEADERS domain
+    handler = webserver.SequentialHandler()
+
+    def method(request):
+        if request.headers['foo'] != 'bar':
+            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+            request.send_response(400)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
+            return
+        request.send_response(200)
+        request.end_headers()
+
+    handler.add('PUT', '/test_metadata/foo.txt', custom_method=method)
+    with webserver.install_http_handler(handler):
+        assert gdal.SetFileMetadata('/vsis3/test_metadata/foo.txt', {'foo': 'bar'}, 'HEADERS')
+
+
+    # Write TAGS domain
+    handler = webserver.SequentialHandler()
+
+    def method(request):
+        request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
+
+        content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
+        if content != """<?xml version="1.0" encoding="UTF-8"?>
+<Tagging xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <TagSet>
+    <Tag>
+      <Key>foo</Key>
+      <Value>bar</Value>
+    </Tag>
+  </TagSet>
+</Tagging>
+""":
+            sys.stderr.write('Did not get expected content: %s\n' % content)
+            request.send_response(400)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
+            return
+
+        request.send_response(200)
+        request.send_header('Content-Length', 0)
+        request.end_headers()
+
+    handler.add('PUT', '/test_metadata/foo.txt?tagging', custom_method=method)
+    with webserver.install_http_handler(handler):
+        assert gdal.SetFileMetadata('/vsis3/test_metadata/foo.txt', {'foo': 'bar'}, 'TAGS')
+
+    # Write TAGS domain (wiping tags)
+    handler = webserver.SequentialHandler()
+    handler.add('DELETE', '/test_metadata/foo.txt?tagging', 204)
+    with webserver.install_http_handler(handler):
+        assert gdal.SetFileMetadata('/vsis3/test_metadata/foo.txt', {}, 'TAGS')
+
+    # Error case
+    with gdaltest.error_handler():
+        assert gdal.GetFileMetadata('/vsis3/test_metadata/foo.txt', 'UNSUPPORTED') == {}
+
+    # Error case
+    with gdaltest.error_handler():
+        assert not gdal.SetFileMetadata('/vsis3/test_metadata/foo.txt', {}, 'UNSUPPORTED')
+
+###############################################################################
 # Read credentials from simulated ~/.aws/credentials
 
 

@@ -38,6 +38,19 @@ from osgeo import gdal      # noqa
 import test_py_scripts      # noqa  # pylint: disable=E0401
 import pytest
 
+def _verify_raster_band_checksums(filename, expected_cs=[]):
+    ds = gdal.Open(filename)
+    if ds is None:
+        pytest.fail('cannot open output file "%s"' % filename)
+    
+    num_bands = len(expected_cs)
+    for i in range(num_bands):
+        if ds.GetRasterBand(i + 1).Checksum() != expected_cs[i]:
+            for j in range(num_bands):
+                print(ds.GetRasterBand(j + 1).Checksum())
+            pytest.fail('wrong checksum for band %d (file %s)' % (i + 1, filename))
+
+    ds = None
 
 def test_gdal2tiles_py_simple():
     script_path = test_py_scripts.get_py_script('gdal2tiles')
@@ -55,16 +68,10 @@ def test_gdal2tiles_py_simple():
 
     os.unlink('tmp/out_gdal2tiles_smallworld.tif')
 
-    ds = gdal.Open('tmp/out_gdal2tiles_smallworld/0/0/0.png')
-
-    expected_cs = [25314, 28114, 6148, 59026]
-    for i in range(4):
-        if ds.GetRasterBand(i + 1).Checksum() != expected_cs[i]:
-            for j in range(4):
-                print(ds.GetRasterBand(j + 1).Checksum())
-            pytest.fail('wrong checksum for band %d' % (i + 1))
-
-    ds = None
+    _verify_raster_band_checksums(
+        'tmp/out_gdal2tiles_smallworld/0/0/0.png',
+        expected_cs = [25314, 28114, 6148, 59026]
+    )
 
     for filename in ['googlemaps.html', 'leaflet.html', 'openlayers.html', 'tilemapresource.xml']:
         assert os.path.exists('tmp/out_gdal2tiles_smallworld/' + filename), \
@@ -88,16 +95,10 @@ def test_gdal2tiles_py_zoom_option():
         'gdal2tiles',
         '-q --force-kml --processes=2 -z 0-1 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
 
-    ds = gdal.Open('tmp/out_gdal2tiles_smallworld/1/0/0.png')
-
-    expected_cs = [8130, 10496, 65274, 63715]
-    for i in range(4):
-        if ds.GetRasterBand(i + 1).Checksum() != expected_cs[i]:
-            for j in range(4):
-                print(ds.GetRasterBand(j + 1).Checksum())
-            pytest.fail('wrong checksum for band %d' % (i + 1))
-
-    ds = None
+    _verify_raster_band_checksums(
+        'tmp/out_gdal2tiles_smallworld/1/0/0.png',
+        expected_cs = [8130, 10496, 65274, 63715]
+    )
 
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/doc.kml')
     assert ds is not None, 'did not get kml'
@@ -139,6 +140,70 @@ def test_gdal2tiles_py_resampling_option():
             pytest.fail('resample option {0!r} failed'.format(resample))
         ds = None
 
+
+def test_gdal2tiles_py_xyz():
+    script_path = test_py_scripts.get_py_script('gdal2tiles')
+    if script_path is None:
+        pytest.skip()
+
+    shutil.copy('../gdrivers/data/small_world.tif', 'tmp/out_gdal2tiles_smallworld_xyz.tif')
+
+    os.chdir('tmp')
+    ret = test_py_scripts.run_py_script(
+        script_path,
+        'gdal2tiles',
+        '-q --xyz --zoom=0-1 out_gdal2tiles_smallworld_xyz.tif')
+    os.chdir('..')
+
+    assert 'ERROR ret code' not in ret
+
+    os.unlink('tmp/out_gdal2tiles_smallworld_xyz.tif')
+
+    _verify_raster_band_checksums(
+        'tmp/out_gdal2tiles_smallworld_xyz/0/0/0.png',
+        expected_cs = [30616, 31851, 9392, 63557]
+    )
+    _verify_raster_band_checksums(
+        'tmp/out_gdal2tiles_smallworld_xyz/1/0/0.png',
+        expected_cs = [25095, 27337, 10068, 63699]
+    )
+
+    for filename in ['googlemaps.html', 'leaflet.html', 'openlayers.html', 'tilemapresource.xml']:
+        assert os.path.exists('tmp/out_gdal2tiles_smallworld_xyz/' + filename), \
+            ('%s missing' % filename)
+
+
+def test_gdal2tiles_py_invalid_srs():
+    """
+    Case where the input image is not georeferenced, i.e. it's missing the SRS info,
+    and no --s_srs option is provided. The script should fail validation and terminate.
+    """
+    script_path = test_py_scripts.get_py_script('gdal2tiles')
+    if script_path is None:
+        pytest.skip()
+
+    shutil.copy('../gdrivers/data/test_nosrs.vrt', 'tmp/out_gdal2tiles_test_nosrs.vrt')
+    shutil.copy('../gdrivers/data/byte.tif', 'tmp/byte.tif')
+
+    os.chdir('tmp')
+    # try running on image with missing SRS
+    ret = test_py_scripts.run_py_script(
+        script_path,
+        'gdal2tiles',
+        '-q --zoom=0-1 out_gdal2tiles_test_nosrs.vrt')
+
+    # this time pass the spatial reference system via cli options
+    ret2 = test_py_scripts.run_py_script(
+        script_path,
+        'gdal2tiles',
+        '-q --zoom=0-1 --s_srs EPSG:4326 out_gdal2tiles_test_nosrs.vrt')
+    os.chdir('..')
+
+    os.unlink('tmp/out_gdal2tiles_test_nosrs.vrt')
+    os.unlink('tmp/byte.tif')
+
+    assert 'ERROR ret code = 2' in ret
+    assert 'ERROR ret code' not in ret2
 
 def test_does_not_error_when_source_bounds_close_to_tiles_bound():
     """
