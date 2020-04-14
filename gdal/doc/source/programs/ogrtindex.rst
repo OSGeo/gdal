@@ -27,7 +27,7 @@ Description
 
 :program:`ogrtindex` program can be used to create a tileindex - a file
 containing a list of the identities of a bunch of other files along with
-there spatial extents. This is primarily intended to be used with
+their spatial extents. This is primarily intended to be used with
 `MapServer <http://mapserver.org/>`__ for tiled access to layers using
 the OGR connection type.
 
