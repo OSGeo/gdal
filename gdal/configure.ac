@@ -1098,7 +1098,7 @@ dnl There may be others as well, that will need be addressed as they arise. We a
 dnl /usr/lib/* to avoid potential cases such as /usr/lib/mysql/lib, which might not have an /etc/ld.so.conf.d
 dnl entry and would not shadow any possible custom installs anyway:
 AC_DEFUN([STRIP_SYSTEM_LIBRARY_PATHS],[
-        STRIPPED_LIBRARY_NAME=`echo [$1] | sed -E -e 's:-L/(usr/)?(lib(64)?/*|lib/x86_64-linux-gnu) : :'`
+        STRIPPED_LIBRARY_NAME=`echo [$1] | sed -E -e 's:-L/(usr/)?(lib(64)?/*|lib/x86_64-linux-gnu)\s+::'`
         dnl If the above command did not remove the leading -L<libdir>, then <libdir> is a custom directory,
         dnl about which we might inform the linker.
         dnl "replace -L(non-space-chars)(space-chars)(anything) with just the first (non-space-chars)"
