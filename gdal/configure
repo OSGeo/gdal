@@ -34313,7 +34313,7 @@ $as_echo "no" >&6; }
 $as_echo "no, mysql is pre-4.x" >&6; }
   else
       HAVE_MYSQL=yes
-      MYSQL_LIB=`$MYSQL_CONFIG --libs`
+      MYSQL_LIB="`$MYSQL_CONFIG --libs`"
 
         STRIPPED_LIBRARY_NAME=`echo "${MYSQL_LIB}" | sed -E -e 's:-L/(usr/)?(lib(64)?/*|lib/x86_64-linux-gnu)\s+::'`
                                 custom_libdir=`echo "$STRIPPED_LIBRARY_NAME" | sed -E -e 's:-L(\S+)\s+.*:\1:'`

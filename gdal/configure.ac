@@ -3742,7 +3742,7 @@ else
     AC_MSG_RESULT([no, mysql is pre-4.x])
   else
       HAVE_MYSQL=yes
-      MYSQL_LIB=`$MYSQL_CONFIG --libs`
+      MYSQL_LIB="`$MYSQL_CONFIG --libs`"
       STRIP_SYSTEM_LIBRARY_PATHS("${MYSQL_LIB}")
       MYSQL_LIB=$STRIPPED_LIBRARY_NAME
       MYSQL_INC="`$MYSQL_CONFIG --include`"
