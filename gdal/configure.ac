@@ -1261,7 +1261,7 @@ else
     fi
   else
     ORIG_LIBS="$LIBS"
-    proj_libdir=$with_proj/lib
+    proj_libdir="$with_proj/lib"
     LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
     AC_LANG_PUSH([C++])
     AC_CHECK_LIB(proj,proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
@@ -1274,7 +1274,7 @@ else
         AC_LANG_POP([C++])
     fi
     if test "$PROJ_FOUND" = "no"; then
-        proj_libdir=$with_proj/lib64
+        proj_libdir="$with_proj/lib64"
         LIBS="-L$with_proj/lib64 -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         unset ac_cv_lib_proj_proj_create_from_wkt
         AC_LANG_PUSH([C++])
@@ -1282,7 +1282,7 @@ else
         AC_LANG_POP([C++])
     fi
     if test "$PROJ_FOUND" = "no"; then
-        proj_libdir=$with_proj/lib
+        proj_libdir="$with_proj/lib"
         LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         AC_LANG_PUSH([C++])
         AC_CHECK_LIB(proj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
@@ -1299,7 +1299,7 @@ else
         fi
     fi
     if test "$PROJ_FOUND" = "no"; then
-        proj_libdir=$with_proj/lib
+        proj_libdir="$with_proj/lib"
         LIBS="-L$with_proj/lib -linternalproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         AC_LANG_PUSH([C++])
         AC_CHECK_LIB(internalproj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
@@ -1317,7 +1317,7 @@ else
     fi
     if test "$PROJ_FOUND" = "no"; then
         AC_MSG_ERROR([PROJ 6 symbols not found])
-    elif test x$with_proj != x/usr -a x$with_proj != x/ ; then
+    elif test "x$with_proj" != "x/usr" -a "x$with_proj" != "x/" ; then
         LIBS="-Wl,-rpath=$proj_libdir $LIBS"
     fi
     if test -r "$with_proj/include/proj.h" ; then
