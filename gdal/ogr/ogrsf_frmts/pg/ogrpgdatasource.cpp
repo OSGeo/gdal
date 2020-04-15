@@ -531,12 +531,45 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     PQsetNoticeProcessor( hPGConn, OGRPGNoticeProcessor, this );
 
 /* -------------------------------------------------------------------- */
-/*      Set active schema if different from 'public'                    */
+/*      Detect PostGIS schema                                           */
 /* -------------------------------------------------------------------- */
-    if (strcmp(osActiveSchema, "public") != 0)
+    CPLString osPostgisSchema;
     {
-        CPLString osCommand;
-        osCommand.Printf("SET search_path='%s',public", osActiveSchema.c_str());
+        PGresult*hResult = OGRPG_PQexec(hPGConn,
+            "SELECT n.nspname FROM pg_proc p JOIN pg_namespace n "
+            "ON n.oid = p.pronamespace WHERE proname = 'postgis_version'");
+        if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
+            && PQntuples(hResult) > 0 )
+        {
+            const char* pszPostgisSchema = PQgetvalue(hResult,0,0);
+
+            CPLDebug("PG","PostGIS schema: '%s'", pszPostgisSchema);
+
+            osPostgisSchema = pszPostgisSchema;
+        }
+        OGRPGClearResult(hResult);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set active schema and/or postgis schema if different from       */
+/*      'public'                                                        */
+/* -------------------------------------------------------------------- */
+    if (osActiveSchema != "public" ||
+        (!osPostgisSchema.empty() && osPostgisSchema != "public"))
+    {
+        CPLString osCommand = "SET search_path=";
+        if( osActiveSchema != "public" )
+        {
+            osCommand += OGRPGEscapeString(hPGConn, osActiveSchema.c_str());
+            osCommand += ',';
+        }
+        osCommand += "public";
+        if( !osPostgisSchema.empty() && osPostgisSchema != "public" )
+        {
+            osCommand += ',';
+            osCommand += OGRPGEscapeString(hPGConn, osPostgisSchema.c_str());
+        }
+
         PGresult    *hResult = OGRPG_PQexec(hPGConn, osCommand );
 
         if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
