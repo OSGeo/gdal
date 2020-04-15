@@ -46,7 +46,8 @@ GDAL_ROOT	=	..\..\..
 # /wd4324 silents warning C4324: '<unnamed-tag>' : structure was padded due to __declspec(align())
 # in tif_jpeg.c:147 and tif_ojpeg.c:248
 
-EXTRAFLAGS = 	$(ZLIB_FLAGS) -DZIP_SUPPORT -DPIXARLOG_SUPPORT \
+# Note: HOST_FILLORDER value is set arbitrarily. This isn't used by GDAL
+EXTRAFLAGS = 	$(ZLIB_FLAGS) -DZIP_SUPPORT -DPIXARLOG_SUPPORT  -DHOST_FILLORDER=FILLORDER_LSB2MSB \
 		$(JPEG_FLAGS) $(JPEG12_FLAGS) $(LZMA_FLAGS) $(ZSTD_FLAGS) $(WEBP_FLAGS) /wd4324
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt

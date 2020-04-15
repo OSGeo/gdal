@@ -50,7 +50,7 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: required
-      dist: trusty
+      dist: xenial
       cache:
         apt: true
         directories:
@@ -124,7 +124,7 @@ matrix:
       env:
         - BUILD_NAME=trusty_32bit
         - DETAILS=""
-    - osx_image: xcode8
+    - os: osx
       language: objective-c
       compiler: clang
       cache:
@@ -139,7 +139,7 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: required
-      dist: trusty
+      dist: xenial
       cache:
         apt: true
       env:
@@ -150,7 +150,7 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: required
-      dist: trusty
+      dist: xenial
       cache:
         apt: true
       env:

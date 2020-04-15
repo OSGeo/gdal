@@ -29,36 +29,19 @@
 ###############################################################################
 
 import os
-
-
 import gdaltest
-import pytest
 
 ###############################################################################
 
 
-def test_loslas_online_1():
+def test_loslas_1():
 
-    if not gdaltest.download_file('http://www.ngs.noaa.gov/PC_PROD/NADCON/NADCON.zip', 'NADCON.zip'):
-        pytest.skip()
-
-    try:
-        os.stat('tmp/cache/NADCON.zip')
-    except OSError:
-        pytest.skip()
-
-    try:
-        gdaltest.unzip('tmp/cache/NADCON', 'tmp/cache/NADCON.zip')
-        os.stat('tmp/cache/NADCON/nadcon.jar')
-        gdaltest.unzip('tmp/cache/NADCON', 'tmp/cache/NADCON/nadcon.jar')
-        os.stat('tmp/cache/NADCON/grids/wyhpgn.los')
-    except OSError:
-        pytest.skip()
-
-    tst = gdaltest.GDALTest('LOSLAS', 'tmp/cache/NADCON/grids/wyhpgn.los', 1, 0, filename_absolute=1)
+    tst = gdaltest.GDALTest('LOSLAS', 'data/wyhpgn.los', 1, 0, filename_absolute=1)
     gt = (-111.625, 0.25, 0.0, 45.625, 0.0, -0.25)
-    stats = (-0.0080000003799796, 0.031125999987125001, 0.0093017323318172005, 0.0075646520354096004)
-    return tst.testOpen(check_gt=gt, check_stat=stats, check_prj='WGS84')
+    stats = (-0.027868999168276787, 0.033906999975442886, 0.009716129862575248, 0.008260044951413324)
+    ret = tst.testOpen(check_gt=gt, check_stat=stats, check_prj='WGS84')
+    os.unlink('data/wyhpgn.los.aux.xml')
+    return ret
 
 
 

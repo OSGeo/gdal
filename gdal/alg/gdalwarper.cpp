@@ -1594,6 +1594,8 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
         pszAlgName = "Quartile1";
     else if( psWO->eResampleAlg == GRA_Q3 )
         pszAlgName = "Quartile3";
+    else if( psWO->eResampleAlg == GRA_Sum )
+        pszAlgName = "Sum";
     else
         pszAlgName = "Unknown";
 
@@ -1843,6 +1845,8 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
         psWO->eResampleAlg = GRA_Q1;
     else if( EQUAL(pszValue, "Quartile3") )
         psWO->eResampleAlg = GRA_Q3;
+    else if( EQUAL(pszValue, "Sum") )
+        psWO->eResampleAlg = GRA_Sum;
     else if( EQUAL(pszValue, "Default") )
         /* leave as is */;
     else

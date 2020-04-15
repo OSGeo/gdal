@@ -559,7 +559,7 @@ void GDALRegister_MSGN()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "EUMETSAT Archive native (.nat)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_msgn.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/msgn.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "nat" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

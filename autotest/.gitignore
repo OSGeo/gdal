@@ -28,6 +28,7 @@ cpp/testthreadcond
 cpp/testvirtualmem
 cpp/test_osr_set_proj_search_paths
 cpp/bug1488
+cpp/proj_with_fork
 ogr/tmp
 ogr/data/delete_nas.gfs
 ogr/data/replace_nas.gfs

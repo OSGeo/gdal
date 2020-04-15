@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ###############################################################################
 # $Id$
 #
@@ -41,13 +41,16 @@ def Usage():
 def gdal_rm(argv, progress=None):
     # pylint: disable=unused-argument
     filename = None
+    recursive = False
 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return -1
 
     for i in range(1, len(argv)):
-        if filename is None:
+        if argv[i] == '-r':
+            recursive = True
+        elif filename is None:
             filename = argv[i]
         elif argv[i][0] == '-':
             print('Unexpected option : %s' % argv[i])
@@ -59,7 +62,10 @@ def gdal_rm(argv, progress=None):
     if filename is None:
         return Usage()
 
-    ret = gdal.Rmdir(filename)
+    if recursive:
+        ret = gdal.RmdirRecursive(filename)
+    else:
+        ret = gdal.Rmdir(filename)
     if ret != 0:
         print('Deletion failed')
     return ret

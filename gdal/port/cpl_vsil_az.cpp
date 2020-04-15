@@ -458,6 +458,9 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 
     void InvalidateRecursive( const CPLString& osDirnameIn );
 
+    int      CopyObject( const char *oldpath, const char *newpath,
+                         CSLConstList papszMetadata ) override;
+
   public:
     VSIAzureFSHandler() = default;
     ~VSIAzureFSHandler() override = default;
@@ -986,6 +989,138 @@ int VSIAzureFSHandler::Rmdir( const char * pszDirname )
     }
 
     return DeleteObject((osDirname + GDAL_MARKER_FOR_DIR).c_str());
+}
+
+/************************************************************************/
+/*                            CopyObject()                              */
+/************************************************************************/
+
+int VSIAzureFSHandler::CopyObject( const char *oldpath, const char *newpath,
+                                   CSLConstList /* papszMetadata */ )
+{
+    CPLString osTargetNameWithoutPrefix = newpath + GetFSPrefix().size();
+    auto poS3HandleHelper =
+        std::unique_ptr<IVSIS3LikeHandleHelper>(
+            CreateHandleHelper(osTargetNameWithoutPrefix, false));
+    if( poS3HandleHelper == nullptr )
+    {
+        return -1;
+    }
+
+    CPLString osSourceNameWithoutPrefix = oldpath + GetFSPrefix().size();
+    auto poS3HandleHelperSource =
+        std::unique_ptr<IVSIS3LikeHandleHelper>(
+            CreateHandleHelper(osSourceNameWithoutPrefix, false));
+    if( poS3HandleHelperSource == nullptr )
+    {
+        return -1;
+    }
+
+    CPLString osSourceHeader("x-ms-copy-source: ");
+    osSourceHeader += poS3HandleHelperSource->GetURL();
+
+    int nRet = 0;
+
+    bool bRetry;
+
+    const int nMaxRetry = atoi(CPLGetConfigOption("GDAL_HTTP_MAX_RETRY",
+                                   CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)));
+    // coverity[tainted_data]
+    double dfRetryDelay = CPLAtof(CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
+                                CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
+    int nRetryCount = 0;
+
+    do
+    {
+        bRetry = false;
+        CURL* hCurlHandle = curl_easy_init();
+        curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
+
+        struct curl_slist* headers = static_cast<struct curl_slist*>(
+            CPLHTTPSetOptions(hCurlHandle,
+                              poS3HandleHelper->GetURL().c_str(),
+                              nullptr));
+        headers = curl_slist_append(headers, osSourceHeader.c_str());
+        headers = curl_slist_append(headers, "Content-Length: 0");
+        headers = VSICurlMergeHeaders(headers,
+                        poS3HandleHelper->GetCurlHeaders("PUT", headers));
+        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+
+        WriteFuncStruct sWriteFuncData;
+        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
+        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+                         VSICurlHandleWriteFunc);
+
+        WriteFuncStruct sWriteFuncHeaderData;
+        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+                         VSICurlHandleWriteFunc);
+
+        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
+        szCurlErrBuf[0] = '\0';
+        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+
+        MultiPerform(GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
+                     hCurlHandle);
+
+        VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
+
+        curl_slist_free_all(headers);
+
+        long response_code = 0;
+        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
+        if( response_code != 202)
+        {
+            // Look if we should attempt a retry
+            const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
+                static_cast<int>(response_code), dfRetryDelay,
+                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
+            if( dfNewRetryDelay > 0 &&
+                nRetryCount < nMaxRetry )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                            "HTTP error code: %d - %s. "
+                            "Retrying again in %.1f secs",
+                            static_cast<int>(response_code),
+                            poS3HandleHelper->GetURL().c_str(),
+                            dfRetryDelay);
+                CPLSleep(dfRetryDelay);
+                dfRetryDelay = dfNewRetryDelay;
+                nRetryCount++;
+                bRetry = true;
+            }
+            else
+            {
+                CPLDebug(GetDebugKey(), "%s",
+                         sWriteFuncData.pBuffer
+                         ? sWriteFuncData.pBuffer
+                         : "(null)");
+                CPLError(CE_Failure, CPLE_AppDefined, "Copy of %s to %s failed",
+                         oldpath, newpath);
+                nRet = -1;
+            }
+        }
+        else
+        {
+            InvalidateCachedData(poS3HandleHelper->GetURL().c_str());
+
+            CPLString osFilenameWithoutSlash(newpath);
+            if( !osFilenameWithoutSlash.empty() && osFilenameWithoutSlash.back() == '/' )
+                osFilenameWithoutSlash.resize( osFilenameWithoutSlash.size() - 1 );
+
+            InvalidateDirContent( CPLGetDirname(osFilenameWithoutSlash) );
+        }
+
+        CPLFree(sWriteFuncData.pBuffer);
+        CPLFree(sWriteFuncHeaderData.pBuffer);
+
+        curl_easy_cleanup(hCurlHandle);
+    }
+    while( bRetry );
+
+    return nRet;
 }
 
 /************************************************************************/

@@ -8,6 +8,8 @@ COG -- Cloud Optimized GeoTIFF generator
 
 .. shortname:: COG
 
+.. built_in_by_default:: 
+
 This driver supports the creation of Cloud Optimized GeoTIFF (COG)
 
 It essentially relies upon the :ref:`raster.gtiff` driver with the
@@ -52,7 +54,7 @@ General creation options
    * ``ZSTD`` is available when using internal libtiff and if GDAL built against 
      libzstd >=1.0, or if built against external libtiff with zstd support.
 
-   * ``LERC`` is available when sing internal libtiff.
+   * ``LERC`` is available when using internal libtiff.
 
    * ``LERC_ZSTD`` is available when ``LERC`` and ``ZSTD`` are available.
 
@@ -82,8 +84,13 @@ General creation options
         Overview generation by itself, which can take most of the
         total processing time, is not multithreaded currently.
 
--  **PREDICTOR=[YES/NO]**: Set the predictor for LZW, DEFLATE and ZSTD
-   compression. The default is NO.
+-  **PREDICTOR=[YES/NO/STANDARD/FLOATING_POINT]**: Set the predictor for LZW,
+   DEFLATE and ZSTD compression. The default is NO. If YES is specified, then
+   standard predictor (Predictor=2) is used for integer data type,
+   and floating-point predictor (Predictor=3) for floating point data type (in
+   some circumstances, the standard predictor might perform better than the
+   floating-point one on floating-point data). STANDARD or FLOATING_POINT can
+   also be used to select the precise algorithm wished.
 
 -  **BIGTIFF=YES/NO/IF_NEEDED/IF_SAFER**: Control whether the created
    file is a BigTIFF or a classic TIFF.
@@ -147,7 +154,7 @@ Reprojection related creation options
 *************************************
 
 - **TILING_SCHEME=CUSTOM/GoogleMapsCompatible**: If set to ``GoogleMapsCompatible``,
-  reprojection to EPSG:3857 using a GoogleMapsCompatible tiling schme will be
+  reprojection to EPSG:3857 using a GoogleMapsCompatible tiling scheme will be
   automatically done. The default block size in that case will be 256. If
   explicitly setting another block size, this one will be taken into account
   (that is if setting a higher value than 256, the original GoogleMapsCompatible
@@ -174,6 +181,18 @@ Reprojection related creation options
   
 - **ADD_ALPHA=YES/NO**: Whether an alpha band is added in case of reprojection.
   Defaults to YES.
+
+-  **GEOTIFF_VERSION=[AUTO/1.0/1.1]**: (GDAL >= 3.1.0) Select the vesion of
+   the GeoTIFF standard used to encode georeferencing information. ``1.0``
+   corresponds to the original
+   `1995, GeoTIFF Revision 1.0, by Ritter & Ruth <http://geotiff.maptools.org/spec/geotiffhome.html>`_.
+   ``1.1`` corresponds to the OGC standard 19-008, which is an evolution of 1.0,
+   which clear ambiguities and fix inconsistencies mostly in the processing of
+   the vertical part of a CRS.
+   ``AUTO`` mode (default value) will generally select 1.0, unless the CRS to
+   encode has a vertical component or is a 3D CRS, in which case 1.1 is used.
+
+   .. note:: Write support for GeoTIFF 1.1 requires libgeotiff 1.6.0 or later.
 
 File format details
 -------------------
@@ -247,12 +266,13 @@ for a COG file with a transparency mask, those strings will be:
     - A space character is inserted after the newline following `KNOWN_INCOMPATIBLE_EDITION=NO`
     - For a COG without mask, the `MASK_INTERLEAVED_WITH_IMAGERY` item will not be present of course.
 
-The ghost area starts with GDAL_STRUCTURAL_METADATA_SIZE=XXXXXX bytes\n where XXXXXX 
-describes the size of this whole section (starting at the beginning of 
-GDAL_STRUCTURAL_METADATA_SIZE).
+The ghost area starts with ``GDAL_STRUCTURAL_METADATA_SIZE=XXXXXX bytes\n`` (of
+a fixed size of 43 bytes) where XXXXXX is a 6-digit number indicating the remaining
+size of the section (that is starting after the linefeed character of this starting
+line).
 
 - ``LAYOUT=IFDS_BEFORE_DATA``: the IFDs are located at the beginning of the file. 
-  GDAL with this PR will also makes sure that the tile index arrays are written 
+  GDAL will also makes sure that the tile index arrays are written
   just after the IFDs and before the imagery, so that a first range request of 
   16 KB will always get all the IFDs
 
@@ -295,7 +315,7 @@ Each tile data is immediately preceded by a leader, consisting of a unsigned 4-b
 in little endian order, giving the number of bytes of *payload* of the tile data
 that follows it. This leader is *ghost* in the sense that the
 TileOffsets[] array does not point to it, but points to the real payload. Hence
-the offset of the leader is TileOffsets[i]-4).
+the offset of the leader is TileOffsets[i]-4.
 
 An optimized reader seeing the ``BLOCK_LEADER=SIZE_AS_UINT4`` metadata item will thus look for TileOffset[i] 
 and TileOffset[i+1] to deduce it must fetch the data starting at 

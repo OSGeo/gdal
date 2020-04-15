@@ -7,6 +7,8 @@ OGC API - Features
 
 .. shortname:: OAPIF
 
+.. build_dependencies:: libcurl
+
 This driver can connect to a OGC API - Features service. It assumes that the
 service supports OpenAPI 3.0/JSON/GeoJSON encoding for respectively API
 description, feature collection metadata and feature collection data.
@@ -58,6 +60,8 @@ The following options are available:
    Defaults to 10. Minimum is 1, maximum 10000.
 -  **USERPWD**: May be supplied with *userid:password* to pass a userid
    and password to the remote server.
+-  **IGNORE_SCHEMA**\ = YES/NO. (GDAL >= 3.1) Set to YES to ignore the XML
+   Schema or JSON schema that may be offered by the server.
 
 Examples
 --------
@@ -112,12 +116,12 @@ Examples
       lagebeztxt: String (0.0)
       tntxt: String (0.0)
 
--  Filtering on a property
+-  Filtering on a property (depending on if the server exposes filtering capabilities of the properties, part or totally of the filter might be evaluated on client side)
 
    ::
 
 
-      $ ogrinfo OAPIF:https://www.ldproxy.nrw.de/rest/services/kataster flurstueck -al -q -where "gemarkung = 'Wünnenberg'"
+      $ ogrinfo OAPIF:https://www.ldproxy.nrw.de/rest/services/kataster flurstueck -al -q -where "flur = '028'"
       Layer name: flurstueck
       Metadata:
         TITLE=Flurstück

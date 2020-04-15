@@ -474,7 +474,11 @@ def test_numpy_rw_13():
     with pytest.raises(Exception, match='Specified buf_xsize not consistent '
                              'with array shape'):
         ds.ReadAsArray(buf_obj=ar, buf_xsize=1, buf_ysize=1)
-    
+
+    ar = numpy.empty([1, 2, 3], dtype=numpy.uint8)
+    with pytest.raises(Exception, match='Specified buf_xsize not consistent '
+                             'with array shape'):
+        ds.ReadAsArray(buf_obj=ar, buf_xsize=1, buf_ysize=1, interleave='pixel')
 
     # Inconsistent data type
     ar = numpy.empty([3, 1, 2], dtype=numpy.uint8)
@@ -484,9 +488,13 @@ def test_numpy_rw_13():
 
     # Not enough space in first dimension
     ar = numpy.empty([2, 1, 2], dtype=numpy.uint8)
-    with pytest.raises(Exception, match='Array should have space for 3 bands'):
+    with pytest.raises(Exception, match='Dimension 0 of array should have size 3 to store bands'):
         ds.ReadAsArray(buf_obj=ar)
-    
+
+    # Not enough space in third dimension
+    ar = numpy.empty([1, 2, 2], dtype=numpy.uint8)
+    with pytest.raises(Exception, match='Dimension 2 of array should have size 3 to store bands'):
+        ds.ReadAsArray(buf_obj=ar, interleave='pixel')
 
     # This one should be OK !
     ar = numpy.zeros([3, 1, 2], dtype=numpy.uint8)
@@ -702,6 +710,10 @@ def test_numpy_rw_18():
     res = ds.ReadAsArray(interleave='pixel')
     assert numpy.all(img == res)
 
+    res = numpy.zeros([256, 200, 3])
+    ds.ReadAsArray(buf_obj=res, interleave='pixel')
+    assert numpy.all(img == res)
+
 ###############################################################################
 # The VRT references a non existing TIF file, but using the proxy pool dataset API (#2837)
 
@@ -729,6 +741,32 @@ def test_numpy_rw_failure_in_readasarray():
             exception_raised = True
     assert exception_raised
 
+
+###############################################################################
+# Test permission handling
+
+
+def test_numpy_rw_gdal_array_openarray_permissions():
+
+    if gdaltest.numpy_drv is None:
+        pytest.skip()
+
+    import numpy
+    from osgeo import gdal_array
+
+    # Writeable array
+    ar = numpy.zeros([1, 1], dtype=numpy.uint8)
+    ds = gdal_array.OpenArray(ar)
+    assert ds.GetRasterBand(1).Fill(1) == 0
+    assert ds.GetRasterBand(1).Checksum() != 0
+
+    # Non-writeable array
+    ar = numpy.zeros([1, 1], dtype=numpy.uint8)
+    ar.setflags(write=False)
+    ds = gdal_array.OpenArray(ar)
+    with gdaltest.error_handler():
+        assert ds.GetRasterBand(1).Fill(1) != 0
+    assert ds.GetRasterBand(1).Checksum()  == 0
 
 
 def test_numpy_rw_cleanup():

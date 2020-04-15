@@ -5,6 +5,8 @@ VFK - Czech Cadastral Exchange Data Format
 
 .. shortname:: VFK
 
+.. build_dependencies:: libsqlite3
+
 This driver reads VFK files, i.e. data in the *Czech cadastral exchange
 data format*. The VFK file is recognized as an datasource with zero or
 more layers.

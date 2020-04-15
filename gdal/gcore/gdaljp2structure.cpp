@@ -902,6 +902,7 @@ static const char* GetMarkerName(GByte byVal)
     switch(byVal)
     {
         case 0x90: return "SOT";
+        case 0x50: return "CAP";
         case 0x51: return "SIZ";
         case 0x52: return "COD";
         case 0x53: return "COC";
@@ -1121,12 +1122,29 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             if( PSOT )
                 nNextTileOffset = nOffset + PSOT;
         }
+        else if( abyMarker[1] == 0x50 ) /* CAP (HTJ2K) */
+        {
+             const GUInt32 Pcap = READ_MARKER_FIELD_UINT32("Pcap");
+             for( int i = 0; i < 32; i++ )
+             {
+                 if( (Pcap >> (31 - i)) & 1 )
+                 {
+                     READ_MARKER_FIELD_UINT16(CPLSPrintf("Scap_P%d", i+1));
+                 }
+             }
+             if( nRemainingMarkerSize > 0 )
+                AddElement( psMarker, psLastChild,
+                    CPLCreateXMLElementAndValue(
+                        nullptr, "RemainingBytes",
+                        CPLSPrintf("%d", static_cast<int>(nRemainingMarkerSize) )));
+        }
         else if( abyMarker[1] == 0x51 ) /* SIZ */
         {
             READ_MARKER_FIELD_UINT16("Rsiz", [](GUInt16 v) {
                 return (v == 0) ? "Unrestricted profile":
                         (v == 1) ? "Profile 0":
-                        (v == 2) ? "Profile 1": nullptr; });
+                        (v == 2) ? "Profile 1":
+                        (v == 16384) ? "HTJ2K": nullptr; });
             READ_MARKER_FIELD_UINT32("Xsiz");
             READ_MARKER_FIELD_UINT32("Ysiz");
             READ_MARKER_FIELD_UINT32("XOsiz");
@@ -1137,6 +1155,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             READ_MARKER_FIELD_UINT32("YTOSiz");
             Csiz = READ_MARKER_FIELD_UINT16("Csiz");
             bError = false;
+            // cppcheck-suppress knownConditionTrueFalse
             for(int i=0;i<Csiz && !bError;i++)
             {
                 READ_MARKER_FIELD_UINT8(CPLSPrintf("Ssiz%d", i), [](GByte v) {
@@ -1221,6 +1240,8 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                     osInterp += "Segmentation symbols are used";
                 else
                     osInterp += "No segmentation symbols are used";
+                if( nLastVal & 0x40 )
+                    osInterp += ", High Throughput algorithm";
                 AddField(psMarker, psLastChild,
                          "SPcod_cbstyle", static_cast<GByte>(nLastVal), osInterp.c_str());
                 pabyMarkerDataIter += 1;

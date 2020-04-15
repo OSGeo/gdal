@@ -3,7 +3,9 @@
 ESRI Shapefile / DBF
 ====================
 
-.. shortname:: ``ESRI Shapefile``
+.. shortname:: ESRI Shapefile
+
+.. built_in_by_default::
 
 All varieties of ESRI Shapefiles should be available for reading, creation and
 editing. The driver can also handle standalone
@@ -24,7 +26,7 @@ applies for SHPT_POLYGON shapefiles, reported as layers of type
 wkbPolygon, but depending on the number of parts of each geometry, the
 actual type can be either OGRPolygon or OGRMultiPolygon.
 
-Starting with GDAL 2.1 measures (M coordinate) are supported. A
+Measures (M coordinate) are supported. A
 Shapefile with measures is created if the specified geometry type is
 measured or an appropriate layer creation option is used. When a
 shapefile which may have measured geometries is opened, the first shape
@@ -51,29 +53,39 @@ topological relationships of the parts of the polygons so that the
 resulting polygons are correctly defined in the OGC Simple Feature
 convention.
 
+Encoding
+--------
+
 An attempt is made to read the code page setting in the .cpg file, or as
 a fallback in the LDID/codepage setting from the .dbf file, and use it
 to translate string fields to UTF-8 on read, and back when writing. LDID
 "87 / 0x57" is treated as ISO-8859-1 which may not be appropriate. The
-SHAPE_ENCODING `configuration
-option <http://trac.osgeo.org/gdal/wiki/ConfigOptions>`__ may be used to
+:decl_configoption:`SHAPE_ENCODING` configuration option may be used to
 override the encoding interpretation of the shapefile with any encoding
-supported by CPLRecode or to "" to avoid any recoding. (Recoding support
-is new for GDAL/OGR 1.9.0)
+supported by CPLRecode or to "" to avoid any recoding.
 
-Driver capabilities
--------------------
+Starting with GDAL 3.1, the following metadata items are available in the
+"SHAPEFILE" domain:
 
-.. supports_create::
-
-.. supports_georeferencing::
-
-.. supports_virtualio::
+-  **LDID_VALUE**\ =integer: Raw LDID value from the DBF header. Only present
+   if this value is not zero.
+-  **ENCODING_FROM_LDID**\ = string: Encoding name deduced from LDID_VALUE. Only
+   present if LDID_VALUE is present
+-  **CPG_VALUE**\ =string: Content of the .cpg file. Only present if the file
+   exists.
+-  **ENCODING_FROM_CPG**\ = string: Encoding name deduced from CPG_VALUE. Only
+   present if CPG_VALUE is present
+-  **SOURCE_ENCODING**\= string: Encoding used by GDAL to encode/recode strings.
+   If the user has provided the ``SHAPE_ENCODING`` configuration option or
+   ``ENCODING`` open option have been provided (included to empty value), then
+   their value is used to fill this metadata item.
+   Otherwise it is equal to ENCODING_FROM_CPG if it is present. Otherwise it is
+   equal to ENCODING_FROM_LDID.
 
 Open options
 ------------
 
-Starting with GDAL 2.0, the following open options are available.
+The following open options are available.
 
 -  **ENCODING**\ =encoding_name: to override the encoding interpretation
    of the shapefile with any encoding supported by CPLRecode or to "" to
@@ -283,12 +295,12 @@ effect. If nothing is set, a warning will be emitted when the 2GB limit
 is reached.
 
 Dataset Creation Options
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 None
 
 Layer Creation Options
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 -  **SHPT=type**: Override the type of shapefile created. Can be one of
    NULL for a simple .dbf file with no .shp file, POINT, ARC, POLYGON or
@@ -320,14 +332,14 @@ Layer Creation Options
    Previous GDAL versions did not write one.
 
 VSI Virtual File System API support
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------
 
 The driver supports reading from files managed by VSI Virtual File
 System API, which include "regular" files, as well as files in the
 /vsizip/, /vsigzip/ , /vsicurl/ domains.
 
 Compressed files
-~~~~~~~~~~~~~~~~
+----------------
 
 Starting with GDAL 3.1, the driver can also support reading, creating and
 editing .shz files (ZIP files containing the .shp, .shx, .dbf and other side-car
@@ -335,7 +347,7 @@ files of a single layer) and .shp.zip files (ZIP files contains one or several
 layers). Creation and editing involves the creation of temporary files.
 
 Examples
-~~~~~~~~
+--------
 
 -  A merge of two shapefiles 'file1.shp' and 'file2.shp' into a new file
    'file_merged.shp' is performed like this:
@@ -364,7 +376,7 @@ Examples
       % ogrinfo file1.dbf -sql "RESIZE file1"
 
 Advanced topics
-~~~~~~~~~~~~~~~
+---------------
 
 (GDAL >= 2.0) The SHAPE_REWIND_ON_WRITE configuration option/environment
 variable can be set to NO to prevent the shapefile writer to correct the
@@ -378,8 +390,17 @@ from a MultiPatch object (from a Shapefile/FileGDB/PGeo datasource).
 variable can be set to YES (default NO) to restore broken or absent .shx
 file from associated .shp file during opening.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 See Also
-~~~~~~~~
+--------
 
 -  `Shapelib Page <http://shapelib.maptools.org/>`__
 -  `User Notes on OGR Shapefile

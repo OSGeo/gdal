@@ -322,7 +322,7 @@ CPLErr GDALArrayBandBlockCache::FlushCache()
 
     EndDirtyBlockFlushingLog();
 
-    WaitKeepAliveCounter();
+    WaitCompletionPendingTasks();
 
     return( eGlobalErr );
 }

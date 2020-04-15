@@ -22,7 +22,8 @@ Synopsis
         [-co "NAME=VALUE"]* [-a_nodata value] [-init value]*
         [-te xmin ymin xmax ymax] [-tr xres yres] [-tap] [-ts width height]
         [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
-                CInt16/CInt32/CFloat32/CFloat64}] [-q]
+                CInt16/CInt32/CFloat32/CFloat64}]
+        [-optim {[AUTO]/VECTOR/RASTER}] [-q]
         <src_datasource> <dst_filename>
 
 Description
@@ -159,6 +160,16 @@ raster data is only supported since GDAL 2.1.0.
 .. option:: -ot <type>
 
     Force the output bands to be of the indicated data type. Defaults to ``Float64``
+
+.. option:: -optim {[AUTO]/VECTOR/RASTER}}
+
+    Force the algorithm used (results are identical). The raster mode is used in most cases and
+    optimise read/write operations. The vector mode is useful with a decent amount of input 
+    features and optimise the CPU use. That mode have to be used with tiled images to be 
+    efficient. The auto mode (the default) will chose the algorithm based on input and output 
+    properties.
+
+    .. versionadded:: 2.3
 
 .. option:: -q
 

@@ -82,7 +82,7 @@ Addition of a new file to an existing zip:
     VSIFWriteL("Hello World", 1, strlen("Hello world"), newfile);
     VSIFCloseL(newfile);
 
-Starting with GDAL 2.4, the ``GDAL_NUM_THREADS`` configuration option can be set to an integer or ``ALL_CPUS`` to enable multi-threaded compression of a single file. This is similar to the pigz utility in independent mode. By default the input stream is split into 1 MB chunks (the chunk size can be tuned with the ``CPL_VSIL_DEFLATE_CHUNK_SIZE`` configuration option, with values like "x K" or "x M"), and each chunk is independently compressed (and terminated by a nine byte marker 0x00 0x00 0xFF 0xFF 0x00 0x00 0x00 0xFF 0xFF, signaling a full flush of the stream and dictionary, enabling potential independent decoding of each chunk). This slightly reduces the compression rate, so very small chunk sizes should be avoided.
+Starting with GDAL 2.4, the :decl_configoption:`GDAL_NUM_THREADS` configuration option can be set to an integer or ``ALL_CPUS`` to enable multi-threaded compression of a single file. This is similar to the pigz utility in independent mode. By default the input stream is split into 1 MB chunks (the chunk size can be tuned with the :decl_configoption:`CPL_VSIL_DEFLATE_CHUNK_SIZE` configuration option, with values like "x K" or "x M"), and each chunk is independently compressed (and terminated by a nine byte marker 0x00 0x00 0xFF 0xFF 0x00 0x00 0x00 0xFF 0xFF, signaling a full flush of the stream and dictionary, enabling potential independent decoding of each chunk). This slightly reduces the compression rate, so very small chunk sizes should be avoided.
 
 Read and write operations cannot be interleaved. The new zip must be closed before being re-opened in read mode.
 
@@ -103,11 +103,11 @@ Examples:
 
 :cpp:func:`VSIStatL` will return the uncompressed file size, but this is potentially a slow operation on large files, since it requires uncompressing the whole file. Seeking to the end of the file, or at random locations, is similarly slow. To speed up that process, "snapshots" are internally created in memory so as to be able being able to seek to part of the files already decompressed in a faster way. This mechanism of snapshots also apply to /vsizip/ files.
 
-When the file is located in a writable location, a file with extension .gz.properties is created with an indication of the uncompressed file size (the creation of that file can be disabled by setting the ``CPL_VSIL_GZIP_WRITE_PROPERTIES`` configuration option to ``NO``).
+When the file is located in a writable location, a file with extension .gz.properties is created with an indication of the uncompressed file size (the creation of that file can be disabled by setting the :decl_configoption:`CPL_VSIL_GZIP_WRITE_PROPERTIES` configuration option to ``NO``).
 
 Write capabilities are also available, but read and write operations cannot be interleaved.
 
-Starting with GDAL 2.4, the ``GDAL_NUM_THREADS`` configuration option can be set to an integer or ``ALL_CPUS`` to enable multi-threaded compression of a single file. This is similar to the pigz utility in independent mode. By default the input stream is split into 1 MB chunks (the chunk size can be tuned with the ``CPL_VSIL_DEFLATE_CHUNK_SIZE`` configuration option, with values like "x K" or "x M"), and each chunk is independently compressed (and terminated by a nine byte marker 0x00 0x00 0xFF 0xFF 0x00 0x00 0x00 0xFF 0xFF, signaling a full flush of the stream and dictionary, enabling potential independent decoding of each chunk). This slightly reduces the compression rate, so very small chunk sizes should be avoided.
+Starting with GDAL 2.4, the :decl_configoption:`GDAL_NUM_THREADS` configuration option can be set to an integer or ``ALL_CPUS`` to enable multi-threaded compression of a single file. This is similar to the pigz utility in independent mode. By default the input stream is split into 1 MB chunks (the chunk size can be tuned with the :decl_configoption:`CPL_VSIL_DEFLATE_CHUNK_SIZE` configuration option, with values like "x K" or "x M"), and each chunk is independently compressed (and terminated by a nine byte marker 0x00 0x00 0xFF 0xFF 0x00 0x00 0x00 0xFF 0xFF, signaling a full flush of the stream and dictionary, enabling potential independent decoding of each chunk). This slightly reduces the compression rate, so very small chunk sizes should be avoided.
 
 /vsitar/ (.tar, .tgz archives)
 ------------------------------
@@ -154,30 +154,30 @@ Example using :program:`ogrinfo` to read a shapefile on the internet:
 
 Starting with GDAL 2.3, options can be passed in the filename with the following syntax: ``/vsicurl?[option_i=val_i&]*url=http://...`` where each option name and value (including the value of "url") is URL-encoded. Currently supported options are:
 
-- use_head=yes/no: whether the HTTP HEAD request can be emitted. Default to YES. Setting this option overrides the behaviour of the ``CPL_VSIL_CURL_USE_HEAD`` configuration option.
-- max_retry=number: default to 0. Setting this option overrides the behaviour of the ``GDAL_HTTP_MAX_RETRY`` configuration option.
-- retry_delay=number_in_seconds: default to 30. Setting this option overrides the behaviour of the ``GDAL_HTTP_RETRY_DELAY`` configuration option.
+- use_head=yes/no: whether the HTTP HEAD request can be emitted. Default to YES. Setting this option overrides the behaviour of the :decl_configoption:`CPL_VSIL_CURL_USE_HEAD` configuration option.
+- max_retry=number: default to 0. Setting this option overrides the behaviour of the :decl_configoption:`GDAL_HTTP_MAX_RETRY` configuration option.
+- retry_delay=number_in_seconds: default to 30. Setting this option overrides the behaviour of the :decl_configoption:`GDAL_HTTP_RETRY_DELAY` configuration option.
 - list_dir=yes/no: whether an attempt to read the file list of the directory where the file is located should be done. Default to YES.
 
-Partial downloads (requires the HTTP server to support random reading) are done with a 16 KB granularity by default. Starting with GDAL 2.3, the chunk size can be configured with the ``CPL_VSIL_CURL_CHUNK_SIZE`` configuration option, with a value in bytes. If the driver detects sequential reading it will progressively increase the chunk size up to 2 MB to improve download performance. Starting with GDAL 2.3, the ``GDAL_INGESTED_BYTES_AT_OPEN`` configuration option can be set to impose the number of bytes read in one GET call at file opening (can help performance to read Cloud optimized geotiff with a large header).
+Partial downloads (requires the HTTP server to support random reading) are done with a 16 KB granularity by default. Starting with GDAL 2.3, the chunk size can be configured with the :decl_configoption:`CPL_VSIL_CURL_CHUNK_SIZE` configuration option, with a value in bytes. If the driver detects sequential reading it will progressively increase the chunk size up to 2 MB to improve download performance. Starting with GDAL 2.3, the :decl_configoption:`GDAL_INGESTED_BYTES_AT_OPEN` configuration option can be set to impose the number of bytes read in one GET call at file opening (can help performance to read Cloud optimized geotiff with a large header).
 
-The ``GDAL_HTTP_PROXY``, ``GDAL_HTTP_PROXYUSERPWD`` and ``GDAL_PROXY_AUTH`` configuration options can be used to define a proxy server. The syntax to use is the one of Curl ``CURLOPT_PROXY``, ``CURLOPT_PROXYUSERPWD`` and ``CURLOPT_PROXYAUTH`` options.
+The :decl_configoption:`GDAL_HTTP_PROXY`, :decl_configoption:`GDAL_HTTP_PROXYUSERPWD` and :decl_configoption:`GDAL_PROXY_AUTH` configuration options can be used to define a proxy server. The syntax to use is the one of Curl ``CURLOPT_PROXY``, ``CURLOPT_PROXYUSERPWD`` and ``CURLOPT_PROXYAUTH`` options.
 
-Starting with GDAL 2.1.3, the ``CURL_CA_BUNDLE`` or ``SSL_CERT_FILE`` configuration options can be used to set the path to the Certification Authority (CA) bundle file (if not specified, curl will use a file in a system location).
+Starting with GDAL 2.1.3, the :decl_configoption:`CURL_CA_BUNDLE` or :decl_configoption:`SSL_CERT_FILE` configuration options can be used to set the path to the Certification Authority (CA) bundle file (if not specified, curl will use a file in a system location).
 
-Starting with GDAL 2.3, additional HTTP headers can be sent by setting the ``GDAL_HTTP_HEADER_FILE`` configuration option to point to a filename of a text file with "key: value" HTTP headers.
+Starting with GDAL 2.3, additional HTTP headers can be sent by setting the :decl_configoption:`GDAL_HTTP_HEADER_FILE` configuration option to point to a filename of a text file with "key: value" HTTP headers.
 
-Starting with GDAL 2.3, the ``GDAL_HTTP_MAX_RETRY`` (number of attempts) and ``GDAL_HTTP_RETRY_DELAY`` (in seconds) configuration option can be set, so that request retries are done in case of HTTP errors 429, 502, 503 or 504.
+Starting with GDAL 2.3, the :decl_configoption:`GDAL_HTTP_MAX_RETRY` (number of attempts) and :decl_configoption:`GDAL_HTTP_RETRY_DELAY` (in seconds) configuration option can be set, so that request retries are done in case of HTTP errors 429, 502, 503 or 504.
 
 More generally options of :cpp:func:`CPLHTTPFetch` available through configuration options are available.
 
-The file can be cached in RAM by setting the configuration option ``VSI_CACHE`` to ``TRUE``. The cache size defaults to 25 MB, but can be modified by setting the configuration option ``VSI_CACHE_SIZE`` (in bytes). Content in that cache is discarded when the file handle is closed.
+The file can be cached in RAM by setting the configuration option :decl_configoption:`VSI_CACHE` to ``TRUE``. The cache size defaults to 25 MB, but can be modified by setting the configuration option :decl_configoption:`VSI_CACHE_SIZE` (in bytes). Content in that cache is discarded when the file handle is closed.
 
-In addition, a global least-recently-used cache of 16 MB shared among all downloaded content is enabled by default, and content in it may be reused after a file handle has been closed and reopen, during the life-time of the process or until :cpp:func:`VSICurlClearCache` is called. Starting with GDAL 2.3, the size of this global LRU cache can be modified by setting the configuration option ``CPL_VSIL_CURL_CACHE_SIZE`` (in bytes).
+In addition, a global least-recently-used cache of 16 MB shared among all downloaded content is enabled by default, and content in it may be reused after a file handle has been closed and reopen, during the life-time of the process or until :cpp:func:`VSICurlClearCache` is called. Starting with GDAL 2.3, the size of this global LRU cache can be modified by setting the configuration option :decl_configoption:`CPL_VSIL_CURL_CACHE_SIZE` (in bytes).
 
-Starting with GDAL 2.3, the ``CPL_VSIL_CURL_NON_CACHED`` configuration option can be set to values like :file:`/vsicurl/http://example.com/foo.tif:/vsicurl/http://example.com/some_directory`, so that at file handle closing, all cached content related to the mentioned file(s) is no longer cached. This can help when dealing with resources that can be modified during execution of GDAL related code. Alternatively, :cpp:func:`VSICurlClearCache` can be used.
+Starting with GDAL 2.3, the :decl_configoption:`CPL_VSIL_CURL_NON_CACHED` configuration option can be set to values like :file:`/vsicurl/http://example.com/foo.tif:/vsicurl/http://example.com/some_directory`, so that at file handle closing, all cached content related to the mentioned file(s) is no longer cached. This can help when dealing with resources that can be modified during execution of GDAL related code. Alternatively, :cpp:func:`VSICurlClearCache` can be used.
 
-Starting with GDAL 2.1, ``/vsicurl/`` will try to query directly redirected URLs to Amazon S3 signed URLs during their validity period, so as to minimize round-trips. This behaviour can be disabled by setting the configuration option ``CPL_VSIL_CURL_USE_S3_REDIRECT`` to ``NO``.
+Starting with GDAL 2.1, ``/vsicurl/`` will try to query directly redirected URLs to Amazon S3 signed URLs during their validity period, so as to minimize round-trips. This behaviour can be disabled by setting the configuration option :decl_configoption:`CPL_VSIL_CURL_USE_S3_REDIRECT` to ``NO``.
 
 :cpp:func:`VSIStatL` will return the size in st_size member and file nature- file or directory - in st_mode member (the later only reliable with FTP resources for now).
 
@@ -194,11 +194,11 @@ Although this file handler is able seek to random offsets in the file, this will
 
 Recognized filenames are of the form :file:`/vsicurl_streaming/http[s]://path/to/remote/resource` or :file:`/vsicurl_streaming/ftp://path/to/remote/resource`, where :file:`path/to/remote/resource` is the URL of a remote resource.
 
-The ``GDAL_HTTP_PROXY``, ``GDAL_HTTP_PROXYUSERPWD`` and ``GDAL_PROXY_AUTH`` configuration options can be used to define a proxy server. The syntax to use is the one of Curl ``CURLOPT_PROXY``, ``CURLOPT_PROXYUSERPWD`` and ``CURLOPT_PROXYAUTH`` options.
+The :decl_configoption:`GDAL_HTTP_PROXY`, :decl_configoption:`GDAL_HTTP_PROXYUSERPWD` and :decl_configoption:`GDAL_PROXY_AUTH` configuration options can be used to define a proxy server. The syntax to use is the one of Curl ``CURLOPT_PROXY``, ``CURLOPT_PROXYUSERPWD`` and ``CURLOPT_PROXYAUTH`` options.
 
-Starting with GDAL 2.1.3, the ``CURL_CA_BUNDLE`` or ``SSL_CERT_FILE`` configuration options can be used to set the path to the Certification Authority (CA) bundle file (if not specified, curl will use a file in a system location).
+Starting with GDAL 2.1.3, the :decl_configoption:`CURL_CA_BUNDLE` or :decl_configoption:`SSL_CERT_FILE` configuration options can be used to set the path to the Certification Authority (CA) bundle file (if not specified, curl will use a file in a system location).
 
-The file can be cached in RAM by setting the configuration option ``VSI_CACHE`` to ``TRUE``. The cache size defaults to 25 MB, but can be modified by setting the configuration option ``VSI_CACHE_SIZE`` (in bytes).
+The file can be cached in RAM by setting the configuration option :decl_configoption:`VSI_CACHE` to ``TRUE``. The cache size defaults to 25 MB, but can be modified by setting the configuration option :decl_configoption:`VSI_CACHE_SIZE` (in bytes).
 
 :cpp:func:`VSIStatL` will return the size in st_size member and file nature- file or directory - in st_mode member (the later only reliable with FTP resources for now).
 
@@ -217,25 +217,29 @@ The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
 
 Several authentication methods are possible, and are attempted in the following order:
 
-1. If ``AWS_NO_SIGN_REQUEST=YES`` configuration option is set, request signing is disabled. This option might be used for buckets with public access rights. Available since GDAL 2.3
-2. The ``AWS_SECRET_ACCESS_KEY`` and ``AWS_ACCESS_KEY_ID`` configuration options can be set. The ``AWS_SESSION_TOKEN`` configuration option must be set when temporary credentials are used.
-3. Starting with GDAL 2.3, alternate ways of providing credentials similar to what the "aws" command line utility or Boto3 support can be used. If the above mentioned environment variables are not provided, the ``~/.aws/credentials`` or ``UserProfile%/.aws/credentials`` file will be read (or the file pointed by ``CPL_AWS_CREDENTIALS_FILE``). The profile may be specified with the ``AWS_DEFAULT_PROFILE`` environment variable (the default profile is "default")
-4. The ``~/.aws/config`` or ``UserProfile%/.aws/config`` file may also be used (or the file pointer by ``AWS_CONFIG_FILE``) to retrieve credentials and the AWS region.
+1. If :decl_configoption:`AWS_NO_SIGN_REQUEST=YES` configuration option is set, request signing is disabled. This option might be used for buckets with public access rights. Available since GDAL 2.3
+2. The :decl_configoption:`AWS_SECRET_ACCESS_KEY` and :decl_configoption:`AWS_ACCESS_KEY_ID` configuration options can be set. The :decl_configoption:`AWS_SESSION_TOKEN` configuration option must be set when temporary credentials are used.
+3. Starting with GDAL 2.3, alternate ways of providing credentials similar to what the "aws" command line utility or Boto3 support can be used. If the above mentioned environment variables are not provided, the ``~/.aws/credentials`` or ``UserProfile%/.aws/credentials`` file will be read (or the file pointed by :decl_configoption:`CPL_AWS_CREDENTIALS_FILE`). The profile may be specified with the :decl_configoption:`AWS_DEFAULT_PROFILE` environment variable (the default profile is "default")
+4. The ``~/.aws/config`` or ``UserProfile%/.aws/config`` file may also be used (or the file pointer by :decl_configoption:`AWS_CONFIG_FILE`) to retrieve credentials and the AWS region.
 5. If none of the above method succeeds, instance profile credentials will be retrieved when GDAL is used on EC2 instances.
 
-The ``AWS_REGION`` (or ``AWS_DEFAULT_REGION`` starting with GDAL 2.3) configuration option may be set to one of the supported S3 regions and defaults to ``us-east-1``.
+The :decl_configoption:`AWS_REGION` (or :decl_configoption:`AWS_DEFAULT_REGION` starting with GDAL 2.3) configuration option may be set to one of the supported S3 regions and defaults to ``us-east-1``.
 
-Starting with GDAL 2.2, the ``AWS_REQUEST_PAYER`` configuration option may be set to "requester" to facilitate use with Requester Pays buckets.
+Starting with GDAL 2.2, the :decl_configoption:`AWS_REQUEST_PAYER` configuration option may be set to "requester" to facilitate use with Requester Pays buckets.
 
-The ``AWS_S3_ENDPOINT`` configuration option defaults to s3.amazonaws.com.
+The :decl_configoption:`AWS_S3_ENDPOINT` configuration option defaults to s3.amazonaws.com.
 
-The ``AWS_VIRTUAL_HOSTING`` configuration option defaults to ``TRUE``. This allows you to configure the two ways to access the buckets, see Bucket and Host Name for more details.
+The :decl_configoption:`AWS_HTTPS` configuration option defaults to ``YES``.
+
+The :decl_configoption:`AWS_VIRTUAL_HOSTING` configuration option defaults to ``TRUE``. This allows you to configure the two ways to access the buckets, see Bucket and Host Name for more details.
 - ``TRUE`` value, identifies the bucket via a virtual bucket host name, e.g.: mybucket.cname.domain.com
 - ``FALSE`` value, identifies the bucket as the top-level directory in the URI, e.g.: cname.domain.com/mybucket
 
-On writing, the file is uploaded using the S3 multipart upload API. The size of chunks is set to 50 MB by default, allowing creating files up to 500 GB (10000 parts of 50 MB each). If larger files are needed, then increase the value of the ``VSIS3_CHUNK_SIZE`` config option to a larger value (expressed in MB). In case the process is killed and the file not properly closed, the multipart upload will remain open, causing Amazon to charge you for the parts storage. You'll have to abort yourself with other means such "ghost" uploads (e.g. with the s3cmd utility) For files smaller than the chunk size, a simple PUT request is used instead of the multipart upload API.
+On writing, the file is uploaded using the S3 multipart upload API. The size of chunks is set to 50 MB by default, allowing creating files up to 500 GB (10000 parts of 50 MB each). If larger files are needed, then increase the value of the :decl_configoption:`VSIS3_CHUNK_SIZE` config option to a larger value (expressed in MB). In case the process is killed and the file not properly closed, the multipart upload will remain open, causing Amazon to charge you for the parts storage. You'll have to abort yourself with other means such "ghost" uploads (e.g. with the s3cmd utility) For files smaller than the chunk size, a simple PUT request is used instead of the multipart upload API.
 
-Since GDAL 2.4, when listing a directory, files with GLACIER storage class are ignored unless the ``CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE`` configuration option is set to ``NO``.
+Since GDAL 2.4, when listing a directory, files with GLACIER storage class are ignored unless the :decl_configoption:`CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE` configuration option is set to ``NO``.
+
+Since GDAL 3.1, the Rename() operation is supported (first doing a copy of the original file and then deleting it).
 
 .. versionadded:: 2.1
 
@@ -267,13 +271,15 @@ The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
 
 Several authentication methods are possible, and are attempted in the following order:
 
-1. The ``GS_SECRET_ACCESS_KEY`` and ``GS_ACCESS_KEY_ID`` configuration options can be set for AWS-style authentication
-2. The ``GDAL_HTTP_HEADER_FILE`` configuration option to point to a filename of a text file with "key: value" headers. Typically, it must contain a "Authorization: Bearer XXXXXXXXX" line.
-3. (GDAL >= 2.3) The ``GS_OAUTH2_REFRESH_TOKEN`` configuration option can be set to use OAuth2 client authentication. See http://code.google.com/apis/accounts/docs/OAuth2.html This refresh token can be obtained with the ``gdal_auth.py -s storage`` or ``gdal_auth.py -s storage-rw`` script Note: instead of using the default GDAL application credentials, you may define the ``GS_OAUTH2_CLIENT_ID`` and ``GS_OAUTH2_CLIENT_SECRET`` configuration options (need to be defined both for gdal_auth.py and later execution of /vsigs)
-4. (GDAL >= 2.3) The ``GOOGLE_APPLICATION_CREDENTIALS`` configuration option an be set to point to a JSon file containing OAuth2 service account credentials, in particular a private key and a client email. See https://developers.google.com/identity/protocols/OAuth2ServiceAccount for more details on this authentication method. The bucket must grant the "Storage Legacy Bucket Owner" or "Storage Legacy Bucket Reader" permissions to the service account. The ``GS_OAUTH2_SCOPE`` configuration option can be set to change the default permission scope from "https://www.googleapis.com/auth/devstorage.read_write" to "https://www.googleapis.com/auth/devstorage.read_only" if needed.
-5. (GDAL >= 2.3) Variant of the previous method. The GS_OAUTH2_PRIVATE_KEY (or ``GS_OAUTH2_PRIVATE_KEY_FILE)`` and ``GS_OAUTH2_CLIENT_EMAIL`` can be set to use OAuth2 service account authentication. See https://developers.google.com/identity/protocols/OAuth2ServiceAccount for more details on this authentication method. The ``GS_OAUTH2_PRIVATE_KEY`` configuration option must contain the private key as a inline string, starting with "-----BEGIN PRIVATE KEY-----" Alternatively the ``GS_OAUTH2_PRIVATE_KEY_FILE`` configuration option can be set to indicate a filename that contains such a private key. The bucket must grant the "Storage Legacy Bucket Owner" or "Storage Legacy Bucket Reader" permissions to the service account. The ``GS_OAUTH2_SCOPE`` configuration option can be set to change the default permission scope from "https://www.googleapis.com/auth/devstorage.read_write" to "https://www.googleapis.com/auth/devstorage.read_only" if needed.
-6. (GDAL >= 2.3) An alternate way of providing credentials similar to what the "gsutil" command line utility or Boto3 support can be used. If the above mentioned environment variables are not provided, the :file:`~/.boto` or :file:`UserProfile%/.boto` file will be read (or the file pointed by ``CPL_GS_CREDENTIALS_FILE``) for the gs_secret_access_key and gs_access_key_id entries for AWS style authentication. If not found, it will look for the gs_oauth2_refresh_token (and optionally client_id and client_secret) entry for OAuth2 client authentication.
-7. (GDAL >= 2.3) Finally if none of the above method succeeds, the code will check if the current machine is a Google Compute Engine instance, and if so will use the permissions associated to it (using the default service account associated with the VM). To force a machine to be detected as a GCE instance (for example for code running in a container with no access to the boot logs), you can set ``CPL_MACHINE_IS_GCE`` to ``YES``.
+1. The :decl_configoption:`GS_SECRET_ACCESS_KEY` and :decl_configoption:`GS_ACCESS_KEY_ID` configuration options can be set for AWS-style authentication
+2. The :decl_configoption:`GDAL_HTTP_HEADER_FILE` configuration option to point to a filename of a text file with "key: value" headers. Typically, it must contain a "Authorization: Bearer XXXXXXXXX" line.
+3. (GDAL >= 2.3) The :decl_configoption:`GS_OAUTH2_REFRESH_TOKEN` configuration option can be set to use OAuth2 client authentication. See http://code.google.com/apis/accounts/docs/OAuth2.html This refresh token can be obtained with the ``gdal_auth.py -s storage`` or ``gdal_auth.py -s storage-rw`` script Note: instead of using the default GDAL application credentials, you may define the :decl_configoption:`GS_OAUTH2_CLIENT_ID` and :decl_configoption:`GS_OAUTH2_CLIENT_SECRET` configuration options (need to be defined both for gdal_auth.py and later execution of /vsigs)
+4. (GDAL >= 2.3) The :decl_configoption:`GOOGLE_APPLICATION_CREDENTIALS` configuration option can be set to point to a JSON file containing OAuth2 service account credentials, in particular a private key and a client email. See https://developers.google.com/identity/protocols/OAuth2ServiceAccount for more details on this authentication method. The bucket must grant the "Storage Legacy Bucket Owner" or "Storage Legacy Bucket Reader" permissions to the service account. The :decl_configoption:`GS_OAUTH2_SCOPE` configuration option can be set to change the default permission scope from "https://www.googleapis.com/auth/devstorage.read_write" to "https://www.googleapis.com/auth/devstorage.read_only" if needed.
+5. (GDAL >= 2.3) Variant of the previous method. The :decl_configoption:`GS_OAUTH2_PRIVATE_KEY` (or :decl_configoption:`GS_OAUTH2_PRIVATE_KEY_FILE)` and :decl_configoption:`GS_OAUTH2_CLIENT_EMAIL` can be set to use OAuth2 service account authentication. See https://developers.google.com/identity/protocols/OAuth2ServiceAccount for more details on this authentication method. The :decl_configoption:`GS_OAUTH2_PRIVATE_KEY` configuration option must contain the private key as a inline string, starting with "-----BEGIN PRIVATE KEY-----" Alternatively the :decl_configoption:`GS_OAUTH2_PRIVATE_KEY_FILE` configuration option can be set to indicate a filename that contains such a private key. The bucket must grant the "Storage Legacy Bucket Owner" or "Storage Legacy Bucket Reader" permissions to the service account. The :decl_configoption:`GS_OAUTH2_SCOPE` configuration option can be set to change the default permission scope from "https://www.googleapis.com/auth/devstorage.read_write" to "https://www.googleapis.com/auth/devstorage.read_only" if needed.
+6. (GDAL >= 2.3) An alternate way of providing credentials similar to what the "gsutil" command line utility or Boto3 support can be used. If the above mentioned environment variables are not provided, the :file:`~/.boto` or :file:`UserProfile%/.boto` file will be read (or the file pointed by :decl_configoption:`CPL_GS_CREDENTIALS_FILE`) for the gs_secret_access_key and gs_access_key_id entries for AWS style authentication. If not found, it will look for the gs_oauth2_refresh_token (and optionally client_id and client_secret) entry for OAuth2 client authentication.
+7. (GDAL >= 2.3) Finally if none of the above method succeeds, the code will check if the current machine is a Google Compute Engine instance, and if so will use the permissions associated to it (using the default service account associated with the VM). To force a machine to be detected as a GCE instance (for example for code running in a container with no access to the boot logs), you can set :decl_configoption:`CPL_MACHINE_IS_GCE` to ``YES``.
+
+Since GDAL 3.1, the Rename() operation is supported (first doing a copy of the original file and then deleting it).
 
 .. versionadded:: 2.2
 
@@ -307,8 +313,10 @@ The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
 
 Two authentication methods are possible, and are attempted in the following order:
 
-1. The ``AZURE_STORAGE_CONNECTION_STRING`` configuration option, given in the access key section of the administration interface. It contains both the account name and a secret key.
-2. The ``AZURE_STORAGE_ACCOUNT`` and ``AZURE_STORAGE_ACCESS_KEY`` configuration options pointing respectively to the account name and a secret key.
+1. The :decl_configoption:`AZURE_STORAGE_CONNECTION_STRING` configuration option, given in the access key section of the administration interface. It contains both the account name and a secret key.
+2. The :decl_configoption:`AZURE_STORAGE_ACCOUNT` and :decl_configoption:`AZURE_STORAGE_ACCESS_KEY` configuration options pointing respectively to the account name and a secret key.
+
+Since GDAL 3.1, the Rename() operation is supported (first doing a copy of the original file and then deleting it).
 
 .. versionadded:: 2.3
 
@@ -338,9 +346,9 @@ Recognized filenames are of the form :file:`/vsioss/bucket/key` where ``bucket``
 
 The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
 
-The ``OSS_SECRET_ACCESS_KEY`` and ``OSS_ACCESS_KEY_ID`` configuration options must be set. The ``OSS_ENDPOINT`` configuration option should normally be set to the appropriate value, which reflects the region attached to the bucket. The default is ``oss-us-east-1.aliyuncs.com``. If the bucket is stored in another region than oss-us-east-1, the code logic will redirect to the appropriate endpoint.
+The :decl_configoption:`OSS_SECRET_ACCESS_KEY` and :decl_configoption:`OSS_ACCESS_KEY_ID` configuration options must be set. The :decl_configoption:`OSS_ENDPOINT` configuration option should normally be set to the appropriate value, which reflects the region attached to the bucket. The default is ``oss-us-east-1.aliyuncs.com``. If the bucket is stored in another region than oss-us-east-1, the code logic will redirect to the appropriate endpoint.
 
-On writing, the file is uploaded using the OSS multipart upload API. The size of chunks is set to 50 MB by default, allowing creating files up to 500 GB (10000 parts of 50 MB each). If larger files are needed, then increase the value of the ``VSIOSS_CHUNK_SIZE`` config option to a larger value (expressed in MB). In case the process is killed and the file not properly closed, the multipart upload will remain open, causing Alibaba to charge you for the parts storage. You'll have to abort yourself with other means. For files smaller than the chunk size, a simple PUT request is used instead of the multipart upload API.
+On writing, the file is uploaded using the OSS multipart upload API. The size of chunks is set to 50 MB by default, allowing creating files up to 500 GB (10000 parts of 50 MB each). If larger files are needed, then increase the value of the :decl_configoption:`VSIOSS_CHUNK_SIZE` config option to a larger value (expressed in MB). In case the process is killed and the file not properly closed, the multipart upload will remain open, causing Alibaba to charge you for the parts storage. You'll have to abort yourself with other means. For files smaller than the chunk size, a simple PUT request is used instead of the multipart upload API.
 
 .. versionadded:: 2.3
 
@@ -370,12 +378,24 @@ Recognized filenames are of the form :file:`/vsiswift/bucket/key` where ``bucket
 
 The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
 
-Two authentication methods are possible, and are attempted in the following order:
+Three authentication methods are possible, and are attempted in the following order:
 
-1. The ``SWIFT_STORAGE_URL`` and ``SWIFT_AUTH_TOKEN`` configuration options are set respectively to the storage URL (e.g http://127.0.0.1:12345/v1/AUTH_something) and the value of the x-auth-token authorization token.
-2. The ``SWIFT_AUTH_V1_URL``, ``SWIFT_USER`` and ``SWIFT_KEY`` configuration options are set respectively to the endpoint of the Auth V1 authentication (e.g http://127.0.0.1:12345/auth/v1.0), the user name and the key/password. This authentication endpoint will be used to retrieve the storage URL and authorization token mentioned in the first authentication method.
+1. The :decl_configoption:`SWIFT_STORAGE_URL` and :decl_configoption:`SWIFT_AUTH_TOKEN` configuration options are set respectively to the storage URL (e.g http://127.0.0.1:12345/v1/AUTH_something) and the value of the x-auth-token authorization token.
+2. The :decl_configoption:`SWIFT_AUTH_V1_URL`, :decl_configoption:`SWIFT_USER` and :decl_configoption:`SWIFT_KEY` configuration options are set respectively to the endpoint of the Auth V1 authentication (e.g http://127.0.0.1:12345/auth/v1.0), the user name and the key/password. This authentication endpoint will be used to retrieve the storage URL and authorization token mentioned in the first authentication method.
+3. Authentication with Keystone v3 is using the same options as python-swiftclient, see https://docs.openstack.org/python-swiftclient/latest/cli/index.html#authentication for more details. GDAL (>= 3.1) supports the following options:
 
-This file system handler also allows sequential writing of files (no seeks or read operations are then allowed)
+   - `OS_IDENTITY_API_VERSION=3`
+   - `OS_AUTH_URL`
+   - `OS_USERNAME`
+   - `OS_PASSWORD`
+   - `OS_USER_DOMAIN_NAME`
+   - `OS_PROJECT_NAME`
+   - `OS_PROJECT_DOMAIN_NAME`
+   - `OS_REGION_NAME`
+
+This file system handler also allows sequential writing of files (no seeks or read operations are then allowed).
+
+In some versions of OpenStack Swift, the access to large (segmented) files fails unless they are explicitly marked as static large objects, instead of being dynamic large objects which is the default. Using the python-swiftclient this can be achieved when uploading the file by passing the ``--use-slo`` flag (see https://docs.openstack.org/python-swiftclient/latest/cli/index.html#swift-upload for all options). For more information about large objects see https://docs.openstack.org/swift/latest/api/large_objects.html.
 
 .. versionadded:: 2.3
 
@@ -431,11 +451,11 @@ The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
 
 The following configuration options are available:
 
-- ``WEBHDFS_USERNAME=value``: User name (when security is off).
-- ``WEBHDFS_DELEGATION=value``: Hadoop delegation token (when security is on).
-- ``WEBHDFS_DATANODE_HOST=value``: For APIs using redirect, substitute the redirection hostname with the one provided by this option (normally resolvable hostname should be rewritten by a proxy)
-- ``WEBHDFS_REPLICATION=int_value``: Replication value used when creating a file
-- ``WEBHDFS_PERMISSION=int_value``: Permission mask (to provide as decimal number) when creating a file or directory
+- :decl_configoption:`WEBHDFS_USERNAME` = value: User name (when security is off).
+- :decl_configoption:`WEBHDFS_DELEGATION` = value: Hadoop delegation token (when security is on).
+- :decl_configoption:`WEBHDFS_DATANODE_HOST` = value: For APIs using redirect, substitute the redirection hostname with the one provided by this option (normally resolvable hostname should be rewritten by a proxy)
+- :decl_configoption:`WEBHDFS_REPLICATION` = int_value: Replication value used when creating a file
+- :decl_configoption:`WEBHDFS_PERMISSION` = int_value: Permission mask (to provide as decimal number) when creating a file or directory
 
 This file system handler also allows sequential writing of files (no seeks or read operations are then allowed)
 
@@ -558,4 +578,4 @@ The default size of caching for each file is 25 MB (25 MB for each file that is 
 
 /vsicrypt/ is a special file handler is installed that allows reading/creating/update encrypted files on the fly, with random access capabilities.
 
-Refert to :cpp:func:`VSIInstallCryptFileHandler` for more details.
+Refer to :cpp:func:`VSIInstallCryptFileHandler` for more details.

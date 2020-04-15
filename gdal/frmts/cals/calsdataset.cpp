@@ -608,9 +608,9 @@ void GDALRegister_CALS()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "CALS (Type 1)" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_cals.html" );
+                               "drivers/raster/cals.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, ".cal .ct1");
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "cal ct1");
 
     poDriver->pfnIdentify = CALSDataset::Identify;
     poDriver->pfnOpen = CALSDataset::Open;

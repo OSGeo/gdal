@@ -6,6 +6,8 @@ KEA
 
 .. shortname:: KEA
 
+.. build_dependencies:: libkea and libhdf5 libraries
+
 Starting with GDAL 2.0, GDAL can read, create and update files in the
 KEA format, through the libkea library.
 

@@ -616,12 +616,10 @@ MAIN_START(argc, argv)
                         projectionRef, pszTargetSRS, fileNameToWrite );
                     if( hCT )
                         OCTDestroyCoordinateTransformation( hCT );
-                    if( hSourceSRS )
-                        OSRDestroySpatialReference( hSourceSRS );
+                    OSRDestroySpatialReference( hSourceSRS );
                     continue;
                 }
-                if( hCT )
-                    OCTDestroyCoordinateTransformation( hCT );
+                OCTDestroyCoordinateTransformation( hCT );
             }
         }
 

@@ -853,7 +853,7 @@ def user_srs_to_wkt(user_text):
     return srs.ExportToWkt()
 
 
-def equal_srs_from_wkt(expected_wkt, got_wkt):
+def equal_srs_from_wkt(expected_wkt, got_wkt, verbose=True):
     expected_srs = osr.SpatialReference()
     expected_srs.ImportFromWkt(expected_wkt)
 
@@ -862,10 +862,10 @@ def equal_srs_from_wkt(expected_wkt, got_wkt):
 
     if got_srs.IsSame(expected_srs):
         return 1
-    print('Expected:\n%s' % expected_wkt)
-    print('Got:     \n%s' % got_wkt)
-
-    post_reason('SRS differs from expected.')
+    if verbose:
+        print('Expected:\n%s' % expected_wkt)
+        print('Got:     \n%s' % got_wkt)
+        post_reason('SRS differs from expected.')
     return 0
 
 ###############################################################################

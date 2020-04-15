@@ -40,6 +40,8 @@ static int nOpenIterations = 1;
 static volatile int nPendingThreads = 0;
 static const char *pszFilename = nullptr;
 static int nChecksum = 0;
+static int nWidth = 0;
+static int nHeight = 0;
 
 static CPLMutex *pGlobalMutex = nullptr;
 
@@ -51,6 +53,7 @@ static void Usage()
 {
     printf("multireadtest [-lock_on_open] [-open_in_main] [-t <thread#>]\n"
            "              [-i <iterations>] [-oi <iterations>]\n"
+           "              [-width <val>] [-height <val>]\n"
            "              filename\n");
     exit(1);
 }
@@ -85,8 +88,8 @@ static void WorkerFunc( void *arg )
         {
             const int nMyChecksum = GDALChecksumImage(GDALGetRasterBand(hDS, 1),
                                                       0, 0,
-                                                      GDALGetRasterXSize(hDS),
-                                                      GDALGetRasterYSize(hDS));
+                                                      nWidth ? nWidth : GDALGetRasterXSize(hDS),
+                                                      nHeight ? nHeight : GDALGetRasterYSize(hDS));
 
             if( nMyChecksum != nChecksum )
             {
@@ -145,6 +148,14 @@ int main( int argc, char ** argv )
         {
             nThreadCount = atoi(argv[++iArg]);
         }
+        else if( iArg < argc-1 && EQUAL(argv[iArg], "-width") )
+        {
+            nWidth = atoi(argv[++iArg]);
+        }
+        else if( iArg < argc-1 && EQUAL(argv[iArg], "-height") )
+        {
+            nHeight = atoi(argv[++iArg]);
+        }
         else if( EQUAL(argv[iArg], "-lock_on_open") )
         {
             bLockOnOpen = true;
@@ -188,8 +199,8 @@ int main( int argc, char ** argv )
 
         nChecksum = GDALChecksumImage(GDALGetRasterBand(hDS, 1),
                                       0, 0,
-                                      GDALGetRasterXSize(hDS),
-                                      GDALGetRasterYSize(hDS));
+                                      nWidth ? nWidth : GDALGetRasterXSize(hDS),
+                                      nHeight ? nHeight : GDALGetRasterYSize(hDS));
 
         GDALClose(hDS);
     }

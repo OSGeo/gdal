@@ -6,7 +6,7 @@
  *******************************************************************************
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2018-2019, NextGIS
+ *  Copyright (c) 2018-2020, NextGIS <info@nextgis.com>
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -53,7 +53,6 @@ public:
  * OGRNGWDataset()
  */
 OGRNGWDataset::OGRNGWDataset() :
-    bReadWrite(false),
     nBatchSize(-1),
     nPageSize(-1),
     bFetchedPermissions(false),
@@ -100,12 +99,12 @@ void OGRNGWDataset::FetchPermissions()
         return;
     }
 
-    if( bReadWrite )
+    if( IsUpdateMode() )
     {
         // Check connection and is it read only.
         char **papszHTTPOptions = GetHeaders();
         stPermissions = NGWAPI::CheckPermissions( osUrl, osResourceId,
-            papszHTTPOptions, bReadWrite );
+            papszHTTPOptions, IsUpdateMode() );
         CSLDestroy( papszHTTPOptions );
     }
     else
@@ -175,7 +174,7 @@ bool OGRNGWDataset::Open( const std::string &osUrlIn,
     osUrl = osUrlIn;
     osResourceId = osResourceIdIn;
 
-    bReadWrite = bUpdateIn;
+    eAccess = bUpdateIn ? GA_Update : GA_ReadOnly;
 
     osUserPwd = CSLFetchNameValueDef( papszOpenOptionsIn, "USERPWD",
         CPLGetConfigOption("NGW_USERPWD", ""));
@@ -276,6 +275,7 @@ bool OGRNGWDataset::Init(int nOpenFlagsIn)
             else if( osResourceType == "mapserver_style" ||
                 osResourceType == "qgis_vector_style" ||
                 osResourceType == "raster_style" ||
+                osResourceType == "qgis_raster_style" ||
                 osResourceType == "wmsclient_layer" )
             {
                 // GetExtent from parent.
@@ -317,7 +317,8 @@ bool OGRNGWDataset::Init(int nOpenFlagsIn)
                         {
                             nEPSG = oParentRoot.GetInteger("vector_layer/srs/id", nEPSG);
                         }
-                        else if( osResourceType == "raster_style")
+                        else if( osResourceType == "raster_style" ||
+                                 osResourceType == "qgis_raster_style")
                         {
                             nEPSG = oParentRoot.GetInteger("raster_layer/srs/id", nEPSG);
                         }
@@ -498,6 +499,7 @@ void OGRNGWDataset::AddRaster( const CPLJSONObject &oRasterJsonObj,
     if( osResourceType == "mapserver_style" ||
         osResourceType == "qgis_vector_style" ||
         osResourceType == "raster_style" ||
+        osResourceType == "qgis_raster_style" ||
         osResourceType == "wmsclient_layer" )
     {
         osOutResourceId = oRasterJsonObj.GetString( "resource/id" );
@@ -517,7 +519,8 @@ void OGRNGWDataset::AddRaster( const CPLJSONObject &oRasterJsonObj,
             {
                 CPLJSONObject oChild = oChildren[i];
                 osResourceType = oChild.GetString("resource/cls");
-                if( osResourceType == "raster_style" )
+                if( osResourceType == "raster_style" ||
+                    osResourceType == "qgis_raster_style" )
                 {
                     AddRaster( oChild, papszOptions );
                 }
@@ -552,7 +555,7 @@ OGRLayer *OGRNGWDataset::ICreateLayer( const char *pszNameIn,
                                            OGRwkbGeometryType eGType,
                                            char **papszOptions )
 {
-    if( !bReadWrite )
+    if( !IsUpdateMode() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Operation not available in read-only mode");
@@ -569,7 +572,8 @@ OGRLayer *OGRNGWDataset::ICreateLayer( const char *pszNameIn,
     }
 
     // Check input parameters.
-    if( eGType < wkbPoint || eGType > wkbMultiPolygon )
+    if( (eGType < wkbPoint || eGType > wkbMultiPolygon) && 
+        (eGType < wkbPoint25D || eGType > wkbMultiPolygon25D) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Unsupported geometry type: %s", OGRGeometryTypeToName(eGType));
@@ -623,16 +627,11 @@ OGRLayer *OGRNGWDataset::ICreateLayer( const char *pszNameIn,
     // Create layer.
     std::string osKey = CSLFetchNameValueDef( papszOptions, "KEY", "");
     std::string osDesc = CSLFetchNameValueDef( papszOptions, "DESCRIPTION", "");
-    OGRSpatialReference* poSRSClone = poSpatialRef;
-    if( poSRSClone )
-    {
-        poSRSClone = poSRSClone->Clone();
-        poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    }
+    OGRSpatialReference* poSRSClone = poSpatialRef->Clone();
+    poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     OGRNGWLayer *poLayer = new OGRNGWLayer( this, pszNameIn, poSRSClone, eGType,
         osKey, osDesc );
-    if( poSRSClone )
-        poSRSClone->Release();
+    poSRSClone->Release();
     papoLayers = (OGRNGWLayer**) CPLRealloc(papoLayers, (nLayers + 1) *
         sizeof(OGRNGWLayer*));
     papoLayers[nLayers++] = poLayer;
@@ -644,7 +643,7 @@ OGRLayer *OGRNGWDataset::ICreateLayer( const char *pszNameIn,
  */
 OGRErr OGRNGWDataset::DeleteLayer( int iLayer )
 {
-    if( !bReadWrite )
+    if( !IsUpdateMode() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Operation not available in read-only mode.");

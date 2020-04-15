@@ -1556,7 +1556,7 @@ def test_ogr_mitab_35():
     assert coordsys == 'CoordSys NonEarth Units "m"'
     srs = get_srs_from_coordsys(coordsys)
     wkt = srs.ExportToWkt()
-    assert wkt == 'LOCAL_CS["Nonearth",UNIT["Meter",1]]'
+    assert wkt in ('LOCAL_CS["Nonearth",UNIT["Meter",1]]', 'LOCAL_CS["Nonearth",UNIT["Meter",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]')
 
     # Test units
     for mif_unit in ['mi', 'km', 'in', 'ft', 'yd', 'mm', 'cm', 'm', 'survey ft', 'nmi', 'li', 'ch', 'rd']:
@@ -1573,7 +1573,7 @@ def test_ogr_mitab_35():
     assert coordsys == 'CoordSys Earth Projection 1, 104'
     srs = get_srs_from_coordsys(coordsys)
     wkt = srs.ExportToWkt()
-    assert wkt == 'GEOGCS["unnamed",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]'
+    assert wkt == 'GEOGCS["unnamed",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]'
     coordsys = get_coordsys_from_srs(srs)
     assert coordsys == 'CoordSys Earth Projection 1, 104'
 
@@ -1584,7 +1584,7 @@ def test_ogr_mitab_35():
     assert coordsys == 'CoordSys Earth Projection 8, 104, "m", 3, 0, 0.9996, 500000, 0'
     srs = get_srs_from_coordsys(coordsys)
     wkt = srs.ExportToWkt()
-    assert wkt == 'PROJCS["unnamed",GEOGCS["unnamed",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
+    assert wkt == 'PROJCS["unnamed",GEOGCS["unnamed",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
     coordsys = get_coordsys_from_srs(srs)
     assert coordsys == 'CoordSys Earth Projection 8, 104, "m", 3, 0, 0.9996, 500000, 0'
 
@@ -1637,7 +1637,7 @@ def test_ogr_mitab_35():
     assert coordsys == 'CoordSys Earth Projection 1, 103'
     srs = get_srs_from_coordsys(coordsys)
     wkt = srs.ExportToWkt()
-    assert wkt == 'GEOGCS["unnamed",DATUM["WGS_1972",SPHEROID["WGS 72",6378135,298.26],TOWGS84[0,8,10,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]'
+    assert wkt in ('GEOGCS["unnamed",DATUM["WGS_1972",SPHEROID["WGS 72",6378135,298.26]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]', 'GEOGCS["unnamed",DATUM["World_Geodetic_System_1972",SPHEROID["WGS 72",6378135,298.26]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]')
     coordsys = get_coordsys_from_srs(srs)
     assert coordsys == 'CoordSys Earth Projection 1, 103'
 
@@ -1648,11 +1648,11 @@ def test_ogr_mitab_35():
     assert coordsys == 'CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49, 700000, 6600000'
     srs = get_srs_from_coordsys(coordsys)
     wkt = srs.ExportToWkt()
-    assert wkt == 'PROJCS["RGF93 / Lambert-93",GEOGCS["RGF93",DATUM["Reseau_Geodesique_Francais_1993",SPHEROID["GRS 80",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6171"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["latitude_of_origin",46.5],PARAMETER["central_meridian",3],PARAMETER["standard_parallel_1",49],PARAMETER["standard_parallel_2",44],PARAMETER["false_easting",700000],PARAMETER["false_northing",6600000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","2154"]]'
+    assert wkt == 'PROJCS["RGF93 / Lambert-93",GEOGCS["RGF93",DATUM["Reseau_Geodesique_Francais_1993",SPHEROID["GRS 80",6378137,298.257222101],AUTHORITY["EPSG","6171"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["latitude_of_origin",46.5],PARAMETER["central_meridian",3],PARAMETER["standard_parallel_1",49],PARAMETER["standard_parallel_2",44],PARAMETER["false_easting",700000],PARAMETER["false_northing",6600000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","2154"]]'
     coordsys = get_coordsys_from_srs(srs)
     assert coordsys == 'CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49, 700000, 6600000'
 
-    srs = osr.SpatialReference('PROJCS["RGF93 / Lambert-93",GEOGCS["RGF93",DATUM["Reseau_Geodesique_Francais_1993",SPHEROID["GRS 80",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",49.00000000002],PARAMETER["standard_parallel_2",44],PARAMETER["latitude_of_origin",46.5],PARAMETER["central_meridian",3],PARAMETER["false_easting",700000],PARAMETER["false_northing",6600000],UNIT["Meter",1.0],AUTHORITY["EPSG","2154"]]')
+    srs = osr.SpatialReference('PROJCS["RGF93 / Lambert-93",GEOGCS["RGF93",DATUM["Reseau_Geodesique_Francais_1993",SPHEROID["GRS 80",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",49.00000000002],PARAMETER["standard_parallel_2",44],PARAMETER["latitude_of_origin",46.5],PARAMETER["central_meridian",3],PARAMETER["false_easting",700000],PARAMETER["false_northing",6600000],UNIT["Meter",1.0],AUTHORITY["EPSG","2154"]]')
     coordsys = get_coordsys_from_srs(srs)
     assert coordsys == 'CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000002, 700000, 6600000'
     gdal.SetConfigOption('MITAB_BOUNDS_FILE', 'data/mitab_bounds.txt')
@@ -2401,6 +2401,69 @@ def test_ogr_mitab_custom_datum_export():
     sr.SetUTM(33)
     proj =  sr.ExportToMICoordSys()
     assert proj == 'Earth Projection 8, 9999, 42, 1, 2, 3, -4, -5, -6, -7, 0, "m", 15, 0, 0.9996, 500000, 0'
+
+###############################################################################
+# Check write/read description
+
+def test_ogr_mitab_description():
+    filename = '/vsimem/test_description.tab'
+
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
+    assert ds is not None, ('Can\'t create dataset: ' + filename)
+
+    test_description = 'Состав данных: Топокарты (растр) 1:50К, 100К, 250К, 500К, Топокарты (вектор) 1:100К, 1:250К, ЦМР 10м, Реестр географических названий 1:100000, АТД 1:10000, лидарная съемка, ортофото. Лицензия: на геоданные - ограничительная, не соответствующая определению "открытых данных", так как запрещено распространение данных.'
+
+    lyr = ds.CreateLayer('test_description', options=['ENCODING=CP1251', 'DESCRIPTION={}'.format(test_description)])
+    assert lyr is not None, ('Can\'t create layer "test_description"')
+    if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
+        pytest.skip('skipping test: recode is not possible')
+    
+    lyr.CreateField(ogr.FieldDefn('feature_id', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('other_field', ogr.OFTInteger))
+
+    # Check description truncate.
+    check_text = 'Состав данных: Топокарты (растр) 1:50К, 100К, 250К, 500К, Топокарты (вектор) 1:100К, 1:250К, ЦМР 10м, Реестр географических названий 1:100000, АТД 1:10000, лидарная съемка, ортофото. Лицензия: на геоданные - ограничительная, не соответствующая определению "открытых данных", так как запрещено распростр'
+    assert check_text == lyr.GetMetadataItem('DESCRIPTION')
+    ds = None
+
+    # Check storing description in tab file.
+    ds = ogr.Open(filename, update=1)
+    assert ds is not None, ('Can\'t open dataset: ' + filename)
+    lyr = ds.GetLayer(0)
+    assert lyr is not None, ('Can\'t get layer 0 from ' + filename)
+    assert check_text == lyr.GetMetadataItem('DESCRIPTION')
+
+    # Check update description in tab file.
+    check_short_text = 'Состав данных: Топокарты (растр) 1:50К, 100К, 250К, 500К'
+    lyr.SetMetadataItem('DESCRIPTION', check_short_text)
+    ds = None
+
+    ds = ogr.Open(filename)
+    assert ds is not None, ('Can\'t open dataset: ' + filename)
+    lyr = ds.GetLayer(0)
+    assert lyr is not None, ('Can\'t get layer 0 from ' + filename)
+    assert check_short_text == lyr.GetMetadataItem('DESCRIPTION')
+    ds = None
+
+    # Check line breaks and double quotes
+    test_description = 'Состав данных: "Топокарты (растр)"\n1:50К,\n100К,\n250К,\n500К\r\n"new line"'
+    check_description = 'Состав данных: "Топокарты (растр)" 1:50К, 100К, 250К, 500К  "new line"'
+
+    ds = ogr.Open(filename, update=1)
+    assert ds is not None, ('Can\'t open dataset: ' + filename)
+    lyr = ds.GetLayer(0)
+    assert lyr is not None, ('Can\'t get layer 0 from ' + filename)
+    lyr.SetMetadataItem('DESCRIPTION', test_description)
+    ds = None
+
+    ds = ogr.Open(filename)
+    assert ds is not None, ('Can\'t open dataset: ' + filename)
+    lyr = ds.GetLayer(0)
+    assert lyr is not None, ('Can\'t get layer 0 from ' + filename)
+    assert check_description == lyr.GetMetadataItem('DESCRIPTION')
+    ds = None
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
 
 
 ###############################################################################

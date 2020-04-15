@@ -230,6 +230,7 @@ GDALDataset *NTv1Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->GetRasterBand(1)->SetDescription( "Latitude Offset (arc seconds)" );
     poDS->GetRasterBand(2)->SetDescription( "Longitude Offset (arc seconds)" );
+    poDS->GetRasterBand(2)->SetMetadataItem("positive_value", "west");
 
 /* -------------------------------------------------------------------- */
 /*      Setup georeferencing.                                           */

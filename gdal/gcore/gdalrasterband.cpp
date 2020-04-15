@@ -546,6 +546,7 @@ CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
 /* -------------------------------------------------------------------- */
 /*      Invoke underlying implementation method.                        */
 /* -------------------------------------------------------------------- */
+
     int bCallLeaveReadWrite = EnterReadWrite(GF_Read);
     CPLErr eErr = IReadBlock( nXBlockOff, nYBlockOff, pImage );
     if( bCallLeaveReadWrite) LeaveReadWrite();
@@ -4793,7 +4794,9 @@ inline double GetPixelValue( GDALDataType eDataType,
             }
             break;
         default:
+#ifndef CSA_BUILD
             dfValue = 0.0;
+#endif
             CPLAssert( false );
     }
 

@@ -9,7 +9,8 @@ OBJ	=	netcdfdataset.o \
 		netcdflayersg.o \
 		netcdfsgwriterutil.o \
 		netcdfmultidim.o \
-		netcdfvirtual.o
+		netcdfvirtual.o \
+		netcdf_sentinel3_sral_mwr.o
 
 XTRA_OPT =
 ifeq ($(NETCDF_HAS_NC4),yes)

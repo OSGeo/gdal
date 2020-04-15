@@ -663,7 +663,7 @@ void GDALRegister_PRF()
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "prf" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_prf.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/prf.html" );
     poDriver->pfnIdentify = PhPrfDataset::Identify;
     poDriver->pfnOpen = PhPrfDataset::Open;
     GDALRegisterDriver( (GDALDriverH)poDriver );

@@ -68,6 +68,7 @@ CPL_CVSID("$Id$")
 %token SWQT_IDENTIFIER          "identifier"
 %token SWQT_IN                  "IN"
 %token SWQT_LIKE                "LIKE"
+%token SWQT_ILIKE               "ILIKE"
 %token SWQT_ESCAPE              "ESCAPE"
 %token SWQT_BETWEEN             "BETWEEN"
 %token SWQT_NULL                "NULL"
@@ -103,7 +104,7 @@ CPL_CVSID("$Id$")
 %left SWQT_AND
 %left SWQT_NOT
 
-%left '=' '<' '>' '!' SWQT_BETWEEN SWQT_IN SWQT_LIKE SWQT_IS
+%left '=' '<' '>' '!' SWQT_BETWEEN SWQT_IN SWQT_LIKE SWQT_ILIKE SWQT_IS
 %left SWQT_ESCAPE
 
 %left '+' '-'
@@ -123,11 +124,13 @@ input:
     | SWQT_VALUE_START value_expr
         {
             context->poRoot = $2;
+            swq_fixup(context);
         }
 
     | SWQT_SELECT_START select_statement
         {
             context->poRoot = $2;
+            swq_fixup(context);
         }
 
 value_expr:
@@ -148,8 +151,24 @@ value_expr:
         {
             $$ = new swq_expr_node( SWQ_OR );
             $$->field_type = SWQ_BOOLEAN;
-            $$->PushSubExpression( $1 );
-            $$->PushSubExpression( $3 );
+
+            if( $1->eNodeType == SNT_OPERATION &&
+                $1->nOperation == SWQ_OR  )
+            {
+                // Temporary non-binary formulation
+                $$->nSubExprCount = $1->nSubExprCount;
+                $$->papoSubExpr = $1->papoSubExpr;
+                $$->PushSubExpression( $3 );
+
+                $1->nSubExprCount = 0;
+                $1->papoSubExpr= nullptr;
+                delete $1;
+            }
+            else
+            {
+                $$->PushSubExpression( $1 );
+                $$->PushSubExpression( $3 );
+            }
         }
 
     | SWQT_NOT value_expr
@@ -263,6 +282,48 @@ value_expr:
     | value_expr SWQT_NOT SWQT_LIKE value_expr SWQT_ESCAPE value_expr
         {
             swq_expr_node *like = new swq_expr_node( SWQ_LIKE );
+            like->field_type = SWQ_BOOLEAN;
+            like->PushSubExpression( $1 );
+            like->PushSubExpression( $4 );
+            like->PushSubExpression( $6 );
+
+            $$ = new swq_expr_node( SWQ_NOT );
+            $$->field_type = SWQ_BOOLEAN;
+            $$->PushSubExpression( like );
+        }
+
+    | value_expr SWQT_ILIKE value_expr
+        {
+            $$ = new swq_expr_node( SWQ_ILIKE );
+            $$->field_type = SWQ_BOOLEAN;
+            $$->PushSubExpression( $1 );
+            $$->PushSubExpression( $3 );
+        }
+
+    | value_expr SWQT_NOT SWQT_ILIKE value_expr
+        {
+            swq_expr_node *like = new swq_expr_node( SWQ_ILIKE );
+            like->field_type = SWQ_BOOLEAN;
+            like->PushSubExpression( $1 );
+            like->PushSubExpression( $4 );
+
+            $$ = new swq_expr_node( SWQ_NOT );
+            $$->field_type = SWQ_BOOLEAN;
+            $$->PushSubExpression( like );
+        }
+
+    | value_expr SWQT_ILIKE value_expr SWQT_ESCAPE value_expr
+        {
+            $$ = new swq_expr_node( SWQ_ILIKE );
+            $$->field_type = SWQ_BOOLEAN;
+            $$->PushSubExpression( $1 );
+            $$->PushSubExpression( $3 );
+            $$->PushSubExpression( $5 );
+        }
+
+    | value_expr SWQT_NOT SWQT_ILIKE value_expr SWQT_ESCAPE value_expr
+        {
+            swq_expr_node *like = new swq_expr_node( SWQ_ILIKE );
             like->field_type = SWQ_BOOLEAN;
             like->PushSubExpression( $1 );
             like->PushSubExpression( $4 );

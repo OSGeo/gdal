@@ -153,7 +153,7 @@ struct GDALWarpAppOptions
 
     /*! the resampling method. Available methods are: near, bilinear,
         cubic, cubicspline, lanczos, average, mode, max, min, med,
-        q1, q3 */
+        q1, q3, sum */
     GDALResampleAlg eResampleAlg;
 
     /*! nodata masking values for input bands (different values can be supplied
@@ -1108,7 +1108,7 @@ GDALDatasetH GDALWarpIndirect( const char *pszDest,
 /**
  * Image reprojection and warping function.
  *
- * This is the equivalent of the <a href="gdal_warp.html">gdalwarp</a> utility.
+ * This is the equivalent of the <a href="/programs/gdal_warp.html">gdalwarp</a> utility.
  *
  * GDALWarpAppOptions* must be allocated and freed with GDALWarpAppOptionsNew()
  * and GDALWarpAppOptionsFree() respectively.
@@ -3464,18 +3464,29 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
 class CutlineTransformer : public OGRCoordinateTransformation
 {
 public:
+    void         *hSrcImageTransformer = nullptr;
 
-    void         *hSrcImageTransformer;
+    explicit CutlineTransformer(void* hTransformArg): hSrcImageTransformer(hTransformArg) {}
 
     virtual OGRSpatialReference *GetSourceCS() override { return nullptr; }
     virtual OGRSpatialReference *GetTargetCS() override { return nullptr; }
 
+    virtual ~CutlineTransformer()
+    {
+        GDALDestroyTransformer(hSrcImageTransformer);
+    }
 
     virtual int Transform( int nCount,
                            double *x, double *y, double *z, double* /* t */,
                            int *pabSuccess ) override {
         return GDALGenImgProjTransform( hSrcImageTransformer, TRUE,
                                         nCount, x, y, z, pabSuccess );
+    }
+
+    virtual OGRCoordinateTransformation *Clone() const override
+    {
+        return new CutlineTransformer(
+            GDALCloneTransformer(hSrcImageTransformer));
     }
 };
 
@@ -3627,13 +3638,11 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, OGRGeometryH hCutline,
 /* -------------------------------------------------------------------- */
 /*      Transform the geometry to pixel/line coordinates.               */
 /* -------------------------------------------------------------------- */
-    CutlineTransformer oTransformer;
-
     /* The cutline transformer will *invert* the hSrcImageTransformer */
     /* so it will convert from the cutline SRS to the source pixel/line */
     /* coordinates */
-    oTransformer.hSrcImageTransformer =
-        GDALCreateGenImgProjTransformer2( hSrcDS, nullptr, papszTO );
+    CutlineTransformer oTransformer(
+        GDALCreateGenImgProjTransformer2( hSrcDS, nullptr, papszTO ) );
 
     CSLDestroy( papszTO );
 
@@ -3752,8 +3761,6 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, OGRGeometryH hCutline,
         }
     }
 
-    GDALDestroyGenImgProjTransformer( oTransformer.hSrcImageTransformer );
-
     if( eErr == OGRERR_FAILURE )
     {
         if( CPLTestBool(CPLGetConfigOption("GDALWARP_IGNORE_BAD_CUTLINE", "NO")) )
@@ -3854,7 +3861,7 @@ static bool IsValidSRS( const char *pszUserInput )
  * Allocates a GDALWarpAppOptions struct.
  *
  * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
- *                  The accepted options are the ones of the <a href="gdal_warp.html">gdalwarp</a> utility.
+ *                  The accepted options are the ones of the <a href="/programs/gdal_warp.html">gdalwarp</a> utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
  *                           otherwise (gdal_translate_bin.cpp use case) must be allocated with
  *                           GDALWarpAppOptionsForBinaryNew() prior to this function. Will be
@@ -4337,6 +4344,8 @@ static bool GetResampleAlg(const char* pszResampling,
         eResampleAlg = GRA_Q1;
     else if ( EQUAL(pszResampling, "q3") )
         eResampleAlg = GRA_Q3;
+    else if ( EQUAL(pszResampling, "sum") )
+        eResampleAlg = GRA_Sum;
     else
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Unknown resampling method: %s.",

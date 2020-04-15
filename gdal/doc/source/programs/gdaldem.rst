@@ -304,12 +304,27 @@ comma as separators are GDAL specific extensions.
 
 For example :
 
-3500   white
-2500   235:220:175
-50%   190 185 135
-700    240 250 150
-0      50  180  50
-nv     0   0   0   0
+::
+
+    3500   white
+    2500   235:220:175
+    50%   190 185 135
+    700    240 250 150
+    0      50  180  50
+    nv     0   0   0   0
+
+
+To implement a "round to the floor value" mode, the elevation value can be
+duplicate with a new value being slightly above the threshold.
+For example to have red in [0,10], green in ]10,20] and blue in ]20,30]:
+
+::
+    0       red
+    10      red
+    10.001  green
+    20      green
+    20.001  blue
+    30      blue
 
 TRI
 ^^^

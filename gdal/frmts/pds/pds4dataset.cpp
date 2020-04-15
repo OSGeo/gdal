@@ -844,7 +844,7 @@ static double GetAngularValue(CPLXMLNode* psParent, const char* pszElementName,
 /*                          ReadGeoreferencing()                       */
 /************************************************************************/
 
-// See https://pds.nasa.gov/datastandards/schema/released/cart/v1/PDS4_CART_1B10_1931.xsd,
+// See https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1D00_1933.xsd,
 //     https://raw.githubusercontent.com/nasa-pds-data-dictionaries/ldd-cart/master/build/1.B.0.0/PDS4_CART_1B00.xsd,
 //     https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.xsd
 // and the corresponding .sch files
@@ -1016,6 +1016,25 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
                     oSRS.SetLCC(dfStdParallel1, dfStdParallel2,
                                 dfCenterLat, dfCenterLon, 0, 0);
                 }
+            }
+            else if( EQUAL(osProjName, "Mercator") )
+            {
+                if( bGotScale )
+                {
+                    oSRS.SetMercator(dfCenterLat, // should be 0 normally
+                                     dfCenterLon, dfScale,
+                                     0.0, 0.0);
+                }
+                else
+                {
+                    oSRS.SetMercator2SP(dfStdParallel1,
+                                        dfCenterLat, // should be 0 normally
+                                        dfCenterLon, 0.0, 0.0);
+                }
+            }
+            else if( EQUAL(osProjName, "Orthographic") )
+            {
+                oSRS.SetOrthographic(dfCenterLat, dfCenterLon, 0.0, 0.0);
             }
             else if( EQUAL(osProjName, "Oblique Mercator") &&
                      (psObliqueAzimuth != nullptr || psObliquePoint != nullptr) )
@@ -2057,7 +2076,7 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
 /************************************************************************/
 
 // Returns true is pszCur >= pszRef
-// Must be things like 1900, 1B00, 1B10_1931 ...
+// Must be things like 1900, 1B00, 1D00_1933 ...
 static bool IsCARTVersionGTE(const char* pszCur, const char* pszRef)
 {
     return strcmp(pszCur, pszRef) >= 0;
@@ -2220,6 +2239,9 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
         typedef std::pair<const char*, double> ProjParam;
         std::vector<ProjParam> aoProjParams;
 
+        const bool bUse_CART_1933_Or_Later =
+            IsCARTVersionGTE(pszCARTVersion, "1D00_1933");
+
         if( pszProjection == nullptr )
         {
             pszPDS4ProjectionName = "Equirectangular";
@@ -2230,23 +2252,47 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
         else if( EQUAL(pszProjection, SRS_PT_EQUIRECTANGULAR) )
         {
             pszPDS4ProjectionName = "Equirectangular";
-            aoProjParams.push_back(ProjParam("standard_parallel_1",
-                    oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 1.0)));
-            aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
-                    oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
-            aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
-                    oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
+            if( bUse_CART_1933_Or_Later )
+            {
+                aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
+                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
+                aoProjParams.push_back(ProjParam("standard_parallel_1",
+                        oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 1.0)));
+                aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
+                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+            }
+            else
+            {
+                aoProjParams.push_back(ProjParam("standard_parallel_1",
+                        oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 1.0)));
+                aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
+                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
+                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
+            }
         }
 
         else if( EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) )
         {
             pszPDS4ProjectionName = "Lambert Conformal Conic";
-            aoProjParams.push_back(ProjParam("scale_factor_at_projection_origin",
-                    oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0)));
-            aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
-                    oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
-            aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
-                    oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
+            if( bUse_CART_1933_Or_Later )
+            {
+                aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
+                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
+                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
+                aoProjParams.push_back(ProjParam("scale_factor_at_projection_origin",
+                        oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0)));
+            }
+            else
+            {
+                aoProjParams.push_back(ProjParam("scale_factor_at_projection_origin",
+                        oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0)));
+                aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
+                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
+                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
+            }
         }
 
         else if( EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
@@ -2277,7 +2323,9 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
         else if( EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC) )
         {
             pszPDS4ProjectionName = "Polar Stereographic";
-            aoProjParams.push_back(ProjParam("straight_vertical_longitude_from_pole",
+            aoProjParams.push_back(ProjParam(
+                bUse_CART_1933_Or_Later ?  "longitude_of_central_meridian" :
+                                           "straight_vertical_longitude_from_pole",
                     oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
             aoProjParams.push_back(ProjParam("scale_factor_at_projection_origin",
                     oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0)));
@@ -2314,7 +2362,6 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
         }
         else if( EQUAL(pszProjection, SRS_PT_ORTHOGRAPHIC) )
         {
-            // Does not exist yet in schema
             pszPDS4ProjectionName = "Orthographic";
             aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
                     oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
@@ -2324,22 +2371,29 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
 
         else if( EQUAL(pszProjection, SRS_PT_MERCATOR_1SP) )
         {
-            // Does not exist yet in schema
             pszPDS4ProjectionName = "Mercator";
+            aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
+                    oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+            aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
+                    oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
             aoProjParams.push_back(ProjParam("scale_factor_at_projection_origin",
                     oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0)));
+        }
+
+        else if( EQUAL(pszProjection, SRS_PT_MERCATOR_2SP) )
+        {
+            pszPDS4ProjectionName = "Mercator";
+            aoProjParams.push_back(ProjParam("standard_parallel_1",
+                    oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0)));
             aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
                     oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
             aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
                     oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0)));
         }
 
-        else if( EQUAL(pszProjection, SRS_PT_MERCATOR_2SP) )
+        else if( EQUAL(pszProjection, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
         {
-            // Does not exist yet in schema
-            pszPDS4ProjectionName = "Mercator";
-            aoProjParams.push_back(ProjParam("standard_parallel_1",
-                    oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0)));
+            pszPDS4ProjectionName = "Lambert Azimuthal Equal Area";
             aoProjParams.push_back(ProjParam("longitude_of_central_meridian",
                     oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)));
             aoProjParams.push_back(ProjParam("latitude_of_projection_origin",
@@ -2371,10 +2425,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
         if( pszProjection &&
             EQUAL(pszProjection, SRS_PT_HOTINE_OBLIQUE_MERCATOR_AZIMUTH_CENTER) )
         {
-            CPLCreateXMLElementAndValue(psProj,
-                (osPrefix + "scale_factor_at_projection_origin").c_str(),
-                CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 0.0)));
-            CPLXMLNode* psOLA = CPLCreateXMLNode(psProj, CXT_Element,
+            CPLXMLNode* psOLA = CPLCreateXMLNode(nullptr, CXT_Element,
                                     (osPrefix + "Oblique_Line_Azimuth").c_str());
             CPLAddXMLAttributeAndValue( 
                 CPLCreateXMLElementAndValue(psOLA,
@@ -2387,6 +2438,35 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
                     (osPrefix + "azimuth_measure_point_longitude").c_str(),
                     CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0))),
                 "unit", "deg");
+
+            if( bUse_CART_1933_Or_Later )
+            {
+                CPLAddXMLChild(psProj, psOLA);
+
+                CPLAddXMLAttributeAndValue(
+                    CPLCreateXMLElementAndValue(psProj,
+                        (osPrefix + "longitude_of_central_meridian").c_str(),
+                        "0"),
+                    "unit", "deg");
+
+                const double dfScaleFactor = oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 0.0);
+                if( dfScaleFactor != 1.0 )
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "Scale factor on initial support = %.18g cannot "
+                             "be encoded in PDS4",
+                             dfScaleFactor);
+                }
+            }
+            else
+            {
+                CPLCreateXMLElementAndValue(psProj,
+                    (osPrefix + "scale_factor_at_projection_origin").c_str(),
+                    CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 0.0)));
+
+                CPLAddXMLChild(psProj, psOLA);
+            }
+
             CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psProj,
                     (osPrefix + "latitude_of_projection_origin").c_str(),
@@ -2396,9 +2476,24 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
         else if( pszProjection &&
             EQUAL(pszProjection, SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN) )
         {
-            CPLCreateXMLElementAndValue(psProj,
-                (osPrefix + "scale_factor_at_projection_origin").c_str(),
-                CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 0.0)));
+            if( bUse_CART_1933_Or_Later )
+            {
+                const double dfScaleFactor = oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 0.0);
+                if( dfScaleFactor != 1.0 )
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "Scale factor on initial support = %.18g cannot "
+                             "be encoded in PDS4",
+                             dfScaleFactor);
+                }
+            }
+            else
+            {
+                CPLCreateXMLElementAndValue(psProj,
+                    (osPrefix + "scale_factor_at_projection_origin").c_str(),
+                    CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 0.0)));
+            }
+
             CPLXMLNode* psOLP = CPLCreateXMLNode(psProj, CXT_Element,
                                     (osPrefix + "Oblique_Line_Point").c_str());
             CPLXMLNode* psOLPG1 = CPLCreateXMLNode(psOLP, CXT_Element,
@@ -2425,6 +2520,16 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
                     (osPrefix + "oblique_line_longitude").c_str(),
                     CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_2, 0.0))),
                 "unit", "deg");
+
+            if( bUse_CART_1933_Or_Later )
+            {
+                CPLAddXMLAttributeAndValue(
+                    CPLCreateXMLElementAndValue(psProj,
+                        (osPrefix + "longitude_of_central_meridian").c_str(),
+                        "0"),
+                    "unit", "deg");
+            }
+
             CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psProj,
                     (osPrefix + "latitude_of_projection_origin").c_str(),
@@ -3370,8 +3475,8 @@ void PDS4Dataset::CreateHeader(CPLXMLNode* psProduct,
                         else
                         {
                             // GDAL 3.1
-                            osCartSchema = "https://pds.nasa.gov/datastandards/schema/released/cart/v1/PDS4_CART_1B10_1931.xsd";
-                            pszCARTVersion = "1B10_1931";
+                            osCartSchema = "https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1D00_1933.xsd";
+                            pszCARTVersion = "1D00_1933";
                         }
                         CPLString osNewVal(psSchemaLoc->psChild->pszValue);
                         osNewVal += " http://pds.nasa.gov/pds4/cart/v1 " + osCartSchema;
@@ -3641,7 +3746,7 @@ void PDS4Dataset::WriteHeader()
 
     if( m_bCreateHeader )
     {
-        CPLString osCARTVersion("1B10_1931");
+        CPLString osCARTVersion("1D00_1933");
         char* pszXML = CPLSerializeXMLTree(psRoot);
         if( pszXML )
         {
@@ -4449,7 +4554,7 @@ void GDALRegister_PDS4()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "NASA Planetary Data System 4" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_pds4.html" );
+                               "drivers/raster/pds4.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xml" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte UInt16 Int16 UInt32 Int32 Float32 "

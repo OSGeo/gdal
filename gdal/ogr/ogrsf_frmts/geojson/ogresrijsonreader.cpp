@@ -423,14 +423,6 @@ OGRFeature* OGRESRIJSONReader::ReadFeature( json_object* poObj )
             poFeature->SetGeometryDirectly( poGeometry );
         }
     }
-    else
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid Feature object. "
-                  "Missing \'geometry\' member." );
-        delete poFeature;
-        return nullptr;
-    }
 
     return poFeature;
 }
@@ -1052,6 +1044,21 @@ OGRSpatialReference* OGRESRIJSONReadSpatialReference( json_object* poObj )
             {
                 delete poSRS;
                 poSRS = nullptr;
+            }
+            else
+            {
+                int nEntries = 0;
+                int* panMatchConfidence = nullptr;
+                OGRSpatialReferenceH* pahSRS = poSRS->FindMatches(
+                    nullptr, &nEntries, &panMatchConfidence);
+                if( nEntries == 1 && panMatchConfidence[0] >= 70 )
+                {
+                    delete poSRS;
+                    poSRS = OGRSpatialReference::FromHandle(pahSRS[0])->Clone();
+                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                }
+                OSRFreeSRSArray(pahSRS);
+                CPLFree(panMatchConfidence);
             }
 
             return poSRS;

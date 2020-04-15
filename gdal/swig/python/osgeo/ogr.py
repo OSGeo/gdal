@@ -2768,14 +2768,12 @@ class Layer(MajorObject):
             self.CreateField(i)
 
     def __iter__(self):
-        return self
-
-    def next(self):
-        feature = self.GetNextFeature()
-        if not feature:
-            raise StopIteration
-        else:
-            return feature
+        self.ResetReading()
+        while True:
+            feature = self.GetNextFeature()
+            if not feature:
+                break
+            yield feature
 
     def schema(self):
         output = []
@@ -7122,42 +7120,6 @@ class Geometry(_object):
         return _ogr.Geometry_TransformTo(self, *args)
 
 
-    def Transform(self, *args):
-        """
-        Transform(Geometry self, CoordinateTransformation trans) -> OGRErr
-
-        OGRErr OGR_G_Transform(OGRGeometryH
-        hGeom, OGRCoordinateTransformationH hTransform)
-
-        Apply arbitrary coordinate transformation to geometry.
-
-        This function will transform the coordinates of a geometry from their
-        current spatial reference system to a new target spatial reference
-        system. Normally this means reprojecting the vectors, but it could
-        include datum shifts, and changes of units.
-
-        Note that this function does not require that the geometry already
-        have a spatial reference system. It will be assumed that they can be
-        treated as having the source spatial reference system of the
-        OGRCoordinateTransformation object, and the actual SRS of the geometry
-        will be ignored. On successful completion the output
-        OGRSpatialReference of the OGRCoordinateTransformation will be
-        assigned to the geometry.
-
-        This function is the same as the CPP method OGRGeometry::transform.
-
-        Parameters:
-        -----------
-
-        hGeom:  handle on the geometry to apply the transform to.
-
-        hTransform:  handle on the transformation to apply.
-
-        OGRERR_NONE on success or an error code. 
-        """
-        return _ogr.Geometry_Transform(self, *args)
-
-
     def GetSpatialReference(self, *args):
         """
         GetSpatialReference(Geometry self) -> SpatialReference
@@ -7648,6 +7610,43 @@ class Geometry(_object):
         return _ogr.Geometry_Value(self, *args)
 
 
+    def Transform(self, *args):
+        """
+        Transform(Geometry self, CoordinateTransformation trans) -> OGRErr
+        Transform(Geometry self, GeomTransformer transformer) -> Geometry
+
+        OGRErr OGR_G_Transform(OGRGeometryH
+        hGeom, OGRCoordinateTransformationH hTransform)
+
+        Apply arbitrary coordinate transformation to geometry.
+
+        This function will transform the coordinates of a geometry from their
+        current spatial reference system to a new target spatial reference
+        system. Normally this means reprojecting the vectors, but it could
+        include datum shifts, and changes of units.
+
+        Note that this function does not require that the geometry already
+        have a spatial reference system. It will be assumed that they can be
+        treated as having the source spatial reference system of the
+        OGRCoordinateTransformation object, and the actual SRS of the geometry
+        will be ignored. On successful completion the output
+        OGRSpatialReference of the OGRCoordinateTransformation will be
+        assigned to the geometry.
+
+        This function is the same as the CPP method OGRGeometry::transform.
+
+        Parameters:
+        -----------
+
+        hGeom:  handle on the geometry to apply the transform to.
+
+        hTransform:  handle on the transformation to apply.
+
+        OGRERR_NONE on success or an error code. 
+        """
+        return _ogr.Geometry_Transform(self, *args)
+
+
     def Destroy(self):
       self.__swig_destroy__(self)
       self.__del__()
@@ -7665,19 +7664,38 @@ class Geometry(_object):
         self.this = result.this
 
     def __iter__(self):
-        self.iter_subgeom = 0
-        return self
+        for i in range(self.GetGeometryCount()):
+            yield self.GetGeometryRef(i)
 
-    def next(self):
-        if self.iter_subgeom < self.GetGeometryCount():
-            subgeom = self.GetGeometryRef(self.iter_subgeom)
-            self.iter_subgeom += 1
-            return subgeom
-        else:
-            raise StopIteration
 
 Geometry_swigregister = _ogr.Geometry_swigregister
 Geometry_swigregister(Geometry)
+
+class GeomTransformer(_object):
+    """Proxy of C++ OGRGeomTransformerShadow class."""
+
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, GeomTransformer, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, GeomTransformer, name)
+    __repr__ = _swig_repr
+
+    def __init__(self, *args):
+        """__init__(OGRGeomTransformerShadow self, CoordinateTransformation ct, char ** options=None) -> GeomTransformer"""
+        this = _ogr.new_GeomTransformer(*args)
+        try:
+            self.this.append(this)
+        except __builtin__.Exception:
+            self.this = this
+    __swig_destroy__ = _ogr.delete_GeomTransformer
+    __del__ = lambda self: None
+
+    def Transform(self, *args):
+        """Transform(GeomTransformer self, Geometry src_geom) -> Geometry"""
+        return _ogr.GeomTransformer_Transform(self, *args)
+
+GeomTransformer_swigregister = _ogr.GeomTransformer_swigregister
+GeomTransformer_swigregister(GeomTransformer)
 
 
 def GetDriverCount(*args):

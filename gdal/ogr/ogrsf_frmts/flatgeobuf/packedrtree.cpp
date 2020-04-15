@@ -1,3 +1,33 @@
+/******************************************************************************
+ *
+ * Project:  FlatGeobuf
+ * Purpose:  Packed RTree management
+ * Author:   Björn Harrtell <bjorn at wololo dot org>
+ *
+ ******************************************************************************
+ * Copyright (c) 2018-2020, Björn Harrtell <bjorn at wololo dot org>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
+
+// NOTE: The upstream of this file is in https://github.com/bjornharrtell/flatgeobuf/tree/master/src/cpp
+
 #ifdef GDAL_COMPILATION
 #include "cpl_port.h"
 #else
@@ -6,10 +36,14 @@
 
 #include "packedrtree.h"
 
+#include <map>
+#include <unordered_map>
+#include <iostream>
+
 namespace FlatGeobuf
 {
 
-void Rect::expand(const Rect& r)
+void NodeItem::expand(const NodeItem& r)
 {
     if (r.minX < minX) minX = r.minX;
     if (r.minY < minY) minY = r.minY;
@@ -17,17 +51,18 @@ void Rect::expand(const Rect& r)
     if (r.maxY > maxY) maxY = r.maxY;
 }
 
-Rect Rect::createInvertedInfiniteRect()
+NodeItem NodeItem::create(uint64_t offset)
 {
     return {
         std::numeric_limits<double>::infinity(),
         std::numeric_limits<double>::infinity(),
         -1 * std::numeric_limits<double>::infinity(),
-        -1 * std::numeric_limits<double>::infinity()
+        -1 * std::numeric_limits<double>::infinity(),
+        offset
     };
 }
 
-bool Rect::intersects(const Rect& r) const
+bool NodeItem::intersects(const NodeItem& r) const
 {
     if (maxX < r.minX) return false;
     if (maxY < r.minY) return false;
@@ -36,7 +71,7 @@ bool Rect::intersects(const Rect& r) const
     return true;
 }
 
-std::vector<double> Rect::toVector()
+std::vector<double> NodeItem::toVector()
 {
     return std::vector<double> { minX, minY, maxX, maxY };
 }
@@ -91,7 +126,7 @@ uint32_t hilbert(uint32_t x, uint32_t y)
     return value;
 }
 
-uint32_t hilbert(const Rect& r, uint32_t hilbertMax, const Rect& extent)
+uint32_t hilbert(const NodeItem& r, uint32_t hilbertMax, const NodeItem& extent)
 {
     uint32_t x = static_cast<uint32_t>(floor(hilbertMax * ((r.minX + r.maxX) / 2 - extent.minX) / extent.width()));
     uint32_t y = static_cast<uint32_t>(floor(hilbertMax * ((r.minY + r.maxY) / 2 - extent.minY) / extent.height()));
@@ -103,39 +138,39 @@ const uint32_t hilbertMax = (1 << 16) - 1;
 
 void hilbertSort(std::vector<std::shared_ptr<Item>> &items)
 {
-    Rect extent = std::accumulate(items.begin(), items.end(), Rect::createInvertedInfiniteRect(), [] (Rect a, std::shared_ptr<Item> b) {
-        a.expand(b->rect);
+    NodeItem extent = std::accumulate(items.begin(), items.end(), NodeItem::create(0), [] (NodeItem a, std::shared_ptr<Item> b) {
+        a.expand(b->nodeItem);
         return a;
     });
     std::sort(items.begin(), items.end(), [&extent] (std::shared_ptr<Item> a, std::shared_ptr<Item> b) {
-        uint32_t ha = hilbert(a->rect, hilbertMax, extent);
-        uint32_t hb = hilbert(b->rect, hilbertMax, extent);
+        uint32_t ha = hilbert(a->nodeItem, hilbertMax, extent);
+        uint32_t hb = hilbert(b->nodeItem, hilbertMax, extent);
         return ha > hb;
     });
 }
 
-Rect calcExtent(const std::vector<Rect> &rects)
+NodeItem calcExtent(const std::vector<NodeItem> &nodes)
 {
-    Rect extent = std::accumulate(rects.begin(), rects.end(), Rect::createInvertedInfiniteRect(), [] (Rect a, const Rect& b) {
+    NodeItem extent = std::accumulate(nodes.begin(), nodes.end(), NodeItem::create(0), [] (NodeItem a, const NodeItem& b) {
         a.expand(b);
         return a;
     });
     return extent;
 }
 
-Rect calcExtent(const std::vector<std::shared_ptr<Item>> &rectitems)
+NodeItem calcExtent(const std::vector<std::shared_ptr<Item>> &items)
 {
-    Rect extent = std::accumulate(rectitems.begin(), rectitems.end(), Rect::createInvertedInfiniteRect(), [] (Rect a, std::shared_ptr<Item> b) {
-        a.expand(b->rect);
+    NodeItem extent = std::accumulate(items.begin(), items.end(), NodeItem::create(0), [] (NodeItem a, std::shared_ptr<Item> b) {
+        a.expand(b->nodeItem);
         return a;
     });
     return extent;
 }
 
-void hilbertSort(std::vector<Rect> &items)
+void hilbertSort(std::vector<NodeItem> &items)
 {
-    Rect extent = calcExtent(items);
-    std::sort(items.begin(), items.end(), [&extent] (const Rect& a, const Rect& b) {
+    NodeItem extent = calcExtent(items);
+    std::sort(items.begin(), items.end(), [&extent] (const NodeItem& a, const NodeItem& b) {
         uint32_t ha = hilbert(a, hilbertMax, extent);
         uint32_t hb = hilbert(b, hilbertMax, extent);
         return ha > hb;
@@ -150,43 +185,56 @@ void PackedRTree::init(const uint16_t nodeSize)
         throw std::invalid_argument("Cannot create empty tree");
     _nodeSize = std::min(std::max(nodeSize, static_cast<uint16_t>(2)), static_cast<uint16_t>(65535));
     _levelBounds = generateLevelBounds(_numItems, _nodeSize);
-    _numNodes = _levelBounds.back();
-    _numNonLeafNodes = static_cast<uint32_t>(_numNodes - _numItems);
-    _minAlign = _numNonLeafNodes % 2;
-    _rects.reserve(static_cast<size_t>(_numNodes));
-    _indices.reserve(static_cast<size_t>(_numNonLeafNodes));
+    _numNodes = _levelBounds.front().second;
+    _nodeItems = new NodeItem[static_cast<size_t>(_numNodes)];
 }
 
-std::vector<uint64_t> PackedRTree::generateLevelBounds(const uint64_t numItems, const uint16_t nodeSize) {
+std::vector<std::pair<uint64_t, uint64_t>> PackedRTree::generateLevelBounds(const uint64_t numItems, const uint16_t nodeSize) {
     if (nodeSize < 2)
         throw std::invalid_argument("Node size must be at least 2");
     if (numItems == 0)
         throw std::invalid_argument("Number of items must be greater than 0");
     if (numItems > std::numeric_limits<uint64_t>::max() - ((numItems / nodeSize) * 2))
         throw std::overflow_error("Number of items too large");
-    std::vector<uint64_t> levelBounds;
+
+    // number of nodes per level in bottom-up order
+    std::vector<uint64_t> levelNumNodes;
     uint64_t n = numItems;
     uint64_t numNodes = n;
-    levelBounds.push_back(n);
+    levelNumNodes.push_back(n);
     do {
         n = (n + nodeSize - 1) / nodeSize;
         numNodes += n;
-        levelBounds.push_back(numNodes);
+        levelNumNodes.push_back(n);
     } while (n != 1);
+
+    // bounds per level in reversed storage order (top-down)
+    std::vector<uint64_t> levelOffsets;
+    n = numNodes;
+    for (auto size : levelNumNodes) {
+        levelOffsets.push_back(n - size);
+        n -= size;
+    }
+    std::reverse(levelOffsets.begin(), levelOffsets.end());
+    std::reverse(levelNumNodes.begin(), levelNumNodes.end());
+    std::vector<std::pair<uint64_t, uint64_t>> levelBounds;
+    for (size_t i = 0; i < levelNumNodes.size(); i++)
+        levelBounds.push_back(std::pair<uint64_t, uint64_t>(levelOffsets[i], levelOffsets[i] + levelNumNodes[i]));
+    std::reverse(levelBounds.begin(), levelBounds.end());
     return levelBounds;
 }
 
 void PackedRTree::generateNodes()
 {
-    for (uint32_t i = 0, pos = 0; i < _levelBounds.size() - 1; i++) {
-        uint32_t end = static_cast<uint32_t>(_levelBounds[i]);
+    for (uint32_t i = 0; i < _levelBounds.size() - 1; i++) {
+        auto pos = _levelBounds[i].first;
+        auto end = _levelBounds[i].second;
+        auto newpos = _levelBounds[i + 1].first;
         while (pos < end) {
-            Rect nodeRect = Rect::createInvertedInfiniteRect();
-            uint32_t nodeIndex = pos;
+            NodeItem node = NodeItem::create(pos);
             for (uint32_t j = 0; j < _nodeSize && pos < end; j++)
-                nodeRect.expand(_rects[pos++]);
-            _rects.push_back(nodeRect);
-            _indices.push_back(nodeIndex);
+                node.expand(_nodeItems[pos++]);
+            _nodeItems[newpos++] = node;
         }
     }
 }
@@ -194,143 +242,123 @@ void PackedRTree::generateNodes()
 void PackedRTree::fromData(const void *data)
 {
     auto buf = reinterpret_cast<const uint8_t *>(data);
-    const Rect *pr = reinterpret_cast<const Rect *>(buf);
+    const NodeItem *pn = reinterpret_cast<const NodeItem *>(buf);
     for (uint64_t i = 0; i < _numNodes; i++) {
-        Rect r = *pr++;
-        _rects.push_back(r);
-        _extent.expand(r);
+        NodeItem n = *pn++;
+        _nodeItems[i] = n;
+        _extent.expand(n);
     }
-    uint64_t rectsSize = _numNodes * sizeof(Rect);
-    const uint32_t *pi = reinterpret_cast<const uint32_t *>(buf + rectsSize);
-    for (uint32_t i = 0; i < _numNonLeafNodes; i++)
-        _indices[i] = *pi++;
 }
 
-static std::vector<Rect> convert(const std::vector<std::shared_ptr<Item>> &items)
-{
-    std::vector<Rect> rects;
-    for (const std::shared_ptr<Item> item: items)
-        rects.push_back(item->rect);
-    return rects;
-}
-
-PackedRTree::PackedRTree(const std::vector<std::shared_ptr<Item>> &items, const Rect& extent, const uint16_t nodeSize) :
+PackedRTree::PackedRTree(const std::vector<std::shared_ptr<Item>> &items, const NodeItem& extent, const uint16_t nodeSize) :
     _extent(extent),
-    _rects(convert(items)),
-    _numItems(_rects.size())
+    _numItems(items.size())
 {
     init(nodeSize);
+    for (size_t i = 0; i < _numItems; i++) {
+        _nodeItems[_numNodes - _numItems + i] = items[i]->nodeItem;
+    }
     generateNodes();
 }
 
-PackedRTree::PackedRTree(const std::vector<Rect> &rects, const Rect& extent, const uint16_t nodeSize) :
+PackedRTree::PackedRTree(const std::vector<NodeItem> &nodes, const NodeItem& extent, const uint16_t nodeSize) :
     _extent(extent),
-    _rects(rects),
-    _numItems(_rects.size())
+    _numItems(nodes.size())
 {
     init(nodeSize);
+    for (size_t i = 0; i < _numItems; i++) {
+        _nodeItems[_numNodes - _numItems + i] = nodes[i];
+    }
     generateNodes();
 }
 
 PackedRTree::PackedRTree(const void *data, const uint64_t numItems, const uint16_t nodeSize) :
-    _extent(Rect::createInvertedInfiniteRect()),
+    _extent(NodeItem::create(0)),
     _numItems(numItems)
 {
     init(nodeSize);
     fromData(data);
 }
 
-std::vector<uint64_t> PackedRTree::search(double minX, double minY, double maxX, double maxY) const
+std::vector<SearchResultItem> PackedRTree::search(double minX, double minY, double maxX, double maxY) const
 {
-    Rect r { minX, minY, maxX, maxY };
-    std::vector<uint64_t> queue;
-    std::vector<uint64_t> results;
-    queue.push_back(_rects.size() - 1);
-    queue.push_back(_levelBounds.size() - 1);
+    uint64_t leafNodesOffset = _levelBounds.front().first;
+    NodeItem n { minX, minY, maxX, maxY, 0 };
+    std::vector<SearchResultItem> results;
+    std::unordered_map<uint64_t, uint64_t> queue;
+    queue.insert(std::pair<uint64_t, uint64_t>(0, _levelBounds.size() - 1));
     while(queue.size() != 0) {
-        uint64_t nodeIndex = queue[queue.size() - 2];
-        uint64_t level = queue[queue.size() - 1];
-        queue.pop_back();
-        queue.pop_back();
+        auto next = queue.begin();
+        uint64_t nodeIndex = next->first;
+        uint64_t level = next->second;
+        queue.erase(next);
+        bool isLeafNode = nodeIndex >= _numNodes - _numItems;
         // find the end index of the node
-        uint64_t end = std::min(static_cast<uint64_t>(nodeIndex + _nodeSize), _levelBounds[static_cast<size_t>(level)]);
+        uint64_t end = std::min(static_cast<uint64_t>(nodeIndex + _nodeSize), _levelBounds[static_cast<size_t>(level)].second);
         // search through child nodes
         for (uint64_t pos = nodeIndex; pos < end; pos++) {
-            if (!r.intersects(_rects[static_cast<size_t>(pos)]))
+            auto nodeItem = _nodeItems[static_cast<size_t>(pos)];
+            if (!n.intersects(nodeItem))
                 continue;
-            if (nodeIndex < _numItems) {
-                results.push_back(pos); // leaf item
-            } else {
-                queue.push_back(_indices[static_cast<size_t>(pos - _numItems)]); // node; add it to the search queue
-                queue.push_back(level - 1);
-            }
+            if (isLeafNode)
+                results.push_back({ nodeItem.offset, pos - leafNodesOffset });
+            else
+                queue.insert(std::pair<uint64_t, uint64_t>(nodeItem.offset, level - 1));
         }
     }
     return results;
 }
 
-std::vector<uint64_t> PackedRTree::streamSearch(
-    const uint64_t numItems, const uint16_t nodeSize, const Rect& r,
+std::vector<SearchResultItem> PackedRTree::streamSearch(
+    const uint64_t numItems, const uint16_t nodeSize, const NodeItem& item,
     const std::function<void(uint8_t *, size_t, size_t)> &readNode)
 {
     auto levelBounds = generateLevelBounds(numItems, nodeSize);
-    uint64_t numNodes = levelBounds.back();
-    std::vector<uint32_t> nodeIndices;
-    nodeIndices.reserve(nodeSize);
-    uint8_t *nodeIndicesBuf = reinterpret_cast<uint8_t *>(nodeIndices.data());
-    std::vector<Rect> nodeRects;
-    nodeRects.reserve(nodeSize);
-    uint8_t *nodeRectsBuf = reinterpret_cast<uint8_t *>(nodeRects.data());
-    std::vector<uint64_t> queue;
-    std::vector<uint64_t> results;
-    queue.push_back(numNodes - 1);
-    queue.push_back(levelBounds.size() - 1);
+    uint64_t leafNodesOffset = levelBounds.front().first;
+    uint64_t numNodes = levelBounds.front().second;
+    std::vector<NodeItem> nodeItems;
+    nodeItems.reserve(nodeSize);
+    uint8_t *nodesBuf = reinterpret_cast<uint8_t *>(nodeItems.data());
+    // use ordered search queue to make index traversal in sequential order
+    std::map<uint64_t, uint64_t> queue;
+    std::vector<SearchResultItem> results;
+    queue.insert(std::pair<uint64_t, uint64_t>(0, levelBounds.size() - 1));
     while(queue.size() != 0) {
-        uint64_t nodeIndex = queue[queue.size() - 2];
-        bool isLeafNode = nodeIndex < numItems;
-        uint64_t level = queue[queue.size() - 1];
-        queue.pop_back();
-        queue.pop_back();
+        auto next = queue.begin();
+        uint64_t nodeIndex = next->first;
+        uint64_t level = next->second;
+        queue.erase(next);
+        bool isLeafNode = nodeIndex >= numNodes - numItems;
         // find the end index of the node
-        uint64_t end = std::min(static_cast<uint64_t>(nodeIndex + nodeSize), levelBounds[static_cast<size_t>(level)]);
+        uint64_t end = std::min(static_cast<uint64_t>(nodeIndex + nodeSize), levelBounds[static_cast<size_t>(level)].second);
         uint64_t length = end - nodeIndex;
-        if (!isLeafNode) {
-            auto offset = numNodes * sizeof(Rect) + (nodeIndex - numItems) * sizeof(uint32_t);
-            readNode(nodeIndicesBuf, static_cast<size_t>(offset), static_cast<size_t>(length * sizeof(uint32_t)));
-#if !CPL_IS_LSB
-            for( size_t i = 0; i < static_cast<size_t>(length); i++ )
-            {
-                CPL_LSBPTR32(&nodeIndices[i]);
-            }
-#endif
-        }
-        readNode(nodeRectsBuf, static_cast<size_t>(nodeIndex * sizeof(Rect)), static_cast<size_t>(length * sizeof(Rect)));
+        readNode(nodesBuf, static_cast<size_t>(nodeIndex * sizeof(NodeItem)), static_cast<size_t>(length * sizeof(NodeItem)));
 #if !CPL_IS_LSB
         for( size_t i = 0; i < static_cast<size_t>(length); i++ )
         {
-            CPL_LSBPTR64(&nodeRects[i].minX);
-            CPL_LSBPTR64(&nodeRects[i].minY);
-            CPL_LSBPTR64(&nodeRects[i].maxX);
-            CPL_LSBPTR64(&nodeRects[i].maxY);
+            CPL_LSBPTR64(&nodeItems[i].minX);
+            CPL_LSBPTR64(&nodeItems[i].minY);
+            CPL_LSBPTR64(&nodeItems[i].maxX);
+            CPL_LSBPTR64(&nodeItems[i].maxY);
+            CPL_LSBPTR64(&nodeItems[i].offset);
         }
 #endif
         // search through child nodes
         for (uint64_t pos = nodeIndex; pos < end; pos++) {
             uint64_t nodePos = pos - nodeIndex;
-            if (!r.intersects(nodeRects[static_cast<size_t>(nodePos)]))
+            auto nodeItem = nodeItems[static_cast<size_t>(nodePos)];
+            if (!item.intersects(nodeItem))
                 continue;
-            if (isLeafNode) {
-                results.push_back(pos); // leaf item
-            } else {
-                queue.push_back(nodeIndices[static_cast<size_t>(nodePos)]); // node; add it to the search queue
-                queue.push_back(level - 1);
-            }
+            if (isLeafNode)
+                results.push_back({ nodeItem.offset, pos - leafNodesOffset });
+            else
+                queue.insert(std::pair<uint64_t, uint64_t>(nodeItem.offset, level - 1));
         }
     }
     return results;
 }
 
-uint64_t PackedRTree::size() const { return _numNodes * sizeof(Rect) + (_numNonLeafNodes + _minAlign) * sizeof(uint32_t); }
+uint64_t PackedRTree::size() const { return _numNodes * sizeof(NodeItem); }
 
 uint64_t PackedRTree::size(const uint64_t numItems, const uint16_t nodeSize)
 {
@@ -348,32 +376,33 @@ uint64_t PackedRTree::size(const uint64_t numItems, const uint16_t nodeSize)
         n = (n + nodeSizeMin - 1) / nodeSizeMin;
         numNodes += n;
     } while (n != 1);
-    const uint64_t numNonLeafNodes = numNodes - numItems;
-    const uint32_t minAlign = numNonLeafNodes % 2;
-    return numNodes * sizeof(Rect) + (numNonLeafNodes + minAlign) * sizeof(uint32_t);
+    return numNodes * sizeof(NodeItem);
 }
 
 void PackedRTree::streamWrite(const std::function<void(uint8_t *, size_t)> &writeData) {
 #if !CPL_IS_LSB
-    // Note: we should normally revert endianness after writing, but as we no longer
-    // use the data structures this is not needed.
-    for( size_t i = 0; i < _rects.size(); i++ )
+    for( size_t i = 0; i < static_cast<size_t>(_numNodes); i++ )
     {
-        CPL_LSBPTR64(&_rects[i].minX);
-        CPL_LSBPTR64(&_rects[i].minY);
-        CPL_LSBPTR64(&_rects[i].maxX);
-        CPL_LSBPTR64(&_rects[i].maxY);
-    }
-    for( size_t i = 0; i < _indices.size(); i++ )
-    {
-        CPL_LSBPTR32(&_indices[i]);
+        CPL_LSBPTR64(&_nodeItems[i].minX);
+        CPL_LSBPTR64(&_nodeItems[i].minY);
+        CPL_LSBPTR64(&_nodeItems[i].maxX);
+        CPL_LSBPTR64(&_nodeItems[i].maxY);
+        CPL_LSBPTR64(&_nodeItems[i].offset);
     }
 #endif
-    writeData(reinterpret_cast<uint8_t *>(_rects.data()), _rects.size() * sizeof(Rect));
-    writeData(reinterpret_cast<uint8_t *>(_indices.data()), _indices.size() * sizeof(uint32_t));
-    writeData(reinterpret_cast<uint8_t *>(_indices.data()), (_numNonLeafNodes % 2) * sizeof(uint32_t));
+    writeData(reinterpret_cast<uint8_t *>(_nodeItems), static_cast<size_t>(_numNodes * sizeof(NodeItem)));
+#if !CPL_IS_LSB
+    for( size_t i = 0; i < static_cast<size_t>(_numNodes); i++ )
+    {
+        CPL_LSBPTR64(&_nodeItems[i].minX);
+        CPL_LSBPTR64(&_nodeItems[i].minY);
+        CPL_LSBPTR64(&_nodeItems[i].maxX);
+        CPL_LSBPTR64(&_nodeItems[i].maxY);
+        CPL_LSBPTR64(&_nodeItems[i].offset);
+    }
+#endif
 }
 
-Rect PackedRTree::getExtent() const { return _extent; }
+NodeItem PackedRTree::getExtent() const { return _extent; }
 
 }

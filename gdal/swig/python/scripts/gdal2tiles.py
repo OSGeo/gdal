@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # ******************************************************************************
 #  $Id$
@@ -487,6 +487,13 @@ def exit_with_error(message, details=""):
     sys.exit(2)
 
 
+def set_cache_max(cache_in_bytes):
+    # We set the maximum using `SetCacheMax` and `GDAL_CACHEMAX` to support both fork and spawn as multiprocessing start methods.
+    # https://github.com/OSGeo/gdal/pull/2112
+    os.environ['GDAL_CACHEMAX'] = '%d' % int(cache_in_bytes / 1024 / 1024)
+    gdal.SetCacheMax(cache_in_bytes)
+
+
 def generate_kml(tx, ty, tz, tileext, tile_size, tileswne, options, children=None, **args):
     """
     Template for the KML. Returns filled string.
@@ -688,8 +695,14 @@ def setup_no_data_values(input_dataset, options):
             in_nodata = nds
     else:
         for i in range(1, input_dataset.RasterCount + 1):
-            raster_no_data = input_dataset.GetRasterBand(i).GetNoDataValue()
+            band = input_dataset.GetRasterBand(i)
+            raster_no_data = band.GetNoDataValue()
             if raster_no_data is not None:
+                # Ignore nodata values that are not in the range of the band data type (see https://github.com/OSGeo/gdal/pull/2299)
+                if band.DataType == gdal.GDT_Byte and (raster_no_data != int(raster_no_data) or raster_no_data < 0 or raster_no_data > 255):
+                    # We should possibly do similar check for other data types
+                    in_nodata = []
+                    break
                 in_nodata.append(raster_no_data)
 
     if options.verbose:
@@ -722,7 +735,9 @@ def setup_input_srs(input_dataset, options):
             input_srs = osr.SpatialReference()
             input_srs.ImportFromWkt(input_srs_wkt)
 
-    input_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    if input_srs is not None:
+        input_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    
     return input_srs, input_srs_wkt
 
 
@@ -1052,10 +1067,11 @@ def create_overview_tiles(tile_job_info, output_folder, options):
             for tx in range(tminx, tmaxx + 1):
 
                 ti += 1
+                ytile = GDAL2Tiles.getYTile(ty, tz, options)
                 tilefilename = os.path.join(output_folder,
                                             str(tz),
                                             str(tx),
-                                            "%s.%s" % (ty, tile_job_info.tile_extension))
+                                            "%s.%s" % (ytile, tile_job_info.tile_extension))
 
                 if options.verbose:
                     print(ti, '/', tcount, tilefilename)
@@ -1087,8 +1103,9 @@ def create_overview_tiles(tile_job_info, output_folder, options):
                     for x in range(2 * tx, 2 * tx + 2):
                         minx, miny, maxx, maxy = tile_job_info.tminmax[tz + 1]
                         if x >= minx and x <= maxx and y >= miny and y <= maxy:
+                            ytile2 = GDAL2Tiles.getYTile(y, tz+1, options)
                             base_tile_path = os.path.join(output_folder, str(tz + 1), str(x),
-                                                          "%s.%s" % (y, tile_job_info.tile_extension))
+                                                          "%s.%s" % (ytile2, tile_job_info.tile_extension))
                             if not os.path.isfile(base_tile_path):
                                 continue
 
@@ -1166,6 +1183,9 @@ def optparse_init():
     p.add_option('-d', '--tmscompatible', dest="tmscompatible", action="store_true",
                  help=("When using the geodetic profile, specifies the base resolution "
                        "as 0.703125 or 2 tiles at zoom level 0."))
+    p.add_option('--xyz',
+                 action='store_true', dest='xyz',
+                 help="Use XYZ tile numbering (OSM Slippy Map tiles) instead of TMS")
     p.add_option("-v", "--verbose",
                  action="store_true", dest="verbose",
                  help="Print status messages to stdout")
@@ -1179,6 +1199,9 @@ def optparse_init():
                  dest="nb_processes",
                  type='int',
                  help="Number of processes to use for tiling")
+    p.add_option("--tilesize", dest="tilesize", default=256,
+                 type='int',
+                 help="Tile size in pixel of a tile")
 
     # KML options
     g = OptionGroup(p, "KML (Google Earth) options",
@@ -1387,6 +1410,8 @@ class GDAL2Tiles(object):
 
         # Tile format
         self.tile_size = 256
+        if options.tilesize:
+            self.tile_size = options.tilesize
         self.tiledriver = 'PNG'
         self.tileext = 'png'
         self.tmp_dir = tempfile.mkdtemp()
@@ -1426,6 +1451,9 @@ class GDAL2Tiles(object):
             zoom_min, zoom_max = minmax[:2]
             self.tminz = int(zoom_min)
             if zoom_max:
+                if int(zoom_max) < self.tminz:
+                    raise Exception('max zoom (%d) less than min zoom (%d)' %
+                                    (int(zoom_max), self.tminz))
                 self.tmaxz = int(zoom_max)
             else:
                 self.tmaxz = int(zoom_min)
@@ -1508,7 +1536,7 @@ class GDAL2Tiles(object):
             if not in_srs:
                 exit_with_error(
                     "Input file has unknown SRS.",
-                    "Use --s_srs ESPG:xyz (or similar) to provide source reference system.")
+                    "Use --s_srs EPSG:xyz (or similar) to provide source reference system.")
 
             if not has_georeference(input_dataset):
                 exit_with_error(
@@ -1582,7 +1610,7 @@ class GDAL2Tiles(object):
         # Calculating ranges for tiles in different zoom levels
         if self.options.profile == 'mercator':
 
-            self.mercator = GlobalMercator()
+            self.mercator = GlobalMercator(tile_size=self.tile_size)
 
             # Function which generates SWNE in LatLong for given tile
             self.tileswne = self.mercator.TileLatLonBounds
@@ -1625,7 +1653,7 @@ class GDAL2Tiles(object):
 
         if self.options.profile == 'geodetic':
 
-            self.geodetic = GlobalGeodetic(self.options.tmscompatible)
+            self.geodetic = GlobalGeodetic(self.options.tmscompatible, tile_size=self.tile_size)
 
             # Function which generates SWNE in LatLong for given tile
             self.tileswne = self.geodetic.TileLatLonBounds
@@ -1835,8 +1863,9 @@ class GDAL2Tiles(object):
             for tx in range(tminx, tmaxx + 1):
 
                 ti += 1
+                ytile = GDAL2Tiles.getYTile(ty, tz, self.options)
                 tilefilename = os.path.join(
-                    self.output_folder, str(tz), str(tx), "%s.%s" % (ty, self.tileext))
+                    self.output_folder, str(tz), str(tx), "%s.%s" % (ytile, self.tileext))
                 if self.options.verbose:
                     print(ti, '/', tcount, tilefilename)
 
@@ -1904,7 +1933,7 @@ class GDAL2Tiles(object):
                 # geo_query
                 tile_details.append(
                     TileDetail(
-                        tx=tx, ty=ty, tz=tz, rx=rx, ry=ry, rxsize=rxsize, rysize=rysize, wx=wx,
+                        tx=tx, ty=ytile, tz=tz, rx=rx, ry=ry, rxsize=rxsize, rysize=rysize, wx=wx,
                         wy=wy, wxsize=wxsize, wysize=wysize, querysize=querysize,
                     )
                 )
@@ -2568,8 +2597,22 @@ class GDAL2Tiles(object):
                   // Create OSM layer
                   var osm = new OpenLayers.Layer.OSM("OpenStreetMap");
 
+            """ % args    # noqa
+
+            if self.options.xyz:
+                s += """
                   // create TMS Overlay layer
-                   var tmsoverlay = new OpenLayers.Layer.TMS("TMS Overlay", "",
+                  var tmsoverlay = new OpenLayers.Layer.XYZ("XYZ Overlay",
+                      "${z}/${x}/${y}.png", {
+                      transitionEffect: 'resize',
+                      isBaseLayer: false
+                  });
+
+                """ % args    # noqa
+            else:
+                s += """
+                  // create TMS Overlay layer
+                  var tmsoverlay = new OpenLayers.Layer.TMS("TMS Overlay", "",
                   {
                       serviceVersion: '.',
                       layername: '.',
@@ -2578,6 +2621,10 @@ class GDAL2Tiles(object):
                       isBaseLayer: false,
                       getURL: getURL
                   });
+
+                """ % args    # noqa
+
+            s += """
                   if (OpenLayers.Util.alphaHack() == false) {
                       tmsoverlay.setOpacity(0.7);
                   }
@@ -2591,7 +2638,7 @@ class GDAL2Tiles(object):
                   switcherControl.maximizeControl();
 
                   map.zoomToExtent(mapBounds.transform(map.displayProjection, map.projection));
-          """ % args    # noqa
+        """ % args    # noqa
 
         elif self.options.profile == 'geodetic':
             s += """
@@ -2629,7 +2676,7 @@ class GDAL2Tiles(object):
                   switcherControl.maximizeControl();
 
                   map.zoomToExtent(mapBounds);
-           """ % args   # noqa
+            """ % args   # noqa
 
         elif self.options.profile == 'raster':
             s += """
@@ -2653,7 +2700,7 @@ class GDAL2Tiles(object):
 
                   map.addLayer(layer);
                   map.zoomToExtent(mapBounds);
-        """ % args    # noqa
+            """ % args    # noqa
 
         s += """
                   map.addControls([new OpenLayers.Control.PanZoomBar(),
@@ -2664,7 +2711,7 @@ class GDAL2Tiles(object):
               }
         """ % args
 
-        if self.options.profile == 'mercator':
+        if self.options.profile == 'mercator' and self.options.xyz is None:
             s += """
               function getURL(bounds) {
                   bounds = this.adjustBounds(bounds);
@@ -2682,9 +2729,8 @@ class GDAL2Tiles(object):
                   }
                   if (mapBounds.intersectsBounds(bounds) && (z >= mapMinZoom) && (z <= mapMaxZoom)) {
                       return url + path;
-                  } else {
-                      return emptyTileURL;
                   }
+                  return emptyTileURL;
               }
             """ % args    # noqa
 
@@ -2703,9 +2749,8 @@ class GDAL2Tiles(object):
                   }
                   if (mapBounds.intersectsBounds(bounds) && (z >= mapMinZoom) && (z <= mapMaxZoom)) {
                       return url + path;
-                  } else {
-                      return emptyTileURL;
                   }
+                  return emptyTileURL;
               }
             """ % args    # noqa
 
@@ -2724,63 +2769,74 @@ class GDAL2Tiles(object):
                   }
                   if (mapBounds.intersectsBounds(bounds) && (z >= mapMinZoom) && (z <= mapMaxZoom)) {
                       return url + path;
-                  } else {
-                      return emptyTileURL;
                   }
+                  return emptyTileURL;
               }
             """ % args    # noqa
 
         s += """
-           function getWindowHeight() {
+            function getWindowHeight() {
                 if (self.innerHeight) return self.innerHeight;
-                    if (document.documentElement && document.documentElement.clientHeight)
-                        return document.documentElement.clientHeight;
-                    if (document.body) return document.body.clientHeight;
-                        return 0;
-                }
+                if (document.documentElement && document.documentElement.clientHeight)
+                    return document.documentElement.clientHeight;
+                if (document.body) return document.body.clientHeight;
+                return 0;
+            }
 
-                function getWindowWidth() {
-                    if (self.innerWidth) return self.innerWidth;
-                    if (document.documentElement && document.documentElement.clientWidth)
-                        return document.documentElement.clientWidth;
-                    if (document.body) return document.body.clientWidth;
-                        return 0;
-                }
+            function getWindowWidth() {
+                if (self.innerWidth) return self.innerWidth;
+                if (document.documentElement && document.documentElement.clientWidth)
+                    return document.documentElement.clientWidth;
+                if (document.body) return document.body.clientWidth;
+                return 0;
+            }
 
-                function resize() {
-                    var map = document.getElementById("map");
-                    var header = document.getElementById("header");
-                    var subheader = document.getElementById("subheader");
-                    map.style.height = (getWindowHeight()-80) + "px";
-                    map.style.width = (getWindowWidth()-20) + "px";
-                    header.style.width = (getWindowWidth()-20) + "px";
-                    subheader.style.width = (getWindowWidth()-20) + "px";
-                    if (map.updateSize) { map.updateSize(); };
-                }
+            function resize() {
+                var map = document.getElementById("map");
+                var header = document.getElementById("header");
+                var subheader = document.getElementById("subheader");
+                map.style.height = (getWindowHeight()-80) + "px";
+                map.style.width = (getWindowWidth()-20) + "px";
+                header.style.width = (getWindowWidth()-20) + "px";
+                subheader.style.width = (getWindowWidth()-20) + "px";
+                if (map.updateSize) { map.updateSize(); };
+            }
 
-                onresize=function(){ resize(); };
+            onresize=function(){ resize(); };
 
-                </script>
-              </head>
-              <body onload="init()">
-                <div id="header"><h1>%(title)s</h1></div>
-                <div id="subheader">Generated by <a href="http://www.klokan.cz/projects/gdal2tiles/">GDAL2Tiles</a>, Copyright &copy; 2008 <a href="http://www.klokan.cz/">Klokan Petr Pridal</a>,  <a href="http://www.gdal.org/">GDAL</a> &amp; <a href="http://www.osgeo.org/">OSGeo</a> <a href="http://code.google.com/soc/">GSoC</a>
-                <!-- PLEASE, LET THIS NOTE ABOUT AUTHOR AND PROJECT SOMEWHERE ON YOUR WEBSITE, OR AT LEAST IN THE COMMENT IN HTML. THANK YOU -->
-                </div>
-                <div id="map"></div>
-                <script type="text/javascript" >resize()</script>
-              </body>
-            </html>""" % args   # noqa
+            </script>
+            </head>
+            <body onload="init()">
+            <div id="header"><h1>%(title)s</h1></div>
+            <div id="subheader">Generated by <a href="http://www.klokan.cz/projects/gdal2tiles/">GDAL2Tiles</a>, Copyright &copy; 2008 <a href="http://www.klokan.cz/">Klokan Petr Pridal</a>,  <a href="http://www.gdal.org/">GDAL</a> &amp; <a href="http://www.osgeo.org/">OSGeo</a> <a href="http://code.google.com/soc/">GSoC</a>
+            <!-- PLEASE, LET THIS NOTE ABOUT AUTHOR AND PROJECT SOMEWHERE ON YOUR WEBSITE, OR AT LEAST IN THE COMMENT IN HTML. THANK YOU -->
+            </div>
+            <div id="map"></div>
+            <script type="text/javascript" >resize()</script>
+            </body>
+        </html>""" % args   # noqa
 
         return s
 
+    @staticmethod
+    def getYTile(ty, tz, options):
+        """
+        Calculates the y-tile number based on whether XYZ or TMS (default) system is used
+        :param ty: The y-tile number
+        :param tz: The z-tile number
+        :return: The transformed y-tile number
+        """
+        if options.xyz:
+            return (2**tz - 1) - ty  # Convert from TMS to XYZ numbering system
+        return ty
+
 
 def worker_tile_details(input_file, output_folder, options):
-      gdal2tiles = GDAL2Tiles(input_file, output_folder, options)
-      gdal2tiles.open_input()
-      gdal2tiles.generate_metadata()
-      tile_job_info, tile_details = gdal2tiles.generate_base_tiles()
-      return tile_job_info, tile_details
+    gdal2tiles = GDAL2Tiles(input_file, output_folder, options)
+    gdal2tiles.open_input()
+    gdal2tiles.generate_metadata()
+    tile_job_info, tile_details = gdal2tiles.generate_base_tiles()
+    return tile_job_info, tile_details
 
 class ProgressBar(object):
 
@@ -2883,15 +2939,17 @@ def single_threaded_tiling(input_file, output_folder, options):
 def multi_threaded_tiling(input_file, output_folder, options):
     nb_processes = options.nb_processes or 1
 
-    # Make sure that all processes do not consume more than GDAL_CACHEMAX
-    os.environ['GDAL_CACHEMAX'] = '%d' % int(gdal.GetCacheMax() / nb_processes)
+    # Make sure that all processes do not consume more than `gdal.GetCacheMax()`
+    gdal_cache_max = gdal.GetCacheMax()
+    gdal_cache_max_per_process = max(1024 * 1024, math.floor(gdal_cache_max / nb_processes))
+    set_cache_max(gdal_cache_max_per_process)
 
     pool = Pool(processes=nb_processes)
 
     if options.verbose:
         print("Begin tiles details calc")
 
-    conf, tile_details = pool.apply(worker_tile_details, [input_file, output_folder, options])
+    conf, tile_details = worker_tile_details(input_file, output_folder, options)
 
     if options.verbose:
         print("Tiles details calc complete.")
@@ -2908,6 +2966,9 @@ def multi_threaded_tiling(input_file, output_folder, options):
 
     pool.close()
     pool.join()     # Jobs finished
+
+    # Set the maximum cache back to the original value
+    set_cache_max(gdal_cache_max)
 
     create_overview_tiles(conf, output_folder, options)
 

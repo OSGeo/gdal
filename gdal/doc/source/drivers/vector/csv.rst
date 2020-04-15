@@ -5,6 +5,8 @@ Comma Separated Value (.csv)
 
 .. shortname:: CSV
 
+.. built_in_by_default::
+
 OGR supports reading and writing primarily non-spatial tabular data
 stored in text CSV files. CSV files are a common interchange format
 between software packages supporting tabular data and are also easily
@@ -157,6 +159,13 @@ Y_POSSIBLE_NAMES=Lat\* -oo KEEP_GEOM_COLUMNS=NO* will return :
    OGRFeature(test):3
      Name (String) = Third point
      POINT (0.75 47.5)
+     
+If CSV file does not have a header line the dummy "field_n" names can be
+used as possible names for coordinate fieds. For example plain XYZ point 
+data can be opened as
+
+*ogrinfo -ro -al elevation.xyz -oo X_POSSIBLE_NAMES=field_1 -oo
+Y_POSSIBLE_NAMES=field_2 -oo Z_POSSIBLE_NAMES=field_3*
 
 Otherwise, if one or several columns contain a geometry definition
 encoded as WKT, WKB (encoded in hexadecimal) or GeoJSON (in which case

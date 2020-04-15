@@ -178,14 +178,12 @@
             self.CreateField(i)
 
     def __iter__(self):
-        return self
-
-    def next(self):
-        feature = self.GetNextFeature()
-        if not feature:
-            raise StopIteration
-        else:
-            return feature
+        self.ResetReading()
+        while True:
+            feature = self.GetNextFeature()
+            if not feature:
+                break
+            yield feature
 
     def schema(self):
         output = []
@@ -479,16 +477,9 @@
       self.this = result.this
 
   def __iter__(self):
-      self.iter_subgeom = 0
-      return self
+      for i in range(self.GetGeometryCount()):
+          yield self.GetGeometryRef(i)
 
-  def next(self):
-      if self.iter_subgeom < self.GetGeometryCount():
-          subgeom = self.GetGeometryRef(self.iter_subgeom)
-          self.iter_subgeom += 1
-          return subgeom
-      else:
-          raise StopIteration
 %}
 }
 

@@ -3495,14 +3495,10 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
             PQerrorMessage(poConn));
         if (poResult != nullptr)
             PQclear(poResult);
-        if (pszSchema)
-            CPLFree(pszSchema);
-        if (pszTable)
-            CPLFree(pszTable);
-        if (pszColumn)
-            CPLFree(pszColumn);
-        if (pszWhere)
-            CPLFree(pszWhere);
+        CPLFree(pszSchema);
+        CPLFree(pszTable);
+        CPLFree(pszColumn);
+        CPLFree(pszWhere);
 
         CPLFree(pszConnectionString);
 
@@ -3898,14 +3894,10 @@ PostGISRasterDataset::Delete(const char* pszFilename)
             PQclear(poResult);
     }
 
-    if (pszSchema)
-        CPLFree(pszSchema);
-    if (pszTable)
-        CPLFree(pszTable);
-    if (pszColumn)
-        CPLFree(pszColumn);
-    if (pszWhere)
-        CPLFree(pszWhere);
+    CPLFree(pszSchema);
+    CPLFree(pszTable);
+    CPLFree(pszColumn);
+    CPLFree(pszWhere);
 
     // clean up connection string
     CPLFree(pszConnectionString);

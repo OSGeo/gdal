@@ -6,6 +6,8 @@ ROI_PAC -- ROI_PAC
 
 .. shortname:: ROI_PAC
 
+.. built_in_by_default::
+
 Driver for the image formats used in the JPL's ROI_PAC project
 (https://aws.roipac.org/). All image type are supported excepted .raw
 images.

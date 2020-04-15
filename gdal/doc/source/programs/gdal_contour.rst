@@ -20,7 +20,7 @@ Synopsis
                  [-snodata n] [-i <interval>]
                  [-f <formatname>] [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE] ...]
                  [-off <offset>] [-fl <level> <level>...] [-e <exp_base>]
-                 [-nln <outlayername>] [-p]
+                 [-nln <outlayername>] [-q] [-p]
                  <src_filename> <dst_filename>
 
 Description
@@ -116,6 +116,10 @@ raster elevation model (DEM).
     Generate contour polygons rather than contour lines.
 
     .. versionadded:: 2.4.0
+
+.. option:: -q
+
+    Be quiet.
 
 C API
 -----

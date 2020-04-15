@@ -45,7 +45,8 @@ OBJ	= \
 
 O_OBJ	=	$(foreach file,$(OBJ),../../o/$(file))
 
-ALL_C_FLAGS =	$(CFLAGS_NOFTRAPV) $(CPPFLAGS) -DDONT_DEPRECATE_SPRINTF
+# Note: HOST_FILLORDER value is set arbitrarily. This isn't used by GDAL
+ALL_C_FLAGS =	$(CFLAGS_NOFTRAPV) $(CPPFLAGS) -DDONT_DEPRECATE_SPRINTF -DHOST_FILLORDER=FILLORDER_LSB2MSB
 
 ifeq ($(LIBZ_SETTING),internal) 
 XTRA_OPT =      -I../../zlib 

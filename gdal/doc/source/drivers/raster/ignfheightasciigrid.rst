@@ -8,6 +8,8 @@ IGNFHeightASCIIGrid -- IGN-France height correction ASCII grids
 
 .. versionadded:: 2.4
 
+.. built_in_by_default::
+
 Supports reading IGN-France height correction ASCII grids (.txt, .mnt,
 .gra).
 

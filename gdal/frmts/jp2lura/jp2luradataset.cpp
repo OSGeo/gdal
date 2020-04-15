@@ -2511,7 +2511,7 @@ void GDALRegister_JP2Lura()
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                 "JPEG-2000 driver based on Lurawave library" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_jp2lura.html" );
+                                   "drivers/raster/jp2lura.html" );
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jp2" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "jp2 j2f j2k" );

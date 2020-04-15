@@ -6,6 +6,8 @@ GSBG -- Golden Software Binary Grid File Format
 
 .. shortname:: GSBG
 
+.. built_in_by_default::
+
 This is the binary (non-human-readable) version of one of the raster
 formats used by Golden Software products (such as the Surfer series).
 Like the ASCII version, this format is supported for both reading and

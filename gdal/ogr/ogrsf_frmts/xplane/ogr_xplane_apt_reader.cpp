@@ -257,7 +257,8 @@ void OGRXPlaneAptReader::Read()
                 }
                 return;
             }
-            else if( nTokens == 0 || !assertMinCol(2) )
+            else if( papszTokens == nullptr || papszTokens[0] == nullptr ||
+                     !assertMinCol(2) )
             {
                 break;
             }
@@ -1222,7 +1223,7 @@ bool OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
                                dfLatBezier, dfLonBezier,
                                dfLat, dfLon);
             }
-            else if (!bIsFirst && !(dfLastLat == dfLat && dfLastLon == dfLon))
+            else if (!(dfLastLat == dfLat && dfLastLon == dfLon))
             {
                 double dfCtrLatBezier = dfLat - (dfLatBezier - dfLat);
                 double dfCtrLonBezier = dfLon - (dfLonBezier - dfLon);
@@ -1572,7 +1573,7 @@ bool OGRXPlaneAptReader::ParseLinearGeometry(
                                dfLatBezier, dfLonBezier,
                                dfLat, dfLon);
             }
-            else if (!bIsFirst && !(dfLastLat == dfLat && dfLastLon == dfLon))
+            else if (!(dfLastLat == dfLat && dfLastLon == dfLon))
             {
                 double dfCtrLatBezier = dfLat - (dfLatBezier - dfLat);
                 double dfCtrLonBezier = dfLon - (dfLonBezier - dfLon);

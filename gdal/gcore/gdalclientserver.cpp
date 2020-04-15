@@ -6074,8 +6074,7 @@ GDALDataset *GDALClientDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return nullptr;
     }
-    if( poDS != nullptr )
-        CPLErrorReset();
+    CPLErrorReset();
 
     return poDS;
 }

@@ -6,6 +6,8 @@ GTiff -- GeoTIFF File Format
 
 .. shortname:: GTiff
 
+.. built_in_by_default::
+
 Most forms of TIFF and GeoTIFF files are supported by GDAL for reading,
 and somewhat less varieties can be written.
 
@@ -454,7 +456,9 @@ Creation Options
 
 -  **WEBP_LOSSLESS=True/False**: (GDAL >= 2.4.0 and libwebp >= 0.1.4):
    By default, lossy compression is used. If set to True, lossless
-   compression will be used.
+   compression will be used. There is a significant time penalty for each
+   tile/strip with lossless WebP compression, so you may want to increase the
+   BLOCKYSIZE value for strip layout.
 
 -  **PHOTOMETRIC=[MINISBLACK/MINISWHITE/RGB/CMYK/YCBCR/CIELAB/ICCLAB/ITULAB]**:
    Set the photometric interpretation tag. Default is MINISBLACK, but if
@@ -646,47 +650,47 @@ Configuration options
 This paragraph lists the configuration options that can be set to alter
 the default behaviour of the GTiff driver.
 
--  GTIFF_IGNORE_READ_ERRORS : (GDAL >= 1.9.0) Can be set to TRUE to
+-  :decl_configoption:`GTIFF_IGNORE_READ_ERRORS` : Can be set to TRUE to
    avoid turning libtiff errors into GDAL errors. Can help reading
    partially corrupted TIFF files
--  ESRI_XML_PAM: Can be set to TRUE to force metadata in the xml:ESRI
+-  :decl_configoption:`ESRI_XML_PAM` : Can be set to TRUE to force metadata in the xml:ESRI
    domain to be written to PAM.
--  JPEG_QUALITY_OVERVIEW: Integer between 0 and 100. Default value : 75.
+-  :decl_configoption:`JPEG_QUALITY_OVERVIEW` : Integer between 0 and 100. Default value : 75.
    Quality of JPEG compressed overviews, either internal or external.
--  GDAL_TIFF_INTERNAL_MASK: See `Internal nodata
+-  :decl_configoption:`GDAL_TIFF_INTERNAL_MASK` : See `Internal nodata
    masks <#internal_mask>`__ section. Default value : FALSE.
--  GDAL_TIFF_INTERNAL_MASK_TO_8BIT: See `Internal nodata
+-  :decl_configoption:`GDAL_TIFF_INTERNAL_MASK_TO_8BIT` : See `Internal nodata
    masks <#internal_mask>`__ section. Default value : TRUE
--  USE_RRD: Can be set to TRUE to force external overviews in the RRD
+-  :decl_configoption:`USE_RRD` : Can be set to TRUE to force external overviews in the RRD
    format. Default value : FALSE
--  TIFF_USE_OVR: Can be set to TRUE to force external overviews in the
+-  :decl_configoption:`TIFF_USE_OVR` : Can be set to TRUE to force external overviews in the
    GeoTIFF (.ovr) format. Default value : FALSE
--  GTIFF_POINT_GEO_IGNORE: Can be set to TRUE to revert back to the
+-  :decl_configoption:`GTIFF_POINT_GEO_IGNORE` : Can be set to TRUE to revert back to the
    behaviour of GDAL < 1.8.0 regarding how PixelIsPoint is interpreted
    w.r.t geotransform. See :ref:`rfc-33`
    for more details. Default value : FALSE
--  GTIFF_REPORT_COMPD_CS: (GDAL >= 1.9.0). Can be set to TRUE to avoid
+-  :decl_configoption:`GTIFF_REPORT_COMPD_CS` : Can be set to TRUE to avoid
    stripping the vertical CRS of compound CRS when reading the SRS of a
    file. Does not affect the writing side. Default value : FALSE for GeoTIFF 1.0
    files, or TRUE (starting with GDAL 3.1) for GeoTIFF 1.1 files.
--  GDAL_ENABLE_TIFF_SPLIT : Can be set to FALSE to avoid
+-  :decl_configoption:`GDAL_ENABLE_TIFF_SPLIT` : Can be set to FALSE to avoid
    all-in-one-strip files being presented as having. Default value :
    TRUE
--  GDAL_TIFF_OVR_BLOCKSIZE : See `Overviews <#overviews>`__ section.
--  GTIFF_LINEAR_UNITS: Can be set to BROKEN to read GeoTIFF files that
+-  :decl_configoption:`GDAL_TIFF_OVR_BLOCKSIZE` : See `Overviews <#overviews>`__ section.
+-  :decl_configoption:`GTIFF_LINEAR_UNITS` : Can be set to BROKEN to read GeoTIFF files that
    have false easting/northing improperly set in meters when it ought to
    be in coordinate system linear units. (`Ticket
    #3901 <http://trac.osgeo.org/gdal/ticket/3901>`__).
--  TAB_APPROX_GEOTRANSFORM=YES/NO: (GDAL >= 2.0) To decide if an
+-  :decl_configoption:`TAB_APPROX_GEOTRANSFORM` =YES/NO: (GDAL >= 2.0) To decide if an
    approximate geotransform is acceptable when reading a .tab file.
    Default value: NO
--  GTIFF_DIRECT_IO=YES/NO: (GDAL >= 2.0) Can be set to YES to use
+-  :decl_configoption:`GTIFF_DIRECT_IO` =YES/NO: (GDAL >= 2.0) Can be set to YES to use
    specialized RasterIO() implementations when reading un-compressed
    TIFF files (un-tiled only in GDAL 2.0, both un-tiled and tiled in
    GDAL 2.1) to avoid using the block cache. Setting it to YES even when
    the optimized cases do not apply should be safe (generic
    implementation will be used). Default value:NO
--  GTIFF_VIRTUAL_MEM_IO=YES/NO/IF_ENOUGH_RAM: (GDAL >= 2.0) Can be set
+-  :decl_configoption:`GTIFF_VIRTUAL_MEM_IO` =YES/NO/IF_ENOUGH_RAM: (GDAL >= 2.0) Can be set
    to YES to use specialized RasterIO() implementations when reading
    un-compressed TIFF files to avoid using the block cache. This
    implementation relies on memory-mapped file I/O, and is currently
@@ -699,15 +703,23 @@ the default behaviour of the GTiff driver.
    bigger than the physical memory. Default value:NO. If both
    GTIFF_VIRTUAL_MEM_IO and GTIFF_DIRECT_IO are enabled, the former is
    used in priority, and if not possible, the later is tried.
--  GDAL_GEOREF_SOURCES=comma-separated list with one or several of PAM,
+-  :decl_configoption:`GDAL_GEOREF_SOURCES` =comma-separated list with one or several of PAM,
    INTERNAL, TABFILE or WORLDFILE. (GDAL >= 2.2). See
    `Georeferencing <#georeferencing>`__ paragraph.
--  GDAL_NUM_THREADS=number_of_threads/ALL_CPUS: (GDAL >= 2.1) Enable
+-  :decl_configoption:`GDAL_NUM_THREADS` =number_of_threads/ALL_CPUS: (GDAL >= 2.1) Enable
    multi-threaded compression by specifying the number of worker
    threads. Worth it for slow compression algorithms such as DEFLATE or
    LZMA. Will be ignored for JPEG. Default is compression in the main
    thread. Note: this configuration option also apply to other parts to
    GDAL (warping, gridding, ...).
+-  :decl_configoption:`GTIFF_WRITE_TOWGS84` =AUTO/YES/NO: (GDAL >= 3.0.3). When set to AUTO, a
+   GeogTOWGS84GeoKey geokey will be written with TOWGS84 3 or 7-parameter
+   Helmert transformation, if the CRS has no EPSG code attached to it, or if
+   the TOWGS84 transformation attached to the CRS doesn't match the one imported
+   from the EPSG code.
+   If set to YES, then the TOWGS84 transformation attached to the CRS will be
+   always written. If set to NO, then the transformation will not be written in
+   any situation.
 
 See Also
 --------

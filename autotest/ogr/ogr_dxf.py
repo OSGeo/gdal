@@ -1052,7 +1052,7 @@ def test_ogr_dxf_22():
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
-    if feat.GetFieldAsString('Text') != '\A1;test^Itext\~\pt0.2;{\H0.7x;\Sab\/c\~d%%p^ ef\^ g.h\#i;} j{\L\Ok\ol}m':
+    if feat.GetFieldAsString('Text') != r'\A1;test^Itext\~\pt0.2;{\H0.7x;\Sab\/c\~d%%p^ ef\^ g.h\#i;} j{\L\Ok\ol}m':
         feat.DumpReadable()
         pytest.fail('bad attribute with DXF_TRANSLATE_ESCAPE_SEQUENCES = FALSE')
 
@@ -3582,6 +3582,27 @@ def test_ogr_dxf_53():
         pytest.fail('Wrong feature geometry')
 
     
+###############################################################################
+# Test frozen and off layers
+
+
+def test_ogr_dxf_54():
+
+    gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', 'FALSE')
+    ds = ogr.Open('data/frozen-off.dxf')
+    gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', None)
+    lyr = ds.GetLayer(0)
+
+    # Features should be visible/hidden in the following order:
+    featureVisibility = '.hhh..hhh..hhhhhhhhhhhhhh.hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh.hhh..hhhhhhhhhhhhhh.hhh'
+
+    for number, h in enumerate(featureVisibility):
+        f = lyr.GetNextFeature()
+        isFeatureVisible = '#000000)' in f.GetStyleString() or '#ff0000)' in f.GetStyleString()
+        if isFeatureVisible == (h == 'h'):
+            f.DumpReadable()
+            pytest.fail('Wrong visibility on feature %d' % number)
+
 
 ###############################################################################
 def test_ogr_dxf_insert_too_many_errors():
@@ -3607,6 +3628,44 @@ def test_ogr_dxf_write_geometry_collection_of_unsupported_type():
     assert ret != 0
     ds = None
     gdal.Unlink(tmpfile)
+
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/1969
+# with a SPLINE whose first knot is a very close to zero negative value.
+
+def test_ogr_dxf_very_close_neg_to_zero_knot():
+
+    ds = ogr.Open('data/spline_with_very_close_neg_to_zero_knot.dxf')
+    lyr = ds.GetLayer(0)
+
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    extent = g.GetEnvelope()
+    assert extent == pytest.approx((163.0306017054786, 166.6530957511469,
+                                    78.40469559017359, 81.82569418640966), abs=1e-5)
+
+###############################################################################
+
+
+def test_ogr_dxf_polygon_3D():
+
+
+    tmpfile = '/vsimem/test_ogr_dxf_polygon_3D.dxf'
+    ds = ogr.GetDriverByName('DXF').CreateDataSource(tmpfile)
+    lyr = ds.CreateLayer('test')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    g = ogr.CreateGeometryFromWkt('POLYGON((0 0 10,0 1 10,1 1 10,0 0 10))')
+    f.SetGeometry(g)
+    lyr.CreateFeature(f)
+    ds = None
+    ds = ogr.Open(tmpfile)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    got_g = f.GetGeometryRef()
+    assert got_g.Equals(g)
+    gdal.Unlink(tmpfile)
+
 
 ###############################################################################
 # cleanup

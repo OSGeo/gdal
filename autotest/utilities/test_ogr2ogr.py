@@ -34,8 +34,6 @@ import os
 import shutil
 import pytest
 
-sys.path.append('../ogr')
-
 from osgeo import gdal, ogr, osr
 import gdaltest
 import ogrtest
@@ -173,23 +171,29 @@ def test_ogr2ogr_5():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
+
+def check_if_has_ogr_pg():
+    path = '../ogr'
+    if path not in sys.path:
+        sys.path.append(path)
+    import ogr_pg
+    ogr_pg.test_ogr_pg_1()
+    if gdaltest.pg_ds is None:
+        pytest.skip()
+    gdaltest.pg_ds.Destroy()
+
 ###############################################################################
 # Test -overwrite
 
 
 def test_ogr2ogr_6():
 
-    import ogr_pg
+    check_if_has_ogr_pg()
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
         pytest.skip()
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
-
-    ogr_pg.test_ogr_pg_1()
-    if gdaltest.pg_ds is None:
-        pytest.skip()
-    gdaltest.pg_ds.Destroy()
 
     gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:"' + gdaltest.pg_connection_string + '" -sql "DELLAYER:tpoly"')
 
@@ -208,17 +212,12 @@ def test_ogr2ogr_6():
 
 def test_ogr2ogr_7():
 
-    import ogr_pg
+    check_if_has_ogr_pg()
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
         pytest.skip()
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
-
-    ogr_pg.test_ogr_pg_1()
-    if gdaltest.pg_ds is None:
-        pytest.skip()
-    gdaltest.pg_ds.Destroy()
 
     gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:"' + gdaltest.pg_connection_string + '" -sql "DELLAYER:tpoly"')
 
@@ -1344,14 +1343,10 @@ def test_ogr2ogr_40():
 
 def test_ogr2ogr_41():
 
-    import ogr_pg
+    check_if_has_ogr_pg()
+
     if test_cli_utilities.get_ogr2ogr_path() is None:
         pytest.skip()
-
-    ogr_pg.test_ogr_pg_1()
-    if gdaltest.pg_ds is None:
-        pytest.skip()
-    gdaltest.pg_ds.Destroy()
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     ds.ExecuteSQL('DELLAYER:test_ogr2ogr_41_src')

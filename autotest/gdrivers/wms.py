@@ -790,8 +790,20 @@ def test_wms_18():
 
     expected_cs = 12824
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == expected_cs, 'Did not get expected SRTM checksum.'
+    assert cs == expected_cs, 'Did not get expected checksum.'
 
+    ds = None
+
+    # Alternative url with additional parameters
+    fn = '<GDAL_WMS><Service name="AGS"><ServerUrl>http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Specialty/ESRI_StateCityHighway_USA/MapServer/export?dpi=96&amp;layerdefs=&amp;layerTimeOptions=&amp;dynamicLayers=&amp;</ServerUrl><BBoxOrder>xyXY</BBoxOrder><SRS>EPSG:3857</SRS></Service><DataWindow><UpperLeftX>-20037508.34</UpperLeftX><UpperLeftY>20037508.34</UpperLeftY><LowerRightX>20037508.34</LowerRightX><LowerRightY>-20037508.34</LowerRightY><SizeX>512</SizeX><SizeY>512</SizeY></DataWindow></GDAL_WMS>'
+
+    ds = gdal.Open(fn)
+
+    assert ds is not None, 'open failed.'
+    assert ds.RasterXSize == 512 and ds.RasterYSize == 512 and ds.RasterCount == 3, \
+        'wrong size or bands'
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == expected_cs, 'Did not get expected checksum.'
     ds = None
 
 ###############################################################################

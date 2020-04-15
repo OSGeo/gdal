@@ -6,7 +6,7 @@
  *******************************************************************************
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2018, NextGIS
+ *  Copyright (c) 2018-2020, NextGIS <info@nextgis.com>
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -234,24 +234,35 @@ static GDALDataset *OGRNGWDriverCreateCopy( const char *pszFilename,
         return nullptr;
     }
 
+    // NGW v3.1 supported different raster types: 1 band and 16/32 bit, RGB/RGBA
+    // rasters and etc.
+    // For RGB/RGBA rasters we can create default raster_style.
+    // For other types - qml style file path is mandatory.
+    std::string osQMLPath = CSLFetchNameValueDef( papszOptions, "RASTER_QML_PATH", "");
+
     // Check bands count.
     const int nBands = poSrcDS->GetRasterCount();
     if( nBands < 3 || nBands > 4 )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-            "NGW driver doesn't support %d bands.  Must be 3 (RGB) or 4 (RGBA)",
-            nBands );
-        return nullptr;
+        if( osQMLPath.empty() ) {
+            CPLError( CE_Failure, CPLE_NotSupported,
+                "Default NGW raster style supports only 3 (RGB) or 4 (RGBA). "
+                "Raster has %d bands. You must provide QML file with raster style.",
+                nBands );
+            return nullptr;
+        }
     }
 
     // Check band data type.
     if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-            "NGW driver doesn't support data type %s. "
-            "Only 8 bit byte bands supported.", GDALGetDataTypeName(
-                poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
-        return nullptr;
+        if( osQMLPath.empty() ) {
+            CPLError( CE_Failure, CPLE_NotSupported,
+                "Default NGW raster style supports only 8 bit byte bands. "
+                "Raster has data type %s. You must provide QML file with raster style.",
+                GDALGetDataTypeName( poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
+            return nullptr;
+        }
     }
 
     bool bCloseDS = false;
@@ -311,7 +322,6 @@ static GDALDataset *OGRNGWDriverCreateCopy( const char *pszFilename,
         CPLGetConfigOption("NGW_USERPWD", ""));
     std::string osStyleName = CSLFetchNameValueDef( papszOptions, "RASTER_STYLE_NAME", "");
 
-
     // Send file
     char **papszHTTPOptions = GetHeaders(osUserPwd);
     CPLJSONObject oFileJson = NGWAPI::UploadFile(stUri.osAddress, osFilename,
@@ -335,8 +345,6 @@ static GDALDataset *OGRNGWDriverCreateCopy( const char *pszFilename,
         return nullptr;
     }
 
-    oFileJson = oUploadMeta[0];
-
     // Create raster layer
     // Create payload
     CPLJSONObject oPayloadRaster;
@@ -357,10 +365,10 @@ static GDALDataset *OGRNGWDriverCreateCopy( const char *pszFilename,
     oParent.Add( "id", atoi(stUri.osResourceId.c_str()) );
 
     CPLJSONObject oRasterLayer( "raster_layer", oPayloadRaster );
-    oRasterLayer.Add( "source", oFileJson );
+    oRasterLayer.Add( "source", oUploadMeta[0] );
 
     CPLJSONObject oSrs("srs", oRasterLayer);
-    oSrs.Add("id", 3857); // Now only Web Mercator supported.
+    oSrs.Add( "id", 3857 ); // Now only Web Mercator supported.
 
     papszHTTPOptions = GetHeaders(osUserPwd);
     std::string osNewResourceId = NGWAPI::CreateResource( stUri.osAddress,
@@ -373,10 +381,32 @@ static GDALDataset *OGRNGWDriverCreateCopy( const char *pszFilename,
     // Create raster style
     CPLJSONObject oPayloadRasterStyle;
     CPLJSONObject oResourceStyle( "resource", oPayloadRasterStyle );
-    oResourceStyle.Add( "cls", "raster_style" );
+    if( osQMLPath.empty() )
+    {
+        oResourceStyle.Add( "cls", "raster_style" );
+    }
+    else
+    {
+        oResourceStyle.Add( "cls", "qgis_raster_style" );
+
+        // Upload QML file
+        papszHTTPOptions = GetHeaders(osUserPwd);
+        oFileJson = NGWAPI::UploadFile(stUri.osAddress, osQMLPath,
+            papszHTTPOptions, pfnProgress, pProgressData);
+        oUploadMeta = oFileJson.GetArray("upload_meta");
+        if( !oUploadMeta.IsValid() || oUploadMeta.Size() == 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Get unexpected response: %s.",
+                oFileJson.Format(CPLJSONObject::Plain).c_str());
+            return nullptr;
+        }
+        CPLJSONObject oQGISRasterStyle( "qgis_raster_style", oPayloadRasterStyle );
+        oQGISRasterStyle.Add( "file_upload", oUploadMeta[0]);
+    }
+
     if( osStyleName.empty() )
     {
-        osStyleName = stUri.osNewResourceName + "_style";
+        osStyleName = stUri.osNewResourceName;
     }
     oResourceStyle.Add( "display_name", osStyleName );
     CPLJSONObject oParentRaster( "parent", oResourceStyle );
@@ -449,6 +479,7 @@ void RegisterOGRNGW()
         "   <Option name='CACHE_EXPIRES' scope='raster' type='integer' description='Time in seconds cached files will stay valid. If cached file expires it is deleted when maximum size of cache is reached. Also expired file can be overwritten by the new one from web' default='604800'/>"
         "   <Option name='CACHE_MAX_SIZE' scope='raster' type='integer' description='The cache maximum size in bytes. If cache reached maximum size, expired cached files will be deleted' default='67108864'/>"
         "   <Option name='JSON_DEPTH' scope='raster,vector' type='integer' description='The depth of json response that can be parsed. If depth is greater than this value, parse error occurs' default='32'/>"
+        "   <Option name='RASTER_QML_PATH' scope='raster' type='string' description='Raster QMS style path'/>"
         "</CreationOptionList>"
     );
 

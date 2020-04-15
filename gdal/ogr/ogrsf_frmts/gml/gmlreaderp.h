@@ -55,6 +55,8 @@ class GMLReader;
 
 typedef struct _GeometryNamesStruct GeometryNamesStruct;
 
+bool OGRGMLIsGeometryElement(const char* pszElement);
+
 /************************************************************************/
 /*                        GFSTemplateList                               */
 /************************************************************************/

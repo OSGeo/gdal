@@ -1,10 +1,12 @@
 .. _raster.mrsid:
 
 ================================================================================
-MrSID --- Multi-resolution Seamless Image Database
+MrSID -- Multi-resolution Seamless Image Database
 ================================================================================
 
 .. shortname:: MrSID
+
+.. build_dependencies:: MrSID SDK
 
 MrSID is a wavelet-based image compression technology which can utilize
 both lossy and lossless encoding. This technology was acquired in its

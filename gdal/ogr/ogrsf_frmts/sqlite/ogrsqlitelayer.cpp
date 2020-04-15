@@ -138,7 +138,7 @@ bool OGRGetDateTimeFieldType( const char* pszValue,
                               OGRFieldType* pFieldType )
 {
     bool bSuccess = FALSE;
-    size_t nValueLength = strnlen( pszValue, 16 );
+    size_t nValueLength = CPLStrnlen( pszValue, 16 );
 
     if( nValueLength >= 5 )
     {
@@ -2484,6 +2484,16 @@ static const SpliteOGRGeometryTypeTuple anTypesMap[] = {
 { OGRSpliteComprGeometryCollectionXYZM, wkbGeometryCollectionZM },
 };
 
+static bool QuickCheckForSpatialiteGeometryValidity( const GByte *pabyData,
+                                                     int nBytes )
+{
+    return nBytes >= 44
+        && pabyData[0] == 0
+        && (pabyData[1] == wkbXDR || pabyData[1] == wkbNDR)
+        && pabyData[38] == 0x7C
+        && pabyData[nBytes-1] == 0xFE;
+}
+
 OGRErr OGRSQLiteLayer::GetSpatialiteGeometryHeader( const GByte *pabyData,
                                                     int nBytes,
                                                     int* pnSRID,
@@ -2494,13 +2504,10 @@ OGRErr OGRSQLiteLayer::GetSpatialiteGeometryHeader( const GByte *pabyData,
                                                     double* pdfMaxX,
                                                     double* pdfMaxY )
 {
-    if( nBytes < 44
-        || pabyData[0] != 0
-        || pabyData[38] != 0x7C
-        || pabyData[nBytes-1] != 0xFE )
+    if( !QuickCheckForSpatialiteGeometryValidity(pabyData, nBytes) )
         return OGRERR_CORRUPT_DATA;
 
-    OGRwkbByteOrder eByteOrder = (OGRwkbByteOrder) pabyData[1];
+    const OGRwkbByteOrder eByteOrder = static_cast<OGRwkbByteOrder>(pabyData[1]);
 
     if( pnSRID != nullptr )
     {
@@ -2535,7 +2542,7 @@ OGRErr OGRSQLiteLayer::GetSpatialiteGeometryHeader( const GByte *pabyData,
                  nBytes >= 44 + 4 )
             {
                 int nCount = 0;
-                memcpy( &nSpliteType, pabyData + 43, 4 );
+                memcpy( &nCount, pabyData + 43, 4 );
                 if (NEED_SWAP_SPATIALITE())
                     CPL_SWAP32PTR( &nCount );
                 *pbIsEmpty = (nCount == 0);
@@ -2605,17 +2612,12 @@ OGRErr OGRSQLiteLayer::ImportSpatiaLiteGeometry( const GByte *pabyData,
                                                  int* pnSRID )
 
 {
-    OGRwkbByteOrder eByteOrder;
-
     *ppoGeometry = nullptr;
 
-    if( nBytes < 44
-        || pabyData[0] != 0
-        || pabyData[38] != 0x7C
-        || pabyData[nBytes-1] != 0xFE )
+    if( !QuickCheckForSpatialiteGeometryValidity(pabyData, nBytes) )
         return OGRERR_CORRUPT_DATA;
 
-    eByteOrder = (OGRwkbByteOrder) pabyData[1];
+    const OGRwkbByteOrder eByteOrder = static_cast<OGRwkbByteOrder>(pabyData[1]);
 
 /* -------------------------------------------------------------------- */
 /*      Decode the geometry type.                                       */
@@ -2712,6 +2714,27 @@ int OGRSQLiteLayer::CanBeCompressedSpatialiteGeometry(const OGRGeometry *poGeome
 }
 
 /************************************************************************/
+/*                        collectSimpleGeometries()                     */
+/************************************************************************/
+
+static void collectSimpleGeometries(const OGRGeometryCollection* poGeomCollection,
+                                    std::vector<const OGRGeometry*>& simpleGeometries)
+{
+    const int nParts = poGeomCollection->getNumGeometries();
+    simpleGeometries.reserve(simpleGeometries.size() + nParts);
+    for( int i = 0; i < nParts; i++ )
+    {
+        const OGRGeometry* poSubGeom = poGeomCollection->getGeometryRef(i);
+        const OGRGeometryCollection* poSubGeomColl =
+            dynamic_cast<const OGRGeometryCollection*>(poSubGeom);
+        if( poSubGeomColl )
+            collectSimpleGeometries(poSubGeomColl, simpleGeometries);
+        else
+            simpleGeometries.push_back(poSubGeom);
+    }
+}
+
+/************************************************************************/
 /*                  ComputeSpatiaLiteGeometrySize()                     */
 /************************************************************************/
 
@@ -2779,9 +2802,13 @@ int OGRSQLiteLayer::ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry,
         {
             int nSize = 4;
             const OGRGeometryCollection* poGeomCollection = poGeometry->toGeometryCollection();
-            int nParts = poGeomCollection->getNumGeometries();
+
+            std::vector<const OGRGeometry*> simpleGeometries;
+            collectSimpleGeometries(poGeomCollection, simpleGeometries);
+
+            int nParts = static_cast<int>(simpleGeometries.size());
             for(int i=0;i<nParts;i++)
-                nSize += 5 + ComputeSpatiaLiteGeometrySize(poGeomCollection->getGeometryRef(i),
+                nSize += 5 + ComputeSpatiaLiteGeometrySize(simpleGeometries[i],
                                                            bSpatialite2D, bUseComprGeom );
             return nSize;
         }
@@ -2969,7 +2996,8 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
                                                      int bUseComprGeom,
                                                      GByte* pabyData )
 {
-    switch (wkbFlatten(poGeometry->getGeometryType()))
+    const auto eFGeomType = wkbFlatten(poGeometry->getGeometryType());
+    switch (eFGeomType)
     {
         case wkbPoint:
         {
@@ -3169,7 +3197,11 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
         {
             const OGRGeometryCollection* poGeomCollection = poGeometry->toGeometryCollection();
             int nTotalSize = 4;
-            int nParts = poGeomCollection->getNumGeometries();
+
+            std::vector<const OGRGeometry*> simpleGeometries;
+            collectSimpleGeometries(poGeomCollection, simpleGeometries);
+
+            int nParts = static_cast<int>(simpleGeometries.size());
             memcpy(pabyData, &nParts, 4);
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR( pabyData );
@@ -3179,16 +3211,7 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
                 pabyData[nTotalSize] = 0x69;
                 nTotalSize ++;
 
-                const OGRGeometry* poPart = poGeomCollection->getGeometryRef(i);
-                if( OGR_GT_IsSubClassOf(poPart->getGeometryType(),
-                                        wkbGeometryCollection) )
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                        "Unexpected geometry type %s as part of %s",
-                        OGRToOGCGeomType(poPart->getGeometryType()),
-                        OGRToOGCGeomType(poGeometry->getGeometryType()));
-                    return 0;
-                }
+                const OGRGeometry* poPart = simpleGeometries[i];
                 int nCode = GetSpatialiteGeometryCode(poPart,
                                                       bSpatialite2D,
                                                       bUseComprGeom, FALSE);

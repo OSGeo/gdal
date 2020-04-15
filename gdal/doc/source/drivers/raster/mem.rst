@@ -6,6 +6,8 @@ MEM -- In Memory Raster
 
 .. shortname:: MEM
 
+.. built_in_by_default::
+
 GDAL supports the ability to hold rasters in a temporary in-memory
 format. This is primarily useful for temporary datasets in scripts or
 internal to applications. It is not generally of any use to application
@@ -75,3 +77,10 @@ Driver capabilities
 .. supports_create::
 
 .. supports_georeferencing::
+
+Multidimensional API support
+----------------------------
+
+.. versionadded:: 3.1
+
+The MEM driver supports the :ref:`multidim_raster_data_model`.

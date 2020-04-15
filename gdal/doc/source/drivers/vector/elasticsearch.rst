@@ -1,17 +1,19 @@
 .. _vector.elasticsearch:
 
-ElasticSearch: Geographically Encoded Objects for ElasticSearch
+Elasticsearch: Geographically Encoded Objects for Elasticsearch
 ===============================================================
 
-.. shortname:: ElasticSearch
+.. shortname:: Elasticsearch
+
+.. build_dependencies:: libcurl
 
 | Driver is read-write starting with GDAL 2.1 (was write only in GDAL
   2.0 or earlier)
-| As of GDAL 2.1, ElasticSearch 1.X and, partially, 2.X versions are
+| As of GDAL 2.1, Elasticsearch 1.X and, partially, 2.X versions are
   supported (5.0 known not to work). GDAL 2.2 adds supports for
-  ElasticSearch 2.X and 5.X
+  Elasticsearch 2.X and 5.X
 
-`ElasticSearch <http://elasticsearch.org/>`__ is an Enterprise-level
+`Elasticsearch <http://elasticsearch.org/>`__ is an Enterprise-level
 search engine for a variety of data sources. It supports full-text
 indexing and geospatial querying of those data in a fast and efficient
 manor using a predefined REST API.
@@ -27,7 +29,7 @@ Opening dataset name syntax
 ---------------------------
 
 Starting with GDAL 2.1, the driver supports reading existing indices
-from a ElasticSearch host. There are two main possible syntaxes to open
+from a Elasticsearch host. There are two main possible syntaxes to open
 a dataset:
 
 -  Using *ES:http://hostname:port* (where port is typically 9200)
@@ -54,41 +56,41 @@ The open options available are :
    Defaults to 'ogc_fid'
 -  **FORWARD_HTTP_HEADERS_FROM_ENV**\ =string. (GDAL >= 3.1)
    Can be used to specify HTTP headers,
-   typically for authentication purposes, that must be passed to ElasticSearch.
+   typically for authentication purposes, that must be passed to Elasticsearch.
    The value of string is a comma separated list of http_header_name=env_variable_name,
    where http_header_name is the name of a HTTP header and env_variable_name
    the name of the environment variable / configuration option from which th value
    of the HTTP header should be retrieved. This is intended for a use case where
-   the OGR ElasticSearch driver is invoked from a web server that stores the HTTP
+   the OGR Elasticsearch driver is invoked from a web server that stores the HTTP
    headers of incoming request into environment variables.
    The ES_FORWARD_HTTP_HEADERS_FROM_ENV configuration option can also be used.
 
-ElasticSearch vs OGR concepts
+Elasticsearch vs OGR concepts
 -----------------------------
 
-Each mapping type inside a ElasticSearch index will be considered as a
-OGR layer. A ElasticSearch document is considered as a OGR feature.
+Each mapping type inside a Elasticsearch index will be considered as a
+OGR layer. A Elasticsearch document is considered as a OGR feature.
 
 Field definitions
 -----------------
 
 Fields are dynamically mapped from the input OGR data source. However,
-the driver will take advantage of advanced options within ElasticSearch
+the driver will take advantage of advanced options within Elasticsearch
 as defined in a `field mapping
 file <http://code.google.com/p/ogr2elasticsearch/wiki/ModifyingtheIndex>`__.
 
 The mapping file allows you to modify the mapping according to the
-`ElasticSearch field-specific
+`Elasticsearch field-specific
 types <http://www.elasticsearch.org/guide/reference/mapping/core-types.html>`__.
 There are many options to choose from, however, most of the
 functionality is based on all the different things you are able to do
-with text fields within ElasticSearch.
+with text fields within Elasticsearch.
 
 ::
 
-   ogr2ogr -progress --config ES_WRITEMAP /path/to/file/map.txt -f "ElasticSearch" http://localhost:9200 my_shapefile.shp
+   ogr2ogr -progress --config ES_WRITEMAP /path/to/file/map.txt -f "Elasticsearch" http://localhost:9200 my_shapefile.shp
 
-The ElasticSearch writer supports the following Configuration Options.
+The Elasticsearch writer supports the following Configuration Options.
 Starting with GDAL 2.1, layer creation options are also available and
 should be preferred:
 
@@ -102,7 +104,7 @@ should be preferred:
    layer creation option should rather be used.
 -  **ES_BULK**\ =5000000. Identifies the maximum size in bytes of the
    buffer to store documents to be inserted at a time. Lower record
-   counts help with memory consumption within ElasticSearch but take
+   counts help with memory consumption within Elasticsearch but take
    longer to insert. Starting with GDAL 2.1, the **BULK_SIZE** layer
    creation option should rather be used.
 -  **ES_OVERWRITE**\ =1. Overwrites the current index by deleting an
@@ -120,7 +122,7 @@ and the "center" of the polygon is used as value of the point. Starting
 with GDAL 2.1,
 `geo_shape <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html>`__
 is used to store all geometry types (except curve geometries that are
-not handled by ElasticSearch and will be approximated to their linear
+not handled by Elasticsearch and will be approximated to their linear
 equivalents).
 
 Filtering
@@ -130,11 +132,11 @@ The driver will forward any spatial filter set with SetSpatialFilter()
 to the server.
 
 Starting with GDAL 2.2, SQL attribute filters set with
-SetAttributeFilter() are converted to `ElasticSearch filter
+SetAttributeFilter() are converted to `Elasticsearch filter
 syntax <https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-filters.html>`__.
 They will be combined with the potentially defined spatial filter.
 
-It is also possible to directly use a ElasticSearch filter by setting
+It is also possible to directly use a Elasticsearch filter by setting
 the string passed to SetAttributeFilter() as a JSon serialized object,
 e.g.
 
@@ -188,7 +190,7 @@ ExecuteSQL() interface
 ----------------------
 
 Starting with GDAL 2.2, SQL requests, involving a single layer, with
-WHERE and ORDER BY statements will be translated as ElasticSearch
+WHERE and ORDER BY statements will be translated as Elasticsearch
 queries.
 
 Otherwise, if specifying "ES" as the dialect of ExecuteSQL(), a JSon
@@ -202,7 +204,7 @@ contain the \_index and \_type special fields to indicate the provenance
 of the features.
 
 The following filter can be used to restrict the search to the "poly"
-index and its "FeatureCollection" type mapping (ElasticSearch 1.X and
+index and its "FeatureCollection" type mapping (Elasticsearch 1.X and
 2.X)
 
 ::
@@ -221,7 +223,7 @@ index and its "FeatureCollection" type mapping (ElasticSearch 1.X and
        }
    }
 
-For ElasticSearch 5.X (works also with 2.X) :
+For Elasticsearch 5.X (works also with 2.X) :
 
 ::
 
@@ -249,7 +251,7 @@ Getting metadata
 Getting feature count is efficient.
 
 Getting extent is efficient, only on geometry columns mapped to
-ElasticSearch type geo_point. On geo_shape fields, feature retrieval of
+Elasticsearch type geo_point. On geo_shape fields, feature retrieval of
 the whole layer is done, which might be slow.
 
 Write support
@@ -284,13 +286,14 @@ options:
 -  **INDEX_DEFINITION**\ =filename or JSon. (GDAL >= 2.4) Filename from
    which to read a user-defined index definition, or inlined index
    definition as serialized JSon.
--  **MAPPING_NAME=**\ =name. Name of the mapping type within the index.
+-  **MAPPING_NAME=**\ =name. (Elasticsearch < 7) Name of the mapping type within the index.
    By default, the mapping name is "FeatureCollection" and the documents
    will be written as GeoJSON Feature objects. If another mapping name
-   is chosen, a more "flat" structure will be used.
--  **MAPPING**\ =filename or JSon. Filename from which to read a
-   user-defined mapping, or mapping as serialized JSon. This option is
+   is chosen, a more "flat" structure will be used.  This option is
    ignored when converting to Elasticsearch >=7 (see `Removal of mapping types <https://www.elastic.co/guide/en/elasticsearch/reference/current/removal-of-types.html>`__).
+   With Elasticsearch 7 or later, a "flat" structure is always used.
+-  **MAPPING**\ =filename or JSon. Filename from which to read a
+   user-defined mapping, or mapping as serialized JSon.
 -  **WRITE_MAPPING**\ =filename. Creates a mapping file that can be
    modified by the user prior to insert in to the index. No feature will
    be written. This option is exclusive with MAPPING.
@@ -303,7 +306,7 @@ options:
    the index. In case there are several type mappings, the whole index
    need to be destroyed (it is unsafe to destroy a mapping and the
    documents that use it, since they might be used by other mappings.
-   This was possible in ElasticSearch 1.X, but no longer in later
+   This was possible in Elasticsearch 1.X, but no longer in later
    versions).
 -  **GEOMETRY_NAME**\ =name. Name of geometry column. Defaults to
    'geometry'.
@@ -337,14 +340,14 @@ options:
    `"index"
    property <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html>`__
    of the field mapping set to "not_analyzed" (the default in
-   ElasticSearch is "analyzed"). A same field should not be specified
+   Elasticsearch is "analyzed"). A same field should not be specified
    both in NOT_ANALYZED_FIELDS and NOT_INDEXED_FIELDS. Starting with
    GDAL 2.2, the {ALL} value can be used to designate all fields. This
    option is without effect if MAPPING is specified.
 -  **NOT_INDEXED_FIELDS**\ =List of comma separated field names that
    should not be indexed. Those fields will have their `"index"
    property <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html>`__
-   of the field mapping set to "no" (the default in ElasticSearch is
+   of the field mapping set to "no" (the default in Elasticsearch is
    "analyzed"). A same field should not be specified both in
    NOT_ANALYZED_FIELDS and NOT_INDEXED_FIELDS. This option is without
    effect if MAPPING is specified.
@@ -395,14 +398,14 @@ Examples
 
    C:\GDAL_on_Windows>ogrinfo ES: my_type -where "{\"query\": { \"match\": { \"properties.NAME\": \"Helsinki\" } } }"
 
-**Load an ElasticSearch index with a shapefile:**
+**Load an Elasticsearch index with a shapefile:**
 
 ::
 
-   ogr2ogr -f "ElasticSearch" http://localhost:9200 my_shapefile.shp
+   ogr2ogr -f "Elasticsearch" http://localhost:9200 my_shapefile.shp
 
 **Create a Mapping File:** The mapping file allows you to modify the
-mapping according to the `ElasticSearch field-specific
+mapping according to the `Elasticsearch field-specific
 types <http://www.elasticsearch.org/guide/reference/mapping/core-types.html>`__.
 There are many options to choose from, however, most of the
 functionality is based on all the different things you are able to do
@@ -410,26 +413,26 @@ with text fields.
 
 ::
 
-   ogr2ogr -progress --config ES_WRITEMAP /path/to/file/map.txt -f "ElasticSearch" http://localhost:9200 my_shapefile.shp
+   ogr2ogr -progress --config ES_WRITEMAP /path/to/file/map.txt -f "Elasticsearch" http://localhost:9200 my_shapefile.shp
 
 or (GDAL >= 2.1):
 
 ::
 
-   ogr2ogr -progress -lco WRITE_MAPPING=/path/to/file/map.txt -f "ElasticSearch" http://localhost:9200 my_shapefile.shp
+   ogr2ogr -progress -lco WRITE_MAPPING=/path/to/file/map.txt -f "Elasticsearch" http://localhost:9200 my_shapefile.shp
 
 **Read the Mapping File:** Reads the mapping file during the
 transformation
 
 ::
 
-   ogr2ogr -progress --config ES_META /path/to/file/map.txt -f "ElasticSearch" http://localhost:9200 my_shapefile.shp
+   ogr2ogr -progress --config ES_META /path/to/file/map.txt -f "Elasticsearch" http://localhost:9200 my_shapefile.shp
 
 or (GDAL >= 2.1):
 
 ::
 
-   ogr2ogr -progress -lco MAPPING=/path/to/file/map.txt -f "ElasticSearch" http://localhost:9200 my_shapefile.shp
+   ogr2ogr -progress -lco MAPPING=/path/to/file/map.txt -f "Elasticsearch" http://localhost:9200 my_shapefile.shp
 
 **Bulk Uploading (for larger datasets):** Bulk loading helps when
 uploading a lot of data. The integer value is the number of bytes that
@@ -438,20 +441,20 @@ considerations <https://www.elastic.co/guide/en/elasticsearch/guide/current/bulk
 
 ::
 
-   ogr2ogr -progress --config ES_BULK 5000000 -f "ElasticSearch" http://localhost:9200 PG:"host=localhost user=postgres dbname=my_db password=password" "my_table" -nln thetable
+   ogr2ogr -progress --config ES_BULK 5000000 -f "Elasticsearch" http://localhost:9200 PG:"host=localhost user=postgres dbname=my_db password=password" "my_table" -nln thetable
 
 or (GDAL >= 2.1):
 
 ::
 
-   ogr2ogr -progress -lco BULK_SIZE=5000000 -f "ElasticSearch" http://localhost:9200 my_shapefile.shp
+   ogr2ogr -progress -lco BULK_SIZE=5000000 -f "Elasticsearch" http://localhost:9200 my_shapefile.shp
 
 **Overwrite the current Index:** If specified, this will overwrite the
 current index. Otherwise, the data will be appended.
 
 ::
 
-   ogr2ogr -progress --config ES_OVERWRITE 1 -f "ElasticSearch" http://localhost:9200 PG:"host=localhost user=postgres dbname=my_db password=password" "my_table" -nln thetable
+   ogr2ogr -progress --config ES_OVERWRITE 1 -f "Elasticsearch" http://localhost:9200 PG:"host=localhost user=postgres dbname=my_db password=password" "my_table" -nln thetable
 
 or (GDAL >= 2.1):
 
@@ -462,6 +465,6 @@ or (GDAL >= 2.1):
 See Also
 --------
 
--  `Home page for ElasticSearch <http://elasticsearch.org/>`__
+-  `Home page for Elasticsearch <http://elasticsearch.org/>`__
 -  `Examples Wiki <http://code.google.com/p/ogr2elasticsearch/w/list>`__
 -  `Google Group <http://groups.google.com/group/ogr2elasticsearch>`__

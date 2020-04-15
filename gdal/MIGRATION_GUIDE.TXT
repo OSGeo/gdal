@@ -1,9 +1,18 @@
+MIGRATION GUIDE FROM GDAL 3.0 to GDAL 3.1
+-----------------------------------------
+
+- OGR SQL: the 'LIKE' operator is now case sensitive by default. ILIKE (supported
+  in previous versions) must be used for case insensitive comparison. The
+  OGR_SQL_LIKE_AS_ILIKE configuration option can be set to YES to make LIKE behave
+  in a case insensitive way as in previous versions.
+
 MIGRATION GUIDE FROM GDAL 2.4 to GDAL 3.0
 -----------------------------------------
 
 - Unix Build: ./configure arguments --without-bsb, --without-grib,
   and --without-mrf have been renamed to --disable-driver-bsb,
   --disable-driver-grib and --disable-driver-mrf
+ - Unix build: Arguments of --with-pg changed to yes/no only.
 - Substantial changes, sometimes backward incompatible, in coordinate reference
   system and coordinate transformations have been introduced per
   https://trac.osgeo.org/gdal/wiki/rfc73_proj6_wkt2_srsbarn
@@ -419,4 +428,3 @@ Changes that should likely not impact anybody :
    * OGRGeometryFactory::getGEOSGeometryFactory() has been removed.
      This method returned NULL since 2006
      ( http://trac.osgeo.org/gdal/changeset/9899/trunk/ogr/ogrgeometryfactory.cpp )
-

@@ -6,6 +6,8 @@ JP2KAK -- JPEG-2000 (based on Kakadu)
 
 .. shortname:: JP2KAK
 
+.. build_dependencies:: Kakadu library
+
 Most forms of JPEG2000 JP2 and JPC compressed images (ISO/IEC 15444-1)
 can be read with GDAL using a driver based on the Kakadu library. As
 well, new images can be written. Existing images cannot be updated in

@@ -1159,7 +1159,7 @@ void GDALRegister_Envisat()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Envisat Image Format" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#Envisat" );
+                               "drivers/raster/esat.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "n1" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

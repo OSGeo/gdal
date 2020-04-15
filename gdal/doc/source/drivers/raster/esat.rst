@@ -6,6 +6,8 @@ ESAT -- Envisat Image Product
 
 .. shortname:: ESAT
 
+.. built_in_by_default::
+
 GDAL supports the Envisat product format for read access. All sample
 types are supported. Files with two matching measurement datasets (MDS)
 are represented as having two bands. Currently all ASAR Level 1 and

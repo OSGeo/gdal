@@ -6,6 +6,8 @@ AAIGrid -- Arc/Info ASCII Grid
 
 .. shortname:: AAIGrid
 
+.. built_in_by_default::
+
 Supported for read and write access, including reading of an affine
 georeferencing transform and some projections. This format is the ASCII
 interchange format for Arc/Info Grid, and takes the form of an ASCII
@@ -44,7 +46,7 @@ places(using %lf format). Starting with GDAL 1.11, another option is
 SIGNIFICANT_DIGITS=3, which will output 3 significant digits (using %g
 format).
 
-The `AIG <#AIG>`__ driver is also available for Arc/Info Binary Grid
+The :ref:`raster.aig` driver is also available for Arc/Info Binary Grid
 format.
 
 NOTE: Implemented as ``gdal/frmts/aaigrid/aaigriddataset.cpp``.

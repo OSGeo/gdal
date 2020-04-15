@@ -60,7 +60,8 @@ CPL_CVSID("$Id$")
 static int ArgIsNumeric( const char * );
 static void AttachMetadata( GDALDatasetH, char ** );
 static void CopyBandInfo( GDALRasterBand * poSrcBand, GDALRasterBand * poDstBand,
-                            int bCanCopyStatsMetadata, int bCopyScale, int bCopyNoData, bool bCopyRAT );
+                          int bCanCopyStatsMetadata, int bCopyScale, int bCopyNoData, bool bCopyRAT,
+                          const GDALTranslateOptions* psOptions );
 
 typedef enum
 {
@@ -587,13 +588,75 @@ static CPLString EditISIS3MetadataForBandChange(const char* pszJSON,
 }
 
 /************************************************************************/
+/*                       AdjustNoDataValue()                            */
+/************************************************************************/
+
+static double AdjustNoDataValue( double dfInputNoDataValue,
+                                 GDALRasterBand* poBand,
+                                 const GDALTranslateOptions *psOptions )
+{
+    bool bSignedByte = false;
+    const char* pszPixelType = CSLFetchNameValue( psOptions->papszCreateOptions, "PIXELTYPE" );
+    if( pszPixelType == nullptr )
+    {
+        pszPixelType = poBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+    }
+    if( pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE") )
+        bSignedByte = true;
+    int bClamped = FALSE;
+    int bRounded = FALSE;
+    double dfVal = 0.0;
+    const GDALDataType eBandType = poBand->GetRasterDataType();
+    if( bSignedByte )
+    {
+        if( dfInputNoDataValue < -128.0 )
+        {
+            dfVal = -128.0;
+            bClamped = TRUE;
+        }
+        else if( dfInputNoDataValue > 127.0 )
+        {
+            dfVal = 127.0;
+            bClamped = TRUE;
+        }
+        else
+        {
+            dfVal = static_cast<int>(floor(dfInputNoDataValue + 0.5));
+            if( dfVal != dfInputNoDataValue )
+                bRounded = TRUE;
+        }
+    }
+    else
+    {
+        dfVal = GDALAdjustValueToDataType(eBandType,
+                                                dfInputNoDataValue,
+                                                &bClamped, &bRounded );
+    }
+
+    if (bClamped)
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, "for band %d, nodata value has been clamped "
+                "to %.0f, the original value being out of range.",
+                poBand->GetBand(), dfVal);
+    }
+    else if(bRounded)
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, "for band %d, nodata value has been rounded "
+                "to %.0f, %s being an integer datatype.",
+                poBand->GetBand(), dfVal,
+                GDALGetDataTypeName(eBandType));
+    }
+    return dfVal;
+}
+
+/************************************************************************/
 /*                             GDALTranslate()                          */
 /************************************************************************/
 
 /**
  * Converts raster data between different formats.
  *
- * This is the equivalent of the <a href="gdal_translate.html">gdal_translate</a> utility.
+ * This is the equivalent of the <a href="/programs/gdal_translate.html">gdal_translate</a> utility.
  *
  * GDALTranslateOptions* must be allocated and freed with GDALTranslateOptionsNew()
  * and GDALTranslateOptionsFree() respectively.
@@ -1894,7 +1957,8 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                           !psOptions->bUnscale && !psOptions->bSetScale &&
                             !psOptions->bSetOffset,
                           !psOptions->bSetNoData && !psOptions->bUnsetNoData,
-                          !psOptions->bNoRAT );
+                          !psOptions->bNoRAT,
+                          psOptions );
             if( psOptions->nScaleRepeat == 0 &&
                 psOptions->nExponentRepeat == 0 &&
                 EQUAL(psOptions->pszFormat, "GRIB") )
@@ -1921,57 +1985,8 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
         if( psOptions->bSetNoData )
         {
-            bool bSignedByte = false;
-            pszPixelType = CSLFetchNameValue( psOptions->papszCreateOptions, "PIXELTYPE" );
-            if( pszPixelType == nullptr )
-            {
-                pszPixelType = poVRTBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
-            }
-            if( pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE") )
-                bSignedByte = true;
-            int bClamped = FALSE;
-            int bRounded = FALSE;
-            double dfVal = 0.0;
-            if( bSignedByte )
-            {
-                if( psOptions->dfNoDataReal < -128.0 )
-                {
-                    dfVal = -128.0;
-                    bClamped = TRUE;
-                }
-                else if( psOptions->dfNoDataReal > 127.0 )
-                {
-                    dfVal = 127.0;
-                    bClamped = TRUE;
-                }
-                else
-                {
-                    dfVal = static_cast<int>(floor(psOptions->dfNoDataReal + 0.5));
-                    if( dfVal != psOptions->dfNoDataReal )
-                        bRounded = TRUE;
-                }
-            }
-            else
-            {
-                dfVal = GDALAdjustValueToDataType(eBandType,
-                                                     psOptions->dfNoDataReal,
-                                                     &bClamped, &bRounded );
-            }
-
-            if (bClamped)
-            {
-                CPLError( CE_Warning, CPLE_AppDefined, "for band %d, nodata value has been clamped "
-                       "to %.0f, the original value being out of range.",
-                       i + 1, dfVal);
-            }
-            else if(bRounded)
-            {
-                CPLError( CE_Warning, CPLE_AppDefined, "for band %d, nodata value has been rounded "
-                       "to %.0f, %s being an integer datatype.",
-                       i + 1, dfVal,
-                       GDALGetDataTypeName(eBandType));
-            }
-
+            const double dfVal = AdjustNoDataValue(
+                psOptions->dfNoDataReal, poVRTBand, psOptions);
             poVRTBand->SetNoDataValue( dfVal );
         }
 
@@ -2107,7 +2122,8 @@ static void AttachMetadata( GDALDatasetH hDS, char **papszMetadataOptions )
 /* more and more custom behaviour in the context of gdal_translate ... */
 
 static void CopyBandInfo( GDALRasterBand * poSrcBand, GDALRasterBand * poDstBand,
-                          int bCanCopyStatsMetadata, int bCopyScale, int bCopyNoData, bool bCopyRAT )
+                          int bCanCopyStatsMetadata, int bCopyScale, int bCopyNoData, bool bCopyRAT,
+                          const GDALTranslateOptions *psOptions )
 
 {
 
@@ -2157,7 +2173,11 @@ static void CopyBandInfo( GDALRasterBand * poSrcBand, GDALRasterBand * poDstBand
         int bSuccess = FALSE;
         double dfNoData = poSrcBand->GetNoDataValue(&bSuccess);
         if( bSuccess )
-            poDstBand->SetNoDataValue( dfNoData );
+        {
+            const double dfVal = AdjustNoDataValue(
+                dfNoData, poDstBand, psOptions);
+            poDstBand->SetNoDataValue( dfVal );
+        }
     }
 
     if (bCopyScale)
@@ -2214,7 +2234,7 @@ static int GetColorInterp( const char* pszStr )
  * Allocates a GDALTranslateOptions struct.
  *
  * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
- *                  The accepted options are the ones of the <a href="gdal_translate.html">gdal_translate</a> utility.
+ *                  The accepted options are the ones of the <a href="/programs/gdal_translate.html">gdal_translate</a> utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
  *                           otherwise (gdal_translate_bin.cpp use case) must be allocated with
  *                           GDALTranslateOptionsForBinaryNew() prior to this function. Will be
@@ -2294,7 +2314,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
 /*      Handle command line arguments.                                  */
 /* -------------------------------------------------------------------- */
     const int argc = CSLCount(papszArgv);
-    for( int i = 0; papszArgv != nullptr && i < argc; i++ )
+    for( int i = 0; i < argc && papszArgv != nullptr && papszArgv[i] != nullptr; i++ )
     {
         if( i < argc-1 && (EQUAL(papszArgv[i],"-of") || EQUAL(papszArgv[i],"-f")) )
         {

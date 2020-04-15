@@ -444,6 +444,77 @@ def test_pam_metadata_preserved():
     gdal.GetDriverByName('PNM').Delete(tmpfilename)
 
 ###############################################################################
+# Test that we can retrieve GCPs from xml:ESRI domain
+#
+
+def test_pam_esri_GeodataXform_gcp():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/test_pam_esri_GeodataXform_gcp.tif', 20, 20, 1)
+    ds = None
+
+    gdal.FileFromMemBuffer('/vsimem/test_pam_esri_GeodataXform_gcp.tif.aux.xml',
+"""<PAMDataset>
+  <Metadata domain="xml:ESRI" format="xml">
+    <GeodataXform xsi:type="typens:PolynomialXform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:typens="http://www.esri.com/schemas/ArcGIS/10.3">
+      <PolynomialOrder>1</PolynomialOrder>
+      <SpatialReference xsi:type="typens:ProjectedCoordinateSystem">
+        <WKT>PROJCS["NW Africa Grid",GEOGCS["GCS_NTF",DATUM["D_NTF",SPHEROID["Clarke_1880_IGN",6378249.2,293.4660212936265]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic"],PARAMETER["False_Easting",1000000.0],PARAMETER["False_Northing",500000.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Standard_Parallel_1",34.0],PARAMETER["Scale_Factor",0.9994],PARAMETER["Latitude_Of_Origin",34.0],UNIT["Meter",1.0]]</WKT>
+        <XOrigin>-36981000</XOrigin>
+        <YOrigin>-28020400</YOrigin>
+        <XYScale>118575067.20124523</XYScale>
+        <ZOrigin>-100000</ZOrigin>
+        <ZScale>10000</ZScale>
+        <MOrigin>-100000</MOrigin>
+        <MScale>10000</MScale>
+        <XYTolerance>0.001</XYTolerance>
+        <ZTolerance>0.001</ZTolerance>
+        <MTolerance>0.001</MTolerance>
+        <HighPrecision>true</HighPrecision>
+      </SpatialReference>
+      <SourceGCPs xsi:type="typens:ArrayOfDouble">
+        <Double>1</Double>
+        <Double>-2</Double>
+        <Double>3</Double>
+        <Double>-4</Double>
+        <Double>5</Double>
+        <Double>-6</Double>
+      </SourceGCPs>
+      <TargetGCPs xsi:type="typens:ArrayOfDouble">
+        <Double>7</Double>
+        <Double>8</Double>
+        <Double>9</Double>
+        <Double>10</Double>
+        <Double>11</Double>
+        <Double>12</Double>
+      </TargetGCPs>
+    </GeodataXform>
+  </Metadata>
+</PAMDataset>""")
+
+    ds = gdal.Open('/vsimem/test_pam_esri_GeodataXform_gcp.tif')
+    gcps = ds.GetGCPs()
+    sr_gt = ds.GetSpatialRef()
+    sr_gcp = ds.GetGCPSpatialRef()
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/test_pam_esri_GeodataXform_gcp.tif')
+
+    assert len(gcps) == 3
+    assert gcps[0].GCPPixel == 1
+    assert gcps[0].GCPLine == 2
+    assert gcps[0].GCPX == 7
+    assert gcps[0].GCPY == 8
+    assert gcps[0].GCPZ == 0
+    assert gcps[1].GCPPixel == 3
+    assert gcps[1].GCPLine == 4
+    assert gcps[1].GCPX == 9
+    assert gcps[1].GCPY == 10
+    assert gcps[1].GCPZ == 0
+    assert sr_gt is None
+    assert sr_gcp is not None
+
+    ds = None
+
+###############################################################################
 # Cleanup.
 
 def test_pam_cleanup():

@@ -6,6 +6,8 @@ SGI -- SGI Image Format
 
 .. shortname:: SGI
 
+.. built_in_by_default::
+
 The SGI driver currently supports the reading and writing of SGI Image
 files.
 

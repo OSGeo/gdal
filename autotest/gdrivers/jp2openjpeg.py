@@ -37,9 +37,6 @@ from osgeo import ogr
 from osgeo import osr
 import pytest
 
-sys.path.append('../ogr')
-sys.path.append('../../gdal/swig/python/samples')
-
 import gdaltest
 
 ###############################################################################
@@ -809,6 +806,10 @@ def test_jp2openjpeg_25():
 
 
 def validate(filename, expected_gmljp2=True, return_error_count=False, oidoc=None, inspire_tg=True):
+
+    for path in ('../ogr', '../../gdal/swig/python/samples'):
+        if path not in sys.path:
+            sys.path.append(path)
 
     try:
         import validate_jp2
@@ -2920,7 +2921,9 @@ def test_jp2openjpeg_49():
             print('Expected ' + str(expected_gt))
             pytest.fail('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
 
-        if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and expected_srs not in srs_wkt):
+        if expected_srs == 'LOCAL_CS["PAM"]' and srs_wkt == 'LOCAL_CS["PAM",UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]':
+            pass # ok
+        elif (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and expected_srs not in srs_wkt):
             print('Got ' + srs_wkt)
             print('Expected ' + expected_srs)
             pytest.fail('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
@@ -2975,7 +2978,9 @@ def test_jp2openjpeg_49():
             print('Expected ' + str(expected_gt))
             pytest.fail('Did not get expected gt for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
 
-        if (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and expected_srs not in srs_wkt):
+        if expected_srs == 'LOCAL_CS["PAM"]' and srs_wkt == 'LOCAL_CS["PAM",UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]':
+            pass # ok
+        elif (expected_srs == '' and srs_wkt != '') or (expected_srs != '' and expected_srs not in srs_wkt):
             print('Got ' + srs_wkt)
             print('Expected ' + expected_srs)
             pytest.fail('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
@@ -3126,6 +3131,19 @@ def test_jp2openjpeg_odd_dimensions_overviews():
     assert ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,2049,1025)
     assert gdal.GetLastErrorMsg() == ''
     ds = None
+
+###############################################################################
+# Test reading an image whose origin is not (0,0)
+
+
+def test_jp2openjpeg_image_origin_not_zero():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/byte_image_origin_not_zero.jp2')
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    assert ds.GetRasterBand(1).ReadRaster(0,0,20,20,10,10) is not None
 
 ###############################################################################
 

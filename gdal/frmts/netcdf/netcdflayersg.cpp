@@ -224,7 +224,10 @@ void netCDFDataset::SGCommitPendingTransaction()
             // Go through all the layers and resize dimensions accordingly
             for(size_t layerInd = 0; layerInd < papoLayers.size(); layerInd++)
             {
-                nccfdriver::ncLayer_SG_Metadata& layerMD = papoLayers[layerInd]->getLayerSGMetadata();
+                auto poLayer = dynamic_cast<netCDFLayer*>(papoLayers[layerInd].get());
+                if( !poLayer )
+                    continue;
+                nccfdriver::ncLayer_SG_Metadata& layerMD = poLayer->getLayerSGMetadata();
                 nccfdriver::geom_t wType = layerMD.getWritableType();
 
                 // Resize node coordinates
@@ -346,9 +349,8 @@ OGRFeature* netCDFLayer::buildSGeometryFeature(size_t featureInd)
             break;
     }
 
-    int r_size = 0;
-    std::unique_ptr<unsigned char, std::default_delete<unsigned char[]>> wkb_rep(m_simpleGeometryReader->serializeToWKB(featureInd, r_size));
-    geometry->importFromWkb(static_cast<const unsigned char*>(wkb_rep.get()), r_size, wkbVariantIso);
+    const auto wkb = m_simpleGeometryReader->serializeToWKB(featureInd);
+    geometry->importFromWkb(wkb.data(), static_cast<int>(wkb.size()), wkbVariantIso);
     geometry->assignSpatialReference(this->GetSpatialRef());
 
     OGRFeatureDefn* defn = this->GetLayerDefn();

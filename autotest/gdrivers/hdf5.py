@@ -478,3 +478,14 @@ def test_hdf5_recursive_groups():
 def test_hdf5_family_driver():
 
     assert gdal.Open('data/test_family_0.h5')
+
+
+def test_hdf5_single_dim():
+
+    ds = gdal.Open('HDF5:data/byte_chunked_multiple.nc://x')
+    assert ds
+    b = ds.GetRasterBand(1)
+    assert b.YSize == 1
+    assert b.XSize == 20
+    assert b.GetBlockSize() == [20, 1]
+    assert b.Checksum() == 231

@@ -6,6 +6,8 @@ ADRG -- ADRG/ARC Digitized Raster Graphics (.gen/.thf)
 
 .. shortname:: ADRG
 
+.. built_in_by_default::
+
 Supported by GDAL for read access. Creation is possible, but it must be
 considered as experimental and a means of testing read access (although
 files created by the driver can be read successfully on another GIS

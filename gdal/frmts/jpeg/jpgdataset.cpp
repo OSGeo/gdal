@@ -1836,7 +1836,6 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
        (nYSize == nBufYSize) && (nYSize == nRasterYSize) &&
        (eBufType == GDT_Byte) && (GetDataPrecision() != 12) &&
        (pData != nullptr) &&
-       (panBandMap != nullptr) &&
        (panBandMap[0] == 1) && (panBandMap[1] == 2) && (panBandMap[2] == 3) &&
        // These color spaces need to be transformed to RGB.
        GetOutColorSpace() != JCS_YCCK && GetOutColorSpace() != JCS_CMYK )
@@ -2782,8 +2781,7 @@ CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
             }
         }
 
-        if( eErr == CE_None &&
-            !pfnProgress((iY + 1) / static_cast<double>(nYSize),
+        if( !pfnProgress((iY + 1) / static_cast<double>(nYSize),
                          nullptr, pProgressData) )
         {
             eErr = CE_Failure;
@@ -2972,6 +2970,7 @@ void   JPGAddEXIF        ( GDALDataType eWorkDT,
             pabyOvr = VSIGetMemFileBuffer(osTmpFile, &nJPEGIfByteCount, TRUE);
         VSIUnlink(osTmpFile);
 
+        // cppcheck-suppress knownConditionTrueFalse
         if( pabyOvr == nullptr )
         {
             nJPEGIfByteCount = 0;
@@ -3528,7 +3527,7 @@ void GDALRegister_JPEG()
     poDriver->SetDescription("JPEG");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "JPEG JFIF");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_jpeg.html");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/jpeg.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "jpg");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "jpg jpeg");
     poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/jpeg");

@@ -30,11 +30,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import gdaltest
 import os
 
 import pytest
 
-from osgeo import osr, gdal
+from osgeo import osr
 
 bonne = 'PROJCS["bonne",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["bonne"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Standard_Parallel_1",60.0],UNIT["Meter",1.0]]'
 
@@ -101,9 +102,9 @@ transform_list = [
      'EPSG:4328', (-3748031.46884168, -3144971.82314589, 4077985.57220038), 0.1,
      'Geocentric', None, None),
 
-    # Test Vertical Datum Shift with a change of horizontal and vert units.
+    # Test Vertical Datum Shift with a change of horizontal units.
     ('+proj=utm +zone=11 +datum=WGS84', (100000.0, 3500000.0, 0.0), 0.1,
-     '+proj=utm +zone=11 +datum=WGS84 +geoidgrids=egm96_15.gtx +units=us-ft', (328083.333225467, 11482916.6665952, 136.055454832886), 0.01,
+     '+proj=utm +zone=11 +datum=WGS84 +geoidgrids=egm96_15.gtx +units=us-ft', (328083.333225467, 11482916.6665952, 41.4697855726348), 0.01,
      'EGM 96 Conversion', None, "GRID:egm96_15.gtx"),
 
     # Test optimization in case of identical projections (projected)
@@ -121,6 +122,32 @@ transform_list = [
      '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs', (222638.981586547, 6274861.39384813, 0), 1e-3,
      'GRS80 -> EPSG:3857', None, None),
 
+    # Test GRS80 -> EPSG:3857
+    ('+proj=longlat +ellps=GRS80 +towgs84=0,0,0 +no_defs', (2, 49, 0.0), 1e-8,
+     '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs', (222638.981586547, 6274861.39384813, 0), 1e-3,
+     'GRS80 -> EPSG:3857', None, None),
+
+    ('EPSG:4314', (50, 10, 0.0), 1e-8,
+     'EPSG:4326', (49.9988573027651,9.99881145557889, 0.0), 1e-8,
+     'DHDN -> WGS84 using BETA2007', None, 'GRID:BETA2007.gsb'),
+
+    ("""GEOGCS["DHDN",
+    DATUM["Deutsches_Hauptdreiecksnetz",
+        SPHEROID["Bessel 1841",6377397.155,299.1528128,
+            AUTHORITY["EPSG","7004"]],
+        TOWGS84[598.1,73.7,418.2,0.202,0.045,-2.455,6.7],
+        AUTHORITY["EPSG","6314"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["degree",0.0174532925199433,
+        AUTHORITY["EPSG","9122"]],
+    AUTHORITY["EPSG","4314"]]""", (50, 10, 0.0), 1e-8,
+     'EPSG:4326', (49.9988572643058,9.99881392529464,0), 1e-8,
+     'DHDN -> WGS84 using TOWGS84 automatically set', 'OSR_CT_USE_DEFAULT_EPSG_TOWGS84=YES', None),
+
+    ('+proj=longlat +ellps=bessel +towgs84=598.1,73.7,418.2,0.202,0.045,-2.455,6.7 +no_defs', (10, 50, 0.0), 1e-8,
+     'EPSG:4326', (49.9988572643058,9.99881392529464,0), 1e-8,
+     'DHDN -> WGS84 usign explicit TOWGS84', None, None),
 ]
 
 ###############################################################################
@@ -136,15 +163,19 @@ def test_proj(src_srs, src_xyz, src_error,
              dst_srs, dst_xyz, dst_error, unit_name, options, requirements):
 
     if requirements is not None and requirements[:5] == 'GRID:':
-        proj_lib = os.getenv('PROJ_LIB')
-        if proj_lib is None:
-            # print( 'PROJ_LIB unset, skipping test.' )
+        grid_name = requirements[5:]
+        if grid_name == 'egm96_15.gtx' and \
+           osr.GetPROJVersionMajor() * 10000 + osr.GetPROJVersionMinor() * 100 + osr.GetPROJVersionMicro() < 60201:
+            # Issues before PROJ 6.2.1
             pytest.skip()
-
-        try:
-            open(proj_lib + '/' + requirements[5:])
-        except IOError:
-            # print( 'Did not find GRID:%s' % requirements[5:] )
+        search_paths = osr.GetPROJSearchPaths()
+        found = False
+        for path in search_paths:
+            if os.path.exists(os.path.join(path, grid_name)):
+                found = True
+                break
+        if not found:
+            #print( 'Did not find GRID:%s' % grid_name )
             pytest.skip()
 
     src = osr.SpatialReference()
@@ -160,20 +191,17 @@ def test_proj(src_srs, src_xyz, src_error,
     else:
         additionnal_error_str = ''
 
-    try:
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
+    has_built_ct = False
+    if options and '=' in options:
+        tokens = options.split('=')
+        if len(tokens) == 2:
+            key = tokens[0]
+            value = tokens[1]
+            with gdaltest.config_option(key, value):
+                has_built_ct = True
+                ct = osr.CoordinateTransformation(src, dst)
+    if not has_built_ct:
         ct = osr.CoordinateTransformation(src, dst)
-        gdal.PopErrorHandler()
-        if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
-            pytest.skip('PROJ.4 missing, transforms not available.')
-    except ValueError:
-        gdal.PopErrorHandler()
-        if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
-            pytest.skip('PROJ.4 missing, transforms not available.')
-        pytest.fail('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
-    except:
-        gdal.PopErrorHandler()
-        pytest.fail('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
 
     ######################################################################
     # Transform source point to destination SRS.
@@ -191,7 +219,17 @@ def test_proj(src_srs, src_xyz, src_error,
     ######################################################################
     # Now transform back.
 
-    ct = osr.CoordinateTransformation(dst, src)
+    has_built_ct = False
+    if options and '=' in options:
+        tokens = options.split('=')
+        if len(tokens) == 2:
+            key = tokens[0]
+            value = tokens[1]
+            with gdaltest.config_option(key, value):
+                has_built_ct = True
+                ct = osr.CoordinateTransformation(dst, src)
+    if not has_built_ct:
+        ct = osr.CoordinateTransformation(dst, src)
 
     result = ct.TransformPoint(result[0], result[1], result[2])
 
@@ -200,4 +238,5 @@ def test_proj(src_srs, src_xyz, src_error,
         + abs(result[2] - src_xyz[2])
 
     assert error <= src_error, \
-        ('Back to source error is %g.%s' % (error, additionnal_error_str))
+        ('Back to source error is %g got (%.15g,%.15g,%.15g)%s'
+                            % (error, result[0], result[1], result[2], additionnal_error_str))

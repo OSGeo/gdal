@@ -1320,7 +1320,14 @@ const Eprj_ProParameters *HFAGetProParameters( HFAHandle hHFA )
         CPLCalloc(sizeof(Eprj_ProParameters), 1));
 
     // Fetch the fields.
-    psProParms->proType = (Eprj_ProType)poMIEntry->GetIntField("proType");
+    const int proType = poMIEntry->GetIntField("proType");
+    if( proType != EPRJ_INTERNAL && proType != EPRJ_EXTERNAL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Wrong value for proType");
+        CPLFree(psProParms);
+        return nullptr;
+    }
+    psProParms->proType = static_cast<Eprj_ProType>(proType);
     psProParms->proNumber = poMIEntry->GetIntField("proNumber");
     psProParms->proExeName = CPLStrdup(poMIEntry->GetStringField("proExeName"));
     psProParms->proName = CPLStrdup(poMIEntry->GetStringField("proName"));

@@ -695,7 +695,7 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM( GTIF* hGTIF, GTIFDefn* psDefn,
 
     // Check PCSCitationGeoKey if it exists.
     szCTString[0] = '\0';
-    if( hGTIF && GDALGTIFKeyGetASCII( hGTIF, PCSCitationGeoKey, szCTString,
+    if( GDALGTIFKeyGetASCII( hGTIF, PCSCitationGeoKey, szCTString,
                                       0, sizeof(szCTString)) )
     {
         // For tif created by LEICA(ERDAS), ESRI state plane pe string was

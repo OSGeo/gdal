@@ -150,7 +150,7 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
     // Get tile directory
     // --------------------------------------------------------------------
 
-    eFormat = (INGR_Format) hHeaderOne.DataTypeCode;
+    uint16 eFormatUntyped = (INGR_Format) hHeaderOne.DataTypeCode;
 
     bTiled = hHeaderOne.DataTypeCode == TiledRasterData;
 
@@ -165,7 +165,7 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
         if (nTiles == 0)
             return;
 
-        eFormat = (INGR_Format) hTileDir.DataTypeCode;
+        eFormatUntyped = hTileDir.DataTypeCode;
 
         // ----------------------------------------------------------------
         // Set blocks dimensions based on tiles
@@ -190,7 +190,7 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
     // --------------------------------------------------------------------
     // Get the Data Type from Format
     // --------------------------------------------------------------------
-    eDataType = INGR_GetDataType( static_cast<uint16>(eFormat) );
+    eDataType = INGR_GetDataType( eFormatUntyped );
 
     // --------------------------------------------------------------------
     // Allocate buffer for a Block of data
@@ -203,9 +203,10 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
         nBlockXSize > INT_MAX / (nBlockYSize *
                                  (GDALGetDataTypeSizeBytes( eDataType ))) )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Too big block size");
+        CPLError(CE_Failure, CPLE_AppDefined, "Too big block size / invalid type");
         return;
     }
+    eFormat = static_cast<INGR_Format>(eFormatUntyped);
 
     nBlockBufSize = nBlockXSize * nBlockYSize *
                     (GDALGetDataTypeSize( eDataType ) / 8);

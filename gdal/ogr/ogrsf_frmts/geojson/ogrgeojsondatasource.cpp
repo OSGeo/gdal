@@ -797,7 +797,9 @@ void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo* poOpenInfo,
             if( !ReadFromFile( poOpenInfo, pszUnprefixed ) )
                 return;
         }
-        OGRErr err = reader.Parse( pszGeoData_ );
+        OGRErr err = reader.Parse( pszGeoData_,
+            nSrcType == eGeoJSONSourceService &&
+            !STARTS_WITH_CI(poOpenInfo->pszFilename, "TopoJSON:") );
         if( OGRERR_NONE == err )
         {
             reader.ReadLayers( this );
@@ -944,6 +946,10 @@ void OGRGeoJSONDataSource::SetOptionsOnReader(GDALOpenInfo* poOpenInfo,
     poReader->SetArrayAsString(
         CPLTestBool(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "ARRAY_AS_STRING",
                 CPLGetConfigOption("OGR_GEOJSON_ARRAY_AS_STRING", "NO"))));
+
+    poReader->SetDateAsString(
+        CPLTestBool(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "DATE_AS_STRING",
+                CPLGetConfigOption("OGR_GEOJSON_DATE_AS_STRING", "NO"))));
 }
 
 /************************************************************************/

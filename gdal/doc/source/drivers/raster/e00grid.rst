@@ -6,6 +6,8 @@ E00GRID -- Arc/Info Export E00 GRID
 
 .. shortname:: E00GRID
 
+.. built_in_by_default::
+
 GDAL supports reading DEMs/rasters exported as E00 Grids.
 
 The driver has been tested against datasets such as the one available on

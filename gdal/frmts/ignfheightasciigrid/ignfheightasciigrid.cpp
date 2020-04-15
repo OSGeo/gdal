@@ -709,7 +709,7 @@ void GDALRegister_IGNFHeightASCIIGrid()
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
                               "IGN France height correction ASCII Grid");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-                              "frmt_various.html#IGNFHeightASCIIGrid");
+                              "drivers/raster/ignfheightasciigrid.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "mnt txt gra");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");

@@ -267,7 +267,8 @@ int GDALWarpOperation::ValidateOptions()
         && psOptions->eResampleAlg != GRA_Min
         && psOptions->eResampleAlg != GRA_Med
         && psOptions->eResampleAlg != GRA_Q1
-        && psOptions->eResampleAlg != GRA_Q3)
+        && psOptions->eResampleAlg != GRA_Q3
+        && psOptions->eResampleAlg != GRA_Sum)
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "GDALWarpOptions.Validate(): "
@@ -444,6 +445,19 @@ int GDALWarpOperation::ValidateOptions()
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "GDALWarpOptions.Validate(): "
                   "pfnDstDensityMaskFunc provided as well as a DstAlphaBand." );
+        return FALSE;
+    }
+
+    const bool bErrorOutIfEmptySourceWindow = CPLFetchBool(
+        psOptions->papszWarpOptions,
+        "ERROR_OUT_IF_EMPTY_SOURCE_WINDOW", true);
+    if( !bErrorOutIfEmptySourceWindow &&
+        CSLFetchNameValue(psOptions->papszWarpOptions, "INIT_DEST") == nullptr )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg,
+                  "GDALWarpOptions.Validate(): "
+                  "ERROR_OUT_IF_EMPTY_SOURCE_WINDOW=FALSE can only be used "
+                  "if INIT_DEST is set");
         return FALSE;
     }
 
@@ -1769,7 +1783,14 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
         if( hWarpMutex != nullptr )
             CPLReleaseMutex( hWarpMutex );
         if( eErr != CE_None )
+        {
+            const bool bErrorOutIfEmptySourceWindow = CPLFetchBool(
+                psOptions->papszWarpOptions,
+                "ERROR_OUT_IF_EMPTY_SOURCE_WINDOW", true);
+            if( !bErrorOutIfEmptySourceWindow )
+                return CE_None;
             return eErr;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -2722,10 +2743,21 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
 /* -------------------------------------------------------------------- */
     if( nFailedCount > nSamplePoints - 5 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Too many points (%d out of %d) failed to transform, "
-                  "unable to compute output bounds.",
-                  nFailedCount, nSamplePoints );
+        const bool bErrorOutIfEmptySourceWindow = CPLFetchBool(
+            psOptions->papszWarpOptions,
+            "ERROR_OUT_IF_EMPTY_SOURCE_WINDOW", true);
+        if( bErrorOutIfEmptySourceWindow )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Too many points (%d out of %d) failed to transform, "
+                    "unable to compute output bounds.",
+                    nFailedCount, nSamplePoints );
+        }
+        else
+        {
+            CPLDebug("WARP", "Cannot determine source window for %d,%d,%d,%d",
+                     nDstXOff, nDstYOff, nDstXSize, nDstYSize);
+        }
         return CE_Failure;
     }
 

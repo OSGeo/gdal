@@ -189,7 +189,7 @@ CPLErr VRTRawRasterBand::SetRawLink( const char *pszFilename,
 {
     ClearRawLink();
 
-    reinterpret_cast<VRTDataset *>( poDS )->SetNeedsFlush();
+    static_cast<VRTDataset *>( poDS )->SetNeedsFlush();
 
 /* -------------------------------------------------------------------- */
 /*      Prepare filename.                                               */
@@ -222,7 +222,7 @@ CPLErr VRTRawRasterBand::SetRawLink( const char *pszFilename,
         fp = CPLOpenShared( pszExpandedFilename, "rb", TRUE );
 
     if( fp == nullptr
-        && reinterpret_cast<VRTDataset *>( poDS )->GetAccess() == GA_Update )
+        && static_cast<VRTDataset *>( poDS )->GetAccess() == GA_Update )
     {
         fp = CPLOpenShared( pszExpandedFilename, "wb+", TRUE );
     }
@@ -321,6 +321,27 @@ void VRTRawRasterBand::ClearRawLink()
     CPLFree( m_pszSourceFilename );
     m_pszSourceFilename = nullptr;
 }
+
+/************************************************************************/
+/*                            GetVirtualMemAuto()                       */
+/************************************************************************/
+
+CPLVirtualMem * VRTRawRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
+                                                     int *pnPixelSpace,
+                                                     GIntBig *pnLineSpace,
+                                                     char **papszOptions )
+
+{
+    // check the pointer to RawRasterBand
+    if( m_poRawRaster == nullptr )
+    {
+        // use the super class method
+        return VRTRasterBand::GetVirtualMemAuto(eRWFlag, pnPixelSpace, pnLineSpace, papszOptions);
+    }
+    // if available, use the RawRasterBand method (use mmap if available)
+    return m_poRawRaster->GetVirtualMemAuto(eRWFlag, pnPixelSpace, pnLineSpace, papszOptions);
+}
+
 
 /************************************************************************/
 /*                              XMLInit()                               */
@@ -513,7 +534,7 @@ void VRTRawRasterBand::GetFileList( char*** ppapszFileList, int *pnSize,
     if (*pnSize + 1 >= *pnMaxSize)
     {
         *pnMaxSize = 2 + 2 * (*pnMaxSize);
-        *ppapszFileList = reinterpret_cast<char **>(
+        *ppapszFileList = static_cast<char **>(
             CPLRealloc( *ppapszFileList, sizeof(char*) * (*pnMaxSize) ) );
     }
 

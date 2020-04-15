@@ -3,7 +3,7 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  ElasticSearch driver testing (with fake server)
+# Purpose:  Elasticsearch driver testing (with fake server)
 # Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
@@ -48,14 +48,14 @@ def test_ogr_elasticsearch_init():
     ogrtest.srs_wgs84 = osr.SpatialReference()
     ogrtest.srs_wgs84.SetFromUserInput('WGS84')
 
-    ogrtest.elasticsearch_drv = ogr.GetDriverByName('ElasticSearch')
+    ogrtest.elasticsearch_drv = ogr.GetDriverByName('Elasticsearch')
     if ogrtest.elasticsearch_drv is None:
         pytest.skip()
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
 ###############################################################################
-# Test writing into an nonexistent ElasticSearch datastore.
+# Test writing into an nonexistent Elasticsearch datastore.
 
 
 def test_ogr_elasticsearch_nonexistent_server():
@@ -65,36 +65,36 @@ def test_ogr_elasticsearch_nonexistent_server():
     with gdaltest.error_handler():
         ds = ogrtest.elasticsearch_drv.CreateDataSource(
             '/vsimem/nonexistent_host')
-    assert ds is None, 'managed to open nonexistent ElasticSearch datastore.'
+    assert ds is None, 'managed to open nonexistent Elasticsearch datastore.'
 
     with gdaltest.error_handler():
         ds = ogrtest.elasticsearch_drv.Open('ES:/vsimem/nonexistent_host')
-    assert ds is None, 'managed to open nonexistent ElasticSearch datastore.'
+    assert ds is None, 'managed to open nonexistent Elasticsearch datastore.'
 
     gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch", """{}""")
 
     with gdaltest.error_handler():
         ds = ogrtest.elasticsearch_drv.Open('ES:/vsimem/fakeelasticsearch')
-    assert ds is None, 'managed to open invalid ElasticSearch datastore.'
+    assert ds is None, 'managed to open invalid Elasticsearch datastore.'
 
     gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch", """{"version":null}""")
 
     with gdaltest.error_handler():
         ds = ogrtest.elasticsearch_drv.Open('ES:/vsimem/fakeelasticsearch')
-    assert ds is None, 'managed to open invalid ElasticSearch datastore.'
+    assert ds is None, 'managed to open invalid Elasticsearch datastore.'
 
     gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch", """{"version":{}}""")
 
     with gdaltest.error_handler():
         ds = ogrtest.elasticsearch_drv.Open('ES:/vsimem/fakeelasticsearch')
-    assert ds is None, 'managed to open invalid ElasticSearch datastore.'
+    assert ds is None, 'managed to open invalid Elasticsearch datastore.'
 
     gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch",
                            """{"version":{"number":null}}""")
 
     with gdaltest.error_handler():
         ds = ogrtest.elasticsearch_drv.Open('ES:/vsimem/fakeelasticsearch')
-    assert ds is None, 'managed to open invalid ElasticSearch datastore.'
+    assert ds is None, 'managed to open invalid Elasticsearch datastore.'
 
 ###############################################################################
 # Simple test
@@ -109,7 +109,7 @@ def test_ogr_elasticsearch_1():
 
     ds = ogrtest.elasticsearch_drv.CreateDataSource(
         "/vsimem/fakeelasticsearch")
-    assert ds is not None, 'did not managed to open ElasticSearch datastore'
+    assert ds is not None, 'did not managed to open Elasticsearch datastore'
 
     assert ds.TestCapability(ogr.ODsCCreateLayer) != 0
     assert ds.TestCapability(ogr.ODsCDeleteLayer) != 0
@@ -237,7 +237,7 @@ def test_ogr_elasticsearch_1():
 
     # Success
     gdal.FileFromMemBuffer(
-        '/vsimem/fakeelasticsearch/foo2/FeatureCollection&POSTFIELDS={ "geometry": { "type": "POINT", "coordinates": [ 0.0, 1.0 ] }, "type": "Feature", "properties": { "str_field": "a", "int_field": 1, "int64_field": 123456789012, "real_field": 2.34, "boolean_field": true, "strlist_field": [ "a", "b" ], "intlist_field": [ 1, 2 ], "int64list_field": [ 123456789012, 2 ], "reallist_field": [ 1.23, 4.56 ], "date_field": "2015\/08\/12", "datetime_field": "2015\/08\/12 12:34:56.789", "time_field": "12:34:56.789", "binary_field": "ASNGV4mrze8=" } }', '{ "_id": "my_id" }')
+        '/vsimem/fakeelasticsearch/foo2/FeatureCollection&POSTFIELDS={ "geometry": { "type": "Point", "coordinates": [ 0.0, 1.0 ] }, "type": "Feature", "properties": { "str_field": "a", "int_field": 1, "int64_field": 123456789012, "real_field": 2.34, "boolean_field": true, "strlist_field": [ "a", "b" ], "intlist_field": [ 1, 2 ], "int64list_field": [ 123456789012, 2 ], "reallist_field": [ 1.23, 4.56 ], "date_field": "2015\/08\/12", "datetime_field": "2015\/08\/12 12:34:56.789", "time_field": "12:34:56.789", "binary_field": "ASNGV4mrze8=" } }', '{ "_id": "my_id" }')
     ret = lyr.CreateFeature(feat)
     assert ret == 0
     assert feat['_id'] == 'my_id'
@@ -284,7 +284,7 @@ def test_ogr_elasticsearch_1():
                          'GEOM_MAPPING_TYPE=GEO_POINT', 'GEOM_PRECISION=1m', 'BULK_INSERT=NO'])
 
     gdal.FileFromMemBuffer(
-        '/vsimem/fakeelasticsearch/foo3/FeatureCollection&POSTFIELDS={ "ogc_fid": 1, "geometry": { "type": "POINT", "coordinates": [ 0.5, 0.5 ] }, "type": "Feature", "properties": { } }', '{}')
+        '/vsimem/fakeelasticsearch/foo3/FeatureCollection&POSTFIELDS={ "ogc_fid": 1, "geometry": { "type": "Point", "coordinates": [ 0.5, 0.5 ] }, "type": "Feature", "properties": { } }', '{}')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
     ret = lyr.CreateFeature(feat)
@@ -344,7 +344,7 @@ def test_ogr_elasticsearch_2():
 
     ds = ogrtest.elasticsearch_drv.CreateDataSource(
         "/vsimem/fakeelasticsearch")
-    assert ds is not None, 'did not managed to open ElasticSearch datastore'
+    assert ds is not None, 'did not managed to open Elasticsearch datastore'
 
     gdal.FileFromMemBuffer(
         '/vsimem/fakeelasticsearch/foo&CUSTOMREQUEST=PUT', '{}')
@@ -387,7 +387,7 @@ def test_ogr_elasticsearch_3():
 
     ds = ogrtest.elasticsearch_drv.CreateDataSource(
         "/vsimem/fakeelasticsearch")
-    assert ds is not None, 'did not managed to open ElasticSearch datastore'
+    assert ds is not None, 'did not managed to open Elasticsearch datastore'
 
     gdal.FileFromMemBuffer(
         '/vsimem/fakeelasticsearch/name_laundering&CUSTOMREQUEST=PUT', '{}')
@@ -617,7 +617,7 @@ def test_ogr_elasticsearch_4():
                 "type": "Feature",
                 "my_fid": 5,
                 "a_geopoint" : {
-                    "type": "POINT",
+                    "type": "Point",
                     "coordinates": [2,49]
                 },
                 "a_geoshape": {
@@ -664,7 +664,7 @@ def test_ogr_elasticsearch_4():
             "_source": {
                 "type": "Feature",
                 "a_geopoint" : {
-                    "type": "POINT",
+                    "type": "Point",
                     "coordinates": [2,49]
                 },
                 "a_geoshape": {
@@ -762,7 +762,7 @@ def test_ogr_elasticsearch_4():
             "_source": {
                 "type": "Feature",
                 "a_geoshape" : {
-                    "type": "POINT",
+                    "type": "Point",
                     "coordinates": [2,49]
                 },
                 "properties": {
@@ -786,7 +786,7 @@ def test_ogr_elasticsearch_4():
             "_source": {
                 "type": "Feature",
                 "a_geopoint" : {
-                    "type": "POINT",
+                    "type": "Point",
                     "coordinates": [2,49]
                 },
                 "properties": {
@@ -825,7 +825,7 @@ def test_ogr_elasticsearch_4():
             "_source": {
                 "type": "Feature",
                 "a_geoshape" : {
-                    "type": "POINT",
+                    "type": "Point",
                     "coordinates": [2,49]
                 },
                 "properties": {
@@ -1050,7 +1050,7 @@ def test_ogr_elasticsearch_5():
         {
             "_source": {
                 "a_geopoint" : {
-                    "type": "POINT",
+                    "type": "Point",
                     "coordinates": [2,49]
                 },
                 "a_geoshape": {
@@ -1113,7 +1113,7 @@ def test_ogr_elasticsearch_5():
 
     f['_id'] = 'my_id'
     gdal.FileFromMemBuffer(
-        """/vsimem/fakeelasticsearch/non_geojson/my_mapping/my_id&POSTFIELDS={ "a_geoshape": { "type": "linestring", "coordinates": [ [ 2.0, 49.0 ], [ 3.0, 50.0 ] ] }, "a_geopoint": { "type": "POINT", "coordinates": [ 2.0, 49.0 ] }, "another_geopoint": [ 2.5, 49.5 ], "superobject": { "another_geoshape": { "type": "point", "coordinates": [ 3.0, 50.0 ] }, "another_geoshape2": { "type": "point", "coordinates": [ 2.0, 50.0 ] }, "subfield": "5", "subobject": { "subfield": "foo", "another_subfield": 6 } }, "str_field": "foo" }""", "{}")
+        """/vsimem/fakeelasticsearch/non_geojson/my_mapping/my_id&POSTFIELDS={ "a_geoshape": { "type": "linestring", "coordinates": [ [ 2.0, 49.0 ], [ 3.0, 50.0 ] ] }, "a_geopoint": { "type": "Point", "coordinates": [ 2.0, 49.0 ] }, "another_geopoint": [ 2.5, 49.5 ], "superobject": { "another_geoshape": { "type": "point", "coordinates": [ 3.0, 50.0 ] }, "another_geoshape2": { "type": "point", "coordinates": [ 2.0, 50.0 ] }, "subfield": "5", "subobject": { "subfield": "foo", "another_subfield": 6 } }, "str_field": "foo" }""", "{}")
     ret = lyr.SetFeature(f)
     assert ret == 0
 
@@ -1142,9 +1142,9 @@ def test_ogr_elasticsearch_5():
     f['superobject.subfield2'] = 'foo'
     f['superobject.another_geoshape3'] = ogr.CreateGeometryFromWkt(
         'POINT (3 50)')
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/_mapping/my_mapping&POSTFIELDS={ "my_mapping": { "properties": { "str_field": { "type": "string" }, "superobject": { "properties": { "subfield": { "type": "string" }, "subobject": { "properties": { "subfield": { "type": "string" }, "another_subfield": { "type": "integer" } } }, "subfield2": { "type": "string" }, "another_geoshape": { "type": "geo_shape" }, "another_geoshape2": { "type": "geo_shape" }, "another_geoshape3": { "properties": { "type": { "type": "string" }, "coordinates": { "type": "geo_point" } } } } }, "another_field": { "type": "string" }, "a_geoshape": { "type": "geo_shape" }, "a_geopoint": { "properties": { "type": { "type": "string" }, "coordinates": { "type": "geo_point" } } }, "another_geopoint": { "type": "geo_point" } }, "_meta": { "geomfields": { "superobject.another_geoshape2": "POINT" } } } }""", '{}')
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/_mapping/my_mapping&POSTFIELDS={ "my_mapping": { "properties": { "str_field": { "type": "string" }, "superobject": { "properties": { "subfield": { "type": "string" }, "subobject": { "properties": { "subfield": { "type": "string" }, "another_subfield": { "type": "integer" } } }, "subfield2": { "type": "string" }, "another_geoshape": { "type": "geo_shape" }, "another_geoshape2": { "type": "geo_shape" }, "another_geoshape3": { "properties": { "type": { "type": "string" }, "coordinates": { "type": "geo_point" } } } } }, "another_field": { "type": "string" }, "a_geoshape": { "type": "geo_shape" }, "a_geopoint": { "properties": { "type": { "type": "string" }, "coordinates": { "type": "geo_point" } } }, "another_geopoint": { "type": "geo_point" } }, "_meta": { "geomfields": { "superobject.another_geoshape2": "Point" } } } }""", '{}')
     gdal.FileFromMemBuffer(
-        """/vsimem/fakeelasticsearch/non_geojson/my_mapping&POSTFIELDS={ "superobject": { "another_geoshape3": { "type": "POINT", "coordinates": [ 3.0, 50.0 ] }, "subfield2": "foo" } }""", "{}")
+        """/vsimem/fakeelasticsearch/non_geojson/my_mapping&POSTFIELDS={ "superobject": { "another_geoshape3": { "type": "Point", "coordinates": [ 3.0, 50.0 ] }, "subfield2": "foo" } }""", "{}")
     gdal.FileFromMemBuffer(
         """/vsimem/fakeelasticsearch/non_geojson/my_mapping/_count?pretty""", "{}")
     lyr.CreateFeature(f)
@@ -1376,7 +1376,7 @@ def test_ogr_elasticsearch_8():
     assert ret == 0
 
 ###############################################################################
-# Test ElasticSearch 5.X
+# Test Elasticsearch 5.X
 
 
 def test_ogr_elasticsearch_9():
@@ -1576,6 +1576,27 @@ def test_ogr_elasticsearch_10():
                 "type": "Feature",
                 "properties": {
                     "text_field": "foo"
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    assert f is not None
+
+    lyr.SetAttributeFilter("CAST(text_field AS CHARACTER) = 'foo_cast'")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "match": { "properties.text_field": "foo_cast" } } } } }""",
+                           """{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "text_field": "foo_cast"
                 }
             }
         }]

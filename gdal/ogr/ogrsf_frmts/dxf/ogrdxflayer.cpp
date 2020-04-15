@@ -7,7 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2009, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
- * Copyright (c) 2017, Alan Thomas <alant@outlook.com.au>
+ * Copyright (c) 2017-2020, Alan Thomas <alant@outlook.com.au>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -180,7 +180,8 @@ void OGRDXFLayer::TranslateGenericProperty( OGRDXFFeature *poFeature,
       break;
 
       case 60:
-        poFeature->oStyleProperties["Hidden"] = pszValue;
+        if( atoi(pszValue) )
+            poFeature->oStyleProperties["Hidden"] = "1";
         break;
 
       case 67:
@@ -1350,7 +1351,7 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
             poLR->set3D(TRUE);
             if (vertexIndex71 != 0 && vertexIndex71 <= nPoints)
             {
-                if (startPoint == -1)
+                //if (startPoint == -1)
                     startPoint = vertexIndex71-1;
                 poLR->setPoint(iPoint,papoPoints[vertexIndex71-1]);
                 iPoint++;
@@ -2110,8 +2111,16 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
             break;
 
           case 40:
-            adfKnots.push_back( CPLAtof(szLineBuf) );
+          {
+            double dfVal = CPLAtof(szLineBuf);
+            // Ad-hoc fix for https://github.com/OSGeo/gdal/issues/1969
+            // where the first knot is at a very very close to zero negative
+            // value and following knots are at 0.
+            if( dfVal < 0 && dfVal > -1.0e-10 )
+                dfVal = 0;
+            adfKnots.push_back(dfVal);
             break;
+          }
 
           case 41:
             adfWeights.push_back( CPLAtof(szLineBuf) );

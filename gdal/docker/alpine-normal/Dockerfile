@@ -5,14 +5,14 @@
 # Public domain
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG ALPINE_VERSION=3.10
+ARG ALPINE_VERSION=3.11
 FROM alpine:${ALPINE_VERSION} as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
 MAINTAINER Even Rouault <even.rouault@spatialys.com>
 
 # Setup build env for PROJ
-RUN apk add --no-cache wget curl unzip -q make libtool autoconf automake pkgconfig g++ sqlite sqlite-dev
+RUN apk add --no-cache wget curl unzip make libtool autoconf automake pkgconfig g++ sqlite sqlite-dev
 
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 RUN \
@@ -21,15 +21,16 @@ RUN \
     && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/usr/share/proj \
     && rm -f *.zip
 
-# For GDAL
+# For PROJ and GDAL
 ARG POPPLER_DEV=poppler-dev
 RUN apk add --no-cache \
     linux-headers \
-    curl-dev \
+    curl-dev tiff-dev \
     zlib-dev zstd-dev \
     libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev \
-    py-numpy-dev python3-dev py3-numpy \
+    py3-numpy-dev python3-dev py3-numpy \
     ${POPPLER_DEV} postgresql-dev \
+    openexr-dev \
     # For spatialite (and GDAL)
     libxml2-dev \
     && mkdir -p /build_thirdparty/usr/lib
@@ -37,7 +38,7 @@ RUN apk add --no-cache \
 # Build xerces-c
 ARG XERCESC_VERSION=3.2.2
 RUN if test "${XERCESC_VERSION}" != ""; then ( \
-    wget -q http://mirror.ibcp.fr/pub/apache/xerces/c/3/sources/xerces-c-${XERCESC_VERSION}.zip \
+    wget -q https://www-eu.apache.org/dist//xerces/c/3//sources/xerces-c-${XERCESC_VERSION}.zip \
     && unzip -q xerces-c-${XERCESC_VERSION}.zip  \
     && rm -f xerces-c-${XERCESC_VERSION}.zip \
     && cd xerces-c-${XERCESC_VERSION} \
@@ -51,7 +52,7 @@ RUN if test "${XERCESC_VERSION}" != ""; then ( \
     ); fi
 
 # Build geos
-ARG GEOS_VERSION=3.7.1
+ARG GEOS_VERSION=3.8.1
 RUN if test "${GEOS_VERSION}" != ""; then ( \
     wget -q http://download.osgeo.org/geos/geos-${GEOS_VERSION}.tar.bz2 \
     && tar xjf geos-${GEOS_VERSION}.tar.bz2  \
@@ -99,7 +100,7 @@ RUN if test "${HDF5_VERSION}" != ""; then ( \
     ); fi
 
 # Build netCDF
-ARG NETCDF_VERSION=4.6.3
+ARG NETCDF_VERSION=4.7.3
 RUN if test "${NETCDF_VERSION}" != ""; then ( \
     wget -q https://github.com/Unidata/netcdf-c/archive/v${NETCDF_VERSION}.tar.gz \
     && tar xzf v${NETCDF_VERSION}.tar.gz \
@@ -151,20 +152,20 @@ RUN if test "${FREEXL_VERSION}" != ""; then ( \
     ); fi
 
 # Build likbkea
-ARG KEA_VERSION=c6d36f3db5e4
+ARG KEA_VERSION=1.4.12
 RUN if test "${KEA_VERSION}" != ""; then ( \
     apk add --no-cache cmake \
-    && wget -q https://bitbucket.org/chchrsc/kealib/get/${KEA_VERSION}.zip \
-    && unzip -q ${KEA_VERSION}.zip \
-    && rm -f ${KEA_VERSION}.zip \
-    && cd chchrsc-kealib-${KEA_VERSION}/trunk \
+    && wget -q https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
+    && unzip -q kealib-${KEA_VERSION}.zip \
+    && rm -f kealib-${KEA_VERSION}.zip \
+    && cd kealib-kealib-${KEA_VERSION} \
     && cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr -DHDF5_INCLUDE_DIR=/usr/include/hdf5 \
         -DHDF5_LIB_PATH=/usr/lib -DLIBKEA_WITH_GDAL=OFF \
     && make -j$(nproc) \
     && make install \
-    && cd ../.. \
-    && rm -rf chchrsc-kealib-${KEA_VERSION} \
+    && cd .. \
+    && rm -rf kealib-kealib-${KEA_VERSION} \
     && cp -P /usr/lib/libkea*.so* /build_thirdparty/usr/lib \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && apk del cmake \
@@ -340,13 +341,13 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && mkdir -p /build_gdal_python/usr/lib \
     && mkdir -p /build_gdal_python/usr/bin \
     && mkdir -p /build_gdal_version_changing/usr/include \
-    && mv /build/usr/lib/python3.7          /build_gdal_python/usr/lib \
+    && mv /build/usr/lib/python3.8          /build_gdal_python/usr/lib \
     && mv /build/usr/lib                    /build_gdal_version_changing/usr \
     && mv /build/usr/include/gdal_version.h /build_gdal_version_changing/usr/include \
     && mv /build/usr/bin/*.py               /build_gdal_python/usr/bin \
     && mv /build/usr/bin                    /build_gdal_version_changing/usr \
     && for i in /build_gdal_version_changing/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_gdal_python/usr/lib/python3.7/site-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_gdal_python/usr/lib/python3.8/site-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done \
     # Remove resource files of uncompiled drivers
     && (for i in \
@@ -365,10 +366,11 @@ ARG POPPLER=poppler
 RUN apk add --no-cache \
         libstdc++ \
         sqlite-libs \
-        libcurl \
+        libcurl tiff \
         zlib zstd-libs\
         libjpeg-turbo libpng libwebp expat \
         python3 py3-numpy ${POPPLER} pcre libpq libxml2 portablexdr openjpeg \
+        openexr \
     # Remove /usr/lib/libopenjp2.so.2.3.0 since we are building v2.3.1 manually
     # && rm -f /usr/lib/libopenjp2.so.2.3.0 \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*
@@ -376,7 +378,8 @@ RUN apk add --no-cache \
     # libpoppler-cpp.so is not used by GDAL. Only libpoppler.so*
     && rm -f /usr/lib/libpoppler-cpp.so* \
     # Only libwebp.so is used by GDAL
-    && rm -f /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so*
+    && rm -f /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so* \
+    && ln -s /usr/bin/python3 /usr/bin/python
 
 # Order layers starting with less frequently varying ones
 COPY --from=builder  /build_thirdparty/usr/ /usr/

@@ -44,14 +44,14 @@ static void Usage(const char* pszErrorMsg = nullptr)
 
 {
     printf(
-       "gdal_viewshed [-b <band>] [-inodata]\n"
-       "              [-snodata n] [-f <formatname>]\n"
+       "gdal_viewshed [-b <band>]\n"
+       "              [-a_nodata <value>] [-f <formatname>]\n"
        "              [-oz <observer_height>] [-tz <target_height>] [-md <max_distance>]\n"
-       "              [-ox <observer_x>] [-oy <observer_y>]\n"
+       "              -ox <observer_x> -oy <observer_y>\n"
        "              [-vv <visibility>] [-iv <invisibility>]\n"
        "              [-ov <out_of_range>] [-cc <curvature_coef>]\n"
        "              [[-co NAME=VALUE] ...]\n"
-       "              [-q]\n"
+       "              [-q] [-om <output mode>]\n"
        "              <src_filename> <dst_filename>\n");
 
     if( pszErrorMsg != nullptr )
@@ -82,12 +82,14 @@ MAIN_START(argc, argv)
     double dfObserverHeight = 2.0;
     double dfTargetHeight = 0.0;
     double dfMaxDistance = 0.0;
+    bool bObserverXSpecified = false;
     double dfObserverX = 0.0;
+    bool bObserverYSpecified = false;
     double dfObserverY = 0.0;
     double dfVisibleVal = 255.0;
     double dfInvisibleVal = 0.0;
-    double dfOutOfRangeVal = -1.0;
-    double dfNoDataVal = 0.0;
+    double dfOutOfRangeVal = 0.0;
+    double dfNoDataVal = -1.0;
     double dfCurvCoeff = 0.0;
     const char *pszDriverName = nullptr;
     const char *pszSrcFilename = nullptr;
@@ -95,6 +97,7 @@ MAIN_START(argc, argv)
     bool bQuiet = false;
     GDALProgressFunc pfnProgress = nullptr;
     char** papszCreateOptions = nullptr;
+    const char *pszOutputMode = nullptr;
 
     GDALAllRegister();
 
@@ -123,11 +126,13 @@ MAIN_START(argc, argv)
         else if( EQUAL(argv[i],"-ox") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            bObserverXSpecified = true;
             dfObserverX = CPLAtofTaintedSuppressed(argv[++i]);
         }
         else if (EQUAL(argv[i], "-oy"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            bObserverYSpecified = true;
             dfObserverY = CPLAtofTaintedSuppressed(argv[++i]);
         }
         else if( EQUAL(argv[i],"-oz") )
@@ -180,6 +185,11 @@ MAIN_START(argc, argv)
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             nBandIn = atoi(argv[++i]);
         }
+        else if( EQUAL(argv[i],"-om") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            pszOutputMode = argv[++i];
+        }
         else if ( EQUAL(argv[i],"-q") || EQUAL(argv[i],"-quiet") )
         {
             bQuiet = TRUE;
@@ -206,6 +216,16 @@ MAIN_START(argc, argv)
         Usage("Missing destination filename.");
     }
 
+    if( !bObserverXSpecified )
+    {
+        Usage("Missing -ox.");
+    }
+
+    if( !bObserverYSpecified )
+    {
+        Usage("Missing -oy.");
+    }
+
     if (!bQuiet)
         pfnProgress = GDALTermProgress;
 
@@ -216,6 +236,26 @@ MAIN_START(argc, argv)
         if( osFormat.empty() )
         {
             exit( 2 );
+        }
+    }
+
+    GDALViewshedOutputType outputMode = GVOT_NORMAL;
+    if(pszOutputMode != nullptr)
+    {
+        if(EQUAL(pszOutputMode, "NORMAL"))
+        {
+        }
+        else if(EQUAL(pszOutputMode, "DEM"))
+        {
+            outputMode = GVOT_MIN_TARGET_HEIGHT_FROM_DEM;
+        }
+        else if(EQUAL(pszOutputMode, "GROUND"))
+        {
+            outputMode = GVOT_MIN_TARGET_HEIGHT_FROM_GROUND;
+        }
+        else
+        {
+            Usage("-om must be either NORMAL, DEM or GROUND");
         }
     }
 
@@ -246,7 +286,7 @@ MAIN_START(argc, argv)
                          dfVisibleVal, dfInvisibleVal,
                          dfOutOfRangeVal, dfNoDataVal, dfCurvCoeff,
                          GVM_Edge, dfMaxDistance,
-                         pfnProgress, nullptr, nullptr);
+                         pfnProgress, nullptr, outputMode, nullptr);
     bool bSuccess = hDstDS != nullptr;
     GDALClose( hSrcDS );
     GDALClose( hDstDS );

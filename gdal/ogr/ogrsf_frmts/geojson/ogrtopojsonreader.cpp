@@ -58,10 +58,20 @@ OGRTopoJSONReader::~OGRTopoJSONReader()
 /*                           Parse()                                    */
 /************************************************************************/
 
-OGRErr OGRTopoJSONReader::Parse( const char* pszText )
+OGRErr OGRTopoJSONReader::Parse( const char* pszText, bool bLooseIdentification )
 {
     json_object *jsobj = nullptr;
-    if( nullptr != pszText && !OGRJSonParse(pszText, &jsobj, true) )
+    if( bLooseIdentification )
+    {
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+    }
+    const bool bOK = nullptr != pszText && OGRJSonParse(pszText, &jsobj, true);
+    if( bLooseIdentification )
+    {
+        CPLPopErrorHandler();
+        CPLErrorReset();
+    }
+    if( !bOK )
     {
         return OGRERR_CORRUPT_DATA;
     }
@@ -432,7 +442,7 @@ static void EstablishLayerDefn( OGRFeatureDefn* poDefn,
         json_object_object_foreachC( poObjProps, it )
         {
             OGRGeoJSONReaderAddOrUpdateField(poDefn, it.key, it.val,
-                                             false, 0, false,
+                                             false, 0, false, false,
                                              aoSetUndeterminedTypeFields);
         }
     }

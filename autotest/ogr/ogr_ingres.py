@@ -220,7 +220,7 @@ def test_ogr_ingres_7():
     result = gdaltest.ingres_lyr.CreateField(field_defn)
     field_defn.Destroy()
 
-    assert result is 0, 'CreateField failed!'
+    assert result == 0, 'CreateField failed!'
 
     ####################################################################
     # Apply a value to this field in one feature.

@@ -209,6 +209,7 @@ void RegisterOGRTAB()
 "<LayerCreationOptionList>"
 "  <Option name='BOUNDS' type='string' description='Custom bounds. Expect format is xmin,ymin,xmax,ymax'/>"
 "  <Option name='ENCODING' type='string' description='to override the encoding interpretation of the DAT/MID with any encoding supported by CPLRecode or to \"\" to avoid any recoding (Neutral charset)'/>"
+"  <Option name='DESCRIPTION' type='string' description='Friendly name of table. Only for tab format.'/>" // See https://support.pitneybowes.com/SearchArticles/VFP05_KnowledgeWithSidebarHowTo?id=kA180000000CtuHCAS&popup=false&lang=en_US
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,

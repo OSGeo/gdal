@@ -31,6 +31,7 @@
 #include "ogr_spatialref.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstring>
 #include <limits>
@@ -81,6 +82,37 @@ struct OGRCoordinateTransformationOptions::Private
 OGRCoordinateTransformationOptions::OGRCoordinateTransformationOptions():
     d(new Private())
 {
+}
+
+/************************************************************************/
+/*                  OGRCoordinateTransformationOptions()                */
+/************************************************************************/
+
+/** \brief Copy constructor
+ *
+ * @since GDAL 3.1
+ */
+OGRCoordinateTransformationOptions::OGRCoordinateTransformationOptions(
+    const OGRCoordinateTransformationOptions& other):
+        d(new Private(*(other.d)))
+{}
+
+/************************************************************************/
+/*                          operator =()                                */
+/************************************************************************/
+
+/** \brief Assignment operator
+ *
+ * @since GDAL 3.1
+ */
+OGRCoordinateTransformationOptions&
+    OGRCoordinateTransformationOptions::operator= (const OGRCoordinateTransformationOptions& other)
+{
+    if( this != &other )
+    {
+        *d = *(other.d);
+    }
+    return *this;
 }
 
 /************************************************************************/
@@ -277,8 +309,6 @@ int OCTCoordinateTransformationOptionsSetOperation(
 //! @cond Doxygen_Suppress
 class OGRProjCT : public OGRCoordinateTransformation
 {
-    CPL_DISALLOW_COPY_ASSIGN(OGRProjCT)
-
     OGRSpatialReference *poSRSSource = nullptr;
     bool        bSourceLatLong = false;
     bool        bSourceWrap = false;
@@ -313,6 +343,18 @@ class OGRProjCT : public OGRCoordinateTransformation
 
     bool        bNoTransform = false;
 
+    enum class Strategy
+    {
+        PROJ,
+        BEST_ACCURACY,
+        FIRST_MATCHING
+    };
+#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
+    Strategy    m_eStrategy = Strategy::PROJ;
+#else
+    Strategy    m_eStrategy = Strategy::BEST_ACCURACY;
+#endif
+
     bool        ListCoordinateOperations(const char* pszSrcSRS,
                                          const char* pszTargetSRS,
                                          const OGRCoordinateTransformationOptions& options );
@@ -326,25 +368,46 @@ class OGRProjCT : public OGRCoordinateTransformation
         PJ* pj = nullptr;
         CPLString osName{};
         CPLString osProjString{};
+        double accuracy = 0.0;
 
         Transformation(double minxIn, double minyIn, double maxxIn, double maxyIn,
                        PJ* pjIn,
                        const CPLString& osNameIn,
-                       const CPLString& osProjStringIn):
+                       const CPLString& osProjStringIn,
+                       double accuracyIn):
             minx(minxIn), miny(minyIn), maxx(maxxIn), maxy(maxyIn),
-            pj(pjIn), osName(osNameIn), osProjString(osProjStringIn) {}
+            pj(pjIn), osName(osNameIn), osProjString(osProjStringIn),
+            accuracy(accuracyIn) {}
 
         Transformation(const Transformation&) = delete;
+        Transformation(Transformation&& other):
+            minx(other.minx), miny(other.miny), maxx(other.maxx), maxy(other.maxy),
+            pj(other.pj), osName(std::move(other.osName)),
+            osProjString(std::move(other.osProjString)),
+            accuracy(other.accuracy)
+        {
+            other.pj = nullptr;
+        }
         Transformation& operator=(const Transformation&) = delete;
 
         ~Transformation()
         {
-            proj_assign_context(pj, OSRGetProjTLSContext());
-            proj_destroy(pj);
+            if( pj )
+            {
+                proj_assign_context(pj, OSRGetProjTLSContext());
+                proj_destroy(pj);
+            }
         }
     };
-    std::list<Transformation> m_oTransformations{};
+    std::vector<Transformation> m_oTransformations{};
     int m_iCurTransformation = -1;
+    OGRCoordinateTransformationOptions m_options{};
+
+    OGRProjCT(const OGRProjCT& other)
+    {
+        Initialize(other.poSRSSource, other.poSRSTarget, other.m_options);
+    }
+    OGRProjCT& operator= (const OGRProjCT& ) = delete;
 
 public:
     OGRProjCT();
@@ -364,6 +427,10 @@ public:
     bool GetEmitErrors() const override { return m_bEmitErrors; }
     void SetEmitErrors( bool bEmitErrors ) override
         { m_bEmitErrors = bEmitErrors; }
+
+    OGRCoordinateTransformation* Clone() const override {
+        return new OGRProjCT(*this);
+    }
 };
 //! @endcond
 
@@ -464,6 +531,25 @@ OGRCreateCoordinateTransformation( const OGRSpatialReference *poSource,
  *
  * The source SRS and target SRS should generally not be NULL. This is only
  * allowed if a custom coordinate operation is set through the hOptions argument.
+ *
+ * Starting with GDAL 3.0.3, the OGR_CT_OP_SELECTION configuration option can be
+ * set to PROJ (default if PROJ >= 6.3), BEST_ACCURACY or FIRST_MATCHING to decide
+ * of the strategy to select the operation to use among candidates, whose area of
+ * use is compatible with the points to transform. It is only taken into account
+ * if no user defined coordinate transformation pipeline has been specified.
+ * <ul>
+ * <li>PROJ means the default behaviour used by PROJ proj_create_crs_to_crs().
+ *     In particular the operation to use among several initial candidates is
+ *     evaluated for each point to transform.</li>
+ * <li>BEST_ACCURACY means the operation whose accuracy is best. It should be
+ *     close to PROJ behaviour, except that the operation to select is decided
+ *     for the average point of the coordinates passed in a single Transform() call.</li>
+ * <li>FIRST_MATCHING is the operation ordered first in the list of candidates:
+ *     it will not necessarily have the best accuracy, but generally a larger area of
+ *     use.  It is evaluated for the average point of the coordinates passed in a
+ *     single Transform() call. This was the default behaviour for GDAL 3.0.0 to
+ *     3.0.2</li>
+ * </ul>
  *
  * If options contains a user defined coordinate transformation pipeline, it
  * will be unconditionally used.
@@ -638,6 +724,8 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
                            const OGRCoordinateTransformationOptions& options )
 
 {
+    m_options = options;
+
     if( poSourceIn == nullptr || poTargetIn == nullptr )
     {
         if( options.d->osCoordOperation.empty() )
@@ -820,6 +908,29 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
         CPLFree(pszDstProj4Defn);
     }
 
+    const char* pszCTOpSelection = CPLGetConfigOption("OGR_CT_OP_SELECTION", nullptr);
+    if( pszCTOpSelection )
+    {
+        if( EQUAL(pszCTOpSelection, "PROJ") )
+            m_eStrategy = Strategy::PROJ;
+        else if( EQUAL(pszCTOpSelection, "BEST_ACCURACY") )
+            m_eStrategy = Strategy::BEST_ACCURACY;
+        else if( EQUAL(pszCTOpSelection, "FIRST_MATCHING") )
+            m_eStrategy = Strategy::FIRST_MATCHING;
+        else
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "OGR_CT_OP_SELECTION=%s not supported", pszCTOpSelection);
+    }
+    if( m_eStrategy == Strategy::PROJ )
+    {
+        const char* pszUseApproxTMERC = CPLGetConfigOption("OSR_USE_APPROX_TMERC", nullptr);
+        if( pszUseApproxTMERC && CPLTestBool(pszUseApproxTMERC) )
+        {
+            CPLDebug("OSRCT", "Using OGR_CT_OP_SELECTION=BEST_ACCURACY as OSR_USE_APPROX_TMERC is set");
+            m_eStrategy = Strategy::BEST_ACCURACY;
+        }
+    }
+
     if( !options.d->osCoordOperation.empty() )
     {
         auto ctx = OSRGetProjTLSContext();
@@ -838,15 +949,44 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
                  m_bReversePj ? "(reversed) " : "");
 #endif
     }
-    else if( !bWebMercatorToWGS84LongLat )
+    else if( !bWebMercatorToWGS84LongLat && poSRSSource && poSRSTarget )
     {
-        const char* const apszOptions[] = { "FORMAT=WKT2_2018", nullptr };
-        char* pszSrcSRS = nullptr;
+        const auto CanUseAuthorityDef = [](const OGRSpatialReference* poSRS1,
+                                           OGRSpatialReference* poSRSFromAuth,
+                                           const char* pszAuth)
         {
+            if( EQUAL(pszAuth, "EPSG") &&
+                CPLTestBool(CPLGetConfigOption("OSR_CT_USE_DEFAULT_EPSG_TOWGS84", "NO")) )
+            {
+                // We don't want by default to honour 'default' TOWGS84 terms that come with the EPSG code
+                // because there might be a better transformation from that
+                // Typical case if EPSG:31468 "DHDN / 3-degree Gauss-Kruger zone 4"
+                // where the DHDN->TOWGS84 transformation can use the BETA2007.gsb grid
+                // instead of TOWGS84[598.1,73.7,418.2,0.202,0.045,-2.455,6.7]
+                // But if the user really wants it, it can set the
+                // OSR_CT_USE_DEFAULT_EPSG_TOWGS84 configuration option to YES
+                double adfTOWGS84_1[7];
+                double adfTOWGS84_2[7];
+
+                poSRSFromAuth->AddGuessedTOWGS84();
+
+                if( poSRS1->GetTOWGS84(adfTOWGS84_1) == OGRERR_NONE &&
+                    poSRSFromAuth->GetTOWGS84(adfTOWGS84_2) == OGRERR_NONE &&
+                    memcmp(adfTOWGS84_1, adfTOWGS84_2, sizeof(adfTOWGS84_1)) == 0 )
+                {
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        const auto exportSRSToText = [&CanUseAuthorityDef](const OGRSpatialReference* poSRS)
+        {
+            char* pszText = nullptr;
             // If we have a AUTH:CODE attached, use it to retrieve the full
             // definition in case a trip to WKT1 has lost the area of use.
-            const char* pszAuth = poSRSSource->GetAuthorityName(nullptr);
-            const char* pszCode = poSRSSource->GetAuthorityCode(nullptr);
+            const char* pszAuth = poSRS->GetAuthorityName(nullptr);
+            const char* pszCode = poSRS->GetAuthorityCode(nullptr);
             if( pszAuth && pszCode )
             {
                 CPLString osAuthCode(pszAuth);
@@ -854,44 +994,63 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
                 osAuthCode += pszCode;
                 OGRSpatialReference oTmpSRS;
                 oTmpSRS.SetFromUserInput(osAuthCode);
-                oTmpSRS.SetDataAxisToSRSAxisMapping(poSRSSource->GetDataAxisToSRSAxisMapping());
-                if( oTmpSRS.IsSame(poSRSSource) )
+                oTmpSRS.SetDataAxisToSRSAxisMapping(poSRS->GetDataAxisToSRSAxisMapping());
+                if( oTmpSRS.IsSame(poSRS) )
                 {
-                    pszSrcSRS = CPLStrdup(osAuthCode);
+                    if( CanUseAuthorityDef(poSRS, &oTmpSRS, pszAuth) )
+                    {
+                        pszText = CPLStrdup(osAuthCode);
+                    }
                 }
             }
-            if( pszSrcSRS == nullptr )
+            if( pszText == nullptr )
             {
-                poSRSSource->exportToWkt(&pszSrcSRS, apszOptions);
+                CPLErrorStateBackuper oErrorStateBackuper;
+                CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+                const char *pszProjName = poSRS->GetAttrValue("PROJECTION");
+                const char* const apszOptionsWKT2_2018[] = { "FORMAT=WKT2_2018", nullptr };
+                const char* const apszOptionsWKT1[] = { "FORMAT=WKT1_GDAL", nullptr };
+                // NetCDF hack
+                if( pszProjName && EQUAL(pszProjName, "Rotated_pole") )
+                    poSRS->exportToWkt(&pszText, apszOptionsWKT1);
+                else
+                    poSRS->exportToWkt(&pszText, apszOptionsWKT2_2018);
             }
-        }
+            return pszText;
+        };
 
-        char* pszTargetSRS = nullptr;
+        char* pszSrcSRS = exportSRSToText(poSRSSource);
+        char* pszTargetSRS = exportSRSToText(poSRSTarget);
+
+        if( m_eStrategy == Strategy::PROJ )
         {
-            // If we have a AUTH:CODE attached, use it to retrieve the full
-            // definition in case a trip to WKT1 has lost the area of use.
-            const char* pszAuth = poSRSTarget->GetAuthorityName(nullptr);
-            const char* pszCode = poSRSTarget->GetAuthorityCode(nullptr);
-            if( pszAuth && pszCode )
+            PJ_AREA* area = nullptr;
+            if( options.d->bHasAreaOfInterest )
             {
-                CPLString osAuthCode(pszAuth);
-                osAuthCode += ':';
-                osAuthCode += pszCode;
-                OGRSpatialReference oTmpSRS;
-                oTmpSRS.SetFromUserInput(osAuthCode);
-                oTmpSRS.SetDataAxisToSRSAxisMapping(poSRSTarget->GetDataAxisToSRSAxisMapping());
-                if( oTmpSRS.IsSame(poSRSTarget) )
-                {
-                    pszTargetSRS = CPLStrdup(osAuthCode);
-                }
+                area = proj_area_create();
+                proj_area_set_bbox(area,
+                    options.d->dfWestLongitudeDeg,
+                    options.d->dfSouthLatitudeDeg,
+                    options.d->dfEastLongitudeDeg,
+                    options.d->dfNorthLatitudeDeg);
             }
-            if( pszTargetSRS == nullptr )
+            auto ctx = OSRGetProjTLSContext();
+            m_pj = proj_create_crs_to_crs(ctx, pszSrcSRS, pszTargetSRS, area);
+            if( area )
+                proj_area_destroy(area);
+            if( m_pj == nullptr )
             {
-                poSRSTarget->exportToWkt(&pszTargetSRS, apszOptions);
+                CPLError( CE_Failure, CPLE_NotSupported,
+                            "Cannot find coordinate operations from `%s' to `%s'",
+                            pszSrcSRS,
+                            pszTargetSRS );
+                CPLFree( pszSrcSRS );
+                CPLFree( pszTargetSRS );
+                return FALSE;
             }
-        }
 
-        if( !ListCoordinateOperations(pszSrcSRS, pszTargetSRS, options) )
+        }
+        else if( !ListCoordinateOperations(pszSrcSRS, pszTargetSRS, options) )
         {
             CPLError( CE_Failure, CPLE_NotSupported,
                         "Cannot find coordinate operations from `%s' to `%s'",
@@ -906,7 +1065,7 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
         CPLFree(pszTargetSRS);
     }
 
-    if( options.d->osCoordOperation.empty() )
+    if( options.d->osCoordOperation.empty() && poSRSSource && poSRSTarget )
     {
         // Determine if we can skip the transformation completely.
         bNoTransform = !bSourceWrap && !bTargetWrap &&
@@ -1174,6 +1333,7 @@ bool OGRProjCT::ListCoordinateOperations(const char* pszSrcSRS,
         if( minx <= maxx )
         {
             CPLString osProjString;
+            const double accuracy = proj_coordoperation_get_accuracy(ctx, op);
             auto pj = op_to_pj(ctx, op, &osProjString);
             CPLString osName;
             auto name = proj_get_name(op);
@@ -1184,7 +1344,7 @@ bool OGRProjCT::ListCoordinateOperations(const char* pszSrcSRS,
             if( pj )
             {
                 m_oTransformations.emplace_back(
-                    minx, miny, maxx, maxy, pj, osName, osProjString);
+                    minx, miny, maxx, maxy, pj, osName, osProjString, accuracy);
             }
         }
         return op;
@@ -1390,6 +1550,7 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
     if( bSourceLatLong && bSourceWrap )
     {
         OGRAxisOrientation orientation;
+        assert( poSRSSource );
         poSRSSource->GetAxis(nullptr, 0, &orientation);
         if( orientation == OAO_East )
         {
@@ -1545,37 +1706,101 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
             avgX /= nCountValid;
             avgY /= nCountValid;
         }
-        int iBestTransf = -1;
-        const char* pszProjString = nullptr;
-        const char* pszOpName = nullptr;
-        // The first transformation whose BBOX match our data is the best
-        // one given the sorting order.
+
+        constexpr int N_MAX_RETRY = 2;
+        int iExcluded[N_MAX_RETRY] = {-1, -1};
+
+        const int nOperations = static_cast<int>(m_oTransformations.size());
+        PJ_COORD coord;
+        coord.xyzt.x = avgX;
+        coord.xyzt.y = avgY;
+        coord.xyzt.z = z ? z[0] : 0;
+        coord.xyzt.t = t ? t[0] : HUGE_VAL;
+
+        // We may need several attempts. For example the point at
+        // lon=-111.5 lat=45.26 falls into the bounding box of the Canadian
+        // ntv2_0.gsb grid, except that it is not in any of the subgrids, being
+        // in the US. We thus need another retry that will select the conus
+        // grid.
+        for( int iRetry = 0; iRetry <= N_MAX_RETRY; iRetry++ )
         {
-            int i = 0;
-            for( const auto& transf: m_oTransformations )
+            int iBestTransf = -1;
+            // Select transform whose BBOX match our data and has the best accuracy
+            // if m_eStrategy == BEST_ACCURACY. Or just the first BBOX matching one, if
+            //  m_eStrategy == FIRST_MATCHING
+            double dfBestAccuracy = std::numeric_limits<double>::infinity();
+            for( int i = 0; i < nOperations; i++ )
             {
-                if( avgX >= transf.minx && avgX <= transf.maxx &&
-                    avgY >= transf.miny && avgY <= transf.maxy )
+                if( i == iExcluded[0] || i == iExcluded[1] )
                 {
-                    pj = transf.pj;
-                    pszProjString = transf.osProjString.c_str();
-                    pszOpName = transf.osName.c_str();
-                    iBestTransf = i;
-                    break;
+                    continue;
                 }
-                i++;
+                const auto& transf = m_oTransformations[i];
+                if( avgX >= transf.minx && avgX <= transf.maxx &&
+                    avgY >= transf.miny && avgY <= transf.maxy &&
+                    (iBestTransf < 0 || (transf.accuracy >= 0 &&
+                                        transf.accuracy < dfBestAccuracy)) )
+                {
+                    iBestTransf = i;
+                    dfBestAccuracy = transf.accuracy;
+                    if( m_eStrategy == Strategy::FIRST_MATCHING )
+                        break;
+                }
             }
-        }
-        if( pj )
-        {
+            if( iBestTransf < 0 )
+            {
+                break;
+            }
+            const auto& transf = m_oTransformations[iBestTransf];
+            pj = transf.pj;
+            proj_assign_context( pj, ctx );
             if( iBestTransf != m_iCurTransformation )
             {
                 CPLDebug("OGRCT", "Selecting transformation %s (%s)",
-                         pszProjString, pszOpName);
+                        transf.osProjString.c_str(),
+                        transf.osName.c_str());
                 m_iCurTransformation = iBestTransf;
             }
+
+            auto res = proj_trans(pj, m_bReversePj ? PJ_INV : PJ_FWD, coord);
+            if( res.xyzt.x != HUGE_VAL ) {
+                break;
+            }
+            pj = nullptr;
+            CPLDebug("OGRCT", 
+                     "Did not result in valid result. "
+                     "Attempting a retry with another operation.");
+            if( iRetry == N_MAX_RETRY ) {
+                break;
+            }
+            iExcluded[iRetry] = iBestTransf;
         }
-        else
+
+        if( !pj )
+        {
+            // In case we did not find an operation whose area of use is compatible
+            // with the input coordinate, then goes through again the list, and
+            // use the first operation that does not require grids.
+            for( int i = 0; i < nOperations; i++ )
+            {
+                const auto& transf = m_oTransformations[i];
+                if( proj_coordoperation_get_grid_used_count(ctx, transf.pj) == 0 )
+                {
+                    pj = transf.pj;
+                    proj_assign_context( pj, ctx );
+                    if( i != m_iCurTransformation )
+                    {
+                        CPLDebug("OGRCT", "Selecting transformation %s (%s)",
+                                transf.osProjString.c_str(),
+                                transf.osName.c_str());
+                        m_iCurTransformation = i;
+                    }
+                    break;
+                }
+            }
+        }
+
+        if( !pj )
         {
             if( m_bEmitErrors && ++nErrorCount < 20 )
             {
@@ -1738,6 +1963,7 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
     if( bTargetLatLong && bTargetWrap )
     {
         OGRAxisOrientation orientation;
+        assert( poSRSTarget );
         poSRSTarget->GetAxis(nullptr, 0, &orientation);
         if( orientation == OAO_East )
         {

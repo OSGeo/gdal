@@ -41,6 +41,7 @@
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 
+#include <cassert>
 #include <algorithm>
 #include <limits>
 #include <utility>
@@ -900,6 +901,7 @@ CPLErr BAGResampledBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     std::vector<int> counts;
     if( poGDS->m_bMask )
     {
+        CPLAssert(pImage); // to make CLang Static Analyzer happy
         memset(pImage, 0, nBlockXSize * nBlockYSize);
     }
     else if( poGDS->m_ePopulation == BAGDataset::Population::MEAN )
@@ -4493,7 +4495,7 @@ void GDALRegister_BAG()
     poDriver->SetDescription("BAG");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Bathymetry Attributed Grid");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_bag.html");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/bag.html");
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "bag");
 

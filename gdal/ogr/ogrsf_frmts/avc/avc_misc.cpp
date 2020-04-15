@@ -372,7 +372,13 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
             if (EQUAL(pszTmpPath+iLastPartStart, papszDir[iEntry]))
             {
                 /* Fount it! */
+#ifdef CSA_BUILD
+                // Silence false positive warning about overlapping buffers
+                memmove(pszTmpPath+iLastPartStart, papszDir[iEntry],
+                        strlen(papszDir[iEntry]) + 1);
+#else
                 strcpy(pszTmpPath+iLastPartStart, papszDir[iEntry]);
+#endif
                 break;
             }
         }

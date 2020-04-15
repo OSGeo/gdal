@@ -115,7 +115,7 @@ CPLErr PNG_Codec::DecompressPNG(buf_mgr &dst, buf_mgr &src)
 
     png_infop infop = png_create_info_struct(pngp);
     if (nullptr == infop) {
-        if (pngp) png_destroy_read_struct(&pngp, &infop, nullptr);
+        png_destroy_read_struct(&pngp, &infop, nullptr);
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error creating PNG info");
         return CE_Failure;
     }

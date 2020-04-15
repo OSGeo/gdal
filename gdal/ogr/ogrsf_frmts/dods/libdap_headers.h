@@ -37,9 +37,6 @@
 
 #define DEFAULT_BASETYPE_FACTORY
 
-// #define DODS_DEBUG 1
-#include <debug.h>
-
 #include <BaseType.h>  // DODS
 #include <Byte.h>
 #include <Int16.h>

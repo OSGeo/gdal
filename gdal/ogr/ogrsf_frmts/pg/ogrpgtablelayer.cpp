@@ -299,18 +299,20 @@ CPLErr OGRPGTableLayer::SetMetadata(char** papszMD, const char* pszDomain)
     if( !bDeferredCreation && (pszDomain == nullptr || EQUAL(pszDomain, "")) )
     {
         const char* l_pszDescription = OGRLayer::GetMetadataItem("DESCRIPTION");
+        if( l_pszDescription == nullptr )
+            l_pszDescription = "";
         PGconn              *hPGConn = poDS->GetPGConn();
         CPLString osCommand;
 
         osCommand.Printf( "COMMENT ON TABLE %s IS %s",
                            pszSqlTableName,
-                           l_pszDescription && l_pszDescription[0] != '\0' ?
+                           l_pszDescription[0] != '\0' ?
                               OGRPGEscapeString(hPGConn, l_pszDescription).c_str() : "NULL" );
         PGresult* hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
         OGRPGClearResult( hResult );
 
         CPLFree(pszDescription);
-        pszDescription = CPLStrdup(l_pszDescription ? l_pszDescription : "");
+        pszDescription = CPLStrdup(l_pszDescription);
     }
 
     return CE_None;
@@ -913,9 +915,6 @@ OGRFeature *OGRPGTableLayer::GetNextFeature()
     if( pszQueryStatement == nullptr )
         ResetReading();
 
-    if( pszQueryStatement == nullptr )
-        ResetReading();
-
     OGRPGGeomFieldDefn* poGeomFieldDefn = nullptr;
     if( poFeatureDefn->GetGeomFieldCount() != 0 )
         poGeomFieldDefn = poFeatureDefn->myGetGeomFieldDefn(m_iGeomFieldFilter);
@@ -937,7 +936,7 @@ OGRFeature *OGRPGTableLayer::GetNextFeature()
             || poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY
             || FilterGeometry( poFeature->GetGeomFieldRef(m_iGeomFieldFilter) )  )
         {
-            if( poFeature && iFIDAsRegularColumnIndex >= 0 )
+            if( iFIDAsRegularColumnIndex >= 0 )
             {
                 poFeature->SetField(iFIDAsRegularColumnIndex, poFeature->GetFID());
             }
@@ -1815,7 +1814,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
                 osCommand += "''";
         }
         else if( poGeomFieldDefn->ePostgisType == GEOM_TYPE_WKB &&
-                 bWkbAsOid && poGeom != nullptr )
+                 bWkbAsOid )
         {
             Oid     oid = GeometryToOID( poGeom );
 

@@ -148,7 +148,7 @@ Reading location from stdin.
     441197 3749005
     443852 3747743
     
-    $ cat coordinates.tsv | gdallocationinfo -geoloc utmsmall.tif
+    $ cat coordinates.txt | gdallocationinfo -geoloc utmsmall.tif
     Report:
       Location: (38P,49L)
       Band 1:

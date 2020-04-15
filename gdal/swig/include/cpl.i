@@ -508,6 +508,28 @@ void wrapper_VSIFileFromMemBuffer( const char* utf8_path, int nBytes, const GByt
 /* Added in GDAL 1.7.0 */
 VSI_RETVAL VSIUnlink(const char * utf8_path );
 
+%rename (UnlinkBatch) wrapper_VSIUnlinkBatch;
+%apply (char **options) {char ** files};
+%inline {
+bool wrapper_VSIUnlinkBatch(char** files)
+{
+    int* success = VSIUnlinkBatch(files);
+    if( !success )
+        return false;
+    int bRet = true;
+    for( int i = 0; files && files[i]; i++ )
+    {
+        if( !success[i] ) {
+            bRet = false;
+            break;
+        }
+    }
+    VSIFree(success);
+    return bRet;
+}
+}
+%clear (char **files);
+
 /* Added in GDAL 1.7.0 */
 /* Thread support is necessary for binding languages with threaded GC */
 /* even if the user doesn't explicitly use threads */
@@ -652,6 +674,20 @@ int wrapper_VSIStatL( const char * utf8_path, StatBuf *psStatBufOut, int nFlags 
 }
 
 #endif
+
+%rename (GetFileMetadata) VSIGetFileMetadata;
+%apply (char **dict) { char ** };
+char** VSIGetFileMetadata( const char *utf8_path, const char* domain,
+                           char** options = NULL );
+%clear char **;
+
+%rename (SetFileMetadata) VSISetFileMetadata;
+%apply (char **dict) { char ** metadata };
+bool VSISetFileMetadata( const char * utf8_path,
+                         char** metadata,
+                         const char* domain,
+                         char** options = NULL );
+%clear char **;
 
 %apply Pointer NONNULL {VSILFILE* fp};
 

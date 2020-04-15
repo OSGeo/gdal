@@ -6,7 +6,7 @@
  *******************************************************************************
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2018-2019, NextGIS
+ *  Copyright (c) 2018-2020, NextGIS
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -205,7 +205,6 @@ private:
 class OGRNGWDataset final : public GDALDataset
 {
     friend class OGRNGWLayer;
-    bool bReadWrite;
     int nBatchSize;
     int nPageSize;
     NGWAPI::Permissions stPermissions;
@@ -276,7 +275,7 @@ private:
     void AddRaster( const CPLJSONObject &oResourceJsonObject,  char **papszOptions );
     bool Init(int nOpenFlagsIn);
     bool FlushMetadata( char **papszMetadata );
-    bool IsUpdateMode() const { return bReadWrite; }
+    inline bool IsUpdateMode() const { return eAccess == GA_Update; }
     bool IsBatchMode() const { return nBatchSize >= 0; }
     bool HasFeaturePaging() const { return bHasFeaturePaging; }
     int GetPageSize() const { return bHasFeaturePaging ? nPageSize : -1; }

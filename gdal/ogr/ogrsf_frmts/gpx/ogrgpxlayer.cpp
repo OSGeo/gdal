@@ -1360,7 +1360,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeatureIn, int nIdentLev
                     }
 
                     /* Remove leading spaces for a numeric field */
-                    if (poFieldDefn->GetType() == OFTInteger || poFieldDefn->GetType() == OFTReal)
+                    if (poFieldDefn->GetType() == OFTInteger)
                     {
                         while( *pszRaw == ' ' )
                             pszRaw++;

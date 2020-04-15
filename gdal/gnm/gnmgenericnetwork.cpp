@@ -1388,17 +1388,9 @@ int GNMGenericNetwork::TestCapability( const char * pszCap )
 OGRLayer *GNMGenericNetwork::CopyLayer(OGRLayer *poSrcLayer,
                                        const char *pszNewName, char **papszOptions)
 {
-    if(CSLFindName(papszOptions, "DST_SRSWKT") == -1)
-    {
-        papszOptions = CSLAddNameValue(papszOptions, "DST_SRSWKT",
-                                       GetProjectionRef());
-    }
-    else
-    {
-        papszOptions = CSLSetNameValue(papszOptions, "DST_SRSWKT",
-                                       GetProjectionRef());
-    }
-    return GDALDataset::CopyLayer(poSrcLayer, pszNewName, papszOptions);
+    CPLStringList aosOptions(CSLDuplicate(papszOptions));
+    aosOptions.SetNameValue("DST_SRSWKT", GetProjectionRef());
+    return GDALDataset::CopyLayer(poSrcLayer, pszNewName, aosOptions.List());
 }
 
 int GNMGenericNetwork::CloseDependentDatasets()

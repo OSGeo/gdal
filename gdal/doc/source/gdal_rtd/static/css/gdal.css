@@ -282,3 +282,21 @@ footer .logo-link .osgeo-logo
 	width: 24px;
 	display: inline-block;
 }
+
+.shortname .admonition-title::before{
+    content: '';
+}
+
+/*
+div[class ^= "admonition shortname"] > p.admonition-title {
+}*/
+
+/* Cf https://astronautweb.co/snippet/font-awesome/ */
+.built_in_by_default .admonition-title::before{
+    content: '\f00c'; /* checkbox */
+}
+
+/* Cf https://astronautweb.co/snippet/font-awesome/ */
+.build_dependencies .admonition-title::before{
+    content: '\f129'; /* info */
+}

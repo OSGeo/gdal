@@ -7,6 +7,8 @@ MongoDBv3
 
 .. shortname:: MongoDBv3
 
+.. build_dependencies:: Mongo CXX >= 3.4.0 client library
+
 This driver can connect to the a MongoDB service.
 
 The driver supports read, creation, update and delete operations of

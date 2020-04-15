@@ -506,14 +506,32 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
 CPLErr DTEDDataset::GetGeoTransform( double * padfTransform )
 
 {
-    padfTransform[0] = psDTED->dfULCornerX;
-    padfTransform[1] = psDTED->dfPixelSizeX;
-    padfTransform[2] = 0.0;
-    padfTransform[3] = psDTED->dfULCornerY;
-    padfTransform[4] = 0.0;
-    padfTransform[5] = psDTED->dfPixelSizeY * -1;
 
-    return CE_None;
+    bool bApplyPixelIsPoint =
+         CPLTestBool( CPLGetConfigOption( "DTED_APPLY_PIXEL_IS_POINT",
+                                          "FALSE") );
+    if (!bApplyPixelIsPoint)
+    {
+        padfTransform[0] = psDTED->dfULCornerX;
+        padfTransform[1] = psDTED->dfPixelSizeX;
+        padfTransform[2] = 0.0;
+        padfTransform[3] = psDTED->dfULCornerY;
+        padfTransform[4] = 0.0;
+        padfTransform[5] = psDTED->dfPixelSizeY * -1;
+
+        return CE_None;
+
+    } else
+    {
+        padfTransform[0] = psDTED->dfULCornerX + (0.5 * psDTED->dfPixelSizeX);
+        padfTransform[1] = psDTED->dfPixelSizeX;
+        padfTransform[2] = 0.0;
+        padfTransform[3] = psDTED->dfULCornerY - (0.5 * psDTED->dfPixelSizeY) ;
+        padfTransform[4] = 0.0;
+        padfTransform[5] = psDTED->dfPixelSizeY * -1;
+
+        return CE_None;
+    }
 }
 
 /************************************************************************/
@@ -918,7 +936,7 @@ void GDALRegister_DTED()
                                "DTED Elevation Raster" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "dt0 dt1 dt2" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#DTED" );
+                               "drivers/raster/dted.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 UInt16" );
 

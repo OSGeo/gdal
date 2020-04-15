@@ -412,6 +412,7 @@ void GDALGPKGMBTilesLikePseudoDataset::FillBuffer(GByte* pabyData,
     const double dfNoDataValue = IGetRasterBand(1)->GetNoDataValue(&bHasNoData);
     if( !bHasNoData || dfNoDataValue == 0.0 )
     {
+        // cppcheck-suppress nullPointer
         memset(pabyData, 0, nPixels * m_nDTSize );
     }
     else

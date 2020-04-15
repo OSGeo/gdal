@@ -712,7 +712,7 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
 /**
  * Create raster from the scattered data.
  *
- * This is the equivalent of the <a href="gdal_grid.html">gdal_grid</a> utility.
+ * This is the equivalent of the <a href="/programs/gdal_grid.html">gdal_grid</a> utility.
  *
  * GDALGridOptions* must be allocated and freed with GDALGridOptionsNew()
  * and GDALGridOptionsFree() respectively.
@@ -983,7 +983,7 @@ static bool IsNumber(const char* pszStr)
  * Allocates a GDALGridOptions struct.
  *
  * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
- *                  The accepted options are the ones of the <a href="gdal_translate.html">gdal_translate</a> utility.
+ *                  The accepted options are the ones of the <a href="/programs/gdal_translate.html">gdal_translate</a> utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
  *                           otherwise (gdal_translate_bin.cpp use case) must be allocated with
  *                           GDALGridOptionsForBinaryNew() prior to this function. Will be
@@ -1039,7 +1039,7 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
 /*      Handle command line arguments.                                  */
 /* -------------------------------------------------------------------- */
     const int argc = CSLCount(papszArgv);
-    for( int i = 0; papszArgv != nullptr && i < argc; i++ )
+    for( int i = 0; i < argc && papszArgv != nullptr && papszArgv[i] != nullptr; i++ )
     {
         if( i < argc-1 && (EQUAL(papszArgv[i],"-of") || EQUAL(papszArgv[i],"-f")) )
         {
@@ -1092,8 +1092,11 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
 
         else if( i+2 < argc && EQUAL(papszArgv[i],"-outsize") )
         {
-            psOptions->nXSize = atoi(papszArgv[++i]);
-            psOptions->nYSize = atoi(papszArgv[++i]);
+            CPLAssert(papszArgv[i+1]);
+            CPLAssert(papszArgv[i+2]);
+            psOptions->nXSize = atoi(papszArgv[i+1]);
+            psOptions->nYSize = atoi(papszArgv[i+2]);
+            i += 2;
         }
 
         else if( i+1 < argc && EQUAL(papszArgv[i],"-co") )

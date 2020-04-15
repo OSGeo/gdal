@@ -284,6 +284,10 @@ class TABFile final : public IMapInfoFile
 
     virtual OGRErr      SyncToDisk() override;
 
+    virtual CPLErr SetMetadataItem( const char * pszName,
+                                    const char * pszValue,
+                                    const char * pszDomain = "" ) override;
+
     ///////////////
     // Read access specific stuff
     //

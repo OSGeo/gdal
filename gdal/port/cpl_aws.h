@@ -36,6 +36,7 @@
 #ifdef HAVE_CURL
 
 #include <cstddef>
+#include <mutex>
 
 #include "cpl_string.h"
 
@@ -108,6 +109,8 @@ public:
                                        bool /*bSetError*/, bool* /*pbUpdateMap*/ = nullptr) { return false;}
 
         virtual const CPLString& GetURL() const = 0;
+
+        virtual CPLString GetCopySourceHeader() const { return std::string(); }
 
         static bool GetBucketAndObjectKey(const char* pszURI,
                                           const char* pszFSPrefix,
@@ -205,6 +208,8 @@ class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
         void SetRequestPayer(const CPLString &osStr);
         void SetVirtualHosting(bool b);
 
+        CPLString GetCopySourceHeader() const override { return "x-amz-copy-source"; }
+
         CPLString GetSignedURL(CSLConstList papszOptions);
 
         static void CleanMutex();
@@ -233,6 +238,12 @@ class VSIS3UpdateParams
             poHelper->SetRequestPayer(m_osRequestPayer);
             poHelper->SetVirtualHosting(m_bUseVirtualHosting);
         }
+
+        static std::mutex gsMutex;
+        static std::map< CPLString, VSIS3UpdateParams > goMapBucketsToS3Params;
+        static void UpdateMapFromHandle( IVSIS3LikeHandleHelper* poHandleHelper );
+        static void UpdateHandleFromMap( IVSIS3LikeHandleHelper* poHandleHelper );
+        static void ClearCache();
 };
 
 #endif /* HAVE_CURL */

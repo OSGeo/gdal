@@ -1963,12 +1963,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         // No projection, only latlon system (geographic).
         break;
     case GS3_ROTATED_LATLON:
-        CPLDebug("GRIB", "angleRotate=%f, southLat=%f, southLon=%f, poleLat=%f, poleLon=%f",
-                 meta->gds.angleRotate,
-                 meta->gds.southLat,
-                 meta->gds.southLon,
-                 meta->gds.poleLat,
-                 meta->gds.poleLon);
+        // will apply pole rotation afterwards
         break;
     case GS3_MERCATOR:
         if( meta->gds.orientLon == 0.0 )
@@ -2071,6 +2066,16 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         }
     }
 
+    if( meta->gds.projType == GS3_ROTATED_LATLON )
+    {
+        oSRS.SetDerivedGeogCRSWithPoleRotationGRIBConvention(
+            oSRS.GetName(),
+            meta->gds.southLat,
+            meta->gds.southLon > 180 ?
+                meta->gds.southLon - 360 : meta->gds.southLon,
+            meta->gds.angleRotate);
+    }
+
     OGRSpatialReference oLL;  // Construct the "geographic" part of oSRS.
     oLL.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     oLL.CopyGeogCSFrom(&oSRS);
@@ -2100,7 +2105,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         rPixelSizeX = meta->gds.Dx;
         rPixelSizeY = meta->gds.Dy;
     }
-    else if( oSRS.IsProjected() )
+    else if( oSRS.IsProjected() && meta->gds.projType != GS3_ROTATED_LATLON )
     {
         // Longitude in degrees, to be transformed to meters (or degrees in
         // case of latlon).
@@ -2205,17 +2210,6 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
     adfGeoTransform[1] = rPixelSizeX;
     adfGeoTransform[5] = -rPixelSizeY;
 
-    if( meta->gds.projType == GS3_ROTATED_LATLON &&
-        meta->gds.angleRotate == 0 )
-    {
-        oSRS.SetProjection( "Rotated_pole" );
-        oSRS.SetExtension(
-            "PROJCS", "PROJ4",
-            CPLSPrintf("+proj=ob_tran +lon_0=%.18g +o_proj=longlat +o_lon_p=0 "
-                       "+o_lat_p=%.18g +a=%.18g +b=%.18g +to_meter=0.0174532925199 +wktext",
-                       meta->gds.southLon, -meta->gds.southLat, a, b));
-    }
-
     if( bError )
         m_poSRS.reset();
     else
@@ -2264,7 +2258,7 @@ GDALGRIBDriver::GDALGRIBDriver() : bHasFullInitMetadata(false)
 {
     aosMetadata.SetNameValue(GDAL_DCAP_RASTER, "YES");
     aosMetadata.SetNameValue(GDAL_DMD_LONGNAME, "GRIdded Binary (.grb, .grb2)");
-    aosMetadata.SetNameValue(GDAL_DMD_HELPTOPIC, "frmt_grib.html");
+    aosMetadata.SetNameValue(GDAL_DMD_HELPTOPIC, "drivers/raster/grib.html");
     aosMetadata.SetNameValue(GDAL_DMD_EXTENSIONS, "grb grb2 grib2");
     aosMetadata.SetNameValue(GDAL_DCAP_VIRTUALIO, "YES");
 

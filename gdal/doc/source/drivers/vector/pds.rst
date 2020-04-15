@@ -5,6 +5,8 @@ PDS - Planetary Data Systems TABLE
 
 .. shortname:: PDS
 
+.. built_in_by_default::
+
 This driver reads TABLE objects from PDS datasets. Note there is a GDAL
 PDS driver to read the raster IMAGE objects from PDS datasets.
 

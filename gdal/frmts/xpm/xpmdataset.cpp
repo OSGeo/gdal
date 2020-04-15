@@ -442,7 +442,7 @@ void GDALRegister_XPM()
     poDriver->SetDescription( "XPM" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "X11 PixMap Format" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#XPM" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/xpm.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xpm" );
     poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/x-xpixmap" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );

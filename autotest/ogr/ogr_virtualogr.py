@@ -39,6 +39,7 @@ import pytest
 
 # Linter says this isn't used, but it actually is via pytest magic :)
 from ogr.ogr_sql_sqlite import require_ogr_sql_sqlite  # noqa
+require_ogr_sql_sqlite; # to make pyflakes happy
 
 ###############################################################################
 

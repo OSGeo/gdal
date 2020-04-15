@@ -35,7 +35,15 @@
 
 #include "proj.h"
 
+#ifndef _WIN32
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
 #include <mutex>
+#include <vector>
+
+//#define SIMUL_OLD_PROJ6
 
 /*! @cond Doxygen_Suppress */
 
@@ -48,7 +56,11 @@ static void osr_proj_logger(void * /* user_data */,
     }
     else if( level == PJ_LOG_DEBUG )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "PROJ: %s", message);
+        CPLDebug("PROJ", "%s", message);
+    }
+    else if( level == PJ_LOG_TRACE )
+    {
+        CPLDebug("PROJ_TRACE", "%s", message);
     }
 }
 
@@ -61,6 +73,12 @@ struct OSRPJContextHolder
     unsigned searchPathGenerationCounter = 0;
     PJ_CONTEXT* context = nullptr;
     OSRProjTLSCache oCache{};
+#if !defined(_WIN32)
+    pid_t curpid = 0;
+#if defined(SIMUL_OLD_PROJ6) || !(PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 2)
+    std::vector<PJ_CONTEXT*> oldcontexts{};
+#endif
+#endif
 
     OSRPJContextHolder() = default;
     ~OSRPJContextHolder();
@@ -95,6 +113,13 @@ void OSRPJContextHolder::deinit()
     // Destroy context in last
     proj_context_destroy(context);
     context = nullptr;
+#if defined(SIMUL_OLD_PROJ6) || (!defined(_WIN32) && !(PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 2))
+    for( size_t i = 0; i < oldcontexts.size(); i++ )
+    {
+        proj_context_destroy(oldcontexts[i]);
+    }
+    oldcontexts.clear();
+#endif
 }
 
 #ifdef WIN32
@@ -132,7 +157,30 @@ static OSRPJContextHolder& GetProjTLSContextHolder()
 static thread_local OSRPJContextHolder g_tls_projContext;
 static OSRPJContextHolder& GetProjTLSContextHolder()
 {
-    return g_tls_projContext;
+    OSRPJContextHolder& l_projContext = g_tls_projContext;
+
+    // Detect if we are now running in a child process created by fork()
+    // In that situation we must make sure *not* to use the same underlying
+    // file open descriptor to the sqlite3 database, since seeks&reads in one
+    // of the parent or child will affect the other end.
+    const pid_t curpid = getpid();
+    if( curpid != l_projContext.curpid )
+    {
+        l_projContext.curpid = curpid;
+#if defined(SIMUL_OLD_PROJ6) || !(PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 2)
+        // PROJ < 6.2 ? Recreate new context
+        l_projContext.oldcontexts.push_back(l_projContext.context);
+        l_projContext.context = nullptr;
+        l_projContext.init();
+#else
+        proj_context_set_autoclose_database(l_projContext.context, true);
+        // dummy call to cause the database to be closed
+        proj_context_get_database_path(l_projContext.context);
+        proj_context_set_autoclose_database(l_projContext.context, false);
+#endif
+    }
+
+    return l_projContext;
 }
 #endif
 
@@ -180,11 +228,12 @@ void OSRProjTLSCache::clear()
     m_oCacheWKT.clear();
 }
 
-PJ* OSRProjTLSCache::GetPJForEPSGCode(int nCode)
+PJ* OSRProjTLSCache::GetPJForEPSGCode(int nCode, bool bUseNonDeprecated, bool bAddTOWGS84)
 {
     try
     {
-        const auto& cached = m_oCacheEPSG.get(nCode);
+        const EPSGCacheKey key(nCode, bUseNonDeprecated, bAddTOWGS84);
+        const auto& cached = m_oCacheEPSG.get(key);
         return proj_clone(OSRGetProjTLSContext(), cached.get());
     }
     catch( const lru11::KeyNotFound& )
@@ -193,9 +242,10 @@ PJ* OSRProjTLSCache::GetPJForEPSGCode(int nCode)
     }
 }
 
-void OSRProjTLSCache::CachePJForEPSGCode(int nCode, PJ* pj)
+void OSRProjTLSCache::CachePJForEPSGCode(int nCode, bool bUseNonDeprecated, bool bAddTOWGS84, PJ* pj)
 {
-    m_oCacheEPSG.insert(nCode, std::shared_ptr<PJ>(
+    const EPSGCacheKey key(nCode, bUseNonDeprecated, bAddTOWGS84);
+    m_oCacheEPSG.insert(key, std::shared_ptr<PJ>(
                     proj_clone(OSRGetProjTLSContext(), pj), OSRPJDeleter()));
 }
 
@@ -243,6 +293,28 @@ void OSRSetPROJSearchPaths( const char* const * papszPaths )
     std::lock_guard<std::mutex> oLock(g_oSearchPathMutex);
     g_searchPathGenerationCounter ++;
     g_aosSearchpaths.Assign(CSLDuplicate(papszPaths), true);
+}
+
+/************************************************************************/
+/*                        OSRGetPROJSearchPaths()                       */
+/************************************************************************/
+
+/** \brief Get the search path(s) for PROJ resource files.
+ *
+ * @return NULL terminated list of directory paths. To be freed with CSLDestroy()
+ * @since GDAL 3.0.3
+ */
+char** OSRGetPROJSearchPaths()
+{
+    std::lock_guard<std::mutex> oLock(g_oSearchPathMutex);
+    const char* pszSep =
+#ifdef _WIN32
+                        ";"
+#else
+                        ":"
+#endif
+    ;
+    return CSLTokenizeString2( proj_info().searchpath, pszSep, 0);
 }
 
 /************************************************************************/

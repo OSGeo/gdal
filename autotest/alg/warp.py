@@ -34,7 +34,7 @@
 
 import os
 import shutil
-
+import sys
 
 from osgeo import gdal
 from osgeo import osr
@@ -1315,6 +1315,42 @@ def test_warp_40():
     assert maxdiff <= 1, 'Image too different from reference'
 
 ###############################################################################
+# test weighted average
+
+
+def test_warp_weighted_average():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
+    if gdaltest.tiff_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/3by3_average.vrt')
+    ref_ds = gdal.Open('data/3by3_average.tif')
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+
+    assert maxdiff <= 1, 'Image too different from reference'
+
+###############################################################################
+# test sum
+
+
+def test_warp_sum():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
+    if gdaltest.tiff_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/3by3_sum.vrt')
+    ref_ds = gdal.Open('data/3by3_sum.tif')
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+
+    assert maxdiff <= 1, 'Image too different from reference'
+
+###############################################################################
 # test GDALSuggestedWarpOutput (#5693)
 
 
@@ -1565,6 +1601,9 @@ def test_warp_52():
 
 def test_warp_53():
 
+    if sys.platform == 'darwin':
+        pytest.skip("Expected checksum should be updated for Mac")
+
     for typestr in ('Byte', 'UInt16', 'Int16'):
         src_ds = gdal.Translate('', '../gcore/data/byte.tif',
                                 options='-of MEM -b 1 -b 1 -ot ' + typestr)
@@ -1691,3 +1730,14 @@ def test_warp_nearest_real_nodata_multiple_band():
                             1, 0, 1])
     out_ds = gdal.Warp('', src_ds, options = '-of MEM')
     assert struct.unpack('d' * 4, out_ds.ReadRaster()) == struct.unpack('d' * 4, src_ds.ReadRaster())
+
+
+###############################################################################
+# Test bugfix for #2365
+
+def test_warp_med_out_of_bounds_src_pixels():
+
+    ds = gdal.Open('data/test_bug_2365_wraped_med.vrt')
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == 0
+    ds = None

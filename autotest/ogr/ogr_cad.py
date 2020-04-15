@@ -10,7 +10,7 @@
 #  The MIT License (MIT)
 #
 #  Copyright (c) 2016 Alexandr Borzykh
-#  Copyright (c) 2016, NextGIS <info@nextgis.com>
+#  Copyright (c) 2016-2019, NextGIS <info@nextgis.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy
 #  of this software and associated documentation files (the "Software"), to deal
@@ -107,6 +107,8 @@ def test_ogr_cad_2():
 
     assert geom.GetGeometryType() == ogr.wkbLineString25D, \
         'did not get expected geometry type.'
+
+    assert geom.GetPointCount() > 2, 'cad geometry is invalid'
 
     gdaltest.cad_ds = None
 

@@ -575,12 +575,18 @@ int ContourGenerateEx( GDALRasterBandShadow *srcBand,
 
 %rename (ViewshedMode) GDALViewshedMode;
 typedef enum {
-	GVM_Diagonal = 1,
+    GVM_Diagonal = 1,
     GVM_Edge = 2,
     GVM_Max = 3,
     GVM_Min = 4
 } GDALViewshedMode;
 
+%rename (ViewshedOutputType) GDALViewshedOutputType;
+typedef enum {
+    GVOT_NORMAL = 1,
+    GVOT_MIN_TARGET_HEIGHT_FROM_DEM = 2,
+    GVOT_MIN_TARGET_HEIGHT_FROM_GROUND = 3
+} GDALViewshedOutputType;
 
 %newobject ViewshedGenerate;
 #ifndef SWIGJAVA
@@ -597,6 +603,7 @@ GDALDatasetShadow *ViewshedGenerate( GDALRasterBandShadow *srcBand,
                         double outOfRangeVal,  double noDataVal, double dfCurvCoeff,
                         GDALViewshedMode mode, double maxDistance,
                         GDALProgressFunc callback = NULL, void* callback_data = NULL,
+                        GDALViewshedOutputType heightMode = GVOT_NORMAL,
                         char** papszOptions = NULL)
 {
     GDALDatasetShadow* ds = GDALViewshedGenerate( srcBand,
@@ -616,6 +623,7 @@ GDALDatasetShadow *ViewshedGenerate( GDALRasterBandShadow *srcBand,
                                  maxDistance,
                                  callback,
                                  callback_data,
+                                 heightMode,
                                  papszOptions);
   if (ds == 0) {
     /*throw CPLGetLastErrorMsg(); causes a SWIG_exception later*/

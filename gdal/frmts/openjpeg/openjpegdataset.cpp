@@ -227,6 +227,8 @@ class JP2OpenJPEGDataset final: public GDALJP2AbstractDataset
     JP2OpenJPEGFile* m_psJP2OpenJPEGFile = nullptr;
     int*             m_pnLastLevel = nullptr;
 #endif
+    int         m_nX0 = 0;
+    int         m_nY0 = 0;
 
     int         nThreads = -1;
     int         m_nBlocksToLoad = 0;
@@ -932,10 +934,10 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
         /* The decode area must be expressed in grid reference, ie at full*/
         /* scale */
         if (!opj_set_decode_area(pCodec,psImage,
-                                 static_cast<int>(static_cast<GIntBig>(nBlockXOff*nBlockXSize) * nParentXSize / nRasterXSize),
-                                 static_cast<int>(static_cast<GIntBig>(nBlockYOff*nBlockYSize) * nParentYSize / nRasterYSize),
-                                 static_cast<int>(static_cast<GIntBig>(nBlockXOff*nBlockXSize+nWidthToRead) * nParentXSize / nRasterXSize),
-                                 static_cast<int>(static_cast<GIntBig>(nBlockYOff*nBlockYSize+nHeightToRead) * nParentYSize / nRasterYSize)))
+                                 m_nX0 + static_cast<int>(static_cast<GIntBig>(nBlockXOff*nBlockXSize) * nParentXSize / nRasterXSize),
+                                 m_nY0 + static_cast<int>(static_cast<GIntBig>(nBlockYOff*nBlockYSize) * nParentYSize / nRasterYSize),
+                                 m_nX0 + static_cast<int>(static_cast<GIntBig>(nBlockXOff*nBlockXSize+nWidthToRead) * nParentXSize / nRasterXSize),
+                                 m_nY0 + static_cast<int>(static_cast<GIntBig>(nBlockYOff*nBlockYSize+nHeightToRead) * nParentYSize / nRasterYSize)))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "opj_set_decode_area() failed");
             eErr = CE_Failure;
@@ -1879,6 +1881,8 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->bIs420 = bIs420;
     poDS->bSingleTiled = (poDS->nRasterXSize == (int)nTileW &&
                           poDS->nRasterYSize == (int)nTileH);
+    poDS->m_nX0 = psImage->x0;
+    poDS->m_nY0 = psImage->y0;
 
     if( CPLFetchBool(poOpenInfo->papszOpenOptions, "USE_TILE_AS_BLOCK", false) )
     {
@@ -2221,6 +2225,8 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         poODS->m_pnLastLevel = poDS->m_pnLastLevel;
 #endif
+        poODS->m_nX0 = poDS->m_nX0;
+        poODS->m_nY0 = poDS->m_nY0;
 
         for( iBand = 1; iBand <= poDS->nBands; iBand++ )
         {
@@ -4102,7 +4108,7 @@ void GDALRegister_JP2OpenJPEG()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "JPEG-2000 driver based on OpenJPEG library" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jp2openjpeg.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/jp2openjpeg.html" );
     poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jp2" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "jp2 j2k" );

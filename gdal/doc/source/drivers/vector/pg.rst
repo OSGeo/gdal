@@ -5,6 +5,8 @@ PostgreSQL / PostGIS
 
 .. shortname:: PostgreSQL
 
+.. build_dependencies:: PostgreSQL client library (libpq)
+
 This driver implements support for access to spatial tables in
 PostgreSQL extended with the `PostGIS <http://postgis.net/>`__ spatial
 data support. Some support exists in the driver for use with PostgreSQL
@@ -39,6 +41,12 @@ Connecting to a database
    ::
 
       PG:"dbname='databasename' host='addr' port='5432' user='x' password='y'"
+
+   *or* starting with GDAL 3.1:
+
+   ::
+
+      PG:service=servicename
 
 | It's also possible to omit the database name and connect to a
   *default* database, with the same name as the user name.
@@ -75,9 +83,9 @@ default, rather than evaluating them internally when using the
 ExecuteSQL() call on the OGRDataSource, or the -sql command option to
 ogr2ogr. Attribute query expressions are also passed directly through to
 PostgreSQL. It's also possible to request the ogr Pg driver to handle
-SQL commands with the `OGR SQL <ogr_sql.html>`__ engine, by passing
-**"OGRSQL"** string to the ExecuteSQL() method, as the name of the SQL
-dialect.
+SQL commands with the :ref:`OGR SQL <ogr_sql_dialect>` engine, by
+passing **"OGRSQL"** string to the ExecuteSQL() method, as the name of
+the SQL dialect.
 
 The PostgreSQL driver in OGR supports the
 OGRDataSource::StartTransaction(), OGRDataSource::CommitTransaction()
@@ -119,6 +127,8 @@ Dataset open options
 -  **USER**\ =string: User name.
 -  **PASSWORD**\ =string: Password.
 -  **HOST**\ =string: Server hostname.
+-  **DBNAME**\ =string: Database name.
+-  **SERVICE**\ =string: Service name (GDAL >= 3.1)
 -  **ACTIVE_SCHEMA**\ =string: Active schema.
 -  **SCHEMAS**\ =string: Restricted sets of schemas to explore (comma
    separated).

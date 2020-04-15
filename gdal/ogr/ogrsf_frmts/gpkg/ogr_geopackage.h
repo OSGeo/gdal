@@ -92,6 +92,7 @@ class OGRGeoPackageTableLayer;
 class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALGPKGMBTilesLikePseudoDataset
 {
     friend class GDALGeoPackageRasterBand;
+    friend class OGRGeoPackageLayer;
     friend class OGRGeoPackageTableLayer;
 
     GUInt32             m_nApplicationId;
@@ -221,6 +222,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
 
         bool                ConvertGpkgSpatialRefSysToExtensionWkt2();
 
+        std::map<int, bool> m_oSetGPKGLayerWarnings{};
+
     public:
                             GDALGeoPackageDataset();
                             virtual ~GDALGeoPackageDataset();
@@ -310,7 +313,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         virtual int                     IGetRasterCount() override { return nBands; }
         virtual GDALRasterBand*         IGetRasterBand(int nBand) override { return GetRasterBand(nBand); }
         virtual sqlite3                *IGetDB() override { return GetDB(); }
-        virtual bool                    IGetUpdate() override { return bUpdate != FALSE; }
+        virtual bool                    IGetUpdate() override { return GetUpdate(); }
         virtual bool                    ICanIWriteBlock() override;
         virtual OGRErr                  IStartTransaction() override { return SoftStartTransaction(); }
         virtual OGRErr                  ICommitTransaction() override { return SoftCommitTransaction(); }
@@ -408,6 +411,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     bool                        m_bIsInGpkgContents;
     bool                        m_bFeatureDefnCompleted;
     int                         m_iSrs;
+    int                         m_nZFlag = 0;
+    int                         m_nMFlag = 0;
     OGREnvelope*                m_poExtent;
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     GIntBig                     m_nTotalFeatureCount;

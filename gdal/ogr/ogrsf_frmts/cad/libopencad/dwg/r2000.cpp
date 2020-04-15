@@ -53,10 +53,6 @@ template <typename T> std::string to_string(T val)
 }
 #endif
 
-#ifdef __APPLE__
-    #include <MacTypes.h>
-#endif
-
 #define UNKNOWN1 CADHeader::MAX_HEADER_CONSTANT + 1
 #define UNKNOWN2 CADHeader::MAX_HEADER_CONSTANT + 2
 #define UNKNOWN3 CADHeader::MAX_HEADER_CONSTANT + 3

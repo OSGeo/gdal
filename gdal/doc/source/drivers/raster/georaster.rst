@@ -6,6 +6,8 @@ Oracle Spatial GeoRaster
 
 .. shortname:: GeoRaster
 
+.. build_dependencies:: Oracle client libraries
+
 This driver supports reading and writing raster data in Oracle Spatial
 GeoRaster format (10g or later). The Oracle Spatial GeoRaster driver is
 optionally built as a GDAL plugin, but it requires Oracle client

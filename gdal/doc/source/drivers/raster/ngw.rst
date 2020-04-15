@@ -7,6 +7,8 @@ NGW -- NextGIS Web
 
 .. shortname:: NGW
 
+.. build_dependencies:: libcurl
+
 NextGIS Web - is a server GIS, which allows to store and edit geodata
 and to display maps in web browser. Also NextGIS Web can share geodata
 with other NextGIS software.
@@ -19,9 +21,9 @@ NextGIS Web has the following features:
 -  Load geodata from PostGIS or import from GIS formats (ESRI Shape,
    GeoJSON or GeoTIFF)
 -  Load vector geodata in the following formats: GeoJSON, CSV, ESRI
-   Shape
+   Shape, Mapinfo tab
 -  Import map styles from QGIS project or set them manually
--  Act as a server for TMS, WMS, WFS
+-  Act as a server for TMS, WMS, MVT, WFS
 -  Act as a client for WMS
 -  User can add photos to records, change record attributes via web
    interface or WFS-T protocol
@@ -46,14 +48,13 @@ NextGIS Web supports several raster types:
 -  WMS Service
 -  Web map as combination of raster and vector styles
 
-| Each NextGIS Web raster layer can have one or more raster styles.
-| Each NextGIS Web vector or PostGIS layer can have one or more vector
-  style (QGIS qml or MapServer xml).
-| WMS layer is one or more layers from external WMS service. This layer
-  has no styles.
-| WMS Service is usual WMS protocol implementation.
+Each NextGIS Web raster layer can have one or more raster styles.
+Each NextGIS Web vector or PostGIS layer can have one or more vector
+styles (QGIS qml or MapServer xml).
+WMS layers from external WMS service have no styles.
+WMS Service is usual WMS protocol implementation.
 
-Now NGW driver supports only raster and vector styles and WMS layers.
+NGW driver supports only raster and vector styles and WMS layers.
 You can get raster data as tiles or image (only tiles are supported
 now).
 
@@ -122,18 +123,19 @@ The following open options are available:
 Create copy options
 -------------------
 
-NextGIS Web supported only GeoTIFF with 3 (RGB) or 4 (RGBA) bangs with
-datatype Byte. In CreateCopy function if source dataset has GeoTiff file
-format it will copy as is. For other formats the additional
-transformation to temporary GeoTiff file will be executed.
+NextGIS Web supports only GeoTIFF file format. Prior version 3.1 supported only
+3 (RGB) or 4 (RGBA) bands rasters with datatype Byte. In CreateCopy function if
+source dataset has GeoTIFF file format it will copy as is. For other formats the
+additional transformation to temporary GeoTIFF file will execute.
 
 The following copy options are available:
 
--  KEY - Key value. Must be unique in whole NextGIS Web instance.
-   Optional.
+-  KEY - Key value. Must be unique in whole NextGIS Web instance. Optional.
 -  DESCRIPTION - Resource description. Optional.
--  RASTER_STYLE_NAME - Raster style name. Optional. Default is raster
-   layer name + "_style" suffix.
+-  RASTER_STYLE_NAME - Raster style name. Optional. Default is same as raster
+   layer name.
+-  RASTER_QML_PATH - Path to QGIS QML raster style file. Optional for RGB/RGBA,
+   for other bands count/pixel types is mandatory.
 -  USERPWD - Username and password, separated by colon.
 -  CACHE_EXPIRES=604800 - Time in seconds cached files will stay valid.
    If cached file expires it is deleted when maximum size of cache is

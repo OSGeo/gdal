@@ -68,3 +68,5 @@ ogr2ogr --config OGR_STROKE_CURVE TRUE -SQL 'SELECT Rechtsstatus,publiziertAb,Me
    /* 130 */ {"MSLET", "Mean Sea Level Pressure (NAM Model Reduction)", "Pa", UC_NONE},
       addSimpleType(&oTypes, "INST_EFFEKT", "installertEffekt", OFTInteger);
             const char sText[] = "infinit";
+    if (EQUAL( pszFormat, "DOUB" ))
+        case GDT_Float64: pszFormat = "DOUB"; break;

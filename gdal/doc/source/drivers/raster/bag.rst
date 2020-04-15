@@ -1,10 +1,12 @@
 .. _raster.bag:
 
 ================================================================================
-BAG --- Bathymetry Attributed Grid
+BAG -- Bathymetry Attributed Grid
 ================================================================================
 
 .. shortname:: BAG
+
+.. build_dependencies:: libhdf5
 
 This driver provides read-only support, and starting with GDAL 2.4 for
 creation, for bathymetry data in the BAG format. BAG files are actually

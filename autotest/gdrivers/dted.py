@@ -148,8 +148,7 @@ def test_dted_7():
 
     assert gdal.GetLastErrorMsg() is not None, 'An expected warning was not emitted'
 
-    assert prj == 'GEOGCS["WGS 72",DATUM["World_Geodetic_System_1972",SPHEROID["WGS 72",6378135,298.26]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4322"]]', \
-        ('Projection does not match expected:\n%s' % prj)
+    assert prj.startswith('GEOGCS["WGS 72"')
 
 ###############################################################################
 # Test a file whose checksum is corrupted
@@ -287,6 +286,18 @@ def test_dted_15():
     gdal.SetConfigOption('GDAL_DTED_SINGLE_BLOCK', None)
     return ret
 
+
+def test_dted_16():
+
+    with gdaltest.config_option('DTED_APPLY_PIXEL_IS_POINT', 'TRUE'):
+        ds = gdal.Open('data/n43.dt0')
+        assert ds is not None
+
+        max_error = 0.000001
+        gt = ds.GetGeoTransform()
+        assert gt == pytest.approx((-80.0, 0.0083333333333333332, 0, 44.0, 0, -0.0083333333333333332), abs=max_error)
+
+
 ###############################################################################
 # Cleanup.
 
@@ -304,7 +315,7 @@ def test_dted_cleanup():
         os.remove('tmp/n43.dt2')
     except OSError:
         pass
-    
+
 
 
 

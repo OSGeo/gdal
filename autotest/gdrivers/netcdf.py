@@ -294,6 +294,11 @@ def test_netcdf_2():
 
     tst.testOpen(check_prj=wkt)
 
+    # Check that no nodata value is reported for a Byte dataset
+    ds = gdal.Open('tmp/netcdf2.nc')
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
+    ds = None
+
     # Test that in raster-only mode, update isn't supported (not sure what would be missing for that...)
     with gdaltest.error_handler():
         ds = gdal.Open('tmp/netcdf2.nc', gdal.GA_Update)
@@ -2591,8 +2596,8 @@ def test_netcdf_71():
 
     ds = gdal.Open('data/test_coord_scale_offset.nc')
     gt = ds.GetGeoTransform()
-    expected_gt = (-690769.999174516, 1015.8812500000931, 0.0, 2040932.1838741193, 0.0, 1015.8812499996275)
-    assert max(abs(gt[i] - expected_gt[i]) for i in range(6)) <= 1e-3
+    expected_gt = (-690769.999174516, 1015.8812500000931, 0.0, 2042963.9463741186, 0.0, -1015.8812499996275)
+    assert gt == pytest.approx(expected_gt, abs=1e-3)
 
 ###############################################################################
 # test int64 attributes / dim
@@ -2621,8 +2626,8 @@ def test_netcdf_73():
 
     ds = gdal.Open('data/geos_rad.nc')
     gt = ds.GetGeoTransform()
-    expected_gt = (-5979486.362104082, 1087179.4077774752, 0.0, -5979487.123448145, 0.0, 1087179.4077774752)
-    assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1
+    expected_gt = (-5979486.362104082, 1087179.4077774752, 0.0, 5979486.362104082, 0.0, -1087179.4077774752)
+    assert gt == pytest.approx(expected_gt, abs=1e-3)
 
 ###############################################################################
 # test geostationary with microradian units (https://github.com/OSGeo/gdal/pull/220)
@@ -2635,8 +2640,8 @@ def test_netcdf_74():
 
     ds = gdal.Open('data/geos_microradian.nc')
     gt = ds.GetGeoTransform()
-    expected_gt = (-5739675.119757546, 615630.8078590936, 0.0, -1032263.7666924844, 0.0, 615630.8078590936)
-    assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1
+    expected_gt = (-5739675.119757546, 615630.8078590936, 0.0, 5739675.119757546, 0.0, -615630.8078590936)
+    assert gt == pytest.approx(expected_gt, abs=1e-3)
 
 ###############################################################################
 # test opening a ncdump file
@@ -3513,7 +3518,7 @@ def test_serpenski3D_two_ring():
 
     assert(s != None)
     
-    lc = s.GetLayerCount();
+    lc = s.GetLayerCount()
     assert(lc == 1)
     good_layer = s.GetLayerByName("serpenski")
     assert(good_layer != None) # real layer
@@ -3662,7 +3667,7 @@ def test_point_write():
         pytest.skip()
     src = gdal.OpenEx("data/netcdf-sg/write-tests/point_write_test.json", gdal.OF_VECTOR) 
     assert(src is not None)
-    gdal.VectorTranslate("tmp/test_point_write.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/test_point_write.nc", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/test_point_write.nc")
     assert(src is not None)
@@ -3674,28 +3679,28 @@ def test_point_write():
     assert(layer.GetFeatureCount() == 4)
 
     # Test each feature manually
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "POINT (0.5 -0.5)")
     assert(fnam == "FishingSpot1")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "POINT (1 -1)")
     assert(fnam == "FishingSpot2")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "POINT (1.5 -1.5)")
     assert(fnam == "FishingSpot3")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -3707,7 +3712,7 @@ def test_point3D_write():
         pytest.skip()
     src = gdal.OpenEx("data/netcdf-sg/write-tests/point3D_write_test.json", gdal.OF_VECTOR) 
     assert(src is not None)
-    gdal.VectorTranslate("tmp/test_point3D_write.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/test_point3D_write.nc", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/test_point3D_write.nc")
     assert(src is not None)
@@ -3719,28 +3724,28 @@ def test_point3D_write():
     assert(layer.GetFeatureCount() == 4)
 
     # Test each feature manually
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "POINT (0.5 -0.5 -1.5)")
     assert(fnam == "FishingSpot1")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "POINT (1 -1 -0.5)")
     assert(fnam == "FishingSpot2")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "POINT (1.5 -1.5 0.5)")
     assert(fnam == "FishingSpot3")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -3754,7 +3759,7 @@ def test_line_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/line_write_test.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/line_write_test.nc", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/line_write_test.nc")
     assert(src is not None)
@@ -3765,21 +3770,21 @@ def test_line_write():
     assert(layer.GetFeatureCount() == 3)
 
     # Test each feature manually
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "LINESTRING (1.5 -1.5)")
     assert(fnam == "seg1")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "LINESTRING (30.5 30.5,5 5)")
     assert(fnam == "seg2")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -3793,7 +3798,7 @@ def test_line3D_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/line3D_write_test.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/line3D_write_test.nc", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/line3D_write_test.nc")
     assert(src is not None)
@@ -3804,21 +3809,21 @@ def test_line3D_write():
     assert(layer.GetFeatureCount() == 3)
 
     # Test each feature manually
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "LINESTRING (0.1 0.2 0.3,99 -99 0)")
     assert(fnam == "path1")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "LINESTRING (100 101 102,25 27 29)")
     assert(fnam == "path2")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -3832,7 +3837,7 @@ def test_polygon_no_ir_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/polygon_no_ir_write_test.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/polygon_no_ir_write_test.nc", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/polygon_no_ir_write_test.nc")
     assert(src is not None)
@@ -3845,7 +3850,7 @@ def test_polygon_no_ir_write():
     # Test each feature manually
     # Do to ambiguities present in CF-1.8, these are actually read out as Multipolygons, not Polygons
     # But when being written out, they are OGRFeature POLYGON
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -3853,7 +3858,7 @@ def test_polygon_no_ir_write():
     assert(fnam == "Triangle")
 
     # This second feature has an interior ring in it
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -3868,7 +3873,7 @@ def test_polygon_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/polygon_write_test.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/polygon_write_test.nc", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/polygon_write_test.nc")
     assert(src is not None)
@@ -3881,7 +3886,7 @@ def test_polygon_write():
     # Test each feature manually
     # Do to ambiguities present in CF-1.8, these are actually read out as Multipolygons, not Polygons
     # But when being written out, they are OGRFeature POLYGON
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -3889,14 +3894,14 @@ def test_polygon_write():
     assert(fnam == "Triangle")
 
     # This second feature has an interior ring in it
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "MULTIPOLYGON (((3 0,4 0,4 1,3 1,3 0),(3.5 0.25,3.75 0.25,3.75 0.5,3.5 0.5,3.5 0.25)))")
     assert(fnam == "Square_in_Square")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -3910,7 +3915,7 @@ def test_polygon3D_no_ir_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/polygon3D_no_ir_write_test.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/polygon3D_no_ir_write_test.nc", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/polygon3D_no_ir_write_test.nc")
     assert(src is not None)
@@ -3923,7 +3928,7 @@ def test_polygon3D_no_ir_write():
     # Test each feature manually
     # Do to ambiguities present in CF-1.8, these are actually read out as Multipolygons, not Polygons
     # But when being written out, they are OGRFeature POLYGON
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fid = feat.GetFieldAsInteger("ID")
@@ -3931,7 +3936,7 @@ def test_polygon3D_no_ir_write():
     assert(fid == 0)
 
     # This second feature has an interior ring in it
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fid = feat.GetFieldAsInteger("ID")
@@ -3945,7 +3950,7 @@ def test_polygon3D_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/polygon3D_write_test.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/polygon3D_write_test.nc", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/polygon3D_write_test.nc")
     assert(src is not None)
@@ -3958,7 +3963,7 @@ def test_polygon3D_write():
     # Test each feature manually
     # Do to ambiguities present in CF-1.8, these are actually read out as Multipolygons, not Polygons
     # But when being written out, they are OGRFeature POLYGON
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -3966,14 +3971,14 @@ def test_polygon3D_write():
     assert(fnam == "Trianglything")
 
     # This second feature has an interior ring in it
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "MULTIPOLYGON (((3 0 0,4 0 0,4 1 1,3 1 1,3 0 0),(3.5 0.25 1,3.75 0.25 1,3.75 0.5 1,3.5 0.5 1,3.5 0.25 1)))")
     assert(fnam == "Prismthing")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -3987,7 +3992,7 @@ def test_multipoint_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/multipoint_write_test.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/multipoint_write_test.nc", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/multipoint_write_test.nc")
     assert(src is not None)
@@ -3998,21 +4003,21 @@ def test_multipoint_write():
     assert(layer.GetFeatureCount() == 3)
 
     # Test each feature manually
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "MULTIPOINT (1 -1,2 -2,4 -4)")
     assert(fnam == "Peaks1")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "MULTIPOINT (5 -5,6 -6,8 -8)")
     assert(fnam == "Peaks2")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4026,7 +4031,7 @@ def test_multipoint3D_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/multipoint3D_write_test.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/multipoint3D_write_test.nc", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/multipoint3D_write_test.nc")
     assert(src is not None)
@@ -4037,14 +4042,14 @@ def test_multipoint3D_write():
     assert(layer.GetFeatureCount() == 2)
 
     # Test each feature manually
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "MULTIPOINT (0 -1 -5,2 -2 2)")
     assert(fnam == "site1")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4058,7 +4063,7 @@ def test_multiline_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/multiline_write_test.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/multiline_write_test.nc", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/multiline_write_test.nc")
     assert(src is not None)
@@ -4069,21 +4074,21 @@ def test_multiline_write():
     assert(layer.GetFeatureCount() == 3)
 
     # Test each feature manually
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "MULTILINESTRING ((1 -5),(2 -4,3 -3,4 -2,5 -1))")
     assert(fnam == "fresh_river")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "MULTILINESTRING ((-2 5,-3 4,-4 3,-5 2))")
     assert(fnam == "not_so_fresh_river")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4097,7 +4102,7 @@ def test_multiline3D_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/multiline3D_write_test.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/multiline3D_write_test.nc", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/multiline3D_write_test.nc")
     assert(src is not None)
@@ -4108,14 +4113,14 @@ def test_multiline3D_write():
     assert(layer.GetFeatureCount() == 2)
 
     # Test each feature manually
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "MULTILINESTRING ((1 -5 10),(2 -4 9,3 -3 8,4 -2 7,5 -1 8))")
     assert(fnam == "fresh_river")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4129,7 +4134,7 @@ def test_multipolygon_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/multipolygon_write_test.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/multipolygon_write_test.nc", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/multipolygon_write_test.nc")
     assert(src is not None)
@@ -4142,7 +4147,7 @@ def test_multipolygon_write():
     # Test each feature manually
     # Do to ambiguities present in CF-1.8, these are actually read out as Multipolygons, not Polygons
     # But when being written out, they are OGRFeature POLYGON
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4150,7 +4155,7 @@ def test_multipolygon_write():
     assert(fnam == "Triangles")
 
     # This second feature has an interior ring in it
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4164,7 +4169,7 @@ def test_multipolygon3D_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/multipolygon3D_write_test.nc4", src, format="netCDF");
+    gdal.VectorTranslate("tmp/multipolygon3D_write_test.nc4", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/multipolygon3D_write_test.nc4")
     assert(src is not None)
@@ -4177,7 +4182,7 @@ def test_multipolygon3D_write():
     # Test each feature manually
     # Due to ambiguities present in CF-1.8, these are actually read out as Multipolygons, not Polygons
     # But when being written out, they are OGRFeature POLYGON
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4185,7 +4190,7 @@ def test_multipolygon3D_write():
     assert(fnam == "Trianglies")
 
     # This second feature has an interior ring in it
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4193,7 +4198,7 @@ def test_multipolygon3D_write():
     assert(fnam == "Prismy_and_Triangly")
 
     # This third feature is just a Polygon
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4207,7 +4212,7 @@ def test_multipolygon_with_no_ir_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/multipolygon_no_ir_write_test.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/multipolygon_no_ir_write_test.nc", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/multipolygon_no_ir_write_test.nc")
     assert(src is not None)
@@ -4218,14 +4223,14 @@ def test_multipolygon_with_no_ir_write():
     assert(layer.GetFeatureCount() == 2)
 
     # Test each feature manually
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "MULTIPOLYGON (((0 0,1 0,1 1,0 0)))")
     assert(fnam == "Triangle")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4239,7 +4244,7 @@ def test_multipolygon3D_with_no_ir_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/multipolygon3D_no_ir_write_test.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/multipolygon3D_no_ir_write_test.nc", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/multipolygon3D_no_ir_write_test.nc")
     assert(src is not None)
@@ -4250,14 +4255,14 @@ def test_multipolygon3D_with_no_ir_write():
     assert(layer.GetFeatureCount() == 2)
 
     # Test each feature manually
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "MULTIPOLYGON (((0 0 0,1 0 1,1 1 2,0 0 3)))")
     assert(fnam == "Triangle")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4299,7 +4304,7 @@ def test_write_nc_from_nc():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/multipoint_test_replica.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/multipoint_test_replica.nc", src, format="netCDF")
 
     ncds = ogr.Open("tmp/multipoint_test_replica.nc")
     assert(src is not None)
@@ -4342,7 +4347,7 @@ def test_multipolygon_with_no_ir_NC4_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/multipolygon_no_ir_write_test.nc4", src, format="netCDF", datasetCreationOptions=['FORMAT=NC4']);
+    gdal.VectorTranslate("tmp/multipolygon_no_ir_write_test.nc4", src, format="netCDF", datasetCreationOptions=['FORMAT=NC4'])
 
     nc_tsrc = ogr.Open("tmp/multipolygon_no_ir_write_test.nc4")
     assert(src is not None)
@@ -4353,14 +4358,14 @@ def test_multipolygon_with_no_ir_NC4_write():
     assert(layer.GetFeatureCount() == 2)
 
     # Test each feature manually
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "MULTIPOLYGON (((0 0,1 0,1 1,0 0)))")
     assert(fnam == "Triangle")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4377,7 +4382,7 @@ def test_multipolygon3D_NC4C_write():
     # This test is identical to test_multipolygon3D_write
     # except it writes to NC4C
 
-    gdal.VectorTranslate("tmp/multipolygon3D_write_test.nc", src, format="netCDF", datasetCreationOptions=['FORMAT=NC4C']);
+    gdal.VectorTranslate("tmp/multipolygon3D_write_test.nc", src, format="netCDF", datasetCreationOptions=['FORMAT=NC4C'])
 
     nc_tsrc = ogr.Open("tmp/multipolygon3D_write_test.nc")
     assert(src is not None)
@@ -4390,7 +4395,7 @@ def test_multipolygon3D_NC4C_write():
     # Test each feature manually
     # Due to ambiguities present in CF-1.8, these are actually read out as Multipolygons, not Polygons
     # But when being written out, they are OGRFeature POLYGON
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4398,7 +4403,7 @@ def test_multipolygon3D_NC4C_write():
     assert(fnam == "Trianglies")
 
     # This second feature has an interior ring in it
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4406,7 +4411,7 @@ def test_multipolygon3D_NC4C_write():
     assert(fnam == "Prismy_and_Triangly")
 
     # This third feature is just a Polygon
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4438,11 +4443,11 @@ def test_write_multiple_layers_one_nc():
 
     src = gdal.OpenEx("data/netcdf-sg/write-tests/multipolygon_no_ir_write_test.json", gdal.OF_VECTOR) 
     assert(src is not None)
-    gdal.VectorTranslate("tmp/mlnc.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/mlnc.nc", src, format="netCDF")
 
     src = gdal.OpenEx("data/netcdf-sg/write-tests/point3D_write_test.json", gdal.OF_VECTOR) 
     assert(src is not None)
-    gdal.VectorTranslate("tmp/mlnc.nc", src, format="netCDF", accessMode='update');
+    gdal.VectorTranslate("tmp/mlnc.nc", src, format="netCDF", accessMode='update')
 
     nc_tsrc = ogr.Open("tmp/mlnc.nc")
     assert(nc_tsrc.GetLayerCount() == 2)
@@ -4453,14 +4458,14 @@ def test_write_multiple_layers_one_nc():
     assert(layer.GetFeatureCount() == 2)
 
     # Test each feature manually
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "MULTIPOLYGON (((0 0,1 0,1 1,0 0)))")
     assert(fnam == "Triangle")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4473,28 +4478,28 @@ def test_write_multiple_layers_one_nc():
     assert(layer.GetFeatureCount() == 4)
 
     # Test each feature manually
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "POINT (0.5 -0.5 -1.5)")
     assert(fnam == "FishingSpot1")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "POINT (1 -1 -0.5)")
     assert(fnam == "FishingSpot2")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "POINT (1.5 -1.5 0.5)")
     assert(fnam == "FishingSpot3")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4512,7 +4517,7 @@ def test_write_multiple_layers_one_nc_NC4():
 
     src = gdal.OpenEx("tmp/mlnc.nc", gdal.OF_VECTOR) 
     assert(src is not None)
-    gdal.VectorTranslate("tmp/mlnc4.nc4", src, format="netCDF", datasetCreationOptions=['FORMAT=NC4']);
+    gdal.VectorTranslate("tmp/mlnc4.nc4", src, format="netCDF", datasetCreationOptions=['FORMAT=NC4'])
 
     nc_tsrc = ogr.Open("tmp/mlnc4.nc4")
     assert(nc_tsrc.GetLayerCount() == 2)
@@ -4523,14 +4528,14 @@ def test_write_multiple_layers_one_nc_NC4():
     assert(layer.GetFeatureCount() == 2)
 
     # Test each feature manually
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "MULTIPOLYGON (((0 0,1 0,1 1,0 0)))")
     assert(fnam == "Triangle")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4543,28 +4548,28 @@ def test_write_multiple_layers_one_nc_NC4():
     assert(layer.GetFeatureCount() == 4)
 
     # Test each feature manually
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "POINT (0.5 -0.5 -1.5)")
     assert(fnam == "FishingSpot1")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "POINT (1 -1 -0.5)")
     assert(fnam == "FishingSpot2")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "POINT (1.5 -1.5 0.5)")
     assert(fnam == "FishingSpot3")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4582,7 +4587,7 @@ def test_write_multiple_layers_one_nc_back_to_NC3():
 
     src = gdal.OpenEx("tmp/mlnc4.nc4", gdal.OF_VECTOR) 
     assert(src is not None)
-    gdal.VectorTranslate("tmp/mlnc_noupdate3.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/mlnc_noupdate3.nc", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/mlnc_noupdate3.nc")
     assert(nc_tsrc.GetLayerCount() == 2)
@@ -4593,14 +4598,14 @@ def test_write_multiple_layers_one_nc_back_to_NC3():
     assert(layer.GetFeatureCount() == 2)
 
     # Test each feature manually
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "MULTIPOLYGON (((0 0,1 0,1 1,0 0)))")
     assert(fnam == "Triangle")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4613,28 +4618,28 @@ def test_write_multiple_layers_one_nc_back_to_NC3():
     assert(layer.GetFeatureCount() == 4)
 
     # Test each feature manually
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "POINT (0.5 -0.5 -1.5)")
     assert(fnam == "FishingSpot1")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "POINT (1 -1 -0.5)")
     assert(fnam == "FishingSpot2")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
     assert(fWkt == "POINT (1.5 -1.5 0.5)")
     assert(fnam == "FishingSpot3")
 
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4648,7 +4653,7 @@ def test_SG_NC3_field_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/bufft.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/bufft.nc", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/bufft.nc")
     assert(nc_tsrc is not None)
@@ -4659,7 +4664,7 @@ def test_SG_NC3_field_write():
     assert(layer.GetFeatureCount() == 1)
 
     # Test each feature manually
-    feat = layer.GetNextFeature();
+    feat = layer.GetNextFeature()
     fgeo = feat.GetGeometryRef()
     fWkt = fgeo.ExportToWkt()
     fnam = feat.GetFieldAsString("NAMES")
@@ -4710,12 +4715,12 @@ def test_empty_polygon_read_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/empty_polygon.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/empty_polygon.nc", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/empty_polygon.nc")
     assert(nc_tsrc is not None)
 
-    nc_layer = nc_tsrc.GetLayerByName("places");
+    nc_layer = nc_tsrc.GetLayerByName("places")
     assert(nc_layer.GetFeatureCount() == 2)
     first = nc_layer.GetNextFeature()
     assert(first.GetFieldAsString("NAMES") == "Somewhere")
@@ -4730,12 +4735,12 @@ def test_empty_multiline_read_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/empty_mline.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/empty_mline.nc", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/empty_mline.nc")
     assert(nc_tsrc is not None)
 
-    nc_layer = nc_tsrc.GetLayerByName("places");
+    nc_layer = nc_tsrc.GetLayerByName("places")
     assert(nc_layer.GetFeatureCount() == 2)
     first = nc_layer.GetNextFeature()
     assert(first.GetFieldAsString("NAMES") == "Somewhere")
@@ -4750,12 +4755,12 @@ def test_empty_multipolygon_read_write():
     assert(src is not None)
     assert(src.GetLayerCount() == 1)
 
-    gdal.VectorTranslate("tmp/empty_multipolygon.nc", src, format="netCDF");
+    gdal.VectorTranslate("tmp/empty_multipolygon.nc", src, format="netCDF")
 
     nc_tsrc = ogr.Open("tmp/empty_multipolygon.nc")
     assert(nc_tsrc is not None)
 
-    nc_layer = nc_tsrc.GetLayerByName("places");
+    nc_layer = nc_tsrc.GetLayerByName("places")
     assert(nc_layer.GetFeatureCount() == 2)
     first = nc_layer.GetNextFeature()
     assert(first.GetFieldAsString("NAMES") == "Nowhere")
@@ -4786,6 +4791,145 @@ def test_states_full_layer_buffer_restrict_correctness_single_datum():
         lftgeo = lft.GetGeometryRef()
         dftgeo = dft.GetGeometryRef()
         assert(lftgeo.Equal(dftgeo))
+
+def test_netcdf_uint16_netcdf4_without_fill():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    # This dataset was created with  nc_def_var_fill(cdfid, nZId, NC_NOFILL, NULL)
+    # Check that we don't report a nodata value
+    ds = gdal.Open('data/uint16_netcdf4_without_fill.nc')
+    assert not ds.GetRasterBand(1).GetNoDataValue()
+
+
+def test_netcdf_sen3_sral_mwr_fake_standard_measurement():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    ds = gdal.OpenEx('data/sen3_sral_mwr_fake_standard_measurement.nc', gdal.OF_RASTER)
+    assert not ds
+
+    ds = gdal.OpenEx('data/sen3_sral_mwr_fake_standard_measurement.nc', gdal.OF_VECTOR)
+    assert ds
+    assert ds.GetLayerCount() == 3
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == 'sen3_sral_mwr_fake_standard_measurement_time_01'
+    assert lyr.GetSpatialRef() is not None
+    assert lyr.GetLayerDefn().GetFieldCount() == 5
+    assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
+    assert lyr.TestCapability(ogr.OLCRandomRead) == 1
+    assert lyr.TestCapability(ogr.OLCRandomWrite) == 0
+    assert lyr.GetFeatureCount() == 2
+    assert lyr.GetMetadata_Dict() == {
+        'alt_01_comment': 'Altitude of satellite above the reference ellipsoid',
+        'alt_01_long_name': 'altitude of the satellite : 1 Hz',
+        'alt_01_standard_name': 'height_above_reference_ellipsoid',
+        'alt_01_units': 'm',
+        'orb_alt_rate_01_comment': 'The reference surface for the orbital altitude rate is the combined mean_sea_surface/geoid surface. It is used to compute the Doppler correction on the altimeter range',
+        'orb_alt_rate_01_long_name': 'orbital altitude rate : 1 Hz',
+        'orb_alt_rate_01_units': 'm/s',
+        'surf_type_01_flag_meanings': 'ocean_or_semi_enclosed_sea enclosed_sea_or_lake continental_ice land',
+        'surf_type_01_flag_values': '{0,1,2,3}',
+        'surf_type_01_long_name': 'surface type : 1 Hz',
+        'time_01_calendar': 'gregorian',
+        'time_01_long_name': 'UTC: 1 Hz',
+        'time_01_standard_name': 'time',
+        'time_01_units': 'seconds since 2000-01-01 00:00:00.0',
+        'total_electron_content_01_long_name': 'Altimeter-derived total electron content (TECU) : 1 Hz',
+        'total_electron_content_01_units': 'count'
+    }
+    assert lyr.GetMetadataItem('alt_01_units') == 'm'
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().GetX() == pytest.approx(2.234567, 1e-7)
+    assert f.GetGeometryRef().GetY() == pytest.approx(49.234567, 1e-7)
+    assert f['time_01'] == 1.25
+    assert not f.IsFieldSet("surf_type_01")
+    assert not f.IsFieldSet("orb_alt_rate_01")
+    assert not f.IsFieldSet("total_electron_content_01")
+    f = lyr.GetNextFeature()
+    assert f['time_01'] == 2.25
+    assert f['surf_type_01'] == 1
+    assert f['orb_alt_rate_01'] == 0.01
+    assert f['total_electron_content_01'] == 10000000000.0
+    assert lyr.GetNextFeature() is None
+    assert lyr.GetNextFeature() is None
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is not None
+
+    lyr.SetSpatialFilterRect(-50,-50,-50,-50)
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is None
+    assert lyr.GetFeatureCount() == 0
+    lyr.SetSpatialFilter(None)
+
+    lyr.SetAttributeFilter('0 = 1')
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is None
+
+    assert lyr.GetFeature(0) is None
+    assert lyr.GetFeature(1).GetFID() == 1
+    assert lyr.GetFeature(3) is None
+
+    lyr = ds.GetLayer(1)
+    assert lyr.GetName() == 'sen3_sral_mwr_fake_standard_measurement_time_20_ku'
+    f = lyr.GetNextFeature()
+    assert not f.IsFieldSet('nb_stack_20_ku')
+    f = lyr.GetNextFeature()
+    assert f['nb_stack_20_ku'] == 1
+
+
+def test_netcdf_chunked_multiple():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    ds = gdal.Open('data/byte_chunked_multiple.nc')
+    assert ds.GetRasterBand(1).GetBlockSize() == [10, 10]
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+def test_netcdf_chunked_not_multiple():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    ds = gdal.Open('data/byte_chunked_not_multiple.nc')
+    assert ds.GetRasterBand(1).GetBlockSize() == [15, 6]
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+def test_netcdf_create():
+
+    ds = gdaltest.netcdf_drv.Create('tmp/test_create.nc', 2, 2)
+    ds.SetGeoTransform([2, 0.1, 0, 49, 0, -0.1])
+    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 2, b'ABCD')
+    ds = None
+    ds = gdal.Open('tmp/test_create.nc')
+    assert ds.GetGeoTransform() == pytest.approx([2, 0.1, 0, 49, 0, -0.1], rel=1e-10)
+    assert ds.GetRasterBand(1).ReadRaster() == b'ABCD'
+    ds = None
+    gdal.Unlink('tmp/test_create.nc')
+
+
+def test_netcdf_sg1_8_max_variable_with_max_width_string_field_no_warning():
+
+    gdal.VectorTranslate("tmp/poly.nc", "../ogr/data/poly.shp", format="netCDF")
+
+    gdal.ErrorReset()
+    # Check that opening in raster/vector mode doesn't emit warning
+    ds = gdal.OpenEx("tmp/poly.nc")
+    assert gdal.GetLastErrorType() == 0
+    assert ds
+    assert ds.GetLayerCount() == 1
+    ds = None
+    gdal.Unlink('tmp/poly.nc')
+
 
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]

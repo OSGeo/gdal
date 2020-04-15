@@ -5,7 +5,9 @@ FlatGeobuf
 
 .. versionadded:: 3.1
 
-.. shortname:: ``FlatGeobuf``
+.. shortname:: FlatGeobuf
+
+.. built_in_by_default::
 
 This driver implements read/write support for access to features encoded
 in `FlatGeobuf <https://github.com/bjornharrtell/flatgeobuf>`__ format, a
@@ -28,16 +30,16 @@ A single .fgb file only contains one single layer. For multiple layer support,
 it is possible to put several .fgb files in a directory, and use that directory
 name as the connection string.
 
-On creation, passing a filenam without a .fgb suffix will instruct the driver
+On creation, passing a filename without a .fgb suffix will instruct the driver
 to create a directory of that name, and create layers as .fgb files in that
 directory.
 
 Open options
 ------------
 
--  **VERIFY_BUFFERS=**\ *YES/NO*: Set the YES verify buffers when reading.
-    This can provide some protection for invalid/corrupt data with a performance
-    trade off. Defaults to YES.
+-  **VERIFY_BUFFERS=**\ *YES/NO*: Set to YES to verify buffers when reading.
+   This can provide some protection for invalid/corrupt data with a performance
+   trade off. Defaults to YES.
 
 Dataset Creation Options
 ------------------------
@@ -47,8 +49,14 @@ None
 Layer Creation Options
 ----------------------
 
--  **SPATIAL_INDEX=**\ *YES/NO*: Set the YES to create a
+-  **SPATIAL_INDEX=**\ *YES/NO*: Set to YES to create a
    spatial index. Defaults to YES.
+-  **TEMPORARY_DIR=**\ path: Path to an existing directory where temporary
+   files should be created. Only used if SPATIAL_INDEX=YES. If not specified,
+   the directory of the output file will be used for regular filenames. For
+   other VSI file systems, the temporary directory will be the one decided by
+   the :cpp:func:`CPLGenerateTempFilename` function.
+   "/vsimem/" can be used for in-memory temporary files.
 
 Examples
 --------
@@ -64,7 +72,7 @@ Examples
 
 -  Conversion of a Geopackage file with multiple layers:
 
-    ::
+   ::
 
       % ogr2ogr -f FlatGeobuf my_fgb_dataset input.gpkg
 

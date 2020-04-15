@@ -2009,9 +2009,10 @@ GByte* GDALColorReliefPrecompute(GDALRasterBandH hSrcBand,
     const int nIndexOffset = (eDT == GDT_Int16) ? 32768 : 0;
     *pnIndexOffset = nIndexOffset;
     const int nXSize = GDALGetRasterBandXSize(hSrcBand);
-    const int nYSize = GDALGetRasterBandXSize(hSrcBand);
+    const int nYSize = GDALGetRasterBandYSize(hSrcBand);
     if( eDT == GDT_Byte ||
-        ((eDT == GDT_Int16 || eDT == GDT_UInt16) && nXSize * nYSize > 65536) )
+        ((eDT == GDT_Int16 || eDT == GDT_UInt16) &&
+         static_cast<GIntBig>(nXSize) * nYSize > 65536) )
     {
         const int iMax = (eDT == GDT_Byte) ? 256: 65536;
         pabyPrecomputed = static_cast<GByte *>(VSI_MALLOC2_VERBOSE(4, iMax));
@@ -3307,7 +3308,7 @@ static Algorithm GetAlgorithm(const char* pszProcessing)
 /**
  * Apply a DEM processing.
  *
- * This is the equivalent of the <a href="gdaldem.html">gdaldem</a> utility.
+ * This is the equivalent of the <a href="/programs/gdaldem.html">gdaldem</a> utility.
  *
  * GDALDEMProcessingOptions* must be allocated and freed with
  * GDALDEMProcessingOptionsNew() and GDALDEMProcessingOptionsFree()
@@ -3859,7 +3860,7 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
  * Allocates a GDALDEMProcessingOptions struct.
  *
  * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
- *                  The accepted options are the ones of the <a href="gdaldem.html">gdaldem</a> utility.
+ *                  The accepted options are the ones of the <a href="/programs/gdaldem.html">gdaldem</a> utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
  *                           otherwise (gdal_translate_bin.cpp use case) must be allocated with
  *                           GDALDEMProcessingOptionsForBinaryNew() prior to this function. Will be

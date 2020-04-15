@@ -5,6 +5,8 @@ SQLite / Spatialite RDBMS
 
 .. shortname:: SQLite
 
+.. build_dependencies:: libsqlite3 or libspatialite
+
 OGR optionally supports spatial and non-spatial tables stored in SQLite
 3.x database files. SQLite is a "light weight" single file based RDBMS
 engine with fairly complete SQL semantics and respectable performance.
@@ -39,7 +41,7 @@ default.
 
 By default, SQL statements are passed directly to the SQLite database
 engine. It's also possible to request the driver to handle SQL commands
-with `OGR SQL <ogr_sql.html>`__ engine, by passing **"OGRSQL"** string
+with :ref:`OGR SQL <ogr_sql_dialect>` engine, by passing **"OGRSQL"** string
 to the ExecuteSQL() method, as name of the SQL dialect.
 
 The OGR_SQLITE_SYNCHRONOUS configuration option
@@ -141,8 +143,7 @@ The SQLite SQL dialect
 ----------------------
 
 Starting with OGR 1.10, the SQLite SQL engine can be used to run SQL
-queries on any OGR datasource if using the `SQLite
-SQL <ogr_sql_sqlite.html>`__ dialect.
+queries on any OGR datasource if using the :ref:`sql_sqlite_dialect`.
 
 The VirtualOGR SQLite extension
 -------------------------------
@@ -212,7 +213,7 @@ function to automatically load all the layers of a datasource.
    sqlite> SELECT * FROM sqlite_master;
    table|poly|poly|0|CREATE VIRTUAL TABLE "poly" USING VirtualOGR('poly.shp', 0, 'poly')
 
-Refer to the `SQLite SQL <ogr_sql_sqlite.html>`__ dialect for an
+Refer to the :ref:`sql_sqlite_dialect` for an
 overview of the capabilities of VirtualOGR tables.
 
 Creation Issues

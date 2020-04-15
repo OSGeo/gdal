@@ -55,6 +55,10 @@
 
 #include "flatbuffers/stl_emulation.h"
 
+#if defined(__ICCARM__)
+#include <intrinsics.h>
+#endif
+
 // Note the __clang__ check is needed, because clang presents itself
 // as an older GNUC compiler (4.2).
 // Clang 3.3 and later implement all of the ISO C++ 2011 standard.
@@ -117,7 +121,7 @@
   #define FLATBUFFERS_LITTLEENDIAN 0
 #endif // __s390x__
 #if !defined(FLATBUFFERS_LITTLEENDIAN)
-  #if defined(__GNUC__) || defined(__clang__)
+  #if defined(__GNUC__) || defined(__clang__) || defined(__ICCARM__)
     #if (defined(__BIG_ENDIAN__) || \
          (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__))
       #define FLATBUFFERS_LITTLEENDIAN 0
@@ -140,6 +144,10 @@
 #define FLATBUFFERS_VERSION_REVISION 0
 #define FLATBUFFERS_STRING_EXPAND(X) #X
 #define FLATBUFFERS_STRING(X) FLATBUFFERS_STRING_EXPAND(X)
+namespace flatbuffers {
+  // Returns version as string  "MAJOR.MINOR.REVISION".
+  const char* FLATBUFFERS_VERSION();
+}
 
 #if (!defined(_MSC_VER) || _MSC_VER > 1600) && \
     (!defined(__GNUC__) || (__GNUC__ * 100 + __GNUC_MINOR__ >= 407)) || \
@@ -191,7 +199,7 @@
   // to detect a header that provides an implementation
   #if defined(__has_include)
     // Check for std::string_view (in c++17)
-    #if __has_include(<string_view>) && (__cplusplus >= 201606 || _HAS_CXX17)
+    #if __has_include(<string_view>) && (__cplusplus >= 201606 || (defined(_HAS_CXX17) && _HAS_CXX17))
       #include <string_view>
       namespace flatbuffers {
         typedef std::string_view string_view;
@@ -234,8 +242,8 @@
 // Suppress Undefined Behavior Sanitizer (recoverable only). Usage:
 // - __supress_ubsan__("undefined")
 // - __supress_ubsan__("signed-integer-overflow")
-#if defined(__clang__)
-  #define __supress_ubsan__(type) __attribute__((no_sanitize_address))
+#if defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7))
+  #define __supress_ubsan__(type) __attribute__((no_sanitize(type)))
 #elif defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__ >= 409)
   #define __supress_ubsan__(type) __attribute__((no_sanitize_undefined))
 #else
@@ -303,6 +311,11 @@ template<typename T> T EndianSwap(T t) {
     #define FLATBUFFERS_BYTESWAP16 _byteswap_ushort
     #define FLATBUFFERS_BYTESWAP32 _byteswap_ulong
     #define FLATBUFFERS_BYTESWAP64 _byteswap_uint64
+  #elif defined(__ICCARM__)
+    #define FLATBUFFERS_BYTESWAP16 __REV16
+    #define FLATBUFFERS_BYTESWAP32 __REV
+    #define FLATBUFFERS_BYTESWAP64(x) \
+       ((__REV(static_cast<uint32_t>(x >> 32U))) | (static_cast<uint64_t>(__REV(static_cast<uint32_t>(x)))) << 32U)
   #else
     #if defined(__GNUC__) && __GNUC__ * 100 + __GNUC_MINOR__ < 408 && !defined(__clang__)
       // __builtin_bswap16 was missing prior to GCC 4.8.
@@ -317,22 +330,20 @@ template<typename T> T EndianSwap(T t) {
   if (sizeof(T) == 1) {   // Compile-time if-then's.
     return t;
   } else if (sizeof(T) == 2) {
-    union { T t; uint16_t i; } u;
-    u.t = t;
+    union { T t; uint16_t i; } u = { t };
     u.i = FLATBUFFERS_BYTESWAP16(u.i);
     return u.t;
   } else if (sizeof(T) == 4) {
-    union { T t; uint32_t i; } u;
-    u.t = t;
+    union { T t; uint32_t i; } u = { t };
     u.i = FLATBUFFERS_BYTESWAP32(u.i);
     return u.t;
   } else if (sizeof(T) == 8) {
-    union { T t; uint64_t i; } u;
-    u.t = t;
+    union { T t; uint64_t i; } u = { t };
     u.i = FLATBUFFERS_BYTESWAP64(u.i);
     return u.t;
   } else {
     FLATBUFFERS_ASSERT(0);
+    return t;
   }
 }
 
@@ -371,6 +382,7 @@ template<typename T> __supress_ubsan__("alignment") void WriteScalar(void *p, Of
 // Computes how many bytes you'd have to pad to be able to write an
 // "scalar_size" scalar if the buffer had grown to "buf_size" (downwards in
 // memory).
+ __supress_ubsan__("unsigned-integer-overflow")
 inline size_t PaddingBytes(size_t buf_size, size_t scalar_size) {
   return ((~buf_size) + 1) & (scalar_size - 1);
 }

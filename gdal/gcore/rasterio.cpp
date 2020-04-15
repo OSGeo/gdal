@@ -2899,6 +2899,7 @@ template<> void GDALUnrolledCopy<GByte,2,1>( GByte* CPL_RESTRICT pDest,
         }
 #endif
 
+        const __m128i xmm_zero = _mm_setzero_si128();
         const __m128i xmm_mask = _mm_set1_epi16(0xff);
         // If we were sure that there would always be 1 trailing byte, we could
         // check against nIters - 15
@@ -2910,8 +2911,8 @@ template<> void GDALUnrolledCopy<GByte,2,1>( GByte* CPL_RESTRICT pDest,
             xmm0 = _mm_and_si128(xmm0, xmm_mask);
             xmm1 = _mm_and_si128(xmm1, xmm_mask);
             // Pack int16 to uint8
-            xmm0 = _mm_packus_epi16(xmm0, xmm0);
-            xmm1 = _mm_packus_epi16(xmm1, xmm1);
+            xmm0 = _mm_packus_epi16(xmm0, xmm_zero);
+            xmm1 = _mm_packus_epi16(xmm1, xmm_zero);
 
             // Move 64 lower bits of xmm1 to 64 upper bits of xmm0
             xmm1 = _mm_slli_si128(xmm1, 8);
@@ -3242,6 +3243,10 @@ GDALCopyWords64( const void * CPL_RESTRICT pSrcData,
 
         if( nWordCount == 1 )
         {
+#ifdef CSA_BUILD
+            // Avoid false positives...
+            memcpy(pDstData, pSrcData, nSrcDataTypeSize);
+#else
             if( nSrcDataTypeSize == 2 )
                 memcpy(pDstData, pSrcData, 2);
             else if( nSrcDataTypeSize == 4 )
@@ -3250,6 +3255,7 @@ GDALCopyWords64( const void * CPL_RESTRICT pSrcData,
                 memcpy(pDstData, pSrcData, 8 );
             else /* if( eSrcType == GDT_CFloat64 ) */
                 memcpy(pDstData, pSrcData, 16);
+#endif
             return;
         }
 

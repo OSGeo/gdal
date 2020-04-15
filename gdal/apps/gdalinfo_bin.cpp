@@ -233,7 +233,7 @@ MAIN_START(argc, argv)
     GDALDestroyDriverManager();
 
     CPLDumpSharedList( nullptr );
-    CPLCleanupTLS();
+    GDALDestroy();
 
     exit( 0 );
 }

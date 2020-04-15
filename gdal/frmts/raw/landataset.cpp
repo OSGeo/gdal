@@ -478,6 +478,7 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
+    // cppcheck-suppress knownConditionTrueFalse
     if( nPixelOffset != -1 &&
         poDS->nRasterXSize > INT_MAX / (nPixelOffset * nBandCount) )
     {
@@ -1041,7 +1042,7 @@ void GDALRegister_LAN()
     poDriver->SetDescription( "LAN" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Erdas .LAN/.GIS" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#LAN" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/lan.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte Int16" );
 

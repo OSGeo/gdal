@@ -5,6 +5,8 @@ CouchDB - CouchDB/GeoCouch
 
 .. shortname:: CouchDB
 
+.. build_dependencies:: lilbcurl
+
 This driver can connect to the a CouchDB service, potentially enabled
 with the GeoCouch spatial extension.
 

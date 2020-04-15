@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
@@ -35,9 +35,10 @@ from osgeo import osr
 
 
 def Usage():
-    print('Usage: gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]')
+    print('Usage: gdal_edit [--help-general] [-ro] [-a_srs srs_def]')
+    print('                 [-a_ullr ulx uly lrx lry] [-a_ulurll ulx uly urx ury llx lly]')
     print('                 [-tr xres yres] [-unsetgt] [-unsetrpc] [-a_nodata value] [-unsetnodata]')
-    print('                 [-offset value] [-scale value]')
+    print('                 [-offset value] [-scale value] [-units value]')
     print('                 [-colorinterp_X red|green|blue|alpha|gray|undefined]*')
     print('                 [-unsetstats] [-stats] [-approx_stats]')
     print('                 [-setstats min max mean stddev]')
@@ -69,10 +70,15 @@ def gdal_edit(argv):
     srs = None
     ulx = None
     uly = None
+    urx = None
+    ury = None
+    llx = None
+    lly = None
     lrx = None
     lry = None
     nodata = None
     unsetnodata = False
+    units = None
     xres = None
     yres = None
     unsetgt = False
@@ -106,6 +112,19 @@ def gdal_edit(argv):
             lrx = float(argv[i + 1])
             i = i + 1
             lry = float(argv[i + 1])
+            i = i + 1
+        elif argv[i] == '-a_ulurll' and i < len(argv) - 6:
+            ulx = float(argv[i + 1])
+            i = i + 1
+            uly = float(argv[i + 1])
+            i = i + 1
+            urx = float(argv[i + 1])
+            i = i + 1
+            ury = float(argv[i + 1])
+            i = i + 1
+            llx = float(argv[i + 1])
+            i = i + 1
+            lly = float(argv[i + 1])
             i = i + 1
         elif argv[i] == '-tr' and i < len(argv) - 2:
             xres = float(argv[i + 1])
@@ -180,6 +199,9 @@ def gdal_edit(argv):
             else:
                 statsdev = None
             i = i + 1
+        elif argv[i] == '-units' and i < len(argv) - 1:
+            units = argv[i + 1]
+            i = i + 1
         elif argv[i] == '-unsetmd':
             unsetmd = True
         elif argv[i] == '-unsetnodata':
@@ -224,7 +246,7 @@ def gdal_edit(argv):
 
     if (srs is None and lry is None and yres is None and not unsetgt and
             not unsetstats and not stats and not setstats and nodata is None and
-            not molist and not unsetmd and not gcp_list and
+            not units and not molist and not unsetmd and not gcp_list and
             not unsetnodata and not colorinterp and
             scale is None and offset is None and not unsetrpc):
         print('No option specified')
@@ -234,12 +256,14 @@ def gdal_edit(argv):
     exclusive_option = 0
     if lry is not None:
         exclusive_option = exclusive_option + 1
+    if lly is not None:  # -a_ulurll
+        exclusive_option = exclusive_option + 1
     if yres is not None:
         exclusive_option = exclusive_option + 1
     if unsetgt:
         exclusive_option = exclusive_option + 1
     if exclusive_option > 1:
-        print('-a_ullr, -tr and -unsetgt options are exclusive.')
+        print('-a_ullr, -a_ulurll, -tr and -unsetgt options are exclusive.')
         print('')
         return Usage()
 
@@ -299,6 +323,11 @@ def gdal_edit(argv):
               uly, 0, (lry - uly) / ds.RasterYSize]
         ds.SetGeoTransform(gt)
 
+    elif lly is not None:  # -a_ulurll
+        gt = [ulx, (urx - ulx) / ds.RasterXSize, (llx - ulx) / ds.RasterYSize,
+              uly, (ury - uly) / ds.RasterXSize, (lly - uly) / ds.RasterYSize]
+        ds.SetGeoTransform(gt)
+
     if yres is not None:
         gt = ds.GetGeoTransform()
         # Doh ! why is gt a tuple and not an array...
@@ -336,6 +365,10 @@ def gdal_edit(argv):
     if offset:
         for i in range(ds.RasterCount):
             ds.GetRasterBand(i + 1).SetOffset(offset[i])
+
+    if units:
+        for i in range(ds.RasterCount):
+            ds.GetRasterBand(i + 1).SetUnitType(units)
 
     if unsetstats:
         for i in range(ds.RasterCount):

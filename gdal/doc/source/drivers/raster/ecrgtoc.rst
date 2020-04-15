@@ -6,6 +6,8 @@ ECRGTOC -- ECRG Table Of Contents (TOC.xml)
 
 .. shortname:: ECRGTOC
 
+.. built_in_by_default::
+
 This is a read-only reader for ECRG (Enhanced Compressed Raster Graphic)
 products, that uses the table of content file, TOC.xml, and exposes it
 as a virtual dataset whose coverage is the set of ECRG frames contained

@@ -2344,7 +2344,7 @@ JPEGVGetField(TIFF* tif, uint32 tag, va_list ap)
 	switch (tag) {
 		case TIFFTAG_JPEGTABLES:
 			*va_arg(ap, uint32*) = sp->jpegtables_length;
-			*va_arg(ap, void**) = sp->jpegtables;
+			*va_arg(ap, const void**) = sp->jpegtables;
 			break;
 		case TIFFTAG_JPEGQUALITY:
 			*va_arg(ap, int*) = sp->jpegquality;

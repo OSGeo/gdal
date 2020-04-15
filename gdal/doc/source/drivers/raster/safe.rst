@@ -6,6 +6,8 @@ SAFE -- Sentinel-1 SAFE XML Product
 
 .. shortname:: SAFE
 
+.. built_in_by_default::
+
 Driver for Sentinel products. Currently supports only Sentinel-1 SAR
 products. See also the :ref:`GDAL Sentinel-2 driver <raster.sentinel2>`
 

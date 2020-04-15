@@ -388,9 +388,6 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
     /* Create a fresh dataset for us to work with */
     COASPDataset *poDS = new COASPDataset();
 
-    if (poDS == nullptr)
-        return nullptr;
-
     /* Steal the file pointer for the header */
     poDS->fpHdr = poOpenInfo->fpL;
     poOpenInfo->fpL = nullptr;
@@ -402,6 +399,13 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
     char *pszDir = VSIStrdup(CPLGetPath(poDS->pszFileName));
     const char *pszExt = "rc";
     int nNull = static_cast<int>(strlen(pszBaseName)) - 1;
+    if( nNull <= 0 )
+    {
+        VSIFree(pszDir);
+        VSIFree(pszBaseName);
+        delete poDS;
+        return nullptr;
+    }
     char *pszBase = (char *)CPLMalloc(nNull);
     strncpy(pszBase, pszBaseName, nNull);
     pszBase[nNull - 1] = '\0';
@@ -563,7 +567,7 @@ void GDALRegister_COASP()
                                "DRDC COASP SAR Processor Raster" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION,
                                "hdr" );
-    // poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_coasp.html");
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/coasp.html");
     poDriver->pfnIdentify = COASPDataset::Identify;
     poDriver->pfnOpen = COASPDataset::Open;
     GetGDALDriverManager()->RegisterDriver( poDriver );

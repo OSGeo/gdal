@@ -17,14 +17,15 @@ RUN apt-get update -y \
     && apt-get install -y --fix-missing --no-install-recommends \
             software-properties-common build-essential ca-certificates \
             git make cmake wget unzip libtool automake \
-            zlib1g-dev libsqlite3-dev pkg-config sqlite3
+            zlib1g-dev libsqlite3-dev pkg-config sqlite3 libcurl4-gnutls-dev \
+            libtiff5-dev
 
 # Setup build env for GDAL
 RUN apt-get update -y \
     && apt-get install -y --fix-missing --no-install-recommends \
        python3-dev python3-numpy \
        libjpeg-dev libgeos-dev \
-       curl libcurl4-gnutls-dev libexpat-dev libxerces-c-dev \
+       libexpat-dev libxerces-c-dev \
        libwebp-dev \
        libzstd1-dev bash zip curl \
        libpq-dev libssl-dev \
@@ -169,15 +170,15 @@ RUN date
 # PROJ dependencies
 RUN apt-get update; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
-        libsqlite3-0 \
-        curl unzip
+        libsqlite3-0 libtiff5 libcurl4 \
+        curl unzip ca-certificates
 
 # GDAL dependencies
 RUN apt-get update -y; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
         python3-numpy libpython3.6 \
         libjpeg-turbo8 libgeos-3.6.2 libgeos-c1v5 \
-        libcurl4 libexpat1 \
+        libexpat1 \
         libxerces-c3.2 \
         libwebp6 \
         libzstd1 bash libpq5 libssl1.1

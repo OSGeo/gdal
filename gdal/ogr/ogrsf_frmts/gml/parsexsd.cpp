@@ -134,11 +134,21 @@ bool GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
         return true;
     }
 
-    /* TODO: Would be nice to have a proper date type */
-    else if( EQUAL(pszBase, "date") ||
-             EQUAL(pszBase, "dateTime") )
+    else if( EQUAL(pszBase, "date")  )
     {
-        *pGMLType = GMLPT_String;
+        *pGMLType = GMLPT_Date;
+        return true;
+    }
+
+    else if( EQUAL(pszBase, "time")  )
+    {
+        *pGMLType = GMLPT_Time;
+        return true;
+    }
+
+    else if( EQUAL(pszBase, "dateTime") )
+    {
+        *pGMLType = GMLPT_DateTime;
         return true;
     }
 
@@ -432,10 +442,12 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             if (EQUAL(pszStrippedNSType, "string") ||
                 EQUAL(pszStrippedNSType, "Character"))
                 gmlType = GMLPT_String;
-            // TODO: Would be nice to have a proper date type.
-            else if (EQUAL(pszStrippedNSType, "date") ||
-                     EQUAL(pszStrippedNSType, "dateTime"))
-                gmlType = GMLPT_String;
+            else if (EQUAL(pszStrippedNSType, "date"))
+                gmlType = GMLPT_Date;
+            else if (EQUAL(pszStrippedNSType, "time"))
+                gmlType = GMLPT_Time;
+            else if (EQUAL(pszStrippedNSType, "dateTime"))
+                gmlType = GMLPT_DateTime;
             else if (EQUAL(pszStrippedNSType, "real") ||
                      EQUAL(pszStrippedNSType, "double") ||
                      EQUAL(pszStrippedNSType, "decimal"))

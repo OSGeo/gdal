@@ -6,6 +6,8 @@ CTG -- USGS LULC Composite Theme Grid
 
 .. shortname:: CTG
 
+.. built_in_by_default::
+
 This driver can read USGS Land Use and Land Cover (LULC) grids encoded
 in the Character Composite Theme Grid (CTG) format. Each file is
 reported as a 6-band dataset of type Int32. The meaning of each band is

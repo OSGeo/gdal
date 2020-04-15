@@ -1098,6 +1098,13 @@ def test_ogr_shape_29():
 
     ds = ogr.Open('tmp/UPPERCASE', update=1)
     lyr = ds.GetLayer(0)
+
+    assert lyr.GetMetadata_Dict('SHAPEFILE') == {
+        'CPG_VALUE': 'UTF-8',
+        'ENCODING_FROM_CPG': 'UTF-8',
+        'SOURCE_ENCODING': 'UTF-8'
+    }
+
     lyr.DeleteFeature(0)
     ds.ExecuteSQL('REPACK UPPERCASE')
     ds = None
@@ -1773,6 +1780,12 @@ def test_ogr_shape_49():
     ds = ogr.Open('data/facility_surface_dd.dbf')
     lyr = ds.GetLayer(0)
 
+    assert lyr.GetMetadata_Dict('SHAPEFILE') == {
+        'ENCODING_FROM_LDID': 'ISO-8859-1',
+        'LDID_VALUE': '87',
+        'SOURCE_ENCODING': 'ISO-8859-1'
+    }
+
     feat = lyr.GetFeature(91)
 
     name = feat.GetField('NAME')
@@ -1804,6 +1817,12 @@ def test_ogr_shape_50():
             'Recode failed, but TestCapability(OLCStringsAsUTF8) returns TRUE'
 
         pytest.skip('skipping test: iconv support needed')
+
+    assert lyr.GetMetadata_Dict('SHAPEFILE') == {
+        'ENCODING_FROM_LDID': 'CP936',
+        'LDID_VALUE': '77',
+        'SOURCE_ENCODING': 'CP936'
+    }
 
     # Setup the utf-8 string.
     if sys.version_info >= (3, 0, 0):
@@ -3821,7 +3840,6 @@ def test_ogr_shape_99():
         DATUM["CH1903",
             SPHEROID["Bessel 1841",6377397.155,299.1528128,
                 AUTHORITY["EPSG","7004"]],
-            TOWGS84[674.374,15.056,405.346,0,0,0,0],
             AUTHORITY["EPSG","6149"]],
         PRIMEM["Greenwich",0,
             AUTHORITY["EPSG","8901"]],
@@ -4763,6 +4781,42 @@ def test_ogr_shape_116_invalid_layer_name():
     assert ds.GetLayerCount() == 1
     ds = None
     gdal.RmdirRecursive(dirname)
+
+
+###############################################################################
+# Test case where a file with LDID/87 is overridden by a .cpg file
+
+
+def test_ogr_shape_ldid_and_cpg():
+
+    gdal.FileFromMemBuffer('/vsimem/tmp.dbf',
+                           open('data/facility_surface_dd.dbf', 'rb').read())
+    gdal.FileFromMemBuffer('/vsimem/tmp.cpg', 'UTF-8')
+    ds = gdal.OpenEx('/vsimem/tmp.dbf')
+    lyr = ds.GetLayer(0)
+    assert lyr.GetMetadata_Dict('SHAPEFILE') == {
+        'CPG_VALUE': 'UTF-8',
+        'ENCODING_FROM_CPG': 'UTF-8',
+        'ENCODING_FROM_LDID': 'ISO-8859-1',
+        'LDID_VALUE': '87',
+        'SOURCE_ENCODING': 'UTF-8'
+    }
+    ds = None
+
+    # Disable recoding
+    ds = gdal.OpenEx('/vsimem/tmp.dbf', open_options = ['ENCODING='])
+    lyr = ds.GetLayer(0)
+    assert lyr.GetMetadata_Dict('SHAPEFILE') == {
+        'CPG_VALUE': 'UTF-8',
+        'ENCODING_FROM_CPG': 'UTF-8',
+        'ENCODING_FROM_LDID': 'ISO-8859-1',
+        'LDID_VALUE': '87',
+        'SOURCE_ENCODING': ''
+    }
+    ds = None
+
+    gdal.Unlink('/vsimem/tmp.dbf')
+    gdal.Unlink('/vsimem/tmp.cpg')
 
 ###############################################################################
 

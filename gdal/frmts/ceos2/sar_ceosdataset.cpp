@@ -2196,7 +2196,7 @@ void GDALRegister_SAR_CEOS()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "CEOS SAR Image" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#SAR_CEOS" );
+                               "drivers/raster/sar_ceos.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = SAR_CEOSDataset::Open;

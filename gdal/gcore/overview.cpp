@@ -393,13 +393,20 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
     T *pDstScanline = static_cast<T *>(
         VSI_MALLOC_VERBOSE(
             nDstXWidth * GDALGetDataTypeSizeBytes(eWrkDataType) ) );
-    int* panSrcXOffShifted = static_cast<int *>(
-        VSI_MALLOC_VERBOSE(2 * nDstXWidth * sizeof(int) ) );
+    struct PrecomputedXValue
+    {
+        int nLeftXOffShifted;
+        int nRightXOffShifted;
+        double dfLeftWeight;
+        double dfRightWeight;
+    };
+    PrecomputedXValue* pasSrcX = static_cast<PrecomputedXValue *>(
+        VSI_MALLOC_VERBOSE(nDstXWidth * sizeof(PrecomputedXValue) ) );
 
-    if( pDstScanline == nullptr || panSrcXOffShifted == nullptr )
+    if( pDstScanline == nullptr || pasSrcX == nullptr )
     {
         VSIFree(pDstScanline);
-        VSIFree(panSrcXOffShifted);
+        VSIFree(pasSrcX);
         return CE_Failure;
     }
 
@@ -412,7 +419,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                                nTransparentIdx) )
     {
         VSIFree(pDstScanline);
-        VSIFree(panSrcXOffShifted);
+        VSIFree(pasSrcX);
         return CE_Failure;
     }
 
@@ -424,7 +431,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
         {
             CPLError(CE_Failure, CPLE_ObjectNull, "No aEntries.");
             VSIFree(pDstScanline);
-            VSIFree(panSrcXOffShifted);
+            VSIFree(pasSrcX);
             return CE_Failure;
         }
         aEntries[static_cast<int>(tNoDataValue)].c4 = 0;
@@ -447,33 +454,21 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
         double dfSrcXOff = dfSrcXDelta + iDstPixel * dfXRatioDstToSrc;
         // Apply some epsilon to avoid numerical precision issues
         int nSrcXOff = static_cast<int>(dfSrcXOff + 1e-8);
-#ifdef only_pixels_with_more_than_10_pct_participation
-        // When oversampling, don't take into account pixels that have a tiny
-        // participation in the resulting pixel
-        if( dfXRatioDstToSrc > 1 && dfSrcXOff - nSrcXOff > 0.9 &&
-            nSrcXOff < nChunkRightXOff)
-            nSrcXOff ++;
-#endif
-        if( nSrcXOff < nChunkXOff )
-            nSrcXOff = nChunkXOff;
-
         double dfSrcXOff2 = dfSrcXDelta + (iDstPixel+1)* dfXRatioDstToSrc;
         int nSrcXOff2 = static_cast<int>(ceil(dfSrcXOff2 - 1e-8));
-#ifdef only_pixels_with_more_than_10_pct_participation
-        // When oversampling, don't take into account pixels that have a tiny
-        // participation in the resulting pixel
-        if( dfXRatioDstToSrc > 1 && nSrcXOff2 - dfSrcXOff2 > 0.9 &&
-            nSrcXOff2 > nChunkXOff)
-            nSrcXOff2 --;
-#endif
+
+        if( nSrcXOff < nChunkXOff )
+            nSrcXOff = nChunkXOff;
         if( nSrcXOff2 == nSrcXOff )
             nSrcXOff2 ++;
         if( nSrcXOff2 > nChunkRightXOff )
             nSrcXOff2 = nChunkRightXOff;
 
-        panSrcXOffShifted[2 * (iDstPixel - nDstXOff)] = nSrcXOff - nChunkXOff;
-        panSrcXOffShifted[2 * (iDstPixel - nDstXOff) + 1] =
-            nSrcXOff2 - nChunkXOff;
+        pasSrcX[iDstPixel - nDstXOff].nLeftXOffShifted = nSrcXOff - nChunkXOff;
+        pasSrcX[iDstPixel - nDstXOff].nRightXOffShifted = nSrcXOff2 - nChunkXOff;
+        pasSrcX[iDstPixel - nDstXOff].dfLeftWeight = ( nSrcXOff2 == nSrcXOff + 1 ) ? 1.0 :  1 - (dfSrcXOff - nSrcXOff);
+        pasSrcX[iDstPixel - nDstXOff].dfRightWeight = 1 - (nSrcXOff2 - dfSrcXOff2);
+
         if( nSrcXOff2 - nSrcXOff != 2 ||
             (nLastSrcXOff2 >= 0 && nLastSrcXOff2 != nSrcXOff) )
         {
@@ -492,25 +487,11 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
     {
         double dfSrcYOff = dfSrcYDelta + iDstLine * dfYRatioDstToSrc;
         int nSrcYOff = static_cast<int>(dfSrcYOff + 1e-8);
-#ifdef only_pixels_with_more_than_10_pct_participation
-        // When oversampling, don't take into account pixels that have a tiny
-        // participation in the resulting pixel
-        if( dfYRatioDstToSrc > 1 && dfSrcYOff - nSrcYOff > 0.9 &&
-            nSrcYOff < nChunkBottomYOff)
-            nSrcYOff ++;
-#endif
         if( nSrcYOff < nChunkYOff )
             nSrcYOff = nChunkYOff;
 
         double dfSrcYOff2 = dfSrcYDelta + (iDstLine+1) * dfYRatioDstToSrc;
         int nSrcYOff2 = static_cast<int>(ceil(dfSrcYOff2 - 1e-8));
-#ifdef only_pixels_with_more_than_10_pct_participation
-        // When oversampling, don't take into account pixels that have a tiny
-        // participation in the resulting pixel
-        if( dfYRatioDstToSrc > 1 && nSrcYOff2 - dfSrcYOff2 > 0.9 &&
-            nSrcYOff2 > nChunkYOff)
-            nSrcYOff2 --;
-#endif
         if( nSrcYOff2 == nSrcYOff )
             ++nSrcYOff2;
         if( nSrcYOff2 > nChunkBottomYOff )
@@ -528,7 +509,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                 // Optimized case : no nodata, overview by a factor of 2 and
                 // regular x and y src spacing.
                 const T* pSrcScanlineShifted =
-                    pChunk + panSrcXOffShifted[0] +
+                    pChunk + pasSrcX[0].nLeftXOffShifted +
                     static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize;
                 for( int iDstPixel = 0; iDstPixel < nDstXWidth; ++iDstPixel )
                 {
@@ -547,27 +528,74 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
             }
             else
             {
+                const double dfBottomWeight =
+                    (nSrcYOff + 1 == nSrcYOff2) ? 1.0 : 1.0 - (dfSrcYOff - nSrcYOff);
+                const double dfTopWeight = 1.0 - (nSrcYOff2 - dfSrcYOff2);
                 nSrcYOff -= nChunkYOff;
                 nSrcYOff2 -= nChunkYOff;
 
                 for( int iDstPixel = 0; iDstPixel < nDstXWidth; ++iDstPixel )
                 {
-                    const int nSrcXOff = panSrcXOffShifted[2 * iDstPixel];
-                    const int nSrcXOff2 = panSrcXOffShifted[2 * iDstPixel + 1];
+                    const int nSrcXOff = pasSrcX[iDstPixel].nLeftXOffShifted;
+                    const int nSrcXOff2 = pasSrcX[iDstPixel].nRightXOffShifted;
 
-                    Tsum dfTotal = 0;
+                    double dfTotal = 0;
+                    double dfTotalWeight = 0;
                     GPtrDiff_t nCount = 0;
 
                     for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
                     {
-                        for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
+                        const double dfWeightY =
+                            (iY == nSrcYOff) ? dfBottomWeight :
+                            (iY + 1 == nSrcYOff2) ? dfTopWeight :
+                            1.0;
+
+                        const auto pChunkShifted = pChunk +
+                            static_cast<GPtrDiff_t>(iY) *nChunkXSize;
+                        // Left pixel
                         {
-                            const T val = pChunk[iX + static_cast<GPtrDiff_t>(iY) *nChunkXSize];
+                            const int iX = nSrcXOff;
+                            const T val = pChunkShifted[iX];
                             if( pabyChunkNodataMask == nullptr ||
                                 pabyChunkNodataMask[iX + iY *nChunkXSize] )
                             {
-                                dfTotal += val;
-                                ++nCount;
+                                nCount ++;
+                                const double dfWeightX = pasSrcX[iDstPixel].dfLeftWeight;
+                                const double dfWeight = dfWeightX * dfWeightY;
+                                dfTotalWeight += dfWeight;
+                                dfTotal += val * dfWeight;
+                            }
+                        }
+
+                        if( nSrcXOff + 1 < nSrcXOff2 )
+                        {
+                            // Middle pixels
+                            for( int iX = nSrcXOff + 1; iX + 1 < nSrcXOff2; ++iX )
+                            {
+                                const T val = pChunkShifted[iX];
+                                if( pabyChunkNodataMask == nullptr ||
+                                    pabyChunkNodataMask[iX + iY *nChunkXSize] )
+                                {
+                                    nCount ++;
+                                    const double dfWeight = dfWeightY;
+                                    dfTotalWeight += dfWeight;
+                                    dfTotal += val * dfWeight;
+                                }
+                            }
+
+                            // Right pixel
+                            {
+                                const int iX = nSrcXOff2 - 1;
+                                const T val = pChunkShifted[iX];
+                                if( pabyChunkNodataMask == nullptr ||
+                                    pabyChunkNodataMask[iX + iY *nChunkXSize] )
+                                {
+                                    nCount ++;
+                                    const double dfWeightX = pasSrcX[iDstPixel].dfRightWeight;
+                                    const double dfWeight = dfWeightX * dfWeightY;
+                                    dfTotalWeight += dfWeight;
+                                    dfTotal += val * dfWeight;
+                                }
                             }
                         }
                     }
@@ -581,14 +609,14 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                     else if( eWrkDataType == GDT_Byte ||
                              eWrkDataType == GDT_UInt16)
                     {
-                        auto nVal = static_cast<T>((dfTotal + nCount / 2) / nCount);
+                        auto nVal = static_cast<T>((dfTotal + dfTotalWeight / 2) / dfTotalWeight);
                         if( bHasNoData && nVal == tNoDataValue )
                             nVal = tReplacementVal;
                         pDstScanline[iDstPixel] = nVal;
                     }
                     else
                     {
-                        auto nVal = static_cast<T>(dfTotal / nCount);
+                        auto nVal = static_cast<T>(dfTotal / dfTotalWeight);
                         if( bHasNoData && nVal == tNoDataValue )
                             nVal = tReplacementVal;
                         pDstScanline[iDstPixel] = nVal;
@@ -603,8 +631,8 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 
             for( int iDstPixel = 0; iDstPixel < nDstXWidth; ++iDstPixel )
             {
-                const int nSrcXOff = panSrcXOffShifted[2 * iDstPixel];
-                const int nSrcXOff2 = panSrcXOffShifted[2 * iDstPixel + 1];
+                const int nSrcXOff = pasSrcX[iDstPixel].nLeftXOffShifted;
+                const int nSrcXOff2 = pasSrcX[iDstPixel].nRightXOffShifted;
 
                 GPtrDiff_t nTotalR = 0;
                 GPtrDiff_t nTotalG = 0;
@@ -653,7 +681,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 
     CPLFree( pDstScanline );
     CPLFree( aEntries );
-    CPLFree( panSrcXOffShifted );
+    CPLFree( pasSrcX );
 
     return eErr;
 }

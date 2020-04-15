@@ -3445,7 +3445,7 @@ int NITFDataset::ScanJPEGQLevel( GUIntBig *pnDataStart, bool *pbError )
 /* -------------------------------------------------------------------- */
 /*      Do we have an NITF app tag?  If so, pull out the Q level.       */
 /* -------------------------------------------------------------------- */
-    if( !EQUAL((char *)abyHeader+nOffset+6,"NITF") )
+    if( memcmp(abyHeader+nOffset+6,"NITF\0",5) != 0 )
         return 0;
 
     return abyHeader[22+nOffset];
@@ -6162,7 +6162,7 @@ void GDALRegister_NITF()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "National Imagery Transmission Format" );
 
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_nitf.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/nitf.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ntf" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,

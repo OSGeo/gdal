@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2012-2013, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2012-2019, Even Rouault <even dot rouault at spatialys.com>
  *
  * This software is available under the following "MIT Style" license,
  * or at the option of the licensee under the LGPL (see COPYING).  This
@@ -32,157 +32,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log: dbfopen.c,v $
- * Revision 1.92  2016-12-05 18:44:08  erouault
- * * dbfopen.c, shapefil.h: write DBF end-of-file character 0x1A by default.
- * This behaviour can be controlled with the DBFSetWriteEndOfFileChar()
- * function.
- *
- * Revision 1.91  2016-12-05 12:44:05  erouault
- * * Major overhaul of Makefile build system to use autoconf/automake.
- *
- * * Warning fixes in contrib/
- *
- * Revision 1.90  2016-12-04 15:30:15  erouault
- * * shpopen.c, dbfopen.c, shptree.c, shapefil.h: resync with
- * GDAL Shapefile driver. Mostly cleanups. SHPObject and DBFInfo
- * structures extended with new members. New functions:
- * DBFSetLastModifiedDate, SHPOpenLLEx, SHPRestoreSHX,
- * SHPSetFastModeReadObject
- *
- * * sbnsearch.c: new file to implement original ESRI .sbn spatial
- * index reading. (no write support). New functions:
- * SBNOpenDiskTree, SBNCloseDiskTree, SBNSearchDiskTree,
- * SBNSearchDiskTreeInteger, SBNSearchFreeIds
- *
- * * Makefile, makefile.vc, CMakeLists.txt, shapelib.def: updates
- * with new file and symbols.
- *
- * * commit: helper script to cvs commit
- *
- * Revision 1.89  2011-07-24 05:59:25  fwarmerdam
- * minimize use of CPLError in favor of SAHooks.Error()
- *
- * Revision 1.88  2011-05-13 17:35:17  fwarmerdam
- * added DBFReorderFields() and DBFAlterFields() functions (from Even)
- *
- * Revision 1.87  2011-05-07 22:41:02  fwarmerdam
- * ensure pending record is flushed when adding a native field (GDAL #4073)
- *
- * Revision 1.86  2011-04-17 15:15:29  fwarmerdam
- * Removed unused variable.
- *
- * Revision 1.85  2010-12-06 16:09:34  fwarmerdam
- * fix buffer read overrun fetching code page (bug 2276)
- *
- * Revision 1.84  2009-10-29 19:59:48  fwarmerdam
- * avoid crash on truncated header (gdal #3093)
- *
- * Revision 1.83  2008/11/12 14:28:15  fwarmerdam
- * DBFCreateField() now works on files with records
- *
- * Revision 1.82  2008/11/11 17:47:09  fwarmerdam
- * added DBFDeleteField() function
- *
- * Revision 1.81  2008/01/03 17:48:13  bram
- * in DBFCreate, use default code page LDID/87 (= 0x57, ANSI)
- * instead of LDID/3.  This seems to be the same as what ESRI
- * would be doing by default.
- *
- * Revision 1.80  2007/12/30 14:36:39  fwarmerdam
- * avoid syntax issue with last comment.
- *
- * Revision 1.79  2007/12/30 14:35:48  fwarmerdam
- * Avoid char* / unsigned char* warnings.
- *
- * Revision 1.78  2007/12/18 18:28:07  bram
- * - create hook for client specific atof (bugzilla ticket 1615)
- * - check for NULL handle before closing cpCPG file, and close after reading.
- *
- * Revision 1.77  2007/12/15 20:25:21  bram
- * dbfopen.c now reads the Code Page information from the DBF file, and exports
- * this information as a string through the DBFGetCodePage function.  This is
- * either the number from the LDID header field ("LDID/<number>") or as the
- * content of an accompanying .CPG file.  When creating a DBF file, the code can
- * be set using DBFCreateEx.
- *
- * Revision 1.76  2007/12/12 22:21:32  bram
- * DBFClose: check for NULL psDBF handle before trying to close it.
- *
- * Revision 1.75  2007/12/06 13:58:19  fwarmerdam
- * make sure file offset calculations are done in as SAOffset
- *
- * Revision 1.74  2007/12/06 07:00:25  fwarmerdam
- * dbfopen now using SAHooks for fileio
- *
- * Revision 1.73  2007/09/03 19:48:11  fwarmerdam
- * move DBFReadAttribute() static dDoubleField into dbfinfo
- *
- * Revision 1.72  2007/09/03 19:34:06  fwarmerdam
- * Avoid use of static tuple buffer in DBFReadTuple()
- *
- * Revision 1.71  2006/06/22 14:37:18  fwarmerdam
- * avoid memory leak if dbfopen fread fails
- *
- * Revision 1.70  2006/06/17 17:47:05  fwarmerdam
- * use calloc() for dbfinfo in DBFCreate
- *
- * Revision 1.69  2006/06/17 15:34:32  fwarmerdam
- * disallow creating fields wider than 255
- *
- * Revision 1.68  2006/06/17 15:12:40  fwarmerdam
- * Fixed C++ style comments.
- *
- * Revision 1.67  2006/06/17 00:24:53  fwarmerdam
- * Don't treat non-zero decimals values as high order byte for length
- * for strings.  It causes serious corruption for some files.
- * http://bugzilla.remotesensing.org/show_bug.cgi?id=1202
- *
- * Revision 1.66  2006/03/29 18:26:20  fwarmerdam
- * fixed bug with size of pachfieldtype in dbfcloneempty
- *
- * Revision 1.65  2006/02/15 01:14:30  fwarmerdam
- * added DBFAddNativeFieldType
- *
- * Revision 1.64  2006/02/09 00:29:04  fwarmerdam
- * Changed to put spaces into string fields that are NULL as
- * per http://bugzilla.maptools.org/show_bug.cgi?id=316.
- *
- * Revision 1.63  2006/01/25 15:35:43  fwarmerdam
- * check success on DBFFlushRecord
- *
- * Revision 1.62  2006/01/10 16:28:03  fwarmerdam
- * Fixed typo in CPLError.
- *
- * Revision 1.61  2006/01/10 16:26:29  fwarmerdam
- * Push loading record buffer into DBFLoadRecord.
- * Implement CPL error reporting if USE_CPL defined.
- *
- * Revision 1.60  2006/01/05 01:27:27  fwarmerdam
- * added dbf deletion mark/fetch
- *
- * Revision 1.59  2005/03/14 15:20:28  fwarmerdam
- * Fixed last change.
- *
- * Revision 1.58  2005/03/14 15:18:54  fwarmerdam
- * Treat very wide fields with no decimals as double.  This is
- * more than 32bit integer fields.
- *
- * Revision 1.57  2005/02/10 20:16:54  fwarmerdam
- * Make the pszStringField buffer for DBFReadAttribute() static char [256]
- * as per bug 306.
- *
- * Revision 1.56  2005/02/10 20:07:56  fwarmerdam
- * Fixed bug 305 in DBFCloneEmpty() - header length problem.
- *
- * Revision 1.55  2004/09/26 20:23:46  fwarmerdam
- * avoid warnings with rcsid and signed/unsigned stuff
- *
- * Revision 1.54  2004/09/15 16:26:10  fwarmerdam
- * Treat all blank numeric fields as null too.
- */
+ ******************************************************************************/
 
 #include "shapefil.h"
 
@@ -355,10 +205,25 @@ static int DBFFlushRecord( DBFHandle psDBF )
             psDBF->nRecordLength * STATIC_CAST(SAOffset, psDBF->nCurrentRecord)
             + psDBF->nHeaderLength;
 
-	if( psDBF->sHooks.FSeek( psDBF->fp, nRecordOffset, 0 ) != 0
-            || psDBF->sHooks.FWrite( psDBF->pszCurrentRecord,
-                                     psDBF->nRecordLength,
-                                     1, psDBF->fp ) != 1 )
+/* -------------------------------------------------------------------- */
+/*      Guard FSeek with check for whether we're already at position;   */
+/*      no-op FSeeks defeat network filesystems' write buffering.       */
+/* -------------------------------------------------------------------- */
+        if ( psDBF->bRequireNextWriteSeek ||
+	     psDBF->sHooks.FTell( psDBF->fp ) != nRecordOffset ) {
+            if ( psDBF->sHooks.FSeek( psDBF->fp, nRecordOffset, 0 ) != 0 ) {
+                char szMessage[128];
+                snprintf( szMessage, sizeof(szMessage),
+                          "Failure seeking to position before writing DBF record %d.",
+                          psDBF->nCurrentRecord );
+                psDBF->sHooks.Error( szMessage );
+                return FALSE;
+            }
+        }
+
+	if ( psDBF->sHooks.FWrite( psDBF->pszCurrentRecord,
+                               psDBF->nRecordLength,
+                               1, psDBF->fp ) != 1 )
         {
             char szMessage[128];
             snprintf( szMessage, sizeof(szMessage), "Failure writing DBF record %d.",
@@ -366,6 +231,11 @@ static int DBFFlushRecord( DBFHandle psDBF )
             psDBF->sHooks.Error( szMessage );
             return FALSE;
         }
+
+/* -------------------------------------------------------------------- */
+/*      If next op is also a write, allow possible skipping of FSeek.   */
+/* -------------------------------------------------------------------- */
+	psDBF->bRequireNextWriteSeek = FALSE;
 
         if( psDBF->nCurrentRecord == psDBF->nRecords - 1 )
         {
@@ -417,6 +287,10 @@ static int DBFLoadRecord( DBFHandle psDBF, int iRecord )
         }
 
 	psDBF->nCurrentRecord = iRecord;
+/* -------------------------------------------------------------------- */
+/*      Require a seek for next write in case of mixed R/W operations.  */
+/* -------------------------------------------------------------------- */
+	psDBF->bRequireNextWriteSeek = TRUE;
     }
 
     return TRUE;
@@ -712,6 +586,8 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
 
     DBFSetWriteEndOfFileChar( psDBF, TRUE );
 
+    psDBF->bRequireNextWriteSeek = TRUE;
+
     return( psDBF );
 }
 
@@ -896,6 +772,8 @@ DBFCreateLL( const char * pszFilename, const char * pszCodePage, SAHooks *psHook
     DBFSetLastModifiedDate(psDBF, 95, 7, 26); /* dummy date */
 
     DBFSetWriteEndOfFileChar(psDBF, TRUE);
+
+    psDBF->bRequireNextWriteSeek = TRUE;
 
     return( psDBF );
 }

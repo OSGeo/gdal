@@ -93,6 +93,7 @@ static const int anGWKFilterRadius[] =
     0,  // Med
     0,  // Q1
     0,  // Q3
+    0,  // Sum
 };
 
 static double GWKBilinear(double dfX);
@@ -115,6 +116,7 @@ static const FilterFuncType apfGWKFilter[] =
     nullptr,  // Med
     nullptr,  // Q1
     nullptr,  // Q3
+    nullptr,  // Sum
 };
 
 // TODO(schwehr): Can we make these functions have a const * const arg?
@@ -138,6 +140,7 @@ static const FilterFunc4ValuesType apfGWKFilter4Values[] =
     nullptr,  // Med
     nullptr,  // Q1
     nullptr,  // Q3
+    nullptr,  // Sum
 };
 
 int GWKGetFilterRadius(GDALResampleAlg eResampleAlg)
@@ -204,10 +207,27 @@ struct _GWKJobStruct
     int           (*pfnProgress)(GWKJobStruct* psJob);
     void           *pTransformerArg;
 
-    // Just used during thread initialization phase.
-    GDALTransformerFunc pfnTransformerInit;
-    void           *pTransformerArgInit;
+    void           (*pfnFunc)(void*); // used by GWKRun() to assign the proper pTransformerArg
 } ;
+
+struct GWKThreadInitData
+{
+    GDALTransformerFunc pfnTransformerInit = nullptr;
+    void               *pTransformerArgInit = nullptr;
+
+    void               *pTransformerArg = nullptr;
+    GIntBig             nThreadId = 0;
+};
+
+struct GWKThreadData
+{
+    CPLWorkerThreadPool* poThreadPool = nullptr;
+    GWKJobStruct* pasThreadJob = nullptr;
+    CPLCond* hCond = nullptr;
+    CPLMutex* hCondMutex = nullptr;
+    void* pTransformerArgInput = nullptr; // owned by calling layer. Not to be destroyed
+    std::map<GIntBig, void*> mapThreadToTransformerArg{};
+};
 
 /************************************************************************/
 /*                        GWKProgressThread()                           */
@@ -277,11 +297,11 @@ static CPLErr GWKGenericMonoThread( GDALWarpKernel *poWK,
 
 static void GWKThreadInitTransformer(void* pData)
 {
-    GWKJobStruct* psJob = static_cast<GWKJobStruct*>(pData);
-    if( psJob->pTransformerArg == nullptr )
-        psJob->pTransformerArg =
-            GDALCloneTransformer(psJob->pTransformerArgInit);
-    if( psJob->pTransformerArg != nullptr )
+    GWKThreadInitData* psInitData = static_cast<GWKThreadInitData*>(pData);
+    if( psInitData->pTransformerArg == nullptr )
+        psInitData->pTransformerArg =
+            GDALCloneTransformer(psInitData->pTransformerArgInit);
+    if( psInitData->pTransformerArg != nullptr )
     {
         // In case of lazy opening (for example RPCDEM), do a dummy
         // transformation to be sure that the DEM is really opened with the
@@ -291,23 +311,16 @@ static void GWKThreadInitTransformer(void* pData)
         double dfZ = 0.0;
         int bSuccess = FALSE;
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        psJob->pfnTransformerInit(psJob->pTransformerArg, TRUE, 1,
+        psInitData->pfnTransformerInit(psInitData->pTransformerArg, TRUE, 1,
                                   &dfX, &dfY, &dfZ, &bSuccess );
         CPLPopErrorHandler();
     }
+    psInitData->nThreadId = CPLGetPID();
 }
 
 /************************************************************************/
 /*                          GWKThreadsCreate()                          */
 /************************************************************************/
-
-typedef struct
-{
-    CPLWorkerThreadPool* poThreadPool;
-    GWKJobStruct* pasThreadJob;
-    CPLCond* hCond;
-    CPLMutex* hCondMutex;
-} GWKThreadData;
 
 void* GWKThreadsCreate( char** papszWarpOptions,
                         GDALTransformerFunc pfnTransformer,
@@ -328,11 +341,7 @@ void* GWKThreadsCreate( char** papszWarpOptions,
     if( nThreads > 128 )
         nThreads = 128;
 
-    GWKThreadData* psThreadData = static_cast<GWKThreadData *>(
-        VSI_CALLOC_VERBOSE(1, sizeof(GWKThreadData)));
-    if( psThreadData == nullptr )
-        return nullptr;
-
+    GWKThreadData* psThreadData = new GWKThreadData();
     CPLCond* hCond = nullptr;
     if( nThreads )
         hCond = CPLCreateCond();
@@ -360,18 +369,22 @@ void* GWKThreadsCreate( char** papszWarpOptions,
         }
         CPLReleaseMutex(psThreadData->hCondMutex);
 
+        std::vector<std::unique_ptr<GWKThreadInitData>> apoInitData;
         std::vector<void*> apInitData;
         for( int i = 0; i < nThreads; i++ )
         {
             psThreadData->pasThreadJob[i].hCond = psThreadData->hCond;
             psThreadData->pasThreadJob[i].hCondMutex = psThreadData->hCondMutex;
-            psThreadData->pasThreadJob[i].pfnTransformerInit = pfnTransformer;
-            psThreadData->pasThreadJob[i].pTransformerArgInit = pTransformerArg;
+
+            std::unique_ptr<GWKThreadInitData> poInitData(new GWKThreadInitData());
+            poInitData->pfnTransformerInit = pfnTransformer;
+            poInitData->pTransformerArgInit = pTransformerArg;
             if( i == 0 )
-                psThreadData->pasThreadJob[i].pTransformerArg = pTransformerArg;
+                poInitData->pTransformerArg = pTransformerArg;
             else
-                psThreadData->pasThreadJob[i].pTransformerArg = nullptr;
-            apInitData.push_back(&(psThreadData->pasThreadJob[i]));
+                poInitData->pTransformerArg = nullptr;
+            apoInitData.push_back(std::move(poInitData));
+            apInitData.push_back(apoInitData.back().get());
         }
 
         psThreadData->poThreadPool = new (std::nothrow) CPLWorkerThreadPool();
@@ -386,7 +399,7 @@ void* GWKThreadsCreate( char** papszWarpOptions,
 
         for( int i = 1; i < nThreads; i++ )
         {
-            if( psThreadData->pasThreadJob[i].pTransformerArg == nullptr )
+            if( apoInitData[i]->pTransformerArg == nullptr )
             {
                 CPLDebug("WARP", "Cannot deserialize transformer");
                 bTransformerCloningSuccess = false;
@@ -394,13 +407,24 @@ void* GWKThreadsCreate( char** papszWarpOptions,
             }
         }
 
-        if( !bTransformerCloningSuccess )
+        if( bTransformerCloningSuccess )
+        {
+            psThreadData->pTransformerArgInput = pTransformerArg;
+            for( int i = 0; i < nThreads; i++ )
+            {
+                const auto nThreadId = apoInitData[i]->nThreadId;
+                CPLAssert(psThreadData->mapThreadToTransformerArg.find(nThreadId) ==
+                    psThreadData->mapThreadToTransformerArg.end());
+                psThreadData->mapThreadToTransformerArg[nThreadId] =
+                    apoInitData[i]->pTransformerArg;
+            }
+        }
+        else
         {
             for( int i = 1; i < nThreads; i++ )
             {
-                if( psThreadData->pasThreadJob[i].pTransformerArg )
-                    GDALDestroyTransformer(psThreadData->
-                                           pasThreadJob[i].pTransformerArg);
+                if( apoInitData[i]->pTransformerArg )
+                    GDALDestroyTransformer(apoInitData[i]->pTransformerArg);
             }
             CPLFree(psThreadData->pasThreadJob);
             psThreadData->pasThreadJob = nullptr;
@@ -427,15 +451,10 @@ void GWKThreadsEnd( void* psThreadDataIn )
     GWKThreadData* psThreadData = static_cast<GWKThreadData *>(psThreadDataIn);
     if( psThreadData->poThreadPool )
     {
-        const int nThreads = psThreadData->poThreadPool->GetThreadCount();
-        if( psThreadData->pasThreadJob )
+        for( auto& pair: psThreadData->mapThreadToTransformerArg )
         {
-            for( int i = 1; i < nThreads; i++ )
-            {
-                if( psThreadData->pasThreadJob[i].pTransformerArg )
-                    GDALDestroyTransformer(psThreadData->
-                                        pasThreadJob[i].pTransformerArg);
-            }
+            if( pair.second != psThreadData->pTransformerArgInput )
+                GDALDestroyTransformer(pair.second);
         }
         delete psThreadData->poThreadPool;
     }
@@ -444,8 +463,26 @@ void GWKThreadsEnd( void* psThreadDataIn )
         CPLDestroyCond(psThreadData->hCond);
     if( psThreadData->hCondMutex )
         CPLDestroyMutex(psThreadData->hCondMutex);
-    CPLFree(psThreadData);
+    delete psThreadData;
 }
+
+/************************************************************************/
+/*                         ThreadFuncAdapter()                          */
+/************************************************************************/
+
+static void ThreadFuncAdapter(void* pData)
+{
+    // Assign the pTransformerArg created in the current thread to this job
+    // This workarounds the PROJ bug fixed in https://github.com/OSGeo/PROJ/pull/1726
+    GWKJobStruct* psJob = static_cast<GWKJobStruct *>(pData);
+    const GWKThreadData* psThreadData =
+        static_cast<const GWKThreadData*>(psJob->poWK->psThreadData);
+    auto oIter = psThreadData->mapThreadToTransformerArg.find(CPLGetPID());
+    CPLAssert(oIter != psThreadData->mapThreadToTransformerArg.end());
+    psJob->pTransformerArg = oIter->second;
+    psJob->pfnFunc(pData);
+}
+
 
 /************************************************************************/
 /*                                GWKRun()                              */
@@ -519,7 +556,8 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
             psThreadData->pasThreadJob[i].pfnProgress = GWKProgressThread;
         else
             psThreadData->pasThreadJob[i].pfnProgress = nullptr;
-        psThreadData->poThreadPool->SubmitJob( pfnFunc,
+        psThreadData->pasThreadJob[i].pfnFunc = pfnFunc;
+        psThreadData->poThreadPool->SubmitJob( ThreadFuncAdapter,
                             static_cast<void*>(&psThreadData->pasThreadJob[i]) );
     }
 
@@ -622,7 +660,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  * Resampling algorithm.
  *
  * The resampling algorithm to use.  One of GRA_NearestNeighbour, GRA_Bilinear,
- * GRA_Cubic, GRA_CubicSpline, GRA_Lanczos, GRA_Average, or GRA_Mode.
+ * GRA_Cubic, GRA_CubicSpline, GRA_Lanczos, GRA_Average, GRA_Mode or GRA_Sum.
  *
  * This field is required. GDT_NearestNeighbour may be used as a default
  * value.
@@ -1277,6 +1315,9 @@ CPLErr GDALWarpKernel::PerformWarp()
         return GWKAverageOrMode( this );
 
     if( eResample == GRA_Q3 )
+        return GWKAverageOrMode( this );
+
+    if( eResample == GRA_Sum )
         return GWKAverageOrMode( this );
 
     if (!GDALDataTypeIsComplex(eWorkingDataType))
@@ -5811,6 +5852,10 @@ static void GWKAverageOrModeThread( void* pData)
         nAlgo = GWKAOM_Quant;
         quant = 0.75;
     }
+    else if( poWK->eResample == GRA_Sum )
+    {
+        nAlgo = GWKAOM_Sum;
+    }
     else
     {
         // Other resample algorithms not permitted here.
@@ -5908,7 +5953,52 @@ static void GWKAverageOrModeThread( void* pData)
 
             if( !pabSuccess[iDstX] || !pabSuccess2[iDstX] )
                 continue;
+
+            if( padfX[iDstX] < poWK->nSrcXOff - 1 ||
+                padfX2[iDstX] < poWK->nSrcXOff - 1 ||
+                padfY[iDstX] < poWK->nSrcYOff - 1 ||
+                padfY2[iDstX] < poWK->nSrcYOff -1 ||
+                padfX[iDstX] > nSrcXSize + poWK->nSrcXOff + 1 ||
+                padfX2[iDstX] > nSrcXSize + poWK->nSrcXOff + 1 ||
+                padfY[iDstX] > nSrcYSize + poWK->nSrcYOff + 1 ||
+                padfY2[iDstX] > nSrcYSize + poWK->nSrcYOff + 1 )
+            {
+                continue;
+            }
+
             const GPtrDiff_t iDstOffset = iDstX + static_cast<GPtrDiff_t>(iDstY) * nDstXSize;
+
+            // Compute corners in source crs.
+
+            // The transformation might not have preserved ordering of
+            // coordinates so do the necessary swapping (#5433).
+            // NOTE: this is really an approximative fix. To do something
+            // more precise we would for example need to compute the
+            // transformation of coordinates in the
+            // [iDstX,iDstY]x[iDstX+1,iDstY+1] square back to source
+            // coordinates, and take the bounding box of the got source
+            // coordinates.
+            const double dfXMin = std::min(padfX[iDstX],padfX2[iDstX]);
+            int iSrcXMin =
+                std::max(static_cast<int>(floor(dfXMin + 1e-10)) -
+                            poWK->nSrcXOff, 0);
+            const double dfXMax = std::max(padfX[iDstX],padfX2[iDstX]);
+            int iSrcXMax =
+                std::min(static_cast<int>(ceil(dfXMax - 1e-10)) -
+                            poWK->nSrcXOff, nSrcXSize);
+            const double dfYMin = std::min(padfY[iDstX],padfY2[iDstX]);
+            int iSrcYMin =
+                std::max(static_cast<int>(floor(dfYMin + 1e-10)) -
+                            poWK->nSrcYOff, 0);
+            const double dfYMax = std::max(padfY[iDstX],padfY2[iDstX]);
+            int iSrcYMax =
+                std::min(static_cast<int>(ceil(dfYMax - 1e-10)) -
+                            poWK->nSrcYOff, nSrcYSize);
+
+            if( iSrcXMin == iSrcXMax && iSrcXMax < nSrcXSize )
+                iSrcXMax++;
+            if( iSrcYMin == iSrcYMax && iSrcYMax < nSrcYSize )
+                iSrcYMax++;
 
 /* ==================================================================== */
 /*      Loop processing each band.                                      */
@@ -5925,54 +6015,36 @@ static void GWKAverageOrModeThread( void* pData)
 /* -------------------------------------------------------------------- */
 /*      Collect the source value.                                       */
 /* -------------------------------------------------------------------- */
-                double dfTotalReal = 0.0;
-                double dfTotalImag = 0.0;
-                // Count of pixels used to compute average/mode.
-                int nCount = 0;
-                // Count of all pixels sampled, including nodata.
-                int nCount2 = 0;
-
-                // Compute corners in source crs.
-
-                // The transformation might not have preserved ordering of
-                // coordinates so do the necessary swapping (#5433).
-                // NOTE: this is really an approximative fix. To do something
-                // more precise we would for example need to compute the
-                // transformation of coordinates in the
-                // [iDstX,iDstY]x[iDstX+1,iDstY+1] square back to source
-                // coordinates, and take the bounding box of the got source
-                // coordinates.
-                int iSrcXMin =
-                    std::max(static_cast<int>(floor(std::min(padfX[iDstX],padfX2[iDstX]) + 1e-10)) -
-                             poWK->nSrcXOff, 0);
-                int iSrcXMax =
-                    std::min(static_cast<int>(ceil(std::max(padfX[iDstX],padfX2[iDstX]) - 1e-10)) -
-                             poWK->nSrcXOff, nSrcXSize);
-                int iSrcYMin =
-                    std::max(static_cast<int>(floor(std::min(padfY[iDstX],padfY2[iDstX]) + 1e-10)) -
-                             poWK->nSrcYOff, 0);
-                int iSrcYMax =
-                    std::min(static_cast<int>(ceil(std::max(padfY[iDstX],padfY2[iDstX]) - 1e-10)) -
-                             poWK->nSrcYOff, nSrcYSize);
-
-                if( iSrcXMin == iSrcXMax && iSrcXMax < nSrcXSize )
-                    iSrcXMax++;
-                if( iSrcYMin == iSrcYMax && iSrcYMax < nSrcYSize )
-                    iSrcYMax++;
 
                 // Loop over source lines and pixels - 3 possible algorithms.
+
+#define COMPUTE_WEIGHT_Y(iSrcY) \
+    ((iSrcY == iSrcYMin) ? \
+        ((iSrcYMin + 1 == iSrcYMax) ? 1.0 : 1 - (dfYMin - iSrcYMin)): \
+     (iSrcY + 1 == iSrcYMax) ? 1 - (iSrcYMax - dfYMax): \
+     1.0)
+
+#define COMPUTE_WEIGHT(iSrcX, dfWeightY) \
+    ((iSrcX == iSrcXMin) ? \
+        ((iSrcXMin + 1 == iSrcXMax) ? dfWeightY : dfWeightY * (1 - (dfXMin - iSrcXMin))): \
+     (iSrcX + 1 == iSrcXMax) ? dfWeightY * (1 - (iSrcXMax - dfXMax)): \
+     dfWeightY)
 
                 // poWK->eResample == GRA_Average.
                 if( nAlgo == GWKAOM_Average )
                 {
+                    double dfTotalReal = 0.0;
+                    double dfTotalImag = 0.0;
+                    double dfTotalWeight = 0.0;
+
                     // This code adapted from GDALDownsampleChunk32R_AverageT()
                     // in gcore/overview.cpp.
                     for( int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
                     {
-                        for( int iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++ )
+                        const double dfWeightY = COMPUTE_WEIGHT_Y(iSrcY);
+                        iSrcOffset = iSrcXMin + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+                        for( int iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++, iSrcOffset++ )
                         {
-                            iSrcOffset = iSrcX + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
-
                             if( poWK->panUnifiedSrcValid != nullptr
                                 && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
                                      & (0x01 << (iSrcOffset & 0x1f))) )
@@ -5980,34 +6052,82 @@ static void GWKAverageOrModeThread( void* pData)
                                 continue;
                             }
 
-                            nCount2++;
                             if( GWKGetPixelValue(
                                     poWK, iBand, iSrcOffset,
                                     &dfBandDensity, &dfValueRealTmp,
                                     &dfValueImagTmp ) &&
                                 dfBandDensity > BAND_DENSITY_THRESHOLD )
                             {
-                                nCount++;
-                                dfTotalReal += dfValueRealTmp;
+                                const double dfWeight = COMPUTE_WEIGHT(iSrcX, dfWeightY);
+                                dfTotalWeight += dfWeight;
+                                dfTotalReal += dfValueRealTmp * dfWeight;
                                 if (bIsComplex)
                                 {
-                                    dfTotalImag += dfValueImagTmp;
+                                    dfTotalImag += dfValueImagTmp * dfWeight;
                                 }
                             }
                         }
                     }
 
-                    if( nCount > 0 )
+                    if( dfTotalWeight > 0 )
                     {
-                        dfValueReal = dfTotalReal / nCount;
+                        dfValueReal = dfTotalReal / dfTotalWeight;
                         if (bIsComplex)
                         {
-                            dfValueImag = dfTotalImag / nCount;
+                            dfValueImag = dfTotalImag / dfTotalWeight;
                         }
                         dfBandDensity = 1;
                         bHasFoundDensity = true;
                     }
                 }  // GRA_Average.
+                else if( nAlgo == GWKAOM_Sum )
+                // poWK->eResample == GRA_Sum
+                {
+                    double dfTotalReal = 0.0;
+                    double dfTotalImag = 0.0;
+                    bool bFoundValid = false;
+
+                    for( int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
+                    {
+                        const double dfWeightY = COMPUTE_WEIGHT_Y(iSrcY);
+                        iSrcOffset = iSrcXMin + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+                        for( int iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++, iSrcOffset++ )
+                        {
+                            if( poWK->panUnifiedSrcValid != nullptr
+                                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
+                                     & (0x01 << (iSrcOffset & 0x1f))) )
+                            {
+                                continue;
+                            }
+
+                            if( GWKGetPixelValue(
+                                    poWK, iBand, iSrcOffset,
+                                    &dfBandDensity, &dfValueRealTmp,
+                                    &dfValueImagTmp ) &&
+                                dfBandDensity > BAND_DENSITY_THRESHOLD )
+                            {
+                                const double dfWeight = COMPUTE_WEIGHT(iSrcX, dfWeightY);
+                                bFoundValid = true;
+                                dfTotalReal += dfValueRealTmp * dfWeight;
+                                if (bIsComplex)
+                                {
+                                    dfTotalImag += dfValueImagTmp * dfWeight;
+                                }
+                            }
+                        }
+                    }
+
+                    if( bFoundValid )
+                    {
+                        dfValueReal = dfTotalReal;
+                        if (bIsComplex)
+                        {
+                            dfValueImag = dfTotalImag;
+                        }
+                        dfBandDensity = 1;
+                        bHasFoundDensity = true;
+                    }
+                }  // GRA_Sum.
                 else if( nAlgo == GWKAOM_Imode || nAlgo == GWKAOM_Fmode )
                 // poWK->eResample == GRA_Mode
                 {
@@ -6036,15 +6156,12 @@ static void GWKAverageOrModeThread( void* pData)
                                          & (0x01 << (iSrcOffset & 0x1f))) )
                                     continue;
 
-                                nCount2++;
                                 if( GWKGetPixelValue(
                                         poWK, iBand, iSrcOffset,
                                         &dfBandDensity, &dfValueRealTmp,
                                         &dfValueImagTmp ) &&
                                     dfBandDensity > BAND_DENSITY_THRESHOLD )
                                 {
-                                    nCount++;
-
                                     const float fVal =
                                         static_cast<float>(dfValueRealTmp);
 
@@ -6099,15 +6216,12 @@ static void GWKAverageOrModeThread( void* pData)
                                          & (0x01 << (iSrcOffset & 0x1f))) )
                                     continue;
 
-                                nCount2++;
                                 if( GWKGetPixelValue(
                                         poWK, iBand, iSrcOffset,
                                         &dfBandDensity, &dfValueRealTmp,
                                         &dfValueImagTmp ) &&
                                     dfBandDensity > BAND_DENSITY_THRESHOLD )
                                 {
-                                    nCount++;
-
                                     const int nVal =
                                         static_cast<int>(dfValueRealTmp);
                                     if( ++panVals[nVal+nBinsOffset] > nMaxVal )
@@ -6132,7 +6246,8 @@ static void GWKAverageOrModeThread( void* pData)
                 else if( nAlgo == GWKAOM_Max )
                 // poWK->eResample == GRA_Max.
                 {
-                    dfTotalReal = std::numeric_limits<double>::lowest();
+                    bool bFoundValid = false;
+                    double dfTotalReal = std::numeric_limits<double>::lowest();
                     // This code adapted from nAlgo 1 method, GRA_Average.
                     for( int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
                     {
@@ -6154,7 +6269,7 @@ static void GWKAverageOrModeThread( void* pData)
                                     &dfValueImagTmp ) &&
                                 dfBandDensity > BAND_DENSITY_THRESHOLD )
                             {
-                                nCount++;
+                                bFoundValid = true;
                                 if( dfTotalReal < dfValueRealTmp )
                                 {
                                     dfTotalReal = dfValueRealTmp;
@@ -6163,7 +6278,7 @@ static void GWKAverageOrModeThread( void* pData)
                         }
                     }
 
-                    if( nCount > 0 )
+                    if( bFoundValid )
                     {
                         dfValueReal = dfTotalReal;
                         dfBandDensity = 1;
@@ -6173,7 +6288,8 @@ static void GWKAverageOrModeThread( void* pData)
                 else if( nAlgo == GWKAOM_Min )
                 // poWK->eResample == GRA_Min.
                 {
-                    dfTotalReal = std::numeric_limits<double>::max();
+                    bool bFoundValid = false;
+                    double dfTotalReal = std::numeric_limits<double>::max();
                     // This code adapted from nAlgo 1 method, GRA_Average.
                     for( int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
                     {
@@ -6195,7 +6311,7 @@ static void GWKAverageOrModeThread( void* pData)
                                     &dfValueImagTmp ) &&
                                 dfBandDensity > BAND_DENSITY_THRESHOLD )
                             {
-                                nCount++;
+                                bFoundValid = true;
                                 if( dfTotalReal > dfValueRealTmp )
                                 {
                                     dfTotalReal = dfValueRealTmp;
@@ -6204,7 +6320,7 @@ static void GWKAverageOrModeThread( void* pData)
                         }
                     }
 
-                    if( nCount > 0 )
+                    if( bFoundValid )
                     {
                         dfValueReal = dfTotalReal;
                         dfBandDensity = 1;
@@ -6214,6 +6330,7 @@ static void GWKAverageOrModeThread( void* pData)
                 else if( nAlgo == GWKAOM_Quant )
                 // poWK->eResample == GRA_Med | GRA_Q1 | GRA_Q3.
                 {
+                    bool bFoundValid = false;
                     std::vector<double> dfRealValuesTmp;
 
                     // This code adapted from nAlgo 1 method, GRA_Average.
@@ -6237,13 +6354,13 @@ static void GWKAverageOrModeThread( void* pData)
                                     &dfValueImagTmp ) &&
                                 dfBandDensity > BAND_DENSITY_THRESHOLD )
                             {
-                                nCount++;
+                                bFoundValid = true;
                                 dfRealValuesTmp.push_back(dfValueRealTmp);
                             }
                         }
                     }
 
-                    if( nCount > 0 )
+                    if( bFoundValid )
                     {
                         std::sort(dfRealValuesTmp.begin(), dfRealValuesTmp.end());
                         int quantIdx = static_cast<int>(

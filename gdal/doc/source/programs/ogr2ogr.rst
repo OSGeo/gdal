@@ -165,6 +165,9 @@ output coordinate system or even reprojecting the features during translation.
     with ``-nlt POLYGON``, the resulting polygon will break the Simple Features
     rules.
 
+    Starting with GDAL 3.0.5, ``-nlt CONVERT_TO_LINEAR`` and ``-nlt PROMOTE_TO_MULTI``
+    can be used simultaneously.
+
 .. option:: -dim <val>
 
     Force the coordinate dimension to val (valid values are ``XY``, ``XYZ``,
@@ -337,7 +340,7 @@ output coordinate system or even reprojecting the features during translation.
 .. option:: -explodecollections
 
     Produce one feature for each geometry in any kind of geometry collection in
-    the source file
+    the source file, applied after any ``-sql`` option.
 
 .. option:: -zfield <field_name>
 

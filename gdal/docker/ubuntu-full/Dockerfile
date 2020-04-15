@@ -17,7 +17,8 @@ RUN apt-get update -y \
     && apt-get install -y --fix-missing --no-install-recommends \
             software-properties-common build-essential ca-certificates \
             git make cmake wget unzip libtool automake \
-            zlib1g-dev libsqlite3-dev pkg-config sqlite3
+            zlib1g-dev libsqlite3-dev pkg-config sqlite3 libcurl4-gnutls-dev \
+            libtiff5-dev
 
 # Setup build env for GDAL
 RUN apt-get update -y \
@@ -25,7 +26,7 @@ RUN apt-get update -y \
        libcharls-dev libopenjp2-7-dev libcairo2-dev \
        python3-dev python3-numpy \
        libpng-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev \
-       curl libcurl4-gnutls-dev libxml2-dev libexpat-dev libxerces-c-dev \
+       curl libxml2-dev libexpat-dev libxerces-c-dev \
        libnetcdf-dev libpoppler-dev libpoppler-private-dev \
        libspatialite-dev swig libhdf4-alt-dev libhdf5-serial-dev \
        libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev \
@@ -33,30 +34,23 @@ RUN apt-get update -y \
        libkml-dev libmysqlclient-dev libogdi3.2-dev \
        libcfitsio-dev openjdk-8-jdk libzstd1-dev \
        libpq-dev libssl-dev libboost-dev \
-       autoconf automake bash-completion libarmadillo-dev
-
-ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
-ARG PROJ_INSTALL_PREFIX
-RUN \
-    mkdir -p /build_projgrids/${PROJ_INSTALL_PREFIX}/share/proj \
-    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
-    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/${PROJ_INSTALL_PREFIX}/share/proj \
-    && rm -f *.zip
+       autoconf automake bash-completion libarmadillo-dev \
+       libopenexr-dev
 
 # Build likbkea
-ARG KEA_VERSION=c6d36f3db5e4
-RUN wget -q https://bitbucket.org/chchrsc/kealib/get/${KEA_VERSION}.zip \
-    && unzip -q ${KEA_VERSION}.zip \
-    && rm -f ${KEA_VERSION}.zip \
-    && cd chchrsc-kealib-${KEA_VERSION}/trunk \
+ARG KEA_VERSION=1.4.12
+RUN wget -q https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
+    && unzip -q kealib-${KEA_VERSION}.zip \
+    && rm -f kealib-${KEA_VERSION}.zip \
+    && cd kealib-kealib-${KEA_VERSION} \
     && cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr -DHDF5_INCLUDE_DIR=/usr/include/hdf5/serial \
         -DHDF5_LIB_PATH=/usr/lib/x86_64-linux-gnu/hdf5/serial -DLIBKEA_WITH_GDAL=OFF \
     && make -j$(nproc) \
     && make install DESTDIR="/build_thirdparty" \
     && make install \
-    && cd ../.. \
-    && rm -rf chchrsc-kealib-${KEA_VERSION} \
+    && cd .. \
+    && rm -rf kealib-kealib-${KEA_VERSION} \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
@@ -96,7 +90,7 @@ RUN mkdir mongocxx \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build tiledb
-ARG TILEDB_VERSION=1.5.0
+ARG TILEDB_VERSION=1.7.7
 RUN mkdir tiledb \
     && wget -q https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz -O - \
         | tar xz -C tiledb --strip-components=1 \
@@ -138,6 +132,7 @@ ARG RSYNC_REMOTE
 
 # Build PROJ
 ARG PROJ_VERSION=master
+ARG PROJ_INSTALL_PREFIX
 RUN mkdir proj \
     && wget -q https://github.com/OSGeo/proj.4/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
@@ -249,39 +244,33 @@ RUN date
 # PROJ dependencies
 RUN apt-get update; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        libsqlite3-0 \
-        curl unzip
+        libsqlite3-0 libtiff5 libcurl4 \
+        wget curl unzip ca-certificates
 
 # GDAL dependencies
 RUN apt-get update; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libcharls1 libopenjp2-7 libcairo2 python3-numpy \
         libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos-3.6.2 libgeos-c1v5 \
-        libcurl4 libxml2 libexpat1 \
+        libxml2 libexpat1 \
         libxerces-c3.2 libnetcdf-c++4 netcdf-bin libpoppler73 libspatialite7 gpsbabel \
         libhdf4-0-alt libhdf5-100 libhdf5-cpp-100 poppler-utils libfreexl1 unixodbc libwebp6 \
-        libepsilon1 liblcms2-2 libpcre3 libcrypto++ libdap25 libdapclient6v5 libfyba0 \
+        libepsilon1 liblcms2-2 libpcre3 libcrypto++6 libdap25 libdapclient6v5 libfyba0 \
         libkmlbase1 libkmlconvenience1 libkmldom1 libkmlengine1 libkmlregionator1 libkmlxsd1 \
         libmysqlclient20 libogdi3.2 libcfitsio5 openjdk-8-jre \
         libzstd1 bash bash-completion libpq5 libssl1.1 \
-        libarmadillo8 libpython3.6
+        libarmadillo8 libpython3.6 libopenexr22
 
 # Order layers starting with less frequently varying ones
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 ARG PROJ_INSTALL_PREFIX
 RUN \
-    mkdir -p ${PROJ_INSTALL_PREFIX}/share/proj \
-    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
-    && unzip -j -u -o proj-datumgrid-latest.zip  -d ${PROJ_INSTALL_PREFIX}/share/proj \
-    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-europe-latest.zip \
-    && unzip -j -u -o proj-datumgrid-europe-latest.zip -d ${PROJ_INSTALL_PREFIX}/share/proj \
-    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-oceania-latest.zip \
-    && unzip -j -u -o proj-datumgrid-oceania-latest.zip -d ${PROJ_INSTALL_PREFIX}/share/proj \
-    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-world-latest.zip  \
-    && unzip -j -u -o proj-datumgrid-world-latest.zip -d ${PROJ_INSTALL_PREFIX}/share/proj \
-    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-north-america-latest.zip \
-    && unzip -j -u -o proj-datumgrid-north-america-latest.zip -d ${PROJ_INSTALL_PREFIX}/share/proj  \
-    && rm -f *.zip
+    mkdir -p ${PROJ_INSTALL_PREFIX}/share/proj; \
+    wget --no-verbose --mirror https://cdn.proj.org/; \
+    rm -f cdn.proj.org/*.js; \
+    rm -f cdn.proj.org/*.css; \
+    mv cdn.proj.org/* ${PROJ_INSTALL_PREFIX}/share/proj/; \
+    rmdir cdn.proj.org
 
 COPY --from=builder  /build_thirdparty/usr/ /usr/
 

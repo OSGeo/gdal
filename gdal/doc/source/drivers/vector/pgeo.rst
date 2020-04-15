@@ -5,6 +5,8 @@ ESRI Personal GeoDatabase
 
 .. shortname:: PGeo
 
+.. build_dependencies:: ODBC library
+
 OGR optionally supports reading ESRI Personal GeoDatabase .mdb files via
 ODBC. Personal GeoDatabase is a Microsoft Access database with a set of
 tables defined by ESRI for holding geodatabase metadata, and with
@@ -38,8 +40,8 @@ the future.
 
 By default, SQL statements are passed directly to the MDB database
 engine. It's also possible to request the driver to handle SQL commands
-with `OGR SQL <ogr_sql.html>`__ engine, by passing **"OGRSQL"** string
-to the ExecuteSQL() method, as name of the SQL dialect.
+with :ref:`OGR SQL <ogr_sql_dialect>` engine, by passing **"OGRSQL"**
+string to the ExecuteSQL() method, as name of the SQL dialect.
 
 Driver capabilities
 -------------------

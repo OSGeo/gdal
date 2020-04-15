@@ -6,6 +6,8 @@ VRT -- GDAL Virtual Format
 
 .. shortname:: VRT
 
+.. built_in_by_default::
+
 Introduction
 ------------
 
@@ -82,7 +84,7 @@ The **dataAxisToSRSAxisMapping** attribute is allowed since GDAL 3.0 to describe
 
   <GeoTransform>440720.0,  60,  0.0,  3751320.0,  0.0, -60.0</GeoTransform>
 
-- **GCPList**: This element contains a list of Ground Control Points for the dataset, mapping between pixel/line coordinates and georeferenced coordinates. The Projection attribute should contain the SRS of the georeferenced coordinates in the same format as the SRS element.
+- **GCPList**: This element contains a list of Ground Control Points for the dataset, mapping between pixel/line coordinates and georeferenced coordinates. The Projection attribute should contain the SRS of the georeferenced coordinates in the same format as the SRS element. The dataAxisToSRSAxisMapping attribute is the same as in the SRS element.
 
 .. code-block:: xml
 
@@ -1068,10 +1070,12 @@ configuration option, which can accept 3 values:
 - NO: all VRT scripts are considered untrusted, and none Python pixelfunction will be run.
 - TRUSTED_MODULES (default setting): all VRT scripts with inline Python code in their PixelFunctionCode elements will be considered untrusted and will not be run. VRT scripts that use a PixelFunctionType of the form "module_name.function_name" will be considered as trusted, only if "module_name" is allowed in the GDAL_VRT_TRUSTED_MODULES configuration option. The value of this configuration option is a comma separated listed of trusted module names. The '*' wildcard can be used at the name of a string to match all strings beginning with the substring before the '*' character. For example 'every*' will make 'every.thing' or 'everything' module trusted. '*' can also be used to make all modules to be trusted. The ".*" wildcard can also be used to match exact modules or submodules names. For example 'every.*' will make 'every' and 'every.thing' modules trusted, but not 'everything'.
 
+.. _linking_mechanism_to_python_interpreter:
+
 Linking mechanism to a Python interpreter
 *****************************************
 
-Currently only CPython - 2.6, 2.7 and 3.x - is supported. The GDAL shared object
+Currently only CPython 2 and 3 is supported. The GDAL shared object
 is not explicitly linked at build time to any of the CPython library. When GDAL
 will need to run Python code, it will first determine if the Python interpreter
 is loaded in the current process (which is the case if the program is a Python
@@ -1082,13 +1086,13 @@ use, either as a shortname like "libpython2.7.so" if it is accessible through
 the Linux dynamic loader (so typically in one of the paths in /etc/ld.so.conf or
 LD_LIBRARY_PATH) or as a full path name like "/usr/lib/x86_64-linux-gnu/libpython2.7.so".
 The same holds on Windows will shortnames like "python27.dll" if accessible through
-the PATH or full path names like "c:\python27\python27.dll". If the PYTHONSO
+the PATH or full path names like "c:\\python27\\python27.dll". If the PYTHONSO
 configuration option is not defined, it will look for a "python" binary in the
 directories of the PATH and will try to determine the related shared object
 (it will retry with "python3" if no "python" has been found). If the above
 was not successful, then a predefined list of shared objects names
 will be tried. At the time of writing, the order of versions searched is 2.7,
-2.6, 3.4, 3.5, 3.6, 3.3, 3.2. Enabling debug information (CPL_DEBUG=VRT) will
+3.5, 3.6, 3.7, 3.8, 3.4, 3.3, 3.2. Enabling debug information (CPL_DEBUG=ON) will
 show which Python version is used.
 
 Just-in-time compilation
@@ -1399,7 +1403,7 @@ pseudo panchromatic intensity, but not bound to an output band.
         </PansharpeningOptions>
     </VRTDataset>
 
-Multidimensionnal VRT
+Multidimensional VRT
 ---------------------
 
 .. versionadded:: 3.1
@@ -1412,14 +1416,43 @@ See the dedicated :ref:`vrt_multidimensional` page.
 
    vrt_multidimensional
 
+vrt:// connection string
+------------------------
+
+.. versionadded:: 3.1
+
+In some contexts, it might be useful to benefit from features of VRT without
+having to create a file or to provide the rather verbose VRT XML content as
+the connection string. For that purpose, the following URI syntax is supported for
+the dataset name since GDAL 3.1
+
+::
+
+    vrt://{path_to_gdal_dataset}?[bands=num1,...,numN]
+
+For example:
+
+::
+
+    vrt://my.tif?bands=3,2,1
+
+The only supported option currently is bands. Other may be added in the future.
+
+The effect of this option is to change the band composition. The values specified
+are the source band numbers (between 1 and N), possibly out-of-order or with repetitions.
+The ``mask`` value can be used to specify the global mask band. This can also
+be seen as an equivalent of running `gdal_translate -of VRT -b num1 ... -b numN`.
+
 Multi-threading issues
 ----------------------
 
-The below section applies to GDAL <= 2.2. Starting with GDAL 2.3, the use
-of VRT datasets is subject to the standard GDAL dataset multi-threaded rules
-(that is a VRT dataset handle may only be used by a same thread at a time,
-but you may open several dataset handles on the same VRT file and use them
-in different threads)
+.. warning::
+
+    The below section applies to GDAL <= 2.2. Starting with GDAL 2.3, the use
+    of VRT datasets is subject to the standard GDAL dataset multi-threaded rules
+    (that is a VRT dataset handle may only be used by a same thread at a time,
+    but you may open several dataset handles on the same VRT file and use them
+    in different threads)
 
 When using VRT datasets in a multi-threading environment, you should be
 careful to open the VRT dataset by the thread that will use it afterwards. The

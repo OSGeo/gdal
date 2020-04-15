@@ -1,4 +1,4 @@
-/******************************************************************************
+ /******************************************************************************
  *
  * Project:  Memory Array Translator
  * Purpose:  Complete implementation.
@@ -1374,7 +1374,7 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->nRasterXSize = atoi(CSLFetchNameValue(papszOptions,"PIXELS"));
     poDS->nRasterYSize = atoi(CSLFetchNameValue(papszOptions,"LINES"));
-    poDS->eAccess = GA_Update;
+    poDS->eAccess = poOpenInfo->eAccess;
 
 /* -------------------------------------------------------------------- */
 /*      Extract other information.                                      */
