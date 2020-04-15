@@ -1551,13 +1551,15 @@ static CPLString SENTINEL2GetTilename(const CPLString& osGranulePath,
     const char chSeparator = SENTINEL2GetPathSeparator(osTile);
     if( !osTile.empty() )
         osTile += chSeparator;
-    if( bIsPreview ||
-        (psL2ABandDesc != nullptr && psL2ABandDesc->eLocation == TL_QI_DATA ) )
+    if( osJPEG2000Name.size() > 12 && osJPEG2000Name[8] == '_' && osJPEG2000Name[12] == '_' )
+        procBaseLineIs1 = true;
+    if( bIsPreview || 
+        (psL2ABandDesc != nullptr &&
+            (psL2ABandDesc->eLocation == TL_QI_DATA ) ) )
     {
         osTile += "QI_DATA";
         osTile += chSeparator;
-        if( osJPEG2000Name.size() > 12 &&
-            osJPEG2000Name[8] == '_' && osJPEG2000Name[12] == '_' )
+        if( procBaseLineIs1 )
         {
             if( atoi(osBandName) > 0 )
             {
@@ -1592,8 +1594,7 @@ static CPLString SENTINEL2GetTilename(const CPLString& osGranulePath,
             osTile += CPLSPrintf("R%02dm", nPrecisionL2A);
             osTile += chSeparator;
         }
-        if( osJPEG2000Name.size() > 12 &&
-            osJPEG2000Name[8] == '_' && osJPEG2000Name[12] == '_' )
+        if( procBaseLineIs1 )
         {
             if( atoi(osBandName) > 0 )
             {
@@ -1631,6 +1632,7 @@ static CPLString SENTINEL2GetTilename(const CPLString& osGranulePath,
                 osTile += osBandName;
         }
         else
+        if( !procBaseLineIs1 )
         {
             osTile += "_";
             osTile += osBandName;
@@ -3616,7 +3618,8 @@ SENTINEL2Dataset* SENTINEL2Dataset::CreateL1CL2ADataset(
                         bIsPreview,
                         (eLevel == SENTINEL2_L1C) ? 0 : nSubDSPrecision);
                 if( bIsSafeCompact && eLevel == SENTINEL2_L2A &&
-                    pType == MSI2Ap && osTile.size() >= 34 )
+                    pType == MSI2Ap && osTile.size() >= 34 &&
+                    osTile.substr(osTile.size()-18,3)!="MSK" )
                 {
                     osTile.insert(osTile.size() - 34, "L2A_");
                 }
