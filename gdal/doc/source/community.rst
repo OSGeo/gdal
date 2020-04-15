@@ -44,6 +44,12 @@ with the community.
 The `Mailing List`_ and `GitHub`_ avenues are going to be more productive
 communication channels in most situations.
 
+.. note:: the Freenode channel only accepts messages from registered
+          users, so make sure to complete that step. Instructions can be
+          found on https://wiki.osgeo.org/wiki/Matrix for doing it from
+          the Matrix side and https://freenode.net/kb/answer/registration
+          for doing it from the IRC side (if you don't use Matrix)
+
 
 .. _`git`: https://en.wikipedia.org/wiki/Git_(software)
 .. _`Freenode`: http://freenode.net
