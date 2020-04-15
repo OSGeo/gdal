@@ -111,6 +111,7 @@ typedef struct
 {
     const char* pszBandName;
     const char* pszBandDescription;
+    int         nResolution;    /* meters */
     SENTINEL2_L2A_Tilelocation eLocation;
 } SENTINEL2_L2A_BandDescription;
 
@@ -121,13 +122,24 @@ public:
     CPLString osBandPrefixPath; // GRANULE/L1C_T30TXT_A007999_20170102T111441/IMG_DATA/T30TXT_20170102T111442_
 };
 
+static const char* L2A_BandDescription_AOT = "Aerosol Optical Thickness map (at 550nm)";
+static const char* L2A_BandDescription_WVP = "Scene-average Water Vapour map";
+static const char* L2A_BandDescription_SCL = "Scene Classification";
+static const char* L2A_BandDescription_CLD = "Raster mask values range from 0 for high confidence clear sky to 100 for high confidence cloudy";
+static const char* L2A_BandDescription_SNW = "Raster mask values range from 0 for high confidence NO snow/ice to 100 for high confidence snow/ice";
+
 static const SENTINEL2_L2A_BandDescription asL2ABandDesc[] =
 {
-    { "AOT", "Aerosol Optical Thickness map (at 550nm)", TL_IMG_DATA_Rxxm },
-    { "WVP", "Scene-average Water Vapour map", TL_IMG_DATA_Rxxm },
-    { "SCL", "Scene Classification", TL_IMG_DATA },
-    { "CLD", "Raster mask values range from 0 for high confidence clear sky to 100 for high confidence cloudy", TL_QI_DATA },
-    { "SNW", "Raster mask values range from 0 for high confidence NO snow/ice to 100 for high confidence snow/ice", TL_QI_DATA },
+    { "AOT", L2A_BandDescription_AOT,20, TL_IMG_DATA_Rxxm },
+    { "AOT", L2A_BandDescription_AOT,60, TL_IMG_DATA_Rxxm },
+    { "WVP", L2A_BandDescription_WVP,20, TL_IMG_DATA_Rxxm },
+    { "WVP", L2A_BandDescription_WVP,60, TL_IMG_DATA_Rxxm },
+    { "SCL", L2A_BandDescription_SCL,20, TL_IMG_DATA_Rxxm },
+    { "SCL", L2A_BandDescription_SCL,60, TL_IMG_DATA_Rxxm },
+    { "CLD", L2A_BandDescription_CLD,20, TL_QI_DATA },
+    { "CLD", L2A_BandDescription_CLD,60, TL_QI_DATA },
+    { "SNW", L2A_BandDescription_SNW,20, TL_QI_DATA },
+    { "SNW", L2A_BandDescription_SNW,60, TL_QI_DATA },
 };
 
 #define NB_L2A_BANDS (sizeof(asL2ABandDesc)/sizeof(asL2ABandDesc[0]))
@@ -1559,13 +1571,19 @@ static CPLString SENTINEL2GetTilename(const CPLString& osGranulePath,
                 osJPEG2000Name[10] = osBandName[1];
                 osJPEG2000Name[11] = osBandName[2];
             }
+            osTile += osJPEG2000Name;
         }
         else
         {
-            CPLDebug("SENTINEL2", "Invalid granule path: %s",
-                     osGranulePath.c_str());
+            osTile += "MSK_";
+            osTile += osBandName;
+            osTile += "PRB";
         }
-        osTile += osJPEG2000Name;
+        //else
+        //{
+        //    CPLDebug("SENTINEL2", "Invalid granule path: %s",
+        //             osGranulePath.c_str());
+        //}
         if( nPrecisionL2A && !bIsPreview )
             osTile += CPLSPrintf("_%02dm", nPrecisionL2A);
     }
@@ -1616,6 +1634,11 @@ static CPLString SENTINEL2GetTilename(const CPLString& osGranulePath,
                 osTile += osBandName.substr(1);
             else
                 osTile += osBandName;
+        }
+        else
+        {
+            osTile += "_";
+            osTile += osBandName;
         }
         if( nPrecisionL2A )
             osTile += CPLSPrintf("_%02dm", nPrecisionL2A);
@@ -2466,6 +2489,16 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2A( const char* pszFilename,
                 osName = "0" + osName;
             oMapResolutionsToBands[psBandDesc->nResolution].insert(osName);
         }
+        if (eLevel == SENTINEL2_L2A )
+        {
+            for(unsigned int i = 0; i < NB_L2A_BANDS; ++i)
+            {
+                const SENTINEL2_L2A_BandDescription * psL2ABandDesc = &asL2ABandDesc[i];
+                oSetResolutions.insert( psL2ABandDesc->nResolution );
+                CPLString osName = psL2ABandDesc->pszBandName;
+                oMapResolutionsToBands[psL2ABandDesc->nResolution].insert(osName);
+            }
+        }
     }
     else if( eLevel == SENTINEL2_L1C &&
         !SENTINEL2GetResolutionSet(psProductInfo,
@@ -3089,6 +3122,15 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2ASubdataset( GDALOpenInfo * poOpenInfo,
             if( atoi(osName) < 10 )
                 osName = "0" + osName;
             oMapResolutionsToBands[psBandDesc->nResolution].insert(osName);
+        }
+        if (eLevel == SENTINEL2_L2A )
+        {
+            for(unsigned int i = 0; i < NB_L2A_BANDS; ++i)
+            {
+                const SENTINEL2_L2A_BandDescription * psL2ABandDesc = &asL2ABandDesc[i];
+                CPLString osName = psL2ABandDesc->pszBandName;
+                oMapResolutionsToBands[psL2ABandDesc->nResolution].insert(osName);
+            }
         }
         if( eLevel == SENTINEL2_L1C &&
             !SENTINEL2GetGranuleList_L1CSafeCompact(psRoot, osFilename,
