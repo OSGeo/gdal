@@ -32332,10 +32332,10 @@ $as_echo_n "checking libnetcdf compiler and linker flags with nc-config... " >&6
     NETCDF_INCLUDEDIR=`$NETCDF_NCCONFIG --includedir`
     NETCDF_LIBS=`$NETCDF_NCCONFIG --libs`
 
-        STRIPPED_LIBRARY_NAME=`echo "${NETCDF_LIBS}" | sed -E -e 's:-L/(usr/)?(lib(64)?/*|lib/x86_64-linux-gnu)\s\s*::'`
+        STRIPPED_LIBRARY_NAME=`echo "${NETCDF_LIBS}" | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*\s\s*::'`
                         echo "$STRIPPED_LIBRARY_NAME" | grep -- -L > /dev/null
         if test $? -eq 0 ; then
-                                custom_libdir=`echo "$STRIPPED_LIBRARY_NAME" | sed -E -e 's:\s*-L(\S\S*)\s\s*.*:\1:'`
+                                custom_libdir=`echo "$STRIPPED_LIBRARY_NAME" | sed -E 's:\s*-L(\S\S*)\s\s*.*:\1:'`
                 STRIPPED_LIBRARY_NAME="-Wl,-rpath=$custom_libdir $STRIPPED_LIBRARY_NAME"
         fi
 
@@ -34316,10 +34316,10 @@ $as_echo "no, mysql is pre-4.x" >&6; }
       HAVE_MYSQL=yes
       MYSQL_LIB="`$MYSQL_CONFIG --libs`"
 
-        STRIPPED_LIBRARY_NAME=`echo "${MYSQL_LIB}" | sed -E -e 's:-L/(usr/)?(lib(64)?/*|lib/x86_64-linux-gnu)\s\s*::'`
+        STRIPPED_LIBRARY_NAME=`echo "${MYSQL_LIB}" | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*\s\s*::'`
                         echo "$STRIPPED_LIBRARY_NAME" | grep -- -L > /dev/null
         if test $? -eq 0 ; then
-                                custom_libdir=`echo "$STRIPPED_LIBRARY_NAME" | sed -E -e 's:\s*-L(\S\S*)\s\s*.*:\1:'`
+                                custom_libdir=`echo "$STRIPPED_LIBRARY_NAME" | sed -E 's:\s*-L(\S\S*)\s\s*.*:\1:'`
                 STRIPPED_LIBRARY_NAME="-Wl,-rpath=$custom_libdir $STRIPPED_LIBRARY_NAME"
         fi
 
@@ -39078,10 +39078,10 @@ if test "${HAVE_GEOS}" = "yes" ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: Using C API from GEOS $GEOS_VERSION" >&5
 $as_echo "$as_me: Using C API from GEOS $GEOS_VERSION" >&6;}
 
-        STRIPPED_LIBRARY_NAME=`echo "${GEOS_LIBS}" | sed -E -e 's:-L/(usr/)?(lib(64)?/*|lib/x86_64-linux-gnu)\s\s*::'`
+        STRIPPED_LIBRARY_NAME=`echo "${GEOS_LIBS}" | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*\s\s*::'`
                         echo "$STRIPPED_LIBRARY_NAME" | grep -- -L > /dev/null
         if test $? -eq 0 ; then
-                                custom_libdir=`echo "$STRIPPED_LIBRARY_NAME" | sed -E -e 's:\s*-L(\S\S*)\s\s*.*:\1:'`
+                                custom_libdir=`echo "$STRIPPED_LIBRARY_NAME" | sed -E 's:\s*-L(\S\S*)\s\s*.*:\1:'`
                 STRIPPED_LIBRARY_NAME="-Wl,-rpath=$custom_libdir $STRIPPED_LIBRARY_NAME"
         fi
 
