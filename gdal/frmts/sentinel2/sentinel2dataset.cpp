@@ -1579,11 +1579,6 @@ static CPLString SENTINEL2GetTilename(const CPLString& osGranulePath,
             osTile += osBandName;
             osTile += "PRB";
         }
-        //else
-        //{
-        //    CPLDebug("SENTINEL2", "Invalid granule path: %s",
-        //             osGranulePath.c_str());
-        //}
         if( nPrecisionL2A && !bIsPreview )
             osTile += CPLSPrintf("_%02dm", nPrecisionL2A);
     }
@@ -2491,12 +2486,10 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2A( const char* pszFilename,
         }
         if (eLevel == SENTINEL2_L2A )
         {
-            for(unsigned int i = 0; i < NB_L2A_BANDS; ++i)
+            for( const auto& sL2ABandDesc: asL2ABandDesc)
             {
-                const SENTINEL2_L2A_BandDescription * psL2ABandDesc = &asL2ABandDesc[i];
-                oSetResolutions.insert( psL2ABandDesc->nResolution );
-                CPLString osName = psL2ABandDesc->pszBandName;
-                oMapResolutionsToBands[psL2ABandDesc->nResolution].insert(osName);
+                oSetResolutions.insert( sL2ABandDesc.nResolution );
+                oMapResolutionsToBands[sL2ABandDesc.nResolution].insert(sL2ABandDesc.pszBandName);
             }
         }
     }
@@ -3125,11 +3118,9 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2ASubdataset( GDALOpenInfo * poOpenInfo,
         }
         if (eLevel == SENTINEL2_L2A )
         {
-            for(unsigned int i = 0; i < NB_L2A_BANDS; ++i)
+            for( const auto& sL2ABandDesc: asL2ABandDesc)
             {
-                const SENTINEL2_L2A_BandDescription * psL2ABandDesc = &asL2ABandDesc[i];
-                CPLString osName = psL2ABandDesc->pszBandName;
-                oMapResolutionsToBands[psL2ABandDesc->nResolution].insert(osName);
+                oMapResolutionsToBands[sL2ABandDesc.nResolution].insert(sL2ABandDesc.pszBandName);
             }
         }
         if( eLevel == SENTINEL2_L1C &&
