@@ -1953,7 +1953,7 @@ def test_sentinel2_l2a_5():
     got_gt = ds.GetGeoTransform()
     assert got_gt == (600000.0, 60.0, 0.0, 6400020.0, 0.0, -60.0)
 
-    assert ds.RasterCount == 2
+    assert ds.RasterCount == 7
 
     vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
@@ -2177,7 +2177,7 @@ def test_sentinel2_l2a_7():
     got_gt = ds.GetGeoTransform()
     assert got_gt == (600000.0, 60.0, 0.0, 6400020.0, 0.0, -60.0)
 
-    assert ds.RasterCount == 2
+    assert ds.RasterCount == 5
 
     vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
