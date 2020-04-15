@@ -251,6 +251,7 @@ Layer creation options
    must be written as the 'id' member of Feature objects.
 -  **ID_TYPE**\ =AUTO/String/Integer. (OGR >= 2.3) Type of the 'id'
    memer of Feature objects.
+-  **ID_GENERATE**\ =YES/NO. (OGR >= 3.0.4) Auto-generate feature ids
 -  **WRITE_NON_FINITE_VALUES**\ =YES/NO. (OGR >= 2.4) Whether to write
    NaN / Infinity values. Such values are not allowed in strict JSon
    mode, but some JSon parsers (libjson-c >= 0.12 for exampl) can
