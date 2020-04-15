@@ -1551,6 +1551,7 @@ static CPLString SENTINEL2GetTilename(const CPLString& osGranulePath,
     const char chSeparator = SENTINEL2GetPathSeparator(osTile);
     if( !osTile.empty() )
         osTile += chSeparator;
+    bool procBaseLineIs1 = false;
     if( osJPEG2000Name.size() > 12 && osJPEG2000Name[8] == '_' && osJPEG2000Name[12] == '_' )
         procBaseLineIs1 = true;
     if( bIsPreview || 
