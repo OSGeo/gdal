@@ -34,6 +34,7 @@ import os
 
 from osgeo import gdal
 from osgeo import ogr
+import gdaltest
 import ogrtest
 import pytest
 
@@ -267,6 +268,22 @@ def test_contour_3():
 
     ogr_ds.ReleaseResultSet(lyr)
     ogr_ds.Destroy()
+
+###############################################################################
+
+
+def test_contour_raster_acquisition_error():
+
+    ogr_ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    ogr_lyr = ogr_ds.CreateLayer('contour', geom_type=ogr.wkbLineString)
+    field_defn = ogr.FieldDefn('ID', ogr.OFTInteger)
+    ogr_lyr.CreateField(field_defn)
+    ds = gdal.Open('../gcore/data/byte_truncated.tif')
+
+    with gdaltest.error_handler():
+        assert gdal.ContourGenerateEx(ds.GetRasterBand(1), ogr_lyr,
+                                        options = [ "LEVEL_INTERVAL=1",
+                                                    "ID_FIELD=0"] ) != 0
 
 ###############################################################################
 # Cleanup
