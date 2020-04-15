@@ -1589,8 +1589,9 @@ static CPLString SENTINEL2GetTilename(const CPLString& osGranulePath,
     {
         osTile += "IMG_DATA";
         osTile += chSeparator;
-        if( (psL2ABandDesc != nullptr && psL2ABandDesc->eLocation == TL_IMG_DATA_Rxxm) ||
-            (psL2ABandDesc == nullptr && nPrecisionL2A != 0) )
+        if( ( (psL2ABandDesc != nullptr && psL2ABandDesc->eLocation == TL_IMG_DATA_Rxxm) ||
+              (psL2ABandDesc == nullptr && nPrecisionL2A != 0) ) &&
+            (!procBaseLineIs1 || osBandName!="SCL") )
         {
             osTile += CPLSPrintf("R%02dm", nPrecisionL2A);
             osTile += chSeparator;
