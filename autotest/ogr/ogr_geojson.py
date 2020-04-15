@@ -2680,6 +2680,18 @@ def test_ogr_geojson_id_field_and_id_type():
     gdal.Unlink('/vsimem/out.json')
     assert '"id": 35043411, "properties": { "AREA": 215229.266, "EAS_ID": 168 }' in got
 
+    gdal.VectorTranslate('/vsimem/out.json', 'data/poly.shp', format='GeoJSON', layerCreationOptions=['ID_GENERATE=YES'], limit=1)
+    got = read_file('/vsimem/out.json')
+    assert '"id": 0, "properties": { "AREA": 215229.266, "EAS_ID": 168, "PRFEDEA": "35043411" }' in got
+
+    gdal.VectorTranslate('/vsimem/out.json', 'data/poly.shp', format='GeoJSON', layerCreationOptions=['ID_GENERATE=YES', 'ID_TYPE=Integer'], limit=1)
+    got = read_file('/vsimem/out.json')
+    assert '"id": 0, "properties": { "AREA": 215229.266, "EAS_ID": 168, "PRFEDEA": "35043411" }' in got
+
+    gdal.VectorTranslate('/vsimem/out.json', 'data/poly.shp', format='GeoJSON', layerCreationOptions=['ID_GENERATE=YES', 'ID_TYPE=String'], limit=1)
+    got = read_file('/vsimem/out.json')
+    assert '"id": "0", "properties": { "AREA": 215229.266, "EAS_ID": 168, "PRFEDEA": "35043411" }' in got
+
 ###############################################################################
 
 
