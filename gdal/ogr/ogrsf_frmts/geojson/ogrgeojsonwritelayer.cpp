@@ -183,6 +183,9 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
         poFeatureToWrite = poFeature;
     }
 
+    if (oWriteOptions_.bGenerateID && poFeatureToWrite->GetFID() == OGRNullFID) {
+        poFeatureToWrite->SetFID(nOutCounter_);
+    }
     json_object* poObj =
         OGRGeoJSONWriteFeature( poFeatureToWrite, oWriteOptions_ );
     CPLAssert( nullptr != poObj );
