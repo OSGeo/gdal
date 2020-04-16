@@ -24625,7 +24625,9 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
     fi
     if test "$PROJ_FOUND" = "no"; then
         as_fn_error $? "PROJ 6 symbols not found" "$LINENO" 5
-                fi
+    elif test "x$with_proj" != "x/usr" -a "x$with_proj" != "x/" ; then
+        LIBS="-Wl,-rpath=$proj_libdir $LIBS"
+    fi
     if test -r "$with_proj/include/proj.h" ; then
         PROJ_INCLUDE="$PROJ_INCLUDE -I$with_proj/include"
         { $as_echo "$as_me:${as_lineno-$LINENO}: proj.h found" >&5
