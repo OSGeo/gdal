@@ -32334,7 +32334,7 @@ $as_echo_n "checking libnetcdf compiler and linker flags with nc-config... " >&6
 
         STRIPPED_LIBRARY_NAME="$(echo "${NETCDF_LIBS}" | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[:space:]]+::')"
 
-    NETCDF_LIBS=$STRIPPED_LIBRARY_NAME
+    NETCDF_LIBS="$STRIPPED_LIBRARY_NAME"
     echo ""
     { $as_echo "$as_me:${as_lineno-$LINENO}: result:  got version=\"$NETCDF_VERSION\", prefix=\"$NETCDF_PREFIX\",
  libs=\"$NETCDF_LIBS\", includedir=\"$NETCDF_INCLUDEDIR\"" >&5
@@ -34313,7 +34313,7 @@ $as_echo "no, mysql is pre-4.x" >&6; }
 
         STRIPPED_LIBRARY_NAME="$(echo "${MYSQL_LIB}" | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[:space:]]+::')"
 
-      MYSQL_LIB=$STRIPPED_LIBRARY_NAME
+      MYSQL_LIB="$STRIPPED_LIBRARY_NAME"
       MYSQL_INC="`$MYSQL_CONFIG --include`"
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
@@ -39070,7 +39070,7 @@ $as_echo "$as_me: Using C API from GEOS $GEOS_VERSION" >&6;}
 
         STRIPPED_LIBRARY_NAME="$(echo "${GEOS_LIBS}" | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[:space:]]+::')"
 
-  GEOS_LIBS=$STRIPPED_LIBRARY_NAME
+  GEOS_LIBS="$STRIPPED_LIBRARY_NAME"
   LIBS="${GEOS_LIBS} ${LIBS}"
   HAVE_GEOS_RESULT="yes"
 fi
@@ -39349,7 +39349,7 @@ $as_echo "$as_me: Using C API from SFCGAL $SFCGAL_VERSION" >&6;}
 
         STRIPPED_LIBRARY_NAME="$(echo "${SFCGAL_LIBS}" | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[:space:]]+::')"
 
-  SFCGAL_LIBS=$STRIPPED_LIBRARY_NAME
+  SFCGAL_LIBS="$STRIPPED_LIBRARY_NAME"
   LIBS="${SFCGAL_LIBS} ${LIBS}"
   HAVE_SFCGAL_RESULT="yes"
 fi
