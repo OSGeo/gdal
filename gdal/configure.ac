@@ -1098,15 +1098,19 @@ dnl There may be others as well, that will need be addressed as they arise. We a
 dnl /usr/lib/* to avoid potential cases such as /usr/lib/mysql/lib, which might not have an /etc/ld.so.conf.d
 dnl entry and would not shadow any possible custom installs anyway:
 AC_DEFUN([STRIP_SYSTEM_LIBRARY_PATHS],[
-        STRIPPED_LIBRARY_NAME=`echo [$1] | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*\s\s*::'`
+        dnl STRIPPED_LIBRARY_NAME=`echo [$1] | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*\s\s*::'`
+        STRIPPED_LIBRARY_NAME=`echo [$1] | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[[:space:]]]+::'`
         dnl If the above command did not remove the leading -L<libdir>, then <libdir> is a custom directory,
         dnl about which we might inform the linker.
+        echo "STRIPPED_LIBRARY_NAME 1: $STRIPPED_LIBRARY_NAME"
         echo "$STRIPPED_LIBRARY_NAME" | grep -- -L > /dev/null
         if test $? -eq 0 ; then
                 dnl "replace -L(non-space-chars)(space-chars)(anything) with just the first (non-space-chars)"
-                custom_libdir=`echo "$STRIPPED_LIBRARY_NAME" | sed -E 's:\s*-L(\S\S*)\s\s*.*:\1:'`
+                dnl custom_libdir=`echo "$STRIPPED_LIBRARY_NAME" | sed -E 's:\s*-L(\S\S*)\s\s*.*:\1:'`
+                custom_libdir=$(echo "$STRIPPED_LIBRARY_NAME" | sed -E 's:[[[:space:]]]*-L([[^[:space:]]]+)[[[:space:]]]+.*:\1:')
                 STRIPPED_LIBRARY_NAME="-Wl,-rpath=$custom_libdir $STRIPPED_LIBRARY_NAME"
         fi
+        echo "STRIPPED_LIBRARY_NAME 2: $STRIPPED_LIBRARY_NAME"
 ])
 
 dnl ---------------------------------------------------------------------------
