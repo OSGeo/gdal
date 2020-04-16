@@ -1311,7 +1311,14 @@ else
     if test "$PROJ_FOUND" = "no"; then
         AC_MSG_ERROR([PROJ 6 symbols not found])
     elif test "x$with_proj" != "x/usr" -a "x$with_proj" != "x/" ; then
-        LIBS="-Wl,-rpath=$proj_libdir $LIBS"
+        case "${host_os}" in
+          darwin*)
+              LIBS="-Wl,-rpath,$proj_libdir $LIBS"
+              ;;
+          *)
+              LIBS="-Wl,-rpath=$proj_libdir $LIBS"
+              ;;
+        esac
     fi
     if test -r "$with_proj/include/proj.h" ; then
         PROJ_INCLUDE="$PROJ_INCLUDE -I$with_proj/include"
