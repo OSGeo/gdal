@@ -1841,11 +1841,11 @@ def test_sentinel2_l2a_4():
                     'SUBDATASET_1_NAME':
                     'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634',
                     'SUBDATASET_2_DESC':
-                    'Bands B5, B6, B7, B8A, B11, B12 with 20m resolution, UTM 34N',
+                    'Bands B5, B6, B7, B8A, B11, B12, AOT, CLD, SCL, SNW, WVP with 20m resolution, UTM 34N',
                     'SUBDATASET_2_NAME':
                     'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml:20m:EPSG_32634',
                     'SUBDATASET_3_DESC':
-                    'Bands B1, B9 with 60m resolution, UTM 34N',
+                    'Bands B1, B9, AOT, CLD, SCL, SNW, WVP with 60m resolution, UTM 34N',
                     'SUBDATASET_3_NAME':
                     'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml:60m:EPSG_32634',
                     'SUBDATASET_4_DESC':
@@ -1953,7 +1953,7 @@ def test_sentinel2_l2a_5():
     got_gt = ds.GetGeoTransform()
     assert got_gt == (600000.0, 60.0, 0.0, 6400020.0, 0.0, -60.0)
 
-    assert ds.RasterCount == 2
+    assert ds.RasterCount == 7
 
     vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
@@ -2060,11 +2060,11 @@ def test_sentinel2_l2a_6():
                     'SUBDATASET_1_NAME':
                     'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634',
                     'SUBDATASET_2_DESC':
-                    'Bands B5, B6, B7, B8A, B11, B12 with 20m resolution, UTM 34N',
+                    'Bands B5, B6, B7, B8A, B11, B12, AOT, CLD, SCL, SNW, WVP with 20m resolution, UTM 34N',
                     'SUBDATASET_2_NAME':
                     'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml:20m:EPSG_32634',
                     'SUBDATASET_3_DESC':
-                    'Bands B1, B9 with 60m resolution, UTM 34N',
+                    'Bands B1, B9, AOT, CLD, SCL, SNW, WVP with 60m resolution, UTM 34N',
                     'SUBDATASET_3_NAME':
                     'SENTINEL2_L2A:data/fake_sentinel2_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml:60m:EPSG_32634',
                     'SUBDATASET_4_DESC':
@@ -2177,7 +2177,7 @@ def test_sentinel2_l2a_7():
     got_gt = ds.GetGeoTransform()
     assert got_gt == (600000.0, 60.0, 0.0, 6400020.0, 0.0, -60.0)
 
-    assert ds.RasterCount == 2
+    assert ds.RasterCount == 7
 
     vrt = ds.GetMetadata('xml:VRT')[0]
     placement_vrt = """<SimpleSource>
