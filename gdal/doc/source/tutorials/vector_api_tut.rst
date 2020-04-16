@@ -789,7 +789,7 @@ In C :
 
 Now that the layer exists, we need to create any attribute fields that should
 appear on the layer.  Fields must be added to the layer before any features
-are written.  To create a field we initialize an :cpp:class:`OGRField` object with the
+are written.  To create a field we initialize an :cpp:union:`OGRField` object with the
 information about the field.  In the case of Shapefiles, the field width and
 precision is significant in the creation of the output .dbf file, so we
 set it specifically, though generally the defaults are OK.  For this example
