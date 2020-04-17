@@ -1080,6 +1080,7 @@ enable_driver_gpx
 enable_driver_gtm
 enable_driver_htf
 enable_driver_jml
+enable_driver_mapml
 enable_driver_mvt
 enable_driver_ntf
 enable_driver_openair
@@ -1994,6 +1995,7 @@ Optional Features:
   --disable-driver-gtm    disable gtm driver support (enabled by default)
   --disable-driver-htf    disable htf driver support (enabled by default)
   --disable-driver-jml    disable jml driver support (enabled by default)
+  --disable-driver-mapml  disable mapml driver support (enabled by default)
   --disable-driver-mvt    disable mvt driver support (enabled by default)
   --disable-driver-ntf    disable ntf driver support (enabled by default)
   --disable-driver-openair
@@ -27253,6 +27255,35 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED jml"
   INTERNAL_FORMAT_jml_ENABLED=no
+fi
+
+# Check whether --enable-driver-mapml was given.
+if test "${enable_driver_mapml+set}" = set; then :
+  enableval=$enable_driver_mapml;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_mapml
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED mapml"
+  INTERNAL_FORMAT_mapml_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DMAPML_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED mapml"
+  INTERNAL_FORMAT_mapml_ENABLED=no
 fi
 
 # Check whether --enable-driver-mvt was given.
