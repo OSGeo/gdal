@@ -647,7 +647,7 @@ CPLErr TileDBDataset::TrySaveXML()
         CPLErrorHandlerPusher oQuietError( CPLQuietErrorHandler );
         char* pszTree = CPLSerializeXMLTree( psTree );
 
-#if TILEDB_VERSION_MAJOR >= 1 && TILEDB_VERSION_MINOR >= 7
+#if TILEDB_VERSION_MAJOR > 1 || TILEDB_VERSION_MINOR >= 7
         if ( eAccess == GA_ReadOnly )
         {
             auto oMeta = std::unique_ptr<tiledb::Array>( 
@@ -786,7 +786,7 @@ CPLErr TileDBDataset::TryLoadCachedXML( char ** /*papszSiblingFiles*/, bool bRel
         {
             CPLErrorHandlerPusher oQuietError( CPLQuietErrorHandler );
 
-#if TILEDB_VERSION_MAJOR >= 1 && TILEDB_VERSION_MINOR >= 7
+#if TILEDB_VERSION_MAJOR > 1 || TILEDB_VERSION_MINOR >= 7
             if ( bReload )
             {
                 tiledb_datatype_t v_type = TILEDB_UINT8; // CPLSerializeXMLTree returns char*
