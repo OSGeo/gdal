@@ -77,6 +77,7 @@ Dataset creation options
 -  **EXTENT_ZOOM_MIN**\ =int: Min value for extent.zoom.
 -  **EXTENT_ZOOM_MAX**\ =int: Max value for extent.zoom.
 -  **EXTENT_EXTRA**\ =string: Filename of inline XML content for extra content to insert in extent element.
+-  **BODY_LINKS**\ =string: Inline XML content for extra content to insert as link elements in the body. For example '<link type="foo" href="bar" /><link type="baz" href="baw" />'
 
 Links
 -----

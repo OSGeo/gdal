@@ -255,6 +255,55 @@ def test_ogr_mapml_creation_options():
     gdal.Unlink(filename)
 
 
+def test_ogr_mapml_body_links_single():
+
+    options = [
+        'BODY_LINKS=<link type="foo" href="bar"/>'
+    ]
+    filename = '/vsimem/out.mapml'
+    ds = ogr.GetDriverByName('MapML').CreateDataSource(filename, options=options)
+    lyr = ds.CreateLayer('lyr')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (-180 0)'))
+    lyr.CreateFeature(f)
+    ds = None
+
+    f = gdal.VSIFOpenL(filename, "rb")
+    xml = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+
+    assert """</extent>
+    <link type="foo" href="bar" />
+    <feature id="lyr.1" class="lyr">""" in xml
+
+    gdal.Unlink(filename)
+
+
+def test_ogr_mapml_body_links_multiple():
+
+    options = [
+        'BODY_LINKS=<link type="foo" href="bar"/><link type="baz" href="baw"/>'
+    ]
+    filename = '/vsimem/out.mapml'
+    ds = ogr.GetDriverByName('MapML').CreateDataSource(filename, options=options)
+    lyr = ds.CreateLayer('lyr')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (-180 0)'))
+    lyr.CreateFeature(f)
+    ds = None
+
+    f = gdal.VSIFOpenL(filename, "rb")
+    xml = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+
+    assert """</extent>
+    <link type="foo" href="bar" />
+    <link type="baz" href="baw" />
+    <feature id="lyr.1" class="lyr">""" in xml
+
+    gdal.Unlink(filename)
+
+
 def test_ogr_mapml_no_class():
 
     filename = '/vsimem/out.mapml'

@@ -935,6 +935,20 @@ GDALDataset* OGRMapMLWriterDataset::Create( const char * pszFilename,
         CPLAddXMLAttributeAndValue(poDS->m_psExtent, "action", pszExtentAction);
 
     poDS->m_psLastChild = poDS->m_psExtent;
+
+    const char* pszBodyLinks = CSLFetchNameValue(papszOptions, "BODY_LINKS");
+    if( pszBodyLinks )
+    {
+        CPLXMLNode* psLinks = CPLParseXMLString(pszBodyLinks);
+        if( psLinks )
+        {
+            poDS->m_psExtent->psNext = psLinks;
+            poDS->m_psLastChild = psLinks;
+            while( poDS->m_psLastChild->psNext )
+                poDS->m_psLastChild = poDS->m_psLastChild->psNext;
+        }
+    }
+
     poDS->m_aosOptions = CSLDuplicate(papszOptions);
 
     return poDS;
@@ -1399,6 +1413,8 @@ void RegisterOGRMapML()
 "  <Option name='EXTENT_ZOOM_MAX' type='int' description='Max value for extent.zoom'/>"
 "  <Option name='EXTENT_EXTRA' type='string' "
     "description='Filename of inline XML content for extra content to insert in extent element'/>"
+"  <Option name='BODY_LINKS' type='string' "
+    "description='Inline XML content for extra content to insert as link elements in the body'/>"
 "</CreationOptionList>" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
