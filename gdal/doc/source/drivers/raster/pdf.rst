@@ -518,8 +518,7 @@ Poppler
 libpoppler itself must have been configured with --enable-xpdf-headers
 so that the xpdf C++ headers are available. Note: the poppler C++ API
 isn't stable, so the driver compilation may fail with too old or too
-recent poppler versions. Successfully tested versions are poppler >=
-0.12.X and <= 0.31.0.
+recent poppler versions.
 
 PoDoFo
 ~~~~~~
