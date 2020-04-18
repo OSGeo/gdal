@@ -9,7 +9,7 @@ ARG ALPINE_VERSION=3.11
 FROM alpine:${ALPINE_VERSION} as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
-MAINTAINER Even Rouault <even.rouault@spatialys.com>
+LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 
 # Setup build env for PROJ
 RUN apk add --no-cache wget curl unzip make libtool autoconf automake pkgconfig g++ sqlite sqlite-dev
