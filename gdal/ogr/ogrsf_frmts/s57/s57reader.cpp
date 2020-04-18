@@ -3103,10 +3103,8 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 
         if( poDstATTF == nullptr )
         {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Unable to apply ATTF change to target record without "
-                      "an ATTF field (see GDAL/OGR Bug #1648)" );
-            return false;
+            // Create empty ATTF Field (see GDAL/OGR Bug #1648)" ); 
+            poDstATTF = poTarget->AddField(poModule->FindFieldDefn( "ATTF" ));         
         }
 
         DDFField *poSrcATTF = poUpdate->FindField( "ATTF" );
