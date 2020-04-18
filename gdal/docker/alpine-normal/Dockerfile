@@ -36,9 +36,9 @@ RUN apk add --no-cache \
     && mkdir -p /build_thirdparty/usr/lib
 
 # Build xerces-c
-ARG XERCESC_VERSION=3.2.2
+ARG XERCESC_VERSION=3.2.3
 RUN if test "${XERCESC_VERSION}" != ""; then ( \
-    wget -q https://www-eu.apache.org/dist//xerces/c/3//sources/xerces-c-${XERCESC_VERSION}.zip \
+    wget -q https://www-eu.apache.org/dist//xerces/c/3/sources/xerces-c-${XERCESC_VERSION}.zip \
     && unzip -q xerces-c-${XERCESC_VERSION}.zip  \
     && rm -f xerces-c-${XERCESC_VERSION}.zip \
     && cd xerces-c-${XERCESC_VERSION} \
@@ -84,7 +84,7 @@ RUN if test "${SZIP_VERSION}" != ""; then ( \
     ); fi
 
 # Build hdf5
-ARG HDF5_VERSION=1.10.5
+ARG HDF5_VERSION=1.12.0
 RUN if test "${HDF5_VERSION}" != ""; then ( \
     wget -q https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-${HDF5_VERSION%.*}/hdf5-${HDF5_VERSION}/src/hdf5-${HDF5_VERSION}.tar.gz \
     && tar xzf hdf5-${HDF5_VERSION}.tar.gz \
@@ -100,9 +100,10 @@ RUN if test "${HDF5_VERSION}" != ""; then ( \
     ); fi
 
 # Build netCDF
-ARG NETCDF_VERSION=4.7.3
+ARG NETCDF_VERSION=4.7.4
 RUN if test "${NETCDF_VERSION}" != ""; then ( \
-    wget -q https://github.com/Unidata/netcdf-c/archive/v${NETCDF_VERSION}.tar.gz \
+    apk add --no-cache libexecinfo-dev \
+    && wget -q https://github.com/Unidata/netcdf-c/archive/v${NETCDF_VERSION}.tar.gz \
     && tar xzf v${NETCDF_VERSION}.tar.gz \
     && rm -f v${NETCDF_VERSION}.tar.gz \
     && cd netcdf-c-${NETCDF_VERSION} \
@@ -113,10 +114,11 @@ RUN if test "${NETCDF_VERSION}" != ""; then ( \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
     && rm -rf netcdf-c-${NETCDF_VERSION} \
+    && apk del libexecinfo-dev \
     ); fi
 
 # Build hdf4
-ARG HDF4_VERSION=4.2.14
+ARG HDF4_VERSION=4.2.15
 RUN if test "${HDF4_VERSION}" != ""; then ( \
     apk add --no-cache byacc flex portablexdr-dev \
     && mkdir hdf4 \
