@@ -1060,7 +1060,7 @@ CPLErr MBTilesDataset::SetGeoTransform( double* padfGeoTransform )
             if( miny < -ok_maxy)
                 miny = -ok_maxy;
 
-            osBounds.Printf("%.18g,%.18g,%.18g,%.18g",minx, miny, maxx, maxy );
+            osBounds.Printf("%.17g,%.17g,%.17g,%.17g",minx, miny, maxx, maxy );
         }
 
         char* pszSQL = sqlite3_mprintf(

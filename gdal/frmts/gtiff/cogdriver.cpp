@@ -358,10 +358,10 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
     papszArg = CSLAddString(papszArg, "-t_srs");
     papszArg = CSLAddString(papszArg, osTargetSRS);
     papszArg = CSLAddString(papszArg, "-te");
-    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g,", dfMinX));
-    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g,", dfMinY));
-    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g,", dfMaxX));
-    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g,", dfMaxY));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g,", dfMinX));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g,", dfMinY));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g,", dfMaxX));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g,", dfMaxY));
     papszArg = CSLAddString(papszArg, "-ts");
     papszArg = CSLAddString(papszArg, CPLSPrintf("%d", nXSize));
     papszArg = CSLAddString(papszArg, CPLSPrintf("%d", nYSize));

@@ -414,7 +414,7 @@ def main(argv=None):
             if dfNoData != dfNoData:
                 print("  NoData Value=nan")
             else:
-                print("  NoData Value=%.18g" % dfNoData)
+                print("  NoData Value=%.17g" % dfNoData)
 
         if hBand.GetOverviewCount() > 0:
 

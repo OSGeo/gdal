@@ -742,10 +742,10 @@ void OGRAmigoCloudTableLayer::BuildWhere()
         char szBox3D_2[128];
         char* pszComma = nullptr;
 
-        CPLsnprintf(szBox3D_1, sizeof(szBox3D_1), "%.18g %.18g", sEnvelope.MinX, sEnvelope.MinY);
+        CPLsnprintf(szBox3D_1, sizeof(szBox3D_1), "%.17g %.17g", sEnvelope.MinX, sEnvelope.MinY);
         while((pszComma = strchr(szBox3D_1, ',')) != nullptr)
             *pszComma = '.';
-        CPLsnprintf(szBox3D_2, sizeof(szBox3D_2), "%.18g %.18g", sEnvelope.MaxX, sEnvelope.MaxY);
+        CPLsnprintf(szBox3D_2, sizeof(szBox3D_2), "%.17g %.17g", sEnvelope.MaxX, sEnvelope.MaxY);
         while((pszComma = strchr(szBox3D_2, ',')) != nullptr)
             *pszComma = '.';
         osWHERE.Printf("(%s && 'BOX3D(%s, %s)'::box3d)",

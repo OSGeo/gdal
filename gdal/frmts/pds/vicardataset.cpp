@@ -1295,7 +1295,7 @@ static void WriteLabelItemValue(std::string& osLabel,
     }
     else if( eType == CPLJSONObject::Type::Long )
     {
-        std::string osVal(CPLSPrintf("%.18g",
+        std::string osVal(CPLSPrintf("%.17g",
                                      static_cast<double>(obj.ToLong())));
         if( osVal.find('.') == std::string::npos )
             osVal += ".0";
@@ -1308,7 +1308,7 @@ static void WriteLabelItemValue(std::string& osLabel,
             dfVal <= static_cast<double>(std::numeric_limits<GIntBig>::max()) &&
             static_cast<double>(static_cast<GIntBig>(dfVal)) == dfVal )
         {
-            std::string osVal(CPLSPrintf("%.18g", dfVal));
+            std::string osVal(CPLSPrintf("%.17g", dfVal));
             if( osVal.find('.') == std::string::npos )
                 osVal += ".0";
             osLabel += osVal;

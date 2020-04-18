@@ -130,7 +130,7 @@ def extract_tile(ds, src_band_nbr, tile_x, tile_y, jpg_filename):
             return 1
         content = """<PAMDataset>
     <SRS>%s</SRS>
-    <GeoTransform>%.18g,%.18g,%.18g,%.18g,%.18g,%.18g</GeoTransform>
+    <GeoTransform>%.17g,%.17g,%.17g,%.17g,%.17g,%.17g</GeoTransform>
     </PAMDataset>
     """ % (srs, sub_gt[0], sub_gt[1], sub_gt[2], sub_gt[3], sub_gt[4], sub_gt[5])
         gdal.VSIFWriteL(content, 1, len(content), out_f)

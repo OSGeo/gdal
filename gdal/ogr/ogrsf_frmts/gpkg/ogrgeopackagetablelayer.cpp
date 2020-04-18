@@ -55,8 +55,8 @@ OGRErr OGRGeoPackageTableLayer::SaveExtent()
 
     char *pszSQL = sqlite3_mprintf(
                 "UPDATE gpkg_contents SET "
-                "min_x = %.18g, min_y = %.18g, "
-                "max_x = %.18g, max_y = %.18g "
+                "min_x = %.17g, min_y = %.17g, "
+                "max_x = %.17g, max_y = %.17g "
                 "WHERE lower(table_name) = lower('%q') AND "
                 "Lower(data_type) = 'features'",
                 m_poExtent->MinX, m_poExtent->MinY,
@@ -2499,7 +2499,7 @@ static bool findMinOrMax( GDALGeoPackageDataset* poDS,
         osSQL += " WHERE ";
         osSQL += pszVarName;
         osSQL += isMin ? " < " : " > ";
-        osSQL += CPLSPrintf( "%.18g", val );
+        osSQL += CPLSPrintf( "%.17g", val );
         osSQL += " LIMIT 1";
         SQLResult oResult;
         if ( SQLQuery(poDS->GetDB(), osSQL, &oResult) != OGRERR_NONE )

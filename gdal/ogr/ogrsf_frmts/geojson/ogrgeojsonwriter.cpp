@@ -1508,7 +1508,7 @@ static int OGR_json_double_with_precision_to_string( struct json_object *jso,
     const double dfVal =  json_object_get_double(jso);
     if( fabs(dfVal) > 1e50 && !CPLIsInf(dfVal) )
     {
-        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.18g", dfVal);
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.17g", dfVal);
     }
     else
     {

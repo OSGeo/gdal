@@ -381,7 +381,7 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname=None, update_mode=DEF
             dst_layer.ResetReading()
             if src_type == dst_type and src_type == ogr.OFTReal:
                 val = src_feat.GetFieldAsDouble(src_idx)
-                dst_layer.SetAttributeFilter("%s = %.18g" % (matchfieldname, val))
+                dst_layer.SetAttributeFilter("%s = %.17g" % (matchfieldname, val))
             elif src_type == dst_type and src_type == ogr.OFTInteger:
                 val = src_feat.GetFieldAsInteger(src_idx)
                 dst_layer.SetAttributeFilter("%s = %d" % (matchfieldname, val))

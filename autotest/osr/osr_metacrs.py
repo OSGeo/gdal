@@ -78,7 +78,7 @@ class TestMetaCRS(object):
             + abs(result[2] - self.dst_xyz[2])
 
         if error > self.dst_error:
-            err_msg = 'Dest error is %g, src=%g,%g,%g, dst=%.18g,%.18g,%.18g, exp=%.18g,%.18g,%.18g' \
+            err_msg = 'Dest error is %g, src=%g,%g,%g, dst=%.17g,%.17g,%.17g, exp=%.17g,%.17g,%.17g' \
                       % (error,
                          self.src_xyz[0], self.src_xyz[1], self.src_xyz[2],
                          result[0], result[1], result[2],

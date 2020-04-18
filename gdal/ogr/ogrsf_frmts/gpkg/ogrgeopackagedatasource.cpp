@@ -2093,10 +2093,10 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         const double dfPixelYSize = CPLAtof(SQLResultGetValue(&oResult, 2, 0));
         const int nTileWidth = atoi(SQLResultGetValue(&oResult, 3, 0));
         const int nTileHeight = atoi(SQLResultGetValue(&oResult, 4, 0));
-        osContentsMinX = CPLSPrintf("%.18g", dfMinX + dfPixelXSize * nTileWidth * atoi(SQLResultGetValue(&oResult2, 0, 0)));
-        osContentsMaxY = CPLSPrintf("%.18g", dfMaxY - dfPixelYSize * nTileHeight * atoi(SQLResultGetValue(&oResult2, 1, 0)));
-        osContentsMaxX = CPLSPrintf("%.18g", dfMinX + dfPixelXSize * nTileWidth * (1 + atoi(SQLResultGetValue(&oResult2, 2, 0))));
-        osContentsMinY = CPLSPrintf("%.18g", dfMaxY - dfPixelYSize * nTileHeight * (1 + atoi(SQLResultGetValue(&oResult2, 3, 0))));
+        osContentsMinX = CPLSPrintf("%.17g", dfMinX + dfPixelXSize * nTileWidth * atoi(SQLResultGetValue(&oResult2, 0, 0)));
+        osContentsMaxY = CPLSPrintf("%.17g", dfMaxY - dfPixelYSize * nTileHeight * atoi(SQLResultGetValue(&oResult2, 1, 0)));
+        osContentsMaxX = CPLSPrintf("%.17g", dfMinX + dfPixelXSize * nTileWidth * (1 + atoi(SQLResultGetValue(&oResult2, 2, 0))));
+        osContentsMinY = CPLSPrintf("%.17g", dfMaxY - dfPixelYSize * nTileHeight * (1 + atoi(SQLResultGetValue(&oResult2, 3, 0))));
         pszContentsMinX = osContentsMinX.c_str();
         pszContentsMinY = osContentsMinY.c_str();
         pszContentsMaxX = osContentsMaxX.c_str();
@@ -2125,7 +2125,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
                 static_cast<int>(dfGPKGNoDataValue) != dfGPKGNoDataValue )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "data_null = %.18g is invalid for integer data_type",
+                         "data_null = %.17g is invalid for integer data_type",
                          dfGPKGNoDataValue);
             }
             else
@@ -2478,7 +2478,7 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
     const char* pszCurrentDate = CPLGetConfigOption("OGR_CURRENT_DATE", nullptr);
     CPLString osInsertGpkgContentsFormatting("INSERT INTO gpkg_contents "
             "(table_name,data_type,identifier,description,min_x,min_y,max_x,max_y,last_change,srs_id) VALUES "
-            "('%q','%q','%q','%q',%.18g,%.18g,%.18g,%.18g,");
+            "('%q','%q','%q','%q',%.17g,%.17g,%.17g,%.17g,");
     osInsertGpkgContentsFormatting += ( pszCurrentDate ) ? "'%q'" : "%s";
     osInsertGpkgContentsFormatting += ",%d)";
     char* pszSQL =
@@ -2501,7 +2501,7 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
 
     pszSQL = sqlite3_mprintf("INSERT INTO gpkg_tile_matrix_set "
             "(table_name,srs_id,min_x,min_y,max_x,max_y) VALUES "
-            "('%q',%d,%.18g,%.18g,%.18g,%.18g)",
+            "('%q',%d,%.17g,%.17g,%.17g,%.17g)",
             m_osRasterTable.c_str(), m_nSRID,
             m_dfTMSMinX,dfTMSMinY,dfTMSMaxX,m_dfTMSMaxY);
     eErr = SQLCommand(hDB, pszSQL);
@@ -2533,7 +2533,7 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
 
         pszSQL = sqlite3_mprintf("INSERT INTO gpkg_tile_matrix "
                 "(table_name,zoom_level,matrix_width,matrix_height,tile_width,tile_height,pixel_x_size,pixel_y_size) VALUES "
-                "('%q',%d,%d,%d,%d,%d,%.18g,%.18g)",
+                "('%q',%d,%d,%d,%d,%d,%.17g,%.17g)",
                 m_osRasterTable.c_str(),i,nTileMatrixWidth,nTileMatrixHeight,
                 nTileWidth,nTileHeight,dfPixelXSizeZoomLevel,dfPixelYSizeZoomLevel);
         eErr = SQLCommand(hDB, pszSQL);
@@ -2883,7 +2883,7 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                 int nTileMatrixHeight = (nOvYSize + nTileHeight - 1) / nTileHeight;
                 pszSQL = sqlite3_mprintf("INSERT INTO gpkg_tile_matrix "
                         "(table_name,zoom_level,matrix_width,matrix_height,tile_width,tile_height,pixel_x_size,pixel_y_size) VALUES "
-                        "('%q',%d,%d,%d,%d,%d,%.18g,%.18g)",
+                        "('%q',%d,%d,%d,%d,%d,%.17g,%.17g)",
                         m_osRasterTable.c_str(),nNewZoomLevel,nTileMatrixWidth,nTileMatrixHeight,
                         nTileWidth,nTileHeight,dfPixelXSizeZoomLevel,dfPixelYSizeZoomLevel);
                 eErr = SQLCommand(hDB, pszSQL);
@@ -4535,7 +4535,7 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
         "INSERT INTO gpkg_2d_gridded_coverage_ancillary "
         "(tile_matrix_set_name, datatype, scale, offset, precision, "
         "grid_cell_encoding, uom, field_name, quantity_definition) "
-        "VALUES ('%q', '%s', %.18g, %.18g, %.18g, %s, %s, %s, %s)",
+        "VALUES ('%q', '%s', %.17g, %.17g, %.17g, %s, %s, %s, %s)",
         m_osRasterTable.c_str(),
         ( m_eTF == GPKG_TF_PNG_16BIT ) ? "integer" : "float",
         m_dfScale, m_dfOffset, m_dfPrecision,

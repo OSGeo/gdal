@@ -1552,7 +1552,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                   {
                       CPLError(
                           CE_Warning, CPLE_AppDefined,
-                          "Value %.18g of field %s with 0 decimal of feature "
+                          "Value %.17g of field %s with 0 decimal of feature "
                           CPL_FRMT_GIB " is bigger than 2^53. "
                           "Precision loss likely occurred or going to happen.%s",
                           dfVal, poFieldDefn->GetNameRef(),
@@ -1568,7 +1568,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
               {
                   CPLError(
                       CE_Warning, CPLE_AppDefined,
-                      "Value %.18g of field %s of feature " CPL_FRMT_GIB " not "
+                      "Value %.17g of field %s of feature " CPL_FRMT_GIB " not "
                       "successfully written. Possibly due to too larger number "
                       "with respect to field width",
                       dfVal, poFieldDefn->GetNameRef(), poFeature->GetFID());

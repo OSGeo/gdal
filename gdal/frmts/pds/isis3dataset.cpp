@@ -1983,7 +1983,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
         // The existence of those different conventions is acknowledged in
         // https://pds-imaging.jpl.nasa.gov/documentation/Cassini_BIDRSIS.PDF in the middle of page 10
         oProj4String.Printf(
-            "+proj=ob_tran +o_proj=eqc +o_lon_p=%.18g +o_lat_p=%.18g +lon_0=%.18g",
+            "+proj=ob_tran +o_proj=eqc +o_lon_p=%.17g +o_lat_p=%.17g +lon_0=%.17g",
             -poleRotation,
             180-poleLatitude,
             poleLongitude);
@@ -3772,7 +3772,7 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, const CPLJSONObject &oObj,
                         }
                         else
                         {
-                            VSIFPrintfL(fp, "%s%s%s = %.18g <%s>\n",
+                            VSIFPrintfL(fp, "%s%s%s = %.17g <%s>\n",
                                         osIndentation.c_str(), osKey.c_str(),
                                         osPadding.c_str(),
                                         dfVal, osUnit.c_str());
@@ -3852,7 +3852,7 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, const CPLJSONObject &oObj,
             }
             else
             {
-                VSIFPrintfL(fp, "%s%s%s = %.18g\n",
+                VSIFPrintfL(fp, "%s%s%s = %.17g\n",
                             osIndentation.c_str(), osKey.c_str(),
                             osPadding.c_str(), dfVal);
             }
@@ -3948,7 +3948,7 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, const CPLJSONObject &oObj,
                     }
                     else
                     {
-                        osVal = CPLSPrintf("%.18g", dfVal);
+                        osVal = CPLSPrintf("%.17g", dfVal);
                     }
                     const size_t nValLen = osVal.size();
                     if( nFirstPos < WIDTH && idx > 0 &&

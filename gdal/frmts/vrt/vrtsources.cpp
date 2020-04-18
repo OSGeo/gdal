@@ -2222,7 +2222,7 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
             CPLString().Printf("%g", m_padfLUTInputs[1]) )
         {
             osLUT = CPLString().Printf(
-                "%.18g:%g", m_padfLUTInputs[0], m_padfLUTOutputs[0]);
+                "%.17g:%g", m_padfLUTInputs[0], m_padfLUTOutputs[0]);
         }
         else
         {
@@ -2241,7 +2241,7 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
                 // Can someone distill the issue down to a quick comment?
                 // https://trac.osgeo.org/gdal/ticket/6422
                 osLUT += CPLString().Printf(
-                    ",%.18g:%g", m_padfLUTInputs[i], m_padfLUTOutputs[i]);
+                    ",%.17g:%g", m_padfLUTInputs[i], m_padfLUTOutputs[i]);
             }
             else
             {

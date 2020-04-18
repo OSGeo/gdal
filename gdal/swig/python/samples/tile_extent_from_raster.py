@@ -135,7 +135,7 @@ def main():
                 xmin = gt[0] + x * blockxsize * gt[1]
                 xmax = xmin + blockxsize * gt[1]
                 f = ogr.Feature(out_lyr.GetLayerDefn())
-                wkt = 'POLYGON((%.18g %.18g,%.18g %.18g,%.18g %.18g,%.18g %.18g,%.18g %.18g))' % (xmin, ymin,
+                wkt = 'POLYGON((%.17g %.17g,%.17g %.17g,%.17g %.17g,%.17g %.17g,%.17g %.17g))' % (xmin, ymin,
                                                                                                   xmin, ymax,
                                                                                                   xmax, ymax,
                                                                                                   xmax, ymin,

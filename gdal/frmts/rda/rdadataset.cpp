@@ -1370,7 +1370,7 @@ static CPLString Get20Coeffs(json_object* poObj, const char* pszPath,
     {
         if( i != 0 )
             osRet += " ";
-        osRet += CPLSPrintf("%.18g",
+        osRet += CPLSPrintf("%.17g",
             json_object_get_double(json_object_array_get_idx(poCoeffs, i)));
     }
     return osRet;
@@ -1439,35 +1439,35 @@ bool GDALRDADataset::ReadRPCs()
     if( !bMinMaxLongLatError )
     {
         papszMD = CSLSetNameValue(papszMD, RPC_MIN_LONG,
-                                  CPLSPrintf("%.18g", dfMinX));
+                                  CPLSPrintf("%.17g", dfMinX));
         papszMD = CSLSetNameValue(papszMD, RPC_MIN_LAT,
-                                  CPLSPrintf("%.18g", dfMinY));
+                                  CPLSPrintf("%.17g", dfMinY));
         papszMD = CSLSetNameValue(papszMD, RPC_MAX_LONG,
-                                  CPLSPrintf("%.18g", dfMaxX));
+                                  CPLSPrintf("%.17g", dfMaxX));
         papszMD = CSLSetNameValue(papszMD, RPC_MAX_LAT,
-                                  CPLSPrintf("%.18g", dfMaxY));
+                                  CPLSPrintf("%.17g", dfMaxY));
     }
 
     papszMD = CSLSetNameValue(papszMD, RPC_LINE_OFF,
-        CPLSPrintf("%.18g", GetJsonDouble(poObj, "lineOffset", true, bError)));
+        CPLSPrintf("%.17g", GetJsonDouble(poObj, "lineOffset", true, bError)));
     papszMD = CSLSetNameValue(papszMD, RPC_SAMP_OFF,
-        CPLSPrintf("%.18g", GetJsonDouble(poObj, "sampleOffset", true, bError)));
+        CPLSPrintf("%.17g", GetJsonDouble(poObj, "sampleOffset", true, bError)));
     papszMD = CSLSetNameValue(papszMD, RPC_LAT_OFF,
-        CPLSPrintf("%.18g", GetJsonDouble(poObj, "latOffset", true, bError)));
+        CPLSPrintf("%.17g", GetJsonDouble(poObj, "latOffset", true, bError)));
     papszMD = CSLSetNameValue(papszMD, RPC_LONG_OFF,
-        CPLSPrintf("%.18g", GetJsonDouble(poObj, "lonOffset", true, bError)));
+        CPLSPrintf("%.17g", GetJsonDouble(poObj, "lonOffset", true, bError)));
     papszMD = CSLSetNameValue(papszMD, RPC_HEIGHT_OFF,
-        CPLSPrintf("%.18g", GetJsonDouble(poObj, "heightOffset", true, bError)));
+        CPLSPrintf("%.17g", GetJsonDouble(poObj, "heightOffset", true, bError)));
     papszMD = CSLSetNameValue(papszMD, RPC_LINE_SCALE,
-        CPLSPrintf("%.18g", GetJsonDouble(poObj, "lineScale", true, bError)));
+        CPLSPrintf("%.17g", GetJsonDouble(poObj, "lineScale", true, bError)));
     papszMD = CSLSetNameValue(papszMD, RPC_SAMP_SCALE,
-        CPLSPrintf("%.18g", GetJsonDouble(poObj, "sampleScale", true, bError)));
+        CPLSPrintf("%.17g", GetJsonDouble(poObj, "sampleScale", true, bError)));
     papszMD = CSLSetNameValue(papszMD, RPC_LAT_SCALE,
-        CPLSPrintf("%.18g", GetJsonDouble(poObj, "latScale", true, bError)));
+        CPLSPrintf("%.17g", GetJsonDouble(poObj, "latScale", true, bError)));
     papszMD = CSLSetNameValue(papszMD, RPC_LONG_SCALE,
-        CPLSPrintf("%.18g", GetJsonDouble(poObj, "lonScale", true, bError)));
+        CPLSPrintf("%.17g", GetJsonDouble(poObj, "lonScale", true, bError)));
     papszMD = CSLSetNameValue(papszMD, RPC_HEIGHT_SCALE,
-        CPLSPrintf("%.18g", GetJsonDouble(poObj, "heightScale", true, bError)));
+        CPLSPrintf("%.17g", GetJsonDouble(poObj, "heightScale", true, bError)));
     papszMD = CSLSetNameValue(papszMD, RPC_LINE_NUM_COEFF,
         Get20Coeffs(poObj, "lineNumCoefs", true, bError));
     papszMD = CSLSetNameValue(papszMD, RPC_LINE_DEN_COEFF,

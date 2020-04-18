@@ -1094,7 +1094,7 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
             else if (sqlite3_value_type (argv[i]) == SQLITE_FLOAT)
             { // Insure that only Decimal.Points are used, never local settings such as Decimal.Comma.
                 osAttributeFilter +=
-                    CPLSPrintf("%.18g", sqlite3_value_double (argv[i]));
+                    CPLSPrintf("%.17g", sqlite3_value_double (argv[i]));
             }
             else if (sqlite3_value_type (argv[i]) == SQLITE_TEXT)
             {
@@ -2304,7 +2304,7 @@ int OGR2SQLITESpatialIndex_Filter(sqlite3_vtab_cursor* pCursor,
     }
 
 #ifdef DEBUG_OGR2SQLITE
-    CPLDebug("OGR2SQLITE", "Spatial filter : %.18g, %.18g, %.18g, %.18g",
+    CPLDebug("OGR2SQLITE", "Spatial filter : %.17g, %.17g, %.17g, %.17g",
               dfMinX, dfMinY, dfMaxX, dfMaxY);
 #endif
 

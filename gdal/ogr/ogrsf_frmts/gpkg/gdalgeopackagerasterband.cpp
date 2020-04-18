@@ -2275,7 +2275,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                         "INSERT INTO gpkg_2d_gridded_tile_ancillary "
                         "(tpudt_name, tpudt_id, scale, offset, min, max, "
                         "mean, std_dev) VALUES "
-                        "('%q', ?, %.18g, %.18g, ?, ?, ?, ?)",
+                        "('%q', ?, %.17g, %.17g, ?, ?, ?, ?)",
                         m_osRasterTable.c_str(), dfTileScale, dfTileOffset);
 #ifdef DEBUG_VERBOSE
                     CPLDebug("GPKG", "%s", pszSQL);

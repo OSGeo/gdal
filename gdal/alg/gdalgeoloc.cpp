@@ -631,9 +631,9 @@ static void GDALGeoLocRescale( char**& papszMD, const char* pszItem,
     const double dfVal =
         dfRatio *
         CPLAtofM(CSLFetchNameValueDef(papszMD, pszItem,
-                                      CPLSPrintf("%.18g", dfDefaultVal)));
+                                      CPLSPrintf("%.17g", dfDefaultVal)));
 
-    papszMD = CSLSetNameValue(papszMD, pszItem, CPLSPrintf("%.18g", dfVal));
+    papszMD = CSLSetNameValue(papszMD, pszItem, CPLSPrintf("%.17g", dfVal));
 
 }
 

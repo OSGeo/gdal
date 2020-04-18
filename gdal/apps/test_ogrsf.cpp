@@ -2348,7 +2348,7 @@ static int TestAttributeFilter( CPL_UNUSED GDALDataset* poDS,
             osValue.Printf(szFormat, poTargetFeature->GetFieldAsDouble(i));
         }
         else
-            osValue.Printf("%.18g", poTargetFeature->GetFieldAsDouble(i));
+            osValue.Printf("%.17g", poTargetFeature->GetFieldAsDouble(i));
     }
 
 /* -------------------------------------------------------------------- */

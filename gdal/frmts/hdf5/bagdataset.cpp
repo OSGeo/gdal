@@ -3856,11 +3856,11 @@ CPLString BAGCreator::GenerateMatadata(GDALDataset *poSrcDS,
 
     double adfGeoTransform[6];
     poSrcDS->GetGeoTransform(adfGeoTransform);
-    osOptions.SetNameValue("VAR_RESX", CPLSPrintf("%.18g",
+    osOptions.SetNameValue("VAR_RESX", CPLSPrintf("%.17g",
                                               adfGeoTransform[1]));
-    osOptions.SetNameValue("VAR_RESY", CPLSPrintf("%.18g",
+    osOptions.SetNameValue("VAR_RESY", CPLSPrintf("%.17g",
                                               fabs(adfGeoTransform[5])));
-    osOptions.SetNameValue("VAR_RES", CPLSPrintf("%.18g",
+    osOptions.SetNameValue("VAR_RES", CPLSPrintf("%.17g",
                     std::max(adfGeoTransform[1], fabs(adfGeoTransform[5]))));
 
     const char* pszProjection = poSrcDS->GetProjectionRef();
@@ -3923,7 +3923,7 @@ CPLString BAGCreator::GenerateMatadata(GDALDataset *poSrcDS,
         std::swap(dfMinY, dfMaxY);
     }
     osOptions.SetNameValue("VAR_CORNER_POINTS",
-                           CPLSPrintf("%.18g,%.18g %.18g,%.18g",
+                           CPLSPrintf("%.17g,%.17g %.17g,%.17g",
                                       dfMinX, dfMinY, dfMaxX, dfMaxY));
 
     double adfCornerX[4] = { dfMinX, dfMinX, dfMaxX, dfMaxX };
@@ -3951,10 +3951,10 @@ CPLString BAGCreator::GenerateMatadata(GDALDataset *poSrcDS,
                              std::max(adfCornerX[2], adfCornerX[3]));
     double dfNorth = std::max(std::max(adfCornerY[0], adfCornerY[1]),
                               std::max(adfCornerY[2], adfCornerY[3]));
-    osOptions.SetNameValue("VAR_WEST_LONGITUDE", CPLSPrintf("%.18g", dfWest));
-    osOptions.SetNameValue("VAR_SOUTH_LATITUDE", CPLSPrintf("%.18g", dfSouth));
-    osOptions.SetNameValue("VAR_EAST_LONGITUDE", CPLSPrintf("%.18g", dfEast));
-    osOptions.SetNameValue("VAR_NORTH_LATITUDE", CPLSPrintf("%.18g", dfNorth));
+    osOptions.SetNameValue("VAR_WEST_LONGITUDE", CPLSPrintf("%.17g", dfWest));
+    osOptions.SetNameValue("VAR_SOUTH_LATITUDE", CPLSPrintf("%.17g", dfSouth));
+    osOptions.SetNameValue("VAR_EAST_LONGITUDE", CPLSPrintf("%.17g", dfEast));
+    osOptions.SetNameValue("VAR_NORTH_LATITUDE", CPLSPrintf("%.17g", dfNorth));
 
     if( !SubstituteVariables(psMain, osOptions.List()) )
     {

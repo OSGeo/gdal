@@ -7405,7 +7405,7 @@ OGRErr OGRSpatialReference::SetVerticalPerspective( double dfTopoOriginLat,
     OGRSpatialReference oSRS;
     CPLString oProj4String;
     oProj4String.Printf(
-        "+proj=nsper +lat_0=%.18g +lon_0=%.18g +h=%.18g +x_0=%.18g +y_0=%.18g",
+        "+proj=nsper +lat_0=%.17g +lon_0=%.17g +h=%.17g +x_0=%.17g +y_0=%.17g",
          dfTopoOriginLat, dfTopoOriginLon, dfViewPointHeight,
          dfFalseEasting, dfFalseNorthing);
     oSRS.SetFromUserInput(oProj4String);
@@ -7473,8 +7473,8 @@ OGRErr OGRSpatialReference::SetDerivedGeogCRSWithPoleRotationGRIBConvention(
     SetProjection( "Rotated_pole" );
     SetExtension(
         "PROJCS", "PROJ4",
-        CPLSPrintf("+proj=ob_tran +lon_0=%.18g +o_proj=longlat +o_lon_p=%.18g "
-                   "+o_lat_p=%.18g +a=%.18g +b=%.18g +to_meter=0.0174532925199 +wktext",
+        CPLSPrintf("+proj=ob_tran +lon_0=%.17g +o_proj=longlat +o_lon_p=%.17g "
+                   "+o_lat_p=%.17g +a=%.17g +b=%.17g +to_meter=0.0174532925199 +wktext",
                    dfSouthPoleLon,
                    dfAxisRotation == 0 ? 0 : -dfAxisRotation,
                    dfSouthPoleLat == 0 ? 0 : -dfSouthPoleLat,

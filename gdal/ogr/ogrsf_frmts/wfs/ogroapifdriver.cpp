@@ -1307,7 +1307,7 @@ CPLString OGROAPIFLayer::AddFilters(const CPLString& osURL)
         if( bAddBBoxFilter )
         {
             osURLNew = CPLURLAddKVP(osURLNew, "bbox",
-                CPLSPrintf("%.18g,%.18g,%.18g,%.18g",
+                CPLSPrintf("%.17g,%.17g,%.17g,%.17g",
                         dfMinX,dfMinY,dfMaxX,dfMaxY));
         }
     }

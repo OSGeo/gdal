@@ -813,7 +813,7 @@ bool GDALExtendedDataType::CopyValue(const void* pSrc,
                 str = CPLSPrintf("%.9g", *static_cast<const float*>(pSrc));
                 break;
             case GDT_Float64:
-                str = CPLSPrintf("%.18g", *static_cast<const double*>(pSrc));
+                str = CPLSPrintf("%.17g", *static_cast<const double*>(pSrc));
                 break;
             case GDT_CInt16:
             {
@@ -836,7 +836,7 @@ bool GDALExtendedDataType::CopyValue(const void* pSrc,
             case GDT_CFloat64:
             {
                 const double* src = static_cast<const double*>(pSrc);
-                str = CPLSPrintf("%.18g+%.18gj", src[0], src[1]);
+                str = CPLSPrintf("%.17g+%.17gj", src[0], src[1]);
                 break;
             }
             case GDT_TypeCount:

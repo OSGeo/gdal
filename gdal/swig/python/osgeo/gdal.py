@@ -323,7 +323,7 @@ def MultiDimInfo(ds, **kwargs):
 
 
 def _strHighPrec(x):
-    return x if _is_str_or_unicode(x) else '%.18g' % x
+    return x if _is_str_or_unicode(x) else '%.17g' % x
 
 def TranslateOptions(options=None, format=None,
               outputType = gdalconst.GDT_Unknown, bandList=None, maskBand=None,

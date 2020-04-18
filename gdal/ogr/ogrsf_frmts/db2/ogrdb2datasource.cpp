@@ -1977,10 +1977,10 @@ int OGRDB2DataSource::OpenRaster( const char* pszTableName,
         double dfPixelYSize = CPLAtof(oStatement.GetColData( 2));
         int nTileWidth = atoi(oStatement.GetColData( 3));
         int nTileHeight = atoi(oStatement.GetColData( 4));
-        osContentsMinX = CPLSPrintf("%.18g", dfMinX + dfPixelXSize * nTileWidth * atoi(oStatement2.GetColData( 0)));
-        osContentsMaxY = CPLSPrintf("%.18g", dfMaxY - dfPixelYSize * nTileHeight * atoi(oStatement2.GetColData( 1)));
-        osContentsMaxX = CPLSPrintf("%.18g", dfMinX + dfPixelXSize * nTileWidth * (1 + atoi(oStatement2.GetColData( 2))));
-        osContentsMinY = CPLSPrintf("%.18g", dfMaxY - dfPixelYSize * nTileHeight * (1 + atoi(oStatement2.GetColData( 3))));
+        osContentsMinX = CPLSPrintf("%.17g", dfMinX + dfPixelXSize * nTileWidth * atoi(oStatement2.GetColData( 0)));
+        osContentsMaxY = CPLSPrintf("%.17g", dfMaxY - dfPixelYSize * nTileHeight * atoi(oStatement2.GetColData( 1)));
+        osContentsMaxX = CPLSPrintf("%.17g", dfMinX + dfPixelXSize * nTileWidth * (1 + atoi(oStatement2.GetColData( 2))));
+        osContentsMinY = CPLSPrintf("%.17g", dfMaxY - dfPixelYSize * nTileHeight * (1 + atoi(oStatement2.GetColData( 3))));
         pszContentsMinX = osContentsMinX.c_str();
         pszContentsMinY = osContentsMinY.c_str();
         pszContentsMaxX = osContentsMaxX.c_str();
@@ -3082,7 +3082,7 @@ CPLErr OGRDB2DataSource::FinalizeRasterRegistration()
     OGRDB2Statement oStatement( GetSession() );
     oStatement.Appendf( "INSERT INTO gpkg.contents "
                         "(table_name,data_type,identifier,description,min_x,min_y,max_x,max_y,srs_id) VALUES "
-                        "('%s','tiles','%s','%s',%.18g,%.18g,%.18g,%.18g,%d)",
+                        "('%s','tiles','%s','%s',%.17g,%.17g,%.17g,%.17g,%d)",
                         m_osRasterTable.c_str(),
                         m_osIdentifier.c_str(),
                         m_osDescription.c_str(),
@@ -3106,7 +3106,7 @@ CPLErr OGRDB2DataSource::FinalizeRasterRegistration()
     oStatement.Clear();
     oStatement.Appendf( "INSERT INTO gpkg.tile_matrix_set "
                         "(table_name,srs_id,min_x,min_y,max_x,max_y) VALUES "
-                        "('%s',%d,%.18g,%.18g,%.18g,%.18g)",
+                        "('%s',%d,%.17g,%.17g,%.17g,%.17g)",
                         m_osRasterTable.c_str(), m_nSRID,
                         m_dfTMSMinX,dfTMSMinY,dfTMSMaxX,m_dfTMSMaxY);
 
@@ -3148,7 +3148,7 @@ CPLErr OGRDB2DataSource::FinalizeRasterRegistration()
                             "(table_name,zoom_level,matrix_width,matrix_height, "
                             "tile_width,tile_height,pixel_x_size,pixel_y_size) "
                             "VALUES "
-                            "('%s',%d,%d,%d,%d,%d,%.18g,%.18g)",
+                            "('%s',%d,%d,%d,%d,%d,%.17g,%.17g)",
                             m_osRasterTable.c_str(),i,nTileMatrixWidth,
                             nTileMatrixHeight,
                             nTileWidth,nTileHeight,dfPixelXSizeZoomLevel,
@@ -3429,7 +3429,7 @@ CPLErr OGRDB2DataSource::IBuildOverviews(
 
                 oStatement.Appendf( "INSERT INTO gpkg.tile_matrix "
                                     "(table_name,zoom_level,matrix_width,matrix_height,tile_width,tile_height,pixel_x_size,pixel_y_size) VALUES "
-                                    "(%s,%d,%d,%d,%d,%d,%.18g,%.18g)",
+                                    "(%s,%d,%d,%d,%d,%d,%.17g,%.17g)",
                                     m_osRasterTable.c_str(),nNewZoomLevel,nTileMatrixWidth,nTileMatrixHeight,
                                     nTileWidth,nTileHeight,dfPixelXSizeZoomLevel,dfPixelYSizeZoomLevel);
 #ifdef DEBUG_SQL

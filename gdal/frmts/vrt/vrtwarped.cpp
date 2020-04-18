@@ -1511,10 +1511,10 @@ CPLXMLNode *VRTWarpedDataset::SerializeToXML( const char *pszVRTPathIn )
                 m_aoVerticalShiftGrids[i].bInverse ? "TRUE" : "FALSE");
         CPLCreateXMLElementAndValue(psVertShiftGridNode,
                 "ToMeterSrc",
-                CPLSPrintf("%.18g", m_aoVerticalShiftGrids[i].dfToMeterSrc));
+                CPLSPrintf("%.17g", m_aoVerticalShiftGrids[i].dfToMeterSrc));
         CPLCreateXMLElementAndValue(psVertShiftGridNode,
                 "ToMeterDest",
-                CPLSPrintf("%.18g", m_aoVerticalShiftGrids[i].dfToMeterDest));
+                CPLSPrintf("%.17g", m_aoVerticalShiftGrids[i].dfToMeterDest));
         for( int j=0; j < m_aoVerticalShiftGrids[i].aosOptions.size(); ++j )
         {
             char* pszKey = nullptr;

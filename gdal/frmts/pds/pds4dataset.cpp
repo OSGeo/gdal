@@ -2209,19 +2209,19 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
     CPLAddXMLAttributeAndValue(
         CPLCreateXMLElementAndValue(psBC,
             (osPrefix + "west_bounding_coordinate").c_str(),
-            CPLSPrintf("%.18g", dfWest)), "unit", "deg");
+            CPLSPrintf("%.17g", dfWest)), "unit", "deg");
     CPLAddXMLAttributeAndValue(
         CPLCreateXMLElementAndValue(psBC,
             (osPrefix + "east_bounding_coordinate").c_str(),
-            CPLSPrintf("%.18g", dfEast )), "unit", "deg");
+            CPLSPrintf("%.17g", dfEast )), "unit", "deg");
     CPLAddXMLAttributeAndValue(
         CPLCreateXMLElementAndValue(psBC,
             (osPrefix + "north_bounding_coordinate").c_str(),
-            CPLSPrintf("%.18g", dfNorth)), "unit", "deg");
+            CPLSPrintf("%.17g", dfNorth)), "unit", "deg");
     CPLAddXMLAttributeAndValue(
         CPLCreateXMLElementAndValue(psBC,
             (osPrefix + "south_bounding_coordinate").c_str(),
-            CPLSPrintf("%.18g", dfSouth)), "unit", "deg");
+            CPLSPrintf("%.17g", dfSouth)), "unit", "deg");
 
     CPLXMLNode* psSRI = CPLCreateXMLNode(psCart, CXT_Element,
                 (osPrefix + "Spatial_Reference_Information").c_str());
@@ -2415,7 +2415,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
         {
             CPLXMLNode* psParam = CPLCreateXMLElementAndValue(psProj,
                     (osPrefix + aoProjParams[i].first).c_str(),
-                    CPLSPrintf("%.18g", aoProjParams[i].second));
+                    CPLSPrintf("%.17g", aoProjParams[i].second));
             if( !STARTS_WITH(aoProjParams[i].first, "scale_factor") )
             {
                 CPLAddXMLAttributeAndValue(psParam, "unit", "deg");
@@ -2430,13 +2430,13 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
             CPLAddXMLAttributeAndValue( 
                 CPLCreateXMLElementAndValue(psOLA,
                     (osPrefix + "azimuthal_angle").c_str(),
-                    CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_AZIMUTH, 0.0))),
+                    CPLSPrintf("%.17g", oSRS.GetNormProjParm(SRS_PP_AZIMUTH, 0.0))),
                 "unit", "deg");;
             // Not completely sure of this
             CPLAddXMLAttributeAndValue( 
                 CPLCreateXMLElementAndValue(psOLA,
                     (osPrefix + "azimuth_measure_point_longitude").c_str(),
-                    CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0))),
+                    CPLSPrintf("%.17g", oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0))),
                 "unit", "deg");
 
             if( bUse_CART_1933_Or_Later )
@@ -2453,7 +2453,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
                 if( dfScaleFactor != 1.0 )
                 {
                     CPLError(CE_Warning, CPLE_NotSupported,
-                             "Scale factor on initial support = %.18g cannot "
+                             "Scale factor on initial support = %.17g cannot "
                              "be encoded in PDS4",
                              dfScaleFactor);
                 }
@@ -2462,7 +2462,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
             {
                 CPLCreateXMLElementAndValue(psProj,
                     (osPrefix + "scale_factor_at_projection_origin").c_str(),
-                    CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 0.0)));
+                    CPLSPrintf("%.17g", oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 0.0)));
 
                 CPLAddXMLChild(psProj, psOLA);
             }
@@ -2470,7 +2470,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
             CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psProj,
                     (osPrefix + "latitude_of_projection_origin").c_str(),
-                    CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0))),
+                    CPLSPrintf("%.17g", oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0))),
                 "unit", "deg");
         }
         else if( pszProjection &&
@@ -2482,7 +2482,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
                 if( dfScaleFactor != 1.0 )
                 {
                     CPLError(CE_Warning, CPLE_NotSupported,
-                             "Scale factor on initial support = %.18g cannot "
+                             "Scale factor on initial support = %.17g cannot "
                              "be encoded in PDS4",
                              dfScaleFactor);
                 }
@@ -2491,7 +2491,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
             {
                 CPLCreateXMLElementAndValue(psProj,
                     (osPrefix + "scale_factor_at_projection_origin").c_str(),
-                    CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 0.0)));
+                    CPLSPrintf("%.17g", oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 0.0)));
             }
 
             CPLXMLNode* psOLP = CPLCreateXMLNode(psProj, CXT_Element,
@@ -2501,24 +2501,24 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
             CPLAddXMLAttributeAndValue( 
                 CPLCreateXMLElementAndValue(psOLPG1,
                     (osPrefix + "oblique_line_latitude").c_str(),
-                    CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_1, 0.0))),
+                    CPLSPrintf("%.17g", oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_1, 0.0))),
                 "unit", "deg");
             CPLAddXMLAttributeAndValue( 
                 CPLCreateXMLElementAndValue(psOLPG1,
                     (osPrefix + "oblique_line_longitude").c_str(),
-                    CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_1, 0.0))),
+                    CPLSPrintf("%.17g", oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_1, 0.0))),
                 "unit", "deg");
             CPLXMLNode* psOLPG2 = CPLCreateXMLNode(psOLP, CXT_Element,
                                     (osPrefix + "Oblique_Line_Point_Group").c_str());
             CPLAddXMLAttributeAndValue( 
                 CPLCreateXMLElementAndValue(psOLPG2,
                     (osPrefix + "oblique_line_latitude").c_str(),
-                    CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_2, 0.0))),
+                    CPLSPrintf("%.17g", oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_2, 0.0))),
                 "unit", "deg");
             CPLAddXMLAttributeAndValue( 
                 CPLCreateXMLElementAndValue(psOLPG2,
                     (osPrefix + "oblique_line_longitude").c_str(),
-                    CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_2, 0.0))),
+                    CPLSPrintf("%.17g", oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_2, 0.0))),
                 "unit", "deg");
 
             if( bUse_CART_1933_Or_Later )
@@ -2533,7 +2533,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
             CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psProj,
                     (osPrefix + "latitude_of_projection_origin").c_str(),
-                    CPLSPrintf("%.18g", oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0))),
+                    CPLSPrintf("%.17g", oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0))),
                 "unit", "deg");
         }
 
@@ -2582,22 +2582,22 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
             CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psCR,
                     (osPrefix + "pixel_resolution_x").c_str(),
-                    CPLSPrintf("%.18g", m_adfGeoTransform[1] * dfDegToMeter)),
+                    CPLSPrintf("%.17g", m_adfGeoTransform[1] * dfDegToMeter)),
                 "unit", "m/pixel");
             CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psCR,
                     (osPrefix + "pixel_resolution_y").c_str(),
-                    CPLSPrintf("%.18g", -m_adfGeoTransform[5] * dfDegToMeter)),
+                    CPLSPrintf("%.17g", -m_adfGeoTransform[5] * dfDegToMeter)),
                 "unit", "m/pixel");
             CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psCR,
                     (osPrefix + "pixel_scale_x").c_str(),
-                    CPLSPrintf("%.18g", 1.0 / (m_adfGeoTransform[1]))),
+                    CPLSPrintf("%.17g", 1.0 / (m_adfGeoTransform[1]))),
                 "unit", "pixel/deg");
             CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psCR,
                     (osPrefix + "pixel_scale_y").c_str(),
-                    CPLSPrintf("%.18g", 1.0 / (-m_adfGeoTransform[5]))),
+                    CPLSPrintf("%.17g", 1.0 / (-m_adfGeoTransform[5]))),
                 "unit", "pixel/deg");
         }
         else if( oSRS.IsProjected() )
@@ -2605,22 +2605,22 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
             CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psCR,
                     (osPrefix + "pixel_resolution_x").c_str(),
-                    CPLSPrintf("%.18g", m_adfGeoTransform[1] * dfLinearUnits)),
+                    CPLSPrintf("%.17g", m_adfGeoTransform[1] * dfLinearUnits)),
                 "unit", "m/pixel");
             CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psCR,
                     (osPrefix + "pixel_resolution_y").c_str(),
-                    CPLSPrintf("%.18g", -m_adfGeoTransform[5] * dfLinearUnits)),
+                    CPLSPrintf("%.17g", -m_adfGeoTransform[5] * dfLinearUnits)),
                 "unit", "m/pixel");
             CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psCR,
                     (osPrefix + "pixel_scale_x").c_str(),
-                    CPLSPrintf("%.18g", dfDegToMeter / (m_adfGeoTransform[1] * dfLinearUnits))),
+                    CPLSPrintf("%.17g", dfDegToMeter / (m_adfGeoTransform[1] * dfLinearUnits))),
                 "unit", "pixel/deg");
             CPLAddXMLAttributeAndValue(
                 CPLCreateXMLElementAndValue(psCR,
                     (osPrefix + "pixel_scale_y").c_str(),
-                    CPLSPrintf("%.18g", dfDegToMeter / (-m_adfGeoTransform[5] * dfLinearUnits))),
+                    CPLSPrintf("%.17g", dfDegToMeter / (-m_adfGeoTransform[5] * dfLinearUnits))),
                 "unit", "pixel/deg");
         }
 
@@ -2641,12 +2641,12 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
                 CPLAddXMLAttributeAndValue(
                         CPLCreateXMLElementAndValue(psGT,
                             (osPrefix + "upperleft_corner_x").c_str(),
-                            CPLSPrintf("%.18g", dfULX * dfDegToMeter)),
+                            CPLSPrintf("%.17g", dfULX * dfDegToMeter)),
                         "unit", "m");
                 CPLAddXMLAttributeAndValue(
                         CPLCreateXMLElementAndValue(psGT,
                             (osPrefix + "upperleft_corner_y").c_str(),
-                            CPLSPrintf("%.18g", dfULY * dfDegToMeter)),
+                            CPLSPrintf("%.17g", dfULY * dfDegToMeter)),
                         "unit", "m");
             }
             else if( oSRS.IsProjected() )
@@ -2654,12 +2654,12 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
                 CPLAddXMLAttributeAndValue(
                         CPLCreateXMLElementAndValue(psGT,
                             (osPrefix + "upperleft_corner_x").c_str(),
-                            CPLSPrintf("%.18g", dfULX * dfLinearUnits)),
+                            CPLSPrintf("%.17g", dfULX * dfLinearUnits)),
                         "unit", "m");
                 CPLAddXMLAttributeAndValue(
                         CPLCreateXMLElementAndValue(psGT,
                             (osPrefix + "upperleft_corner_y").c_str(),
-                            CPLSPrintf("%.18g", dfULY * dfLinearUnits)),
+                            CPLSPrintf("%.17g", dfULY * dfLinearUnits)),
                         "unit", "m");
             }
         }
@@ -2731,7 +2731,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
     CPLAddXMLAttributeAndValue(
         CPLCreateXMLElementAndValue(psGM,
                 (osPrefix + (bUseLDD1930RadiusNames ? "a_axis_radius" : "semi_major_radius")).c_str(),
-                CPLSPrintf("%.18g", dfSemiMajor)),
+                CPLSPrintf("%.17g", dfSemiMajor)),
         "unit", "m");
     // No, this is not a bug. The PDS4  b_axis_radius/semi_minor_radius is the minor radius
     // on the equatorial plane. Which in WKT doesn't really exist, so reuse
@@ -2739,12 +2739,12 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart,
     CPLAddXMLAttributeAndValue(
         CPLCreateXMLElementAndValue(psGM,
                 (osPrefix + (bUseLDD1930RadiusNames ? "b_axis_radius" : "semi_minor_radius")).c_str(),
-                CPLSPrintf("%.18g", dfSemiMajor)),
+                CPLSPrintf("%.17g", dfSemiMajor)),
         "unit", "m");
     CPLAddXMLAttributeAndValue(
         CPLCreateXMLElementAndValue(psGM,
                 (osPrefix + (bUseLDD1930RadiusNames ? "c_axis_radius" : "polar_radius")).c_str(),
-                CPLSPrintf("%.18g", dfSemiMinor)),
+                CPLSPrintf("%.17g", dfSemiMinor)),
         "unit", "m");
     const char* pszLongitudeDirection =
         CSLFetchNameValueDef(m_papszCreationOptions, "LONGITUDE_DIRECTION",
@@ -3142,7 +3142,7 @@ void PDS4Dataset::WriteArray(const CPLString& osPrefix,
     {
         CPLCreateXMLElementAndValue(psElementArray,
                             (osPrefix + "scaling_factor").c_str(),
-                            CPLSPrintf("%.18g", dfScale));
+                            CPLSPrintf("%.17g", dfScale));
     }
 
     int bHasOffset = FALSE;
@@ -3151,7 +3151,7 @@ void PDS4Dataset::WriteArray(const CPLString& osPrefix,
     {
         CPLCreateXMLElementAndValue(psElementArray,
                             (osPrefix + "value_offset").c_str(),
-                            CPLSPrintf("%.18g", dfOffset));
+                            CPLSPrintf("%.17g", dfOffset));
     }
 
     // Axis definitions
@@ -3227,7 +3227,7 @@ void PDS4Dataset::WriteArray(const CPLString& osPrefix,
                 {
                     CPLFree( psMC->psChild->pszValue );
                     psMC->psChild->pszValue =
-                                CPLStrdup(CPLSPrintf("%.18g", dfNoData));
+                                CPLStrdup(CPLSPrintf("%.17g", dfNoData));
                 }
             }
             else
@@ -3237,7 +3237,7 @@ void PDS4Dataset::WriteArray(const CPLString& osPrefix,
                     (osPrefix + "saturated_constant").c_str());
                 psMC = CPLCreateXMLElementAndValue(nullptr,
                     (osPrefix + "missing_constant").c_str(),
-                    CPLSPrintf("%.18g", dfNoData));
+                    CPLSPrintf("%.17g", dfNoData));
                 CPLXMLNode* psNext;
                 if( psSaturatedConstant )
                 {
@@ -3259,7 +3259,7 @@ void PDS4Dataset::WriteArray(const CPLString& osPrefix,
                                 (osPrefix + "Special_Constants").c_str());
         CPLCreateXMLElementAndValue(psSC,
                             (osPrefix + "missing_constant").c_str(),
-                            CPLSPrintf("%.18g", dfNoData));
+                            CPLSPrintf("%.17g", dfNoData));
     }
 }
 

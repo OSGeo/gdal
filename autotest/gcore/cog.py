@@ -396,8 +396,8 @@ def test_cog_byte_to_web_mercator_manual():
     ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
         options = ['BLOCKSIZE=256',
                    'TARGET_SRS=EPSG:3857',
-                   'RES=%.18g' % res,
-                   'EXTENT=%.18g,%.18g,%.18g,%.18g' % (minx,miny,maxx,maxy)])
+                   'RES=%.17g' % res,
+                   'EXTENT=%.17g,%.17g,%.17g,%.17g' % (minx,miny,maxx,maxy)])
     assert ds
 
     ds = None

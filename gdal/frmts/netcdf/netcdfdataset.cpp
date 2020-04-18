@@ -1066,7 +1066,7 @@ CPLErr netCDFRasterBand::SetNoDataValue( double dfNoData )
             !reinterpret_cast<netCDFDataset *>(poDS)->GetDefineMode() )
         {
             CPLDebug("GDAL_netCDF",
-                     "Setting NoDataValue to %.18g (previously set to %.18g) "
+                     "Setting NoDataValue to %.17g (previously set to %.17g) "
                      "but file is no longer in define mode (id #%d, band #%d)",
                      dfNoData, dfNoDataValue, cdfid, nBand);
         }
@@ -1074,7 +1074,7 @@ CPLErr netCDFRasterBand::SetNoDataValue( double dfNoData )
         else
         {
             CPLDebug("GDAL_netCDF",
-                     "Setting NoDataValue to %.18g (id #%d, band #%d)",
+                     "Setting NoDataValue to %.17g (id #%d, band #%d)",
                      dfNoData, cdfid, nBand);
         }
 #endif
@@ -3323,9 +3323,9 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                 oSRS.SetProjection( "Rotated_pole" );
                 oSRS.SetExtension(oSRS.GetRoot()->GetValue(),
                     "PROJ4",
-                    CPLSPrintf("+proj=ob_tran +o_proj=longlat +lon_0=%.18g "
-                               "+o_lon_p=%.18g +o_lat_p=%.18g +a=%.18g "
-                               "+b=%.18g +to_meter=0.0174532925199 +wktext",
+                    CPLSPrintf("+proj=ob_tran +o_proj=longlat +lon_0=%.17g "
+                               "+o_lon_p=%.17g +o_lat_p=%.17g +a=%.17g "
+                               "+b=%.17g +to_meter=0.0174532925199 +wktext",
                                180.0 + dfGridNorthPoleLong,
                                dfNorthPoleGridLong,
                                dfGridNorthPoleLat,

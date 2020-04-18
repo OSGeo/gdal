@@ -551,12 +551,12 @@ void RRASTERDataset::RewriteHeader()
     VSIFPrintfL(fp, "nrows=%d\n", nRasterYSize);
     VSIFPrintfL(fp, "ncols=%d\n", nRasterXSize);
 
-    VSIFPrintfL(fp, "xmin=%.18g\n", m_adfGeoTransform[0]);
-    VSIFPrintfL(fp, "ymin=%.18g\n",
+    VSIFPrintfL(fp, "xmin=%.17g\n", m_adfGeoTransform[0]);
+    VSIFPrintfL(fp, "ymin=%.17g\n",
             m_adfGeoTransform[3] + nRasterYSize * m_adfGeoTransform[5]);
-    VSIFPrintfL(fp, "xmax=%.18g\n",
+    VSIFPrintfL(fp, "xmax=%.17g\n",
             m_adfGeoTransform[0] + nRasterXSize * m_adfGeoTransform[1]);
-    VSIFPrintfL(fp, "ymax=%.18g\n", m_adfGeoTransform[3]);
+    VSIFPrintfL(fp, "ymax=%.17g\n", m_adfGeoTransform[3]);
 
     if( !m_osProjection.empty() )
     {
@@ -589,7 +589,7 @@ void RRASTERDataset::RewriteHeader()
     int bGotNoDataValue = false;
     double dfNoDataValue = GetRasterBand(1)->GetNoDataValue(&bGotNoDataValue);
     if( bGotNoDataValue )
-        VSIFPrintfL(fp, "nodatavalue=%.18g\n", dfNoDataValue);
+        VSIFPrintfL(fp, "nodatavalue=%.17g\n", dfNoDataValue);
 
 #if CPL_IS_LSB
     VSIFPrintfL(fp, "byteorder=%s\n", m_bNativeOrder ? "little": "big");
@@ -614,8 +614,8 @@ void RRASTERDataset::RewriteHeader()
             osMinValue.clear();
             break;
         }
-        osMinValue += CPLSPrintf("%.18g", poBand->m_dfMin);
-        osMaxValue += CPLSPrintf("%.18g", poBand->m_dfMax);
+        osMinValue += CPLSPrintf("%.17g", poBand->m_dfMin);
+        osMaxValue += CPLSPrintf("%.17g", poBand->m_dfMax);
     }
     if( !osMinValue.empty() )
     {
@@ -676,7 +676,7 @@ void RRASTERDataset::RewriteHeader()
                     }
                     else if( eColType == GFT_Real )
                     {
-                        osRatValues += CPLSPrintf("%.18g",
+                        osRatValues += CPLSPrintf("%.17g",
                                                  poRAT->GetValueAsDouble(j, i));
                     }
                     else

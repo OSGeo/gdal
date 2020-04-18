@@ -464,7 +464,7 @@ void OGRMySQLTableLayer::BuildWhere()
         m_poFilterGeom->getEnvelope( &sEnvelope );
 
         CPLsnprintf(szEnvelope, sizeof(szEnvelope),
-                "POLYGON((%.18g %.18g, %.18g %.18g, %.18g %.18g, %.18g %.18g, %.18g %.18g))",
+                "POLYGON((%.17g %.17g, %.17g %.17g, %.17g %.17g, %.17g %.17g, %.17g %.17g))",
                 sEnvelope.MinX, sEnvelope.MinY,
                 sEnvelope.MaxX, sEnvelope.MinY,
                 sEnvelope.MaxX, sEnvelope.MaxY,

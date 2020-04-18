@@ -1346,7 +1346,7 @@ CPLErr GDALWarpOperation::CollectChunkListInternal(
     // in case the heuristics would cause issues.
 #if DEBUG_VERBOSE
     CPLDebug("WARP",
-             "dst=(%d,%d,%d,%d) src=(%d,%d,%d,%d) srcfillratio=%.18g, dfTotalMemoryUse=%.1f MB",
+             "dst=(%d,%d,%d,%d) src=(%d,%d,%d,%d) srcfillratio=%.17g, dfTotalMemoryUse=%.1f MB",
              nDstXOff, nDstYOff, nDstXSize, nDstYSize,
              nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize, dfSrcFillRatio,
              dfTotalMemoryUse / (1024 * 1024));

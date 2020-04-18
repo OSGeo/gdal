@@ -2600,7 +2600,7 @@ CPLErr GDALGenerateVRTColorRelief( const char* pszDstFilename,
 
             if( eColorSelectionMode == COLOR_SELECTION_EXACT_ENTRY )
             {
-                bOK &= VSIFPrintfL(fp, "%.18g:0,",
+                bOK &= VSIFPrintfL(fp, "%.17g:0,",
                                    dfVal - fabs(dfVal) * DBL_EPSILON) > 0;
             }
             else if( iColor > 0 &&
@@ -2609,14 +2609,14 @@ CPLErr GDALGenerateVRTColorRelief( const char* pszDstFilename,
                 const double dfMidVal =
                     (dfVal + pasColorAssociation[iColor-1].dfVal) / 2.0;
                 bOK &= VSIFPrintfL(
-                    fp, "%.18g:%d",
+                    fp, "%.17g:%d",
                     dfMidVal - fabs(dfMidVal) * DBL_EPSILON,
                     (iBand == 0) ? pasColorAssociation[iColor-1].nR :
                     (iBand == 1) ? pasColorAssociation[iColor-1].nG :
                     (iBand == 2) ? pasColorAssociation[iColor-1].nB :
                     pasColorAssociation[iColor-1].nA) > 0;
                 bOK &= VSIFPrintfL(
-                    fp, ",%.18g:%d", dfMidVal,
+                    fp, ",%.17g:%d", dfMidVal,
                     (iBand == 0) ? pasColorAssociation[iColor].nR :
                     (iBand == 1) ? pasColorAssociation[iColor].nG :
                     (iBand == 2) ? pasColorAssociation[iColor].nB :
@@ -2626,7 +2626,7 @@ CPLErr GDALGenerateVRTColorRelief( const char* pszDstFilename,
             if( eColorSelectionMode != COLOR_SELECTION_NEAREST_ENTRY )
             {
                 if( dfVal != static_cast<double>(static_cast<int>(dfVal)) )
-                    bOK &= VSIFPrintfL(fp, "%.18g", dfVal) > 0;
+                    bOK &= VSIFPrintfL(fp, "%.17g", dfVal) > 0;
                 else
                     bOK &= VSIFPrintfL(fp, "%d", static_cast<int>(dfVal)) > 0;
                 bOK &= VSIFPrintfL(fp, ":%d",
@@ -2638,7 +2638,7 @@ CPLErr GDALGenerateVRTColorRelief( const char* pszDstFilename,
 
             if( eColorSelectionMode == COLOR_SELECTION_EXACT_ENTRY )
             {
-                bOK &= VSIFPrintfL(fp, ",%.18g:0",
+                bOK &= VSIFPrintfL(fp, ",%.17g:0",
                                    dfVal + fabs(dfVal) * DBL_EPSILON) > 0;
             }
         }

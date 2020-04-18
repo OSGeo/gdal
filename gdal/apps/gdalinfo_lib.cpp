@@ -993,7 +993,7 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                 else
                 {
                     Concat(osStr, psOptions->bStdoutOutput,
-                           "  NoData Value=%.18g\n", dfNoData );
+                           "  NoData Value=%.17g\n", dfNoData );
                 }
             }
         }
