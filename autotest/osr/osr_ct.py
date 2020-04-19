@@ -423,3 +423,20 @@ def test_osr_ct_geocentric():
     assert abs(x - 3353420.949) < 1e-1
     assert abs(y - 1304075.021) < 1e-1
     assert abs(z - 5248935.144) < 1e-1
+
+###############################################################################
+# Test with +lon_wrap=180
+
+
+def test_osr_ct_lon_wrap():
+
+    s = osr.SpatialReference()
+    s.SetFromUserInput("+proj=longlat +ellps=GRS80")
+    t = osr.SpatialReference()
+    t.SetFromUserInput("+proj=longlat +ellps=GRS80 +lon_wrap=180")
+    ct = osr.CoordinateTransformation(s, t)
+    assert ct
+
+    x, y, _ = ct.TransformPoint(-25, 60, 0)
+    assert x == pytest.approx(-25 + 360, abs=1e-12)
+    assert y == pytest.approx(60, abs=1e-12)

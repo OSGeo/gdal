@@ -917,13 +917,13 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
             return true;
         };
 
-        const char* const apszOptions[] = { "FORMAT=WKT2_2018", nullptr };
-        char* pszSrcSRS = nullptr;
+        const auto exportSRSToText = [&CanUseAuthorityDef](const OGRSpatialReference* poSRS)
         {
+            char* pszText = nullptr;
             // If we have a AUTH:CODE attached, use it to retrieve the full
             // definition in case a trip to WKT1 has lost the area of use.
-            const char* pszAuth = poSRSSource->GetAuthorityName(nullptr);
-            const char* pszCode = poSRSSource->GetAuthorityCode(nullptr);
+            const char* pszAuth = poSRS->GetAuthorityName(nullptr);
+            const char* pszCode = poSRS->GetAuthorityCode(nullptr);
             if( pszAuth && pszCode )
             {
                 CPLString osAuthCode(pszAuth);
@@ -931,48 +931,38 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
                 osAuthCode += pszCode;
                 OGRSpatialReference oTmpSRS;
                 oTmpSRS.SetFromUserInput(osAuthCode);
-                oTmpSRS.SetDataAxisToSRSAxisMapping(poSRSSource->GetDataAxisToSRSAxisMapping());
-                if( oTmpSRS.IsSame(poSRSSource) )
+                oTmpSRS.SetDataAxisToSRSAxisMapping(poSRS->GetDataAxisToSRSAxisMapping());
+                if( oTmpSRS.IsSame(poSRS) )
                 {
-                    if( CanUseAuthorityDef(poSRSSource, &oTmpSRS, pszAuth) )
+                    if( CanUseAuthorityDef(poSRS, &oTmpSRS, pszAuth) )
                     {
-                        pszSrcSRS = CPLStrdup(osAuthCode);
+                        pszText = CPLStrdup(osAuthCode);
                     }
                 }
             }
-            if( pszSrcSRS == nullptr )
+            if( pszText == nullptr )
             {
-                poSRSSource->exportToWkt(&pszSrcSRS, apszOptions);
+                CPLErrorStateBackuper oErrorStateBackuper;
+                CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+                const char *pszProjName = poSRS->GetAttrValue("PROJECTION");
+                const char* const apszOptionsWKT2_2018[] = { "FORMAT=WKT2_2018", nullptr };
+                const char* const apszOptionsWKT1[] = { "FORMAT=WKT1_GDAL", nullptr };
+                // If there's a PROJ4 EXTENSION node in WKT1, then use
+                // WKT1. For example when dealing with "+proj=longlat +lon_wrap=180"
+                if( poSRS->GetExtension(nullptr, "PROJ4", nullptr) ||
+                    // NetCDF hack
+                    (pszProjName && EQUAL(pszProjName, "Rotated_pole")) )
+                {
+                    poSRS->exportToWkt(&pszText, apszOptionsWKT1);
+                }
+                else
+                    poSRS->exportToWkt(&pszText, apszOptionsWKT2_2018);
             }
-        }
+            return pszText;
+        };
 
-        char* pszTargetSRS = nullptr;
-        {
-            // If we have a AUTH:CODE attached, use it to retrieve the full
-            // definition in case a trip to WKT1 has lost the area of use.
-            const char* pszAuth = poSRSTarget->GetAuthorityName(nullptr);
-            const char* pszCode = poSRSTarget->GetAuthorityCode(nullptr);
-            if( pszAuth && pszCode )
-            {
-                CPLString osAuthCode(pszAuth);
-                osAuthCode += ':';
-                osAuthCode += pszCode;
-                OGRSpatialReference oTmpSRS;
-                oTmpSRS.SetFromUserInput(osAuthCode);
-                oTmpSRS.SetDataAxisToSRSAxisMapping(poSRSTarget->GetDataAxisToSRSAxisMapping());
-                if( oTmpSRS.IsSame(poSRSTarget) )
-                {
-                    if( CanUseAuthorityDef(poSRSTarget, &oTmpSRS, pszAuth) )
-                    {
-                        pszTargetSRS = CPLStrdup(osAuthCode);
-                    }
-                }
-            }
-            if( pszTargetSRS == nullptr )
-            {
-                poSRSTarget->exportToWkt(&pszTargetSRS, apszOptions);
-            }
-        }
+        char* pszSrcSRS = exportSRSToText(poSRSSource);
+        char* pszTargetSRS = exportSRSToText(poSRSTarget);
 
         if( m_eStrategy == Strategy::PROJ )
         {
