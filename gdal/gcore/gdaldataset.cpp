@@ -3221,7 +3221,6 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
                                      const char *const *papszSiblingFiles )
 {
     VALIDATE_POINTER1(pszFilename, "GDALOpen", nullptr);
-
 /* -------------------------------------------------------------------- */
 /*      In case of shared dataset, first scan the existing list to see  */
 /*      if it could already contain the requested dataset.              */
@@ -3311,11 +3310,16 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
     oOpenInfo.papszOpenOptions = papszOpenOptionsCleaned;
 
     const int nDriverCount = poDM->GetDriverCount();
+    const int nAllowedDrivers = CSLCount( papszAllowedDrivers );
+
     for( int iDriver = -1; iDriver < nDriverCount; ++iDriver )
     {
         GDALDriver *poDriver = nullptr;
 
-        if( iDriver < 0 )
+        if ( (iDriver == -1 ) && ( nAllowedDrivers == 1 ) )
+            continue;
+
+        if ( iDriver < 0 )
         {
             poDriver = GDALGetAPIPROXYDriver();
         }

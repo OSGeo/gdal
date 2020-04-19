@@ -1946,7 +1946,7 @@ GDALLoadWorldFile( const char *pszFilename, double *padfGeoTransform )
  * </ul>
  *
  * @param pszBaseFilename the target raster file.
- * @param pszExtension the extension to use (i.e. ".wld") or NULL to derive it
+ * @param pszExtension the extension to use (i.e. "wld") or NULL to derive it
  * from the pszBaseFilename
  * @param padfGeoTransform the six double array into which the
  * geotransformation should be placed.
@@ -2105,7 +2105,7 @@ int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
  * </ul>
  *
  * @param pszBaseFilename the target raster file.
- * @param pszExtension the extension to use (i.e. ".wld"). Must not be NULL
+ * @param pszExtension the extension to use (i.e. "wld"). Must not be NULL
  * @param padfGeoTransform the six double array from which the
  * geotransformation should be read.
  *

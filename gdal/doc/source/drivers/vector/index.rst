@@ -67,6 +67,7 @@ Vector drivers
    jml
    kml
    libkml
+   mapml
    mdb
    memory
    mitab

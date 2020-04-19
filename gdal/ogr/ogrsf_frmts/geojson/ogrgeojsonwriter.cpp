@@ -79,6 +79,7 @@ void OGRGeoJSONWriteOptions::SetIDOptions(CSLConstList papszOptions)
             eForcedIDFieldType = OFTInteger64;
         }
     }
+    bGenerateID = CPL_TO_BOOL(CSLFetchBoolean(papszOptions, "ID_GENERATE", false));
 }
 
 /*! @endcond */

@@ -451,7 +451,7 @@ epsg_list = [
     [2066, False],  # cass
     [2964, False],  # aea
     [3410, False],  # cea
-    [3786, False],  # eqc spherical, method=9823
+    #[3786, False],  # eqc spherical, method=9823. EPSG:3786 is now deprecated
     [32663, False],  # eqc elliptical, method=9842
     [4087, False],  # eqc WGS 84 / World Equidistant Cylindrical method=1028
     [4088, False],  # eqc World Equidistant Cylindrical (Sphere) method=1029
