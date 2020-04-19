@@ -196,6 +196,9 @@ struct GDALVectorTranslateOptions
     /*! the parameter to geometric operation */
     double dfGeomOpParam;
 
+    /*! Whether to run MakeValid */
+    bool bMakeValid;
+
     /*! list of field types to convert to a field of type string in the destination layer.
         Valid types are: Integer, Integer64, Real, String, Date, Time, DateTime, Binary,
         IntegerList, Integer64List, RealList, StringList. Special value "All" can be
@@ -426,6 +429,7 @@ public:
     OGRCoordinateTransformation  *m_poGCPCoordTrans;
     int                           m_eGType;
     GeomTypeConversion            m_eGeomTypeConversion;
+    bool                          m_bMakeValid;
     int                           m_nCoordDim;
     GeomOperation                 m_eGeomOp;
     double                        m_dfGeomOpParam;
@@ -2557,6 +2561,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     oTranslator.m_poGCPCoordTrans = poGCPCoordTrans;
     oTranslator.m_eGType = psOptions->eGType;
     oTranslator.m_eGeomTypeConversion = psOptions->eGeomTypeConversion;
+    oTranslator.m_bMakeValid = psOptions->bMakeValid;
     oTranslator.m_nCoordDim = psOptions->nCoordDim;
     oTranslator.m_eGeomOp = psOptions->eGeomOp;
     oTranslator.m_dfGeomOpParam = psOptions->dfGeomOpParam;
@@ -4808,33 +4813,39 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                     poDstGeometry->assignSpatialReference(poOutputSRS);
                 }
 
-                if (m_poClipDst)
+                if( poDstGeometry != nullptr )
                 {
-                    if( poDstGeometry == nullptr )
-                        goto end_loop;
-
-                    OGRGeometry* poClipped = poDstGeometry->Intersection(m_poClipDst);
-                    delete poDstGeometry;
-                    if (poClipped == nullptr || poClipped->IsEmpty())
+                    if (m_poClipDst)
                     {
-                        delete poClipped;
-                        goto end_loop;
+                        OGRGeometry* poClipped = poDstGeometry->Intersection(m_poClipDst);
+                        delete poDstGeometry;
+                        if (poClipped == nullptr || poClipped->IsEmpty())
+                        {
+                            delete poClipped;
+                            goto end_loop;
+                        }
+
+                        poDstGeometry = poClipped;
                     }
 
-                    poDstGeometry = poClipped;
-                }
+                    if( m_bMakeValid )
+                    {
+                        OGRGeometry* poValidGeom = poDstGeometry->MakeValid();
+                        delete poDstGeometry;
+                        poDstGeometry = poValidGeom;
+                        if( poDstGeometry == nullptr )
+                            goto end_loop;
+                    }
 
-                if( eGType != GEOMTYPE_UNCHANGED )
-                {
-                    poDstGeometry = OGRGeometryFactory::forceTo(
-                            poDstGeometry, static_cast<OGRwkbGeometryType>(eGType));
-                }
-                else if( m_eGeomTypeConversion == GTC_PROMOTE_TO_MULTI ||
-                         m_eGeomTypeConversion == GTC_CONVERT_TO_LINEAR ||
-                         m_eGeomTypeConversion == GTC_PROMOTE_TO_MULTI_AND_CONVERT_TO_LINEAR ||
-                         m_eGeomTypeConversion == GTC_CONVERT_TO_CURVE )
-                {
-                    if( poDstGeometry != nullptr )
+                    if( eGType != GEOMTYPE_UNCHANGED )
+                    {
+                        poDstGeometry = OGRGeometryFactory::forceTo(
+                                poDstGeometry, static_cast<OGRwkbGeometryType>(eGType));
+                    }
+                    else if( m_eGeomTypeConversion == GTC_PROMOTE_TO_MULTI ||
+                            m_eGeomTypeConversion == GTC_CONVERT_TO_LINEAR ||
+                            m_eGeomTypeConversion == GTC_PROMOTE_TO_MULTI_AND_CONVERT_TO_LINEAR ||
+                            m_eGeomTypeConversion == GTC_CONVERT_TO_CURVE )
                     {
                         OGRwkbGeometryType eTargetType = poDstGeometry->getGeometryType();
                         eTargetType = ConvertType(m_eGeomTypeConversion, eTargetType);
@@ -5020,6 +5031,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
     psOptions->eGeomTypeConversion = GTC_DEFAULT;
     psOptions->eGeomOp = GEOMOP_NONE;
     psOptions->dfGeomOpParam = 0;
+    psOptions->bMakeValid = false;
     psOptions->papszFieldTypesToString = nullptr;
     psOptions->papszMapFieldType = nullptr;
     psOptions->bUnsetFieldWidth = false;
@@ -5340,6 +5352,25 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
         {
             psOptions->eGeomOp = GEOMOP_SIMPLIFY_PRESERVE_TOPOLOGY;
             psOptions->dfGeomOpParam = CPLAtof(papszArgv[++i]);
+        }
+        else if( EQUAL(papszArgv[i],"-makevalid") )
+        {
+            // Check that OGRGeometry::MakeValid() is available
+            OGRGeometry* poInputGeom = nullptr;
+            OGRGeometryFactory::createFromWkt(
+                "POLYGON((0 0,1 1,1 0,0 1,0 0))", nullptr, &poInputGeom );
+            CPLAssert(poInputGeom);
+            OGRGeometry* poValidGeom = poInputGeom->MakeValid();
+            delete poInputGeom;
+            if( poValidGeom == nullptr )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                        "-makevalid only supported for builds against GEOS 3.8 or later");
+                GDALVectorTranslateOptionsFree(psOptions);
+                return nullptr;
+            }
+            delete poValidGeom;
+            psOptions->bMakeValid = true;
         }
         else if( i+1 < nArgc && EQUAL(papszArgv[i],"-fieldTypeToString") )
         {

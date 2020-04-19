@@ -38,6 +38,7 @@ Synopsis
             [-clipdstwhere expression]
             [-wrapdateline] [-datelineoffset val]
             [[-simplify tolerance] | [-segmentize max_dist]]
+            [-makevalid]
             [-addfields] [-unsetFid]
             [-relaxedFieldNameMatch] [-forceNullable] [-unsetDefault]
             [-fieldTypeToString All|(type1[,type2]*)] [-unsetFieldWidth]
@@ -300,6 +301,13 @@ output coordinate system or even reprojecting the features during translation.
 .. option:: -segmentize <max_dist>
 
     Maximum distance between 2 nodes. Used to create intermediate points.
+
+.. option:: -makevalid
+
+    Run the :cpp:func:`OGRGeometry::MakeValid` operation on geometries to ensure
+    they are valid regarding the rules of the Simple Features specification.
+
+    .. versionadded: 3.1 (requires GEOS 3.8 or later)
 
 .. option:: -fieldTypeToString type1,...
 
