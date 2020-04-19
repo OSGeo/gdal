@@ -24212,7 +24212,6 @@ $as_echo "$as_me: proj.h found" >&6;}
     fi
   else
     ORIG_LIBS="$LIBS"
-    proj_libdir="$with_proj/lib"
     LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
     ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -24327,7 +24326,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     fi
     if test "$PROJ_FOUND" = "no"; then
-        proj_libdir="$with_proj/lib64"
         LIBS="-L$with_proj/lib64 -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         unset ac_cv_lib_proj_proj_create_from_wkt
         ac_ext=cpp
@@ -24386,7 +24384,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     fi
     if test "$PROJ_FOUND" = "no"; then
-        proj_libdir="$with_proj/lib"
         LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -24505,7 +24502,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
         fi
     fi
     if test "$PROJ_FOUND" = "no"; then
-        proj_libdir="$with_proj/lib"
         LIBS="-L$with_proj/lib -linternalproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -24625,15 +24621,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
     fi
     if test "$PROJ_FOUND" = "no"; then
         as_fn_error $? "PROJ 6 symbols not found" "$LINENO" 5
-    elif test "x$with_proj" != "x/usr" -a "x$with_proj" != "x/" ; then
-        case "${host_os}" in
-          darwin*)
-              LIBS="-Wl,-rpath,$proj_libdir $LIBS"
-              ;;
-          *)
-              LIBS="-Wl,-rpath=$proj_libdir $LIBS"
-              ;;
-        esac
     fi
     if test -r "$with_proj/include/proj.h" ; then
         PROJ_INCLUDE="$PROJ_INCLUDE -I$with_proj/include"

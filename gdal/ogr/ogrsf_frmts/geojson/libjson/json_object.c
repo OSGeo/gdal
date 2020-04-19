@@ -10,10 +10,6 @@
  *
  */
 
-// For uselocale
-#undef _XOPEN_SOURCE
-#define _XOPEN_SOURCE 700
-
 #include "cpl_string.h"
 
 #include "config.h"
