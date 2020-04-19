@@ -76,7 +76,11 @@ See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
 See [ubuntu-full/Dockerfile](ubuntu-full/Dockerfile)
 
 
-# Usage example
+# Usage
+
+Pull the required image and then run passing the gdal program you want to execute as a [docker run](https://docs.docker.com/engine/reference/commandline/run/) command. Bind a volume from your local file system to the docker container to run gdal programs that accept a file argument. For example, binding `-v /home:/home` on Linux or `-v /Users:/Users` on Mac will allow you to reference files in your home directory by passing their full path. Use the docker `--rm` option to automatically remove the container when the run completes.
+
+## Example:
 
 ```shell
 docker pull osgeo/gdal:alpine-small-latest
