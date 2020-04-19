@@ -267,36 +267,6 @@ def test_osr_esri_9():
 
     
 ###############################################################################
-# Verify Plate_Carree handling.
-
-
-def test_osr_esri_10():
-
-    srs = osr.SpatialReference()
-    srs.SetFromUserInput('PROJCS["Sphere_Plate_Carree",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6371000.0,0.0]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Plate_Carree"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],UNIT["Meter",1.0]]')
-
-    expected = 'PROJCS["Sphere_Plate_Carree",GEOGCS["Unknown datum based upon the Authalic Sphere",DATUM["Not_specified_based_on_Authalic_Sphere",SPHEROID["Sphere",6371000,0],AUTHORITY["EPSG","6035"]],PRIMEM["Greenwich",0],UNIT["Degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["standard_parallel_1",0],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
-
-    srs.MorphFromESRI()
-    wkt = srs.ExportToWkt()
-    if wkt != expected:
-        print('')
-        print('Got:      ', wkt)
-        print('Expected: ', expected)
-        pytest.fail('Did not get expected Equirectangular SRS after morphFromESRI')
-
-    expected = 'PROJCS["Sphere_Plate_Carree",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6371000.0,0.0]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Equidistant_Cylindrical"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Standard_Parallel_1",0.0],UNIT["Meter",1.0]]'
-
-    srs.MorphToESRI()
-    wkt = srs.ExportToWkt()
-    if wkt != expected:
-        print('')
-        print('Got:      ', wkt)
-        print('Expected: ', expected)
-        pytest.fail('Did not get expected Equidistant_Cylindrical SRS after morphToESRI')
-
-    
-###############################################################################
 # Verify arc/info style TM handling.
 
 
