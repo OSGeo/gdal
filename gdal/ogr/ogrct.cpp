@@ -1010,9 +1010,14 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
                 const char *pszProjName = poSRS->GetAttrValue("PROJECTION");
                 const char* const apszOptionsWKT2_2018[] = { "FORMAT=WKT2_2018", nullptr };
                 const char* const apszOptionsWKT1[] = { "FORMAT=WKT1_GDAL", nullptr };
-                // NetCDF hack
-                if( pszProjName && EQUAL(pszProjName, "Rotated_pole") )
+                // If there's a PROJ4 EXTENSION node in WKT1, then use
+                // WKT1. For example when dealing with "+proj=longlat +lon_wrap=180"
+                if( poSRS->GetExtension(nullptr, "PROJ4", nullptr) ||
+                    // NetCDF hack
+                    (pszProjName && EQUAL(pszProjName, "Rotated_pole")) )
+                {
                     poSRS->exportToWkt(&pszText, apszOptionsWKT1);
+                }
                 else
                     poSRS->exportToWkt(&pszText, apszOptionsWKT2_2018);
             }
