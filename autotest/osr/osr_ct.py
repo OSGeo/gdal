@@ -430,6 +430,10 @@ def test_osr_ct_geocentric():
 
 def test_osr_ct_lon_wrap():
 
+    if osr.GetPROJVersionMajor() * 10000 + osr.GetPROJVersionMinor() * 100 + osr.GetPROJVersionMicro() < 70001:
+        # Issue before PROJ 7.0.1
+        pytest.skip()
+
     s = osr.SpatialReference()
     s.SetFromUserInput("+proj=longlat +ellps=GRS80")
     t = osr.SpatialReference()
