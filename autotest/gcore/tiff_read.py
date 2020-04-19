@@ -3434,3 +3434,16 @@ def test_tiff_read_bigtiff_invalid_slong8_for_stripoffsets():
         ds = gdal.Open('data/byte_bigtiff_invalid_slong8_for_stripoffsets.tif')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4672
+
+
+###############################################################################
+# Test reading a file with a single band, and WhitePoint and PrimaryChromaticities
+# tags
+
+
+def test_tiff_read_tiff_single_band_with_whitepoint_primarychroma_tags():
+
+    ds = gdal.Open('data/tiff_single_band_with_whitepoint_primarychroma_tags.tif')
+    # Check that it doesn't crash. We could perhaps return something more
+    # useful
+    assert ds.GetMetadata('COLOR_PROFILE') == {}
