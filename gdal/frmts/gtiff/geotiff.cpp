@@ -13137,8 +13137,11 @@ void GTiffDataset::LoadICCProfile()
         if( TIFFGetField(hTIFF, TIFFTAG_WHITEPOINT, &pWP) )
         {
             if( !TIFFGetFieldDefaulted( hTIFF, TIFFTAG_TRANSFERFUNCTION, &pTFR,
-                                        &pTFG, &pTFB) )
+                                        &pTFG, &pTFB) ||
+                pTFR == nullptr || pTFG == nullptr || pTFB == nullptr )
+            {
                 return;
+            }
 
             const int TIFFTAG_TRANSFERRANGE = 0x0156;
             TIFFGetFieldDefaulted( hTIFF, TIFFTAG_TRANSFERRANGE,
