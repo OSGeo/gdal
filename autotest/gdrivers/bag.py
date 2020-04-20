@@ -128,6 +128,34 @@ def test_bag_3():
 #
 
 
+def test_bag_read_resolution():
+    if gdaltest.bag_drv is None:
+        pytest.skip()
+
+    # BAG version 1.1
+    ds = gdal.Open('data/true_n_nominal.bag')
+    gt = ds.GetGeoTransform()
+    # UpperLeft corner, resX, resY 
+    got = (gt[0], gt[3], gt[1], gt[5])
+    assert got == (12344.12345678, 22142.12345678, 2.0, -2.0)
+
+    # BAG version 1.4
+    ds = gdal.Open('data/southern_hemi_false_northing.bag')
+    gt = ds.GetGeoTransform()
+    got = (gt[0], gt[3], gt[1], gt[5])
+    assert got == (615037.5,  9559387.5, 75.0, -75.0)
+    
+    # BAG version 1.6
+    ds = gdal.Open('data/test_offset_ne_corner.bag')
+    gt = ds.GetGeoTransform()
+    got = (gt[0], gt[3], gt[1], gt[5])
+    assert got == (85.0, 500112.0, 30.0, -32.0)
+
+
+###############################################################################
+#
+
+
 def test_bag_vr_normal():
     if gdaltest.bag_drv is None:
         pytest.skip()
