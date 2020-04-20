@@ -1090,6 +1090,17 @@ AC_DEFINE_UNQUOTED(HAVE_SC_PHYS_PAGES, 1,
 AC_MSG_RESULT([no])
 ])
 
+dnl '---------------------------------------------------------------------------
+dnl Remove possible system library paths from a *_LIB variable to prevent other, perhaps unrelated, system libraries
+dnl from shadowing custom libraries of the same name the user might have installed e.g. under /usr/local.
+dnl System library paths are things like /lib, /usr/lib, /lib64, /usr/lib64, and /usr/lib/x86_64-linux-gnu.
+dnl There may be others as well, that will need be addressed as they arise. We avoid wildcards such as
+dnl /usr/lib/* to avoid potential cases such as /usr/lib/mysql/lib, which might not have an /etc/ld.so.conf.d
+dnl entry and would not shadow any possible custom installs anyway:
+AC_DEFUN([STRIP_SYSTEM_LIBRARY_PATHS],[
+        STRIPPED_LIBRARY_NAME="$(echo [$1] | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[[:space:]]]+::')"
+])
+
 dnl ---------------------------------------------------------------------------
 dnl Check if libz is available.
 dnl ---------------------------------------------------------------------------
@@ -2906,6 +2917,8 @@ else
     NETCDF_PREFIX=`$NETCDF_NCCONFIG --prefix`
     NETCDF_INCLUDEDIR=`$NETCDF_NCCONFIG --includedir`
     NETCDF_LIBS=`$NETCDF_NCCONFIG --libs`
+    STRIP_SYSTEM_LIBRARY_PATHS("${NETCDF_LIBS}")
+    NETCDF_LIBS="$STRIPPED_LIBRARY_NAME"
     echo ""
     AC_MSG_RESULT([ got version="$NETCDF_VERSION", prefix="$NETCDF_PREFIX",
  libs="$NETCDF_LIBS", includedir="$NETCDF_INCLUDEDIR"])
@@ -3717,6 +3730,8 @@ else
   else
       HAVE_MYSQL=yes
       MYSQL_LIB="`$MYSQL_CONFIG --libs`"
+      STRIP_SYSTEM_LIBRARY_PATHS("${MYSQL_LIB}")
+      MYSQL_LIB="$STRIPPED_LIBRARY_NAME"
       MYSQL_INC="`$MYSQL_CONFIG --include`"
       AC_MSG_RESULT([yes])
   fi
@@ -4565,6 +4580,8 @@ HAVE_GEOS_RESULT="no"
 if test "${HAVE_GEOS}" = "yes" ; then
 
   AC_MSG_NOTICE([Using C API from GEOS $GEOS_VERSION])
+  STRIP_SYSTEM_LIBRARY_PATHS("${GEOS_LIBS}")
+  GEOS_LIBS="$STRIPPED_LIBRARY_NAME"
   LIBS="${GEOS_LIBS} ${LIBS}"
   HAVE_GEOS_RESULT="yes"
 fi
@@ -4578,6 +4595,8 @@ HAVE_SFCGAL_RESULT="no"
 if test "${HAVE_SFCGAL}" = "yes" ; then
 
   AC_MSG_NOTICE([Using C API from SFCGAL $SFCGAL_VERSION])
+  STRIP_SYSTEM_LIBRARY_PATHS("${SFCGAL_LIBS}")
+  SFCGAL_LIBS="$STRIPPED_LIBRARY_NAME"
   LIBS="${SFCGAL_LIBS} ${LIBS}"
   HAVE_SFCGAL_RESULT="yes"
 fi
