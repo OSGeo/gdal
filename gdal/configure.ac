@@ -4130,7 +4130,7 @@ AC_ARG_WITH(spatialite,
     ,,)
 
 AC_ARG_WITH(spatialite-soname,
-    [  --with-spatialite-soname=ARG Spatialite shared object name (e.g. libspatialite.so), only used if --with-spatiliate=dlopen],
+    [  --with-spatialite-soname=ARG Spatialite shared object name (e.g. libspatialite.so), only used if --with-spatialite=dlopen],
     ,,)
 
 HAVE_SPATIALITE=no
