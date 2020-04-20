@@ -2188,7 +2188,7 @@ Optional Packages:
   --with-curl=ARG       Include curl (ARG=path to curl-config.)
   --with-xml2=ARG       Include libxml2 (ARG=yes/no)
   --with-spatialite=ARG Include SpatiaLite support (ARG=no(default), yes, dlopen (only supported for Spatialite >= 4.1.2) or path)
-  --with-spatialite-soname=ARG Spatialite shared object name (e.g. libspatialite.so), only used if --with-spatiliate=dlopen
+  --with-spatialite-soname=ARG Spatialite shared object name (e.g. libspatialite.so), only used if --with-spatialite=dlopen
   --with-sqlite3=[ARG]    use SQLite 3 library [default=yes], optionally
                           specify the prefix for sqlite3 library
   --with-rasterlite2=ARG Include RasterLite2 support (ARG=no(default), yes or path)
