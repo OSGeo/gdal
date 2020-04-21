@@ -3304,10 +3304,20 @@ void BAGDataset::LoadMetadata()
         {
             if( strcmp(psIter->pszValue, "axisDimensionProperties") == 0 )
             {
-                const char* pszDim = CPLGetXMLValue(
-                    psIter, "MD_Dimension.dimensionName.MD_DimensionNameTypeCode", nullptr);
-                const char* pszRes = CPLGetXMLValue(
-                    psIter, "MD_Dimension.resolution.Measure", nullptr);
+                // since BAG format 1.5 version
+                const char* pszDim = CPLGetXMLValue(psIter, "MD_Dimension.dimensionName.MD_DimensionNameTypeCode", nullptr);
+                const char* pszRes = nullptr;
+                if(pszDim)
+                {
+                    pszRes = CPLGetXMLValue(psIter, "MD_Dimension.resolution.Measure", nullptr);
+                }
+                else
+                {
+                    // prior to BAG format 1.5 version
+                    pszDim = CPLGetXMLValue(psIter, "MD_Dimension.dimensionName", nullptr);
+                    pszRes = CPLGetXMLValue(psIter, "MD_Dimension.resolution.Measure.value", nullptr);
+                }
+
                 if( pszDim && EQUAL(pszDim, "row") && pszRes )
                 {
                     osResHeight = pszRes;
