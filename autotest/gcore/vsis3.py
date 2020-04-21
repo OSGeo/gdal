@@ -2364,8 +2364,6 @@ def test_vsis3_fake_rename_dir():
         request.end_headers()
 
     handler.add('PUT', '/test/target_dir/', custom_method=method)
-    handler.add('GET', '/test/target_dir/test.txt', 404)
-    handler.add('GET', '/test/?delimiter=%2F&max-keys=100&prefix=target_dir%2Ftest.txt%2F', 200)
 
     def method(request):
         if request.headers['Content-Length'] != '0':
@@ -2660,6 +2658,34 @@ def test_vsis3_metadata():
     # Error case
     with gdaltest.error_handler():
         assert not gdal.SetFileMetadata('/vsis3/test_metadata/foo.txt', {}, 'UNSUPPORTED')
+
+###############################################################################
+# Test that we take into account directory listing to avoid useless
+# requests
+
+
+def test_vsis3_no_useless_requests():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/no_useless_requests/?delimiter=%2F', 200,
+        {'Content-type': 'application/xml'},
+        """<?xml version="1.0" encoding="UTF-8"?>
+        <ListBucketResult>
+            <Prefix></Prefix>
+            <Contents>
+            </Contents>
+        </ListBucketResult>
+    """)
+    with webserver.install_http_handler(handler):
+        assert gdal.VSIFOpenL('/vsis3/no_useless_requests/foo.txt', 'rb') is None
+        assert gdal.VSIFOpenL('/vsis3/no_useless_requests/bar.txt', 'rb') is None
+        assert gdal.VSIStatL('/vsis3/no_useless_requests/baz.txt') is None
+
 
 ###############################################################################
 # Read credentials from simulated ~/.aws/credentials

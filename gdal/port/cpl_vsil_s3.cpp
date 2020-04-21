@@ -1653,6 +1653,32 @@ VSIVirtualHandle* VSIS3FSHandler::Open( const char *pszFilename,
         return poHandle;
     }
 
+    if( CPLString(pszFilename).back() != '/' )
+    {
+        // If there's directory content for the directory where this file belongs to,
+        // use it to detect if the object does not exist
+        CachedDirList cachedDirList;
+        const CPLString osDirname(CPLGetDirname(pszFilename));
+        if( STARTS_WITH_CI(osDirname, GetFSPrefix()) &&
+            GetCachedDirList(osDirname, cachedDirList) && cachedDirList.bGotFileList )
+        {
+            const CPLString osFilenameOnly(CPLGetFilename(pszFilename));
+            bool bFound = false;
+            for( int i = 0; i < cachedDirList.oFileList.size(); i++ )
+            {
+                if( cachedDirList.oFileList[i] == osFilenameOnly )
+                {
+                    bFound = true;
+                    break;
+                }
+            }
+            if( !bFound )
+            {
+                return nullptr;
+            }
+        }
+    }
+
     return
         VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError);
 }
@@ -2446,6 +2472,34 @@ int IVSIS3LikeFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
     CPLString osFilename(pszFilename);
     if( osFilename.find('/', GetFSPrefix().size()) == std::string::npos )
         osFilename += "/";
+
+    CPLString osFilenameWithoutSlash(osFilename);
+    if( osFilenameWithoutSlash.back() == '/' )
+        osFilenameWithoutSlash.resize(osFilenameWithoutSlash.size()-1);
+
+    // If there's directory content for the directory where this file belongs to,
+    // use it to detect if the object does not exist
+    CachedDirList cachedDirList;
+    const CPLString osDirname(CPLGetDirname(osFilenameWithoutSlash));
+    if( STARTS_WITH_CI(osDirname, GetFSPrefix()) &&
+        GetCachedDirList(osDirname, cachedDirList) && cachedDirList.bGotFileList )
+    {
+        const CPLString osFilenameOnly(CPLGetFilename(osFilenameWithoutSlash));
+        bool bFound = false;
+        for( int i = 0; i < cachedDirList.oFileList.size(); i++ )
+        {
+            if( cachedDirList.oFileList[i] == osFilenameOnly )
+            {
+                bFound = true;
+                break;
+            }
+        }
+        if( !bFound )
+        {
+            return -1;
+        }
+    }
+
     if( VSICurlFilesystemHandler::Stat(osFilename, pStatBuf, nFlags) == 0 )
     {
         return 0;
