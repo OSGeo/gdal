@@ -32,9 +32,16 @@
 
 #include "geotiff.h"
 
+#if LIBGEOTIFF_VERSION >= 1600
+
+#define GDALGTIFKeyGetASCII GTIFKeyGetASCII
+#define GDALGTIFKeyGetSHORT GTIFKeyGetSHORT
+#define GDALGTIFKeyGetDOUBLE GTIFKeyGetDOUBLE
+
+#else
+
 int GDALGTIFKeyGetASCII( GTIF *hGTIF, geokey_t key,
                                 char* szStr,
-                                int nIndex,
                                 int szStrMaxLen );
 
 int GDALGTIFKeyGetSHORT( GTIF *hGTIF, geokey_t key,
@@ -46,5 +53,7 @@ int GDALGTIFKeyGetDOUBLE( GTIF *hGTIF, geokey_t key,
                                  double* pdfVal,
                                  int nIndex,
                                  int nCount );
+
+#endif
 
 #endif // GT_WKT_SRS_PRIV_H_INCLUDED
