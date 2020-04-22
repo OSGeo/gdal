@@ -11,6 +11,7 @@
 #define GTIFAngleStringToDD gdal_GTIFAngleStringToDD
 #define GTIFAngleToDD gdal_GTIFAngleToDD
 #define _GTIFcalloc gdal__GTIFcalloc
+#define GTIFDeaccessCSV gdal_GTIFDeaccessCSV
 #define GTIFDecToDMS gdal_GTIFDecToDMS
 #define GTIFDirectoryInfo gdal_GTIFDirectoryInfo
 #define GTIFErrorFunction gdal_GTIFErrorFunction
@@ -44,11 +45,14 @@
 #define GTIFImport gdal_GTIFImport
 #define GTIFKeyCode gdal_GTIFKeyCode
 #define GTIFKeyGet gdal_GTIFKeyGet
+#define GTIFKeyGetASCII gdal_GTIFKeyGetASCII
 #define GTIFKeyGetDOUBLE gdal_GTIFKeyGetDOUBLE
 #define GTIFKeyGetInternal gdal_GTIFKeyGetInternal
 #define GTIFKeyGetSHORT gdal_GTIFKeyGetSHORT
+#define GTIFKeyGetSSHORT gdal_GTIFKeyGetSSHORT
 #define GTIFKeyInfo gdal_GTIFKeyInfo
 #define GTIFKeyName gdal_GTIFKeyName
+#define GTIFKeyNameEx gdal_GTIFKeyNameEx
 #define GTIFKeySet gdal_GTIFKeySet
 #define GTIFMapSysToPCS gdal_GTIFMapSysToPCS
 #define GTIFMapSysToProj gdal_GTIFMapSysToProj
@@ -63,6 +67,7 @@
 #define GTIFPrint gdal_GTIFPrint
 #define GTIFPrintDefn gdal_GTIFPrintDefn
 #define GTIFPrintDefnEx gdal_GTIFPrintDefnEx
+#define GTIFProj4AppendEllipsoid gdal_GTIFProj4AppendEllipsoid
 #define GTIFProj4FromLatLong gdal_GTIFProj4FromLatLong
 #define GTIFProj4ToLatLong gdal_GTIFProj4ToLatLong
 #define GTIFProjToMapSys gdal_GTIFProjToMapSys
@@ -72,6 +77,7 @@
 #define _GTIFSetField gdal__GTIFSetField
 #define GTIFSetFromProj4 gdal_GTIFSetFromProj4
 #define GTIFSetSimpleTagsMethods gdal_GTIFSetSimpleTagsMethods
+#define GTIFSetVersionNumbers gdal_GTIFSetVersionNumbers
 #define GTIFTagCode gdal_GTIFTagCode
 #define GTIFTagName gdal_GTIFTagName
 #define _GTIFTagType gdal__GTIFTagType
@@ -94,6 +100,7 @@
 #define ReadKey gdal_ReadKey
 #define ReadKey gdal_ReadKey
 #define ReadTag gdal_ReadTag
+#define SetCSVFilenameHook gdal_SetCSVFilenameHook
 #define SetGTParmIds gdal_SetGTParmIds
 #define SortKeys gdal_SortKeys
 #define ST_Create gdal_ST_Create
@@ -113,6 +120,7 @@
 #define XTIFFOpen gdal_XTIFFOpen
 #define StatePlaneTable gdal_StatePlaneTable
 #define _keyInfo gdal__keyInfo
+#define _keyInfoV11 gdal__keyInfoV11
 #define _csdefaultValue gdal__csdefaultValue
 #define _modeltypeValue gdal__modeltypeValue
 #define _rastertypeValue gdal__rastertypeValue
