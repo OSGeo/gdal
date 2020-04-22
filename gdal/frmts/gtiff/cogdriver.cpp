@@ -757,6 +757,7 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     CPLConfigOptionSetter oSetterInternalMask(
         "GDAL_TIFF_INTERNAL_MASK", "YES", false);
 
+    CPLDebug("COG", "Generating final product");
     auto poRet = poGTiffDrv->CreateCopy(pszFilename, poCurDS, false,
                                         aosOptions.List(),
                                         GDALScaledProgress, pScaledProgress);
