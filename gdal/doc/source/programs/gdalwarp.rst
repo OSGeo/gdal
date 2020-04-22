@@ -126,7 +126,7 @@ with control information.
 
 .. option:: -tr <xres> <yres>
 
-    Sse output file resolution (in target georeferenced units)
+    Set output file resolution (in target georeferenced units)
 
 .. option:: -tap
 
