@@ -174,3 +174,79 @@ int GTIFKeyGet(GTIF *gtif, geokey_t thekey, void *val, int nIndex, int count)
 
         return count;
 }
+
+/************************************************************************/
+/*                       GTIFKeyGetInternal()                           */
+/************************************************************************/
+
+static int GTIFKeyGetInternal( GTIF *psGTIF, geokey_t key,
+                           void* pData,
+                           int nIndex,
+                           int nCount,
+                           tagtype_t expected_tagtype )
+{
+    tagtype_t tagtype;
+    if( !GTIFKeyInfo(psGTIF, key, NULL, &tagtype) )
+        return 0;
+    if( tagtype != expected_tagtype )
+    {
+        if( psGTIF->gt_error_callback )
+        {
+            psGTIF->gt_error_callback(
+                psGTIF,
+                LIBGEOTIFF_WARNING,
+                "Expected key %s to be of type %s. Got %s",
+                GTIFKeyName(key), GTIFTypeName(expected_tagtype),
+                GTIFTypeName(tagtype));
+        }
+        return 0;
+    }
+    return GTIFKeyGet( psGTIF, key, pData, nIndex, nCount );
+}
+
+/************************************************************************/
+/*                          GTIFKeyGetASCII()                           */
+/************************************************************************/
+
+/**
+ * This function reads the value of a single GeoKey of type ASCII from a GeoTIFF file.
+ *
+ * Same as GTIFGetKey() except that it adds checking that the key read is of the
+ * expected type.
+ */
+int GTIFKeyGetASCII( GTIF *gtif, geokey_t key, char* szStr, int szStrMaxLen )
+{
+    return GTIFKeyGetInternal( gtif, key, szStr, 0, szStrMaxLen, TYPE_ASCII );
+}
+
+/************************************************************************/
+/*                          GTIFKeyGetSHORT()                           */
+/************************************************************************/
+
+/**
+ * This function reads the value of a single GeoKey of type SHORT from a GeoTIFF file.
+ *
+ * Same as GTIFGetKey() except that it adds checking that the key read is of the
+ * expected type.
+ */
+int GTIFKeyGetSHORT( GTIF *gtif, geokey_t key, unsigned short* pnVal, int nIndex,
+                     int nCount )
+{
+    return GTIFKeyGetInternal(gtif, key, pnVal, nIndex, nCount, TYPE_SHORT);
+}
+
+/************************************************************************/
+/*                        GDALGTIFKeyGetDOUBLE()                        */
+/************************************************************************/
+
+/**
+ * This function reads the value of a single GeoKey of type DOUBLE from a GeoTIFF file.
+ *
+ * Same as GTIFGetKey() except that it adds checking that the key read is of the
+ * expected type.
+ */
+int GTIFKeyGetDOUBLE( GTIF *gtif, geokey_t key, double* pdfVal, int nIndex,
+                      int nCount )
+{
+    return GTIFKeyGetInternal(gtif, key, pdfVal, nIndex, nCount, TYPE_DOUBLE);
+}
