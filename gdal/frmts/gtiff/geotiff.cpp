@@ -12663,7 +12663,7 @@ static void GTiffDatasetSetAreaOrPointMD( GTIF* hGTIF,
                                           GDALMultiDomainMetadata& m_oGTiffMDMD )
 {
     // Is this a pixel-is-point dataset?
-    short nRasterType = 0;
+    unsigned short nRasterType = 0;
 
     if( GDALGTIFKeyGetSHORT(hGTIF, GTRasterTypeGeoKey, &nRasterType,
                     0, 1 ) == 1 )
@@ -14595,7 +14595,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
         double *padfMatrix = nullptr;
         uint16 nCount = 0;
         bool bPixelIsPoint = false;
-        short nRasterType = 0;
+        unsigned short nRasterType = 0;
         bool bPointGeoIgnore = false;
 
         std::set<signed char> aoSetPriorities;

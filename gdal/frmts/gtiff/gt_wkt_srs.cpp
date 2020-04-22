@@ -285,7 +285,7 @@ int GDALGTIFKeyGetASCII( GTIF *hGTIF, geokey_t key,
 /************************************************************************/
 
 int GDALGTIFKeyGetSHORT( GTIF *hGTIF, geokey_t key,
-                         short* pnVal,
+                         unsigned short* pnVal,
                          int nIndex,
                          int nCount )
 {
@@ -467,7 +467,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
 /*      libgeotiff to meters (or above) to simulate the old             */
 /*      behavior.                                                       */
 /* -------------------------------------------------------------------- */
-    short bLinearUnitsMarkedCorrect = FALSE;
+    unsigned short bLinearUnitsMarkedCorrect = FALSE;
 
     GDALGTIFKeyGetSHORT(hGTIF, ProjLinearUnitsInterpCorrectGeoKey,
                &bLinearUnitsMarkedCorrect, 0, 1);
@@ -589,15 +589,15 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
 /* ==================================================================== */
 /*      Read keys related to vertical component.                        */
 /* ==================================================================== */
-    short verticalCSType = -1;
-    short verticalDatum = -1;
-    short verticalUnits = -1;
+    unsigned short verticalCSType = 0;
+    unsigned short verticalDatum =  0;
+    unsigned short verticalUnits =  0;
 
     GDALGTIFKeyGetSHORT( hGTIF, VerticalCSTypeGeoKey, &verticalCSType, 0, 1 );
     GDALGTIFKeyGetSHORT( hGTIF, VerticalDatumGeoKey, &verticalDatum, 0, 1 );
     GDALGTIFKeyGetSHORT( hGTIF, VerticalUnitsGeoKey, &verticalUnits, 0, 1 );
 
-    if( verticalCSType != -1 || verticalDatum != -1 || verticalUnits != -1 )
+    if( verticalCSType != 0 || verticalDatum != 0 || verticalUnits != 0 )
     {
         int versions[3];
         GTIFDirectoryInfo(hGTIF, versions, nullptr);
@@ -614,7 +614,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
 /*      value.                                                          */
 /* -------------------------------------------------------------------- */
             if( (verticalCSType >= 5101 && verticalCSType <= 5112)
-                && verticalDatum == -1 )
+                && verticalDatum == 0 )
             {
                 verticalDatum = verticalCSType;
                 verticalCSType = verticalDatum + 600;
@@ -639,10 +639,10 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
 /*      there isn't one in EPSG.                                        */
 /* -------------------------------------------------------------------- */
         if( (verticalCSType >= 5001 && verticalCSType <= 5033)
-            && verticalDatum == -1 )
+            && verticalDatum == 0 )
         {
             verticalDatum = verticalCSType + 1000;
-            verticalCSType = -1;
+            verticalCSType = 0;
         }
     }
 
@@ -813,9 +813,9 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
                     if( pszTmpCode && pszTmpVertCode &&
                         atoi(pszTmpCode) == atoi(pszTmpVertCode) )
                     {
-                        verticalCSType = -1;
-                        verticalDatum = -1;
-                        verticalUnits = -1;
+                        verticalCSType = 0;
+                        verticalDatum = 0;
+                        verticalUnits = 0;
                         oSRS.CopyGeogCSFrom(&oTmpVertSRS);
                         bSetDatumEllipsoid = false;
                         bGeog3DCRS = true;
@@ -876,7 +876,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
 /*      but that should do for now. This may mask shortcomings in the   */
 /*      libgeotiff GTIFGetDefn() function.                              */
 /* ==================================================================== */
-    short tmp = 0;
+    unsigned short tmp = 0;
     bool bGotFromEPSG = false;
     if( psDefn->Model == ModelTypeProjected &&
         psDefn->PCS != KvUserDefined &&
@@ -1232,7 +1232,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
 /* ==================================================================== */
     bool bNeedManualVertCS = false;
     char citation[2048] = { '\0' };
-    if( (verticalCSType != -1 || verticalDatum != -1 || verticalUnits != -1)
+    if( (verticalCSType != 0 || verticalDatum != 0 || verticalUnits != 0)
         && (oSRS.IsGeographic() || oSRS.IsProjected() || oSRS.IsLocal()) )
     {
         if( !GDALGTIFKeyGetASCII( hGTIF, VerticalCitationGeoKey, citation,
@@ -2952,13 +2952,13 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
 /* -------------------------------------------------------------------- */
     bool bPixelIsPoint = false;
     bool bPointGeoIgnore = false;
-    short nRasterType = 0;
+    unsigned short nRasterType = 0;
 
     GTIF *hGTIF = GTIFNew(hTIFF);
 
     if( hGTIF != nullptr && GDALGTIFKeyGetSHORT(hGTIF, GTRasterTypeGeoKey,
                                              &nRasterType, 0, 1 ) == 1
-        && nRasterType == static_cast<short>( RasterPixelIsPoint ) )
+        && nRasterType == static_cast<unsigned short>( RasterPixelIsPoint ) )
     {
         bPixelIsPoint = true;
         bPointGeoIgnore =

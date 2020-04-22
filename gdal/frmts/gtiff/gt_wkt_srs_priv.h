@@ -38,7 +38,7 @@ int GDALGTIFKeyGetASCII( GTIF *hGTIF, geokey_t key,
                                 int szStrMaxLen );
 
 int GDALGTIFKeyGetSHORT( GTIF *hGTIF, geokey_t key,
-                                short* pnVal,
+                                unsigned short* pnVal,
                                 int nIndex,
                                 int nCount );
 
