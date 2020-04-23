@@ -41,6 +41,10 @@
 #pragma clang diagnostic pop
 #endif
 
+#define IS_OPENJPEG_OR_LATER(major,minor,patch) \
+    ((OPJ_VERSION_MAJOR * 10000 + OPJ_VERSION_MINOR * 100 + OPJ_VERSION_BUILD) >= \
+        ((major)*10000+(minor)*100+(patch)))
+
 #include <cassert>
 #include <vector>
 
@@ -2955,7 +2959,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             "BLOCKXSIZE", "BLOCKYSIZE", "QUALITY", "REVERSIBLE",
             "RESOLUTIONS", "PROGRESSION", "SOP", "EPH",
             "YCBCR420", "YCC", "NBITS", "1BIT_ALPHA", "PRECINCTS",
-            "TILEPARTS", "CODEBLOCK_WIDTH", "CODEBLOCK_HEIGHT", nullptr };
+            "TILEPARTS", "CODEBLOCK_WIDTH", "CODEBLOCK_HEIGHT", "PLT", nullptr };
 
         for( int i = 0; apszIgnoredOptions[i]; i ++)
         {
@@ -3316,6 +3320,24 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         delete poGMLJP2Box;
         return nullptr;
     }
+
+#if IS_OPENJPEG_OR_LATER(2,3,2)
+    if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "PLT", "FALSE")) )
+    {
+        const char* const apszOptions[] = { "PLT=YES", nullptr };
+        if( !opj_encoder_set_extra_options(pCodec, apszOptions) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "opj_encoder_set_extra_options() failed");
+            opj_image_destroy(psImage);
+            opj_destroy_codec(pCodec);
+            CPLFree(pasBandParams);
+            pasBandParams = nullptr;
+            delete poGMLJP2Box;
+            return nullptr;
+        }
+    }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
@@ -3717,7 +3739,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             "BLOCKXSIZE", "BLOCKYSIZE", "QUALITY", "REVERSIBLE",
             "RESOLUTIONS", "PROGRESSION", "SOP", "EPH",
             "YCBCR420", "YCC", "NBITS", "1BIT_ALPHA", "PRECINCTS",
-            "TILEPARTS", "CODEBLOCK_WIDTH", "CODEBLOCK_HEIGHT", nullptr };
+            "TILEPARTS", "CODEBLOCK_WIDTH", "CODEBLOCK_HEIGHT", "PLT", nullptr };
         for( int i = 0; apszIgnoredOptions[i]; i ++)
         {
             if( CSLFetchNameValue(papszOptions, apszIgnoredOptions[i]) )
@@ -4173,6 +4195,9 @@ void GDALRegister_JP2OpenJPEG()
 "   <Option name='USE_SRC_CODESTREAM' type='boolean' description='When source dataset is JPEG2000, whether to reuse the codestream of the source dataset unmodified' default='NO'/>"
 #if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
 "   <Option name='CODEBLOCK_STYLE' type='string' description='Comma-separated combination of BYPASS, RESET, TERMALL, VSC, PREDICTABLE, SEGSYM or value between 0 and 63'/>"
+#endif
+#if IS_OPENJPEG_OR_LATER(2,3,2)
+"   <Option name='PLT' type='boolean' description='True to insert PLT marker segments' default='false'/>"
 #endif
 "</CreationOptionList>"  );
 
