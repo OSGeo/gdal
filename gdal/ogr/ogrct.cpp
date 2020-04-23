@@ -1007,16 +1007,18 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
             {
                 CPLErrorStateBackuper oErrorStateBackuper;
                 CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-                const char *pszProjName = poSRS->GetAttrValue("PROJECTION");
                 const char* const apszOptionsWKT2_2018[] = { "FORMAT=WKT2_2018", nullptr };
-                const char* const apszOptionsWKT1[] = { "FORMAT=WKT1_GDAL", nullptr };
                 // If there's a PROJ4 EXTENSION node in WKT1, then use
-                // WKT1. For example when dealing with "+proj=longlat +lon_wrap=180"
-                if( poSRS->GetExtension(nullptr, "PROJ4", nullptr) ||
-                    // NetCDF hack
-                    (pszProjName && EQUAL(pszProjName, "Rotated_pole")) )
+                // it. For example when dealing with "+proj=longlat +lon_wrap=180"
+                if( poSRS->GetExtension(nullptr, "PROJ4", nullptr) )
                 {
-                    poSRS->exportToWkt(&pszText, apszOptionsWKT1);
+                    poSRS->exportToProj4(&pszText);
+                    if (strstr(pszText, " +type=crs") == nullptr )
+                    {
+                        auto tmpText = std::string(pszText) + " +type=crs";
+                        CPLFree(pszText);
+                        pszText = CPLStrdup(tmpText.c_str());
+                    }
                 }
                 else
                     poSRS->exportToWkt(&pszText, apszOptionsWKT2_2018);
@@ -1026,6 +1028,10 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
 
         char* pszSrcSRS = exportSRSToText(poSRSSource);
         char* pszTargetSRS = exportSRSToText(poSRSTarget);
+#ifdef DEBUG
+        CPLDebug("OGR_CT", "Source CRS: '%s'", pszSrcSRS);
+        CPLDebug("OGR_CT", "Target CRS: '%s'", pszTargetSRS);
+#endif
 
         if( m_eStrategy == Strategy::PROJ )
         {
