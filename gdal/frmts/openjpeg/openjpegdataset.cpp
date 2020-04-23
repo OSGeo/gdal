@@ -224,7 +224,7 @@ class JP2OpenJPEGDataset final: public GDALJP2AbstractDataset
     JP2OpenJPEGDataset** papoOverviewDS = nullptr;
     bool        bUseSetDecodeArea = false;
     bool        bSingleTiled = false;
-#if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
+#if IS_OPENJPEG_OR_LATER(2,3,0)
     opj_codec_t**    m_ppCodec = nullptr;
     opj_stream_t **  m_ppStream = nullptr;
     opj_image_t **   m_ppsImage = nullptr;
@@ -819,7 +819,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
     const int nHeightToRead =
         std::min(nBlockYSize, nRasterYSize - nBlockYOff * nBlockYSize);
 
-#if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
+#if IS_OPENJPEG_OR_LATER(2,3,0)
     if( m_ppCodec &&
         CPLTestBool(CPLGetConfigOption("USE_OPENJPEG_SINGLE_TILE_OPTIM", "YES")) )
     {
@@ -872,7 +872,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
             goto end;
         }
 
-#if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
+#if IS_OPENJPEG_OR_LATER(2,3,0)
         if( m_psJP2OpenJPEGFile )
         {
             pStream = JP2OpenJPEGCreateReadStream( m_psJP2OpenJPEGFile, nCodeStreamLength);
@@ -891,7 +891,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
             goto end;
         }
 
-#if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 2
+#if IS_OPENJPEG_OR_LATER(2,2,0)
         if( getenv("OPJ_NUM_THREADS") == nullptr )
         {
             if( m_nBlocksToLoad <= 1 )
@@ -904,7 +904,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
         if(!opj_read_header(pStream,pCodec,&psImage))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "opj_read_header() failed (psImage=%p)", psImage);
-#if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 2
+#if IS_OPENJPEG_OR_LATER(2,2,0)
             // Hopefully the situation is better on openjpeg 2.2 regarding cleanup
             eErr = CE_Failure;
             goto end;
@@ -1119,7 +1119,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
     }
 
 end:
-#if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
+#if IS_OPENJPEG_OR_LATER(2,3,0)
     if( m_ppCodec != nullptr &&
         CPLTestBool(CPLGetConfigOption("USE_OPENJPEG_SINGLE_TILE_OPTIM", "YES")) )
     {
@@ -1225,7 +1225,7 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
 {
     FlushCache();
 
-#if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
+#if IS_OPENJPEG_OR_LATER(2,3,0)
     if( iLevel == 0 )
     {
         if( m_ppCodec )
@@ -1706,7 +1706,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
-#if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
+#if IS_OPENJPEG_OR_LATER(2,3,0)
     if( getenv("OPJ_NUM_THREADS") == nullptr )
     {
         JP2OpenJPEGDataset oTmpDS;
@@ -2165,7 +2165,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poCT != nullptr )
         numResolutions = 0;
 
-#if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
+#if IS_OPENJPEG_OR_LATER(2,3,0)
     if( poDS->bSingleTiled && poDS->bUseSetDecodeArea )
     {
         poDS->m_ppCodec = new opj_codec_t* (pCodec);
@@ -2220,7 +2220,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         poODS->nCodeStreamLength = nCodeStreamLength;
         poODS->bIs420 = bIs420;
 
-#if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
+#if IS_OPENJPEG_OR_LATER(2,3,0)
         if( poODS->bSingleTiled && poODS->bUseSetDecodeArea )
         {
             poODS->m_ppCodec = poDS->m_ppCodec;
@@ -2252,7 +2252,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->papoOverviewDS[poDS->nOverviewCount ++] = poODS;
     }
 
-#if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
+#if IS_OPENJPEG_OR_LATER(2,3,0)
     if( poDS->bSingleTiled && poDS->bUseSetDecodeArea )
     {
         // nothing
@@ -2660,8 +2660,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     int bYCC = ((nBands == 3 || nBands == 4) &&
             CPLTestBool(CSLFetchNameValueDef(papszOptions, "YCC", "TRUE")));
 
-#if OPJ_VERSION_MAJOR == 2 && OPJ_VERSION_MINOR < 2
-    /* TODO: when OpenJPEG 2.2 is released, make this conditional */
+#if !(IS_OPENJPEG_OR_LATER(2,2,0))
     /* Depending on the way OpenJPEG <= r2950 is built, YCC with 4 bands might work on
      * Debug mode, but this relies on unreliable stack buffer overflows, so
      * better err on the safe side */
@@ -3085,7 +3084,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     parameters.cblockh_init = nCblockH;
     parameters.mode = 0;
 
-#if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
+#if IS_OPENJPEG_OR_LATER(2,3,0)
     // Was buggy before for some of the options
     const char* pszCodeBlockStyle = CSLFetchNameValue(papszOptions, "CODEBLOCK_STYLE");
     if( pszCodeBlockStyle )
@@ -4193,7 +4192,7 @@ void GDALRegister_JP2OpenJPEG()
 "   <Option name='WRITE_METADATA' type='boolean' description='Whether metadata should be written, in a dedicated JP2 XML box' default='NO'/>"
 "   <Option name='MAIN_MD_DOMAIN_ONLY' type='boolean' description='(Only if WRITE_METADATA=YES) Whether only metadata from the main domain should be written' default='NO'/>"
 "   <Option name='USE_SRC_CODESTREAM' type='boolean' description='When source dataset is JPEG2000, whether to reuse the codestream of the source dataset unmodified' default='NO'/>"
-#if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
+#if IS_OPENJPEG_OR_LATER(2,3,0)
 "   <Option name='CODEBLOCK_STYLE' type='string' description='Comma-separated combination of BYPASS, RESET, TERMALL, VSC, PREDICTABLE, SEGSYM or value between 0 and 63'/>"
 #endif
 #if IS_OPENJPEG_OR_LATER(2,3,2)
