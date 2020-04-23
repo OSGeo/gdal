@@ -24,7 +24,7 @@ GMLJP2 boxes.
 Starting with GDAL 2.0, the driver supports creating files with
 transparency, arbitrary band count, and adding/reading metadata. Update
 of georeferencing or metadata of existing file is also supported.
-Optional intellectual property metdata can be read/written in the
+Optional intellectual property metadata can be read/written in the
 xml:IPR box.
 
 Driver capabilities
