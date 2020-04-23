@@ -1454,7 +1454,20 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
     }
     else if( pszFormat[0] == '\0' )
     {
-        if( IsGeographic() && !IsCompound() && GetAxesCount() == 3 )
+#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
+        const bool isGeog = d->m_pjType == PJ_TYPE_GEOGRAPHIC_2D_CRS ||
+                            d->m_pjType == PJ_TYPE_GEOGRAPHIC_3D_CRS;
+        const bool isDerivedGeographic = isGeog &&
+                        proj_is_derived_crs(d->getPROJContext(), d->m_pj_crs);
+        if( isDerivedGeographic )
+        {
+            wktFormat = PJ_WKT2_2018;
+        }
+        else
+#endif
+
+        if( (IsGeographic() || IsProjected()) &&
+            !IsCompound() && GetAxesCount() == 3 )
         {
             wktFormat = PJ_WKT2_2018;
         }

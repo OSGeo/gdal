@@ -2553,6 +2553,8 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
 
     // Read grid_mapping information and set projections.
 
+    bool bRotatedPole = false;
+
     if( !EQUAL(pszGridMappingValue, "") )
     {
         pszValue = FetchAttr(pszGridMappingValue, CF_GRD_MAPPING_NAME);
@@ -3194,6 +3196,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                                dfGridNorthPoleLat,
                                dfEarthRadius,
                                dfEarthRadius));
+                bRotatedPole = true;
             }
 
         // Is this Latitude/Longitude Grid, default?
@@ -3335,7 +3338,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                     //     oSRS.SetLinearUnits(pszUnits, 1.0);
                 }
             }
-            else if( oSRS.IsGeographic() )
+            else if( oSRS.IsGeographic() && !bRotatedPole )
             {
                 oSRS.SetAngularUnits(CF_UNITS_D, CPLAtof(SRS_UA_DEGREE_CONV));
                 oSRS.SetAuthority("GEOGCS|UNIT", "EPSG", 9122);
@@ -3344,8 +3347,9 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
             // Set projection.
             oSRS.exportToWkt(&pszTempProjection);
             CPLDebug("GDAL_netCDF", "setting WKT from CF");
-            SetProjection(pszTempProjection);
-            CPLFree(pszTempProjection);
+            CPLFree(pszProjection);
+            pszProjection = pszTempProjection;
+            bSetProjection = true;
         }
 
         // Is pixel spacing uniform across the map?
