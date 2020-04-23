@@ -1473,15 +1473,11 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
     }
     else if( pszFormat[0] == '\0' )
     {
-#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
-        if( d->m_pjType == PJ_TYPE_GEOGRAPHIC_2D_CRS &&
-            proj_is_derived_crs(ctxt, d->m_pj_crs) )
+        if( IsDerivedGeographic() )
         {
             wktFormat = PJ_WKT2_2018;
         }
-        else
-#endif
-        if( (IsGeographic() || IsProjected()) &&
+        else if( (IsGeographic() || IsProjected()) &&
             !IsCompound() && GetAxesCount() == 3 )
         {
             wktFormat = PJ_WKT2_2018;
@@ -8183,6 +8179,54 @@ int OSRIsGeographic( OGRSpatialReferenceH hSRS )
     VALIDATE_POINTER1( hSRS, "OSRIsGeographic", 0 );
 
     return ToPointer(hSRS)->IsGeographic();
+}
+
+
+/************************************************************************/
+/*                      IsDerivedGeographic()                           */
+/************************************************************************/
+
+/**
+ * \brief Check if the CRS is a derived geographic coordinate system.
+ * (for example a rotated long/lat grid)
+ *
+ * This method is the same as the C function OSRIsDerivedGeographic().
+ *
+ * @since GDAL 3.1.0 and PROJ 6.3.0
+ */
+
+int OGRSpatialReference::IsDerivedGeographic() const
+
+{
+    d->refreshProjObj();
+    d->demoteFromBoundCRS();
+#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
+    const bool isGeog = d->m_pjType == PJ_TYPE_GEOGRAPHIC_2D_CRS ||
+                        d->m_pjType == PJ_TYPE_GEOGRAPHIC_3D_CRS;
+    const bool isDerivedGeographic = isGeog &&
+                        proj_is_derived_crs(d->getPROJContext(), d->m_pj_crs);
+#else
+    constexpr bool isDerivedGeographic = false;
+#endif
+    d->undoDemoteFromBoundCRS();
+    return isDerivedGeographic ? TRUE : FALSE;
+}
+
+/************************************************************************/
+/*                      OSRIsDerivedGeographic()                        */
+/************************************************************************/
+/**
+ * \brief Check if derived geographic coordinate system.
+ * (for example a rotated long/lat grid)
+ *
+ * This function is the same as OGRSpatialReference::IsDerivedGeographic().
+ */
+int OSRIsDerivedGeographic( OGRSpatialReferenceH hSRS )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRIsDerivedGeographic", 0 );
+
+    return ToPointer(hSRS)->IsDerivedGeographic();
 }
 
 /************************************************************************/

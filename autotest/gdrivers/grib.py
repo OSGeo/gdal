@@ -263,6 +263,9 @@ def test_grib_grib1_read_rotated_pole_lonlat():
     expected_projection_before_proj_7 = 'PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["unnamed",SPHEROID["Sphere",6367470,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Rotated_pole"],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],EXTENSION["PROJ4","+proj=ob_tran +lon_0=-15 +o_proj=longlat +o_lon_p=0 +o_lat_p=30 +a=6367470 +b=6367470 +to_meter=0.0174532925199 +wktext"]]'
     assert projection in (expected_projection_proj_7, expected_projection_before_proj_7), projection
 
+    if projection == expected_projection_proj_7:
+        assert ds.GetSpatialRef().IsDerivedGeographic()
+
     gt = ds.GetGeoTransform()
     expected_gt = (-30.25, 0.1, 0.0, 24.15, 0.0, -0.1)
     assert max([abs(gt[i] - expected_gt[i]) for i in range(6)]) <= 1e-3, \
