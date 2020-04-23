@@ -258,6 +258,9 @@ Creation Options
    increase codestream size, but improve either coding/decoding speed or
    resilience/error detection.
 
+-  **PLT=YES/NO**: (GDAL >= 3.1.1 and OpenJPEG > 2.3.1) Whether to write a
+   PLT (Packet Length) marker segments in tile-part headers. Defaults to NO.
+
 -  **WRITE_METADATA=YES/NO**: Whether metadata should be
    written, in a dedicated JP2 'xml ' box. Defaults to NO. The content
    of the 'xml ' box will be like:
