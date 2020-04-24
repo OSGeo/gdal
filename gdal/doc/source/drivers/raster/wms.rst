@@ -80,12 +80,12 @@ other content before the ``<GDAL_WMS>`` element.
 <AdviseRead>true</AdviseRead>                                              Enable AdviseRead API call - download images into cache. (optional, defaults to false)
 <VerifyAdviseRead>true</VerifyAdviseRead>                                  Open each downloaded image and do some basic checks before writing into cache. Disabling can save some CPU cycles if server is trusted to always return correct images. (optional, defaults to true)
 <ClampRequests>false</ClampRequests>                                       Should requests, that otherwise would be partially outside of defined data window, be clipped resulting in smaller than block size request. (optional, defaults to true)
-<UserAgent>GDAL WMS driver (http://www.gdal.org/frmt_wms.html)</UserAgent> HTTP User-agent string. Some servers might require a well-known user-agent such as "Mozilla/5.0" (optional, defaults to "GDAL WMS driver (http://www.gdal.org/frmt_wms.html)"). Added in GDAL 1.8.0
-<UserPwd>user:password</UserPwd>                                           User and Password for HTTP authentication (optional). Added in GDAL 1.10.0
-<UnsafeSSL>true</UnsafeSSL>                                                Skip SSL certificate verification. May be needed if server is using a self signed certificate (optional, defaults to false). Added in GDAL 1.8.0.
-<Referer>http://example.foo/</Referer>                                     HTTP Referer string. Some servers might require it (optional). Added in GDAL 1.9.0
-<ZeroBlockHttpCodes>204,404</ZeroBlockHttpCodes>                           Comma separated list of HTTP response codes that will be interpreted as a 0 filled image (i.e. black for 3 bands, and transparent for 4 bands) instead of aborting the request. Added in GDAL 1.9.0. (optional, defaults to 204)
-<ZeroBlockOnServerException>true</ZeroBlockOnServerException>              Whether to treat a Service Exception returned by the server as a 0 filled image instead of aborting the request. Added in 1.9.0. (optional, defaults to false)
+<UserAgent>GDAL WMS driver (http://www.gdal.org/frmt_wms.html)</UserAgent> HTTP User-agent string. Some servers might require a well-known user-agent such as "Mozilla/5.0" (optional, defaults to "GDAL WMS driver (http://www.gdal.org/frmt_wms.html)"). When used with some servers, like OpenStreetMap ones, it is highly recommended to put a custom user agent to avoid being blocked if the default user agent had to be blocked.
+<UserPwd>user:password</UserPwd>                                           User and Password for HTTP authentication (optional).
+<UnsafeSSL>true</UnsafeSSL>                                                Skip SSL certificate verification. May be needed if server is using a self signed certificate (optional, defaults to false).
+<Referer>http://example.foo/</Referer>                                     HTTP Referer string. Some servers might require it (optional).
+<ZeroBlockHttpCodes>204,404</ZeroBlockHttpCodes>                           Comma separated list of HTTP response codes that will be interpreted as a 0 filled image (i.e. black for 3 bands, and transparent for 4 bands) instead of aborting the request. (optional, defaults to 204)
+<ZeroBlockOnServerException>true</ZeroBlockOnServerException>              Whether to treat a Service Exception returned by the server as a 0 filled image instead of aborting the request. (optional, defaults to false)
 </GDAL_WMS>
 \
 ========================================================================== ===============================================================================================================================================================================================================================================================================================================================
@@ -350,7 +350,9 @@ Examples
      Example <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_openstreetmap_tms.xml>`__: Connect to
      OpenStreetMap tile service. Note that this file takes advantage of
      the tile cache; more information about configuring the tile cache
-     settings is available above.
+     settings is available above. Please also change the <UserAgent>, to avoid the
+     default one being used, and potentially blocked by OSM servers in case a too
+     big usage of it would be seen.
    | ``gdal_translate -of PNG -outsize 512 512 frmt_wms_openstreetmap_tms.xml openstreetmap.png``
 
 -  | `MetaCarta TMS Layer Example <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_metacarta_tms.xml>`__,
