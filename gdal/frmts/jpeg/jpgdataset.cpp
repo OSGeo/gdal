@@ -1378,35 +1378,34 @@ CPLErr JPGDataset::LoadScanline( int iLine, GByte* outBuffer )
             /* store for all coefficients */
             /* See call to jinit_d_coef_controller() from master_selection() */
             /* in libjpeg */
-            vsi_l_offset nRequiredMemory =
-                static_cast<vsi_l_offset>(sDInfo.image_width) *
-                sDInfo.image_height * sDInfo.num_components *
-                ((sDInfo.data_precision+7)/8);
-            /* BLOCK_SMOOTHING_SUPPORTED is generally defined, so we need */
-            /* to replicate the logic of jinit_d_coef_controller() */
-            if( sDInfo.progressive_mode )
-                nRequiredMemory *= 3;
 
-    #ifndef GDAL_LIBJPEG_LARGEST_MEM_ALLOC
-    #define GDAL_LIBJPEG_LARGEST_MEM_ALLOC (100 * 1024 * 1024)
-    #endif
+            // 1 MB for regular libjpeg usage
+            vsi_l_offset nRequiredMemory = 1024 * 1024;
 
-            if( nRequiredMemory > GDAL_LIBJPEG_LARGEST_MEM_ALLOC &&
+            for (int ci = 0; ci < sDInfo.num_components; ci++) {
+                const jpeg_component_info *compptr = &(sDInfo.comp_info[ci]);
+                nRequiredMemory += static_cast<vsi_l_offset>(
+                    DIV_ROUND_UP(compptr->width_in_blocks, compptr->h_samp_factor)) *
+                    DIV_ROUND_UP(compptr->height_in_blocks, compptr->v_samp_factor) *
+                    sizeof(JBLOCK);
+            }
+
+            if( sDInfo.mem->max_memory_to_use > 0 &&
+                nRequiredMemory > static_cast<vsi_l_offset>(sDInfo.mem->max_memory_to_use) &&
                 CPLGetConfigOption("GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", nullptr) == nullptr )
             {
-                    CPLError(CE_Failure, CPLE_NotSupported,
-                        "Reading this image would require libjpeg to allocate "
-                        "at least " CPL_FRMT_GUIB " bytes. "
-                        "This is disabled since above the " CPL_FRMT_GUIB " threshold. "
-                        "You may override this restriction by defining the "
-                        "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC environment variable, "
-                        "or recompile GDAL by defining the "
-                        "GDAL_LIBJPEG_LARGEST_MEM_ALLOC macro to a value greater "
-                        "than " CPL_FRMT_GUIB,
-                        static_cast<GUIntBig>(nRequiredMemory),
-                        static_cast<GUIntBig>(GDAL_LIBJPEG_LARGEST_MEM_ALLOC),
-                        static_cast<GUIntBig>(GDAL_LIBJPEG_LARGEST_MEM_ALLOC));
-                    return CE_Failure;
+                CPLError(CE_Failure, CPLE_NotSupported,
+                    "Reading this image would require libjpeg to allocate "
+                    "at least " CPL_FRMT_GUIB " bytes. "
+                    "This is disabled since above the " CPL_FRMT_GUIB " threshold. "
+                    "You may override this restriction by defining the "
+                    "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC environment variable, "
+                    "or setting the JPEGMEM environment variable to a value greater "
+                    "or equal to '" CPL_FRMT_GUIB "M'",
+                    static_cast<GUIntBig>(nRequiredMemory),
+                    static_cast<GUIntBig>(sDInfo.mem->max_memory_to_use),
+                    static_cast<GUIntBig>((nRequiredMemory + 1000000 - 1) / 1000000));
+                return CE_Failure;
             }
         }
 
