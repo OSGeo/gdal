@@ -1206,35 +1206,34 @@ JPEGPreDecode(TIFF* tif, uint16 s)
             /* store for all coefficients */
             /* See call to jinit_d_coef_controller() from master_selection() */
             /* in libjpeg */
-            toff_t nRequiredMemory = (toff_t)sp->cinfo.d.image_width *
-                                     sp->cinfo.d.image_height *
-                                     sp->cinfo.d.num_components *
-                                     ((td->td_bitspersample+7)/8);
-            /* BLOCK_SMOOTHING_SUPPORTED is generally defined, so we need */
-            /* to replicate the logic of jinit_d_coef_controller() */
-            if( sp->cinfo.d.progressive_mode )
-                nRequiredMemory *= 3;
 
-#ifndef TIFF_LIBJPEG_LARGEST_MEM_ALLOC
-#define TIFF_LIBJPEG_LARGEST_MEM_ALLOC (100 * 1024 * 1024)
-#endif
+            /* 1 MB for regular libjpeg usage */
+            toff_t nRequiredMemory = 1024 * 1024;
 
-            if( nRequiredMemory > TIFF_LIBJPEG_LARGEST_MEM_ALLOC &&
+            for (ci = 0; ci < sp->cinfo.d.num_components; ci++) {
+                const jpeg_component_info *compptr = &(sp->cinfo.d.comp_info[ci]);
+                nRequiredMemory += (toff_t)(
+                    ((compptr->width_in_blocks + compptr->h_samp_factor - 1) / compptr->h_samp_factor)) *
+                    ((compptr->height_in_blocks + compptr->v_samp_factor - 1) / compptr->v_samp_factor) *
+                    sizeof(JBLOCK);
+            }
+
+            if( sp->cinfo.d.mem->max_memory_to_use > 0 &&
+                nRequiredMemory > (toff_t)(sp->cinfo.d.mem->max_memory_to_use) &&
                 getenv("LIBTIFF_ALLOW_LARGE_LIBJPEG_MEM_ALLOC") == NULL )
             {
-                    TIFFErrorExt(tif->tif_clientdata, module,
-                        "Reading this strip would require libjpeg to allocate "
-                        "at least %u bytes. "
-                        "This is disabled since above the %u threshold. "
-                        "You may override this restriction by defining the "
-                        "LIBTIFF_ALLOW_LARGE_LIBJPEG_MEM_ALLOC environment variable, "
-                        "or recompile libtiff by defining the "
-                        "TIFF_LIBJPEG_LARGEST_MEM_ALLOC macro to a value greater "
-                        "than %u",
-                        (unsigned)nRequiredMemory,
-                        (unsigned)TIFF_LIBJPEG_LARGEST_MEM_ALLOC,
-                        (unsigned)TIFF_LIBJPEG_LARGEST_MEM_ALLOC);
-                    return (0);
+                TIFFErrorExt(tif->tif_clientdata, module,
+                    "Reading this image would require libjpeg to allocate "
+                    "at least %u bytes. "
+                    "This is disabled since above the %u threshold. "
+                    "You may override this restriction by defining the "
+                    "LIBTIFF_ALLOW_LARGE_LIBJPEG_MEM_ALLOC environment variable, "
+                    "or setting the JPEGMEM environment variable to a value greater "
+                    "or equal to '%uM'",
+                    (unsigned)(nRequiredMemory),
+                    (unsigned)(sp->cinfo.d.mem->max_memory_to_use),
+                    (unsigned)((nRequiredMemory + 1000000 - 1) / 1000000));
+                return 0;
             }
         }
 
