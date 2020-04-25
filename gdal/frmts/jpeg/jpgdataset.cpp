@@ -1221,6 +1221,7 @@ void JPGDatasetCommon::InitInternalOverviews()
 
         if( nImplicitOverviews > 0 )
         {
+            ppoActiveDS = &poActiveDS;
             papoInternalOverviews = static_cast<GDALDataset **>(
                 CPLMalloc((nImplicitOverviews + (poEXIFOverview ? 1 : 0)) *
                           sizeof(GDALDataset *)));
@@ -1238,9 +1239,10 @@ void JPGDatasetCommon::InitInternalOverviews()
                 sArgs.nScaleFactor = 1 << (i + 1);
                 sArgs.bDoPAMInitialize = false;
                 sArgs.bUseInternalOverviews = false;
-                GDALDataset *poImplicitOverview = JPGDataset::Open(&sArgs);
+                JPGDatasetCommon *poImplicitOverview = JPGDataset::Open(&sArgs);
                 if( poImplicitOverview == nullptr )
                     break;
+                poImplicitOverview->ppoActiveDS = &poActiveDS;
                 papoInternalOverviews[nInternalOverviewsCurrent] =
                     poImplicitOverview;
                 nInternalOverviewsCurrent++;
@@ -1328,15 +1330,28 @@ JPGDataset::~JPGDataset()
 
 {
     GDALPamDataset::FlushCache();
+    JPGDataset::StopDecompress();
+}
 
+/************************************************************************/
+/*                           StopDecompress()                           */
+/************************************************************************/
+
+void JPGDataset::StopDecompress()
+{
     if (bHasDoneJpegStartDecompress)
     {
         jpeg_abort_decompress(&sDInfo);
+        bHasDoneJpegStartDecompress = false;
     }
     if (bHasDoneJpegCreateDecompress)
     {
         jpeg_destroy_decompress(&sDInfo);
+        bHasDoneJpegCreateDecompress = false;
     }
+    nLoadedScanline = INT_MAX;
+    if( ppoActiveDS )
+        *ppoActiveDS = nullptr;
 }
 
 /************************************************************************/
@@ -1363,6 +1378,11 @@ CPLErr JPGDataset::LoadScanline( int iLine, GByte* outBuffer )
     if( nLoadedScanline == iLine )
         return CE_None;
 
+    // code path triggered when an active reader has been stopped by another
+    // one, in case of multiple scans datasets and overviews
+    if( !bHasDoneJpegCreateDecompress && Restart() != CE_None )
+        return CE_Failure;
+
     // setup to trap a fatal error.
     if (setjmp(sUserData.setjmp_buffer))
         return CE_Failure;
@@ -1388,6 +1408,14 @@ CPLErr JPGDataset::LoadScanline( int iLine, GByte* outBuffer )
                     DIV_ROUND_UP(compptr->width_in_blocks, compptr->h_samp_factor)) *
                     DIV_ROUND_UP(compptr->height_in_blocks, compptr->v_samp_factor) *
                     sizeof(JBLOCK);
+            }
+
+            if( nRequiredMemory > 10 * 1024 * 1024 && ppoActiveDS && *ppoActiveDS != this )
+            {
+                // If another overview was active, stop it to limit memory consumption
+                if( *ppoActiveDS )
+                    (*ppoActiveDS)->StopDecompress();
+                *ppoActiveDS = this;
             }
 
             if( sDInfo.mem->max_memory_to_use > 0 &&
@@ -1659,6 +1687,11 @@ void JPGDataset::SetScaleNumAndDenom()
 CPLErr JPGDataset::Restart()
 
 {
+    if( ppoActiveDS && *ppoActiveDS != this && *ppoActiveDS != nullptr )
+    {
+        (*ppoActiveDS)->StopDecompress();
+    }
+
     // Setup to trap a fatal error.
     if (setjmp(sUserData.setjmp_buffer))
         return CE_Failure;
@@ -1666,9 +1699,9 @@ CPLErr JPGDataset::Restart()
     J_COLOR_SPACE colorSpace = sDInfo.out_color_space;
     J_COLOR_SPACE jpegColorSpace = sDInfo.jpeg_color_space;
 
-    jpeg_abort_decompress(&sDInfo);
-    jpeg_destroy_decompress(&sDInfo);
+    StopDecompress();
     jpeg_create_decompress(&sDInfo);
+    bHasDoneJpegCreateDecompress = true;
 
 #if !defined(JPGDataset)
     LoadDefaultTables(0);
@@ -1720,6 +1753,8 @@ CPLErr JPGDataset::Restart()
         sJProgress.progress_monitor = JPGDataset::ProgressMonitor;
         jpeg_start_decompress(&sDInfo);
         bHasDoneJpegStartDecompress = true;
+        if( ppoActiveDS )
+            *ppoActiveDS = this;
     }
 
     return CE_None;
@@ -2029,14 +2064,14 @@ GDALDataset *JPGDatasetCommon::Open( GDALOpenInfo *poOpenInfo )
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *JPGDataset::Open( JPGDatasetOpenArgs *psArgs )
+JPGDatasetCommon *JPGDataset::Open( JPGDatasetOpenArgs *psArgs )
 
 {
     JPGDataset *poDS = new JPGDataset();
     return OpenStage2(psArgs, poDS);
 }
 
-GDALDataset *JPGDataset::OpenStage2( JPGDatasetOpenArgs *psArgs,
+JPGDatasetCommon *JPGDataset::OpenStage2( JPGDatasetOpenArgs *psArgs,
                                      JPGDataset *&poDS )
 {
     // Will detect mismatch between compile-time and run-time libjpeg versions.

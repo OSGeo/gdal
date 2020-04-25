@@ -1060,6 +1060,29 @@ def test_jpeg_28():
 
     gdal.Unlink(tmpfilename)
 
+
+###############################################################################
+# Test multiscan and overviews
+
+
+def test_jpeg_multiscan_overviews():
+
+    tmpfilename = '/vsimem/test_jpeg_multiscan_overviews.jpg'
+
+    # Will require ~ 20 MB of libjpeg memory
+    src_ds = gdal.GetDriverByName('MEM').Create('', 10000, 1000)
+    src_ds.GetRasterBand(1).Fill(255)
+    ds = gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds, options=['PROGRESSIVE=YES'])
+    src_ds = None
+    ds = gdal.Open(tmpfilename)
+    for y in (0,1):
+        assert struct.unpack('B', ds.GetRasterBand(1).ReadRaster(0,y,1,1))[0] == 255
+        assert struct.unpack('B', ds.GetRasterBand(1).GetOverview(0).ReadRaster(0,y,1,1))[0] == 255
+        assert struct.unpack('B', ds.GetRasterBand(1).GetOverview(1).ReadRaster(0,y,1,1))[0] == 255
+    ds = None
+
+    gdal.Unlink(tmpfilename)
+
 ###############################################################################
 # Cleanup
 
