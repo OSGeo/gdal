@@ -4144,10 +4144,10 @@ elif test "$with_spatialite" = "yes"; then
         AC_MSG_CHECKING([for spatialite.h in /usr/include or /usr/local/include])
         if test -f "/usr/include/spatialite.h" -o -f "/usr/local/include/spatialite.h"; then
             AC_MSG_RESULT(found)
-            AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,-lsqlite3 -lproj)
+            AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,-lsqlite3)
             if test "$SPATIALITE_INIT_FOUND" = "yes"; then
                 HAVE_SPATIALITE=yes
-                SPATIALITE_LIBS="-lspatialite -lsqlite3 -lproj"
+                SPATIALITE_LIBS="-lspatialite -lsqlite3"
                 LIBS="$LIBS $SPATIALITE_LIBS"
                 HAVE_SQLITE3=yes
             fi
