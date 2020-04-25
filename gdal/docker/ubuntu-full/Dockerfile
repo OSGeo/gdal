@@ -6,15 +6,16 @@
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
 ARG PROJ_INSTALL_PREFIX=/usr/local
+ARG BASE_IMAGE=ubuntu:20.04
 
-FROM ubuntu:18.04 as builder
+FROM $BASE_IMAGE as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
 LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 
 # Setup build env for PROJ
 RUN apt-get update -y \
-    && apt-get install -y --fix-missing --no-install-recommends \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
             software-properties-common build-essential ca-certificates \
             git make cmake wget unzip libtool automake \
             zlib1g-dev libsqlite3-dev pkg-config sqlite3 libcurl4-gnutls-dev \
@@ -22,7 +23,7 @@ RUN apt-get update -y \
 
 # Setup build env for GDAL
 RUN apt-get update -y \
-    && apt-get install -y --fix-missing --no-install-recommends \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
        libcharls-dev libopenjp2-7-dev libcairo2-dev \
        python3-dev python3-numpy \
        libpng-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev \
@@ -31,14 +32,14 @@ RUN apt-get update -y \
        libspatialite-dev swig libhdf4-alt-dev libhdf5-serial-dev \
        libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev \
        liblcms2-2 libpcre3-dev libcrypto++-dev libdap-dev libfyba-dev \
-       libkml-dev libmysqlclient-dev libogdi3.2-dev \
-       libcfitsio-dev openjdk-8-jdk libzstd1-dev \
+       libkml-dev libmysqlclient-dev libogdi-dev \
+       libcfitsio-dev openjdk-8-jdk libzstd-dev \
        libpq-dev libssl-dev libboost-dev \
        autoconf automake bash-completion libarmadillo-dev \
        libopenexr-dev
 
 # Build likbkea
-ARG KEA_VERSION=1.4.12
+ARG KEA_VERSION=1.4.13
 RUN wget -q https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
     && unzip -q kealib-${KEA_VERSION}.zip \
     && rm -f kealib-${KEA_VERSION}.zip \
@@ -55,7 +56,7 @@ RUN wget -q https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build mongo-c-driver
-ARG MONGO_C_DRIVER_VERSION=1.13.0
+ARG MONGO_C_DRIVER_VERSION=1.16.2
 RUN mkdir mongo-c-driver \
     && wget -q https://github.com/mongodb/mongo-c-driver/releases/download/${MONGO_C_DRIVER_VERSION}/mongo-c-driver-${MONGO_C_DRIVER_VERSION}.tar.gz -O - \
         | tar xz -C mongo-c-driver --strip-components=1 \
@@ -73,14 +74,14 @@ RUN mkdir mongo-c-driver \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build mongocxx
-ARG MONGOCXX_VERSION=3.4.0
+ARG MONGOCXX_VERSION=3.5.0
 RUN mkdir mongocxx \
     && wget -q https://github.com/mongodb/mongo-cxx-driver/archive/r${MONGOCXX_VERSION}.tar.gz -O - \
         | tar xz -C mongocxx --strip-components=1 \
     && cd mongocxx \
     && mkdir build_cmake \
     && cd build_cmake \
-    && cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DBSONCXX_POLY_USE_BOOST=ON -DMONGOCXX_ENABLE_SLOW_TESTS=NO -DCMAKE_BUILD_TYPE=Release \
+    && cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DBSONCXX_POLY_USE_BOOST=ON -DMONGOCXX_ENABLE_SLOW_TESTS=NO -DCMAKE_BUILD_TYPE=Release -DBUILD_VERSION=${MONGOCXX_VERSION} \
     && make -j$(nproc) \
     && make install DESTDIR="/build_thirdparty" \
     && make install \
@@ -107,7 +108,7 @@ RUN mkdir tiledb \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build openjpeg
-ARG OPENJPEG_VERSION=2.3.1
+ARG OPENJPEG_VERSION=
 RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
     wget -q https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
     && tar xzf v${OPENJPEG_VERSION}.tar.gz \
@@ -134,7 +135,7 @@ ARG RSYNC_REMOTE
 ARG PROJ_VERSION=master
 ARG PROJ_INSTALL_PREFIX
 RUN mkdir proj \
-    && wget -q https://github.com/OSGeo/proj.4/archive/${PROJ_VERSION}.tar.gz -O - \
+    && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
     && ./autogen.sh \
@@ -147,7 +148,7 @@ RUN mkdir proj \
         export PROJ_DB_CACHE_DIR="$HOME/.ccache"; \
         ccache -M 100M; \
     fi \
-    && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -O2' \
+    && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2' \
         ./configure --prefix=${PROJ_INSTALL_PREFIX} --disable-static \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
@@ -237,7 +238,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build final image
-FROM ubuntu:18.04 as runner
+FROM $BASE_IMAGE as runner
 
 RUN date
 
@@ -250,16 +251,16 @@ RUN apt-get update; \
 # GDAL dependencies
 RUN apt-get update; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        libcharls1 libopenjp2-7 libcairo2 python3-numpy \
-        libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos-3.6.2 libgeos-c1v5 \
+        libcharls2 libopenjp2-7 libcairo2 python3-numpy \
+        libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos-3.8.0 libgeos-c1v5 \
         libxml2 libexpat1 \
-        libxerces-c3.2 libnetcdf-c++4 netcdf-bin libpoppler73 libspatialite7 gpsbabel \
-        libhdf4-0-alt libhdf5-100 libhdf5-cpp-100 poppler-utils libfreexl1 unixodbc libwebp6 \
+        libxerces-c3.2 libnetcdf-c++4 netcdf-bin libpoppler97 libspatialite7 gpsbabel \
+        libhdf4-0-alt libhdf5-103 libhdf5-cpp-103 poppler-utils libfreexl1 unixodbc libwebp6 \
         libepsilon1 liblcms2-2 libpcre3 libcrypto++6 libdap25 libdapclient6v5 libfyba0 \
         libkmlbase1 libkmlconvenience1 libkmldom1 libkmlengine1 libkmlregionator1 libkmlxsd1 \
-        libmysqlclient20 libogdi3.2 libcfitsio5 openjdk-8-jre \
+        libmysqlclient21 libogdi4.1 libcfitsio8 openjdk-8-jre \
         libzstd1 bash bash-completion libpq5 libssl1.1 \
-        libarmadillo8 libpython3.6 libopenexr22
+        libarmadillo9 libpython3.8 libopenexr24
 
 # Order layers starting with less frequently varying ones
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
