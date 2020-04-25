@@ -92,8 +92,10 @@ typedef struct
     bool bUseInternalOverviews;
 } JPGDatasetOpenArgs;
 
+class JPGDatasetCommon;
+
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
-GDALDataset *JPEGDataset12Open(JPGDatasetOpenArgs *psArgs);
+JPGDatasetCommon *JPEGDataset12Open(JPGDatasetOpenArgs *psArgs);
 GDALDataset *JPEGDataset12CreateCopy( const char *pszFilename,
                                       GDALDataset *poSrcDS,
                                       int bStrict, char **papszOptions,
@@ -109,7 +111,6 @@ GDALDataset *JPEGDataset12CreateCopy( const char *pszFilename,
 #  define JPEG_LIB_MK1_OR_12BIT 1
 #endif
 
-class JPGDatasetCommon;
 GDALRasterBand *JPGCreateBand(JPGDatasetCommon *poDS, int nBand);
 
 typedef void (*my_jpeg_write_m_header)(void *cinfo, int marker,
@@ -161,6 +162,7 @@ class JPGMaskBand;
 class JPGDatasetCommon CPL_NON_FINAL: public GDALPamDataset
 {
   protected:
+    friend class JPGDataset;
     friend class JPGRasterBand;
     friend class JPGMaskBand;
 
@@ -169,6 +171,8 @@ class JPGDatasetCommon CPL_NON_FINAL: public GDALPamDataset
     int           nInternalOverviewsCurrent;
     int           nInternalOverviewsToFree;
     GDALDataset **papoInternalOverviews;
+    JPGDatasetCommon* poActiveDS = nullptr; /* only valid in parent DS */
+    JPGDatasetCommon** ppoActiveDS = nullptr; /* &poActiveDS of poActiveDS frmo parentDS */
     void          InitInternalOverviews();
     GDALDataset  *InitEXIFOverview();
 
@@ -200,6 +204,7 @@ class JPGDatasetCommon CPL_NON_FINAL: public GDALPamDataset
     bool   bHasDoneJpegStartDecompress;
 
     virtual CPLErr LoadScanline(int, GByte* outBuffer = nullptr) = 0;
+    virtual void   StopDecompress() = 0;
     virtual CPLErr Restart() = 0;
 
     virtual int GetDataPrecision() = 0;
@@ -289,6 +294,7 @@ class JPGDataset final: public JPGDatasetCommon
     struct jpeg_progress_mgr sJProgress;
 
     virtual CPLErr LoadScanline(int, GByte* outBuffer) override;
+    virtual void   StopDecompress() override;
     virtual CPLErr Restart() override;
     virtual int GetDataPrecision() override { return sDInfo.data_precision; }
     virtual int GetOutColorSpace() override { return sDInfo.out_color_space; }
@@ -299,14 +305,14 @@ class JPGDataset final: public JPGDatasetCommon
 #endif
     void   SetScaleNumAndDenom();
 
-    static GDALDataset *OpenStage2( JPGDatasetOpenArgs *psArgs,
+    static JPGDatasetCommon *OpenStage2( JPGDatasetOpenArgs *psArgs,
                                     JPGDataset *&poDS );
 
   public:
                  JPGDataset();
     virtual ~JPGDataset();
 
-    static GDALDataset *Open( JPGDatasetOpenArgs *psArgs );
+    static JPGDatasetCommon *Open( JPGDatasetOpenArgs *psArgs );
     static GDALDataset *CreateCopy( const char *pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
