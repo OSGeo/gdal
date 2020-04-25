@@ -55,7 +55,7 @@ ARG RSYNC_REMOTE
 # Build PROJ
 ARG PROJ_VERSION=master
 RUN mkdir proj \
-    && wget -q https://github.com/OSGeo/proj.4/archive/${PROJ_VERSION}.tar.gz -O - \
+    && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
     && ./autogen.sh \

@@ -188,7 +188,7 @@ fi
 echo "Using PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}"
 
 if test "${PROJ_VERSION}" = "" -o "${PROJ_VERSION}" = "master"; then
-    PROJ_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/proj.4/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
+    PROJ_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/PROJ/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
 fi
 echo "Using PROJ_VERSION=${PROJ_VERSION}"
 
