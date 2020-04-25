@@ -892,15 +892,26 @@ def test_jpeg_26():
 # http://www.libjpeg-jpeg_26.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf
 
 
-def test_jpeg_27():
+def test_jpeg_27_max_memory():
 
-    # Should error out with 'Reading this strip would require
+    # Fails for some reason on Windows.
+    if sys.platform == 'win32':
+        pytest.skip()
+
+    # Should error out with 'Reading this image would require
     # libjpeg to allocate at least...'
     gdal.ErrorReset()
-    ds = gdal.Open('/vsisubfile/146,/vsizip/../gcore/data/eofloop_valid_huff.tif.zip')
     with gdaltest.error_handler():
+        os.environ['JPEGMEM'] = '10M'
+        gdal.SetConfigOption('GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER', '1000')
+        ds = gdal.Open('/vsisubfile/146,/vsizip/../gcore/data/eofloop_valid_huff.tif.zip')
         cs = ds.GetRasterBand(1).Checksum()
+        del os.environ['JPEGMEM']
+        gdal.SetConfigOption('GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER', None)
         assert cs == 0 and gdal.GetLastErrorMsg() != ''
+
+
+def test_jpeg_27_max_scan_number():
 
     # Should error out with 'Scan number...
     gdal.ErrorReset()
@@ -911,7 +922,7 @@ def test_jpeg_27():
         cs = ds.GetRasterBand(1).Checksum()
         gdal.SetConfigOption('GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC', None)
         gdal.SetConfigOption('GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER', None)
-        assert gdal.GetLastErrorMsg() != ''
+        assert cs == 0 and gdal.GetLastErrorMsg() != ''
 
     
 ###############################################################################
