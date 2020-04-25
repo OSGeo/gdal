@@ -154,7 +154,7 @@ RUN if test "${FREEXL_VERSION}" != ""; then ( \
     ); fi
 
 # Build likbkea
-ARG KEA_VERSION=1.4.12
+ARG KEA_VERSION=1.4.13
 RUN if test "${KEA_VERSION}" != ""; then ( \
     apk add --no-cache cmake \
     && wget -q https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
@@ -199,7 +199,7 @@ ARG RSYNC_REMOTE
 # Build PROJ
 ARG PROJ_VERSION=master
 RUN mkdir proj \
-    && wget -q https://github.com/OSGeo/proj.4/archive/${PROJ_VERSION}.tar.gz -O - \
+    && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
     && ./autogen.sh \
