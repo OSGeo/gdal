@@ -4168,7 +4168,7 @@ bool GDALMDArrayMask::IRead(const GUInt64* arrayStartIdx,
 {
     size_t nElts = 1;
     const size_t nDims = GetDimensionCount();
-    CPLAssert(nDims >= 1);
+    assert(nDims >= 1);
     std::vector<GPtrDiff_t> tmpBufferStrideVector(nDims);
     for( size_t i = 0; i < nDims; i++ )
         nElts *= count[i];
