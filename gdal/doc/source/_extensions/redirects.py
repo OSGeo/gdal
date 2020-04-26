@@ -125,4 +125,4 @@ def copy_legacy_redirects(app, docname): # Sphinx expects two arguments
 def setup(app):
     app.add_config_value('enable_redirects', False, 'html')
     app.connect('build-finished', copy_legacy_redirects)
-    return { 'parallel_read_safe': False, 'parallel_write_safe': True }
+    return { 'parallel_read_safe': True, 'parallel_write_safe': True }
