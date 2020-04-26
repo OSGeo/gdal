@@ -32,7 +32,7 @@ Links
 -----
 
 -  `MRF User
-   Guide <https://github.com/nasa-gibs/mrf/blob/master/src/gdal_mrf/frmts/mrf/MUG.md>`__
+   Guide <https://github.com/nasa-gibs/mrf/blob/master/doc/MUG.md>
 -  `MRF
    Specification <https://github.com/nasa-gibs/mrf/blob/master/spec/mrf_spec.md>`__
 -  `Source repository
