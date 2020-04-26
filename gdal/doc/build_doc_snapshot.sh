@@ -20,12 +20,13 @@ mkdir ${TMPDIR}
 cp -r build/html/* ${TMPDIR}
 rm -f ${TMPDIR}/gdal.pdf
 cp build/latex/gdal.pdf ${TMPDIR}
+ORIG_DIR=$PWD
 cd ${TMPDIR}
 wget https://download.osgeo.org/gdal/for_doc/javadoc.zip -O /tmp/javadoc.zip
 wget https://download.osgeo.org/gdal/for_doc/python-doc.tar.gz -O /tmp/python-doc.tar.gz
 unzip -q /tmp/javadoc.zip
 tar xzf /tmp/python-doc.tar.gz
-cd ..
+cd ${ORIG_DIR}
 
 rm -f "${ARCHIVE}"
 zip -r "${ARCHIVE}" ${TMPDIR}/*
