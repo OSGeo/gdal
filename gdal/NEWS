@@ -1,4 +1,4 @@
-= GDAL/OGR 3.1.0 *Preliminary* Release Notes (up to 9701f02467dda67f7e65579f69395a4650a7d35f) =
+= GDAL/OGR 3.1.0 Release Notes =
 
 == In a nutshell... ==
 
@@ -11,6 +11,7 @@
    - RDB: read-only, for RIEGL Database .mpx RDB 2 files (#1538) (needs proprietary SDK)
  * New OGR drivers:
    - FlatGeoBuf: read-support and creation (#1742)
+   - MapML: read/write driver for experimental web spec
  * Improved drivers:
   - OAPIF driver (renamed from WFS3): updated to OGC API - Features 1.0 core spec
   - GTiff: improve performance of internal overview creation
@@ -38,6 +39,11 @@ Build(Unix):
  * Enable Bash completions and control installation
  * GDALmake.opt.in: silence datarootdir warning
  * Doc: allow user full control over installation directory
+ * fix JVM detection for HDFS support on MacOS (#2313)
+ * Remove #define HOST_FILLORDER from cpl_config.h (#2345)
+ * Added search for proj library in lib64 directory.
+ * configure: strip -L/usr/lib and similar from netCDF, MySQL, GEOS and SFCGAL lib path (#2395)
+ * configure: remove useless -lproj from --with-spatialite dectection
 
 Build(Windows):
  * parametrize number of CPUs for parallel builds with CPU_COUNT variable (#1922)
@@ -52,31 +58,44 @@ All:
 
 == Algorithms ==
 
+* Warper: add sum resampling method (#1437)
+* Average resampling (warp and overview/translate): use weighted average for border source pixels
 * GDALReprojectImage(): properly take into account source/target alpha bands
 * GDALCreateReprojectionTransformerEx(): do not emit error if reverse transformation fails, and fix crash when trying to use null reverse transformation
 * Warper: fix GDAL 2.3 regression in a situation with source nodata value, multiple bands and nearest resampling where the logic to detect which source pixels are nodata was inverted (#1656)
+* GWKAverageOrModeThread(): reject invalid source pixels for average/q1/q3/mode/min/max resampling (#2365)
 * Multithreaded warper: make sure a transformer object is used by the thread which created it (#1989). This workarounds a PROJ bug also fixed per https://github.com/OSGeo/PROJ/pull/1726
 * Contour: fix SegmentMerger list iterator skipping and out of bounds error (#1670)
 * Contour: fix (over) precision issue when comparing pixel value to NoData on Float32 rasters (#1987)
 * Contour: add sanity checks for interval based contouring, in case the dataset contains extreme values regarding the settings, which would lead to a lot of memory allocations / too large computation time
 * TPS warper: enhance precision without armadillo support (#1809)
 * GDALRasterizeGeometries(): fix potential integer overflow / memory allocation failure, depending on GDAL_CACHEMAX and raster dimensions (#2261)
+* Rasterize: speed optimization for geometry collections (#2369)
+* GDALContourGenerate(): propagate raster acquisition error (#2410)
 
 == Port ==
 
 * /vsitar/: support >100 character file names (#1559)
 * /vsitar/: accept space as end of field terminator
+* /vsigz/: fix seeking within .gz/.tgz files larger than 2 GB (#2315)
 * /vsicurl (and derived filesystems): fix concurrency issue with multithreaded reads (#1244)
 * /vsicurl/: avoid downloading one extra block when the end offset is just at a chunk boundary
 * /vsicurl/: fix CPL_VSIL_CURL_ALLOWED_EXTENSIONS with query string (#1614)
 * /vsicurl/: allow 'Connection timed out' CURL errors as candidate for HTTP retry
 * /vsicurl/: GetFileSize(): when HEAD request does not return Content-Length header, retry with GET
 * /vsis3/: for a long living file handle, refresh credentials coming from EC2/AIM (#1593)
+* /vsis3/: invalidate cached non-existing file is AWS_ config options are changed in the meantime (#2294)
 * /vsis3/ /vsigs/ /vsiaz/: implement Rename() first doing a copy of the original file and then deleting it
+* /vsis3/ and similar: add a NUM_THREADS option to Sync() for parallelized copy
 * AWS: Fix error in loading ~/.aws/config file (#2203)
 * VSISync(): when copying from /vsis3/ to /vsis3/ (or /vsigs/->/vsigs/, /vsiaz/->/vsiaz/), use CopyObject() method to use server side copy
+* VSISync(): make file copying from /vsis3/ actually use /vsis3_streaming/ to reduce number of GET requests
+* VSISync(): add a CHUNK_SIZE option to Sync() to split large objects and get parallelization of their download and upload
 * Add VSIUnlinkBatch() for batch deletion of files, and add optimized /vsis3/ implementation
 * Add efficient VSIRmdirRecursive() implementation for /vsis3/
+* Add VSIGetFileMetadata()/VSISetFileMetadata() and implement them to get/set HTTP headers, and AWS S3 object tagging
+* /vsis3/ and other network filesystems: avoid useless network requests when we already got a directory listing (#2429)
+* /vsiswift/: V3 authentication method, handling auth token expiration
 * /vsimem/: make Rename() error if destination file is not in /vsimem/
 * /vsizip/ writing: in ZIP64 mode, also advertise 45 as the version in the central directory (avoids a warning from 'zip' utility)
 * Add CPLCanRecode function and use it in MITAB, Shape and SXF drivers to decide when to advertize UTF-8 capability
@@ -91,6 +110,7 @@ All:
 * Add VSIOverwriteFile()
 * Add CPLLaunderForFilename()
 * cpl_error.h: add a CPLDebugOnly() macro that expands to CPLDebug() only for DEBUG builds
+* QuietDelete: support expliciting the drivers to use
 
 == Core ==
 
@@ -108,6 +128,7 @@ All:
 * GDALUnrolledCopy<GByte,2,1>: fix SSE2-only implementation (when SSSE3 is not available, on older AMD CPUs)
 * PAM: support reading GCPs from ESRI GeodataXform in .aux.xml files
 * Make it possible to call BuildOverviews() on a dataset returned by GDALBuildVRT()
+* GDALDataset::SetProjection(): re-allow the use of PROJ4 strings (#2034)
 
 == Utilities ==
 
@@ -119,6 +140,7 @@ All:
 * gdalwarp: fix wrong axis order when using source/target CRS being a geographic3D CRS such as EPSG:4979, and with vertical shift grid application (#1561, GDAL 3.0 regression)
 * gdal_contour: remove explicit width/precision=12/3 of the elev field (#1487)
 * gdal_contour: turn on quiet mode if output dataset is standard output (refs #2057)
+* gdaldem: avoid potential integer overflow in color-relief mode (#2354)
 * gdal_calc.py: fixed NaN-streaking in output images when the --allBands option is given to tiled images
 * gdal_polygonize.py: fix outputing to geojson without explicit -f switch (#1533)
 * gdalcompare.py: take into account mask bands
@@ -127,9 +149,13 @@ All:
 * gdallocationinfo and gdaltransform: print a hint when values are expected from the command line and stdin is an interactive terminal (refs #1684)
 * Python utilities: fix GetOutputDriverFor() when multiple drivers found (#1719)
 * gdal2tiles.py: add remaining resample methods
+* gdal2tiles.py: add option for setting the tile size (#2097)
+* gdal2tiles.py: add --xyz option to generate tiles in the OSM Slippy Map standard (#2098)
 * gdal2tiles.py: show warning when running against non-Byte input (#1956)
 * gdal2tiles.py: update cache calculation (#2020)
 * gdal2tiles.py: check that min zoom <= max zoom (#2161)
+* gdal2tiles.py: ignore nodata values that are not in the range of the band data type
+* gdal2tiles.py: fix hang when --s_srs specified but image lacks georeferencing
 * gdal_translate / gdalwarp / ogrct: allow dealing with non-WKT1 representable SRS (#1856)
 * gdal_edit.py: add a -units switch
 * gdal_edit.py: add -a_ulurll switch
@@ -139,6 +165,7 @@ All:
 == Sample scripts ==
 
 * Add tile_extent_from_raster.py: sample script to generate the extent of each raster tile in a overview as a vector layer
+* Add gdal_remove_towgs84.py script
 
 == GDAL drivers ==
 
@@ -146,9 +173,16 @@ Multiple drivers:
  * GTiff, GPKG, MBTiles, PostgisRaster drivers: share lock of overview dataset with parent dataset (#1488)
  * HDF5 and netCDF: fix crash when reading attributes of type string of variable length with NULL values
  * CTable2/LOSLAS/NTv1/NTv2: document in metadata that positive longitude shift values are towards west
+ * Revise raster drivers GDAL_DMD_HELPTOPIC
+ * JP2KAK and JP2OPENJPEG: fix to read images whose origin is not (0,0)
+ * Strip TOWGS84 when datum is known, in GTiff, Spatialite and GPKG drivers
 
 BAG driver:
  * modify way georeferencing is read (particularly pixel sizes and origin) (#1728)
+ * Backward compatibility for metadata reading for BAG < 1.5 (#2428)
+
+BSB driver:
+ * Report PLY coordinates as a WKT POLYGON in a BSB_CUTLINE metadata item
 
 BYN driver:
  * fix nodata value for Int32 encoded products
@@ -163,6 +197,11 @@ DIMAP driver:
 
 DDS driver:
  * add read support
+
+DTED driver:
+ * Add DTED_APPLY_PIXEL_IS_POINT environment switch  (#2384)
+ * emit a CE_Failure instead of a CE_Warning in case of checksum verification failure (#2410)
+ * support E96 as well as MSL for COMPD_CS (#2422)
 
 EEDA driver:
  * fix startTime / endTime comparisons that were incomplete in #1506
@@ -201,6 +240,7 @@ GTiff driver:
  * do not write TOWGS84 that come from EPSG codes, unless GTIFF_WRITE_TOWGS84=YES is explicitly set
  * GTiff writing: workaround PROJ 6.3.0 bug when writing a EPSG:4937 ETRS89 Geog3D CRS
  * GTiff writing: do not write by default EPSG:3857/WebMercator as a ESRI PE string. Fixes 3.0 regression
+ * avoid crash on single-component file with Whitepoint and PrimaryChromaticities tags
  * libtiff: BigTIFF creation: write TileByteCounts/StripByteCounts tag with SHORT or LONG when possible
  * Internal libgeotiff: set UOMLength from GeogLinearUnits (for geocentic CRS) (#1596)
  * Internal libgeotiff: upgrade to libgeotiff 1.6.0dev to support OGC GeoTIFF 1.1
@@ -261,9 +301,12 @@ JP2KAK driver:
 
 JPEG driver:
  * fix further calls to RasterIO after reading full image at full resolution (#1947)
+ * tune sanity check for multiple-scan (QGIS #35957)
+ * in case of multiscan image and implicit overviews, limit memory consumption
 
 KEA driver:
  * return error when deleting metadata item rather than crashing (#1681)
+ * Backport thread safety fixes and nullptr tests from standalone driver (#2372)
 
 LOSLAS driver:
  * add support for .geo geoid models
@@ -290,6 +333,9 @@ netCDF driver:
  * Disregard valid range if min > max (#1811)
  * for byte (signed/unsigned) variables, do not report a nodata value if there's no explicit _FillValue/missing_value as recommended by the netCDF specs. And for other data types use nc_inq_var_fill() to get the default value
  * do not report nodata if NOFILL is set
+ * fix bottom-up identification with negative scale_factor for y axis (#1383)
+ * fix issue when opening /vsicurl/http[s]://example.com/foo.nc filenames (#2412)
+ * Fix support of WKT1_GDAL with netCDF rotated pole formulation
 
 NGW driver:
  * Add support for additional raster types and QGIS styles.
@@ -337,6 +383,9 @@ RMF driver:
 RS2 driver:
  * add half-pixel shift to reported GCP line and column numbers (#1666)
 
+Sentinel2 driver:
+ * Add support for exposing Level-2A AOT, WVP, SCL, CLD, SNW data in SAFE_COMPACT format (#2404)
+
 TileDB driver:
  * add capability to define co-registered attributes per band
  * set row-major reads and removed adviseread (#1479)
@@ -346,6 +395,7 @@ TileDB driver:
  * support reading tiles in update mode (#2185)
  * use array metadata to store xml (#2103)
  * redirect vsis3 calls to tiledb s3 direct calls
+ * Flush cache in block order for global writes (#2391)
 
 TSX driver:
  * add PAZ support
@@ -374,7 +424,10 @@ VRT driver:
  * avoid erroneous pixel request do be done with KernelFilteredSource
  * VRTRawRasterBand: add GetVirtualMemAuto interface to enable mmap io
  * fix requesting a downsampling version of the mask band of a source that has masks and overviews
-  
+ * VRT pansharpening: fix crash when NoData is set and input multispectral bands are separate files (#2328)
+ * fix IGetDataCoverageStatus() that can cause issue for the use case of https://lists.osgeo.org/pipermail/gdal-dev/2020-April/051889.html
+ * gdalvrt.xsd: add 'dataAxisToSRSAxisMapping' attribute for GCPList element (#2378)
+
 WCS driver:
  * pass user-supplied progress function to curl HTTP request when using DirectRasterIO
 
@@ -389,7 +442,9 @@ WMS driver:
 
 * Support API-level precision/round for geometry WKT (#1797)
 * OGR SQL: make LIKE behave in a case sensitive way from now
-* OGR SQLite: do not propagate 'IS / IS NOT value' constructs to OGR SQL
+* OGR SQL: support constructs 'A OR B OR C ... OR N' with many successive OR
+* SQL SQLite: do not propagate 'IS / IS NOT value' constructs to OGR SQL
+* SQL SQLite: add support for ST_MakeValid() using OGRGeometry::MakeValid() if not exposed by Spatialite already
 * Rename swq.h->ogr_swq.h and install it, mark SQL query parse API with
 CPL_UNSTABLE_API macro (#1925)
 * SQLite dialect: fix issue when using JOIN on a layer without fast filter count capability
@@ -398,6 +453,7 @@ CPL_UNSTABLE_API macro (#1925)
 * Add OGR_G_CreateGeometryFromEsriJson() and map it to SWIG
 * OGRLinearRing::isPointOnRingBoundary(): fix incomplete test that could falsely return true if the point was aligned with a segment, but not between the nodes. Impact correct reconstruction of holes in shapefile driver
 * OGRGeometryFactory::ForceTo(): fix crash when forcing a MultiPolygon Z/M/ZM to a CompoundCurve (#2120)
+* OGRGeometryFactory::forceToMultiLineString(): fix for a GeometryCollection of LineStringZ/M/ZM (#1873)
 * OGRGeometryRebuildCurves(): only try to reconstruct curved geometry if one of the input geometries has really a non-linear portion
 * curveFromLineString(): make sure to exactly close the compound curve if the input curve is itself closed
 * GDALDataset::CopyLayer(): fix crash when using DST_SRSWKT option. And also set SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER)
@@ -421,6 +477,8 @@ CPL_UNSTABLE_API macro (#1925)
 * Coordinate transformation: make it work with hacky WKT1 rotated pole from netCDF driver
 * Add OGR_GeomTransformer_XXXX API that wraps OGRGeometryFactory::transformWithOptions() and expose it to SWIG (fixes #1911)
 * Fix PROJ usage across fork() calls (#2221)
+* OGRCoordinateTransformation: correctly deal when transforming CRS that includes +lon_wrap= or similar qualifiers
+* Add OSRIsDerivedGeographic()
 
 == Utilities ==
 
@@ -429,6 +487,8 @@ CPL_UNSTABLE_API macro (#1925)
 * ogr2ogr: emit better error message when using -f VRT
 * ogr2ogr: improve performance of -explodecollections on collections with big number of parts
 * ogr2ogr: avoid non-relevant warning 'Input datasource uses random layer reading, but output datasource does not support random layer writing' when converting one single layer
+* ogr2ogr: allow to combine -nlt CONVERT_TO_LINEAR and -nlt PROMOTE_TO_MULTI (#2338)
+* ogr2ogr: add a -makevalid switch (requires GEOS 3.8 or later) and expose it in Python as makeValid=True options of gdal.VectorTranslate()
 
 == OGR drivers ==
 
@@ -446,13 +506,22 @@ CAD driver:
  * Fix read ellipse and arc (#1886)
 
 DXF driver:
+ * Re-add some header and trailer elements that caused compatibility issues with recent Autocad versions (#1213)
  * Generate correct HATCH boundary elliptical arc segments for certain start/end angles
  * Skip "Embedded Object" sections in 2018 version DXFs
  * Specify maximum gap between interpolated curve points, configurable with OGR_ARC_MAX_GAP
  * do not error out if trying to create a OGR_STYLE field
  * fix handling of SPLINE whose first knot is at a very very close to zero negative (#1969)
+ * do not discard Z value when reading a HATCH (#2349)
+ * write (100, AcDbEntity) before (8, layer_name) (#2348)
+ * Correct handling of "off" and "frozen" layers in blocks (#1028)
 
+DWG driver:
+ * add support for ODA 2021.2 (Windows builds)
+ 
 ElasticSearch driver:
+ * rename driver to Elasticsearch (s lowercase for search)
+ * update geometry type name for Points
  * Enable support for Elasticsearch 7 (#1246)
  * Set 'application/json' in RunRequest() with POST (#1628)
  * GeoJSON type field should be mapped as text in ES>=5
@@ -461,6 +530,7 @@ ElasticSearch driver:
 
 ESRIJson driver:
  * attempt identification of SRS from database entries (#2007)
+ * do not require a 'geometry' member to be present in a feature
 
 GeoJSON driver:
  * on writing, format OFTDate and OFTDateTime as ISO 8601 strings rather than OGR traditional formatting
@@ -473,15 +543,23 @@ GeoJSON driver:
  * Transform MAX_OBJECT_SIZE to runtime environment option - OGR_GEOJSON_MAX_OBJ_SIZE
  * on reading of a file that use crs.name = urn:ogc:def:crs:OGC:1.3:CRS84, report EPSG:4326 as we used to do in GDAL 2 (#2035)
  * in writing mode, implement GetExtent() (#2269)
+ * Add ID_GENERATE option for generating missing feature ids (#2406)
 
 GeoJSONSeq driver:
  * make Open() return successfully only if at least one feature is detected
+
+GML driver:
+ * support reading standalone geometry (#2386)
+ * fix axis order issue when decoding AIXM ElevationPoint (#2356)
+ * fix axis order issue with gml:CircleByCenterPoint and gml:ArcByCenterPoint (# 2356)
+ * fix handling of angles with ArcByCenterPoint and urn:ogc:def:crs:EPSG::4326, and compound curves made of a sequence of straight lines and ArcByCenterPoint in a <segments> (#2356)
 
 GPKG driver:
  * change default value of OGR_GPKG_FOREIGN_KEY_CHECK to NO, so as to avoid issues in downstream software
  * insert more accurate spatial extent in gpkg_contents
  * on layer creation, check if the SRS is consistent with its advertize AUTHORITY/ID, and if not do not use official EPSG entries (#1857)
  * allow parsing datetime serialized as OGR strings, and emit warnings when unrecognized content is found (#2183)
+ * when writing a layer of geometry wkbUnknown, make sure to set gpkg_geometry_columns.z/m to 2 when there are geometries with Z/M values (#2360)
 
 KML driver:
  * set OAMS_TRADITIONAL_GIS_ORDER for SRS returned on returned layers
@@ -512,6 +590,9 @@ MySQL driver:
  * Add SRID to geometry when creating layer table (#1015)
  * use INFORMATION_SCHEMA.ST_GEOMETRY_COLUMNS to get SRSId
 
+NAS driver:
+ *  disable generation of .gfs file in read-only file systems (or intended to be), similarly to GML driver
+
 netCDF driver:
  * add read/write support for CF-1.8 Encoded Geometries
  * add support for vector products Sentinel3 SRAL MWR Level 2
@@ -541,6 +622,8 @@ PDF driver:
 
 PostgreSQL driver:
  * add support for PostgreSQL 12 (#1692)
+ * add support for PG:service=xxx syntax and SERVICE open option (#2373)
+ * support PostGIS schema installed in non-public schema (#2400)
  * do not attempt to create VARCHAR(n) columns with n >= 10485760 (#1508)
  * be more restrictive when deducing non-nullability of columns in SQL result layers (#1734)
 
@@ -559,6 +642,8 @@ S57 driver:
  * s57objectclasses.csv: add missing TXTDSC attribute for DRYDOC class (#1723)
  * s57objectclasses.csv: add wtwdis and unlocd for distance marks from IENC (#2123)
  * s57objectclasses.csv: add PICREP attribute to LNDMRK object class
+ * Added handling of ISDT when using updates (#895)
+ * Added creation of additional field "ATTF" when missing while updating (#2249)
 
 SOSI driver:
  * Append values from duplicate fields when setting new appendFieldsMap open option (#1794)
@@ -575,6 +660,9 @@ SXF driver:
  * Use SXF_SET_VERTCS from dataset open options
  * Add OGRSXFLayer::CanRecode and check it for OLCStringsAsUTF8 capability
  * Add driver identify function (#1607)
+
+VFK driver:
+ * use a faster implementation of VFKDataBlockSQLite::LoadGeometryPolygon()
 
 VRT driver:
  * set OAMS_TRADITIONAL_GIS_ORDER for LayerSRS (#1975)
@@ -595,6 +683,7 @@ All:
  * add osr.SetPROJSearchPath(path) that can be used since setting PROJ_LIB from C# does no work (#1647)
 
 Python bindings:
+ * add 'add' option to gdal.Rasterize
  * add hint&workaround for ImportError on Windows Python >= 3.8
  * add compatibility with SWIG 4.0 (#1702)
  * build modules in parallel
@@ -603,6 +692,9 @@ Python bindings:
  * make the feature iterator on the layer call ResetReading()
  * Removed calls to deprecated imp module (#2264)
  * Add numpy as extras_require dependency (#2158)
+ * emit exception is osr.SpatialReference(wkt) fails, even if in non-UseExceptions() mode, to avoid later cryptic exception (#2303)
+ * NUMPYDataset::Open() / gdal_array.OpenArray(): honour writeable flag of the numpy array to decide update status of GDAL dataset
+ * fix invalid check for Dataset.ReadAsArray(buf_obj=some_array, interleave='pixel') scenario
 
 = GDAL/OGR 3.0.0 Release Notes =
 
