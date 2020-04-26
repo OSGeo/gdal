@@ -143,14 +143,20 @@ if test -d "man"; then
     rm -rf man
 fi
 
-(cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=apps swig/python/scripts"; echo "FILE_PATTERNS=*.cpp *.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES"; echo "QUIET=YES") | doxygen -
+if test -f "doc/Makefile"; then
+    (cd doc; make man)
+    mkdir -p man/man1
+    cp doc/build/man/*.1 man/man1
+    rm -rf doc/build
+else
+    (cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=apps swig/python/scripts"; echo "FILE_PATTERNS=*.cpp *.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES"; echo "QUIET=YES") | doxygen -
+    rm -f doxygen_sqlite3.db
+    rm -f man/man1/*_dist_wrk_gdal_gdal_apps_.1
+fi
 
 if test ! -d "man"; then
     echo " make man failed"
 fi
-
-rm -f doxygen_sqlite3.db
-rm -f man/man1/*_dist_wrk_gdal_gdal_apps_.1
 
 cd "$CWD"
 

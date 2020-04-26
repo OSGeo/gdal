@@ -125,14 +125,11 @@ Perl module maintainer to make a CPAN release.
 
 8.3) Create a snapshot of the documentation (only for feature releases)
 
- Old procedure (defunct now) was:
-
- i.e. On www.gdal.org:
- % cd /var/www/gdal
- % ./gdal-web-refresh.sh
- % zip -r ~/gdal230beta1doc.zip gdal-web --exclude "gdal-web/1.11/*" --exclude "gdal-web/daily/*"
-
- New procedure: TODO. involves "make html" in doc/ directory
+    0. Potentially refresh https://download.osgeo.org/gdal/for_doc/javadoc.zip and
+       https://download.osgeo.org/gdal/for_doc/javadoc.zip
+    1. cd doc
+    2. ./build_doc_snapshot 310
+       This generates gdal310doc.zip
 
 8.4) Publish the resulting files on download.osgeo.org, 
     in /osgeo/download/gdal/X.Y.Z (where X.Y.Z is the version number)
