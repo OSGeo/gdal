@@ -615,9 +615,7 @@ Documentation
 -------------
 
 In addition to function level documentation, the new capability will be
-documented in the `OGR
-Architecture <http://gdal.org/ogr/ogr_arch.html>`__ and `OGR API
-tutorial <http://gdal.org/ogr/ogr_apitut.html>`__ documents.
+documented in the :ref:`vector_data_model` and :ref:`vector_api_tut` documents.
 
 Python and other language bindings
 ----------------------------------

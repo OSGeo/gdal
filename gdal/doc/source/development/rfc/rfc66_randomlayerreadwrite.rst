@@ -30,8 +30,7 @@ rather inefficient (this requires for each layer to read the whole
 file). One example of such drivers is the OSM driver. For this driver, a
 hack had been developed in the past to be able to use the
 OGRLayer::GetNextFeature() method, but with a really particular
-semantics. See "Interleaved reading" paragraph of
-`http://gdal.org/drv_osm.html <http://gdal.org/drv_osm.html>`__ for more
+semantics. See "Interleaved reading" paragraph of :ref:`vector.osm` for more
 details. A similar need arises with the development of a new driver,
 GMLAS (for GML Application Schemas), that reads GML files with arbitrary
 element nesting, and thus can return them in a apparent random order,

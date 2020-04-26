@@ -269,7 +269,7 @@ Attributes:  (none)
 
 Notes
 
-- Each of the interpolation methods (MovingAverage, etc.) is an element whose content is a text string corresponding to the parameter(s) for that method.  See http://www.gdal.org/grid_tutorial.html for a description of the methods and their parameter strings.
+- Each of the interpolation methods (MovingAverage, etc.) is an element whose content is a text string corresponding to the parameter(s) for that method.  See :ref:`gdal_grid_tut` for a description of the methods and their parameter strings.
 - In the parameter descriptions, MAX is used to indicate the value defined by libc which is the largest supportable value for the output datatype.  If you choose to override this default be sure that the number you specify will fit in the datatype you specify.
 - If this element is omitted, the band shall have the "None" interpolation method applied.
 - If this element is a child of the PointCloudView element, it applies to all bands (unless overridden for a specific band)

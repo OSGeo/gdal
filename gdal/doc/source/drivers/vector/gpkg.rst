@@ -261,7 +261,7 @@ support non-spatial tables. This was added in GeoPackage 1.2 as the
 "attributes" data type.
 
 Starting with GDAL 2.0, the driver allows creating and reading
-non-spatial tables with the :ref:`vector.aspatial`.
+non-spatial tables with the :ref:`vector.geopackage_aspatial`.
 
 Starting with GDAL 2.2, the driver will also, by default, list non
 spatial tables that are not registered through the gdal_aspatial
@@ -325,7 +325,7 @@ Level of support of GeoPackage Extensions
    * - `WKT for Coordinate Reference Systems <http://www.geopackage.org/guidance/extensions/wkt_for_crs.md>`__ (WKT v2)
      - Yes
      -  Partially, since GDAL 2.2. GDAL can read databases using this extension, but cannot interpret a SRS entry that has only a WKT v2 entry.
-   * - :ref:`vector.aspatial`
+   * - :ref:`vector.geopackage_aspatial`
      - No
      - Yes, since GDAL 2.0. Deprecated in GDAL 2.2 for the *attributes* official data_type
 
@@ -374,4 +374,4 @@ See Also
 .. toctree::
    :hidden:
 
-   aspatial
+   geopackage_aspatial

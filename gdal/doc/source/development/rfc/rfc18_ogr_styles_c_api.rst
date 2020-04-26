@@ -15,9 +15,7 @@ Summary
 
 OGR has a number of C++ classes that deal with the encoding of style
 information and attaching that to features. More information is
-available in the
-`http://www.gdal.org/ogr/ogr_feature_style.html <http://www.gdal.org/ogr/ogr_feature_style.html>`__
-document.
+available in the :ref:`ogr_feature_style` document.
 
 With GDAL/OGR version 1.4.x and older, it was not possible to deal with
 style information using the C API. This RFC proposes the addition of

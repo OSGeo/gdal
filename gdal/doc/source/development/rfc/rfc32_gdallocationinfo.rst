@@ -35,8 +35,7 @@ requests, and hopefully in a way that will have some general value as a
 gdallocationinfo
 ----------------
 
-Full docs are available at:
-`http://www.gdal.org/gdallocationinfo.html <http://www.gdal.org/gdallocationinfo.html>`__
+Full docs are available at :ref:`gdallocationinfo`
 
 ::
 

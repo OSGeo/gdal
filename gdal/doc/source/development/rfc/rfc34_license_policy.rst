@@ -199,8 +199,7 @@ Unresolved:
    currently as it relies on linking with binary objects with unknown
    licencing terms, even if apparently the ultimate goal seems to open
    source them.
--  I'm a bit confused by
-   `http://gdal.org/frmt_msg.html <http://gdal.org/frmt_msg.html>`__.
+-  I'm a bit confused by :ref:`raster.msg`.
    Seems that it relies on third party stuff with both proprietary and
    GPL code.
 -  I am unsure about the ODBC based drivers. I suppose PGEO and
