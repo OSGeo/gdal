@@ -737,12 +737,12 @@ typedef enum {
 #define EXIFTAG_PRESSURE		37890		/* Pressure as the ambient situation at the shot hecto-Pascal (hPa) */
 #define EXIFTAG_WATERDEPTH		37891		/* WaterDepth as the ambient situation at the shot in meter (m) */
 #define EXIFTAG_ACCELERATION		37892		/* Acceleration (a scalar regardless of direction) as the ambient situation at the shot in units of mGal (10-5 m/s^2) */
-#define EXIFTAG_CAMERAELEVATIONANGLE		37893		/* Elevation/depression. angle of the orientation of the camera(imaging optical axis) as the ambient situation at the shot in degree(°) from -180° to +180°. */
+#define EXIFTAG_CAMERAELEVATIONANGLE		37893		/* Elevation/depression. angle of the orientation of the camera(imaging optical axis) as the ambient situation at the shot in degree from -180deg to +180deg. */
 #define EXIFTAG_CAMERAOWNERNAME		42032		/* owner of a camera */
 #define EXIFTAG_BODYSERIALNUMBER		42033		/* serial number of the body of the camera */
 #define EXIFTAG_LENSSPECIFICATION		42034		/* minimum focal length (in mm), maximum focal length (in mm), minimum F number in the minimum focal length, and minimum F number in the maximum focal length, */
 #define EXIFTAG_LENSMAKE		42035		/* the lens manufacturer */
-#define EXIFTAG_LENSMODEL		42036		/* the lens’s model name and model number */
+#define EXIFTAG_LENSMODEL		42036		/* the lens model name and model number */
 #define EXIFTAG_LENSSERIALNUMBER		42037		/* the serial number of the interchangeable lens */
 #define EXIFTAG_GAMMA		42240		/* value of coefficient gamma */
 #define EXIFTAG_COMPOSITEIMAGE		42080	/* composite image */
