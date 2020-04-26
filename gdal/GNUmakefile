@@ -183,10 +183,6 @@ install-man:
 	$(INSTALL_DIR) $(DESTDIR)$(INST_MAN)/man1
 	for f in $(wildcard man/man1/*.1) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_MAN)/man1 ; done
 
-web-update:	docs
-	$(INSTALL_DIR) $(INST_WEB)
-	cp html/*.* $(INST_WEB)
-
 install:	install-actions
 
 install-static-lib: static-lib gdal.pc
