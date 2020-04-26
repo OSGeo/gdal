@@ -1,5 +1,7 @@
 
-.. warning:: COVID-19: #RestezChezVous #StayAtHome #ZuHauseBleiben
+.. only:: website
+
+    .. warning:: COVID-19: #RestezChezVous #StayAtHome #ZuHauseBleiben
 
 ================================================================================
 GDAL
