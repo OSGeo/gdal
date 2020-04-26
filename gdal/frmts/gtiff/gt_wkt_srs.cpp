@@ -909,7 +909,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
             // into account
             const char* pszUnitsName = nullptr;
             double dfUOMLengthInMeters = oSRS.GetLinearUnits( &pszUnitsName );
-            // Non exact comparision, as there's a slight difference between
+            // Non exact comparison, as there's a slight difference between
             // the evaluation of US Survey foot harcoded in geo_normalize.c to
             // 12.0 / 39.37, and the corresponding value returned by
             // PROJ >= 6.0.0 and <= 7.0.0 for EPSG:9003

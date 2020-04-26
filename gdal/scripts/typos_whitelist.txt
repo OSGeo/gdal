@@ -70,3 +70,7 @@ ogr2ogr --config OGR_STROKE_CURVE TRUE -SQL 'SELECT Rechtsstatus,publiziertAb,Me
             const char sText[] = "infinit";
     if (EQUAL( pszFormat, "DOUB" ))
         case GDT_Float64: pszFormat = "DOUB"; break;
+* gdal2tiles.py: add --xyz option to generate tiles in the OSM Slippy Map standard (#2098)
+                 help="Use XYZ tile numbering (OSM Slippy Map tiles) instead of TMS")
+  Generate XYZ tiles (OSM Slippy Map standard) instead of TSM
+ * Support FORMAT=HALF, DOUB and COMP

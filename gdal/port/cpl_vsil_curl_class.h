@@ -594,7 +594,7 @@ struct CurlRequestHelper
     CurlRequestHelper();
     ~CurlRequestHelper();
     long perform(CURL* hCurlHandle,
-                 struct curl_slist* headers, // ownership transfered
+                 struct curl_slist* headers, // ownership transferred
                  VSICurlFilesystemHandler *poFS,
                  IVSIS3LikeHandleHelper *poS3HandleHelper);
 };
