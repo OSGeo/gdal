@@ -15,8 +15,7 @@ Implementation version: GDAL 2.2
 Summary
 -------
 
-As of now, the OGRGeometry class (found at
-[http://www.gdal.org/classOGRGeometry.html]) (the base class from which
+As of now, the :cpp:class:`OGRGeometry` class (the base class from which
 all the subtypes are derived) is limited to OGRCompoundCurve,
 OGRCircularString, OGRLinearRing, OGRMultiLineString, OGRMultiPoint,
 OGRMultiPolygon, OGRMultiCurve, OGRSimpleCurve, OGRCurvePolygon and

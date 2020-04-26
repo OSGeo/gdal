@@ -1,4 +1,4 @@
-.. _vector.aspatial:
+.. _vector.geopackage_aspatial:
 
 GeoPackage aspatial extension
 =============================

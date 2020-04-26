@@ -22,7 +22,6 @@ project = 'GDAL'
 copyright = '1998-' + str(datetime.date.today().year)
 author = 'Frank Warmerdam, Even Rouault, and others'
 
-
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -410,7 +409,6 @@ breathe_default_project = "api"
 # Tell sphinx what the primary language being documented is.
 primary_domain = 'cpp'
 
-import redirects
-redirect_files = redirects.gather_redirects()
+# -- Redirects --------------------------------------------------
 
-
+enable_redirects = False
