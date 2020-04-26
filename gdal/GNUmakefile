@@ -170,6 +170,8 @@ docs:
 
 man:
 	(cd doc; make man)
+	mkdir -p man/man1
+	cp doc/build/man/*.1 man/man1
 
 all:	default ogr-all
 
@@ -179,7 +181,7 @@ install-docs:
 
 install-man:
 	$(INSTALL_DIR) $(DESTDIR)$(INST_MAN)/man1
-	for f in $(wildcard doc/build/man/*.1) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_MAN)/man1 ; done
+	for f in $(wildcard man/man1/*.1) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_MAN)/man1 ; done
 
 web-update:	docs
 	$(INSTALL_DIR) $(INST_WEB)
