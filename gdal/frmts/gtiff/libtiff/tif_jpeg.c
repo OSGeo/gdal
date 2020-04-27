@@ -1212,10 +1212,13 @@ JPEGPreDecode(TIFF* tif, uint16 s)
 
             for (ci = 0; ci < sp->cinfo.d.num_components; ci++) {
                 const jpeg_component_info *compptr = &(sp->cinfo.d.comp_info[ci]);
-                nRequiredMemory += (toff_t)(
-                    ((compptr->width_in_blocks + compptr->h_samp_factor - 1) / compptr->h_samp_factor)) *
-                    ((compptr->height_in_blocks + compptr->v_samp_factor - 1) / compptr->v_samp_factor) *
-                    sizeof(JBLOCK);
+                if( compptr->h_samp_factor > 0 && compptr->v_samp_factor > 0 )
+                {
+                    nRequiredMemory += (toff_t)(
+                        ((compptr->width_in_blocks + compptr->h_samp_factor - 1) / compptr->h_samp_factor)) *
+                        ((compptr->height_in_blocks + compptr->v_samp_factor - 1) / compptr->v_samp_factor) *
+                        sizeof(JBLOCK);
+                }
             }
 
             if( sp->cinfo.d.mem->max_memory_to_use > 0 &&
