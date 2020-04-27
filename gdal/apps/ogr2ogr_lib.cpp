@@ -4835,6 +4835,10 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                         poDstGeometry = poValidGeom;
                         if( poDstGeometry == nullptr )
                             goto end_loop;
+                        OGRGeometry* poCleanedGeom =
+                            OGRGeometryFactory::removeLowerDimensionSubGeoms(poDstGeometry);
+                        delete poDstGeometry;
+                        poDstGeometry = poCleanedGeom;
                     }
 
                     if( eGType != GEOMTYPE_UNCHANGED )

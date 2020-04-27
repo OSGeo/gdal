@@ -572,7 +572,10 @@ def test_ogr2ogr_lib_makevalid():
         make_valid_available = g.MakeValid() is not None
 
     tmpfilename = '/vsimem/tmp.csv'
-    with gdaltest.tempfile(tmpfilename,'id,WKT\n1,"POLYGON ((0 0,10 10,0 10,10 0,0 0))"'):
+    with gdaltest.tempfile(tmpfilename,"""id,WKT
+1,"POLYGON ((0 0,10 10,0 10,10 0,0 0))"
+2,"POLYGON ((0 0,0 1,0.5 1,0.5 0.75,0.5 1,1 1,1 0,0 0))"
+"""):
         if make_valid_available:
             ds = gdal.VectorTranslate('', tmpfilename, format='Memory', makeValid=True)
         else:
@@ -584,3 +587,5 @@ def test_ogr2ogr_lib_makevalid():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert ogrtest.check_feature_geometry(f, "MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))") == 0
+    f = lyr.GetNextFeature()
+    assert ogrtest.check_feature_geometry(f, "POLYGON ((0 0,0 1,0.5 1.0,1 1,1 0,0 0))") == 0

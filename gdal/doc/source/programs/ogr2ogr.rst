@@ -304,8 +304,9 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -makevalid
 
-    Run the :cpp:func:`OGRGeometry::MakeValid` operation on geometries to ensure
-    they are valid regarding the rules of the Simple Features specification.
+    Run the :cpp:func:`OGRGeometry::MakeValid` operation, followed by
+    :cpp:func:`OGRGeometryFactory::removeLowerDimensionSubGeoms`, on geometries 
+    to ensure they are valid regarding the rules of the Simple Features specification.
 
     .. versionadded: 3.1 (requires GEOS 3.8 or later)
 
