@@ -1174,7 +1174,7 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
 #endif
     if (ogrGeometry == nullptr || ogrGeometry->IsEmpty())
     {
-        CPLDebug("FlatGeobuf", "Skip writting feature without geometry");
+        CPLDebug("FlatGeobuf", "Skip writing feature without geometry");
         return OGRERR_NONE;
     }
     if (m_geometryType != GeometryType::Unknown && ogrGeometry->getGeometryType() != m_eGType) {

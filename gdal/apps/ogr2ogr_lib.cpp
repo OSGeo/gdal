@@ -3767,7 +3767,7 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             bPreserveFID = true;
         }
 
-        // If bAddOverwriteLCO is ON (set up when overwritting a CARTO layer),
+        // If bAddOverwriteLCO is ON (set up when overwriting a CARTO layer),
         // set OVERWRITE to YES so the new layer overwrites the old one
         if (bAddOverwriteLCO)
         {

@@ -1202,7 +1202,7 @@ bool GDALAbstractMDArray::Read(const GUInt64* arrayStartIdx,
     if( !GetDataType().CanConvertTo(bufferDataType) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Array data type is not convertable to buffer data type");
+                 "Array data type is not convertible to buffer data type");
         return false;
     }
 
@@ -1319,7 +1319,7 @@ bool GDALAbstractMDArray::Write(const GUInt64* arrayStartIdx,
     if( !bufferDataType.CanConvertTo(GetDataType()) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Buffer data type is not convertable to array data type");
+                 "Buffer data type is not convertible to array data type");
         return false;
     }
 
