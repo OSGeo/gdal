@@ -131,19 +131,3 @@ nmake.local*
 *~
 *tmp
 .python-version
-
-# eclipse
-.autotools
-.cproject
-.project
-.settings
-
-# netbeans
-nbproject
-
-# qtcreator
-gdal.config
-gdal.creator
-gdal.creator.user
-gdal.files
-gdal.includes
