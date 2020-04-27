@@ -847,7 +847,7 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
         }
         else
         {
-            // treat as cartesian, no geo metadata
+            // treat as Cartesian, no geo metadata
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Parsed metadata boxes from jpip stream, geographic metadata not found - is the server using placeholders for this data?" );
         }

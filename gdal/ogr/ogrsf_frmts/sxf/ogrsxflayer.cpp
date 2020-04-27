@@ -805,7 +805,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
       return NULL;
     }
 #endif
-    else if (eGeomType == SXF_GT_TextTemplate ) // TODO realise this
+    else if (eGeomType == SXF_GT_TextTemplate ) // TODO realize this
     {
       CPLError( CE_Warning, CPLE_NotSupported,
       "SXF. Geometry type Text Template do not support." );

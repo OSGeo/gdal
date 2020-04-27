@@ -262,7 +262,7 @@ static int ReadVarUInt(GByte*& pabyIter, GByte* pabyEnd, OutType& nOutVal)
             return TRUE;
         }
         nShift += 7;
-        // To avoid undefined behaviour later when doing << nShift
+        // To avoid undefined behavior later when doing << nShift
         if( nShift >= static_cast<int>(sizeof(OutType)) * 8 )
         {
             pabyIter = pabyLocalIter;
@@ -1171,7 +1171,7 @@ static void ReadVarIntAndAddNoCheck(GByte*& pabyIter, GIntBig& nOutVal)
             return;
         }
         nShift += 7;
-        // To avoid undefined behaviour later when doing << nShift
+        // To avoid undefined behavior later when doing << nShift
         if( nShift >= static_cast<int>(sizeof(GIntBig)) * 8 )
         {
             pabyIter = pabyLocalIter;

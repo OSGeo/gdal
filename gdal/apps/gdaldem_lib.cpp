@@ -1572,7 +1572,7 @@ static void GDALColorReliefProcessColors(ColorAssociation **ppasColorAssociation
             }
             else
             {
-                // Fallback to the old behaviour: keep equivalent entries as
+                // Fallback to the old behavior: keep equivalent entries as
                 // they are.
             }
 

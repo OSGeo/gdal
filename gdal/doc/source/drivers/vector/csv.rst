@@ -93,7 +93,7 @@ names is all numeric it is assumed that the first line is actually data
 values and dummy field names are generated internally (field_1 through
 field_n) and the first record is treated as a feature. Starting with
 GDAL 1.9.0 numeric values are treated as field names if they are
-enclosed in double quotes. Starting with GDAL 2.1, this behaviour can be
+enclosed in double quotes. Starting with GDAL 2.1, this behavior can be
 modified via the HEADERS open option.
 
 All CSV files are treated as UTF-8 encoded. Starting with GDAL 1.9.0, a
@@ -353,7 +353,7 @@ Layer Creation options:
 -  **STRING_QUOTING**\ =IF_NEEDED/IF_AMBIGUOUS/ALWAYS (Starting with
    GDAL 2.3): whether to double-quote strings. IF_AMBIGUOUS means that
    string values that look like numbers will be quoted (it also implies
-   IF_NEEDED). Defaults to IF_AMBIGUOUS (behaviour in older versions was
+   IF_NEEDED). Defaults to IF_AMBIGUOUS (behavior in older versions was
    IF_NEEDED)
 
 Configuration options (set with "--config key value" on command line

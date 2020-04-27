@@ -16,7 +16,7 @@ Summary
 -------
 
 This RFC aims at adding millisecond accuracy to OFTTime and OFTDateTime
-fields, as a number of formats support it explicitely or implicitely :
+fields, as a number of formats support it explicitly or implicitly :
 MapInfo, GPX, Atom (GeoRSS driver), GeoPackage, SQLite, PostgreSQL, CSV,
 GeoJSON, ODS, XLSX, KML (potentially GML too)...
 
@@ -139,7 +139,7 @@ Compatibility
 
 This modifies the C/C++ API and ABI.
 
-Output of above mentionned drivers will now include milliseconds if a
+Output of above mentioned drivers will now include milliseconds if a
 DateTime/Time field has such precision.
 
 Related ticket

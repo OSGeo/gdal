@@ -2758,7 +2758,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                         else
                         {
                             // Histogram were written as doubles, as is now the
-                            // default behaviour.
+                            // default behavior.
                             bRet &= VSIFSeekL(hHFA->fp, nOffset + 8 * nBin,
                                               SEEK_SET) >= 0;
                             double nValue = CPLAtof(pszWork);

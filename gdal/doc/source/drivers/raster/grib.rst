@@ -83,7 +83,7 @@ Configuration options
 ---------------------
 
 This paragraph lists the configuration options that can be set to alter
-the default behaviour of the GRIB driver.
+the default behavior of the GRIB driver.
 
 -  GRIB_NORMALIZE_UNITS=YES/NO : (GDAL >= 1.9.0) Default to YES. Can be
    set to NO to avoid gdal to normalize units to metric. By default
@@ -298,7 +298,7 @@ the driver also assumed that temperature (detected if the first value of
 a product definition template, ie the *Parameter category* is
 0=Temperature) values in the input dataset will be in Celsius degrees,
 and will automatically offset them to Kelvin degrees. It is possible to
-control that behaviour by setting the **INPUT_UNIT** creation option to
+control that behavior by setting the **INPUT_UNIT** creation option to
 C (for Celsius) or K (for Kelvin). The default is C.
 
 GRIB2 to GRIB2 conversions

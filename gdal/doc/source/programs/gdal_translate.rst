@@ -155,7 +155,7 @@ resampling, and rescaling pixels in the process.
 
     (Error when Partially Outside) If this option is set, :option:`-srcwin` or
     :option:`-projwin` values that falls partially outside the source raster
-    extent will be considered as an error. The default behaviour is to accept
+    extent will be considered as an error. The default behavior is to accept
     such requests, when they were considered as an error before.
 
 .. option:: -eco

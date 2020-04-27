@@ -628,7 +628,7 @@ VSIVirtualHandle* VSITarFilesystemHandler::Open( const char *pszFilename,
  * For example gdalinfo /vsitar/myarchive.tar/subdir1/file1.tif
  *
  * Syntactic sugar : if the tar archive contains only one file located at its
- * root, just mentionning "/vsitar/path/to/the/file.tar" will work
+ * root, just mentioning "/vsitar/path/to/the/file.tar" will work
  *
  * VSIStatL() will return the uncompressed size in st_size member and file
  * nature- file or directory - in st_mode member.

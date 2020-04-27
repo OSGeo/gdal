@@ -65,7 +65,7 @@ The :program:`gnmmanage` program can perform various managing operations on geog
 
 .. option:: connect <gfid_src> <gfid_tgt> <gfid_con>
 
-    Make a topological connection, where the gfid_src and gfid_tgt are vertexes and gfid_con is edge (gfid_con can be -1, so the system edge will be inserted).
+    Make a topological connection, where the gfid_src and gfid_tgt are vertices and gfid_con is edge (gfid_con can be -1, so the system edge will be inserted).
 
     Manually assign the following values: 
 

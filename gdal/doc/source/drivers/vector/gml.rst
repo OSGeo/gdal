@@ -177,7 +177,7 @@ the GML driver according to :ref:`rfc-41`.
 
 Starting with OGR 1.10, in case of multiple geometry occurrences, if a
 geometry is in a <geometry> element, this will be the one selected. This
-will make default behaviour consistent with Inspire objects.
+will make default behavior consistent with Inspire objects.
 
 Starting with OGR 1.8.0, the user can change the .gfs file to select the
 appropriate geometry by specifying its path with the
@@ -215,7 +215,7 @@ option **GML_SKIP_RESOLVE_ELEMS** to **NONE** to enable resolution.
 
 By default the resolved file will be saved in the same directory as the
 original file with the extension ".resolved.gml", if it doesn't exist
-already. This behaviour can be changed using the configuration option
+already. This behavior can be changed using the configuration option
 **GML_SAVE_RESOLVED_TO**. Set it to **SAME** to overwrite the original
 file. Set it to a **filename ending with .gml** to save it to that
 location. Any other values are ignored. If the resolver cannot write to
@@ -426,7 +426,7 @@ Open options
 -  **EMPTY_AS_NULL=YES/NO**: (GDAL >=2.0) By default
    (EMPTY_AS_NULL=YES), fields with empty content will be reported as
    being NULL, instead of being an empty string. This is the historic
-   behaviour. However this will prevent such fields to be declared as
+   behavior. However this will prevent such fields to be declared as
    not-nullable if the application schema declared them as mandatory. So
    this option can be set to NO to have both empty strings being report
    as such, and mandatory fields being reported as not nullable.
@@ -505,7 +505,7 @@ The GML writer supports the following dataset creation options:
    Otherwise, such geometries will be approximating into their closest
    matching linear geometry.
    Note: starting with OGR 1.11, fields of type StringList, RealList or
-   IntegerList can be written. This will cause to advertize the SF-1
+   IntegerList can be written. This will cause to advertise the SF-1
    profile in the .XSD schema (such types are not supported by SF-0).
 -  **GML_FEATURE_COLLECTION**\ =YES/NO (OGR >= 2.3) Whether to use the
    gml:FeatureCollection, instead of creating a dedicated container
@@ -722,7 +722,7 @@ Let's consider the following test.gml file :
    </gml:FeatureCollection>
 
 By default, only the TopLevelObject object would be reported and it
-would only use the second geometry. This is not the desired behaviour in
+would only use the second geometry. This is not the desired behavior in
 that instance. You can edit the generated .gfs and modify it like the
 following in order to specify a full path to the element (top level XML
 element being omitted) :

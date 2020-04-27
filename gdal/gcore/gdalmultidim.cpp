@@ -105,7 +105,7 @@ std::shared_ptr<GDALAttribute> GDALIHasAttribute::GetAttributeFromAttributes(
  * GDALMDArrayGetAttributes().
 
  * @param papszOptions Driver specific options determining how attributes
- * should be retrieved. Pass nullptr for default behaviour.
+ * should be retrieved. Pass nullptr for default behavior.
  *
  * @return the attributes.
  */
@@ -182,7 +182,7 @@ GDALGroup::~GDALGroup() = default;
  * This is the same as the C function GDALGroupGetMDArrayNames().
  *
  * @param papszOptions Driver specific options determining how arrays
- * should be retrieved. Pass nullptr for default behaviour.
+ * should be retrieved. Pass nullptr for default behavior.
  *
  * @return the array names.
  */
@@ -207,7 +207,7 @@ GDALGroup::GetMDArrayNames(CPL_UNUSED CSLConstList papszOptions) const
  *
  * @param osName Array name.
  * @param papszOptions Driver specific options determining how the array should
- * be opened.  Pass nullptr for default behaviour.
+ * be opened.  Pass nullptr for default behavior.
  *
  * @return the array, or nullptr.
  */
@@ -231,7 +231,7 @@ std::shared_ptr<GDALMDArray> GDALGroup::OpenMDArray(CPL_UNUSED const std::string
  * This is the same as the C function GDALGroupGetGroupNames().
  *
  * @param papszOptions Driver specific options determining how groups
- * should be retrieved. Pass nullptr for default behaviour.
+ * should be retrieved. Pass nullptr for default behavior.
  *
  * @return the group names.
  */
@@ -255,7 +255,7 @@ std::vector<std::string> GDALGroup::GetGroupNames(CPL_UNUSED CSLConstList papszO
  *
  * @param osName Sub-group name.
  * @param papszOptions Driver specific options determining how the sub-group should
- * be opened.  Pass nullptr for default behaviour.
+ * be opened.  Pass nullptr for default behavior.
  *
  * @return the group, or nullptr.
  */
@@ -281,7 +281,7 @@ std::shared_ptr<GDALGroup> GDALGroup::OpenGroup(CPL_UNUSED const std::string& os
  * This is the same as the C function GDALGroupGetDimensions().
  *
  * @param papszOptions Driver specific options determining how groups
- * should be retrieved. Pass nullptr for default behaviour.
+ * should be retrieved. Pass nullptr for default behavior.
  *
  * @return the dimensions.
  */
@@ -448,7 +448,7 @@ GUInt64 GDALGroup::GetTotalCopyCost() const
 /** Copy the content of a group into a new (generally empty) group.
  *
  * @param poDstRootGroup Destination root group. Must NOT be nullptr.
- * @param poSrcDS    Source dataset. Migt be nullptr (but for correct behaviour
+ * @param poSrcDS    Source dataset. Migt be nullptr (but for correct behavior
  *                   of some output drivers this is not recommended)
  * @param poSrcGroup Source group. Must NOT be nullptr.
  * @param bStrict Whether to enable stict mode. In strict mode, any error will
@@ -2592,7 +2592,7 @@ bool GDALMDArray::CopyFromAllExceptValues(const GDALMDArray* poSrcArray,
 
 /** Copy the content of an array into a new (generally empty) array.
  *
- * @param poSrcDS    Source dataset. Migt be nullptr (but for correct behaviour
+ * @param poSrcDS    Source dataset. Migt be nullptr (but for correct behavior
  *                   of some output drivers this is not recommended)
  * @param poSrcArray Source array. Should NOT be nullptr.
  * @param bStrict Whether to enable stict mode. In strict mode, any error will
@@ -3405,12 +3405,12 @@ static std::shared_ptr<GDALMDArray> CreateFieldNameExtractArray(
  *     dimension of size 1 put at the beginning. That is [[[0,1,2,3],[4,5,6,7]]].</li>
  * </ul>
  *
- * One difference with NumPy behaviour is that ranges that would result in
+ * One difference with NumPy behavior is that ranges that would result in
  * zero elements are not allowed (dimensions of size 0 not being allowed in the
  * GDAL multidimensional model).
  *
  * For field access, the syntax to use is ["field_name"] or ['field_name'].
- * Multipe field specification is not supported currently.
+ * Multiple field specification is not supported currently.
  *
  * Both type of access can be combined, e.g. GetView("[1]['field_name']")
  *
@@ -4572,7 +4572,7 @@ public:
             SetMetadataItem(attr->GetName().c_str(), val.c_str());
         }
 
-        // Instanciate bands by iterating over non-XY variables
+        // Instantiate bands by iterating over non-XY variables
         size_t iDim = 0;
 lbl_next_depth:
         if( iDim < nNewDimCount )
@@ -5349,7 +5349,7 @@ std::shared_ptr<GDALMDArray> GDALDimension::GetIndexingVariable() const
  * This is the array, typically one-dimensional, describing the values taken
  * by the dimension.
  *
- * Optionaly implemented by drivers.
+ * Optionally implemented by drivers.
  *
  * Drivers known to implement it: MEM.
  *
@@ -5888,7 +5888,7 @@ GDALGroupH GDALGroupOpenGroup(GDALGroupH hGroup, const char* pszSubGroupName,
  * @param hGroup Group.
  * @param pnCount Pointer to the number of values returned. Must NOT be NULL.
  * @param papszOptions Driver specific options determining how dimensions
- * should be retrieved. Pass nullptr for default behaviour.
+ * should be retrieved. Pass nullptr for default behavior.
  *
  * @return an array of *pnCount dimensions.
  */
@@ -5943,7 +5943,7 @@ GDALAttributeH GDALGroupGetAttribute(GDALGroupH hGroup, const char* pszName)
  * @param hGroup Group.
  * @param pnCount Pointer to the number of values returned. Must NOT be NULL.
  * @param papszOptions Driver specific options determining how attributes
- * should be retrieved. Pass nullptr for default behaviour.
+ * should be retrieved. Pass nullptr for default behavior.
  *
  * @return an array of *pnCount attributes.
  */
@@ -6367,7 +6367,7 @@ GDALAttributeH GDALMDArrayGetAttribute(GDALMDArrayH hArray, const char* pszName)
  * @param hArray Array.
  * @param pnCount Pointer to the number of values returned. Must NOT be NULL.
  * @param papszOptions Driver specific options determining how attributes
- * should be retrieved. Pass nullptr for default behaviour.
+ * should be retrieved. Pass nullptr for default behavior.
  *
  * @return an array of *pnCount attributes.
  */

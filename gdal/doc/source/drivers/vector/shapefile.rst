@@ -31,7 +31,7 @@ Shapefile with measures is created if the specified geometry type is
 measured or an appropriate layer creation option is used. When a
 shapefile which may have measured geometries is opened, the first shape
 is examined and if it uses measures, the geometry type of the layer is
-set accordingly. This behaviour can be changed with the ADJUST_GEOM_TYPE
+set accordingly. This behavior can be changed with the ADJUST_GEOM_TYPE
 open option.
 
 MultiPatch files are read and each patch geometry is turned into a TIN
@@ -321,7 +321,7 @@ Layer Creation Options
    spatial index (.qix). Defaults to NO.
 -  **DBF_DATE_LAST_UPDATE=**\ *YYYY-MM-DD*: (OGR >= 2.0) Modification
    date to write in DBF header with year-month-day format. If not
-   specified, current date is used. Note: behaviour of past GDAL
+   specified, current date is used. Note: behavior of past GDAL
    releases was to write 1995-07-26
 -  **AUTO_REPACK=**\ *YES/NO*: (OGR >= 2.2) Default to YES in GDAL 2.2.
    Whether the shapefile should be automatically repacked when needed,

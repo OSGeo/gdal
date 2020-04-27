@@ -59,7 +59,7 @@ Configuration options
 ~~~~~~~~~~~~~~~~~~~~~
 
 This paragraph lists the configuration options that can be set to alter
-the default behaviour of the DTED driver.
+the default behavior of the DTED driver.
 
 -  REPORT_COMPD_CS: (GDAL >= 2.2.2). Can be set to TRUE to avoid
    stripping the vertical CS of compound CS when reading the SRS of a

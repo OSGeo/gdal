@@ -115,7 +115,7 @@ GDALRasterBlockManager
        void        DestroyRBMMutex();
    };
 
-Many of the operations originally done by statics within GDALRasterBlock
+Many of the operations originally done by statistics:* within GDALRasterBlock
 are now moved into the GDALRasterBlockManager.
 
 GDALDataset

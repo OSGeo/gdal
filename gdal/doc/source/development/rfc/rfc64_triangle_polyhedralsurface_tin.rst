@@ -59,7 +59,7 @@ as including the necessary WKB codes in <ogr_core.h>.
 Additionally, the `SFCGAL <http://www.sfcgal.org/>`__ library is a new
 optional dependency of GDAL (build support only done for Unix for now).
 The minimum version tested to build is 1.2.2 (as found in Ubuntu 16.04).
-As mentionned in its home page, "SFCGAL is a C++ wrapper library around
+As mentioned in its home page, "SFCGAL is a C++ wrapper library around
 CGAL with the aim of supporting ISO 19107:2013 and OGC Simple Features
 Access 1.2 for 3D operations." It is mostly used as a potential geometry
 backend by PostGIS. It has a C API, that is the one we use.
@@ -435,8 +435,8 @@ GeoPackage
 
 The GeoPackage specification supports [Multi]Point, [Multi]LineString,
 [Multi]Polygon and GeometryCollection in its core. Curve geometry types
-are mentionned as a registered extension. But Triangle,
-PolyhedralSurface or TIN are not mentionned at all. However the
+are mentioned as a registered extension. But Triangle,
+PolyhedralSurface or TIN are not mentioned at all. However the
 GeoPackage geometry blob format being based on ISO WKB, support for the
 new geometry types did not really require new code. Hence we have kepts
 this possibility of reading/writing the 3 new geometry types, but with a
@@ -449,7 +449,7 @@ Other drivers
 The CSV, VRT, PGDump, SQLite (but not Spatialite) drivers support the
 new geometry types. A couple of drivers have been modified, so as not to
 crash on the writing side when being provided with the new geometry
-types. Besides the previously mentionned drivers, the following drivers
+types. Besides the previously mentioned drivers, the following drivers
 have been verified to not crash (but potentially error out, or skip
 unrecognized geometries): MySQL, OCI, KML, LIBKML, GeoJSON, MapInfo
 
@@ -463,7 +463,7 @@ Compatibility
 
 Many applications will not be able to properly deal with the new
 geometry types that may now be returned by some drivers. In GDAL 2.1,
-the new types were introduced mentionning that they might be returned by
+the new types were introduced mentioning that they might be returned by
 GDAL in the future. Code should either skip the new geometries, deal
 with them properly or use the OGR_G_ForceTo() function to convert to a
 geometry type it supports.

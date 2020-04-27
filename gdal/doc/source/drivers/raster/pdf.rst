@@ -323,7 +323,7 @@ Creation Options
 
 -  **EXCLUSIVE_LAYERS=names**: Comma separated list of layer names, such
    that only one of those layers can be visible at a time. This is the
-   behaviour of radio-buttons in a graphical user interface. The layer
+   behavior of radio-buttons in a graphical user interface. The layer
    names can come from LAYER_NAME (main raster layer name),
    EXTRA_RASTERS_LAYER_NAME, EXTRA_LAYER_NAME and
    OGR_DISPLAY_LAYER_NAMES.

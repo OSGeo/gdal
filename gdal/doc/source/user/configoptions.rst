@@ -63,9 +63,9 @@ List of configuration options and where they apply
 
 .. note::
     This list is known to be incomplete. It depends on proper annotation of configuration
-    options where they are mentionned elsewhere in the documentation.
+    options where they are mentioned elsewhere in the documentation.
     If you want to help to extend it, use the ``:decl_configoption:`NAME```
-    syntax in places where a configuration option is mentionned.
+    syntax in places where a configuration option is mentioned.
 
 
 .. include:: configoptions_index_generated.rst

@@ -2403,7 +2403,7 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
  *
  * @param psExtraArg (new in GDAL 2.0) pointer to a GDALRasterIOExtraArg
  * structure with additional arguments to specify resampling and progress
- * callback, or NULL for default behaviour. The GDAL_RASTERIO_RESAMPLING
+ * callback, or NULL for default behavior. The GDAL_RASTERIO_RESAMPLING
  * configuration option can also be defined to override the default resampling
  * to one of BILINEAR, CUBIC, CUBICSPLINE, LANCZOS, AVERAGE or MODE.
  *

@@ -1389,7 +1389,7 @@ PNG_EXPORT(58, void, png_write_row, (png_structrp png_ptr,
     png_const_bytep row));
 
 /* Write a few rows of image data: (*row) is not written; however, the type
- * is declared as writeable to maintain compatibility with previous versions
+ * is declared as writable to maintain compatibility with previous versions
  * of libpng and to allow the 'display_row' array from read_rows to be passed
  * unchanged to write_rows.
  */
@@ -3095,7 +3095,7 @@ PNG_EXPORT(245, int, png_image_write_to_memory, (png_imagep image, void *memory,
     * stored in *memory_bytes.  On failure *memory_bytes will contain 0.
     *
     * If 'memory' is not NULL it must point to memory[*memory_bytes] of
-    * writeable memory.
+    * writable memory.
     *
     * If the function returns success memory[*memory_bytes] (if 'memory' is not
     * NULL) contains the written PNG data.  *memory_bytes will always be less

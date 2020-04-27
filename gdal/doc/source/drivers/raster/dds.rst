@@ -40,7 +40,7 @@ Build instructions
 
 Building crunch can be a bit difficult. The `build_fixes` branch of
 https://github.com/rouault/crunch/ includes a CMake build system, as well as
-a few fixes that are not found in the upstream respository
+a few fixes that are not found in the upstream repository
 
 Build crunch
 ++++++++++++

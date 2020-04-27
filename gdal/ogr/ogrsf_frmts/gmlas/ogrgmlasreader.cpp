@@ -254,7 +254,7 @@ GMLASBaseEntityResolver::~GMLASBaseEntityResolver()
 
 /* Called by GMLASInputSource destructor. This is useful for use to */
 /* know where a .xsd has been finished from processing. Note that we */
-/* strongly depend on Xerces behaviour here... */
+/* strongly depend on Xerces behavior here... */
 void GMLASBaseEntityResolver::notifyClosing(const CPLString& osFilename )
 {
     CPLDebug("GMLAS", "Closing %s", osFilename.c_str());

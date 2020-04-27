@@ -2212,7 +2212,7 @@ netCDFDataset::netCDFDataset() :
     pszCFCoordinates(nullptr),
     nCFVersion(1.6),
     bSGSupport(false),
-    eMultipleLayerBehaviour(SINGLE_LAYER),
+    eMultipleLayerBehavior(SINGLE_LAYER),
     logCount(0),
     vcdf(cdfid),
     GeometryScribe(vcdf, this->generateLogName()),
@@ -3502,7 +3502,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                     std::max(pdfXCoord[0], pdfXCoord[xdim - 1]) <= 540 )
                 {
                     CPLDebug("GDAL_netCDF",
-                             "Offseting longitudes from ]180,540] to ]-180,180]. "
+                             "Offsetting longitudes from ]180,540] to ]-180,180]. "
                              "Can be disabled with GDAL_NETCDF_CENTERLONG_180=NO");
                     for( size_t i = 0; i < xdim; i++ )
                             pdfXCoord[i] -= 360;
@@ -5776,7 +5776,7 @@ int netCDFDataset::TestCapability(const char *pszCap)
     if( EQUAL(pszCap, ODsCCreateLayer) )
     {
         return eAccess == GA_Update && nBands == 0 &&
-               (eMultipleLayerBehaviour != SINGLE_LAYER || this->GetLayerCount() == 0 || bSGSupport);
+               (eMultipleLayerBehavior != SINGLE_LAYER || this->GetLayerCount() == 0 || bSGSupport);
     }
     return FALSE;
 }
@@ -5819,7 +5819,7 @@ OGRLayer *netCDFDataset::ICreateLayer( const char *pszName,
     }
 
     netCDFDataset *poLayerDataset = nullptr;
-    if( eMultipleLayerBehaviour == SEPARATE_FILES )
+    if( eMultipleLayerBehavior == SEPARATE_FILES )
     {
         char **papszDatasetOptions = nullptr;
         papszDatasetOptions = CSLSetNameValue(
@@ -5846,7 +5846,7 @@ OGRLayer *netCDFDataset::ICreateLayer( const char *pszName,
                            NCDF_CONVENTIONS_CF_V1_6);
     }
 #ifdef NETCDF_HAS_NC4
-    else if( eMultipleLayerBehaviour == SEPARATE_GROUPS )
+    else if( eMultipleLayerBehavior == SEPARATE_GROUPS )
     {
         SetDefineMode(true);
 
@@ -8233,7 +8233,7 @@ netCDFDataset::CreateLL( const char *pszFilename,
     poDS->papszCreationOptions = CSLDuplicate(papszOptions);
     poDS->ProcessCreationOptions();
 
-    if( poDS->eMultipleLayerBehaviour == SEPARATE_FILES )
+    if( poDS->eMultipleLayerBehavior == SEPARATE_FILES )
     {
         VSIStatBuf sStat;
         if( VSIStat(pszFilename, &sStat) == 0 )
@@ -8950,30 +8950,30 @@ void netCDFDataset::ProcessCreationOptions()
 #endif
 
     // MULTIPLE_LAYERS option.
-    const char *pszMultipleLayerBehaviour =
+    const char *pszMultipleLayerBehavior =
         CSLFetchNameValueDef(papszCreationOptions, "MULTIPLE_LAYERS", "NO");
     const char *pszGeometryEnc =
         CSLFetchNameValueDef(papszCreationOptions, "GEOMETRY_ENCODING", "CF_1.8");
-    if( EQUAL(pszMultipleLayerBehaviour, "NO") || EQUAL(pszGeometryEnc, "CF_1.8"))
+    if( EQUAL(pszMultipleLayerBehavior, "NO") || EQUAL(pszGeometryEnc, "CF_1.8"))
     {
-        eMultipleLayerBehaviour = SINGLE_LAYER;
+        eMultipleLayerBehavior = SINGLE_LAYER;
     }
-    else if( EQUAL(pszMultipleLayerBehaviour, "SEPARATE_FILES") )
+    else if( EQUAL(pszMultipleLayerBehavior, "SEPARATE_FILES") )
     {
-        eMultipleLayerBehaviour = SEPARATE_FILES;
+        eMultipleLayerBehavior = SEPARATE_FILES;
     }
 #ifdef NETCDF_HAS_NC4
-    else if( EQUAL(pszMultipleLayerBehaviour, "SEPARATE_GROUPS") )
+    else if( EQUAL(pszMultipleLayerBehavior, "SEPARATE_GROUPS") )
     {
         if( eFormat == NCDF_FORMAT_NC4 )
         {
-            eMultipleLayerBehaviour = SEPARATE_GROUPS;
+            eMultipleLayerBehavior = SEPARATE_GROUPS;
         }
         else
         {
             CPLError(CE_Warning, CPLE_IllegalArg,
                      "MULTIPLE_LAYERS=%s is recognised only with FORMAT=NC4",
-                     pszMultipleLayerBehaviour);
+                     pszMultipleLayerBehavior);
         }
     }
 #endif
@@ -8981,7 +8981,7 @@ void netCDFDataset::ProcessCreationOptions()
     {
         CPLError(CE_Warning, CPLE_IllegalArg,
                  "MULTIPLE_LAYERS=%s not recognised",
-                 pszMultipleLayerBehaviour);
+                 pszMultipleLayerBehavior);
     }
 
     // Set nCreateMode based on eFormat.
@@ -11019,7 +11019,7 @@ static CPLErr NCDFGetVisibleDims( int nGroupId, int *pnDims,
 }
 
 // Get direct sub-groups IDs of a given NetCDF (or group) ID.
-// Consider only direct childs, does not get childs of childs.
+// Consider only direct children, does not get children of children.
 static CPLErr NCDFGetSubGroups( int nGroupId, int *pnSubGroups,
                                   int **ppanSubGroupIds )
 {

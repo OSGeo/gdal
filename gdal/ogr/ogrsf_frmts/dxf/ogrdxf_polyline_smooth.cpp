@@ -69,12 +69,11 @@ static double GetOGRangle(double angle)
             : -(angle + 180.0);
 }
 
-// TODO: Spelling Tesselate -> Tessellate
 /************************************************************************/
-/*                DXFSmoothPolyline::Tesselate()                        */
+/*                DXFSmoothPolyline::Tessellate()                        */
 /************************************************************************/
 
-OGRGeometry* DXFSmoothPolyline::Tesselate() const
+OGRGeometry* DXFSmoothPolyline::Tessellate() const
 {
     assert(!m_vertices.empty());
 

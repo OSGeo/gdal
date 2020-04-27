@@ -2509,7 +2509,7 @@ class CFChecker(object):
                     typ = 'incr'
                 else:
                     # Same value - ERROR
-                    print("ERROR (5): co-ordinate variable '" + var.id + "' not monotonic")
+                    print("ERROR (5): coordinate variable '" + var.id + "' not monotonic")
                     self.err = self.err + 1
                     return 1
 
@@ -2518,12 +2518,12 @@ class CFChecker(object):
                 i = i + 1
                 if val < lastVal and typ != 'decr':
                     # ERROR - should be increasing value
-                    print("ERROR (5): co-ordinate variable '" + var.id + "' not monotonic")
+                    print("ERROR (5): coordinate variable '" + var.id + "' not monotonic")
                     self.err = self.err + 1
                     return 1
                 elif val > lastVal and typ != 'incr':
                     # ERROR - should be decreasing value
-                    print("ERROR (5): co-ordinate variable '" + var.id + "' not monotonic")
+                    print("ERROR (5): coordinate variable '" + var.id + "' not monotonic")
                     self.err = self.err + 1
                     return 1
 

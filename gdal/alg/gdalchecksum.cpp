@@ -116,7 +116,7 @@ GDALChecksumImage( GDALRasterBandH hBand,
                 }
                 else
                 {
-                    // Standard behaviour of GDALCopyWords when converting
+                    // Standard behavior of GDALCopyWords when converting
                     // from floating point to Int32.
                     dfVal += 0.5;
 

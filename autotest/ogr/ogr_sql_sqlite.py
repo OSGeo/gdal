@@ -619,7 +619,7 @@ def test_ogr_sql_sqlite_10():
 
 
 ###############################################################################
-# Test correct parsing of litterals
+# Test correct parsing of literals
 
 
 def test_ogr_sql_sqlite_11():

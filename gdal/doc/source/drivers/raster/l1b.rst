@@ -103,19 +103,19 @@ for NOAA >=15.
 Subdatasets
 -----------
 
-NOAA <=14 datasets advertize a
+NOAA <=14 datasets advertise a
 L1B_SOLAR_ZENITH_ANGLES:"l1b_dataset_name" subdataset that contains a
 maximum of 51 solar zenith angles for each scanline ( beginning at
 sample 5 with a step of 8 samples for GAC data, beginning at sample 25
 with a step of 40 samples for HRPT/LAC/FRAC data).
 
-NOAA >=15 datasets advertize a L1B_ANGLES:"l1b_dataset_name" subdataset
+NOAA >=15 datasets advertise a L1B_ANGLES:"l1b_dataset_name" subdataset
 that contains 3 bands (solar zenith angles, satellite zenith angles and
 relative azimuth angles) with 51 values for each scanline ( beginning at
 sample 5 with a step of 8 samples for GAC data, beginning at sample 25
 with a step of 40 samples for HRPT/LAC/FRAC data).
 
-NOAA >=15 datasets advertize a L1B_CLOUDS:"l1b_dataset_name" subdataset
+NOAA >=15 datasets advertise a L1B_CLOUDS:"l1b_dataset_name" subdataset
 that contains a band of same dimensions as bands of the main L1B
 dataset. The values of each pixel are 0 = unknown; 1 = clear; 2 =
 cloudy; 3 = partly cloudy.

@@ -29,7 +29,7 @@ projection.
 Starting with GDAL 2.3, the driver will open a dataset as RGBA. For
 previous versions, the driver will try to determine the number of bands
 by probing the content of one tile. It is possible to alter this
-behaviour by defining the MBTILES_BAND_COUNT configuration option (or
+behavior by defining the MBTILES_BAND_COUNT configuration option (or
 starting with GDAL 2.1, the BAND_COUNT open option) to the number of
 bands. The values supported are 1, 2, 3 or 4. Four band
 (Red,Green,Blue,Alpha) dataset gives the maximum compatibility with the
@@ -284,7 +284,7 @@ whose value is a JSon serialized document such as the below one:
 that are created into the target MVT dataset. They are mapped to the MVT
 target layer *boundaries*.
 
-It is also possible to get the same behaviour with the below layer
+It is also possible to get the same behavior with the below layer
 creation options, although that is not convenient in the ogr2ogr use
 case.
 

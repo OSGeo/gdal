@@ -45,7 +45,7 @@
 #define PREEXISTING_BINARY_FILE \
     "Binary file pre-existing PDS4 label. This comment is used by GDAL to " \
     "avoid deleting the binary file when the label is deleted. Keep it to " \
-    "preserve this behaviour."
+    "preserve this behavior."
 
 extern "C" void GDALRegister_PDS4();
 

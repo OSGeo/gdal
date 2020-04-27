@@ -83,7 +83,7 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
 {
     poDS = poDSIn;
     // Cannot be moved to initializer list because of use of this, which MSVC 2008 doesn't like
-    poBehaviour = new OGRSQLiteSelectLayerCommonBehaviour(poDSIn, this, osSQLIn,
+    poBehavior = new OGRSQLiteSelectLayerCommonBehaviour(poDSIn, this, osSQLIn,
                                                           bEmptyLayer);
 
     bAllowMultipleGeomFields = bAllowMultipleGeomFieldsIn;
@@ -167,7 +167,7 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
 
 OGRSQLiteSelectLayer::~OGRSQLiteSelectLayer()
 {
-    delete poBehaviour;
+    delete poBehavior;
 }
 
 /************************************************************************/
@@ -176,7 +176,7 @@ OGRSQLiteSelectLayer::~OGRSQLiteSelectLayer()
 
 void OGRSQLiteSelectLayer::ResetReading()
 {
-    return poBehaviour->ResetReading();
+    return poBehavior->ResetReading();
 }
 
 void OGRSQLiteSelectLayerCommonBehaviour::ResetReading()
@@ -194,7 +194,7 @@ void OGRSQLiteSelectLayerCommonBehaviour::ResetReading()
 
 OGRFeature *OGRSQLiteSelectLayer::GetNextFeature()
 {
-    return poBehaviour->GetNextFeature();
+    return poBehavior->GetNextFeature();
 }
 
 OGRFeature *OGRSQLiteSelectLayerCommonBehaviour::GetNextFeature()
@@ -237,7 +237,7 @@ int HasSpecialFields(swq_expr_node* expr, int nMinIndexForSpecialField)
 
 OGRErr OGRSQLiteSelectLayer::SetAttributeFilter( const char *pszQuery )
 {
-    return poBehaviour->SetAttributeFilter(pszQuery);
+    return poBehavior->SetAttributeFilter(pszQuery);
 }
 
 OGRErr OGRSQLiteSelectLayerCommonBehaviour::SetAttributeFilter( const char *pszQuery )
@@ -276,7 +276,7 @@ OGRErr OGRSQLiteSelectLayerCommonBehaviour::SetAttributeFilter( const char *pszQ
 
 GIntBig OGRSQLiteSelectLayer::GetFeatureCount( int bForce )
 {
-    return poBehaviour->GetFeatureCount(bForce);
+    return poBehavior->GetFeatureCount(bForce);
 }
 
 GIntBig OGRSQLiteSelectLayerCommonBehaviour::GetFeatureCount( int bForce )
@@ -341,12 +341,12 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
     bDoStep = TRUE;
 
 #ifdef DEBUG
-    CPLDebug( "OGR_SQLITE", "prepare_v2(%s)", poBehaviour->osSQLCurrent.c_str() );
+    CPLDebug( "OGR_SQLITE", "prepare_v2(%s)", poBehavior->osSQLCurrent.c_str() );
 #endif
 
     const int rc =
-        sqlite3_prepare_v2( poDS->GetDB(), poBehaviour->osSQLCurrent,
-                         static_cast<int>(poBehaviour->osSQLCurrent.size()),
+        sqlite3_prepare_v2( poDS->GetDB(), poBehavior->osSQLCurrent,
+                         static_cast<int>(poBehavior->osSQLCurrent.size()),
                          &hStmt, nullptr );
 
     if( rc == SQLITE_OK )
@@ -354,7 +354,7 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
 
     CPLError( CE_Failure, CPLE_AppDefined,
               "In ResetStatement(): sqlite3_prepare_v2(%s):\n  %s",
-              poBehaviour->osSQLCurrent.c_str(), sqlite3_errmsg(poDS->GetDB()) );
+              poBehavior->osSQLCurrent.c_str(), sqlite3_errmsg(poDS->GetDB()) );
     hStmt = nullptr;
     return OGRERR_FAILURE;
 }
@@ -366,7 +366,7 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
 void OGRSQLiteSelectLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
 
 {
-    poBehaviour->SetSpatialFilter(iGeomField, poGeomIn);
+    poBehavior->SetSpatialFilter(iGeomField, poGeomIn);
 }
 
 void OGRSQLiteSelectLayerCommonBehaviour::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
@@ -607,7 +607,7 @@ int OGRSQLiteSelectLayerCommonBehaviour::BuildSQL()
 
 int OGRSQLiteSelectLayer::TestCapability( const char * pszCap )
 {
-    return poBehaviour->TestCapability(pszCap);
+    return poBehavior->TestCapability(pszCap);
 }
 
 int OGRSQLiteSelectLayerCommonBehaviour::TestCapability( const char * pszCap )
@@ -635,7 +635,7 @@ int OGRSQLiteSelectLayerCommonBehaviour::TestCapability( const char * pszCap )
 
 OGRErr OGRSQLiteSelectLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
 {
-    return poBehaviour->GetExtent(iGeomField, psExtent, bForce);
+    return poBehavior->GetExtent(iGeomField, psExtent, bForce);
 }
 
 OGRErr OGRSQLiteSelectLayerCommonBehaviour::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)

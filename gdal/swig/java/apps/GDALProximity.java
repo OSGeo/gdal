@@ -451,20 +451,20 @@ public class GDALProximity {
              * Is the current pixel a target pixel?
              */
 
-            boolean isATarger = false;
+            boolean isATarget = false;
 
             if( TargetValues.length == 0) {
-                isATarger = scanlineArray[iPixel] != 0.0F;
+                isATarget = scanlineArray[iPixel] != 0.0F;
             } else {
                 for( int i = 0; i < TargetValues.length; i++) {
                     if( scanlineArray[iPixel] == TargetValues[i] ) {
-                        isATarger = true;
+                        isATarget = true;
                         break;
                     }
                 }
             }
 
-            if (isATarger) {
+            if (isATarget) {
                 proximityArray[iPixel] = 0.0F;
                 nearXArray[iPixel] = (short) iPixel;
                 nearYArray[iPixel] = (short) iLine;

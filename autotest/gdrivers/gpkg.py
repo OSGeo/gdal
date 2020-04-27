@@ -1842,7 +1842,7 @@ def test_gpkg_21():
     out_ds.SetMetadataItem('1', '2')
     out_ds.SetMetadataItem('3', '4', 'CUSTOM_DOMAIN')
     out_ds.SetMetadataItem('6', '7', 'GEOPACKAGE')
-    # Non GDAL metdata
+    # Non GDAL metadata
     out_ds.ExecuteSQL("INSERT INTO gpkg_metadata VALUES (10, 'dataset', 'uri', 'text/plain', 'my_metadata')")
     out_ds.ExecuteSQL("INSERT INTO gpkg_metadata_reference VALUES ('geopackage',NULL,NULL,NULL,'2012-08-17T14:49:32.932Z',10,NULL)")
     out_ds.ExecuteSQL("INSERT INTO gpkg_metadata VALUES (11, 'dataset', 'uri', 'text/plain', 'other_metadata')")

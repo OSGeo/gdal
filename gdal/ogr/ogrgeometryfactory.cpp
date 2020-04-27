@@ -1497,7 +1497,7 @@ enum OrganizePolygonMethod
  * with care.
  *
  * If the OGR_ORGANIZE_POLYGONS configuration option is defined, its value will override
- * the value of the METHOD option of papszOptions (useful to modify the behaviour of the
+ * the value of the METHOD option of papszOptions (useful to modify the behavior of the
  * shapefile driver)
  *
  * @param papoPolygons array of geometry pointers - should all be OGRPolygons.
@@ -3804,7 +3804,7 @@ OGRGeometryFactory::TransformWithOptionsCache::~TransformWithOptionsCache()
  * @param poSrcGeom source geometry
  * @param poCT coordinate transformation object, or NULL.
  * @param papszOptions options. Including WRAPDATELINE=YES and DATELINEOFFSET=.
- * @param cache Cache. May increase performance if persisted between invokations
+ * @param cache Cache. May increase performance if persisted between invocations
  * @return (new) transformed geometry.
  */
 OGRGeometry* OGRGeometryFactory::transformWithOptions(

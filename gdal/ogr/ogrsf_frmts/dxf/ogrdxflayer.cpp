@@ -580,7 +580,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMTEXT()
     // Font name
     osStyle.Printf("LABEL(f:\"");
 
-    // Preserve legacy behaviour of specifying "Arial" as a default font name.
+    // Preserve legacy behavior of specifying "Arial" as a default font name.
     osStyle += poDS->LookupTextStyleProperty( osStyleName, "Font", "Arial" );
 
     osStyle += "\"";
@@ -840,7 +840,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateTEXT( const bool bIsAttribOrAttdef )
     // Font name
     osStyle.Printf("LABEL(f:\"");
 
-    // Preserve legacy behaviour of specifying "Arial" as a default font name.
+    // Preserve legacy behavior of specifying "Arial" as a default font name.
     osStyle += poDS->LookupTextStyleProperty( osStyleName, "Font", "Arial" );
 
     osStyle += "\"";
@@ -1171,7 +1171,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateLWPOLYLINE()
         smoothPolyline.Close();
 
     smoothPolyline.SetUseMaxGapWhenTessellatingArcs( poDS->InlineBlocks() );
-    OGRGeometry* poGeom = smoothPolyline.Tesselate();
+    OGRGeometry* poGeom = smoothPolyline.Tessellate();
     poFeature->ApplyOCSTransformer( poGeom );
     poFeature->SetGeometryDirectly( poGeom );
 
@@ -1194,7 +1194,7 @@ static inline int SafeAbs(int x)
 /************************************************************************/
 /*                         TranslatePOLYLINE()                          */
 /*                                                                      */
-/*      We also capture the following VERTEXes.                         */
+/*      We also capture the following vertices.                         */
 /************************************************************************/
 
 OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
@@ -1236,7 +1236,7 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Collect VERTEXes as a smooth polyline.                          */
+/*      Collect vertices as a smooth polyline.                          */
 /* -------------------------------------------------------------------- */
     double dfX = 0.0;
     double dfY = 0.0;
@@ -1443,7 +1443,7 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
         smoothPolyline.Close();
 
     smoothPolyline.SetUseMaxGapWhenTessellatingArcs( poDS->InlineBlocks() );
-    OGRGeometry* poGeom = smoothPolyline.Tesselate();
+    OGRGeometry* poGeom = smoothPolyline.Tessellate();
 
     if( (nPolylineFlag & 8) == 0 )
         poFeature->ApplyOCSTransformer( poGeom );

@@ -524,7 +524,7 @@ SDO_ORDINATE_ARRAY(0,0, 1,1, 0,2, -1,3, 0,4, 2,2, 0,0 )
     assert tr
 
 ###############################################################################
-# Test handling of compount linestring.
+# Test handling of compound linestring.
 
 
 def test_ogr_oci_14():
@@ -563,7 +563,7 @@ SDO_ORDINATE_ARRAY(10,10, 10,14, 6,10, 14,10)
     assert tr
 
 ###############################################################################
-# Test handling of compount polygon.
+# Test handling of compound polygon.
 
 
 def test_ogr_oci_15():

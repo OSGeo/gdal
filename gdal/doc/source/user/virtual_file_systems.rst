@@ -154,9 +154,9 @@ Example using :program:`ogrinfo` to read a shapefile on the internet:
 
 Starting with GDAL 2.3, options can be passed in the filename with the following syntax: ``/vsicurl?[option_i=val_i&]*url=http://...`` where each option name and value (including the value of "url") is URL-encoded. Currently supported options are:
 
-- use_head=yes/no: whether the HTTP HEAD request can be emitted. Default to YES. Setting this option overrides the behaviour of the :decl_configoption:`CPL_VSIL_CURL_USE_HEAD` configuration option.
-- max_retry=number: default to 0. Setting this option overrides the behaviour of the :decl_configoption:`GDAL_HTTP_MAX_RETRY` configuration option.
-- retry_delay=number_in_seconds: default to 30. Setting this option overrides the behaviour of the :decl_configoption:`GDAL_HTTP_RETRY_DELAY` configuration option.
+- use_head=yes/no: whether the HTTP HEAD request can be emitted. Default to YES. Setting this option overrides the behavior of the :decl_configoption:`CPL_VSIL_CURL_USE_HEAD` configuration option.
+- max_retry=number: default to 0. Setting this option overrides the behavior of the :decl_configoption:`GDAL_HTTP_MAX_RETRY` configuration option.
+- retry_delay=number_in_seconds: default to 30. Setting this option overrides the behavior of the :decl_configoption:`GDAL_HTTP_RETRY_DELAY` configuration option.
 - list_dir=yes/no: whether an attempt to read the file list of the directory where the file is located should be done. Default to YES.
 
 Partial downloads (requires the HTTP server to support random reading) are done with a 16 KB granularity by default. Starting with GDAL 2.3, the chunk size can be configured with the :decl_configoption:`CPL_VSIL_CURL_CHUNK_SIZE` configuration option, with a value in bytes. If the driver detects sequential reading it will progressively increase the chunk size up to 2 MB to improve download performance. Starting with GDAL 2.3, the :decl_configoption:`GDAL_INGESTED_BYTES_AT_OPEN` configuration option can be set to impose the number of bytes read in one GET call at file opening (can help performance to read Cloud optimized geotiff with a large header).
@@ -177,7 +177,7 @@ In addition, a global least-recently-used cache of 16 MB shared among all downlo
 
 Starting with GDAL 2.3, the :decl_configoption:`CPL_VSIL_CURL_NON_CACHED` configuration option can be set to values like :file:`/vsicurl/http://example.com/foo.tif:/vsicurl/http://example.com/some_directory`, so that at file handle closing, all cached content related to the mentioned file(s) is no longer cached. This can help when dealing with resources that can be modified during execution of GDAL related code. Alternatively, :cpp:func:`VSICurlClearCache` can be used.
 
-Starting with GDAL 2.1, ``/vsicurl/`` will try to query directly redirected URLs to Amazon S3 signed URLs during their validity period, so as to minimize round-trips. This behaviour can be disabled by setting the configuration option :decl_configoption:`CPL_VSIL_CURL_USE_S3_REDIRECT` to ``NO``.
+Starting with GDAL 2.1, ``/vsicurl/`` will try to query directly redirected URLs to Amazon S3 signed URLs during their validity period, so as to minimize round-trips. This behavior can be disabled by setting the configuration option :decl_configoption:`CPL_VSIL_CURL_USE_S3_REDIRECT` to ``NO``.
 
 :cpp:func:`VSIStatL` will return the size in st_size member and file nature- file or directory - in st_mode member (the later only reliable with FTP resources for now).
 
@@ -569,7 +569,7 @@ This is not a proper virtual file system handler, but a C function that takes a 
 
 The :cpp:class:`VSICachedFile` class only handles read operations at that time, and will error out on write operations.
 
-This is done with the :cpp:func:`VSICreateCachedFile` function, that is implictly used by a number of the above mentioned file systems (namely the default one for standard file system operations, and the /vsicurl/ and other related network file systems) if the ``VSI_CACHE`` configuration option is set to ``YES``.
+This is done with the :cpp:func:`VSICreateCachedFile` function, that is implicitly used by a number of the above mentioned file systems (namely the default one for standard file system operations, and the /vsicurl/ and other related network file systems) if the ``VSI_CACHE`` configuration option is set to ``YES``.
 
 The default size of caching for each file is 25 MB (25 MB for each file that is cached), and can be controlled with the ``VSI_CACHE_SIZE`` configuration option (value in bytes).
 

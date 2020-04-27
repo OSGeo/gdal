@@ -74,7 +74,7 @@ More details can be found in the :ref:`gdal_vrttut_pansharpen` section.
 
 .. option:: -spat_adjust {union(default),intersection,none,nonewithoutwarning}
 
-    Select behaviour when bands have not the same extent. See
+    Select behavior when bands have not the same extent. See
     *SpatialExtentAdjustment* documentation in `VRT
     tutorial <gdal_vrttut.html#gdal_vrttut_pansharpen>`__
 

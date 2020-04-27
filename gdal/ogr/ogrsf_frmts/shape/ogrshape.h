@@ -293,7 +293,7 @@ class OGRShapeDataSource final: public OGRDataSource
 
     std::vector<CPLString> GetLayerNames() const;
     void                AddLayer( OGRShapeLayer* poLayer );
-    static void         RefeshLockFile(void* _self);
+    static void         RefreshLockFile(void* _self);
     void                RemoveLockFile();
     bool                RecompressIfNeeded(const std::vector<CPLString>& layerNames);
 

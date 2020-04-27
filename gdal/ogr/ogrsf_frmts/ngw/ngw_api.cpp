@@ -33,7 +33,7 @@
 
 namespace NGWAPI {
 
-std::string GetPermisions(const std::string &osUrl, const std::string &osResourceId)
+std::string GetPermissions(const std::string &osUrl, const std::string &osResourceId)
 {
     return osUrl + "/api/resource/" + osResourceId + "/permission";
 }
@@ -430,7 +430,7 @@ Permissions CheckPermissions(const std::string &osUrl,
     Permissions stOut;
     CPLErrorReset();
     CPLJSONDocument oPermissionReq;
-    bool bResult = oPermissionReq.LoadUrl( GetPermisions( osUrl, osResourceId ),
+    bool bResult = oPermissionReq.LoadUrl( GetPermissions( osUrl, osResourceId ),
         papszHTTPOptions );
 
     CPLJSONObject oRoot = oPermissionReq.GetRoot();

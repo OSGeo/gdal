@@ -129,7 +129,7 @@ def copy_shape_to_flatgeobuf(name, wkbType, compress=None, options=[]):
         return False
 
     ######################################################
-    # Setup schema (all test shapefiles use common schmea)
+    # Setup schema (all test shapefiles use common schema)
     ogrtest.quick_create_layer_def(lyr,
                                    [('FID', ogr.OFTReal),
                                     ('NAME', ogr.OFTString)])

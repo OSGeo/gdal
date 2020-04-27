@@ -511,7 +511,7 @@ typedef int            (*VSIFilesystemPluginCloseCallback)         ( void *pFile
 
 /**
  * struct containing callbacks to used by the handler.
- * (rw), (r), (w) or () at the end indicate wether the given callback is mandatory
+ * (rw), (r), (w) or () at the end indicate whether the given callback is mandatory
  * for reading and or writing handlers. A (?) indicates that the callback might
  * be mandatory for certain drivers only.
  * @since GDAL 3.0

@@ -50,7 +50,7 @@ namespace PCIDSK
     struct AncillaryData_t
     {
         /**
-         * Default constrcutor
+         * Default constructor
          */
         AncillaryData_t() :
             SlantRangeFstPixel(0),
@@ -118,7 +118,7 @@ namespace PCIDSK
     struct RadarSeg_t
     {
         /**
-         * Default constrcutor
+         * Default constructor
          */
         RadarSeg_t() :
             EquatorialRadius(0.0),
@@ -205,7 +205,7 @@ namespace PCIDSK
     struct AttitudeLine_t
     {
         /**
-         * Default constrcutor
+         * Default constructor
          */
         AttitudeLine_t():
             ChangeInAttitude(0.0),
@@ -256,7 +256,7 @@ namespace PCIDSK
     struct AttitudeSeg_t
     {
         /**
-         * Default constrcutor
+         * Default constructor
          */
         AttitudeSeg_t() :
             Roll(0.0),
@@ -325,7 +325,7 @@ namespace PCIDSK
     struct AvhrrLine_t
     {
         /**
-         * Default constrcutor
+         * Default constructor
          */
         AvhrrLine_t()
         {
@@ -406,7 +406,7 @@ namespace PCIDSK
     struct AvhrrSeg_t
     {
         /**
-         * Default constrcutor
+         * Default constructor
          */
         AvhrrSeg_t() :
             nImageXSize(0),
@@ -552,7 +552,7 @@ namespace PCIDSK
     struct EphemerisSeg_t
     {
         /**
-         * Default constrcutor
+         * Default constructor
          */
         EphemerisSeg_t()
         {

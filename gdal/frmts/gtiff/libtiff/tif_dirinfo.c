@@ -55,7 +55,7 @@ static const TIFFFieldArray gpsFieldArray;
  * The Rational2Double upgraded libtiff functionality allows the definition and achievement of true double-precision accuracy
  * for TIFF tags of RATIONAL type and field_bit=FIELD_CUSTOM using the set_field_type = TIFF_SETGET_DOUBLE.
  * Unfortunately, that changes the old implemented interface for TIFFGetField().
- * In order to keep the old TIFFGetField() interface behaviour those tags have to be redefined with set_field_type = TIFF_SETGET_FLOAT!
+ * In order to keep the old TIFFGetField() interface behavior those tags have to be redefined with set_field_type = TIFF_SETGET_FLOAT!
  *
  *  Rational custom arrays are already defined as _Cxx_FLOAT, thus can stay.
  *

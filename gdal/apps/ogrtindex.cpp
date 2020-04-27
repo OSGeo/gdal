@@ -623,7 +623,7 @@ MAIN_START(nArgc, papszArgv)
                     {
                         fprintf(
                             stderr, "Note : you can override this "
-                            "behaviour with -accept_different_schemas option\n"
+                            "behavior with -accept_different_schemas option\n"
                             "but this may result in a tileindex incompatible "
                             "with MapServer\n");
                         bFirstWarningForNonMatchingAttributes = false;
@@ -657,7 +657,7 @@ MAIN_START(nArgc, papszArgv)
                         {
                             fprintf(
                                 stderr, "Note : you can override this "
-                                "behaviour with -accept_different_schemas "
+                                "behavior with -accept_different_schemas "
                                 "option,\nbut this may result in a tileindex "
                                 "incompatible with MapServer\n");
                             bFirstWarningForNonMatchingAttributes = false;

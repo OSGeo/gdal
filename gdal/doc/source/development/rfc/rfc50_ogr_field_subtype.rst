@@ -97,8 +97,8 @@ Changes in drivers
 
 -  GeoJSON: can read/write OFSTBoolean
 -  GML: can read/write OFSTBoolean, OFSTInt16 and OFSTFloat32
--  CSV: can read/write OFSTBoolean (explicitely with CSVT or with
-   autodetection), OFSTInt16 and OFSTFloat32 (explicitely with CSVT)
+-  CSV: can read/write OFSTBoolean (explicitly with CSVT or with
+   autodetection), OFSTInt16 and OFSTFloat32 (explicitly with CSVT)
 -  PG: can read/write OFSTBoolean, OFSTInt16 and OFSTFloat32
 -  PGDump: can write OFSTBoolean, OFSTInt16 and OFSTFloat32
 -  GeoPackage: can read/write OFSTBoolean, OFSTInt16 and OFSTFloat32
@@ -147,7 +147,7 @@ Compatibility
 
 This should have no impact on read-only operations done by applications.
 Update operations could be impacted if an out-of-range value for the
-subtype is written (but such a behaviour probably already caused issues,
+subtype is written (but such a behavior probably already caused issues,
 either ignored or notified by the backend)
 
 Documentation

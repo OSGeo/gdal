@@ -412,7 +412,7 @@ def main(argv=None):
 
         if overwrite:
             cnt = output_ds.GetLayerCount()
-            iLayer = None  # initialise in case there are no loop iterations
+            iLayer = None  # initialize in case there are no loop iterations
             for iLayer in range(cnt):
                 poLayer = output_ds.GetLayer(iLayer)
                 if poLayer is not None \

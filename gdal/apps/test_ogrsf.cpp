@@ -2549,7 +2549,7 @@ static int TestOGRLayerUTF8 ( OGRLayer *poLayer )
     bool bFoundString = false;
     bool bFoundNonASCII = false;
     bool bFoundUTF8 = false;
-    bool bCanAdvertizeUTF8 = true;
+    bool bCanAdvertiseUTF8 = true;
 
     OGRFeature* poFeature = nullptr;
     while( bRet &&
@@ -2596,7 +2596,7 @@ static int TestOGRLayerUTF8 ( OGRLayer *poLayer )
                     else
                     {
                         if (!bIsUTF8)
-                            bCanAdvertizeUTF8 = false;
+                            bCanAdvertiseUTF8 = false;
                     }
                 }
             }
@@ -2607,7 +2607,7 @@ static int TestOGRLayerUTF8 ( OGRLayer *poLayer )
     if( !bFoundString )
     {
     }
-    else if (bCanAdvertizeUTF8 && bVerbose)
+    else if (bCanAdvertiseUTF8 && bVerbose)
     {
         if (bIsAdvertizedAsUTF8)
         {
@@ -2708,7 +2708,7 @@ static int TestGetExtent ( OGRLayer *poLayer, int iGeomField )
             else
             {
                 printf("INFO: unknown relationship between sExtent and "
-                       "sExentSlow.\n");
+                       "sExtentSlow.\n");
             }
             printf("INFO: sExtentSlow.MinX = %.15f\n", sExtentSlow.MinX);
             printf("INFO: sExtentSlow.MinY = %.15f\n", sExtentSlow.MinY);

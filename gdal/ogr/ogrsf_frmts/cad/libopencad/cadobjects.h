@@ -555,7 +555,7 @@ public:
 
     long nObjectsOwned;
 
-    CADHandleArray hVertexes; // content really depends on DWG version.
+    CADHandleArray hVertices; // content really depends on DWG version.
 
     CADHandle hSeqend;
 };
@@ -573,7 +573,7 @@ public:
 
     long nObjectsOwned;
 
-    CADHandleArray hVertexes; // content really depends on DWG version.
+    CADHandleArray hVertices; // content really depends on DWG version.
 
     CADHandle hSeqend;
 };
@@ -897,9 +897,9 @@ public:
     double                       dfElevation;
     double                       dfThickness;
     CADVector                    vectExtrusion;
-    std::vector<CADVector>            avertVertexes;
+    std::vector<CADVector>            avertVertices;
     std::vector<double>               adfBulges;
-    std::vector<short>                adVertexesID;
+    std::vector<short>                adVerticesID;
     std::vector<std::pair<double, double>> astWidths; // start, end.
 };
 
@@ -1115,8 +1115,8 @@ public:
 
     short dClipBoundaryType;
 
-    long              nNumberVertexesInClipPolygon;
-    std::vector<CADVector> avertClippingPolygonVertexes;
+    long              nNumberVerticesInClipPolygon;
+    std::vector<CADVector> avertClippingPolygonVertices;
 
     CADHandle hImageDef;
     CADHandle hImageDefReactor;
@@ -1221,9 +1221,9 @@ public:
     CADVector     vectExtrusion;
     short         dOpenClosed; // 1 open, 3 closed
     unsigned char nLinesInStyle;
-    short         nNumVertexes;
+    short         nNumVertices;
 
-    std::vector<CADMLineVertex> avertVertexes;
+    std::vector<CADMLineVertex> avertVertices;
 
     CADHandle hMLineStyle;
 };
@@ -1252,10 +1252,10 @@ public:
     CADPolylinePFaceObject();
     virtual ~CADPolylinePFaceObject(){}
 
-    short             nNumVertexes;
+    short             nNumVertices;
     short             nNumFaces;
     long              nObjectsOwned;
-    std::vector<CADHandle> hVertexes; // content really depends on DWG version.
+    std::vector<CADHandle> hVertices; // content really depends on DWG version.
     CADHandle         hSeqend;
 };
 

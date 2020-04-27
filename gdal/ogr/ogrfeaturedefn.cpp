@@ -1581,7 +1581,7 @@ std::vector<int> OGRFeatureDefn::ComputeMapForSetFrom( const OGRFeatureDefn* poS
         const char* pszName = poFldDefn->GetNameRef();
 
         // In the insane case where there are several matches, arbitrarily
-        // decide for the first one (preserve past behaviour)
+        // decide for the first one (preserve past behavior)
         if( oMapNameToTargetFieldIndex.find(pszName) ==
                                         oMapNameToTargetFieldIndex.end() )
         {

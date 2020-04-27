@@ -304,7 +304,7 @@ null_value in the GeoPackage internals perfectly match.
 For Int16, UInt16 or Float32 with PNG tiles, GDAL will generally remap
 the input nodata value to another value.
 
-On writing, for PNG tiles, the behaviour is the following one:
+On writing, for PNG tiles, the behavior is the following one:
 
 ============== =================================================== =====================================================
 GDAL data type Input GDAL nodata value                             null_value in GPKG gpkg_2d_gridded_coverage_ancillary
@@ -313,7 +313,7 @@ UInt16         X (if coverage offset == 0 and coverage scale == 1) X
 Float32        Any                                                 65535
 ============== =================================================== =====================================================
 
-On reading, for PNG tiles, the behaviour is the following one:
+On reading, for PNG tiles, the behavior is the following one:
 
 ============== ===================================================== =========================
 GDAL data type null_value in GPKG gpkg_2d_gridded_coverage_ancillary Exposed GDAL nodata value

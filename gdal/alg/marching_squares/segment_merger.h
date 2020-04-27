@@ -184,7 +184,7 @@ private:
         }
         else
         {
-            // try to perfom linemerge with another line
+            // try to perform linemerge with another line
             // since we got out of the previous loop on the first match
             // there is no need to test previous elements
             // also: a segment merges at most two lines, no need to stall here ;)

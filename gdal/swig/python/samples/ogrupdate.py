@@ -195,7 +195,7 @@ def ogrupdate_analyse_args(argv, progress=None, progress_arg=None):
         return 1
 
     if matchfieldname is None and dst_layer.TestCapability(ogr.OLCRandomRead) == 0 and not quiet:
-        print('Warning: target layer does not advertize fast random read capability. Update might be slow')
+        print('Warning: target layer does not advertise fast random read capability. Update might be slow')
 
     if papszSelFields is not None and compare_before_update:
         print('Warning: -select and -compare_before_update are not compatible. Ignoring -compare_before_update')

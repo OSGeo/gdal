@@ -842,7 +842,7 @@ void GDALRegister_COG()
 "   <Option name='RESAMPLING' type='string' "
         "description='Resampling method for overviews or warping'/>"
 "   <Option name='OVERVIEWS' type='string-select' description='"
-        "Behaviour regarding overviews'>"
+        "Behavior regarding overviews'>"
 "     <Value>AUTO</Value>"
 "     <Value>IGNORE_EXISTING</Value>"
 "     <Value>FORCE_USE_EXISTING</Value>"

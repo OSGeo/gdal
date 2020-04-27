@@ -2,7 +2,7 @@
  *
  * Project:  FMEObjects Translator
  * Purpose:  Implementation of the OGRFMELayerDB class.  This is the
- *           class implementing behaviour for layers that are built on
+ *           class implementing behavior for layers that are built on
  *           smart readers representing databases with spatial constraints,
  *           and where clause support.
  * Author:   Frank Warmerdam, warmerdam@pobox.com

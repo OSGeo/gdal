@@ -75,7 +75,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
     if( GDALIsInGlobalDestructor() )
     {
         // this is typically during Python interpreter shutdown, and ends up in a crash
-        // because error handling tries to do thread initialisation.
+        // because error handling tries to do thread initialization.
         return;
     }
 

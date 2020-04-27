@@ -409,7 +409,7 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DCAP_CREATECOPY_MULTIDIMENSIONAL     "DCAP_CREATECOPY_MULTIDIMENSIONAL"
 
-/** Capability set by a driver that supports multidimensionnal data.
+/** Capability set by a driver that supports multidimensional data.
  * @since GDAL 3.1
  */
 #define GDAL_DCAP_MULTIDIM_RASTER     "DCAP_MULTIDIM_RASTER"
@@ -547,7 +547,7 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess ) CPL_
  */
 #define     GDAL_OF_GNM             0x08
 
-/** Allow multidimensionnal raster drivers to be used.
+/** Allow multidimensional raster drivers to be used.
  * Used by GDALOpenEx().
  * @since GDAL 3.1
  */
@@ -1395,7 +1395,7 @@ CPLXMLNode CPL_DLL* GDALGetJPEG2000Structure(const char* pszFilename,
                                              CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 
 /* ==================================================================== */
-/*      Multidimensionnal API_api                                       */
+/*      Multidimensional API_api                                       */
 /* ==================================================================== */
 
 GDALDatasetH CPL_DLL GDALCreateMultiDimensional( GDALDriverH hDriver,

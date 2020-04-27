@@ -59,7 +59,7 @@ Layer creation options
    apply to coordinates.
 -  **ID_FIELD**\ =string. Name of the source field that must be written
    as the 'id' member of Feature objects.
--  **ID_TYPE**\ =AUTO/String/Integer. Type of the 'id' memer of Feature
+-  **ID_TYPE**\ =AUTO/String/Integer. Type of the 'id' member of Feature
    objects.
 
 See Also

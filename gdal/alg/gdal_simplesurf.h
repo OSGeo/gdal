@@ -87,7 +87,7 @@ public:
      * nIndex should be within range from 0 to DESC_SIZE (in current version - 64)
      *
      * @return Reference to value of descriptor in 'nIndex' position.
-     * If index is out of range then behaviour is undefined.
+     * If index is out of range then behavior is undefined.
      */
     double& operator[](int nIndex);
 

@@ -611,7 +611,7 @@ class OGRSQLiteSelectLayerCommonBehaviour
 
 class OGRSQLiteSelectLayer CPL_NON_FINAL: public OGRSQLiteLayer, public IOGRSQLiteSelectLayer
 {
-    OGRSQLiteSelectLayerCommonBehaviour* poBehaviour;
+    OGRSQLiteSelectLayerCommonBehaviour* poBehavior;
 
     virtual OGRErr      ResetStatement() override;
 

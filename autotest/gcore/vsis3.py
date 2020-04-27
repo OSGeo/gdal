@@ -626,7 +626,7 @@ def test_vsis3_2():
     assert data == 'bar'
 
 ###############################################################################
-# Test re-opening after chaning configuration option (#2294)
+# Test re-opening after changing configuration option (#2294)
 
 
 def test_vsis3_open_after_config_option_chage():

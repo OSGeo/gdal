@@ -2112,7 +2112,7 @@ CPLErr IdrisiRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
     }
 
     // ----------------------------------------------------------
-    // Get field indecies
+    // Get field indices
     // ----------------------------------------------------------
 
     int iValue = -1;

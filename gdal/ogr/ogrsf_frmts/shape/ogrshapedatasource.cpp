@@ -1418,10 +1418,10 @@ char** OGRShapeDataSource::GetFileList()
 }
 
 /************************************************************************/
-//                          RefeshLockFile()                            */
+//                          RefreshLockFile()                            */
 /************************************************************************/
 
-void OGRShapeDataSource::RefeshLockFile(void* _self)
+void OGRShapeDataSource::RefreshLockFile(void* _self)
 {
     OGRShapeDataSource* self = static_cast<OGRShapeDataSource*>(_self);
     CPLAssert(self->m_psLockFile);
@@ -1536,7 +1536,7 @@ bool OGRShapeDataSource::UncompressIfNeeded()
             CPLGetConfigOption("OGR_SHAPE_LOCK_DELAY",
                             CPLSPrintf("%d", knREFRESH_LOCK_FILE_DELAY_SEC)));
         m_hRefreshLockFileThread = CPLCreateJoinableThread(
-            OGRShapeDataSource::RefeshLockFile, this);
+            OGRShapeDataSource::RefreshLockFile, this);
         if( !m_hRefreshLockFileThread )
         {
             VSIFCloseL(m_psLockFile);

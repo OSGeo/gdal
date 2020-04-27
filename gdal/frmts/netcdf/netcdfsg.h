@@ -186,7 +186,7 @@ namespace nccfdriver
         std::vector<std::string> v_headers;
         int nc;
         
-        void open(int container_id);    // opens and intializes a geometry_container into the scanner 
+        void open(int container_id);    // opens and initializes a geometry_container into the scanner 
         
         public:
             std::vector<std::string>& headers() { return this->v_headers; }

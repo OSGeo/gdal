@@ -177,7 +177,7 @@ flags);
  * user_delete function is called before the new one is set.
  *
  * If to_string_func is NULL, the other parameters are ignored
- * and the default behaviour is reset.
+ * and the default behavior is reset.
  *
  * The userdata parameter is optional and may be passed as NULL.  If provided,
  * it is passed to to_string_func as-is.  This parameter may be NULL even

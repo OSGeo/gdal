@@ -600,7 +600,7 @@ int VSIRename( const char * oldpath, const char * newpath )
  * /vsis3/, /vsigs/ or /vsiaz/</li>
  * </ul>
  *
- * Similarly to rsync behaviour, if the source filename ends with a slash,
+ * Similarly to rsync behavior, if the source filename ends with a slash,
  * it means that the content of the directory must be copied, but not the
  * directory name. For example, assuming "/home/even/foo" contains a file "bar",
  * VSISync("/home/even/foo/", "/mnt/media", ...) will create a "/mnt/media/bar"
@@ -608,7 +608,7 @@ int VSIRename( const char * oldpath, const char * newpath )
  * "/mnt/media/foo" directory which contains a bar file.
  *
  * @param pszSource Source file or directory.  UTF-8 encoded.
- * @param pszTarget Target file or direcotry.  UTF-8 encoded.
+ * @param pszTarget Target file or directory.  UTF-8 encoded.
  * @param papszOptions Null terminated list of options, or NULL.
  * Currently accepted options are:
  * <ul>

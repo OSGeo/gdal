@@ -3360,7 +3360,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "INSPIRE_TG=YES implies following GMLJP2 specification which "
-                     "recommends advertize reader requirement 67 feature, and thus JPX capability");
+                     "recommends advertise reader requirement 67 feature, and thus JPX capability");
         }
         else if( poGMLJP2Box != nullptr && bJPXOption )
         {
@@ -4157,7 +4157,7 @@ void GDALRegister_JP2OpenJPEG()
 "       <Value>PROFILE_1</Value>"
 "   </Option>"
 "   <Option name='INSPIRE_TG' type='boolean' description='Whether to use features that comply with Inspire Orthoimagery Technical Guidelines' default='NO'/>"
-"   <Option name='JPX' type='boolean' description='Whether to advertize JPX features when a GMLJP2 box is written (or use JPX branding if GMLJP2 v2)' default='YES'/>"
+"   <Option name='JPX' type='boolean' description='Whether to advertise JPX features when a GMLJP2 box is written (or use JPX branding if GMLJP2 v2)' default='YES'/>"
 "   <Option name='GEOBOXES_AFTER_JP2C' type='boolean' description='Whether to place GeoJP2/GMLJP2 boxes after the code-stream' default='NO'/>"
 "   <Option name='PRECINCTS' type='string' description='Precincts size as a string of the form {w,h},{w,h},... with power-of-two values'/>"
 "   <Option name='TILEPARTS' type='string-select' description='Whether to generate tile-parts and according to which criterion' default='DISABLED'>"

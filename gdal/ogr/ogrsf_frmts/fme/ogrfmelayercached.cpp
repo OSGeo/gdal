@@ -2,7 +2,7 @@
  *
  * Project:  FMEObjects Translator
  * Purpose:  Implementation of the OGRFMELayerCached class.  This is the
- *           class implementing behaviour for layers that are built into a
+ *           class implementing behavior for layers that are built into a
  *           temporary spatial cache (as opposed to live read database).
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *

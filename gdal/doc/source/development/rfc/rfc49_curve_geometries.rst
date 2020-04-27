@@ -113,7 +113,7 @@ values :
 The codes have been taken from SFA 1.2.1, and are consistent with the
 PostGIS 2 implementation. Note that ISO SQL/MM Part 3 allows alternates
 values for wkbCircularString (8 or 1000001) : see Table 15 in the above
-mentionned draft. The values in the range 10000XX probably date back
+mentioned draft. The values in the range 10000XX probably date back
 from an earlier draft version. OGR will import them, but will use the
 values from SFA 1.2.1 when exporting WKB.
 
@@ -305,8 +305,8 @@ New methods
     *         and OGRGeometryFactory::curveFromLineString() can decode them.
     *         This is the best compromise for round-tripping in OGR and better results
     *         with PostGIS <a href="http://postgis.org/docs/ST_LineToCurve.html">ST_LineToCurve()</a>
-    *         If set to YES, the intermediate point is explicitely added to the linestring.
-    *         If set to NO, the intermediate point is not explicitely added.
+    *         If set to YES, the intermediate point is explicitly added to the linestring.
+    *         If set to NO, the intermediate point is not explicitly added.
     * </li>
     * </ul>
     */
@@ -383,7 +383,7 @@ Simple example doing the union of 2 half-circles that are contiguous:
        g3 = g1.Union(g2)
        assert g3.ExportToWkt() == 'CURVEPOLYGON (CIRCULARSTRING (0 0,1 1,2 0,1 -1,0 0))'
 
-Or using GetCurveGeometry() explicitely on the result of a buffer
+Or using GetCurveGeometry() explicitly on the result of a buffer
 operation:
 
 ::
@@ -555,7 +555,7 @@ Regarding code using GDAL
 
 Many applications will not be able to properly deal with the new
 geometry types that may now be returned by some drivers. If they don't
-want to test the geometry type and explicitely calling the conversion
+want to test the geometry type and explicitly calling the conversion
 function, they can call OGRSetNonLinearGeometriesEnabledFlag(FALSE) (the
 default value is TRUE, i.e. non-linear geometries can be returned). In
 which case, they will be transformed into their closest linear geometry,
@@ -569,7 +569,7 @@ bindings.
 Libraries should generally *not* use that method, since that could
 interfere with other libraries or applications.
 
-Note that it does *not* affect the behaviour of the C++ API. It has been
+Note that it does *not* affect the behavior of the C++ API. It has been
 deemed dangerous/complicated to try doing that at the C++ level as it
 could confuse drivers since they might call GetGeomType() for example.
 

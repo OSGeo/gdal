@@ -302,15 +302,15 @@ struct GDALVectorTranslateOptions
         source layer */
     bool bUnsetDefault;
 
-    /*! to prevent the new default behaviour that consists in, if the output driver has a FID layer
+    /*! to prevent the new default behavior that consists in, if the output driver has a FID layer
         creation option and we are not in append mode, to preserve the name of the source FID column
         and source feature IDs */
     bool bUnsetFid;
 
     /*! use the FID of the source features instead of letting the output driver to automatically
-        assign a new one. If not in append mode, this behaviour becomes the default if the output
+        assign a new one. If not in append mode, this behavior becomes the default if the output
         driver has a FID layer creation option. In which case the name of the source FID column will
-        be used and source feature IDs will be attempted to be preserved. This behaviour can be
+        be used and source feature IDs will be attempted to be preserved. This behavior can be
         disabled by option GDALVectorTranslateOptions::bUnsetFid */
     bool bPreserveFID;
 
@@ -1556,7 +1556,7 @@ OGRLayer* GDALVectorTranslateWrappedDataset::GetLayerByName(const char* pszName)
     if( poLayer == nullptr )
         return nullptr;
 
-    // Replicate source dataset behaviour: if the fact of calling
+    // Replicate source dataset behavior: if the fact of calling
     // GetLayerByName() on a initially hidden layer makes it visible through
     // GetLayerCount()/GetLayer(), do the same. Otherwise we are going to
     // maintain it hidden as well.
@@ -5265,7 +5265,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
             psOptions->nLayerTransaction = FALSE;
             psOptions->bForceTransaction = true;
         }
-        /* Undocumented. Just a provision. Default behaviour should be OK */
+        /* Undocumented. Just a provision. Default behavior should be OK */
         else if ( EQUAL(papszArgv[i],"-lyr_transaction") )
         {
             psOptions->nLayerTransaction = TRUE;

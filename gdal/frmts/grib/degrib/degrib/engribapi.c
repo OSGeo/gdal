@@ -439,7 +439,7 @@ int fillSect3(enGribMeta * en, uShort2 tmplNum, double majEarth,
    }
    /* srcGridDef = [Code:3.0] 0 => Use a grid template * 1 => predetermined
     * grid (may not have grid template) * 255 => means no grid applies (no
-    * grid def applies) * for 1,255 tempateNum = 65535 means no grid
+    * grid def applies) * for 1,255 templateNum = 65535 means no grid
     * template. */
    en->gds[0] = 0;
    en->gds[1] = Nx * Ny;
