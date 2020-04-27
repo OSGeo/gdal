@@ -1404,6 +1404,13 @@ CPLErr JPGDataset::LoadScanline( int iLine, GByte* outBuffer )
 
             for (int ci = 0; ci < sDInfo.num_components; ci++) {
                 const jpeg_component_info *compptr = &(sDInfo.comp_info[ci]);
+                if( compptr->h_samp_factor <= 0 ||
+                    compptr->v_samp_factor <= 0 )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Invalid sampling factor(s)");
+                    return CE_Failure;
+                }
                 nRequiredMemory += static_cast<vsi_l_offset>(
                     DIV_ROUND_UP(compptr->width_in_blocks, compptr->h_samp_factor)) *
                     DIV_ROUND_UP(compptr->height_in_blocks, compptr->v_samp_factor) *
