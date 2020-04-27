@@ -457,6 +457,7 @@ CPL_UNSTABLE_API macro (#1925)
 * OGRGeometryRebuildCurves(): only try to reconstruct curved geometry if one of the input geometries has really a non-linear portion
 * curveFromLineString(): make sure to exactly close the compound curve if the input curve is itself closed
 * GDALDataset::CopyLayer(): fix crash when using DST_SRSWKT option. And also set SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER)
+* Add OGR_G_RemoveLowerDimensionSubGeoms()
 
 == OGRSpatialReference ==
 
