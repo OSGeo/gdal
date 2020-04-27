@@ -1372,7 +1372,7 @@ static std::string SanitizeItemName(const std::string& osItemName)
     if( osRet != osItemName )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Lable item name %s has been sanitized to %s",
+                 "Label item name %s has been sanitized to %s",
                  osItemName.c_str(), osRet.c_str());
     }
     return osRet;
