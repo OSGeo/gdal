@@ -107,6 +107,7 @@ OGRGeometryH CPL_DLL OGR_G_ForceToMultiLineString( OGRGeometryH ) CPL_WARN_UNUSE
 OGRGeometryH CPL_DLL OGR_G_ForceTo( OGRGeometryH hGeom,
                                     OGRwkbGeometryType eTargetType,
                                     char** papszOptions ) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL OGR_G_RemoveLowerDimensionSubGeoms( const OGRGeometryH hGeom ) CPL_WARN_UNUSED_RESULT;
 
 int    CPL_DLL OGR_G_GetDimension( OGRGeometryH );
 int    CPL_DLL OGR_G_GetCoordinateDimension( OGRGeometryH );

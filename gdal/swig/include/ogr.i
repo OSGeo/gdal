@@ -2981,6 +2981,11 @@ public:
     return (OGRGeometryShadow*) OGR_G_MakeValid(self);
   }
 
+  %newobject RemoveLowerDimensionSubGeoms;
+  OGRGeometryShadow* RemoveLowerDimensionSubGeoms() {
+    return (OGRGeometryShadow*) OGR_G_RemoveLowerDimensionSubGeoms(self);
+  }
+
   %newobject Buffer;
 #ifndef SWIGJAVA
   %feature("kwargs") Buffer;

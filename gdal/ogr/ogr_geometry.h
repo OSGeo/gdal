@@ -2982,6 +2982,8 @@ class CPL_DLL OGRGeometryFactory
                                   OGRwkbGeometryType eTargetType,
                                   const char*const* papszOptions = nullptr );
 
+    static OGRGeometry * removeLowerDimensionSubGeoms( const OGRGeometry* poGeom );
+
     static OGRGeometry * organizePolygons( OGRGeometry **papoPolygons,
                                            int nPolygonCount,
                                            int *pbResultValidGeometry,
