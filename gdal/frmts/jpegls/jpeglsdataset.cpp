@@ -121,9 +121,11 @@ static const char* JPEGLSGetErrorAsString(CharlsApiResultType eCode)
         case CharlsApiResultType::ParameterValueNotSupported: return "ParameterValueNotSupported";
         case CharlsApiResultType::UncompressedBufferTooSmall: return "UncompressedBufferTooSmall";
         case CharlsApiResultType::CompressedBufferTooSmall: return "CompressedBufferTooSmall";
+#ifndef CHARLS_2_1
         case CharlsApiResultType::InvalidCompressedData: return "InvalidCompressedData";
         case CharlsApiResultType::ImageTypeNotSupported: return "ImageTypeNotSupported";
         case CharlsApiResultType::UnsupportedBitDepthForTransform: return "UnsupportedBitDepthForTransform";
+#endif
         case CharlsApiResultType::UnsupportedColorTransform: return "UnsupportedColorTransform";
         default: return "unknown";
     };
