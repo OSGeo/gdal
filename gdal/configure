@@ -22669,6 +22669,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 
 
+
 # Check whether --with-libz was given.
 if test "${with_libz+set}" = set; then :
   withval=$with_libz;
@@ -32369,7 +32370,13 @@ $as_echo_n "checking libnetcdf compiler and linker flags with nc-config... " >&6
     NETCDF_INCLUDEDIR=`$NETCDF_NCCONFIG --includedir`
     NETCDF_LIBS=`$NETCDF_NCCONFIG --libs`
 
+    if echo "x" | sed -E "s/x/y/" >/dev/null 2>/dev/null; then
         STRIPPED_LIBRARY_NAME="$(echo "${NETCDF_LIBS}" | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[:space:]]+::')"
+    elif echo "x" | sed -r "s/x/y/" >/dev/null 2>/dev/null; then
+                STRIPPED_LIBRARY_NAME="$(echo "${NETCDF_LIBS}" | sed -r 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[:space:]]+::')"
+    else
+        STRIPPED_LIBRARY_NAME="$(echo "${NETCDF_LIBS}")"
+    fi
 
     NETCDF_LIBS="$STRIPPED_LIBRARY_NAME"
     echo ""
@@ -34348,7 +34355,13 @@ $as_echo "no, mysql is pre-4.x" >&6; }
       HAVE_MYSQL=yes
       MYSQL_LIB="`$MYSQL_CONFIG --libs`"
 
+    if echo "x" | sed -E "s/x/y/" >/dev/null 2>/dev/null; then
         STRIPPED_LIBRARY_NAME="$(echo "${MYSQL_LIB}" | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[:space:]]+::')"
+    elif echo "x" | sed -r "s/x/y/" >/dev/null 2>/dev/null; then
+                STRIPPED_LIBRARY_NAME="$(echo "${MYSQL_LIB}" | sed -r 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[:space:]]+::')"
+    else
+        STRIPPED_LIBRARY_NAME="$(echo "${MYSQL_LIB}")"
+    fi
 
       MYSQL_LIB="$STRIPPED_LIBRARY_NAME"
       MYSQL_INC="`$MYSQL_CONFIG --include`"
@@ -37391,7 +37404,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
                 ac_sqlite3_version=`cat $ac_sqlite3_header_path \
                     | grep '#define.*SQLITE_VERSION.*\"' | sed -e 's/.* "//' \
                         | sed -e 's/"//'`
-                if test $ac_sqlite3_version != ""; then
+                if test "$ac_sqlite3_version" != ""; then
                     SQLITE3_VERSION=$ac_sqlite3_version
                 else
                     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Can not find SQLITE_VERSION macro in sqlite3.h header to retrieve SQLite version!" >&5
@@ -37776,7 +37789,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
                 ac_sqlite3_version=`cat $ac_sqlite3_header_path \
                     | grep '#define.*SQLITE_VERSION.*\"' | sed -e 's/.* "//' \
                         | sed -e 's/"//'`
-                if test $ac_sqlite3_version != ""; then
+                if test "$ac_sqlite3_version" != ""; then
                     SQLITE3_VERSION=$ac_sqlite3_version
                 else
                     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Can not find SQLITE_VERSION macro in sqlite3.h header to retrieve SQLite version!" >&5
@@ -39105,7 +39118,13 @@ if test "${HAVE_GEOS}" = "yes" ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: Using C API from GEOS $GEOS_VERSION" >&5
 $as_echo "$as_me: Using C API from GEOS $GEOS_VERSION" >&6;}
 
+    if echo "x" | sed -E "s/x/y/" >/dev/null 2>/dev/null; then
         STRIPPED_LIBRARY_NAME="$(echo "${GEOS_LIBS}" | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[:space:]]+::')"
+    elif echo "x" | sed -r "s/x/y/" >/dev/null 2>/dev/null; then
+                STRIPPED_LIBRARY_NAME="$(echo "${GEOS_LIBS}" | sed -r 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[:space:]]+::')"
+    else
+        STRIPPED_LIBRARY_NAME="$(echo "${GEOS_LIBS}")"
+    fi
 
   GEOS_LIBS="$STRIPPED_LIBRARY_NAME"
   LIBS="${GEOS_LIBS} ${LIBS}"
@@ -39384,7 +39403,13 @@ if test "${HAVE_SFCGAL}" = "yes" ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: Using C API from SFCGAL $SFCGAL_VERSION" >&5
 $as_echo "$as_me: Using C API from SFCGAL $SFCGAL_VERSION" >&6;}
 
+    if echo "x" | sed -E "s/x/y/" >/dev/null 2>/dev/null; then
         STRIPPED_LIBRARY_NAME="$(echo "${SFCGAL_LIBS}" | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[:space:]]+::')"
+    elif echo "x" | sed -r "s/x/y/" >/dev/null 2>/dev/null; then
+                STRIPPED_LIBRARY_NAME="$(echo "${SFCGAL_LIBS}" | sed -r 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[:space:]]+::')"
+    else
+        STRIPPED_LIBRARY_NAME="$(echo "${SFCGAL_LIBS}")"
+    fi
 
   SFCGAL_LIBS="$STRIPPED_LIBRARY_NAME"
   LIBS="${SFCGAL_LIBS} ${LIBS}"
