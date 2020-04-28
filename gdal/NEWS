@@ -2,7 +2,7 @@
 
 == In a nutshell... ==
 
- * Implement RFC 75: support for multidirectional arrays in MEM, VRT, netCDF, HDF4, HDF5 and GRIB drivers. Read/write for MEM and netCDF. Read/only for others. Add gdalmdiminfo and gdalmdimtranslate utilities.
+ * Implement RFC 75: support for multidimensional arrays in MEM, VRT, netCDF, HDF4, HDF5 and GRIB drivers. Read/write for MEM and netCDF. Read/only for others. Add gdalmdiminfo and gdalmdimtranslate utilities.
  * Implement RFC76: add capability of writing vector drivers in Python
  * New GDAL drivers:
    - COG: write-only, for Cloud Optimized GeoTIFF
