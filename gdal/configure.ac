@@ -1097,8 +1097,16 @@ dnl System library paths are things like /lib, /usr/lib, /lib64, /usr/lib64, and
 dnl There may be others as well, that will need be addressed as they arise. We avoid wildcards such as
 dnl /usr/lib/* to avoid potential cases such as /usr/lib/mysql/lib, which might not have an /etc/ld.so.conf.d
 dnl entry and would not shadow any possible custom installs anyway:
+
 AC_DEFUN([STRIP_SYSTEM_LIBRARY_PATHS],[
+    if echo "x" | sed -E "s/x/y/" >/dev/null 2>/dev/null; then
         STRIPPED_LIBRARY_NAME="$(echo [$1] | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[[:space:]]]+::')"
+    elif echo "x" | sed -r "s/x/y/" >/dev/null 2>/dev/null; then
+        dnl Compatibility with older GNU sed that doesn't support -E
+        STRIPPED_LIBRARY_NAME="$(echo [$1] | sed -r 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[[:space:]]]+::')"
+    else
+        STRIPPED_LIBRARY_NAME="$(echo [$1])"
+    fi
 ])
 
 dnl ---------------------------------------------------------------------------
