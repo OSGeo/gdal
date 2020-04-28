@@ -122,9 +122,12 @@ static const char* JPEGLSGetErrorAsString(CharlsApiResultType eCode)
         case CharlsApiResultType::UncompressedBufferTooSmall: return "UncompressedBufferTooSmall";
         case CharlsApiResultType::CompressedBufferTooSmall: return "CompressedBufferTooSmall";
         case CharlsApiResultType::InvalidCompressedData: return "InvalidCompressedData";
-        case CharlsApiResultType::ImageTypeNotSupported: return "ImageTypeNotSupported";
-        case CharlsApiResultType::UnsupportedBitDepthForTransform: return "UnsupportedBitDepthForTransform";
+        case CharlsApiResultType::TooMuchCompressedData: return "TooMuchCompressedData";
         case CharlsApiResultType::UnsupportedColorTransform: return "UnsupportedColorTransform";
+        case CharlsApiResultType::UnsupportedEncoding: return "UnsupportedEncoding";
+        case CharlsApiResultType::UnknownJpegMarker: return "UnknownJpegMarker";
+        case CharlsApiResultType::MissingJpegMarkerStart: return "MissingJpegMarkerStart";
+        case CharlsApiResultType::UnexpectedFailure: return "UnexpectedFailure";
         default: return "unknown";
     };
 }
@@ -139,9 +142,12 @@ static const char* JPEGLSGetErrorAsString(JLS_ERROR eCode)
         case UncompressedBufferTooSmall: return "UncompressedBufferTooSmall";
         case CompressedBufferTooSmall: return "CompressedBufferTooSmall";
         case InvalidCompressedData: return "InvalidCompressedData";
-        case ImageTypeNotSupported: return "ImageTypeNotSupported";
-        case UnsupportedBitDepthForTransform: return "UnsupportedBitDepthForTransform";
+        case TooMuchCompressedData: return "TooMuchCompressedData";
         case UnsupportedColorTransform: return "UnsupportedColorTransform";
+        case UnsupportedEncoding: return "UnsupportedEncoding";
+        case UnknownJpegMarker: return "UnknownJpegMarker";
+        case MissingJpegMarkerStart: return "MissingJpegMarkerStart";
+        case UnexpectedFailure: return "UnexpectedFailure";
         default: return "unknown";
     };
 }

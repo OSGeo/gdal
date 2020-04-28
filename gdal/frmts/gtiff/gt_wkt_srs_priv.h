@@ -30,7 +30,7 @@
 #ifndef GT_WKT_SRS_PRIV_H_INCLUDED
 #define GT_WKT_SRS_PRIV_H_INCLUDED
 
-#include "geotiff.h"
+#include "libgeotiff/geotiff.h"
 
 #if LIBGEOTIFF_VERSION >= 1600
 
