@@ -184,6 +184,9 @@ RUN apt-get update -y; \
         libwebp6 \
         libzstd1 bash libpq5 libssl1.1 libopenjp2-7
 
+RUN apt-get update; \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y python-is-python3
+
 # Order layers starting with less frequently varying ones
 # Only used for custom libopenjp2
 # COPY --from=builder  /build_thirdparty/usr/ /usr/

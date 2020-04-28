@@ -273,6 +273,9 @@ RUN \
     mv cdn.proj.org/* ${PROJ_INSTALL_PREFIX}/share/proj/; \
     rmdir cdn.proj.org
 
+RUN apt-get update; \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y python-is-python3
+
 COPY --from=builder  /build_thirdparty/usr/ /usr/
 
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/share/proj/ ${PROJ_INSTALL_PREFIX}/share/proj/
