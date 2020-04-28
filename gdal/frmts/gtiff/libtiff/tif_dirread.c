@@ -6439,7 +6439,7 @@ static int _TIFFFillStrilesInternal( TIFF *tif, int loadStripByteCount )
     if( td->td_stripoffset_p != NULL )
             return 1;
 
-    /* If tdir_count was cancelled, then we already got there, but in error */
+    /* If tdir_count was canceled, then we already got there, but in error */
     if( td->td_stripoffset_entry.tdir_count == 0 )
             return 0;
 

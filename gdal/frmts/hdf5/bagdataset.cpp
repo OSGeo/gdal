@@ -3610,7 +3610,7 @@ class BAGCreator
         hid_t m_bagRoot = -1;
 
         static bool SubstituteVariables(CPLXMLNode* psNode, char** papszDict);
-        static CPLString GenerateMatadata(GDALDataset *poSrcDS,
+        static CPLString GenerateMetadata(GDALDataset *poSrcDS,
                                           char ** papszOptions);
         bool CreateAndWriteMetadata(const CPLString& osXMLMetadata);
         bool CreateTrackingListDataset();
@@ -3786,10 +3786,10 @@ bool BAGCreator::SubstituteVariables(CPLXMLNode* psNode, char** papszDict)
 }
 
 /************************************************************************/
-/*                          GenerateMatadata()                          */
+/*                          GenerateMetadata()                          */
 /************************************************************************/
 
-CPLString BAGCreator::GenerateMatadata(GDALDataset *poSrcDS,
+CPLString BAGCreator::GenerateMetadata(GDALDataset *poSrcDS,
                                        char ** papszOptions)
 {
     CPLXMLNode* psRoot;
@@ -4395,7 +4395,7 @@ bool BAGCreator::Create( const char *pszFilename, GDALDataset *poSrcDS,
         return false;
     }
 
-    CPLString osXMLMetadata = GenerateMatadata(poSrcDS, papszOptions);
+    CPLString osXMLMetadata = GenerateMetadata(poSrcDS, papszOptions);
     if( osXMLMetadata.empty() )
     {
         return false;

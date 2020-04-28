@@ -274,7 +274,7 @@ namespace nccfdriver
             } 
         }
 
-        // (1) the touple order for a single point
+        // (1) the tuple order for a single point
         // (2) the variable ids with the relevant coordinate values
         int X = INVALID_VAR_ID;
         int Y = INVALID_VAR_ID;
@@ -392,7 +392,7 @@ namespace nccfdriver
         }
     
 
-        // (3) check touple order
+        // (3) check tuple order
         if(this->touple_order < 2)
         {
             throw SG_Exception_Existential(container_name, "insufficent node coordinates must have at least two axis");    

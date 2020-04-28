@@ -194,7 +194,7 @@ Layer Creation Options
    (GDAL >=2.4, or YES for earlier versions) by default. Creates a
    spatial index (GiST) on the geometry column to speed up queries (Has
    effect only when PostGIS is available). Set to NONE (GDAL >= 2.4, or
-   FALSE for earlier verions) to disable. BRIN is only available with
+   FALSE for earlier versions) to disable. BRIN is only available with
    PostgreSQL >= 9.4 and PostGIS >= 2.3. SPGIST is only available with
    PostgreSQL >= 11 and PostGIS >= 2.5
 -  **TEMPORARY**: (From GDAL 1.8.0) Set to OFF by default. Creates a
@@ -205,7 +205,7 @@ Layer Creation Options
    indexing since PostgreSQL 9.3.
 -  **NONE_AS_UNKNOWN**: (From GDAL 1.8.1) Can bet set to TRUE to force
    non-spatial layers (wkbNone) to be created as spatial tables of type
-   GEOMETRY (wkbUnknown), which was the behaviour prior to GDAL 1.8.0.
+   GEOMETRY (wkbUnknown), which was the behavior prior to GDAL 1.8.0.
    Defaults to NO, in which case a regular table is created and not
    recorded in the PostGIS geometry_columns table.
 -  **FID**: (From GDAL 1.9.0) Name of the FID column to create. Defaults

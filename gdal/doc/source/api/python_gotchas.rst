@@ -190,7 +190,7 @@ But according to `email from Even Rouault <https://lists.osgeo.org/pipermail/gda
 
    Destroy() was perhaps necessary with old-gen bindings, but I'm not even sure 
    of that... Perhaps this shouldn't have been exposed at all... But, as 
-   mentionned in the slides, it is true that there are situations where you 
+   mentioned in the slides, it is true that there are situations where you 
    shouldn't call Destroy() at all.
 
 

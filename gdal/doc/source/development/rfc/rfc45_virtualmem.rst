@@ -30,7 +30,7 @@ possible, and if one wants to operate on the whole image, one must use a
 windowing strategy to avoid memory issues : typically by proceeding
 scanline (or group of scanlines) by scanline, or by blocks for tiled
 images. This can make the writing of algorithms more complicated when
-they need to access a neighbourhoud of pixels around each pixel of
+they need to access a neighbourhood of pixels around each pixel of
 interest, since the size of this extra window must be taken into
 account, leading to overlapping regions of interests. Nothing that
 cannot be solved, but that requires some additional thinking that
@@ -748,7 +748,7 @@ Implemented by gdalvirtualmem.cpp
            by pixel organization, tile (1, 0), ...  */
        GTO_TIP,
        /*! Band Interleaved by Tile : tile (0,0) of first band, tile (0,0) of second
-           band, ... tile (1,0) of fisrt band, tile (1,0) of second band, ... */
+           band, ... tile (1,0) of first band, tile (1,0) of second band, ... */
        GTO_BIT,
        /*! Band SeQuential : all the tiles of first band, all the tiles of following band... */
        GTO_BSQ

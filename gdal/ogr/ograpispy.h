@@ -47,7 +47,7 @@
  * are recognized as special strings to name the standard output and error files).
  * The traced calls are outputted as a OGR Python script.
  *
- * Only calls that may have side-effects to the behaviour of drivers are traced.
+ * Only calls that may have side-effects to the behavior of drivers are traced.
  *
  * If a file-based datasource is open in update mode, a snapshot of its initial
  * state is stored in a 'snapshot' directory, and then a copy of it is made as

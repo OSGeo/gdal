@@ -389,7 +389,7 @@ int NTFFileReader::Open( const char * pszFilenameIn )
     {
         delete poRecord;
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Cound not find section header record in %s.\n",
+                  "Could not find section header record in %s.\n",
                   pszFilename );
         return FALSE;
     }
@@ -398,7 +398,7 @@ int NTFFileReader::Open( const char * pszFilenameIn )
     {
         delete poRecord;
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Cound not find product type in %s.\n",
+                  "Could not find product type in %s.\n",
                   pszFilename );
         return FALSE;
     }

@@ -58,7 +58,7 @@ When translating from or into BYN file to or from another formats the
 scale will afect the result profundly.
 
 Translating to a format that supports Scale (GTIFF for example) will
-mantain the data type and thescale information. The pixel values are
+maintain the data type and thescale information. The pixel values are
 perfectly preserved.
 
 Translating to a format that does not support Scale will maintain the

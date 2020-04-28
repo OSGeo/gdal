@@ -141,12 +141,12 @@ OGRDataSource which inherits from GDALDataset).
     Nested transactions are not supported.
     
     All changes done after the start of the transaction are definitely applied in the
-    datasource if CommitTransaction() is called. They may be cancelled by calling
+    datasource if CommitTransaction() is called. They may be canceled by calling
     RollbackTransaction() instead.
     
     At the time of writing, transactions only apply on vector layers.
     
-    Datasets that support transactions will advertize the ODsCTransactions capability.
+    Datasets that support transactions will advertise the ODsCTransactions capability.
     Use of transactions at dataset level is generally preferred to transactions at
     layer level, whose scope is rarely limited to the layer from which it was started.
     
@@ -154,15 +154,15 @@ OGRDataSource which inherits from GDALDataset).
     should be called.
     
     If an error occurs after a successful StartTransaction(), the whole
-    transaction may or may not be implicitely cancelled, depending on drivers. (e.g.
+    transaction may or may not be implicitly canceled, depending on drivers. (e.g.
     the PG driver will cancel it, SQLite/GPKG not). In any case, in the event of an
     error, an explicit call to RollbackTransaction() should be done to keep things balanced.
     
     By default, when bForce is set to FALSE, only "efficient" transactions will be
     attempted. Some drivers may offer an emulation of transactions, but sometimes
-    with significant overhead, in which case the user must explicitely allow for such
+    with significant overhead, in which case the user must explicitly allow for such
     an emulation by setting bForce to TRUE. Drivers that offer emulated transactions
-    should advertize the ODsCEmulatedTransactions capability (and not ODsCTransactions).
+    should advertise the ODsCEmulatedTransactions capability (and not ODsCTransactions).
     
     This function is the same as the C function GDALDatasetStartTransaction().
 
@@ -239,14 +239,14 @@ Emulated transactions
 A new function OGRCreateEmulatedTransactionDataSourceWrapper() is added
 for used by drivers that do not natively support transactions but want
 an emulation of them. It could potentially be adopted by any datasource
-whose data is supportted by files/directories.
+whose data is supported by files/directories.
 
 ::
 
-   /** Returns a new datasource object that adds transactional behaviour to an existing datasource.
+   /** Returns a new datasource object that adds transactional behavior to an existing datasource.
     * 
     * The provided poTransactionBehaviour object should implement driver-specific
-    * behaviour for transactions.
+    * behavior for transactions.
     *
     * The generic mechanisms offered by the wrapper class do not cover concurrent
     * updates (though different datasource connections) to the same datasource files.
@@ -258,12 +258,12 @@ whose data is supportted by files/directories.
     * Layer structural changes are not allowed after StartTransaction() if the
     * layer definition object has been returned previously with GetLayerDefn().
     *
-    * @param poBaseDataSource the datasource to which to add transactional behaviour.
+    * @param poBaseDataSource the datasource to which to add transactional behavior.
     * @param poTransactionBehaviour an implementation of the IOGRTransactionBehaviour interface.
     * @param bTakeOwnershipDataSource whether the returned object should own the
     *                                 passed poBaseDataSource (and thus destroy it
     *                                 when it is destroyed itself).
-    * @param bTakeOwnershipTransactionBehaviour whether the returned object should own
+    * @param bTakeOwnershipTransactionBehavior whether the returned object should own
     *                                           the passed poTransactionBehaviour
     *                                           (and thus destroy it when
     *                                           it is destroyed itself).
@@ -274,7 +274,7 @@ whose data is supportted by files/directories.
                                    OGRDataSource* poBaseDataSource,
                                    IOGRTransactionBehaviour* poTransactionBehaviour,
                                    int bTakeOwnershipDataSource,
-                                   int bTakeOwnershipTransactionBehaviour);
+                                   int bTakeOwnershipTransactionBehavior);
 
 The definition of the IOGRTransactionBehaviour interface is the
 following:
@@ -358,7 +358,7 @@ the following additional information to clarify its semantics :
 PG driver changes
 ~~~~~~~~~~~~~~~~~
 
-Dataset level transactions have been implemented, and use of implicitely
+Dataset level transactions have been implemented, and use of implicitly
 created transactions reworked.
 
 Interleaved layer reading is now possible.
@@ -367,20 +367,20 @@ GetFeature() has been modified to run without a cursor or a transaction,
 and all other calls to transactions have been checked/modified to not
 reset accidentally a transaction initiated by the user.
 
-Below the new behaviour as described in the updated drv_pg_advanced.html
+Below the new behavior as described in the updated drv_pg_advanced.html
 help page :
 
 ::
 
    Efficient sequential reading in PostgreSQL requires to be done within a transaction
    (technically this is a CURSOR WITHOUT HOLD).
-   So the PG driver will implicitely open such a transaction if none is currently
+   So the PG driver will implicitly open such a transaction if none is currently
    opened as soon as a feature is retrieved. This transaction will be released if
    ResetReading() is called (provided that no other layer is still being read).
 
    If within such an implicit transaction, an explicit dataset level StartTransaction()
    is issued, the PG driver will use a SAVEPOINT to emulate properly the transaction
-   behaviour while making the active cursor on the read layer still opened.
+   behavior while making the active cursor on the read layer still opened.
 
    If an explicit transaction is opened with dataset level StartTransaction()
    before reading a layer, this transaction will be used for the cursor that iterates
@@ -499,7 +499,7 @@ GPKG and SQLite driver changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Dataset level transactions have been implemented. A few fixes made here
-and there to avoid reseting accidentally a transaction initiated by the
+and there to avoid resetting accidentally a transaction initiated by the
 user.
 
 FileGDB driver changes
@@ -511,7 +511,7 @@ geodatabase when StartTransaction(force=TRUE) is called. If the
 transaction is committed, the backup copy is destroyed. If the
 transaction is rolled back, the backup copy is restored. So this might
 be costly when operating on huge geodatabases. Note that this emulation
-has an unspecified behaviour in case of concurrent updates (with
+has an unspecified behavior in case of concurrent updates (with
 different connections in the same or another process).
 
 SWIG bindings (Python / Java / C# / Perl) changes
@@ -548,16 +548,16 @@ The test suite is extended to test
 Compatibility Issues
 --------------------
 
-As described above, subtle behaviour changes can be observed with the PG
+As described above, subtle behavior changes can be observed with the PG
 driver, related to implicit transactions that were flushed before and
 are no longer now, but this should hopefully be restricted to
 non-typical use cases. So some cases that "worked" before might no
-longer work, but the new behaviour should hopefully be more
+longer work, but the new behavior should hopefully be more
 understandable.
 
 The PG and SQLite drivers could accept apparently nested calls to
 StartTransaction() (at the layer level). This is no longer possible
-since they are now redirected to dataset transactions, that explicitely
+since they are now redirected to dataset transactions, that explicitly
 do not support it.
 
 Out of scope

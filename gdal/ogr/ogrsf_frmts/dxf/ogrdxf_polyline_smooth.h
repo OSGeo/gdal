@@ -92,7 +92,7 @@ public:
 class DXFSmoothPolyline
 {
     // A DXF polyline that includes vertex bulge information.
-    // Call Tesselate() to convert to an OGRGeometry.
+    // Call Tessellate() to convert to an OGRGeometry.
     // We treat Z as constant over the entire string; this may
     // change in the future.
 
@@ -107,7 +107,7 @@ public:
     DXFSmoothPolyline() : m_blinestringstarted(false), m_bClosed(false),
                           m_dim(2), m_bUseMaxGapWhenTessellatingArcs(false) { }
 
-    OGRGeometry* Tesselate() const;  // TODO: Spelling.
+    OGRGeometry* Tessellate() const;
 
     size_t size() const { return m_vertices.size(); }
 

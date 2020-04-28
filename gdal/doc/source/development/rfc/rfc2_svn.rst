@@ -37,7 +37,7 @@ Details
    regain commit access. Committer access on the new repository will be
    enabled after the above changes are all complete.
 8. The GDAL committers document should be updated, removing non-GDAL
-   commiters (ie. libtiff, geotiff, etc).
+   committers (ie. libtiff, geotiff, etc).
 
 Header Format
 -------------

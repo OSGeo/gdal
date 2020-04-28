@@ -680,7 +680,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         oFieldDefn.SetSubType(eSubType);
         // On creation in the FileGDB driver (GDBFieldTypeToWidthPrecision) if
         // string width is 0, we pick up 65535 by default to mean unlimited
-        // string length, but we do not want to advertize such a big number.
+        // string length, but we do not want to advertise such a big number.
         if( eType == OFTString && nWidth < 65535 )
             oFieldDefn.SetWidth(nWidth);
         oFieldDefn.SetNullable(poGDBField->IsNullable());

@@ -237,7 +237,7 @@ struct GDALTranslateOptions
     /*! If this option is set, GDALTranslateOptions::adfSrcWin or (GDALTranslateOptions::dfULX,
         GDALTranslateOptions::dfULY, GDALTranslateOptions::dfLRX, GDALTranslateOptions::dfLRY)
         values that falls partially outside the source raster extent will be considered
-        as an error. The default behaviour is to accept such requests. */
+        as an error. The default behavior is to accept such requests. */
     bool bErrorOnPartiallyOutside;
 
     /*! Same as bErrorOnPartiallyOutside, except that the criterion for
@@ -1051,7 +1051,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         // memory driver doesn't expect files with those names to be deleted
         // on a file system...
         // This is somewhat messy. Ideally there should be a way for the
-        // driver to overload the default behaviour
+        // driver to overload the default behavior
         if( !EQUAL(psOptions->pszFormat, "MEM") &&
             !EQUAL(psOptions->pszFormat, "Memory") )
         {
@@ -2119,7 +2119,7 @@ static void AttachMetadata( GDALDatasetH hDS, char **papszMetadataOptions )
 /************************************************************************/
 
 /* A bit of a clone of VRTRasterBand::CopyCommonInfoFrom(), but we need */
-/* more and more custom behaviour in the context of gdal_translate ... */
+/* more and more custom behavior in the context of gdal_translate ... */
 
 static void CopyBandInfo( GDALRasterBand * poSrcBand, GDALRasterBand * poDstBand,
                           int bCanCopyStatsMetadata, int bCopyScale, int bCopyNoData, bool bCopyRAT,

@@ -32,7 +32,7 @@ What is proposed here is that in the first case where the "other_field"
 keyword is totally absent, we use the current unset field concept. And
 for the other case, we add a new concept of null field.
 
-This distinction beetween both concepts apply to all GeoJSON based
+This distinction between both concepts apply to all GeoJSON based
 formats and protocols, so GeoJSON, ElasticSearch, MongoDB, CouchDB,
 Cloudant.
 
@@ -119,7 +119,7 @@ The following drivers will be modified to take into account the unset
 and NULL state as distinct states: GeoJSON, ElasticSearch, MongoDB,
 CouchDB, Cloudant, GML, GMLAS, WFS.
 
-Note: regarding the GMLAS driver, the previous behaviour to have both
+Note: regarding the GMLAS driver, the previous behavior to have both
 xxxx and xxxx_nil fields when xxxx is an optional nillable XML elements
 is preserved by default (can be changed through a configuration setting
 in the gmlasconf.xml file). The rationale is that the GMLAS driver is
@@ -135,10 +135,10 @@ field unset will also test if the field is null.
 
 For SQL based drivers (PG, PGDump, Carto, MySQL, OCI, SQLite, GPKG), on
 reading a SQL NULL value will be mapped to the new Null state. On
-writing, a unset field will not be mentionned in the corresponding
-INSERT or UPDATE statement. Whereas a Null field will be mentionned and
+writing, a unset field will not be mentioned in the corresponding
+INSERT or UPDATE statement. Whereas a Null field will be mentioned and
 set to NULL. On insertion, there will generally be no difference of
-behaviour, unless a default value is defined on the field, in which case
+behavior, unless a default value is defined on the field, in which case
 it will be used by the database engine to set the value in the unset
 case. On update, a unset field will not see its content updated by the
 database, where as a field set to NULL will be updated to NULL.
@@ -166,7 +166,7 @@ Compatibility Issues
 All code, in GDAL source code, and in calling external code, that
 currently uses OGRFeature::IsFieldSet() / OGR_F_IsFieldSet() should also
 be updated to used IsFieldNull() / OGR_F_IsFieldNull(), either to act
-exactly as in the unset case, or add a new appropriate behaviour. A
+exactly as in the unset case, or add a new appropriate behavior. A
 convenience method and function OGRFeature::IsFieldSetAndNotNull() /
 OGR_F_IsFieldSetAndNotNull() is added to ease the porting of existing
 code.

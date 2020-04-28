@@ -57,7 +57,7 @@ CPL_CVSID("$Id$")
 
      1) the table is registered in the raster_columns table and number of bands, minx,miny,maxx,maxy are available
         a) no where clause, the table has a primary key and a GIST index on the raster column.
-            If the raster_columns advertize a scale_x and scale_y, use it.
+            If the raster_columns advertise a scale_x and scale_y, use it.
             Otherwise take the metadata of 10 rasters and compute and average scale_x, scale_y
             With above information, we can build the dataset definition.
 

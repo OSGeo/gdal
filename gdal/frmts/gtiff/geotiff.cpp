@@ -10429,7 +10429,7 @@ CPLErr GTiffDataset::IBuildOverviews(
 
     // Make implicit JPEG overviews invisible, but do not destroy
     // them in case they are already used (not sure that the client
-    // has the right to do that.  Behaviour maybe undefined in GDAL API.
+    // has the right to do that.  Behavior maybe undefined in GDAL API.
     m_nJPEGOverviewCount = 0;
 
 /* -------------------------------------------------------------------- */
@@ -14656,7 +14656,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                                 "specification, assumes that the file "
                                 "was intended to be north-up, and will "
                                 "treat this file as if ScaleY was "
-                                "positive. You may override this behaviour "
+                                "positive. You may override this behavior "
                                 "by setting the GTIFF_HONOUR_NEGATIVE_SCALEY "
                                 "configuration option to YES");
                             m_adfGeoTransform[5] = padfScale[1];

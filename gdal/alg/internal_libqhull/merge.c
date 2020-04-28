@@ -1908,7 +1908,7 @@ void qh_mergecycle_all(facetT *facetlist, boolT *wasmerge) {
       each facet->f.replace == newfacet
 
     newfacet moved to end of qh.facet_list
-      makes newfacet a newfacet (get's facet1->id if it was old)
+      makes newfacet a newfacet (gets facet1->id if it was old)
       sets newfacet->newmerge
       clears newfacet->center (unless merging into a large facet)
       clears newfacet->tested and ridge->tested for facet1
@@ -2597,7 +2597,7 @@ void qh_mergeridges(facetT *facet1, facetT *facet2) {
         if apex
           rename facet1 to facet2 in its vertex neighbors
         else
-          delete facet1 from vertex neighors
+          delete facet1 from vertex neighbors
           if only in facet2
             add vertex to qh.del_vertices for later deletion
       for each ridge of facet1

@@ -231,7 +231,7 @@ Out-of-tree drivers :
     drivers. GDAL drivers should also declare SetMetadataItem( GDAL_DCAP_RASTER, "YES" ).
     OGRDataSource::CreateLayer() and SyncToDisk() changes will affect OGR drivers.
 
-Behaviour changes :
+Behavior changes :
 
   * GDALDriverManager::GetDriverCount() and GetDriver() return both raster and
     vector drivers. The nature of a driver can be tested with the GDAL_DCAP_RASTER
@@ -249,7 +249,7 @@ C/C++ API :
     geometry types. Use wkbFlatten(), wkbHasZ(), wkbSetZ() instead
   * OGRwkbGeometryType enumeration has new values.
 
-Behaviour changes :
+Behavior changes :
 
   * GML, NAS, WFS, PostGIS, VRT, GeoPackage and CSV drivers can return non-linear geometries.
     Applications that do not wish to get such geometries can call
@@ -283,7 +283,7 @@ C API:
   * OGR_L_GetFeature(), OGR_L_DeleteFeature(), OGR_L_SetNextByIndex() take a GIntBig instead of a long
   * OGR_F_GetFID() and OGR_L_GetFeatureCount() now returns a GIntBig
 
-Behaviour changes :
+Behavior changes :
   * OFTInteger64 and OFTIntegerList64 can be returned whereas OGRFieldType is returned.
 
 Out-of-tree drivers :
@@ -298,7 +298,7 @@ Link: http://trac.osgeo.org/gdal/wiki/rfc52_strict_sql_quoting
 
 No API changes
 
-Behaviour changes:
+Behavior changes:
   * Identifiers, i.e column names or table names, can no longer be quoted with
     single quote characters, but must use double quote characters if quoting is
     needed, conforming with SQL 92 syntax. Failure to do the change will not
@@ -322,11 +322,11 @@ Link: http://trac.osgeo.org/gdal/wiki/rfc54_dataset_transactions
 
 Only API additions.
 
-Behaviour changes:
-  * As described in the RFC, subtle behaviour changes can be observed with the PG driver,
+Behavior changes:
+  * As described in the RFC, subtle behavior changes can be observed with the PG driver,
     related to implicit transactions that were flushed before and are no longer now,
     but this should hopefully be restricted to non-typical use cases. So some cases that "worked" before might
-    no longer work, but the new behaviour should hopefully be more understandable.
+    no longer work, but the new behavior should hopefully be more understandable.
 
   * The PG and SQLite drivers could accept apparently nested calls to StartTransaction()
     (at the layer level). This is no longer possible since they are now redirected
@@ -336,7 +336,7 @@ H) RFC 55: Refined SetFeature() and DeleteFeature() semantics
 
 Link: http://trac.osgeo.org/gdal/wiki/rfc55_refined_setfeature_deletefeature_semantics
 
-Behaviour changes:
+Behavior changes:
     * Drivers will now return OGRERR_NON_EXISTING_FEATURE when calling SetFeature()
       or DeleteFeature() with a feature id that does not exist.
 
@@ -377,7 +377,7 @@ Driver related changes:
         char CPL_DLL * OGRGetRFC822DateTime(const OGRField* psField);
         char CPL_DLL * OGRGetXMLDateTime(const OGRField* psField);
 
-Behaviour changes:
+Behavior changes:
 
     * OGRFeature::GetFieldAsString() will now output milliseconds if a DateTime/Time
       field has such precision.

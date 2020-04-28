@@ -62,7 +62,7 @@ Thread support
 
 By default, if the JPEG2000 file has internal tiling, GDAL will try to
 decode several tiles in multiple threads if the RasterIO() request it
-receives intersect several tiles. This behaviour can be controlled with
+receives intersect several tiles. This behavior can be controlled with
 the GDAL_NUM_THREADS configuration option that defaults to ALL_CPUS in
 that context. In case RAM is limited, it can be needed to set this
 configuration option to 1 to disable multi-threading
@@ -183,7 +183,7 @@ Creation Options
    which add constraints on tile dimensions and number of resolutions.
    In AUTO mode, the driver will determine if the BLOCKXSIZE,
    BLOCKYSIZE, RESOLUTIONS, CODEBLOCK_WIDTH and CODEBLOCK_HEIGHT values
-   are compatible with PROFILE_1 and advertize it in the relevant case.
+   are compatible with PROFILE_1 and advertise it in the relevant case.
    Note that the default values of those options are compatible with
    PROFILE_1. Otherwise UNRESTRICTED is advertized. Defaults to AUTO.
 
@@ -196,7 +196,7 @@ Creation Options
    CODEBLOCK_HEIGHT options will be checked against the requirements and
    recommendations of the Technical Guidelines.
 
--  **JPX=YES/NO**: (GDAL >= 2.0) Whether to advertize JPX features, and
+-  **JPX=YES/NO**: (GDAL >= 2.0) Whether to advertise JPX features, and
    add a Reader requirement box, when a GMLJP2 box is written. Defaults
    to YES. This option should not be used unless compatibility problems
    with a reader occur.

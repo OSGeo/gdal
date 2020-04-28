@@ -1424,7 +1424,7 @@ class GDAL2Tiles(object):
         # Not for 'raster' profile
         self.scaledquery = True
         # How big should be query window be for scaling down
-        # Later on reset according the chosen resampling algorightm
+        # Later on reset according the chosen resampling algorithm
         self.querysize = 4 * self.tile_size
 
         # Should we use Read on the input file for generating overview tiles?
@@ -1602,7 +1602,7 @@ class GDAL2Tiles(object):
         self.omaxx = self.out_gt[0] + self.warped_input_dataset.RasterXSize * self.out_gt[1]
         self.omaxy = self.out_gt[3]
         self.ominy = self.out_gt[3] - self.warped_input_dataset.RasterYSize * self.out_gt[1]
-        # Note: maybe round(x, 14) to avoid the gdal_translate behaviour, when 0 becomes -1e-15
+        # Note: maybe round(x, 14) to avoid the gdal_translate behavior, when 0 becomes -1e-15
 
         if self.options.verbose:
             print("Bounds (output srs):", round(self.ominx, 13), self.ominy, self.omaxx, self.omaxy)

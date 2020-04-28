@@ -991,10 +991,10 @@ size_t VSIS3WriteHandle::ReadCallBackBufferChunked( char *buffer, size_t size,
     }
     const size_t nSizeMax = size * nitems;
     size_t nSizeToWrite = nSizeMax;
-    size_t nChunckedBufferRemainingSize =
+    size_t nChunkedBufferRemainingSize =
                 poThis->m_nChunkedBufferSize - poThis->m_nChunkedBufferOff;
-    if( nChunckedBufferRemainingSize < nSizeToWrite )
-        nSizeToWrite = nChunckedBufferRemainingSize;
+    if( nChunkedBufferRemainingSize < nSizeToWrite )
+        nSizeToWrite = nChunkedBufferRemainingSize;
     memcpy(buffer,
            static_cast<const GByte*>(poThis->m_pBuffer) + poThis->m_nChunkedBufferOff,
            nSizeToWrite);

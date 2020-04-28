@@ -88,7 +88,7 @@ Creation Options
    the GeoJP2 (GeoTIFF in JPEG2000) specification should be included in
    the file. Defaults to NO.
 -  **SPLIT_IEEE754=YES/NO**: Whether encoding of Float32 bands as 3
-   bands with values decomposed according to IEEE-754 struture: first
+   bands with values decomposed according to IEEE-754 structure: first
    band (1 bit, signed) with sign bit, second band (8 bits, unsigned)
    with exponent value and third band (23 bits, unsigned) with mantissa
    value. Default to NO. This is a non-standard extension to encode
@@ -178,7 +178,7 @@ Creation Options
    several layers. The PCRL (position) should be used with precincts.
    Defaults to LRCP.
 
--  **JPX=YES/NO**: Whether to advertize JPX features, and add a Reader
+-  **JPX=YES/NO**: Whether to advertise JPX features, and add a Reader
    requirement box, when a GMLJP2 box is written (for GMLJP2 v2, the
    branding will also be "jpx "). Defaults to YES. This option should
    not be used unless compatibility problems with a reader occur.

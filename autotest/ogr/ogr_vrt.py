@@ -2858,7 +2858,7 @@ def test_ogr_vrt_36():
     gdal.Unlink('/vsimem/ogr_vrt_36.vrt')
 
 ###############################################################################
-# Test implict non-spatial layers (#6336)
+# Test implicit non-spatial layers (#6336)
 
 
 def test_ogr_vrt_37():

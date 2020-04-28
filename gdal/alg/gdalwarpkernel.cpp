@@ -4743,7 +4743,7 @@ static CPL_INLINE bool GWKCheckAndComputeSrcOffsets(
     // Check for potential overflow when casting from float to int, (if
     // operating outside natural projection area, padfX/Y can be a very huge
     // positive number before doing the actual conversion), as such cast is
-    // undefined behaviour that can trigger exception with some compilers
+    // undefined behavior that can trigger exception with some compilers
     // (see #6753)
     if( _padfX[_iDstX] + 1e-10 > _nSrcXSize + _poWK->nSrcXOff ||
         _padfY[_iDstX] + 1e-10 > _nSrcYSize + _poWK->nSrcYOff )

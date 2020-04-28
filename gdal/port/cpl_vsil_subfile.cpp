@@ -296,7 +296,7 @@ VSISubFileFilesystemHandler::DecomposePath( const char *pszPath,
         {
             // -1 is sometimes passed to mean that we don't know the file size
             // for example when creating a JPEG2000 datastream in a NITF file
-            // Transform it into 0 for correct behaviour of Read(), Write() and
+            // Transform it into 0 for correct behavior of Read(), Write() and
             // Eof().
             if( pszPath[i + 1] == '-' )
                 nSubFileSize = 0;

@@ -692,7 +692,7 @@ OGRFeature *OGRDWGLayer::TranslateLWPOLYLINE( OdDbEntityPtr poEntity )
         oSmoothPolyline.Close();
 
     poFeature->SetGeometryDirectly(
-        oSmoothPolyline.Tesselate() );
+        oSmoothPolyline.Tessellate() );
 
     PrepareLineStyle( poFeature );
 

@@ -753,7 +753,7 @@ TIFFReadRawStrip(TIFF* tif, uint32 strip, void* buf, tmsize_t size)
 }
 
 TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW
-static uint64 NoSantizeSubUInt64(uint64 a, uint64 b)
+static uint64 NoSanitizeSubUInt64(uint64 a, uint64 b)
 {
     return a - b;
 }
@@ -841,7 +841,7 @@ TIFFFillStrip(TIFF* tif, uint32 strip)
 					"Read error on strip %lu; "
 					"got %I64u bytes, expected %I64u",
 					(unsigned long) strip,
-					(unsigned __int64) NoSantizeSubUInt64(tif->tif_size, TIFFGetStrileOffset(tif, strip)),
+					(unsigned __int64) NoSanitizeSubUInt64(tif->tif_size, TIFFGetStrileOffset(tif, strip)),
 					(unsigned __int64) bytecount);
 #else
 				TIFFErrorExt(tif->tif_clientdata, module,
@@ -849,7 +849,7 @@ TIFFFillStrip(TIFF* tif, uint32 strip)
 					"Read error on strip %lu; "
 					"got %llu bytes, expected %llu",
 					(unsigned long) strip,
-					(unsigned long long) NoSantizeSubUInt64(tif->tif_size, TIFFGetStrileOffset(tif, strip)),
+					(unsigned long long) NoSanitizeSubUInt64(tif->tif_size, TIFFGetStrileOffset(tif, strip)),
 					(unsigned long long) bytecount);
 #endif
 				tif->tif_curstrip = NOSTRIP;

@@ -174,7 +174,7 @@ def copy_shape_to_geojson(gjname, compress=None):
         return False, dst_name
 
     ######################################################
-    # Setup schema (all test shapefiles use common schmea)
+    # Setup schema (all test shapefiles use common schema)
     ogrtest.quick_create_layer_def(lyr,
                                    [('FID', ogr.OFTReal),
                                     ('NAME', ogr.OFTString)])
@@ -2512,7 +2512,7 @@ def test_ogr_geojson_62():
     assert srs.ExportToWkt().find('32631') >= 0
 
 ###############################################################################
-# Extensive test of field tye promotion
+# Extensive test of field type promotion
 
 
 def test_ogr_geojson_63():

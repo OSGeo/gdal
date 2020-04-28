@@ -1168,7 +1168,7 @@ png_init_palette_transformations(png_structrp png_ptr)
     */
 
    /* The following code cannot be entered in the alpha pre-multiplication case
-    * because PNG_BACKGROUND_EXPAND is cancelled below.
+    * because PNG_BACKGROUND_EXPAND is canceled below.
     */
    if ((png_ptr->transformations & PNG_BACKGROUND_EXPAND) != 0 &&
        (png_ptr->transformations & PNG_EXPAND) != 0)
@@ -1235,7 +1235,7 @@ png_init_rgb_transformations(png_structrp png_ptr)
     */
 
    /* The following code cannot be entered in the alpha pre-multiplication case
-    * because PNG_BACKGROUND_EXPAND is cancelled below.
+    * because PNG_BACKGROUND_EXPAND is canceled below.
     */
    if ((png_ptr->transformations & PNG_BACKGROUND_EXPAND) != 0 &&
        (png_ptr->transformations & PNG_EXPAND) != 0 &&
@@ -1562,7 +1562,7 @@ png_init_read_transformations(png_structrp png_ptr)
     * built when it would be quicker to just calculate the correct value for
     * each palette entry directly.  Also, the test is too tricky - why check
     * PNG_RGB_TO_GRAY if PNG_GAMMA is not set?  The answer seems to be that
-    * PNG_GAMMA is cancelled even if the gamma is known?  The test excludes the
+    * PNG_GAMMA is canceled even if the gamma is known?  The test excludes the
     * PNG_COMPOSE case, so apparently if there is no *overall* gamma correction
     * the gamma tables will not be built even if composition is required on a
     * gamma encoded value.

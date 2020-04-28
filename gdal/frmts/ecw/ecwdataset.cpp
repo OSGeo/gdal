@@ -2107,7 +2107,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
     {
         // This is tricky, because it expects the rest of the image
         // with this buffer width to be read. The preferred way to
-        // achieve this behaviour would be to call AdviseRead before
+        // achieve this behavior would be to call AdviseRead before
         // call IRasterIO.  The logic could be improved to detect
         // successive pattern of single line reading before doing an
         // AdviseRead.
@@ -3143,7 +3143,7 @@ void ECWDataset::ECW2WKTProjection()
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
 
-    /* For backward-compatible with previous behaviour. Should we only */
+    /* For backward-compatible with previous behavior. Should we only */
     /* restrict to those 2 values ? */
     if (psFileInfo->eCellSizeUnits != ECW_CELL_UNITS_METERS &&
         psFileInfo->eCellSizeUnits != ECW_CELL_UNITS_FEET)
@@ -3419,7 +3419,7 @@ void ECWInitialize()
     /*      Version 3.x and 4.x of the ECWJP2 SDK did not resolve datum and */
     /*      projection to EPSG code using internal mapping.                 */
     /*      Version 5.x do so we provide means to achieve old               */
-    /*      behaviour.                                                      */
+    /*      behavior.                                                      */
     /* -------------------------------------------------------------------- */
     #if ECWSDK_VERSION >= 50
     if( CPLTestBool( CPLGetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION","NO") ) == TRUE)

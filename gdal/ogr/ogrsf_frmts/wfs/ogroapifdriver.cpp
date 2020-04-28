@@ -2343,7 +2343,7 @@ int OGROAPIFLayer::TestCapability(const char* pszCap)
     {
         return TRUE;
     }
-    // Don't advertize OLCRandomRead as it requires a GET per feature
+    // Don't advertise OLCRandomRead as it requires a GET per feature
     return FALSE;
 }
 

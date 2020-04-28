@@ -185,7 +185,7 @@ class OGRLIBKMLDataSource final: public OGRDataSource
     /***** layers *****/
     OGRLIBKMLLayer          **papoLayers;
     int                       nLayers;
-    int                       nAlloced;
+    int                       nAllocated;
     std::map<CPLString, OGRLIBKMLLayer*> m_oMapLayers;
 
     bool                      bUpdate;

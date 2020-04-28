@@ -44,7 +44,7 @@ Note: MSSQL could also likely be updated
 Caveats
 ~~~~~~~
 
-The behaviour of the shapefile driver is a bit particular, in that, its
+The behavior of the shapefile driver is a bit particular, in that, its
 SetFeature() implementation accepts to recreate a feature that had been
 deleted (and its CreateFeature() implementation ignores any set FID on
 the passed feature to append a new feature). So
@@ -73,7 +73,7 @@ Test Suite
 ----------
 
 The test suite is extended to test the modified drivers. test_ogrsf also
-tests the behaviour of drivers updating/deleting non-existing features.
+tests the behavior of drivers updating/deleting non-existing features.
 
 Compatibility Issues
 --------------------

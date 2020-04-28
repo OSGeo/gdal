@@ -2238,7 +2238,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   OGRFeatureDefnH fd;
   OGRFeatureH f;
   OGRGeometryH g;
-  int bTokenBehaviour= CSLT_ALLOWEMPTYTOKENS;
+  int bTokenBehavior= CSLT_ALLOWEMPTYTOKENS;
 
   fd= NULL;
   f= NULL;
@@ -2280,12 +2280,12 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   /*         allow direct access !                        */
   if( GetMetaQuotedText_GCIO(Meta) )
   {
-    bTokenBehaviour|= CSLT_HONOURSTRINGS;
+    bTokenBehavior|= CSLT_HONOURSTRINGS;
   }
   CPLDebug("GEOCONCEPT","Cache=[%s] delim=[%s]", GetGCCache_GCIO(H), delim);
   if( !(papszFields= CSLTokenizeString2(GetGCCache_GCIO(H),
                                       delim,
-                                      bTokenBehaviour)) )
+                                      bTokenBehavior)) )
   {
     CPLError( CE_Failure, CPLE_AppDefined,
               "Line %ld, Geoconcept line syntax is wrong.\n",

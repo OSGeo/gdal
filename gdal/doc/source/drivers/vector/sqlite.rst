@@ -346,7 +346,7 @@ statements have to be invoked appropriately (with the
 OGR_L_StartTransaction() / OGR_L_CommitTransaction()) in order to get
 optimal performance. By default, if no transaction is explicitly
 started, SQLite will autocommit on every statement, which will be slow.
-If using ogr2ogr, its default behaviour is to COMMIT a transaction every
+If using ogr2ogr, its default behavior is to COMMIT a transaction every
 20000 inserted rows. The **-gt** argument allows explicitly setting the
 number of rows for each transaction. Increasing to **-gt 65536** or more
 ensures optimal performance while populating some table containing many

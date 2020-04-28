@@ -453,7 +453,7 @@ GifRecordType GIFAbstractDataset::FindFirstImage( GifFileType* hGifFile )
 GIFAbstractRasterBand::GIFAbstractRasterBand(
     GIFAbstractDataset *poDSIn, int nBandIn,
     SavedImage *psSavedImage, int nBackground,
-    int bAdvertizeInterlacedMDI ) :
+    int bAdvertiseInterlacedMDI ) :
     psImage(psSavedImage),
     panInterlaceMap(nullptr),
     poColorTable(nullptr),
@@ -478,7 +478,7 @@ GIFAbstractRasterBand::GIFAbstractRasterBand(
     {
         int iLine = 0;
 
-        if( bAdvertizeInterlacedMDI )
+        if( bAdvertiseInterlacedMDI )
             poDS->SetMetadataItem( "INTERLACED", "YES", "IMAGE_STRUCTURE" );
 
         panInterlaceMap = (int *) CPLCalloc(poDSIn->nRasterYSize,sizeof(int));
@@ -491,7 +491,7 @@ GIFAbstractRasterBand::GIFAbstractRasterBand(
                 panInterlaceMap[j] = iLine++;
         }
     }
-    else if( bAdvertizeInterlacedMDI )
+    else if( bAdvertiseInterlacedMDI )
     {
         poDS->SetMetadataItem( "INTERLACED", "NO", "IMAGE_STRUCTURE" );
     }

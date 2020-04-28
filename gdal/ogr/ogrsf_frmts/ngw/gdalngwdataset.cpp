@@ -267,7 +267,7 @@ bool OGRNGWDataset::Init(int nOpenFlagsIn)
             else if( (osResourceType == "vector_layer" ||
                 osResourceType == "postgis_layer") )
             {
-                // Cehck feature paging.
+                // Check feature paging.
                 FillCapabilities( papszHTTPOptions );
                 // Add vector layer.
                 AddLayer( oRoot, papszHTTPOptions, nOpenFlagsIn );
@@ -815,7 +815,7 @@ char **OGRNGWDataset::GetHeaders() const
 /*
  * SQLUnescape()
  * Get from gdal/ogr/ogrsf_frmts/sqlite/ogrsqliteutility.cpp as we don't want
- * depenency on sqlite
+ * dependency on sqlite
  */
 static CPLString SQLUnescape( const char *pszVal )
 {
@@ -843,7 +843,7 @@ static CPLString SQLUnescape( const char *pszVal )
 /*
  * SQLTokenize()
  * Get from gdal/ogr/ogrsf_frmts/sqlite/ogrsqliteutility.cpp as we don't want
- * depenency on sqlite
+ * dependency on sqlite
  */
 static char **SQLTokenize( const char *pszStr )
 {

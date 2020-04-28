@@ -1459,7 +1459,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj )
 
             const char* pszName = json_object_get_string( poNameURL );
 
-            // Mostly to emulate GDAL 2.x behaviour
+            // Mostly to emulate GDAL 2.x behavior
             // See https://github.com/OSGeo/gdal/issues/2035
             if( EQUAL(pszName, "urn:ogc:def:crs:OGC:1.3:CRS84") )
                 pszName = "EPSG:4326";

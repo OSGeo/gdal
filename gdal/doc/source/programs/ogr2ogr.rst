@@ -206,10 +206,10 @@ output coordinate system or even reprojecting the features during translation.
 
     Use the FID of the source features instead of letting the output driver
     automatically assign a new one (for formats that require an FID).  If not
-    in append mode, this behaviour is the default if the output driver has
+    in append mode, this behavior is the default if the output driver has
     a FID layer creation option, un which case the name of the source FID
     column will be used and source feature IDs will be attempted to be
-    preserved. This behaviour can be disabled by setting ``-unsetFid``.
+    preserved. This behavior can be disabled by setting ``-unsetFid``.
 
 .. option:: -fid fid
 

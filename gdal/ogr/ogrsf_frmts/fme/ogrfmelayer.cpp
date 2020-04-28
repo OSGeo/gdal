@@ -2,7 +2,7 @@
  *
  * Project:  FMEObjects Translator
  * Purpose:  Implementation of the OGRFMELayer base class.  The class
- *           implements behaviour shared between database and spatial cached
+ *           implements behavior shared between database and spatial cached
  *           layer types.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *

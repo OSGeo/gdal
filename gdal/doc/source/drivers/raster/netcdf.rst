@@ -422,7 +422,7 @@ NetCDF-4 groups on reading:
 
 -  When searching for a variable containing auxiliary information on the
    selected subdataset, like coordinate variables or grid_mapping, we
-   now also search in parent groups and their childs as specified in
+   now also search in parent groups and their children as specified in
    `Support of groups in
    CF <https://github.com/cf-convention/cf-conventions/issues/144>`__
 

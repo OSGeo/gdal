@@ -75,9 +75,9 @@ class OGRDataSourceWithTransaction final: public OGRDataSource
 
   protected:
     OGRDataSource *m_poBaseDataSource;
-    IOGRTransactionBehaviour* m_poTransactionBehaviour;
+    IOGRTransactionBehaviour* m_poTransactionBehavior;
     int            m_bHasOwnershipDataSource;
-    int            m_bHasOwnershipTransactionBehaviour;
+    int            m_bHasOwnershipTransactionBehavior;
     int            m_bInTransaction;
 
     std::map<CPLString, OGRLayerWithTransaction* > m_oMapLayers{};
@@ -92,7 +92,7 @@ class OGRDataSourceWithTransaction final: public OGRDataSource
                  OGRDataSourceWithTransaction(OGRDataSource* poBaseDataSource,
                                           IOGRTransactionBehaviour* poTransactionBehaviour,
                                           int bTakeOwnershipDataSource,
-                                          int bTakeOwnershipTransactionBehaviour);
+                                          int bTakeOwnershipTransactionBehavior);
 
     virtual     ~OGRDataSourceWithTransaction();
 
@@ -157,12 +157,12 @@ OGRDataSource* OGRCreateEmulatedTransactionDataSourceWrapper(
                                 OGRDataSource* poBaseDataSource,
                                 IOGRTransactionBehaviour* poTransactionBehaviour,
                                 int bTakeOwnershipDataSource,
-                                int bTakeOwnershipTransactionBehaviour)
+                                int bTakeOwnershipTransactionBehavior)
 {
     return new OGRDataSourceWithTransaction(poBaseDataSource,
                                             poTransactionBehaviour,
                                             bTakeOwnershipDataSource,
-                                            bTakeOwnershipTransactionBehaviour);
+                                            bTakeOwnershipTransactionBehavior);
 }
 
 /************************************************************************/
@@ -173,11 +173,11 @@ OGRDataSourceWithTransaction::OGRDataSourceWithTransaction(
     OGRDataSource* poBaseDataSource,
     IOGRTransactionBehaviour* poTransactionBehaviour,
     int bTakeOwnershipDataSource,
-    int bTakeOwnershipTransactionBehaviour) :
+    int bTakeOwnershipTransactionBehavior) :
     m_poBaseDataSource(poBaseDataSource),
-    m_poTransactionBehaviour(poTransactionBehaviour),
+    m_poTransactionBehavior(poTransactionBehaviour),
     m_bHasOwnershipDataSource(bTakeOwnershipDataSource),
-    m_bHasOwnershipTransactionBehaviour(bTakeOwnershipTransactionBehaviour),
+    m_bHasOwnershipTransactionBehavior(bTakeOwnershipTransactionBehavior),
     m_bInTransaction(FALSE)
 {}
 
@@ -189,8 +189,8 @@ OGRDataSourceWithTransaction::~OGRDataSourceWithTransaction()
 
     if( m_bHasOwnershipDataSource )
         delete m_poBaseDataSource;
-    if( m_bHasOwnershipTransactionBehaviour )
-        delete m_poTransactionBehaviour;
+    if( m_bHasOwnershipTransactionBehavior )
+        delete m_poTransactionBehavior;
 }
 
 OGRLayer* OGRDataSourceWithTransaction::WrapLayer(OGRLayer* poLayer)
@@ -367,7 +367,7 @@ OGRErr OGRDataSourceWithTransaction::StartTransaction(int bForce)
     }
     int bHasReopenedDS = FALSE;
     OGRErr eErr =
-        m_poTransactionBehaviour->StartTransaction(m_poBaseDataSource, bHasReopenedDS);
+        m_poTransactionBehavior->StartTransaction(m_poBaseDataSource, bHasReopenedDS);
     if( bHasReopenedDS )
         RemapLayers();
     if( eErr == OGRERR_NONE )
@@ -394,7 +394,7 @@ OGRErr OGRDataSourceWithTransaction::CommitTransaction()
     m_bInTransaction = FALSE;
     int bHasReopenedDS = FALSE;
     OGRErr eErr =
-        m_poTransactionBehaviour->CommitTransaction(m_poBaseDataSource, bHasReopenedDS);
+        m_poTransactionBehavior->CommitTransaction(m_poBaseDataSource, bHasReopenedDS);
     if( bHasReopenedDS )
         RemapLayers();
     return eErr;
@@ -419,7 +419,7 @@ OGRErr OGRDataSourceWithTransaction::RollbackTransaction()
     m_bInTransaction = FALSE;
     int bHasReopenedDS = FALSE;
     OGRErr eErr =
-        m_poTransactionBehaviour->RollbackTransaction(m_poBaseDataSource, bHasReopenedDS);
+        m_poTransactionBehavior->RollbackTransaction(m_poBaseDataSource, bHasReopenedDS);
     if( bHasReopenedDS )
         RemapLayers();
     return eErr;

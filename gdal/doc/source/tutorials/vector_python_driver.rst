@@ -225,7 +225,7 @@ Alternatively, the following method may be implemented.
 Other methods
 +++++++++++++
 
-The following method may be optionaly implemented:
+The following method may be optionally implemented:
 
 .. py:function:: close(self)
     :noindex:
@@ -407,7 +407,7 @@ method (see below passthrough example)
 Optional methods
 ++++++++++++++++
 
-The following methods may be optionaly implemented:
+The following methods may be optionally implemented:
 
 .. py:function:: extent(self, force_computation)
     :noindex:
@@ -473,7 +473,7 @@ The connection strings recognized by the drivers are
 the prefixing by the driver name is absolutely not a requirement, but something
 specific to this particular driver which is a bit artificial (without the prefix,
 the connection string would go directly to the native driver). The CityJSON
-driver mentionned in the :ref:`Other examples <other_examples>` paragraph does
+driver mentioned in the :ref:`Other examples <other_examples>` paragraph does
 not need it.
 
 .. code-block::

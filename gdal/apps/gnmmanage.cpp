@@ -131,7 +131,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
            "      -dsco NAME=VALUE: network creation option set as pair=value\n"
            "   import src_dataset_name: import external layer where src_dataset_name is a dataset name to copy from\n"
            "      -l layer_name: layer name in dataset. If unset, 0 layer is copied\n"
-           "   connect gfid_src gfid_tgt gfid_con: make a topological connection, where the gfid_src and gfid_tgt are vertexes and gfid_con is edge (gfid_con can be -1, so the virtual connection will be created)\n"
+           "   connect gfid_src gfid_tgt gfid_con: make a topological connection, where the gfid_src and gfid_tgt are vertices and gfid_con is edge (gfid_con can be -1, so the virtual connection will be created)\n"
            "      -c cost -ic inv_cost -dir dir: manually assign the following values: the cost (weight), inverse cost and direction of the edge (optional)\n"
            "   disconnect gfid_src gfid_tgt gfid_con: removes the connection from the graph\n"
            "   rule rule_str: creates a rule in the network by the given rule_str string\n"

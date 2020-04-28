@@ -285,7 +285,7 @@ is the same as ``<>``, the string equality is
 case insensitive, but the ``<``, ``>``, ``<=`` and ``>=`` operators *are* case sensitive. 
 
 Starting with GDAL 3.1, LIKE is case sensitive, and ILIKE is case insensitive.
-In previous versions, LIKE was also case insensitive. If the old behaviour is
+In previous versions, LIKE was also case insensitive. If the old behavior is
 wished in GDAL 3.1, the :decl_configoption:`OGR_SQL_LIKE_AS_ILIKE` can be set to ``YES``.
 
 The value argument to the ``LIKE`` and ``ILIKE`` operators is a pattern against which

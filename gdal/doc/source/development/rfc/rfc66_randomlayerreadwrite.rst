@@ -227,7 +227,7 @@ Drivers
 The OSM and GMLAS driver are updated to implement the new API.
 
 Existing drivers that support ODsCRandomLayerWrite are updated to
-advertize it (that is most drivers that have layer creation
+advertise it (that is most drivers that have layer creation
 capabilities, with the exceptions of KML, JML and GeoJSON).
 
 Utilities

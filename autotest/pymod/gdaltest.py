@@ -1275,7 +1275,7 @@ def neginf():
     return float('-inf')
 
 ###############################################################################
-# Has the user requested to dowload test data
+# Has the user requested to download test data
 def download_test_data():
     global count_skipped_tests_download
     val = gdal.GetConfigOption('GDAL_DOWNLOAD_TEST_DATA', None)

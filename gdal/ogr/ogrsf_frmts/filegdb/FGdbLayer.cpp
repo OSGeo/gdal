@@ -2956,7 +2956,7 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
             fieldTemplate.SetSubType(eSubType);
             /* On creation (GDBFieldTypeToWidthPrecision) if string width is 0, we pick up */
             /* 65535 by default to mean unlimited string length, but we don't want */
-            /* to advertize such a big number */
+            /* to advertise such a big number */
             if( ogrType == OFTString && nLength < 65535 )
                 fieldTemplate.SetWidth(nLength);
             //fieldTemplate.SetPrecision(nPrecision);
@@ -3110,7 +3110,7 @@ void FGdbLayer::SetSpatialFilter( OGRGeometry* pOGRGeom )
 
     m_pOGRFilterGeometry = pOGRGeom->clone();
 
-    // NOTE: This is really special behaviour: no other driver, nor core, does
+    // NOTE: This is really special behavior: no other driver, nor core, does
     // reprojection of filter geometry to source layer SRS. Should perhaps
     // be removed for consistency
     if( m_pOGRFilterGeometry->getSpatialReference() != nullptr )

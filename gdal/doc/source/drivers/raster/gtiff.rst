@@ -93,7 +93,7 @@ image. Transparency masks of internal overviews are also supported.
 When the GDAL_TIFF_INTERNAL_MASK configuration option is set to YES and
 the GeoTIFF file is opened in update mode, the CreateMaskBand() method
 on a TIFF dataset or rasterband will create an internal transparency
-mask. Otherwise, the default behaviour of nodata mask creation will be
+mask. Otherwise, the default behavior of nodata mask creation will be
 used, that is to say the creation of a .msk file, as per :ref:`rfc-15`.
 
 1-bit internal mask band are deflate compressed. When reading them back,
@@ -137,7 +137,7 @@ There are two well supported configurations:
    mode, BuildOverviews() will automatically create overviews for the
    external transparency mask (in a .msk.ovr file)
 
-For the two other mixed configurations, behaviour is less obvious:
+For the two other mixed configurations, behavior is less obvious:
 
 -  Internal overviews, external nodata mask: when running
    BuildOverviews() in update mode on the .tif file, only the overviews
@@ -246,7 +246,7 @@ Sparse files
 GDAL makes a special interpretation of a TIFF tile or strip whose offset
 and byte count are set to 0, that is to say a tile or strip that has no
 corresponding allocated physical storage. On reading, such tiles or
-strips are considered to be implictly set to 0 or to the nodata value
+strips are considered to be implicitly set to 0 or to the nodata value
 when it is defined. On writing, it is possible to enable generating such
 files through the Create() interface by setting the SPARSE_OK creation
 option to YES. Then, blocks that are never written through the
@@ -286,7 +286,7 @@ Raw mode
 
 For some TIFF formulations that have "odd" photometric color spaces,
 on-the-fly decoding as RGBA is done. This might not be desirable in some
-use cases. This behaviour can be disabled by prefixing the filename with
+use cases. This behavior can be disabled by prefixing the filename with
 GTIFF_RAW:
 
 For example to translate a CMYK file to another one :
@@ -539,7 +539,7 @@ Creation Options
    the standard way will be used, with the addition of a ESRI_PE WKT
    string as the value of PCSCitationGeoKey.
 
--  **GEOTIFF_VERSION=[AUTO/1.0/1.1]**: (GDAL >= 3.1.0) Select the vesion of
+-  **GEOTIFF_VERSION=[AUTO/1.0/1.1]**: (GDAL >= 3.1.0) Select the version of
    the GeoTIFF standard used to encode georeferencing information. ``1.0``
    corresponds to the original
    `1995, GeoTIFF Revision 1.0, by Ritter & Ruth <http://geotiff.maptools.org/spec/geotiffhome.html>`_.
@@ -648,7 +648,7 @@ Configuration options
 ~~~~~~~~~~~~~~~~~~~~~
 
 This paragraph lists the configuration options that can be set to alter
-the default behaviour of the GTiff driver.
+the default behavior of the GTiff driver.
 
 -  :decl_configoption:`GTIFF_IGNORE_READ_ERRORS` : Can be set to TRUE to
    avoid turning libtiff errors into GDAL errors. Can help reading
@@ -666,7 +666,7 @@ the default behaviour of the GTiff driver.
 -  :decl_configoption:`TIFF_USE_OVR` : Can be set to TRUE to force external overviews in the
    GeoTIFF (.ovr) format. Default value : FALSE
 -  :decl_configoption:`GTIFF_POINT_GEO_IGNORE` : Can be set to TRUE to revert back to the
-   behaviour of GDAL < 1.8.0 regarding how PixelIsPoint is interpreted
+   behavior of GDAL < 1.8.0 regarding how PixelIsPoint is interpreted
    w.r.t geotransform. See :ref:`rfc-33`
    for more details. Default value : FALSE
 -  :decl_configoption:`GTIFF_REPORT_COMPD_CS` : Can be set to TRUE to avoid

@@ -76,7 +76,7 @@ might be costly when operating on huge geodatabases.
 Starting with GDAL 2.1, on Linux/Unix, instead of a full backup copy
 only layers that are modified are backed up.
 
-Note that this emulation has an unspecified behaviour in case of
+Note that this emulation has an unspecified behavior in case of
 concurrent updates (with different connections in the same or another
 process).
 

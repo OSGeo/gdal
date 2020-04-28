@@ -256,7 +256,7 @@ static CPLString VSICurlGetURLFromFilename(const char* pszFilename,
                 else if( EQUAL(pszKey, "empty_dir") )
                 {
                     /* Undocumented. Used by PLScenes driver */
-                    /* This more or less emulates the behaviour of
+                    /* This more or less emulates the behavior of
                         * GDAL_DISABLE_READDIR_ON_OPEN=EMPTY_DIR */
                     if( pbEmptyDir )
                         *pbEmptyDir = CPLTestBool(pszValue);

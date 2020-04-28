@@ -418,7 +418,7 @@ void OGR_Fld_SetSubType( OGRFieldDefnH hDefn, OGRFieldSubType eSubType )
  * For a datetime literal value, format should be 'YYYY/MM/DD HH:MM:SS[.sss]'
  * (considered as UTC time).
  *
- * Drivers that support writing DEFAULT clauses will advertize the
+ * Drivers that support writing DEFAULT clauses will advertise the
  * GDAL_DCAP_DEFAULT_FIELDS driver metadata item.
  *
  * This function is the same as the C function OGR_Fld_SetDefault().
@@ -486,7 +486,7 @@ void OGRFieldDefn::SetDefault( const char* pszDefaultIn )
  * For a datetime literal value, format should be 'YYYY/MM/DD HH:MM:SS[.sss]'
  * (considered as UTC time).
  *
- * Drivers that support writing DEFAULT clauses will advertize the
+ * Drivers that support writing DEFAULT clauses will advertise the
  * GDAL_DCAP_DEFAULT_FIELDS driver metadata item.
  *
  * This function is the same as the C++ method OGRFieldDefn::SetDefault().
@@ -1189,7 +1189,7 @@ int OGR_Fld_IsNullable( OGRFieldDefnH hDefn )
  * By default, fields are nullable, so this method is generally called with
  * FALSE to set a not-null constraint.
  *
- * Drivers that support writing not-null constraint will advertize the
+ * Drivers that support writing not-null constraint will advertise the
  * GDAL_DCAP_NOTNULL_FIELDS driver metadata item.
  *
  * This method is the same as the C function OGR_Fld_SetNullable().
@@ -1208,7 +1208,7 @@ int OGR_Fld_IsNullable( OGRFieldDefnH hDefn )
  * By default, fields are nullable, so this method is generally called with
  * FALSE to set a not-null constraint.
  *
- * Drivers that support writing not-null constraint will advertize the
+ * Drivers that support writing not-null constraint will advertise the
  * GDAL_DCAP_NOTNULL_FIELDS driver metadata item.
  *
  * This method is the same as the C++ method OGRFieldDefn::SetNullable().

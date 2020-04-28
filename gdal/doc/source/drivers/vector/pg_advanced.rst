@@ -129,7 +129,7 @@ The FID of
 a feature (i.e. usually the value of the OGC_FID column for the feature)
 inserted into a table with CreateFeature(), in non-copy mode, will be
 retrieved from the database and can be obtained with GetFID(). One
-side-effect of this new behaviour is that you must be careful if you
+side-effect of this new behavior is that you must be careful if you
 re-use the same feature object in a loop that makes insertions. After
 the first iteration, the FID will be set to a non-null value, so at the
 second iteration, CreateFeature() will try to insert the new feature
@@ -157,17 +157,17 @@ or :
            lyr.CreateFeature(feat)
            print('The feature has been assigned FID %d' % feat.GetFID())
 
-OGR < 1.8.0 behaviour can be obtained by setting the configuration
+OGR < 1.8.0 behavior can be obtained by setting the configuration
 option OGR_PG_RETRIEVE_FID to FALSE.
 
 Issues with transactions
 ------------------------
 
 Note: this section mostly applies to GDAL 2.0, that implements :ref:`rfc-54`
-Previous versions had different behaviour which made it impractical to
+Previous versions had different behavior which made it impractical to
 handle both reading and writing with the same OGR datasource. Reading
 several layers in a interleaved way was also not working properly. The
-new below behaviour should enable more powerful uses, but might cause
+new below behavior should enable more powerful uses, but might cause
 subtle problems for existing code that relied on implicit transactions
 being regularly flushed by the PG driver in GDAL 1.X
 
@@ -180,7 +180,7 @@ still being read).
 
 If within such an implicit transaction, an explicit dataset level
 StartTransaction() is issued, the PG driver will use a SAVEPOINT to
-emulate properly the transaction behaviour while making the active
+emulate properly the transaction behavior while making the active
 cursor on the read layer still opened.
 
 If an explicit transaction is opened with dataset level

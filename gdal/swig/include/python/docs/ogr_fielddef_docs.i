@@ -147,7 +147,7 @@ expression (that might be ignored by other drivers). For a datetime
 literal value, format should be 'YYYY/MM/DD HH:MM:SS[.sss]'
 (considered as UTC time).
 
-Drivers that support writing DEFAULT clauses will advertize the
+Drivers that support writing DEFAULT clauses will advertise the
 GDAL_DCAP_DEFAULT_FIELDS driver metadata item.
 
 This function is the same as the C++ method
@@ -431,7 +431,7 @@ Set whether this field can receive null values.
 By default, fields are nullable, so this method is generally called
 with FALSE to set a not-null constraint.
 
-Drivers that support writing not-null constraint will advertize the
+Drivers that support writing not-null constraint will advertise the
 GDAL_DCAP_NOTNULL_FIELDS driver metadata item.
 
 This method is the same as the C++ method OGRFieldDefn::SetNullable().

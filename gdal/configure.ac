@@ -1165,7 +1165,7 @@ dnl ---------------------------------------------------------------------------
 AM_ICONV
 
 dnl Extra test needed for GCC 4.5 on Solaris 11, where there is
-dnl a different behaviour if the tests are compiled with gcc or g++.
+dnl a different behavior if the tests are compiled with gcc or g++.
 dnl So we introduce a ICONV_CPP_CONST that must be used instead of
 dnl ICONV_CONST when used from .cpp files.
 if test "$am_func_iconv" = "yes"; then
@@ -2931,7 +2931,7 @@ else
       LIBS="$NETCDF_LIBS $LIBS"
     fi
 
-dnl previous behaviour without nc-config
+dnl previous behavior without nc-config
 
 dnl test linking using default settings
 elif test "$with_netcdf" = "yes" -o "$with_netcdf" = "" ; then

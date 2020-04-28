@@ -1585,7 +1585,7 @@ int VRTDataset::CheckCompatibleForDatasetIO()
 /* In ProxyPoolDatasets, by default only one band is initialized. When using
  * VRTDataset::IRasterIO and CheckCompatibleForDatasetIO is True, we need to have
  * all bands initialized (but only for the last band in the VRTDataset). This function
- * assumes CheckCompatibleForDatasetIO() has already been run and returned succesfull.
+ * assumes CheckCompatibleForDatasetIO() has already been run and returned successful.
  */
 void VRTDataset::ExpandProxyBands()
 {
@@ -2109,7 +2109,7 @@ VRTDataset::IBuildOverviews( const char *pszResampling,
     }
 
     // Make implicit overviews invisible, but do not destroy them in case they
-    // are already used.  Should the client do that?  Behaviour might undefined
+    // are already used.  Should the client do that?  Behavior might undefined
     // in GDAL API?
     if( !m_apoOverviews.empty() )
     {

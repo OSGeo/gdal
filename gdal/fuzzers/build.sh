@@ -41,7 +41,7 @@ mkdir -p build
 cd build
 POPPLER_CFLAGS="$CFLAGS"
 POPPLER_CXXFLAGS="$CXXFLAGS"
-# we do not really want to deal with Poppler undefined behaviour bugs, such
+# we do not really want to deal with Poppler undefined behavior bugs, such
 # as integer overflows
 if [ "$SANITIZER" = "undefined" ]; then
     if [ "$ARCHITECTURE" = "i386" ]; then

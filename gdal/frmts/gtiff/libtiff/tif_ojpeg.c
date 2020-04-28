@@ -74,7 +74,7 @@
    or errors, up to the point where either these values are read, or it's clear they
    aren't there. This means that some of the data is read twice, but we feel speed
    in correcting these values is important enough to warrant this sacrifice. Although
-   there is currently no define or other configuration mechanism to disable this behaviour,
+   there is currently no define or other configuration mechanism to disable this behavior,
    the actual header scanning is build to robustly respond with error report if it
    should encounter an uncorrected mismatch of subsampling values. See
    OJPEGReadHeaderInfoSecStreamSof.

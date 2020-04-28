@@ -179,7 +179,7 @@ a) Update the GDAL http://trac.osgeo.org/gdal/wiki/DownloadSource topic to
 b) Update http://trac.osgeo.org/gdal/wiki (Releases section)
 c) Update http://trac.osgeo.org/gdal/wiki/NewsAndStatus
 
-13) Update doc/source/about_no_title.rst and doc/source/download.rst to advertize the new release and link to the release notes
+13) Update doc/source/about_no_title.rst and doc/source/download.rst to advertise the new release and link to the release notes
 
 14) Update GitHub to close the release milestone. 
     Then create a new milestone for the next release.

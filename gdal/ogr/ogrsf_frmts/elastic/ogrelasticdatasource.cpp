@@ -425,7 +425,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "The index %s already exists. "
                          "You have to delete the whole index. You can do that "
-                         "with OVERWITE_INDEX=YES",
+                         "with OVERWRITE_INDEX=YES",
                          osLaunderedName.c_str());
                 return nullptr;
             }

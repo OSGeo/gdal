@@ -1,7 +1,7 @@
 .. _osr_api_tut:
 
 ================================================================================
-OGR Coordinate Reference Systems and Coodinate Transformation tutorial
+OGR Coordinate Reference Systems and Coordinate Transformation tutorial
 ================================================================================
 
 .. highlight:: cpp
@@ -74,7 +74,7 @@ file.
 
 .. note::
 
-    In WKT 1, space characters in datum nams are normally replaced by underscore.
+    In WKT 1, space characters in datum names are normally replaced by underscore.
     And WGS_1984 is used as an alias of "World Geodetic System 1984"
 
 The OGRSpatialReference has built in support for a few well known CRS,
@@ -213,7 +213,7 @@ The argument passed to :cpp:func:`OGRSpatialReference::SetAxisMappingStrategy` i
 data axis to CRS axis mapping strategy.
 
 - :c:macro:`OAMS_TRADITIONAL_GIS_ORDER` means that for geographic CRS with lat/long order, the data will still be long/lat ordered. Similarly for a projected CRS with northing/easting order, the data will still be easting/northing ordered.
-- :c:macro:`OAMS_AUTHORITY_COMPLIANT` means that the data axis will be identical to the CRS axis. This is the fdefault value when instanciating OGRSpatialReference.
+- :c:macro:`OAMS_AUTHORITY_COMPLIANT` means that the data axis will be identical to the CRS axis. This is the fdefault value when instantiating OGRSpatialReference.
 - :c:macro:`OAMS_CUSTOM` means that the data axis are customly defined with SetDataAxisToSRSAxisMapping().
 
 What has been discussed in this section for the particular case of Geographic

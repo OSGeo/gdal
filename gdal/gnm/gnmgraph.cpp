@@ -219,7 +219,7 @@ GNMPATH GNMGraph::DijkstraShortestPath( GNMGFID nStartFID, GNMGFID nEndFID,
             // final array.
             aoShortestPath.push_back(std::make_pair(nNextVertexId, it->second));
 
-            // An edge has only two vertexes, so we get the opposite one to the
+            // An edge has only two vertices, so we get the opposite one to the
             // current vertex in order to continue search backwards.
             nNextVertexId = GetOppositVertex(it->second, it->first);
         }
@@ -448,7 +448,7 @@ void GNMGraph::DijkstraShortestPathTree(GNMGFID nFID,
                                    const std::map<GNMGFID, GNMStdEdge> &mstEdges,
                                          std::map<GNMGFID, GNMGFID> &mnPathTree)
 {
-    // Initialize all vertexes in graph with infinity mark.
+    // Initialize all vertices in graph with infinity mark.
     double dfInfinity = std::numeric_limits<double>::infinity();
 
     std::map<GNMGFID, double> mMarks;
@@ -461,11 +461,11 @@ void GNMGraph::DijkstraShortestPathTree(GNMGFID nFID,
     mMarks[nFID] = 0.0;
     mnPathTree[nFID] = -1;
 
-    // Initialize all vertexes as unseen (there are no seen vertexes).
+    // Initialize all vertices as unseen (there are no seen vertices).
     std::set<GNMGFID> snSeen;
 
     // We use multimap to maintain the ascending order of costs and because
-    // there can be different vertexes with the equal cost.
+    // there can be different vertices with the equal cost.
     std::multimap<double,GNMGFID> to_see;
     std::multimap<double,GNMGFID>::iterator it;
     to_see.insert(std::pair<double,GNMGFID>(0.0, nFID));
@@ -476,10 +476,10 @@ void GNMGraph::DijkstraShortestPathTree(GNMGFID nFID,
     double dfCurrentEdgeCost, dfCurrentVertMark, dfNewVertexMark;
     std::map<GNMGFID, GNMStdEdge>::const_iterator ite;
 
-    // Continue iterations while there are some vertexes to see.
+    // Continue iterations while there are some vertices to see.
     while (!to_see.empty())
     {
-        // We must see vertexes with minimal costs at first.
+        // We must see vertices with minimal costs at first.
         // In multimap the first cost is the minimal.
         it = to_see.begin();
 
@@ -562,12 +562,12 @@ void GNMGraph::TraceTargets(std::queue<GNMGFID> &vertexQueue,
     GNMCONSTVECTOR::const_iterator it;
     std::queue<GNMGFID> neighbours_queue;
 
-    // See all given vertexes except thouse that have been already seen.
+    // See all given vertices except thouse that have been already seen.
     while (!vertexQueue.empty())
     {
         GNMGFID nCurVertID = vertexQueue.front();
 
-        // There may be duplicate unmarked vertexes in a current queue. Check it.
+        // There may be duplicate unmarked vertices in a current queue. Check it.
         if (markedVertIds.find(nCurVertID) == markedVertIds.end())
         {
             markedVertIds.insert(nCurVertID);
@@ -582,7 +582,7 @@ void GNMGraph::TraceTargets(std::queue<GNMGFID> &vertexQueue,
                 {
                     GNMGFID nCurEdgeID = *it;
 
-                    // ISSUE: think about to return a sequence of vertexes and edges
+                    // ISSUE: think about to return a sequence of vertices and edges
                     // (which is more universal), as now we are going to return only
                     // sequence of edges.
                     connectedIds.push_back( std::make_pair(nCurVertID, nCurEdgeID) );
@@ -604,7 +604,7 @@ void GNMGraph::TraceTargets(std::queue<GNMGFID> &vertexQueue,
                     */
                     nTargetVertID = GetOppositVertex(nCurEdgeID, nCurVertID);
 
-                    // Avoid marked or blocked vertexes.
+                    // Avoid marked or blocked vertices.
                     if ((markedVertIds.find(nTargetVertID) == markedVertIds.end())
                     && (!CheckVertexBlocked(nTargetVertID)))
                         neighbours_queue.push(nTargetVertID);

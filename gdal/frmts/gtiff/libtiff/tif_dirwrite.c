@@ -2700,7 +2700,7 @@ void DoubleToSrational_direct(double value,  long *num,  long *denom)
 *  (ref. e.g. https://de.wikipedia.org/wiki/Kettenbruch or https://en.wikipedia.org/wiki/Continued_fraction
 *             https://en.wikipedia.org/wiki/Euclidean_algorithm)
 * The following functions implement the
-* - ToRationalEuclideanGCD()		auxiliary function which mainly implements euclidian GCD
+* - ToRationalEuclideanGCD()		auxiliary function which mainly implements euclidean GCD
 * - DoubleToRational()			conversion function for un-signed rationals
 * - DoubleToSrational()			conversion function for signed rationals
 ------------------------------------------------------------------------------------------------------------------*/
@@ -2724,8 +2724,8 @@ void ToRationalEuclideanGCD(double value, int blnUseSignedRange, int blnUseSmall
 	unsigned long maxDenom;
 	/*-- nMax and fMax defines the initial accuracy of the starting fractional,
 	*   or better, the highest used integer numbers used within the starting fractional (bigNum/bigDenom).
-	*   There are two approaches, which can accidentially lead to different accuracies just depending on the value.
-	*   Therefore, blnUseSmallRange steers this behaviour.
+	*   There are two approaches, which can accidentally lead to different accuracies just depending on the value.
+	*   Therefore, blnUseSmallRange steers this behavior.
 	*   For long long nMax = ((9223372036854775807-1)/2); for long nMax = ((2147483647-1)/2);
 	*/
 	if (blnUseSmallRange) {
@@ -2828,7 +2828,7 @@ void DoubleToRational(double value, uint32 *num, uint32 *denom)
 	/*-- Check for negative values. If so it is an error. */
 	if (value < 0) {
 		*num = *denom = 0;
-		TIFFErrorExt(0, "TIFFLib: DoubeToRational()", " Negative Value for Unsigned Rational given.");
+		TIFFErrorExt(0, "TIFFLib: DoubleToRational()", " Negative Value for Unsigned Rational given.");
 		return;
 	}
 
@@ -2852,7 +2852,7 @@ void DoubleToRational(double value, uint32 *num, uint32 *denom)
 	}
 
 	/*-- There are two approaches using the Euclidean algorithm,
-	*   which can accidentially lead to different accuracies just depending on the value.
+	*   which can accidentally lead to different accuracies just depending on the value.
 	*   Try both and define which one was better.
 	*/
 	ToRationalEuclideanGCD(value, FALSE, FALSE, &ullNum, &ullDenom);
@@ -2860,9 +2860,9 @@ void DoubleToRational(double value, uint32 *num, uint32 *denom)
 	/*-- Double-Check, that returned values fit into ULONG :*/
 	if (ullNum > 0xFFFFFFFFUL || ullDenom > 0xFFFFFFFFUL || ullNum2 > 0xFFFFFFFFUL || ullDenom2 > 0xFFFFFFFFUL) {
 #if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
-		TIFFErrorExt(0, "TIFFLib: DoubeToRational()", " Num or Denom exceeds ULONG: val=%14.6f, num=%I64u, denom=%I64u | num2=%I64u, denom2=%I64u", value, ullNum, ullDenom, ullNum2, ullDenom2);
+		TIFFErrorExt(0, "TIFFLib: DoubleToRational()", " Num or Denom exceeds ULONG: val=%14.6f, num=%I64u, denom=%I64u | num2=%I64u, denom2=%I64u", value, ullNum, ullDenom, ullNum2, ullDenom2);
 #else
-		TIFFErrorExt(0, "TIFFLib: DoubeToRational()", " Num or Denom exceeds ULONG: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu", value, ullNum, ullDenom, ullNum2, ullDenom2);
+		TIFFErrorExt(0, "TIFFLib: DoubleToRational()", " Num or Denom exceeds ULONG: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu", value, ullNum, ullDenom, ullNum2, ullDenom2);
 #endif
 		assert(0);
 	}
@@ -2916,18 +2916,18 @@ void DoubleToSrational(double value, int32 *num, int32 *denom)
 	}
 
 	/*-- There are two approaches using the Euclidean algorithm,
-	*   which can accidentially lead to different accuracies just depending on the value.
+	*   which can accidentally lead to different accuracies just depending on the value.
 	*   Try both and define which one was better.
-	*   Furthermore, set behaviour of ToRationalEuclideanGCD() to the range of signed-long.
+	*   Furthermore, set behavior of ToRationalEuclideanGCD() to the range of signed-long.
 	*/
 	ToRationalEuclideanGCD(value, TRUE, FALSE, &ullNum, &ullDenom);
 	ToRationalEuclideanGCD(value, TRUE, TRUE, &ullNum2, &ullDenom2);
 	/*-- Double-Check, that returned values fit into LONG :*/
 	if (ullNum > 0x7FFFFFFFL || ullDenom > 0x7FFFFFFFL || ullNum2 > 0x7FFFFFFFL || ullDenom2 > 0x7FFFFFFFL) {
 #if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
-		TIFFErrorExt(0, "TIFFLib: DoubeToSrational()", " Num or Denom exceeds LONG: val=%14.6f, num=%I64u, denom=%I64u | num2=%I64u, denom2=%I64u", neg*value, ullNum, ullDenom, ullNum2, ullDenom2);
+		TIFFErrorExt(0, "TIFFLib: DoubleToSrational()", " Num or Denom exceeds LONG: val=%14.6f, num=%I64u, denom=%I64u | num2=%I64u, denom2=%I64u", neg*value, ullNum, ullDenom, ullNum2, ullDenom2);
 #else
-		TIFFErrorExt(0, "TIFFLib: DoubeToSrational()", " Num or Denom exceeds LONG: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu", neg*value, ullNum, ullDenom, ullNum2, ullDenom2);
+		TIFFErrorExt(0, "TIFFLib: DoubleToSrational()", " Num or Denom exceeds LONG: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu", neg*value, ullNum, ullDenom, ullNum2, ullDenom2);
 #endif
 		assert(0);
 	}

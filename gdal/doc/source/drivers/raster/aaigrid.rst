@@ -39,7 +39,7 @@ the input to have square pixels.
 When writing floating-point values, the driver uses the "%.20g" format
 pattern as a default. You can consult a `reference
 manual <http://en.wikipedia.org/wiki/Printf>`__ for printf to have an
-idea of the exact behaviour of this ;-). You can alternatively specify
+idea of the exact behavior of this ;-). You can alternatively specify
 the number of decimal places with the DECIMAL_PRECISION creation option.
 For example, DECIMAL_PRECISION=3 will output numbers with 3 decimal
 places(using %lf format). Starting with GDAL 1.11, another option is

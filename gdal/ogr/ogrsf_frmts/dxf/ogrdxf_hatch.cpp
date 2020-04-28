@@ -682,7 +682,7 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC,
     }
 
     oSmoothPolyline.SetUseMaxGapWhenTessellatingArcs( poDS->InlineBlocks() );
-    poGC->addGeometryDirectly( oSmoothPolyline.Tesselate() );
+    poGC->addGeometryDirectly( oSmoothPolyline.Tessellate() );
 
 /* -------------------------------------------------------------------- */
 /*      Skip through source boundary objects if present.                */

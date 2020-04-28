@@ -124,7 +124,7 @@ setExtraSamples(TIFF* tif, va_list ap, uint32* v)
         {
                 TIFFWarningExt(tif->tif_clientdata,module,
                     "ExtraSamples tag value is changing, "
-                    "but TransferFunction was read with a different value. Cancelling it");
+                    "but TransferFunction was read with a different value. Canceling it");
                 TIFFClrFieldBit(tif,FIELD_TRANSFERFUNCTION);
                 _TIFFfree(td->td_transferfunction[0]);
                 td->td_transferfunction[0] = NULL;
@@ -206,7 +206,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 		/*
 		 * If the data require post-decoding processing to byte-swap
 		 * samples, set it up here.  Note that since tags are required
-		 * to be ordered, compression code can override this behaviour
+		 * to be ordered, compression code can override this behavior
 		 * in the setup method if it wants to roll the post decoding
 		 * work in with its normal work.
 		 */
@@ -276,7 +276,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
             {
                 TIFFWarningExt(tif->tif_clientdata,module,
                     "SamplesPerPixel tag value is changing, "
-                    "but SMinSampleValue tag was read with a different value. Cancelling it");
+                    "but SMinSampleValue tag was read with a different value. Canceling it");
                 TIFFClrFieldBit(tif,FIELD_SMINSAMPLEVALUE);
                 _TIFFfree(td->td_sminsamplevalue);
                 td->td_sminsamplevalue = NULL;
@@ -285,7 +285,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
             {
                 TIFFWarningExt(tif->tif_clientdata,module,
                     "SamplesPerPixel tag value is changing, "
-                    "but SMaxSampleValue tag was read with a different value. Cancelling it");
+                    "but SMaxSampleValue tag was read with a different value. Canceling it");
                 TIFFClrFieldBit(tif,FIELD_SMAXSAMPLEVALUE);
                 _TIFFfree(td->td_smaxsamplevalue);
                 td->td_smaxsamplevalue = NULL;
@@ -297,7 +297,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
             {
                     TIFFWarningExt(tif->tif_clientdata,module,
                         "SamplesPerPixel tag value is changing, "
-                        "but TransferFunction was read with a different value. Cancelling it");
+                        "but TransferFunction was read with a different value. Canceling it");
                     TIFFClrFieldBit(tif,FIELD_TRANSFERFUNCTION);
                     _TIFFfree(td->td_transferfunction[0]);
                     td->td_transferfunction[0] = NULL;

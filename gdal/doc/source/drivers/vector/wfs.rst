@@ -291,7 +291,7 @@ The following options are available:
 -  **EMPTY_AS_NULL=YES/NO**: (GDAL >=2.0) By default
    (EMPTY_AS_NULL=YES), fields with empty content will be reported as
    being NULL, instead of being an empty string. This is the historic
-   behaviour. However this will prevent such fields to be declared as
+   behavior. However this will prevent such fields to be declared as
    not-nullable if the application schema declared them as mandatory. So
    this option can be set to NO to have both empty strings being report
    as such, and mandatory fields being reported as not nullable.

@@ -187,7 +187,7 @@ control the behavior of this driver.
 -  **MSSQLSPATIAL_ALWAYS_OUTPUT_FID**: Always retrieve the FID value of
    the recently created feature (even if it is not a true IDENTITY
    column). Default = "NO".
--  **MSSQLSPATIAL_SHOW_FID_COLUMN**: Force to display the FID colums as
+-  **MSSQLSPATIAL_SHOW_FID_COLUMN**: Force to display the FID columns as
    a feature attribute. Default = "NO".
 -  **MSSQLSPATIAL_USE_GEOMETRY_COLUMNS**: Use/create geometry_columns
    metadata table in the database. Default = "YES".

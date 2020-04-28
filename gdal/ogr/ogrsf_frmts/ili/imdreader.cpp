@@ -292,7 +292,7 @@ public:
                             AddGeomField(psName, wkbPolygon);
 
                             //We add the area helper point geometry after polygon
-                            //for better behaviour of clients with limited multi geometry support
+                            //for better behavior of clients with limited multi geometry support
                             CPLString areaPointGeomName = psName + CPLString("__Point");
                             AddCoord(areaPointGeomName, psElementNode);
                         } else if (EQUAL(psKind, "Surface"))

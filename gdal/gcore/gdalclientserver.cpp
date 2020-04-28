@@ -125,7 +125,7 @@ GA_ReadOnly).
 \section gdal_api_proxy_options Advanced options
 
 For now, the server launched is the gdalserver executable on Windows. On Unix,
-the default behaviour is to just fork() the current process. It is also possible
+the default behavior is to just fork() the current process. It is also possible
 to launch the gdalserver executable by forcing GDAL_API_PROXY_SERVER=YES.  The
 full filename of the gdalserver executable can also be specified in the
 GDAL_API_PROXY_SERVER.
@@ -144,7 +144,7 @@ In case of many dataset opening or creation, to avoid the cost of repeated
 process forking, a pool of unused connections is established. Each time a
 dataset is closed, the associated connection is pushed in the pool (if there's
 an empty bucket). When a following dataset is to be opened, one of those
-connections will be reused. This behaviour is controlled with the
+connections will be reused. This behavior is controlled with the
 GDAL_API_PROXY_CONN_POOL config option that is set to YES by default, and will
 keep a maximum of 4 unused connections.  GDAL_API_PROXY_CONN_POOL can be set to
 a integer value to specify the maximum number of unused connections.

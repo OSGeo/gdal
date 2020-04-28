@@ -1549,7 +1549,7 @@ public:
             // but we set a special flag to allow vector&raster operations so
             // that the rendering will happen in the next phase
             if( bTemporaryEnableVectorForTextStroking )
-                return FALSE; // this is the default behaviour of the parent
+                return FALSE; // this is the default behavior of the parent
             bTemporaryEnableVectorForTextStroking = true;
             bool bRet = m_pDevice->DrawNormalText(nChars, pCharPos,
                                                      pFont,

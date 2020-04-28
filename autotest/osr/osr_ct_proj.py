@@ -147,7 +147,7 @@ transform_list = [
 
     ('+proj=longlat +ellps=bessel +towgs84=598.1,73.7,418.2,0.202,0.045,-2.455,6.7 +no_defs', (10, 50, 0.0), 1e-8,
      'EPSG:4326', (49.9988572643058,9.99881392529464,0), 1e-8,
-     'DHDN -> WGS84 usign explicit TOWGS84', None, None),
+     'DHDN -> WGS84 using explicit TOWGS84', None, None),
 ]
 
 ###############################################################################

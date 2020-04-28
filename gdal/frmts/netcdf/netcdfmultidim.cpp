@@ -2089,7 +2089,7 @@ lbl_start:
             while(true)
             {
                 // Simulate a recursive call to the next dimension
-                // Implictly save back count and ptr
+                // Implicitly save back count and ptr
                 dimIdx ++;
                 stack_ptr[dimIdx] = stack_ptr[dimIdx-1];
                 goto lbl_start;
@@ -3003,7 +3003,7 @@ bool netCDFAttribute::IRead(const GUInt64* arrayStartIdx,
                                             m_nAttType);
     if( nElementSize == 0 )
         return false;
-    const auto nOuputDTSize = bufferDataType.GetSize();
+    const auto nOutputDTSize = bufferDataType.GetSize();
     std::vector<GByte> abyBuffer(
         static_cast<size_t>(GetTotalElementsCount()) * nElementSize);
     int ret = nc_get_att(m_gid, m_varid, GetName().c_str(), &abyBuffer[0]);
@@ -3052,7 +3052,7 @@ bool netCDFAttribute::IRead(const GUInt64* arrayStartIdx,
         if( !m_dims.empty() )
         {
             pabySrcBuffer += static_cast<std::ptrdiff_t>(arrayStep[0] * nElementSize);
-            pabyDstBuffer += nOuputDTSize * bufferStride[0];
+            pabyDstBuffer += nOutputDTSize * bufferStride[0];
         }
     }
 

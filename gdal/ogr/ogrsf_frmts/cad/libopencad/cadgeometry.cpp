@@ -382,34 +382,34 @@ CADPolyline3D::CADPolyline3D()
 
 void CADPolyline3D::addVertex( const CADVector& vertex )
 {
-    vertexes.push_back( vertex );
+    vertices.push_back( vertex );
 }
 
 size_t CADPolyline3D::getVertexCount() const
 {
-    return vertexes.size();
+    return vertices.size();
 }
 
 CADVector& CADPolyline3D::getVertex( size_t index )
 {
-    return vertexes[index];
+    return vertices[index];
 }
 
 void CADPolyline3D::print() const
 {
     cout << "|------Polyline3D-----|\n";
-    for( size_t i = 0; i < vertexes.size(); ++i )
+    for( size_t i = 0; i < vertices.size(); ++i )
     {
         cout << "  #" << i <<
-            ". X: " << vertexes[i].getX() <<
-            ", Y: " << vertexes[i].getY() << "\n";
+            ". X: " << vertices[i].getX() <<
+            ", Y: " << vertices[i].getY() << "\n";
     }
     cout << "\n";
 }
 
 void CADPolyline3D::transform( const Matrix& matrix )
 {
-    for( CADVector& vertex : vertexes )
+    for( CADVector& vertex : vertices )
     {
         vertex = matrix.multiply( vertex );
     }
@@ -430,11 +430,11 @@ CADLWPolyline::CADLWPolyline() :
 void CADLWPolyline::print() const
 {
     cout << "|------LWPolyline-----|\n";
-    for( size_t i = 0; i < vertexes.size(); ++i )
+    for( size_t i = 0; i < vertices.size(); ++i )
     {
         cout << "  #" << i <<
-            ". X: " << vertexes[i].getX() <<
-            ", Y: " << vertexes[i].getY() << "\n";
+            ". X: " << vertices[i].getX() <<
+            ", Y: " << vertices[i].getY() << "\n";
     }
     cout << "\n";
 }
@@ -1064,24 +1064,24 @@ CADPolylinePFace::CADPolylinePFace()
 void CADPolylinePFace::print() const
 {
     cout << "|---------PolylinePface---------|\n";
-    for( size_t i = 0; i < vertexes.size(); ++i )
+    for( size_t i = 0; i < vertices.size(); ++i )
     {
-        cout << "  #" << i << ".\t" << vertexes[i].getX() <<
-                               "\t" << vertexes[i].getY() <<
-                               "\t" << vertexes[i].getZ() << "\n";
+        cout << "  #" << i << ".\t" << vertices[i].getX() <<
+                               "\t" << vertices[i].getY() <<
+                               "\t" << vertices[i].getZ() << "\n";
     }
     cout << "\n";
 }
 
 void CADPolylinePFace::transform( const Matrix& matrix )
 {
-    for( CADVector& vertex : vertexes )
+    for( CADVector& vertex : vertices )
         vertex = matrix.multiply( vertex );
 }
 
 void CADPolylinePFace::addVertex( const CADVector& vertex )
 {
-    vertexes.push_back( vertex );
+    vertices.push_back( vertex );
 }
 
 //------------------------------------------------------------------------------
@@ -1121,12 +1121,12 @@ void CADMLine::print() const
         "Base point: " << position.getX() << "\t" <<
                           position.getY() << "\t" <<
                           position.getZ() << "\n" <<
-        "Vertexes:\n";
-    for( size_t i = 0; i < avertVertexes.size(); ++i )
+        "Vertices:\n";
+    for( size_t i = 0; i < avertVertices.size(); ++i )
     {
-        cout << "  #" << i << ".\t" << avertVertexes[i].getX() <<
-                               "\t" << avertVertexes[i].getY() <<
-                               "\t" << avertVertexes[i].getZ() << "\n";
+        cout << "  #" << i << ".\t" << avertVertices[i].getX() <<
+                               "\t" << avertVertices[i].getY() <<
+                               "\t" << avertVertices[i].getZ() << "\n";
     }
     cout << "\n";
 }
@@ -1134,7 +1134,7 @@ void CADMLine::print() const
 void CADMLine::transform( const Matrix& matrix )
 {
     CADPoint3D::transform( matrix );
-    for( CADVector& vertex : avertVertexes )
+    for( CADVector& vertex : avertVertices )
     {
         vertex = matrix.multiply( vertex );
     }
@@ -1162,7 +1162,7 @@ void CADMLine::setOpened( bool value )
 
 void CADMLine::addVertex( const CADVector& vertex )
 {
-    avertVertexes.push_back( vertex );
+    avertVertices.push_back( vertex );
 }
 
 //------------------------------------------------------------------------------

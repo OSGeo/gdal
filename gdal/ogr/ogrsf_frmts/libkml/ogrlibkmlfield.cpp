@@ -680,8 +680,8 @@ void field2kml(
                     if( poKmlPlacemark->has_geometry()
                         && -1 < poOgrFeat->GetFieldAsInteger( i ) )
                     {
-                        const int iTesselate = poOgrFeat->GetFieldAsInteger( i );
-                        if( iTesselate &&
+                        const int iTessellate = poOgrFeat->GetFieldAsInteger( i );
+                        if( iTessellate &&
                             !(!isGX &&
                               static_cast<kmldom::AltitudeModeEnum>(iAltitudeMode) ==
                               kmldom::ALTITUDEMODE_CLAMPTOGROUND) &&
@@ -700,7 +700,7 @@ void field2kml(
                         {
                             GeometryPtr poKmlGeometry =
                                 poKmlPlacemark->get_geometry();
-                            ogr2tessellate_rec( CPL_TO_BOOL(iTesselate),
+                            ogr2tessellate_rec( CPL_TO_BOOL(iTessellate),
                                                 poKmlGeometry );
                             if( !isGX &&
                                 iAltitudeMode ==

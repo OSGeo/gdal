@@ -537,9 +537,9 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
                 error_report.EmitError('GENERAL', 'rreq.NSF (=%d) != NSF_found (=%d)' % (NSF, NSF_found))
             if gmljp2_found and not SF67Found:
                 if inspire_tg:
-                    error_report.EmitError('INSPIRE_TG', '"rreq" box does not advertize standard flag 67 whereas GMLJP2 box is present')
+                    error_report.EmitError('INSPIRE_TG', '"rreq" box does not advertise standard flag 67 whereas GMLJP2 box is present')
                 else:
-                    error_report.EmitWarning('GENERAL', '"rreq" box does not advertize standard flag 67 whereas GMLJP2 box is present')
+                    error_report.EmitWarning('GENERAL', '"rreq" box does not advertise standard flag 67 whereas GMLJP2 box is present')
 
             NVF = get_field_val(rreq, 'NVF')
             if NVF is None:
@@ -1163,7 +1163,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
                     error_report.EmitWarning(
                         'GENERAL',
                         'User-defined precincts %d found but '
-                        'SPcod_transformation did not advertize it' % i)
+                        'SPcod_transformation did not advertise it' % i)
                 elif SPcod_Precincts is None and (Scod & 1) != 0:
                     error_report.EmitWarning('GENERAL', 'No user-defined precincts %d defined but SPcod_transformation advertized it' % i)
                 elif SPcod_Precincts is None and inspire_tg:
