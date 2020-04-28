@@ -908,8 +908,10 @@ HAVE_LERC=1
 # Comment out the following if you want to build JPEGLS with CHARLS support
 #CHARLS_INC=-IE:\work\GIS\gdal\supportlibs\charls\include\
 #CHARLS_LIB=e:\work\GIS\gdal\supportlibs\charls\bin\Release\x86\CharLS.lib
-# Comment out for API 2.x:
+# Comment out for charls 2.0:
 #CHARLS_FLAGS = -DCHARLS_2
+# And for charls 2.1
+#CHARLS_FLAGS = -DCHARLS_2_1
 
 # Comment out for DDS driver
 #CRUNCH_INC = -Ic:\dev\install-crunch\include\crunch
