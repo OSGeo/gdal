@@ -304,6 +304,9 @@ JPEG driver:
  * tune sanity check for multiple-scan (QGIS #35957)
  * in case of multiscan image and implicit overviews, limit memory consumption
 
+JPEGLS driver:
+ * add support for CharLS 2.1
+
 KEA driver:
  * return error when deleting metadata item rather than crashing (#1681)
  * Backport thread safety fixes and nullptr tests from standalone driver (#2372)
