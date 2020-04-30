@@ -259,13 +259,10 @@ OGRMultiPolygon *GeometryReader::readMultiPolygon()
     auto mp = std::unique_ptr<OGRMultiPolygon>(new OGRMultiPolygon());
     for (uoffset_t i = 0; i < parts->size(); i++) {
         GeometryReader reader { parts->Get(i), GeometryType::Polygon, m_hasZ, m_hasM };
-        auto g = reader.read();
+        auto g = std::unique_ptr<OGRGeometry>(reader.read());
         if (g == nullptr)
             return nullptr;
-        auto p = std::unique_ptr<OGRPolygon>(g->toPolygon());
-        if (p == nullptr)
-            return nullptr;
-        mp->addGeometryDirectly(p.release());
+        mp->addGeometryDirectly(g.release()->toPolygon());
     }
     return mp.release();
 }
