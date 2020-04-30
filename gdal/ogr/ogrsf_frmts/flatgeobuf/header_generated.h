@@ -9,10 +9,13 @@
 namespace FlatGeobuf {
 
 struct Column;
+struct ColumnBuilder;
 
 struct Crs;
+struct CrsBuilder;
 
 struct Header;
+struct HeaderBuilder;
 
 enum class GeometryType : uint8_t {
   Unknown = 0,
@@ -87,7 +90,7 @@ inline const char * const *EnumNamesGeometryType() {
 }
 
 inline const char *EnumNameGeometryType(GeometryType e) {
-  if (e < GeometryType::Unknown || e > GeometryType::Triangle) return "";
+  if (flatbuffers::IsOutRange(e, GeometryType::Unknown, GeometryType::Triangle)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesGeometryType()[index];
 }
@@ -156,12 +159,13 @@ inline const char * const *EnumNamesColumnType() {
 }
 
 inline const char *EnumNameColumnType(ColumnType e) {
-  if (e < ColumnType::Byte || e > ColumnType::Binary) return "";
+  if (flatbuffers::IsOutRange(e, ColumnType::Byte, ColumnType::Binary)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesColumnType()[index];
 }
 
 struct Column FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef ColumnBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_NAME = 4,
     VT_TYPE = 6
@@ -182,6 +186,7 @@ struct Column FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 };
 
 struct ColumnBuilder {
+  typedef Column Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_name(flatbuffers::Offset<flatbuffers::String> name) {
@@ -225,6 +230,7 @@ inline flatbuffers::Offset<Column> CreateColumnDirect(
 }
 
 struct Crs FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef CrsBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_ORG = 4,
     VT_CODE = 6,
@@ -263,6 +269,7 @@ struct Crs FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 };
 
 struct CrsBuilder {
+  typedef Crs Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_org(flatbuffers::Offset<flatbuffers::String> org) {
@@ -329,6 +336,7 @@ inline flatbuffers::Offset<Crs> CreateCrsDirect(
 }
 
 struct Header FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef HeaderBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_NAME = 4,
     VT_ENVELOPE = 6,
@@ -398,6 +406,7 @@ struct Header FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 };
 
 struct HeaderBuilder {
+  typedef Header Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_name(flatbuffers::Offset<flatbuffers::String> name) {
