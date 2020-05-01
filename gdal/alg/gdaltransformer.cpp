@@ -1548,6 +1548,8 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     GDALGenImgProjTransformInfo *psInfo =
         GDALCreateGenImgProjTransformerInternal();
 
+    bool bCanUseSrcGeoTransform = false;
+
 /* -------------------------------------------------------------------- */
 /*      Get forward and inverse geotransform for the source image.      */
 /* -------------------------------------------------------------------- */
@@ -1598,6 +1600,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                                       dfEastLongitudeDeg,
                                       dfNorthLatitudeDeg);
         }
+        bCanUseSrcGeoTransform = true;
     }
     else if( bGCPUseOK
              && (pszMethod == nullptr || EQUAL(pszMethod, "GCP_POLYNOMIAL") )
@@ -1921,7 +1924,8 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         }
     }
 
-    const bool bMayInsertCenterLong = (!oSrcSRS.IsEmpty() && hSrcDS
+    const bool bMayInsertCenterLong = (bCanUseSrcGeoTransform
+            && !oSrcSRS.IsEmpty() && hSrcDS
             && CPLFetchBool( papszOptions, "INSERT_CENTER_LONG", true ));
     if( (!oSrcSRS.IsEmpty() && !oDstSRS.IsEmpty() &&
          (!oSrcSRS.IsSame(&oDstSRS) ||
