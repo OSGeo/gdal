@@ -79,7 +79,7 @@ BEGIN { use_ok('Geo::GDAL') };
             my $f = shift;
             my $g = $f->Geometry;
             ok($g->AsText eq 
-               'POLYGON ((0 0,0 -40,40 -40,40 0,0 0),(10 -20,20 -20,20 -30,10 -30,10 -20))', 
+               'POLYGON ((0 0,0 -40,40 -40,40 0,0 0),(10 -20,10 -30,20 -30,20 -20,10 -20))',
                'big geometry with hole') if $f->{val} == 0;
             ok($g->AsText eq 
                'POLYGON ((10 -20,10 -30,20 -30,20 -20,10 -20))', 
