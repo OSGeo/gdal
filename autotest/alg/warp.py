@@ -1741,3 +1741,15 @@ def test_warp_med_out_of_bounds_src_pixels():
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 0
     ds = None
+
+###############################################################################
+# Test fix for #2460
+
+
+def test_warp_rpc_source_has_geotransform():
+
+    out_ds = gdal.Warp('', 'data/test_rpc_with_gt_bug_2460.tif',
+                       format='MEM',
+                       transformerOptions=['METHOD=RPC', 'RPC_HEIGHT=1118'])
+    cs = out_ds.GetRasterBand(1).Checksum()
+    assert cs == 60397
