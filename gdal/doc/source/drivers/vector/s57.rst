@@ -49,7 +49,7 @@ transfer will have in excess of 100 layers.
 Each feature type has a predefined set of attributes as defined by the
 S-57 standard. For instance, the airport (AIRARE) object class can have
 the AIRARE, CATAIR, CONDTN, CONVIS, NOBJNM, OBJNAM, STATUS, INFORM,
-NINFOM, NTXTDS, PICREP, SCAMAX, SCAMIN, TXTDSC, ,RECDAT, RECIND, SORDAT,
+NINFOM, NTXTDS, PICREP, SCAMAX, SCAMIN, TXTDSC, RECDAT, RECIND, SORDAT,
 and SORIND attributes. These short names can be related to longer, more
 meaningful names using an S-57 object/attribute catalog such as the S-57
 standard document itself, or the catalog files (s57attributes.csv, and
@@ -64,36 +64,29 @@ which appear on all feature, regardless of object class. is turned on.
      Attribute Name  Description                            Defined On
      --------------  -----------                            ----------
 
-     GRUP            Group number.                  All features
+     GRUP            Group number.                          All features
 
-     OBJL            Object label code.  This number    All features
-                 indicates the object class of the
+     OBJL            Object label code.  This number        All features
+                     indicates the object class of the
                      feature.
 
      RVER            Record version.
 
      AGEN            Numeric agency code, such as 50 for    All features
                      the Canadian Hydrographic Service.
-             A potentially outdated list is
-             available in agencode.txt.
 
      FIDN            Feature identification number.         All features
 
      FIDS            Feature identification subdivision.    All features
 
-     DSNM            Dataset name.  The name of the file    All features
-                     the feature came from.  Used with
-                     LNAM to form a unique dataset wide
-             identifier for a feature.
-
      INFORM          Informational text.                    Some features
 
-     NINFOM      Informational text in national         Some features
+     NINFOM          Informational text in national         Some features
                      language.
 
-     OBJNAM          Object name                Some features
+     OBJNAM          Object name                            Some features
 
-     NOBJNM          Object name in national        Some features
+     NOBJNM          Object name in national                Some features
                      language.
 
      SCAMAX          Maximum scale for display              Some features
@@ -115,6 +108,16 @@ The following are present if LNAM_REFS is enabled:
 
      FFPT_RIND       Relationship indicators for each of    All Features
                      the LNAM_REFS relationships.
+
+
+DSID layer
+----------
+
+Dataset wide fields, such as DSID (Data Set Identification), DSSI
+(Data Set Structure Information) and DSPM (Data Set Parameter) are exposed
+in a layer ``DSID`` which has a single feature.
+See paragraph 7.3.1 "Data set general information record structure" of
+`IHO S-57 Edition 3.1 standard (main)`_
 
 Soundings
 ---------
@@ -223,5 +226,6 @@ See Also
 -  `Frank's S-57 Page (at
    archive.org) <https://web.archive.org/web/20130730111701/http://home.gdal.org/projects/s57/index.html>`__:
    Links to other resources, and sample datasets.
--  `IHO S-57 Edition 3.1
-   (main) <http://www.iho.int/iho_pubs/standard/S-57Ed3.1/31Main.pdf>`__
+-  `IHO S-57 Edition 3.1 standard (main)`_
+
+.. _`IHO S-57 Edition 3.1 standard (main)`: https://web.archive.org/web/20190330184049/http://www.iho.int/iho_pubs/standard/S-57Ed3.1/31Main.pdf
