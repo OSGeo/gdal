@@ -319,6 +319,34 @@ void OGRSpatialReference::Private::refreshRootFromProjObj()
     }
 }
 
+static bool isNorthEastAxisOrder(PJ_CONTEXT* ctx, PJ* cs)
+{
+    const char* pszName1 = nullptr;
+    const char* pszDirection1 = nullptr;
+    proj_cs_get_axis_info(
+        ctx, cs, 0, &pszName1, nullptr, &pszDirection1,
+        nullptr, nullptr, nullptr, nullptr);
+    const char* pszName2 = nullptr;
+    const char* pszDirection2 = nullptr;
+    proj_cs_get_axis_info(
+        ctx, cs, 1, &pszName2, nullptr, &pszDirection2,
+        nullptr, nullptr, nullptr, nullptr);
+    if( pszDirection1 && EQUAL(pszDirection1, "north") &&
+        pszDirection2 && EQUAL(pszDirection2, "east") )
+    {
+        return true;
+    }
+    if( pszDirection1 && pszDirection2 &&
+        ((EQUAL(pszDirection1, "north") && EQUAL(pszDirection2, "north")) ||
+         (EQUAL(pszDirection1, "south") && EQUAL(pszDirection2, "south"))) &&
+        pszName1 && STARTS_WITH_CI(pszName1, "northing") &&
+        pszName2 && STARTS_WITH_CI(pszName2, "easting") )
+    {
+        return true;
+    }
+    return false;
+}
+
 void OGRSpatialReference::Private::refreshAxisMapping()
 {
     if( !m_pj_crs || m_axisMappingStrategy == OAMS_CUSTOM )
@@ -330,6 +358,7 @@ void OGRSpatialReference::Private::refreshAxisMapping()
         doUndoDemote = true;
         demoteFromBoundCRS();
     }
+    const auto ctxt = getPROJContext();
     PJ* horizCRS = nullptr;
     int axisCount = 0;
     if( m_pjType == PJ_TYPE_VERTICAL_CRS )
@@ -338,10 +367,10 @@ void OGRSpatialReference::Private::refreshAxisMapping()
     }
     else if( m_pjType == PJ_TYPE_COMPOUND_CRS )
     {
-        horizCRS = proj_crs_get_sub_crs(getPROJContext(), m_pj_crs, 0);
+        horizCRS = proj_crs_get_sub_crs(ctxt, m_pj_crs, 0);
         if( horizCRS && proj_get_type(horizCRS) == PJ_TYPE_BOUND_CRS )
         {
-            auto baseCRS = proj_get_source_crs(getPROJContext(), horizCRS);
+            auto baseCRS = proj_get_source_crs(ctxt, horizCRS);
             if( baseCRS )
             {
                 proj_destroy(horizCRS);
@@ -349,12 +378,12 @@ void OGRSpatialReference::Private::refreshAxisMapping()
             }
         }
 
-        auto vertCRS = proj_crs_get_sub_crs(getPROJContext(), m_pj_crs, 1);
+        auto vertCRS = proj_crs_get_sub_crs(ctxt, m_pj_crs, 1);
         if( vertCRS )
         {
             if( proj_get_type(vertCRS) == PJ_TYPE_BOUND_CRS )
             {
-                auto baseCRS = proj_get_source_crs(getPROJContext(), vertCRS);
+                auto baseCRS = proj_get_source_crs(ctxt, vertCRS);
                 if( baseCRS )
                 {
                     proj_destroy(vertCRS);
@@ -362,10 +391,10 @@ void OGRSpatialReference::Private::refreshAxisMapping()
                 }
             }
 
-            auto cs = proj_crs_get_coordinate_system(getPROJContext(), vertCRS);
+            auto cs = proj_crs_get_coordinate_system(ctxt, vertCRS);
             if( cs )
             {
-                axisCount += proj_cs_get_axis_count(getPROJContext(), cs);
+                axisCount += proj_cs_get_axis_count(ctxt, cs);
                 proj_destroy(cs);
             }
             proj_destroy(vertCRS);
@@ -376,31 +405,17 @@ void OGRSpatialReference::Private::refreshAxisMapping()
         horizCRS = m_pj_crs;
     }
 
-    bool switchForGisFriendlyOrder = false;
+    bool bSwitchForGisFriendlyOrder = false;
     if( horizCRS )
     {
-        auto cs = proj_crs_get_coordinate_system(getPROJContext(), horizCRS);
+        auto cs = proj_crs_get_coordinate_system(ctxt, horizCRS);
         if( cs )
         {
-            int nHorizCSAxisCount = proj_cs_get_axis_count(getPROJContext(), cs);
+            int nHorizCSAxisCount = proj_cs_get_axis_count(ctxt, cs);
             axisCount += nHorizCSAxisCount;
             if( nHorizCSAxisCount >= 2 )
             {
-                const char* pszName1 = nullptr;
-                const char* pszDirection1 = nullptr;
-                proj_cs_get_axis_info(
-                    getPROJContext(), cs, 0, &pszName1, nullptr, &pszDirection1,
-                    nullptr, nullptr, nullptr, nullptr);
-                const char* pszName2 = nullptr;
-                const char* pszDirection2 = nullptr;
-                proj_cs_get_axis_info(
-                    getPROJContext(), cs, 1, &pszName2, nullptr, &pszDirection2,
-                    nullptr, nullptr, nullptr, nullptr);
-                if( pszDirection1 && EQUAL(pszDirection1, "north") &&
-                    pszDirection2 && EQUAL(pszDirection2, "east") )
-                {
-                    switchForGisFriendlyOrder = true;
-                }
+                bSwitchForGisFriendlyOrder = isNorthEastAxisOrder(ctxt, cs);
             }
             proj_destroy(cs);
         }
@@ -416,7 +431,7 @@ void OGRSpatialReference::Private::refreshAxisMapping()
 
     m_axisMapping.resize(axisCount);
     if( m_axisMappingStrategy == OAMS_AUTHORITY_COMPLIANT ||
-        !switchForGisFriendlyOrder )
+        !bSwitchForGisFriendlyOrder )
     {
         for( int i = 0; i < axisCount; i++ )
         {
@@ -10752,10 +10767,11 @@ int OGRSpatialReference::EPSGTreatsAsNorthingEasting() const
 
     d->demoteFromBoundCRS();
     PJ* projCRS;
+    const auto ctxt = d->getPROJContext();
     if( d->m_pjType == PJ_TYPE_COMPOUND_CRS )
     {
         projCRS = proj_crs_get_sub_crs(
-            d->getPROJContext(), d->m_pj_crs, 1);
+            ctxt, d->m_pj_crs, 1);
         if( !projCRS || proj_get_type(projCRS) != PJ_TYPE_PROJECTED_CRS )
         {
             d->undoDemoteFromBoundCRS();
@@ -10765,7 +10781,7 @@ int OGRSpatialReference::EPSGTreatsAsNorthingEasting() const
     }
     else
     {
-        projCRS = proj_clone(d->getPROJContext(), d->m_pj_crs);
+        projCRS = proj_clone(ctxt, d->m_pj_crs);
     }
     const char* pszAuth = proj_get_id_auth_name(projCRS, 0);
     if( pszAuth == nullptr || !EQUAL(pszAuth, "EPSG") )
@@ -10776,36 +10792,13 @@ int OGRSpatialReference::EPSGTreatsAsNorthingEasting() const
     }
 
     bool ret = false;
-    auto cs = proj_crs_get_coordinate_system(d->getPROJContext(),
-                                                 projCRS);
+    auto cs = proj_crs_get_coordinate_system(ctxt, projCRS);
     proj_destroy(projCRS);
     d->undoDemoteFromBoundCRS();
 
     if( cs )
     {
-        const char* pszDirection = nullptr;
-        if( proj_cs_get_axis_info(
-            d->getPROJContext(), cs, 0, nullptr, nullptr, &pszDirection,
-            nullptr, nullptr, nullptr, nullptr) )
-        {
-            if( EQUAL(pszDirection, "north") )
-            {
-                ret = true;
-            }
-        }
-        if( ret )
-        {
-            if( proj_cs_get_axis_info(
-            d->getPROJContext(), cs, 1, nullptr, nullptr, &pszDirection,
-            nullptr, nullptr, nullptr, nullptr) )
-            {
-                if( EQUAL(pszDirection, "north") )
-                {
-                    ret = false;
-                }
-            }
-        }
-
+        ret = isNorthEastAxisOrder(ctxt, cs);
         proj_destroy(cs);
     }
 
@@ -10817,7 +10810,7 @@ int OGRSpatialReference::EPSGTreatsAsNorthingEasting() const
 /************************************************************************/
 
 /**
- * \brief This function returns TRUE if EPSG feels this geographic coordinate
+ * \brief This function returns TRUE if EPSG feels this projected coordinate
  * system should be treated as having northing/easting coordinate ordering.
  *
  * This function is the same as
