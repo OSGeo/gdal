@@ -27,6 +27,11 @@
  * New Sphinx-based documentation
  * Multiple security related fixes (ossfuzz)
  * Continued code linting (cppcheck, CoverityScan, etc.)
+ * Compatibility with GDAL 3.0:
+    - C and C++ API: backward compatible changes
+    - C ABI: backward compatible changes
+    - C++ ABI: modified
+    - Functional changes: see MIGRATION_GUIDE.TXT
 
 == Build ==
 
@@ -69,6 +74,7 @@ All:
 * Contour: fix (over) precision issue when comparing pixel value to NoData on Float32 rasters (#1987)
 * Contour: add sanity checks for interval based contouring, in case the dataset contains extreme values regarding the settings, which would lead to a lot of memory allocations / too large computation time
 * TPS warper: enhance precision without armadillo support (#1809)
+* RPC warper: fix issue when source image has a geotransform (#2460)
 * GDALRasterizeGeometries(): fix potential integer overflow / memory allocation failure, depending on GDAL_CACHEMAX and raster dimensions (#2261)
 * Rasterize: speed optimization for geometry collections (#2369)
 * GDALContourGenerate(): propagate raster acquisition error (#2410)

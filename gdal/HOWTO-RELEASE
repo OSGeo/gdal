@@ -61,7 +61,9 @@ Perl module maintainer to make a CPAN release.
 4) Update LIBGDAL_CURRENT/REVISION/AGE macros in GDALmake.opt.in.
    - For a release with no interface changes just bump REVISION.
    - Adding interfaces, bump CURRENT/AGE, set REVISION to 0.
-   - Deleting interfaces / compatibility issues - bump CURRENT, others to zero.
+   - Deleting/changing interfaces in C or C++ API, or modification of
+     the C++ ABI (e.g. addition of virtual method, new argument with default value, etc.):
+     bump CURRENT, set others to zero.
 
 5) Prepare release overview in the NEWS file. For example, to get all changes
    from v2.2.0 to current HEAD (from gdal/ subdirectory)
