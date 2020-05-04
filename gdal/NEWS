@@ -486,6 +486,7 @@ CPL_UNSTABLE_API macro (#1925)
 * Fix PROJ usage across fork() calls (#2221)
 * OGRCoordinateTransformation: correctly deal when transforming CRS that includes +lon_wrap= or similar qualifiers
 * Add OSRIsDerivedGeographic()
+* EPSGTreatsAsNorthingEasting(): fix it to properly deal with Polar projected CRS with northing,easting order
 
 == Utilities ==
 
