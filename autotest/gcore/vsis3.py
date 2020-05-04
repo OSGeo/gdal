@@ -51,7 +51,7 @@ def open_for_read(uri):
 def test_vsis3_init():
 
     gdaltest.aws_vars = {}
-    for var in ('AWS_SECRET_ACCESS_KEY', 'AWS_ACCESS_KEY_ID', 'AWS_TIMESTAMP', 'AWS_HTTPS', 'AWS_VIRTUAL_HOSTING', 'AWS_S3_ENDPOINT', 'AWS_REQUEST_PAYER', 'AWS_DEFAULT_REGION', 'AWS_DEFAULT_PROFILE', 'AWS_NO_SIGN_REQUEST'):
+    for var in ('AWS_SECRET_ACCESS_KEY', 'AWS_ACCESS_KEY_ID', 'AWS_TIMESTAMP', 'AWS_HTTPS', 'AWS_VIRTUAL_HOSTING', 'AWS_S3_ENDPOINT', 'AWS_REQUEST_PAYER', 'AWS_DEFAULT_REGION', 'AWS_DEFAULT_PROFILE', 'AWS_PROFILE', 'AWS_NO_SIGN_REQUEST'):
         gdaltest.aws_vars[var] = gdal.GetConfigOption(var)
         if gdaltest.aws_vars[var] is not None:
             gdal.SetConfigOption(var, "")
@@ -2841,7 +2841,7 @@ def test_vsis3_read_credentials_config_file_non_default_profile(tmpdir):
     gdal.SetConfigOption('AWS_ACCESS_KEY_ID', '')
     gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', None)
     gdal.SetConfigOption('AWS_CONFIG_FILE', None)
-    gdal.SetConfigOption('AWS_DEFAULT_PROFILE', 'myprofile')
+    gdal.SetConfigOption('AWS_PROFILE', 'myprofile')
 
     os_aws = tmpdir.mkdir(".aws")
 
@@ -2883,7 +2883,7 @@ aws_secret_access_key = bar
 
     assert data == 'foo'
 
-    gdal.SetConfigOption('AWS_DEFAULT_PROFILE', '')
+    gdal.SetConfigOption('AWS_PROFILE', '')
 
 ###############################################################################
 # Read credentials from simulated ~/.aws/credentials and ~/.aws/config
