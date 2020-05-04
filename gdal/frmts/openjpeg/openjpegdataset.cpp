@@ -3321,6 +3321,13 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     }
 
 #if IS_OPENJPEG_OR_LATER(2,3,2)
+
+    if( getenv("OPJ_NUM_THREADS") == nullptr )
+    {
+        JP2OpenJPEGDataset oTmpDS;
+        opj_codec_set_threads(pCodec, oTmpDS.GetNumThreads());
+    }
+
     if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "PLT", "FALSE")) )
     {
         const char* const apszOptions[] = { "PLT=YES", nullptr };
