@@ -339,11 +339,11 @@ static size_t CPLJSONWriteFunction(void *pBuffer, size_t nSize, size_t nMemb,
  */
 
 #ifdef HAVE_CURL
-bool CPLJSONDocument::LoadUrl(const std::string &osUrl, char **papszOptions,
+bool CPLJSONDocument::LoadUrl(const std::string &osUrl, const char* const* papszOptions,
                               GDALProgressFunc pfnProgress,
                               void *pProgressArg)
 #else
-bool CPLJSONDocument::LoadUrl(const std::string & /*osUrl*/, char ** /*papszOptions*/,
+bool CPLJSONDocument::LoadUrl(const std::string & /*osUrl*/, const char* const* /*papszOptions*/,
                               GDALProgressFunc /*pfnProgress*/,
                               void * /*pProgressArg*/)
 #endif // HAVE_CURL
