@@ -368,15 +368,17 @@ def test_jp2openjpeg_14():
     assert ds.GetGCPCount() == 2
 
 ###############################################################################
-# Test multi-threading reading
+# Test multi-threading reading and (possibly) writing
 
-
-def test_jp2openjpeg_15():
+@pytest.mark.parametrize('JP2OPENJPEG_USE_THREADED_IO', ['YES', 'NO'])
+def test_jp2openjpeg_15(JP2OPENJPEG_USE_THREADED_IO):
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 256, 256)
     src_ds.GetRasterBand(1).Fill(255)
     data = src_ds.ReadRaster()
-    ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_15.jp2', src_ds, options=['BLOCKXSIZE=32', 'BLOCKYSIZE=32'])
+    # Setting only used for writing
+    with gdaltest.config_option('JP2OPENJPEG_USE_THREADED_IO', JP2OPENJPEG_USE_THREADED_IO):
+        ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_15.jp2', src_ds, options=['BLOCKXSIZE=33', 'BLOCKYSIZE=34'])
     src_ds = None
     got_data = ds.ReadRaster()
     ds = None
