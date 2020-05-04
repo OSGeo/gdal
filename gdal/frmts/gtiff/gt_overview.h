@@ -58,7 +58,7 @@ void GTIFFBuildOverviewMetadata( const char *pszResampling,
                                  GDALDataset *poBaseDS,
                                  CPLString &osMetadata );
 
-CPLErr CPL_DLL
+CPLErr
 GTIFFBuildOverviewsEx( const char * pszFilename,
                        int nBands, GDALRasterBand **papoBandList,
                        int nOverviews, int * panOverviewList,
