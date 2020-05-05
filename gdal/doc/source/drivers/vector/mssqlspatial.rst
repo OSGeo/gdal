@@ -1,6 +1,6 @@
 .. _vector.mssqlspatial:
 
-MSSQLSpatial - Microsoft SQL Server Spatial Database
+MSSQLSpatial - Microsoft SQL Server Spatial  Database
 ====================================================
 
 .. shortname:: MSSQLSpatial
