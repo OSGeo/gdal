@@ -97,7 +97,7 @@ Layer Creation Options
    is associated with the layer. In the case, if the EPSG code is
    mentioned, it will be used as the SRID. (Note: the spatial_ref_sys
    table must be correctly populated with the specified SRID)
--  **NONE_AS_UNKNOWN**: Can bet set to TRUE to force
+-  **NONE_AS_UNKNOWN**: Can be set to TRUE to force
    non-spatial layers (wkbNone) to be created as spatial tables of type
    GEOMETRY (wkbUnknown).
    Defaults to NO, in which case a regular table is created and not
