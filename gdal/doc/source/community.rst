@@ -58,6 +58,8 @@ communication channels in most situations.
 Conference
 ----------
 
+.. warning:: FOSS4G 2020 has unfortunately been canceled.
+
 .. image:: ../images/foss4g2020.png
    :alt:     FOSS4G 2020
    :target:  https://2020.foss4g.org/
