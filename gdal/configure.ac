@@ -1535,10 +1535,10 @@ AC_SUBST(GDALFORMATS_ENABLED,$GDALFORMATS_ENABLED)
 if test "$LIBZ_SETTING" != "no" ; then
   if test "x$INTERNAL_FORMAT_rik_ENABLED" = "xyes"; then
       GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED rik"
-  fi 
+  fi
   if test "x$INTERNAL_FORMAT_ozi_ENABLED" = "xyes"; then
       GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED ozi"
-  fi 
+  fi
 fi
 
 
@@ -2789,7 +2789,7 @@ AC_SUBST(HAVE_HDF5,$HAVE_HDF5)
 AC_SUBST(HDF5_INCLUDE,$HDF5_INCLUDE)
 
 if test "$HAVE_HDF5" != "no" ; then
-  OPT_GDAL_FORMATS="hdf5 $OPT_GDAL_FORMATS"
+  OPT_GDAL_FORMATS="hdf5 hdf5r $OPT_GDAL_FORMATS"
 fi
 
 dnl ---------------------------------------------------------------------------
@@ -3744,7 +3744,7 @@ m4_foreach_w([frmt],XERCES_DRIVERS,[
   if test "x$driver_enabled" = "xyes"; then
     OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
     OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
-  fi 
+  fi
 ])
 
 fi
@@ -3768,7 +3768,7 @@ m4_foreach_w([frmt],EXPAT_DRIVERS,[
   if test "x$driver_enabled" = "xyes"; then
     OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
     OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
-  fi 
+  fi
 ])
 
 fi
@@ -3859,7 +3859,7 @@ m4_foreach_w([frmt],ODBC_DRIVERS,[
   if test "x$driver_enabled" = "xyes"; then
     OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
     OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
-  fi 
+  fi
 ])
 fi
 
@@ -4023,14 +4023,14 @@ m4_foreach_w([frmt],CURL_FORMATS,[
   driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
   if test "x$driver_enabled" = "xyes"; then
     GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED frmt"
-  fi 
+  fi
 ])
 m4_foreach_w([frmt],CURL_DRIVERS,[
   driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
   if test "x$driver_enabled" = "xyes"; then
     OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
     OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
-  fi 
+  fi
 ])
 
 fi
@@ -4199,7 +4199,7 @@ m4_foreach_w([frmt],SQLITE_FORMATS,[
   driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
   if test "x$driver_enabled" = "xyes"; then
     GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED frmt"
-  fi 
+  fi
 ])
 
 m4_foreach_w([frmt],SQLITE_DRIVERS,[
@@ -4207,7 +4207,7 @@ m4_foreach_w([frmt],SQLITE_DRIVERS,[
   if test "x$driver_enabled" = "xyes"; then
     OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
     OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
-  fi 
+  fi
 ])
 
 fi
@@ -4853,7 +4853,7 @@ if test "$PDF_PLUGIN" != "yes" ; then
     if test "$LIBZ_SETTING" != "no" ; then
       GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED pdf"
     fi
-  fi 
+  fi
 fi
 
 
@@ -5455,7 +5455,7 @@ TILEDB_SETTING=no
 if test "$with_tiledb" = "yes" -o "$with_tiledb" = "" ; then
 
   AC_CHECK_LIB(tiledb,tiledb_coords,TILEDB_SETTING=yes,TILEDB_SETTING=no,)
-  
+
   if test "$TILEDB_SETTING" = "yes" ; then
     LIBS="-ltiledb $LIBS"
   else
