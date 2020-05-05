@@ -811,7 +811,11 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
                                                 CPLString& osCredentials)
 {
     // See http://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html
-    const char* pszProfile = CPLGetConfigOption("AWS_DEFAULT_PROFILE", "");
+    // If AWS_DEFAULT_PROFILE is set (obsolete, no longer documented), use it in priority
+    // Otherwise use AWS_PROFILE
+    // Otherwise fallback to "default"
+    const char* pszProfile = CPLGetConfigOption("AWS_DEFAULT_PROFILE",
+        CPLGetConfigOption("AWS_PROFILE", ""));
     const CPLString osProfile(pszProfile[0] != '\0' ? pszProfile : "default");
 
 #ifdef WIN32
