@@ -166,13 +166,13 @@ install:
 script:
   - ./gdal/ci/travis/${BUILD_NAME}/script.sh
 
-notifications:
-  email:
-    recipients:
-      - gdal-commits@lists.osgeo.org
-
-  irc:
-    channels:
-      - "irc.freenode.org#gdal"
-    use_notice: true
-    on_success: change
+# notifications:
+#   email:
+#     recipients:
+#       - gdal-commits@lists.osgeo.org
+#
+#   irc:
+#     channels:
+#       - "irc.freenode.org#gdal"
+#     use_notice: true
+#     on_success: change
