@@ -803,7 +803,7 @@ GByte* GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol)
     }
     else
     {
-        GByte* pabyDest = m_pabyCachedTiles;
+        GByte* pabyDest = m_pabyCachedTiles + 2 * nTileBands * nBandBlockSize;
         bool bAllNonDirty = true;
         for( int i = 0; i < nBands; i++ )
         {
@@ -817,7 +817,7 @@ GByte* GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol)
 
         /* If some bands of the blocks are dirty/written we need to fetch */
         /* the tile in a temporary buffer in order not to override dirty bands*/
-        GByte* pabyTemp = m_pabyCachedTiles + nTileBands * nBandBlockSize;
+        GByte* pabyTemp = m_pabyCachedTiles + 3 * nTileBands * nBandBlockSize;
         if( ReadTile(nRow, nCol, pabyTemp) != nullptr )
         {
             for( int i = 0; i < nBands; i++ )
