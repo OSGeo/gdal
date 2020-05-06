@@ -1679,10 +1679,13 @@ bool GDALGeoPackageDataset::AllocCachedTiles()
     int nTileWidth, nTileHeight;
     GetRasterBand(1)->GetBlockSize(&nTileWidth, &nTileHeight);
 
-    const int nCacheCount =
+    // We currently need 4 caches because of
+    // GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol)
+    const int nCacheCount = 4;
+/*
         (m_nShiftXPixelsMod != 0 || m_nShiftYPixelsMod != 0) ? 4 :
         (GetUpdate() && m_eDT == GDT_Byte) ? 2 : 1;
-
+*/
     m_pabyCachedTiles = (GByte*) VSI_MALLOC3_VERBOSE(
         nCacheCount * (m_eDT == GDT_Byte ? 4 : 1) * m_nDTSize,
         nTileWidth, nTileHeight);
