@@ -88,7 +88,10 @@ GDALCreateApproxTransformer2( GDALTransformerFunc pfnRawTransformer,
 
 /*!
 
-\typedef int GDALTransformerFunc
+\typedef typedef int
+(*GDALTransformerFunc)( void *pTransformerArg,
+                        int bDstToSrc, int nPointCount,
+                        double *x, double *y, double *z, int *panSuccess );
 
 Generic signature for spatial point transformers.
 
