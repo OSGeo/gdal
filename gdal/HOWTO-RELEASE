@@ -338,7 +338,7 @@ e) Click the "Release" button and that is it! The release should be available in
 
    Example:
     - bugfix release: https://lists.osgeo.org/pipermail/gdal-dev/2019-July/050543.html
-    - feature release: https://lists.osgeo.org/pipermail/gdal-dev/2019-May/050202.html
+    - feature release: https://lists.osgeo.org/pipermail/gdal-dev/2020-May/052117.html
 
 Note: gdal-announce@ is moderated. Make sure that your email address is approved
 ('mod' tick disabled in https://lists.osgeo.org/mailman/admin/gdal-announce/members),
