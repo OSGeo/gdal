@@ -48,11 +48,6 @@
 
 CPL_CVSID("$Id$")
 
-CPL_C_START
-// TODO(schwehr): Why is this not in a header?
-const char* GDALClientDatasetGetFilename( const char* pszFilename );
-CPL_C_END
-
 /************************************************************************/
 /*                             GDALDriver()                             */
 /************************************************************************/
@@ -142,9 +137,6 @@ void CPL_STDCALL GDALDestroyDriver( GDALDriverH hDriver )
  * file handle, but also ensures that all the data and metadata has been written
  * to the dataset (GDALFlushCache() is not sufficient for that purpose).
  *
- * In some situations, the new dataset can be created in another process through
- * the \ref gdal_api_proxy mechanism.
- *
  * In GDAL 2, the arguments nXSize, nYSize and nBands can be passed to 0 when
  * creating a vector-only dataset for a compatible driver.
  *
@@ -199,40 +191,6 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
                   "sizes must be larger than zero.",
                   nXSize, nYSize );
         return nullptr;
-    }
-
-    const char* pszClientFilename = GDALClientDatasetGetFilename(pszFilename);
-    if( pszClientFilename != nullptr && !EQUAL(GetDescription(), "MEM") &&
-        !EQUAL(GetDescription(), "VRT")  )
-    {
-        GDALDriver* poAPIPROXYDriver = GDALGetAPIPROXYDriver();
-        if( poAPIPROXYDriver != this )
-        {
-            if( poAPIPROXYDriver == nullptr ||
-                poAPIPROXYDriver->pfnCreate == nullptr )
-                return nullptr;
-            char** papszOptionsDup = CSLDuplicate(papszOptions);
-            papszOptionsDup = CSLAddNameValue(papszOptionsDup, "SERVER_DRIVER",
-                                              GetDescription());
-            GDALDataset* poDstDS = poAPIPROXYDriver->pfnCreate(
-                pszClientFilename, nXSize, nYSize, nBands,
-                eType, papszOptionsDup );
-
-            CSLDestroy(papszOptionsDup);
-
-            if( poDstDS != nullptr )
-            {
-                if( poDstDS->GetDescription() == nullptr
-                    || strlen(poDstDS->GetDescription()) == 0 )
-                    poDstDS->SetDescription( pszFilename );
-
-                if( poDstDS->poDriver == nullptr )
-                    poDstDS->poDriver = poAPIPROXYDriver;
-            }
-
-            if( poDstDS != nullptr || CPLGetLastErrorNo() != CPLE_NotSupported )
-                return poDstDS;
-        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -946,9 +904,6 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
  * file handle, but also ensures that all the data and metadata has been written
  * to the dataset (GDALFlushCache() is not sufficient for that purpose).
  *
- * In some situations, the new dataset can be created in another process through
- * the \ref gdal_api_proxy mechanism.
- *
  * @param pszFilename the name for the new dataset.  UTF-8 encoded.
  * @param poSrcDS the dataset being duplicated.
  * @param bStrict TRUE if the copy must be strictly equivalent, or more
@@ -972,37 +927,6 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 {
     if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
-
-    const char* pszClientFilename = GDALClientDatasetGetFilename(pszFilename);
-    if( pszClientFilename != nullptr && !EQUAL(GetDescription(), "MEM") &&
-        !EQUAL(GetDescription(), "VRT") )
-    {
-        GDALDriver* poAPIPROXYDriver = GDALGetAPIPROXYDriver();
-        if( poAPIPROXYDriver != this )
-        {
-            if( poAPIPROXYDriver->pfnCreateCopy == nullptr )
-                return nullptr;
-            char** papszOptionsDup = CSLDuplicate(papszOptions);
-            papszOptionsDup = CSLAddNameValue(papszOptionsDup, "SERVER_DRIVER",
-                                              GetDescription());
-            GDALDataset* const poDstDS = poAPIPROXYDriver->pfnCreateCopy(
-                pszClientFilename, poSrcDS, bStrict, papszOptionsDup,
-                pfnProgress, pProgressData);
-            if( poDstDS != nullptr )
-            {
-                if( poDstDS->GetDescription() == nullptr
-                    || strlen(poDstDS->GetDescription()) == 0 )
-                    poDstDS->SetDescription( pszFilename );
-
-                if( poDstDS->poDriver == nullptr )
-                    poDstDS->poDriver = poAPIPROXYDriver;
-            }
-
-            CSLDestroy(papszOptionsDup);
-            if( poDstDS != nullptr || CPLGetLastErrorNo() != CPLE_NotSupported )
-                return poDstDS;
-        }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Make sure we cleanup if there is an existing dataset of this    */
@@ -2202,19 +2126,14 @@ GDALIdentifyDriverEx( const char* pszFilename,
     const int nDriverCount = poDM->GetDriverCount();
 
     // First pass: only use drivers that have a pfnIdentify implementation.
-    for( int iDriver = -1; iDriver < nDriverCount; ++iDriver )
+    for( int iDriver = 0; iDriver < nDriverCount; ++iDriver )
     {
-        GDALDriver* poDriver;
-
-        if( iDriver < 0 )
-            poDriver = GDALGetAPIPROXYDriver();
-        else
+        GDALDriver* poDriver = poDM->GetDriver( iDriver );
+        if (papszAllowedDrivers != nullptr &&
+            CSLFindString(papszAllowedDrivers,
+                            GDALGetDriverShortName(poDriver)) == -1)
         {
-            poDriver = poDM->GetDriver( iDriver );
-            if (papszAllowedDrivers != nullptr &&
-                CSLFindString(papszAllowedDrivers,
-                              GDALGetDriverShortName(poDriver)) == -1)
-                continue;
+            continue;
         }
 
         VALIDATE_POINTER1( poDriver, "GDALIdentifyDriver", nullptr );
@@ -2250,18 +2169,13 @@ GDALIdentifyDriverEx( const char* pszFilename,
     }
 
     // Second pass: slow method.
-    for( int iDriver = -1; iDriver < nDriverCount; ++iDriver )
+    for( int iDriver = 0; iDriver < nDriverCount; ++iDriver )
     {
-        GDALDriver* poDriver;
-
-        if( iDriver < 0 )
-            poDriver = GDALGetAPIPROXYDriver();
-        else
+        GDALDriver* poDriver = poDM->GetDriver( iDriver );
+        if (papszAllowedDrivers != nullptr &&
+            CSLFindString(papszAllowedDrivers,
+                            GDALGetDriverShortName(poDriver)) == -1)
         {
-            poDriver = poDM->GetDriver( iDriver );
-            if (papszAllowedDrivers != nullptr &&
-                CSLFindString(papszAllowedDrivers,
-                              GDALGetDriverShortName(poDriver)) == -1)
                 continue;
         }
 
