@@ -157,17 +157,19 @@ Perl module maintainer to make a CPAN release.
 11.2) Log on download.osgeo.org, go to /osgeo/download/gdal/X.Y.Z
 
       Remove the RC suffixes for the final RC, like:
-      mv gdal-3.0.1rc1.tar.xz gdal-3.0.1.tar.xz
-      mv gdal-3.0.1rc1.tar.xz.md5 gdal-3.0.1.tar.xz.md5
-      mv gdal301rc1.zip gdal301.zip
-      mv gdal301rc1.zip.md5 gdal301.zip.md5
-      mv gdalautotest-3.0.1rc1.tar.gz gdalautotest-3.0.1.tar.gz
-      mv gdalautotest-3.0.1rc1.zip gdalautotest-3.0.1.zip
+      mv gdal-3.1.0rc1.tar.xz gdal-3.1.0.tar.xz
+      mv gdal-3.1.0rc1.tar.xz.md5 gdal-3.1.0.tar.gz.md5
+      mv gdal-3.1.0rc1.tar.gz gdal-3.1.0.tar.xz
+      mv gdal-3.1.0rc1.tar.gz.md5 gdal-3.1.0.tar.gz.md5
+      mv gdal310rc1.zip gdal310.zip
+      mv gdal310rc1.zip.md5 gdal310.zip.md5
+      mv gdalautotest-3.1.0rc1.tar.gz gdalautotest-3.1.0.tar.gz
+      mv gdalautotest-3.1.0rc1.zip gdalautotest-3.1.0.zip
 
       And edit the .md5 file to remove the reference to RC in the names they contain
-      vim gdal-3.0.1.tar.gz.md5
-      vim gdal-3.0.1.tar.xz.md5
-      vim gdal301.zip.md5
+      vim gdal-3.1.0.tar.gz.md5
+      vim gdal-3.1.0.tar.xz.md5
+      vim gdal310.zip.md5
 
       Check that everything is fine:
       md5sum -c *.md5
@@ -176,11 +178,7 @@ Perl module maintainer to make a CPAN release.
 
   % ln -sf X.Y.Z CURRENT
 
-12) Update Trac 
-a) Update the GDAL http://trac.osgeo.org/gdal/wiki/DownloadSource topic to
-   refer to the latest available source.
-b) Update http://trac.osgeo.org/gdal/wiki (Releases section)
-c) Update http://trac.osgeo.org/gdal/wiki/NewsAndStatus
+12) (Removed)
 
 13) Update doc/source/about_no_title.rst and doc/source/download.rst to advertise the new release and link to the release notes
 
