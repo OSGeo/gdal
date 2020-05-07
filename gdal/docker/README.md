@@ -86,3 +86,12 @@ Pull the required image and then run passing the gdal program you want to execut
 docker pull osgeo/gdal:alpine-small-latest
 docker run --rm -v /home:/home osgeo/gdal:alpine-small-latest gdalinfo $PWD/my.tif
 ```
+
+# Images of releases
+
+Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.1.0 and PROJ 7.0.1:
+* osgeo/alpine-ultrasmall-3.1.0
+* osgeo/alpine-small-3.1.0
+* osgeo/alpine-normal-3.1.0
+* osgeo/ubuntu-small-3.1.0
+* osgeo/ubuntu-full-3.1.0
