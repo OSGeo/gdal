@@ -251,7 +251,9 @@ INCLUDE_GNM_FRMTS = YES
 
 # PROJ stuff (required dependency: PROJ >= 6)
 #PROJ_INCLUDE = -Id:\install-proj\local\include
-#PROJ_LIBRARY = d:\install-proj\local\lib\proj_6_0.lib
+# Note: shell32.lib is needed starting with PROJ 7.0 in some circumstances
+# See https://github.com/OSGeo/gdal/issues/2488
+#PROJ_LIBRARY = d:\install-proj\local\lib\proj_6_0.lib shell32.lib
 
 # Uncomment to build with libiconv library to support extended character
 # recoding capabilities. GDAL's internal stub implementation supports
