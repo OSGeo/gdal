@@ -169,7 +169,7 @@ static OGRFeature *JSONToFeature( const CPLJSONObject &featureJson,
         CPLJSONObject oExtensions = featureJson.GetObj("extensions");
         if( oExtensions.IsValid() && oExtensions.GetType() != CPLJSONObject::Type::Null )
         {
-            poFeature->SetNativeData(oExtensions.Format(CPLJSONObject::Plain).c_str());
+            poFeature->SetNativeData(oExtensions.Format(CPLJSONObject::PrettyFormat::Plain).c_str());
             poFeature->SetNativeMediaType("application/json");
         }
     }
@@ -287,7 +287,7 @@ static CPLJSONObject FeatureToJson(OGRFeature *poFeature)
  */
 static std::string FeatureToJsonString(OGRFeature *poFeature)
 {
-    return FeatureToJson(poFeature).Format(CPLJSONObject::Plain);
+    return FeatureToJson(poFeature).Format(CPLJSONObject::PrettyFormat::Plain);
 }
 
 /*
@@ -1290,7 +1290,7 @@ std::string OGRNGWLayer::CreateNGWResourceJson()
     // Add resmeta json item.
     NGWAPI::FillResmeta(oResourceJson, GetMetadata("NGW"));
 
-    return oResourceJson.Format(CPLJSONObject::Plain);
+    return oResourceJson.Format(CPLJSONObject::PrettyFormat::Plain);
 }
 
 /*
@@ -1317,7 +1317,7 @@ OGRErr OGRNGWLayer::SyncFeatures()
     if( !aoPatchedFIDs.empty() )
     {
         auto osIDs = NGWAPI::PatchFeatures( poDS->GetUrl(), osResourceId,
-            oFeatureJsonArray.Format(CPLJSONObject::Plain), poDS->GetHeaders() );
+            oFeatureJsonArray.Format(CPLJSONObject::PrettyFormat::Plain), poDS->GetHeaders() );
         if( !osIDs.empty() )
         {
             bNeedSyncData = false;

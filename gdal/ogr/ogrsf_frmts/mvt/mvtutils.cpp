@@ -45,7 +45,7 @@ void OGRMVTInitFields(OGRFeatureDefn* poFeatureDefn,
     {
         for( const auto& oField: oFields.GetChildren() )
         {
-            if( oField.GetType() == CPLJSONObject::String )
+            if( oField.GetType() == CPLJSONObject::Type::String )
             {
                 if( oField.ToString() == "Number" )
                 {
@@ -91,14 +91,14 @@ OGRwkbGeometryType OGRMVTFindGeomTypeFromTileStat(
         CPLJSONObject oId =
             oTileStatLayers[i].GetObj("layer");
         if( oId.IsValid() && oId.GetType() ==
-                CPLJSONObject::String )
+                CPLJSONObject::Type::String )
         {
             if( oId.ToString() == pszLayerName )
             {
                 CPLJSONObject oGeom =
                     oTileStatLayers[i].GetObj("geometry");
                 if( oGeom.IsValid() && oGeom.GetType() ==
-                        CPLJSONObject::String )
+                        CPLJSONObject::Type::String )
                 {
                     const std::string oGeomType(
                         oGeom.ToString());
@@ -179,7 +179,7 @@ OGRFeature* OGRMVTCreateFeatureFrom(OGRFeature* poSrcFeature,
         if( !bEmpty )
         {
             poFeature->SetField("json",
-                            oProperties.Format(CPLJSONObject::Pretty).c_str());
+                            oProperties.Format(CPLJSONObject::PrettyFormat::Pretty).c_str());
         }
 
         OGRGeometry* poSrcGeom = poSrcFeature->GetGeometryRef();
@@ -203,7 +203,7 @@ OGRFeature* OGRMVTCreateFeatureFrom(OGRFeature* poSrcFeature,
             oObj.Add( "geometry", oJSonDoc.GetRoot() );
         }
         poFeature->SetNativeData(
-            oObj.Format(CPLJSONObject::Pretty).c_str());
+            oObj.Format(CPLJSONObject::PrettyFormat::Pretty).c_str());
         poFeature->SetNativeMediaType("application/vnd.geo+json");
 #endif
     }

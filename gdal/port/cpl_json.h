@@ -58,7 +58,7 @@ public:
     /**
      * Json object types
      */
-    enum Type {
+    enum class Type {
         Unknown,
         Null,
         Object,
@@ -73,7 +73,7 @@ public:
     /**
      * Json object format to string options
      */
-    enum PrettyFormat {
+    enum class PrettyFormat {
         Plain,  ///< No extra whitespace or formatting applied
         Spaced, ///< Minimal whitespace inserted
         Pretty  ///< Formatted output
@@ -128,14 +128,14 @@ public:
     GInt64 ToLong(GInt64 nDefault = 0) const;
     bool ToBool(bool bDefault = false) const;
     CPLJSONArray ToArray() const;
-    std::string Format(enum PrettyFormat eFormat) const;
+    std::string Format(PrettyFormat eFormat) const;
 
     //
     void Delete(const std::string &osName);
     CPLJSONArray GetArray(const std::string &osName) const;
     CPLJSONObject GetObj(const std::string &osName) const;
     CPLJSONObject operator[](const std::string &osName) const;
-    enum Type GetType() const;
+    Type GetType() const;
 /*! @cond Doxygen_Suppress */
     std::string GetName() const { return m_osKey; }
 /*! @endcond */

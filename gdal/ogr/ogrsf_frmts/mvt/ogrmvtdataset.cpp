@@ -2416,7 +2416,7 @@ static bool LoadMetadata(const CPLString& osMetadataFile,
     oTileStatLayers.Deinit();
 
     CPLJSONObject oJson = oDoc.GetRoot().GetObj("json");
-    if( !(oJson.IsValid() && oJson.GetType() == CPLJSONObject::String) )
+    if( !(oJson.IsValid() && oJson.GetType() == CPLJSONObject::Type::String) )
     {
         oVectorLayers =
             oDoc.GetRoot().GetArray("vector_layers");
@@ -2763,7 +2763,7 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
 
     OGREnvelope sExtent;
     bool bExtentValid = false;
-    if( oBounds.IsValid() && oBounds.GetType() == CPLJSONObject::String )
+    if( oBounds.IsValid() && oBounds.GetType() == CPLJSONObject::Type::String )
     {
         CPLStringList aosTokens(
             CSLTokenizeString2( oBounds.ToString().c_str(), ",", 0 ));
@@ -2782,7 +2782,7 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
             sExtent.MaxY = dfY1;
         }
     }
-    else if( oBounds.IsValid() && oBounds.GetType() == CPLJSONObject::Array )
+    else if( oBounds.IsValid() && oBounds.GetType() == CPLJSONObject::Type::Array )
     {
         // Cf https://free.tilehosting.com/data/v3.json?key=THE_KEY
         CPLJSONArray oBoundArray = oBounds.ToArray();
@@ -2808,7 +2808,7 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
     {
         CPLJSONObject oId = oVectorLayers[i].GetObj("id");
         if( oId.IsValid() && oId.GetType() ==
-                CPLJSONObject::String )
+                CPLJSONObject::Type::String )
         {
             OGRwkbGeometryType eGeomType = wkbUnknown;
             if( oTileStatLayers.IsValid() )
@@ -3134,7 +3134,7 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
                             {
                                 CPLJSONObject oId = oVectorLayers[i].GetObj("id");
                                 if( oId.IsValid() && oId.GetType() ==
-                                        CPLJSONObject::String )
+                                        CPLJSONObject::Type::String )
                                 {
                                     if( oId.ToString() == pszLayerName )
                                     {

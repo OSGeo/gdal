@@ -1336,7 +1336,7 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     poDS->m_aosPDSMD.InsertString(
         0,
-        poDS->oKeywords.GetJsonObject().Format(CPLJSONObject::Pretty).c_str());
+        poDS->oKeywords.GetJsonObject().Format(CPLJSONObject::PrettyFormat::Pretty).c_str());
     VSIFCloseL( fpQube );
 
 /* -------------------------------------------------------------------- */
