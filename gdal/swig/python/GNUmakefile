@@ -143,3 +143,8 @@ docs:
 
 epydoc: generate
 	epydoc --config epydoc.conf
+
+doc-tarball: epydoc
+	mv html python
+	tar cvzf python-doc.tar.gz python
+	rm -rf python

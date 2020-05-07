@@ -127,8 +127,9 @@ Perl module maintainer to make a CPAN release.
 
 8.3) Create a snapshot of the documentation (only for feature releases)
 
-    0. Potentially refresh https://download.osgeo.org/gdal/for_doc/javadoc.zip and
-       https://download.osgeo.org/gdal/for_doc/javadoc.zip
+    0. Potentially refresh
+       https://download.osgeo.org/gdal/for_doc/javadoc.zip (./make_doc.sh from swig/java)
+       https://download.osgeo.org/gdal/for_doc/python-doc.tar.gz (make doc-tarball from swig/python)
     1. cd doc
     2. ./build_doc_snapshot 310
        This generates gdal310doc.zip
