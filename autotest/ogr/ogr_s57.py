@@ -391,7 +391,21 @@ def test_ogr_s57_online_4():
         if mystr and sys.version_info < (3, 0, 0):
             mystr.decode('UTF-8').encode('UTF-8')
 
-    
+###############################################################################
+# Test updates of DSID (#2498)
+
+
+def test_ogr_s57_update_dsid():
+
+    ds = ogr.Open('data/s57/fake_s57_update_dsid.000')
+    lyr = ds.GetLayerByName('DSID')
+    f = lyr.GetNextFeature()
+    assert f['DSID_EDTN'] == '0'
+    assert f['DSID_UPDN'] == '1'
+    assert f['DSID_UADT'] == '20190211'
+    assert f['DSID_ISDT'] == '20190212'
+
+
 ###############################################################################
 #  Cleanup
 

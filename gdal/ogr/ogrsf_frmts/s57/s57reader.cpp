@@ -177,8 +177,6 @@ S57Reader::S57Reader( const char * pszFilename ) :
     bMissingWarningIssued(false),
     bAttrWarningIssued(false)
 {
-    szUPDNUpdate[0] = '\0';
-    szISDTUpdate[0] = '\0';
 }
 
 /************************************************************************/
@@ -1218,21 +1216,24 @@ OGRFeature *S57Reader::ReadDSID()
                      poDSIDRecord->GetIntSubfield( "DSID", 0, "INTU", 0 ));
         poFeature->SetField( "DSID_DSNM",
                      poDSIDRecord->GetStringSubfield( "DSID", 0, "DSNM", 0 ));
-        poFeature->SetField( "DSID_EDTN",
+        if( !m_osEDTNUpdate.empty() )
+            poFeature->SetField( "DSID_EDTN", m_osEDTNUpdate.c_str() );
+        else
+            poFeature->SetField( "DSID_EDTN",
                      poDSIDRecord->GetStringSubfield( "DSID", 0, "EDTN", 0 ));
-        if( strlen(szUPDNUpdate) > 0 )
-            poFeature->SetField( "DSID_UPDN", szUPDNUpdate );
+        if( !m_osUPDNUpdate.empty() )
+            poFeature->SetField( "DSID_UPDN", m_osUPDNUpdate.c_str() );
         else
             poFeature->SetField( "DSID_UPDN",
                      poDSIDRecord->GetStringSubfield( "DSID", 0, "UPDN", 0 ));
 
         poFeature->SetField( "DSID_UADT",
                      poDSIDRecord->GetStringSubfield( "DSID", 0, "UADT", 0 ));
-        if( strlen(szISDTUpdate) > 0 )
-            poFeature->SetField( "DSID_ISDT", szISDTUpdate );
+        if( !m_osISDTUpdate.empty() )
+            poFeature->SetField( "DSID_ISDT", m_osISDTUpdate.c_str() );
         else
             poFeature->SetField( "DSID_ISDT",
-                     poDSIDRecord->GetStringSubfield( "DSID", 0, "ISDT", 0 ));        
+                     poDSIDRecord->GetStringSubfield( "DSID", 0, "ISDT", 0 ));
         poFeature->SetField( "DSID_STED",
                      poDSIDRecord->GetFloatSubfield( "DSID", 0, "STED", 0 ));
         poFeature->SetField( "DSID_PRSP",
@@ -3267,14 +3268,18 @@ bool S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
         {
             if( poDSIDRecord != nullptr )
             {
+                const char* pszEDTN
+                    = poRecord->GetStringSubfield( "DSID", 0, "EDTN", 0 );
+                if( pszEDTN != nullptr )
+                    m_osEDTNUpdate = pszEDTN;
                 const char* pszUPDN
                     = poRecord->GetStringSubfield( "DSID", 0, "UPDN", 0 );
-                if( pszUPDN != nullptr && strlen(pszUPDN) < sizeof(szUPDNUpdate) )
-                    strcpy( szUPDNUpdate, pszUPDN );
-               const char* pszISDT
+                if( pszUPDN != nullptr )
+                    m_osUPDNUpdate = pszUPDN;
+                const char* pszISDT
                     = poRecord->GetStringSubfield( "DSID", 0, "ISDT", 0 );
-                if( pszISDT != nullptr && strlen(pszISDT) < sizeof(szISDTUpdate) )
-                    strcpy( szISDTUpdate, pszISDT );                
+                if( pszISDT != nullptr)
+                    m_osISDTUpdate = pszISDT;
             }
         }
 

@@ -227,5 +227,6 @@ See Also
    archive.org) <https://web.archive.org/web/20130730111701/http://home.gdal.org/projects/s57/index.html>`__:
    Links to other resources, and sample datasets.
 -  `IHO S-57 Edition 3.1 standard (main)`_
+-  `S-57 Appendix B <https://iho.int/uploads/user/pubs/standards/s-57/20ApB1.pdf>`__
 
 .. _`IHO S-57 Edition 3.1 standard (main)`: https://web.archive.org/web/20190330184049/http://www.iho.int/iho_pubs/standard/S-57Ed3.1/31Main.pdf
