@@ -29,7 +29,7 @@
 #include "ogr_lvbag.h"
 #include "ogrsf_frmts.h"
 
-// g++ -DHAVE_EXPAT -fPIC -shared -Wall -g -DDEBUG ogr/ogrsf_frmts/lvbag/*.cpp -o ogr_LVBAG.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/jml -L. -lgdal
+// g++ -DHAVE_EXPAT -fPIC -shared -Wall -g -DDEBUG ogr/ogrsf_frmts/lvbag/*.cpp -o ogr_LVBAG.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/lvbag -L. -lgdal
 
 CPL_CVSID("$Id$")
 
