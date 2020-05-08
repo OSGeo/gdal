@@ -16,5 +16,5 @@ install:
 	$(INSTALL_DIR) $(DESTDIR)$(INST_BASH_COMPLETION) ; \
 	$(INSTALL_DATA) gdal-bash-completion.sh $(DESTDIR)$(INST_BASH_COMPLETION)/gdalinfo; \
 	for p in $(PROGRAMS); do \
-		ln -rs $(DESTDIR)$(INST_BASH_COMPLETION)/gdalinfo $(DESTDIR)$(INST_BASH_COMPLETION)/$$p; \
+		ln -s $(DESTDIR)$(INST_BASH_COMPLETION)/gdalinfo $(DESTDIR)$(INST_BASH_COMPLETION)/$$p; \
 	done
