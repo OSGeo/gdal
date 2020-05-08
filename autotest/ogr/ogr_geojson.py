@@ -213,7 +213,7 @@ def copy_shape_to_geojson(gjname, compress=None):
 
 def test_ogr_geojson_2():
 
-    ds = ogr.Open('data/point.geojson')
+    ds = ogr.Open('data/geojson/point.geojson')
     assert ds is not None, 'Failed to open datasource'
 
     assert ds.GetLayerCount() == 1, 'Wrong number of layers'
@@ -234,7 +234,7 @@ def test_ogr_geojson_2():
 
 def test_ogr_geojson_3():
 
-    ds = ogr.Open('data/linestring.geojson')
+    ds = ogr.Open('data/geojson/linestring.geojson')
     assert ds is not None, 'Failed to open datasource'
 
     assert ds.GetLayerCount() == 1, 'Wrong number of layers'
@@ -255,7 +255,7 @@ def test_ogr_geojson_3():
 
 def test_ogr_geojson_4():
 
-    ds = ogr.Open('data/polygon.geojson')
+    ds = ogr.Open('data/geojson/polygon.geojson')
     assert ds is not None, 'Failed to open datasource'
 
     assert ds.GetLayerCount() == 1, 'Wrong number of layers'
@@ -276,7 +276,7 @@ def test_ogr_geojson_4():
 
 def test_ogr_geojson_5():
 
-    ds = ogr.Open('data/geometrycollection.geojson')
+    ds = ogr.Open('data/geojson/geometrycollection.geojson')
     assert ds is not None, 'Failed to open datasource'
 
     assert ds.GetLayerCount() == 1, 'Wrong number of layers'
@@ -297,7 +297,7 @@ def test_ogr_geojson_5():
 
 def test_ogr_geojson_6():
 
-    ds = ogr.Open('data/multipoint.geojson')
+    ds = ogr.Open('data/geojson/multipoint.geojson')
     assert ds is not None, 'Failed to open datasource'
 
     assert ds.GetLayerCount() == 1, 'Wrong number of layers'
@@ -318,7 +318,7 @@ def test_ogr_geojson_6():
 
 def test_ogr_geojson_7():
 
-    ds = ogr.Open('data/multilinestring.geojson')
+    ds = ogr.Open('data/geojson/multilinestring.geojson')
     assert ds is not None, 'Failed to open datasource'
 
     assert ds.GetLayerCount() == 1, 'Wrong number of layers'
@@ -339,7 +339,7 @@ def test_ogr_geojson_7():
 
 def test_ogr_geojson_8():
 
-    ds = ogr.Open('data/multipolygon.geojson')
+    ds = ogr.Open('data/geojson/multipolygon.geojson')
     assert ds is not None, 'Failed to open datasource'
 
     assert ds.GetLayerCount() == 1, 'Wrong number of layers'
@@ -415,7 +415,7 @@ def test_ogr_geojson_10():
 
 def test_ogr_geojson_11():
 
-    ds = ogr.Open('data/srs_name.geojson')
+    ds = ogr.Open('data/geojson/srs_name.geojson')
     assert ds is not None, 'Failed to open datasource'
 
     assert ds.GetLayerCount() == 1, 'Wrong number of layers'
@@ -476,7 +476,7 @@ def test_ogr_geojson_13():
 def test_ogr_geojson_14():
 
     with gdaltest.error_handler():
-        ds = ogr.Open('data/ogr_geojson_14.geojson')
+        ds = ogr.Open('data/geojson/ogr_geojson_14.geojson')
     lyr = ds.GetLayer(0)
 
     try:
@@ -1013,7 +1013,7 @@ def test_ogr_geojson_35():
 
 def test_ogr_geojson_36():
 
-    ds = ogr.Open('data/point_with_utf8bom.json')
+    ds = ogr.Open('data/geojson/point_with_utf8bom.json')
     assert ds is not None, 'Failed to open datasource'
     ds = None
 
@@ -1849,7 +1849,7 @@ def test_ogr_geojson_51():
 
 def test_ogr_geojson_52():
 
-    ds = ogr.Open('data/nullvalues.geojson')
+    ds = ogr.Open('data/geojson/nullvalues.geojson')
     assert ds is not None, 'Failed to open datasource'
 
     assert ds.GetLayerCount() == 1, 'Wrong number of layers'
@@ -2517,9 +2517,9 @@ def test_ogr_geojson_62():
 
 def test_ogr_geojson_63():
 
-    ds_ref = ogr.Open('data/test_type_promotion_ref.json')
+    ds_ref = ogr.Open('data/geojson/test_type_promotion_ref.json')
     lyr_ref = ds_ref.GetLayer(0)
-    ds = ogr.Open('data/test_type_promotion.json')
+    ds = ogr.Open('data/geojson/test_type_promotion.json')
     lyr = ds.GetLayer(0)
     return ogrtest.compare_layers(lyr, lyr_ref)
 
@@ -2597,7 +2597,7 @@ def test_ogr_geojson_66():
 
 def test_ogr_geojson_67():
 
-    ds = ogr.Open('data/grenada.geojson')
+    ds = ogr.Open('data/geojson/grenada.geojson')
     assert ds is not None
     assert ds.GetDriver().GetName() == 'GeoJSON'
     lyr = ds.GetLayer(0)
