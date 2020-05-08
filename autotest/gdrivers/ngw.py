@@ -244,7 +244,7 @@ def test_ngw_7():
 
     ovr_band = gdaltest.ngw_ds.GetRasterBand(1).GetOverview(21)
     assert ovr_band is not None
-    cs = ovr_band.Checksum()
+    ovr_band.Checksum()
 
     gdal.PopErrorHandler()
     gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', 'OFF')
