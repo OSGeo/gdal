@@ -184,7 +184,7 @@ def copy_shape_to_geojson(gjname, compress=None):
 
     dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
 
-    src_name = os.path.join('data', gjname + '.shp')
+    src_name = os.path.join('data', 'shp', gjname + '.shp')
     shp_ds = ogr.Open(src_name)
     shp_lyr = shp_ds.GetLayer(0)
 

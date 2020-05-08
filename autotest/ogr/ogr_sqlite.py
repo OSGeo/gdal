@@ -1447,7 +1447,7 @@ def test_ogr_spatialite_2(require_spatialite):
 def test_ogr_spatialite_3(require_spatialite):
 
     ds = ogr.Open('tmp/spatialite_test.db', update=1)
-    ds.ExecuteSQL('CREATE VIRTUAL TABLE testpoly USING VirtualShape(data/testpoly, CP1252, -1)')
+    ds.ExecuteSQL('CREATE VIRTUAL TABLE testpoly USING VirtualShape(data/shp/testpoly, CP1252, -1)')
     ds.Destroy()
 
     ds = ogr.Open('tmp/spatialite_test.db')

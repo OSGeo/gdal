@@ -275,11 +275,12 @@ def test_ogr_sql_11():
 
     expect = [None]
 
-    sql_lyr = gdaltest.ds.ExecuteSQL("select max(eas_id) from empty")
+    ds = ogr.Open('data/shp/empty.shp')
+    sql_lyr = ds.ExecuteSQL("select max(eas_id) from empty")
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'max_eas_id', expect)
 
-    gdaltest.ds.ReleaseResultSet(sql_lyr)
+    ds.ReleaseResultSet(sql_lyr)
 
     assert tr
 
@@ -291,11 +292,12 @@ def test_ogr_sql_12():
 
     expect = []
 
-    sql_lyr = gdaltest.ds.ExecuteSQL("select distinct eas_id from empty")
+    ds = ogr.Open('data/shp/empty.shp')
+    sql_lyr = ds.ExecuteSQL("select distinct eas_id from empty")
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'eas_id', expect)
 
-    gdaltest.ds.ReleaseResultSet(sql_lyr)
+    ds.ReleaseResultSet(sql_lyr)
 
     assert tr
 
@@ -424,7 +426,7 @@ def test_ogr_sql_18():
     if sys.version_info >= (3, 0, 0):
         pytest.skip()
 
-    name = 'data/departs.vrt'
+    name = 'data/shp/departs.vrt'
 
     ds = ogr.Open(name)
     assert ds is not None
@@ -1368,7 +1370,7 @@ def test_ogr_sql_46():
 
 def test_ogr_sql_47():
 
-    ds = ogr.Open('data/sort_test.dbf')
+    ds = ogr.Open('data/shp/sort_test.dbf')
     sql_lyr = ds.ExecuteSQL('SELECT * FROM sort_test ORDER BY text_value')
     prec_val = ''
     for f in sql_lyr:

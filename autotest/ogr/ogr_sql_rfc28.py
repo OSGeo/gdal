@@ -360,7 +360,8 @@ def test_ogr_rfc28_17():
 # Test some special distinct cases.
 
 def test_ogr_rfc28_18():
-    lyr = gdaltest.ds.ExecuteSQL("SELECT COUNT(distinct id), COUNT(distinct id) as \"xx\" from departs")
+    ds = ogr.Open('data/shp/departs.shp')
+    lyr = ds.ExecuteSQL("SELECT COUNT(distinct id), COUNT(distinct id) as \"xx\" from departs")
 
     expect = [1]
     tr = ogrtest.check_features_against_list(lyr, 'COUNT_id', expect)
@@ -369,7 +370,7 @@ def test_ogr_rfc28_18():
     lyr.ResetReading()
     tr = ogrtest.check_features_against_list(lyr, 'xx', expect)
 
-    gdaltest.ds.ReleaseResultSet(lyr)
+    ds.ReleaseResultSet(lyr)
 
     assert tr
 

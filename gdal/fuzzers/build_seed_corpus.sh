@@ -332,10 +332,7 @@ echo "Building ogr_fuzzer_seed_corpus.zip"
 CUR_DIR=$PWD
 cd $(dirname $0)/../../autotest/ogr/data
 rm -f $OUT/ogr_fuzzer_seed_corpus.zip
-zip -r $OUT/ogr_fuzzer_seed_corpus.zip . >/dev/null
-cd mvt
-zip $OUT/ogr_fuzzer_seed_corpus.zip ./* >/dev/null
-cd ..
+zip -rj $OUT/ogr_fuzzer_seed_corpus.zip . >/dev/null
 cd $CUR_DIR
 
 echo "Building cad_fuzzer_seed_corpus.zip"
