@@ -415,6 +415,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
         if( CPLFetchBool(papszOptions, "OVERWRITE_INDEX", false)  )
         {
             Delete(CPLSPrintf("%s/%s", GetURL(), osLaunderedName.c_str()));
+            bIndexExists = false;
         }
         else if( m_bOverwrite || CPLFetchBool(papszOptions, "OVERWRITE", false) )
         {
@@ -440,6 +441,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
                 return nullptr;
             }
             Delete(CPLSPrintf("%s/%s", GetURL(), osLaunderedName.c_str()));
+            bIndexExists = false;
         }
         else
         {
