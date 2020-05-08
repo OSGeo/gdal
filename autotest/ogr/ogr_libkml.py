@@ -61,7 +61,7 @@ def test_ogr_libkml_datastore():
         print('Unregister KML driver')
         ogrtest.kml_drv.Deregister()
 
-    ogrtest.kml_ds = ogr.Open('data/samples.kml')
+    ogrtest.kml_ds = ogr.Open('data/kml/samples.kml')
     if ogrtest.kml_ds is not None:
         ogrtest.have_read_libkml = 1
 
@@ -471,7 +471,7 @@ def test_ogr_libkml_xml_attributes():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    ds = ogr.Open('data/description_with_xml.kml')
+    ds = ogr.Open('data/kml/description_with_xml.kml')
 
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
@@ -492,7 +492,7 @@ def test_ogr_libkml_read_geometries():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    ds = ogr.Open('data/geometries.kml')
+    ds = ogr.Open('data/kml/geometries.kml')
 
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
@@ -514,7 +514,7 @@ def test_ogr_libkml_test_ogrsf():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' --config OGR_SKIP KML -ro data/samples.kml')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' --config OGR_SKIP KML -ro data/kml/samples.kml')
 
     assert not (ret.find("using driver `LIBKML'") == -1 or ret.find('INFO') == -1 or ret.find('ERROR') != -1)
 
@@ -527,7 +527,7 @@ def test_ogr_libkml_read_placemark():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    ds = ogr.Open('data/placemark.kml')
+    ds = ogr.Open('data/kml/placemark.kml')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     assert feat is not None
@@ -543,7 +543,7 @@ def test_ogr_libkml_read_empty():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    ds = ogr.Open('data/empty.kml')
+    ds = ogr.Open('data/kml/empty.kml')
     assert ds.GetLayerCount() == 0
 
     ds = None
@@ -557,7 +557,7 @@ def test_ogr_libkml_read_emptylayers():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    ds = ogr.Open('data/emptylayers.kml')
+    ds = ogr.Open('data/kml/emptylayers.kml')
     assert ds.GetLayerCount() == 2
 
     # --> One difference with the old KML driver
@@ -579,7 +579,7 @@ def test_ogr_libkml_read_emptylayers_without_folder():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    ds = ogr.Open('data/emptylayers_without_folder.kml')
+    ds = ogr.Open('data/kml/emptylayers_without_folder.kml')
     assert ds.GetLayerCount() == 1
 
     # --> One difference with the old KML driver
@@ -597,7 +597,7 @@ def test_ogr_libkml_read_schema():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    ds = ogr.Open('data/test_schema.kml')
+    ds = ogr.Open('data/kml/test_schema.kml')
     assert ds.GetLayerCount() == 4
 
     lyr = ds.GetLayer(0)
@@ -630,7 +630,7 @@ def test_ogr_libkml_extended_data_without_schema_data():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    ds = ogr.Open('data/extended_data_without_schema_data.kml')
+    ds = ogr.Open('data/kml/extended_data_without_schema_data.kml')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     if feat.GetField('field1') != '1_1':
@@ -659,7 +659,7 @@ def test_ogr_libkml_gxtrack():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    ds = ogr.Open('data/gxtrack.kml')
+    ds = ogr.Open('data/kml/gxtrack.kml')
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
@@ -679,7 +679,7 @@ def test_ogr_libkml_gxmultitrack():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    ds = ogr.Open('data/gxmultitrack.kml')
+    ds = ogr.Open('data/kml/gxmultitrack.kml')
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
@@ -1741,7 +1741,7 @@ def test_ogr_libkml_read_gx_timestamp():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    ds = ogr.Open('data/gxtimestamp.kml')
+    ds = ogr.Open('data/kml/gxtimestamp.kml')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['timestamp'] != '2016/02/13 12:34:56+00':
@@ -1762,7 +1762,7 @@ def test_ogr_libkml_read_placemark_with_kml_prefix():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    ds = ogr.Open('data/placemark_with_kml_prefix.kml')
+    ds = ogr.Open('data/kml/placemark_with_kml_prefix.kml')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     assert feat is not None
@@ -1776,7 +1776,7 @@ def test_ogr_libkml_read_duplicate_folder_name():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    ds = ogr.Open('data/duplicate_folder_name.kml')
+    ds = ogr.Open('data/kml/duplicate_folder_name.kml')
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'layer'
     lyr = ds.GetLayer(1)
@@ -1791,7 +1791,7 @@ def test_ogr_libkml_read_placemark_in_root_and_subfolder():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    ds = ogr.Open('data/placemark_in_root_and_subfolder.kml')
+    ds = ogr.Open('data/kml/placemark_in_root_and_subfolder.kml')
     lyr = ds.GetLayerByName('TopLevel')
     assert lyr is not None
     assert lyr.GetFeatureCount() == 1
@@ -1809,7 +1809,7 @@ def test_ogr_libkml_read_tab_separated_coord_triplet():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    ds = ogr.Open('data/tab_separated_coord_triplet.kml')
+    ds = ogr.Open('data/kml/tab_separated_coord_triplet.kml')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
 
@@ -1826,7 +1826,7 @@ def test_ogr_libkml_read_kml_with_space_content_in_coordinates():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    ds = ogr.Open('data/kml_with_space_content_in_coordinates.kml')
+    ds = ogr.Open('data/kml/kml_with_space_content_in_coordinates.kml')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
 
@@ -1843,7 +1843,7 @@ def test_ogr_libkml_read_several_schema():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    ds = ogr.Open('data/several_schema_in_layer.kml')
+    ds = ogr.Open('data/kml/several_schema_in_layer.kml')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     if feat['fieldA'] != 'fieldAValue' or feat['common'] != 'commonAValue':
@@ -1855,7 +1855,7 @@ def test_ogr_libkml_read_several_schema():
         feat.DumpReadable()
         pytest.fail()
 
-    ds = ogr.Open('data/several_schema_outside_layer.kml')
+    ds = ogr.Open('data/kml/several_schema_outside_layer.kml')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     if feat['fieldA'] != 'fieldAValue' or feat['common'] != 'commonAValue':
@@ -1877,7 +1877,7 @@ def test_ogr_libkml_update_existing_kml():
         pytest.skip()
 
     filename = '/vsimem/ogr_libkml_update_existing_kml.kml'
-    gdal.FileFromMemBuffer(filename, open('data/several_schema_in_layer.kml', 'rb').read())
+    gdal.FileFromMemBuffer(filename, open('data/kml/several_schema_in_layer.kml', 'rb').read())
     ds = ogr.Open(filename, update=1)
     lyr = ds.GetLayer(0)
     fc_before = lyr.GetFeatureCount()
