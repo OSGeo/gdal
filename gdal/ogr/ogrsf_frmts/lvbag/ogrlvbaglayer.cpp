@@ -50,6 +50,8 @@ OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, VSILFILE *fpIn ) :
     
     poFeatureDefn->Reference();
     
+    memset(aBuf, '\0', sizeof(aBuf));
+
     ResetReading();
 }
 
