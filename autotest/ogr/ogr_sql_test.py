@@ -328,7 +328,7 @@ def test_ogr_sql_14():
         'BRUSH(fc:#000000,bc:#ffffff,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0")',
         'BRUSH(fc:#000000,bc:#ffffff,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0")']
 
-    ds = ogr.Open('data/small.mif')
+    ds = ogr.Open('data/mitab/small.mif')
     sql_lyr = ds.ExecuteSQL("select ogr_style from small where ogr_geom_wkt LIKE 'POLYGON%'")
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'ogr_style', expect)
@@ -361,7 +361,7 @@ def test_ogr_sql_16():
 
     expect = [2]
 
-    ds = ogr.Open('data/small.mif')
+    ds = ogr.Open('data/mitab/small.mif')
     sql_lyr = ds.ExecuteSQL("select fid from small where owner < 'H'")
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'fid', expect)
@@ -379,7 +379,7 @@ def test_ogr_sql_17():
 
     expect = ['1', '2']
 
-    ds = ogr.Open('data/small.mif')
+    ds = ogr.Open('data/mitab/small.mif')
     sql_lyr = ds.ExecuteSQL("select CAST(fid as CHARACTER(10)), CAST(data as numeric(7,3)) from small")
 
     fld_def = sql_lyr.GetLayerDefn().GetFieldDefn(0)

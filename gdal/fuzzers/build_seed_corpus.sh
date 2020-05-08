@@ -419,13 +419,13 @@ echo "Building mitab_tab_fuzzer_seed_corpus.zip"
 printf "FUZZER_FRIENDLY_ARCHIVE\\n" > all_geoms_tab.tar
 for ext in tab map dat id; do
     printf "***NEWFILE***:my.%s\\n" "$ext" >> all_geoms_tab.tar
-    cat $(dirname $0)/../../autotest/ogr/data/all_geoms.$ext >> all_geoms_tab.tar
+    cat $(dirname $0)/../../autotest/ogr/data/mitab/all_geoms.$ext >> all_geoms_tab.tar
 done
 
 printf "FUZZER_FRIENDLY_ARCHIVE\\n" > poly_indexed.tar
 for ext in tab map dat id; do
     printf "***NEWFILE***:my.%s\\n" "$ext" >> poly_indexed.tar
-    cat $(dirname $0)/../../autotest/ogr/data/poly_indexed.$ext >> poly_indexed.tar
+    cat $(dirname $0)/../../autotest/ogr/data/mitab/poly_indexed.$ext >> poly_indexed.tar
 done
 
 printf "FUZZER_FRIENDLY_ARCHIVE\\n" > view.tar
@@ -448,9 +448,9 @@ echo "Building mitab_mif_fuzzer_seed_corpus.zip"
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:my.mif\\n"
-    cat $(dirname $0)/../../autotest/ogr/data/small.mif
+    cat $(dirname $0)/../../autotest/ogr/data/mitab/small.mif
     printf "***NEWFILE***:my.mid\\n" >> small_mif.tar
-    cat $(dirname $0)/../../autotest/ogr/data/small.mid
+    cat $(dirname $0)/../../autotest/ogr/data/mitab/small.mid
 } > small_mif.tar
 rm -f $OUT/mitab_mif_fuzzer_seed_corpus.zip
 zip -r $OUT/mitab_mif_fuzzer_seed_corpus.zip small_mif.tar >/dev/null
