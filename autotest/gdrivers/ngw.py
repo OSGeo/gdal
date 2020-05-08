@@ -228,7 +228,7 @@ def test_ngw_6():
 ###############################################################################
 # Check checksum for a small region.
 
-def test_ngw_7():
+def DISABLED_test_ngw_7():
 
     if gdaltest.ngw_drv is None or gdaltest.ngw_ds is None:
         pytest.skip()
