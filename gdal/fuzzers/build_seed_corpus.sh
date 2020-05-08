@@ -504,9 +504,9 @@ rm -f $OUT/gml_fuzzer_seed_corpus.zip
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:test.gml\\n"
-    cat $(dirname $0)/../../autotest/ogr/data/archsites.gml
+    cat $(dirname $0)/../../autotest/ogr/data/gml/archsites.gml
     printf "***NEWFILE***:test.xsd\\n"
-    cat $(dirname $0)/../../autotest/ogr/data/archsites.xsd
+    cat $(dirname $0)/../../autotest/ogr/data/gml/archsites.xsd
 } > $CUR_DIR/archsites_gml.tar
 zip -r $OUT/gml_fuzzer_seed_corpus.zip archsites_gml.tar >/dev/null
 rm archsites_gml.tar

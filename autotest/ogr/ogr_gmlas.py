@@ -2423,7 +2423,7 @@ def test_ogr_gmlas_read_fake_gmljp2():
     if ogr.GetDriverByName('GMLAS') is None:
         pytest.skip()
 
-    ds = gdal.OpenEx('GMLAS:data/fake_gmljp2.xml')
+    ds = gdal.OpenEx('GMLAS:data/gmlas/fake_gmljp2.xml')
 
     count = 0
     while True:

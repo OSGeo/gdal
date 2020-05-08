@@ -388,7 +388,7 @@ def test_ogr_mitab_13():
     except (OSError, AttributeError):
         pass
 
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f "MapInfo File" tmp/testlyrdef.tab ../ogr/data/testlyrdef.gml')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f "MapInfo File" tmp/testlyrdef.tab ../ogr/data/mitab/testlyrdef.gml')
 
     ds = ogr.Open('tmp/testlyrdef.tab')
 
@@ -433,7 +433,7 @@ def test_ogr_mitab_14():
     except (OSError, AttributeError):
         pass
 
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f "MapInfo File" -dsco FORMAT=MIF tmp/testlyrdef.mif ../ogr/data/testlyrdef.gml')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f "MapInfo File" -dsco FORMAT=MIF tmp/testlyrdef.mif ../ogr/data/mitab/testlyrdef.gml')
 
     ds = ogr.Open('tmp/testlyrdef.mif')
 

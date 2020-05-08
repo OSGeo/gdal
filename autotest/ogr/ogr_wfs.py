@@ -61,7 +61,7 @@ def ogr_wfs_init():
     gdaltest.deegree_wfs = None
     gdaltest.ionic_wfs = None
 
-    gml_ds = ogr.Open('data/ionic_wfs.gml')
+    gml_ds = ogr.Open('data/gml/ionic_wfs.gml')
     if gml_ds is None:
         gdaltest.wfs_drv = None
         if gdal.GetLastErrorMsg().find('Xerces') != -1:
