@@ -264,7 +264,7 @@ int Hdf5rLosGrid_t::summarize()
         setStatus();
     }
 
-    return nOnEarthPts_;
+    return (int)nOnEarthPts_;
 }
 
 //******************************************************************************
@@ -405,7 +405,7 @@ int Hdf5rLosGrid_t::buildGridfromGdalArrays( unsigned nGridRows,
     // set on/off Earth status
     setStatus();
 
-    return nOnEarthPts_;
+    return (int)nOnEarthPts_;
 }
 
 //******************************************************************************
@@ -473,7 +473,7 @@ int Hdf5rLosGrid_t::changeObserverLocation( const m3d::Vector& satEcfMeters,
         setStatus();
     }
 
-    return nOnEarthPts_;
+    return (int)nOnEarthPts_;
 }
 
 //******************************************************************************

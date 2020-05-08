@@ -44,7 +44,7 @@ void CompoundBase::CompoundElement_t::setValue( const std::string& v,
     // number of  data items, with 0==>1 for scalar item
     // (note strings are assumed null terminated so nItems is not used
     //   for strings)
-    int nItems = (dimension == 0) ? 1 : dimension;
+    int nItems = (dimension == 0) ? 1 : (int)dimension;
 
     // Each parser reads the next token from the stream, both the stream
     // and nItems (above) control number of tokens allowed
@@ -65,7 +65,7 @@ void CompoundBase::CompoundElement_t::setValue( const std::string& v,
     {
         uint32_t* u32ptr = reinterpret_cast<uint32_t*>(dptr);
         while ((iss >> token) && (nItems-- > 0))
-            *u32ptr++ = std::stoul( token );
+            *u32ptr++ = (uint32_t)std::stoul( token );
     }
     break;
 
@@ -128,7 +128,7 @@ std::string CompoundBase::CompoundElement_t::toString( const CompoundData_t* dat
     // number of iterations over data items, with 0==>1 for scalar item
     // (note strings are assumed null terminated so nItems is not used
     //   for strings)
-    unsigned nItems = (dimension == 0) ? 1 : dimension;
+    unsigned nItems = (dimension == 0) ? 1 : (unsigned int)dimension;
 
     // convert to string by type
     switch (ptrType)

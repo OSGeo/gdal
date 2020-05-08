@@ -65,8 +65,8 @@ public:
     /**
      * Using the Frame Element Map, set one FrameData dataset
      * referenced in the map.
-     * @param frameDataMap Reference to a Frame Element Map.
-     * @return Number of
+     * @param frameData Reference to a Frame Element Map.
+     * @return Result from write request
      */
     int setFrameDataFromMap( const Hdf5rFrameData* frameData );
 

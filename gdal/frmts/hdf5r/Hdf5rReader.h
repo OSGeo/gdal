@@ -92,9 +92,9 @@ public:
      * Load each compound element of the Summary Metadata groups
      * ErrorInfo and SeqInfo into vectors.  The vector element pointers are of
      * the common super class, CompoundBase.
-     * @param errorInfo A reference to a vector of pointers to ErrorInfoTable
+     * @param errorInfoVect A reference to a vector of pointers to ErrorInfoTable
      *                  type.
-     * @param seqInfo A reference to a vector of pointers to SeqInfoTable
+     * @param seqInfoVect A reference to a vector of pointers to SeqInfoTable
      *                type.
      * @return true on successful read, false otherwise.
      */

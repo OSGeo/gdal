@@ -23,9 +23,9 @@ default:	$(OBJ:.o=.$(OBJ_EXT)) $(SUBLIBS)
 clean:
 	rm -f *.o $(O_OBJ)
 
-$(OBJ) $(O_OBJ):	Hdf5rFrameData.h \
+$(OBJ) $(O_OBJ):	Hdf5IObase.h \
+										Hdf5rFrameData.h \
                     Hdf5rLosGrid.h \
-                    Hdf5IObase.h \
                     Hdf5rReader.h \
                     Hdf5rWriter.h \
                     Hdf5rAttributeBase.h \

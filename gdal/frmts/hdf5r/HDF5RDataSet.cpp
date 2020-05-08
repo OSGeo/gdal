@@ -551,8 +551,8 @@ void HDF5RDataSet::setCreateAttributes( GDALDataset* poSrcDS,
         //    - when loaded the bounding row and column are extrapolated
         //        so all pixels locations may be interpolated
         //    - Dimensions reduced here so frame data matches what we will write
-        int ncols = losGrid->getNcols() - 1;
-        int nrows = losGrid->getNrows() - 1;
+        int ncols = (int)losGrid->getNcols() - 1;
+        int nrows = (int)losGrid->getNrows() - 1;
         frameData->numGeoPoints = ncols * nrows;
 
         // get references to each corner of the grid

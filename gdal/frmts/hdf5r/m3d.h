@@ -239,8 +239,8 @@ public:
     /**
      * Vector inner or dot product of two vectors. Which is equivalent to
      * a matrix multiply of a 1x3 row vector times a 3x1 column vector.
-     * @param V
-     * @param W
+     * @param V lhs
+     * @param W rhs
      * @return V dot W (a scalar)
      */
     friend double operator*( const Vector& V, const Vector& W )

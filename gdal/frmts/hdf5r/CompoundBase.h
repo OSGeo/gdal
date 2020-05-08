@@ -76,7 +76,7 @@ public:
          * @brief Convert element content to a string.
          * Using the address of the Hdf5rFrameData_t and the enumeration
          * defining the underlying type, convert the element contents to a string.
-         * @param frmDataPtr Pointer to as Hdf5rFrameData_t for the conversion.
+         * @param cdataPtr Pointer to as Hdf5rFrameData_t for the conversion.
          * @return String representation of the element contents.
          */
         std::string toString( const CompoundData_t* cdataPtr ) const;

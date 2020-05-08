@@ -69,7 +69,7 @@ public:
       status_( UNINITIALIZED ),
       iXmin_( 0 ), iXmax_( 0 ), iYmin_( 0 ), iYmax_( 0 ),
       Xmin_( DMAX ), Xmax_( -DMAX ), Ymin_( DMAX ), Ymax_( -DMAX ),
-      avgXpixelSz_( 0.0 ), avgYpixelSz_( 0.0 ),
+      // avgXpixelSz_( 0.0 ), avgYpixelSz_( 0.0 ),
       satEcfMeters_(),
       invalidLatLonValue_( -9999.0 ),
       earth_( *Earth::getInstance() )
@@ -98,7 +98,7 @@ public:
         status_( UNINITIALIZED ),
         iXmin_( 0 ), iXmax_( 0 ), iYmin_( 0 ), iYmax_( 0 ),
         Xmin_( DMAX ), Xmax_( -DMAX ), Ymin_( DMAX ), Ymax_( -DMAX ),
-        avgXpixelSz_( 0.0 ), avgYpixelSz_( 0.0 ),
+        // avgXpixelSz_( 0.0 ), avgYpixelSz_( 0.0 ),
         satEcfMeters_( satEcfMeters ),
         invalidLatLonValue_( -9999.0 ),
         earth_( earth )
@@ -239,8 +239,8 @@ public:
      * by GDAL transform calls.  The satellite (or observer) ECF location
      * vector and Earth lat, lon points are used to calculate the line-of-sight
      * vector or fil with -999 if GDAL status is 0.
-     * @param satEcfLocMeters Observer location in ECF meters
-     * @param earth The Earth model to use.
+     * @param nGridRows Number of rows in the grid.
+     * @param nGridCols Number of columns in the grid.
      * @param lat Earth latitude in degrees (matching Earth model), ignored
      *            for indexes where gdalXformStatus == 0.
      * @param lon Earth longitude in degrees (matching Earth model), ignored
@@ -269,7 +269,7 @@ public:
      *                      longitude.
      * @return number of on-Earth points in grid
      */
-    int changeObserverLocation( const m3d::Vector& setEcfMeters,
+    int changeObserverLocation( const m3d::Vector& satEcfMeters,
                                 double offEarthValue );
 
     /**
@@ -373,8 +373,8 @@ private:
     double Xmax_;
     double Ymin_;
     double Ymax_;
-    double avgXpixelSz_;
-    double avgYpixelSz_;
+    // double avgXpixelSz_;
+    // double avgYpixelSz_;
 
     m3d::Vector satEcfMeters_;
 
@@ -384,8 +384,8 @@ private:
 
     /**
      * Private function to update min/max for a single grid point
-     * @param i
-     * @param mapXY
+     * @param i point
+     * @param mapXY point coordinates
      */
     void updateMinMax( int i, const GeoMapXY_t mapXY );
 

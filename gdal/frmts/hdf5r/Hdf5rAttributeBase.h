@@ -123,7 +123,7 @@ public:
                 value.i32 = std::stoi( v );
                 break;
             case CV_U32:
-                value.u32 = std::stoul( v );
+                value.u32 = (uint32_t)std::stoul( v );
                 break;
             case CV_I64:
                 value.i64 = std::stoll( v );

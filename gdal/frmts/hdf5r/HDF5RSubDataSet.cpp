@@ -527,7 +527,7 @@ OGRErr HDF5RSubDataSet::setNsperOgrSpatialRef(double lat, double lon, double alt
 
 	if (rc == OGRERR_NONE)
 	{
-		char *pszWKT = NULL;
+		char *pszWKT = nullptr;
 		oSRS.exportToWkt( &pszWKT );
 		//printf( "NSPER WKT: %s\n", pszWKT );
 		ogcWktProjectionInfo_ = pszWKT;
@@ -559,7 +559,7 @@ OGRErr HDF5RSubDataSet::setUserOgrSpatialRef(const CPLString& userStr)
 
 	if (rc == OGRERR_NONE)
 	{
-		char *pszWKT = NULL;
+		char *pszWKT = nullptr;
 		oSRS.exportToWkt( &pszWKT );
 		//printf( "USER WKT: %s\n", pszWKT );
 		ogcWktProjectionInfo_ = pszWKT;
@@ -736,13 +736,13 @@ int HDF5RSubDataSet::buildGcpListFromLosGrid( const Hdf5rLosGrid_t& losGrid,
     if (losGrid.isValid())
     {
         // columns == pixels in GCP-speak
-        int nPixels = losGrid.getNcols();
+        int nPixels = (int)losGrid.getNcols();
 
         // rows == lines in GCP-speak
-        int nLines = losGrid.getNrows();
+        int nLines = (int)losGrid.getNrows();
 
         // initial number of GCPs is the number of on-Earth points in the grid
-        int szGcpList = losGrid.getNumOnEarth();
+        int szGcpList = (int)losGrid.getNumOnEarth();
 
         // limit the number of GCPs to less than gcpMax. Some drivers,
         // notably gtiff, limit the number of GCPs

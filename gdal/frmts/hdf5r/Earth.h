@@ -308,7 +308,7 @@ public:
     /**
      * Set the orthographic reference origin for projection.  Must be called
      * before using orthoGrapicMapXY().
-     * @param ecef An ECEF reference vector which will be converted to a
+     * @param ecef0 An ECEF reference vector which will be converted to a
      *             geodetic location for the projection with orthoGrapicMapXY().
      */
     void setOrthoGraphicReference( const m3d::Vector& ecef0 );

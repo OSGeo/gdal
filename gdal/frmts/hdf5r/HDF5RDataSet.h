@@ -67,7 +67,7 @@ public:
      * attributes in HDF5-R: "SCID" and "SCA".  Note that this driver must
      * precede the other GDAL HDF5 drivers because their Identify() methods
      * yield false positives for HDF5-R.
-     * @param gdalInfo
+     * @param gdalInfo File information class for the file to open.
      * @return 1 (true) on HDF5-R identity match, 0 otherwise.
      */
     static int Identify( GDALOpenInfo* gdalInfo );
@@ -109,7 +109,7 @@ public:
      * @param nXSize X dimension which corresponds to pixels, channels, or
      *               columns.
      * @param nYSize Y dimension which corresponds to scan lines or rows
-     * @param nBandsv Number of bands.  Must be 1 for HDF5-R.
+     * @param nBands Number of bands.  Must be 1 for HDF5-R.
      * @param etype Data type, must be GDT_CInt32 for HDF5-R.
      * @param papszOptions Array of null-terminated pointers to NAME=VALUE
      *                     c-strings. Typically passed on gdal command lines
@@ -126,9 +126,9 @@ public:
     /**
      * \fn GDALDataset::SetGeoTransform(double*)
      * \brief Set the affine transformation coefficients.
-     * See GetGeoTransform() for details on the meaning of the padfTransform
+     * See GetGeoTransform() for details on the meaning of the padTransform
      * coefficients.
-     * @param padfTransform a six double buffer containing the transformation
+     * @param padTransform a six double buffer containing the transformation
      *                      coefficients to be written with the dataset.
      * @return CE_None on success, or CE_Failure if this transform cannot be
      *         written.
@@ -142,17 +142,17 @@ public:
      * space, and projection coordinates (Xp,Yp) space.
      *
      * \code
-     *   Xp = padfTransform[0] + P*padfTransform[1] + L*padfTransform[2];
-     *   Yp = padfTransform[3] + P*padfTransform[4] + L*padfTransform[5];
+     *   Xp = padTransform[0] + P*padTransform[1] + L*padTransform[2];
+     *   Yp = padTransform[3] + P*padTransform[4] + L*padTransform[5];
      * \endcode
      *
-     * In a north up image, padfTransform[1] is the pixel width, and
-     * padfTransform[5] is the pixel height.  The upper left corner of the
-     * upper left pixel is at position (padfTransform[0],padfTransform[3]).
+     * In a north up image, padTransform[1] is the pixel width, and
+     * padTransform[5] is the pixel height.  The upper left corner of the
+     * upper left pixel is at position (padTransform[0],padTransform[3]).
      *
      * The default transform is (0,1,0,0,0,1).
      *
-     * @param padfTransform an existing six double buffer into which the
+     * @param padTransform an existing six double buffer into which the
      * transformation will be placed.
      *
      * @return CE_None on success, or CE_Failure has not been explicitly set
@@ -196,7 +196,7 @@ protected: // methods
      * and insert new values in the File Attributes or Frame Data members that
      * with matching names.
      * @param cstrArray NULL terminated GDAL name=value strings
-     * @param fileAttributes Pointer to an instance of Hdf5rFileAttributes
+     * @param attributes Pointer to an instance of Hdf5rFileAttributes
      * @param what A string to identify the caller in debug output
      * @return Number of values loaded into either map.
      */
@@ -213,8 +213,8 @@ protected: // methods
      * - fileName: Name of the base HDF5-R file, it is the same for all
      *             SUBDATASETs
      * - frameIndex: Index of an individual frame
-     * @param descStr: Descriptor string
-     * @param sdesc: A Hdf5rSubDataDesc_t to fill
+     * @param descStr Descriptor string
+     * @param sdesc A Hdf5rSubDataDesc_t to fill
      * @return Boolean true if all elements of the descriptor are found, also
      *         sets the 'filled' boolean of the structure.
      */

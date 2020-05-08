@@ -18,7 +18,7 @@ class ErrorInfoTable: public CompoundBase
 public:
 
     static constexpr const char* ERROR_INFO_PREFIX = "H5R.EI";
-    static constexpr int ERROR_INFO_PREFIX_SZ = std::strlen( ERROR_INFO_PREFIX );
+    static constexpr int ERROR_INFO_PREFIX_SZ = sizeof(ERROR_INFO_PREFIX) / sizeof(char*);
     static constexpr const char* ERROR_INFO_FMT_PREFIX = "H5R.EI%03d.";
 
     ErrorInfoTable( const char* errCstr = "NO_ERRORS",
@@ -94,7 +94,7 @@ class SeqInfoTable: public CompoundBase
 public:
 
     static constexpr const char* SEQ_INFO_PREFIX = "H5R.SI";
-    static constexpr int SEQ_INFO_PREFIX_SZ = std::strlen( SEQ_INFO_PREFIX );
+    static constexpr int SEQ_INFO_PREFIX_SZ = sizeof(SEQ_INFO_PREFIX) / sizeof(char*);
     static constexpr const char* SEQ_INFO_FMT_PREFIX = "H5R.SI%03d.";
 
     SeqInfoTable()

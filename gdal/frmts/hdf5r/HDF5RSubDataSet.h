@@ -33,7 +33,7 @@ public:
      * attributes in HDF5-R: "SCID" and "SCA".  Note that this driver must
      * precede the other GDAL HDF5 drivers because their Identify() methods
      * yield false positives for HDF5-R.
-     * @param gdalInfo
+     * @param gdalInfo File information class for the file to open.
      * @return 1 (true) on HDF5-R identity match, 0 otherwise.
      */
     static int Identify(GDALOpenInfo* gdalInfo);
@@ -64,8 +64,9 @@ private:
     /**
      * Load frame data members into a GDAL name=value list from the
      * Hdf5rFrameData class for a specific frame number.
+     * @param compound Pointer to CompoundBase.
+     * @param attrIndex Attribute Index.
      * @param nvList Pointer to GDAL name=value strings. List is null terminated.
-     * @param frameIndex Index into the HDF5-R frames from 0.
      * @return Boolean true on success, false otherwise.
      */
     bool loadGdalCompoundAttributes( const CompoundBase* compound,
@@ -93,7 +94,7 @@ private:
 
     /**
      * Set the projection from user specification.
-     * @param userStr: User string in Proj format or WKT or GDAL short name
+     * @param userStr User string in Proj format or WKT or GDAL short name
      * @return OGRerr (from ogr_core.h) OGRERR_NONE is the desired result
      */
     OGRErr setUserOgrSpatialRef( const CPLString& userStr );
