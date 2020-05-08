@@ -419,3 +419,49 @@ END
     assert ds.GetMetadataItem('NOTE') == '("a","b")'
 
     gdal.Unlink('/vsimem/test')
+
+
+###############################################################################
+# Test reading a Mercator_2SP dataset (#2490)
+
+def test_pds_mercator_2SP():
+
+    # Dataset from https://sbnarchive.psi.edu/pds3/dawn/fc/DWNCLCFC2_2/DATA/CE_LAMO_Q_00N_036E_MER_CLR.IMG
+    ds = gdal.Open('data/CE_LAMO_Q_00N_036E_MER_CLR_truncated.IMG')
+    expected_wkt = """PROJCRS["MERCATOR 1_CERES",
+    BASEGEOGCRS["GCS_1_CERES",
+        DATUM["D_1_CERES",
+            ELLIPSOID["1_CERES",470000,0,
+                LENGTHUNIT["metre",1,
+                    ID["EPSG",9001]]]],
+        PRIMEM["Reference_Meridian",0,
+            ANGLEUNIT["degree",0.0174532925199433,
+                ID["EPSG",9122]]]],
+    CONVERSION["unnamed",
+        METHOD["Mercator (variant B)",
+            ID["EPSG",9805]],
+        PARAMETER["Latitude of 1st standard parallel",-12.99,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8823]],
+        PARAMETER["Longitude of natural origin",36,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8802]],
+        PARAMETER["False easting",0,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8806]],
+        PARAMETER["False northing",0,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8807]]],
+    CS[Cartesian,2],
+        AXIS["easting",east,
+            ORDER[1],
+            LENGTHUNIT["metre",1,
+                ID["EPSG",9001]]],
+        AXIS["northing",north,
+            ORDER[2],
+            LENGTHUNIT["metre",1,
+                ID["EPSG",9001]]]]"""
+    expected_srs = osr.SpatialReference()
+    expected_srs.ImportFromWkt(expected_wkt)
+    srs = ds.GetSpatialRef()
+    assert srs.IsSame(expected_srs), srs.ExportToWkt()
