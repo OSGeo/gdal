@@ -42,7 +42,7 @@ from osgeo import ogr
 
 def test_ogr_bna_1():
 
-    gdaltest.bna_ds = ogr.Open('data/test.bna')
+    gdaltest.bna_ds = ogr.Open('data/bna/test.bna')
 
     lyr = gdaltest.bna_ds.GetLayerByName('test_points')
 
@@ -66,7 +66,7 @@ def test_ogr_bna_1():
 
 def test_ogr_bna_2():
 
-    gdaltest.bna_ds = ogr.Open('data/test.bna')
+    gdaltest.bna_ds = ogr.Open('data/bna/test.bna')
 
     lyr = gdaltest.bna_ds.GetLayerByName('test_lines')
 
@@ -85,7 +85,7 @@ def test_ogr_bna_2():
 
 def test_ogr_bna_3():
 
-    gdaltest.bna_ds = ogr.Open('data/test.bna')
+    gdaltest.bna_ds = ogr.Open('data/bna/test.bna')
 
     lyr = gdaltest.bna_ds.GetLayerByName('test_polygons')
 
@@ -113,7 +113,7 @@ def test_ogr_bna_3():
 
 def test_ogr_bna_4():
 
-    gdaltest.bna_ds = ogr.Open('data/test.bna')
+    gdaltest.bna_ds = ogr.Open('data/bna/test.bna')
 
     lyr = gdaltest.bna_ds.GetLayerByName('test_ellipses')
 

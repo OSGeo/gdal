@@ -308,7 +308,7 @@ def test_ogr_gpx_7():
 
     gdaltest.gpx_ds = None
 
-    bna_ds = ogr.Open('data/bna_for_gpx.bna')
+    bna_ds = ogr.Open('data/gpx/bna_for_gpx.bna')
 
     try:
         os.remove('tmp/gpx.gpx')
