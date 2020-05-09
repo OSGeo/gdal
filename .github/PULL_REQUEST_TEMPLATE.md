@@ -28,6 +28,7 @@ please squash your commits in a single one at the end. See
 
  - [ ] ADD YOUR TASKS HERE
  - [ ] Add test case(s)
+ - [ ] Add documentation
  - [ ] Review
  - [ ] Adjust for comments
  - [ ] All CI builds and checks have passed
