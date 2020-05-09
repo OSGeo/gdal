@@ -110,7 +110,7 @@ def test_ogr_geojsonseq_inline():
 
 def test_ogr_geojsonseq_prefix():
 
-    ds = ogr.Open("""GeoJSONSeq:data/test.geojsonl""")
+    ds = ogr.Open("""GeoJSONSeq:data/geojsonseq/test.geojsonl""")
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 2
 
@@ -181,7 +181,7 @@ def test_ogr_geojsonseq_reprojection():
 
 def test_ogr_geojsonseq_read_rs_json_pretty():
 
-    ds = ogr.Open('data/test.geojsons')
+    ds = ogr.Open('data/geojsonseq/test.geojsons')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['foo'] != 'bar' or \
@@ -202,7 +202,7 @@ def test_ogr_geojsonseq_test_ogrsf():
         pytest.skip()
 
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.geojsonl')
+        test_cli_utilities.get_test_ogrsf_path() + ' -ro data/geojsonseq/test.geojsonl')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
