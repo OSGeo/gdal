@@ -1571,12 +1571,12 @@ def test_ogr_shape_43():
     if drv is None:
         pytest.skip()
 
-    conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip')
+    conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip')
     if conn is None:
         pytest.skip('cannot open URL')
     conn.close()
 
-    ds = ogr.Open('/vsizip//vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip')
+    ds = ogr.Open('/vsizip//vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip')
     assert ds is not None
 
     lyr = ds.GetLayer(0)
@@ -1598,12 +1598,12 @@ def ogr_shape_44_DISABLED():
     if drv is None:
         pytest.skip()
 
-    conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip')
+    conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip')
     if conn is None:
         pytest.skip('cannot open URL')
     conn.close()
 
-    ds = ogr.Open('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/testshp')
+    ds = ogr.Open('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/testshp')
     assert ds is not None
 
     lyr = ds.GetLayer(0)

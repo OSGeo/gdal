@@ -2508,7 +2508,7 @@ def test_jp2openjpeg_45():
     gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
 
     # Test writing&reading a gmljp2:featureMember pointing to a remote resource
-    conf = {"root_instance": {"gml_filelist": [{"remote_resource": "https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/expected_gml_gml32.gml"}]}}
+    conf = {"root_instance": {"gml_filelist": [{"remote_resource": "https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/expected_gml_gml32.gml"}]}}
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options=['GMLJP2V2_DEF=' + json.dumps(conf)])
     del out_ds
 
@@ -2522,7 +2522,7 @@ def test_jp2openjpeg_45():
     gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
 
     if ds is None:
-        if gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/expected_gml_gml32.gml') is None:
+        if gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/expected_gml_gml32.gml') is None:
             pytest.skip()
         pytest.fail()
     assert ds.GetLayerCount() == 1
