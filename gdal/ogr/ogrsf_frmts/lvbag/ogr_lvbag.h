@@ -30,7 +30,7 @@
 #define OGR_LVBAG_H_INCLUDED
 
 #include "ogrsf_frmts.h"
-#define HAVE_EXPAT 1 // TODO: Only for IntelliCode
+
 #ifdef HAVE_EXPAT
 #include "ogr_expat.h"
 #endif
