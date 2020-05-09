@@ -44,7 +44,7 @@ import pytest
 
 def test_ogr_gxt_1():
 
-    gdaltest.gxt_ds = ogr.Open('data/expected_000_GRD.gxt')
+    gdaltest.gxt_ds = ogr.Open('data/geoconcept/expected_000_GRD.gxt')
 
     assert gdaltest.gxt_ds is not None
 
@@ -88,7 +88,7 @@ def test_ogr_gxt_1():
 
 def test_ogr_gxt_2():
 
-    gdaltest.gxt_ds = ogr.Open('data/expected_000_GRD_TAB.txt')
+    gdaltest.gxt_ds = ogr.Open('data/geoconcept/expected_000_GRD_TAB.txt')
 
     assert gdaltest.gxt_ds is not None
 
@@ -124,7 +124,7 @@ def test_ogr_gxt_3():
 
     gdaltest.gxt_ds = None
 
-    src_ds = ogr.Open('data/points.gxt')
+    src_ds = ogr.Open('data/geoconcept/points.gxt')
 
     try:
         os.remove('tmp/tmp.gxt')
@@ -201,7 +201,7 @@ def test_ogr_gxt_3():
 
 def test_ogr_gxt_multipolygon_singlepart_nohole():
 
-    ds = ogr.Open('data/geoconcept_multipolygon_singlepart_nohole.txt')
+    ds = ogr.Open('data/geoconcept/geoconcept_multipolygon_singlepart_nohole.txt')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
 
@@ -220,7 +220,7 @@ def test_ogr_gxt_multipolygon_singlepart_hole():
     if not ogrtest.have_geos():
         pytest.skip()
 
-    ds = ogr.Open('data/geoconcept_multipolygon_singlepart_hole.txt')
+    ds = ogr.Open('data/geoconcept/geoconcept_multipolygon_singlepart_hole.txt')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
 
@@ -239,7 +239,7 @@ def test_ogr_gxt_multipolygon_twoparts_second_with_hole():
     if not ogrtest.have_geos():
         pytest.skip()
 
-    ds = ogr.Open('data/geoconcept_multipolygon_twoparts_second_with_hole.txt')
+    ds = ogr.Open('data/geoconcept/geoconcept_multipolygon_twoparts_second_with_hole.txt')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
 
@@ -258,7 +258,7 @@ def test_ogr_gxt_line():
     if not ogrtest.have_geos():
         pytest.skip()
 
-    ds = ogr.Open('data/line.gxt')
+    ds = ogr.Open('data/geoconcept/line.gxt')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
 
