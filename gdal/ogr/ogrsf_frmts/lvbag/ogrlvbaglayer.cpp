@@ -270,7 +270,7 @@ void OGRLVBAGLayer::EndElementCbk(const char *pszName)
         if( !osElementString.empty() )
         {
             std::unique_ptr<OGRGeometry> poGeom = std::unique_ptr<OGRGeometry>{
-                CPL_REINTERPRET_CAST(OGRGeometry *, OGR_G_CreateFromGML(osElementString.c_str())) };
+                reinterpret_cast<OGRGeometry *>(OGR_G_CreateFromGML(osElementString.c_str())) };
             if( poGeom && !poGeom->IsEmpty() )
             {
                 if( !bSchemaOlny )
