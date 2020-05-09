@@ -356,7 +356,7 @@ cd $OLDPWD
 echo "Building xlsx_fuzzer_seed_corpus.zip"
 rm -f $OUT/xlsx_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD
-cd  $(dirname $0)/../../autotest/ogr/data
+cd  $(dirname $0)/../../autotest/ogr/data/xlsx
 for filename in *.xlsx; do
     mkdir tmpxlsx
     (cd tmpxlsx

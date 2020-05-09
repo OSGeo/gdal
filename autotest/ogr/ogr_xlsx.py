@@ -107,7 +107,7 @@ def test_ogr_xlsx_1():
 
     assert drv.TestCapability("foo") == 0
 
-    ds = ogr.Open('data/test.xlsx')
+    ds = ogr.Open('data/xlsx/test.xlsx')
     assert ds is not None, 'cannot open dataset'
 
     return ogr_xlsx_check(ds)
@@ -123,7 +123,7 @@ def test_ogr_xlsx_2():
         pytest.skip()
 
     gdal.SetConfigOption('OGR_XLSX_HEADERS', 'DISABLE')
-    ds = ogr.Open('data/test.xlsx')
+    ds = ogr.Open('data/xlsx/test.xlsx')
 
     lyr = ds.GetLayerByName('Feuille7')
 
@@ -142,7 +142,7 @@ def test_ogr_xlsx_3():
         pytest.skip()
 
     gdal.SetConfigOption('OGR_XLSX_FIELD_TYPES', 'STRING')
-    ds = ogr.Open('data/test.xlsx')
+    ds = ogr.Open('data/xlsx/test.xlsx')
 
     lyr = ds.GetLayerByName('Feuille7')
 
@@ -164,7 +164,7 @@ def test_ogr_xlsx_4():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.xlsx')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/xlsx/test.xlsx')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
@@ -182,7 +182,7 @@ def test_ogr_xlsx_5():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         pytest.skip()
 
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f XLSX tmp/test.xlsx data/test.xlsx')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f XLSX tmp/test.xlsx data/xlsx/test.xlsx')
 
     ds = ogr.Open('tmp/test.xlsx')
     ret = ogr_xlsx_check(ds)
@@ -204,7 +204,7 @@ def test_ogr_xlsx_6():
 
     # In this dataset the column titles are not recognised by default.
     gdal.SetConfigOption('OGR_XLSX_HEADERS', 'FORCE')
-    ds = ogr.Open('data/inlineStr.xlsx')
+    ds = ogr.Open('data/xlsx/inlineStr.xlsx')
 
     lyr = ds.GetLayerByName('inlineStr')
 
@@ -230,7 +230,7 @@ def test_ogr_xlsx_7():
         pytest.skip()
 
     gdal.Unlink('tmp/ogr_xlsx_7.xlsx')
-    shutil.copy('data/test.xlsx', 'tmp/ogr_xlsx_7.xlsx')
+    shutil.copy('data/xlsx/test.xlsx', 'tmp/ogr_xlsx_7.xlsx')
 
     ds = ogr.Open('tmp/ogr_xlsx_7.xlsx', update=1)
     lyr = ds.GetLayerByName('Feuille7')
@@ -372,7 +372,7 @@ def test_ogr_xlsx_11():
     if drv is None:
         pytest.skip()
 
-    ds = ogr.Open('data/not_all_columns_present.xlsx')
+    ds = ogr.Open('data/xlsx/not_all_columns_present.xlsx')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     for i in (0, 27, 28, 29):
@@ -392,7 +392,7 @@ def test_ogr_xlsx_12():
     if drv is None:
         pytest.skip()
 
-    ds = ogr.Open('data/absolute_sheet_filename.xlsx')
+    ds = ogr.Open('data/xlsx/absolute_sheet_filename.xlsx')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f is not None
@@ -409,7 +409,7 @@ def test_ogr_xlsx_13():
         pytest.skip()
 
     gdal.SetConfigOption('OGR_XLSX_FIELD_TYPES', None)
-    ds = ogr.Open('data/test_missing_row1_data.xlsx')
+    ds = ogr.Open('data/xlsx/test_missing_row1_data.xlsx')
 
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Sheet1', 'bad layer name'
@@ -455,7 +455,7 @@ def test_ogr_xlsx_14():
         pytest.skip()
 
     gdal.SetConfigOption('OGR_XLSX_FIELD_TYPES', None)
-    ds = ogr.Open('data/test_empty_last_field.xlsx')
+    ds = ogr.Open('data/xlsx/test_empty_last_field.xlsx')
 
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Sheet1', 'bad layer name'
