@@ -318,7 +318,7 @@ rm srtm.tar ers_dem.tar
 echo "Building ogr_sdts_fuzzer_seed_corpus.zip"
 rm -f $OUT/ogr_sdts_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD
-cd  $(dirname $0)/../../autotest/ogr/data/D3607551_rd0s_1_sdts_truncated
+cd  $(dirname $0)/../../autotest/ogr/data/sdts/D3607551_rd0s_1_sdts_truncated
 printf "FUZZER_FRIENDLY_ARCHIVE\\n" > $CUR_DIR/ogr_sdts.tar
 for file in *.DDF; do
     printf "***NEWFILE***:%s\\n" "$file" >> $CUR_DIR/ogr_sdts.tar
