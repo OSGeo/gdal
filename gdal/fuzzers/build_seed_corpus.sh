@@ -376,7 +376,7 @@ rm xlsx_*.tar
 echo "Building ods_fuzzer_seed_corpus.zip"
 rm -f $OUT/ods_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD
-cd  $(dirname $0)/../../autotest/ogr/data
+cd  $(dirname $0)/../../autotest/ogr/data/ods
 for filename in *.ods; do
     mkdir tmpods
     unzip -d tmpods $filename >/dev/null
