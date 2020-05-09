@@ -77,7 +77,6 @@ static GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo )
                      poOpenInfo->fpL ) )
     {
         poDS.reset();
-        poDS = nullptr;
     }
 
     poOpenInfo->fpL = nullptr;
