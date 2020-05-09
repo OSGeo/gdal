@@ -75,7 +75,7 @@ class OGRLVBAGLayer final: public OGRLayer
     
     XMLParserUniquePtr  oParser;
     
-    bool                bSchemaOlny;
+    bool                bSchemaOnly;
     bool                bHasReadSchema;
     
     int                 nCurrentDepth;
