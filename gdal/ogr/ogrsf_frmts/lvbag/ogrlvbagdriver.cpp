@@ -97,7 +97,7 @@ void RegisterOGRLVBAG()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Kadaster LV BAG Extract 2.0" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xml" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_lvbag.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/lvbag.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = OGRLVBAGDriverOpen;
