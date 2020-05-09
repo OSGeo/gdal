@@ -55,32 +55,16 @@ OGRLVBAGDataSource::~OGRLVBAGDataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRLVBAGDataSource::Open( const char* pszFilename, int bUpdate,
-    VSILFILE* fpIn)
+int OGRLVBAGDataSource::Open( const char* pszFilename, VSILFILE* fpIn)
 {
-    /** FUTURE: For now we're just read-only */
-    if( bUpdate )
-    {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                "OGR/LVBAG driver does not support opening a file in "
-                "update mode");
-        return FALSE;
-    }
-
     fp = fpIn;
 
     SetDescription(pszFilename);
 
-#ifndef HAVE_EXPAT
-    CPLError( CE_Failure, CPLE_NotSupported,
-              "OGR/LVBAG driver has not been built with read support. "
-              "Expat library required" );
-    return FALSE;
-#else
-    poLayer = std::unique_ptr<OGRLVBAGLayer>(new OGRLVBAGLayer(pszFilename, fp));
+    poLayer = std::unique_ptr<OGRLVBAGLayer>(
+        new OGRLVBAGLayer(pszFilename, fp));
 
     return TRUE;
-#endif /* HAVE_EXPAT */
 }
 
 /************************************************************************/

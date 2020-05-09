@@ -29,8 +29,6 @@
 #include "ogr_lvbag.h"
 #include "ogrsf_frmts.h"
 
-// g++ -DHAVE_EXPAT -fPIC -shared -Wall -g -DDEBUG ogr/ogrsf_frmts/lvbag/*.cpp -o ogr_LVBAG.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/lvbag -L. -lgdal
-
 CPL_CVSID("$Id$")
 
 extern "C" void RegisterOGRLVBAG();
@@ -46,7 +44,7 @@ static int OGRLVBAGDriverIdentify( GDALOpenInfo* poOpenInfo )
     
     const char* pszPtr = reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
 
-    if( pszPtr[0] != '<' )
+    if( poOpenInfo->nHeaderBytes == 0 || pszPtr[0] != '<' )
         return FALSE;
 
     // Can't handle mutations just yet
@@ -70,10 +68,10 @@ static GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo )
         poOpenInfo->eAccess == GA_Update)
         return nullptr;
 
-    std::unique_ptr<OGRLVBAGDataSource> poDS = std::unique_ptr<OGRLVBAGDataSource>(new OGRLVBAGDataSource());
+    std::unique_ptr<OGRLVBAGDataSource> poDS = std::unique_ptr<
+        OGRLVBAGDataSource>(new OGRLVBAGDataSource());
 
     if( !poDS->Open( poOpenInfo->pszFilename,
-                     poOpenInfo->eAccess == GA_Update,
                      poOpenInfo->fpL ) )
     {
         poDS.reset();

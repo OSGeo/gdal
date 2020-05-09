@@ -30,12 +30,9 @@
 #define OGR_LVBAG_H_INCLUDED
 
 #include "ogrsf_frmts.h"
-
-#ifdef HAVE_EXPAT
 #include "ogr_expat.h"
-#endif
 
-#ifdef HAVE_EXPAT
+namespace {
 
 /**
  * Deleter for unique pointer.
@@ -61,6 +58,8 @@ struct XMLParserUniquePtrDeleter
  */
 
 typedef std::unique_ptr<XML_ParserStruct, XMLParserUniquePtrDeleter> XMLParserUniquePtr;
+
+}
 
 /************************************************************************/
 /*                           OGRLVBAGLayer                              */
@@ -112,8 +111,6 @@ public:
     int                 TestCapability( const char * ) override;
 };
 
-#endif /* HAVE_EXPAT */
-
 /************************************************************************/
 /*                          OGRLVBAGDataSource                          */
 /************************************************************************/
@@ -128,7 +125,6 @@ public:
                         ~OGRLVBAGDataSource();
 
     int                 Open( const char* pszFilename,
-                              int bUpdate,
                               VSILFILE* fpIn );
 
     int                 GetLayerCount() override { return poLayer != nullptr ? 1 : 0; }
