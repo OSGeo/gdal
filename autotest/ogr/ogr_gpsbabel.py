@@ -52,7 +52,7 @@ def test_ogr_gpsbabel_init():
     if ret.find('GPSBabel') == -1:
         pytest.skip('Cannot access GPSBabel utility')
 
-    ds = ogr.Open('data/test.gpx')
+    ds = ogr.Open('data/gpx/test.gpx')
 
     if ds is None:
         print('GPX driver not configured for read support')
