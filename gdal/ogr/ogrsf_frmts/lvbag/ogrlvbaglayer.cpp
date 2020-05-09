@@ -47,8 +47,14 @@ OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, VSILFILE *fpIn ) :
     fp{ fpIn },
     nNextFID{ 0 },
     oParser{ nullptr },
-    bSchemaOlny{ false },
-    bHasReadSchema{ false }
+    bSchemaOnly{ false },
+    bHasReadSchema{ false },
+    nCurrentDepth{ 0 },
+    nGeometryElementDepth{ 0 },
+    nFeatureCollectionDepth{ 0 },
+    nFeatureElementDepth{ 0 },
+    nAttributeElementDepth{ 0 },
+    bCollectData{ false }
 {
     SetDescription(CPLGetBasename(pszFilename));
     
