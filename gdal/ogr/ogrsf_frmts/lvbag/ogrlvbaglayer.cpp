@@ -93,7 +93,7 @@ OGRFeatureDefn* OGRLVBAGLayer::GetLayerDefn()
 {
     if ( !bHasReadSchema )
     {
-        bSchemaOlny = true;
+        bSchemaOnly = true;
 
         ResetReading();
         ConfigureParser();
@@ -168,7 +168,7 @@ void OGRLVBAGLayer::StartElementCbk(const char *pszName, const char **ppszAttr)
         nGeometryElementDepth == 0 && STARTS_WITH_CI(pszName, "objecten") )
     {
         nAttributeElementDepth = nCurrentDepth;
-        if( bSchemaOlny )
+        if( bSchemaOnly )
         {
             poFeatureDefn->SetName(XMLTagSplit(pszName));
             SetDescription(poFeatureDefn->GetName());
@@ -210,7 +210,7 @@ void OGRLVBAGLayer::StartElementCbk(const char *pszName, const char **ppszAttr)
              EQUAL("sl-bag-extract:bagObject", pszName) )
     {
         nFeatureElementDepth = nCurrentDepth;
-        if( !bSchemaOlny )
+        if( !bSchemaOnly )
             poFeature = new OGRFeature(poFeatureDefn);
     }
     else if( nFeatureCollectionDepth == 0 && EQUAL("sl:standBestand", pszName) )
@@ -237,7 +237,7 @@ void OGRLVBAGLayer::EndElementCbk(const char *pszName)
         StopDataCollect();
         if ( !osElementString.empty() ) 
         {
-            if( bSchemaOlny )
+            if( bSchemaOnly )
             {
                 OGRFieldType eType = OFTString;
                 OGRFieldDefn oField(pszTag, eType);
@@ -273,7 +273,7 @@ void OGRLVBAGLayer::EndElementCbk(const char *pszName)
                 reinterpret_cast<OGRGeometry *>(OGR_G_CreateFromGML(osElementString.c_str())) };
             if( poGeom && !poGeom->IsEmpty() )
             {
-                if( !bSchemaOlny )
+                if( !bSchemaOnly )
                     poFeature->SetGeometryDirectly(poGeom.release());
                 else
                 {
@@ -296,7 +296,7 @@ void OGRLVBAGLayer::EndElementCbk(const char *pszName)
     {
         nFeatureElementDepth = 0;
 
-        if( !bSchemaOlny )
+        if( !bSchemaOnly )
             poFeature->SetFID(nNextFID++);
 
         XML_StopParser(oParser.get(), XML_TRUE);
@@ -412,7 +412,7 @@ OGRFeature *OGRLVBAGLayer::GetNextFeature()
     if ( !bHasReadSchema )
         GetLayerDefn();
 
-    bSchemaOlny = false;
+    bSchemaOnly = false;
     poFeature = nullptr;
 
     if (nNextFID == 0)
