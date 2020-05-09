@@ -69,7 +69,7 @@ class OGRLVBAGLayer final: public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
     OGRFeature         *poFeature;
-    VSILFILE           *fp;
+    VSILFILE           *fp;  // owned by the dataset object
     int                 nNextFID;
     
     XMLParserUniquePtr  oParser;
