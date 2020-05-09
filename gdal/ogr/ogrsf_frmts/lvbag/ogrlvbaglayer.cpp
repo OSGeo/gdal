@@ -440,7 +440,10 @@ OGRFeature *OGRLVBAGLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRLVBAGLayer::TestCapability( const char * /* pszCap */ )
+int OGRLVBAGLayer::TestCapability( const char * pszCap )
 {
+    if (EQUAL(pszCap, OLCStringsAsUTF8))
+        return TRUE;
+    
     return FALSE;
 }
