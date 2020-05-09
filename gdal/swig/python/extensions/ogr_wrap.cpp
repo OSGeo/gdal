@@ -6990,6 +6990,11 @@ SWIGINTERN PyObject *_wrap_Driver_CopyDataSource(PyObject *SWIGUNUSEDPARM(self),
     }
   }
   {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
     if ( bUseExceptions ) {
       ClearErrorState();
     }
