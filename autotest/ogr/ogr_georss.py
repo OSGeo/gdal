@@ -50,7 +50,7 @@ def test_ogr_georss_init():
 
     gdaltest.have_gml_reader = 0
     try:
-        ds = ogr.Open('data/ionic_wfs.gml')
+        ds = ogr.Open('data/gm/ionic_wfs.gml')
         if ds is not None:
             gdaltest.have_gml_reader = 1
             ds = None
