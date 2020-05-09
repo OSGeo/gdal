@@ -40,7 +40,7 @@ import pytest
 
 def test_ogr_segp1_points():
 
-    ds = ogr.Open('data/test.segp1')
+    ds = ogr.Open('data/segp1/test.segp1')
     assert ds is not None, 'cannot open dataset'
 
     assert ds.GetLayerCount() == 2, 'bad layer count'
@@ -78,7 +78,7 @@ def test_ogr_segp1_points():
 
 def test_ogr_segp1_lines():
 
-    ds = ogr.Open('data/test.segp1')
+    ds = ogr.Open('data/segp1/test.segp1')
     assert ds is not None, 'cannot open dataset'
 
     assert ds.GetLayerCount() == 2, 'bad layer count'
@@ -115,7 +115,7 @@ def test_ogr_segp1_lines():
 
 def test_ogr_ukooa_points():
 
-    ds = ogr.Open('data/test.ukooa')
+    ds = ogr.Open('data/segukooa/test.ukooa')
     assert ds is not None, 'cannot open dataset'
 
     assert ds.GetLayerCount() == 2, 'bad layer count'
@@ -152,7 +152,7 @@ def test_ogr_ukooa_points():
 
 def test_ogr_ukooa_lines():
 
-    ds = ogr.Open('data/test.ukooa')
+    ds = ogr.Open('data/segukooa/test.ukooa')
     assert ds is not None, 'cannot open dataset'
 
     assert ds.GetLayerCount() == 2, 'bad layer count'
