@@ -49,7 +49,7 @@ static int OGRLVBAGDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( pszPtr[0] != '<' )
         return FALSE;
 
-    /** Can't handle mutations just yet */
+    // Can't handle mutations just yet
     if( strstr(pszPtr, "http://www.kadaster.nl/schemas/mutatielevering-generiek/1.0") != nullptr )
         return FALSE;
 
