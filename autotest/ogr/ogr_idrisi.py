@@ -40,7 +40,7 @@ import pytest
 
 def test_ogr_idrisi_1():
 
-    ds = ogr.Open('data/points.vct')
+    ds = ogr.Open('data/idrisi/points.vct')
     assert ds is not None
 
     lyr = ds.GetLayer(0)
@@ -111,7 +111,7 @@ def test_ogr_idrisi_1():
 
 def test_ogr_idrisi_2():
 
-    ds = ogr.Open('data/lines.vct')
+    ds = ogr.Open('data/idrisi/lines.vct')
     assert ds is not None
 
     lyr = ds.GetLayer(0)
@@ -156,7 +156,7 @@ def test_ogr_idrisi_2():
 
 def test_ogr_idrisi_3():
 
-    ds = ogr.Open('data/polygons.vct')
+    ds = ogr.Open('data/idrisi/polygons.vct')
     assert ds is not None
 
     lyr = ds.GetLayer(0)
