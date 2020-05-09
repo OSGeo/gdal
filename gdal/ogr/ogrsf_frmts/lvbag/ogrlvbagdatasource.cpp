@@ -70,7 +70,7 @@ int OGRLVBAGDataSource::Open( const char* pszFilename, int bUpdate,
     fp = fpIn;
 
     SetDescription(pszFilename);
-    poLayer = std::make_unique<OGRLVBAGLayer>(pszFilename, fp);
+    poLayer = std::unique_ptr<OGRLVBAGLayer>(new OGRLVBAGLayer(pszFilename, fp));
 
     return TRUE;
 }

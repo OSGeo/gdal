@@ -76,7 +76,7 @@ static GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo )
               "Expat library required" );
     return nullptr;
 #else
-    std::unique_ptr<OGRLVBAGDataSource> poDS = std::make_unique<OGRLVBAGDataSource>();
+    std::unique_ptr<OGRLVBAGDataSource> poDS = std::unique_ptr<OGRLVBAGDataSource>(new OGRLVBAGDataSource());
 
     if( !poDS->Open( poOpenInfo->pszFilename,
                      poOpenInfo->eAccess == GA_Update,
@@ -101,7 +101,7 @@ void RegisterOGRLVBAG()
     if( GDALGetDriverByName( "LVBAG" ) != nullptr )
         return;
 
-    std::unique_ptr<GDALDriver> poDriver = std::make_unique<GDALDriver>();
+    std::unique_ptr<GDALDriver> poDriver = std::unique_ptr<GDALDriver>(new GDALDriver());
 
     poDriver->SetDescription( "LVBAG" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
