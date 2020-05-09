@@ -41,7 +41,7 @@ import pytest
 
 def test_ogr_htf_1():
 
-    ds = ogr.Open('data/test.htf')
+    ds = ogr.Open('data/htf/test.htf')
     assert ds is not None, 'cannot open dataset'
 
     lyr = ds.GetLayer(0)
@@ -90,11 +90,11 @@ def test_ogr_htf_2():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.htf')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/htf/test.htf')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.htf metadata')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/htf/test.htf metadata')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
