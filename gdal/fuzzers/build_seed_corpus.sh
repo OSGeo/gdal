@@ -458,7 +458,7 @@ rm small_mif.tar
 
 echo "Building openfilegdb_fuzzer_seed_corpus.zip"
 rm -rf testopenfilegdb.gdb
-unzip $(dirname $0)/../../autotest/ogr/data/testopenfilegdb.gdb.zip >/dev/null
+unzip $(dirname $0)/../../autotest/ogr/data/filegdb/testopenfilegdb.gdb.zip >/dev/null
 printf "FUZZER_FRIENDLY_ARCHIVE\\n" > testopenfilegdb.gdb.tar
 for f in testopenfilegdb.gdb/*; do
     printf "***NEWFILE***:%s\\n" "$f" >> testopenfilegdb.gdb.tar
@@ -466,7 +466,7 @@ for f in testopenfilegdb.gdb/*; do
 done
 
 rm -rf testopenfilegdb92.gdb
-unzip $(dirname $0)/../../autotest/ogr/data/testopenfilegdb92.gdb.zip >/dev/null
+unzip $(dirname $0)/../../autotest/ogr/data/filegdb/testopenfilegdb92.gdb.zip >/dev/null
 printf "FUZZER_FRIENDLY_ARCHIVE\\n" > testopenfilegdb92.gdb.tar
 for f in testopenfilegdb92.gdb/*; do
     printf "***NEWFILE***:%s\\n" "$f" >> testopenfilegdb92.gdb.tar
