@@ -191,14 +191,8 @@ void OGRLVBAGLayer::StartElementCbk(const char *pszName, const char **ppszAttr)
         const char** papszIter = ppszAttr;
         while( papszIter && *papszIter != nullptr )
         {
-            OGRGeomFieldDefn *poGeomField = poFeatureDefn->GetGeomFieldDefn(0);
-            if( EQUAL("srsname", papszIter[0]) && poGeomField->GetSpatialRef() == nullptr )
-            {
-                OGRSpatialReference* poSRS = new OGRSpatialReference{};
-                poSRS->importFromURN(papszIter[1]);
-                poGeomField->SetSpatialRef(poSRS);
-                poSRS->Release();
-            }
+            if( EQUAL("srsname", papszIter[0]) && osSRSName.empty() )
+                osSRSName = papszIter[1];
 
             osElementString += " ";
             osElementString += papszIter[0];
@@ -283,6 +277,14 @@ void OGRLVBAGLayer::EndElementCbk(const char *pszName)
                     poFeature->SetGeometryDirectly(poGeom.release());
                 else
                 {
+                    if( !osSRSName.empty() )
+                    {
+                        OGRSpatialReference* poSRS = new OGRSpatialReference{};
+                        poSRS->importFromURN(osSRSName.c_str());
+                        poGeom->assignSpatialReference(poSRS);
+                        poSRS->Release();
+                    }
+
                     OGRGeomFieldDefn *poGeomField = poFeatureDefn->GetGeomFieldDefn(0);
                     poGeomField->SetSpatialRef(poGeom->getSpatialReference());
                     poGeomField->SetType(poGeom->getGeometryType());
