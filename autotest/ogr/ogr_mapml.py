@@ -433,6 +433,6 @@ def test_ogr_mapml_ogrsf():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/poly.mapml')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/mapml/poly.mapml')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
