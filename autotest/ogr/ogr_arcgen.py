@@ -40,7 +40,7 @@ import pytest
 
 def test_ogr_arcgen_points():
 
-    ds = ogr.Open('data/points.gen')
+    ds = ogr.Open('data/arcgen/points.gen')
     assert ds is not None, 'cannot open dataset'
 
     assert ds.GetLayerCount() == 1, 'bad layer count'
@@ -66,7 +66,7 @@ def test_ogr_arcgen_points():
 
 def test_ogr_arcgen_points25d():
 
-    ds = ogr.Open('data/points25d.gen')
+    ds = ogr.Open('data/arcgen/points25d.gen')
     assert ds is not None, 'cannot open dataset'
 
     assert ds.GetLayerCount() == 1, 'bad layer count'
@@ -92,7 +92,7 @@ def test_ogr_arcgen_points25d():
 
 def test_ogr_arcgen_lines():
 
-    ds = ogr.Open('data/lines.gen')
+    ds = ogr.Open('data/arcgen/lines.gen')
     assert ds is not None, 'cannot open dataset'
 
     lyr = ds.GetLayer(0)
@@ -116,7 +116,7 @@ def test_ogr_arcgen_lines():
 
 def test_ogr_arcgen_lines25d():
 
-    ds = ogr.Open('data/lines25d.gen')
+    ds = ogr.Open('data/arcgen/lines25d.gen')
     assert ds is not None, 'cannot open dataset'
 
     lyr = ds.GetLayer(0)
@@ -140,7 +140,7 @@ def test_ogr_arcgen_lines25d():
 
 def test_ogr_arcgen_polygons():
 
-    ds = ogr.Open('data/polygons.gen')
+    ds = ogr.Open('data/arcgen/polygons.gen')
     assert ds is not None, 'cannot open dataset'
 
     lyr = ds.GetLayer(0)
@@ -164,7 +164,7 @@ def test_ogr_arcgen_polygons():
 
 def test_ogr_arcgen_polygons25d():
 
-    ds = ogr.Open('data/polygons25d.gen')
+    ds = ogr.Open('data/arcgen/polygons25d.gen')
     assert ds is not None, 'cannot open dataset'
 
     lyr = ds.GetLayer(0)
