@@ -243,9 +243,11 @@ void OGRLVBAGLayer::EndElementCbk(const char *pszName)
         {
             if( bSchemaOnly )
             {
-                OGRFieldType eType = OFTString;
-                OGRFieldDefn oField(pszTag, eType);
-                poFeatureDefn->AddFieldDefn(&oField);
+                if( poFeatureDefn->GetFieldIndex(pszTag) == -1 )
+                {
+                    OGRFieldDefn oField(pszTag, OFTString);
+                    poFeatureDefn->AddFieldDefn(&oField);
+                }
             }
             else
             {
