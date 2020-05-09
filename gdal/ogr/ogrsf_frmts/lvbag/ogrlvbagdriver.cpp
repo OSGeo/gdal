@@ -70,12 +70,6 @@ static GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo )
         poOpenInfo->eAccess == GA_Update)
         return nullptr;
 
-#ifndef HAVE_EXPAT
-    CPLError( CE_Failure, CPLE_NotSupported,
-              "OGR/LVBAG driver has not been built with read support. "
-              "Expat library required" );
-    return nullptr;
-#else
     std::unique_ptr<OGRLVBAGDataSource> poDS = std::unique_ptr<OGRLVBAGDataSource>(new OGRLVBAGDataSource());
 
     if( !poDS->Open( poOpenInfo->pszFilename,
@@ -89,7 +83,6 @@ static GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo )
     poOpenInfo->fpL = nullptr;
 
     return poDS.release();
-#endif
 }
 
 /************************************************************************/

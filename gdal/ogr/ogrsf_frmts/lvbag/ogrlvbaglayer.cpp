@@ -30,6 +30,10 @@
 #include "ogr_lvbag.h"
 #include "ogr_p.h"
 
+CPL_CVSID("$Id$")
+
+#ifdef HAVE_EXPAT
+
 /************************************************************************/
 /*                           OGRLVBAGLayer()                            */
 /*                                                                      */
@@ -435,3 +439,5 @@ int OGRLVBAGLayer::TestCapability( const char * /* pszCap */ )
 {
     return FALSE;
 }
+
+#endif /* HAVE_EXPAT */

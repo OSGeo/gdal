@@ -70,9 +70,17 @@ int OGRLVBAGDataSource::Open( const char* pszFilename, int bUpdate,
     fp = fpIn;
 
     SetDescription(pszFilename);
+
+#ifndef HAVE_EXPAT
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "OGR/LVBAG driver has not been built with read support. "
+              "Expat library required" );
+    return FALSE;
+#else
     poLayer = std::unique_ptr<OGRLVBAGLayer>(new OGRLVBAGLayer(pszFilename, fp));
 
     return TRUE;
+#endif /* HAVE_EXPAT */
 }
 
 /************************************************************************/

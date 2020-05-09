@@ -35,6 +35,8 @@
 #include "ogr_expat.h"
 #endif
 
+#ifdef HAVE_EXPAT
+
 /**
  * Deleter for unique pointer.
  *
@@ -110,13 +112,15 @@ public:
     int                 TestCapability( const char * ) override;
 };
 
+#endif /* HAVE_EXPAT */
+
 /************************************************************************/
 /*                          OGRLVBAGDataSource                          */
 /************************************************************************/
 
 class OGRLVBAGDataSource final: public GDALDataset
 {
-    std::unique_ptr<OGRLVBAGLayer>       poLayer;
+    std::unique_ptr<OGRLayer>       poLayer;
     VSILFILE            *fp;
 
 public:
