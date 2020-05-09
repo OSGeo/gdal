@@ -38,7 +38,7 @@ import pytest
 
 def test_ogr_dgn_1():
 
-    gdaltest.dgn_ds = ogr.Open('data/smalltest.dgn')
+    gdaltest.dgn_ds = ogr.Open('data/dgn/smalltest.dgn')
     assert gdaltest.dgn_ds is not None, 'failed to open test file.'
 
     gdaltest.dgn_lyr = gdaltest.dgn_ds.GetLayer(0)

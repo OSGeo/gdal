@@ -560,7 +560,7 @@ def test_ogr_sql_24():
 
     result = 'success'
 
-    ds = ogr.Open('data/smalltest.dgn')
+    ds = ogr.Open('data/dgn/smalltest.dgn')
 
     sql_layer = ds.ExecuteSQL('SELECT * from elements where colorindex=83 and type=3')
 
