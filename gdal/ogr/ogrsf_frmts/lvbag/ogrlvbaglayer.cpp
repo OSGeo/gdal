@@ -420,7 +420,8 @@ OGRFeature *OGRLVBAGLayer::GetNextFeature()
 
     ParseDocument();
 
-    if( (m_poFilterGeom == nullptr ||
+    if( poFeature &&
+        (m_poFilterGeom == nullptr ||
         FilterGeometry(poFeature->GetGeometryRef())) &&
         (m_poAttrQuery == nullptr ||
         m_poAttrQuery->Evaluate(poFeature)) )
