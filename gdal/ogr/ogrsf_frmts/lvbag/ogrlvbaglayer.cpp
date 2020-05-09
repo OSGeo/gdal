@@ -319,17 +319,17 @@ void OGRLVBAGLayer::ConfigureParser()
 {
     const auto startElementWrapper = [](void *pUserData, const char *pszName, const char **ppszAttr)
     {
-        CPL_STATIC_CAST(OGRLVBAGLayer*, pUserData)->StartElementCbk(pszName, ppszAttr);
+        static_cast<OGRLVBAGLayer *>(pUserData)->StartElementCbk(pszName, ppszAttr);
     };
 
     const auto endElementWrapper = [](void *pUserData, const char *pszName)
     {
-        CPL_STATIC_CAST(OGRLVBAGLayer*, pUserData)->EndElementCbk(pszName);
+        static_cast<OGRLVBAGLayer *>(pUserData)->EndElementCbk(pszName);
     };
 
     const auto dataHandlerWrapper = [](void *pUserData, const XML_Char *data, int nLen)
     {
-        CPL_STATIC_CAST(OGRLVBAGLayer*, pUserData)->DataHandlerCbk(data, nLen);
+        static_cast<OGRLVBAGLayer *>(pUserData)->DataHandlerCbk(data, nLen);
     };
 
     oParser = XMLParserUniquePtr{ OGRCreateExpatXMLParser() };
@@ -354,8 +354,8 @@ bool OGRLVBAGLayer::IsParserFinished(XML_Status status)
                     "Parsing of LV BAG file failed : %s at line %d, "
                     "column %d",
                     XML_ErrorString(XML_GetErrorCode(oParser.get())),
-                    CPL_STATIC_CAST(int, XML_GetCurrentLineNumber(oParser.get())),
-                    CPL_STATIC_CAST(int, XML_GetCurrentColumnNumber(oParser.get())) );
+                    static_cast<int>(XML_GetCurrentLineNumber(oParser.get())),
+                    static_cast<int>(XML_GetCurrentColumnNumber(oParser.get())) );
             return true;
 
         case XML_STATUS_SUSPENDED:
@@ -382,7 +382,7 @@ void OGRLVBAGLayer::ParseDocument()
             case XML_PARSING:
             {
                 memset(aBuf, '\0', sizeof(aBuf));
-                const unsigned int nLen = CPL_STATIC_CAST(unsigned int, VSIFReadL(aBuf, 1, sizeof(aBuf), fp));
+                const unsigned int nLen = static_cast<unsigned int>(VSIFReadL(aBuf, 1, sizeof(aBuf), fp));
 
                 if( IsParserFinished(XML_Parse(oParser.get(), aBuf, nLen, VSIFEofL(fp))) )
                     return;
