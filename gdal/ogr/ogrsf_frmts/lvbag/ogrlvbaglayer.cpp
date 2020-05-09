@@ -76,8 +76,8 @@ void OGRLVBAGLayer::ResetReading()
 {
     VSIRewindL(fp);
 
-    nCurrentDepth = 0,
-    nGeometryElementDepth = 0,
+    nCurrentDepth = 0;
+    nGeometryElementDepth = 0;
     nFeatureCollectionDepth = 0;
     nFeatureElementDepth = 0;
     nAttributeElementDepth = 0;
