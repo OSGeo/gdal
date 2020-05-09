@@ -104,9 +104,9 @@ def test_gdal_ls_py_3():
 
 
 def test_gdal_ls_py_4():
-    ret_str = run_gdal_ls(['', '-l', '/vsizip/../ogr/data/poly.zip'])
+    ret_str = run_gdal_ls(['', '-l', '/vsizip/../ogr/data/shp/poly.zip'])
 
-    if ret_str.find('-r--r--r--  1 unknown unknown          415 2008-02-11 21:35 /vsizip/../ogr/data/poly.zip/poly.PRJ') == -1:
+    if ret_str.find('-r--r--r--  1 unknown unknown          415 2008-02-11 21:35 /vsizip/../ogr/data/shp/poly.zip/poly.PRJ') == -1:
         if gdaltest.skip_on_travis():
             # FIXME
             # Fails on Travis with dates at 1970-01-01 00:00

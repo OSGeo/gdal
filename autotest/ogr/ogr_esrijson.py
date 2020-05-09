@@ -89,7 +89,7 @@ def validate_layer(lyr, name, features, typ, fields, box):
 
 def test_ogr_esrijson_read_point():
 
-    ds = ogr.Open('data/esripoint.json')
+    ds = ogr.Open('data/esrijson/esripoint.json')
     assert ds is not None, 'Failed to open datasource'
 
     assert ds.GetLayerCount() == 1, 'Wrong number of layers'
@@ -138,7 +138,7 @@ def test_ogr_esrijson_read_point():
 
 def test_ogr_esrijson_read_linestring():
 
-    ds = ogr.Open('data/esrilinestring.json')
+    ds = ogr.Open('data/esrijson/esrilinestring.json')
     assert ds is not None, 'Failed to open datasource'
 
     assert ds.GetLayerCount() == 1, 'Wrong number of layers'
@@ -188,7 +188,7 @@ def test_ogr_esrijson_read_linestring():
 
 def test_ogr_esrijson_read_polygon():
 
-    ds = ogr.Open('data/esripolygon.json')
+    ds = ogr.Open('data/esrijson/esripolygon.json')
     assert ds is not None, 'Failed to open datasource'
 
     assert ds.GetLayerCount() == 1, 'Wrong number of layers'
@@ -209,7 +209,7 @@ def test_ogr_esrijson_read_polygon():
     lyr = None
     ds = None
 
-    ds = ogr.Open('data/esripolygonempty.json')
+    ds = ogr.Open('data/esrijson/esripolygonempty.json')
     assert ds is not None, 'Failed to open datasource'
     lyr = ds.GetLayer(0)
     feature = lyr.GetNextFeature()
@@ -226,7 +226,7 @@ def test_ogr_esrijson_read_polygon():
 
 def test_ogr_esrijson_read_multipoint():
 
-    ds = ogr.Open('data/esrimultipoint.json')
+    ds = ogr.Open('data/esrijson/esrimultipoint.json')
     assert ds is not None, 'Failed to open datasource'
 
     assert ds.GetLayerCount() == 1, 'Wrong number of layers'
@@ -253,7 +253,7 @@ def test_ogr_esrijson_read_multipoint():
 
 def test_ogr_esrijson_read_pointz():
 
-    ds = ogr.Open('data/esrizpoint.json')
+    ds = ogr.Open('data/esrijson/esrizpoint.json')
     assert ds is not None, 'Failed to open datasource'
 
     assert ds.GetLayerCount() == 1, 'Wrong number of layers'
@@ -302,7 +302,7 @@ def test_ogr_esrijson_read_pointz():
 
 def test_ogr_esrijson_read_linestringz():
 
-    ds = ogr.Open('data/esrizlinestring.json')
+    ds = ogr.Open('data/esrijson/esrizlinestring.json')
     assert ds is not None, 'Failed to open datasource'
 
     assert ds.GetLayerCount() == 1, 'Wrong number of layers'
@@ -330,7 +330,7 @@ def test_ogr_esrijson_read_linestringz():
 
 def test_ogr_esrijson_read_multipointz():
 
-    ds = ogr.Open('data/esrizmultipoint.json')
+    ds = ogr.Open('data/esrijson/esrizmultipoint.json')
     assert ds is not None, 'Failed to open datasource'
 
     assert ds.GetLayerCount() == 1, 'Wrong number of layers'
@@ -358,7 +358,7 @@ def test_ogr_esrijson_read_multipointz():
 
 def test_ogr_esrijson_read_polygonz():
 
-    ds = ogr.Open('data/esrizpolygon.json')
+    ds = ogr.Open('data/esrijson/esrizpolygon.json')
     assert ds is not None, 'Failed to open datasource'
 
     assert ds.GetLayerCount() == 1, 'Wrong number of layers'
@@ -386,7 +386,7 @@ def test_ogr_esrijson_read_polygonz():
 
 def test_ogr_esrijson_read_multipointm():
 
-    ds = ogr.Open('data/esrihasmnozmultipoint.json')
+    ds = ogr.Open('data/esrijson/esrihasmnozmultipoint.json')
     assert ds is not None, 'Failed to open datasource'
 
     assert ds.GetLayerCount() == 1, 'Wrong number of layers'
@@ -413,7 +413,7 @@ def test_ogr_esrijson_read_multipointm():
 
 def test_ogr_esrijson_read_pointz_withou_z():
 
-    ds = ogr.Open('data/esriinvalidhaszmultipoint.json')
+    ds = ogr.Open('data/esrijson/esriinvalidhaszmultipoint.json')
     assert ds is not None, 'Failed to open datasource'
 
     assert ds.GetLayerCount() == 1, 'Wrong number of layers'
@@ -440,7 +440,7 @@ def test_ogr_esrijson_read_pointz_withou_z():
 
 def test_ogr_esrijson_read_multipointzm():
 
-    ds = ogr.Open('data/esrizmmultipoint.json')
+    ds = ogr.Open('data/esrijson/esrizmmultipoint.json')
     assert ds is not None, 'Failed to open datasource'
 
     assert ds.GetLayerCount() == 1, 'Wrong number of layers'
@@ -649,7 +649,7 @@ def test_ogr_esrijson_featureservice_scrolling():
 
 def test_ogr_esrijson_read_starting_with_features_geometry():
 
-    ds = ogr.Open('data/esrijsonstartingwithfeaturesgeometry.json')
+    ds = ogr.Open('data/esrijson/esrijsonstartingwithfeaturesgeometry.json')
     assert ds is not None
     assert ds.GetDriver().GetName() == 'ESRIJSON'
     lyr = ds.GetLayer(0)

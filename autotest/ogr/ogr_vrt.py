@@ -281,10 +281,10 @@ def test_ogr_vrt_10():
     if gdaltest.vrt_ds is None:
         pytest.skip()
 
-    vrt_xml = '<OGRVRTDataSource><OGRVRTLayer name="test"><SrcDataSource relativeToVRT="0">data/testpoly.shp</SrcDataSource><SrcLayer>testpoly</SrcLayer></OGRVRTLayer></OGRVRTDataSource>'
+    vrt_xml = '<OGRVRTDataSource><OGRVRTLayer name="test"><SrcDataSource relativeToVRT="0">data/shp/testpoly.shp</SrcDataSource><SrcLayer>testpoly</SrcLayer></OGRVRTLayer></OGRVRTDataSource>'
     vrt_ds = ogr.Open(vrt_xml)
     vrt_lyr = vrt_ds.GetLayerByName('test')
-    src_ds = ogr.Open('data/testpoly.shp')
+    src_ds = ogr.Open('data/shp/testpoly.shp')
     src_lyr = src_ds.GetLayer(0)
 
     assert vrt_lyr.TestCapability(ogr.OLCFastFeatureCount) == src_lyr.TestCapability(ogr.OLCFastFeatureCount)

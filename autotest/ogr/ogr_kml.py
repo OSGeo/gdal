@@ -63,7 +63,7 @@ def test_ogr_kml_datastore():
         print('Unregister LIBKML driver')
         ogrtest.libkml_drv.Deregister()
 
-    ogrtest.kml_ds = ogr.Open('data/samples.kml')
+    ogrtest.kml_ds = ogr.Open('data/kml/samples.kml')
     if ogrtest.kml_ds is not None:
         ogrtest.have_read_kml = 1
 
@@ -411,7 +411,7 @@ def test_ogr_kml_xml_attributes():
     if not ogrtest.have_read_kml:
         pytest.skip()
 
-    ds = ogr.Open('data/description_with_xml.kml')
+    ds = ogr.Open('data/kml/description_with_xml.kml')
 
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
@@ -430,7 +430,7 @@ def test_ogr_kml_read_geometries():
     if not ogrtest.have_read_kml:
         pytest.skip()
 
-    ds = ogr.Open('data/geometries.kml')
+    ds = ogr.Open('data/kml/geometries.kml')
 
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
@@ -451,7 +451,7 @@ def test_ogr_kml_test_ogrsf():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' --config OGR_SKIP LIBKML -ro data/samples.kml')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' --config OGR_SKIP LIBKML -ro data/kml/samples.kml')
 
     assert not (ret.find("using driver `KML'") == -1 or ret.find('INFO') == -1 or ret.find('ERROR') != -1)
 
@@ -483,7 +483,7 @@ def test_ogr_kml_read_placemark():
     if not ogrtest.have_read_kml:
         pytest.skip()
 
-    ds = ogr.Open('data/placemark.kml')
+    ds = ogr.Open('data/kml/placemark.kml')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     assert feat is not None
@@ -497,7 +497,7 @@ def test_ogr_kml_read_empty():
     if not ogrtest.have_read_kml:
         pytest.skip()
 
-    ds = ogr.Open('data/empty.kml')
+    ds = ogr.Open('data/kml/empty.kml')
     assert ds.GetLayerCount() == 0
 
 ###############################################################################
@@ -509,7 +509,7 @@ def test_ogr_kml_read_emptylayers():
     if not ogrtest.have_read_kml:
         pytest.skip()
 
-    ds = ogr.Open('data/emptylayers.kml')
+    ds = ogr.Open('data/kml/emptylayers.kml')
     assert ds.GetLayerCount() == 2
 
     assert ds.GetLayer(0).GetFeatureCount() == 0
@@ -668,7 +668,7 @@ def test_ogr_kml_read_folder_with_subfolder_placemark():
     if not ogrtest.have_read_kml:
         pytest.skip()
 
-    ds = ogr.Open('data/folder_with_subfolder_placemark.kml')
+    ds = ogr.Open('data/kml/folder_with_subfolder_placemark.kml')
     assert ds.GetLayerCount() == 1
 
     assert ds.GetLayer(0).GetFeatureCount() == 0
@@ -683,7 +683,7 @@ def test_ogr_kml_read_truncated():
         pytest.skip()
 
     with gdaltest.error_handler():
-        ds = ogr.Open('data/truncated.kml')
+        ds = ogr.Open('data/kml/truncated.kml')
     assert ds is None
 
 ###############################################################################
@@ -695,7 +695,7 @@ def test_ogr_kml_read_weird_empty_folders():
     if not ogrtest.have_read_kml:
         pytest.skip()
 
-    ds = ogr.Open('data/weird_empty_folders.kml')
+    ds = ogr.Open('data/kml/weird_empty_folders.kml')
     assert ds.GetLayerCount() == 1
 
     assert ds.GetLayer(0).GetFeatureCount() == 0
@@ -710,7 +710,7 @@ def test_ogr_kml_read_junk_content_after_valid_doc():
         pytest.skip()
 
     with gdaltest.error_handler():
-        ds = ogr.Open('data/junk_content_after_valid_doc.kml')
+        ds = ogr.Open('data/kml/junk_content_after_valid_doc.kml')
     assert ds is None
 
 ###############################################################################
@@ -722,7 +722,7 @@ def test_ogr_kml_read_placemark_with_kml_prefix():
     if not ogrtest.have_read_kml:
         pytest.skip()
 
-    ds = ogr.Open('data/placemark_with_kml_prefix.kml')
+    ds = ogr.Open('data/kml/placemark_with_kml_prefix.kml')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     assert feat is not None
@@ -736,7 +736,7 @@ def test_ogr_kml_read_duplicate_folder_name():
     if not ogrtest.have_read_kml:
         pytest.skip()
 
-    ds = ogr.Open('data/duplicate_folder_name.kml')
+    ds = ogr.Open('data/kml/duplicate_folder_name.kml')
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'layer'
     lyr = ds.GetLayer(1)
@@ -751,7 +751,7 @@ def test_ogr_kml_read_placemark_in_root_and_subfolder():
     if not ogrtest.have_read_kml:
         pytest.skip()
 
-    ds = ogr.Open('data/placemark_in_root_and_subfolder.kml')
+    ds = ogr.Open('data/kml/placemark_in_root_and_subfolder.kml')
     lyr = ds.GetLayerByName('TopLevel')
     assert lyr is not None
     assert lyr.GetFeatureCount() == 1

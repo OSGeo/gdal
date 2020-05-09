@@ -1235,9 +1235,9 @@ def test_ogr2ogr_37():
     shutil.copy('../ogr/data/poly.shp', 'tmp/test_ogr2ogr_37_src')
     shutil.copy('../ogr/data/poly.shx', 'tmp/test_ogr2ogr_37_src')
     shutil.copy('../ogr/data/poly.dbf', 'tmp/test_ogr2ogr_37_src')
-    shutil.copy('../ogr/data/testpoly.shp', 'tmp/test_ogr2ogr_37_src')
-    shutil.copy('../ogr/data/testpoly.shx', 'tmp/test_ogr2ogr_37_src')
-    shutil.copy('../ogr/data/testpoly.dbf', 'tmp/test_ogr2ogr_37_src')
+    shutil.copy('../ogr/data/shp/testpoly.shp', 'tmp/test_ogr2ogr_37_src')
+    shutil.copy('../ogr/data/shp/testpoly.shx', 'tmp/test_ogr2ogr_37_src')
+    shutil.copy('../ogr/data/shp/testpoly.dbf', 'tmp/test_ogr2ogr_37_src')
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/test_ogr2ogr_37_dir.shp tmp/test_ogr2ogr_37_src')
 
@@ -1296,9 +1296,9 @@ def test_ogr2ogr_39():
     shutil.copy('../ogr/data/poly.shp', 'tmp/test_ogr2ogr_39_src')
     shutil.copy('../ogr/data/poly.shx', 'tmp/test_ogr2ogr_39_src')
     shutil.copy('../ogr/data/poly.dbf', 'tmp/test_ogr2ogr_39_src')
-    shutil.copy('../ogr/data/testpoly.shp', 'tmp/test_ogr2ogr_39_src')
-    shutil.copy('../ogr/data/testpoly.shx', 'tmp/test_ogr2ogr_39_src')
-    shutil.copy('../ogr/data/testpoly.dbf', 'tmp/test_ogr2ogr_39_src')
+    shutil.copy('../ogr/data/shp/testpoly.shp', 'tmp/test_ogr2ogr_39_src')
+    shutil.copy('../ogr/data/shp/testpoly.shx', 'tmp/test_ogr2ogr_39_src')
+    shutil.copy('../ogr/data/shp/testpoly.dbf', 'tmp/test_ogr2ogr_39_src')
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/test_ogr2ogr_39.shp tmp/test_ogr2ogr_39_src -sql "select * from poly"')
 

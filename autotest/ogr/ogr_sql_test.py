@@ -275,11 +275,12 @@ def test_ogr_sql_11():
 
     expect = [None]
 
-    sql_lyr = gdaltest.ds.ExecuteSQL("select max(eas_id) from empty")
+    ds = ogr.Open('data/shp/empty.shp')
+    sql_lyr = ds.ExecuteSQL("select max(eas_id) from empty")
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'max_eas_id', expect)
 
-    gdaltest.ds.ReleaseResultSet(sql_lyr)
+    ds.ReleaseResultSet(sql_lyr)
 
     assert tr
 
@@ -291,11 +292,12 @@ def test_ogr_sql_12():
 
     expect = []
 
-    sql_lyr = gdaltest.ds.ExecuteSQL("select distinct eas_id from empty")
+    ds = ogr.Open('data/shp/empty.shp')
+    sql_lyr = ds.ExecuteSQL("select distinct eas_id from empty")
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'eas_id', expect)
 
-    gdaltest.ds.ReleaseResultSet(sql_lyr)
+    ds.ReleaseResultSet(sql_lyr)
 
     assert tr
 
@@ -326,7 +328,7 @@ def test_ogr_sql_14():
         'BRUSH(fc:#000000,bc:#ffffff,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0")',
         'BRUSH(fc:#000000,bc:#ffffff,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0")']
 
-    ds = ogr.Open('data/small.mif')
+    ds = ogr.Open('data/mitab/small.mif')
     sql_lyr = ds.ExecuteSQL("select ogr_style from small where ogr_geom_wkt LIKE 'POLYGON%'")
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'ogr_style', expect)
@@ -359,7 +361,7 @@ def test_ogr_sql_16():
 
     expect = [2]
 
-    ds = ogr.Open('data/small.mif')
+    ds = ogr.Open('data/mitab/small.mif')
     sql_lyr = ds.ExecuteSQL("select fid from small where owner < 'H'")
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'fid', expect)
@@ -377,7 +379,7 @@ def test_ogr_sql_17():
 
     expect = ['1', '2']
 
-    ds = ogr.Open('data/small.mif')
+    ds = ogr.Open('data/mitab/small.mif')
     sql_lyr = ds.ExecuteSQL("select CAST(fid as CHARACTER(10)), CAST(data as numeric(7,3)) from small")
 
     fld_def = sql_lyr.GetLayerDefn().GetFieldDefn(0)
@@ -424,7 +426,7 @@ def test_ogr_sql_18():
     if sys.version_info >= (3, 0, 0):
         pytest.skip()
 
-    name = 'data/departs.vrt'
+    name = 'data/shp/departs.vrt'
 
     ds = ogr.Open(name)
     assert ds is not None
@@ -1368,7 +1370,7 @@ def test_ogr_sql_46():
 
 def test_ogr_sql_47():
 
-    ds = ogr.Open('data/sort_test.dbf')
+    ds = ogr.Open('data/shp/sort_test.dbf')
     sql_lyr = ds.ExecuteSQL('SELECT * FROM sort_test ORDER BY text_value')
     prec_val = ''
     for f in sql_lyr:

@@ -238,7 +238,7 @@ def test_gdalsrsinfo_14bis():
         pytest.skip()
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() +
-                               ' -o proj4 ../ogr/data/Stacks.shp')
+                               ' -o proj4 ../ogr/data/shp/Stacks.shp')
 
     assert ret.strip() == "+proj=lcc +lat_0=27.8333333333333 +lon_0=-99 +lat_1=30.2833333333333 +lat_2=28.3833333333333 +x_0=600000 +y_0=3999999.9998984 +datum=NAD83 +units=us-ft +no_defs"
 

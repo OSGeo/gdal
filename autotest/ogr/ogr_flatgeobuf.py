@@ -139,7 +139,7 @@ def copy_shape_to_flatgeobuf(name, wkbType, compress=None, options=[]):
 
     dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
 
-    src_name = os.path.join('data', name + '.shp')
+    src_name = os.path.join('data', 'shp', name + '.shp')
     shp_ds = ogr.Open(src_name)
     shp_lyr = shp_ds.GetLayer(0)
 

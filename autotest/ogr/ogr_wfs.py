@@ -61,7 +61,7 @@ def ogr_wfs_init():
     gdaltest.deegree_wfs = None
     gdaltest.ionic_wfs = None
 
-    gml_ds = ogr.Open('data/ionic_wfs.gml')
+    gml_ds = ogr.Open('data/gml/ionic_wfs.gml')
     if gml_ds is None:
         gdaltest.wfs_drv = None
         if gdal.GetLastErrorMsg().find('Xerces') != -1:
@@ -431,7 +431,7 @@ class WFSHTTPHandler(BaseHTTPRequestHandler):
                     self.send_response(200)
                     self.send_header('Content-type', 'application/xml')
                     self.end_headers()
-                    f = open('data/get_capabilities.xml', 'rb')
+                    f = open('data/wfs/get_capabilities.xml', 'rb')
                     content = f.read()
                     f.close()
                     self.wfile.write(content)
@@ -441,7 +441,7 @@ class WFSHTTPHandler(BaseHTTPRequestHandler):
                     self.send_response(200)
                     self.send_header('Content-type', 'application/xml')
                     self.end_headers()
-                    f = open('data/describe_feature_type.xml', 'rb')
+                    f = open('data/wfs/describe_feature_type.xml', 'rb')
                     content = f.read()
                     f.close()
                     self.wfile.write(content)
@@ -451,7 +451,7 @@ class WFSHTTPHandler(BaseHTTPRequestHandler):
                     self.send_response(200)
                     self.send_header('Content-type', 'application/xml')
                     self.end_headers()
-                    f = open('data/get_feature.xml', 'rb')
+                    f = open('data/wfs/get_feature.xml', 'rb')
                     content = f.read()
                     f.close()
                     self.wfile.write(content)
@@ -683,7 +683,7 @@ def test_ogr_wfs_ionic_sql():
 
 def test_ogr_wfs_xmldescriptionfile():
 
-    ds = ogr.Open('data/testwfs.xml')
+    ds = ogr.Open('data/wfs/testwfs.xml')
     lyr = ds.GetLayer(0)
     feature_defn = lyr.GetLayerDefn()
     index = feature_defn.GetFieldIndex('name')
@@ -756,15 +756,15 @@ def test_ogr_wfs_xmldescriptionfile_to_be_updated():
 
 def test_ogr_wfs_getcapabilitiesfile():
 
-    ds = ogr.Open('data/getcapabilities_wfs.xml')
+    ds = ogr.Open('data/wfs/getcapabilities_wfs.xml')
 
     if ds is None:
-        gdal.Unlink('data/getcapabilities_wfs.gfs')
+        gdal.Unlink('data/wfs/getcapabilities_wfs.gfs')
         pytest.fail()
 
     ds = None
 
-    gdal.Unlink('data/getcapabilities_wfs.gfs')
+    gdal.Unlink('data/wfs/getcapabilities_wfs.gfs')
 
 ###############################################################################
 # Test opening a datastore which only support GML 3.2.1 output

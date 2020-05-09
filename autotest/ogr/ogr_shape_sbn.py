@@ -130,7 +130,7 @@ def test_ogr_shape_sbn_1():
 
 def test_ogr_shape_sbn_2():
 
-    ds = ogr.Open('data/CoHI_GCS12.shp')
+    ds = ogr.Open('data/shp/CoHI_GCS12.shp')
     lyr = ds.GetLayer(0)
     return search_all_features(lyr)
 
