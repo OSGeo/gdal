@@ -483,7 +483,7 @@ rm testopenfilegdb92.gdb.tar
 echo "Building avcbin_fuzzer_seed_corpus.zip"
 rm -f $OUT/avcbin_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD
-cd  $(dirname $0)/../../autotest/ogr/data/testavc
+cd  $(dirname $0)/../../autotest/ogr/data/avc/testavc
 printf "FUZZER_FRIENDLY_ARCHIVE\\n" > $CUR_DIR/avcbin.tar
 find . -type f | while read -r f ; do
     printf "***NEWFILE***:%s\\n" "$f" >> $CUR_DIR/avcbin.tar
@@ -494,7 +494,7 @@ zip -r $OUT/avcbin_fuzzer_seed_corpus.zip avcbin.tar >/dev/null
 rm avcbin.tar
 
 echo "Building avce00_fuzzer_seed_corpus.zip"
-cd $(dirname $0)/../../autotest/ogr/data
+cd $(dirname $0)/../../autotest/ogr/data/avc
 rm -f $OUT/avce00_fuzzer_seed_corpus.zip
 zip -r $OUT/avce00_fuzzer_seed_corpus.zip ./*.e00 >/dev/null
 cd $OLDPWD
