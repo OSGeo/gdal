@@ -660,12 +660,14 @@ public:
 #ifndef SWIGJAVA
 %feature( "kwargs" ) CopyDataSource;
 #endif
+%apply Pointer NONNULL {OGRDataSourceShadow *copy_ds};
   OGRDataSourceShadow *CopyDataSource( OGRDataSourceShadow* copy_ds,
                                   const char* utf8_path,
                                   char **options = 0 ) {
     OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CopyDataSource(self, copy_ds, utf8_path, options);
     return ds;
   }
+%clear OGRDataSourceShadow *copy_ds;
 #ifdef SWIGPYTHON
 %nothread;
 #endif
