@@ -78,7 +78,7 @@ class OGRMapMLReaderDataset final: public GDALPamDataset
 /*                         OGRMapMLReaderLayer                          */
 /************************************************************************/
 
-class OGRMapMLReaderLayer final: public OGRLayer
+class OGRMapMLReaderLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRMapMLReaderLayer>
 {
         OGRMapMLReaderDataset* m_poDS = nullptr;
         OGRFeatureDefn* m_poFeatureDefn = nullptr;
@@ -98,7 +98,7 @@ class OGRMapMLReaderLayer final: public OGRLayer
 
         OGRFeatureDefn* GetLayerDefn() override { return m_poFeatureDefn; }
         void ResetReading() override;
-        OGRFeature* GetNextFeature() override;
+        DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRMapMLReaderLayer)
         int TestCapability( const char * pszCap ) override;
 };
 
@@ -686,30 +686,6 @@ OGRFeature* OGRMapMLReaderLayer::GetNextRawFeature()
     m_psCurNode = m_psCurNode->psNext;
 
     return poFeature;
-}
-
-/************************************************************************/
-/*                            GetNextFeature()                          */
-/************************************************************************/
-
-OGRFeature* OGRMapMLReaderLayer::GetNextFeature()
-{
-    while( true )
-    {
-        OGRFeature *poFeature = GetNextRawFeature();
-        if (poFeature == nullptr)
-            return nullptr;
-
-        if((m_poFilterGeom == nullptr
-            || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == nullptr
-            || m_poAttrQuery->Evaluate( poFeature )) )
-        {
-            return poFeature;
-        }
-
-        delete poFeature;
-    }
 }
 
 /************************************************************************/

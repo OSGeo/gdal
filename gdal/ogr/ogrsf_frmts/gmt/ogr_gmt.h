@@ -38,7 +38,7 @@
 /*                             OGRGmtLayer                              */
 /************************************************************************/
 
-class OGRGmtLayer final: public OGRLayer
+class OGRGmtLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRGmtLayer>
 {
     OGRSpatialReference *poSRS;
     OGRFeatureDefn     *poFeatureDefn;
@@ -73,7 +73,7 @@ class OGRGmtLayer final: public OGRLayer
                         virtual ~OGRGmtLayer();
 
     void                ResetReading() override;
-    OGRFeature *        GetNextFeature() override;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRGmtLayer)
 
     OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 

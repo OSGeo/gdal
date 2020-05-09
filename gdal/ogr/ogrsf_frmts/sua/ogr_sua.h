@@ -36,7 +36,7 @@
 /*                             OGRSUALayer                              */
 /************************************************************************/
 
-class OGRSUALayer final: public OGRLayer
+class OGRSUALayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRSUALayer>
 {
     OGRFeatureDefn*    poFeatureDefn;
     OGRSpatialReference *poSRS;
@@ -55,7 +55,7 @@ class OGRSUALayer final: public OGRLayer
                         virtual ~OGRSUALayer();
 
     virtual void                ResetReading() override;
-    virtual OGRFeature *        GetNextFeature() override;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRSUALayer)
 
     virtual OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
