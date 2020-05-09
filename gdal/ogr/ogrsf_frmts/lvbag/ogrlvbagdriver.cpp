@@ -44,7 +44,7 @@ static int OGRLVBAGDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( poOpenInfo->fpL == nullptr )
         return FALSE;
     
-    const char* pszPtr = CPL_REINTERPRET_CAST(const char *, poOpenInfo->pabyHeader);
+    const char* pszPtr = reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
 
     if( pszPtr[0] != '<' )
         return FALSE;
