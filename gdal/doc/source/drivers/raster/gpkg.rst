@@ -291,6 +291,21 @@ schemes are :
 In all the above tiling schemes, consecutive zoom levels defer by a
 resolution of a factor of two.
 
+Starting with GDAL 3.2, it is also possible to use a Tile Matrix Set definition,
+encoded as a JSon file, according to the `OGC Two Dimensional Tile Matrix Set standard`_
+Examples of such files can be found at http://schemas.opengis.net/tms/1.0/json/examples/
+The GDAL data directory also contains files prefixed with ``tms_`` and with a ``.json``
+extension. If there is a ``tms_FOO.json`` file, then ``FOO`` can be used as the
+value of the TILING_SCHEME creation option. There are restrictions on the types
+of tile matrix set supported:
+
+* all zoom levels must have the same origin
+* consecutive zoom levels defer by a resolution of a factor of two.
+* all zoom levels must have the same tile dimension
+* variable matrix width tile set are not supported.
+
+.. _`OGC Two Dimensional Tile Matrix Set standard`: http://docs.opengeospatial.org/is/17-083r2/17-083r2.html
+
 Nodata value
 ~~~~~~~~~~~~
 
@@ -363,8 +378,12 @@ The following creation options are available:
    6.
 -  **DITHER**\ =YES/NO: Whether to use Floyd-Steinberg dithering (for
    TILE_FORMAT=PNG8). Defaults to NO.
--  **TILING_SCHEME**\ =CUSTOM/GoogleCRS84Quad/GoogleMapsCompatible/InspireCRS84Quad/PseudoTMS_GlobalGeodetic/PseudoTMS_GlobalMercator.
+-  **TILING_SCHEME**\ =CUSTOM/GoogleCRS84Quad/GoogleMapsCompatible/InspireCRS84Quad/PseudoTMS_GlobalGeodetic/PseudoTMS_GlobalMercator/other.
    See `Tiling schemes <#tiling_schemes>`__ section. Defaults to CUSTOM.
+   Starting with GDAL 3.2, the value of TILING_SCHEME can also be the filename
+   of a JSON file according to the `OGC Two Dimensional Tile Matrix Set standard`_,
+   a URL to such file, the radical of a definition file in the GDAL data directory
+   (e.g. ``FOO`` for a file named ``tms_FOO.json``) or the inline JSON definition.
    Note: the TILING_SCHEME option with a non-CUSTOM value is best used
    with the gdal_translate utility / CreateCopy() API operation. If used
    with gdalwarp, it requires setting the -tr switch to the exact value

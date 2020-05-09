@@ -2087,12 +2087,25 @@ def test_gpkg_26():
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
+    # Test with a .json tile matrix set
+    ds = gdal.Translate('/vsimem/tmp.gpkg', '../gdrivers/data/small_world.tif',
+                        options='-of GPKG -co TILING_SCHEME=LINZAntarticaMapTileGrid -projwin -180 -50 180 -90')
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == '5482'
+    assert ds.GetGeoTransform() == pytest.approx(((314023.27126670163, 28672, 0.0, 5685976.728733298, 0.0, -28672)), abs=1e-8)
+    ds = None
+    gdal.Unlink('/vsimem/tmp.gpkg')
+
+    # Unsupported TILING_SCHEME
+    src_ds = gdal.Open('data/byte.tif')
+    with gdaltest.error_handler():
+        assert gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', src_ds, options=['TILING_SCHEME=NZTM2000']) is None
+    gdal.Unlink('/vsimem/tmp.gpkg')
+
     # Invalid TILING_SCHEME
     src_ds = gdal.Open('data/byte.tif')
-    gdal.PushErrorHandler()
-    ds = gdaltest.gpkg_dr.CreateCopy('/foo/tmp.gpkg', src_ds, options=['TILING_SCHEME=invalid'])
-    gdal.PopErrorHandler()
-    assert ds is None
+    with gdaltest.error_handler():
+        assert gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', src_ds, options=['TILING_SCHEME=invalid']) is None
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Invalid target filename
     src_ds = gdal.Open('data/byte.tif')
