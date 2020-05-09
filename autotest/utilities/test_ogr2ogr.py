@@ -969,13 +969,13 @@ def test_ogr2ogr_30():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         pytest.skip()
 
-    ds = ogr.Open('../ogr/data/testlistfields.gml')
+    ds = ogr.Open('../ogr/data/gml/testlistfields.gml')
     if ds is None:
         pytest.skip()
     ds = None
 
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -splitlistfields tmp/test_ogr2ogr_30.dbf ../ogr/data/testlistfields.gml')
-    gdal.Unlink('../ogr/data//testlistfields.gfs')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -splitlistfields tmp/test_ogr2ogr_30.dbf ../ogr/data/gml/testlistfields.gml')
+    gdal.Unlink('../ogr/data/gml/testlistfields.gfs')
 
     ds = ogr.Open('tmp/test_ogr2ogr_30.dbf')
     assert ds is not None
