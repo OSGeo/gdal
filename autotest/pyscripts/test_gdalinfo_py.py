@@ -121,7 +121,7 @@ def test_gdalinfo_py_6():
     if script_path is None:
         pytest.skip()
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gdrivers/data/int.img')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gdrivers/data/hfa/int.img')
     assert ret.find('Overviews') != -1
 
 ###############################################################################

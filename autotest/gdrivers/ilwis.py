@@ -82,7 +82,7 @@ def test_ilwis_2():
 
 def test_ilwis_3():
 
-    tst = gdaltest.GDALTest('ilwis', 'float.img', 1, 23529)
+    tst = gdaltest.GDALTest('ilwis', 'hfa/float.img', 1, 23529)
 
     return tst.testCreate(new_filename='tmp/float.mpr', out_bands=1)
 

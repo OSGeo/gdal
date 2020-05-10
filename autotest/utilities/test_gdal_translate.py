@@ -531,7 +531,7 @@ def test_gdal_translate_25():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
 
-    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -q ../gdrivers/data/int.img tmp/test_gdal_translate_25.tif -norat')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -q ../gdrivers/data/hfa/int.img tmp/test_gdal_translate_25.tif -norat')
 
     ds = gdal.Open('tmp/test_gdal_translate_25.tif')
     assert ds.GetRasterBand(1).GetDefaultRAT() is None, 'RAT unexpected'

@@ -62,7 +62,7 @@ def test_hf2_2():
 
 def test_hf2_3():
 
-    tst = gdaltest.GDALTest('HF2', 'float.img', 1, 23529)
+    tst = gdaltest.GDALTest('HF2', 'hfa/float.img', 1, 23529)
     return tst.testCreateCopy(check_minmax=0)
 
 ###############################################################################

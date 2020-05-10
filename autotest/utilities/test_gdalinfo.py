@@ -119,7 +119,7 @@ def test_gdalinfo_6():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/int.img')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/hfa/int.img')
     assert ret.find('Overviews') != -1
     assert ret.find('GDALRasterAttributeTable') != -1
 
@@ -505,7 +505,7 @@ def test_gdalinfo_33():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/int.img')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/hfa/int.img')
     ret = json.loads(ret)
     assert 'overviews' in ret['bands'][0]
     assert 'rat' in ret

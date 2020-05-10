@@ -87,7 +87,7 @@ rm -f $OUT/hfa_fuzzer_seed_corpus.zip
 cd $(dirname $0)/../../autotest/gcore/data
 zip -r $OUT/hfa_fuzzer_seed_corpus.zip ./*.img >/dev/null
 cd $OLDPWD
-cd $(dirname $0)/../../autotest/gdrivers/data
+cd $(dirname $0)/../../autotest/gdrivers/data/hfa
 zip -r $OUT/hfa_fuzzer_seed_corpus.zip ./*.img >/dev/null
 cd $OLDPWD
 
