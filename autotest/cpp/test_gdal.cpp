@@ -1320,7 +1320,7 @@ namespace tut
         // PDS 3
         {
             GDALDatasetUniquePtr poDS(
-                GDALDataset::Open(GDRIVERS_DATA_DIR "mc02_truncated.img"));
+                GDALDataset::Open(GDRIVERS_DATA_DIR "pds/mc02_truncated.img"));
             ensure( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
             ensure( poDS->GetRawBinaryLayout(sLayout) );

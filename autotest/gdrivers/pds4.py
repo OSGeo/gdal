@@ -1409,7 +1409,7 @@ def test_pds4_createlabelonly_fits():
 
 def test_pds4_createlabelonly_pds3():
 
-    gdal.FileFromMemBuffer('/vsimem/mc02_truncated.img', open('data/mc02_truncated.img', 'rb').read())
+    gdal.FileFromMemBuffer('/vsimem/mc02_truncated.img', open('data/pds/mc02_truncated.img', 'rb').read())
 
     src_ds = gdal.Open('/vsimem/mc02_truncated.img')
     return _test_createlabelonly(src_ds, expected_standard_id = '<parsing_standard_id>PDS3</parsing_standard_id>')
