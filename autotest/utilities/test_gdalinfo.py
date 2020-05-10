@@ -389,7 +389,7 @@ def test_gdalinfo_25():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/byte_with_xmp.tif -listmdd', check_memleak=False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/gtiff/byte_with_xmp.tif -listmdd', check_memleak=False)
     assert 'Metadata domains:' in ret
     assert '  xml:XMP' in ret
 
@@ -401,7 +401,7 @@ def test_gdalinfo_26():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/byte_with_xmp.tif -mdd all', check_memleak=False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/gtiff/byte_with_xmp.tif -mdd all', check_memleak=False)
     assert 'Metadata (xml:XMP)' in ret
 
 ###############################################################################
@@ -594,7 +594,7 @@ def test_gdalinfo_38():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/byte_with_xmp.tif -listmdd', check_memleak=False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/gtiff/byte_with_xmp.tif -listmdd', check_memleak=False)
     ret = json.loads(ret)
     assert 'metadataDomains' in ret['metadata']
     assert ret['metadata']['metadataDomains'][0] == 'xml:XMP'
@@ -607,7 +607,7 @@ def test_gdalinfo_39():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/byte_with_xmp.tif -mdd all', check_memleak=False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/gtiff/byte_with_xmp.tif -mdd all', check_memleak=False)
     ret = json.loads(ret)
     assert 'xml:XMP' in ret['metadata']
 

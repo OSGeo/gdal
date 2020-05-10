@@ -2904,7 +2904,7 @@ def test_gpkg_41():
 
     gdal.SetConfigOption('GPKG_ALLOW_CRAZY_SETTINGS', 'YES')
     with gdaltest.error_handler():
-        gdal.Translate('/vsimem/gpkg_41.gpkg', 'data/huge_line.tif',
+        gdal.Translate('/vsimem/gpkg_41.gpkg', 'data/gpkg/huge_line.tif',
                        format='GPKG', creationOptions=[
                            'BLOCKXSIZE=500000000', 'BLOCKYSIZE=1'])
     gdal.SetConfigOption('GPKG_ALLOW_CRAZY_SETTINGS', None)

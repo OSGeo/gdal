@@ -6830,7 +6830,7 @@ def test_tiff_write_181_xmp():
     new_ds = gdaltest.tiff_drv.CreateCopy('tmp/test_181.tif', src_ds)
     src_ds = None
 
-    xmp_ds = gdal.Open('../gdrivers/data/byte_with_xmp.tif')
+    xmp_ds = gdal.Open('../gdrivers/data/gtiff/byte_with_xmp.tif')
     xmp = xmp_ds.GetMetadata('xml:XMP')
     xmp_ds = None
     assert 'W5M0MpCehiHzreSzNTczkc9d' in xmp[0], 'Wrong input file without XMP'
@@ -6854,7 +6854,7 @@ def test_tiff_write_181_xmp():
 
 def test_tiff_write_182_xmp_delete():
 
-    shutil.copyfile('../gdrivers/data/byte_with_xmp.tif', 'tmp/test_182.tif')
+    shutil.copyfile('../gdrivers/data/gtiff/byte_with_xmp.tif', 'tmp/test_182.tif')
 
     chg_ds = gdal.Open('tmp/test_182.tif', gdal.GA_Update)
     read_xmp = chg_ds.GetMetadata('xml:XMP')

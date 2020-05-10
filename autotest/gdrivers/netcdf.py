@@ -3055,7 +3055,7 @@ def test_netcdf_expanded_form_of_grid_mapping():
 
 init_list = [
     ('byte.tif', 4672, []),
-    ('byte_signed.tif', 4672, ['PIXELTYPE=SIGNEDBYTE']),
+    ('gtiff/byte_signed.tif', 4672, ['PIXELTYPE=SIGNEDBYTE']),
     ('int16.tif', 4672, []),
     ('int32.tif', 4672, []),
     ('float32.tif', 4672, []),

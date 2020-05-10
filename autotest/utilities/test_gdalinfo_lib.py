@@ -77,7 +77,7 @@ def test_gdalinfo_lib_3():
 
 def test_gdalinfo_lib_4():
 
-    ds = gdal.Open('../gdrivers/data/byte_with_xmp.tif')
+    ds = gdal.Open('../gdrivers/data/gtiff/byte_with_xmp.tif')
 
     ret = gdal.Info(ds, allMetadata=True, format='json')
     assert 'xml:XMP' in ret['metadata']

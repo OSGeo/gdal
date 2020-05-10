@@ -41,7 +41,7 @@ import gdaltest
 
 
 lst = [
-    ["GTiff", "data/byte_with_xmp.tif", True],
+    ["GTiff", "data/gtiff/byte_with_xmp.tif", True],
     ["GTiff", "data/byte.tif", False],
     ["GIF", "data/gif/byte_with_xmp.gif", True],
     ["BIGGIF", "data/gif/fakebig.gif", False],
