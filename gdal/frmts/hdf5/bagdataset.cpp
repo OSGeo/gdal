@@ -2797,8 +2797,11 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
             return false;
         }
         H5free_memory(pszName);
-        hid_t type = H5Tget_member_type(m_hVarresMetadataDataType, i);
-        bool bTypeOK = H5Tequal(asMetadataFields[i].eType, type) > 0;
+        const hid_t type = H5Tget_member_type(m_hVarresMetadataDataType, i);
+        const hid_t hNativeType =
+            H5Tget_native_type(type, H5T_DIR_DEFAULT);
+        bool bTypeOK = H5Tequal(asMetadataFields[i].eType, hNativeType) > 0;
+        H5Tclose(hNativeType);
         H5Tclose(type);
         if( !bTypeOK )
         {
@@ -2882,8 +2885,11 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
             return false;
         }
         H5free_memory(pszName);
-        hid_t type = H5Tget_member_type(m_hVarresRefinementsDataType, i);
-        bool bTypeOK = H5Tequal(asRefinementsFields[i].eType, type) > 0;
+        const hid_t type = H5Tget_member_type(m_hVarresRefinementsDataType, i);
+        const hid_t hNativeType =
+            H5Tget_native_type(type, H5T_DIR_DEFAULT);
+        bool bTypeOK = H5Tequal(asRefinementsFields[i].eType, hNativeType) > 0;
+        H5Tclose(hNativeType);
         H5Tclose(type);
         if( !bTypeOK )
         {
@@ -4223,10 +4229,10 @@ bool BAGCreator::CreateElevationOrUncertainty(GDALDataset *poSrcDS,
         if( hDatasetID < 0)
             break;
 
-        if( !GH5_CreateAttribute(hDatasetID, pszMaxAttrName, H5T_NATIVE_FLOAT) )
+        if( !GH5_CreateAttribute(hDatasetID, pszMaxAttrName, hDataType) )
             break;
 
-        if( !GH5_CreateAttribute(hDatasetID, pszMinAttrName, H5T_NATIVE_FLOAT) )
+        if( !GH5_CreateAttribute(hDatasetID, pszMinAttrName, hDataType) )
             break;
 
         hFileSpace = H5_CHECK(H5Dget_space(hDatasetID));
@@ -4315,7 +4321,7 @@ bool BAGCreator::CreateElevationOrUncertainty(GDALDataset *poSrcDS,
                         break;
 
                     if( H5_CHECK(H5Dwrite(
-                            hDatasetID, hDataType, hMemSpace, hFileSpace, 
+                            hDatasetID, H5T_NATIVE_FLOAT, hMemSpace, hFileSpace, 
                             H5P_DEFAULT, afValues.data())) < 0 )
                     {
                         H5Sclose(hMemSpace);
