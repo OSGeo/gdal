@@ -511,7 +511,7 @@ class GDALTest(object):
             if vsimem:
                 new_filename = '/vsimem/' + self.filename + '.tst'
             else:
-                new_filename = 'tmp/' + self.filename + '.tst'
+                new_filename = 'tmp/' + os.path.basename(self.filename) + '.tst'
 
         new_ds = self.driver.Create(new_filename, xsize, ysize, out_bands,
                                     src_ds.GetRasterBand(self.band).DataType,
