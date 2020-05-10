@@ -216,9 +216,9 @@ rm -f $OUT/rraster_fuzzer_seed_corpus.zip
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:my.grd\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/byte_rraster.grd
+    cat $(dirname $0)/../../autotest/gdrivers/data/rraster/byte_rraster.grd
     printf "***NEWFILE***:my.gri\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/byte_rraster.gri
+    cat $(dirname $0)/../../autotest/gdrivers/data/rraster/byte_rraster.gri
 } > rraster.tar
 zip -r $OUT/rraster_fuzzer_seed_corpus.zip rraster.tar >/dev/null
 rm rraster.tar
