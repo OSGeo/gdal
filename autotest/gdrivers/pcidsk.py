@@ -43,7 +43,7 @@ import pytest
 
 def test_pcidsk_1():
 
-    tst = gdaltest.GDALTest('PCIDSK', 'utm.pix', 1, 39576)
+    tst = gdaltest.GDALTest('PCIDSK', 'pcidsk/utm.pix', 1, 39576)
     return tst.testOpen()
 
 ###############################################################################
@@ -62,7 +62,7 @@ def test_pcidsk_2():
 
 def test_pcidsk_3():
 
-    tst = gdaltest.GDALTest('PCIDSK', 'utm.pix', 1, 39576)
+    tst = gdaltest.GDALTest('PCIDSK', 'pcidsk/utm.pix', 1, 39576)
 
     return tst.testCreateCopy(check_gt=1, check_srs=1)
 
@@ -72,7 +72,7 @@ def test_pcidsk_3():
 
 def test_pcidsk_4():
 
-    ds = gdal.Open('data/utm.pix')
+    ds = gdal.Open('data/pcidsk/utm.pix')
 
     band = ds.GetRasterBand(1)
     assert band.GetOverviewCount() == 1, 'did not get expected overview count'

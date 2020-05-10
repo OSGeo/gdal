@@ -196,7 +196,7 @@ def test_jp2kak_13():
     if gdaltest.jp2kak_drv is None:
         pytest.skip()
 
-    src_ds = gdal.Open('data/utm.pix')
+    src_ds = gdal.Open('data/pcidsk/utm.pix')
     jp2_ds = gdaltest.jp2kak_drv.CreateCopy('tmp/jp2kak_13.jp2', src_ds)
     src_ds = None
 
