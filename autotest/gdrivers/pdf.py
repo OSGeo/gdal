@@ -523,7 +523,7 @@ def test_pdf_color_table(poppler_or_pdfium):
     if gdal.GetDriverByName('GIF') is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('PDF', 'bug407.gif', 1, None)
+    tst = gdaltest.GDALTest('PDF', 'small_world_pct.tif', 1, None)
     ret = tst.testCreateCopy(check_minmax=0, check_gt=0, check_srs=None, check_checksum_not_null=pdf_checksum_available())
 
     return ret

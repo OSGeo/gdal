@@ -120,7 +120,7 @@ def test_gdal_translate_5():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
 
-    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -expand rgb ../gdrivers/data/bug407.gif tmp/test5.tif')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -expand rgb ../gdrivers/data/gif/bug407.gif tmp/test5.tif')
 
     ds = gdal.Open('tmp/test5.tif')
     assert ds is not None
@@ -348,7 +348,7 @@ def test_gdal_translate_17():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
 
-    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT -expand rgba ../gdrivers/data/bug407.gif tmp/test17.vrt')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT -expand rgba ../gdrivers/data/gif/bug407.gif tmp/test17.vrt')
 
     ds = gdal.Open('tmp/test17.vrt')
     assert ds is not None

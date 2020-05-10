@@ -83,10 +83,10 @@ def test_gdalinfo_4():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/bug407.gif')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/gif/bug407.gif')
     assert ret.find('0: 255,255,255,255') != -1
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -noct ../gdrivers/data/bug407.gif')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -noct ../gdrivers/data/gif/bug407.gif')
     assert ret.find('0: 255,255,255,255') == -1
 
 ###############################################################################
@@ -464,11 +464,11 @@ def test_gdalinfo_31():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/bug407.gif')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/gif/bug407.gif')
     ret = json.loads(ret)
     assert ret['bands'][0]['colorTable']['entries'][0] == [255, 255, 255, 255]
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json -noct ../gdrivers/data/bug407.gif')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json -noct ../gdrivers/data/gif/bug407.gif')
     ret = json.loads(ret)
     assert 'colorTable' not in ret['bands'][0]
 

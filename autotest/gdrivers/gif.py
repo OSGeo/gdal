@@ -62,7 +62,7 @@ def test_gif_1():
 
 def test_gif_2():
 
-    tst = gdaltest.GDALTest('GIF', 'bug407.gif', 1, 57921)
+    tst = gdaltest.GDALTest('GIF', 'gif/bug407.gif', 1, 57921)
     return tst.testOpen()
 
 ###############################################################################
@@ -71,7 +71,7 @@ def test_gif_2():
 
 def test_gif_3():
 
-    tst = gdaltest.GDALTest('GIF', 'bug407.gif', 1, 57921,
+    tst = gdaltest.GDALTest('GIF', 'gif/bug407.gif', 1, 57921,
                             options=['INTERLACING=NO'])
 
     return tst.testCreateCopy()
@@ -82,7 +82,7 @@ def test_gif_3():
 
 def test_gif_4():
 
-    ds = gdal.Open('data/bug407.gif')
+    ds = gdal.Open('data/gif/bug407.gif')
     cm = ds.GetRasterBand(1).GetRasterColorTable()
     assert cm.GetCount() == 16 and cm.GetColorEntry(0) == (255, 255, 255, 255) and cm.GetColorEntry(1) == (255, 255, 208, 255), \
         'Wrong colormap entries'
@@ -156,11 +156,11 @@ def test_gif_7():
     drv.Deregister()
     drv.Register()
 
-    tst = gdaltest.GDALTest('BIGGIF', 'bug407.gif', 1, 57921)
+    tst = gdaltest.GDALTest('BIGGIF', 'gif/bug407.gif', 1, 57921)
 
     tst.testOpen()
 
-    ds = gdal.Open('data/bug407.gif')
+    ds = gdal.Open('data/gif/bug407.gif')
     assert ds is not None
 
     assert ds.GetDriver().ShortName == 'BIGGIF'
@@ -176,7 +176,7 @@ def test_gif_8():
     drv.Deregister()
     drv.Register()
 
-    ds = gdal.Open('data/fakebig.gif')
+    ds = gdal.Open('data/gif/fakebig.gif')
     assert ds is not None
 
     assert ds.GetDriver().ShortName == 'BIGGIF'
