@@ -383,11 +383,11 @@ bool GH5_WriteAttribute (hid_t loc_id, const char *pszAttrName,
     if( H5Tequal(hAttrNativeType, H5T_NATIVE_FLOAT) )
     {
         float fVal = static_cast<float>(dfValue);
-        bSuccess = H5Awrite(hAttr, hDataType, &fVal) >= 0;
+        bSuccess = H5Awrite(hAttr, hAttrNativeType, &fVal) >= 0;
     }
     else if( H5Tequal(hAttrNativeType, H5T_NATIVE_DOUBLE) )
     {
-        bSuccess = H5Awrite(hAttr, hDataType, &dfValue) >= 0;
+        bSuccess = H5Awrite(hAttr, hAttrNativeType, &dfValue) >= 0;
     }
     else
     {
@@ -426,7 +426,7 @@ bool GH5_WriteAttribute (hid_t loc_id, const char *pszAttrName,
     if( H5Tequal(hAttrNativeType, H5T_NATIVE_INT) ||
         H5Tequal(hAttrNativeType, H5T_NATIVE_UINT) )
     {
-        bSuccess = H5Awrite(hAttr, hDataType, &nValue) >= 0;
+        bSuccess = H5Awrite(hAttr, hAttrNativeType, &nValue) >= 0;
     }
     else
     {
