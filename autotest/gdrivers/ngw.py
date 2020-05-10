@@ -169,7 +169,7 @@ def test_ngw_4():
     url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + resource_id + '/int16'
     ds = gdaltest.ngw_drv.CreateCopy(url, src_ds, options=[
         'DESCRIPTION=Test 16bit raster create',
-        'RASTER_QML_PATH=data/96.qml'
+        'RASTER_QML_PATH=data/ngw/96.qml'
     ])
     src_ds = None
 
