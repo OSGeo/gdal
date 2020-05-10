@@ -38,7 +38,7 @@ import gdaltest
 
 def test_fujibas_1():
 
-    tst = gdaltest.GDALTest('FujiBAS', 'fakefujibas.pcb', 1, 1)
+    tst = gdaltest.GDALTest('FujiBAS', 'fujibas/fakefujibas.pcb', 1, 1)
     return tst.testOpen()
 
 
