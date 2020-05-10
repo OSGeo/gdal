@@ -52,7 +52,7 @@ def test_pcidsk_1():
 
 def test_pcidsk_2():
 
-    tst = gdaltest.GDALTest('PCIDSK', 'rgba16.png', 2, 2042)
+    tst = gdaltest.GDALTest('PCIDSK', 'png/rgba16.png', 2, 2042)
 
     return tst.testCreate()
 
@@ -217,7 +217,7 @@ def test_pcidsk_7():
 
 def test_pcidsk_8():
 
-    tst = gdaltest.GDALTest('PCIDSK', 'rgba16.png', 2, 2042,
+    tst = gdaltest.GDALTest('PCIDSK', 'png/rgba16.png', 2, 2042,
                             options=['INTERLEAVING=FILE'])
 
     return tst.testCreate()
@@ -283,7 +283,7 @@ def test_pcidsk_11():
     if gdaltest.pcidsk_new == 0:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('PCIDSK', 'rgba16.png', 2, 2042,
+    tst = gdaltest.GDALTest('PCIDSK', 'png/rgba16.png', 2, 2042,
                             options=['INTERLEAVING=TILED', 'TILESIZE=32'])
 
     return tst.testCreate()
@@ -296,7 +296,7 @@ def test_pcidsk_12():
     if gdaltest.pcidsk_new == 0:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('PCIDSK', 'rgba16.png', 2, 2042,
+    tst = gdaltest.GDALTest('PCIDSK', 'png/rgba16.png', 2, 2042,
                             options=['INTERLEAVING=TILED', 'TILESIZE=32', 'COMPRESSION=RLE'])
 
     return tst.testCreate()

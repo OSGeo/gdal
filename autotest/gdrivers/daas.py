@@ -754,7 +754,7 @@ Content-Type: application/json
     # Inconsistent PNG image
     ds.FlushCache()
     handler = webserver.SequentialHandler()
-    png_content = open('data/test.png', 'rb').read()
+    png_content = open('data/png/test.png', 'rb').read()
     handler.add('POST', '/getbuffer', 200,
                 {'Content-Type': 'multipart/form-data; boundary=bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7'},
                 """--bd3f250361b619a49ef290d4fdfcf5d5691e385e5a74254803befd5fe2a7

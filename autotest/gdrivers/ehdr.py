@@ -45,7 +45,7 @@ import pytest
 
 def test_ehdr_1():
 
-    tst = gdaltest.GDALTest('EHDR', 'rgba16.png', 2, 2042)
+    tst = gdaltest.GDALTest('EHDR', 'png/rgba16.png', 2, 2042)
 
     return tst.testCreate()
 
