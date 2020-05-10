@@ -840,7 +840,7 @@ def test_hfa_excluded_values():
 def test_hfa_ov_nodata():
 
     drv = gdal.GetDriverByName('HFA')
-    src_ds = gdal.Open('data/nodata_int.asc')
+    src_ds = gdal.Open('data/aaigrid/nodata_int.asc')
     wrk_ds = drv.CreateCopy('/vsimem/ov_nodata.img', src_ds)
     src_ds = None
 

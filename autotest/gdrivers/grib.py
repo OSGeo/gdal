@@ -1142,7 +1142,7 @@ def test_grib_grib2_write_data_encodings_warnings_and_errors():
     tests += [['data/byte.tif', ['JPEG2000_DRIVER=THIS_IS_NOT_A_J2K_DRIVER']]]  # non-existing driver
     tests += [['data/byte.tif', ['JPEG2000_DRIVER=DERIVED']]]  # Read-only driver
     tests += [['../gcore/data/cfloat32.tif', []]]  # complex data type
-    tests += [['data/float64.asc', []]]  # no projection
+    tests += [['data/aaigrid/float64.asc', []]]  # no projection
     tests += [['data/byte.sgi', []]]  # no geotransform
     tests += [['data/envi/rotation.img', []]]  # geotransform with rotation terms
     gdal.GetDriverByName('GTiff').Create('/vsimem/huge.tif', 65535, 65535, 1, options=['SPARSE_OK=YES'])

@@ -412,7 +412,7 @@ def test_gdalinfo_27():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/float64.asc -oo datatype=float64', check_memleak=False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/aaigrid/float64.asc -oo datatype=float64', check_memleak=False)
     assert 'Type=Float64' in ret
 
 ###############################################################################

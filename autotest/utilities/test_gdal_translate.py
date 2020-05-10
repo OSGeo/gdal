@@ -612,7 +612,7 @@ def test_gdal_translate_28():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
 
-    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gdrivers/data/float64.asc tmp/test_gdal_translate_28.tif -oo datatype=float64')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gdrivers/data/aaigrid/float64.asc tmp/test_gdal_translate_28.tif -oo datatype=float64')
 
     ds = gdal.Open('tmp/test_gdal_translate_28.tif')
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Float64
