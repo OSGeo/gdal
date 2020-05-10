@@ -38,7 +38,7 @@ import gdaltest
 
 def test_jdem_1():
 
-    tst = gdaltest.GDALTest('JDEM', 'fakejdem.mem', 1, 15)
+    tst = gdaltest.GDALTest('JDEM', 'jdem/fakejdem.mem', 1, 15)
     return tst.testOpen()
 
 
