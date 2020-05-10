@@ -3,7 +3,7 @@
   <GeoTransform> -4.4840319999999998e+01,  3.4320000000000002e-03,  0.0000000000000000e+00, -2.2932583999999999e+01,  0.0000000000000000e+00, -3.4320000000000002e-03</GeoTransform>
   <VRTRasterBand dataType="Byte" band="1">
     <KernelFilteredSource>
-      <SourceFilename>./data/rgbsmall.tif</SourceFilename>
+      <SourceFilename relativeToVRT="1">../rgbsmall.tif</SourceFilename>
       <SourceBand>1</SourceBand>
       <SrcRect xOff="0" yOff="0" xSize="50" ySize="50"/>
       <DstRect xOff="0" yOff="0" xSize="50" ySize="50"/>

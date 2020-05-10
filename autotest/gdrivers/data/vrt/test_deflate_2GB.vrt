@@ -9,7 +9,7 @@
     <ResampleAlg>NearestNeighbour</ResampleAlg>
     <WorkingDataType>Byte</WorkingDataType>
     <Option name="INIT_DEST">0</Option>
-    <SourceDataset relativeToVRT="0">/vsizip/data/test_deflate_2GB.tif.zip/test_deflate_2GB.tif</SourceDataset>
+    <SourceDataset relativeToVRT="0">/vsizip/data/vrt/test_deflate_2GB.tif.zip/test_deflate_2GB.tif</SourceDataset>
     <Transformer>
       <ApproxTransformer>
         <MaxError>0.125</MaxError>

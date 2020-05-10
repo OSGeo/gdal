@@ -16,7 +16,7 @@
     <WarpMemoryLimit>6.71089e+07</WarpMemoryLimit>
     <ResampleAlg>NearestNeighbour</ResampleAlg>
     <WorkingDataType>Byte</WorkingDataType>
-    <SourceDataset relativeToVRT="1">rgb_gcp.vrt</SourceDataset>
+    <SourceDataset relativeToVRT="1">../rgb_gcp.vrt</SourceDataset>
     <Transformer>
       <GenImgProjTransformer>
         <SrcGCPTransformer>

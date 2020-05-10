@@ -21,7 +21,7 @@
     <WorkingDataType>Byte</WorkingDataType>
     <Option name="STREAMABLE_OUTPUT">YES</Option>
     <Option name="INIT_DEST">0</Option>
-    <SourceDataset relativeToVRT="1">byte.tif</SourceDataset>
+    <SourceDataset relativeToVRT="1">../byte.tif</SourceDataset>
     <Transformer>
       <ApproxTransformer>
         <MaxError>0.125</MaxError>

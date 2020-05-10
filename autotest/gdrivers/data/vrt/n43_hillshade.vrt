@@ -4,7 +4,7 @@
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
     <ColorInterp>Gray</ColorInterp>
     <SimpleSource>
-      <SourceFilename relativeToVRT="1">n43.dt0</SourceFilename>
+      <SourceFilename relativeToVRT="1">../n43.dt0</SourceFilename>
       <SourceBand>1</SourceBand>
       <SourceProperties RasterXSize="121" RasterYSize="121" DataType="Int16" BlockXSize="121" BlockYSize="33" />
       <SrcRect xOff="0" yOff="0" xSize="121" ySize="121" />
