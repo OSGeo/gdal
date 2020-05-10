@@ -38,7 +38,7 @@ import gdaltest
 
 def test_ilwis_1():
 
-    tst = gdaltest.GDALTest('ilwis', 'LanduseSmall.mpr', 1, 2351)
+    tst = gdaltest.GDALTest('ilwis', 'ilwis/LanduseSmall.mpr', 1, 2351)
 
     srs = """PROJCS["UTM",
     GEOGCS["PSAD56",
