@@ -482,7 +482,7 @@ def test_hdf5_family_driver():
 
 def test_hdf5_single_dim():
 
-    ds = gdal.Open('HDF5:data/byte_chunked_multiple.nc://x')
+    ds = gdal.Open('HDF5:data/netcdf/byte_chunked_multiple.nc://x')
     assert ds
     b = ds.GetRasterBand(1)
     assert b.YSize == 1

@@ -96,7 +96,7 @@ def test_hdf5_multidim_basic():
 
 def test_hdf5_multidim_var_alldatatypes():
 
-    ds = gdal.OpenEx('HDF5:data/alldatatypes.nc', gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.OpenEx('HDF5:data/netcdf/alldatatypes.nc', gdal.OF_MULTIDIM_RASTER)
     assert ds
     rg = ds.GetRootGroup()
     assert rg
@@ -191,7 +191,7 @@ def test_hdf5_multidim_var_alldatatypes():
 
 def test_hdf5_multidim_read_array():
 
-    ds = gdal.OpenEx('HDF5:data/alldatatypes.nc', gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.OpenEx('HDF5:data/netcdf/alldatatypes.nc', gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
 
     # 0D
@@ -258,7 +258,7 @@ def test_hdf5_multidim_read_array():
 
 def test_hdf5_multidim_attr_alldatatypes():
 
-    ds = gdal.OpenEx('HDF5:data/alldatatypes.nc', gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.OpenEx('HDF5:data/netcdf/alldatatypes.nc', gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
 
     attrs = rg.GetAttributes()
@@ -348,7 +348,7 @@ def test_hdf5_multidim_attr_alldatatypes():
 
 def test_hdf5_multidim_nodata_unit():
 
-    ds = gdal.OpenEx('HDF5:data/trmm-nc4.nc', gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.OpenEx('HDF5:data/netcdf/trmm-nc4.nc', gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
 
     ar = rg.OpenMDArray('pcp')
@@ -382,7 +382,7 @@ def test_hdf5_multidim_recursive_groups():
 
 def test_hdf5_netcdf_dimensions():
 
-    ds = gdal.OpenEx('HDF5:data/trmm-nc4.nc', gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.OpenEx('HDF5:data/netcdf/trmm-nc4.nc', gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
 
     assert rg.GetAttribute('CDI')
@@ -426,7 +426,7 @@ def test_hdf5_netcdf_dimensions():
 
 def test_hdf5_multidim_netcdf_dimensions_complex_case():
 
-    ds = gdal.OpenEx('HDF5:data/alldatatypes.nc', gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.OpenEx('HDF5:data/netcdf/alldatatypes.nc', gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     dims = rg.GetDimensions()
     assert len(dims) == 6
