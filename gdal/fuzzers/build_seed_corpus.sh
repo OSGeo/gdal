@@ -267,10 +267,10 @@ cd $OLDPWD
 echo "Building gdal_fuzzer_seed_corpus.zip"
 cd $(dirname $0)/../../autotest/gcore/data
 rm -f $OUT/gdal_fuzzer_seed_corpus.zip
-zip -r $OUT/gdal_fuzzer_seed_corpus.zip . >/dev/null
+find . -type f -exec zip -j $OUT/gdal_fuzzer_seed_corpus.zip {} \; >/dev/null
 cd $OLDPWD
 cd $(dirname $0)/../../autotest/gdrivers/data
-zip -r $OUT/gdal_fuzzer_seed_corpus.zip . >/dev/null
+find . -type f -exec zip -j $OUT/gdal_fuzzer_seed_corpus.zip {} \; >/dev/null
 cd $OLDPWD
 
 echo "Building gdal_filesystem_fuzzer_seed_corpus.zip"
@@ -332,7 +332,7 @@ echo "Building ogr_fuzzer_seed_corpus.zip"
 CUR_DIR=$PWD
 cd $(dirname $0)/../../autotest/ogr/data
 rm -f $OUT/ogr_fuzzer_seed_corpus.zip
-zip -rj $OUT/ogr_fuzzer_seed_corpus.zip . >/dev/null
+find . -type f -exec zip -j $OUT/ogr_fuzzer_seed_corpus.zip {} \; >/dev/null
 cd $CUR_DIR
 
 echo "Building cad_fuzzer_seed_corpus.zip"
@@ -393,7 +393,7 @@ rm ods_*.tar
 
 
 echo "Building rec_fuzzer_seed_corpus.zip"
-cd $(dirname $0)/../../autotest/ogr/data
+cd $(dirname $0)/../../autotest/ogr/data/rec
 rm -f $OUT/rec_fuzzer_seed_corpus.zip
 zip -r $OUT/rec_fuzzer_seed_corpus.zip ./*.rec >/dev/null
 cd $OLDPWD
