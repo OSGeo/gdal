@@ -530,7 +530,7 @@ def test_sentinel2_l1c_7():
         ds = gdal.Open('SENTINEL2_L1C:/vsimem/test.xml:60m:EPSG_32753')
     ds = None
 
-    f = open('data/gtsmall_10_uint16.jp2', 'rb')
+    f = open('data/jpeg2000/gtsmall_10_uint16.jp2', 'rb')
     f2 = gdal.VSIFOpenL('/vsimem/GRANULE/S2A_OPER_MSI_L1C_bla_N01.03/IMG_DATA/S2A_OPER_MSI_L1C_bla_B01.jp2', 'wb')
     data = f.read()
     gdal.VSIFWriteL(data, 1, len(data), f2)
@@ -1235,7 +1235,7 @@ def test_sentinel2_l1b_4():
     # Now open with missing main MTD
     gdal.Unlink('/vsimem/foo/S2B_PROD_MTD_foo.xml')
 
-    f = open('data/gtsmall_10_uint16.jp2', 'rb')
+    f = open('data/jpeg2000/gtsmall_10_uint16.jp2', 'rb')
     f2 = gdal.VSIFOpenL('/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/IMG_DATA/S2B_OPER_MSI_L1B_B01.jp2', 'wb')
     data = f.read()
     gdal.VSIFWriteL(data, 1, len(data), f2)

@@ -276,7 +276,7 @@ def test_mrsid_6():
 """
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
-    tst = gdaltest.GDALTest('JP2MrSID', 'byte.jp2', 1, 50054)
+    tst = gdaltest.GDALTest('JP2MrSID', 'jpeg2000/byte.jp2', 1, 50054)
     return tst.testOpen(check_prj=srs, check_gt=gt)
 
 
@@ -288,7 +288,7 @@ def test_mrsid_7():
     if gdaltest.jp2mrsid_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/int16.jp2')
+    ds = gdal.Open('data/jpeg2000/int16.jp2')
     ds_ref = gdal.Open('data/int16.tif')
 
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
@@ -373,7 +373,7 @@ def test_mrsid_10():
     if gdaltest.jp2mrsid_drv is None:
         pytest.skip()
 
-    f = open('data/int16.jp2', 'rb')
+    f = open('data/jpeg2000/int16.jp2', 'rb')
     data = f.read()
     f.close()
 
@@ -396,7 +396,7 @@ def test_mrsid_11():
     if gdaltest.jp2mrsid_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/byte_without_geotransform.jp2')
+    ds = gdal.Open('data/jpeg2000/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
     assert geotransform[0] == pytest.approx(440720, abs=0.1) and geotransform[1] == pytest.approx(60, abs=0.001) and geotransform[2] == pytest.approx(0, abs=0.001) and geotransform[3] == pytest.approx(3751320, abs=0.1) and geotransform[4] == pytest.approx(0, abs=0.001) and geotransform[5] == pytest.approx(-60, abs=0.001), \

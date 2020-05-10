@@ -216,7 +216,7 @@ int main(int /* argc*/ , char* /* argv */[])
     hDS = GDALOpen("RASTERLITE:" GDRIVERS_DIR "data/rasterlite_pyramids.sqlite,table=test", GA_ReadOnly);
     hDS = GDALOpen("RASTERLITE:" GDRIVERS_DIR "data/rasterlite_pyramids.sqlite,table=test,level=1", GA_ReadOnly);
 
-    OpenJPEG2000(GDRIVERS_DIR "data/rgbwcmyk01_YeGeo_kakadu.jp2");
+    OpenJPEG2000(GDRIVERS_DIR "data/jpeg2000/rgbwcmyk01_YeGeo_kakadu.jp2");
 
     hDS = GDALOpen(GDRIVERS_DIR "tmp/cache/Europe 2001_OZF.map", GA_ReadOnly);
 

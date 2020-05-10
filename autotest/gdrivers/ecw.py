@@ -398,7 +398,7 @@ def test_ecw_13():
     if gdaltest.jp2ecw_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/rgb16_ecwsdk.jp2')
+    ds = gdal.Open('data/jpeg2000/rgb16_ecwsdk.jp2')
 
     wrktype = gdal.GDT_Float32
     raw_data = ds.ReadRaster(10, 10, 40, 40, buf_type=wrktype,
@@ -480,7 +480,7 @@ def test_ecw_16():
 """
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
-    tst = gdaltest.GDALTest('JP2ECW', 'byte.jp2', 1, 50054)
+    tst = gdaltest.GDALTest('JP2ECW', 'jpeg2000/byte.jp2', 1, 50054)
     return tst.testOpen(check_prj=srs, check_gt=gt)
 
 ###############################################################################
@@ -495,7 +495,7 @@ def test_ecw_17():
     if gdaltest.ecw_drv.major_version == 4:
         pytest.skip('4.x SDK gets unreliable results for jp2')
 
-    ds = gdal.Open('data/int16.jp2')
+    ds = gdal.Open('data/jpeg2000/int16.jp2')
     ds_ref = gdal.Open('data/int16.tif')
 
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
@@ -536,8 +536,10 @@ def test_ecw_18():
 """
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
-    tst = gdaltest.GDALTest('JP2ECW', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute=1)
-    return tst.testOpen(check_prj=srs, check_gt=gt)
+    tst = gdaltest.GDALTest('JP2ECW', '/vsigzip/data/jpeg2000/byte.jp2.gz', 1, 50054, filename_absolute=1)
+    ret = tst.testOpen(check_prj=srs, check_gt=gt)
+    gdal.Unlink('data/jpeg2000/byte.jp2.gz.properties')
+    return ret
 
 ###############################################################################
 # Test a JPEG2000 with the 3 bands having 13bit depth and the 4th one 1 bit
@@ -548,7 +550,7 @@ def test_ecw_19():
     if gdaltest.jp2ecw_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/3_13bit_and_1bit.jp2')
+    ds = gdal.Open('data/jpeg2000/3_13bit_and_1bit.jp2')
 
     expected_checksums = [64570, 57277, 56048, 61292]
 
@@ -834,7 +836,7 @@ def test_ecw_27():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         pytest.skip()
 
-    ds = gdal.Open('data/byte_without_geotransform.jp2')
+    ds = gdal.Open('data/jpeg2000/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
     assert geotransform[0] == pytest.approx(440720, abs=0.1) and geotransform[1] == pytest.approx(60, abs=0.001) and geotransform[2] == pytest.approx(0, abs=0.001) and geotransform[3] == pytest.approx(3751320, abs=0.1) and geotransform[4] == pytest.approx(0, abs=0.001) and geotransform[5] == pytest.approx(-60, abs=0.001), \
@@ -1520,7 +1522,7 @@ def test_ecw_43():
     if gdaltest.jp2ecw_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')
+    ds = gdal.Open('data/jpeg2000/stefan_full_rgba_alpha_1bit.jp2')
     fourth_band = ds.GetRasterBand(4)
     assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is None
     got_cs = fourth_band.Checksum()
@@ -1543,7 +1545,7 @@ def test_ecw_43():
 
     assert jp2_fourth_band_data == gtiff_fourth_band_data
 
-    ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
+    ds = gdal.OpenEx('data/jpeg2000/stefan_full_rgba_alpha_1bit.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
     fourth_band = ds.GetRasterBand(4)
     assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '1'
 
@@ -1558,7 +1560,7 @@ def test_ecw_44():
     if gdaltest.ecw_drv.major_version < 5 or (gdaltest.ecw_drv.major_version == 5 and gdaltest.ecw_drv.minor_version < 1):
         pytest.skip()
 
-    ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')
+    ds = gdal.Open('data/jpeg2000/stefan_full_rgba_alpha_1bit.jp2')
 
     expected_md = [
         ('CODE_BLOCK_SIZE_X', '64'),
