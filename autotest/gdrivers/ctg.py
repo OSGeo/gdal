@@ -39,7 +39,7 @@ import gdaltest
 
 def test_ctg_1():
 
-    tst = gdaltest.GDALTest('CTG', 'fake_grid_cell', 1, 21)
+    tst = gdaltest.GDALTest('CTG', 'ctg/fake_grid_cell', 1, 21)
     expected_gt = [421000.0, 200.0, 0.0, 5094400.0, 0.0, -200.0]
     expected_srs = """PROJCS["WGS 84 / UTM zone 14N",
     GEOGCS["WGS 84",
@@ -66,7 +66,7 @@ def test_ctg_1():
     ret = tst.testOpen(check_gt=expected_gt, check_prj=expected_srs)
 
     if ret == 'success':
-        ds = gdal.Open('data/fake_grid_cell')
+        ds = gdal.Open('data/ctg/fake_grid_cell')
         lst = ds.GetRasterBand(1).GetCategoryNames()
         assert lst is not None and lst, 'expected non empty category names for band 1'
         lst = ds.GetRasterBand(2).GetCategoryNames()
