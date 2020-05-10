@@ -39,7 +39,7 @@ import gdaltest
 
 def test_ceos_1():
 
-    tst = gdaltest.GDALTest('CEOS', 'IMAGERY-75K.L-3', 4, 9956,
+    tst = gdaltest.GDALTest('CEOS', 'ceos/IMAGERY-75K.L-3', 4, 9956,
                             xoff=0, yoff=0, xsize=5932, ysize=3)
     return tst.testOpen()
 

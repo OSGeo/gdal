@@ -38,7 +38,7 @@ import gdaltest
 
 def test_elas_1():
 
-    tst = gdaltest.GDALTest('ELAS', 'byte_elas.bin', 1, 4672)
+    tst = gdaltest.GDALTest('ELAS', 'elas/byte_elas.bin', 1, 4672)
     return tst.testOpen()
 
 ###############################################################################
@@ -47,7 +47,7 @@ def test_elas_1():
 
 def test_elas_2():
 
-    tst = gdaltest.GDALTest('ELAS', 'byte_elas.bin', 1, 4672)
+    tst = gdaltest.GDALTest('ELAS', 'elas/byte_elas.bin', 1, 4672)
     return tst.testCreate()
 
 

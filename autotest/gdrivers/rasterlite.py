@@ -78,7 +78,7 @@ def test_rasterlite_2():
         pytest.skip('Please upgrade your sqlite3 library to be able to read Rasterlite DBs (needs rtree support)!')
 
     gdal.ErrorReset()
-    ds = gdal.Open('data/rasterlite.sqlite')
+    ds = gdal.Open('data/rasterlite/rasterlite.sqlite')
     if ds is None:
         if gdal.GetLastErrorMsg().find('unsupported file format') != -1:
             gdaltest.rasterlite_drv = None
@@ -123,7 +123,7 @@ def test_rasterlite_3():
     if gdaltest.rasterlite_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('RASTERLITE:data/rasterlite_pyramids.sqlite,table=test')
+    ds = gdal.Open('RASTERLITE:data/rasterlite/rasterlite_pyramids.sqlite,table=test')
 
     assert ds.RasterCount == 3, 'expected 3 bands'
 
@@ -155,7 +155,7 @@ def test_rasterlite_4():
     if gdaltest.rasterlite_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('RASTERLITE:data/rasterlite_pct.sqlite,minx=0,miny=0,maxx=180,maxy=90')
+    ds = gdal.Open('RASTERLITE:data/rasterlite/rasterlite_pct.sqlite,minx=0,miny=0,maxx=180,maxy=90')
 
     assert ds.RasterCount == 1, 'expected 1 band'
 
@@ -180,7 +180,7 @@ def test_rasterlite_5():
     if gdaltest.rasterlite_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('RASTERLITE:data/rasterlite_pct.sqlite,bands=3')
+    ds = gdal.Open('RASTERLITE:data/rasterlite/rasterlite_pct.sqlite,bands=3')
 
     assert ds.RasterCount == 3, 'expected 3 bands'
 
@@ -379,7 +379,7 @@ def test_rasterlite_12():
     if gdaltest.has_spatialite is False:
         pytest.skip()
 
-    ds = gdal.Open('data/byte.rasterlite')
+    ds = gdal.Open('data/rasterlite/byte.rasterlite')
     assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
 
 ###############################################################################
@@ -397,7 +397,7 @@ def test_rasterlite_13():
     if gdaltest.rasterlite_drv.GetMetadataItem("ENABLE_SQL_SQLITE_FORMAT") != 'YES':
         pytest.skip()
 
-    ds = gdal.Open('data/byte.rasterlite.sql')
+    ds = gdal.Open('data/rasterlite/byte.rasterlite.sql')
     assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
 
 ###############################################################################

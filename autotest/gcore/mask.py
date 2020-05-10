@@ -118,7 +118,7 @@ def test_mask_3():
 
 def test_mask_4():
 
-    src_ds = gdal.Open('../gdrivers/data/masked.jpg')
+    src_ds = gdal.Open('../gdrivers/data/jpeg/masked.jpg')
 
     assert src_ds is not None, 'Failed to open test dataset.'
 

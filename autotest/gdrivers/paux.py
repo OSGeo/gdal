@@ -39,7 +39,7 @@ import gdaltest
 
 def test_paux_1():
 
-    tst = gdaltest.GDALTest('PAux', 'small16.raw', 2, 12816)
+    tst = gdaltest.GDALTest('PAux', 'paux/small16.raw', 2, 12816)
     return tst.testOpen()
 
 ###############################################################################

@@ -42,7 +42,7 @@ import gdaltest
 
 def test_adrg_read_gen():
 
-    tst = gdaltest.GDALTest('ADRG', 'SMALL_ADRG/ABCDEF01.GEN', 1, 62833)
+    tst = gdaltest.GDALTest('ADRG', 'adrg/SMALL_ADRG/ABCDEF01.GEN', 1, 62833)
     return tst.testOpen()
 
 ###############################################################################
@@ -51,7 +51,7 @@ def test_adrg_read_gen():
 
 def test_adrg_read_transh():
 
-    tst = gdaltest.GDALTest('ADRG', 'SMALL_ADRG/TRANSH01.THF', 1, 62833)
+    tst = gdaltest.GDALTest('ADRG', 'adrg/SMALL_ADRG/TRANSH01.THF', 1, 62833)
     return tst.testOpen()
 
 ###############################################################################
@@ -60,7 +60,7 @@ def test_adrg_read_transh():
 
 def test_adrg_read_subdataset_img():
 
-    tst = gdaltest.GDALTest('ADRG', 'ADRG:data/SMALL_ADRG/ABCDEF01.GEN,data/SMALL_ADRG/ABCDEF01.IMG', 1, 62833, filename_absolute=1)
+    tst = gdaltest.GDALTest('ADRG', 'ADRG:data/adrg/SMALL_ADRG/ABCDEF01.GEN,data/adrg/SMALL_ADRG/ABCDEF01.IMG', 1, 62833, filename_absolute=1)
     return tst.testOpen()
 
 ###############################################################################
@@ -70,7 +70,7 @@ def test_adrg_read_subdataset_img():
 def test_adrg_copy():
 
     drv = gdal.GetDriverByName('ADRG')
-    srcds = gdal.Open('data/SMALL_ADRG/ABCDEF01.GEN')
+    srcds = gdal.Open('data/adrg/SMALL_ADRG/ABCDEF01.GEN')
 
     dstds = drv.CreateCopy('tmp/ABCDEF01.GEN', srcds)
 
@@ -89,7 +89,7 @@ def test_adrg_copy():
 def test_adrg_2subdatasets():
 
     drv = gdal.GetDriverByName('ADRG')
-    srcds = gdal.Open('data/SMALL_ADRG/ABCDEF01.GEN')
+    srcds = gdal.Open('data/adrg/SMALL_ADRG/ABCDEF01.GEN')
 
     gdal.SetConfigOption('ADRG_SIMULATE_MULTI_IMG', 'ON')
     dstds = drv.CreateCopy('tmp/XXXXXX01.GEN', srcds)
@@ -125,7 +125,7 @@ def test_adrg_2subdatasets():
 def test_adrg_copy_vsimem():
 
     drv = gdal.GetDriverByName('ADRG')
-    srcds = gdal.Open('data/SMALL_ADRG/ABCDEF01.GEN')
+    srcds = gdal.Open('data/adrg/SMALL_ADRG/ABCDEF01.GEN')
 
     dstds = drv.CreateCopy('/vsimem/ABCDEF01.GEN', srcds)
 
@@ -152,7 +152,7 @@ def test_adrg_copy_vsimem():
 
 def test_adrg_zna_9():
 
-    ds = gdal.Open('data/SMALL_ADRG_ZNA9/ABCDEF01.GEN')
+    ds = gdal.Open('data/adrg/SMALL_ADRG_ZNA9/ABCDEF01.GEN')
     expected_gt = (-307675.73602473765, 100.09145391818853, 0.0, -179477.5051066006, 0.0, -100.09145391818853)
     gt = ds.GetGeoTransform()
     assert max(abs(gt[i] - expected_gt[i]) for i in range(6)) <= 1e-5, \
@@ -167,7 +167,7 @@ def test_adrg_zna_9():
 
 def test_adrg_zna_18():
 
-    ds = gdal.Open('data/SMALL_ADRG_ZNA18/ABCDEF01.GEN')
+    ds = gdal.Open('data/adrg/SMALL_ADRG_ZNA18/ABCDEF01.GEN')
     expected_gt = (-307675.73602473765, 100.09145391818853, 0.0, 179477.5051066006, 0.0, -100.09145391818853)
     gt = ds.GetGeoTransform()
     assert max(abs(gt[i] - expected_gt[i]) for i in range(6)) <= 1e-5, \

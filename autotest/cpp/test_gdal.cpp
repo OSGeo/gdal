@@ -1079,7 +1079,7 @@ namespace tut
         // ENVI
         {
             GDALDatasetUniquePtr poDS(
-                GDALDataset::Open(GDRIVERS_DATA_DIR "envi_rgbsmall_bip.img"));
+                GDALDataset::Open(GDRIVERS_DATA_DIR "envi/envi_rgbsmall_bip.img"));
             ensure( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
             ensure( poDS->GetRawBinaryLayout(sLayout) );
@@ -1095,7 +1095,7 @@ namespace tut
         }
         {
             GDALDatasetUniquePtr poDS(
-                GDALDataset::Open(GDRIVERS_DATA_DIR "envi_rgbsmall_bil.img"));
+                GDALDataset::Open(GDRIVERS_DATA_DIR "envi/envi_rgbsmall_bil.img"));
             ensure( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
             ensure( poDS->GetRawBinaryLayout(sLayout) );
@@ -1111,7 +1111,7 @@ namespace tut
         }
         {
             GDALDatasetUniquePtr poDS(
-                GDALDataset::Open(GDRIVERS_DATA_DIR "envi_rgbsmall_bsq.img"));
+                GDALDataset::Open(GDRIVERS_DATA_DIR "envi/envi_rgbsmall_bsq.img"));
             ensure( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
             ensure( poDS->GetRawBinaryLayout(sLayout) );
@@ -1252,7 +1252,7 @@ namespace tut
         // ISIS3
         {
             GDALDatasetUniquePtr poDS(
-                GDALDataset::Open(GDRIVERS_DATA_DIR "isis3_detached.lbl"));
+                GDALDataset::Open(GDRIVERS_DATA_DIR "isis3/isis3_detached.lbl"));
             ensure( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
             ensure( poDS->GetRawBinaryLayout(sLayout) );
@@ -1270,7 +1270,7 @@ namespace tut
         // VICAR
         {
             GDALDatasetUniquePtr poDS(
-                GDALDataset::Open(GDRIVERS_DATA_DIR "test_vicar_truncated.bin"));
+                GDALDataset::Open(GDRIVERS_DATA_DIR "vicar/test_vicar_truncated.bin"));
             ensure( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
             ensure( poDS->GetRawBinaryLayout(sLayout) );
@@ -1320,7 +1320,7 @@ namespace tut
         // PDS 3
         {
             GDALDatasetUniquePtr poDS(
-                GDALDataset::Open(GDRIVERS_DATA_DIR "mc02_truncated.img"));
+                GDALDataset::Open(GDRIVERS_DATA_DIR "pds/mc02_truncated.img"));
             ensure( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
             ensure( poDS->GetRawBinaryLayout(sLayout) );
@@ -1338,7 +1338,7 @@ namespace tut
         // PDS 4
         {
             GDALDatasetUniquePtr poDS(
-                GDALDataset::Open(GDRIVERS_DATA_DIR "byte_pds4_cart_1700.xml"));
+                GDALDataset::Open(GDRIVERS_DATA_DIR "pds4/byte_pds4_cart_1700.xml"));
             ensure( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
             ensure( poDS->GetRawBinaryLayout(sLayout) );

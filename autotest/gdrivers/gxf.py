@@ -43,7 +43,7 @@ import gdaltest
 
 def test_gxf_1():
 
-    tst = gdaltest.GDALTest('GXF', 'small.gxf', 1, 90)
+    tst = gdaltest.GDALTest('GXF', 'gxf/small.gxf', 1, 90)
 
     return tst.testOpen()
 
@@ -53,7 +53,7 @@ def test_gxf_1():
 
 def test_gxf_2():
 
-    tst = gdaltest.GDALTest('GXF', 'small2.gxf', 1, 65042)
+    tst = gdaltest.GDALTest('GXF', 'gxf/small2.gxf', 1, 65042)
     wkt = """PROJCS["NAD27 / Ohio North",
     GEOGCS["NAD27",
         DATUM["NAD27",

@@ -1142,9 +1142,9 @@ def test_grib_grib2_write_data_encodings_warnings_and_errors():
     tests += [['data/byte.tif', ['JPEG2000_DRIVER=THIS_IS_NOT_A_J2K_DRIVER']]]  # non-existing driver
     tests += [['data/byte.tif', ['JPEG2000_DRIVER=DERIVED']]]  # Read-only driver
     tests += [['../gcore/data/cfloat32.tif', []]]  # complex data type
-    tests += [['data/float64.asc', []]]  # no projection
-    tests += [['data/byte.sgi', []]]  # no geotransform
-    tests += [['data/rotation.img', []]]  # geotransform with rotation terms
+    tests += [['data/aaigrid/float64.asc', []]]  # no projection
+    tests += [['data/test_nosrs.vrt', []]]  # no geotransform
+    tests += [['data/envi/rotation.img', []]]  # geotransform with rotation terms
     gdal.GetDriverByName('GTiff').Create('/vsimem/huge.tif', 65535, 65535, 1, options=['SPARSE_OK=YES'])
     tests += [['/vsimem/huge.tif', []]]  # too many pixels
 
@@ -1300,7 +1300,7 @@ def test_grib_grib2_template_4_48():
 
 def test_grib_grib2_scan_flag_not_64():
 
-    ds = gdal.Open('/vsisparse/data/blend.t17z.master.f001.co.grib2.sparse.xml')
+    ds = gdal.Open('/vsisparse/data/grib/blend.t17z.master.f001.co.grib2.sparse.xml')
     gt = ds.GetGeoTransform()
     expected_gt = (-3272421.457337171, 2539.703, 0.0, 3790842.1060354356, 0.0, -2539.703)
     assert gt == pytest.approx(expected_gt, rel=1e-6)

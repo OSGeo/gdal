@@ -59,7 +59,7 @@ def test_dds(compression,checksums):
 
 def test_dds_no_compression():
     ref_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
-    ds = gdal.Open('data/stefan_full_rgba_no_compression.dds')
+    ds = gdal.Open('data/dds/stefan_full_rgba_no_compression.dds')
     assert ds
     assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
     ref_checksum = [ref_ds.GetRasterBand(i+1).Checksum() for i in range(4)]

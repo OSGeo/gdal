@@ -51,7 +51,7 @@ def test_xyz_1():
 
 def test_xyz_2():
 
-    src_ds = gdal.Open('data/float.img')
+    src_ds = gdal.Open('data/hfa/float.img')
     ds = gdal.GetDriverByName('XYZ').CreateCopy('tmp/float.xyz', src_ds, options=['COLUMN_SEPARATOR=,', 'ADD_HEADER_LINE=YES'])
     got_cs = ds.GetRasterBand(1).Checksum()
     expected_cs = src_ds.GetRasterBand(1).Checksum()

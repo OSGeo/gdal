@@ -71,7 +71,7 @@ def test_kro_3():
 
 def test_kro_4():
 
-    tst = gdaltest.GDALTest('KRO', 'rgba16.png', 1, 1886)
+    tst = gdaltest.GDALTest('KRO', 'png/rgba16.png', 1, 1886)
 
     return tst.testCreate()
 

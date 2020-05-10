@@ -100,7 +100,7 @@ def test_fits_nodata():
 def test_fits_offscale():
     driver = gdal.GetDriverByName('FITS')
 
-    ds = gdal.Open('../gdrivers/data/offscale_byte.tif')
+    ds = gdal.Open('../gdrivers/data/fits/offscale_byte.tif')
     ds2 = driver.CreateCopy('tmp/offscale_byte.fits', ds)
     ds2 = None
     gdal.Unlink('tmp/offscale_byte.fits.aux.xml')

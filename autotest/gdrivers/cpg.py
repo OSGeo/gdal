@@ -38,7 +38,7 @@ import gdaltest
 
 def test_cpg_1():
 
-    tst = gdaltest.GDALTest('CPG', 'fakecpgSIRC.hdr', 1, 0)
+    tst = gdaltest.GDALTest('CPG', 'cpg/fakecpgSIRC.hdr', 1, 0)
     return tst.testOpen()
 
 

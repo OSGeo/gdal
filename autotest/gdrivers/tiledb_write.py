@@ -170,7 +170,7 @@ def test_tiledb_write_attributes():
 def test_tiledb_write_subdatasets():
     gdaltest.tiledb_drv = gdal.GetDriverByName('TileDB')
 
-    src_ds = gdal.Open('data/DeepBlue-SeaWiFS-1.0_L3_20100101_v004-20130604T131317Z.h5')
+    src_ds = gdal.Open('data/tiledb_input/DeepBlue-SeaWiFS-1.0_L3_20100101_v004-20130604T131317Z.h5')
 
     new_ds = gdaltest.tiledb_drv.CreateCopy('tmp/test_sds_array', src_ds,
                                         False)

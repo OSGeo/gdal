@@ -84,10 +84,10 @@ def test_identify_4():
     dr = gdal.IdentifyDriverEx('data/byte.tif', allowed_drivers=['HFA'])
     assert dr is None, 'Got wrong driver for byte.tif'
 
-    dr = gdal.IdentifyDriverEx('../gdrivers/data/aea.dat', sibling_files=['aea.dat'])
+    dr = gdal.IdentifyDriverEx('../gdrivers/data/envi/aea.dat', sibling_files=['aea.dat'])
     assert dr is None, 'Got a driver, which was not expected!'
 
-    dr = gdal.IdentifyDriverEx('../gdrivers/data/aea.dat', sibling_files=['aea.dat', 'aea.hdr'])
+    dr = gdal.IdentifyDriverEx('../gdrivers/data/envi/aea.dat', sibling_files=['aea.dat', 'aea.hdr'])
     assert dr is not None, 'Did not get a driver!'
 
 

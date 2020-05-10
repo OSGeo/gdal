@@ -72,12 +72,12 @@ def test_misc_2():
 def test_misc_3():
 
     with gdaltest.error_handler():
-        ds = gdal.OpenShared('../gdrivers/data/small16.aux')
+        ds = gdal.OpenShared('../gdrivers/data/paux/small16.aux')
     ds.GetRasterBand(1).Checksum()
     cache_size = gdal.GetCacheUsed()
 
     with gdaltest.error_handler():
-        ds2 = gdal.OpenShared('../gdrivers/data/small16.aux')
+        ds2 = gdal.OpenShared('../gdrivers/data/paux/small16.aux')
     ds2.GetRasterBand(1).Checksum()
     cache_size2 = gdal.GetCacheUsed()
 

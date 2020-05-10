@@ -38,7 +38,7 @@ import gdaltest
 
 def test_nwt_grc_1():
 
-    tst = gdaltest.GDALTest('NWT_GRC', 'nwt_grc.grc', 1, 46760)
+    tst = gdaltest.GDALTest('NWT_GRC', 'nwt_grc/nwt_grc.grc', 1, 46760)
     return tst.testOpen()
 
 

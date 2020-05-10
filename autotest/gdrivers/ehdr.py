@@ -45,7 +45,7 @@ import pytest
 
 def test_ehdr_1():
 
-    tst = gdaltest.GDALTest('EHDR', 'rgba16.png', 2, 2042)
+    tst = gdaltest.GDALTest('EHDR', 'png/rgba16.png', 2, 2042)
 
     return tst.testCreate()
 
@@ -65,7 +65,7 @@ def test_ehdr_2():
 
 def test_ehdr_3():
 
-    tst = gdaltest.GDALTest('EHDR', 'float32.bil', 1, 27)
+    tst = gdaltest.GDALTest('EHDR', 'ehdr/float32.bil', 1, 27)
 
     return tst.testCreateCopy()
 
@@ -128,7 +128,7 @@ def test_ehdr_5():
 
 def test_ehdr_6():
 
-    tst = gdaltest.GDALTest('EHDR', 'float32.bil', 1, 27)
+    tst = gdaltest.GDALTest('EHDR', 'ehdr/float32.bil', 1, 27)
 
     return tst.testCreateCopy(vsimem=1)
 
@@ -149,7 +149,7 @@ def test_ehdr_7():
 def test_ehdr_8():
 
     drv = gdal.GetDriverByName('EHDR')
-    src_ds = gdal.Open('data/8s.vrt')
+    src_ds = gdal.Open('data/ehdr/8s.vrt')
     ds = drv.CreateCopy('tmp/ehdr_8.bil', src_ds)
     src_ds = None
 
@@ -174,7 +174,7 @@ def test_ehdr_8():
 
 def test_ehdr_9():
 
-    ds = gdal.Open('data/wc_10m_CCCMA_A2a_2020_tmin_9.bil')
+    ds = gdal.Open('data/ehdr/wc_10m_CCCMA_A2a_2020_tmin_9.bil')
 
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Int16, 'wrong datatype'
 
@@ -190,7 +190,7 @@ def test_ehdr_9():
 
 
 def test_ehdr_10():
-    tst = gdaltest.GDALTest('EHDR', 'ehdr10.bil', 1, 8202)
+    tst = gdaltest.GDALTest('EHDR', 'ehdr/ehdr10.bil', 1, 8202)
     return tst.testOpen()
 
 ###############################################################################
@@ -198,7 +198,7 @@ def test_ehdr_10():
 
 
 def test_ehdr_11():
-    tst = gdaltest.GDALTest('EHDR', 'ehdr11.flt', 1, 8202)
+    tst = gdaltest.GDALTest('EHDR', 'ehdr/ehdr11.flt', 1, 8202)
     return tst.testOpen()
 
 ###############################################################################
@@ -311,7 +311,7 @@ def test_ehdr_14():
 def test_ehdr_rat():
 
     tmpfile = '/vsimem/rat.bil'
-    gdal.Translate(tmpfile, 'data/int16_rat.bil', format='EHdr')
+    gdal.Translate(tmpfile, 'data/ehdr/int16_rat.bil', format='EHdr')
     ds = gdal.Open(tmpfile)
     rat = ds.GetRasterBand(1).GetDefaultRAT()
     assert rat is not None

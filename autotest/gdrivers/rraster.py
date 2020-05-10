@@ -40,7 +40,7 @@ import gdaltest
 # Perform simple read test.
 
 
-def test_rraster_1(filename='data/byte_rraster.grd', check_prj=None):
+def test_rraster_1(filename='data/rraster/byte_rraster.grd', check_prj=None):
 
     tst = gdaltest.GDALTest('RRASTER', filename, 1, 4672, filename_absolute=True)
     ref_ds = gdal.Open('data/byte.tif')
@@ -61,8 +61,8 @@ def test_rraster_1(filename='data/byte_rraster.grd', check_prj=None):
 
 def test_rraster_1_copy():
 
-    filename = '/vsimem/byte_rraster.grd'
-    gdal.Translate(filename, 'data/byte_rraster.grd', format='RRASTER')
+    filename = '/vsimem/rraster/byte_rraster.grd'
+    gdal.Translate(filename, 'data/rraster/byte_rraster.grd', format='RRASTER')
     assert not gdal.VSIStatL(filename + '.aux.xml'), 'did not expect .aux.xml'
     sr = osr.SpatialReference()
     sr.SetFromUserInput('+proj=utm +zone=11 +ellps=clrk66 +nadgrids=@conus,@alaska,@ntv2_0.gsb,@ntv1_can.dat +units=m +no_defs')
@@ -108,7 +108,7 @@ def _is_dict_included_in_dict(got, expected, key_name='', to_print=None):
 ###############################################################################
 
 
-def test_rraster_rgba(filename='data/rgba_rraster.grd'):
+def test_rraster_rgba(filename='data/rraster/rgba_rraster.grd'):
 
     ds = gdal.Open(filename)
     info = gdal.Info(ds, computeChecksum=True, format='json')
@@ -144,7 +144,7 @@ def test_rraster_rgba_copy():
     filename = '/vsimem/rgba_rraster.grd'
 
     for creationOptions in [[], ['INTERLEAVE=BIP'], ['INTERLEAVE=BIL'], ['INTERLEAVE=BSQ']]:
-        gdal.Translate(filename, 'data/rgba_rraster.grd', format='RRASTER',
+        gdal.Translate(filename, 'data/rraster/rgba_rraster.grd', format='RRASTER',
                        creationOptions=creationOptions)
         assert not gdal.VSIStatL(filename + '.aux.xml'), 'did not expect .aux.xml'
         print(creationOptions)
@@ -155,7 +155,7 @@ def test_rraster_rgba_copy():
 ###############################################################################
 
 
-def test_rraster_ct_rgb(filename='data/byte_rraster_ct_rgb.grd'):
+def test_rraster_ct_rgb(filename='data/rraster/byte_rraster_ct_rgb.grd'):
 
     ds = gdal.Open(filename)
     info = gdal.Info(ds, format='json')
@@ -175,8 +175,8 @@ def test_rraster_ct_rgb(filename='data/byte_rraster_ct_rgb.grd'):
 
 def test_rraster_ct_rgb_copy():
 
-    filename = '/vsimem/byte_rraster_ct_rgb.grd'
-    gdal.Translate(filename, 'data/byte_rraster_ct_rgb.grd', format='RRASTER')
+    filename = '/vsimem/rraster/byte_rraster_ct_rgb.grd'
+    gdal.Translate(filename, 'data/rraster/byte_rraster_ct_rgb.grd', format='RRASTER')
     assert not gdal.VSIStatL(filename + '.aux.xml'), 'did not expect .aux.xml'
     test_rraster_ct_rgb(filename)
     gdal.GetDriverByName('RRASTER').Delete(filename)
@@ -184,7 +184,7 @@ def test_rraster_ct_rgb_copy():
 ###############################################################################
 
 
-def test_rraster_ct_rgba(filename='data/byte_rraster_ct_rgba.grd'):
+def test_rraster_ct_rgba(filename='data/rraster/byte_rraster_ct_rgba.grd'):
 
     ds = gdal.Open(filename)
     info = gdal.Info(ds, format='json')
@@ -204,8 +204,8 @@ def test_rraster_ct_rgba(filename='data/byte_rraster_ct_rgba.grd'):
 
 def test_rraster_ct_rgba_copy():
 
-    filename = '/vsimem/byte_rraster_ct_rgba.grd'
-    gdal.Translate(filename, 'data/byte_rraster_ct_rgba.grd', format='RRASTER')
+    filename = '/vsimem/rraster/byte_rraster_ct_rgba.grd'
+    gdal.Translate(filename, 'data/rraster/byte_rraster_ct_rgba.grd', format='RRASTER')
     assert not gdal.VSIStatL(filename + '.aux.xml'), 'did not expect .aux.xml'
     test_rraster_ct_rgba(filename)
     gdal.GetDriverByName('RRASTER').Delete(filename)
@@ -213,7 +213,7 @@ def test_rraster_ct_rgba_copy():
 ###############################################################################
 
 
-def test_rraster_rat(filename='data/byte_rraster_rat.grd'):
+def test_rraster_rat(filename='data/rraster/byte_rraster_rat.grd'):
 
     ds = gdal.Open(filename)
     info = gdal.Info(ds, format='json')
@@ -293,8 +293,8 @@ def test_rraster_rat(filename='data/byte_rraster_rat.grd'):
 
 def test_rraster_rat_copy():
 
-    filename = '/vsimem/byte_rraster_rat.grd'
-    gdal.Translate(filename, 'data/byte_rraster_rat.grd', format='RRASTER')
+    filename = '/vsimem/rraster/byte_rraster_rat.grd'
+    gdal.Translate(filename, 'data/rraster/byte_rraster_rat.grd', format='RRASTER')
     assert not gdal.VSIStatL(filename + '.aux.xml'), 'did not expect .aux.xml'
     test_rraster_rat(filename)
     gdal.GetDriverByName('RRASTER').Delete(filename)
@@ -306,7 +306,7 @@ def test_rraster_signedbyte():
 
     filename = '/vsimem/rraster_signedbyte.grd'
     filename2 = '/vsimem/rraster_signedbyte2.grd'
-    gdal.Translate(filename, 'data/byte_rraster.grd', format='RRASTER',
+    gdal.Translate(filename, 'data/rraster/byte_rraster.grd', format='RRASTER',
                    creationOptions=['PIXELTYPE=SIGNEDBYTE'])
     gdal.Translate(filename2, filename, format='RRASTER')
 
@@ -367,7 +367,7 @@ def test_rraster_nodata_and_metadata():
 def test_rraster_update():
 
     filename = '/vsimem/temp.grd'
-    gdal.Translate(filename, 'data/byte_rraster.grd', format='RRASTER')
+    gdal.Translate(filename, 'data/rraster/byte_rraster.grd', format='RRASTER')
     gdal.Open(filename, gdal.GA_Update)
     ds = gdal.Open(filename, gdal.GA_Update)
     assert ds.GetRasterBand(1).Checksum() == 4672

@@ -42,7 +42,7 @@ import pytest
 
 def test_png_1():
 
-    tst = gdaltest.GDALTest('PNG', 'test.png', 1, 57921)
+    tst = gdaltest.GDALTest('PNG', 'png/test.png', 1, 57921)
     return tst.testOpen()
 
 ###############################################################################
@@ -51,7 +51,7 @@ def test_png_1():
 
 def test_png_2():
 
-    tst = gdaltest.GDALTest('PNG', 'test.png', 1, 57921)
+    tst = gdaltest.GDALTest('PNG', 'png/test.png', 1, 57921)
 
     return tst.testCreateCopy()
 
@@ -61,7 +61,7 @@ def test_png_2():
 
 def test_png_3():
 
-    ds = gdal.Open('data/test.png')
+    ds = gdal.Open('data/png/test.png')
     cm = ds.GetRasterBand(1).GetRasterColorTable()
     assert cm.GetCount() == 16 and cm.GetColorEntry(0) == (255, 255, 255, 0) and cm.GetColorEntry(1) == (255, 255, 208, 255), \
         'Wrong colormap entries'
@@ -90,7 +90,7 @@ def test_png_3():
 
 def test_png_4():
 
-    tst = gdaltest.GDALTest('PNG', 'rgb.ntf', 3, 21349)
+    tst = gdaltest.GDALTest('PNG', 'rgbsmall.tif', 3, 21349)
 
     return tst.testCreateCopy()
 
@@ -100,7 +100,7 @@ def test_png_4():
 
 def test_png_5():
 
-    tst = gdaltest.GDALTest('PNG', 'rgba16.png', 3, 1815)
+    tst = gdaltest.GDALTest('PNG', 'png/rgba16.png', 3, 1815)
     return tst.testOpen()
 
 ###############################################################################
@@ -109,7 +109,7 @@ def test_png_5():
 
 def test_png_6():
 
-    tst = gdaltest.GDALTest('PNG', 'rgba16.png', 4, 4873)
+    tst = gdaltest.GDALTest('PNG', 'png/rgba16.png', 4, 4873)
 
     return tst.testCreateCopy()
 
@@ -121,7 +121,7 @@ def test_png_6():
 def test_png_7():
 
     drv = gdal.GetDriverByName('PNG')
-    srcds = gdal.Open('data/tbbn2c16.png')
+    srcds = gdal.Open('data/png/tbbn2c16.png')
 
     dstds = drv.CreateCopy('tmp/png7.png', srcds)
     srcds = None
@@ -144,7 +144,7 @@ def test_png_7():
 def test_png_8():
 
     drv = gdal.GetDriverByName('PNG')
-    ds_src = gdal.Open('data/idat_broken.png')
+    ds_src = gdal.Open('data/png/idat_broken.png')
 
     md = ds_src.GetMetadata()
     assert not md, 'metadata list not expected'

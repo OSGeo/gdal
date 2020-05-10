@@ -40,7 +40,7 @@ import gdaltest
 
 def test_roipac_1():
 
-    tst = gdaltest.GDALTest('roi_pac', 'srtm.dem', 1, 64074)
+    tst = gdaltest.GDALTest('roi_pac', 'roipac/srtm.dem', 1, 64074)
 
     prj = """GEOGCS["WGS 84",
     DATUM["WGS_1984",
@@ -64,7 +64,7 @@ def test_roipac_1():
 
 def test_roipac_2():
 
-    ds = gdal.Open('data/srtm.dem')
+    ds = gdal.Open('data/roipac/srtm.dem')
     val = ds.GetMetadataItem('YMAX', 'ROI_PAC')
     assert val == '9'
 
@@ -74,7 +74,7 @@ def test_roipac_2():
 
 def test_roipac_3():
 
-    tst = gdaltest.GDALTest('roi_pac', 'srtm.dem', 1, 64074)
+    tst = gdaltest.GDALTest('roi_pac', 'roipac/srtm.dem', 1, 64074)
     return tst.testCreateCopy(check_gt=1, new_filename='strm.tst.dem')
 
 ###############################################################################
@@ -83,7 +83,7 @@ def test_roipac_3():
 
 def test_roipac_4():
 
-    tst = gdaltest.GDALTest('roi_pac', 'srtm.dem', 1, 64074)
+    tst = gdaltest.GDALTest('roi_pac', 'roipac/srtm.dem', 1, 64074)
     return tst.testCreateCopy(check_gt=1, new_filename='strm.tst.dem', vsimem=1)
 
 ###############################################################################
@@ -92,7 +92,7 @@ def test_roipac_4():
 
 def test_roipac_5():
 
-    ds = gdal.Open('data/srtm.dem')
+    ds = gdal.Open('data/roipac/srtm.dem')
     band = ds.GetRasterBand(1)
     offset = band.GetOffset()
     assert offset == 1

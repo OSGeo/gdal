@@ -38,7 +38,7 @@ import gdaltest
 
 def test_sgi_1():
 
-    tst = gdaltest.GDALTest('SGI', 'byte.sgi', 1, 4672)
+    tst = gdaltest.GDALTest('SGI', 'sgi/byte.sgi', 1, 4672)
 
     return tst.testOpen()
 

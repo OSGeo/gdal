@@ -30,7 +30,6 @@
 ###############################################################################
 
 import os
-import shutil
 import threading
 from osgeo import gdal
 
@@ -197,7 +196,7 @@ def test_vrtderived_5():
         pytest.skip()
 
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', 'YES')
-    ds = gdal.Open('data/n43_hillshade.vrt')
+    ds = gdal.Open('data/vrt/n43_hillshade.vrt')
     cs = ds.GetRasterBand(1).Checksum()
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
     assert cs == 50577, 'invalid checksum'
@@ -215,7 +214,7 @@ def test_vrtderived_6():
         pytest.skip()
 
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', 'YES')
-    ds = gdal.Open('data/python_ones.vrt')
+    ds = gdal.Open('data/vrt/python_ones.vrt')
     cs = ds.GetRasterBand(1).Checksum()
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
     assert cs == 10000, 'invalid checksum'
@@ -230,7 +229,7 @@ def test_vrtderived_7():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES')
+    ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/vrt/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES')
     if gdal.GetConfigOption('CPL_DEBUG') is not None:
         print(err)
     # Either we cannot find a Python library, either it works
@@ -240,7 +239,7 @@ def test_vrtderived_7():
         print(err)
         pytest.fail(ret)
 
-    ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES --config VRT_ENABLE_PYTHON_PATH NO')
+    ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/vrt/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES --config VRT_ENABLE_PYTHON_PATH NO')
     if gdal.GetConfigOption('CPL_DEBUG') is not None:
         print(err)
 # Either we cannot find a Python library, either it works
@@ -250,7 +249,7 @@ def test_vrtderived_7():
         print(err)
         pytest.fail(ret)
 
-    ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES --config VRT_ENABLE_PYTHON_SYMLINK NO')
+    ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/vrt/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES --config VRT_ENABLE_PYTHON_SYMLINK NO')
     if gdal.GetConfigOption('CPL_DEBUG') is not None:
         print(err)
 # Either we cannot find a Python library, either it works
@@ -261,7 +260,7 @@ def test_vrtderived_7():
         pytest.fail(ret)
 
     # Invalid shared object name
-    ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES --config PYTHONSO foo')
+    ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/vrt/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES --config PYTHONSO foo')
     if gdal.GetConfigOption('CPL_DEBUG') is not None:
         print(err)
     assert 'Checksum=0' in ret, err
@@ -269,7 +268,7 @@ def test_vrtderived_7():
     # Valid shared object name, but without Python symbols
     libgdal_so = gdaltest.find_lib('gdal')
     if libgdal_so is not None:
-        ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES --config PYTHONSO "%s"' % libgdal_so)
+        ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -checksum data/vrt/n43_hillshade.vrt --config GDAL_VRT_ENABLE_PYTHON YES --config PYTHONSO "%s"' % libgdal_so)
         if gdal.GetConfigOption('CPL_DEBUG') is not None:
             print(err)
         assert 'Checksum=0' in ret, err
@@ -288,13 +287,13 @@ def test_vrtderived_8():
         pytest.skip()
 
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', 'NO')
-    ds = gdal.Open('data/n43_hillshade.vrt')
+    ds = gdal.Open('data/vrt/n43_hillshade.vrt')
     with gdaltest.error_handler():
         cs = ds.GetRasterBand(1).Checksum()
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
     assert cs == 0, 'invalid checksum'
 
-    ds = gdal.Open('data/n43_hillshade.vrt')
+    ds = gdal.Open('data/vrt/n43_hillshade.vrt')
     with gdaltest.error_handler():
         cs = ds.GetRasterBand(1).Checksum()
     assert cs == 0, 'invalid checksum'
@@ -664,19 +663,19 @@ def test_vrtderived_11():
     except (ImportError, AttributeError):
         pytest.skip()
 
-    shutil.copy('data/n43_hillshade.vrt', 'tmp/n43_hillshade.vrt')
-    shutil.copy('data/n43.dt0', 'tmp/n43.dt0')
-    ds = gdal.Open('tmp/n43_hillshade.vrt', gdal.GA_Update)
+    gdal.FileFromMemBuffer('/vsimem/n43_hillshade.vrt', open('data/vrt/n43_hillshade.vrt', 'rb').read().decode('UTF-8').replace('../', '').encode('UTF-8'))
+    gdal.FileFromMemBuffer('/vsimem/n43.dt0', open('data/n43.dt0', 'rb').read())
+    ds = gdal.Open('/vsimem/n43_hillshade.vrt', gdal.GA_Update)
     ds.SetMetadataItem('foo', 'bar')
     ds = None
-    ds = gdal.Open('tmp/n43_hillshade.vrt')
+    ds = gdal.Open('/vsimem/n43_hillshade.vrt')
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', 'YES')
     cs = ds.GetRasterBand(1).Checksum()
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
     ds = None
 
-    os.unlink('tmp/n43_hillshade.vrt')
-    os.unlink('tmp/n43.dt0')
+    gdal.Unlink('/vsimem/n43_hillshade.vrt')
+    gdal.Unlink('/vsimem/n43.dt0')
 
     assert cs == 50577, 'invalid checksum'
 
@@ -752,7 +751,7 @@ def test_vrtderived_13():
 
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', "YES")
     # Will test the VRTDerivedRasterBand::IGetDataCoverageStatus() interface
-    ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/vrtderived_13.tif', gdal.Open('data/python_ones.vrt'))
+    ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/vrtderived_13.tif', gdal.Open('data/vrt/python_ones.vrt'))
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', None)
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
@@ -773,7 +772,7 @@ def test_vrtderived_14():
         pytest.skip()
 
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', "YES")
-    ds = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtderived_14.vrt', gdal.Open('data/python_ones.vrt'))
+    ds = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtderived_14.vrt', gdal.Open('data/vrt/python_ones.vrt'))
     (my_min, my_max) = ds.GetRasterBand(1).ComputeRasterMinMax()
     (my_min2, my_max2, mean, stddev) = ds.GetRasterBand(1).ComputeStatistics(False)
     hist = ds.GetRasterBand(1).GetHistogram()

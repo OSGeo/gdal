@@ -112,7 +112,7 @@ def test_ecw_2():
     if gdaltest.ecw_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/jrc.ecw')
+    ds = gdal.Open('data/ecw/jrc.ecw')
 
     if gdaltest.ecw_drv.major_version == 3:
         (exp_mean, exp_stddev) = (141.172, 67.3636)
@@ -139,7 +139,7 @@ def test_ecw_3():
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         pytest.skip()
 
-    ds = gdal.Open('data/jrc.ecw')
+    ds = gdal.Open('data/ecw/jrc.ecw')
     out_ds = gdaltest.ecw_drv.CreateCopy('tmp/jrc_out.ecw', ds, options=['TARGET=75'])
     if out_ds is not None:
         version = out_ds.GetMetadataItem('VERSION')
@@ -398,7 +398,7 @@ def test_ecw_13():
     if gdaltest.jp2ecw_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/rgb16_ecwsdk.jp2')
+    ds = gdal.Open('data/jpeg2000/rgb16_ecwsdk.jp2')
 
     wrktype = gdal.GDT_Float32
     raw_data = ds.ReadRaster(10, 10, 40, 40, buf_type=wrktype,
@@ -480,7 +480,7 @@ def test_ecw_16():
 """
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
-    tst = gdaltest.GDALTest('JP2ECW', 'byte.jp2', 1, 50054)
+    tst = gdaltest.GDALTest('JP2ECW', 'jpeg2000/byte.jp2', 1, 50054)
     return tst.testOpen(check_prj=srs, check_gt=gt)
 
 ###############################################################################
@@ -495,7 +495,7 @@ def test_ecw_17():
     if gdaltest.ecw_drv.major_version == 4:
         pytest.skip('4.x SDK gets unreliable results for jp2')
 
-    ds = gdal.Open('data/int16.jp2')
+    ds = gdal.Open('data/jpeg2000/int16.jp2')
     ds_ref = gdal.Open('data/int16.tif')
 
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
@@ -536,8 +536,10 @@ def test_ecw_18():
 """
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
-    tst = gdaltest.GDALTest('JP2ECW', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute=1)
-    return tst.testOpen(check_prj=srs, check_gt=gt)
+    tst = gdaltest.GDALTest('JP2ECW', '/vsigzip/data/jpeg2000/byte.jp2.gz', 1, 50054, filename_absolute=1)
+    ret = tst.testOpen(check_prj=srs, check_gt=gt)
+    gdal.Unlink('data/jpeg2000/byte.jp2.gz.properties')
+    return ret
 
 ###############################################################################
 # Test a JPEG2000 with the 3 bands having 13bit depth and the 4th one 1 bit
@@ -548,7 +550,7 @@ def test_ecw_19():
     if gdaltest.jp2ecw_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/3_13bit_and_1bit.jp2')
+    ds = gdal.Open('data/jpeg2000/3_13bit_and_1bit.jp2')
 
     expected_checksums = [64570, 57277, 56048, 61292]
 
@@ -568,7 +570,7 @@ def test_ecw_20():
     if gdaltest.ecw_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/jrc.ecw')
+    ds = gdal.Open('data/ecw/jrc.ecw')
 
     band = ds.GetRasterBand(1)
     assert band.GetOverviewCount() == 1, 'did not get expected number of overview'
@@ -604,7 +606,7 @@ def test_ecw_21():
     if gdaltest.ecw_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/jrc.ecw')
+    ds = gdal.Open('data/ecw/jrc.ecw')
     mem_ds = gdal.GetDriverByName('MEM').CreateCopy('xxxyyy', ds, options=['INTERLEAVE=PIXEL'])
     ds = None
 
@@ -631,7 +633,7 @@ def test_ecw_22():
     if gdaltest.ecw_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/spif83.ecw')
+    ds = gdal.Open('data/ecw/spif83.ecw')
 
     expected_wkt = """PROJCS["L2CAL6M",GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6269"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4269"]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",32.7833333078095],PARAMETER["standard_parallel_2",33.8833333208765],PARAMETER["latitude_of_origin",32.166666682432],PARAMETER["central_meridian",-116.249999974595],PARAMETER["false_easting",2000000],PARAMETER["false_northing",500000],UNIT["Metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]"""
     wkt = ds.GetProjectionRef()
@@ -648,8 +650,8 @@ def test_ecw_23():
     if gdaltest.ecw_drv is None:
         pytest.skip()
 
-    shutil.copyfile('data/spif83.ecw', 'tmp/spif83.ecw')
-    shutil.copyfile('data/spif83_hidden.ecw.aux.xml', 'tmp/spif83.ecw.aux.xml')
+    shutil.copyfile('data/ecw/spif83.ecw', 'tmp/spif83.ecw')
+    shutil.copyfile('data/ecw/spif83_hidden.ecw.aux.xml', 'tmp/spif83.ecw.aux.xml')
 
     ds = gdal.Open('tmp/spif83.ecw')
 
@@ -678,7 +680,7 @@ def test_ecw_24():
     if gdaltest.ecw_drv is None:
         pytest.skip()
 
-    shutil.copyfile('data/spif83.ecw', 'tmp/spif83.ecw')
+    shutil.copyfile('data/ecw/spif83.ecw', 'tmp/spif83.ecw')
     try:
         os.remove('tmp/spif83.ecw.aux.xml')
     except OSError:
@@ -721,7 +723,7 @@ def test_ecw_25():
     if gdaltest.ecw_drv is None:
         pytest.skip()
 
-    shutil.copyfile('data/spif83.ecw', 'tmp/spif83.ecw')
+    shutil.copyfile('data/ecw/spif83.ecw', 'tmp/spif83.ecw')
     try:
         os.remove('tmp/spif83.ecw.aux.xml')
     except OSError:
@@ -776,7 +778,7 @@ def test_ecw_26():
     if gdaltest.ecw_drv is None:
         pytest.skip()
 
-    shutil.copyfile('data/spif83.ecw', 'tmp/spif83.ecw')
+    shutil.copyfile('data/ecw/spif83.ecw', 'tmp/spif83.ecw')
     try:
         os.remove('tmp/spif83.ecw.aux.xml')
     except OSError:
@@ -834,7 +836,7 @@ def test_ecw_27():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         pytest.skip()
 
-    ds = gdal.Open('data/byte_without_geotransform.jp2')
+    ds = gdal.Open('data/jpeg2000/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
     assert geotransform[0] == pytest.approx(440720, abs=0.1) and geotransform[1] == pytest.approx(60, abs=0.001) and geotransform[2] == pytest.approx(0, abs=0.001) and geotransform[3] == pytest.approx(3751320, abs=0.1) and geotransform[4] == pytest.approx(0, abs=0.001) and geotransform[5] == pytest.approx(-60, abs=0.001), \
@@ -853,11 +855,11 @@ def test_ecw_28():
 
     x = y = 50
 
-    ds = gdal.Open('data/jrc.ecw')
+    ds = gdal.Open('data/ecw/jrc.ecw')
     multiband_data = ds.ReadRaster(x, y, 1, 1)
     ds = None
 
-    ds = gdal.Open('data/jrc.ecw')
+    ds = gdal.Open('data/ecw/jrc.ecw')
     data1 = ds.GetRasterBand(1).ReadRaster(x, y, 1, 1)
     data2 = ds.GetRasterBand(2).ReadRaster(x, y, 1, 1)
     data3 = ds.GetRasterBand(3).ReadRaster(x, y, 1, 1)
@@ -876,11 +878,11 @@ def test_ecw_29():
     if gdaltest.ecw_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/jrc.ecw')
+    ds = gdal.Open('data/ecw/jrc.ecw')
     data_b1 = ds.GetRasterBand(1).ReadRaster(0, 0, 400, 400)
     ds = None
 
-    ds = gdal.Open('data/jrc.ecw')
+    ds = gdal.Open('data/ecw/jrc.ecw')
     data_ecw_supersampled_b1 = ds.GetRasterBand(1).ReadRaster(0, 0, 400, 400, 800, 800)
     ds = None
 
@@ -947,7 +949,7 @@ def test_ecw_30():
     if gdaltest.ecw_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/jrc.ecw')
+    ds = gdal.Open('data/ecw/jrc.ecw')
     (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
     data_readraster = ds.GetRasterBand(1).ReadRaster(0, 0, blockxsize, blockysize)
     data_readblock = ds.GetRasterBand(1).ReadBlock(0, 0)
@@ -967,11 +969,11 @@ def test_ecw_31():
     if gdaltest.ecw_drv.major_version < 4:
         pytest.skip()
 
-    ds = gdal.Open('data/jrc.ecw')
+    ds = gdal.Open('data/ecw/jrc.ecw')
     ref_buf = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize)
     ds = None
 
-    ds = gdal.Open('data/jrc.ecw')
+    ds = gdal.Open('data/ecw/jrc.ecw')
 
     asyncreader = ds.BeginAsyncReader(0, 0, ds.RasterXSize, ds.RasterYSize)
     while True:
@@ -1008,7 +1010,7 @@ def test_ecw_32():
     if gdaltest.ecw_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/jrc.ecw')
+    ds = gdal.Open('data/ecw/jrc.ecw')
     data_123 = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, band_list=[1, 2, 3])
     data_321 = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, band_list=[3, 2, 1])
     assert data_123 != data_321
@@ -1016,19 +1018,19 @@ def test_ecw_32():
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="400" rasterYSize="400">
     <VRTRasterBand dataType="Byte" band="1">
         <SimpleSource>
-        <SourceFilename relativeToVRT="0">data/jrc.ecw</SourceFilename>
+        <SourceFilename relativeToVRT="0">data/ecw/jrc.ecw</SourceFilename>
         <SourceBand>3</SourceBand>
         </SimpleSource>
     </VRTRasterBand>
     <VRTRasterBand dataType="Byte" band="2">
         <SimpleSource>
-        <SourceFilename relativeToVRT="0">data/jrc.ecw</SourceFilename>
+        <SourceFilename relativeToVRT="0">data/ecw/jrc.ecw</SourceFilename>
         <SourceBand>2</SourceBand>
         </SimpleSource>
     </VRTRasterBand>
     <VRTRasterBand dataType="Byte" band="3">
         <SimpleSource>
-        <SourceFilename relativeToVRT="0">data/jrc.ecw</SourceFilename>
+        <SourceFilename relativeToVRT="0">data/ecw/jrc.ecw</SourceFilename>
         <SourceBand>1</SourceBand>
         </SimpleSource>
     </VRTRasterBand>
@@ -1046,11 +1048,11 @@ def test_ecw_33():
     if gdaltest.ecw_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/jrc.ecw')
+    ds = gdal.Open('data/ecw/jrc.ecw')
     multiband_data = ds.ReadRaster(100, 100, 50, 50)
     ds = None
 
-    ds = gdal.Open('data/jrc.ecw')
+    ds = gdal.Open('data/ecw/jrc.ecw')
 
     # To feed the heuristics
     ds.GetRasterBand(1).ReadRaster(10, 10, 50, 50)
@@ -1098,10 +1100,10 @@ def test_ecw_33_bis():
     if gdaltest.ecw_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/jrc.ecw')
+    ds = gdal.Open('data/ecw/jrc.ecw')
     data_ref = ds.ReadRaster(0, 0, 50, 50)
 
-    ds = gdal.Open('data/jrc.ecw')
+    ds = gdal.Open('data/ecw/jrc.ecw')
 
     # To feed the heuristics
     ds.GetRasterBand(1).ReadRaster(0, 0, 50, 50, buf_pixel_space=4)
@@ -1186,21 +1188,21 @@ def test_ecw_36():
     <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Blue</ColorInterp>
         <SimpleSource>
-        <SourceFilename relativeToVRT="0">data/jrc.ecw</SourceFilename>
+        <SourceFilename relativeToVRT="0">data/ecw/jrc.ecw</SourceFilename>
         <SourceBand>3</SourceBand>
         </SimpleSource>
     </VRTRasterBand>
     <VRTRasterBand dataType="Byte" band="2">
         <ColorInterp>Red</ColorInterp>
         <SimpleSource>
-        <SourceFilename relativeToVRT="0">data/jrc.ecw</SourceFilename>
+        <SourceFilename relativeToVRT="0">data/ecw/jrc.ecw</SourceFilename>
         <SourceBand>1</SourceBand>
         </SimpleSource>
     </VRTRasterBand>
     <VRTRasterBand dataType="Byte" band="3">
         <ColorInterp>Green</ColorInterp>
         <SimpleSource>
-        <SourceFilename relativeToVRT="0">data/jrc.ecw</SourceFilename>
+        <SourceFilename relativeToVRT="0">data/ecw/jrc.ecw</SourceFilename>
         <SourceBand>2</SourceBand>
         </SimpleSource>
     </VRTRasterBand>
@@ -1239,7 +1241,7 @@ def test_ecw_37():
     if gdaltest.ecw_drv.major_version < 5:
         pytest.skip()
 
-    ds = gdal.Open("data/jrc.ecw")
+    ds = gdal.Open("data/ecw/jrc.ecw")
 
     dswr = gdaltest.ecw_drv.CreateCopy('tmp/jrc123.ecw', ds, options=['ECW_FORMAT_VERSION=3', 'TARGET=75'])
 
@@ -1282,9 +1284,9 @@ def test_ecw_38():
     if gdaltest.ecw_drv.major_version < 4:
         pytest.skip()
 
-    shutil.copyfile('data/jrc.ecw', fname)
+    shutil.copyfile('data/ecw/jrc.ecw', fname)
 
-    ds = gdal.Open('data/jrc.ecw')
+    ds = gdal.Open('data/ecw/jrc.ecw')
 
     ds_ref = gdal.Open(fname)
 
@@ -1307,7 +1309,7 @@ def test_ecw_39():
     if gdaltest.ecw_drv.major_version < 5:
         pytest.skip()
 
-    ds = gdal.Open('data/jrc.ecw')
+    ds = gdal.Open('data/ecw/jrc.ecw')
 
     dswr = gdaltest.ecw_drv.CreateCopy('tmp/jrcstats.ecw', ds, options=['ECW_FORMAT_VERSION=3', 'TARGET=75'])
     ds = None
@@ -1332,7 +1334,7 @@ def test_ecw_40():
     if gdaltest.ecw_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/stefan_full_rgba_ecwv3_meta.ecw')
+    ds = gdal.Open('data/ecw/stefan_full_rgba_ecwv3_meta.ecw')
     if ds is None:
         if gdaltest.ecw_drv.major_version < 5:
             if gdal.GetLastErrorMsg().find('requires ECW SDK 5.0') >= 0:
@@ -1378,7 +1380,7 @@ def test_ecw_41():
     if gdaltest.ecw_drv is None or gdaltest.ecw_drv.major_version < 5:
         pytest.skip()
 
-    shutil.copy('data/stefan_full_rgba_ecwv3_meta.ecw', 'tmp/stefan_full_rgba_ecwv3_meta.ecw')
+    shutil.copy('data/ecw/stefan_full_rgba_ecwv3_meta.ecw', 'tmp/stefan_full_rgba_ecwv3_meta.ecw')
     try:
         os.remove('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
     except OSError:
@@ -1449,7 +1451,7 @@ def test_ecw_42():
     if gdaltest.ecw_drv is None or gdaltest.ecw_drv.major_version < 5:
         pytest.skip()
 
-    shutil.copy('data/stefan_full_rgba_ecwv3_meta.ecw', 'tmp/stefan_full_rgba_ecwv3_meta.ecw')
+    shutil.copy('data/ecw/stefan_full_rgba_ecwv3_meta.ecw', 'tmp/stefan_full_rgba_ecwv3_meta.ecw')
     try:
         os.remove('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
     except OSError:
@@ -1520,7 +1522,7 @@ def test_ecw_43():
     if gdaltest.jp2ecw_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')
+    ds = gdal.Open('data/jpeg2000/stefan_full_rgba_alpha_1bit.jp2')
     fourth_band = ds.GetRasterBand(4)
     assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is None
     got_cs = fourth_band.Checksum()
@@ -1543,7 +1545,7 @@ def test_ecw_43():
 
     assert jp2_fourth_band_data == gtiff_fourth_band_data
 
-    ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
+    ds = gdal.OpenEx('data/jpeg2000/stefan_full_rgba_alpha_1bit.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
     fourth_band = ds.GetRasterBand(4)
     assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '1'
 
@@ -1558,7 +1560,7 @@ def test_ecw_44():
     if gdaltest.ecw_drv.major_version < 5 or (gdaltest.ecw_drv.major_version == 5 and gdaltest.ecw_drv.minor_version < 1):
         pytest.skip()
 
-    ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')
+    ds = gdal.Open('data/jpeg2000/stefan_full_rgba_alpha_1bit.jp2')
 
     expected_md = [
         ('CODE_BLOCK_SIZE_X', '64'),
@@ -1709,7 +1711,7 @@ def test_ecw_47():
     if gdaltest.ecw_drv.major_version == 3:
         pytest.skip()
 
-    data = open('data/jrc.ecw', 'rb').read()
+    data = open('data/ecw/jrc.ecw', 'rb').read()
     gdal.FileFromMemBuffer('/vsimem/ecw_47.ecw', data)
 
     ds = gdal.Open('/vsimem/ecw_47.ecw')
@@ -1742,7 +1744,7 @@ def test_ecw_48():
     assert ecw_upward == 'TRUE' or ecw_upward == 'ON', \
         'ECW_ALWAYS_UPWARD default value must be TRUE.'
 
-    ds = gdal.Open('data/spif83_downward.ecw')
+    ds = gdal.Open('data/ecw/spif83_downward.ecw')
     gt = ds.GetGeoTransform()
 
     # expect Y resolution negative
@@ -1760,7 +1762,7 @@ def test_ecw_49():
 
     ecw_upward_old = gdal.GetConfigOption('ECW_ALWAYS_UPWARD', 'TRUE')
     gdal.SetConfigOption('ECW_ALWAYS_UPWARD', 'FALSE')
-    ds = gdal.Open('data/spif83_downward.ecw')
+    ds = gdal.Open('data/ecw/spif83_downward.ecw')
     gt = ds.GetGeoTransform()
     gdal.SetConfigOption('ECW_ALWAYS_UPWARD', ecw_upward_old)
 

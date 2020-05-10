@@ -38,7 +38,7 @@ import gdaltest
 
 def test_r_1():
 
-    tst = gdaltest.GDALTest('R', 'r_test.asc', 2, 202)
+    tst = gdaltest.GDALTest('R', 'r/r_test.asc', 2, 202)
 
     return tst.testOpen()
 
@@ -48,7 +48,7 @@ def test_r_1():
 
 def test_r_2():
 
-    tst = gdaltest.GDALTest('R', 'r_test.rdb', 1, 202)
+    tst = gdaltest.GDALTest('R', 'r/r_test.rdb', 1, 202)
     return tst.testOpen()
 
 ###############################################################################
