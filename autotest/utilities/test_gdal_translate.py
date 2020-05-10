@@ -316,7 +316,7 @@ def test_gdal_translate_15():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
 
-    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -sds ../gdrivers/data/A.TOC tmp/test15.tif')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -sds ../gdrivers/data/nitf/A.TOC tmp/test15.tif')
 
     ds = gdal.Open('tmp/test15_1.tif')
     assert ds is not None

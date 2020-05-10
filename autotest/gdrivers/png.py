@@ -90,7 +90,7 @@ def test_png_3():
 
 def test_png_4():
 
-    tst = gdaltest.GDALTest('PNG', 'rgb.ntf', 3, 21349)
+    tst = gdaltest.GDALTest('PNG', 'rgbsmall.tif', 3, 21349)
 
     return tst.testCreateCopy()
 

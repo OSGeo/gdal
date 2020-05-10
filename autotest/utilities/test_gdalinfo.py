@@ -174,10 +174,10 @@ def test_gdalinfo_9():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/fake_nsif.ntf')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/nitf/fake_nsif.ntf')
     assert ret.find('BLOCKA=010000001000000000') == -1, 'got unexpected extra MD.'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -mdd TRE ../gdrivers/data/fake_nsif.ntf')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -mdd TRE ../gdrivers/data/nitf/fake_nsif.ntf')
     assert ret.find('BLOCKA=010000001000000000') != -1, 'did not get extra MD.'
 
 ###############################################################################
@@ -561,11 +561,11 @@ def test_gdalinfo_36():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/fake_nsif.ntf')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/nitf/fake_nsif.ntf')
     ret = json.loads(ret)
     assert 'TRE' not in ret['metadata'], 'got unexpected extra MD.'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json -mdd TRE ../gdrivers/data/fake_nsif.ntf')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json -mdd TRE ../gdrivers/data/nitf/fake_nsif.ntf')
     ret = json.loads(ret)
     assert ret['metadata']['TRE']['BLOCKA'].find('010000001000000000') != -1, \
         'did not get extra MD.'

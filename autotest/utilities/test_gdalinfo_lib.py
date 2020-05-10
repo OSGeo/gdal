@@ -61,7 +61,7 @@ def test_gdalinfo_lib_2():
 
 def test_gdalinfo_lib_3():
 
-    ds = gdal.Open('../gdrivers/data/fake_nsif.ntf')
+    ds = gdal.Open('../gdrivers/data/nitf/fake_nsif.ntf')
 
     ret = gdal.Info(ds, format='json')
     assert 'TRE' not in ret['metadata'], 'got unexpected extra MD.'

@@ -178,10 +178,10 @@ def test_gdalinfo_py_9():
     if script_path is None:
         pytest.skip()
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gdrivers/data/fake_nsif.ntf')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gdrivers/data/nitf/fake_nsif.ntf')
     assert ret.find('BLOCKA=010000001000000000') == -1, 'Got unexpected extra MD.'
 
-    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-mdd TRE ../gdrivers/data/fake_nsif.ntf')
+    ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-mdd TRE ../gdrivers/data/nitf/fake_nsif.ntf')
     assert ret.find('BLOCKA=010000001000000000') != -1, 'did not get extra MD.'
 
 ###############################################################################
