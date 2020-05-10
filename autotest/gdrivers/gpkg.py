@@ -2982,7 +2982,7 @@ def test_gpkg_44():
     if gdaltest.gpkg_dr.GetMetadataItem("ENABLE_SQL_GPKG_FORMAT") != 'YES':
         pytest.skip()
 
-    ds = gdal.Open('data/byte.gpkg.sql')
+    ds = gdal.Open('data/gpkg/byte.gpkg.sql')
     assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
 
 ###############################################################################
@@ -2994,7 +2994,7 @@ def test_gpkg_45():
     if gdaltest.gpkg_dr is None:
         pytest.skip()
 
-    ds = gdal.Open('data/byte.gpkg')
+    ds = gdal.Open('data/gpkg/byte.gpkg')
     assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
 
 ###############################################################################
@@ -3152,7 +3152,7 @@ def test_gpkg_open_old_gpkg_elevation_tiles_extension():
         pytest.skip()
 
     gdal.ErrorReset()
-    ds = gdal.Open('data/uint16-old-elevation-extension.gpkg')
+    ds = gdal.Open('data/gpkg/uint16-old-elevation-extension.gpkg')
     assert gdal.GetLastErrorMsg() == ''
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4672
@@ -3184,7 +3184,7 @@ def test_gpkg_match_overview_factor():
         pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/gpkg_match_overview_factor.gpkg',
-                           open('data/test_match_overview_factor.gpkg', 'rb').read())
+                           open('data/gpkg/test_match_overview_factor.gpkg', 'rb').read())
 
     ds = gdal.Open('/vsimem/gpkg_match_overview_factor.gpkg', gdal.GA_Update)
     ret = ds.BuildOverviews('NONE', [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048])
@@ -3292,7 +3292,7 @@ def test_gpkg_50000_25000_uint16():
     if sys.maxsize < 2**32:
         pytest.skip('Test not available on 32 bit')
 
-    ds = gdal.Open('/vsizip/data/50000_25000_uint16.gpkg.zip/50000_25000_uint16.gpkg')
+    ds = gdal.Open('/vsizip/data/gpkg/50000_25000_uint16.gpkg.zip/50000_25000_uint16.gpkg')
 
     import psutil
     sizeof_uint16 = 2
@@ -3318,7 +3318,7 @@ def test_gpkg_50000_50000_uint16():
     if sys.maxsize < 2**32:
         pytest.skip('Test not available on 32 bit')
 
-    ds = gdal.Open('/vsizip/data/50000_50000_uint16.gpkg.zip/50000_50000_uint16.gpkg')
+    ds = gdal.Open('/vsizip/data/gpkg/50000_50000_uint16.gpkg.zip/50000_50000_uint16.gpkg')
 
     import psutil
     sizeof_uint16 = 2
