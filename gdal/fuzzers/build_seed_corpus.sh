@@ -293,7 +293,7 @@ rm gdal_sdts.tar
 echo "Building ers_fuzzer_seed_corpus.zip"
 rm -f $OUT/ers_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD
-cd  $(dirname $0)/../../autotest/gdrivers/data
+cd  $(dirname $0)/../../autotest/gdrivers/data/ers
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:%s\\n" "test.ers"
