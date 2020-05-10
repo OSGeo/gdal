@@ -40,7 +40,7 @@ import gdaltest
 
 def test_iris_1():
 
-    tst = gdaltest.GDALTest('IRIS', 'fakeiris.dat', 1, 65532)
+    tst = gdaltest.GDALTest('IRIS', 'iris/fakeiris.dat', 1, 65532)
     return tst.testOpen()
 
 ###############################################################################
@@ -49,7 +49,7 @@ def test_iris_1():
 
 def test_iris_2():
 
-    ds = gdal.Open('data/iristest.dat')
+    ds = gdal.Open('data/iris/iristest.dat')
     assert ds.GetRasterBand(1).Checksum() == 52872
 
     ds.GetProjectionRef()
