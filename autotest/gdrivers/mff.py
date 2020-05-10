@@ -38,7 +38,7 @@ import gdaltest
 
 def test_mff_1():
 
-    tst = gdaltest.GDALTest('MFF', 'fakemff.hdr', 1, 1)
+    tst = gdaltest.GDALTest('MFF', 'mff/fakemff.hdr', 1, 1)
     return tst.testOpen()
 
 ###############################################################################
@@ -47,7 +47,7 @@ def test_mff_1():
 
 def test_mff_2():
 
-    tst = gdaltest.GDALTest('MFF', 'fakemfftiled.hdr', 1, 1)
+    tst = gdaltest.GDALTest('MFF', 'mff/fakemfftiled.hdr', 1, 1)
     return tst.testOpen()
 
 
@@ -56,7 +56,7 @@ def test_mff_2():
 
 def test_mff_3():
 
-    tst = gdaltest.GDALTest('MFF', 'bytemff.hdr', 1, 4672)
+    tst = gdaltest.GDALTest('MFF', 'mff/bytemff.hdr', 1, 4672)
     return tst.testOpen()
 
 
