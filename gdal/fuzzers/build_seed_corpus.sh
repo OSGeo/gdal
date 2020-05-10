@@ -190,9 +190,9 @@ rm -f $OUT/isce_fuzzer_seed_corpus.zip
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:isce.slc\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/isce.slc
+    cat $(dirname $0)/../../autotest/gdrivers/data/isce/isce.slc
     printf "***NEWFILE***:isce.slc.xml\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/isce.slc.xml
+    cat $(dirname $0)/../../autotest/gdrivers/data/isce/isce.slc.xml
 } > isce.tar
 zip -r $OUT/isce_fuzzer_seed_corpus.zip isce.tar >/dev/null
 rm isce.tar
