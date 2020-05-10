@@ -790,7 +790,7 @@ def test_netcdf_22():
     if not gdaltest.netcdf_drv_has_hdf4:
         pytest.skip()
 
-    ifile = 'data/hdifftst2.hdf'
+    ifile = 'data/hdf4/hdifftst2.hdf'
 
     # suppress warning
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -820,7 +820,7 @@ def test_netcdf_23():
             gdal.GetDriverByName('HDF4Image') is None:
         pytest.skip()
 
-    ifile = 'data/hdifftst2.hdf'
+    ifile = 'data/hdf4/hdifftst2.hdf'
 
     # test with Open()
     ds = gdal.Open(ifile)
