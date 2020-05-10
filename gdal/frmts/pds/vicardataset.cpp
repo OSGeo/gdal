@@ -940,7 +940,12 @@ CPLErr VICARBASICRasterBand::IReadBlock( int /*nXBlock*/, int nYBlock, void *pIm
     {
         return CE_Failure;
     }
-
+#ifdef CPL_MSB
+    if( nDTSize > 1 )
+    {
+        GDALSwapWords(pImage, nDTSize, nRasterXSize, nDTSize);
+    }
+#endif
     return CE_None;
 }
 
@@ -993,6 +998,13 @@ CPLErr VICARBASICRasterBand::IWriteBlock( int /*nXBlock*/, int nYBlock,
         }
     }
 
+#ifdef CPL_MSB
+    if( nDTSize > 1 )
+    {
+        GDALSwapWords(pImage, nDTSize, nRasterXSize, nDTSize);
+    }
+#endif
+
     size_t nCodedSize = 0;
     try
     {
@@ -1005,6 +1017,13 @@ CPLErr VICARBASICRasterBand::IWriteBlock( int /*nXBlock*/, int nYBlock,
     {
         return CE_Failure;
     }
+
+#ifdef CPL_MSB
+    if( nDTSize > 1 )
+    {
+        GDALSwapWords(pImage, nDTSize, nRasterXSize, nDTSize);
+    }
+#endif
 
     if( poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC )
     {
