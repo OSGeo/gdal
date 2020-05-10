@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+<Folder>
 <GroundOverlay>
 <name>small_world</name>
 <color>ffffffff</color>
 <Icon>
-<href>small_world.tif</href>
+<href>../small_world_pct.tif</href>
 <viewBoundScale>1</viewBoundScale>
 </Icon>
 <LatLonBox>
@@ -14,4 +16,6 @@
 <west>-180</west>
 </LatLonBox>
 </GroundOverlay>
+</Folder>
+</Document>
 </kml>
