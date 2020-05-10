@@ -3814,7 +3814,7 @@ def test_tiff_write_105():
 # Test the direct copy mechanism of JPEG source
 
 
-def test_tiff_write_106(filename='../gdrivers/data/byte_with_xmp.jpg', options=None, check_cs=True):
+def test_tiff_write_106(filename='../gdrivers/data/jpeg/byte_with_xmp.jpg', options=None, check_cs=True):
 
     if options is None:
         options = ['COMPRESS=JPEG']
@@ -3864,33 +3864,33 @@ def test_tiff_write_109():
 
 
 def test_tiff_write_110():
-    return test_tiff_write_106(filename='../gdrivers/data/albania.jpg', check_cs=False)
+    return test_tiff_write_106(filename='../gdrivers/data/jpeg/albania.jpg', check_cs=False)
 
 # Whole copy of YCbCr *DOES* give exact pixels w.r.t. original image
 
 
 def test_tiff_write_111():
-    return test_tiff_write_106(filename='../gdrivers/data/albania.jpg', options=['COMPRESS=JPEG', 'BLOCKYSIZE=260'])
+    return test_tiff_write_106(filename='../gdrivers/data/jpeg/albania.jpg', options=['COMPRESS=JPEG', 'BLOCKYSIZE=260'])
 
 
 def test_tiff_write_111_bis():
-    return test_tiff_write_106(filename='../gdrivers/data/albania.jpg', options=['COMPRESS=JPEG', 'BLOCKYSIZE=260', 'INTERLEAVE=PIXEL'])
+    return test_tiff_write_106(filename='../gdrivers/data/jpeg/albania.jpg', options=['COMPRESS=JPEG', 'BLOCKYSIZE=260', 'INTERLEAVE=PIXEL'])
 
 
 def test_tiff_write_111_ter():
-    return test_tiff_write_106(filename='../gdrivers/data/albania.jpg', options=['COMPRESS=JPEG', 'BLOCKYSIZE=260', 'INTERLEAVE=BAND'], check_cs=False)
+    return test_tiff_write_106(filename='../gdrivers/data/jpeg/albania.jpg', options=['COMPRESS=JPEG', 'BLOCKYSIZE=260', 'INTERLEAVE=BAND'], check_cs=False)
 
 # Tiled organization of YCbCr does *NOT* give exact pixels w.r.t. original image
 
 
 def test_tiff_write_112():
-    return test_tiff_write_106(filename='../gdrivers/data/albania.jpg', options=['COMPRESS=JPEG', 'TILED=YES'], check_cs=False)
+    return test_tiff_write_106(filename='../gdrivers/data/jpeg/albania.jpg', options=['COMPRESS=JPEG', 'TILED=YES'], check_cs=False)
 
 # The source is a JPEG in RGB colorspace (usually it is YCbCr).
 
 
 def test_tiff_write_113():
-    return test_tiff_write_106(filename='../gdrivers/data/rgbsmall_rgb.jpg', options=['COMPRESS=JPEG', 'BLOCKYSIZE=8'])
+    return test_tiff_write_106(filename='../gdrivers/data/jpeg/rgbsmall_rgb.jpg', options=['COMPRESS=JPEG', 'BLOCKYSIZE=8'])
 
 ###############################################################################
 # Test CreateCopy() interruption
@@ -4642,7 +4642,7 @@ def test_tiff_write_128():
         pytest.skip()
 
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'NO')
-    src_ds = gdal.Open('../gdrivers/data/rgb_ntf_cmyk.jpg')
+    src_ds = gdal.Open('../gdrivers/data/jpeg/rgb_ntf_cmyk.jpg')
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', None)
 
     # Will received implicitly CMYK photometric interpretation.
@@ -5658,7 +5658,7 @@ def test_tiff_write_147():
 
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'NO')
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
-    gdal.Translate('/vsimem/tiff_write_147.tif', '../gdrivers/data/rgb_ntf_cmyk.jpg', options='-outsize 1000% 1000% -co COMPRESS=JPEG -co PHOTOMETRIC=CMYK')
+    gdal.Translate('/vsimem/tiff_write_147.tif', '../gdrivers/data/jpeg/rgb_ntf_cmyk.jpg', options='-outsize 1000% 1000% -co COMPRESS=JPEG -co PHOTOMETRIC=CMYK')
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', None)
     gdal.SetConfigOption('GDAL_PAM_ENABLED', None)
     out_ds = gdal.Open('/vsimem/tiff_write_147.tif')
@@ -5677,12 +5677,12 @@ def test_tiff_write_148():
         pytest.skip()
 
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'NO')
-    tmp_ds = gdal.Translate('', '../gdrivers/data/rgb_ntf_cmyk.jpg', format='MEM')
+    tmp_ds = gdal.Translate('', '../gdrivers/data/jpeg/rgb_ntf_cmyk.jpg', format='MEM')
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', None)
     original_stats = [tmp_ds.GetRasterBand(i + 1).ComputeStatistics(True) for i in range(4)]
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'NO')
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
-    gdal.Translate('/vsimem/tiff_write_148.tif', '../gdrivers/data/rgb_ntf_cmyk.jpg', options='-outsize 1000% 1000% -co COMPRESS=JPEG -co PHOTOMETRIC=CMYK')
+    gdal.Translate('/vsimem/tiff_write_148.tif', '../gdrivers/data/jpeg/rgb_ntf_cmyk.jpg', options='-outsize 1000% 1000% -co COMPRESS=JPEG -co PHOTOMETRIC=CMYK')
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', None)
     gdal.SetConfigOption('GDAL_PAM_ENABLED', None)
     out_ds = gdal.Open('GTIFF_RAW:/vsimem/tiff_write_148.tif')

@@ -1381,7 +1381,7 @@ def test_pdf_jpeg_direct_copy(poppler_or_pdfium):
     if gdal.GetDriverByName('JPEG') is None:
         pytest.skip()
 
-    src_ds = gdal.Open('data/byte_with_xmp.jpg')
+    src_ds = gdal.Open('data/jpeg/byte_with_xmp.jpg')
     ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_jpeg_direct_copy.pdf', src_ds, options=['XMP=NO'])
     ds = None
     src_ds = None
@@ -1416,7 +1416,7 @@ def test_pdf_jpeg_in_vrt_direct_copy(poppler_or_pdfium):
   <GeoTransform>  4.4072000000000000e+05,  6.0000000000000000e+01,  0.0000000000000000e+00,  3.7513200000000000e+06,  0.0000000000000000e+00, -6.0000000000000000e+01</GeoTransform>
   <VRTRasterBand dataType="Byte" band="1">
     <SimpleSource>
-      <SourceFilename relativeToVRT="0">data/byte_with_xmp.jpg</SourceFilename>
+      <SourceFilename relativeToVRT="0">data/jpeg/byte_with_xmp.jpg</SourceFilename>
       <SourceBand>1</SourceBand>
       <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="1" />
       <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
