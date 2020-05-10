@@ -1381,7 +1381,7 @@ def test_pds4_createlabelonly_isis3():
 
 def test_pds4_createlabelonly_vicar():
 
-    gdal.FileFromMemBuffer('/vsimem/test_vicar_truncated.bin', open('data/test_vicar_truncated.bin', 'rb').read())
+    gdal.FileFromMemBuffer('/vsimem/test_vicar_truncated.bin', open('data/vicar/test_vicar_truncated.bin', 'rb').read())
 
     src_ds = gdal.Open('/vsimem/test_vicar_truncated.bin')
     return _test_createlabelonly(src_ds, expected_standard_id = '<parsing_standard_id>VICAR2</parsing_standard_id>')

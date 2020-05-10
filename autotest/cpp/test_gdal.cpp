@@ -1270,7 +1270,7 @@ namespace tut
         // VICAR
         {
             GDALDatasetUniquePtr poDS(
-                GDALDataset::Open(GDRIVERS_DATA_DIR "test_vicar_truncated.bin"));
+                GDALDataset::Open(GDRIVERS_DATA_DIR "vicar/test_vicar_truncated.bin"));
             ensure( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
             ensure( poDS->GetRawBinaryLayout(sLayout) );
