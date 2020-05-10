@@ -70,7 +70,7 @@ def wms_2():
     if not gdaltest.wms_srv1_ok:
         pytest.skip()
 
-    gdaltest.wms_ds = gdal.Open('data/pop_wms.xml')
+    gdaltest.wms_ds = gdal.Open('data/wms/pop_wms.xml')
 
     if gdaltest.wms_ds is not None:
         return
@@ -575,7 +575,7 @@ def test_wms_13():
     if gdaltest.wms_drv is None:
         pytest.skip()
 
-    ds = gdal.Open("data/DNEC_250K.vrt")
+    ds = gdal.Open("data/wms/DNEC_250K.vrt")
     if ds.ReadRaster(0, 0, 1024, 682) is None:
         srv = 'http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GeCapabilities'
         if gdaltest.gdalurlopen(srv) is None:
