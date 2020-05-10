@@ -107,11 +107,11 @@ echo "Building srp_fuzzer_seed_corpus.zip"
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:FKUSRP01.GEN\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/USRP_PCB0/FKUSRP01.GEN
+    cat $(dirname $0)/../../autotest/gdrivers/data/srp/USRP_PCB0/FKUSRP01.GEN
     printf "***NEWFILE***:FKUSRP01.IMG\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/USRP_PCB0/FKUSRP01.IMG
+    cat $(dirname $0)/../../autotest/gdrivers/data/srp/USRP_PCB0/FKUSRP01.IMG
     printf "***NEWFILE***:FKUSRP01.QAL\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/USRP_PCB0/FKUSRP01.QAL
+    cat $(dirname $0)/../../autotest/gdrivers/data/srp/USRP_PCB0/FKUSRP01.QAL
 } > srp.tar
 rm -f $OUT/srp_fuzzer_seed_corpus.zip
 zip -r $OUT/srp_fuzzer_seed_corpus.zip srp.tar >/dev/null
