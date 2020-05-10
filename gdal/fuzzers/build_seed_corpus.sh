@@ -141,9 +141,9 @@ rm -f $OUT/envi_fuzzer_seed_corpus.zip
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:my.hdr\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/aea.hdr
+    cat $(dirname $0)/../../autotest/gdrivers/data/envi/aea.hdr
     printf "***NEWFILE***:my.dat\\n" >> aea.tar
-    cat $(dirname $0)/../../autotest/gdrivers/data/aea.dat
+    cat $(dirname $0)/../../autotest/gdrivers/data/envi/aea.dat
 } > aea.tar
 zip -r $OUT/envi_fuzzer_seed_corpus.zip aea.tar >/dev/null
 rm aea.tar
@@ -151,9 +151,9 @@ rm aea.tar
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:my.hdr\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/aea_compressed.hdr
+    cat $(dirname $0)/../../autotest/gdrivers/data/envi/aea_compressed.hdr
     printf "***NEWFILE***:my.dat\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/aea_compressed.dat
+    cat $(dirname $0)/../../autotest/gdrivers/data/envi/aea_compressed.dat
 } > aea_compressed.tar
 zip -r $OUT/envi_fuzzer_seed_corpus.zip aea_compressed.tar >/dev/null
 rm aea_compressed.tar

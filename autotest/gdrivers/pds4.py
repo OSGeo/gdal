@@ -1318,8 +1318,8 @@ def _test_createlabelonly(src_ds, expected_standard_id = None, filename = '/vsim
 
 def test_pds4_createlabelonly_envi():
 
-    gdal.FileFromMemBuffer('/vsimem/envi_rgbsmall_bip.img', open('data/envi_rgbsmall_bip.img', 'rb').read())
-    gdal.FileFromMemBuffer('/vsimem/envi_rgbsmall_bip.hdr', open('data/envi_rgbsmall_bip.hdr', 'rb').read())
+    gdal.FileFromMemBuffer('/vsimem/envi_rgbsmall_bip.img', open('data/envi/envi_rgbsmall_bip.img', 'rb').read())
+    gdal.FileFromMemBuffer('/vsimem/envi_rgbsmall_bip.hdr', open('data/envi/envi_rgbsmall_bip.hdr', 'rb').read())
 
     src_ds = gdal.Open('/vsimem/envi_rgbsmall_bip.img')
     return _test_createlabelonly(src_ds)

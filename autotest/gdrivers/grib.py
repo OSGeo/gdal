@@ -1144,7 +1144,7 @@ def test_grib_grib2_write_data_encodings_warnings_and_errors():
     tests += [['../gcore/data/cfloat32.tif', []]]  # complex data type
     tests += [['data/float64.asc', []]]  # no projection
     tests += [['data/byte.sgi', []]]  # no geotransform
-    tests += [['data/rotation.img', []]]  # geotransform with rotation terms
+    tests += [['data/envi/rotation.img', []]]  # geotransform with rotation terms
     gdal.GetDriverByName('GTiff').Create('/vsimem/huge.tif', 65535, 65535, 1, options=['SPARSE_OK=YES'])
     tests += [['/vsimem/huge.tif', []]]  # too many pixels
 
