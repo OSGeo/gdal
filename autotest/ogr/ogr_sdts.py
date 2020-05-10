@@ -40,7 +40,7 @@ import pytest
 
 def test_ogr_sdts_1():
 
-    gdaltest.sdts_ds = ogr.Open('data/D3607551_rd0s_1_sdts_truncated/TR01CATD.DDF')
+    gdaltest.sdts_ds = ogr.Open('data/sdts/D3607551_rd0s_1_sdts_truncated/TR01CATD.DDF')
 
     assert gdaltest.sdts_ds is not None
 

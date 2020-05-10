@@ -2,7 +2,7 @@
  <OGRVRTDataSource>
 
     <OGRVRTLayer name="test2">
-        <SrcDataSource relativeToVRT="1">flat.dbf</SrcDataSource> 
+        <SrcDataSource relativeToVRT="1">../flat.dbf</SrcDataSource> 
  	<SrcLayer>flat</SrcLayer> 
 	<GeometryType>wkbPoint</GeometryType> 
 	<GeometryField encoding="PointFromColumns" x="x" y="y" z="z"/> 

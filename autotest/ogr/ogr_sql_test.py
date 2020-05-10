@@ -560,7 +560,7 @@ def test_ogr_sql_24():
 
     result = 'success'
 
-    ds = ogr.Open('data/smalltest.dgn')
+    ds = ogr.Open('data/dgn/smalltest.dgn')
 
     sql_layer = ds.ExecuteSQL('SELECT * from elements where colorindex=83 and type=3')
 
@@ -635,7 +635,7 @@ def test_ogr_sql_26():
 
 def test_ogr_sql_27():
 
-    ds = ogr.Open('data/testdatetime.csv')
+    ds = ogr.Open('data/csv/testdatetime.csv')
 
     sql_lyr = ds.ExecuteSQL("SELECT * FROM testdatetime WHERE "
                             "timestamp < '2010/04/01 00:00:00' AND "

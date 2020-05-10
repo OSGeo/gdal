@@ -4,6 +4,6 @@
   <entry>
     <primary regexp="http://www.epic.noaa.gov:10100/dods/wod2001/natl_prof_bot.cdp*"/>
 
-    <ancillary url="data/natl_prof_bot.cdp.das"/>
+    <ancillary url="data/dods/natl_prof_bot.cdp.das"/>
   </entry>
 </ais>

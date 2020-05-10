@@ -1842,7 +1842,7 @@ def test_jp2openjpeg_45():
         pytest.skip()
 
     with gdaltest.error_handler():
-        if ogr.Open('../ogr/data/ionic_wfs.gml') is None:
+        if ogr.Open('../ogr/data/gml/ionic_wfs.gml') is None:
             pytest.skip('GML read support missing')
 
     if gdal.GetDriverByName('KML') is None and gdal.GetDriverByName('LIBKML') is None:

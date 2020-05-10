@@ -48,7 +48,7 @@ def test_ogr_xls_1():
 
     assert drv.TestCapability("foo") == 0
 
-    ds = ogr.Open('data/test972000xp.xls')
+    ds = ogr.Open('data/xls/test972000xp.xls')
     assert ds is not None, 'cannot open dataset'
 
     assert ds.TestCapability("foo") == 0
@@ -99,7 +99,7 @@ def test_ogr_xls_2():
         pytest.skip()
 
     gdal.SetConfigOption('OGR_XLS_HEADERS', 'DISABLE')
-    ds = ogr.Open('data/test972000xp.xls')
+    ds = ogr.Open('data/xls/test972000xp.xls')
 
     lyr = ds.GetLayer(0)
 
@@ -118,7 +118,7 @@ def test_ogr_xls_3():
         pytest.skip()
 
     gdal.SetConfigOption('OGR_XLS_FIELD_TYPES', 'STRING')
-    ds = ogr.Open('data/test972000xp.xls')
+    ds = ogr.Open('data/xls/test972000xp.xls')
 
     lyr = ds.GetLayer(0)
 
@@ -140,7 +140,7 @@ def test_ogr_xls_4():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test972000xp.xls')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/xls/test972000xp.xls')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 

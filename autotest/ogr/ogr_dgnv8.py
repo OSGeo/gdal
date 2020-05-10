@@ -47,7 +47,7 @@ def test_ogr_dgnv8_1():
     if gdaltest.dgnv8_drv is None:
         pytest.skip()
 
-    ds = ogr.Open('data/test_dgnv8.dgn')
+    ds = ogr.Open('data/dgnv8/test_dgnv8.dgn')
     assert ds is not None, 'failed to open test file.'
 
 ###############################################################################
@@ -59,12 +59,12 @@ def test_ogr_dgnv8_2():
     if gdaltest.dgnv8_drv is None:
         pytest.skip()
 
-    gdal.VectorTranslate('/vsimem/ogr_dgnv8_2.csv', 'data/test_dgnv8.dgn',
+    gdal.VectorTranslate('/vsimem/ogr_dgnv8_2.csv', 'data/dgnv8/test_dgnv8.dgn',
                          options='-f CSV  -dsco geometry=as_wkt -sql "select *, ogr_style from my_model"')
 
     ds_ref = ogr.Open('/vsimem/ogr_dgnv8_2.csv')
     lyr_ref = ds_ref.GetLayer(0)
-    ds = ogr.Open('data/test_dgnv8_ref.csv')
+    ds = ogr.Open('data/dgnv8/test_dgnv8_ref.csv')
     lyr = ds.GetLayer(0)
     ret = ogrtest.compare_layers(lyr, lyr_ref, excluded_fields=['WKT'])
 
@@ -85,11 +85,11 @@ def test_ogr_dgnv8_3():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test_dgnv8.dgn')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/dgnv8/test_dgnv8.dgn')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
-    shutil.copy('data/test_dgnv8.dgn', 'tmp/test_dgnv8.dgn')
+    shutil.copy('data/dgnv8/test_dgnv8.dgn', 'tmp/test_dgnv8.dgn')
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/test_dgnv8.dgn')
     os.unlink('tmp/test_dgnv8.dgn')
 
@@ -105,7 +105,7 @@ def test_ogr_dgnv8_4():
         pytest.skip()
 
     tmp_dgn = 'tmp/ogr_dgnv8_4.dgn'
-    gdal.VectorTranslate(tmp_dgn, 'data/test_dgnv8.dgn', format='DGNv8')
+    gdal.VectorTranslate(tmp_dgn, 'data/dgnv8/test_dgnv8.dgn', format='DGNv8')
 
     tmp_csv = '/vsimem/ogr_dgnv8_4.csv'
     gdal.VectorTranslate(tmp_csv, tmp_dgn,
@@ -114,7 +114,7 @@ def test_ogr_dgnv8_4():
 
     ds_ref = ogr.Open(tmp_csv)
     lyr_ref = ds_ref.GetLayer(0)
-    ds = ogr.Open('data/test_dgnv8_write_ref.csv')
+    ds = ogr.Open('data/dgnv8/test_dgnv8_write_ref.csv')
     lyr = ds.GetLayer(0)
     ret = ogrtest.compare_layers(lyr, lyr_ref, excluded_fields=['WKT'])
 

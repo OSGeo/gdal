@@ -644,7 +644,7 @@ def test_ogr_fgdb_11():
     except OSError:
         pass
 
-    f = open('data/test_filegdb_field_types.xml', 'rt')
+    f = open('data/filegdb/test_filegdb_field_types.xml', 'rt')
     xml_def = f.read()
     f.close()
 
@@ -805,7 +805,7 @@ def test_ogr_fgdb_15():
         shutil.rmtree('tmp/test3005.gdb')
     except OSError:
         pass
-    gdaltest.unzip('tmp', 'data/test3005.gdb.zip')
+    gdaltest.unzip('tmp', 'data/filegdb/test3005.gdb.zip')
     ds = ogr.Open('tmp/test3005.gdb')
     lyr = ds.GetLayer(0)
     got_wkt = lyr.GetSpatialRef().ExportToWkt()
@@ -824,7 +824,7 @@ def test_ogr_fgdb_16():
         pytest.skip()
 
     try:
-        gdaltest.unzip('tmp/cache', 'data/ESSENCE_NAIPF_ORI_PROV_sub93.gdb.zip')
+        gdaltest.unzip('tmp/cache', 'data/filegdb/ESSENCE_NAIPF_ORI_PROV_sub93.gdb.zip')
     except OSError:
         pass
     try:
@@ -2031,9 +2031,9 @@ def test_ogr_fgdb_22():
     if ogrtest.fgdb_drv is None:
         pytest.skip()
 
-    ds = ogr.Open('data/curves.gdb')
+    ds = ogr.Open('data/filegdb/curves.gdb')
     lyr = ds.GetLayerByName('line')
-    ds_ref = ogr.Open('data/curves_line.csv')
+    ds_ref = ogr.Open('data/filegdb/curves_line.csv')
     lyr_ref = ds_ref.GetLayer(0)
     for f in lyr:
         f_ref = lyr_ref.GetNextFeature()
@@ -2042,7 +2042,7 @@ def test_ogr_fgdb_22():
             pytest.fail(f_ref.GetGeometryRef().ExportToWkt())
 
     lyr = ds.GetLayerByName('polygon')
-    ds_ref = ogr.Open('data/curves_polygon.csv')
+    ds_ref = ogr.Open('data/filegdb/curves_polygon.csv')
     lyr_ref = ds_ref.GetLayer(0)
     for f in lyr:
         f_ref = lyr_ref.GetNextFeature()
@@ -2050,9 +2050,9 @@ def test_ogr_fgdb_22():
             print(f.GetGeometryRef().ExportToWkt())
             pytest.fail(f_ref.GetGeometryRef().ExportToWkt())
 
-    ds = ogr.Open('data/curve_circle_by_center.gdb')
+    ds = ogr.Open('data/filegdb/curve_circle_by_center.gdb')
     lyr = ds.GetLayer(0)
-    ds_ref = ogr.Open('data/curve_circle_by_center.csv')
+    ds_ref = ogr.Open('data/filegdb/curve_circle_by_center.csv')
     lyr_ref = ds_ref.GetLayer(0)
     for f in lyr:
         f_ref = lyr_ref.GetNextFeature()
@@ -2070,9 +2070,9 @@ def test_ogr_fgdb_23():
     if ogrtest.fgdb_drv is None:
         pytest.skip()
 
-    os.chdir('data/curves.gdb')
+    os.chdir('data/filegdb/curves.gdb')
     ds = ogr.Open('.')
-    os.chdir('../..')
+    os.chdir('../../..')
     assert ds is not None
 
 ###############################################################################
@@ -2085,9 +2085,9 @@ def test_ogr_fgdb_24():
     if ogrtest.fgdb_drv is None:
         pytest.skip()
 
-    ds = ogr.Open('data/filegdb_polygonzm_m_not_closing_with_curves.gdb')
+    ds = ogr.Open('data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb')
     lyr = ds.GetLayer(0)
-    ds_ref = ogr.Open('data/filegdb_polygonzm_m_not_closing_with_curves.gdb.csv')
+    ds_ref = ogr.Open('data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb.csv')
     lyr_ref = ds_ref.GetLayer(0)
     for f in lyr:
         f_ref = lyr_ref.GetNextFeature()
@@ -2095,9 +2095,9 @@ def test_ogr_fgdb_24():
             print(f.GetGeometryRef().ExportToIsoWkt())
             pytest.fail(f_ref.GetGeometryRef().ExportToIsoWkt())
 
-    ds = ogr.Open('data/filegdb_polygonzm_nan_m_with_curves.gdb')
+    ds = ogr.Open('data/filegdb/filegdb_polygonzm_nan_m_with_curves.gdb')
     lyr = ds.GetLayer(0)
-    ds_ref = ogr.Open('data/filegdb_polygonzm_nan_m_with_curves.gdb.csv')
+    ds_ref = ogr.Open('data/filegdb/filegdb_polygonzm_nan_m_with_curves.gdb.csv')
     lyr_ref = ds_ref.GetLayer(0)
     for f in lyr:
         f_ref = lyr_ref.GetNextFeature()
@@ -2115,7 +2115,7 @@ def test_ogr_fgdb_25():
     if ogrtest.fgdb_drv is None:
         pytest.skip()
 
-    ds = ogr.Open('data/curves.gdb')
+    ds = ogr.Open('data/filegdb/curves.gdb')
     sql_lyr = ds.ExecuteSQL('SELECT OBJECTID FROM polygon WHERE OBJECTID = 2')
     assert sql_lyr is not None
     f = sql_lyr.GetNextFeature()
@@ -2153,7 +2153,7 @@ def test_ogr_fgdb_weird_winding_order():
         shutil.rmtree('tmp/roads_clip Drawing.gdb')
     except OSError:
         pass
-    gdaltest.unzip('tmp', 'data/weird_winding_order_fgdb.zip')
+    gdaltest.unzip('tmp', 'data/filegdb/weird_winding_order_fgdb.zip')
 
     ds = ogr.Open('tmp/roads_clip Drawing.gdb')
     lyr = ds.GetLayer(0)

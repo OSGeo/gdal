@@ -41,7 +41,7 @@ import pytest
 
 def test_ogr_pds_1():
 
-    ds = ogr.Open('data/ap01578l.lbl')
+    ds = ogr.Open('data/pds/ap01578l.lbl')
     assert ds is not None, 'cannot open dataset'
 
     lyr = ds.GetLayerByName('RAMAPPING')
@@ -73,7 +73,7 @@ def test_ogr_pds_1():
 
 def test_ogr_pds_2():
 
-    ds = ogr.Open('data/virsvd_orb_11187_050618.lbl')
+    ds = ogr.Open('data/pds/virsvd_orb_11187_050618.lbl')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['INCIDENCE_ANGLE'] != pytest.approx(3.56775538, abs=1e-7) or f['TEMP_2'] != pytest.approx(28.1240005493164, abs=1e-7):

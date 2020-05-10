@@ -107,7 +107,7 @@ def test_ogr_ods_1():
 
     assert drv.TestCapability("foo") == 0
 
-    ds = ogr.Open('data/test.ods')
+    ds = ogr.Open('data/ods/test.ods')
     assert ds is not None, 'cannot open dataset'
 
     return ogr_ods_check(ds)
@@ -124,7 +124,7 @@ def test_ogr_ods_kspread_1():
 
     assert drv.TestCapability("foo") == 0
 
-    ds = ogr.Open('data/test_kspread.ods')
+    ds = ogr.Open('data/ods/test_kspread.ods')
     assert ds is not None, 'cannot open dataset'
 
     assert ds.TestCapability("foo") == 0
@@ -191,7 +191,7 @@ def test_ogr_ods_2():
         pytest.skip()
 
     gdal.SetConfigOption('OGR_ODS_HEADERS', 'DISABLE')
-    ds = ogr.Open('data/test.ods')
+    ds = ogr.Open('data/ods/test.ods')
 
     lyr = ds.GetLayerByName('Feuille7')
 
@@ -210,7 +210,7 @@ def test_ogr_ods_3():
         pytest.skip()
 
     gdal.SetConfigOption('OGR_ODS_FIELD_TYPES', 'STRING')
-    ds = ogr.Open('data/test.ods')
+    ds = ogr.Open('data/ods/test.ods')
 
     lyr = ds.GetLayerByName('Feuille7')
 
@@ -232,7 +232,7 @@ def test_ogr_ods_4():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.ods')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/ods/test.ods')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
@@ -250,7 +250,7 @@ def test_ogr_ods_5():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         pytest.skip()
 
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f ODS tmp/test.ods data/test.ods')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f ODS tmp/test.ods data/ods/test.ods')
 
     ds = ogr.Open('tmp/test.ods')
     ret = ogr_ods_check(ds)
@@ -270,7 +270,7 @@ def test_ogr_ods_6():
     if drv is None:
         pytest.skip()
 
-    src_ds = ogr.Open('ODS:data/content_formulas.xml')
+    src_ds = ogr.Open('ODS:data/ods/content_formulas.xml')
     filepath = '/vsimem/content_formulas.csv'
     with gdaltest.error_handler():
         out_ds = ogr.GetDriverByName('CSV').CopyDataSource(src_ds, filepath)
@@ -314,7 +314,7 @@ def test_ogr_ods_7():
     filepath = 'tmp/ogr_ods_7.ods'
     if os.path.exists(filepath):
         os.unlink(filepath)
-    shutil.copy('data/test.ods', filepath)
+    shutil.copy('data/ods/test.ods', filepath)
 
     ds = ogr.Open(filepath, update=1)
     lyr = ds.GetLayerByName('Feuille7')
@@ -463,7 +463,7 @@ def test_ogr_ods_number_columns_repeated_at_end_of_row():
     if drv is None:
         pytest.skip()
 
-    ds = ogr.Open('data/testrepeatedcolatendofrow.ods')
+    ds = ogr.Open('data/ods/testrepeatedcolatendofrow.ods')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     f = lyr.GetNextFeature()

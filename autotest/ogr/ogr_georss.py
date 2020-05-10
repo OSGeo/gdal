@@ -41,7 +41,7 @@ import pytest
 
 def test_ogr_georss_init():
 
-    ds = ogr.Open('data/atom_rfc_sample.xml')
+    ds = ogr.Open('data/georss/atom_rfc_sample.xml')
     if ds is None:
         gdaltest.georss_read_support = 0
     else:
@@ -50,7 +50,7 @@ def test_ogr_georss_init():
 
     gdaltest.have_gml_reader = 0
     try:
-        ds = ogr.Open('data/ionic_wfs.gml')
+        ds = ogr.Open('data/gm/ionic_wfs.gml')
         if ds is not None:
             gdaltest.have_gml_reader = 1
             ds = None
@@ -106,7 +106,7 @@ def ogr_georss_test_atom(filename):
 
 def test_ogr_georss_1():
 
-    return ogr_georss_test_atom('data/atom_rfc_sample.xml')
+    return ogr_georss_test_atom('data/georss/atom_rfc_sample.xml')
 
 ###############################################################################
 # Test reading an ATOM document with atom: prefiw
@@ -114,7 +114,7 @@ def test_ogr_georss_1():
 
 def test_ogr_georss_1_atom_ns():
 
-    return ogr_georss_test_atom('data/atom_rfc_sample_atom_ns.xml')
+    return ogr_georss_test_atom('data/georss/atom_rfc_sample_atom_ns.xml')
 
 ###############################################################################
 # Test writing a Atom 1.0 document (doesn't need read support)
@@ -210,7 +210,7 @@ def ogr_georss_test_rss(filename, only_first_feature):
 
 def test_ogr_georss_2():
 
-    return ogr_georss_test_rss('data/test_georss_simple.xml', False)
+    return ogr_georss_test_rss('data/georss/test_georss_simple.xml', False)
 
 ###############################################################################
 # Test reading a RSS 2.0 document with GeoRSS GML geometries
@@ -221,7 +221,7 @@ def test_ogr_georss_3():
     if not gdaltest.have_gml_reader:
         pytest.skip()
 
-    return ogr_georss_test_rss('data/test_georss_gml.xml', False)
+    return ogr_georss_test_rss('data/georss/test_georss_gml.xml', False)
 
 ###############################################################################
 # Test writing a RSS 2.0 document (doesn't need read support)
@@ -559,7 +559,7 @@ def test_ogr_georss_cleanup():
     files = os.listdir('data')
     for filename in files:
         if len(filename) > 13 and filename[-13:] == '.resolved.gml':
-            os.unlink('data/' + filename)
+            os.unlink('data/georss/' + filename)
 
     
 

@@ -973,7 +973,7 @@ def test_ogr_opaif_schema_from_json_schema():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oapif/collections/foo/jsonschema', 200,
                 {'Content-Type': 'application/schema+json'},
-                open('data/oapif_json_schema_eo.jsonschema', 'rt').read())
+                open('data/oapif/oapif_json_schema_eo.jsonschema', 'rt').read())
     handler.add('GET', '/oapif/collections/foo/items?limit=10', 200,
                 {'Content-Type': 'application/geo+json'},
                 """{ "type": "FeatureCollection", "features": [

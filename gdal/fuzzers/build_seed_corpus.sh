@@ -318,7 +318,7 @@ rm srtm.tar ers_dem.tar
 echo "Building ogr_sdts_fuzzer_seed_corpus.zip"
 rm -f $OUT/ogr_sdts_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD
-cd  $(dirname $0)/../../autotest/ogr/data/D3607551_rd0s_1_sdts_truncated
+cd  $(dirname $0)/../../autotest/ogr/data/sdts/D3607551_rd0s_1_sdts_truncated
 printf "FUZZER_FRIENDLY_ARCHIVE\\n" > $CUR_DIR/ogr_sdts.tar
 for file in *.DDF; do
     printf "***NEWFILE***:%s\\n" "$file" >> $CUR_DIR/ogr_sdts.tar
@@ -342,13 +342,13 @@ zip -r $OUT/cad_fuzzer_seed_corpus.zip . >/dev/null
 cd $OLDPWD
 
 echo "Building csv_fuzzer_seed_corpus.zip"
-cd $(dirname $0)/../../autotest/ogr/data
+cd $(dirname $0)/../../autotest/ogr/data/csv
 rm -f $OUT/csv_fuzzer_seed_corpus.zip
 zip -r $OUT/csv_fuzzer_seed_corpus.zip ./*.csv >/dev/null
 cd $OLDPWD
 
 echo "Building bna_fuzzer_seed_corpus.zip"
-cd $(dirname $0)/../../autotest/ogr/data
+cd $(dirname $0)/../../autotest/ogr/data/bna
 rm -f $OUT/bna_fuzzer_seed_corpus.zip
 zip -r $OUT/bna_fuzzer_seed_corpus.zip ./*.bna >/dev/null
 cd $OLDPWD
@@ -356,7 +356,7 @@ cd $OLDPWD
 echo "Building xlsx_fuzzer_seed_corpus.zip"
 rm -f $OUT/xlsx_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD
-cd  $(dirname $0)/../../autotest/ogr/data
+cd  $(dirname $0)/../../autotest/ogr/data/xlsx
 for filename in *.xlsx; do
     mkdir tmpxlsx
     (cd tmpxlsx
@@ -376,7 +376,7 @@ rm xlsx_*.tar
 echo "Building ods_fuzzer_seed_corpus.zip"
 rm -f $OUT/ods_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD
-cd  $(dirname $0)/../../autotest/ogr/data
+cd  $(dirname $0)/../../autotest/ogr/data/ods
 for filename in *.ods; do
     mkdir tmpods
     unzip -d tmpods $filename >/dev/null
@@ -458,7 +458,7 @@ rm small_mif.tar
 
 echo "Building openfilegdb_fuzzer_seed_corpus.zip"
 rm -rf testopenfilegdb.gdb
-unzip $(dirname $0)/../../autotest/ogr/data/testopenfilegdb.gdb.zip >/dev/null
+unzip $(dirname $0)/../../autotest/ogr/data/filegdb/testopenfilegdb.gdb.zip >/dev/null
 printf "FUZZER_FRIENDLY_ARCHIVE\\n" > testopenfilegdb.gdb.tar
 for f in testopenfilegdb.gdb/*; do
     printf "***NEWFILE***:%s\\n" "$f" >> testopenfilegdb.gdb.tar
@@ -466,7 +466,7 @@ for f in testopenfilegdb.gdb/*; do
 done
 
 rm -rf testopenfilegdb92.gdb
-unzip $(dirname $0)/../../autotest/ogr/data/testopenfilegdb92.gdb.zip >/dev/null
+unzip $(dirname $0)/../../autotest/ogr/data/filegdb/testopenfilegdb92.gdb.zip >/dev/null
 printf "FUZZER_FRIENDLY_ARCHIVE\\n" > testopenfilegdb92.gdb.tar
 for f in testopenfilegdb92.gdb/*; do
     printf "***NEWFILE***:%s\\n" "$f" >> testopenfilegdb92.gdb.tar
@@ -483,7 +483,7 @@ rm testopenfilegdb92.gdb.tar
 echo "Building avcbin_fuzzer_seed_corpus.zip"
 rm -f $OUT/avcbin_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD
-cd  $(dirname $0)/../../autotest/ogr/data/testavc
+cd  $(dirname $0)/../../autotest/ogr/data/avc/testavc
 printf "FUZZER_FRIENDLY_ARCHIVE\\n" > $CUR_DIR/avcbin.tar
 find . -type f | while read -r f ; do
     printf "***NEWFILE***:%s\\n" "$f" >> $CUR_DIR/avcbin.tar
@@ -494,7 +494,7 @@ zip -r $OUT/avcbin_fuzzer_seed_corpus.zip avcbin.tar >/dev/null
 rm avcbin.tar
 
 echo "Building avce00_fuzzer_seed_corpus.zip"
-cd $(dirname $0)/../../autotest/ogr/data
+cd $(dirname $0)/../../autotest/ogr/data/avc
 rm -f $OUT/avce00_fuzzer_seed_corpus.zip
 zip -r $OUT/avce00_fuzzer_seed_corpus.zip ./*.e00 >/dev/null
 cd $OLDPWD

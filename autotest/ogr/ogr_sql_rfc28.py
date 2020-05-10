@@ -181,7 +181,7 @@ def test_ogr_rfc28_8_good_quoting():
 
 
 def test_ogr_rfc28_9():
-    ds = ogr.Open('data/oddname.csv')
+    ds = ogr.Open('data/csv/oddname.csv')
     lyr = ds.GetLayer(0)
     lyr.SetAttributeFilter("\"Funky @Name\" = '32'")
 
@@ -199,7 +199,7 @@ def test_ogr_rfc28_9():
 
 
 def test_ogr_rfc28_10():
-    ds = ogr.Open('data/oddname.csv')
+    ds = ogr.Open('data/csv/oddname.csv')
     lyr = ds.ExecuteSQL("SELECT * from oddname where \"Funky @Name\" = '32'")
 
     count = lyr.GetFeatureCount()
@@ -217,7 +217,7 @@ def test_ogr_rfc28_10():
 
 
 def test_ogr_rfc28_11():
-    ds = ogr.Open('data/oddname.csv')
+    ds = ogr.Open('data/csv/oddname.csv')
     lyr = ds.ExecuteSQL("SELECT \"Funky @Name\" from oddname where prime_meridian_code = '8902'")
 
     count = lyr.GetFeatureCount()

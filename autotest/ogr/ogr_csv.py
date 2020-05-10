@@ -411,7 +411,7 @@ def test_ogr_csv_11():
         pytest.skip()
 
     gdaltest.csv_ds = None
-    gdaltest.csv_ds = ogr.Open('data/testcsvt.csv')
+    gdaltest.csv_ds = ogr.Open('data/csv/testcsvt.csv')
 
     assert gdaltest.csv_ds is not None
 
@@ -725,7 +725,7 @@ def test_ogr_csv_19():
         pytest.skip()
 
     gdaltest.csv_ds = None
-    gdaltest.csv_ds = ogr.Open('data/testnull.csv')
+    gdaltest.csv_ds = ogr.Open('data/csv/testnull.csv')
 
     assert gdaltest.csv_ds is not None
 
@@ -754,7 +754,7 @@ def test_ogr_csv_20():
 
     gdaltest.csv_ds = None
 
-    gdaltest.csv_ds = ogr.Open('data/testnumheader1.csv')
+    gdaltest.csv_ds = ogr.Open('data/csv/testnumheader1.csv')
     assert gdaltest.csv_ds is not None
 
     lyr = gdaltest.csv_ds.GetLayerByName('testnumheader1')
@@ -771,7 +771,7 @@ def test_ogr_csv_20():
 
     gdaltest.csv_ds = None
 
-    gdaltest.csv_ds = ogr.Open('data/testnumheader2.csv')
+    gdaltest.csv_ds = ogr.Open('data/csv/testnumheader2.csv')
     assert gdaltest.csv_ds is not None
 
     lyr = gdaltest.csv_ds.GetLayerByName('testnumheader2')
@@ -797,7 +797,7 @@ def test_ogr_csv_21():
 
     gdaltest.csv_ds = None
 
-    gdaltest.csv_ds = ogr.Open('data/testquoteheader1.csv')
+    gdaltest.csv_ds = ogr.Open('data/csv/testquoteheader1.csv')
     assert gdaltest.csv_ds is not None
 
     lyr = gdaltest.csv_ds.GetLayerByName('testquoteheader1')
@@ -812,7 +812,7 @@ def test_ogr_csv_21():
 
     gdaltest.csv_ds = None
 
-    gdaltest.csv_ds = ogr.Open('data/testquoteheader2.csv')
+    gdaltest.csv_ds = ogr.Open('data/csv/testquoteheader2.csv')
     assert gdaltest.csv_ds is not None
 
     lyr = gdaltest.csv_ds.GetLayerByName('testquoteheader2')
@@ -832,7 +832,7 @@ def test_ogr_csv_21():
 
 def test_ogr_csv_22():
 
-    ds = ogr.Open('data/csv_with_utf8_bom.csv')
+    ds = ogr.Open('data/csv/csv_with_utf8_bom.csv')
     lyr = ds.GetLayer(0)
     fld0_name = lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef()
 
@@ -975,7 +975,7 @@ def test_ogr_csv_26():
 
 def test_ogr_csv_27():
 
-    ds = ogr.Open('data/test_eurostat.tsv')
+    ds = ogr.Open('data/csv/test_eurostat.tsv')
     lyr = ds.GetLayer(0)
     layer_defn = lyr.GetLayerDefn()
     assert layer_defn.GetFieldCount() == 8
@@ -1090,7 +1090,7 @@ def test_ogr_csv_30():
 
 def test_ogr_csv_31():
 
-    ds = ogr.Open('data/allCountries.txt')
+    ds = ogr.Open('data/csv/allCountries.txt')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f.GetField('GEONAMEID') != '3038814' or f.GetField('LATITUDE') != 42.5 or \
@@ -1113,7 +1113,7 @@ def test_ogr_csv_31():
 def test_ogr_csv_32():
 
     # Without limit, everything will be detected as string
-    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
+    ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1127,7 +1127,7 @@ def test_ogr_csv_32():
             pytest.fail(i)
 
     # Without limit, everything will be detected as string
-    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
+    ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=0'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1139,7 +1139,7 @@ def test_ogr_csv_32():
             pytest.fail(i)
 
     # We limit to the first "1.5" line
-    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
+    ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=300', 'QUOTED_FIELDS_AS_STRING=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1156,13 +1156,13 @@ def test_ogr_csv_32():
             pytest.fail(i)
 
     # Without QUOTED_FIELDS_AS_STRING=YES, str3 will be detected as integer
-    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
+    ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=300'])
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('str3')).GetType() == ogr.OFTInteger
 
     # We limit to the first 2 lines
-    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
+    ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350', 'QUOTED_FIELDS_AS_STRING=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1179,7 +1179,7 @@ def test_ogr_csv_32():
             pytest.fail(i)
 
     # Test AUTODETECT_WIDTH=YES
-    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
+    ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350', 'AUTODETECT_WIDTH=YES', 'QUOTED_FIELDS_AS_STRING=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1195,7 +1195,7 @@ def test_ogr_csv_32():
             pytest.fail(i)
 
     # Test AUTODETECT_WIDTH=STRING_ONLY
-    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
+    ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350', 'AUTODETECT_WIDTH=STRING_ONLY', 'QUOTED_FIELDS_AS_STRING=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1211,7 +1211,7 @@ def test_ogr_csv_32():
             pytest.fail(i)
 
     # Test KEEP_SOURCE_COLUMNS=YES
-    ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
+    ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350', 'KEEP_SOURCE_COLUMNS=YES', 'QUOTED_FIELDS_AS_STRING=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1236,7 +1236,7 @@ def test_ogr_csv_32():
                 8,  # Value with a width greater than field width found in record 8 for field str1
                 9,  # Value with a precision greater than field precision found in record 9 for field real1
                ]:
-        ds = gdal.OpenEx('data/testtypeautodetect.csv', gdal.OF_VECTOR,
+        ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
                          open_options=['AUTODETECT_TYPE=YES', 'AUTODETECT_SIZE_LIMIT=350', 'AUTODETECT_WIDTH=YES'])
         lyr = ds.GetLayer(0)
         gdal.ErrorReset()
@@ -1268,7 +1268,7 @@ def test_ogr_csv_32():
 
 def test_ogr_csv_33():
 
-    ds = gdal.OpenEx('data/testtypeautodetectboolean.csv', gdal.OF_VECTOR,
+    ds = gdal.OpenEx('data/csv/testtypeautodetectboolean.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1323,7 +1323,7 @@ def test_ogr_csv_33():
 
 def test_ogr_csv_34():
 
-    ds = gdal.OpenEx('data/testtypeautodetectinteger64.csv', gdal.OF_VECTOR,
+    ds = gdal.OpenEx('data/csv/testtypeautodetectinteger64.csv', gdal.OF_VECTOR,
                      open_options=['AUTODETECT_TYPE=YES'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -2083,7 +2083,7 @@ def test_ogr_csv_49():
 def test_ogr_csv_more_than_100_geom_fields():
 
     with gdaltest.error_handler():
-        ds = ogr.Open('data/more_than_100_geom_fields.csv')
+        ds = ogr.Open('data/csv/more_than_100_geom_fields.csv')
     lyr = ds.GetLayer(0)
     lyr.GetNextFeature()
 

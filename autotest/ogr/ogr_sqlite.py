@@ -1227,19 +1227,19 @@ def test_ogr_sqlite_28():
         pytest.skip()
 
     # Test with a Spatialite 3.0 DB
-    shutil.copy('data/poly_spatialite.sqlite', 'tmp/poly_spatialite.sqlite')
+    shutil.copy('data/sqlite/poly_spatialite.sqlite', 'tmp/poly_spatialite.sqlite')
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/poly_spatialite.sqlite')
     os.unlink('tmp/poly_spatialite.sqlite')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
     # Test on a result SQL layer
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/poly_spatialite.sqlite -sql "SELECT * FROM poly"')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/sqlite/poly_spatialite.sqlite -sql "SELECT * FROM poly"')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
     # Test with a Spatialite 4.0 DB
-    shutil.copy('data/poly_spatialite4.sqlite', 'tmp/poly_spatialite4.sqlite')
+    shutil.copy('data/sqlite/poly_spatialite4.sqlite', 'tmp/poly_spatialite4.sqlite')
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/poly_spatialite4.sqlite')
     os.unlink('tmp/poly_spatialite4.sqlite')
 
@@ -2917,7 +2917,7 @@ def test_ogr_spatialite_12(require_spatialite):
     if gdal.GetDriverByName('SQLite').GetMetadataItem("ENABLE_SQL_SQLITE_FORMAT") != 'YES':
         pytest.skip()
 
-    ds = ogr.Open('data/poly_spatialite.sqlite.sql')
+    ds = ogr.Open('data/sqlite/poly_spatialite.sqlite.sql')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f is not None

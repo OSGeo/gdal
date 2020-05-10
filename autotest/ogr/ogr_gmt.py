@@ -127,7 +127,7 @@ def test_ogr_gmt_3():
 
 def test_ogr_gmt_4():
 
-    ds = ogr.Open('data/test_multi.gmt')
+    ds = ogr.Open('data/gmt/test_multi.gmt')
     lyr = ds.GetLayer(0)
 
     assert lyr.GetLayerDefn().GetGeomType() == ogr.wkbMultiLineString, \
