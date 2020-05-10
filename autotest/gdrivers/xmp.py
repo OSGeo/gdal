@@ -59,8 +59,8 @@ lst = [
     ["JP2OpenJPEG", "data/byte.jp2", False],
     ["JP2KAK", "data/byte_with_xmp.jp2", True],
     ["JP2KAK", "data/byte.jp2", False],
-    ["PDF", "data/adobe_style_geospatial_with_xmp.pdf", True],
-    ["PDF", "data/adobe_style_geospatial.pdf", False],
+    ["PDF", "data/pdf/adobe_style_geospatial_with_xmp.pdf", True],
+    ["PDF", "data/pdf/adobe_style_geospatial.pdf", False],
     ["WEBP", "data/rgbsmall_with_xmp.webp", True],
     ["WEBP", "data/rgbsmall.webp", False],
 ]

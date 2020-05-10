@@ -4,7 +4,7 @@
   <VRTRasterBand dataType="Byte" band="1">
     <ColorInterp>Gray</ColorInterp>
     <SimpleSource>
-      <SourceFilename relativeToVRT="1">byte.tif</SourceFilename>
+      <SourceFilename relativeToVRT="1">../byte.tif</SourceFilename>
       <SourceBand>1</SourceBand>
       <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
       <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
