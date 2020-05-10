@@ -41,7 +41,7 @@ import pytest
 
 def test_ntv2_1():
 
-    tst = gdaltest.GDALTest('NTV2', 'test_ntv2_le.gsb', 2, 10)
+    tst = gdaltest.GDALTest('NTV2', 'ntv2/test_ntv2_le.gsb', 2, 10)
     gt = (-5.52, 7.8, 0.0, 52.05, 0.0, -5.55)
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 
@@ -51,7 +51,7 @@ def test_ntv2_1():
 
 def test_ntv2_2():
 
-    tst = gdaltest.GDALTest('NTV2', 'test_ntv2_be.gsb', 2, 10)
+    tst = gdaltest.GDALTest('NTV2', 'ntv2/test_ntv2_be.gsb', 2, 10)
     gt = (-5.52, 7.8, 0.0, 52.05, 0.0, -5.55)
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 
@@ -61,7 +61,7 @@ def test_ntv2_2():
 
 def test_ntv2_3():
 
-    tst = gdaltest.GDALTest('NTV2', 'test_ntv2_le.gsb', 2, 10, options=['ENDIANNESS=LE'])
+    tst = gdaltest.GDALTest('NTV2', 'ntv2/test_ntv2_le.gsb', 2, 10, options=['ENDIANNESS=LE'])
     return tst.testCreateCopy(vsimem=1)
 
 ###############################################################################
@@ -70,7 +70,7 @@ def test_ntv2_3():
 
 def test_ntv2_4():
 
-    tst = gdaltest.GDALTest('NTV2', 'test_ntv2_le.gsb', 2, 10, options=['ENDIANNESS=BE'])
+    tst = gdaltest.GDALTest('NTV2', 'ntv2/test_ntv2_le.gsb', 2, 10, options=['ENDIANNESS=BE'])
     return tst.testCreateCopy(vsimem=1)
 
 ###############################################################################
@@ -79,7 +79,7 @@ def test_ntv2_4():
 
 def test_ntv2_5():
 
-    src_ds = gdal.Open('data/test_ntv2_le.gsb')
+    src_ds = gdal.Open('data/ntv2/test_ntv2_le.gsb')
     gdal.GetDriverByName('NTv2').Create('/vsimem/ntv2_5.gsb', 1, 1, 4, gdal.GDT_Float32, options=['ENDIANNESS=LE'])
     ds = gdal.GetDriverByName('NTv2').CreateCopy('/vsimem/ntv2_5.gsb', src_ds, options=['APPEND_SUBDATASET=YES'])
     assert ds.GetRasterBand(2).Checksum() == 10
@@ -95,7 +95,7 @@ def test_ntv2_5():
 
 def test_ntv2_6():
 
-    src_ds = gdal.Open('data/test_ntv2_le.gsb')
+    src_ds = gdal.Open('data/ntv2/test_ntv2_le.gsb')
     gdal.GetDriverByName('NTv2').Create('/vsimem/ntv2_6.gsb', 1, 1, 4, gdal.GDT_Float32, options=['ENDIANNESS=BE'])
     ds = gdal.GetDriverByName('NTv2').CreateCopy('/vsimem/ntv2_6.gsb', src_ds, options=['APPEND_SUBDATASET=YES'])
     assert ds.GetRasterBand(2).Checksum() == 10
