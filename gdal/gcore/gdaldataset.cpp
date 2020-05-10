@@ -2033,7 +2033,13 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
 
     CPLAssert(nullptr != pData);
 
-    if (nXSize == nBufXSize && nYSize == nBufYSize && nBandCount > 1 &&
+    const bool bHasSubpixelShift =
+       psExtraArg->bFloatingPointWindowValidity &&
+       psExtraArg->eResampleAlg != GRIORA_NearestNeighbour &&
+       (nXOff != psExtraArg->dfXOff || nYOff != psExtraArg->dfYOff);
+
+    if (!bHasSubpixelShift &&
+        nXSize == nBufXSize && nYSize == nBufYSize && nBandCount > 1 &&
         (pszInterleave = GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE")) !=
             nullptr &&
         EQUAL(pszInterleave, "PIXEL"))
