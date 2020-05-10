@@ -280,7 +280,10 @@ void OGRLVBAGLayer::EndElementCbk(const char *pszName)
             if( poGeom && !poGeom->IsEmpty() )
             {
                 if( !bSchemaOnly )
+                {
+                    poGeom->assignSpatialReference(GetSpatialRef());
                     poFeature->SetGeometryDirectly(poGeom.release());
+                }
                 else
                 {
                     OGRGeomFieldDefn *poGeomField = poFeatureDefn->GetGeomFieldDefn(0);
