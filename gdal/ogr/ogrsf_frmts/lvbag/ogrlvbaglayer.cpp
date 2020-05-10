@@ -30,8 +30,6 @@
 #include "ogr_lvbag.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$")
-
 /************************************************************************/
 /*                           OGRLVBAGLayer()                            */
 /*                                                                      */
@@ -337,7 +335,7 @@ void OGRLVBAGLayer::ConfigureParser()
         static_cast<OGRLVBAGLayer *>(pUserData)->DataHandlerCbk(data, nLen);
     };
 
-    oParser = XMLParserUniquePtr{ OGRCreateExpatXMLParser() };
+    oParser = OGRLVBAG::XMLParserUniquePtr{ OGRCreateExpatXMLParser() };
     XML_SetElementHandler(oParser.get(), startElementWrapper, endElementWrapper);
     XML_SetCharacterDataHandler(oParser.get(), dataHandlerWrapper);
     XML_SetUserData(oParser.get(), this);

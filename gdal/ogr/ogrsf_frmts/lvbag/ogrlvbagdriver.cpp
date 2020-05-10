@@ -29,10 +29,6 @@
 #include "ogr_lvbag.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$")
-
-extern "C" void RegisterOGRLVBAG();
-
 /************************************************************************/
 /*                             Identify()                               */
 /************************************************************************/
@@ -68,8 +64,8 @@ static GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo )
         poOpenInfo->eAccess == GA_Update)
         return nullptr;
 
-    std::unique_ptr<OGRLVBAGDataSource> poDS = std::unique_ptr<
-        OGRLVBAGDataSource>(new OGRLVBAGDataSource());
+    auto poDS = std::unique_ptr<OGRLVBAGDataSource>(
+        new OGRLVBAGDataSource());
 
     if( !poDS->Open( poOpenInfo->pszFilename,
                      poOpenInfo->fpL ) )

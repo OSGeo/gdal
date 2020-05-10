@@ -1085,7 +1085,6 @@ enable_driver_gpx
 enable_driver_gtm
 enable_driver_htf
 enable_driver_jml
-enable_driver_lvbag
 enable_driver_mapml
 enable_driver_mvt
 enable_driver_ntf
@@ -1128,6 +1127,7 @@ enable_driver_vfk
 enable_driver_osm
 enable_driver_ods
 enable_driver_xlsx
+enable_driver_lvbag
 enable_driver_nas
 enable_driver_ili
 enable_driver_gmlas
@@ -1996,7 +1996,6 @@ Optional Features:
   --disable-driver-gtm    disable gtm driver support (enabled by default)
   --disable-driver-htf    disable htf driver support (enabled by default)
   --disable-driver-jml    disable jml driver support (enabled by default)
-  --disable-driver-lvbag  disable lvbag driver support (enabled by default)
   --disable-driver-mapml  disable mapml driver support (enabled by default)
   --disable-driver-mvt    disable mvt driver support (enabled by default)
   --disable-driver-ntf    disable ntf driver support (enabled by default)
@@ -2073,6 +2072,8 @@ Optional Features:
   --disable-driver-ods    disable ods driver support (enabled by default,
                           requires expat)
   --disable-driver-xlsx   disable xlsx driver support (enabled by default,
+                          requires expat)
+  --disable-driver-lvbag  disable lvbag driver support (enabled by default,
                           requires expat)
   --disable-driver-nas    disable nas driver support (enabled by default,
                           requires xerces-c)
@@ -28492,35 +28493,6 @@ else
   INTERNAL_FORMAT_jml_ENABLED=no
 fi
 
-# Check whether --enable-driver-lvbag was given.
-if test "${enable_driver_lvbag+set}" = set; then :
-  enableval=$enable_driver_lvbag;
-fi
-cur_driver_enabled=yes
-requested=$enable_driver_lvbag
-if test "$all_drivers_disabled" = "yes"; then :
-  if test "x$requested" = "xyes"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-else
-  if test "x$requested" != "xno"; then :
-    cur_driver_enabled=yes
-  else
-    cur_driver_enabled=no
-  fi
-fi
-
-if test "$cur_driver_enabled" = "yes"; then :
-  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED lvbag"
-  INTERNAL_FORMAT_lvbag_ENABLED=yes
-  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DLVBAG_ENABLED"
-else
-  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED lvbag"
-  INTERNAL_FORMAT_lvbag_ENABLED=no
-fi
-
 # Check whether --enable-driver-mapml was given.
 if test "${enable_driver_mapml+set}" = set; then :
   enableval=$enable_driver_mapml;
@@ -29727,6 +29699,33 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED xlsx"
   INTERNAL_FORMAT_xlsx_ENABLED=no
+fi
+
+# Check whether --enable-driver-lvbag was given.
+if test "${enable_driver_lvbag+set}" = set; then :
+  enableval=$enable_driver_lvbag;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_lvbag
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_lvbag_ENABLED=yes
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED lvbag"
+  INTERNAL_FORMAT_lvbag_ENABLED=no
 fi
 
 
@@ -36371,6 +36370,12 @@ if test "$HAVE_EXPAT" = "yes"; then
   if test "x$driver_enabled" = "xyes"; then
     OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED xlsx"
     OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DXLSX_ENABLED"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_lvbag_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED lvbag"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DLVBAG_ENABLED"
   fi
 
 

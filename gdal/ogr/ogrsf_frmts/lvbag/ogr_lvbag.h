@@ -32,7 +32,7 @@
 #include "ogrsf_frmts.h"
 #include "ogr_expat.h"
 
-namespace {
+namespace OGRLVBAG {
 
 /**
  * Deleter for unique pointer.
@@ -72,7 +72,7 @@ class OGRLVBAGLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<O
     VSILFILE           *fp;  // owned by the dataset object
     int                 nNextFID;
     
-    XMLParserUniquePtr  oParser;
+    OGRLVBAG::XMLParserUniquePtr  oParser;
     
     bool                bSchemaOnly;
     bool                bHasReadSchema;
