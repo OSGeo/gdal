@@ -95,9 +95,9 @@ echo "Building adrg_fuzzer_seed_corpus.zip"
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:ABCDEF01.GEN\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/SMALL_ADRG/ABCDEF01.GEN
+    cat $(dirname $0)/../../autotest/gdrivers/data/adrg/SMALL_ADRG/ABCDEF01.GEN
     printf "***NEWFILE***:ABCDEF01.IMG\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/SMALL_ADRG/ABCDEF01.IMG
+    cat $(dirname $0)/../../autotest/gdrivers/data/adrg/SMALL_ADRG/ABCDEF01.IMG
 } > adrg.tar
 rm -f $OUT/adrg_fuzzer_seed_corpus.zip
 zip -r $OUT/adrg_fuzzer_seed_corpus.zip adrg.tar >/dev/null
