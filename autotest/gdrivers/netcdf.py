@@ -641,7 +641,7 @@ def test_netcdf_17():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
 
-    ifile = 'data/groups.h5'
+    ifile = 'data/hdf5/groups.h5'
 
     # skip test if Hdf5 is not enabled
     if gdal.GetDriverByName('HDF5') is None and \

@@ -39,7 +39,7 @@ pytestmark = pytest.mark.require_driver('HDF5')
 
 def test_hdf5_multidim_basic():
 
-    ds = gdal.OpenEx('data/u8be.h5', gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.OpenEx('data/hdf5/u8be.h5', gdal.OF_MULTIDIM_RASTER)
     assert ds
     rg = ds.GetRootGroup()
     assert rg
@@ -364,7 +364,7 @@ def test_hdf5_multidim_recursive_groups():
 
     # File generated with
     # import h5py
-    # f = h5py.File('recursive_groups.h5','w')
+    # f = h5py.File('hdf5/recursive_groups.h5','w')
     # group = f.create_group("subgroup")
     # group['link_to_root'] = f
     # group['link_to_self'] = group
@@ -372,10 +372,10 @@ def test_hdf5_multidim_recursive_groups():
     # group['soft_link_to_self'] = h5py.SoftLink('/subgroup')
     # group['soft_link_to_not_existing'] = h5py.SoftLink('/not_existing')
     # group['hard_link_to_root'] = h5py.HardLink('/')
-    # group['ext_link_to_self_root'] = h5py.ExternalLink("recursive_groups.h5", "/")
+    # group['ext_link_to_self_root'] = h5py.ExternalLink("hdf5/recursive_groups.h5", "/")
     # f.close()
 
-    ds = gdal.OpenEx('data/recursive_groups.h5', gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.OpenEx('data/hdf5/recursive_groups.h5', gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     assert rg.GetGroupNames() == ['subgroup']
 
@@ -495,14 +495,14 @@ def test_hdf5_multidim_netcdf_dimensions_complex_case():
 
 def test_hdf5_multidim_dimension_labels_with_null():
 
-    ds = gdal.OpenEx('data/dimension_labels_with_null.h5', gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.OpenEx('data/hdf5/dimension_labels_with_null.h5', gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
 
     ar = rg.OpenMDArray('data')
     attr = ar.GetAttribute('DIMENSION_LABELS')
     assert attr.ReadAsStringArray() == ['', '', 'x']
 
-    ds = gdal.OpenEx('data/dimension_labels_with_null.h5', gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.OpenEx('data/hdf5/dimension_labels_with_null.h5', gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray('data')
     dims = ar.GetDimensions()
@@ -514,4 +514,4 @@ def test_hdf5_multidim_dimension_labels_with_null():
 
 def test_hdf5_multidim_family_driver():
 
-    assert gdal.OpenEx('data/test_family_0.h5', gdal.OF_MULTIDIM_RASTER)
+    assert gdal.OpenEx('data/hdf5/test_family_0.h5', gdal.OF_MULTIDIM_RASTER)
