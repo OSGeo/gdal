@@ -42,7 +42,7 @@
 
 class OGRGeomediaDataSource;
 
-class OGRGeomediaLayer CPL_NON_FINAL: public OGRLayer
+class OGRGeomediaLayer CPL_NON_FINAL: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRGeomediaLayer>
 {
   protected:
     OGRFeatureDefn     *poFeatureDefn;
@@ -68,14 +68,14 @@ class OGRGeomediaLayer CPL_NON_FINAL: public OGRLayer
     virtual CPLODBCStatement *  GetStatement() { return poStmt; }
 
     void                LookupSRID( int );
+    OGRFeature          *GetNextRawFeature();
 
   public:
                         OGRGeomediaLayer();
     virtual             ~OGRGeomediaLayer();
 
     virtual void        ResetReading() override;
-    virtual OGRFeature *GetNextRawFeature();
-    virtual OGRFeature *GetNextFeature() override;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRGeomediaLayer)
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
 

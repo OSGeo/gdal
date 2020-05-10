@@ -126,7 +126,7 @@ static unsigned GetCmdCount(unsigned int nCmdCountCombined)
 /*                          OGRMVTLayerBase                             */
 /************************************************************************/
 
-class OGRMVTLayerBase CPL_NON_FINAL: public OGRLayer
+class OGRMVTLayerBase CPL_NON_FINAL: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRMVTLayerBase>
 {
         virtual OGRFeature         *GetNextRawFeature() = 0;
 
@@ -141,7 +141,7 @@ class OGRMVTLayerBase CPL_NON_FINAL: public OGRLayer
         virtual OGRFeatureDefn *    GetLayerDefn() override
                                             { return m_poFeatureDefn; }
 
-        virtual OGRFeature*         GetNextFeature() override;
+        DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRMVTLayerBase)
 
         virtual int                 TestCapability( const char * ) override;
 };
@@ -324,30 +324,6 @@ OGRMVTLayerBase::~OGRMVTLayerBase()
 void OGRMVTLayerBase::InitFields(const CPLJSONObject& oFields)
 {
     OGRMVTInitFields(m_poFeatureDefn, oFields);
-}
-
-/************************************************************************/
-/*                          GetNextFeature()                            */
-/************************************************************************/
-
-OGRFeature* OGRMVTLayerBase::GetNextFeature()
-{
-    while( true )
-    {
-        OGRFeature *poFeature = GetNextRawFeature();
-        if (poFeature == nullptr)
-            return nullptr;
-
-        if((m_poFilterGeom == nullptr
-            || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == nullptr
-            || m_poAttrQuery->Evaluate( poFeature )) )
-        {
-            return poFeature;
-        }
-
-        delete poFeature;
-    }
 }
 
 /************************************************************************/

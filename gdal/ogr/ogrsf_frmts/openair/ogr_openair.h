@@ -47,7 +47,7 @@ typedef struct
     int fillB;
 } OpenAirStyle;
 
-class OGROpenAirLayer final: public OGRLayer
+class OGROpenAirLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGROpenAirLayer>
 {
     OGRFeatureDefn*    poFeatureDefn;
     OGRSpatialReference *poSRS;
@@ -68,7 +68,7 @@ class OGROpenAirLayer final: public OGRLayer
                         virtual ~OGROpenAirLayer();
 
     virtual void                ResetReading() override;
-    virtual OGRFeature *        GetNextFeature() override;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGROpenAirLayer)
 
     virtual OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
@@ -79,7 +79,7 @@ class OGROpenAirLayer final: public OGRLayer
 /*                       OGROpenAirLabelLayer                           */
 /************************************************************************/
 
-class OGROpenAirLabelLayer final: public OGRLayer
+class OGROpenAirLabelLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGROpenAirLabelLayer>
 {
     OGRFeatureDefn*    poFeatureDefn;
     OGRSpatialReference *poSRS;
@@ -101,7 +101,7 @@ class OGROpenAirLabelLayer final: public OGRLayer
                         virtual ~OGROpenAirLabelLayer();
 
     virtual void                ResetReading() override;
-    virtual OGRFeature *        GetNextFeature() override;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGROpenAirLabelLayer)
 
     virtual OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
