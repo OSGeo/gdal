@@ -413,32 +413,22 @@ void OGRLVBAGLayer::ParseDocument()
 }
 
 /************************************************************************/
-/*                           OGRLVBAGLayer()                            */
+/*                         GetNextRawFeature()                          */
 /************************************************************************/
 
-OGRFeature *OGRLVBAGLayer::GetNextFeature()
+OGRFeature *OGRLVBAGLayer::GetNextRawFeature()
 {
-    if ( !bHasReadSchema )
-        GetLayerDefn();
+    GetLayerDefn();
 
     bSchemaOnly = false;
-    poFeature = nullptr;
 
     if (nNextFID == 0)
         ConfigureParser();
 
+    poFeature = nullptr;
     ParseDocument();
 
-    if( poFeature &&
-        (m_poFilterGeom == nullptr ||
-        FilterGeometry(poFeature->GetGeometryRef())) &&
-        (m_poAttrQuery == nullptr ||
-        m_poAttrQuery->Evaluate(poFeature)) )
-        return poFeature;
-    
-    if( poFeature )
-        delete poFeature;
-    return nullptr;
+    return poFeature;
 }
 
 /************************************************************************/

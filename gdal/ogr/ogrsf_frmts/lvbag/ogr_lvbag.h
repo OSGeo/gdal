@@ -65,7 +65,7 @@ typedef std::unique_ptr<XML_ParserStruct, XMLParserUniquePtrDeleter> XMLParserUn
 /*                           OGRLVBAGLayer                              */
 /************************************************************************/
 
-class OGRLVBAGLayer final: public OGRLayer
+class OGRLVBAGLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRLVBAGLayer>
 {
     OGRFeatureDefn     *poFeatureDefn;
     OGRFeature         *poFeature;
@@ -99,12 +99,14 @@ class OGRLVBAGLayer final: public OGRLayer
     void                StartDataCollect();
     void                StopDataCollect();
 
+    OGRFeature *        GetNextRawFeature();
+
 public:
     OGRLVBAGLayer( const char *pszFilename, VSILFILE *fp );
     ~OGRLVBAGLayer();
 
     void                ResetReading() override;
-    OGRFeature*         GetNextFeature() override;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRLVBAGLayer)
 
     OGRFeatureDefn*     GetLayerDefn() override;
 
