@@ -916,7 +916,7 @@ namespace nccfdriver
 
     void inPlaceSerialize_Point(SGeometry_Reader * ge, size_t seek_pos, std::vector<unsigned char>& buffer)
     {
-        uint8_t order = 1;
+        uint8_t order = PLATFORM_HEADER;
         uint32_t t = ge->get_axisCount() == 2 ? wkbPoint:
                      ge->get_axisCount() == 3 ? wkbPoint25D: wkbNone;
 
