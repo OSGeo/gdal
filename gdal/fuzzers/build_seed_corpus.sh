@@ -203,9 +203,9 @@ rm -f $OUT/roipac_fuzzer_seed_corpus.zip
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:srtm.dem\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/srtm.dem
+    cat $(dirname $0)/../../autotest/gdrivers/data/roipac/srtm.dem
     printf "***NEWFILE***:srtm.dem.rsc\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/srtm.dem.rsc
+    cat $(dirname $0)/../../autotest/gdrivers/data/roipac/srtm.dem.rsc
 } > roipac.tar
 zip -r $OUT/roipac_fuzzer_seed_corpus.zip roipac.tar >/dev/null
 rm roipac.tar
