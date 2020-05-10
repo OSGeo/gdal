@@ -1252,7 +1252,7 @@ namespace tut
         // ISIS3
         {
             GDALDatasetUniquePtr poDS(
-                GDALDataset::Open(GDRIVERS_DATA_DIR "isis3_detached.lbl"));
+                GDALDataset::Open(GDRIVERS_DATA_DIR "isis3/isis3_detached.lbl"));
             ensure( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
             ensure( poDS->GetRawBinaryLayout(sLayout) );
