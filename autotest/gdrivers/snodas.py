@@ -39,7 +39,7 @@ import gdaltest
 
 def test_snodas_1():
 
-    tst = gdaltest.GDALTest('SNODAS', 'fake_snodas.hdr', 1, 0)
+    tst = gdaltest.GDALTest('SNODAS', 'snodas/fake_snodas.hdr', 1, 0)
     expected_gt = [-124.733749999995, 0.0083333333333330643, 0.0, 52.874583333331302, 0.0, -0.0083333333333330054]
     expected_srs = """GEOGCS["WGS 84",
     DATUM["WGS_1984",
@@ -55,7 +55,7 @@ def test_snodas_1():
     ret = tst.testOpen(check_gt=expected_gt, check_prj=expected_srs, skip_checksum=True)
 
     if ret == 'success':
-        ds = gdal.Open('data/fake_snodas.hdr')
+        ds = gdal.Open('data/snodas/fake_snodas.hdr')
         ds.GetFileList()
         assert ds.GetRasterBand(1).GetNoDataValue() == -9999
         assert ds.GetRasterBand(1).GetMinimum() == 0
