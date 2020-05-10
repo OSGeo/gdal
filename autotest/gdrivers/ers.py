@@ -56,7 +56,7 @@ def test_ers_1():
 
 def test_ers_2():
 
-    tst = gdaltest.GDALTest('ERS', 'float32.bil', 1, 27)
+    tst = gdaltest.GDALTest('ERS', 'ehdr/float32.bil', 1, 27)
     return tst.testCreateCopy(new_filename='tmp/float32.ers',
                               check_gt=1, vsimem=1)
 

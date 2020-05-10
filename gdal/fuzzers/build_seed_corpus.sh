@@ -164,9 +164,9 @@ rm -f $OUT/ehdr_fuzzer_seed_corpus.zip
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:my.hdr\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/ehdr11.hdr
+    cat $(dirname $0)/../../autotest/gdrivers/data/ehdr/ehdr11.hdr
     printf "***NEWFILE***:my.dat\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/ehdr11.flt
+    cat $(dirname $0)/../../autotest/gdrivers/data/ehdr/ehdr11.flt
 } > ehdr11.tar
 zip -r $OUT/ehdr_fuzzer_seed_corpus.zip ehdr11.tar >/dev/null
 rm ehdr11.tar

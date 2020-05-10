@@ -199,7 +199,7 @@ def test_aaigrid_8():
 
 def test_aaigrid_9():
 
-    ds = gdal.Open('data/float32.bil')
+    ds = gdal.Open('data/ehdr/float32.bil')
     ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds, options=['DECIMAL_PRECISION=2'])
     got_minmax = ds2.GetRasterBand(1).ComputeRasterMinMax()
     ds2 = None
@@ -257,7 +257,7 @@ def test_aaigrid_10():
 
 def test_aaigrid_11():
 
-    ds = gdal.Open('data/float32.bil')
+    ds = gdal.Open('data/ehdr/float32.bil')
     ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds, options=['SIGNIFICANT_DIGITS=2'])
     got_minmax = ds2.GetRasterBand(1).ComputeRasterMinMax()
     ds2 = None

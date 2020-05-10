@@ -58,7 +58,7 @@ def test_idrisi_2():
 
 def test_idrisi_3():
 
-    tst = gdaltest.GDALTest('RST', 'float32.bil', 1, 27)
+    tst = gdaltest.GDALTest('RST', 'ehdr/float32.bil', 1, 27)
 
     return tst.testCreate(new_filename='tmp/float32.rst', out_bands=1, vsimem=1)
 
