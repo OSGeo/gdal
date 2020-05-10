@@ -42,7 +42,7 @@ import pytest
 
 def test_aigrid_1():
 
-    tst = gdaltest.GDALTest('AIG', 'abc3x1', 1, 3)
+    tst = gdaltest.GDALTest('AIG', 'aigrid/abc3x1', 1, 3)
     return tst.testOpen()
 
 ###############################################################################
@@ -51,7 +51,7 @@ def test_aigrid_1():
 
 def test_aigrid_2():
 
-    ds = gdal.Open('data/abc3x1/prj.adf')
+    ds = gdal.Open('data/aigrid/abc3x1/prj.adf')
 
     gt = ds.GetGeoTransform()
 
@@ -73,7 +73,7 @@ def test_aigrid_2():
 
 def test_aigrid_3():
 
-    ds = gdal.Open('data/abc3x1')
+    ds = gdal.Open('data/aigrid/abc3x1')
     cm = ds.GetRasterBand(1).GetRasterColorTable()
     assert cm.GetCount() == 256 and cm.GetColorEntry(0) == (95, 113, 150, 255) and cm.GetColorEntry(1) == (95, 57, 29, 255), \
         'Wrong colormap entries'
@@ -87,7 +87,7 @@ def test_aigrid_3():
 
 def test_aigrid_4():
 
-    tst = gdaltest.GDALTest('AIG', 'ABC3X1UC', 1, 3)
+    tst = gdaltest.GDALTest('AIG', 'aigrid/ABC3X1UC', 1, 3)
     return tst.testOpen()
 
 ###############################################################################
@@ -96,7 +96,7 @@ def test_aigrid_4():
 
 def test_aigrid_5():
 
-    ds = gdal.Open('data/ABC3X1UC')
+    ds = gdal.Open('data/aigrid/ABC3X1UC')
     cm = ds.GetRasterBand(1).GetRasterColorTable()
     assert cm.GetCount() == 256 and cm.GetColorEntry(0) == (95, 113, 150, 255) and cm.GetColorEntry(1) == (95, 57, 29, 255), \
         'Wrong colormap entries'
@@ -111,7 +111,7 @@ def test_aigrid_5():
 
 def test_aigrid_6():
 
-    ds = gdal.Open('data/aigrid_sta_24bytes/teststa')
+    ds = gdal.Open('data/aigrid/aigrid_sta_24bytes/teststa')
 
     assert ds.GetRasterBand(1).GetMinimum() == 0.0, 'Wrong minimum'
 

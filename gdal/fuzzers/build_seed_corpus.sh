@@ -251,7 +251,7 @@ echo "Building aig_fuzzer_seed_corpus.zip"
 printf "FUZZER_FRIENDLY_ARCHIVE\\n" > aig.tar
 for x in hdr.adf sta.adf dblbnd.adf vat.adf w001001.adf abc3x1.clr prj.adf w001001x.adf; do
     printf "***NEWFILE***:%s\\n" "$x" >> aig.tar
-    cat $(dirname $0)/../../autotest/gdrivers/data/abc3x1/$x >> aig.tar
+    cat $(dirname $0)/../../autotest/gdrivers/data/aigrid/abc3x1/$x >> aig.tar
 done
 rm -f $OUT/aig_fuzzer_seed_corpus.zip
 zip -r $OUT/aig_fuzzer_seed_corpus.zip aig.tar >/dev/null
