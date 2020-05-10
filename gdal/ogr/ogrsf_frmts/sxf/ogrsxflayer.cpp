@@ -143,6 +143,7 @@ bool OGRSXFLayer::AddRecord( long nFID, unsigned nClassCode, vsi_l_offset nOffse
                 int nReadObj = static_cast<int>(VSIFReadL(&stAttrInfo, 4, 1, fpSXF));
                 if (nReadObj == 1)
                 {
+                    CPL_LSBPTR16(&(stAttrInfo.nCode));
                     CPLString oFieldName;
                     if (snAttributeCodes.find(stAttrInfo.nCode) == snAttributeCodes.end())
                     {
@@ -618,6 +619,15 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
         CPLError(CE_Failure, CPLE_FileIO, "SXF. Read record failed.");
         return nullptr;
     }
+    CPL_LSBPTR32(&(stRecordHeader.nID));
+    CPL_LSBPTR32(&(stRecordHeader.nFullLength));
+    CPL_LSBPTR32(&(stRecordHeader.nGeometryLength));
+    CPL_LSBPTR32(&(stRecordHeader.nClassifyCode));
+    CPL_LSBPTR16(&(stRecordHeader.anGroup[0]));
+    CPL_LSBPTR16(&(stRecordHeader.anGroup[1]));
+    CPL_LSBPTR32(&(stRecordHeader.nPointCount));
+    CPL_LSBPTR16(&(stRecordHeader.nSubObjectCount));
+    CPL_LSBPTR16(&(stRecordHeader.nPointCountSmall));
 
     SXFGeometryType eGeomType = SXF_GT_Unknown;
     GByte code = 0;
@@ -874,6 +884,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
             {
                 char *psSemanticsdBufBeg = psSemanticsdBuf + offset;
                 SXFRecordAttributeInfo stAttInfo = *(SXFRecordAttributeInfo*)psSemanticsdBufBeg;
+                CPL_LSBPTR16(&(stAttInfo.nCode));
                 offset += 4;
 
                 CPLString oFieldName;
