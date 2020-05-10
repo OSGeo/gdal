@@ -177,9 +177,9 @@ rm -f $OUT/genbin_fuzzer_seed_corpus.zip
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:my.hdr\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/tm4628_96.hdr
+    cat $(dirname $0)/../../autotest/gdrivers/data/genbin/tm4628_96.hdr
     printf "***NEWFILE***:my.bil\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/tm4628_96.bil
+    cat $(dirname $0)/../../autotest/gdrivers/data/genbin/tm4628_96.bil
 } > genbin.tar
 zip -r $OUT/genbin_fuzzer_seed_corpus.zip genbin.tar >/dev/null
 rm genbin.tar
