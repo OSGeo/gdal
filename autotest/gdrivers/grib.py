@@ -1300,7 +1300,7 @@ def test_grib_grib2_template_4_48():
 
 def test_grib_grib2_scan_flag_not_64():
 
-    ds = gdal.Open('/vsisparse/data/blend.t17z.master.f001.co.grib2.sparse.xml')
+    ds = gdal.Open('/vsisparse/data/grib/blend.t17z.master.f001.co.grib2.sparse.xml')
     gt = ds.GetGeoTransform()
     expected_gt = (-3272421.457337171, 2539.703, 0.0, 3790842.1060354356, 0.0, -2539.703)
     assert gt == pytest.approx(expected_gt, rel=1e-6)
