@@ -56,32 +56,37 @@ def test_ogr_lvbag_1():
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Ligplaats', 'bad layer name'
 
-    # assert lyr.GetGeomType() == ogr.wkbNone, 'bad layer geometry type'
+    assert lyr.GetGeomType() == ogr.wkbPolygon, 'bad layer geometry type'
     # assert lyr.GetSpatialRef() is None, 'bad spatial ref'
-    # assert lyr.GetFeatureCount() == 3
-    # assert lyr.TestCapability("foo") == 0
+    assert lyr.GetFeatureCount() == 3
+    assert lyr.TestCapability("foo") == 0
 
-    # assert lyr.GetLayerDefn().GetFieldCount() == 10
+    assert lyr.GetLayerDefn().GetFieldCount() == 10
 
-    # assert (lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger and \
-    #    lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTReal and \
-    #    lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTString and \
-    #    lyr.GetLayerDefn().GetFieldDefn(3).GetType() == ogr.OFTDate and \
-    #    lyr.GetLayerDefn().GetFieldDefn(4).GetType() == ogr.OFTDateTime)
+    assert (lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString and \
+       lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString and \
+       lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTString and \
+       lyr.GetLayerDefn().GetFieldDefn(3).GetType() == ogr.OFTString and \
+       lyr.GetLayerDefn().GetFieldDefn(4).GetType() == ogr.OFTString)
 
-    # feat = lyr.GetNextFeature()
-    # if feat.GetFieldAsInteger(0) != 1 or \
-    #    feat.GetFieldAsDouble(1) != 1.0 or \
-    #    feat.IsFieldSet(2) or \
-    #    feat.GetFieldAsString(3) != '1980/01/01' or \
-    #    feat.GetFieldAsString(4) != '1980/01/01 00:00:00':
-    #     feat.DumpReadable()
-    #     pytest.fail()
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsString(0) != '1' or \
+       feat.GetFieldAsString(1) != '2009-05-26' or \
+       feat.GetFieldAsString(2) != '2009-11-06T13:37:22.000' or \
+       feat.GetFieldAsString(3) != '2009-11-06T14:07:51.498' or \
+       feat.GetFieldAsString(4) != 'NL.IMBAG.Ligplaats' or \
+       feat.GetFieldAsString(5) != '0106020000000003' or \
+       feat.GetFieldAsString(6) != 'Plaats aangewezen' or \
+       feat.GetFieldAsString(7) != 'N' or \
+       feat.GetFieldAsString(8) != '2009-05-26' or \
+       feat.GetFieldAsString(9) != '2009-01000':
+        feat.DumpReadable()
+        pytest.fail()
 
-    # feat = lyr.GetNextFeature()
-    # feat = lyr.GetNextFeature()
-    # feat = lyr.GetNextFeature()
-    # assert feat is None
+    feat = lyr.GetNextFeature()
+    feat = lyr.GetNextFeature()
+    feat = lyr.GetNextFeature()
+    assert feat is None
 
 ###############################################################################
 # Run test_ogrsf
