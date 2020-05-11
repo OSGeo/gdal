@@ -2040,7 +2040,11 @@ def test_gpkg_26():
 
         gdal.Unlink('/vsimem/tmp.gpkg')
 
-    tests = [('GoogleCRS84Quad', [[42255, 47336, 24963, 35707], [42255, 47336, 24965, 35707], [42253, 47333, 24961, 35707]], None),
+    tests = [('GoogleCRS84Quad', [[42255, 47336, 24963, 35707],
+                                  [42255, 47336, 24965, 35707],
+                                  [42253, 47333, 24961, 35707],
+                                  [42253, 47334, 24963, 35707], # s390x
+                                  ], None),
              ('GoogleMapsCompatible', [[35429, 36787, 20035, 17849]], None)]
 
     for (scheme, expected_cs, other_options) in tests:
