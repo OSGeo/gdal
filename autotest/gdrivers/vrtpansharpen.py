@@ -1498,7 +1498,10 @@ def test_vrtpansharpen_9():
 </VRTDataset>""")
     assert vrt_ds is not None
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
-    assert cs in ([6950, 11745, 8965],)
+    expected_cs_list = ([6950, 11745, 8965],
+                        [6946, 11736, 8957] # s390x
+                        )
+    assert cs in expected_cs_list
 
     # Implicit nodata
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/small_world_pan_nodata.tif', 800, 400)
@@ -1535,7 +1538,7 @@ def test_vrtpansharpen_9():
 </VRTDataset>""")
     assert vrt_ds is not None
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
-    assert cs in ([6950, 11745, 8965],)
+    assert cs in expected_cs_list
 
     gdal.Unlink('/vsimem/small_world_pan_nodata.tif')
     gdal.Unlink('/vsimem/small_world_nodata.tif')
