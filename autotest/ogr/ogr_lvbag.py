@@ -40,7 +40,7 @@ pytestmark = pytest.mark.require_driver('LVBAG')
 # Basic tests
 
 
-def test_ogr_lvbag_1():
+def test_ogr_lvbag_dataset_lig():
 
     ds = ogr.Open('data/lvbag/lig.xml')
     assert ds is not None, 'cannot open dataset'
