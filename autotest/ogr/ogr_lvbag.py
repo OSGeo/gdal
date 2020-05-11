@@ -121,7 +121,7 @@ def test_ogr_lvbag_2():
     feat = lyr.GetNextFeature()
     assert feat is None
 
-def test_ogr_lvbag_3():
+def test_ogr_lvbag_dataset_opr():
 
     ds = ogr.Open('data/lvbag/opr.xml')
     assert ds is not None, 'cannot open dataset'
