@@ -39,10 +39,6 @@ rm autotest/gdrivers/nwt_grd.py
 (cd autotest/gdrivers && pytest rmf.py) || echo "rmf.py failed"
 rm autotest/gdrivers/rmf.py
 
-# Remaining issue with basic2
-(cd autotest/gdrivers && pytest vicar.py) || echo "vicar.py failed"
-rm autotest/gdrivers/vicar.py
-
 # Run the 2 following before removing netcdf.py, as they depend on it
 (cd autotest/gdrivers && pytest netcdf_multidim.py) || echo "netcdf_multidim.py failed"
 rm autotest/gdrivers/netcdf_multidim.py
