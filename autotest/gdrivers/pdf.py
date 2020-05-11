@@ -1230,8 +1230,8 @@ def test_pdf_extra_rasters(poppler_or_pdfium):
     if pdf_is_poppler() or pdf_is_pdfium():
         assert layers == ['LAYER_00_NAME=byte_tif', 'LAYER_01_NAME=subbyte'], \
             'did not get expected layers'
-    assert not (pdf_is_poppler() and (cs != 7926 and cs != 8177 and cs != 8174 and cs != 8165)), \
-        'bad checksum'
+    if pdf_is_poppler():
+        assert cs in (7926, 8177, 8174, 8165, 8172)
 
 ###############################################################################
 # Test adding a OGR datasource
