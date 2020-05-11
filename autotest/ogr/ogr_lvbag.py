@@ -31,22 +31,16 @@
 
 
 
-import gdaltest
-from osgeo import gdal
 from osgeo import ogr
 import pytest
+
+pytestmark = pytest.mark.require_driver('LVBAG')
 
 ###############################################################################
 # Basic tests
 
 
 def test_ogr_lvbag_1():
-
-    drv = ogr.GetDriverByName('LVBAG')
-    if drv is None:
-        pytest.skip()
-
-    assert drv.TestCapability("foo") == 0
 
     ds = ogr.Open('data/lvbag/lig.xml')
     assert ds is not None, 'cannot open dataset'
@@ -88,15 +82,56 @@ def test_ogr_lvbag_1():
     feat = lyr.GetNextFeature()
     assert feat is None
 
+def test_ogr_lvbag_2():
+
+    ds = ogr.Open('data/lvbag/num.xml')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+    assert ds.GetLayer(1) is None
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == 'Nummeraanduiding', 'bad layer name'
+
+    assert lyr.GetGeomType() == ogr.wkbPolygon, 'bad layer geometry type'
+    assert lyr.GetSpatialRef() is None, 'bad spatial ref'
+    assert lyr.GetFeatureCount() == 3
+    assert lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
+
+    assert lyr.GetLayerDefn().GetFieldCount() == 13
+
+    # assert (lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString and \
+    #    lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString and \
+    #    lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTString and \
+    #    lyr.GetLayerDefn().GetFieldDefn(3).GetType() == ogr.OFTString and \
+    #    lyr.GetLayerDefn().GetFieldDefn(4).GetType() == ogr.OFTString)
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('namespace') != 'NL.IMBAG.Nummeraanduiding' or \
+       feat.GetField('lokaalID') != '0106200000002798' or \
+       feat.GetField('huisnummer') != '23' or \
+       feat.GetField('postcode') != '9403KB' or \
+       feat.GetField('typeAdresseerbaarObject') != 'Verblijfsobject' or \
+       feat.GetField('status') != 'Naamgeving uitgegeven' or \
+       feat.GetField('geconstateerd') != 'N' or \
+       feat.GetFieldAsString('documentdatum') != '2009-09-14' or \
+       feat.GetFieldAsString('documentnummer') != '2009-BB01570' or \
+       feat.GetField('voorkomenidentificatie') != '1' or \
+       feat.GetField('beginGeldigheid') != '2009-09-24' or \
+       feat.GetField('tijdstipRegistratie') != '2009-11-06T12:21:37.000' or \
+       feat.GetField('tijdstipRegistratieLV') != '2009-11-06T12:38:46.603':
+        feat.DumpReadable()
+        pytest.fail()
+
+    feat = lyr.GetNextFeature()
+    feat = lyr.GetNextFeature()
+    feat = lyr.GetNextFeature()
+    assert feat is None
+
 ###############################################################################
 # Run test_ogrsf
 
 
 def test_ogr_lvbag_4():
-
-    drv = ogr.GetDriverByName('LVBAG')
-    if drv is None:
-        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -104,6 +139,4 @@ def test_ogr_lvbag_4():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/lvbag/wpl.xml')
 
-    assert 'INFO' not in ret and 'ERROR' not in ret
-
-
+    assert 'INFO' in ret and 'ERROR' not in ret
