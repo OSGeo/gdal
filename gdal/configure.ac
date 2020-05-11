@@ -1496,7 +1496,7 @@ else
     AC_CHECK_LIB(proj,proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
     AC_LANG_POP([C++])
     if test "$PROJ_FOUND" = "no"; then
-        LIBS="-L$with_proj/lib -lproj -lsqlite3 $ORIG_LIBS"
+        LIBS="-L$with_proj/lib -lproj $ORIG_LIBS"
         unset ac_cv_lib_proj_proj_create_from_wkt
         AC_LANG_PUSH([C++])
         AC_CHECK_LIB(proj,proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
@@ -1508,7 +1508,7 @@ else
         AC_CHECK_LIB(proj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
         AC_LANG_POP([C++])
         if test "$PROJ_FOUND" = "no"; then
-            LIBS="-L$with_proj/lib -lproj -lsqlite3 $ORIG_LIBS"
+            LIBS="-L$with_proj/lib -lproj $ORIG_LIBS"
             unset ac_cv_lib_proj_internal_proj_create_from_wkt
             AC_LANG_PUSH([C++])
             AC_CHECK_LIB(proj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
@@ -1524,7 +1524,7 @@ else
         AC_CHECK_LIB(internalproj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
         AC_LANG_POP([C++])
         if test "$PROJ_FOUND" = "no"; then
-            LIBS="-L$with_proj/lib -linternalproj -lsqlite3 $ORIG_LIBS"
+            LIBS="-L$with_proj/lib -linternalproj $ORIG_LIBS"
             unset ac_cv_lib_internal_proj_internal_proj_create_from_wkt
             AC_LANG_PUSH([C++])
             AC_CHECK_LIB(internalproj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
