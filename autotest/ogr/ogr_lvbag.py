@@ -104,7 +104,6 @@ def test_ogr_lvbag_4():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/lvbag/wpl.xml')
 
-    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
+    assert 'INFO' not in ret and 'ERROR' not in ret
 
 
