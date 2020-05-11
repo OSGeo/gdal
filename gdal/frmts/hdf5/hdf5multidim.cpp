@@ -180,10 +180,13 @@ static GDALExtendedDataType BuildDataType(hid_t hDataType, bool& bHasVLen, bool&
                 return GDALExtendedDataType::Create(GDT_Unknown);
             CPLString osCompName(pszName);
             H5free_memory(pszName);
-            auto hMemberType = H5Tget_member_type(hDataType, i);
+            const auto hMemberType = H5Tget_member_type(hDataType, i);
             if( hMemberType < 0 )
                 return GDALExtendedDataType::Create(GDT_Unknown);
-            auto memberDT = BuildDataType(hMemberType, bHasVLen, bNonNativeDataType, oTypes);
+            const hid_t hNativeMemberType =
+                H5Tget_native_type(hMemberType, H5T_DIR_ASCEND);
+            auto memberDT = BuildDataType(hNativeMemberType, bHasVLen, bNonNativeDataType, oTypes);
+            H5Tclose(hNativeMemberType);
             H5Tclose(hMemberType);
             if( memberDT.GetClass() == GEDTC_NUMERIC && memberDT.GetNumericDataType() == GDT_Unknown )
                 return GDALExtendedDataType::Create(GDT_Unknown);
@@ -202,7 +205,10 @@ static GDALExtendedDataType BuildDataType(hid_t hDataType, bool& bHasVLen, bool&
         std::string osName("unnamed");
         for( const auto& oPair: oTypes )
         {
-            if( H5Tequal(oPair.second, hDataType) )
+            const auto hPairNativeType = H5Tget_native_type(oPair.second, H5T_DIR_ASCEND);
+            const auto matches = H5Tequal(hPairNativeType, hDataType);
+            H5Tclose(hPairNativeType);
+            if( matches )
             {
                 osName = oPair.first;
                 break;
@@ -214,8 +220,11 @@ static GDALExtendedDataType BuildDataType(hid_t hDataType, bool& bHasVLen, bool&
     }
     else if (klass == H5T_ENUM )
     {
-        auto hParent = H5Tget_super(hDataType);
-        auto ret(BuildDataType(hParent, bHasVLen, bNonNativeDataType, oTypes));
+        const auto hParent = H5Tget_super(hDataType);
+        const hid_t hNativeParent =
+                H5Tget_native_type(hParent, H5T_DIR_ASCEND);
+        auto ret(BuildDataType(hNativeParent, bHasVLen, bNonNativeDataType, oTypes));
+        H5Tclose(hNativeParent);
         H5Tclose(hParent);
         return ret;
     }

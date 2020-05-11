@@ -294,7 +294,7 @@ def test_ogr_mvt_point_polygon_clip():
         pytest.skip()
     if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
         pytest.skip()
-    if gdaltest.is_travis_branch('sanitize') or gdaltest.is_travis_branch('python3'):
+    if gdaltest.is_travis_branch('sanitize') or gdaltest.is_travis_branch('python3') or gdaltest.is_travis_branch('s390x'):
         pytest.skip()
 
     ds = ogr.Open('data/mvt/point_polygon/1')

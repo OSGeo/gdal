@@ -1153,8 +1153,8 @@ def test_tiff_ovr_37(both_endian):
 
     predictor2_size = os.stat('tmp/ovr37.dt0.ovr')[stat.ST_SIZE]
     # 3957 : on little-endian host
-    # XXXX : on big-endian host ??? FIXME: To be updated
-    assert predictor2_size == 3957, 'did not get expected file size.'
+    # 3912 : on big-endian host
+    assert predictor2_size in (3957,3912), 'did not get expected file size.'
 
 ###############################################################################
 # Test that the predictor flag gets well propagated to internal overviews
