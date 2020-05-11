@@ -153,7 +153,7 @@ def test_ogr_lvbag_4():
 # Run test_ogrsf
 
 
-def test_ogr_lvbag_4():
+def test_ogr_lvbag_test_ogrsf():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
