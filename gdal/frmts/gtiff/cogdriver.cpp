@@ -100,7 +100,8 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
                                   double& dfMaxX,
                                   double& dfMaxY,
                                   std::unique_ptr<gdal::TileMatrixSet>& poTM,
-                                  int& nZoomLevel)
+                                  int& nZoomLevel,
+                                  int& nAlignedLevels)
 {
     osTargetSRS = CSLFetchNameValueDef(papszOptions, "TARGET_SRS", "");
     CPLString osTilingScheme(CSLFetchNameValueDef(papszOptions,
@@ -280,7 +281,7 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
         int nBRTileX = static_cast<int>(std::ceil((dfMaxX - dfOriX) / dfTileExtent));
         int nBRTileY = static_cast<int>(std::ceil((dfOriY - dfMinY) / dfTileExtent));
 
-        const int nAlignedLevels = std::min(std::min(10, atoi(
+        nAlignedLevels = std::min(std::min(10, atoi(
             CSLFetchNameValueDef(papszOptions, "ALIGNED_LEVELS", "0"))), nZoomLevel);
         int nAccDivisor = 1;
         for( int i = 0; i < nAlignedLevels - 1; i++ )
@@ -393,13 +394,14 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
 {
     std::unique_ptr<gdal::TileMatrixSet> poTM;
     int nZoomLevel = 0;
+    int nAlignedLevels = 0;
     return COGGetWarpingCharacteristics(poSrcDS,
                                         papszOptions,
                                         osResampling,
                                         osTargetSRS,
                                         nXSize, nYSize,
                                         dfMinX, dfMinY, dfMaxX, dfMaxY,
-                                        poTM, nZoomLevel);
+                                        poTM, nZoomLevel, nAlignedLevels);
 }
 
 /************************************************************************/
@@ -439,7 +441,8 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
                                 double& dfCurPixels,
                                 double& dfTotalPixelsToProcess,
                                 std::unique_ptr<gdal::TileMatrixSet>& poTM,
-                                int& nZoomLevel)
+                                int& nZoomLevel,
+                                int& nAlignedLevels)
 {
     CPLString osResampling;
     CPLString osTargetSRS;
@@ -454,7 +457,7 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
                                       osTargetSRS,
                                       nXSize, nYSize,
                                       dfMinX, dfMinY, dfMaxX, dfMaxY,
-                                      poTM, nZoomLevel) )
+                                      poTM, nZoomLevel, nAlignedLevels) )
     {
         return nullptr;
     }
@@ -617,13 +620,14 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
 
     std::unique_ptr<gdal::TileMatrixSet> poTM;
     int nZoomLevel = 0;
+    int nAlignedLevels = 0;
     if( COGHasWarpingOptions(papszOptions) )
     {
         m_poReprojectedDS =
             CreateReprojectedDS(pszFilename, poCurDS,
                                 papszOptions, pfnProgress, pProgressData,
                                 dfCurPixels, dfTotalPixelsToProcess,
-                                poTM, nZoomLevel);
+                                poTM, nZoomLevel, nAlignedLevels);
         if( !m_poReprojectedDS )
             return nullptr;
         poCurDS = m_poReprojectedDS.get();
@@ -889,6 +893,20 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
         {
             aosOptions.SetNameValue("@MASK_OVERVIEW_DATASET", m_osTmpMskOverviewFilename);
         }
+    }
+
+    const CPLString osTilingScheme(CSLFetchNameValueDef(papszOptions,
+                                                "TILING_SCHEME", "CUSTOM"));
+    if( osTilingScheme != "CUSTOM" )
+    {
+         aosOptions.SetNameValue("@TILING_SCHEME_NAME", osTilingScheme);
+         aosOptions.SetNameValue("@TILING_SCHEME_ZOOM_LEVEL",
+                                 CPLSPrintf("%d", nZoomLevel));
+         if( nAlignedLevels > 0 )
+         {
+             aosOptions.SetNameValue("@TILING_SCHEME_ALIGNED_LEVELS",
+                                     CPLSPrintf("%d", nAlignedLevels));
+         }
     }
 
     GDALDriver* poGTiffDrv = GDALDriver::FromHandle(GDALGetDriverByName("GTiff"));

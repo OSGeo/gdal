@@ -1714,6 +1714,7 @@ static void GDALInfoReportMetadata( const GDALInfoOptions* psOptions,
             {
                 if( !EQUAL(*papszIter, "") &&
                     !EQUAL(*papszIter, "IMAGE_STRUCTURE") &&
+                    !EQUAL(*papszIter, "TILING_SCHEME") &&
                     !EQUAL(*papszIter, "SUBDATASETS") &&
                     !EQUAL(*papszIter, "GEOLOCATION") &&
                     !EQUAL(*papszIter, "RPC") )
@@ -1766,6 +1767,8 @@ static void GDALInfoReportMetadata( const GDALInfoOptions* psOptions,
 
     if (!bIsBand)
     {
+        GDALInfoPrintMetadata( psOptions, hObject, "TILING_SCHEME", "Tiling Scheme",
+                               pszIndent, bJson, poMetadata, osStr );
         GDALInfoPrintMetadata( psOptions, hObject, "SUBDATASETS", "Subdatasets",
                                pszIndent, bJson, poMetadata, osStr );
         GDALInfoPrintMetadata( psOptions, hObject, "GEOLOCATION", "Geolocation",

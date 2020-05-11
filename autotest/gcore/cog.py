@@ -642,5 +642,11 @@ def test_cog_northing_easting_and_non_power_of_two_ratios():
     tile_y = (y0_NZTM2000 - gt[3]) / (blocksize * ovr1_res)
     assert tile_y == pytest.approx(round(tile_y))
 
+    assert ds.GetMetadata("TILING_SCHEME") == {
+        "NAME": "NZTM2000",
+        "ZOOM_LEVEL": "14",
+        "ALIGNED_LEVELS": "2"
+    }
+
     ds = None
     gdal.GetDriverByName('GTiff').Delete(filename)

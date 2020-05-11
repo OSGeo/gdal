@@ -11694,6 +11694,33 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
         }
     }
 
+    const char* pszTilingSchemeName =
+        CSLFetchNameValue(l_papszCreationOptions, "@TILING_SCHEME_NAME");
+    if( pszTilingSchemeName )
+    {
+        AppendMetadataItem( &psRoot, &psTail,
+                            "NAME", pszTilingSchemeName,
+                            0, nullptr, "TILING_SCHEME" );
+
+        const char* pszZoomLevel = CSLFetchNameValue(
+            l_papszCreationOptions, "@TILING_SCHEME_ZOOM_LEVEL");
+        if( pszZoomLevel )
+        {
+            AppendMetadataItem( &psRoot, &psTail,
+                                "ZOOM_LEVEL", pszZoomLevel,
+                                0, nullptr, "TILING_SCHEME" );
+        }
+
+        const char* pszAlignedLevels = CSLFetchNameValue(
+            l_papszCreationOptions, "@TILING_SCHEME_ALIGNED_LEVELS");
+        if( pszAlignedLevels )
+        {
+            AppendMetadataItem( &psRoot, &psTail,
+                                "ALIGNED_LEVELS", pszAlignedLevels,
+                                0, nullptr, "TILING_SCHEME" );
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Write out the generic XML metadata if there is any.             */
 /* -------------------------------------------------------------------- */
