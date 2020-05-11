@@ -82,6 +82,10 @@ mrf_list = [
     ids=['{0}-{3}'.format(*r) for r in mrf_list],
 )
 def test_mrf(src_filename, chksum, chksum_after_reopening, options):
+
+    if 'COMPRESS=LERC' in options and 'LERC' not in gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST'):
+        pytest.skip()
+
     if src_filename == 'jpeg/12bit_rose_extract.jpg':
         import jpeg
         jpeg.test_jpeg_1()
@@ -317,6 +321,9 @@ def test_mrf_overview_external():
 
 def test_mrf_lerc_nodata():
 
+    if 'LERC' not in gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST'):
+        pytest.skip()
+
     gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF',
                    noData=107, creationOptions=['COMPRESS=LERC'])
     ds = gdal.Open('/vsimem/out.mrf')
@@ -335,6 +342,9 @@ def test_mrf_lerc_nodata():
 
 
 def test_mrf_lerc_with_huffman():
+
+    if 'LERC' not in gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST'):
+        pytest.skip()
 
     gdal.Translate('/vsimem/out.mrf', 'data/small_world.tif', format='MRF',
                    width=5000, height=5000, creationOptions=['COMPRESS=LERC'])
