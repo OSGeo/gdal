@@ -92,18 +92,12 @@ def test_ogr_lvbag_2():
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Nummeraanduiding', 'bad layer name'
 
-    assert lyr.GetGeomType() == ogr.wkbPolygon, 'bad layer geometry type'
+    assert lyr.GetGeomType() == ogr.wkbUnknown, 'bad layer geometry type'
     assert lyr.GetSpatialRef() is None, 'bad spatial ref'
     assert lyr.GetFeatureCount() == 3
     assert lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
 
     assert lyr.GetLayerDefn().GetFieldCount() == 13
-
-    # assert (lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString and \
-    #    lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString and \
-    #    lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTString and \
-    #    lyr.GetLayerDefn().GetFieldDefn(3).GetType() == ogr.OFTString and \
-    #    lyr.GetLayerDefn().GetFieldDefn(4).GetType() == ogr.OFTString)
 
     feat = lyr.GetNextFeature()
     if feat.GetField('namespace') != 'NL.IMBAG.Nummeraanduiding' or \
@@ -127,6 +121,34 @@ def test_ogr_lvbag_2():
     feat = lyr.GetNextFeature()
     assert feat is None
 
+def test_ogr_lvbag_3():
+
+    ds = ogr.Open('data/lvbag/opr.xml')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == 'OpenbareRuimte', 'bad layer name'
+
+    assert lyr.GetGeomType() == ogr.wkbUnknown, 'bad layer geometry type'
+    assert lyr.GetSpatialRef() is None, 'bad spatial ref'
+    assert lyr.GetFeatureCount() == 3
+    assert lyr.GetLayerDefn().GetFieldCount() == 12
+
+def test_ogr_lvbag_4():
+
+    ds = ogr.Open('data/lvbag/pnd.xml')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == 'Pand', 'bad layer name'
+
+    assert lyr.GetGeomType() == ogr.wkbPolygon25D, 'bad layer geometry type'
+    assert '28992' in lyr.GetSpatialRef().ExportToWkt()
+    assert lyr.GetFeatureCount() == 6
+    assert lyr.GetLayerDefn().GetFieldCount() == 14
+
 ###############################################################################
 # Run test_ogrsf
 
@@ -137,6 +159,7 @@ def test_ogr_lvbag_4():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
+    import gdaltest
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/lvbag/wpl.xml')
 
     assert 'INFO' in ret and 'ERROR' not in ret
