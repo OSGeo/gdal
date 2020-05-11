@@ -135,7 +135,7 @@ def test_ogr_lvbag_dataset_opr():
     assert lyr.GetFeatureCount() == 3
     assert lyr.GetLayerDefn().GetFieldCount() == 12
 
-def test_ogr_lvbag_4():
+def test_ogr_lvbag_dataset_pnd():
 
     ds = ogr.Open('data/lvbag/pnd.xml')
     assert ds is not None, 'cannot open dataset'
