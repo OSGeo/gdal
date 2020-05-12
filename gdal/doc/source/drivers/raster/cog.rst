@@ -165,13 +165,22 @@ General creation options
 Reprojection related creation options
 *************************************
 
-- **TILING_SCHEME=CUSTOM/GoogleMapsCompatible**: If set to ``GoogleMapsCompatible``,
-  reprojection to EPSG:3857 using a GoogleMapsCompatible tiling scheme will be
-  automatically done. The default block size in that case will be 256. If
-  explicitly setting another block size, this one will be taken into account
-  (that is if setting a higher value than 256, the original GoogleMapsCompatible
+- **TILING_SCHEME=CUSTOM/GoogleMapsCompatible/other**: Default value: CUSTOM.
+  If set to a value different than CUSTOM, the definition of the specified tiling
+  scheme will be used to reproject the dataset to its CRS, select the resolution
+  corresponding to the closest zoom level and align on tile boundaries at this
+  resolution. The tile size indicated in the tiling scheme definition (generally
+  256 pixels) will be used, unless the user has specified a value with the
+  BLOCKSIZE creation option, in which case the user specified one will be taken
+  into account (that is if setting a higher value than 256, the original
   tiling scheme is modified to take into account the size of the HiDiPi tiles).
-  In GoogleMapsCompatible mode, TARGET_SRS, RES and EXTENT options are ignored.
+  In non-CUSTOM mode, TARGET_SRS, RES and EXTENT options are ignored.
+  Starting with GDAL 3.2, the value of TILING_SCHEME can also be the filename
+  of a JSON file according to the `OGC Two Dimensional Tile Matrix Set standard`_,
+  a URL to such file, the radical of a definition file in the GDAL data directory
+  (e.g. ``FOO`` for a file named ``tms_FOO.json``) or the inline JSON definition.
+
+.. _`OGC Two Dimensional Tile Matrix Set standard`: http://docs.opengeospatial.org/is/17-083r2/17-083r2.html
 
 - **TARGET_SRS=string**: to force reprojection of the input dataset to another
   SRS. The string can be a WKT string, a EPSG:XXXX code or a PROJ string.
@@ -183,13 +192,14 @@ Reprojection related creation options
   units of TARGET_SRS. Only taken into account if TARGET_SRS is specified.
 
 - **ALIGNED_LEVELS=INT**: Number of overview levels for which GeoTIFF tile and
-  WebMercator tiles match. When specifying this option, padding tiles will be
+  tiles defined in the tiling scheme match. When specifying this option, padding tiles will be
   added to the left and top sides of the target raster, when needed, so that
-  a GeoTIFF tile matches with a tile of the GoogleMapsCompatible tiling scheme.
-  Only taken into account if TILING_SCHEME=GoogleMapsCompatible. As up to
-  2^ALIGNED_LEVELS tiles can be added in each dimension, it is the responsibility
-  of the user to use this setting with care (a hard limit of 10 is enforced by
-  the driver).
+  a GeoTIFF tile matches with a tile of the tiling scheme.
+  Only taken into account if TILING_SCHEME is different from CUSTOM.
+  For a tiling scheme whose consecutive zoom level resolutions differ by a
+  factor of 2, care must be taken in setting this value to a high number of
+  levels, as up to 2^(ALIGNED_LEVELS-1) tiles can be added in each dimension.
+  The driver enforces a hard limit of 10.
   
 - **ADD_ALPHA=YES/NO**: Whether an alpha band is added in case of reprojection.
   Defaults to YES.

@@ -2224,6 +2224,14 @@ namespace tut
             oArray.Add(GINT64_MAX);
             oArray.Add(true);
             ensure_equals(oArray.Size(), 7);
+
+            int nCount = 0;
+            for(const auto& obj: oArray)
+            {
+                ensure_equals(obj.GetInternalHandle(), oArray[nCount].GetInternalHandle());
+                nCount++;
+            }
+            ensure_equals(nCount, 7);
         }
         {
             CPLJSONDocument oDocument;

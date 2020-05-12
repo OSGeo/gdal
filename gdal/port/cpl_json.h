@@ -169,6 +169,22 @@ public:
 
 private:
     explicit CPLJSONArray(const std::string &osName, JSONObjectH poJsonObject);
+
+    class CPL_DLL ConstIterator
+    {
+            const CPLJSONArray& m_oSelf;
+            int m_nIdx;
+            mutable CPLJSONObject m_oObj{};
+
+        public:
+            ConstIterator(const CPLJSONArray& oSelf, bool bStart): m_oSelf(oSelf), m_nIdx(bStart ? 0 : oSelf.Size()) {}
+            ~ConstIterator() = default;
+            CPLJSONObject& operator*() const { m_oObj = m_oSelf[m_nIdx]; return m_oObj; }
+            ConstIterator& operator++() { m_nIdx ++; return *this; }
+            bool operator==(const ConstIterator& it) const { return m_nIdx == it.m_nIdx; }
+            bool operator!=(const ConstIterator& it) const { return m_nIdx != it.m_nIdx; }
+    };
+
 /*! @endcond */
 public:
     int Size() const;
@@ -181,6 +197,11 @@ public:
     void Add(bool bValue);
     CPLJSONObject operator[](int nIndex);
     const CPLJSONObject operator[](int nIndex) const;
+
+    /** Iterator to first element */
+    ConstIterator begin() const { return ConstIterator(*this, true); }
+    /** Iterator to after last element */
+    ConstIterator end() const { return ConstIterator(*this, false); }
 };
 
 /**
@@ -207,7 +228,7 @@ public:
     bool LoadChunks(const std::string &osPath, size_t nChunkSize = 16384,
                     GDALProgressFunc pfnProgress = nullptr,
                     void *pProgressArg = nullptr);
-    bool LoadUrl(const std::string &osUrl, char **papszOptions,
+    bool LoadUrl(const std::string &osUrl, const char* const* papszOptions,
                  GDALProgressFunc pfnProgress = nullptr,
                  void *pProgressArg = nullptr);
 

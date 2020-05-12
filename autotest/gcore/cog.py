@@ -586,3 +586,67 @@ def test_cog_invalidation_by_metadata_change():
 
     with gdaltest.error_handler():
         gdal.GetDriverByName('GTiff').Delete(filename)
+
+
+###############################################################################
+# Test a tiling scheme with a CRS with northing/easting axis order
+# and non power-of-two ratios of scales.
+
+
+def test_cog_northing_easting_and_non_power_of_two_ratios():
+
+    filename = '/vsimem/cog.tif'
+
+    x0_NZTM2000 = -1000000
+    y0_NZTM2000 = 10000000
+    blocksize = 256
+    scale_denom_zoom_level_14 = 1000
+    scale_denom_zoom_level_13 = 2500
+    scale_denom_zoom_level_12 = 5000
+
+    ds = gdal.Translate(filename, 'data/byte.tif',
+        options='-of COG -a_srs EPSG:2193 -a_ullr 1000001 5000001 1000006.6 4999995.4 -co TILING_SCHEME=NZTM2000 -co ALIGNED_LEVELS=2')
+    assert ds.RasterXSize == 1280
+    assert ds.RasterYSize == 1280
+    b = ds.GetRasterBand(1)
+    assert [(b.GetOverview(i).XSize, b.GetOverview(i).YSize) for i in range(b.GetOverviewCount())] == [(512, 512), (256, 256)]
+
+    gt = ds.GetGeoTransform()
+    res_zoom_level_14 = scale_denom_zoom_level_14 * 0.28e-3 # According to OGC Tile Matrix Set formula
+    assert gt == pytest.approx((999872, res_zoom_level_14, 0, 5000320, 0, -res_zoom_level_14), abs=1e-8)
+
+    # Check that gt origin matches the corner of a tile at zoom 14
+    res = gt[1]
+    tile_x = (gt[0] - x0_NZTM2000) / (blocksize * res)
+    assert tile_x == pytest.approx(round(tile_x))
+    tile_y = (y0_NZTM2000 - gt[3]) / (blocksize * res)
+    assert tile_y == pytest.approx(round(tile_y))
+
+    # Check that overview=0 corresponds to the resolution of zoom level=13 / OGC ScaleDenom = 2500
+    ovr0_xsize = b.GetOverview(0).XSize
+    assert float(ovr0_xsize) / ds.RasterXSize == float(scale_denom_zoom_level_14) / scale_denom_zoom_level_13
+    # Check that gt origin matches the corner of a tile at zoom 13
+    ovr0_res = res * scale_denom_zoom_level_13 / scale_denom_zoom_level_14
+    tile_x = (gt[0] - x0_NZTM2000) / (blocksize * ovr0_res)
+    assert tile_x == pytest.approx(round(tile_x))
+    tile_y = (y0_NZTM2000 - gt[3]) / (blocksize * ovr0_res)
+    assert tile_y == pytest.approx(round(tile_y))
+
+    # Check that overview=1 corresponds to the resolution of zoom level=12 / OGC ScaleDenom = 5000
+    ovr1_xsize = b.GetOverview(1).XSize
+    assert float(ovr1_xsize) / ds.RasterXSize == float(scale_denom_zoom_level_14) / scale_denom_zoom_level_12
+    # Check that gt origin matches the corner of a tile at zoom 12
+    ovr1_res = res * scale_denom_zoom_level_12 / scale_denom_zoom_level_14
+    tile_x = (gt[0] - x0_NZTM2000) / (blocksize * ovr1_res)
+    assert tile_x == pytest.approx(round(tile_x))
+    tile_y = (y0_NZTM2000 - gt[3]) / (blocksize * ovr1_res)
+    assert tile_y == pytest.approx(round(tile_y))
+
+    assert ds.GetMetadata("TILING_SCHEME") == {
+        "NAME": "NZTM2000",
+        "ZOOM_LEVEL": "14",
+        "ALIGNED_LEVELS": "2"
+    }
+
+    ds = None
+    gdal.GetDriverByName('GTiff').Delete(filename)
