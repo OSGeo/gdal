@@ -26,8 +26,8 @@ chroot "$chroot" sh -c "cd $PWD/autotest/ogr && OGR_MYSQL_CONNECTION_STRING=mysq
 chroot "$chroot" sh -c "cd $PWD/autotest/ogr && OGR_MYSQL_CONNECTION_STRING=mysql:test,user=root,password=passwd,port=33061,host=127.0.0.1 $PYTEST ogr_mysql.py"
 
 # PostGIS tests
-chroot "$chroot" sh -c "cd $PWD/autotest/ogr && OGR_PG_CONNECTION_STRING='host=127.0.0.1 port=25432 dbname=autotest user=docker password=docker' $PYTEST ogr_pg.py"
-chroot "$chroot" sh -c "cd $PWD/autotest/gdrivers && PGHOST=127.0.0.1 PGPORT=25432 PGUSER=docker PGPASSWORD=docker $PYTEST postgisraster.py"
+chroot "$chroot" sh -c "cd $PWD/autotest/ogr && OGR_PG_CONNECTION_STRING='host=127.0.0.1 port=25432 dbname=autotest user=docker password=docker' $PYTEST --capture=no -ra ogr_pg.py"
+chroot "$chroot" sh -c "cd $PWD/autotest/gdrivers && PGHOST=127.0.0.1 PGPORT=25432 PGUSER=docker PGPASSWORD=docker $PYTEST --capture=no -ra postgisraster.py"
 
 # MongoDB v3
 chroot "$chroot" sh -c "cd $PWD/autotest/ogr && MONGODBV3_TEST_PORT=27018 MONGODBV3_TEST_HOST=localhost $PYTEST ogr_mongodbv3.py"

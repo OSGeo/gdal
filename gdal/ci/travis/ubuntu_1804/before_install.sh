@@ -61,6 +61,7 @@ chroot "$chroot" sh -c "echo 'CREATE DATABASE test' | mysql -uroot -ppasswd --po
 # Initialize PostGIS
 PGPASSWORD=docker psql -h localhost -U docker -p 25432 -d gis -c "CREATE DATABASE autotest"
 PGPASSWORD=docker psql -h localhost -U docker -p 25432 -d autotest -c "CREATE EXTENSION postgis"
+PGPASSWORD=docker psql -h localhost -U docker -p 25432 -d autotest -c "CREATE EXTENSION postgis_raster"
 
 # Mongo
 docker run --name mongo -p 27018:27017 -d mongo:latest
