@@ -952,10 +952,18 @@ class GDALCOGDriver final: public GDALDriver
 {
         bool m_bInitialized = false;
 
+        bool bHasLZW = false;
+        bool bHasDEFLATE = false;
+        bool bHasLZMA = false;
+        bool bHasZSTD = false;
+        bool bHasJPEG = false;
+        bool bHasWebP = false;
+        std::string osCompressValues{};
+
         void InitializeCreationOptionList();
 
     public:
-        GDALCOGDriver() = default;
+        GDALCOGDriver();
 
         const char* GetMetadataItem(const char* pszName, const char* pszDomain) override
         {
@@ -973,21 +981,22 @@ class GDALCOGDriver final: public GDALDriver
         }
 };
 
+GDALCOGDriver::GDALCOGDriver()
+{
+    // We could defer this in InitializeCreationOptionList() but with currently
+    // released libtiff versions where there was a bug (now fixed) in
+    // TIFFGetConfiguredCODECs(), this wouldn't work properly if the LERC codec
+    // had been registered in between
+    osCompressValues = GTiffGetCompressValues(
+        bHasLZW, bHasDEFLATE, bHasLZMA, bHasZSTD, bHasJPEG, bHasWebP,
+        true /* bForCOG */);
+}
+
 void GDALCOGDriver::InitializeCreationOptionList()
 {
     if( m_bInitialized )
         return;
     m_bInitialized = true;
-
-    bool bHasLZW = false;
-    bool bHasDEFLATE = false;
-    bool bHasLZMA = false;
-    bool bHasZSTD = false;
-    bool bHasJPEG = false;
-    bool bHasWebP = false;
-    CPLString osCompressValues(GTiffGetCompressValues(
-        bHasLZW, bHasDEFLATE, bHasLZMA, bHasZSTD, bHasJPEG, bHasWebP,
-        true /* bForCOG */));
 
     CPLString osOptions;
     osOptions = "<CreationOptionList>"
