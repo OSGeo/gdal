@@ -140,12 +140,11 @@ def test_ogr_lvbag_dataset_pnd():
     ds = ogr.Open('data/lvbag/pnd.xml')
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 1, 'bad layer count'
+    assert '28992' in ds.GetSpatialRef().ExportToWkt()
 
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Pand', 'bad layer name'
-
     assert lyr.GetGeomType() == ogr.wkbPolygon25D, 'bad layer geometry type'
-    assert '28992' in lyr.GetSpatialRef().ExportToWkt()
     assert lyr.GetFeatureCount() == 6
     assert lyr.GetLayerDefn().GetFieldCount() == 14
 
