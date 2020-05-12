@@ -39,8 +39,6 @@ import pytest
 
 import gdaltest
 
-run_tiff_write_api_proxy = True
-
 ###############################################################################
 
 
@@ -7184,20 +7182,6 @@ def test_tiff_write_too_many_tiles():
                 src_ds.BuildOverviews('NEAR', [2])
         assert 'File too large regarding tile size' in gdal.GetLastErrorMsg()
 
-
-###############################################################################
-# Ask to run again tests with GDAL_API_PROXY=YES
-
-
-def tiff_write_api_proxy():
-
-    if not run_tiff_write_api_proxy:
-        pytest.skip()
-
-    import test_py_scripts
-    ret = test_py_scripts.run_py_script_as_external_script('.', 'tiff_write', ' -api_proxy', display_live_on_parent_stdout=True)
-
-    assert ret.find('Failed:    0') != -1
 
 ###############################################################################
 

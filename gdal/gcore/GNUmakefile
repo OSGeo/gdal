@@ -9,7 +9,7 @@ OBJ	=	gdalmultidim.o gdalopeninfo.o gdaldrivermanager.o gdaldriver.o gdaldataset
 		gdal_rat.o gdalpamproxydb.o \
                 gdalallvalidmaskband.o gdalnodatamaskband.o \
 		gdalproxydataset.o gdalproxypool.o gdaldefaultasync.o \
-		gdalnodatavaluesmaskband.o gdaldllmain.o gdalexif.o gdalclientserver.o \
+		gdalnodatavaluesmaskband.o gdaldllmain.o gdalexif.o \
 		gdalgeorefpamdataset.o gdaljp2abstractdataset.o gdalvirtualmem.o \
 		gdaloverviewdataset.o gdalrescaledalphaband.o gdaljp2structure.o \
 		gdal_mdreader.o gdaljp2metadatagenerator.o gdalabstractbandblockcache.o \

@@ -3103,9 +3103,6 @@ CPLErr CPL_STDCALL GDALCreateDatasetMaskBand( GDALDatasetH hDS, int nFlags )
  * .tar/.tar.gz/.tgz archive (see VSIInstallTarFileHandler()) or on a HTTP / FTP
  * server (see VSIInstallCurlFileHandler())
  *
- * In some situations (dealing with unverified data), the datasets can be opened
- * in another process through the \ref gdal_api_proxy mechanism.
- *
  * \sa GDALOpenShared()
  * \sa GDALOpenEx()
  *
@@ -3159,9 +3156,6 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
  * file in a .zip archive (see VSIInstallZipFileHandler()), in a
  * .tar/.tar.gz/.tgz archive (see VSIInstallTarFileHandler()) or on a HTTP / FTP
  * server (see VSIInstallCurlFileHandler())
- *
- * In some situations (dealing with unverified data), the datasets can be opened
- * in another process through the \ref gdal_api_proxy mechanism.
  *
  * In order to reduce the need for searches through the operating system
  * file system machinery, it is possible to give an optional list of files with
@@ -3316,26 +3310,14 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
     oOpenInfo.papszOpenOptions = papszOpenOptionsCleaned;
 
     const int nDriverCount = poDM->GetDriverCount();
-    const int nAllowedDrivers = CSLCount( papszAllowedDrivers );
-
-    for( int iDriver = -1; iDriver < nDriverCount; ++iDriver )
+    for( int iDriver = 0; iDriver < nDriverCount; ++iDriver )
     {
-        GDALDriver *poDriver = nullptr;
-
-        if ( (iDriver == -1 ) && ( nAllowedDrivers == 1 ) )
+        GDALDriver *poDriver = poDM->GetDriver(iDriver);
+        if (papszAllowedDrivers != nullptr &&
+            CSLFindString(papszAllowedDrivers,
+                            GDALGetDriverShortName(poDriver)) == -1)
+        {
             continue;
-
-        if ( iDriver < 0 )
-        {
-            poDriver = GDALGetAPIPROXYDriver();
-        }
-        else
-        {
-            poDriver = poDM->GetDriver(iDriver);
-            if (papszAllowedDrivers != nullptr &&
-                CSLFindString(papszAllowedDrivers,
-                              GDALGetDriverShortName(poDriver)) == -1)
-                continue;
         }
 
         if( (nOpenFlags & GDAL_OF_RASTER) != 0 &&
@@ -3576,9 +3558,6 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
  * file in a .zip archive (see VSIInstallZipFileHandler()), in a
  * .tar/.tar.gz/.tgz archive (see VSIInstallTarFileHandler()) or on a HTTP / FTP
  * server (see VSIInstallCurlFileHandler())
- *
- * In some situations (dealing with unverified data), the datasets can be opened
- * in another process through the \ref gdal_api_proxy mechanism.
  *
  * \sa GDALOpen()
  * \sa GDALOpenEx()
