@@ -1932,7 +1932,7 @@ void MBTilesDataset::InitVector(double dfMinX, double dfMinY,
     {
         CPLJSONObject oId = oVectorLayers[i].GetObj("id");
         if( oId.IsValid() && oId.GetType() ==
-                CPLJSONObject::String )
+                CPLJSONObject::Type::String )
         {
             OGRwkbGeometryType eGeomType = wkbUnknown;
             if( oTileStatLayers.IsValid() )

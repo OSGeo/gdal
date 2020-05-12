@@ -514,7 +514,7 @@ static GDALDatasetH GDALTranslateFlush(GDALDatasetH hOutDS)
 
 static CPLJSONObject Clone(const CPLJSONObject& obj)
 {
-    auto serialized = obj.Format(CPLJSONObject::Plain);
+    auto serialized = obj.Format(CPLJSONObject::PrettyFormat::Plain);
     CPLJSONDocument oJSONDocument;
     const GByte *pabyData = reinterpret_cast<const GByte *>(serialized.c_str());
     oJSONDocument.LoadMemory( pabyData );
@@ -558,7 +558,7 @@ static CPLString EditISIS3MetadataForBandChange(const char* pszJSON,
     }
 
     auto oBandBin = oRoot.GetObj( "IsisCube/BandBin" );
-    if( oBandBin.IsValid() && oBandBin.GetType() == CPLJSONObject::Object )
+    if( oBandBin.IsValid() && oBandBin.GetType() == CPLJSONObject::Type::Object )
     {
         // Backup original BandBin object
         oRoot.GetObj("IsisCube").Add("OriginalBandBin", Clone(oBandBin));
@@ -568,15 +568,15 @@ static CPLString EditISIS3MetadataForBandChange(const char* pszJSON,
         // source dataset.
         for( auto& child: oBandBin.GetChildren() )
         {
-            if( child.GetType() == CPLJSONObject::Array )
+            if( child.GetType() == CPLJSONObject::Type::Array )
             {
                 ReworkArray(oBandBin, child, nSrcBandCount, psOptions);
             }
-            else if( child.GetType() == CPLJSONObject::Object )
+            else if( child.GetType() == CPLJSONObject::Type::Object )
             {
                 auto oValue = child.GetObj("value");
                 auto oUnit = child.GetObj("unit");
-                if( oValue.GetType() == CPLJSONObject::Array )
+                if( oValue.GetType() == CPLJSONObject::Type::Array )
                 {
                     ReworkArray(child, oValue, nSrcBandCount, psOptions);
                 }
@@ -584,7 +584,7 @@ static CPLString EditISIS3MetadataForBandChange(const char* pszJSON,
         }
     }
 
-    return oRoot.Format(CPLJSONObject::Pretty);
+    return oRoot.Format(CPLJSONObject::PrettyFormat::Pretty);
 }
 
 /************************************************************************/

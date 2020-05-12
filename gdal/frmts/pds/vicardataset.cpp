@@ -1238,7 +1238,7 @@ char **VICARDataset::GetMetadata( const char* pszDomain )
                 BuildLabel();
             }
             CPLAssert( m_oJSonLabel.IsValid() );
-            const CPLString osJson = m_oJSonLabel.Format(CPLJSONObject::Pretty);
+            const CPLString osJson = m_oJSonLabel.Format(CPLJSONObject::PrettyFormat::Pretty);
             m_aosVICARMD.InsertString(0, osJson.c_str());
         }
         return m_aosVICARMD.List();
@@ -1359,7 +1359,7 @@ static void WriteLabelItemValue(std::string& osLabel,
     }
     else
     {
-        osLabel += SerializeString(obj.Format(CPLJSONObject::Plain));
+        osLabel += SerializeString(obj.Format(CPLJSONObject::PrettyFormat::Plain));
     }
 }
 
@@ -1581,7 +1581,7 @@ static CPLJSONObject GetOrCreateJSONObject(CPLJSONObject &oParent,
                                            const std::string &osKey)
 {
     CPLJSONObject oChild = oParent[osKey];
-    if( oChild.IsValid() && oChild.GetType() != CPLJSONObject::Object )
+    if( oChild.IsValid() && oChild.GetType() != CPLJSONObject::Type::Object )
     {
         oParent.Delete( osKey );
         oChild.Deinit();
@@ -1667,7 +1667,7 @@ void VICARDataset::BuildLabel()
     {
         auto oMap = oLabel.GetObj("PROPERTY/MAP");
         if( oMap.IsValid() &&
-            oMap.GetType() == CPLJSONObject::Object )
+            oMap.GetType() == CPLJSONObject::Type::Object )
         {
             if( !m_osTargetName.empty() )
                 oMap.Set( "TARGET_NAME", m_osTargetName );
