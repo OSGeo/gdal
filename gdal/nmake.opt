@@ -42,7 +42,7 @@ MSVC_VER=1900
 !ENDIF
 
 ###############################################################################
-# Allow setting of parallel compilation number of processors with CPU_COUNT 
+# Allow setting of parallel compilation number of processors with CPU_COUNT
 # variable
 
 !IFNDEF CPU_COUNT
@@ -86,8 +86,14 @@ DATADIR = "$(GDAL_HOME)\data"
 
 # Set this to the installed directory containing python.  If you don't
 # have python just let it point to a directory that does not exist (as now).
-!IFNDEF PYDIR 
+!IFNDEF PYDIR
 PYDIR   =	"C:\Software\Python24"
+!ENDIF
+
+# Set this to the name of the python executable in PYDIR. For example "python_d.exe"
+# if building python bindings with a debug build.
+!IFNDEF PYEXEC
+PYEXEC = python.exe
 !ENDIF
 
 # Set the location of your SWIG installation
@@ -154,9 +160,9 @@ OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MP$(CPU_COUNT) /MDd /EH
 !ENDIF
 !ENDIF  # OPTFLAGS
 
-# 
+#
 # Set flags controlling warnings level, and suppression of some warnings.
-# 
+#
 !IFNDEF WARNFLAGS
 # 4127: conditional expression is constant
 # 4251: 'identifier' : class 'type' needs to have dll-interface to be used by clients of class 'type2'
@@ -167,14 +173,14 @@ OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MP$(CPU_COUNT) /MDd /EH
 # 4206: nonstandard extension used : translation unit is empty (only applies to C source code)
 # 4351: new behavior: elements of array 'array' will be default initialized (needed for https://trac.osgeo.org/gdal/changeset/35593)
 # 4611: interaction between '_setjmp' and C++ object destruction is non-portable
-# 
+#
 WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4351 /wd4611
 
 !ENDIF
 
-# 
+#
 # Set flags controlling availability of SSE
-# 
+#
 !IFNDEF SSEFLAGS
 SSEFLAGS = /DHAVE_SSE_AT_COMPILE_TIME
 SSSE3FLAGS = /DHAVE_SSSE3_AT_COMPILE_TIME
@@ -209,14 +215,14 @@ LDEBUG= /debug /opt:ref /opt:icf
 WIN64=YES
 !ENDIF
 
-# If you don't want some entry points to have STDCALL conventions, 
+# If you don't want some entry points to have STDCALL conventions,
 # comment out the following and add -DCPL_DISABLE_STDCALL in OPTFLAGS.
 # This option has no effect on 64-bit windows.
 !IFNDEF STDCALL
 STDCALL=YES
 !ENDIF
 
-# Version number embedded in DLL name. 
+# Version number embedded in DLL name.
 # If GDAL version is X.Y.Z, VERSION = X * 100 + Y
 !IFNDEF VERSION
 VERSION =	301
@@ -234,7 +240,7 @@ DLLBUILD=1
 !ENDIF
 
 # Enable all OGR formats, or only raster formats?  Comment out to disable
-# vector formats. 
+# vector formats.
 !IFNDEF INCLUDE_OGR_FRMTS
 INCLUDE_OGR_FRMTS = YES
 !ENDIF
@@ -246,7 +252,7 @@ INCLUDE_GNM_FRMTS = YES
 !ENDIF
 
 # To be enabled defined to point to wsetargv.obj from the Visual C++ directory,
-# when you want the utility programs to be able to expand wildcards. 
+# when you want the utility programs to be able to expand wildcards.
 #SETARGV =	"D:\Software\VStudio\VC98\lib\wsetargv.obj"
 
 # PROJ stuff (required dependency: PROJ >= 6)
@@ -332,8 +338,8 @@ JPEG12_SUPPORTED = 1
 #		$(LIBKML_DIR)/third_party\uriparser-0.7.5.win32/release/uriparser.lib \
 #		$(LIBKML_DIR)/third_party\zlib-1.2.3.win32/lib/minizip.lib \
 #		$(LIBKML_DIR)/third_party\zlib-1.2.3.win32/lib/zlib.lib
-							
-# Uncomment the following and update to enable ECW read support with the 
+
+# Uncomment the following and update to enable ECW read support with the
 # 4.1+ readonly SDK
 #ECWDIR  = 	"c:/Program Files/ERDAS/ERDAS ECW JPEG2000 Read SDK"
 #ECWFLAGS =	-DECWSDK_VERSION=41 \
@@ -344,9 +350,9 @@ JPEG12_SUPPORTED = 1
 #		$(ECWDIR)\lib\vc90\win32\NCSUtil4.lib \
 #		$(ECWDIR)\lib\vc90\win32\NCScnet4.lib
 
-# To add Write support, use the write SDK, change NCSEcw4_RO.lib to 
+# To add Write support, use the write SDK, change NCSEcw4_RO.lib to
 # NCSEcw4.lib, and add -DHAVE_COMPRESS to ECWFLAGS.  The ECWDIR setting will
-# also need some adjustment. 
+# also need some adjustment.
 
 # Uncomment the following and update to enable ECW read support with the 5.0+ SDK
 #!IF $(MSVC_VER) < 1910
@@ -547,7 +553,7 @@ TD_LIBS = $(TD_LIBS) \
 
 # Uncomment and adjust paths if you have Kakadu 6.0 or newer
 #
-# Starting with KKDU V7.9.1 (at least), it is possible to generate 
+# Starting with KKDU V7.9.1 (at least), it is possible to generate
 # jp2ak and jpipkak with the 2 Kakadu DLLs instead of object files
 # In such case :
 #   o do NOT define KAKOBJDIR
@@ -577,16 +583,16 @@ KAKADU_7_5_OR_LATER = YES
 # Uncomment the following and update to enable NCSA HDF Release 5 support.
 #HDF5_PLUGIN = NO
 #HDF5_DIR =	c:\warmerda\supportlibs\hdf5\5-164-win
-#HDF5_LIB =	$(HDF5_DIR)\dll\hdf5dll.lib 
+#HDF5_LIB =	$(HDF5_DIR)\dll\hdf5dll.lib
 
-# Needed to define H5_BUILT_AS_DYNAMIC_LIB for windows compilation 
+# Needed to define H5_BUILT_AS_DYNAMIC_LIB for windows compilation
 # scenarios where it is not exported on the target (non-CMake builds)
 #HDF5_H5_IS_DLL = YES
 
 # Uncomment the following and update to enable KEA support.
 #KEA_PLUGIN = NO
 #KEA_CFLAGS = -Ic:\kea\include
-#KEA_LIB = c:\kea\libkea.lib 
+#KEA_LIB = c:\kea\libkea.lib
 
 # Uncomment the following for MrSID support.  Only MRSID_DIR is required,
 # which may point to a MrSID Raster SDK, Lidar SDK, or the combined SDK, and
@@ -615,7 +621,7 @@ PCIDSK_SETTING=INTERNAL
 #PG_LIB = n:\pkg\libpq_win32\lib\libpqdll.lib wsock32.lib
 
 # MySQL Libraries
-# NOTE: Need /MT instead of /MD, also enable /EHsc switch. 
+# NOTE: Need /MT instead of /MD, also enable /EHsc switch.
 #MYSQL_INC_DIR = D:\Software\MySQLServer4.1\include
 #MYSQL_LIB = D:\Software\MySQLServer4.1\lib\opt\libmysql.lib advapi32.lib
 
@@ -695,15 +701,15 @@ GRIB_SETTING=yes
 #SDE_VERSION=91
 #SDE_PLUGIN = NO
 #SDE_SDK = C:\arcgis\arcsde
-#SDE_INC = $(SDE_SDK)\include 
+#SDE_INC = $(SDE_SDK)\include
 #SDE_LIB = $(SDE_SDK)\lib\pe$(SDE_VERSION).lib \
-#          $(SDE_SDK)\lib\sde$(SDE_VERSION).lib $(SDE_SDK)\lib\sg$(SDE_VERSION).lib      
+#          $(SDE_SDK)\lib\sde$(SDE_VERSION).lib $(SDE_SDK)\lib\sg$(SDE_VERSION).lib
 
 
 #FGDB_ENABLED = YES
 #FGDB_PLUGIN = YES
 #FGDB_SDK = C:\Users\rburhum\Desktop\FileGDB_API_VS2008_1_0beta3
-#FGDB_INC = $(FGDB_SDK)\include 
+#FGDB_INC = $(FGDB_SDK)\include
 #FGDB_LIB = $(FGDB_SDK)\lib\FileGDBAPI.lib
 
 #uncomment to build AmigoCloud as a plugin instead
@@ -751,7 +757,7 @@ GRIB_SETTING=yes
 # Uncomment for OpenJpeg (release v2.1 or later) support
 #OPENJPEG_ENABLED = YES
 # Note that, contrary to GDAL releases <= 2.2.X, this must point to the
-# directory where openjpeg.h and opj_config.h are set 
+# directory where openjpeg.h and opj_config.h are set
 #OPENJPEG_CFLAGS = -IC:\openjpeg\include\openjpeg-2.X
 #OPENJPEG_LIB = C:\openjpeg\lib\openjp2.lib
 
@@ -869,7 +875,7 @@ QHULL_SETTING = INTERNAL
 # Cryptopp stuff.
 # Make sure cryptopp is compiled with /MD ( Properties | Configuration properties | C/C++ |  Code Generation | Runtime Library: Multi-threaded DLL (/MD))
 # The headers file must be in $(CRYPTOPP_INC)/cryptopp (the /cryptopp part must not be in the following variable then)
-# CRYPTOPP_INC = -Ic:/install-cryptopp-x64/include 
+# CRYPTOPP_INC = -Ic:/install-cryptopp-x64/include
 #
 # Define USE_ONLY_CRYPTODLL_ALG is running against cryptopp.dll, but not if statically linking
 # USE_ONLY_CRYPTODLL_ALG=YES
@@ -888,7 +894,7 @@ QHULL_SETTING = INTERNAL
 MRF_SETTING=yes
 
 # Any extra libraries needed on this platform?
-ADD_LIBS	= 
+ADD_LIBS	=
 
 # Binding list. One or several in the following list
 # csharp, java, python
@@ -896,8 +902,8 @@ ADD_LIBS	=
 
 # Comment out the following if you want to build with Python support, but
 # you don't have Numeric Python installed (with include files).  Numeric
-# integration may not work.  This only appears to the old generation 
-# bindings. 
+# integration may not work.  This only appears to the old generation
+# bindings.
 #HAVE_NUMPY=1
 
 # Set HAVE_LERC=0 to disable LERC support
@@ -946,7 +952,7 @@ GNM_FLAG = -DGNM_ENABLED
 !ENDIF
 !ENDIF
 
-#LINKER_FLAGS =	/NODEFAULTLIB:LIBC 
+#LINKER_FLAGS =	/NODEFAULTLIB:LIBC
 LINKER_FLAGS = $(EXTRA_LINKER_FLAGS) $(MSVC_VLD_LIB) $(LDEBUG)
 
 
