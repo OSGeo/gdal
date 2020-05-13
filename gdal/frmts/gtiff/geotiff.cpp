@@ -11341,7 +11341,7 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
                     else if( bFoundTag &&
                              asTIFFTags[iTag].eType == GTIFFTAGTYPE_BYTE_STRING )
                     {
-                        int nLen = static_cast<int>(strlen(pszItemValue));
+                        uint32 nLen = static_cast<uint32>(strlen(pszItemValue));
                         if( nLen )
                         {
                             TIFFSetField( hTIFF, asTIFFTags[iTag].nTagVal,
@@ -19584,7 +19584,7 @@ static void GTiffTagExtender(TIFF *tif)
           TRUE, TRUE, const_cast<char *>( "RPCCoefficient" ) },
         { TIFFTAG_TIFF_RSID, -1, -1, TIFF_ASCII, FIELD_CUSTOM,
           TRUE, FALSE, const_cast<char *>( "TIFF_RSID" ) },
-        { TIFFTAG_GEO_METADATA, -1, -1, TIFF_BYTE, FIELD_CUSTOM,
+        { TIFFTAG_GEO_METADATA, TIFF_VARIABLE2, TIFF_VARIABLE2, TIFF_BYTE, FIELD_CUSTOM,
           TRUE, TRUE, const_cast<char *>( "GEO_METADATA" ) }
     };
 
