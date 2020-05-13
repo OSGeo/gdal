@@ -15153,6 +15153,44 @@ void GTiffDataset::ScanDirectories()
             TIFFGetField( m_hTIFF, TIFFTAG_IMAGEWIDTH, &nXSize );
             TIFFGetField( m_hTIFF, TIFFTAG_IMAGELENGTH, &nYSize );
 
+            // For Geodetic TIFF grids (GTG)
+            // (https://proj.org/specifications/geodetictiffgrids.html)
+            // extract the grid_name to put it in the description
+            std::string osFriendlyName;
+            char* pszText = nullptr;
+            if( TIFFGetField( m_hTIFF, TIFFTAG_GDAL_METADATA, &pszText ) &&
+                strstr(pszText, "grid_name") != nullptr )
+            {
+                CPLXMLNode *psRoot = CPLParseXMLString( pszText );
+                CPLXMLNode *psItem = nullptr;
+
+                if( psRoot != nullptr && psRoot->eType == CXT_Element
+                    && EQUAL(psRoot->pszValue,"GDALMetadata") )
+                    psItem = psRoot->psChild;
+
+                for( ; psItem != nullptr; psItem = psItem->psNext )
+                {
+
+                    if( psItem->eType != CXT_Element
+                        || !EQUAL(psItem->pszValue,"Item") )
+                        continue;
+
+                    const char *pszKey = CPLGetXMLValue( psItem, "name", nullptr );
+                    const char *pszValue = CPLGetXMLValue( psItem, nullptr, nullptr );
+                    int nBand =
+                        atoi(CPLGetXMLValue( psItem, "sample", "-1" ));
+                    if( pszKey && pszValue && nBand <= 0 &&
+                        EQUAL(pszKey, "grid_name") )
+                    {
+                        osFriendlyName = ": ";
+                        osFriendlyName += pszValue;
+                        break;
+                    }
+                }
+
+                CPLDestroyXMLNode(psRoot);
+            }
+
             if( nXSize > INT_MAX || nYSize > INT_MAX )
             {
                 CPLDebug("GTiff",
@@ -15173,6 +15211,7 @@ void GTiffDataset::ScanDirectories()
                             static_cast<int>(nXSize),
                             static_cast<int>(nYSize),
                             nSPP );
+                osDesc += osFriendlyName;
 
                 aosSubdatasets.AddString(osName);
                 aosSubdatasets.AddString(osDesc);

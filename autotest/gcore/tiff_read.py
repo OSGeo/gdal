@@ -3450,3 +3450,15 @@ def test_tiff_read_tiff_single_band_with_whitepoint_primarychroma_tags():
     # Check that it doesn't crash. We could perhaps return something more
     # useful
     assert ds.GetMetadata('COLOR_PROFILE') == {}
+
+
+###############################################################################
+# Test that subdataset names for Geodetic TIFF grids (GTG)
+# (https://proj.org/specifications/geodetictiffgrids.html)
+# include the grid_name
+
+
+def test_tiff_read_geodetic_tiff_grid():
+
+    ds = gdal.Open('data/test_hgrid_with_subgrid.tif')
+    assert ds.GetSubDatasets()[0][1] == 'Page 1 (10P x 10L x 2B): CAwest'
