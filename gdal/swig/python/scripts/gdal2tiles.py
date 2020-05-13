@@ -2980,6 +2980,8 @@ def main():
     # TODO: gbataille - debug intermediate tiles.vrt not produced anymore?
     # TODO: gbataille - Refactor generate overview tiles to not depend on self variables
     argv = gdal.GeneralCmdLineProcessor(sys.argv)
+    if argv is None:
+        return
     input_file, output_folder, options = process_args(argv[1:])
     nb_processes = options.nb_processes or 1
 
