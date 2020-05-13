@@ -390,7 +390,7 @@ The following example shows how to conveniently create a long/lat coordinate
 system using the same geographic CRS as a projected coordinate
 system, and using that to transform between projected coordinates and
 long/lat. The returned coordinates will be in longitude, latitude order due to
-the call to SetDataAxisToSRSAxisMapping(OAMS_TRADITIONAL_GIS_ORDER)
+the call to SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER)
 
 .. code-block::
 
@@ -402,7 +402,7 @@ the call to SetDataAxisToSRSAxisMapping(OAMS_TRADITIONAL_GIS_ORDER)
     oUTM.SetUTM( 17 );
 
     poLongLat = oUTM.CloneGeogCS();
-    poLongLat->SetDataAxisToSRSAxisMapping(OAMS_TRADITIONAL_GIS_ORDER);
+    poLongLat->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     poTransform = OGRCreateCoordinateTransformation( &oUTM, poLongLat );
     if( poTransform == NULL )
