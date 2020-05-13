@@ -6600,9 +6600,6 @@ def test_tiff_write_webp_huge_single_strip():
 
 def test_tiff_write_172_geometadata_tiff_rsid():
 
-    if gdaltest.is_travis_branch('s390x'):
-         pytest.xfail('GEO_METADATA not correctly retrieved on s390x')
-
     tmpfilename = '/vsimem/tiff_write_172_geometadata_tiff_rsid.tiff'
     ds = gdal.GetDriverByName('GTiff').Create(tmpfilename, 1, 1)
     ds.SetMetadataItem('GEO_METADATA', 'foo')
