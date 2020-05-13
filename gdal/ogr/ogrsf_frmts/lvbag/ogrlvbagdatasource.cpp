@@ -54,7 +54,7 @@ int OGRLVBAGDataSource::Open( const char* pszFilename )
 
 OGRLayer *OGRLVBAGDataSource::GetLayer( int iLayer )
 {
-    if( iLayer < 0 || iLayer >= static_cast<int>(papoLayers.size()) )
+    if( iLayer < 0 || iLayer >= GetLayerCount() )
         return nullptr;
     
     return papoLayers[iLayer].get();

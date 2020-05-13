@@ -46,8 +46,7 @@ static int OGRLVBAGDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( !EQUAL(osExt, "xml") )
         return FALSE;
 
-    const char* pszPtr = reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
-
+    auto pszPtr = reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
     if( poOpenInfo->nHeaderBytes == 0 || pszPtr[0] != '<' )
         return FALSE;
 
@@ -89,6 +88,10 @@ static GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo )
                 CPLFormFilename(poOpenInfo->pszFilename, papszNames[i], nullptr);
 
             if( EQUAL(papszNames[i], ".") || EQUAL(papszNames[i], "..") )
+                continue;
+
+            CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
+            if( !EQUAL(osExt, "xml") )
                 continue;
 
             GDALOpenInfo oOpenInfo{ oSubFilename, GA_ReadOnly };
