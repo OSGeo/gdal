@@ -90,7 +90,7 @@ static GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo )
             if( EQUAL(papszNames[i], ".") || EQUAL(papszNames[i], "..") )
                 continue;
 
-            CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
+            CPLString osExt(CPLGetExtension(oSubFilename));
             if( !EQUAL(osExt, "xml") )
                 continue;
 
