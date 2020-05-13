@@ -34,35 +34,16 @@
 /************************************************************************/
 
 OGRLVBAGDataSource::OGRLVBAGDataSource() :
-    poLayer{ nullptr },
-    fp{ nullptr }
+    papoLayers{ OGRLVBAG::LayerVector{} }
 {}
-
-/************************************************************************/
-/*                         ~OGRLVBAGDataSource()                          */
-/************************************************************************/
-
-OGRLVBAGDataSource::~OGRLVBAGDataSource()
-{
-    if ( fp != nullptr )
-    {
-        VSIFCloseL(fp);
-        fp = nullptr;
-    }
-}
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRLVBAGDataSource::Open( const char* pszFilename, VSILFILE* fpIn)
+int OGRLVBAGDataSource::Open( const char* pszFilename )
 {
-    fp = fpIn;
-
-    SetDescription(pszFilename);
-
-    poLayer = std::unique_ptr<OGRLVBAGLayer>(
-        new OGRLVBAGLayer(pszFilename, fp));
+    papoLayers.emplace_back(new OGRLVBAGLayer(pszFilename));
 
     return TRUE;
 }
@@ -73,10 +54,10 @@ int OGRLVBAGDataSource::Open( const char* pszFilename, VSILFILE* fpIn)
 
 OGRLayer *OGRLVBAGDataSource::GetLayer( int iLayer )
 {
-    if( iLayer != 0 )
+    if( iLayer < 0 || iLayer >= static_cast<int>(papoLayers.size()) )
         return nullptr;
-
-    return poLayer.get();
+    
+    return papoLayers[iLayer].get();
 }
 
 /************************************************************************/

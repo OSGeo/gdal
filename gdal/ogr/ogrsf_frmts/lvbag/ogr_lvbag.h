@@ -59,6 +59,11 @@ struct XMLParserUniquePtrDeleter
 
 typedef std::unique_ptr<XML_ParserStruct, XMLParserUniquePtrDeleter> XMLParserUniquePtr;
 
+/**
+ * Vector holding pointers to OGRLayer.
+ */
+using LayerVector = std::vector<std::unique_ptr<OGRLayer>>;
+
 }
 
 /************************************************************************/
@@ -69,7 +74,7 @@ class OGRLVBAGLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<O
 {
     OGRFeatureDefn     *poFeatureDefn;
     OGRFeature         *poFeature;
-    VSILFILE           *fp;  // owned by the dataset object
+    VSILFILE           *fp;
     int                 nNextFID;
     
     OGRLVBAG::XMLParserUniquePtr  oParser;
@@ -102,7 +107,7 @@ class OGRLVBAGLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<O
     OGRFeature *        GetNextRawFeature();
 
 public:
-    OGRLVBAGLayer( const char *pszFilename, VSILFILE *fp );
+    OGRLVBAGLayer( const char *pszFilename );
     ~OGRLVBAGLayer();
 
     void                ResetReading() override;
@@ -119,17 +124,15 @@ public:
 
 class OGRLVBAGDataSource final: public GDALDataset
 {
-    std::unique_ptr<OGRLayer>       poLayer;
-    VSILFILE            *fp;
+    OGRLVBAG::LayerVector papoLayers;
 
 public:
                         OGRLVBAGDataSource();
-                        ~OGRLVBAGDataSource();
 
-    int                 Open( const char* pszFilename,
-                              VSILFILE* fpIn );
+    int                 Open( const char* pszFilename );
 
-    int                 GetLayerCount() override { return poLayer != nullptr ? 1 : 0; }
+    int                 GetLayerCount() override {
+                            return static_cast<int>(papoLayers.size()); }
     OGRLayer            *GetLayer( int ) override;
 
     int                 TestCapability( const char * ) override;

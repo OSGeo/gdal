@@ -37,10 +37,10 @@
 /*      file pointer.                                                   */
 /************************************************************************/
 
-OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, VSILFILE *fpIn ) :
+OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename ) :
     poFeatureDefn{ new OGRFeatureDefn{} },
     poFeature{ nullptr },
-    fp{ fpIn },
+    fp{ VSIFOpenExL(pszFilename, "rb", true) },
     nNextFID{ 0 },
     oParser{ nullptr },
     bSchemaOnly{ false },
@@ -68,6 +68,11 @@ OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, VSILFILE *fpIn ) :
 OGRLVBAGLayer::~OGRLVBAGLayer()
 {
     poFeatureDefn->Release();
+    if ( fp != nullptr )
+    {
+        VSIFCloseL(fp);
+        fp = nullptr;
+    }
 }
 
 /************************************************************************/

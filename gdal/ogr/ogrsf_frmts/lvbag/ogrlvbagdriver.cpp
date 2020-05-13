@@ -35,9 +35,17 @@
 
 static int OGRLVBAGDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
+    if( !poOpenInfo->bStatOK )
+        return FALSE;
+    if( poOpenInfo->bIsDirectory )
+        return -1;  // Unsure.
     if( poOpenInfo->fpL == nullptr )
         return FALSE;
-    
+ 
+    CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
+    if( !EQUAL(osExt, "xml") )
+        return FALSE;
+
     const char* pszPtr = reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
 
     if( poOpenInfo->nHeaderBytes == 0 || pszPtr[0] != '<' )
@@ -60,20 +68,49 @@ static int OGRLVBAGDriverIdentify( GDALOpenInfo* poOpenInfo )
 static GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo )
 {
     if( !OGRLVBAGDriverIdentify(poOpenInfo) ||
-        poOpenInfo->fpL == nullptr ||
         poOpenInfo->eAccess == GA_Update)
         return nullptr;
 
     auto poDS = std::unique_ptr<OGRLVBAGDataSource>(
         new OGRLVBAGDataSource());
+    poDS->SetDescription(poOpenInfo->pszFilename);
 
-    if( !poDS->Open( poOpenInfo->pszFilename,
-                     poOpenInfo->fpL ) )
+    if( !poOpenInfo->bIsDirectory && poOpenInfo->fpL != nullptr )
+    {
+        if( !poDS->Open( poOpenInfo->pszFilename ) )
+            poDS.reset();
+    }
+    else if( poOpenInfo->bIsDirectory && poOpenInfo->fpL == nullptr )
+    {
+        char **papszNames = VSIReadDir(poOpenInfo->pszFilename);
+        for( int i = 0; papszNames != nullptr && papszNames[i] != nullptr; ++i )
+        {
+            const CPLString oSubFilename =
+                CPLFormFilename(poOpenInfo->pszFilename, papszNames[i], nullptr);
+
+            if( EQUAL(papszNames[i], ".") || EQUAL(papszNames[i], "..") )
+                continue;
+
+            GDALOpenInfo oOpenInfo{ oSubFilename, GA_ReadOnly };
+            if( !OGRLVBAGDriverIdentify(&oOpenInfo) )
+                continue;
+
+            if( !poDS->Open( oSubFilename ) )
+                continue;
+        }
+
+        CSLDestroy(papszNames);
+        if( !poDS->GetLayerCount() )
+        {
+            poDS.reset();
+            return nullptr;
+        }
+    }
+    else
     {
         poDS.reset();
+        return nullptr;
     }
-
-    poOpenInfo->fpL = nullptr;
 
     return poDS.release();
 }
