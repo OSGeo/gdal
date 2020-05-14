@@ -757,7 +757,6 @@ GDALGeoPackageDataset::GDALGeoPackageDataset() :
     m_bDescriptionAsCO(false),
     m_bHasReadMetadataFromStorage(false),
     m_bMetadataDirty(false),
-    m_papszSubDatasets(nullptr),
     m_pszProjection(nullptr),
     m_bRecordInsertedInGPKGContent(false),
     m_bGeoTransformValid(false),
@@ -831,7 +830,6 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
 
     CPLFree( m_papoLayers );
     CPLFree( m_papoOverviewDS );
-    CSLDestroy( m_papszSubDatasets );
     CPLFree(m_pszProjection);
 
     std::map<int, OGRSpatialReference*>::iterator oIter =
@@ -872,6 +870,15 @@ bool GDALGeoPackageDataset::ICanIWriteBlock()
 }
 
 /************************************************************************/
+/*                          GetOGRTableLimit()                          */
+/************************************************************************/
+
+static int GetOGRTableLimit()
+{
+    return atoi(CPLGetConfigOption("OGR_TABLE_LIMIT", "10000"));
+}
+
+/************************************************************************/
 /*                      GetNameTypeMapFromSQliteMaster()                */
 /************************************************************************/
 
@@ -885,8 +892,7 @@ const std::map<CPLString, CPLString> &
             "SELECT name, type FROM sqlite_master WHERE "
             "type IN ('view', 'table') OR "
             "(name LIKE 'trigger_%_feature_count_%' AND type = 'trigger')");
-    const int nTableLimit =
-                atoi(CPLGetConfigOption("OGR_TABLE_LIMIT", "10000"));
+    const int nTableLimit = GetOGRTableLimit();
     if( nTableLimit > 0 )
     {
         osSQL += " LIMIT ";
@@ -945,8 +951,7 @@ const std::map< CPLString, std::vector<GPKGExtensionDesc> > &
             "'gpkg_geom_POLYHEDRALSURFACE', 'gpkg_geom_TIN', 'gpkg_geom_TRIANGLE', "
             "'gpkg_rtree_index', 'gpkg_geometry_type_trigger', 'gpkg_srs_id_trigger', "
             "'gpkg_crs_wkt', 'gpkg_schema')");
-    const int nTableLimit =
-                atoi(CPLGetConfigOption("OGR_TABLE_LIMIT", "10000"));
+    const int nTableLimit = GetOGRTableLimit();
     if( nTableLimit > 0 )
     {
         osSQL += " LIMIT ";
@@ -989,8 +994,7 @@ const std::map< CPLString, GPKGContentsDesc > &
     CPLString osSQL("SELECT table_name, data_type, identifier, "
             "description, min_x, min_y, max_x, max_y "
             "FROM gpkg_contents WHERE table_name IS NOT NULL");
-    const int nTableLimit =
-                atoi(CPLGetConfigOption("OGR_TABLE_LIMIT", "10000"));
+    const int nTableLimit = GetOGRTableLimit();
     if( nTableLimit > 0 )
     {
         osSQL += " LIMIT ";
@@ -1342,8 +1346,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                     "AND name NOT IN ('st_spatial_ref_sys', 'spatial_ref_sys', 'st_geometry_columns', 'geometry_columns') "
                     "AND lower(name) NOT IN (SELECT lower(table_name) FROM gpkg_contents)";
         }
-        const int nTableLimit =
-                    atoi(CPLGetConfigOption("OGR_TABLE_LIMIT", "10000"));
+        const int nTableLimit = GetOGRTableLimit();
         if( nTableLimit > 0 )
         {
             osSQL += " LIMIT ";
@@ -1449,7 +1452,12 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
             sqlite3_free(pszTmp);
             SetPhysicalFilename( osFilename.c_str() );
         }
-        osSQL += " LIMIT 1000";
+        const int nTableLimit = GetOGRTableLimit();
+        if( nTableLimit > 0 )
+        {
+            osSQL += " LIMIT ";
+            osSQL += CPLSPrintf("%d", 1 + nTableLimit);
+        }
 
         const OGRErr err = SQLQuery(hDB, osSQL.c_str(), &oResult);
         if  ( err != OGRERR_NONE )
@@ -1491,11 +1499,14 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         {
             bRet = TRUE;
 
-            if( oResult.nRowCount == 1000 )
+            if( nTableLimit > 0 && oResult.nRowCount > nTableLimit )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "File has more than 1000 raster tables. "
-                         "Limiting to first 1000");
+                        "File has more than %d raster tables. "
+                        "Limiting to first %d (can be overridden with "
+                        "OGR_TABLE_LIMIT config option)",
+                        nTableLimit, nTableLimit);
+                oResult.nRowCount = nTableLimit;
             }
 
             int nSDSCount = 0;
@@ -1504,18 +1515,14 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                 const char *pszTableName = SQLResultGetValue(&oResult, 0, i);
                 const char *pszIdentifier = SQLResultGetValue(&oResult, 1, i);
 
-                m_papszSubDatasets = CSLSetNameValue( m_papszSubDatasets,
-                                                    CPLSPrintf("SUBDATASET_%d_NAME", nSDSCount+1),
-                                                    CPLSPrintf("GPKG:%s:%s", m_pszFilename, pszTableName) );
-                if( pszIdentifier )
-                    m_papszSubDatasets = CSLSetNameValue( m_papszSubDatasets,
-                                                            CPLSPrintf("SUBDATASET_%d_DESC", nSDSCount+1),
-                                                            CPLSPrintf("%s - %s", pszTableName, pszIdentifier) );
-                else
-                    m_papszSubDatasets = CSLSetNameValue( m_papszSubDatasets,
-                                                            CPLSPrintf("SUBDATASET_%d_DESC", nSDSCount+1),
-                                                            pszTableName );
-
+                m_aosSubDatasets.AddNameValue(
+                    CPLSPrintf("SUBDATASET_%d_NAME", nSDSCount+1),
+                    CPLSPrintf("GPKG:%s:%s", m_pszFilename, pszTableName));
+                m_aosSubDatasets.AddNameValue(
+                    CPLSPrintf("SUBDATASET_%d_DESC", nSDSCount+1),
+                    pszIdentifier ?
+                        CPLSPrintf("%s - %s", pszTableName, pszIdentifier) :
+                        pszTableName);
                 nSDSCount ++;
             }
         }
@@ -3076,7 +3083,7 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
 {
     pszDomain = CheckMetadataDomain(pszDomain);
     if( pszDomain != nullptr && EQUAL(pszDomain,"SUBDATASETS") )
-        return m_papszSubDatasets;
+        return m_aosSubDatasets.List();
 
     if( m_bHasReadMetadataFromStorage )
         return GDALPamDataset::GetMetadata( pszDomain );

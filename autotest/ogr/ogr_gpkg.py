@@ -3059,15 +3059,15 @@ def test_ogr_gpkg_43():
     ds.CommitTransaction()
     ds = None
 
-    with gdaltest.error_handler():
-        ds = gdal.Open('/vsimem/ogr_gpkg_43.gpkg')
-    assert len(ds.GetMetadata_List('SUBDATASETS')) == 2 * 1000
-    ds = None
-    gdal.SetConfigOption('OGR_TABLE_LIMIT', '1000')
-    with gdaltest.error_handler():
-        ds = ogr.Open('/vsimem/ogr_gpkg_43.gpkg')
-    gdal.SetConfigOption('OGR_TABLE_LIMIT', None)
-    assert ds.GetLayerCount() == 1000
+    ds = gdal.OpenEx('/vsimem/ogr_gpkg_43.gpkg')
+    assert len(ds.GetMetadata_List('SUBDATASETS')) == 2 * 1001
+    assert ds.GetLayerCount() == 1001
+
+    with gdaltest.config_option('OGR_TABLE_LIMIT', '1000'):
+        with gdaltest.error_handler():
+            ds = gdal.OpenEx('/vsimem/ogr_gpkg_43.gpkg')
+            assert len(ds.GetMetadata_List('SUBDATASETS')) == 2 * 1000
+            assert ds.GetLayerCount() == 1000
     ds = None
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_43.gpkg')
