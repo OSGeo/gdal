@@ -113,7 +113,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
     bool                m_bGridCellEncodingAsCO = false;
     bool                m_bHasReadMetadataFromStorage;
     bool                m_bMetadataDirty;
-    char              **m_papszSubDatasets;
+    CPLStringList       m_aosSubDatasets{};
     char               *m_pszProjection;
     bool                m_bRecordInsertedInGPKGContent;
     bool                m_bGeoTransformValid;
