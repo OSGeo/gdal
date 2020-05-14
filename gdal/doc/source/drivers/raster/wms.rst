@@ -466,6 +466,7 @@ See Also
    specification <http://onearth.jpl.nasa.gov/tiled.html>`__
 -  `ArcGIS Server REST
    API <http://resources.arcgis.com/en/help/rest/apiref/>`__
+-  :ref:`raster.wmts` driver page.
 
 .. |example output 1| image:: http://sydney.freeearthfoundation.com/gdalwms/metacarta_wmsc.png
 .. |example output 2| image:: http://sydney.freeearthfoundation.com/gdalwms/tileservice_bmng.jpg
