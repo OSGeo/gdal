@@ -1245,7 +1245,9 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
             }
             if( ret &&
                 std::fabs(dfWestLongitudeDeg) <= 180 &&
-                std::fabs(dfEastLongitudeDeg) <= 180 )
+                std::fabs(dfEastLongitudeDeg) <= 180 &&
+                std::fabs(dfSouthLatitudeDeg) <= 90 &&
+                std::fabs(dfNorthLatitudeDeg) <= 90 )
             {
                 CPLDebug("GDAL", "Computing area of interest: %g, %g, %g, %g",
                         dfWestLongitudeDeg, dfSouthLatitudeDeg,
