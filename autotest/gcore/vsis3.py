@@ -60,7 +60,7 @@ def test_vsis3_init():
     # to mess up our tests
     gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', '')
     gdal.SetConfigOption('AWS_CONFIG_FILE', '')
-    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', '')
+    gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL', '')
 
     assert gdal.GetSignedURL('/vsis3/foo/bar') is None
 
@@ -2962,8 +2962,8 @@ def test_vsis3_read_credentials_ec2():
     gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('AWS_ACCESS_KEY_ID', '')
 
-    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL',
-                         'http://localhost:%d/latest/meta-data/iam/security-credentials/' % gdaltest.webserver_port)
+    gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL',
+                         'http://localhost:%d' % gdaltest.webserver_port)
     # Disable hypervisor related check to test if we are really on EC2
     gdal.SetConfigOption('CPL_AWS_AUTODETECT_EC2', 'NO')
 
@@ -2987,7 +2987,7 @@ def test_vsis3_read_credentials_ec2():
     assert data == 'foo'
 
     # Set a fake URL to check that credentials re-use works
-    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', '')
+    gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL', '')
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_fake_bucket/bar', 200, {}, 'bar')
@@ -2999,7 +2999,7 @@ def test_vsis3_read_credentials_ec2():
 
     assert data == 'bar'
 
-    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', '')
+    gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL', '')
     gdal.SetConfigOption('CPL_AWS_AUTODETECT_EC2', None)
 
 ###############################################################################
@@ -3020,22 +3020,22 @@ def test_vsis3_read_credentials_ec2_expiration():
     gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('AWS_ACCESS_KEY_ID', '')
 
-    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL',
-                         'http://localhost:%d/latest/meta-data/iam/security-credentials/expire_in_past/' % gdaltest.webserver_port)
+    gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL',
+                         'http://localhost:%d' % gdaltest.webserver_port)
     # Disable hypervisor related check to test if we are really on EC2
     gdal.SetConfigOption('CPL_AWS_AUTODETECT_EC2', 'NO')
 
     gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/latest/meta-data/iam/security-credentials/expire_in_past/', 200, {}, 'myprofile')
-    handler.add('GET', '/latest/meta-data/iam/security-credentials/expire_in_past/myprofile', 200, {},
+    handler.add('GET', '/latest/meta-data/iam/security-credentials/', 200, {}, 'myprofile')
+    handler.add('GET', '/latest/meta-data/iam/security-credentials/myprofile', 200, {},
                 """{
                 "AccessKeyId": "AWS_ACCESS_KEY_ID",
                 "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
                 "Expiration": "1970-01-01T00:00:00Z"
                 }""")
-    handler.add('GET', '/latest/meta-data/iam/security-credentials/expire_in_past/myprofile', 200, {},
+    handler.add('GET', '/latest/meta-data/iam/security-credentials/myprofile', 200, {},
                 """{
                 "AccessKeyId": "AWS_ACCESS_KEY_ID",
                 "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
@@ -3051,17 +3051,17 @@ def test_vsis3_read_credentials_ec2_expiration():
     assert data == 'foo'
 
     # Set a fake URL to demonstrate we try to re-fetch credentials
-    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL',
-                         'http://localhost:%d/invalid/' % gdaltest.webserver_port)
+    gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL',
+                         'http://localhost:%d/invalid' % gdaltest.webserver_port)
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/invalid/myprofile', 404)
+    handler.add('GET', '/invalid/latest/meta-data/iam/security-credentials/myprofile', 404)
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             f = open_for_read('/vsis3/s3_fake_bucket/bar')
         assert f is None
 
-    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', '')
+    gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL', '')
     gdal.SetConfigOption('CPL_AWS_AUTODETECT_EC2', None)
 
 ###############################################################################
@@ -3222,4 +3222,4 @@ def test_vsis3_cleanup():
 
     gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', None)
     gdal.SetConfigOption('AWS_CONFIG_FILE', None)
-    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', None)
+    gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL', None)

@@ -693,22 +693,21 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
     }
 
     CPLString osURLRefreshCredentials;
-    CPLString osCPL_AWS_EC2_CREDENTIALS_URL(
-        CPLGetConfigOption("CPL_AWS_EC2_CREDENTIALS_URL", ""));
+    const CPLString osEC2DefaultURL("http://169.254.169.254");
+    const CPLString osEC2RootURL(
+        CPLGetConfigOption("CPL_AWS_EC2_API_ROOT_URL", osEC2DefaultURL));
     const CPLString osECSRelativeURI(
         CPLGetConfigOption("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", ""));
-    if( osCPL_AWS_EC2_CREDENTIALS_URL.empty() && !osECSRelativeURI.empty() )
+    if( osEC2RootURL == osEC2DefaultURL && !osECSRelativeURI.empty() )
     {
         // See https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html
         osURLRefreshCredentials = "http://169.254.170.2" + osECSRelativeURI;
     }
     else
     {
-        const CPLString osDefaultURL(
-            "http://169.254.169.254/latest/meta-data/iam/security-credentials/");
         const CPLString osEC2CredentialsURL =
-            osCPL_AWS_EC2_CREDENTIALS_URL.empty() ? osDefaultURL : osCPL_AWS_EC2_CREDENTIALS_URL;
-        if( osIAMRole.empty() && !osEC2CredentialsURL.empty() )
+            osEC2RootURL + "/latest/meta-data/iam/security-credentials/";
+        if( osIAMRole.empty() )
         {
             // If we don't know yet the IAM role, fetch it
             if( IsMachinePotentiallyEC2Instance() )
