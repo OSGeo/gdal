@@ -95,6 +95,7 @@ author_silker = 'Silke Reimer <silke@intevation.de>'
 author_mikhailg = 'Mikhail Gusev <gusevmihs@gmail.com>'
 author_dmitryb = 'Dmitry Baryshnikov <polimax@mail.ru>'
 author_evenr = 'Even Rouault <even.rouault@spatialys.com>'
+author_tamass = 'Tamas Szekeres <szekerest@gmail.com>'
 
 man_pages = [
     (
@@ -105,10 +106,24 @@ man_pages = [
         1
     ),
     (
+        'programs/gdalmdiminfo',
+        'gdalmdiminfo',
+        u'Reports structure and content of a multidimensional dataset',
+        [author_evenr],
+        1
+    ),
+    (
         'programs/gdal_translate',
         'gdal_translate',
         u'Converts raster data between different formats.',
         [author_frankw, author_silker],
+        1
+    ),
+    (
+        'programs/gdalmdimtranslate',
+        'gdalmdimtranslate',
+        u'Converts multidimensional data between different formats, and perform subsetting.',
+        [author_evenr],
         1
     ),
     (
@@ -151,6 +166,13 @@ man_pages = [
         'gdaldem',
         u'Tools to analyze and visualize DEMs.',
         ['Matthew Perry <perrygeo@gmail.com>', author_evenr, 'Howard Butler <hobu.inc@gmail.com>', 'Chris Yesson <chris.yesson@ioz.ac.uk>'],
+        1
+    ),
+    (
+        'programs/gdal_viewshed',
+        'gdal_viewshed',
+        u'Calculates a viewshed raster from an input raster DEM for a user defined point',
+        [author_tamass],
         1
     ),
     (

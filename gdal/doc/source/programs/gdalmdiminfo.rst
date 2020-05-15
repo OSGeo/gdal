@@ -4,9 +4,9 @@
 gdalmdiminfo
 ================================================================================
 
-.. versionadded:: 3.1
-
 .. only:: html
+
+    .. versionadded:: 3.1
 
     Reports structure and content of a multidimensional dataset.
 
