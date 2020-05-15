@@ -2970,13 +2970,18 @@ def test_vsis3_read_credentials_ec2():
     gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/latest/meta-data/iam/security-credentials/', 200, {}, 'myprofile')
+    handler.add('PUT', '/latest/api/token', 200, {}, 'mytoken',
+                expected_headers={'X-aws-ec2-metadata-token-ttl-seconds': '10'})
+    handler.add('GET', '/latest/meta-data/iam/security-credentials/', 200, {}, 'myprofile',
+                expected_headers={'X-aws-ec2-metadata-token': 'mytoken'})
     handler.add('GET', '/latest/meta-data/iam/security-credentials/myprofile', 200, {},
                 """{
                 "AccessKeyId": "AWS_ACCESS_KEY_ID",
                 "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
                 "Expiration": "3000-01-01T00:00:00Z"
-                }""")
+                }""",
+                expected_headers={'X-aws-ec2-metadata-token': 'mytoken'})
+
     handler.add('GET', '/s3_fake_bucket/resource', custom_method=get_s3_fake_bucket_resource_method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsis3/s3_fake_bucket/resource')
@@ -3028,19 +3033,26 @@ def test_vsis3_read_credentials_ec2_expiration():
     gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/latest/meta-data/iam/security-credentials/', 200, {}, 'myprofile')
+    handler.add('PUT', '/latest/api/token', 200, {}, 'mytoken',
+                expected_headers={'X-aws-ec2-metadata-token-ttl-seconds': '10'})
+    handler.add('GET', '/latest/meta-data/iam/security-credentials/', 200, {}, 'myprofile',
+                expected_headers={'X-aws-ec2-metadata-token': 'mytoken'})
     handler.add('GET', '/latest/meta-data/iam/security-credentials/myprofile', 200, {},
                 """{
                 "AccessKeyId": "AWS_ACCESS_KEY_ID",
                 "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
                 "Expiration": "1970-01-01T00:00:00Z"
-                }""")
+                }""",
+                expected_headers={'X-aws-ec2-metadata-token': 'mytoken'})
+    handler.add('PUT', '/latest/api/token', 200, {}, 'mytoken2',
+                expected_headers={'X-aws-ec2-metadata-token-ttl-seconds': '10'})
     handler.add('GET', '/latest/meta-data/iam/security-credentials/myprofile', 200, {},
                 """{
                 "AccessKeyId": "AWS_ACCESS_KEY_ID",
                 "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
                 "Expiration": "1970-01-01T00:00:00Z"
-                }""")
+                }""",
+                expected_headers={'X-aws-ec2-metadata-token': 'mytoken2'})
     handler.add('GET', '/s3_fake_bucket/resource', custom_method=get_s3_fake_bucket_resource_method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsis3/s3_fake_bucket/resource')
@@ -3055,7 +3067,7 @@ def test_vsis3_read_credentials_ec2_expiration():
                          'http://localhost:%d/invalid' % gdaltest.webserver_port)
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/invalid/latest/meta-data/iam/security-credentials/myprofile', 404)
+    handler.add('PUT', '/invalid/latest/api/token', 404)
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             f = open_for_read('/vsis3/s3_fake_bucket/bar')

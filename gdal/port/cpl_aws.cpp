@@ -698,6 +698,7 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
         CPLGetConfigOption("CPL_AWS_EC2_API_ROOT_URL", osEC2DefaultURL));
     const CPLString osECSRelativeURI(
         CPLGetConfigOption("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", ""));
+    CPLString osToken;
     if( osEC2RootURL == osEC2DefaultURL && !osECSRelativeURI.empty() )
     {
         // See https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html
@@ -705,37 +706,73 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
     }
     else
     {
+        if( !IsMachinePotentiallyEC2Instance() )
+            return false;
+
+        // Use IMDSv2 protocol:
+        // https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
+
+        // Retrieve IMDSv2 token
+        {
+            const CPLString osEC2_IMDSv2_api_token_URL =
+                osEC2RootURL + "/latest/api/token";
+            CPLStringList aosOptions;
+            aosOptions.SetNameValue("TIMEOUT", "1");
+            aosOptions.SetNameValue("CUSTOMREQUEST", "PUT");
+            aosOptions.SetNameValue("HEADERS",
+                                    "X-aws-ec2-metadata-token-ttl-seconds: 10");
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            CPLHTTPResult* psResult =
+                        CPLHTTPFetch( osEC2_IMDSv2_api_token_URL, aosOptions.List() );
+            CPLPopErrorHandler();
+            if( psResult )
+            {
+                if( psResult->nStatus == 0 && psResult->pabyData != nullptr )
+                {
+                    osToken = reinterpret_cast<char*>(psResult->pabyData);
+                }
+                CPLHTTPDestroyResult(psResult);
+            }
+            if( osToken.empty() )
+                return false;
+        }
+
+        // If we don't know yet the IAM role, fetch it
         const CPLString osEC2CredentialsURL =
             osEC2RootURL + "/latest/meta-data/iam/security-credentials/";
         if( gosIAMRole.empty() )
         {
-            // If we don't know yet the IAM role, fetch it
-            if( IsMachinePotentiallyEC2Instance() )
+            CPLStringList aosOptions;
+            aosOptions.SetNameValue("TIMEOUT", "1");
+            aosOptions.SetNameValue("HEADERS",
+                            ("X-aws-ec2-metadata-token: " + osToken).c_str());
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            CPLHTTPResult* psResult =
+                        CPLHTTPFetch( osEC2CredentialsURL, aosOptions.List() );
+            CPLPopErrorHandler();
+            if( psResult )
             {
-                char** papszOptions = CSLSetNameValue(nullptr, "TIMEOUT", "1");
-                CPLPushErrorHandler(CPLQuietErrorHandler);
-                CPLHTTPResult* psResult =
-                            CPLHTTPFetch( osEC2CredentialsURL, papszOptions );
-                CPLPopErrorHandler();
-                CSLDestroy(papszOptions);
-                if( psResult )
+                if( psResult->nStatus == 0 && psResult->pabyData != nullptr )
                 {
-                    if( psResult->nStatus == 0 && psResult->pabyData != nullptr )
-                    {
-                        gosIAMRole = reinterpret_cast<char*>(psResult->pabyData);
-                    }
-                    CPLHTTPDestroyResult(psResult);
+                    gosIAMRole = reinterpret_cast<char*>(psResult->pabyData);
                 }
+                CPLHTTPDestroyResult(psResult);
             }
+            if( gosIAMRole.empty() )
+                return false;
         }
-        if( gosIAMRole.empty() )
-            return false;
         osURLRefreshCredentials = osEC2CredentialsURL + gosIAMRole;
     }
 
     // Now fetch the refreshed credentials
     CPLStringList oResponse;
-    CPLHTTPResult* psResult = CPLHTTPFetch(osURLRefreshCredentials.c_str(), nullptr );
+    CPLStringList aosOptions;
+    if( !osToken.empty() )
+    {
+        aosOptions.SetNameValue("HEADERS",
+                            ("X-aws-ec2-metadata-token: " + osToken).c_str());
+    }
+    CPLHTTPResult* psResult = CPLHTTPFetch(osURLRefreshCredentials.c_str(), aosOptions.List() );
     if( psResult )
     {
         if( psResult->nStatus == 0 && psResult->pabyData != nullptr )
