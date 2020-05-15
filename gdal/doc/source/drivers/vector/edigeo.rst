@@ -23,7 +23,7 @@ files.
 
 In order the SRS of the layers to be correctly built, the IGNF file that
 contains the definition of IGN SRS must be placed in the directory of
-PROJ.4 resource files.
+PROJ resource files.
 
 The whole set of files will be parsed into memory. This may be a
 limitation if dealing with big EDIGEO exchanges.
