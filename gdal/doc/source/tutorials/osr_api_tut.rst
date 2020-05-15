@@ -69,7 +69,7 @@ to the user.  However, the datum name "World Geodetic System 1984" is used as a 
 the datum, and should be set to a known value from the EPSG registry, so that
 appropriate datum transformations can be done during coordinate operations.
 The list of valid geodetic datum can be seen in the 3rd column of the
-`geodetic_datum.sq <https://github.com/OSGeo/PROJ/blob/master/data/sql/geodetic_datum.sql>`_
+`geodetic_datum.sql <https://github.com/OSGeo/PROJ/blob/master/data/sql/geodetic_datum.sql>`_
 file.
 
 .. note::
