@@ -4,9 +4,9 @@
 gdalmdimtranslate
 ================================================================================
 
-.. versionadded:: 3.1
-
 .. only:: html
+
+    .. versionadded:: 3.1
 
     Converts multidimensional data between different formats, and perform subsetting.
 
