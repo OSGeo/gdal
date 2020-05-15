@@ -162,6 +162,18 @@ General creation options
 
   .. note:: Write support for GeoTIFF 1.1 requires libgeotiff 1.6.0 or later.
 
+- **SPARSE_OK=TRUE/FALSE** ((GDAL >= 3.2): Should empty blocks be
+   omitted on disk? When this option is set, any attempt of writing a
+   block whose all pixels are 0 or the nodata value will cause it not to
+   be written at all (unless there is a corresponding block already
+   allocated in the file). Sparse files have 0 tile/strip offsets for
+   blocks never written and save space; however, most non-GDAL packages
+   cannot read such files.
+   On the reading side, the presence of a omitted tile after a non-empty one
+   may cause optimized readers to have to issue an extra GET request to the
+   TileByteCounts array.
+   The default is FALSE.
+
 Reprojection related creation options
 *************************************
 
@@ -304,16 +316,16 @@ line).
   warning on writing, and when reopening such file, so that users know they have 
   *broken* their COG file
 
-- ``MASK_INTERLEAVED_WITH_IMAGERY=YES``: indicates that mask data immediately 
-  follows imagery data. So when reading data at offset=TileOffset[i] - 4 and 
+- ``MASK_INTERLEAVED_WITH_IMAGERY=YES``: indicates that mask data immediately
+  follows imagery data. So when reading data at offset=TileOffset[i] - 4 and
   size=TileOffset[i+1]-TileOffset[i]+4, you'll get a buffer with:
 
    * leader with imagery tile size (4 bytes)
-   * imagery data (starting at TileOffset[i] and of size TileByteCount[i])
+   * imagery data (starting at TileOffsets[i] and of size TileByteCounts[i])
    * trailer of imagery (4 bytes)
    * leader with mask tilesize (4 bytes)
-   * mask data (starting at mask.TileOffset[i] and of size 
-     mask.TileByteCount[i], but none of them actually need to be read)
+   * mask data (starting at mask.TileOffsets[i] and of size
+     mask.TileByteCounts[i], but none of them actually need to be read)
    * trailer of mask data (4 bytes)
 
 .. _cog.tile_data_leader_trailer:
@@ -344,7 +356,7 @@ of the last 4 bytes of the payload of the tile data. The size of this trailer is
 readers to be able to check if TIFF writers, not aware of those optimizations,
 have modified the  TIFF file in a way that breaks the optimizations. If an optimized reader 
 detects an inconsistency, it can then fallbacks to the regular/slower method of using 
-TileOffset[i] + TileByteCount[i].
+TileOffsets[i] + TileByteCounts[i].
 
 Examples
 --------

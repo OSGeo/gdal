@@ -60,7 +60,7 @@ def full_check_band(f, band_name, band, errors,
         mask_band = band.GetMaskBand()
         mask_block_size = mask_band.GetBlockSize()
         if block_size != mask_block_size:
-            errors += [ band_name + ': mask block size is different from its imagery band' ]
+            errors += [band_name + ': mask block size is different from its imagery band']
             mask_band = None
 
     yblocks = (band.YSize + block_size[1] - 1) // block_size[1]
@@ -69,37 +69,53 @@ def full_check_band(f, band_name, band, errors,
     for y in range(yblocks):
         for x in range(xblocks):
 
-            offset = int(band.GetMetadataItem('BLOCK_OFFSET_%d_%d' % (x,y), 'TIFF'))
-            bytecount = int(band.GetMetadataItem('BLOCK_SIZE_%d_%d' % (x,y), 'TIFF'))
+            offset = band.GetMetadataItem('BLOCK_OFFSET_%d_%d' % (x, y), 'TIFF')
+            offset = int(offset) if offset is not None else 0
+            bytecount = band.GetMetadataItem('BLOCK_SIZE_%d_%d' % (x, y), 'TIFF')
+            bytecount = int(bytecount) if bytecount is not None else 0
 
-            if block_order_row_major and offset < last_offset:
-                errors += [ band_name + ': offset of block (%d, %d) is smaller than previous block' % (x,y) ]
+            if offset > 0:
+                if block_order_row_major and offset < last_offset:
+                    errors += [band_name +
+                               ': offset of block (%d, %d) is smaller than previous block' % (x, y)]
 
-            if block_leader_size_as_uint4:
-                gdal.VSIFSeekL(f, offset - 4, 0)
-                leader_size = struct.unpack('<I', gdal.VSIFReadL(4, 1, f))[0]
-                if leader_size != bytecount:
-                    errors += [ band_name + ': for block (%d, %d), size in leader bytes is %d instead of %d' % (x,y,leader_size,bytecount) ]
+                if block_leader_size_as_uint4:
+                    gdal.VSIFSeekL(f, offset - 4, 0)
+                    leader_size = struct.unpack('<I', gdal.VSIFReadL(4, 1, f))[0]
+                    if leader_size != bytecount:
+                        errors += [band_name + ': for block (%d, %d), size in leader bytes is %d instead of %d' % (
+                            x, y, leader_size, bytecount)]
 
-            if block_trailer_last_4_bytes_repeated:
-                if bytecount >= 4:
-                    gdal.VSIFSeekL(f, offset + bytecount - 4, 0)
-                    last_bytes = gdal.VSIFReadL(8, 1, f)
-                    if last_bytes[0:4] != last_bytes[4:8]:
-                        errors += [ band_name + ': for block (%d, %d), trailer bytes are invalid' % (x,y) ]
+                if block_trailer_last_4_bytes_repeated:
+                    if bytecount >= 4:
+                        gdal.VSIFSeekL(f, offset + bytecount - 4, 0)
+                        last_bytes = gdal.VSIFReadL(8, 1, f)
+                        if last_bytes[0:4] != last_bytes[4:8]:
+                            errors += [band_name +
+                                       ': for block (%d, %d), trailer bytes are invalid' % (x, y)]
 
             if mask_band:
-                offset_mask = int(mask_band.GetMetadataItem('BLOCK_OFFSET_%d_%d' % (x,y), 'TIFF'))
-                #bytecount_mask = int(mask_band.GetMetadataItem('BLOCK_SIZE_%d_%d' % (x,y), 'TIFF'))
-                expected_offset_mask = offset + bytecount + \
-                    (4 if block_leader_size_as_uint4 else 0) + \
-                    (4 if block_trailer_last_4_bytes_repeated else 0)
-                if offset_mask != expected_offset_mask:
-                    errors += [ 'Mask of ' + band_name + ': for block (%d, %d), offset is %d, whereas %d was expected' % (x,y,offset_mask,expected_offset_mask) ]
+                offset_mask = mask_band.GetMetadataItem('BLOCK_OFFSET_%d_%d' % (x, y), 'TIFF')
+                offset_mask = int(offset_mask) if offset_mask is not None else 0
+                if offset > 0 and offset_mask > 0:
+                    #bytecount_mask = int(mask_band.GetMetadataItem('BLOCK_SIZE_%d_%d' % (x,y), 'TIFF'))
+                    expected_offset_mask = offset + bytecount + \
+                        (4 if block_leader_size_as_uint4 else 0) + \
+                        (4 if block_trailer_last_4_bytes_repeated else 0)
+                    if offset_mask != expected_offset_mask:
+                        errors += ['Mask of ' + band_name + ': for block (%d, %d), offset is %d, whereas %d was expected' % (
+                            x, y, offset_mask, expected_offset_mask)]
+                elif offset == 0 and offset_mask > 0:
+                    if block_order_row_major and offset_mask < last_offset:
+                        errors += ['Mask of ' + band_name +
+                                   ': offset of block (%d, %d) is smaller than previous block' % (x, y)]
+
+                    offset = offset_mask
 
             last_offset = offset
 
-def validate(ds,check_tiled=True, full_check=False):
+
+def validate(ds, check_tiled=True, full_check=False):
     """Check if a file is a (Geo)TIFF with cloud optimized compatible structure.
 
     Args:
@@ -187,9 +203,9 @@ def validate(ds,check_tiled=True, full_check=False):
             block_trailer_last_4_bytes_repeated = 'BLOCK_TRAILER=LAST_4_BYTES_REPEATED' in extra_md
             mask_interleaved_with_imagery = 'MASK_INTERLEAVED_WITH_IMAGERY=YES' in extra_md
             if 'KNOWN_INCOMPATIBLE_EDITION=YES' in extra_md:
-                errors += [ "KNOWN_INCOMPATIBLE_EDITION=YES is declared in the file" ]
+                errors += ["KNOWN_INCOMPATIBLE_EDITION=YES is declared in the file"]
             expected_ifd_pos += len(pattern) + size
-            expected_ifd_pos += expected_ifd_pos % 2 # IFD offset starts on a 2-byte boundary
+            expected_ifd_pos += expected_ifd_pos % 2  # IFD offset starts on a 2-byte boundary
         gdal.VSIFCloseL(f)
 
         if expected_ifd_pos != ifd_offsets[0]:
@@ -242,20 +258,27 @@ def validate(ds,check_tiled=True, full_check=False):
 
     # Check that the imagery starts by the smallest overview and ends with
     # the main resolution dataset
-    block_offset = main_band.GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF')
-    if not block_offset:
-        errors += ['Missing BLOCK_OFFSET_0_0']
-    data_offset = int(block_offset) if block_offset else None
-    data_offsets = [data_offset]
+
+    def get_block_offset(band):
+        blockxsize, blockysize = band.GetBlockSize()
+        for y in range(int((band.YSize + blockysize - 1) / blockysize)):
+            for x in range(int((band.XSize + blockxsize - 1) / blockxsize)):
+                block_offset = band.GetMetadataItem('BLOCK_OFFSET_%d_%d' % (x, y), 'TIFF')
+                if block_offset:
+                    return int(block_offset)
+        return 0
+
+    block_offset = get_block_offset(main_band)
+    data_offsets = [block_offset]
     details['data_offsets'] = {}
-    details['data_offsets']['main'] = data_offset
+    details['data_offsets']['main'] = block_offset
     for i in range(ovr_count):
         ovr_band = ds.GetRasterBand(1).GetOverview(i)
-        data_offset = int(ovr_band.GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
-        data_offsets.append(data_offset)
-        details['data_offsets']['overview_%d' % i] = data_offset
+        block_offset = get_block_offset(ovr_band)
+        data_offsets.append(block_offset)
+        details['data_offsets']['overview_%d' % i] = block_offset
 
-    if data_offsets[-1] < ifd_offsets[-1]:
+    if data_offsets[-1] != 0 and data_offsets[-1] < ifd_offsets[-1]:
         if ovr_count > 0:
             errors += [
                 'The offset of the first block of the smallest overview '
@@ -265,19 +288,19 @@ def validate(ds,check_tiled=True, full_check=False):
                 'The offset of the first block of the image should '
                 'be after its IFD']
     for i in range(len(data_offsets) - 2, 0, -1):
-        if data_offsets[i] < data_offsets[i + 1]:
+        if data_offsets[i] != 0 and data_offsets[i] < data_offsets[i + 1]:
             errors += [
                 'The offset of the first block of overview of index %d should '
                 'be after the one of the overview of index %d' %
                 (i - 1, i)]
-    if len(data_offsets) >= 2 and data_offsets[0] < data_offsets[1]:
+    if len(data_offsets) >= 2 and data_offsets[0] != 0 and data_offsets[0] < data_offsets[1]:
         errors += [
-            'The offset of the first block of the main resolution image'
+            'The offset of the first block of the main resolution image '
             'should be after the one of the overview of index %d' %
             (ovr_count - 1)]
 
-    if full_check and (block_order_row_major or block_leader_size_as_uint4 or \
-                       block_trailer_last_4_bytes_repeated or \
+    if full_check and (block_order_row_major or block_leader_size_as_uint4 or
+                       block_trailer_last_4_bytes_repeated or
                        mask_interleaved_with_imagery):
         f = gdal.VSIFOpenL(filename, 'rb')
         if not f:
@@ -289,7 +312,7 @@ def validate(ds,check_tiled=True, full_check=False):
                         block_trailer_last_4_bytes_repeated,
                         mask_interleaved_with_imagery)
         if main_band.GetMaskFlags() == gdal.GMF_PER_DATASET and \
-            (filename + '.msk') not in ds.GetFileList():
+                (filename + '.msk') not in ds.GetFileList():
             full_check_band(f, 'Mask band of main resolution image',
                             main_band.GetMaskBand(), errors,
                             block_order_row_major,
@@ -303,7 +326,7 @@ def validate(ds,check_tiled=True, full_check=False):
                             block_trailer_last_4_bytes_repeated,
                             mask_interleaved_with_imagery)
             if ovr_band.GetMaskFlags() == gdal.GMF_PER_DATASET and \
-                (filename + '.msk') not in ds.GetFileList():
+                    (filename + '.msk') not in ds.GetFileList():
                 full_check_band(f, 'Mask band of overview %d' % i,
                                 ovr_band.GetMaskBand(), errors,
                                 block_order_row_major,
@@ -347,7 +370,7 @@ def main():
 
     try:
         ret = 0
-        warnings, errors, details = validate(filename, full_check = full_check)
+        warnings, errors, details = validate(filename, full_check=full_check)
         if warnings:
             if not quiet:
                 print('The following warnings were found:')
@@ -367,8 +390,10 @@ def main():
                 print('%s is a valid cloud optimized GeoTIFF' % filename)
 
         if not quiet and not warnings and not errors:
-            print('\nThe size of all IFD headers is %d bytes' %
-                  min(details['data_offsets'][k] for k in details['data_offsets']))
+            headers_size = min(details['data_offsets'][k] for k in details['data_offsets'])
+            if headers_size == 0:
+                headers_size = gdal.VSIStatL(filename).size
+            print('\nThe size of all IFD headers is %d bytes' % headers_size)
     except ValidateCloudOptimizedGeoTIFFException as e:
         if not quiet:
             print('%s is NOT a valid cloud optimized GeoTIFF : %s' %

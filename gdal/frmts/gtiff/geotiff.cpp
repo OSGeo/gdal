@@ -4104,7 +4104,7 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
     // Except for the last block, we just read the offset from the TIFF offset
     // array, and retrieve the size in the leader 4 bytes that come before the
     // payload.
-    auto OptimizedRetrievalhOfOffsetSize = [&](int nBlockId,
+    auto OptimizedRetrievalOfOffsetSize = [&](int nBlockId,
                                                vsi_l_offset& nOffset,
                                                vsi_l_offset& nSize,
                                                size_t nTotalSize,
@@ -4118,7 +4118,7 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
             {
                 // Special case for the last block. As there is no next block
                 // from which to retrieve an offset, use the good old method
-                // that consists in readign the ByteCount array.
+                // that consists in reading the ByteCount array.
                 if( bTryMask &&
                     m_poGDS->GetRasterBand(1)->GetMaskBand() &&
                     m_poGDS->m_poMaskDS )
@@ -4152,12 +4152,7 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
                 else
                 {
                     // Shouldn't happen for a compliant file
-                    if( nOffsetNext == 0 )
-                    {
-                        CPLDebug("GTiff",
-                                    "Tile %d missing", nBlockId + 1);
-                    }
-                    else
+                    if( nOffsetNext != 0 )
                     {
                         CPLDebug("GTiff",
                                     "Tile %d is not located after %d", nBlockId + 1, nBlockId);
@@ -4184,8 +4179,12 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
         }
         else
         {
-            // Shouldn't happen for a compliant file
-            CPLDebug("GTiff", "Tile %d missing", nBlockId);
+            // Sparse tile
+            StrileData data;
+            data.nOffset = 0;
+            data.nByteCount = 0;
+            data.bTryMask = false;
+            oMapStrileToOffsetByteCount[nBlockId] = data;
         }
     };
 
@@ -4205,6 +4204,15 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
             const auto nBlockId = entry.first;
             const auto nOffset = entry.second.nOffset;
             const auto nSize = entry.second.nByteCount;
+            if( nOffset == 0 )
+            {
+                // Sparse tile
+                m_poGDS->m_oCacheStrileToOffsetByteCount.insert(
+                    nBlockId,
+                    std::pair<vsi_l_offset, vsi_l_offset>(0, 0));
+                continue;
+            }
+
             if( nOffset < nLastOffset )
             {
                 // shouldn't happen normally if tiles are sorted
@@ -4357,7 +4365,7 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
                     !m_poGDS->m_bStreamingIn &&
                     m_poGDS->m_bBlockOrderRowMajor && m_poGDS->m_bLeaderSizeAsUInt4 )
                 {
-                    OptimizedRetrievalhOfOffsetSize(nBlockId, nOffset, nSize, nTotalSize, nMaxRawBlockCacheSize);
+                    OptimizedRetrievalOfOffsetSize(nBlockId, nOffset, nSize, nTotalSize, nMaxRawBlockCacheSize);
                 }
                 else
 #endif
@@ -8312,6 +8320,9 @@ bool GTiffDataset::HasOnlyNoDataT( const T* pBuffer, int nWidth, int nHeight,
                                    int nLineStride, int nComponents ) const
 {
     const T noDataValue = static_cast<T>((m_bNoDataSet) ? m_dfNoDataValue : 0.0);
+
+    CPLAssert(m_nBitsPerSample != 1 || noDataValue == 0);
+
     // Fast test: check the 4 corners and the middle pixel.
     for( int iBand = 0; iBand < nComponents; iBand++ )
     {
@@ -8364,16 +8375,21 @@ bool GTiffDataset::HasOnlyNoData( const void* pBuffer, int nWidth, int nHeight,
 #else
     typedef unsigned int WordType;
 #endif
-    if( (!m_bNoDataSet || m_dfNoDataValue == 0.0) && nWidth == nLineStride
-#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
-        && CPL_IS_ALIGNED(pBuffer, sizeof(WordType))
-#endif
-        )
+    if( (!m_bNoDataSet || m_dfNoDataValue == 0.0) && nWidth == nLineStride )
     {
         const GByte* pabyBuffer = static_cast<const GByte*>(pBuffer);
-        const size_t nSize = static_cast<size_t>(nWidth) * nHeight *
-                             nComponents * GDALGetDataTypeSizeBytes(eDT);
+        const size_t nSize = (static_cast<size_t>(nWidth) * nHeight *
+                                nComponents * m_nBitsPerSample + 7) / 8;
         size_t i = 0;
+        const size_t nInitialIters = std::min(
+            sizeof(WordType) -
+                (reinterpret_cast<std::uintptr_t>(pabyBuffer) % sizeof(WordType)),
+            nSize);
+        for( ; i < nInitialIters; i++ )
+        {
+            if( pabyBuffer[i] )
+                return false;
+        }
         for( ; i + sizeof(WordType) - 1 < nSize; i += sizeof(WordType) )
         {
             if( *(reinterpret_cast<const WordType*>(pabyBuffer + i)) )
@@ -8438,7 +8454,7 @@ inline bool GTiffDataset::IsFirstPixelEqualToNoData( const void* pBuffer )
 {
     const GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
     const double dfEffectiveNoData = (m_bNoDataSet) ? m_dfNoDataValue : 0.0;
-    if( m_nBitsPerSample == 8 )
+    if( m_nBitsPerSample == 8 || (m_nBitsPerSample < 8 && dfEffectiveNoData == 0) )
     {
         if( m_nSampleFormat == SAMPLEFORMAT_INT )
         {
@@ -14965,6 +14981,7 @@ void GTiffDataset::SetStructuralMDFromParent(GTiffDataset* poParentDS)
     m_bLeaderSizeAsUInt4 = poParentDS->m_bLeaderSizeAsUInt4;
     m_bTrailerRepeatedLast4BytesRepeated = poParentDS->m_bTrailerRepeatedLast4BytesRepeated;
     m_bMaskInterleavedWithImagery = poParentDS->m_bMaskInterleavedWithImagery;
+    m_bWriteEmptyTiles = poParentDS->m_bWriteEmptyTiles;
 }
 
 /************************************************************************/
@@ -18049,6 +18066,32 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Do we want to ensure all blocks get written out on close to     */
+/*      avoid sparse files?                                             */
+/* -------------------------------------------------------------------- */
+    if( !CPLFetchBool( papszOptions, "SPARSE_OK", false ) )
+        poDS->m_bFillEmptyTilesAtClosing = true;
+
+    poDS->m_bWriteEmptyTiles =
+        (bCopySrcOverviews && poDS->m_bFillEmptyTilesAtClosing) ||
+        bStreaming ||
+        (poDS->m_nCompression != COMPRESSION_NONE &&
+            poDS->m_bFillEmptyTilesAtClosing);
+    // Only required for people writing non-compressed striped files in the
+    // rightorder and wanting all tstrips to be written in the same order
+    // so that the end result can be memory mapped without knowledge of each
+    // strip offset
+    if( CPLTestBool( CSLFetchNameValueDef(
+                            papszOptions,
+                            "WRITE_EMPTY_TILES_SYNCHRONOUSLY", "FALSE" )) ||
+        CPLTestBool( CSLFetchNameValueDef(
+                            papszOptions,
+                            "@WRITE_EMPTY_TILES_SYNCHRONOUSLY", "FALSE" )) )
+    {
+        poDS->m_bWriteEmptyTiles = true;
+    }
+
     // Precreate (internal) mask, so that the IBuildOverviews() below
     // has a chance to create also the overviews of the mask.
     CPLErr eErr = CE_None;
@@ -18056,6 +18099,11 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( bCreateMask )
     {
         eErr = poDS->CreateMaskBand( nMaskFlags );
+        if( poDS->m_poMaskDS )
+        {
+            poDS->m_poMaskDS->m_bFillEmptyTilesAtClosing = poDS->m_bFillEmptyTilesAtClosing;
+            poDS->m_poMaskDS->m_bWriteEmptyTiles = poDS->m_bWriteEmptyTiles;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -18192,12 +18240,16 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 poDstDS->m_bBlockOrderRowMajor = true;
                 poDstDS->m_bLeaderSizeAsUInt4 = true;
                 poDstDS->m_bTrailerRepeatedLast4BytesRepeated = true;
+                poDstDS->m_bFillEmptyTilesAtClosing = poDS->m_bFillEmptyTilesAtClosing;
+                poDstDS->m_bWriteEmptyTiles = poDS->m_bWriteEmptyTiles;
                 GDALRasterBand* poSrcMaskBand = nullptr;
                 if( poDstDS->m_poMaskDS )
                 {
                     poDstDS->m_poMaskDS->m_bBlockOrderRowMajor = true;
                     poDstDS->m_poMaskDS->m_bLeaderSizeAsUInt4 = true;
                     poDstDS->m_poMaskDS->m_bTrailerRepeatedLast4BytesRepeated = true;
+                    poDstDS->m_poMaskDS->m_bFillEmptyTilesAtClosing = poDS->m_bFillEmptyTilesAtClosing;
+                    poDstDS->m_poMaskDS->m_bWriteEmptyTiles = poDS->m_bWriteEmptyTiles;
 
                     poSrcMaskBand = poMaskOvrDS ?
                         (iOvrLevel == 0 ? poMaskOvrDS->GetRasterBand(1) :
@@ -18439,32 +18491,6 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             papszCopyWholeRasterOptions[iNextOption++] =
                 "INTERLEAVE=BAND";
-        }
-
-    /* -------------------------------------------------------------------- */
-    /*      Do we want to ensure all blocks get written out on close to     */
-    /*      avoid sparse files?                                             */
-    /* -------------------------------------------------------------------- */
-        if( !CPLFetchBool( papszOptions, "SPARSE_OK", false ) )
-            poDS->m_bFillEmptyTilesAtClosing = true;
-
-        poDS->m_bWriteEmptyTiles =
-            bCopySrcOverviews ||
-            bStreaming ||
-            (poDS->m_nCompression != COMPRESSION_NONE &&
-             poDS->m_bFillEmptyTilesAtClosing);
-        // Only required for people writing non-compressed striped files in the
-        // rightorder and wanting all tstrips to be written in the same order
-        // so that the end result can be memory mapped without knowledge of each
-        // strip offset
-        if( CPLTestBool( CSLFetchNameValueDef(
-                             papszOptions,
-                             "WRITE_EMPTY_TILES_SYNCHRONOUSLY", "FALSE" )) ||
-           CPLTestBool( CSLFetchNameValueDef(
-                             papszOptions,
-                             "@WRITE_EMPTY_TILES_SYNCHRONOUSLY", "FALSE" )) )
-        {
-            poDS->m_bWriteEmptyTiles = true;
         }
 
         if( bCopySrcOverviews &&
