@@ -70,9 +70,9 @@ Example
 
 ::
 
-    $  gdalsrsinfo   "EPSG:4326"
+    $ gdalsrsinfo EPSG:4326
 
-    PROJ.4 : '+proj=longlat +datum=WGS84 +no_defs '
+    PROJ.4 : +proj=longlat +datum=WGS84 +no_defs
 
     OGC WKT :
     GEOGCS["WGS 84",
