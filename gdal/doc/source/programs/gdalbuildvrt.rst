@@ -62,7 +62,7 @@ changed in later versions.
 .. option:: -tileindex
 
     Use the specified value as the tile index field, instead of the default
-    value with is 'location'.
+    value which is 'location'.
 
 .. option:: -resolution {highest|lowest|average|user}
 
