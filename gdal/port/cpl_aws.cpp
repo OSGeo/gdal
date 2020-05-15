@@ -43,12 +43,12 @@ CPL_CVSID("$Id$")
 // #define DEBUG_VERBOSE 1
 
 #ifdef HAVE_CURL
-static CPLMutex *hMutex = nullptr;
-static CPLString osIAMRole;
-static CPLString osGlobalAccessKeyId;
-static CPLString osGlobalSecretAccessKey;
-static CPLString osGlobalSessionToken;
-static GIntBig nGlobalExpiration = 0;
+static CPLMutex *ghMutex = nullptr;
+static CPLString gosIAMRole;
+static CPLString gosGlobalAccessKeyId;
+static CPLString gosGlobalSecretAccessKey;
+static CPLString gosGlobalSessionToken;
+static GIntBig gnGlobalExpiration = 0;
 
 /************************************************************************/
 /*                         CPLGetLowerCaseHex()                         */
@@ -679,64 +679,100 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
                                                 CPLString& osAccessKeyId,
                                                 CPLString& osSessionToken)
 {
-    CPLMutexHolder oHolder( &hMutex );
+    CPLMutexHolder oHolder( &ghMutex );
     time_t nCurTime;
     time(&nCurTime);
     // Try to reuse credentials if they are still valid, but
     // keep one minute of margin...
-    if( !osGlobalAccessKeyId.empty() && nCurTime < nGlobalExpiration - 60 )
+    if( !gosGlobalAccessKeyId.empty() && nCurTime < gnGlobalExpiration - 60 )
     {
-        osAccessKeyId = osGlobalAccessKeyId;
-        osSecretAccessKey = osGlobalSecretAccessKey;
-        osSessionToken = osGlobalSessionToken;
+        osAccessKeyId = gosGlobalAccessKeyId;
+        osSecretAccessKey = gosGlobalSecretAccessKey;
+        osSessionToken = gosGlobalSessionToken;
         return true;
     }
 
     CPLString osURLRefreshCredentials;
-    CPLString osCPL_AWS_EC2_CREDENTIALS_URL(
-        CPLGetConfigOption("CPL_AWS_EC2_CREDENTIALS_URL", ""));
+    const CPLString osEC2DefaultURL("http://169.254.169.254");
+    const CPLString osEC2RootURL(
+        CPLGetConfigOption("CPL_AWS_EC2_API_ROOT_URL", osEC2DefaultURL));
     const CPLString osECSRelativeURI(
         CPLGetConfigOption("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", ""));
-    if( osCPL_AWS_EC2_CREDENTIALS_URL.empty() && !osECSRelativeURI.empty() )
+    CPLString osToken;
+    if( osEC2RootURL == osEC2DefaultURL && !osECSRelativeURI.empty() )
     {
         // See https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html
         osURLRefreshCredentials = "http://169.254.170.2" + osECSRelativeURI;
     }
     else
     {
-        const CPLString osDefaultURL(
-            "http://169.254.169.254/latest/meta-data/iam/security-credentials/");
-        const CPLString osEC2CredentialsURL =
-            osCPL_AWS_EC2_CREDENTIALS_URL.empty() ? osDefaultURL : osCPL_AWS_EC2_CREDENTIALS_URL;
-        if( osIAMRole.empty() && !osEC2CredentialsURL.empty() )
-        {
-            // If we don't know yet the IAM role, fetch it
-            if( IsMachinePotentiallyEC2Instance() )
-            {
-                char** papszOptions = CSLSetNameValue(nullptr, "TIMEOUT", "1");
-                CPLPushErrorHandler(CPLQuietErrorHandler);
-                CPLHTTPResult* psResult =
-                            CPLHTTPFetch( osEC2CredentialsURL, papszOptions );
-                CPLPopErrorHandler();
-                CSLDestroy(papszOptions);
-                if( psResult )
-                {
-                    if( psResult->nStatus == 0 && psResult->pabyData != nullptr )
-                    {
-                        osIAMRole = reinterpret_cast<char*>(psResult->pabyData);
-                    }
-                    CPLHTTPDestroyResult(psResult);
-                }
-            }
-        }
-        if( osIAMRole.empty() )
+        if( !IsMachinePotentiallyEC2Instance() )
             return false;
-        osURLRefreshCredentials = osEC2CredentialsURL + osIAMRole;
+
+        // Use IMDSv2 protocol:
+        // https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
+
+        // Retrieve IMDSv2 token
+        {
+            const CPLString osEC2_IMDSv2_api_token_URL =
+                osEC2RootURL + "/latest/api/token";
+            CPLStringList aosOptions;
+            aosOptions.SetNameValue("TIMEOUT", "1");
+            aosOptions.SetNameValue("CUSTOMREQUEST", "PUT");
+            aosOptions.SetNameValue("HEADERS",
+                                    "X-aws-ec2-metadata-token-ttl-seconds: 10");
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            CPLHTTPResult* psResult =
+                        CPLHTTPFetch( osEC2_IMDSv2_api_token_URL, aosOptions.List() );
+            CPLPopErrorHandler();
+            if( psResult )
+            {
+                if( psResult->nStatus == 0 && psResult->pabyData != nullptr )
+                {
+                    osToken = reinterpret_cast<char*>(psResult->pabyData);
+                }
+                CPLHTTPDestroyResult(psResult);
+            }
+            if( osToken.empty() )
+                return false;
+        }
+
+        // If we don't know yet the IAM role, fetch it
+        const CPLString osEC2CredentialsURL =
+            osEC2RootURL + "/latest/meta-data/iam/security-credentials/";
+        if( gosIAMRole.empty() )
+        {
+            CPLStringList aosOptions;
+            aosOptions.SetNameValue("TIMEOUT", "1");
+            aosOptions.SetNameValue("HEADERS",
+                            ("X-aws-ec2-metadata-token: " + osToken).c_str());
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            CPLHTTPResult* psResult =
+                        CPLHTTPFetch( osEC2CredentialsURL, aosOptions.List() );
+            CPLPopErrorHandler();
+            if( psResult )
+            {
+                if( psResult->nStatus == 0 && psResult->pabyData != nullptr )
+                {
+                    gosIAMRole = reinterpret_cast<char*>(psResult->pabyData);
+                }
+                CPLHTTPDestroyResult(psResult);
+            }
+            if( gosIAMRole.empty() )
+                return false;
+        }
+        osURLRefreshCredentials = osEC2CredentialsURL + gosIAMRole;
     }
 
     // Now fetch the refreshed credentials
     CPLStringList oResponse;
-    CPLHTTPResult* psResult = CPLHTTPFetch(osURLRefreshCredentials.c_str(), nullptr );
+    CPLStringList aosOptions;
+    if( !osToken.empty() )
+    {
+        aosOptions.SetNameValue("HEADERS",
+                            ("X-aws-ec2-metadata-token: " + osToken).c_str());
+    }
+    CPLHTTPResult* psResult = CPLHTTPFetch(osURLRefreshCredentials.c_str(), aosOptions.List() );
     if( psResult )
     {
         if( psResult->nStatus == 0 && psResult->pabyData != nullptr )
@@ -758,10 +794,10 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
         !osSecretAccessKey.empty() &&
         Iso8601ToUnixTime(osExpiration, &nExpirationUnix) )
     {
-        osGlobalAccessKeyId = osAccessKeyId;
-        osGlobalSecretAccessKey = osSecretAccessKey;
-        osGlobalSessionToken = osSessionToken;
-        nGlobalExpiration = nExpirationUnix;
+        gosGlobalAccessKeyId = osAccessKeyId;
+        gosGlobalSecretAccessKey = osSecretAccessKey;
+        gosGlobalSessionToken = osSessionToken;
+        gnGlobalExpiration = nExpirationUnix;
         CPLDebug("AWS", "Storing AIM credentials until %s",
                 osExpiration.c_str());
     }
@@ -1044,9 +1080,9 @@ bool VSIS3HandleHelper::GetConfiguration(CSLConstList papszOptions,
 
 void VSIS3HandleHelper::CleanMutex()
 {
-    if( hMutex != nullptr )
-        CPLDestroyMutex( hMutex );
-    hMutex = nullptr;
+    if( ghMutex != nullptr )
+        CPLDestroyMutex( ghMutex );
+    ghMutex = nullptr;
 }
 
 /************************************************************************/
@@ -1055,13 +1091,13 @@ void VSIS3HandleHelper::CleanMutex()
 
 void VSIS3HandleHelper::ClearCache()
 {
-    CPLMutexHolder oHolder( &hMutex );
+    CPLMutexHolder oHolder( &ghMutex );
 
-    osIAMRole.clear();
-    osGlobalAccessKeyId.clear();
-    osGlobalSecretAccessKey.clear();
-    osGlobalSessionToken.clear();
-    nGlobalExpiration = 0;
+    gosIAMRole.clear();
+    gosGlobalAccessKeyId.clear();
+    gosGlobalSecretAccessKey.clear();
+    gosGlobalSessionToken.clear();
+    gnGlobalExpiration = 0;
 }
 
 /************************************************************************/
