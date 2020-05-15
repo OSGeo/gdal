@@ -30,12 +30,6 @@
 #ifndef CPL_ILI2READER_H_INCLUDED
 #define CPL_ILI2READER_H_INCLUDED
 
-// This works around problems with math.h on some platforms #defining INFINITY
-#ifdef INFINITY
-#undef  INFINITY
-#define INFINITY INFINITY_XERCES
-#endif
-
 #include "imdreader.h"
 #include <list>
 
