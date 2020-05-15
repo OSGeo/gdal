@@ -43,12 +43,12 @@ CPL_CVSID("$Id$")
 // #define DEBUG_VERBOSE 1
 
 #ifdef HAVE_CURL
-static CPLMutex *hMutex = nullptr;
-static CPLString osIAMRole;
-static CPLString osGlobalAccessKeyId;
-static CPLString osGlobalSecretAccessKey;
-static CPLString osGlobalSessionToken;
-static GIntBig nGlobalExpiration = 0;
+static CPLMutex *ghMutex = nullptr;
+static CPLString gosIAMRole;
+static CPLString gosGlobalAccessKeyId;
+static CPLString gosGlobalSecretAccessKey;
+static CPLString gosGlobalSessionToken;
+static GIntBig gnGlobalExpiration = 0;
 
 /************************************************************************/
 /*                         CPLGetLowerCaseHex()                         */
@@ -679,16 +679,16 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
                                                 CPLString& osAccessKeyId,
                                                 CPLString& osSessionToken)
 {
-    CPLMutexHolder oHolder( &hMutex );
+    CPLMutexHolder oHolder( &ghMutex );
     time_t nCurTime;
     time(&nCurTime);
     // Try to reuse credentials if they are still valid, but
     // keep one minute of margin...
-    if( !osGlobalAccessKeyId.empty() && nCurTime < nGlobalExpiration - 60 )
+    if( !gosGlobalAccessKeyId.empty() && nCurTime < gnGlobalExpiration - 60 )
     {
-        osAccessKeyId = osGlobalAccessKeyId;
-        osSecretAccessKey = osGlobalSecretAccessKey;
-        osSessionToken = osGlobalSessionToken;
+        osAccessKeyId = gosGlobalAccessKeyId;
+        osSecretAccessKey = gosGlobalSecretAccessKey;
+        osSessionToken = gosGlobalSessionToken;
         return true;
     }
 
@@ -707,7 +707,7 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
     {
         const CPLString osEC2CredentialsURL =
             osEC2RootURL + "/latest/meta-data/iam/security-credentials/";
-        if( osIAMRole.empty() )
+        if( gosIAMRole.empty() )
         {
             // If we don't know yet the IAM role, fetch it
             if( IsMachinePotentiallyEC2Instance() )
@@ -722,15 +722,15 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
                 {
                     if( psResult->nStatus == 0 && psResult->pabyData != nullptr )
                     {
-                        osIAMRole = reinterpret_cast<char*>(psResult->pabyData);
+                        gosIAMRole = reinterpret_cast<char*>(psResult->pabyData);
                     }
                     CPLHTTPDestroyResult(psResult);
                 }
             }
         }
-        if( osIAMRole.empty() )
+        if( gosIAMRole.empty() )
             return false;
-        osURLRefreshCredentials = osEC2CredentialsURL + osIAMRole;
+        osURLRefreshCredentials = osEC2CredentialsURL + gosIAMRole;
     }
 
     // Now fetch the refreshed credentials
@@ -757,10 +757,10 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
         !osSecretAccessKey.empty() &&
         Iso8601ToUnixTime(osExpiration, &nExpirationUnix) )
     {
-        osGlobalAccessKeyId = osAccessKeyId;
-        osGlobalSecretAccessKey = osSecretAccessKey;
-        osGlobalSessionToken = osSessionToken;
-        nGlobalExpiration = nExpirationUnix;
+        gosGlobalAccessKeyId = osAccessKeyId;
+        gosGlobalSecretAccessKey = osSecretAccessKey;
+        gosGlobalSessionToken = osSessionToken;
+        gnGlobalExpiration = nExpirationUnix;
         CPLDebug("AWS", "Storing AIM credentials until %s",
                 osExpiration.c_str());
     }
@@ -1043,9 +1043,9 @@ bool VSIS3HandleHelper::GetConfiguration(CSLConstList papszOptions,
 
 void VSIS3HandleHelper::CleanMutex()
 {
-    if( hMutex != nullptr )
-        CPLDestroyMutex( hMutex );
-    hMutex = nullptr;
+    if( ghMutex != nullptr )
+        CPLDestroyMutex( ghMutex );
+    ghMutex = nullptr;
 }
 
 /************************************************************************/
@@ -1054,13 +1054,13 @@ void VSIS3HandleHelper::CleanMutex()
 
 void VSIS3HandleHelper::ClearCache()
 {
-    CPLMutexHolder oHolder( &hMutex );
+    CPLMutexHolder oHolder( &ghMutex );
 
-    osIAMRole.clear();
-    osGlobalAccessKeyId.clear();
-    osGlobalSecretAccessKey.clear();
-    osGlobalSessionToken.clear();
-    nGlobalExpiration = 0;
+    gosIAMRole.clear();
+    gosGlobalAccessKeyId.clear();
+    gosGlobalSecretAccessKey.clear();
+    gosGlobalSessionToken.clear();
+    gnGlobalExpiration = 0;
 }
 
 /************************************************************************/
