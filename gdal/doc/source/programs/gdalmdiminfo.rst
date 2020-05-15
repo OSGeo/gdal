@@ -24,13 +24,11 @@ Synopsis
 Description
 -----------
 
-:program:`gdalinfo` program lists various information about a GDAL supported
+:program:`gdalmdiminfo` program lists various information about a GDAL supported
 multidimensional raster dataset as JSON output. It follows the
 following `JSON schema <https://github.com/OSGeo/gdal/blob/master/gdal/data/gdalmdiminfo_output.schema.json>`_
 
 The following command line parameters can appear in any order
-
-.. program:: gdalinfo
 
 .. option:: -detailed
 
