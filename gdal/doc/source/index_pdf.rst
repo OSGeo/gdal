@@ -9,7 +9,9 @@ GDAL
     :hidden:
 
     about
+    license
     download
+    faq
     programs/index
     drivers/raster/index
     drivers/vector/index
@@ -18,5 +20,3 @@ GDAL
     tutorials/index
     community
     contributing/index
-    faq
-    license
