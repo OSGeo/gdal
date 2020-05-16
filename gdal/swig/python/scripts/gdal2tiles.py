@@ -1179,7 +1179,7 @@ def optparse_init():
     p.add_option('-e', '--resume', dest="resume", action="store_true",
                  help="Resume mode. Generate only missing files.")
     p.add_option('-a', '--srcnodata', dest="srcnodata", metavar="NODATA",
-                 help="NODATA transparency value to assign to the input data")
+                 help="Value in the input dataset considered as transparent")
     p.add_option('-d', '--tmscompatible', dest="tmscompatible", action="store_true",
                  help=("When using the geodetic profile, specifies the base resolution "
                        "as 0.703125 or 2 tiles at zoom level 0."))
@@ -1199,9 +1199,9 @@ def optparse_init():
                  dest="nb_processes",
                  type='int',
                  help="Number of processes to use for tiling")
-    p.add_option("--tilesize", dest="tilesize", default=256,
+    p.add_option("--tilesize", dest="tilesize",  metavar="PIXELS", default=256,
                  type='int',
-                 help="Tile size in pixel of a tile")
+                 help="Width and height in pixel of a tile")
 
     # KML options
     g = OptionGroup(p, "KML (Google Earth) options",

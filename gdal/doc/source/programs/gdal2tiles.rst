@@ -20,7 +20,7 @@ Synopsis
                   [-e] [-a nodata] [-v] [-q] [-h] [-k] [-n] [-u url]
                   [-w webviewer] [-t title] [-c copyright]
                   [--processes=NB_PROCESSES] [--xyz]
-                  --tilesize=TILESIZE
+                  --tilesize=PIXELS
                   [-g googlekey] [-b bingkey] input_file [output_dir]
 
 Description
@@ -62,7 +62,10 @@ can publish a picture without proper georeferencing too.
 
 .. option:: --xyz
 
-  Generate XYZ tiles (OSM Slippy Map standard) instead of TSM
+  Generate XYZ tiles (OSM Slippy Map standard) instead of TMS.
+  Only for mercator profile.
+  In the default mode (TMS), tiles at y=0 are the southern-most tiles, whereas
+  in XYZ mode (used by OGC WMTS too), tiles at y=0 are the northern-most tiles.
 
   .. versionadded:: 3.1
 
@@ -76,7 +79,8 @@ can publish a picture without proper georeferencing too.
 
 .. option:: -a <NODATA>, --srcnodata=<NODATA>
 
-  NODATA transparency value to assign to the input data.
+  Value in the input dataset considered as transparent. If the input dataset
+  had already an associate nodata value, it is overriden by the specified value.
 
 .. option:: -v, --verbose
 
@@ -90,13 +94,13 @@ can publish a picture without proper georeferencing too.
 
 .. option:: --processes=<NB_PROCESSES>
 
-  Number of processes to use for tiling.
+  Number of parallel processes to use for tiling, to speed-up the computation.
 
   .. versionadded:: 2.3
 
-.. option:: --tilesize=<TILESIZE>
+.. option:: --tilesize=<PIXELS>
 
-  Pixel size of the tiles.
+  Width and height in pixel of a tile. Default is 256.
 
   .. versionadded:: 3.1
 
