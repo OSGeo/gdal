@@ -64,8 +64,17 @@ $(GDAL_SLIB):	$(GDAL_OBJ) $(GDAL_LIB)
 	$(LD_SHARED) $(GDAL_SLIB_SONAME) $(GDAL_OBJ) $(GDAL_LIBS) $(LDFLAGS) $(LIBS) \
 		-o $(GDAL_SLIB)
 
+#  split potentially long lines
+SORTED  := $(sort $(wildcard $(GDAL_OBJ:.o=.lo)))
+NSORTED := $(words $(SORTED))
+#  mid left and right indices
+MIDL := $(shell echo $$(( $(NSORTED) / 2 )) )
+MIDR := $(shell echo $$(( $(MIDL) + 1 )) )
+
 $(LIBGDAL):	$(GDAL_OBJ:.o=.lo)
-	$(LD) $(LDFLAGS) $(LIBS) -o $@ $(sort $(wildcard $(GDAL_OBJ:.o=.lo))) \
+	$(LD) $(LDFLAGS) $(LIBS) -o $@ \
+	$(wordlist 1,$(MIDL),$(SORTED)) \
+	$(wordlist $(MIDR),$(words $(SORTED)),$(SORTED)) \
 	    -rpath $(INST_LIB) \
 	    -no-undefined \
 	    -version-info $(LIBGDAL_CURRENT):$(LIBGDAL_REVISION):$(LIBGDAL_AGE)
