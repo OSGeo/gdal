@@ -67,11 +67,11 @@ accessed database), then all tables and named views listed in the
 (PostGIS disabled for the accessed database), all regular user tables
 and named views will be treated as layers.
 
-Starting with GDAL 1.7.0, the driver also supports the
+The driver also supports the
 `geography <http://postgis.net/docs/manual-1.5/ch04.html#PostGIS_Geography>`__
 column type introduced in PostGIS 1.5.
 
-Starting with GDAL 2.0, the driver also supports reading and writing the
+The driver also supports reading and writing the
 following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE,
 CURVEPOLYGON, MULTICURVE and MULTISURFACE
 
@@ -119,8 +119,6 @@ this command with a CPLPushErrorHandler()/CPLPopErrorHandler() pair.
 
 Dataset open options
 ~~~~~~~~~~~~~~~~~~~~
-
-(GDAL >= 2.0)
 
 -  **DBNAME**\ =string: Database name.
 -  **PORT**\ =integer: Port.
@@ -197,25 +195,25 @@ Layer Creation Options
    FALSE for earlier versions) to disable. BRIN is only available with
    PostgreSQL >= 9.4 and PostGIS >= 2.3. SPGIST is only available with
    PostgreSQL >= 11 and PostGIS >= 2.5
--  **TEMPORARY**: (From GDAL 1.8.0) Set to OFF by default. Creates a
+-  **TEMPORARY**: Set to OFF by default. Creates a
    temporary table instead of a permanent one.
--  **UNLOGGED**: (From GDAL 2.0) Set to OFF by default. Whether to
+-  **UNLOGGED**: Set to OFF by default. Whether to
    create the table as a unlogged one. Unlogged tables are only
    supported since PostgreSQL 9.1, and GiST indexes used for spatial
    indexing since PostgreSQL 9.3.
--  **NONE_AS_UNKNOWN**: (From GDAL 1.8.1) Can bet set to TRUE to force
+-  **NONE_AS_UNKNOWN**: Can bet set to TRUE to force
    non-spatial layers (wkbNone) to be created as spatial tables of type
-   GEOMETRY (wkbUnknown), which was the behavior prior to GDAL 1.8.0.
+   GEOMETRY (wkbUnknown).
    Defaults to NO, in which case a regular table is created and not
    recorded in the PostGIS geometry_columns table.
--  **FID**: (From GDAL 1.9.0) Name of the FID column to create. Defaults
+-  **FID**: Name of the FID column to create. Defaults
    to 'ogc_fid'.
--  **FID64**: (From GDAL 2.0) This may be "TRUE" to create a FID column
+-  **FID64**: This may be "TRUE" to create a FID column
    that can support 64 bit identifiers. The default value is "FALSE".
--  **EXTRACT_SCHEMA_FROM_LAYER_NAME**: (From GDAL 1.9.0) Can be set to
+-  **EXTRACT_SCHEMA_FROM_LAYER_NAME**: Can be set to
    NO to avoid considering the dot character as the separator between
    the schema and the table name. Defaults to YES.
--  **COLUMN_TYPES**: (From GDAL 1.10) A list of strings of format
+-  **COLUMN_TYPES**: A list of strings of format
    field_name=pg_field_type (separated by comma) that should be use when
    CreateField() is invoked on them. This will override the default
    choice that OGR would have made. This can for example be used to
@@ -236,19 +234,18 @@ Options <http://trac.osgeo.org/gdal/wiki/ConfigOptions>`__ which help
 control the behavior of this driver.
 
 -  **PG_USE_COPY**: This may be "YES" for using COPY for inserting data
-   to Postgresql. COPY is significantly faster than INSERT. Starting
-   with GDAL 2.0, COPY is used by default when inserting from a table
-   that has just been created.
+   to Postgresql. COPY is significantly faster than INSERT. COPY is used by
+   default when inserting from a table that has just been created.
 -  **PGSQL_OGR_FID**: Set name of primary key instead of 'ogc_fid'. Only
    used when opening a layer whose primary key cannot be autodetected.
    Ignored by CreateLayer() that uses the FID creation option.
--  **PG_USE_BASE64**: (GDAL >= 1.8.0) If set to "YES", geometries will
+-  **PG_USE_BASE64**: If set to "YES", geometries will
    be fetched as BASE64 encoded EWKB instead of canonical HEX encoded
    EWKB. This reduces the amount of data to be transferred from 2 N to
    1.333 N, where N is the size of EWKB data. However, it might be a bit
    slower than fetching in canonical form when the client and the server
    are on the same machine, so the default is NO.
--  **OGR_TRUNCATE**: (GDAL >= 1.11) If set to "YES", the content of the
+-  **OGR_TRUNCATE**: If set to "YES", the content of the
    table will be first erased with the SQL TRUNCATE command before
    inserting the first feature. This is an alternative to using the
    -overwrite flag of ogr2ogr, that avoids views based on the table to

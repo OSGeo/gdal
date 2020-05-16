@@ -105,7 +105,7 @@ WMS
 Communications with an OGC WMS server. Has support for both tiled and
 untiled requests.
 
-Starting with GDAL >= 1.10, WMS layers can be queried (through a
+WMS layers can be queried (through a
 GetFeatureInfo request) with the gdallocationinfo utility, or with a
 GetMetadataItem("Pixel_iCol_iLine", "LocationInfo") call on a band
 object.
@@ -173,8 +173,8 @@ WorldWind
 Access to web-based WorldWind tile services. Access is always tile
 based.
 
-TMS (GDAL 1.7.0 and later)
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+TMS
+~~~
 
 The TMS Minidriver is designed primarily to support the users of the
 `TMS
@@ -218,8 +218,8 @@ OpenStreetMap and many other popular tile services.
 Two examples of usage of the TMS service are included in the examples
 below.
 
-OnEarth Tiled WMS (GDAL 1.9.0 and later)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+OnEarth Tiled WMS
+~~~~~~~~~~~~~~~~~
 
 The OnEarth Tiled WMS minidriver supports the Tiled WMS specification
 implemented for the JPL OnEarth driver per the specification at
@@ -239,8 +239,8 @@ A typical OnEarth Tiled WMS configuration file might look like:
 Most of the other information is automatically fetched from the remote
 server using the GetTileService method at open time.
 
-VirtualEarth (GDAL 1.9.0 and later)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+VirtualEarth
+~~~~~~~~~~~~
 
 Access to web-based Virtual Earth tile services. Access is always tile
 based.
@@ -259,8 +259,8 @@ The DataWindow element might be omitted. The default values are :
 -  BlockSizeX = 256
 -  BlockSizeY = 256
 
-ArcGIS REST API (GDAL 2.0 and later)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ArcGIS REST API
+~~~~~~~~~~~~~~~
 
 Access to ArcGIS REST `map service
 resource <http://resources.arcgis.com/en/help/rest/apiref/mapserver.html>`__
@@ -400,7 +400,7 @@ The WMS driver can open :
 
       gdalinfo "<GDAL_WMS><Service name=\"TiledWMS\"><ServerUrl>http://onearth.jpl.nasa.gov/wms.cgi?</ServerUrl><TiledGroupName>Global SRTM Elevation</TiledGroupName></Service></GDAL_WMS>"
 
--  (GDAL >= 1.9.0) the base URL of a WMS service, prefixed with *WMS:* :
+-  the base URL of a WMS service, prefixed with *WMS:* :
 
    ::
 
@@ -409,14 +409,14 @@ The WMS driver can open :
    A list of subdatasets will be returned, resulting from the parsing of
    the GetCapabilities request on that server.
 
--  (GDAL >= 1.9.0) a pseudo GetMap request, such as the subdataset name
+-  a pseudo GetMap request, such as the subdataset name
    returned by the previous syntax :
 
    ::
 
       gdalinfo "WMS:http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=DNEC_250K%3AELEVATION%2FELEVATION&SRS=EPSG:42304&BBOX=-3000000,-1500000,6000000,4500000"
 
--  (GDAL >= 1.9.0) the base URL of a Tiled WMS service, prefixed with
+-  the base URL of a Tiled WMS service, prefixed with
    *WMS:* and with request=GetTileService as GET argument:
 
    ::
@@ -426,7 +426,7 @@ The WMS driver can open :
    A list of subdatasets will be returned, resulting from the parsing of
    the GetTileService request on that server.
 
--  (GDAL >= 2.0.0) the URL of a REST definition for a ArcGIS MapServer:
+-  the URL of a REST definition for a ArcGIS MapServer:
 
    ::
 

@@ -295,7 +295,7 @@ For each 2D geometry type there is a corresponding 2.5D type code.  The 2D
 and 2.5D geometry cases are handled by the same C++ class, so our code will
 handle 2D or 3D cases properly.
 
-Starting with OGR 1.11, several geometry fields can be associated to a feature.
+Several geometry fields can be associated to a feature.
 
 In C++ :
 
@@ -1160,7 +1160,7 @@ In Python :
     ds = None
 
 
-Starting with OGR 1.11, everal geometry fields< can be associated to a feature. This capability
+Several geometry fields can be associated to a feature. This capability
 is just available for a few file formats, such as PostGIS.
 
 To create such datasources, geometry fields must be first created.

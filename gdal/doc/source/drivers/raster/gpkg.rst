@@ -8,7 +8,7 @@ GPKG -- GeoPackage raster
 
 .. build_dependencies:: libsqlite3 (and any or all of PNG, JPEG, WEBP drivers)
 
-Starting with GDAL 2.0, this driver implements full read/creation/update
+This driver implements full read/creation/update
 of tables containing raster tiles in the `OGC GeoPackage format
 standard <http://www.geopackage.org/spec/>`__. The GeoPackage standard
 uses a SQLite database file as a generic container, and the standard
@@ -481,13 +481,13 @@ Level of support of GeoPackage Extensions
      - Supported by GDAL?
    * - `Zoom Other intervals <http://www.geopackage.org/guidance/extensions/zoom_other_intervals.html>`__
      - Yes
-     - Yes, since GDAL 2.0
+     - Yes
    * - `Tiles Encoding WebP <http://www.geopackage.org/guidance/extensions/tiles_encoding_webp.html>`__
      - Yes
-     - Yes, since GDAL 2.0
+     - Yes
    * - `Metadata <http://www.geopackage.org/guidance/extensions/metadata.html>`__
      - Yes
-     - Yes, since GDAL 1.11
+     - Yes
    * - `WKT for Coordinate Reference Systems <http://www.geopackage.org/guidance/extensions/wkt_for_crs.md>`__ (WKT v2)
      - Yes
      - Partially, since GDAL 2.2. GDAL can read databases using this extension. GDAL 3.0 brings support for the WKT v2 entry.

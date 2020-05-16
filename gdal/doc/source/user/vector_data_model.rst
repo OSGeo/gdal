@@ -24,7 +24,7 @@ Geometry
 
 The geometry classes are represent various kinds of vector geometry. All the geometry classes derived from :cpp:class:`OGRGeometry` which defines the common services of all geometries. Types of geometry include :cpp:class:`OGRPoint`, :cpp:class:`OGRLineString`, :cpp:class:`OGRPolygon`, :cpp:class:`OGRGeometryCollection`, :cpp:class:`OGRMultiPolygon`, :cpp:class:`OGRMultiPoint`, and :cpp:class:`OGRMultiLineString`.
 
-GDAL 2.0 extends those geometry type with non-linear geometries with the :cpp:class:`OGRCircularString`, :cpp:class:`OGRCompoundCurve`, :cpp:class:`OGRCurvePolygon`, :cpp:class:`OGRMultiCurve` and :cpp:class:`OGRMultiSurface` classes.
+Those geometry type are extended with non-linear geometries with the :cpp:class:`OGRCircularString`, :cpp:class:`OGRCompoundCurve`, :cpp:class:`OGRCurvePolygon`, :cpp:class:`OGRMultiCurve` and :cpp:class:`OGRMultiSurface` classes.
 
 Additional intermediate abstract base classes contain functionality that could eventually be implemented by other geometry types. These include OGRCurve (base class for OGRLineString) and OGRSurface (base class for OGRPolygon). Some intermediate interfaces modeled in the simple features abstract model and SFCOM are not modeled in OGR at this time. In most cases the methods are aggregated into other classes.
 
@@ -36,8 +36,8 @@ Many of the spatial analysis methods (such as computing overlaps and so forth) a
 
 While it is theoretically possible to derive other or more specific geometry classes from the existing OGRGeometry classes, this isn't an aspect that has been well thought out. In particular, it would be possible to create specialized classes using the OGRGeometryFactory without modifying it.
 
-Compatibility issues with GDAL 2.0 non-linear geometries
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Compatibility issues with  non-linear geometries
+++++++++++++++++++++++++++++++++++++++++++++++++
 
 Generic mechanisms have been introduced so that creating or modifying a feature with a non-linear geometry in a layer of a driver that does not support it will transform that geometry in the closest matching linear geometry.
 
@@ -55,15 +55,15 @@ There is also an associated :cpp:class:`OGRCoordinateTransformation` class that 
 Feature / Feature Definition
 ----------------------------
 
-The :cpp:class:`OGRGeometry` captures the geometry of a vector feature ... the spatial position/region of a feature. The :cpp:class:`OGRFeature` contains this geometry, and adds feature attributes, feature id, and a feature class identifier. Starting with OGR 1.11, several geometries can be associated to a OGRFeature.
+The :cpp:class:`OGRGeometry` captures the geometry of a vector feature ... the spatial position/region of a feature. The :cpp:class:`OGRFeature` contains this geometry, and adds feature attributes, feature id, and a feature class identifier. Several geometries can be associated to a OGRFeature.
 
 The set of attributes, their types, names and so forth is represented via the :cpp:class:`OGRFeatureDefn` class. One OGRFeatureDefn normally exists for a layer of features. The same definition is shared in a reference counted manner by the feature of that type (or feature class).
 
-The feature id (FID) of a feature is intended to be a unique identifier for the feature within the layer it is a member of. Freestanding features, or features not yet written to a layer may have a null (OGRNullFID) feature id. The feature ids are modeled in OGR as a 64-bit integer (GDAL 2.0 or later); however, this is not sufficiently expressive to model the natural feature ids in some formats. For instance, the GML feature id is a string.
+The feature id (FID) of a feature is intended to be a unique identifier for the feature within the layer it is a member of. Freestanding features, or features not yet written to a layer may have a null (OGRNullFID) feature id. The feature ids are modeled in OGR as a 64-bit integer; however, this is not sufficiently expressive to model the natural feature ids in some formats. For instance, the GML feature id is a string.
 
 The feature class also contains an indicator of the types of geometry allowed for that feature class (returned as an OGRwkbGeometryType from :cpp:func:`OGRFeatureDefn::GetGeomType`). If this is wkbUnknown then any type of geometry is allowed. This implies that features in a given layer can potentially be of different geometry types though they will always share a common attribute schema.
 
-Starting with OGR 1.11, several geometry fields can be associated to a feature class. Each geometry field has its own indicator of geometry type allowed, returned by OGRGeomFieldDefn::GetType(), and its spatial reference system, returned by :cpp:func:`OGRGeomFieldDefn::GetSpatialRef`.
+Several geometry fields can be associated to a feature class. Each geometry field has its own indicator of geometry type allowed, returned by OGRGeomFieldDefn::GetType(), and its spatial reference system, returned by :cpp:func:`OGRGeomFieldDefn::GetSpatialRef`.
 
 The OGRFeatureDefn also contains a feature class name (normally used as a layer name).
 

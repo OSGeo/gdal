@@ -296,13 +296,6 @@ Variables attributes for: tos, lon, lat and time
      time#bounds=time_bnds
      time#original_units=seconds since 2001-1-1
 
-Driver Improvements (GDAL >= 1.9.0)
------------------------------------
-
-The driver has undergone significant changes in GDAL 1.9.0, see NEWS
-file and `NetCDF
-Improvements <http://trac.osgeo.org/gdal/wiki/NetCDF_Improvements>`__.
-
 Important Changes
 ~~~~~~~~~~~~~~~~~
 

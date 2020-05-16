@@ -34,9 +34,7 @@ fact you may get less than 51 GCPs, especially at end of scanlines.
 Another approach to rectification is manual selection of the GCPs using
 external source of georeference information.
 
-Before GDAL 1.10.2, a maximum of 11 x 20 GCPs were reported. This might
-be unsuitable for correct warping. Starting with GDAL 1.10.2, a much
-higher density will be reported, unless the L1B_HIGH_GCP_DENSITY
+A high density of GCPs will be reported, unless the L1B_HIGH_GCP_DENSITY
 configuration option is set to NO.
 
 Precision of the GCPs determination depends from the satellite type. In
@@ -46,7 +44,7 @@ positions more precise than 1/128=0.0078125 of degree (~28"). In NOAA-15
 -- NOAA-17 datasets we have much more precise positions, they are stored
 as 10000th of degree.
 
-Starting with GDAL 1.11, the GCPs will also be reported as a
+The GCPs will also be reported as a
 :ref:`geolocation array <rfc-41>`,
 with Lagrangian interpolation of the 51 GCPs per scanline to the number
 of pixels per scanline width.
@@ -88,7 +86,7 @@ Metadata records:
    when satellite moves from low latitudes to high latitudes and
    **Descending** in other case.
 
-Starting with GDAL 1.11, most metadata records can be written to a .CSV
+Most metadata records can be written to a .CSV
 file when the L1B_FETCH_METADATA configuration file is set to YES. By
 default, the filename will be called "[l1b_dataset_name]_metadata.csv",
 and located in the same directory as the L1B dataset. By defining the

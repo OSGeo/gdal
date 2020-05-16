@@ -45,10 +45,10 @@ The neatline (for OGC best practice) or the bounding box (Adobe style)
 will be reported as a NEATLINE metadata item, so that it can be later
 used as a cutline for the warping algorithm.
 
-Starting with GDAL 1.9.0, XMP metadata can be extracted from the file,
+XMP metadata can be extracted from the file,
 and will be stored as XML raw content in the xml:XMP metadata domain.
 
-Starting with GDAL 1.10.0, additional metadata, such as found in USGS
+Additional metadata, such as found in USGS
 Topo PDF can be extracted from the file, and will be stored as XML raw
 content in the EMBEDDED_METADATA metadata domain.
 
@@ -57,11 +57,11 @@ Configuration options
 
 -  *GDAL_PDF_DPI* : To control the dimensions of the raster by
    specifying the DPI of the rasterization with the Its default value is
-   150. Starting with GDAL 1.10, the driver will make some effort to
+   150. The driver will make some effort to
    guess the DPI value either from a specific metadata item contained in
    some PDF files, or from the raster images inside the PDF (in simple
    cases).
--  *GDAL_PDF_NEATLINE* : (GDAL >= 1.10.0 ) The name of the neatline to
+-  *GDAL_PDF_NEATLINE* : The name of the neatline to
    select (only available for geospatial PDF, encoded according to OGC
    Best Practice). This defaults to "Map Layers" for USGS Topo PDF. If
    not found, the neatline that covers the largest area.
@@ -89,8 +89,7 @@ Configuration options
 Open Options
 ~~~~~~~~~~~~
 
-Since GDAL 2.0, above configuration options are also available as open
-options.
+Above configuration options are also available as open options.
 
 -  **RENDERING_OPTIONS**\ =[RASTER,VECTOR,TEXT / RASTER,VECTOR /
    RASTER,TEXT / RASTER / VECTOR,TEXT / VECTOR / TEXT]: same as
@@ -117,7 +116,7 @@ options.
 LAYERS Metadata domain
 ----------------------
 
-Starting with GDAL >= 1.10.0 and when GDAL is compiled against Poppler
+When GDAL is compiled against Poppler
 or PDFium, the LAYERS metadata domain can be queried to retrieve layer
 names that can be turned ON or OFF. This is useful to know which values
 to specify for the *GDAL_PDF_LAYERS* or *GDAL_PDF_LAYERS_OFF*
@@ -149,7 +148,7 @@ The opening of a PDF document (to get the georeferencing) is fast, but
 at the first access to a raster block, the whole page will be rasterized
 (with Poppler), which can be a slow operation.
 
-Note: starting with GDAL 1.10, some raster-only PDF files (such as some
+Note: some raster-only PDF files (such as some
 USGS GeoPDF files), that are regularly tiled are exposed as tiled
 dataset by the GDAL PDF driver, and can be rendered with any backends.
 
@@ -161,8 +160,8 @@ For documents that contain several neatlines in a page (insets), the
 georeferencing will be extracted from the inset that has the largest
 area (in term of screen points).
 
-Creation Issues (GDAL >= 1.10.0)
---------------------------------
+Creation Issues
+---------------
 
 PDF documents can be created from other GDAL raster datasets, that have
 1 band (graylevel or with color table), 3 bands (RGB) or 4 bands (RGBA).

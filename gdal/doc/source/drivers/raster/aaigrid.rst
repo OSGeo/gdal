@@ -24,7 +24,7 @@ the same format as the band data.
 By default, the datatype returned for AAIGRID datasets by GDAL is
 autodetected, and set to Float32 for grid with floating point values or
 Int32 otherwise. This is done by analysing the format of the NODATA
-value and, if needed, the data of the grid. From GDAL 1.8.0, you can
+value and, if needed, the data of the grid. You can
 explicitly specify the datatype by setting the AAIGRID_DATATYPE
 configuration option (Int32, Float32 and Float64 values are supported
 currently)
@@ -42,7 +42,7 @@ manual <http://en.wikipedia.org/wiki/Printf>`__ for printf to have an
 idea of the exact behavior of this ;-). You can alternatively specify
 the number of decimal places with the DECIMAL_PRECISION creation option.
 For example, DECIMAL_PRECISION=3 will output numbers with 3 decimal
-places(using %lf format). Starting with GDAL 1.11, another option is
+places(using %lf format). Another option is
 SIGNIFICANT_DIGITS=3, which will output 3 significant digits (using %g
 format).
 

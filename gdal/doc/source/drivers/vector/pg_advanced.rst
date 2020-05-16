@@ -157,7 +157,7 @@ or :
            lyr.CreateFeature(feat)
            print('The feature has been assigned FID %d' % feat.GetFID())
 
-OGR < 1.8.0 behavior can be obtained by setting the configuration
+Old GDAL behavior can be obtained by setting the configuration
 option :decl_configoption:`OGR_PG_RETRIEVE_FID` to FALSE.
 
 Issues with transactions

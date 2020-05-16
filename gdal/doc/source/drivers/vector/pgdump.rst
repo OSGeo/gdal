@@ -16,7 +16,7 @@ This driver is very similar to the PostGIS shp2pgsql utility.
 
 Most creation options are shared with the regular PostgreSQL driver.
 
-Starting with OGR 1.11, the PGDump driver supports creating tables with
+The PGDump driver supports creating tables with
 multiple PostGIS geometry columns (following :ref:`rfc-41`)
 
 Driver capabilities
@@ -132,8 +132,6 @@ Environment variables
 
 VSI Virtual File System API support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Some features below might require OGR >= 1.9.0)
 
 The driver supports rwriting to files managed by VSI Virtual File System
 API, which include "regular" files, as well as files in the /vsizip/,

@@ -272,7 +272,7 @@ documents through the key. Please consider using the Extra open options.
 Time
 ~~~~
 
-Starting with GDAL 1.9.0, this driver includes experimental support for
+This driver includes experimental support for
 time based WCS 1.0.0 servers. On initial access the last offered time
 position will be identified as the DefaultTime. Each time position
 available for the coverage will be treated as a subdataset.

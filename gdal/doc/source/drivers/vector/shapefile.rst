@@ -128,7 +128,7 @@ that are used by UMN MapServer. Spatial indexing can accelerate
 spatially filtered passes through large datasets to pick out a small
 area quite dramatically.
 
-Starting with OGR 1.10, it can also use the ESRI spatial index files
+It can also use the ESRI spatial index files
 (.sbn / .sbx), but writing them is not supported currently.
 
 To create a spatial index (in .qix format), issue a SQL command of the
@@ -199,8 +199,8 @@ for a solution.
 Shapefile feature attributes are stored in an associated .dbf file, and
 so attributes suffer a number of limitations:
 
--  Attribute names can only be up to 10 characters long. Starting with
-   version 1.7, the OGR Shapefile driver tries to generate unique field
+-  Attribute names can only be up to 10 characters long.
+   The OGR Shapefile driver tries to generate unique field
    names. Successive duplicate field names, including those created by
    truncation to 10 characters, will be truncated to 8 characters and
    appended with a serial number from 1 to 99.
@@ -240,7 +240,7 @@ deletion in the .dbf file, and then ignored by OGR. To actually remove
 them permanently (resulting in renumbering of FIDs) invoke the SQL
 'REPACK <tablename>' via the datasource ExecuteSQL() method.
 
-Starting with GDAL 2.0, REPACK will also result in .shp being rewritten
+REPACK will also result in .shp being rewritten
 if a feature geometry has been modified with SetFeature() and resulted
 in a change of the size the binary encoding of the geometry in the .shp
 file.
@@ -273,8 +273,6 @@ correct. It is then necessary to force a recomputation by invoking the
 SQL 'RECOMPUTE EXTENT ON <tablename>' via the datasource ExecuteSQL()
 method. The same applies for the deletion of a shape.
 
-Note: RECOMPUTE EXTENT ON is available in OGR >= 1.9.0.
-
 Size Issues
 -----------
 
@@ -288,7 +286,7 @@ arbitrarily large.
 However, for compatibility with other software implementation, it is not
 recommended to use a file size over 2GB for both .SHP and .DBF files.
 
-Starting with OGR 1.11, the 2GB_LIMIT=YES layer creation option can be
+The 2GB_LIMIT=YES layer creation option can be
 used to strictly enforce that limit. For update mode, the
 :decl_configoption:`SHAPE_2GB_LIMIT` configuration option can be set to YES for similar
 effect. If nothing is set, a warning will be emitted when the 2GB limit
@@ -312,14 +310,14 @@ Layer Creation Options
 -  **ENCODING=**\ *value*: set the encoding value in the DBF file. The
    default value is "LDID/87". It is not clear what other values may be
    appropriate.
--  **RESIZE=**\ *YES/NO*: (OGR >= 1.10.0) set the YES to resize fields
+-  **RESIZE=**\ *YES/NO*: set the YES to resize fields
    to their optimal size. See above "Field sizes" section. Defaults to
    NO.
--  **2GB_LIMIT=**\ *YES/NO*: (OGR >= 1.11) set the YES to enforce the
+-  **2GB_LIMIT=**\ *YES/NO*: set the YES to enforce the
    2GB file size for .SHP or .DBF files. Defaults to NO.
--  **SPATIAL_INDEX=**\ *YES/NO*: (OGR >= 2.0) set the YES to create a
+-  **SPATIAL_INDEX=**\ *YES/NO*: set the YES to create a
    spatial index (.qix). Defaults to NO.
--  **DBF_DATE_LAST_UPDATE=**\ *YYYY-MM-DD*: (OGR >= 2.0) Modification
+-  **DBF_DATE_LAST_UPDATE=**\ *YYYY-MM-DD*: Modification
    date to write in DBF header with year-month-day format. If not
    specified, current date is used. Note: behavior of past GDAL
    releases was to write 1995-07-26

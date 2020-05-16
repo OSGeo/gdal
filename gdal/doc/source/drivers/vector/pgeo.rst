@@ -51,7 +51,7 @@ Driver capabilities
 How to use PGeo driver with unixODBC and MDB Tools (on Unix and Linux)
 ----------------------------------------------------------------------
 
-Starting with GDAL/OGR 1.9.0, the :ref:`MDB <vector.mdb>` driver is an
+The :ref:`MDB <vector.mdb>` driver is an
 alternate way of reading ESRI Personal GeoDatabase .mdb files without
 requiring unixODBC and MDB Tools
 

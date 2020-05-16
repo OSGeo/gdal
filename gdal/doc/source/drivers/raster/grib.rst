@@ -85,7 +85,7 @@ Configuration options
 This paragraph lists the configuration options that can be set to alter
 the default behavior of the GRIB driver.
 
--  GRIB_NORMALIZE_UNITS=YES/NO : (GDAL >= 1.9.0) Default to YES. Can be
+-  GRIB_NORMALIZE_UNITS=YES/NO : Default to YES. Can be
    set to NO to avoid gdal to normalize units to metric. By default
    (GRIB_NORMALIZE_UNITS=YES), temperatures are reported in degree
    Celsius (°C). With GRIB_NORMALIZE_UNITS=NO, they are reported in

@@ -14,7 +14,7 @@ writing) GXF-3 files, including support for georeferencing information,
 and projections.
 
 By default, the datatype returned for GXF datasets by GDAL is Float32.
-From GDAL 1.8.0, you can specify the datatype by setting the
+You can specify the datatype by setting the
 GXF_DATATYPE configuration option (Float64 supported currently)
 
 Details on the supporting code, and format can be found on the

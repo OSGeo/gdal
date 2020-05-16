@@ -101,7 +101,7 @@ The **dataAxisToSRSAxisMapping** attribute is allowed since GDAL 3.0 to describe
     <MDI key="md_key">Metadata value</MDI>
   </Metadata>
 
-- **MaskBand**: (GDAL >= 1.8.0) This element represents a mask band that is shared between all bands on the dataset (see GMF_PER_DATASET in RFC 15). It must contain a single VRTRasterBand child element, that is the description of the mask band itself.
+- **MaskBand**: This element represents a mask band that is shared between all bands on the dataset (see GMF_PER_DATASET in RFC 15). It must contain a single VRTRasterBand child element, that is the description of the mask band itself.
 
 .. code-block:: xml
 
@@ -239,13 +239,13 @@ The allowed subelements for VRTRasterBand are :
 
 - **SimpleSource**: The SimpleSource_ indicates that raster data should be read from a separate dataset, indicating the dataset, and band to be read from, and how the data should map into this bands raster space.
 
-- **AveragedSource**: The AveragedSource is derived from the SimpleSource and shares the same properties except that it uses an averaging resampling instead of a nearest neighbour algorithm as in SimpleSource, when the size of the destination rectangle is not the same as the size of the source rectangle. Note: starting with GDAL 2.0, a more general mechanism to specify resampling algorithms can be used. See above paragraph about the 'resampling' attribute.
+- **AveragedSource**: The AveragedSource is derived from the SimpleSource and shares the same properties except that it uses an averaging resampling instead of a nearest neighbour algorithm as in SimpleSource, when the size of the destination rectangle is not the same as the size of the source rectangle. Note: a more general mechanism to specify resampling algorithms can be used. See above paragraph about the 'resampling' attribute.
 
 - **ComplexSource**: The ComplexSource_ is derived from the SimpleSource (so it shares the SourceFilename, SourceBand, SrcRect and DestRect elements), but it provides support to rescale and offset the range of the source values. Certain regions of the source can be masked by specifying the NODATA value.
 
 - **KernelFilteredSource**: The KernelFilteredSource_ is a pixel source derived from the Simple Source (so it shares the SourceFilename, SourceBand, SrcRect and DestRect elements, but it also passes the data through a simple filtering kernel specified with the Kernel element.
 
-- **MaskBand**: (GDAL >= 1.8.0) This element represents a mask band that is specific to the VRTRasterBand it contains. It must contain a single VRTRasterBand child element, that is the description of the mask band itself.
+- **MaskBand**: This element represents a mask band that is specific to the VRTRasterBand it contains. It must contain a single VRTRasterBand child element, that is the description of the mask band itself.
 
 Sources
 *******
@@ -262,7 +262,7 @@ The relativeToVRT attribute on the SourceFilename indicates whether the
 filename should be interpreted as relative to the .vrt file (value is 1)
 or not relative to the .vrt file (value is 0).  The default is 0.
 
-The shared attribute, added in GDAL 2.0.0, on the SourceFilename indicates whether the
+The shared attribute, on the SourceFilename indicates whether the
 dataset should be shared (value is 1) or not (value is 0). The default is 1.
 If several VRT datasets referring to the same underlying sources are used in a multithreaded context,
 shared should be set to 0. Alternatively, the VRT_SHARED_SOURCE configuration
@@ -275,7 +275,7 @@ when building VRTs with a big number of source datasets. The needed parameters a
 raster dimensions, the size of the blocks and the data type. If the SourceProperties
 tag is not present, the source dataset will be opened at the same time as the VRT itself.
 
-Starting with GDAL 1.8.0, the content of the SourceBand subelement can refer to
+The content of the SourceBand subelement can refer to
 a mask band. For example mask,1 means the mask band of the first band of the source.
 
 .. code-block:: xml
@@ -288,7 +288,7 @@ a mask band. For example mask,1 means the mask band of the first band of the sou
       <DstRect xOff="0" yOff="0" xSize="512" ySize="512"/>
     </SimpleSource>
 
-Starting with GDAL 2.0, a OpenOptions subelement can be added to specify
+A OpenOptions subelement can be added to specify
 the open options to apply when opening the source dataset. It has <OOI> (open option item)
 subelements which have a "key" attribute and the value as the data of the element.
 
@@ -305,7 +305,7 @@ subelements which have a "key" attribute and the value as the data of the elemen
       <DstRect xOff="0" yOff="0" xSize="256" ySize="256"/>
     </SimpleSource>
 
-Starting with GDAL 2.0, a resampling attribute can be specified on a SimpleSource
+A resampling attribute can be specified on a SimpleSource
 or ComplexSource element to specified the resampling algorithm used when the
 size of the destination rectangle is not the same as the size of the source
 rectangle. The values allowed for that attribute are : nearest,bilinear,cubic,
@@ -324,7 +324,7 @@ cubicspline,lanczos,average,mode.
 ComplexSource
 ~~~~~~~~~~~~~
 
-Starting with GDAL 1.11, alternatively to linear scaling, non-linear
+Alternatively to linear scaling, non-linear
 scaling using a power function can be used by specifying the Exponent,
 SrcMin, SrcMax, DstMin and DstMax elements. If SrcMin and SrcMax are
 not specified, they are computed from the source minimum and maximum
@@ -526,8 +526,8 @@ Another example, in this case a 400x300 RGB pixel interleaved image.
 Creation of VRT Datasets
 ------------------------
 
-The VRT driver supports several methods of creating VRT datasets.  As of
-GDAL 1.2.0 the vrtdataset.h include file should be installed with the core
+The VRT driver supports several methods of creating VRT datasets.
+The vrtdataset.h include file should be installed with the core
 GDAL include files, allowing direct access to the VRT classes.  However,
 even without that most capabilities remain available through standard GDAL
 interfaces.
@@ -1461,7 +1461,7 @@ underlying datasets. So, if you open twice the same VRT dataset by the same
 thread, both VRT datasets will share the same handles to the underlying
 datasets.
 
-The shared attribute, added in GDAL 2.0.0, on the SourceFilename indicates whether the
+The shared attribute, on the SourceFilename indicates whether the
 dataset should be shared (value is 1) or not (value is 0). The default is 1.
 If several VRT datasets referring to the same underlying sources are used in a multithreaded context,
 shared should be set to 0. Alternatively, the VRT_SHARED_SOURCE configuration
@@ -1481,8 +1481,7 @@ limit of the pool can be increased by setting the GDAL_MAX_DATASET_POOL_SIZE
 configuration option to a bigger value. Note that a typical user process on
 Linux is limited to 1024 simultaneously opened files, and you should let some
 margin for shared libraries, etc...
-As of GDAL 2.0, gdal_translate and gdalwarp, by default, increase the pool size
-to 450.
+gdal_translate and gdalwarp, by default, increase the pool size to 450.
 
 Driver capabilities
 -------------------

@@ -228,8 +228,7 @@ Character Encodings
 Normally DXF files are in the ANSI_1252 / Win1252 encoding. GDAL/OGR
 attempts to translate this to UTF-8 when reading and back into ANSI_1252
 when writing. DXF files can also have a header field ($DWGCODEPAGE)
-indicating the encoding of the file. In GDAL 1.8.x and earlier this was
-ignored but from GDAL 1.9.0 and later an attempt is made to use this to
+indicating the encoding of the file. An attempt is made to use this to
 recode other code pages to UTF-8. Whether this works will depend on the
 code page naming and whether GDAL/OGR is built against the iconv library
 for character recoding.
@@ -300,7 +299,7 @@ The dataset creation supports the following dataset creation options:
 -  **TRAILER=**\ *filename*: Override the trailer file used - in place
    of trailer.dxf located in the GDAL_DATA directory.
 
-Note that in GDAL 1.8 and later, the header and trailer templates can be
+The header and trailer templates can be
 complete DXF files. The driver will scan them and only extract the
 needed portions (portion before or after the ENTITIES section).
 

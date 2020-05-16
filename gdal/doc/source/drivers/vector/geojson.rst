@@ -108,8 +108,7 @@ generated as `union <http://en.wikipedia.org/wiki/Union_(set_theory)>`__
 of all *Feature* properties.
 
 Schema detection will recognized fields of type String, Integer, Real,
-StringList, IntegerList and RealList. Starting with GDAL 2.0,
-Integer(Boolean), Date, Time and DateTime fields are also recognized.
+StringList, IntegerList and RealList, Integer(Boolean), Date, Time and DateTime.
 
 It is possible to tell the driver to not to process attributes by
 setting environment variable **ATTRIBUTES_SKIP=YES**. Default behavior

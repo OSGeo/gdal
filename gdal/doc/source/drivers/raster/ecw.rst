@@ -91,9 +91,9 @@ Creation Options:
    examples are NUTM11, or GEODETIC.
 -  **DATUM=name**: Name of the ECW datum string to use. Common examples
    are WGS84 or NAD83.
--  **UNITS=name**: (GDAL >= 1.9.0) Name of the ECW projection units to
+-  **UNITS=name**: Name of the ECW projection units to
    use : METERS (default) or FEET (us-foot).
--  **ECW_FORMAT_VERSION=2/3**: (GDAL >= 1.10.0) When build with the ECW
+-  **ECW_FORMAT_VERSION=2/3**: When build with the ECW
    5.x SDK this option can be set to allow ECW Version 3 files to be
    created. Default, 2 to retain widest compatibility.
 
@@ -147,8 +147,6 @@ The GDAL-specific options:
 ECW Version 3 Files
 ~~~~~~~~~~~~~~~~~~~
 
-(Starting with GDAL 1.10.0)
-
 ECW 5.x SDK introduces a new file format version which,
 
 #. Storage of data statistics, histograms, metadata, RPC information
@@ -173,8 +171,6 @@ for asynchronous / progressive streaming access to ECWP services.
 
 Metadata / Georeferencing
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Starting with GDAL 1.9.0)
 
 The PROJ, DATUM and UNITS found in the ECW header are reported in the
 ECW metadata domain. They can also be set with the SetMetadataItem()

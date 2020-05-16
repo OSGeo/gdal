@@ -63,10 +63,7 @@ Expat library supports reading the following built-in encodings :
 -  UTF-8
 -  UTF-16
 -  ISO-8859-1
-
-OGR 1.8.0 adds supports for Windows-1252 encoding (for previous
-versions, altering the encoding mentioned in the XML header to
-ISO-8859-1 might work in some cases).
+-  Windows-1252
 
 The content returned by OGR will be encoded in UTF-8, after the
 conversion from the encoding mentioned in the file header is.
@@ -207,7 +204,7 @@ Issues when translating to Shapefile
    names "track_seg_id" and "track_seg_point_id" are truncated to 10
    characters in the .DBF file, thus leading to duplicate names.
 
-   To avoid this, starting with GDAL 1.6.1, you can define the
+   To avoid this, you can define the
    GPX_SHORT_NAMES configuration option to TRUE to make them be reported
    respectively as "trksegid" and "trksegptid", which will allow them to
    be unique once translated to DBF. The "route_point_id" field of
@@ -225,14 +222,14 @@ Issues when translating to Shapefile
    fields of type Date. So by default, you will lose the
    hour:minute:second part of the *Time* elements of a GPX file.
 
-   Starting with GDAL 1.6.0, you can use the OGR SQL CAST operator to
+   You can use the OGR SQL CAST operator to
    convert the *time* field to a string :
 
    ::
 
           ogr2ogr out input.gpx -sql "SELECT ele, CAST(time AS character(32)) FROM waypoints"
 
-   Starting with GDAL 1.7.0, there is a more convenient way to select
+   There is a more convenient way to select
    all fields and ask for the conversion of the ones of a given type to
    strings:
 
@@ -242,8 +239,6 @@ Issues when translating to Shapefile
 
 VSI Virtual File System API support
 -----------------------------------
-
-(Some features below might require OGR >= 1.9.0)
 
 The driver supports reading and writing to files managed by VSI Virtual
 File System API, which include "regular" files, as well as files in the
@@ -307,7 +302,7 @@ which will give an output like the following one :
        </gpx>
 
 Use of -sql option to remap field names to the ones allowed by the GPX
-schema (starting with GDAL 1.6.0):
+schema:
 
 ::
 

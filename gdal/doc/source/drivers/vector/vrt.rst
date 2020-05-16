@@ -142,8 +142,8 @@ layer name, and may have the following subelements:
      is the FID value of the source features.
 
   Logic for GDAL < 2.4: The layer will report the FID column name only
-  if it is also reported as a regular field. Starting with GDAL 2.0, a
-  "name" attribute can be specified on the FID element so that the FID
+  if it is also reported as a regular field.
+  A "name" attribute can be specified on the FID element so that the FID
   column name is always reported.
 
 - **Style** (optional): Name of the attribute column from which the style

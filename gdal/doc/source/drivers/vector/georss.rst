@@ -55,10 +55,7 @@ Expat library supports reading the following built-in encodings :
 -  UTF-8
 -  UTF-16
 -  ISO-8859-1
-
-OGR 1.8.0 adds supports for Windows-1252 encoding (for previous
-versions, altering the encoding mentioned in the XML header to
-ISO-8859-1 might work in some cases).
+-  Windows-1252
 
 The content returned by OGR will be encoded in UTF-8, after the
 conversion from the encoding mentioned in the file header is.
@@ -197,8 +194,6 @@ of the ogr2ogr utility (see :ref:`rfc-21`)
 
 VSI Virtual File System API support
 -----------------------------------
-
-(Some features below might require OGR >= 1.9.0)
 
 The driver supports reading and writing to files managed by VSI Virtual
 File System API, which include "regular" files, as well as files in the

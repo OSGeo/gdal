@@ -69,7 +69,7 @@ mentioned sources and ignore GMLJP2 boxes.
 Option Options
 --------------
 
-(GDAL >= 2.0 ) The following open option is available:
+The following open option is available:
 
 -  **1BIT_ALPHA_PROMOTION=YES/NO**: Whether a 1-bit alpha channel should
    be promoted to 8-bit. Defaults to YES.
@@ -111,7 +111,7 @@ impact decoding speed and compatibility with other JPEG2000 toolkits.
    GML in JPEG2000 specification should be included in the file. Unless
    GMLJP2V2_DEF is used, the version of the GMLJP2 box will be version
    1. Defaults to YES.
--  **GMLJP2V2_DEF=filename**: (Starting with GDAL 2.0) Indicates whether
+-  **GMLJP2V2_DEF=filename**: Indicates whether
    a GML box conforming to the `OGC GML in JPEG2000, version
    2 <http://docs.opengeospatial.org/is/08-085r4/08-085r4.html>`__
    specification should be included in the file. *filename* must point
@@ -150,7 +150,7 @@ impact decoding speed and compatibility with other JPEG2000 toolkits.
 -  **DECOMPRESS_LAYERS=n**: The number of quality layers to decode
 -  **DECOMPRESS_RECONSTRUCTION_PARAMETER=n**: IRREVERSIBLE_9x7 or
    REVERSIBLE_5x3
--  **WRITE_METADATA=YES/NO**: (GDAL >= 2.0) Whether metadata should be
+-  **WRITE_METADATA=YES/NO**: Whether metadata should be
    written, in a dedicated JP2 XML box. Defaults to NO. The content of
    the XML box will be like:
 
@@ -175,7 +175,7 @@ impact decoding speed and compatibility with other JPEG2000 toolkits.
    If there is a metadata domain whose name is "xml:XMP", its content
    will be written as a JP2 UUID XMP box.
 
--  **MAIN_MD_DOMAIN_ONLY=YES/NO**: (GDAL >= 2.0) (Only if
+-  **MAIN_MD_DOMAIN_ONLY=YES/NO**: (Only if
    WRITE_METADATA=YES) Whether only metadata from the main domain should
    be written. Defaults to NO.
 
@@ -214,7 +214,7 @@ meaning of these options.
 Metadata
 --------
 
-Starting with GDAL 1.11.0, XMP metadata can be extracted from JPEG2000
+XMP metadata can be extracted from JPEG2000
 files, and will be stored as XML raw content in the xml:XMP metadata
 domain.
 

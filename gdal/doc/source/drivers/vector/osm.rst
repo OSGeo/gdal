@@ -45,7 +45,7 @@ alternate path with the :decl_configoption:`OSM_CONFIG_FILE` configuration optio
 The customization is essentially which OSM attributes and keys should be
 translated into OGR layer fields.
 
-Starting with GDAL 2.0, fields can be computed with SQL expressions
+Fields can be computed with SQL expressions
 (evaluated by SQLite engine) from other fields/tags. For example to
 compute the z_order attribute.
 
@@ -185,16 +185,16 @@ And to combine the above steps :
 Open options
 ------------
 
--  **CONFIG_FILE=filename**: (GDAL >=2.0) Configuration filename.
+-  **CONFIG_FILE=filename**: Configuration filename.
    Defaults to {GDAL_DATA}/osmconf.ini.
--  **USE_CUSTOM_INDEXING=YES/NO**: (GDAL >=2.0) Whether to enable custom
+-  **USE_CUSTOM_INDEXING=YES/NO**: Whether to enable custom
    indexing. Defaults to YES.
--  **COMPRESS_NODES=YES/NO**: (GDAL >=2.0) Whether to compress nodes in
+-  **COMPRESS_NODES=YES/NO**: Whether to compress nodes in
    temporary DB. Defaults to NO.
--  **MAX_TMPFILE_SIZE=int_val**: (GDAL >=2.0) Maximum size in MB of
+-  **MAX_TMPFILE_SIZE=int_val**: Maximum size in MB of
    in-memory temporary file. If it exceeds that value, it will go to
    disk. Defaults to 100.
--  **INTERLEAVED_READING=YES/NO**: (GDAL >=2.0) Whether to enable
+-  **INTERLEAVED_READING=YES/NO**: Whether to enable
    interleaved reading. Defaults to NO.
 
 See Also
