@@ -75,7 +75,9 @@ optionally set.
 -  **BaseStartIndex**: (OGR >= 1.10) Base of the start index when paging
    is enabled (0 or 1). See "Request paging" section.
 -  **COOKIE**: HTTP cookies that are passed in HTTP requests, formatted
-   as COOKIE1=VALUE1; COOKIE2=VALUE2
+   as COOKIE1=VALUE1; COOKIE2=VALUE2... Starting with GDAL 2.3, additional
+   HTTP headers can be sent by setting the GDAL_HTTP_HEADER_FILE configuration
+   option to point to a filename of a text file with “key: value” HTTP headers.
 
 Request paging
 --------------
