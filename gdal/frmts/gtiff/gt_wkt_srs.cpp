@@ -1219,9 +1219,9 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
         if( pszProjCRSName )
         {
             // Hack to be able to read properly what we have written for
-            // EPSG:102113 (ESRI ancient WebMercator).
+            // ESRI:102113 (ESRI ancient WebMercator).
             if( EQUAL(pszProjCRSName, "WGS_1984_Web_Mercator") )
-                oSRS.importFromEPSG(102113);
+                oSRS.SetFromUserInput("ESRI:102113");
             // And for EPSG:900913
             else if( EQUAL( pszProjCRSName,
                             "Google Maps Global Mercator" ) )

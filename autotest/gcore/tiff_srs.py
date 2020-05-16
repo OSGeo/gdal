@@ -185,6 +185,19 @@ def test_tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere():
     EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs"]]"""
 
 ###############################################################################
+# Test reading ESRI:102113 WGS_1984_Web_Mercator
+
+
+def test_tiff_srs_WGS_1984_Web_Mercator():
+
+    ds = gdal.Open('data/WGS_1984_Web_Mercator.tif')
+    sr = ds.GetSpatialRef()
+    ds = None
+
+    assert sr.GetAuthorityName(None) == 'ESRI'
+    assert sr.GetAuthorityCode(None) == '102113'
+
+###############################################################################
 # Test writing and reading various angular units
 
 
