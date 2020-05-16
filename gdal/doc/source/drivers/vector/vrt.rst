@@ -43,86 +43,82 @@ Virtual File Format
 -------------------
 
 The root element of the XML control file is **OGRVRTDataSource**. It has
-an **OGRVRTLayer** (or **OGRVRTWarpedLayer** or **OGRVRTUnionLayer**
-starting with GDAL 1.10.0) child for each layer in the virtual
+an **OGRVRTLayer** (or **OGRVRTWarpedLayer** or **OGRVRTUnionLayer**) child for
+each layer in the virtual
 datasource, and a **Metadata** element.
 
 A `XML schema of the OGR VRT
 format <https://github.com/OSGeo/gdal/blob/master/gdal/data/ogrvrt.xsd>`__ is
-available. Starting with GDAL 1.11, when GDAL is configured with libXML2
+available. When GDAL is configured with libXML2
 support, that schema will be used to validate the VRT documents.
 Non-conformities will be reported only as warnings. That validation can
 be disabled by setting the GDAL_XML_VALIDATION configuration option to
 NO.
 
-**Metadata** (optional): (GDAL >= 2.0) This element contains a list of
+Metadata element
+++++++++++++++++
+
+**Metadata** (optional): This element contains a list of
 metadata name/value pairs associated with the dataset as a whole. It has
 <MDI> (metadata item) subelements which have a "key" attribute and the
 value as the data of the element. The Metadata element can be repeated
 multiple times, in which case it must be accompanied with a "domain"
 attribute to indicate the name of the metadata domain.
 
+OGRVRTLayer element
++++++++++++++++++++
+
 A **OGRVRTLayer** element should have a **name** attribute with the
 layer name, and may have the following subelements:
 
-**SrcDataSource** (mandatory): The value is the name of the datasource
-that this layer will be derived from. The element may optionally have a
-**relativeToVRT** attribute which defaults to "0", but if "1" indicates
-that the source datasource should be interpreted as relative to the
-virtual file. This can be any OGR supported dataset, including ODBC,
-CSV, etc. The element may also have a **shared** attribute to control
-whether the datasource should be opened in shared mode. Defaults to OFF
-for SrcLayer use and ON for SrcSQL use.
+- **SrcDataSource** (mandatory): The value is the name of the datasource
+  that this layer will be derived from. The element may optionally have a
+  **relativeToVRT** attribute which defaults to "0", but if "1" indicates
+  that the source datasource should be interpreted as relative to the
+  virtual file. This can be any OGR supported dataset, including ODBC,
+  CSV, etc. The element may also have a **shared** attribute to control
+  whether the datasource should be opened in shared mode. Defaults to OFF
+  for SrcLayer use and ON for SrcSQL use.
 
-| 
+- **OpenOptions** (optional): This element may list a number
+  of open options as child elements of the form <OOI
+  key="key_name">value_name</OOI>
 
-**OpenOptions** (optional): (GDAL >= 2.0) This element may list a number
-of open options as child elements of the form <OOI
-key="key_name">value_name</OOI>
+- **Metadata** (optional): This element contains a list of
+  metadata name/value pairs associated with the layer as a whole. It has
+  <MDI> (metadata item) subelements which have a "key" attribute and the
+  value as the data of the element. The Metadata element can be repeated
+  multiple times, in which case it must be accompanied with a "domain"
+  attribute to indicate the name of the metadata domain.
 
-| 
+- **SrcLayer** (optional): The value is the name of the layer on the
+  source data source from which this virtual layer should be derived. If
+  this element isn't provided, then the SrcSQL element must be provided.
 
-**Metadata** (optional): (GDAL >= 2.0) This element contains a list of
-metadata name/value pairs associated with the layer as a whole. It has
-<MDI> (metadata item) subelements which have a "key" attribute and the
-value as the data of the element. The Metadata element can be repeated
-multiple times, in which case it must be accompanied with a "domain"
-attribute to indicate the name of the metadata domain.
+- **SrcSQL** (optional): An SQL statement to execute to generate the
+  desired layer result. This should be provided instead of the SrcLayer
+  for statement derived results. Some limitations may apply for SQL
+  derived layers. Starting with OGR 1.10, an optional **dialect**
+  attribute can be specified on the SrcSQL element to specify which SQL
+  "dialect" should be used : possible values are currently
+  :ref:`OGR SQL <ogr_sql_dialect>` or :ref:`SQLITE
+  <sql_sqlite_dialect>`. If *dialect* is not specified, the default
+  dialect of the datasource will be used.
 
-| 
-
-**SrcLayer** (optional): The value is the name of the layer on the
-source data source from which this virtual layer should be derived. If
-this element isn't provided, then the SrcSQL element must be provided.
-
-| 
-
-**SrcSQL** (optional): An SQL statement to execute to generate the
-desired layer result. This should be provided instead of the SrcLayer
-for statement derived results. Some limitations may apply for SQL
-derived layers. Starting with OGR 1.10, an optional **dialect**
-attribute can be specified on the SrcSQL element to specify which SQL
-"dialect" should be used : possible values are currently
-:ref:`OGR SQL <ogr_sql_dialect>` or :ref:`SQLITE
-<sql_sqlite_dialect>`. If *dialect* is not specified, the default
-dialect of the datasource will be used.
-
-| 
-
-| **FID** (optional): Name of the source attribute column from which the
+- **FID** (optional): Name of the source attribute column from which the
   FID of features should be derived. If not provided, the FID of the
   source features will be used directly.
 
--  Logic for GDAL >= 2.4: Different situations are possible:
+  Logic for GDAL >= 2.4: Different situations are possible:
 
-   -  ::
+  -  ::
 
          <FID>source_field_name</FID>
 
       A FID column will be reported as source_field_name with the
       content of source field source_field_name.
 
-   -  ::
+  -  ::
 
          <FID name="dest_field_name">source_field_name</FID>
 
@@ -130,14 +126,14 @@ dialect of the datasource will be used.
       of source field source_field_name. dest_field_name can potentially
       be set to the empty string.
 
-   -  ::
+  -  ::
 
          <FID />
 
       No FID column is reported. The FID value of VRT features is the
       FID value of the source features.
 
-   -  ::
+  -  ::
 
          <FID name="dest_field_name"/>
 
@@ -145,133 +141,122 @@ dialect of the datasource will be used.
       of the implicit source FID column. The FID value of VRT features
       is the FID value of the source features.
 
--  Logic for GDAL < 2.4: The layer will report the FID column name only
-   if it is also reported as a regular field. Starting with GDAL 2.0, a
-   "name" attribute can be specified on the FID element so that the FID
-   column name is always reported.
+  Logic for GDAL < 2.4: The layer will report the FID column name only
+  if it is also reported as a regular field. Starting with GDAL 2.0, a
+  "name" attribute can be specified on the FID element so that the FID
+  column name is always reported.
 
-| 
+- **Style** (optional): Name of the attribute column from which the style
+  of features should be derived. If not provided, the style of the source
+  features will be used directly.
 
-**Style** (optional): Name of the attribute column from which the style
-of features should be derived. If not provided, the style of the source
-features will be used directly.
+- **GeometryType** (optional): The geometry type to be assigned to the
+  layer. If not provided it will be taken from the source layer. The value
+  should be one of "wkbNone", "wkbUnknown", "wkbPoint", "wkbLineString",
+  "wkbPolygon", "wkbMultiPoint", "wkbMultiLineString", "wkbMultiPolygon",
+  or "wkbGeometryCollection". Optionally "25D" may be appended to mark it
+  as including Z coordinates. Defaults to "wkbUnknown" indicating that any
+  geometry type is allowed.
 
-| 
+- **LayerSRS** (optional): The value of this element is the spatial
+  reference to use for the layer. If not provided, it is inherited from
+  the source layer. The value may be WKT or any other input that is
+  accepted by the OGRSpatialReference::SetUserInput() method. If the value
+  is NULL, then no SRS will be used for the layer.
 
-**GeometryType** (optional): The geometry type to be assigned to the
-layer. If not provided it will be taken from the source layer. The value
-should be one of "wkbNone", "wkbUnknown", "wkbPoint", "wkbLineString",
-"wkbPolygon", "wkbMultiPoint", "wkbMultiLineString", "wkbMultiPolygon",
-or "wkbGeometryCollection". Optionally "25D" may be appended to mark it
-as including Z coordinates. Defaults to "wkbUnknown" indicating that any
-geometry type is allowed.
-
-| 
-
-**LayerSRS** (optional): The value of this element is the spatial
-reference to use for the layer. If not provided, it is inherited from
-the source layer. The value may be WKT or any other input that is
-accepted by the OGRSpatialReference::SetUserInput() method. If the value
-is NULL, then no SRS will be used for the layer.
-
-| 
-
-| **GeometryField** (optional): This element is used to define how the
+- **GeometryField** (optional): This element is used to define how the
   geometry for features should be derived.
-| If not provided the geometry of the source feature is copied directly.
-| The type of geometry encoding is indicated with the **encoding**
+
+  If not provided the geometry of the source feature is copied directly.
+  The type of geometry encoding is indicated with the **encoding**
   attribute which may have the value "WKT", "WKB" or "PointFromColumns".
-| If the encoding is "WKT" or "WKB" then the **field** attribute will
+
+  If the encoding is "WKT" or "WKB" then the **field** attribute will
   have the name of the field containing the WKT or WKB geometry.
-| If the encoding is "PointFromColumns" then the **x**, **y**, **z** and
+  
+  If the encoding is "PointFromColumns" then the **x**, **y**, **z** and
   **m** attributes will have the names of the columns to be used for the
   X, Y, Z and M coordinates. The **z** and **m** attributes are optional
   (m only supported since OGR 2.1.1).
-| The optional **reportSrcColumn** attribute can be used to specify
+
+  The optional **reportSrcColumn** attribute can be used to specify
   whether the source geometry fields (the fields set in the **field**,
   **x**, **y**, **z**, **m** attributes) should be reported as fields of
   the VRT layer. It defaults to TRUE. If set to FALSE, the source
   geometry fields will only be used to build the geometry of the
   features of the VRT layer.
 
-Starting with OGR 1.11, the GeometryField element can be repeated as
-many times as necessary to create multiple geometry fields. It accepts a
-**name** attribute (recommended) that will be used to define the VRT
-geometry field name. When **encoding** is not specified, the **field**
-attribute will be used to determine the corresponding geometry field
-name in the source layer. If neither **encoding** nor **field** are
-specified, it is assumed that the name of source geometry field is the
-value of the **name** attribute.
+  The GeometryField element can be repeated as
+  many times as necessary to create multiple geometry fields. It accepts a
+  **name** attribute (recommended) that will be used to define the VRT
+  geometry field name. When **encoding** is not specified, the **field**
+  attribute will be used to determine the corresponding geometry field
+  name in the source layer. If neither **encoding** nor **field** are
+  specified, it is assumed that the name of source geometry field is the
+  value of the **name** attribute.
 
-Starting with GDAL 2.0, the optional **nullable** attribute can be used
-to specify whether the geometry field is nullable. It defaults to
-"true".
+  The optional **nullable** attribute can be used
+  to specify whether the geometry field is nullable. It defaults to
+  "true".
 
-When several geometry fields are used, the following child elements of
-**GeometryField** can be defined to explicitly set the geometry type,
-SRS, source region, or extent.
+  When several geometry fields are used, the following child elements of
+  **GeometryField** can be defined to explicitly set the geometry type,
+  SRS, source region, or extent.
 
--  **GeometryType** (optional) : same syntax as OGRVRTLayer-level
-   **GeometryType**.
--  **SRS** (optional) : same syntax as OGRVRTLayer-level **LayerSRS**
-   (note SRS vs LayerSRS)
--  **SrcRegion** (optional) : same syntax as OGRVRTLayer-level
-   **SrcRegion**
--  **ExtentXMin**, **ExtentYMin**, **ExtentXMax** and **ExtentXMax**
-   (optional) : same syntax as OGRVRTLayer-level elements of same name
+  *  **GeometryType** (optional) : same syntax as OGRVRTLayer-level
+     **GeometryType**.
+  *  **SRS** (optional) : same syntax as OGRVRTLayer-level **LayerSRS**
+     (note SRS vs LayerSRS)
+  *  **SrcRegion** (optional) : same syntax as OGRVRTLayer-level
+     **SrcRegion**
+  *  **ExtentXMin**, **ExtentYMin**, **ExtentXMax** and **ExtentXMax**
+     (optional) : same syntax as OGRVRTLayer-level elements of same name
 
-If no **GeometryField** element is specified, all the geometry fields of
-the source layer will be exposed by the VRT layer. In order not to
-expose any geometry field of the source layer, you need to specify
-OGRVRTLayer-level **GeometryType** element to wkbNone.
+  If no **GeometryField** element is specified, all the geometry fields of
+  the source layer will be exposed by the VRT layer. In order not to
+  expose any geometry field of the source layer, you need to specify
+  OGRVRTLayer-level **GeometryType** element to wkbNone.
 
-| 
+- **SrcRegion** (optional) : This element is used to
+  define an initial spatial filter for the source features. This spatial
+  filter will be combined with any spatial filter explicitly set on the
+  VRT layer with the SetSpatialFilter() method. The value of the element
+  must be a valid WKT string defining a polygon. An optional **clip**
+  attribute can be set to "TRUE" to clip the geometries to the source
+  region, otherwise the source geometries are not modified.
 
-**SrcRegion** (optional, from GDAL 1.7.0) : This element is used to
-define an initial spatial filter for the source features. This spatial
-filter will be combined with any spatial filter explicitly set on the
-VRT layer with the SetSpatialFilter() method. The value of the element
-must be a valid WKT string defining a polygon. An optional **clip**
-attribute can be set to "TRUE" to clip the geometries to the source
-region, otherwise the source geometries are not modified.
+  **Field** (optional): One or more attribute fields may
+  be defined with Field elements. If no Field elements are defined, the
+  fields of the source layer/sql will be defined on the VRT layer. The
+  Field may have the following attributes:
 
-| 
+  *  **name** (required): the name of the field.
+  *  **type**: the field type, one of "Integer", "IntegerList", "Real",
+     "RealList", "String", "StringList", "Binary", "Date", "Time", or
+     "DateTime". Defaults to "String".
+  *  **subtype**: the field subtype, one of "None",
+     "Boolean", "Int16", "Float32". Defaults to "None".
+  *  **width**: the field width. Defaults to unknown.
+  *  **precision**: the field width. Defaults to zero.
+  *  **src**: the name of the source field to be copied to this one.
+     Defaults to the value of "name".
+  *  **nullable** can be used to specify whether the field
+     is nullable. It defaults to "true".
 
-**Field** (optional, from GDAL 1.7.0): One or more attribute fields may
-be defined with Field elements. If no Field elements are defined, the
-fields of the source layer/sql will be defined on the VRT layer. The
-Field may have the following attributes:
+- **FeatureCount** (optional) : This element is used to
+  define the feature count of the layer (when no spatial or attribute
+  filter is set). This can be useful on static data, when getting the
+  feature count from the source layer is slow.
 
--  **name** (required): the name of the field.
--  **type**: the field type, one of "Integer", "IntegerList", "Real",
-   "RealList", "String", "StringList", "Binary", "Date", "Time", or
-   "DateTime". Defaults to "String".
--  **subtype**: (GDAL >= 2.0) the field subtype, one of "None",
-   "Boolean", "Int16", "Float32". Defaults to "None".
--  **width**: the field width. Defaults to unknown.
--  **precision**: the field width. Defaults to zero.
--  **src**: the name of the source field to be copied to this one.
-   Defaults to the value of "name".
--  **nullable** (GDAL >= 2.0) can be used to specify whether the field
-   is nullable. It defaults to "true".
+- **ExtentXMin**, **ExtentYMin**, **ExtentXMax** and **ExtentXMax**
+  (optional) : Those elements are used to define the
+  extent of the layer. This can be useful on static data, when getting the
+  extent from the source layer is slow.
 
-| 
+OGRVRTWarpedLayer element
++++++++++++++++++++++++++
 
-**FeatureCount** (optional, from GDAL 1.10.0) : This element is used to
-define the feature count of the layer (when no spatial or attribute
-filter is set). This can be useful on static data, when getting the
-feature count from the source layer is slow.
-
-| 
-
-**ExtentXMin**, **ExtentYMin**, **ExtentXMax** and **ExtentXMax**
-(optional, from GDAL 1.10.0) : Those elements are used to define the
-extent of the layer. This can be useful on static data, when getting the
-extent from the source layer is slow.
-
-| 
-
-A **OGRVRTWarpedLayer** element (GDAL >= 1.10.0) is used to do
+A **OGRVRTWarpedLayer** element is used to do
 on-the-fly reprojection of a source layer. It may have the following
 subelements:
 
@@ -283,7 +268,7 @@ subelements:
 -  **TargetSRS** (mandatory): The value of this element is the spatial
    reference to use for the layer after reprojection.
 -  **ExtentXMin**, **ExtentYMin**, **ExtentXMax** and **ExtentXMax**
-   (optional, from GDAL 1.10.0) : Those elements are used to define the
+   (optional) : Those elements are used to define the
    extent of the layer. This can be useful on static data, when getting
    the extent from the source layer is slow.
 -  **WarpedGeomFieldName** (optional, from GDAL 1.11) : The value of
@@ -292,7 +277,10 @@ subelements:
    several geometry fields, only the one matching WarpedGeomFieldName
    will be warped; the other ones will be untouched.
 
-A **OGRVRTUnionLayer** element (GDAL >= 1.10.0) is used to concatenate
+OGRVRTUnionLayer element
+++++++++++++++++++++++++
+
+A **OGRVRTUnionLayer** element is used to concatenate
 the content of source layers. It should have a **name** and may have the
 following subelements:
 
