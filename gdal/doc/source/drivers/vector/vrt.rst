@@ -98,7 +98,7 @@ layer name, and may have the following subelements:
 - **SrcSQL** (optional): An SQL statement to execute to generate the
   desired layer result. This should be provided instead of the SrcLayer
   for statement derived results. Some limitations may apply for SQL
-  derived layers. Starting with OGR 1.10, an optional **dialect**
+  derived layers. An optional **dialect**
   attribute can be specified on the SrcSQL element to specify which SQL
   "dialect" should be used : possible values are currently
   :ref:`OGR SQL <ogr_sql_dialect>` or :ref:`SQLITE
@@ -111,35 +111,35 @@ layer name, and may have the following subelements:
 
   Logic for GDAL >= 2.4: Different situations are possible:
 
-  -  ::
+  -  .. code-block:: XML
 
          <FID>source_field_name</FID>
 
-      A FID column will be reported as source_field_name with the
-      content of source field source_field_name.
+     A FID column will be reported as source_field_name with the
+     content of source field source_field_name.
 
-  -  ::
+  -  .. code-block:: XML
 
          <FID name="dest_field_name">source_field_name</FID>
 
-      A FID column will be reported as dest_field_name with the content
-      of source field source_field_name. dest_field_name can potentially
-      be set to the empty string.
+     A FID column will be reported as dest_field_name with the content
+     of source field source_field_name. dest_field_name can potentially
+     be set to the empty string.
 
-  -  ::
+  -  .. code-block:: XML
 
          <FID />
 
-      No FID column is reported. The FID value of VRT features is the
-      FID value of the source features.
+     No FID column is reported. The FID value of VRT features is the
+     FID value of the source features.
 
-  -  ::
+  -  .. code-block:: XML
 
          <FID name="dest_field_name"/>
 
-      A FID column will be reported as dest_field_name with the content
-      of the implicit source FID column. The FID value of VRT features
-      is the FID value of the source features.
+     A FID column will be reported as dest_field_name with the content
+     of the implicit source FID column. The FID value of VRT features
+     is the FID value of the source features.
 
   Logic for GDAL < 2.4: The layer will report the FID column name only
   if it is also reported as a regular field. Starting with GDAL 2.0, a
@@ -271,7 +271,7 @@ subelements:
    (optional) : Those elements are used to define the
    extent of the layer. This can be useful on static data, when getting
    the extent from the source layer is slow.
--  **WarpedGeomFieldName** (optional, from GDAL 1.11) : The value of
+-  **WarpedGeomFieldName** (optional) : The value of
    this element is the geometry field name of the source layer to wrap.
    If not specified, the first geometry field will be used. If there are
    several geometry fields, only the one matching WarpedGeomFieldName
@@ -308,8 +308,8 @@ following subelements:
    for the syntax. Note: the src attribute is not supported in the
    context of a OGRVRTUnionLayer element (field names are assumed to be
    identical).
--  **GeometryField** (optional, exclusive with **FieldStrategy**, GDAL
-   >= 1.11) : the **name** attribute and the following sub-elements
+-  **GeometryField** (optional, exclusive with **FieldStrategy**):
+   the **name** attribute and the following sub-elements
    **GeometryType**, **SRS** and **Extent[X|Y][Min|Max]** are available.
 -  **FeatureCount** (optional) : see above for the syntax
 -  **ExtentXMin**, **ExtentYMin**, **ExtentXMax** and **ExtentXMax**
@@ -323,7 +323,7 @@ database DISEASE is used to form a spatial layer. The virtual file uses
 the "x" and "y" columns to get the spatial location. It also marks the
 layer as a point layer, and as being in the WGS84 coordinate system.
 
-::
+.. code-block:: XML
 
    <OGRVRTDataSource>
 
@@ -345,7 +345,7 @@ names from a source layer to other names. This is particularly true when
 you want to transcode to a format whose schema is fixed, such as GPX
 (<name>, <desc>, etc.). This can be accomplished using SQL this way:
 
-::
+.. code-block:: XML
 
    <OGRVRTDataSource>
        <OGRVRTLayer name="remapped_layer">
@@ -354,10 +354,10 @@ you want to transcode to a format whose schema is fixed, such as GPX
        </OGRVRTLayer>
    </OGRVRTDataSource>
 
-This can also be accomplished (from GDAL 1.7.0) using explicit field
+This can also be accomplished using explicit field
 definitions:
 
-::
+.. code-block:: XML
 
    <OGRVRTDataSource>
        <OGRVRTLayer name="remapped_layer">
@@ -368,14 +368,14 @@ definitions:
        </OGRVRTLayer>
    </OGRVRTDataSource>
 
-Example: Transparent spatial filtering (GDAL >= 1.7.0)
-------------------------------------------------------
+Example: Transparent spatial filtering
+--------------------------------------
 
 The following example will only return features from the source layer
 that intersect the (0,40)-(10,50) region. Furthermore, returned
 geometries will be clipped to fit into that region.
 
-::
+.. code-block:: XML
 
    <OGRVRTDataSource>
        <OGRVRTLayer name="source">
@@ -384,13 +384,13 @@ geometries will be clipped to fit into that region.
        </OGRVRTLayer>
    </OGRVRTDataSource>
 
-Example: Reprojected layer (GDAL >= 1.10.0)
--------------------------------------------
+Example: Reprojected layer
+--------------------------
 
 The following example will return the source.shp layer reprojected to
 EPSG:4326.
 
-::
+.. code-block:: XML
 
    <OGRVRTDataSource>
        <OGRVRTWarpedLayer>
@@ -401,13 +401,13 @@ EPSG:4326.
        </OGRVRTWarpedLayer>
    </OGRVRTDataSource>
 
-Example: Union layer (GDAL >= 1.10.0)
--------------------------------------
+Example: Union layer
+--------------------
 
 The following example will return a layer that is the concatenation of
 source1.shp and source2.shp.
 
-::
+.. code-block:: XML
 
    <OGRVRTDataSource>
        <OGRVRTUnionLayer name="unionLayer">
@@ -420,8 +420,8 @@ source1.shp and source2.shp.
        </OGRVRTUnionLayer>
    </OGRVRTDataSource>
 
-Example: SQLite/Spatialite SQL dialect (GDAL >=1.10.0)
-------------------------------------------------------
+Example: SQLite/Spatialite SQL dialect
+--------------------------------------
 
 The following example will return four different layers which are
 generated in a fly from the same polygon shapefile. The first one is the
@@ -433,7 +433,7 @@ for replacing the original geometries by points which are inside the
 corresponding source polygons. Note that for using the last three layers
 of this VRT file GDAL must be compiled with SQLite and SpatiaLite.
 
-::
+.. code-block:: XML
 
    <OGRVRTDataSource>
        <OGRVRTLayer name="polygons">
@@ -453,13 +453,13 @@ of this VRT file GDAL must be compiled with SQLite and SpatiaLite.
        </OGRVRTLayer>
    </OGRVRTDataSource>
 
-Example: Multiple geometry fields (GDAL >= 1.11)
-------------------------------------------------
+Example: Multiple geometry fields
+---------------------------------
 
 The following example will expose all the attribute and geometry fields
 of the source layer:
 
-::
+.. code-block:: XML
 
    <OGRVRTDataSource>
        <OGRVRTLayer name="test">
@@ -469,7 +469,7 @@ of the source layer:
 
 To expose only part (or all!) of the fields:
 
-::
+.. code-block:: XML
 
    <OGRVRTDataSource>
        <OGRVRTLayer name="other_test">
@@ -490,7 +490,7 @@ To expose only part (or all!) of the fields:
 
 To reproject the 'pg_geom_field_2' geometry field to EPSG:4326:
 
-::
+.. code-block:: XML
 
    <OGRVRTDataSource>
        <OGRVRTWarpedLayer>
@@ -505,7 +505,7 @@ To reproject the 'pg_geom_field_2' geometry field to EPSG:4326:
 To make the union of several multi-geometry layers and keep only a few
 of them:
 
-::
+.. code-block:: XML
 
    <OGRVRTDataSource>
        <OGRVRTUnionLayer name="unionLayer">
