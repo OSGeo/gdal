@@ -367,7 +367,7 @@ In Python:
 Note that :cpp:func:`OGRFeature::GetGeometryRef` and :cpp:func:`OGRFeature::GetGeomFieldRef`
 return a pointer to
 the internal geometry owned by the OGRFeature.  There we don't actually
-deleted the return geometry.
+delete the return geometry.
 
 
 With GDAL 2.3 and C++11, the looping over features is simply terminated by
