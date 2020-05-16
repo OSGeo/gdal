@@ -31,6 +31,8 @@ It is possible to chain multiple file system handlers.
     # ogrinfo a shapefile in a zip file on an ftp:
 
     ogrinfo -ro -al -so /vsizip//vsicurl/ftp://user:password@example.com/foldername/file.zip/example.shp
+    
+(Note is also OK to say /vsizip/vsicurl/... with a single slash. (But when writing documentation please still use two.))    
 
 Drivers supporting virtual file systems
 ---------------------------------------
