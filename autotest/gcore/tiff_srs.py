@@ -71,7 +71,6 @@ def test_srs_write_compd_cs():
         DATUM["Nouvelle_Triangulation_Francaise_Paris",
             SPHEROID["Clarke 1880 (IGN)",6378249.2,293.4660212936265,
                 AUTHORITY["EPSG","7011"]],
-            TOWGS84[-168,-60,320,0,0,0,0],
             AUTHORITY["EPSG","6807"]],
         PRIMEM["Paris",2.5969213],
         UNIT["grad",0.01570796326794897],
@@ -97,7 +96,7 @@ def test_srs_write_compd_cs():
 
     gdal.Unlink('/vsimem/tiff_srs_compd_cs.tif')
 
-    assert sr.IsSame(sr2) == 1, 'did not get expected SRS'
+    assert sr.IsSame(sr2) == 1, wkt
 
 ###############################################################################
 # Test reading a COMPDCS without VerticalCSType
