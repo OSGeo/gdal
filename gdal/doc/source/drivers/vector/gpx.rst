@@ -142,7 +142,7 @@ Supported geometries :
 For route points and tracks points, if there is a Z coordinate, it is
 used to fill the elevation element of the corresponding points.
 
-Starting with GDAL/OGR 1.8.0, if a layer is named "track_points" with
+If a layer is named "track_points" with
 wkbPoint/wkbPoint25D geometries, the tracks in the GPX file will be
 built from the sequence of features in that layer. This is the way of
 setting GPX attributes for each track point, in addition to the raw
@@ -182,7 +182,7 @@ The GPX writer supports the following *dataset* creation options:
 -  **GPX_EXTENSIONS_NS_URL**: Only used if GPX_USE_EXTENSIONS=YES and
    GPX_EXTENSIONS_NS is set.
    The namespace URI. By default, "http://osgeo.org/gdal".
--  **LINEFORMAT**: (GDAL/OGR >= 1.8.0) By default files are created with
+-  **LINEFORMAT**: By default files are created with
    the line termination conventions of the local platform (CR/LF on
    win32 or LF on all other systems). This may be overridden through use
    of the LINEFORMAT layer creation option which may have a value of
@@ -279,7 +279,7 @@ Use of the *<extensions>* tag for output :
 
 which will give an output like the following one :
 
-::
+.. code-block:: XML
 
        <?xml version="1.0"?>
        <gpx version="1.1" creator="GDAL 1.5dev"

@@ -252,7 +252,7 @@ holes can cause interoperability issues with other software.
 Field sizes
 -----------
 
-Starting with GDAL/OGR 1.10, the driver knows to auto-extend string and
+The driver knows to auto-extend string and
 integer fields (up to the 255 bytes limit imposed by the DBF format) to
 dynamically accommodate for the length of the data to be inserted.
 
@@ -366,7 +366,7 @@ Examples
 
       % ogrinfo file1.shp -sql "CREATE SPATIAL INDEX ON file1"
 
--  Resizing columns of a DBF file to their optimal size (OGR >= 1.10.0)
+-  Resizing columns of a DBF file to their optimal size
    :
 
    ::
