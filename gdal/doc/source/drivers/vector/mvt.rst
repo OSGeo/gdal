@@ -191,7 +191,7 @@ level ranges a given layer is written.
 
 Part of the conversion is multi-threaded by default, using as many
 threads as there are cores. The number of threads used can be controlled
-with the GDAL_NUM_THREADS configuration option.
+with the :decl_configoption:`GDAL_NUM_THREADS` configuration option.
 
 Dataset creation options
 ------------------------

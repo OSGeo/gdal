@@ -9,7 +9,7 @@ found in the :ref:`OGR PostgreSQL driver Information <vector.pg>` page.
 Connection options related to schemas and tables
 ------------------------------------------------
 
-Starting with GDAL 1.8.0, the database opening should be significantly
+The database opening should be significantly
 faster than in previous versions, so using tables= or schemas= options
 will not bring further noticeable speed-ups.
 
@@ -158,18 +158,10 @@ or :
            print('The feature has been assigned FID %d' % feat.GetFID())
 
 OGR < 1.8.0 behavior can be obtained by setting the configuration
-option OGR_PG_RETRIEVE_FID to FALSE.
+option :decl_configoption:`OGR_PG_RETRIEVE_FID` to FALSE.
 
 Issues with transactions
 ------------------------
-
-Note: this section mostly applies to GDAL 2.0, that implements :ref:`rfc-54`
-Previous versions had different behavior which made it impractical to
-handle both reading and writing with the same OGR datasource. Reading
-several layers in a interleaved way was also not working properly. The
-new below behavior should enable more powerful uses, but might cause
-subtle problems for existing code that relied on implicit transactions
-being regularly flushed by the PG driver in GDAL 1.X
 
 Efficient sequential reading in PostgreSQL requires to be done within a
 transaction (technically this is a CURSOR WITHOUT HOLD). So the PG

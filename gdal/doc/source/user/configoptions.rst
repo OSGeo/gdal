@@ -16,7 +16,8 @@ variables the user can set.
 How to set configuration options ?
 ----------------------------------
 
-One example of a config option is the GDAL_CACHEMAX option. It controls the size
+One example of a configuration option is the :decl_configoption:`GDAL_CACHEMAX`
+option. It controls the size
 of the GDAL block cache, in megabytes. It can be set in the environment on Unix
 (bash/bourne) shell like this:
 
@@ -57,6 +58,8 @@ they can be limited to only the current thread with
 
 For boolean options, the values YES, TRUE or ON can be used to turn the option on;
 NO, FALSE or OFF to turn it off.
+
+.. _list_config_options:
 
 List of configuration options and where they apply
 --------------------------------------------------

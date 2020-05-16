@@ -40,7 +40,7 @@ Configuration
 In the *data* folder of the GDAL distribution, you can find a
 `osmconf.ini <https://github.com/OSGeo/gdal/blob/master/gdal/data/osmconf.ini>`__
 file that can be customized to fit your needs. You can also define an
-alternate path with the OSM_CONFIG_FILE configuration option.
+alternate path with the :decl_configoption:`OSM_CONFIG_FILE` configuration option.
 
 The customization is essentially which OSM attributes and keys should be
 translated into OGR layer fields.
@@ -79,8 +79,8 @@ The driver will use an internal SQLite database to resolve geometries.
 If that database remains under 100 MB it will reside in RAM. If it grows
 above, it will be written in a temporary file on disk. By default, this
 file will be written in the current directory, unless you define the
-CPL_TMPDIR configuration option. The 100 MB default threshold can be
-adjusted with the OSM_MAX_TMPFILE_SIZE configuration option (value in
+:decl_configoption:`CPL_TMPDIR` configuration option. The 100 MB default threshold can be
+adjusted with the :decl_configoption:`OSM_MAX_TMPFILE_SIZE` configuration option (value in
 MB).
 
 For indexation of nodes, a custom mechanism not relying on SQLite is
@@ -88,10 +88,10 @@ used by default (indexation of ways to solve relations is still relying
 on SQLite). It can speed up operations significantly. However, in some
 situations (non increasing node ids, or node ids not in expected range),
 it might not work and the driver will output an error message suggesting
-to relaunch by defining the OSM_USE_CUSTOM_INDEXING configuration option
+to relaunch by defining the :decl_configoption:`OSM_USE_CUSTOM_INDEXING` configuration option
 to NO.
 
-When custom indexing is used (default case), the OSM_COMPRESS_NODES
+When custom indexing is used (default case), the :decl_configoption:`OSM_COMPRESS_NODES`
 configuration option can be set to YES (the default is NO). This option
 might be turned on to improve performances when I/O access is the
 limiting factor (typically the case of rotational disk), and will be

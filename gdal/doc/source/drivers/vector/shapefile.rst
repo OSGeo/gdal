@@ -48,7 +48,7 @@ specification, that is to say the vertices of outer rings should be
 oriented clockwise on the X/Y plane, and those of inner rings
 counterclockwise. If a Shapefile is broken w.r.t. that rule, it is
 possible to define the configuration option
-OGR_ORGANIZE_POLYGONS=DEFAULT to proceed to a full analysis based on
+:decl_configoption:`OGR_ORGANIZE_POLYGONS` to DEFAULT to proceed to a full analysis based on
 topological relationships of the parts of the polygons so that the
 resulting polygons are correctly defined in the OGC Simple Feature
 convention.
@@ -76,7 +76,7 @@ Starting with GDAL 3.1, the following metadata items are available in the
 -  **ENCODING_FROM_CPG**\ = string: Encoding name deduced from CPG_VALUE. Only
    present if CPG_VALUE is present
 -  **SOURCE_ENCODING**\= string: Encoding used by GDAL to encode/recode strings.
-   If the user has provided the ``SHAPE_ENCODING`` configuration option or
+   If the user has provided the :decl_configoption:`SHAPE_ENCODING` configuration option or
    ``ENCODING`` open option have been provided (included to empty value), then
    their value is used to fill this metadata item.
    Otherwise it is equal to ENCODING_FROM_CPG if it is present. Otherwise it is
@@ -290,7 +290,7 @@ recommended to use a file size over 2GB for both .SHP and .DBF files.
 
 Starting with OGR 1.11, the 2GB_LIMIT=YES layer creation option can be
 used to strictly enforce that limit. For update mode, the
-SHAPE_2GB_LIMIT configuration option can be set to YES for similar
+:decl_configoption:`SHAPE_2GB_LIMIT` configuration option can be set to YES for similar
 effect. If nothing is set, a warning will be emitted when the 2GB limit
 is reached.
 
@@ -378,7 +378,7 @@ Examples
 Advanced topics
 ---------------
 
-(GDAL >= 2.0) The SHAPE_REWIND_ON_WRITE configuration option/environment
+The :decl_configoption:`SHAPE_REWIND_ON_WRITE` configuration option/environment
 variable can be set to NO to prevent the shapefile writer to correct the
 winding order of exterior/interior rings to be conformant with the one
 mandated by the Shapefile specification. This can be useful in some
@@ -386,7 +386,7 @@ situations where a MultiPolygon passed to the shapefile writer is not
 really a compliant Single Feature polygon, but originates from example
 from a MultiPatch object (from a Shapefile/FileGDB/PGeo datasource).
 
-(GDAL >= 2.1) The SHAPE_RESTORE_SHX configuration option/environment
+(GDAL >= 2.1) The :decl_configoption:`SHAPE_RESTORE_SHX` configuration option/environment
 variable can be set to YES (default NO) to restore broken or absent .shx
 file from associated .shp file during opening.
 
