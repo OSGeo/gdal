@@ -89,6 +89,7 @@ other content before the ``<GDAL_WMS>`` element.
 </GDAL_WMS>
 \
 ========================================================================== ===============================================================================================================================================================================================================================================================================================================================
+
 Starting with GDAL 2.3, additional HTTP headers can be sent by setting the GDAL_HTTP_HEADER_FILE configuration option to point to a filename of a text file with “key: value” HTTP headers.
 
 Minidrivers
@@ -472,4 +473,3 @@ See Also
 .. |example output 1| image:: http://sydney.freeearthfoundation.com/gdalwms/metacarta_wmsc.png
 .. |example output 2| image:: http://sydney.freeearthfoundation.com/gdalwms/tileservice_bmng.jpg
 .. |example output 3| image:: http://sydney.freeearthfoundation.com/gdalwms/tileservice_nysdop2004.jpg
-
