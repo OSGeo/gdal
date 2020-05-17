@@ -322,9 +322,9 @@ Examples
 
       gdal_translate -of PNG -outsize 500 250 metacarta_wmsc.xml metacarta_wmsc.png
 
-    .. only:: html
+   .. only:: html
 
-        |example output 1|
+        .. image:: http://sydney.freeearthfoundation.com/gdalwms/metacarta_wmsc.png
 
 -  | `tileservice_bmng.xml <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_tileservice_bmng.xml>`__ -
      TileService, Blue Marble NG (January)
@@ -333,9 +333,9 @@ Examples
 
       gdal_translate -of JPEG -outsize 500 250 tileservice_bmng.xml tileservice_bmng.jpg
 
-    .. only:: html
+   .. only:: html
 
-        |example output 2|
+        .. image:: http://sydney.freeearthfoundation.com/gdalwms/tileservice_bmng.jpg
 
 -  | `tileservice_nysdop2004.xml <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_tileservice_nysdop2004.xml>`__
      - TileService, NYSDOP 2004
@@ -344,9 +344,9 @@ Examples
 
       gdal_translate -of JPEG -projwin -73.687030 41.262680 -73.686359 41.262345 -outsize 500 250 tileservice_nysdop2004.xml tileservice_nysdop2004.jpg
 
-    .. only:: html
+   .. only:: html
 
-        |example output 3|
+        .. image:: http://sydney.freeearthfoundation.com/gdalwms/tileservice_nysdop2004.jpg
 
 -  | `OpenStreetMap TMS Service
      Example <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_openstreetmap_tms.xml>`__: Connect to
@@ -469,7 +469,3 @@ See Also
 -  `ArcGIS Server REST
    API <http://resources.arcgis.com/en/help/rest/apiref/>`__
 -  :ref:`raster.wmts` driver page.
-
-.. |example output 1| image:: http://sydney.freeearthfoundation.com/gdalwms/metacarta_wmsc.png
-.. |example output 2| image:: http://sydney.freeearthfoundation.com/gdalwms/tileservice_bmng.jpg
-.. |example output 3| image:: http://sydney.freeearthfoundation.com/gdalwms/tileservice_nysdop2004.jpg
