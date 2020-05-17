@@ -4658,9 +4658,6 @@ def test_ogr_shape_114_shz():
 
 def test_ogr_shape_115_shp_zip():
 
-    if sys.platform == 'darwin':
-        pytest.skip("Regularly angs on MacOSX. Not sure why.")
-
     dirname = 'tmp/test_ogr_shape_115'
     gdal.RmdirRecursive(dirname)
     os.mkdir(dirname)
