@@ -1428,17 +1428,12 @@ void OGRShapeDataSource::RefreshLockFile(void* _self)
     CPLAcquireMutex(self->m_poRefreshLockFileMutex, 1000);
     CPLCondSignal(self->m_poRefreshLockFileCond);
     unsigned int nInc = 0;
-    while(true)
+    while(!(self->m_bExitRefreshLockFileThread))
     {
         auto ret = CPLCondTimedWait(self->m_poRefreshLockFileCond,
                                     self->m_poRefreshLockFileMutex,
                                     self->m_dfRefreshLockDelay);
-        if( ret == COND_TIMED_WAIT_COND )
-        {
-            if( self->m_bExitRefreshLockFileThread )
-                break;
-        }
-        else if( ret == COND_TIMED_WAIT_TIME_OUT )
+        if( ret == COND_TIMED_WAIT_TIME_OUT )
         {
             CPLAssert(self->m_psLockFile);
             VSIFSeekL(self->m_psLockFile, 0, SEEK_SET);
