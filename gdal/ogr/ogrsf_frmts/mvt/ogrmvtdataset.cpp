@@ -1387,7 +1387,7 @@ static CPLStringList StripDummyEntries(const CPLStringList& aosInput)
             aosOutput.AddString( aosInput[i] );
         }
     }
-    return aosOutput;
+    return aosOutput.Sort();
 }
 
 /************************************************************************/
@@ -1597,7 +1597,7 @@ void OGRMVTDirectoryLayer::OpenTile()
         int nX = (m_bUseReadDir || !m_aosDirContent.empty()) ?
                         atoi(m_aosDirContent[m_nXIndex]) : m_nXIndex;
         int nY = m_bUseReadDir ? atoi(m_aosSubDirContent[m_nYIndex]) : m_nYIndex;
-        m_nFIDBase = (static_cast<GIntBig>(nY) << m_nZ) | nX;
+        m_nFIDBase = (static_cast<GIntBig>(nX) << m_nZ) | nY;
     }
 }
 
