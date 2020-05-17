@@ -410,7 +410,7 @@ latex_elements = {
 }
 
 latex_documents = [
-    ('index_pdf', 'gdal.tex', project, author, 'manual'),
+    ('index_pdf', 'gdal.tex', project + ' Documentation', author, 'manual'),
 ]
 
 latex_toplevel_sectioning = 'chapter'
