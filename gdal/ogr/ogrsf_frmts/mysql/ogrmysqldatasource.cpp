@@ -697,11 +697,10 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /*      SRS ID.                                                         */
 /* -------------------------------------------------------------------- */
     CPLString osCommand;
-    int nAuthorityCode = 0;
     if( pszAuthorityName != nullptr )
     {
         /* Check that the authority code is integral */
-        nAuthorityCode = atoi( oSRS.GetAuthorityCode(nullptr) );
+        const int nAuthorityCode = atoi( oSRS.GetAuthorityCode(nullptr) );
         if( nAuthorityCode > 0 )
         {
             if( GetMajorVersion() < 8 || IsMariaDB() )

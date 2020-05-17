@@ -1138,7 +1138,6 @@ RPCInverseTransformPoint( GDALRPCTransformInfo *psTransform,
     double dfLastResultY = 0.0;
     double dfLastPixelDeltaX = 0.0;
     double dfLastPixelDeltaY = 0.0;
-    double dfDEMH = 0.0;
     bool bLastPixelDeltaValid = false;
     const int nMaxIterations =
         (psTransform->nMaxIterations > 0) ? psTransform->nMaxIterations :
@@ -1152,7 +1151,7 @@ RPCInverseTransformPoint( GDALRPCTransformInfo *psTransform,
         double dfBackLine = 0.0;
 
         // Update DEMH.
-        dfDEMH = 0.0;
+        double dfDEMH = 0.0;
         double dfDEMPixel = 0.0;
         double dfDEMLine = 0.0;
         if( !GDALRPCGetHeightAtLongLat(psTransform, dfResultX, dfResultY,

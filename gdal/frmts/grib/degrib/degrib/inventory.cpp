@@ -310,8 +310,8 @@ static int GRIB2SectToBuffer (VSILFILE *fp,
       return -1;
    }
    if (*sect == -1) {
-      *sect = buffer[5 - 5];
-   } else if (buffer[5 - 5] != *sect) {
+      *sect = buffer[0];
+   } else if (buffer[0] != *sect) {
       errSprintf ("ERROR: Section %d mislabeled\n", *sect);
       return -2;
    }

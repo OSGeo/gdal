@@ -2438,8 +2438,8 @@ int OGRMongoDBDataSource::ListLayers(const char* pszDatabase)
         {
             const std::string& osCollection(*oIter);
             if( !STARTS_WITH(osCollection.c_str(), "system.") &&
-                osCollection != "startup_log" &&
-                osCollection != "_ogr_metadata" )
+                osCollection != std::string("startup_log") &&
+                osCollection != std::string("_ogr_metadata") )
             {
                 m_apoLayers.push_back(new OGRMongoDBLayer(this,
                                                       pszDatabase,

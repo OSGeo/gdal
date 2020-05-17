@@ -1543,11 +1543,9 @@ OGRErr OGRSimpleCurve::importFromWkb( const unsigned char *pabyData,
 /* -------------------------------------------------------------------- */
 /*      Get the vertex.                                                 */
 /* -------------------------------------------------------------------- */
-    int i = 0;
-
     if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
     {
-        for( i = 0; i < nPointCount; i++ )
+        for( int i = 0; i < nPointCount; i++ )
         {
             memcpy( paoPoints + i, pabyData + 9 + i*32, 16 );
             memcpy( padfZ + i, pabyData + 9 + 16 + i*32, 8 );
@@ -1556,7 +1554,7 @@ OGRErr OGRSimpleCurve::importFromWkb( const unsigned char *pabyData,
     }
     else if( flags & OGR_G_MEASURED )
     {
-        for( i = 0; i < nPointCount; i++ )
+        for( int i = 0; i < nPointCount; i++ )
         {
             memcpy( paoPoints + i, pabyData + 9 + i*24, 16 );
             memcpy( padfM + i, pabyData + 9 + 16 + i*24, 8 );
@@ -1564,7 +1562,7 @@ OGRErr OGRSimpleCurve::importFromWkb( const unsigned char *pabyData,
     }
     else if( flags & OGR_G_3D )
     {
-        for( i = 0; i < nPointCount; i++ )
+        for( int i = 0; i < nPointCount; i++ )
         {
             memcpy( paoPoints + i, pabyData + 9 + i*24, 16 );
             memcpy( padfZ + i, pabyData + 9 + 16 + i*24, 8 );
@@ -1580,7 +1578,7 @@ OGRErr OGRSimpleCurve::importFromWkb( const unsigned char *pabyData,
 /* -------------------------------------------------------------------- */
     if( OGR_SWAP( eByteOrder ) )
     {
-        for( i = 0; i < nPointCount; i++ )
+        for( int i = 0; i < nPointCount; i++ )
         {
             CPL_SWAPDOUBLE( &(paoPoints[i].x) );
             CPL_SWAPDOUBLE( &(paoPoints[i].y) );
@@ -1588,7 +1586,7 @@ OGRErr OGRSimpleCurve::importFromWkb( const unsigned char *pabyData,
 
         if( flags & OGR_G_3D )
         {
-            for( i = 0; i < nPointCount; i++ )
+            for( int i = 0; i < nPointCount; i++ )
             {
                 CPL_SWAPDOUBLE( padfZ + i );
             }
@@ -1596,7 +1594,7 @@ OGRErr OGRSimpleCurve::importFromWkb( const unsigned char *pabyData,
 
         if( flags & OGR_G_MEASURED )
         {
-            for( i = 0; i < nPointCount; i++ )
+            for( int i = 0; i < nPointCount; i++ )
             {
                 CPL_SWAPDOUBLE( padfM + i );
             }

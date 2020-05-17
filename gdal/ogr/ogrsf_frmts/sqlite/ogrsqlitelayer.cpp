@@ -3158,12 +3158,11 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
         case wkbPolygon:
         {
             const OGRPolygon* poPoly = poGeometry->toPolygon();
-            int nParts = 0;
             int nTotalSize = 4;
             if (poPoly->getExteriorRing() != nullptr)
             {
                 int nInteriorRingCount = poPoly->getNumInteriorRings();
-                nParts = 1 + nInteriorRingCount;
+                const int nParts = 1 + nInteriorRingCount;
                 memcpy(pabyData, &nParts, 4);
                 if (NEED_SWAP_SPATIALITE())
                     CPL_SWAP32PTR( pabyData );

@@ -355,7 +355,7 @@ DODSDataset::connect_to_server() /*throw(Error)*/
 /*      Connect, and fetch version information.                         */
 /* -------------------------------------------------------------------- */
     AISConnect *poConnection = new AISConnect(oURL);
-    string version = poConnection->request_version();
+    /*string version = */ poConnection->request_version();
     /*    if (version.empty() || version.find("/3.") == string::npos)
     {
         CPLError( CE_Warning, CPLE_AppDefined,

@@ -65,7 +65,7 @@ CPL_C_END
 
 #include "mrsidstream.h"
 
-LT_USE_NAMESPACE(LizardTech)
+using namespace LizardTech;
 
 /* -------------------------------------------------------------------- */
 /*      Various wrapper templates used to force new/delete to happen    */
@@ -1292,8 +1292,9 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
             int bWGS84 = FALSE;
             int bUnitsMeter = FALSE;
             while ( (pszLine = CPLReadLine2L(fp, 200, nullptr)) != nullptr &&
-                    ++nCountLine < 1000 )
+                    nCountLine < 1000 )
             {
+                ++ nCountLine;
                 if (nCountLine == 1 && strcmp(pszLine, "::MetadataFile") != 0)
                     break;
                 if (STARTS_WITH_CI(pszLine, "Projection UTM "))

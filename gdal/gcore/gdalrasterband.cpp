@@ -3766,9 +3766,6 @@ CPLErr GDALRasterBand::GetStatistics( int bApproxOK, int bForce,
                                       double *pdfMean, double *pdfStdDev )
 
 {
-    double dfMin = 0.0;
-    double dfMax = 0.0;
-
 /* -------------------------------------------------------------------- */
 /*      Do we already have metadata items for the requested values?     */
 /* -------------------------------------------------------------------- */
@@ -3800,8 +3797,8 @@ CPLErr GDALRasterBand::GetStatistics( int bApproxOK, int bForce,
         int bSuccessMin = FALSE;
         int bSuccessMax = FALSE;
 
-        dfMin = GetMinimum( &bSuccessMin );
-        dfMax = GetMaximum( &bSuccessMax );
+        const double dfMin = GetMinimum( &bSuccessMin );
+        const double dfMax = GetMaximum( &bSuccessMax );
 
         if( bSuccessMin && bSuccessMax )
         {

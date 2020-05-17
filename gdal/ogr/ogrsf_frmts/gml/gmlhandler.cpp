@@ -1300,7 +1300,7 @@ OGRErr GMLHandler::startElementDefault(const char *pszName, int nLenName, void* 
 /* -------------------------------------------------------------------- */
 /*      Is it a feature?  If so push a whole new state, and return.     */
 /* -------------------------------------------------------------------- */
-    int nClassIndex = 0;
+    int nClassIndex;
     const char* pszFilteredClassName = nullptr;
 
     if( nLenName == 9 && strcmp(pszName, "boundedBy") == 0 )

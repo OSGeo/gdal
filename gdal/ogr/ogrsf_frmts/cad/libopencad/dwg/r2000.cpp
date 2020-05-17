@@ -2369,7 +2369,6 @@ CADLWPolylineObject * DWGFileR2000::getLWPolyLine(unsigned int dObjectSize,
     polyline->setSize( dObjectSize );
     polyline->stCed = stCommonEntityData;
 
-    double x             = 0.0, y = 0.0;
     int    vertixesCount = 0, nBulges = 0, nNumWidths = 0;
     short  dataFlag      = buffer.ReadBITSHORT();
     if( dataFlag & 4 )
@@ -2445,8 +2444,8 @@ CADLWPolylineObject * DWGFileR2000::getLWPolyLine(unsigned int dObjectSize,
     for( int i = 1; i < vertixesCount; ++i )
     {
         prev = size_t( i - 1 );
-        x = buffer.ReadBITDOUBLEWD( polyline->avertVertices[prev].getX() );
-        y = buffer.ReadBITDOUBLEWD( polyline->avertVertices[prev].getY() );
+        double x = buffer.ReadBITDOUBLEWD( polyline->avertVertices[prev].getX() );
+        double y = buffer.ReadBITDOUBLEWD( polyline->avertVertices[prev].getY() );
         if( buffer.IsEOB() )
         {
             delete polyline;

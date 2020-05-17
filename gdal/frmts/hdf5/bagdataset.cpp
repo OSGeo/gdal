@@ -3821,6 +3821,7 @@ CPLString BAGCreator::GenerateMetadata(GDALDataset *poSrcDS,
     if( psRoot == nullptr )
         return CPLString();
     CPLXMLTreeCloser oCloser(psRoot);
+    CPL_IGNORE_RET_VAL(oCloser);
 
     CPLXMLNode* psMain = psRoot;
     for(; psMain; psMain = psMain->psNext )
@@ -4343,7 +4344,6 @@ bool BAGCreator::CreateElevationOrUncertainty(GDALDataset *poSrcDS,
         }
         if( !ret )
             break;
-        ret = false;
 
         if( fMin > fMax )
             fMin = fMax = fNoDataValue;

@@ -315,7 +315,7 @@ void OGR2SQLITE_ogr_geocode_set_result(sqlite3_context* pContext,
         OGRLayer* poLayer = (OGRLayer*)hLayer;
         OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
         OGRFeature* poFeature = poLayer->GetNextFeature();
-        int nIdx = -1;
+        int nIdx;
         if( poFeature == nullptr )
             sqlite3_result_null (pContext);
         else if( strcmp(pszField, "geometry") == 0 &&

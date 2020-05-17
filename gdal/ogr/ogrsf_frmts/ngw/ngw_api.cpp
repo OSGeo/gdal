@@ -793,11 +793,10 @@ CPLJSONObject UploadFile(const std::string &osUrl, const std::string &osFilePath
     CPLHTTPResult *psResult = CPLHTTPFetchEx( GetUpload(osUrl).c_str(),
         papszHTTPOptions, pfnProgress, pProgressData, nullptr, nullptr );
     CSLDestroy( papszHTTPOptions );
-    bool bResult = false;
     CPLJSONObject oResult;
     if( psResult )
     {
-        bResult = psResult->nStatus == 0 && psResult->pszErrBuf == nullptr;
+        const bool bResult = psResult->nStatus == 0 && psResult->pszErrBuf == nullptr;
 
         // Get error message.
         if( !bResult )

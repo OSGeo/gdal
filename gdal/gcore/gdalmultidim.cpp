@@ -1950,6 +1950,7 @@ lbl_return_to_caller_end_of_loop:
     }
 
     dimIdx --;
+    // cppcheck-suppress negativeContainerIndex
     switch( stack[dimIdx].return_point )
     {
         case Caller::CALLER_END_OF_LOOP: goto lbl_return_to_caller_end_of_loop;

@@ -1553,7 +1553,6 @@ static bool GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
 
           default:
             CPLAssert( false );
-            dfDstDensity = 0.0;
             return false;
         }
 
@@ -1751,7 +1750,6 @@ static bool GWKSetPixelValueReal( GDALWarpKernel *poWK, int iBand,
 
           default:
             CPLAssert( false );
-            dfDstDensity = 0.0;
             return false;
         }
 
@@ -2459,7 +2457,6 @@ static bool GWKBilinearResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
         return true;
     }
 
-    double dfMult = 0.0;
     double dfAccumulatorDivisor = 0.0;
     double dfAccumulator = 0.0;
 
@@ -2467,7 +2464,7 @@ static bool GWKBilinearResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
     if( iSrcX >= 0 && iSrcX < poWK->nSrcXSize
         && iSrcY >= 0 && iSrcY < poWK->nSrcYSize )
     {
-        dfMult = dfRatioX * dfRatioY;
+        const double dfMult = dfRatioX * dfRatioY;
 
         dfAccumulatorDivisor += dfMult;
 
@@ -2478,7 +2475,7 @@ static bool GWKBilinearResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
     if( iSrcX+1 >= 0 && iSrcX+1 < poWK->nSrcXSize
         && iSrcY >= 0 && iSrcY < poWK->nSrcYSize )
     {
-        dfMult = (1.0 - dfRatioX) * dfRatioY;
+        const double dfMult = (1.0 - dfRatioX) * dfRatioY;
 
         dfAccumulatorDivisor += dfMult;
 
@@ -2489,7 +2486,7 @@ static bool GWKBilinearResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
     if( iSrcX+1 >= 0 && iSrcX+1 < poWK->nSrcXSize
         && iSrcY+1 >= 0 && iSrcY+1 < poWK->nSrcYSize )
     {
-        dfMult = (1.0 - dfRatioX) * (1.0 - dfRatioY);
+        const double dfMult = (1.0 - dfRatioX) * (1.0 - dfRatioY);
 
         dfAccumulatorDivisor += dfMult;
 
@@ -2500,7 +2497,7 @@ static bool GWKBilinearResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
     if( iSrcX >= 0 && iSrcX < poWK->nSrcXSize
         && iSrcY+1 >= 0 && iSrcY+1 < poWK->nSrcYSize )
     {
-        dfMult = dfRatioX * (1.0 - dfRatioY);
+        const double dfMult = dfRatioX * (1.0 - dfRatioY);
 
         dfAccumulatorDivisor += dfMult;
 

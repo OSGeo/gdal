@@ -712,7 +712,7 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
             {
                 apszOpenOptions[iGMLOOIdex] = CPLSPrintf("EXPOSE_GML_ID=%s",
                                                 poDS->ExposeGMLId() ? "YES" : "NO");
-                iGMLOOIdex ++;
+                // iGMLOOIdex ++;
             }
 
             poOutputDS = (GDALDataset*)
@@ -973,7 +973,7 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
     {
         apszGMLOpenOptions[iGMLOOIdex] = CPLSPrintf("EXPOSE_GML_ID=%s",
                                         poDS->ExposeGMLId() ? "YES" : "NO");
-        iGMLOOIdex ++;
+        // iGMLOOIdex ++;
     }
 
     GDALDriverH hDrv = GDALIdentifyDriver(osTmpFileName, nullptr);

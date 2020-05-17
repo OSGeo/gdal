@@ -1414,7 +1414,7 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
 
 bool IVSIS3LikeFSHandler::CompleteMultipart(const CPLString& osFilename,
                                             const CPLString& osUploadID,
-                                            const std::vector<CPLString> aosEtags,
+                                            const std::vector<CPLString>& aosEtags,
                                             IVSIS3LikeHandleHelper *poS3HandleHelper,
                                             int nMaxRetry,
                                             double dfRetryDelay)
@@ -2722,17 +2722,17 @@ int IVSIS3LikeFSHandler::CopyObject( const char *oldpath, const char *newpath,
         if( papszMetadata && papszMetadata[0] )
         {
             headers = curl_slist_append(headers, "x-amz-metadata-directive: REPLACE");
-        }
-        for( int i = 0; papszMetadata && papszMetadata[i]; i++ )
-        {
-            char* pszKey = nullptr;
-            const char* pszValue = CPLParseNameValue(papszMetadata[i], &pszKey);
-            if( pszKey && pszValue )
+            for( int i = 0; papszMetadata[i]; i++ )
             {
-                headers = curl_slist_append(headers,
-                                            CPLSPrintf("%s: %s", pszKey, pszValue));
+                char* pszKey = nullptr;
+                const char* pszValue = CPLParseNameValue(papszMetadata[i], &pszKey);
+                if( pszKey && pszValue )
+                {
+                    headers = curl_slist_append(headers,
+                                                CPLSPrintf("%s: %s", pszKey, pszValue));
+                }
+                CPLFree(pszKey);
             }
-            CPLFree(pszKey);
         }
         headers = VSICurlMergeHeaders(headers,
                         poS3HandleHelper->GetCurlHeaders("PUT", headers));

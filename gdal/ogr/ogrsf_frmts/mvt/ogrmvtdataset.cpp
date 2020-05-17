@@ -3959,7 +3959,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     double dfIntersectBottomRightY = dfBottomRightY - dfBuffer;
 
     const OGRGeometry* poIntersection;
-    std::unique_ptr<OGRGeometry> poIntersectionHolder;
+    std::unique_ptr<OGRGeometry> poIntersectionHolder; // keep in that scope
     if( sEnvelope.MinX >= dfIntersectTopX &&
         sEnvelope.MinY >= dfIntersectBottomRightY &&
         sEnvelope.MaxX <= dfIntersectBottomRightX &&
@@ -3982,7 +3982,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
         CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
         auto poTmp = poGeom->Intersection(&oPoly);
         poIntersection = poTmp;
-        poIntersectionHolder = std::unique_ptr<OGRGeometry>(poTmp);
+        poIntersectionHolder.reset(poTmp);
         if( poIntersection == nullptr || poIntersection->IsEmpty() )
         {
             return OGRERR_NONE;

@@ -1019,7 +1019,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
             if (!bSamePrecision)
             {
                 bpccBox.SetType("bpcc");
-                bpccBox.AppendUInt8((1-1) | 0x80);
+                bpccBox.AppendUInt8(0x80);
                 bpccBox.AppendUInt8(8-1);
                 bpccBox.AppendUInt8(23-1);
             }

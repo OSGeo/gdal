@@ -80,7 +80,7 @@ struct VSIDIRAz: public VSIDIR
     int nMaxFiles = 0;
     bool bCacheResults = true;
 
-    VSIDIRAz(IVSIS3LikeFSHandler *poFSIn): poFS(poFSIn) {}
+    explicit VSIDIRAz(IVSIS3LikeFSHandler *poFSIn): poFS(poFSIn) {}
     ~VSIDIRAz()
     {
         delete poHandleHelper;

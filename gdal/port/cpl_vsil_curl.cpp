@@ -318,6 +318,7 @@ VSICurlHandle::VSICurlHandle( VSICurlFilesystemHandler* poFSIn,
                               const char* pszFilename,
                               const char* pszURLIn ) :
     poFS(poFSIn),
+    m_osFilename(pszFilename),
     m_nMaxRetry(atoi(CPLGetConfigOption("GDAL_HTTP_MAX_RETRY",
                                    CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)))),
     // coverity[tainted_data]
@@ -326,7 +327,6 @@ VSICurlHandle::VSICurlHandle( VSICurlFilesystemHandler* poFSIn,
     m_bUseHead(CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_USE_HEAD",
                                              "YES")))
 {
-    m_osFilename = pszFilename;
     m_papszHTTPOptions = CPLHTTPGetOptionsFromEnv();
     if( pszURLIn )
     {
@@ -2952,7 +2952,7 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
 
     bool bListDir = true;
     bool bEmptyDir = false;
-    CPLString osURL(
+    CPL_IGNORE_RET_VAL(
         VSICurlGetURLFromFilename(pszFilename, nullptr, nullptr, nullptr,
                                   &bListDir, &bEmptyDir, nullptr));
 

@@ -1399,25 +1399,21 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
 /* -------------------------------------------------------------------- */
     if( nRCNM == RCNM_VI || nRCNM == RCNM_VC )
     {
-        double dfX = 0.0;
-        double dfY = 0.0;
-
         if( poRecord->FindField( "SG2D" ) != nullptr )
         {
-            dfX = poRecord->GetIntSubfield("SG2D",0,"XCOO",0) / (double)nCOMF;
-            dfY = poRecord->GetIntSubfield("SG2D",0,"YCOO",0) / (double)nCOMF;
+            const double dfX = poRecord->GetIntSubfield("SG2D",0,"XCOO",0) / (double)nCOMF;
+            const double dfY = poRecord->GetIntSubfield("SG2D",0,"YCOO",0) / (double)nCOMF;
             poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY ) );
         }
 
         else if( poRecord->FindField( "SG3D" ) != nullptr ) /* presume sounding*/
         {
-            double dfZ = 0.0;
             const int nVCount = poRecord->FindField("SG3D")->GetRepeatCount();
             if( nVCount == 1 )
             {
-                dfX =poRecord->GetIntSubfield("SG3D",0,"XCOO",0)/(double)nCOMF;
-                dfY =poRecord->GetIntSubfield("SG3D",0,"YCOO",0)/(double)nCOMF;
-                dfZ =poRecord->GetIntSubfield("SG3D",0,"VE3D",0)/(double)nSOMF;
+                const double dfX =poRecord->GetIntSubfield("SG3D",0,"XCOO",0)/(double)nCOMF;
+                const double dfY =poRecord->GetIntSubfield("SG3D",0,"YCOO",0)/(double)nCOMF;
+                const double dfZ =poRecord->GetIntSubfield("SG3D",0,"VE3D",0)/(double)nSOMF;
                 poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ));
             }
             else
@@ -1426,11 +1422,11 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
 
                 for( int i = 0; i < nVCount; i++ )
                 {
-                    dfX = poRecord->GetIntSubfield("SG3D",0,"XCOO",i)
+                    const double dfX = poRecord->GetIntSubfield("SG3D",0,"XCOO",i)
                         / static_cast<double>( nCOMF );
-                    dfY = poRecord->GetIntSubfield("SG3D",0,"YCOO",i)
+                    const double dfY = poRecord->GetIntSubfield("SG3D",0,"YCOO",i)
                         / static_cast<double>( nCOMF );
-                    dfZ = poRecord->GetIntSubfield("SG3D",0,"VE3D",i)
+                    const double dfZ = poRecord->GetIntSubfield("SG3D",0,"VE3D",i)
                         / static_cast<double>( nSOMF );
 
                     poMP->addGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );

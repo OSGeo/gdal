@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "ogrgeojsonutils.h"
+#include <assert.h>
 #include <cpl_port.h>
 #include <cpl_conv.h>
 #include <ogr_geometry.h>
@@ -285,6 +286,7 @@ static bool IsLikelyNewlineSequenceGeoJSON( VSILFILE* fpL,
         {
             const char* pszText = pszFileContent ? pszFileContent:
                 reinterpret_cast<const char*>(pabyHeader);
+            assert(pszText);
             nRead = std::min(strlen(pszText), nBufferSize);
             memcpy(abyBuffer.data(), pszText, nRead);
             bFirstIter = false;

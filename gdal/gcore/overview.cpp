@@ -3160,12 +3160,12 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     // than nearest neighbouring, we have to fetch to nodata mask.
 
     GDALRasterBand* poMaskBand = nullptr;
-    int nMaskFlags = 0;
     bool bUseNoDataMask = false;
     bool bCanUseCascaded = true;
 
     if( !STARTS_WITH_CI(pszResampling, "NEAR") )
     {
+        int nMaskFlags;
         // Special case if we are the alpha band. We want it to be considered
         // as the mask band to avoid alpha=0 to be taken into account in average
         // computation.
