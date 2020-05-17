@@ -4,7 +4,7 @@
 Configuration options
 ================================================================================
 
-This page discussed runtime configuration options for GDAL, and is distinct from
+This page discusses runtime configuration options for GDAL. These are distinct from
 options to the build-time configure script. Runtime configuration options apply
 on all platforms, and are evaluated at runtime. They can be set programmatically,
 by commandline switches or in the environment by the user.
@@ -13,7 +13,7 @@ Configuration options are normally used to alter the default behavior of GDAL/OG
 drivers and in some cases the GDAL/OGR core. They are essentially global
 variables the user can set.
 
-How to set configuration options ?
+How to set configuration options?
 ----------------------------------
 
 One example of a configuration option is the :decl_configoption:`GDAL_CACHEMAX`
