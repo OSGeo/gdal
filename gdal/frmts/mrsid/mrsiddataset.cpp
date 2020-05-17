@@ -211,7 +211,7 @@ class MrSIDDataset final: public GDALJP2AbstractDataset
     CPLString           osMETFilename;
 
     CPLErr              OpenZoomLevel( lt_int32 iZoom );
-    char                *SerializeMetadataRec( const LTIMetadataRecord* );
+    CPLString           SerializeMetadataRec( const LTIMetadataRecord* );
     int                 GetMetadataElement( const char *, void *, int=0 );
     void                FetchProjParms();
     void                GetGTIFDefn();
@@ -1022,22 +1022,22 @@ CPLErr MrSIDDataset::IBuildOverviews( const char *, int, int *,
 /*                        SerializeMetadataRec()                        */
 /************************************************************************/
 
-char *MrSIDDataset::SerializeMetadataRec( const LTIMetadataRecord *poMetadataRec )
+CPLString MrSIDDataset::SerializeMetadataRec( const LTIMetadataRecord *poMetadataRec )
 {
     GUInt32  iNumDims = 0;
     const GUInt32  *paiDims = nullptr;
     const void     *pData = poMetadataRec->getArrayData( iNumDims, paiDims );
-    GUInt32        i, j, k = 0, iLength;
-    char           *pszMetadata = CPLStrdup( "" );
+    CPLString      osMetadata;
+    GUInt32        k = 0;
 
-    for ( i = 0; i < iNumDims; i++ )
+    for ( GUInt32 i = 0; i < iNumDims; i++ )
     {
         // stops on large binary data
         if ( poMetadataRec->getDataType() == LTI_METADATA_DATATYPE_UINT8
              && paiDims[i] > 1024 )
-            return pszMetadata;
+            return CPLString();
 
-        for ( j = 0; j < paiDims[i]; j++ )
+        for ( GUInt32 j = 0; j < paiDims[i]; j++ )
         {
             CPLString osTemp;
 
@@ -1069,20 +1069,16 @@ char *MrSIDDataset::SerializeMetadataRec( const LTIMetadataRecord *poMetadataRec
                     osTemp = ((const char **)pData)[k++];
                     break;
                 default:
-                    osTemp = "";
                     break;
             }
 
-            iLength = static_cast<int>(strlen(pszMetadata) + osTemp.size() + 2);
-
-            pszMetadata = (char *)CPLRealloc( pszMetadata, iLength );
-            if ( !EQUAL( pszMetadata, "" ) )
-                strncat( pszMetadata, ",", 1 );
-            CPLStrlcat( pszMetadata, osTemp, iLength );
+            if( !osMetadata.empty() )
+                osMetadata += ',';
+            osMetadata += osTemp;
         }
     }
 
-    return pszMetadata;
+    return osMetadata;
 }
 
 /************************************************************************/
@@ -1548,7 +1544,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
         const LTIMetadataRecord *poMetadataRec = nullptr;
         if ( LT_SUCCESS(poDS->poMetadata->getDataByIndex(i, poMetadataRec)) )
         {
-            char    *pszElement = poDS->SerializeMetadataRec( poMetadataRec );
+            const auto osElement = poDS->SerializeMetadataRec( poMetadataRec );
             char    *pszKey = CPLStrdup( poMetadataRec->getTagName() );
             char    *pszTemp = pszKey;
 
@@ -1561,9 +1557,8 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
             }
             while ( *++pszTemp );
 
-            poDS->SetMetadataItem( pszKey, pszElement );
+            poDS->SetMetadataItem( pszKey, osElement.c_str() );
 
-            CPLFree( pszElement );
             CPLFree( pszKey );
         }
     }
