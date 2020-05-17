@@ -123,6 +123,7 @@ GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS,
  * Compared to GDALAutoCreateWarpedVRT() this function adds one extra
  * argument: options to be passed to GDALCreateGenImgProjTransformer2().
  *
+ * @since 3.2
  */
 
 GDALDatasetH CPL_STDCALL
