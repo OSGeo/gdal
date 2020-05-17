@@ -211,7 +211,6 @@ class MrSIDDataset final: public GDALJP2AbstractDataset
     CPLString           osMETFilename;
 
     CPLErr              OpenZoomLevel( lt_int32 iZoom );
-    CPLString           SerializeMetadataRec( const LTIMetadataRecord* );
     int                 GetMetadataElement( const char *, void *, int=0 );
     void                FetchProjParms();
     void                GetGTIFDefn();
@@ -1022,7 +1021,7 @@ CPLErr MrSIDDataset::IBuildOverviews( const char *, int, int *,
 /*                        SerializeMetadataRec()                        */
 /************************************************************************/
 
-CPLString MrSIDDataset::SerializeMetadataRec( const LTIMetadataRecord *poMetadataRec )
+static CPLString SerializeMetadataRec( const LTIMetadataRecord *poMetadataRec )
 {
     GUInt32  iNumDims = 0;
     const GUInt32  *paiDims = nullptr;
@@ -1544,7 +1543,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
         const LTIMetadataRecord *poMetadataRec = nullptr;
         if ( LT_SUCCESS(poDS->poMetadata->getDataByIndex(i, poMetadataRec)) )
         {
-            const auto osElement = poDS->SerializeMetadataRec( poMetadataRec );
+            const auto osElement = SerializeMetadataRec( poMetadataRec );
             char    *pszKey = CPLStrdup( poMetadataRec->getTagName() );
             char    *pszTemp = pszKey;
 
