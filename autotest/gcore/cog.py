@@ -51,6 +51,32 @@ def _check_cog(filename):
     except OSError:
         pytest.fail('validate_cloud_optimized_geotiff failed')
 
+
+###############################################################################
+
+def check_libtiff_internal_or_at_least(expected_maj, expected_min, expected_micro):
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['LIBTIFF'] == 'INTERNAL':
+        return True
+    if md['LIBTIFF'].startswith('LIBTIFF, Version '):
+        version = md['LIBTIFF'][len('LIBTIFF, Version '):]
+        version = version[0:version.find('\n')]
+        got_maj, got_min, got_micro = version.split('.')
+        got_maj = int(got_maj)
+        got_min = int(got_min)
+        got_micro = int(got_micro)
+        if got_maj > expected_maj:
+            return True
+        if got_maj < expected_maj:
+            return False
+        if got_min > expected_min:
+            return True
+        if got_min < expected_min:
+            return False
+        return got_micro >= expected_micro
+    return False
+
 ###############################################################################
 # Basic test
 
@@ -650,3 +676,167 @@ def test_cog_northing_easting_and_non_power_of_two_ratios():
 
     ds = None
     gdal.GetDriverByName('GTiff').Delete(filename)
+
+
+###############################################################################
+# Test SPARSE_OK=YES
+
+
+def test_cog_sparse():
+
+    filename = '/vsimem/cog.tif'
+    src_ds = gdal.GetDriverByName('MEM').Create('', 512, 512)
+    src_ds.GetRasterBand(1).Fill(255)
+    src_ds.WriteRaster(0, 0, 256, 256, '\x00' * 256 * 256)
+    src_ds.WriteRaster(256, 256, 128, 128, '\x00' * 128 * 128)
+    src_ds.BuildOverviews('NEAREST', [2])
+    gdal.GetDriverByName('COG').CreateCopy(filename, src_ds, options = ['BLOCKSIZE=128', 'SPARSE_OK=YES', 'COMPRESS=LZW'])
+    _check_cog(filename)
+    with gdaltest.config_option('GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE', 'YES'):
+        ds = gdal.Open(filename)
+        assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_1_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_2_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('BLOCK_OFFSET_1_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512)
+        assert ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256) == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256)
+
+        if check_libtiff_internal_or_at_least(4, 0, 11):
+            # This file is the same as the one generated above, except that we have,
+            # with an hex editor, zeroify all entries of TileByteCounts except the
+            # last tile of the main IFD, and for a tile when the next tile is sparse
+            ds = gdal.Open('data/cog_sparse_strile_arrays_zeroified_when_possible.tif')
+            assert ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512)
+
+    ds = None
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test SPARSE_OK=YES with mask
+
+
+def test_cog_sparse_mask():
+
+    filename = '/vsimem/cog.tif'
+    src_ds = gdal.GetDriverByName('MEM').Create('', 512, 512, 4)
+    for i in range(4):
+        src_ds.GetRasterBand(i+1).SetColorInterpretation(gdal.GCI_RedBand + i)
+        src_ds.GetRasterBand(i+1).Fill(255)
+        src_ds.GetRasterBand(i+1).WriteRaster(0, 0, 256, 256, '\x00' * 256 * 256)
+        src_ds.GetRasterBand(i+1).WriteRaster(256, 256, 128, 128, '\x00' * 128 * 128)
+    src_ds.BuildOverviews('NEAREST', [2])
+    gdal.GetDriverByName('COG').CreateCopy(filename, src_ds, options = ['BLOCKSIZE=128', 'SPARSE_OK=YES', 'COMPRESS=JPEG', 'RESAMPLING=NEAREST'])
+    _check_cog(filename)
+    with gdaltest.config_option('GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE', 'YES'):
+        ds = gdal.Open(filename)
+        assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_1_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_2_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_1_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_2_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('BLOCK_OFFSET_1_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_1_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512)
+        assert ds.GetRasterBand(1).GetMaskBand().ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(4).ReadRaster(0, 0, 512, 512)
+        assert ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256) == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256)
+        assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().ReadRaster(0, 0, 256, 256) == src_ds.GetRasterBand(4).GetOverview(0).ReadRaster(0, 0, 256, 256)
+
+    ds = None
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test SPARSE_OK=YES with imagery at 0 and mask at 255
+
+
+def test_cog_sparse_imagery_0_mask_255():
+
+    filename = '/vsimem/cog.tif'
+    src_ds = gdal.GetDriverByName('MEM').Create('', 512, 512, 4)
+    for i in range(4):
+        src_ds.GetRasterBand(i+1).SetColorInterpretation(gdal.GCI_RedBand + i)
+        src_ds.GetRasterBand(i+1).Fill(0 if i < 3 else 255)
+    src_ds.BuildOverviews('NEAREST', [2])
+    gdal.GetDriverByName('COG').CreateCopy(filename, src_ds, options = ['BLOCKSIZE=128', 'SPARSE_OK=YES', 'COMPRESS=JPEG'])
+    _check_cog(filename)
+    with gdaltest.config_option('GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE', 'YES'):
+        ds = gdal.Open(filename)
+        assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512)
+        assert ds.GetRasterBand(1).GetMaskBand().ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(4).ReadRaster(0, 0, 512, 512)
+        assert ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256) == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256)
+        assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().ReadRaster(0, 0, 256, 256) == src_ds.GetRasterBand(4).GetOverview(0).ReadRaster(0, 0, 256, 256)
+
+    ds = None
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test SPARSE_OK=YES with imagery at 0 or 255 and mask at 255
+
+
+def test_cog_sparse_imagery_0_or_255_mask_255():
+
+    filename = '/vsimem/cog.tif'
+    src_ds = gdal.GetDriverByName('MEM').Create('', 512, 512, 4)
+    for i in range(4):
+        src_ds.GetRasterBand(i+1).SetColorInterpretation(gdal.GCI_RedBand + i)
+    for i in range(3):
+        src_ds.GetRasterBand(i+1).Fill(255)
+        src_ds.GetRasterBand(i+1).WriteRaster(0, 0, 256, 256, '\x00' * 256 * 256)
+        src_ds.GetRasterBand(i+1).WriteRaster(256, 256, 128, 128, '\x00' * 128 * 128)
+    src_ds.GetRasterBand(4).Fill(255)
+    src_ds.BuildOverviews('NEAREST', [2])
+    gdal.GetDriverByName('COG').CreateCopy(filename, src_ds, options = ['BLOCKSIZE=128', 'SPARSE_OK=YES', 'COMPRESS=JPEG', 'RESAMPLING=NEAREST'])
+    _check_cog(filename)
+    with gdaltest.config_option('GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE', 'YES'):
+        ds = gdal.Open(filename)
+        assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_2_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512)
+        assert ds.GetRasterBand(1).GetMaskBand().ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(4).ReadRaster(0, 0, 512, 512)
+        assert ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256) == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256)
+        assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().ReadRaster(0, 0, 256, 256) == src_ds.GetRasterBand(4).GetOverview(0).ReadRaster(0, 0, 256, 256)
+
+    ds = None
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test SPARSE_OK=YES with imagery and mask at 0
+
+
+def test_cog_sparse_imagery_mask_0():
+
+    filename = '/vsimem/cog.tif'
+    src_ds = gdal.GetDriverByName('MEM').Create('', 512, 512, 4)
+    for i in range(4):
+        src_ds.GetRasterBand(i+1).SetColorInterpretation(gdal.GCI_RedBand + i)
+        src_ds.GetRasterBand(i+1).Fill(0)
+    src_ds.BuildOverviews('NEAREST', [2])
+    gdal.GetDriverByName('COG').CreateCopy(filename, src_ds, options = ['BLOCKSIZE=128', 'SPARSE_OK=YES', 'COMPRESS=JPEG'])
+    _check_cog(filename)
+    with gdaltest.config_option('GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE', 'YES'):
+        ds = gdal.Open(filename)
+        assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512)
+        assert ds.GetRasterBand(1).GetMaskBand().ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(4).ReadRaster(0, 0, 512, 512)
+        assert ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256) == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256)
+        assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().ReadRaster(0, 0, 256, 256) == src_ds.GetRasterBand(4).GetOverview(0).ReadRaster(0, 0, 256, 256)
+
+    ds = None
+    gdal.Unlink(filename)
