@@ -157,6 +157,8 @@ Interpolation algorithms
 
 There are number of interpolation algorithms to choose from.
 
+More details about them can also be found in :ref:`gdal_grid_tut`
+
 .. _gdal_grid_invdist:
 
 invdist

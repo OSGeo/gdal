@@ -88,7 +88,7 @@ GDALCreateApproxTransformer2( GDALTransformerFunc pfnRawTransformer,
 
 /*!
 
-\typedef int GDALTransformerFunc
+\typedef typedef int (*GDALTransformerFunc)( void *pTransformerArg, int bDstToSrc, int nPointCount, double *x, double *y, double *z, int *panSuccess );
 
 Generic signature for spatial point transformers.
 
@@ -1245,7 +1245,9 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
             }
             if( ret &&
                 std::fabs(dfWestLongitudeDeg) <= 180 &&
-                std::fabs(dfEastLongitudeDeg) <= 180 )
+                std::fabs(dfEastLongitudeDeg) <= 180 &&
+                std::fabs(dfSouthLatitudeDeg) <= 90 &&
+                std::fabs(dfNorthLatitudeDeg) <= 90 )
             {
                 CPLDebug("GDAL", "Computing area of interest: %g, %g, %g, %g",
                         dfWestLongitudeDeg, dfSouthLatitudeDeg,
@@ -1548,6 +1550,8 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     GDALGenImgProjTransformInfo *psInfo =
         GDALCreateGenImgProjTransformerInternal();
 
+    bool bCanUseSrcGeoTransform = false;
+
 /* -------------------------------------------------------------------- */
 /*      Get forward and inverse geotransform for the source image.      */
 /* -------------------------------------------------------------------- */
@@ -1598,6 +1602,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                                       dfEastLongitudeDeg,
                                       dfNorthLatitudeDeg);
         }
+        bCanUseSrcGeoTransform = true;
     }
     else if( bGCPUseOK
              && (pszMethod == nullptr || EQUAL(pszMethod, "GCP_POLYNOMIAL") )
@@ -1921,7 +1926,8 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         }
     }
 
-    const bool bMayInsertCenterLong = (!oSrcSRS.IsEmpty() && hSrcDS
+    const bool bMayInsertCenterLong = (bCanUseSrcGeoTransform
+            && !oSrcSRS.IsEmpty() && hSrcDS
             && CPLFetchBool( papszOptions, "INSERT_CENTER_LONG", true ));
     if( (!oSrcSRS.IsEmpty() && !oDstSRS.IsEmpty() &&
          (!oSrcSRS.IsSame(&oDstSRS) ||
@@ -3319,8 +3325,6 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc,
                                         const double zSMETransformed[3] )
 {
     ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(pCBData);
-    int bSuccess = FALSE;  // TODO(schwehr): Split into each case.
-
     const int nMiddle = (nPoints - 1) / 2;
 
 #ifdef notdef_sanify_check
@@ -3330,7 +3334,7 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc,
         double z2[3] = { z[0], z[nMiddle], z[nPoints-1] };
         int anSuccess2[3] = {};
 
-        bSuccess =
+        const int bSuccess =
             psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc, 3,
                                         x2, y2, z2, anSuccess2 );
         CPLAssert(bSuccess);
@@ -3415,6 +3419,7 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc,
             x[nMiddle] == x[nMiddle + (nPoints - nMiddle - 1) / 2];
 
         int anSuccess2[3] = {};
+        int bSuccess = FALSE;
         if( !bUseBaseTransformForHalf1 && !bUseBaseTransformForHalf2 )
             bSuccess =
                 psATInfo->pfnBaseTransformer(psATInfo->pBaseCBData,
@@ -3441,10 +3446,6 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc,
                                              anSuccess2 + 2 );
             anSuccess2[0] = TRUE;
             anSuccess2[1] = TRUE;
-        }
-        else
-        {
-            bSuccess = FALSE;
         }
 
         if( !bSuccess || !anSuccess2[0] || !anSuccess2[1] || !anSuccess2[2] )

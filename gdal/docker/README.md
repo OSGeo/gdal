@@ -7,7 +7,7 @@ Each directory contains a `./build.sh` for convenient building of the image.
 Note: the mention of the overall licensing terms of the GDAL build is to the
 best of our knowledge and not guaranteed. Users should check by themselves.
 
-# Alpine based (3.10)
+# Alpine based (3.11)
 
 ## Ultra small: `osgeo/gdal:alpine-ultrasmall-latest`
 
@@ -46,7 +46,7 @@ See [alpine-small/Dockerfile](alpine-small/Dockerfile)
 
 See [alpine-normal/Dockerfile](alpine-normal/Dockerfile)
 
-# Ubuntu based (18:04 / bionic)
+# Ubuntu based (20:04 / focal)
 
 ## Small: `osgeo/gdal:ubuntu-small-latest`
 
@@ -55,30 +55,43 @@ See [alpine-normal/Dockerfile](alpine-normal/Dockerfile)
 * Vector drivers: all built-in + XML based ones + SQLite-based ones + network-based ones + PostgreSQL
 * External libraries enabled: libsqlite3, libproj, libcurl, libjpeg, libpng, libwebp,
   libzstd, libexpat, libxerces-c, libpq, libssl, libgeos
-* GDAL Python (Python 3.6)
+* GDAL Python (Python 3.8)
 * Base PROJ grid package
 * Overall licensing terms of the GDAL build: LGPL + permissive (X/MIT, BSD style, Apache, etc..)
 
 See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
 
-## Full: `osgeo/gdal:ubuntu-full-latest`
+## Full: `osgeo/gdal:ubuntu-full-latest` (aliased to `osgeo/gdal`)
 
-* Image size: ~ 1.8 GB
+* Image size: ~ 1.2 GB
 * Raster drivers: all based on almost all possible free and open-source dependencies
 * Vector drivers: all based on almost all possible free and open-source dependencies
 * External libraries enabled: small + libnetcdf, libhdf4, libhdf5, libtiledb, libkea,
   mongocxx 3.4, libspatialite, unixodbc, libxml2, libcfitsio, libmysqlclient,
   libkml, libpoppler
-* GDAL Python (Python 3.6)
+* GDAL Python (Python 3.8)
 * *All* PROJ grid packages
 * Overall licensing terms of the GDAL build: copy-left (GPL) + LGPL + permissive
 
 See [ubuntu-full/Dockerfile](ubuntu-full/Dockerfile)
 
 
-# Usage example
+# Usage
+
+Pull the required image and then run passing the gdal program you want to execute as a [docker run](https://docs.docker.com/engine/reference/commandline/run/) command. Bind a volume from your local file system to the docker container to run gdal programs that accept a file argument. For example, binding `-v /home:/home` on Linux or `-v /Users:/Users` on Mac will allow you to reference files in your home directory by passing their full path. Use the docker `--rm` option to automatically remove the container when the run completes.
+
+## Example:
 
 ```shell
 docker pull osgeo/gdal:alpine-small-latest
 docker run --rm -v /home:/home osgeo/gdal:alpine-small-latest gdalinfo $PWD/my.tif
 ```
+
+# Images of releases
+
+Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.1.0 and PROJ 7.0.1:
+* osgeo/alpine-ultrasmall-3.1.0
+* osgeo/alpine-small-3.1.0
+* osgeo/alpine-normal-3.1.0
+* osgeo/ubuntu-small-3.1.0
+* osgeo/ubuntu-full-3.1.0

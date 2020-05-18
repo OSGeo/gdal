@@ -189,6 +189,7 @@ class PDFDataset final: public GDALPamDataset
     friend class PDFRasterBand;
     friend class PDFImageRasterBand;
 
+    VSILFILE    *m_fp = nullptr;
     PDFDataset*  poParentDS;
 
     CPLString    osFilename;
@@ -265,7 +266,7 @@ class PDFDataset final: public GDALPamDataset
 #endif
 
 #if defined(HAVE_POPPLER)
-    void         ExploreLayersPoppler(GDALPDFArray* poArray, int nRecLevel, CPLString osTopLayer = "");
+    void         ExploreLayersPoppler(GDALPDFArray* poArray, CPLString osTopLayer, int nRecLevel, int& nVisited, bool& bStop);
     void         FindLayersPoppler();
     void         TurnLayersOnOffPoppler();
     std::vector<std::pair<CPLString, OptionalContentGroup*> > oLayerOCGListPoppler;
@@ -339,7 +340,7 @@ private:
     void                ExploreTree(GDALPDFObject* poObj,
                                     std::set< std::pair<int,int> > aoSetAlreadyVisited,
                                     int nRecLevel);
-    void                ExploreContents(GDALPDFObject* poObj, GDALPDFObject* poResources);
+    void                ExploreContents(GDALPDFObject* poObj, GDALPDFObject* poResources, int nDepth, int& nVisited, bool& bStop);
 
     void                ExploreContentsNonStructuredInternal(GDALPDFObject* poContents,
                                                              GDALPDFObject* poResources,

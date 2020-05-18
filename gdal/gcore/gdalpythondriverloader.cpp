@@ -318,7 +318,7 @@ CPLString GetStringRes(PyObject* poObj, const char* pszFunctionName,
 /*                          PythonPluginLayer                           */
 /************************************************************************/
 
-class PythonPluginLayer: public OGRLayer
+class PythonPluginLayer final: public OGRLayer
 {
         PyObject* m_poLayer = nullptr;
         OGRFeatureDefn* m_poFeatureDefn = nullptr;
@@ -346,7 +346,7 @@ class PythonPluginLayer: public OGRLayer
 
     public:
 
-        PythonPluginLayer(PyObject* poLayer);
+        explicit PythonPluginLayer(PyObject* poLayer);
         ~PythonPluginLayer();
 
         const char* GetName() override;
@@ -1391,7 +1391,7 @@ char** PythonPluginLayer::GetMetadata(const char* pszDomain)
 /*                         PythonPluginDataset                          */
 /************************************************************************/
 
-class PythonPluginDataset: public GDALDataset
+class PythonPluginDataset final: public GDALDataset
 {
         PyObject* m_poDataset = nullptr;
         std::map<int, std::unique_ptr<OGRLayer>> m_oMapLayer{};
@@ -1610,15 +1610,15 @@ bool PythonPluginDriver::LoadPlugin()
         return false;
     }
 
-    PyObject* poInstanciate = PyObject_GetAttrString(gpoGDALPythonDriverModule,
+    PyObject* poInstantiate = PyObject_GetAttrString(gpoGDALPythonDriverModule,
                                                      "_instantiate_plugin" );
-    CPLAssert(poInstanciate);
+    CPLAssert(poInstantiate);
 
     PyObject* pyArgs = PyTuple_New(1);
     PyTuple_SetItem(pyArgs, 0, poModule);
-    PyObject* poPlugin = PyObject_Call(poInstanciate, pyArgs, nullptr);
+    PyObject* poPlugin = PyObject_Call(poInstantiate, pyArgs, nullptr);
     Py_DecRef(pyArgs);
-    Py_DecRef(poInstanciate);
+    Py_DecRef(poInstantiate);
 
     if( ErrOccurredEmitCPLError() )
     {

@@ -421,7 +421,7 @@ public class ogrtindex {
 
                   if (bFirstWarningForNonMatchingAttributes)
                   {
-                     System.err.print("Note : you can override this behaviour with -accept_different_schemas option\n"
+                     System.err.print("Note : you can override this behavior with -accept_different_schemas option\n"
                            + "but this may result in a tileindex incompatible with MapServer\n");
                      bFirstWarningForNonMatchingAttributes = false;
                   }
@@ -447,7 +447,7 @@ public class ogrtindex {
 
                      if (bFirstWarningForNonMatchingAttributes)
                      {
-                        System.err.print("Note : you can override this behaviour with -accept_different_schemas option\n"
+                        System.err.print("Note : you can override this behavior with -accept_different_schemas option\n"
                               + "but this may result in a tileindex incompatible with MapServer\n");
                         bFirstWarningForNonMatchingAttributes = false;
                      }

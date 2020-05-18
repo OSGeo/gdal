@@ -427,8 +427,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /* -------------------------------------------------------------------- */
 /*      Report progress, and support interrupts.                        */
 /* -------------------------------------------------------------------- */
-        if( eErr == CE_None &&
-            !pfnProgress(0.25 + 0.25 * ((iY + 1) / static_cast<double>(nYSize)),
+        if( !pfnProgress(0.25 + 0.25 * ((iY + 1) / static_cast<double>(nYSize)),
                          "", pProgressArg) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );

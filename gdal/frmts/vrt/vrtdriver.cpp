@@ -193,9 +193,9 @@ VRTCreateCopy( const char * pszFilename,
     /*      Convert tree to a single block of XML text.                     */
     /* -------------------------------------------------------------------- */
         char *pszVRTPath = CPLStrdup(CPLGetPath(pszFilename));
-        reinterpret_cast<VRTDataset *>(
+        static_cast<VRTDataset *>(
             poSrcDS )->UnsetPreservedRelativeFilenames();
-        CPLXMLNode *psDSTree = reinterpret_cast<VRTDataset *>(
+        CPLXMLNode *psDSTree = static_cast<VRTDataset *>(
             poSrcDS )->SerializeToXML( pszVRTPath );
 
         char *pszXML = CPLSerializeXMLTree( psDSTree );
@@ -268,7 +268,7 @@ VRTCreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create the virtual dataset.                                     */
 /* -------------------------------------------------------------------- */
-    VRTDataset *poVRTDS = reinterpret_cast<VRTDataset *>(
+    VRTDataset *poVRTDS = static_cast<VRTDataset *>(
         VRTDataset::Create( pszFilename,
                             poSrcDS->GetRasterXSize(),
                             poSrcDS->GetRasterYSize(),
@@ -334,7 +334,7 @@ VRTCreateCopy( const char * pszFilename,
         poVRTDS->AddBand( poSrcBand->GetRasterDataType(), nullptr );
 
         VRTSourcedRasterBand *poVRTBand
-            = reinterpret_cast<VRTSourcedRasterBand *>(
+            = static_cast<VRTSourcedRasterBand *>(
                 poVRTDS->GetRasterBand( iBand+1 ) );
 
 /* -------------------------------------------------------------------- */
@@ -409,7 +409,7 @@ void GDALRegister_VRT()
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIDIM_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Virtual Raster" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vrt" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "gdal_vrttut.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/vrt.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 "
                                "CInt16 CInt32 CFloat32 CFloat64" );

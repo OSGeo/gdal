@@ -622,7 +622,7 @@ bool GDALDAASDataset::GetAuthorization()
 /************************************************************************/
 
 static CPLJSONObject GetObject(CPLJSONObject& oContainer, const char* pszPath,
-                               enum CPLJSONObject::Type eExpectedType,
+                               CPLJSONObject::Type eExpectedType,
                                const char* pszExpectedType,
                                bool bVerboseError, bool& bError)
 {
@@ -656,7 +656,7 @@ static int GetInteger(CPLJSONObject& oContainer, const char* pszPath,
                       bool bVerboseError, bool& bError)
 {
     CPLJSONObject oObj = GetObject(oContainer, pszPath,
-                                   CPLJSONObject::Integer, "an integer",
+                                   CPLJSONObject::Type::Integer, "an integer",
                                    bVerboseError, bError);
     if( !oObj.IsValid() )
     {
@@ -682,8 +682,8 @@ static double GetDouble(CPLJSONObject& oContainer, const char* pszPath,
         bError = true;
         return 0.0;
     }
-    if( oObj.GetType() != CPLJSONObject::Integer &&
-        oObj.GetType() != CPLJSONObject::Double)
+    if( oObj.GetType() != CPLJSONObject::Type::Integer &&
+        oObj.GetType() != CPLJSONObject::Type::Double)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "%s not a double", pszPath);
@@ -701,7 +701,7 @@ static CPLString GetString(CPLJSONObject& oContainer, const char* pszPath,
                            bool bVerboseError, bool& bError)
 {
     CPLJSONObject oObj = GetObject(oContainer, pszPath,
-                                   CPLJSONObject::String, "a string",
+                                   CPLJSONObject::Type::String, "a string",
                                    bVerboseError, bError);
     if( !oObj.IsValid() )
     {
@@ -838,7 +838,7 @@ bool GDALDAASDataset::GetImageMetadata()
     }
     CPLJSONObject oGetBufferDict;
     oGetBufferDict.Deinit();
-    if( oGetBufferObj.GetType() == CPLJSONObject::Array )
+    if( oGetBufferObj.GetType() == CPLJSONObject::Type::Array )
     {
         auto array = oGetBufferObj.ToArray();
         if( array.Size() > 0 )
@@ -846,7 +846,7 @@ bool GDALDAASDataset::GetImageMetadata()
             oGetBufferDict = array[0];
         }
     }
-    else if( oGetBufferObj.GetType() == CPLJSONObject::Object )
+    else if( oGetBufferObj.GetType() == CPLJSONObject::Type::Object )
     {
         oGetBufferDict = oGetBufferObj;
     }
@@ -901,7 +901,7 @@ bool GDALDAASDataset::GetImageMetadata()
         for( int i = 0; i < oBandArray.Size(); ++i )
         {
             CPLJSONObject oBandObj = oBandArray[i];
-            if( oBandObj.GetType() == CPLJSONObject::Object )
+            if( oBandObj.GetType() == CPLJSONObject::Type::Object )
             {
                 GDALDAASBandDesc oDesc;
                 oDesc.nIndex = i + 1;
@@ -951,9 +951,9 @@ bool GDALDAASDataset::GetImageMetadata()
             osName != "step" &&
             osName != "pixelType" &&
             oObj.IsValid() &&
-            oType != CPLJSONObject::Null &&
-            oType != CPLJSONObject::Array &&
-            oType != CPLJSONObject::Object )
+            oType != CPLJSONObject::Type::Null &&
+            oType != CPLJSONObject::Type::Array &&
+            oType != CPLJSONObject::Type::Object )
         {
             SetMetadataItem( osName.c_str(), oObj.ToString().c_str() );
         }
@@ -1017,7 +1017,7 @@ void GDALDAASDataset::ReadSRS(const CPLJSONObject& oProperties)
         for( int i = 0; i < oSRSArray.Size(); ++i )
         {
             CPLJSONObject oSRSObj = oSRSArray[i];
-            if( oSRSObj.GetType() == CPLJSONObject::Object )
+            if( oSRSObj.GetType() == CPLJSONObject::Type::Object )
             {
                 bool bError = false;
                 CPLString osType( GetString(oSRSObj, "type", true, bError) );
@@ -2258,7 +2258,7 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     }
 
     papszOptions = CSLSetNameValue(papszOptions, "POSTFIELDS",
-                        oDoc.GetRoot().Format(CPLJSONObject::Pretty).c_str());
+                        oDoc.GetRoot().Format(CPLJSONObject::PrettyFormat::Pretty).c_str());
 
     CPLString osURL( CPLGetConfigOption("GDAL_DAAS_GET_BUFFER_URL",
                                         poGDS->m_osGetBufferURL.c_str()) );
@@ -2639,7 +2639,7 @@ void GDALRegister_DAAS()
                                "Airbus DS Intelligence "
                                "Data As A Service driver" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_daas.html" );
+                               "drivers/raster/daas.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"

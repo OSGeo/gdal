@@ -1221,6 +1221,7 @@ void JPGDatasetCommon::InitInternalOverviews()
 
         if( nImplicitOverviews > 0 )
         {
+            ppoActiveDS = &poActiveDS;
             papoInternalOverviews = static_cast<GDALDataset **>(
                 CPLMalloc((nImplicitOverviews + (poEXIFOverview ? 1 : 0)) *
                           sizeof(GDALDataset *)));
@@ -1238,9 +1239,10 @@ void JPGDatasetCommon::InitInternalOverviews()
                 sArgs.nScaleFactor = 1 << (i + 1);
                 sArgs.bDoPAMInitialize = false;
                 sArgs.bUseInternalOverviews = false;
-                GDALDataset *poImplicitOverview = JPGDataset::Open(&sArgs);
+                JPGDatasetCommon *poImplicitOverview = JPGDataset::Open(&sArgs);
                 if( poImplicitOverview == nullptr )
                     break;
+                poImplicitOverview->ppoActiveDS = &poActiveDS;
                 papoInternalOverviews[nInternalOverviewsCurrent] =
                     poImplicitOverview;
                 nInternalOverviewsCurrent++;
@@ -1328,15 +1330,28 @@ JPGDataset::~JPGDataset()
 
 {
     GDALPamDataset::FlushCache();
+    JPGDataset::StopDecompress();
+}
 
+/************************************************************************/
+/*                           StopDecompress()                           */
+/************************************************************************/
+
+void JPGDataset::StopDecompress()
+{
     if (bHasDoneJpegStartDecompress)
     {
         jpeg_abort_decompress(&sDInfo);
+        bHasDoneJpegStartDecompress = false;
     }
     if (bHasDoneJpegCreateDecompress)
     {
         jpeg_destroy_decompress(&sDInfo);
+        bHasDoneJpegCreateDecompress = false;
     }
+    nLoadedScanline = INT_MAX;
+    if( ppoActiveDS )
+        *ppoActiveDS = nullptr;
 }
 
 /************************************************************************/
@@ -1363,6 +1378,11 @@ CPLErr JPGDataset::LoadScanline( int iLine, GByte* outBuffer )
     if( nLoadedScanline == iLine )
         return CE_None;
 
+    // code path triggered when an active reader has been stopped by another
+    // one, in case of multiple scans datasets and overviews
+    if( !bHasDoneJpegCreateDecompress && Restart() != CE_None )
+        return CE_Failure;
+
     // setup to trap a fatal error.
     if (setjmp(sUserData.setjmp_buffer))
         return CE_Failure;
@@ -1378,35 +1398,49 @@ CPLErr JPGDataset::LoadScanline( int iLine, GByte* outBuffer )
             /* store for all coefficients */
             /* See call to jinit_d_coef_controller() from master_selection() */
             /* in libjpeg */
-            vsi_l_offset nRequiredMemory =
-                static_cast<vsi_l_offset>(sDInfo.image_width) *
-                sDInfo.image_height * sDInfo.num_components *
-                ((sDInfo.data_precision+7)/8);
-            /* BLOCK_SMOOTHING_SUPPORTED is generally defined, so we need */
-            /* to replicate the logic of jinit_d_coef_controller() */
-            if( sDInfo.progressive_mode )
-                nRequiredMemory *= 3;
 
-    #ifndef GDAL_LIBJPEG_LARGEST_MEM_ALLOC
-    #define GDAL_LIBJPEG_LARGEST_MEM_ALLOC (100 * 1024 * 1024)
-    #endif
+            // 1 MB for regular libjpeg usage
+            vsi_l_offset nRequiredMemory = 1024 * 1024;
 
-            if( nRequiredMemory > GDAL_LIBJPEG_LARGEST_MEM_ALLOC &&
+            for (int ci = 0; ci < sDInfo.num_components; ci++) {
+                const jpeg_component_info *compptr = &(sDInfo.comp_info[ci]);
+                if( compptr->h_samp_factor <= 0 ||
+                    compptr->v_samp_factor <= 0 )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Invalid sampling factor(s)");
+                    return CE_Failure;
+                }
+                nRequiredMemory += static_cast<vsi_l_offset>(
+                    DIV_ROUND_UP(compptr->width_in_blocks, compptr->h_samp_factor)) *
+                    DIV_ROUND_UP(compptr->height_in_blocks, compptr->v_samp_factor) *
+                    sizeof(JBLOCK);
+            }
+
+            if( nRequiredMemory > 10 * 1024 * 1024 && ppoActiveDS && *ppoActiveDS != this )
+            {
+                // If another overview was active, stop it to limit memory consumption
+                if( *ppoActiveDS )
+                    (*ppoActiveDS)->StopDecompress();
+                *ppoActiveDS = this;
+            }
+
+            if( sDInfo.mem->max_memory_to_use > 0 &&
+                nRequiredMemory > static_cast<vsi_l_offset>(sDInfo.mem->max_memory_to_use) &&
                 CPLGetConfigOption("GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", nullptr) == nullptr )
             {
-                    CPLError(CE_Failure, CPLE_NotSupported,
-                        "Reading this image would require libjpeg to allocate "
-                        "at least " CPL_FRMT_GUIB " bytes. "
-                        "This is disabled since above the " CPL_FRMT_GUIB " threshold. "
-                        "You may override this restriction by defining the "
-                        "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC environment variable, "
-                        "or recompile GDAL by defining the "
-                        "GDAL_LIBJPEG_LARGEST_MEM_ALLOC macro to a value greater "
-                        "than " CPL_FRMT_GUIB,
-                        static_cast<GUIntBig>(nRequiredMemory),
-                        static_cast<GUIntBig>(GDAL_LIBJPEG_LARGEST_MEM_ALLOC),
-                        static_cast<GUIntBig>(GDAL_LIBJPEG_LARGEST_MEM_ALLOC));
-                    return CE_Failure;
+                CPLError(CE_Failure, CPLE_NotSupported,
+                    "Reading this image would require libjpeg to allocate "
+                    "at least " CPL_FRMT_GUIB " bytes. "
+                    "This is disabled since above the " CPL_FRMT_GUIB " threshold. "
+                    "You may override this restriction by defining the "
+                    "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC environment variable, "
+                    "or setting the JPEGMEM environment variable to a value greater "
+                    "or equal to '" CPL_FRMT_GUIB "M'",
+                    static_cast<GUIntBig>(nRequiredMemory),
+                    static_cast<GUIntBig>(sDInfo.mem->max_memory_to_use),
+                    static_cast<GUIntBig>((nRequiredMemory + 1000000 - 1) / 1000000));
+                return CE_Failure;
             }
         }
 
@@ -1660,6 +1694,11 @@ void JPGDataset::SetScaleNumAndDenom()
 CPLErr JPGDataset::Restart()
 
 {
+    if( ppoActiveDS && *ppoActiveDS != this && *ppoActiveDS != nullptr )
+    {
+        (*ppoActiveDS)->StopDecompress();
+    }
+
     // Setup to trap a fatal error.
     if (setjmp(sUserData.setjmp_buffer))
         return CE_Failure;
@@ -1667,9 +1706,9 @@ CPLErr JPGDataset::Restart()
     J_COLOR_SPACE colorSpace = sDInfo.out_color_space;
     J_COLOR_SPACE jpegColorSpace = sDInfo.jpeg_color_space;
 
-    jpeg_abort_decompress(&sDInfo);
-    jpeg_destroy_decompress(&sDInfo);
+    StopDecompress();
     jpeg_create_decompress(&sDInfo);
+    bHasDoneJpegCreateDecompress = true;
 
 #if !defined(JPGDataset)
     LoadDefaultTables(0);
@@ -1721,6 +1760,8 @@ CPLErr JPGDataset::Restart()
         sJProgress.progress_monitor = JPGDataset::ProgressMonitor;
         jpeg_start_decompress(&sDInfo);
         bHasDoneJpegStartDecompress = true;
+        if( ppoActiveDS )
+            *ppoActiveDS = this;
     }
 
     return CE_None;
@@ -1836,7 +1877,6 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
        (nYSize == nBufYSize) && (nYSize == nRasterYSize) &&
        (eBufType == GDT_Byte) && (GetDataPrecision() != 12) &&
        (pData != nullptr) &&
-       (panBandMap != nullptr) &&
        (panBandMap[0] == 1) && (panBandMap[1] == 2) && (panBandMap[2] == 3) &&
        // These color spaces need to be transformed to RGB.
        GetOutColorSpace() != JCS_YCCK && GetOutColorSpace() != JCS_CMYK )
@@ -2031,14 +2071,14 @@ GDALDataset *JPGDatasetCommon::Open( GDALOpenInfo *poOpenInfo )
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *JPGDataset::Open( JPGDatasetOpenArgs *psArgs )
+JPGDatasetCommon *JPGDataset::Open( JPGDatasetOpenArgs *psArgs )
 
 {
     JPGDataset *poDS = new JPGDataset();
     return OpenStage2(psArgs, poDS);
 }
 
-GDALDataset *JPGDataset::OpenStage2( JPGDatasetOpenArgs *psArgs,
+JPGDatasetCommon *JPGDataset::OpenStage2( JPGDatasetOpenArgs *psArgs,
                                      JPGDataset *&poDS )
 {
     // Will detect mismatch between compile-time and run-time libjpeg versions.
@@ -2782,8 +2822,7 @@ CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
             }
         }
 
-        if( eErr == CE_None &&
-            !pfnProgress((iY + 1) / static_cast<double>(nYSize),
+        if( !pfnProgress((iY + 1) / static_cast<double>(nYSize),
                          nullptr, pProgressData) )
         {
             eErr = CE_Failure;
@@ -2972,6 +3011,7 @@ void   JPGAddEXIF        ( GDALDataType eWorkDT,
             pabyOvr = VSIGetMemFileBuffer(osTmpFile, &nJPEGIfByteCount, TRUE);
         VSIUnlink(osTmpFile);
 
+        // cppcheck-suppress knownConditionTrueFalse
         if( pabyOvr == nullptr )
         {
             nJPEGIfByteCount = 0;
@@ -3528,7 +3568,7 @@ void GDALRegister_JPEG()
     poDriver->SetDescription("JPEG");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "JPEG JFIF");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_jpeg.html");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/jpeg.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "jpg");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "jpg jpeg");
     poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/jpeg");

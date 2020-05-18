@@ -269,7 +269,6 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDSIn, int nBandIn,
                 this->eDataType = GDT_Int32;
                 G_set_c_null_value ( &cval, 1);
                 dfNoData = (double) cval;
-                nativeNulls = true;
             }
             nativeNulls = false;
         } else {  // 3-4 bytes
@@ -1053,7 +1052,7 @@ void GDALRegister_GRASS()
     poDriver->SetDescription( "GRASS" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GRASS Rasters (5.7+)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_grass.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/grass.html" );
 
     poDriver->pfnOpen = GRASSDataset::Open;
 

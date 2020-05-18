@@ -52,8 +52,8 @@ if ! test -d fix_typos; then
      git clone https://github.com/rouault/codespell
      (cd codespell && git checkout gdal_improvements)
      # Aggregate base dictionary + QGIS one + Debian Lintian one
-     curl https://raw.githubusercontent.com/qgis/QGIS/master/scripts/spelling.dat | sed "s/:/->/" | grep -v "colour->" | grep -v "colours->" > qgis.txt
-     curl https://anonscm.debian.org/cgit/lintian/lintian.git/plain/data/spelling/corrections| grep "||" | grep -v "#" | sed "s/||/->/" > debian.txt
+     curl https://raw.githubusercontent.com/qgis/QGIS/master/scripts/spell_check/spelling.dat | sed "s/:/->/" | grep -v "colour->" | grep -v "colours->" > qgis.txt
+     curl https://salsa.debian.org/lintian/lintian/-/raw/master/data/spelling/corrections | grep "||" | grep -v "#" | sed "s/||/->/" > debian.txt
      cat codespell/data/dictionary.txt qgis.txt debian.txt | awk 'NF' > gdal_dict.txt
      echo "difered->deferred" >> gdal_dict.txt
      echo "differed->deferred" >> gdal_dict.txt
@@ -62,12 +62,13 @@ if ! test -d fix_typos; then
     )
 fi
 
-EXCLUDED_FILES="*/.svn*,configure,config.status,config.sub,*/autom4te.cache/*,*.ai"
+EXCLUDED_FILES="*/.svn*,configure,config.status,config.guess,config.sub,*/autom4te.cache/*,*.ai"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/hdf-eos/*,teststream.out,ogrogdilayer.cpp"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/doc/br/*,*/data/*,figures.mp,*/tmp/*,*/ruby/*"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/fix_typos/*,fix_typos.sh,*.eps,geopackage_aspatial.html"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/kdu_cache_wrapper.h,*/PublicDecompWT/*,*/man/*,./html/*"
 EXCLUDED_FILES="$EXCLUDED_FILES,PROVENANCE.TXT,libtool,ltmain.sh,libtool.m4,./m4/*"
+EXCLUDED_FILES="$EXCLUDED_FILES,WFSServersList.txt"
 WORDS_WHITE_LIST="poSession,FIDN,TRAFIC,HTINK,repID,oCurr,INTREST,oPosition"
 WORDS_WHITE_LIST="$WORDS_WHITE_LIST,CPL_SUPRESS_CPLUSPLUS,SRP_NAM,ADRG_NAM,'SRP_NAM,AuxilaryTarget"
 # IRIS driver metadata item names: FIXME ?
@@ -82,6 +83,21 @@ WORDS_WHITE_LIST="$WORDS_WHITE_LIST,THRESHHOLD_BILEVEL,THRESHHOLD_HALFTONE,THRES
 WORDS_WHITE_LIST="$WORDS_WHITE_LIST,oUTMorLL"
 # hf2dataset.cpp
 WORDS_WHITE_LIST="$WORDS_WHITE_LIST,fVertPres"
+# kml_generate_test_files.py
+WORDS_WHITE_LIST="$WORDS_WHITE_LIST,Lod,LOD"
+# Many .py (nd for nodata)
+WORDS_WHITE_LIST="$WORDS_WHITE_LIST,nd"
+# vsis3.py
+WORDS_WHITE_LIST="$WORDS_WHITE_LIST,iam"
+# NITF
+WORDS_WHITE_LIST="$WORDS_WHITE_LIST,TRE"
+# autotest/cpp
+WORDS_WHITE_LIST="$WORDS_WHITE_LIST,TUT_USE_SEH,SEH_OK,SEH_CTOR,SEH_TEST,SEH_DUMMY,SEH"
+WORDS_WHITE_LIST="$WORDS_WHITE_LIST,NPY_ARRAY_WRITEABLE"
+WORDS_WHITE_LIST="$WORDS_WHITE_LIST,cartesian,Cartesian,CARTESIAN,Australia"
+WORDS_WHITE_LIST="$WORDS_WHITE_LIST,cJP2_Error_Decompression_Cancelled"
+WORDS_WHITE_LIST="$WORDS_WHITE_LIST,ADVERTIZE_UTF8,SetAdvertizeUTF8,m_bAdvertizeUTF8,bAdvertizeUTF8In"
+WORDS_WHITE_LIST="$WORDS_WHITE_LIST,poTransactionBehaviour,IOGRTransactionBehaviour"
 
 python3 fix_typos/codespell/codespell.py -w -i 3 -q 2 -S "$EXCLUDED_FILES" \
     -x scripts/typos_whitelist.txt --words-white-list=$WORDS_WHITE_LIST \

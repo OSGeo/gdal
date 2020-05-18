@@ -34,16 +34,6 @@
 #include "netcdfsg.h"
 namespace nccfdriver
 {
-    /* Re-implementation of mempcpy
-     * but compatible with libraries which only implement memcpy
-     */
-    static void* memcpy_jump(void *dest, const void *src, size_t n)
-    {
-        memcpy(dest, src, n);
-        int8_t * byte_pointer = static_cast<int8_t*>(dest);
-        return static_cast<void*>(byte_pointer + n);
-    }
-
     /* Attribute Fetch
      * -
      * A function which makes it a bit easier to fetch single text attribute values
@@ -284,7 +274,7 @@ namespace nccfdriver
             } 
         }
 
-        // (1) the touple order for a single point
+        // (1) the tuple order for a single point
         // (2) the variable ids with the relevant coordinate values
         int X = INVALID_VAR_ID;
         int Y = INVALID_VAR_ID;
@@ -359,11 +349,10 @@ namespace nccfdriver
 
         int all_dim = INVALID_VAR_ID;
         bool dim_set = false;
-        int dimC = 0;
         //(1) one dimension check, each node_coordinates have same dimension
         for(size_t nvitr = 0; nvitr < nodec_varIds.size(); nvitr++)
         {
-            dimC = 0;
+            int dimC = 0;
             nc_inq_varndims(ncId, nodec_varIds[nvitr], &dimC);
 
             if(dimC != 1)
@@ -402,7 +391,7 @@ namespace nccfdriver
         }
     
 
-        // (3) check touple order
+        // (3) check tuple order
         if(this->touple_order < 2)
         {
             throw SG_Exception_Existential(container_name, "insufficent node coordinates must have at least two axis");    
@@ -502,14 +491,35 @@ namespace nccfdriver
         else return this->node_counts.size();
     }
 
+    static void add_to_buffer(std::vector<unsigned char>& buffer, uint8_t v)
+    {
+        buffer.push_back(v);
+    }
+
+    static void add_to_buffer(std::vector<unsigned char>& buffer, uint32_t v)
+    {
+        const size_t old_size = buffer.size();
+        buffer.resize(old_size + sizeof(v));
+        memcpy(&buffer[old_size], &v, sizeof(v));
+    }
+
+    static void add_to_buffer(std::vector<unsigned char>&, int) = delete;
+
+    static void add_to_buffer(std::vector<unsigned char>& buffer, double v)
+    {
+        const size_t old_size = buffer.size();
+        buffer.resize(old_size + sizeof(v));
+        memcpy(&buffer[old_size], &v, sizeof(v));
+    }
+
     /* serializeToWKB
      * Takes the geometry in SGeometry at a given index and converts it into WKB format.
      * Converting SGeometry into WKB automatically allocates the required buffer space
      * and returns a buffer that MUST be free'd
      */
-    unsigned char * SGeometry_Reader::serializeToWKB(size_t featureInd, int& wkbSize)
+    std::vector<unsigned char> SGeometry_Reader::serializeToWKB(size_t featureInd)
     {        
-        unsigned char * ret = nullptr;
+        std::vector<unsigned char> ret;
         int nc = 0; size_t sb = 0;
 
         // Points don't have node_count entry... only inspect and set node_counts if not a point
@@ -524,14 +534,10 @@ namespace nccfdriver
         switch(this->getGeometryType())
         {
             case POINT:
-                wkbSize = 1 + 4 + this->touple_order * 8;
-                ret = new uint8_t[wkbSize];
                 inPlaceSerialize_Point(this, featureInd, ret);
                 break;
 
             case LINE:
-                wkbSize = 1 + 4 + 4 + this->touple_order * 8 * nc;
-                ret = new uint8_t[wkbSize];
                 inPlaceSerialize_LineString(this, nc, sb, ret);
                 break;
 
@@ -546,32 +552,26 @@ namespace nccfdriver
                 // (Or 8 byte double x node count x # dimension + 4 byte point count x part_count)
 
                 // if interior ring, then assume that it will be a multipolygon (maybe future work?)
-                wkbSize = 1 + 4 + 4 + 4 + this->touple_order * 8 * nc;
-                ret = new uint8_t[wkbSize];
                 inPlaceSerialize_PolygonExtOnly(this, nc, sb, ret);
                 break;
 
             case MULTIPOINT:
                 {
-                    wkbSize = 1 + 4 + 4 + nc * (1 + 4 + this->touple_order * 8);
-                    ret = new uint8_t[wkbSize];
-
-                    void * worker = ret;
-                    int8_t header = PLATFORM_HEADER;
+                    uint8_t header = PLATFORM_HEADER;
                     uint32_t t = this->touple_order == 2 ? wkbMultiPoint :
                                  this->touple_order == 3 ? wkbMultiPoint25D : wkbNone;
 
                     if(t == wkbNone) throw SG_Exception_BadFeature();
 
                     // Add metadata
-                    worker = memcpy_jump(worker, &header, 1);
-                    worker = memcpy_jump(worker, &t, 4);
-                    worker = memcpy_jump(worker, &nc, 4);
+                    add_to_buffer(ret, header);
+                    add_to_buffer(ret, t);
+                    add_to_buffer(ret, static_cast<uint32_t>(nc));
 
                     // Add points
                     for(int pts = 0; pts < nc; pts++)
                     {
-                        worker = inPlaceSerialize_Point(this, static_cast<size_t>(sb + pts), worker);                                
+                        inPlaceSerialize_Point(this, static_cast<size_t>(sb + pts), ret);
                     }
                 }
 
@@ -579,7 +579,7 @@ namespace nccfdriver
 
             case MULTILINE:
                 {
-                    int8_t header = PLATFORM_HEADER;
+                    uint8_t header = PLATFORM_HEADER;
                     uint32_t t = this->touple_order == 2 ? wkbMultiLineString :
                                 this->touple_order == 3 ? wkbMultiLineString25D : wkbNone;
 
@@ -587,7 +587,6 @@ namespace nccfdriver
                     int32_t lc = parts_count[featureInd];
                     size_t seek_begin = sb;
                     size_t pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous    
-                    wkbSize = 1 + 4 + 4;
                     std::vector<int> pnc;
 
                     // Build sub vector for part_node_counts
@@ -595,25 +594,19 @@ namespace nccfdriver
                     for(int itr = 0; itr < lc; itr++)
                     {
                         pnc.push_back(pnode_counts[pc_begin + itr]);    
-                         wkbSize += this->touple_order * 8 * pnc[itr] + 1 + 4 + 4;
                     }
 
-                
                     size_t cur_point = seek_begin;
                     size_t pcount = pnc.size();
 
-                    // Allocate and set pointers
-                    ret = new uint8_t[wkbSize];
-                    void * worker = ret;
-
                     // Begin Writing
-                    worker = memcpy_jump(worker, &header, 1);
-                    worker = memcpy_jump(worker, &t, 4);
-                    worker = memcpy_jump(worker, &pcount, 4);
+                    add_to_buffer(ret, header);
+                    add_to_buffer(ret, t);
+                    add_to_buffer(ret, static_cast<uint32_t>(pcount));
 
                     for(size_t itr = 0; itr < pcount; itr++)
                     {
-                            worker = inPlaceSerialize_LineString(this, pnc[itr], cur_point, worker);
+                            inPlaceSerialize_LineString(this, pnc[itr], cur_point, ret);
                             cur_point = pnc[itr] + cur_point;
                     }
                 }
@@ -622,7 +615,7 @@ namespace nccfdriver
 
             case MULTIPOLYGON:
                 {
-                    int8_t header = PLATFORM_HEADER;
+                    uint8_t header = PLATFORM_HEADER;
                     uint32_t t = this->touple_order == 2 ? wkbMultiPolygon:
                                  this->touple_order == 3 ? wkbMultiPolygon25D: wkbNone;
 
@@ -631,59 +624,27 @@ namespace nccfdriver
                     int32_t rc = parts_count[featureInd];
                     size_t seek_begin = sb;
                     size_t pc_begin = pnc_bl[featureInd]; // initialize with first part count, list of part counts is contiguous        
-                    wkbSize = 1 + 4 + 4;
                     std::vector<int> pnc;
 
                     // Build sub vector for part_node_counts
                     for(int itr = 0; itr < rc; itr++)
                     {
                         pnc.push_back(pnode_counts[pc_begin + itr]);    
-                    }    
-
-                    // Figure out each Polygon's space requirements
-                    if(noInteriors)
-                    {
-                        for(int ss = 0; ss < rc; ss++)
-                        {
-                             wkbSize += 8 * this->touple_order * pnc[ss] + 1 + 4 + 4 + 4;
-                        }
                     }
 
-                    else
-                    {
-                        // Total space requirements for Polygons:
-                        // (1 + 4 + 4) * number of Polygons
-                        // 4 * number of Rings Total
-                        // 8 * touple_order * number of Points
-        
-
-                        // Each ring collection corresponds to a polygon
-                        wkbSize += (1 + 4 + 4) * poly_count[featureInd]; // (headers)
-
-                        // Add header requirements for rings
-                        wkbSize += 4 * parts_count[featureInd];
-
-                        // Add requirements for number of points
-                        wkbSize += 8 * this->touple_order * nc;
-                    }
-
-                    // Now allocate and serialize
-                    ret = new uint8_t[wkbSize];
-                
                     // Create Multipolygon headers
-                    void * worker = (void*)ret;
-                    worker = memcpy_jump(worker, &header, 1);
-                    worker = memcpy_jump(worker, &t, 4);
+                    add_to_buffer(ret, header);
+                    add_to_buffer(ret, t);
 
                     if(noInteriors)
                     {
                         size_t cur_point = seek_begin;
                         size_t pcount = pnc.size();
-                        worker = memcpy_jump(worker, &pcount, 4);
+                        add_to_buffer(ret, static_cast<uint32_t>(pcount));
 
                         for(size_t itr = 0; itr < pcount; itr++)
                         {
-                            worker = inPlaceSerialize_PolygonExtOnly(this, pnc[itr], cur_point, worker);
+                            inPlaceSerialize_PolygonExtOnly(this, pnc[itr], cur_point, ret);
                             cur_point = pnc[itr] + cur_point;
                         }
                     }
@@ -691,17 +652,16 @@ namespace nccfdriver
                     else
                     {
                         int32_t polys = poly_count[featureInd];
-                        worker = memcpy_jump(worker, &polys, 4);
+                        add_to_buffer(ret, static_cast<uint32_t>(polys));
     
                         size_t base = pnc_bl[featureInd]; // beginning of parts_count for this multigeometry
                         size_t seek = seek_begin; // beginning of node range for this multigeometry
                         size_t ir_base = base + 1;
-                        int rc_m = 1; 
 
                         // has interior rings,
                         for(int32_t itr = 0; itr < polys; itr++)
                         {    
-                            rc_m = 1;
+                            int rc_m = 1;
 
                             // count how many parts belong to each Polygon        
                             while(ir_base < int_rings.size() && int_rings[ir_base])
@@ -721,7 +681,7 @@ namespace nccfdriver
                                 poly_parts.push_back(pnode_counts[base + itr_2]);
                             }
 
-                            worker = inPlaceSerialize_Polygon(this, poly_parts, rc_m, seek, worker);
+                            inPlaceSerialize_Polygon(this, poly_parts, rc_m, seek, ret);
 
                             // Update seek position
                             for(size_t itr_3 = 0; itr_3 < poly_parts.size(); itr_3++)
@@ -730,6 +690,7 @@ namespace nccfdriver
                             }
 
                             base += poly_parts.size();
+                            // cppcheck-suppress redundantAssignment
                             ir_base = base + 1;
                         }
                     }
@@ -952,34 +913,29 @@ namespace nccfdriver
         return ret;
     }
 
-    void* inPlaceSerialize_Point(SGeometry_Reader * ge, size_t seek_pos, void * serializeBegin)
+    void inPlaceSerialize_Point(SGeometry_Reader * ge, size_t seek_pos, std::vector<unsigned char>& buffer)
     {
-        uint8_t order = 1;
+        uint8_t order = PLATFORM_HEADER;
         uint32_t t = ge->get_axisCount() == 2 ? wkbPoint:
                      ge->get_axisCount() == 3 ? wkbPoint25D: wkbNone;
 
         if(t == wkbNone) throw SG_Exception_BadFeature();
 
-        serializeBegin = memcpy_jump(serializeBegin, &order, 1);
-        serializeBegin = memcpy_jump(serializeBegin, &t, 4);
+        add_to_buffer(buffer, order);
+        add_to_buffer(buffer, t);
 
         // Now get point data;
         Point & p = (*ge)[seek_pos];
-        double x = p[0];
-        double y = p[1];
-        serializeBegin = memcpy_jump(serializeBegin, &x, 8);
-        serializeBegin = memcpy_jump(serializeBegin, &y, 8);
+        add_to_buffer(buffer, p[0]);
+        add_to_buffer(buffer, p[1]);
 
         if(ge->get_axisCount() >= 3)
         {
-            double z = p[2];
-            serializeBegin = memcpy_jump(serializeBegin, &z, 8);
+            add_to_buffer(buffer, p[2]);
         }
-
-        return serializeBegin;
     }
 
-    void* inPlaceSerialize_LineString(SGeometry_Reader * ge, int node_count, size_t seek_begin, void * serializeBegin)
+    void inPlaceSerialize_LineString(SGeometry_Reader * ge, int node_count, size_t seek_begin, std::vector<unsigned char>& buffer)
     {
         uint8_t order = PLATFORM_HEADER;
         uint32_t t = ge->get_axisCount() == 2 ? wkbLineString:
@@ -988,103 +944,83 @@ namespace nccfdriver
         if(t == wkbNone) throw SG_Exception_BadFeature();
         uint32_t nc = (uint32_t) node_count;
         
-        serializeBegin = memcpy_jump(serializeBegin, &order, 1);
-        serializeBegin = memcpy_jump(serializeBegin, &t, 4);
-        serializeBegin = memcpy_jump(serializeBegin, &nc, 4);
+        add_to_buffer(buffer, order);
+        add_to_buffer(buffer, t);
+        add_to_buffer(buffer, nc);
 
         // Now serialize points
         for(int ind = 0; ind < node_count; ind++)
         {
             Point & p = (*ge)[seek_begin + ind];
-            double x = p[0];
-            double y = p[1];
-            serializeBegin = memcpy_jump(serializeBegin, &x, 8);
-            serializeBegin = memcpy_jump(serializeBegin, &y, 8);    
+            add_to_buffer(buffer, p[0]);
+            add_to_buffer(buffer, p[1]);
             
             if(ge->get_axisCount() >= 3)
             {
-                double z = p[2];
-                serializeBegin = memcpy_jump(serializeBegin, &z, 8);
+                add_to_buffer(buffer, p[2]);
             }
         }
-
-        return serializeBegin;
     }
 
-    void* inPlaceSerialize_PolygonExtOnly(SGeometry_Reader * ge, int node_count, size_t seek_begin, void * serializeBegin)
+    void inPlaceSerialize_PolygonExtOnly(SGeometry_Reader * ge, int node_count, size_t seek_begin, std::vector<unsigned char>& buffer)
     {    
-        int8_t header = PLATFORM_HEADER;
+        uint8_t order = PLATFORM_HEADER;
         uint32_t t = ge->get_axisCount() == 2 ? wkbPolygon:
                      ge->get_axisCount() == 3 ? wkbPolygon25D: wkbNone;
 
         if(t == wkbNone) throw SG_Exception_BadFeature();
-        int32_t rc = 1;
-                
-        void * writer = serializeBegin;
-        writer = memcpy_jump(writer, &header, 1);
-        writer = memcpy_jump(writer, &t, 4);
-        writer = memcpy_jump(writer, &rc, 4);
-                        
-        int32_t nc = (int32_t)node_count;
-        writer = memcpy_jump(writer, &node_count, 4);
+        uint32_t rc = 1;
 
-        for(int pind = 0; pind < nc; pind++)
+        add_to_buffer(buffer, order);
+        add_to_buffer(buffer, t);
+        add_to_buffer(buffer, rc);
+        add_to_buffer(buffer, static_cast<uint32_t>(node_count));
+        for(int pind = 0; pind < node_count; pind++)
         {
             Point & pt= (*ge)[seek_begin + pind];
-            double x = pt[0]; double y = pt[1];
-            writer = memcpy_jump(writer, &x, 8);
-            writer = memcpy_jump(writer, &y, 8);
-            
+            add_to_buffer(buffer, pt[0]);
+            add_to_buffer(buffer, pt[1]);
+
             if(ge->get_axisCount() >= 3)
             {
-                double z = pt[2];
-                writer = memcpy_jump(writer, &z, 8);
+                add_to_buffer(buffer, pt[2]);
             }
         }
-
-        return writer;
     }
 
-    void* inPlaceSerialize_Polygon(SGeometry_Reader * ge, std::vector<int>& pnc, int ring_count, size_t seek_begin, void * serializeBegin)
+    void inPlaceSerialize_Polygon(SGeometry_Reader * ge, std::vector<int>& pnc, int ring_count, size_t seek_begin, std::vector<unsigned char>& buffer)
     {
-            
-        int8_t header = PLATFORM_HEADER;
+        uint8_t order = PLATFORM_HEADER;
         uint32_t t = ge->get_axisCount() == 2 ? wkbPolygon:
                      ge->get_axisCount() == 3 ? wkbPolygon25D: wkbNone;
 
         if(t == wkbNone) throw SG_Exception_BadFeature();
-        int32_t rc = static_cast<int32_t>(ring_count);
-                
-        void * writer = serializeBegin;
-        writer = memcpy_jump(writer, &header, 1);
-        writer = memcpy_jump(writer, &t, 4);
-        writer = memcpy_jump(writer, &rc, 4);
+        uint32_t rc = static_cast<uint32_t>(ring_count);
+
+        add_to_buffer(buffer, order);
+        add_to_buffer(buffer, t);
+        add_to_buffer(buffer, rc);
         int cmoffset = 0;
-                        
         for(int ring_c = 0; ring_c < ring_count; ring_c++)
         {
-            int32_t node_count = pnc[ring_c];
-            writer = memcpy_jump(writer, &node_count, 4);
+            uint32_t node_count = pnc[ring_c];
+            add_to_buffer(buffer, node_count);
 
             int pind = 0;
             for(pind = 0; pind < pnc[ring_c]; pind++)
             {
                 Point & pt= (*ge)[seek_begin + cmoffset + pind];
-                double x = pt[0]; double y = pt[1];
-                writer = memcpy_jump(writer, &x, 8);
-                writer = memcpy_jump(writer, &y, 8);
-            
+                add_to_buffer(buffer, pt[0]);
+                add_to_buffer(buffer, pt[1]);
+
                 if(ge->get_axisCount() >= 3)
                 {
-                     double z = pt[2];
-                     writer = memcpy_jump(writer, &z, 8);
+                     add_to_buffer(buffer, pt[2]);
                 }
             }
 
             cmoffset += pind;
         }
-
-        return writer;
     }
 
     int scanForGeometryContainers(int ncid, std::set<int> & r_ids)

@@ -23,7 +23,7 @@ Network
 -Setting/unsetting connections. These generic methods of building the network topology (automatically and manually) receive the identifiers of features being connected in a common way, while the concrete implementation knows where and how to store and build the topology;
 -Reading connections. The generic methods return the connections in the common way;
 -Adding/removing layers/features. When the feature or layer is being added to the network some actions can be initiated (weights change in a graph, cascade changes in connected features). Concrete GNMNetwork describes how it is done.
--Defining network's business logic or behaviour. It can be expressed in network rules or constraints/restrictions. Expected that each rule can be set from a string and each concrete GNMNetwork will transform it to the internal look.
+-Defining network's business logic or behavior. It can be expressed in network rules or constraints/restrictions. Expected that each rule can be set from a string and each concrete GNMNetwork will transform it to the internal look.
 
 Format
 ++++++
@@ -58,4 +58,4 @@ Network analysis
 
 The network analysis in GNM is implemented in :cpp:class:`GNMNetwork` object.
 
-:cpp:class:`GNMGenericNetwork` holds the graph in memory in STL containers and provides basic algorithms which return the results in the array-form (e.g. std::vector full of path's edges and vertexes GFIDs). But the caller get a result as OGRLayer there features get from layers consist the network. Also some additional fields created (VERTEX/EDGE indicator field, GFID, layer name, etc.). The caller have to free the result OGRLayer via :cpp:func:`GDALDataset::ReleaseResultSet`
+:cpp:class:`GNMGenericNetwork` holds the graph in memory in STL containers and provides basic algorithms which return the results in the array-form (e.g. std::vector full of path's edges and vertices GFIDs). But the caller get a result as OGRLayer there features get from layers consist the network. Also some additional fields created (VERTEX/EDGE indicator field, GFID, layer name, etc.). The caller have to free the result OGRLayer via :cpp:func:`GDALDataset::ReleaseResultSet`

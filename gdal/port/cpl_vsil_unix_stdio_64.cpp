@@ -188,7 +188,7 @@ class VSIUnixStdioHandle final : public VSIVirtualHandle
     bool          bLastOpWrite = false;
     bool          bLastOpRead = false;
     bool          bAtEOF = false;
-    // In a+ mode, disable any optimization since the behaviour of the file
+    // In a+ mode, disable any optimization since the behavior of the file
     // pointer on Mac and other BSD system is to have a seek() to the end of
     // file and thus a call to our Seek(0, SEEK_SET) before a read will be a
     // no-op.

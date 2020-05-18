@@ -40,7 +40,7 @@ import pytest
 
 def test_ogr_openair_1():
 
-    ds = ogr.Open('data/openair_test.txt')
+    ds = ogr.Open('data/openair/openair_test.txt')
     assert ds is not None, 'cannot open dataset'
 
     lyr = ds.GetLayerByName('airspaces')

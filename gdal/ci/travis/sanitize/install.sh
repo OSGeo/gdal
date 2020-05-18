@@ -18,8 +18,8 @@ $SCRIPT_DIR/../common_install.sh
 export ASAN_OPTIONS=allocator_may_return_null=1
 
 export CCACHE_CPP2=yes
-export CC="ccache $PWD/clang+llvm-6.0.1-x86_64-linux-gnu-ubuntu-16.04/bin/clang"
-export CXX="ccache $PWD/clang+llvm-6.0.1-x86_64-linux-gnu-ubuntu-16.04/bin/clang++"
+export CC="ccache $PWD/clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang"
+export CXX="ccache $PWD/clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang++"
 
 ccache -M 1G
 ccache -s

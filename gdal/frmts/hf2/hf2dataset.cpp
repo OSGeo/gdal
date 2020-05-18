@@ -390,7 +390,7 @@ int HF2Dataset::Identify( GDALOpenInfo * poOpenInfo)
     GDALOpenInfo* poOpenInfoToDelete = nullptr;
     /*  GZipped .hf2 files are common, so automagically open them */
     /*  if the /vsigzip/ has not been explicitly passed */
-    CPLString osFilename(poOpenInfo->pszFilename);
+    CPLString osFilename; // keep in that scope
     if ((EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "hfz") ||
         (strlen(poOpenInfo->pszFilename) > 6 &&
          EQUAL(poOpenInfo->pszFilename + strlen(poOpenInfo->pszFilename) - 6, "hf2.gz"))) &&
@@ -1175,7 +1175,7 @@ void GDALRegister_HF2()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "HF2/HFZ heightfield raster" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_hf2.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/hf2.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "hf2" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"

@@ -252,7 +252,7 @@ width or precision are changed. However, appropriate field truncation or
 expansion will occur if the width is altered.
 
 Other drivers, mainly database drivers (PG, MySQL, SQLite), could be
-easily extented to implement the new API by issuing the appropriate SQL
+easily extended to implement the new API by issuing the appropriate SQL
 command (ALTER TABLE foo DROP COLUMN bar, ALTER TABLE foo ALTER COLUMN
 bar, ...). The implementation of DeleteField() and AlterFieldDefn() in
 the PG driver is indeed planned, provided this RFC is adopted. The

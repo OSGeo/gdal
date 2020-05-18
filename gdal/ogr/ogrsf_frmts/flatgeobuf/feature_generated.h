@@ -11,10 +11,13 @@
 namespace FlatGeobuf {
 
 struct Geometry;
+struct GeometryBuilder;
 
 struct Feature;
+struct FeatureBuilder;
 
 struct Geometry FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef GeometryBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_ENDS = 4,
     VT_XY = 6,
@@ -72,6 +75,7 @@ struct Geometry FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 };
 
 struct GeometryBuilder {
+  typedef Geometry Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_ends(flatbuffers::Offset<flatbuffers::Vector<uint32_t>> ends) {
@@ -162,6 +166,7 @@ inline flatbuffers::Offset<Geometry> CreateGeometryDirect(
 }
 
 struct Feature FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef FeatureBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_GEOMETRY = 4,
     VT_PROPERTIES = 6,
@@ -190,6 +195,7 @@ struct Feature FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 };
 
 struct FeatureBuilder {
+  typedef Feature Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_geometry(flatbuffers::Offset<FlatGeobuf::Geometry> geometry) {

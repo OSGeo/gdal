@@ -6,9 +6,9 @@ SQL SQLite dialect
 
 .. highlight:: sql
 
-Since GDAL/OGR 1.10, the SQLite "dialect" can be used as an alternate SQL dialect to the
+The SQLite "dialect" can be used as an alternate SQL dialect to the
 :ref:`ogr_sql_dialect`.
-This assumes that GDAL/OGR is built with support for SQLite (>= 3.6), and preferably
+This assumes that GDAL/OGR is built with support for SQLite, and preferably
 with `Spatialite <http://www.gaia-gis.it/spatialite/>`_ support too to benefit from spatial functions.
 
 The SQLite dialect may be used with any OGR datasource, like the OGR SQL dialect. It
@@ -213,7 +213,7 @@ CAST(ogr_inflate(compressed_blob) AS VARCHAR). See CPLZLibInflate().
 Other functions
 +++++++++++++++
 
-Starting with OGR 2.0, the ``hstore_get_value()`` function can be used to extract
+The ``hstore_get_value()`` function can be used to extract
 a value associate to a key from a HSTORE string, formatted like "key=>value,other_key=>other_value,..."
 
 .. code-block::

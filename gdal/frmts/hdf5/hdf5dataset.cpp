@@ -99,7 +99,7 @@ void GDALRegister_HDF5()
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
                               "Hierarchical Data Format Release 5");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_hdf5.html");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/hdf5.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "h5 hdf5");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
@@ -507,6 +507,15 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
 
     poDS->SetMetadata(poDS->papszMetadata);
 
+    if( STARTS_WITH(CSLFetchNameValueDef(poDS->papszMetadata, "mission_name", ""), "Sentinel 3") &&
+        EQUAL(CSLFetchNameValueDef(poDS->papszMetadata, "altimeter_sensor_name", ""), "SRAL") &&
+        EQUAL(CSLFetchNameValueDef(poDS->papszMetadata, "radiometer_sensor_name", ""), "MWR") &&
+        GDALGetDriverByName("netCDF") != nullptr )
+    {
+        delete poDS;
+        return nullptr;
+    }
+
     if ( CSLCount(poDS->papszSubDatasets) / 2 >= 1 )
         poDS->SetMetadata(poDS->papszSubDatasets, "SUBDATASETS");
 
@@ -894,7 +903,6 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
     }
 
     char *szData = nullptr;
-    hsize_t nAttrSize = 0;
     char *szValue = nullptr;
 
     if( H5Tget_class(hAttrNativeType) == H5T_STRING )
@@ -924,7 +932,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
         }
         else
         {
-            nAttrSize = H5Aget_storage_size(hAttrID);
+            const hsize_t nAttrSize = H5Aget_storage_size(hAttrID);
             szValue = static_cast<char *>(CPLMalloc((size_t)(nAttrSize + 1)));
             H5Aread(hAttrID, hAttrNativeType, szValue);
             szValue[nAttrSize] = '\0';
@@ -1102,7 +1110,7 @@ CPLErr HDF5Dataset::CreateMetadata( HDF5GroupObjects *poH5Object, int nType)
 
     poH5CurrentObject = poH5Object;
 
-    if( poH5Object->pszPath == nullptr || EQUAL(poH5Object->pszPath, "") )
+    if( EQUAL(poH5Object->pszPath, "") )
         return CE_None;
 
     HDF5Dataset *const poDS = this;

@@ -107,8 +107,6 @@ VSIPDFFileStream::~VSIPDFFileStream()
     if (poParent == nullptr)
     {
         delete poFilename;
-        if (f)
-            VSIFCloseL(f);
     }
 }
 

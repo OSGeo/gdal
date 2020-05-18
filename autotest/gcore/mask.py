@@ -118,14 +118,14 @@ def test_mask_3():
 
 def test_mask_4():
 
-    src_ds = gdal.Open('../gdrivers/data/masked.jpg')
+    src_ds = gdal.Open('../gdrivers/data/jpeg/masked.jpg')
 
     assert src_ds is not None, 'Failed to open test dataset.'
 
     # NOTE: for now we copy to PNM since it does everything (overviews too)
     # externally. Should eventually test with gtiff, hfa.
     drv = gdal.GetDriverByName('PNM')
-    ds = drv.CreateCopy('tmp/mask_4.pnm', src_ds)
+    ds = drv.CreateCopy('tmp/mask_4.ppm', src_ds)
     src_ds = None
 
     # confirm we got the custom mask on the copied dataset.
@@ -153,7 +153,7 @@ def test_mask_5():
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         pytest.skip()
 
-    ds = gdal.Open('tmp/mask_4.pnm', gdal.GA_Update)
+    ds = gdal.Open('tmp/mask_4.ppm', gdal.GA_Update)
 
     assert ds is not None, 'Failed to open test dataset.'
 
@@ -177,7 +177,7 @@ def test_mask_5():
     ds = None
 
     # Reopen and confirm we still get same results.
-    ds = gdal.Open('tmp/mask_4.pnm')
+    ds = gdal.Open('tmp/mask_4.ppm')
 
     # confirm mask flags on overview.
     ovr = ds.GetRasterBand(1).GetOverview(1)
@@ -194,7 +194,7 @@ def test_mask_5():
     msk = None
     ds = None
 
-    gdal.GetDriverByName('PNM').Delete('tmp/mask_4.pnm')
+    gdal.GetDriverByName('PNM').Delete('tmp/mask_4.ppm')
 
 ###############################################################################
 # Test a TIFF file with 1 band and an embedded mask of 1 bit

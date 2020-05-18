@@ -609,7 +609,6 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
 {
     size_t nDestMax = 32;
     char *pszDest = static_cast<char *>(CPLMalloc(nDestMax + 1));
-    int nRepeat = 0;
 
     size_t iSrc = 0;
     size_t iDst = 0;
@@ -665,7 +664,7 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
         else if( (iSrc == 0 || pszSrc[iSrc-1] == ',')
                  && isdigit(pszSrc[iSrc]) )
         {
-            nRepeat = atoi(pszSrc+iSrc);
+            const int nRepeat = atoi(pszSrc+iSrc);
             // 100: arbitrary number. Higher values might cause performance
             // problems in the below loop
             if( nRepeat < 0 || nRepeat > 100 )

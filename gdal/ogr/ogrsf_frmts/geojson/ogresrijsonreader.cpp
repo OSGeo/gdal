@@ -423,14 +423,6 @@ OGRFeature* OGRESRIJSONReader::ReadFeature( json_object* poObj )
             poFeature->SetGeometryDirectly( poGeometry );
         }
     }
-    else
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid Feature object. "
-                  "Missing \'geometry\' member." );
-        delete poFeature;
-        return nullptr;
-    }
 
     return poFeature;
 }

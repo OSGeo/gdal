@@ -619,9 +619,10 @@ def test_vsiaz_write_blockblob_retry():
 
         handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', 502)
         handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method=method)
-        with webserver.install_http_handler(handler):
-            assert gdal.VSIFWriteL('foo', 1, 3, f) == 3
-            gdal.VSIFCloseL(f)
+        with gdaltest.error_handler():
+            with webserver.install_http_handler(handler):
+                assert gdal.VSIFWriteL('foo', 1, 3, f) == 3
+                gdal.VSIFCloseL(f)
 
 ###############################################################################
 # Test write with retry
@@ -649,9 +650,10 @@ def test_vsiaz_write_appendblob_retry():
         handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin?comp=appendblock', 502)
         handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin?comp=appendblock', 201)
 
-        with webserver.install_http_handler(handler):
-            assert gdal.VSIFWriteL('0123456789abcdef', 1, 16, f) == 16
-            gdal.VSIFCloseL(f)
+        with gdaltest.error_handler():
+            with webserver.install_http_handler(handler):
+                assert gdal.VSIFWriteL('0123456789abcdef', 1, 16, f) == 16
+                gdal.VSIFCloseL(f)
 
 ###############################################################################
 # Test Unlink()
@@ -826,6 +828,9 @@ def test_vsiaz_fake_rename():
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/azure/blob/myaccount/test/source.txt', 200,
                 {'Content-Length': '3'})
+    handler.add('HEAD', '/azure/blob/myaccount/test/target.txt', 404)
+    handler.add('GET', '/azure/blob/myaccount/test?comp=list&delimiter=%2F&maxresults=1&prefix=target.txt%2F&restype=container', 200)
+
     def method(request):
         if request.headers['Content-Length'] != '0':
             sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))

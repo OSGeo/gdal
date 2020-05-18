@@ -325,17 +325,22 @@ GDALPansharpenOperation::Initialize( const GDALPansharpenOptions* psOptionsIn )
             for( int i = 0; i < psOptions->nInputSpectralBands; i++ )
             {
                 GDALRasterBand* poSrcBand = aMSBands[i];
+                int iVRTBand;
                 if( anInputBands.empty() || i == 0 )
                 {
                     poVDS = new VRTDataset(poSrcBand->GetXSize(), poSrcBand->GetYSize());
                     aVDS.push_back(poVDS);
+                    iVRTBand = 1;
                 }
-                if( !anInputBands.empty() )
+                else
+                {
                     anInputBands[i] = i + 1;
+                    iVRTBand = i + 1;
+                }
                 poVDS->AddBand(poSrcBand->GetRasterDataType(), nullptr);
                 VRTSourcedRasterBand* poVRTBand =
                     dynamic_cast<VRTSourcedRasterBand*>(
-                        poVDS->GetRasterBand(i + 1));
+                        poVDS->GetRasterBand(iVRTBand));
                 if( poVRTBand == nullptr )
                     return CE_Failure;
                 aMSBands[i] = poVRTBand;
@@ -1093,6 +1098,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion( int nXOff, int nYOff,
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     const GDALRIOResampleAlg eResampleAlg = psOptions->eResampleAlg;
+    // cppcheck-suppress redundantAssignment
     sExtraArg.eResampleAlg = eResampleAlg;
     sExtraArg.bFloatingPointWindowValidity = TRUE;
     double dfRatioX =
@@ -1557,6 +1563,7 @@ void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void* pUserData)
 #else
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    // cppcheck-suppress redundantAssignment
     sExtraArg.eResampleAlg = psJob->eResampleAlg;
     sExtraArg.bFloatingPointWindowValidity = TRUE;
     sExtraArg.dfXOff = psJob->dfXOff;

@@ -149,7 +149,7 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
 
         oSmoothPolyline.Close();
 
-        OGRLineString *poLS = oSmoothPolyline.Tesselate()->toLineString();
+        OGRLineString *poLS = oSmoothPolyline.Tessellate()->toLineString();
         poGC->addGeometryDirectly( poLS );
 
         return OGRERR_NONE;

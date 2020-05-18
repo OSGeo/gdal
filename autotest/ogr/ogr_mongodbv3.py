@@ -401,7 +401,7 @@ def test_ogr_mongodbv3_2():
         sql_lyr = ogrtest.mongodbv3_ds.ExecuteSQL('{ "foo": 1 }', dialect='MongoDB')
     assert sql_lyr is None
 
-    # MongoDB dialect of ExecuteSQL() with existing commnand
+    # MongoDB dialect of ExecuteSQL() with existing command
     sql_lyr = ogrtest.mongodbv3_ds.ExecuteSQL('{ "listCommands" : 1 }',
                                             dialect='MongoDB')
     assert sql_lyr is not None

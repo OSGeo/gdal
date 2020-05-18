@@ -39,7 +39,7 @@ import gdaltest
 
 def test_cals_1():
 
-    tst = gdaltest.GDALTest('CALS', 'small1bit.img', 1, 9907)
+    tst = gdaltest.GDALTest('CALS', 'hfa/small1bit.img', 1, 9907)
 
     return tst.testCreateCopy()
 

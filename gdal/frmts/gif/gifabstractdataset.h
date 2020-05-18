@@ -116,7 +116,7 @@ class GIFAbstractRasterBand CPL_NON_FINAL: public GDALPamRasterBand
   public:
     GIFAbstractRasterBand(GIFAbstractDataset *poDS, int nBand,
                           SavedImage *psSavedImage, int nBackground,
-                          int bAdvertizeInterlacedMDI );
+                          int bAdvertiseInterlacedMDI );
     ~GIFAbstractRasterBand() override;
 
     double GetNoDataValue( int *pbSuccess = nullptr ) override;

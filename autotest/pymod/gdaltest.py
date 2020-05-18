@@ -511,7 +511,7 @@ class GDALTest(object):
             if vsimem:
                 new_filename = '/vsimem/' + self.filename + '.tst'
             else:
-                new_filename = 'tmp/' + self.filename + '.tst'
+                new_filename = 'tmp/' + os.path.basename(self.filename) + '.tst'
 
         new_ds = self.driver.Create(new_filename, xsize, ysize, out_bands,
                                     src_ds.GetRasterBand(self.band).DataType,
@@ -572,7 +572,7 @@ class GDALTest(object):
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
 
-        new_filename = 'tmp/' + self.filename + '.tst'
+        new_filename = 'tmp/' + os.path.basename(self.filename) + '.tst'
         new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
                                     src_ds.GetRasterBand(self.band).DataType,
                                     options=self.options)
@@ -618,7 +618,7 @@ class GDALTest(object):
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
 
-        new_filename = 'tmp/' + self.filename + '.tst'
+        new_filename = 'tmp/' + os.path.basename(self.filename) + '.tst'
         new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
                                     src_ds.GetRasterBand(self.band).DataType,
                                     options=self.options)
@@ -674,7 +674,7 @@ class GDALTest(object):
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
 
-        new_filename = 'tmp/' + self.filename + '.tst'
+        new_filename = 'tmp/' + os.path.basename(self.filename) + '.tst'
         new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
                                     src_ds.GetRasterBand(self.band).DataType,
                                     options=self.options)
@@ -716,7 +716,7 @@ class GDALTest(object):
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
 
-        new_filename = 'tmp/' + self.filename + '.tst'
+        new_filename = 'tmp/' + os.path.basename(self.filename) + '.tst'
         new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
                                     src_ds.GetRasterBand(self.band).DataType,
                                     options=self.options)
@@ -772,7 +772,7 @@ class GDALTest(object):
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
 
-        new_filename = 'tmp/' + self.filename + '.tst'
+        new_filename = 'tmp/' + os.path.basename(self.filename) + '.tst'
         new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
                                     src_ds.GetRasterBand(self.band).DataType,
                                     options=self.options)
@@ -807,7 +807,7 @@ class GDALTest(object):
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
 
-        new_filename = 'tmp/' + self.filename + '.tst'
+        new_filename = 'tmp/' + os.path.basename(self.filename) + '.tst'
         new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
                                     src_ds.GetRasterBand(self.band).DataType,
                                     options=self.options)
@@ -853,7 +853,7 @@ def user_srs_to_wkt(user_text):
     return srs.ExportToWkt()
 
 
-def equal_srs_from_wkt(expected_wkt, got_wkt):
+def equal_srs_from_wkt(expected_wkt, got_wkt, verbose=True):
     expected_srs = osr.SpatialReference()
     expected_srs.ImportFromWkt(expected_wkt)
 
@@ -862,10 +862,10 @@ def equal_srs_from_wkt(expected_wkt, got_wkt):
 
     if got_srs.IsSame(expected_srs):
         return 1
-    print('Expected:\n%s' % expected_wkt)
-    print('Got:     \n%s' % got_wkt)
-
-    post_reason('SRS differs from expected.')
+    if verbose:
+        print('Expected:\n%s' % expected_wkt)
+        print('Got:     \n%s' % got_wkt)
+        post_reason('SRS differs from expected.')
     return 0
 
 ###############################################################################
@@ -1275,7 +1275,7 @@ def neginf():
     return float('-inf')
 
 ###############################################################################
-# Has the user requested to dowload test data
+# Has the user requested to download test data
 def download_test_data():
     global count_skipped_tests_download
     val = gdal.GetConfigOption('GDAL_DOWNLOAD_TEST_DATA', None)

@@ -217,7 +217,7 @@ def test_ogr_pcidsk_5():
     if gdal.GetDriverByName('PCIDSK') is None:
         pytest.skip()
 
-    ds = ogr.Open('../gdrivers/data/utm.pix', update=1)
+    ds = ogr.Open('../gdrivers/data/pcidsk/utm.pix', update=1)
     assert ds is not None
     ds = None
 

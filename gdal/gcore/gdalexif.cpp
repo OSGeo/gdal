@@ -421,7 +421,7 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
 /*
  * Return size of TIFFDataType in bytes
  */
-static int EXIF_TIFFDataWidth(GDALEXIFTIFFDataType type)
+static int EXIF_TIFFDataWidth(int /* GDALEXIFTIFFDataType */ type)
 {
     switch(type)
     {
@@ -636,7 +636,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
         }
 
         const int nDataWidth =
-            EXIF_TIFFDataWidth(static_cast<GDALEXIFTIFFDataType>(poTIFFDirEntry->tdir_type));
+            EXIF_TIFFDataWidth(poTIFFDirEntry->tdir_type);
         if (nDataWidth == 0 || poTIFFDirEntry->tdir_type >= TIFF_IFD )
         {
             CPLError( CE_Warning, CPLE_AppDefined,

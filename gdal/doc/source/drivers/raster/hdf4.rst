@@ -185,7 +185,7 @@ and some of these are supported by GDAL. Currently supported are
 -  SeaWiFS Level 3 Standard Mapped Image Products (**SEAWIFS_L3**)
 
 By default the hdf4 driver only reads the gcps from every 10th row and
-column from EOS_SWATH datasets. You can change this behaviour by setting
+column from EOS_SWATH datasets. You can change this behavior by setting
 the GEOL_AS_GCPS environment variable to PARTIAL (default), NONE, or
 FULL.
 
@@ -217,6 +217,14 @@ Metadata
 All HDF4 attributes are transparently translated as GDAL metadata. In
 the HDF file attributes may be assigned assigned to the whole file as
 well as to particular subdatasets.
+
+Multidimensional API support
+----------------------------
+
+.. versionadded:: 3.1
+
+The HDF4 driver supports the :ref:`multidim_raster_data_model` for reading
+operations.
 
 Driver building
 ---------------

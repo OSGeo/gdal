@@ -236,7 +236,7 @@ def test_ogr_pdf_5():
         pytest.skip()
 
     with gdaltest.config_option('OGR_PDF_READ_NON_STRUCTURED', 'YES'):
-        ds = ogr.Open('data/drawing.pdf')
+        ds = ogr.Open('data/pdf/drawing.pdf')
     assert ds is not None
 
     lyr = ds.GetLayer(0)
@@ -252,7 +252,7 @@ def test_ogr_pdf_bezier_curve_and_polygon_holes():
         pytest.skip()
 
     with gdaltest.config_option('OGR_PDF_READ_NON_STRUCTURED', 'YES'):
-        ds = ogr.Open('data/bezier_curve_and_polygon_holes.pdf')
+        ds = ogr.Open('data/pdf/bezier_curve_and_polygon_holes.pdf')
     assert ds is not None
 
     lyr = ds.GetLayer(0)

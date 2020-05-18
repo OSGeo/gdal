@@ -535,8 +535,7 @@ def test_osr_basic_17():
 
 def test_osr_basic_18():
 
-    # This is a dummy one, but who cares
-    wkt = osr.GetUserInputAsWKT('http://www.opengis.net/def/crs-compound?1=http://www.opengis.net/def/crs/EPSG/0/4326&2=http://www.opengis.net/def/crs/EPSG/0/4326')
+    wkt = osr.GetUserInputAsWKT('http://www.opengis.net/def/crs-compound?1=http://www.opengis.net/def/crs/EPSG/0/4326&2=http://www.opengis.net/def/crs/EPSG/0/3855')
     assert wkt.startswith('COMPD_CS'), 'CRS URL parsing not as expected.'
 
 ###############################################################################
@@ -1639,3 +1638,8 @@ def test_osr_create_in_one_thread_destroy_in_other():
     assert arg[0]
     del arg[0]
 
+
+def test_osr_SpatialReference_invalid_wkt_in_constructor():
+
+    with pytest.raises(RuntimeError):
+        osr.SpatialReference('invalid')

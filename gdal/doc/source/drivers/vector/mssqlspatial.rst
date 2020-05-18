@@ -62,14 +62,14 @@ Server}**
 Layers
 ------
 
-Starting with GDAL 1.11 if the user defines the environment variable
+If the user defines the environment variable
 *MSSQLSPATIAL_LIST_ALL_TABLES=YES* (and does not specify Tables= in the
 connection string), all regular user tables will be treated as layers.
 This option is useful if you want tables with with no spatial data
 
 By default the MSSQL driver will only look for layers that are
-registered in the *geometry_columns* metadata table. Starting with GDAL
-1.10 if the user defines the environment variable
+registered in the *geometry_columns* metadata table.
+If the user defines the environment variable
 *MSSQLSPATIAL_USE_GEOMETRY_COLUMNS=NO* then the driver will look for all
 user spatial tables found in the system catalog
 
@@ -81,7 +81,7 @@ default, rather than evaluating them internally when using the
 ExecuteSQL() call on the OGRDataSource, or the -sql command option to
 ogr2ogr. Attribute query expressions are also passed directly through to
 MSSQL. It's also possible to request the OGR MSSQL driver to handle SQL
-commands with the `OGR SQL <ogr_sql.html>`__ engine, by passing
+commands with the :ref:`OGR SQL <ogr_sql_dialect>` engine, by passing
 **"OGRSQL"** string to the ExecuteSQL() method, as the name of the SQL
 dialect.
 
@@ -122,45 +122,27 @@ Layer Creation Options
    default is "YES".
 -  **DIM={2,3}**: Control the dimension of the layer. Defaults to 3.
 -  **GEOMETRY_NAME**: Set the name of geometry column in the new table.
-   If omitted it defaults to *ogr_geometry*.. Note: option was called
-   GEOM_NAME in releases before GDAL 2
+   If omitted it defaults to *ogr_geometry*.
 -  **SCHEMA**: Set name of schema for new table. If this parameter is
    not supported the default schema "*dbo"* is used.
 -  **SRID**: Set the spatial reference id of the new table explicitly.
    The corresponding entry should already be added to the
    spatial_ref_sys metadata table. If this parameter is not set the SRID
    is derived from the authority code of source layer SRS.
--  **SPATIAL_INDEX**: (From GDAL 2.0.0) Boolean flag (YES/NO) to
+-  **SPATIAL_INDEX**: Boolean flag (YES/NO) to
    enable/disable the automatic creation of a spatial index on the newly
    created layers (enabled by default).
--  **UPLOAD_GEOM_FORMAT**: (From GDAL 2.0.0) Specify the geometry format
+-  **UPLOAD_GEOM_FORMAT**: Specify the geometry format
    (wkb or wkt) when creating or modifying features. The default is wkb.
--  **FID**: (From GDAL 2.0.0) Name of the FID column to create. Defaults
+-  **FID**: Name of the FID column to create. Defaults
    to ogr_fid.
--  **FID64**: (From GDAL 2.0.0) Specifies whether to create the FID
+-  **FID64**: Specifies whether to create the FID
    column with bigint type to handle 64bit wide ids. Default = NO
--  **GEOMETRY_NULLABLE**: (From GDAL 2.0.0) Specifies whether the values
+-  **GEOMETRY_NULLABLE**: Specifies whether the values
    of the geometry column can be NULL. Default = YES
 -  **EXTRACT_SCHEMA_FROM_LAYER_NAME**: (From GDAL 2.3.0) Can be set to
    NO to avoid considering the dot character as the separator between
    the schema and the table name. Defaults to YES.
-
-Spatial Index Creation
-~~~~~~~~~~~~~~~~~~~~~~
-
-By default the MS SQL Spatial driver doesn't add spatial indexes to the
-tables during the layer creation. However you should create a spatial
-index by using the following sql option:
-
-   ::
-
-      create spatial index on schema.table
-
-The spatial index can also be dropped by using the following syntax:
-
-   ::
-
-      drop spatial index on schema.table
 
 Configuration options
 ---------------------
@@ -187,7 +169,7 @@ control the behavior of this driver.
 -  **MSSQLSPATIAL_ALWAYS_OUTPUT_FID**: Always retrieve the FID value of
    the recently created feature (even if it is not a true IDENTITY
    column). Default = "NO".
--  **MSSQLSPATIAL_SHOW_FID_COLUMN**: Force to display the FID colums as
+-  **MSSQLSPATIAL_SHOW_FID_COLUMN**: Force to display the FID columns as
    a feature attribute. Default = "NO".
 -  **MSSQLSPATIAL_USE_GEOMETRY_COLUMNS**: Use/create geometry_columns
    metadata table in the database. Default = "YES".
@@ -198,8 +180,8 @@ control the behavior of this driver.
    MSSQL server. The driver tries to correct these geometries before
    submitting that to the server. Default = "YES".
 
-Transaction support (GDAL >= 2.0)
----------------------------------
+Transaction support
+-------------------
 
 The driver implements transactions at the dataset level, per :ref:`rfc-54`
 
@@ -212,17 +194,15 @@ Creating a layer from an OGR data source
 
       ogr2ogr -overwrite -f MSSQLSpatial "MSSQL:server=.\MSSQLSERVER2008;database=geodb;trusted_connection=yes" "rivers.tab"
 
+      ogr2ogr -overwrite -f MSSQLSpatial "MSSQL:server=127.0.0.1;database=TestDB;UID=SA;PWD=DummyPassw0rd" "rivers.gpkg"
+      
 Connecting to a layer and dump the contents
 
    ::
 
       ogrinfo -al "MSSQL:server=.\MSSQLSERVER2008;database=geodb;tables=rivers;trusted_connection=yes"
-
-Creating a spatial index
-
-   ::
-
-      ogrinfo -sql "create spatial index on rivers" "MSSQL:server=.\MSSQLSERVER2008;database=geodb;trusted_connection=yes"
+      
+      ogrinfo -al "MSSQL:server=127.0.0.1;database=TestDB;driver=ODBC Driver 17 for SQL Server;UID=SA;PWD=DummyPassw0rd"
 
 Connecting with username/password
 

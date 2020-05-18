@@ -2930,6 +2930,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
+        CPLAssert( papszSubdatasetName[3] );
         poDS->iDataset = atoi( papszSubdatasetName[3] );
     }
     CSLDestroy( papszSubdatasetName );
@@ -4087,7 +4088,7 @@ void GDALRegister_HDF4Image()
     poDriver->SetDescription( "HDF4Image" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "HDF4 Dataset" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_hdf4.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/hdf4.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 UInt16 Int32 UInt32 "
                                "Float32 Float64" );

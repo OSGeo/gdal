@@ -1,0 +1,28 @@
+{
+  "type":"FeatureCollection",
+  "name":"test",
+  "features":[
+    {
+      "type":"Feature",
+      "properties":{
+        "mixed1":1,
+        "mixed2":2
+      },
+      "geometry":{
+        "type":"Point",
+        "coordinates":[0,0]
+      }
+    },
+    {
+      "type":"Feature",
+      "properties":{
+          "mixed1":"abc",
+          "mixed2":3
+      },
+      "geometry":{
+        "type":"LineString",
+        "coordinates": [[100.0, 0.0], [101.0, 1.0]]
+      }
+    }
+  ]
+}

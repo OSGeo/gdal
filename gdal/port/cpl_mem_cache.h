@@ -207,7 +207,7 @@ class Cache {
   }
 
  private:
-  // Dissallow copying.
+  // Disallow copying.
   Cache(const Cache&) = delete;
   Cache& operator=(const Cache&) = delete;
 

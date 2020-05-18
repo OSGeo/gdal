@@ -111,7 +111,7 @@ Integer based computation of standard deviation
 The Welford algorithm is good but it involves floating point operations for
 each pixel to compute the progressive mean and variance. Whereas fundamentally
 we would need those floating point operations only at the end if using the
-original formulas, and we could use integer arithmetics for the rest.
+original formulas, and we could use integer arithmetic for the rest.
 Another drawback of Welford approach is that it prevents any
 parallelization whereas if you have a set of values, you can conceptually divide
 it in as many subsets you want, and for each subset compute its local minimum,
@@ -149,7 +149,7 @@ intermediary results, handling the carries and building the resulting number.
 Not very efficient, but we do not really care about that, since it is just a
 final operation.
 
-To make it is easier, that partial 128 bit arithmetics is abstracted in a
+To make it is easier, that partial 128 bit arithmetic is abstracted in a
 GDALUInt128 C++ class that has different implementations regarding the CPU and
 compiler support.
 

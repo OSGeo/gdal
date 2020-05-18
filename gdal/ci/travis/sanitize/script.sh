@@ -2,7 +2,7 @@
 
 set -e
 
-export PRELOAD=$PWD/clang+llvm-6.0.1-x86_64-linux-gnu-ubuntu-16.04/lib/clang/6.0.1/lib/linux/libclang_rt.asan-x86_64.so
+export PRELOAD=$PWD/clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-16.04/lib/clang/9.0.0/lib/linux/libclang_rt.asan-x86_64.so
 
 cd gdal
 

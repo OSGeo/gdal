@@ -40,7 +40,7 @@ import gdaltest
 
 def test_isce_1():
 
-    tst = gdaltest.GDALTest('isce', 'isce.slc', 1, 350)
+    tst = gdaltest.GDALTest('isce', 'isce/isce.slc', 1, 350)
 
     prj = """GEOGCS["WGS 84",
     DATUM["WGS_1984",
@@ -68,7 +68,7 @@ def test_isce_1():
 
 def test_isce_2():
 
-    ds = gdal.Open('data/isce.slc')
+    ds = gdal.Open('data/isce/isce.slc')
     val = ds.GetMetadataItem('IMAGE_TYPE', 'ISCE')
     assert val == 'slc'
 
@@ -78,7 +78,7 @@ def test_isce_2():
 
 def test_isce_3():
 
-    tst = gdaltest.GDALTest('isce', 'isce.slc', 1, 350)
+    tst = gdaltest.GDALTest('isce', 'isce/isce.slc', 1, 350)
     return tst.testCreateCopy(check_gt=0, new_filename='isce.tst.slc')
 
 ###############################################################################
@@ -87,7 +87,7 @@ def test_isce_3():
 
 def test_isce_4():
 
-    tst = gdaltest.GDALTest('isce', 'isce.slc', 1, 350)
+    tst = gdaltest.GDALTest('isce', 'isce/isce.slc', 1, 350)
     return tst.testCreateCopy(check_gt=0, new_filename='isce.tst.slc', vsimem=1)
 
 

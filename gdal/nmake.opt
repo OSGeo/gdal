@@ -42,7 +42,7 @@ MSVC_VER=1900
 !ENDIF
 
 ###############################################################################
-# Allow setting of parallel compilation number of processors with CPU_COUNT 
+# Allow setting of parallel compilation number of processors with CPU_COUNT
 # variable
 
 !IFNDEF CPU_COUNT
@@ -86,8 +86,14 @@ DATADIR = "$(GDAL_HOME)\data"
 
 # Set this to the installed directory containing python.  If you don't
 # have python just let it point to a directory that does not exist (as now).
-!IFNDEF PYDIR 
+!IFNDEF PYDIR
 PYDIR   =	"C:\Software\Python24"
+!ENDIF
+
+# Set this to the name of the python executable in PYDIR. For example "python_d.exe"
+# if building python bindings with a debug build.
+!IFNDEF PYEXEC
+PYEXEC = python.exe
 !ENDIF
 
 # Set the location of your SWIG installation
@@ -150,13 +156,13 @@ CXX_PDB_FLAGS=
 !IF "$(DEBUG)" == "0"
 OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MP$(CPU_COUNT) /MD /EHsc /Ox /FC /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DNDEBUG
 !ELSE
-OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MP$(CPU_COUNT) /MD /EHsc /FC /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DDEBUG
+OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MP$(CPU_COUNT) /MDd /EHsc /FC /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DDEBUG
 !ENDIF
 !ENDIF  # OPTFLAGS
 
-# 
+#
 # Set flags controlling warnings level, and suppression of some warnings.
-# 
+#
 !IFNDEF WARNFLAGS
 # 4127: conditional expression is constant
 # 4251: 'identifier' : class 'type' needs to have dll-interface to be used by clients of class 'type2'
@@ -167,14 +173,14 @@ OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MP$(CPU_COUNT) /MD /EHs
 # 4206: nonstandard extension used : translation unit is empty (only applies to C source code)
 # 4351: new behavior: elements of array 'array' will be default initialized (needed for https://trac.osgeo.org/gdal/changeset/35593)
 # 4611: interaction between '_setjmp' and C++ object destruction is non-portable
-# 
+#
 WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4351 /wd4611
 
 !ENDIF
 
-# 
+#
 # Set flags controlling availability of SSE
-# 
+#
 !IFNDEF SSEFLAGS
 SSEFLAGS = /DHAVE_SSE_AT_COMPILE_TIME
 SSSE3FLAGS = /DHAVE_SSSE3_AT_COMPILE_TIME
@@ -209,17 +215,17 @@ LDEBUG= /debug /opt:ref /opt:icf
 WIN64=YES
 !ENDIF
 
-# If you don't want some entry points to have STDCALL conventions, 
+# If you don't want some entry points to have STDCALL conventions,
 # comment out the following and add -DCPL_DISABLE_STDCALL in OPTFLAGS.
 # This option has no effect on 64-bit windows.
 !IFNDEF STDCALL
 STDCALL=YES
 !ENDIF
 
-# Version number embedded in DLL name. 
+# Version number embedded in DLL name.
 # If GDAL version is X.Y.Z, VERSION = X * 100 + Y
 !IFNDEF VERSION
-VERSION =	300
+VERSION =	301
 !ENDIF
 
 # Comment the following out if you want PAM supported disabled
@@ -234,7 +240,7 @@ DLLBUILD=1
 !ENDIF
 
 # Enable all OGR formats, or only raster formats?  Comment out to disable
-# vector formats. 
+# vector formats.
 !IFNDEF INCLUDE_OGR_FRMTS
 INCLUDE_OGR_FRMTS = YES
 !ENDIF
@@ -246,12 +252,14 @@ INCLUDE_GNM_FRMTS = YES
 !ENDIF
 
 # To be enabled defined to point to wsetargv.obj from the Visual C++ directory,
-# when you want the utility programs to be able to expand wildcards. 
+# when you want the utility programs to be able to expand wildcards.
 #SETARGV =	"D:\Software\VStudio\VC98\lib\wsetargv.obj"
 
 # PROJ stuff (required dependency: PROJ >= 6)
 #PROJ_INCLUDE = -Id:\install-proj\local\include
-#PROJ_LIBRARY = d:\install-proj\local\lib\proj_6_0.lib
+# Note: shell32.lib is needed starting with PROJ 7.0 in some circumstances
+# See https://github.com/OSGeo/gdal/issues/2488
+#PROJ_LIBRARY = d:\install-proj\local\lib\proj_6_0.lib shell32.lib
 
 # Uncomment to build with libiconv library to support extended character
 # recoding capabilities. GDAL's internal stub implementation supports
@@ -332,8 +340,8 @@ JPEG12_SUPPORTED = 1
 #		$(LIBKML_DIR)/third_party\uriparser-0.7.5.win32/release/uriparser.lib \
 #		$(LIBKML_DIR)/third_party\zlib-1.2.3.win32/lib/minizip.lib \
 #		$(LIBKML_DIR)/third_party\zlib-1.2.3.win32/lib/zlib.lib
-							
-# Uncomment the following and update to enable ECW read support with the 
+
+# Uncomment the following and update to enable ECW read support with the
 # 4.1+ readonly SDK
 #ECWDIR  = 	"c:/Program Files/ERDAS/ERDAS ECW JPEG2000 Read SDK"
 #ECWFLAGS =	-DECWSDK_VERSION=41 \
@@ -344,9 +352,9 @@ JPEG12_SUPPORTED = 1
 #		$(ECWDIR)\lib\vc90\win32\NCSUtil4.lib \
 #		$(ECWDIR)\lib\vc90\win32\NCScnet4.lib
 
-# To add Write support, use the write SDK, change NCSEcw4_RO.lib to 
+# To add Write support, use the write SDK, change NCSEcw4_RO.lib to
 # NCSEcw4.lib, and add -DHAVE_COMPRESS to ECWFLAGS.  The ECWDIR setting will
-# also need some adjustment. 
+# also need some adjustment.
 
 # Uncomment the following and update to enable ECW read support with the 5.0+ SDK
 #!IF $(MSVC_VER) < 1910
@@ -404,10 +412,97 @@ JPEG12_SUPPORTED = 1
 #		/DLIBECWJ2 /DWIN32 /D_WINDLL -DNO_X86_MMI
 
 # DWG support using the Open Design Alliance Teigha Libraries
+# Two versions are supported:
+# - ODA >= 2021 (tested with 2021.2), defined immediately
+# - Teigha 4.2, see a bit below
 
-#TD_BASE = C:\warmerda\pkg\td_vc9
-#TD_FLAGS = -D_TOOLKIT_IN_DLL_
-#TD_INCLUDE = -I$(TD_BASE)\TD\Include -I$(TD_BASE)\TD\Extensions\ExServices
+# For ODA >= 2021, you must define appropriately the following variables
+# TD_ACTIVATION_FILE_DIRECTORY: path to a directory where the "OdActivationInfo" file is.
+# TD_DRAWINGS_BASE: path where the Drawings component is installed (it has among others the Dgn, lib, Kernel and KernelBase subdirectories)
+# TD_KERNEL_BASE: path where the Kernel component is installed (it has among others the lib subdirectories)
+# TD_PLATFORM: suffix indicating the architecture, compiler version and uild type. For example "vc15dll", "vc15md". This is the suffix found at the end of TD_KERNEL_BASE and TD_DRAWINGS_BASE
+# And only when linking against a DLL build of ODA,
+# TD_DLL_FLAGS: to uncomment only when linking against a DLL build of ODA.
+#
+# Example:
+# TD_ACTIVATION_FILE_DIRECTORY = C:\dev\oda
+# TD_KERNEL_BASE = C:\dev\oda\Kernel_vc15dll
+# TD_DRAWINGS_BASE = C:\dev\oda\Drawings_vc15dll
+# TD_PLATFORM = vc15dll
+# TD_DLL_FLAGS = /D_TOOLKIT_IN_DLL_
+
+# Logic to define TD_INCLUDE and TD_LIBS for ODA >= 2020
+!IFDEF TD_PLATFORM
+!IFNDEF TD_INCLUDE
+TD_INCLUDE = $(TD_DLL_FLAGS)\
+             -I$(TD_ACTIVATION_FILE_DIRECTORY) \
+             -I$(TD_DRAWINGS_BASE)\KernelBase\Include \
+			 -I$(TD_DRAWINGS_BASE)\Kernel\Include \
+			 -I$(TD_DRAWINGS_BASE)\Kernel\Extensions\ExServices \
+			 -I$(TD_DRAWINGS_BASE)\Drawing\Include \
+			 -I$(TD_DRAWINGS_BASE)\Drawing\Extensions\ExServices \
+			 -I$(TD_DRAWINGS_BASE)\Dgn\include \
+			 -I$(TD_DRAWINGS_BASE)\Dgn\Extensions\ExServices
+!ENDIF
+
+!IFNDEF TD_LIBS
+TD_DRAWINGS_LIBDIR = $(TD_DRAWINGS_BASE)\lib\$(TD_PLATFORM)
+TD_KERNEL_LIBDIR = $(TD_KERNEL_BASE)\lib\$(TD_PLATFORM)
+
+TD_LIBS =  \
+    $(TD_DRAWINGS_LIBDIR)/TD_Db.lib \
+    $(TD_DRAWINGS_LIBDIR)/TD_DbCore.lib \
+    $(TD_DRAWINGS_LIBDIR)/TD_DbEntities.lib \
+    $(TD_DRAWINGS_LIBDIR)/TD_DrawingsExamplesCommon.lib \
+    $(TD_DRAWINGS_LIBDIR)/TG_Db.lib \
+    $(TD_DRAWINGS_LIBDIR)/TG_ExamplesCommon.lib \
+    $(TD_KERNEL_LIBDIR)/TD_Alloc.lib \
+    $(TD_KERNEL_LIBDIR)/TD_DbRoot.lib \
+    $(TD_KERNEL_LIBDIR)/TD_ExamplesCommon.lib \
+    $(TD_KERNEL_LIBDIR)/TD_Ge.lib \
+    $(TD_KERNEL_LIBDIR)/TD_Root.lib \
+    advapi32.lib
+
+!IFDEF TD_DLL_FLAGS
+# Additional libs specific to ODA DLL builds
+TD_LIBS = $(TD_LIBS) \
+    $(TD_DRAWINGS_LIBDIR)/TD_Key.lib
+!ELSE
+# Additional libs specific to ODA static builds
+TD_LIBS = $(TD_LIBS) \
+    $(TD_KERNEL_LIBDIR)/TD_Gi.lib \
+    $(TD_KERNEL_LIBDIR)/tinyxml.lib \
+    $(TD_KERNEL_LIBDIR)/TD_Zlib.lib \
+    $(TD_DRAWINGS_LIBDIR)/TD_DbIO.lib \
+    $(TD_DRAWINGS_LIBDIR)/ISM.lib \
+    $(TD_DRAWINGS_LIBDIR)/WipeOut.lib \
+    $(TD_DRAWINGS_LIBDIR)/RText.lib \
+    $(TD_DRAWINGS_LIBDIR)/ATEXT.lib \
+    $(TD_DRAWINGS_LIBDIR)/SCENEOE.lib \
+    $(TD_DRAWINGS_LIBDIR)/ACCAMERA.lib \
+    $(TD_DRAWINGS_LIBDIR)/AcMPolygonObj15.lib \
+    $(TD_KERNEL_LIBDIR)/TD_Gs.lib \
+    $(TD_KERNEL_LIBDIR)/TD_SpatialIndex.lib \
+    $(TD_KERNEL_LIBDIR)/oless.lib \
+    $(TD_KERNEL_LIBDIR)/UTF.lib \
+    $(TD_KERNEL_LIBDIR)/WinBitmap.lib \
+    $(TD_KERNEL_LIBDIR)/OdBrepModeler.lib \
+    $(TD_KERNEL_LIBDIR)/TD_Br.lib \
+    $(TD_KERNEL_LIBDIR)/TD_AcisBuilder.lib \
+    $(TD_KERNEL_LIBDIR)/TD_BrepBuilder.lib \
+    $(TD_KERNEL_LIBDIR)/TD_BrepBuilderFiller.lib \
+    $(TD_KERNEL_LIBDIR)/TD_BrepRenderer.lib \
+    $(TD_DRAWINGS_LIBDIR)/ModelerGeometry.lib \
+    $(TD_DRAWINGS_LIBDIR)/RecomputeDimBlock.lib \
+    crypt32.lib \
+    secur32.lib \
+    user32.lib \
+    gdi32.lib \
+    ole32.lib
+!ENDIF  # TD_DLL_FLAGS
+!ENDIF  # TD_LIBS
+!ENDIF  # TD_PLATFORM
+
 # The following works for Teigha 4.2.2
 # In TD_INCLUDE, add /D_TOOLKIT_IN_DLL_ if linking against the .dll
 #TD_INCLUDE = -I$(TD_BASE)\Core\Include -I$(TD_BASE)\Core\Extensions\ExServices -I$(TD_BASE)\Dgn\include -I$(TD_BASE)\Dgn\Extensions\ExServices
@@ -460,7 +555,7 @@ JPEG12_SUPPORTED = 1
 
 # Uncomment and adjust paths if you have Kakadu 6.0 or newer
 #
-# Starting with KKDU V7.9.1 (at least), it is possible to generate 
+# Starting with KKDU V7.9.1 (at least), it is possible to generate
 # jp2ak and jpipkak with the 2 Kakadu DLLs instead of object files
 # In such case :
 #   o do NOT define KAKOBJDIR
@@ -490,16 +585,16 @@ KAKADU_7_5_OR_LATER = YES
 # Uncomment the following and update to enable NCSA HDF Release 5 support.
 #HDF5_PLUGIN = NO
 #HDF5_DIR =	c:\warmerda\supportlibs\hdf5\5-164-win
-#HDF5_LIB =	$(HDF5_DIR)\dll\hdf5dll.lib 
+#HDF5_LIB =	$(HDF5_DIR)\dll\hdf5dll.lib
 
-# Needed to define H5_BUILT_AS_DYNAMIC_LIB for windows compilation 
+# Needed to define H5_BUILT_AS_DYNAMIC_LIB for windows compilation
 # scenarios where it is not exported on the target (non-CMake builds)
 #HDF5_H5_IS_DLL = YES
 
 # Uncomment the following and update to enable KEA support.
 #KEA_PLUGIN = NO
 #KEA_CFLAGS = -Ic:\kea\include
-#KEA_LIB = c:\kea\libkea.lib 
+#KEA_LIB = c:\kea\libkea.lib
 
 # Uncomment the following for MrSID support.  Only MRSID_DIR is required,
 # which may point to a MrSID Raster SDK, Lidar SDK, or the combined SDK, and
@@ -528,7 +623,7 @@ PCIDSK_SETTING=INTERNAL
 #PG_LIB = n:\pkg\libpq_win32\lib\libpqdll.lib wsock32.lib
 
 # MySQL Libraries
-# NOTE: Need /MT instead of /MD, also enable /EHsc switch. 
+# NOTE: Need /MT instead of /MD, also enable /EHsc switch.
 #MYSQL_INC_DIR = D:\Software\MySQLServer4.1\include
 #MYSQL_LIB = D:\Software\MySQLServer4.1\lib\opt\libmysql.lib advapi32.lib
 
@@ -598,19 +693,23 @@ GRIB_SETTING=yes
 # Uncomment the following if you prefer to build OCI support as a plugin.
 #OCI_PLUGIN = YES
 
-#!IFDEF ORACLE_HOME
-#OCI_LIB =	$(ORACLE_HOME)\oci\lib\msvc\ociw32.lib \
-#		$(ORACLE_HOME)\oci\lib\msvc\oci.lib
-#OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
-#!ENDIF
+!IFDEF ORACLE_HOME
+!IFNDEF OCI_LIB
+OCI_LIB =	$(ORACLE_HOME)\oci\lib\msvc\ociw32.lib \
+		$(ORACLE_HOME)\oci\lib\msvc\oci.lib
+!ENDIF
+!IFNDEF OCI_INCLUDE
+OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
+!ENDIF
+!ENDIF
 
 #SDE_ENABLED = YES
 #SDE_VERSION=91
 #SDE_PLUGIN = NO
 #SDE_SDK = C:\arcgis\arcsde
-#SDE_INC = $(SDE_SDK)\include 
+#SDE_INC = $(SDE_SDK)\include
 #SDE_LIB = $(SDE_SDK)\lib\pe$(SDE_VERSION).lib \
-#          $(SDE_SDK)\lib\sde$(SDE_VERSION).lib $(SDE_SDK)\lib\sg$(SDE_VERSION).lib      
+#          $(SDE_SDK)\lib\sde$(SDE_VERSION).lib $(SDE_SDK)\lib\sg$(SDE_VERSION).lib
 
 #MRR_PLUGIN = YES
 #MRR_ENABLED = YES
@@ -624,7 +723,7 @@ GRIB_SETTING=yes
 #FGDB_ENABLED = YES
 #FGDB_PLUGIN = YES
 #FGDB_SDK = C:\Users\rburhum\Desktop\FileGDB_API_VS2008_1_0beta3
-#FGDB_INC = $(FGDB_SDK)\include 
+#FGDB_INC = $(FGDB_SDK)\include
 #FGDB_LIB = $(FGDB_SDK)\lib\FileGDBAPI.lib
 
 #uncomment to build AmigoCloud as a plugin instead
@@ -672,7 +771,7 @@ GRIB_SETTING=yes
 # Uncomment for OpenJpeg (release v2.1 or later) support
 #OPENJPEG_ENABLED = YES
 # Note that, contrary to GDAL releases <= 2.2.X, this must point to the
-# directory where openjpeg.h and opj_config.h are set 
+# directory where openjpeg.h and opj_config.h are set
 #OPENJPEG_CFLAGS = -IC:\openjpeg\include\openjpeg-2.X
 #OPENJPEG_LIB = C:\openjpeg\lib\openjp2.lib
 
@@ -790,7 +889,7 @@ QHULL_SETTING = INTERNAL
 # Cryptopp stuff.
 # Make sure cryptopp is compiled with /MD ( Properties | Configuration properties | C/C++ |  Code Generation | Runtime Library: Multi-threaded DLL (/MD))
 # The headers file must be in $(CRYPTOPP_INC)/cryptopp (the /cryptopp part must not be in the following variable then)
-# CRYPTOPP_INC = -Ic:/install-cryptopp-x64/include 
+# CRYPTOPP_INC = -Ic:/install-cryptopp-x64/include
 #
 # Define USE_ONLY_CRYPTODLL_ALG is running against cryptopp.dll, but not if statically linking
 # USE_ONLY_CRYPTODLL_ALG=YES
@@ -809,7 +908,7 @@ QHULL_SETTING = INTERNAL
 MRF_SETTING=yes
 
 # Any extra libraries needed on this platform?
-ADD_LIBS	= 
+ADD_LIBS	=
 
 # Binding list. One or several in the following list
 # csharp, java, python
@@ -817,8 +916,8 @@ ADD_LIBS	=
 
 # Comment out the following if you want to build with Python support, but
 # you don't have Numeric Python installed (with include files).  Numeric
-# integration may not work.  This only appears to the old generation 
-# bindings. 
+# integration may not work.  This only appears to the old generation
+# bindings.
 #HAVE_NUMPY=1
 
 # Set HAVE_LERC=0 to disable LERC support
@@ -829,8 +928,10 @@ HAVE_LERC=1
 # Comment out the following if you want to build JPEGLS with CHARLS support
 #CHARLS_INC=-IE:\work\GIS\gdal\supportlibs\charls\include\
 #CHARLS_LIB=e:\work\GIS\gdal\supportlibs\charls\bin\Release\x86\CharLS.lib
-# Comment out for API 2.x:
+# Comment out for charls 2.0:
 #CHARLS_FLAGS = -DCHARLS_2
+# And for charls 2.1
+#CHARLS_FLAGS = -DCHARLS_2_1
 
 # Comment out for DDS driver
 #CRUNCH_INC = -Ic:\dev\install-crunch\include\crunch
@@ -865,7 +966,7 @@ GNM_FLAG = -DGNM_ENABLED
 !ENDIF
 !ENDIF
 
-#LINKER_FLAGS =	/NODEFAULTLIB:LIBC 
+#LINKER_FLAGS =	/NODEFAULTLIB:LIBC
 LINKER_FLAGS = $(EXTRA_LINKER_FLAGS) $(MSVC_VLD_LIB) $(LDEBUG)
 
 

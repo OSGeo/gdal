@@ -417,7 +417,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         # projVrt = os.path.join(outPath, "%s_%s.vrt" % \
         #    (origTiff.rstrip('.tif'), proj[0] ))
         projRaster = os.path.join(outPath, "%s_%s.%s" %
-                                  (origTiff.rstrip('.tif'), proj[0], intExt))
+                                  (os.path.basename(origTiff).rstrip('.tif'), proj[0], intExt))
         srs = osr.SpatialReference()
         srs.SetFromUserInput(proj[2])
         t_srs_wkt = srs.ExportToWkt()
@@ -556,9 +556,9 @@ def test_netcdf_cf_1(netcdf_setup):  # noqa
     if gdaltest.netcdf_drv is None:
         pytest.skip()
 
-    # tst1 = gdaltest.GDALTest( 'NETCDF', 'trmm.tif', 1, 14 )
+    # tst1 = gdaltest.GDALTest( 'NETCDF', 'netcdf/trmm.tif', 1, 14 )
     # result = tst1.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_1.nc', delete_copy = 0)
-    result = netcdf_test_copy('data/trmm.nc', 1, 14, 'tmp/netcdf_cf_1.nc')
+    result = netcdf_test_copy('data/netcdf/trmm.nc', 1, 14, 'tmp/netcdf_cf_1.nc')
     if result != 'fail':
         # tst2 = gdaltest.GDALTest( 'GTIFF', '../tmp/netcdf_cf_1.nc', 1, 14 )
         # result = tst2.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_1.tiff', delete_copy = 0)
@@ -580,7 +580,7 @@ def test_netcdf_cf_2():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
 
-    result = netcdf_test_copy('data/trmm.nc', 1, 14, 'tmp/netcdf_cf_2.nc')
+    result = netcdf_test_copy('data/netcdf/trmm.nc', 1, 14, 'tmp/netcdf_cf_2.nc')
 
     result_cf = 'success'
     if gdaltest.netcdf_cf_method is not None:
@@ -602,7 +602,7 @@ def test_netcdf_cf_3():
     result = 'success'
     result_cf = 'success'
 
-    result = netcdf_test_copy('data/trmm-wgs84.tif', 1, 14, 'tmp/netcdf_cf_3.nc')
+    result = netcdf_test_copy('data/netcdf/trmm-wgs84.tif', 1, 14, 'tmp/netcdf_cf_3.nc')
 
     if result == 'success':
         # tst = gdaltest.GDALTest( 'GTIFF', '../tmp/netcdf_cf_3.nc', 1, 14 )
@@ -626,10 +626,10 @@ def test_netcdf_cf_4():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
 
-    result = netcdf_cfproj_testcopy(netcdf_cfproj_tuples, 'melb-small.tif',
+    result = netcdf_cfproj_testcopy(netcdf_cfproj_tuples, 'netcdf/melb-small.tif',
                                     netcdf_cfproj_int_fmt_maps,
                                     'data', 'tmp', 'translate_results.txt')
-#    result = netcdf_cfproj_testcopy(netcdf_cfproj_tuples1, 'melb-small.tif', \
+#    result = netcdf_cfproj_testcopy(netcdf_cfproj_tuples1, 'netcdf/melb-small.tif', \
 #                                    'data', 'tmp', 'translate_results.txt')
 
     return result
@@ -643,7 +643,7 @@ def test_netcdf_cf_5():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
 
-    ifiles = ['NETCDF:data/orog_CRCM1.nc:orog', 'NETCDF:data/orog_CRCM2.nc:orog']
+    ifiles = ['NETCDF:data/netcdf/orog_CRCM1.nc:orog', 'NETCDF:data/netcdf/orog_CRCM2.nc:orog']
     for ifile in ifiles:
         ds = gdal.Open(ifile)
         prj = ds.GetProjection()
@@ -663,9 +663,9 @@ def test_netcdf_cf_6():
     if gdaltest.netcdf_drv is None:
         pytest.skip()
 
-    ifiles = ('data/cf_dimsindiff_4326.nc',
-              'NETCDF:data/cf_nasa_4326.nc:/science/grids/data/temp',
-              'NETCDF:data/cf_nasa_4326.nc:/science/grids/imagingGeometry/lookAngle')
+    ifiles = ('data/netcdf/cf_dimsindiff_4326.nc',
+              'NETCDF:data/netcdf/cf_nasa_4326.nc:/science/grids/data/temp',
+              'NETCDF:data/netcdf/cf_nasa_4326.nc:/science/grids/imagingGeometry/lookAngle')
     for ifile in ifiles:
         ds = gdal.Open(ifile)
         prj = ds.GetProjection()
@@ -685,10 +685,10 @@ def test_netcdf_cf_7(netcdf_setup):  # noqa
     if gdaltest.netcdf_drv is None:
         pytest.skip()
 
-    checks = (('data/cf_dimsindiff_4326.nc', 1, 2041),
-              ('NETCDF:data/cf_nasa_4326.nc:/science/grids/data/temp', 1, 2041),
-              ('NETCDF:data/cf_nasa_4326.nc:/science/grids/imagingGeometry/lookAngle', 1, 476),
-              ('NETCDF:data/cf_nasa_4326.nc:/science/grids/imagingGeometry/lookAngle', 4, 476))
+    checks = (('data/netcdf/cf_dimsindiff_4326.nc', 1, 2041),
+              ('NETCDF:data/netcdf/cf_nasa_4326.nc:/science/grids/data/temp', 1, 2041),
+              ('NETCDF:data/netcdf/cf_nasa_4326.nc:/science/grids/imagingGeometry/lookAngle', 1, 476),
+              ('NETCDF:data/netcdf/cf_nasa_4326.nc:/science/grids/imagingGeometry/lookAngle', 4, 476))
 
     for infile, band, checksum in checks:
         ds = gdal.Open(infile, gdal.GA_ReadOnly)

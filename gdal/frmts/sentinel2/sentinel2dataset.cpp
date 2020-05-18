@@ -111,6 +111,7 @@ typedef struct
 {
     const char* pszBandName;
     const char* pszBandDescription;
+    int         nResolution;    /* meters */
     SENTINEL2_L2A_Tilelocation eLocation;
 } SENTINEL2_L2A_BandDescription;
 
@@ -121,13 +122,24 @@ public:
     CPLString osBandPrefixPath; // GRANULE/L1C_T30TXT_A007999_20170102T111441/IMG_DATA/T30TXT_20170102T111442_
 };
 
+static const char* L2A_BandDescription_AOT = "Aerosol Optical Thickness map (at 550nm)";
+static const char* L2A_BandDescription_WVP = "Scene-average Water Vapour map";
+static const char* L2A_BandDescription_SCL = "Scene Classification";
+static const char* L2A_BandDescription_CLD = "Raster mask values range from 0 for high confidence clear sky to 100 for high confidence cloudy";
+static const char* L2A_BandDescription_SNW = "Raster mask values range from 0 for high confidence NO snow/ice to 100 for high confidence snow/ice";
+
 static const SENTINEL2_L2A_BandDescription asL2ABandDesc[] =
 {
-    { "AOT", "Aerosol Optical Thickness map (at 550nm)", TL_IMG_DATA_Rxxm },
-    { "WVP", "Scene-average Water Vapour map", TL_IMG_DATA_Rxxm },
-    { "SCL", "Scene Classification", TL_IMG_DATA },
-    { "CLD", "Raster mask values range from 0 for high confidence clear sky to 100 for high confidence cloudy", TL_QI_DATA },
-    { "SNW", "Raster mask values range from 0 for high confidence NO snow/ice to 100 for high confidence snow/ice", TL_QI_DATA },
+    { "AOT", L2A_BandDescription_AOT,20, TL_IMG_DATA_Rxxm },
+    { "AOT", L2A_BandDescription_AOT,60, TL_IMG_DATA_Rxxm },
+    { "WVP", L2A_BandDescription_WVP,20, TL_IMG_DATA_Rxxm },
+    { "WVP", L2A_BandDescription_WVP,60, TL_IMG_DATA_Rxxm },
+    { "SCL", L2A_BandDescription_SCL,20, TL_IMG_DATA_Rxxm },
+    { "SCL", L2A_BandDescription_SCL,60, TL_IMG_DATA_Rxxm },
+    { "CLD", L2A_BandDescription_CLD,20, TL_QI_DATA },
+    { "CLD", L2A_BandDescription_CLD,60, TL_QI_DATA },
+    { "SNW", L2A_BandDescription_SNW,20, TL_QI_DATA },
+    { "SNW", L2A_BandDescription_SNW,60, TL_QI_DATA },
 };
 
 #define NB_L2A_BANDS (sizeof(asL2ABandDesc)/sizeof(asL2ABandDesc[0]))
@@ -1539,13 +1551,16 @@ static CPLString SENTINEL2GetTilename(const CPLString& osGranulePath,
     const char chSeparator = SENTINEL2GetPathSeparator(osTile);
     if( !osTile.empty() )
         osTile += chSeparator;
-    if( bIsPreview ||
-        (psL2ABandDesc != nullptr && psL2ABandDesc->eLocation == TL_QI_DATA ) )
+    bool procBaseLineIs1 = false;
+    if( osJPEG2000Name.size() > 12 && osJPEG2000Name[8] == '_' && osJPEG2000Name[12] == '_' )
+        procBaseLineIs1 = true;
+    if( bIsPreview || 
+        (psL2ABandDesc != nullptr &&
+            (psL2ABandDesc->eLocation == TL_QI_DATA ) ) )
     {
         osTile += "QI_DATA";
         osTile += chSeparator;
-        if( osJPEG2000Name.size() > 12 &&
-            osJPEG2000Name[8] == '_' && osJPEG2000Name[12] == '_' )
+        if( procBaseLineIs1 )
         {
             if( atoi(osBandName) > 0 )
             {
@@ -1559,13 +1574,14 @@ static CPLString SENTINEL2GetTilename(const CPLString& osGranulePath,
                 osJPEG2000Name[10] = osBandName[1];
                 osJPEG2000Name[11] = osBandName[2];
             }
+            osTile += osJPEG2000Name;
         }
         else
         {
-            CPLDebug("SENTINEL2", "Invalid granule path: %s",
-                     osGranulePath.c_str());
+            osTile += "MSK_";
+            osTile += osBandName;
+            osTile += "PRB";
         }
-        osTile += osJPEG2000Name;
         if( nPrecisionL2A && !bIsPreview )
             osTile += CPLSPrintf("_%02dm", nPrecisionL2A);
     }
@@ -1573,14 +1589,14 @@ static CPLString SENTINEL2GetTilename(const CPLString& osGranulePath,
     {
         osTile += "IMG_DATA";
         osTile += chSeparator;
-        if( (psL2ABandDesc != nullptr && psL2ABandDesc->eLocation == TL_IMG_DATA_Rxxm) ||
-            (psL2ABandDesc == nullptr && nPrecisionL2A != 0) )
+        if( ( (psL2ABandDesc != nullptr && psL2ABandDesc->eLocation == TL_IMG_DATA_Rxxm) ||
+              (psL2ABandDesc == nullptr && nPrecisionL2A != 0) ) &&
+            (!procBaseLineIs1 || osBandName!="SCL") )
         {
             osTile += CPLSPrintf("R%02dm", nPrecisionL2A);
             osTile += chSeparator;
         }
-        if( osJPEG2000Name.size() > 12 &&
-            osJPEG2000Name[8] == '_' && osJPEG2000Name[12] == '_' )
+        if( procBaseLineIs1 )
         {
             if( atoi(osBandName) > 0 )
             {
@@ -1616,6 +1632,12 @@ static CPLString SENTINEL2GetTilename(const CPLString& osGranulePath,
                 osTile += osBandName.substr(1);
             else
                 osTile += osBandName;
+        }
+        else
+        if( !procBaseLineIs1 )
+        {
+            osTile += "_";
+            osTile += osBandName;
         }
         if( nPrecisionL2A )
             osTile += CPLSPrintf("_%02dm", nPrecisionL2A);
@@ -1760,8 +1782,6 @@ GDALDataset *SENTINEL2Dataset::OpenL1BGranule( const char* pszFilename,
 
     SENTINEL2_CPLXMLNodeHolder oXMLHolder(psRoot);
     CPLStripXMLNamespace(psRoot, nullptr, TRUE);
-
-    CPLString osMainMTD(SENTINEL2GetMainMTDFilenameFromGranuleMTD(pszFilename));
 
     SENTINEL2DatasetContainer* poDS = new SENTINEL2DatasetContainer();
 
@@ -2466,6 +2486,14 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2A( const char* pszFilename,
                 osName = "0" + osName;
             oMapResolutionsToBands[psBandDesc->nResolution].insert(osName);
         }
+        if (eLevel == SENTINEL2_L2A )
+        {
+            for( const auto& sL2ABandDesc: asL2ABandDesc)
+            {
+                oSetResolutions.insert( sL2ABandDesc.nResolution );
+                oMapResolutionsToBands[sL2ABandDesc.nResolution].insert(sL2ABandDesc.pszBandName);
+            }
+        }
     }
     else if( eLevel == SENTINEL2_L1C &&
         !SENTINEL2GetResolutionSet(psProductInfo,
@@ -3090,6 +3118,13 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2ASubdataset( GDALOpenInfo * poOpenInfo,
                 osName = "0" + osName;
             oMapResolutionsToBands[psBandDesc->nResolution].insert(osName);
         }
+        if (eLevel == SENTINEL2_L2A )
+        {
+            for( const auto& sL2ABandDesc: asL2ABandDesc)
+            {
+                oMapResolutionsToBands[sL2ABandDesc.nResolution].insert(sL2ABandDesc.pszBandName);
+            }
+        }
         if( eLevel == SENTINEL2_L1C &&
             !SENTINEL2GetGranuleList_L1CSafeCompact(psRoot, osFilename,
                                                     aoL1CSafeCompactGranuleList) )
@@ -3583,7 +3618,8 @@ SENTINEL2Dataset* SENTINEL2Dataset::CreateL1CL2ADataset(
                         bIsPreview,
                         (eLevel == SENTINEL2_L1C) ? 0 : nSubDSPrecision);
                 if( bIsSafeCompact && eLevel == SENTINEL2_L2A &&
-                    pType == MSI2Ap && osTile.size() >= 34 )
+                    pType == MSI2Ap && osTile.size() >= 34 &&
+                    osTile.substr(osTile.size()-18,3)!="MSK" )
                 {
                     osTile.insert(osTile.size() - 34, "L2A_");
                 }
@@ -3835,7 +3871,7 @@ void GDALRegister_SENTINEL2()
 #endif
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Sentinel 2" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_sentinel2.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/sentinel2.html" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 
 #ifdef GDAL_DMD_OPENOPTIONLIST

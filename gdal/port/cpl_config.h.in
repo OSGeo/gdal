@@ -183,9 +183,6 @@
 /* Define to 1 if you have the `lstat' function. */
 #undef HAVE_LSTAT
 
-/* Set the native cpu bit order (FILLORDER_LSB2MSB or FILLORDER_MSB2LSB) */
-#undef HOST_FILLORDER
-
 /* Define as const if the declaration of iconv() needs const. */
 #undef ICONV_CONST
 

@@ -2409,7 +2409,7 @@ std::vector<std::shared_ptr<GDALDimension>> HDF4SDSGroup::GetDimensions(CSLConst
         SDendaccess(iSDS);
     }
 
-    // Instanciate dimensions
+    // Instantiate dimensions
     std::set<std::shared_ptr<GDALDimensionWeakIndexingVar>> oSetDimsWithVariable;
     for(const auto& iter: oMapDimIdToDimSize )
     {
@@ -2452,6 +2452,7 @@ std::vector<std::shared_ptr<GDALDimension>> HDF4SDSGroup::GetDimensions(CSLConst
                                                       osType,
                                                       osDirection,
                                                       iter.second));
+        // cppcheck-suppress knownConditionTrueFalse
         if( bIsIndexedDim )
         {
             oSetDimsWithVariable.insert(poDim);

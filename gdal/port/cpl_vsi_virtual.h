@@ -95,10 +95,12 @@ public:
     virtual int Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags) = 0;
     virtual int Unlink( const char *pszFilename )
                       { (void) pszFilename; errno=ENOENT; return -1; }
+    virtual int* UnlinkBatch( CSLConstList papszFiles );
     virtual int Mkdir( const char *pszDirname, long nMode )
                       {(void)pszDirname; (void)nMode; errno=ENOENT; return -1;}
     virtual int Rmdir( const char *pszDirname )
                       { (void) pszDirname; errno=ENOENT; return -1; }
+    virtual int RmdirRecursive( const char *pszDirname );
     virtual char **ReadDir( const char *pszDirname )
                       { (void) pszDirname; return nullptr; }
     virtual char **ReadDirEx( const char *pszDirname, int /* nMaxFiles */ )
@@ -121,6 +123,14 @@ public:
 
     virtual VSIDIR* OpenDir( const char *pszPath, int nRecurseDepth,
                              const char* const *papszOptions);
+
+    virtual char** GetFileMetadata( const char * pszFilename, const char* pszDomain,
+                                    CSLConstList papszOptions );
+
+    virtual bool   SetFileMetadata( const char * pszFilename,
+                                    CSLConstList papszMetadata,
+                                    const char* pszDomain,
+                                    CSLConstList papszOptions );
 };
 #endif /* #ifndef DOXYGEN_SKIP */
 

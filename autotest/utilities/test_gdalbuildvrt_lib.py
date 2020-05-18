@@ -86,5 +86,18 @@ def test_gdalbuildvrt_lib_2():
     ds = None
 
 
+###############################################################################
+# Test creating overviews
 
+
+def test_gdalbuildvrt_lib_ovr():
+
+    tmpfilename = '/vsimem/my.vrt'
+    ds = gdal.BuildVRT(tmpfilename, '../gcore/data/byte.tif')
+    ds.BuildOverviews('NEAR', [2])
+    ds = None
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
+    ds = None
+    gdal.GetDriverByName('VRT').Delete(tmpfilename)
 

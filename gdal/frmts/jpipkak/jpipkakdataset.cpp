@@ -495,6 +495,8 @@ void JPIPKAKDataset::KakaduInitialize()
 
         jpipkak_kdu_cpl_error_message oErrHandler( CE_Failure );
         jpipkak_kdu_cpl_error_message oWarningHandler( CE_Warning );
+        CPL_IGNORE_RET_VAL(oErrHandler);
+        CPL_IGNORE_RET_VAL(oWarningHandler);
 
         kdu_customize_warnings(new jpipkak_kdu_cpl_error_message( CE_Warning ) );
         kdu_customize_errors(new jpipkak_kdu_cpl_error_message( CE_Failure ) );
@@ -847,7 +849,7 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
         }
         else
         {
-            // treat as cartesian, no geo metadata
+            // treat as Cartesian, no geo metadata
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Parsed metadata boxes from jpip stream, geographic metadata not found - is the server using placeholders for this data?" );
         }
@@ -1506,7 +1508,7 @@ void GDALRegister_JPIPKAK()
     poDriver->SetDescription( "JPIPKAK" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "JPIP (based on Kakadu)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jpipkak.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/jpipkak.html" );
     poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jpp-stream" );
 
     poDriver->pfnOpen = JPIPKAKDataset::Open;

@@ -1498,7 +1498,10 @@ def test_vrtpansharpen_9():
 </VRTDataset>""")
     assert vrt_ds is not None
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
-    assert cs in ([6950, 11745, 8965],)
+    expected_cs_list = ([6950, 11745, 8965],
+                        [6946, 11736, 8957] # s390x
+                        )
+    assert cs in expected_cs_list
 
     # Implicit nodata
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/small_world_pan_nodata.tif', 800, 400)
@@ -1535,7 +1538,7 @@ def test_vrtpansharpen_9():
 </VRTDataset>""")
     assert vrt_ds is not None
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
-    assert cs in ([6950, 11745, 8965],)
+    assert cs in expected_cs_list
 
     gdal.Unlink('/vsimem/small_world_pan_nodata.tif')
     gdal.Unlink('/vsimem/small_world_nodata.tif')
@@ -1762,6 +1765,37 @@ def test_vrtpansharpen_11():
     </VRTDataset>""", pan_mem_ds.GetRasterBand(1), [ms_mem_ds.GetRasterBand(i + 1) for i in range(3)])
     gdal.PopErrorHandler()
     assert vrt_ds is None
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/2328
+
+
+def test_vrtpansharpen_nodata_multiple_spectral_bands():
+
+    gdal.Translate('/vsimem/b1.tif', 'data/small_world.tif')
+    gdal.Translate('/vsimem/b2.tif', 'data/small_world.tif')
+
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
+  <PansharpeningOptions>
+      <NoData>0</NoData>
+    <PanchroBand>
+      <SourceFilename>data/small_world.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </PanchroBand>
+    <SpectralBand dstBand="1">
+      <SourceFilename>/vsimem/b1.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SpectralBand>
+    <SpectralBand dstBand="2">
+      <SourceFilename>/vsimem/b2.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SpectralBand>
+  </PansharpeningOptions>
+</VRTDataset>""")
+    assert vrt_ds
+
+    gdal.Unlink('/vsimem/b1.tif')
+    gdal.Unlink('/vsimem/b2.tif')
 
 ###############################################################################
 # Cleanup

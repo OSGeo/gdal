@@ -1243,7 +1243,7 @@ def Info(ds, **kwargs):
     return ret
 
 
-def MultiDimInfoOptions(options=None, detailed=False, array=None, limit=None, as_text=False):
+def MultiDimInfoOptions(options=None, detailed=False, array=None, arrayoptions=None, limit=None, as_text=False):
     """ Create a MultiDimInfoOptions() object that can be passed to gdal.MultiDimInfo()
         options can be be an array of strings, a string or let empty and filled from other keywords."""
 
@@ -1259,6 +1259,9 @@ def MultiDimInfoOptions(options=None, detailed=False, array=None, limit=None, as
             new_options += ['-array', array]
         if limit:
             new_options += ['-limit', str(limit)]
+        if arrayoptions:
+            for option in arrayoptions:
+                new_options += ['-arrayoption', option]
 
     return GDALMultiDimInfoOptions(new_options), as_text
 
@@ -1471,7 +1474,7 @@ def WarpOptions(options=None, format=None,
           workingType --- working type (gdalconst.GDT_Byte, etc...)
           warpOptions --- list of warping options
           errorThreshold --- error threshold for approximation transformer (in pixels)
-          warpMemoryLimit --- size of working buffer in bytes
+          warpMemoryLimit --- size of working buffer in MB
           resampleAlg --- resampling mode
           creationOptions --- list of creation options
           srcNodata --- source nodata value(s)
@@ -1654,6 +1657,7 @@ def VectorTranslateOptions(options=None, format=None,
          geometryType=None,
          dim=None,
          segmentizeMaxDist= None,
+         makeValid=False,
          zField=None,
          skipFailures=False,
          limit=None,
@@ -1682,6 +1686,7 @@ def VectorTranslateOptions(options=None, format=None,
           geometryType --- output layer geometry type ('POINT', ....)
           dim --- output dimension ('XY', 'XYZ', 'XYM', 'XYZM', 'layer_dim')
           segmentizeMaxDist --- maximum distance between consecutive nodes of a line geometry
+          makeValid --- run MakeValid() on geometries
           zField --- name of field to use to set the Z component of geometries
           skipFailures --- whether to skip failures
           limit -- maximum number of features to read per layer
@@ -1745,6 +1750,8 @@ def VectorTranslateOptions(options=None, format=None,
                     new_options += [lyr]
         if segmentizeMaxDist is not None:
             new_options += ['-segmentize', str(segmentizeMaxDist)]
+        if makeValid:
+            new_options += ['-makevalid']
         if spatFilter is not None:
             new_options += ['-spat', str(spatFilter[0]), str(spatFilter[1]), str(spatFilter[2]), str(spatFilter[3])]
         if spatSRS is not None:
@@ -1752,7 +1759,11 @@ def VectorTranslateOptions(options=None, format=None,
         if layerName is not None:
             new_options += ['-nln', layerName]
         if geometryType is not None:
-            new_options += ['-nlt', geometryType]
+            if _is_str_or_unicode(geometryType):
+                new_options += ['-nlt', geometryType]
+            else:
+                for opt in geometryType:
+                    new_options += ['-nlt', opt]
         if dim is not None:
             new_options += ['-dim', dim]
         if zField is not None:
@@ -2062,6 +2073,7 @@ def RasterizeOptions(options=None, format=None,
          bands=None, inverse=False, allTouched=False,
          burnValues=None, attribute=None, useZ=False, layers=None,
          SQLStatement=None, SQLDialect=None, where=None, optim=None,
+         add=None,
          callback=None, callback_data=None):
     """ Create a RasterizeOptions() object that can be passed to gdal.Rasterize()
         Keyword arguments are :
@@ -2088,6 +2100,8 @@ def RasterizeOptions(options=None, format=None,
           SQLStatement --- SQL statement to apply to the source dataset
           SQLDialect --- SQL dialect ('OGRSQL', 'SQLITE', ...)
           where --- WHERE clause to apply to source layer(s)
+          optim --- optimization mode ('RASTER', 'VECTOR')
+          add --- set to True to use additive mode instead of replace when burning values
           callback --- callback method
           callback_data --- user data for callback
     """
@@ -2158,6 +2172,8 @@ def RasterizeOptions(options=None, format=None,
             new_options += ['-where', str(where)]
         if optim is not None:
             new_options += ['-optim', str(optim)]
+        if add:
+            new_options += ['-add']
 
     return (GDALRasterizeOptions(new_options), callback, callback_data)
 

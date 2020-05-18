@@ -47,7 +47,7 @@ void GDALRegister_PCRaster()
 
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "PCRaster Raster File");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte Int32 Float32");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_various.html#PCRaster");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/pcraster.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "map" );
 
     poDriver->pfnOpen = PCRasterDataset::open;

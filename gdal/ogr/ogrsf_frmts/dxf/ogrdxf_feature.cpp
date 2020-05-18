@@ -150,20 +150,37 @@ const CPLString OGRDXFFeature::GetColor( OGRDXFDataSource* const poDS,
     CPLString osLayer = GetFieldAsString("Layer");
 
 /* -------------------------------------------------------------------- */
-/*      Is the layer or object disabled/hidden/frozen/off?              */
+/*      Is the layer or object hidden/off (1) or frozen (2)?            */
 /* -------------------------------------------------------------------- */
 
-    bool bHidden = false;
+    int iHidden = 0;
 
-    if( oStyleProperties.count("Hidden") > 0 &&
-        atoi(oStyleProperties["Hidden"]) == 1 )
+    if( oStyleProperties.count("Hidden") > 0 )
     {
-        bHidden = true;
+        iHidden = 1;
     }
     else
     {
         const char* pszHidden = poDS->LookupLayerProperty( osLayer, "Hidden" );
-        bHidden = pszHidden && EQUAL(pszHidden, "1");
+        if( pszHidden )
+            iHidden = atoi(pszHidden);
+
+        // Is the block feature on a frozen layer? If so, hide this feature
+        if( !iHidden && poBlockFeature )
+        {
+            const CPLString osBlockLayer =
+                poBlockFeature->GetFieldAsString("Layer");
+            const char* pszBlockHidden =
+                poDS->LookupLayerProperty( osBlockLayer, "Hidden" );
+            if( pszBlockHidden && atoi(pszBlockHidden) == 2 )
+                iHidden = 2;
+        }
+
+        // If this feature is on a frozen layer, make the object totally
+        // hidden so it won't reappear if we regenerate the style string again
+        // during block insertion
+        if( iHidden == 2 )
+            oStyleProperties["Hidden"] = "1";
     }
 
     // Helpful constants
@@ -314,7 +331,7 @@ const CPLString OGRDXFFeature::GetColor( OGRDXFDataSource* const poDS,
             pabyDXFColors[nColor*3+2] );
     }
     
-    if( bHidden )
+    if( iHidden )
         osResult += "00";
 
     return osResult;

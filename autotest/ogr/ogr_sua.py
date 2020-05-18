@@ -40,7 +40,7 @@ import pytest
 
 def test_ogr_sua_1():
 
-    ds = ogr.Open('data/za.sua')
+    ds = ogr.Open('data/sua/za.sua')
     assert ds is not None, 'cannot open dataset'
 
     lyr = ds.GetLayer(0)

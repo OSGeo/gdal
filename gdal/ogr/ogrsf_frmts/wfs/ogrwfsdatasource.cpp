@@ -1024,8 +1024,6 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
         if (psWFSCapabilities == nullptr)
         {
             CPLHTTPResult* psResult = SendGetCapabilities(pszBaseURL, strOriginalTypeName);
-            osTypeName = WFS_DecodeURL(strOriginalTypeName);
-
             if (psResult == nullptr)
             {
                 CPLDestroyXMLNode( psXML );
@@ -1358,7 +1356,11 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
                     pszDefaultSRS = osSRSName.c_str();
                 }
 
-                if (pszDefaultSRS)
+                // EPSG:404000 is a GeoServer joke to indicate a unknown SRS
+                // https://osgeo-org.atlassian.net/browse/GEOS-8993
+                if (pszDefaultSRS &&
+                    !EQUAL(pszDefaultSRS, "EPSG:404000") &&
+                    !EQUAL(pszDefaultSRS, "urn:ogc:def:crs:EPSG::404000"))
                 {
                     OGRSpatialReference oSRS;
                     if (oSRS.SetFromUserInput(pszDefaultSRS) == OGRERR_NONE)

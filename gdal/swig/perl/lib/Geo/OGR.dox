@@ -507,7 +507,7 @@
 # this data model. Attributes are called fields and some fields are
 # spatial, i.e., their value is a geometry. Fields have at least a
 # name and a type. Features may exist within a layer or
-# separetely. The data model of a feature is a definition object.
+# separately. The data model of a feature is a definition object.
 # @isa (Geo::OGR)
 
 ## @cmethod Geo::OGR::Feature new(%schema)

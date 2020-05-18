@@ -206,9 +206,6 @@ CPLErr EIRDataset::GetGeoTransform( double * padfTransform )
 char **EIRDataset::GetFileList()
 
 {
-    const CPLString osPath = CPLGetPath( GetDescription() );
-    const CPLString osName = CPLGetBasename( GetDescription() );
-
     // Main data file, etc.
     char **papszFileList = GDALPamDataset::GetFileList();
 
@@ -562,7 +559,7 @@ void GDALRegister_EIR()
     poDriver->SetDescription( "EIR" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Erdas Imagine Raw" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#EIR" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/eir.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = EIRDataset::Open;

@@ -35,6 +35,8 @@
 #include "gdal_priv.h"
 #include "tiffio.h"
 
+#include <utility>
+
 toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                             int nXSize, int nYSize,
                             int nBitsPerPixel, int nPlanarConfig, int nSamples,
@@ -58,10 +60,12 @@ void GTIFFBuildOverviewMetadata( const char *pszResampling,
                                  GDALDataset *poBaseDS,
                                  CPLString &osMetadata );
 
-CPLErr CPL_DLL
+CPLErr
 GTIFFBuildOverviewsEx( const char * pszFilename,
                        int nBands, GDALRasterBand **papoBandList,
-                       int nOverviews, int * panOverviewList,
+                       int nOverviews,
+                       const int * panOverviewList,
+                       const std::pair<int, int>* pasOverviewSize,
                        const char * pszResampling,
                        const char* const* papszOptions,
                        GDALProgressFunc pfnProgress, void * pProgressData );

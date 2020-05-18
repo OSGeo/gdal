@@ -70,3 +70,81 @@ ogr2ogr --config OGR_STROKE_CURVE TRUE -SQL 'SELECT Rechtsstatus,publiziertAb,Me
             const char sText[] = "infinit";
     if (EQUAL( pszFormat, "DOUB" ))
         case GDT_Float64: pszFormat = "DOUB"; break;
+* gdal2tiles.py: add --xyz option to generate tiles in the OSM Slippy Map standard (#2098)
+                 help="Use XYZ tile numbering (OSM Slippy Map tiles) instead of TMS")
+  Generate XYZ tiles (OSM Slippy Map standard) instead of TSM
+ * Support FORMAT=HALF, DOUB and COMP
+# Check read Alos metadata format
+        os.remove('data/alos/IMG-md_alos.tif.aux.xml')
+    ds = gdal.Open('data/alos/IMG-md_alos.tif', gdal.GA_ReadOnly)
+    assert not os.path.exists('data/alos/IMG-md_alos.tif.aux.xml')
+    gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', 'NO')
+    gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', None)
+        post_reason('Cannot determine if filesystem supports sparse files')
+        post_reason('File system does not support sparse files')
+                    'writing not known to support sparse files')
+        post_reason('Filesystem %s is not believed to support sparse files' % ret)
+	$(CC) $(CFLAGS) /c $*.cpp /Fo$@
+	$(CC) $(CFLAGS) /c $*.c /Fo$@
+					throw bad_ctor("seh");
+					throw seh("seh");
+struct seh : public tut_error
+    seh(const std::string& msg)
+    ~seh() throw()
+          <property name="str">fo&lt;o</property>
+    if not gdaltest.download_file('http://www.geodatenzentrum.de/gdz1/abgabe/testdaten/vektor/nas_testdaten_peine.zip', 'nas_testdaten_peine.zip'):
+    ds = ogr.Open('tmp/cache/CochitiDamShapeFiles')
+ENDE"""
+ENDE
+                   'SRP_EDN=0',
+                   'SRP_EDN=1',
+        ds = ogr.GetDriverByName('netCDF').CreateDataSource('/not_existing_dir/invalid_subdir', options=['MULTIPLE_LAYERS=SEPARATE_FILES', 'GEOMETRY_ENCODING=WKT'])
+    ds = ogr.GetDriverByName('netCDF').CreateDataSource('tmp/netcdf_57', options=['MULTIPLE_LAYERS=SEPARATE_FILES', 'GEOMETRY_ENCODING=WKT'])
+    assert xml_tre.find('<tre name="RSMDCA"') != -1, 'did not get expected xml:TRE'
+  <tre name="ENGRDA" location="image">
+    <field name="RECNT" value="002" />
+  </tre>
+  <tre name="CCINFA" location="file">
+  <tre name="CCINFA" location="image">
+  <tre name="SENSRB" location="image">
+    assert (not (xml_tre.find('<tre name="GEOPSB"') == -1 or \
+       xml_tre.find('<tre name="J2KLRA"') == -1 or \
+       xml_tre.find('<tre name="GEOLOB"') == -1 or \
+       xml_tre.find('<tre name="BNDPLB"') == -1 or \
+       xml_tre.find('<tre name="ACCPOB"') == -1 or \
+       xml_tre.find('<tre name="SOURCB"') == -1)), 'did not get expected xml:TRE'
+    assert xml_tre.find('<tre name="PIAPRD"') != -1, 'did not get expected xml:TRE'
+        Type; S(tring), N(umeric) D(ata variable type) and Use C(oordinate),
+collinsb	Benjamin Collins        collinsb at mitre.org		gdal
+ * Read cartesian coordinates if applicable in GDALLoadOziMapFile().
+ * Author:   Benjamin Collins, The MITRE Corporation
+/* Intel's compiler complains if a variable which was never initialised is
+        // because error handling tries to do thread initialisation.
+ * Copyright (c) 2006, The MITRE Corporation
+                        oSRS.SetLinearUnits("kilometre", 1000.0);
+float32*gridwidth offset in arcseconds (or in metres for geoids)
+// name=foo,transpose=[1,0],view=[0],dstname=bar,ot=Float32
+        else if( STARTS_WITH(token.c_str(), "ot=") )
+            auto outputTypeStr = token.substr(strlen("ot="));
+        // On Mach, the default limit is 256 files per process
+    grep -v "frmts/jpeg/libjpeg/jdphuff.c:493,error,shiftNegative,Shifting a negative value is undefined behaviour" | \
+ * \brief Get spheroid semi major axis (in metres starting with GDAL 3.0)
+        "attributeType | attribute | tile | model | catalogue | schema | "
+    "attributeType | attribute | tile | model | catalogue | schema | "
+  // Fix this behaviour (except -0).
+"36,Current - non - gravitational,CURENT,CURVEL;DATEND;DATSTA;NOBJNM;OBJNAM;ORIENT;PEREND;PERSTA;,INFORM;NINFOM;SCAMAX;SCAMIN;,RECDAT;RECIND;SORDAT;SORIND;,G,Point;",
+      addSimpleType(poTypes, "ADRESSE", "adresse", OFTString);
+      addSimpleType(poTypes, "ADRESSEREFKODE", "adresseReferansekode", OFTString);
+      addSimpleType(poTypes, "FRISTMATRIKKELFØRINGSKRAV", "fristMatrikkelføringskrav", OFTDate);
+      addSimpleType(poTypes, "FRISTOPPMÅLING", "fristOppmåling", OFTDate);
+      addSimpleType(poTypes, "GKVARIABEL", "geokVariabel", OFTString);
+      addSimpleType(poTypes, "GVAKT_PROS", "geoVernAktivProsess", OFTString);
+      addSimpleType(poTypes, "GVVKT_PROS", "geoVernViktigProsess", OFTString);
+      addSimpleType(poTypes, "INST_EFFEKT", "installertEffekt", OFTInteger);
+      addSimpleType(poTypes, "PROSESS_HISTORIE", "prosesshistorie", OFTString);
+   ADRESSEREFERANSEType.setElement(1, "adresseReferansekode", OFTString);
+   ADRESSETILLEGGType.setElement(1, "adresseKommentar", OFTString);
+   ADRESSETILLEGGType.setElement(2, "adresseReferanse", OFTString);
+   FIRMA_EIERType.setElement(2, "adresse", OFTString);
+.. include:: options/ot.rst
+    fl = gdal.ReadDir('/vsicurl/http://ortho.linz.govt.nz/tifs/2005_06')

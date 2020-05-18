@@ -52,7 +52,7 @@ interpretation... If not, files that do not match the common characteristics wil
 If there is some amount of spatial overlapping between files, the order of files
 appearing in the list of source matter: files that are listed at the end are the ones
 from which the content will be fetched. Note that nodata will be taken into account
-to potentially fetch data from less prioritary datasets, but currently, alpha channel
+to potentially fetch data from less priority datasets, but currently, alpha channel
 is not taken into account to do alpha compositing (so a source with alpha=0
 appearing on top of another source will override is content). This might be
 changed in later versions.
@@ -62,7 +62,7 @@ changed in later versions.
 .. option:: -tileindex
 
     Use the specified value as the tile index field, instead of the default
-    value with is 'location'.
+    value which is 'location'.
 
 .. option:: -resolution {highest|lowest|average|user}
 

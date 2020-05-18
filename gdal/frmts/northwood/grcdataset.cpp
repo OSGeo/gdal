@@ -411,7 +411,7 @@ void GDALRegister_NWT_GRC()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Northwood Classified Grid Format .grc/.tab");
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#northwood_grc" );
+                               "drivers/raster/nwtgrd.html#driver-capabilities-nwt-grc" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grc" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

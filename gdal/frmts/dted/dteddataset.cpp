@@ -506,14 +506,32 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
 CPLErr DTEDDataset::GetGeoTransform( double * padfTransform )
 
 {
-    padfTransform[0] = psDTED->dfULCornerX;
-    padfTransform[1] = psDTED->dfPixelSizeX;
-    padfTransform[2] = 0.0;
-    padfTransform[3] = psDTED->dfULCornerY;
-    padfTransform[4] = 0.0;
-    padfTransform[5] = psDTED->dfPixelSizeY * -1;
 
-    return CE_None;
+    bool bApplyPixelIsPoint =
+         CPLTestBool( CPLGetConfigOption( "DTED_APPLY_PIXEL_IS_POINT",
+                                          "FALSE") );
+    if (!bApplyPixelIsPoint)
+    {
+        padfTransform[0] = psDTED->dfULCornerX;
+        padfTransform[1] = psDTED->dfPixelSizeX;
+        padfTransform[2] = 0.0;
+        padfTransform[3] = psDTED->dfULCornerY;
+        padfTransform[4] = 0.0;
+        padfTransform[5] = psDTED->dfPixelSizeY * -1;
+
+        return CE_None;
+
+    } else
+    {
+        padfTransform[0] = psDTED->dfULCornerX + (0.5 * psDTED->dfPixelSizeX);
+        padfTransform[1] = psDTED->dfPixelSizeX;
+        padfTransform[2] = 0.0;
+        padfTransform[3] = psDTED->dfULCornerY - (0.5 * psDTED->dfPixelSizeY) ;
+        padfTransform[4] = 0.0;
+        padfTransform[5] = psDTED->dfPixelSizeY * -1;
+
+        return CE_None;
+    }
 }
 
 /************************************************************************/
@@ -537,7 +555,7 @@ const char *DTEDDataset::_GetProjectionRef()
     {
 
         pszVertDatum = GetMetadataItem("DTED_VerticalDatum");
-        if (EQUAL(pszVertDatum, "MSL") &&
+        if ( (EQUAL(pszVertDatum, "MSL") || EQUAL(pszVertDatum, "E96") ) &&
             CPLTestBool( CPLGetConfigOption("REPORT_COMPD_CS", "NO") ) )
         {
                 return "COMPD_CS[\"WGS 84 + EGM96 geoid height\", GEOGCS[\"WGS 84\", DATUM[\"WGS_1984\", SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]], AUTHORITY[\"EPSG\",\"6326\"]], PRIMEM[\"Greenwich\",0, AUTHORITY[\"EPSG\",\"8901\"]], UNIT[\"degree\",0.0174532925199433, AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST], AUTHORITY[\"EPSG\",\"4326\"]], VERT_CS[\"EGM96 geoid height\", VERT_DATUM[\"EGM96 geoid\",2005, AUTHORITY[\"EPSG\",\"5171\"]], UNIT[\"metre\",1, AUTHORITY[\"EPSG\",\"9001\"]], AXIS[\"Up\",UP], AUTHORITY[\"EPSG\",\"5773\"]]]";
@@ -918,7 +936,7 @@ void GDALRegister_DTED()
                                "DTED Elevation Raster" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "dt0 dt1 dt2" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#DTED" );
+                               "drivers/raster/dted.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 UInt16" );
 

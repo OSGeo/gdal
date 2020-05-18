@@ -29,10 +29,10 @@ Description
 The :program:`gdal_contour` generates a vector contour file from the input
 raster elevation model (DEM).
 
-.. versionadded:: 1.7.0
+The contour line-strings are oriented consistently and the high side will
+be on the right, i.e. a line string goes clockwise around a top.
 
-    The contour line-strings are oriented consistently and the high side will
-    be on the right, i.e. a line string goes clockwise around a top.
+.. program:: gdal_contour
 
 .. option:: -b <band>
 

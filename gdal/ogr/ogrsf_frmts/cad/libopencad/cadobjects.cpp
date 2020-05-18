@@ -801,7 +801,7 @@ CADImageObject::CADImageObject() :
     dFade( 0 ),
     bClipMode( false ),
     dClipBoundaryType( 0 ),
-    nNumberVertexesInClipPolygon( 0 )
+    nNumberVerticesInClipPolygon( 0 )
 {
 }
 
@@ -862,7 +862,7 @@ CADMLineObject::CADMLineObject() :
     dJust( 0 ),
     dOpenClosed( 0 ),
     nLinesInStyle( 0 ),
-    nNumVertexes( 0 )
+    nNumVertices( 0 )
 {
 }
 
@@ -884,7 +884,7 @@ CAD3DFaceObject::CAD3DFaceObject() :
 
 CADPolylinePFaceObject::CADPolylinePFaceObject() :
     CADEntityObject(POLYLINE_PFACE),
-    nNumVertexes( 0 ),
+    nNumVertices( 0 ),
     nNumFaces( 0 ),
     nObjectsOwned( 0 )
 {

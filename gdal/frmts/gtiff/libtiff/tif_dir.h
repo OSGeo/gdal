@@ -261,6 +261,7 @@ extern "C" {
 
 extern const TIFFFieldArray* _TIFFGetFields(void);
 extern const TIFFFieldArray* _TIFFGetExifFields(void);
+extern const TIFFFieldArray* _TIFFGetGpsFields(void);
 extern void _TIFFSetupFields(TIFF* tif, const TIFFFieldArray* infoarray);
 extern void _TIFFPrintFieldInfo(TIFF*, FILE*);
 
@@ -269,6 +270,7 @@ extern int _TIFFFillStriles(TIFF*);
 typedef enum {
 	tfiatImage,
 	tfiatExif,
+	tfiatGps,		/* EXIF-GPS fields array type */
 	tfiatOther
 } TIFFFieldArrayType;
 

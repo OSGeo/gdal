@@ -66,8 +66,6 @@ void Range::setRange(const char *pszStr) {
     }
     const char *pszc=pszStr;
     char *psze = nullptr;
-    int nMin = 0;
-    int nMax = 0;
     SelafinTypeDef eType;
     while (*pszc!=0 && *pszc!=']') {
         pszc++;
@@ -78,9 +76,9 @@ void Range::setRange(const char *pszStr) {
             eType=ELEMENTS;
             pszc++;
         } else eType=ALL;
-        if (*pszc==':') {
-            nMin=0;
-        } else {
+
+        int nMin = 0;
+        if (*pszc!=':') {
             nMin=(int)strtol(pszc,&psze,10);
             if (*psze!=':' && *psze!=',' && *psze!=']') {
                 CPLError( CE_Warning, CPLE_IllegalArg, "Invalid range specified\n");
@@ -90,11 +88,10 @@ void Range::setRange(const char *pszStr) {
             }
             pszc=psze;
         }
+        int nMax = -1;
         if (*pszc==':') {
             ++pszc;
-            if (*pszc==',' || *pszc==']') {
-                nMax=-1;
-            } else {
+            if (*pszc != ',' && *pszc !=']') {
                 nMax=(int)strtol(pszc,&psze,10);
                 if (*psze!=',' && *psze!=']') {
                     CPLError( CE_Warning, CPLE_IllegalArg, "Invalid range specified\n");
@@ -283,7 +280,6 @@ int OGRSelafinDataSource::Open( const char * pszFilename, int bUpdateIn,
     /* For writable /vsizip/, do nothing more */
     if (bCreate && STARTS_WITH(pszName, "/vsizip/")) return TRUE;
     CPLString osFilename(pszName);
-    CPLString osBaseFilename = CPLGetFilename(pszName);
     // Determine what sort of object this is.
     VSIStatBufL sStatBuf;
     if (VSIStatExL( osFilename, &sStatBuf, VSI_STAT_NATURE_FLAG ) != 0) return FALSE;

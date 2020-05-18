@@ -180,10 +180,15 @@ stop_rsync_host()
     fi
 }
 
-PROJ_DATUMGRID_LATEST_LAST_MODIFIED=$(curl -Is http://download.osgeo.org/proj/proj-datumgrid-latest.zip | grep Last-Modified)
+if test "${BASE_IMAGE_NAME}" = "osgeo/gdal:ubuntu-full"; then
+    PROJ_DATUMGRID_LATEST_LAST_MODIFIED=$(curl -Is https://cdn.proj.org/index.html | grep Last-Modified)
+else
+    PROJ_DATUMGRID_LATEST_LAST_MODIFIED=$(curl -Is http://download.osgeo.org/proj/proj-datumgrid-latest.zip | grep Last-Modified)
+fi
+echo "Using PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}"
 
 if test "${PROJ_VERSION}" = "" -o "${PROJ_VERSION}" = "master"; then
-    PROJ_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/proj.4/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
+    PROJ_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/PROJ/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
 fi
 echo "Using PROJ_VERSION=${PROJ_VERSION}"
 

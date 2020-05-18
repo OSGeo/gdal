@@ -6094,7 +6094,7 @@ void GDALRegister_HFA()
     poDriver->SetDescription("HFA");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Erdas Imagine Images (.img)");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_hfa.html");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/hfa.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "img");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
                               "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 "

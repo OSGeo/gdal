@@ -15,7 +15,8 @@ Synopsis
 
 .. code-block::
 
-    gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]
+    gdal_edit [--help-general] [-ro] [-a_srs srs_def]
+            [-a_ullr ulx uly lrx lry] [-a_ulurll ulx uly urx ury llx lly]
             [-tr xres yres] [-unsetgt] [-unsetrpc] [-a_nodata value] [-unsetnodata]
             [-unsetstats] [-stats] [-approx_stats]
             [-setstats min max mean stddev]
@@ -50,8 +51,6 @@ It works only with raster formats that support update access to existing dataset
     the dataset in update-mode. In which case, updated information will go into
     PAM :file:`.aux.xml` files.
 
-    .. versionadded:: 1.11
-
 .. option:: -a_srs <srs_def>
 
     Defines the target coordinate system.
@@ -63,6 +62,14 @@ It works only with raster formats that support update access to existing dataset
 .. option:: -a_ullr ulx uly lrx lry:
 
     Assign/override the georeferenced bounds of the dataset.
+
+.. option:: -a_ulurll ulx uly urx ury llx lly:
+
+    Assign/override the georeferenced bounds of the dataset from three points:
+    upper-left, upper-right and lower-left. Unlike :option:`-a_ullr`, this also
+    supports rotated datasets (edges not parallel to coordinate system axes).
+
+    .. versionadded:: 3.1
 
 .. option:: -tr <xres> <yres>
 
@@ -149,7 +156,7 @@ It works only with raster formats that support update access to existing dataset
 
     .. versionadded:: 3.1
 
--.. option:: colorinterp_X red|green|blue|alpha|gray|undefined
+.. option:: colorinterp_X red|green|blue|alpha|gray|undefined
 
     Change the color interpretation of band X (where X is a valid band
     number, starting at 1).
@@ -180,7 +187,7 @@ It works only with raster formats that support update access to existing dataset
 
     .. versionadded:: 2.0
 
-The :option:`-a_ullr`, :option:`-tr` and :option:`-unsetgt` options are exclusive.
+The :option:`-a_ullr`, :option:`-a_ulurll`, :option:`-tr` and :option:`-unsetgt` options are exclusive.
 
 The :option:`-unsetstats` and either :option:`-stats` or :option:`-approx_stats` options are exclusive.
 

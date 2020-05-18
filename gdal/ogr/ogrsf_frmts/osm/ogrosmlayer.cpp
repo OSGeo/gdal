@@ -346,7 +346,9 @@ bool OGROSMLayer::AddToArray( OGRFeature* poFeature,
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Too many features have accumulated in %s layer. "
-                    "Use OGR_INTERLEAVED_READING=YES mode",
+                    "Use the OGR_INTERLEAVED_READING=YES configuration option, "
+                    "or the INTERLEAVED_READING=YES open option, or the "
+                    "GDALDataset::GetNextFeature() / GDALDatasetGetNextFeature() API.",
                     GetName());
         }
         bHasWarnedTooManyFeatures = true;

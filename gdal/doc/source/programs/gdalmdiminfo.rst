@@ -4,9 +4,9 @@
 gdalmdiminfo
 ================================================================================
 
-.. versionadded:: 3.1
-
 .. only:: html
+
+    .. versionadded:: 3.1
 
     Reports structure and content of a multidimensional dataset.
 
@@ -17,20 +17,20 @@ Synopsis
 
 .. code-block::
 
-    gdalmdiminfo [--help-general] [-oo NAME=VALUE]* [-detailed]
-                 [-nopretty] [-array {array_name}] [-limit {number}]
+    gdalmdiminfo [--help-general] [-oo NAME=VALUE]* [-arrayoption NAME=VALUE]*
+                 [-detailed] [-nopretty] [-array {array_name}] [-limit {number}]
                  <datasetname>
 
 Description
 -----------
 
-:program:`gdalinfo` program lists various information about a GDAL supported
+:program:`gdalmdiminfo` program lists various information about a GDAL supported
 multidimensional raster dataset as JSON output. It follows the
 following `JSON schema <https://github.com/OSGeo/gdal/blob/master/gdal/data/gdalmdiminfo_output.schema.json>`_
 
 The following command line parameters can appear in any order
 
-.. program:: gdalinfo
+.. program:: gdalmdiminfo
 
 .. option:: -detailed
 
@@ -53,6 +53,13 @@ The following command line parameters can appear in any order
 .. option:: -oo <NAME=VALUE>
 
     Dataset open option (format specific).
+    This option may be used several times.
+
+.. option:: -arrayoption <NAME=VALUE>
+
+    Option passed to :cpp:func:`GDALGroup::GetMDArrayNames` to filter reported
+    arrays. Such option is format specific. Consult driver documentation.
+    This option may be used several times.
 
 C API
 -----

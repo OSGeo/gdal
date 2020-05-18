@@ -38,7 +38,7 @@ import gdaltest
 
 def test_lan_1():
 
-    tst = gdaltest.GDALTest('LAN', 'fakelan.lan', 1, 10)
+    tst = gdaltest.GDALTest('LAN', 'lan/fakelan.lan', 1, 10)
     return tst.testOpen()
 
 ###############################################################################
@@ -47,7 +47,7 @@ def test_lan_1():
 
 def test_lan_2():
 
-    tst = gdaltest.GDALTest('LAN', 'fakelan4bit.lan', 1, 10)
+    tst = gdaltest.GDALTest('LAN', 'lan/fakelan4bit.lan', 1, 10)
     return tst.testOpen()
 
 

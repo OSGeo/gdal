@@ -38,7 +38,7 @@ import gdaltest
 
 def test_leveller_1():
 
-    tst = gdaltest.GDALTest('Leveller', 'ter6test.ter', 1, 33441)
+    tst = gdaltest.GDALTest('Leveller', 'leveller/ter6test.ter', 1, 33441)
     return tst.testOpen()
 
 

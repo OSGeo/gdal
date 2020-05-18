@@ -82,7 +82,7 @@ parameters to the RasterIO() methods :
    be chained between generic/specific and/or dataset/rasterband
    implementations. Passing just the pointer is more efficient.
 
-The structure is versionned. In the future if further options are added,
+The structure is versioned. In the future if further options are added,
 the new members will be added at the end of the structure and the
 version number will be incremented. Code in GDAL core&drivers can check
 the version number to determine which options are available.
@@ -120,7 +120,7 @@ in overview computation as well, and rely on the generic infrastructure
 for convolution computation introduced lately for improved cubic
 overviews. Some algorithms are not available on raster bands with color
 palette. A warning will be emitted if an attempt of doing so is done,
-and nearest neightbour will be used as a fallback.
+and nearest neighbour will be used as a fallback.
 
 The GDAL_RASTERIO_RESAMPLING configuration option can be set as an
 alternate way of specifying the resampling algorithm. Mainly useful for
@@ -141,7 +141,7 @@ in-tree code forgets to forwards psExtraArg it might have returned from
 a caller.
 
 GDALDataset::RasterIO() and GDALRasterBand::RasterIO() can accept a NULL
-pointer for that argument in which case they will instanciate a default
+pointer for that argument in which case they will instantiate a default
 GDALRasterIOExtraArg structure to be passed to IRasterIO(). Any other
 code that calls IRasterIO() directly (a few IReadBlock()
 implementations) should make sure of doing so, so that IRasterIO() can
@@ -231,7 +231,7 @@ Compatibility
    failing to do so will be undetected at compile time (due to how C++
    virtual method overloading work).
 
-Both issues will be mentionned in MIGRATION_GUIDE.TXT
+Both issues will be mentioned in MIGRATION_GUIDE.TXT
 
 Documentation
 -------------

@@ -220,11 +220,10 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     unsigned char *cptr = (unsigned char*)pszRecord +
         (data_length - bytes_per_line);
     int bitsLeft = 8;
-    unsigned short value = 0;
 
     if (open_mode != MODE_RAD) {
         for (int c=0; c < nBlockXSize; c++) {
-            value = 0;
+            unsigned short value = 0;
             for (int bit=0; bit < 10; bit++) {
                 value <<= 1;
                 if (*cptr & 128) {
@@ -242,7 +241,7 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     } else {
         // radiance mode
         for (int c=0; c < nBlockXSize; c++) {
-            value = 0;
+            unsigned short value = 0;
             for (int bit=0; bit < 10; bit++) {
                 value <<= 1;
                 if (*cptr & 128) {
@@ -559,7 +558,7 @@ void GDALRegister_MSGN()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "EUMETSAT Archive native (.nat)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_msgn.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/msgn.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "nat" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

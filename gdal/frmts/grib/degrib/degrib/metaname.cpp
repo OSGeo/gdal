@@ -2799,7 +2799,6 @@ static void ElemNameProb (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
                mallocSprintf (name, "ProbPrcpBlw");
                mallocSprintf (comment, "Prob of precip below average");
             }
-            *convert = UC_NONE;
          } else if (probType == 3) {
             if (lenTime > 0) {
                if (timeRangeUnit == 3) {
@@ -2816,7 +2815,6 @@ static void ElemNameProb (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
                mallocSprintf (name, "ProbPrcpAbv");
                mallocSprintf (comment, "Prob of precip above average");
             }
-            *convert = UC_NONE;
          } else {
             myAssert (probType == 1);
             if (lenTime > 0) {
@@ -2858,7 +2856,6 @@ static void ElemNameProb (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
                }
                mallocSprintf (comment, "Prob of Precip > %g In.", upperProb / 25.4);
             }
-            *convert = UC_NONE;
          }
          *convert = UC_NONE;
          return;

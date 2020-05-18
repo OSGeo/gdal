@@ -966,6 +966,7 @@ do {                                                    \
             CPLCalloc( sHeader.nExtHdrSize, 1 ) );
 
         RMF_WRITE_LONG( pabyExtHeader, sExtHeader.nEllipsoid, 24 );
+        RMF_WRITE_LONG( pabyExtHeader, sExtHeader.nVertDatum, 28 );
         RMF_WRITE_LONG( pabyExtHeader, sExtHeader.nDatum, 32 );
         RMF_WRITE_LONG( pabyExtHeader, sExtHeader.nZone, 36 );
 
@@ -1345,6 +1346,7 @@ do {                                                                    \
         if( poDS->sHeader.nExtHdrSize >= 36 + 4 )
         {
             RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nEllipsoid, 24 );
+            RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nVertDatum, 28 );
             RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nDatum, 32 );
             RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nZone, 36 );
         }
@@ -1723,7 +1725,17 @@ do {                                                                    \
         if(poDS->sHeader.iEPSGCode > RMF_EPSG_MIN_CODE &&
            (OGRERR_NONE != res || oSRS.IsLocal()))
         {
-            oSRS.importFromEPSG(poDS->sHeader.iEPSGCode);
+            res = oSRS.importFromEPSG(poDS->sHeader.iEPSGCode);
+        }
+
+        const char* pszSetVertCS =
+            CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                                "RMF_SET_VERTCS",
+                                 CPLGetConfigOption("RMF_SET_VERTCS", "NO"));
+        if(CPLTestBool(pszSetVertCS) && res == OGRERR_NONE && 
+           poDS->sExtHeader.nVertDatum > 0)
+        {
+            oSRS.importVertCSFromPanorama(poDS->sExtHeader.nVertDatum);
         }
 
         if( poDS->pszProjection )
@@ -3058,7 +3070,7 @@ void GDALRegister_RMF()
     poDriver->SetDescription( "RMF" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Raster Matrix Format" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_rmf.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/rmf.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "rsw" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 Int32 Float64" );
@@ -3086,6 +3098,10 @@ void GDALRegister_RMF()
     poDriver->pfnIdentify = RMFDataset::Identify;
     poDriver->pfnOpen = RMFDataset::Open;
     poDriver->pfnCreate = RMFDataset::Create;
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='RMF_SET_VERTCS' type='string' description='Layers spatial reference will include vertical coordinate system description if exist' default='NO'/>"
+        "</OpenOptionList>");
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

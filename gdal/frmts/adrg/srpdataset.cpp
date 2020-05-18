@@ -1220,8 +1220,6 @@ void SRPDataset::AddMetadatafromFromTHF(const char* pszFileName)
     if (!module.Open(pszFileName, TRUE))
         return ;
 
-    CPLString osDirName(CPLGetDirname(pszFileName));
-
     while( true )
     {
         CPLPushErrorHandler( CPLQuietErrorHandler );
@@ -1671,7 +1669,7 @@ void GDALRegister_SRP()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Standard Raster Product (ASRP/USRP)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#SRP" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/srp.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "img" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

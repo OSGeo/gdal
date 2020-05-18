@@ -41,7 +41,7 @@ import pytest
 
 def test_jp2metadata_1():
 
-    ds = gdal.Open('data/erdas_foo.jp2')
+    ds = gdal.Open('data/jpeg2000/erdas_foo.jp2')
     if ds is None:
         pytest.skip()
 
@@ -60,17 +60,17 @@ def test_jp2metadata_2():
 
     # Pleiades product description http://www.cscrs.itu.edu.tr/assets/downloads/PleiadesUserGuide.pdf
     try:
-        os.remove('data/IMG_md_ple_R1C1.jp2.aux.xml')
+        os.remove('data/jpeg2000/IMG_md_ple_R1C1.jp2.aux.xml')
     except OSError:
         pass
 
-    ds = gdal.Open('data/IMG_md_ple_R1C1.jp2', gdal.GA_ReadOnly)
+    ds = gdal.Open('data/jpeg2000/IMG_md_ple_R1C1.jp2', gdal.GA_ReadOnly)
     if ds is None:
         pytest.skip()
 
     filelist = ds.GetFileList()
 
-    assert len(filelist) == 3, 'did not get expected file list.'
+    assert len(filelist) == 3, filelist
 
     mddlist = ds.GetMetadataDomainList()
     assert 'IMD' in mddlist and 'RPC' in mddlist and 'IMAGERY' in mddlist, \
@@ -84,7 +84,7 @@ def test_jp2metadata_2():
 
     ds = None
 
-    assert not os.path.exists('data/IMG_md_ple_R1C1.jp2.aux.xml')
+    assert not os.path.exists('data/jpeg2000/IMG_md_ple_R1C1.jp2.aux.xml')
 
     
 ###############################################################################
@@ -99,7 +99,7 @@ def test_jp2metadata_3():
 
     exp_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
 
-    ds = gdal.Open('data/ll.jp2')
+    ds = gdal.Open('data/jpeg2000/ll.jp2')
     if ds is None:
         gdal.SetConfigOption('GDAL_IGNORE_AXIS_ORIENTATION', 'NO')
         pytest.skip()
@@ -132,7 +132,7 @@ def test_jp2metadata_4():
 
     exp_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
 
-    ds = gdal.Open('data/gmljp2_dtedsm_epsg_4326_axes.jp2')
+    ds = gdal.Open('data/jpeg2000/gmljp2_dtedsm_epsg_4326_axes.jp2')
     if ds is None:
         pytest.skip()
     wkt = ds.GetProjection()
@@ -163,7 +163,7 @@ def test_jp2metadata_4():
 
 def test_jp2metadata_5():
 
-    ds = gdal.Open('data/gmljp2_epsg3035_easting_northing.jp2')
+    ds = gdal.Open('data/jpeg2000/gmljp2_epsg3035_easting_northing.jp2')
     if ds is None:
         pytest.skip()
 

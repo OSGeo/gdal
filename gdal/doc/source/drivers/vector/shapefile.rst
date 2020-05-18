@@ -26,12 +26,12 @@ applies for SHPT_POLYGON shapefiles, reported as layers of type
 wkbPolygon, but depending on the number of parts of each geometry, the
 actual type can be either OGRPolygon or OGRMultiPolygon.
 
-Starting with GDAL 2.1 measures (M coordinate) are supported. A
+Measures (M coordinate) are supported. A
 Shapefile with measures is created if the specified geometry type is
 measured or an appropriate layer creation option is used. When a
 shapefile which may have measured geometries is opened, the first shape
 is examined and if it uses measures, the geometry type of the layer is
-set accordingly. This behaviour can be changed with the ADJUST_GEOM_TYPE
+set accordingly. This behavior can be changed with the ADJUST_GEOM_TYPE
 open option.
 
 MultiPatch files are read and each patch geometry is turned into a TIN
@@ -48,34 +48,44 @@ specification, that is to say the vertices of outer rings should be
 oriented clockwise on the X/Y plane, and those of inner rings
 counterclockwise. If a Shapefile is broken w.r.t. that rule, it is
 possible to define the configuration option
-OGR_ORGANIZE_POLYGONS=DEFAULT to proceed to a full analysis based on
+:decl_configoption:`OGR_ORGANIZE_POLYGONS` to DEFAULT to proceed to a full analysis based on
 topological relationships of the parts of the polygons so that the
 resulting polygons are correctly defined in the OGC Simple Feature
 convention.
+
+Encoding
+--------
 
 An attempt is made to read the code page setting in the .cpg file, or as
 a fallback in the LDID/codepage setting from the .dbf file, and use it
 to translate string fields to UTF-8 on read, and back when writing. LDID
 "87 / 0x57" is treated as ISO-8859-1 which may not be appropriate. The
-SHAPE_ENCODING `configuration
-option <http://trac.osgeo.org/gdal/wiki/ConfigOptions>`__ may be used to
+:decl_configoption:`SHAPE_ENCODING` configuration option may be used to
 override the encoding interpretation of the shapefile with any encoding
-supported by CPLRecode or to "" to avoid any recoding. (Recoding support
-is new for GDAL/OGR 1.9.0)
+supported by CPLRecode or to "" to avoid any recoding.
 
-Driver capabilities
--------------------
+Starting with GDAL 3.1, the following metadata items are available in the
+"SHAPEFILE" domain:
 
-.. supports_create::
-
-.. supports_georeferencing::
-
-.. supports_virtualio::
+-  **LDID_VALUE**\ =integer: Raw LDID value from the DBF header. Only present
+   if this value is not zero.
+-  **ENCODING_FROM_LDID**\ = string: Encoding name deduced from LDID_VALUE. Only
+   present if LDID_VALUE is present
+-  **CPG_VALUE**\ =string: Content of the .cpg file. Only present if the file
+   exists.
+-  **ENCODING_FROM_CPG**\ = string: Encoding name deduced from CPG_VALUE. Only
+   present if CPG_VALUE is present
+-  **SOURCE_ENCODING**\= string: Encoding used by GDAL to encode/recode strings.
+   If the user has provided the :decl_configoption:`SHAPE_ENCODING` configuration option or
+   ``ENCODING`` open option have been provided (included to empty value), then
+   their value is used to fill this metadata item.
+   Otherwise it is equal to ENCODING_FROM_CPG if it is present. Otherwise it is
+   equal to ENCODING_FROM_LDID.
 
 Open options
 ------------
 
-Starting with GDAL 2.0, the following open options are available.
+The following open options are available.
 
 -  **ENCODING**\ =encoding_name: to override the encoding interpretation
    of the shapefile with any encoding supported by CPLRecode or to "" to
@@ -118,7 +128,7 @@ that are used by UMN MapServer. Spatial indexing can accelerate
 spatially filtered passes through large datasets to pick out a small
 area quite dramatically.
 
-Starting with OGR 1.10, it can also use the ESRI spatial index files
+It can also use the ESRI spatial index files
 (.sbn / .sbx), but writing them is not supported currently.
 
 To create a spatial index (in .qix format), issue a SQL command of the
@@ -189,8 +199,8 @@ for a solution.
 Shapefile feature attributes are stored in an associated .dbf file, and
 so attributes suffer a number of limitations:
 
--  Attribute names can only be up to 10 characters long. Starting with
-   version 1.7, the OGR Shapefile driver tries to generate unique field
+-  Attribute names can only be up to 10 characters long.
+   The OGR Shapefile driver tries to generate unique field
    names. Successive duplicate field names, including those created by
    truncation to 10 characters, will be truncated to 8 characters and
    appended with a serial number from 1 to 99.
@@ -230,7 +240,7 @@ deletion in the .dbf file, and then ignored by OGR. To actually remove
 them permanently (resulting in renumbering of FIDs) invoke the SQL
 'REPACK <tablename>' via the datasource ExecuteSQL() method.
 
-Starting with GDAL 2.0, REPACK will also result in .shp being rewritten
+REPACK will also result in .shp being rewritten
 if a feature geometry has been modified with SetFeature() and resulted
 in a change of the size the binary encoding of the geometry in the .shp
 file.
@@ -242,7 +252,7 @@ holes can cause interoperability issues with other software.
 Field sizes
 -----------
 
-Starting with GDAL/OGR 1.10, the driver knows to auto-extend string and
+The driver knows to auto-extend string and
 integer fields (up to the 255 bytes limit imposed by the DBF format) to
 dynamically accommodate for the length of the data to be inserted.
 
@@ -263,8 +273,6 @@ correct. It is then necessary to force a recomputation by invoking the
 SQL 'RECOMPUTE EXTENT ON <tablename>' via the datasource ExecuteSQL()
 method. The same applies for the deletion of a shape.
 
-Note: RECOMPUTE EXTENT ON is available in OGR >= 1.9.0.
-
 Size Issues
 -----------
 
@@ -278,19 +286,19 @@ arbitrarily large.
 However, for compatibility with other software implementation, it is not
 recommended to use a file size over 2GB for both .SHP and .DBF files.
 
-Starting with OGR 1.11, the 2GB_LIMIT=YES layer creation option can be
+The 2GB_LIMIT=YES layer creation option can be
 used to strictly enforce that limit. For update mode, the
-SHAPE_2GB_LIMIT configuration option can be set to YES for similar
+:decl_configoption:`SHAPE_2GB_LIMIT` configuration option can be set to YES for similar
 effect. If nothing is set, a warning will be emitted when the 2GB limit
 is reached.
 
 Dataset Creation Options
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 None
 
 Layer Creation Options
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 -  **SHPT=type**: Override the type of shapefile created. Can be one of
    NULL for a simple .dbf file with no .shp file, POINT, ARC, POLYGON or
@@ -302,16 +310,16 @@ Layer Creation Options
 -  **ENCODING=**\ *value*: set the encoding value in the DBF file. The
    default value is "LDID/87". It is not clear what other values may be
    appropriate.
--  **RESIZE=**\ *YES/NO*: (OGR >= 1.10.0) set the YES to resize fields
+-  **RESIZE=**\ *YES/NO*: set the YES to resize fields
    to their optimal size. See above "Field sizes" section. Defaults to
    NO.
--  **2GB_LIMIT=**\ *YES/NO*: (OGR >= 1.11) set the YES to enforce the
+-  **2GB_LIMIT=**\ *YES/NO*: set the YES to enforce the
    2GB file size for .SHP or .DBF files. Defaults to NO.
--  **SPATIAL_INDEX=**\ *YES/NO*: (OGR >= 2.0) set the YES to create a
+-  **SPATIAL_INDEX=**\ *YES/NO*: set the YES to create a
    spatial index (.qix). Defaults to NO.
--  **DBF_DATE_LAST_UPDATE=**\ *YYYY-MM-DD*: (OGR >= 2.0) Modification
+-  **DBF_DATE_LAST_UPDATE=**\ *YYYY-MM-DD*: Modification
    date to write in DBF header with year-month-day format. If not
-   specified, current date is used. Note: behaviour of past GDAL
+   specified, current date is used. Note: behavior of past GDAL
    releases was to write 1995-07-26
 -  **AUTO_REPACK=**\ *YES/NO*: (OGR >= 2.2) Default to YES in GDAL 2.2.
    Whether the shapefile should be automatically repacked when needed,
@@ -322,14 +330,14 @@ Layer Creation Options
    Previous GDAL versions did not write one.
 
 VSI Virtual File System API support
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------
 
 The driver supports reading from files managed by VSI Virtual File
 System API, which include "regular" files, as well as files in the
 /vsizip/, /vsigzip/ , /vsicurl/ domains.
 
 Compressed files
-~~~~~~~~~~~~~~~~
+----------------
 
 Starting with GDAL 3.1, the driver can also support reading, creating and
 editing .shz files (ZIP files containing the .shp, .shx, .dbf and other side-car
@@ -337,7 +345,7 @@ files of a single layer) and .shp.zip files (ZIP files contains one or several
 layers). Creation and editing involves the creation of temporary files.
 
 Examples
-~~~~~~~~
+--------
 
 -  A merge of two shapefiles 'file1.shp' and 'file2.shp' into a new file
    'file_merged.shp' is performed like this:
@@ -358,7 +366,7 @@ Examples
 
       % ogrinfo file1.shp -sql "CREATE SPATIAL INDEX ON file1"
 
--  Resizing columns of a DBF file to their optimal size (OGR >= 1.10.0)
+-  Resizing columns of a DBF file to their optimal size
    :
 
    ::
@@ -366,9 +374,9 @@ Examples
       % ogrinfo file1.dbf -sql "RESIZE file1"
 
 Advanced topics
-~~~~~~~~~~~~~~~
+---------------
 
-(GDAL >= 2.0) The SHAPE_REWIND_ON_WRITE configuration option/environment
+The :decl_configoption:`SHAPE_REWIND_ON_WRITE` configuration option/environment
 variable can be set to NO to prevent the shapefile writer to correct the
 winding order of exterior/interior rings to be conformant with the one
 mandated by the Shapefile specification. This can be useful in some
@@ -376,12 +384,21 @@ situations where a MultiPolygon passed to the shapefile writer is not
 really a compliant Single Feature polygon, but originates from example
 from a MultiPatch object (from a Shapefile/FileGDB/PGeo datasource).
 
-(GDAL >= 2.1) The SHAPE_RESTORE_SHX configuration option/environment
+(GDAL >= 2.1) The :decl_configoption:`SHAPE_RESTORE_SHX` configuration option/environment
 variable can be set to YES (default NO) to restore broken or absent .shx
 file from associated .shp file during opening.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
 See Also
-~~~~~~~~
+--------
 
 -  `Shapelib Page <http://shapelib.maptools.org/>`__
 -  `User Notes on OGR Shapefile

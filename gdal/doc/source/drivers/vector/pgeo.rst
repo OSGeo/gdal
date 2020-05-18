@@ -40,8 +40,8 @@ the future.
 
 By default, SQL statements are passed directly to the MDB database
 engine. It's also possible to request the driver to handle SQL commands
-with `OGR SQL <ogr_sql.html>`__ engine, by passing **"OGRSQL"** string
-to the ExecuteSQL() method, as name of the SQL dialect.
+with :ref:`OGR SQL <ogr_sql_dialect>` engine, by passing **"OGRSQL"**
+string to the ExecuteSQL() method, as name of the SQL dialect.
 
 Driver capabilities
 -------------------
@@ -51,7 +51,7 @@ Driver capabilities
 How to use PGeo driver with unixODBC and MDB Tools (on Unix and Linux)
 ----------------------------------------------------------------------
 
-Starting with GDAL/OGR 1.9.0, the :ref:`MDB <vector.mdb>` driver is an
+The :ref:`MDB <vector.mdb>` driver is an
 alternate way of reading ESRI Personal GeoDatabase .mdb files without
 requiring unixODBC and MDB Tools
 

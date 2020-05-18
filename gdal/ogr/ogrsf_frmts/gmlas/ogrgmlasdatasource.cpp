@@ -857,7 +857,9 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
             if( VSIStatL(m_osGMLFilename, &sStat) == 0 )
             {
                 m_nFileSize = sStat.st_size;
-                CPL_SHA256Update(&ctxt, &(sStat.st_size), sizeof(sStat.st_size));
+                GUInt64 nFileSizeLittleEndian = static_cast<GUInt64>(sStat.st_size);
+                CPL_LSBPTR64(&nFileSizeLittleEndian);
+                CPL_SHA256Update(&ctxt, &nFileSizeLittleEndian, sizeof(nFileSizeLittleEndian));
             }
 
             GByte abyHash[CPL_SHA256_HASH_SIZE];

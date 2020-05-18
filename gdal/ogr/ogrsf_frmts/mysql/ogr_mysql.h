@@ -240,6 +240,10 @@ class OGRMySQLDataSource final: public OGRDataSource
     OGRSpatialReference *FetchSRS( int nSRSId );
 
     OGRErr              InitializeMetadataTables();
+    OGRErr              UpdateMetadataTables(const char *pszLayerName,
+                                             OGRwkbGeometryType eType,
+                                             const char *pszGeomColumnName,
+                                             const int nSRSId);
 
     int                 Open( const char *, char** papszOpenOptions, int bUpdate );
     int                 OpenTable( const char *, int bUpdate );

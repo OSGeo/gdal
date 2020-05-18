@@ -2173,30 +2173,30 @@ namespace tut
                            std::string("default"));
             oObj.Add("const_char_star", nullptr);
             oObj.Add("const_char_star", "my_const_char_star");
-            ensure_equals( oObj.GetObj("const_char_star").GetType(), CPLJSONObject::String );
+            ensure( oObj.GetObj("const_char_star").GetType() == CPLJSONObject::Type::String );
             oObj.Add("int", 1);
             ensure_equals( oObj.GetInteger("int"), 1 );
             ensure_equals( oObj.GetInteger("inexisting_int", -987), -987 );
-            ensure_equals( oObj.GetObj("int").GetType(), CPLJSONObject::Integer );
+            ensure( oObj.GetObj("int").GetType() == CPLJSONObject::Type::Integer );
             oObj.Add("int64", GINT64_MAX);
             ensure_equals( oObj.GetLong("int64"), GINT64_MAX );
             ensure_equals( oObj.GetLong("inexisting_int64", GINT64_MIN), GINT64_MIN );
-            ensure_equals( oObj.GetObj("int64").GetType(), CPLJSONObject::Long );
+            ensure( oObj.GetObj("int64").GetType() == CPLJSONObject::Type::Long );
             oObj.Add("double", 1.25);
             ensure_equals( oObj.GetDouble("double"), 1.25 );
             ensure_equals( oObj.GetDouble("inexisting_double", -987.0), -987.0 );
-            ensure_equals( oObj.GetObj("double").GetType(), CPLJSONObject::Double );
+            ensure( oObj.GetObj("double").GetType() == CPLJSONObject::Type::Double );
             oObj.Add("array", CPLJSONArray());
-            ensure_equals( oObj.GetObj("array").GetType(), CPLJSONObject::Array );
+            ensure( oObj.GetObj("array").GetType() == CPLJSONObject::Type::Array );
             oObj.Add("obj", CPLJSONObject());
-            ensure_equals( oObj.GetObj("obj").GetType(), CPLJSONObject::Object );
+            ensure( oObj.GetObj("obj").GetType() == CPLJSONObject::Type::Object );
             oObj.Add("bool", true);
             ensure_equals( oObj.GetBool("bool"), true );
             ensure_equals( oObj.GetBool("inexisting_bool", false), false );
-            ensure_equals( oObj.GetObj("bool").GetType(), CPLJSONObject::Boolean );
+            ensure( oObj.GetObj("bool").GetType() == CPLJSONObject::Type::Boolean );
             oObj.AddNull("null_field");
-            ensure_equals( oObj.GetObj("null_field").GetType(), CPLJSONObject::Null );
-            ensure_equals( oObj.GetObj("inexisting").GetType(), CPLJSONObject::Unknown );
+            ensure( oObj.GetObj("null_field").GetType() == CPLJSONObject::Type::Null );
+            ensure( oObj.GetObj("inexisting").GetType() == CPLJSONObject::Type::Unknown );
             oObj.Set("string", std::string("my_string"));
             oObj.Set("const_char_star", nullptr);
             oObj.Set("const_char_star", "my_const_char_star");
@@ -2224,6 +2224,14 @@ namespace tut
             oArray.Add(GINT64_MAX);
             oArray.Add(true);
             ensure_equals(oArray.Size(), 7);
+
+            int nCount = 0;
+            for(const auto& obj: oArray)
+            {
+                ensure_equals(obj.GetInternalHandle(), oArray[nCount].GetInternalHandle());
+                nCount++;
+            }
+            ensure_equals(nCount, 7);
         }
         {
             CPLJSONDocument oDocument;

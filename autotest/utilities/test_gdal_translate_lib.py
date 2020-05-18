@@ -122,7 +122,7 @@ def test_gdal_translate_lib_4():
 
 def test_gdal_translate_lib_5():
 
-    ds = gdal.Open('../gdrivers/data/bug407.gif')
+    ds = gdal.Open('../gdrivers/data/gif/bug407.gif')
     ds = gdal.Translate('tmp/test5.tif', ds, rgbExpand='rgb')
     assert ds is not None
 

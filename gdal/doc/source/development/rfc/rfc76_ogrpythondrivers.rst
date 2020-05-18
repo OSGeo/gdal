@@ -77,7 +77,7 @@ the C++ code will:
 * if not already done, find Python symbols, or start Python (see below paragraph
   for more details)
 * if not already done, load the .py file as a Python module
-* if not already done, instanciate an instance of the Python class of the module
+* if not already done, instantiate an instance of the Python class of the module
   deriving from ``gdal_python_driver.BaseDriver``
 * call the  ``identify`` and ``open`` method depending on the originated API call.
 
@@ -356,9 +356,9 @@ bit artificial. The CityJSON driver mentioned below does not need it.
 Other examples:
 
 * a PASSTHROUGH driver that forwards calls to the GDAL SWIG Python API:
-  https://github.com/rouault/gdal/blob/pythondrivers/gdal/examples/pydrivers/ogr_PASSTHROUGH.py
+  https://github.com/OSGeo/gdal/blob/master/gdal/examples/pydrivers/ogr_PASSTHROUGH.py
 * a driver implemented a simple parsing of `CityJSON <https://www.cityjson.org/>`_:
-  https://github.com/rouault/gdal/blob/pythondrivers/gdal/examples/pydrivers/ogr_CityJSON.py
+  https://github.com/OSGeo/gdal/blob/master/gdal/examples/pydrivers/ogr_CityJSON.py
 
 Limitations and scope
 ---------------------

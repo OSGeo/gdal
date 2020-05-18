@@ -128,7 +128,7 @@ You can use the full power of PostgreSQL + PostGIS SQL capabilities.
 Open options
 ------------
 
-Starting with GDAL 2.0, the following open options are available:
+The following open options are available:
 
 -  **BATCH_INSERT**\ =YES/NO: Whether to group feature insertions in a
    batch. Defaults to YES. Only apply in creation or update mode.

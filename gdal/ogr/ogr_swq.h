@@ -418,6 +418,10 @@ int CPL_UNSTABLE_API swq_is_reserved_keyword(const char* pszStr);
 char CPL_UNSTABLE_API *OGRHStoreGetValue(const char* pszHStore, 
                                          const char* pszSearchedKey);
 
+#ifdef GDAL_COMPILATION
+void swq_fixup(swq_parse_context* psParseContext);
+#endif
+
 #endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* def SWQ_H_INCLUDED_ */

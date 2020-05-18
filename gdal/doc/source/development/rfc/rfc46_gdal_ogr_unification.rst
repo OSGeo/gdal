@@ -55,7 +55,7 @@ strongly relate to RFC 46 :
    GDALOpen <./rfc36_open_by_drivername>`__. The new GDALOpenEx()
    accepts a list of a subset drivers that must be probed, as suggested
    by RFC36. The specification of the drivers on the command line of
-   utilies could be easily done through a new option, but that's not in
+   utilities could be easily done through a new option, but that's not in
    the scope of RFC 46.
 -  `RFC 38: OGR Faster Open <./rfc38_ogr_faster_open>`__ is completely
    included in RFC 46 through the possibility of using
@@ -106,9 +106,9 @@ Drivers and driver registration
 -  Drivers directly inheriting from GDALDriver (to be opposed to those
    inheriting from OGRSFDriver) should : - declare SetMetadataItem(
    GDAL_DCAP_VECTOR, "YES" ). - implement pfnOpen() for dataset opening
-   - optionaly, implement pfnCreate() for dataset creation. For vector
+   - optionally, implement pfnCreate() for dataset creation. For vector
    drivers, the nBands parameter of Create() is supposed to be passed to
-   0. - optionaly, implement pfnDelete() for dataset deletion
+   0. - optionally, implement pfnDelete() for dataset deletion
 
 -  The *C* OGR Driver API will still work with drivers that have been
    converted as "pure" GDALDrivers (this is not true of the C++ OGR
@@ -189,7 +189,7 @@ Drivers and driver registration
       GetDriverByName()
    -  accept OGR_SKIP and OGR_DRIVER_PATH configuration options for
       backward compatibility.
-   -  The recommanded separator for driver names in GDAL_SKIP is now
+   -  The recommended separator for driver names in GDAL_SKIP is now
       comma instead of space (similarly to what OGR_SKIP does). This is
       to make it possible to define OGR driver names in GDAL_SKIP that
       have spaces in their names like "ESRI Shapefile" or "MapInfo
@@ -205,7 +205,7 @@ Drivers and driver registration
    to declare it. But the registration code detects if a driver does not
    declare any of GDAL_DCAP_RASTER nor GDAL_DCAP_VECTOR, in which case
    it declares GDAL_DCAP_RASTER on behalf of the un-patched driver, with
-   a debug message inviting to explicitely set it.
+   a debug message inviting to explicitly set it.
 
 -  New metadata items :
 
@@ -450,7 +450,7 @@ Datasets / Datasources
 
    The existing GDALOpen(), GDALOpenShared(), OGROpen(), OGROpenShared(),
    OGR_Dr_Open() are just wrappers of GDALOpenEx() with appropriate open flags.
-   From the user point of view, their behaviour is identical to the existing one,
+   From the user point of view, their behavior is identical to the existing one,
    i.e. GDALOpen() family will only returns datasets of drivers with declared raster
    capabilities, and similarly with OGROpen() family with vector.
 
@@ -551,7 +551,7 @@ Changes in drivers
 
 -  Following drivers are kept as OGRSFDriver, but their Open() method
    does early extension/prefix testing to avoid datasource object to be
-   instanciated : CartoDB, CouchDB, DXF, EDIGEO, GeoConcept, GFT, GME,
+   instantiated : CartoDB, CouchDB, DXF, EDIGEO, GeoConcept, GFT, GME,
    IDRISI, OGDI, PCIDSK, PG, XPlane.
 
 -  Identify() has been implemented for CSV, DGN, DXF, EDIGEO, GeoJSON,
@@ -648,7 +648,7 @@ a bit different. It starts at 1 for GDAL datasets, and started at 0 for
 OGR datasources. Now that OGRDataSource is basically a GDALDataset, it
 starts at 1 for both cases. Hopefully there are very few users of the
 OGR_DS_GetRefCount() API. If it was deemed necessary we could restore
-the previous behaviour at the C API, but that would not be possible at
+the previous behavior at the C API, but that would not be possible at
 the C++ level. For reference, neither MapServer nor QGIS use
 OGR_DS_GetRefCount().
 
@@ -671,7 +671,7 @@ Version numbering
 -----------------
 
 Although the above describes changes should have very few impact on
-existing applications of the C API, some behaviour changes, C++ level
+existing applications of the C API, some behavior changes, C++ level
 changes and the conceptual changes are thought to deserve a 2.0 version
 number.
 

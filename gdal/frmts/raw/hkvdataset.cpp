@@ -874,7 +874,7 @@ CPLErr HKVDataset::_SetProjection( const char * pszNewProjection )
     }
     else
     {
-        // Default to previous behaviour if spheroid not found by radius and
+        // Default to previous behavior if spheroid not found by radius and
         // inverse flattening.
         if( strstr(pszNewProjection,"Bessel") != nullptr )
         {
@@ -1879,7 +1879,7 @@ void GDALRegister_HKV()
     poDriver->SetDescription( "MFF2" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Vexcel MFF2 (HKV) Raster" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_mff2.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/mff2.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 UInt16 Int32 UInt32 CInt16 "
                                "CInt32 Float32 Float64 CFloat32 CFloat64" );

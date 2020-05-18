@@ -70,7 +70,7 @@ def wms_2():
     if not gdaltest.wms_srv1_ok:
         pytest.skip()
 
-    gdaltest.wms_ds = gdal.Open('data/pop_wms.xml')
+    gdaltest.wms_ds = gdal.Open('data/wms/pop_wms.xml')
 
     if gdaltest.wms_ds is not None:
         return
@@ -575,7 +575,7 @@ def test_wms_13():
     if gdaltest.wms_drv is None:
         pytest.skip()
 
-    ds = gdal.Open("data/DNEC_250K.vrt")
+    ds = gdal.Open("data/wms/DNEC_250K.vrt")
     if ds.ReadRaster(0, 0, 1024, 682) is None:
         srv = 'http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GeCapabilities'
         if gdaltest.gdalurlopen(srv) is None:
@@ -790,8 +790,20 @@ def test_wms_18():
 
     expected_cs = 12824
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == expected_cs, 'Did not get expected SRTM checksum.'
+    assert cs == expected_cs, 'Did not get expected checksum.'
 
+    ds = None
+
+    # Alternative url with additional parameters
+    fn = '<GDAL_WMS><Service name="AGS"><ServerUrl>http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Specialty/ESRI_StateCityHighway_USA/MapServer/export?dpi=96&amp;layerdefs=&amp;layerTimeOptions=&amp;dynamicLayers=&amp;</ServerUrl><BBoxOrder>xyXY</BBoxOrder><SRS>EPSG:3857</SRS></Service><DataWindow><UpperLeftX>-20037508.34</UpperLeftX><UpperLeftY>20037508.34</UpperLeftY><LowerRightX>20037508.34</LowerRightX><LowerRightY>-20037508.34</LowerRightY><SizeX>512</SizeX><SizeY>512</SizeY></DataWindow></GDAL_WMS>'
+
+    ds = gdal.Open(fn)
+
+    assert ds is not None, 'open failed.'
+    assert ds.RasterXSize == 512 and ds.RasterYSize == 512 and ds.RasterCount == 3, \
+        'wrong size or bands'
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == expected_cs, 'Did not get expected checksum.'
     ds = None
 
 ###############################################################################

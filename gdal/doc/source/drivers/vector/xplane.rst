@@ -114,7 +114,7 @@ Fields:
 -  apt_icao: String (5.0). ICAO code for the airport.
 -  apt_name: String (0.0). Full name of the airport.
 -  type: Integer (1.0). Airport type : 0 for regular airport, 1 for
-   seaplane/floatplane base, 2 for heliport (added in GDAL 1.7.0)
+   seaplane/floatplane base, 2 for heliport
 -  elevation_m: Real (8.2). Elevation of the airport (in meters).
 -  has_tower: Integer (1.0). Set to 1 if the airport has a tower view
    point.
@@ -277,7 +277,7 @@ computed from the water runway threshold information. Fields:
 Stopway layer (Polygon)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-(Starting with GDAL 1.7.0) This layer contains the rectangular shape of
+This layer contains the rectangular shape of
 a stopway/blastpad/over-run that may be found at the beginning of a
 runway. It is part of the tarmac but not intended to be used for normal
 operations. It is computed from the runway stopway/blastpad/over-run

@@ -5489,7 +5489,7 @@ class FieldDefn(_object):
         By default, fields are nullable, so this method is generally called
         with FALSE to set a not-null constraint.
 
-        Drivers that support writing not-null constraint will advertize the
+        Drivers that support writing not-null constraint will advertise the
         GDAL_DCAP_NOTNULL_FIELDS driver metadata item.
 
         This method is the same as the C++ method OGRFieldDefn::SetNullable().
@@ -5554,7 +5554,7 @@ class FieldDefn(_object):
         literal value, format should be 'YYYY/MM/DD HH:MM:SS[.sss]'
         (considered as UTC time).
 
-        Drivers that support writing DEFAULT clauses will advertize the
+        Drivers that support writing DEFAULT clauses will advertise the
         GDAL_DCAP_DEFAULT_FIELDS driver metadata item.
 
         This function is the same as the C++ method
@@ -6382,6 +6382,11 @@ class Geometry(_object):
         return _ogr.Geometry_MakeValid(self, *args)
 
 
+    def RemoveLowerDimensionSubGeoms(self, *args):
+        """RemoveLowerDimensionSubGeoms(Geometry self) -> Geometry"""
+        return _ogr.Geometry_RemoveLowerDimensionSubGeoms(self, *args)
+
+
     def Buffer(self, *args, **kwargs):
         """
         Buffer(Geometry self, double distance, int quadsecs=30) -> Geometry
@@ -7120,42 +7125,6 @@ class Geometry(_object):
         return _ogr.Geometry_TransformTo(self, *args)
 
 
-    def Transform(self, *args):
-        """
-        Transform(Geometry self, CoordinateTransformation trans) -> OGRErr
-
-        OGRErr OGR_G_Transform(OGRGeometryH
-        hGeom, OGRCoordinateTransformationH hTransform)
-
-        Apply arbitrary coordinate transformation to geometry.
-
-        This function will transform the coordinates of a geometry from their
-        current spatial reference system to a new target spatial reference
-        system. Normally this means reprojecting the vectors, but it could
-        include datum shifts, and changes of units.
-
-        Note that this function does not require that the geometry already
-        have a spatial reference system. It will be assumed that they can be
-        treated as having the source spatial reference system of the
-        OGRCoordinateTransformation object, and the actual SRS of the geometry
-        will be ignored. On successful completion the output
-        OGRSpatialReference of the OGRCoordinateTransformation will be
-        assigned to the geometry.
-
-        This function is the same as the CPP method OGRGeometry::transform.
-
-        Parameters:
-        -----------
-
-        hGeom:  handle on the geometry to apply the transform to.
-
-        hTransform:  handle on the transformation to apply.
-
-        OGRERR_NONE on success or an error code. 
-        """
-        return _ogr.Geometry_Transform(self, *args)
-
-
     def GetSpatialReference(self, *args):
         """
         GetSpatialReference(Geometry self) -> SpatialReference
@@ -7646,6 +7615,43 @@ class Geometry(_object):
         return _ogr.Geometry_Value(self, *args)
 
 
+    def Transform(self, *args):
+        """
+        Transform(Geometry self, CoordinateTransformation trans) -> OGRErr
+        Transform(Geometry self, GeomTransformer transformer) -> Geometry
+
+        OGRErr OGR_G_Transform(OGRGeometryH
+        hGeom, OGRCoordinateTransformationH hTransform)
+
+        Apply arbitrary coordinate transformation to geometry.
+
+        This function will transform the coordinates of a geometry from their
+        current spatial reference system to a new target spatial reference
+        system. Normally this means reprojecting the vectors, but it could
+        include datum shifts, and changes of units.
+
+        Note that this function does not require that the geometry already
+        have a spatial reference system. It will be assumed that they can be
+        treated as having the source spatial reference system of the
+        OGRCoordinateTransformation object, and the actual SRS of the geometry
+        will be ignored. On successful completion the output
+        OGRSpatialReference of the OGRCoordinateTransformation will be
+        assigned to the geometry.
+
+        This function is the same as the CPP method OGRGeometry::transform.
+
+        Parameters:
+        -----------
+
+        hGeom:  handle on the geometry to apply the transform to.
+
+        hTransform:  handle on the transformation to apply.
+
+        OGRERR_NONE on success or an error code. 
+        """
+        return _ogr.Geometry_Transform(self, *args)
+
+
     def Destroy(self):
       self.__swig_destroy__(self)
       self.__del__()
@@ -7669,6 +7675,32 @@ class Geometry(_object):
 
 Geometry_swigregister = _ogr.Geometry_swigregister
 Geometry_swigregister(Geometry)
+
+class GeomTransformer(_object):
+    """Proxy of C++ OGRGeomTransformerShadow class."""
+
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, GeomTransformer, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, GeomTransformer, name)
+    __repr__ = _swig_repr
+
+    def __init__(self, *args):
+        """__init__(OGRGeomTransformerShadow self, CoordinateTransformation ct, char ** options=None) -> GeomTransformer"""
+        this = _ogr.new_GeomTransformer(*args)
+        try:
+            self.this.append(this)
+        except __builtin__.Exception:
+            self.this = this
+    __swig_destroy__ = _ogr.delete_GeomTransformer
+    __del__ = lambda self: None
+
+    def Transform(self, *args):
+        """Transform(GeomTransformer self, Geometry src_geom) -> Geometry"""
+        return _ogr.GeomTransformer_Transform(self, *args)
+
+GeomTransformer_swigregister = _ogr.GeomTransformer_swigregister
+GeomTransformer_swigregister(GeomTransformer)
 
 
 def GetDriverCount(*args):

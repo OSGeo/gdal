@@ -48,7 +48,6 @@ OGRPGDataSource::OGRPGDataSource() :
     papoLayers(nullptr),
     nLayers(0),
     pszName(nullptr),
-    pszDBName(nullptr),
     bDSUpdate(FALSE),
     bHavePostGIS(FALSE),
     bHaveGeography(FALSE),
@@ -92,7 +91,6 @@ OGRPGDataSource::~OGRPGDataSource()
     OGRPGDataSource::FlushCache();
 
     CPLFree( pszName );
-    CPLFree( pszDBName );
     CPLFree( pszForcedTables );
     CSLDestroy( papszSchemaList );
 
@@ -368,7 +366,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     pszName = CPLStrdup( pszNewName );
 
     CPLString osConnectionName(pszName);
-    const char* apszOpenOptions[] = { "dbname", "port", "user", "password",
+    const char* apszOpenOptions[] = { "service", "dbname", "port", "user", "password",
                                       "host", "active_schema", "schemas", "tables" };
     for(int i=0; i <(int)(sizeof(apszOpenOptions)/sizeof(char*));i++)
     {
@@ -533,36 +531,45 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     PQsetNoticeProcessor( hPGConn, OGRPGNoticeProcessor, this );
 
 /* -------------------------------------------------------------------- */
-/*      Try to establish the database name from the connection          */
-/*      string passed.                                                  */
+/*      Detect PostGIS schema                                           */
 /* -------------------------------------------------------------------- */
-    if( strstr(pszNewName, "dbname=") != nullptr )
+    CPLString osPostgisSchema;
     {
-        pszDBName = CPLStrdup( strstr(pszNewName, "dbname=") + 7 );
-
-        for( int i = 0; pszDBName[i] != '\0'; i++ )
+        PGresult*hResult = OGRPG_PQexec(hPGConn,
+            "SELECT n.nspname FROM pg_proc p JOIN pg_namespace n "
+            "ON n.oid = p.pronamespace WHERE proname = 'postgis_version'");
+        if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
+            && PQntuples(hResult) > 0 )
         {
-            if( pszDBName[i] == ' ' )
-            {
-                pszDBName[i] = '\0';
-                break;
-            }
+            const char* pszPostgisSchema = PQgetvalue(hResult,0,0);
+
+            CPLDebug("PG","PostGIS schema: '%s'", pszPostgisSchema);
+
+            osPostgisSchema = pszPostgisSchema;
         }
+        OGRPGClearResult(hResult);
     }
-    else if( getenv( "USER" ) != nullptr )
-        pszDBName = CPLStrdup( getenv("USER") );
-    else
-        pszDBName = CPLStrdup( "unknown_dbname" );
-
-    CPLDebug( "PG", "DBName=\"%s\"", pszDBName );
 
 /* -------------------------------------------------------------------- */
-/*      Set active schema if different from 'public'                    */
+/*      Set active schema and/or postgis schema if different from       */
+/*      'public'                                                        */
 /* -------------------------------------------------------------------- */
-    if (strcmp(osActiveSchema, "public") != 0)
+    if (osActiveSchema != "public" ||
+        (!osPostgisSchema.empty() && osPostgisSchema != "public"))
     {
-        CPLString osCommand;
-        osCommand.Printf("SET search_path='%s',public", osActiveSchema.c_str());
+        CPLString osCommand = "SET search_path=";
+        if( osActiveSchema != "public" )
+        {
+            osCommand += OGRPGEscapeString(hPGConn, osActiveSchema.c_str());
+            osCommand += ',';
+        }
+        osCommand += "public";
+        if( !osPostgisSchema.empty() && osPostgisSchema != "public" )
+        {
+            osCommand += ',';
+            osCommand += OGRPGEscapeString(hPGConn, osPostgisSchema.c_str());
+        }
+
         PGresult    *hResult = OGRPG_PQexec(hPGConn, osCommand );
 
         if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )

@@ -80,7 +80,7 @@ struct VSIDIRAz: public VSIDIR
     int nMaxFiles = 0;
     bool bCacheResults = true;
 
-    VSIDIRAz(IVSIS3LikeFSHandler *poFSIn): poFS(poFSIn) {}
+    explicit VSIDIRAz(IVSIS3LikeFSHandler *poFSIn): poFS(poFSIn) {}
     ~VSIDIRAz()
     {
         delete poHandleHelper;
@@ -458,7 +458,8 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 
     void InvalidateRecursive( const CPLString& osDirnameIn );
 
-    int      CopyObject( const char *oldpath, const char *newpath ) override;
+    int      CopyObject( const char *oldpath, const char *newpath,
+                         CSLConstList papszMetadata ) override;
 
   public:
     VSIAzureFSHandler() = default;
@@ -994,7 +995,8 @@ int VSIAzureFSHandler::Rmdir( const char * pszDirname )
 /*                            CopyObject()                              */
 /************************************************************************/
 
-int VSIAzureFSHandler::CopyObject( const char *oldpath, const char *newpath )
+int VSIAzureFSHandler::CopyObject( const char *oldpath, const char *newpath,
+                                   CSLConstList /* papszMetadata */ )
 {
     CPLString osTargetNameWithoutPrefix = newpath + GetFSPrefix().size();
     auto poS3HandleHelper =

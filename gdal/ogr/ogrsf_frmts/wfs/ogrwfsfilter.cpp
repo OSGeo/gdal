@@ -205,13 +205,13 @@ static bool WFS_ExprDumpAsOGCFilter( CPLString& osFilter,
         }
 
         const char* pszFieldname = nullptr;
-        int nIndex = 0;
         const bool bSameTable =
             psOptions->poFDefn != nullptr &&
             ( poExpr->table_name == nullptr ||
               EQUAL(poExpr->table_name, psOptions->poFDefn->GetName()) );
         if( bSameTable )
         {
+            int nIndex;
             if( (nIndex = psOptions->poFDefn->GetFieldIndex(poExpr->string_value)) >= 0 )
             {
                 pszFieldname = psOptions->poFDefn->GetFieldDefn(nIndex)->GetNameRef();
@@ -227,6 +227,7 @@ static bool WFS_ExprDumpAsOGCFilter( CPLString& osFilter,
             if( poLayer )
             {
                 OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
+                int nIndex;
                 if( (nIndex = poFDefn->GetFieldIndex(poExpr->string_value)) >= 0 )
                 {
                     pszFieldname = CPLSPrintf("%s/%s",

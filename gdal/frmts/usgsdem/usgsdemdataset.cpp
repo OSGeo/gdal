@@ -948,7 +948,7 @@ void GDALRegister_USGSDEM()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dem" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "USGS Optional ASCII DEM (and CDED)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_usgsdem.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/usgsdem.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Int16" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"

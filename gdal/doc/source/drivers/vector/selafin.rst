@@ -375,8 +375,8 @@ created, two layers are actually added: one for points and one for
 elements.
 
 New features and attributes can be added to the layers or removed. The
-behaviour depends on the type of layer (points or elements). The
-following table explains the behaviour of the driver in the different
+behavior depends on the type of layer (points or elements). The
+following table explains the behavior of the driver in the different
 cases.
 
 ================================== ========================================================================================================================================================================================= ======================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================

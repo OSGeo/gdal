@@ -3467,8 +3467,8 @@ static OGRGeometry* OGRGeometryRebuildCurves( const OGRGeometry* poGeom,
 {
     if( poOGRProduct != nullptr &&
         wkbFlatten(poOGRProduct->getGeometryType()) != wkbPoint &&
-        (poGeom->hasCurveGeometry() ||
-         (poOtherGeom && poOtherGeom->hasCurveGeometry())) )
+        (poGeom->hasCurveGeometry(true) ||
+         (poOtherGeom && poOtherGeom->hasCurveGeometry(true))) )
     {
         OGRGeometry* poCurveGeom = poOGRProduct->getCurveGeometry();
         delete poOGRProduct;
@@ -3576,6 +3576,9 @@ static OGRBoolean OGRGEOSBooleanPredicate(
  * \brief Attempts to make an invalid geometry valid without losing vertices.
  *
  * Already-valid geometries are cloned without further intervention.
+ *
+ * Running OGRGeometryFactory::removeLowerDimensionSubGeoms() as a post-processing
+ * step is often desired.
  *
  * This method is the same as the C function OGR_G_MakeValid().
  *
@@ -5197,7 +5200,7 @@ OGRErr OGRGeometry::Centroid( OGRPoint *poPoint ) const
             return OGRERR_FAILURE;
         }
 
-        if( poCentroidGeom != nullptr && getSpatialReference() != nullptr )
+        if( getSpatialReference() != nullptr )
             poCentroidGeom->assignSpatialReference(getSpatialReference());
 
         OGRPoint *poCentroid = poCentroidGeom->toPoint();
@@ -5340,7 +5343,7 @@ OGRGeometryH OGR_G_PointOnSurface( OGRGeometryH hGeom )
             return nullptr;
         }
 
-        if( poInsidePointGeom != nullptr && poThis->getSpatialReference() != nullptr )
+        if( poThis->getSpatialReference() != nullptr )
             poInsidePointGeom->
                 assignSpatialReference(poThis->getSpatialReference());
 

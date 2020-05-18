@@ -107,7 +107,33 @@ GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS,
                          GDALResampleAlg eResampleAlg,
                          double dfMaxError,
                          const GDALWarpOptions *psOptionsIn )
+{
+  return GDALAutoCreateWarpedVRTEx(
+        hSrcDS, pszSrcWKT, pszDstWKT, eResampleAlg,
+        dfMaxError, psOptionsIn, nullptr );
+}
 
+/************************************************************************/
+/*                     GDALAutoCreateWarpedVRTEx()                      */
+/************************************************************************/
+
+/**
+ * Create virtual warped dataset automatically.
+ *
+ * Compared to GDALAutoCreateWarpedVRT() this function adds one extra
+ * argument: options to be passed to GDALCreateGenImgProjTransformer2().
+ *
+ * @since 3.2
+ */
+
+GDALDatasetH CPL_STDCALL
+GDALAutoCreateWarpedVRTEx( GDALDatasetH hSrcDS,
+                           const char *pszSrcWKT,
+                           const char *pszDstWKT,
+                           GDALResampleAlg eResampleAlg,
+                           double dfMaxError,
+                           const GDALWarpOptions *psOptionsIn,
+                           CSLConstList papszTransformerOptions )
 {
     VALIDATE_POINTER1( hSrcDS, "GDALAutoCreateWarpedVRT", nullptr );
 
@@ -167,10 +193,17 @@ GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS,
 /*      Create the transformer.                                         */
 /* -------------------------------------------------------------------- */
     psWO->pfnTransformer = GDALGenImgProjTransform;
+
+    char **papszOptions = nullptr;
+    if( pszSrcWKT != nullptr )
+        papszOptions = CSLSetNameValue( papszOptions, "SRC_SRS", pszSrcWKT );
+    if( pszDstWKT != nullptr )
+        papszOptions = CSLSetNameValue( papszOptions, "DST_SRS", pszDstWKT );
+    papszOptions = CSLMerge( papszOptions, papszTransformerOptions );
     psWO->pTransformerArg =
-        GDALCreateGenImgProjTransformer( psWO->hSrcDS, pszSrcWKT,
-                                         nullptr, pszDstWKT,
-                                         TRUE, 1.0, 0 );
+        GDALCreateGenImgProjTransformer2( psWO->hSrcDS, nullptr,
+                                          papszOptions );
+    CSLDestroy( papszOptions );
 
     if( psWO->pTransformerArg == nullptr )
     {
@@ -555,6 +588,10 @@ public:
         }
         return TRUE;
     }
+
+    virtual OGRCoordinateTransformation* Clone() const override {
+        return new GDALWarpCoordRescaler(*this); }
+
 };
 
 /************************************************************************/
@@ -682,7 +719,7 @@ void VRTWarpedDataset::CreateImplicitOverviews()
         {
             GDALWarpCoordRescaler oRescaler(1.0 / dfSrcRatioX,
                                             1.0 / dfSrcRatioY);
-            reinterpret_cast<OGRGeometry*>(psWOOvr->hCutline)->
+            static_cast<OGRGeometry*>(psWOOvr->hCutline)->
                                                     transform(&oRescaler);
         }
 
@@ -740,7 +777,7 @@ char** VRTWarpedDataset::GetFileList()
 
         if( psWO->hSrcDS != nullptr &&
             (pszFilename =
-             reinterpret_cast<GDALDataset*>(psWO->hSrcDS)->GetDescription()) != nullptr )
+             static_cast<GDALDataset*>(psWO->hSrcDS)->GetDescription()) != nullptr )
         {
             VSIStatBufL  sStat;
             if( VSIStatL( pszFilename, &sStat ) == 0 )
@@ -1176,7 +1213,8 @@ GDALInitializeWarpedVRT( GDALDatasetH hDS, GDALWarpOptions *psWO )
 {
     VALIDATE_POINTER1( hDS, "GDALInitializeWarpedVRT", CE_Failure );
 
-    return reinterpret_cast<VRTWarpedDataset *>( hDS )->Initialize( psWO );
+    return static_cast<VRTWarpedDataset *>(GDALDataset::FromHandle(hDS))->
+        Initialize( psWO );
 }
 
 /*! @cond Doxygen_Suppress */
@@ -1666,7 +1704,7 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
                 }
                 else
                 {
-                     GByte* pabyBlock = reinterpret_cast<GByte *>(
+                     GByte* pabyBlock = static_cast<GByte *>(
                         poBlock->GetDataRef() );
                     const int nDTSize =
                         GDALGetDataTypeSizeBytes(poBlock->GetDataType());
@@ -1725,7 +1763,7 @@ VRTWarpedRasterBand::VRTWarpedRasterBand( GDALDataset *poDSIn, int nBandIn,
     nBand = nBandIn;
     eAccess = GA_Update;
 
-    reinterpret_cast<VRTWarpedDataset *>( poDS )->GetBlockSize( &nBlockXSize,
+    static_cast<VRTWarpedDataset *>( poDS )->GetBlockSize( &nBlockXSize,
                                                                 &nBlockYSize );
 
     if( eType != GDT_Unknown )
@@ -1750,7 +1788,7 @@ CPLErr VRTWarpedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                         void * pImage )
 
 {
-    VRTWarpedDataset *poWDS = reinterpret_cast<VRTWarpedDataset *>( poDS );
+    VRTWarpedDataset *poWDS = static_cast<VRTWarpedDataset *>( poDS );
     GDALRasterBlock *poBlock = GetLockedBlockRef( nBlockXOff, nBlockYOff, TRUE );
     if( poBlock == nullptr )
         return CE_Failure;
@@ -1778,7 +1816,7 @@ CPLErr VRTWarpedRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                                          void * pImage )
 
 {
-    VRTWarpedDataset *poWDS = reinterpret_cast<VRTWarpedDataset *>( poDS );
+    VRTWarpedDataset *poWDS = static_cast<VRTWarpedDataset *>( poDS );
 
     // This is a bit tricky. In the case we are warping a VRTWarpedDataset
     // with a destination alpha band, IWriteBlock can be called on that alpha
@@ -1821,7 +1859,7 @@ int VRTWarpedRasterBand::GetOverviewCount()
 
 {
     VRTWarpedDataset * const poWDS =
-        reinterpret_cast<VRTWarpedDataset *>( poDS );
+        static_cast<VRTWarpedDataset *>( poDS );
 
     poWDS->CreateImplicitOverviews();
 
@@ -1836,7 +1874,7 @@ GDALRasterBand *VRTWarpedRasterBand::GetOverview( int iOverview )
 
 {
     VRTWarpedDataset * const poWDS =
-        reinterpret_cast<VRTWarpedDataset *>( poDS );
+        static_cast<VRTWarpedDataset *>( poDS );
 
     if( iOverview < 0 || iOverview >= GetOverviewCount() )
         return nullptr;

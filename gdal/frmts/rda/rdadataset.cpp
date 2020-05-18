@@ -2284,7 +2284,7 @@ void GDALRegister_RDA()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "DigitalGlobe Raster Data Access driver" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_rda.html" );
+                               "drivers/raster/rda.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dgrda" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,

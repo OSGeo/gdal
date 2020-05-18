@@ -283,6 +283,7 @@ bool GMLASConfiguration::Load(const char* pszFilename)
         return false;
     }
     CPLXMLTreeCloser oCloser(psRoot);
+    CPL_IGNORE_RET_VAL(oCloser);
 
     // Validate the configuration file
     if( CPLTestBool(CPLGetConfigOption("GDAL_XML_VALIDATION", "YES")) )

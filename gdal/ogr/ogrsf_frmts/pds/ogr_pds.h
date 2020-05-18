@@ -58,7 +58,7 @@ typedef struct
     int nItems;
 } FieldDesc;
 
-class OGRPDSLayer final: public OGRLayer
+class OGRPDSLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRPDSLayer>
 {
     OGRFeatureDefn*    poFeatureDefn;
 
@@ -90,7 +90,7 @@ class OGRPDSLayer final: public OGRLayer
                         virtual ~OGRPDSLayer();
 
     virtual void                ResetReading() override;
-    virtual OGRFeature *        GetNextFeature() override;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRPDSLayer)
 
     virtual OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 

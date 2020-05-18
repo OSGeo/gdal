@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#include "cpl_vax.h"
+
 #include "IngrTypes.h"
 #include "JpegHelper.h"
 
@@ -1161,6 +1163,7 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
             bHeader = false;
             break;
         }
+        // cppcheck-suppress knownConditionTrueFalse
         if( nWordsInScanline < 4 )
             return 0;
 
@@ -1249,13 +1252,12 @@ INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
     unsigned int   iInput = 0;
     unsigned int   iOutput = 0;
     unsigned short *pauiSrc = (unsigned short *) pabySrcData;
-    unsigned short nRun = 0;
     unsigned char  nValue = 0;
     unsigned short previous = 0;
 
     if( CPL_LSBWORD16(pauiSrc[0]) != 0x5900 )
     {
-        nRun     = 256;
+        unsigned short nRun     = 256;
         nValue   = 0;
         do
         {
@@ -1285,7 +1287,7 @@ INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
     {
         do
         {
-            nRun = CPL_LSBWORD16(pauiSrc[ iInput ]);
+            const unsigned short nRun = CPL_LSBWORD16(pauiSrc[ iInput ]);
             iInput++;
 
             if( nRun == 0x5900 )
@@ -1654,15 +1656,6 @@ void CPL_STDCALL INGR_JPEGAppDataDiskToMem(INGR_JPEGAppData* pJPEGAppData, const
 #endif
 }
 
-//  ------------------------------------------------------------------
-//    Pasted from the DNG OGR Driver to avoid dependency on OGR
-//  ------------------------------------------------------------------
-
-typedef struct dbl {
-    GUInt32 hi;
-    GUInt32 lo;
-} double64_t;
-
 /************************************************************************/
 /*                           INGR_DGN2IEEEDouble()                      */
 /************************************************************************/
@@ -1670,80 +1663,5 @@ typedef struct dbl {
 void    INGR_DGN2IEEEDouble(void * dbl)
 
 {
-    double64_t  dt;
-    GUInt32     sign;
-    int     exponent;
-    GUInt32     rndbits;
-    unsigned char       *src;
-    unsigned char       *dest;
-
-/* -------------------------------------------------------------------- */
-/*      Arrange the VAX double so that it may be accessed by a          */
-/*      double64_t structure, (two GUInt32s).                           */
-/* -------------------------------------------------------------------- */
-    src =  (unsigned char *) dbl;
-    dest = (unsigned char *) &dt;
-#ifdef CPL_LSB
-    dest[2] = src[0];
-    dest[3] = src[1];
-    dest[0] = src[2];
-    dest[1] = src[3];
-    dest[6] = src[4];
-    dest[7] = src[5];
-    dest[4] = src[6];
-    dest[5] = src[7];
-#else
-    dest[1] = src[0];
-    dest[0] = src[1];
-    dest[3] = src[2];
-    dest[2] = src[3];
-    dest[5] = src[4];
-    dest[4] = src[5];
-    dest[7] = src[6];
-    dest[6] = src[7];
-#endif
-
-/* -------------------------------------------------------------------- */
-/*      Save the sign of the double                                     */
-/* -------------------------------------------------------------------- */
-    sign         = dt.hi & 0x80000000;
-
-/* -------------------------------------------------------------------- */
-/*      Adjust the exponent so that we may work with it                 */
-/* -------------------------------------------------------------------- */
-    exponent = (dt.hi >> 23) & 0x000000ff;
-
-    if (exponent)
-        exponent = exponent -129 + 1023;
-
-/* -------------------------------------------------------------------- */
-/*      Save the bits that we are discarding so we can round properly   */
-/* -------------------------------------------------------------------- */
-    rndbits = dt.lo & 0x00000007;
-
-    dt.lo = dt.lo >> 3;
-    dt.lo = (dt.lo & 0x1fffffff) | (dt.hi << 29);
-
-    if (rndbits)
-        dt.lo = dt.lo | 0x00000001;
-
-/* -------------------------------------------------------------------- */
-/*      Shift the hi-order int over 3 and insert the exponent and sign  */
-/* -------------------------------------------------------------------- */
-    dt.hi = dt.hi >> 3;
-    dt.hi = dt.hi & 0x000fffff;
-    dt.hi = dt.hi | ((GUInt32)exponent << 20) | sign;
-
-#ifdef CPL_LSB
-/* -------------------------------------------------------------------- */
-/*      Change the number to a byte swapped format                      */
-/* -------------------------------------------------------------------- */
-    src = (unsigned char *) &dt;
-    dest = (unsigned char *) dbl;
-
-    memcpy(dest + 0, src + 4, 4);
-    memcpy(dest + 4, src + 0, 4);
-#else
-    memcpy( dbl, &dt, 8 );
-#endif
+    CPLVaxToIEEEDouble(dbl);
 }

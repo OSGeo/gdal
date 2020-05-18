@@ -39,7 +39,7 @@ import gdaltest
 
 def test_e00grid_1():
 
-    tst = gdaltest.GDALTest('E00GRID', 'fake_e00grid.e00', 1, 65359)
+    tst = gdaltest.GDALTest('E00GRID', 'e00grid/fake_e00grid.e00', 1, 65359)
     expected_gt = [500000.0, 1000.0, 0.0, 4000000.0, 0.0, -1000.0]
     expected_srs = """PROJCS["UTM Zone 15, Northern Hemisphere",
     GEOGCS["NAD83",
@@ -63,7 +63,7 @@ def test_e00grid_1():
     ret = tst.testOpen(check_gt=expected_gt, check_prj=expected_srs)
 
     if ret == 'success':
-        ds = gdal.Open('data/fake_e00grid.e00')
+        ds = gdal.Open('data/e00grid/fake_e00grid.e00')
         assert ds.GetRasterBand(1).GetNoDataValue() == -32767, \
             'did not get expected nodata value'
         assert ds.GetRasterBand(1).GetUnitType() == 'ft', \
@@ -77,7 +77,7 @@ def test_e00grid_1():
 
 def test_e00grid_2():
 
-    tst = gdaltest.GDALTest('E00GRID', 'fake_e00grid_compressed.e00', 1, 65347)
+    tst = gdaltest.GDALTest('E00GRID', 'e00grid/fake_e00grid_compressed.e00', 1, 65347)
     expected_gt = [500000.0, 1000.0, 0.0, 4000000.0, 0.0, -1000.0]
     expected_srs = """PROJCS["UTM Zone 15, Northern Hemisphere",
     GEOGCS["NAD83",
@@ -101,7 +101,7 @@ def test_e00grid_2():
     ret = tst.testOpen(check_gt=expected_gt, check_prj=expected_srs)
 
     if ret == 'success':
-        ds = gdal.Open('data/fake_e00grid_compressed.e00')
+        ds = gdal.Open('data/e00grid/fake_e00grid_compressed.e00')
         line0 = ds.ReadRaster(0, 0, 5, 1)
         ds.ReadRaster(0, 1, 5, 1)
         line2 = ds.ReadRaster(0, 2, 5, 1)

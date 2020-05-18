@@ -7,11 +7,13 @@ SPHINXBUILD   = sphinx-build
 SOURCEDIR     = source
 BUILDDIR      = build
 
+# Use O="-D enable_redirects=1" with "make html" to create redirects
+
 # Put it first so that "make" without argument is like "make help".
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: help Makefile clean
+.PHONY: help Makefile clean generated_rst_files
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
@@ -23,11 +25,13 @@ help:
 	mkdir -p build/doxygen_html && cd .. && ((cat Doxyfile; printf "HTML_OUTPUT=doc/build/doxygen_html") | doxygen -)
 	touch .doxygen_up_to_date
 
+generated_rst_files: .doxygen_up_to_date
+	python3 "$(SOURCEDIR)/build_driver_summary.py" "$(SOURCEDIR)/drivers/raster" raster_driver_summary "$(SOURCEDIR)/drivers/raster/driver_summary.rst"
+	python3 "$(SOURCEDIR)/build_driver_summary.py" "$(SOURCEDIR)/drivers/vector" vector_driver_summary "$(SOURCEDIR)/drivers/vector/driver_summary.rst"
+	python3 "$(SOURCEDIR)/build_configoptions_index.py"  "$(SOURCEDIR)" "$(SOURCEDIR)/user/configoptions_index_generated.rst"
+
 .PHONY: html latexpdf
-html: .doxygen_up_to_date
-	python "$(SOURCEDIR)/build_driver_summary.py" "$(SOURCEDIR)/drivers/raster" raster_driver_summary "$(SOURCEDIR)/drivers/raster/driver_summary.rst"
-	python "$(SOURCEDIR)/build_driver_summary.py" "$(SOURCEDIR)/drivers/vector" vector_driver_summary "$(SOURCEDIR)/drivers/vector/driver_summary.rst"
-	python "$(SOURCEDIR)/build_configoptions_index.py"  "$(SOURCEDIR)" "$(SOURCEDIR)/user/configoptions_index_generated.rst"
+html: generated_rst_files
 	$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 	# Hack to hide the TOC
 	sed 's/<div class="toctree-wrapper compound">/<div class="toctree-wrapper compound" hidden=1>/' < "$(BUILDDIR)/html/drivers/raster/index.html" > "$(BUILDDIR)/html/drivers/raster/index.html.mod"
@@ -40,13 +44,10 @@ html: .doxygen_up_to_date
 	cp -r build/doxygen_html build/html/doxygen
 	ln -sf ../latex/gdal.pdf build/html
 
-man: .doxygen_up_to_date
+man: generated_rst_files
 	$(SPHINXBUILD) -M man "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-latexpdf: .doxygen_up_to_date
-	python "$(SOURCEDIR)/build_driver_summary.py" "$(SOURCEDIR)/drivers/raster" raster_driver_summary "$(SOURCEDIR)/drivers/raster/driver_summary.rst"
-	python "$(SOURCEDIR)/build_driver_summary.py" "$(SOURCEDIR)/drivers/vector" vector_driver_summary "$(SOURCEDIR)/drivers/vector/driver_summary.rst"
-	python "$(SOURCEDIR)/build_configoptions_index.py"  "$(SOURCEDIR)" "$(SOURCEDIR)/user/configoptions_index_generated.rst"
+latexpdf: generated_rst_files
 	$(SPHINXBUILD) -M latexpdf "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 clean:

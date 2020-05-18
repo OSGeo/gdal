@@ -71,7 +71,6 @@ def test_srs_write_compd_cs():
         DATUM["Nouvelle_Triangulation_Francaise_Paris",
             SPHEROID["Clarke 1880 (IGN)",6378249.2,293.4660212936265,
                 AUTHORITY["EPSG","7011"]],
-            TOWGS84[-168,-60,320,0,0,0,0],
             AUTHORITY["EPSG","6807"]],
         PRIMEM["Paris",2.5969213],
         UNIT["grad",0.01570796326794897],
@@ -97,7 +96,7 @@ def test_srs_write_compd_cs():
 
     gdal.Unlink('/vsimem/tiff_srs_compd_cs.tif')
 
-    assert sr.IsSame(sr2) == 1, 'did not get expected SRS'
+    assert sr.IsSame(sr2) == 1, wkt
 
 ###############################################################################
 # Test reading a COMPDCS without VerticalCSType
@@ -183,6 +182,19 @@ def test_tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere():
     AXIS["Easting",EAST],
     AXIS["Northing",NORTH],
     EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs"]]"""
+
+###############################################################################
+# Test reading ESRI:102113 WGS_1984_Web_Mercator
+
+
+def test_tiff_srs_WGS_1984_Web_Mercator():
+
+    ds = gdal.Open('data/WGS_1984_Web_Mercator.tif')
+    sr = ds.GetSpatialRef()
+    ds = None
+
+    assert sr.GetAuthorityName(None) == 'ESRI'
+    assert sr.GetAuthorityCode(None) == '102113'
 
 ###############################################################################
 # Test writing and reading various angular units
@@ -362,13 +374,23 @@ def test_tiff_srs_imagine_localcs_citation():
 # override the default coming from EPSG
 
 
-def test_tiff_srs_towgs84_override():
+def test_tiff_srs_towgs84_override_OSR_STRIP_TOWGS84_NO():
+
+    with gdaltest.config_option('OSR_STRIP_TOWGS84', 'NO'):
+        ds = gdal.Open('data/gtiff_towgs84_override.tif')
+        wkt = ds.GetProjectionRef()
+    ds = None
+
+    assert 'TOWGS84[584.8,67,400.3,0.105,0.013,-2.378,10.29]' in wkt, wkt
+
+
+def test_tiff_srs_towgs84_override_OSR_STRIP_TOWGS84_default():
 
     ds = gdal.Open('data/gtiff_towgs84_override.tif')
     wkt = ds.GetProjectionRef()
     ds = None
 
-    assert 'TOWGS84[584.8,67,400.3,0.105,0.013,-2.378,10.29]' in wkt, wkt
+    assert 'TOWGS84' not in wkt
 
 ###############################################################################
 # Test reading PCSCitationGeoKey (#7199)
@@ -441,7 +463,7 @@ epsg_list = [
     [2066, False],  # cass
     [2964, False],  # aea
     [3410, False],  # cea
-    [3786, False],  # eqc spherical, method=9823
+    #[3786, False],  # eqc spherical, method=9823. EPSG:3786 is now deprecated
     [32663, False],  # eqc elliptical, method=9842
     [4087, False],  # eqc WGS 84 / World Equidistant Cylindrical method=1028
     [4088, False],  # eqc World Equidistant Cylindrical (Sphere) method=1029
@@ -517,7 +539,7 @@ def _create_geotiff1_1_from_copy_and_compare(srcfilename, options = []):
 
     src_ds = gdal.Open(srcfilename)
     tmpfile = '/vsimem/tmp.tif'
-    gdal.GetDriverByName('GTiff').CreateCopy(tmpfile, src_ds, options = options)
+    gdal.GetDriverByName('GTiff').CreateCopy(tmpfile, src_ds, options = options + ['ENDIANNESS=LITTLE'])
     f = gdal.VSIFOpenL(tmpfile, 'rb')
     data = gdal.VSIFReadL(1, 100000, f)
     gdal.VSIFCloseL(f)
@@ -567,6 +589,22 @@ def test_tiff_srs_read_epsg4979_geotiff1_1():
 
 def test_tiff_srs_write_epsg4979_geotiff1_1():
     _create_geotiff1_1_from_copy_and_compare('data/epsg4979_geotiff1_1.tif')
+
+
+def test_tiff_srs_write_epsg4937_etrs89_3D_geotiff1_1():
+    if int(gdal.GetDriverByName('GTiff').GetMetadataItem('LIBGEOTIFF')) < 1600:
+        pytest.skip()
+    tmpfile = '/vsimem/tmp.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(tmpfile, 1, 1)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4937)
+    ds.SetSpatialRef(sr)
+    ds = None
+    ds = gdal.Open(tmpfile)
+    assert sr.GetName() == 'ETRS89'
+    assert sr.GetAuthorityCode(None) == '4937'
+    ds = None
+    gdal.Unlink(tmpfile)
 
 
 # Deprecated way of conveying GeographicCRS 3D
@@ -650,6 +688,7 @@ def test_tiff_srs_towgs84_from_epsg_do_not_write_it():
     ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1)
     srs_in = osr.SpatialReference()
     srs_in.ImportFromEPSG(31468)
+    srs_in.AddGuessedTOWGS84()
     assert srs_in.HasTOWGS84()
     ds.SetSpatialRef(srs_in)
     ds = None
@@ -666,14 +705,16 @@ def test_tiff_srs_towgs84_from_epsg_force_write_it():
     ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1)
     srs_in = osr.SpatialReference()
     srs_in.ImportFromEPSG(31468)
+    srs_in.AddGuessedTOWGS84()
     assert srs_in.HasTOWGS84()
     with gdaltest.config_option('GTIFF_WRITE_TOWGS84', 'YES'):
         ds.SetSpatialRef(srs_in)
         ds = None
 
-    ds = gdal.Open(filename)
-    with gdaltest.config_option('OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG', 'NO'):
-        srs = ds.GetSpatialRef()
+    with gdaltest.config_option('OSR_STRIP_TOWGS84', 'NO'):
+        ds = gdal.Open(filename)
+        with gdaltest.config_option('OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG', 'NO'):
+            srs = ds.GetSpatialRef()
     assert srs.HasTOWGS84()
 
 
@@ -708,7 +749,41 @@ def test_tiff_srs_towgs84_with_epsg_code_but_non_default_TOWGS84():
     ds.SetSpatialRef(srs_in)
     ds = None
 
-    ds = gdal.Open(filename)
-    srs = ds.GetSpatialRef()
+    with gdaltest.config_option('OSR_STRIP_TOWGS84', 'NO'):
+        ds = gdal.Open(filename)
+        srs = ds.GetSpatialRef()
     assert srs.GetTOWGS84() == (1,2,3,4,5,6,7)
 
+
+def test_tiff_srs_write_epsg3857():
+    tmpfile = '/vsimem/tmp.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(tmpfile, 1, 1)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(3857)
+    ds.SetSpatialRef(sr)
+    ds = None
+    ds = gdal.Open(tmpfile)
+    assert sr.GetName() == 'WGS 84 / Pseudo-Mercator'
+    assert sr.GetAuthorityCode(None) == '3857'
+    f = gdal.VSIFOpenL(tmpfile, 'rb')
+    data = gdal.VSIFReadL(1, 100000, f)
+    gdal.VSIFCloseL(f)
+    gdal.Unlink(tmpfile)
+    assert b"ESRI PE String" not in data
+
+
+def test_tiff_srs_read_epsg26730_with_linear_units_set():
+    ds = gdal.Open('data/epsg26730_with_linear_units_set.tif')
+    sr = ds.GetSpatialRef()
+    assert sr.GetAuthorityCode(None) == '26730'
+
+
+def test_tiff_srs_read_user_defined_geokeys():
+    if int(gdal.GetDriverByName('GTiff').GetMetadataItem('LIBGEOTIFF')) < 1600:
+        pytest.skip()
+
+    gdal.ErrorReset()
+    ds = gdal.Open('data/byte_user_defined_geokeys.tif')
+    sr = ds.GetSpatialRef()
+    assert gdal.GetLastErrorMsg() == ''
+    assert sr is not None

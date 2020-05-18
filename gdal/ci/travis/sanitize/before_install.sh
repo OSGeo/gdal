@@ -23,5 +23,6 @@ tar xzf FileGDB_API_1_5_64gcc51.tar.gz
 sudo cp FileGDB_API-64gcc51/lib/* /usr/lib
 sudo ldconfig
 
-wget http://releases.llvm.org/6.0.1/clang+llvm-6.0.1-x86_64-linux-gnu-ubuntu-16.04.tar.xz
-tar xJf clang+llvm-6.0.1-x86_64-linux-gnu-ubuntu-16.04.tar.xz
+FILE=clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz
+URL_ROOT=https://github.com/rouault/gdal_ci_tools/raw/master/${FILE}
+curl -Ls ${URL_ROOT}aa ${URL_ROOT}ab ${URL_ROOT}ac ${URL_ROOT}ad ${URL_ROOT}ae | tar xJf -

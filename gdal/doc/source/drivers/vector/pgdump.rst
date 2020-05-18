@@ -16,7 +16,7 @@ This driver is very similar to the PostGIS shp2pgsql utility.
 
 Most creation options are shared with the regular PostgreSQL driver.
 
-Starting with OGR 1.11, the PGDump driver supports creating tables with
+The PGDump driver supports creating tables with
 multiple PostGIS geometry columns (following :ref:`rfc-41`)
 
 Driver capabilities
@@ -66,7 +66,7 @@ Layer Creation Options
 -  **SCHEMA**: Set name of schema for new table. Using the same layer
    name in different schemas is supported, but not in the public schema
    and others.
--  **CREATE_SCHEMA**: (OGR >= 1.8.1) To be used in combination with
+-  **CREATE_SCHEMA**: To be used in combination with
    SCHEMA. Set to ON by default so that the CREATE SCHEMA instruction is
    emitted. Turn to OFF to prevent CREATE SCHEMA from being emitted.
 -  **SPATIAL_INDEX**\ =NONE/GIST/SPGIST/BRIN (starting with GDAL 2.4) or
@@ -74,12 +74,12 @@ Layer Creation Options
    (GDAL >=2.4, or YES for earlier versions) by default. Creates a
    spatial index (GiST) on the geometry column to speed up queries (Has
    effect only when PostGIS is available). Set to NONE (GDAL >= 2.4, or
-   FALSE for earlier verions) to disable. BRIN is only available with
+   FALSE for earlier versions) to disable. BRIN is only available with
    PostgreSQL >= 9.4 and PostGIS >= 2.3. SPGIST is only available with
    PostgreSQL >= 11 and PostGIS >= 2.5
 -  **TEMPORARY**: Set to OFF by default. Creates a temporary table
    instead of a permanent one.
--  **UNLOGGED**: (From GDAL 2.0) Set to OFF by default. Whether to
+-  **UNLOGGED**: Set to OFF by default. Whether to
    create the table as a unlogged one. Unlogged tables are only
    supported since PostgreSQL 9.1, and GiST indexes used for spatial
    indexing since PostgreSQL 9.3.
@@ -89,37 +89,36 @@ Layer Creation Options
 -  **CREATE_TABLE**: Set to ON by default so that tables are recreated
    if necessary. Turn to OFF to disable this and use existing table
    structure.
--  **DROP_TABLE**\ =ON/OFF/IF_EXISTS: (OGR >= 1.8.1) Set to ON so that
+-  **DROP_TABLE**\ =ON/OFF/IF_EXISTS: Defaults to IF_EXISTS. Set to ON so that
    tables are destroyed before being recreated. Set to OFF to prevent
-   DROP TABLE from being emitted. Set to IF_EXISTS (default in GDAL 2.0)
+   DROP TABLE from being emitted. Set to IF_EXISTS
    in order DROP TABLE IF EXISTS to be emitted (needs PostgreSQL >= 8.2)
 -  **SRID**: Set the SRID of the geometry. Defaults to -1, unless a SRS
    is associated with the layer. In the case, if the EPSG code is
    mentioned, it will be used as the SRID. (Note: the spatial_ref_sys
    table must be correctly populated with the specified SRID)
--  **NONE_AS_UNKNOWN**: (From GDAL 1.9.0) Can bet set to TRUE to force
+-  **NONE_AS_UNKNOWN**: Can be set to TRUE to force
    non-spatial layers (wkbNone) to be created as spatial tables of type
-   GEOMETRY (wkbUnknown), which was the behaviour prior to GDAL 1.8.0.
+   GEOMETRY (wkbUnknown).
    Defaults to NO, in which case a regular table is created and not
    recorded in the PostGIS geometry_columns table.
--  **FID**: (From GDAL 1.9.0) Name of the FID column to create. Defaults
+-  **FID**: Name of the FID column to create. Defaults
    to 'ogc_fid'.
--  **FID64**: (From GDAL 2.0) This may be "TRUE" to create a FID column
+-  **FID64**: This may be "TRUE" to create a FID column
    that can support 64 bit identifiers. The default value is "FALSE".
--  **EXTRACT_SCHEMA_FROM_LAYER_NAME**: (From GDAL 1.9.0) Can be set to
+-  **EXTRACT_SCHEMA_FROM_LAYER_NAME**: Can be set to
    NO to avoid considering the dot character as the separator between
    the schema and the table name. Defaults to YES.
--  **COLUMN_TYPES**: (From GDAL 1.10) A list of strings of format
+-  **COLUMN_TYPES**: A list of strings of format
    field_name=pg_field_type (separated by comma) that should be use when
    CreateField() is invoked on them. This will override the default
    choice that OGR would have made. This can for example be used to
    create a column of type
    `HSTORE <http://www.postgresql.org/docs/9.0/static/hstore.html>`__.
--  **POSTGIS_VERSION**: (From GDAL 1.9.0) Can be set to 2.0 for PostGIS
-   2.0 compatibility. Starting with GDAL 2.0, it is important to set it
-   correctly when dealing with non-linear geometry types. Starting with
-   GDAL 2.1, can be POSTGIS_VERSION=2.2 is specially dealt with to
-   correctly export POINT EMPTY geometries
+-  **POSTGIS_VERSION**: Defaults to 2.2 starting with GDAL 3.2 (1.5 previously)
+   Possible values: 1.5, 2.0 or 2.2.
+   PostGIS 2.0 encodes differently non-linear geometry types.
+   And 2.2 brings special handling for POINT EMPTY geometries.
 -  **DESCRIPTION** (From GDAL 2.1) Description string to put in the
    pg_description system table. The description can also be written with
    SetMetadataItem("DESCRIPTION", description_string). Descriptions are
@@ -133,8 +132,6 @@ Environment variables
 
 VSI Virtual File System API support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Some features below might require OGR >= 1.9.0)
 
 The driver supports rwriting to files managed by VSI Virtual File System
 API, which include "regular" files, as well as files in the /vsizip/,

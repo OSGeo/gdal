@@ -35,7 +35,6 @@ API
        gdaldataset_cpp
        gdalrasterband_cpp
        gdalwarp_cpp
-       ogrlayer_cpp
 
    Vector API
    +++++++++++++++++++++++++++
@@ -46,6 +45,7 @@ API
        ogrfeature_cpp
        ogrfeaturestyle_cpp
        ogrgeometry_cpp
+       ogrlayer_cpp
 
    Spatial reference system API
    ++++++++++++++++++++++++++++

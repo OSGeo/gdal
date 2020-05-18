@@ -63,6 +63,7 @@ Raster drivers
    epsilon
    esat
    ers
+   exr
    fast
    fit
    fits
@@ -94,6 +95,7 @@ Raster drivers
    intergraphraster
    iris
    isce
+   isg
    isis2
    isis3
    jdem

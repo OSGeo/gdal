@@ -37,11 +37,22 @@ from osgeo import gdal
 from osgeo import osr
 import pytest
 
-sys.path.append('../../gdal/swig/python/samples')
-
 import gdaltest
 
-run_tiff_write_api_proxy = True
+###############################################################################
+
+
+def _check_cog(filename, check_tiled=True, full_check=False):
+
+    path = '../../gdal/swig/python/samples'
+    if path not in sys.path:
+        sys.path.append(path)
+    import validate_cloud_optimized_geotiff
+    try:
+        _, errors, _ = validate_cloud_optimized_geotiff.validate(filename, check_tiled=check_tiled, full_check=full_check)
+        assert not errors, 'validate_cloud_optimized_geotiff failed'
+    except OSError:
+        pytest.fail('validate_cloud_optimized_geotiff failed')
 
 ###############################################################################
 # Get the GeoTIFF driver, and verify a few things about it.
@@ -2004,7 +2015,7 @@ def test_tiff_write_64():
     wkt = ds.GetProjection()
     ds = None
 
-    expected_wkt = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]"""
+    expected_wkt = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]"""
 
     assert wkt == expected_wkt, 'coordinate system does not exactly match.'
 
@@ -2977,12 +2988,7 @@ def test_tiff_write_87():
 
     ds = None
 
-    import validate_cloud_optimized_geotiff
-    try:
-        _, errors, _ = validate_cloud_optimized_geotiff.validate('tmp/tiff_write_87_dst.tif', check_tiled=False, full_check=True)
-        assert not errors, 'validate_cloud_optimized_geotiff failed'
-    except OSError:
-        pytest.fail('validate_cloud_optimized_geotiff failed')
+    _check_cog('tmp/tiff_write_87_dst.tif', check_tiled=False, full_check=True)
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_87_src.tif')
     gdaltest.tiff_drv.Delete('tmp/tiff_write_87_dst.tif')
@@ -3395,12 +3401,7 @@ def test_tiff_write_96(other_options = [], nbands = 1, nbits = 8):
             'did not get expected checksums'
         assert ds.GetMetadataItem('HAS_USED_READ_ENCODED_API', '_DEBUG_') == '0'
 
-    import validate_cloud_optimized_geotiff
-    try:
-        _, errors, _ = validate_cloud_optimized_geotiff.validate('tmp/tiff_write_96_dst.tif', check_tiled=False, full_check=True)
-        assert not errors, 'validate_cloud_optimized_geotiff failed'
-    except OSError:
-        pytest.fail('validate_cloud_optimized_geotiff failed')
+    _check_cog('tmp/tiff_write_96_dst.tif', check_tiled=False, full_check=True)
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_96_src.tif')
     gdaltest.tiff_drv.Delete('tmp/tiff_write_96_dst.tif')
@@ -3811,7 +3812,7 @@ def test_tiff_write_105():
 # Test the direct copy mechanism of JPEG source
 
 
-def test_tiff_write_106(filename='../gdrivers/data/byte_with_xmp.jpg', options=None, check_cs=True):
+def test_tiff_write_106(filename='../gdrivers/data/jpeg/byte_with_xmp.jpg', options=None, check_cs=True):
 
     if options is None:
         options = ['COMPRESS=JPEG']
@@ -3861,33 +3862,33 @@ def test_tiff_write_109():
 
 
 def test_tiff_write_110():
-    return test_tiff_write_106(filename='../gdrivers/data/albania.jpg', check_cs=False)
+    return test_tiff_write_106(filename='../gdrivers/data/jpeg/albania.jpg', check_cs=False)
 
 # Whole copy of YCbCr *DOES* give exact pixels w.r.t. original image
 
 
 def test_tiff_write_111():
-    return test_tiff_write_106(filename='../gdrivers/data/albania.jpg', options=['COMPRESS=JPEG', 'BLOCKYSIZE=260'])
+    return test_tiff_write_106(filename='../gdrivers/data/jpeg/albania.jpg', options=['COMPRESS=JPEG', 'BLOCKYSIZE=260'])
 
 
 def test_tiff_write_111_bis():
-    return test_tiff_write_106(filename='../gdrivers/data/albania.jpg', options=['COMPRESS=JPEG', 'BLOCKYSIZE=260', 'INTERLEAVE=PIXEL'])
+    return test_tiff_write_106(filename='../gdrivers/data/jpeg/albania.jpg', options=['COMPRESS=JPEG', 'BLOCKYSIZE=260', 'INTERLEAVE=PIXEL'])
 
 
 def test_tiff_write_111_ter():
-    return test_tiff_write_106(filename='../gdrivers/data/albania.jpg', options=['COMPRESS=JPEG', 'BLOCKYSIZE=260', 'INTERLEAVE=BAND'], check_cs=False)
+    return test_tiff_write_106(filename='../gdrivers/data/jpeg/albania.jpg', options=['COMPRESS=JPEG', 'BLOCKYSIZE=260', 'INTERLEAVE=BAND'], check_cs=False)
 
 # Tiled organization of YCbCr does *NOT* give exact pixels w.r.t. original image
 
 
 def test_tiff_write_112():
-    return test_tiff_write_106(filename='../gdrivers/data/albania.jpg', options=['COMPRESS=JPEG', 'TILED=YES'], check_cs=False)
+    return test_tiff_write_106(filename='../gdrivers/data/jpeg/albania.jpg', options=['COMPRESS=JPEG', 'TILED=YES'], check_cs=False)
 
 # The source is a JPEG in RGB colorspace (usually it is YCbCr).
 
 
 def test_tiff_write_113():
-    return test_tiff_write_106(filename='../gdrivers/data/rgbsmall_rgb.jpg', options=['COMPRESS=JPEG', 'BLOCKYSIZE=8'])
+    return test_tiff_write_106(filename='../gdrivers/data/jpeg/rgbsmall_rgb.jpg', options=['COMPRESS=JPEG', 'BLOCKYSIZE=8'])
 
 ###############################################################################
 # Test CreateCopy() interruption
@@ -4639,7 +4640,7 @@ def test_tiff_write_128():
         pytest.skip()
 
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'NO')
-    src_ds = gdal.Open('../gdrivers/data/rgb_ntf_cmyk.jpg')
+    src_ds = gdal.Open('../gdrivers/data/jpeg/rgb_ntf_cmyk.jpg')
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', None)
 
     # Will received implicitly CMYK photometric interpretation.
@@ -5655,7 +5656,7 @@ def test_tiff_write_147():
 
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'NO')
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
-    gdal.Translate('/vsimem/tiff_write_147.tif', '../gdrivers/data/rgb_ntf_cmyk.jpg', options='-outsize 1000% 1000% -co COMPRESS=JPEG -co PHOTOMETRIC=CMYK')
+    gdal.Translate('/vsimem/tiff_write_147.tif', '../gdrivers/data/jpeg/rgb_ntf_cmyk.jpg', options='-outsize 1000% 1000% -co COMPRESS=JPEG -co PHOTOMETRIC=CMYK')
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', None)
     gdal.SetConfigOption('GDAL_PAM_ENABLED', None)
     out_ds = gdal.Open('/vsimem/tiff_write_147.tif')
@@ -5674,12 +5675,12 @@ def test_tiff_write_148():
         pytest.skip()
 
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'NO')
-    tmp_ds = gdal.Translate('', '../gdrivers/data/rgb_ntf_cmyk.jpg', format='MEM')
+    tmp_ds = gdal.Translate('', '../gdrivers/data/jpeg/rgb_ntf_cmyk.jpg', format='MEM')
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', None)
     original_stats = [tmp_ds.GetRasterBand(i + 1).ComputeStatistics(True) for i in range(4)]
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'NO')
     gdal.SetConfigOption('GDAL_PAM_ENABLED', 'NO')
-    gdal.Translate('/vsimem/tiff_write_148.tif', '../gdrivers/data/rgb_ntf_cmyk.jpg', options='-outsize 1000% 1000% -co COMPRESS=JPEG -co PHOTOMETRIC=CMYK')
+    gdal.Translate('/vsimem/tiff_write_148.tif', '../gdrivers/data/jpeg/rgb_ntf_cmyk.jpg', options='-outsize 1000% 1000% -co COMPRESS=JPEG -co PHOTOMETRIC=CMYK')
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', None)
     gdal.SetConfigOption('GDAL_PAM_ENABLED', None)
     out_ds = gdal.Open('GTIFF_RAW:/vsimem/tiff_write_148.tif')
@@ -6827,7 +6828,7 @@ def test_tiff_write_181_xmp():
     new_ds = gdaltest.tiff_drv.CreateCopy('tmp/test_181.tif', src_ds)
     src_ds = None
 
-    xmp_ds = gdal.Open('../gdrivers/data/byte_with_xmp.tif')
+    xmp_ds = gdal.Open('../gdrivers/data/gtiff/byte_with_xmp.tif')
     xmp = xmp_ds.GetMetadata('xml:XMP')
     xmp_ds = None
     assert 'W5M0MpCehiHzreSzNTczkc9d' in xmp[0], 'Wrong input file without XMP'
@@ -6851,7 +6852,7 @@ def test_tiff_write_181_xmp():
 
 def test_tiff_write_182_xmp_delete():
 
-    shutil.copyfile('../gdrivers/data/byte_with_xmp.tif', 'tmp/test_182.tif')
+    shutil.copyfile('../gdrivers/data/gtiff/byte_with_xmp.tif', 'tmp/test_182.tif')
 
     chg_ds = gdal.Open('tmp/test_182.tif', gdal.GA_Update)
     read_xmp = chg_ds.GetMetadata('xml:XMP')
@@ -7159,30 +7160,25 @@ def test_tiff_write_compression_create_and_createcopy():
     gdaltest.tiff_drv.Delete(tmpfile)
 
 ###############################################################################
-# Attempt at creating a file with more than 4 billion tiles
+# Attempt at creating a file with more tile arrays larger than 2 GB
 
 
 def test_tiff_write_too_many_tiles():
 
-    src_ds = gdal.Open('<VRTDataset rasterXSize="100000000" rasterYSize="100000000"><VRTRasterBand dataType="Byte" band="1"/></VRTDataset>')
+    src_ds = gdal.Open('<VRTDataset rasterXSize="40000000" rasterYSize="40000000"><VRTRasterBand dataType="Byte" band="1"/></VRTDataset>')
     with gdaltest.error_handler():
         assert not gdaltest.tiff_drv.CreateCopy('/vsimem/tmp.tif', src_ds, options = ['TILED=YES'])
     assert 'File too large regarding tile size' in gdal.GetLastErrorMsg()
 
+    with gdaltest.tempfile('/vsimem/test_tiff_write_too_many_tiles.vrt',
+                           '<VRTDataset rasterXSize="40000000" rasterYSize="40000000"><VRTRasterBand dataType="Byte" band="1"/></VRTDataset>'):
+        src_ds = gdal.Open('/vsimem/test_tiff_write_too_many_tiles.vrt')
+        gdal.ErrorReset()
+        with gdaltest.config_option('GDAL_TIFF_OVR_BLOCKSIZE', '128'):
+            with gdaltest.error_handler():
+                src_ds.BuildOverviews('NEAR', [2])
+        assert 'File too large regarding tile size' in gdal.GetLastErrorMsg()
 
-###############################################################################
-# Ask to run again tests with GDAL_API_PROXY=YES
-
-
-def tiff_write_api_proxy():
-
-    if not run_tiff_write_api_proxy:
-        pytest.skip()
-
-    import test_py_scripts
-    ret = test_py_scripts.run_py_script_as_external_script('.', 'tiff_write', ' -api_proxy', display_live_on_parent_stdout=True)
-
-    assert ret.find('Failed:    0') != -1
 
 ###############################################################################
 

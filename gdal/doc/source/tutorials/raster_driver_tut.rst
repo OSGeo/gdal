@@ -335,7 +335,7 @@ The definition in the driver file is:
         GetGDALDriverManager()->RegisterDriver(poDriver);
     }
 
-Note the use of GDAL_CHECK_VERSION macro (starting with GDAL 1.5.0). This is an optional macro for drivers inside GDAL tree that don't depend on external libraries, but that can be very useful if you compile your driver as a plugin (that is to say, an out-of-tree driver). As the GDAL C++ ABI may, and will, change between GDAL releases (for example from GDAL 1.5.0 to 1.6.0), it may be necessary to recompile your driver against the header files of the GDAL version with which you want to make it work. The GDAL_CHECK_VERSION macro will check that the GDAL version with which the driver was compiled and the version against which it is running are compatible.
+Note the use of GDAL_CHECK_VERSION macro. This is an optional macro for drivers inside GDAL tree that don't depend on external libraries, but that can be very useful if you compile your driver as a plugin (that is to say, an out-of-tree driver). As the GDAL C++ ABI may, and will, change between GDAL releases (for example from GDAL 1.x to 1.y), it may be necessary to recompile your driver against the header files of the GDAL version with which you want to make it work. The GDAL_CHECK_VERSION macro will check that the GDAL version with which the driver was compiled and the version against which it is running are compatible.
 
 The registration function will create an instance of a GDALDriver object when first called, and register it with the GDALDriverManager. The following fields can be set in the driver before registering it with the GDALDriverManager.
 

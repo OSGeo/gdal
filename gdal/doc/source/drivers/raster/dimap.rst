@@ -16,7 +16,7 @@ The imagery is in a distinct imagery file, often a TIFF file, but the
 DIMAP dataset handles accessing that file, and attaches geolocation and
 other metadata to the dataset from the metadata xml file.
 
-From GDAL 1.6.0, the content of the <Spectral_Band_Info> node is
+The content of the <Spectral_Band_Info> node is
 reported as metadata at the level of the raster band. Note that the
 content of the Spectral_Band_Info of the first band is still reported as
 metadata of the dataset, but this should be considered as a deprecated

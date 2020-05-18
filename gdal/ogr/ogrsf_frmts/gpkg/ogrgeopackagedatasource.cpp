@@ -35,6 +35,8 @@
 #include "ogrsqliteutility.h"
 #include "vrt/vrtdataset.h"
 
+#include "tilematrixset.hpp"
+
 #include <cstdlib>
 
 #include <algorithm>
@@ -66,7 +68,7 @@ typedef struct
     double      dfPixelYSizeZoomLevel0;
 } TilingSchemeDefinition;
 
-static const TilingSchemeDefinition asTilingShemes[] =
+static const TilingSchemeDefinition asTilingSchemes[] =
 {
     /* See http://portal.opengeospatial.org/files/?artifact_id=35326 (WMTS 1.0), Annex E.3 */
     { "GoogleCRS84Quad",
@@ -76,31 +78,6 @@ static const TilingSchemeDefinition asTilingShemes[] =
       256, 256,
       360.0 / 256, 360.0 / 256 },
 
-    /* See http://portal.opengeospatial.org/files/?artifact_id=35326 (WMTS 1.0), Annex E.4 */
-    { "GoogleMapsCompatible",
-      3857,
-      -(156543.0339280410*256) /2, (156543.0339280410*256) /2,
-      1, 1,
-      256, 256,
-      156543.0339280410, 156543.0339280410 },
-
-    /* See InspireCRS84Quad at http://inspire.ec.europa.eu/documents/Network_Services/TechnicalGuidance_ViewServices_v3.0.pdf */
-    /* This is exactly the same as PseudoTMS_GlobalGeodetic */
-    { "InspireCRS84Quad",
-      4326,
-      -180.0, 90.0,
-      2, 1,
-      256, 256,
-      180.0 / 256, 180.0 / 256 },
-
-    /* See global-geodetic at http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification */
-    { "PseudoTMS_GlobalGeodetic",
-      4326,
-      -180.0, 90.0,
-      2, 1,
-      256, 256,
-      180.0 / 256, 180.0 / 256 },
-
     /* See global-mercator at http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification */
     { "PseudoTMS_GlobalMercator",
       3857,
@@ -109,6 +86,102 @@ static const TilingSchemeDefinition asTilingShemes[] =
       256, 256,
       78271.516, 78271.516 },
 };
+
+/************************************************************************/
+/*                     GetTilingScheme()                                */
+/************************************************************************/
+
+static std::unique_ptr<TilingSchemeDefinition> GetTilingScheme(const char* pszName)
+{
+    if( EQUAL(pszName, "CUSTOM") )
+        return nullptr;
+
+    for( const auto& tilingScheme: asTilingSchemes )
+    {
+        if( EQUAL(pszName, tilingScheme.pszName) )
+        {
+            return std::unique_ptr<TilingSchemeDefinition>(
+                                new TilingSchemeDefinition(tilingScheme));
+        }
+    }
+
+    if( EQUAL(pszName, "PseudoTMS_GlobalGeodetic") )
+        pszName = "InspireCRS84Quad";
+
+    auto poTM = gdal::TileMatrixSet::parse(pszName);
+    if( poTM == nullptr )
+        return nullptr;
+    if( !poTM->haveAllLevelsSameTopLeft() )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unsupported tiling scheme: not all zoom levels have same top left corner");
+        return nullptr;
+    }
+    if( !poTM->haveAllLevelsSameTileSize() )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unsupported tiling scheme: not all zoom levels have same tile size");
+        return nullptr;
+    }
+    if( !poTM->hasOnlyPowerOfTwoVaryingScales() )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unsupported tiling scheme: resolution of consecutive zoom levels is not always 2");
+        return nullptr;
+    }
+    if( poTM->hasVariableMatrixWidth() )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unsupported tiling scheme: some levels have variable matrix width");
+        return nullptr;
+    }
+    std::unique_ptr<TilingSchemeDefinition> poTilingScheme(new TilingSchemeDefinition);
+    poTilingScheme->pszName = pszName;
+
+    OGRSpatialReference oSRS;
+    if( oSRS.SetFromUserInput(poTM->crs().c_str()) != OGRERR_NONE )
+    {
+        return nullptr;
+    }
+    if( poTM->crs() == "http://www.opengis.net/def/crs/OGC/1.3/CRS84" )
+    {
+        poTilingScheme->nEPSGCode = 4326;
+    }
+    else
+    {
+        const char* pszAuthName = oSRS.GetAuthorityName(nullptr);
+        const char* pszAuthCode = oSRS.GetAuthorityCode(nullptr);
+        if( pszAuthName == nullptr || !EQUAL(pszAuthName, "EPSG") ||
+            pszAuthCode == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unsupported tiling scheme: only EPSG CRS supported");
+            return nullptr;
+        }
+        poTilingScheme->nEPSGCode = atoi(pszAuthCode);
+    }
+    const auto& zoomLevel0 = poTM->tileMatrixList()[0];
+    poTilingScheme->dfMinX = zoomLevel0.mTopLeftX;
+    poTilingScheme->dfMaxY = zoomLevel0.mTopLeftY;
+    poTilingScheme->nTileXCountZoomLevel0 = zoomLevel0.mMatrixWidth;
+    poTilingScheme->nTileYCountZoomLevel0 = zoomLevel0.mMatrixHeight;
+    poTilingScheme->nTileWidth = zoomLevel0.mTileWidth;
+    poTilingScheme->nTileHeight = zoomLevel0.mTileHeight;
+    poTilingScheme->dfPixelXSizeZoomLevel0 = zoomLevel0.mResX;
+    poTilingScheme->dfPixelYSizeZoomLevel0 = zoomLevel0.mResY;
+
+    const bool bInvertAxis =
+        oSRS.EPSGTreatsAsLatLong() != FALSE ||
+        oSRS.EPSGTreatsAsNorthingEasting() != FALSE;
+    if( bInvertAxis )
+    {
+        std::swap(poTilingScheme->dfMinX, poTilingScheme->dfMaxY);
+        std::swap(poTilingScheme->dfPixelXSizeZoomLevel0,
+                  poTilingScheme->dfPixelYSizeZoomLevel0);
+    }
+    return poTilingScheme;
+}
+
 
 static const char* pszCREATE_GPKG_GEOMETRY_COLUMNS =
     "CREATE TABLE gpkg_geometry_columns ("
@@ -323,6 +396,7 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId)
     }
 
     SQLResultFree(&oResult);
+    poSpatialRef->StripTOWGS84IfKnownDatumAndAllowed();
     m_oMapSrsIdToSrs[iSrsId] = poSpatialRef;
     poSpatialRef->Reference();
     return poSpatialRef;
@@ -756,7 +830,6 @@ GDALGeoPackageDataset::GDALGeoPackageDataset() :
     m_bDescriptionAsCO(false),
     m_bHasReadMetadataFromStorage(false),
     m_bMetadataDirty(false),
-    m_papszSubDatasets(nullptr),
     m_pszProjection(nullptr),
     m_bRecordInsertedInGPKGContent(false),
     m_bGeoTransformValid(false),
@@ -830,7 +903,6 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
 
     CPLFree( m_papoLayers );
     CPLFree( m_papoOverviewDS );
-    CSLDestroy( m_papszSubDatasets );
     CPLFree(m_pszProjection);
 
     std::map<int, OGRSpatialReference*>::iterator oIter =
@@ -849,7 +921,7 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
 
 bool GDALGeoPackageDataset::ICanIWriteBlock()
 {
-    if( !bUpdate )
+    if( !GetUpdate() )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "IWriteBlock() not supported on dataset opened in read-only mode");
@@ -871,6 +943,15 @@ bool GDALGeoPackageDataset::ICanIWriteBlock()
 }
 
 /************************************************************************/
+/*                          GetOGRTableLimit()                          */
+/************************************************************************/
+
+static int GetOGRTableLimit()
+{
+    return atoi(CPLGetConfigOption("OGR_TABLE_LIMIT", "10000"));
+}
+
+/************************************************************************/
 /*                      GetNameTypeMapFromSQliteMaster()                */
 /************************************************************************/
 
@@ -884,8 +965,7 @@ const std::map<CPLString, CPLString> &
             "SELECT name, type FROM sqlite_master WHERE "
             "type IN ('view', 'table') OR "
             "(name LIKE 'trigger_%_feature_count_%' AND type = 'trigger')");
-    const int nTableLimit =
-                atoi(CPLGetConfigOption("OGR_TABLE_LIMIT", "10000"));
+    const int nTableLimit = GetOGRTableLimit();
     if( nTableLimit > 0 )
     {
         osSQL += " LIMIT ";
@@ -944,8 +1024,7 @@ const std::map< CPLString, std::vector<GPKGExtensionDesc> > &
             "'gpkg_geom_POLYHEDRALSURFACE', 'gpkg_geom_TIN', 'gpkg_geom_TRIANGLE', "
             "'gpkg_rtree_index', 'gpkg_geometry_type_trigger', 'gpkg_srs_id_trigger', "
             "'gpkg_crs_wkt', 'gpkg_schema')");
-    const int nTableLimit =
-                atoi(CPLGetConfigOption("OGR_TABLE_LIMIT", "10000"));
+    const int nTableLimit = GetOGRTableLimit();
     if( nTableLimit > 0 )
     {
         osSQL += " LIMIT ";
@@ -988,8 +1067,7 @@ const std::map< CPLString, GPKGContentsDesc > &
     CPLString osSQL("SELECT table_name, data_type, identifier, "
             "description, min_x, min_y, max_x, max_y "
             "FROM gpkg_contents WHERE table_name IS NOT NULL");
-    const int nTableLimit =
-                atoi(CPLGetConfigOption("OGR_TABLE_LIMIT", "10000"));
+    const int nTableLimit = GetOGRTableLimit();
     if( nTableLimit > 0 )
     {
         osSQL += " LIMIT ";
@@ -1044,7 +1122,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     {
         char** papszTokens = CSLTokenizeString2(poOpenInfo->pszFilename, ":", 0);
         int nCount = CSLCount(papszTokens);
-        if( nCount != 3 && nCount != 4 )
+        if( nCount < 3 )
         {
             CSLDestroy(papszTokens);
             return FALSE;
@@ -1059,6 +1137,18 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                   (papszTokens[2][0] == '/' || papszTokens[2][0] == '\\') )
         {
             osFilename = CPLString(papszTokens[1]) + ":" + papszTokens[2];
+        }
+        // GPKG:/vsicurl/http[s]://[user:passwd@]example.com[:8080]/foo.gpkg:bar
+        else if ( nCount >= 4 &&
+                  (EQUAL(papszTokens[1], "/vsicurl/http") ||
+                   EQUAL(papszTokens[1], "/vsicurl/https")) )
+        {
+            osFilename = CPLString(papszTokens[1]);
+            for( int i = 2; i < nCount - 1; i++ )
+            {
+                osFilename += ':';
+                osFilename += papszTokens[i];
+            }
         }
         osSubdatasetTableName = papszTokens[nCount-1];
 
@@ -1080,8 +1170,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                                     poOpenInfo->nHeaderBytes);
     }
 
-    bUpdate = poOpenInfo->eAccess == GA_Update;
-    eAccess = poOpenInfo->eAccess; /* hum annoying duplication */
+    eAccess = poOpenInfo->eAccess;
     m_pszFilename = CPLStrdup( osFilename );
 
 #ifdef ENABLE_SQL_GPKG_FORMAT
@@ -1187,7 +1276,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         }
 
         /* See if we can open the SQLite database */
-        if( !OpenOrCreateDB(bUpdate
+        if( !OpenOrCreateDB(GetUpdate()
                         ? SQLITE_OPEN_READWRITE
                         : SQLITE_OPEN_READONLY) )
             return FALSE;
@@ -1327,11 +1416,10 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                     "AND name NOT LIKE 'vgpkg_%' "
                     "AND name NOT LIKE 'rtree_%' AND name NOT LIKE 'sqlite_%' "
                     // Avoid reading those views from simple_sewer_features.gpkg
-                    "AND name NOT IN ('st_spatial_ref_sys', 'spatial_ref_sys', 'st_geometry_columns') "
+                    "AND name NOT IN ('st_spatial_ref_sys', 'spatial_ref_sys', 'st_geometry_columns', 'geometry_columns') "
                     "AND lower(name) NOT IN (SELECT lower(table_name) FROM gpkg_contents)";
         }
-        const int nTableLimit =
-                    atoi(CPLGetConfigOption("OGR_TABLE_LIMIT", "10000"));
+        const int nTableLimit = GetOGRTableLimit();
         if( nTableLimit > 0 )
         {
             osSQL += " LIMIT ";
@@ -1383,12 +1471,21 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                 const char* pszM = SQLResultGetValue(&oResult, 6, i);
                 bool bIsInGpkgContents = CPL_TO_BOOL(SQLResultGetValueAsInteger(&oResult, 11, i));
                 OGRGeoPackageTableLayer *poLayer = new OGRGeoPackageTableLayer(this, pszTableName);
+                bool bHasZ = pszZ && atoi(pszZ) > 0;
+                bool bHasM = pszM && atoi(pszM) > 0;
+                if( pszGeomType && EQUAL(pszGeomType, "GEOMETRY") )
+                {
+                    if( pszZ && atoi(pszZ) == 2 )
+                        bHasZ = false;
+                    if( pszM && atoi(pszM) == 2 )
+                        bHasM = false;
+                }
                 poLayer->SetOpeningParameters(bIsInGpkgContents,
                                               bIsSpatial,
                                               pszGeomColName,
                                               pszGeomType,
-                                              pszZ && atoi(pszZ) > 0,
-                                              pszM && atoi(pszM) > 0);
+                                              bHasZ,
+                                              bHasM);
                 m_papoLayers[m_nLayers++] = poLayer;
             }
         }
@@ -1428,7 +1525,12 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
             sqlite3_free(pszTmp);
             SetPhysicalFilename( osFilename.c_str() );
         }
-        osSQL += " LIMIT 1000";
+        const int nTableLimit = GetOGRTableLimit();
+        if( nTableLimit > 0 )
+        {
+            osSQL += " LIMIT ";
+            osSQL += CPLSPrintf("%d", 1 + nTableLimit);
+        }
 
         const OGRErr err = SQLQuery(hDB, osSQL.c_str(), &oResult);
         if  ( err != OGRERR_NONE )
@@ -1470,11 +1572,14 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         {
             bRet = TRUE;
 
-            if( oResult.nRowCount == 1000 )
+            if( nTableLimit > 0 && oResult.nRowCount > nTableLimit )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "File has more than 1000 raster tables. "
-                         "Limiting to first 1000");
+                        "File has more than %d raster tables. "
+                        "Limiting to first %d (can be overridden with "
+                        "OGR_TABLE_LIMIT config option)",
+                        nTableLimit, nTableLimit);
+                oResult.nRowCount = nTableLimit;
             }
 
             int nSDSCount = 0;
@@ -1483,18 +1588,14 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                 const char *pszTableName = SQLResultGetValue(&oResult, 0, i);
                 const char *pszIdentifier = SQLResultGetValue(&oResult, 1, i);
 
-                m_papszSubDatasets = CSLSetNameValue( m_papszSubDatasets,
-                                                    CPLSPrintf("SUBDATASET_%d_NAME", nSDSCount+1),
-                                                    CPLSPrintf("GPKG:%s:%s", m_pszFilename, pszTableName) );
-                if( pszIdentifier )
-                    m_papszSubDatasets = CSLSetNameValue( m_papszSubDatasets,
-                                                            CPLSPrintf("SUBDATASET_%d_DESC", nSDSCount+1),
-                                                            CPLSPrintf("%s - %s", pszTableName, pszIdentifier) );
-                else
-                    m_papszSubDatasets = CSLSetNameValue( m_papszSubDatasets,
-                                                            CPLSPrintf("SUBDATASET_%d_DESC", nSDSCount+1),
-                                                            pszTableName );
-
+                m_aosSubDatasets.AddNameValue(
+                    CPLSPrintf("SUBDATASET_%d_NAME", nSDSCount+1),
+                    CPLSPrintf("GPKG:%s:%s", m_pszFilename, pszTableName));
+                m_aosSubDatasets.AddNameValue(
+                    CPLSPrintf("SUBDATASET_%d_DESC", nSDSCount+1),
+                    pszIdentifier ?
+                        CPLSPrintf("%s - %s", pszTableName, pszIdentifier) :
+                        pszTableName);
                 nSDSCount ++;
             }
         }
@@ -1658,10 +1759,13 @@ bool GDALGeoPackageDataset::AllocCachedTiles()
     int nTileWidth, nTileHeight;
     GetRasterBand(1)->GetBlockSize(&nTileWidth, &nTileHeight);
 
-    const int nCacheCount =
+    // We currently need 4 caches because of
+    // GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol)
+    const int nCacheCount = 4;
+/*
         (m_nShiftXPixelsMod != 0 || m_nShiftYPixelsMod != 0) ? 4 :
-        (bUpdate && m_eDT == GDT_Byte) ? 2 : 1;
-
+        (GetUpdate() && m_eDT == GDT_Byte) ? 2 : 1;
+*/
     m_pabyCachedTiles = (GByte*) VSI_MALLOC3_VERBOSE(
         nCacheCount * (m_eDT == GDT_Byte ? 4 : 1) * m_nDTSize,
         nTileWidth, nTileHeight);
@@ -1723,7 +1827,6 @@ bool GDALGeoPackageDataset::InitRaster( GDALGeoPackageDataset* poParentDS,
     if( poParentDS )
     {
         m_poParentDS = poParentDS;
-        bUpdate = poParentDS->bUpdate;
         eAccess = poParentDS->eAccess;
         hDB = poParentDS->hDB;
         m_eTF = poParentDS->m_eTF;
@@ -1992,7 +2095,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     const char* pszZoomLevel =  CSLFetchNameValue(papszOpenOptionsIn, "ZOOM_LEVEL");
     if( pszZoomLevel )
     {
-        if( bUpdate )
+        if( GetUpdate() )
             osSQL += CPLSPrintf(" AND zoom_level <= %d", atoi(pszZoomLevel));
         else
         {
@@ -2001,12 +2104,12 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         }
     }
     // In read-only mode, only lists non empty zoom levels
-    else if( !bUpdate )
+    else if( !GetUpdate() )
     {
         osSQL += CPLSPrintf(" AND EXISTS(SELECT 1 FROM %s WHERE zoom_level = tm.zoom_level LIMIT 1)",
                             osQuotedTableName.c_str());
     }
-    else if( pszZoomLevel == nullptr )
+    else // if( pszZoomLevel == nullptr )
     {
         osSQL += CPLSPrintf(" AND zoom_level <= (SELECT MAX(zoom_level) FROM %s)",
                             osQuotedTableName.c_str());
@@ -2025,7 +2128,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
             SQLResultFree(&oResult);
             osSQL = pszSQL;
             osSQL += " ORDER BY zoom_level DESC";
-            if( !bUpdate )
+            if( !GetUpdate() )
                 osSQL += " LIMIT 1";
             err = SQLQuery(hDB, osSQL.c_str(), &oResult);
         }
@@ -2159,7 +2262,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     const char* pszTF = CSLFetchNameValue(papszOpenOptionsIn, "TILE_FORMAT");
     if( pszTF )
     {
-        if( !bUpdate )
+        if( !GetUpdate() )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "TILE_FORMAT open option ignored in read-only mode");
@@ -2266,21 +2369,14 @@ CPLErr GDALGeoPackageDataset::_SetProjection( const char* pszProjection )
         nSRID = GetSrsId( oSRS );
     }
 
-    for(size_t iScheme = 0;
-               iScheme < sizeof(asTilingShemes)/sizeof(asTilingShemes[0]);
-               iScheme++ )
+    const auto poTS = GetTilingScheme(m_osTilingScheme);
+    if( poTS && nSRID != poTS->nEPSGCode )
     {
-        if( EQUAL(m_osTilingScheme, asTilingShemes[iScheme].pszName) )
-        {
-            if( nSRID != asTilingShemes[iScheme].nEPSGCode )
-            {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                        "Projection should be EPSG:%d for %s tiling scheme",
-                         asTilingShemes[iScheme].nEPSGCode,
-                         m_osTilingScheme.c_str());
-                return CE_Failure;
-            }
-        }
+        CPLError(CE_Failure, CPLE_NotSupported,
+                "Projection should be EPSG:%d for %s tiling scheme",
+                poTS->nEPSGCode,
+                m_osTilingScheme.c_str());
+        return CE_Failure;
     }
 
     m_nSRID = nSRID;
@@ -2352,33 +2448,28 @@ CPLErr GDALGeoPackageDataset::SetGeoTransform( double* padfGeoTransform )
         return CE_Failure;
     }
 
-    for(size_t iScheme = 0;
-               iScheme < sizeof(asTilingShemes)/sizeof(asTilingShemes[0]);
-               iScheme++ )
+    const auto poTS = GetTilingScheme(m_osTilingScheme);
+    if( poTS )
     {
-        if( EQUAL(m_osTilingScheme, asTilingShemes[iScheme].pszName) )
+        double dfPixelXSizeZoomLevel0 = poTS->dfPixelXSizeZoomLevel0;
+        double dfPixelYSizeZoomLevel0 = poTS->dfPixelYSizeZoomLevel0;
+        for( m_nZoomLevel = 0; m_nZoomLevel < 25; m_nZoomLevel++ )
         {
-            double dfPixelXSizeZoomLevel0 = asTilingShemes[iScheme].dfPixelXSizeZoomLevel0;
-            double dfPixelYSizeZoomLevel0 = asTilingShemes[iScheme].dfPixelYSizeZoomLevel0;
-            for( m_nZoomLevel = 0; m_nZoomLevel < 25; m_nZoomLevel++ )
+            double dfExpectedPixelXSize = dfPixelXSizeZoomLevel0 / (1 << m_nZoomLevel);
+            double dfExpectedPixelYSize = dfPixelYSizeZoomLevel0 / (1 << m_nZoomLevel);
+            if( fabs( padfGeoTransform[1] - dfExpectedPixelXSize ) < 1e-8 * dfExpectedPixelXSize &&
+                fabs( fabs(padfGeoTransform[5]) - dfExpectedPixelYSize ) < 1e-8 * dfExpectedPixelYSize )
             {
-                double dfExpectedPixelXSize = dfPixelXSizeZoomLevel0 / (1 << m_nZoomLevel);
-                double dfExpectedPixelYSize = dfPixelYSizeZoomLevel0 / (1 << m_nZoomLevel);
-                if( fabs( padfGeoTransform[1] - dfExpectedPixelXSize ) < 1e-8 * dfExpectedPixelXSize &&
-                    fabs( fabs(padfGeoTransform[5]) - dfExpectedPixelYSize ) < 1e-8 * dfExpectedPixelYSize )
-                {
-                    break;
-                }
+                break;
             }
-            if( m_nZoomLevel == 25 )
-            {
-                m_nZoomLevel = -1;
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "Could not find an appropriate zoom level of %s tiling scheme that matches raster pixel size",
-                         m_osTilingScheme.c_str());
-                return CE_Failure;
-            }
-            break;
+        }
+        if( m_nZoomLevel == 25 )
+        {
+            m_nZoomLevel = -1;
+            CPLError(CE_Failure, CPLE_NotSupported,
+                        "Could not find an appropriate zoom level of %s tiling scheme that matches raster pixel size",
+                        m_osTilingScheme.c_str());
+            return CE_Failure;
         }
     }
 
@@ -2417,21 +2508,16 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
     int nTileYCountZoomLevel0 =
         std::max(1, DIV_ROUND_UP((nRasterYSize >> m_nZoomLevel), nTileHeight));
 
-    for(size_t iScheme = 0;
-               iScheme < sizeof(asTilingShemes)/sizeof(asTilingShemes[0]);
-               iScheme++ )
+    const auto poTS = GetTilingScheme(m_osTilingScheme);
+    if( poTS )
     {
-        if( EQUAL(m_osTilingScheme, asTilingShemes[iScheme].pszName) )
-        {
-            CPLAssert( m_nZoomLevel >= 0 );
-            m_dfTMSMinX = asTilingShemes[iScheme].dfMinX;
-            m_dfTMSMaxY = asTilingShemes[iScheme].dfMaxY;
-            dfPixelXSizeZoomLevel0 = asTilingShemes[iScheme].dfPixelXSizeZoomLevel0;
-            dfPixelYSizeZoomLevel0 = asTilingShemes[iScheme].dfPixelYSizeZoomLevel0;
-            nTileXCountZoomLevel0 = asTilingShemes[iScheme].nTileXCountZoomLevel0;
-            nTileYCountZoomLevel0 = asTilingShemes[iScheme].nTileYCountZoomLevel0;
-            break;
-        }
+        CPLAssert( m_nZoomLevel >= 0 );
+        m_dfTMSMinX = poTS->dfMinX;
+        m_dfTMSMaxY = poTS->dfMaxY;
+        dfPixelXSizeZoomLevel0 = poTS->dfPixelXSizeZoomLevel0;
+        dfPixelYSizeZoomLevel0 = poTS->dfPixelYSizeZoomLevel0;
+        nTileXCountZoomLevel0 = poTS->nTileXCountZoomLevel0;
+        nTileYCountZoomLevel0 = poTS->nTileYCountZoomLevel0;
     }
     m_nTileMatrixWidth = nTileXCountZoomLevel0 * (1 << m_nZoomLevel);
     m_nTileMatrixHeight = nTileYCountZoomLevel0 * (1 << m_nZoomLevel);
@@ -3053,7 +3139,7 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
 {
     pszDomain = CheckMetadataDomain(pszDomain);
     if( pszDomain != nullptr && EQUAL(pszDomain,"SUBDATASETS") )
-        return m_papszSubDatasets;
+        return m_aosSubDatasets.List();
 
     if( m_bHasReadMetadataFromStorage )
         return GDALPamDataset::GetMetadata( pszDomain );
@@ -3773,8 +3859,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
     }
     m_pszFilename = CPLStrdup(pszFilename);
     m_bNew = true;
-    bUpdate = TRUE;
-    eAccess = GA_Update; /* hum annoying duplication */
+    eAccess = GA_Update;
 
     // for test/debug purposes only. true is the nominal value
     m_bPNGSupports2Bands = CPLTestBool(CPLGetConfigOption("GPKG_PNG_SUPPORTS_2BANDS", "TRUE"));
@@ -4298,44 +4383,33 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
                 return FALSE;
         }
 
-        const char* pszTilingScheme = CSLFetchNameValue(papszOptions, "TILING_SCHEME");
-        if( pszTilingScheme )
+        m_osTilingScheme = CSLFetchNameValueDef(papszOptions, "TILING_SCHEME", "CUSTOM");
+        if( !EQUAL(m_osTilingScheme, "CUSTOM") )
         {
-            m_osTilingScheme = pszTilingScheme;
-            bool bFound = false;
-            for(size_t iScheme = 0;
-                iScheme < sizeof(asTilingShemes)/sizeof(asTilingShemes[0]);
-                 iScheme++ )
+            const auto poTS = GetTilingScheme(m_osTilingScheme);
+            if( !poTS )
+                return FALSE;
+
+            if( nTileWidth != poTS->nTileWidth ||
+                nTileHeight != poTS->nTileHeight )
             {
-                if( EQUAL(m_osTilingScheme, asTilingShemes[iScheme].pszName) )
-                {
-                    if( nTileWidth != asTilingShemes[iScheme].nTileWidth ||
-                        nTileHeight != asTilingShemes[iScheme].nTileHeight )
-                    {
-                        CPLError(CE_Failure, CPLE_NotSupported,
-                                "Tile dimension should be %dx%d for %s tiling scheme",
-                                asTilingShemes[iScheme].nTileWidth,
-                                asTilingShemes[iScheme].nTileHeight,
-                                m_osTilingScheme.c_str());
-                        return FALSE;
-                    }
-
-                    // Implicitly sets SRS.
-                    OGRSpatialReference oSRS;
-                    if( oSRS.importFromEPSG(asTilingShemes[iScheme].nEPSGCode)
-                        != OGRERR_NONE )
-                        return FALSE;
-                    char* pszWKT = nullptr;
-                    oSRS.exportToWkt(&pszWKT);
-                    SetProjection(pszWKT);
-                    CPLFree(pszWKT);
-
-                    bFound = true;
-                    break;
-                }
+                CPLError(CE_Failure, CPLE_NotSupported,
+                        "Tile dimension should be %dx%d for %s tiling scheme",
+                        poTS->nTileWidth,
+                        poTS->nTileHeight,
+                        m_osTilingScheme.c_str());
+                return FALSE;
             }
-            if( !bFound )
-                m_osTilingScheme = "CUSTOM";
+
+            // Implicitly sets SRS.
+            OGRSpatialReference oSRS;
+            if( oSRS.importFromEPSG(poTS->nEPSGCode)
+                != OGRERR_NONE )
+                return FALSE;
+            char* pszWKT = nullptr;
+            oSRS.exportToWkt(&pszWKT);
+            SetProjection(pszWKT);
+            CPLFree(pszWKT);
         }
     }
 
@@ -4669,24 +4743,12 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
         return poDS;
     }
 
-    bool bFound = false;
-    int nEPSGCode = 0;
-    size_t iScheme = 0;  // Used after for.
-    for( ;
-         iScheme < sizeof(asTilingShemes)/sizeof(asTilingShemes[0]);
-         iScheme++ )
-    {
-        if( EQUAL(pszTilingScheme, asTilingShemes[iScheme].pszName) )
-        {
-            nEPSGCode = asTilingShemes[iScheme].nEPSGCode;
-            bFound = true;
-            break;
-        }
-    }
-    if( !bFound )
+    const auto poTS = GetTilingScheme(pszTilingScheme);
+    if( !poTS )
     {
         return nullptr;
     }
+    const int nEPSGCode = poTS->nEPSGCode;
 
     OGRSpatialReference oSRS;
     if( oSRS.importFromEPSG(nEPSGCode) != OGRERR_NONE )
@@ -4781,7 +4843,7 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
     int nZoomLevel = 0;  // Used after for.
     for( ; nZoomLevel < 25; nZoomLevel++ )
     {
-        dfRes = asTilingShemes[iScheme].dfPixelXSizeZoomLevel0 / (1 << nZoomLevel);
+        dfRes = poTS->dfPixelXSizeZoomLevel0 / (1 << nZoomLevel);
         if( dfComputedRes > dfRes )
             break;
         dfPrevRes = dfRes;
@@ -4816,7 +4878,7 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
         }
     }
 
-    dfRes = asTilingShemes[iScheme].dfPixelXSizeZoomLevel0 / (1 << nZoomLevel);
+    dfRes = poTS->dfPixelXSizeZoomLevel0 / (1 << nZoomLevel);
 
     double dfMinX = adfExtent[0];
     double dfMinY = adfExtent[1];
@@ -4922,6 +4984,8 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
     GDALWarpOptions *psWO = GDALCreateWarpOptions();
 
     psWO->papszWarpOptions = CSLSetNameValue(nullptr, "OPTIMIZE_SIZE", "YES");
+    psWO->papszWarpOptions = CSLSetNameValue(
+                            psWO->papszWarpOptions, "SAMPLE_GRID", "YES");
     if( bHasNoData )
     {
         if( dfNoDataValue == 0.0 )
@@ -5094,7 +5158,7 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Verify we are in update mode.                                   */
 /* -------------------------------------------------------------------- */
-    if( !bUpdate )
+    if( !GetUpdate() )
     {
         CPLError( CE_Failure, CPLE_NoWriteAccess,
                   "Data source %s opened read-only.\n"
@@ -5378,7 +5442,7 @@ OGRErr GDALGeoPackageDataset::DeleteLayerCommon(const char* pszLayerName)
 
 OGRErr GDALGeoPackageDataset::DeleteLayer( int iLayer )
 {
-    if( !bUpdate || iLayer < 0 || iLayer >= m_nLayers )
+    if( !GetUpdate() || iLayer < 0 || iLayer >= m_nLayers )
         return OGRERR_FAILURE;
 
     m_papoLayers[iLayer]->ResetReading();
@@ -5551,14 +5615,14 @@ int GDALGeoPackageDataset::TestCapability( const char * pszCap )
          EQUAL(pszCap,ODsCDeleteLayer) ||
          EQUAL(pszCap,"RenameLayer") )
     {
-         return bUpdate;
+         return GetUpdate();
     }
     else if( EQUAL(pszCap,ODsCCurveGeometries) )
         return TRUE;
     else if( EQUAL(pszCap,ODsCMeasuredGeometries) )
         return TRUE;
     else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
-        return bUpdate;
+        return GetUpdate();
 
     return OGRSQLiteBaseDataSource::TestCapability(pszCap);
 }

@@ -438,7 +438,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
         const double dfX = poPoint->getX();
         const double dfY = poPoint->getY();
         const double dfZ = poPoint->getZ();
-        double dfM = 0.0;
+        double dfM = -std::numeric_limits<double>::max();
         double *pdfM = nullptr;
         if( wkbHasM(eLayerGeomType) &&
             (hSHP->nShapeType == SHPT_POINTM ||
@@ -446,8 +446,6 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
         {
             if( poGeom->IsMeasured() )
                 dfM = poPoint->getM();
-            else
-                dfM = -std::numeric_limits<double>::max();
             pdfM = &dfM;
         }
 
@@ -1447,7 +1445,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
           {
               const char *pszStr = poFeature->GetFieldAsString(iField);
               char *pszEncoded = nullptr;
-              if( strlen(pszSHPEncoding) > 0 )
+              if( pszSHPEncoding[0] != '\0' )
               {
                   pszEncoded =
                       CPLRecode( pszStr, CPL_ENC_UTF8, pszSHPEncoding );
@@ -1475,18 +1473,20 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                   if( pszEncoded != nullptr &&  // For Coverity.
                       EQUAL(pszSHPEncoding, CPL_ENC_UTF8))
                   {
-                      // TODO(schwehr): Provide a comment about what this does.
+                      // Truncate string by making sure we don't cut in the
+                      // middle of a UTF-8 multibyte character
+                      // Continuation bytes of such characters are of the form
+                      // 10xxxxxx (0x80), whereas single-byte are 0xxxxxxx
+                      // and the start of a multi-byte is 11xxxxxx
                       const char *p = pszStr + nStrLen;
-                      int byteCount = nStrLen;
-                      while( byteCount > 0 )
+                      while( nStrLen > 0 )
                       {
                           if( (*p & 0xc0) != 0x80 )
                           {
-                              nStrLen = byteCount;
                               break;
                           }
 
-                          byteCount--;
+                          nStrLen--;
                           p--;
                       }
 
@@ -1513,13 +1513,11 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
           case OFTInteger:
           case OFTInteger64:
           {
-              char szFormat[20] = {};
               char szValue[32] = {};
-              int nFieldWidth = poFieldDefn->GetWidth();
-              snprintf(szFormat, sizeof(szFormat),
-                       "%%%d" CPL_FRMT_GB_WITHOUT_PREFIX "d",
-                       std::min(nFieldWidth, static_cast<int>(sizeof(szValue)) - 1));
-              snprintf(szValue, sizeof(szValue), szFormat,
+              const int nFieldWidth = poFieldDefn->GetWidth();
+              snprintf(szValue, sizeof(szValue),
+                       "%*" CPL_FRMT_GB_WITHOUT_PREFIX "d",
+                       std::min(nFieldWidth, static_cast<int>(sizeof(szValue)) - 1),
                        poFeature->GetFieldAsInteger64(iField));
 
               const int nStrLen = static_cast<int>(strlen(szValue));

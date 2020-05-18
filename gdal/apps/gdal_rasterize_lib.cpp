@@ -225,13 +225,13 @@ static CPLErr ProcessLayer(
 
     while( (hFeat = OGR_L_GetNextFeature( hSrcLayer )) != nullptr )
     {
-        if( OGR_F_GetGeometryRef( hFeat ) == nullptr )
+        OGRGeometryH hGeom = OGR_F_StealGeometry( hFeat );
+        if( hGeom == nullptr )
         {
             OGR_F_Destroy( hFeat );
             continue;
         }
 
-        OGRGeometryH hGeom = OGR_G_Clone( OGR_F_GetGeometryRef( hFeat ) );
         if( hCT != nullptr )
         {
             if( OGR_G_Transform(hGeom, hCT) != OGRERR_NONE )

@@ -1,0 +1,15 @@
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+OBJ	=	ogrmapmldataset.obj
+EXTRAFLAGS =	-I.. -I..\..
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
+
+

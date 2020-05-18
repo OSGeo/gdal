@@ -1118,7 +1118,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
 
         for( auto&& poMember: poGC )
         {
-            if( poMember->getGeometryType() != wkbLineString )
+            if( wkbFlatten(poMember->getGeometryType()) != wkbLineString )
             {
                 return poGeom;
             }
@@ -1301,6 +1301,111 @@ OGRGeometryH OGR_G_ForceToMultiLineString( OGRGeometryH hGeom )
 }
 
 /************************************************************************/
+/*                      removeLowerDimensionSubGeoms()                  */
+/************************************************************************/
+
+/** \brief Remove sub-geometries from a geometry collection that do not have
+ *         the maximum topological dimensionality of the collection.
+ *
+ * This is typically to be used as a cleanup phase after running OGRGeometry::MakeValid()
+ *
+ * For example, MakeValid() on a polygon can return a geometry collection of
+ * polygons and linestrings. Calling this method will return either a polygon
+ * or multipolygon by dropping those linestrings.
+ *
+ * On a non-geometry collection, this will return a clone of the passed geometry.
+ *
+ * @param poGeom input geometry
+ * @return a new geometry.
+ *
+ * @since GDAL 3.1.0
+ */
+OGRGeometry* OGRGeometryFactory::removeLowerDimensionSubGeoms( const OGRGeometry* poGeom )
+{
+    if( poGeom == nullptr )
+        return nullptr;
+    if( wkbFlatten(poGeom->getGeometryType()) != wkbGeometryCollection ||
+        poGeom->IsEmpty() )
+    {
+        return poGeom->clone();
+    }
+    const OGRGeometryCollection* poGC = poGeom->toGeometryCollection();
+    int nMaxDim = 0;
+    OGRBoolean bHasCurve = FALSE;
+    for( const auto poSubGeom: *poGC )
+    {
+        nMaxDim = std::max(nMaxDim, poSubGeom->getDimension());
+        bHasCurve |= poSubGeom->hasCurveGeometry();
+    }
+    int nCountAtMaxDim = 0;
+    const OGRGeometry* poGeomAtMaxDim = nullptr;
+    for( const auto poSubGeom: *poGC )
+    {
+        if( poSubGeom->getDimension() == nMaxDim )
+        {
+            poGeomAtMaxDim = poSubGeom;
+            nCountAtMaxDim ++;
+        }
+    }
+    if( nCountAtMaxDim == 1 && poGeomAtMaxDim != nullptr )
+    {
+        return poGeomAtMaxDim->clone();
+    }
+    OGRGeometryCollection* poRet =
+        (nMaxDim == 0) ?               static_cast<OGRGeometryCollection*>(new OGRMultiPoint()) :
+        (nMaxDim == 1 && !bHasCurve) ? static_cast<OGRGeometryCollection*>(new OGRMultiLineString()) :
+        (nMaxDim == 1 && bHasCurve) ?  static_cast<OGRGeometryCollection*>(new OGRMultiCurve()) :
+        (nMaxDim == 2 && !bHasCurve) ? static_cast<OGRGeometryCollection*>(new OGRMultiPolygon()) :
+                                       static_cast<OGRGeometryCollection*>(new OGRMultiSurface());
+    for( const auto poSubGeom: *poGC )
+    {
+        if( poSubGeom->getDimension() == nMaxDim )
+        {
+            if( OGR_GT_IsSubClassOf(poSubGeom->getGeometryType(), wkbGeometryCollection) )
+            {
+                const OGRGeometryCollection* poSubGeomAsGC = poSubGeom->toGeometryCollection();
+                for( const auto poSubSubGeom: *poSubGeomAsGC )
+                {
+                    if( poSubSubGeom->getDimension() == nMaxDim )
+                    {
+                        poRet->addGeometryDirectly(poSubSubGeom->clone());
+                    }
+                }
+            }
+            else
+            {
+                poRet->addGeometryDirectly(poSubGeom->clone());
+            }
+        }
+    }
+    return poRet;
+}
+
+/************************************************************************/
+/*                  OGR_G_RemoveLowerDimensionSubGeoms()                */
+/************************************************************************/
+
+/** \brief Remove sub-geometries from a geometry collection that do not have
+ *         the maximum topological dimensionality of the collection.
+ *
+ * This function is the same as the C++ method
+ * OGRGeometryFactory::removeLowerDimensionSubGeoms().
+ *
+ * @param hGeom handle to the geometry to convert
+ * @return a new geometry.
+ *
+ * @since GDAL 3.1.0
+ */
+
+OGRGeometryH OGR_G_RemoveLowerDimensionSubGeoms( const OGRGeometryH hGeom )
+
+{
+    return OGRGeometry::ToHandle(
+        OGRGeometryFactory::removeLowerDimensionSubGeoms(
+            OGRGeometry::FromHandle(hGeom)));
+}
+
+/************************************************************************/
 /*                          organizePolygons()                          */
 /************************************************************************/
 
@@ -1392,7 +1497,7 @@ enum OrganizePolygonMethod
  * with care.
  *
  * If the OGR_ORGANIZE_POLYGONS configuration option is defined, its value will override
- * the value of the METHOD option of papszOptions (useful to modify the behaviour of the
+ * the value of the METHOD option of papszOptions (useful to modify the behavior of the
  * shapefile driver)
  *
  * @param papoPolygons array of geometry pointers - should all be OGRPolygons.
@@ -2101,17 +2206,13 @@ OGRGeometryFactory::createFromGEOS(
     {
         poGeometry = nullptr;
     }
-
-    if( pabyBuf != nullptr )
-    {
-        // Since GEOS 3.1.1, so we test 3.2.0.
+    // Since GEOS 3.1.1, so we test 3.2.0.
 #if GEOS_CAPI_VERSION_MAJOR >= 2 || \
     (GEOS_CAPI_VERSION_MAJOR == 1 && GEOS_CAPI_VERSION_MINOR >= 6)
-        GEOSFree_r( hGEOSCtxt, pabyBuf );
+    GEOSFree_r( hGEOSCtxt, pabyBuf );
 #else
-        free( pabyBuf );
+    free( pabyBuf );
 #endif
-    }
 
     return poGeometry;
 
@@ -3701,9 +3802,9 @@ OGRGeometryFactory::TransformWithOptionsCache::~TransformWithOptionsCache()
 
 /** Transform a geometry.
  * @param poSrcGeom source geometry
- * @param poCT coordinate transformation object.
- * @param papszOptions options. Including WRAPDATELINE=YES.
- * @param cache Cache. May increase performance if persisted between invokations
+ * @param poCT coordinate transformation object, or NULL.
+ * @param papszOptions options. Including WRAPDATELINE=YES and DATELINEOFFSET=.
+ * @param cache Cache. May increase performance if persisted between invocations
  * @return (new) transformed geometry.
  */
 OGRGeometry* OGRGeometryFactory::transformWithOptions(
@@ -3858,6 +3959,102 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions(
     }
 
     return poDstGeom;
+}
+
+/************************************************************************/
+/*                         OGRGeomTransformer()                         */
+/************************************************************************/
+
+struct OGRGeomTransformer
+{
+    std::unique_ptr<OGRCoordinateTransformation> poCT{};
+    OGRGeometryFactory::TransformWithOptionsCache cache{};
+    CPLStringList aosOptions{};
+
+    OGRGeomTransformer() = default;
+    OGRGeomTransformer(const OGRGeomTransformer&) = delete;
+    OGRGeomTransformer& operator=(const OGRGeomTransformer&) = delete;
+};
+
+/************************************************************************/
+/*                     OGR_GeomTransformer_Create()                     */
+/************************************************************************/
+
+/** Create a geometry transformer.
+ *
+ * This is a enhanced version of OGR_G_Transform().
+ *
+ * When reprojecting geometries from a Polar Stereographic projection or a
+ * projection naturally crossing the antimeridian (like UTM Zone 60) to a
+ * geographic CRS, it will cut geometries along the antimeridian. So a
+ * LineString might be returned as a MultiLineString.
+ *
+ * The WRAPDATELINE=YES option might be specified for circumstances to correct
+ * geometries that incorrectly go from a longitude on a side of the antimeridian
+ * to the other side, like a LINESTRING(-179 0,179 0) will be transformed to
+ * a MULTILINESTRING ((-179 0,-180 0),(180 0,179 0)). For that use case, hCT
+ * might be NULL.
+ *
+ * @param hCT Coordinate transformation object (will be cloned) or NULL.
+ * @param papszOptions NULL terminated list of options, or NULL.
+ *                     Supported options are:
+ *                     <ul>
+ *                         <li>WRAPDATELINE=YES</li>
+ *                         <li>DATELINEOFFSET=longitude_gap_in_degree. Defaults to 10.</li>
+ *                     </ul>
+ * @return transformer object to free with OGR_GeomTransformer_Destroy()
+ * @since GDAL 3.1
+ */
+OGRGeomTransformerH OGR_GeomTransformer_Create( OGRCoordinateTransformationH hCT,
+                                                CSLConstList papszOptions )
+{
+    OGRGeomTransformer* transformer = new OGRGeomTransformer;
+    if( hCT )
+    {
+        transformer->poCT.reset(
+            OGRCoordinateTransformation::FromHandle(hCT)->Clone());
+    }
+    transformer->aosOptions.Assign(CSLDuplicate(papszOptions));
+    return transformer;
+}
+
+/************************************************************************/
+/*                     OGR_GeomTransformer_Transform()                  */
+/************************************************************************/
+
+/** Transforms a geometry.
+ *
+ * @param hTransformer transformer object.
+ * @param hGeom Source geometry.
+ * @return a new geometry (or NULL) to destroy with OGR_G_DestroyGeometry()
+ * @since GDAL 3.1
+ */
+OGRGeometryH OGR_GeomTransformer_Transform(OGRGeomTransformerH hTransformer,
+                                           OGRGeometryH hGeom)
+{
+    VALIDATE_POINTER1( hTransformer, "OGR_GeomTransformer_Transform", nullptr );
+    VALIDATE_POINTER1( hGeom, "OGR_GeomTransformer_Transform", nullptr );
+
+    return OGRGeometry::ToHandle(
+        OGRGeometryFactory::transformWithOptions(
+            OGRGeometry::FromHandle(hGeom),
+            hTransformer->poCT.get(),
+            hTransformer->aosOptions.List(),
+            hTransformer->cache));
+}
+
+/************************************************************************/
+/*                      OGR_GeomTransformer_Destroy()                   */
+/************************************************************************/
+
+/** Destroy a geometry transformer allocated with OGR_GeomTransformer_Create()
+ *
+ * @param hTransformer transformer object.
+ * @since GDAL 3.1
+ */
+void OGR_GeomTransformer_Destroy(OGRGeomTransformerH hTransformer)
+{
+    delete hTransformer;
 }
 
 /************************************************************************/
@@ -5770,7 +5967,9 @@ OGRCurve* OGRGeometryFactory::curveFromLineString(
     OGRCompoundCurve* poCC = nullptr;
     OGRCircularString* poCS = nullptr;
     OGRLineString* poLSNew = nullptr;
-    for( int i = 0; i < poLS->getNumPoints(); /* nothing */ )
+    const int nLSNumPoints = poLS->getNumPoints();
+    const bool bIsClosed = nLSNumPoints >= 4 && poLS->get_IsClosed();
+    for( int i = 0; i < nLSNumPoints; /* nothing */ )
     {
         const int iNewI = OGRGF_DetectArc(poLS, i, poCC, poCS, poLSNew);
         if( iNewI == -2 )
@@ -5802,10 +6001,12 @@ OGRCurve* OGRGeometryFactory::curveFromLineString(
         {
             double dfScale = std::max(1.0, fabs(p.getX()));
             dfScale = std::max(dfScale, fabs(p.getY()));
-            if( fabs(poLSNew->getX(poLSNew->getNumPoints()-1) -
-                     p.getX()) / dfScale > 1e-8 ||
-                fabs(poLSNew->getY(poLSNew->getNumPoints()-1) -
-                     p.getY()) / dfScale > 1e-8 )
+            if (bIsClosed && i == nLSNumPoints - 1)
+                dfScale = 0;
+            if( fabs(poLSNew->getX(poLSNew->getNumPoints()-1) - p.getX()) >
+                    1e-8 * dfScale ||
+                fabs(poLSNew->getY(poLSNew->getNumPoints()-1) - p.getY()) >
+                    1e-8 * dfScale )
             {
                 poLSNew->addPoint(&p);
             }

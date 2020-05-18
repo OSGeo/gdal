@@ -7,7 +7,7 @@
 # Howard Butler hobu.inc@gmail.com
 
 
-gdal_version = '3.0.0'
+gdal_version = '3.1.0'
 
 import sys
 import os
@@ -253,7 +253,15 @@ class gdal_ext(build_ext):
             # the gdal-config location given in setup.cfg is
             # incorrect, or possibly the default -- ../../apps/gdal-config
             # We'll try to use the gdal-config that might be on the path.
-            return fetch_config(option)
+            try:
+                return fetch_config(option)
+            except gdal_config_error as e:
+                msg = 'Could not find gdal-config. Make sure you have installed the GDAL native library and development headers.'
+                import sys
+                import traceback
+                traceback_string = ''.join(traceback.format_exception(*sys.exc_info()))
+                raise gdal_config_error(traceback_string + '\n' + msg)
+
 
     def build_extensions(self):
 
@@ -336,7 +344,8 @@ if sys.version_info < (3,):
             self.check_extensions_list(self.extensions)
 
             with Pool(num_jobs) as pool:
-                pool.map(self.build_extension, self.extensions)
+                # Note: map() returns an iterator that needs to be consumed.
+                list(pool.map(self.build_extension, self.extensions))
 
         build_ext.build_extensions = parallel_build_extensions
     except:
@@ -455,7 +464,8 @@ setup_kwargs = dict(
     data_files=data_files,
     ext_modules=ext_modules,
     scripts=glob('scripts/*.py'),
-    cmdclass={'build_ext': gdal_ext}
+    cmdclass={'build_ext': gdal_ext},
+    extras_require={'numpy': ['numpy > 1.0.0']},
 )
 
 # This section can be greatly simplified with python >= 3.5 using **

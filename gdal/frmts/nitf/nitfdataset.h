@@ -339,7 +339,7 @@ class NITFProxyPamRasterBand CPL_NON_FINAL: public GDALPamRasterBand
 /* to make sure they keep the proper pointer to their "natural" dataset */
 /* This trick is no longer necessary with the NITFWrapperRasterBand */
 /* We just override the few specific methods where we want that */
-/* the NITFWrapperRasterBand behaviour differs from the JPEG/JPEG2000 one */
+/* the NITFWrapperRasterBand behavior differs from the JPEG/JPEG2000 one */
 
 class NITFWrapperRasterBand final: public NITFProxyPamRasterBand
 {

@@ -73,7 +73,7 @@ def test_ozi_online_1():
         assert len(gcps) == 4, 'did not get expected gcp count.'
 
         gcp0 = gcps[0]
-        assert gcp0.GCPPixel == 61 and gcp0.GCPLine == 436 and gcp0.GCPX == pytest.approx((9112088.39654255), abs=0.001) and gcp0.GCPY == pytest.approx(-999503.568004833, abs=0.001), \
+        assert gcp0.GCPPixel == 61 and gcp0.GCPLine == 436 and gcp0.GCPX == pytest.approx(-1653990.4525324, abs=0.001) and gcp0.GCPY == pytest.approx(6950885.0402214, abs=0.001), \
             'did not get expected gcp.'
 
         wkt = ds.GetGCPProjection()

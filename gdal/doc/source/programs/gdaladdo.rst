@@ -138,9 +138,11 @@ To produce the smallest possible JPEG-In-TIFF overviews, you should use :
     --config COMPRESS_OVERVIEW JPEG --config PHOTOMETRIC_OVERVIEW YCBCR --config INTERLEAVE_OVERVIEW PIXEL
 
 External overviews can be created in the BigTIFF format by using
-the BIGTIFF_OVERVIEW configuration option : --config BIGTIFF_OVERVIEW {IF_NEEDED|IF_SAFER|YES|NO}.
+the :decl_configoption:`BIGTIFF_OVERVIEW` configuration option :
+--config BIGTIFF_OVERVIEW {IF_NEEDED|IF_SAFER|YES|NO}.
+
 The default value is IF_SAFER starting with GDAL 2.3.0 (previously was IF_NEEDED).
-The behaviour of this option is exactly the same as the BIGTIFF creation option
+The behavior of this option is exactly the same as the BIGTIFF creation option
 documented in the GeoTIFF driver documentation.
 
 - YES forces BigTIFF.

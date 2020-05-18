@@ -53,7 +53,7 @@ static int OGRFlatGeobufDriverIdentify(GDALOpenInfo* poOpenInfo){
     if( pabyHeader[0] == 0x66 &&
         pabyHeader[1] == 0x67 &&
         pabyHeader[2] == 0x62 ) {
-        if (pabyHeader[3] == 0x02) {
+        if (pabyHeader[3] == 0x03) {
             CPLDebug("FlatGeobuf", "Verified magicbytes");
             return TRUE;
         } else {
@@ -136,7 +136,12 @@ void RegisterOGRFlatGeobuf()
     poDriver->SetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='SPATIAL_INDEX' type='boolean' description='Whether to create a spatial index' default='YES'/>"
+"  <Option name='TEMPORARY_DIR' type='string' description='Directory where temporary file should be created'/>"
 "</LayerCreationOptionList>");
+    poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"  <Option name='VERIFY_BUFFERS' type='boolean' description='Verify flatbuffers integrity' default='YES'/>"
+"</OpenOptionList>");
 
     poDriver->pfnOpen = OGRFlatGeobufDataset::Open;
     poDriver->pfnCreate = OGRFlatGeobufDataset::Create;
@@ -254,7 +259,7 @@ bool OGRFlatGeobufDataset::OpenFile(const char* pszFilename, VSILFILE* fp, bool 
     CPL_LSBPTR32(&headerSize);
     CPLDebug("FlatGeobuf", "headerSize: %d", headerSize);
     if (headerSize > header_max_buffer_size) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Header size too large (> 1MB)");
+        CPLError(CE_Failure, CPLE_AppDefined, "Header size too large (> 10 MB)");
         return false;
     }
     std::unique_ptr<GByte, CPLFreeReleaser> buf(static_cast<GByte*>(VSIMalloc(headerSize)));
@@ -300,18 +305,10 @@ bool OGRFlatGeobufDataset::OpenFile(const char* pszFilename, VSILFILE* fp, bool 
         }
     }
 
-    uint64_t offsetIndices = 0;
-    if (featuresCount > 0) {
-        CPLDebug("FlatGeobuf", "Feature indices start at offset (%lu)", static_cast<long unsigned int>(offset));
-        offsetIndices = offset;
-        offset += featuresCount * 8;
-        CPLDebug("FlatGeobuf", "Add featuresCount * 8 to offset (%lu)", static_cast<long unsigned int>(featuresCount * 8));
-    }
-
     CPLDebug("FlatGeobuf", "Features start at offset (%lu)", static_cast<long unsigned int>(offset));
 
     auto poLayer = std::unique_ptr<OGRFlatGeobufLayer>(
-        new OGRFlatGeobufLayer(header, buf.release(), pszFilename, fp, offset, offsetIndices));
+        new OGRFlatGeobufLayer(header, buf.release(), pszFilename, fp, offset));
     poLayer->VerifyBuffers(bVerifyBuffers);
 
     m_apoLayers.push_back(std::move(poLayer));
@@ -436,28 +433,40 @@ OGRLayer* OGRFlatGeobufDataset::ICreateLayer( const char *pszLayerName,
     bool bCreateSpatialIndexAtClose = CPLFetchBool( papszOptions, "SPATIAL_INDEX", true );
 
     VSILFILE *poFpWrite;
-    std::string oTempFile;
+    std::string osTempFile;
+    int savedErrno;
     if (bCreateSpatialIndexAtClose) {
         CPLDebug("FlatGeobuf", "Spatial index requested will write to temp file and do second pass on close");
         const CPLString osDirname(CPLGetPath(osFilename.c_str()));
         const CPLString osBasename(CPLGetBasename(osFilename.c_str()));
-        oTempFile = CPLFormFilename(osDirname, osBasename, nullptr);
-        oTempFile += "_temp.fgb";
-        poFpWrite = VSIFOpenL(oTempFile.c_str(), "w+b");
+        const char* pszTempDir = CSLFetchNameValue(papszOptions, "TEMPORARY_DIR");
+        osTempFile = pszTempDir ?
+            CPLFormFilename(pszTempDir, osBasename, nullptr) :
+            (STARTS_WITH(osFilename, "/vsi") &&
+            !STARTS_WITH(osFilename, "/vsimem/")) ?
+            CPLGenerateTempFilename(osBasename) :
+            CPLFormFilename(osDirname, osBasename, nullptr);
+        osTempFile += "_temp.fgb";
+        poFpWrite = VSIFOpenL(osTempFile.c_str(), "w+b");
+        savedErrno = errno;
+        // Unlink it now to avoid stale temporary file if killing the process
+        // (only works on Unix)
+        VSIUnlink(osTempFile.c_str());
     } else {
         CPLDebug("FlatGeobuf", "No spatial index will write directly to output");
-        poFpWrite = VSIFOpenL(osFilename.c_str(), "w+b");
+        poFpWrite = VSIFOpenL(osFilename.c_str(), "wb");
+        savedErrno = errno;
     }
     if (poFpWrite == nullptr) {
         CPLError(CE_Failure, CPLE_OpenFailed,
                     "Failed to create %s:\n%s",
-                    osFilename.c_str(), VSIStrerror(errno));
+                    osFilename.c_str(), VSIStrerror(savedErrno));
         return nullptr;
     }
 
     // Create a layer.
     auto poLayer = std::unique_ptr<OGRFlatGeobufLayer>(
-        new OGRFlatGeobufLayer(pszLayerName, osFilename, poSpatialRef, eGType, poFpWrite, oTempFile, bCreateSpatialIndexAtClose));
+        new OGRFlatGeobufLayer(pszLayerName, osFilename, poSpatialRef, eGType, poFpWrite, osTempFile, bCreateSpatialIndexAtClose));
 
     m_apoLayers.push_back(std::move(poLayer));
 

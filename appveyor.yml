@@ -8,9 +8,11 @@ environment:
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
     VS_VERSION: Visual Studio 15
     platform: x86
+    PROJ_BRANCH: 7.0
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     VS_VERSION: Visual Studio 14
     platform: x64
+    PROJ_BRANCH: 6.3
 
 shallow_clone: true
 
@@ -137,11 +139,11 @@ install:
       $env:NMAKE_LOCAL+="NETCDF_INC_DIR=`$(SDK_INC)`n"
       $env:NMAKE_LOCAL+="NETCDF_HAS_NC4 = yes`n"
       $env:NMAKE_LOCAL+="PROJ_INCLUDE=-I$env:APPVEYOR_BUILD_FOLDER\install-proj\include`n"
-      $env:NMAKE_LOCAL+="PROJ_LIBRARY=$env:APPVEYOR_BUILD_FOLDER\install-proj\lib\proj_6_2.lib`n"
+      $env:NMAKE_LOCAL+="PROJ_LIBRARY=$env:APPVEYOR_BUILD_FOLDER\install-proj\lib\proj.lib`n"
       $env:NMAKE_LOCAL | Set-Content "$env:APPVEYOR_BUILD_FOLDER\gdal\nmake.local"
       #
       cd $env:APPVEYOR_BUILD_FOLDER
-      exec { git clone --depth=1 -b 6.2 https://github.com/OSGeo/proj.4 proj }
+      exec { git clone --depth=1 -b $env:PROJ_BRANCH https://github.com/OSGeo/PROJ proj }
       cd proj
       exec { mkdir build }
       cd build
@@ -153,14 +155,14 @@ install:
       $env:PATH="$env:APPVEYOR_BUILD_FOLDER;$env:PATH"
       $env:PROJ_INSTALL_DIR="$env:APPVEYOR_BUILD_FOLDER"+"\install-proj"
       $env:CMAKE_INSTALL_PREFIX="-DCMAKE_INSTALL_PREFIX=" + $env:PROJ_INSTALL_DIR
-      exec { cmake -G $env:VS_FULL .. $env:CMAKE_INSTALL_PREFIX -DPROJ_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBPROJ_SHARED=ON -DCMAKE_TOOLCHAIN_FILE=c:/projects/gdal/vcpkg/scripts/buildsystems/vcpkg.cmake }
+      exec { cmake -G $env:VS_FULL .. $env:CMAKE_INSTALL_PREFIX -DPROJ_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBPROJ_SHARED=ON -DCMAKE_TOOLCHAIN_FILE=c:/projects/gdal/vcpkg/scripts/buildsystems/vcpkg.cmake -DBUILD_SHARED_LIBS=ON -DENABLE_CURL=OFF -DENABLE_TIFF=OFF -DBUILD_PROJSYNC=OFF }
       exec { cmake --build . --config Release --target install }
       cd $env:APPVEYOR_BUILD_FOLDER\install-proj\share\proj
       appveyor DownloadFile https://download.osgeo.org/proj/proj-datumgrid-1.8.zip
       exec { 7z x proj-datumgrid-1.8.zip -aoa }
       #
       cd $env:APPVEYOR_BUILD_FOLDER\gdal
-      exec { copy $env:APPVEYOR_BUILD_FOLDER\install-proj\bin\proj_6_2.dll . }
+      exec { copy $env:APPVEYOR_BUILD_FOLDER\install-proj\bin\*.dll . }
       exec { nmake /f makefile.vc MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS=/WX }
       cd apps
       exec { nmake /f makefile.vc test_ogrsf.exe MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS=/WX }

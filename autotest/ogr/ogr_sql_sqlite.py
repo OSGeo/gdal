@@ -619,7 +619,7 @@ def test_ogr_sql_sqlite_10():
 
 
 ###############################################################################
-# Test correct parsing of litterals
+# Test correct parsing of literals
 
 
 def test_ogr_sql_sqlite_11():
@@ -1841,3 +1841,51 @@ def test_ogr_sql_sqlite_31():
 
 
 
+###############################################################################
+# Test flattening of geometry collection inside geometry collection
+
+
+def test_ogr_sql_sqlite_geomcollection_in_geomcollection():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbLineStringM)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (MULTIPOINT(1 2,3 4),MULTILINESTRING((5 6,7 8),(9 10,11 12)))'))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('MULTILINESTRING ((5 6,7 8),(9 10,11 12))'))
+    lyr.CreateFeature(f)
+    f = None
+    sql_lyr = ds.ExecuteSQL('select * from test', dialect='SQLite')
+    f = sql_lyr.GetNextFeature()
+    got_wkt_1 = f.GetGeometryRef().ExportToIsoWkt()
+    f = sql_lyr.GetNextFeature()
+    got_wkt_2 = f.GetGeometryRef().ExportToIsoWkt()
+    ds.ReleaseResultSet(sql_lyr)
+
+    assert got_wkt_1 == 'GEOMETRYCOLLECTION (POINT (1 2),POINT (3 4),LINESTRING (5 6,7 8),LINESTRING (9 10,11 12))'
+    assert got_wkt_2 == 'MULTILINESTRING ((5 6,7 8),(9 10,11 12))'
+
+
+
+###############################################################################
+# Test ST_MakeValid()
+
+
+def test_ogr_sql_sqlite_st_makevalid():
+
+    # Check if MakeValid() is available
+    g = ogr.CreateGeometryFromWkt('POLYGON ((0 0,10 10,0 10,10 0,0 0))')
+    with gdaltest.error_handler():
+        make_valid_available = g.MakeValid() is not None
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    sql = "SELECT ST_MakeValid(ST_GeomFromText('POLYGON ((0 0,1 1,1 0,0 1,0 0))'))"
+    sql_lyr = ds.ExecuteSQL(sql, dialect='SQLite')
+    f = sql_lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    wkt = g.ExportToWkt() if g is not None else None
+    ds.ReleaseResultSet(sql_lyr)
+
+    if make_valid_available:
+        assert wkt == 'MULTIPOLYGON (((0.5 0.5,0 0,0 1,0.5 0.5)),((0.5 0.5,1 1,1 0,0.5 0.5)))'

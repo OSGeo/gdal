@@ -601,7 +601,7 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM( GTIF* hGTIF, GTIFDefn* psDefn,
 
     bool hasUnits = false;
     if( GDALGTIFKeyGetASCII( hGTIF, GTCitationGeoKey, szCTString,
-                             0, sizeof(szCTString) ) )
+                             sizeof(szCTString) ) )
     {
         CPLString osLCCT = szCTString;
 
@@ -695,8 +695,8 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM( GTIF* hGTIF, GTIFDefn* psDefn,
 
     // Check PCSCitationGeoKey if it exists.
     szCTString[0] = '\0';
-    if( hGTIF && GDALGTIFKeyGetASCII( hGTIF, PCSCitationGeoKey, szCTString,
-                                      0, sizeof(szCTString)) )
+    if( GDALGTIFKeyGetASCII( hGTIF, PCSCitationGeoKey, szCTString,
+                             sizeof(szCTString)) )
     {
         // For tif created by LEICA(ERDAS), ESRI state plane pe string was
         // used and the state plane zone is given in PCSCitation. Therefore

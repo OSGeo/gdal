@@ -190,7 +190,7 @@ But according to `email from Even Rouault <https://lists.osgeo.org/pipermail/gda
 
    Destroy() was perhaps necessary with old-gen bindings, but I'm not even sure 
    of that... Perhaps this shouldn't have been exposed at all... But, as 
-   mentionned in the slides, it is true that there are situations where you 
+   mentioned in the slides, it is true that there are situations where you 
    shouldn't call Destroy() at all.
 
 
@@ -222,7 +222,7 @@ However, neither of these methods guarantee that the data are written to disk, s
 Exceptions raised in custom error handlers do not get caught
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-If using GDAL 1.10+ the python bindings allow you to specify a python callable as an error handler (`#4993 <https://trac.osgeo.org/gdal/ticket/4993>`__).
+The python bindings allow you to specify a python callable as an error handler (`#4993 <https://trac.osgeo.org/gdal/ticket/4993>`__).
 However, these error handlers appear to be called in a separate thread and any exceptions raised do not propagate back to the main thread (`#5186 <https://trac.osgeo.org/gdal/ticket/5186>`__).
 
 So if you want to  `catch warnings as well as errors <https://gis.stackexchange.com/questions/43404/how-to-detect-a-gdal-ogr-warning/68042>`__, something like this won't work:
@@ -281,56 +281,6 @@ But you can do something like this instead:
       gdal.PopErrorHandler()
 
 
-Gotchas fixed in GDAL 1.8.0
----------------------------
-
-These are the bugs that were fixed or designs that were changed in GDAL 1.8.0. If you use an older version, watch out for these.
-
-``gdal.ErrorReset()`` must be called after an error occurs, or it will keep happening
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-In this example, we use OGR to create a geometry object using valid WKT. Then we try some invalid WKT, which is expected to fail, and then try the valid WKT again but it fails. Other OGR functions will also fail.
-
-.. code-block::
-
-   >>> from osgeo import ogr
-   >>> ogr.UseExceptions()
-   >>> ogr.CreateGeometryFromWkt('POINT(1 2)')          # Create a point using valid WKT
-   <osgeo.ogr.Geometry; proxy of <Swig Object of type 'OGRGeometryShadow *' at 0x244b658> >
-   >>> ogr.CreateGeometryFromWkt('blah blah blah')      # Now try to create one using invalid WKT
-   Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-      File "C:\Python25\lib\site-packages\osgeo\ogr.py", line 2885, in CreateGeometryFromWkt
-         return _ogr.CreateGeometryFromWkt(*args, **kwargs)
-   RuntimeError: OGR Error: Unsupported geometry type
-   >>> ogr.CreateGeometryFromWkt('POINT(1 2)')          # Now try to to create one using valid WKT again
-   Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-      File "C:\Python25\lib\site-packages\osgeo\ogr.py", line 2885, in CreateGeometryFromWkt
-         return _ogr.CreateGeometryFromWkt(*args, **kwargs)
-   RuntimeError: OGR Error: Unsupported geometry type
-
-
-The problem is that OGR and GDAL maintain an internal state variable that tracks whether an error occurred during the last operation, but this variable is not automatically cleared by OGR or GDAL.
-You must manually clear it by calling the gdal.ErrorReset() function:
-
-.. code-block::
-
-   >>> ogr.CreateGeometryFromWkt('blah blah blah')
-   Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-      File "C:\Python25\lib\site-packages\osgeo\ogr.py", line 2885, in CreateGeometryFromWkt
-         return _ogr.CreateGeometryFromWkt(*args, **kwargs)
-   RuntimeError: OGR Error: Unsupported geometry type
-   >>> from osgeo import gdal
-   >>> gdal.ErrorReset()
-   >>> ogr.CreateGeometryFromWkt('POINT(1 2)')
-   <osgeo.ogr.Geometry; proxy of <Swig Object of type 'OGRGeometryShadow *' at 0x244b7a8> >
-
-This function only appears in the GDAL Python bindings, not the OGR Python bindings. Even if you are only using OGR, you must use GDAL to clear the error.
-
-This problem is acknowledged by the GDAL team as a bug. Please see `#3077 <https://trac.osgeo.org/gdal/ticket/3077>`__.
-
 Gotchas that result from bugs or behaviors of other software
 ------------------------------------------------------------
 
@@ -338,7 +288,7 @@ Python crashes in GDAL functions when you upgrade or downgrade numpy
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Much of GDAL's Python bindings are implemented in C++. Much of the core of numpy is implemented in C. The C++ part of GDAL's Python bindings interacts with the C part of numpy through numpy's ABI (application binary interface). 
-This requires GDAL's Python bindings to be compiled using numpy header files that define numpy C data structures. Those data structures sometimes change between numpy versions. When this happens, the new version of numpy is not be compatible at the binary level with the old version, and the GDAL Python bindings must be recompiled before they will work with the new verison of numpy. 
+This requires GDAL's Python bindings to be compiled using numpy header files that define numpy C data structures. Those data structures sometimes change between numpy versions. When this happens, the new version of numpy is not be compatible at the binary level with the old version, and the GDAL Python bindings must be recompiled before they will work with the new version of numpy. 
 And when they are recompiled, they probably won't work with the old version.
 
 If you obtained a precompiled version of GDAL's Python bindings, such as the Windows packages from `http://gisinternals.com/sdk.php <http://gisinternals.com/sdk.php>`__ be sure you look up what version of numpy was used to compile them, and install that version of numpy on your machine.

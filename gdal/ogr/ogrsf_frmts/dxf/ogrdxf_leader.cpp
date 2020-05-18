@@ -995,7 +995,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
     // Font name
     osStyle.Printf("LABEL(f:\"");
 
-    // Preserve legacy behaviour of specifying "Arial" as a default font name.
+    // Preserve legacy behavior of specifying "Arial" as a default font name.
     osStyle += poDS->LookupTextStyleProperty( osStyleName, "Font", "Arial" );
 
     osStyle += "\"";
@@ -1241,7 +1241,7 @@ namespace {
 /*      vector from the parameters as follows:                          */
 /*              0 0 ... 0 adfParameters 1 1 ... 1                       */
 /*        (nDegree zeros)               (nDegree ones)                  */
-/*      To fully match AutoCAD's behaviour, a chord-length              */
+/*      To fully match AutoCAD's behavior, a chord-length              */
 /*      parameterisation should be used, and the start and end          */
 /*      tangent vectors should be multiplied by the total chord         */
 /*      length of all chords.                                           */

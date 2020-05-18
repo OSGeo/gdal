@@ -41,7 +41,7 @@ import pytest
 def test_ogr_gtm_init():
     gdaltest.gtm_ds = None
 
-    gdaltest.gtm_ds = ogr.Open('data/samplemap.gtm')
+    gdaltest.gtm_ds = ogr.Open('data/gtm/samplemap.gtm')
 
     if gdaltest.gtm_ds is None:
         gdaltest.have_gtm = 0

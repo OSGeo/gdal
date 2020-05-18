@@ -96,7 +96,7 @@ Software using GDAL
 - `SkylineGlobe  <http://www.skylineglobe.com>`_  The Skyline suite of interactive applications allows you to build, view, query and analyze customized, virtual 3D landscapes.
 - `SNAP  <http://step.esa.int/main/toolboxes/snap>`_  Sentinel Application Platform for Earth Observation processing and analysis.
 - `SpacEyes3D  <http://www.spaceyes.com>`_  3D visualization software for cartographic data.
-- `Spatial Manger  <http://www.spatialmanager.com>`_  A product suite designed designed to manage spatial data in a simple, fast and inexpensive way. Uses GDAL to import/export data.
+- `Spatial Manager  <http://www.spatialmanager.com>`_  A product suite designed designed to manage spatial data in a simple, fast and inexpensive way. Uses GDAL to import/export data.
 - `Carmenta Engine  <http://www.carmenta.com>`_ (previously known as SpatialAce): A GIS Rapid Application Development environment
 - `StarSpan  <https://github.com/Ecotrust/starspan>`_  raster/vector analysis.
 - `TacitView  <https://www.insitu.com/information-delivery/information-processing/tacitview>`_  An imagery visualization and exploitation package for military intelligence.

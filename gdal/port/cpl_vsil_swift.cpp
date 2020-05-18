@@ -99,7 +99,8 @@ void VSICurlFilesystemHandler::AnalyseSwiftFileList(
         if( !osName.empty() )
         {
             osNextMarker = osName;
-            if( osName.size() > osPrefix.size() && osName.find(osPrefix) == 0 )
+            if( osName.size() > osPrefix.size() &&
+                osName.substr(0, osPrefix.size()) == osPrefix )
             {
                 if( bHasCount )
                 {
@@ -267,6 +268,7 @@ class VSISwiftHandle final : public IVSIS3LikeHandle
     struct curl_slist* GetCurlHeaders(
         const CPLString& osVerb,
         const struct curl_slist* psExistingHeaders ) override;
+    virtual bool Authenticate() override;
 
   public:
     VSISwiftHandle( VSISwiftFSHandler* poFS,
@@ -682,6 +684,15 @@ struct curl_slist* VSISwiftHandle::GetCurlHeaders( const CPLString& osVerb,
                                 const struct curl_slist* psExistingHeaders )
 {
     return m_poHandleHelper->GetCurlHeaders(osVerb, psExistingHeaders);
+}
+
+/************************************************************************/
+/*                           Authenticate()                             */
+/************************************************************************/
+
+bool VSISwiftHandle::Authenticate()
+{
+    return m_poHandleHelper->Authenticate();
 }
 
 

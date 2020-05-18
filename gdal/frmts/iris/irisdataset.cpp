@@ -1160,7 +1160,7 @@ void GDALRegister_IRIS()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "IRIS data (.PPI, .CAPPi etc)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#IRIS" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/iris.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ppi" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

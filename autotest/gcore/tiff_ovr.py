@@ -197,7 +197,7 @@ def test_tiff_ovr_4(both_endian):
             total += ord(ovimage[i])
 
     average = total / pix_count
-    exp_average = 153.0656
+    exp_average = 154.0992
     assert average == pytest.approx(exp_average, abs=0.1), 'got wrong average for overview image'
 
     # Read base band as overview resolution and verify we aren't getting
@@ -1153,8 +1153,8 @@ def test_tiff_ovr_37(both_endian):
 
     predictor2_size = os.stat('tmp/ovr37.dt0.ovr')[stat.ST_SIZE]
     # 3957 : on little-endian host
-    # XXXX : on big-endian host ??? FIXME: To be updated
-    assert predictor2_size == 3957, 'did not get expected file size.'
+    # 3912 : on big-endian host
+    assert predictor2_size in (3957,3912), 'did not get expected file size.'
 
 ###############################################################################
 # Test that the predictor flag gets well propagated to internal overviews
@@ -1257,7 +1257,7 @@ def test_tiff_ovr_40(both_endian):
             total += ord(ovimage[i])
 
     average = total / pix_count
-    exp_average = 153.0656
+    exp_average = 154.0992
     assert average == pytest.approx(exp_average, abs=0.1), 'got wrong average for overview image'
 
     # Read base band as overview resolution and verify we aren't getting

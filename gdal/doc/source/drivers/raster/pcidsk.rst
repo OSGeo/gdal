@@ -23,8 +23,7 @@ will be returned as GDAL style RPC metadata.
 Internal overview (pyramid) images will also be correctly read though
 newly requested overviews will be built externally as an .ovr file.
 
-Starting with GDAL 2.0, vector segments are also supported by the
-driver.
+Vector segments are also supported by the driver.
 
 Creation Options
 ----------------

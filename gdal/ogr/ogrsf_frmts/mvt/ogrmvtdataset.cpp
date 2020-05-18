@@ -126,7 +126,7 @@ static unsigned GetCmdCount(unsigned int nCmdCountCombined)
 /*                          OGRMVTLayerBase                             */
 /************************************************************************/
 
-class OGRMVTLayerBase CPL_NON_FINAL: public OGRLayer
+class OGRMVTLayerBase CPL_NON_FINAL: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRMVTLayerBase>
 {
         virtual OGRFeature         *GetNextRawFeature() = 0;
 
@@ -141,7 +141,7 @@ class OGRMVTLayerBase CPL_NON_FINAL: public OGRLayer
         virtual OGRFeatureDefn *    GetLayerDefn() override
                                             { return m_poFeatureDefn; }
 
-        virtual OGRFeature*         GetNextFeature() override;
+        DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRMVTLayerBase)
 
         virtual int                 TestCapability( const char * ) override;
 };
@@ -324,30 +324,6 @@ OGRMVTLayerBase::~OGRMVTLayerBase()
 void OGRMVTLayerBase::InitFields(const CPLJSONObject& oFields)
 {
     OGRMVTInitFields(m_poFeatureDefn, oFields);
-}
-
-/************************************************************************/
-/*                          GetNextFeature()                            */
-/************************************************************************/
-
-OGRFeature* OGRMVTLayerBase::GetNextFeature()
-{
-    while( true )
-    {
-        OGRFeature *poFeature = GetNextRawFeature();
-        if (poFeature == nullptr)
-            return nullptr;
-
-        if((m_poFilterGeom == nullptr
-            || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == nullptr
-            || m_poAttrQuery->Evaluate( poFeature )) )
-        {
-            return poFeature;
-        }
-
-        delete poFeature;
-    }
 }
 
 /************************************************************************/
@@ -707,21 +683,10 @@ bool OGRMVTLayer::QuickScanFeature(const GByte* pabyData,
                 READ_SIZE(pabyData, pabyDataFeatureEnd, nGeometrySize);
                 const GByte* pabyDataGeometryEnd = pabyData + nGeometrySize;
                 OGRwkbGeometryType eType = wkbUnknown;
+
                 if( nGeomType == knGEOM_TYPE_POINT )
                 {
                     eType = wkbPoint;
-                }
-                else if( nGeomType == knGEOM_TYPE_LINESTRING )
-                {
-                    eType = wkbLineString;
-                }
-                else if( nGeomType == knGEOM_TYPE_POLYGON )
-                {
-                    eType = wkbPolygon;
-                }
-
-                if( eType == wkbPoint )
-                {
                     unsigned int nCmdCountCombined = 0;
                     READ_VARUINT32(pabyData, pabyDataGeometryEnd,
                                     nCmdCountCombined);
@@ -731,8 +696,9 @@ bool OGRMVTLayer::QuickScanFeature(const GByte* pabyData,
                         eType = wkbMultiPoint;
                     }
                 }
-                else if( eType == wkbLineString )
+                else if( nGeomType == knGEOM_TYPE_LINESTRING )
                 {
+                    eType = wkbLineString;
                     for( int iIter = 0;
                             pabyData < pabyDataGeometryEnd; iIter++ )
                     {
@@ -756,8 +722,9 @@ bool OGRMVTLayer::QuickScanFeature(const GByte* pabyData,
                         }
                     }
                 }
-                else if( eType == wkbPolygon )
+                else if( nGeomType == knGEOM_TYPE_POLYGON )
                 {
+                    eType = wkbPolygon;
                     for( int iIter = 0;
                             pabyData < pabyDataGeometryEnd; iIter++ )
                     {
@@ -1420,7 +1387,7 @@ static CPLStringList StripDummyEntries(const CPLStringList& aosInput)
             aosOutput.AddString( aosInput[i] );
         }
     }
-    return aosOutput;
+    return aosOutput.Sort();
 }
 
 /************************************************************************/
@@ -1630,7 +1597,7 @@ void OGRMVTDirectoryLayer::OpenTile()
         int nX = (m_bUseReadDir || !m_aosDirContent.empty()) ?
                         atoi(m_aosDirContent[m_nXIndex]) : m_nXIndex;
         int nY = m_bUseReadDir ? atoi(m_aosSubDirContent[m_nYIndex]) : m_nYIndex;
-        m_nFIDBase = (static_cast<GIntBig>(nY) << m_nZ) | nX;
+        m_nFIDBase = (static_cast<GIntBig>(nX) << m_nZ) | nY;
     }
 }
 
@@ -2425,7 +2392,7 @@ static bool LoadMetadata(const CPLString& osMetadataFile,
     oTileStatLayers.Deinit();
 
     CPLJSONObject oJson = oDoc.GetRoot().GetObj("json");
-    if( !(oJson.IsValid() && oJson.GetType() == CPLJSONObject::String) )
+    if( !(oJson.IsValid() && oJson.GetType() == CPLJSONObject::Type::String) )
     {
         oVectorLayers =
             oDoc.GetRoot().GetArray("vector_layers");
@@ -2772,7 +2739,7 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
 
     OGREnvelope sExtent;
     bool bExtentValid = false;
-    if( oBounds.IsValid() && oBounds.GetType() == CPLJSONObject::String )
+    if( oBounds.IsValid() && oBounds.GetType() == CPLJSONObject::Type::String )
     {
         CPLStringList aosTokens(
             CSLTokenizeString2( oBounds.ToString().c_str(), ",", 0 ));
@@ -2791,7 +2758,7 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
             sExtent.MaxY = dfY1;
         }
     }
-    else if( oBounds.IsValid() && oBounds.GetType() == CPLJSONObject::Array )
+    else if( oBounds.IsValid() && oBounds.GetType() == CPLJSONObject::Type::Array )
     {
         // Cf https://free.tilehosting.com/data/v3.json?key=THE_KEY
         CPLJSONArray oBoundArray = oBounds.ToArray();
@@ -2817,7 +2784,7 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
     {
         CPLJSONObject oId = oVectorLayers[i].GetObj("id");
         if( oId.IsValid() && oId.GetType() ==
-                CPLJSONObject::String )
+                CPLJSONObject::Type::String )
         {
             OGRwkbGeometryType eGeomType = wkbUnknown;
             if( oTileStatLayers.IsValid() )
@@ -3143,7 +3110,7 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
                             {
                                 CPLJSONObject oId = oVectorLayers[i].GetObj("id");
                                 if( oId.IsValid() && oId.GetType() ==
-                                        CPLJSONObject::String )
+                                        CPLJSONObject::Type::String )
                                 {
                                     if( oId.ToString() == pszLayerName )
                                     {
@@ -3992,7 +3959,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     double dfIntersectBottomRightY = dfBottomRightY - dfBuffer;
 
     const OGRGeometry* poIntersection;
-    std::unique_ptr<OGRGeometry> poIntersectionHolder;
+    std::unique_ptr<OGRGeometry> poIntersectionHolder; // keep in that scope
     if( sEnvelope.MinX >= dfIntersectTopX &&
         sEnvelope.MinY >= dfIntersectBottomRightY &&
         sEnvelope.MaxX <= dfIntersectBottomRightX &&
@@ -4015,7 +3982,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
         CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
         auto poTmp = poGeom->Intersection(&oPoly);
         poIntersection = poTmp;
-        poIntersectionHolder = std::unique_ptr<OGRGeometry>(poTmp);
+        poIntersectionHolder.reset(poTmp);
         if( poIntersection == nullptr || poIntersection->IsEmpty() )
         {
             return OGRERR_NONE;

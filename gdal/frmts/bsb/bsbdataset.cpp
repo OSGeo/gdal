@@ -62,6 +62,8 @@ class BSBDataset final: public GDALPamDataset
     void        ScanForGCPsNos( const char *pszFilename );
     void        ScanForGCPsBSB();
 
+    void        ScanForCutline();
+
     static int IdentifyInternal( GDALOpenInfo *, bool & isNosOut );
 
   public:
@@ -691,6 +693,49 @@ void BSBDataset::ScanForGCPsBSB()
 }
 
 /************************************************************************/
+/*                            ScanForCutline()                          */
+/************************************************************************/
+
+void BSBDataset::ScanForCutline()
+{
+    /* PLY: Border Polygon Record - coordinates of the panel within the 
+    * raster image, given in chart datum lat/long. Any shape polygon.
+    * They look like:
+    *      PLY/1,32.346666666667,-60.881666666667 
+    *      PLY/n,lat,long 
+    *
+    * If found then we return it via a BSB_CUTLINE metadata item as a WKT POLYGON.
+    */
+
+    std::string wkt;
+    for( int i = 0; psInfo->papszHeader[i] != nullptr; i++ )
+    {
+        if( !STARTS_WITH_CI(psInfo->papszHeader[i], "PLY/") )
+            continue;
+
+        const CPLStringList aosTokens(
+            CSLTokenizeString2( psInfo->papszHeader[i]+4, ",", 0 ));
+
+        if( aosTokens.size() >= 3 )
+        {
+            if (wkt.empty())
+                wkt = "POLYGON ((";
+            else
+                wkt += ',';
+            wkt += aosTokens[2];
+            wkt += ' ';
+            wkt += aosTokens[1];
+        }
+    }
+
+    if (!wkt.empty())
+    {
+        wkt += "))";
+        SetMetadataItem("BSB_CUTLINE", wkt.c_str());
+    }
+}
+
+/************************************************************************/
 /*                          IdentifyInternal()                          */
 /************************************************************************/
 
@@ -795,6 +840,11 @@ GDALDataset *BSBDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetBand( 1, new BSBRasterBand( poDS ));
 
     poDS->ScanForGCPs( isNos, poOpenInfo->pszFilename );
+    
+/* -------------------------------------------------------------------- */
+/*      Set CUTLINE metadata if a bounding polygon is available         */
+/* -------------------------------------------------------------------- */
+    poDS->ScanForCutline();
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -1167,7 +1217,7 @@ void GDALRegister_BSB()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Maptech BSB Nautical Charts" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#BSB" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/bsb.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 #ifdef BSB_CREATE
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );

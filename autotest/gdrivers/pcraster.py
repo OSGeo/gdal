@@ -45,7 +45,7 @@ def test_pcraster_1():
     if gdaltest.pcraster_drv is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('PCRaster', 'ldd.map', 1, 4528)
+    tst = gdaltest.GDALTest('PCRaster', 'pcraster/ldd.map', 1, 4528)
     return tst.testOpen()
 
 ###############################################################################
@@ -57,7 +57,7 @@ def test_pcraster_2():
     if gdaltest.pcraster_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/ldd.map')
+    ds = gdal.Open('data/pcraster/ldd.map')
 
     gt = ds.GetGeoTransform()
 

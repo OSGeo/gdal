@@ -167,34 +167,6 @@ $SKPOLY
  70
      0
   9
-$TDCREATE
- 40
-2455343.56230316
-  9
-$TDUCREATE
- 40
-2455343.728969826
-  9
-$TDUPDATE
- 40
-2455343.562303171
-  9
-$TDUUPDATE
- 40
-2455343.728969838
-  9
-$TDINDWG
- 40
-0.0000000116
-  9
-$TDUSRTIMER
- 40
-0.0000000116
-  9
-$USRTIMER
- 70
-     1
-  9
 $ANGBASE
  50
 0.0
@@ -567,14 +539,6 @@ $PSTYLEMODE
 290
      1
   9
-$FINGERPRINTGUID
-  2
-{E7F7769E-AACA-40AB-9EF3-61BBAFBCBA26}
-  9
-$VERSIONGUID
-  2
-{FAEB1C32-E019-11D5-929B-00C0DF256EC4}
-  9
 $EXTNAMES
 290
      1
@@ -646,22 +610,6 @@ AcDbDictionaryWithDefault
 ObjectDBX Classes
  90
         0
- 91
-        4
-280
-     0
-281
-     0
-  0
-CLASS
-  1
-VISUALSTYLE
-  2
-AcDbVisualStyle
-  3
-ObjectDBX Classes
- 90
-     4095
  91
         4
 280
@@ -1081,20 +1029,6 @@ AcDbBlockTableRecord
 340
 1E
   0
-BLOCK_RECORD
-  5
-23
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbBlockTableRecord
-  2
-*Paper_Space0
-340
-26
-  0
 ENDTAB
   0
 ENDSEC
@@ -1183,46 +1117,8 @@ AcDbEntity
 100
 AcDbBlockEnd
   0
-BLOCK
-  5
-24
-330
-23
-100
-AcDbEntity
-  8
-0
-100
-AcDbBlockBegin
-  2
-*Paper_Space0
- 70
-     0
- 10
-0.0
- 20
-0.0
- 30
-0.0
-  3
-*Paper_Space0
-  1
-
-  0
-ENDBLK
-  5
-25
-330
-23
-100
-AcDbEntity
-  8
-0
-100
-AcDbBlockEnd
-  0
 ENDSEC
   0
 SECTION
-  2 
+  2
 ENTITIES

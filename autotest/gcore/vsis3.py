@@ -51,7 +51,7 @@ def open_for_read(uri):
 def test_vsis3_init():
 
     gdaltest.aws_vars = {}
-    for var in ('AWS_SECRET_ACCESS_KEY', 'AWS_ACCESS_KEY_ID', 'AWS_TIMESTAMP', 'AWS_HTTPS', 'AWS_VIRTUAL_HOSTING', 'AWS_S3_ENDPOINT', 'AWS_REQUEST_PAYER', 'AWS_DEFAULT_REGION', 'AWS_DEFAULT_PROFILE', 'AWS_NO_SIGN_REQUEST'):
+    for var in ('AWS_SECRET_ACCESS_KEY', 'AWS_ACCESS_KEY_ID', 'AWS_TIMESTAMP', 'AWS_HTTPS', 'AWS_VIRTUAL_HOSTING', 'AWS_S3_ENDPOINT', 'AWS_REQUEST_PAYER', 'AWS_DEFAULT_REGION', 'AWS_DEFAULT_PROFILE', 'AWS_PROFILE', 'AWS_NO_SIGN_REQUEST'):
         gdaltest.aws_vars[var] = gdal.GetConfigOption(var)
         if gdaltest.aws_vars[var] is not None:
             gdal.SetConfigOption(var, "")
@@ -60,7 +60,7 @@ def test_vsis3_init():
     # to mess up our tests
     gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', '')
     gdal.SetConfigOption('AWS_CONFIG_FILE', '')
-    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', '')
+    gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL', '')
 
     assert gdal.GetSignedURL('/vsis3/foo/bar') is None
 
@@ -87,6 +87,61 @@ def test_vsis3_no_sign_request():
             pytest.skip('cannot open URL')
         pytest.fail()
     gdal.VSIFCloseL(f)
+
+
+###############################################################################
+# Test Sync() and multithreaded download
+
+
+def test_vsis3_sync_multithreaded_download():
+
+    if not gdaltest.built_against_curl():
+        pytest.skip()
+
+    def cbk(pct, _, tab):
+        assert pct >= tab[0]
+        tab[0] = pct
+        return True
+
+    tab = [ -1 ]
+    # Use a public bucket with /test_dummy/foo and /test_dummy/bar files
+    with gdaltest.config_option('AWS_NO_SIGN_REQUEST', 'YES'):
+        assert gdal.Sync('/vsis3/cdn.proj.org/test_dummy',
+                         '/vsimem/test_vsis3_no_sign_request_sync',
+                         options=['NUM_THREADS=2'],
+                         callback=cbk, callback_data=tab)
+    assert tab[0] == 1.0
+    assert gdal.VSIStatL('/vsimem/test_vsis3_no_sign_request_sync/test_dummy/foo').size == 4
+    assert gdal.VSIStatL('/vsimem/test_vsis3_no_sign_request_sync/test_dummy/bar').size == 4
+    gdal.RmdirRecursive('/vsimem/test_vsis3_no_sign_request_sync')
+
+
+###############################################################################
+# Test Sync() and multithreaded download and CHUNK_SIZE
+
+
+def test_vsis3_sync_multithreaded_download_chunk_size():
+
+    if not gdaltest.built_against_curl():
+        pytest.skip()
+
+    def cbk(pct, _, tab):
+        assert pct >= tab[0]
+        tab[0] = pct
+        return True
+
+    tab = [ -1 ]
+    # Use a public bucket with /test_dummy/foo and /test_dummy/bar files
+    with gdaltest.config_option('AWS_NO_SIGN_REQUEST', 'YES'):
+        assert gdal.Sync('/vsis3/cdn.proj.org/test_dummy',
+                         '/vsimem/test_vsis3_no_sign_request_sync',
+                         options=['NUM_THREADS=2', 'CHUNK_SIZE=3'],
+                         callback=cbk, callback_data=tab)
+    assert tab[0] == 1.0
+    assert gdal.VSIStatL('/vsimem/test_vsis3_no_sign_request_sync/test_dummy/foo').size == 4
+    assert gdal.VSIStatL('/vsimem/test_vsis3_no_sign_request_sync/test_dummy/bar').size == 4
+
+    gdal.RmdirRecursive('/vsimem/test_vsis3_no_sign_request_sync')
 
 ###############################################################################
 # Error cases
@@ -363,6 +418,8 @@ def test_vsis3_2():
         pytest.fail(data)
 
     # Test region and endpoint 'redirects'
+    gdal.VSICurlClearCache()
+
     handler.req_count = 0
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsis3_streaming/s3_fake_bucket/redirect')
@@ -567,6 +624,50 @@ def test_vsis3_2():
         gdal.VSIFCloseL(f)
 
     assert data == 'bar'
+
+###############################################################################
+# Test re-opening after changing configuration option (#2294)
+
+
+def test_vsis3_open_after_config_option_chage():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test_vsis3_change_config_options/?delimiter=%2F', 403)
+    handler.add('GET', '/test_vsis3_change_config_options/test.bin', 403)
+    with webserver.install_http_handler(handler):
+        with gdaltest.error_handler():
+            f = open_for_read('/vsis3/test_vsis3_change_config_options/test.bin')
+        assert f is None
+
+    # Does not attempt any network access since we didn't change significant
+    # parameters
+    f = open_for_read('/vsis3/test_vsis3_change_config_options/test.bin')
+    assert f is None
+
+    with gdaltest.config_option('AWS_ACCESS_KEY_ID', 'another_key_id'):
+        handler = webserver.SequentialHandler()
+        handler.add('GET', '/test_vsis3_change_config_options/?delimiter=%2F', 200,
+            {'Content-type': 'application/xml'},
+            """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix></Prefix>
+                <Contents>
+                    <Key>test.bin</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>123456</Size>
+                </Contents>
+            </ListBucketResult>
+        """)
+        with webserver.install_http_handler(handler):
+            f = open_for_read('/vsis3/test_vsis3_change_config_options/test.bin')
+            assert f is not None
+            gdal.VSIFCloseL(f)
+
 
 ###############################################################################
 # Test ReadDir() with a fake AWS server
@@ -1293,8 +1394,9 @@ def test_vsis3_write_single_put_retry():
         handler.add('PUT', '/s3_fake_bucket3/put_with_retry.bin', 502)
         handler.add('PUT', '/s3_fake_bucket3/put_with_retry.bin', custom_method=method)
 
-        with webserver.install_http_handler(handler):
-            gdal.VSIFCloseL(f)
+        with gdaltest.error_handler():
+            with webserver.install_http_handler(handler):
+                gdal.VSIFCloseL(f)
 
 
 ###############################################################################
@@ -1370,6 +1472,152 @@ def test_vsis3_5():
     with webserver.install_http_handler(handler):
         ret = gdal.Unlink('/vsis3/s3_delete_bucket/redirect')
     assert ret == 0
+
+###############################################################################
+# Test DeleteObjects with a fake AWS server
+
+
+def test_vsis3_unlink_batch():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    def method(request):
+        if request.headers['Content-MD5'] != 'Ze0X4LdlTwCsT+WpNxD9FA==':
+            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+            request.send_response(403)
+            return
+
+        content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
+        if content != """<?xml version="1.0" encoding="UTF-8"?>
+<Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Object>
+    <Key>foo</Key>
+  </Object>
+  <Object>
+    <Key>bar/baz</Key>
+  </Object>
+</Delete>
+""":
+            sys.stderr.write('Did not get expected content: %s\n' % content)
+            request.send_response(403)
+            return
+
+        request.protocol_version = 'HTTP/1.1'
+        request.send_response(200)
+        response = """<DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Deleted><Key>foo</Key></Deleted><Deleted><Key>bar/baz</Key></Deleted></DeleteResult>"""
+        request.send_header('Content-Length', len(response))
+        request.send_header('Connection', 'close')
+        request.end_headers()
+        request.wfile.write(response.encode('ascii'))
+
+    handler = webserver.SequentialHandler()
+    handler.add('POST', '/unlink_batch/?delete', custom_method=method)
+    handler.add('POST', '/unlink_batch/?delete', 200, {},
+                """<DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Deleted><Key>baw</Key></Deleted></DeleteResult>""")
+
+    with gdaltest.config_option('CPL_VSIS3_UNLINK_BATCH_SIZE', '2'):
+        with webserver.install_http_handler(handler):
+            ret = gdal.UnlinkBatch(['/vsis3/unlink_batch/foo', '/vsis3/unlink_batch/bar/baz', '/vsis3/unlink_batch/baw'])
+    assert ret
+
+    handler = webserver.SequentialHandler()
+    handler.add('POST', '/unlink_batch/?delete', 200, {},
+                """<DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Failed><Key>foo</Key></Failed></DeleteResult>""")
+
+    with webserver.install_http_handler(handler):
+        ret = gdal.UnlinkBatch(['/vsis3/unlink_batch/foo'])
+    assert not ret
+
+###############################################################################
+# Test RmdirRecursive() with a fake AWS server
+
+
+def test_vsis3_rmdir_recursive():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test_rmdir_recursive/?prefix=somedir%2F', 200, {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix>somedir/</Prefix>
+                <Marker/>
+                <Contents>
+                    <Key>somedir/test.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>40</Size>
+                </Contents>
+                <Contents>
+                    <Key>somedir/subdir/</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>0</Size>
+                </Contents>
+                <Contents>
+                    <Key>somedir/subdir/test.txt</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>5</Size>
+                </Contents>
+            </ListBucketResult>
+        """)
+
+    def method(request):
+        content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
+        if content != """<?xml version="1.0" encoding="UTF-8"?>
+<Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Object>
+    <Key>somedir/test.txt</Key>
+  </Object>
+  <Object>
+    <Key>somedir/subdir/</Key>
+  </Object>
+</Delete>
+""":
+            sys.stderr.write('Did not get expected content: %s\n' % content)
+            request.send_response(403)
+            return
+
+        request.protocol_version = 'HTTP/1.1'
+        request.send_response(200)
+        response = """<DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Deleted><Key>somedir/test.txt</Key></Deleted><Deleted><Key>somedir/subdir/</Key></Deleted></DeleteResult>"""
+        request.send_header('Content-Length', len(response))
+        request.send_header('Connection', 'close')
+        request.end_headers()
+        request.wfile.write(response.encode('ascii'))
+
+    handler.add('POST', '/test_rmdir_recursive/?delete', custom_method=method)
+
+    def method(request):
+        content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
+        if content != """<?xml version="1.0" encoding="UTF-8"?>
+<Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Object>
+    <Key>somedir/subdir/test.txt</Key>
+  </Object>
+  <Object>
+    <Key>somedir/</Key>
+  </Object>
+</Delete>
+""":
+            sys.stderr.write('Did not get expected content: %s\n' % content)
+            request.send_response(403)
+            return
+
+        request.protocol_version = 'HTTP/1.1'
+        request.send_response(200)
+        response = """<DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Deleted><Key>somedir/subdir/test.txt</Key></Deleted><Deleted><Key>somedir/</Key></Deleted></DeleteResult>"""
+        request.send_header('Content-Length', len(response))
+        request.send_header('Connection', 'close')
+        request.end_headers()
+        request.wfile.write(response.encode('ascii'))
+
+    handler.add('POST', '/test_rmdir_recursive/?delete', custom_method=method)
+
+    with gdaltest.config_option('CPL_VSIS3_UNLINK_BATCH_SIZE', '2'):
+        with webserver.install_http_handler(handler):
+            assert gdal.RmdirRecursive('/vsis3/test_rmdir_recursive/somedir') == 0
+
 
 ###############################################################################
 # Test multipart upload with a fake AWS server
@@ -1601,8 +1849,9 @@ def test_vsis3_write_multipart_retry():
                     'ETag': '"first_etag"',
                     'Connection': 'close'}, {})
 
-        with webserver.install_http_handler(handler):
-            ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
+        with gdaltest.error_handler():
+            with webserver.install_http_handler(handler):
+                ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
         assert ret == size
         handler = webserver.SequentialHandler()
 
@@ -1616,8 +1865,9 @@ def test_vsis3_write_multipart_retry():
                     {'Content-Length': '0',
                     'Connection': 'close'}, {})
 
-        with webserver.install_http_handler(handler):
-            gdal.VSIFCloseL(f)
+        with gdaltest.error_handler():
+            with webserver.install_http_handler(handler):
+                gdal.VSIFCloseL(f)
 
 
 ###############################################################################
@@ -1849,13 +2099,23 @@ def test_vsis3_sync_etag():
     handler.add('PUT', '/out/testsync.txt', custom_method=method)
 
     gdal.FileFromMemBuffer('/vsimem/testsync.txt', 'foo')
+
+    def cbk(pct, _, tab):
+        assert pct > tab[0]
+        tab[0] = pct
+        return True
+
+    tab = [ 0 ]
     with webserver.install_http_handler(handler):
-        assert gdal.Sync('/vsimem/testsync.txt', '/vsis3/out', options=options)
+        assert gdal.Sync('/vsimem/testsync.txt', '/vsis3/out', options=options,
+                         callback=cbk, callback_data=tab)
+    assert tab[0] == 1.0
 
     # Re-try with cached ETag. Should generate no network access
     handler = webserver.SequentialHandler()
     with webserver.install_http_handler(handler):
         assert gdal.Sync('/vsimem/testsync.txt', '/vsis3/out', options=options)
+        assert gdal.Sync('/vsimem/testsync.txt', '/vsis3/out/testsync.txt', options=options)
 
     gdal.VSICurlClearCache()
 
@@ -1871,26 +2131,14 @@ def test_vsis3_sync_etag():
     # Shouldn't do any copy, but hard to verify
     with webserver.install_http_handler(webserver.SequentialHandler()):
         assert gdal.Sync( '/vsis3/out/testsync.txt', '/vsimem/', options=options)
+        assert gdal.Sync( '/vsis3/out/testsync.txt', '/vsimem/testsync.txt', options=options)
 
     # Modify target file, and redo synchronization
     gdal.FileFromMemBuffer('/vsimem/testsync.txt', 'bar')
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/out/?delimiter=%2F', 200, {},
-                """<?xml version="1.0" encoding="UTF-8"?>
-                    <ListBucketResult>
-                        <Prefix></Prefix>
-                        <Contents>
-                            <Key>testsync.txt</Key>
-                            <LastModified>1970-01-01T00:00:01.000Z</LastModified>
-                            <Size>3</Size>
-                            <ETag>"acbd18db4cc2f85cedef654fccc4a4d8"</ETag>
-                        </Contents>
-                    </ListBucketResult>
-                """)
-    handler.add('GET', '/out/testsync.txt', 206,
+    handler.add('GET', '/out/testsync.txt', 200,
                 { 'Content-Length' : '3',
-                  'Content-Range': 'bytes 0-2/3',
                   'ETag' : '"acbd18db4cc2f85cedef654fccc4a4d8"' }, "foo")
     with webserver.install_http_handler(handler):
         assert gdal.Sync( '/vsis3/out/testsync.txt', '/vsimem/', options=options)
@@ -1920,10 +2168,12 @@ def test_vsis3_sync_etag():
     gdal.Mkdir('/vsimem/subdir', 0)
     gdal.FileFromMemBuffer('/vsimem/subdir/testsync.txt', 'foo')
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/out/?delimiter=%2F', 200, {},
+    handler.add('GET', '/out/', 200, {},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
-                        <Prefix></Prefix>
+                        <Prefix/>
+                        <Marker/>
+                        <IsTruncated>false</IsTruncated>
                         <Contents>
                             <Key>testsync.txt</Key>
                             <LastModified>1970-01-01T00:00:01.000Z</LastModified>
@@ -1956,10 +2206,8 @@ def test_vsis3_sync_timestamp():
                 { 'Content-Length' : '3',
                   'Content-Range': 'bytes 0-2/3',
                   'Last-Modified': 'Mon, 01 Jan 1970 00:00:01 GMT' }, "foo")
-    handler.add('GET', '/out/?delimiter=%2F', 404)
-    handler.add('GET', '/out/testsync.txt', 206,
+    handler.add('GET', '/out/testsync.txt', 200,
                 { 'Content-Length' : '3',
-                  'Content-Range': 'bytes 0-2/3',
                   'Last-Modified': 'Mon, 01 Jan 1970 00:00:01 GMT' }, "foo")
     with webserver.install_http_handler(handler):
         assert gdal.Sync( '/vsis3/out/testsync.txt', '/vsimem/',
@@ -2002,6 +2250,45 @@ def test_vsis3_sync_timestamp():
     gdal.Unlink('/vsimem/testsync.txt')
 
 ###############################################################################
+# Test vsisync() with source and target in /vsis3
+
+
+def test_vsis3_sync_source_target_in_vsis3():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/in/testsync.txt', 200,
+                { 'Content-Length' : '3',
+                  'Content-Range': 'bytes 0-2/3',
+                  'Last-Modified': 'Mon, 01 Jan 1970 00:00:01 GMT' }, "foo")
+    handler.add('GET', '/out/', 200)
+    handler.add('GET', '/out/testsync.txt', 200,
+                { 'Content-Length' : '3',
+                  'Last-Modified': 'Mon, 01 Jan 1970 00:00:01 GMT' }, "foo")
+
+    def method(request):
+        if request.headers['Content-Length'] != '0':
+            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+            request.send_response(400)
+            return
+        if request.headers['x-amz-copy-source'] != '/in/testsync.txt':
+            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+            request.send_response(400)
+            return
+
+        request.send_response(200)
+        request.send_header('Content-Length', 0)
+        request.end_headers()
+
+    handler.add('PUT', '/out/testsync.txt', custom_method=method)
+
+    with webserver.install_http_handler(handler):
+        assert gdal.Sync( '/vsis3/in/testsync.txt', '/vsis3/out/')
+
+###############################################################################
 # Test rename
 
 def test_vsis3_fake_rename():
@@ -2014,6 +2301,8 @@ def test_vsis3_fake_rename():
     handler.add('GET', '/test/source.txt', 206,
                 { 'Content-Length' : '3',
                   'Content-Range': 'bytes 0-2/3' }, "foo")
+    handler.add('GET', '/test/target.txt', 404)
+    handler.add('GET', '/test/?delimiter=%2F&max-keys=100&prefix=target.txt%2F', 200)
 
     def method(request):
         if request.headers['Content-Length'] != '0':
@@ -2099,6 +2388,303 @@ def test_vsis3_fake_rename_dir():
 
     with webserver.install_http_handler(handler):
         assert gdal.Rename( '/vsis3/test/source_dir', '/vsis3/test/target_dir') == 0
+
+###############################################################################
+# Test rename onto existing dir is not allowed
+
+def test_vsis3_fake_rename_on_existing_dir():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test/source.txt', 206,
+                { 'Content-Length' : '3',
+                  'Content-Range': 'bytes 0-2/3' }, "foo")
+    handler.add('GET', '/test_target_dir/', 200)
+
+    with webserver.install_http_handler(handler):
+        assert gdal.Rename( '/vsis3/test/source.txt', '/vsis3/test_target_dir') == -1
+
+
+###############################################################################
+# Test Sync() and multithreaded download and CHUNK_SIZE
+
+
+def test_vsis3_fake_sync_multithreaded_upload_chunk_size():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    def cbk(pct, _, tab):
+        assert pct >= tab[0]
+        tab[0] = pct
+        return True
+
+    gdal.Mkdir('/vsimem/test', 0)
+    gdal.FileFromMemBuffer('/vsimem/test/foo', 'foo\n')
+
+    tab = [ -1 ]
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test_bucket/?prefix=test%2F', 200)
+    handler.add('GET', '/test_bucket/test', 404)
+    handler.add('GET', '/test_bucket/?delimiter=%2F&max-keys=100&prefix=test%2F', 200)
+    handler.add('GET', '/test_bucket/', 200)
+    handler.add('GET', '/test_bucket/test/', 404)
+    handler.add('PUT', '/test_bucket/test/', 200)
+
+    def method(request):
+        request.protocol_version = 'HTTP/1.1'
+        response = '<?xml version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><UploadId>my_id</UploadId></InitiateMultipartUploadResult>'
+        request.send_response(200)
+        request.send_header('Content-type', 'application/xml')
+        request.send_header('Content-Length', len(response))
+        request.end_headers()
+        request.wfile.write(response.encode('ascii'))
+
+    handler.add('POST', '/test_bucket/test/foo?uploads', custom_method=method)
+
+    def method(request):
+        if request.headers['Content-Length'] != '3':
+            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+            request.send_response(400)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
+            return
+        request.send_response(200)
+        request.send_header('ETag', '"first_etag"')
+        request.send_header('Content-Length', 0)
+        request.end_headers()
+
+    handler.add('PUT', '/test_bucket/test/foo?partNumber=1&uploadId=my_id', custom_method=method)
+
+    def method(request):
+        if request.headers['Content-Length'] != '1':
+            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+            request.send_response(400)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
+            return
+        request.send_response(200)
+        request.send_header('ETag', '"second_etag"')
+        request.send_header('Content-Length', 0)
+        request.end_headers()
+
+    handler.add('PUT', '/test_bucket/test/foo?partNumber=2&uploadId=my_id', custom_method=method)
+
+
+    def method(request):
+
+        if request.headers['Content-Length'] != '186':
+            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+            request.send_response(400)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
+            return
+
+        content = request.rfile.read(186).decode('ascii')
+        if content != """<CompleteMultipartUpload>
+<Part>
+<PartNumber>1</PartNumber><ETag>"first_etag"</ETag></Part>
+<Part>
+<PartNumber>2</PartNumber><ETag>"second_etag"</ETag></Part>
+</CompleteMultipartUpload>
+""":
+            sys.stderr.write('Did not get expected content: %s\n' % content)
+            request.send_response(400)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
+            return
+
+        request.send_response(200)
+        request.send_header('Content-Length', 0)
+        request.end_headers()
+
+    handler.add('POST', '/test_bucket/test/foo?uploadId=my_id', custom_method=method)
+
+    with gdaltest.config_option('VSIS3_SIMULATE_THREADING', 'YES'):
+        with webserver.install_http_handler(handler):
+            assert gdal.Sync('/vsimem/test',
+                             '/vsis3/test_bucket',
+                             options=['NUM_THREADS=1', 'CHUNK_SIZE=3'],
+                             callback=cbk, callback_data=tab)
+    assert tab[0] == 1.0
+
+    gdal.RmdirRecursive('/vsimem/test')
+
+
+def test_vsis3_fake_sync_multithreaded_upload_chunk_size_failure():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    gdal.Mkdir('/vsimem/test', 0)
+    gdal.FileFromMemBuffer('/vsimem/test/foo', 'foo\n')
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test_bucket/?prefix=test%2F', 200)
+    handler.add('GET', '/test_bucket/test', 404)
+    handler.add('GET', '/test_bucket/?delimiter=%2F&max-keys=100&prefix=test%2F', 200)
+    handler.add('GET', '/test_bucket/', 200)
+    handler.add('GET', '/test_bucket/test/', 404)
+    handler.add('PUT', '/test_bucket/test/', 200)
+
+    def method(request):
+        request.protocol_version = 'HTTP/1.1'
+        response = '<?xml version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><UploadId>my_id</UploadId></InitiateMultipartUploadResult>'
+        request.send_response(200)
+        request.send_header('Content-type', 'application/xml')
+        request.send_header('Content-Length', len(response))
+        request.end_headers()
+        request.wfile.write(response.encode('ascii'))
+
+    handler.add('POST', '/test_bucket/test/foo?uploads', custom_method=method)
+
+    def method(request):
+        if request.headers['Content-Length'] != '3':
+            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+            request.send_response(400)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
+            return
+        request.send_response(200)
+        request.send_header('ETag', '"first_etag"')
+        request.send_header('Content-Length', 0)
+        request.end_headers()
+
+    handler.add('PUT', '/test_bucket/test/foo?partNumber=1&uploadId=my_id', 400)
+    handler.add('DELETE', '/test_bucket/test/foo?uploadId=my_id', 204)
+
+    with gdaltest.config_options({'VSIS3_SIMULATE_THREADING': 'YES',
+                                  'VSIS3_SYNC_MULTITHREADING': 'NO'}):
+        with webserver.install_http_handler(handler):
+            with gdaltest.error_handler():
+                assert not gdal.Sync('/vsimem/test',
+                                     '/vsis3/test_bucket',
+                                     options=['NUM_THREADS=1', 'CHUNK_SIZE=3'])
+
+    gdal.RmdirRecursive('/vsimem/test')
+
+###############################################################################
+# Test reading/writing metadata
+
+
+def test_vsis3_metadata():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    # Read HEADERS domain
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test_metadata/foo.txt', 200, {'foo': 'bar'})
+    with webserver.install_http_handler(handler):
+        md = gdal.GetFileMetadata('/vsis3/test_metadata/foo.txt', 'HEADERS')
+    assert 'foo' in md and md['foo'] == 'bar'
+
+    # Read TAGS domain
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/test_metadata/foo.txt?tagging', 200, {},
+                """<Tagging><TagSet><Tag><Key>foo</Key><Value>bar</Value></Tag></TagSet></Tagging>""")
+    with webserver.install_http_handler(handler):
+        md = gdal.GetFileMetadata('/vsis3/test_metadata/foo.txt', 'TAGS')
+    assert 'foo' in md and md['foo'] == 'bar'
+
+    # Write HEADERS domain
+    handler = webserver.SequentialHandler()
+
+    def method(request):
+        if request.headers['foo'] != 'bar':
+            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+            request.send_response(400)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
+            return
+        request.send_response(200)
+        request.end_headers()
+
+    handler.add('PUT', '/test_metadata/foo.txt', custom_method=method)
+    with webserver.install_http_handler(handler):
+        assert gdal.SetFileMetadata('/vsis3/test_metadata/foo.txt', {'foo': 'bar'}, 'HEADERS')
+
+
+    # Write TAGS domain
+    handler = webserver.SequentialHandler()
+
+    def method(request):
+        request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
+
+        content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
+        if content != """<?xml version="1.0" encoding="UTF-8"?>
+<Tagging xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <TagSet>
+    <Tag>
+      <Key>foo</Key>
+      <Value>bar</Value>
+    </Tag>
+  </TagSet>
+</Tagging>
+""":
+            sys.stderr.write('Did not get expected content: %s\n' % content)
+            request.send_response(400)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
+            return
+
+        request.send_response(200)
+        request.send_header('Content-Length', 0)
+        request.end_headers()
+
+    handler.add('PUT', '/test_metadata/foo.txt?tagging', custom_method=method)
+    with webserver.install_http_handler(handler):
+        assert gdal.SetFileMetadata('/vsis3/test_metadata/foo.txt', {'foo': 'bar'}, 'TAGS')
+
+    # Write TAGS domain (wiping tags)
+    handler = webserver.SequentialHandler()
+    handler.add('DELETE', '/test_metadata/foo.txt?tagging', 204)
+    with webserver.install_http_handler(handler):
+        assert gdal.SetFileMetadata('/vsis3/test_metadata/foo.txt', {}, 'TAGS')
+
+    # Error case
+    with gdaltest.error_handler():
+        assert gdal.GetFileMetadata('/vsis3/test_metadata/foo.txt', 'UNSUPPORTED') == {}
+
+    # Error case
+    with gdaltest.error_handler():
+        assert not gdal.SetFileMetadata('/vsis3/test_metadata/foo.txt', {}, 'UNSUPPORTED')
+
+###############################################################################
+# Test that we take into account directory listing to avoid useless
+# requests
+
+
+def test_vsis3_no_useless_requests():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/no_useless_requests/?delimiter=%2F', 200,
+        {'Content-type': 'application/xml'},
+        """<?xml version="1.0" encoding="UTF-8"?>
+        <ListBucketResult>
+            <Prefix></Prefix>
+            <Contents>
+            </Contents>
+        </ListBucketResult>
+    """)
+    with webserver.install_http_handler(handler):
+        assert gdal.VSIFOpenL('/vsis3/no_useless_requests/foo.txt', 'rb') is None
+        assert gdal.VSIFOpenL('/vsis3/no_useless_requests/bar.txt', 'rb') is None
+        assert gdal.VSIStatL('/vsis3/no_useless_requests/baz.txt') is None
 
 
 ###############################################################################
@@ -2246,21 +2832,22 @@ aws_secret_access_key = bar
 # a non default profile
 
 
-def test_vsis3_read_credentials_config_file_non_default():
+def test_vsis3_read_credentials_config_file_non_default_profile(tmpdir):
 
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
     gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('AWS_ACCESS_KEY_ID', '')
+    gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', None)
+    gdal.SetConfigOption('AWS_CONFIG_FILE', None)
+    gdal.SetConfigOption('AWS_PROFILE', 'myprofile')
 
-    gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', '/vsimem/aws_credentials')
-    gdal.SetConfigOption('AWS_CONFIG_FILE', '/vsimem/aws_config')
-    gdal.SetConfigOption('AWS_DEFAULT_PROFILE', 'myprofile')
+    os_aws = tmpdir.mkdir(".aws")
 
     gdal.VSICurlClearCache()
 
-    gdal.FileFromMemBuffer('/vsimem/aws_credentials', """
+    os_aws.join('credentials').write("""
 [unrelated]
 aws_access_key_id = foo
 aws_secret_access_key = bar
@@ -2272,7 +2859,7 @@ aws_access_key_id = foo
 aws_secret_access_key = bar
 """)
 
-    gdal.FileFromMemBuffer('/vsimem/aws_config', """
+    os_aws.join('config').write("""
 [unrelated]
 aws_access_key_id = foo
 aws_secret_access_key = bar
@@ -2286,18 +2873,17 @@ aws_secret_access_key = bar
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_fake_bucket/resource', custom_method=get_s3_fake_bucket_resource_method)
     with webserver.install_http_handler(handler):
-        f = open_for_read('/vsis3/s3_fake_bucket/resource')
+        with gdaltest.config_option(
+            'USERPROFILE' if sys.platform == 'win32' else 'HOME', str(tmpdir)
+        ):
+            f = open_for_read('/vsis3/s3_fake_bucket/resource')
         assert f is not None
         data = gdal.VSIFReadL(1, 4, f).decode('ascii')
         gdal.VSIFCloseL(f)
 
     assert data == 'foo'
 
-    gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', '')
-    gdal.Unlink('/vsimem/aws_credentials')
-    gdal.SetConfigOption('AWS_CONFIG_FILE', '')
-    gdal.Unlink('/vsimem/aws_config')
-    gdal.SetConfigOption('AWS_DEFAULT_PROFILE', '')
+    gdal.SetConfigOption('AWS_PROFILE', '')
 
 ###############################################################################
 # Read credentials from simulated ~/.aws/credentials and ~/.aws/config
@@ -2376,21 +2962,26 @@ def test_vsis3_read_credentials_ec2():
     gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('AWS_ACCESS_KEY_ID', '')
 
-    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL',
-                         'http://localhost:%d/latest/meta-data/iam/security-credentials/' % gdaltest.webserver_port)
+    gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL',
+                         'http://localhost:%d' % gdaltest.webserver_port)
     # Disable hypervisor related check to test if we are really on EC2
     gdal.SetConfigOption('CPL_AWS_AUTODETECT_EC2', 'NO')
 
     gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/latest/meta-data/iam/security-credentials/', 200, {}, 'myprofile')
+    handler.add('PUT', '/latest/api/token', 200, {}, 'mytoken',
+                expected_headers={'X-aws-ec2-metadata-token-ttl-seconds': '10'})
+    handler.add('GET', '/latest/meta-data/iam/security-credentials/', 200, {}, 'myprofile',
+                expected_headers={'X-aws-ec2-metadata-token': 'mytoken'})
     handler.add('GET', '/latest/meta-data/iam/security-credentials/myprofile', 200, {},
                 """{
                 "AccessKeyId": "AWS_ACCESS_KEY_ID",
                 "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
                 "Expiration": "3000-01-01T00:00:00Z"
-                }""")
+                }""",
+                expected_headers={'X-aws-ec2-metadata-token': 'mytoken'})
+
     handler.add('GET', '/s3_fake_bucket/resource', custom_method=get_s3_fake_bucket_resource_method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsis3/s3_fake_bucket/resource')
@@ -2401,7 +2992,7 @@ def test_vsis3_read_credentials_ec2():
     assert data == 'foo'
 
     # Set a fake URL to check that credentials re-use works
-    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', '')
+    gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL', '')
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_fake_bucket/bar', 200, {}, 'bar')
@@ -2413,7 +3004,7 @@ def test_vsis3_read_credentials_ec2():
 
     assert data == 'bar'
 
-    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', '')
+    gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL', '')
     gdal.SetConfigOption('CPL_AWS_AUTODETECT_EC2', None)
 
 ###############################################################################
@@ -2434,21 +3025,34 @@ def test_vsis3_read_credentials_ec2_expiration():
     gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('AWS_ACCESS_KEY_ID', '')
 
-    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL',
-                         'http://localhost:%d/latest/meta-data/iam/security-credentials/expire_in_past/' % gdaltest.webserver_port)
+    gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL',
+                         'http://localhost:%d' % gdaltest.webserver_port)
     # Disable hypervisor related check to test if we are really on EC2
     gdal.SetConfigOption('CPL_AWS_AUTODETECT_EC2', 'NO')
 
     gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/latest/meta-data/iam/security-credentials/expire_in_past/', 200, {}, 'myprofile')
-    handler.add('GET', '/latest/meta-data/iam/security-credentials/expire_in_past/myprofile', 200, {},
+    handler.add('PUT', '/latest/api/token', 200, {}, 'mytoken',
+                expected_headers={'X-aws-ec2-metadata-token-ttl-seconds': '10'})
+    handler.add('GET', '/latest/meta-data/iam/security-credentials/', 200, {}, 'myprofile',
+                expected_headers={'X-aws-ec2-metadata-token': 'mytoken'})
+    handler.add('GET', '/latest/meta-data/iam/security-credentials/myprofile', 200, {},
                 """{
                 "AccessKeyId": "AWS_ACCESS_KEY_ID",
                 "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
                 "Expiration": "1970-01-01T00:00:00Z"
-                }""")
+                }""",
+                expected_headers={'X-aws-ec2-metadata-token': 'mytoken'})
+    handler.add('PUT', '/latest/api/token', 200, {}, 'mytoken2',
+                expected_headers={'X-aws-ec2-metadata-token-ttl-seconds': '10'})
+    handler.add('GET', '/latest/meta-data/iam/security-credentials/myprofile', 200, {},
+                """{
+                "AccessKeyId": "AWS_ACCESS_KEY_ID",
+                "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
+                "Expiration": "1970-01-01T00:00:00Z"
+                }""",
+                expected_headers={'X-aws-ec2-metadata-token': 'mytoken2'})
     handler.add('GET', '/s3_fake_bucket/resource', custom_method=get_s3_fake_bucket_resource_method)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsis3/s3_fake_bucket/resource')
@@ -2459,17 +3063,17 @@ def test_vsis3_read_credentials_ec2_expiration():
     assert data == 'foo'
 
     # Set a fake URL to demonstrate we try to re-fetch credentials
-    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL',
-                         'http://localhost:%d/invalid/' % gdaltest.webserver_port)
+    gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL',
+                         'http://localhost:%d/invalid' % gdaltest.webserver_port)
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/invalid/myprofile', 404)
+    handler.add('PUT', '/invalid/latest/api/token', 404)
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             f = open_for_read('/vsis3/s3_fake_bucket/bar')
         assert f is None
 
-    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', '')
+    gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL', '')
     gdal.SetConfigOption('CPL_AWS_AUTODETECT_EC2', None)
 
 ###############################################################################
@@ -2630,4 +3234,4 @@ def test_vsis3_cleanup():
 
     gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', None)
     gdal.SetConfigOption('AWS_CONFIG_FILE', None)
-    gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', None)
+    gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL', None)

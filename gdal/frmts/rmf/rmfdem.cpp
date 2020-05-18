@@ -95,7 +95,7 @@ GInt32 INV_INT4  = 0xFFFFFFF0L;
 GInt32 INV_INT12 = 0xFFFFF000L;
 GInt32 INV_INT24 = 0xFF000000L;
 
-// Not sure which behaviour we wish for int32 overflow, so just do the
+// Not sure which behavior we wish for int32 overflow, so just do the
 // addition as uint32 to workaround -ftrapv
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static GInt32 AddInt32( GInt32& nTarget, GInt32 nVal )
@@ -670,7 +670,7 @@ size_t RMFDataset::DEMCompress(const GByte* pabyIn, GUInt32 nSizeIn,
         if(nRecordSize == 1)
         {
             eRecordType = eCurrType;
-            nRecordElementSize = anDeltaTypeSize[eCurrType >> 5];
+            //nRecordElementSize = anDeltaTypeSize[eCurrType >> 5];
             continue;
         }
 

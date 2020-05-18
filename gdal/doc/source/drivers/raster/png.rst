@@ -28,7 +28,7 @@ the various image types, and will preserve transparency/nodata values.
 Georeferencing .wld files are written if option WORLDFILE is set. All
 pixel types other than 16bit unsigned will be written as eight bit.
 
-Starting with GDAL 1.9.0, XMP metadata can be extracted from the file,
+XMP metadata can be extracted from the file,
 and will be stored as XML raw content in the xml:XMP metadata domain.
 
 Driver capabilities
@@ -43,7 +43,7 @@ Driver capabilities
 Color Profile Metadata
 ----------------------
 
-Starting with GDAL 1.11, GDAL can deal with the following color profile
+GDAL can deal with the following color profile
 metadata in the COLOR_PROFILE domain:
 
 -  SOURCE_ICC_PROFILE (Base64 encoded ICC profile embedded in file. If
@@ -70,17 +70,13 @@ Creation Options:
 -  **ZLEVEL=n**: Set the amount of time to spend on compression. The
    default is 6. A value of 1 is fast but does no compression, and a
    value of 9 is slow but does the best compression.
--  **TITLE=value**: Title, written in a TEXT or iTXt chunk (GDAL >= 2.0
-   )
+-  **TITLE=value**: Title, written in a TEXT or iTXt chunk
 -  **DESCRIPTION=value**: Description, written in a TEXT or iTXt chunk
-   (GDAL >= 2.0 )
--  **COPYRIGHT=value**: Copyright, written in a TEXT or iTXt chunk (GDAL
-   >= 2.0 )
--  **COMMENT=value**: Comment, written in a TEXT or iTXt chunk (GDAL >=
-   2.0 )
+-  **COPYRIGHT=value**: Copyright, written in a TEXT or iTXt chunk
+-  **COMMENT=value**: Comment, written in a TEXT or iTXt chunk
 -  **WRITE_METADATA_AS_TEXT=YES/NO**: Whether to write source dataset
-   metadata in TEXT chunks (GDAL >= 2.0 )
--  **NBITS=1/2/4**: Force number of output bits (GDAL >= 2.1 )
+   metadata in TEXT chunks
+-  **NBITS=1/2/4**: Force number of output bits (GDAL >= 2.1)
 
 NOTE: Implemented as ``gdal/frmts/png/pngdataset.cpp``.
 

@@ -44,7 +44,7 @@ Care is taken to override the `sphinx_rtd_theme` CSS settings as required, rathe
 
 The following is an outline of `boundless_rtd` contents:
 
-* static/css/boundless.css - provides font selection and overides branding elements
+* static/css/boundless.css - provides font selection and overrides branding elements
 * static/fonts/proximanova-*
 * static/fonts/sourcecodepro-*
 * static/img/boundless-logo-32.png

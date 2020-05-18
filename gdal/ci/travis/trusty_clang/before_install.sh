@@ -75,13 +75,13 @@ sudo cp -r openjpeg-v2.3.0-linux-x86_64/lib/* /usr/local/lib
 #tar xzf mongo-cxx-1.0.2-install-ubuntu12.04-64bit.tar.gz
 #sudo cp -r mongo-cxx-1.0.2-install/include/* /usr/local/include
 #sudo cp -r mongo-cxx-1.0.2-install/lib/* /usr/local/lib
-wget https://bitbucket.org/chchrsc/kealib/get/c6d36f3db5e4.zip
-unzip c6d36f3db5e4.zip
-cd chchrsc-kealib-c6d36f3db5e4/trunk
-cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DHDF5_INCLUDE_DIR=/usr/include -DHDF5_LIB_PATH=/usr/lib -DLIBKEA_WITH_GDAL=OFF
-make -j4
-sudo make install
-cd ../..
+
+wget https://github.com/ubarsc/kealib/archive/kealib-1.4.12.zip
+unzip kealib-1.4.12.zip
+(cd kealib-kealib-1.4.12;
+cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DHDF5_INCLUDE_DIR=/usr/include -DHDF5_LIB_PATH=/usr/lib -DLIBKEA_WITH_GDAL=OFF;
+make -j4;
+sudo make install)
 
 # Build zstd
 wget https://github.com/facebook/zstd/archive/v1.3.3.tar.gz

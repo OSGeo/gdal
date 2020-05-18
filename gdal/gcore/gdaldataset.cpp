@@ -865,7 +865,7 @@ const char *GDALDataset::GetProjectionRefFromSpatialRef(const OGRSpatialReferenc
     {
         return "";
     }
-    if( pszWKT && m_poPrivate->m_pszWKTCached &&
+    if( m_poPrivate->m_pszWKTCached &&
         strcmp(pszWKT, m_poPrivate->m_pszWKTCached) == 0 )
     {
         CPLFree(pszWKT);
@@ -1004,7 +1004,7 @@ CPLErr GDALDataset::SetProjection( const char *pszProjection )
     {
         OGRSpatialReference oSRS;
         oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        if( oSRS.importFromWkt(pszProjection) != OGRERR_NONE )
+        if( oSRS.SetFromUserInput(pszProjection) != OGRERR_NONE )
         {
             return CE_Failure;
         }
@@ -1553,7 +1553,7 @@ const char *GDALDataset::GetGCPProjectionFromSpatialRef(const OGRSpatialReferenc
     {
         return "";
     }
-    if( pszWKT && m_poPrivate->m_pszWKTGCPCached &&
+    if( m_poPrivate->m_pszWKTGCPCached &&
         strcmp(pszWKT, m_poPrivate->m_pszWKTGCPCached) == 0 )
     {
         CPLFree(pszWKT);
@@ -2033,7 +2033,13 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
 
     CPLAssert(nullptr != pData);
 
-    if (nXSize == nBufXSize && nYSize == nBufYSize && nBandCount > 1 &&
+    const bool bHasSubpixelShift =
+       psExtraArg->bFloatingPointWindowValidity &&
+       psExtraArg->eResampleAlg != GRIORA_NearestNeighbour &&
+       (nXOff != psExtraArg->dfXOff || nYOff != psExtraArg->dfYOff);
+
+    if (!bHasSubpixelShift &&
+        nXSize == nBufXSize && nYSize == nBufYSize && nBandCount > 1 &&
         (pszInterleave = GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE")) !=
             nullptr &&
         EQUAL(pszInterleave, "PIXEL"))
@@ -2403,7 +2409,7 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
  *
  * @param psExtraArg (new in GDAL 2.0) pointer to a GDALRasterIOExtraArg
  * structure with additional arguments to specify resampling and progress
- * callback, or NULL for default behaviour. The GDAL_RASTERIO_RESAMPLING
+ * callback, or NULL for default behavior. The GDAL_RASTERIO_RESAMPLING
  * configuration option can also be defined to override the default resampling
  * to one of BILINEAR, CUBIC, CUBICSPLINE, LANCZOS, AVERAGE or MODE.
  *
@@ -2817,6 +2823,82 @@ GDALDatasetAdviseRead( GDALDatasetH hDS,
 }
 
 /************************************************************************/
+/*                         AntiRecursionStruct                          */
+/************************************************************************/
+
+namespace {
+// Prevent infinite recursion.
+struct AntiRecursionStruct
+{
+    struct DatasetContext
+    {
+        std::string osFilename;
+        int         nOpenFlags;
+        int         nSizeAllowedDrivers;
+
+        DatasetContext(const std::string& osFilenameIn,
+                        int nOpenFlagsIn,
+                        int nSizeAllowedDriversIn) :
+            osFilename(osFilenameIn),
+            nOpenFlags(nOpenFlagsIn),
+            nSizeAllowedDrivers(nSizeAllowedDriversIn) {}
+    };
+
+    struct DatasetContextCompare {
+        bool operator() (const DatasetContext& lhs, const DatasetContext& rhs) const {
+            return lhs.osFilename < rhs.osFilename ||
+                    (lhs.osFilename == rhs.osFilename &&
+                    (lhs.nOpenFlags < rhs.nOpenFlags ||
+                        (lhs.nOpenFlags == rhs.nOpenFlags &&
+                        lhs.nSizeAllowedDrivers < rhs.nSizeAllowedDrivers)));
+        }
+    };
+
+    std::set<DatasetContext, DatasetContextCompare> aosDatasetNamesWithFlags{};
+    int nRecLevel = 0;
+};
+} // namespace
+
+#ifdef WIN32
+// Currently thread_local and C++ objects don't work well with DLL on Windows
+static void FreeAntiRecursion( void* pData )
+{
+    delete static_cast<AntiRecursionStruct*>(pData);
+}
+
+static AntiRecursionStruct& GetAntiRecursion()
+{
+    static AntiRecursionStruct dummy;
+    int bMemoryErrorOccurred = false;
+    void* pData = CPLGetTLSEx(CTLS_GDALOPEN_ANTIRECURSION, &bMemoryErrorOccurred);
+    if( bMemoryErrorOccurred )
+    {
+        return dummy;
+    }
+    if( pData == nullptr)
+    {
+        auto pAntiRecursion = new AntiRecursionStruct();
+        CPLSetTLSWithFreeFuncEx( CTLS_GDALOPEN_ANTIRECURSION,
+                                 pAntiRecursion,
+                                 FreeAntiRecursion, &bMemoryErrorOccurred );
+        if( bMemoryErrorOccurred )
+        {
+            delete pAntiRecursion;
+            return dummy;
+        }
+        return *pAntiRecursion;
+    }
+    return *static_cast<AntiRecursionStruct*>(pData);
+}
+#else
+static thread_local AntiRecursionStruct g_tls_antiRecursion;
+static AntiRecursionStruct& GetAntiRecursion()
+{
+    return g_tls_antiRecursion;
+}
+#endif
+
+/************************************************************************/
 /*                            GetFileList()                             */
 /************************************************************************/
 
@@ -2858,6 +2940,15 @@ char **GDALDataset::GetFileList()
     if( bMainFileReal )
         papszList = CSLAddString(papszList, osMainFilename);
 
+    AntiRecursionStruct& sAntiRecursion = GetAntiRecursion();
+    if( sAntiRecursion.nRecLevel == 100 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "GetFileList() called with too many recursion levels");
+        return papszList;
+    }
+    ++sAntiRecursion.nRecLevel;
+
 /* -------------------------------------------------------------------- */
 /*      Do we have a known overview file?                               */
 /* -------------------------------------------------------------------- */
@@ -2883,6 +2974,8 @@ char **GDALDataset::GetFileList()
         }
         CSLDestroy(papszMskList);
     }
+
+    --sAntiRecursion.nRecLevel;
 
     return papszList;
 }
@@ -3010,9 +3103,6 @@ CPLErr CPL_STDCALL GDALCreateDatasetMaskBand( GDALDatasetH hDS, int nFlags )
  * .tar/.tar.gz/.tgz archive (see VSIInstallTarFileHandler()) or on a HTTP / FTP
  * server (see VSIInstallCurlFileHandler())
  *
- * In some situations (dealing with unverified data), the datasets can be opened
- * in another process through the \ref gdal_api_proxy mechanism.
- *
  * \sa GDALOpenShared()
  * \sa GDALOpenEx()
  *
@@ -3038,82 +3128,6 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
         GDALOpenEx(pszFilename, nOpenFlags, nullptr, nullptr, nullptr);
     return hDataset;
 }
-
-/************************************************************************/
-/*                         AntiRecursionStruct                          */
-/************************************************************************/
-
-namespace {
-// Prevent infinite recursion.
-struct AntiRecursionStruct
-{
-    struct DatasetContext
-    {
-        std::string osFilename;
-        int         nOpenFlags;
-        int         nSizeAllowedDrivers;
-
-        DatasetContext(const std::string& osFilenameIn,
-                        int nOpenFlagsIn,
-                        int nSizeAllowedDriversIn) :
-            osFilename(osFilenameIn),
-            nOpenFlags(nOpenFlagsIn),
-            nSizeAllowedDrivers(nSizeAllowedDriversIn) {}
-    };
-
-    struct DatasetContextCompare {
-        bool operator() (const DatasetContext& lhs, const DatasetContext& rhs) const {
-            return lhs.osFilename < rhs.osFilename ||
-                    (lhs.osFilename == rhs.osFilename &&
-                    (lhs.nOpenFlags < rhs.nOpenFlags ||
-                        (lhs.nOpenFlags == rhs.nOpenFlags &&
-                        lhs.nSizeAllowedDrivers < rhs.nSizeAllowedDrivers)));
-        }
-    };
-
-    std::set<DatasetContext, DatasetContextCompare> aosDatasetNamesWithFlags{};
-    int nRecLevel = 0;
-};
-} // namespace
-
-#ifdef WIN32
-// Currently thread_local and C++ objects don't work well with DLL on Windows
-static void FreeAntiRecursion( void* pData )
-{
-    delete static_cast<AntiRecursionStruct*>(pData);
-}
-
-static AntiRecursionStruct& GetAntiRecursion()
-{
-    static AntiRecursionStruct dummy;
-    int bMemoryErrorOccurred = false;
-    void* pData = CPLGetTLSEx(CTLS_GDALOPEN_ANTIRECURSION, &bMemoryErrorOccurred);
-    if( bMemoryErrorOccurred )
-    {
-        return dummy;
-    }
-    if( pData == nullptr)
-    {
-        auto pAntiRecursion = new AntiRecursionStruct();
-        CPLSetTLSWithFreeFuncEx( CTLS_GDALOPEN_ANTIRECURSION,
-                                 pAntiRecursion,
-                                 FreeAntiRecursion, &bMemoryErrorOccurred );
-        if( bMemoryErrorOccurred )
-        {
-            delete pAntiRecursion;
-            return dummy;
-        }
-        return *pAntiRecursion;
-    }
-    return *static_cast<AntiRecursionStruct*>(pData);
-}
-#else
-static thread_local AntiRecursionStruct g_tls_antiRecursion;
-static AntiRecursionStruct& GetAntiRecursion()
-{
-    return g_tls_antiRecursion;
-}
-#endif
 
 /************************************************************************/
 /*                             GDALOpenEx()                             */
@@ -3142,9 +3156,6 @@ static AntiRecursionStruct& GetAntiRecursion()
  * file in a .zip archive (see VSIInstallZipFileHandler()), in a
  * .tar/.tar.gz/.tgz archive (see VSIInstallTarFileHandler()) or on a HTTP / FTP
  * server (see VSIInstallCurlFileHandler())
- *
- * In some situations (dealing with unverified data), the datasets can be opened
- * in another process through the \ref gdal_api_proxy mechanism.
  *
  * In order to reduce the need for searches through the operating system
  * file system machinery, it is possible to give an optional list of files with
@@ -3210,7 +3221,6 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
                                      const char *const *papszSiblingFiles )
 {
     VALIDATE_POINTER1(pszFilename, "GDALOpen", nullptr);
-
 /* -------------------------------------------------------------------- */
 /*      In case of shared dataset, first scan the existing list to see  */
 /*      if it could already contain the requested dataset.              */
@@ -3300,21 +3310,14 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
     oOpenInfo.papszOpenOptions = papszOpenOptionsCleaned;
 
     const int nDriverCount = poDM->GetDriverCount();
-    for( int iDriver = -1; iDriver < nDriverCount; ++iDriver )
+    for( int iDriver = 0; iDriver < nDriverCount; ++iDriver )
     {
-        GDALDriver *poDriver = nullptr;
-
-        if( iDriver < 0 )
+        GDALDriver *poDriver = poDM->GetDriver(iDriver);
+        if (papszAllowedDrivers != nullptr &&
+            CSLFindString(papszAllowedDrivers,
+                            GDALGetDriverShortName(poDriver)) == -1)
         {
-            poDriver = GDALGetAPIPROXYDriver();
-        }
-        else
-        {
-            poDriver = poDM->GetDriver(iDriver);
-            if (papszAllowedDrivers != nullptr &&
-                CSLFindString(papszAllowedDrivers,
-                              GDALGetDriverShortName(poDriver)) == -1)
-                continue;
+            continue;
         }
 
         if( (nOpenFlags & GDAL_OF_RASTER) != 0 &&
@@ -3555,9 +3558,6 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
  * file in a .zip archive (see VSIInstallZipFileHandler()), in a
  * .tar/.tar.gz/.tgz archive (see VSIInstallTarFileHandler()) or on a HTTP / FTP
  * server (see VSIInstallCurlFileHandler())
- *
- * In some situations (dealing with unverified data), the datasets can be opened
- * in another process through the \ref gdal_api_proxy mechanism.
  *
  * \sa GDALOpen()
  * \sa GDALOpenEx()
@@ -4817,6 +4817,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 
     const char *pszSRSWKT = CSLFetchNameValue(papszOptions, "DST_SRSWKT");
     OGRSpatialReference oDstSpaRef(pszSRSWKT);
+    oDstSpaRef.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     OGRFeatureDefn *poSrcDefn = poSrcLayer->GetLayerDefn();
     OGRLayer *poDstLayer = nullptr;
 
@@ -4837,9 +4838,11 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
         {
             // Remove DST_WKT from option list to prevent warning from driver.
             const int nSRSPos = CSLFindName(papszOptions, "DST_SRSWKT");
-            papszOptions = CSLRemoveStrings(papszOptions, nSRSPos, 1, nullptr);
+            CPLStringList aosOptionsWithoutDstSRSWKT(
+                CSLRemoveStrings(CSLDuplicate(papszOptions), nSRSPos, 1, nullptr));
             poDstLayer = ICreateLayer(pszNewName, &oDstSpaRef,
-                                      poSrcDefn->GetGeomType(), papszOptions);
+                                      poSrcDefn->GetGeomType(),
+                                      aosOptionsWithoutDstSRSWKT.List());
         }
     }
 

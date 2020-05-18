@@ -1597,11 +1597,9 @@ void GeoRasterWrapper::GetColorMap( int nBand, GDALColorTable* poCT )
 
         CPLXMLNode* psColors = CPLGetXMLNode( psLayers, "colorMap.colors.cell" );
 
-        int iColor = 0;
-
         for(  ; psColors; psColors = psColors->psNext )
         {
-            iColor    = (short) atoi( CPLGetXMLValue( psColors, "value","0"));
+            const int iColor    = (short) atoi( CPLGetXMLValue( psColors, "value","0"));
             oEntry.c1 = (short) atoi( CPLGetXMLValue( psColors, "red",  "0"));
             oEntry.c2 = (short) atoi( CPLGetXMLValue( psColors, "green","0"));
             oEntry.c3 = (short) atoi( CPLGetXMLValue( psColors, "blue", "0"));

@@ -422,7 +422,7 @@ ECWAsyncReader::GetNextUpdatedRegion( double dfTimeout,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Return indication of complete or just buffer updateded.         */
+/*      Return indication of complete or just buffer updated.         */
 /* -------------------------------------------------------------------- */
 
     if( bComplete && !bUpdateReady )

@@ -396,6 +396,11 @@ class SpatialReference(_object):
         return _osr.SpatialReference_IsGeographic(self, *args)
 
 
+    def IsDerivedGeographic(self, *args):
+        """IsDerivedGeographic(SpatialReference self) -> int"""
+        return _osr.SpatialReference_IsDerivedGeographic(self, *args)
+
+
     def IsProjected(self, *args):
         """IsProjected(SpatialReference self) -> int"""
         return _osr.SpatialReference_IsProjected(self, *args)
@@ -846,6 +851,11 @@ class SpatialReference(_object):
         return _osr.SpatialReference_GetTOWGS84(self, *args)
 
 
+    def AddGuessedTOWGS84(self, *args):
+        """AddGuessedTOWGS84(SpatialReference self) -> OGRErr"""
+        return _osr.SpatialReference_AddGuessedTOWGS84(self, *args)
+
+
     def SetLocalCS(self, *args):
         """SetLocalCS(SpatialReference self, char const * pszName) -> OGRErr"""
         return _osr.SpatialReference_SetLocalCS(self, *args)
@@ -1009,6 +1019,24 @@ class SpatialReference(_object):
     def PromoteTo3D(self, *args):
         """PromoteTo3D(SpatialReference self, char const * name=None) -> OGRErr"""
         return _osr.SpatialReference_PromoteTo3D(self, *args)
+
+
+
+    def __init__(self, *args, **kwargs):
+        """__init__(OSRSpatialReferenceShadow self, char const * wkt) -> SpatialReference"""
+        oldval = _osr.GetUseExceptions()
+        if not oldval:
+            _osr.UseExceptions()
+        try:
+            this = _osr.new_SpatialReference(*args, **kwargs)
+        finally:
+            if not oldval:
+                _osr.DontUseExceptions()
+        try:
+            self.this.append(this)
+        except __builtin__.Exception:
+            self.this = this
+
 
 SpatialReference_swigregister = _osr.SpatialReference_swigregister
 SpatialReference_swigregister(SpatialReference)

@@ -490,7 +490,6 @@ void OGRDB2TableLayer::DropSpatialIndex()
 CPLString OGRDB2TableLayer::BuildFields()
 
 {
-    int i = 0;
     int nColumn = 0;
     CPLString osFieldList;
 
@@ -527,7 +526,7 @@ CPLString OGRDB2TableLayer::BuildFields()
         panFieldOrdinals = (int *) CPLMalloc( sizeof(int)
                                     * poFeatureDefn->GetFieldCount() );
 
-        for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+        for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
         {
             if ( poFeatureDefn->GetFieldDefn(i)->IsIgnored() )
                 continue;

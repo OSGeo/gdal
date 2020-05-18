@@ -43,7 +43,7 @@ import pytest
 
 def test_vicar_1():
 
-    tst = gdaltest.GDALTest('VICAR', 'test_vicar_truncated.bin', 1, 0)
+    tst = gdaltest.GDALTest('VICAR', 'vicar/test_vicar_truncated.bin', 1, 0)
     expected_prj = """PROJCS["SINUSOIDAL MARS",
     GEOGCS["GCS_MARS",
         DATUM["D_MARS",
@@ -57,7 +57,7 @@ def test_vicar_1():
     UNIT["meter",1]]]"""
     tst.testOpen(check_prj=expected_prj, skip_checksum=True)
 
-    ds = gdal.Open('data/test_vicar_truncated.bin')
+    ds = gdal.Open('data/vicar/test_vicar_truncated.bin')
     expected_gt = (-53985.0, 25.0, 0.0, -200805.0, 0.0, -25.0)
     got_gt = ds.GetGeoTransform()
     for i in range(6):
@@ -108,7 +108,7 @@ read_datatypes_lists = [
 )
 def test_vicar_read_datatypes(filename, dt, checksum):
 
-    ds = gdal.Open('data/%s.vic' % filename)
+    ds = gdal.Open('data/vicar/%s.vic' % filename)
     assert ds.GetLayerCount() == 0
     assert not ds.GetLayer(0)
     b = ds.GetRasterBand(1)
@@ -117,7 +117,7 @@ def test_vicar_read_datatypes(filename, dt, checksum):
     b = None
     ds = None
 
-    gdal.FileFromMemBuffer('/vsimem/test.vic', open('data/%s.vic' % filename, 'rb').read())
+    gdal.FileFromMemBuffer('/vsimem/test.vic', open('data/vicar/%s.vic' % filename, 'rb').read())
     ds = gdal.Open('/vsimem/test.vic', gdal.GA_Update)
     ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, ds.ReadRaster())
     ds = None
@@ -129,7 +129,7 @@ def test_vicar_read_datatypes(filename, dt, checksum):
 
 def test_vicar_read_binary_prefix():
 
-    ds = gdal.OpenEx('data/vicar_binary_prefix.vic')
+    ds = gdal.OpenEx('data/vicar/vicar_binary_prefix.vic')
     assert ds.GetLayerCount() == 1
     lyr = ds.GetLayer(0)
     assert lyr
@@ -142,8 +142,8 @@ def test_vicar_read_binary_prefix():
     assert lyr.GetNextFeature()
     ds = None
 
-    assert ogr.Open('data/vicar_binary_prefix.vic')
-    assert not ogr.Open('data/vicar_byte.vic')
+    assert ogr.Open('data/vicar/vicar_binary_prefix.vic')
+    assert not ogr.Open('data/vicar/vicar_byte.vic')
 
 
 def test_vicar_create():
@@ -234,7 +234,7 @@ create_datatypes_lists = [
 )
 def test_vicar_create_all_data_types(filename):
     dstfilename = '/vsimem/test.vic'
-    src_ds = gdal.Open('data/' + filename + '.vic')
+    src_ds = gdal.Open('data/vicar/' + filename + '.vic')
     assert gdal.GetDriverByName('VICAR').CreateCopy(dstfilename, src_ds)
     ds = gdal.Open(dstfilename)
     assert ds.GetRasterBand(1).DataType == src_ds.GetRasterBand(1).DataType
@@ -296,7 +296,7 @@ def test_vicar_create_label_option_as_filename_error():
 
 def test_vicar_create_georeferencing():
 
-    src_ds = gdal.Open('data/test_vicar_truncated.bin')
+    src_ds = gdal.Open('data/vicar/test_vicar_truncated.bin')
     filename = '/vsimem/test.vic'
     ds = gdal.GetDriverByName('VICAR').Create(filename, src_ds.RasterXSize, src_ds.RasterYSize)
     ds.SetGeoTransform(src_ds.GetGeoTransform())
@@ -334,7 +334,7 @@ compressed_datasets_lists = [
 )
 def test_vicar_read_compressed_datasets(filename, dt, checksum):
 
-    ds = gdal.Open('data/%s.vic' % filename)
+    ds = gdal.Open('data/vicar/%s.vic' % filename)
     assert ds.GetLayerCount() == 0
     assert not ds.GetLayer(0)
     b = ds.GetRasterBand(1)
@@ -344,7 +344,7 @@ def test_vicar_read_compressed_datasets(filename, dt, checksum):
 
 def test_vicar_write_basic():
 
-    src_ds = gdal.Open('data/vicar_byte_basic.vic')
+    src_ds = gdal.Open('data/vicar/vicar_byte_basic.vic')
 
     filename= '/vsimem/test.vic'
     assert gdal.GetDriverByName('VICAR').CreateCopy(filename, src_ds, options = ['COMPRESS=BASIC'])
@@ -361,7 +361,7 @@ def test_vicar_write_basic():
 
 def test_vicar_write_basic2():
 
-    src_ds = gdal.Open('data/vicar_byte_basic.vic')
+    src_ds = gdal.Open('data/vicar/vicar_byte_basic.vic')
 
     filename= '/vsimem/test.vic'
     assert gdal.GetDriverByName('VICAR').CreateCopy(filename, src_ds, options = ['COMPRESS=BASIC2'])
@@ -374,7 +374,7 @@ def test_vicar_write_basic2():
 
 def test_vicar_write_basic2_int16():
 
-    src_ds = gdal.Open('data/vicar_int16_basic2.vic')
+    src_ds = gdal.Open('data/vicar/vicar_int16_basic2.vic')
 
     filename= '/vsimem/test.vic'
     assert gdal.GetDriverByName('VICAR').CreateCopy(filename, src_ds, options = ['COMPRESS=BASIC2'])
@@ -387,7 +387,7 @@ def test_vicar_write_basic2_int16():
 
 def test_vicar_write_basic2_all_ones():
 
-    src_ds = gdal.Open('data/vicar_all_ones_basic2.vic')
+    src_ds = gdal.Open('data/vicar/vicar_all_ones_basic2.vic')
 
     filename= '/vsimem/test.vic'
     assert gdal.GetDriverByName('VICAR').CreateCopy(filename, src_ds, options = ['COMPRESS=BASIC2'])

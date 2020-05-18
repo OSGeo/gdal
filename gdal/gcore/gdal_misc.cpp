@@ -1459,12 +1459,15 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
                 // coordinates.
                 if ( eErr == OGRERR_NONE )
                 {
-                    OGRSpatialReference *poLatLong = oSRS.CloneGeogCS();
+                    OGRSpatialReference *poLongLat = oSRS.CloneGeogCS();
 
-                    if ( poLatLong )
+                    if ( poLongLat )
                     {
+                        oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                        poLongLat->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
                         OGRCoordinateTransformation *poTransform =
-                            OGRCreateCoordinateTransformation( poLatLong,
+                            OGRCreateCoordinateTransformation( poLongLat,
                                                                &oSRS );
                         if ( poTransform )
                         {
@@ -1472,7 +1475,7 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
                                 poTransform->Transform( 1, &dfLon, &dfLat ));
                             delete poTransform;
                         }
-                        delete poLatLong;
+                        delete poLongLat;
                     }
                 }
             }
@@ -1943,7 +1946,7 @@ GDALLoadWorldFile( const char *pszFilename, double *padfGeoTransform )
  * </ul>
  *
  * @param pszBaseFilename the target raster file.
- * @param pszExtension the extension to use (i.e. ".wld") or NULL to derive it
+ * @param pszExtension the extension to use (i.e. "wld") or NULL to derive it
  * from the pszBaseFilename
  * @param padfGeoTransform the six double array into which the
  * geotransformation should be placed.
@@ -2102,7 +2105,7 @@ int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
  * </ul>
  *
  * @param pszBaseFilename the target raster file.
- * @param pszExtension the extension to use (i.e. ".wld"). Must not be NULL
+ * @param pszExtension the extension to use (i.e. "wld"). Must not be NULL
  * @param padfGeoTransform the six double array from which the
  * geotransformation should be read.
  *

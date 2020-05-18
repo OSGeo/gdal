@@ -41,7 +41,7 @@ import pytest
 
 def test_vrtfilt_1():
 
-    tst = gdaltest.GDALTest('VRT', 'avfilt.vrt', 1, 21890)
+    tst = gdaltest.GDALTest('VRT', 'vrt/avfilt.vrt', 1, 21890)
     return tst.testOpen()
 
 ###############################################################################
@@ -50,13 +50,13 @@ def test_vrtfilt_1():
 
 def test_vrtfilt_2():
 
-    ds = gdal.Open('data/test_vrt_filter_nodata.tif')
+    ds = gdal.Open('data/vrt/test_vrt_filter_nodata.tif')
     checksum = ds.GetRasterBand(1).Checksum()
     ds = None
 
     # This is a black&white checkboard, where black = nodata
     # Thus averaging it and taking nodata into account will not change it
-    tst = gdaltest.GDALTest('VRT', 'avfilt_nodata.vrt', 1, checksum)
+    tst = gdaltest.GDALTest('VRT', 'vrt/avfilt_nodata.vrt', 1, checksum)
     return tst.testOpen()
 
 ###############################################################################
@@ -147,7 +147,7 @@ def test_vrtfilt_5():
 
 def test_vrtfilt_6():
 
-    tst = gdaltest.GDALTest('VRT', 'avfilt_1d.vrt', 1, 22377)
+    tst = gdaltest.GDALTest('VRT', 'vrt/avfilt_1d.vrt', 1, 22377)
     return tst.testOpen()
 
 ###############################################################################

@@ -220,8 +220,6 @@ GDALDriverManager::~GDALDriverManager()
         delete poDriver;
     }
 
-    delete GDALGetAPIPROXYDriver();
-
     CleanupPythonDrivers();
 
 /* -------------------------------------------------------------------- */

@@ -33,12 +33,6 @@
 #pragma GCC system_header
 #endif
 
-// This works around problems with math.h on some platforms #defining INFINITY
-#ifdef INFINITY
-#undef  INFINITY
-#define INFINITY INFINITY_XERCES
-#endif
-
 #include <util/PlatformUtils.hpp>
 #include <sax2/DefaultHandler.hpp>
 #include <sax2/ContentHandler.hpp>

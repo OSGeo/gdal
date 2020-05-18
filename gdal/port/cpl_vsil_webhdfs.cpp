@@ -232,9 +232,10 @@ VSIWebHDFSWriteHandle::VSIWebHDFSWriteHandle( VSIWebHDFSFSHandler* poFS,
                                               const char* pszFilename) :
         VSIAppendWriteHandle(poFS, poFS->GetFSPrefix(), pszFilename,
                              GetWebHDFSBufferSize()),
-        m_osURL( pszFilename + poFS->GetFSPrefix().size() )
+        m_osURL( pszFilename + poFS->GetFSPrefix().size() ),
+        m_osDataNodeHost( GetWebHDFSDataNodeHost() )
 {
-    m_osDataNodeHost = GetWebHDFSDataNodeHost();
+    // cppcheck-suppress useInitializationList
     m_osUsernameParam = CPLGetConfigOption("WEBHDFS_USERNAME", "");
     if( !m_osUsernameParam.empty() )
         m_osUsernameParam = "&user.name=" + m_osUsernameParam;
@@ -874,9 +875,10 @@ int VSIWebHDFSFSHandler::Mkdir( const char *pszDirname, long nMode )
 
 VSIWebHDFSHandle::VSIWebHDFSHandle( VSIWebHDFSFSHandler* poFSIn,
                           const char* pszFilename, const char* pszURL ) :
-        VSICurlHandle(poFSIn, pszFilename, pszURL)
+        VSICurlHandle(poFSIn, pszFilename, pszURL),
+        m_osDataNodeHost(GetWebHDFSDataNodeHost())
 {
-    m_osDataNodeHost = GetWebHDFSDataNodeHost();
+    // cppcheck-suppress useInitializationList
     m_osUsernameParam = CPLGetConfigOption("WEBHDFS_USERNAME", "");
     if( !m_osUsernameParam.empty() )
         m_osUsernameParam = "&user.name=" + m_osUsernameParam;

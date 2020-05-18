@@ -965,12 +965,10 @@ int OGRGenSQLResultsLayer::PrepareSummary()
     poSrcLayer->GetLayerDefn()->SetGeometryIgnored(bSaveIsGeomIgnored);
 
 /* -------------------------------------------------------------------- */
-/*      If we have run out of features on the source layer, clear       */
-/*      away the filters we have installed till a next run through      */
+/*      Clear away the filters we have installed till a next run through*/
 /*      the features.                                                   */
 /* -------------------------------------------------------------------- */
-    if( poSrcFeature == nullptr )
-        ClearFilters();
+    ClearFilters();
 
 /* -------------------------------------------------------------------- */
 /*      Now apply the values to the summary feature.  If we are in      */

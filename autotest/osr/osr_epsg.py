@@ -47,14 +47,13 @@ def test_osr_epsg_1():
     assert srs.GetAuthorityCode(None) == '3003'
 
 ###############################################################################
-# Check that EPSG:4312 lookup has the towgs84 values set properly
-# from gcs.override.csv.
-
+# Check that EPSG:4312 w.r.t towgs84 values
 
 def test_osr_epsg_2():
 
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4312)
+    with gdaltest.config_option('OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG', 'YES'):
+        srs.ImportFromEPSG(4312)
 
     if float(srs.GetAttrValue('TOWGS84', 6)) != pytest.approx(2.4232, abs=0.0005):
         print(srs.ExportToPrettyWkt())
@@ -71,6 +70,7 @@ def test_osr_epsg_3():
     for epsg in [3120, 2172, 2173, 2174, 2175, 3328]:
         srs = osr.SpatialReference()
         srs.ImportFromEPSG(epsg)
+        srs.AddGuessedTOWGS84()
 
         expected_towgs84 = [33.4, -146.6, -76.3, -0.359, -0.053, 0.844, -0.84]
 
@@ -119,30 +119,25 @@ def test_osr_epsg_6():
         '# We do not expect a datum shift'
 
 ###############################################################################
-#   Check that EPSGA:2193 is considered as N/E
+#   Check working of EPSGTreatsAsNorthingEasting
 
-
-def test_osr_epsg_7():
-
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(2193)
-
-    assert srs.EPSGTreatsAsNorthingEasting(), 'supposed to be treated as n/e'
-
-    assert srs.ExportToWkt().find('AXIS') != -1, 'should  have AXIS node'
-
-###############################################################################
-#   Check that EPSGA:2193 is considered as N/E
-
-
-def test_osr_epsg_8():
+@pytest.mark.parametrize('epsg_code,is_northing_easting',
+                         [(2193, True), # NZGD2000 / New Zealand Transverse Mercator 2000
+                          (32631, False), # WGS 84 / UTM zone 31N
+                          (32661, True), # WGS 84 / UPS North (N,E)
+                          (5041, False), # WGS 84 / UPS North (E,N)
+                          (32761, True), # WGS 84 / UPS South (N,E)
+                          (5042, False), # WGS 84 / UPS South (E,N)
+                          (3031, False), # WGS 84 / Antarctic Polar Stereographic
+                          (5482, True), # RSRGD2000 / RSPS2000
+                          ]
+                         )
+def test_osr_epsg_treats_as_northing_easting(epsg_code, is_northing_easting):
 
     srs = osr.SpatialReference()
-    srs.ImportFromEPSGA(2193)
+    srs.ImportFromEPSG(epsg_code)
+    assert srs.EPSGTreatsAsNorthingEasting() == is_northing_easting
 
-    assert srs.EPSGTreatsAsNorthingEasting(), 'supposed to be treated as n/e'
-
-    assert srs.ExportToWkt().find('AXIS') != -1, 'should  have AXIS node'
 
 ###############################################################################
 #   Check EPSG:3857

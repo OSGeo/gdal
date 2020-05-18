@@ -185,7 +185,7 @@ class OGRGeometry:
    virtual OGRGeometry *LocateAlong(double mValue);
    virtual OGRGeometry *LocateBetween(double mStart, double mEnd);
 
-   //Remove b3D from importPreambuleFromWkb: it is not used, the flags are managed within the method.
+   //Remove b3D from importPreambleFromWkb: it is not used, the flags are managed within the method.
 
 int CoordinateDimension() should have the new semantics. The method name
 in simple features documents actually is without prefix get.

@@ -50,8 +50,8 @@ namespace PCIDSK
     /*                        CPCIDSKVectorSegment                          */
     /************************************************************************/
 
-    class CPCIDSKVectorSegment : virtual public CPCIDSKSegment, 
-                                 public PCIDSKVectorSegment
+    class CPCIDSKVectorSegment final: virtual public CPCIDSKSegment, 
+                                      public PCIDSKVectorSegment
     {
         friend class VecSegHeader;
         friend class VecSegDataIndex;

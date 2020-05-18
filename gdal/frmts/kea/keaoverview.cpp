@@ -33,7 +33,7 @@ CPL_CVSID("$Id$")
 
 // constructor
 KEAOverview::KEAOverview(KEADataset *pDataset, int nSrcBand, GDALAccess eAccessIn,
-                kealib::KEAImageIO *pImageIO, int *pRefCount,
+                kealib::KEAImageIO *pImageIO, LockedRefCount *pRefCount,
                 int nOverviewIndex, uint64_t nXSize, uint64_t nYSize)
  : KEARasterBand( pDataset, nSrcBand, eAccessIn, pImageIO, pRefCount )
 {

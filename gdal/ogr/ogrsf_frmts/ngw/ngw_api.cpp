@@ -33,7 +33,7 @@
 
 namespace NGWAPI {
 
-std::string GetPermisions(const std::string &osUrl, const std::string &osResourceId)
+std::string GetPermissions(const std::string &osUrl, const std::string &osResourceId)
 {
     return osUrl + "/api/resource/" + osResourceId + "/permission";
 }
@@ -312,7 +312,7 @@ bool RenameResource(const std::string &osUrl, const std::string &osResourceId,
     CPLJSONObject oPayload;
     CPLJSONObject oResource("resource", oPayload);
     oResource.Add("display_name", osNewName);
-    std::string osPayload = oPayload.Format(CPLJSONObject::Plain);
+    std::string osPayload = oPayload.Format(CPLJSONObject::PrettyFormat::Plain);
 
     return UpdateResource( osUrl, osResourceId, osPayload, papszHTTPOptions);
 }
@@ -332,6 +332,18 @@ OGRwkbGeometryType NGWGeomTypeToOGRGeomType(const std::string &osGeomType)
         return wkbMultiLineString;
     else if ( osGeomType == "MULTIPOLYGON")
         return wkbMultiPolygon;
+    else if( osGeomType == "POINTZ")
+        return wkbPoint25D;
+    else if ( osGeomType == "LINESTRINGZ")
+        return wkbLineString25D;
+    else if ( osGeomType == "POLYGONZ")
+        return wkbPolygon25D;
+    else if ( osGeomType == "MULTIPOINTZ")
+        return wkbMultiPoint25D;
+    else if ( osGeomType == "MULTILINESTRINGZ")
+        return wkbMultiLineString25D;
+    else if ( osGeomType == "MULTIPOLYGONZ")
+        return wkbMultiPolygon25D;
     else
         return wkbUnknown;
 }
@@ -352,6 +364,18 @@ std::string OGRGeomTypeToNGWGeomType(OGRwkbGeometryType eType)
             return "MULTILINESTRING";
         case wkbMultiPolygon:
             return "MULTIPOLYGON";
+        case wkbPoint25D:
+            return "POINTZ";
+        case wkbLineString25D:
+            return "LINESTRINGZ";
+        case wkbPolygon25D:
+            return "POLYGONZ";
+        case wkbMultiPoint25D:
+            return "MULTIPOINTZ";
+        case wkbMultiLineString25D:
+            return "MULTILINESTRINGZ";
+        case wkbMultiPolygon25D:
+            return "MULTIPOLYGONZ";
         default:
             return "";
     }
@@ -406,7 +430,7 @@ Permissions CheckPermissions(const std::string &osUrl,
     Permissions stOut;
     CPLErrorReset();
     CPLJSONDocument oPermissionReq;
-    bool bResult = oPermissionReq.LoadUrl( GetPermisions( osUrl, osResourceId ),
+    bool bResult = oPermissionReq.LoadUrl( GetPermissions( osUrl, osResourceId ),
         papszHTTPOptions );
 
     CPLJSONObject oRoot = oPermissionReq.GetRoot();
@@ -459,10 +483,10 @@ std::string GetLayerExtent(const std::string &osUrl, const std::string &osResour
 std::string GetResmetaSuffix(CPLJSONObject::Type eType)
 {
     switch( eType ) {
-        case CPLJSONObject::Integer:
-        case CPLJSONObject::Long:
+        case CPLJSONObject::Type::Integer:
+        case CPLJSONObject::Type::Long:
             return ".d";
-        case CPLJSONObject::Double:
+        case CPLJSONObject::Type::Double:
             return ".f";
         default:
             return "";
@@ -518,7 +542,7 @@ bool FlushMetadata(const std::string &osUrl, const std::string &osResourceId,
     FillResmeta(oMetadataJson, papszMetadata);
 
     return UpdateResource( osUrl, osResourceId,
-        oMetadataJson.Format(CPLJSONObject::Plain), papszHTTPOptions);
+        oMetadataJson.Format(CPLJSONObject::PrettyFormat::Plain), papszHTTPOptions);
 }
 
 bool DeleteFeature(const std::string &osUrl, const std::string &osResourceId,
@@ -769,11 +793,10 @@ CPLJSONObject UploadFile(const std::string &osUrl, const std::string &osFilePath
     CPLHTTPResult *psResult = CPLHTTPFetchEx( GetUpload(osUrl).c_str(),
         papszHTTPOptions, pfnProgress, pProgressData, nullptr, nullptr );
     CSLDestroy( papszHTTPOptions );
-    bool bResult = false;
     CPLJSONObject oResult;
     if( psResult )
     {
-        bResult = psResult->nStatus == 0 && psResult->pszErrBuf == nullptr;
+        const bool bResult = psResult->nStatus == 0 && psResult->pszErrBuf == nullptr;
 
         // Get error message.
         if( !bResult )

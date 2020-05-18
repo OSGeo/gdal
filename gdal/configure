@@ -631,6 +631,8 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+EXR_LIBS
+EXR_CFLAGS
 HAVE_LERC
 HAVE_OPENSSL_CRYPTO
 USE_ONLY_CRYPTODLL_ALG
@@ -719,7 +721,8 @@ SQLITE3_VERSION
 LIBXML2_LIB
 LIBXML2_INC
 HAVE_LIBXML2
-LIBXML2_CONFIG
+LIBXML2_LIBS
+LIBXML2_CFLAGS
 CURL_LIB
 CURL_INC
 CURL_SETTING
@@ -834,13 +837,14 @@ PG_INC
 HAVE_PG
 PQ_LIBS
 PQ_CFLAGS
-PKG_CONFIG
 GDALFORMATS_ENABLED
 OGRFORMATS_ENABLED_CFLAGS
 OGRFORMATS_ENABLED
 ZSTD_SETTING
 LIBLZMA_SETTING
 PROJ_INCLUDE
+bashcompdir
+PKG_CONFIG
 LTLIBICONV
 LIBICONV
 LIBZ_SETTING
@@ -917,6 +921,7 @@ build_os
 build_vendor
 build_cpu
 build
+PACKAGE
 target_alias
 host_alias
 build_alias
@@ -985,7 +990,9 @@ with_threads
 with_libz
 enable_rpath
 with_libiconv_prefix
+with_bash_completion
 with_proj
+with_proj_extra_lib_for_test
 with_liblzma
 with_zstd
 enable_all_optional_drivers
@@ -1074,6 +1081,7 @@ enable_driver_gpx
 enable_driver_gtm
 enable_driver_htf
 enable_driver_jml
+enable_driver_mapml
 enable_driver_mvt
 enable_driver_ntf
 enable_driver_openair
@@ -1221,6 +1229,7 @@ with_cryptopp
 with_crypto
 with_lerc
 with_null
+with_exr
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1237,6 +1246,7 @@ LT_SYS_LIBRARY_PATH
 CPP
 CXXCPP
 PKG_CONFIG
+bashcompdir
 PQ_CFLAGS
 PQ_LIBS
 OGDI_CFLAGS
@@ -1249,8 +1259,12 @@ OPENJPEG_CFLAGS
 OPENJPEG_LIBS
 LIBKML_CFLAGS
 LIBKML_LIBS
+LIBXML2_CFLAGS
+LIBXML2_LIBS
 POPPLER_CFLAGS
-POPPLER_LIBS'
+POPPLER_LIBS
+EXR_CFLAGS
+EXR_LIBS'
 
 
 # Initialize some variables set by options.
@@ -1993,6 +2007,7 @@ Optional Features:
   --disable-driver-gtm    disable gtm driver support (enabled by default)
   --disable-driver-htf    disable htf driver support (enabled by default)
   --disable-driver-jml    disable jml driver support (enabled by default)
+  --disable-driver-mapml  disable mapml driver support (enabled by default)
   --disable-driver-mvt    disable mvt driver support (enabled by default)
   --disable-driver-ntf    disable ntf driver support (enabled by default)
   --disable-driver-openair
@@ -2118,7 +2133,10 @@ Optional Packages:
   --with-gnu-ld           assume the C compiler uses GNU ld default=no
   --with-libiconv-prefix[=DIR]  search for libiconv in DIR/include and DIR/lib
   --without-libiconv-prefix     don't search for libiconv in includedir and libdir
+  --with-bash-completion=ARG
+                          Install Bash completions (ARG=yes or path)
   --with-proj=ARG Compile with PROJ.x (ARG=yes or path)
+  --with-proj-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (i.e. -lcurl -ltiff ...). Mainly for static libproj
   --with-liblzma=ARG       Include liblzma support (ARG=yes/no)
   --with-zstd=ARG       Include zstd support (ARG=yes/no/installation_prefix)
   --with-pg=ARG           Include PostgreSQL GDAL/OGR Support (ARG=yes,no)
@@ -2180,9 +2198,9 @@ Optional Packages:
   --with-odbc=ARG       Include ODBC support (ARG=no or path)
   --with-dods-root=ARG  Include DODS support (ARG=no or absolute path)
   --with-curl=ARG       Include curl (ARG=path to curl-config.)
-  --with-xml2=ARG       Include libxml2 (ARG=path to xml2-config.)
+  --with-xml2=ARG       Include libxml2 (ARG=yes/no)
   --with-spatialite=ARG Include SpatiaLite support (ARG=no(default), yes, dlopen (only supported for Spatialite >= 4.1.2) or path)
-  --with-spatialite-soname=ARG Spatialite shared object name (e.g. libspatialite.so), only used if --with-spatiliate=dlopen
+  --with-spatialite-soname=ARG Spatialite shared object name (e.g. libspatialite.so), only used if --with-spatialite=dlopen
   --with-sqlite3=[ARG]    use SQLite 3 library [default=yes], optionally
                           specify the prefix for sqlite3 library
   --with-rasterlite2=ARG Include RasterLite2 support (ARG=no(default), yes or path)
@@ -2228,6 +2246,7 @@ Optional Packages:
   --without-lerc          Disable LERC library
   --with-null             Enable NULL driver (only useful for development
                           purposes
+  --with-exr            Include EXR support via OpenEXR library
 
 Some influential environment variables:
   CC          C compiler command
@@ -2244,6 +2263,8 @@ Some influential environment variables:
   CPP         C preprocessor
   CXXCPP      C++ preprocessor
   PKG_CONFIG  path to pkg-config utility
+  bashcompdir value of completionsdir for bash-completion, overriding
+              pkg-config
   PQ_CFLAGS   C compiler flags for PQ, overriding pkg-config
   PQ_LIBS     linker flags for PQ, overriding pkg-config
   OGDI_CFLAGS C compiler flags for OGDI, overriding pkg-config
@@ -2261,10 +2282,16 @@ Some influential environment variables:
   LIBKML_CFLAGS
               C compiler flags for LIBKML, overriding pkg-config
   LIBKML_LIBS linker flags for LIBKML, overriding pkg-config
+  LIBXML2_CFLAGS
+              C compiler flags for LIBXML2, overriding pkg-config
+  LIBXML2_LIBS
+              linker flags for LIBXML2, overriding pkg-config
   POPPLER_CFLAGS
               C compiler flags for POPPLER, overriding pkg-config
   POPPLER_LIBS
               linker flags for POPPLER, overriding pkg-config
+  EXR_CFLAGS  C compiler flags for EXR, overriding pkg-config
+  EXR_LIBS    linker flags for EXR, overriding pkg-config
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -3432,6 +3459,8 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
+
+PACKAGE=gdal
 
 
 ac_config_headers="$ac_config_headers port/cpl_config.h:port/cpl_config.h.in"
@@ -5623,43 +5652,6 @@ eval ac_res=\$$as_CACHEVAR
 $as_echo "$ac_res" >&6; }
 if eval test \"x\$"$as_CACHEVAR"\" = x"yes"; then :
   CXX_WFLAGS="$CXX_WFLAGS -Wunused-private-field"
-else
-  :
-fi
-
-as_CACHEVAR=`$as_echo "ax_cv_check_cxxflags_$ERROR_ON_UNKNOWN_OPTIONS_-Wmissing-prototypes" | $as_tr_sh`
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -Wmissing-prototypes" >&5
-$as_echo_n "checking whether C++ compiler accepts -Wmissing-prototypes... " >&6; }
-if eval \${$as_CACHEVAR+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-  ax_check_save_flags=$CXXFLAGS
-  CXXFLAGS="$CXXFLAGS $ERROR_ON_UNKNOWN_OPTIONS -Wmissing-prototypes"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  eval "$as_CACHEVAR=yes"
-else
-  eval "$as_CACHEVAR=no"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  CXXFLAGS=$ax_check_save_flags
-fi
-eval ac_res=\$$as_CACHEVAR
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-if eval test \"x\$"$as_CACHEVAR"\" = x"yes"; then :
-  CXX_WFLAGS="$CXX_WFLAGS -Wmissing-prototypes"
 else
   :
 fi
@@ -21351,26 +21343,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking native cpu bit order" >&5
-$as_echo_n "checking native cpu bit order... " >&6; }
-case "$host_cpu" in
-    i*86*|x86_64*)
-        HOST_FILLORDER=FILLORDER_LSB2MSB
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: lsb2msb" >&5
-$as_echo "lsb2msb" >&6; }
-	;;
-    *)
-	HOST_FILLORDER=FILLORDER_MSB2LSB
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: msb2lsb" >&5
-$as_echo "msb2lsb" >&6; }
-        ;;
-esac
-
-cat >>confdefs.h <<_ACEOF
-#define HOST_FILLORDER $HOST_FILLORDER
-_ACEOF
-
-
 for ac_func in vprintf
 do :
   ac_fn_c_check_func "$LINENO" "vprintf" "ac_cv_func_vprintf"
@@ -22695,6 +22667,9 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 
 
+
+
+
 # Check whether --with-libz was given.
 if test "${with_libz+set}" = set; then :
   withval=$with_libz;
@@ -23871,6 +23846,164 @@ _ACEOF
 fi
 
 
+
+# Check whether --with-bash-completion was given.
+if test "${with_bash_completion+set}" = set; then :
+  withval=$with_bash_completion;
+fi
+
+
+if test "x$with_bash_completion" = "xno" -o "x$with_bash_completion" = "x"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: Bash completions not requested" >&5
+$as_echo "$as_me: Bash completions not requested" >&6;}
+elif test "x$with_bash_completion" = "xyes"; then
+
+
+if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
+	if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
+set dummy ${ac_tool_prefix}pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+if test -n "$PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
+$as_echo "$PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_path_PKG_CONFIG"; then
+  ac_pt_PKG_CONFIG=$PKG_CONFIG
+  # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_ac_pt_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $ac_pt_PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ac_pt_PKG_CONFIG="$ac_pt_PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_ac_pt_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+ac_pt_PKG_CONFIG=$ac_cv_path_ac_pt_PKG_CONFIG
+if test -n "$ac_pt_PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_pt_PKG_CONFIG" >&5
+$as_echo "$ac_pt_PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_pt_PKG_CONFIG" = x; then
+    PKG_CONFIG=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    PKG_CONFIG=$ac_pt_PKG_CONFIG
+  fi
+else
+  PKG_CONFIG="$ac_cv_path_PKG_CONFIG"
+fi
+
+fi
+if test -n "$PKG_CONFIG"; then
+	_pkg_min_version=0.9.0
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
+$as_echo_n "checking pkg-config is at least version $_pkg_min_version... " >&6; }
+	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		PKG_CONFIG=""
+	fi
+
+fi
+
+if test -n "$PKG_CONFIG"; then
+    if test -n "$bashcompdir"; then
+        pkg_cv_bashcompdir="$bashcompdir"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"bash-completion\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "bash-completion") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_bashcompdir=`$PKG_CONFIG --variable="completionsdir" "bash-completion" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+bashcompdir=$pkg_cv_bashcompdir
+
+if test "x$bashcompdir" = x""; then :
+  bashcompdir="${sysconfdir}/bash_completion.d"
+fi
+
+else
+  bashcompdir=$with_bash_completion
+
+fi
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PROJ >= 6 library" >&5
 $as_echo_n "checking for PROJ >= 6 library... " >&6; }
 
@@ -23878,6 +24011,13 @@ $as_echo_n "checking for PROJ >= 6 library... " >&6; }
 # Check whether --with-proj was given.
 if test "${with_proj+set}" = set; then :
   withval=$with_proj;
+fi
+
+
+
+# Check whether --with-proj-extra-lib-for-test was given.
+if test "${with_proj_extra_lib_for_test+set}" = set; then :
+  withval=$with_proj_extra_lib_for_test;
 fi
 
 
@@ -24086,9 +24226,8 @@ $as_echo "$as_me: proj.h found" >&6;}
         as_fn_error $? "proj.h not found" "$LINENO" 5
     fi
   else
-
     ORIG_LIBS="$LIBS"
-    LIBS="-L$with_proj/lib -lproj $ORIG_LIBS"
+    LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
     ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -24144,7 +24283,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     if test "$PROJ_FOUND" = "no"; then
-        LIBS="-L$with_proj/lib -lproj -lsqlite3 $ORIG_LIBS"
+        LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         unset ac_cv_lib_proj_proj_create_from_wkt
         ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -24202,7 +24341,65 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     fi
     if test "$PROJ_FOUND" = "no"; then
-        LIBS="-L$with_proj/lib -lproj $ORIG_LIBS"
+        LIBS="-L$with_proj/lib64 -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
+        unset ac_cv_lib_proj_proj_create_from_wkt
+        ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for proj_create_from_wkt in -lproj" >&5
+$as_echo_n "checking for proj_create_from_wkt in -lproj... " >&6; }
+if ${ac_cv_lib_proj_proj_create_from_wkt+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lproj  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char proj_create_from_wkt ();
+int
+main ()
+{
+return proj_create_from_wkt ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_proj_proj_create_from_wkt=yes
+else
+  ac_cv_lib_proj_proj_create_from_wkt=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_proj_proj_create_from_wkt" >&5
+$as_echo "$ac_cv_lib_proj_proj_create_from_wkt" >&6; }
+if test "x$ac_cv_lib_proj_proj_create_from_wkt" = xyes; then :
+  PROJ_FOUND=yes
+else
+  PROJ_FOUND=no
+fi
+
+        ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+    fi
+    if test "$PROJ_FOUND" = "no"; then
+        LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -24258,7 +24455,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
         if test "$PROJ_FOUND" = "no"; then
-            LIBS="-L$with_proj/lib -lproj -lsqlite3 $ORIG_LIBS"
+            LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
             unset ac_cv_lib_proj_internal_proj_create_from_wkt
             ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -24320,7 +24517,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
         fi
     fi
     if test "$PROJ_FOUND" = "no"; then
-        LIBS="-L$with_proj/lib -linternalproj $ORIG_LIBS"
+        LIBS="-L$with_proj/lib -linternalproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
         ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -24376,7 +24573,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
         if test "$PROJ_FOUND" = "no"; then
-            LIBS="-L$with_proj/lib -linternalproj -lsqlite3 $ORIG_LIBS"
+            LIBS="-L$with_proj/lib -linternalproj -lsqlite3 $with_proj_extra_lib_for_test  $ORIG_LIBS"
             unset ac_cv_lib_internal_proj_internal_proj_create_from_wkt
             ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -27075,6 +27272,35 @@ else
   INTERNAL_FORMAT_jml_ENABLED=no
 fi
 
+# Check whether --enable-driver-mapml was given.
+if test "${enable_driver_mapml+set}" = set; then :
+  enableval=$enable_driver_mapml;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_mapml
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED mapml"
+  INTERNAL_FORMAT_mapml_ENABLED=yes
+  OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS -DMAPML_ENABLED"
+else
+  OGRFORMATS_DISABLED="$OGRFORMATS_DISABLED mapml"
+  INTERNAL_FORMAT_mapml_ENABLED=no
+fi
+
 # Check whether --enable-driver-mvt was given.
 if test "${enable_driver_mvt+set}" = set; then :
   enableval=$enable_driver_mvt;
@@ -28505,6 +28731,8 @@ fi
 
 if test "x$with_pg" = "xyes" -o "x$with_pg" = "x" ; then
   PG_CONFIG=yes
+elif test "x$with_pg" != "xno"; then
+  as_fn_error $? "Only --with-pg=yes/no supported" "$LINENO" 5
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PostgreSQL" >&5
@@ -30031,8 +30259,7 @@ HAVE_CHARLS=no
 CHARLS_INC=
 
 if test "$with_charls" = "yes" -o "$with_charls" = "" ; then
-
-  for ac_header in CharLS/interface.h
+    for ac_header in CharLS/interface.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "CharLS/interface.h" "ac_cv_header_CharLS_interface_h" "$ac_includes_default"
 if test "x$ac_cv_header_CharLS_interface_h" = xyes; then :
@@ -30090,7 +30317,7 @@ fi
         CHARLS_INC="-DCHARLS_INTERFACE_H"
     fi
   else
-    for ac_header in CharLS/charls.h
+        for ac_header in CharLS/charls.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "CharLS/charls.h" "ac_cv_header_CharLS_charls_h" "$ac_includes_default"
 if test "x$ac_cv_header_CharLS_charls_h" = xyes; then :
@@ -30158,6 +30385,77 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
         if test "$HAVE_CHARLS" = "yes"; then
             LIBS="-lCharLS $LIBS"
             CHARLS_INC="-DCHARLS_2"
+        fi
+    else
+                for ac_header in charls/charls.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "charls/charls.h" "ac_cv_header_charls_charls_h" "$ac_includes_default"
+if test "x$ac_cv_header_charls_charls_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_CHARLS_CHARLS_H 1
+_ACEOF
+
+fi
+
+done
+
+        if test "$ac_cv_header_charls_charls_h" = "yes"; then
+            ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JpegLsDecode in -lcharls" >&5
+$as_echo_n "checking for JpegLsDecode in -lcharls... " >&6; }
+if ${ac_cv_lib_charls_JpegLsDecode+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcharls  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char JpegLsDecode ();
+int
+main ()
+{
+return JpegLsDecode ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_charls_JpegLsDecode=yes
+else
+  ac_cv_lib_charls_JpegLsDecode=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_charls_JpegLsDecode" >&5
+$as_echo "$ac_cv_lib_charls_JpegLsDecode" >&6; }
+if test "x$ac_cv_lib_charls_JpegLsDecode" = xyes; then :
+  HAVE_CHARLS=yes
+fi
+
+            ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+            if test "$HAVE_CHARLS" = "yes"; then
+                LIBS="-lcharls $LIBS"
+                CHARLS_INC="-DCHARLS_2_1"
+            fi
         fi
     fi
   fi
@@ -32141,6 +32439,16 @@ $as_echo_n "checking libnetcdf compiler and linker flags with nc-config... " >&6
     NETCDF_PREFIX=`$NETCDF_NCCONFIG --prefix`
     NETCDF_INCLUDEDIR=`$NETCDF_NCCONFIG --includedir`
     NETCDF_LIBS=`$NETCDF_NCCONFIG --libs`
+
+    if echo "x" | sed -E "s/x/y/" >/dev/null 2>/dev/null; then
+        STRIPPED_LIBRARY_NAME="$(echo "${NETCDF_LIBS}" | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[:space:]]+::')"
+    elif echo "x" | sed -r "s/x/y/" >/dev/null 2>/dev/null; then
+                STRIPPED_LIBRARY_NAME="$(echo "${NETCDF_LIBS}" | sed -r 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[:space:]]+::')"
+    else
+        STRIPPED_LIBRARY_NAME="$(echo "${NETCDF_LIBS}")"
+    fi
+
+    NETCDF_LIBS="$STRIPPED_LIBRARY_NAME"
     echo ""
     { $as_echo "$as_me:${as_lineno-$LINENO}: result:  got version=\"$NETCDF_VERSION\", prefix=\"$NETCDF_PREFIX\",
  libs=\"$NETCDF_LIBS\", includedir=\"$NETCDF_INCLUDEDIR\"" >&5
@@ -34116,6 +34424,16 @@ $as_echo "no, mysql is pre-4.x" >&6; }
   else
       HAVE_MYSQL=yes
       MYSQL_LIB="`$MYSQL_CONFIG --libs`"
+
+    if echo "x" | sed -E "s/x/y/" >/dev/null 2>/dev/null; then
+        STRIPPED_LIBRARY_NAME="$(echo "${MYSQL_LIB}" | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[:space:]]+::')"
+    elif echo "x" | sed -r "s/x/y/" >/dev/null 2>/dev/null; then
+                STRIPPED_LIBRARY_NAME="$(echo "${MYSQL_LIB}" | sed -r 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[:space:]]+::')"
+    else
+        STRIPPED_LIBRARY_NAME="$(echo "${MYSQL_LIB}")"
+    fi
+
+      MYSQL_LIB="$STRIPPED_LIBRARY_NAME"
       MYSQL_INC="`$MYSQL_CONFIG --include`"
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
@@ -36442,21 +36760,22 @@ if test "${with_xml2+set}" = set; then :
 fi
 
 
-if test "`basename xx/$with_xml2`" = "xml2-config" ; then
-  LIBXML2_CONFIG="$with_xml2"
-elif test "$with_xml2" = "no" ; then
-  LIBXML2_CONFIG=no
-else
-  # Extract the first word of "xml2-config", so it can be a program name with args.
-set dummy xml2-config; ac_word=$2
+if test "x$with_xml2" = "xyes" -o "x$with_xml2" = "x" ; then
+
+
+
+if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
+	if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
+set dummy ${ac_tool_prefix}pkg-config; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_LIBXML2_CONFIG+:} false; then :
+if ${ac_cv_path_PKG_CONFIG+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  case $LIBXML2_CONFIG in
+  case $PKG_CONFIG in
   [\\/]* | ?:[\\/]*)
-  ac_cv_path_LIBXML2_CONFIG="$LIBXML2_CONFIG" # Let the user override the test with a path.
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
   ;;
   *)
   as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
@@ -36466,7 +36785,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_LIBXML2_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -36474,14 +36793,13 @@ done
   done
 IFS=$as_save_IFS
 
-  test -z "$ac_cv_path_LIBXML2_CONFIG" && ac_cv_path_LIBXML2_CONFIG="no"
   ;;
 esac
 fi
-LIBXML2_CONFIG=$ac_cv_path_LIBXML2_CONFIG
-if test -n "$LIBXML2_CONFIG"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $LIBXML2_CONFIG" >&5
-$as_echo "$LIBXML2_CONFIG" >&6; }
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+if test -n "$PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
+$as_echo "$PKG_CONFIG" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -36489,16 +36807,159 @@ fi
 
 
 fi
+if test -z "$ac_cv_path_PKG_CONFIG"; then
+  ac_pt_PKG_CONFIG=$PKG_CONFIG
+  # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_ac_pt_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $ac_pt_PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ac_pt_PKG_CONFIG="$ac_pt_PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_ac_pt_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
 
-if test "$LIBXML2_CONFIG" != "no" ; then
+  ;;
+esac
+fi
+ac_pt_PKG_CONFIG=$ac_cv_path_ac_pt_PKG_CONFIG
+if test -n "$ac_pt_PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_pt_PKG_CONFIG" >&5
+$as_echo "$ac_pt_PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlParseDoc in -lxml2" >&5
+  if test "x$ac_pt_PKG_CONFIG" = x; then
+    PKG_CONFIG=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    PKG_CONFIG=$ac_pt_PKG_CONFIG
+  fi
+else
+  PKG_CONFIG="$ac_cv_path_PKG_CONFIG"
+fi
+
+fi
+if test -n "$PKG_CONFIG"; then
+	_pkg_min_version=0.21
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
+$as_echo_n "checking pkg-config is at least version $_pkg_min_version... " >&6; }
+	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		PKG_CONFIG=""
+	fi
+
+fi
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for LIBXML2" >&5
+$as_echo_n "checking for LIBXML2... " >&6; }
+
+if test -n "$PKG_CONFIG"; then
+    if test -n "$LIBXML2_CFLAGS"; then
+        pkg_cv_LIBXML2_CFLAGS="$LIBXML2_CFLAGS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libxml-2.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libxml-2.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBXML2_CFLAGS=`$PKG_CONFIG --cflags "libxml-2.0" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+if test -n "$PKG_CONFIG"; then
+    if test -n "$LIBXML2_LIBS"; then
+        pkg_cv_LIBXML2_LIBS="$LIBXML2_LIBS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libxml-2.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libxml-2.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBXML2_LIBS=`$PKG_CONFIG --libs "libxml-2.0" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        LIBXML2_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "libxml-2.0"`
+        else
+	        LIBXML2_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "libxml-2.0"`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$LIBXML2_PKG_ERRORS" >&5
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                HAVE_LIBXML2=no
+elif test $pkg_failed = untried; then
+	HAVE_LIBXML2=no
+else
+	LIBXML2_CFLAGS=$pkg_cv_LIBXML2_CFLAGS
+	LIBXML2_LIBS=$pkg_cv_LIBXML2_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	HAVE_LIBXML2=yes
+fi
+
+  if test "${HAVE_LIBXML2}" = "yes"; then
+    SAVED_LIBS="${LIBS}"
+    LIBS="${LIBXML2_LIBS}"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlParseDoc in -lxml2" >&5
 $as_echo_n "checking for xmlParseDoc in -lxml2... " >&6; }
 if ${ac_cv_lib_xml2_xmlParseDoc+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lxml2 `$LIBXML2_CONFIG --libs` $LIBS"
+LIBS="-lxml2  $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -36534,14 +36995,19 @@ else
   HAVE_LIBXML2=no
 fi
 
+    LIBS="${SAVED_LIBS}"
+  fi
 
-fi
-
-if test "$HAVE_LIBXML2" = "yes" ; then
-
-  LIBXML2_INC=`$LIBXML2_CONFIG --cflags`
-  LIBXML2_LIB=`$LIBXML2_CONFIG --libs`
-
+  if test "${HAVE_LIBXML2}" = "yes"; then
+    LIBXML2_INC="${LIBXML2_CFLAGS}"
+    LIBXML2_LIB="${LIBXML2_LIBS}"
+  else
+    if test "x$with_xml2" = "xyes"; then
+      as_fn_error $? "--with-xml2 was requested, but libxml2 is not available" "$LINENO" 5
+    fi
+  fi
+elif test "x$with_xml2" != "xno"; then
+  as_fn_error $? "Only --with-xml2=yes/no supported" "$LINENO" 5
 fi
 
 HAVE_LIBXML2=$HAVE_LIBXML2
@@ -36600,7 +37066,7 @@ if ${ac_cv_lib_spatialite_spatialite_init+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lspatialite -lsqlite3 -lproj $LIBS"
+LIBS="-lspatialite -lsqlite3 $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -36638,7 +37104,7 @@ fi
 
             if test "$SPATIALITE_INIT_FOUND" = "yes"; then
                 HAVE_SPATIALITE=yes
-                SPATIALITE_LIBS="-lspatialite -lsqlite3 -lproj"
+                SPATIALITE_LIBS="-lspatialite -lsqlite3"
                 LIBS="$LIBS $SPATIALITE_LIBS"
                 HAVE_SQLITE3=yes
             fi
@@ -37008,7 +37474,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
                 ac_sqlite3_version=`cat $ac_sqlite3_header_path \
                     | grep '#define.*SQLITE_VERSION.*\"' | sed -e 's/.* "//' \
                         | sed -e 's/"//'`
-                if test $ac_sqlite3_version != ""; then
+                if test "$ac_sqlite3_version" != ""; then
                     SQLITE3_VERSION=$ac_sqlite3_version
                 else
                     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Can not find SQLITE_VERSION macro in sqlite3.h header to retrieve SQLite version!" >&5
@@ -37393,7 +37859,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
                 ac_sqlite3_version=`cat $ac_sqlite3_header_path \
                     | grep '#define.*SQLITE_VERSION.*\"' | sed -e 's/.* "//' \
                         | sed -e 's/"//'`
-                if test $ac_sqlite3_version != ""; then
+                if test "$ac_sqlite3_version" != ""; then
                     SQLITE3_VERSION=$ac_sqlite3_version
                 else
                     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Can not find SQLITE_VERSION macro in sqlite3.h header to retrieve SQLite version!" >&5
@@ -38721,6 +39187,16 @@ if test "${HAVE_GEOS}" = "yes" ; then
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: Using C API from GEOS $GEOS_VERSION" >&5
 $as_echo "$as_me: Using C API from GEOS $GEOS_VERSION" >&6;}
+
+    if echo "x" | sed -E "s/x/y/" >/dev/null 2>/dev/null; then
+        STRIPPED_LIBRARY_NAME="$(echo "${GEOS_LIBS}" | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[:space:]]+::')"
+    elif echo "x" | sed -r "s/x/y/" >/dev/null 2>/dev/null; then
+                STRIPPED_LIBRARY_NAME="$(echo "${GEOS_LIBS}" | sed -r 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[:space:]]+::')"
+    else
+        STRIPPED_LIBRARY_NAME="$(echo "${GEOS_LIBS}")"
+    fi
+
+  GEOS_LIBS="$STRIPPED_LIBRARY_NAME"
   LIBS="${GEOS_LIBS} ${LIBS}"
   HAVE_GEOS_RESULT="yes"
 fi
@@ -38996,6 +39472,16 @@ if test "${HAVE_SFCGAL}" = "yes" ; then
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: Using C API from SFCGAL $SFCGAL_VERSION" >&5
 $as_echo "$as_me: Using C API from SFCGAL $SFCGAL_VERSION" >&6;}
+
+    if echo "x" | sed -E "s/x/y/" >/dev/null 2>/dev/null; then
+        STRIPPED_LIBRARY_NAME="$(echo "${SFCGAL_LIBS}" | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[:space:]]+::')"
+    elif echo "x" | sed -r "s/x/y/" >/dev/null 2>/dev/null; then
+                STRIPPED_LIBRARY_NAME="$(echo "${SFCGAL_LIBS}" | sed -r 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[:space:]]+::')"
+    else
+        STRIPPED_LIBRARY_NAME="$(echo "${SFCGAL_LIBS}")"
+    fi
+
+  SFCGAL_LIBS="$STRIPPED_LIBRARY_NAME"
   LIBS="${SFCGAL_LIBS} ${LIBS}"
   HAVE_SFCGAL_RESULT="yes"
 fi
@@ -40510,17 +40996,6 @@ export BINTRUE
 BINTRUE=$BINTRUE
 
 
-if test "$datadir" = '${prefix}/share' ; then
-  datadir='${prefix}/share/gdal'
-fi
-
-if test "$datadir" = '${datarootdir}' \
-     -a "$datarootdir" = '${prefix}/share' ; then
-  datarootdir='${prefix}/share/gdal'
-fi
-
-mandir='${prefix}/man'
-
 
 if test "$prefix" = "NONE" ; then
   GDAL_PREFIX=/usr/local
@@ -40794,7 +41269,7 @@ if test -z "$with_hdfs" -o "$with_hdfs" = "no" ; then
 $as_echo "HDFS support not requested." >&6; }
 else
      if test "$JAVA_HOME"; then
-          JNI_LIB="-L$(find $JAVA_HOME | grep libjvm.so | head -1 | sed 's/libjvm.so$//') -ljvm"
+          JNI_LIB="-L$(find $JAVA_HOME | grep libjvm | head -1 | sed "s/[^/]*$//") -ljvm"
      else
           as_fn_error $? "HDFS support requires java support (--with-java). $JAVA_HOME" "$LINENO" 5
      fi
@@ -40876,7 +41351,7 @@ $as_echo "HDFS support enabled." >&6; }
                as_fn_error $? "HDFS support not enabled." "$LINENO" 5
           fi
      else
-          as_fn_error $? "Unable to find libjvm.so." "$LINENO" 5
+          as_fn_error $? "Unable to find libjvm." "$LINENO" 5
      fi
 fi
 
@@ -41903,6 +42378,273 @@ else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
 $as_echo "disabled" >&6; }
 fi
+
+
+
+# Check whether --with-exr was given.
+if test "${with_exr+set}" = set; then :
+  withval=$with_exr;
+fi
+
+
+HAVE_EXR=no
+EXR_CFLAGS=""
+
+if test "$with_exr" = "no" ; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: EXR support disabled." >&5
+$as_echo "$as_me: EXR support disabled." >&6;}
+
+else
+
+
+
+if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
+	if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
+set dummy ${ac_tool_prefix}pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+if test -n "$PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
+$as_echo "$PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_path_PKG_CONFIG"; then
+  ac_pt_PKG_CONFIG=$PKG_CONFIG
+  # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_ac_pt_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $ac_pt_PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ac_pt_PKG_CONFIG="$ac_pt_PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_ac_pt_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+ac_pt_PKG_CONFIG=$ac_cv_path_ac_pt_PKG_CONFIG
+if test -n "$ac_pt_PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_pt_PKG_CONFIG" >&5
+$as_echo "$ac_pt_PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_pt_PKG_CONFIG" = x; then
+    PKG_CONFIG=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    PKG_CONFIG=$ac_pt_PKG_CONFIG
+  fi
+else
+  PKG_CONFIG="$ac_cv_path_PKG_CONFIG"
+fi
+
+fi
+if test -n "$PKG_CONFIG"; then
+	_pkg_min_version=0.21
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
+$as_echo_n "checking pkg-config is at least version $_pkg_min_version... " >&6; }
+	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		PKG_CONFIG=""
+	fi
+
+fi
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for EXR" >&5
+$as_echo_n "checking for EXR... " >&6; }
+
+if test -n "$PKG_CONFIG"; then
+    if test -n "$EXR_CFLAGS"; then
+        pkg_cv_EXR_CFLAGS="$EXR_CFLAGS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"OpenEXR >= 2.2\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "OpenEXR >= 2.2") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_EXR_CFLAGS=`$PKG_CONFIG --cflags "OpenEXR >= 2.2" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+if test -n "$PKG_CONFIG"; then
+    if test -n "$EXR_LIBS"; then
+        pkg_cv_EXR_LIBS="$EXR_LIBS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"OpenEXR >= 2.2\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "OpenEXR >= 2.2") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_EXR_LIBS=`$PKG_CONFIG --libs "OpenEXR >= 2.2" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        EXR_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "OpenEXR >= 2.2"`
+        else
+	        EXR_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "OpenEXR >= 2.2"`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$EXR_PKG_ERRORS" >&5
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                HAVE_EXR=no
+elif test $pkg_failed = untried; then
+	HAVE_EXR=no
+else
+	EXR_CFLAGS=$pkg_cv_EXR_CFLAGS
+	EXR_LIBS=$pkg_cv_EXR_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	HAVE_EXR=yes
+fi
+
+  if test -n "$EXR_CFLAGS"; then
+
+    # Test that the package found is for the right architecture
+    saved_LIBS="$LIBS"
+    LIBS="$EXR_LIBS"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ImfTiledInputReadTile in -lIlmImf" >&5
+$as_echo_n "checking for ImfTiledInputReadTile in -lIlmImf... " >&6; }
+if ${ac_cv_lib_IlmImf_ImfTiledInputReadTile+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lIlmImf  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char ImfTiledInputReadTile ();
+int
+main ()
+{
+return ImfTiledInputReadTile ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_IlmImf_ImfTiledInputReadTile=yes
+else
+  ac_cv_lib_IlmImf_ImfTiledInputReadTile=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_IlmImf_ImfTiledInputReadTile" >&5
+$as_echo "$ac_cv_lib_IlmImf_ImfTiledInputReadTile" >&6; }
+if test "x$ac_cv_lib_IlmImf_ImfTiledInputReadTile" = xyes; then :
+  HAVE_EXR=yes
+else
+  HAVE_EXR=no
+fi
+
+    LIBS="$saved_LIBS"
+
+    if test "$HAVE_EXR" = "yes"; then
+        OPT_GDAL_FORMATS="exr $OPT_GDAL_FORMATS"
+        LIBS="$EXR_LIBS $LIBS"
+    else
+        EXR_CFLAGS=""
+    fi
+  fi
+fi
+
+EXR_CFLAGS=$EXR_CFLAGS
+
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking if sprintf can be overloaded for GDAL compilation" >&5
@@ -44520,6 +45262,9 @@ echo "  HDFS support:              ${HDFS_ENABLED}"
 
 
 echo "  TileDB support:            ${TILEDB_SETTING}"
+
+
+echo "  EXR support:               ${HAVE_EXR}"
 
 
 echo "  userfaultfd support:       ${ENABLE_UFFD}"

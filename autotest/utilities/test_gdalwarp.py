@@ -883,7 +883,7 @@ def test_gdalwarp_39():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
 
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' ../gdrivers/data/float64.asc tmp/test_gdalwarp_39.tif -oo DATATYPE=Float64 -overwrite')
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' ../gdrivers/data/aaigrid/float64.asc tmp/test_gdalwarp_39.tif -oo DATATYPE=Float64 -overwrite')
 
     ds = gdal.Open('tmp/test_gdalwarp_39.tif')
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Float64

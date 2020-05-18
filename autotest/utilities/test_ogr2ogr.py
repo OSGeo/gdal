@@ -34,8 +34,6 @@ import os
 import shutil
 import pytest
 
-sys.path.append('../ogr')
-
 from osgeo import gdal, ogr, osr
 import gdaltest
 import ogrtest
@@ -173,23 +171,29 @@ def test_ogr2ogr_5():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
+
+def check_if_has_ogr_pg():
+    path = '../ogr'
+    if path not in sys.path:
+        sys.path.append(path)
+    import ogr_pg
+    ogr_pg.test_ogr_pg_1()
+    if gdaltest.pg_ds is None:
+        pytest.skip()
+    gdaltest.pg_ds.Destroy()
+
 ###############################################################################
 # Test -overwrite
 
 
 def test_ogr2ogr_6():
 
-    import ogr_pg
+    check_if_has_ogr_pg()
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
         pytest.skip()
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
-
-    ogr_pg.test_ogr_pg_1()
-    if gdaltest.pg_ds is None:
-        pytest.skip()
-    gdaltest.pg_ds.Destroy()
 
     gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:"' + gdaltest.pg_connection_string + '" -sql "DELLAYER:tpoly"')
 
@@ -208,17 +212,12 @@ def test_ogr2ogr_6():
 
 def test_ogr2ogr_7():
 
-    import ogr_pg
+    check_if_has_ogr_pg()
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
         pytest.skip()
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
-
-    ogr_pg.test_ogr_pg_1()
-    if gdaltest.pg_ds is None:
-        pytest.skip()
-    gdaltest.pg_ds.Destroy()
 
     gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' PG:"' + gdaltest.pg_connection_string + '" -sql "DELLAYER:tpoly"')
 
@@ -970,13 +969,13 @@ def test_ogr2ogr_30():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         pytest.skip()
 
-    ds = ogr.Open('../ogr/data/testlistfields.gml')
+    ds = ogr.Open('../ogr/data/gml/testlistfields.gml')
     if ds is None:
         pytest.skip()
     ds = None
 
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -splitlistfields tmp/test_ogr2ogr_30.dbf ../ogr/data/testlistfields.gml')
-    gdal.Unlink('../ogr/data//testlistfields.gfs')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -splitlistfields tmp/test_ogr2ogr_30.dbf ../ogr/data/gml/testlistfields.gml')
+    gdal.Unlink('../ogr/data/gml/testlistfields.gfs')
 
     ds = ogr.Open('tmp/test_ogr2ogr_30.dbf')
     assert ds is not None
@@ -1236,9 +1235,9 @@ def test_ogr2ogr_37():
     shutil.copy('../ogr/data/poly.shp', 'tmp/test_ogr2ogr_37_src')
     shutil.copy('../ogr/data/poly.shx', 'tmp/test_ogr2ogr_37_src')
     shutil.copy('../ogr/data/poly.dbf', 'tmp/test_ogr2ogr_37_src')
-    shutil.copy('../ogr/data/testpoly.shp', 'tmp/test_ogr2ogr_37_src')
-    shutil.copy('../ogr/data/testpoly.shx', 'tmp/test_ogr2ogr_37_src')
-    shutil.copy('../ogr/data/testpoly.dbf', 'tmp/test_ogr2ogr_37_src')
+    shutil.copy('../ogr/data/shp/testpoly.shp', 'tmp/test_ogr2ogr_37_src')
+    shutil.copy('../ogr/data/shp/testpoly.shx', 'tmp/test_ogr2ogr_37_src')
+    shutil.copy('../ogr/data/shp/testpoly.dbf', 'tmp/test_ogr2ogr_37_src')
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/test_ogr2ogr_37_dir.shp tmp/test_ogr2ogr_37_src')
 
@@ -1297,9 +1296,9 @@ def test_ogr2ogr_39():
     shutil.copy('../ogr/data/poly.shp', 'tmp/test_ogr2ogr_39_src')
     shutil.copy('../ogr/data/poly.shx', 'tmp/test_ogr2ogr_39_src')
     shutil.copy('../ogr/data/poly.dbf', 'tmp/test_ogr2ogr_39_src')
-    shutil.copy('../ogr/data/testpoly.shp', 'tmp/test_ogr2ogr_39_src')
-    shutil.copy('../ogr/data/testpoly.shx', 'tmp/test_ogr2ogr_39_src')
-    shutil.copy('../ogr/data/testpoly.dbf', 'tmp/test_ogr2ogr_39_src')
+    shutil.copy('../ogr/data/shp/testpoly.shp', 'tmp/test_ogr2ogr_39_src')
+    shutil.copy('../ogr/data/shp/testpoly.shx', 'tmp/test_ogr2ogr_39_src')
+    shutil.copy('../ogr/data/shp/testpoly.dbf', 'tmp/test_ogr2ogr_39_src')
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/test_ogr2ogr_39.shp tmp/test_ogr2ogr_39_src -sql "select * from poly"')
 
@@ -1344,14 +1343,10 @@ def test_ogr2ogr_40():
 
 def test_ogr2ogr_41():
 
-    import ogr_pg
+    check_if_has_ogr_pg()
+
     if test_cli_utilities.get_ogr2ogr_path() is None:
         pytest.skip()
-
-    ogr_pg.test_ogr_pg_1()
-    if gdaltest.pg_ds is None:
-        pytest.skip()
-    gdaltest.pg_ds.Destroy()
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     ds.ExecuteSQL('DELLAYER:test_ogr2ogr_41_src')

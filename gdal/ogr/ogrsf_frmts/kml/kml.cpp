@@ -103,6 +103,7 @@ bool KML::parse()
     int nDone = 0;
     int nLen = 0;
     char aBuf[BUFSIZ] = { 0 };
+    bool bError = false;
 
     do
     {
@@ -117,29 +118,8 @@ bool KML::parse()
                       XML_ErrorString(XML_GetErrorCode(oParser)),
                       static_cast<int>(XML_GetCurrentLineNumber(oParser)),
                       static_cast<int>(XML_GetCurrentColumnNumber(oParser)));
-            XML_ParserFree(oParser);
-            VSIRewindL(pKMLFile_);
-
-            if( poCurrent_ != nullptr )
-            {
-                while( poCurrent_ )
-                {
-                    KMLNode* poTemp = poCurrent_->getParent();
-                    delete poCurrent_;
-                    poCurrent_ = poTemp;
-                }
-                // No need to destroy poTrunk_ : it has been destroyed in
-                // the last iteration
-            }
-            else
-            {
-                // Case of invalid content after closing element matching
-                // first <kml> element
-                delete poTrunk_;
-            }
-            poTrunk_ = nullptr;
-
-            return false;
+            bError = true;
+            break;
         }
         nWithoutEventCounter ++;
     } while (!nDone && nLen > 0 && nWithoutEventCounter < 10);
@@ -151,11 +131,27 @@ bool KML::parse()
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too much data inside one element. File probably corrupted");
-        while( poCurrent_ )
+        bError = true;
+    }
+
+    if( bError )
+    {
+        if( poCurrent_ != nullptr )
         {
-            KMLNode* poTemp = poCurrent_->getParent();
-            delete poCurrent_;
-            poCurrent_ = poTemp;
+            while( poCurrent_ )
+            {
+                KMLNode* poTemp = poCurrent_->getParent();
+                delete poCurrent_;
+                poCurrent_ = poTemp;
+            }
+            // No need to destroy poTrunk_ : it has been destroyed in
+            // the last iteration
+        }
+        else
+        {
+            // Case of invalid content after closing element matching
+            // first <kml> element
+            delete poTrunk_;
         }
         poTrunk_ = nullptr;
         return false;

@@ -53,7 +53,7 @@ def test_ogr_s57_1():
     if gdal.GetConfigOption('OGR_S57_OPTIONS', '') != '':
         gdal.SetConfigOption('OGR_S57_OPTIONS', '')
 
-    gdaltest.s57_ds = ogr.Open('data/1B5X02NE.000')
+    gdaltest.s57_ds = ogr.Open('data/s57/1B5X02NE.000')
     assert gdaltest.s57_ds is not None, 'failed to open test file.'
 
 ###############################################################################
@@ -162,7 +162,7 @@ def test_ogr_s57_5():
 
 def test_ogr_s57_6():
 
-    ds = ogr.Open('data/bug1526.000')
+    ds = ogr.Open('data/s57/bug1526.000')
 
     feat = ds.GetLayerByName('FOGSIG').GetNextFeature()
 
@@ -177,7 +177,7 @@ def test_ogr_s57_6():
 
 def test_ogr_s57_7():
 
-    ds = ogr.Open('data/bug2147_3R7D0889.000')
+    ds = ogr.Open('data/s57/bug2147_3R7D0889.000')
 
     feat = ds.GetLayerByName('ROADWY').GetNextFeature()
 
@@ -197,7 +197,7 @@ def test_ogr_s57_8():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/1B5X02NE.000')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/s57/1B5X02NE.000')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
@@ -211,7 +211,7 @@ def test_ogr_s57_9():
 
     gdal.SetConfigOption('OGR_S57_OPTIONS', 'RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON')
     ds = ogr.GetDriverByName('S57').CreateDataSource('tmp/ogr_s57_9.000')
-    src_ds = ogr.Open('data/1B5X02NE.000')
+    src_ds = ogr.Open('data/s57/1B5X02NE.000')
     gdal.SetConfigOption('OGR_S57_OPTIONS', None)
     for src_lyr in src_ds:
         if src_lyr.GetName() == 'DSID':
@@ -238,7 +238,7 @@ def test_ogr_s57_9():
     gdal.Unlink('tmp/ogr_s57_9.000')
 
     gdal.SetConfigOption('OGR_S57_OPTIONS', 'RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON')
-    gdal.VectorTranslate('tmp/ogr_s57_9.000', 'data/1B5X02NE.000', options="-f S57 IsolatedNode ConnectedNode Edge Face M_QUAL")
+    gdal.VectorTranslate('tmp/ogr_s57_9.000', 'data/s57/1B5X02NE.000', options="-f S57 IsolatedNode ConnectedNode Edge Face M_QUAL")
     gdal.SetConfigOption('OGR_S57_OPTIONS', None)
 
     ds = gdal.OpenEx('tmp/ogr_s57_9.000', open_options=['RETURN_PRIMITIVES=ON'])
@@ -259,7 +259,7 @@ def test_ogr_s57_9():
 
 def test_ogr_s57_10():
 
-    ds = ogr.Open('data/fake_s57.000')
+    ds = ogr.Open('data/s57/fake_s57.000')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f['DSID_EXPP'] == 2
@@ -271,7 +271,7 @@ def test_ogr_s57_10():
 
 def test_ogr_s57_11():
 
-    ds = ogr.Open('data/fake_s57_variant_C151.000')
+    ds = ogr.Open('data/s57/fake_s57_variant_C151.000')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f['DSID_EXPP'] == 2
@@ -391,7 +391,21 @@ def test_ogr_s57_online_4():
         if mystr and sys.version_info < (3, 0, 0):
             mystr.decode('UTF-8').encode('UTF-8')
 
-    
+###############################################################################
+# Test updates of DSID (#2498)
+
+
+def test_ogr_s57_update_dsid():
+
+    ds = ogr.Open('data/s57/fake_s57_update_dsid.000')
+    lyr = ds.GetLayerByName('DSID')
+    f = lyr.GetNextFeature()
+    assert f['DSID_EDTN'] == '0'
+    assert f['DSID_UPDN'] == '1'
+    assert f['DSID_UADT'] == '20190211'
+    assert f['DSID_ISDT'] == '20190212'
+
+
 ###############################################################################
 #  Cleanup
 

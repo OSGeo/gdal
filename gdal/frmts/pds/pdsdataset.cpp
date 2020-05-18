@@ -479,7 +479,14 @@ void PDSDataset::ParseSRS()
     } else if (EQUAL( map_proj_name, "SINUSOIDAL" )) {
         oSRS.SetSinusoidal ( center_lon, 0, 0 );
     } else if (EQUAL( map_proj_name, "MERCATOR" )) {
-        oSRS.SetMercator ( center_lat, center_lon, 1, 0, 0 );
+        if( center_lat == 0.0 && first_std_parallel != 0.0 )
+        {
+            oSRS.SetMercator2SP( first_std_parallel, center_lat, center_lon, 0, 0 );
+        }
+        else
+        {
+            oSRS.SetMercator ( center_lat, center_lon, 1, 0, 0 );
+        }
     } else if (EQUAL( map_proj_name, "STEREOGRAPHIC" )) {
         if ( (fabs(center_lat)-90) < 0.0000001 ) {
                 oSRS.SetPS ( center_lat, center_lon, 1, 0, 0 );
@@ -1329,7 +1336,7 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     poDS->m_aosPDSMD.InsertString(
         0,
-        poDS->oKeywords.GetJsonObject().Format(CPLJSONObject::Pretty).c_str());
+        poDS->oKeywords.GetJsonObject().Format(CPLJSONObject::PrettyFormat::Pretty).c_str());
     VSIFCloseL( fpQube );
 
 /* -------------------------------------------------------------------- */
@@ -1571,7 +1578,7 @@ void GDALRegister_PDS()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "NASA Planetary Data System" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_pds.html" );
+                               "drivers/raster/pds.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = PDSDataset::Open;

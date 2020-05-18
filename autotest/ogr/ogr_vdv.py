@@ -45,7 +45,7 @@ import pytest
 
 def test_ogr_idf_1():
 
-    ds = ogr.Open('data/test.idf')
+    ds = ogr.Open('data/vdv/test.idf')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['NODE_ID'] != 1 or f['foo'] != 'U' or f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
@@ -87,7 +87,7 @@ def test_ogr_idf_1_with_temp_sqlite_db():
 
 def test_ogr_idf_3d():
 
-    ds = ogr.Open('data/test_3d.idf')
+    ds = ogr.Open('data/vdv/test_3d.idf')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f['NODE_ID'] != 1 or f['foo'] != 'U' or f.GetGeometryRef().ExportToWkt() != 'POINT (2 49 10)':
@@ -123,7 +123,7 @@ def test_ogr_idf_2():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.idf')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/vdv/test.idf')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 

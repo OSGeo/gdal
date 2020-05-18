@@ -6,6 +6,8 @@ gdal_viewshed
 
 .. only:: html
 
+    .. versionadded:: 3.1.0
+
     Calculates a viewshed raster from an input raster DEM using method defined in [Wang2000]_ for a user defined point.
 
 .. Index:: gdal_viewshed
@@ -15,27 +17,28 @@ Synopsis
 
 .. code-block::
 
-   gdal_viewshed [-b <band>] [-inodata]
-                 [-snodata n] [-f <formatname>]
+   gdal_viewshed [-b <band>]
+                 [-a_nodata <value>] [-f <formatname>]
                  [-oz <observer_height>] [-tz <target_height>] [-md <max_distance>]
-                 [-ox <observer_x>] [-oy <observer_y>]
+                 -ox <observer_x> -oy <observer_y>
                  [-vv <visibility>] [-iv <invisibility>]
                  [-ov <out_of_range>] [-cc <curvature_coef>]
                  [[-co NAME=VALUE] ...]
-                 [-q]
+                 [-q] [-om <output mode>]
                  <src_filename> <dst_filename>
 
 Description
 -----------
 
-The :program:`gdal_viewshed` generates a 0-1 visibility raster with 1 band from the input
-raster elevation model (DEM).
+By default the :program:`gdal_viewshed` generates a binary visibility raster from one band
+of the input raster elevation model (DEM). The output raster will be of type
+Byte. With the -mode flag can also return a minimum visible height raster of type Float64.
 
-
+.. note::
+    The algorithm as implemented currently will only output meaningful results
+    if the georeferencing is in a projected coordinate reference system.
 
 .. program:: gdal_viewshed
-
-.. versionadded:: 3.1.0
 
 .. include:: options/co.rst
 
@@ -47,7 +50,11 @@ raster elevation model (DEM).
 
 .. option:: -a_nodata <value>
 
-   The value to be set for the cells in the output raster that has no data.
+   The value to be set for the cells in the output raster that have no data.
+
+   .. note::
+        Currently, no special processing of input cells at a nodata
+        value is done (which may result in erroneous results).
 
 .. option:: -ox <value>
 
@@ -68,6 +75,7 @@ raster elevation model (DEM).
 .. option:: -md <value>
 
    Maximum distance from observer to compute visibiliy.
+   It is also used to clamp the extent of the output raster.
 
 .. option:: -cc <value>
 
@@ -82,7 +90,7 @@ raster elevation model (DEM).
 
 .. option:: -iv <value>
 
-   Pixel value to set for invisible areas. Default: -1
+   Pixel value to set for invisible areas. Default: 0
 
 .. option:: -ov <value>
 
@@ -92,6 +100,20 @@ raster elevation model (DEM).
 .. option:: -vv <value>
 
    Pixel value to set for visible areas. Default: 255
+
+.. option:: -om <output mode>
+
+  Sets what information the output contains.
+
+  Possible values: VISIBLE, DEM, GROUND
+ 
+  VISIBLE returns a raster of type Byte containing visible locations.
+ 
+  DEM and GROUND will return a raster of type Float64 containing the minimum target
+  height for target to be visible from the DEM surface or ground level respectively.
+  Flags -tz, -iv and -vv will be ignored.
+
+  Default VISIBLE
 
 C API
 -----

@@ -721,10 +721,11 @@ OGRErr OGRWAsPLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
 }
 
 /************************************************************************/
-/*                           GetNextFeature()                           */
+/*                           GetNextRawFeature()                        */
 /************************************************************************/
 
-OGRFeature *OGRWAsPLayer::GetNextFeature()
+OGRFeature *OGRWAsPLayer::GetNextRawFeature()
+
 {
     if ( READ_ONLY != eMode)
     {
@@ -732,33 +733,6 @@ OGRFeature *OGRWAsPLayer::GetNextFeature()
         return nullptr;
     }
 
-    GetLayerDefn();
-
-    while( true )
-    {
-        OGRFeature *poFeature = GetNextRawFeature();
-        if (poFeature == nullptr)
-            return nullptr;
-
-        if((m_poFilterGeom == nullptr
-            || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == nullptr
-            || m_poAttrQuery->Evaluate( poFeature )) )
-        {
-            return poFeature;
-        }
-        else
-            delete poFeature;
-    }
-}
-
-/************************************************************************/
-/*                           GetNextRawFeature()                        */
-/************************************************************************/
-
-OGRFeature *OGRWAsPLayer::GetNextRawFeature()
-
-{
     const char * pszLine = CPLReadLineL( hFile );
     if ( !pszLine ) return nullptr;
 

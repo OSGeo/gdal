@@ -322,7 +322,7 @@ OGRBoolean OGRCurve::IsConvex() const
 OGRCompoundCurve* OGRCurve::CastToCompoundCurve( OGRCurve* poCurve )
 {
     OGRCompoundCurve* poCC = new OGRCompoundCurve();
-    if( poCurve->getGeometryType() == wkbLineString )
+    if( wkbFlatten(poCurve->getGeometryType()) == wkbLineString )
         poCurve = CastToLineString(poCurve);
     if( !poCurve->IsEmpty() && poCC->addCurveDirectly(poCurve) != OGRERR_NONE )
     {

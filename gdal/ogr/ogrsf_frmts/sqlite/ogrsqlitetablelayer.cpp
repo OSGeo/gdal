@@ -485,6 +485,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
         poGeomFieldDefn->SetType( eGeomType );
         poGeomFieldDefn->SetSpatialRef(poDS->FetchSRS(poGeomFieldDefn->nSRSId));
 
+        // cppcheck-suppress knownConditionTrueFalse
         if( eGeomFormat == OSGF_SpatiaLite )
             bHasSpatialiteCol = TRUE;
     }
@@ -508,7 +509,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
         // obsolete library version not supporting new triggers
         // enforcing ReadOnly mode
             CPLDebug("SQLITE", "Enforcing ReadOnly mode : obsolete library version not supporting new triggers");
-            poDS->SetUpdate(FALSE);
+            poDS->DisableUpdate();
         }
 
         sqlite3_free_table( papszTriggerResult );
@@ -3410,6 +3411,7 @@ void OGRSQLiteTableLayer::LoadStatistics()
     /* If it is equal to the modified timestamp of the DB (as a file) */
     /* then we can safely use the data from the layer_statistics, since */
     /* it will be up-to-date */
+    // cppcheck-suppress knownConditionTrueFalse
     if( nFileTimestamp == nTS || nFileTimestamp == nTS + 1 )
     {
         osSQL.Printf("SELECT row_count, extent_min_x, extent_min_y, extent_max_x, extent_max_y "

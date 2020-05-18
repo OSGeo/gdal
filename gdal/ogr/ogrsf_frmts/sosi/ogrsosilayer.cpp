@@ -330,7 +330,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
 
         if (poGeom == nullptr) continue;                         /* skipping L_HODE and unrecognized groups */
         if (oGType != poFeatureDefn->GetGeomType()) {
-            if (poGeom != nullptr) delete poGeom;
+            delete poGeom;
             continue; /* skipping features that are not the correct geometry */
         }
 
@@ -395,8 +395,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
           CSLDestroy(tokens);
         }
 
-        if( poGeom != nullptr )
-            poGeom->assignSpatialReference(poParent->poSRS);
+        poGeom->assignSpatialReference(poParent->poSRS);
 
         poFeature->SetGeometryDirectly( poGeom );
         poFeature->SetFID( nNextFID++ );

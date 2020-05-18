@@ -41,7 +41,7 @@ import pytest
 def test_ogr_gpx_init():
     gdaltest.gpx_ds = None
 
-    gdaltest.gpx_ds = ogr.Open('data/test.gpx')
+    gdaltest.gpx_ds = ogr.Open('data/gpx/test.gpx')
     if gdaltest.gpx_ds is None:
         gdaltest.have_gpx = 0
     else:
@@ -308,7 +308,7 @@ def test_ogr_gpx_7():
 
     gdaltest.gpx_ds = None
 
-    bna_ds = ogr.Open('data/bna_for_gpx.bna')
+    bna_ds = ogr.Open('data/gpx/bna_for_gpx.bna')
 
     try:
         os.remove('tmp/gpx.gpx')
@@ -447,7 +447,7 @@ def test_ogr_gpx_8():
     gdaltest.gpx_ds = None
 
     f = open('tmp/gpx.gpx', 'rb')
-    f_ref = open('data/ogr_gpx_8_ref.txt', 'rb')
+    f_ref = open('data/gpx/ogr_gpx_8_ref.txt', 'rb')
     f_content = f.read()
     f_ref_content = f_ref.read()
     f.close()
@@ -463,7 +463,7 @@ def test_ogr_gpx_9():
     if not gdaltest.have_gpx:
         pytest.skip()
 
-    ds = ogr.Open('data/track_with_time_extension.gpx')
+    ds = ogr.Open('data/gpx/track_with_time_extension.gpx')
     lyr = ds.GetLayerByName('tracks')
     f = lyr.GetNextFeature()
     if f['time'] != '2015-10-11T15:06:33Z':

@@ -501,7 +501,7 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
     VSIStatBufL sStat;
     if( VSIStatL(osTmpFilename, &sStat) != 0 )
     {
-        // Shoudln't happen really. Just to make Coverity happy.
+        // Shouldn't happen really. Just to make Coverity happy.
         CSLDestroy(papszOptions);
         return nullptr;
     }
@@ -526,7 +526,7 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
     // Now replace the TIFF header by the CALS header.
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb+");
     if( fp == nullptr )
-        return nullptr; // Shoudln't happen normally.
+        return nullptr; // Shouldn't happen normally.
     memset(szBuffer, ' ', 2048);
     CPLString osField;
     osField = "srcdocid: NONE";
@@ -608,9 +608,9 @@ void GDALRegister_CALS()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "CALS (Type 1)" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_cals.html" );
+                               "drivers/raster/cals.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, ".cal .ct1");
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "cal ct1");
 
     poDriver->pfnIdentify = CALSDataset::Identify;
     poDriver->pfnOpen = CALSDataset::Open;

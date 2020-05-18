@@ -110,7 +110,7 @@ A few caveats :
 Impacted utilities
 ------------------
 
-The gdalinfo utility is extented to accept :
+The gdalinfo utility is extended to accept :
 
 -  a "-listmdd" option that will print the metadata domains available,
 

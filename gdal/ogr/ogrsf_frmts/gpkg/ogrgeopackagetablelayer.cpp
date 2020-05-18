@@ -799,8 +799,13 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
             if( pszGeomColsType != nullptr )
                 osGeomColsType = pszGeomColsType;
             m_iSrs = SQLResultGetValueAsInteger(&oResultGeomCols, 3, 0);
-            bHasZ = CPL_TO_BOOL(SQLResultGetValueAsInteger(&oResultGeomCols, 4, 0));
-            bHasM = CPL_TO_BOOL(SQLResultGetValueAsInteger(&oResultGeomCols, 5, 0));
+            m_nZFlag = SQLResultGetValueAsInteger(&oResultGeomCols, 4, 0);
+            m_nMFlag = SQLResultGetValueAsInteger(&oResultGeomCols, 5, 0);
+            if( !(EQUAL(osGeomColsType, "GEOMETRY") && m_nZFlag == 2) )
+            {
+                bHasZ = CPL_TO_BOOL(m_nZFlag);
+                bHasM = CPL_TO_BOOL(m_nMFlag);
+            }
 
             SQLResultFree(&oResultGeomCols);
         }
@@ -1680,6 +1685,39 @@ void OGRGeoPackageTableLayer::CheckGeometryType( OGRFeature *poFeature )
                          GetName(),
                          OGRToOGCGeomType(eLayerGeomType));
                 m_eSetBadGeomTypeWarned.insert(eGeomType);
+            }
+        }
+    }
+
+    // wkbUnknown is a rather loose type in OGR. Make sure to update
+    // the z and m columns of gpkg_geometry_columns to 2 if we have geometries
+    // with Z and M components
+    if( GetGeomType() == wkbUnknown && (m_nZFlag == 0 || m_nMFlag == 0) )
+    {
+        OGRGeometry* poGeom = poFeature->GetGeometryRef();
+        if( poGeom != nullptr )
+        {
+            bool bUpdateGpkgGeometryColumnsTable = false;
+            OGRwkbGeometryType eGeomType = poGeom->getGeometryType();
+            if( m_nZFlag == 0 && wkbHasZ(eGeomType) )
+            {
+                m_nZFlag = 2;
+                bUpdateGpkgGeometryColumnsTable = true;
+            }
+            if( m_nMFlag == 0 && wkbHasM(eGeomType) )
+            {
+                m_nMFlag = 2;
+                bUpdateGpkgGeometryColumnsTable = true;
+            }
+            if( bUpdateGpkgGeometryColumnsTable )
+            {
+                /* Update gpkg_geometry_columns */
+                char* pszSQL = sqlite3_mprintf(
+                    "UPDATE gpkg_geometry_columns SET z = %d, m = %d WHERE "
+                    "table_name = '%q' AND column_name = '%q'",
+                    m_nZFlag, m_nMFlag, GetName(),GetGeometryColumn());
+                CPL_IGNORE_RET_VAL(SQLCommand(m_poDS->GetDB(), pszSQL));
+                sqlite3_free(pszSQL);
             }
         }
     }
@@ -3631,6 +3669,8 @@ void OGRGeoPackageTableLayer::SetCreationParameters( OGRwkbGeometryType eGType,
 
     if( eGType != wkbNone )
     {
+        m_nZFlag = wkbHasZ(eGType) ? 1 : 0;
+        m_nMFlag = wkbHasM(eGType) ? 1 : 0;
         OGRGeomFieldDefn oGeomFieldDefn(pszGeomColumnName, eGType);
         if( poSRS )
             m_iSrs = m_poDS->GetSrsId(*poSRS);
@@ -3660,8 +3700,6 @@ OGRErr OGRGeoPackageTableLayer::RegisterGeometryColumn()
     const char *pszGeometryType = m_poDS->GetGeometryTypeString(eGType);
     /* Requirement 27: The z value in a gpkg_geometry_columns table row */
     /* SHALL be one of 0 (none), 1 (mandatory), or 2 (optional) */
-    bool bGeometryTypeHasZ = CPL_TO_BOOL(wkbHasZ(eGType));
-    bool bGeometryTypeHasM = CPL_TO_BOOL(wkbHasM(eGType));
 
     /* Update gpkg_geometry_columns with the table info */
     char* pszSQL = sqlite3_mprintf(
@@ -3670,8 +3708,8 @@ OGRErr OGRGeoPackageTableLayer::RegisterGeometryColumn()
         " VALUES "
         "('%q','%q','%q',%d,%d,%d)",
         GetName(),GetGeometryColumn(),pszGeometryType,
-        m_iSrs,static_cast<int>(bGeometryTypeHasZ),
-        static_cast<int>(bGeometryTypeHasM));
+        m_iSrs, m_nZFlag,
+        m_nMFlag);
 
     OGRErr err = SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);

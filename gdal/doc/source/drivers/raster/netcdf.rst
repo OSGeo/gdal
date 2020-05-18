@@ -296,13 +296,6 @@ Variables attributes for: tos, lon, lat and time
      time#bounds=time_bnds
      time#original_units=seconds since 2001-1-1
 
-Driver Improvements (GDAL >= 1.9.0)
------------------------------------
-
-The driver has undergone significant changes in GDAL 1.9.0, see NEWS
-file and `NetCDF
-Improvements <http://trac.osgeo.org/gdal/wiki/NetCDF_Improvements>`__.
-
 Important Changes
 ~~~~~~~~~~~~~~~~~
 
@@ -422,9 +415,33 @@ NetCDF-4 groups on reading:
 
 -  When searching for a variable containing auxiliary information on the
    selected subdataset, like coordinate variables or grid_mapping, we
-   now also search in parent groups and their childs as specified in
+   now also search in parent groups and their children as specified in
    `Support of groups in
    CF <https://github.com/cf-convention/cf-conventions/issues/144>`__
+
+Multidimensional API support
+----------------------------
+
+.. versionadded:: 3.1
+
+The netCDF driver supports the :ref:`multidim_raster_data_model` for reading and
+creation operations.
+
+The :cpp:func:`GDALGroup::GetMDArrayNames` method supports the following options:
+
+- SHOW_ALL=YES/NO. Defaults to NO. If set to YES, all variables will be listed.
+- SHOW_ZERO_DIM=YES/NO. Defaults to NO. If set to NO, variables with 0-dimension
+  will not be listed.
+- SHOW_COORDINATES=YES/NO. Defaults to YES. If set to NO, variables refererenced
+  in the ``coordinates`` attribute of another variable will not be listed.
+- SHOW_BOUNDS=YES/NO. Defaults to YES. If set to NO, variables refererenced
+  in the ``bounds`` attribute of another variable will not be listed.
+- SHOW_INDEXING=YES/NO. Defaults to YES. If set to NO,
+  single-dimensional variables whose name is equal to the name of their indexing
+  variable will not be listed.
+- SHOW_TIME=YES/NO. Defaults to YES. If set to NO,
+  single-dimensional variables whose ``standard_name`` attribute is "time"
+  will not be listed.
 
 Driver building
 ---------------

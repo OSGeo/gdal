@@ -7,7 +7,7 @@ cd gdal
 wine64 apps/gdalinfo.exe --version
 cd ../autotest
 # Does not work under wine
-rm gcore/gdal_api_proxy.py gcore/rfc30.py
+rm gcore/rfc30.py
 rm gnm/gnm_test.py
 
 # For some reason this crashes in the matrix .travis.yml but not in standalone branch

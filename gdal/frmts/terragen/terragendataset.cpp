@@ -1078,7 +1078,7 @@ void GDALRegister_Terragen()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ter" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Terragen heightfield" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_terragen.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/terragen.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"

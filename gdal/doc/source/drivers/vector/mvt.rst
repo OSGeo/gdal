@@ -191,7 +191,7 @@ level ranges a given layer is written.
 
 Part of the conversion is multi-threaded by default, using as many
 threads as there are cores. The number of threads used can be controlled
-with the GDAL_NUM_THREADS configuration option.
+with the :decl_configoption:`GDAL_NUM_THREADS` configuration option.
 
 Dataset creation options
 ------------------------
@@ -286,7 +286,7 @@ whose value is a JSon serialized document such as the below one:
 that are created into the target MVT dataset. They are mapped to the MVT
 target layer *boundaries*.
 
-It is also possible to get the same behaviour with the below layer
+It is also possible to get the same behavior with the below layer
 creation options, although that is not convenient in the ogr2ogr use
 case.
 

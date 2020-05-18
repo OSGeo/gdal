@@ -702,7 +702,7 @@ int DTEDReadProfileEx( DTEDInfo * psDInfo, int nColumnOffset,
         else if (fileCheckSum != nCheckSum)
         {
 #ifndef AVOID_CPL
-            CPLError( CE_Warning, CPLE_AppDefined,
+            CPLError( CE_Failure, CPLE_AppDefined,
 #else
             fprintf( stderr,
 #endif

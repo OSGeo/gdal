@@ -226,6 +226,7 @@ class CPL_DLL OGRSpatialReference
                                 double *padfPrjParams, long iDatum,
                                 int nUSGSAngleFormat = USGS_ANGLE_PACKEDDMS );
     OGRErr      importFromPanorama( long, long, long, double* );
+    OGRErr      importVertCSFromPanorama( int );
     OGRErr      importFromOzi( const char * const* papszLines );
     OGRErr      importFromWMSAUTO( const char *pszAutoDef );
     OGRErr      importFromXML( const char * );
@@ -246,6 +247,9 @@ class CPL_DLL OGRSpatialReference
 
     OGRErr      Validate() const;
     OGRErr      StripVertical();
+
+    bool        StripTOWGS84IfKnownDatumAndAllowed();
+    bool        StripTOWGS84IfKnownDatum();
 
     int         EPSGTreatsAsLatLong() const;
     int         EPSGTreatsAsNorthingEasting() const;
@@ -323,6 +327,7 @@ class CPL_DLL OGRSpatialReference
 
     bool        IsEmpty() const;
     int         IsGeographic() const;
+    int         IsDerivedGeographic() const;
     int         IsProjected() const;
     int         IsGeocentric() const;
     int         IsLocal() const;
@@ -367,6 +372,7 @@ class CPL_DLL OGRSpatialReference
                             double = 0.0, double = 0.0, double = 0.0,
                             double = 0.0 );
     OGRErr      GetTOWGS84( double *padfCoef, int nCoeff = 7 ) const;
+    OGRErr      AddGuessedTOWGS84();
 
     double      GetSemiMajor( OGRErr * = nullptr ) const;
     double      GetSemiMinor( OGRErr * = nullptr ) const;
@@ -780,6 +786,11 @@ public:
      */
     static inline OGRCoordinateTransformation* FromHandle(OGRCoordinateTransformationH hCT)
         { return reinterpret_cast<OGRCoordinateTransformation*>(hCT); }
+
+    /** Clone
+     * @since GDAL 3.1
+     */
+    virtual OGRCoordinateTransformation* Clone() const = 0;
 };
 
 OGRCoordinateTransformation CPL_DLL *
@@ -804,6 +815,8 @@ private:
 
 public:
     OGRCoordinateTransformationOptions();
+    OGRCoordinateTransformationOptions(const OGRCoordinateTransformationOptions&);
+    OGRCoordinateTransformationOptions& operator= (const OGRCoordinateTransformationOptions&);
     ~OGRCoordinateTransformationOptions();
 
     bool SetAreaOfInterest(double dfWestLongitudeDeg,

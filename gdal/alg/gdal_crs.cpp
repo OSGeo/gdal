@@ -139,7 +139,6 @@ static const char * const CRS_error_message[] = {
 static
 void* GDALCreateSimilarGCPTransformer( void *hTransformArg, double dfRatioX, double dfRatioY )
 {
-    int i = 0;
     GDAL_GCP *pasGCPList = nullptr;
     GCPTransformInfo *psInfo = static_cast<GCPTransformInfo *>(hTransformArg);
 
@@ -154,7 +153,7 @@ void* GDALCreateSimilarGCPTransformer( void *hTransformArg, double dfRatioX, dou
     else
     {
         pasGCPList = GDALDuplicateGCPs( psInfo->nGCPCount, psInfo->pasGCPList );
-        for(i=0;i<psInfo->nGCPCount;i++)
+        for(int i=0;i<psInfo->nGCPCount;i++)
         {
             pasGCPList[i].dfGCPPixel /= dfRatioX;
             pasGCPList[i].dfGCPLine /= dfRatioY;
@@ -807,17 +806,15 @@ static int exactdet (
     double N[]     /* NORTHING COEFFICIENTS */
 )
   {
-  int pntnow = 0;
   int currow = 1;
-  int j = 0;
 
-  for(pntnow = 0 ; pntnow < cp->count ; pntnow++)
+  for(int pntnow = 0 ; pntnow < cp->count ; pntnow++)
     {
     if(cp->status[pntnow] > 0)
       {
       /* POPULATE MATRIX M */
 
-      for(j = 1 ; j <= m->n ; j++)
+      for(int j = 1 ; j <= m->n ; j++)
         {
         M(currow,j) = term(j,cp->e1[pntnow] - x_mean, cp->n1[pntnow] - y_mean);
         }
@@ -856,13 +853,13 @@ static int calcls (
     double N[]     /* NORTHING COEFFICIENTS */
 )
 {
-    int i = 0, j = 0, n = 0, numactive = 0;
+    int numactive = 0;
 
     /* INITIALIZE THE UPPER HALF OF THE MATRIX AND THE TWO COLUMN VECTORS */
 
-    for(i = 1 ; i <= m->n ; i++)
+    for(int i = 1 ; i <= m->n ; i++)
     {
-        for(j = i ; j <= m->n ; j++)
+        for(int j = i ; j <= m->n ; j++)
             M(i,j) = 0.0;
         a[i-1] = b[i-1] = 0.0;
     }
@@ -870,14 +867,14 @@ static int calcls (
     /* SUM THE UPPER HALF OF THE MATRIX AND THE COLUMN VECTORS ACCORDING TO
        THE LEAST SQUARES METHOD OF SOLVING OVER DETERMINED SYSTEMS */
 
-    for(n = 0 ; n < cp->count ; n++)
+    for(int n = 0 ; n < cp->count ; n++)
     {
         if(cp->status[n] > 0)
         {
             numactive++;
-            for(i = 1 ; i <= m->n ; i++)
+            for(int i = 1 ; i <= m->n ; i++)
             {
-                for(j = i ; j <= m->n ; j++)
+                for(int j = i ; j <= m->n ; j++)
                     M(i,j) += term(i,cp->e1[n] - x_mean, cp->n1[n] - y_mean) * term(j,cp->e1[n] - x_mean, cp->n1[n] - y_mean);
 
                 a[i-1] += cp->e2[n] * term(i,cp->e1[n] - x_mean, cp->n1[n] - y_mean);
@@ -891,9 +888,9 @@ static int calcls (
 
     /* TRANSPOSE VALUES IN UPPER HALF OF M TO OTHER HALF */
 
-    for(i = 2 ; i <= m->n ; i++)
+    for(int i = 2 ; i <= m->n ; i++)
     {
-        for(j = 1 ; j < i ; j++)
+        for(int j = 1 ; j < i ; j++)
             M(i,j) = M(j,i);
     }
 
@@ -951,27 +948,17 @@ static double term (int nTerm, double e, double n)
 static int solvemat (struct MATRIX *m,
   double a[], double b[], double E[], double N[])
 {
-    int i = 0;
-    int j = 0;
-    int i2 = 0;
-    int j2 = 0;
-    int imark = 0;
-    double factor = 0.0;
-    double temp = 0.0;
-    double pivot = 0.0;  /* ACTUAL VALUE OF THE LARGEST PIVOT CANDIDATE */
-
-    for(i = 1 ; i <= m->n ; i++)
+    for(int i = 1 ; i <= m->n ; i++)
     {
-        j = i;
+        int j = i;
 
         /* find row with largest magnitude value for pivot value */
 
-        pivot = M(i,j);
-        imark = i;
-        for(i2 = i + 1 ; i2 <= m->n ; i2++)
+        double pivot = M(i,j); /* ACTUAL VALUE OF THE LARGEST PIVOT CANDIDATE */
+        int imark = i;
+        for(int i2 = i + 1 ; i2 <= m->n ; i2++)
         {
-            temp = fabs(M(i2,j));
-            if(temp > fabs(pivot))
+            if(fabs(M(i2,j)) > fabs(pivot))
             {
                 pivot = M(i2,j);
                 imark = i2;
@@ -989,31 +976,24 @@ static int solvemat (struct MATRIX *m,
 
         if(imark != i)
         {
-            for(j2 = 1 ; j2 <= m->n ; j2++)
+            for(int j2 = 1 ; j2 <= m->n ; j2++)
             {
-                temp = M(imark,j2);
-                M(imark,j2) = M(i,j2);
-                M(i,j2) = temp;
+                std::swap(M(imark,j2), M(i,j2));
             }
 
-            temp = a[imark-1];
-            a[imark-1] = a[i-1];
-            a[i-1] = temp;
-
-            temp = b[imark-1];
-            b[imark-1] = b[i-1];
-            b[i-1] = temp;
+            std::swap(a[imark-1], a[i-1]);
+            std::swap(b[imark-1], b[i-1]);
         }
 
         /* compute zeros above and below the pivot, and compute
            values for the rest of the row as well */
 
-        for(i2 = 1 ; i2 <= m->n ; i2++)
+        for(int i2 = 1 ; i2 <= m->n ; i2++)
         {
             if(i2 != i)
             {
-                factor = M(i2,j) / pivot;
-                for(j2 = j ; j2 <= m->n ; j2++)
+                const double factor = M(i2,j) / pivot;
+                for(int j2 = j ; j2 <= m->n ; j2++)
                     M(i2,j2) -= factor * M(i,j2);
                 a[i2-1] -= factor * a[i-1];
                 b[i2-1] -= factor * b[i-1];
@@ -1024,7 +1004,7 @@ static int solvemat (struct MATRIX *m,
     /* SINCE ALL OTHER VALUES IN THE MATRIX ARE ZERO NOW, CALCULATE THE
        COEFFICIENTS BY DIVIDING THE COLUMN VECTORS BY THE DIAGONAL VALUES. */
 
-    for(i = 1 ; i <= m->n ; i++)
+    for(int i = 1 ; i <= m->n ; i++)
     {
         E[i-1] = a[i-1] / M(i,i);
         N[i-1] = b[i-1] / M(i,i);
@@ -1062,31 +1042,28 @@ static int solvemat (struct MATRIX *m,
 /***************************************************************************/
 static int worst_outlier(struct Control_Points *cp, double x_mean, double y_mean, int nOrder, double E[], double N[], double dfTolerance)
 {
-    int nI = 0, nIndex = 0;
-    double dfDifference = 0.0;
-    double dfSampleRes = 0.0;
-    double dfLineRes = 0.0;
-    double dfCurrentDifference = 0.0;
-    double dfSampleResidual = 0.0;
-    double dfLineResidual = 0.0;
+    //double dfSampleResidual = 0.0;
+    //double dfLineResidual = 0.0;
     double *padfResiduals = static_cast<double*>(CPLCalloc(sizeof(double),cp->count));
 
-    for(nI = 0; nI < cp->count; nI++)
+    for(int nI = 0; nI < cp->count; nI++)
     {
+        double dfSampleRes = 0.0;
+        double dfLineRes = 0.0;
         CRS_georef( cp->e1[nI] - x_mean, cp->n1[nI] - y_mean, &dfSampleRes, &dfLineRes,E,N,nOrder );
         dfSampleRes -= cp->e2[nI];
         dfLineRes -= cp->n2[nI];
-        dfSampleResidual += dfSampleRes*dfSampleRes;
-        dfLineResidual += dfLineRes*dfLineRes;
+        //dfSampleResidual += dfSampleRes*dfSampleRes;
+        //dfLineResidual += dfLineRes*dfLineRes;
 
         padfResiduals[nI] = sqrt(dfSampleRes*dfSampleRes + dfLineRes*dfLineRes);
     }
 
-    nIndex = -1;
-    dfDifference = -1.0;
-    for(nI = 0; nI < cp->count; nI++)
+    int nIndex = -1;
+    double dfDifference = -1.0;
+    for(int nI = 0; nI < cp->count; nI++)
     {
-        dfCurrentDifference = padfResiduals[nI];
+        double dfCurrentDifference = padfResiduals[nI];
         if(fabs(dfCurrentDifference) < 1.19209290E-07F /*FLT_EPSILON*/)
         {
             dfCurrentDifference = 0.0;
@@ -1122,7 +1099,6 @@ static int remove_outliers( GCPTransformInfo *psInfo )
     double *padfRasterX = nullptr;
     double *padfRasterY = nullptr;
     int *panStatus = nullptr;
-    int nI = 0;
     int nCRSresult = 0;
     int nGCPCount = 0;
     int nMinimumGcps = 0;
@@ -1149,7 +1125,7 @@ static int remove_outliers( GCPTransformInfo *psInfo )
         padfRasterY = new double[nGCPCount];
         panStatus = new int[nGCPCount];
 
-        for( nI = 0; nI < nGCPCount; nI++ )
+        for( int nI = 0; nI < nGCPCount; nI++ )
         {
             panStatus[nI] = 1;
             padfGeoX[nI] = psInfo->pasGCPList[nI].dfGCPX;
@@ -1194,7 +1170,7 @@ static int remove_outliers( GCPTransformInfo *psInfo )
             CPLFree(psInfo->pasGCPList[nIndex].pszId);
             CPLFree(psInfo->pasGCPList[nIndex].pszInfo);
 
-            for( nI = nIndex; nI < sPoints.count - 1; nI++ )
+            for( int nI = nIndex; nI < sPoints.count - 1; nI++ )
             {
                 sPoints.e1[nI] = sPoints.e1[nI + 1];
                 sPoints.n1[nI] = sPoints.n1[nI + 1];
@@ -1212,7 +1188,7 @@ static int remove_outliers( GCPTransformInfo *psInfo )
                                         nReqOrder );
         }
 
-        for( nI = 0; nI < sPoints.count; nI++ )
+        for( int nI = 0; nI < sPoints.count; nI++ )
         {
             psInfo->pasGCPList[nI].dfGCPX = sPoints.e2[nI];
             psInfo->pasGCPList[nI].dfGCPY = sPoints.n2[nI];

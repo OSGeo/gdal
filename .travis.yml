@@ -13,7 +13,7 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: required
-      dist: trusty
+      dist: bionic
       cache:
         apt: true
         directories:
@@ -50,7 +50,7 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: required
-      dist: trusty
+      dist: xenial
       cache:
         apt: true
         directories:
@@ -73,11 +73,27 @@ matrix:
       env:
         - BUILD_NAME=android
         - DETAILS=""
+#    - os: linux
+#      compiler: gcc
+#      language: cpp
+#      sudo: false
+#      dist: precise
+#      cache:
+#        apt: true
+#        directories:
+#          - $HOME/.ccache
+#      apt:
+#        packages:
+#          - ccache
+#      env:
+#        - BUILD_NAME=big_endian
+#        - DETAILS=""
     - os: linux
+      arch: s390x
       compiler: gcc
       language: cpp
       sudo: false
-      dist: precise
+      dist: bionic
       cache:
         apt: true
         directories:
@@ -86,7 +102,7 @@ matrix:
         packages:
           - ccache
       env:
-        - BUILD_NAME=big_endian
+        - BUILD_NAME=s390x
         - DETAILS=""
     - os: linux
       compiler: gcc
@@ -139,7 +155,7 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: required
-      dist: trusty
+      dist: xenial
       cache:
         apt: true
       env:
@@ -150,7 +166,7 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: required
-      dist: trusty
+      dist: xenial
       cache:
         apt: true
       env:
@@ -166,13 +182,13 @@ install:
 script:
   - ./gdal/ci/travis/${BUILD_NAME}/script.sh
 
-notifications:
-  email:
-    recipients:
-      - gdal-commits@lists.osgeo.org
-
-  irc:
-    channels:
-      - "irc.freenode.org#gdal"
-    use_notice: true
-    on_success: change
+# notifications:
+#   email:
+#     recipients:
+#       - gdal-commits@lists.osgeo.org
+#
+#   irc:
+#     channels:
+#       - "irc.freenode.org#gdal"
+#     use_notice: true
+#     on_success: change

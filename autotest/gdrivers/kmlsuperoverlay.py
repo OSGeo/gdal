@@ -262,7 +262,7 @@ def test_kmlsuperoverlay_5():
 
 def test_kmlsuperoverlay_6():
 
-    ds = gdal.Open('data/kmlimage.kmz')
+    ds = gdal.Open('data/kml/kmlimage.kmz')
     assert ds.GetProjectionRef().find('WGS_1984') >= 0
     got_gt = ds.GetGeoTransform()
     ref_gt = [1.2554125761846773, 1.6640895429971981e-05, 0.0, 43.452120815728101, 0.0, -1.0762348187666334e-05]
@@ -282,7 +282,7 @@ def test_kmlsuperoverlay_6():
 
 def test_kmlsuperoverlay_7():
 
-    ds = gdal.Open('data/small_world.kml')
+    ds = gdal.Open('data/kml/small_world.kml')
     assert ds.GetProjectionRef().find('WGS_1984') >= 0
     got_gt = ds.GetGeoTransform()
     ref_gt = [-180.0, 0.9, 0.0, 90.0, 0.0, -0.9]
@@ -299,7 +299,7 @@ def test_kmlsuperoverlay_7():
 
 def test_kmlsuperoverlay_single_overlay_document_folder_pct():
 
-    ds = gdal.Open('data/small_world_in_document_folder_pct.kml')
+    ds = gdal.Open('data/kml/small_world_in_document_folder_pct.kml')
     assert ds.GetProjectionRef().find('WGS_1984') >= 0
     got_gt = ds.GetGeoTransform()
     ref_gt = [-180.0, 0.9, 0.0, 90.0, 0.0, -0.9]

@@ -41,7 +41,7 @@
 
 class OGREDIGEODataSource;
 
-class OGREDIGEOLayer final: public OGRLayer
+class OGREDIGEOLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGREDIGEOLayer>
 {
     OGREDIGEODataSource* poDS;
 
@@ -64,7 +64,7 @@ class OGREDIGEOLayer final: public OGRLayer
                         virtual ~OGREDIGEOLayer();
 
     virtual void                ResetReading() override;
-    virtual OGRFeature *        GetNextFeature() override;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGREDIGEOLayer)
     virtual OGRFeature *        GetFeature(GIntBig nFID) override;
     virtual GIntBig             GetFeatureCount( int bForce ) override;
 

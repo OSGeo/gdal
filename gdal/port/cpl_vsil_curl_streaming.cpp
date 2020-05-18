@@ -112,7 +112,7 @@ class RingBuffer
     size_t nLength = 0;
 
     public:
-        RingBuffer(size_t nCapacity = BKGND_BUFFER_SIZE);
+        explicit RingBuffer(size_t nCapacity = BKGND_BUFFER_SIZE);
         ~RingBuffer();
 
         size_t GetCapacity() const { return nCapacity; }
@@ -238,7 +238,7 @@ public:
 
     CachedFileProp*     GetCachedFileProp(const char*     pszURL);
 
-    void    ClearCache();
+    virtual void    ClearCache();
 };
 
 /************************************************************************/
@@ -1530,7 +1530,7 @@ VSICurlStreamingFSHandler::VSICurlStreamingFSHandler()
 
 VSICurlStreamingFSHandler::~VSICurlStreamingFSHandler()
 {
-    ClearCache();
+    VSICurlStreamingFSHandler::ClearCache();
 
     CPLDestroyMutex( hMutex );
     hMutex = nullptr;
@@ -1544,12 +1544,9 @@ void VSICurlStreamingFSHandler::ClearCache()
 {
     CPLMutexHolder oHolder( &hMutex );
 
-    for( std::map<CPLString, CachedFileProp*>::const_iterator
-             iterCacheFileSize = cacheFileSize.begin();
-         iterCacheFileSize != cacheFileSize.end();
-         iterCacheFileSize++ )
+    for( auto& kv: cacheFileSize )
     {
-        CPLFree(iterCacheFileSize->second);
+        CPLFree(kv.second);
     }
     cacheFileSize.clear();
 }
@@ -1655,8 +1652,6 @@ int VSICurlStreamingFSHandler::Stat( const char *pszFilename,
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return -1;
 
-    CPLString osFilename(pszFilename);
-
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
     VSICurlStreamingHandle* poHandle =
@@ -1718,8 +1713,6 @@ class VSIS3StreamingFSHandler final: public IVSIS3LikeStreamingFSHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIS3StreamingFSHandler)
 
-    std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params{};
-
 protected:
     CPLString GetFSPrefix() override { return "/vsis3_streaming/"; }
     VSICurlStreamingHandle* CreateFileHandle( const char* pszURL ) override;
@@ -1733,6 +1726,12 @@ public:
 
     void UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelper ) override;
     void UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelper ) override;
+
+    void ClearCache() override
+    {
+        IVSIS3LikeStreamingFSHandler::ClearCache();
+        VSIS3UpdateParams::ClearCache();
+    }
 };
 
 /************************************************************************/
@@ -1742,16 +1741,7 @@ public:
 void VSIS3StreamingFSHandler::UpdateMapFromHandle(
     IVSIS3LikeHandleHelper * poHandleHelper )
 {
-    CPLMutexHolder oHolder( &hMutex );
-
-    VSIS3HandleHelper * poS3HandleHelper =
-        dynamic_cast<VSIS3HandleHelper *>(poHandleHelper);
-    CPLAssert( poS3HandleHelper );
-    if( !poS3HandleHelper )
-        return;
-
-    oMapBucketsToS3Params[ poS3HandleHelper->GetBucket() ] =
-        VSIS3UpdateParams ( poS3HandleHelper );
+    VSIS3UpdateParams::UpdateMapFromHandle(poHandleHelper);
 }
 
 /************************************************************************/
@@ -1761,20 +1751,7 @@ void VSIS3StreamingFSHandler::UpdateMapFromHandle(
 void VSIS3StreamingFSHandler::UpdateHandleFromMap(
     IVSIS3LikeHandleHelper * poHandleHelper )
 {
-    CPLMutexHolder oHolder( &hMutex );
-
-    VSIS3HandleHelper * poS3HandleHelper =
-        dynamic_cast<VSIS3HandleHelper *>(poHandleHelper);
-    CPLAssert( poS3HandleHelper );
-    if( !poS3HandleHelper )
-        return;
-
-    std::map< CPLString, VSIS3UpdateParams>::iterator oIter =
-        oMapBucketsToS3Params.find(poS3HandleHelper->GetBucket());
-    if( oIter != oMapBucketsToS3Params.end() )
-    {
-        oIter->second.UpdateHandlerHelper(poS3HandleHelper);
-    }
+    VSIS3UpdateParams::UpdateHandleFromMap(poHandleHelper);
 }
 
 /************************************************************************/

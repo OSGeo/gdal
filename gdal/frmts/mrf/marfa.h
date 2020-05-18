@@ -165,7 +165,7 @@ typedef struct ILImage {
     ILSize pagecount;
     ILCompression comp;
     ILOrder order;
-    int nbo;
+    bool nbo;
     int hasNoData;
     double NoDataValue;
     CPLString datfname;

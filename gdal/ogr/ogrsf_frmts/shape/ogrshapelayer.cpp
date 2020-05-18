@@ -177,6 +177,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
             osEncoding = "";
         }
     }
+    SetMetadataItem("SOURCE_ENCODING", osEncoding, "SHAPEFILE");
 
     poFeatureDefn = SHPReadOGRFeatureDefn(
         CPLGetBasename(pszFullName),
@@ -339,6 +340,115 @@ void OGRShapeLayer::SetWriteDBFEOFChar( bool b )
 /*                          ConvertCodePage()                           */
 /************************************************************************/
 
+static CPLString GetEncodingFromLDIDNumber(int nLDID)
+{
+    int nCP = -1;  // Windows code page.
+
+    // http://www.autopark.ru/ASBProgrammerGuide/DBFSTRUC.HTM
+    switch( nLDID )
+    {
+        case 1: nCP = 437;      break;
+        case 2: nCP = 850;      break;
+        case 3: nCP = 1252;     break;
+        case 4: nCP = 10000;    break;
+        case 8: nCP = 865;      break;
+        case 10: nCP = 850;     break;
+        case 11: nCP = 437;     break;
+        case 13: nCP = 437;     break;
+        case 14: nCP = 850;     break;
+        case 15: nCP = 437;     break;
+        case 16: nCP = 850;     break;
+        case 17: nCP = 437;     break;
+        case 18: nCP = 850;     break;
+        case 19: nCP = 932;     break;
+        case 20: nCP = 850;     break;
+        case 21: nCP = 437;     break;
+        case 22: nCP = 850;     break;
+        case 23: nCP = 865;     break;
+        case 24: nCP = 437;     break;
+        case 25: nCP = 437;     break;
+        case 26: nCP = 850;     break;
+        case 27: nCP = 437;     break;
+        case 28: nCP = 863;     break;
+        case 29: nCP = 850;     break;
+        case 31: nCP = 852;     break;
+        case 34: nCP = 852;     break;
+        case 35: nCP = 852;     break;
+        case 36: nCP = 860;     break;
+        case 37: nCP = 850;     break;
+        case 38: nCP = 866;     break;
+        case 55: nCP = 850;     break;
+        case 64: nCP = 852;     break;
+        case 77: nCP = 936;     break;
+        case 78: nCP = 949;     break;
+        case 79: nCP = 950;     break;
+        case 80: nCP = 874;     break;
+        case 87: return CPL_ENC_ISO8859_1;
+        case 88: nCP = 1252;     break;
+        case 89: nCP = 1252;     break;
+        case 100: nCP = 852;     break;
+        case 101: nCP = 866;     break;
+        case 102: nCP = 865;     break;
+        case 103: nCP = 861;     break;
+        case 104: nCP = 895;     break;
+        case 105: nCP = 620;     break;
+        case 106: nCP = 737;     break;
+        case 107: nCP = 857;     break;
+        case 108: nCP = 863;     break;
+        case 120: nCP = 950;     break;
+        case 121: nCP = 949;     break;
+        case 122: nCP = 936;     break;
+        case 123: nCP = 932;     break;
+        case 124: nCP = 874;     break;
+        case 134: nCP = 737;     break;
+        case 135: nCP = 852;     break;
+        case 136: nCP = 857;     break;
+        case 150: nCP = 10007;   break;
+        case 151: nCP = 10029;   break;
+        case 200: nCP = 1250;    break;
+        case 201: nCP = 1251;    break;
+        case 202: nCP = 1254;    break;
+        case 203: nCP = 1253;    break;
+        case 204: nCP = 1257;    break;
+        default: break;
+    }
+
+    if( nCP < 0 )
+        return CPLString();
+    return CPLString().Printf("CP%d", nCP);
+}
+
+static CPLString GetEncodingFromCPG( const char* pszCPG )
+{
+    // see https://support.esri.com/en/technical-article/000013192
+    CPLString osEncodingFromCPG;
+    const int nCPG = atoi(pszCPG);
+    if( (nCPG >= 437 && nCPG <= 950)
+        || (nCPG >= 1250 && nCPG <= 1258) )
+    {
+        osEncodingFromCPG.Printf( "CP%d", nCPG );
+    }
+    else if( STARTS_WITH_CI(pszCPG, "8859") )
+    {
+        if( pszCPG[4] == '-' )
+            osEncodingFromCPG.Printf( "ISO-8859-%s", pszCPG + 5 );
+        else
+            osEncodingFromCPG.Printf( "ISO-8859-%s", pszCPG + 4 );
+    }
+    else if( STARTS_WITH_CI(pszCPG, "UTF-8") ||
+             STARTS_WITH_CI(pszCPG, "UTF8") )
+        osEncodingFromCPG =  CPL_ENC_UTF8;
+    else if( STARTS_WITH_CI(pszCPG, "ANSI 1251") )
+        osEncodingFromCPG = "CP1251";
+    else
+    {
+        // Try just using the CPG value directly.  Works for stuff like Big5.
+        osEncodingFromCPG = pszCPG;
+    }
+    return osEncodingFromCPG;
+}
+
+
 CPLString OGRShapeLayer::ConvertCodePage( const char *pszCodePage )
 
 {
@@ -347,110 +457,40 @@ CPLString OGRShapeLayer::ConvertCodePage( const char *pszCodePage )
     if( pszCodePage == nullptr )
         return l_osEncoding;
 
-    if( STARTS_WITH_CI(pszCodePage, "LDID/") )
+    CPLString osEncodingFromLDID;
+    if( hDBF->iLanguageDriver != 0 )
     {
-        int nCP = -1;  // Windows code page.
+        SetMetadataItem("LDID_VALUE",
+                        CPLSPrintf("%d", hDBF->iLanguageDriver),
+                        "SHAPEFILE");
 
-        // http://www.autopark.ru/ASBProgrammerGuide/DBFSTRUC.HTM
-        switch( atoi(pszCodePage+5) )
-        {
-          case 1: nCP = 437;      break;
-          case 2: nCP = 850;      break;
-          case 3: nCP = 1252;     break;
-          case 4: nCP = 10000;    break;
-          case 8: nCP = 865;      break;
-          case 10: nCP = 850;     break;
-          case 11: nCP = 437;     break;
-          case 13: nCP = 437;     break;
-          case 14: nCP = 850;     break;
-          case 15: nCP = 437;     break;
-          case 16: nCP = 850;     break;
-          case 17: nCP = 437;     break;
-          case 18: nCP = 850;     break;
-          case 19: nCP = 932;     break;
-          case 20: nCP = 850;     break;
-          case 21: nCP = 437;     break;
-          case 22: nCP = 850;     break;
-          case 23: nCP = 865;     break;
-          case 24: nCP = 437;     break;
-          case 25: nCP = 437;     break;
-          case 26: nCP = 850;     break;
-          case 27: nCP = 437;     break;
-          case 28: nCP = 863;     break;
-          case 29: nCP = 850;     break;
-          case 31: nCP = 852;     break;
-          case 34: nCP = 852;     break;
-          case 35: nCP = 852;     break;
-          case 36: nCP = 860;     break;
-          case 37: nCP = 850;     break;
-          case 38: nCP = 866;     break;
-          case 55: nCP = 850;     break;
-          case 64: nCP = 852;     break;
-          case 77: nCP = 936;     break;
-          case 78: nCP = 949;     break;
-          case 79: nCP = 950;     break;
-          case 80: nCP = 874;     break;
-          case 87: return CPL_ENC_ISO8859_1;
-          case 88: nCP = 1252;     break;
-          case 89: nCP = 1252;     break;
-          case 100: nCP = 852;     break;
-          case 101: nCP = 866;     break;
-          case 102: nCP = 865;     break;
-          case 103: nCP = 861;     break;
-          case 104: nCP = 895;     break;
-          case 105: nCP = 620;     break;
-          case 106: nCP = 737;     break;
-          case 107: nCP = 857;     break;
-          case 108: nCP = 863;     break;
-          case 120: nCP = 950;     break;
-          case 121: nCP = 949;     break;
-          case 122: nCP = 936;     break;
-          case 123: nCP = 932;     break;
-          case 124: nCP = 874;     break;
-          case 134: nCP = 737;     break;
-          case 135: nCP = 852;     break;
-          case 136: nCP = 857;     break;
-          case 150: nCP = 10007;   break;
-          case 151: nCP = 10029;   break;
-          case 200: nCP = 1250;    break;
-          case 201: nCP = 1251;    break;
-          case 202: nCP = 1254;    break;
-          case 203: nCP = 1253;    break;
-          case 204: nCP = 1257;    break;
-          default: break;
-        }
-
-        if( nCP != -1 )
-        {
-            l_osEncoding.Printf( "CP%d", nCP );
-            return l_osEncoding;
-        }
+        osEncodingFromLDID = GetEncodingFromLDIDNumber(hDBF->iLanguageDriver);
+    }
+    if( !osEncodingFromLDID.empty() )
+    {
+        SetMetadataItem("ENCODING_FROM_LDID",
+                        osEncodingFromLDID.c_str(),
+                        "SHAPEFILE");
     }
 
-    // From the CPG file
-    // http://resources.arcgis.com/fr/content/kbase?fa=articleShow&d=21106
-
-    if( (atoi(pszCodePage) >= 437 && atoi(pszCodePage) <= 950)
-        || (atoi(pszCodePage) >= 1250 && atoi(pszCodePage) <= 1258) )
+    CPLString osEncodingFromCPG;
+    if( !STARTS_WITH_CI(pszCodePage, "LDID/") )
     {
-        l_osEncoding.Printf( "CP%d", atoi(pszCodePage) );
-        return l_osEncoding;
-    }
-    if( STARTS_WITH_CI(pszCodePage, "8859") )
-    {
-        if( pszCodePage[4] == '-' )
-            l_osEncoding.Printf( "ISO-8859-%s", pszCodePage + 5 );
-        else
-            l_osEncoding.Printf( "ISO-8859-%s", pszCodePage + 4 );
-        return l_osEncoding;
-    }
-    if( STARTS_WITH_CI(pszCodePage, "UTF-8") )
-        return CPL_ENC_UTF8;
-    if( STARTS_WITH_CI(pszCodePage, "ANSI 1251") )
-        return "CP1251";
+        SetMetadataItem("CPG_VALUE", pszCodePage, "SHAPEFILE");
 
-    // Try just using the CPG value directly.  Works for stuff like Big5.
-    return pszCodePage;
+        osEncodingFromCPG = GetEncodingFromCPG(pszCodePage);
+
+        if( !osEncodingFromCPG.empty() )
+            SetMetadataItem("ENCODING_FROM_CPG", osEncodingFromCPG, "SHAPEFILE");
+
+        l_osEncoding = osEncodingFromCPG;
+    }
+    else if( !osEncodingFromLDID.empty() )
+    {
+        l_osEncoding = osEncodingFromLDID;
+    }
+
+    return l_osEncoding;
 }
 
 /************************************************************************/
@@ -2175,7 +2215,7 @@ OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
                 int* panConfidence = nullptr;
                 OGRSpatialReferenceH* pahSRS =
                     poSRS->FindMatches(nullptr, &nEntries, &panConfidence);
-                if( nEntries == 1 && panConfidence[0] == 100 )
+                if( nEntries == 1 && panConfidence[0] >= 90 )
                 {
                     poSRS->Release();
                     poSRS = reinterpret_cast<OGRSpatialReference*>(pahSRS[0]);

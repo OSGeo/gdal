@@ -38,7 +38,7 @@ import gdaltest
 
 def test_ndf_1():
 
-    tst = gdaltest.GDALTest('NDF', 'LE7134052000500350.H3', 1, 6510,
+    tst = gdaltest.GDALTest('NDF', 'ndf/LE7134052000500350.H3', 1, 6510,
                             xoff=0, yoff=0, xsize=15620, ysize=1)
 
     gt = (320325.75, 14.25, 0, 1383062.25, 0, -14.25)

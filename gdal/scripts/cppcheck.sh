@@ -34,16 +34,21 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
     cppcheck --inline-suppr --template='{file}:{line},{severity},{id},{message}' \
         --enable=all --inconclusive --std=posix -UAFL_FRIENDLY -UANDROID \
         -UCOMPAT_WITH_ICC_CONVERSION_CHECK -DDEBUG -UDEBUG_BOOL -DHAVE_CXX11=1 \
+        -D__linux \
         -DGBool=int -DCPL_HAS_GINT64=1 -DHAVE_GEOS -DHAVE_EXPAT -DHAVE_XERCES -DCOMPILATION_ALLOWED \
         -DHAVE_SFCGAL -DHAVE_SPATIALITE -DSPATIALITE_412_OR_LATER \
         -DHAVE_SQLITE -DSQLITE_VERSION_NUMBER=3006000 -DHAVE_SQLITE_VFS \
         -DHAVE_RASTERLITE2 \
+        -DHAVE_CURL -DLIBCURL_VERSION_NUM=0x073800 \
         -DPTHREAD_MUTEX_RECURSIVE -DCPU_LITTLE_ENDIAN -DCPL_IS_LSB=1 \
         -DKDU_MAJOR_VERSION=7 -DKDU_MINOR_VERSION=5 \
         -DHAVE_JASPER_UUID \
         -D__GNUC__==5 -DGDAL_COMPILATION \
         -DODBCVER=0x0300 \
         -DNETCDF_HAS_NC4 \
+        -DJPEG_SUPPORTED \
+        -DJPEG_DUAL_MODE_8_12 \
+        -D_TOOLKIT_IN_DLL_ \
         -UGDAL_NO_AUTOLOAD \
         -DHAVE_MITAB \
         -Dva_copy=va_start \
@@ -58,6 +63,14 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -DHAVE_SSE_AT_COMPILE_TIME \
         -DHAVE_LIBXML2 \
         -DCPL_INTERNAL= \
+        -DCHAR_BIT=8 \
+        -DUCHAR_MAX=255 \
+        -DSHRT_MIN=-32768 \
+        -DSHRT_MAX=32767 \
+        -DUSHRT_MAX=65535 \
+        -DINT_MIN=-2147483648 \
+        -DINT_MAX=2147483647 \
+        -DUINT_MAX=4294967295U \
         --include=port/cpl_config.h \
         --include=port/cpl_port.h \
         -I port -I gcore -I ogr -I ogr/ogrsf_frmts -I ogr/ogrsf_frmts/geojson \
@@ -92,6 +105,10 @@ mv ${LOG_FILE}.tmp ${LOG_FILE}
 
 # I don't want to care about flatbuffers
 grep -v -e "ogr/ogrsf_frmts/flatgeobuf/flatbuffers" ${LOG_FILE} > ${LOG_FILE}.tmp
+mv ${LOG_FILE}.tmp ${LOG_FILE}
+
+# False positive deallocuse
+grep -v -e "frmts/png/libpng/png.c" ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
 if grep "null pointer" ${LOG_FILE} ; then

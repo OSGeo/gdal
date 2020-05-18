@@ -45,7 +45,7 @@
 #define PREEXISTING_BINARY_FILE \
     "Binary file pre-existing PDS4 label. This comment is used by GDAL to " \
     "avoid deleting the binary file when the label is deleted. Keep it to " \
-    "preserve this behaviour."
+    "preserve this behavior."
 
 extern "C" void GDALRegister_PDS4();
 
@@ -4554,7 +4554,7 @@ void GDALRegister_PDS4()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "NASA Planetary Data System 4" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_pds4.html" );
+                               "drivers/raster/pds4.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xml" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte UInt16 Int16 UInt32 Int32 Float32 "

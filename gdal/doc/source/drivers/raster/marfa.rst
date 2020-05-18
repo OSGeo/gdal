@@ -31,9 +31,6 @@ Driver capabilities
 Links
 -----
 
--  `MRF User
-   Guide <https://github.com/nasa-gibs/mrf/blob/master/src/gdal_mrf/frmts/mrf/MUG.md>`__
--  `MRF
-   Specification <https://github.com/nasa-gibs/mrf/blob/master/spec/mrf_spec.md>`__
--  `Source repository
-   nasa-gibs/mrf <https://github.com/nasa-gibs/mrf>`__
+-  `MRF User Guide <https://github.com/nasa-gibs/mrf/blob/master/doc/MUG.md>`__
+-  `MRF Specification <https://github.com/nasa-gibs/mrf/blob/master/spec/mrf_spec.md>`__
+-  `Source repository nasa-gibs/mrf <https://github.com/nasa-gibs/mrf>`__

@@ -231,7 +231,7 @@ CPLErr NWT_GRDRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
         return CE_Failure;
 
     // Ensure the blocksize is not beyond the system limits and
-    // initialise the size of the record
+    // initialize the size of the record
     if (nBlockXSize > INT_MAX / 2) {
         return CE_Failure;
     }
@@ -245,7 +245,7 @@ CPLErr NWT_GRDRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     // Cast pImage to float
     float *pfImage = reinterpret_cast<float *>(pImage);
 
-    // Initialise output array
+    // Initialize output array
     GByte *pabyRecord = reinterpret_cast<GByte *>(VSI_MALLOC_VERBOSE(
                     nRecordSize));
     if (pabyRecord == nullptr)
@@ -1036,7 +1036,7 @@ void GDALRegister_NWT_GRD() {
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
             "Northwood Numeric Grid Format .grd/.tab");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_nwtgrd.html");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/nwtgrd.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "grd");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Float32");

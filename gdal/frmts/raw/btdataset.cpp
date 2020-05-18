@@ -508,11 +508,11 @@ CPLErr BTDataset::_SetProjection( const char *pszNewProjection )
 /*      Parse projection.                                               */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS( pszProjection );
-    GInt16  nShortTemp = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Linear units.                                                   */
 /* -------------------------------------------------------------------- */
+#if 0
     if( oSRS.IsGeographic() )
     {
         // nShortTemp = 0;
@@ -529,8 +529,8 @@ CPLErr BTDataset::_SetProjection( const char *pszNewProjection )
         else
             nShortTemp = 1;
     }
-
-    nShortTemp = CPL_LSBWORD16( 1 );
+#endif
+    GInt16 nShortTemp = CPL_LSBWORD16( 1 );
     memcpy( abyHeader + 22, &nShortTemp, 2 );
 
 /* -------------------------------------------------------------------- */
@@ -978,7 +978,7 @@ void GDALRegister_BT()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "VTP .bt (Binary Terrain) 1.3 Format" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_various.html#BT" );
+                                   "drivers/raster/bt.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bt" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Int16 Int32 Float32" );

@@ -740,19 +740,17 @@ boolean GeoRasterDataset::JPEG_CopyDirect( const char* pszJPGFilename,
         VSIFSeekL( fpInput, 0L, SEEK_END);
 
         size_t nCount = 0;
-        size_t nSize = 0;
-        size_t nDataLength = VSIFTellL( fpInput );
+        const size_t nDataLength = VSIFTellL( fpInput );
 
         VSIFSeekL( fpInput, 0L, SEEK_SET );
 
-        GUIntBig nWrite = (GUIntBig) 0;
-        GUIntBig nCurOff = (GUIntBig) 0;
+        GUIntBig nCurOff = 0;
 
         while( nCount < nDataLength )
         {
             size_t nChunk = (size_t) MIN( nCache, nDataLength - nCount );
 
-            nSize = VSIFReadL( pBuffer, 1, nChunk, fpInput );
+            size_t nSize = VSIFReadL( pBuffer, 1, nChunk, fpInput );
 
             if ( nSize != nChunk )
             {
@@ -760,7 +758,7 @@ boolean GeoRasterDataset::JPEG_CopyDirect( const char* pszJPGFilename,
                           "amount read differs from JPG length" );
             }
 
-            nWrite = poStmt->WriteBlob( poLocator,
+            const auto nWrite = poStmt->WriteBlob( poLocator,
                                         (void*) pBuffer,
                                         (nCurOff + 1),
                                         nSize );
@@ -1381,17 +1379,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
     //      Copy information to the raster bands
     // --------------------------------------------------------------------
 
-    int    bHasNoDataValue = FALSE;
-    double dfNoDataValue = 0.0;
-    double dfMin = 0.0;
-    double dfMax = 0.0;
-    double dfStdDev = 0.0;
-    double dfMean = 0.0;
-    double dfMedian = 0.0;
-    double dfMode = 0.0;
-    int    iBand = 0;
-
-    for( iBand = 1; iBand <= poSrcDS->GetRasterCount(); iBand++ )
+    for( int iBand = 1; iBand <= poSrcDS->GetRasterCount(); iBand++ )
     {
         GDALRasterBand*      poSrcBand = poSrcDS->GetRasterBand( iBand );
         GeoRasterRasterBand* poDstBand = (GeoRasterRasterBand*)
@@ -1412,15 +1400,21 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
         //  Copy statistics information, without median and mode.
         // ----------------------------------------------------------------
 
-        if( poSrcBand->GetStatistics( false, false, &dfMin, &dfMax,
-            &dfMean, &dfStdDev ) == CE_None )
         {
-            poDstBand->SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
+            double dfMin = 0.0;
+            double dfMax = 0.0;
+            double dfMean = 0.0;
+            double dfStdDev = 0.0;
+            if( poSrcBand->GetStatistics( false, false, &dfMin, &dfMax,
+                &dfMean, &dfStdDev ) == CE_None )
+            {
+                poDstBand->SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
 
-            /* That will not be recorded in the GeoRaster metadata since it
-             * doesn't have median and mode, so those values are only useful
-             * at runtime.
-             */
+                /* That will not be recorded in the GeoRaster metadata since it
+                * doesn't have median and mode, so those values are only useful
+                * at runtime.
+                */
+            }
         }
 
         // ----------------------------------------------------------------
@@ -1439,11 +1433,11 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
         if ( pszMin    != nullptr && pszMax  != nullptr && pszMean   != nullptr &&
              pszMedian != nullptr && pszMode != nullptr && pszStdDev != nullptr )
         {
-            dfMin        = CPLScanDouble( pszMin, MAX_DOUBLE_STR_REP );
-            dfMax        = CPLScanDouble( pszMax, MAX_DOUBLE_STR_REP );
-            dfMean       = CPLScanDouble( pszMean, MAX_DOUBLE_STR_REP );
-            dfMedian     = CPLScanDouble( pszMedian, MAX_DOUBLE_STR_REP );
-            dfMode       = CPLScanDouble( pszMode, MAX_DOUBLE_STR_REP );
+            const double dfMin        = CPLScanDouble( pszMin, MAX_DOUBLE_STR_REP );
+            const double dfMax        = CPLScanDouble( pszMax, MAX_DOUBLE_STR_REP );
+            const double dfMean       = CPLScanDouble( pszMean, MAX_DOUBLE_STR_REP );
+            const double dfMedian     = CPLScanDouble( pszMedian, MAX_DOUBLE_STR_REP );
+            const double dfMode       = CPLScanDouble( pszMode, MAX_DOUBLE_STR_REP );
 
             if ( ! ( ( dfMin    > dfMax ) ||
                      ( dfMean   > dfMax ) || ( dfMean   < dfMin ) ||
@@ -1476,8 +1470,8 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
         // ----------------------------------------------------------------
         //  Copy NoData Value
         // ----------------------------------------------------------------
-
-        dfNoDataValue = poSrcBand->GetNoDataValue( &bHasNoDataValue );
+        int    bHasNoDataValue = FALSE;
+        const double dfNoDataValue = poSrcBand->GetNoDataValue( &bHasNoDataValue );
 
         if( bHasNoDataValue )
         {
@@ -1532,12 +1526,6 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
         return nullptr;
     }
 
-    int iYOffset = 0;
-    int iXOffset = 0;
-    int iXBlock  = 0;
-    int iYBlock  = 0;
-    int nBlockCols = 0;
-    int nBlockRows = 0;
     CPLErr eErr = CE_None;
 
     int nPixelSize = GDALGetDataTypeSize(
@@ -1619,23 +1607,22 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
         int nBandCount = poSrcDS->GetRasterCount();
 
-        for( iBand = 1; iBand <= nBandCount; iBand++ )
+        for( int iBand = 1; iBand <= nBandCount; iBand++ )
         {
             GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand );
             GDALRasterBand *poDstBand = poDstDS->GetRasterBand( iBand );
 
-            for( iYOffset = 0, iYBlock = 0;
+            for( int iYOffset = 0, iYBlock = 0;
                  iYOffset < nYSize;
                  iYOffset += nBlockYSize, iYBlock++ )
             {
-
-                for( iXOffset = 0, iXBlock = 0;
+                const int nBlockRows = MIN( nBlockYSize, nYSize - iYOffset );
+                for( int iXOffset = 0, iXBlock = 0;
                      iXOffset < nXSize;
                      iXOffset += nBlockXSize, iXBlock++ )
                 {
 
-                    nBlockCols = MIN( nBlockXSize, nXSize - iXOffset );
-                    nBlockRows = MIN( nBlockYSize, nYSize - iYOffset );
+                    const int nBlockCols = MIN( nBlockXSize, nXSize - iXOffset );
 
                     eErr = poSrcBand->RasterIO( GF_Read,
                         iXOffset, iYOffset,
@@ -1677,18 +1664,18 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
         poDstDS->poGeoRaster->SetWriteOnly( true );
 
-        for( iYOffset = 0, iYBlock = 0;
+        for( int iYOffset = 0, iYBlock = 0;
              iYOffset < nYSize;
              iYOffset += nBlockYSize, iYBlock++ )
         {
-            for( iXOffset = 0, iXBlock = 0;
+            const int nBlockRows = MIN( nBlockYSize, nYSize - iYOffset );
+            for( int iXOffset = 0, iXBlock = 0;
                  iXOffset < nXSize;
                  iXOffset += nBlockXSize, iXBlock++ )
             {
-                nBlockCols = MIN( nBlockXSize, nXSize - iXOffset );
-                nBlockRows = MIN( nBlockYSize, nYSize - iYOffset );
+                const int nBlockCols = MIN( nBlockXSize, nXSize - iXOffset );
 
-                for( iBand = 1;
+                for( int iBand = 1;
                      iBand <= poSrcDS->GetRasterCount();
                      iBand++ )
                 {
@@ -2936,7 +2923,7 @@ void CPL_DLL GDALRegister_GEOR()
     poDriver->SetDescription(  "GeoRaster" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Oracle Spatial GeoRaster" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_georaster.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/georaster.html" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte UInt16 Int16 UInt32 Int32 Float32 "

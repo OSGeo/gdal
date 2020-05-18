@@ -318,7 +318,7 @@ def test_vrtrawlink_vax_order():
 
     ds = gdal.Open("""<VRTDataset rasterXSize="4" rasterYSize="3">
         <VRTRasterBand dataType="Float32" band="1" subClass="VRTRawRasterBand">
-            <SourceFilename relativetoVRT="0">data/vicar_vax_float32.vic</SourceFilename>
+            <SourceFilename relativetoVRT="0">data/vicar/vicar_vax_float32.vic</SourceFilename>
             <ImageOffset>368</ImageOffset>
             <PixelOffset>4</PixelOffset>
             <LineOffset>16</LineOffset>

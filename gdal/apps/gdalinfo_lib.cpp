@@ -593,7 +593,6 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
             bTransformToWGS84 = true;
             hLatLong = OSRNewSpatialReference( nullptr );
             OSRSetWellKnownGeogCS( hLatLong, "WGS84" );
-            OSRSetAxisMappingStrategy(hLatLong, OAMS_TRADITIONAL_GIS_ORDER);
         }
         else
         {
@@ -607,6 +606,7 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
 
         if( hLatLong != nullptr )
         {
+            OSRSetAxisMappingStrategy(hLatLong, OAMS_TRADITIONAL_GIS_ORDER);
             CPLPushErrorHandler( CPLQuietErrorHandler );
             hTransform = OCTNewCoordinateTransformation( hProj, hLatLong );
             CPLPopErrorHandler();
@@ -1714,6 +1714,7 @@ static void GDALInfoReportMetadata( const GDALInfoOptions* psOptions,
             {
                 if( !EQUAL(*papszIter, "") &&
                     !EQUAL(*papszIter, "IMAGE_STRUCTURE") &&
+                    !EQUAL(*papszIter, "TILING_SCHEME") &&
                     !EQUAL(*papszIter, "SUBDATASETS") &&
                     !EQUAL(*papszIter, "GEOLOCATION") &&
                     !EQUAL(*papszIter, "RPC") )
@@ -1766,6 +1767,8 @@ static void GDALInfoReportMetadata( const GDALInfoOptions* psOptions,
 
     if (!bIsBand)
     {
+        GDALInfoPrintMetadata( psOptions, hObject, "TILING_SCHEME", "Tiling Scheme",
+                               pszIndent, bJson, poMetadata, osStr );
         GDALInfoPrintMetadata( psOptions, hObject, "SUBDATASETS", "Subdatasets",
                                pszIndent, bJson, poMetadata, osStr );
         GDALInfoPrintMetadata( psOptions, hObject, "GEOLOCATION", "Geolocation",

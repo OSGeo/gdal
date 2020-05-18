@@ -35,9 +35,15 @@
 #pragma GCC system_header
 #endif
 
+#ifdef CHARLS_2_1
+#define CHARLS_2
+#endif
+
 /* CharLS header */
 #ifdef CHARLS_INTERFACE_H
 #include <CharLS/interface.h>
+#elif defined(CHARLS_2_1)
+#include <charls/charls.h>
 #else
 #include <CharLS/charls.h>
 #endif

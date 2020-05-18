@@ -441,7 +441,7 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
             return nullptr; //empty zip file
 
         CPLString file;
-        for (int iFile = 0; filesinzip != nullptr && filesinzip[iFile] != nullptr; iFile++)
+        for (int iFile = 0; filesinzip[iFile] != nullptr; iFile++)
         {
             if (EQUAL(CPLGetExtension(filesinzip[iFile]), "sdat"))
             {
@@ -1104,7 +1104,7 @@ void GDALRegister_SAGA()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "SAGA GIS Binary Grid (.sdat, .sg-grd-z)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#SAGA" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/sdat.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "sdat sg-grd-z" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte Int16 "
                                "UInt16 Int32 UInt32 Float32 Float64" );

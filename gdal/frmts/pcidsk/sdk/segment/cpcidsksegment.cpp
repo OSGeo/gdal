@@ -89,7 +89,7 @@ void CPCIDSKSegment::SetMetadataValue( const std::string &key, const std::string
 }
 
 /************************************************************************/
-/*                           GetMetdataKeys()                           */
+/*                           GetMetadataKeys()                           */
 /************************************************************************/
 std::vector<std::string> CPCIDSKSegment::GetMetadataKeys() const
 {
@@ -236,6 +236,7 @@ void CPCIDSKSegment::WriteToFile( const void *buffer, uint64 offset, uint64 size
         data_size += blocks_to_add * 512;
     }
 
+    assert(file); // avoid CLang Static Analyzer false positive
     file->WriteToFile( buffer, offset + data_offset + 1024, size );
 }
 

@@ -37,6 +37,12 @@ static void READ_GINT32(int& X, const char*& p)
     SWAP_4(X);
     p+= sizeof(GInt32);
 }
+static void READ_FLOAT(float& X, const char*& p)
+{
+    memcpy(&X, p, sizeof(float));
+    SWAP_4(X);
+    p+= sizeof(float);
+}
 
 //
 // Check that a buffer contains a supported Lerc1 blob, the type supported by MRF
@@ -60,13 +66,8 @@ static int checkV1(const char *s, size_t sz)
         return 0;
     s += 10;
 
-    // A place to read an int or a float
-    union {
-        GInt32 i;
-        float val;
-    };
-
     // Version
+    int i;
     READ_GINT32(i, s);
     if (i != 11) return 0;
 
@@ -98,8 +99,9 @@ static int checkV1(const char *s, size_t sz)
     if (nBytesMask < 0) return 0;
 
     // mask max value, 0 or 1 as float
-    READ_GINT32(i, s);
-    if (val != 0.0 && val != 1.0) return 0;
+    float val;
+    READ_FLOAT(val, s);
+    if (val != 0.0f && val != 1.0f) return 0;
 
     // If data header can't be read the actual size is unknown
     if (nBytesMask > INT_MAX - 66 ||

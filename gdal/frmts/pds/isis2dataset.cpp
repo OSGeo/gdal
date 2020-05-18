@@ -1177,7 +1177,7 @@ void GDALRegister_ISIS2()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "USGS Astrogeology ISIS cube (Version 2)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_isis2.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/isis2.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 UInt16 Float32 Float64");

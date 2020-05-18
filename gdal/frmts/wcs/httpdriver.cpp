@@ -148,7 +148,7 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
     CPLPopErrorHandler();
 
     // The JP2OpenJPEG driver may need to reopen the file, hence this special
-    // behaviour
+    // behavior
     if( poDS != nullptr && poDS->GetDriver() != nullptr &&
         EQUAL(poDS->GetDriver()->GetDescription(), "JP2OpenJPEG") )
     {

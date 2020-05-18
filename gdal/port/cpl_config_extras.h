@@ -5,12 +5,6 @@
 
 #if defined(__APPLE__)
 
-#ifdef __BIG_ENDIAN__
-  #define HOST_FILLORDER FILLORDER_MSB2LSB
-#else
-  #define HOST_FILLORDER FILLORDER_LSB2MSB
-#endif
-
 #ifdef __LP64__
   #define SIZEOF_UNSIGNED_LONG 8
 #else

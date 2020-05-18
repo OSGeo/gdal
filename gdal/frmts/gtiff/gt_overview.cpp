@@ -310,6 +310,7 @@ GTIFFBuildOverviews( const char * pszFilename,
 {
     return GTIFFBuildOverviewsEx(pszFilename, nBands, papoBandList,
                                  nOverviews, panOverviewList,
+                                 nullptr,
                                  pszResampling,
                                  nullptr,
                                  pfnProgress, pProgressData);
@@ -318,13 +319,17 @@ GTIFFBuildOverviews( const char * pszFilename,
 CPLErr
 GTIFFBuildOverviewsEx( const char * pszFilename,
                        int nBands, GDALRasterBand **papoBandList,
-                       int nOverviews, int * panOverviewList,
+                       int nOverviews,
+                       const int * panOverviewList,
+                       const std::pair<int, int>* pasOverviewSize,
                        const char * pszResampling,
                        const char* const* papszOptions,
                        GDALProgressFunc pfnProgress, void * pProgressData )
 {
     if( nBands == 0 || nOverviews == 0 )
         return CE_None;
+
+    CPLAssert( (panOverviewList != nullptr) ^ (pasOverviewSize != nullptr) );
 
     if( !GTiffOneTimeInit() )
         return CE_Failure;
@@ -660,6 +665,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
     VSIStatBufL sStatBuf;
     VSILFILE* fpL = nullptr;
 
+    bool bCreateBigTIFF = false;
     if( VSIStatExL( pszFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG ) != 0 )
     {
     /* -------------------------------------------------------------------- */
@@ -671,10 +677,16 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
 
         for( iOverview = 0; iOverview < nOverviews; iOverview++ )
         {
-            const int nOXSize = (nXSize + panOverviewList[iOverview] - 1)
-                / panOverviewList[iOverview];
-            const int nOYSize = (nYSize + panOverviewList[iOverview] - 1)
-                / panOverviewList[iOverview];
+            const int nOXSize = panOverviewList ?
+                (nXSize + panOverviewList[iOverview] - 1)
+                    / panOverviewList[iOverview] :
+                // cppcheck-suppress nullPointer
+                pasOverviewSize[iOverview].first;
+            const int nOYSize = panOverviewList ?
+                (nYSize + panOverviewList[iOverview] - 1)
+                    / panOverviewList[iOverview] :
+                // cppcheck-suppress nullPointer
+                pasOverviewSize[iOverview].second;
 
             dfUncompressedOverviewSize +=
                 nOXSize * static_cast<double>(nOYSize) * nBands * nDataTypeSize;
@@ -690,7 +702,6 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
         if( pszBIGTIFF == nullptr )
             pszBIGTIFF = "IF_SAFER";
 
-        bool bCreateBigTIFF = false;
         if( EQUAL(pszBIGTIFF,"IF_NEEDED") )
         {
             if( nCompression == COMPRESSION_NONE
@@ -754,7 +765,13 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
         if( fpL == nullptr )
             hOTIFF = nullptr;
         else
+        {
+            GByte abyBuffer[4] = { 0 };
+            VSIFReadL(abyBuffer, 1, 4, fpL);
+            VSIFSeekL(fpL, 0, SEEK_SET);
+            bCreateBigTIFF = abyBuffer[2] == 43 || abyBuffer[3] == 43;
             hOTIFF = VSI_TIFFOpen( pszFilename, "r+", fpL );
+        }
         if( hOTIFF == nullptr )
         {
             if( CPLGetLastErrorNo() == 0 )
@@ -852,12 +869,31 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
 
     for( iOverview = 0; iOverview < nOverviews; iOverview++ )
     {
-        const int nOXSize = (nXSize + panOverviewList[iOverview] - 1)
-            / panOverviewList[iOverview];
-        const int nOYSize = (nYSize + panOverviewList[iOverview] - 1)
-            / panOverviewList[iOverview];
+        const int nOXSize = panOverviewList ?
+                (nXSize + panOverviewList[iOverview] - 1)
+                    / panOverviewList[iOverview] :
+                // cppcheck-suppress nullPointer
+                pasOverviewSize[iOverview].first;
+        const int nOYSize = panOverviewList ?
+                (nYSize + panOverviewList[iOverview] - 1)
+                    / panOverviewList[iOverview] :
+                // cppcheck-suppress nullPointer
+                pasOverviewSize[iOverview].second;
 
-        GTIFFWriteDirectory( hOTIFF, FILETYPE_REDUCEDIMAGE,
+        unsigned nTileXCount = DIV_ROUND_UP(nOXSize, nOvrBlockXSize);
+        unsigned nTileYCount = DIV_ROUND_UP(nOYSize, nOvrBlockYSize);
+        // libtiff implementation limitation
+        if( nTileXCount > 0x80000000U / (bCreateBigTIFF ? 8 : 4) / nTileYCount )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "File too large regarding tile size. This would result "
+                     "in a file with tile arrays larger than 2GB");
+            XTIFFClose( hOTIFF );
+            VSIFCloseL(fpL);
+            return CE_Failure;
+        }
+
+        if( GTIFFWriteDirectory( hOTIFF, FILETYPE_REDUCEDIMAGE,
                              nOXSize, nOYSize, nBitsPerPixel,
                              nPlanarConfig, nBands,
                              nOvrBlockXSize, nOvrBlockYSize, TRUE, nCompression,
@@ -875,7 +911,12 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
                              pszNoData,
                              nullptr,
                              false
-                           );
+                           ) == 0 )
+        {
+            XTIFFClose( hOTIFF );
+            VSIFCloseL(fpL);
+            return CE_Failure;
+        }
     }
 
     if( panRed )
@@ -942,10 +983,13 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
 /*      Loop writing overview data.                                     */
 /* -------------------------------------------------------------------- */
 
-    int *panOverviewListSorted =
-        static_cast<int*>(CPLMalloc(sizeof(int) * nOverviews));
-    memcpy( panOverviewListSorted, panOverviewList, sizeof(int) * nOverviews);
-    std::sort(panOverviewListSorted, panOverviewListSorted + nOverviews);
+    int *panOverviewListSorted = nullptr;
+    if( panOverviewList )
+    {
+        panOverviewListSorted = static_cast<int*>(CPLMalloc(sizeof(int) * nOverviews));
+        memcpy( panOverviewListSorted, panOverviewList, sizeof(int) * nOverviews);
+        std::sort(panOverviewListSorted, panOverviewListSorted + nOverviews);
+    }
 
     GTIFFSetInExternalOvr(true);
 
@@ -997,17 +1041,30 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
                         continue;
                     }
 
-                    const int nOvFactor =
-                        GDALComputeOvFactor(poOverview->GetXSize(),
-                                            poSrcBand->GetXSize(),
-                                            poOverview->GetYSize(),
-                                            poSrcBand->GetYSize());
+                    bool bMatch;
+                    if( panOverviewListSorted )
+                    {
+                        const int nOvFactor =
+                            GDALComputeOvFactor(poOverview->GetXSize(),
+                                                poSrcBand->GetXSize(),
+                                                poOverview->GetYSize(),
+                                                poSrcBand->GetYSize());
 
-                    if( nOvFactor == panOverviewListSorted[i]
-                        || nOvFactor == GDALOvLevelAdjust2(
-                                            panOverviewListSorted[i],
-                                            poSrcBand->GetXSize(),
-                                            poSrcBand->GetYSize() ) )
+                        bMatch = ( nOvFactor == panOverviewListSorted[i]
+                            || nOvFactor == GDALOvLevelAdjust2(
+                                                panOverviewListSorted[i],
+                                                poSrcBand->GetXSize(),
+                                                poSrcBand->GetYSize() ) );
+                    }
+                    else
+                    {
+                        bMatch = (
+                            // cppcheck-suppress nullPointer
+                            poOverview->GetXSize() == pasOverviewSize[i].first &&
+                            // cppcheck-suppress nullPointer
+                            poOverview->GetYSize() == pasOverviewSize[i].second );
+                    }
+                    if( bMatch )
                     {
                         papapoOverviewBands[iBand][i] = poOverview;
                         if( bHasNoData )

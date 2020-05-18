@@ -340,6 +340,10 @@ public:
     return OSRIsGeographic(self);
   }
 
+  int IsDerivedGeographic() {
+    return OSRIsDerivedGeographic(self);
+  }
+
   int IsProjected() {
     return OSRIsProjected(self);
   }
@@ -927,6 +931,10 @@ public:
 
   OGRErr GetTOWGS84( double argout[7] ) {
     return OSRGetTOWGS84( self, argout, 7 );
+  }
+
+  OGRErr AddGuessedTOWGS84() {
+    return OSRAddGuessedTOWGS84( self );
   }
 
   OGRErr SetLocalCS( const char *pszName ) {

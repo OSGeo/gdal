@@ -40,7 +40,7 @@ import gdaltest
 # Read USRP dataset with PCB=0
 
 
-def test_srp_1(filename='USRP_PCB0/FKUSRP01.IMG'):
+def test_srp_1(filename='srp/USRP_PCB0/FKUSRP01.IMG'):
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32600 + 17)
@@ -78,14 +78,14 @@ def test_srp_1(filename='USRP_PCB0/FKUSRP01.IMG'):
 
 
 def test_srp_2():
-    return test_srp_1('USRP_PCB4/FKUSRP01.IMG')
+    return test_srp_1('srp/USRP_PCB4/FKUSRP01.IMG')
 
 ###############################################################################
 # Read USRP dataset with PCB=8
 
 
 def test_srp_3():
-    return test_srp_1('USRP_PCB8/FKUSRP01.IMG')
+    return test_srp_1('srp/USRP_PCB8/FKUSRP01.IMG')
 
 ###############################################################################
 # Read from TRANSH01.THF file.
@@ -93,7 +93,7 @@ def test_srp_3():
 
 def test_srp_4():
 
-    tst = gdaltest.GDALTest('SRP', 'USRP_PCB0/TRANSH01.THF', 1, 24576)
+    tst = gdaltest.GDALTest('SRP', 'srp/USRP_PCB0/TRANSH01.THF', 1, 24576)
     ret = tst.testOpen()
     return ret
 
@@ -104,13 +104,11 @@ def test_srp_4():
 def test_srp_5():
 
     gdal.SetConfigOption('SRP_SINGLE_GEN_IN_THF_AS_DATASET', 'FALSE')
-    ds = gdal.Open('data/USRP_PCB0/TRANSH01.THF')
+    ds = gdal.Open('data/srp/USRP_PCB0/TRANSH01.THF')
     gdal.SetConfigOption('SRP_SINGLE_GEN_IN_THF_AS_DATASET', None)
     subdatasets = ds.GetMetadata('SUBDATASETS')
-    assert (subdatasets['SUBDATASET_1_NAME'] == 'SRP:data/USRP_PCB0/FKUSRP01.GEN,data/USRP_PCB0/FKUSRP01.IMG' or \
-       subdatasets['SUBDATASET_1_NAME'] == 'SRP:data/USRP_PCB0\\FKUSRP01.GEN,data/USRP_PCB0\\FKUSRP01.IMG')
-    assert (subdatasets['SUBDATASET_1_DESC'] == 'SRP:data/USRP_PCB0/FKUSRP01.GEN,data/USRP_PCB0/FKUSRP01.IMG' or \
-       subdatasets['SUBDATASET_1_DESC'] == 'SRP:data/USRP_PCB0\\FKUSRP01.GEN,data/USRP_PCB0\\FKUSRP01.IMG')
+    assert subdatasets['SUBDATASET_1_NAME'].replace('\\', '/') == 'SRP:data/srp/USRP_PCB0/FKUSRP01.GEN,data/srp/USRP_PCB0/FKUSRP01.IMG'
+    assert subdatasets['SUBDATASET_1_DESC'].replace('\\', '/') == 'SRP:data/srp/USRP_PCB0/FKUSRP01.GEN,data/srp/USRP_PCB0/FKUSRP01.IMG'
 
     expected_md = ['SRP_CLASSIFICATION=U',
                    'SRP_CREATIONDATE=20120505',
@@ -129,7 +127,7 @@ def test_srp_5():
 
 def test_srp_6():
 
-    tst = gdaltest.GDALTest('SRP', 'SRP:data/USRP_PCB4/FKUSRP01.GEN,data/USRP_PCB4/FKUSRP01.IMG', 1, 24576, filename_absolute=1)
+    tst = gdaltest.GDALTest('SRP', 'SRP:data/srp/USRP_PCB4/FKUSRP01.GEN,data/srp/USRP_PCB4/FKUSRP01.IMG', 1, 24576, filename_absolute=1)
     tst.testOpen()
 
 
@@ -139,6 +137,6 @@ def test_srp_6():
 def test_srp_cleanup():
 
     # FIXME ?
-    os.unlink('data/USRP_PCB0/TRANSH01.THF.aux.xml')
+    os.unlink('data/srp/USRP_PCB0/TRANSH01.THF.aux.xml')
 
 ###############################################################################

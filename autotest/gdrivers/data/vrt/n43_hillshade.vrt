@@ -1,0 +1,76 @@
+<VRTDataset rasterXSize="121" rasterYSize="121">
+  <SRS>GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]</SRS>
+  <GeoTransform> -8.0004166666666663e+01,  8.3333333333333332e-03,  0.0000000000000000e+00,  4.4004166666666663e+01,  0.0000000000000000e+00, -8.3333333333333332e-03</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">../n43.dt0</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="121" RasterYSize="121" DataType="Int16" BlockXSize="121" BlockYSize="33" />
+      <SrcRect xOff="0" yOff="0" xSize="121" ySize="121" />
+      <DstRect xOff="0" yOff="0" xSize="121" ySize="121" />
+    </SimpleSource>
+    <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+    <PixelFunctionType>hillshade</PixelFunctionType>
+    <PixelFunctionArguments scale="111120" z_factor="30" />
+    <PixelFunctionCode>
+      <![CDATA[
+# Licence: X/MIT
+# Copyright 2016, Even Rouault
+import math
+
+def hillshade_int(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
+                  raster_ysize, radius, gt, z, scale):
+    ovr_scale_x = 1.0 * (out_ar.shape[1] - 2 * radius) / xsize
+    ovr_scale_y = 1.0 * (out_ar.shape[0] - 2 * radius) / ysize
+    ewres = gt[1] / ovr_scale_x
+    nsres = gt[5] / ovr_scale_y
+    inv_nsres = 1.0 / nsres
+    inv_ewres = 1.0 / ewres
+
+    az = 315
+    alt = 45
+    degreesToRadians = math.pi / 180
+
+    sin_alt = math.sin(alt * degreesToRadians)
+    azRadians = az * degreesToRadians
+    z_scale_factor = z / (8 * scale)
+    cos_alt_mul_z_scale_factor = math.cos(alt * degreesToRadians) * z_scale_factor
+    cos_az_mul_cos_alt_mul_z_scale_factor_mul_254 = \
+                254 * math.cos(azRadians) * cos_alt_mul_z_scale_factor
+    sin_az_mul_cos_alt_mul_z_scale_factor_mul_254 = \
+                254 * math.sin(azRadians) * cos_alt_mul_z_scale_factor
+    square_z_scale_factor = z_scale_factor * z_scale_factor
+    sin_alt_mul_254 = 254.0 * sin_alt
+
+    for j in range(radius, out_ar.shape[0]-radius):
+        win_line = in_ar[0][j-radius:j+radius+1,:]
+        for i in range(radius, out_ar.shape[1]-radius):
+            win = win_line[:,i-radius:i+radius+1].tolist()
+            x = inv_ewres * ((win[0][0] + win[1][0] + win[1][0] + win[2][0]) - \
+                             (win[0][2] + win[1][2] + win[1][2] + win[2][2])) 
+            y = inv_nsres * ((win[2][0] + win[2][1] + win[2][1] + win[2][2]) - \
+                             (win[0][0] + win[0][1] + win[0][1] + win[0][2]))
+            xx_plus_yy = x * x + y * y
+            cang_mul_254 = (sin_alt_mul_254 - \
+                (y * cos_az_mul_cos_alt_mul_z_scale_factor_mul_254 - \
+                    x * sin_az_mul_cos_alt_mul_z_scale_factor_mul_254)) / \
+                math.sqrt(1 + square_z_scale_factor * xx_plus_yy)
+            if cang_mul_254 < 0:
+                out_ar[j,i] = 1
+            else:
+                out_ar[j,i] = 1 + round(cang_mul_254)
+
+def hillshade(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, 
+              raster_ysize, radius, gt, **kwargs):
+    z = float(kwargs['z_factor'])
+    scale= float(kwargs['scale'])
+    hillshade_int(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
+                  raster_ysize, radius, gt, z, scale)
+
+]]>
+    </PixelFunctionCode>
+    <BufferRadius>1</BufferRadius>
+    <SourceTransferType>Int16</SourceTransferType>
+  </VRTRasterBand>
+</VRTDataset>

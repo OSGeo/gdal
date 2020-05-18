@@ -480,7 +480,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
         char szErrorMsg[200];
 
         snprintf( szErrorMsg, sizeof(szErrorMsg),
-                 "Record count in .shp header is %d, which seems\n"
+                 "Record count in .shx header is %d, which seems\n"
                  "unreasonable.  Assuming header is corrupt.",
                  psSHP->nRecords );
         szErrorMsg[sizeof(szErrorMsg)-1] = '\0';
@@ -704,9 +704,8 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
     int             nLenWithoutExtension;
     unsigned int    nSHPFilesize;
 
-    unsigned int    nCurrentRecordOffset = 0;
     unsigned int    nCurrentSHPOffset = 100;
-    size_t          nRealSHXContentSize = 100;
+    unsigned int    nRealSHXContentSize = 100;
 
     const char      pszSHXAccess[] = "w+b";
     char            *pabySHXHeader;
@@ -837,7 +836,6 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
             if ( !bBigEndian ) SwapWord( 4, &nRecordOffset );
             if ( !bBigEndian ) SwapWord( 4, &nRecordLength );
             nRecordOffset += nRecordLength + 4;
-            nCurrentRecordOffset += 8;
             nCurrentSHPOffset += 8 + nRecordLength * 2;
 
             psHooks->FSeek( fpSHP, nCurrentSHPOffset, 0 );
@@ -1343,6 +1341,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
     int32	i32;
     int     bAppendToLastRecord = FALSE;
     int     bAppendToFile = FALSE;
+    int     bFirstFeature = (psSHP->nRecords == 0);
 
     psSHP->bUpdated = TRUE;
 
@@ -1734,10 +1733,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 /* -------------------------------------------------------------------- */
 /*	Expand file wide bounds based on this shape.			*/
 /* -------------------------------------------------------------------- */
-    if( psSHP->adBoundsMin[0] == 0.0
-        && psSHP->adBoundsMax[0] == 0.0
-        && psSHP->adBoundsMin[1] == 0.0
-        && psSHP->adBoundsMax[1] == 0.0 )
+    if( bFirstFeature )
     {
         if( psObject->nSHPType == SHPT_NULL || psObject->nVertices == 0 )
         {

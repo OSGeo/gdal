@@ -19,7 +19,8 @@ Synopsis
     gdal2tiles.py [-p profile] [-r resampling] [-s srs] [-z zoom]
                   [-e] [-a nodata] [-v] [-q] [-h] [-k] [-n] [-u url]
                   [-w webviewer] [-t title] [-c copyright]
-                  [--processes=NB_PROCESSES]
+                  [--processes=NB_PROCESSES] [--xyz]
+                  --tilesize=PIXELS
                   [-g googlekey] [-b bingkey] input_file [output_dir]
 
 Description
@@ -59,6 +60,15 @@ can publish a picture without proper georeferencing too.
 
   The spatial reference system used for the source input data.
 
+.. option:: --xyz
+
+  Generate XYZ tiles (OSM Slippy Map standard) instead of TMS.
+  Only for mercator profile.
+  In the default mode (TMS), tiles at y=0 are the southern-most tiles, whereas
+  in XYZ mode (used by OGC WMTS too), tiles at y=0 are the northern-most tiles.
+
+  .. versionadded:: 3.1
+
 .. option:: -z <ZOOM>, --zoom=<ZOOM>
 
   Zoom levels to render (format:'2-5' or '10').
@@ -66,11 +76,12 @@ can publish a picture without proper georeferencing too.
 .. option:: -e, --resume
 
   Resume mode. Generate only missing files.
-  
+
 .. option:: -a <NODATA>, --srcnodata=<NODATA>
 
-  NODATA transparency value to assign to the input data.
-  
+  Value in the input dataset considered as transparent. If the input dataset
+  had already an associate nodata value, it is overriden by the specified value.
+
 .. option:: -v, --verbose
 
   Generate verbose output of tile generation.
@@ -83,14 +94,20 @@ can publish a picture without proper georeferencing too.
 
 .. option:: --processes=<NB_PROCESSES>
 
-  Number of processes to use for tiling.
+  Number of parallel processes to use for tiling, to speed-up the computation.
 
   .. versionadded:: 2.3
+
+.. option:: --tilesize=<PIXELS>
+
+  Width and height in pixel of a tile. Default is 256.
+
+  .. versionadded:: 3.1
 
 .. option:: -h, --help
 
   Show help message and exit.
-  
+
 .. option:: --version
 
   Show program's version number and exit.
@@ -130,7 +147,7 @@ Options for generated HTML viewers a la Google Maps
 .. option:: -c <COPYRIGHT>, --copyright=<COPYRIGHT>
 
   Copyright for the map.
-  
+
 .. option:: -g <GOOGLEKEY>, --googlekey=<GOOGLEKEY>
 
   Google Maps API key from http://code.google.com/apis/maps/signup.html.

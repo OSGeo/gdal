@@ -41,6 +41,7 @@
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 
+#include <cassert>
 #include <algorithm>
 #include <limits>
 #include <utility>
@@ -900,6 +901,7 @@ CPLErr BAGResampledBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     std::vector<int> counts;
     if( poGDS->m_bMask )
     {
+        CPLAssert(pImage); // to make CLang Static Analyzer happy
         memset(pImage, 0, nBlockXSize * nBlockYSize);
     }
     else if( poGDS->m_ePopulation == BAGDataset::Population::MEAN )
@@ -2795,8 +2797,11 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
             return false;
         }
         H5free_memory(pszName);
-        hid_t type = H5Tget_member_type(m_hVarresMetadataDataType, i);
-        bool bTypeOK = H5Tequal(asMetadataFields[i].eType, type) > 0;
+        const hid_t type = H5Tget_member_type(m_hVarresMetadataDataType, i);
+        const hid_t hNativeType =
+            H5Tget_native_type(type, H5T_DIR_DEFAULT);
+        bool bTypeOK = H5Tequal(asMetadataFields[i].eType, hNativeType) > 0;
+        H5Tclose(hNativeType);
         H5Tclose(type);
         if( !bTypeOK )
         {
@@ -2880,8 +2885,11 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
             return false;
         }
         H5free_memory(pszName);
-        hid_t type = H5Tget_member_type(m_hVarresRefinementsDataType, i);
-        bool bTypeOK = H5Tequal(asRefinementsFields[i].eType, type) > 0;
+        const hid_t type = H5Tget_member_type(m_hVarresRefinementsDataType, i);
+        const hid_t hNativeType =
+            H5Tget_native_type(type, H5T_DIR_DEFAULT);
+        bool bTypeOK = H5Tequal(asRefinementsFields[i].eType, hNativeType) > 0;
+        H5Tclose(hNativeType);
         H5Tclose(type);
         if( !bTypeOK )
         {
@@ -3302,10 +3310,20 @@ void BAGDataset::LoadMetadata()
         {
             if( strcmp(psIter->pszValue, "axisDimensionProperties") == 0 )
             {
-                const char* pszDim = CPLGetXMLValue(
-                    psIter, "MD_Dimension.dimensionName.MD_DimensionNameTypeCode", nullptr);
-                const char* pszRes = CPLGetXMLValue(
-                    psIter, "MD_Dimension.resolution.Measure", nullptr);
+                // since BAG format 1.5 version
+                const char* pszDim = CPLGetXMLValue(psIter, "MD_Dimension.dimensionName.MD_DimensionNameTypeCode", nullptr);
+                const char* pszRes = nullptr;
+                if(pszDim)
+                {
+                    pszRes = CPLGetXMLValue(psIter, "MD_Dimension.resolution.Measure", nullptr);
+                }
+                else
+                {
+                    // prior to BAG format 1.5 version
+                    pszDim = CPLGetXMLValue(psIter, "MD_Dimension.dimensionName", nullptr);
+                    pszRes = CPLGetXMLValue(psIter, "MD_Dimension.resolution.Measure.value", nullptr);
+                }
+
                 if( pszDim && EQUAL(pszDim, "row") && pszRes )
                 {
                     osResHeight = pszRes;
@@ -3598,7 +3616,7 @@ class BAGCreator
         hid_t m_bagRoot = -1;
 
         static bool SubstituteVariables(CPLXMLNode* psNode, char** papszDict);
-        static CPLString GenerateMatadata(GDALDataset *poSrcDS,
+        static CPLString GenerateMetadata(GDALDataset *poSrcDS,
                                           char ** papszOptions);
         bool CreateAndWriteMetadata(const CPLString& osXMLMetadata);
         bool CreateTrackingListDataset();
@@ -3774,10 +3792,10 @@ bool BAGCreator::SubstituteVariables(CPLXMLNode* psNode, char** papszDict)
 }
 
 /************************************************************************/
-/*                          GenerateMatadata()                          */
+/*                          GenerateMetadata()                          */
 /************************************************************************/
 
-CPLString BAGCreator::GenerateMatadata(GDALDataset *poSrcDS,
+CPLString BAGCreator::GenerateMetadata(GDALDataset *poSrcDS,
                                        char ** papszOptions)
 {
     CPLXMLNode* psRoot;
@@ -3803,6 +3821,7 @@ CPLString BAGCreator::GenerateMatadata(GDALDataset *poSrcDS,
     if( psRoot == nullptr )
         return CPLString();
     CPLXMLTreeCloser oCloser(psRoot);
+    CPL_IGNORE_RET_VAL(oCloser);
 
     CPLXMLNode* psMain = psRoot;
     for(; psMain; psMain = psMain->psNext )
@@ -4211,10 +4230,10 @@ bool BAGCreator::CreateElevationOrUncertainty(GDALDataset *poSrcDS,
         if( hDatasetID < 0)
             break;
 
-        if( !GH5_CreateAttribute(hDatasetID, pszMaxAttrName, H5T_NATIVE_FLOAT) )
+        if( !GH5_CreateAttribute(hDatasetID, pszMaxAttrName, hDataType) )
             break;
 
-        if( !GH5_CreateAttribute(hDatasetID, pszMinAttrName, H5T_NATIVE_FLOAT) )
+        if( !GH5_CreateAttribute(hDatasetID, pszMinAttrName, hDataType) )
             break;
 
         hFileSpace = H5_CHECK(H5Dget_space(hDatasetID));
@@ -4303,7 +4322,7 @@ bool BAGCreator::CreateElevationOrUncertainty(GDALDataset *poSrcDS,
                         break;
 
                     if( H5_CHECK(H5Dwrite(
-                            hDatasetID, hDataType, hMemSpace, hFileSpace, 
+                            hDatasetID, H5T_NATIVE_FLOAT, hMemSpace, hFileSpace, 
                             H5P_DEFAULT, afValues.data())) < 0 )
                     {
                         H5Sclose(hMemSpace);
@@ -4325,7 +4344,6 @@ bool BAGCreator::CreateElevationOrUncertainty(GDALDataset *poSrcDS,
         }
         if( !ret )
             break;
-        ret = false;
 
         if( fMin > fMax )
             fMin = fMax = fNoDataValue;
@@ -4383,7 +4401,7 @@ bool BAGCreator::Create( const char *pszFilename, GDALDataset *poSrcDS,
         return false;
     }
 
-    CPLString osXMLMetadata = GenerateMatadata(poSrcDS, papszOptions);
+    CPLString osXMLMetadata = GenerateMetadata(poSrcDS, papszOptions);
     if( osXMLMetadata.empty() )
     {
         return false;
@@ -4493,7 +4511,7 @@ void GDALRegister_BAG()
     poDriver->SetDescription("BAG");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Bathymetry Attributed Grid");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_bag.html");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/bag.html");
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "bag");
 

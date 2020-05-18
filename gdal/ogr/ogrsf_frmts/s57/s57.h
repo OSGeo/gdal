@@ -33,6 +33,7 @@
 #ifndef S57_H_INCLUDED
 #define S57_H_INCLUDED
 
+#include <string>
 #include <vector>
 #include "ogr_feature.h"
 #include "iso8211.h"
@@ -276,7 +277,9 @@ class CPL_DLL S57Reader
     int                 nNextDSIDIndex;
     DDFRecord           *poDSIDRecord;
     DDFRecord           *poDSPMRecord;
-    char                szUPDNUpdate[10];
+    std::string         m_osEDTNUpdate;
+    std::string         m_osUPDNUpdate;
+    std::string         m_osISDTUpdate;
 
     char                **papszOptions;
 

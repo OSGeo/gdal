@@ -78,8 +78,8 @@ OGRPGDumpLayer::OGRPGDumpLayer( OGRPGDumpDataSource* poDSIn,
     nForcedSRSId(-2),
     nForcedGeometryTypeFlags(-1),
     bCreateSpatialIndexFlag(true),
-    nPostGISMajor(1),
-    nPostGISMinor(2),
+    nPostGISMajor(0),
+    nPostGISMinor(0),
     iNextShapeId(0),
     iFIDAsRegularColumnIndex(-1),
     bAutoFIDOnCreateViaCopy(true),
@@ -1553,7 +1553,7 @@ OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
     CPLString osFieldType;
     OGRFieldDefn oField( poFieldIn );
 
-    // Can be set to NO to test ogr2ogr default behaviour
+    // Can be set to NO to test ogr2ogr default behavior
     const bool bAllowCreationOfFieldWithFIDName =
         CPLTestBool(CPLGetConfigOption(
             "PGDUMP_DEBUG_ALLOW_CREATION_FIELD_WITH_FID_NAME", "YES"));

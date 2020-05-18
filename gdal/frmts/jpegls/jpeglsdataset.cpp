@@ -121,9 +121,11 @@ static const char* JPEGLSGetErrorAsString(CharlsApiResultType eCode)
         case CharlsApiResultType::ParameterValueNotSupported: return "ParameterValueNotSupported";
         case CharlsApiResultType::UncompressedBufferTooSmall: return "UncompressedBufferTooSmall";
         case CharlsApiResultType::CompressedBufferTooSmall: return "CompressedBufferTooSmall";
+#ifndef CHARLS_2_1
         case CharlsApiResultType::InvalidCompressedData: return "InvalidCompressedData";
         case CharlsApiResultType::ImageTypeNotSupported: return "ImageTypeNotSupported";
         case CharlsApiResultType::UnsupportedBitDepthForTransform: return "UnsupportedBitDepthForTransform";
+#endif
         case CharlsApiResultType::UnsupportedColorTransform: return "UnsupportedColorTransform";
         default: return "unknown";
     };
@@ -772,7 +774,7 @@ void GDALRegister_JPEGLS()
     poDriver->SetDescription( "JPEGLS" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "JPEGLS" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jpegls.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/jpegls.html" );
     // poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jls" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jls" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte Int16" );

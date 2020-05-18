@@ -583,6 +583,7 @@ static void ProcessCurve(OGRFeature* poFeature, const CPLString& osPen,
         double dfParam = dfStartParam + i *
                 (dfEndParam - dfStartParam) / (nPoints - 1);
         eRes = curveElement->getPointAtParam(dfParam, point);
+        CPL_IGNORE_RET_VAL(eRes);
         CPLAssert(eRes == eOk );
         ProcessCurveTraits<CurveElementPtr>::setPoint(poSC, i, point);
     }

@@ -936,7 +936,7 @@ void GDALRegister_ISCE()
 
     poDriver->SetDescription( "ISCE" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ISCE raster" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#ISCE" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/isce.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 Int32 Int64 Float32"
                                " Float64 CInt16 CInt64 CFloat32 "

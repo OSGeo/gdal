@@ -297,6 +297,10 @@ It is important that there be no spaces or other content before the
 |                                   |                                   |
 +-----------------------------------+-----------------------------------+
 
+Starting with GDAL 2.3, additional HTTP headers can be sent by setting the
+GDAL_HTTP_HEADER_FILE configuration option to point to a filename of a text
+file with “key: value” HTTP headers. 
+
 GetFeatureInfo request
 ----------------------
 

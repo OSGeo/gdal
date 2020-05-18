@@ -2326,7 +2326,7 @@ static int NITFFormatRPC00BCoefficient( char* pszBuffer, double dfVal,
         }
         szTemp[11] = szTemp[13];
     }
-    else // behaviour of the standard: 2 digits for the exponent
+    else // behavior of the standard: 2 digits for the exponent
 #endif
     {
         CPLAssert( nLen == 13 );

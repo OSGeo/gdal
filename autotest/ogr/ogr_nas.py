@@ -158,7 +158,7 @@ def test_ogr_nas_3():
     if drv is None:
         pytest.skip()
 
-    ds = ogr.Open('data/empty_nas.xml')
+    ds = ogr.Open('data/nas/empty_nas.xml')
     assert ds is not None, 'could not open dataset'
 
     assert ds.GetLayerCount() == 1, 'did not get expected layer count'
@@ -177,11 +177,11 @@ def test_ogr_nas_4():
         pytest.skip()
 
     try:
-        os.remove('data/delete_nas.gfs')
+        os.remove('data/nas/delete_nas.gfs')
     except OSError:
         pass
 
-    ds = ogr.Open('data/delete_nas.xml')
+    ds = ogr.Open('data/nas/delete_nas.xml')
     assert ds is not None, 'could not open dataset'
 
     assert ds.GetLayerCount() == 2, 'did not get expected layer count'
@@ -205,7 +205,7 @@ def test_ogr_nas_4():
     ds = None
 
     try:
-        os.remove('data/delete_nas.gfs')
+        os.remove('data/nas/delete_nas.gfs')
     except OSError:
         pass
 
@@ -222,11 +222,11 @@ def test_ogr_nas_5():
         pytest.skip()
 
     try:
-        os.remove('data/replace_nas.gfs')
+        os.remove('data/nas/replace_nas.gfs')
     except OSError:
         pass
 
-    ds = ogr.Open('data/replace_nas.xml')
+    ds = ogr.Open('data/nas/replace_nas.xml')
     assert ds is not None, 'could not open dataset'
 
     assert ds.GetLayerCount() == 3, 'did not get expected layer count'
@@ -273,7 +273,7 @@ def test_ogr_nas_5():
     ds = None
 
     try:
-        os.remove('data/replace_nas.gfs')
+        os.remove('data/nas/replace_nas.gfs')
     except OSError:
         pass
 

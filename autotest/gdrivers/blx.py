@@ -41,7 +41,7 @@ def test_blx_1():
 
     prj = 'WGS84'
     gt = [20.0004166, 0.0008333, 0.0, 50.0004166, 0.0, -0.0008333]
-    tst = gdaltest.GDALTest('BLX', 's4103.blx', 1, 47024)
+    tst = gdaltest.GDALTest('BLX', 'blx/s4103.blx', 1, 47024)
     return tst.testOpen(check_prj=prj, check_gt=gt)
 
 
@@ -52,7 +52,7 @@ def test_blx_2():
 
     prj = 'WGS84'
     gt = [20.0004166, 0.0008333, 0.0, 50.0004166, 0.0, -0.0008333]
-    tst = gdaltest.GDALTest('BLX', 's4103.xlb', 1, 47024)
+    tst = gdaltest.GDALTest('BLX', 'blx/s4103.xlb', 1, 47024)
     return tst.testOpen(check_prj=prj, check_gt=gt)
 
 
@@ -61,7 +61,7 @@ def test_blx_2():
 
 def test_blx_3():
 
-    tst = gdaltest.GDALTest('BLX', 's4103.xlb', 1, 47024)
+    tst = gdaltest.GDALTest('BLX', 'blx/s4103.xlb', 1, 47024)
     return tst.testCreateCopy(check_gt=1, check_srs=1)
 
 
@@ -70,7 +70,7 @@ def test_blx_3():
 
 def test_blx_4():
 
-    tst = gdaltest.GDALTest('BLX', 's4103.blx', 1, 47024, options=['BIGENDIAN=YES'])
+    tst = gdaltest.GDALTest('BLX', 'blx/s4103.blx', 1, 47024, options=['BIGENDIAN=YES'])
     return tst.testCreateCopy(check_gt=1, check_srs=1)
 
 
@@ -79,7 +79,7 @@ def test_blx_4():
 
 def test_blx_5():
 
-    ds = gdal.Open('data/s4103.blx')
+    ds = gdal.Open('data/blx/s4103.blx')
 
     band = ds.GetRasterBand(1)
     assert band.GetOverviewCount() == 4, 'did not get expected overview count'

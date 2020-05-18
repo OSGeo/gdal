@@ -339,7 +339,7 @@ void GDALRegister_BPG()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Better Portable Graphics" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_bpg.html" );
+                               "drivers/raster/bpg.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bpg" );
     // poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/bpg" );
 

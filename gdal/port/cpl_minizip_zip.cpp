@@ -140,7 +140,7 @@ typedef struct linkedlist_data_s
 typedef struct
 {
     z_stream stream;            /* zLib stream structure for inflate */
-    int  stream_initialised;    /* 1 is stream is initialised */
+    int  stream_initialised;    /* 1 is stream is initialized */
     uInt pos_in_buffered_data;  /* last written byte in buffered_data */
 
     ZPOS64_T pos_local_header;     /* offset of the local header of the file

@@ -742,7 +742,7 @@ LogLuvEncodeTile(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 #undef exp2  /* Conflict with C'99 function */
 #define exp2(x)		exp(M_LN2*(x))
 
-static int itrunc(double x, int m)
+static int tiff_itrunc(double x, int m)
 {
     if( m == SGILOGENCODE_NODITHER )
         return (int)x;
@@ -777,9 +777,9 @@ LogL16fromY(double Y, int em)	/* get 16-bit LogL from Y */
 	if (Y <= -1.8371976e19)
 		return (0xffff);
 	if (Y > 5.4136769e-20)
-		return itrunc(256.*(log2(Y) + 64.), em);
+		return tiff_itrunc(256.*(log2(Y) + 64.), em);
 	if (Y < -5.4136769e-20)
-		return (~0x7fff | itrunc(256.*(log2(-Y) + 64.), em));
+		return (~0x7fff | tiff_itrunc(256.*(log2(-Y) + 64.), em));
 	return (0);
 }
 
@@ -855,7 +855,7 @@ LogL10fromY(double Y, int em)	/* get 10-bit LogL from Y */
 	else if (Y <= .00024283)
 		return (0);
 	else
-		return itrunc(64.*(log2(Y) + 12.), em);
+		return tiff_itrunc(64.*(log2(Y) + 12.), em);
 }
 
 #define NANGLES		100
@@ -925,12 +925,12 @@ uv_encode(double u, double v, int em)	/* encode (u',v') coordinates */
 
 	if (v < UV_VSTART)
 		return oog_encode(u, v);
-	vi = itrunc((v - UV_VSTART)*(1./UV_SQSIZ), em);
+	vi = tiff_itrunc((v - UV_VSTART)*(1./UV_SQSIZ), em);
 	if (vi >= UV_NVS)
 		return oog_encode(u, v);
 	if (u < uv_row[vi].ustart)
 		return oog_encode(u, v);
-	ui = itrunc((u - uv_row[vi].ustart)*(1./UV_SQSIZ), em);
+	ui = tiff_itrunc((u - uv_row[vi].ustart)*(1./UV_SQSIZ), em);
 	if (ui >= uv_row[vi].nus)
 		return oog_encode(u, v);
 
@@ -1099,7 +1099,7 @@ Luv24fromLuv48(LogLuvState* sp, uint8* op, tmsize_t n)
 		else if (sp->encode_meth == SGILOGENCODE_NODITHER)
 			Le = (luv3[0]-3314) >> 2;
 		else
-			Le = itrunc(.25*(luv3[0]-3314.), sp->encode_meth);
+			Le = tiff_itrunc(.25*(luv3[0]-3314.), sp->encode_meth);
 
 		Ce = uv_encode((luv3[1]+.5)/(1<<15), (luv3[2]+.5)/(1<<15),
 					sp->encode_meth);
@@ -1155,10 +1155,10 @@ LogLuv32fromXYZ(float XYZ[3], int em)
 		v = 9.*XYZ[1] / s;
 	}
 	if (u <= 0.) ue = 0;
-	else ue = itrunc(UVSCALE*u, em);
+	else ue = tiff_itrunc(UVSCALE*u, em);
 	if (ue > 255) ue = 255;
 	if (v <= 0.) ve = 0;
-	else ve = itrunc(UVSCALE*v, em);
+	else ve = tiff_itrunc(UVSCALE*v, em);
 	if (ve > 255) ve = 255;
 					/* combine encodings */
 	return (Le << 16 | ue << 8 | ve);
@@ -1238,8 +1238,8 @@ Luv32fromLuv48(LogLuvState* sp, uint8* op, tmsize_t n)
 	}
 	while (n-- > 0) {
 		*luv++ = (uint32)luv3[0] << 16 |
-	(itrunc(luv3[1]*(UVSCALE/(1<<15)), sp->encode_meth) << 8 & 0xff00) |
-		(itrunc(luv3[2]*(UVSCALE/(1<<15)), sp->encode_meth) & 0xff);
+	(tiff_itrunc(luv3[1]*(UVSCALE/(1<<15)), sp->encode_meth) << 8 & 0xff00) |
+		(tiff_itrunc(luv3[2]*(UVSCALE/(1<<15)), sp->encode_meth) & 0xff);
 		luv3 += 3;
 	}
 }

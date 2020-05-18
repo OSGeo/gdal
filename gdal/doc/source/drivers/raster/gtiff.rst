@@ -93,7 +93,7 @@ image. Transparency masks of internal overviews are also supported.
 When the GDAL_TIFF_INTERNAL_MASK configuration option is set to YES and
 the GeoTIFF file is opened in update mode, the CreateMaskBand() method
 on a TIFF dataset or rasterband will create an internal transparency
-mask. Otherwise, the default behaviour of nodata mask creation will be
+mask. Otherwise, the default behavior of nodata mask creation will be
 used, that is to say the creation of a .msk file, as per :ref:`rfc-15`.
 
 1-bit internal mask band are deflate compressed. When reading them back,
@@ -137,7 +137,7 @@ There are two well supported configurations:
    mode, BuildOverviews() will automatically create overviews for the
    external transparency mask (in a .msk.ovr file)
 
-For the two other mixed configurations, behaviour is less obvious:
+For the two other mixed configurations, behavior is less obvious:
 
 -  Internal overviews, external nodata mask: when running
    BuildOverviews() in update mode on the .tif file, only the overviews
@@ -198,16 +198,16 @@ The value of GDALMD_AREA_OR_POINT ("AREA_OR_POINT") metadata item is
 stored in the GeoTIFF key RasterPixelIsPoint for GDALGeoTIFF or GeoTIFF
 profiles.
 
-Starting with GDAL 1.9.0, XMP metadata can be extracted from the file,
+XMP metadata can be extracted from the file,
 and will be reported as XML raw content in the xml:XMP metadata domain.
 
-Starting with GDAL 1.10, EXIF metadata can be extracted from the file,
+EXIF metadata can be extracted from the file,
 and will be reported in the EXIF metadata domain.
 
 Color Profile Metadata
 ----------------------
 
-Starting with GDAL 1.11, GDAL can deal with the following color profile
+GDAL can deal with the following color profile
 metadata in the COLOR_PROFILE domain:
 
 -  SOURCE_ICC_PROFILE (Base64 encoded ICC profile embedded in file. If
@@ -246,7 +246,7 @@ Sparse files
 GDAL makes a special interpretation of a TIFF tile or strip whose offset
 and byte count are set to 0, that is to say a tile or strip that has no
 corresponding allocated physical storage. On reading, such tiles or
-strips are considered to be implictly set to 0 or to the nodata value
+strips are considered to be implicitly set to 0 or to the nodata value
 when it is defined. On writing, it is possible to enable generating such
 files through the Create() interface by setting the SPARSE_OK creation
 option to YES. Then, blocks that are never written through the
@@ -286,7 +286,7 @@ Raw mode
 
 For some TIFF formulations that have "odd" photometric color spaces,
 on-the-fly decoding as RGBA is done. This might not be desirable in some
-use cases. This behaviour can be disabled by prefixing the filename with
+use cases. This behavior can be disabled by prefixing the filename with
 GTIFF_RAW:
 
 For example to translate a CMYK file to another one :
@@ -349,7 +349,7 @@ Creation Options
    if there's RPC information and that the PROFILE is not the default
    GDALGeoTIFF.
 
--  **RPCTXT=YES**: (GDAL >=2.0) Force the generation of an associated
+-  **RPCTXT=YES**: Force the generation of an associated
    \_RPC.TXT file to describe RPC (Rational Polynomial Coefficients), if
    RPC information is available.
 
@@ -370,14 +370,13 @@ Creation Options
 
 -  **NBITS=n**: Create a file with less than 8 bits per sample by
    passing a value from 1 to 7. The apparent pixel type should be Byte.
-   From GDAL 1.6.0, values of n=9...15 (UInt16 type) and n=17...31
+   Values of n=9...15 (UInt16 type) and n=17...31
    (UInt32 type) are also accepted. From GDAL 2.2, n=16 is accepted for
    Float32 type to generate half-precision floating point values.
 
 -  **COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/ZSTD/LERC/LERC_DEFLATE/LERC_ZSTD/WEBP/NONE]**:
    Set the compression to use. JPEG should generally only be used with
-   Byte data (8 bit per channel). But starting with GDAL 1.7.0 and
-   provided that GDAL is built with internal libtiff and libjpeg, it is
+   Byte data (8 bit per channel). But when GDAL is built with internal libtiff and libjpeg, it is
    possible to read and write TIFF files with 12bit JPEG compressed TIFF
    files (seen as UInt16 bands with NBITS=12). See the `"8 and 12 bit
    JPEG in TIFF" <http://trac.osgeo.org/gdal/wiki/TIFF12BitJPEG>`__ wiki
@@ -400,11 +399,11 @@ Creation Options
    differencing and 3 is floating point prediction.
 
 -  **DISCARD_LSB=nbits or nbits_band1,nbits_band2,...nbits_bandN**:
-   (GDAL >= 2.0) Set the number of least-significant bits to clear,
+   Set the number of least-significant bits to clear,
    possibly different per band. Lossy compression scheme to be best used
    with PREDICTOR=2 and LZW/DEFLATE/ZSTD compression.
 
--  **SPARSE_OK=TRUE/FALSE** (From GDAL 1.6.0): Should newly created
+-  **SPARSE_OK=TRUE/FALSE**: Should newly created
    files (through Create() interface) be allowed to be sparse? Sparse
    files have 0 tile/strip offsets for blocks never written and save
    space; however, most non-GDAL packages cannot read such files.
@@ -418,7 +417,7 @@ Creation Options
    compression. A value of 100 is best quality (least compression), and
    1 is worst quality (best compression). The default is 75.
 
--  **JPEGTABLESMODE=0/1/2/3**: (From GDAL 2.0) Configure how and where
+-  **JPEGTABLESMODE=0/1/2/3**: Configure how and where
    JPEG quantization and Huffman tables are written in the TIFF
    JpegTables tag and strip/tile. Default to 1.
 
@@ -456,7 +455,9 @@ Creation Options
 
 -  **WEBP_LOSSLESS=True/False**: (GDAL >= 2.4.0 and libwebp >= 0.1.4):
    By default, lossy compression is used. If set to True, lossless
-   compression will be used.
+   compression will be used. There is a significant time penalty for each
+   tile/strip with lossless WebP compression, so you may want to increase the
+   BLOCKYSIZE value for strip layout.
 
 -  **PHOTOMETRIC=[MINISBLACK/MINISWHITE/RGB/CMYK/YCBCR/CIELAB/ICCLAB/ITULAB]**:
    Set the photometric interpretation tag. Default is MINISBLACK, but if
@@ -466,10 +467,8 @@ Creation Options
 -  **ALPHA=[YES/NON-PREMULTIPLIED/PREMULTIPLIED/UNSPECIFIED]**: The
    first "extrasample" is marked as being alpha if there are any extra
    samples. This is necessary if you want to produce a greyscale TIFF
-   file with an alpha band (for instance). For GDAL < 1.10, only the YES
-   value is supported, and it is then assumed as being PREMULTIPLIED
-   alpha (ASSOCALPHA in TIFF). Starting with GDAL 1.10, YES is an alias
-   for NON-PREMULTIPLIED alpha, and the other values can be used.
+   file with an alpha band (for instance). YES is an alias
+   for NON-PREMULTIPLIED alpha.
 
 -  **PROFILE=[GDALGeoTIFF/GeoTIFF/BASELINE]**: Control what non-baseline
    tags are emitted by GDAL.
@@ -537,7 +536,7 @@ Creation Options
    the standard way will be used, with the addition of a ESRI_PE WKT
    string as the value of PCSCitationGeoKey.
 
--  **GEOTIFF_VERSION=[AUTO/1.0/1.1]**: (GDAL >= 3.1.0) Select the vesion of
+-  **GEOTIFF_VERSION=[AUTO/1.0/1.1]**: (GDAL >= 3.1.0) Select the version of
    the GeoTIFF standard used to encode georeferencing information. ``1.0``
    corresponds to the original
    `1995, GeoTIFF Revision 1.0, by Ritter & Ruth <http://geotiff.maptools.org/spec/geotiffhome.html>`_.
@@ -576,7 +575,7 @@ of 8 for PHOTOMETRIC=RGB or 16 for PHOTOMETRIC=YCBCR
 Streaming operations
 ~~~~~~~~~~~~~~~~~~~~
 
-Starting with GDAL 2.0, the GeoTIFF driver can support reading or
+The GeoTIFF driver can support reading or
 writing TIFF files (with some restrictions detailed below) in a
 streaming compatible way.
 
@@ -646,7 +645,7 @@ Configuration options
 ~~~~~~~~~~~~~~~~~~~~~
 
 This paragraph lists the configuration options that can be set to alter
-the default behaviour of the GTiff driver.
+the default behavior of the GTiff driver.
 
 -  :decl_configoption:`GTIFF_IGNORE_READ_ERRORS` : Can be set to TRUE to
    avoid turning libtiff errors into GDAL errors. Can help reading
@@ -664,9 +663,8 @@ the default behaviour of the GTiff driver.
 -  :decl_configoption:`TIFF_USE_OVR` : Can be set to TRUE to force external overviews in the
    GeoTIFF (.ovr) format. Default value : FALSE
 -  :decl_configoption:`GTIFF_POINT_GEO_IGNORE` : Can be set to TRUE to revert back to the
-   behaviour of GDAL < 1.8.0 regarding how PixelIsPoint is interpreted
-   w.r.t geotransform. See :ref:`rfc-33`
-   for more details. Default value : FALSE
+   behaviour of ancient GDAL versions regarding how PixelIsPoint is interpreted
+   w.r.t geotransform. See :ref:`rfc-33` for more details. Default value : FALSE
 -  :decl_configoption:`GTIFF_REPORT_COMPD_CS` : Can be set to TRUE to avoid
    stripping the vertical CRS of compound CRS when reading the SRS of a
    file. Does not affect the writing side. Default value : FALSE for GeoTIFF 1.0
@@ -679,16 +677,16 @@ the default behaviour of the GTiff driver.
    have false easting/northing improperly set in meters when it ought to
    be in coordinate system linear units. (`Ticket
    #3901 <http://trac.osgeo.org/gdal/ticket/3901>`__).
--  :decl_configoption:`TAB_APPROX_GEOTRANSFORM` =YES/NO: (GDAL >= 2.0) To decide if an
+-  :decl_configoption:`TAB_APPROX_GEOTRANSFORM` =YES/NO: To decide if an
    approximate geotransform is acceptable when reading a .tab file.
    Default value: NO
--  :decl_configoption:`GTIFF_DIRECT_IO` =YES/NO: (GDAL >= 2.0) Can be set to YES to use
+-  :decl_configoption:`GTIFF_DIRECT_IO` =YES/NO: Can be set to YES to use
    specialized RasterIO() implementations when reading un-compressed
    TIFF files (un-tiled only in GDAL 2.0, both un-tiled and tiled in
    GDAL 2.1) to avoid using the block cache. Setting it to YES even when
    the optimized cases do not apply should be safe (generic
    implementation will be used). Default value:NO
--  :decl_configoption:`GTIFF_VIRTUAL_MEM_IO` =YES/NO/IF_ENOUGH_RAM: (GDAL >= 2.0) Can be set
+-  :decl_configoption:`GTIFF_VIRTUAL_MEM_IO` =YES/NO/IF_ENOUGH_RAM: Can be set
    to YES to use specialized RasterIO() implementations when reading
    un-compressed TIFF files to avoid using the block cache. This
    implementation relies on memory-mapped file I/O, and is currently

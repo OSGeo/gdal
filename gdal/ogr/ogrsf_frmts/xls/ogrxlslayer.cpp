@@ -276,37 +276,13 @@ GIntBig OGRXLSLayer::GetFeatureCount( int bForce )
 }
 
 /************************************************************************/
-/*                           GetNextFeature()                           */
-/************************************************************************/
-
-OGRFeature *OGRXLSLayer::GetNextFeature()
-{
-    GetLayerDefn();
-
-    while( true )
-    {
-        OGRFeature *poFeature = GetNextRawFeature();
-        if (poFeature == nullptr)
-            return nullptr;
-
-        if(/*(m_poFilterGeom == NULL
-            || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && */ (m_poAttrQuery == nullptr
-            || m_poAttrQuery->Evaluate( poFeature )) )
-        {
-            return poFeature;
-        }
-        else
-            delete poFeature;
-    }
-}
-
-/************************************************************************/
 /*                         GetNextRawFeature()                          */
 /************************************************************************/
 
 OGRFeature *OGRXLSLayer::GetNextRawFeature()
 {
+    GetLayerDefn();
+
     if (nNextFID == nRows)
         return nullptr;
 

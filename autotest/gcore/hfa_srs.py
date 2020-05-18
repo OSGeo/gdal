@@ -43,7 +43,7 @@ epsg_list = [
     # [2046, False],  # tmerc south oriented DISABLED. Not sure about the axis
     [3031, True],  # stere
     [32661, True],  # stere
-    [3408, False],  # laea
+    [6931, False],  # laea
     [2062, False],  # lcc
     #[2065, True],  # krovak South-West
     [5221, True],  # krovak east-north

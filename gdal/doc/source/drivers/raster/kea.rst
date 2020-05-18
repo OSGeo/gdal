@@ -8,8 +8,7 @@ KEA
 
 .. build_dependencies:: libkea and libhdf5 libraries
 
-Starting with GDAL 2.0, GDAL can read, create and update files in the
-KEA format, through the libkea library.
+GDAL can read, create and update files in the KEA format, through the libkea library.
 
 KEA is an image file format, named after the New Zealand bird, that
 provides a full implementation of the GDAL data model and is implemented

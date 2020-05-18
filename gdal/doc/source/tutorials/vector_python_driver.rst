@@ -120,23 +120,25 @@ The entry point .py script must contains a single class that inherits from
 That class must define the following methods:
 
 .. py:function:: identify(self, filename, first_bytes, open_flags, open_options={})
+    :noindex:
 
-   :param str filename: File name, or more generally, connection string.
-   :param binary first_bytes: First bytes of the file (if it is a file).
-    At least 1024 (if the file has at least 1024 bytes), or more if a native driver in the driver probe sequence has requested more previously.
-   :param int open_flags: Open flags. To be ignored for now.
-   :param dict open_options: Open options.
-   :return: True if the file is recognized by the driver, False if not, or -1
-            if that cannot be known from the first bytes.
+    :param str filename: File name, or more generally, connection string.
+    :param binary first_bytes: First bytes of the file (if it is a file).
+        At least 1024 (if the file has at least 1024 bytes), or more if a native driver in the driver probe sequence has requested more previously.
+    :param int open_flags: Open flags. To be ignored for now.
+    :param dict open_options: Open options.
+    :return: True if the file is recognized by the driver, False if not, or -1
+                if that cannot be known from the first bytes.
 
 .. py:function:: open(self, filename, first_bytes, open_flags, open_options={})
+    :noindex:
 
-   :param str filename: File name, or more generally, connection string.
-   :param binary first_bytes: First bytes of the file (if it is a file).
-    At least 1024 (if the file has at least 1024 bytes), or more if a native driver in the driver probe sequence has requested more previously.
-   :param int open_flags: Open flags. To be ignored for now.
-   :param dict open_options: Open options.
-   :return: an object deriving from gdal_python_driver.BaseDataset or None
+    :param str filename: File name, or more generally, connection string.
+    :param binary first_bytes: First bytes of the file (if it is a file).
+        At least 1024 (if the file has at least 1024 bytes), or more if a native driver in the driver probe sequence has requested more previously.
+    :param int open_flags: Open flags. To be ignored for now.
+    :param dict open_options: Open options.
+    :return: an object deriving from gdal_python_driver.BaseDataset or None
 
 Example:
 
@@ -181,17 +183,19 @@ Example:
 Otherwise, the following two methods should be defined:
 
 .. py:function:: layer_count(self)
+    :noindex:
 
-   :return: the number of layers
+    :return: the number of layers
 
 .. py:function:: layer(self, idx)
+    :noindex:
 
-   :param int idx: Index of the layer to return. Normally between 0 and
-                   self.layer_count() - 1, but calling code might pass any
-                   value. In case of invalid index, None should be returned.
-   :return: an object deriving from gdal_python_driver.BaseLayer or None.
-            The C++ code will take care of caching that object, and this method
-            will only be called once for a given idx value.
+    :param int idx: Index of the layer to return. Normally between 0 and
+                    self.layer_count() - 1, but calling code might pass any
+                    value. In case of invalid index, None should be returned.
+    :return: an object deriving from gdal_python_driver.BaseLayer or None.
+                The C++ code will take care of caching that object, and this method
+                will only be called once for a given idx value.
 
 Example:
 
@@ -213,16 +217,18 @@ key: value of type string, for the default metadata domain.
 Alternatively, the following method may be implemented.
 
 .. py:function:: metadata(self, domain)
+    :noindex:
 
-   :param str domain: metadata domain. Empty string for the default one
-   :return: None, or a dictionary of key:value pairs of type string;
+    :param str domain: metadata domain. Empty string for the default one
+    :return: None, or a dictionary of key:value pairs of type string;
 
 Other methods
 +++++++++++++
 
-The following method may be optionaly implemented:
+The following method may be optionally implemented:
 
 .. py:function:: close(self)
+    :noindex:
 
     Called at the destruction of the C++ peer GDALDataset object. Useful
     to close database connections for example.
@@ -240,6 +246,7 @@ Metadata, and other definitions
 The following attributes are required and must defined at __init__ time:
 
 .. py:attribute:: name
+    :noindex:
 
     Layer name, of type string. If not set, a ``name`` method must
     be defined.
@@ -250,10 +257,12 @@ The following attributes are required and must defined at __init__ time:
     Each field is a dictionary with the following properties:
 
     .. py:attribute:: name
+        :noindex:
 
         Required
 
     .. py:attribute:: type
+        :noindex:
 
         A integer value of type ogr.OFT\_ (from the SWIG Python bindings), or
         one of the following string values: ``String``, ``Integer``, ``Integer16``, ``Integer64``,
@@ -263,15 +272,18 @@ The following attributes are required and must defined at __init__ time:
     return such a sequence.
 
 .. py:attribute:: geometry_fields
+    :noindex:
 
     Sequence of geometry field definitions (may be empty).
     Each field is a dictionary with the following properties:
 
     .. py:attribute:: name
+        :noindex:
 
         Required. May be empty
 
     .. py:attribute:: type
+        :noindex:
 
         Required. A integer value of type ogr.wkb\_ (from the SWIG Python bindings), or
         one of the following string values: ``Unknown``, ``Point``, ``LineString``,
@@ -279,6 +291,7 @@ The following attributes are required and must defined at __init__ time:
         ``GeometryCollections`` or all other values returned by :cpp:func:`OGRGeometryTypeToName`
 
     .. py:attribute:: srs
+        :noindex:
 
         The SRS attached to the geometry field as a string that can be ingested by
         :cpp:func:`OGRSpatialReference::SetFromUserInput`, such as a PROJ string,
@@ -290,32 +303,38 @@ The following attributes are required and must defined at __init__ time:
 The following attributes are optional:
 
 .. py:attribute:: fid_name
+    :noindex:
 
     Feature ID column name, of type string. May be empty string. If not set,
     a ``fid_name`` method may be defined.
 
 .. py:attribute:: metadata
+    :noindex:
 
     A dictionary of key: value strings, corresponding to metadata of the default
     metadata domain. Alternatively, a ``metadata`` method that accepts a domain
     argument may be defined.
 
 .. py:attribute:: iterator_honour_attribute_filter
+    :noindex:
 
     Can be set to True if the feature iterator takes into account the
     ``attribute_filter`` attribute that can be set on the layer.
 
 .. py:attribute:: iterator_honour_spatial_filter
+    :noindex:
 
     Can be set to True if the feature iterator takes into account the
     ``spatial_filter`` attribute that can be set on the layer.
 
 .. py:attribute:: feature_count_honour_attribute_filter
+    :noindex:
 
     Can be set to True if the feature_count method takes into account the
     ``attribute_filter`` attribute that can be set on the layer.
 
 .. py:attribute:: feature_count_honour_spatial_filter
+    :noindex:
 
     Can be set to True if the feature_count method takes into account the
     ``spatial_filter`` attribute that can be set on the layer.
@@ -328,44 +347,75 @@ a ``__iter__`` method.
 
 The iterator must return a dictionary with the feature content.
 
-If self.iterator_honour_attribute_filter or self.iterator_honour_spatial_filter
-are set to True, the attribute filter and/or spatial filter must be honoured
-by this method.
-
 Two keys allowed in the returned dictionary are:
 
 .. py:attribute:: id
+    :noindex:
 
     Strongly recommended. The value must be of type int to be recognized as a FID by GDAL
 
 .. py:attribute:: type
+    :noindex:
 
     Required. The value must be the string "OGRFeature"
 
 .. py:attribute:: fields
+    :noindex:
 
     Required. The value must be a dictionary whose keys are field names, or None
 
 .. py:attribute:: geometry_fields
+    :noindex:
 
     Required. the value must be a dictionary whose keys are geometry field names (possibly
     the empty string for unnamed geometry columns), or None.
     The value of each key must be a geometry encoded as WKT, or None.
 
 .. py:attribute:: style
+    :noindex:
 
     Optional. The value must be a string conforming to the :ref:`ogr_feature_style`.
+
+Filtering
++++++++++
+
+By default, any attribute or spatial filter set by the user of the OGR API will
+be evaluated by the generic C++ side of the driver, by iterating over all features of the
+layer.
+
+If the ``iterator_honour_attribute_filter`` (resp. ``iterator_honour_spatial_filter``)
+attribute of the layer object is set to ``True``, the attribute filter (resp.
+spatial filter) must be honoured by the feature iterator method.
+
+The attribute filter is set in the ``attribute_filter`` attribute of the
+layer object. It is a string conforming to :ref:`OGR SQL <ogr_sql_dialect>`.
+When the attribute filter is changed by the OGR API, the ``attribute_filter_changed``
+optional method is called (see below paragraph about optional methods).
+An implementation of ``attribute_filter_changed`` may decide to fallback on
+evaluation by the generic C++ side of the driver by calling the ``SetAttributeFilter``
+method (see below passthrough example)
+
+The geometry filter is set in the ``spatial_filter`` attribute of the
+layer object. It is a string encoding as ISO WKT. It is the responsibility of
+the user of the OGR API to express it in the CRS of the layer.
+When the attribute filter is changed by the OGR API, the ``spatial_filter_changed``
+optional method is called (see below paragraph about optional methods).
+An implementation of ``spatial_filter_changed`` may decide to fallback on
+evaluation by the generic C++ side of the driver by calling the ``SetSpatialFilter``
+method (see below passthrough example)
 
 Optional methods
 ++++++++++++++++
 
-The following methods may be optionaly implemented:
+The following methods may be optionally implemented:
 
 .. py:function:: extent(self, force_computation)
+    :noindex:
 
     :return: the list [xmin,ymin,xmax,ymax] with the spatial extent of the layer.
 
 .. py:function:: feature_count(self, force_computation)
+    :noindex:
 
     :return: the number of features of the layer.
 
@@ -374,12 +424,14 @@ The following methods may be optionaly implemented:
     by this method.
 
 .. py:function:: feature_by_id(self, fid)
+    :noindex:
 
     :param int fid: feature ID
     :return: a feature object in one of the formats of the ``__next__`` method
              described above, or None if no object matches fid
 
 .. py:function:: attribute_filter_changed(self)
+    :noindex:
 
     This method is called whenever self.attribute_filter has been changed.
     It is the opportunity for the driver to potentially chane the value of
@@ -387,6 +439,7 @@ The following methods may be optionaly implemented:
     attributes.
 
 .. py:function:: spatial_filter_changed(self)
+    :noindex:
 
     This method is called whenever self.spatial_filter has been changed (its value
     is a geometry encoded in WKT)
@@ -395,6 +448,7 @@ The following methods may be optionaly implemented:
     attributes.
 
 .. py:function:: test_capability(self, cap)
+    :noindex:
 
     :param cap string: potential values are BaseLayer.FastGetExtent,
                        BaseLayer.FastSpatialFilter, BaseLayer.FastFeatureCount,
@@ -406,13 +460,20 @@ Full example
 ------------
 
 The following example is a passthrough driver that forwards the calls to the
-SWIG Python GDAL API.
+SWIG Python GDAL API. It has no practical use, and is just intended to show
+case most possible uses of the API. A real-world driver will only use part of the
+API demonstrated. For example, the passthrough driver implements attribute and
+spatial filters in a completely dummy way, by calling back the C++ part of the
+driver. The ``iterator_honour_attribute_filter`` and ``iterator_honour_spatial_filter``
+attributes, and the ``attribute_filter_changed`` and ``spatial_filter_changed``
+method implementations, could have omitted with the same result.
+
 The connection strings recognized by the drivers are
 "PASSHTROUGH:connection_string_supported_by_non_python_drivers". Note that
 the prefixing by the driver name is absolutely not a requirement, but something
 specific to this particular driver which is a bit artificial (without the prefix,
 the connection string would go directly to the native driver). The CityJSON
-driver mentionned in the :ref:`Other examples <other_examples>` paragraph does
+driver mentioned in the :ref:`Other examples <other_examples>` paragraph does
 not need it.
 
 .. code-block::
@@ -484,15 +545,18 @@ not need it.
             return [minx, miny, maxx, maxy]
 
         def feature_count(self, force_computation):
+            # Dummy implementation: we call back the generic C++ implementation
             return self.gdal_layer.GetFeatureCount(True)
 
         def attribute_filter_changed(self):
+            # Dummy implementation: we call back the generic C++ implementation
             if self.attribute_filter:
                 self.gdal_layer.SetAttributeFilter(str(self.attribute_filter))
             else:
                 self.gdal_layer.SetAttributeFilter(None)
 
         def spatial_filter_changed(self):
+            # Dummy implementation: we call back the generic C++ implementation
             # the 'inf' test is just for a test_ogrsf oddity
             if self.spatial_filter and 'inf' not in self.spatial_filter:
                 self.gdal_layer.SetSpatialFilter(

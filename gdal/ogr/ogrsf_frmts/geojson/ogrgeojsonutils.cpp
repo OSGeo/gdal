@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "ogrgeojsonutils.h"
+#include <assert.h>
 #include <cpl_port.h>
 #include <cpl_conv.h>
 #include <ogr_geometry.h>
@@ -285,6 +286,7 @@ static bool IsLikelyNewlineSequenceGeoJSON( VSILFILE* fpL,
         {
             const char* pszText = pszFileContent ? pszFileContent:
                 reinterpret_cast<const char*>(pabyHeader);
+            assert(pszText);
             nRead = std::min(strlen(pszText), nBufferSize);
             memcpy(abyBuffer.data(), pszText, nRead);
             bFirstIter = false;
@@ -544,8 +546,7 @@ GeoJSONSourceType ESRIJSONDriverGetSourceType( GDALOpenInfo* poOpenInfo )
     // By default read first 6000 bytes.
     // 6000 was chosen as enough bytes to
     // enable all current tests to pass.
-    if( poOpenInfo->fpL == nullptr ||
-        !poOpenInfo->TryToIngest(6000) )
+    if( !poOpenInfo->TryToIngest(6000) )
     {
         return eGeoJSONSourceUnknown;
     }
@@ -603,8 +604,7 @@ GeoJSONSourceType TopoJSONDriverGetSourceType( GDALOpenInfo* poOpenInfo )
     // By default read first 6000 bytes.
     // 6000 was chosen as enough bytes to
     // enable all current tests to pass.
-    if( poOpenInfo->fpL == nullptr ||
-        !poOpenInfo->TryToIngest(6000) )
+    if( !poOpenInfo->TryToIngest(6000) )
     {
         return eGeoJSONSourceUnknown;
     }

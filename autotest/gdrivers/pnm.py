@@ -28,9 +28,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
-
+from osgeo import gdal
 import gdaltest
+import pytest
 
 ###############################################################################
 # Read Test grayscale (PGM)
@@ -38,7 +38,7 @@ import gdaltest
 
 def test_pnm_1():
 
-    tst = gdaltest.GDALTest('PNM', 'byte.pgm', 1, 4672)
+    tst = gdaltest.GDALTest('PNM', 'pnm/byte.pgm', 1, 4672)
 
     return tst.testOpen()
 
@@ -48,7 +48,7 @@ def test_pnm_1():
 
 def test_pnm_2():
 
-    tst = gdaltest.GDALTest('PNM', 'byte.pgm', 1, 4672)
+    tst = gdaltest.GDALTest('PNM', 'pnm/byte.pgm', 1, 4672)
 
     return tst.testCreateCopy(vsimem=1)
 
@@ -58,7 +58,7 @@ def test_pnm_2():
 
 def test_pnm_3():
 
-    tst = gdaltest.GDALTest('PNM', 'rgbsmall.ppm', 2, 21053)
+    tst = gdaltest.GDALTest('PNM', 'pnm/rgbsmall.ppm', 2, 21053)
 
     return tst.testOpen()
 
@@ -68,10 +68,14 @@ def test_pnm_3():
 
 def test_pnm_4():
 
-    tst = gdaltest.GDALTest('PNM', 'rgbsmall.ppm', 2, 21053)
+    tst = gdaltest.GDALTest('PNM', 'pnm/rgbsmall.ppm', 2, 21053)
 
     return tst.testCreateCopy()
 
-
-
-
+@pytest.mark.parametrize("nbands", [1, 3])
+def test_pnm_write_non_standard_extension(nbands):
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('PNM').Create('foo.foo', 1, 1, nbands)
+    assert gdal.GetLastErrorType() != 0
+    gdal.Unlink('foo.foo')

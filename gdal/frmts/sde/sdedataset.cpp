@@ -509,7 +509,7 @@ void GDALRegister_SDE()
     poDriver->SetDescription( "SDE" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ESRI ArcSDE" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,  "frmt_various.html#SDE" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,  "drivers/raster/sde.html" );
 
     poDriver->pfnOpen = SDEDataset::Open;
 

@@ -95,7 +95,6 @@ def test_osr_compd_3():
             DATUM["Nouvelle_Triangulation_Francaise_Paris",
                 SPHEROID["Clarke 1880 (IGN)",6378249.2,293.4660212936265,
                     AUTHORITY["EPSG","7011"]],
-                TOWGS84[-168,-60,320,0,0,0,0],
                 AUTHORITY["EPSG","6807"]],
             PRIMEM["Paris",2.33722917,
                 AUTHORITY["EPSG","8903"]],
@@ -118,7 +117,7 @@ def test_osr_compd_3():
             AUTHORITY["EPSG","5118"]],
         UNIT["metre",1,
             AUTHORITY["EPSG","9001"]],
-        AXIS["Up",UP],
+        AXIS["Gravity-related height",UP],
         AUTHORITY["EPSG","5719"]],
     AUTHORITY["EPSG","7401"]]"""
     wkt = srs.ExportToPrettyWkt()
@@ -141,7 +140,6 @@ def test_osr_compd_4():
         DATUM["Nouvelle_Triangulation_Francaise_Paris",
             SPHEROID["Clarke 1880 (IGN)",6378249.2,293.4660212936265,
                 AUTHORITY["EPSG","7011"]],
-            TOWGS84[-168,-60,320,0,0,0,0],
             AUTHORITY["EPSG","6807"]],
         PRIMEM["Paris",2.33722917,
             AUTHORITY["EPSG","8903"]],
@@ -153,7 +151,7 @@ def test_osr_compd_4():
             AUTHORITY["EPSG","5119"]],
         UNIT["metre",1,
             AUTHORITY["EPSG","9001"]],
-        AXIS["Up",UP],
+        AXIS["Gravity-related height",UP],
         AUTHORITY["EPSG","5720"]],
     AUTHORITY["EPSG","7400"]]"""
     wkt = srs.ExportToPrettyWkt()
@@ -178,7 +176,6 @@ def test_osr_compd_5():
             DATUM["North_American_Datum_1983",
                 SPHEROID["GRS 1980",6378137,298.257222101,
                     AUTHORITY["EPSG","7019"]],
-                TOWGS84[0,0,0,0,0,0,0],
                 AUTHORITY["EPSG","6269"]],
             PRIMEM["Greenwich",0,
                 AUTHORITY["EPSG","8901"]],
@@ -211,7 +208,7 @@ def test_osr_compd_5():
         print('warning they are equivalent, but not completely the same')
         print(wkt)
 
-    exp_proj4 = '+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +vunits=m +no_defs'
+    exp_proj4 = '+proj=utm +zone=11 +datum=NAD83 +units=m +vunits=m +no_defs'
     proj4 = srs.ExportToProj4()
     assert proj4 == exp_proj4, ('Did not get expected proj.4 string, got:' + proj4)
 

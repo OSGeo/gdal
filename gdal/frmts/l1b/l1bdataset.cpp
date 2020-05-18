@@ -569,7 +569,7 @@ L1BDataset::L1BDataset( L1BFileFormat eL1BFormatIn ) :
     iGCPCodeOffset(0),
     iCLAVRStart(0),
     nGCPsPerLine(0),
-    eLocationIndicator(DESCEND), // XXX: should be initialised
+    eLocationIndicator(DESCEND), // XXX: should be initialized
     iGCPStart(0),
     iGCPStep(0),
     eL1BFormat(eL1BFormatIn),
@@ -3032,8 +3032,7 @@ L1BFileFormat L1BDataset::DetectFormat( const char* pszFilename,
         return L1B_NONE;
 
     // try NOAA-18 formats
-    if ( nHeaderBytes > 22 + 10
-        && *(pabyHeader + 0) == '\0'
+    if (  *(pabyHeader + 0) == '\0'
         && *(pabyHeader + 1) == '\0'
         && *(pabyHeader + 2) == '\0'
         && *(pabyHeader + 3) == '\0'
@@ -3551,7 +3550,7 @@ void GDALRegister_L1B()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "NOAA Polar Orbiter Level 1b Data Set" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_l1b.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/l1b.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 

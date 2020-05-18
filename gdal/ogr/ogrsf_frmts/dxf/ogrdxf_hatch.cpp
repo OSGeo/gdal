@@ -592,6 +592,9 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC,
     int nVertexCount = -1;
     bool bHaveBulges = false;
 
+    if( dfElevation != 0 )
+        oSmoothPolyline.setCoordinateDimension(3);
+
 /* -------------------------------------------------------------------- */
 /*      Read the boundary path type.                                    */
 /* -------------------------------------------------------------------- */
@@ -679,7 +682,7 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC,
     }
 
     oSmoothPolyline.SetUseMaxGapWhenTessellatingArcs( poDS->InlineBlocks() );
-    poGC->addGeometryDirectly( oSmoothPolyline.Tesselate() );
+    poGC->addGeometryDirectly( oSmoothPolyline.Tessellate() );
 
 /* -------------------------------------------------------------------- */
 /*      Skip through source boundary objects if present.                */

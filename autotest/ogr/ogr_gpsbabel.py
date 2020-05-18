@@ -52,7 +52,7 @@ def test_ogr_gpsbabel_init():
     if ret.find('GPSBabel') == -1:
         pytest.skip('Cannot access GPSBabel utility')
 
-    ds = ogr.Open('data/test.gpx')
+    ds = ogr.Open('data/gpx/test.gpx')
 
     if ds is None:
         print('GPX driver not configured for read support')
@@ -70,7 +70,7 @@ def test_ogr_gpsbabel_1():
     if not ogrtest.have_read_gpsbabel:
         pytest.skip()
 
-    ds = ogr.Open('GPSBabel:nmea:data/nmea.txt')
+    ds = ogr.Open('GPSBabel:nmea:data/gpsbabel/nmea.txt')
     assert ds is not None
 
     assert ds.GetLayerCount() == 2
@@ -84,7 +84,7 @@ def test_ogr_gpsbabel_2():
     if not ogrtest.have_read_gpsbabel:
         pytest.skip()
 
-    ds = ogr.Open('data/nmea.txt')
+    ds = ogr.Open('data/gpsbabel/nmea.txt')
     assert ds is not None
 
     assert ds.GetLayerCount() == 2

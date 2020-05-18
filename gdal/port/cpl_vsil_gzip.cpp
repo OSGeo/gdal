@@ -181,7 +181,7 @@ class VSIGZipHandle final : public VSIVirtualHandle
 
     void check_header();
     int get_byte();
-    int gzseek( vsi_l_offset nOffset, int nWhence );
+    bool gzseek( vsi_l_offset nOffset, int nWhence );
     int gzrewind ();
     uLong getLong ();
 
@@ -535,15 +535,16 @@ void VSIGZipHandle::check_header()
         }
     }
 
-    int c = 0;
     if( (flags & ORIG_NAME) != 0 )
     {
         // Skip the original file name.
+        int c;
         while( (c = get_byte()) != 0 && c != EOF ) {}
     }
     if( (flags & COMMENT) != 0 )
     {
         // skip the .gz file comment.
+        int c;
         while ((c = get_byte()) != 0 && c != EOF) {}
     }
     if( (flags & HEAD_CRC) != 0 )
@@ -622,18 +623,14 @@ int VSIGZipHandle::gzrewind ()
 
 int VSIGZipHandle::Seek( vsi_l_offset nOffset, int nWhence )
 {
-    /* The semantics of gzseek are different from ::Seek */
-    /* It returns the current offset, where as ::Seek should return 0 */
-    /* if successful */
-    int ret = gzseek(nOffset, nWhence);
-    return (ret >= 0) ? 0 : ret;
+    return gzseek(nOffset, nWhence) ? 0 : -1;
 }
 
 /************************************************************************/
 /*                            gzseek()                                  */
 /************************************************************************/
 
-int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
+bool VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
 {
     const vsi_l_offset original_offset = offset;
     const int original_nWhence = whence;
@@ -651,8 +648,8 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
         {
             if( out + offset > m_compressed_size )
             {
-                CPL_VSIL_GZ_RETURN(-1);
-                return -1L;
+                CPL_VSIL_GZ_RETURN(FALSE);
+                return false;
             }
 
             offset = startOff + out + offset;
@@ -661,8 +658,8 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
         {
             if( offset > m_compressed_size )
             {
-                CPL_VSIL_GZ_RETURN(-1);
-                return -1L;
+                CPL_VSIL_GZ_RETURN(FALSE);
+                return false;
             }
 
             offset = startOff + offset;
@@ -673,30 +670,27 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
             // so no way to seek backward. See #1590 */
             if( offset > 0 ) // || -offset > compressed_size
             {
-                CPL_VSIL_GZ_RETURN(-1);
-                return -1L;
+                CPL_VSIL_GZ_RETURN(FALSE);
+                return false;
             }
 
             offset = startOff + m_compressed_size - offset;
         }
         else
         {
-            CPL_VSIL_GZ_RETURN(-1);
-            return -1L;
+            CPL_VSIL_GZ_RETURN(FALSE);
+            return false;
         }
 
         if( VSIFSeekL(reinterpret_cast<VSILFILE*>(m_poBaseHandle), offset, SEEK_SET) < 0 )
         {
-            CPL_VSIL_GZ_RETURN(-1);
-            return -1L;
+            CPL_VSIL_GZ_RETURN(FALSE);
+            return false;
         }
 
         out = offset - startOff;
         in = out;
-#ifdef ENABLE_DEBUG
-        CPLDebug("GZIP", "return " CPL_FRMT_GUIB, in);
-#endif
-        return in > INT_MAX ? INT_MAX : static_cast<int>(in);
+        return true;
     }
 
     // whence == SEEK_END is unsuppored in original gzseek.
@@ -707,7 +701,7 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
         if( offset == 0 && m_uncompressed_size != 0 )
         {
             out = m_uncompressed_size;
-            return 1;
+            return true;
         }
 
         // We don't know the uncompressed size. This is unfortunate.
@@ -741,14 +735,14 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
     }
     else if( gzrewind() < 0 )
     {
-            CPL_VSIL_GZ_RETURN(-1);
-            return -1L;
+        CPL_VSIL_GZ_RETURN(FALSE);
+        return false;
     }
 
     if( z_err != Z_OK && z_err != Z_STREAM_END )
     {
-        CPL_VSIL_GZ_RETURN(-1);
-        return -1L;
+        CPL_VSIL_GZ_RETURN(FALSE);
+        return false;
     }
 
     for( unsigned int i = 0;
@@ -797,17 +791,14 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
         outbuf = static_cast<Byte*>(ALLOC(Z_BUFSIZE));
         if( outbuf == nullptr )
         {
-            CPL_VSIL_GZ_RETURN(-1);
-            return -1L;
+            CPL_VSIL_GZ_RETURN(FALSE);
+            return false;
         }
     }
 
     if( original_nWhence == SEEK_END && z_err == Z_STREAM_END )
     {
-#ifdef ENABLE_DEBUG
-        CPLDebug("GZIP", "gzseek return " CPL_FRMT_GUIB, out);
-#endif
-        return static_cast<int>(out);
+        return true;
     }
 
     while( offset > 0 )
@@ -820,8 +811,8 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
             static_cast<int>(Read(outbuf, 1, static_cast<uInt>(size)));
         if( read_size == 0 )
         {
-            // CPL_VSIL_GZ_RETURN(-1);
-            return -1L;
+            // CPL_VSIL_GZ_RETURN(FALSE);
+            return false;
         }
         if( original_nWhence == SEEK_END )
         {
@@ -834,7 +825,7 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
         offset -= read_size;
     }
 #ifdef ENABLE_DEBUG
-    CPLDebug("GZIP", "gzseek return " CPL_FRMT_GUIB, out);
+    CPLDebug("GZIP", "gzseek at offset " CPL_FRMT_GUIB, out);
 #endif
 
     if( original_offset == 0 && original_nWhence == SEEK_END )
@@ -873,7 +864,7 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
         }
     }
 
-    return static_cast<int>(out);
+    return true;
 }
 
 /************************************************************************/

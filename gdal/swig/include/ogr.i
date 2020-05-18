@@ -241,7 +241,6 @@ typedef struct OGRFeatureHS OGRFeatureShadow;
 typedef struct OGRFeatureDefnHS OGRFeatureDefnShadow;
 typedef struct OGRGeometryHS OGRGeometryShadow;
 typedef struct OGRCoordinateTransformationHS OSRCoordinateTransformationShadow;
-typedef struct OGRCoordinateTransformationHS OGRCoordinateTransformationShadow;
 typedef struct OGRFieldDefnHS OGRFieldDefnShadow;
 #else
 typedef void OSRSpatialReferenceShadow;
@@ -258,6 +257,7 @@ typedef void OGRFieldDefnShadow;
 #endif
 typedef struct OGRStyleTableHS OGRStyleTableShadow;
 typedef struct OGRGeomFieldDefnHS OGRGeomFieldDefnShadow;
+typedef struct OGRGeomTransformer OGRGeomTransformerShadow;
 %}
 
 #ifdef SWIGJAVA
@@ -660,12 +660,14 @@ public:
 #ifndef SWIGJAVA
 %feature( "kwargs" ) CopyDataSource;
 #endif
+%apply Pointer NONNULL {OGRDataSourceShadow *copy_ds};
   OGRDataSourceShadow *CopyDataSource( OGRDataSourceShadow* copy_ds,
                                   const char* utf8_path,
                                   char **options = 0 ) {
     OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CopyDataSource(self, copy_ds, utf8_path, options);
     return ds;
   }
+%clear OGRDataSourceShadow *copy_ds;
 #ifdef SWIGPYTHON
 %nothread;
 #endif
@@ -2981,6 +2983,11 @@ public:
     return (OGRGeometryShadow*) OGR_G_MakeValid(self);
   }
 
+  %newobject RemoveLowerDimensionSubGeoms;
+  OGRGeometryShadow* RemoveLowerDimensionSubGeoms() {
+    return (OGRGeometryShadow*) OGR_G_RemoveLowerDimensionSubGeoms(self);
+  }
+
   %newobject Buffer;
 #ifndef SWIGJAVA
   %feature("kwargs") Buffer;
@@ -3224,6 +3231,12 @@ public:
     return OGR_G_Value(self, dfDistance);
   }
 
+  %newobject Transform;
+  %apply Pointer NONNULL {OGRGeomTransformerShadow* transformer};
+  OGRGeometryShadow* Transform(OGRGeomTransformerShadow* transformer)
+  {
+    return (OGRGeometryShadow*)OGR_GeomTransformer_Transform(transformer, self);
+  }
 } /* %extend */
 
 }; /* class OGRGeometryShadow */
@@ -3235,6 +3248,34 @@ public:
 %clear (const char* field_name);
 #endif
 
+/************************************************************************/
+/*                         OGRGeomTransformerH                          */
+/************************************************************************/
+
+%rename (GeomTransformer) OGRGeomTransformerShadow;
+class OGRGeomTransformerShadow {
+  OGRGeomTransformerShadow();
+public:
+%extend {
+
+  OGRGeomTransformerShadow(OSRCoordinateTransformationShadow* ct,
+                           char** options = NULL ) {
+    return OGR_GeomTransformer_Create(ct, options);
+  }
+
+  ~OGRGeomTransformerShadow() {
+    OGR_GeomTransformer_Destroy( self );
+  }
+
+  %newobject Transform;
+  %apply Pointer NONNULL {OGRGeometryShadow* src_geom};
+  OGRGeometryShadow* Transform(OGRGeometryShadow* src_geom)
+  {
+    return (OGRGeometryShadow*)OGR_GeomTransformer_Transform(self, src_geom);
+  }
+} /* %extend */
+
+}; /* class OGRGeomTransformerShadow */
 
 /************************************************************************/
 /*                        Other misc functions.                         */

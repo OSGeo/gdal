@@ -38,7 +38,7 @@ import gdaltest
 
 def test_gsc_1():
 
-    tst = gdaltest.GDALTest('GSC', 'fakegsc.gsc', 1, 0)
+    tst = gdaltest.GDALTest('GSC', 'gsc/fakegsc.gsc', 1, 0)
     return tst.testOpen()
 
 

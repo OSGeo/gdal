@@ -259,7 +259,7 @@ static void ApplyErrorHandler( CPLErrorContext *psCtx, CPLErr eErrClass,
                 pfnErrorHandler(eErrClass, err_no, pszMessage);
             }
         }
-        else if( eErrClass == CE_Debug )
+        else /* if( eErrClass == CE_Debug ) */
         {
             // for CPLDebug messages we propagate to the default error handler
             pActiveUserData = nullptr;
@@ -289,7 +289,7 @@ static void ApplyErrorHandler( CPLErrorContext *psCtx, CPLErr eErrClass,
  * CE_Fatal meaning that a fatal error has occurred, and that CPLError()
  * should not return.
  *
- * The default behaviour of CPLError() is to report errors to stderr,
+ * The default behavior of CPLError() is to report errors to stderr,
  * and to abort() after reporting a CE_Fatal error.  It is expected that
  * some applications will want to suppress error reporting, and will want to
  * install a C++ exception, or longjmp() approach to no local fatal error
@@ -653,7 +653,7 @@ void CPLDebug( const char * pszCategory,
         strcat( pszMessage, VSICTime( static_cast<unsigned long>(tv.tv_sec) ) );
 
         // On windows anyway, ctime puts a \n at the end, but I'm not
-        // convinced this is standard behaviour, so we'll get rid of it
+        // convinced this is standard behavior, so we'll get rid of it
         // carefully
 
         if( pszMessage[strlen(pszMessage) -1 ] == '\n' )
@@ -1133,7 +1133,7 @@ CPLSetErrorHandlerEx( CPLErrorHandler pfnErrorHandlerNew, void* pUserData )
  *     void MyErrorHandler(CPLErr eErrClass, int err_no, const char *msg)
  * </pre>
  *
- * Pass NULL to come back to the default behavior.  The default behaviour
+ * Pass NULL to come back to the default behavior.  The default behavior
  * (CPLDefaultErrorHandler()) is to write the message to stderr.
  *
  * The msg will be a partially formatted error message not containing the
@@ -1141,7 +1141,7 @@ CPLSetErrorHandlerEx( CPLErrorHandler pfnErrorHandlerNew, void* pUserData )
  * is handled by CPLError() before calling the handler.  If the error
  * handler function is passed a CE_Fatal class error and returns, then
  * CPLError() will call abort(). Applications wanting to interrupt this
- * fatal behaviour will have to use longjmp(), or a C++ exception to
+ * fatal behavior will have to use longjmp(), or a C++ exception to
  * indirectly exit the function.
  *
  * Another standard error handler is CPLQuietErrorHandler() which doesn't

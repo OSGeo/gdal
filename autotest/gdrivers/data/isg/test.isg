@@ -1,0 +1,25 @@
+This is an example.
+Here some information about model computation can be provided.
+
+Reference:
+A. Name1, B. Name2 (year). Title. Journal, Volume(Number), pp. xxx-yyy.
+begin_of_head ================================================ 
+model name : EXAMPLE
+model type : gravimetric
+units      : meters
+reference  : GRS80
+lat min    =    40.0000
+lat max    =    41.0000
+lon min    =   120.0000
+lon max    =   121.5000
+delta lat  =     0.2500
+delta lon  =     0.2500
+nrows      =          4
+ncols      =          6
+nodata     = -9999.0000
+ISG format =        1.0
+end_of_head ================================================== 
+30.1234    31.2222    32.3456    33.4444    34.5678    36.6666
+41.1111    42.2345    43.3333    44.4567    45.5555    46.6789
+51.4321    52.9753    53.6543    54.8642 -9999.0000 -9999.0000
+61.9999    62.8888    63.7777    64.6666 -9999.0000 -9999.0000
