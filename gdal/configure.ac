@@ -1306,26 +1306,6 @@ if test "$LIBCURL_CONFIG" != "no" ; then
 
 fi
 
-if test "$CURL_SETTING" = "yes" ; then
-
-  CURL_INC=`$LIBCURL_CONFIG --cflags`
-  CURL_LIB=`$LIBCURL_CONFIG --libs`
-m4_foreach_w([frmt],CURL_FORMATS,[
-  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
-  if test "x$driver_enabled" = "xyes"; then
-    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED frmt"
-  fi
-])
-m4_foreach_w([frmt],CURL_DRIVERS,[
-  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
-  if test "x$driver_enabled" = "xyes"; then
-    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
-    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
-  fi
-])
-
-fi
-
 AC_SUBST(CURL_SETTING,$CURL_SETTING)
 AC_SUBST(CURL_INC,    $CURL_INC)
 AC_SUBST(CURL_LIB,    $CURL_LIB)
@@ -1449,24 +1429,6 @@ AC_SUBST([SQLITE_INC], $SQLITE3_CFLAGS)
 AC_SUBST([HAVE_SQLITE], $HAVE_SQLITE3)
 AC_SUBST([SQLITE_HAS_COLUMN_METADATA], $SQLITE_HAS_COLUMN_METADATA)
 HAVE_SQLITE=$HAVE_SQLITE3
-
-if test "$HAVE_SQLITE3" = "yes"; then
-m4_foreach_w([frmt],SQLITE_FORMATS,[
-  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
-  if test "x$driver_enabled" = "xyes"; then
-    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED frmt"
-  fi
-])
-
-m4_foreach_w([frmt],SQLITE_DRIVERS,[
-  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
-  if test "x$driver_enabled" = "xyes"; then
-    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
-    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
-  fi
-])
-
-fi
 
 dnl ---------------------------------------------------------------------------
 dnl PROJ.6 related stuff
@@ -1640,6 +1602,10 @@ else
 fi
 
 AC_SUBST(ZSTD_SETTING,$ZSTD_SETTING)
+
+dnl ---------------------------------------------------------------------------
+dnl Set up drivers and formats
+dnl ---------------------------------------------------------------------------
 
 GDALFORMATS_ENABLED=
 GDALFORMATS_DISABLED=
@@ -1829,13 +1795,49 @@ AC_SUBST(GDALFORMATS_ENABLED,$GDALFORMATS_ENABLED)
 if test "$LIBZ_SETTING" != "no" ; then
   if test "x$INTERNAL_FORMAT_rik_ENABLED" = "xyes"; then
       GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED rik"
-  fi 
+  fi
   if test "x$INTERNAL_FORMAT_ozi_ENABLED" = "xyes"; then
       GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED ozi"
-  fi 
+  fi
 fi
 
+if test "$CURL_SETTING" = "yes" ; then
 
+  CURL_INC=`$LIBCURL_CONFIG --cflags`
+  CURL_LIB=`$LIBCURL_CONFIG --libs`
+m4_foreach_w([frmt],CURL_FORMATS,[
+  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
+  if test "x$driver_enabled" = "xyes"; then
+    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED frmt"
+  fi
+])
+m4_foreach_w([frmt],CURL_DRIVERS,[
+  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
+  fi
+])
+
+fi
+
+if test "$HAVE_SQLITE3" = "yes"; then
+m4_foreach_w([frmt],SQLITE_FORMATS,[
+  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
+  if test "x$driver_enabled" = "xyes"; then
+    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED frmt"
+  fi
+])
+
+m4_foreach_w([frmt],SQLITE_DRIVERS,[
+  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
+  fi
+])
+
+fi
 
 dnl ---------------------------------------------------------------------------
 dnl Select an PostgreSQL Library to use, or disable driver.
