@@ -1609,10 +1609,10 @@ def test_ogr_mitab_35():
                      'CoordSys Earth Projection 18, 104, "m", 1, 2, 3, 4',
                      'CoordSys Earth Projection 19, 104, "m", 1, 2, 3, 4, 5, 6',
                      'CoordSys Earth Projection 20, 104, "m", 1, 2, 3, 4, 5',
-                     'CoordSys Earth Projection 21, 104, "m", 1, 2, 3, 4, 5',
-                     'CoordSys Earth Projection 22, 104, "m", 1, 2, 3, 4, 5',
-                     'CoordSys Earth Projection 23, 104, "m", 1, 2, 3, 4, 5',
-                     'CoordSys Earth Projection 24, 104, "m", 1, 2, 3, 4, 5',
+                     #'CoordSys Earth Projection 21, 104, "m", 1, 2, 3, 4, 5',
+                     #'CoordSys Earth Projection 22, 104, "m", 1, 2, 3, 4, 5',
+                     #'CoordSys Earth Projection 23, 104, "m", 1, 2, 3, 4, 5',
+                     #'CoordSys Earth Projection 24, 104, "m", 1, 2, 3, 4, 5',
                      'CoordSys Earth Projection 25, 104, "m", 1, 2, 3, 4',
                      'CoordSys Earth Projection 26, 104, "m", 1, 2',
                      'CoordSys Earth Projection 27, 104, "m", 1, 2, 3, 4',
@@ -1689,6 +1689,16 @@ def test_ogr_mitab_35():
     srs = get_srs_from_coordsys(coordsys)
     wkt = srs.ExportToWkt()
     assert wkt == 'GEOGCS["unnamed",DATUM["MIF 9999,1,1,2,3,4,5,6,7,3",SPHEROID["WGS 72",6378135,298.26],TOWGS84[1,2,3,-4,-5,-6,7]],PRIMEM["non-Greenwich",3],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]'
+
+    # Test EPSG:2393 / KKJ
+    srs = osr.SpatialReference("""PROJCS["KKJ / Finland Uniform Coordinate System",GEOGCS["KKJ",DATUM["Kartastokoordinaattijarjestelma_1966",SPHEROID["International 1924",6378388,297,AUTHORITY["EPSG","7022"]],AUTHORITY["EPSG","6123"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4123"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",27],PARAMETER["scale_factor",1],PARAMETER["false_easting",3500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Northing",NORTH],AXIS["Easting",EAST],AUTHORITY["EPSG","2393"]]""")
+    coordsys = get_coordsys_from_srs(srs)
+    assert coordsys == 'CoordSys Earth Projection 24, 1016, "m", 27, 0, 1, 3500000, 0'
+    srs = get_srs_from_coordsys(coordsys)
+    wkt = srs.ExportToWkt()
+    assert wkt == 'PROJCS["unnamed",GEOGCS["unnamed",DATUM["Kartastokoordinaattijarjestelma_1966",SPHEROID["International 1924",6378388,297]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",27],PARAMETER["scale_factor",1],PARAMETER["false_easting",3500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
+    coordsys = get_coordsys_from_srs(srs)
+    assert coordsys == 'CoordSys Earth Projection 24, 1016, "m", 27, 0, 1, 3500000, 0'
 
 ###############################################################################
 # Test opening and modifying a file with polygons created with MapInfo that consists of
