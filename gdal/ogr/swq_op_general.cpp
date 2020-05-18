@@ -1182,12 +1182,12 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode,
             eRetType = SWQ_STRING;
             eArgType = SWQ_STRING;
         }
-        else if( poNode->papoSubExpr[0]->field_type == SWQ_FLOAT )
+        else if( poNode->papoSubExpr[0]->field_type == SWQ_FLOAT || poNode->papoSubExpr[1]->field_type == SWQ_FLOAT )
         {
             eRetType = SWQ_FLOAT;
             eArgType = SWQ_FLOAT;
         }
-        else if( poNode->papoSubExpr[0]->field_type == SWQ_INTEGER64 )
+        else if( poNode->papoSubExpr[0]->field_type == SWQ_INTEGER64 || poNode->papoSubExpr[1]->field_type == SWQ_INTEGER64 )
         {
             eRetType = SWQ_INTEGER64;
             eArgType = SWQ_INTEGER64;
@@ -1206,12 +1206,12 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode,
         if( !SWQCheckSubExprAreNotGeometries(poNode) )
             return SWQ_ERROR;
         SWQAutoPromoteIntegerToInteger64OrFloat( poNode );
-        if( poNode->papoSubExpr[0]->field_type == SWQ_FLOAT )
+        if( poNode->papoSubExpr[0]->field_type == SWQ_FLOAT || poNode->papoSubExpr[1]->field_type == SWQ_FLOAT )
         {
             eRetType = SWQ_FLOAT;
             eArgType = SWQ_FLOAT;
         }
-        else if( poNode->papoSubExpr[0]->field_type == SWQ_INTEGER64 )
+        else if( poNode->papoSubExpr[0]->field_type == SWQ_INTEGER64 || poNode->papoSubExpr[1]->field_type == SWQ_INTEGER64 )
         {
             eRetType = SWQ_INTEGER64;
             eArgType = SWQ_INTEGER64;
