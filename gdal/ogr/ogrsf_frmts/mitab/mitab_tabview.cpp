@@ -1386,7 +1386,6 @@ int  TABRelation::Init(const char *pszViewName,
      * Create new FeatureDefn and copy selected fields definitions
      * while updating the appropriate field maps.
      *----------------------------------------------------------------*/
-    int nIndex = 0;
     OGRFieldDefn *poFieldDefn = nullptr;
 
     m_poDefn = new OGRFeatureDefn(pszViewName);
@@ -1397,6 +1396,7 @@ int  TABRelation::Init(const char *pszViewName,
          papszSelectedFields != nullptr && papszSelectedFields[i] != nullptr;
          i++ )
     {
+        int nIndex;
         if (poMainDefn &&
             (nIndex=poMainDefn->GetFieldIndex(papszSelectedFields[i])) >=0)
         {

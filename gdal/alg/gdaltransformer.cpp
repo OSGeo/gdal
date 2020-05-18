@@ -3325,8 +3325,6 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc,
                                         const double zSMETransformed[3] )
 {
     ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(pCBData);
-    int bSuccess = FALSE;  // TODO(schwehr): Split into each case.
-
     const int nMiddle = (nPoints - 1) / 2;
 
 #ifdef notdef_sanify_check
@@ -3336,7 +3334,7 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc,
         double z2[3] = { z[0], z[nMiddle], z[nPoints-1] };
         int anSuccess2[3] = {};
 
-        bSuccess =
+        const int bSuccess =
             psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc, 3,
                                         x2, y2, z2, anSuccess2 );
         CPLAssert(bSuccess);
@@ -3421,6 +3419,7 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc,
             x[nMiddle] == x[nMiddle + (nPoints - nMiddle - 1) / 2];
 
         int anSuccess2[3] = {};
+        int bSuccess = FALSE;
         if( !bUseBaseTransformForHalf1 && !bUseBaseTransformForHalf2 )
             bSuccess =
                 psATInfo->pfnBaseTransformer(psATInfo->pBaseCBData,
@@ -3447,10 +3446,6 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc,
                                              anSuccess2 + 2 );
             anSuccess2[0] = TRUE;
             anSuccess2[1] = TRUE;
-        }
-        else
-        {
-            bSuccess = FALSE;
         }
 
         if( !bSuccess || !anSuccess2[0] || !anSuccess2[1] || !anSuccess2[2] )

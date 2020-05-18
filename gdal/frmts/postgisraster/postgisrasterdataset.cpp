@@ -2104,8 +2104,6 @@ const char * pszValidConnectionString)
 {
     int l_nTiles = PQntuples(poResult);
     int i = 0;
-    double dfTileUpperLeftX = 0;
-    double dfTileUpperLeftY = 0;
 
     papszSubdatasets = static_cast<char**>(VSICalloc(2 * l_nTiles + 1, sizeof(char*)));
     if( papszSubdatasets == nullptr )
@@ -2153,8 +2151,8 @@ const char * pszValidConnectionString)
 
             CPLFree(pszRes);
 
-            dfTileUpperLeftX = CPLAtof(papszParams[POS_UPPERLEFTX]);
-            dfTileUpperLeftY = CPLAtof(papszParams[POS_UPPERLEFTY]);
+            const double dfTileUpperLeftX = CPLAtof(papszParams[POS_UPPERLEFTX]);
+            const double dfTileUpperLeftY = CPLAtof(papszParams[POS_UPPERLEFTY]);
 
             papszSubdatasets[2 * i] =
                 CPLStrdup(CPLSPrintf("SUBDATASET_%d_NAME=PG:%s schema=%s table=%s column=%s "
@@ -3284,7 +3282,6 @@ CPLErr PostGISRasterDataset::_SetProjection(const char * pszProjectionRef) {
     VALIDATE_POINTER1(pszProjectionRef, "SetProjection", CE_Failure);
 
     CPLString osCommand;
-    int nFetchedSrid = -1;
 
     /*****************************************************************
      * Check if the dataset allows updating
@@ -3307,7 +3304,7 @@ CPLErr PostGISRasterDataset::_SetProjection(const char * pszProjectionRef) {
     if (poResult && PQresultStatus(poResult) == PGRES_TUPLES_OK
             && PQntuples(poResult) > 0) {
 
-        nFetchedSrid = atoi(PQgetvalue(poResult, 0, 0));
+        const int nFetchedSrid = atoi(PQgetvalue(poResult, 0, 0));
 
         // update class attribute
         nSrid = nFetchedSrid;
@@ -3338,7 +3335,7 @@ CPLErr PostGISRasterDataset::_SetProjection(const char * pszProjectionRef) {
         if (poResult && PQresultStatus(poResult) == PGRES_TUPLES_OK
                 && PQntuples(poResult) > 0) {
 
-            nFetchedSrid = atoi(PQgetvalue(poResult, 0, 0));
+            const int nFetchedSrid = atoi(PQgetvalue(poResult, 0, 0));
 
             // update class attribute
             nSrid = nFetchedSrid;

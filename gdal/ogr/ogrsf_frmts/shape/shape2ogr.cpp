@@ -438,7 +438,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
         const double dfX = poPoint->getX();
         const double dfY = poPoint->getY();
         const double dfZ = poPoint->getZ();
-        double dfM = 0.0;
+        double dfM = -std::numeric_limits<double>::max();
         double *pdfM = nullptr;
         if( wkbHasM(eLayerGeomType) &&
             (hSHP->nShapeType == SHPT_POINTM ||
@@ -446,8 +446,6 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
         {
             if( poGeom->IsMeasured() )
                 dfM = poPoint->getM();
-            else
-                dfM = -std::numeric_limits<double>::max();
             pdfM = &dfM;
         }
 

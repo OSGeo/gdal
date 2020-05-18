@@ -435,7 +435,7 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
                          double dfRetryDelay);
     bool CompleteMultipart(const CPLString& osFilename,
                            const CPLString& osUploadID,
-                           const std::vector<CPLString> aosEtags,
+                           const std::vector<CPLString>& aosEtags,
                            IVSIS3LikeHandleHelper *poS3HandleHelper,
                            int nMaxRetry,
                            double dfRetryDelay);

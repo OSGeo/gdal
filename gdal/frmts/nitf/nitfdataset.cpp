@@ -5888,6 +5888,7 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
     nOffset ++;
     abyAPP6[nOffset] = 0;
     nOffset ++;
+    (void)nOffset;
 
     CPLAssert(nOffset == sizeof(abyAPP6));
 

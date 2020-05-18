@@ -2131,12 +2131,11 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                 memset(m_pabyCachedTiles + 2 * nBandBlockSize, 0, nBlockXSize * iYOff);
                 memset(m_pabyCachedTiles + 3 * nBandBlockSize, 0, nBlockXSize * iYOff);
             }
-            GPtrDiff_t i = 0;  // TODO: Rename variable to make it clear what it is.
             for(GPtrDiff_t iY = iYOff; iY < iYOff + iYCount; iY ++)
             {
                 if( iXOff > 0 )
                 {
-                    i = iY * nBlockXSize;
+                    const GPtrDiff_t i = iY * nBlockXSize;
                     memset(m_pabyCachedTiles + 0 * nBandBlockSize + i, 0, iXOff);
                     memset(m_pabyCachedTiles + 1 * nBandBlockSize + i, 0, iXOff);
                     memset(m_pabyCachedTiles + 2 * nBandBlockSize + i, 0, iXOff);
@@ -2144,7 +2143,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                 }
                 for(int iX = iXOff; iX < iXOff + iXCount; iX ++)
                 {
-                    i = iY * nBlockXSize + iX;
+                    const GPtrDiff_t i = iY * nBlockXSize + iX;
                     GByte byVal = m_pabyCachedTiles[i];
                     m_pabyCachedTiles[i] = abyCT[4*byVal];
                     m_pabyCachedTiles[i + 1 * nBandBlockSize] = abyCT[4*byVal+1];
@@ -2153,7 +2152,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                 }
                 if( iXOff + iXCount < nBlockXSize )
                 {
-                    i = iY * nBlockXSize + iXOff + iXCount;
+                    const GPtrDiff_t i = iY * nBlockXSize + iXOff + iXCount;
                     memset(m_pabyCachedTiles + 0 * nBandBlockSize + i, 0, nBlockXSize - (iXOff + iXCount));
                     memset(m_pabyCachedTiles + 1 * nBandBlockSize + i, 0, nBlockXSize - (iXOff + iXCount));
                     memset(m_pabyCachedTiles + 2 * nBandBlockSize + i, 0, nBlockXSize - (iXOff + iXCount));
@@ -2162,7 +2161,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             }
             if( iYOff + iYCount < nBlockYSize )
             {
-                i = (iYOff + iYCount) * nBlockXSize;
+                const GPtrDiff_t i = (iYOff + iYCount) * nBlockXSize;
                 memset(m_pabyCachedTiles + 0 * nBandBlockSize + i, 0, nBlockXSize * (nBlockYSize - (iYOff + iYCount)));
                 memset(m_pabyCachedTiles + 1 * nBandBlockSize + i, 0, nBlockXSize * (nBlockYSize - (iYOff + iYCount)));
                 memset(m_pabyCachedTiles + 2 * nBandBlockSize + i, 0, nBlockXSize * (nBlockYSize - (iYOff + iYCount)));

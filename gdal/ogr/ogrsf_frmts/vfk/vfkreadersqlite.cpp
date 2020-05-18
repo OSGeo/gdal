@@ -134,15 +134,14 @@ VFKReaderSQLite::VFKReaderSQLite( const GDALOpenInfo* poOpenInfo ) :
                  sqlite3_errmsg(m_poDB));
     }
 
-    int nRowCount = 0;
-    int nColCount = 0;
     CPLString osCommand;
     if( m_bDbSource )
     {
         /* check if it is really VFK DB datasource */
         char* pszErrMsg = nullptr;
         char** papszResult = nullptr;
-        nRowCount = nColCount = 0;
+        int nRowCount = 0;
+        int nColCount = 0;
 
         osCommand.Printf("SELECT * FROM sqlite_master WHERE type='table' AND name='%s'",
                          VFK_DB_TABLE);
@@ -166,7 +165,9 @@ VFKReaderSQLite::VFKReaderSQLite( const GDALOpenInfo* poOpenInfo ) :
         /* check if DB is up-to-date datasource */
         char* pszErrMsg = nullptr;
         char** papszResult = nullptr;
-        nRowCount = nColCount = 0;
+        int nRowCount = 0;
+        int nColCount = 0;
+
         osCommand.Printf("SELECT * FROM %s LIMIT 1", VFK_DB_TABLE);
         sqlite3_get_table(m_poDB,
                           osCommand.c_str(),

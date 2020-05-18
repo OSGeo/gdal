@@ -537,13 +537,11 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     // Check if RAT is just colortable and/or histogram
     // ----------------------------------------------------------
 
-    CPLString sColName = "";
-    int  iCol = 0;
     int  nColCount = poRAT->GetColumnCount();
 
-    for( iCol = 0; iCol < poRAT->GetColumnCount(); iCol++ )
+    for( int iCol = 0; iCol < poRAT->GetColumnCount(); iCol++ )
     {
-        sColName = poRAT->GetNameOfCol( iCol );
+        const CPLString sColName = poRAT->GetNameOfCol( iCol );
 
         if( EQUAL( sColName, "histogram" ) ||
             EQUAL( sColName, "red" ) ||
@@ -570,7 +568,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
 
     CPLString osDescription = "( ID NUMBER";
 
-    for( iCol = 0; iCol < poRAT->GetColumnCount(); iCol++ )
+    for( int iCol = 0; iCol < poRAT->GetColumnCount(); iCol++ )
     {
         osDescription += ", ";
         osDescription += poRAT->GetNameOfCol( iCol );
@@ -656,7 +654,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     papWriteFields[0] =
         (void*) VSIMalloc3(sizeof(int), sizeof(int), nEntryCount ); // ID field
 
-    for(iCol = 0; iCol < nColunsCount; iCol++)
+    for(int iCol = 0; iCol < nColunsCount; iCol++)
     {
         if( poRAT->GetTypeOfCol( iCol ) == GFT_String )
         {
@@ -683,7 +681,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     {
         ((int *)(papWriteFields[0]))[iEntry] = iEntry; // ID field
 
-        for(iCol = 0; iCol < nColunsCount; iCol++)
+        for(int iCol = 0; iCol < nColunsCount; iCol++)
         {
             if( poRAT->GetTypeOfCol( iCol ) == GFT_String )
             {
@@ -715,7 +713,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
 
     CPLString osInsert = CPLSPrintf( "INSERT INTO %s VALUES (", pszVATName );
     
-    for( iCol = 0; iCol < ( nColunsCount + 1); iCol++ )
+    for( int iCol = 0; iCol < ( nColunsCount + 1); iCol++ )
     {
         if( iCol > 0 )
         {
@@ -733,7 +731,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
 
     poStmt->Bind((int*) papWriteFields[0]); // ID field
     
-    for(iCol = 0; iCol < nColunsCount; iCol++)
+    for(int iCol = 0; iCol < nColunsCount; iCol++)
     {
         if( poRAT->GetTypeOfCol( iCol ) == GFT_String )
         {
@@ -762,7 +760,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     // Clean up
     // ---------------------------
 
-    for(iCol = 0; iCol < ( nColunsCount + 1); iCol++)
+    for(int iCol = 0; iCol < ( nColunsCount + 1); iCol++)
     {
         CPLFree( papWriteFields[iCol] );
     }

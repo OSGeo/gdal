@@ -220,11 +220,10 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     unsigned char *cptr = (unsigned char*)pszRecord +
         (data_length - bytes_per_line);
     int bitsLeft = 8;
-    unsigned short value = 0;
 
     if (open_mode != MODE_RAD) {
         for (int c=0; c < nBlockXSize; c++) {
-            value = 0;
+            unsigned short value = 0;
             for (int bit=0; bit < 10; bit++) {
                 value <<= 1;
                 if (*cptr & 128) {
@@ -242,7 +241,7 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     } else {
         // radiance mode
         for (int c=0; c < nBlockXSize; c++) {
-            value = 0;
+            unsigned short value = 0;
             for (int bit=0; bit < 10; bit++) {
                 value <<= 1;
                 if (*cptr & 128) {

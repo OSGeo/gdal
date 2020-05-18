@@ -1357,20 +1357,18 @@ void kml2field( OGRFeature * poOgrFeat, FeaturePtr poKmlFeature )
                 poOgrFeat->SetField( iField, camera->get_roll() );
         }
 
-        int nAltitudeMode = -1;
-
         int iField = poOgrFeat->GetFieldIndex( oFC.altitudeModefield );
 
         if( iField > -1 )
         {
             if( camera->has_altitudemode() )
             {
-                nAltitudeMode = camera->get_altitudemode();
+                const int nAltitudeMode = camera->get_altitudemode();
                 ogrkmlSetAltitudeMode(poOgrFeat, iField, nAltitudeMode, false);
             }
             else if( camera->has_gx_altitudemode() )
             {
-                nAltitudeMode = camera->get_gx_altitudemode();
+                const int nAltitudeMode = camera->get_gx_altitudemode();
                 ogrkmlSetAltitudeMode(poOgrFeat, iField, nAltitudeMode, true);
             }
         }

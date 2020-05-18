@@ -206,9 +206,6 @@ CPLErr EIRDataset::GetGeoTransform( double * padfTransform )
 char **EIRDataset::GetFileList()
 
 {
-    const CPLString osPath = CPLGetPath( GetDescription() );
-    const CPLString osName = CPLGetBasename( GetDescription() );
-
     // Main data file, etc.
     char **papszFileList = GDALPamDataset::GetFileList();
 

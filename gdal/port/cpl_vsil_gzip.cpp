@@ -535,15 +535,16 @@ void VSIGZipHandle::check_header()
         }
     }
 
-    int c = 0;
     if( (flags & ORIG_NAME) != 0 )
     {
         // Skip the original file name.
+        int c;
         while( (c = get_byte()) != 0 && c != EOF ) {}
     }
     if( (flags & COMMENT) != 0 )
     {
         // skip the .gz file comment.
+        int c;
         while ((c = get_byte()) != 0 && c != EOF) {}
     }
     if( (flags & HEAD_CRC) != 0 )

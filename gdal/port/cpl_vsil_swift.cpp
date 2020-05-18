@@ -99,7 +99,8 @@ void VSICurlFilesystemHandler::AnalyseSwiftFileList(
         if( !osName.empty() )
         {
             osNextMarker = osName;
-            if( osName.size() > osPrefix.size() && osName.find(osPrefix) == 0 )
+            if( osName.size() > osPrefix.size() &&
+                osName.substr(0, osPrefix.size()) == osPrefix )
             {
                 if( bHasCount )
                 {

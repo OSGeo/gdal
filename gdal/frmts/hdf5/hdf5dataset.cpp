@@ -903,7 +903,6 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
     }
 
     char *szData = nullptr;
-    hsize_t nAttrSize = 0;
     char *szValue = nullptr;
 
     if( H5Tget_class(hAttrNativeType) == H5T_STRING )
@@ -933,7 +932,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
         }
         else
         {
-            nAttrSize = H5Aget_storage_size(hAttrID);
+            const hsize_t nAttrSize = H5Aget_storage_size(hAttrID);
             szValue = static_cast<char *>(CPLMalloc((size_t)(nAttrSize + 1)));
             H5Aread(hAttrID, hAttrNativeType, szValue);
             szValue[nAttrSize] = '\0';

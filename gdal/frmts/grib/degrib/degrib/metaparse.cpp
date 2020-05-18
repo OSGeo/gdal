@@ -460,7 +460,7 @@ static int ParseSect2_Wx (float *rdat, sInt4 nrdat, sInt4 *idat,
    }
 
    loc = 0;
-   if (nidat <= loc) {
+   if (nidat == 0) {
       errSprintf ("ERROR: Ran out of idat data\n");
       return -1;
    }
@@ -585,7 +585,7 @@ static int ParseSect2_Hazard (float *rdat, sInt4 nrdat, sInt4 *idat,
    }
 
    loc = 0;
-   if (nidat <= loc) {
+   if (nidat == 0) {
       errSprintf ("ERROR: Ran out of idat data\n");
       return -1;
    }

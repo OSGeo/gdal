@@ -8446,7 +8446,6 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
 
     const char *pszPenPattern = nullptr;
 
-    int nPenId = 0;
     // Set the Id of the Pen, use Pattern if necessary.
     if(pszPenName &&
        (strstr(pszPenName, "mapinfo-pen-") || strstr(pszPenName, "ogr-pen-")) )
@@ -8454,7 +8453,7 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
         const char* pszPenId = strstr(pszPenName, "mapinfo-pen-");
         if( pszPenId != nullptr )
         {
-            nPenId = atoi(pszPenId+12);
+            const int nPenId = atoi(pszPenId+12);
             SetPenPattern(static_cast<GByte>(nPenId));
         }
         else
@@ -8462,7 +8461,7 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
             pszPenId = strstr(pszPenName, "ogr-pen-");
             if( pszPenId != nullptr )
             {
-                nPenId = atoi(pszPenId+8);
+                int nPenId = atoi(pszPenId+8);
                 if(nPenId == 0)
                     nPenId = 2;
                 SetPenPattern(static_cast<GByte>(nPenId));

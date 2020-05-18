@@ -112,7 +112,7 @@ class RingBuffer
     size_t nLength = 0;
 
     public:
-        RingBuffer(size_t nCapacity = BKGND_BUFFER_SIZE);
+        explicit RingBuffer(size_t nCapacity = BKGND_BUFFER_SIZE);
         ~RingBuffer();
 
         size_t GetCapacity() const { return nCapacity; }
@@ -1544,12 +1544,9 @@ void VSICurlStreamingFSHandler::ClearCache()
 {
     CPLMutexHolder oHolder( &hMutex );
 
-    for( std::map<CPLString, CachedFileProp*>::const_iterator
-             iterCacheFileSize = cacheFileSize.begin();
-         iterCacheFileSize != cacheFileSize.end();
-         iterCacheFileSize++ )
+    for( auto& kv: cacheFileSize )
     {
-        CPLFree(iterCacheFileSize->second);
+        CPLFree(kv.second);
     }
     cacheFileSize.clear();
 }
@@ -1654,8 +1651,6 @@ int VSICurlStreamingFSHandler::Stat( const char *pszFilename,
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return -1;
-
-    CPLString osFilename(pszFilename);
 
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 

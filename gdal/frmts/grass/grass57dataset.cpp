@@ -269,7 +269,6 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDSIn, int nBandIn,
                 this->eDataType = GDT_Int32;
                 G_set_c_null_value ( &cval, 1);
                 dfNoData = (double) cval;
-                nativeNulls = true;
             }
             nativeNulls = false;
         } else {  // 3-4 bytes

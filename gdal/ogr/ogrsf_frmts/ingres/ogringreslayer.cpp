@@ -188,7 +188,7 @@ OGRGeometry *OGRIngresLayer::TranslateGeometry( const char *pszGeom )
 
         if( *pszNext == ')' )
         {
-            pszNext++;
+            //pszNext++;
             CPLAssert( nDepth == 1 );
             nDepth--;
             break;
@@ -225,6 +225,7 @@ OGRGeometry *OGRIngresLayer::TranslateGeometry( const char *pszGeom )
             pszNext++;
     }
 
+    (void)nDepth;
     CPLAssert( nDepth == 0 );
 
 /* -------------------------------------------------------------------- */

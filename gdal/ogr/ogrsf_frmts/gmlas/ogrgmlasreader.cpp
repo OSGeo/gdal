@@ -2640,8 +2640,8 @@ void GMLASReader::ProcessSWEDataArray(CPLXMLNode* psRoot)
                                                "encoding.TextEncoding");
     if( psTextEncoding == nullptr )
         return;
-    CPLString osDecimalSeparator =
-        CPLGetXMLValue(psTextEncoding, "decimalSeparator", ".");
+    //CPLString osDecimalSeparator =
+    //    CPLGetXMLValue(psTextEncoding, "decimalSeparator", ".");
     CPLString osBlockSeparator =
         CPLGetXMLValue(psTextEncoding, "blockSeparator", "");
     CPLString osTokenSeparator =

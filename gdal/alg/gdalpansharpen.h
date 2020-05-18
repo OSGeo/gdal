@@ -265,6 +265,7 @@ class GDALPansharpenOperation
                                                      size_t nBandValues,
                                                      T nMaxValue ) const;
 
+        // cppcheck-suppress functionStatic
         CPLErr PansharpenChunk( GDALDataType eWorkDataType, GDALDataType eBufDataType,
                                                      const void* pPanBuffer,
                                                      const void* pUpsampledSpectralBuffer,

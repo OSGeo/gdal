@@ -759,6 +759,8 @@ void JP2KAKDataset::KakaduInitialize()
 
     kdu_cpl_error_message oErrHandler(CE_Failure);
     kdu_cpl_error_message oWarningHandler(CE_Warning);
+    CPL_IGNORE_RET_VAL(oErrHandler);
+    CPL_IGNORE_RET_VAL(oWarningHandler);
 
     kdu_customize_warnings(new kdu_cpl_error_message(CE_Warning));
     kdu_customize_errors(new kdu_cpl_error_message(CE_Failure));

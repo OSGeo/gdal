@@ -349,11 +349,10 @@ namespace nccfdriver
 
         int all_dim = INVALID_VAR_ID;
         bool dim_set = false;
-        int dimC = 0;
         //(1) one dimension check, each node_coordinates have same dimension
         for(size_t nvitr = 0; nvitr < nodec_varIds.size(); nvitr++)
         {
-            dimC = 0;
+            int dimC = 0;
             nc_inq_varndims(ncId, nodec_varIds[nvitr], &dimC);
 
             if(dimC != 1)
@@ -658,12 +657,11 @@ namespace nccfdriver
                         size_t base = pnc_bl[featureInd]; // beginning of parts_count for this multigeometry
                         size_t seek = seek_begin; // beginning of node range for this multigeometry
                         size_t ir_base = base + 1;
-                        int rc_m = 1; 
 
                         // has interior rings,
                         for(int32_t itr = 0; itr < polys; itr++)
                         {    
-                            rc_m = 1;
+                            int rc_m = 1;
 
                             // count how many parts belong to each Polygon        
                             while(ir_base < int_rings.size() && int_rings[ir_base])
@@ -692,6 +690,7 @@ namespace nccfdriver
                             }
 
                             base += poly_parts.size();
+                            // cppcheck-suppress redundantAssignment
                             ir_base = base + 1;
                         }
                     }

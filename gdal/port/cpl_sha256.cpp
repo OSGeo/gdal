@@ -54,8 +54,8 @@ CPL_CVSID("$Id$")
 #define sigma1(x) (ROTR((x), 17) ^ ROTR((x), 19) ^ ((x) >> 10))
 
 #define DO_ROUND() {                                                    \
-                t1 = h + SIGMA1(e) + Ch(e, f, g) + *(Kp++) + *(W++);    \
-                t2 = SIGMA0(a) + Maj(a, b, c);                          \
+                GUInt32 t1 = h + SIGMA1(e) + Ch(e, f, g) + *(Kp++) + *(W++);    \
+                GUInt32 t2 = SIGMA0(a) + Maj(a, b, c);                          \
                 h = g;                                                  \
                 g = f;                                                  \
                 f = e;                                                  \
@@ -150,8 +150,6 @@ CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static void CPL_SHA256Guts(CPL_SHA256Context * sc, const GUInt32 * cbuf)
 {
         GUInt32 buf[64] = {};
-        GUInt32 t1 = 0;
-        GUInt32 t2 = 0;
 
         GUInt32 *W = buf;
 

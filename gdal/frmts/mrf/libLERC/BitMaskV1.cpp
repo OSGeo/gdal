@@ -85,6 +85,7 @@ bool BitMaskV1::RLEdecompress(const Byte* src, size_t nRemainingBytes) const {
         }
     }
     READ_COUNT;
+    (void)nRemainingBytes;
     return (count == EOT);
 }
 
@@ -138,11 +139,13 @@ int BitMaskV1::RLEcompress(Byte *dst) const {
             *pCnt++ = *src;
             src += run;
             sz -= run;
+            // cppcheck-suppress redundantAssignment
             dst = pCnt + 2; // after the next marker
         }
     }
     // cppcheck-suppress uselessAssignmentPtrArg
     FLUSH;
+    (void)oddrun;
     WRITE_COUNT(EOT); // End marker
     // return compressed output size
     return int(pCnt - start);
@@ -175,6 +178,7 @@ int BitMaskV1::RLEsize() const {
         }
     }
     SIMFLUSH;
+    (void)oddrun;
     return osz;
 }
 

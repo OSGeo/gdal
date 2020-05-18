@@ -3547,19 +3547,16 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         }
 
         // Add res box if needed
-        double dfXRes = 0.0;
-        double dfYRes = 0.0;
-        int nResUnit = 0;
         GDALJP2Box* poRes = nullptr;
         if( poSrcDS->GetMetadataItem("TIFFTAG_XRESOLUTION") != nullptr
             && poSrcDS->GetMetadataItem("TIFFTAG_YRESOLUTION") != nullptr
             && poSrcDS->GetMetadataItem("TIFFTAG_RESOLUTIONUNIT") != nullptr )
         {
-            dfXRes =
+            double dfXRes =
                 CPLAtof(poSrcDS->GetMetadataItem("TIFFTAG_XRESOLUTION"));
-            dfYRes =
+            double dfYRes =
                 CPLAtof(poSrcDS->GetMetadataItem("TIFFTAG_YRESOLUTION"));
-            nResUnit = atoi(poSrcDS->GetMetadataItem("TIFFTAG_RESOLUTIONUNIT"));
+            int nResUnit = atoi(poSrcDS->GetMetadataItem("TIFFTAG_RESOLUTIONUNIT"));
 #define PIXELS_PER_INCH 2
 #define PIXELS_PER_CM   3
 

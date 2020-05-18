@@ -199,7 +199,7 @@ ILImage::ILImage() :
     pagecount(pcount(size, pagesize)),
     comp(IL_PNG),
     order(IL_Interleaved),
-    nbo(0),
+    nbo(false),
     hasNoData(FALSE),
     NoDataValue(0.0),
     dt(GDT_Unknown),

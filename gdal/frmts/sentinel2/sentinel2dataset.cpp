@@ -1783,8 +1783,6 @@ GDALDataset *SENTINEL2Dataset::OpenL1BGranule( const char* pszFilename,
     SENTINEL2_CPLXMLNodeHolder oXMLHolder(psRoot);
     CPLStripXMLNamespace(psRoot, nullptr, TRUE);
 
-    CPLString osMainMTD(SENTINEL2GetMainMTDFilenameFromGranuleMTD(pszFilename));
-
     SENTINEL2DatasetContainer* poDS = new SENTINEL2DatasetContainer();
 
     if( !osOriginalXML.empty() )

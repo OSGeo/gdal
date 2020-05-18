@@ -463,7 +463,6 @@ void OGRMSSQLSpatialTableLayer::DropSpatialIndex()
 CPLString OGRMSSQLSpatialTableLayer::BuildFields()
 
 {
-    int i = 0;
     int nColumn = 0;
     CPLString osFieldList;
 
@@ -516,7 +515,7 @@ CPLString OGRMSSQLSpatialTableLayer::BuildFields()
         CPLFree(panFieldOrdinals);
         panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * poFeatureDefn->GetFieldCount() );
 
-        for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+        for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
         {
             if ( poFeatureDefn->GetFieldDefn(i)->IsIgnored() )
                 continue;
