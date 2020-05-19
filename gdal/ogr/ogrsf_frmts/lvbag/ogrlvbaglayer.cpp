@@ -545,8 +545,6 @@ void OGRLVBAGLayer::ParseDocument()
 
 OGRFeature *OGRLVBAGLayer::GetNextRawFeature()
 {
-    GetLayerDefn();
-
     bSchemaOnly = false;
 
     if (nNextFID == 0)
