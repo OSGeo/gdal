@@ -107,7 +107,7 @@ class OGRLVBAGLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<O
     OGRFeature *        GetNextRawFeature();
 
 public:
-    OGRLVBAGLayer( const char *pszFilename );
+    explicit OGRLVBAGLayer( const char *pszFilename );
     ~OGRLVBAGLayer();
 
     void                ResetReading() override;
