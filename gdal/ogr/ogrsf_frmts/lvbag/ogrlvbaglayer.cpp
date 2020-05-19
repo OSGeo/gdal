@@ -127,6 +127,112 @@ static inline const char* XMLTagSplit(const char *pszName)
     return pszTag;
 }
 
+void OGRLVBAGLayer::CreateFeatureDefn(const char *pszDataset)
+{
+    if( EQUAL("pnd", pszDataset) )
+    {
+        OGRFieldDefn oField0("namespace", OFTString);
+        OGRFieldDefn oField1("lokaalID", OFTString);
+        OGRFieldDefn oField2("versie", OFTString);
+        OGRFieldDefn oField3("oorspronkelijkBouwjaar", OFTDate);
+        OGRFieldDefn oField4("status", OFTString);
+        OGRFieldDefn oField5("geconstateerd", OFTInteger);
+        oField5.SetSubType(OFSTBoolean);
+        OGRFieldDefn oField6("documentdatum", OFTDate);
+        OGRFieldDefn oField7("documentnummer", OFTString);
+
+        poFeatureDefn->AddFieldDefn(&oField0);
+        poFeatureDefn->AddFieldDefn(&oField1);
+        poFeatureDefn->AddFieldDefn(&oField2);
+        poFeatureDefn->AddFieldDefn(&oField3);
+        poFeatureDefn->AddFieldDefn(&oField4);
+        poFeatureDefn->AddFieldDefn(&oField5);
+        poFeatureDefn->AddFieldDefn(&oField6);
+        poFeatureDefn->AddFieldDefn(&oField7);
+
+        poFeatureDefn->SetName("Pand");
+        SetDescription(poFeatureDefn->GetName());
+    }
+    else if( EQUAL("pnd", pszDataset) )
+    {
+        OGRFieldDefn oField0("namespace", OFTString);
+        OGRFieldDefn oField1("lokaalID", OFTString);
+        OGRFieldDefn oField2("versie", OFTString);
+        OGRFieldDefn oField3("huisnummer", OFTInteger);
+        OGRFieldDefn oField4("huisletter", OFTString);
+        OGRFieldDefn oField5("huisnummertoevoeging", OFTString);
+        OGRFieldDefn oField6("postcode", OFTString);
+        OGRFieldDefn oField7("typeAdresseerbaarObject", OFTString);
+        OGRFieldDefn oField8("status", OFTString);
+        OGRFieldDefn oField9("geconstateerd", OFTInteger);
+        oField9.SetSubType(OFSTBoolean);
+        OGRFieldDefn oField10("documentdatum", OFTDate);
+        OGRFieldDefn oField11("documentnummer", OFTString);
+  
+        poFeatureDefn->AddFieldDefn(&oField0);
+        poFeatureDefn->AddFieldDefn(&oField1);
+        poFeatureDefn->AddFieldDefn(&oField2);
+        poFeatureDefn->AddFieldDefn(&oField3);
+        poFeatureDefn->AddFieldDefn(&oField4);
+        poFeatureDefn->AddFieldDefn(&oField5);
+        poFeatureDefn->AddFieldDefn(&oField6);
+        poFeatureDefn->AddFieldDefn(&oField7);
+        poFeatureDefn->AddFieldDefn(&oField8);
+        poFeatureDefn->AddFieldDefn(&oField9);
+        poFeatureDefn->AddFieldDefn(&oField10);
+        poFeatureDefn->AddFieldDefn(&oField11);
+ 
+        poFeatureDefn->SetName("Nummeraanduiding");
+        SetDescription(poFeatureDefn->GetName());
+    }
+    else if( EQUAL("lig", pszDataset) )
+    {
+        OGRFieldDefn oField0("namespace", OFTString);
+        OGRFieldDefn oField1("lokaalID", OFTString);
+        OGRFieldDefn oField2("versie", OFTString);
+        OGRFieldDefn oField3("status", OFTString);
+        OGRFieldDefn oField4("geconstateerd", OFTInteger);
+        oField4.SetSubType(OFSTBoolean);
+        OGRFieldDefn oField5("documentdatum", OFTDate);
+        OGRFieldDefn oField6("documentnummer", OFTString);
+  
+        poFeatureDefn->AddFieldDefn(&oField0);
+        poFeatureDefn->AddFieldDefn(&oField1);
+        poFeatureDefn->AddFieldDefn(&oField2);
+        poFeatureDefn->AddFieldDefn(&oField3);
+        poFeatureDefn->AddFieldDefn(&oField4);
+        poFeatureDefn->AddFieldDefn(&oField5);
+        poFeatureDefn->AddFieldDefn(&oField6);
+ 
+        poFeatureDefn->SetName("Ligplaats");
+        SetDescription(poFeatureDefn->GetName());
+    }
+
+    {
+        OGRFieldDefn oField0("voorkomenidentificatie", OFTInteger);
+        OGRFieldDefn oField1("beginGeldigheid", OFTDate);
+        OGRFieldDefn oField2("eindGeldigheid", OFTDate);
+        OGRFieldDefn oField3("tijdstipRegistratie", OFTDateTime);
+        OGRFieldDefn oField4("eindRegistratie", OFTDateTime);
+        OGRFieldDefn oField5("tijdstipInactief", OFTDateTime);
+        OGRFieldDefn oField6("tijdstipRegistratieLV", OFTDateTime);
+        OGRFieldDefn oField7("tijdstipEindRegistratieLV", OFTDateTime);
+        OGRFieldDefn oField8("tijdstipInactiefLV", OFTDateTime);
+        OGRFieldDefn oField9("tijdstipNietBagLV", OFTDateTime);
+
+        poFeatureDefn->AddFieldDefn(&oField0);
+        poFeatureDefn->AddFieldDefn(&oField1);
+        poFeatureDefn->AddFieldDefn(&oField2);
+        poFeatureDefn->AddFieldDefn(&oField3);
+        poFeatureDefn->AddFieldDefn(&oField4);
+        poFeatureDefn->AddFieldDefn(&oField5);
+        poFeatureDefn->AddFieldDefn(&oField6);
+        poFeatureDefn->AddFieldDefn(&oField7);
+        poFeatureDefn->AddFieldDefn(&oField8);
+        poFeatureDefn->AddFieldDefn(&oField9);
+    }
+}
+
 /************************************************************************/
 /*                         StartDataCollect()                           */
 /************************************************************************/
@@ -175,11 +281,6 @@ void OGRLVBAGLayer::StartElementCbk(const char *pszName, const char **ppszAttr)
         nGeometryElementDepth == 0 && STARTS_WITH_CI(pszName, "objecten") )
     {
         nAttributeElementDepth = nCurrentDepth;
-        if( bSchemaOnly )
-        {
-            poFeatureDefn->SetName(XMLTagSplit(pszName));
-            SetDescription(poFeatureDefn->GetName());
-        }
     }
     else if( nFeatureElementDepth > 0 && nAttributeElementDepth > 0 &&
              nGeometryElementDepth == 0 )
@@ -224,6 +325,10 @@ void OGRLVBAGLayer::StartElementCbk(const char *pszName, const char **ppszAttr)
     {
         nFeatureCollectionDepth = nCurrentDepth;
     }
+    else if( nFeatureCollectionDepth > 0 && EQUAL("sl:objectType", pszName) )
+    {
+        StartDataCollect();
+    }
 
     nCurrentDepth++;
 }
@@ -236,28 +341,36 @@ void OGRLVBAGLayer::EndElementCbk(const char *pszName)
 {
     nCurrentDepth--;
 
-    if( nCurrentDepth > nAttributeElementDepth && nAttributeElementDepth > 0
-    && nGeometryElementDepth == 0 )
+    if( nCurrentDepth > nAttributeElementDepth
+        && nAttributeElementDepth > 0
+        && nGeometryElementDepth == 0 )
     {
         const char *pszTag = XMLTagSplit(pszName);
         
         StopDataCollect();
-        if ( !osElementString.empty() ) 
+        if ( !osElementString.empty() )
         {
-            if( bSchemaOnly )
-            {
-                if( poFeatureDefn->GetFieldIndex(pszTag) == -1 )
-                {
-                    OGRFieldDefn oField(pszTag, OFTString);
-                    poFeatureDefn->AddFieldDefn(&oField);
-                }
-            }
-            else
+            if( !bSchemaOnly )
             {
                 const int iFieldIndex = poFeatureDefn->GetFieldIndex(pszTag);
                 if( iFieldIndex > -1 )
                 {
-                    poFeature->SetField(iFieldIndex, osElementString.c_str());
+                    const char *pszValue = osElementString.c_str();
+                    const OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iFieldIndex);
+                    if (poFieldDefn->GetSubType() == OGRFieldSubType::OFSTBoolean)
+                    {
+                        if( EQUAL("n", pszValue) )
+                            poFeature->SetField(iFieldIndex, 0);
+                        else if( EQUAL("j", pszValue) )
+                            poFeature->SetField(iFieldIndex, 1);
+                        else
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined, "Parsing boolean failed");
+                            XML_StopParser(oParser.get(), XML_FALSE);
+                        }
+                    }
+                    else
+                        poFeature->SetField(iFieldIndex, pszValue);
                 }
             }
         }
@@ -316,6 +429,17 @@ void OGRLVBAGLayer::EndElementCbk(const char *pszName)
     else if( nFeatureCollectionDepth == nCurrentDepth )
     {
         nFeatureCollectionDepth = 0;
+    }
+    else if( EQUAL("sl:objectType", pszName) && !poFeatureDefn->GetFieldCount() )
+    {
+        StopDataCollect();
+        if ( osElementString.empty() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Parsing LV BAG extract failed");
+            XML_StopParser(oParser.get(), XML_FALSE);
+        }
+        
+        CreateFeatureDefn(osElementString.c_str());
     }
 }
 

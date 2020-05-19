@@ -93,6 +93,8 @@ class OGRLVBAGLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<O
 
     char                aBuf[BUFSIZ];
 
+    void                CreateFeatureDefn(const char *);
+
     void                ConfigureParser();
     void                ParseDocument();
     bool                IsParserFinished(XML_Status status);
