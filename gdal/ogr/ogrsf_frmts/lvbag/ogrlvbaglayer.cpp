@@ -435,7 +435,9 @@ void OGRLVBAGLayer::EndElementCbk(const char *pszName)
             XML_StopParser(oParser.get(), XML_FALSE);
         }
         
-        CreateFeatureDefn(osElementString.c_str());
+        if( !bHasReadSchema )
+            CreateFeatureDefn(osElementString.c_str());
+        bHasReadSchema = true;
     }
 }
 
