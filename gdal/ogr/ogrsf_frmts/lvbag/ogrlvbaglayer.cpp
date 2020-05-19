@@ -58,7 +58,7 @@ OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename ) :
     
     memset(aBuf, '\0', sizeof(aBuf));
 
-    ResetReading();
+    VSIRewindL(fp);
 }
 
 /************************************************************************/
@@ -83,13 +83,13 @@ void OGRLVBAGLayer::ResetReading()
 {
     VSIRewindL(fp);
 
+    nNextFID = 0;
     nCurrentDepth = 0;
     nGeometryElementDepth = 0;
     nFeatureCollectionDepth = 0;
     nFeatureElementDepth = 0;
     nAttributeElementDepth = 0;
-    bCollectData = 0;
-    nNextFID = 0;
+    bCollectData = false;
 }
 
 /************************************************************************/
@@ -102,12 +102,8 @@ OGRFeatureDefn* OGRLVBAGLayer::GetLayerDefn()
     {
         bSchemaOnly = true;
 
-        ResetReading();
         ConfigureParser();
         ParseDocument();
-
-        oParser.reset();
-        bHasReadSchema = true;
     }
 
     return poFeatureDefn;
@@ -449,6 +445,8 @@ void OGRLVBAGLayer::EndElementCbk(const char *pszName)
 
 void OGRLVBAGLayer::ConfigureParser()
 {
+    ResetReading();
+
     const auto startElementWrapper = [](void *pUserData, const char *pszName, const char **ppszAttr)
     {
         static_cast<OGRLVBAGLayer *>(pUserData)->StartElementCbk(pszName, ppszAttr);
@@ -507,7 +505,7 @@ void OGRLVBAGLayer::ParseDocument()
     {
         XML_ParsingStatus status;
         XML_GetParsingStatus(oParser.get(), &status);
-        
+
         switch (status.parsing)
         {
             case XML_INITIALIZED:
