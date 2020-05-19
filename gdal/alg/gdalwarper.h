@@ -288,7 +288,7 @@ GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS,
                          GDALResampleAlg eResampleAlg,
                          double dfMaxError, const GDALWarpOptions *psOptions );
 
-GDALDatasetH CPL_STDCALL
+GDALDatasetH CPL_DLL CPL_STDCALL
 GDALAutoCreateWarpedVRTEx( GDALDatasetH hSrcDS,
                            const char *pszSrcWKT, const char *pszDstWKT,
                            GDALResampleAlg eResampleAlg,
