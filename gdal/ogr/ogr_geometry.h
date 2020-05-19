@@ -65,7 +65,7 @@ enum class OGRWktFormat
 };
 
 /// Options for formatting WKT output
-struct OGRWktOptions
+struct CPL_DLL OGRWktOptions
 {
 public:
     /// Type of WKT output to produce.

@@ -743,6 +743,7 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     aosOverviewOptions.SetNameValue("NUM_THREADS",
                         CSLFetchNameValue(papszOptions, "NUM_THREADS"));
     aosOverviewOptions.SetNameValue("BIGTIFF", "YES");
+    aosOverviewOptions.SetNameValue("SPARSE_OK", "YES");
 
     if( bGenerateMskOvr )
     {
@@ -878,6 +879,8 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
                                 CSLFetchNameValue(papszOptions, "NUM_THREADS"));
     aosOptions.SetNameValue("GEOTIFF_VERSION",
                             CSLFetchNameValue(papszOptions, "GEOTIFF_VERSION"));
+    aosOptions.SetNameValue("SPARSE_OK",
+                            CSLFetchNameValue(papszOptions, "SPARSE_OK"));
 
     if( EQUAL( osOverviews, "NONE") )
     {
@@ -1085,6 +1088,7 @@ void GDALCOGDriver::InitializeCreationOptionList()
 "       <Value>1.1</Value>"
 "   </Option>"
 #endif
+"   <Option name='SPARSE_OK' type='boolean' description='Should empty blocks be omitted on disk?' default='FALSE'/>"
 "</CreationOptionList>";
 
     SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, osOptions.c_str());

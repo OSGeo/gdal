@@ -1542,4 +1542,17 @@ namespace tut
         }
     }
 
+    // Test OGRGeometry::exportToWkt()
+    template<>
+    template<>
+    void object::test<17>()
+    {
+        char* pszWKT = nullptr;
+        OGRPoint p(1, 2);
+        p.exportToWkt(&pszWKT);
+        ensure(pszWKT != nullptr);
+        ensure_equals(std::string(pszWKT), "POINT (1 2)");
+        CPLFree(pszWKT);
+    }
+
 } // namespace tut
