@@ -63,6 +63,19 @@
 typedef int CPLErr;
 typedef int GDALRIOResampleAlg;
 
+%typemap(check) GDALRIOResampleAlg
+{
+    // %typemap(check) GDALRIOResampleAlg
+    // This check is a bit too late, since $1 has already been cast
+    // to GDALRIOResampleAlg, so we are a bit in undefined behaviour land,
+    // but compilers should hopefully do the right thing
+    if( static_cast<int>($1) < 0 ||
+        static_cast<int>($1) > static_cast<int>(GRIORA_LAST) )
+    {
+        SWIG_exception(SWIG_ValueError, "Invalid value for resample_alg");
+    }
+}
+
 %include "python_strings.i"
 
 %{
