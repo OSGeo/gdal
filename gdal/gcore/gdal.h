@@ -135,8 +135,11 @@ typedef enum
     /*! Average */                                      GRIORA_Average = 5,
     /*! Mode (selects the value which appears most often of all the sampled points) */
                                                         GRIORA_Mode = 6,
-    /*! Gauss blurring */                               GRIORA_Gauss = 7
+    /*! Gauss blurring */                               GRIORA_Gauss = 7,
     /* NOTE: values 8 to 12 are reserved for max,min,med,Q1,Q3 */
+/*! @cond Doxygen_Suppress */
+                                                        GRIORA_LAST = GRIORA_Gauss
+/*! @endcond */
 } GDALRIOResampleAlg;
 
 /* NOTE to developers: only add members, and if so edit INIT_RASTERIO_EXTRA_ARG */

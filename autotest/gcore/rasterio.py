@@ -1018,3 +1018,18 @@ def test_rasterio_dataset_write_on_readonly():
     with gdaltest.error_handler():
         err = ds.WriteRaster(0, 0, 20, 20, ds.ReadRaster())
     assert err != 0
+
+
+@pytest.mark.parametrize('resample_alg', [-1, 8])
+def test_rasterio_dataset_invalid_resample_alg(resample_alg):
+
+    mem_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+    with gdaltest.error_handler():
+        with pytest.raises(Exception):
+            assert mem_ds.ReadRaster(buf_xsize=1, buf_ysize=1, resample_alg=resample_alg) is None
+        with pytest.raises(Exception):
+            assert mem_ds.GetRasterBand(1).ReadRaster(buf_xsize=1, buf_ysize=1, resample_alg=resample_alg) is None
+        with pytest.raises(Exception):
+            assert mem_ds.ReadAsArray(buf_xsize=1, buf_ysize=1, resample_alg=resample_alg) is None
+        with pytest.raises(Exception):
+            assert mem_ds.GetRasterBand(1).ReadAsArray(buf_xsize=1, buf_ysize=1, resample_alg=resample_alg) is None

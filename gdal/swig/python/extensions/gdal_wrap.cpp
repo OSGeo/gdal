@@ -3965,7 +3965,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
     if( GDALIsInGlobalDestructor() )
     {
         // this is typically during Python interpreter shutdown, and ends up in a crash
-        // because error handling tries to do thread initialisation.
+        // because error handling tries to do thread initialization.
         return;
     }
 
@@ -5299,6 +5299,15 @@ SWIGINTERN OGRErr GDALDatasetShadow_RollbackTransaction(GDALDatasetShadow *self)
     return GDALDatasetRollbackTransaction(self);
   }
 SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,int xoff,int yoff,int xsize,int ysize,void **buf,int *buf_xsize=0,int *buf_ysize=0,GDALDataType *buf_type=0,int band_list=0,int *pband_list=0,GIntBig *buf_pixel_space=0,GIntBig *buf_line_space=0,GIntBig *buf_band_space=0,GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour,GDALProgressFunc callback=NULL,void *callback_data=NULL){
+    // This check is a bit too late. resample_alg should already have been
+    // validated, so we are a bit in undefined behaviour land, but compilers
+    // should hopefully do the right thing
+    if( static_cast<int>(resample_alg) < 0 ||
+        static_cast<int>(resample_alg) > static_cast<int>(GRIORA_LAST) )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Invalid value for resample_alg");
+        return CE_Failure;
+    }
     int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
     GDALDataType ntype;
@@ -6577,6 +6586,15 @@ SWIGINTERN GDALMDArrayHS *GDALRasterBandShadow_AsMDArray(GDALRasterBandShadow *s
     return GDALRasterBandAsMDArray(self);
   }
 SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,double xoff,double yoff,double xsize,double ysize,void **buf,int *buf_xsize=0,int *buf_ysize=0,int *buf_type=0,GIntBig *buf_pixel_space=0,GIntBig *buf_line_space=0,GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour,GDALProgressFunc callback=NULL,void *callback_data=NULL){
+    // This check is a bit too late. resample_alg should already have been
+    // validated, so we are a bit in undefined behaviour land, but compilers
+    // should hopefully do the right thing
+    if( static_cast<int>(resample_alg) < 0 ||
+        static_cast<int>(resample_alg) > static_cast<int>(GRIORA_LAST) )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Invalid value for resample_alg");
+        return CE_Failure;
+    }
     int nxsize = (buf_xsize==0) ? static_cast<int>(xsize) : *buf_xsize;
     int nysize = (buf_ysize==0) ? static_cast<int>(ysize) : *buf_ysize;
     GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
@@ -20822,6 +20840,17 @@ SWIGINTERN PyObject *_wrap_Dataset_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), P
     }
   }
   {
+    // %typemap(check) GDALRIOResampleAlg
+    // This check is a bit too late, since arg15 has already been cast
+    // to GDALRIOResampleAlg, so we are a bit in undefined behaviour land,
+    // but compilers should hopefully do the right thing
+    if( static_cast<int>(arg15) < 0 ||
+      static_cast<int>(arg15) > static_cast<int>(GRIORA_LAST) )
+    {
+      SWIG_exception(SWIG_ValueError, "Invalid value for resample_alg");
+    }
+  }
+  {
     if ( bUseExceptions ) {
       ClearErrorState();
     }
@@ -30920,6 +30949,17 @@ SWIGINTERN PyObject *_wrap_Band_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), PyOb
     {
       /* %typemap(in) ( void* callback_data=NULL)  */
       psProgressInfo->psPyCallbackData = obj12 ;
+    }
+  }
+  {
+    // %typemap(check) GDALRIOResampleAlg
+    // This check is a bit too late, since arg12 has already been cast
+    // to GDALRIOResampleAlg, so we are a bit in undefined behaviour land,
+    // but compilers should hopefully do the right thing
+    if( static_cast<int>(arg12) < 0 ||
+      static_cast<int>(arg12) > static_cast<int>(GRIORA_LAST) )
+    {
+      SWIG_exception(SWIG_ValueError, "Invalid value for resample_alg");
     }
   }
   {

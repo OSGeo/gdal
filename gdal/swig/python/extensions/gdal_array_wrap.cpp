@@ -5436,6 +5436,17 @@ SWIGINTERN PyObject *_wrap_BandRasterIONumPy(PyObject *SWIGUNUSEDPARM(self), PyO
     }
   }
   {
+    // %typemap(check) GDALRIOResampleAlg
+    // This check is a bit too late, since arg9 has already been cast
+    // to GDALRIOResampleAlg, so we are a bit in undefined behaviour land,
+    // but compilers should hopefully do the right thing
+    if( static_cast<int>(arg9) < 0 ||
+      static_cast<int>(arg9) > static_cast<int>(GRIORA_LAST) )
+    {
+      SWIG_exception(SWIG_ValueError, "Invalid value for resample_alg");
+    }
+  }
+  {
     SWIG_PYTHON_THREAD_BEGIN_ALLOW;
     result = (CPLErr)BandRasterIONumPy(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11);
     SWIG_PYTHON_THREAD_END_ALLOW;
@@ -5618,6 +5629,17 @@ SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObje
       SWIG_exception_fail(SWIG_ArgError(ecode12), "in method '" "DatasetIONumPy" "', argument " "12"" of type '" "bool""'");
     } 
     arg12 = static_cast< bool >(val12);
+  }
+  {
+    // %typemap(check) GDALRIOResampleAlg
+    // This check is a bit too late, since arg9 has already been cast
+    // to GDALRIOResampleAlg, so we are a bit in undefined behaviour land,
+    // but compilers should hopefully do the right thing
+    if( static_cast<int>(arg9) < 0 ||
+      static_cast<int>(arg9) > static_cast<int>(GRIORA_LAST) )
+    {
+      SWIG_exception(SWIG_ValueError, "Invalid value for resample_alg");
+    }
   }
   {
     SWIG_PYTHON_THREAD_BEGIN_ALLOW;
