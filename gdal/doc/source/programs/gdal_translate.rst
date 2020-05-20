@@ -284,3 +284,10 @@ To create a RGBA dataset from a RGB dataset with a mask
 
     gdal_translate withmask.tif rgba.tif -b 1 -b 2 -b 3 -b mask
 
+
+Use :decl_configoption:`GDAL_HTTP_HEADER_FILE` to set, and :decl_configoption:`CPL_CURL_VERBOSE` to see custom HTTP headers sent during a request
+
+::
+
+    GDAL_HTTP_HEADER_FILE=/tmp/header.txt CPL_CURL_VERBOSE=YES \
+    gdal_translate frmts/wms/frmt_wms_openstreetmap_tms.xml out.tif -outsize 256 256 --debug on
