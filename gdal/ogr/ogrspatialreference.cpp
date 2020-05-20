@@ -7654,6 +7654,7 @@ OGRSpatialReference::GetAuthorityCode( const char *pszTargetKey ) const
 
 {
     d->refreshProjObj();
+    const char* pszInputTargetKey = pszTargetKey;
     pszTargetKey = d->nullifyTargetKeyIfPossible(pszTargetKey);
     if( pszTargetKey == nullptr )
     {
@@ -7663,8 +7664,28 @@ OGRSpatialReference::GetAuthorityCode( const char *pszTargetKey ) const
         }
         d->demoteFromBoundCRS();
         auto ret = proj_get_id_code(d->m_pj_crs, 0);
+        if( ret == nullptr && d->m_pjType == PJ_TYPE_PROJECTED_CRS )
+        {
+            auto ctxt = d->getPROJContext();
+            auto cs = proj_crs_get_coordinate_system(ctxt, d->m_pj_crs);
+            if( cs )
+            {
+                const int axisCount = proj_cs_get_axis_count(ctxt, cs);
+                proj_destroy(cs);
+                if( axisCount == 3 )
+                {
+                    // This might come from a COMPD_CS with a VERT_DATUM type = 2002
+                    // in which case, using the WKT1 representation will enable
+                    // us to recover the EPSG code.
+                    pszTargetKey = pszInputTargetKey;
+                }
+            }
+        }
         d->undoDemoteFromBoundCRS();
-        return ret;
+        if( ret != nullptr || pszTargetKey == nullptr )
+        {
+            return ret;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -7738,6 +7759,7 @@ OGRSpatialReference::GetAuthorityName( const char *pszTargetKey ) const
 
 {
     d->refreshProjObj();
+    const char* pszInputTargetKey = pszTargetKey;
     pszTargetKey = d->nullifyTargetKeyIfPossible(pszTargetKey);
     if( pszTargetKey == nullptr )
     {
@@ -7747,8 +7769,28 @@ OGRSpatialReference::GetAuthorityName( const char *pszTargetKey ) const
         }
         d->demoteFromBoundCRS();
         auto ret = proj_get_id_auth_name(d->m_pj_crs, 0);
+        if( ret == nullptr && d->m_pjType == PJ_TYPE_PROJECTED_CRS )
+        {
+            auto ctxt = d->getPROJContext();
+            auto cs = proj_crs_get_coordinate_system(ctxt, d->m_pj_crs);
+            if( cs )
+            {
+                const int axisCount = proj_cs_get_axis_count(ctxt, cs);
+                proj_destroy(cs);
+                if( axisCount == 3 )
+                {
+                    // This might come from a COMPD_CS with a VERT_DATUM type = 2002
+                    // in which case, using the WKT1 representation will enable
+                    // us to recover the EPSG code.
+                    pszTargetKey = pszInputTargetKey;
+                }
+            }
+        }
         d->undoDemoteFromBoundCRS();
-        return ret;
+        if( ret != nullptr || pszTargetKey == nullptr )
+        {
+            return ret;
+        }
     }
 
 /* -------------------------------------------------------------------- */
