@@ -149,7 +149,7 @@ void OGRLVBAGLayer::CreateFeatureDefn(const char *pszDataset)
         poFeatureDefn->SetName("Pand");
         SetDescription(poFeatureDefn->GetName());
     }
-    else if( EQUAL("pnd", pszDataset) )
+    else if( EQUAL("num", pszDataset) )
     {
         OGRFieldDefn oField0("namespace", OFTString);
         OGRFieldDefn oField1("lokaalID", OFTString);
