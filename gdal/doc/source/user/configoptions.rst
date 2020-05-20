@@ -25,6 +25,12 @@ of the GDAL block cache, in megabytes. It can be set in the environment on Unix
 
     export GDAL_CACHEMAX=64
 
+Or just for this command, like this:
+::
+
+    GDAL_CACHEMAX=64 gdal_translate 64 in.tif out.tif
+
+
 In a DOS/Windows command shell it is done like this:
 
 ::
