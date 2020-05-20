@@ -1619,7 +1619,7 @@ OGRErr OSRExportToWktEx( OGRSpatialReferenceH hSRS,
 /**
  * Convert this SRS into a PROJJSON string.
  *
- * Note that the returned WKT string should be freed with
+ * Note that the returned JSON string should be freed with
  * CPLFree() when no longer needed.  It is the responsibility of the caller.
  *
  * @param ppszResult the resulting string is returned in this pointer.
@@ -9509,7 +9509,7 @@ int OSRGetAxesCount( OGRSpatialReferenceH hSRS )
  * This method is equivalent to the C function OSRGetAxis().
  *
  * @param pszTargetKey the coordinate system part to query ("PROJCS" or "GEOGCS").
- * @param iAxis the axis to query (0 for first, 1 for second).
+ * @param iAxis the axis to query (0 for first, 1 for second, 2 for third).
  * @param peOrientation location into which to place the fetch orientation, may be NULL.
  *
  * @return the name of the axis or NULL on failure.
