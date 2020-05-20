@@ -128,13 +128,14 @@ class OGRLVBAGDataSource final: public GDALDataset
 {
     OGRLVBAG::LayerVector papoLayers;
 
+    void                TryCoalesceLayers();
+
 public:
                         OGRLVBAGDataSource();
 
     int                 Open( const char* pszFilename );
 
-    int                 GetLayerCount() override {
-                            return static_cast<int>(papoLayers.size()); }
+    int                 GetLayerCount() override;
     OGRLayer            *GetLayer( int ) override;
 
     int                 TestCapability( const char * ) override;

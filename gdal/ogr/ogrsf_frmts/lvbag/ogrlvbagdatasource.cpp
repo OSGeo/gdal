@@ -28,6 +28,9 @@
 
 #include "ogr_lvbag.h"
 #include "ogrsf_frmts.h"
+#include "ogrunionlayer.h"
+
+#include <algorithm>
 
 /************************************************************************/
 /*                          OGRLVBAGDataSource()                          */
@@ -43,9 +46,95 @@ OGRLVBAGDataSource::OGRLVBAGDataSource() :
 
 int OGRLVBAGDataSource::Open( const char* pszFilename )
 {
-    papoLayers.emplace_back(new OGRLVBAGLayer(pszFilename));
+    papoLayers.emplace_back(new OGRLVBAGLayer{pszFilename});
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                          TryCoalesceLayers()                         */
+/************************************************************************/
+
+void OGRLVBAGDataSource::TryCoalesceLayers()
+{
+    std::vector<int> paGroup = {};
+    std::map<int, std::vector<int>> paMergeVector = {};
+
+    // FUTURE: This can be optimized
+    for( size_t i = 0; i < papoLayers.size(); ++i )
+    {
+        std::vector<int> paVector = {};
+        for( size_t j = 0; j < papoLayers.size(); ++j )
+        {
+            if( std::find(paGroup.cbegin(), paGroup.cend(), j) != paGroup.end() )
+                continue;
+
+            if( j > i
+                && EQUAL(papoLayers[i]->GetName(), papoLayers[j]->GetName()) )
+            {
+                if( papoLayers[i]->GetGeomType() == papoLayers[j]->GetGeomType()
+                    && papoLayers[i]->GetLayerDefn()->IsSame(
+                        papoLayers[j]->GetLayerDefn()) )
+                {
+                    paVector.push_back(j);
+                    paGroup.push_back(j);
+                }
+            }
+        }
+        if( !paVector.empty() )
+            paMergeVector.insert({i, paVector});
+    }
+
+    if( paMergeVector.empty() )
+        return;
+
+    for( const auto &p : paMergeVector )
+    {
+        const auto papoLayersIdx = p.second;
+        int nSrcLayers = papoLayersIdx.size() + 1;
+        OGRLayer **papoSrcLayers = static_cast<OGRLayer **>(
+            CPLRealloc(nullptr, sizeof(OGRLayer *) * nSrcLayers ));
+
+        int idx = 0;
+        papoSrcLayers[idx++] = papoLayers[p.first].release();
+        for( const auto &poLayerIdx : papoLayersIdx )
+            papoSrcLayers[idx++] = papoLayers[poLayerIdx].release();
+
+        auto poLayer = std::unique_ptr<OGRUnionLayer>{
+            new OGRUnionLayer{ papoSrcLayers[0]->GetName(), nSrcLayers, papoSrcLayers, TRUE } };
+
+        OGRFeatureDefn *lyr0def = papoSrcLayers[0]->GetLayerDefn();
+
+        const int nFields = lyr0def->GetFieldCount();
+        OGRFieldDefn** papoFields = static_cast<OGRFieldDefn **>(
+            CPLRealloc(nullptr, sizeof(OGRFieldDefn *) * nFields ));
+        for( int i = 0; i < nFields; ++i )
+            papoFields[i] = lyr0def->GetFieldDefn(i);
+
+        const int nGeomFields = lyr0def->GetGeomFieldCount();
+        OGRUnionLayerGeomFieldDefn** papoGeomFields = static_cast<OGRUnionLayerGeomFieldDefn **>(
+            CPLRealloc(nullptr, sizeof(OGRUnionLayerGeomFieldDefn *) * nGeomFields ));
+        for( int i = 0; i < nGeomFields; ++i )
+            papoGeomFields[i] = new OGRUnionLayerGeomFieldDefn( lyr0def->GetGeomFieldDefn( i ) );
+
+        poLayer->SetFields(
+            FIELD_FROM_FIRST_LAYER,
+            nFields, papoFields,
+            nGeomFields, papoGeomFields);
+  
+        // Erase all released pointers
+        auto it = papoLayers.begin();
+        while( it != papoLayers.end() )
+        {
+            if( !(*it) )
+                it = papoLayers.erase(it);
+            else
+                ++it;
+        }
+
+        // TODO: cast can fail
+        papoLayers.push_back(std::unique_ptr<OGRLayer>{ dynamic_cast<OGRLayer*>(poLayer.release()) });
+    }
 }
 
 /************************************************************************/
@@ -56,8 +145,18 @@ OGRLayer *OGRLVBAGDataSource::GetLayer( int iLayer )
 {
     if( iLayer < 0 || iLayer >= GetLayerCount() )
         return nullptr;
-    
+
     return papoLayers[iLayer].get();
+}
+
+/************************************************************************/
+/*                           GetLayerCount()                            */
+/************************************************************************/
+
+int OGRLVBAGDataSource::GetLayerCount()
+{
+    TryCoalesceLayers();
+    return static_cast<int>(papoLayers.size());
 }
 
 /************************************************************************/
