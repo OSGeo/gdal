@@ -51,12 +51,15 @@ def test_ogr_lvbag_dataset_lig():
     assert lyr.GetName() == 'Ligplaats', 'bad layer name'
 
     assert lyr.GetGeomType() == ogr.wkbPolygon, 'bad layer geometry type'
-    # assert lyr.GetSpatialRef() is None, 'bad spatial ref'
     assert lyr.GetFeatureCount() == 3
     assert lyr.TestCapability("foo") == 0
     assert lyr.TestCapability("StringsAsUTF8") == 1
 
+    assert 'Amersfoort' in lyr.GetSpatialRef().ExportToWkt()
+
     assert lyr.GetLayerDefn().GetFieldCount() == 17
+
+    assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
 
     assert (lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef() == 'namespace' and \
        lyr.GetLayerDefn().GetFieldDefn(1).GetNameRef() == 'lokaalID' and \
@@ -133,6 +136,7 @@ def test_ogr_lvbag_dataset_num():
     assert lyr.GetGeomType() == ogr.wkbUnknown, 'bad layer geometry type'
     assert lyr.GetSpatialRef() is None, 'bad spatial ref'
     assert lyr.GetFeatureCount() == 3
+    assert lyr.GetSpatialRef() is None, 'bad spatial ref'
     assert lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
 
     assert lyr.GetLayerDefn().GetFieldCount() == 22
@@ -140,14 +144,14 @@ def test_ogr_lvbag_dataset_num():
     feat = lyr.GetNextFeature()
     if feat.GetField('namespace') != 'NL.IMBAG.Nummeraanduiding' or \
        feat.GetField('lokaalID') != '0106200000002798' or \
-       feat.GetField('huisnummer') != '23' or \
+       feat.GetFieldAsInteger('huisnummer') != 23 or \
        feat.GetField('postcode') != '9403KB' or \
        feat.GetField('typeAdresseerbaarObject') != 'Verblijfsobject' or \
        feat.GetField('status') != 'Naamgeving uitgegeven' or \
-       feat.GetField('geconstateerd') != '0' or \
+       feat.GetFieldAsInteger('geconstateerd') != 0 or \
        feat.GetFieldAsString('documentdatum') != '2009/09/14' or \
        feat.GetFieldAsString('documentnummer') != '2009-BB01570' or \
-       feat.GetField('voorkomenidentificatie') != '1' or \
+       feat.GetFieldAsInteger('voorkomenidentificatie') != 1 or \
        feat.GetField('beginGeldigheid') != '2009/09/24' or \
        feat.GetField('tijdstipRegistratie') != '2009/11/06 12:21:37' or \
        feat.GetField('tijdstipRegistratieLV') != '2009/11/06 12:38:46.603':
@@ -178,13 +182,54 @@ def test_ogr_lvbag_dataset_pnd():
     ds = ogr.Open('data/lvbag/pnd.xml')
     assert ds is not None, 'cannot open dataset'
     assert ds.GetLayerCount() == 1, 'bad layer count'
-    # assert '28992' in ds.GetSpatialRef().ExportToWkt()
 
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Pand', 'bad layer name'
     assert lyr.GetGeomType() == ogr.wkbPolygon25D, 'bad layer geometry type'
     assert lyr.GetFeatureCount() == 6
     assert lyr.GetLayerDefn().GetFieldCount() == 18
+
+    sr = lyr.GetSpatialRef()
+
+    assert sr.GetAuthorityName(None) == 'EPSG'
+    assert sr.GetAuthorityCode(None) == '28992'
+
+def test_ogr_lvbag_dataset_sta():
+
+    ds = ogr.Open('data/lvbag/sta.xml')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == 'Standplaats', 'bad layer name'
+    assert lyr.GetGeomType() == ogr.wkbPolygon, 'bad layer geometry type'
+    assert lyr.GetFeatureCount() == 2
+    assert lyr.GetLayerDefn().GetFieldCount() == 17
+
+def test_ogr_lvbag_dataset_wpl():
+
+    ds = ogr.Open('data/lvbag/wpl.xml')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == 'Woonplaats', 'bad layer name'
+    assert lyr.GetGeomType() == ogr.wkbPolygon, 'bad layer geometry type'
+    assert lyr.GetFeatureCount() == 2
+    assert lyr.GetLayerDefn().GetFieldCount() == 17
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('naam') != 'Assen' or \
+       feat.GetField('lokaalID') != '2391':
+        feat.DumpReadable()
+        pytest.fail()
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('naam') != 'Loon' or \
+       feat.GetField('lokaalID') != '2392':
+        feat.DumpReadable()
+        pytest.fail()
+
 
 ###############################################################################
 # Run test_ogrsf
