@@ -1832,7 +1832,7 @@ def test_tiff_ovr_average_multiband_vs_singleband():
 ###############################################################################
 
 
-def test_tiff_ovr_multithreading():
+def test_tiff_ovr_multithreading_multiband():
 
     # Test multithreading through GDALRegenerateOverviewsMultiBand
     ds = gdal.Translate('/vsimem/test.tif', 'data/stefan_full_rgba.tif',
@@ -1841,6 +1841,23 @@ def test_tiff_ovr_multithreading():
     with gdaltest.config_options({'GDAL_NUM_THREADS': '8',
                                   'GDAL_OVR_CHUNK_MAX_SIZE': '100'}):
         ds.BuildOverviews('AVERAGE', [2])
+    ds = None
+    ds = gdal.Open('/vsimem/test.tif')
+    assert [ds.GetRasterBand(i+1).Checksum() for i in range(4)] == [12603, 58561, 36064, 10807]
+    ds = None
+    gdal.Unlink('/vsimem/test.tif')
+
+###############################################################################
+
+
+def test_tiff_ovr_multithreading_singleband():
+
+    # Test multithreading through GDALRegenerateOverviews
+    ds = gdal.Translate('/vsimem/test.tif', 'data/stefan_full_rgba.tif',
+                        creationOptions=['INTERLEAVE=BAND'])
+    with gdaltest.config_options({'GDAL_NUM_THREADS': '8',
+                                  'GDAL_OVR_CHUNKYSIZE': '1'}):
+        ds.BuildOverviews('AVERAGE', [2, 4])
     ds = None
     ds = gdal.Open('/vsimem/test.tif')
     assert [ds.GetRasterBand(i+1).Checksum() for i in range(4)] == [12603, 58561, 36064, 10807]
