@@ -367,7 +367,7 @@ bool CPLWorkerThreadPool::Setup(int nThreads,
     CPLAssert( nThreads > 0 );
 
     bool bRet = true;
-    for(int i=0;i<nThreads;i++)
+    for(int i=static_cast<int>(aWT.size());i<nThreads;i++)
     {
         std::unique_ptr<CPLWorkerThread> wt(new CPLWorkerThread);
         wt->pfnInitFunc = pfnInitFunc;
