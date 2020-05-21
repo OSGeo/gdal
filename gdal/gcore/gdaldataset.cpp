@@ -1894,6 +1894,10 @@ CPLErr GDALSetGCPs2( GDALDatasetH hDS, int nGCPCount,
  * deleted by specifying nOverviews == 0. This works at least for external
  * overviews (.ovr), TIFF internal overviews, etc.
  *
+ * Starting with GDAL 3.2, the GDAL_NUM_THREADS configuration option can be set
+ * to "ALL_CPUS" or a integer value to specify the number of threads to use for
+ * overview computation.
+ *
  * This method is the same as the C function GDALBuildOverviews().
  *
  * @param pszResampling one of "AVERAGE", "AVERAGE_MAGPHASE", "BILINEAR",

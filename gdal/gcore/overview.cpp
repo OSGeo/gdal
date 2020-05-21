@@ -36,7 +36,11 @@
 
 #include <algorithm>
 #include <complex>
+#include <condition_variable>
 #include <limits>
+#include <list>
+#include <memory>
+#include <mutex>
 #include <vector>
 
 #include "cpl_conv.h"
@@ -44,6 +48,7 @@
 #include "cpl_progress.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
+#include "gdal_thread_pool.h"
 #include "gdalwarper.h"
 
 // Restrict to 64bit processors because they are guaranteed to have SSE2.
@@ -3552,6 +3557,10 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
  * considered as the nodata value and not each value of the triplet
  * independently per band.
  *
+ * Starting with GDAL 3.2, the GDAL_NUM_THREADS configuration option can be set
+ * to "ALL_CPUS" or a integer value to specify the number of threads to use for
+ * overview computation.
+ *
  * @param nBands the number of bands, size of papoSrcBands and size of
  *               first dimension of papapoOverviewBands
  * @param papoSrcBands the list of source bands to downsample
@@ -3601,13 +3610,13 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
     if( pfnResampleFn == nullptr )
         return CE_Failure;
 
-    int nSrcWidth = papoSrcBands[0]->GetXSize();
-    int nSrcHeight = papoSrcBands[0]->GetYSize();
+    const int nToplevelSrcWidth = papoSrcBands[0]->GetXSize();
+    const int nToplevelSrcHeight = papoSrcBands[0]->GetYSize();
     GDALDataType eDataType = papoSrcBands[0]->GetRasterDataType();
     for( int iBand = 1; iBand < nBands; ++iBand )
     {
-        if( papoSrcBands[iBand]->GetXSize() != nSrcWidth ||
-            papoSrcBands[iBand]->GetYSize() != nSrcHeight )
+        if( papoSrcBands[iBand]->GetXSize() != nToplevelSrcWidth ||
+            papoSrcBands[iBand]->GetYSize() != nToplevelSrcHeight )
         {
             CPLError(
                 CE_Failure, CPLE_NotSupported,
@@ -3658,9 +3667,8 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
     double dfTotalPixelCount = 0;
     for( int iOverview = 0; iOverview < nOverviews; ++iOverview )
     {
-        nSrcWidth = papoSrcBands[0]->GetXSize();
-        nSrcHeight = papoSrcBands[0]->GetYSize();
-
+        int nSrcWidth = nToplevelSrcWidth;
+        int nSrcHeight = nToplevelSrcHeight;
         const int nDstWidth = papapoOverviewBands[0][iOverview]->GetXSize();
         // Try to use previous level of overview as the source to compute
         // the next level.
@@ -3674,10 +3682,7 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
         dfTotalPixelCount += static_cast<double>(nSrcWidth) * nSrcHeight;
     }
 
-    nSrcWidth = papoSrcBands[0]->GetXSize();
-    nSrcHeight = papoSrcBands[0]->GetYSize();
-
-    GDALDataType eWrkDataType =
+    const GDALDataType eWrkDataType =
         GDALGetOvrWorkDataType(pszResampling, eDataType);
 
     // I'd wish we had a better way of conveying this !
@@ -3710,6 +3715,17 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
     const bool bPropagateNoData =
         CPLTestBool( CPLGetConfigOption("GDAL_OVR_PROPAGATE_NODATA", "NO") );
 
+    const char* pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "1");
+    const int nThreads = std::max(1, std::min(128,
+            EQUAL(pszThreads, "ALL_CPUS") ? CPLGetNumCPUs() : atoi(pszThreads)));
+    auto poThreadPool = nThreads > 1 ? GDALGetGlobalThreadPool(nThreads) : nullptr;
+    auto poJobQueue = poThreadPool ? poThreadPool->CreateJobQueue() :
+                            std::unique_ptr<CPLJobQueue>(nullptr);
+
+    // Only configurable for debug / testing
+    const int nChunkMaxSize =
+        atoi(CPLGetConfigOption("GDAL_OVR_CHUNK_MAX_SIZE", "10485760"));
+
     // Second pass to do the real job.
     double dfCurPixelCount = 0;
     CPLErr eErr = CE_None;
@@ -3729,6 +3745,8 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
 
         // Try to use previous level of overview as the source to compute
         // the next level.
+        int nSrcWidth = nToplevelSrcWidth;
+        int nSrcHeight = nToplevelSrcHeight;
         if( iOverview > 0 &&
             papapoOverviewBands[0][iOverview - 1]->GetXSize() > nDstWidth )
         {
@@ -3763,7 +3781,7 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
 
             if( static_cast<GIntBig>(nFullResXChunkQueried) *
                   nFullResYChunkQueried * nBands *
-                    GDALGetDataTypeSizeBytes(eWrkDataType) > 10 * 1024 * 1024 )
+                    GDALGetDataTypeSizeBytes(eWrkDataType) > nChunkMaxSize )
             {
                 break;
             }
@@ -3777,48 +3795,140 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
         const int nFullResXChunkQueried =
             nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
 
-        void** papaChunk = static_cast<void **>(
-            VSI_MALLOC_VERBOSE(nBands * sizeof(void*)) );
-        if( papaChunk == nullptr )
+        // Structure to hold a pointer to free with CPLFree()
+        struct PointerHolder
         {
-            CPLFree(pabHasNoData);
-            CPLFree(pafNoDataValue);
-            return CE_Failure;
-        }
-        GByte* pabyChunkNoDataMask = nullptr;
-        for( int iBand = 0; iBand < nBands; ++iBand )
+            void* ptr = nullptr;
+
+            explicit PointerHolder(void* ptrIn): ptr(ptrIn) {}
+            ~PointerHolder() { CPLFree(ptr); }
+            PointerHolder(const PointerHolder&) = delete;
+            PointerHolder& operator=(const PointerHolder&) = delete;
+        };
+
+        // Structure describing a resampling job
+        struct OvrJob
         {
-            papaChunk[iBand] = VSI_MALLOC3_VERBOSE(
-                nFullResXChunkQueried,
-                nFullResYChunkQueried,
-                GDALGetDataTypeSizeBytes(eWrkDataType) );
-            if( papaChunk[iBand] == nullptr )
+            // Buffers to free when job is finished
+            std::shared_ptr<PointerHolder> oSrcMaskBufferHolder{};
+            std::unique_ptr<PointerHolder> oSrcBufferHolder{};
+            std::unique_ptr<PointerHolder> oDstBufferHolder{};
+
+            // Input parameters of pfnResampleFn
+            GDALResampleFunction pfnResampleFn = nullptr;
+            double dfXRatioDstToSrc{};
+            double dfYRatioDstToSrc{};
+            GDALDataType eWrkDataType = GDT_Unknown;
+            const void * pChunk = nullptr;
+            const GByte * pabyChunkNodataMask = nullptr;
+            int nChunkXOff = 0;
+            int nChunkXSize = 0;
+            int nChunkYOff = 0;
+            int nChunkYSize = 0;
+            int nDstXOff = 0;
+            int nDstXOff2 = 0;
+            int nDstYOff = 0;
+            int nDstYOff2 = 0;
+            GDALRasterBand* poOverview = nullptr;
+            const char * pszResampling = nullptr;
+            int bHasNoData = 0;
+            float fNoDataValue = 0.0f;
+            GDALDataType eSrcDataType = GDT_Unknown;
+            bool bPropagateNoData = false;
+
+            // Ouput values of resampling function
+            CPLErr eErr = CE_Failure;
+            void* pDstBuffer = nullptr;
+            GDALDataType eDstBufferDataType = GDT_Unknown;
+
+            // Synchronization
+            bool                    bFinished = false;
+            std::mutex              mutex{};
+            std::condition_variable cv{};
+        };
+
+        // Thread function to resample
+        const auto JobResampleFunc = [](void* pData)
+        {
+            OvrJob* poJob = static_cast<OvrJob*>(pData);
+
+            poJob->eErr = poJob->pfnResampleFn(
+                poJob->dfXRatioDstToSrc,
+                poJob->dfYRatioDstToSrc,
+                0.0, 0.0,
+                poJob->eWrkDataType,
+                poJob->pChunk,
+                poJob->pabyChunkNodataMask,
+                poJob->nChunkXOff,
+                poJob->nChunkXSize,
+                poJob->nChunkYOff,
+                poJob->nChunkYSize,
+                poJob->nDstXOff,
+                poJob->nDstXOff2,
+                poJob->nDstYOff,
+                poJob->nDstYOff2,
+                poJob->poOverview,
+                &(poJob->pDstBuffer),
+                &(poJob->eDstBufferDataType),
+                poJob->pszResampling,
+                poJob->bHasNoData,
+                poJob->fNoDataValue,
+                nullptr,
+                poJob->eSrcDataType,
+                poJob->bPropagateNoData);
+
+            poJob->oDstBufferHolder.reset(new PointerHolder(poJob->pDstBuffer));
+
             {
-                while ( --iBand >= 0)
-                    CPLFree(papaChunk[iBand]);
-                CPLFree(papaChunk);
-                CPLFree(pabHasNoData);
-                CPLFree(pafNoDataValue);
-                return CE_Failure;
+                std::lock_guard<std::mutex> guard(poJob->mutex);
+                poJob->bFinished = true;
+                poJob->cv.notify_one();
             }
-        }
-        if( bUseNoDataMask )
+        };
+
+        // Function to write resample data to target band
+        const auto WriteJobData = [](const OvrJob* poJob)
         {
-            pabyChunkNoDataMask = static_cast<GByte *>(
-                VSI_MALLOC2_VERBOSE( nFullResXChunkQueried,
-                                     nFullResYChunkQueried ) );
-            if( pabyChunkNoDataMask == nullptr )
+            return poJob->poOverview->RasterIO(
+                                GF_Write,
+                                poJob->nDstXOff,
+                                poJob->nDstYOff,
+                                poJob->nDstXOff2 - poJob->nDstXOff,
+                                poJob->nDstYOff2 - poJob->nDstYOff,
+                                poJob->pDstBuffer,
+                                poJob->nDstXOff2 - poJob->nDstXOff,
+                                poJob->nDstYOff2 - poJob->nDstYOff,
+                                poJob->eDstBufferDataType,
+                                0, 0, nullptr );
+        };
+
+        // Wait for completion of oldest job and serialize it
+        const auto WaitAndFinalizeOldestJob = [WriteJobData](
+                            std::list<std::unique_ptr<OvrJob>>& jobList)
+        {
+            auto poOldestJob = jobList.front().get();
             {
-                for( int iBand = 0; iBand < nBands; ++iBand )
+                std::unique_lock<std::mutex> oGuard(poOldestJob->mutex);
+                while( !poOldestJob->bFinished )
                 {
-                    CPLFree(papaChunk[iBand]);
+                    poOldestJob->cv.wait(oGuard);
                 }
-                CPLFree(papaChunk);
-                CPLFree(pabHasNoData);
-                CPLFree(pafNoDataValue);
-                return CE_Failure;
             }
-        }
+            CPLErr l_eErr = poOldestJob->eErr;
+            if( l_eErr == CE_None )
+            {
+                l_eErr = WriteJobData(poOldestJob);
+            }
+
+            jobList.pop_front();
+            return l_eErr;
+        };
+
+        // Queue of jobs
+        std::list<std::unique_ptr<OvrJob>> jobList;
+
+        std::vector<void*> apaChunk(nBands);
+        GByte* pabyChunkNoDataMask = nullptr;
 
         int nDstYOff = 0;
         // Iterate on destination overview, block by block.
@@ -3902,6 +4012,62 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
                     nDstXOff, nDstYOff, nDstXCount, nDstYCount );
 #endif
 
+                // Avoid accumulating too many tasks and exhaust RAM
+
+                // Try to complete already finished jobs
+                while( eErr == CE_None && !jobList.empty() )
+                {
+                    auto poOldestJob = jobList.front().get();
+                    {
+                        std::lock_guard<std::mutex> oGuard(poOldestJob->mutex);
+                        if( !poOldestJob->bFinished )
+                        {
+                            break;
+                        }
+                    }
+                    eErr = poOldestJob->eErr;
+                    if( eErr == CE_None )
+                    {
+                        eErr = WriteJobData(poOldestJob);
+                    }
+
+                    jobList.pop_front();
+                }
+
+                // And in case we have saturated the number of threads,
+                // wait for completion of tasks to go below the threshold.
+                while( eErr == CE_None &&
+                       jobList.size() >= static_cast<size_t>(nThreads) )
+                {
+                    eErr = WaitAndFinalizeOldestJob(jobList);
+                }
+
+                // (Re)allocate buffers if needed
+                for( int iBand = 0; iBand < nBands; ++iBand )
+                {
+                    if( apaChunk[iBand] == nullptr )
+                    {
+                        apaChunk[iBand] = VSI_MALLOC3_VERBOSE(
+                            nFullResXChunkQueried,
+                            nFullResYChunkQueried,
+                            GDALGetDataTypeSizeBytes(eWrkDataType) );
+                        if( apaChunk[iBand] == nullptr )
+                        {
+                            eErr = CE_Failure;
+                        }
+                    }
+                }
+                if( bUseNoDataMask && pabyChunkNoDataMask == nullptr  )
+                {
+                    pabyChunkNoDataMask = static_cast<GByte *>(
+                        VSI_MALLOC2_VERBOSE( nFullResXChunkQueried,
+                                            nFullResYChunkQueried ) );
+                    if( pabyChunkNoDataMask == nullptr )
+                    {
+                        eErr = CE_Failure;
+                    }
+                }
+
                 // Read the source buffers for all the bands.
                 for( int iBand = 0; iBand < nBands && eErr == CE_None; ++iBand )
                 {
@@ -3914,7 +4080,7 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
                         GF_Read,
                         nChunkXOffQueried, nChunkYOffQueried,
                         nChunkXSizeQueried, nChunkYSizeQueried,
-                        papaChunk[iBand],
+                        apaChunk[iBand],
                         nChunkXSizeQueried, nChunkYSizeQueried,
                         eWrkDataType, 0, 0, nullptr );
                 }
@@ -3936,59 +4102,74 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
                         GDT_Byte, 0, 0, nullptr );
                 }
 
+                std::shared_ptr<PointerHolder> oSrcMaskBufferHolder(
+                    new PointerHolder(poJobQueue ? pabyChunkNoDataMask : nullptr));
+
                 // Compute the resulting overview block.
                 for( int iBand = 0; iBand < nBands && eErr == CE_None; ++iBand )
                 {
-                    void* pDstBuffer = nullptr;
-                    GDALDataType eDstBufferDataType = GDT_Unknown;
-                    GDALRasterBand* poDstBand = papapoOverviewBands[iBand][iOverview];
-                    eErr = pfnResampleFn(
-                        dfXRatioDstToSrc, dfYRatioDstToSrc,
-                        0.0, 0.0,
-                        eWrkDataType,
-                        papaChunk[iBand],
-                        pabyChunkNoDataMask,
-                        nChunkXOffQueried, nChunkXSizeQueried,
-                        nChunkYOffQueried, nChunkYSizeQueried,
-                        nDstXOff, nDstXOff + nDstXCount,
-                        nDstYOff, nDstYOff + nDstYCount,
-                        poDstBand,
-                        &pDstBuffer,
-                        &eDstBufferDataType,
-                        pszResampling,
-                        pabHasNoData[iBand],
-                        pafNoDataValue[iBand],
-                        /*poColorTable*/ nullptr,
-                        eDataType,
-                        bPropagateNoData);
-                    if( eErr == CE_None )
+                    auto poJob = std::unique_ptr<OvrJob>(new OvrJob());
+                    poJob->pfnResampleFn = pfnResampleFn;
+                    poJob->dfXRatioDstToSrc = dfXRatioDstToSrc;
+                    poJob->dfYRatioDstToSrc = dfYRatioDstToSrc;
+                    poJob->eWrkDataType = eWrkDataType;
+                    poJob->pChunk = apaChunk[iBand];
+                    poJob->pabyChunkNodataMask = pabyChunkNoDataMask;
+                    poJob->nChunkXOff = nChunkXOffQueried;
+                    poJob->nChunkXSize = nChunkXSizeQueried;
+                    poJob->nChunkYOff = nChunkYOffQueried;
+                    poJob->nChunkYSize = nChunkYSizeQueried;
+                    poJob->nDstXOff = nDstXOff;
+                    poJob->nDstXOff2 = nDstXOff + nDstXCount;
+                    poJob->nDstYOff = nDstYOff;
+                    poJob->nDstYOff2 = nDstYOff + nDstYCount;
+                    poJob->poOverview = papapoOverviewBands[iBand][iOverview];
+                    poJob->pszResampling = pszResampling;
+                    poJob->bHasNoData = pabHasNoData[iBand];
+                    poJob->fNoDataValue = pafNoDataValue[iBand];
+                    poJob->eSrcDataType = eDataType;
+                    poJob->bPropagateNoData = bPropagateNoData;
+
+                    if( poJobQueue )
                     {
-                        eErr = poDstBand->RasterIO(
-                            GF_Write,
-                            nDstXOff,
-                            nDstYOff,
-                            nDstXCount,
-                            nDstYCount,
-                            pDstBuffer,
-                            nDstXCount,
-                            nDstYCount,
-                            eDstBufferDataType,
-                            0, 0, nullptr );
+                        poJob->oSrcMaskBufferHolder = oSrcMaskBufferHolder;
+                        poJob->oSrcBufferHolder.reset(
+                            new PointerHolder(apaChunk[iBand]));
+                        apaChunk[iBand] = nullptr;
+
+                        poJobQueue->SubmitJob(JobResampleFunc, poJob.get());
+                        jobList.emplace_back(std::move(poJob));
                     }
-                    CPLFree(pDstBuffer);
+                    else
+                    {
+                        JobResampleFunc(poJob.get());
+                        eErr = poJob->eErr;
+                        if( eErr == CE_None )
+                        {
+                            eErr = WriteJobData(poJob.get());
+                        }
+                    }
                 }
+
+                if( poJobQueue )
+                    pabyChunkNoDataMask = nullptr;
             }
 
             dfCurPixelCount += static_cast<double>(nYCount) * nSrcWidth;
         }
 
+        // Wait for all pending jobs to complete
+        while( eErr == CE_None && !jobList.empty() )
+        {
+            eErr = WaitAndFinalizeOldestJob(jobList);
+        }
+
         // Flush the data to overviews.
         for( int iBand = 0; iBand < nBands; ++iBand )
         {
-            CPLFree(papaChunk[iBand]);
+            CPLFree(apaChunk[iBand]);
             papapoOverviewBands[iBand][iOverview]->FlushCache();
         }
-        CPLFree(papaChunk);
         CPLFree(pabyChunkNoDataMask);
     }
 
