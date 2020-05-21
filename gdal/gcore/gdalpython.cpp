@@ -388,7 +388,7 @@ static bool LoadPythonAPI()
     }
 
     // Otherwise probe a few known objects.
-    // Note: update doc/source/drivers/raster/vrt.rst if changechange
+    // Note: update doc/source/drivers/raster/vrt.rst if change
     if( libHandle == nullptr )
     {
         const char* const apszPythonSO[] = { "libpython2.7." SO_EXT,
@@ -396,6 +396,7 @@ static bool LoadPythonAPI()
                                                 "libpython3.6m." SO_EXT,
                                                 "libpython3.7m." SO_EXT,
                                                 "libpython3.8m." SO_EXT,
+                                                "libpython3.9m." SO_EXT,
                                                 "libpython3.4m." SO_EXT,
                                                 "libpython3.3." SO_EXT,
                                                 "libpython3.2." SO_EXT };
@@ -592,6 +593,7 @@ static bool LoadPythonAPI()
                                             "python36.dll",
                                             "python37.dll",
                                             "python38.dll",
+                                            "python39.dll",
                                             "python34.dll",
                                             "python33.dll",
                                             "python32.dll" };
