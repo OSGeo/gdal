@@ -566,7 +566,6 @@ void OGRLVBAGLayer::ParseDocument()
     {
         XML_ParsingStatus status;
         XML_GetParsingStatus(oParser.get(), &status);
-
         switch (status.parsing)
         {
             case XML_INITIALIZED:
