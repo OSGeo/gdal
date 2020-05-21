@@ -248,7 +248,10 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
         // This is somewhat messy. Ideally there should be a way for the
         // driver to overload the default behaviour
         if( !EQUAL(GetDescription(), "MEM") &&
-            !EQUAL(GetDescription(), "Memory") )
+            !EQUAL(GetDescription(), "Memory") &&
+            // ogr2ogr -f PostgreSQL might reach the Delete method of the
+            // PostgisRaster dirver which is undesirable
+            !EQUAL(GetDescription(), "PostgreSQL") )
         {
             char** papszAllowedDrivers = nullptr;
             papszAllowedDrivers = CSLAddString(papszAllowedDrivers, GetDescription() );
