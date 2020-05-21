@@ -93,6 +93,9 @@ class OGRLVBAGLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<O
 
     char                aBuf[BUFSIZ];
 
+    void                AddOccurrenceFieldDefn();
+    void                AddIdentifierFieldDefn();
+    void                AddDocumentFieldDefn();
     void                CreateFeatureDefn(const char *);
 
     void                ConfigureParser();
