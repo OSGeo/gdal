@@ -275,7 +275,7 @@ void OGRLVBAGLayer::CreateFeatureDefn(const char *pszDataset)
     }
     else if( EQUAL("wpl", pszDataset) )
     {
-        OGRFieldDefn oField0("naam", OFTInteger);
+        OGRFieldDefn oField0("naam", OFTString);
   
         poFeatureDefn->AddFieldDefn(&oField0);
  
