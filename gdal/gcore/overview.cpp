@@ -1907,8 +1907,8 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
                                    int nChunkYOff, int nChunkYSize,
                                    int nDstXOff, int nDstXOff2,
                                    int nDstYOff, int nDstYOff2,
-                                   GDALRasterBand ** papoDstBands,
-                                   float* pafDstBuffer,
+                                   GDALRasterBand * poDstBand,
+                                   void* pDstBuffer,
                                    int bHasNoData,
                                    float fNoDataValue,
                                    FilterFuncType pfnFilterFunc,
@@ -1920,7 +1920,8 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
 {
     if( !bHasNoData )
         fNoDataValue = 0.0f;
-    const auto dstDataType = papoDstBands[0]->GetRasterDataType();
+    const auto dstDataType = poDstBand->GetRasterDataType();
+    const int nDstDataTypeSize = GDALGetDataTypeSizeBytes(dstDataType);
     const float fReplacementVal = GetReplacementValueIfNoData(
         dstDataType, bHasNoData, fNoDataValue);
     // cppcheck-suppress unreadVariable
@@ -1992,6 +1993,14 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
 /*      Allocate work buffers.                                          */
 /* -------------------------------------------------------------------- */
     const int nDstXSize = nDstXOff2 - nDstXOff;
+    float* pafWrkScanline = nullptr;
+    if( dstDataType != GDT_Float32 )
+    {
+        pafWrkScanline = static_cast<float*>(
+            VSI_MALLOC2_VERBOSE(nDstXSize, sizeof(float)));
+        if( pafWrkScanline == nullptr )
+            return CE_Failure;
+    }
 
     const double dfXScale = 1.0 / dfXRatioDstToSrc;
     const double dfXScaleWeight = ( dfXScale >= 1.0 ) ? 1.0 : dfXScale;
@@ -2020,6 +2029,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
         (pabyChunkNodataMask != nullptr &&
          pabyChunkNodataMaskHorizontalFiltered == nullptr) )
     {
+        VSIFree(pafWrkScanline);
         VSIFree(padfHorizontalFiltered);
         VSIFreeAligned(padfWeights);
         VSIFree(pabyChunkNodataMaskHorizontalFiltered);
@@ -2233,8 +2243,8 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
 
     for( int iDstLine = nDstYOff; iDstLine < nDstYOff2; ++iDstLine )
     {
-        float* const pafDstScanline = pafDstBuffer +
-                                            (iDstLine - nDstYOff)  * nDstXSize;
+        float* const pafDstScanline = pafWrkScanline ? pafWrkScanline:
+            static_cast<float*>(pDstBuffer) + (iDstLine - nDstYOff)  * nDstXSize;
 
         const double dfSrcLine =
             (iDstLine + 0.5) * dfYRatioDstToSrc + dfSrcYDelta;
@@ -2438,8 +2448,19 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
                     pafDstScanline[i] = fMaxVal;
             }
         }
+
+        if( pafWrkScanline )
+        {
+            GDALCopyWords(pafWrkScanline, GDT_Float32, 4,
+                          static_cast<GByte*>(pDstBuffer) +
+                            static_cast<size_t>(iDstLine - nDstYOff) *
+                                nDstXSize * nDstDataTypeSize,
+                          dstDataType, nDstDataTypeSize,
+                          nDstXSize);
+        }
     }
 
+    VSIFree(pafWrkScanline);
     VSIFreeAligned( padfWeights );
     VSIFree( padfHorizontalFiltered );
     VSIFree( pabyChunkNodataMaskHorizontalFiltered );
@@ -2510,13 +2531,12 @@ static CPLErr GDALResampleChunk32R_Convolution(
     *ppDstBuffer =
         VSI_MALLOC3_VERBOSE(nDstXOff2 - nDstXOff,
                             nDstYOff2 - nDstYOff,
-                            GDALGetDataTypeSizeBytes(GDT_Float32));
+                            GDALGetDataTypeSizeBytes(eBandDT));
     if( *ppDstBuffer == nullptr )
     {
         return CE_Failure;
     }
-    float* const pafDstBuffer = static_cast<float*>(*ppDstBuffer);
-    *peDstBufferDataType = GDT_Float32;
+    *peDstBufferDataType = eBandDT;
 
     if( eWrkDataType == GDT_Byte )
         return GDALResampleChunk32R_ConvolutionT<GByte>(
@@ -2529,8 +2549,8 @@ static CPLErr GDALResampleChunk32R_Convolution(
             nChunkYOff, nChunkYSize,
             nDstXOff, nDstXOff2,
             nDstYOff, nDstYOff2,
-            &poOverview,
-            pafDstBuffer,
+            poOverview,
+            *ppDstBuffer,
             bHasNoData, fNoDataValue,
             pfnFilterFunc,
             pfnFilterFunc4Values,
@@ -2548,8 +2568,8 @@ static CPLErr GDALResampleChunk32R_Convolution(
             nChunkYOff, nChunkYSize,
             nDstXOff, nDstXOff2,
             nDstYOff, nDstYOff2,
-            &poOverview,
-            pafDstBuffer,
+            poOverview,
+            *ppDstBuffer,
             bHasNoData, fNoDataValue,
             pfnFilterFunc,
             pfnFilterFunc4Values,
@@ -2567,8 +2587,8 @@ static CPLErr GDALResampleChunk32R_Convolution(
             nChunkYOff, nChunkYSize,
             nDstXOff, nDstXOff2,
             nDstYOff, nDstYOff2,
-            &poOverview,
-            pafDstBuffer,
+            poOverview,
+            *ppDstBuffer,
             bHasNoData, fNoDataValue,
             pfnFilterFunc,
             pfnFilterFunc4Values,
