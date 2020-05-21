@@ -76,13 +76,13 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
                     && papoLayers[i]->GetLayerDefn()->IsSame(
                         papoLayers[j]->GetLayerDefn()) )
                 {
-                    paVector.push_back(j);
-                    paGroup.push_back(j);
+                    paVector.push_back(static_cast<int>(j));
+                    paGroup.push_back(static_cast<int>(j));
                 }
             }
         }
         if( !paVector.empty() )
-            paMergeVector.insert({i, paVector});
+            paMergeVector.insert({static_cast<int>(i), paVector});
     }
 
     if( paMergeVector.empty() )
@@ -93,7 +93,7 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
         const int baseLayerIdx = mergeLayer.first;
         const std::vector<int> papoLayersIdx = mergeLayer.second;
         
-        int nSrcLayers = papoLayersIdx.size() + 1;
+        int nSrcLayers = static_cast<int>(papoLayersIdx.size()) + 1;
         OGRLayer **papoSrcLayers = static_cast<OGRLayer **>(
             CPLRealloc(nullptr, sizeof(OGRLayer *) * nSrcLayers ));
 
