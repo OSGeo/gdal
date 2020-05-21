@@ -206,6 +206,18 @@ def test_ogr_lvbag_dataset_sta():
     assert lyr.GetFeatureCount() == 2
     assert lyr.GetLayerDefn().GetFieldCount() == 17
 
+def test_ogr_lvbag_dataset_vbo():
+
+    ds = ogr.Open('data/lvbag/vbo.xml')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == 'Verblijfsobject', 'bad layer name'
+    # assert lyr.GetGeomType() == ogr.wkbUnknown, 'bad layer geometry type'
+    assert lyr.GetFeatureCount() == 3
+    assert lyr.GetLayerDefn().GetFieldCount() == 19
+
 def test_ogr_lvbag_dataset_wpl():
 
     ds = ogr.Open('data/lvbag/wpl.xml')
@@ -216,7 +228,7 @@ def test_ogr_lvbag_dataset_wpl():
     assert lyr.GetName() == 'Woonplaats', 'bad layer name'
     assert lyr.GetGeomType() == ogr.wkbPolygon, 'bad layer geometry type'
     assert lyr.GetFeatureCount() == 2
-    assert lyr.GetLayerDefn().GetFieldCount() == 17
+    assert lyr.GetLayerDefn().GetFieldCount() == 18
 
     feat = lyr.GetNextFeature()
     if feat.GetField('naam') != 'Assen' or \
