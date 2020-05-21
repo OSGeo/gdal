@@ -44,6 +44,7 @@
 #include "cpl_http.h"
 #include "cpl_auto_close.h"
 #include "cpl_minixml.h"
+#include "cpl_worker_thread_pool.h"
 
 #include <fstream>
 #include <string>
@@ -2820,4 +2821,73 @@ namespace tut
             ensure_equals( x.GetString(), std::string("[1, 2]") );
         }
     }
+
+    // Test CPLWorkerThreadPool
+    template<>
+    template<>
+    void object::test<40>()
+    {
+        CPLWorkerThreadPool oPool;
+        ensure(oPool.Setup(2, nullptr, nullptr));
+
+        const auto myJob = [](void* pData)
+        {
+            (*static_cast<int*>(pData))++;
+        };
+
+        {
+            std::vector<int> res(1000);
+            for( int i = 0; i < 1000; i++ )
+            {
+                res[i] = i;
+                oPool.SubmitJob(myJob, &res[i]);
+            }
+            oPool.WaitCompletion();
+            for( int i = 0; i < 1000; i++ )
+            {
+                ensure_equals(res[i], i + 1);
+            }
+        }
+
+        {
+            std::vector<int> res(1000);
+            std::vector<void*> resPtr(1000);
+            for( int i = 0; i < 1000; i++ )
+            {
+                res[i] = i;
+                resPtr[i] = &res[i];
+            }
+            oPool.SubmitJobs(myJob, resPtr);
+            oPool.WaitEvent();
+            oPool.WaitCompletion();
+            for( int i = 0; i < 1000; i++ )
+            {
+                ensure_equals(res[i], i + 1);
+            }
+        }
+
+        {
+            auto jobQueue1 = oPool.CreateJobQueue();
+            auto jobQueue2 = oPool.CreateJobQueue();
+
+            ensure_equals(jobQueue1->GetPool(), &oPool);
+
+            std::vector<int> res(1000);
+            for( int i = 0; i < 1000; i++ )
+            {
+                res[i] = i;
+                if( i % 2 )
+                    jobQueue1->SubmitJob(myJob, &res[i]);
+                else
+                    jobQueue2->SubmitJob(myJob, &res[i]);
+            }
+            jobQueue1->WaitCompletion();
+            jobQueue2->WaitCompletion();
+            for( int i = 0; i < 1000; i++ )
+            {
+                ensure_equals(res[i], i + 1);
+            }
+        }
+    }
+
 } // namespace tut
