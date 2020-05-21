@@ -7664,7 +7664,6 @@ OGRSpatialReference::GetAuthorityCode( const char *pszTargetKey ) const
         }
         d->demoteFromBoundCRS();
         auto ret = proj_get_id_code(d->m_pj_crs, 0);
-        bool tryGetAttrNode = false;
         if( ret == nullptr && d->m_pjType == PJ_TYPE_PROJECTED_CRS )
         {
             auto ctxt = d->getPROJContext();
@@ -7678,13 +7677,12 @@ OGRSpatialReference::GetAuthorityCode( const char *pszTargetKey ) const
                     // This might come from a COMPD_CS with a VERT_DATUM type = 2002
                     // in which case, using the WKT1 representation will enable
                     // us to recover the EPSG code.
-                    tryGetAttrNode = true;
                     pszTargetKey = pszInputTargetKey;
                 }
             }
         }
         d->undoDemoteFromBoundCRS();
-        if( ret != nullptr || !tryGetAttrNode )
+        if( ret != nullptr || pszTargetKey == nullptr )
         {
             return ret;
         }
@@ -7771,7 +7769,6 @@ OGRSpatialReference::GetAuthorityName( const char *pszTargetKey ) const
         }
         d->demoteFromBoundCRS();
         auto ret = proj_get_id_auth_name(d->m_pj_crs, 0);
-        bool tryGetAttrNode = false;
         if( ret == nullptr && d->m_pjType == PJ_TYPE_PROJECTED_CRS )
         {
             auto ctxt = d->getPROJContext();
@@ -7785,13 +7782,12 @@ OGRSpatialReference::GetAuthorityName( const char *pszTargetKey ) const
                     // This might come from a COMPD_CS with a VERT_DATUM type = 2002
                     // in which case, using the WKT1 representation will enable
                     // us to recover the EPSG code.
-                    tryGetAttrNode = true;
                     pszTargetKey = pszInputTargetKey;
                 }
             }
         }
         d->undoDemoteFromBoundCRS();
-        if( ret != nullptr || !tryGetAttrNode )
+        if( ret != nullptr || pszTargetKey == nullptr )
         {
             return ret;
         }

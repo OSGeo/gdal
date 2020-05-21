@@ -341,3 +341,5 @@ def test_osr_compd_vert_datum_2002():
     assert sr.IsProjected()
     assert sr.GetAuthorityCode('PROJCS') == '26930'
     assert sr.GetAuthorityName('PROJCS') == 'EPSG'
+    assert sr.GetAuthorityCode(None) is None
+    assert sr.GetAuthorityName(None) is None
