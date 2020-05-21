@@ -301,8 +301,7 @@ Open options
 -  **NUM_THREADS=number_of_threads/ALL_CPUS**: (From GDAL 2.1) Enable
    multi-threaded compression by specifying the number of worker
    threads. Worth it for slow compression algorithms such as DEFLATE or
-   LZMA. Will be ignored for JPEG. Default is compression in the main
-   thread.
+   LZMA. Default is compression in the main thread.
 
 -  **GEOREF_SOURCES=string**: (GDAL > 2.2) Define which georeferencing
    sources are allowed and their priority order. See

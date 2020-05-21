@@ -8797,11 +8797,10 @@ void GTiffDataset::InitCompressionThreads( char** papszOptions )
             EQUAL(pszValue, "ALL_CPUS") ? CPLGetNumCPUs() : atoi(pszValue);
         if( nThreads > 1 )
         {
-            if( m_nCompression == COMPRESSION_NONE ||
-                m_nCompression == COMPRESSION_JPEG )
+            if( m_nCompression == COMPRESSION_NONE )
             {
                 CPLDebug( "GTiff",
-                          "NUM_THREADS ignored with uncompressed or JPEG" );
+                          "NUM_THREADS ignored with uncompressed" );
             }
             else
             {
@@ -9236,7 +9235,8 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
             m_nCompression == COMPRESSION_LZMA ||
             m_nCompression == COMPRESSION_ZSTD ||
             m_nCompression == COMPRESSION_LERC ||
-            m_nCompression == COMPRESSION_WEBP) )
+            m_nCompression == COMPRESSION_WEBP ||
+            m_nCompression == COMPRESSION_JPEG) )
     {
         if( m_bBlockOrderRowMajor || m_bLeaderSizeAsUInt4 ||
             m_bTrailerRepeatedLast4BytesRepeated )
