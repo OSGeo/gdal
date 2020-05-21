@@ -3386,7 +3386,9 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
  * (type, dimensions)
  *
  * The resampling algorithms supported for the moment are "NEAREST", "AVERAGE"
- * and "GAUSS"
+ * "GAUSS", "CUBIC", "CUBICSPLINE", "LANCZOS" and "BILINEAR"
+ *
+ * It does not support color tables or complex data types.
  *
  * The pseudo-algorithm used by the function is :
  *    for each overview
@@ -3411,7 +3413,8 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
  * @param papapoOverviewBands bidimension array of bands. First dimension is
  *                            indexed by nBands. Second dimension is indexed by
  *                            nOverviews.
- * @param pszResampling Resampling algorithm ("NEAREST", "AVERAGE" or "GAUSS").
+ * @param pszResampling Resampling algorithm ("NEAREST", "AVERAGE"
+ * "GAUSS", "CUBIC", "CUBICSPLINE", "LANCZOS" or "BILINEAR").
  * @param pfnProgress progress report function.
  * @param pProgressData progress function callback data.
  * @return CE_None on success or CE_Failure on failure.
