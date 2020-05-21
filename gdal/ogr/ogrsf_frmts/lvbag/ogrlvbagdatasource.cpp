@@ -88,34 +88,38 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
     if( paMergeVector.empty() )
         return;
 
-    for( const auto &p : paMergeVector )
+    for( const auto &mergeLayer : paMergeVector )
     {
-        const auto papoLayersIdx = p.second;
+        const int baseLayerIdx = mergeLayer.first;
+        const std::vector<int> papoLayersIdx = mergeLayer.second;
+        
         int nSrcLayers = papoLayersIdx.size() + 1;
         OGRLayer **papoSrcLayers = static_cast<OGRLayer **>(
             CPLRealloc(nullptr, sizeof(OGRLayer *) * nSrcLayers ));
 
         int idx = 0;
-        papoSrcLayers[idx++] = papoLayers[p.first].release();
+        papoSrcLayers[idx++] = papoLayers[baseLayerIdx].release();
         for( const auto &poLayerIdx : papoLayersIdx )
             papoSrcLayers[idx++] = papoLayers[poLayerIdx].release();
 
+        OGRLayer *poBaseLayer = papoSrcLayers[0];
+
         auto poLayer = std::unique_ptr<OGRUnionLayer>{
-            new OGRUnionLayer{ papoSrcLayers[0]->GetName(), nSrcLayers, papoSrcLayers, TRUE } };
+            new OGRUnionLayer{ poBaseLayer->GetName(), nSrcLayers, papoSrcLayers, TRUE } };
 
-        OGRFeatureDefn *lyr0def = papoSrcLayers[0]->GetLayerDefn();
+        OGRFeatureDefn *poBaseLayerDefn = poBaseLayer->GetLayerDefn();
 
-        const int nFields = lyr0def->GetFieldCount();
+        const int nFields = poBaseLayerDefn->GetFieldCount();
         OGRFieldDefn** papoFields = static_cast<OGRFieldDefn **>(
             CPLRealloc(nullptr, sizeof(OGRFieldDefn *) * nFields ));
         for( int i = 0; i < nFields; ++i )
-            papoFields[i] = lyr0def->GetFieldDefn(i);
+            papoFields[i] = poBaseLayerDefn->GetFieldDefn(i);
 
-        const int nGeomFields = lyr0def->GetGeomFieldCount();
+        const int nGeomFields = poBaseLayerDefn->GetGeomFieldCount();
         OGRUnionLayerGeomFieldDefn** papoGeomFields = static_cast<OGRUnionLayerGeomFieldDefn **>(
             CPLRealloc(nullptr, sizeof(OGRUnionLayerGeomFieldDefn *) * nGeomFields ));
         for( int i = 0; i < nGeomFields; ++i )
-            papoGeomFields[i] = new OGRUnionLayerGeomFieldDefn( lyr0def->GetGeomFieldDefn( i ) );
+            papoGeomFields[i] = new OGRUnionLayerGeomFieldDefn( poBaseLayerDefn->GetGeomFieldDefn( i ) );
 
         poLayer->SetFields(
             FIELD_FROM_FIRST_LAYER,

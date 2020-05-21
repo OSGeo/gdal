@@ -123,109 +123,168 @@ static inline const char* XMLTagSplit(const char *pszName)
     return pszTag;
 }
 
+/************************************************************************/
+/*                      AddIdentifierFieldDefn()                        */
+/************************************************************************/
+
+void OGRLVBAGLayer::AddIdentifierFieldDefn()
+{
+    OGRFieldDefn oField0("namespace", OFTString);
+    OGRFieldDefn oField1("lokaalID", OFTString);
+    OGRFieldDefn oField2("versie", OFTString);
+
+    poFeatureDefn->AddFieldDefn(&oField0);
+    poFeatureDefn->AddFieldDefn(&oField1);
+    poFeatureDefn->AddFieldDefn(&oField2);
+}
+
+/************************************************************************/
+/*                       AddDocumentFieldDefn()                         */
+/************************************************************************/
+
+void OGRLVBAGLayer::AddDocumentFieldDefn()
+{
+    OGRFieldDefn oField0("status", OFTString);
+    OGRFieldDefn oField1("geconstateerd", OFTInteger);
+    oField1.SetSubType(OFSTBoolean);
+    OGRFieldDefn oField2("documentdatum", OFTDate);
+    OGRFieldDefn oField3("documentnummer", OFTString);
+
+    poFeatureDefn->AddFieldDefn(&oField0);
+    poFeatureDefn->AddFieldDefn(&oField1);
+    poFeatureDefn->AddFieldDefn(&oField2);
+    poFeatureDefn->AddFieldDefn(&oField3);
+}
+
+/************************************************************************/
+/*                      AddOccurrenceFieldDefn()                        */
+/************************************************************************/
+
+void OGRLVBAGLayer::AddOccurrenceFieldDefn()
+{
+    OGRFieldDefn oField0("voorkomenidentificatie", OFTInteger);
+    OGRFieldDefn oField1("beginGeldigheid", OFTDate);
+    OGRFieldDefn oField2("eindGeldigheid", OFTDate);
+    OGRFieldDefn oField3("tijdstipRegistratie", OFTDateTime);
+    OGRFieldDefn oField4("eindRegistratie", OFTDateTime);
+    OGRFieldDefn oField5("tijdstipInactief", OFTDateTime);
+    OGRFieldDefn oField6("tijdstipRegistratieLV", OFTDateTime);
+    OGRFieldDefn oField7("tijdstipEindRegistratieLV", OFTDateTime);
+    OGRFieldDefn oField8("tijdstipInactiefLV", OFTDateTime);
+    OGRFieldDefn oField9("tijdstipNietBagLV", OFTDateTime);
+
+    poFeatureDefn->AddFieldDefn(&oField0);
+    poFeatureDefn->AddFieldDefn(&oField1);
+    poFeatureDefn->AddFieldDefn(&oField2);
+    poFeatureDefn->AddFieldDefn(&oField3);
+    poFeatureDefn->AddFieldDefn(&oField4);
+    poFeatureDefn->AddFieldDefn(&oField5);
+    poFeatureDefn->AddFieldDefn(&oField6);
+    poFeatureDefn->AddFieldDefn(&oField7);
+    poFeatureDefn->AddFieldDefn(&oField8);
+    poFeatureDefn->AddFieldDefn(&oField9);
+}
+
+/************************************************************************/
+/*                         CreateFeatureDefn()                          */
+/************************************************************************/
+
 void OGRLVBAGLayer::CreateFeatureDefn(const char *pszDataset)
 {
     if( EQUAL("pnd", pszDataset) )
     {
-        OGRFieldDefn oField0("namespace", OFTString);
-        OGRFieldDefn oField1("lokaalID", OFTString);
-        OGRFieldDefn oField2("versie", OFTString);
-        OGRFieldDefn oField3("oorspronkelijkBouwjaar", OFTDate);
-        OGRFieldDefn oField4("status", OFTString);
-        OGRFieldDefn oField5("geconstateerd", OFTInteger);
-        oField5.SetSubType(OFSTBoolean);
-        OGRFieldDefn oField6("documentdatum", OFTDate);
-        OGRFieldDefn oField7("documentnummer", OFTString);
+        OGRFieldDefn oField0("oorspronkelijkBouwjaar", OFTDate);
 
         poFeatureDefn->AddFieldDefn(&oField0);
-        poFeatureDefn->AddFieldDefn(&oField1);
-        poFeatureDefn->AddFieldDefn(&oField2);
-        poFeatureDefn->AddFieldDefn(&oField3);
-        poFeatureDefn->AddFieldDefn(&oField4);
-        poFeatureDefn->AddFieldDefn(&oField5);
-        poFeatureDefn->AddFieldDefn(&oField6);
-        poFeatureDefn->AddFieldDefn(&oField7);
+        
+        AddIdentifierFieldDefn();
+        AddDocumentFieldDefn();
+        AddOccurrenceFieldDefn();
 
         poFeatureDefn->SetName("Pand");
         SetDescription(poFeatureDefn->GetName());
     }
     else if( EQUAL("num", pszDataset) )
     {
-        OGRFieldDefn oField0("namespace", OFTString);
-        OGRFieldDefn oField1("lokaalID", OFTString);
-        OGRFieldDefn oField2("versie", OFTString);
-        OGRFieldDefn oField3("huisnummer", OFTInteger);
-        OGRFieldDefn oField4("huisletter", OFTString);
-        OGRFieldDefn oField5("huisnummertoevoeging", OFTString);
-        OGRFieldDefn oField6("postcode", OFTString);
-        OGRFieldDefn oField7("typeAdresseerbaarObject", OFTString);
-        OGRFieldDefn oField8("status", OFTString);
-        OGRFieldDefn oField9("geconstateerd", OFTInteger);
-        oField9.SetSubType(OFSTBoolean);
-        OGRFieldDefn oField10("documentdatum", OFTDate);
-        OGRFieldDefn oField11("documentnummer", OFTString);
+        OGRFieldDefn oField0("huisnummer", OFTInteger);
+        OGRFieldDefn oField1("huisletter", OFTString);
+        OGRFieldDefn oField2("huisnummertoevoeging", OFTString);
+        OGRFieldDefn oField3("postcode", OFTString);
+        OGRFieldDefn oField4("typeAdresseerbaarObject", OFTString);
   
         poFeatureDefn->AddFieldDefn(&oField0);
         poFeatureDefn->AddFieldDefn(&oField1);
         poFeatureDefn->AddFieldDefn(&oField2);
         poFeatureDefn->AddFieldDefn(&oField3);
         poFeatureDefn->AddFieldDefn(&oField4);
-        poFeatureDefn->AddFieldDefn(&oField5);
-        poFeatureDefn->AddFieldDefn(&oField6);
-        poFeatureDefn->AddFieldDefn(&oField7);
-        poFeatureDefn->AddFieldDefn(&oField8);
-        poFeatureDefn->AddFieldDefn(&oField9);
-        poFeatureDefn->AddFieldDefn(&oField10);
-        poFeatureDefn->AddFieldDefn(&oField11);
  
+        AddIdentifierFieldDefn();
+        AddDocumentFieldDefn();
+        AddOccurrenceFieldDefn();
+
         poFeatureDefn->SetName("Nummeraanduiding");
         SetDescription(poFeatureDefn->GetName());
     }
     else if( EQUAL("lig", pszDataset) )
     {
-        OGRFieldDefn oField0("namespace", OFTString);
-        OGRFieldDefn oField1("lokaalID", OFTString);
-        OGRFieldDefn oField2("versie", OFTString);
-        OGRFieldDefn oField3("status", OFTString);
-        OGRFieldDefn oField4("geconstateerd", OFTInteger);
-        oField4.SetSubType(OFSTBoolean);
-        OGRFieldDefn oField5("documentdatum", OFTDate);
-        OGRFieldDefn oField6("documentnummer", OFTString);
-  
-        poFeatureDefn->AddFieldDefn(&oField0);
-        poFeatureDefn->AddFieldDefn(&oField1);
-        poFeatureDefn->AddFieldDefn(&oField2);
-        poFeatureDefn->AddFieldDefn(&oField3);
-        poFeatureDefn->AddFieldDefn(&oField4);
-        poFeatureDefn->AddFieldDefn(&oField5);
-        poFeatureDefn->AddFieldDefn(&oField6);
- 
+        AddIdentifierFieldDefn();
+        AddDocumentFieldDefn();
+        AddOccurrenceFieldDefn();
+
         poFeatureDefn->SetName("Ligplaats");
         SetDescription(poFeatureDefn->GetName());
     }
-
+    else if( EQUAL("sta", pszDataset) )
     {
-        OGRFieldDefn oField0("voorkomenidentificatie", OFTInteger);
-        OGRFieldDefn oField1("beginGeldigheid", OFTDate);
-        OGRFieldDefn oField2("eindGeldigheid", OFTDate);
-        OGRFieldDefn oField3("tijdstipRegistratie", OFTDateTime);
-        OGRFieldDefn oField4("eindRegistratie", OFTDateTime);
-        OGRFieldDefn oField5("tijdstipInactief", OFTDateTime);
-        OGRFieldDefn oField6("tijdstipRegistratieLV", OFTDateTime);
-        OGRFieldDefn oField7("tijdstipEindRegistratieLV", OFTDateTime);
-        OGRFieldDefn oField8("tijdstipInactiefLV", OFTDateTime);
-        OGRFieldDefn oField9("tijdstipNietBagLV", OFTDateTime);
+        AddIdentifierFieldDefn();
+        AddDocumentFieldDefn();
+        AddOccurrenceFieldDefn();
+
+        poFeatureDefn->SetName("Standplaats");
+        SetDescription(poFeatureDefn->GetName());
+    }
+    else if( EQUAL("opr", pszDataset) )
+    {
+        OGRFieldDefn oField0("naam", OFTString);
+        OGRFieldDefn oField1("type", OFTString);
 
         poFeatureDefn->AddFieldDefn(&oField0);
         poFeatureDefn->AddFieldDefn(&oField1);
-        poFeatureDefn->AddFieldDefn(&oField2);
-        poFeatureDefn->AddFieldDefn(&oField3);
-        poFeatureDefn->AddFieldDefn(&oField4);
-        poFeatureDefn->AddFieldDefn(&oField5);
-        poFeatureDefn->AddFieldDefn(&oField6);
-        poFeatureDefn->AddFieldDefn(&oField7);
-        poFeatureDefn->AddFieldDefn(&oField8);
-        poFeatureDefn->AddFieldDefn(&oField9);
+ 
+        AddIdentifierFieldDefn();
+        AddDocumentFieldDefn();
+        AddOccurrenceFieldDefn();
+
+        poFeatureDefn->SetName("OpenbareRuimte");
+        SetDescription(poFeatureDefn->GetName());
+    }
+    else if( EQUAL("vbo", pszDataset) )
+    {
+        OGRFieldDefn oField0("gebruiksdoel", OFTString);
+        OGRFieldDefn oField1("oppervlakte", OFTInteger);
+
+        poFeatureDefn->AddFieldDefn(&oField0);
+        poFeatureDefn->AddFieldDefn(&oField1);
+ 
+        AddIdentifierFieldDefn();
+        AddDocumentFieldDefn();
+        AddOccurrenceFieldDefn();
+
+        poFeatureDefn->SetName("Verblijfsobject");
+        SetDescription(poFeatureDefn->GetName());
+    }
+    else if( EQUAL("wpl", pszDataset) )
+    {
+        OGRFieldDefn oField0("naam", OFTInteger);
+  
+        poFeatureDefn->AddFieldDefn(&oField0);
+ 
+        AddIdentifierFieldDefn();
+        AddDocumentFieldDefn();
+        AddOccurrenceFieldDefn();
+
+        poFeatureDefn->SetName("Woonplaats");
+        SetDescription(poFeatureDefn->GetName());
     }
 }
 
@@ -562,7 +621,7 @@ OGRFeature *OGRLVBAGLayer::GetNextRawFeature()
 
 int OGRLVBAGLayer::TestCapability( const char * pszCap )
 {
-    if (EQUAL(pszCap, OLCStringsAsUTF8))
+    if( EQUAL(pszCap, OLCStringsAsUTF8) )
         return TRUE;
     
     return FALSE;
