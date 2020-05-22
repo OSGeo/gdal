@@ -81,14 +81,14 @@ class FileProp
     CPLString       ETag{};
 };
 
-typedef struct
+struct CachedDirList
 {
     bool            bGotFileList = false;
     unsigned int    nGenerationAuthParameters = 0;
     CPLStringList   oFileList{}; /* only file name without path */
-} CachedDirList;
+};
 
-typedef struct
+struct WriteFuncStruct
 {
     char*           pBuffer = nullptr;
     size_t          nSize = 0;
@@ -116,7 +116,7 @@ typedef struct
     // CURLOPT_SUPPRESS_CONNECT_HEADERS fixes this
     bool            bIsProxyConnectHeader = false;
 #endif
-} WriteFuncStruct;
+};
 
 /************************************************************************/
 /*                     VSICurlFilesystemHandler                         */

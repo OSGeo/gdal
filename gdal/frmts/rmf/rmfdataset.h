@@ -139,7 +139,7 @@ typedef struct
 /*                            RMFCompressionJob                         */
 /************************************************************************/
 
-typedef struct
+struct RMFCompressionJob
 {
     RMFDataset* poDS = nullptr;
     CPLErr eResult = CE_None;
@@ -151,7 +151,7 @@ typedef struct
     size_t nCompressedBytes = 0;
     GUInt32 nXSize = 0;
     GUInt32 nYSize = 0;
-} RMFCompressionJob;
+};
 
 /************************************************************************/
 /*                            RMFCompressData                           */
@@ -177,11 +177,11 @@ struct RMFCompressData
 /*                            RMFTileData                               */
 /************************************************************************/
 
-typedef struct
+struct RMFTileData
 {
     std::vector<GByte>  oData;
     int                 nBandsWritten = 0;
-} RMFTileData;
+};
 
 /************************************************************************/
 /*                              RMFDataset                              */
