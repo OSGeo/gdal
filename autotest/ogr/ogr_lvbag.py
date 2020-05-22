@@ -262,6 +262,20 @@ def test_ogr_lvbag_read_zip_2():
     assert lyr.GetName() == 'Pand', 'bad layer name'
     assert lyr.GetFeatureCount() == 10
 
+def test_ogr_lvbag_read_zip_3():
+
+    ds = ogr.Open('/vsizip/./data/lvbag/archive_mixed.zip')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 2, 'bad layer count'
+    
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == 'Standplaats', 'bad layer name'
+    assert lyr.GetFeatureCount() == 5
+
+    lyr = ds.GetLayer(1)
+    assert lyr.GetName() == 'Pand', 'bad layer name'
+    assert lyr.GetFeatureCount() == 9
+
 ###############################################################################
 # Run test_ogrsf
 
