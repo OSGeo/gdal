@@ -204,6 +204,8 @@ public:
     virtual int EvaluateRange(int nRow1, int nCol1, int nRow2, int nCol2,
                               std::vector<ods_formula_node>& aoOutValues) = 0;
     virtual ~IODSCellEvaluator() {}
+
+    int m_nDepth = 0;
 };
 
 ods_formula_node* ods_formula_compile( const char *expr );
