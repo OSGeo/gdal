@@ -44,7 +44,7 @@
 #include "ogr_core.h"
 #include "ogr_feature.h"
 #include "ogr_spatialref.h"
-#include "ogrlayerpool.h"
+#include "ogrlayerpool.h" 
 #include "ogrunionlayer.h"
 #include "ogrwarpedlayer.h"
 #include "ogrsf_frmts.h"

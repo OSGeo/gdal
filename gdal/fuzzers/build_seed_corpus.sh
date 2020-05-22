@@ -517,6 +517,12 @@ rm -f $OUT/fgb_fuzzer_seed_corpus.zip
 zip -r $OUT/fgb_fuzzer_seed_corpus.zip ./*.fgb >/dev/null
 cd $OLDPWD
 
+echo "Building lvbag_fuzzer_seed_corpus.zip"
+cd $(dirname $0)/../../autotest/ogr/data/lvbag
+rm -f $OUT/lvbag_fuzzer_seed_corpus.zip
+zip -r $OUT/lvbag_fuzzer_seed_corpus.zip ./*.xml >/dev/null
+cd $OLDPWD
+
 
 echo "Copying data to $OUT"
 cp $(dirname $0)/../data/* $OUT

@@ -54,6 +54,9 @@ void OGRRegisterAllInternal()
 #ifdef NTF_ENABLED
     RegisterOGRNTF();
 #endif
+#ifdef LVBAG_ENABLED
+    RegisterOGRLVBAG();
+#endif
 #ifdef SDTS_ENABLED
     RegisterOGRSDTS();
 #endif
