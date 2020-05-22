@@ -242,6 +242,25 @@ def test_ogr_lvbag_dataset_wpl():
         feat.DumpReadable()
         pytest.fail()
 
+def test_ogr_lvbag_read_zip_1():
+
+    ds = ogr.Open('/vsizip/./data/lvbag/archive_pnd.zip/0453PND01052020_000001.xml')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+    
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == 'Pand', 'bad layer name'
+    assert lyr.GetFeatureCount() == 4
+
+def test_ogr_lvbag_read_zip_2():
+
+    ds = ogr.Open('/vsizip/./data/lvbag/archive_pnd.zip')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+    
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == 'Pand', 'bad layer name'
+    assert lyr.GetFeatureCount() == 10
 
 ###############################################################################
 # Run test_ogrsf

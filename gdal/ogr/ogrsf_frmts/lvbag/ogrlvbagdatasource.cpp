@@ -66,7 +66,8 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
         std::vector<int> paVector = {};
         for( size_t j = 0; j < papoLayers.size(); ++j )
         {
-            if( std::find(paGroup.cbegin(), paGroup.cend(), j) != paGroup.end() )
+            if( std::find(paGroup.cbegin(), paGroup.cend(), static_cast<int>(j))
+                != paGroup.end() )
                 continue;
 
             if( j > i
