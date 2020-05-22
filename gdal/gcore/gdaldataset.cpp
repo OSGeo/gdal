@@ -6264,6 +6264,11 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
             (poSelectParseOptions &&
             poSelectParseOptions->bAddSecondaryTablesGeometryFields) )
             nFieldCount += poSrcLayer->GetLayerDefn()->GetGeomFieldCount();
+
+        const char* pszFID = poSrcLayer->GetFIDColumn();
+        if (pszFID && !EQUAL(pszFID, "") && !EQUAL(pszFID, "FID") &&
+            poSrcLayer->GetLayerDefn()->GetFieldIndex(pszFID) < 0)
+            nFieldCount++;
     }
 
 /* -------------------------------------------------------------------- */
@@ -6275,13 +6280,13 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
 
     psParseInfo->sFieldList.count = 0;
     psParseInfo->sFieldList.names = static_cast<char **>(
-        CPLMalloc(sizeof(char *) * (nFieldCount + SPECIAL_FIELD_COUNT + 1)));
+        CPLMalloc(sizeof(char *) * (nFieldCount + SPECIAL_FIELD_COUNT)));
     psParseInfo->sFieldList.types = static_cast<swq_field_type *>(CPLMalloc(
-        sizeof(swq_field_type) * (nFieldCount + SPECIAL_FIELD_COUNT + 1)));
+        sizeof(swq_field_type) * (nFieldCount + SPECIAL_FIELD_COUNT)));
     psParseInfo->sFieldList.table_ids = static_cast<int *>(
-        CPLMalloc(sizeof(int) * (nFieldCount + SPECIAL_FIELD_COUNT + 1)));
+        CPLMalloc(sizeof(int) * (nFieldCount + SPECIAL_FIELD_COUNT)));
     psParseInfo->sFieldList.ids = static_cast<int *>(
-        CPLMalloc(sizeof(int) * (nFieldCount + SPECIAL_FIELD_COUNT + 1)));
+        CPLMalloc(sizeof(int) * (nFieldCount + SPECIAL_FIELD_COUNT)));
 
     bool bIsFID64 = false;
     for( int iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
