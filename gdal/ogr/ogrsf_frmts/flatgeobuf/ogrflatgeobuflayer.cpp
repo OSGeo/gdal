@@ -39,6 +39,7 @@
 #include "geometrywriter.h"
 
 #include <algorithm>
+#include <stdexcept>
 
 using namespace flatbuffers;
 using namespace FlatGeobuf;
