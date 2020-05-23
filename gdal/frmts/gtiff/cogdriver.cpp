@@ -135,6 +135,18 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
             return false;
         }
         osTargetSRS = poTM->crs();
+
+        // "Normalize" SRS as AUTH:CODE
+        OGRSpatialReference oTargetSRS;
+        oTargetSRS.SetFromUserInput(osTargetSRS);
+        const char* pszAuthCode = oTargetSRS.GetAuthorityCode(nullptr);
+        const char* pszAuthName = oTargetSRS.GetAuthorityName(nullptr);
+        if( pszAuthName && pszAuthCode )
+        {
+            osTargetSRS = pszAuthName;
+            osTargetSRS += ':';
+            osTargetSRS += pszAuthCode;
+        }
     }
 
     CPLStringList aosTO;
@@ -436,32 +448,19 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
                                 const char* pszDstFilename,
                                 GDALDataset *poSrcDS,
                                 const char * const* papszOptions,
+                                const CPLString& osResampling,
+                                const CPLString& osTargetSRS,
+                                const int nXSize,
+                                const int nYSize,
+                                const double dfMinX,
+                                const double dfMinY,
+                                const double dfMaxX,
+                                const double dfMaxY,
                                 GDALProgressFunc pfnProgress,
                                 void * pProgressData,
                                 double& dfCurPixels,
-                                double& dfTotalPixelsToProcess,
-                                std::unique_ptr<gdal::TileMatrixSet>& poTM,
-                                int& nZoomLevel,
-                                int& nAlignedLevels)
+                                double& dfTotalPixelsToProcess)
 {
-    CPLString osResampling;
-    CPLString osTargetSRS;
-    int nXSize = 0;
-    int nYSize = 0;
-    double dfMinX = 0;
-    double dfMinY = 0;
-    double dfMaxX = 0;
-    double dfMaxY = 0;
-    if( !COGGetWarpingCharacteristics(poSrcDS, papszOptions,
-                                      osResampling,
-                                      osTargetSRS,
-                                      nXSize, nYSize,
-                                      dfMinX, dfMinY, dfMaxX, dfMaxY,
-                                      poTM, nZoomLevel, nAlignedLevels) )
-    {
-        return nullptr;
-    }
-
     char** papszArg = nullptr;
     // We could have done a warped VRT, but overview building on it might be
     // slow, so materialize as GTiff
@@ -624,14 +623,82 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     int nAlignedLevels = 0;
     if( COGHasWarpingOptions(papszOptions) )
     {
-        m_poReprojectedDS =
-            CreateReprojectedDS(pszFilename, poCurDS,
-                                papszOptions, pfnProgress, pProgressData,
-                                dfCurPixels, dfTotalPixelsToProcess,
-                                poTM, nZoomLevel, nAlignedLevels);
-        if( !m_poReprojectedDS )
+        CPLString osTargetResampling;
+        CPLString osTargetSRS;
+        int nTargetXSize = 0;
+        int nTargetYSize = 0;
+        double dfTargetMinX = 0;
+        double dfTargetMinY = 0;
+        double dfTargetMaxX = 0;
+        double dfTargetMaxY = 0;
+        if( !COGGetWarpingCharacteristics(poCurDS, papszOptions,
+                                          osTargetResampling,
+                                          osTargetSRS,
+                                          nTargetXSize, nTargetYSize,
+                                          dfTargetMinX, dfTargetMinY,
+                                          dfTargetMaxX, dfTargetMaxY,
+                                          poTM, nZoomLevel, nAlignedLevels) )
+        {
             return nullptr;
-        poCurDS = m_poReprojectedDS.get();
+        }
+
+        // Collect information on source dataset to see if it already
+        // matches the warping specifications
+        CPLString osSrcSRS;
+        const auto poSrcSRS = poCurDS->GetSpatialRef();
+        if( poSrcSRS )
+        {
+            const char* pszAuthName = poSrcSRS->GetAuthorityName(nullptr);
+            const char* pszAuthCode = poSrcSRS->GetAuthorityCode(nullptr);
+            if( pszAuthName && pszAuthCode )
+            {
+                osSrcSRS = pszAuthName;
+                osSrcSRS += ':';
+                osSrcSRS += pszAuthCode;
+            }
+        }
+        double dfSrcMinX = 0;
+        double dfSrcMinY = 0;
+        double dfSrcMaxX = 0;
+        double dfSrcMaxY = 0;
+        double adfSrcGT[6];
+        const int nSrcXSize = poCurDS->GetRasterXSize();
+        const int nSrcYSize = poCurDS->GetRasterYSize();
+        if( poCurDS->GetGeoTransform(adfSrcGT) == CE_None )
+        {
+            dfSrcMinX = adfSrcGT[0];
+            dfSrcMaxY = adfSrcGT[3];
+            dfSrcMaxX = adfSrcGT[0] + nSrcXSize * adfSrcGT[1];
+            dfSrcMinY = adfSrcGT[3] + nSrcYSize * adfSrcGT[5];
+        }
+
+        if( nTargetXSize == nSrcXSize &&
+            nTargetYSize == nSrcYSize &&
+            osTargetSRS == osSrcSRS &&
+            fabs(dfSrcMinX - dfTargetMinX) < 1e-10 * fabs(dfSrcMinX) &&
+            fabs(dfSrcMinY - dfTargetMinY) < 1e-10 * fabs(dfSrcMinY) &&
+            fabs(dfSrcMaxX - dfTargetMaxX) < 1e-10 * fabs(dfSrcMaxX) &&
+            fabs(dfSrcMaxY - dfTargetMaxY) < 1e-10 * fabs(dfSrcMaxY) )
+        {
+            CPLDebug("COG", "Skipping reprojection step: "
+                     "source dataset matches reprojection specifications");
+        }
+        else
+        {
+            m_poReprojectedDS =
+                CreateReprojectedDS(pszFilename, poCurDS,
+                                    papszOptions,
+                                    osTargetResampling,
+                                    osTargetSRS,
+                                    nTargetXSize, nTargetYSize,
+                                    dfTargetMinX, dfTargetMinY,
+                                    dfTargetMaxX, dfTargetMaxY,
+                                    pfnProgress, pProgressData,
+                                    dfCurPixels, dfTotalPixelsToProcess);
+            if( !m_poReprojectedDS )
+                return nullptr;
+            poCurDS = m_poReprojectedDS.get();
+        }
     }
 
     CPLString osCompress = CSLFetchNameValueDef(papszOptions, "COMPRESS", "NONE");

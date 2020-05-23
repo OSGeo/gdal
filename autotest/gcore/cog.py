@@ -397,8 +397,41 @@ def test_cog_byte_to_web_mercator():
     ds = None
     _check_cog(filename)
 
+    # Use our generated COG as the input of the same COG generation: reprojection
+    # should be skipped
+    filename2 = directory + '/cog2.tif'
+    src_ds = gdal.Open(filename)
+
+    class my_error_handler(object):
+        def __init__(self):
+            self.debug_msg_list = []
+            self.other_msg_list = []
+
+        def handler(self, eErrClass, err_no, msg):
+            if eErrClass == gdal.CE_Debug:
+                self.debug_msg_list.append(msg)
+            else:
+                self.other_msg_list.append(msg)
+
+    handler = my_error_handler();
+    try:
+        gdal.PushErrorHandler(handler.handler)
+        gdal.SetCurrentErrorHandlerCatchDebug(True)
+        with gdaltest.config_option('CPL_DEBUG', 'COG'):
+            ds = gdal.GetDriverByName('COG').CreateCopy(filename2, src_ds,
+                options = ['TILING_SCHEME=GoogleMapsCompatible', 'ALIGNED_LEVELS=3'])
+    finally:
+        gdal.PopErrorHandler()
+
+    assert ds
+    assert 'COG: Skipping reprojection step: source dataset matches reprojection specifications' in handler.debug_msg_list
+    assert handler.other_msg_list == []
     src_ds = None
+    ds = None
+
+    # Cleanup
     gdal.GetDriverByName('GTiff').Delete(filename)
+    gdal.GetDriverByName('GTiff').Delete(filename2)
     gdal.Unlink(directory)
 
 
