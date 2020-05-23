@@ -532,7 +532,7 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
                 pfnProgress, pProgressData );
     dfCurPixels = dfNextPixels;
 
-    CPLDebug("COG", "Reprojecting source dataset");
+    CPLDebug("COG", "Reprojecting source dataset: start");
     GDALWarpAppOptionsSetProgress(psOptions, GDALScaledProgress, pScaledProgress );
     CPLString osTmpFile(GetTmpFilename(pszDstFilename, "warped.tif.tmp"));
     auto hSrcDS = GDALDataset::ToHandle(poSrcDS);
@@ -540,6 +540,7 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
                           1, &hSrcDS,
                           psOptions, nullptr);
     GDALWarpAppOptionsFree(psOptions);
+    CPLDebug("COG", "Reprojecting source dataset: end");
 
     GDALDestroyScaledProgress(pScaledProgress);
 
@@ -747,7 +748,7 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
 
     if( bGenerateMskOvr )
     {
-        CPLDebug("COG", "Generating overviews of the mask");
+        CPLDebug("COG", "Generating overviews of the mask: start");
         m_osTmpMskOverviewFilename = GetTmpFilename(pszFilename, "msk.ovr.tmp");
         GDALRasterBand* poSrcMask = poFirstBand->GetMaskBand();
         const char* pszResampling = CSLFetchNameValueDef(papszOptions,
@@ -772,6 +773,7 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
             pszResampling,
             aosOverviewOptions.List(),
             GDALScaledProgress, pScaledProgress );
+        CPLDebug("COG", "Generating overviews of the mask: end");
 
         GDALDestroyScaledProgress(pScaledProgress);
         if( eErr != CE_None )
@@ -782,7 +784,7 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
 
     if( bGenerateOvr )
     {
-        CPLDebug("COG", "Generating overviews of the imagery");
+        CPLDebug("COG", "Generating overviews of the imagery: start");
         m_osTmpOverviewFilename = GetTmpFilename(pszFilename, "ovr.tmp");
         std::vector<GDALRasterBand*> apoSrcBands;
         for( int i = 0; i < nBands; i++ )
@@ -814,6 +816,7 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
             pszResampling,
             aosOverviewOptions.List(),
             GDALScaledProgress, pScaledProgress );
+        CPLDebug("COG", "Generating overviews of the imagery: end");
 
         GDALDestroyScaledProgress(pScaledProgress);
         if( eErr != CE_None )
@@ -923,13 +926,17 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     CPLConfigOptionSetter oSetterInternalMask(
         "GDAL_TIFF_INTERNAL_MASK", "YES", false);
 
-    CPLDebug("COG", "Generating final product");
+    CPLDebug("COG", "Generating final product: start");
     auto poRet = poGTiffDrv->CreateCopy(pszFilename, poCurDS, false,
                                         aosOptions.List(),
                                         GDALScaledProgress, pScaledProgress);
 
     GDALDestroyScaledProgress(pScaledProgress);
 
+    if( poRet )
+        poRet->FlushCache();
+
+    CPLDebug("COG", "Generating final product: end");
     return poRet;
 }
 
