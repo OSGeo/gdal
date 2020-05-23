@@ -213,7 +213,7 @@ resampling, and rescaling pixels in the process.
 
 .. option:: -mo META-TAG=VALUE
 
-    Passes a metadata key and value to set on the output dataset if possible.
+    Passes a metadata key and value to set on the output dataset if possible. Do not use -mo when using WMTS.
 
 .. include:: options/co.rst
 
