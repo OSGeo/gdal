@@ -3958,56 +3958,6 @@ typedef char retStringAndCPLFree;
   }
 
 
-extern "C" int CPL_DLL GDALIsInGlobalDestructor();
-
-void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* pszErrorMsg)
-{
-    if( GDALIsInGlobalDestructor() )
-    {
-        // this is typically during Python interpreter shutdown, and ends up in a crash
-        // because error handling tries to do thread initialization.
-        return;
-    }
-
-    void* user_data = CPLGetErrorHandlerUserData();
-    PyObject *psArgs;
-
-    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
-
-    psArgs = Py_BuildValue("(iis)", eErrClass, err_no, pszErrorMsg );
-    PyEval_CallObject( (PyObject*)user_data, psArgs);
-    Py_XDECREF(psArgs);
-
-    SWIG_PYTHON_THREAD_END_BLOCK;
-}
-
-
-  CPLErr PushErrorHandler( CPLErrorHandler pfnErrorHandler = NULL, void* user_data = NULL )
-  {
-    if( pfnErrorHandler == NULL )
-        CPLPushErrorHandler(CPLQuietErrorHandler);
-    else
-        CPLPushErrorHandlerEx(pfnErrorHandler, user_data);
-    return CE_None;
-  }
-
-
-  void PopErrorHandler()
-  {
-     void* user_data = CPLGetErrorHandlerUserData();
-     if( user_data != NULL )
-     {
-         Py_XDECREF((PyObject*)user_data);
-     }
-     CPLPopErrorHandler();
-  }
-
-
-  void Error( CPLErr msg_class = CE_Failure, int err_code = 0, const char* msg = "error" ) {
-    CPLError( msg_class, err_code, "%s", msg );
-  }
-
-
 SWIGINTERN int
 SWIG_AsVal_long (PyObject *obj, long* val)
 {
@@ -4065,6 +4015,56 @@ SWIG_AsVal_int (PyObject * obj, int *val)
   }  
   return res;
 }
+
+
+extern "C" int CPL_DLL GDALIsInGlobalDestructor();
+
+void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* pszErrorMsg)
+{
+    if( GDALIsInGlobalDestructor() )
+    {
+        // this is typically during Python interpreter shutdown, and ends up in a crash
+        // because error handling tries to do thread initialization.
+        return;
+    }
+
+    void* user_data = CPLGetErrorHandlerUserData();
+    PyObject *psArgs;
+
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
+    psArgs = Py_BuildValue("(iis)", eErrClass, err_no, pszErrorMsg );
+    PyEval_CallObject( (PyObject*)user_data, psArgs);
+    Py_XDECREF(psArgs);
+
+    SWIG_PYTHON_THREAD_END_BLOCK;
+}
+
+
+  CPLErr PushErrorHandler( CPLErrorHandler pfnErrorHandler = NULL, void* user_data = NULL )
+  {
+    if( pfnErrorHandler == NULL )
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+    else
+        CPLPushErrorHandlerEx(pfnErrorHandler, user_data);
+    return CE_None;
+  }
+
+
+  void PopErrorHandler()
+  {
+     void* user_data = CPLGetErrorHandlerUserData();
+     if( user_data != NULL )
+     {
+         Py_XDECREF((PyObject*)user_data);
+     }
+     CPLPopErrorHandler();
+  }
+
+
+  void Error( CPLErr msg_class = CE_Failure, int err_code = 0, const char* msg = "error" ) {
+    CPLError( msg_class, err_code, "%s", msg );
+  }
 
 
 retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
@@ -8603,6 +8603,45 @@ SWIGINTERN PyObject *_wrap_SetErrorHandler(PyObject *SWIGUNUSEDPARM(self), PyObj
 #endif
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SetCurrentErrorHandlerCatchDebug(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  int arg1 ;
+  int val1 ;
+  int ecode1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:SetCurrentErrorHandlerCatchDebug",&obj0)) SWIG_fail;
+  ecode1 = SWIG_AsVal_int(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "SetCurrentErrorHandlerCatchDebug" "', argument " "1"" of type '" "int""'");
+  } 
+  arg1 = static_cast< int >(val1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      CPLSetCurrentErrorHandlerCatchDebug(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
@@ -41472,6 +41511,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"VSIGetMemFileBuffer_unsafe", _wrap_VSIGetMemFileBuffer_unsafe, METH_VARARGS, (char *)"VSIGetMemFileBuffer_unsafe(char const * utf8_path)"},
 	 { (char *)"Debug", _wrap_Debug, METH_VARARGS, (char *)"Debug(char const * msg_class, char const * message)"},
 	 { (char *)"SetErrorHandler", _wrap_SetErrorHandler, METH_VARARGS, (char *)"SetErrorHandler(CPLErrorHandler pfnErrorHandler=0) -> CPLErr"},
+	 { (char *)"SetCurrentErrorHandlerCatchDebug", _wrap_SetCurrentErrorHandlerCatchDebug, METH_VARARGS, (char *)"SetCurrentErrorHandlerCatchDebug(int bCatchDebug)"},
 	 { (char *)"PushErrorHandler", _wrap_PushErrorHandler, METH_VARARGS, (char *)"PushErrorHandler(CPLErrorHandler pfnErrorHandler=0) -> CPLErr"},
 	 { (char *)"PopErrorHandler", _wrap_PopErrorHandler, METH_VARARGS, (char *)"PopErrorHandler()"},
 	 { (char *)"Error", _wrap_Error, METH_VARARGS, (char *)"Error(CPLErr msg_class, int err_code=0, char const * msg)"},

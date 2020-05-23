@@ -1473,6 +1473,10 @@ def SetErrorHandler(*args):
     """SetErrorHandler(CPLErrorHandler pfnErrorHandler=0) -> CPLErr"""
     return _gdal.SetErrorHandler(*args)
 
+def SetCurrentErrorHandlerCatchDebug(*args):
+    """SetCurrentErrorHandlerCatchDebug(int bCatchDebug)"""
+    return _gdal.SetCurrentErrorHandlerCatchDebug(*args)
+
 def PushErrorHandler(*args):
     """PushErrorHandler(CPLErrorHandler pfnErrorHandler=0) -> CPLErr"""
     return _gdal.PushErrorHandler(*args)
