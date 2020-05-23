@@ -327,7 +327,7 @@ class OGROSMDataSource final: public OGRDataSource
     int                 nMinSizeKeysInSetClosedWaysArePolygons;
     int                 nMaxSizeKeysInSetClosedWaysArePolygons;
 
-    LonLat             *pasLonLatCache;
+    std::vector<LonLat> m_asLonLatCache{};
 
     bool                bReportAllNodes;
     bool                bReportAllWays;
@@ -352,7 +352,7 @@ class OGROSMDataSource final: public OGRDataSource
 
     bool                bAttributeNameLaundering;
 
-    GByte              *pabyWayBuffer;
+    std::vector<GByte>  m_abyWayBuffer{};
 
     int                 nWaysProcessed;
     int                 nRelationsProcessed;
@@ -408,12 +408,13 @@ class OGROSMDataSource final: public OGRDataSource
     static const GIntBig FILESIZE_INVALID = -1;
     GIntBig             m_nFileSize;
 
-    int                 CompressWay (bool bIsArea, unsigned int nTags, IndexedKVP* pasTags,
+    void                CompressWay (bool bIsArea, unsigned int nTags, IndexedKVP* pasTags,
                                      int nPoints, LonLat* pasLonLatPairs,
                                      OSMInfo* psInfo,
-                                     GByte* pabyCompressedWay);
-    int                 UncompressWay( int nBytes, GByte* pabyCompressedWay,
-                                       bool *pbIsArea, LonLat* pasCoords,
+                                     std::vector<GByte> &abyCompressedWay);
+    void                UncompressWay( int nBytes, const GByte* pabyCompressedWay,
+                                       bool *pbIsArea,
+                                       std::vector<LonLat>& asCoords,
                                        unsigned int* pnTags, OSMTag* pasTags,
                                        OSMInfo* psInfo );
 
