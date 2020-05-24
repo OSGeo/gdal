@@ -3468,6 +3468,14 @@ bool OGROSMDataSource::ParseConf( char** papszOpenOptionsIn )
             CSLDestroy(papszTokens2);
         }
 
+        else if(STARTS_WITH(pszLine, "report_all_tags="))
+        {
+            if( strcmp(pszLine + strlen("report_all_tags="), "yes") == 0 )
+            {
+                std::fill( begin(m_ignoredKeys), end(m_ignoredKeys), "" );
+            }
+        }
+
         else if(STARTS_WITH(pszLine, "report_all_nodes="))
         {
             if( strcmp(pszLine + strlen("report_all_nodes="), "no") == 0 )
