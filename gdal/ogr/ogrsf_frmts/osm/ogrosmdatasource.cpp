@@ -247,6 +247,7 @@ OGROSMDataSource::OGROSMDataSource() :
     nNodesInTransaction(0),
     nMinSizeKeysInSetClosedWaysArePolygons(0),
     nMaxSizeKeysInSetClosedWaysArePolygons(0),
+    m_ignoredKeys({{"area","created_by","converted_by","note","todo","fixme","FIXME"}}),
     bReportAllNodes(false),
     bReportAllWays(false),
     bFeatureAdded(false),
@@ -2053,20 +2054,11 @@ void OGROSMDataSource::NotifyWay( OSMWay* psWay )
             const char* pszK = psWay->pasTags[iTag].pszK;
             const char* pszV = psWay->pasTags[iTag].pszV;
 
-            if( strcmp(pszK, "area") == 0 )
+            if( std::any_of(begin(m_ignoredKeys), end(m_ignoredKeys),
+                    [pszK](const char* pszIgnoredKey) { return strcmp(pszK, pszIgnoredKey) == 0; }) )
+            {
                 continue;
-            if( strcmp(pszK, "created_by") == 0 )
-                continue;
-            if( strcmp(pszK, "converted_by") == 0 )
-                continue;
-            if( strcmp(pszK, "note") == 0 )
-                continue;
-            if( strcmp(pszK, "todo") == 0 )
-                continue;
-            if( strcmp(pszK, "fixme") == 0 )
-                continue;
-            if( strcmp(pszK, "FIXME") == 0 )
-                continue;
+            }
 
             std::map<const char*, KeyDesc*, ConstCharComp>::iterator oIterK =
                 aoMapIndexedKeys.find(pszK);

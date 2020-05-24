@@ -36,6 +36,7 @@
 #include "ogrsf_frmts.h"
 #include "cpl_string.h"
 
+#include <array>
 #include <set>
 #include <unordered_set>
 #include <map>
@@ -328,6 +329,8 @@ class OGROSMDataSource final: public OGRDataSource
     int                 nMaxSizeKeysInSetClosedWaysArePolygons;
 
     std::vector<LonLat> m_asLonLatCache{};
+
+    std::array<const char*, 7>  m_ignoredKeys;
 
     bool                bReportAllNodes;
     bool                bReportAllWays;
