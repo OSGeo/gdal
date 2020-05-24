@@ -891,11 +891,20 @@ def test_cog_zoom_level_strategy(zoom_level_strategy,expected_gt):
     ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
         options = ['TILING_SCHEME=GoogleMapsCompatible',
                    'ZOOM_LEVEL_STRATEGY=' + zoom_level_strategy])
-
-    ds = None
-    ds = gdal.Open(filename)
     gt = ds.GetGeoTransform()
     assert gt == pytest.approx(expected_gt, rel=1e-10)
+
+    # Test that the zoom level strategy applied on input data already on a
+    # zoom level doesn't lead to selecting another zoom level
+    filename2 = '/vsimem/test_cog_zoom_level_strategy_2.tif'
+    src_ds = gdal.Open('data/byte.tif')
+    ds2 = gdal.GetDriverByName('COG').CreateCopy(filename2, ds,
+        options = ['TILING_SCHEME=GoogleMapsCompatible',
+                    'ZOOM_LEVEL_STRATEGY=' + zoom_level_strategy])
+    gt = ds2.GetGeoTransform()
+    assert gt == pytest.approx(expected_gt, rel=1e-10)
+    ds2 = None
+    gdal.Unlink(filename2)
 
     ds = None
     gdal.Unlink(filename)

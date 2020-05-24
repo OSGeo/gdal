@@ -267,7 +267,7 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
         for( ; nZoomLevel < static_cast<int>(tmList.size()); nZoomLevel++ )
         {
             dfRes = tmList[nZoomLevel].mResX * tmList[0].mTileWidth / nBlockSize;
-            if( dfComputedRes > dfRes )
+            if( dfComputedRes > dfRes || fabs( dfComputedRes - dfRes ) / dfRes <= 1e-8 )
                 break;
             dfPrevRes = dfRes;
         }
@@ -278,28 +278,25 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
             return false;
         }
 
-        if( nZoomLevel > 0 )
+        if( nZoomLevel > 0 && fabs( dfComputedRes - dfRes ) / dfRes > 1e-8 )
         {
             const char* pszZoomLevelStrategy = CSLFetchNameValueDef(papszOptions,
                                                                     "ZOOM_LEVEL_STRATEGY",
                                                                     "AUTO");
-            if( fabs( dfComputedRes - dfRes ) / dfRes > 1e-8 )
+            if( EQUAL(pszZoomLevelStrategy, "LOWER") )
             {
-                if( EQUAL(pszZoomLevelStrategy, "LOWER") )
-                {
-                    nZoomLevel --;
-                }
-                else if( EQUAL(pszZoomLevelStrategy, "UPPER") )
-                {
-                    /* do nothing */
-                }
-                else
-                {
-                    if( dfPrevRes / dfComputedRes < dfComputedRes / dfRes )
-                        nZoomLevel --;
-                }
-                dfRes = tmList[nZoomLevel].mResX * tmList[0].mTileWidth / nBlockSize;
+                nZoomLevel --;
             }
+            else if( EQUAL(pszZoomLevelStrategy, "UPPER") )
+            {
+                /* do nothing */
+            }
+            else
+            {
+                if( dfPrevRes / dfComputedRes < dfComputedRes / dfRes )
+                    nZoomLevel --;
+            }
+            dfRes = tmList[nZoomLevel].mResX * tmList[0].mTileWidth / nBlockSize;
         }
 
         CPLDebug("COG", "Using ZOOM_LEVEL %d", nZoomLevel);
