@@ -247,6 +247,7 @@ OGROSMDataSource::OGROSMDataSource() :
     nNodesInTransaction(0),
     nMinSizeKeysInSetClosedWaysArePolygons(0),
     nMaxSizeKeysInSetClosedWaysArePolygons(0),
+    m_ignoredKeys({{"area","created_by","converted_by","note","todo","fixme","FIXME"}}),
     bReportAllNodes(false),
     bReportAllWays(false),
     bFeatureAdded(false),
@@ -2053,20 +2054,11 @@ void OGROSMDataSource::NotifyWay( OSMWay* psWay )
             const char* pszK = psWay->pasTags[iTag].pszK;
             const char* pszV = psWay->pasTags[iTag].pszV;
 
-            if( strcmp(pszK, "area") == 0 )
+            if( std::any_of(begin(m_ignoredKeys), end(m_ignoredKeys),
+                    [pszK](const char* pszIgnoredKey) { return strcmp(pszK, pszIgnoredKey) == 0; }) )
+            {
                 continue;
-            if( strcmp(pszK, "created_by") == 0 )
-                continue;
-            if( strcmp(pszK, "converted_by") == 0 )
-                continue;
-            if( strcmp(pszK, "note") == 0 )
-                continue;
-            if( strcmp(pszK, "todo") == 0 )
-                continue;
-            if( strcmp(pszK, "fixme") == 0 )
-                continue;
-            if( strcmp(pszK, "FIXME") == 0 )
-                continue;
+            }
 
             std::map<const char*, KeyDesc*, ConstCharComp>::iterator oIterK =
                 aoMapIndexedKeys.find(pszK);
@@ -3476,6 +3468,14 @@ bool OGROSMDataSource::ParseConf( char** papszOpenOptionsIn )
             CSLDestroy(papszTokens2);
         }
 
+        else if(STARTS_WITH(pszLine, "report_all_tags="))
+        {
+            if( strcmp(pszLine + strlen("report_all_tags="), "yes") == 0 )
+            {
+                std::fill( begin(m_ignoredKeys), end(m_ignoredKeys), "" );
+            }
+        }
+
         else if(STARTS_WITH(pszLine, "report_all_nodes="))
         {
             if( strcmp(pszLine + strlen("report_all_nodes="), "no") == 0 )
@@ -3602,6 +3602,11 @@ bool OGROSMDataSource::ParseConf( char** papszOpenOptionsIn )
                 for(int i=0;papszTokens2[i] != nullptr;i++)
                 {
                     papoLayers[iCurLayer]->AddField(papszTokens2[i], OFTString);
+                    for( const char*& pszIgnoredKey : m_ignoredKeys )
+                    {
+                        if( strcmp( papszTokens2[i], pszIgnoredKey ) == 0 )
+                            pszIgnoredKey = "";
+                    }
                 }
                 CSLDestroy(papszTokens2);
             }
