@@ -4844,7 +4844,7 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
     for( ; nZoomLevel < 25; nZoomLevel++ )
     {
         dfRes = poTS->dfPixelXSizeZoomLevel0 / (1 << nZoomLevel);
-        if( dfComputedRes > dfRes )
+        if( dfComputedRes > dfRes || fabs( dfComputedRes - dfRes ) / dfRes <= 1e-8 )
             break;
         dfPrevRes = dfRes;
     }
@@ -4857,21 +4857,20 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
         return nullptr;
     }
 
-    const char* pszZoomLevelStrategy = CSLFetchNameValueDef(papszOptions,
-                                                            "ZOOM_LEVEL_STRATEGY",
-                                                            "AUTO");
-    if( fabs( dfComputedRes - dfRes ) / dfRes > 1e-8 )
+    if( nZoomLevel > 0 && fabs( dfComputedRes - dfRes ) / dfRes > 1e-8 )
     {
+        const char* pszZoomLevelStrategy = CSLFetchNameValueDef(papszOptions,
+                                                                "ZOOM_LEVEL_STRATEGY",
+                                                                "AUTO");
         if( EQUAL(pszZoomLevelStrategy, "LOWER") )
         {
-            if( nZoomLevel > 0 )
-                nZoomLevel --;
+            nZoomLevel --;
         }
         else if( EQUAL(pszZoomLevelStrategy, "UPPER") )
         {
             /* do nothing */
         }
-        else if( nZoomLevel > 0 )
+        else
         {
             if( dfPrevRes / dfComputedRes < dfComputedRes / dfRes )
                 nZoomLevel --;
