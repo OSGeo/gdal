@@ -277,14 +277,31 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
                     "Could not find an appropriate zoom level");
             return false;
         }
+
         if( nZoomLevel > 0 )
         {
-            if( dfPrevRes / dfComputedRes < dfComputedRes / dfRes )
+            const char* pszZoomLevelStrategy = CSLFetchNameValueDef(papszOptions,
+                                                                    "ZOOM_LEVEL_STRATEGY",
+                                                                    "AUTO");
+            if( fabs( dfComputedRes - dfRes ) / dfRes > 1e-8 )
             {
-                nZoomLevel --;
+                if( EQUAL(pszZoomLevelStrategy, "LOWER") )
+                {
+                    nZoomLevel --;
+                }
+                else if( EQUAL(pszZoomLevelStrategy, "UPPER") )
+                {
+                    /* do nothing */
+                }
+                else
+                {
+                    if( dfPrevRes / dfComputedRes < dfComputedRes / dfRes )
+                        nZoomLevel --;
+                }
                 dfRes = tmList[nZoomLevel].mResX * tmList[0].mTileWidth / nBlockSize;
             }
         }
+
         CPLDebug("COG", "Using ZOOM_LEVEL %d", nZoomLevel);
 
         const double dfTileExtent = dfRes * nBlockSize;
@@ -438,6 +455,7 @@ void COGRemoveWarpingOptions(CPLStringList& aosOptions)
     aosOptions.SetNameValue("EXTENT", nullptr);
     aosOptions.SetNameValue("RES", nullptr);
     aosOptions.SetNameValue("ALIGNED_LEVELS", nullptr);
+    aosOptions.SetNameValue("ZOOM_LEVEL_STRATEGY", nullptr);
 }
 
 /************************************************************************/
@@ -1143,6 +1161,13 @@ void GDALCOGDriver::InitializeCreationOptionList()
     }
 
     osOptions +=
+"  </Option>"
+"  <Option name='ZOOM_LEVEL_STRATEGY' type='string-select' "
+        "description='Strategy to determine zoom level. "
+        "Only used for TILING_SCHEME != CUSTOM' default='AUTO'>"
+"    <Value>AUTO</Value>"
+"    <Value>LOWER</Value>"
+"    <Value>UPPER</Value>"
 "  </Option>"
 "   <Option name='TARGET_SRS' type='string' "
         "description='Target SRS as EPSG:XXXX, WKT or PROJ string for reprojection'/>"

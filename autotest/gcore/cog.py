@@ -873,3 +873,29 @@ def test_cog_sparse_imagery_mask_0():
 
     ds = None
     gdal.Unlink(filename)
+
+
+
+###############################################################################
+# Test ZOOM_LEVEL_STRATEGY option
+
+@pytest.mark.parametrize('zoom_level_strategy,expected_gt',
+    [('AUTO', (-13110479.09147343, 76.43702828517416, 0.0, 4030983.1236470547, 0.0, -76.43702828517416)),
+     ('LOWER', (-13110479.09147343, 76.43702828517416, 0.0, 4030983.1236470547, 0.0, -76.43702828517416)),
+     ('UPPER', (-13100695.151852928, 38.21851414258708, 0.0, 4021199.1840265524, 0.0, -38.21851414258708))
+    ])
+def test_cog_zoom_level_strategy(zoom_level_strategy,expected_gt):
+
+    filename = '/vsimem/test_cog_zoom_level_strategy.tif'
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+        options = ['TILING_SCHEME=GoogleMapsCompatible',
+                   'ZOOM_LEVEL_STRATEGY=' + zoom_level_strategy])
+
+    ds = None
+    ds = gdal.Open(filename)
+    gt = ds.GetGeoTransform()
+    assert gt == pytest.approx(expected_gt, rel=1e-10)
+
+    ds = None
+    gdal.Unlink(filename)
