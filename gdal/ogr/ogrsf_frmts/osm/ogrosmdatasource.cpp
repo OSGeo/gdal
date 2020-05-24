@@ -3602,6 +3602,11 @@ bool OGROSMDataSource::ParseConf( char** papszOpenOptionsIn )
                 for(int i=0;papszTokens2[i] != nullptr;i++)
                 {
                     papoLayers[iCurLayer]->AddField(papszTokens2[i], OFTString);
+                    for( const char*& pszIgnoredKey : m_ignoredKeys )
+                    {
+                        if( strcmp( papszTokens2[i], pszIgnoredKey ) == 0 )
+                            pszIgnoredKey = "";
+                    }
                 }
                 CSLDestroy(papszTokens2);
             }
