@@ -185,7 +185,7 @@ Reprojection related creation options
   256 pixels) will be used, unless the user has specified a value with the
   BLOCKSIZE creation option, in which case the user specified one will be taken
   into account (that is if setting a higher value than 256, the original
-  tiling scheme is modified to take into account the size of the HiDiPi tiles).
+  tiling scheme is modified to take into account the size of the HiDPi tiles).
   In non-CUSTOM mode, TARGET_SRS, RES and EXTENT options are ignored.
   Starting with GDAL 3.2, the value of TILING_SCHEME can also be the filename
   of a JSON file according to the `OGC Two Dimensional Tile Matrix Set standard`_,
