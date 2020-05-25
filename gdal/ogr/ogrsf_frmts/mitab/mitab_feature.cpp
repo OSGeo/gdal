@@ -589,9 +589,11 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
             }
             else
             {
-                nHour = 0;
-                nMin = 0;
-                fSec = 0;
+                // Put negative values, so that WriteTimeField() forges
+                // a negative value, and ultimately write -1 in the binary field
+                nHour = -1;
+                nMin = -1;
+                fSec = -1;
             }
             nStatus = poDATFile->WriteTimeField(nHour, nMin, static_cast<int>(fSec),
                                                 OGR_GET_MS(fSec), poINDFile,
