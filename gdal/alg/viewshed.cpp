@@ -249,8 +249,8 @@ GDALDatasetH GDALViewshedGenerate(GDALRasterBandH hBand,
     /* calculate observer position */
     double dfX, dfY;
     GDALApplyGeoTransform(adfInvGeoTransform, dfObserverX, dfObserverY, &dfX, &dfY);
-    int nX = static_cast<int>(std::round(dfX));
-    int nY = static_cast<int>(std::round(dfY));
+    int nX = static_cast<int>(dfX);
+    int nY = static_cast<int>(dfY);
 
     int nXSize = GDALGetRasterBandXSize( hBand );
     int nYSize = GDALGetRasterBandYSize( hBand );
