@@ -1309,6 +1309,8 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
                                            nMaxWidth));
         if(  !poField->IsNullable() )
             osCommand += " NOT NULL";
+        if(  !poField->IsUnique() )
+            osCommand += " UNIQUE";
         if( poField->GetDefault() != nullptr && !poField->IsDefaultDriverSpecific() )
         {
             osCommand += " DEFAULT ";
@@ -3786,6 +3788,10 @@ CPLString OGRGeoPackageTableLayer::GetColumnsOfCreateTable(const std::vector<OGR
         if( !poFieldDefn->IsNullable() )
         {
             osSQL += " NOT NULL";
+        }
+        if( !poFieldDefn->IsUnique() )
+        {
+            osSQL += " UNIQUE";
         }
         const char* pszDefault = poFieldDefn->GetDefault();
         if( pszDefault != nullptr &&

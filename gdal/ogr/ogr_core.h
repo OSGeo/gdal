@@ -573,6 +573,13 @@ typedef enum
  */
 #define ALTER_DEFAULT_FLAG         0x10
 
+/** Alter field UNIQUE constraint.
+ * Used by OGR_L_AlterFieldDefn().
+ * @since GDAL 3.6
+ */
+#define ALTER_UNIQUE_FLAG         0x12
+
+
 /** Alter all parameters of field definition.
  * Used by OGR_L_AlterFieldDefn().
  */
