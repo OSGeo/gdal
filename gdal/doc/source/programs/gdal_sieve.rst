@@ -22,7 +22,7 @@ Description
 -----------
 
 :program:`gdal_sieve.py` script removes raster polygons smaller than
-a provided threshold size (in pixels) and replaces replaces them with the
+a provided threshold size (in pixels) and replaces them with the
 pixel value of the largest neighbour polygon. The result can be written
 back to the existing raster band, or copied into a new file.
 

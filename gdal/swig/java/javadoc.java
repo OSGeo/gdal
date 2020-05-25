@@ -900,7 +900,7 @@ public class gdal:public static int FillNodata(Band targetBand, Band maskBand, d
  * Removes small raster polygons.
  * <p>
  * The function removes raster polygons smaller than a provided
- * threshold size (in pixels) and replaces replaces them with the pixel value
+ * threshold size (in pixels) and replaces them with the pixel value
  * of the largest neighbour polygon.
  * <p>
  * Polygon are determined (per GDALRasterPolygonEnumerator) as regions of
