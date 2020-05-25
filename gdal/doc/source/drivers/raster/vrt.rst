@@ -879,9 +879,8 @@ Using Derived Bands (with pixel functions in Python)
 
 Starting with GDAL 2.2, in addition to pixel functions written in C/C++ as
 documented in the \ref gdal_vrttut_derived_c section, it is possible to use
-pixel functions written in Python. Both
-<a href="https://www.python.org/">CPython</a>
-and <a href="http://www.numpy.org/">NumPy</a> are requirements at run-time.
+pixel functions written in Python. Both `CPython <https://www.python.org/>`_
+and `NumPy <http://www.numpy.org/>`_ are requirements at run-time.
 
 The subelements for VRTRasterBand (whose subclass specification must be
 set to VRTDerivedRasterBand) are :
@@ -909,6 +908,14 @@ The signature of the Python pixel function must have the following arguments:
 - **buf_radius**: radius of the buffer (in pixels) added to the left, right, top and bottom of in_ar / out_ar. This is the value of the optional BufferRadius element that can be set so that the original pixel request is extended by a given amount of pixels.
 - **gt**: geotransform. Array of 6 double values.
 - **kwargs**: dictionary with user arguments defined in PixelFunctionArguments
+
+The provided ``out_ar`` array must be modified in-place. Any value currently
+returned by the pixel function is ignored.
+
+.. note::
+
+    If wanting to fill ``out_ar`` from another array, use the ``out_ar[:] = ...``
+    syntax.
 
 Examples
 ++++++++
