@@ -2475,6 +2475,31 @@ def test_ogr_mitab_description():
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
 
+###############################################################################
+# Test writing and reading back unset/null date, time, datetime
+
+
+def test_ogr_mitab_nulldatetime():
+
+    filename = '/vsimem/nulldatetime.tab'
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
+    lyr = ds.CreateLayer("nulldatetime")
+    lyr.CreateField(ogr.FieldDefn("time", ogr.OFTTime))
+    lyr.CreateField(ogr.FieldDefn("date", ogr.OFTDate))
+    lyr.CreateField(ogr.FieldDefn("datetime", ogr.OFTDateTime))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert not f.IsFieldSet("time")
+    assert not f.IsFieldSet("date")
+    assert not f.IsFieldSet("datetime")
+    ds = None
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
 
 ###############################################################################
 #
