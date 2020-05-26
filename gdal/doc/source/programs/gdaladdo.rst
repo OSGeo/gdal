@@ -153,6 +153,15 @@ documented in the GeoTIFF driver documentation.
 
 See the documentation of the :ref:`raster.gtiff` driver for further explanations on all those options.
 
+Multithreading
+--------------
+
+.. versionadded:: 3.2
+
+The :decl_configoption:`GDAL_NUM_THREADS` configuration option can be set to
+``ALL_CPUS`` or a integer value to specify the number of threads to use for
+overview computation.
+
 C API
 -----
 

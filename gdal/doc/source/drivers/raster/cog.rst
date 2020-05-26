@@ -194,6 +194,14 @@ Reprojection related creation options
 
 .. _`OGC Two Dimensional Tile Matrix Set standard`: http://docs.opengeospatial.org/is/17-083r2/17-083r2.html
 
+- **ZOOM_LEVEL_STRATEGY**\ =AUTO/LOWER/UPPER. (GDAL >= 3.2) Strategy to determine
+  zoom level. Only used for TILING_SCHEME different from CUSTOM.
+  LOWER will select the zoom level immediately below the
+  theoretical computed non-integral zoom level, leading to subsampling.
+  On the contrary, UPPER will select the immediately above zoom level,
+  leading to oversampling. Defaults to AUTO which selects the closest
+  zoom level.
+
 - **TARGET_SRS=string**: to force reprojection of the input dataset to another
   SRS. The string can be a WKT string, a EPSG:XXXX code or a PROJ string.
 

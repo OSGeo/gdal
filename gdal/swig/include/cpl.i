@@ -63,6 +63,9 @@ typedef char retStringAndCPLFree;
   }
 %}
 
+%rename (SetCurrentErrorHandlerCatchDebug) CPLSetCurrentErrorHandlerCatchDebug;
+void CPLSetCurrentErrorHandlerCatchDebug( int bCatchDebug );
+
 #ifdef SWIGPYTHON
 
 %nothread;

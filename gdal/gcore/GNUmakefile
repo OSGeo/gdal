@@ -14,7 +14,8 @@ OBJ	=	gdalmultidim.o gdalopeninfo.o gdaldrivermanager.o gdaldriver.o gdaldataset
 		gdaloverviewdataset.o gdalrescaledalphaband.o gdaljp2structure.o \
 		gdal_mdreader.o gdaljp2metadatagenerator.o gdalabstractbandblockcache.o \
 		gdalarraybandblockcache.o gdalhashsetbandblockcache.o rawdataset.o \
-		gdalpython.o gdalpythondriverloader.o tilematrixset.o
+		gdalpython.o gdalpythondriverloader.o tilematrixset.o \
+		gdal_thread_pool.o
 
 CPPFLAGS	:=	 -I../frmts/gtiff -I../frmts/mem -I../frmts/vrt -I../ogr -I../ogr/ogrsf_frmts/generic -I../gnm/ -I../gnm/gnm_frmts/ $(JSON_INCLUDE) -I../ogr/ogrsf_frmts/geojson $(CPPFLAGS) $(PAM_SETTING) $(XTRA_OPT)
 

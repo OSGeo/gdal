@@ -1078,12 +1078,19 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
             }
         }
 
-        if( eErr == CE_None )
-            eErr =
-                GDALRegenerateOverviewsMultiBand(
-                    nBands, papoBandList,
-                    nOverviews, papapoOverviewBands,
-                    pszResampling, pfnProgress, pProgressData );
+        {
+            CPLConfigOptionSetter oSetter(
+                "GDAL_NUM_THREADS",
+                CSLFetchNameValue(papszOptions, "NUM_THREADS"),
+                true);
+
+            if( eErr == CE_None )
+                eErr =
+                    GDALRegenerateOverviewsMultiBand(
+                        nBands, papoBandList,
+                        nOverviews, papapoOverviewBands,
+                        pszResampling, pfnProgress, pProgressData );
+        }
 
         for( int iBand = 0; iBand < nBands; iBand++ )
         {
@@ -1136,15 +1143,23 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
                     (iBand + 1) / static_cast<double>( nBands ),
                     pfnProgress, pProgressData );
 
-            if( eErr == CE_None )
-                eErr =
-                    GDALRegenerateOverviews(
-                        hSrcBand,
-                        nDstOverviews,
-                        reinterpret_cast<GDALRasterBandH *>( papoOverviews ),
-                        pszResampling,
-                        GDALScaledProgress,
-                        pScaledProgressData );
+
+            {
+                CPLConfigOptionSetter oSetter(
+                    "GDAL_NUM_THREADS",
+                    CSLFetchNameValue(papszOptions, "NUM_THREADS"),
+                    true);
+
+                if( eErr == CE_None )
+                    eErr =
+                        GDALRegenerateOverviews(
+                            hSrcBand,
+                            nDstOverviews,
+                            reinterpret_cast<GDALRasterBandH *>( papoOverviews ),
+                            pszResampling,
+                            GDALScaledProgress,
+                            pScaledProgressData );
+            }
 
             GDALDestroyScaledProgress( pScaledProgressData );
         }

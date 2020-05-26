@@ -2608,13 +2608,15 @@ typedef CPLErr (*GDALResampleFunction)
                         double dfSrcXDelta,
                         double dfSrcYDelta,
                         GDALDataType eWrkDataType,
-                        void * pChunk,
-                        GByte * pabyChunkNodataMask,
+                        const void * pChunk,
+                        const GByte * pabyChunkNodataMask,
                         int nChunkXOff, int nChunkXSize,
                         int nChunkYOff, int nChunkYSize,
                         int nDstXOff, int nDstXOff2,
                         int nDstYOff, int nDstYOff2,
                         GDALRasterBand * poOverview,
+                        void** ppDstBuffer,
+                        GDALDataType* peDstBufferDataType,
                         const char * pszResampling,
                         int bHasNoData, float fNoDataValue,
                         GDALColorTable* poColorTable,
@@ -2623,29 +2625,6 @@ typedef CPLErr (*GDALResampleFunction)
 
 GDALResampleFunction GDALGetResampleFunction(const char* pszResampling,
                                                  int* pnRadius);
-
-#ifdef GDAL_ENABLE_RESAMPLING_MULTIBAND
-typedef CPLErr (*GDALResampleFunctionMultiBands)
-                      ( double dfXRatioDstToSrc,
-                        double dfYRatioDstToSrc,
-                        double dfSrcXDelta,
-                        double dfSrcYDelta,
-                        GDALDataType eWrkDataType,
-                        void * pChunk, int nBands,
-                        GByte * pabyChunkNodataMask,
-                        int nChunkXOff, int nChunkXSize,
-                        int nChunkYOff, int nChunkYSize,
-                        int nDstXOff, int nDstXOff2,
-                        int nDstYOff, int nDstYOff2,
-                        GDALRasterBand ** papoDstBands,
-                        const char * pszResampling,
-                        int bHasNoData, float fNoDataValue,
-                        GDALColorTable* poColorTable,
-                        GDALDataType eSrcDataType);
-
-GDALResampleFunctionMultiBands GDALGetResampleFunctionMultiBands(const char* pszResampling,
-                                                       int* pnRadius);
-#endif
 
 GDALDataType GDALGetOvrWorkDataType(const char* pszResampling,
                                         GDALDataType eSrcDataType);

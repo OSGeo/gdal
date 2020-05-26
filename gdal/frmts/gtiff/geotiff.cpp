@@ -85,6 +85,7 @@
 #include "gdal_pam.h"
 #include "gdal_priv.h"
 #include "gdal_priv_templates.hpp"
+#include "gdal_thread_pool.h"
 #include "geo_normalize.h"
 #include "geotiff.h"
 #include "geovalues.h"
@@ -110,8 +111,6 @@
 CPL_CVSID("$Id$")
 
 static bool bGlobalInExternalOvr = false;
-static std::mutex gMutexThreadPool;
-CPLWorkerThreadPool *gpoCompressThreadPool = nullptr;
 
 // Only libtiff 4.0.4 can handle between 32768 and 65535 directories.
 #if TIFFLIB_VERSION >= 20120922
@@ -307,7 +306,7 @@ private:
     CPLVirtualMem        *m_pBaseMapping = nullptr;
     GByte                *m_pTempBufferForCommonDirectIO = nullptr;
     CPLVirtualMem        *m_psVirtualMemIOMapping = nullptr;
-    CPLWorkerThreadPool  *m_poCompressThreadPool = nullptr;
+    std::unique_ptr<CPLJobQueue> m_poCompressQueue{};
     CPLMutex             *m_hCompressThreadPoolMutex = nullptr;
 
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
@@ -7782,18 +7781,10 @@ int GTiffDataset::Finalize()
 /* -------------------------------------------------------------------- */
     FlushCacheInternal( true );
 
-    // Destroy compression pool.
-    if( m_poCompressThreadPool )
+    // Destroy compression queue
+    if( m_poCompressQueue )
     {
-        m_poCompressThreadPool->WaitCompletion();
-
-        // Save thread pool for later reuse.
-        {
-            std::lock_guard<std::mutex> oLock(gMutexThreadPool);
-            delete gpoCompressThreadPool;
-            gpoCompressThreadPool = m_poCompressThreadPool;
-            m_poCompressThreadPool = nullptr;
-        }
+        m_poCompressQueue->WaitCompletion();
 
         for( int i = 0; i < static_cast<int>(m_asCompressionJobs.size()); ++i )
         {
@@ -7805,6 +7796,7 @@ int GTiffDataset::Finalize()
             }
         }
         CPLDestroyMutex(m_hCompressThreadPoolMutex);
+        m_poCompressQueue.reset();
     }
 
 /* -------------------------------------------------------------------- */
@@ -8805,41 +8797,20 @@ void GTiffDataset::InitCompressionThreads( char** papszOptions )
             EQUAL(pszValue, "ALL_CPUS") ? CPLGetNumCPUs() : atoi(pszValue);
         if( nThreads > 1 )
         {
-            if( m_nCompression == COMPRESSION_NONE ||
-                m_nCompression == COMPRESSION_JPEG )
+            if( m_nCompression == COMPRESSION_NONE )
             {
                 CPLDebug( "GTiff",
-                          "NUM_THREADS ignored with uncompressed or JPEG" );
+                          "NUM_THREADS ignored with uncompressed" );
             }
             else
             {
                 CPLDebug("GTiff", "Using %d threads for compression", nThreads);
 
-                // Try to reuse previously created thread pool
-                {
-                    std::lock_guard<std::mutex> oLock(gMutexThreadPool);
-                    if( gpoCompressThreadPool &&
-                        gpoCompressThreadPool->GetThreadCount() == nThreads )
-                    {
-                        m_poCompressThreadPool = gpoCompressThreadPool;
-                    }
-                    else
-                    {
-                        delete gpoCompressThreadPool;
-                    }
-                    gpoCompressThreadPool = nullptr;
-                }
+                auto poThreadPool = GDALGetGlobalThreadPool(nThreads);
+                if( poThreadPool )
+                    m_poCompressQueue = poThreadPool->CreateJobQueue();
 
-                if( m_poCompressThreadPool == nullptr )
-                {
-                    m_poCompressThreadPool = new CPLWorkerThreadPool();
-                    if( !m_poCompressThreadPool->Setup(nThreads, nullptr, nullptr) )
-                    {
-                        delete m_poCompressThreadPool;
-                        m_poCompressThreadPool = nullptr;
-                    }
-                }
-                if( m_poCompressThreadPool != nullptr )
+                if( m_poCompressQueue != nullptr )
                 {
                     // Add a margin of an extra job w.r.t thread number
                     // so as to optimize compression time (enables the main
@@ -9166,8 +9137,8 @@ void GTiffDataset::WriteRawStripOrTile( int nStripOrTile,
 
 void GTiffDataset::WaitCompletionForJobIdx(int i)
 {
-    auto poTP = m_poBaseDS ?
-        m_poBaseDS->m_poCompressThreadPool : m_poCompressThreadPool;
+    auto poQueue = m_poBaseDS ?
+        m_poBaseDS->m_poCompressQueue.get() : m_poCompressQueue.get();
     auto& oQueue = m_poBaseDS ? m_poBaseDS->m_asQueueJobIdx : m_asQueueJobIdx;
     auto& asJobs = m_poBaseDS ? m_poBaseDS->m_asCompressionJobs : m_asCompressionJobs;
     auto mutex = m_poBaseDS ? m_poBaseDS->m_hCompressThreadPoolMutex : m_hCompressThreadPoolMutex;
@@ -9191,7 +9162,7 @@ void GTiffDataset::WaitCompletionForJobIdx(int i)
                         asJobs[i].nStripOrTile);
                 bHasWarned = true;
             }
-            poTP->WaitEvent();
+            poQueue->GetPool()->WaitEvent();
         }
         else
         {
@@ -9218,12 +9189,12 @@ void GTiffDataset::WaitCompletionForJobIdx(int i)
 
 void GTiffDataset::WaitCompletionForBlock(int nBlockId)
 {
-    auto poTP = m_poBaseDS ?
-        m_poBaseDS->m_poCompressThreadPool : m_poCompressThreadPool;
+    auto poQueue = m_poBaseDS ?
+        m_poBaseDS->m_poCompressQueue.get() : m_poCompressQueue.get();
     auto& oQueue = m_poBaseDS ? m_poBaseDS->m_asQueueJobIdx : m_asQueueJobIdx;
     auto& asJobs = m_poBaseDS ? m_poBaseDS->m_asCompressionJobs : m_asCompressionJobs;
 
-    if( poTP != nullptr )
+    if( poQueue != nullptr )
     {
         for( int i = 0; i < static_cast<int>(asJobs.size()); ++i )
         {
@@ -9254,17 +9225,18 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
 /* -------------------------------------------------------------------- */
 /*      Should we do compression in a worker thread ?                   */
 /* -------------------------------------------------------------------- */
-    auto poTP = m_poBaseDS ?
-        m_poBaseDS->m_poCompressThreadPool : m_poCompressThreadPool;
+    auto poQueue = m_poBaseDS ?
+        m_poBaseDS->m_poCompressQueue.get() : m_poCompressQueue.get();
 
-    if( poTP == nullptr ||
+    if( poQueue == nullptr ||
           !(m_nCompression == COMPRESSION_ADOBE_DEFLATE ||
             m_nCompression == COMPRESSION_LZW ||
             m_nCompression == COMPRESSION_PACKBITS ||
             m_nCompression == COMPRESSION_LZMA ||
             m_nCompression == COMPRESSION_ZSTD ||
             m_nCompression == COMPRESSION_LERC ||
-            m_nCompression == COMPRESSION_WEBP) )
+            m_nCompression == COMPRESSION_WEBP ||
+            m_nCompression == COMPRESSION_JPEG) )
     {
         if( m_bBlockOrderRowMajor || m_bLeaderSizeAsUInt4 ||
             m_bTrailerRepeatedLast4BytesRepeated )
@@ -9349,7 +9321,7 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
         TIFFGetField( m_hTIFF, TIFFTAG_PREDICTOR, &psJob->nPredictor );
     }
 
-    poTP->SubmitJob(ThreadCompressionFunc, psJob);
+    poQueue->SubmitJob(ThreadCompressionFunc, psJob);
     oQueue.push(nNextCompressionJobAvail);
 
     return true;
@@ -9882,10 +9854,10 @@ void GTiffDataset::FlushCacheInternal( bool bFlushDirectory )
     m_bLoadedBlockDirty = false;
 
     // Finish compression
-    auto poTP = m_poBaseDS ? m_poBaseDS->m_poCompressThreadPool : m_poCompressThreadPool;
-    if( poTP )
+    auto poQueue = m_poBaseDS ? m_poBaseDS->m_poCompressQueue.get() : m_poCompressQueue.get();
+    if( poQueue )
     {
-        poTP->WaitCompletion();
+        poQueue->WaitCompletion();
 
         // Flush remaining data
         auto& oQueue = m_poBaseDS ? m_poBaseDS->m_asQueueJobIdx : m_asQueueJobIdx;
@@ -19712,9 +19684,6 @@ void GDALDeregister_GTiff( GDALDriver * )
         TIFFUnRegisterCODEC(pLercCodec);
     pLercCodec = nullptr;
 #endif
-
-    delete gpoCompressThreadPool;
-    gpoCompressThreadPool = nullptr;
 }
 
 /************************************************************************/

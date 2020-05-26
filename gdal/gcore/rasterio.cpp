@@ -1240,6 +1240,9 @@ CPLErr GDALRasterBand::RasterIOResampled(
                 if( !bSkipResample && eErr == CE_None )
                 {
                     const bool bPropagateNoData = false;
+                    void* pDstBuffer = nullptr;
+                    GDALDataType eDstBufferDataType = GDT_Unknown;
+                    GDALRasterBand* poMEMBand = GDALRasterBand::FromHandle(hMEMBand);
                     eErr = pfnResampleFunc(
                         dfXRatioDstToSrc,
                         dfYRatioDstToSrc,
@@ -1256,12 +1259,29 @@ CPLErr GDALRasterBand::RasterIOResampled(
                         nDstXOff + nDestXOffVirtual + nDstXCount,
                         nDstYOff + nDestYOffVirtual,
                         nDstYOff + nDestYOffVirtual + nDstYCount,
-                        GDALRasterBand::FromHandle(hMEMBand),
+                        poMEMBand,
+                        &pDstBuffer,
+                        &eDstBufferDataType,
                         pszResampling,
                         bHasNoData, fNoDataValue,
                         GetColorTable(),
                         eDataType,
                         bPropagateNoData);
+                    if( eErr == CE_None )
+                    {
+                        eErr = poMEMBand->RasterIO(
+                            GF_Write,
+                            nDstXOff + nDestXOffVirtual,
+                            nDstYOff + nDestYOffVirtual,
+                            nDstXCount,
+                            nDstYCount,
+                            pDstBuffer,
+                            nDstXCount,
+                            nDstYCount,
+                            eDstBufferDataType,
+                            0, 0, nullptr );
+                    }
+                    CPLFree(pDstBuffer);
                 }
 
                 nBlocksDone ++;
@@ -1739,6 +1759,9 @@ CPLErr GDALDataset::RasterIOResampled(
                          i++ )
                     {
                         const bool bPropagateNoData = false;
+                        void* pDstBuffer = nullptr;
+                        GDALDataType eDstBufferDataType = GDT_Unknown;
+                        GDALRasterBand* poMEMBand = poMEMDS->GetRasterBand(i+1);
                         eErr = pfnResampleFunc(
                             dfXRatioDstToSrc,
                             dfYRatioDstToSrc,
@@ -1755,13 +1778,30 @@ CPLErr GDALDataset::RasterIOResampled(
                             nDstXOff + nDestXOffVirtual + nDstXCount,
                             nDstYOff + nDestYOffVirtual,
                             nDstYOff + nDestYOffVirtual + nDstYCount,
-                            poMEMDS->GetRasterBand(i+1),
+                            poMEMBand,
+                            &pDstBuffer,
+                            &eDstBufferDataType,
                             pszResampling,
                             FALSE /*bHasNoData*/,
                             0.f /* fNoDataValue */,
                             nullptr /* color table*/,
                             eDataType,
                             bPropagateNoData );
+                        if( eErr == CE_None )
+                        {
+                            eErr = poMEMBand->RasterIO(
+                                GF_Write,
+                                nDstXOff + nDestXOffVirtual,
+                                nDstYOff + nDestYOffVirtual,
+                                nDstXCount,
+                                nDstYCount,
+                                pDstBuffer,
+                                nDstXCount,
+                                nDstYCount,
+                                eDstBufferDataType,
+                                0, 0, nullptr );
+                        }
+                        CPLFree(pDstBuffer);
                     }
                 }
 
