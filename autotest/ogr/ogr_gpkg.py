@@ -293,6 +293,10 @@ def test_ogr_gpkg_7():
     feat_read = lyr.GetNextFeature()
     assert feat_read is None, 'last call should return NULL'
 
+    # Check that calling again GetNextFeature() does not reset the iterator
+    feat_read = lyr.GetNextFeature()
+    assert feat_read is None, 'last call should still return NULL'
+
     # Add another feature
     geom = ogr.CreateGeometryFromWkt('POINT(100 100)')
     feat = ogr.Feature(lyr.GetLayerDefn())

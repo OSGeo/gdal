@@ -366,6 +366,7 @@ class OGRGeoPackageLayer CPL_NON_FINAL: public OGRLayer, public IOGRSQLiteGetSpa
 
     sqlite3_stmt        *m_poQueryStatement;
     bool                 bDoStep;
+    bool                 m_bEOF = false;
 
     char                *m_pszFidColumn;
 
