@@ -1,5 +1,5 @@
 /*****************************************************************************
-* Copyright 2016 Pitney Bowes Inc.
+* Copyright 2016, 2020 Precisely.
 *
 * Licensed under the MIT License (the “License”); you may not use this file
 * except in the compliance with the License.
