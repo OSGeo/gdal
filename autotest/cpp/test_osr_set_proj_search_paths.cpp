@@ -63,8 +63,7 @@ static void func2(void*)
 
 int main()
 {
-    auto info = proj_info();
-    auto tokens = CSLTokenizeString2(info.searchpath, ";", 0);
+    auto tokens = OSRGetPROJSearchPaths();
 
     // Overriding PROJ_LIB
     setenv("PROJ_LIB", "/i_do/not_exist", true);
