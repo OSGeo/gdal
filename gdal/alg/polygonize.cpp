@@ -432,7 +432,7 @@ EmitPolygonToLayer( OGRLayerH hOutLayer, int iPixValField,
 /* -------------------------------------------------------------------- */
     OGRGeometryH hPolygon = OGR_G_CreateGeometry( wkbPolygon );
 
-    for( const auto oIter: poRPoly->oMapStrings )
+    for( const auto& oIter: poRPoly->oMapStrings )
     {
         const auto &anString = oIter.second;
         OGRGeometryH hRing = OGR_G_CreateGeometry( wkbLinearRing );

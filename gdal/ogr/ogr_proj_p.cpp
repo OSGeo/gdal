@@ -80,7 +80,12 @@ struct OSRPJContextHolder
 #endif
 #endif
 
+#if !defined(_WIN32)
+    OSRPJContextHolder(): curpid(getpid()) {}
+#else
     OSRPJContextHolder() = default;
+#endif
+
     ~OSRPJContextHolder();
 
     void init();

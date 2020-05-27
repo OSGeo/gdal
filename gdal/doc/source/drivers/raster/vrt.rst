@@ -879,9 +879,8 @@ Using Derived Bands (with pixel functions in Python)
 
 Starting with GDAL 2.2, in addition to pixel functions written in C/C++ as
 documented in the \ref gdal_vrttut_derived_c section, it is possible to use
-pixel functions written in Python. Both
-<a href="https://www.python.org/">CPython</a>
-and <a href="http://www.numpy.org/">NumPy</a> are requirements at run-time.
+pixel functions written in Python. Both `CPython <https://www.python.org/>`_
+and `NumPy <http://www.numpy.org/>`_ are requirements at run-time.
 
 The subelements for VRTRasterBand (whose subclass specification must be
 set to VRTDerivedRasterBand) are :
@@ -909,6 +908,14 @@ The signature of the Python pixel function must have the following arguments:
 - **buf_radius**: radius of the buffer (in pixels) added to the left, right, top and bottom of in_ar / out_ar. This is the value of the optional BufferRadius element that can be set so that the original pixel request is extended by a given amount of pixels.
 - **gt**: geotransform. Array of 6 double values.
 - **kwargs**: dictionary with user arguments defined in PixelFunctionArguments
+
+The provided ``out_ar`` array must be modified in-place. Any value currently
+returned by the pixel function is ignored.
+
+.. note::
+
+    If wanting to fill ``out_ar`` from another array, use the ``out_ar[:] = ...``
+    syntax.
 
 Examples
 ++++++++
@@ -1092,7 +1099,7 @@ directories of the PATH and will try to determine the related shared object
 (it will retry with "python3" if no "python" has been found). If the above
 was not successful, then a predefined list of shared objects names
 will be tried. At the time of writing, the order of versions searched is 2.7,
-3.5, 3.6, 3.7, 3.8, 3.4, 3.3, 3.2. Enabling debug information (CPL_DEBUG=ON) will
+3.5, 3.6, 3.7, 3.8, 3.9, 3.4, 3.3, 3.2. Enabling debug information (CPL_DEBUG=ON) will
 show which Python version is used.
 
 Just-in-time compilation

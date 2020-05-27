@@ -136,8 +136,8 @@ For example we can select the annotation features as:
 Spatialite SQL functions
 ++++++++++++++++++++++++
 
-When GDAL/OGR is build with support for the <a href="http://www.gaia-gis.it/spatialite/">Spatialite</a> library,
-a lot of <a href="http://www.gaia-gis.it/gaia-sins/spatialite-sql-4.3.0.html">extra SQL functions</a>,
+When GDAL/OGR is build with support for the `Spatialite <http://www.gaia-gis.it/spatialite/>`_ library,
+a lot of `extra SQL functions <http://www.gaia-gis.it/gaia-sins/spatialite-sql-4.3.0.html>`_,
 in particular spatial functions, can be used in results column fields, WHERE clauses, etc....
 
 .. code-block::

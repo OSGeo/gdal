@@ -1894,6 +1894,10 @@ CPLErr GDALSetGCPs2( GDALDatasetH hDS, int nGCPCount,
  * deleted by specifying nOverviews == 0. This works at least for external
  * overviews (.ovr), TIFF internal overviews, etc.
  *
+ * Starting with GDAL 3.2, the GDAL_NUM_THREADS configuration option can be set
+ * to "ALL_CPUS" or a integer value to specify the number of threads to use for
+ * overview computation.
+ *
  * This method is the same as the C function GDALBuildOverviews().
  *
  * @param pszResampling one of "AVERAGE", "AVERAGE_MAGPHASE", "BILINEAR",
@@ -6264,6 +6268,11 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
             (poSelectParseOptions &&
             poSelectParseOptions->bAddSecondaryTablesGeometryFields) )
             nFieldCount += poSrcLayer->GetLayerDefn()->GetGeomFieldCount();
+
+        const char* pszFID = poSrcLayer->GetFIDColumn();
+        if (pszFID && !EQUAL(pszFID, "") && !EQUAL(pszFID, "FID") &&
+            poSrcLayer->GetLayerDefn()->GetFieldIndex(pszFID) < 0)
+            nFieldCount++;
     }
 
 /* -------------------------------------------------------------------- */
@@ -6275,13 +6284,13 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
 
     psParseInfo->sFieldList.count = 0;
     psParseInfo->sFieldList.names = static_cast<char **>(
-        CPLMalloc(sizeof(char *) * (nFieldCount + SPECIAL_FIELD_COUNT + 1)));
+        CPLMalloc(sizeof(char *) * (nFieldCount + SPECIAL_FIELD_COUNT)));
     psParseInfo->sFieldList.types = static_cast<swq_field_type *>(CPLMalloc(
-        sizeof(swq_field_type) * (nFieldCount + SPECIAL_FIELD_COUNT + 1)));
+        sizeof(swq_field_type) * (nFieldCount + SPECIAL_FIELD_COUNT)));
     psParseInfo->sFieldList.table_ids = static_cast<int *>(
-        CPLMalloc(sizeof(int) * (nFieldCount + SPECIAL_FIELD_COUNT + 1)));
+        CPLMalloc(sizeof(int) * (nFieldCount + SPECIAL_FIELD_COUNT)));
     psParseInfo->sFieldList.ids = static_cast<int *>(
-        CPLMalloc(sizeof(int) * (nFieldCount + SPECIAL_FIELD_COUNT + 1)));
+        CPLMalloc(sizeof(int) * (nFieldCount + SPECIAL_FIELD_COUNT)));
 
     bool bIsFID64 = false;
     for( int iTable = 0; iTable < psSelectInfo->table_count; iTable++ )

@@ -257,7 +257,8 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
     }
     else if( nptr[0] == '1' )
     {
-        if( STARTS_WITH(nptr, "1.#QNAN") )
+        if( STARTS_WITH(nptr, "1.#QNAN") ||
+            STARTS_WITH(nptr, "1.#SNAN") )
         {
             if( endptr ) *endptr = const_cast<char *>(nptr) + strlen(nptr);
             return std::numeric_limits<double>::quiet_NaN();

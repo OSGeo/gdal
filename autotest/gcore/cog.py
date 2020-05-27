@@ -397,8 +397,41 @@ def test_cog_byte_to_web_mercator():
     ds = None
     _check_cog(filename)
 
+    # Use our generated COG as the input of the same COG generation: reprojection
+    # should be skipped
+    filename2 = directory + '/cog2.tif'
+    src_ds = gdal.Open(filename)
+
+    class my_error_handler(object):
+        def __init__(self):
+            self.debug_msg_list = []
+            self.other_msg_list = []
+
+        def handler(self, eErrClass, err_no, msg):
+            if eErrClass == gdal.CE_Debug:
+                self.debug_msg_list.append(msg)
+            else:
+                self.other_msg_list.append(msg)
+
+    handler = my_error_handler();
+    try:
+        gdal.PushErrorHandler(handler.handler)
+        gdal.SetCurrentErrorHandlerCatchDebug(True)
+        with gdaltest.config_option('CPL_DEBUG', 'COG'):
+            ds = gdal.GetDriverByName('COG').CreateCopy(filename2, src_ds,
+                options = ['TILING_SCHEME=GoogleMapsCompatible', 'ALIGNED_LEVELS=3'])
+    finally:
+        gdal.PopErrorHandler()
+
+    assert ds
+    assert 'COG: Skipping reprojection step: source dataset matches reprojection specifications' in handler.debug_msg_list
+    assert handler.other_msg_list == []
     src_ds = None
+    ds = None
+
+    # Cleanup
     gdal.GetDriverByName('GTiff').Delete(filename)
+    gdal.GetDriverByName('GTiff').Delete(filename2)
     gdal.Unlink(directory)
 
 
@@ -837,6 +870,41 @@ def test_cog_sparse_imagery_mask_0():
         assert ds.GetRasterBand(1).GetMaskBand().ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(4).ReadRaster(0, 0, 512, 512)
         assert ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256) == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256)
         assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().ReadRaster(0, 0, 256, 256) == src_ds.GetRasterBand(4).GetOverview(0).ReadRaster(0, 0, 256, 256)
+
+    ds = None
+    gdal.Unlink(filename)
+
+
+
+###############################################################################
+# Test ZOOM_LEVEL_STRATEGY option
+
+@pytest.mark.parametrize('zoom_level_strategy,expected_gt',
+    [('AUTO', (-13110479.09147343, 76.43702828517416, 0.0, 4030983.1236470547, 0.0, -76.43702828517416)),
+     ('LOWER', (-13110479.09147343, 76.43702828517416, 0.0, 4030983.1236470547, 0.0, -76.43702828517416)),
+     ('UPPER', (-13100695.151852928, 38.21851414258708, 0.0, 4021199.1840265524, 0.0, -38.21851414258708))
+    ])
+def test_cog_zoom_level_strategy(zoom_level_strategy,expected_gt):
+
+    filename = '/vsimem/test_cog_zoom_level_strategy.tif'
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+        options = ['TILING_SCHEME=GoogleMapsCompatible',
+                   'ZOOM_LEVEL_STRATEGY=' + zoom_level_strategy])
+    gt = ds.GetGeoTransform()
+    assert gt == pytest.approx(expected_gt, rel=1e-10)
+
+    # Test that the zoom level strategy applied on input data already on a
+    # zoom level doesn't lead to selecting another zoom level
+    filename2 = '/vsimem/test_cog_zoom_level_strategy_2.tif'
+    src_ds = gdal.Open('data/byte.tif')
+    ds2 = gdal.GetDriverByName('COG').CreateCopy(filename2, ds,
+        options = ['TILING_SCHEME=GoogleMapsCompatible',
+                    'ZOOM_LEVEL_STRATEGY=' + zoom_level_strategy])
+    gt = ds2.GetGeoTransform()
+    assert gt == pytest.approx(expected_gt, rel=1e-10)
+    ds2 = None
+    gdal.Unlink(filename2)
 
     ds = None
     gdal.Unlink(filename)

@@ -24,13 +24,17 @@ for filename in matches:
                     break
                 link = l[len('.. _'):-1]
             else:
-                pos = l.find(':decl_configoption:`')
-                if pos >= 0:
+                pos = 0
+                while True:
+                    pos = l.find(':decl_configoption:`', pos)
+                    if pos < 0:
+                        break
                     endpos = l.find('`', pos+len(':decl_configoption:`'))
                     configoption = l[pos+len(':decl_configoption:`'):endpos]
                     if not configoption in configoptions:
                         configoptions[configoption] = set()
                     configoptions[configoption].add(link)
+                    pos = endpos
 
 
 with open(outfile, "wt", encoding='utf-8') as f:

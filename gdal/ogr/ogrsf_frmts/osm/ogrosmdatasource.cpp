@@ -73,9 +73,6 @@
 
 constexpr int LIMIT_IDS_PER_REQUEST = 200;
 
-// 2000 is normally the maximum allowed: https://wiki.openstreetmap.org/wiki/Elements
-constexpr int MAX_NODES_PER_WAY = 10000;
-
 constexpr int IDX_LYR_POINTS = 0;
 constexpr int IDX_LYR_LINES = 1;
 constexpr int IDX_LYR_MULTILINESTRINGS = 2;
@@ -89,11 +86,6 @@ static int DBL_TO_INT( double x )
 static double INT_TO_DBL( int x ) { return x / 1.0e7; }
 
 constexpr unsigned int MAX_COUNT_FOR_TAGS_IN_WAY = 255;  // Must fit on 1 byte.
-constexpr int MAX_SIZE_FOR_TAGS_IN_WAY = 1024;
-
-// 5 bytes for encoding a int : really the worst case scenario!
-constexpr int WAY_BUFFER_SIZE =
-    1 /*is_area*/ + 1 + MAX_NODES_PER_WAY * 2 * 5 + MAX_SIZE_FOR_TAGS_IN_WAY;
 
 constexpr int NODE_PER_BUCKET = 65536;
 
@@ -172,7 +164,6 @@ constexpr int COLLISION_BUCKET_ARRAY_SIZE =
 size_t GetMaxTotalAllocs();
 #endif
 
-static void WriteVarInt64(GUIntBig nSVal, GByte** ppabyData);
 static void WriteVarSInt64(GIntBig nSVal, GByte** ppabyData);
 
 CPL_CVSID("$Id$")
@@ -256,7 +247,7 @@ OGROSMDataSource::OGROSMDataSource() :
     nNodesInTransaction(0),
     nMinSizeKeysInSetClosedWaysArePolygons(0),
     nMaxSizeKeysInSetClosedWaysArePolygons(0),
-    pasLonLatCache(nullptr),
+    m_ignoredKeys({{"area","created_by","converted_by","note","todo","fixme","FIXME"}}),
     bReportAllNodes(false),
     bReportAllWays(false),
     bFeatureAdded(false),
@@ -272,7 +263,6 @@ OGROSMDataSource::OGROSMDataSource() :
     bUseWaysIndexBackup(false),
     bIsFeatureCountEnabled(false),
     bAttributeNameLaundering(true),
-    pabyWayBuffer(nullptr),
     nWaysProcessed(0),
     nRelationsProcessed(0),
     bCustomIndexing(true),
@@ -325,9 +315,6 @@ OGROSMDataSource::~OGROSMDataSource()
                   "Number of bytes read in file : " CPL_FRMT_GUIB,
                   OSM_GetBytesRead(psParser) );
     OSM_Close(psParser);
-
-    CPLFree(pasLonLatCache);
-    CPLFree(pabyWayBuffer);
 
     if( hDB != nullptr )
         CloseDB();
@@ -1376,21 +1363,18 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
 /*                            WriteVarInt()                             */
 /************************************************************************/
 
-static void WriteVarInt( unsigned int nVal, GByte** ppabyData )
+static void WriteVarInt( unsigned int nVal, std::vector<GByte>& abyData )
 {
-    GByte* pabyData = *ppabyData;
     while( true )
     {
         if( (nVal & (~0x7fU)) == 0 )
         {
-            *pabyData = (GByte)nVal;
-            *ppabyData = pabyData + 1;
+            abyData.push_back((GByte)nVal);
             return;
         }
 
-        *pabyData = 0x80 | (GByte)(nVal & 0x7f);
+        abyData.push_back(0x80 | (GByte)(nVal & 0x7f));
         nVal >>= 7;
-        pabyData ++;
     }
 }
 
@@ -1398,21 +1382,41 @@ static void WriteVarInt( unsigned int nVal, GByte** ppabyData )
 /*                           WriteVarInt64()                            */
 /************************************************************************/
 
-static void WriteVarInt64( GUIntBig nVal, GByte** ppabyData )
+static void WriteVarInt64( GUIntBig nVal, std::vector<GByte>& abyData )
 {
-    GByte* pabyData = *ppabyData;
     while( true )
     {
         if( (((GUInt32)nVal) & (~0x7fU)) == 0 )
         {
-            *pabyData = (GByte)nVal;
-            *ppabyData = pabyData + 1;
+            abyData.push_back((GByte)nVal);
             return;
         }
 
-        *pabyData = 0x80 | (GByte)(nVal & 0x7f);
+        abyData.push_back(0x80 | (GByte)(nVal & 0x7f));
         nVal >>= 7;
-        pabyData ++;
+    }
+}
+
+/************************************************************************/
+/*                           WriteVarSInt64()                           */
+/************************************************************************/
+
+static void WriteVarSInt64( GIntBig nSVal, std::vector<GByte>& abyData )
+{
+    GIntBig nVal = nSVal >= 0
+        ? nSVal << 1
+        : ((-1-nSVal) << 1) + 1;
+
+    while( true )
+    {
+        if( (nVal & (~0x7f)) == 0 )
+        {
+            abyData.push_back((GByte)nVal);
+            return;
+        }
+
+        abyData.push_back(0x80 | (GByte)(nVal & 0x7f));
+        nVal >>= 7;
     }
 }
 
@@ -1446,108 +1450,86 @@ static void WriteVarSInt64( GIntBig nSVal, GByte** ppabyData )
 /*                             CompressWay()                            */
 /************************************************************************/
 
-int OGROSMDataSource::CompressWay ( bool bIsArea, unsigned int nTags,
+void OGROSMDataSource::CompressWay ( bool bIsArea, unsigned int nTags,
                                     IndexedKVP* pasTags,
                                     int nPoints, LonLat* pasLonLatPairs,
                                     OSMInfo* psInfo,
-                                    GByte* pabyCompressedWay )
+                                    std::vector<GByte>& abyCompressedWay )
 {
-    GByte* pabyPtr = pabyCompressedWay;
-    *pabyPtr = (bIsArea) ? 1 : 0;
-    pabyPtr++;
-    pabyPtr++; // skip tagCount
+    abyCompressedWay.clear();
+    abyCompressedWay.push_back((bIsArea) ? 1 : 0);
+    abyCompressedWay.push_back(0); // reserve space for tagCount
 
     unsigned int nTagCount = 0;
     CPLAssert(nTags <= MAX_COUNT_FOR_TAGS_IN_WAY);
     for( unsigned int iTag = 0; iTag < nTags; iTag++ )
     {
-        if( static_cast<int>(pabyPtr - pabyCompressedWay) + 2 >=
-            MAX_SIZE_FOR_TAGS_IN_WAY )
-        {
-            break;
-        }
-
-        WriteVarInt(pasTags[iTag].nKeyIndex, &pabyPtr);
+        WriteVarInt(pasTags[iTag].nKeyIndex, abyCompressedWay);
 
         // To fit in 2 bytes, the theoretical limit would be 127 * 128 + 127.
         if( pasTags[iTag].bVIsIndex )
         {
-            if( static_cast<int>(pabyPtr - pabyCompressedWay) + 2 >=
-                MAX_SIZE_FOR_TAGS_IN_WAY )
-            {
-                break;
-            }
-
-            WriteVarInt(pasTags[iTag].u.nValueIndex, &pabyPtr);
+            WriteVarInt(pasTags[iTag].u.nValueIndex, abyCompressedWay);
         }
         else
         {
             const char* pszV = (const char*)pabyNonRedundantValues +
                 pasTags[iTag].u.nOffsetInpabyNonRedundantValues;
 
-            int nLenV = static_cast<int>(strlen(pszV)) + 1;
-            if( static_cast<int>(pabyPtr - pabyCompressedWay) +
-                2 + nLenV >= MAX_SIZE_FOR_TAGS_IN_WAY )
-            {
-                break;
-            }
+            abyCompressedWay.push_back(0);
 
-            WriteVarInt(0, &pabyPtr);
-
-            memcpy(pabyPtr, pszV, nLenV);
-            pabyPtr += nLenV;
+            abyCompressedWay.insert(abyCompressedWay.end(),
+                                    reinterpret_cast<const GByte*>(pszV),
+                                    reinterpret_cast<const GByte*>(pszV) + strlen(pszV) + 1);
         }
 
         nTagCount ++;
     }
 
-    pabyCompressedWay[1] = (GByte) nTagCount;
+    abyCompressedWay[1] = (GByte) nTagCount;
 
     if( bNeedsToSaveWayInfo )
     {
         if( psInfo != nullptr )
         {
-            *pabyPtr = 1;
-            pabyPtr ++;
-
-            WriteVarInt64(psInfo->ts.nTimeStamp, &pabyPtr);
-            WriteVarInt64(psInfo->nChangeset, &pabyPtr);
-            WriteVarInt(psInfo->nVersion, &pabyPtr);
-            WriteVarInt(psInfo->nUID, &pabyPtr);
+            abyCompressedWay.push_back(1);
+            WriteVarInt64(psInfo->ts.nTimeStamp, abyCompressedWay);
+            WriteVarInt64(psInfo->nChangeset,abyCompressedWay);
+            WriteVarInt(psInfo->nVersion, abyCompressedWay);
+            WriteVarInt(psInfo->nUID, abyCompressedWay);
             // FIXME : do something with pszUserSID
         }
         else
         {
-            *pabyPtr = 0;
-            pabyPtr ++;
+            abyCompressedWay.push_back(0);
         }
     }
 
-    memcpy(pabyPtr, &(pasLonLatPairs[0]), sizeof(LonLat));
-    pabyPtr += sizeof(LonLat);
+    abyCompressedWay.insert(abyCompressedWay.end(),
+                            reinterpret_cast<const GByte*>(&(pasLonLatPairs[0])),
+                            reinterpret_cast<const GByte*>(&(pasLonLatPairs[0])) + sizeof(LonLat));
     for(int i=1;i<nPoints;i++)
     {
         GIntBig nDiff64 =
             (GIntBig)pasLonLatPairs[i].nLon - (GIntBig)pasLonLatPairs[i-1].nLon;
-        WriteVarSInt64(nDiff64, &pabyPtr);
+        WriteVarSInt64(nDiff64, abyCompressedWay);
 
         nDiff64 = pasLonLatPairs[i].nLat - pasLonLatPairs[i-1].nLat;
-        WriteVarSInt64(nDiff64, &pabyPtr);
+        WriteVarSInt64(nDiff64,abyCompressedWay);
     }
-    int nBufferSize = (int)(pabyPtr - pabyCompressedWay);
-    return nBufferSize;
 }
 
 /************************************************************************/
 /*                             UncompressWay()                          */
 /************************************************************************/
 
-int OGROSMDataSource::UncompressWay( int nBytes, GByte* pabyCompressedWay,
+void OGROSMDataSource::UncompressWay( int nBytes, const GByte* pabyCompressedWay,
                                      bool* pbIsArea,
-                                     LonLat* pasCoords,
+                                     std::vector<LonLat>& asCoords,
                                      unsigned int* pnTags, OSMTag* pasTags,
                                      OSMInfo* psInfo )
 {
+    asCoords.clear();
     const GByte* pabyPtr = pabyCompressedWay;
     if( pbIsArea )
         *pbIsArea = (*pabyPtr == 1) ? true : false;
@@ -1605,19 +1587,17 @@ int OGROSMDataSource::UncompressWay( int nBytes, GByte* pabyCompressedWay,
             pabyPtr ++;
     }
 
-    memcpy(&pasCoords[0].nLon, pabyPtr, sizeof(int));
-    memcpy(&pasCoords[0].nLat, pabyPtr + sizeof(int), sizeof(int));
+    LonLat lonLat;
+    memcpy(&lonLat.nLon, pabyPtr, sizeof(int));
+    memcpy(&lonLat.nLat, pabyPtr + sizeof(int), sizeof(int));
+    asCoords.emplace_back(lonLat);
     pabyPtr += 2 * sizeof(int);
-    int nPoints = 1;
     do
     {
-        pasCoords[nPoints].nLon = (int)(pasCoords[nPoints-1].nLon + ReadVarSInt64(&pabyPtr));
-        pasCoords[nPoints].nLat = (int)(pasCoords[nPoints-1].nLat + ReadVarSInt64(&pabyPtr));
-
-        nPoints ++;
+        lonLat.nLon = (int)(lonLat.nLon + ReadVarSInt64(&pabyPtr));
+        lonLat.nLat = (int)(lonLat.nLat + ReadVarSInt64(&pabyPtr));
+        asCoords.emplace_back(lonLat);
     } while (pabyPtr < pabyCompressedWay + nBytes);
-
-    return nPoints;
 }
 
 /************************************************************************/
@@ -1641,10 +1621,12 @@ void OGROSMDataSource::IndexWay(GIntBig nWayID, bool bIsArea,
                  "Clamping to %u",
                  nWayID, nTags, nTagsClamped);
     }
-    int nBufferSize = CompressWay (bIsArea, nTagsClamped, pasTags, nPairs, pasLonLatPairs, psInfo, pabyWayBuffer);
-    CPLAssert(nBufferSize <= WAY_BUFFER_SIZE);
-    sqlite3_bind_blob( hInsertWayStmt, 2, pabyWayBuffer,
-                       nBufferSize, SQLITE_STATIC );
+    CompressWay (bIsArea, nTagsClamped, pasTags, nPairs, pasLonLatPairs, psInfo,
+                 m_abyWayBuffer);
+    sqlite3_bind_blob( hInsertWayStmt, 2,
+                       m_abyWayBuffer.data(),
+                       static_cast<int>(m_abyWayBuffer.size()),
+                       SQLITE_STATIC );
 
     int rc = sqlite3_step( hInsertWayStmt );
     sqlite3_reset( hInsertWayStmt );
@@ -1695,8 +1677,7 @@ void OGROSMDataSource::ProcessWaysBatch()
         WayFeaturePair* psWayFeaturePairs = &pasWayFeaturePairs[iPair];
 
         const EMULATED_BOOL bIsArea = psWayFeaturePairs->bIsArea;
-
-        unsigned int nFound = 0;
+        m_asLonLatCache.clear();
 
 #ifdef ENABLE_NODE_LOOKUP_BY_HASHING
         if( bHashedIndexValid )
@@ -1730,9 +1711,7 @@ void OGROSMDataSource::ProcessWaysBatch()
 
                 if( nIdx >= 0 )
                 {
-                    pasLonLatCache[nFound].nLon = pasLonLatArray[nIdx].nLon;
-                    pasLonLatCache[nFound].nLat = pasLonLatArray[nIdx].nLat;
-                    nFound ++;
+                    m_asLonLatCache.push_back(pasLonLatArray[nIdx]);
                 }
             }
         }
@@ -1755,24 +1734,20 @@ void OGROSMDataSource::ProcessWaysBatch()
                     nIdx = FindNode( psWayFeaturePairs->panNodeRefs[i] );
                 if( nIdx >= 0 )
                 {
-                    pasLonLatCache[nFound].nLon = pasLonLatArray[nIdx].nLon;
-                    pasLonLatCache[nFound].nLat = pasLonLatArray[nIdx].nLat;
-                    nFound ++;
+                    m_asLonLatCache.push_back(pasLonLatArray[nIdx]);
                 }
             }
         }
 
-        if( nFound > 0 && bIsArea )
+        if( !m_asLonLatCache.empty() && bIsArea )
         {
-            pasLonLatCache[nFound].nLon = pasLonLatCache[0].nLon;
-            pasLonLatCache[nFound].nLat = pasLonLatCache[0].nLat;
-            nFound ++;
+            m_asLonLatCache.push_back(m_asLonLatCache[0]);
         }
 
-        if( nFound < 2 )
+        if( m_asLonLatCache.size() < 2 )
         {
             CPLDebug("OSM", "Way " CPL_FRMT_GIB " with %d nodes that could be found. Discarding it",
-                    psWayFeaturePairs->nWayID, nFound);
+                    psWayFeaturePairs->nWayID, static_cast<int>(m_asLonLatCache.size()));
             delete psWayFeaturePairs->poFeature;
             psWayFeaturePairs->poFeature = nullptr;
             psWayFeaturePairs->bIsArea = false;
@@ -1785,12 +1760,15 @@ void OGROSMDataSource::ProcessWaysBatch()
                      bIsArea != 0,
                      psWayFeaturePairs->nTags,
                      psWayFeaturePairs->pasTags,
-                     pasLonLatCache, (int)nFound,
+                     m_asLonLatCache.data(),
+                     static_cast<int>(m_asLonLatCache.size()),
                      &psWayFeaturePairs->sInfo);
         }
         else
             IndexWay(psWayFeaturePairs->nWayID, bIsArea != 0, 0, nullptr,
-                     pasLonLatCache, (int)nFound, nullptr);
+                     m_asLonLatCache.data(),
+                     static_cast<int>(m_asLonLatCache.size()),
+                     nullptr);
 
         if( psWayFeaturePairs->poFeature == nullptr )
         {
@@ -1800,19 +1778,21 @@ void OGROSMDataSource::ProcessWaysBatch()
         OGRLineString* poLS = new OGRLineString();
         OGRGeometry* poGeom = poLS;
 
-        poLS->setNumPoints((int)nFound);
-        for( unsigned int i=0;i<nFound;i++)
+        const int nPoints = static_cast<int>(m_asLonLatCache.size());
+        poLS->setNumPoints(nPoints);
+        for(int i=0;i<nPoints;i++)
         {
             poLS->setPoint(i,
-                        INT_TO_DBL(pasLonLatCache[i].nLon),
-                        INT_TO_DBL(pasLonLatCache[i].nLat));
+                        INT_TO_DBL(m_asLonLatCache[i].nLon),
+                        INT_TO_DBL(m_asLonLatCache[i].nLat));
         }
 
         psWayFeaturePairs->poFeature->SetGeometryDirectly(poGeom);
 
-        if( nFound != psWayFeaturePairs->nRefs )
+        if( m_asLonLatCache.size() != psWayFeaturePairs->nRefs )
             CPLDebug("OSM", "For way " CPL_FRMT_GIB ", got only %d nodes instead of %d",
-                   psWayFeaturePairs->nWayID, nFound,
+                   psWayFeaturePairs->nWayID,
+                   nPoints,
                    psWayFeaturePairs->nRefs);
 
         int bFilteredOut = FALSE;
@@ -1942,13 +1922,6 @@ void OGROSMDataSource::NotifyWay( OSMWay* psWay )
         return;
 
     //printf("way %d : %d nodes\n", (int)psWay->nID, (int)psWay->nRefs);
-    if( psWay->nRefs > static_cast<unsigned int>(MAX_NODES_PER_WAY) )
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Ways with more than %d nodes are not supported",
-                 MAX_NODES_PER_WAY);
-        return;
-    }
 
     if( psWay->nRefs < 2 )
     {
@@ -2081,20 +2054,11 @@ void OGROSMDataSource::NotifyWay( OSMWay* psWay )
             const char* pszK = psWay->pasTags[iTag].pszK;
             const char* pszV = psWay->pasTags[iTag].pszV;
 
-            if( strcmp(pszK, "area") == 0 )
+            if( std::any_of(begin(m_ignoredKeys), end(m_ignoredKeys),
+                    [pszK](const char* pszIgnoredKey) { return strcmp(pszK, pszIgnoredKey) == 0; }) )
+            {
                 continue;
-            if( strcmp(pszK, "created_by") == 0 )
-                continue;
-            if( strcmp(pszK, "converted_by") == 0 )
-                continue;
-            if( strcmp(pszK, "note") == 0 )
-                continue;
-            if( strcmp(pszK, "todo") == 0 )
-                continue;
-            if( strcmp(pszK, "fixme") == 0 )
-                continue;
-            if( strcmp(pszK, "FIXME") == 0 )
-                continue;
+            }
 
             std::map<const char*, KeyDesc*, ConstCharComp>::iterator oIterK =
                 aoMapIndexedKeys.find(pszK);
@@ -2321,31 +2285,34 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
         {
             const std::pair<int, void*>& oGeom = aoMapWays[ psRelation->pasMembers[i].nID ];
 
-            LonLat* pasCoords = (LonLat*) pasLonLatCache;
-            int nPoints = 0;
-
             if( pnTags != nullptr && *pnTags == 0 &&
                 strcmp(psRelation->pasMembers[i].pszRole, "outer") == 0 )
             {
-                int nCompressedWaySize = oGeom.first;
-                GByte* pabyCompressedWay = (GByte*) oGeom.second;
+                // This backup in m_abyWayBuffer is crucial for safe memory
+                // usage, as pasTags[].pszV will point to it !
+                m_abyWayBuffer.clear();
+                m_abyWayBuffer.insert(m_abyWayBuffer.end(),
+                                      static_cast<const GByte*>(oGeom.second),
+                                      static_cast<const GByte*>(oGeom.second) + oGeom.first);
 
-                memcpy(pabyWayBuffer, pabyCompressedWay, nCompressedWaySize);
-
-                nPoints = UncompressWay (nCompressedWaySize, pabyWayBuffer,
-                                         nullptr, pasCoords,
-                                         pnTags, pasTags, nullptr );
+                UncompressWay( oGeom.first,
+                               m_abyWayBuffer.data(),
+                               nullptr, m_asLonLatCache,
+                               pnTags, pasTags, nullptr );
             }
             else
             {
-                nPoints = UncompressWay (oGeom.first, (GByte*) oGeom.second, nullptr, pasCoords,
-                                         nullptr, nullptr, nullptr);
+                UncompressWay( oGeom.first,
+                               static_cast<const GByte*>(oGeom.second),
+                               nullptr, m_asLonLatCache,
+                               nullptr, nullptr, nullptr );
             }
 
             OGRLineString* poLS = nullptr;
 
-            if( pasCoords[0].nLon == pasCoords[nPoints - 1].nLon &&
-                pasCoords[0].nLat == pasCoords[nPoints - 1].nLat )
+            if( !m_asLonLatCache.empty() &&
+                m_asLonLatCache.front().nLon == m_asLonLatCache.back().nLon &&
+                m_asLonLatCache.front().nLat == m_asLonLatCache.back().nLat )
             {
                 OGRPolygon* poPoly = new OGRPolygon();
                 OGRLinearRing* poRing = new OGRLinearRing();
@@ -2366,12 +2333,13 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
                 poMLS->addGeometryDirectly(poLS);
             }
 
+            const int nPoints = static_cast<int>(m_asLonLatCache.size());
             poLS->setNumPoints(nPoints);
             for(int j=0;j<nPoints;j++)
             {
                 poLS->setPoint( j,
-                                INT_TO_DBL(pasCoords[j].nLon),
-                                INT_TO_DBL(pasCoords[j].nLat) );
+                                INT_TO_DBL(m_asLonLatCache[j].nLon),
+                                INT_TO_DBL(m_asLonLatCache[j].nLat) );
             }
         }
     }
@@ -2483,12 +2451,11 @@ OGRGeometry* OGROSMDataSource::BuildGeometryCollection(OSMRelation* psRelation,
         {
             const std::pair<int, void*>& oGeom = aoMapWays[ psRelation->pasMembers[i].nID ];
 
-            LonLat* pasCoords = reinterpret_cast<LonLat *>(pasLonLatCache);
             bool bIsArea = false;
-            const int nPoints = UncompressWay(
+            UncompressWay(
                 oGeom.first,
                 reinterpret_cast<GByte *>(oGeom.second),
-                &bIsArea, pasCoords, nullptr, nullptr, nullptr );
+                &bIsArea, m_asLonLatCache, nullptr, nullptr, nullptr );
             OGRLineString* poLS = nullptr;
             if( bIsArea && !bMultiLineString )
             {
@@ -2504,12 +2471,13 @@ OGRGeometry* OGROSMDataSource::BuildGeometryCollection(OSMRelation* psRelation,
                 poColl->addGeometryDirectly(poLS);
             }
 
+            const int nPoints = static_cast<int>(m_asLonLatCache.size());
             poLS->setNumPoints(nPoints);
             for(int j=0;j<nPoints;j++)
             {
                 poLS->setPoint( j,
-                                INT_TO_DBL(pasCoords[j].nLon),
-                                INT_TO_DBL(pasCoords[j].nLat) );
+                                INT_TO_DBL(m_asLonLatCache[j].nLon),
+                                INT_TO_DBL(m_asLonLatCache[j].nLat) );
             }
         }
     }
@@ -2713,11 +2681,9 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
             int nBlobSize = sqlite3_column_bytes(pahSelectWayStmt[0], 1);
             const void* blob = sqlite3_column_blob(pahSelectWayStmt[0], 1);
 
-            LonLat* pasCoords = reinterpret_cast<LonLat *>(pasLonLatCache);
-
-            const int nPoints = UncompressWay(
-                nBlobSize, reinterpret_cast<GByte *>(const_cast<void *>(blob)),
-                nullptr, pasCoords, &nTags, pasTags, &sInfo );
+            UncompressWay(
+                nBlobSize, static_cast<const GByte*>(blob),
+                nullptr, m_asLonLatCache, &nTags, pasTags, &sInfo );
             CPLAssert(nTags <= MAX_COUNT_FOR_TAGS_IN_WAY);
 
             OGRMultiPolygon* poMulti = new OGRMultiPolygon();
@@ -2727,12 +2693,12 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
             poPoly->addRingDirectly(poRing);
             OGRLineString* poLS = poRing;
 
-            poLS->setNumPoints(nPoints);
-            for(int j=0;j<nPoints;j++)
+            poLS->setNumPoints(static_cast<int>(m_asLonLatCache.size()));
+            for(int j=0;j<static_cast<int>(m_asLonLatCache.size());j++)
             {
                 poLS->setPoint( j,
-                                INT_TO_DBL(pasCoords[j].nLon),
-                                INT_TO_DBL(pasCoords[j].nLat) );
+                                INT_TO_DBL(m_asLonLatCache[j].nLon),
+                                INT_TO_DBL(m_asLonLatCache[j].nLat) );
             }
 
             OGRFeature* poFeature =
@@ -2881,10 +2847,6 @@ int OGROSMDataSource::Open( const char * pszFilename,
           papoLayers[IDX_LYR_MULTIPOLYGONS]->HasUID() ||
           papoLayers[IDX_LYR_MULTIPOLYGONS]->HasUser() );
 
-    pasLonLatCache = static_cast<LonLat*>(
-        VSI_MALLOC_VERBOSE(MAX_NODES_PER_WAY * sizeof(LonLat)));
-    pabyWayBuffer = static_cast<GByte*>(VSI_MALLOC_VERBOSE(WAY_BUFFER_SIZE));
-
     panReqIds = static_cast<GIntBig*>(
         VSI_MALLOC_VERBOSE(MAX_ACCUMULATED_NODES * sizeof(GIntBig)));
 #ifdef ENABLE_NODE_LOOKUP_BY_HASHING
@@ -2905,9 +2867,7 @@ int OGROSMDataSource::Open( const char * pszFilename,
     pabyNonRedundantValues = static_cast<GByte*>(
         VSI_MALLOC_VERBOSE(MAX_NON_REDUNDANT_VALUES) );
 
-    if( pasLonLatCache == nullptr ||
-        pabyWayBuffer == nullptr ||
-        panReqIds == nullptr ||
+    if( panReqIds == nullptr ||
         pasLonLatArray == nullptr ||
         panUnsortedReqIds == nullptr ||
         pasWayFeaturePairs == nullptr ||
@@ -3508,6 +3468,14 @@ bool OGROSMDataSource::ParseConf( char** papszOpenOptionsIn )
             CSLDestroy(papszTokens2);
         }
 
+        else if(STARTS_WITH(pszLine, "report_all_tags="))
+        {
+            if( strcmp(pszLine + strlen("report_all_tags="), "yes") == 0 )
+            {
+                std::fill( begin(m_ignoredKeys), end(m_ignoredKeys), "" );
+            }
+        }
+
         else if(STARTS_WITH(pszLine, "report_all_nodes="))
         {
             if( strcmp(pszLine + strlen("report_all_nodes="), "no") == 0 )
@@ -3634,6 +3602,11 @@ bool OGROSMDataSource::ParseConf( char** papszOpenOptionsIn )
                 for(int i=0;papszTokens2[i] != nullptr;i++)
                 {
                     papoLayers[iCurLayer]->AddField(papszTokens2[i], OFTString);
+                    for( const char*& pszIgnoredKey : m_ignoredKeys )
+                    {
+                        if( strcmp( papszTokens2[i], pszIgnoredKey ) == 0 )
+                            pszIgnoredKey = "";
+                    }
                 }
                 CSLDestroy(papszTokens2);
             }

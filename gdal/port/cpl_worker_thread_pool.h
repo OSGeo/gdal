@@ -32,6 +32,10 @@
 
 #include "cpl_multiproc.h"
 #include "cpl_list.h"
+
+#include <condition_variable>
+#include <memory>
+#include <mutex>
 #include <vector>
 
 /**
@@ -42,26 +46,23 @@
  */
 
 #ifndef DOXYGEN_SKIP
+struct CPLWorkerThreadJob;
 class CPLWorkerThreadPool;
 
-typedef struct
+struct CPLWorkerThread
 {
-    CPLThreadFunc  pfnFunc;
-    void          *pData;
-} CPLWorkerThreadJob;
+    CPL_DISALLOW_COPY_ASSIGN(CPLWorkerThread)
+    CPLWorkerThread() = default;
 
-typedef struct
-{
-    CPLThreadFunc        pfnInitFunc;
-    void                *pInitData;
-    CPLWorkerThreadPool *poTP;
-    CPLJoinableThread   *hThread;
-    int                  bMarkedAsWaiting;
-    // CPLWorkerThreadJob  *psNextJob;
+    CPLThreadFunc        pfnInitFunc = nullptr;
+    void                *pInitData = nullptr;
+    CPLWorkerThreadPool *poTP = nullptr;
+    CPLJoinableThread   *hThread = nullptr;
+    bool                 bMarkedAsWaiting = false;
 
-    CPLMutex            *hMutex;
-    CPLCond             *hCond;
-} CPLWorkerThread;
+    std::mutex              m_mutex{};
+    std::condition_variable m_cv{};
+};
 
 typedef enum
 {
@@ -71,14 +72,16 @@ typedef enum
 } CPLWorkerThreadState;
 #endif  // ndef DOXYGEN_SKIP
 
+class CPLJobQueue;
+
 /** Pool of worker threads */
 class CPL_DLL CPLWorkerThreadPool
 {
         CPL_DISALLOW_COPY_ASSIGN(CPLWorkerThreadPool)
 
-        std::vector<CPLWorkerThread> aWT{};
-        CPLCond* hCond = nullptr;
-        CPLMutex* hMutex = nullptr;
+        std::vector<std::unique_ptr<CPLWorkerThread>> aWT{};
+        std::mutex              m_mutex{};
+        std::condition_variable m_cv{};
         volatile CPLWorkerThreadState eState = CPLWTS_OK;
         CPLList* psJobQueue = nullptr;
         volatile int nPendingJobs = 0;
@@ -95,6 +98,7 @@ class CPL_DLL CPLWorkerThreadPool
         CPLWorkerThreadPool();
        ~CPLWorkerThreadPool();
 
+
         bool Setup(int nThreads,
                    CPLThreadFunc pfnInitFunc,
                    void** pasInitData);
@@ -102,6 +106,9 @@ class CPL_DLL CPLWorkerThreadPool
                    CPLThreadFunc pfnInitFunc,
                    void** pasInitData,
                    bool bWaitallStarted);
+
+        std::unique_ptr<CPLJobQueue> CreateJobQueue();
+
         bool SubmitJob(CPLThreadFunc pfnFunc, void* pData);
         bool SubmitJobs(CPLThreadFunc pfnFunc, const std::vector<void*>& apData);
         void WaitCompletion(int nMaxRemainingJobs = 0);
@@ -109,6 +116,34 @@ class CPL_DLL CPLWorkerThreadPool
 
         /** Return the number of threads setup */
         int GetThreadCount() const { return static_cast<int>(aWT.size()); }
+};
+
+/** Job queue */
+class CPL_DLL CPLJobQueue
+{
+        CPL_DISALLOW_COPY_ASSIGN(CPLJobQueue)
+        CPLWorkerThreadPool* m_poPool = nullptr;
+        std::mutex m_mutex{};
+        std::condition_variable m_cv{};
+        int m_nPendingJobs = 0;
+
+        static void JobQueueFunction(void*);
+        void DeclareJobFinished();
+
+//! @cond Doxygen_Suppress
+protected:
+        friend class CPLWorkerThreadPool;
+        explicit CPLJobQueue(CPLWorkerThreadPool* poPool);
+//! @endcond
+
+public:
+        ~CPLJobQueue();
+
+        /** Return the owning worker thread pool */
+        CPLWorkerThreadPool* GetPool() { return m_poPool; }
+
+        bool SubmitJob(CPLThreadFunc pfnFunc, void* pData);
+        void WaitCompletion(int nMaxRemainingJobs = 0);
 };
 
 #endif // CPL_WORKER_THREAD_POOL_H_INCLUDED_

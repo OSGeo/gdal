@@ -9,12 +9,13 @@ DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			geoconcept xplane georss gtm dxf pgdump gpsbabel \
 			sua openair pds htf aeronavfaa edigeo svg idrisi arcgen \
 			segukooa segy sxf openfilegdb wasp selafin jml vdv mvt flatgeobuf mapml \
+			lvbag \
 			$(ARCOBJECTS_DIR) \
 			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
 			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
 			$(SDE_DIR) $(IDB_DIR) $(NAS_DIR) $(DODSDIR) \
 			$(LIBKMLDIR) $(WFSDIR) $(SOSIDIR) \
-			$(COUCHDBDIR) $(CLOUDANTDIR) $(FGDB_DIR) $(XLSDIR) $(ODSDIR) $(XLSXDIR) \
+			$(COUCHDBDIR) $(CLOUDANTDIR) $(FGDB_DIR) $(XLSDIR) $(ODSDIR) $(XLSXDIR) $(LVBAGDIR) \
 			$(INGRESDIR) $(ELASTICDIR) $(GPKGDIR) $(OSMDIR) $(VFKDIR) $(CARTODIR) $(AMIGOCLOUD_DIR) \
 			$(PLSCENESDIR) $(CSWDIR) $(MONGODBDIR) $(MONGODBV3DIR) $(GMLAS_DIR) $(CAD_DIR) $(NGW_DIR)
 
@@ -197,6 +198,11 @@ XLSXDIR = xlsx
 XLSX_OBJ = xlsx\*.obj
 !ENDIF
 
+!IFDEF EXPAT_INCLUDE
+LVBAGDIR = lvbag
+LVBAG_OBJ = lvbag\*.obj
+!ENDIF
+
 !IFDEF CURL_LIB
 ELASTICDIR = elastic
 ELASTIC_OBJ = elastic\*.obj
@@ -286,7 +292,7 @@ default:
 				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ) $(MYSQL_OBJ) \
 				$(ILI_OBJ) $(DWG_OBJ) $(SDE_OBJ) $(FGDB_OBJ) $(ARCDRIVER_OBJ) $(IDB_OBJ) \
 				$(DODS_OBJ) $(NAS_OBJ) $(LIBKMLOBJ) $(WFS_OBJ) \
-				$(SOSI_OBJ) $(COUCHDB_OBJ) $(CLOUDANT_OBJ) $(XLS_OBJ) $(ODS_OBJ) $(XLSX_OBJ)  \
+				$(SOSI_OBJ) $(COUCHDB_OBJ) $(CLOUDANT_OBJ) $(XLS_OBJ) $(ODS_OBJ) $(XLSX_OBJ) $(LVBAG_OBJ)  \
 				$(INGRESOBJ) $(ELASTIC_OBJ) $(GPKG_OBJ) $(OSM_OBJ) $(VFK_OBJ) $(CARTO_OBJ) $(AMIGOCLOUD_OBJ) $(PLSCENES_OBJ) \
 				$(CSW_OBJ) $(MONGODBOBJ) $(MONGODBV3OBJ) $(GMLAS_OBJ) $(CAD_OBJ) $(NGW_OBJ)
 	lib /out:ogrsf_frmts_sup.lib \

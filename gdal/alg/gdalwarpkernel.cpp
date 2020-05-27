@@ -54,6 +54,7 @@
 #include "gdal.h"
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
+#include "gdal_thread_pool.h"
 #include "gdalwarpkernel_opencl.h"
 
 // We restrict to 64bit processors because they are guaranteed to have SSE2.
@@ -212,8 +213,9 @@ struct _GWKJobStruct
 
 struct GWKThreadData
 {
-    CPLWorkerThreadPool* poThreadPool = nullptr;
+    std::unique_ptr<CPLJobQueue> poJobQueue{};
     GWKJobStruct* pasThreadJob = nullptr;
+    int nThreads = 0;
     CPLCond* hCond = nullptr;
     CPLMutex* hCondMutex = nullptr;
     bool bTransformerArgInputAssignedToThread = false;
@@ -310,8 +312,10 @@ void* GWKThreadsCreate( char** papszWarpOptions,
     CPLCond* hCond = nullptr;
     if( nThreads )
         hCond = CPLCreateCond();
-    if( nThreads && hCond )
+    auto poThreadPool = nThreads > 0 ? GDALGetGlobalThreadPool(nThreads) : nullptr;
+    if( nThreads && hCond && poThreadPool )
     {
+        psThreadData->nThreads = nThreads;
         psThreadData->hCond = hCond;
         psThreadData->pasThreadJob = static_cast<GWKJobStruct *>(
             VSI_CALLOC_VERBOSE(sizeof(GWKJobStruct), nThreads));
@@ -335,13 +339,7 @@ void* GWKThreadsCreate( char** papszWarpOptions,
             psThreadData->pasThreadJob[i].hCondMutex = psThreadData->hCondMutex;
         }
 
-        psThreadData->poThreadPool = new (std::nothrow) CPLWorkerThreadPool();
-        if( psThreadData->poThreadPool == nullptr ||
-            !psThreadData->poThreadPool->Setup(nThreads, nullptr, nullptr) )
-        {
-            GWKThreadsEnd(psThreadData);
-            return nullptr;
-        }
+        psThreadData->poJobQueue = poThreadPool->CreateJobQueue();
         psThreadData->pTransformerArgInput = pTransformerArg;
     }
 
@@ -358,14 +356,14 @@ void GWKThreadsEnd( void* psThreadDataIn )
         return;
 
     GWKThreadData* psThreadData = static_cast<GWKThreadData *>(psThreadDataIn);
-    if( psThreadData->poThreadPool )
+    if( psThreadData->poJobQueue )
     {
         for( auto& pair: psThreadData->mapThreadToTransformerArg )
         {
             if( pair.second != psThreadData->pTransformerArgInput )
                 GDALDestroyTransformer(pair.second);
         }
-        delete psThreadData->poThreadPool;
+        psThreadData->poJobQueue.reset();
     }
     CPLFree(psThreadData->pasThreadJob);
     if( psThreadData->hCond )
@@ -454,13 +452,12 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
 
     GWKThreadData* psThreadData =
         static_cast<GWKThreadData*>(poWK->psThreadData);
-    if( psThreadData == nullptr || psThreadData->poThreadPool == nullptr )
+    if( psThreadData == nullptr || psThreadData->poJobQueue == nullptr )
     {
         return GWKGenericMonoThread(poWK, pfnFunc);
     }
 
-    int nThreads =
-        std::min(psThreadData->poThreadPool->GetThreadCount(), nDstYSize / 2);
+    int nThreads = std::min(psThreadData->nThreads, nDstYSize / 2);
     // Config option mostly useful for tests to be able to test multithreading
     // with small rasters
     const int nWarpChunkSize = atoi(
@@ -500,7 +497,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
         else
             psThreadData->pasThreadJob[i].pfnProgress = nullptr;
         psThreadData->pasThreadJob[i].pfnFunc = pfnFunc;
-        psThreadData->poThreadPool->SubmitJob( ThreadFuncAdapter,
+        psThreadData->poJobQueue->SubmitJob( ThreadFuncAdapter,
                             static_cast<void*>(&psThreadData->pasThreadJob[i]) );
     }
 
@@ -532,7 +529,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
 /* -------------------------------------------------------------------- */
 /*      Wait for all jobs to complete.                                  */
 /* -------------------------------------------------------------------- */
-    psThreadData->poThreadPool->WaitCompletion();
+    psThreadData->poJobQueue->WaitCompletion();
 
     return !bStop ? CE_None : CE_Failure;
 }

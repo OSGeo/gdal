@@ -327,4 +327,19 @@ def test_osr_compd_8():
     assert wkt.startswith('COMPD_CS'), 'COMPD_CS not recognised as compound.'
 
 
+###############################################################################
+# Test COMPD_CS with a VERT_DATUM type = 2002 (Ellipsoid height)
 
+def test_osr_compd_vert_datum_2002():
+
+    if osr.GetPROJVersionMajor() * 10000 + osr.GetPROJVersionMinor() * 100 < 70100:
+        # Not supported before PROJ 7.1
+        pytest.skip()
+
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('COMPD_CS["NAD83 / Alabama West + Ellipsoidal height",PROJCS["NAD83 / Alabama West",GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6269"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4269"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",30],PARAMETER["central_meridian",-87.5],PARAMETER["scale_factor",0.999933333],PARAMETER["false_easting",600000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["X",EAST],AXIS["Y",NORTH],AUTHORITY["EPSG","26930"]],VERT_CS["Ellipsoidal height",VERT_DATUM["Ellipsoid",2002],UNIT["metre",1.0,AUTHORITY["EPSG","9001"]],AXIS["Up",UP]]]')
+    assert sr.IsProjected()
+    assert sr.GetAuthorityCode('PROJCS') == '26930'
+    assert sr.GetAuthorityName('PROJCS') == 'EPSG'
+    assert sr.GetAuthorityCode(None) is None
+    assert sr.GetAuthorityName(None) is None

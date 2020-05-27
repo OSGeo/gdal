@@ -185,7 +185,7 @@ Reprojection related creation options
   256 pixels) will be used, unless the user has specified a value with the
   BLOCKSIZE creation option, in which case the user specified one will be taken
   into account (that is if setting a higher value than 256, the original
-  tiling scheme is modified to take into account the size of the HiDiPi tiles).
+  tiling scheme is modified to take into account the size of the HiDPi tiles).
   In non-CUSTOM mode, TARGET_SRS, RES and EXTENT options are ignored.
   Starting with GDAL 3.2, the value of TILING_SCHEME can also be the filename
   of a JSON file according to the `OGC Two Dimensional Tile Matrix Set standard`_,
@@ -193,6 +193,14 @@ Reprojection related creation options
   (e.g. ``FOO`` for a file named ``tms_FOO.json``) or the inline JSON definition.
 
 .. _`OGC Two Dimensional Tile Matrix Set standard`: http://docs.opengeospatial.org/is/17-083r2/17-083r2.html
+
+- **ZOOM_LEVEL_STRATEGY**\ =AUTO/LOWER/UPPER. (GDAL >= 3.2) Strategy to determine
+  zoom level. Only used for TILING_SCHEME different from CUSTOM.
+  LOWER will select the zoom level immediately below the
+  theoretical computed non-integral zoom level, leading to subsampling.
+  On the contrary, UPPER will select the immediately above zoom level,
+  leading to oversampling. Defaults to AUTO which selects the closest
+  zoom level.
 
 - **TARGET_SRS=string**: to force reprojection of the input dataset to another
   SRS. The string can be a WKT string, a EPSG:XXXX code or a PROJ string.

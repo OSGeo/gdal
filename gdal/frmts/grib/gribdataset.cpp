@@ -1577,7 +1577,7 @@ void GRIBArray::Finalize(GRIBGroup* poGroup, inventoryType *psInv)
 
     std::shared_ptr<GDALDimension> poDimTime;
 
-    for( const auto poDim: poGroup->m_dims )
+    for( const auto& poDim: poGroup->m_dims )
     {
         if( STARTS_WITH(poDim->GetName().c_str(), "TIME") &&
             poDim->GetSize() == m_adfTimes.size() )
