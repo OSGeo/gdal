@@ -3942,6 +3942,36 @@ def test_ogr_gpkg_mixed_dimensionality_unknown_layer_geometry_type():
     gdal.Unlink(filename)
 
 
+    # Now test loading the same layer from disk, constraints should be
+    # automatically set on field 2
+    ds = ogr.Open('data/ogr_gpkg_unique.gpkg')
+
+    assert ds.GetLayerCount() == 1
+    lyr = ds.GetLayer(0)
+
+    layerDefinition = lyr.GetLayerDefn()
+    fldDef = layerDefinition.GetFieldDefn(0)
+    assert not fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(1)
+    assert not fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(2)
+    assert fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(3)
+    assert fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(4)
+    assert fldDef.IsUnique()
+
+    # Check the last 3 field where the unique constraint is defined
+    # from an index
+    fldDef = layerDefinition.GetFieldDefn(5)
+    assert fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(6)
+    assert fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(7)
+    assert fldDef.IsUnique()
+
+    ds = None
+
 ###############################################################################
 # Remove the test db from the tmp directory
 

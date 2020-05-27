@@ -32,6 +32,9 @@
 #include "ogrsqliteutility.h"
 #include "cpl_time.h"
 #include "ogr_p.h"
+#if !defined(__GNUC__) || defined(__clang__) || __GNUC__ >= 5
+#include <regex>
+#endif
 
 CPL_CVSID("$Id$")
 
@@ -811,6 +814,79 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
         }
     }
 
+#if !defined(__GNUC__) || defined(__clang__) || __GNUC__ >= 5
+
+    // Unique fields detection
+    char* pszTableDefinitionSQL = sqlite3_mprintf("select sql from sqlite_master where type='table' and name='%q'", m_pszTableName);
+    err = SQLQuery(poDb, pszTableDefinitionSQL, &oResultTable);
+    sqlite3_free(pszTableDefinitionSQL);
+
+    if ( err != OGRERR_NONE || oResultTable.nRowCount == 0 )
+    {
+        if( oResultTable.pszErrMsg != nullptr )
+            CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultTable.pszErrMsg );
+        else
+            CPLError( CE_Failure, CPLE_AppDefined, "Cannot find table %s", m_pszTableName );
+
+        SQLResultFree(&oResultTable);
+        return OGRERR_FAILURE;
+    }
+
+    std::set<std::string> uniqueFields;
+    // Match identifiers with " or ` or no delimiter (and no spaces).
+    static const std::regex sFieldIdentifierRe { R"raw(\s*(["`]([^"`]+)["`])|(([^\s]+)\s).*)raw" };
+    std::string tableDefinition { SQLResultGetValue(&oResultTable, 0, 0) };
+    tableDefinition = tableDefinition.substr(tableDefinition.find('('), tableDefinition.rfind(')') );
+    std::stringstream tableDefinitionStream { tableDefinition };
+    std::smatch uniqueFieldMatch;
+    while (tableDefinitionStream.good()) {
+      std::string fieldStr;
+      getline( tableDefinitionStream, fieldStr, ',' );
+      if( fieldStr.find( "UNIQUE" ) != std::string::npos )
+      {
+        if( std::regex_search(fieldStr, uniqueFieldMatch, sFieldIdentifierRe) )
+        {
+          const std::string quoted { uniqueFieldMatch.str( 2 ) };
+          uniqueFields.insert( quoted.length() ? quoted:  uniqueFieldMatch.str( 4 ) );
+        }
+      }
+    }
+    SQLResultFree(&oResultTable);
+
+    // Search indexes:
+    pszTableDefinitionSQL = sqlite3_mprintf("SELECT sql FROM sqlite_master WHERE type='index' AND"
+                                            " tbl_name='%q' AND sql LIKE 'CREATE UNIQUE INDEX%%'", m_pszTableName);
+    err = SQLQuery(poDb, pszTableDefinitionSQL, &oResultTable);
+    sqlite3_free(pszTableDefinitionSQL);
+
+    if ( err != OGRERR_NONE  )
+    {
+        if( oResultTable.pszErrMsg != nullptr )
+            CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultTable.pszErrMsg );
+        else
+            CPLError( CE_Failure, CPLE_AppDefined, "Error searching indexes for table %s", m_pszTableName );
+
+    }
+    else if (oResultTable.nRowCount >= 0 )
+    {
+      static const std::regex sFieldIndexIdentifierRe { R"raw(\(\s*[`"]?([^",`\)]+)["`]?\s*\))raw" };
+      for( int rowCnt = 0; rowCnt < oResultTable.nRowCount; ++rowCnt )
+      {
+        std::string indexDefinition { SQLResultGetValue(&oResultTable, 0, rowCnt) };
+        if ( indexDefinition.find( "UNIQUE" ) != std::string::npos )
+        {
+          indexDefinition = indexDefinition.substr(indexDefinition.find('('), indexDefinition.rfind(')') );
+          if( std::regex_search(indexDefinition, uniqueFieldMatch, sFieldIndexIdentifierRe) )
+          {
+            uniqueFields.insert( uniqueFieldMatch.str( 1 ) );
+          }
+        }
+      }
+    }
+    SQLResultFree(&oResultTable);
+
+#endif  // <-- Unique detection
+
     /* Use the "PRAGMA TABLE_INFO()" call to get table definition */
     /*  #|name|type|notnull|default|pk */
     /*  0|id|integer|0||1 */
@@ -948,6 +1024,14 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                 oField.SetWidth(nMaxWidth);
                 if( bNotNull )
                     oField.SetNullable(FALSE);
+
+#if !defined(__GNUC__) || defined(__clang__) || __GNUC__ >= 5
+                if ( uniqueFields.find( std::string( pszName ) ) != uniqueFields.end() )
+                {
+                  oField.SetUnique(TRUE);
+                }
+#endif
+
                 if( pszDefault != nullptr )
                 {
                     int nYear = 0;
@@ -1309,7 +1393,7 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
                                            nMaxWidth));
         if(  !poField->IsNullable() )
             osCommand += " NOT NULL";
-        if(  !poField->IsUnique() )
+        if(  poField->IsUnique() )
             osCommand += " UNIQUE";
         if( poField->GetDefault() != nullptr && !poField->IsDefaultDriverSpecific() )
         {
@@ -3789,7 +3873,7 @@ CPLString OGRGeoPackageTableLayer::GetColumnsOfCreateTable(const std::vector<OGR
         {
             osSQL += " NOT NULL";
         }
-        if( !poFieldDefn->IsUnique() )
+        if( poFieldDefn->IsUnique() )
         {
             osSQL += " UNIQUE";
         }

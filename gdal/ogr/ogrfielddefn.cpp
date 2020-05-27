@@ -66,7 +66,8 @@ OGRFieldDefn::OGRFieldDefn( const char * pszNameIn, OGRFieldType eTypeIn ) :
     pszDefault(nullptr),
     bIgnore(FALSE),
     eSubType(OFSTNone),
-    bNullable(TRUE)
+    bNullable(TRUE),
+    bUnique(FALSE)
 {}
 
 /************************************************************************/
