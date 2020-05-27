@@ -539,20 +539,6 @@ CPLString OGRMSSQLSpatialTableLayer::BuildFields()
 }
 
 /************************************************************************/
-/*                           ClearStatement()                           */
-/************************************************************************/
-
-void OGRMSSQLSpatialTableLayer::ClearStatement()
-
-{
-    if( poStmt != nullptr )
-    {
-        delete poStmt;
-        poStmt = nullptr;
-    }
-}
-
-/************************************************************************/
 /*                            GetStatement()                            */
 /************************************************************************/
 
@@ -562,7 +548,6 @@ CPLODBCStatement *OGRMSSQLSpatialTableLayer::GetStatement()
     if( poStmt == nullptr )
     {
         poStmt = BuildStatement(BuildFields());
-        iNextShapeId = 0;
     }
 
     return poStmt;
@@ -646,17 +631,6 @@ CPLODBCStatement* OGRMSSQLSpatialTableLayer::BuildStatement(const char* pszColum
 }
 
 /************************************************************************/
-/*                            ResetReading()                            */
-/************************************************************************/
-
-void OGRMSSQLSpatialTableLayer::ResetReading()
-
-{
-    ClearStatement();
-    OGRMSSQLSpatialLayer::ResetReading();
-}
-
-/************************************************************************/
 /*                             GetFeature()                             */
 /************************************************************************/
 
@@ -672,6 +646,7 @@ OGRFeature *OGRMSSQLSpatialTableLayer::GetFeature( GIntBig nFeatureId )
 
     iNextShapeId = nFeatureId;
 
+    m_bResetNeeded = true;
     poStmt = new CPLODBCStatement( poDS->GetSession() );
     CPLString osFields = BuildFields();
     poStmt->Appendf( "select %s from %s where %s = " CPL_FRMT_GIB, osFields.c_str(),

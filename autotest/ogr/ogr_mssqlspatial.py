@@ -152,6 +152,7 @@ def test_ogr_mssqlspatial_3():
     assert gdaltest.mssqlspatial_lyr.GetFeatureCount() == 5
 
     gdaltest.mssqlspatial_lyr.SetAttributeFilter(None)
+    gdaltest.mssqlspatial_lyr.ResetReading()
 
     for i in range(len(gdaltest.poly_feat)):
         orig_feat = gdaltest.poly_feat[i]
