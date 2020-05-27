@@ -1084,7 +1084,7 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                            int nChunkYOff, int nChunkYSize,
                            int nDstXOff, int nDstXOff2,
                            int nDstYOff, int nDstYOff2,
-                           GDALRasterBand * poOverview,
+                           GDALRasterBand * /* poOverview */,
                            void** ppDstBuffer,
                            GDALDataType* peDstBufferDataType,
                            const char * /* pszResampling */,
@@ -1096,8 +1096,9 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 {
     const float * const pafChunk = static_cast<const float *>( pChunk );
 
+    const int nDstXSize = nDstXOff2 - nDstXOff;
     *ppDstBuffer =
-        VSI_MALLOC3_VERBOSE(nDstXOff2 - nDstXOff, nDstYOff2 - nDstYOff,
+        VSI_MALLOC3_VERBOSE(nDstXSize, nDstYOff2 - nDstYOff,
                             GDALGetDataTypeSizeBytes(GDT_Float32));
     if( *ppDstBuffer == nullptr )
     {
@@ -1105,8 +1106,6 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
     }
     *peDstBufferDataType = GDT_Float32;
     float* const pafDstBuffer = static_cast<float*>(*ppDstBuffer);
-
-    const int nOXSize = poOverview->GetXSize();
 
 /* -------------------------------------------------------------------- */
 /*      Create the filter kernel and allocate scanline buffer.          */
@@ -1170,7 +1169,7 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             pabySrcScanlineNodataMask =
                 pabyChunkNodataMask + static_cast<GPtrDiff_t>(nSrcYOff-nChunkYOff) * nChunkXSize;
 
-        float* const pafDstScanline = pafDstBuffer + (iDstLine - nDstYOff) * nOXSize;
+        float* const pafDstScanline = pafDstBuffer + (iDstLine - nDstYOff) * nDstXSize;
 /* -------------------------------------------------------------------- */
 /*      Loop over destination pixels                                    */
 /* -------------------------------------------------------------------- */
