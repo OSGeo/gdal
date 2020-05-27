@@ -1014,6 +1014,7 @@ def test_ogr_sqlite_23():
     shp_layer = gdaltest.sl_ds.GetLayerByName('tpoly')
     shp_layer.SetIgnoredFields(['AREA'])
 
+    shp_layer.ResetReading()
     feat = shp_layer.GetNextFeature()
 
     assert not feat.IsFieldSet('AREA'), 'got area despite request to ignore it.'

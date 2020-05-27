@@ -248,6 +248,7 @@ class OGRSQLiteLayer CPL_NON_FINAL: public OGRLayer, public IOGRSQLiteGetSpatial
 
     sqlite3_stmt        *hStmt;
     int                  bDoStep;
+    bool                 m_bEOF = false;
 
     OGRSQLiteDataSource *poDS;
 
