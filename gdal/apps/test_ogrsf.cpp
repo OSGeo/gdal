@@ -1352,6 +1352,14 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer,
                CPLGetLastErrorMsg());
     }
 
+    auto poFeat = LOG_ACTION(poLayer->GetNextFeature());
+    if( poFeat != nullptr )
+    {
+        bRet = FALSE;
+        printf("ERROR: GetNextFeature() returned non NULL feature after end of iteration.\n");
+    }
+    delete poFeat;
+
     if( nFC != nClaimedFC )
     {
         bRet = FALSE;
