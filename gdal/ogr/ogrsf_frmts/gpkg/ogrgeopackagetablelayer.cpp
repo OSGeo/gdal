@@ -855,7 +855,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
 
     // Search indexes:
     pszTableDefinitionSQL = sqlite3_mprintf("SELECT sql FROM sqlite_master WHERE type='index' AND"
-                                            " tbl_name='%q' AND sql LIKE 'CREATE UNIQUE INDEX%%'", m_pszTableName);
+                                            " tbl_name='%q' AND sql ILIKE 'CREATE UNIQUE INDEX%%'", m_pszTableName);
     err = SQLQuery(poDb, pszTableDefinitionSQL, &oResultTable);
     sqlite3_free(pszTableDefinitionSQL);
 
@@ -1028,7 +1028,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
 #if !defined(__GNUC__) || defined(__clang__) || __GNUC__ >= 5
                 if ( uniqueFields.find( std::string( pszName ) ) != uniqueFields.end() )
                 {
-                  oField.SetUnique(TRUE);
+                    oField.SetUnique(TRUE);
                 }
 #endif
 
