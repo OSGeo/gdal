@@ -97,6 +97,7 @@ class OGRMySQLLayer CPL_NON_FINAL: public OGRLayer
     char                *pszFIDColumn;
 
     MYSQL_RES           *hResultSet;
+    bool                m_bEOF = false;
 
     int                 FetchSRSId();
 
