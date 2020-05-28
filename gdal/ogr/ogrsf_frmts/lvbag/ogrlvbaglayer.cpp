@@ -547,6 +547,11 @@ bool OGRLVBAGLayer::IsParserFinished(XML_Status status)
                     XML_ErrorString(XML_GetErrorCode(oParser.get())),
                     static_cast<int>(XML_GetCurrentLineNumber(oParser.get())),
                     static_cast<int>(XML_GetCurrentColumnNumber(oParser.get())) );
+            if( poFeature )
+            {
+                delete poFeature;
+                poFeature = nullptr;
+            }
             return true;
 
         case XML_STATUS_SUSPENDED:
