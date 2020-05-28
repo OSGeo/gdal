@@ -372,7 +372,34 @@ def test_ogr_pdf_online_2():
         assert ds.GetLayer(i).GetGeomType() == expected_layers[i][1], \
             ('%d : %d' % (i, ds.GetLayer(i).GetGeomType()))
 
-    
+
+###############################################################################
+# Test PDF with no attributes
+
+
+def test_ogr_pdf_no_attributes():
+
+    if not has_read_support():
+        pytest.skip()
+
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+
+    filename = '/vsimem/test_ogr_pdf_no_attributes.pdf'
+    ds = ogr.GetDriverByName('PDF').CreateDataSource(filename, options=['STREAM_COMPRESS=NONE'])
+    lyr = ds.CreateLayer('first_layer', srs=sr)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(2 49,3 50)'))
+    lyr.CreateFeature(feat)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1
+    ds = None
+
+    gdal.Unlink(filename)
+
 ###############################################################################
 # Cleanup
 

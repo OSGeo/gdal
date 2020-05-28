@@ -2986,29 +2986,26 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteAttributes(
     oDict.Add("A", poDictA);
     poDictA->Add("O", GDALPDFObjectRW::CreateName("UserProperties"));
 
-    if( !aosIncludedFields.empty() )
+    GDALPDFArrayRW* poArray = new GDALPDFArrayRW();
+    for( const auto& fieldName: aosIncludedFields )
     {
-        GDALPDFArrayRW* poArray = new GDALPDFArrayRW();
-        for( const auto& fieldName: aosIncludedFields )
+        int i = OGR_F_GetFieldIndex(hFeat, fieldName);
+        if (i >= 0 && OGR_F_IsFieldSetAndNotNull(hFeat, i))
         {
-            int i = OGR_F_GetFieldIndex(hFeat, fieldName);
-            if (i >= 0 && OGR_F_IsFieldSetAndNotNull(hFeat, i))
-            {
-                OGRFieldDefnH hFDefn = OGR_F_GetFieldDefnRef( hFeat, i );
-                GDALPDFDictionaryRW* poKV = new GDALPDFDictionaryRW();
-                poKV->Add("N", OGR_Fld_GetNameRef(hFDefn));
-                if (OGR_Fld_GetType(hFDefn) == OFTInteger)
-                    poKV->Add("V", OGR_F_GetFieldAsInteger(hFeat, i));
-                else if (OGR_Fld_GetType(hFDefn) == OFTReal)
-                    poKV->Add("V", OGR_F_GetFieldAsDouble(hFeat, i));
-                else
-                    poKV->Add("V", OGR_F_GetFieldAsString(hFeat, i));
-                poArray->Add(poKV);
-            }
+            OGRFieldDefnH hFDefn = OGR_F_GetFieldDefnRef( hFeat, i );
+            GDALPDFDictionaryRW* poKV = new GDALPDFDictionaryRW();
+            poKV->Add("N", OGR_Fld_GetNameRef(hFDefn));
+            if (OGR_Fld_GetType(hFDefn) == OFTInteger)
+                poKV->Add("V", OGR_F_GetFieldAsInteger(hFeat, i));
+            else if (OGR_Fld_GetType(hFDefn) == OFTReal)
+                poKV->Add("V", OGR_F_GetFieldAsDouble(hFeat, i));
+            else
+                poKV->Add("V", OGR_F_GetFieldAsString(hFeat, i));
+            poArray->Add(poKV);
         }
-
-        poDictA->Add("P", poArray);
     }
+
+    poDictA->Add("P", poArray);
 
     oDict.Add("K", nMCID);
     oDict.Add("P", oParent, 0);
