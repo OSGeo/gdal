@@ -63,65 +63,74 @@ void OGRPDFLayer::Fill( GDALPDFArray* poArray )
         if (!(poA != nullptr && poA->GetType() == PDFObjectType_Dictionary))
             continue;
 
+        // P is supposed to be required in A, but past GDAL versions could
+        // generate features without attributes without a P array
         GDALPDFObject* poP = poA->GetDictionary()->Get("P");
-        if (!(poP != nullptr && poP->GetType() == PDFObjectType_Array))
-            continue;
+        GDALPDFArray* poPArray = nullptr;
+        if (poP != nullptr && poP->GetType() == PDFObjectType_Array)
+            poPArray = poP->GetArray();
+        else
+            poP = nullptr;
 
         GDALPDFObject* poK = poFeatureObj->GetDictionary()->Get("K");
         int nK = -1;
         if (poK != nullptr && poK->GetType() == PDFObjectType_Int)
             nK = poK->GetInt();
 
-        GDALPDFArray* poPArray = poP->GetArray();
-        int j;
-        for(j = 0;j<poPArray->GetLength();j++)
+        if( poP )
         {
-            GDALPDFObject* poKV = poPArray->Get(j);
-            if (poKV && poKV->GetType() == PDFObjectType_Dictionary)
+            for(int j = 0;j<poPArray->GetLength();j++)
             {
-                GDALPDFObject* poN = poKV->GetDictionary()->Get("N");
-                GDALPDFObject* poV = poKV->GetDictionary()->Get("V");
-                if (poN != nullptr && poN->GetType() == PDFObjectType_String &&
-                    poV != nullptr)
+                GDALPDFObject* poKV = poPArray->Get(j);
+                if (poKV && poKV->GetType() == PDFObjectType_Dictionary)
                 {
-                    int nIdx = GetLayerDefn()->GetFieldIndex( poN->GetString().c_str() );
-                    OGRFieldType eType = OFTString;
-                    if (poV->GetType() == PDFObjectType_Int)
-                        eType = OFTInteger;
-                    else if (poV->GetType() == PDFObjectType_Real)
-                        eType = OFTReal;
-                    if (nIdx < 0)
+                    GDALPDFObject* poN = poKV->GetDictionary()->Get("N");
+                    GDALPDFObject* poV = poKV->GetDictionary()->Get("V");
+                    if (poN != nullptr && poN->GetType() == PDFObjectType_String &&
+                        poV != nullptr)
                     {
-                        OGRFieldDefn oField(poN->GetString().c_str(), eType);
-                        CreateField(&oField);
-                    }
-                    else if (GetLayerDefn()->GetFieldDefn(nIdx)->GetType() != eType &&
-                                GetLayerDefn()->GetFieldDefn(nIdx)->GetType() != OFTString)
-                    {
-                        OGRFieldDefn oField(poN->GetString().c_str(), OFTString);
-                        AlterFieldDefn( nIdx, &oField, ALTER_TYPE_FLAG );
+                        int nIdx = GetLayerDefn()->GetFieldIndex( poN->GetString().c_str() );
+                        OGRFieldType eType = OFTString;
+                        if (poV->GetType() == PDFObjectType_Int)
+                            eType = OFTInteger;
+                        else if (poV->GetType() == PDFObjectType_Real)
+                            eType = OFTReal;
+                        if (nIdx < 0)
+                        {
+                            OGRFieldDefn oField(poN->GetString().c_str(), eType);
+                            CreateField(&oField);
+                        }
+                        else if (GetLayerDefn()->GetFieldDefn(nIdx)->GetType() != eType &&
+                                    GetLayerDefn()->GetFieldDefn(nIdx)->GetType() != OFTString)
+                        {
+                            OGRFieldDefn oField(poN->GetString().c_str(), OFTString);
+                            AlterFieldDefn( nIdx, &oField, ALTER_TYPE_FLAG );
+                        }
                     }
                 }
             }
         }
 
         OGRFeature* poFeature = new OGRFeature(GetLayerDefn());
-        for(j = 0;j<poPArray->GetLength();j++)
+        if( poPArray )
         {
-            GDALPDFObject* poKV = poPArray->Get(j);
-            if (poKV && poKV->GetType() == PDFObjectType_Dictionary)
+            for(int j = 0;j<poPArray->GetLength();j++)
             {
-                GDALPDFObject* poN = poKV->GetDictionary()->Get("N");
-                GDALPDFObject* poV = poKV->GetDictionary()->Get("V");
-                if (poN != nullptr && poN->GetType() == PDFObjectType_String &&
-                    poV != nullptr)
+                GDALPDFObject* poKV = poPArray->Get(j);
+                if (poKV && poKV->GetType() == PDFObjectType_Dictionary)
                 {
-                    if (poV->GetType() == PDFObjectType_String)
-                        poFeature->SetField(poN->GetString().c_str(), poV->GetString().c_str());
-                    else if (poV->GetType() == PDFObjectType_Int)
-                        poFeature->SetField(poN->GetString().c_str(), poV->GetInt());
-                    else if (poV->GetType() == PDFObjectType_Real)
-                        poFeature->SetField(poN->GetString().c_str(), poV->GetReal());
+                    GDALPDFObject* poN = poKV->GetDictionary()->Get("N");
+                    GDALPDFObject* poV = poKV->GetDictionary()->Get("V");
+                    if (poN != nullptr && poN->GetType() == PDFObjectType_String &&
+                        poV != nullptr)
+                    {
+                        if (poV->GetType() == PDFObjectType_String)
+                            poFeature->SetField(poN->GetString().c_str(), poV->GetString().c_str());
+                        else if (poV->GetType() == PDFObjectType_Int)
+                            poFeature->SetField(poN->GetString().c_str(), poV->GetInt());
+                        else if (poV->GetType() == PDFObjectType_Real)
+                            poFeature->SetField(poN->GetString().c_str(), poV->GetReal());
+                    }
                 }
             }
         }
