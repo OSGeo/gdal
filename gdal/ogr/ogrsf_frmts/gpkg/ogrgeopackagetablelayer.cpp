@@ -4547,6 +4547,10 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
     {
         oTmpFieldDefn.SetDefault(poNewFieldDefn->GetDefault());
     }
+    if( (nFlagsIn & ALTER_UNIQUE_FLAG) )
+    {
+      oTmpFieldDefn.SetUnique( poNewFieldDefn->IsUnique());
+    }
     std::vector<OGRFieldDefn*> apoFields;
     std::vector<OGRFieldDefn*> apoFieldsOld;
     for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
@@ -4805,6 +4809,8 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
                 poFieldDefn->SetNullable(poNewFieldDefn->IsNullable());
             if (nFlagsIn & ALTER_DEFAULT_FLAG)
                 poFieldDefn->SetDefault(poNewFieldDefn->GetDefault());
+            if (nFlagsIn & ALTER_UNIQUE_FLAG)
+              poFieldDefn->SetUnique(poNewFieldDefn->IsUnique());
 
             if( bRunDoSpecialProcessingForColumnCreation )
             {

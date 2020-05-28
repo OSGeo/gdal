@@ -91,7 +91,8 @@ OGRFieldDefn::OGRFieldDefn( const OGRFieldDefn *poPrototype ) :
     pszDefault(nullptr),
     bIgnore(FALSE),  // TODO(schwehr): Can we use IsIgnored()?
     eSubType(poPrototype->GetSubType()),
-    bNullable(poPrototype->IsNullable())
+    bNullable(poPrototype->IsNullable()),
+    bUnique(poPrototype->IsUnique())
 {
     SetDefault(poPrototype->GetDefault());
 }
@@ -1274,7 +1275,7 @@ int OGR_Fld_IsUnique( OGRFieldDefnH hDefn )
  * By default, fields have no unique constraint, so this method is generally called with
  * TRUE to set a unique constraint.
  *
- * Drivers that support writing unique constraint will advertize the
+ * Drivers that support writing unique constraint will advertise the
  * GDAL_DCAP_UNIQUE_FIELDS driver metadata item.
  *
  * This method is the same as the C function OGR_Fld_SetUnique().
@@ -1293,7 +1294,7 @@ int OGR_Fld_IsUnique( OGRFieldDefnH hDefn )
  * By default, fields have no unique constraint, so this method is generally called with
  * TRUE to set a unique constraint.
  *
- * Drivers that support writing unique constraint will advertize the
+ * Drivers that support writing unique constraint will advertise the
  * GDAL_DCAP_UNIQUE_FIELDS driver metadata item.
  *field can receive null values.
  *
@@ -1309,7 +1310,6 @@ void OGR_Fld_SetUnique( OGRFieldDefnH hDefn, int bUniqueIn )
     OGRFieldDefn::FromHandle(hDefn)->SetUnique(bUniqueIn);
 }
 
->>>>>>> 7a4b72f12d... GPKG: unique - fix dox
 /************************************************************************/
 /*                        OGRUpdateFieldType()                          */
 /************************************************************************/

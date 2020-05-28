@@ -583,7 +583,7 @@ typedef enum
 /** Alter all parameters of field definition.
  * Used by OGR_L_AlterFieldDefn().
  */
-#define ALTER_ALL_FLAG             (ALTER_NAME_FLAG | ALTER_TYPE_FLAG | ALTER_WIDTH_PRECISION_FLAG | ALTER_NULLABLE_FLAG | ALTER_DEFAULT_FLAG)
+#define ALTER_ALL_FLAG             (ALTER_NAME_FLAG | ALTER_TYPE_FLAG | ALTER_WIDTH_PRECISION_FLAG | ALTER_NULLABLE_FLAG | ALTER_DEFAULT_FLAG | ALTER_UNIQUE_FLAG)
 
 /** Validate that fields respect not-null constraints.
  * Used by OGR_F_Validate().

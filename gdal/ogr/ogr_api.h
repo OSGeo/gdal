@@ -342,6 +342,8 @@ int    CPL_DLL OGR_Fld_IsIgnored( OGRFieldDefnH hDefn );
 void   CPL_DLL OGR_Fld_SetIgnored( OGRFieldDefnH hDefn, int );
 int    CPL_DLL OGR_Fld_IsNullable( OGRFieldDefnH hDefn );
 void   CPL_DLL OGR_Fld_SetNullable( OGRFieldDefnH hDefn, int );
+int    CPL_DLL OGR_Fld_IsUnique( OGRFieldDefnH hDefn );
+void   CPL_DLL OGR_Fld_SetUnique( OGRFieldDefnH hDefn, int );
 const char CPL_DLL *OGR_Fld_GetDefault( OGRFieldDefnH hDefn );
 void   CPL_DLL OGR_Fld_SetDefault( OGRFieldDefnH hDefn, const char* );
 int    CPL_DLL OGR_Fld_IsDefaultDriverSpecific( OGRFieldDefnH hDefn );
