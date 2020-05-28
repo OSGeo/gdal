@@ -454,6 +454,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
                                           poFeature,
                                           pszFIDColumn,
                                           bFIDColumnInCopyFields,
+                                          std::vector<bool>(poFeatureDefn->GetFieldCount(), true),
                                           OGRPGDumpEscapeStringWithUserData,
                                           nullptr);
 
@@ -480,6 +481,7 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(
     OGRFeature* poFeature,
     const char* pszFIDColumn,
     bool bFIDColumnInCopyFields,
+    const std::vector<bool>& abFieldsToInclude,
     OGRPGCommonEscapeStringCbk pfnEscapeString,
     void* userdata )
 {
@@ -510,9 +512,13 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(
     int nFieldCount = poFeatureDefn->GetFieldCount();
     bool bAddTab = !osCommand.empty();
 
+    CPLAssert( nFieldCount == static_cast<int>(abFieldsToInclude.size()) );
+
     for( int i = 0; i < nFieldCount;  i++ )
     {
         if (i == nFIDIndex)
+            continue;
+        if( !abFieldsToInclude[i] )
             continue;
 
         const char *pszStrValue = poFeature->GetFieldAsString(i);
