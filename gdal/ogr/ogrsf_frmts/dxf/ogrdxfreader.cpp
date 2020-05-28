@@ -125,7 +125,7 @@ void OGRDXFReader::LoadDiskChunk()
 /*      Read one type code and value line pair from the DXF file.       */
 /************************************************************************/
 
-int OGRDXFReader::ReadValue( char *pszValueBuf, int nValueBufSize )
+int OGRDXFReader::ReadValueRaw( char *pszValueBuf, int nValueBufSize )
 
 {
 /* -------------------------------------------------------------------- */
@@ -215,13 +215,23 @@ int OGRDXFReader::ReadValue( char *pszValueBuf, int nValueBufSize )
 /* -------------------------------------------------------------------- */
     nLastValueSize = iSrcBufferOffset - iStartSrcBufferOffset;
 
-/* -------------------------------------------------------------------- */
-/*      Is this a comment?  If so, tail recurse to get another line.    */
-/* -------------------------------------------------------------------- */
-    if( nValueCode == 999 )
-        return ReadValue(pszValueBuf,nValueBufSize);
-    else
-        return nValueCode;
+    return nValueCode;
+}
+
+int OGRDXFReader::ReadValue( char *pszValueBuf, int nValueBufSize )
+{
+    int nValueCode;
+    while( true )
+    {
+        nValueCode = ReadValueRaw(pszValueBuf,nValueBufSize);
+        if( nValueCode == 999 )
+        {
+            // Skip comments
+            continue;
+        }
+        break;
+    }
+    return nValueCode;
 }
 
 /************************************************************************/
