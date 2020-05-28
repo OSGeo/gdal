@@ -280,6 +280,8 @@ class OGRMSSQLSpatialLayer CPL_NON_FINAL: public OGRLayer
     int                 nRawColumns = 0;
 
     CPLODBCStatement   *poStmt = nullptr;
+    bool                m_bEOF = false;
+    bool                m_bResetNeeded = false;
 
     // Layer spatial reference system, and srid.
     OGRSpatialReference *poSRS = nullptr;
@@ -305,13 +307,14 @@ class OGRMSSQLSpatialLayer CPL_NON_FINAL: public OGRLayer
                                           CPLODBCStatement *poStmt );
 
     virtual CPLODBCStatement *  GetStatement() { return poStmt; }
+    void                ClearStatement();
+    OGRFeature         *GetNextRawFeature();
 
   public:
                         OGRMSSQLSpatialLayer();
     virtual             ~OGRMSSQLSpatialLayer();
 
     virtual void        ResetReading() override;
-    virtual OGRFeature *GetNextRawFeature();
     virtual OGRFeature *GetNextFeature() override;
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
@@ -393,7 +396,6 @@ class OGRMSSQLSpatialTableLayer final: public OGRMSSQLSpatialLayer
     int                 bIdentityInsert = FALSE;
 #endif
 
-    void                ClearStatement();
     CPLODBCStatement* BuildStatement(const char* pszColumns);
 
     CPLString BuildFields();
@@ -424,7 +426,6 @@ class OGRMSSQLSpatialTableLayer final: public OGRMSSQLSpatialLayer
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce) override { return GetExtent(0, psExtent, bForce); }
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override;
 
-    virtual void        ResetReading() override;
     virtual GIntBig     GetFeatureCount( int ) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override;
@@ -486,9 +487,6 @@ class OGRMSSQLSpatialSelectLayer final: public OGRMSSQLSpatialLayer
 {
     char                *pszBaseStatement;
 
-    void                ClearStatement();
-    OGRErr              ResetStatement();
-
     virtual CPLODBCStatement *  GetStatement() override;
 
   public:
@@ -496,7 +494,6 @@ class OGRMSSQLSpatialSelectLayer final: public OGRMSSQLSpatialLayer
                                            CPLODBCStatement * );
                         virtual ~OGRMSSQLSpatialSelectLayer();
 
-    virtual void        ResetReading() override;
     virtual GIntBig     GetFeatureCount( int ) override;
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;

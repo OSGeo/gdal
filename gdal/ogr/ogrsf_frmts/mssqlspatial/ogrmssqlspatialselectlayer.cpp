@@ -147,22 +147,7 @@ OGRMSSQLSpatialSelectLayer::OGRMSSQLSpatialSelectLayer( OGRMSSQLSpatialDataSourc
 OGRMSSQLSpatialSelectLayer::~OGRMSSQLSpatialSelectLayer()
 
 {
-    ClearStatement();
     CPLFree(pszBaseStatement);
-}
-
-/************************************************************************/
-/*                           ClearStatement()                           */
-/************************************************************************/
-
-void OGRMSSQLSpatialSelectLayer::ClearStatement()
-
-{
-    if( poStmt != nullptr )
-    {
-        delete poStmt;
-        poStmt = nullptr;
-    }
 }
 
 /************************************************************************/
@@ -173,47 +158,19 @@ CPLODBCStatement *OGRMSSQLSpatialSelectLayer::GetStatement()
 
 {
     if( poStmt == nullptr )
-        ResetStatement();
+    {
+        CPLDebug( "OGR_MSSQLSpatial", "Recreating statement." );
+        poStmt = new CPLODBCStatement( poDS->GetSession() );
+        poStmt->Append( pszBaseStatement );
+
+        if( !poStmt->ExecuteSQL() )
+        {
+            delete poStmt;
+            poStmt = nullptr;
+        }
+    }
 
     return poStmt;
-}
-
-/************************************************************************/
-/*                           ResetStatement()                           */
-/************************************************************************/
-
-OGRErr OGRMSSQLSpatialSelectLayer::ResetStatement()
-
-{
-    ClearStatement();
-
-    iNextShapeId = 0;
-
-    CPLDebug( "OGR_MSSQLSpatial", "Recreating statement." );
-    poStmt = new CPLODBCStatement( poDS->GetSession() );
-    poStmt->Append( pszBaseStatement );
-
-    if( poStmt->ExecuteSQL() )
-        return OGRERR_NONE;
-    else
-    {
-        delete poStmt;
-        poStmt = nullptr;
-        return OGRERR_FAILURE;
-    }
-}
-
-/************************************************************************/
-/*                            ResetReading()                            */
-/************************************************************************/
-
-void OGRMSSQLSpatialSelectLayer::ResetReading()
-
-{
-    if( iNextShapeId != 0 )
-        ClearStatement();
-
-    OGRMSSQLSpatialLayer::ResetReading();
 }
 
 /************************************************************************/

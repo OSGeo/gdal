@@ -618,6 +618,7 @@ void OGRSQLiteLayer::ResetReading()
 {
     ClearStatement();
     iNextShapeId = 0;
+    m_bEOF = false;
 }
 
 /************************************************************************/
@@ -627,11 +628,17 @@ void OGRSQLiteLayer::ResetReading()
 OGRFeature *OGRSQLiteLayer::GetNextFeature()
 
 {
+    if( m_bEOF )
+        return nullptr;
+
     while( true )
     {
         OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == nullptr )
+        {
+            m_bEOF = true;
             return nullptr;
+        }
 
         if( (m_poFilterGeom == nullptr
             || FilterGeometry( poFeature->GetGeomFieldRef(m_iGeomFieldFilter) ) )
