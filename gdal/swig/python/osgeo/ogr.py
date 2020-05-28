@@ -197,7 +197,9 @@ ALTER_NAME_FLAG = _ogr.ALTER_NAME_FLAG
 ALTER_TYPE_FLAG = _ogr.ALTER_TYPE_FLAG
 ALTER_WIDTH_PRECISION_FLAG = _ogr.ALTER_WIDTH_PRECISION_FLAG
 ALTER_NULLABLE_FLAG = _ogr.ALTER_NULLABLE_FLAG
+ALTER__FLAG = _ogr.ALTER__FLAG
 ALTER_DEFAULT_FLAG = _ogr.ALTER_DEFAULT_FLAG
+ALTER_UNIQUE_FLAG = _ogr.ALTER_UNIQUE_FLAG
 ALTER_ALL_FLAG = _ogr.ALTER_ALL_FLAG
 F_VAL_NULL = _ogr.F_VAL_NULL
 F_VAL_GEOM_TYPE = _ogr.F_VAL_GEOM_TYPE
@@ -5504,6 +5506,16 @@ class FieldDefn(_object):
         GDAL 2.0 
         """
         return _ogr.FieldDefn_SetNullable(self, *args)
+
+
+    def IsUnique(self, *args):
+        """IsUnique(FieldDefn self) -> int"""
+        return _ogr.FieldDefn_IsUnique(self, *args)
+
+
+    def SetUnique(self, *args):
+        """SetUnique(FieldDefn self, int bUnique)"""
+        return _ogr.FieldDefn_SetUnique(self, *args)
 
 
     def GetDefault(self, *args):
