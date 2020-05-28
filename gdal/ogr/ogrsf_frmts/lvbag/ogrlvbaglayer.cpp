@@ -598,6 +598,26 @@ void OGRLVBAGLayer::ParseDocument()
 }
 
 /************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
+
+OGRFeature* OGRLVBAGLayer::GetNextFeature()
+{
+    if ( !bHasReadSchema )
+    {
+        GetLayerDefn();
+        if ( !bHasReadSchema )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "Parsing LV BAG extract failed : invalid layer definition");
+            return nullptr;
+        }
+    }
+
+    return OGRGetNextFeatureThroughRaw<OGRLVBAGLayer>::GetNextFeature();
+}
+
+/************************************************************************/
 /*                         GetNextRawFeature()                          */
 /************************************************************************/
 
