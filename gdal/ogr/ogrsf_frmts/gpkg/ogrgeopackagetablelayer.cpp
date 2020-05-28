@@ -32,9 +32,9 @@
 #include "ogrsqliteutility.h"
 #include "cpl_time.h"
 #include "ogr_p.h"
-#if !defined(__GNUC__) || defined(__clang__) || __GNUC__ >= 5
 #include <regex>
-#endif
+#include <ios>
+#include <algorithm>
 
 CPL_CVSID("$Id$")
 
@@ -814,6 +814,8 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
         }
     }
 
+
+    std::set<std::string> uniqueFields;
 #if !defined(__GNUC__) || defined(__clang__) || __GNUC__ >= 5
 
     // Unique fields detection
@@ -832,22 +834,23 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
         return OGRERR_FAILURE;
     }
 
-    std::set<std::string> uniqueFields;
     // Match identifiers with " or ` or no delimiter (and no spaces).
-    static const std::regex sFieldIdentifierRe { R"raw(\s*(["`]([^"`]+)["`])|(([^\s]+)\s).*)raw" };
+    static const std::regex sFieldIdentifierRe { R"raw(^\s*((["`]([^"`]+)["`])|(([^`"\s]+)\s)).*UNIQUE.*)raw", std::regex_constants::icase};
     std::string tableDefinition { SQLResultGetValue(&oResultTable, 0, 0) };
     tableDefinition = tableDefinition.substr(tableDefinition.find('('), tableDefinition.rfind(')') );
     std::stringstream tableDefinitionStream { tableDefinition };
     std::smatch uniqueFieldMatch;
     while (tableDefinitionStream.good()) {
       std::string fieldStr;
-      getline( tableDefinitionStream, fieldStr, ',' );
-      if( fieldStr.find( "UNIQUE" ) != std::string::npos )
+      std::getline( tableDefinitionStream, fieldStr, ',' );
+      std::string upperCaseFieldStr { fieldStr };
+      std::transform(upperCaseFieldStr.begin(), upperCaseFieldStr.end(), upperCaseFieldStr.begin(), ::toupper);
+      if( upperCaseFieldStr.find( "UNIQUE" ) != std::string::npos )
       {
         if( std::regex_search(fieldStr, uniqueFieldMatch, sFieldIdentifierRe) )
         {
-          const std::string quoted { uniqueFieldMatch.str( 2 ) };
-          uniqueFields.insert( quoted.length() ? quoted:  uniqueFieldMatch.str( 4 ) );
+          const std::string quoted { uniqueFieldMatch.str( 3 ) };
+          uniqueFields.insert( quoted.length() ? quoted: uniqueFieldMatch.str( 5 ) );
         }
       }
     }
@@ -855,7 +858,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
 
     // Search indexes:
     pszTableDefinitionSQL = sqlite3_mprintf("SELECT sql FROM sqlite_master WHERE type='index' AND"
-                                            " tbl_name='%q' AND sql ILIKE 'CREATE UNIQUE INDEX%%'", m_pszTableName);
+                                            " tbl_name='%q' AND sql LIKE 'CREATE UNIQUE INDEX%%'", m_pszTableName);
     err = SQLQuery(poDb, pszTableDefinitionSQL, &oResultTable);
     sqlite3_free(pszTableDefinitionSQL);
 
@@ -873,7 +876,9 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
       for( int rowCnt = 0; rowCnt < oResultTable.nRowCount; ++rowCnt )
       {
         std::string indexDefinition { SQLResultGetValue(&oResultTable, 0, rowCnt) };
-        if ( indexDefinition.find( "UNIQUE" ) != std::string::npos )
+        std::string upperCaseIndexDefinition { indexDefinition };
+        std::transform(upperCaseIndexDefinition.begin(), upperCaseIndexDefinition.end(), upperCaseIndexDefinition.begin(), ::toupper);
+        if ( upperCaseIndexDefinition.find( "UNIQUE" ) != std::string::npos )
         {
           indexDefinition = indexDefinition.substr(indexDefinition.find('('), indexDefinition.rfind(')') );
           if( std::regex_search(indexDefinition, uniqueFieldMatch, sFieldIndexIdentifierRe) )
@@ -1025,12 +1030,10 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                 if( bNotNull )
                     oField.SetNullable(FALSE);
 
-#if !defined(__GNUC__) || defined(__clang__) || __GNUC__ >= 5
                 if ( uniqueFields.find( std::string( pszName ) ) != uniqueFields.end() )
                 {
                     oField.SetUnique(TRUE);
                 }
-#endif
 
                 if( pszDefault != nullptr )
                 {
