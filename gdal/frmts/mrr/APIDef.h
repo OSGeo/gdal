@@ -772,7 +772,7 @@ struct SMIR_FieldBandFilter
         pBandIndices(nullptr)
     {}
 
-    SMIR_FieldBandFilter(uint32_t ninField) :
+    explicit SMIR_FieldBandFilter(uint32_t ninField) :
         nMode(MIR_FieldBandFilterMode::FieldAndAllBands),
         nField(ninField),
         nNumBands(0u),
@@ -789,7 +789,7 @@ struct SMIR_CompressionOptions
     MIR_CompressionType nCompressionType;    /*!< Compression type to use. */
     int32_t nCompressionLevel;                        /*!< Compression level to use. */
 
-    SMIR_CompressionOptions(bool bInIsValid) :
+    explicit SMIR_CompressionOptions(bool bInIsValid) :
         bIsValid(bInIsValid), nCompressionType(MIR_CompressionType::MIR_NoCompression), nCompressionLevel(0u)
     {}
 
@@ -843,7 +843,7 @@ struct SMIR_ClipExtent
 
 
     // ToDo : This constructor need to be removed along with all of the constructor in APIDef.h for C parity.
-    SMIR_ClipExtent ( bool bInIsValid ) : bIsValid ( bInIsValid ),xMin(0.0f),yMin(0.0f),xMax(0.0f),yMax(0.0f)
+    explicit SMIR_ClipExtent ( bool bInIsValid ) : bIsValid ( bInIsValid ),xMin(0.0f),yMin(0.0f),xMax(0.0f),yMax(0.0f)
     {}
 };
 
