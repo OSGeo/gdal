@@ -286,6 +286,9 @@ void OGRLVBAGLayer::CreateFeatureDefn(const char *pszDataset)
         poFeatureDefn->SetName("Woonplaats");
         SetDescription(poFeatureDefn->GetName());
     }
+    else
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Parsing LV BAG extract failed : invalid layer definition");
 }
 
 /************************************************************************/
@@ -626,7 +629,7 @@ OGRFeature* OGRLVBAGLayer::GetNextFeature()
 /*                         GetNextRawFeature()                          */
 /************************************************************************/
 
-OGRFeature *OGRLVBAGLayer::GetNextRawFeature()
+OGRFeature* OGRLVBAGLayer::GetNextRawFeature()
 {
     bSchemaOnly = false;
 

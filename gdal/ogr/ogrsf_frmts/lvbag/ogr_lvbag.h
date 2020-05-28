@@ -109,7 +109,7 @@ class OGRLVBAGLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<O
     void                StartDataCollect();
     void                StopDataCollect();
 
-    OGRFeature *        GetNextRawFeature();
+    OGRFeature*         GetNextRawFeature();
 
     friend class OGRGetNextFeatureThroughRaw<OGRLVBAGLayer>;
 

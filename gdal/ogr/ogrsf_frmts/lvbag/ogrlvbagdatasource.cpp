@@ -127,6 +127,11 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
             nFields, papoFields,
             nGeomFields, papoGeomFields);
   
+        for( int i = 0; i < nGeomFields; ++i )
+            delete papoGeomFields[i];
+        CPLFree(papoGeomFields);
+        CPLFree(papoFields);
+
         // Erase all released pointers
         auto it = papoLayers.begin();
         while( it != papoLayers.end() )
@@ -146,7 +151,7 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRLVBAGDataSource::GetLayer( int iLayer )
+OGRLayer* OGRLVBAGDataSource::GetLayer( int iLayer )
 {
     if( iLayer < 0 || iLayer >= GetLayerCount() )
         return nullptr;
