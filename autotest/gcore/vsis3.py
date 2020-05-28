@@ -2949,7 +2949,7 @@ aws_secret_access_key = bar
 # Read credentials from simulated EC2 instance
 
 
-def test_vsis3_read_credentials_ec2():
+def test_vsis3_read_credentials_ec2_imdsv2():
 
     if gdaltest.webserver_port == 0:
         pytest.skip()
@@ -3003,6 +3003,55 @@ def test_vsis3_read_credentials_ec2():
         gdal.VSIFCloseL(f)
 
     assert data == 'bar'
+
+    gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL', '')
+    gdal.SetConfigOption('CPL_AWS_AUTODETECT_EC2', None)
+
+###############################################################################
+# Read credentials from simulated EC2 instance that only supports IMDSv1
+
+
+def test_vsis3_read_credentials_ec2_imdsv1():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    if sys.platform not in ('linux', 'linux2', 'win32'):
+        pytest.skip()
+
+    gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', '')
+    gdal.SetConfigOption('AWS_CONFIG_FILE', '')
+    gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', '')
+    gdal.SetConfigOption('AWS_ACCESS_KEY_ID', '')
+
+    gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL',
+                         'http://localhost:%d' % gdaltest.webserver_port)
+    # Disable hypervisor related check to test if we are really on EC2
+    gdal.SetConfigOption('CPL_AWS_AUTODETECT_EC2', 'NO')
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/latest/api/token', 403, {},
+                expected_headers={'X-aws-ec2-metadata-token-ttl-seconds': '10'})
+    handler.add('GET', '/latest/meta-data/iam/security-credentials/', 200, {}, 'myprofile',
+                unexpected_headers=['X-aws-ec2-metadata-token'])
+    handler.add('GET', '/latest/meta-data/iam/security-credentials/myprofile', 200, {},
+                """{
+                "AccessKeyId": "AWS_ACCESS_KEY_ID",
+                "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
+                "Expiration": "3000-01-01T00:00:00Z"
+                }""",
+                unexpected_headers=['X-aws-ec2-metadata-token'])
+
+    handler.add('GET', '/s3_fake_bucket/resource', custom_method=get_s3_fake_bucket_resource_method)
+    with webserver.install_http_handler(handler):
+        f = open_for_read('/vsis3/s3_fake_bucket/resource')
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+
+    assert data == 'foo'
 
     gdal.SetConfigOption('CPL_AWS_EC2_API_ROOT_URL', '')
     gdal.SetConfigOption('CPL_AWS_AUTODETECT_EC2', None)

@@ -731,10 +731,14 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
                 {
                     osToken = reinterpret_cast<char*>(psResult->pabyData);
                 }
+                else
+                {
+                    // Failure: either we are not running on EC2 (or something emulating it)
+                    // or this doesn't implement yet IDMSv2
+                    // Go on trying IDMSv1
+                }
                 CPLHTTPDestroyResult(psResult);
             }
-            if( osToken.empty() )
-                return false;
         }
 
         // If we don't know yet the IAM role, fetch it
@@ -744,8 +748,11 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
         {
             CPLStringList aosOptions;
             aosOptions.SetNameValue("TIMEOUT", "1");
-            aosOptions.SetNameValue("HEADERS",
-                            ("X-aws-ec2-metadata-token: " + osToken).c_str());
+            if( !osToken.empty() )
+            {
+                aosOptions.SetNameValue("HEADERS",
+                                ("X-aws-ec2-metadata-token: " + osToken).c_str());
+            }
             CPLPushErrorHandler(CPLQuietErrorHandler);
             CPLHTTPResult* psResult =
                         CPLHTTPFetch( osEC2CredentialsURL, aosOptions.List() );
@@ -759,7 +766,11 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
                 CPLHTTPDestroyResult(psResult);
             }
             if( gosIAMRole.empty() )
+            {
+                // We didn't get the IAM role. We are definitely not running
+                // on EC2 or an emulation of it.
                 return false;
+            }
         }
         osURLRefreshCredentials = osEC2CredentialsURL + gosIAMRole;
     }
