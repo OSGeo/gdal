@@ -38,6 +38,8 @@
 #include "ogrpgutility.h"
 #include "ogr_pgdump.h"
 
+#include <vector>
+
 /* These are the OIDs for some builtin types, as returned by PQftype(). */
 /* They were copied from pg_type.h in src/include/catalog/pg_type.h */
 
@@ -308,6 +310,8 @@ class OGRPGTableLayer final: public OGRPGLayer
     int                 iFIDAsRegularColumnIndex;
 
     CPLString           m_osFirstGeometryFieldName;
+
+    std::vector<bool>   m_abGeneratedColumns{};
 
     virtual CPLString   GetFromClauseForGetExtent() override { return pszSqlTableName; }
 

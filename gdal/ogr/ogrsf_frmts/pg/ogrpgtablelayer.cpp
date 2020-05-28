@@ -576,20 +576,23 @@ int OGRPGTableLayer::ReadTableDefinition()
         //CPLDebug("PG", "name=%s, type=%s", oField.GetNameRef(), pszType);
         poFeatureDefn->AddFieldDefn( &oField );
     }
+    m_abGeneratedColumns.resize( poFeatureDefn->GetFieldCount() );
 
     OGRPGClearResult( hResult );
 
     if( bHasDefault )
     {
         osCommand.Printf(
-                 "SELECT a.attname, pg_get_expr(def.adbin, c.oid) "
+                 "SELECT a.attname, pg_get_expr(def.adbin, c.oid)%s "
                  "FROM pg_attrdef def, pg_class c, pg_attribute a, pg_type t, pg_namespace n "
                  "WHERE c.relname = %s AND a.attnum > 0 AND a.attrelid = c.oid "
                  "AND a.atttypid = t.oid AND c.relnamespace=n.oid AND "
                  "def.adrelid = c.oid AND def.adnum = a.attnum "
                  "%s "
                  "ORDER BY a.attnum",
-                 pszEscapedTableNameSingleQuote, osSchemaClause.c_str());
+                 (poDS->sPostgreSQLVersion.nMajor >= 12 ? ", a.attgenerated" : ""),
+                 pszEscapedTableNameSingleQuote,
+                 osSchemaClause.c_str());
 
         hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
         if( !hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK )
@@ -605,11 +608,16 @@ int OGRPGTableLayer::ReadTableDefinition()
         {
             const char      *pszName = PQgetvalue( hResult, iRecord, 0 );
             const char      *pszDefault = PQgetvalue( hResult, iRecord, 1 );
+            const char      *pszGenerated = poDS->sPostgreSQLVersion.nMajor >= 12 ? PQgetvalue( hResult, iRecord, 2 ) : "";
             int nIdx = poFeatureDefn->GetFieldIndex(pszName);
             if( nIdx >= 0 )
             {
                 OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(nIdx);
                 OGRPGCommonLayerNormalizeDefault(poFieldDefn, pszDefault);
+                if( pszGenerated && pszGenerated[0] )
+                {
+                    m_abGeneratedColumns[nIdx] = true;
+                }
             }
         }
 
@@ -1368,6 +1376,9 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
             continue;
         if( !poFeature->IsFieldSet(i) )
             continue;
+        if( m_abGeneratedColumns[i] )
+            continue;
+
         if( bNeedComma )
             osCommand += ", ";
         else
@@ -1721,6 +1732,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
             continue;
         if( !poFeature->IsFieldSet( i ) )
             continue;
+        if( m_abGeneratedColumns[i] )
+            continue;
 
         if( !bNeedComma )
             bNeedComma = TRUE;
@@ -1841,6 +1854,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
             continue;
         if( !poFeature->IsFieldSet( i ) )
             continue;
+        if( m_abGeneratedColumns[i] )
+            continue;
 
         if( bNeedComma )
             osCommand += ", ";
@@ -1958,10 +1973,15 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
         }
     }
 
+    std::vector<bool> abFieldsToInclude(m_abGeneratedColumns.size(), true);
+    for(size_t i = 0; i < abFieldsToInclude.size(); i++)
+        abFieldsToInclude[i] = !m_abGeneratedColumns[i];
+
     OGRPGCommonAppendCopyFieldsExceptGeom(osCommand,
                                           poFeature,
                                           pszFIDColumn,
                                           CPL_TO_BOOL(bFIDColumnInCopyFields),
+                                          abFieldsToInclude,
                                           (OGRPGCommonEscapeStringCbk)OGRPGEscapeString,
                                           hPGConn);
 
@@ -2188,6 +2208,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     }
 
     poFeatureDefn->AddFieldDefn( &oField );
+    m_abGeneratedColumns.resize( poFeatureDefn->GetFieldCount() );
 
     if( pszFIDColumn != nullptr &&
         EQUAL( oField.GetNameRef(), pszFIDColumn ) )
@@ -2444,6 +2465,8 @@ OGRErr OGRPGTableLayer::DeleteField( int iField )
     }
 
     OGRPGClearResult( hResult );
+
+    m_abGeneratedColumns.erase(m_abGeneratedColumns.begin() + iField);
 
     return poFeatureDefn->DeleteFieldDefn( iField );
 }
@@ -3006,6 +3029,8 @@ CPLString OGRPGTableLayer::BuildCopyFields()
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         if (i == nFIDIndex)
+            continue;
+        if( m_abGeneratedColumns[i] )
             continue;
 
         const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
