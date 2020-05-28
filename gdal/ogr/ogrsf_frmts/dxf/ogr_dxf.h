@@ -503,6 +503,7 @@ class OGRDXFLayer final: public OGRLayer
 
 class OGRDXFReader
 {
+    int                 ReadValueRaw( char *pszValueBuffer, int nValueBufferSize );
 public:
     OGRDXFReader();
     ~OGRDXFReader();
