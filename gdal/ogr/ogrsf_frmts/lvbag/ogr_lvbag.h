@@ -112,6 +112,7 @@ class OGRLVBAGLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<O
     OGRFeature*         GetNextRawFeature();
 
     friend class OGRGetNextFeatureThroughRaw<OGRLVBAGLayer>;
+    friend class OGRLVBAGDataSource;
 
 public:
     explicit OGRLVBAGLayer( const char *pszFilename );
@@ -141,7 +142,7 @@ public:
     int                 Open( const char* pszFilename );
 
     int                 GetLayerCount() override;
-    OGRLayer            *GetLayer( int ) override;
+    OGRLayer*           GetLayer( int ) override;
 
     int                 TestCapability( const char * ) override;
 };

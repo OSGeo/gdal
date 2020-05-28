@@ -46,8 +46,16 @@ OGRLVBAGDataSource::OGRLVBAGDataSource() :
 
 int OGRLVBAGDataSource::Open( const char* pszFilename )
 {
-    papoLayers.emplace_back(new OGRLVBAGLayer{pszFilename});
+    auto poLayer = std::unique_ptr<OGRLVBAGLayer>{
+        new OGRLVBAGLayer{ pszFilename } };
+    if( poLayer && !poLayer->fp )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+            "Accessing LV BAG extract failed : %s", pszFilename);
+        return FALSE;
+    }
 
+    papoLayers.push_back(std::move(poLayer));
     return TRUE;
 }
 

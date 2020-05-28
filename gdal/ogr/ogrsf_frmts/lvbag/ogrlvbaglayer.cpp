@@ -57,8 +57,6 @@ OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename ) :
     poFeatureDefn->Reference();
     
     memset(aBuf, '\0', sizeof(aBuf));
-
-    VSIRewindL(fp);
 }
 
 /************************************************************************/
@@ -68,11 +66,8 @@ OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename ) :
 OGRLVBAGLayer::~OGRLVBAGLayer()
 {
     poFeatureDefn->Release();
-    if ( fp != nullptr )
-    {
+    if ( fp )
         VSIFCloseL(fp);
-        fp = nullptr;
-    }
 }
 
 /************************************************************************/
