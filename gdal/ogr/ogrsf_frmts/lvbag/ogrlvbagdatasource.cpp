@@ -69,6 +69,8 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
     std::map<int, std::vector<int>> paMergeVector = {};
 
     // FUTURE: This can be optimized
+    // Find similar layers by doing a triangular matrix
+    // comparison across all layers currently enlisted.
     for( size_t i = 0; i < papoLayers.size(); ++i )
     {
         std::vector<int> paVector = {};
@@ -91,7 +93,7 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
             }
         }
         if( !paVector.empty() )
-            paMergeVector.insert({static_cast<int>(i), paVector});
+            paMergeVector.insert({ static_cast<int>(i), paVector });
     }
 
     if( paMergeVector.empty() )
@@ -150,7 +152,7 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
                 ++it;
         }
 
-        papoLayers.emplace_back(dynamic_cast<OGRLayer*>(poLayer.release()));
+        papoLayers.emplace_back(poLayer.release());
     }
 }
 
