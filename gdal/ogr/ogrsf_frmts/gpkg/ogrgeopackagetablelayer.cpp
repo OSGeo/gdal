@@ -33,7 +33,9 @@
 #include "cpl_time.h"
 #include "ogr_p.h"
 #include <regex>
-#include <ios>
+#include <iostream>
+#include <string>
+#include <sstream>
 #include <algorithm>
 
 CPL_CVSID("$Id$")
@@ -841,7 +843,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
         }
 
         // Match identifiers with " or ` or no delimiter (and no spaces).
-        static const std::regex sFieldIdentifierRe { R"raw(^\s*((["`]([^"`]+)["`])|(([^`"\s]+)\s)).*UNIQUE.*)raw", std::regex_constants::icase};
         std::string tableDefinition { SQLResultGetValue(&oResultTable, 0, 0) };
         tableDefinition = tableDefinition.substr(tableDefinition.find('('), tableDefinition.rfind(')') );
         std::stringstream tableDefinitionStream { tableDefinition };
@@ -853,6 +854,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
             std::transform(upperCaseFieldStr.begin(), upperCaseFieldStr.end(), upperCaseFieldStr.begin(), ::toupper);
             if( upperCaseFieldStr.find( "UNIQUE" ) != std::string::npos )
             {
+                static const std::regex sFieldIdentifierRe { R"raw(^\s*((["`]([^"`]+)["`])|(([^`"\s]+)\s)).*UNIQUE.*)raw", std::regex_constants::icase};
                 if( std::regex_search(fieldStr, uniqueFieldMatch, sFieldIdentifierRe) )
                 {
                     const std::string quoted { uniqueFieldMatch.str( 3 ) };
@@ -878,7 +880,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
         }
         else if (oResultTable.nRowCount >= 0 )
         {
-            static const std::regex sFieldIndexIdentifierRe { R"raw(\(\s*[`"]?([^",`\)]+)["`]?\s*\))raw" };
             for( int rowCnt = 0; rowCnt < oResultTable.nRowCount; ++rowCnt )
             {
                 std::string indexDefinition { SQLResultGetValue(&oResultTable, 0, rowCnt) };
@@ -887,6 +888,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                 if ( upperCaseIndexDefinition.find( "UNIQUE" ) != std::string::npos )
                 {
                     indexDefinition = indexDefinition.substr(indexDefinition.find('('), indexDefinition.rfind(')') );
+                    static const std::regex sFieldIndexIdentifierRe { R"raw(\(\s*[`"]?([^",`\)]+)["`]?\s*\))raw" };
                     if( std::regex_search(indexDefinition, uniqueFieldMatch, sFieldIndexIdentifierRe) )
                     {
                         uniqueFields.insert( uniqueFieldMatch.str( 1 ) );

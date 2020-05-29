@@ -1828,7 +1828,7 @@ def test_ogr_gpkg_unique():
     if gdaltest.gpkg_dr is None:
         pytest.skip()
 
-    if gdaltest.is_travis_branch('trusty_32bit'):
+    if gdaltest.is_travis_branch('trusty_32bit') or gdaltest.is_travis_branch('trusty_clang'):
         pytest.skip('gcc too old')
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_unique.gpkg')
