@@ -134,8 +134,8 @@ class OGRLVBAGDataSource final: public GDALDataset
 {
     OGRLVBAG::LayerVector papoLayers;
 
-    virtual void        TryCoalesceLayers();
-    virtual void        ConcludeBatch();
+    void                TryCoalesceLayers();
+    void                ConcludeBatch();
 
     friend GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo );
 
