@@ -150,8 +150,14 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
                 ++it;
         }
 
-        // TODO: cast can fail
-        papoLayers.push_back(std::unique_ptr<OGRLayer>{ dynamic_cast<OGRLayer*>(poLayer.release()) });
+        if( OGRLayer* poLayerCast = dynamic_cast<OGRLayer*>(poLayer.get()) )
+        {
+            papoLayers.emplace_back(poLayerCast);
+            poLayer.release();
+        }
+        else
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "Layer coalesce failed : bad cast");
     }
 }
 
