@@ -342,7 +342,7 @@ def test_ogr_gpkg_7():
     if gdaltest.gpkg_ds.DeleteLayer('field_test_layer') != 0:
         gdaltest.post_reason('got error code from DeleteLayer(field_test_layer)')
 
-    
+
 
 ###############################################################################
 # Test a variety of geometry feature types and attribute types
@@ -1641,7 +1641,7 @@ def test_ogr_gpkg_21():
     if f.GetField(0) != 'ab':
         gdal.Unlink('/vsimem/ogr_gpkg_21.gpkg')
 
-    
+
 ###############################################################################
 # Test FID64 support
 
@@ -1817,6 +1817,92 @@ def test_ogr_gpkg_23():
     ds = None
 
     gdal.Unlink('/vsimem/ogr_gpkg_23.gpkg')
+
+###############################################################################
+# Test unique constraints on fields
+
+
+def test_ogr_gpkg_unique():
+
+    gdaltest.gpkg_dr = ogr.GetDriverByName('GPKG')
+    if gdaltest.gpkg_dr is None:
+        pytest.skip()
+
+    if gdaltest.is_travis_branch('trusty_32bit') or gdaltest.is_travis_branch('trusty_clang'):
+        pytest.skip('gcc too old')
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_unique.gpkg')
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
+
+    # Default: no unique constraints
+    field_defn = ogr.FieldDefn('field_default', ogr.OFTString)
+    lyr.CreateField(field_defn)
+
+    # Explicit: no unique constraints
+    field_defn = ogr.FieldDefn('field_no_unique', ogr.OFTString)
+    field_defn.SetUnique(0)
+    lyr.CreateField(field_defn)
+
+    # Explicit: unique constraints
+    field_defn = ogr.FieldDefn('field_unique', ogr.OFTString)
+    field_defn.SetUnique(1)
+    lyr.CreateField(field_defn)
+
+    # Now check for getters
+    layerDefinition = lyr.GetLayerDefn()
+    fldDef = layerDefinition.GetFieldDefn(0)
+    assert not fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(1)
+    assert not fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(2)
+    assert fldDef.IsUnique()
+
+
+    # Create another layer from SQL to test quoting of fields
+    # and indexes
+    # Note: leave create table in a single line because of regex spaces testing
+    sql = (
+        'CREATE TABLE IF NOT EXISTS "test2" ( "fid" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "field_default" TEXT, "field_no_unique" TEXT, "field_unique" TEXT UNIQUE,`field unique2` TEXT UNIQUE,field_unique3 TEXT UNIQUE, "field_unique_index" TEXT, `field unique index2`, "field_unique_index3" TEXT);',
+        'CREATE UNIQUE INDEX test2_unique_idx ON test2(field_unique_index);',
+        'CREATE UNIQUE INDEX test2_unique_idx2 ON test2(`field unique index2`);',
+        'CREATE UNIQUE INDEX test2_unique_idx3 ON test2("field_unique_index3");',
+        "INSERT INTO gpkg_contents VALUES('test2','attributes','test2','','2020-05-27T12:27:30.136Z',NULL,NULL,NULL,NULL,0);",
+        "INSERT INTO gpkg_ogr_contents VALUES('test2',NULL);"
+    )
+
+    for s in sql:
+        ds.ExecuteSQL(s)
+
+    ds = None
+
+    # Reload
+    ds = ogr.Open('/vsimem/ogr_gpkg_unique.gpkg')
+
+    assert ds.GetLayerCount() == 2
+    lyr = ds.GetLayer(1)
+
+    layerDefinition = lyr.GetLayerDefn()
+    fldDef = layerDefinition.GetFieldDefn(0)
+    assert not fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(1)
+    assert not fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(2)
+    assert fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(3)
+    assert fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(4)
+    assert fldDef.IsUnique()
+
+    # Check the last 3 field where the unique constraint is defined
+    # from an index
+    fldDef = layerDefinition.GetFieldDefn(5)
+    assert fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(6)
+    assert fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(7)
+    assert fldDef.IsUnique()
+
+    ds = None
 
 ###############################################################################
 # Test default values
@@ -2244,7 +2330,7 @@ def test_ogr_gpkg_30():
     with gdaltest.error_handler():
         gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_30.geopkg')
 
-    
+
 ###############################################################################
 # Test CURVE and SURFACE types
 
@@ -3496,7 +3582,7 @@ def test_ogr_gpkg_53():
 
         assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
-    
+
 ###############################################################################
 # Test editing of a database with 2 layers (https://issues.qgis.org/issues/17034)
 
@@ -3960,5 +4046,5 @@ def test_ogr_gpkg_cleanup():
     except OSError:
         pass
 
-    
+
 ###############################################################################

@@ -32,6 +32,10 @@
 #include "ogrsqliteutility.h"
 #include "cpl_time.h"
 #include "ogr_p.h"
+#include <regex>
+#include <iostream>
+#include <string>
+#include <sstream>
 
 CPL_CVSID("$Id$")
 
@@ -811,6 +815,86 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
         }
     }
 
+
+    std::set<std::string> uniqueFields;
+#if !defined(__GNUC__) || defined(__clang__) || __GNUC__ >= 5
+
+    if( m_bIsTable )
+    {
+
+        // Unique fields detection
+        const std::string upperTableName { CPLString( m_pszTableName ).toupper() };
+        char* pszTableDefinitionSQL = sqlite3_mprintf("SELECT sql FROM sqlite_master "
+                                                      "WHERE type='table' AND UPPER(name)='%q'", upperTableName.c_str() );
+        err = SQLQuery(poDb, pszTableDefinitionSQL, &oResultTable);
+        sqlite3_free(pszTableDefinitionSQL);
+
+        if ( err != OGRERR_NONE || oResultTable.nRowCount == 0 )
+        {
+            if( oResultTable.pszErrMsg != nullptr )
+                CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultTable.pszErrMsg );
+            else
+                CPLError( CE_Failure, CPLE_AppDefined, "Cannot find table %s", m_pszTableName );
+
+            SQLResultFree(&oResultTable);
+            return OGRERR_FAILURE;
+        }
+
+        // Match identifiers with " or ` or no delimiter (and no spaces).
+        std::string tableDefinition { SQLResultGetValue(&oResultTable, 0, 0) };
+        tableDefinition = tableDefinition.substr(tableDefinition.find('('), tableDefinition.rfind(')') );
+        std::stringstream tableDefinitionStream { tableDefinition };
+        std::smatch uniqueFieldMatch;
+        while (tableDefinitionStream.good()) {
+            std::string fieldStr;
+            std::getline( tableDefinitionStream, fieldStr, ',' );
+            if( CPLString( fieldStr ).toupper().find( "UNIQUE" ) != std::string::npos )
+            {
+                static const std::regex sFieldIdentifierRe { R"raw(^\s*((["`]([^"`]+)["`])|(([^`"\s]+)\s)).*UNIQUE.*)raw", std::regex_constants::icase};
+                if( std::regex_search(fieldStr, uniqueFieldMatch, sFieldIdentifierRe) )
+                {
+                    const std::string quoted { uniqueFieldMatch.str( 3 ) };
+                    uniqueFields.insert( quoted.length() ? quoted: uniqueFieldMatch.str( 5 ) );
+                }
+            }
+        }
+        SQLResultFree(&oResultTable);
+
+        // Search indexes:
+        pszTableDefinitionSQL = sqlite3_mprintf("SELECT sql FROM sqlite_master WHERE type='index' AND"
+                                                " UPPER(tbl_name)=UPPER('%q') AND UPPER(sql) LIKE 'CREATE UNIQUE INDEX%%'", upperTableName.c_str() );
+        err = SQLQuery(poDb, pszTableDefinitionSQL, &oResultTable);
+        sqlite3_free(pszTableDefinitionSQL);
+
+        if ( err != OGRERR_NONE  )
+        {
+            if( oResultTable.pszErrMsg != nullptr )
+                CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultTable.pszErrMsg );
+            else
+                CPLError( CE_Failure, CPLE_AppDefined, "Error searching indexes for table %s", m_pszTableName );
+
+        }
+        else if (oResultTable.nRowCount >= 0 )
+        {
+            for( int rowCnt = 0; rowCnt < oResultTable.nRowCount; ++rowCnt )
+            {
+                std::string indexDefinition { SQLResultGetValue(&oResultTable, 0, rowCnt) };
+                if ( CPLString (indexDefinition ).toupper().find( "UNIQUE" ) != std::string::npos )
+                {
+                    indexDefinition = indexDefinition.substr(indexDefinition.find('('), indexDefinition.rfind(')') );
+                    static const std::regex sFieldIndexIdentifierRe { R"raw(\(\s*[`"]?([^",`\)]+)["`]?\s*\))raw" };
+                    if( std::regex_search(indexDefinition, uniqueFieldMatch, sFieldIndexIdentifierRe) )
+                    {
+                        uniqueFields.insert( uniqueFieldMatch.str( 1 ) );
+                    }
+                }
+            }
+        }
+        SQLResultFree(&oResultTable);
+    }
+
+#endif  // <-- Unique detection
+
     /* Use the "PRAGMA TABLE_INFO()" call to get table definition */
     /*  #|name|type|notnull|default|pk */
     /*  0|id|integer|0||1 */
@@ -948,6 +1032,12 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                 oField.SetWidth(nMaxWidth);
                 if( bNotNull )
                     oField.SetNullable(FALSE);
+
+                if ( uniqueFields.find( std::string( pszName ) ) != uniqueFields.end() )
+                {
+                    oField.SetUnique(TRUE);
+                }
+
                 if( pszDefault != nullptr )
                 {
                     int nYear = 0;
@@ -1309,6 +1399,8 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
                                            nMaxWidth));
         if(  !poField->IsNullable() )
             osCommand += " NOT NULL";
+        if(  poField->IsUnique() )
+            osCommand += " UNIQUE";
         if( poField->GetDefault() != nullptr && !poField->IsDefaultDriverSpecific() )
         {
             osCommand += " DEFAULT ";
@@ -3787,6 +3879,10 @@ CPLString OGRGeoPackageTableLayer::GetColumnsOfCreateTable(const std::vector<OGR
         {
             osSQL += " NOT NULL";
         }
+        if( poFieldDefn->IsUnique() )
+        {
+            osSQL += " UNIQUE";
+        }
         const char* pszDefault = poFieldDefn->GetDefault();
         if( pszDefault != nullptr &&
             (!poFieldDefn->IsDefaultDriverSpecific() ||
@@ -4454,6 +4550,10 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
     {
         oTmpFieldDefn.SetDefault(poNewFieldDefn->GetDefault());
     }
+    if( (nFlagsIn & ALTER_UNIQUE_FLAG) )
+    {
+      oTmpFieldDefn.SetUnique( poNewFieldDefn->IsUnique());
+    }
     std::vector<OGRFieldDefn*> apoFields;
     std::vector<OGRFieldDefn*> apoFieldsOld;
     for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
@@ -4712,6 +4812,8 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
                 poFieldDefn->SetNullable(poNewFieldDefn->IsNullable());
             if (nFlagsIn & ALTER_DEFAULT_FLAG)
                 poFieldDefn->SetDefault(poNewFieldDefn->GetDefault());
+            if (nFlagsIn & ALTER_UNIQUE_FLAG)
+              poFieldDefn->SetUnique(poNewFieldDefn->IsUnique());
 
             if( bRunDoSpecialProcessingForColumnCreation )
             {

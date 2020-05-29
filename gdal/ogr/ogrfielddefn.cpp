@@ -66,7 +66,8 @@ OGRFieldDefn::OGRFieldDefn( const char * pszNameIn, OGRFieldType eTypeIn ) :
     pszDefault(nullptr),
     bIgnore(FALSE),
     eSubType(OFSTNone),
-    bNullable(TRUE)
+    bNullable(TRUE),
+    bUnique(FALSE)
 {}
 
 /************************************************************************/
@@ -90,7 +91,8 @@ OGRFieldDefn::OGRFieldDefn( const OGRFieldDefn *poPrototype ) :
     pszDefault(nullptr),
     bIgnore(FALSE),  // TODO(schwehr): Can we use IsIgnored()?
     eSubType(poPrototype->GetSubType()),
-    bNullable(poPrototype->IsNullable())
+    bNullable(poPrototype->IsNullable()),
+    bUnique(poPrototype->IsUnique())
 {
     SetDefault(poPrototype->GetDefault());
 }
@@ -1221,6 +1223,91 @@ int OGR_Fld_IsNullable( OGRFieldDefnH hDefn )
 void OGR_Fld_SetNullable( OGRFieldDefnH hDefn, int bNullableIn )
 {
     OGRFieldDefn::FromHandle(hDefn)->SetNullable(bNullableIn);
+}
+
+/************************************************************************/
+/*                             IsUnique()                             */
+/************************************************************************/
+
+/**
+ * \fn int OGRFieldDefn::IsUnique() const
+ *
+ * \brief Return whether this field has a unique constraint.
+ *
+ * By default, fields have no unique constraint.
+ *
+ * This method is the same as the C function OGR_Fld_IsUnique().
+ *
+ * @return TRUE if the field has a unique constraint.
+ * @since GDAL 3.2
+ */
+
+/************************************************************************/
+/*                         OGR_Fld_IsUnique()                         */
+/************************************************************************/
+
+/**
+ * \brief Return whether this field has a unique constraint.
+ *
+ * By default, fields have no unique constraint.
+ *
+ * This method is the same as the C++ method OGRFieldDefn::IsUnique().
+ *
+ * @param hDefn handle to the field definition
+ * @return TRUE if the field has a unique constraint.
+ * @since GDAL 3.2
+ */
+
+int OGR_Fld_IsUnique( OGRFieldDefnH hDefn )
+{
+    return OGRFieldDefn::FromHandle(hDefn)->IsUnique();
+}
+
+/************************************************************************/
+/*                            SetUnique()                             */
+/************************************************************************/
+
+/**
+ * \fn void OGRFieldDefn::SetUnique( int bUniqueIn );
+ *
+ * \brief Set whether this field has a unique constraint.
+ *
+ * By default, fields have no unique constraint, so this method is generally called with
+ * TRUE to set a unique constraint.
+ *
+ * Drivers that support writing unique constraint will advertise the
+ * GDAL_DCAP_UNIQUE_FIELDS driver metadata item.
+ *
+ * This method is the same as the C function OGR_Fld_SetUnique().
+ *
+ * @param bUniqueIn TRUE if the field must have a unique constraint.
+ * @since GDAL 3.2
+ */
+
+/************************************************************************/
+/*                        OGR_Fld_SetUnique()                          */
+/************************************************************************/
+
+/**
+ * \brief Set whether this field has a unique constraint.
+ *
+ * By default, fields have no unique constraint, so this method is generally called with
+ * TRUE to set a unique constraint.
+ *
+ * Drivers that support writing unique constraint will advertise the
+ * GDAL_DCAP_UNIQUE_FIELDS driver metadata item.
+ *field can receive null values.
+ *
+ * This method is the same as the C++ method OGRFieldDefn::SetUnique().
+ *
+ * @param hDefn handle to the field definition
+ * @param bUniqueIn TRUE if the field must have a unique constraint.
+ * @since GDAL 3.2
+ */
+
+void OGR_Fld_SetUnique( OGRFieldDefnH hDefn, int bUniqueIn )
+{
+    OGRFieldDefn::FromHandle(hDefn)->SetUnique(bUniqueIn);
 }
 
 /************************************************************************/
