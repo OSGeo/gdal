@@ -64,7 +64,7 @@ static int OGRLVBAGDriverIdentify( GDALOpenInfo* poOpenInfo )
 /*                                Open()                                */
 /************************************************************************/
 
-static GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo )
+GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo )
 {
     if( !OGRLVBAGDriverIdentify(poOpenInfo) ||
         poOpenInfo->eAccess == GA_Update)
@@ -100,6 +100,9 @@ static GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo )
 
             if( !poDS->Open( oSubFilename ) )
                 continue;
+
+            if( (i + 1) % 100 == 0 )
+                poDS->ConcludeBatch();
         }
 
         CSLDestroy(papszNames);

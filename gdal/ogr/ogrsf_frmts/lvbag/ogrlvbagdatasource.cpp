@@ -184,3 +184,13 @@ int OGRLVBAGDataSource::TestCapability( const char * /* pszCap */ )
 {
     return FALSE;
 }
+
+/************************************************************************/
+/*                            ConcludeBatch()                           */
+/************************************************************************/
+
+void OGRLVBAGDataSource::ConcludeBatch()
+{
+    // Whenever a batch of files is opened we need to try and coalesce
+    TryCoalesceLayers();
+}
