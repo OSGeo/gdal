@@ -1862,8 +1862,8 @@ def test_ogr_gpkg_unique():
     # and indexes
     # Note: leave create table in a single line because of regex spaces testing
     sql = (
-        'CREATE TABLE IF NOT EXISTS "test2" ( "fid" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "field_default" TEXT, "field_no_unique" TEXT, "field_unique" TEXT UNIQUE,`field unique2` TEXT UNIQUE,field_unique3 TEXT UNIQUE, "field_unique_index" TEXT, `field unique index2`, "field_unique_index3" TEXT);',
-        'CREATE UNIQUE INDEX test2_unique_idx ON test2(field_unique_index);',
+        'CREATE TABLE IF NOT EXISTS "test2" ( "fid" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "field_default" TEXT, "field_no_unique" TEXT, "field_unique" TEXT UNIQUE,`field unique2` TEXT UNIQUE,field_unique3 TEXT UNIQUE, FIELD_UNIQUE_INDEX TEXT, `field unique index2`, "field_unique_index3" TEXT, NOT_UNIQUE TEXT);',
+        'CREATE UNIQUE INDEX test2_unique_idx ON test2(field_unique_index);', # field_unique_index in lowercase whereas in uppercase in CREATE TABLE statement
         'CREATE UNIQUE INDEX test2_unique_idx2 ON test2(`field unique index2`);',
         'CREATE UNIQUE INDEX test2_unique_idx3 ON test2("field_unique_index3");',
         "INSERT INTO gpkg_contents VALUES('test2','attributes','test2','','2020-05-27T12:27:30.136Z',NULL,NULL,NULL,NULL,0);",
@@ -1901,6 +1901,9 @@ def test_ogr_gpkg_unique():
     assert fldDef.IsUnique()
     fldDef = layerDefinition.GetFieldDefn(7)
     assert fldDef.IsUnique()
+
+    fldDef = layerDefinition.GetFieldDefn(8)
+    assert not fldDef.IsUnique()
 
     ds = None
 

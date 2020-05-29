@@ -816,7 +816,8 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
     }
 
 
-    std::set<std::string> uniqueFields;
+    // set names (in upper case) of fields with unique constraint
+    std::set<std::string> uniqueFieldsUC;
 #if !defined(__GNUC__) || defined(__clang__) || __GNUC__ >= 5
 
     if( m_bIsTable )
@@ -850,28 +851,35 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
             std::getline( tableDefinitionStream, fieldStr, ',' );
             if( CPLString( fieldStr ).toupper().find( "UNIQUE" ) != std::string::npos )
             {
-                static const std::regex sFieldIdentifierRe { R"raw(^\s*((["`]([^"`]+)["`])|(([^`"\s]+)\s)).*UNIQUE.*)raw", std::regex_constants::icase};
+                static const std::regex sFieldIdentifierRe {
+                    R"raw(^\s*((["`]([^"`]+)["`])|(([^`"\s]+)\s)).*UNIQUE.*)raw",
+                    std::regex_constants::icase};
                 if( std::regex_search(fieldStr, uniqueFieldMatch, sFieldIdentifierRe) )
                 {
                     const std::string quoted { uniqueFieldMatch.str( 3 ) };
-                    uniqueFields.insert( quoted.length() ? quoted: uniqueFieldMatch.str( 5 ) );
+                    uniqueFieldsUC.insert( CPLString(
+                        !quoted.empty() ? quoted: uniqueFieldMatch.str( 5 )).toupper() );
                 }
             }
         }
         SQLResultFree(&oResultTable);
 
         // Search indexes:
-        pszTableDefinitionSQL = sqlite3_mprintf("SELECT sql FROM sqlite_master WHERE type='index' AND"
-                                                " UPPER(tbl_name)=UPPER('%q') AND UPPER(sql) LIKE 'CREATE UNIQUE INDEX%%'", upperTableName.c_str() );
+        pszTableDefinitionSQL = sqlite3_mprintf(
+            "SELECT sql FROM sqlite_master WHERE type='index' AND"
+            " UPPER(tbl_name)=UPPER('%q') AND UPPER(sql) "
+            "LIKE 'CREATE UNIQUE INDEX%%'", upperTableName.c_str() );
         err = SQLQuery(poDb, pszTableDefinitionSQL, &oResultTable);
         sqlite3_free(pszTableDefinitionSQL);
 
         if ( err != OGRERR_NONE  )
         {
             if( oResultTable.pszErrMsg != nullptr )
-                CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultTable.pszErrMsg );
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "%s", oResultTable.pszErrMsg );
             else
-                CPLError( CE_Failure, CPLE_AppDefined, "Error searching indexes for table %s", m_pszTableName );
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Error searching indexes for table %s", m_pszTableName );
 
         }
         else if (oResultTable.nRowCount >= 0 )
@@ -881,11 +889,14 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                 std::string indexDefinition { SQLResultGetValue(&oResultTable, 0, rowCnt) };
                 if ( CPLString (indexDefinition ).toupper().find( "UNIQUE" ) != std::string::npos )
                 {
-                    indexDefinition = indexDefinition.substr(indexDefinition.find('('), indexDefinition.rfind(')') );
-                    static const std::regex sFieldIndexIdentifierRe { R"raw(\(\s*[`"]?([^",`\)]+)["`]?\s*\))raw" };
-                    if( std::regex_search(indexDefinition, uniqueFieldMatch, sFieldIndexIdentifierRe) )
+                    indexDefinition = indexDefinition.substr(
+                        indexDefinition.find('('), indexDefinition.rfind(')') );
+                    static const std::regex sFieldIndexIdentifierRe {
+                        R"raw(\(\s*[`"]?([^",`\)]+)["`]?\s*\))raw" };
+                    if( std::regex_search(indexDefinition, uniqueFieldMatch,
+                        sFieldIndexIdentifierRe) )
                     {
-                        uniqueFields.insert( uniqueFieldMatch.str( 1 ) );
+                        uniqueFieldsUC.insert( CPLString(uniqueFieldMatch.str( 1 )).toupper() );
                     }
                 }
             }
@@ -1033,7 +1044,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                 if( bNotNull )
                     oField.SetNullable(FALSE);
 
-                if ( uniqueFields.find( std::string( pszName ) ) != uniqueFields.end() )
+                if ( uniqueFieldsUC.find( CPLString( pszName ).toupper() ) != uniqueFieldsUC.end() )
                 {
                     oField.SetUnique(TRUE);
                 }
