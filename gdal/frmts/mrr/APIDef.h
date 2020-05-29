@@ -56,7 +56,7 @@ static const uint32_t       MaxGroupCount               = 1024;         //!< Def
 //    General enumerations
 
 /*! \enum    MIR_DataType
-    \brief    Data types representable by a variant.
+    \brief   Data types representable by a variant.
 
     MIR_DATETIME_OLE
     The DATE type is implemented using an 8-byte floating-point number. 
@@ -226,7 +226,7 @@ enum MIR_UnitCode
 };
 
 /*****************************************************************************************************************************/
-//    Vehicles, drivers and driver capabilities
+// Vehicles, drivers and driver capabilities
 
 /*! \struct    SMIR_VehicleCapabilities
     \brief    Capabilities of the vehicle, applicable to all drivers it supports.
@@ -245,7 +245,7 @@ struct SMIR_VehicleCapabilities
     uint32_t    bThreadSafeFull        : 1;    //!< Supports multiple thread access in Full support mode (ReadOnly & EditCell)
 };
 
-/*! \struct    SMIR_DriverCapabilities
+/*! \struct   SMIR_DriverCapabilities
     \brief    Capabilities of a driver.
 */
 struct SMIR_DriverCapabilities
@@ -300,22 +300,22 @@ struct SMIR_DriverCapabilities
     uint32_t    nCellValidityMethod                 : 2;    //!< 0 = none,1 = numeric compare,2 = string compare,3 = mask
     uint32_t    bExtendedValidity                   : 1;    //!< Supports invalid cell classification
 
-    //    Data storage arrangement within the raster
-    //    TODO    Make this a mask of 4 bits to allow combinations.
+    // Data storage arrangement within the raster
+    // TODO    Make this a mask of 4 bits to allow combinations.
     uint32_t    nCellArrangement_Storage            : 2;    //!< Cell/Row/Strip/Tile    
     
-    //    Order of tiles within the raster
+    // Order of tiles within the raster
     uint32_t    nCellArrangement_RasterXSense       : 2;    //!< W - E / E - W
     uint32_t    nCellArrangement_RasterYSense       : 2;    //!< S - N / N - S
 
-    //    Order of cells within a tile
+    // Order of cells within a tile
     uint32_t    nCellArrangement_TileXSense         : 2;    //!< W - E / E - W
     uint32_t    nCellArrangement_TileYSense         : 2;    //!< S - N / N - S
 
-    //    The level at which fields are interleaved
+    // The level at which fields are interleaved
     uint32_t    nCellArrangement_InterleaveField    : 2;    //!< Cell/Row/Tile/Raster
 
-    //    The level at which bands are interleaved
+    // The level at which bands are interleaved
     uint32_t    nCellArrangement_InterleaveBand     : 2;    //!< Cell/Row/Tile/Raster
 
     uint32_t    bThreadSafeNative                   : 1;    //!< Supports multiple thread access in Native support mode (ReadOnly & EditCell)
@@ -416,7 +416,7 @@ enum MIR_CompressionType
     MIR_Compression_TIFF_LZMA          = 1028         //!< LZMA2
 };
 
-/*!    \enum    MIR_BandType
+/*! \enum    MIR_BandType
     \brief    Raster band type.
 */
 enum MIR_BandType
@@ -427,7 +427,7 @@ enum MIR_BandType
     MIR_TableField_Component  = 3             //!< Band data is an acquired component of another band acquired from a classification table field
 };
 
-/*!    \enum    MIR_NULLType
+/*! \enum    MIR_NULLType
     \brief    Raster null cell identification method.
 */
 enum MIR_NULLType
@@ -1220,7 +1220,7 @@ struct SMIR_RasterInfo
 /*****************************************************************************************************************************/
 //    Statistics
 
-/*!    \enum    MIR_StatisticsMode
+/*! \enum    MIR_StatisticsMode
     \brief
 */
 enum MIR_StatisticsMode
@@ -1249,7 +1249,7 @@ struct SMIR_HistogramBin
     double                                dCumulativeCount;   /*!<Cumulative percentage of samples including this bin.*/        
 };
 
-/*!    \struct    SMIR_Histogram
+/*! \struct    SMIR_Histogram
     \brief    A histogram.
 */
 struct SMIR_Histogram
@@ -1305,7 +1305,7 @@ struct SMIR_Statistics
 /*****************************************************************************************************************************/
 //    Process tracker
 
-/*!    \enum    ProgressMessageType
+/*! \enum    ProgressMessageType
     \brief    Type of message string being returned in the ProcessProgress callback structure for progress tracking.
 */
 enum ProgressMessageType
@@ -1444,7 +1444,7 @@ enum MIR_RasterizeForegroundValueType
 
 };
 
-/*!    \enum    MIR_RasterizeOperator
+/*! \enum    MIR_RasterizeOperator
     \brief
 */
 enum MIR_RasterizeOperator
@@ -1459,7 +1459,7 @@ enum MIR_RasterizeOperator
     MIR_Rasterize_Range                        //Use Range of all the overlapping Vectors field value
 };
 
-/*!    \enum    MIR_IntegrationInterpolationTests
+/*! \enum    MIR_IntegrationInterpolationTests
     \brief    Enum for defining the number of iterations to be used when using the MIR_Integration interpolation method.
 */
 enum MIR_IntegrationInterpolationTests
@@ -1523,7 +1523,7 @@ struct SMIR_LineStatFlags
 
 /*****************************************************************************************************************************/
 
-/*!    \enum    SMIR_GridClassificationType
+/*! \enum    SMIR_GridClassificationType
     \brief    Deprecated.
 */
 enum SMIR_GridClassificationType
@@ -1532,7 +1532,7 @@ enum SMIR_GridClassificationType
     GridClassificationType_Classified
 };
 
-/*!    \struct    SMIR_ClassificationInfo
+/*! \struct    SMIR_ClassificationInfo
     \brief    Classification parameters.
 */
 struct SMIR_ClassificationInfo
@@ -1544,7 +1544,7 @@ struct SMIR_ClassificationInfo
     uint32_t newClassColor;      /*!< RGB color in format Byte0: Red, Byte1: Green, Byte2: Blue */
 };
 
-/*!    \struct    SMIR_ReclassInfo
+/*! \struct    SMIR_ReclassInfo
     \brief    Reclassification data.
 */
 struct SMIR_ReclassInfo
@@ -1566,7 +1566,7 @@ struct SMIR_ReclassInfo
     } newClassColor;            /*!< New class color */
 };
 
-/*!    \struct    SMIR_TableRecordEditInfo
+/*! \struct    SMIR_TableRecordEditInfo
     \brief    Class index and its corresponding new color or new label.
 */
 struct SMIR_TableRecordEditInfo
@@ -1661,7 +1661,7 @@ struct SMIR_ContourOptions
     double                            dMinimumPolygonArea;     /*!< minimum polygon area size */
 };
 
-/*!    \enum    MIR_PolygoiniseType
+/*! \enum    MIR_PolygoiniseType
     \brief Enum to describe how raster data needs to be polygonised.
 */
 enum MIR_PolygoiniseType
@@ -1673,7 +1673,7 @@ enum MIR_PolygoiniseType
     ColourRange                                               /*!< Indicates to polygonise colour of the cells, this is valid for image type raster.*/
 };
 
-/*!    \struct    SMIR_PolygonisationLevel
+/*! \struct    SMIR_PolygonisationLevel
     \brief This describes a range of cells with a value greater than or equal to dFromVal and less than dTopVal.
 */
 struct SMIR_PolygonisationLevel
@@ -1683,7 +1683,7 @@ struct SMIR_PolygonisationLevel
     SMIR_ContourStyle                    cStyle;              /* contour style to be applied to this range. */
 };
 
-/*!    \struct    SMIR_PolygoniseParameter
+/*! \struct    SMIR_PolygoniseParameter
     \brief Structure to describe various parameters for the Polygonise API.
 */
 struct SMIR_PolygoniseParameter
@@ -1696,7 +1696,7 @@ struct SMIR_PolygoniseParameter
 
 /*****************************************************************************************************************************/
 
-/*!    \struct    RasterDPNT
+/*! \struct    RasterDPNT
     \brief Structure to describe a spatial point location.
 */
 struct RasterDPNT
@@ -1705,7 +1705,7 @@ struct RasterDPNT
     double y;                                    /*!< Y location of the point. */
 };
 
-/*!    \enum    SamplePointStatus
+/*! \enum    SamplePointStatus
     \brief    Cell validity status.
 */
 enum SamplePointStatus
@@ -1766,7 +1766,7 @@ enum  CurvatureType
     MIR_Plan         = 2
 };
 
-/*!    \enum    SlopeType
+/*! \enum    SlopeType
     \brief
 */
 enum  SlopeType
@@ -2974,8 +2974,8 @@ struct SMIR_IMP_Groups
     SMIR_IMP_Group*     pvGroups;    /*!< List of group names.*/
 };
 
-/*!    \struct MIR_RegistrationPoint
-\brief    Structure top control a registration point
+/*! \struct MIR_RegistrationPoint
+    \brief    Structure top control a registration point
 */
 typedef struct
 {
@@ -2984,8 +2984,8 @@ typedef struct
 } MIR_RegistrationPoint;
 
 
-/*!    \enum    MIR_WarpTransformType
-\brief    Types of image warp transforms.
+/*! \enum    MIR_WarpTransformType
+    \brief    Types of image warp transforms.
 */
 enum MIR_WarpTransformType
 {
