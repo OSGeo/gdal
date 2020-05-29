@@ -36,7 +36,6 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-#include <algorithm>
 
 CPL_CVSID("$Id$")
 
@@ -822,10 +821,9 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
 
     if( m_bIsTable )
     {
-        std::string upperTableName { m_pszTableName };
-        std::transform(upperTableName.begin(), upperTableName.end(), upperTableName.begin(), ::toupper);
 
         // Unique fields detection
+        const std::string upperTableName { CPLString( m_pszTableName ).toupper() };
         char* pszTableDefinitionSQL = sqlite3_mprintf("SELECT sql FROM sqlite_master "
                                                       "WHERE type='table' AND UPPER(name)='%q'", upperTableName.c_str() );
         err = SQLQuery(poDb, pszTableDefinitionSQL, &oResultTable);
@@ -850,9 +848,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
         while (tableDefinitionStream.good()) {
             std::string fieldStr;
             std::getline( tableDefinitionStream, fieldStr, ',' );
-            std::string upperCaseFieldStr { fieldStr };
-            std::transform(upperCaseFieldStr.begin(), upperCaseFieldStr.end(), upperCaseFieldStr.begin(), ::toupper);
-            if( upperCaseFieldStr.find( "UNIQUE" ) != std::string::npos )
+            if( CPLString( fieldStr ).toupper().find( "UNIQUE" ) != std::string::npos )
             {
                 static const std::regex sFieldIdentifierRe { R"raw(^\s*((["`]([^"`]+)["`])|(([^`"\s]+)\s)).*UNIQUE.*)raw", std::regex_constants::icase};
                 if( std::regex_search(fieldStr, uniqueFieldMatch, sFieldIdentifierRe) )
@@ -883,9 +879,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
             for( int rowCnt = 0; rowCnt < oResultTable.nRowCount; ++rowCnt )
             {
                 std::string indexDefinition { SQLResultGetValue(&oResultTable, 0, rowCnt) };
-                std::string upperCaseIndexDefinition { indexDefinition };
-                std::transform(upperCaseIndexDefinition.begin(), upperCaseIndexDefinition.end(), upperCaseIndexDefinition.begin(), ::toupper);
-                if ( upperCaseIndexDefinition.find( "UNIQUE" ) != std::string::npos )
+                if ( CPLString (indexDefinition ).toupper().find( "UNIQUE" ) != std::string::npos )
                 {
                     indexDefinition = indexDefinition.substr(indexDefinition.find('('), indexDefinition.rfind(')') );
                     static const std::regex sFieldIndexIdentifierRe { R"raw(\(\s*[`"]?([^",`\)]+)["`]?\s*\))raw" };
