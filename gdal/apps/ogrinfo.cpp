@@ -399,6 +399,8 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
                    pszType,
                    poField->GetWidth(),
                    poField->GetPrecision());
+            if( poField->IsUnique() )
+                printf(" UNIQUE");
             if( !poField->IsNullable() )
                 printf(" NOT NULL");
             if( poField->GetDefault() != nullptr )
