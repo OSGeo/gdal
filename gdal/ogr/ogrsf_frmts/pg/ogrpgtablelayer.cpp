@@ -509,12 +509,16 @@ int OGRPGTableLayer::ReadTableDefinition()
 /* -------------------------------------------------------------------- */
     osCommand.Printf(
         "SELECT a.attname, t.typname, a.attlen,"
-        "       format_type(a.atttypid,a.atttypmod), a.attnotnull, def.def%s "
+        "       format_type(a.atttypid,a.atttypmod), a.attnotnull, def.def, i.indisunique%s "
         "FROM pg_attribute a "
         "JOIN pg_type t ON t.oid = a.atttypid "
         "LEFT JOIN "
         "(SELECT adrelid, adnum, pg_get_expr(adbin, adrelid) AS def FROM pg_attrdef) def "
         "ON def.adrelid = a.attrelid AND def.adnum = a.attnum "
+        // Find unique constraints that are on a single column only
+        "LEFT JOIN "
+        "(SELECT DISTINCT indrelid, indkey, indisunique FROM pg_index WHERE indisunique) i "
+        "ON i.indrelid = a.attrelid AND i.indkey[0] = a.attnum AND i.indkey[1] IS NULL "
         "WHERE a.attnum > 0 AND a.attrelid = %u "
         "ORDER BY a.attnum",
         (poDS->sPostgreSQLVersion.nMajor >= 12 ? ", a.attgenerated" : ""),
@@ -553,11 +557,14 @@ int OGRPGTableLayer::ReadTableDefinition()
         const char      *pszFormatType = PQgetvalue(hResult,iRecord,3);
         const char      *pszNotNull = PQgetvalue(hResult,iRecord,4);
         const char      *pszDefault = PQgetisnull(hResult,iRecord,5) ? nullptr : PQgetvalue(hResult,iRecord,5);
+        const char      *pszIsUnique = PQgetvalue(hResult,iRecord,6);
         const char      *pszGenerated =
-            poDS->sPostgreSQLVersion.nMajor >= 12 ? PQgetvalue( hResult, iRecord, 6 ) : "";
+            poDS->sPostgreSQLVersion.nMajor >= 12 ? PQgetvalue( hResult, iRecord, 7 ) : "";
 
         if( pszNotNull && EQUAL(pszNotNull, "t") )
             oField.SetNullable(FALSE);
+        if( pszIsUnique && EQUAL(pszIsUnique, "t") )
+            oField.SetUnique(TRUE);
 
         if( EQUAL(oField.GetNameRef(),osPrimaryKey) )
         {
@@ -2153,13 +2160,15 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
             return OGRERR_FAILURE;
     }
 
-    CPLString osNotNullDefault;
+    CPLString osConstraints;
     if( !oField.IsNullable() )
-        osNotNullDefault += " NOT NULL";
+        osConstraints += " NOT NULL";
+    if( oField.IsUnique() )
+        osConstraints += " UNIQUE";
     if( oField.GetDefault() != nullptr && !oField.IsDefaultDriverSpecific() )
     {
-        osNotNullDefault += " DEFAULT ";
-        osNotNullDefault += OGRPGCommonLayerGetPGDefault(&oField);
+        osConstraints += " DEFAULT ";
+        osConstraints += OGRPGCommonLayerGetPGDefault(&oField);
     }
 
 /* -------------------------------------------------------------------- */
@@ -2173,7 +2182,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
             osCreateTable += OGRPGEscapeColumnName(oField.GetNameRef());
             osCreateTable += " ";
             osCreateTable += osFieldType;
-            osCreateTable += osNotNullDefault;
+            osCreateTable += osConstraints;
         }
     }
     else
@@ -2183,7 +2192,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
         osCommand.Printf( "ALTER TABLE %s ADD COLUMN %s %s",
                         pszSqlTableName, OGRPGEscapeColumnName(oField.GetNameRef()).c_str(),
                         osFieldType.c_str() );
-        osCommand += osNotNullDefault;
+        osCommand += osConstraints;
 
         PGresult* hResult = OGRPG_PQexec(hPGConn, osCommand);
         if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
@@ -2579,6 +2588,42 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
         OGRPGClearResult( hResult );
     }
 
+    // Only supports adding a unique constraint
+    if( (nFlagsIn & ALTER_UNIQUE_FLAG) &&
+        !poFieldDefn->IsUnique() &&
+        poNewFieldDefn->IsUnique() )
+    {
+        oField.SetUnique(poNewFieldDefn->IsUnique());
+
+        osCommand.Printf( "ALTER TABLE %s ADD UNIQUE (%s)",
+                pszSqlTableName,
+                OGRPGEscapeColumnName(poFieldDefn->GetNameRef()).c_str() );
+
+        PGresult* hResult = OGRPG_PQexec(hPGConn, osCommand);
+        if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "%s\n%s",
+                    osCommand.c_str(),
+                    PQerrorMessage(hPGConn) );
+
+            OGRPGClearResult( hResult );
+
+            poDS->SoftRollbackTransaction();
+
+            return OGRERR_FAILURE;
+        }
+        OGRPGClearResult( hResult );
+    }
+    else if( (nFlagsIn & ALTER_UNIQUE_FLAG) &&
+              poFieldDefn->IsUnique() &&
+              !poNewFieldDefn->IsUnique() )
+    {
+        oField.SetUnique(TRUE);
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Dropping a UNIQUE constraint is not supported currently");
+    }
+
     if( (nFlagsIn & ALTER_DEFAULT_FLAG) &&
         ((poFieldDefn->GetDefault() == nullptr && poNewFieldDefn->GetDefault() != nullptr) ||
          (poFieldDefn->GetDefault() != nullptr && poNewFieldDefn->GetDefault() == nullptr) ||
@@ -2673,6 +2718,8 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
         poFieldDefn->SetNullable(oField.IsNullable());
     if (nFlagsIn & ALTER_DEFAULT_FLAG)
         poFieldDefn->SetDefault(oField.GetDefault());
+    if (nFlagsIn & ALTER_UNIQUE_FLAG)
+        poFieldDefn->SetUnique(oField.IsUnique());
 
     return OGRERR_NONE;
 }
