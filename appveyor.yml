@@ -69,6 +69,8 @@ install:
   - if "%VS_VER%" == "2019" CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\VsDevCmd.bat" -arch=%ARCHITECTURE%
   - git clone https://github.com/microsoft/vcpkg
   - cd vcpkg
+# Workaround https://github.com/microsoft/vcpkg/issues/11666
+  - if "%VS_VER%" == "2015" git checkout a64dc07690bc8806e717e190f62eb58e198b599c
   - bootstrap-vcpkg.bat
   - set PATH=%CD%;%PATH%
   - cd ..
