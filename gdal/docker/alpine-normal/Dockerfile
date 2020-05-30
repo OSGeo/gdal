@@ -5,7 +5,7 @@
 # Public domain
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG ALPINE_VERSION=3.11
+ARG ALPINE_VERSION=3.12
 FROM alpine:${ALPINE_VERSION} as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
@@ -371,6 +371,7 @@ RUN apk add --no-cache \
         libcurl tiff \
         zlib zstd-libs\
         libjpeg-turbo libpng libwebp expat \
+        icu-libs \
         python3 py3-numpy ${POPPLER} pcre libpq libxml2 portablexdr openjpeg \
         openexr \
     # Remove /usr/lib/libopenjp2.so.2.3.0 since we are building v2.3.1 manually
