@@ -73,27 +73,11 @@ matrix:
       env:
         - BUILD_NAME=android
         - DETAILS=""
-#    - os: linux
-#      compiler: gcc
-#      language: cpp
-#      sudo: false
-#      dist: precise
-#      cache:
-#        apt: true
-#        directories:
-#          - $HOME/.ccache
-#      apt:
-#        packages:
-#          - ccache
-#      env:
-#        - BUILD_NAME=big_endian
-#        - DETAILS=""
     - os: linux
-      arch: s390x
       compiler: gcc
       language: cpp
       sudo: false
-      dist: bionic
+      dist: precise
       cache:
         apt: true
         directories:
@@ -102,8 +86,24 @@ matrix:
         packages:
           - ccache
       env:
-        - BUILD_NAME=s390x
+        - BUILD_NAME=big_endian
         - DETAILS=""
+#    - os: linux
+#      arch: s390x
+#      compiler: gcc
+#      language: cpp
+#      sudo: false
+#      dist: bionic
+#      cache:
+#        apt: true
+#        directories:
+#          - $HOME/.ccache
+#      apt:
+#        packages:
+#          - ccache
+#      env:
+#        - BUILD_NAME=s390x
+#        - DETAILS=""
     - os: linux
       compiler: gcc
       language: cpp
