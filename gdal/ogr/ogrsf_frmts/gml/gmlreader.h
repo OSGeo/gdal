@@ -86,6 +86,7 @@ class CPL_DLL GMLPropertyDefn
     size_t            m_nSrcElementLen;
     char             *m_pszCondition;
     bool              m_bNullable;
+    bool              m_bUnique = false;
 
 public:
 
@@ -109,6 +110,9 @@ public:
 
     void        SetNullable( bool bNullable ) { m_bNullable = bNullable; }
     bool        IsNullable() const { return m_bNullable; }
+
+    void        SetUnique( bool bUnique ) { m_bUnique = bUnique; }
+    bool        IsUnique() const { return m_bUnique; }
 
     void        AnalysePropertyValue( const GMLProperty* psGMLProperty,
                                       bool bSetWidth = true );
