@@ -3234,6 +3234,8 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                       CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONFIELDDATASUBTYPES ) );
             if( CPLFetchBool( papszMD, GDAL_DCAP_NOTNULL_FIELDS, false ) )
                 printf( "  Supports: Creating fields with NOT NULL constraint.\n" );/*ok*/
+            if( CPLFetchBool( papszMD, GDAL_DCAP_UNIQUE_FIELDS, false ) )
+                printf( "  Supports: Creating fields with UNIQUE constraint.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_DEFAULT_FIELDS, false ) )
                 printf( "  Supports: Creating fields with DEFAULT values.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_NOTNULL_GEOMFIELDS, false ) )

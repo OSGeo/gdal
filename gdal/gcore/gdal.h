@@ -443,6 +443,11 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DCAP_NOTNULL_FIELDS "DCAP_NOTNULL_FIELDS"
 
+/** Capability set by a driver that can create fields with UNIQUE constraint.
+ * @since GDAL 3.2
+ */
+#define GDAL_DCAP_UNIQUE_FIELDS "DCAP_UNIQUE_FIELDS"
+
 /** Capability set by a driver that can create fields with DEFAULT values.
  * @since GDAL 2.0
  */
