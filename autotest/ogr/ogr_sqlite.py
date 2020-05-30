@@ -2953,6 +2953,100 @@ def test_ogr_sqlite_iterate_and_update():
     gdal.Unlink(filename)
 
 ###############################################################################
+# Test unique constraints on fields
+
+
+def test_ogr_sqlite_unique():
+
+    if gdaltest.is_travis_branch('trusty_32bit') or gdaltest.is_travis_branch('trusty_clang'):
+        pytest.skip('gcc too old')
+
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_gpkg_unique.db')
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
+
+    # Default: no unique constraints
+    field_defn = ogr.FieldDefn('field_default', ogr.OFTString)
+    lyr.CreateField(field_defn)
+
+    # Explicit: no unique constraints
+    field_defn = ogr.FieldDefn('field_no_unique', ogr.OFTString)
+    field_defn.SetUnique(0)
+    lyr.CreateField(field_defn)
+
+    # Explicit: unique constraints
+    field_defn = ogr.FieldDefn('field_unique', ogr.OFTString)
+    field_defn.SetUnique(1)
+    lyr.CreateField(field_defn)
+
+    # Now check for getters
+    layerDefinition = lyr.GetLayerDefn()
+    fldDef = layerDefinition.GetFieldDefn(0)
+    assert not fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(1)
+    assert not fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(2)
+    assert fldDef.IsUnique()
+
+
+    # Create another layer from SQL to test quoting of fields
+    # and indexes
+    # Note: leave create table in a single line because of regex spaces testing
+    sql = (
+        'CREATE TABLE IF NOT EXISTS "test2" ( "fid" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "field_default" TEXT, "field_no_unique" TEXT, "field_unique" TEXT UNIQUE,`field unique2` TEXT UNIQUE,field_unique3 TEXT UNIQUE, FIELD_UNIQUE_INDEX TEXT, `field unique index2`, "field_unique_index3" TEXT, NOT_UNIQUE TEXT);',
+        'CREATE UNIQUE INDEX test2_unique_idx ON test2(field_unique_index);', # field_unique_index in lowercase whereas in uppercase in CREATE TABLE statement
+        'CREATE UNIQUE INDEX test2_unique_idx2 ON test2(`field unique index2`);',
+        'CREATE UNIQUE INDEX test2_unique_idx3 ON test2("field_unique_index3");',
+    )
+
+    for s in sql:
+        ds.ExecuteSQL(s)
+
+    ds = None
+
+    # Reload
+    ds = ogr.Open('/vsimem/ogr_gpkg_unique.db')
+
+    lyr = ds.GetLayerByName('test')
+
+    layerDefinition = lyr.GetLayerDefn()
+    fldDef = layerDefinition.GetFieldDefn(0)
+    assert not fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(1)
+    assert not fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(2)
+    assert fldDef.IsUnique()
+
+    lyr = ds.GetLayerByName('test2')
+
+    layerDefinition = lyr.GetLayerDefn()
+    fldDef = layerDefinition.GetFieldDefn(0)
+    assert not fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(1)
+    assert not fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(2)
+    assert fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(3)
+    assert fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(4)
+    assert fldDef.IsUnique()
+
+    # Check the last 3 field where the unique constraint is defined
+    # from an index
+    fldDef = layerDefinition.GetFieldDefn(5)
+    assert fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(6)
+    assert fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(7)
+    assert fldDef.IsUnique()
+
+    fldDef = layerDefinition.GetFieldDefn(8)
+    assert not fldDef.IsUnique()
+
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gpkg_unique.db')
+
+###############################################################################
 #
 
 

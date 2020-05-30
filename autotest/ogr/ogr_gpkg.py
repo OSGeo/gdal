@@ -1824,14 +1824,10 @@ def test_ogr_gpkg_23():
 
 def test_ogr_gpkg_unique():
 
-    gdaltest.gpkg_dr = ogr.GetDriverByName('GPKG')
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     if gdaltest.is_travis_branch('trusty_32bit') or gdaltest.is_travis_branch('trusty_clang'):
         pytest.skip('gcc too old')
 
-    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_unique.gpkg')
+    ds = ogr.GetDriverByName('GPKG').CreateDataSource('/vsimem/ogr_gpkg_unique.gpkg')
     lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
 
     # Default: no unique constraints
@@ -1878,8 +1874,17 @@ def test_ogr_gpkg_unique():
     # Reload
     ds = ogr.Open('/vsimem/ogr_gpkg_unique.gpkg')
 
-    assert ds.GetLayerCount() == 2
-    lyr = ds.GetLayer(1)
+    lyr = ds.GetLayerByName('test')
+
+    layerDefinition = lyr.GetLayerDefn()
+    fldDef = layerDefinition.GetFieldDefn(0)
+    assert not fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(1)
+    assert not fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(2)
+    assert fldDef.IsUnique()
+
+    lyr = ds.GetLayerByName('test2')
 
     layerDefinition = lyr.GetLayerDefn()
     fldDef = layerDefinition.GetFieldDefn(0)

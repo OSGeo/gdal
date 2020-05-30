@@ -34,6 +34,9 @@
 #include "cpl_string.h"
 #include "sqlite3.h"
 
+#include <set>
+#include <string>
+
 typedef struct
 {
     char** papszResult;
@@ -67,4 +70,6 @@ CPLString           SQLUnescape(const char* pszVal);
 
 char**              SQLTokenize( const char* pszSQL );
 
+std::set<std::string> SQLGetUniqueFieldUCConstraints(sqlite3* poDb,
+                                                     const char* pszTableName);
 #endif // OGR_SQLITEUTILITY_H_INCLUDED
