@@ -314,6 +314,11 @@ for name in layer_list:
             vrt += ' precision="%d"' % src_fd.GetPrecision()
         if src_fd.IsNullable() == 0:
             vrt += ' nullable="false"'
+        try:
+            if src_fd.IsUnique():
+                vrt += ' unique="true"'
+        except AttributeError: # if run with GDAL < 3.2
+            pass
         vrt += '/>\n'
 
     if feature_count:

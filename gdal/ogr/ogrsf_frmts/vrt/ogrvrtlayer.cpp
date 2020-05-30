@@ -969,6 +969,11 @@ try_again:
                 CPLTestBool(CPLGetXMLValue(psChild, "nullable", "true"));
             oFieldDefn.SetNullable(bNullable);
 
+            // Unique attribute.
+            const bool bUnique =
+                CPLTestBool(CPLGetXMLValue(psChild, "unique", "false"));
+            oFieldDefn.SetUnique(bUnique);
+
             // Default attribute.
             oFieldDefn.SetDefault(CPLGetXMLValue(psChild, "default", nullptr));
 
