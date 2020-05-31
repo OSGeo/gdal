@@ -3,7 +3,7 @@
 set -e
 
 sudo apt-get purge -y libgeos*
-sudo mv /etc/apt/sources.list.d/pgdg* /tmp
+(sudo mv /etc/apt/sources.list.d/pgdg* /tmp || /bin/true)
 #sudo apt-get remove postgresql-9.2
 #sudo apt-get remove postgis libpq5 libpq-dev postgresql-9.1-postgis postgresql-9.1-postgis-2.2-scripts postgresql-9.2-postgis postgresql-9.3-postgis postgresql-9.1 postgresql-9.2 postgresql-9.3 libgdal1
 sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
