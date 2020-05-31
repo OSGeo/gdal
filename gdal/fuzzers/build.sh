@@ -18,6 +18,26 @@
 # This script is meant to be run by
 # https://github.com/google/oss-fuzz/blob/master/projects/gdal/Dockerfile
 
+rm -rf proj
+git clone --depth 1 https://github.com/OSGeo/PROJ proj
+
+rm -rf curl
+git clone --depth 1 https://github.com/curl/curl.git curl
+
+rm -rf netcdf-4.4.1.1
+curl https://src.fedoraproject.org/lookaside/pkgs/netcdf/netcdf-4.4.1.1.tar.gz/9210fd5355bee868684d9b8f83064aa6/netcdf-4.4.1.1.tar.gz > netcdf-4.4.1.1.tar.gz && \
+    tar xzf netcdf-4.4.1.1.tar.gz && \
+    rm -f netcdf-4.4.1.1.tar.gz && \
+    mv netcdf-c-4.4.1.1 netcdf-4.4.1.1 && \
+    cd netcdf-4.4.1.1 && \
+    patch -p0 < $SRC/NC4_put_propattr_leak_fix.patch && \
+    patch -p0 < $SRC/libnetcdf_fix_undefined_left_shift_in_ncx_get_size_t.patch && \
+    cd ..
+
+rm -rf poppler
+git clone --depth 1 https://anongit.freedesktop.org/git/poppler/poppler.git poppler
+
+
 I386_PACKAGES="zlib1g-dev:i386 libexpat-dev:i386 liblzma-dev:i386 \
               libxerces-c-dev:i386 libpng12-dev:i386 libgif-dev:i386 \
               libwebp-dev:i386 libicu-dev:i386 libnetcdf-dev:i386 \
