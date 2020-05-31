@@ -353,7 +353,7 @@ bool OGRLVBAGLayer::TouchLayer()
         return false;
     }
     
-    eFileDescriptorsState = FD_OPENED; // TODO: Why?
+    eFileDescriptorsState = FD_OPENED;
 
     return true;
 }
