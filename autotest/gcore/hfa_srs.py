@@ -105,3 +105,21 @@ def test_hfa_srs_wisconsin_tmerc():
     sr = osr.SpatialReference()
     sr.SetFromUserInput(wkt)
     assert sr.GetAuthorityCode(None) == '103300'
+
+
+def test_hfa_srs_NAD83_UTM():
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(26915)
+
+    ds = gdal.GetDriverByName('HFA').Create('/vsimem/TestHFASRS.img', 1, 1)
+    ds.SetProjection(sr.ExportToWkt())
+    ds = None
+
+    ds = gdal.Open('/vsimem/TestHFASRS.img')
+    wkt = ds.GetProjectionRef()
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == '26915'
+    ds = None
+
+    gdal.Unlink('/vsimem/TestHFASRS.img')
+
+    assert 'TOWGS84' not in wkt
