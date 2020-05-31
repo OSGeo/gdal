@@ -12,7 +12,13 @@ jobs:
 
       - name: Install Requirements
         run: |
-          sudo apt install -y cppcheck libsqlite3-dev
+          sudo apt install -y cppcheck libsqlite3-dev ccache
+
+      - name: Cache PROJ build
+        uses: actions/cache@v2
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-cache-cppcheck
 
       - name: Build PROJ
         run: |
@@ -20,7 +26,7 @@ jobs:
             tar xzf proj-6.3.2.tar.gz
             mv proj-6.3.2 proj
             cd proj
-            CFLAGS=-O0 CXXFLAGS=-O0 ./configure --without-static --prefix=/tmp/projinstall
+            CC="ccache gcc" CXX="ccache g++" CFLAGS=-O0 CXXFLAGS=-O0 ./configure --without-static --prefix=/tmp/projinstall
             make -j$(nproc)
             make install -j$(nproc)
  
