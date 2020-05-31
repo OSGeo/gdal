@@ -42,7 +42,7 @@ Driver capabilities
 .. supports_virtualio::
 
 Examples
--------
+--------
 
 -  The ogr2ogr utility can be used to dump the results of a LV BAG extract
    to WGS84 in GeoJSON:
