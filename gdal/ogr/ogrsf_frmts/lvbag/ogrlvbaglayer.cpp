@@ -108,7 +108,7 @@ OGRFeatureDefn* OGRLVBAGLayer::GetLayerDefn()
 /*                            XMLTagSplit()                             */
 /************************************************************************/
 
-static inline const char* XMLTagSplit(const char *pszName)
+static inline const char* XMLTagSplit( const char *pszName )
 {
     const char *pszTag = pszName;
     const char *pszSep = strchr(pszTag, ':');
@@ -184,7 +184,7 @@ void OGRLVBAGLayer::AddOccurrenceFieldDefn()
 /*                         CreateFeatureDefn()                          */
 /************************************************************************/
 
-void OGRLVBAGLayer::CreateFeatureDefn(const char *pszDataset)
+void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
 {
     if( EQUAL("pnd", pszDataset) )
     {
@@ -306,7 +306,11 @@ void OGRLVBAGLayer::StopDataCollect()
     osElementString.Trim();
 }
 
-void OGRLVBAGLayer::DataHandlerCbk(const char *data, int nLen)
+/************************************************************************/
+/*                           DataHandlerCbk()                           */
+/************************************************************************/
+
+void OGRLVBAGLayer::DataHandlerCbk( const char *data, int nLen )
 {
     if( nLen && bCollectData )
         osElementString.append(data, nLen);
@@ -316,7 +320,7 @@ void OGRLVBAGLayer::DataHandlerCbk(const char *data, int nLen)
 /*                        startElementCbk()                            */
 /************************************************************************/
 
-void OGRLVBAGLayer::StartElementCbk(const char *pszName, const char **ppszAttr)
+void OGRLVBAGLayer::StartElementCbk( const char *pszName, const char **ppszAttr )
 {
     if( nFeatureElementDepth > 0 && nAttributeElementDepth > 0 &&
         nGeometryElementDepth == 0 && EQUAL("objecten:geometrie", pszName) )
@@ -390,7 +394,7 @@ void OGRLVBAGLayer::StartElementCbk(const char *pszName, const char **ppszAttr)
 /*                           endElementCbk()                            */
 /************************************************************************/
 
-void OGRLVBAGLayer::EndElementCbk(const char *pszName)
+void OGRLVBAGLayer::EndElementCbk( const char *pszName )
 {
     nCurrentDepth--;
 
@@ -531,7 +535,7 @@ void OGRLVBAGLayer::ConfigureParser()
 /*                         IsParserFinished()                           */
 /************************************************************************/
 
-bool OGRLVBAGLayer::IsParserFinished(XML_Status status)
+bool OGRLVBAGLayer::IsParserFinished( XML_Status status )
 {
     switch (status)
     {
@@ -641,7 +645,7 @@ OGRFeature* OGRLVBAGLayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRLVBAGLayer::TestCapability( const char * pszCap )
+int OGRLVBAGLayer::TestCapability( const char *pszCap )
 {
     if( EQUAL(pszCap, OLCStringsAsUTF8) )
         return TRUE;

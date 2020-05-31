@@ -130,7 +130,8 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
         OGRUnionLayerGeomFieldDefn** papoGeomFields = static_cast<OGRUnionLayerGeomFieldDefn **>(
             CPLRealloc(nullptr, sizeof(OGRUnionLayerGeomFieldDefn *) * nGeomFields ));
         for( int i = 0; i < nGeomFields; ++i )
-            papoGeomFields[i] = new OGRUnionLayerGeomFieldDefn( poBaseLayerDefn->GetGeomFieldDefn( i ) );
+            papoGeomFields[i] = new OGRUnionLayerGeomFieldDefn(
+                poBaseLayerDefn->GetGeomFieldDefn( i ) );
 
         poLayer->SetFields(
             FIELD_FROM_FIRST_LAYER,
