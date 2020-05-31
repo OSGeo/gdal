@@ -1767,7 +1767,7 @@ bool GDALMDArray::SetOffset(CPL_UNUSED double dfOffset)
  */
 double GDALMDArray::GetScale(CPL_UNUSED bool* pbHasScale) const
 {
-    if( *pbHasScale )
+    if( pbHasScale )
         *pbHasScale = false;
     return 1.0;
 }
@@ -1793,7 +1793,7 @@ double GDALMDArray::GetScale(CPL_UNUSED bool* pbHasScale) const
  */
 double GDALMDArray::GetOffset(CPL_UNUSED bool* pbHasOffset) const
 {
-    if( *pbHasOffset )
+    if( pbHasOffset )
         *pbHasOffset = false;
     return 0.0;
 }
