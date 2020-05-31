@@ -74,7 +74,8 @@ int OGRLVBAGDataSource::Open( const char* pszFilename )
     }
 
     if( (static_cast<int>(papoLayers.size()) + 1)
-        % poPool->GetMaxSimultaneouslyOpened() == 0 )
+        % poPool->GetMaxSimultaneouslyOpened() == 0
+        && poPool->GetSize() > 0 )
         TryCoalesceLayers();
 
     return TRUE;
