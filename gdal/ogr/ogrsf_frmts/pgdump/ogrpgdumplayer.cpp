@@ -1620,6 +1620,8 @@ OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
                       osFieldType.c_str() );
     if( !oField.IsNullable() )
         osCommand += " NOT NULL";
+    if( oField.IsUnique() )
+        osCommand += " UNIQUE";
     if( oField.GetDefault() != nullptr && !oField.IsDefaultDriverSpecific() )
     {
         osCommand += " DEFAULT ";

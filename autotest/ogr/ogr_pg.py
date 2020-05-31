@@ -4576,6 +4576,84 @@ def test_ogr_pg_generated_columns():
     gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
 
 ###############################################################################
+# Test UNIQUE constraints
+
+
+def test_ogr_pg_unique():
+
+    if gdaltest.pg_ds is None:
+        pytest.skip()
+
+    # Create table to test UNIQUE constraints
+    gdaltest.pg_ds.ExecuteSQL("DROP TABLE IF EXISTS test_ogr_pg_unique CASCADE")
+    lyr = gdaltest.pg_ds.CreateLayer('test_ogr_pg_unique')
+
+    fld_defn = ogr.FieldDefn('with_unique', ogr.OFTString)
+    fld_defn.SetUnique(True)
+    lyr.CreateField(fld_defn)
+
+    fld_defn = ogr.FieldDefn('with_unique_and_explicit_unique_idx', ogr.OFTString)
+    fld_defn.SetUnique(True)
+    lyr.CreateField(fld_defn)
+
+    lyr.CreateField(ogr.FieldDefn('without_unique', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('unique_on_several_col1', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('unique_on_several_col2', ogr.OFTString))
+    gdaltest.pg_ds.ExecuteSQL("CREATE UNIQUE INDEX unique_idx_with_unique_and_explicit_unique_idx ON test_ogr_pg_unique(with_unique_and_explicit_unique_idx)")
+    gdaltest.pg_ds.ExecuteSQL("CREATE UNIQUE INDEX unique_idx_unique_constraints ON test_ogr_pg_unique(unique_on_several_col1, unique_on_several_col2)")
+
+    # Check after re-opening
+    gdaltest.pg_ds = None
+    gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
+    lyr = gdaltest.pg_ds.GetLayerByName('test_ogr_pg_unique')
+    feat_defn = lyr.GetLayerDefn()
+    assert feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('with_unique')).IsUnique()
+    assert feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('with_unique_and_explicit_unique_idx')).IsUnique()
+    assert not feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('without_unique')).IsUnique()
+    assert not feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('unique_on_several_col1')).IsUnique()
+    assert not feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('unique_on_several_col2')).IsUnique()
+
+    # Test AlterFieldDefn()
+
+    # Unchanged state: no unique
+    fld_defn = ogr.FieldDefn('without_unique', ogr.OFTString)
+    fld_defn.SetUnique(False)
+    assert lyr.AlterFieldDefn(feat_defn.GetFieldIndex(fld_defn.GetName()), fld_defn, ogr.ALTER_UNIQUE_FLAG) == ogr.OGRERR_NONE
+    assert not feat_defn.GetFieldDefn(feat_defn.GetFieldIndex(fld_defn.GetName())).IsUnique()
+
+    # Unchanged state: unique
+    fld_defn = ogr.FieldDefn('with_unique', ogr.OFTString)
+    fld_defn.SetUnique(True)
+    assert lyr.AlterFieldDefn(feat_defn.GetFieldIndex(fld_defn.GetName()), fld_defn, ogr.ALTER_UNIQUE_FLAG) == ogr.OGRERR_NONE
+    assert feat_defn.GetFieldDefn(feat_defn.GetFieldIndex(fld_defn.GetName())).IsUnique()
+
+    # no unique -> unique
+    fld_defn = ogr.FieldDefn('without_unique', ogr.OFTString)
+    fld_defn.SetUnique(True)
+    assert lyr.AlterFieldDefn(feat_defn.GetFieldIndex(fld_defn.GetName()), fld_defn, ogr.ALTER_UNIQUE_FLAG) == ogr.OGRERR_NONE
+    assert feat_defn.GetFieldDefn(feat_defn.GetFieldIndex(fld_defn.GetName())).IsUnique()
+
+    # unique -> no unique : unsupported
+    fld_defn = ogr.FieldDefn('without_unique', ogr.OFTString)
+    fld_defn.SetUnique(False)
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        assert lyr.AlterFieldDefn(feat_defn.GetFieldIndex(fld_defn.GetName()), fld_defn, ogr.ALTER_UNIQUE_FLAG) == ogr.OGRERR_NONE
+    assert gdal.GetLastErrorMsg() != ''
+    assert feat_defn.GetFieldDefn(feat_defn.GetFieldIndex(fld_defn.GetName())).IsUnique()
+
+    # Check after re-opening
+    gdaltest.pg_ds = None
+    gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
+    lyr = gdaltest.pg_ds.GetLayerByName('test_ogr_pg_unique')
+    feat_defn = lyr.GetLayerDefn()
+    assert feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('without_unique')).IsUnique()
+
+    # Cleanup
+    gdaltest.pg_ds.ExecuteSQL('DELLAYER:test_ogr_pg_unique')
+    gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
+
+###############################################################################
 #
 
 

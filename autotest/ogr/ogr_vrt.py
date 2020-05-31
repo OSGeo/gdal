@@ -3017,7 +3017,31 @@ def test_ogr_vrt_41():
     with gdaltest.error_handler():
         lyr.GetExtent()
 
-    
+
+###############################################################################
+# Test reading nullable, default, unique
+
+
+def test_ogr_vrt_nullable_unique():
+
+    ds = ogr.Open("""<OGRVRTDataSource>
+  <OGRVRTLayer name="poly">
+    <SrcDataSource>data/poly.shp</SrcDataSource>
+    <SrcLayer>poly</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <Field name="area" type="Real"/>
+    <Field name="eas_id" type="Integer64" width="11" nullable="false" unique="true"/>
+    <Field name="prfedea" type="String"/>
+  </OGRVRTLayer>
+</OGRVRTDataSource>
+""")
+    lyr = ds.GetLayer(0)
+    feat_defn = lyr.GetLayerDefn()
+    assert feat_defn.GetFieldDefn(0).IsNullable()
+    assert not feat_defn.GetFieldDefn(0).IsUnique()
+    assert not feat_defn.GetFieldDefn(1).IsNullable()
+    assert feat_defn.GetFieldDefn(1).IsUnique()
+
 ###############################################################################
 #
 

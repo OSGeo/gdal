@@ -397,6 +397,7 @@ void RegisterOGRSQLite()
 #endif
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_UNIQUE_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

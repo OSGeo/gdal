@@ -1617,7 +1617,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
             oField.SetPrecision(poProperty->GetPrecision());
         if( !bEmptyAsNull )
             oField.SetNullable(poProperty->IsNullable() );
-
+        oField.SetUnique(poProperty->IsUnique());
         poLayer->GetLayerDefn()->AddFieldDefn(&oField);
     }
 
@@ -2169,31 +2169,83 @@ void OGRGMLDataSource::InsertHeader()
                   "<xs:import namespace=\"http://www.opengis.net/gml\" schemaLocation=\"http://schemas.opengis.net/gml/2.1.2/feature.xsd\"/>");
     }
 
-    // Define the FeatureCollection.
-    if (IsGML3Output() && !bGMLFeatureCollection)
+    // Define the FeatureCollection element
+    if (!bGMLFeatureCollection)
     {
-        if (IsGML32Output())
+        bool bHasUniqueConstraints = false;
+        for( int iLayer = 0; (iLayer < nLayerCount) && !bHasUniqueConstraints; iLayer++ )
         {
-            // GML Simple Features profile v2.0 mentions gml:AbstractGML as
-            // substitutionGroup but using gml:AbstractFeature makes it
-            // usablable by GMLJP2 v2.
-            PrintLine(fpSchema,
-                      "<xs:element name=\"FeatureCollection\" type=\"%s:FeatureCollectionType\" substitutionGroup=\"gml:AbstractFeature\"/>",
-                      pszPrefix);
+            OGRFeatureDefn *poFDefn = papoLayers[iLayer]->GetLayerDefn();
+            const int nFieldCount = poFDefn->GetFieldCount();
+            for( int iField = 0; (iField < nFieldCount) && !bHasUniqueConstraints; iField++ )
+            {
+                const OGRFieldDefn* poFieldDefn = poFDefn->GetFieldDefn(iField);
+                if( poFieldDefn->IsUnique() )
+                    bHasUniqueConstraints = true;
+            }
         }
-        else if (IsGML3DeegreeOutput())
+
+        const char* pszFeatureMemberPrefix = pszPrefix;
+        if( IsGML3Output() )
         {
-            PrintLine(fpSchema,
-                      "<xs:element name=\"FeatureCollection\" type=\"%s:FeatureCollectionType\" substitutionGroup=\"gml:_FeatureCollection\"/>",
-                      pszPrefix);
+            if (IsGML32Output())
+            {
+                // GML Simple Features profile v2.0 mentions gml:AbstractGML as
+                // substitutionGroup but using gml:AbstractFeature makes it
+                // usablable by GMLJP2 v2.
+                PrintLine(fpSchema,
+                        "<xs:element name=\"FeatureCollection\" type=\"%s:FeatureCollectionType\" substitutionGroup=\"gml:AbstractFeature\"%s>",
+                        pszPrefix, bHasUniqueConstraints ? "" : "/");
+            }
+            else if (IsGML3DeegreeOutput())
+            {
+                PrintLine(fpSchema,
+                        "<xs:element name=\"FeatureCollection\" type=\"%s:FeatureCollectionType\" substitutionGroup=\"gml:_FeatureCollection\"%s>",
+                        pszPrefix, bHasUniqueConstraints ? "" : "/");
+            }
+            else
+            {
+                PrintLine(fpSchema,
+                        "<xs:element name=\"FeatureCollection\" type=\"%s:FeatureCollectionType\" substitutionGroup=\"gml:_GML\"%s>",
+                        pszPrefix, bHasUniqueConstraints ? "" : "/");
+            }
         }
         else
         {
+            pszFeatureMemberPrefix = "gml";
             PrintLine(fpSchema,
-                      "<xs:element name=\"FeatureCollection\" type=\"%s:FeatureCollectionType\" substitutionGroup=\"gml:_GML\"/>",
-                      pszPrefix);
+                    "<xs:element name=\"FeatureCollection\" type=\"%s:FeatureCollectionType\" substitutionGroup=\"gml:_FeatureCollection\"%s>",
+                    pszPrefix, bHasUniqueConstraints ? "" : "/");
         }
 
+        if( bHasUniqueConstraints )
+        {
+            for( int iLayer = 0; iLayer < nLayerCount; iLayer++ )
+            {
+                OGRFeatureDefn *poFDefn = papoLayers[iLayer]->GetLayerDefn();
+                const int nFieldCount = poFDefn->GetFieldCount();
+                for( int iField = 0; iField < nFieldCount; iField++ )
+                {
+                    const OGRFieldDefn* poFieldDefn = poFDefn->GetFieldDefn(iField);
+                    if( poFieldDefn->IsUnique() )
+                    {
+                        PrintLine(fpSchema, "  <xs:unique name=\"uniqueConstraint_%s_%s\">",
+                                  poFDefn->GetName(), poFieldDefn->GetNameRef());
+                        PrintLine(fpSchema, "    <xs:selector xpath=\"%s:featureMember/%s:%s\"/>",
+                                  pszFeatureMemberPrefix, pszPrefix, poFDefn->GetName());
+                        PrintLine(fpSchema, "    <xs:field xpath=\"%s:%s\"/>",
+                                  pszPrefix, poFieldDefn->GetNameRef());
+                        PrintLine(fpSchema, "  </xs:unique>");
+                    }
+                }
+            }
+            PrintLine(fpSchema, "</xs:element>");
+        }
+    }
+
+    // Define the FeatureCollectionType
+    if (IsGML3Output() && !bGMLFeatureCollection)
+    {
         PrintLine(fpSchema, "<xs:complexType name=\"FeatureCollectionType\">");
         PrintLine(fpSchema, "  <xs:complexContent>");
         if (IsGML3DeegreeOutput())
@@ -2235,10 +2287,6 @@ void OGRGMLDataSource::InsertHeader()
     }
     else if( !bGMLFeatureCollection )
     {
-        PrintLine(fpSchema,
-                  "<xs:element name=\"FeatureCollection\" type=\"%s:FeatureCollectionType\" substitutionGroup=\"gml:_FeatureCollection\"/>",
-                  pszPrefix);
-
         PrintLine(fpSchema, "<xs:complexType name=\"FeatureCollectionType\">");
         PrintLine(fpSchema, "  <xs:complexContent>");
         PrintLine(

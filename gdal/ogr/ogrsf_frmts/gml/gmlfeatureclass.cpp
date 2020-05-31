@@ -649,6 +649,8 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
                 CPLGetXMLValue(psThis, "Condition", nullptr);
             const bool bNullable =
                 CPLTestBool(CPLGetXMLValue(psThis, "Nullable", "true"));
+            const bool bUnique =
+                CPLTestBool(CPLGetXMLValue(psThis, "Unique", "false"));
 
             if( pszName == nullptr )
             {
@@ -663,6 +665,7 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
                 pszName, CPLGetXMLValue(psThis, "ElementPath", nullptr));
 
             poPDefn->SetNullable(bNullable);
+            poPDefn->SetUnique(bUnique);
             if( EQUAL(pszType, "Untyped") )
             {
                 poPDefn->SetType(GMLPT_Untyped);

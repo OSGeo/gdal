@@ -1366,6 +1366,10 @@ def test_ogr_gml_41():
 
     gdaltest.have_gml_validation = False
 
+    #if gdal.GetDriverByName('GMLAS'):
+    #    gdaltest.have_gml_validation = True
+    #    return
+
     if not gdaltest.have_gml_reader:
         pytest.skip()
 
@@ -1391,13 +1395,15 @@ def test_ogr_gml_41():
     gdaltest.have_gml_validation = True
 
 ###############################################################################
-# Test validating against .xsd
 
-
-def test_ogr_gml_42():
+def validate(filename):
 
     if not gdaltest.have_gml_validation:
         pytest.skip()
+
+    #if gdal.GetDriverByName('GMLAS'):
+    #    assert gdal.OpenEx('GMLAS:' + filename, open_options=['VALIDATE=YES', 'FAIL_IF_VALIDATION_ERROR=YES']) is not None
+    #    return
 
     try:
         os.mkdir('tmp/cache/SCHEMAS_OPENGIS_NET')
@@ -1409,7 +1415,7 @@ def test_ogr_gml_42():
     except OSError:
         gdaltest.unzip('tmp/cache/SCHEMAS_OPENGIS_NET', 'tmp/cache/SCHEMAS_OPENGIS_NET.zip')
 
-    ds = ogr.Open('data/gml/expected_gml_gml32.gml')
+    ds = ogr.Open(filename)
 
     gdal.SetConfigOption('GDAL_OPENGIS_SCHEMAS', './tmp/cache/SCHEMAS_OPENGIS_NET')
     lyr = ds.ExecuteSQL('SELECT ValidateSchema()')
@@ -1422,6 +1428,14 @@ def test_ogr_gml_42():
     ds.ReleaseResultSet(lyr)
 
     assert val != 0
+
+###############################################################################
+# Test validating against .xsd
+
+
+def test_ogr_gml_42():
+
+    validate('data/gml/expected_gml_gml32.gml')
 
 ###############################################################################
 # Test automated downloading of WFS schema
@@ -1533,30 +1547,11 @@ def test_ogr_gml_45():
     dst_feat = None
     ds = None
 
-    if not gdaltest.have_gml_validation:
+    try:
+        validate('/vsimem/ogr_gml_45.gml')
+    finally:
         gdal.Unlink('/vsimem/ogr_gml_45.gml')
         gdal.Unlink('/vsimem/ogr_gml_45.xsd')
-        pytest.skip()
-
-    # Validate document
-
-    ds = ogr.Open('/vsimem/ogr_gml_45.gml')
-
-    gdal.SetConfigOption('GDAL_OPENGIS_SCHEMAS', './tmp/cache/SCHEMAS_OPENGIS_NET')
-    lyr = ds.ExecuteSQL('SELECT ValidateSchema()')
-    gdal.SetConfigOption('GDAL_OPENGIS_SCHEMAS', None)
-
-    feat = lyr.GetNextFeature()
-    val = feat.GetFieldAsInteger(0)
-    feat = None
-
-    ds.ReleaseResultSet(lyr)
-    ds = None
-
-    gdal.Unlink('/vsimem/ogr_gml_45.gml')
-    gdal.Unlink('/vsimem/ogr_gml_45.xsd')
-
-    assert val != 0
 
 
 ###############################################################################
@@ -1618,37 +1613,10 @@ def test_ogr_gml_46():
             ds = None
 
             # Validate document
-
-            ds = ogr.Open('/vsimem/ogr_gml_46.gml')
-
-            lyr = ds.GetLayer(0)
-            feat = lyr.GetNextFeature()
-            got_geom = feat.GetGeometryRef()
-
-            if got_geom is None:
-                got_geom_wkt = ''
-            else:
-                got_geom_wkt = got_geom.ExportToWkt()
-
-            if got_geom_wkt != wkt:
-                gdaltest.post_reason('geometry do not match')
-                print('got %s, expected %s' % (got_geom_wkt, wkt))
-
-            feat = None
-
-            gdal.SetConfigOption('GDAL_OPENGIS_SCHEMAS', './tmp/cache/SCHEMAS_OPENGIS_NET')
-            lyr = ds.ExecuteSQL('SELECT ValidateSchema()')
-            gdal.SetConfigOption('GDAL_OPENGIS_SCHEMAS', None)
-
-            feat = lyr.GetNextFeature()
-            val = feat.GetFieldAsInteger(0)
-            feat = None
-
-            ds.ReleaseResultSet(lyr)
-            ds = None
-
-            if val == 0:
-                gdaltest.post_reason('validation failed for format=%s, wkt=%s' % (frmt, wkt))
+            try:
+                validate('/vsimem/ogr_gml_46.gml')
+            except:
+                print('validation failed for format=%s, wkt=%s' % (frmt, wkt))
 
                 f = gdal.VSIFOpenL('/vsimem/ogr_gml_46.gml', 'rb')
                 content = gdal.VSIFReadL(1, 10000, f)
@@ -1659,11 +1627,9 @@ def test_ogr_gml_46():
                 content = gdal.VSIFReadL(1, 10000, f)
                 gdal.VSIFCloseL(f)
                 print(content)
-
-            gdal.Unlink('/vsimem/ogr_gml_46.gml')
-            gdal.Unlink('/vsimem/ogr_gml_46.xsd')
-
-            assert val != 0
+            finally:
+                gdal.Unlink('/vsimem/ogr_gml_46.gml')
+                gdal.Unlink('/vsimem/ogr_gml_46.xsd')
 
         # Only minor schema changes
         if frmt == 'GML3Deegree':
@@ -1673,34 +1639,10 @@ def test_ogr_gml_46():
 ###############################################################################
 # Test validation of WFS GML documents
 
+@pytest.mark.parametrize('filename', ['data/gml/wfs10.xml', 'data/gml/wfs11.xml', 'data/gml/wfs20.xml'])
+def test_ogr_gml_validate_wfs(filename):
+    validate(filename)
 
-def test_ogr_gml_47():
-
-    if not gdaltest.have_gml_validation:
-        pytest.skip()
-
-    filenames = ['data/gml/wfs10.xml', 'data/gml/wfs11.xml', 'data/gml/wfs20.xml']
-
-    for filename in filenames:
-
-        # Validate document
-
-        ds = ogr.Open(filename)
-
-        gdal.SetConfigOption('GDAL_OPENGIS_SCHEMAS', './tmp/cache/SCHEMAS_OPENGIS_NET')
-        lyr = ds.ExecuteSQL('SELECT ValidateSchema()')
-        gdal.SetConfigOption('GDAL_OPENGIS_SCHEMAS', None)
-
-        feat = lyr.GetNextFeature()
-        val = feat.GetFieldAsInteger(0)
-        feat = None
-
-        ds.ReleaseResultSet(lyr)
-        ds = None
-
-        assert val != 0, ('validation failed for file=%s' % filename)
-
-    
 ###############################################################################
 # Test that we can parse some particular .xsd files that have the geometry
 # field declared as :
@@ -3609,6 +3551,51 @@ def test_ogr_gml_standalone_geom():
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToWkt() == 'POLYGON ((2 49,3 49,3 48,2 48,2 49))'
 
+
+###############################################################################
+# Test unique fields
+
+@pytest.mark.parametrize('gml_format', ['GML2','GML3','GML3.2'])
+@pytest.mark.parametrize('constraint_met', [True, False])
+def test_ogr_gml_unique(gml_format, constraint_met):
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    try:
+        ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/test_ogr_gml_unique.gml', options=['FORMAT='+gml_format])
+        lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
+        field_defn = ogr.FieldDefn('field_not_unique', ogr.OFTString)
+        lyr.CreateField(field_defn)
+        field_defn = ogr.FieldDefn('field_unique', ogr.OFTString)
+        field_defn.SetUnique(True)
+        lyr.CreateField(field_defn)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f['field_unique'] = 'foo'
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f['field_unique'] = 'bar' if constraint_met else 'foo'
+        lyr.CreateFeature(f)
+        f = None
+        ds = None
+
+        ds = gdal.OpenEx('/vsimem/test_ogr_gml_unique.gml')
+        lyr = ds.GetLayerByName('test')
+        assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_unique')).IsUnique() == 0
+        assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_unique')).IsUnique() == 1
+        ds = None
+
+        if gdaltest.have_gml_validation:
+            if constraint_met:
+                validate("/vsimem/test_ogr_gml_unique.gml")
+            else:
+                with gdaltest.error_handler():
+                    with pytest.raises(Exception):
+                        validate("/vsimem/test_ogr_gml_unique.gml")
+
+    finally:
+        gdal.Unlink("/vsimem/test_ogr_gml_unique.gml")
+        gdal.Unlink("/vsimem/test_ogr_gml_unique.xsd")
 
 ###############################################################################
 #  Cleanup

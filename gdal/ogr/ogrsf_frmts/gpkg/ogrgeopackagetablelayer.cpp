@@ -32,10 +32,6 @@
 #include "ogrsqliteutility.h"
 #include "cpl_time.h"
 #include "ogr_p.h"
-#include <regex>
-#include <iostream>
-#include <string>
-#include <sstream>
 
 CPL_CVSID("$Id$")
 
@@ -818,93 +814,10 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
 
     // set names (in upper case) of fields with unique constraint
     std::set<std::string> uniqueFieldsUC;
-#if !defined(__GNUC__) || defined(__clang__) || __GNUC__ >= 5
-
     if( m_bIsTable )
     {
-
-        // Unique fields detection
-        const std::string upperTableName { CPLString( m_pszTableName ).toupper() };
-        char* pszTableDefinitionSQL = sqlite3_mprintf("SELECT sql FROM sqlite_master "
-                                                      "WHERE type='table' AND UPPER(name)='%q'", upperTableName.c_str() );
-        err = SQLQuery(poDb, pszTableDefinitionSQL, &oResultTable);
-        sqlite3_free(pszTableDefinitionSQL);
-
-        if ( err != OGRERR_NONE || oResultTable.nRowCount == 0 )
-        {
-            if( oResultTable.pszErrMsg != nullptr )
-                CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultTable.pszErrMsg );
-            else
-                CPLError( CE_Failure, CPLE_AppDefined, "Cannot find table %s", m_pszTableName );
-
-            SQLResultFree(&oResultTable);
-            return OGRERR_FAILURE;
-        }
-
-        // Match identifiers with " or ` or no delimiter (and no spaces).
-        std::string tableDefinition { SQLResultGetValue(&oResultTable, 0, 0) };
-        tableDefinition = tableDefinition.substr(tableDefinition.find('('), tableDefinition.rfind(')') );
-        std::stringstream tableDefinitionStream { tableDefinition };
-        std::smatch uniqueFieldMatch;
-        while (tableDefinitionStream.good()) {
-            std::string fieldStr;
-            std::getline( tableDefinitionStream, fieldStr, ',' );
-            if( CPLString( fieldStr ).toupper().find( "UNIQUE" ) != std::string::npos )
-            {
-                static const std::regex sFieldIdentifierRe {
-                    R"raw(^\s*((["`]([^"`]+)["`])|(([^`"\s]+)\s)).*UNIQUE.*)raw",
-                    std::regex_constants::icase};
-                if( std::regex_search(fieldStr, uniqueFieldMatch, sFieldIdentifierRe) )
-                {
-                    const std::string quoted { uniqueFieldMatch.str( 3 ) };
-                    uniqueFieldsUC.insert( CPLString(
-                        !quoted.empty() ? quoted: uniqueFieldMatch.str( 5 )).toupper() );
-                }
-            }
-        }
-        SQLResultFree(&oResultTable);
-
-        // Search indexes:
-        pszTableDefinitionSQL = sqlite3_mprintf(
-            "SELECT sql FROM sqlite_master WHERE type='index' AND"
-            " UPPER(tbl_name)=UPPER('%q') AND UPPER(sql) "
-            "LIKE 'CREATE UNIQUE INDEX%%'", upperTableName.c_str() );
-        err = SQLQuery(poDb, pszTableDefinitionSQL, &oResultTable);
-        sqlite3_free(pszTableDefinitionSQL);
-
-        if ( err != OGRERR_NONE  )
-        {
-            if( oResultTable.pszErrMsg != nullptr )
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "%s", oResultTable.pszErrMsg );
-            else
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "Error searching indexes for table %s", m_pszTableName );
-
-        }
-        else if (oResultTable.nRowCount >= 0 )
-        {
-            for( int rowCnt = 0; rowCnt < oResultTable.nRowCount; ++rowCnt )
-            {
-                std::string indexDefinition { SQLResultGetValue(&oResultTable, 0, rowCnt) };
-                if ( CPLString (indexDefinition ).toupper().find( "UNIQUE" ) != std::string::npos )
-                {
-                    indexDefinition = indexDefinition.substr(
-                        indexDefinition.find('('), indexDefinition.rfind(')') );
-                    static const std::regex sFieldIndexIdentifierRe {
-                        R"raw(\(\s*[`"]?([^",`\)]+)["`]?\s*\))raw" };
-                    if( std::regex_search(indexDefinition, uniqueFieldMatch,
-                        sFieldIndexIdentifierRe) )
-                    {
-                        uniqueFieldsUC.insert( CPLString(uniqueFieldMatch.str( 1 )).toupper() );
-                    }
-                }
-            }
-        }
-        SQLResultFree(&oResultTable);
+        uniqueFieldsUC = SQLGetUniqueFieldUCConstraints(poDb, m_pszTableName);
     }
-
-#endif  // <-- Unique detection
 
     /* Use the "PRAGMA TABLE_INFO()" call to get table definition */
     /*  #|name|type|notnull|default|pk */
