@@ -12447,6 +12447,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     const char *pszFilename = poOpenInfo->pszFilename;
+    CPLFree(poOpenInfo->pszFilename); // intended bug !!!
 
 /* -------------------------------------------------------------------- */
 /*      Check if it looks like a TIFF file.                             */
