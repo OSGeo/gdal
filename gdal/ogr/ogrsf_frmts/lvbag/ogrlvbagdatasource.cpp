@@ -48,30 +48,13 @@ OGRLVBAGDataSource::OGRLVBAGDataSource() :
 
 int OGRLVBAGDataSource::Open( const char* pszFilename )
 {
-    {
-        auto poLayer = std::unique_ptr<OGRLVBAGLayer>{
-            new OGRLVBAGLayer{ pszFilename, poPool.get() } };
-        if( poLayer && !poLayer->TouchLayer() )
-            return FALSE;
+    auto poLayer = std::unique_ptr<OGRLVBAGLayer>{
+        new OGRLVBAGLayer{ pszFilename, poPool.get() } };
+    if( poLayer && !poLayer->TouchLayer() )
+        return FALSE;
 
-        papoLayers.push_back({ OGRLVBAG::LayerType::LYR_RAW,
-            std::move(poLayer) });
-    }
-
-    // If we reach the limit, then register all the already opened layers.
-    // See the comment in OGRShapeDataSource::AddLayer()
-    if( static_cast<int>(papoLayers.size()) ==
-        poPool->GetMaxSimultaneouslyOpened() && poPool->GetSize() == 0 )
-    {
-        for( auto &poLayer : papoLayers )
-        {
-            if( poLayer.first == OGRLVBAG::LayerType::LYR_UNION )
-                continue;
-            
-            poPool->SetLastUsedLayer(
-                dynamic_cast<OGRLVBAGLayer *>(poLayer.second.get()));
-        }
-    }
+    papoLayers.push_back({ OGRLVBAG::LayerType::LYR_RAW,
+        std::move(poLayer) });
 
     if( (static_cast<int>(papoLayers.size()) + 1)
         % poPool->GetMaxSimultaneouslyOpened() == 0

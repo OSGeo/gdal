@@ -330,9 +330,7 @@ void OGRLVBAGLayer::DataHandlerCbk( const char *data, int nLen )
 
 bool OGRLVBAGLayer::TouchLayer()
 {
-    // Only when the pool is used we register this layer as MRU.
-    if( poPool->GetSize() > 0 )
-        poPool->SetLastUsedLayer(this);
+    poPool->SetLastUsedLayer(this);
 
     switch( eFileDescriptorsState )
     {
