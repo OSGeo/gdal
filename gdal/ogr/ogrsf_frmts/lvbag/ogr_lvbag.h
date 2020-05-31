@@ -31,8 +31,15 @@
 
 #include "ogrsf_frmts.h"
 #include "ogr_expat.h"
+#include "ogrlayerpool.h"
 
 namespace OGRLVBAG {
+
+typedef enum
+{
+    LYR_RAW,
+    LYR_UNION
+} LayerType;
 
 /**
  * Deleter for unique pointer.
@@ -59,10 +66,13 @@ struct XMLParserUniquePtrDeleter
 
 typedef std::unique_ptr<XML_ParserStruct, XMLParserUniquePtrDeleter> XMLParserUniquePtr;
 
+using LayerUniquePtr = std::unique_ptr<OGRLayer>;
+using LayerPoolUniquePtr = std::unique_ptr<OGRLayerPool>;
+
 /**
  * Vector holding pointers to OGRLayer.
  */
-using LayerVector = std::vector<std::unique_ptr<OGRLayer>>;
+using LayerVector = std::vector<std::pair<LayerType, LayerUniquePtr>>;
 
 }
 
@@ -70,13 +80,25 @@ using LayerVector = std::vector<std::unique_ptr<OGRLayer>>;
 /*                           OGRLVBAGLayer                              */
 /************************************************************************/
 
-class OGRLVBAGLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRLVBAGLayer>
+class OGRLVBAGLayer final: public OGRAbstractProxiedLayer, public OGRGetNextFeatureThroughRaw<OGRLVBAGLayer>
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRLVBAGLayer)
+
     OGRFeatureDefn     *poFeatureDefn;
     OGRFeature         *poFeature;
     VSILFILE           *fp;
     int                 nNextFID;
+    CPLString           osFilename;
     
+    typedef enum
+    {
+        FD_OPENED,
+        FD_CLOSED,
+        FD_CANNOT_REOPEN
+    } FileDescriptorState;
+    
+    FileDescriptorState eFileDescriptorsState;
+
     OGRLVBAG::XMLParserUniquePtr  oParser;
     
     bool                bSchemaOnly;
@@ -109,13 +131,16 @@ class OGRLVBAGLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<O
     void                StartDataCollect();
     void                StopDataCollect();
 
+    bool                TouchLayer();
+    void                CloseUnderlyingLayer() override;
+
     OGRFeature*         GetNextRawFeature();
 
     friend class OGRGetNextFeatureThroughRaw<OGRLVBAGLayer>;
     friend class OGRLVBAGDataSource;
 
 public:
-    explicit OGRLVBAGLayer( const char *pszFilename );
+    explicit OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn );
     ~OGRLVBAGLayer();
 
     void                ResetReading() override;
@@ -132,10 +157,10 @@ public:
 
 class OGRLVBAGDataSource final: public GDALDataset
 {
+    OGRLVBAG::LayerPoolUniquePtr poPool;
     OGRLVBAG::LayerVector papoLayers;
 
     void                TryCoalesceLayers();
-    void                ConcludeBatch();
 
     friend GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo );
 

@@ -37,11 +37,14 @@
 /*      file pointer.                                                   */
 /************************************************************************/
 
-OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename ) :
+OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn ) :
+    OGRAbstractProxiedLayer{ poPoolIn },
     poFeatureDefn{ new OGRFeatureDefn{} },
     poFeature{ nullptr },
-    fp{ VSIFOpenExL(pszFilename, "rb", true) },
+    fp{ nullptr },
     nNextFID{ 0 },
+    osFilename{ pszFilename },
+    eFileDescriptorsState{ FD_CLOSED },
     oParser{ nullptr },
     bSchemaOnly{ false },
     bHasReadSchema{ false },
@@ -66,8 +69,7 @@ OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename ) :
 OGRLVBAGLayer::~OGRLVBAGLayer()
 {
     poFeatureDefn->Release();
-    if ( fp )
-        VSIFCloseL(fp);
+    CloseUnderlyingLayer();
 }
 
 /************************************************************************/
@@ -76,6 +78,9 @@ OGRLVBAGLayer::~OGRLVBAGLayer()
 
 void OGRLVBAGLayer::ResetReading()
 {
+    if( !TouchLayer() )
+        return;
+
     VSIRewindL(fp);
 
     nNextFID = 0;
@@ -93,6 +98,9 @@ void OGRLVBAGLayer::ResetReading()
 
 OGRFeatureDefn* OGRLVBAGLayer::GetLayerDefn()
 {
+    if( !TouchLayer() )
+        return nullptr;
+
     if ( !bHasReadSchema )
     {
         bSchemaOnly = true;
@@ -314,6 +322,53 @@ void OGRLVBAGLayer::DataHandlerCbk( const char *data, int nLen )
 {
     if( nLen && bCollectData )
         osElementString.append(data, nLen);
+}
+
+/************************************************************************/
+/*                              TouchLayer()                            */
+/************************************************************************/
+
+bool OGRLVBAGLayer::TouchLayer()
+{
+    // Only when the pool is used we register this layer as MRU.
+    if( poPool->GetSize() > 0 )
+        poPool->SetLastUsedLayer(this);
+
+    switch( eFileDescriptorsState )
+    {
+        case FD_OPENED:
+            return true;
+        case FD_CANNOT_REOPEN:
+            return false;
+        case FD_CLOSED:
+            break;
+    }
+
+    fp = VSIFOpenExL(osFilename, "rb", true);
+    if( !fp )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+            "Opening LV BAG extract failed : %s", osFilename.c_str());
+        eFileDescriptorsState = FD_CANNOT_REOPEN;
+        return false;
+    }
+    
+    eFileDescriptorsState = FD_OPENED; // TODO: Why?
+
+    return true;
+}
+
+/************************************************************************/
+/*                        CloseUnderlyingLayer()                        */
+/************************************************************************/
+
+void OGRLVBAGLayer::CloseUnderlyingLayer()
+{
+    if ( fp )
+        VSIFCloseL(fp);
+    fp = nullptr;
+
+    eFileDescriptorsState = FD_CLOSED;
 }
 
 /************************************************************************/
@@ -610,6 +665,9 @@ void OGRLVBAGLayer::ParseDocument()
 
 OGRFeature* OGRLVBAGLayer::GetNextFeature()
 {
+    if( !TouchLayer() )
+        return nullptr;
+
     if ( !bHasReadSchema )
     {
         GetLayerDefn();
@@ -647,6 +705,9 @@ OGRFeature* OGRLVBAGLayer::GetNextRawFeature()
 
 int OGRLVBAGLayer::TestCapability( const char *pszCap )
 {
+    if( !TouchLayer() )
+        return FALSE;
+
     if( EQUAL(pszCap, OLCStringsAsUTF8) )
         return TRUE;
     

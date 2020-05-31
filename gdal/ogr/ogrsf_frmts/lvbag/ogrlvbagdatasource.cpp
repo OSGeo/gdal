@@ -29,6 +29,7 @@
 #include "ogr_lvbag.h"
 #include "ogrsf_frmts.h"
 #include "ogrunionlayer.h"
+#include "ogrlayerpool.h"
 
 #include <algorithm>
 
@@ -37,7 +38,8 @@
 /************************************************************************/
 
 OGRLVBAGDataSource::OGRLVBAGDataSource() :
-    papoLayers{ OGRLVBAG::LayerVector{} }
+    poPool{ new OGRLayerPool{ } },
+    papoLayers{ OGRLVBAG::LayerVector{ } }
 {}
 
 /************************************************************************/
@@ -46,16 +48,35 @@ OGRLVBAGDataSource::OGRLVBAGDataSource() :
 
 int OGRLVBAGDataSource::Open( const char* pszFilename )
 {
-    auto poLayer = std::unique_ptr<OGRLVBAGLayer>{
-        new OGRLVBAGLayer{ pszFilename } };
-    if( poLayer && !poLayer->fp )
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
-            "Accessing LV BAG extract failed : %s", pszFilename);
-        return FALSE;
+        auto poLayer = std::unique_ptr<OGRLVBAGLayer>{
+            new OGRLVBAGLayer{ pszFilename, poPool.get() } };
+        if( poLayer && !poLayer->TouchLayer() )
+            return FALSE;
+
+        papoLayers.push_back({ OGRLVBAG::LayerType::LYR_RAW,
+            std::move(poLayer) });
     }
 
-    papoLayers.push_back(std::move(poLayer));
+    // If we reach the limit, then register all the already opened layers.
+    // See the comment in OGRShapeDataSource::AddLayer()
+    if( static_cast<int>(papoLayers.size()) ==
+        poPool->GetMaxSimultaneouslyOpened() && poPool->GetSize() == 0 )
+    {
+        for( auto &poLayer : papoLayers )
+        {
+            if( poLayer.first == OGRLVBAG::LayerType::LYR_UNION )
+                continue;
+            
+            poPool->SetLastUsedLayer(
+                dynamic_cast<OGRLVBAGLayer *>(poLayer.second.get()));
+        }
+    }
+
+    if( (static_cast<int>(papoLayers.size()) + 1)
+        % poPool->GetMaxSimultaneouslyOpened() == 0 )
+        TryCoalesceLayers();
+
     return TRUE;
 }
 
@@ -80,12 +101,15 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
                 != paGroup.end() )
                 continue;
 
+            OGRLayer *poLayerLHS = papoLayers[i].second.get();
+            OGRLayer *poLayerRHS = papoLayers[j].second.get();
+
             if( j > i
-                && EQUAL(papoLayers[i]->GetName(), papoLayers[j]->GetName()) )
+                && EQUAL(poLayerLHS->GetName(), poLayerRHS->GetName()) )
             {
-                if( papoLayers[i]->GetGeomType() == papoLayers[j]->GetGeomType()
-                    && papoLayers[i]->GetLayerDefn()->IsSame(
-                        papoLayers[j]->GetLayerDefn()) )
+                if( poLayerLHS->GetGeomType() == poLayerRHS->GetGeomType()
+                    && poLayerLHS->GetLayerDefn()->IsSame(
+                        poLayerRHS->GetLayerDefn()) )
                 {
                     paVector.push_back(static_cast<int>(j));
                     paGroup.push_back(static_cast<int>(j));
@@ -109,9 +133,9 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
             CPLRealloc(nullptr, sizeof(OGRLayer *) * nSrcLayers ));
 
         int idx = 0;
-        papoSrcLayers[idx++] = papoLayers[baseLayerIdx].release();
+        papoSrcLayers[idx++] = papoLayers[baseLayerIdx].second.release();
         for( const auto &poLayerIdx : papoLayersIdx )
-            papoSrcLayers[idx++] = papoLayers[poLayerIdx].release();
+            papoSrcLayers[idx++] = papoLayers[poLayerIdx].second.release();
 
         OGRLayer *poBaseLayer = papoSrcLayers[0];
 
@@ -147,13 +171,14 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
         auto it = papoLayers.begin();
         while( it != papoLayers.end() )
         {
-            if( !(*it) )
+            if( !it->second )
                 it = papoLayers.erase(it);
             else
                 ++it;
         }
 
-        papoLayers.emplace_back(poLayer.release());
+        papoLayers.push_back({ OGRLVBAG::LayerType::LYR_RAW,
+            OGRLVBAG::LayerUniquePtr{ poLayer.release() } });
     }
 }
 
@@ -165,7 +190,7 @@ OGRLayer* OGRLVBAGDataSource::GetLayer( int iLayer )
 {
     if( iLayer < 0 || iLayer >= GetLayerCount() )
         return nullptr;
-    return papoLayers[iLayer].get();
+    return papoLayers[iLayer].second.get();
 }
 
 /************************************************************************/
@@ -185,14 +210,4 @@ int OGRLVBAGDataSource::GetLayerCount()
 int OGRLVBAGDataSource::TestCapability( const char * /* pszCap */ )
 {
     return FALSE;
-}
-
-/************************************************************************/
-/*                            ConcludeBatch()                           */
-/************************************************************************/
-
-void OGRLVBAGDataSource::ConcludeBatch()
-{
-    // Whenever a batch of files is opened we need to try and coalesce
-    TryCoalesceLayers();
 }

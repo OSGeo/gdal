@@ -100,9 +100,6 @@ GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo )
 
             if( !poDS->Open( oSubFilename ) )
                 continue;
-
-            if( (i + 1) % 100 == 0 )
-                poDS->ConcludeBatch();
         }
 
         CSLDestroy(papszNames);
