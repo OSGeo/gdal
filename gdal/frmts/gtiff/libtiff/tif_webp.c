@@ -333,7 +333,7 @@ TWebPSetupEncode(TIFF* tif)
   }
   
   /* check bits per sample and data type */
-  if ((nBitsPerSample != 8) && (sampleFormat != 1)) {
+  if ((nBitsPerSample != 8) || (sampleFormat != SAMPLEFORMAT_UINT)) {
     TIFFErrorExt(tif->tif_clientdata, module,
                 "WEBP driver requires 8 bit unsigned data");
     return 0;
