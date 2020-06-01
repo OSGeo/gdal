@@ -37,11 +37,14 @@
 /*      file pointer.                                                   */
 /************************************************************************/
 
-OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename ) :
+OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn ) :
+    OGRAbstractProxiedLayer{ poPoolIn },
     poFeatureDefn{ new OGRFeatureDefn{} },
     poFeature{ nullptr },
-    fp{ VSIFOpenExL(pszFilename, "rb", true) },
+    fp{ nullptr },
     nNextFID{ 0 },
+    osFilename{ pszFilename },
+    eFileDescriptorsState{ FD_CLOSED },
     oParser{ nullptr },
     bSchemaOnly{ false },
     bHasReadSchema{ false },
@@ -57,8 +60,6 @@ OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename ) :
     poFeatureDefn->Reference();
     
     memset(aBuf, '\0', sizeof(aBuf));
-
-    VSIRewindL(fp);
 }
 
 /************************************************************************/
@@ -68,11 +69,7 @@ OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename ) :
 OGRLVBAGLayer::~OGRLVBAGLayer()
 {
     poFeatureDefn->Release();
-    if ( fp != nullptr )
-    {
-        VSIFCloseL(fp);
-        fp = nullptr;
-    }
+    CloseUnderlyingLayer();
 }
 
 /************************************************************************/
@@ -81,6 +78,9 @@ OGRLVBAGLayer::~OGRLVBAGLayer()
 
 void OGRLVBAGLayer::ResetReading()
 {
+    if( !TouchLayer() )
+        return;
+
     VSIRewindL(fp);
 
     nNextFID = 0;
@@ -98,6 +98,9 @@ void OGRLVBAGLayer::ResetReading()
 
 OGRFeatureDefn* OGRLVBAGLayer::GetLayerDefn()
 {
+    if( !TouchLayer() )
+        return nullptr;
+
     if ( !bHasReadSchema )
     {
         bSchemaOnly = true;
@@ -113,7 +116,7 @@ OGRFeatureDefn* OGRLVBAGLayer::GetLayerDefn()
 /*                            XMLTagSplit()                             */
 /************************************************************************/
 
-static inline const char* XMLTagSplit(const char *pszName)
+static inline const char* XMLTagSplit( const char *pszName )
 {
     const char *pszTag = pszName;
     const char *pszSep = strchr(pszTag, ':');
@@ -189,7 +192,7 @@ void OGRLVBAGLayer::AddOccurrenceFieldDefn()
 /*                         CreateFeatureDefn()                          */
 /************************************************************************/
 
-void OGRLVBAGLayer::CreateFeatureDefn(const char *pszDataset)
+void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
 {
     if( EQUAL("pnd", pszDataset) )
     {
@@ -286,6 +289,9 @@ void OGRLVBAGLayer::CreateFeatureDefn(const char *pszDataset)
         poFeatureDefn->SetName("Woonplaats");
         SetDescription(poFeatureDefn->GetName());
     }
+    else
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Parsing LV BAG extract failed : invalid layer definition");
 }
 
 /************************************************************************/
@@ -308,17 +314,66 @@ void OGRLVBAGLayer::StopDataCollect()
     osElementString.Trim();
 }
 
-void OGRLVBAGLayer::DataHandlerCbk(const char *data, int nLen)
+/************************************************************************/
+/*                           DataHandlerCbk()                           */
+/************************************************************************/
+
+void OGRLVBAGLayer::DataHandlerCbk( const char *data, int nLen )
 {
     if( nLen && bCollectData )
         osElementString.append(data, nLen);
 }
 
 /************************************************************************/
+/*                              TouchLayer()                            */
+/************************************************************************/
+
+bool OGRLVBAGLayer::TouchLayer()
+{
+    poPool->SetLastUsedLayer(this);
+
+    switch( eFileDescriptorsState )
+    {
+        case FD_OPENED:
+            return true;
+        case FD_CANNOT_REOPEN:
+            return false;
+        case FD_CLOSED:
+            break;
+    }
+
+    fp = VSIFOpenExL(osFilename, "rb", true);
+    if( !fp )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+            "Opening LV BAG extract failed : %s", osFilename.c_str());
+        eFileDescriptorsState = FD_CANNOT_REOPEN;
+        return false;
+    }
+    
+    eFileDescriptorsState = FD_OPENED;
+
+    return true;
+}
+
+/************************************************************************/
+/*                        CloseUnderlyingLayer()                        */
+/************************************************************************/
+
+void OGRLVBAGLayer::CloseUnderlyingLayer()
+{
+    if ( fp )
+        VSIFCloseL(fp);
+    fp = nullptr;
+
+    eFileDescriptorsState = FD_CLOSED;
+}
+
+/************************************************************************/
 /*                        startElementCbk()                            */
 /************************************************************************/
 
-void OGRLVBAGLayer::StartElementCbk(const char *pszName, const char **ppszAttr)
+void OGRLVBAGLayer::StartElementCbk( const char *pszName, const char **ppszAttr )
 {
     if( nFeatureElementDepth > 0 && nAttributeElementDepth > 0 &&
         nGeometryElementDepth == 0 && EQUAL("objecten:geometrie", pszName) )
@@ -392,7 +447,7 @@ void OGRLVBAGLayer::StartElementCbk(const char *pszName, const char **ppszAttr)
 /*                           endElementCbk()                            */
 /************************************************************************/
 
-void OGRLVBAGLayer::EndElementCbk(const char *pszName)
+void OGRLVBAGLayer::EndElementCbk( const char *pszName )
 {
     nCurrentDepth--;
 
@@ -533,7 +588,7 @@ void OGRLVBAGLayer::ConfigureParser()
 /*                         IsParserFinished()                           */
 /************************************************************************/
 
-bool OGRLVBAGLayer::IsParserFinished(XML_Status status)
+bool OGRLVBAGLayer::IsParserFinished( XML_Status status )
 {
     switch (status)
     {
@@ -547,6 +602,11 @@ bool OGRLVBAGLayer::IsParserFinished(XML_Status status)
                     XML_ErrorString(XML_GetErrorCode(oParser.get())),
                     static_cast<int>(XML_GetCurrentLineNumber(oParser.get())),
                     static_cast<int>(XML_GetCurrentColumnNumber(oParser.get())) );
+            if( poFeature )
+            {
+                delete poFeature;
+                poFeature = nullptr;
+            }
             return true;
 
         case XML_STATUS_SUSPENDED:
@@ -598,10 +658,33 @@ void OGRLVBAGLayer::ParseDocument()
 }
 
 /************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
+
+OGRFeature* OGRLVBAGLayer::GetNextFeature()
+{
+    if( !TouchLayer() )
+        return nullptr;
+
+    if ( !bHasReadSchema )
+    {
+        GetLayerDefn();
+        if ( !bHasReadSchema )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "Parsing LV BAG extract failed : invalid layer definition");
+            return nullptr;
+        }
+    }
+
+    return OGRGetNextFeatureThroughRaw<OGRLVBAGLayer>::GetNextFeature();
+}
+
+/************************************************************************/
 /*                         GetNextRawFeature()                          */
 /************************************************************************/
 
-OGRFeature *OGRLVBAGLayer::GetNextRawFeature()
+OGRFeature* OGRLVBAGLayer::GetNextRawFeature()
 {
     bSchemaOnly = false;
 
@@ -618,8 +701,11 @@ OGRFeature *OGRLVBAGLayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRLVBAGLayer::TestCapability( const char * pszCap )
+int OGRLVBAGLayer::TestCapability( const char *pszCap )
 {
+    if( !TouchLayer() )
+        return FALSE;
+
     if( EQUAL(pszCap, OLCStringsAsUTF8) )
         return TRUE;
     

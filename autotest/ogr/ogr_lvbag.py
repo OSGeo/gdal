@@ -32,6 +32,7 @@
 
 
 from osgeo import ogr
+import gdaltest
 import pytest
 
 pytestmark = pytest.mark.require_driver('LVBAG')
@@ -275,6 +276,17 @@ def test_ogr_lvbag_read_zip_3():
     lyr = ds.GetLayer(1)
     assert lyr.GetName() == 'Pand', 'bad layer name'
     assert lyr.GetFeatureCount() == 9
+
+def test_ogr_lvbag_read_errors():
+
+    ds = ogr.Open('data/lvbag/inval_pnd.xml')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+    
+    lyr = ds.GetLayer(0)
+    with gdaltest.error_handler():
+        assert lyr.GetName() == ''
+        assert lyr.GetFeatureCount() == 0
 
 ###############################################################################
 # Run test_ogrsf

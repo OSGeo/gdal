@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sl-bag-extract:bagStand xmlns:selecties-extract="http://www.kadaster.nl/schemas/lvbag/extract-selecties/v20180601" xmlns:sl-bag-extract="http://www.kadaster.nl/schemas/lvbag/extract-deelbestand-lvc/v20180601" xmlns:sl="http://www.kadaster.nl/schemas/standlevering-generiek/1.0" xmlns:DatatypenNEN3610="www.kadaster.nl/schemas/lvbag/imbag/datatypennen3610/v20180601" xmlns:Objecten="www.kadaster.nl/schemas/lvbag/imbag/objecten/v20180601" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:Historie="www.kadaster.nl/schebag/imbag/kenmerkinonderzoek/-20180601">
+    <sl-bag-extract:bagInfo>
+ (      <selecties-extract:Gebied-Registratief>
+            <selecties-extract:Gebied-NLD />
+        </selecties-extract:Gebied-Registratief>
+        <selecties-extract:LVC-Extract>
+            <selecties-extract:StandTechnischeDatum>2019-12-18</selecties-extract:StandTechnischeDatum>
+        </selecties-extract:LVC-Extract>
+    </sl-bag-extract:bagInfo>
+    <sl:standBestand>
+        <sl:dataset>LVBAG</sl:dataset>
+        <sl:inhoud>
+            <sl:gebied>Nederland</sl:gebied>
+            <sl:leveringsId>0000000001</sl:leveringsId>
+          <sl:stand>
+            <sl-bag-extract:bagObject>
+                <Objecten:Verblijfsobject>
+                    <Objecten:heeftAlsHoofdadres>
+                        <Objecten-ref:NummeraanduidingRef xlink:href="NL.IMBAG.NUMMERAANDUIDING.0106200000004330"/>
+                    </Objecten:heeftAlsHoofdadres>
+                    <Objecten:voorkomen>
+                        <Historie:Voorkomen>
+                    ct>
+                      :Pand>
+                    <Objecten:identificatie>
+                        <DatatypenNEN3610:namespace>NL.IMBAG.Pand</DatatypenNEN3610:namespace>
+                        <DatatypenNEN3610:lokaalID>0106100000000000</DatatypenNEN3610:lokaalID>
+                    </Objecten:identificatie>
+                    <Objecten:geometrie>
+                        <gml:Polygon srsName="urn:ogc:def:crs:EPSG::28992" srsDimension="3" gml:id="PND_0106100000000000_1_1257505216">
+                            <gml:exterior>
+<gml:LinearRing>
+    <gml:posList count="107">230704.673 557717.195 0.0 230696.517 557721.191 0.0 230691.209 557723.357 0.0 230686.098 557725.123 0.0 230679.377 557727.004 0.0 230670.437 557728.799 0.0 230661.45 557729.812 0.0 230655.656 557730.115 0.0 230649.027 557730.043 0.0 230643.158 557729.63 0.0 230633.637 557728.258 0.0 230624.876 557726.208 0.0 230615.582 557723.153 0.0 230606.557 557719.241 0.0 230598.373 557714.786 0.0 230586.677 557706.609 0.0 230579.401 557700.229 0.0 230572.714 557693.203 0.0 230566.759 557685.703 0.0 230561.401 557677.528 0.0 230570.4 557670.717 0.0 230566.134 557665.045 0.0 230582.615 557652.572 0.0 230571.131 557633.85 0.0 230570.876 557629.467 0.0 230567.259 557629.68 0.0 230567.206 557628.779 0.0 230532.935 557630.773 0.0 230533.301 557634.977 0.0 230522.488 557636.067 0.0 230522.157 557632.223 0.0 230521.939 557628.371 0.0 230521.834 557624.514 0.0 230522.265 557612.318 0.0 230530.941 557613.553 0.0 230530.722 557617.677 0.0 230577.084 557614.962 0.0 230576.036 557596.944 0.0 230552.764 557590.672 0.0 230553.614 557587.68 0.0 230554.584 557584.602 0.0 230555.517 557581.899 0.0 230556.288 557579.82 0.0 230557.158 557577.612 0.0 230556.422 557577.198 0.0 230559.022 557572.927 0.0 230557.962 557572.272 0.0 230569.378 557553.803 0.0 230567.39 557552.175 0.0 230571.466 557548.348 0.0 230563.936 557540.3 0.0 230558.271 557547.052 0.0 230550.031 557541.386 0.0 230555.543 557534.792 0.0 230558.142 557531.98 0.0 230560.821 557529.244 0.0 230563.579 557526.587 0.0 230584.162 557548.583 0.0 230595.737 557541.484 0.0 230595.19 557540.592 0.0 230604.856 557534.664 0.0 230610.615 557544.055 0.0 230619.289 557538.736 0.0 230628.633 557538.868 0.0 230628.845 557527.298 0.0 230629.605 557521.976 0.0 230648.414 557524.644 0.0 230647.648 557530.22 0.0 230650.341 557530.638 0.0 230650.176 557541.427 0.0 230693.097 557567.702 0.0 230698.386 557576.324 0.0 230702.648 557573.709 0.0 230707.877 557582.233 0.0 230710.349 557580.717 0.0 230713.852 557586.428 0.0 230711.38 557587.944 0.0 230716.609 557596.468 0.0 230712.347 557599.083 0.0 230716.265 557605.47 0.0 230718.14 557604.319 0.0 230719.918 557607.218 0.0 230718.042 557608.367 0.0 230715.811 557660.034 0.0 230726.281 557660.487 0.0 230725.862 557670.178 0.0 230731.742 557670.738 0.0 230731.539 557682.497 0.0 230745.893 557701.518 0.0 230734.677 557708.395 0.0 230727.72 557712.698 0.0 230723.661 557706.694 0.0 230719.503 557709.244 0.0 230718.561 557707.709 0.0 230718.391 557707.813 0.0 230718.286 557707.643 0.0 230716.752 557708.584 0.0 230717.242 557709.375 0.0 230717.071 557709.479 0.0 230715.06 557706.208 0.0 230716.764 557705.162 0.0 230716.215 557704.266 0.0 230702.716 557704.626 0.0 230700.773 557705.818 0.0 230701.74 557707.393 0.0 230699.452 557708.82 0.0 230704.673 557717.195 0.0</gml:posList>
+</gml:LinearRing>
+                            </gml:exterior>
+                        </gml:Polygon>
+                    </Objecten:geometrie>
+                    <Objecten:oorspronkelijkBouwjaar>2009</Objecten:oorspronkelijkBouwjaar>
+                    <Objecten:status>Bouwvergunning verleend</Objecten:status>
+                    <Objecten:geconstateerd>N</Objecten:geconstateerd>
+                    <Objecten:documentdatum>2008-12-12</Objecten:documentdatum>
+                    <Objecten:documentnummer>2008-899</Objecten:documentnummer>
+                    <Objecten:voorkomen>
+                        <Historie:Voorkomen>
+                            <Historie:voorkomenidentificatie>1</Historie:voorkomenidentificatie>
+                            <Historie:beginGeldigheid>2008-12-12</Historie:beginGeldigheid>
+                            <Historie:eindGeldigheid>2010-11-25</Historie:eindGeldigheid>
+                            <Historie:tijdstipRegistratie>2009-11-06T11:37:23.000</Historie:tijdstipRegistratie>
+                            <Historie:eindRegistratie>2010-11-25T15:22:47.000</Historie:eindRegistratie>
+                            <Historie:BeschikbaarLV>
+<Historie:tijdstipRegistratieLV>2009-11-06T12:00:16.513</Historie:tijdstipRegistratieLV>
+<Historie:tijdstipEindRegistratieLV>2010-11-25T15:30:38.529</Historie:tijdstipEindRegistratieLV>
+                            </Historie:BeschikbaarLV>
+                        </Historie:Voorkomen>
+                    </Objecten:voorkomen>
+                </Objecten:Pand>
+            </sl-bag-extract:bagObject>
+        </sl:stand>
+        <sl:stand>
+            <sl-bag-extract:bagObject>
+                <Objecten:Pand>
+                    <Objecten:identificatie>
+                        <DatatypenNEN3610:namespace>NL.IMBAG.Pand</DatatypenNEN3610:namespace>
+                        <DatatypenNEN3610:lokaalID>0106100000000000</DatatypenNEN3610:lokaalID>
+                    </Objecten:identificatie>
+                    <Objecten:geometrie>
+                        <gml:Polygon srsName="urn:ogc:def:crs:EPSG::28992" srsDimension="3" gml:id="PND_0106100000000000_2_1290695438">
+                            <gml:exterior>
+<gml:LinearRing>
+    <gml:posList count="107">230704.673 557717.195 0.0 230696.517 557721.191 0.0 230691.209 557723.357 0.0 230686.098 557725.123 0.0 230679.377 557727.004 0.0 230670.437 557728.799 0.0 230661.45 557729.812 0.0 230655.656 557730.115 0.0 230649.027 557730.043 0.0 230643.158 557729.63 0.0 230633.637 557728.258 0.0 230624.876 557726.208 0.0 230615.582 557723.153 0.0 230606.557 557719.241 0.0 230598.373 557714.786 0.0 230586.677 557706.609 0.0 230579.401 557700.229 0.0 230572.714 557693.203 0.0 230566.759 557685.703 0.0 230561.401 557677.528 0.0 230570.4 557670.717 0.0A230566.134 557665.045 0.0 230582.615 557652.572 0.0 230571.131 557633.85 0.0 230570.876 557629.467 0.0 230567.259 557629.68 0.0 230567.206 557628.779 0.0 230532.935 557630.773 0.0 230533.301 557634.977 0.0 230522.488 557636.067 0.0 230522.157 557632.223 0.0 230521.939 557628.371 0.0 230521.834 557624.514 0.0 230522.265 557612.318 0.0 230530.941 557613.553 0.0 230530.722 557617.677 0.0 230577.084 557614.962 0.0 230576.036 557596.944 0.0 230552.764 557590.672 0.0 230553.614 556587.68 0.0 230554.584 557584.602 0.0 230555.517 557581.899 0.0 230556.288 557579.82 0.0 230557.158 557577.612 0.0 230556.422 557577.198 0.0 230559.022 557572.927 0.0 230557.962 557572.272 0.0 230569.378 557553.803 0.0 230567.39 557552.175 0.0 230571.466 557548.348 0.0 230563.936 557540.3 0.0 230558.271 557547.052 0.0 230550.031 557541.386 0.0 230555.543 557534.792 0.0 230558.142 557531.98 0.0 230560.821 557529.244 0.0 230563.579 557526.587 0.0 230584.162 557548.583 0.0 230595.737 557541.484 0.0 230595.19 557540.592 0.0 230604.856 557534.664 0.0 230610.615 557544.055 0.0 230619.289 557538.736 0.0 230628.633 557538.868 0.0 230628.845 557527.298 0.0 230629.605 557521.976 0.0 230648.414 557524.644 0.0 230647.648 557530.22 0.0 230650.341 557530.638 0.0 230650.176 557541.427 0.0 230693.097 557567.702 0.0 230698.386 557576.324 0.0 230702.648 557573.709 0.0 230707.877 557582.233 0.0 230710.349 557580.717 0.0 230713.852 557586.428 0.0 230711.38 557587.944 0.0 230716.609 557596.468 0.0 230712.347 557599.083 0.0 230716.265 557605.47 0.0 230718.14 557604.319 0.0 230719.918 557607.218 0.0 230718.042 557608.367 0.0 230715.811 557660.034 0.0 230726.281 557660.487 0.0 230725.862 557670.178 0.0 230731.742 557670.738 0.0 230731.539 557682.497 0.0 230745.893 557701.518 0.0 230734.677 557708.395 0.0 230727.72 557712.698 0.0 230723.661 557706.694 0.0 230719.503 557709.244 0.0 230718.561 557707.709 0.0 230718.391 557707.813 0.0 230718.286 557707.643 0.0 230716.752 557708.584 0.0 230717.242 557709.375 0.0 230717.071 557709.479 0.0 230715.06 557706.208 0.0 230716.764 557705.162 0.0 230716.215 557704.266 0.0 230702.716 557704.626 0.0 230700.773 557705.818 0.0 230701.74 557707.393 0.0 230699.452 557708.82 0.0 230704.673 557717.195 0.0</gml:posList>
+</gml:LinearRing>
+                            </gml:exterior>
+                        </gml:Polygon>
+                    </Objecten:geometrie>
+                    <Objecten:oorspronkelijkBouwjaar>2009</Objecten:oorspronkelijkBouwjaar>
+                    <Objecten:status>Pand in gebruik (niet ingemeten)</Objecten:status>
+                    <Objecten:geconstateerd>N</Objecten:geconstateerd>
+                    <Objecten:documentdatum>2010-11-25</Objecten:documentdatum>
+                    <Objecten:documentnummer>MUT 2010 - BB 01772</Objecten:documentnummer>
+                    <Objecten:voorkomen>
+                        <Historie:Voorkomen>
+                            <Historie:voorkomenidentificatie>2</Historie:voorkomenidentificatie>
+                            <Historie:beginGeldigheid>2010-11-25</Historie:beginGeldigheid>
+                            <Historie:eindGeldigheid>2011-07-04</Historie:eindGeldigheid>
+                            <Historie:tijdstipRegistratie>2010-11-25T15:22:47.000</Historie:tijdstipRegistratie>
+                            <Historie:eindRegistratie>2011-07-04T10:27:52.000</Historie:eindRegistratie>
+                            <Historie:BeschikbaarLV>
+<Historie:tijdstipRegistratieLV>2010-11-25T15:30:38.529</Historie:tijdstipRegistratieLV>
+<Historie:tijdstipEindRegistratieLV>2011-07-04T10:34:41.354</Historie:tijdstipEindRegistratieLV>
+                            </Historie:BeschikbaarLV>
+                        </Historie:Voorkomen>
+                    </Objecten:voorkomen>
+                </Objecten:Pand>
+            </sl-bag-extract:bagObject>
+        </sl:stand>
+        <sl:stand>
+            <sl-bag-extract:bagObject>
+                <Objecten:Pand>
+                    <Objecten:identificatie>
+                        <DatatypenNEN3610:namespace>NL.IMBAG.Pand</DatatypenNEN3610:namespace>
+                        <DatatypenNEN3610:lokaalID>0106100000000000</DatatypenNEN3610:lokaalID>
+                    </Objecten:ideÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿntificatie>
+                    <Objecten:geometrie>
+                        <gml:Polygon srsName="urn:ogc:def:crs:EPSG::28992" srsDimension="3" gml:id="PND_0106100000000000_3_1309768481">
+                            <gml:exterior>
+<gml:LinearRing>
+    <gml:posList count="133">230523.066 557612.978 0.0 230531.906 557613.575 0.0 230531.665 557616.903 0.0 230542.635 557616.294 0.0 230542.555 557614.222 0.0 230569.703 557612.629 0.0 230569.044 557599.874 0.0 230565.424 557597.88 0.0 230548.147 557598.942 0.0 230549.374 557590.976 0.0 230554.266 557576.923 0.0 230572.234 557547.807 0.0 230563.369 557538.325 0.0 230553.415 557547.643 0.0 230548.643 557544.02 0.0 230556.399 557534.446 0.0 230555.706 557533.749 0.0 230563.193 557526.088 0.0 230583.826 557548.128 0.0 230598.128 557539.385 0.0 230597.579 557538.6100000000002_1_1257505216">
+                            <gml:exterior>
+<gml:LinearRing>
+    <gml:posList count="26">234539.357 557799.836 0.0 234539.309 557800.01 0.0 234543.391 557801.125 0.0 234548.676 557802.569 0.0 234566.608 557807.469 0.0 234543.526 557891.893 0.0 234600.989 557907.607 0.0 234586.994 557958.792 0.0 234442.505 557919.072 0.0 234452.019 557884.03 0.0 234452.086 557883.799 0.0 234452.541 557883.92 0.0 234476.999 557794.408 0.0 234475.07 557793.881 0.0 234478.549 557781.148 0.0 234480.768 557781.754 0.0 234492.536 557784.969 0.0 234503.051 557787.842 0.0 234502.523 557789.772 0.0 234516.281 557793.531 0.0 234521.251 557794.889 0.0 234525.384 557796.018 0.0 234530.194 557797.333 0.0 234533.21 557798.157 0.0 234534.412 557798.485 0.0 234539.357 557799.836 0.0</gml:posList>
+</gml:LinearRing>
+                            </gml:exterior>
+                        </gml:Polygon>
+                    </Objecten:geometrie>
+                    <Objecten:oorspronkelijkBouwjaar>1975</Objecten:oorspronkelijkBouwjaar>
+                    <Objecten:status>Pand in gebruik</Objecten:status>
+                    <Objecten:geconstateerd>N</Objecten:geconstateerd>
+                    <Objecten:documentdatum>2009-09-14</Objecten:documentdatum>
+                    <Objecten:documentnummer>2009-BB07628</Objecten:documentnummer>
+                    <Objecten:voorkomen>
+                        <Historie:Voorkomen>
+                            <Historie:voorkomenidentificatie>1</Historie:voorkomenidentificatie>
+                            <Historie:beginGeldigheid>2009-09-14</Historie:beginGeldigheid>
+                            <Historie:tijdstipRegistratie>2009-11-06T11:37:24.000</Historie:tijdstipRegistratie>
+                            <Historie:BeschikbaarLV>
+<Historie:tijdstipRegistratieLV>2009-11-06T12:00:16.875</Historie:tijdstipRegistratieLV>
+                            </Historie:BeschikbaarLV>
+                        </Historie:Voorkomen>
+                    </Objecten:voorkomen>
+                </Objecten:Pand>
+            </sl-bag-extract:bagObject>
+        </sl:stand>
+        <sl:stand>
+            <sl-bag-extract:bagObject>
+                <Objecten:Pand>
+                    <Objecten:identificatie>
+                        <DatatypenNEN3610:namespace>NL.IMBAG.Pand</DatatypenNEN3610:namespace>
+                        <DatatypenNEN3610:lokaalID>0106100000000003</DatatypenNEN3610:lokaalID>
+                    </Objecten:identificatie>
+                    <Objecten:geometrie>
+                        <gml:Polygon srsName="urn:ogc:def:crs:EPSG::28992" srsDimension="3" gml:id="PND_0106100000000003_1_1257505216">
+                            <gml:exterior>
+<gml:LinearRing>
+    <gml:posList count="10">233686.735 554387.651 0.0 233698.608 554540.019 0.0 233698.345 554540.033 0.0 233698.713 554545.229 0.0 233696.584 554547.75 0.0 233691.33 554548.145 0.0 233691.355 554548.428 0.0 233608.823 554554.799 0.0 233596.445 554394.666 0.0 233686.735 554387.651 0.0</gml:posList>
+</gml:LinearRing>
+                            </gml:exterior>
+                        </gml:Polygon>
+                    </Objecten:geometrie>
+                    <Objecten:oorspronkelijkBouwjaar>2001</Objecten:oorspronkelijkBouwjaar>
+                    <Objecten:status>Pand in gebruik</Objecten:status>
+                    <Objecten:geconstateerd>N</Objecten:geconstateerd>
+                    <Objecten:documentdatum>2000-03-08</Objecten:documentdat

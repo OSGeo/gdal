@@ -29,6 +29,7 @@
 #include "ogr_lvbag.h"
 #include "ogrsf_frmts.h"
 #include "ogrunionlayer.h"
+#include "ogrlayerpool.h"
 
 #include <algorithm>
 
@@ -37,7 +38,8 @@
 /************************************************************************/
 
 OGRLVBAGDataSource::OGRLVBAGDataSource() :
-    papoLayers{ OGRLVBAG::LayerVector{} }
+    poPool{ new OGRLayerPool{ } },
+    papoLayers{ OGRLVBAG::LayerVector{ } }
 {}
 
 /************************************************************************/
@@ -46,7 +48,18 @@ OGRLVBAGDataSource::OGRLVBAGDataSource() :
 
 int OGRLVBAGDataSource::Open( const char* pszFilename )
 {
-    papoLayers.emplace_back(new OGRLVBAGLayer{pszFilename});
+    auto poLayer = std::unique_ptr<OGRLVBAGLayer>{
+        new OGRLVBAGLayer{ pszFilename, poPool.get() } };
+    if( poLayer && !poLayer->TouchLayer() )
+        return FALSE;
+
+    papoLayers.push_back({ OGRLVBAG::LayerType::LYR_RAW,
+        std::move(poLayer) });
+
+    if( (static_cast<int>(papoLayers.size()) + 1)
+        % poPool->GetMaxSimultaneouslyOpened() == 0
+        && poPool->GetSize() > 0 )
+        TryCoalesceLayers();
 
     return TRUE;
 }
@@ -61,6 +74,8 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
     std::map<int, std::vector<int>> paMergeVector = {};
 
     // FUTURE: This can be optimized
+    // Find similar layers by doing a triangular matrix
+    // comparison across all layers currently enlisted.
     for( size_t i = 0; i < papoLayers.size(); ++i )
     {
         std::vector<int> paVector = {};
@@ -70,12 +85,15 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
                 != paGroup.end() )
                 continue;
 
+            OGRLayer *poLayerLHS = papoLayers[i].second.get();
+            OGRLayer *poLayerRHS = papoLayers[j].second.get();
+
             if( j > i
-                && EQUAL(papoLayers[i]->GetName(), papoLayers[j]->GetName()) )
+                && EQUAL(poLayerLHS->GetName(), poLayerRHS->GetName()) )
             {
-                if( papoLayers[i]->GetGeomType() == papoLayers[j]->GetGeomType()
-                    && papoLayers[i]->GetLayerDefn()->IsSame(
-                        papoLayers[j]->GetLayerDefn()) )
+                if( poLayerLHS->GetGeomType() == poLayerRHS->GetGeomType()
+                    && poLayerLHS->GetLayerDefn()->IsSame(
+                        poLayerRHS->GetLayerDefn()) )
                 {
                     paVector.push_back(static_cast<int>(j));
                     paGroup.push_back(static_cast<int>(j));
@@ -83,7 +101,7 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
             }
         }
         if( !paVector.empty() )
-            paMergeVector.insert({static_cast<int>(i), paVector});
+            paMergeVector.insert({ static_cast<int>(i), paVector });
     }
 
     if( paMergeVector.empty() )
@@ -99,9 +117,9 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
             CPLRealloc(nullptr, sizeof(OGRLayer *) * nSrcLayers ));
 
         int idx = 0;
-        papoSrcLayers[idx++] = papoLayers[baseLayerIdx].release();
+        papoSrcLayers[idx++] = papoLayers[baseLayerIdx].second.release();
         for( const auto &poLayerIdx : papoLayersIdx )
-            papoSrcLayers[idx++] = papoLayers[poLayerIdx].release();
+            papoSrcLayers[idx++] = papoLayers[poLayerIdx].second.release();
 
         OGRLayer *poBaseLayer = papoSrcLayers[0];
 
@@ -120,25 +138,31 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
         OGRUnionLayerGeomFieldDefn** papoGeomFields = static_cast<OGRUnionLayerGeomFieldDefn **>(
             CPLRealloc(nullptr, sizeof(OGRUnionLayerGeomFieldDefn *) * nGeomFields ));
         for( int i = 0; i < nGeomFields; ++i )
-            papoGeomFields[i] = new OGRUnionLayerGeomFieldDefn( poBaseLayerDefn->GetGeomFieldDefn( i ) );
+            papoGeomFields[i] = new OGRUnionLayerGeomFieldDefn(
+                poBaseLayerDefn->GetGeomFieldDefn( i ) );
 
         poLayer->SetFields(
             FIELD_FROM_FIRST_LAYER,
             nFields, papoFields,
             nGeomFields, papoGeomFields);
   
+        for( int i = 0; i < nGeomFields; ++i )
+            delete papoGeomFields[i];
+        CPLFree(papoGeomFields);
+        CPLFree(papoFields);
+
         // Erase all released pointers
         auto it = papoLayers.begin();
         while( it != papoLayers.end() )
         {
-            if( !(*it) )
+            if( !it->second )
                 it = papoLayers.erase(it);
             else
                 ++it;
         }
 
-        // TODO: cast can fail
-        papoLayers.push_back(std::unique_ptr<OGRLayer>{ dynamic_cast<OGRLayer*>(poLayer.release()) });
+        papoLayers.push_back({ OGRLVBAG::LayerType::LYR_RAW,
+            OGRLVBAG::LayerUniquePtr{ poLayer.release() } });
     }
 }
 
@@ -146,11 +170,11 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRLVBAGDataSource::GetLayer( int iLayer )
+OGRLayer* OGRLVBAGDataSource::GetLayer( int iLayer )
 {
     if( iLayer < 0 || iLayer >= GetLayerCount() )
         return nullptr;
-    return papoLayers[iLayer].get();
+    return papoLayers[iLayer].second.get();
 }
 
 /************************************************************************/

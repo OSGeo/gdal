@@ -64,14 +64,14 @@ static int OGRLVBAGDriverIdentify( GDALOpenInfo* poOpenInfo )
 /*                                Open()                                */
 /************************************************************************/
 
-static GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo )
+GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo )
 {
     if( !OGRLVBAGDriverIdentify(poOpenInfo) ||
         poOpenInfo->eAccess == GA_Update)
         return nullptr;
 
-    auto poDS = std::unique_ptr<OGRLVBAGDataSource>(
-        new OGRLVBAGDataSource());
+    auto poDS = std::unique_ptr<OGRLVBAGDataSource>{
+        new OGRLVBAGDataSource{} };
     poDS->SetDescription(poOpenInfo->pszFilename);
 
     if( !poOpenInfo->bIsDirectory && poOpenInfo->fpL != nullptr )
