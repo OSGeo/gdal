@@ -35,6 +35,8 @@
 #include "cpl_port.h"
 #include <expat.h>
 
+#include <memory>
+
 /* Compatibility stuff for expat >= 1.95.0 and < 1.95.7 */
 #ifndef XMLCALL
 #define XMLCALL
