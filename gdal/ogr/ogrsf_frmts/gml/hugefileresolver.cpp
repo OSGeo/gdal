@@ -1732,6 +1732,7 @@ static bool gmlHugeFileWriteResolved( huge_helper *helper,
 
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
     VSIFPrintfL(fp, "<ResolvedTopoFeatureCollection  "
+                    "xmlns:xlink=\"http://www.w3.org/1999/xlink\" "
                     "xmlns:gml=\"http://www.opengis.net/gml\">\n");
     VSIFPrintfL(fp, "  <ResolvedTopoFeatureMembers>\n");
 

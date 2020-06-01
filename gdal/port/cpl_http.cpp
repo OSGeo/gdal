@@ -44,6 +44,12 @@
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
 
+// clang complains about C-style cast in #define like CURL_ZERO_TERMINATED
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wold-style-cast"
+#endif
+
 #ifdef HAVE_CURL
 #  include <curl/curl.h>
 // CURLINFO_RESPONSE_CODE was known as CURLINFO_HTTP_CODE in libcurl 7.10.7 and
@@ -2297,3 +2303,7 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
 
     return TRUE;
 }
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif

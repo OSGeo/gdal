@@ -2,7 +2,7 @@
 
 set -e
 
-export PYTHONPATH=$PWD/gdal/swig/python/build/lib.macosx-10.13-x86_64-2.7
+export PYTHONPATH=$PWD/gdal/swig/python/build/lib.macosx-10.13-x86_64-2.7:$PWD/gdal/swig/python/build/lib.macosx-10.15-x86_64-2.7
 export PYTEST="pytest -vv -p no:sugar --color=no"
 
 echo 'Running CPP unit tests'

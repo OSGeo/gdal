@@ -1847,8 +1847,9 @@ def test_jp2openjpeg_45():
         if ogr.Open('../ogr/data/gml/ionic_wfs.gml') is None:
             pytest.skip('GML read support missing')
 
-    if gdal.GetDriverByName('KML') is None and gdal.GetDriverByName('LIBKML') is None:
-        pytest.skip('KML support missing')
+    with gdaltest.error_handler():
+        if ogr.Open('../ogr/data/kml/empty.kml') is None:
+            pytest.skip('KML support missing')
 
     # Test GMLJP2V2_DEF=YES
     src_ds = gdal.Open('data/byte.tif')
@@ -2096,7 +2097,7 @@ def test_jp2openjpeg_45():
 </gmljp2:dcMetadata>""")
 
     gdal.FileFromMemBuffer("/vsimem/feature.xml",
-                           """<FeatureCollection gml:id="myFC1">
+                           """<FeatureCollection gml:id="myFC1" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns="http://www.opengis.net/gml/3.2">
     <featureMember>
         <Observation gml:id="myFC1_Observation">
             <validTime/>
@@ -2167,7 +2168,7 @@ def test_jp2openjpeg_45():
         ds = None
 
     gdal.FileFromMemBuffer("/vsimem/feature2.gml",
-                           """<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://ogr.maptools.org/ http://dummy" gml:id="myFC3">
+                           """<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/ http://dummy" gml:id="myFC3">
     <featureMember>
         <Observation gml:id="myFC3_Observation">
             <validTime/>
@@ -2177,7 +2178,7 @@ def test_jp2openjpeg_45():
 </FeatureCollection>""")
 
     gdal.FileFromMemBuffer("/vsimem/feature3.gml",
-                           """<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd http://ogr.maptools.org/ http://dummy" gml:id="myFC4">
+                           """<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd http://ogr.maptools.org/ http://dummy" gml:id="myFC4">
     <featureMember>
         <Observation gml:id="myFC4_Observation">
             <validTime/>
@@ -2188,7 +2189,7 @@ def test_jp2openjpeg_45():
 
     gdal.FileFromMemBuffer("/vsimem/empty.kml",
                            """<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2" xsi:schemaLocation="http://www.opengis.net/kml/2.2 http://schemas.opengis.net/kml/2.2.0/ogckml22.xsd">
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/kml/2.2 http://schemas.opengis.net/kml/2.2.0/ogckml22.xsd">
     <Document id="empty_doc"/>
 </kml>
 """)
@@ -2435,10 +2436,10 @@ def test_jp2openjpeg_45():
     assert """<ogr2:FeatureCollection gml:id="ID_GMLJP2_0_2_aFeatureCollection" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" xmlns:ogr2="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2">""" in myshape2_gml
 
     feature2_gml = ds.GetMetadata_List("xml:feature2.gml")[0]
-    assert """<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" gml:id="ID_GMLJP2_0_3_myFC3">""" in feature2_gml
+    assert """<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" gml:id="ID_GMLJP2_0_3_myFC3">""" in feature2_gml
 
     feature3_gml = ds.GetMetadata_List("xml:feature3.gml")[0]
-    assert """<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" gml:id="ID_GMLJP2_0_4_myFC4">""" in feature3_gml
+    assert """<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" gml:id="ID_GMLJP2_0_4_myFC4">""" in feature3_gml
 
     myshape2_xsd = ds.GetMetadata_List("xml:a_schema.xsd")[0]
     assert """<xs:schema xmlns:ogr="http://ogr.maptools.org/" """ in myshape2_xsd
@@ -2450,7 +2451,7 @@ def test_jp2openjpeg_45():
     ds = None
 
     ds = ogr.Open('/vsimem/jp2openjpeg_45.jp2')
-    assert ds.GetLayerCount() == 6
+    assert ds.GetLayerCount() == 6, [ ds.GetLayer(j).GetName() for j in range(ds.GetLayerCount()) ]
     expected_layers = ['FC_GridCoverage_1_myshape',
                        'FC_CoverageCollection_1_Observation',
                        'FC_CoverageCollection_2_myshape',

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ogr:FeatureCollection xmlns:gml="http://www.opengis.net/gml">
+<ogr:FeatureCollection xmlns:gml="http://www.opengis.net/gml" xmlns:ogr="http://ogr.maptools.org/" xmlns:prefix="http://prefix">
   <gml:featureMember>
     <ogr:test>
       <ogr:element attr1="1"/>
