@@ -189,8 +189,6 @@ class OGRShapeLayer final: public OGRAbstractProxiedLayer
 
     bool                StartUpdate( const char* pszOperation );
 
-  protected:
-
     virtual void        CloseUnderlyingLayer() override;
 
 // WARNING: Each of the below public methods should start with a call to
