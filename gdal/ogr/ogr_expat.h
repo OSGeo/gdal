@@ -53,6 +53,20 @@
 /* Only for internal use ! */
 XML_Parser CPL_DLL OGRCreateExpatXMLParser(void);
 
+//
+//! @cond Doxygen_Suppress
+struct CPL_DLL OGRExpatUniquePtrDeleter
+{
+    void operator()(XML_Parser oParser) const
+        { XML_ParserFree(oParser); }
+};
+//! @endcond
+
+/** Unique pointer type for XML_Parser.
+ * @since GDAL 3.2
+ */
+using OGRExpatUniquePtr = std::unique_ptr<XML_ParserStruct, OGRExpatUniquePtrDeleter>;
+
 #endif /* HAVE_EXPAT */
 
 #endif /* OGR_EXPATH_INCLUDED */
