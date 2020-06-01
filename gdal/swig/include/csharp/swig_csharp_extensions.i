@@ -181,9 +181,40 @@
   }
 %}
 
+%typemap(csfinalize) SWIGTYPE %{
+  ~$csclassname() {
+    Dispose();
+  }
+%}
+
 %typemap(csconstruct, excode=SWIGEXCODE) SWIGTYPE %{: this($imcall, true, null) {$excode
   }
 %}
+
+%typemap(csdestruct, methodname="Dispose", methodmodifiers="public") SWIGTYPE {
+  lock(this) {
+      if(swigCPtr.Handle != IntPtr.Zero && swigCMemOwn) {
+        swigCMemOwn = false;
+        $imcall;
+      }
+      swigCPtr = new HandleRef(null, IntPtr.Zero);
+      swigParentRef = null;
+      GC.SuppressFinalize(this);
+    }
+  }
+
+%typemap(csdestruct_derived, methodname="Dispose", methodmodifiers="public") TYPE {
+  lock(this) {
+      if(swigCPtr.Handle != IntPtr.Zero && swigCMemOwn) {
+        swigCMemOwn = false;
+        $imcall;
+      }
+      swigCPtr = new HandleRef(null, IntPtr.Zero);
+      swigParentRef = null;
+      GC.SuppressFinalize(this);
+      base.Dispose();
+    }
+  }
 
 %typemap(csin) SWIGTYPE *DISOWN "$csclassname.getCPtrAndDisown($csinput, ThisOwn_false())"
 %typemap(csin) SWIGTYPE *SETREFERENCE "$csclassname.getCPtrAndSetReference($csinput, ThisOwn_false())"
