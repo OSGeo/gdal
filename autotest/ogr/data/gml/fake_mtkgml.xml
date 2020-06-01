@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- this will not validate the http://xml.nls.fi/XML/Schema/Maastotietojarjestelma/MTK/201202/Maastotiedot.xsd schema, but is enough to test the driver -->
 <Maastotiedot xmlns="http://xml.nls.fi/XML/Namespace/Maastotietojarjestelma/SiirtotiedostonMalli/2011-02"
-              xmlns:gml="http://www.opengis.net/gml" srsName="EPSG:3067, EPSG:5717">
+              xmlns:gml="http://www.opengis.net/gml"
+              xmlns:xlink="http://www.w3.org/1999/xlink"
+              srsName="EPSG:3067, EPSG:5717">
     <a>
         <A gid="1" srsDimension="3">
             <regular_attribute>5</regular_attribute>
