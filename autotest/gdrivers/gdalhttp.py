@@ -213,9 +213,9 @@ def test_http_6():
     if drv is None:
         pytest.skip()
 
-    ds = ogr.Open('https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/test.jml')
+    ds = ogr.Open('https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.dbf')
     if ds is None:
-        conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/test.jml')
+        conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.dbf')
         if conn is None:
             pytest.skip('cannot open URL')
         try:
