@@ -36,45 +36,6 @@
 
 %include constraints.i
 
-%typemap(csdispose) SWIGTYPE %{
-  ~$csclassname() {
-    Dispose();
-  }
-%}
-
-%typemap(csdispose_derived) SWIGTYPE %{
-  ~$csclassname() {
-    Dispose();
-  }
-%}
-
-%typemap(csdisposing, methodname="Dispose", methodmodifiers="public", parameters="") SWIGTYPE {
-    lock(this) {
-      if (swigCPtr.Handle != global::System.IntPtr.Zero) {
-        if (swigCMemOwn) {
-          swigCMemOwn = false;
-          $imcall;
-        }
-        swigCPtr = new global::System.Runtime.InteropServices.HandleRef(null, global::System.IntPtr.Zero);
-      }
-      global::System.GC.SuppressFinalize(this);
-    }
-  }
-
-%typemap(csdisposing_derived, methodname="Dispose", methodmodifiers="public", parameters="") SWIGTYPE {
-    lock(this) {
-      if (swigCPtr.Handle != global::System.IntPtr.Zero) {
-        if (swigCMemOwn) {
-          swigCMemOwn = false;
-          $imcall;
-        }
-        swigCPtr = new global::System.Runtime.InteropServices.HandleRef(null, global::System.IntPtr.Zero);
-      }
-      global::System.GC.SuppressFinalize(this);
-      base.Dispose();
-    }
-  }
-
 %rename (Driver) GDALDriverShadow;
 
 class GDALDriverShadow : public GDALMajorObjectShadow {
