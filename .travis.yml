@@ -140,16 +140,17 @@ matrix:
       env:
         - BUILD_NAME=trusty_32bit
         - DETAILS=""
-    - os: osx
-      language: objective-c
-      compiler: clang
-      cache:
-        apt: true
-        directories:
-          - $HOME/.ccache
-      env:
-        - BUILD_NAME=osx
-        - DETAILS="debug build, libtool"
+
+#    - os: osx
+#      language: objective-c
+#      compiler: clang
+#      cache:
+#        apt: true
+#        directories:
+#          - $HOME/.ccache
+#      env:
+#        - BUILD_NAME=osx
+#        - DETAILS="debug build, libtool"
 
 before_install:
   - ./gdal/ci/travis/${BUILD_NAME}/before_install.sh

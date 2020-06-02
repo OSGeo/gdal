@@ -26,6 +26,8 @@ jobs:
  
       - name: Build
         run: ./gdal/ci/travis/osx/install.sh
+        env:
+            WITH_EXPAT: --with-expat=/usr/local/opt/expat
 
       - name: Run tests
         run: ./gdal/ci/travis/osx/script.sh
