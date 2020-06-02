@@ -49,6 +49,9 @@ struct GDALInfoOptionsForBinary
 
     /* > for reporting on a particular subdataset */
     int nSubdataset;
+
+    /* Allowed input drivers. */
+    char** papszAllowInputDrivers;
 };
 
 struct GDALTranslateOptionsForBinary
@@ -59,6 +62,9 @@ struct GDALTranslateOptionsForBinary
     int bCopySubDatasets;
     char** papszOpenOptions;
     char* pszFormat;
+
+    /* Allowed input drivers. */
+    char** papszAllowInputDrivers;
 };
 
 struct GDALWarpAppOptionsForBinary
@@ -75,6 +81,9 @@ struct GDALWarpAppOptionsForBinary
 
     int bOverwrite;
     int bCreateOutput;
+
+    /* Allowed input drivers. */
+    char** papszAllowInputDrivers;
 };
 
 /* Access modes */

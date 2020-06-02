@@ -19,7 +19,8 @@ Synopsis
     gdal_translate [--help-general]
         [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
                 CInt16/CInt32/CFloat32/CFloat64}] [-strict]
-        [-of format] [-b band]* [-mask band] [-expand {gray|rgb|rgba}]
+        [-if format]* [-of format]
+        [-b band]* [-mask band] [-expand {gray|rgb|rgba}]
         [-outsize xsize[%]|0 ysize[%]|0] [-tr xres yres]
         [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]
         [-unscale] [-scale[_bn] [src_min src_max [dst_min dst_max]]]* [-exponent[_bn] exp_val]*
@@ -50,6 +51,8 @@ resampling, and rescaling pixels in the process.
 
     Don't be forgiving of mismatches and lost data when translating to the
     output format.
+
+.. include:: options/if.rst
 
 .. include:: options/of.rst
 
