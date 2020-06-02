@@ -1244,6 +1244,25 @@ def test_gdalwarp_47_append_subdataset():
     ds = None
     gdal.Unlink(tmpfilename)
 
+
+###############################################################################
+# Test -if option
+
+
+def test_gdalwarp_if_option():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        pytest.skip()
+
+    ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' -if GTiff ../gcore/data/byte.tif /vsimem/out.tif')
+    assert err is None or err == ''
+
+    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' -if invalid_driver_name ../gcore/data/byte.tif /vsimem/out.tif')
+    assert err is not None
+    assert 'invalid_driver_name' in err
+
+    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' -if HFA ../gcore/data/byte.tif /vsimem/out.tif')
+    assert err is not None
+
 ###############################################################################
 # Cleanup
 

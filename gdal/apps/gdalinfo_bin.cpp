@@ -46,7 +46,7 @@ static void Usage(const char* pszErrorMsg = nullptr)
     printf( "Usage: gdalinfo [--help-general] [-json] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n"
             "                [-norat] [-noct] [-nofl] [-checksum] [-proj4]\n"
             "                [-listmdd] [-mdd domain|`all`] [-wkt_format WKT1|WKT2|...]*\n"
-            "                [-sd subdataset] [-oo NAME=VALUE]* datasetname\n" );
+            "                [-sd subdataset] [-oo NAME=VALUE]* [-if format]* datasetname\n" );
 
     if( pszErrorMsg != nullptr )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
@@ -74,6 +74,7 @@ static void GDALInfoOptionsForBinaryFree( GDALInfoOptionsForBinary* psOptionsFor
     {
         CPLFree(psOptionsForBinary->pszFilename);
         CSLDestroy(psOptionsForBinary->papszOpenOptions);
+        CSLDestroy(psOptionsForBinary->papszAllowInputDrivers);
         CPLFree(psOptionsForBinary);
     }
 }
@@ -129,7 +130,9 @@ MAIN_START(argc, argv)
 #endif
 
     GDALDatasetH hDataset
-        = GDALOpenEx( psOptionsForBinary->pszFilename, GDAL_OF_READONLY | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, nullptr,
+        = GDALOpenEx( psOptionsForBinary->pszFilename,
+                      GDAL_OF_READONLY | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+                      psOptionsForBinary->papszAllowInputDrivers,
                       psOptionsForBinary->papszOpenOptions, nullptr );
 
     if( hDataset == nullptr )

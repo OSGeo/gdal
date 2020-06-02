@@ -27,7 +27,7 @@ Synopsis
         [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]
         [-cutline datasource] [-cl layer] [-cwhere expression]
         [-csql statement] [-cblend dist_in_pixels] [-crop_to_cutline]
-        [-of format] [-co "NAME=VALUE"]* [-overwrite]
+        [-if format]* [-of format] [-co "NAME=VALUE"]* [-overwrite]
         [-nomd] [-cvmd meta_conflict_value] [-setci] [-oo NAME=VALUE]*
         [-doo NAME=VALUE]*
         srcfile* dstfile
@@ -245,6 +245,8 @@ with control information.
 .. option:: -q
 
     Be quiet.
+
+.. include:: options/if.rst
 
 .. include:: options/of.rst
 

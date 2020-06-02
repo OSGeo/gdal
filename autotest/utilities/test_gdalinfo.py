@@ -628,5 +628,21 @@ def test_gdalinfo_40():
     assert ret['wgs84Extent']['coordinates'] == [[[-180.0, 90.0], [-180.0, -90.0], [180.0, -90.0], [180.0, 90.0], [-180.0, 90.0]]]
 
 
+###############################################################################
+# Test -if option
 
 
+def test_gdalinfo_if_option():
+    if test_cli_utilities.get_gdalinfo_path() is None:
+        pytest.skip()
+
+    ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -if GTiff ../gcore/data/byte.tif', encoding = 'UTF-8')
+    assert (err is None or err == ''), 'got error/warning'
+    assert ret.find('Driver: GTiff/GeoTIFF') != -1
+
+    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -if invalid_driver_name ../gcore/data/byte.tif', encoding = 'UTF-8')
+    assert err is not None
+    assert 'invalid_driver_name' in err
+
+    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -if HFA ../gcore/data/byte.tif', encoding = 'UTF-8')
+    assert err is not None
