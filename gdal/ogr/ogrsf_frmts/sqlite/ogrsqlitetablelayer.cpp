@@ -681,7 +681,9 @@ OGRErr OGRSQLiteTableLayer::RecomputeOrdinals()
             }
         }
     }
+    (void)nCountFieldOrdinals;
     CPLAssert(nCountFieldOrdinals == poFeatureDefn->GetFieldCount() );
+    (void)nCountGeomFieldOrdinals;
     CPLAssert(nCountGeomFieldOrdinals == poFeatureDefn->GetGeomFieldCount() );
     CPLAssert(pszFIDColumn == nullptr || iFIDCol >= 0 );
 

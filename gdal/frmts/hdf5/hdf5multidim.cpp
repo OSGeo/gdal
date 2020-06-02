@@ -291,7 +291,7 @@ class HDF5Array final: public GDALMDArray
 
     HDF5Array(const std::string& osParentName,
               const std::string& osName,
-              std::shared_ptr<HDF5SharedResources> poShared,
+              const std::shared_ptr<HDF5SharedResources>& poShared,
               hid_t hArray,
               const HDF5Group* poGroup,
               bool bSkipFullDimensionInstantiation);
@@ -324,7 +324,7 @@ public:
     static std::shared_ptr<HDF5Array> Create(
                    const std::string& osParentName,
                    const std::string& osName,
-                   std::shared_ptr<HDF5SharedResources> poShared,
+                   const std::shared_ptr<HDF5SharedResources>& poShared,
                    hid_t hArray,
                    const HDF5Group* poGroup,
                    bool bSkipFullDimensionInstantiation)
@@ -382,7 +382,7 @@ class HDF5Attribute final: public GDALAttribute
     HDF5Attribute(const std::string& osGroupFullName,
                   const std::string& osParentName,
                    const std::string& osName,
-                   std::shared_ptr<HDF5SharedResources> poShared,
+                   const std::shared_ptr<HDF5SharedResources>& poShared,
                    hid_t hAttribute):
         GDALAbstractMDArray(osParentName, osName),
         GDALAttribute(osParentName, osName),
@@ -451,7 +451,7 @@ public:
                    const std::string& osGroupFullName,
                    const std::string& osParentName,
                    const std::string& osName,
-                   std::shared_ptr<HDF5SharedResources> poShared,
+                   const std::shared_ptr<HDF5SharedResources>& poShared,
                    hid_t hAttribute)
     {
         auto ar(std::shared_ptr<HDF5Attribute>(new HDF5Attribute(
@@ -787,7 +787,7 @@ HDF5Array::~HDF5Array()
 
 HDF5Array::HDF5Array(const std::string& osParentName,
                    const std::string& osName,
-                   std::shared_ptr<HDF5SharedResources> poShared,
+                   const std::shared_ptr<HDF5SharedResources>& poShared,
                    hid_t hArray,
                    const HDF5Group* poGroup,
                    bool bSkipFullDimensionInstantiation):

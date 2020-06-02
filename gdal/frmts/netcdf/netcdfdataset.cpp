@@ -3466,11 +3466,8 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
     if( !bReadSRSOnly && (nVarDimXID != -1) && (nVarDimYID != -1) &&
         xdim > 0 && ydim > 0 )
     {
-        double *pdfXCoord = nullptr;
-        double *pdfYCoord = nullptr;
-
-        pdfXCoord = static_cast<double *>(CPLCalloc(xdim, sizeof(double)));
-        pdfYCoord = static_cast<double *>(CPLCalloc(ydim, sizeof(double)));
+        double* pdfXCoord = static_cast<double *>(CPLCalloc(xdim, sizeof(double)));
+        double* pdfYCoord = static_cast<double *>(CPLCalloc(ydim, sizeof(double)));
 
         size_t start[2] = { 0, 0 };
         size_t edge[2] = { xdim, 0 };

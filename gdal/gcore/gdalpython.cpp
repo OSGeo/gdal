@@ -193,6 +193,7 @@ static bool LoadPythonAPI()
 
     // First try in the current process in case the python symbols would
     // be already loaded
+    (void) libHandle;
     libHandle = dlopen(nullptr, RTLD_LAZY);
     libHandleStatic = libHandle;
     if( libHandle != nullptr &&

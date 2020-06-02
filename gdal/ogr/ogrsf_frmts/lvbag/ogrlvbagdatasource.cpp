@@ -81,8 +81,8 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
         std::vector<int> paVector = {};
         for( size_t j = 0; j < papoLayers.size(); ++j )
         {
-            if( std::find(paGroup.cbegin(), paGroup.cend(), static_cast<int>(j))
-                != paGroup.end() )
+            // cppcheck-suppress mismatchingContainers
+            if( std::find(paGroup.cbegin(), paGroup.cend(), static_cast<int>(j)) != paGroup.end() )
                 continue;
 
             OGRLayer *poLayerLHS = papoLayers[i].second.get();

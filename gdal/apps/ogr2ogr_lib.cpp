@@ -943,6 +943,8 @@ class GCPCoordTransformation : public OGRCoordinateTransformation
             poSRS->Reference();
     }
 
+    GCPCoordTransformation& operator= (const GCPCoordTransformation&) = delete;
+
 public:
 
     void               *hTransformArg;
@@ -1015,6 +1017,8 @@ class CompositeCT : public OGRCoordinateTransformation
         bOwnCT1(true),
         poCT2(other.poCT2 ? other.poCT2->Clone(): nullptr),
         bOwnCT2(true) {}
+
+    CompositeCT& operator= (const CompositeCT&) = delete;
 
 public:
 

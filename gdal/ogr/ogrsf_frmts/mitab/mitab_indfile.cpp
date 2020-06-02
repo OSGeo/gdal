@@ -1703,19 +1703,16 @@ int TABINDNode::UpdateSplitChild(GByte *pKeyValue1, GInt32 nRecordNo1,
  **********************************************************************/
 int TABINDNode::SplitNode()
 {
-    TABINDNode *poNewNode=nullptr;
-    int numInNode1, numInNode2;
-
     CPLAssert(m_numEntriesInNode >= 2);
     CPLAssert(m_poParentNodeRef);  // This func. does not work for root nodes
 
     /*-----------------------------------------------------------------
      * Prepare new node
      *----------------------------------------------------------------*/
-    numInNode1 = (m_numEntriesInNode+1)/2;
-    numInNode2 = m_numEntriesInNode - numInNode1;
+    int numInNode1 = (m_numEntriesInNode+1)/2;
+    int numInNode2 = m_numEntriesInNode - numInNode1;
 
-    poNewNode = new TABINDNode(m_eAccessMode);
+    TABINDNode* poNewNode = new TABINDNode(m_eAccessMode);
 
     if (m_nCurIndexEntry < numInNode1)
     {

@@ -1164,7 +1164,7 @@ class netCDFLayer final: public OGRLayer
 
         int             GetCDFID() const { return m_nLayerCDFId; }
         void            SetCDFID(int nId) { m_nLayerCDFId = nId; }
-        void            SetSGeometryRepresentation(std::shared_ptr<nccfdriver::SGeometry_Reader> sg) { m_simpleGeometryReader = sg; }
+        void            SetSGeometryRepresentation(const std::shared_ptr<nccfdriver::SGeometry_Reader>& sg) { m_simpleGeometryReader = sg; }
         nccfdriver::ncLayer_SG_Metadata& getLayerSGMetadata() { return m_layerSGDefn; }
 
         virtual void ResetReading() override;

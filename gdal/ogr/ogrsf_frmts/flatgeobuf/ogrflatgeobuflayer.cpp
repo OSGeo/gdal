@@ -132,7 +132,7 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
     OGRSpatialReference *poSpatialRef,
     OGRwkbGeometryType eGType,
     VSILFILE *poFpWrite,
-    std::string oTempFile,
+    const std::string& oTempFile,
     bool bCreateSpatialIndexAtClose) :
     m_eGType(eGType),
     m_poFpWrite(poFpWrite),
