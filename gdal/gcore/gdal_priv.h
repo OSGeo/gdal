@@ -864,7 +864,7 @@ struct CPL_DLL GDALDatasetUniquePtrDeleter
  * reference counter has not been manually modified.
  * @since GDAL 2.3
  */
-typedef std::unique_ptr<GDALDataset, GDALDatasetUniquePtrDeleter> GDALDatasetUniquePtr;
+using GDALDatasetUniquePtr = std::unique_ptr<GDALDataset, GDALDatasetUniquePtrDeleter>;
 
 /* ******************************************************************** */
 /*                           GDALRasterBlock                            */
