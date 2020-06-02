@@ -161,7 +161,8 @@ class VSICurlFilesystemHandler : public VSIFilesystemHandler
                     std::shared_ptr<std::string>>>::iterator,
                     FilenameOffsetPairHasher>>;
 
-    RegionCacheType oRegionCache;
+    std::unique_ptr<RegionCacheType> m_poRegionCacheDoNotUseDirectly{}; // do not access directly. Use GetRegionCache();
+    RegionCacheType* GetRegionCache();
 
     lru11::Cache<std::string, FileProp>  oCacheFileProp;
 
