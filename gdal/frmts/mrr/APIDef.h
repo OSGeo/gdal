@@ -1292,7 +1292,7 @@ struct SMIR_Statistics
 
     // Cell to cell difference statistics
     // Acquired with Mode MIR_StatsMode_Spatial
-    uint64_t                        2CSampleCount;          /*!< Total samples considered for cell to cell statistics calculation */
+    uint64_t                        nC2CSampleCount;        /*!< Total samples considered for cell to cell statistics calculation */
     double                          dC2CMin;                /*!< Minimum cell to cell difference */
     double                          dC2CMax;                /*!< Maximum cell to cell difference */
     double                          dC2CMean;               /*!< Mean of cell to cell differences  */
