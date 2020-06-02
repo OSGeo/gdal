@@ -176,6 +176,17 @@ int LCPDataset::Identify( GDALOpenInfo * poOpenInfo )
         return FALSE;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Check file extension                                            */
+/* -------------------------------------------------------------------- */
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    const char* pszFileExtension = CPLGetExtension( poOpenInfo->pszFilename );
+    if( ! EQUAL( pszFileExtension, "lcp" ) )
+    {
+        return FALSE;
+    }
+#endif
+
     return TRUE;
 }
 
