@@ -99,9 +99,6 @@ int VSICurlUninstallReadCbk( VSILFILE* /* fp */ )
 #define ENABLE_DEBUG 1
 #define ENABLE_DEBUG_VERBOSE 0
 
-static int N_MAX_REGIONS = 1000;
-static int DOWNLOAD_CHUNK_SIZE = 16384;
-
 /***********************************************************ù************/
 /*                    VSICurlAuthParametersChanged()                    */
 /************************************************************************/
@@ -115,14 +112,61 @@ void VSICurlAuthParametersChanged()
 
 namespace cpl {
 
+// Do not access those 2 variables directly !
+// Use VSICURLGetDownloadChunkSize() and GetMaxRegions()
+static int N_MAX_REGIONS_DO_NOT_USE_DIRECTLY = 1000;
+static int DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY = 16384;
+
+/************************************************************************/
+/*                    VSICURLReadGlobalEnvVariables()                   */
+/************************************************************************/
+
+static void VSICURLReadGlobalEnvVariables()
+{
+    struct Initializer
+    {
+        Initializer()
+        {
+            DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY = atoi(
+                    CPLGetConfigOption("CPL_VSIL_CURL_CHUNK_SIZE", "16384"));
+            if( DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY < 1024 ||
+                DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY > 10 * 1024* 1024 )
+                DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY = 16384;
+
+            GIntBig nCacheSize = CPLAtoGIntBig(
+                CPLGetConfigOption("CPL_VSIL_CURL_CACHE_SIZE", "16384000"));
+            if( nCacheSize < DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY ||
+                nCacheSize / DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY > INT_MAX )
+            {
+                nCacheSize = 16384000;
+            }
+            N_MAX_REGIONS_DO_NOT_USE_DIRECTLY = std::max(1,
+                static_cast<int>(nCacheSize / DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY));
+        }
+    };
+    static Initializer initalizer;
+}
+
 /************************************************************************/
 /*                     VSICURLGetDownloadChunkSize()                    */
 /************************************************************************/
 
 int VSICURLGetDownloadChunkSize()
 {
-    return DOWNLOAD_CHUNK_SIZE;
+    VSICURLReadGlobalEnvVariables();
+    return DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY;
 }
+
+/************************************************************************/
+/*                            GetMaxRegions()                           */
+/************************************************************************/
+
+static int GetMaxRegions()
+{
+    VSICURLReadGlobalEnvVariables();
+    return N_MAX_REGIONS_DO_NOT_USE_DIRECTLY;
+}
+
 
 /************************************************************************/
 /*          VSICurlFindStringSensitiveExceptEscapeSequences()           */
@@ -790,13 +834,14 @@ retry:
     CPLString osVerb;
     CPLString osRange; // leave in this scope !
     int nRoundedBufSize = 0;
+    const int knDOWNLOAD_CHUNK_SIZE = VSICURLGetDownloadChunkSize();
     if( UseLimitRangeGetInsteadOfHead() )
     {
         osVerb = "GET";
         const int nBufSize = std::max(1024, std::min(10 * 1024 * 1024,
             atoi(CPLGetConfigOption("GDAL_INGESTED_BYTES_AT_OPEN", "1024"))));
-        nRoundedBufSize = ((nBufSize + DOWNLOAD_CHUNK_SIZE - 1)
-            / DOWNLOAD_CHUNK_SIZE) * DOWNLOAD_CHUNK_SIZE;
+        nRoundedBufSize = ((nBufSize + knDOWNLOAD_CHUNK_SIZE - 1)
+            / knDOWNLOAD_CHUNK_SIZE) * knDOWNLOAD_CHUNK_SIZE;
 
         // so it gets included in Azure signature
         osRange.Printf("Range: bytes=0-%d", nRoundedBufSize-1);
@@ -1044,12 +1089,12 @@ retry:
                 if( sWriteFuncData.pBuffer != nullptr )
                 {
                     for( size_t nOffset = 0;
-                            nOffset + DOWNLOAD_CHUNK_SIZE <= sWriteFuncData.nSize;
-                            nOffset += DOWNLOAD_CHUNK_SIZE )
+                            nOffset + knDOWNLOAD_CHUNK_SIZE <= sWriteFuncData.nSize;
+                            nOffset += knDOWNLOAD_CHUNK_SIZE )
                     {
                         poFS->AddRegion(m_pszURL,
                                         nOffset,
-                                        DOWNLOAD_CHUNK_SIZE,
+                                        knDOWNLOAD_CHUNK_SIZE,
                                         sWriteFuncData.pBuffer + nOffset);
                     }
                 }
@@ -1291,7 +1336,7 @@ retry:
     sWriteFuncHeaderData.bIsHTTP = STARTS_WITH(m_pszURL, "http");
     sWriteFuncHeaderData.nStartOffset = startOffset;
     sWriteFuncHeaderData.nEndOffset =
-        startOffset + nBlocks * DOWNLOAD_CHUNK_SIZE - 1;
+        startOffset + nBlocks * VSICURLGetDownloadChunkSize() - 1;
     // Some servers don't like we try to read after end-of-file (#5786).
     if( oFileProp.bHasComputedFileSize &&
         sWriteFuncHeaderData.nEndOffset >= oFileProp.fileSize )
@@ -1578,15 +1623,16 @@ void VSICurlHandle::DownloadRegionPostProcess( const vsi_l_offset startOffset,
                                                const char* pBuffer,
                                                size_t nSize )
 {
-    lastDownloadedOffset = startOffset + nBlocks * DOWNLOAD_CHUNK_SIZE;
+    const int knDOWNLOAD_CHUNK_SIZE = VSICURLGetDownloadChunkSize();
+    lastDownloadedOffset = startOffset + nBlocks * knDOWNLOAD_CHUNK_SIZE;
 
-    if( nSize > static_cast<size_t>(nBlocks) * DOWNLOAD_CHUNK_SIZE )
+    if( nSize > static_cast<size_t>(nBlocks) * knDOWNLOAD_CHUNK_SIZE )
     {
         if( ENABLE_DEBUG )
             CPLDebug(
                 "VSICURL", "Got more data than expected : %u instead of %u",
                 static_cast<unsigned int>(nSize),
-                static_cast<unsigned int>(nBlocks * DOWNLOAD_CHUNK_SIZE));
+                static_cast<unsigned int>(nBlocks * knDOWNLOAD_CHUNK_SIZE));
     }
 
     vsi_l_offset l_startOffset = startOffset;
@@ -1599,10 +1645,10 @@ void VSICurlHandle::DownloadRegionPostProcess( const vsi_l_offset startOffset,
                 "Add region %u - %u",
                 static_cast<unsigned int>(startOffset),
                 static_cast<unsigned int>(
-                    std::min(static_cast<size_t>(DOWNLOAD_CHUNK_SIZE), nSize)));
+                    std::min(static_cast<size_t>(knDOWNLOAD_CHUNK_SIZE), nSize)));
 #endif
         const size_t nChunkSize =
-            std::min(static_cast<size_t>(DOWNLOAD_CHUNK_SIZE), nSize);
+            std::min(static_cast<size_t>(knDOWNLOAD_CHUNK_SIZE), nSize);
         poFS->AddRegion(m_pszURL, l_startOffset, nChunkSize, pBuffer);
         l_startOffset += nChunkSize;
         pBuffer += nChunkSize;
@@ -1630,6 +1676,8 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
 #endif
 
     vsi_l_offset iterOffset = curOffset;
+    const int knMAX_REGIONS = GetMaxRegions();
+    const int knDOWNLOAD_CHUNK_SIZE = VSICURLGetDownloadChunkSize();
     while( nBufferRequestSize )
     {
         // Don't try to read after end of file.
@@ -1646,7 +1694,7 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
         }
 
         const vsi_l_offset nOffsetToDownload =
-                (iterOffset / DOWNLOAD_CHUNK_SIZE) * DOWNLOAD_CHUNK_SIZE;
+                (iterOffset / knDOWNLOAD_CHUNK_SIZE) * knDOWNLOAD_CHUNK_SIZE;
         std::string osRegion;
         std::shared_ptr<std::string> psRegion = poFS->GetRegion(m_pszURL, nOffsetToDownload);
         if( psRegion != nullptr )
@@ -1673,12 +1721,12 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
             // Ensure that we will request at least the number of blocks
             // to satisfy the remaining buffer size to read.
             const vsi_l_offset nEndOffsetToDownload =
-                ((iterOffset + nBufferRequestSize + DOWNLOAD_CHUNK_SIZE - 1) / DOWNLOAD_CHUNK_SIZE) *
-                DOWNLOAD_CHUNK_SIZE;
+                ((iterOffset + nBufferRequestSize + knDOWNLOAD_CHUNK_SIZE - 1) / knDOWNLOAD_CHUNK_SIZE) *
+                knDOWNLOAD_CHUNK_SIZE;
             const int nMinBlocksToDownload =
                 static_cast<int>(
                     (nEndOffsetToDownload - nOffsetToDownload) /
-                    DOWNLOAD_CHUNK_SIZE);
+                    knDOWNLOAD_CHUNK_SIZE);
             if( nBlocksToDownload < nMinBlocksToDownload )
                 nBlocksToDownload = nMinBlocksToDownload;
 
@@ -1689,15 +1737,15 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
             {
                 if( poFS->GetRegion(
                         m_pszURL,
-                        nOffsetToDownload + i * DOWNLOAD_CHUNK_SIZE) != nullptr )
+                        nOffsetToDownload + i * knDOWNLOAD_CHUNK_SIZE) != nullptr )
                 {
                     nBlocksToDownload = i;
                     break;
                 }
             }
 
-            if( nBlocksToDownload > N_MAX_REGIONS )
-                nBlocksToDownload = N_MAX_REGIONS;
+            if( nBlocksToDownload > knMAX_REGIONS )
+                nBlocksToDownload = knMAX_REGIONS;
 
             osRegion = DownloadRegion(nOffsetToDownload, nBlocksToDownload);
             if( osRegion.empty() )
@@ -1717,7 +1765,7 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
         pBuffer = static_cast<char *>(pBuffer) + nToCopy;
         iterOffset += nToCopy;
         nBufferRequestSize -= nToCopy;
-        if( osRegion.size() < static_cast<size_t>(DOWNLOAD_CHUNK_SIZE) &&
+        if( osRegion.size() < static_cast<size_t>(knDOWNLOAD_CHUNK_SIZE) &&
             nBufferRequestSize != 0 )
         {
             break;
@@ -2404,7 +2452,6 @@ int       VSICurlHandle::Close()
 /************************************************************************/
 
 VSICurlFilesystemHandler::VSICurlFilesystemHandler():
-    oRegionCache{static_cast<size_t>(N_MAX_REGIONS)},
     oCacheFileProp{100 * 1024},
     oCacheDirList{1024, 0}
 {
@@ -2532,6 +2579,20 @@ CURLM* VSICurlFilesystemHandler::GetCurlMultiHandleFor(const CPLString& /*osURL*
 }
 
 /************************************************************************/
+/*                          GetRegionCache()                            */
+/************************************************************************/
+
+VSICurlFilesystemHandler::RegionCacheType* VSICurlFilesystemHandler::GetRegionCache()
+{
+    // should be called under hMutex taken
+    if( m_poRegionCacheDoNotUseDirectly == nullptr )
+    {
+        m_poRegionCacheDoNotUseDirectly.reset(new RegionCacheType(static_cast<size_t>(GetMaxRegions())));
+    }
+    return m_poRegionCacheDoNotUseDirectly.get();
+}
+
+/************************************************************************/
 /*                          GetRegion()                                 */
 /************************************************************************/
 
@@ -2541,11 +2602,12 @@ VSICurlFilesystemHandler::GetRegion( const char* pszURL,
 {
     CPLMutexHolder oHolder( &hMutex );
 
+    const int knDOWNLOAD_CHUNK_SIZE = VSICURLGetDownloadChunkSize();
     nFileOffsetStart =
-        (nFileOffsetStart / DOWNLOAD_CHUNK_SIZE) * DOWNLOAD_CHUNK_SIZE;
+        (nFileOffsetStart / knDOWNLOAD_CHUNK_SIZE) * knDOWNLOAD_CHUNK_SIZE;
 
     std::shared_ptr<std::string> out;
-    if( oRegionCache.tryGet(
+    if( GetRegionCache()->tryGet(
         FilenameOffsetPair(std::string(pszURL), nFileOffsetStart), out) )
     {
         return out;
@@ -2567,7 +2629,7 @@ void VSICurlFilesystemHandler::AddRegion( const char* pszURL,
 
     std::shared_ptr<std::string> value(new std::string());
     value->assign(pData, nSize);
-    oRegionCache.insert(
+    GetRegionCache()->insert(
         FilenameOffsetPair(std::string(pszURL), nFileOffsetStart),
         value);
 }
@@ -2692,9 +2754,10 @@ void VSICurlFilesystemHandler::InvalidateCachedData( const char* pszURL )
         if( kv.key.filename_ == osURL )
             keysToRemove.push_back(kv.key);
     };
-    oRegionCache.cwalk(lambda);
+    auto* poRegionCache = GetRegionCache();
+    poRegionCache->cwalk(lambda);
     for( auto& key: keysToRemove )
-        oRegionCache.remove(key);
+        poRegionCache->remove(key);
 }
 
 /************************************************************************/
@@ -2705,7 +2768,7 @@ void VSICurlFilesystemHandler::ClearCache()
 {
     CPLMutexHolder oHolder( &hMutex );
 
-    oRegionCache.clear();
+    GetRegionCache()->clear();
 
     oCacheFileProp.clear();
 
@@ -2736,9 +2799,10 @@ void VSICurlFilesystemHandler::PartialClearCache(const char* pszFilenamePrefix)
             if( strncmp(kv.key.filename_.c_str(), osURL, osURL.size()) == 0 )
                 keysToRemove.push_back(kv.key);
         };
-        oRegionCache.cwalk(lambda);
+        auto* poRegionCache = GetRegionCache();
+        poRegionCache->cwalk(lambda);
         for( auto& key: keysToRemove )
-            oRegionCache.remove(key);
+            poRegionCache->remove(key);
     }
 
     {
@@ -4422,21 +4486,6 @@ struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
  */
 void VSIInstallCurlFileHandler( void )
 {
-    DOWNLOAD_CHUNK_SIZE = atoi(
-            CPLGetConfigOption("CPL_VSIL_CURL_CHUNK_SIZE", "16384"));
-    if( DOWNLOAD_CHUNK_SIZE < 1024 || DOWNLOAD_CHUNK_SIZE > 10 * 1024* 1024 )
-        DOWNLOAD_CHUNK_SIZE = 16384;
-
-    GIntBig nCacheSize = CPLAtoGIntBig(
-        CPLGetConfigOption("CPL_VSIL_CURL_CACHE_SIZE", "16384000"));
-    if( nCacheSize < DOWNLOAD_CHUNK_SIZE ||
-        nCacheSize / DOWNLOAD_CHUNK_SIZE > INT_MAX )
-    {
-        nCacheSize = 16384000;
-    }
-    N_MAX_REGIONS = std::max(1,
-                        static_cast<int>(nCacheSize / DOWNLOAD_CHUNK_SIZE));
-
     VSIFilesystemHandler* poHandler = new cpl::VSICurlFilesystemHandler;
     VSIFileManager::InstallHandler( "/vsicurl/", poHandler );
     VSIFileManager::InstallHandler( "/vsicurl?", poHandler );
