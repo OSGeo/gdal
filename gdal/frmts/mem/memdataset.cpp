@@ -2592,6 +2592,7 @@ MEMDimension::MEMDimension(const std::string& osParentName,
 /*                           SetIndexingVariable()                      */
 /************************************************************************/
 
+// cppcheck-suppress passedByValue
 bool MEMDimension::SetIndexingVariable(std::shared_ptr<GDALMDArray> poIndexingVariable)
 {
     m_poIndexingVariable = poIndexingVariable;

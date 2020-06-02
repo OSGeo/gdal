@@ -2435,7 +2435,7 @@ void OGRGeoJSONReaderSetField( OGRLayer* poLayer,
         {
             const auto nLength = json_object_array_length(poVal);
             char** papszVal = (char**)CPLMalloc(sizeof(char*) * (nLength+1));
-            auto i = decltype(nLength){0};
+            auto i = decltype(nLength)(0);
             for( ; i < nLength; i++ )
             {
                 json_object* poRow = json_object_array_get_idx(poVal, i);

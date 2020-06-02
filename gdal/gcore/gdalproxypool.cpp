@@ -209,6 +209,7 @@ void GDALDatasetPool::CheckLinks()
         CPLAssert(cur->next != nullptr || cur == lastEntry);
         cur = cur->next;
     }
+    (void)i;
     CPLAssert(i == currentSize);
 }
 #endif
