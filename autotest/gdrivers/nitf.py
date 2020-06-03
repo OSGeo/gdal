@@ -108,7 +108,11 @@ def nitf_create(creation_options, set_inverted_color_interp=True, createcopy=Fal
         ds.GetRasterBand(3).SetRasterColorInterpretation(gdal.GCI_BlueBand)
 
     my_list = list(range(200)) + list(range(20, 220)) + list(range(30, 230))
-    raw_data = array.array('h', my_list).tostring()
+    try:
+        raw_data = array.array('h', my_list).tobytes()
+    except:
+        # Python 2
+        raw_data = array.array('h', my_list).tostring()
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
@@ -307,7 +311,11 @@ def test_nitf_13():
     ds.SetProjection('PROJCS["UTM Zone 11, Southern Hemisphere",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",10000000],UNIT["Meter",1]]')
 
     my_list = list(range(200))
-    raw_data = array.array('f', my_list).tostring()
+    try:
+        raw_data = array.array('f', my_list).tobytes()
+    except:
+        # Python 2
+        raw_data = array.array('f', my_list).tostring()
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,

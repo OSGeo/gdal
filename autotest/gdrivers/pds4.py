@@ -694,7 +694,7 @@ def test_pds4_13():
     assert ds is not None
 
     with gdaltest.error_handler():
-        ds = gdal.Open('PDS4:c:\do_not\exist.xml:1:1')
+        ds = gdal.Open(r'PDS4:c:\do_not\exist.xml:1:1')
     assert ds is None
 
     with gdaltest.error_handler():
