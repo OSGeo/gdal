@@ -295,7 +295,7 @@ def test_gdal_translate_lib_100():
 
     # Will create an implicit options structure
     with gdaltest.error_handler():
-        gdal.TranslateInternal('', gdal.Open('../gcore/data/byte.tif'), None, gdal.TermProgress)
+        gdal.TranslateInternal('', gdal.Open('../gcore/data/byte.tif'), None, gdal.TermProgress_nocb)
 
     # Null dest name
     try:
