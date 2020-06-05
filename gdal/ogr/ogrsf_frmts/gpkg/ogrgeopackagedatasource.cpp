@@ -1618,7 +1618,74 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         }
     }
 
+    if( eAccess == GA_Update )
+    {
+        FixupWrongRTreeTrigger();
+    }
+
     return bRet;
+}
+
+/************************************************************************/
+/*                    FixupWrongRTreeTrigger()                          */
+/************************************************************************/
+
+void GDALGeoPackageDataset::FixupWrongRTreeTrigger()
+{
+    SQLResult oResult;
+    SQLResultInit(&oResult);
+    CPL_IGNORE_RET_VAL(SQLQuery(hDB,
+        "SELECT name, sql FROM sqlite_master WHERE type = 'trigger' AND "
+        "NAME LIKE 'rtree_%_update3' AND sql LIKE '% AFTER UPDATE OF % ON %'",
+        &oResult));
+    if( oResult.nRowCount > 0 )
+    {
+        CPLDebug("GPKG", "Fixing incorrect trigger(s) related to RTree");
+    }
+    for ( int i = 0; i < oResult.nRowCount; i++ )
+    {
+        const char *pszName = SQLResultGetValue(&oResult, 0, i);
+        const char *pszSQL = SQLResultGetValue(&oResult, 1, i);
+        const char *pszPtr1 = strstr(pszSQL, " AFTER UPDATE OF ");
+        if( pszPtr1 )
+        {
+            const char* pszPtr = pszPtr1 + strlen(" AFTER UPDATE OF ");
+            // Skipping over geometry column name
+            while( *pszPtr == ' ' )
+                pszPtr++;
+            if( pszPtr[0] == '"' || pszPtr[0] == '\'' )
+            {
+                char chStringDelim = pszPtr[0];
+                pszPtr ++;
+                while( *pszPtr != '\0' && *pszPtr != chStringDelim )
+                {
+                    if( *pszPtr == '\\' && pszPtr[1] == chStringDelim )
+                        pszPtr += 2;
+                    else
+                        pszPtr += 1;
+                }
+                if( *pszPtr == chStringDelim )
+                    pszPtr++;
+            }
+            else
+            {
+                pszPtr ++;
+                while( *pszPtr != ' ' )
+                    pszPtr++;
+            }
+            if( *pszPtr == ' ' )
+            {
+                SQLCommand(hDB,
+                    ("DROP TRIGGER " + SQLEscapeName(pszName)).c_str());
+                CPLString newSQL;
+                newSQL.assign(pszSQL, pszPtr1 - pszSQL);
+                newSQL += " AFTER UPDATE";
+                newSQL += pszPtr;
+                SQLCommand(hDB, newSQL);
+            }
+        }
+    }
+    SQLResultFree(&oResult);
 }
 
 /************************************************************************/
