@@ -132,7 +132,7 @@ def test_validate_jp2_2():
                        'ERROR[INSPIRE_TG, Conformance class A.8.6]: count(OrthoImageryCoverage.rangeType.field)(=1) != Csiz(=2) ',
                        'ERROR[PROFILE_1, Conformance class A.8.14]: SPcod_xcb_minus_2 = 5, whereas max allowed for Profile 1 is 4']
 
-    if error_report.error_array != expected_errors:
+    if set(error_report.error_array) != set(expected_errors):
         import pprint
         pp = pprint.PrettyPrinter()
         pp.pprint(error_report.error_array)
@@ -147,7 +147,7 @@ def test_validate_jp2_2():
         'WARNING[INSPIRE_TG]: "uuid" box not at expected index',
         'WARNING[INSPIRE_TG, Recommendation 39]: No user-defined precincts 0 defined'
     ]
-    if error_report.warning_array != expected_warnings:
+    if set(error_report.warning_array) != set(expected_warnings):
         import pprint
         pp = pprint.PrettyPrinter()
         pp.pprint(error_report.warning_array)

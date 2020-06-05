@@ -95,7 +95,7 @@ class FileHandler(object):
             end = len(filedata)
             if 'Range' in request.headers:
                 import re
-                res = re.search('bytes=(\d+)\-(\d+)', request.headers['Range'])
+                res = re.search(r'bytes=(\d+)\-(\d+)', request.headers['Range'])
                 if res:
                     res = res.groups()
                     start = int(res[0])

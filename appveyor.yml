@@ -5,13 +5,13 @@ branches:
 
 environment:
   matrix:
-  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-    VS_VERSION: Visual Studio 16
-    VS_VER: 2019
-    SDK: release-1911 # gisinternals SDK version still to 2017
-    MSVC_VER: 1920
-    platform: x86
-    PROJ_BRANCH: 7.0
+  #- APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+  #  VS_VERSION: Visual Studio 16
+  #  VS_VER: 2019
+  #  SDK: release-1911 # gisinternals SDK version still to 2017
+  #  MSVC_VER: 1920
+  #  platform: x86
+  #  PROJ_BRANCH: 7.0
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     VS_VERSION: Visual Studio 14
     VS_VER: 2015
