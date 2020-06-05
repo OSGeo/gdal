@@ -1919,8 +1919,16 @@ ColorAssociation* GDALColorReliefParseColorFile( GDALRasterBandH hSrcBand,
             pasColorAssociation = static_cast<ColorAssociation *>(
                 CPLRealloc(pasColorAssociation,
                            (nColorAssociation + 1) * sizeof(ColorAssociation)));
-            if( EQUAL(papszFields[0], "nv") && bSrcHasNoData )
+            if( EQUAL(papszFields[0], "nv") )
             {
+                if( !bSrcHasNoData )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Input dataset has no nodata value. "
+                             "Ignoring 'nv' entry in color palette");
+                    CSLDestroy(papszFields);
+                    continue;
+                }
                 pasColorAssociation[nColorAssociation].dfVal = dfSrcNoDataValue;
             }
             else if( strlen(papszFields[0]) > 1 &&
