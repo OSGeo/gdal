@@ -47,6 +47,8 @@ CSDEBUG =
 CSC = $(CSC) /define:CLR4
 !ENDIF
 
+CSC = $(CSC) /unsafe
+
 OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj
 
 all: ogr_dir gdal_dir osr_dir const_dir gdal_csharp samples
