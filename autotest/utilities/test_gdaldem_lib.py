@@ -344,6 +344,23 @@ def test_gdaldem_lib_color_relief():
     src_ds = None
     ds = None
 
+
+def test_gdaldem_lib_color_relief_nodata_value():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    colorFilename = '/vsimem/color_file.txt'
+    gdal.FileFromMemBuffer(colorFilename, """nv 255 255 255""")
+
+    with gdaltest.error_handler():
+        ds = gdal.DEMProcessing('', src_ds, 'color-relief', format='MEM', colorFilename=colorFilename)
+    assert ds.GetRasterBand(1).Checksum() == 0
+
+    src_ds.GetRasterBand(1).SetNoDataValue(1)
+    ds = gdal.DEMProcessing('', src_ds, 'color-relief', format='MEM', colorFilename=colorFilename)
+    assert ds.GetRasterBand(1).Checksum() != 0
+
+    gdal.Unlink(colorFilename)
+
 ###############################################################################
 # Test gdaldem tpi
 
