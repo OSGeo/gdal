@@ -16,11 +16,11 @@ def test_metadata_openoptionlist(driver_name):
     driver = gdal.GetDriverByName(driver_name)
     openoptionlist_xml = driver.GetMetadataItem('DMD_OPENOPTIONLIST')
 
-    assert openoptionlist_xml is not None
-    assert "OpenOptionList" in openoptionlist_xml
+    if openoptionlist_xml is not None and len(openoptionlist_xml) > 0:
+        assert "OpenOptionList" in openoptionlist_xml
 
-    # do not fail
-    fromstring(openoptionlist_xml)
+        # do not fail
+        fromstring(openoptionlist_xml)
 
 
 @pytest.mark.parametrize('driver_name', all_driver_names)
@@ -30,11 +30,11 @@ def test_metadata_creationoptionslist(driver_name):
     driver = gdal.GetDriverByName(driver_name)
     creationoptions_xml = driver.GetMetadataItem('DMD_CREATIONOPTIONLIST')
 
-    assert creationoptions_xml is not None
-    assert "CreationOptionList" in creationoptions_xml
+    if creationoptions_xml is not None and len(creationoptions_xml) > 0:
+        assert "CreationOptionList" in creationoptions_xml
 
-    # do not fail
-    fromstring(creationoptions_xml)
+        # do not fail
+        fromstring(creationoptions_xml)
 
 
 @pytest.mark.parametrize('driver_name', ogr_driver_names)
@@ -44,8 +44,8 @@ def test_metadata_layer_creationoptionslist(driver_name):
     driver = gdal.GetDriverByName(driver_name)
     layer_creationoptions_xml = driver.GetMetadataItem('DS_LAYER_CREATIONOPTIONLIST')
 
-    assert layer_creationoptions_xml is not None
-    assert "LayerCreationOptionList" in layer_creationoptions_xml
+    if layer_creationoptions_xml is not None and len(layer_creationoptions_xml) > 0:
+        assert "LayerCreationOptionList" in layer_creationoptions_xml
 
-    # do not fail
-    fromstring(layer_creationoptions_xml)
+        # do not fail
+        fromstring(layer_creationoptions_xml)
