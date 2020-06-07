@@ -20,6 +20,7 @@ def test_metadata_openoptionlist(driver_name):
         assert "OpenOptionList" in openoptionlist_xml
 
         # do not fail
+        print(openoptionlist_xml)
         fromstring(openoptionlist_xml)
 
 
@@ -34,6 +35,7 @@ def test_metadata_creationoptionslist(driver_name):
         assert "CreationOptionList" in creationoptions_xml
 
         # do not fail
+        print(creationoptions_xml)
         fromstring(creationoptions_xml)
 
 
@@ -48,4 +50,5 @@ def test_metadata_layer_creationoptionslist(driver_name):
         assert "LayerCreationOptionList" in layer_creationoptions_xml
 
         # do not fail
+        print(layer_creationoptions_xml)
         fromstring(layer_creationoptions_xml)
