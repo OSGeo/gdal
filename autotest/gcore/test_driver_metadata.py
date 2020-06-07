@@ -179,8 +179,12 @@ def test_metadata_openoptionlist(driver_name):
 
     if openoptionlist_xml is not None and len(openoptionlist_xml) > 0:
         # do not fail
-        parser = etree.XMLParser(schema=schema)
-        etree.fromstring(openoptionlist_xml, parser)
+        try:
+            parser = etree.XMLParser(schema=schema)
+            etree.fromstring(openoptionlist_xml, parser)
+        except:
+            print(openoptionlist_xml)
+            raise
 
 
 @pytest.mark.parametrize('driver_name', all_driver_names)
@@ -194,8 +198,12 @@ def test_metadata_creationoptionslist(driver_name):
 
     if creationoptionslist_xml is not None and len(creationoptionslist_xml) > 0:
         # do not fail
-        parser = etree.XMLParser(schema=schema)
-        etree.fromstring(creationoptionslist_xml, parser)
+        try:
+            parser = etree.XMLParser(schema=schema)
+            etree.fromstring(creationoptionslist_xml, parser)
+        except:
+            print(creationoptionslist_xml)
+            raise
 
 
 @pytest.mark.parametrize('driver_name', ogr_driver_names)
@@ -209,5 +217,9 @@ def test_metadata_layer_creationoptionslist(driver_name):
 
     if creationoptionslist_xml is not None and len(creationoptionslist_xml) > 0:
         # do not fail
-        parser = etree.XMLParser(schema=schema)
-        etree.fromstring(creationoptionslist_xml, parser)
+        try:
+            parser = etree.XMLParser(schema=schema)
+            etree.fromstring(creationoptionslist_xml, parser)
+        except:
+            print(creationoptionslist_xml)
+            raise
