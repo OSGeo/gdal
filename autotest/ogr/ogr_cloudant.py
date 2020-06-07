@@ -38,21 +38,14 @@ import ogrtest
 from osgeo import ogr
 import pytest
 
+
+pytestmark = pytest.mark.require_driver('Cloudant')
+
+
 ###############################################################################
-# Test if driver is available
 
-
-def test_ogr_cloudant_init():
-
-    ogrtest.cloudant_drv = None
-
-    try:
-        ogrtest.cloudant_drv = ogr.GetDriverByName('Cloudant')
-    except:
-        pass
-
-    if ogrtest.cloudant_drv is None:
-        pytest.skip()
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
 
     if 'CLOUDANT_TEST_SERVER' in os.environ:
         ogrtest.cloudant_test_server = os.environ['CLOUDANT_TEST_SERVER']
@@ -64,17 +57,13 @@ def test_ogr_cloudant_init():
     ogrtest.cloudant_test_layer = 'gdaltest'
 
     if gdaltest.gdalurlopen(ogrtest.cloudant_test_url) is None:
-        ogrtest.cloudant_drv = None
         pytest.skip('cannot open %s' % ogrtest.cloudant_test_url)
 
-    
 ###############################################################################
 # Test GetFeatureCount()
 
 
 def test_ogr_cloudant_GetFeatureCount():
-    if ogrtest.cloudant_drv is None:
-        pytest.skip()
 
     ds = ogr.Open('cloudant:%s/%s' % (ogrtest.cloudant_test_server, ogrtest.cloudant_test_layer))
     assert ds is not None
@@ -90,8 +79,6 @@ def test_ogr_cloudant_GetFeatureCount():
 
 
 def test_ogr_cloudant_GetNextFeature():
-    if ogrtest.cloudant_drv is None:
-        pytest.skip()
 
     ds = ogr.Open('cloudant:%s/%s' % (ogrtest.cloudant_test_server, ogrtest.cloudant_test_layer))
     assert ds is not None
@@ -111,8 +98,6 @@ def test_ogr_cloudant_GetNextFeature():
 
 
 def test_ogr_cloudant_GetSpatialRef():
-    if ogrtest.cloudant_drv is None:
-        pytest.skip()
 
     ds = ogr.Open('cloudant:%s/%s' % (ogrtest.cloudant_test_server, ogrtest.cloudant_test_layer))
     assert ds is not None
@@ -131,8 +116,6 @@ def test_ogr_cloudant_GetSpatialRef():
 
 
 def test_ogr_cloudant_GetExtent():
-    if ogrtest.cloudant_drv is None:
-        pytest.skip()
 
     ds = ogr.Open('cloudant:%s/%s' % (ogrtest.cloudant_test_server, ogrtest.cloudant_test_layer))
     assert ds is not None
@@ -151,8 +134,6 @@ def test_ogr_cloudant_GetExtent():
 
 
 def test_ogr_cloudant_SetSpatialFilter():
-    if ogrtest.cloudant_drv is None:
-        pytest.skip()
 
     if not ogrtest.have_geos():
         pytest.skip()

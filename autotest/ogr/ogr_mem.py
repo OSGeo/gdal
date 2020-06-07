@@ -37,25 +37,24 @@ from osgeo import ogr
 from osgeo import gdal
 import pytest
 
+
 ###############################################################################
-# Open Memory datasource.
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
 
-
-def test_ogr_mem_1():
-
-    mem_drv = ogr.GetDriverByName('Memory')
-    gdaltest.mem_ds = mem_drv.CreateDataSource('wrk_in_memory')
+    gdaltest.mem_ds = ogr.GetDriverByName('Memory').CreateDataSource('wrk_in_memory')
 
     assert gdaltest.mem_ds is not None
+
+    yield
+
+    gdaltest.mem_ds = None
 
 ###############################################################################
 # Create table from data/poly.shp
 
 
 def test_ogr_mem_2():
-
-    if gdaltest.mem_ds is None:
-        pytest.skip()
 
     assert gdaltest.mem_ds.TestCapability(ogr.ODsCCreateLayer) != 0, \
         'ODsCCreateLayer TestCapability failed.'
@@ -100,8 +99,6 @@ def test_ogr_mem_2():
 
 
 def test_ogr_mem_3():
-    if gdaltest.mem_ds is None:
-        pytest.skip()
 
     expect = [168, 169, 166, 158, 165]
 
@@ -133,9 +130,6 @@ def test_ogr_mem_3():
 
 def test_ogr_mem_4():
 
-    if gdaltest.mem_ds is None:
-        pytest.skip()
-
     dst_feat = ogr.Feature(feature_def=gdaltest.mem_lyr.GetLayerDefn())
     wkt_list = ['10', '2', '1', '3d_1', '4', '5', '6']
 
@@ -166,9 +160,6 @@ def test_ogr_mem_4():
 
 def test_ogr_mem_5():
 
-    if gdaltest.mem_ds is None:
-        pytest.skip()
-
     expect = [179, 173, 172, 171, 170, 169, 168, 166, 165, 158, None]
 
     sql_lyr = gdaltest.mem_ds.ExecuteSQL('select distinct eas_id from tpoly order by eas_id desc')
@@ -184,9 +175,6 @@ def test_ogr_mem_5():
 
 
 def test_ogr_mem_6():
-
-    if gdaltest.mem_ds is None:
-        pytest.skip()
 
     sql_lyr = gdaltest.mem_ds.ExecuteSQL(
         "select * from tpoly where prfedea = '2'")
@@ -207,9 +195,6 @@ def test_ogr_mem_6():
 
 
 def test_ogr_mem_7():
-
-    if gdaltest.mem_ds is None:
-        pytest.skip()
 
     gdaltest.mem_lyr.SetAttributeFilter(None)
 
@@ -361,9 +346,6 @@ def test_ogr_mem_11():
 
 def test_ogr_mem_12():
 
-    if gdaltest.mem_ds is None:
-        pytest.skip()
-
     #######################################################
     # Create memory Layer
     lyr = gdaltest.mem_ds.GetLayerByName('tpoly')
@@ -385,9 +367,6 @@ def test_ogr_mem_12():
 
 
 def test_ogr_mem_13():
-
-    if gdaltest.mem_ds is None:
-        pytest.skip()
 
     lyr = gdaltest.mem_ds.CreateLayer('listlayer')
     field_defn = ogr.FieldDefn('stringlist', ogr.OFTStringList)
@@ -418,9 +397,6 @@ def test_ogr_mem_13():
 
 
 def test_ogr_mem_14():
-
-    if gdaltest.mem_ds is None:
-        pytest.skip()
 
     lyr = gdaltest.mem_ds.CreateLayer('SetNextByIndex')
     field_defn = ogr.FieldDefn('foo', ogr.OFTString)
@@ -477,19 +453,21 @@ def test_ogr_mem_15():
     # Test SetNonLinearGeometriesEnabledFlag(False)
     old_val = ogr.GetNonLinearGeometriesEnabledFlag()
     ogr.SetNonLinearGeometriesEnabledFlag(False)
-    assert lyr.GetGeomType() == ogr.wkbLineString
-    assert lyr.GetLayerDefn().GetGeomType() == ogr.wkbLineString
-    assert lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() == ogr.wkbLineString
-    lyr.ResetReading()
-    f = lyr.GetNextFeature()
-    g = f.GetGeometryRef()
-    assert g.GetGeometryType() == ogr.wkbLineString
+    try:
+        assert lyr.GetGeomType() == ogr.wkbLineString
+        assert lyr.GetLayerDefn().GetGeomType() == ogr.wkbLineString
+        assert lyr.GetLayerDefn().GetGeomFieldDefn(0).GetType() == ogr.wkbLineString
+        lyr.ResetReading()
+        f = lyr.GetNextFeature()
+        g = f.GetGeometryRef()
+        assert g.GetGeometryType() == ogr.wkbLineString
 
-    lyr.ResetReading()
-    f = lyr.GetNextFeature()
-    g = f.GetGeomFieldRef(0)
-    assert g.GetGeometryType() == ogr.wkbLineString
-    ogr.SetNonLinearGeometriesEnabledFlag(old_val)
+        lyr.ResetReading()
+        f = lyr.GetNextFeature()
+        g = f.GetGeomFieldRef(0)
+        assert g.GetGeometryType() == ogr.wkbLineString
+    finally:
+        ogr.SetNonLinearGeometriesEnabledFlag(old_val)
 
 ###############################################################################
 # Test map implementation
@@ -636,15 +614,6 @@ def test_ogr_mem_17():
 
     f = ds.GetNextFeature(include_layer=False)
     assert f is not None
-
-
-def test_ogr_mem_cleanup():
-
-    if gdaltest.mem_ds is None:
-        pytest.skip()
-
-    ogr.SetNonLinearGeometriesEnabledFlag(True)
-    gdaltest.mem_ds = None
 
 
 

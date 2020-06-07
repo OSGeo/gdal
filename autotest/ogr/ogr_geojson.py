@@ -41,16 +41,7 @@ import gdaltest
 import ogrtest
 import pytest
 
-pytestmark = [pytest.mark.require_driver('GeoJSON'), pytest.mark.usefixtures("startup_and_cleanup")]
-
-###############################################################################
-
-@pytest.fixture(scope="module")
-def startup_and_cleanup():
-
-    gdaltest.geojson_drv = ogr.GetDriverByName('GeoJSON')
-
-    yield
+pytestmark = pytest.mark.require_driver('GeoJSON')
 
 ###############################################################################
 # Test utilities
@@ -163,7 +154,7 @@ def copy_shape_to_geojson(gjname, compress=None):
     else:
         dst_name = os.path.join('tmp', gjname + '.geojson')
 
-    ds = gdaltest.geojson_drv.CreateDataSource(dst_name)
+    ds = ogr.GetDriverByName('GeoJSON').CreateDataSource(dst_name)
     if ds is None:
         return False, dst_name
 
@@ -480,7 +471,7 @@ def test_ogr_geojson_14():
     lyr = ds.GetLayer(0)
 
     try:
-        out_ds = gdaltest.geojson_drv.CreateDataSource('tmp/out_ogr_geojson_14.geojson')
+        out_ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('tmp/out_ogr_geojson_14.geojson')
         out_lyr = out_ds.CreateLayer('lyr')
 
         with gdaltest.error_handler():
@@ -641,7 +632,7 @@ def test_ogr_geojson_22():
 
 def test_ogr_geojson_23():
 
-    ds = gdaltest.geojson_drv.CreateDataSource('/vsimem/ogr_geojson_23.json')
+    ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_23.json')
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4322)
     lyr = ds.CreateLayer('foo', srs=sr, options=['WRITE_BBOX=YES'])
@@ -774,7 +765,7 @@ def test_ogr_geojson_26():
     lyr = None
     ds = None
 
-    ds = gdaltest.geojson_drv.CreateDataSource('/vsimem/ogr_geojson_26.json')
+    ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_26.json')
     lyr = ds.CreateLayer('test')
     lyr.CreateField(ogr.FieldDefn('int64', ogr.OFTInteger64))
     lyr.CreateField(ogr.FieldDefn('int64list', ogr.OFTInteger64List))
@@ -835,7 +826,7 @@ def test_ogr_geojson_27():
 
 def test_ogr_geojson_35():
 
-    ds = gdaltest.geojson_drv.CreateDataSource('/vsimem/ogr_geojson_35.json')
+    ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_35.json')
     lyr = ds.CreateLayer('foo')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(1)

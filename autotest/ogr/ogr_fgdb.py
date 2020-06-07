@@ -40,17 +40,14 @@ from osgeo import ogr
 from osgeo import osr
 import pytest
 
+pytestmark = pytest.mark.require_driver('FileGDB')
+
+
 ###############################################################################
-# Test if driver is available
 
-
-def test_ogr_fgdb_init():
-
-    ogrtest.fgdb_drv = None
-
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
     ogrtest.fgdb_drv = ogr.GetDriverByName('FileGDB')
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     ogrtest.openfilegdb_drv = ogr.GetDriverByName('OpenFileGDB')
     if ogrtest.openfilegdb_drv is not None:
@@ -61,14 +58,40 @@ def test_ogr_fgdb_init():
     except OSError:
         pass
 
-    
+    yield
+
+    try:
+        shutil.rmtree("tmp/test.gdb")
+    except OSError:
+        pass
+
+    try:
+        shutil.rmtree("tmp/test2.gdb")
+    except OSError:
+        pass
+    try:
+        shutil.rmtree("tmp/poly.gdb")
+    except OSError:
+        pass
+    try:
+        shutil.rmtree('tmp/test3005.gdb')
+    except OSError:
+        pass
+    try:
+        shutil.rmtree('tmp/roads_clip Drawing.gdb')
+    except OSError:
+        pass
+
+    if ogrtest.openfilegdb_drv is not None:
+        ogrtest.fgdb_drv.Deregister()
+        # Force OpenFileGDB first
+        ogrtest.openfilegdb_drv.Register()
+        ogrtest.fgdb_drv.Register()
+
 ###############################################################################
 
 
 def ogr_fgdb_is_sdk_1_4_or_later():
-
-    if ogrtest.fgdb_drv is None:
-        return False
 
     if hasattr(ogrtest, 'fgdb_is_sdk_1_4'):
         return ogrtest.fgdb_is_sdk_1_4
@@ -96,8 +119,6 @@ def ogr_fgdb_is_sdk_1_4_or_later():
 # Write and read back various geometry types
 
 def test_ogr_fgdb_1():
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
@@ -231,8 +252,6 @@ def test_ogr_fgdb_1():
 
 
 def test_ogr_fgdb_DeleteField():
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     ds = ogr.Open("tmp/test.gdb", update=1)
     lyr = ds.GetLayerByIndex(0)
@@ -283,8 +302,6 @@ def test_ogr_fgdb_DeleteField():
 
 
 def test_ogr_fgdb_2():
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -299,8 +316,6 @@ def test_ogr_fgdb_2():
 
 
 def test_ogr_fgdb_3():
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -330,8 +345,6 @@ def test_ogr_fgdb_3():
 
 
 def test_ogr_fgdb_sql():
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -355,8 +368,6 @@ def test_ogr_fgdb_sql():
 
 
 def test_ogr_fgdb_4():
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     for j in range(2):
 
@@ -394,8 +405,6 @@ def test_ogr_fgdb_4():
 
 
 def test_ogr_fgdb_5():
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     assert ogrtest.fgdb_drv.DeleteDataSource("tmp/test.gdb") == 0, \
         'DeleteDataSource() failed'
@@ -408,8 +417,6 @@ def test_ogr_fgdb_5():
 
 
 def test_ogr_fgdb_6():
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
@@ -428,8 +435,6 @@ def test_ogr_fgdb_6():
 
 
 def test_ogr_fgdb_7():
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     try:
         shutil.rmtree("tmp/test.gdb")
@@ -463,8 +468,6 @@ def test_ogr_fgdb_7():
 
 
 def test_ogr_fgdb_8():
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     try:
         shutil.rmtree("tmp/test.gdb")
@@ -500,8 +503,6 @@ def test_ogr_fgdb_8():
 
 
 def test_ogr_fgdb_9():
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     try:
         shutil.rmtree("tmp/test.gdb")
@@ -545,8 +546,6 @@ def test_ogr_fgdb_9():
 
 
 def test_ogr_fgdb_10():
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     try:
         shutil.rmtree("tmp/test.gdb")
@@ -636,8 +635,6 @@ def test_ogr_fgdb_10():
 
 
 def test_ogr_fgdb_11():
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     try:
         shutil.rmtree("tmp/test.gdb")
@@ -707,8 +704,6 @@ def test_ogr_fgdb_11():
 
 
 def test_ogr_fgdb_12():
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     ds = ogr.Open('tmp/non_existing.gdb')
     assert ds is None
@@ -741,8 +736,6 @@ def test_ogr_fgdb_12():
 
 
 def test_ogr_fgdb_13():
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogrtest.fgdb_drv.CreateDataSource('tmp/foo')
@@ -781,8 +774,6 @@ def test_ogr_fgdb_13():
 
 
 def test_ogr_fgdb_14():
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     for _ in range(3):
         ds1 = ogr.Open("tmp/test.gdb")
@@ -798,8 +789,6 @@ def test_ogr_fgdb_14():
 
 
 def test_ogr_fgdb_15():
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     try:
         shutil.rmtree('tmp/test3005.gdb')
@@ -857,9 +846,6 @@ def test_ogr_fgdb_16():
 
 def test_ogr_fgdb_17():
 
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
-
     try:
         shutil.rmtree("tmp/test.gdb")
     except OSError:
@@ -916,9 +902,6 @@ def test_ogr_fgdb_17():
 
 
 def test_ogr_fgdb_18():
-
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     try:
         shutil.rmtree("tmp/test.gdb")
@@ -1019,9 +1002,6 @@ def ogr_fgdb_19_open_update(filename):
 
 
 def test_ogr_fgdb_19():
-
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     # FIXME likely due to too old FileGDB SDK on those targets
     # fails with ERROR 1: Failed to open Geodatabase (The system cannot find the file specified.)
@@ -1529,9 +1509,6 @@ def test_ogr_fgdb_19():
 
 def test_ogr_fgdb_19bis():
 
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
-
     if gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1604') or gdaltest.is_travis_branch('trusty_clang') or gdaltest.is_travis_branch('python3') or gdaltest.is_travis_branch('trunk_with_coverage'):
         pytest.skip()
 
@@ -1550,9 +1527,6 @@ def test_ogr_fgdb_19bis():
 
 
 def test_ogr_fgdb_20():
-
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     if ogrtest.openfilegdb_drv is None:
         pytest.skip()
@@ -1949,9 +1923,6 @@ def test_ogr_fgdb_20():
 
 def test_ogr_fgdb_21():
 
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
-
     if not ogr_fgdb_is_sdk_1_4_or_later():
         pytest.skip('SDK 1.4 required')
 
@@ -2028,9 +1999,6 @@ def test_ogr_fgdb_21():
 
 def test_ogr_fgdb_22():
 
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/filegdb/curves.gdb')
     lyr = ds.GetLayerByName('line')
     ds_ref = ogr.Open('data/filegdb/curves_line.csv')
@@ -2067,9 +2035,6 @@ def test_ogr_fgdb_22():
 
 def test_ogr_fgdb_23():
 
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
-
     os.chdir('data/filegdb/curves.gdb')
     ds = ogr.Open('.')
     os.chdir('../../..')
@@ -2081,9 +2046,6 @@ def test_ogr_fgdb_23():
 
 
 def test_ogr_fgdb_24():
-
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
 
     ds = ogr.Open('data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb')
     lyr = ds.GetLayer(0)
@@ -2112,9 +2074,6 @@ def test_ogr_fgdb_24():
 
 def test_ogr_fgdb_25():
 
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/filegdb/curves.gdb')
     sql_lyr = ds.ExecuteSQL('SELECT OBJECTID FROM polygon WHERE OBJECTID = 2')
     assert sql_lyr is not None
@@ -2140,9 +2099,6 @@ def test_ogr_fgdb_25():
 
 def test_ogr_fgdb_weird_winding_order():
 
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
-
     if not ogr_fgdb_is_sdk_1_4_or_later():
         pytest.skip('SDK 1.4 required')
 
@@ -2161,40 +2117,3 @@ def test_ogr_fgdb_weird_winding_order():
     g = f.GetGeometryRef()
     assert g.GetGeometryCount() == 1
     assert g.GetGeometryRef(0).GetGeometryCount() == 17
-
-
-###############################################################################
-# Cleanup
-
-
-def test_ogr_fgdb_cleanup():
-    if ogrtest.fgdb_drv is None:
-        pytest.skip()
-
-    try:
-        shutil.rmtree("tmp/test.gdb")
-    except OSError:
-        pass
-
-    try:
-        shutil.rmtree("tmp/test2.gdb")
-    except OSError:
-        pass
-    try:
-        shutil.rmtree("tmp/poly.gdb")
-    except OSError:
-        pass
-    try:
-        shutil.rmtree('tmp/test3005.gdb')
-    except OSError:
-        pass
-    try:
-        shutil.rmtree('tmp/roads_clip Drawing.gdb')
-    except OSError:
-        pass
-
-    if ogrtest.openfilegdb_drv is not None:
-        ogrtest.fgdb_drv.Deregister()
-        # Force OpenFileGDB first
-        ogrtest.openfilegdb_drv.Register()
-        ogrtest.fgdb_drv.Register()

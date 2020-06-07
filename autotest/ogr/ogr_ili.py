@@ -34,36 +34,22 @@ from osgeo import gdal
 from osgeo import ogr
 import pytest
 
+pytestmark = pytest.mark.require_driver('Interlis 1')
 
-def cpl_debug_on():
-    gdaltest.cpl_debug = gdal.GetConfigOption('CPL_DEBUG')
-    gdal.SetConfigOption('CPL_DEBUG', 'ON')
-
-
-def cpl_debug_reset():
-    gdal.SetConfigOption('CPL_DEBUG', gdaltest.cpl_debug)
 
 ###############################################################################
-# Open Driver
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
+    yield
+    gdal.SetConfigOption('OGR_STROKE_CURVE', None)
 
-
-def test_ogr_interlis1_1():
-
-    gdaltest.have_ili_reader = 0
-    driver = ogr.GetDriverByName('Interlis 1')
-    if driver is None:
-        pytest.skip()
-
-    gdaltest.have_ili_reader = 1
+    gdaltest.clean_tmp()
 
 ###############################################################################
 # Check that Ili1 point layer is properly read.
 
 
 def test_ogr_interlis1_2():
-
-    if not gdaltest.have_ili_reader:
-        pytest.skip()
 
     if not ogrtest.have_geos():
         pytest.skip()
@@ -110,9 +96,6 @@ def test_ogr_interlis1_2():
 
 def test_ogr_interlis1_3():
 
-    if not gdaltest.have_ili_reader:
-        pytest.skip()
-
     ds = ogr.Open('data/ili/format-default.itf,data/ili/format-default.imd')
 
     layers = ['FormatTests__FormatTable']
@@ -144,9 +127,6 @@ def test_ogr_interlis1_3():
 
 def test_ogr_interlis1_4():
 
-    if not gdaltest.have_ili_reader:
-        pytest.skip()
-
     ds = ogr.Open('data/ili/format-test.itf,data/ili/format-test.imd')
 
     layers = ['FormatTests__FormatTable']
@@ -177,9 +157,6 @@ def test_ogr_interlis1_4():
 
 
 def test_ogr_interlis1_5():
-
-    if not gdaltest.have_ili_reader:
-        pytest.skip()
 
     ds = ogr.Open('data/ili/format-default.itf,data/ili/format-default.imd')
 
@@ -224,9 +201,6 @@ ENDE"""
 
 def test_ogr_interlis1_6():
 
-    if not gdaltest.have_ili_reader:
-        pytest.skip()
-
     ds = ogr.Open('data/ili/format-default.itf,data/ili/format-default.imd')
     lyr = ds.GetLayerByName('FormatTests__FormatTable')
     feat = lyr.GetNextFeature()
@@ -265,9 +239,6 @@ ENDE"""
 
 
 def test_ogr_interlis1_7():
-
-    if not gdaltest.have_ili_reader:
-        pytest.skip()
 
     ds = ogr.Open('data/ili/encoding-test.itf,data/ili/format-default.imd')
 
@@ -338,9 +309,6 @@ ENDE"""
 
 def test_ogr_interlis1_9():
 
-    if not gdaltest.have_ili_reader:
-        pytest.skip()
-
     ds = ogr.Open('data/ili/Beispiel-rename.vrt')
     layers = ['BoGebaeude']
     assert ds.GetLayerCount() == len(layers), 'layer count wrong.'
@@ -374,9 +342,6 @@ def test_ogr_interlis1_9():
 
 def test_ogr_interlis1_10():
 
-    if not gdaltest.have_ili_reader:
-        pytest.skip()
-
     if not ogrtest.have_geos():
         pytest.skip()
 
@@ -403,9 +368,6 @@ def test_ogr_interlis1_10():
 
 
 def test_ogr_interlis1_11():
-
-    if not gdaltest.have_ili_reader:
-        pytest.skip()
 
     ds = ogr.Open('data/ili/multigeom.itf,data/ili/multigeom.imd')
 
@@ -446,9 +408,6 @@ def test_ogr_interlis1_11():
 
 def test_ogr_interlis1_12():
 
-    if not gdaltest.have_ili_reader:
-        pytest.skip()
-
     ds = ogr.Open('data/ili/multicoord.itf,data/ili/multicoord.imd')
 
     layers = ['MulticoordTests__MulticoordTable']
@@ -481,9 +440,6 @@ def test_ogr_interlis1_12():
 
 
 def test_ogr_interlis1_13():
-
-    if not gdaltest.have_ili_reader:
-        pytest.skip()
 
     ds = ogr.Open('data/ili/surface.itf,data/ili/surface.imd')
 
@@ -710,9 +666,6 @@ def test_ogr_interlis1_13():
 
 def test_ogr_interlis1_13_linear():
 
-    if not gdaltest.have_ili_reader:
-        pytest.skip()
-
     gdal.SetConfigOption('OGR_STROKE_CURVE', 'YES')
 
     ds = ogr.Open('data/ili/surface.itf,data/ili/surface.imd')
@@ -852,9 +805,6 @@ def test_ogr_interlis1_13_linear():
 
 def test_ogr_interlis1_14():
 
-    if not gdaltest.have_ili_reader:
-        pytest.skip()
-
     ds = ogr.Open('data/ili/Beispiel.itf,data/ili/Beispiel.imd')
     lyr = ds.GetLayerByName('Bodenbedeckung__Strasse')
     feat = lyr.GetNextFeature()
@@ -900,9 +850,6 @@ ENDE
 
 def test_ogr_interlis2_1():
 
-    if not gdaltest.have_ili_reader:
-        pytest.skip()
-
     ds = ogr.Open('data/ili/RoadsExdm2ien.xml')
     assert ds is not None
 
@@ -923,9 +870,6 @@ def test_ogr_interlis2_1():
 
 
 def test_ogr_interlis2_2():
-
-    if not gdaltest.have_ili_reader:
-        pytest.skip()
 
     ds = ogr.Open('data/ili/RoadsExdm2ien.xml,data/ili/RoadsExdm2ien.imd')
     assert ds is not None
@@ -1008,9 +952,6 @@ def test_ogr_interlis2_2():
 # Write Ili2 transfer file.
 
 def test_ogr_interlis2_3():
-
-    if not gdaltest.have_ili_reader:
-        pytest.skip()
 
     ds = ogr.Open('data/ili/RoadsExdm2ien.xml,data/ili/RoadsExdm2ien.imd')
 
@@ -1100,9 +1041,6 @@ def test_ogr_interlis2_3():
 
 def test_ogr_interlis2_4():
 
-    if not gdaltest.have_ili_reader:
-        pytest.skip()
-
     ds = ogr.Open('data/ili/ch.bazl.sicherheitszonenplan.oereb_20131118.xtf,data/ili/ch.bazl.sicherheitszonenplan.oereb_20131118.imd')
     assert ds is not None
 
@@ -1179,9 +1117,6 @@ def test_ogr_interlis2_4():
 
 def test_ogr_interlis_arc1():
 
-    if not gdaltest.have_ili_reader:
-        pytest.skip()
-
     gdal.SetConfigOption('OGR_STROKE_CURVE', 'TRUE')
     # gdal.SetConfigOption('OGR_ARC_STEPSIZE', '0.96')
     ds = ogr.Open('data/ili/Beispiel.itf,data/ili/Beispiel.imd')
@@ -1230,9 +1165,6 @@ def test_ogr_interlis_arc1():
 
 def test_ogr_interlis_arc2():
 
-    if not gdaltest.have_ili_reader:
-        pytest.skip()
-
     ds = ogr.Open('data/ili/Beispiel.itf,data/ili/Beispiel.imd')
 
     lyr = ds.GetLayerByName('Bodenbedeckung__Strasse')
@@ -1248,20 +1180,6 @@ def test_ogr_interlis_arc2():
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
             pytest.fail()
-
-    
-###############################################################################
-#
-
-
-def test_ogr_interlis_cleanup():
-
-    if not gdaltest.have_ili_reader:
-        pytest.skip()
-
-    gdal.SetConfigOption('OGR_STROKE_CURVE', None)
-
-    gdaltest.clean_tmp()
 
 
 
