@@ -7,7 +7,7 @@
 # Author:   Rene Buffat <buffat at gmail dot com>
 #
 ###############################################################################
-# Copyright (c) 2020, Even Rouault <even dot rouault at spatialys dot com>
+# Copyright (c) 2020, Rene Buffat <buffat at gmail dot com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,7 @@
 
 import pytest
 from osgeo import gdal
-from xml.etree.ElementTree import fromstring
+from lxml import etree
 
 all_driver_names = [gdal.GetDriver(i).GetDescription() for i in range(gdal.GetDriverCount())]
 ogr_driver_names = [driver_name for driver_name in all_driver_names
@@ -40,46 +40,174 @@ gdal_driver_names = [driver_name for driver_name in all_driver_names
                      if gdal.GetDriverByName(driver_name).GetMetadataItem('DCAP_RASTER') == 'YES']
 
 
+schema_openoptionslist = etree.XML("""
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="Value">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="alias" use="optional"/>
+          <xs:attribute type="xs:string" name="aliasOf" use="optional"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Option">
+    <xs:complexType mixed="true">
+      <xs:sequence>
+        <xs:element ref="Value" maxOccurs="unbounded" minOccurs="0"/>
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="name" use="required"/>
+      <xs:attribute type="xs:string" name="type" use="optional"/>
+      <xs:attribute type="xs:string" name="description" use="optional"/>
+      <xs:attribute type="xs:string" name="default" use="optional"/>
+      <xs:attribute type="xs:string" name="scope" use="optional"/>
+      <xs:attribute type="xs:string" name="required" use="optional"/>
+      <xs:attribute type="xs:string" name="deprecated_alias" use="optional"/>
+      <xs:attribute type="xs:string" name="alias" use="optional"/>
+      <xs:attribute type="xs:string" name="min" use="optional"/>
+      <xs:attribute type="xs:string" name="max" use="optional"/>
+      <xs:attribute type="xs:string" name="aliasOf" use="optional"/>
+      <xs:attribute type="xs:string" name="maxsize" use="optional"/>
+      <xs:attribute type="xs:string" name="alt_config_option" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="OpenOptionList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Option" maxOccurs="unbounded" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
+""")
+
+schema_creationoptionslist_xml = etree.XML("""
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="Value">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="alias" use="optional"/>
+          <xs:attribute type="xs:string" name="aliasOf" use="optional"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Option">
+    <xs:complexType mixed="true">
+      <xs:sequence>
+        <xs:element ref="Value" maxOccurs="unbounded" minOccurs="0"/>
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="name" use="required"/>
+      <xs:attribute type="xs:string" name="type" use="optional"/>
+      <xs:attribute type="xs:string" name="description" use="optional"/>
+      <xs:attribute type="xs:string" name="default" use="optional"/>
+      <xs:attribute type="xs:string" name="scope" use="optional"/>
+      <xs:attribute type="xs:string" name="required" use="optional"/>
+      <xs:attribute type="xs:string" name="deprecated_alias" use="optional"/>
+      <xs:attribute type="xs:string" name="alias" use="optional"/>
+      <xs:attribute type="xs:string" name="min" use="optional"/>
+      <xs:attribute type="xs:string" name="max" use="optional"/>
+      <xs:attribute type="xs:string" name="aliasOf" use="optional"/>
+      <xs:attribute type="xs:string" name="maxsize" use="optional"/>
+      <xs:attribute type="xs:string" name="alt_config_option" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CreationOptionList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Option" maxOccurs="unbounded" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
+""")
+
+
+schema_layer_creationoptionslist_xml = etree.XML("""
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="Value">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="alias" use="optional"/>
+          <xs:attribute type="xs:string" name="aliasOf" use="optional"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Option">
+    <xs:complexType mixed="true">
+      <xs:sequence>
+        <xs:element ref="Value" maxOccurs="unbounded" minOccurs="0"/>
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="name" use="required"/>
+      <xs:attribute type="xs:string" name="type" use="optional"/>
+      <xs:attribute type="xs:string" name="description" use="optional"/>
+      <xs:attribute type="xs:string" name="default" use="optional"/>
+      <xs:attribute type="xs:string" name="scope" use="optional"/>
+      <xs:attribute type="xs:string" name="required" use="optional"/>
+      <xs:attribute type="xs:string" name="deprecated_alias" use="optional"/>
+      <xs:attribute type="xs:string" name="alias" use="optional"/>
+      <xs:attribute type="xs:string" name="min" use="optional"/>
+      <xs:attribute type="xs:string" name="max" use="optional"/>
+      <xs:attribute type="xs:string" name="aliasOf" use="optional"/>
+      <xs:attribute type="xs:string" name="maxsize" use="optional"/>
+      <xs:attribute type="xs:string" name="alt_config_option" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="LayerCreationOptionList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Option" maxOccurs="unbounded" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
+""")
+
+
 @pytest.mark.parametrize('driver_name', all_driver_names)
 def test_metadata_openoptionlist(driver_name):
     """ Test if DMD_OPENOPTIONLIST metadataitem is present and can be parsed """
+
+    schema = etree.XMLSchema(schema_openoptionslist)
 
     driver = gdal.GetDriverByName(driver_name)
     openoptionlist_xml = driver.GetMetadataItem('DMD_OPENOPTIONLIST')
 
     if openoptionlist_xml is not None and len(openoptionlist_xml) > 0:
-        assert "OpenOptionList" in openoptionlist_xml
-
         # do not fail
-        print(openoptionlist_xml)
-        fromstring(openoptionlist_xml)
+        parser = etree.XMLParser(schema=schema)
+        root = etree.fromstring(openoptionlist_xml, parser)
 
 
 @pytest.mark.parametrize('driver_name', all_driver_names)
 def test_metadata_creationoptionslist(driver_name):
     """ Test if DMD_CREATIONOPTIONLIST metadataitem is present and can be parsed """
 
+    schema = etree.XMLSchema(schema_creationoptionslist_xml)
+
     driver = gdal.GetDriverByName(driver_name)
-    creationoptions_xml = driver.GetMetadataItem('DMD_CREATIONOPTIONLIST')
+    creationoptionslist_xml = driver.GetMetadataItem('DMD_CREATIONOPTIONLIST')
 
-    if creationoptions_xml is not None and len(creationoptions_xml) > 0:
-        assert "CreationOptionList" in creationoptions_xml
-
+    if creationoptionslist_xml is not None and len(creationoptionslist_xml) > 0:
         # do not fail
-        print(creationoptions_xml)
-        fromstring(creationoptions_xml)
+        parser = etree.XMLParser(schema=schema)
+        root = etree.fromstring(creationoptionslist_xml, parser)
 
 
 @pytest.mark.parametrize('driver_name', ogr_driver_names)
 def test_metadata_layer_creationoptionslist(driver_name):
     """ Test if DS_LAYER_CREATIONOPTIONLIST metadataitem is present and can be parsed """
 
+    schema = etree.XMLSchema(schema_layer_creationoptionslist_xml)
+
     driver = gdal.GetDriverByName(driver_name)
-    layer_creationoptions_xml = driver.GetMetadataItem('DS_LAYER_CREATIONOPTIONLIST')
+    creationoptionslist_xml = driver.GetMetadataItem('DS_LAYER_CREATIONOPTIONLIST')
 
-    if layer_creationoptions_xml is not None and len(layer_creationoptions_xml) > 0:
-        assert "LayerCreationOptionList" in layer_creationoptions_xml
-
+    if creationoptionslist_xml is not None and len(creationoptionslist_xml) > 0:
         # do not fail
-        print(layer_creationoptions_xml)
-        fromstring(layer_creationoptions_xml)
+        parser = etree.XMLParser(schema=schema)
+        root = etree.fromstring(creationoptionslist_xml, parser)
