@@ -381,6 +381,22 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Set application name if not found in connection string          */
+/* -------------------------------------------------------------------- */
+
+    if (strstr(pszName, "application_name=") == nullptr &&
+        getenv("PGAPPNAME") == nullptr )
+    {
+        if( osConnectionName.back() != ':' )
+            osConnectionName += " ";
+        osConnectionName += "application_name=";
+        osConnectionName += "'";
+        osConnectionName += "GDAL ";
+        osConnectionName += GDALVersionInfo("RELEASE_NAME");
+        osConnectionName += "'";
+    }
+
     char* pszConnectionName = CPLStrdup(osConnectionName);
 
 /* -------------------------------------------------------------------- */

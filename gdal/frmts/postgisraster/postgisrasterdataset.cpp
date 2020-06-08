@@ -2900,6 +2900,21 @@ GetConnectionInfo(const char * pszFilename,
         osConnectionString += papszParams[i];
         osConnectionString += " ";
     }
+
+    /**********************************************************
+     * Set application name if not found in connection string
+     **********************************************************/
+
+    if (CSLFindName(papszParams, "application_name") == -1 &&
+        getenv("PGAPPNAME") == nullptr) {
+        osConnectionString += "application_name=";
+        osConnectionString += "'";
+        osConnectionString += "GDAL ";
+        osConnectionString += GDALVersionInfo("RELEASE_NAME");
+        osConnectionString += "'";
+        osConnectionString += " ";
+    }
+
     *ppszConnectionString = CPLStrdup(osConnectionString);
 
     nPos = CSLFindName(papszParams, "host");
