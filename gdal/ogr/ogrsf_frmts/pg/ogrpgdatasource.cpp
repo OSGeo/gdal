@@ -385,8 +385,8 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /*      Set application name if not found in connection string          */
 /* -------------------------------------------------------------------- */
 
-    char *pszApplicationNameStart = strstr(pszName, "application_name=");
-    if( pszApplicationNameStart == nullptr )
+    if (strstr(pszName, "application_name=") == nullptr &&
+        getenv("PGAPPNAME") == nullptr )
     {
         if( osConnectionName.back() != ':' )
             osConnectionName += " ";

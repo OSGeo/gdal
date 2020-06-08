@@ -2905,8 +2905,8 @@ GetConnectionInfo(const char * pszFilename,
      * Set application name if not found in connection string
      **********************************************************/
 
-    nPos = CSLFindName(papszParams, "application_name");
-    if (nPos == -1) {
+    if (CSLFindName(papszParams, "application_name") == -1 &&
+        getenv("PGAPPNAME") == nullptr) {
         osConnectionString += "application_name=";
         osConnectionString += "'";
         osConnectionString += "GDAL ";
