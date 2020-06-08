@@ -64,7 +64,7 @@ schema_openoptionslist = etree.XML(r"""
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>
-      <xs:attribute type="xs:string" name="type" use="optional"/>
+      <xs:attribute type="xs:string" name="type" use="required"/>
       <xs:attribute type="xs:string" name="description" use="optional"/>
       <xs:attribute type="xs:string" name="default" use="optional"/>
       <xs:attribute type="xs:string" name="scope" use="optional"/>
@@ -112,7 +112,7 @@ schema_creationoptionslist_xml = etree.XML(r"""
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>
-      <xs:attribute type="xs:string" name="type" use="optional"/>
+      <xs:attribute type="xs:string" name="type" use="required"/>
       <xs:attribute type="xs:string" name="description" use="optional"/>
       <xs:attribute type="xs:string" name="default" use="optional"/>
       <xs:attribute type="xs:string" name="scope" use="optional"/>
@@ -160,7 +160,7 @@ schema_layer_creationoptionslist_xml = etree.XML(r"""
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>
-      <xs:attribute type="xs:string" name="type" use="optional"/>
+      <xs:attribute type="xs:string" name="type" use="required"/>
       <xs:attribute type="xs:string" name="description" use="optional"/>
       <xs:attribute type="xs:string" name="default" use="optional"/>
       <xs:attribute type="xs:string" name="scope" use="optional"/>
@@ -183,6 +183,7 @@ schema_layer_creationoptionslist_xml = etree.XML(r"""
   </xs:element>
 </xs:schema>
 """)
+
 
 @pytest.mark.parametrize('driver_name', all_driver_names)
 def test_metadata_openoptionlist(driver_name):
