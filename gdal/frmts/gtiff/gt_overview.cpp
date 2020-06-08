@@ -1007,12 +1007,19 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
             const double noDataValue = poSrcBand->GetNoDataValue(&bHasNoData);
             if( bHasNoData )
                 poDstBand->SetNoDataValue(noDataValue);
+            std::vector<bool> abDstOverviewAssigned(1 + poDstBand->GetOverviewCount());
 
             for( int i = 0; i < nOverviews && eErr == CE_None; i++ )
             {
+                const bool bDegenerateOverview =
+                    (poSrcBand->GetXSize() >> panOverviewListSorted[i]) == 0 &&
+                    (poSrcBand->GetYSize() >> panOverviewListSorted[i]) == 0;
+
                 for( int j = -1; j < poDstBand->GetOverviewCount() &&
                                  eErr == CE_None; j++ )
                 {
+                    if( abDstOverviewAssigned[1+j] )
+                        continue;
                     GDALRasterBand * poOverview =
                             (j < 0 ) ? poDstBand : poDstBand->GetOverview( j );
                     if( poOverview == nullptr )
@@ -1031,14 +1038,21 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
                         || nOvFactor == GDALOvLevelAdjust2(
                                             panOverviewListSorted[i],
                                             poSrcBand->GetXSize(),
-                                            poSrcBand->GetYSize() ) )
+                                            poSrcBand->GetYSize() )
+                        // Deal with edge cases where overview levels lead to
+                        // degenerate 1x1 overviews
+                        || (bDegenerateOverview &&
+                            poOverview->GetXSize() == 1 &&
+                            poOverview->GetYSize() == 1 ) )
                     {
+                        abDstOverviewAssigned[j+1] = true;
                         papapoOverviewBands[iBand][i] = poOverview;
                         if( bHasNoData )
                             poOverview->SetNoDataValue(noDataValue);
                         break;
                     }
                 }
+
                 CPLAssert( papapoOverviewBands[iBand][i] != nullptr );
             }
         }
