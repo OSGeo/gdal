@@ -509,7 +509,7 @@ def test_metadata_creation_field_datatypes(driver_name):
 
 @pytest.mark.parametrize('driver_name', all_driver_names)
 def test_metadata_creation_sub_field_datatypes(driver_name):
-    """ Test if DMD_CREATIONFIELDDATATYPES metadataitem returns valid datatypes """
+    """ Test if DMD_CREATIONFIELDDATASUBTYPES metadataitem returns valid data subtypes """
 
     valid_datatypes = {'Boolean', 'Float32', 'Int16'}
 
