@@ -2179,13 +2179,3 @@ def test_gml_write_gml_ns():
     gml = geom.ExportToGML(options=['FORMAT=GML32', 'GMLID=foo', 'NAMESPACE_DECL=YES'])
     expected_gml = '<gml:Point xmlns:gml="http://www.opengis.net/gml/3.2" gml:id="foo"><gml:pos>500000 4500000</gml:pos></gml:Point>'
     assert gml == expected_gml, ('got %s, instead of %s' % (gml, expected_gml))
-
-###############################################################################
-# When imported build a list of units based on the files available.
-
-# print 'hit enter'
-# sys.stdin.readline()
-
-
-
-

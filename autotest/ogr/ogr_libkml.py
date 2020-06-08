@@ -38,37 +38,59 @@ from osgeo import osr
 from osgeo import gdal
 import pytest
 
+pytestmark = pytest.mark.require_driver('LIBKML')
+
+
 ###############################################################################
-# Test basic open operation for KML datastore.
-#
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
 
-
-def test_ogr_libkml_datastore():
-
-    ogrtest.kml_ds = None
-    ogrtest.have_read_libkml = 0
-    ogrtest.kml_drv = None
-    ogrtest.libkml_drv = None
-
-    ogrtest.kml_drv = ogr.GetDriverByName('LIBKML')
-    if ogrtest.kml_drv is None:
-        pytest.skip()
-
-    ogrtest.kml_drv = ogr.GetDriverByName('KML')
-    # Unregister KML driver if present as its behaviour is not identical
+    kml_drv = ogr.GetDriverByName('KML')
+    # Unregister KML driver if present as it's behaviour is not identical
     # to new LIBKML driver
-    if ogrtest.kml_drv is not None:
+    if kml_drv is not None:
         print('Unregister KML driver')
-        ogrtest.kml_drv.Deregister()
+        kml_drv.Deregister()
 
-    ogrtest.kml_ds = ogr.Open('data/kml/samples.kml')
-    if ogrtest.kml_ds is not None:
-        ogrtest.have_read_libkml = 1
+    ogrtest.have_read_libkml = ogr.Open('data/kml/samples.kml') is not None
 
-    if not ogrtest.have_read_libkml:
-        pytest.skip()
+    yield
 
-    assert ogrtest.kml_ds.GetLayerCount() == 10, 'wrong number of layers'
+    gdal.Unlink('/vsimem/libkml.kml')
+    gdal.Unlink('/vsimem/libkml.kmz')
+    gdal.Unlink('/vsimem/libkml_use_doc_off.kmz')
+    gdal.Unlink("/vsimem/ogr_libkml_camera.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_layer_lookat.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_layer_camera.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_multigeometry.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_snippet.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_atom_author.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_atom_link.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_phonenumber.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_region.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_screenoverlay.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_model.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_read_write_style_read.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_read_write_style_write.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_update.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_update.kmz")
+    gdal.Unlink("/vsimem/ogr_libkml_write_update_dir/doc.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_update_dir")
+    gdal.Unlink("/vsimem/ogr_libkml_write_networklinkcontrol.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_networklinkcontrol.kmz")
+    gdal.Unlink("/vsimem/ogr_libkml_write_networklinkcontrol_dir/doc.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_networklinkcontrol_dir")
+    gdal.Unlink("/vsimem/ogr_libkml_write_liststyle.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_networklink.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_photooverlay.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_read_write_data.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_folder.kml")
+    gdal.Unlink("/vsimem/ogr_libkml_write_container_properties.kml")
+
+    # Re-register LIBKML driver if necessary
+    if kml_drv is not None:
+        print('Re-register KML driver')
+        kml_drv.Register()
 
 ###############################################################################
 # Test reading attributes for first layer (point).
@@ -80,9 +102,9 @@ def test_ogr_libkml_attributes_1():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    assert ogrtest.kml_ds is not None, 'libkml_ds is none'
+    kml_ds = ogr.Open('data/kml/samples.kml')
 
-    lyr = ogrtest.kml_ds.GetLayerByName('Placemarks')
+    lyr = kml_ds.GetLayerByName('Placemarks')
     feat = lyr.GetNextFeature()
 
     assert feat.GetField('Name') == 'Simple placemark', 'Wrong name field value'
@@ -120,9 +142,9 @@ def test_ogr_libkml_attributes_2():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    assert ogrtest.kml_ds is not None, 'libkml_ds is none'
+    kml_ds = ogr.Open('data/kml/samples.kml')
 
-    lyr = ogrtest.kml_ds.GetLayerByName('Highlighted Icon')
+    lyr = kml_ds.GetLayerByName('Highlighted Icon')
     feat = lyr.GetNextFeature()
 
     assert feat.GetField('Name') == 'Roll over this icon', 'Wrong name field value'
@@ -144,9 +166,9 @@ def test_ogr_libkml_attributes_3():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    assert ogrtest.kml_ds is not None, 'libkml_ds is none'
+    kml_ds = ogr.Open('data/kml/samples.kml')
 
-    lyr = ogrtest.kml_ds.GetLayerByName('Paths')
+    lyr = kml_ds.GetLayerByName('Paths')
     feat = lyr.GetNextFeature()
 
     assert feat.GetField('Name') == 'Tessellated', 'Wrong name field value'
@@ -175,9 +197,9 @@ def test_ogr_libkml_attributes_4():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    assert ogrtest.kml_ds is not None, 'libkml_ds is none'
+    kml_ds = ogr.Open('data/kml/samples.kml')
 
-    lyr = ogrtest.kml_ds.GetLayerByName('Google Campus')
+    lyr = kml_ds.GetLayerByName('Google Campus')
     feat = lyr.GetNextFeature()
 
     i = 40
@@ -203,9 +225,9 @@ def test_ogr_libkml_point_read():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    assert ogrtest.kml_ds is not None, 'libkml_ds is none'
+    kml_ds = ogr.Open('data/kml/samples.kml')
 
-    lyr = ogrtest.kml_ds.GetLayerByName('Placemarks')
+    lyr = kml_ds.GetLayerByName('Placemarks')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
 
@@ -237,9 +259,9 @@ def test_ogr_libkml_linestring_read():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    assert ogrtest.kml_ds is not None, 'libkml_ds is none'
+    kml_ds = ogr.Open('data/kml/samples.kml')
 
-    lyr = ogrtest.kml_ds.GetLayerByName('Paths')
+    lyr = kml_ds.GetLayerByName('Paths')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
 
@@ -268,9 +290,9 @@ def test_ogr_libkml_polygon_read():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    assert ogrtest.kml_ds is not None, 'libkml_ds is none'
+    kml_ds = ogr.Open('data/kml/samples.kml')
 
-    lyr = ogrtest.kml_ds.GetLayerByName('Google Campus')
+    lyr = kml_ds.GetLayerByName('Google Campus')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
 
@@ -300,9 +322,6 @@ def test_ogr_libkml_polygon_read():
 
 
 def ogr_libkml_write(filename):
-
-    if ogrtest.kml_drv is None:
-        pytest.skip()
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filename)
 
@@ -1891,57 +1910,3 @@ def test_ogr_libkml_update_existing_kml():
     assert fc_after == fc_before + 1
 
     gdal.Unlink(filename)
-
-###############################################################################
-#  Cleanup
-
-
-def test_ogr_libkml_cleanup():
-    if not ogrtest.have_read_libkml:
-        pytest.skip()
-
-    if ogrtest.kml_ds is not None:
-        ogrtest.kml_ds = None
-
-    gdal.Unlink('/vsimem/libkml.kml')
-    gdal.Unlink('/vsimem/libkml.kmz')
-    gdal.Unlink('/vsimem/libkml_use_doc_off.kmz')
-    gdal.Unlink("/vsimem/ogr_libkml_camera.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_write_layer_lookat.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_write_layer_camera.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_write_multigeometry.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_write_snippet.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_write_atom_author.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_write_atom_link.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_write_phonenumber.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_write_region.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_write_screenoverlay.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_write_model.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_read_write_style_read.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_read_write_style_write.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_write_update.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_write_update.kmz")
-    gdal.Unlink("/vsimem/ogr_libkml_write_update_dir/doc.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_write_update_dir")
-    gdal.Unlink("/vsimem/ogr_libkml_write_networklinkcontrol.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_write_networklinkcontrol.kmz")
-    gdal.Unlink("/vsimem/ogr_libkml_write_networklinkcontrol_dir/doc.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_write_networklinkcontrol_dir")
-    gdal.Unlink("/vsimem/ogr_libkml_write_liststyle.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_write_networklink.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_write_photooverlay.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_read_write_data.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_write_folder.kml")
-    gdal.Unlink("/vsimem/ogr_libkml_write_container_properties.kml")
-
-    # Re-register KML driver if necessary
-    if ogrtest.kml_drv is not None:
-        print('Re-register KML driver')
-        ogrtest.kml_drv.Register()
-
-    
-###############################################################################
-# Build tests runner
-
-
-
