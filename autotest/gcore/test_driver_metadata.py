@@ -38,7 +38,8 @@ ogr_driver_names = [driver_name for driver_name in all_driver_names
                     if gdal.GetDriverByName(driver_name).GetMetadataItem('DCAP_VECTOR') == 'YES']
 gdal_driver_names = [driver_name for driver_name in all_driver_names
                      if gdal.GetDriverByName(driver_name).GetMetadataItem('DCAP_RASTER') == 'YES']
-
+multidim_driver_name = [driver_name for driver_name in gdal_driver_names
+                        if gdal.GetDriverByName(driver_name).GetMetadataItem('DCAP_MULTIDIM_RASTER') == 'YES']
 
 schema_openoptionslist = etree.XML(r"""
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
@@ -242,6 +243,102 @@ schema_layer_creationoptionslist_xml = etree.XML(r"""
 """)
 
 
+schema_multidim_array_creationoptionslist_xml =etree.XML(r"""
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Value" type="xs:string"/>
+  <xs:element name="Option">
+    <xs:complexType mixed="true">
+      <xs:sequence>
+        <xs:element ref="Value" maxOccurs="unbounded" minOccurs="0"/>
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="name" use="optional"/>
+      <xs:attribute type="xs:string" name="type" use="optional"/>
+      <xs:attribute type="xs:string" name="description" use="optional"/>
+      <xs:attribute type="xs:string" name="default" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MultiDimArrayCreationOptionList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Option" maxOccurs="unbounded" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
+""")
+
+
+schema_multidim_attribute_creationoptionslist_xml = etree.XML(r"""
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Value" type="xs:string"/>
+  <xs:element name="Option">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Value" maxOccurs="unbounded" minOccurs="0"/>
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="name"/>
+      <xs:attribute type="xs:string" name="type"/>
+      <xs:attribute type="xs:string" name="default"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MultiDimAttributeCreationOptionList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Option"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>""")
+
+
+schema_multidim_dataset_creationoptionslist_xml = etree.XML(r"""
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Value" type="xs:string"/>
+  <xs:element name="Option">
+    <xs:complexType mixed="true">
+      <xs:sequence>
+        <xs:element ref="Value" maxOccurs="unbounded" minOccurs="0"/>
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="name" use="optional"/>
+      <xs:attribute type="xs:string" name="type" use="optional"/>
+      <xs:attribute type="xs:string" name="default" use="optional"/>
+      <xs:attribute type="xs:string" name="description" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MultiDimDatasetCreationOptionList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Option" maxOccurs="unbounded" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>""")
+
+
+schema_multidim_dimension_creationoptionslist_xml = etree.XML(r"""
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Option">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="name"/>
+          <xs:attribute type="xs:string" name="type"/>
+          <xs:attribute type="xs:string" name="description"/>
+          <xs:attribute type="xs:string" name="default"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MultiDimDimensionCreationOptionList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Option"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>""")
+
+
 @pytest.mark.parametrize('driver_name', all_driver_names)
 def test_metadata_openoptionlist(driver_name):
     """ Test if DMD_OPENOPTIONLIST metadataitem is present and can be parsed """
@@ -296,4 +393,101 @@ def test_metadata_layer_creationoptionslist(driver_name):
             etree.fromstring(creationoptionslist_xml, parser)
         except:
             print(creationoptionslist_xml)
+            raise
+
+
+@pytest.mark.parametrize('driver_name', multidim_driver_name)
+def test_metadata_multidim_array_creationoptionslist(driver_name):
+    """ Test if DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST metadataitem is present and can be parsed """
+
+    schema = etree.XMLSchema(schema_multidim_array_creationoptionslist_xml)
+
+    driver = gdal.GetDriverByName(driver_name)
+    xml = driver.GetMetadataItem('DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST')
+
+    if xml is not None and len(xml) > 0:
+        # do not fail
+        try:
+            parser = etree.XMLParser(schema=schema)
+            etree.fromstring(xml, parser)
+        except:
+            print(xml)
+            raise
+
+
+@pytest.mark.parametrize('driver_name', multidim_driver_name)
+def test_metadata_multidim_attribute_creationoptionslist(driver_name):
+    """ Test if DMD_MULTIDIM_ATTRIBUTE_CREATIONOPTIONLIST metadataitem is present and can be parsed """
+
+    schema = etree.XMLSchema(schema_multidim_attribute_creationoptionslist_xml)
+
+    driver = gdal.GetDriverByName(driver_name)
+    xml = driver.GetMetadataItem('DMD_MULTIDIM_ATTRIBUTE_CREATIONOPTIONLIST')
+
+    if xml is not None and len(xml) > 0:
+        # do not fail
+        try:
+            parser = etree.XMLParser(schema=schema)
+            etree.fromstring(xml, parser)
+        except:
+            print(xml)
+            raise
+
+
+@pytest.mark.parametrize('driver_name', multidim_driver_name)
+def test_metadata_multidim_dataset_creationoptionslist(driver_name):
+    """ Test if DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST metadataitem is present and can be parsed """
+
+    schema = etree.XMLSchema(schema_multidim_dataset_creationoptionslist_xml)
+
+    driver = gdal.GetDriverByName(driver_name)
+    xml = driver.GetMetadataItem('DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST')
+
+    if xml is not None and len(xml) > 0:
+        # do not fail
+        try:
+            parser = etree.XMLParser(schema=schema)
+            etree.fromstring(xml, parser)
+        except:
+            print(xml)
+            raise
+
+
+@pytest.mark.parametrize('driver_name', multidim_driver_name)
+def test_metadata_multidim_dimension_creationoptionslist(driver_name):
+    """ Test if DMD_MULTIDIM_DIMENSION_CREATIONOPTIONLIST metadataitem is present and can be parsed """
+
+    schema = etree.XMLSchema(schema_multidim_dimension_creationoptionslist_xml)
+
+    driver = gdal.GetDriverByName(driver_name)
+    xml = driver.GetMetadataItem('DMD_MULTIDIM_DIMENSION_CREATIONOPTIONLIST')
+
+    if xml is not None and len(xml) > 0:
+        # do not fail
+        try:
+            parser = etree.XMLParser(schema=schema)
+            etree.fromstring(xml, parser)
+        except:
+            print(xml)
+            raise
+
+
+@pytest.mark.parametrize('driver_name', multidim_driver_name)
+def test_metadata_multidim_group_creationoptionslist(driver_name):
+    """ Test if DMD_MULTIDIM_GROUP_CREATIONOPTIONLIST metadataitem is present and can be parsed """
+
+    # TODO: create schema if xml is available
+    # schema = etree.XMLSchema(schema_multidim_group_creationoptionslist_xml)
+
+    driver = gdal.GetDriverByName(driver_name)
+    xml = driver.GetMetadataItem('DMD_MULTIDIM_GROUP_CREATIONOPTIONLIST')
+
+    if xml is not None and len(xml) > 0:
+        # do not fail
+        try:
+            # parser = etree.XMLParser(schema=schema)
+            # etree.fromstring(xml, parser)
+            etree.fromstring(xml)
+        except:
+            print(xml)
             raise
