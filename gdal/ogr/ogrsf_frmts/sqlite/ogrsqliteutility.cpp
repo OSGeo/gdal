@@ -368,8 +368,8 @@ std::set<std::string> SQLGetUniqueFieldUCConstraints(sqlite3* poDb,
     // Unique fields detection
     const std::string upperTableName { CPLString( pszTableName ).toupper() };
     char* pszTableDefinitionSQL = sqlite3_mprintf(
-        "SELECT sql FROM sqlite_master "
-        "WHERE type='table' AND UPPER(name)='%q'", upperTableName.c_str() );
+        "SELECT sql, type FROM sqlite_master "
+        "WHERE type IN ('table', 'view') AND UPPER(name)='%q'", upperTableName.c_str() );
     SQLResult oResultTable;
     OGRErr err = SQLQuery(poDb, pszTableDefinitionSQL, &oResultTable);
     sqlite3_free(pszTableDefinitionSQL);
@@ -381,6 +381,11 @@ std::set<std::string> SQLGetUniqueFieldUCConstraints(sqlite3* poDb,
         else
             CPLError( CE_Failure, CPLE_AppDefined, "Cannot find table %s", pszTableName );
 
+        SQLResultFree(&oResultTable);
+        return uniqueFieldsUC;
+    }
+    if( std::string(SQLResultGetValue(&oResultTable, 1, 0)) == "view" )
+    {
         SQLResultFree(&oResultTable);
         return uniqueFieldsUC;
     }

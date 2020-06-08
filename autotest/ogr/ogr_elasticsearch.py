@@ -37,30 +37,58 @@ from osgeo import ogr
 from osgeo import osr
 import pytest
 
+pytestmark = pytest.mark.require_driver('Elasticsearch')
+
+
 ###############################################################################
-# Test driver availability
-#
+# Cleanup
+
+def ogr_elasticsearch_delete_files():
+
+    for subdir in ['_search', '_cat', 'no_srs', 'non_standard_geometries', 'other_srs', 'a_layer']:
+        lst = gdal.ReadDir('/vsimem/fakeelasticsearch/' + subdir)
+        if lst:
+            for f in lst:
+                gdal.Unlink('/vsimem/fakeelasticsearch/' + subdir + '/' + f)
+
+        lst = gdal.ReadDir('/vsimem/fakeelasticsearch/' +
+                           subdir + '/FeatureCollection')
+        if lst:
+            for f in lst:
+                gdal.Unlink('/vsimem/fakeelasticsearch/' +
+                            subdir + '/FeatureCollection/' + f)
+
+    lst = gdal.ReadDir('/vsimem/fakeelasticsearch')
+    if lst:
+        for f in lst:
+            gdal.Unlink('/vsimem/fakeelasticsearch/' + f)
+
+    gdal.Unlink('/vsimem/fakeelasticsearch')
+    gdal.Unlink('/vsimem/fakeelasticsearch&USERPWD=user:pwd')
 
 
-def test_ogr_elasticsearch_init():
+###############################################################################
 
-    ogrtest.elasticsearch_drv = None
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
     ogrtest.srs_wgs84 = osr.SpatialReference()
     ogrtest.srs_wgs84.SetFromUserInput('WGS84')
 
     ogrtest.elasticsearch_drv = ogr.GetDriverByName('Elasticsearch')
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    yield
+
+    ogr_elasticsearch_delete_files()
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
 
 ###############################################################################
 # Test writing into an nonexistent Elasticsearch datastore.
 
 
 def test_ogr_elasticsearch_nonexistent_server():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     with gdaltest.error_handler():
         ds = ogrtest.elasticsearch_drv.CreateDataSource(
@@ -101,8 +129,6 @@ def test_ogr_elasticsearch_nonexistent_server():
 
 
 def test_ogr_elasticsearch_1():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch",
                            """{"version":{"number":"2.0.0"}}""")
@@ -339,8 +365,6 @@ def test_ogr_elasticsearch_1():
 
 
 def test_ogr_elasticsearch_2():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     ds = ogrtest.elasticsearch_drv.CreateDataSource(
         "/vsimem/fakeelasticsearch")
@@ -382,8 +406,6 @@ def test_ogr_elasticsearch_2():
 
 
 def test_ogr_elasticsearch_3():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     ds = ogrtest.elasticsearch_drv.CreateDataSource(
         "/vsimem/fakeelasticsearch")
@@ -424,8 +446,6 @@ def test_ogr_elasticsearch_3():
 
 
 def test_ogr_elasticsearch_4():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     with gdaltest.error_handler():
         ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
@@ -965,8 +985,6 @@ def test_ogr_elasticsearch_4():
 
 
 def test_ogr_elasticsearch_5():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch/_stats",
                            """{"_shards":{"total":0,"successful":0,"failed":0},"indices":{}}""")
@@ -1199,8 +1217,6 @@ def test_ogr_elasticsearch_5():
 
 
 def test_ogr_elasticsearch_6():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         """/vsimem/fakeelasticsearch/_cat/indices?h=i""", 'non_standard_geometries\n')
@@ -1295,8 +1311,6 @@ def test_ogr_elasticsearch_6():
 
 
 def test_ogr_elasticsearch_7():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch/_stats",
                            """{"_shards":{"total":0,"successful":0,"failed":0},"indices":{}}""")
@@ -1326,8 +1340,6 @@ def test_ogr_elasticsearch_7():
 
 
 def test_ogr_elasticsearch_8():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch/_stats",
                            """{"_shards":{"total":0,"successful":0,"failed":0},"indices":{}}""")
@@ -1380,8 +1392,6 @@ def test_ogr_elasticsearch_8():
 
 
 def test_ogr_elasticsearch_9():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     ogr_elasticsearch_delete_files()
 
@@ -1486,8 +1496,6 @@ def test_ogr_elasticsearch_9():
 
 
 def test_ogr_elasticsearch_10():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     ogr_elasticsearch_delete_files()
 
@@ -2098,8 +2106,6 @@ def test_ogr_elasticsearch_10():
 
 
 def test_ogr_elasticsearch_11():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     ogr_elasticsearch_delete_files()
 
@@ -2226,8 +2232,6 @@ def test_ogr_elasticsearch_11():
 # Test Elasticsearch 7.x (ignore MAPPING_NAME)
 
 def test_ogr_elasticsearch_12():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     ogr_elasticsearch_delete_files()
 
@@ -2261,8 +2265,6 @@ def test_ogr_elasticsearch_12():
 
 
 def test_ogr_elasticsearch_authentication():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     ogr_elasticsearch_delete_files()
 
@@ -2305,8 +2307,6 @@ def test_ogr_elasticsearch_authentication():
 
 
 def test_ogr_elasticsearch_http_headers_from_env():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     ogr_elasticsearch_delete_files()
 
@@ -2359,40 +2359,3 @@ def test_ogr_elasticsearch_http_headers_from_env():
         f = sql_lyr.GetNextFeature()
         assert f['some_field'] == '5'
         ds.ReleaseResultSet(sql_lyr)
-
-
-###############################################################################
-# Cleanup
-
-
-def ogr_elasticsearch_delete_files():
-
-    for subdir in ['_search', '_cat', 'no_srs', 'non_standard_geometries', 'other_srs', 'a_layer']:
-        lst = gdal.ReadDir('/vsimem/fakeelasticsearch/' + subdir)
-        if lst:
-            for f in lst:
-                gdal.Unlink('/vsimem/fakeelasticsearch/' + subdir + '/' + f)
-
-        lst = gdal.ReadDir('/vsimem/fakeelasticsearch/' +
-                           subdir + '/FeatureCollection')
-        if lst:
-            for f in lst:
-                gdal.Unlink('/vsimem/fakeelasticsearch/' +
-                            subdir + '/FeatureCollection/' + f)
-
-    lst = gdal.ReadDir('/vsimem/fakeelasticsearch')
-    if lst:
-        for f in lst:
-            gdal.Unlink('/vsimem/fakeelasticsearch/' + f)
-
-    gdal.Unlink('/vsimem/fakeelasticsearch')
-    gdal.Unlink('/vsimem/fakeelasticsearch&USERPWD=user:pwd')
-
-
-def test_ogr_elasticsearch_cleanup():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
-
-    ogr_elasticsearch_delete_files()
-
-    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)

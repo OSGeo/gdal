@@ -45,43 +45,25 @@ import ogrtest
 from osgeo import ogr
 import pytest
 
-###############################################################################
-# Test if driver is available
+pytestmark = pytest.mark.require_driver('DB2ODBC')
 
-
-def test_ogr_db2_check_driver():
-
-    ogrtest.db2_drv = None
-
-    ogrtest.db2_drv = ogr.GetDriverByName('DB2ODBC')
-
-    if ogrtest.db2_drv is None:
-        pytest.skip()
-
-    
 ###############################################################################
 # Test if environment variable for DB2 connection is set and we can connect
 
 
-def test_ogr_db2_init():
-
-    if ogrtest.db2_drv is None:
-        pytest.skip()
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
 
     if 'DB2_TEST_SERVER' in os.environ:
         ogrtest.db2_test_server = "DB2ODBC:" + os.environ['DB2_TEST_SERVER']
     else:
-        ogrtest.db2_drv = None
         pytest.skip('Environment variable DB2_TEST_SERVER not found')
 
-    ###############################################################################
+###############################################################################
 # Test GetFeatureCount()
 
 
 def test_ogr_db2_GetFeatureCount():
-
-    if ogrtest.db2_drv is None:
-        pytest.skip()
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
@@ -99,9 +81,6 @@ def test_ogr_db2_GetFeatureCount():
 
 
 def test_ogr_db2_GetSpatialRef():
-
-    if ogrtest.db2_drv is None:
-        pytest.skip()
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
@@ -124,9 +103,6 @@ def test_ogr_db2_GetSpatialRef():
 # Test GetExtent()
 def test_ogr_db2_GetExtent():
 
-    if ogrtest.db2_drv is None:
-        pytest.skip()
-
     ds = ogr.Open(ogrtest.db2_test_server)
 
     assert ds is not None
@@ -146,9 +122,6 @@ def test_ogr_db2_GetExtent():
 
 
 def test_ogr_db2_GetFeature():
-
-    if ogrtest.db2_drv is None:
-        pytest.skip()
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
@@ -171,9 +144,6 @@ def test_ogr_db2_GetFeature():
 
 
 def test_ogr_db2_SetSpatialFilter():
-
-    if ogrtest.db2_drv is None:
-        pytest.skip()
 
     ds = ogr.Open(ogrtest.db2_test_server)
 
@@ -221,9 +191,6 @@ def test_ogr_db2_SetSpatialFilter():
 
 def test_ogr_db2_capabilities():
 
-    if ogrtest.db2_drv is None:
-        pytest.skip()
-
     ds = ogr.Open(ogrtest.db2_test_server)
 
     assert ds is not None
@@ -250,24 +217,4 @@ def test_ogr_db2_capabilities():
     print("Layer Capabilities:")
     for cap in capabilities:
         print("  %s = %s" % (cap, layer.TestCapability(cap)))
-    
-
-def ogr_db2_listdrivers():
-    cnt = ogr.GetDriverCount()
-    formatsList = []  # Empty List
-
-    for i in range(cnt):
-        driver = ogr.GetDriver(i)
-        driverName = driver.GetName()
-        # print driverName
-        if driverName not in formatsList:
-            formatsList.append(driverName)
-
-    formatsList.sort()  # Sorting the messy list of ogr drivers
-
-    for i in formatsList:
-        print(i)
-
-    
-
 

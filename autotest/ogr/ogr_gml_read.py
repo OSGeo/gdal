@@ -43,21 +43,143 @@ from osgeo import osr
 import pytest
 
 ###############################################################################
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
+
+    gdaltest.have_gml_reader = ogr.Open('data/gml/ionic_wfs.gml') is not None
+
+    yield
+
+    gdal.SetConfigOption('GML_SKIP_RESOLVE_ELEMS', None)
+    gdal.SetConfigOption('GML_SAVE_RESOLVED_TO', None)
+
+    gdaltest.clean_tmp()
+
+    fl = gdal.ReadDir('/vsimem/')
+    if fl is not None:
+        print(fl)
+
+    try:
+        os.remove('data/gml/bom.gfs')
+    except OSError:
+        pass
+    try:
+        os.remove('data/gml/utf8.gfs')
+    except OSError:
+        pass
+    try:
+        os.remove('data/gml/ticket_2349_test_1.gfs')
+    except OSError:
+        pass
+    try:
+        os.remove('data/gml/citygml.gfs')
+    except OSError:
+        pass
+    try:
+        os.remove('data/gml/gnis_pop_100.gfs')
+    except OSError:
+        pass
+    try:
+        os.remove('data/gml/gnis_pop_110.gfs')
+    except OSError:
+        pass
+    try:
+        os.remove('data/gml/paris_typical_strike_demonstration.gfs')
+    except OSError:
+        pass
+    try:
+        os.remove('data/gml/global_geometry.gfs')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/global_geometry.gfs')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/global_geometry.xml')
+    except OSError:
+        pass
+    try:
+        os.remove('data/gml/curveProperty.gfs')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/ogr_gml_26.gml')
+        os.remove('tmp/ogr_gml_26.xsd')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/ogr_gml_27.gml')
+        os.remove('tmp/ogr_gml_27.xsd')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/ogr_gml_28.gml')
+        os.remove('tmp/ogr_gml_28.gfs')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/GmlTopo-sample.sqlite')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/GmlTopo-sample.gfs')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/GmlTopo-sample.resolved.gml')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/GmlTopo-sample.xml')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/sample_gml_face_hole_negative_no.sqlite')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/sample_gml_face_hole_negative_no.gfs')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/sample_gml_face_hole_negative_no.resolved.gml')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/sample_gml_face_hole_negative_no.xml')
+    except OSError:
+        pass
+    try:
+        os.remove('data/gml/wfs_typefeature.gfs')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/ogr_gml_51.gml')
+        os.remove('tmp/ogr_gml_51.xsd')
+    except OSError:
+        pass
+    try:
+        os.remove('tmp/gmlattributes.gml')
+        os.remove('tmp/gmlattributes.gfs')
+    except OSError:
+        pass
+    files = os.listdir('data')
+    for filename in files:
+        if len(filename) > 13 and filename[-13:] == '.resolved.gml':
+            os.unlink('data/gml/' + filename)
+    gdal.Unlink('data/gml/test_xsi_nil_gfs.gfs')
+
+###############################################################################
 # Test reading geometry and attribute from ionic wfs gml file.
 #
 
 
 def test_ogr_gml_1():
-
-    gdaltest.have_gml_reader = 0
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
 
     gml_ds = ogr.Open('data/gml/ionic_wfs.gml')
-    if gml_ds is None:
-        if gdal.GetLastErrorMsg().find('Xerces') != -1:
-            pytest.skip()
-        pytest.fail('failed to open test file.')
-
-    gdaltest.have_gml_reader = 1
 
     assert gml_ds.GetLayerCount() == 1, 'wrong number of layers'
 
@@ -3596,135 +3718,3 @@ def test_ogr_gml_unique(gml_format, constraint_met):
     finally:
         gdal.Unlink("/vsimem/test_ogr_gml_unique.gml")
         gdal.Unlink("/vsimem/test_ogr_gml_unique.xsd")
-
-###############################################################################
-#  Cleanup
-
-
-def test_ogr_gml_cleanup():
-    if not gdaltest.have_gml_reader:
-        pytest.skip()
-
-    gdal.SetConfigOption('GML_SKIP_RESOLVE_ELEMS', None)
-    gdal.SetConfigOption('GML_SAVE_RESOLVED_TO', None)
-
-    gdaltest.clean_tmp()
-
-    fl = gdal.ReadDir('/vsimem/')
-    if fl is not None:
-        print(fl)
-
-    return test_ogr_gml_clean_files()
-
-
-def test_ogr_gml_clean_files():
-    try:
-        os.remove('data/gml/bom.gfs')
-    except OSError:
-        pass
-    try:
-        os.remove('data/gml/utf8.gfs')
-    except OSError:
-        pass
-    try:
-        os.remove('data/gml/ticket_2349_test_1.gfs')
-    except OSError:
-        pass
-    try:
-        os.remove('data/gml/citygml.gfs')
-    except OSError:
-        pass
-    try:
-        os.remove('data/gml/gnis_pop_100.gfs')
-    except OSError:
-        pass
-    try:
-        os.remove('data/gml/gnis_pop_110.gfs')
-    except OSError:
-        pass
-    try:
-        os.remove('data/gml/paris_typical_strike_demonstration.gfs')
-    except OSError:
-        pass
-    try:
-        os.remove('data/gml/global_geometry.gfs')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/global_geometry.gfs')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/global_geometry.xml')
-    except OSError:
-        pass
-    try:
-        os.remove('data/gml/curveProperty.gfs')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/ogr_gml_26.gml')
-        os.remove('tmp/ogr_gml_26.xsd')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/ogr_gml_27.gml')
-        os.remove('tmp/ogr_gml_27.xsd')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/ogr_gml_28.gml')
-        os.remove('tmp/ogr_gml_28.gfs')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/GmlTopo-sample.sqlite')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/GmlTopo-sample.gfs')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/GmlTopo-sample.resolved.gml')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/GmlTopo-sample.xml')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/sample_gml_face_hole_negative_no.sqlite')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/sample_gml_face_hole_negative_no.gfs')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/sample_gml_face_hole_negative_no.resolved.gml')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/sample_gml_face_hole_negative_no.xml')
-    except OSError:
-        pass
-    try:
-        os.remove('data/gml/wfs_typefeature.gfs')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/ogr_gml_51.gml')
-        os.remove('tmp/ogr_gml_51.xsd')
-    except OSError:
-        pass
-    try:
-        os.remove('tmp/gmlattributes.gml')
-        os.remove('tmp/gmlattributes.gfs')
-    except OSError:
-        pass
-    files = os.listdir('data')
-    for filename in files:
-        if len(filename) > 13 and filename[-13:] == '.resolved.gml':
-            os.unlink('data/gml/' + filename)
-    gdal.Unlink('data/gml/test_xsi_nil_gfs.gfs')

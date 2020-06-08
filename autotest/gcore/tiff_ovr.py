@@ -1865,6 +1865,25 @@ def test_tiff_ovr_multithreading_singleband():
     gdal.Unlink('/vsimem/test.tif')
 
 ###############################################################################
+
+
+def test_tiff_ovr_multiband_code_path_degenerate():
+
+    temp_path = '/vsimem/test.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(temp_path, 5, 6)
+    ds.GetRasterBand(1).Fill(255)
+    del ds
+    ds = gdal.OpenEx(temp_path, gdal.GA_ReadOnly)
+    with gdaltest.config_option('COMPRESS_OVERVIEW', 'LZW'):
+        ds.BuildOverviews('nearest', overviewlist=[2, 4, 8])
+    assert ds.GetRasterBand(1).GetOverview(0).Checksum() != 0
+    assert ds.GetRasterBand(1).GetOverview(1).Checksum() != 0
+    assert ds.GetRasterBand(1).GetOverview(2).Checksum() != 0
+    del ds
+    gdal.GetDriverByName('GTiff').Delete(temp_path)
+
+
+###############################################################################
 # Cleanup
 
 def test_tiff_ovr_cleanup():

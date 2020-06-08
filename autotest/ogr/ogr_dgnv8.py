@@ -37,27 +37,13 @@ import ogrtest
 from osgeo import gdal, ogr
 import pytest
 
-###############################################################################
-# Verify we can open the test file.
-
-
-def test_ogr_dgnv8_1():
-
-    gdaltest.dgnv8_drv = ogr.GetDriverByName('DGNv8')
-    if gdaltest.dgnv8_drv is None:
-        pytest.skip()
-
-    ds = ogr.Open('data/dgnv8/test_dgnv8.dgn')
-    assert ds is not None, 'failed to open test file.'
+pytestmark = pytest.mark.require_driver('DGNv8')
 
 ###############################################################################
 # Compare with a reference CSV dump
 
 
 def test_ogr_dgnv8_2():
-
-    if gdaltest.dgnv8_drv is None:
-        pytest.skip()
 
     gdal.VectorTranslate('/vsimem/ogr_dgnv8_2.csv', 'data/dgnv8/test_dgnv8.dgn',
                          options='-f CSV  -dsco geometry=as_wkt -sql "select *, ogr_style from my_model"')
@@ -78,9 +64,6 @@ def test_ogr_dgnv8_2():
 
 def test_ogr_dgnv8_3():
 
-    if gdaltest.dgnv8_drv is None:
-        pytest.skip()
-
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
@@ -100,9 +83,6 @@ def test_ogr_dgnv8_3():
 
 
 def test_ogr_dgnv8_4():
-
-    if gdaltest.dgnv8_drv is None:
-        pytest.skip()
 
     tmp_dgn = 'tmp/ogr_dgnv8_4.dgn'
     gdal.VectorTranslate(tmp_dgn, 'data/dgnv8/test_dgnv8.dgn', format='DGNv8')
@@ -127,9 +107,6 @@ def test_ogr_dgnv8_4():
 
 
 def test_ogr_dgnv8_5():
-
-    if gdaltest.dgnv8_drv is None:
-        pytest.skip()
 
     tmp_dgn = 'tmp/ogr_dgnv8_5.dgn'
     options = ['APPLICATION=application',
@@ -183,13 +160,3 @@ def test_ogr_dgnv8_5():
 
     gdal.Unlink(tmp_dgn)
     gdal.Unlink(tmp2_dgn)
-
-
-###############################################################################
-#  Cleanup
-
-def test_ogr_dgnv8_cleanup():
-
-    pass
-
-
