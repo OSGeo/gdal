@@ -2577,9 +2577,9 @@ CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
         if (poUnderlyingIOStream)
             poUnderlyingIOStream->nFileViewCount++;
 
-        if (poIOStream != poUnderlyingIOStream)
+        if ( vsiIoStream != poUnderlyingIOStream )
         {
-            delete poIOStream;
+            delete vsiIoStream;
         }
         else
         {
