@@ -64,7 +64,26 @@ schema_openoptionslist = etree.XML(r"""
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>
-      <xs:attribute type="xs:string" name="type" use="required"/>
+      <xs:attribute name="type" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="INT" />
+            <xs:enumeration value="INTEGER" />
+            <xs:enumeration value="UNSIGNED INT" />
+            <xs:enumeration value="FLOAT" />
+            <xs:enumeration value="BOOLEAN" />
+            <xs:enumeration value="STRING-SELECT" />
+            <xs:enumeration value="STRING" />
+            <xs:enumeration value="int" />
+            <xs:enumeration value="integer" />
+            <xs:enumeration value="unsigned int" />
+            <xs:enumeration value="float" />
+            <xs:enumeration value="boolean" />
+            <xs:enumeration value="string-select" />
+            <xs:enumeration value="string" />
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
       <xs:attribute type="xs:string" name="description" use="optional"/>
       <xs:attribute type="xs:string" name="default" use="optional"/>
       <xs:attribute type="xs:string" name="scope" use="optional"/>
@@ -112,7 +131,26 @@ schema_creationoptionslist_xml = etree.XML(r"""
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>
-      <xs:attribute type="xs:string" name="type" use="required"/>
+      <xs:attribute name="type" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="INT" />
+            <xs:enumeration value="INTEGER" />
+            <xs:enumeration value="UNSIGNED INT" />
+            <xs:enumeration value="FLOAT" />
+            <xs:enumeration value="BOOLEAN" />
+            <xs:enumeration value="STRING-SELECT" />
+            <xs:enumeration value="STRING" />
+            <xs:enumeration value="int" />
+            <xs:enumeration value="integer" />
+            <xs:enumeration value="unsigned int" />
+            <xs:enumeration value="float" />
+            <xs:enumeration value="boolean" />
+            <xs:enumeration value="string-select" />
+            <xs:enumeration value="string" />
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
       <xs:attribute type="xs:string" name="description" use="optional"/>
       <xs:attribute type="xs:string" name="default" use="optional"/>
       <xs:attribute type="xs:string" name="scope" use="optional"/>
@@ -160,7 +198,26 @@ schema_layer_creationoptionslist_xml = etree.XML(r"""
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>
-      <xs:attribute type="xs:string" name="type" use="required"/>
+      <xs:attribute name="type" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="INT" />
+            <xs:enumeration value="INTEGER" />
+            <xs:enumeration value="UNSIGNED INT" />
+            <xs:enumeration value="FLOAT" />
+            <xs:enumeration value="BOOLEAN" />
+            <xs:enumeration value="STRING-SELECT" />
+            <xs:enumeration value="STRING" />
+            <xs:enumeration value="int" />
+            <xs:enumeration value="integer" />
+            <xs:enumeration value="unsigned int" />
+            <xs:enumeration value="float" />
+            <xs:enumeration value="boolean" />
+            <xs:enumeration value="string-select" />
+            <xs:enumeration value="string" />
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
       <xs:attribute type="xs:string" name="description" use="optional"/>
       <xs:attribute type="xs:string" name="default" use="optional"/>
       <xs:attribute type="xs:string" name="scope" use="optional"/>
