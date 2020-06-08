@@ -1034,6 +1034,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
             for( int i = 0; i < nOverviews && eErr == CE_None; i++ )
             {
                 const bool bDegenerateOverview =
+                    panOverviewListSorted != nullptr &&
                     (poSrcBand->GetXSize() >> panOverviewListSorted[i]) == 0 &&
                     (poSrcBand->GetYSize() >> panOverviewListSorted[i]) == 0;
 
