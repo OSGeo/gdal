@@ -40,7 +40,7 @@ gdal_driver_names = [driver_name for driver_name in all_driver_names
                      if gdal.GetDriverByName(driver_name).GetMetadataItem('DCAP_RASTER') == 'YES']
 
 
-schema_openoptionslist = etree.XML("""
+schema_openoptionslist = etree.XML(r"""
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <xs:element name="Value">
     <xs:complexType>
@@ -57,7 +57,13 @@ schema_openoptionslist = etree.XML("""
       <xs:sequence>
         <xs:element ref="Value" maxOccurs="unbounded" minOccurs="0"/>
       </xs:sequence>
-      <xs:attribute type="xs:string" name="name" use="required"/>
+      <xs:attribute name="name" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[^\s]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
       <xs:attribute type="xs:string" name="type" use="optional"/>
       <xs:attribute type="xs:string" name="description" use="optional"/>
       <xs:attribute type="xs:string" name="default" use="optional"/>
@@ -82,7 +88,7 @@ schema_openoptionslist = etree.XML("""
 </xs:schema>
 """)
 
-schema_creationoptionslist_xml = etree.XML("""
+schema_creationoptionslist_xml = etree.XML(r"""
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <xs:element name="Value">
     <xs:complexType>
@@ -99,7 +105,13 @@ schema_creationoptionslist_xml = etree.XML("""
       <xs:sequence>
         <xs:element ref="Value" maxOccurs="unbounded" minOccurs="0"/>
       </xs:sequence>
-      <xs:attribute type="xs:string" name="name" use="required"/>
+      <xs:attribute name="name" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[^\s]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
       <xs:attribute type="xs:string" name="type" use="optional"/>
       <xs:attribute type="xs:string" name="description" use="optional"/>
       <xs:attribute type="xs:string" name="default" use="optional"/>
@@ -124,8 +136,7 @@ schema_creationoptionslist_xml = etree.XML("""
 </xs:schema>
 """)
 
-
-schema_layer_creationoptionslist_xml = etree.XML("""
+schema_layer_creationoptionslist_xml = etree.XML(r"""
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <xs:element name="Value">
     <xs:complexType>
@@ -142,7 +153,13 @@ schema_layer_creationoptionslist_xml = etree.XML("""
       <xs:sequence>
         <xs:element ref="Value" maxOccurs="unbounded" minOccurs="0"/>
       </xs:sequence>
-      <xs:attribute type="xs:string" name="name" use="required"/>
+      <xs:attribute name="name" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[^\s]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
       <xs:attribute type="xs:string" name="type" use="optional"/>
       <xs:attribute type="xs:string" name="description" use="optional"/>
       <xs:attribute type="xs:string" name="default" use="optional"/>
@@ -166,7 +183,6 @@ schema_layer_creationoptionslist_xml = etree.XML("""
   </xs:element>
 </xs:schema>
 """)
-
 
 @pytest.mark.parametrize('driver_name', all_driver_names)
 def test_metadata_openoptionlist(driver_name):
