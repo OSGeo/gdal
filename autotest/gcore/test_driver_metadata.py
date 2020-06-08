@@ -495,13 +495,13 @@ def test_metadata_multidim_group_creationoptionslist(driver_name):
 
 @pytest.mark.parametrize('driver_name', all_driver_names)
 def test_metadata_creation_field_datatypes(driver_name):
-    """ Test if GDAL_DMD_CREATIONFIELDDATATYPES metadataitem returns valid datatypes """
+    """ Test if DMD_CREATIONFIELDDATATYPES metadataitem returns valid datatypes """
 
     valid_datatypes = {'Integer', 'Integer64', 'Real', 'String', 'Date', 'DateTime', 'Time', 'IntegerList',
                        'Integer64List', 'RealList', 'StringList', 'Binary'}
 
     driver = gdal.GetDriverByName(driver_name)
-    datatypes_str = driver.GetMetadataItem('GDAL_DMD_CREATIONFIELDDATATYPES')
+    datatypes_str = driver.GetMetadataItem('DMD_CREATIONFIELDDATATYPES')
     if datatypes_str is not None:
         for datatype in datatypes_str.split(' '):
             assert datatype in valid_datatypes
@@ -509,7 +509,7 @@ def test_metadata_creation_field_datatypes(driver_name):
 
 @pytest.mark.parametrize('driver_name', all_driver_names)
 def test_metadata_creation_sub_field_datatypes(driver_name):
-    """ Test if GDAL_DMD_CREATIONFIELDDATATYPES metadataitem returns valid datatypes """
+    """ Test if DMD_CREATIONFIELDDATATYPES metadataitem returns valid datatypes """
 
     valid_datatypes = {'Boolean', 'Float32', 'Int16'}
 
