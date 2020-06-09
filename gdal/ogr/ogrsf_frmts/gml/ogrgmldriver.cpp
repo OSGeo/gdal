@@ -208,7 +208,7 @@ void RegisterOGRGML()
 "    <Value>OGC_URN</Value>"
 "    <Value>OGC_URL</Value>"
 "  </Option>"
-"  <Option name='WRITE_FEATURE_BOUNDED_BY' type='boolean' description='Whether to write <gml:boundedBy> element for each feature with GML3* versions' default='YES'/>"
+"  <Option name='WRITE_FEATURE_BOUNDED_BY' type='boolean' description='Whether to write &lt;gml:boundedBy&gt; element for each feature with GML3* versions' default='YES'/>"
 "  <Option name='SPACE_INDENTATION' type='boolean' description='Whether to indent the output for readability' default='YES'/>"
 "  <Option name='SRSDIMENSION_LOC' type='string-select' description='(only valid for FORMAT=GML3xx) Location where to put srsDimension attribute' default='POSLIST'>"
 "    <Value>POSLIST</Value>"

@@ -92,7 +92,7 @@ static const char* const szOpenOptionList =
 #elif defined(HAVE_PODOFO)
   "default='PODOFO'"
 #endif  // ~ default PDF_LIB
-  "alt_config_option='GDAL_PDF_LIB'>"
+  " alt_config_option='GDAL_PDF_LIB'>"
 #if defined(HAVE_POPPLER)
 "     <Value>POPPLER</Value>\n"
 #endif  // HAVE_POPPLER
@@ -1685,7 +1685,7 @@ void myRenderPageImpl(PDFDataset* poDS,
 }
 
 static
-void myRenderPageWithContext(PDFDataset* poDS, 
+void myRenderPageWithContext(PDFDataset* poDS,
                              CPDF_PageRenderContext* pContext,
                            FPDF_PAGE page,
                            int start_x,
