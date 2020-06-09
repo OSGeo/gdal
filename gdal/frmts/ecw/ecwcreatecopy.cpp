@@ -118,7 +118,7 @@ public:
     std::shared_ptr<VSIIOStream> m_OStream;
     int m_nPercentComplete;
 
-    int m_bCanceled;
+    int m_bCancelled;
 
     GDALProgressFunc  pfnProgress;
     void             *pProgressData;
@@ -147,7 +147,7 @@ GDALECWCompressor::GDALECWCompressor() :
 {
     m_poSrcDS = nullptr;
     m_nPercentComplete = -1;
-    m_bCanceled = FALSE;
+    m_bCancelled = FALSE;
     pfnProgress = GDALDummyProgress;
     pProgressData = nullptr;
     papoJP2UserBox = nullptr;
@@ -246,7 +246,7 @@ void GDALECWCompressor::WriteStatus(IEEE4 fPercentComplete, const NCS::CString &
     std::string sStatusUTF8;
     sStatusText.utf8_str(sStatusUTF8);
 
-    m_bCanceled = !pfnProgress(
+    m_bCancelled = !pfnProgress(
                     fPercentComplete/100.0,
                     sStatusUTF8.c_str(),
                     pProgressData );
@@ -256,7 +256,7 @@ void GDALECWCompressor::WriteStatus(IEEE4 fPercentComplete, const NCS::CString &
 void GDALECWCompressor::WriteStatus( UINT32 nCurrentLine )
 
 {
-    m_bCanceled =
+    m_bCancelled =
         !pfnProgress( nCurrentLine / (float) sFileInfo.nSizeY,
                       nullptr, pProgressData );
 }
@@ -268,7 +268,7 @@ void GDALECWCompressor::WriteStatus( UINT32 nCurrentLine )
 bool GDALECWCompressor::WriteCancel()
 
 {
-    return (bool) m_bCanceled;
+    return (bool) m_bCancelled;
 }
 
 /************************************************************************/
