@@ -9,7 +9,6 @@ DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			geoconcept xplane georss gtm dxf pgdump gpsbabel \
 			sua openair pds htf aeronavfaa edigeo svg idrisi arcgen \
 			segukooa segy sxf openfilegdb wasp selafin jml vdv mvt flatgeobuf mapml \
-			lvbag \
 			$(ARCOBJECTS_DIR) \
 			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
 			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
