@@ -112,7 +112,7 @@ void RegisterOGRCloudant()
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
     "<LayerCreationOptionList>"
     "  <Option name='UPDATE_PERMISSIONS' type='string' description='Update permissions for the new layer.'/>"
-    "  <Option name='GEOJSON ' type='boolean' description='Whether to write documents as GeoJSON documents.' default='YES'/>"
+    "  <Option name='GEOJSON' type='boolean' description='Whether to write documents as GeoJSON documents.' default='YES'/>"
     "  <Option name='COORDINATE_PRECISION' type='int' description='Maximum number of figures after decimal separator to write in coordinates.' default='15'/>"
     "</LayerCreationOptionList>");
 
