@@ -143,7 +143,7 @@ private:
 /************************************************************************/
 
 GDALECWCompressor::GDALECWCompressor() :
-    eWorkDT(GDT_Unknown), m_OStream(std::make_shared<VSIIOStream>())
+    m_OStream(std::make_shared<VSIIOStream>()), eWorkDT(GDT_Unknown)
 {
     m_poSrcDS = nullptr;
     m_nPercentComplete = -1;
