@@ -52,4 +52,4 @@ PYTESTARGS="$PYTESTARGS --ignore gdrivers/test_validate_jp2.py"
 
 # Run all the Python autotests
 
-$PYTEST $PYTESTARGS
+GDAL_SKIP="JP2ECW ECW" $PYTEST $PYTESTARGS
