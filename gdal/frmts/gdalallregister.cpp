@@ -105,6 +105,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_ELAS();
 #endif
 
+#ifdef FRMT_esric
+    GDALRegister_ESRIC();
+#endif
+
 #ifdef FRMT_aigrid
 //    GDALRegister_AIGrid2();
     GDALRegister_AIGrid();
