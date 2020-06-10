@@ -1333,6 +1333,16 @@ def test_warp_weighted_average():
     assert maxdiff <= 1, 'Image too different from reference'
 
 ###############################################################################
+# test weighted average, with src offset (fix for #2665)
+
+
+def test_warp_weighted_average_with_srcoffset():
+
+    ds = gdal.Open('data/3by3_average_with_srcoffset.vrt')
+    val = struct.unpack('d', ds.ReadRaster(0, 0, 1, 1))[0]
+    assert val == pytest.approx(8.5, abs=1e-5)
+
+###############################################################################
 # test sum
 
 
