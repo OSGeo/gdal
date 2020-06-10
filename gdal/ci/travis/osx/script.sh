@@ -6,7 +6,7 @@ export PYTHONPATH=$PWD/gdal/swig/python/build/lib.macosx-10.13-x86_64-2.7:$PWD/g
 export PYTEST="pytest -vv -p no:sugar --color=no"
 
 echo 'Running CPP unit tests'
-(cd autotest/cpp && GDAL_SKIP=JP2ECW make quick_test)
+(cd autotest/cpp && make quick_test)
 
 echo 'Running Python unit tests'
 # install test dependencies
