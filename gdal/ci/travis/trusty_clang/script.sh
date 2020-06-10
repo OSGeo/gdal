@@ -23,7 +23,7 @@ cd ../..
 # CPP unit tests
 cd ../autotest
 cd cpp
-GDAL_SKIP=JP2ECW make quick_test
+make quick_test
 # Compile and test vsipreload
 make vsipreload.so
 LD_PRELOAD=./vsipreload.so gdalinfo /vsicurl/http://download.osgeo.org/gdal/data/ecw/spif83.ecw
@@ -48,4 +48,4 @@ PYTESTARGS="--ignore ogr/ogr_fgdb.py"
 PYTESTARGS="$PYTESTARGS --ignore ogr/ogr_pgeo.py"
 
 # Run all the Python autotests
-GDAL_SKIP="JP2ECW ECW" $PYTEST $PYTESTARGS
+$PYTEST $PYTESTARGS
