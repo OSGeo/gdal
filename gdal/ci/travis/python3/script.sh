@@ -19,7 +19,7 @@ cd ../..
 # CPP unit tests
 cd ../autotest
 cd cpp
-GDAL_SKIP=JP2ECW make quick_test
+make quick_test
 # Compile and test vsipreload
 make vsipreload.so
 LD_PRELOAD=./vsipreload.so gdalinfo /vsicurl/http://download.osgeo.org/gdal/data/ecw/spif83.ecw
