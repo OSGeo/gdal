@@ -344,7 +344,11 @@ typedef unsigned int  GUIntptr_t;
 
 #ifndef CPL_DLL
 #if defined(_MSC_VER) && !defined(CPL_DISABLE_DLL)
-#  define CPL_DLL     __declspec(dllexport)
+#  ifdef GDAL_COMPILATION
+#    define CPL_DLL __declspec(dllexport)
+#  else
+#    define CPL_DLL
+#  endif
 #  define CPL_INTERNAL
 #else
 #  if defined(USE_GCC_VISIBILITY_FLAG)
