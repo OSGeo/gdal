@@ -356,7 +356,7 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pData) {
         fname = CPLString().Printf("%s/L%02d/R%04xC%04x.bundle", parent->dname.c_str(), lxx, by, bx);
         Bundle& bundle = parent->GetBundle(fname);
         if (nullptr == bundle.fh) { // This is not an error in general, bundles can be missing
-            CPLDebug("Can't open bundle %s", fname.c_str());
+            CPLDebug("ESRIC", "Can't open bundle %s", fname.c_str());
             return MissingTile(nBlockXOff, nBlockYOff, pData);
         }
         int block = static_cast<int>((nBlockYOff % BSZ) * BSZ + (nBlockXOff % BSZ));
