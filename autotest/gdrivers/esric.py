@@ -104,7 +104,7 @@ def test_esric_4():
 ###############################################################################
 # Check that the read of PNG tiles returns the right checksum
 
-def test_esric_4():
+def test_esric_5():
 
     if gdaltest.esric_ds is None:
         pytest.skip()
