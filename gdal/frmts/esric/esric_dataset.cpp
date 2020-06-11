@@ -159,7 +159,7 @@ ECDataset::ECDataset() : isV2(true), BSZ(128), TSZ(256)
 }
 
 CPLErr ECDataset::Initialize(CPLXMLNode* CacheInfo) {
-    CPLErr fine = CE_None;
+    CPLErr error = CE_None;
     try {
         CPLXMLNode* CSI = CPLGetXMLNode(CacheInfo, "CacheStorageInfo");
         CPLXMLNode* TCI = CPLGetXMLNode(CacheInfo, "TileCacheInfo");
@@ -233,10 +233,10 @@ CPLErr ECDataset::Initialize(CPLXMLNode* CacheInfo) {
         bundles.resize(4);
     }
     catch (CPLString& err) {
-        fine = CE_Failure;
-        CPLError(fine, CPLE_OpenFailed, "%s", err.c_str());
+        error = CE_Failure;
+        CPLError(error, CPLE_OpenFailed, "%s", err.c_str());
     }
-    return fine;
+    return error;
 }
 
 GDALDataset* ECDataset::Open(GDALOpenInfo* poOpenInfo)
