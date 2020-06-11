@@ -1,7 +1,31 @@
+//-------------------------------------------------------------------------------
+// Name: esric_dataset.cpp
+// Purpose : gdal driver for reading Esri compact cache as raseter
+//           based on public documentation available at
+//           https://github.com/Esri/raster-tiles-compactcache
+//
+// Author : Lucian Plesea
+//
+// Udate : 06 / 10 / 2020
+//
+//  Copyright 2020 Esri
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissionsand
+//  limitations under the License. ?
+//
+//-------------------------------------------------------------------------------
+
 #include <gdal_priv.h>
 #include <vector>
 #include <algorithm>
-#include <cstdlib> // for rand()
 
 using namespace std;
 
@@ -52,13 +76,17 @@ struct Bundle {
             VSIFCloseL(fh);
             fh = nullptr;
         }
+
+#if !defined(CPL_IS_LSB)
         for (auto& v : index)
             CPL_LSBPTR64(&v);
         return;
+#endif
+
     }
     std::vector<GUInt64> index;
     VSILFILE* fh;
-    int isV2;
+    bool isV2;
     CPLString name;
     const size_t BSZ = 128;
 };
@@ -151,18 +179,19 @@ CPLErr ECDataset::Initialize(CPLXMLNode* CacheInfo) {
         double res = 0;
         while (LODInfo) {
             res = CPLAtof(CPLGetXMLValue(LODInfo, "Resolution", "0"));
-            if (0 == res)
+            if (!(res > 0))
                 throw CPLString("Can't parse resolution for LOD");
             resolutions.push_back(res);
             LODInfo = LODInfo->psNext;
         }
         sort(resolutions.begin(), resolutions.end());
-        if (0 == resolutions.size())
+        if (resolutions.empty())
             throw CPLString("Can't parse LODInfos");
 
         CPLString RawProj(CPLGetXMLValue(TCI, "SpatialReference.WKT", "EPSG:4326"));
         if (OGRERR_NONE != oSRS.SetFromUserInput(RawProj.c_str()))
             throw CPLString("Invalid Spatial Reference");
+        oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
         // resolution is the smallest figure
         res = resolutions[0];
@@ -185,7 +214,7 @@ CPLErr ECDataset::Initialize(CPLXMLNode* CacheInfo) {
 
         double dxsz = (maxx - gt[0]) / res;
         double dysz = (gt[3] - miny) / res;
-        if (dxsz > INT32_MAX || dysz > INT32_MAX)
+        if (dxsz < 1 || dxsz > INT32_MAX || dysz < 1 || dysz > INT32_MAX)
             throw CPLString("Too many levels, resulting raster size exceeds the GDAL limit");
 
         nRasterXSize = int(dxsz);
@@ -198,8 +227,6 @@ CPLErr ECDataset::Initialize(CPLXMLNode* CacheInfo) {
         nBands = EQUAL(compression, "JPEG") ? 3 : 4;
         for (int i = 1; i <= nBands; i++) {
             ECBand* band = new ECBand(this, i);
-            if (!band)
-                throw CPLString("Error initializing bands");
             SetBand(i, band);
         }
         // Keep 4 bundle files open
@@ -223,14 +250,14 @@ GDALDataset* ECDataset::Open(GDALOpenInfo* poOpenInfo)
     CPLXMLNode* CacheInfo = CPLGetXMLNode(config, "=CacheInfo");
     if (!CacheInfo) {
         CPLError(CE_Warning, CPLE_OpenFailed, "Error parsing configuration, can't find CacheInfo element");
-        CPLFree(config);
+        CPLDestroyXMLNode(config);
         return nullptr;
     }
     auto ds = new ECDataset();
     ds->dname.Printf("%s/_alllayers", CPLGetDirname(poOpenInfo->pszFilename));
-    CPLErr fine = ds->Initialize(CacheInfo);
-    CPLFree(config);
-    if (CE_None != fine) {
+    CPLErr error = ds->Initialize(CacheInfo);
+    CPLDestroyXMLNode(config);
+    if (CE_None != error) {
         delete ds;
         ds = nullptr;
     }
@@ -266,8 +293,8 @@ ECBand::~ECBand() {
 }
 
 ECBand::ECBand(ECDataset* parent, int b, int level) : lvl(level), ci(GCI_Undefined) {
-    static GDALColorInterp rgba[4] = { GCI_RedBand, GCI_GreenBand, GCI_BlueBand, GCI_AlphaBand };
-    static GDALColorInterp la[2] = { GCI_GrayIndex, GCI_AlphaBand };
+    static const GDALColorInterp rgba[4] = { GCI_RedBand, GCI_GreenBand, GCI_BlueBand, GCI_AlphaBand };
+    static const GDALColorInterp la[2] = { GCI_GrayIndex, GCI_AlphaBand };
     poDS = parent;
     nBand = b;
 
@@ -329,7 +356,7 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pData) {
         fname = CPLString().Printf("%s/L%02d/R%04xC%04x.bundle", parent->dname.c_str(), lxx, by, bx);
         Bundle& bundle = parent->GetBundle(fname);
         if (nullptr == bundle.fh) { // This is not an error in general, bundles can be missing
-            CPLError(CE_Debug, CPLE_FileIO, "Can't open bundle %s", fname.c_str());
+            CPLDebug("Can't open bundle %s", fname.c_str());
             return MissingTile(nBlockXOff, nBlockYOff, pData);
         }
         int block = static_cast<int>((nBlockYOff % BSZ) * BSZ + (nBlockXOff % BSZ));
@@ -346,7 +373,7 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pData) {
         }
         CPLString magic;
         // Should use some sort of unique
-        magic.Printf("/vsimem/esric_%u.tmp", rand());
+        magic.Printf("/vsimem/esric_%p.tmp", this);
         auto mfh = VSIFileFromMemBuffer(magic.c_str(), fbuffer.data(), size, false);
         VSIFCloseL(mfh);
         // Can't open a raster by handle?
@@ -410,7 +437,9 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pData) {
 // Without full XML parsing, weak, might still fail
 static int Identify(GDALOpenInfo* poOpenInfo) {
     if (poOpenInfo->eAccess != GA_ReadOnly
+#if !defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
         || !ENDS_WITH_CI(poOpenInfo->pszFilename, "conf.xml")
+#endif
         || poOpenInfo->nHeaderBytes < 512
         )
         return false;
