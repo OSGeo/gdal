@@ -62,6 +62,7 @@ Raster drivers
    envi
    epsilon
    esat
+   esric
    ers
    exr
    fast

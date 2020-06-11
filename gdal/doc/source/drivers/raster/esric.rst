@@ -6,6 +6,8 @@ ESRIC -- Esri Compact Cache
 
 .. shortname:: ESRIC
 
+.. built_in_by_default::
+
 Read Esri Compact Cache V2 as a single raster
 
 Driver capabilities
