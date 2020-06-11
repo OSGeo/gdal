@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Purpose : gdal driver for reading Esri compact cache as raseter
+* Purpose : gdal driver for reading Esri compact cache as raster
 *           based on public documentation available at
 *           https://github.com/Esri/raster-tiles-compactcache
 *

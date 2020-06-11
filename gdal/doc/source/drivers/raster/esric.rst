@@ -63,7 +63,7 @@ ________________________
    if the source is grayscale.
 
 -  Only caches with 128 by 128 tiles in a bundle file are supported.
-   This value, te linear number of tiles in a bundle is the value
+   This value, the linear number of tiles in a bundle, is
    contained in the **CacheInfo.CacheStorageInfo.PacketSize**
    element.
 
@@ -72,7 +72,7 @@ ________________________
    field is not present, the default value of EPSG:4326 is assumed.
 
 -  As defined in the standard conf.xml file, the cache tile grid
-   has an origin, stored in the
+   has an origin location, stored in the
    **CacheInfo.TileCacheInfo.TileOrigin** element, which has X
    and Y components. The cache size is not explicilty defined.
    The ESRIC format driver will assume a symetric area around the
@@ -89,17 +89,18 @@ ________________________
    small region of the globe.
 
 -  A bundled cache has multiple resolution levels, encoded in a
-   series of **CacheInfo.TileCacheInfo.LODInfos.LODInfo** elements.
+   series of **CacheInfo.TileCacheInfo.LODInfos.LODInfo** nodes.
    The **LODInfo** XML nodes are identified by the **LevelID**
-   value, which should be successive, starting with 0 for the level
+   value, which have to be successive, starting with 0 for the level
    with the largest value for the **Resolution** and increasing
    towards the **LODInfo** node with smallest **Resolution** value.
-   The **Resolution** values are in spatial reference units per pixel.
-   This convention is similar to other Level, Row and Column tile
+   The level convention is similar to other Level, Row and Column tile
    addressing schemes used in WMTS for example. While common, it is
    not a requirement to have the resolutions of two successive
    levels differ by a factor of two. Each cache level will be read
    as an overview, at the appropriate resolution.
+   The resolution values are in spatial reference distance
+   units per pixel.
 
 -  Many caches are built level by level from different sources,
    similar to many web map tile protocols supported by the GDAL WMS
@@ -107,14 +108,15 @@ ________________________
    from a different source than an adjacent one, or content for a
    specific level can be missing altogether. This driver will return
    opaque black when reading areas which do not have tiles in the
-   cache.
+   cache at a given resolution level, even if data does exist at
+   other levels at the same location.
 
--  A cache might be very large, exceeding the maximum size supported
-   by GDAL, which is INT32_MAX, in either dimension. This driver
-   will generate an error when opening such caches. Removing the
+-  A cache can exceede the maximum size supported by GDAL, which
+   is INT32_MAX, in either dimension. This driver will generate
+   an error when opening such caches. Removing the
    **LODInfo** nodes with the highest **LevelID** from the conf.xml
-   file until the raster size drops below INT32_MAX will allow
-   reading the cache, ignoring the high resolution levels.
+   file until the raster size drops below INT32_MAX is a possible
+   workaround, but the highest resolution levels will not be read.
 
 See Also
 --------
