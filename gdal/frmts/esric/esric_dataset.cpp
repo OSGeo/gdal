@@ -460,7 +460,7 @@ void CPL_DLL GDALRegister_ESRIC() {
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "NO");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Esri Bundled Cache");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Esri Compact Cache");
 
     poDriver->pfnIdentify = Identify;
     poDriver->pfnOpen = ESRIC::ECDataset::Open;
