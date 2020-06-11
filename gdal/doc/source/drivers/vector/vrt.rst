@@ -328,15 +328,13 @@ layer as a point layer, and as being in the WGS84 coordinate system.
 .. code-block:: XML
 
    <OGRVRTDataSource>
-
        <OGRVRTLayer name="worms">
            <SrcDataSource>ODBC:DISEASE,worms</SrcDataSource>
-       <SrcLayer>worms</SrcLayer>
-       <GeometryType>wkbPoint</GeometryType>
+           <SrcLayer>worms</SrcLayer>
+           <GeometryType>wkbPoint</GeometryType>
            <LayerSRS>WGS84</LayerSRS>
-       <GeometryField encoding="PointFromColumns" x="x" y="y"/>
+           <GeometryField encoding="PointFromColumns" x="x" y="y"/>
        </OGRVRTLayer>
-
    </OGRVRTDataSource>
 
 Example: Renaming attributes
