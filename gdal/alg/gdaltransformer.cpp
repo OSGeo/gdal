@@ -2991,17 +2991,23 @@ GDALSerializeReprojectionTransformer( void *pTransformArg )
     char *pszWKT = nullptr;
 
     auto poSRS = psInfo->poForwardTransform->GetSourceCS();
-    poSRS->exportToWkt( &pszWKT );
-    CPLCreateXMLElementAndValue( psTree, "SourceSRS", pszWKT );
-    CPLFree( pszWKT );
+    if( poSRS )
+    {
+        poSRS->exportToWkt( &pszWKT );
+        CPLCreateXMLElementAndValue( psTree, "SourceSRS", pszWKT );
+        CPLFree( pszWKT );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Handle DestinationCS.                                           */
 /* -------------------------------------------------------------------- */
     poSRS = psInfo->poForwardTransform->GetTargetCS();
-    poSRS->exportToWkt( &pszWKT );
-    CPLCreateXMLElementAndValue( psTree, "TargetSRS", pszWKT );
-    CPLFree( pszWKT );
+    if( poSRS )
+    {
+        poSRS->exportToWkt( &pszWKT );
+        CPLCreateXMLElementAndValue( psTree, "TargetSRS", pszWKT );
+        CPLFree( pszWKT );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Serialize options.                                              */
@@ -3073,19 +3079,10 @@ GDALDeserializeReprojectionTransformer( CPLXMLNode *psTree )
         }
     }
 
-    if( !oSrcSRS.IsEmpty() && !oDstSRS.IsEmpty() )
-    {
-        pResult = GDALCreateReprojectionTransformerEx(
-            OGRSpatialReference::ToHandle(&oSrcSRS),
-            OGRSpatialReference::ToHandle(&oDstSRS),
-            aosList.List());
-    }
-    else
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "ReprojectionTransformer definition missing either "
-                 "SourceSRS or TargetSRS definition.");
-    }
+    pResult = GDALCreateReprojectionTransformerEx(
+        !oSrcSRS.IsEmpty() ? OGRSpatialReference::ToHandle(&oSrcSRS) : nullptr,
+        !oDstSRS.IsEmpty() ? OGRSpatialReference::ToHandle(&oDstSRS) : nullptr,
+        aosList.List());
 
     CPLFree( pszSourceWKT );
     CPLFree( pszTargetWKT );
