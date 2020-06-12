@@ -35,35 +35,21 @@ import pytest
 
 
 ###############################################################################
-# Verify we have the driver.
+# Open the dataset
 
 def test_esric_1():
 
-    gdaltest.esric_drv = gdal.GetDriverByName('ESRIC')
-    if gdaltest.esric_drv is None:
-        pytest.skip()
-
-
-###############################################################################
-# Open the dataset
-
-def test_esric_2():
-
-    if gdaltest.esric_drv is None:
-        pytest.skip()
+    pytestmark = pytest.mark.require_driver('ESRIC')
 
     fname="data/esric/Layers/conf.xml"
     gdaltest.esric_ds = gdal.Open(fname)
-    if gdaltest.esric_ds is not None:
-        return
-
-    pytest.fail("open failed")
+    assert gdaltest.esric_ds is not None, "open failed"
 
 
 ###############################################################################
 # Check that the configuration was read as expected
 
-def test_esric_3():
+def test_esric_2():
 
     if gdaltest.esric_ds is None:
         pytest.skip()
@@ -90,7 +76,7 @@ def test_esric_3():
 ###############################################################################
 # Check that the read a missing level generates black
 
-def test_esric_4():
+def test_esric_3():
 
     if gdaltest.esric_ds is None:
         pytest.skip()
@@ -104,7 +90,7 @@ def test_esric_4():
 ###############################################################################
 # Check that the read of PNG tiles returns the right checksum
 
-def test_esric_5():
+def test_esric_4():
 
     if gdaltest.esric_ds is None:
         pytest.skip()
