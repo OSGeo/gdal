@@ -407,17 +407,21 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pData) {
     for (int iBand = 1; iBand <= parent->nBands; iBand++)
     {
         auto band = parent->GetRasterBand(iBand);
-        void* ob = pData;
         if (lvl)
             band = band->GetOverview(lvl - 1);
         GDALRasterBlock* poBlock = nullptr;
         if (band != this) {
             poBlock = band->GetLockedBlockRef(nBlockXOff, nBlockYOff, 1);
-            ob = poBlock->GetDataRef();
+            if (poBlock != nullptr) {
+                GDALCopyWords(buffer.data() + iBand - 1, GDT_Byte, parent->nBands,
+                    poBlock->GetDataRef(), GDT_Byte, 1, TSZ * TSZ);
+                poBlock->DropLock();
+            }
         }
-        GDALCopyWords(buffer.data() + iBand - 1, GDT_Byte, parent->nBands, ob, GDT_Byte, 1, TSZ * TSZ);
-        if (poBlock != nullptr)
-            poBlock->DropLock();
+        else {
+            GDALCopyWords(buffer.data() + iBand - 1, GDT_Byte, parent->nBands,
+                pData, GDT_Byte, 1, TSZ * TSZ);
+        }
     }
 
     return CE_None;
