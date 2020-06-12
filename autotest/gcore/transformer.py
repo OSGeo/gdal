@@ -756,3 +756,15 @@ def test_transformer_tps_precision():
     assert success, 'at least one point could not be transformed'
     assert maxDiffResult < 1e-3, 'at least one transformation exceeds the error bound'
 
+
+###############################################################################
+def test_transformer_image_no_srs():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    ds.SetGeoTransform([0, 10, 0, 0, 0, -10])
+    tr = gdal.Transformer(ds, None, ['COORDINATE_OPERATION=+proj=unitconvert +xy_in=1 +xy_out=2'])
+    assert tr
+    (success, pnt) = tr.TransformPoint(0, 10, 20, 0)
+    assert success
+    assert pnt[0] == pytest.approx(50), pnt
+    assert pnt[1] == pytest.approx(-100), pnt

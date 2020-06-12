@@ -729,7 +729,12 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
     if( poSourceIn == nullptr || poTargetIn == nullptr )
     {
         if( options.d->osCoordOperation.empty() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "OGRProjCT::Initialize(): if source and/or target CRS "
+                     "are null, a coordinate operation must be specified");
             return FALSE;
+        }
     }
 
     if( poSourceIn )
