@@ -86,7 +86,7 @@ struct Bundle {
             fh = nullptr;
         }
 
-#if !defined(CPL_IS_LSB)
+#if !CPL_IS_LSB
         for (auto& v : index)
             CPL_LSBPTR64(&v);
         return;
