@@ -3,7 +3,7 @@ GDAL_ROOT = ..\..
 
 OBJ = esric_dataset.obj
 
-PLUGIN_DLL = gdal_esric.dll
+PLUGIN_DLL = gdal_ESRIC.dll
 
 default: $(OBJ)
 	xcopy /D /Y *.obj ..\o
@@ -15,6 +15,7 @@ clean:
 	-del *.lib
 	-del *.manifest
 	-del *.pdb
+	-del *.ilk
 
 plugin: $(PLUGIN_DLL)
 

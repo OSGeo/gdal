@@ -38,10 +38,6 @@ using namespace std;
 
 CPL_C_START
 void CPL_DLL GDALRegister_ESRIC();
-//void CPL_DLL GDALRegisterMe()
-//{
-//    return GDALRegister_ESRIC();
-//}
 CPL_C_END
 
 static int Identify(GDALOpenInfo* poOpenInfo);
@@ -152,7 +148,6 @@ public:
     }
 protected:
 private:
-    CPLErr MissingTile(int nBlockXOff, int nBlockYOff, void* buffer);
     int lvl;
     GDALColorInterp ci;
 
@@ -328,116 +323,103 @@ void ECBand::AddOverviews() {
     }
 }
 
-CPLErr ECBand::MissingTile(int nBlockXOff, int nBlockYOff, void* pData) {
-    auto parent = reinterpret_cast<ECDataset*>(poDS);
-    auto& buffer = parent->tilebuffer;
-    size_t TSZ = parent->TSZ;
-    if (1 == nBand) {
-        buffer.resize(TSZ * TSZ * parent->nBands);
-        fill(buffer.begin(), buffer.end(), static_cast<GByte>(0));
-        for (int iBand = 2; iBand <= parent->nBands; iBand++) {
-            auto band = parent->GetRasterBand(iBand);
-            if (lvl)
-                band = band->GetOverview(lvl - 1);
-            GDALRasterBlock* const poBlock = band->GetLockedBlockRef(nBlockXOff, nBlockYOff);
-            if (poBlock != nullptr)
-                poBlock->DropLock();
-        }
-    }
-    memset(pData, 0, TSZ * TSZ);
-    return CE_None;
-}
-
 CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pData) {
     auto parent = reinterpret_cast<ECDataset*>(poDS);
     auto& buffer = parent->tilebuffer;
-    auto const TSZ = parent->TSZ;
-    auto const BSZ = parent->BSZ;
+    auto TSZ = parent->TSZ;
+    auto BSZ = parent->BSZ;
+    size_t nBytes = size_t(TSZ) * TSZ;
 
-    if (1 == nBand) {
-        buffer.resize(size_t(TSZ) * TSZ * parent->nBands);
+    buffer.resize(nBytes * parent->nBands);
 
-        int lxx = static_cast<int>(parent->resolutions.size() - lvl - 1);
-        int bx, by;
-        bx = (nBlockXOff / BSZ) * BSZ;
-        by = (nBlockXOff / BSZ) * BSZ;
-        CPLString fname;
-        fname = CPLString().Printf("%s/L%02d/R%04xC%04x.bundle", parent->dname.c_str(), lxx, by, bx);
-        Bundle& bundle = parent->GetBundle(fname);
-        if (nullptr == bundle.fh) { // This is not an error in general, bundles can be missing
-            CPLDebug("ESRIC", "Can't open bundle %s", fname.c_str());
-            return MissingTile(nBlockXOff, nBlockYOff, pData);
-        }
-        int block = static_cast<int>((nBlockYOff % BSZ) * BSZ + (nBlockXOff % BSZ));
-        GUInt64 offset = bundle.index[block] & 0xffffffffffull;
-        GUInt64 size = bundle.index[block] >> 40;
-        if (0 == size)
-            return MissingTile(nBlockXOff, nBlockYOff, pData);
-        auto& fbuffer = parent->filebuffer;
-        fbuffer.resize(size_t(size));
-        VSIFSeekL(bundle.fh, offset, SEEK_SET);
-        if (size != VSIFReadL(fbuffer.data(), size_t(1), size_t(size), bundle.fh)) {
-            CPLError(CE_Failure, CPLE_FileIO,
-                "Error reading tile, reading " CPL_FRMT_GUIB " at " CPL_FRMT_GUIB,
-                GUInt64(size), GUInt64(offset));
-            return CE_Failure;
-        }
-        CPLString magic;
-        // Should use some sort of unique
-        magic.Printf("/vsimem/esric_%p.tmp", this);
-        auto mfh = VSIFileFromMemBuffer(magic.c_str(), fbuffer.data(), size, false);
-        VSIFCloseL(mfh);
-        // Can't open a raster by handle?
-        auto inds = GDALOpen(magic.c_str(), GA_ReadOnly);
-        if (!inds) {
-            VSIUnlink(magic.c_str());
-            CPLError(CE_Failure, CPLE_FileIO, "Error opening tile");
-            return CE_Failure;
-        }
-        // Duplicate first band if not sufficient bands are provided
-        auto inbands = GDALGetRasterCount(inds);
-        int ubands[4] = { 1, 1, 1, 1 };
-        int* usebands = nullptr;
-        int bandcount = parent->nBands;
-        if (inbands != bandcount) {
-            // Opaque if output expects alpha channel
-            if (0 == bandcount % 2) {
-                fill(buffer.begin(), buffer.end(), GByte(255));
-                bandcount--;
-            }
-            if (3 == inbands) {
-                // Lacking opacity, copy the first three bands
-                usebands = ubands;
-                ubands[1] = 2;
-                ubands[2] = 3;
-            }
-            else if (1 == inbands) {
-                // Grayscale, expecting color
-                usebands = ubands;
-            }
-        }
-
-        auto errcode =
-            GDALDatasetRasterIO(inds, GF_Read, 0, 0, TSZ, TSZ, buffer.data(), TSZ, TSZ, GDT_Byte,
-                bandcount, usebands, parent->nBands, parent->nBands * TSZ, 1);
-        GDALClose(inds);
+    int lxx = static_cast<int>(parent->resolutions.size() - lvl - 1);
+    int bx, by;
+    bx = (nBlockXOff / BSZ) * BSZ;
+    by = (nBlockXOff / BSZ) * BSZ;
+    CPLString fname;
+    fname = CPLString().Printf("%s/L%02d/R%04xC%04x.bundle", parent->dname.c_str(), lxx, by, bx);
+    Bundle& bundle = parent->GetBundle(fname);
+    if (nullptr == bundle.fh) { // This is not an error in general, bundles can be missing
+        CPLDebug("ESRIC", "Can't open bundle %s", fname.c_str());
+        memset(pData, 0, nBytes);
+        return CE_None;
+    }
+    int block = static_cast<int>((nBlockYOff % BSZ) * BSZ + (nBlockXOff % BSZ));
+    GUInt64 offset = bundle.index[block] & 0xffffffffffull;
+    GUInt64 size = bundle.index[block] >> 40;
+    if (0 == size) {
+        memset(pData, 0, nBytes);
+        return CE_None;
+    }
+    auto& fbuffer = parent->filebuffer;
+    fbuffer.resize(size_t(size));
+    VSIFSeekL(bundle.fh, offset, SEEK_SET);
+    if (size != VSIFReadL(fbuffer.data(), size_t(1), size_t(size), bundle.fh)) {
+        CPLError(CE_Failure, CPLE_FileIO,
+            "Error reading tile, reading " CPL_FRMT_GUIB " at " CPL_FRMT_GUIB,
+            GUInt64(size), GUInt64(offset));
+        return CE_Failure;
+    }
+    CPLString magic;
+    // Should use some sort of unique
+    magic.Printf("/vsimem/esric_%p.tmp", this);
+    auto mfh = VSIFileFromMemBuffer(magic.c_str(), fbuffer.data(), size, false);
+    VSIFCloseL(mfh);
+    // Can't open a raster by handle?
+    auto inds = GDALOpen(magic.c_str(), GA_ReadOnly);
+    if (!inds) {
         VSIUnlink(magic.c_str());
-        // Error while unpacking tile
-        if (CE_None != errcode)
-            return errcode;
-
-        for (int iBand = 2; iBand <= parent->nBands; iBand++)
-        {
-            auto band = parent->GetRasterBand(iBand);
-            if (lvl)
-                band = band->GetOverview(lvl - 1);
-            auto poBlock = band->GetLockedBlockRef(nBlockXOff, nBlockYOff);
-            if (poBlock != nullptr)
-                poBlock->DropLock();
+        CPLError(CE_Failure, CPLE_FileIO, "Error opening tile");
+        return CE_Failure;
+    }
+    // Duplicate first band if not sufficient bands are provided
+    auto inbands = GDALGetRasterCount(inds);
+    int ubands[4] = { 1, 1, 1, 1 };
+    int* usebands = nullptr;
+    int bandcount = parent->nBands;
+    if (inbands != bandcount) {
+        // Opaque if output expects alpha channel
+        if (0 == bandcount % 2) {
+            fill(buffer.begin(), buffer.end(), GByte(255));
+            bandcount--;
+        }
+        if (3 == inbands) {
+            // Lacking opacity, copy the first three bands
+            usebands = ubands;
+            ubands[1] = 2;
+            ubands[2] = 3;
+        }
+        else if (1 == inbands) {
+            // Grayscale, expecting color
+            usebands = ubands;
         }
     }
 
-    GDALCopyWords(buffer.data() + nBand - 1, GDT_Byte, parent->nBands, pData, GDT_Byte, 1, TSZ * TSZ);
+    auto errcode =
+        GDALDatasetRasterIO(inds, GF_Read, 0, 0, TSZ, TSZ, buffer.data(), TSZ, TSZ, GDT_Byte,
+            bandcount, usebands, parent->nBands, parent->nBands * TSZ, 1);
+    GDALClose(inds);
+    VSIUnlink(magic.c_str());
+    // Error while unpacking tile
+    if (CE_None != errcode)
+        return errcode;
+
+    for (int iBand = 1; iBand <= parent->nBands; iBand++)
+    {
+        auto band = parent->GetRasterBand(iBand);
+        void* ob = pData;
+        if (lvl)
+            band = band->GetOverview(lvl - 1);
+        GDALRasterBlock* poBlock = nullptr;
+        if (band != this) {
+            poBlock = band->GetLockedBlockRef(nBlockXOff, nBlockYOff, 1);
+            ob = poBlock->GetDataRef();
+        }
+        GDALCopyWords(buffer.data() + iBand - 1, GDT_Byte, parent->nBands, ob, GDT_Byte, 1, TSZ * TSZ);
+        if (poBlock != nullptr)
+            poBlock->DropLock();
+    }
+
     return CE_None;
 } // IReadBlock
 

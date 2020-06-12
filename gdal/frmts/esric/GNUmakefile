@@ -6,7 +6,7 @@ FILES = $(TARGET)_dataset
 
 OBJ = $(FILES:=.$(OBJ_EXT))
 
-PLUGIN_SO = gdal_$(TARGET).$(SO_EXT)
+PLUGIN_SO = gdal_ESRIC.$(SO_EXT)
 PLUGINDIR = $(DESTDIR)$(INST_LIB)/gdalplugins
 
 default: $(OBJ)
