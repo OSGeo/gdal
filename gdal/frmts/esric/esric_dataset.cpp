@@ -377,7 +377,9 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pData) {
         fbuffer.resize(size_t(size));
         VSIFSeekL(bundle.fh, offset, SEEK_SET);
         if (size != VSIFReadL(fbuffer.data(), size_t(1), size_t(size), bundle.fh)) {
-            CPLError(CE_Failure, CPLE_FileIO, "Error reading tile");
+            CPLError(CE_Failure, CPLE_FileIO,
+                "Error reading tile, reading " CPL_FRMT_GUIB " at " CPL_FRMT_GUIB,
+                GUInt64(size), GUInt64(offset));
             return CE_Failure;
         }
         CPLString magic;
