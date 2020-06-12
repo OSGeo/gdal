@@ -1450,7 +1450,7 @@ else
 
   if test "x$with_proj" = "xyes" -o "x$with_proj" = "x"; then
     ORIG_LIBS="$LIBS"
-    LIBS="-lproj $ORIG_LIBS"
+    LIBS="-lproj $with_proj_extra_lib_for_test $ORIG_LIBS"
     AC_LANG_PUSH([C++])
     AC_CHECK_LIB(proj,proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
     AC_LANG_POP([C++])
