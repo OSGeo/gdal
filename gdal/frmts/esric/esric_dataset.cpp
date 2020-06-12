@@ -40,9 +40,25 @@ CPL_C_START
 void CPL_DLL GDALRegister_ESRIC();
 CPL_C_END
 
-static int Identify(GDALOpenInfo* poOpenInfo);
-
 namespace ESRIC {
+
+#define ENDS_WITH_CI(a,b) (strlen(a) >= strlen(b) && EQUAL(a + strlen(a) - strlen(b), b))
+
+// Without full XML parsing, weak, might still fail
+static int Identify(GDALOpenInfo* poOpenInfo) {
+    if (poOpenInfo->eAccess != GA_ReadOnly
+#if !defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
+        || !ENDS_WITH_CI(poOpenInfo->pszFilename, "conf.xml")
+#endif
+        || poOpenInfo->nHeaderBytes < 512
+        )
+        return false;
+    CPLString header(reinterpret_cast<char*>(poOpenInfo->pabyHeader), poOpenInfo->nHeaderBytes);
+    return (CPLString::npos != header.find("<CacheInfo"));
+}
+
+    // Stub default delete, don't delete a tile cache from GDAL
+    static CPLErr Delete(const char*) { return CE_None; }
 
 // Read a 32bit unsigned integer stored in little endian
 // Same as CPL_LSBUINT32PTR
@@ -429,24 +445,6 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pData) {
 
 } // namespace
 
-#define ENDS_WITH_CI(a,b) (strlen(a) >= strlen(b) && EQUAL(a + strlen(a) - strlen(b), b))
-
-// Without full XML parsing, weak, might still fail
-static int Identify(GDALOpenInfo* poOpenInfo) {
-    if (poOpenInfo->eAccess != GA_ReadOnly
-#if !defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
-        || !ENDS_WITH_CI(poOpenInfo->pszFilename, "conf.xml")
-#endif
-        || poOpenInfo->nHeaderBytes < 512
-        )
-        return false;
-    CPLString header(reinterpret_cast<char*>(poOpenInfo->pabyHeader), poOpenInfo->nHeaderBytes);
-    return (CPLString::npos != header.find("<CacheInfo"));
-}
-
-// Stub default delete, don't delete a tile cache from GDAL
-static CPLErr Delete(const char*) { return CE_None; }
-
 void CPL_DLL GDALRegister_ESRIC() {
     if (GDALGetDriverByName("ESRIC") != nullptr)
         return;
@@ -459,9 +457,9 @@ void CPL_DLL GDALRegister_ESRIC() {
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Esri Compact Cache");
 
-    poDriver->pfnIdentify = Identify;
+    poDriver->pfnIdentify = ESRIC::Identify;
     poDriver->pfnOpen = ESRIC::ECDataset::Open;
-    poDriver->pfnDelete = Delete;
+    poDriver->pfnDelete = ESRIC::Delete;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }
