@@ -99,16 +99,16 @@ def test_esric_4():
 
     ds = gdaltest.esric_ds
 
-    # Read from level 1, band 1, where we have data
+    # Read from level 1, band 2, where we have data
     # Overviews are counted from zero, in reverse order from levels
 
-    l1b1 = ds.GetRasterBand(1).GetOverview(1)
-    assert l1b1.XSize == 512 and l1b1.YSize == 512
+    l1b2 = ds.GetRasterBand(2).GetOverview(1)
+    assert l1b2.XSize == 512 and l1b2.YSize == 512
 
     # There are four PNG tiles at this level, one is grayscale
 
-    cs = l1b1.Checksum()
-    expectedcs = 33479
+    cs = l1b2.Checksum()
+    expectedcs = 46857
     assert cs == expectedcs, 'wrong data checksum'
 
 def test_esric_cleanup():
