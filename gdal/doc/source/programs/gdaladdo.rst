@@ -33,7 +33,9 @@ most supported file formats with one of several downsampling algorithms.
 
     ``nearest`` applies a nearest neighbour (simple sampling) resampler
 
-    ``average`` computes the average of all non-NODATA contributing pixels.
+    ``average`` computes the average of all non-NODATA contributing pixels. Starting with GDAL 3.1, this is a weighted average taking into account properly the weight of source pixels not contributing fully to the target pixel.
+
+    ``bilinear`` applies a bilinear convolution kernel.
 
     ``gauss`` applies a Gaussian kernel before computing the overview,
     which can lead to better results than simple averaging in e.g case of sharp edges
