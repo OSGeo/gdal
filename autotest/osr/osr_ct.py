@@ -36,6 +36,7 @@ import sys
 from osgeo import gdal
 from osgeo import osr
 from osgeo import ogr
+import gdaltest
 import pytest
 
 
@@ -172,8 +173,9 @@ def test_osr_ct_5():
 
 def test_osr_ct_6():
 
-    ct = osr.CreateCoordinateTransformation(None, None)
-    assert ct is None
+    with gdaltest.error_handler():
+        ct = osr.CreateCoordinateTransformation(None, None)
+        assert ct is None
 
     utm_srs = osr.SpatialReference()
     utm_srs.SetUTM(11)
