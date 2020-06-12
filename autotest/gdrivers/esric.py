@@ -33,16 +33,14 @@ from osgeo import gdal
 import gdaltest
 import pytest
 
+pytestmark = pytest.mark.require_driver('ESRIC')
 
 ###############################################################################
 # Open the dataset
 
 def test_esric_1():
 
-    pytestmark = pytest.mark.require_driver('ESRIC')
-
-    fname="data/esric/Layers/conf.xml"
-    gdaltest.esric_ds = gdal.Open(fname)
+    gdaltest.esric_ds = gdal.Open("data/esric/Layers/conf.xml")
     assert gdaltest.esric_ds is not None, "open failed"
 
 
