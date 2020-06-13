@@ -235,6 +235,7 @@ typedef struct {
 
     int         bHasDEMMissingValue;
     double      dfDEMMissingValue;
+    char        *pszDEMSRS;
     int         bApplyDEMVDatumShift;
 
     GDALDataset *poDS;
@@ -746,7 +747,7 @@ retry:
  * <li> RPC_MAX_ITERATIONS: maximum number of iterations allowed in the
  * iterative solution of pixel/line to lat/long computations. Default value is
  * 10 in the absence of a DEM, or 20 if there is a DEM.  (GDAL >= 2.1.0)</li>
- * 
+ *
  * <li> RPC_FOOTPRINT: WKT or GeoJSON polygon (in long / lat coordinate space)
  * with a validity footprint for the RPC. Any coordinate transformation that
  * goes from or arrive outside this footprint will be considered invalid. This
@@ -886,6 +887,15 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
         psTransform->dfDEMMissingValue = CPLAtof(pszDEMMissingValue);
     }
 
+/* -------------------------------------------------------------------- */
+/*                        The DEM SRS override                          */
+/* -------------------------------------------------------------------- */
+    const char *pszDEMSRS =
+        CSLFetchNameValue(papszOptions, "RPC_DEM_SRS");
+    if ( pszDEMSRS != nullptr )
+    {
+        psTransform->pszDEMSRS = CPLStrdup(pszDEMSRS);
+    }
 /* -------------------------------------------------------------------- */
 /*      Whether to apply vdatum shift                                   */
 /* -------------------------------------------------------------------- */
@@ -1909,7 +1919,16 @@ static bool GDALRPCOpenDEM( GDALRPCTransformInfo* psTransform )
         psTransform->nBufferHeight = -1;
         psTransform->nLastQueriedX = -1;
         psTransform->nLastQueriedY = -1;
-        auto poDSSpaRefSrc = psTransform->poDS->GetSpatialRef();
+
+        OGRSpatialReference* poDEMSRS;
+        if ( psTransform->pszDEMSRS != nullptr )
+        {
+            poDEMSRS = new OGRSpatialReference();
+            poDEMSRS->SetFromUserInput(psTransform->pszDEMSRS);
+            poDEMSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        }
+
+        auto poDSSpaRefSrc = psTransform->pszDEMSRS != nullptr ? poDEMSRS : psTransform->poDS->GetSpatialRef();
         if( poDSSpaRefSrc )
         {
             auto poDSSpaRef = poDSSpaRefSrc->Clone();
