@@ -178,7 +178,7 @@ const char CPL_DLL *CPLLaunderForFilename(const char* pszName,
 /* -------------------------------------------------------------------- */
 
 /** Callback for CPLPushFileFinder */
-typedef const char *(*CPLFileFinder)(const char *, const char *);
+typedef char const *(*CPLFileFinder)(const char *, const char *);
 
 const char    CPL_DLL *CPLFindFile(const char *pszClass,
                                    const char *pszBasename);
