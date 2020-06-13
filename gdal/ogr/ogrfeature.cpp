@@ -2237,27 +2237,28 @@ static void OGRFeatureFormatDateTimeBuffer( char* szTempBuffer,
 
     if( nTZFlag > 1 )
     {
+        char chSign;
         const int nOffset = (nTZFlag - 100) * 15;
         int nHours = static_cast<int>(nOffset / 60);  // Round towards zero.
         const int nMinutes = std::abs(nOffset - nHours * 60);
 
         if( nOffset < 0 )
         {
-            strcat( szTempBuffer, "-" );
+            chSign = '-';
             nHours = std::abs(nHours);
         }
         else
         {
-            strcat( szTempBuffer, "+" );
+            chSign = '+';
         }
 
         if( nMinutes == 0 )
             snprintf( szTempBuffer+strlen(szTempBuffer),
-                      nMaxSize-strlen(szTempBuffer), "%02d", nHours );
+                      nMaxSize-strlen(szTempBuffer), "%c%02d", chSign, nHours );
         else
             snprintf( szTempBuffer+strlen(szTempBuffer),
                       nMaxSize-strlen(szTempBuffer),
-                      "%02d%02d", nHours, nMinutes );
+                      "%c%02d%02d", chSign, nHours, nMinutes );
     }
 }
 
