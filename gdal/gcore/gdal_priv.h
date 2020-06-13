@@ -604,7 +604,9 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     CPLErr BuildOverviews( const char *, int, int *,
                            int, int *, GDALProgressFunc, void * );
 
+#ifndef DOXYGEN_XML
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (4, 5);
+#endif
 
     char ** GetMetadata(const char * pszDomain = "") override;
 
@@ -612,8 +614,6 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 #ifdef DOXYGEN_SKIP
     CPLErr      SetMetadata( char ** papszMetadata,
                              const char * pszDomain ) override;
-    const char *GetMetadataItem( const char * pszName,
-                                 const char * pszDomain ) override;
     CPLErr      SetMetadataItem( const char * pszName,
                                  const char * pszValue,
                                  const char * pszDomain ) override;
@@ -1252,11 +1252,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
 // Only defined when Doxygen enabled
 #ifdef DOXYGEN_SKIP
-    char      **GetMetadata( const char * pszDomain = "" ) override;
     CPLErr      SetMetadata( char ** papszMetadata,
                              const char * pszDomain ) override;
-    const char *GetMetadataItem( const char * pszName,
-                                 const char * pszDomain ) override;
     CPLErr      SetMetadataItem( const char * pszName,
                                  const char * pszValue,
                                  const char * pszDomain ) override;
