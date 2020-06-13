@@ -954,7 +954,12 @@ PREDEFINED             = HAVE_DLFCN_H \
                          HAVE_LONG_LONG=1 \
                          HAVE_SC_PHYS_PAGES=1 \
                          final= \
-                         CPL_RESTRICT=
+                         CPL_RESTRICT= \
+                         CPL_WARN_UNUSED_RESULT= \
+                         CPL_RETURNS_NONNULL= \
+                         CPLSTRING_METHOD_DLL= \
+                         CPL_NO_RETURN= \
+                         EXPERIMENTAL_CPL_WARN_UNUSED_RESULT=
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then
 # this tag can be used to specify a list of macro names that should be expanded.
