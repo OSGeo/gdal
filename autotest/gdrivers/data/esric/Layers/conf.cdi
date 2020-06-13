@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<EnvelopeN xsi:type="typens:EnvelopeN" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:typens="http://www.esri.com/schemas/ArcGIS/10.0">
+    <XMin>-20037507.229594339</XMin>
+    <YMin>-20037507.229594339</YMin>
+    <XMax>20037507.229594339</XMax>
+    <YMax>20037507.229594339</YMax>
+</EnvelopeN>

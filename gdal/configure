@@ -1021,6 +1021,7 @@ enable_driver_e00grid
 enable_driver_elas
 enable_driver_envisat
 enable_driver_ers
+enable_driver_esric
 enable_driver_fit
 enable_driver_gff
 enable_driver_gsg
@@ -1924,6 +1925,7 @@ Optional Features:
   --disable-driver-envisat
                           disable envisat driver support (enabled by default)
   --disable-driver-ers    disable ers driver support (enabled by default)
+  --disable-driver-esric  disable esric driver support (enabled by default)
   --disable-driver-fit    disable fit driver support (enabled by default)
   --disable-driver-gff    disable gff driver support (enabled by default)
   --disable-driver-gsg    disable gsg driver support (enabled by default)
@@ -26662,6 +26664,34 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED ers"
   INTERNAL_FORMAT_ers_ENABLED=no
+fi
+
+# Check whether --enable-driver-esric was given.
+if test "${enable_driver_esric+set}" = set; then :
+  enableval=$enable_driver_esric;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_esric
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED esric"
+  INTERNAL_FORMAT_esric_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED esric"
+  INTERNAL_FORMAT_esric_ENABLED=no
 fi
 
 # Check whether --enable-driver-fit was given.
