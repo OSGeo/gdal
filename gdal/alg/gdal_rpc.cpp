@@ -731,6 +731,9 @@ retry:
  * cover the requested coordinate. When not specified, missing values will cause
  * a failed transform.</li>
  *
+ * <li> RPC_DEM_SRS: WKT SRS, or any string recognized by
+ * OGRSpatialReference::SetFromUserInput(), to be used as an override for DEM SRS.
+ *
  * <li> RPC_DEM_APPLY_VDATUM_SHIFT: whether the vertical component of a compound
  * SRS for the DEM should be used (when it is present). This is useful so as to
  * be able to transform the "raw" values from the DEM expressed with respect to
@@ -1920,7 +1923,7 @@ static bool GDALRPCOpenDEM( GDALRPCTransformInfo* psTransform )
         psTransform->nLastQueriedX = -1;
         psTransform->nLastQueriedY = -1;
 
-        OGRSpatialReference* poDEMSRS;
+        OGRSpatialReference* poDEMSRS = nullptr;
         if ( psTransform->pszDEMSRS != nullptr )
         {
             poDEMSRS = new OGRSpatialReference();
