@@ -412,6 +412,12 @@ bool S57Reader::SetOptions( char ** papszOptionsIn )
     else
         nOptionFlags &= ~S57M_RECODE_BY_DSSI;
 
+    pszOptionValue = CSLFetchNameValue( papszOptions, S57O_LIST_AS_STRING );
+    if( pszOptionValue != nullptr && CPLTestBool(pszOptionValue) )
+        nOptionFlags |= S57M_LIST_AS_STRING;
+    else
+        nOptionFlags &= ~S57M_LIST_AS_STRING;
+
     return true;
 }
 
@@ -964,8 +970,9 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
 
         OGRFieldDefn *poFldDefn
             = poFeature->GetDefnRef()->GetFieldDefn( iField );
-        if( poFldDefn->GetType() == OFTInteger
-            || poFldDefn->GetType() == OFTReal )
+        const auto eType = poFldDefn->GetType();
+        if( eType == OFTInteger
+            || eType == OFTReal )
         {
             if( strlen(pszValue) == 0 )
             {
@@ -979,8 +986,16 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
             else
                 poFeature->SetField( iField, pszValue );
         }
+        else if( eType == OFTStringList )
+        {
+            char** papszTokens = CSLTokenizeString2(pszValue, ",", 0);
+            poFeature->SetField( iField, papszTokens );
+            CSLDestroy(papszTokens);
+        }
         else
+        {
             poFeature->SetField( iField, pszValue );
+        }
 
         CPLFree(pszValueToFree);
     }

@@ -166,6 +166,10 @@ They can also be specified independently as open options to the driver.
 -  **RECODE_BY_DSSI**\ =ON/OFF: Should attribute values be
    recoded to UTF-8 from the character encoding specified in the S57
    DSSI record. Default is OFF.
+-  **LIST_AS_STRING**\ =ON/OFF: (GDAL >= 3.2) Whether attributes tagged as list in S57
+   dictionaries should be reported as a String field, instead of a StringList.
+   Default is OFF. Before GDAL 3.2, the behaviour was equivalent to setting
+   this option to ON.
 
 Example:
 
