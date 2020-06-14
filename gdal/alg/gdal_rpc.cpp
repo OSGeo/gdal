@@ -2302,7 +2302,7 @@ CPLXMLNode *GDALSerializeRPCTransformer( void *pTransformArg )
         {
             CPLCreateXMLElementAndValue(
                 psTree, "DEMSRS",
-                CPLString().Printf( "%s", psInfo->pszDEMSRS ) );
+                psInfo->pszDEMSRS );
         }
     }
 
