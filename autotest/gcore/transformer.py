@@ -251,7 +251,7 @@ def test_transformer_5():
     ds_dem.SetGeoTransform([213300, 200, 0, 4418700, 0, -200])
     ds_dem.GetRasterBand(1).Fill(15)
     ds_dem = None
-    import ipdb; ipdb.set_trace()
+    
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_HEIGHT_SCALE=2', 'RPC_DEM=/vsimem/dem.tif', 'RPC_DEM_SRS=EPSG:32652+5773'])
 
     (success, pnt) = tr.TransformPoint(0, 0.5, 0.5, 0)
