@@ -1926,14 +1926,14 @@ static bool GDALRPCOpenDEM( GDALRPCTransformInfo* psTransform )
         psTransform->nLastQueriedX = -1;
         psTransform->nLastQueriedY = -1;
 
-        OGRSpatialReference poDEMSRS;
+        OGRSpatialReference oDEMSRS;
         if ( psTransform->pszDEMSRS != nullptr )
         {
-            poDEMSRS.SetFromUserInput(psTransform->pszDEMSRS);
-            poDEMSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            oDEMSRS.SetFromUserInput(psTransform->pszDEMSRS);
+            oDEMSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }
 
-        auto poDSSpaRefSrc = psTransform->pszDEMSRS != nullptr ? poDEMSRS : psTransform->poDS->GetSpatialRef();
+        auto poDSSpaRefSrc = psTransform->pszDEMSRS != nullptr ? &oDEMSRS : psTransform->poDS->GetSpatialRef();
         if( poDSSpaRefSrc )
         {
             auto poDSSpaRef = poDSSpaRefSrc->Clone();
