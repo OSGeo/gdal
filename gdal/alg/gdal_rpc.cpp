@@ -731,7 +731,7 @@ retry:
  * cover the requested coordinate. When not specified, missing values will cause
  * a failed transform.</li>
  *
- * <li> RPC_DEM_SRS: (GDAL >= 3.1) WKT SRS, or any string recognized by
+ * <li> RPC_DEM_SRS: (GDAL >= 3.2) WKT SRS, or any string recognized by
  * OGRSpatialReference::SetFromUserInput(), to be used as an override for DEM SRS.
  * Useful if DEM SRS does not have an explicit vertical component. </li>
  *
