@@ -1076,6 +1076,7 @@ void GDALDestroyRPCTransformer( void *pTransformAlg )
         static_cast<GDALRPCTransformInfo *>(pTransformAlg);
 
     CPLFree( psTransform->pszDEMPath );
+    CPLFree( psTransform->pszDEMSRS );
 
     if( psTransform->poDS )
         GDALClose(psTransform->poDS);
@@ -2297,6 +2298,14 @@ CPLXMLNode *GDALSerializeRPCTransformer( void *pTransformArg )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Serialize DEM SRS                                               */
+/* -------------------------------------------------------------------- */
+    if( psInfo->pszDEMSRS != nullptr )
+    {
+        CPLCreateXMLElementAndValue(
+            psTree, "DEMSRS",
+            CPLString().Printf( "%s", psInfo->pszDEMSRS ) );
+/* -------------------------------------------------------------------- */
 /*      Serialize pixel error threshold.                                */
 /* -------------------------------------------------------------------- */
     CPLCreateXMLElementAndValue(
@@ -2413,6 +2422,10 @@ void *GDALDeserializeRPCTransformer( CPLXMLNode *psTree )
         papszOptions = CSLSetNameValue(papszOptions,
                                        "RPC_DEM_APPLY_VDATUM_SHIFT",
                                        pszDEMApplyVDatumShift);
+    const char* pszDEMSRS =
+        CPLGetXMLValue(psTree, "DEMSRS", nullptr);
+    if( pszDEMSRS != nullptr )
+        papszOptions = CSLSetNameValue(papszOptions, "RPC_DEM_SRS", pszDEMSRS);
 
 /* -------------------------------------------------------------------- */
 /*      Generate transformation.                                        */
