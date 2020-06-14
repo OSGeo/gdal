@@ -789,10 +789,3 @@ def test_transformer_image_no_srs():
     assert success
     assert pnt[0] == pytest.approx(50), pnt
     assert pnt[1] == pytest.approx(-100), pnt
-
-
-###############################################################################
-# Test RPC transform with DEM_SRS override of RPC_DEM
-
-def test_transform_rpc_dem_srs():
-    ds = gdal.Open('data/rpc.vrt')

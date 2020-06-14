@@ -733,7 +733,7 @@ retry:
  *
  * <li> RPC_DEM_SRS: (GDAL >= 3.1) WKT SRS, or any string recognized by
  * OGRSpatialReference::SetFromUserInput(), to be used as an override for DEM SRS.
- * Useful if DEM SRS does not have an explicit vertical component.
+ * Useful if DEM SRS does not have an explicit vertical component. </li>
  *
  * <li> RPC_DEM_APPLY_VDATUM_SHIFT: whether the vertical component of a compound
  * SRS for the DEM should be used (when it is present). This is useful so as to
@@ -900,6 +900,7 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
     {
         psTransform->pszDEMSRS = CPLStrdup(pszDEMSRS);
     }
+
 /* -------------------------------------------------------------------- */
 /*      Whether to apply vdatum shift                                   */
 /* -------------------------------------------------------------------- */
