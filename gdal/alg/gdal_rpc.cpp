@@ -1926,7 +1926,7 @@ static bool GDALRPCOpenDEM( GDALRPCTransformInfo* psTransform )
         psTransform->nLastQueriedX = -1;
         psTransform->nLastQueriedY = -1;
 
-        OGRSpatialReference* poDEMSRS = nullptr;
+        OGRSpatialReference* poDEMSRS;
         if ( psTransform->pszDEMSRS != nullptr )
         {
             poDEMSRS = new OGRSpatialReference();
@@ -2295,16 +2295,18 @@ CPLXMLNode *GDALSerializeRPCTransformer( void *pTransformArg )
         CPLCreateXMLElementAndValue(
                 psTree, "DEMApplyVDatumShift",
                 psInfo->bApplyDEMVDatumShift ? "true" : "false" );
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Serialize DEM SRS                                               */
 /* -------------------------------------------------------------------- */
-    if( psInfo->pszDEMSRS != nullptr )
-    {
-        CPLCreateXMLElementAndValue(
-            psTree, "DEMSRS",
-            CPLString().Printf( "%s", psInfo->pszDEMSRS ) );
+        if( psInfo->pszDEMSRS != nullptr )
+        {
+            CPLCreateXMLElementAndValue(
+                psTree, "DEMSRS",
+                CPLString().Printf( "%s", psInfo->pszDEMSRS ) );
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Serialize pixel error threshold.                                */
 /* -------------------------------------------------------------------- */
