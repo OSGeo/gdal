@@ -1425,7 +1425,7 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
                 if( STARTS_WITH(pszLine, "--") )
                     continue;
 
-                // Blacklist a few words tat might have security implications
+                // Reject a few words tat might have security implications
                 // Basically we just want to allow CREATE TABLE and INSERT INTO
                 if( CPLString(pszLine).ifind("ATTACH") != std::string::npos ||
                     CPLString(pszLine).ifind("DETACH") != std::string::npos ||

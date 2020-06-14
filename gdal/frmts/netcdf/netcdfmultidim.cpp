@@ -903,7 +903,7 @@ std::vector<std::string> netCDFGroup::GetMDArrayNames(CSLConstList papszOptions)
     const bool bBounds = bAll || CPLTestBool(CSLFetchNameValueDef(papszOptions, "SHOW_BOUNDS", "YES"));
     const bool bIndexing = bAll || CPLTestBool(CSLFetchNameValueDef(papszOptions, "SHOW_INDEXING", "YES"));
     const bool bTime = bAll || CPLTestBool(CSLFetchNameValueDef(papszOptions, "SHOW_TIME", "YES"));
-    std::set<std::string> blackList;
+    std::set<std::string> ignoreList;
     if( !bCoordinates || !bBounds )
     {
         for( const auto& varid: anVarIds )
@@ -925,7 +925,7 @@ std::vector<std::string> netCDFGroup::GetMDArrayNames(CSLConstList papszOptions)
                 CPLFree(pszTemp);
             }
             for( char** iter = papszTokens; iter && iter[0]; ++iter )
-                blackList.insert(*iter);
+                ignoreList.insert(*iter);
             CSLDestroy(papszTokens);
         }
     }
@@ -967,7 +967,7 @@ std::vector<std::string> netCDFGroup::GetMDArrayNames(CSLConstList papszOptions)
             }
         }
 
-        if( blackList.find(szName) == blackList.end() )
+        if( ignoreList.find(szName) == ignoreList.end() )
         {
             names.emplace_back(szName);
         }
