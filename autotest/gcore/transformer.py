@@ -789,3 +789,5 @@ def test_transformer_dem_overrride_srs():
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
     assert success and pnt[0] == pytest.approx(0.5, abs=0.05) and pnt[1] == pytest.approx(0.5, abs=0.05), \
         'got wrong reverse transform result.'
+
+    gdal.Unlink('/vsimem/dem.tif')
