@@ -235,6 +235,7 @@ typedef struct {
 
     int         bHasDEMMissingValue;
     double      dfDEMMissingValue;
+    char        *pszDEMSRS;
     int         bApplyDEMVDatumShift;
 
     GDALDataset *poDS;
@@ -730,6 +731,10 @@ retry:
  * cover the requested coordinate. When not specified, missing values will cause
  * a failed transform.</li>
  *
+ * <li> RPC_DEM_SRS: (GDAL >= 3.2) WKT SRS, or any string recognized by
+ * OGRSpatialReference::SetFromUserInput(), to be used as an override for DEM SRS.
+ * Useful if DEM SRS does not have an explicit vertical component. </li>
+ *
  * <li> RPC_DEM_APPLY_VDATUM_SHIFT: whether the vertical component of a compound
  * SRS for the DEM should be used (when it is present). This is useful so as to
  * be able to transform the "raw" values from the DEM expressed with respect to
@@ -746,7 +751,7 @@ retry:
  * <li> RPC_MAX_ITERATIONS: maximum number of iterations allowed in the
  * iterative solution of pixel/line to lat/long computations. Default value is
  * 10 in the absence of a DEM, or 20 if there is a DEM.  (GDAL >= 2.1.0)</li>
- * 
+ *
  * <li> RPC_FOOTPRINT: WKT or GeoJSON polygon (in long / lat coordinate space)
  * with a validity footprint for the RPC. Any coordinate transformation that
  * goes from or arrive outside this footprint will be considered invalid. This
@@ -884,6 +889,16 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
     {
         psTransform->bHasDEMMissingValue = TRUE;
         psTransform->dfDEMMissingValue = CPLAtof(pszDEMMissingValue);
+    }
+
+/* -------------------------------------------------------------------- */
+/*                        The DEM SRS override                          */
+/* -------------------------------------------------------------------- */
+    const char *pszDEMSRS =
+        CSLFetchNameValue(papszOptions, "RPC_DEM_SRS");
+    if ( pszDEMSRS != nullptr )
+    {
+        psTransform->pszDEMSRS = CPLStrdup(pszDEMSRS);
     }
 
 /* -------------------------------------------------------------------- */
@@ -1061,6 +1076,7 @@ void GDALDestroyRPCTransformer( void *pTransformAlg )
         static_cast<GDALRPCTransformInfo *>(pTransformAlg);
 
     CPLFree( psTransform->pszDEMPath );
+    CPLFree( psTransform->pszDEMSRS );
 
     if( psTransform->poDS )
         GDALClose(psTransform->poDS);
@@ -1909,7 +1925,15 @@ static bool GDALRPCOpenDEM( GDALRPCTransformInfo* psTransform )
         psTransform->nBufferHeight = -1;
         psTransform->nLastQueriedX = -1;
         psTransform->nLastQueriedY = -1;
-        auto poDSSpaRefSrc = psTransform->poDS->GetSpatialRef();
+
+        OGRSpatialReference oDEMSRS;
+        if ( psTransform->pszDEMSRS != nullptr )
+        {
+            oDEMSRS.SetFromUserInput(psTransform->pszDEMSRS);
+            oDEMSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        }
+
+        auto poDSSpaRefSrc = psTransform->pszDEMSRS != nullptr ? &oDEMSRS : psTransform->poDS->GetSpatialRef();
         if( poDSSpaRefSrc )
         {
             auto poDSSpaRef = poDSSpaRefSrc->Clone();
@@ -2270,6 +2294,16 @@ CPLXMLNode *GDALSerializeRPCTransformer( void *pTransformArg )
         CPLCreateXMLElementAndValue(
                 psTree, "DEMApplyVDatumShift",
                 psInfo->bApplyDEMVDatumShift ? "true" : "false" );
+
+/* -------------------------------------------------------------------- */
+/*      Serialize DEM SRS                                               */
+/* -------------------------------------------------------------------- */
+        if( psInfo->pszDEMSRS != nullptr )
+        {
+            CPLCreateXMLElementAndValue(
+                psTree, "DEMSRS",
+                psInfo->pszDEMSRS );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -2389,6 +2423,10 @@ void *GDALDeserializeRPCTransformer( CPLXMLNode *psTree )
         papszOptions = CSLSetNameValue(papszOptions,
                                        "RPC_DEM_APPLY_VDATUM_SHIFT",
                                        pszDEMApplyVDatumShift);
+    const char* pszDEMSRS =
+        CPLGetXMLValue(psTree, "DEMSRS", nullptr);
+    if( pszDEMSRS != nullptr )
+        papszOptions = CSLSetNameValue(papszOptions, "RPC_DEM_SRS", pszDEMSRS);
 
 /* -------------------------------------------------------------------- */
 /*      Generate transformation.                                        */
