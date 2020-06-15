@@ -795,8 +795,8 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
         {
             const double dfResRatio = (nCurLevel >= 1) ?
                 tmList[nCurLevel-1].mResX / tmList[nCurLevel].mResX : 2;
-            nTmpXSize = static_cast<int>(nTmpXSize / dfResRatio);
-            nTmpYSize = static_cast<int>(nTmpYSize / dfResRatio);
+            nTmpXSize = static_cast<int>(nTmpXSize / dfResRatio + 0.5);
+            nTmpYSize = static_cast<int>(nTmpYSize / dfResRatio + 0.5);
             asOverviewDims.push_back(std::pair<int,int>(nTmpXSize, nTmpYSize));
             nCurLevel --;
         }
