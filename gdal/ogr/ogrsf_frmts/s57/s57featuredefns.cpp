@@ -421,7 +421,15 @@ OGRFeatureDefn *S57GenerateObjectClassDefn(
             break;
 
           case SAT_LIST:
-            oField.SetType( OFTString );
+            if( (nOptionFlags & S57M_LIST_AS_STRING) )
+            {
+                // Legacy behaviour
+                oField.SetType( OFTString );
+            }
+            else
+            {
+                oField.SetType( OFTStringList );
+            }
             break;
         }
 
