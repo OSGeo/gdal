@@ -951,3 +951,17 @@ def test_cog_resampling_options():
 
     ds = None
     gdal.Unlink(filename)
+
+
+
+###############################################################################
+
+def test_cog_invalid_warp_resampling():
+
+    filename = '/vsimem/test_cog_invalid_warp_resampling.tif'
+    src_ds = gdal.Open('data/byte.tif')
+
+    with gdaltest.error_handler():
+        assert gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+            options = ['TILING_SCHEME=GoogleMapsCompatible', 'RESAMPLING=INVALID']) is None
+    gdal.Unlink(filename)
