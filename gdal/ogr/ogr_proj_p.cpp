@@ -81,9 +81,9 @@ struct OSRPJContextHolder
 #endif
 
 #if !defined(_WIN32)
-    OSRPJContextHolder(): curpid(getpid()) {}
+    OSRPJContextHolder(): curpid(getpid()) { init(); }
 #else
-    OSRPJContextHolder() = default;
+    OSRPJContextHolder() { init(); }
 #endif
 
     ~OSRPJContextHolder();
@@ -178,10 +178,13 @@ static OSRPJContextHolder& GetProjTLSContextHolder()
         l_projContext.context = nullptr;
         l_projContext.init();
 #else
+        const auto osr_proj_logger_none = [](void *, int, const char *) {};
+        proj_log_func (l_projContext.context, nullptr, osr_proj_logger_none);
         proj_context_set_autoclose_database(l_projContext.context, true);
         // dummy call to cause the database to be closed
         proj_context_get_database_path(l_projContext.context);
         proj_context_set_autoclose_database(l_projContext.context, false);
+        proj_log_func (l_projContext.context, nullptr, osr_proj_logger);
 #endif
     }
 
@@ -193,7 +196,6 @@ static OSRPJContextHolder& GetProjTLSContextHolder()
 PJ_CONTEXT* OSRGetProjTLSContext()
 {
     auto& l_projContext = GetProjTLSContextHolder();
-    l_projContext.init();
     {
         // If OSRSetPROJSearchPaths() has been called since we created the context,
         // set the new search paths on the context.
