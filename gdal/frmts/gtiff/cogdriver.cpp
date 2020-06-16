@@ -397,6 +397,9 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
 
     auto psOptions = GDALWarpAppOptionsNew(papszArg, nullptr);
     CSLDestroy(papszArg);
+    if( psOptions == nullptr )
+        return nullptr;
+
     const double dfNextPixels =
         double(nXSize) * nYSize * (nBands + (bHasMask ? 1 : 0));
     void* pScaledProgress = GDALCreateScaledProgress(
