@@ -122,6 +122,18 @@ General creation options
    For paletted images,
    NEAREST is used by default, otherwise it is CUBIC.
 
+-  **OVERVIEW_RESAMPLING=[NEAREST/AVERAGE/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS]**:
+   (since GDAL 3.2)
+   Resampling method used for overview generation.
+   For paletted images, NEAREST is used by default, otherwise it is CUBIC.
+   This overrides, for overview generation, the value of ``RESAMPLING`` if it specified.
+
+-  **WARP_RESAMPLING=[NEAREST/AVERAGE/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS]**:
+   (since GDAL 3.2)
+   Resampling method used for reprojection.
+   For paletted images, NEAREST is used by default, otherwise it is CUBIC.
+   This overrides, for reprojection, the value of ``RESAMPLING`` if it specified.
+
 - **OVERVIEWS=[AUTO/IGNORE_EXISTING/FORCE_USE_EXISTING/NONE]**: Describe the behavior
   regarding overview generation and use of source overviews.
   

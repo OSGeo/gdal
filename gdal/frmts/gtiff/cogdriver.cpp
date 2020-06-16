@@ -401,7 +401,9 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
     nYSize = static_cast<int>(std::round((dfMaxY - dfMinY) / dfRes));
 
     osResampling = CSLFetchNameValueDef(papszOptions,
-        "RESAMPLING", GetResampling(poSrcDS));
+        "WARP_RESAMPLING",
+        CSLFetchNameValueDef(papszOptions,
+            "RESAMPLING", GetResampling(poSrcDS)));
 
     return true;
 }
@@ -834,7 +836,9 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
         m_osTmpMskOverviewFilename = GetTmpFilename(pszFilename, "msk.ovr.tmp");
         GDALRasterBand* poSrcMask = poFirstBand->GetMaskBand();
         const char* pszResampling = CSLFetchNameValueDef(papszOptions,
-            "RESAMPLING", GetResampling(poSrcDS));
+            "OVERVIEW_RESAMPLING",
+                CSLFetchNameValueDef(papszOptions,
+                    "RESAMPLING", GetResampling(poSrcDS)));
 
         double dfNextPixels = dfCurPixels + double(nXSize) * nYSize / 3;
         void* pScaledProgress = GDALCreateScaledProgress(
@@ -872,7 +876,9 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
         for( int i = 0; i < nBands; i++ )
             apoSrcBands.push_back( poCurDS->GetRasterBand(i+1) );
         const char* pszResampling = CSLFetchNameValueDef(papszOptions,
-            "RESAMPLING", GetResampling(poSrcDS));
+            "OVERVIEW_RESAMPLING",
+                CSLFetchNameValueDef(papszOptions,
+                    "RESAMPLING", GetResampling(poSrcDS)));
 
         double dfNextPixels = dfCurPixels + double(nXSize) * nYSize * nBands / 3;
         void* pScaledProgress = GDALCreateScaledProgress(
@@ -1130,6 +1136,10 @@ void GDALCOGDriver::InitializeCreationOptionList()
 "   </Option>"
 "   <Option name='RESAMPLING' type='string' "
         "description='Resampling method for overviews or warping'/>"
+"   <Option name='OVERVIEW_RESAMPLING' type='string' "
+        "description='Resampling method for overviews'/>"
+"   <Option name='WARP_RESAMPLING' type='string' "
+        "description='Resampling method for warping'/>"
 "   <Option name='OVERVIEWS' type='string-select' description='"
         "Behavior regarding overviews'>"
 "     <Value>AUTO</Value>"
