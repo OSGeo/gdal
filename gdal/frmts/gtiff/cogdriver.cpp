@@ -230,10 +230,10 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
         CPLDebug("COG", "Using ZOOM_LEVEL %d", nZoomLevel);
 
         const double dfTileExtent = dfRes * nBlockSize;
-        int nTLTileX = static_cast<int>(std::floor((dfMinX - dfOriX) / dfTileExtent));
-        int nTLTileY = static_cast<int>(std::floor((dfOriY - dfMaxY) / dfTileExtent));
-        int nBRTileX = static_cast<int>(std::ceil((dfMaxX - dfOriX) / dfTileExtent));
-        int nBRTileY = static_cast<int>(std::ceil((dfOriY - dfMinY) / dfTileExtent));
+        int nTLTileX = static_cast<int>(std::floor((dfMinX - dfOriX) / dfTileExtent + 1e-10));
+        int nTLTileY = static_cast<int>(std::floor((dfOriY - dfMaxY) / dfTileExtent + 1e-10));
+        int nBRTileX = static_cast<int>(std::ceil((dfMaxX - dfOriX) / dfTileExtent - 1e-10));
+        int nBRTileY = static_cast<int>(std::ceil((dfOriY - dfMinY) / dfTileExtent - 1e-10));
 
         const int nAlignedLevels = std::min(10, atoi(
         CSLFetchNameValueDef(papszOptions, "ALIGNED_LEVELS", "0")));
