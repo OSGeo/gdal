@@ -33,6 +33,7 @@ import pytest
 import sys
 
 from osgeo import gdal
+from osgeo import osr
 
 import gdaltest
 
@@ -953,7 +954,6 @@ def test_cog_resampling_options():
     gdal.Unlink(filename)
 
 
-
 ###############################################################################
 
 def test_cog_invalid_warp_resampling():
@@ -965,3 +965,19 @@ def test_cog_invalid_warp_resampling():
         assert gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
             options = ['TILING_SCHEME=GoogleMapsCompatible', 'RESAMPLING=INVALID']) is None
     gdal.Unlink(filename)
+
+
+###############################################################################
+
+def test_cog_overview_size():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 20480 // 4, 40960 // 4)
+    src_ds.SetGeoTransform([1723840, 7 * 4, 0, 5555840, 0, -7 * 4])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(2193)
+    src_ds.SetProjection(srs.ExportToWkt())
+    filename = '/vsimem/test_cog_overview_size.tif'
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds, options = ['TILING_SCHEME=NZTM2000', 'ALIGNED_LEVELS=4', 'OVERVIEW_RESAMPLING=NONE'])
+    assert (ds.RasterXSize, ds.RasterYSize) == (20480 // 4, 40960 // 4)
+    ovr_size = [ (ds.GetRasterBand(1).GetOverview(i).XSize, ds.GetRasterBand(1).GetOverview(i).YSize) for i in range(ds.GetRasterBand(1).GetOverviewCount()) ]
+    assert ovr_size == [(2048, 4096), (1024, 2048), (512, 1024), (256, 512), (128, 256)]
