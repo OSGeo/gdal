@@ -1072,7 +1072,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             if (psOptions->nXSize <= 0 || psOptions->nYSize <= 0)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Wrong value for -outsize parameter.");
+                         "Wrong value for -ts parameter.");
                 GDALRasterizeOptionsFree(psOptions);
                 return nullptr;
             }
