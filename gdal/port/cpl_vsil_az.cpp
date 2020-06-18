@@ -209,7 +209,7 @@ bool VSIDIRAz::AnalyseAzureFileList(
                     entry->nSize = static_cast<GUIntBig>(
                         CPLAtoGIntBig(CPLGetXMLValue(psIter, "Properties.Content-Length", "0")));
                     entry->bSizeKnown = true;
-                    entry->nMode = S_IFDIR;
+                    entry->nMode = S_IFREG;
                     entry->bModeKnown = true;
 
                     CPLString ETag = CPLGetXMLValue(psIter, "Etag", "");

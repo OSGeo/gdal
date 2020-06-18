@@ -862,6 +862,65 @@ def test_vsiaz_fake_rename():
 
 
 ###############################################################################
+# Test OpenDir() with a fake server
+
+
+def test_vsiaz_opendir():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    # Unlimited depth
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/azure/blob/myaccount/opendir?comp=list&restype=container', 200, {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix></Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>test.txt</Name>
+                            <Properties>
+                              <Last-Modified>01 Jan 1970 00:00:01</Last-Modified>
+                              <Content-Length>40</Content-Length>
+                            </Properties>
+                          </Blob>
+                          <Blob>
+                            <Name>subdir/.gdal_marker_for_dir</Name>
+                          </Blob>
+                          <Blob>
+                            <Name>subdir/test.txt</Name>
+                            <Properties>
+                              <Last-Modified>01 Jan 1970 00:00:01</Last-Modified>
+                              <Content-Length>4</Content-Length>
+                            </Properties>
+                          </Blob>
+                        </Blobs>
+                    </EnumerationResults>""")
+    with webserver.install_http_handler(handler):
+        d = gdal.OpenDir('/vsiaz/opendir')
+    assert d is not None
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'test.txt'
+    assert entry.size == 40
+    assert entry.mode == 32768
+    assert entry.mtime == 1
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'subdir/'
+    assert entry.mode == 16384
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'subdir/test.txt'
+    assert entry.size == 4
+    assert entry.mode == 32768
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry is None
+
+    gdal.CloseDir(d)
+
+###############################################################################
 
 
 def test_vsiaz_stop_webserver():
