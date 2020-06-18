@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import sys
 import time
 from osgeo import gdal
@@ -864,3 +865,16 @@ def test_unlink_batch():
         assert not gdal.UnlinkBatch(['/vsimem/foo', 'tmp/bar'])
     gdal.Unlink('/vsimem/foo')
     gdal.Unlink('tmp/bar')
+
+
+###############################################################################
+# Test gdal.RmdirRecursive()
+
+def test_vsifile_rmdirrecursive():
+
+    gdal.Mkdir('tmp/rmdirrecursive', 493)
+    gdal.Mkdir('tmp/rmdirrecursive/subdir', 493)
+    open('tmp/rmdirrecursive/foo.bin', 'wb').close()
+    open('tmp/rmdirrecursive/subdir/bar.bin', 'wb').close()
+    assert gdal.RmdirRecursive('tmp/rmdirrecursive') == 0
+    assert not os.path.exists('tmp/rmdirrecursive')

@@ -78,7 +78,7 @@ struct VSIDIRAz: public VSIDIR
     IVSIS3LikeFSHandler* poFS = nullptr;
     IVSIS3LikeHandleHelper* poHandleHelper = nullptr;
     int nMaxFiles = 0;
-    bool bCacheResults = true;
+    bool bCacheEntries = true;
 
     explicit VSIDIRAz(IVSIS3LikeFSHandler *poFSIn): poFS(poFSIn) {}
     ~VSIDIRAz()
@@ -209,7 +209,7 @@ bool VSIDIRAz::AnalyseAzureFileList(
                     entry->nSize = static_cast<GUIntBig>(
                         CPLAtoGIntBig(CPLGetXMLValue(psIter, "Properties.Content-Length", "0")));
                     entry->bSizeKnown = true;
-                    entry->nMode = S_IFDIR;
+                    entry->nMode = S_IFREG;
                     entry->bModeKnown = true;
 
                     CPLString ETag = CPLGetXMLValue(psIter, "Etag", "");
@@ -243,7 +243,7 @@ bool VSIDIRAz::AnalyseAzureFileList(
                         entry->bMTimeKnown = true;
                     }
 
-                    if( bCacheResults )
+                    if( bCacheEntries )
                     {
                         FileProp prop;
                         prop.eExists = EXIST_YES;
@@ -290,7 +290,7 @@ bool VSIDIRAz::AnalyseAzureFileList(
                         entry->nMode = S_IFDIR;
                         entry->bModeKnown = true;
 
-                        if( bCacheResults )
+                        if( bCacheEntries )
                         {
                             FileProp prop;
                             prop.eExists = EXIST_YES;
@@ -484,7 +484,7 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 
     char** GetFileList( const char *pszFilename,
                         int nMaxFiles,
-                        bool bCacheResults,
+                        bool bCacheEntries,
                         bool* pbGotFileList );
 
     VSIDIR* OpenDir( const char *pszPath, int nRecurseDepth,
@@ -953,9 +953,9 @@ int VSIAzureFSHandler::Rmdir( const char * pszDirname )
     {
         InvalidateCachedData(
             GetURLFromFilename(osDirname.substr(0, osDirname.size() - 1)) );
-        CPLDebug(GetDebugKey(), "%s is not a object", pszDirname);
-        errno = ENOENT;
-        return -1;
+        // The directory might have not been created by GDAL, and thus lacking the
+        // GDAL marker file, so do not turn non-existence as an error
+        return 0;
     }
     else if( sStat.st_mode != S_IFDIR )
     {
@@ -988,7 +988,13 @@ int VSIAzureFSHandler::Rmdir( const char * pszDirname )
         return -1;
     }
 
-    return DeleteObject((osDirname + GDAL_MARKER_FOR_DIR).c_str());
+    if( DeleteObject((osDirname + GDAL_MARKER_FOR_DIR).c_str()) == 0 )
+        return 0;
+    // The directory might have not been created by GDAL, and thus lacking the
+    // GDAL marker file, so check if is there, and if not, return success.
+    if( VSIStatL(osDirname, &sStat) != 0 )
+        return 0;
+    return -1;
 }
 
 /************************************************************************/
@@ -1137,7 +1143,7 @@ char** VSIAzureFSHandler::GetFileList( const char *pszDirname,
 
 char** VSIAzureFSHandler::GetFileList( const char *pszDirname,
                                        int nMaxFiles,
-                                       bool bCacheResults,
+                                       bool bCacheEntries,
                                        bool* pbGotFileList )
 {
     if( ENABLE_DEBUG )
@@ -1148,7 +1154,7 @@ char** VSIAzureFSHandler::GetFileList( const char *pszDirname,
     char** papszOptions = CSLSetNameValue(nullptr,
                                 "MAXFILES", CPLSPrintf("%d", nMaxFiles));
     papszOptions = CSLSetNameValue(papszOptions,
-                            "CACHE_RESULTS", bCacheResults ? "YES" : "NO");
+                            "CACHE_ENTRIES", bCacheEntries ? "YES" : "NO");
     auto dir = OpenDir(pszDirname, 0, papszOptions);
     CSLDestroy(papszOptions);
     if( !dir )
@@ -1267,8 +1273,8 @@ VSIDIR* VSIAzureFSHandler::OpenDir( const char *pszPath,
     dir->osBucket = osBucket;
     dir->osObjectKey = osObjectKey;
     dir->nMaxFiles = atoi(CSLFetchNameValueDef(papszOptions, "MAXFILES", "0"));
-    dir->bCacheResults = CPLTestBool(
-        CSLFetchNameValueDef(papszOptions, "CACHE_RESULTS", "YES"));
+    dir->bCacheEntries = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "CACHE_ENTRIES", "YES"));
     if( !dir->IssueListDir() )
     {
         delete dir;

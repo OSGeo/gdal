@@ -734,7 +734,12 @@ def test_vsiaz_fake_mkdir_rmdir():
                 {'Connection': 'close', 'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <EnumerationResults>
-                        <Prefix>it_is_a_file/</Prefix>
+                        <Prefix>az_bucket_test_mkdir/</Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>az_bucket_test_mkdir/it_is_a_file</Name>
+                          </Blob>
+                        </Blobs>
                     </EnumerationResults>
                 """)
     with webserver.install_http_handler(handler):
@@ -762,12 +767,15 @@ def test_vsiaz_fake_mkdir_rmdir():
     assert ret == 0
 
     # Try deleting already deleted directory
+    # --> do not consider this as an error because Azure directories are removed
+    # as soon as the last object in it is removed. So when directories are created
+    # without .gdal_marker_for_dir they will disappear without explicit removal
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_mkdir/dir/', 404)
     handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=dir%2F&restype=container', 200)
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsiaz/az_bucket_test_mkdir/dir')
-    assert ret != 0
+    assert ret == 0
 
     # Try deleting non-empty directory
     handler = webserver.SequentialHandler()
@@ -852,6 +860,105 @@ def test_vsiaz_fake_rename():
     with webserver.install_http_handler(handler):
         assert gdal.Rename( '/vsiaz/test/source.txt', '/vsiaz/test/target.txt') == 0
 
+
+###############################################################################
+# Test OpenDir() with a fake server
+
+
+def test_vsiaz_opendir():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    # Unlimited depth
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/azure/blob/myaccount/opendir?comp=list&restype=container', 200, {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix></Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>test.txt</Name>
+                            <Properties>
+                              <Last-Modified>01 Jan 1970 00:00:01</Last-Modified>
+                              <Content-Length>40</Content-Length>
+                            </Properties>
+                          </Blob>
+                          <Blob>
+                            <Name>subdir/.gdal_marker_for_dir</Name>
+                          </Blob>
+                          <Blob>
+                            <Name>subdir/test.txt</Name>
+                            <Properties>
+                              <Last-Modified>01 Jan 1970 00:00:01</Last-Modified>
+                              <Content-Length>4</Content-Length>
+                            </Properties>
+                          </Blob>
+                        </Blobs>
+                    </EnumerationResults>""")
+    with webserver.install_http_handler(handler):
+        d = gdal.OpenDir('/vsiaz/opendir')
+    assert d is not None
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'test.txt'
+    assert entry.size == 40
+    assert entry.mode == 32768
+    assert entry.mtime == 1
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'subdir/'
+    assert entry.mode == 16384
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry.name == 'subdir/test.txt'
+    assert entry.size == 4
+    assert entry.mode == 32768
+
+    entry = gdal.GetNextDirEntry(d)
+    assert entry is None
+
+    gdal.CloseDir(d)
+
+
+###############################################################################
+# Test RmdirRecursive() with a fake server
+
+
+def test_vsiaz_rmdirrecursive():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/azure/blob/myaccount/rmdirrec?comp=list&prefix=subdir%2F&restype=container', 200, {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>subdir/</Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>subdir/test.txt</Name>
+                            <Properties>
+                              <Last-Modified>01 Jan 1970 00:00:01</Last-Modified>
+                              <Content-Length>40</Content-Length>
+                            </Properties>
+                          </Blob>
+                          <Blob>
+                            <Name>subdir/subdir2/.gdal_marker_for_dir</Name>
+                          </Blob>
+                          <Blob>
+                            <Name>subdir/subdir2/test.txt</Name>
+                            <Properties>
+                              <Last-Modified>01 Jan 1970 00:00:01</Last-Modified>
+                              <Content-Length>4</Content-Length>
+                            </Properties>
+                          </Blob>
+                        </Blobs>
+                    </EnumerationResults>""")
+    handler.add('DELETE', '/azure/blob/myaccount/rmdirrec/subdir/test.txt', 202)
+    handler.add('DELETE', '/azure/blob/myaccount/rmdirrec/subdir/subdir2/test.txt', 202)
+    with webserver.install_http_handler(handler):
+        assert gdal.RmdirRecursive('/vsiaz/rmdirrec/subdir') == 0
 
 ###############################################################################
 
