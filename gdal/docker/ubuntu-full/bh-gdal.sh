@@ -10,11 +10,6 @@ if [ -n "${GDAL_BUILD_IS_RELEASE:-}" ]; then
     export GDAL_SHA1SUM=${GDAL_VERSION}
 fi
 
-if [ "${WITH_DEBUG_SYMBOLS:-no}" = "yes" ]; then
-    export CFLAGS="-ggdb"
-    export CXXFLAGS="-ggdb"
-fi
-
 mkdir gdal
 wget -q "https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz" \
     -O - | tar xz -C gdal --strip-components=1

@@ -22,12 +22,8 @@ wget -q "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
         ccache -M 100M
     fi
 
-    if [ "${WITH_DEBUG_SYMBOLS:-no}" = "yes" ]; then
-        CFLAGS="-g -ggdb"
-        CXXFLAGS="-g -ggdb"
-    fi
-    export CFLAGS="-DPROJ_RENAME_SYMBOLS -O2 ${CFLAGS}"
-    export CXXFLAGS="-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 ${CXXFLAGS}"
+    export CFLAGS="-DPROJ_RENAME_SYMBOLS -O2 -g"
+    export CXXFLAGS="-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 -g"
 
     ./configure "--prefix=${PROJ_INSTALL_PREFIX}" --disable-static
 
