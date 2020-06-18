@@ -78,7 +78,7 @@ struct VSIDIRAz: public VSIDIR
     IVSIS3LikeFSHandler* poFS = nullptr;
     IVSIS3LikeHandleHelper* poHandleHelper = nullptr;
     int nMaxFiles = 0;
-    bool bCacheResults = true;
+    bool bCacheEntries = true;
 
     explicit VSIDIRAz(IVSIS3LikeFSHandler *poFSIn): poFS(poFSIn) {}
     ~VSIDIRAz()
@@ -243,7 +243,7 @@ bool VSIDIRAz::AnalyseAzureFileList(
                         entry->bMTimeKnown = true;
                     }
 
-                    if( bCacheResults )
+                    if( bCacheEntries )
                     {
                         FileProp prop;
                         prop.eExists = EXIST_YES;
@@ -290,7 +290,7 @@ bool VSIDIRAz::AnalyseAzureFileList(
                         entry->nMode = S_IFDIR;
                         entry->bModeKnown = true;
 
-                        if( bCacheResults )
+                        if( bCacheEntries )
                         {
                             FileProp prop;
                             prop.eExists = EXIST_YES;
@@ -484,7 +484,7 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 
     char** GetFileList( const char *pszFilename,
                         int nMaxFiles,
-                        bool bCacheResults,
+                        bool bCacheEntries,
                         bool* pbGotFileList );
 
     VSIDIR* OpenDir( const char *pszPath, int nRecurseDepth,
@@ -1143,7 +1143,7 @@ char** VSIAzureFSHandler::GetFileList( const char *pszDirname,
 
 char** VSIAzureFSHandler::GetFileList( const char *pszDirname,
                                        int nMaxFiles,
-                                       bool bCacheResults,
+                                       bool bCacheEntries,
                                        bool* pbGotFileList )
 {
     if( ENABLE_DEBUG )
@@ -1154,7 +1154,7 @@ char** VSIAzureFSHandler::GetFileList( const char *pszDirname,
     char** papszOptions = CSLSetNameValue(nullptr,
                                 "MAXFILES", CPLSPrintf("%d", nMaxFiles));
     papszOptions = CSLSetNameValue(papszOptions,
-                            "CACHE_RESULTS", bCacheResults ? "YES" : "NO");
+                            "CACHE_ENTRIES", bCacheEntries ? "YES" : "NO");
     auto dir = OpenDir(pszDirname, 0, papszOptions);
     CSLDestroy(papszOptions);
     if( !dir )
@@ -1273,8 +1273,8 @@ VSIDIR* VSIAzureFSHandler::OpenDir( const char *pszPath,
     dir->osBucket = osBucket;
     dir->osObjectKey = osObjectKey;
     dir->nMaxFiles = atoi(CSLFetchNameValueDef(papszOptions, "MAXFILES", "0"));
-    dir->bCacheResults = CPLTestBool(
-        CSLFetchNameValueDef(papszOptions, "CACHE_RESULTS", "YES"));
+    dir->bCacheEntries = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "CACHE_ENTRIES", "YES"));
     if( !dir->IssueListDir() )
     {
         delete dir;
