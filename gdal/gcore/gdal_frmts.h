@@ -205,6 +205,7 @@ void CPL_DLL GDALRegister_DAAS(void);
 void CPL_DLL GDALRegister_COG(void);
 void CPL_DLL GDALRegister_RDB(void);
 void CPL_DLL GDALRegister_EXR(void);
+void CPL_DLL GDALRegister_HEIF(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */

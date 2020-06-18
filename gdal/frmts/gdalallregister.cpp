@@ -591,6 +591,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_EXR();
 #endif
 
+#ifdef FRMT_heif
+    GDALRegister_HEIF();
+#endif
+
     // NOTE: you need to generally your own driver before that line.
 
 /* -------------------------------------------------------------------- */
