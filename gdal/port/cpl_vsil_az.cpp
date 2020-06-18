@@ -953,9 +953,9 @@ int VSIAzureFSHandler::Rmdir( const char * pszDirname )
     {
         InvalidateCachedData(
             GetURLFromFilename(osDirname.substr(0, osDirname.size() - 1)) );
-        CPLDebug(GetDebugKey(), "%s is not a object", pszDirname);
-        errno = ENOENT;
-        return -1;
+        // The directory might have not been created by GDAL, and thus lacking the
+        // GDAL marker file, so do not turn non-existence as an error
+        return 0;
     }
     else if( sStat.st_mode != S_IFDIR )
     {
@@ -988,7 +988,13 @@ int VSIAzureFSHandler::Rmdir( const char * pszDirname )
         return -1;
     }
 
-    return DeleteObject((osDirname + GDAL_MARKER_FOR_DIR).c_str());
+    if( DeleteObject((osDirname + GDAL_MARKER_FOR_DIR).c_str()) == 0 )
+        return 0;
+    // The directory might have not been created by GDAL, and thus lacking the
+    // GDAL marker file, so check if is there, and if not, return success.
+    if( VSIStatL(osDirname, &sStat) != 0 )
+        return 0;
+    return -1;
 }
 
 /************************************************************************/

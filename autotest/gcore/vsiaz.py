@@ -734,7 +734,12 @@ def test_vsiaz_fake_mkdir_rmdir():
                 {'Connection': 'close', 'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <EnumerationResults>
-                        <Prefix>it_is_a_file/</Prefix>
+                        <Prefix>az_bucket_test_mkdir/</Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>az_bucket_test_mkdir/it_is_a_file</Name>
+                          </Blob>
+                        </Blobs>
                     </EnumerationResults>
                 """)
     with webserver.install_http_handler(handler):
@@ -762,12 +767,15 @@ def test_vsiaz_fake_mkdir_rmdir():
     assert ret == 0
 
     # Try deleting already deleted directory
+    # --> do not consider this as an error because Azure directories are removed
+    # as soon as the last object in it is removed. So when directories are created
+    # without .gdal_marker_for_dir they will disappear without explicit removal
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_mkdir/dir/', 404)
     handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=dir%2F&restype=container', 200)
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsiaz/az_bucket_test_mkdir/dir')
-    assert ret != 0
+    assert ret == 0
 
     # Try deleting non-empty directory
     handler = webserver.SequentialHandler()
