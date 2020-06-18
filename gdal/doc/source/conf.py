@@ -85,6 +85,8 @@ html_show_sourcelink = False
 
 html_logo = '../images/gdalicon.png'
 
+html_favicon = '../images/favicon.png'
+
 # -- Options for manual page output ---------------------------------------
 
 # One entry per manual page. List of tuples
