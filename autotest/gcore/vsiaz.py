@@ -920,6 +920,46 @@ def test_vsiaz_opendir():
 
     gdal.CloseDir(d)
 
+
+###############################################################################
+# Test RmdirRecursive() with a fake server
+
+
+def test_vsiaz_rmdirrecursive():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/azure/blob/myaccount/rmdirrec?comp=list&prefix=subdir%2F&restype=container', 200, {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>subdir/</Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>subdir/test.txt</Name>
+                            <Properties>
+                              <Last-Modified>01 Jan 1970 00:00:01</Last-Modified>
+                              <Content-Length>40</Content-Length>
+                            </Properties>
+                          </Blob>
+                          <Blob>
+                            <Name>subdir/subdir2/.gdal_marker_for_dir</Name>
+                          </Blob>
+                          <Blob>
+                            <Name>subdir/subdir2/test.txt</Name>
+                            <Properties>
+                              <Last-Modified>01 Jan 1970 00:00:01</Last-Modified>
+                              <Content-Length>4</Content-Length>
+                            </Properties>
+                          </Blob>
+                        </Blobs>
+                    </EnumerationResults>""")
+    handler.add('DELETE', '/azure/blob/myaccount/rmdirrec/subdir/test.txt', 202)
+    handler.add('DELETE', '/azure/blob/myaccount/rmdirrec/subdir/subdir2/test.txt', 202)
+    with webserver.install_http_handler(handler):
+        assert gdal.RmdirRecursive('/vsiaz/rmdirrec/subdir') == 0
+
 ###############################################################################
 
 

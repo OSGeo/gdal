@@ -1513,39 +1513,43 @@ int* VSIFilesystemHandler::UnlinkBatch( CSLConstList papszFiles )
 
 int VSIFilesystemHandler::RmdirRecursive( const char* pszDirname )
 {
-    char** papszFiles = VSIReadDir(pszDirname);
-    for( char** papszIter = papszFiles; papszIter && *papszIter; ++papszIter )
+    CPLString osDirnameWithoutEndSlash(pszDirname);
+    if( !osDirnameWithoutEndSlash.empty() && osDirnameWithoutEndSlash.back() == '/' )
+        osDirnameWithoutEndSlash.resize( osDirnameWithoutEndSlash.size() - 1 );
+
+    CPLStringList aosOptions;
+    auto poDir = std::unique_ptr<VSIDIR>(OpenDir(pszDirname, -1, aosOptions.List()));
+    if( !poDir )
+        return -1;
+    std::vector<std::string> aosDirs;
+    while( true )
     {
-        if( (*papszIter)[0] == '\0' ||
-            strcmp(*papszIter, ".") == 0 ||
-            strcmp(*papszIter, "..") == 0 )
+        auto entry = poDir->NextDirEntry();
+        if( !entry )
+            break;
+
+        const CPLString osFilename(osDirnameWithoutEndSlash + '/' + entry->pszName);
+        if( (entry->nMode & S_IFDIR) )
         {
-            continue;
+            aosDirs.push_back(osFilename);
         }
-        VSIStatBufL sStat;
-        const CPLString osFilename(
-            CPLFormFilename(pszDirname, *papszIter, nullptr));
-        if( VSIStatL(osFilename, &sStat) == 0 )
+        else
         {
-            if( VSI_ISDIR(sStat.st_mode) )
-            {
-                if( RmdirRecursive(osFilename) != 0 )
-                {
-                    CSLDestroy(papszFiles);
-                    return -1;
-                }
-            }
-            else
-            {
-                if( VSIUnlink(osFilename) != 0 )
-                {
-                    CSLDestroy(papszFiles);
-                    return -1;
-                }
-            }
+            if( VSIUnlink(osFilename) != 0 )
+                return -1;
         }
     }
-    CSLDestroy(papszFiles);
+
+    // Sort in reverse order, so that inner-most directories are deleted first
+    std::sort(aosDirs.begin(), aosDirs.end(),
+              [](const std::string& a, const std::string& b) {return a > b; });
+
+    for(const auto& osDir: aosDirs )
+    {
+        if( VSIRmdir(osDir.c_str()) != 0 )
+            return -1;
+    }
+
     return VSIRmdir(pszDirname);
 }
 
