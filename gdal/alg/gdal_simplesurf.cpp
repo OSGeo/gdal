@@ -341,26 +341,6 @@ void GDALSimpleSURF::SetDescriptor(
 // TODO(schwehr): What does "value is 0,1." mean?  Is that 0 to 1 or 0.1?
 // TODO(schwehr): 0,001?
 
-/**
- * Find corresponding points (equal points in two collections).
- *
- * @param poMatchPairs Resulting collection for matched points
- * @param poFirstCollect Points on the first image
- * @param poSecondCollect Points on the second image
- * @param dfThreshold Value from 0 to 1. Threshold affects to number of
- * matched points. If threshold is higher, amount of corresponding
- * points is larger, and vice versa
- *
- * @note Typical threshold's value is 0,1. BUT it's a very approximate guide.
- * It can be 0,001 or even 1. This threshold provides direct adjustment
- * of point matching.
- * NOTICE that if threshold is lower, matches are more robust and correct, but
- * number of matched points is smaller. Therefore if algorithm performs many
- * false detections and produces bad results, reduce threshold.  Otherwise, if
- * algorithm finds nothing, increase threshold.
- *
- * @return CE_None or CE_Failure if error occurs.
- */
 
 CPLErr GDALSimpleSURF::MatchFeaturePoints(
     std::vector<GDALFeaturePoint*> *poMatchPairs,
