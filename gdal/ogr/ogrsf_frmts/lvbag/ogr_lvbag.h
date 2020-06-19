@@ -42,37 +42,14 @@ typedef enum
 } LayerType;
 
 /**
- * Deleter for unique pointer.
- *
- * This functor will free the XML kept resources once the unique pointer goes
- * out of scope or is reset.
+ * Layer pool unique pointer.
  */
-
-struct XMLParserUniquePtrDeleter
-{
-    void operator()(XML_Parser oParser) const noexcept
-    {
-        XML_ParserFree(oParser);
-    }
-};
-
-/**
- * XML parser unique pointer type.
- *
- * The XML parser unique pointer holds the resources used by the parser for as long
- * as the pointers stays inscope. Once the pointer leaves operation scope the deleter
- * is called and the resources are freed.
- */
-
-typedef std::unique_ptr<XML_ParserStruct, XMLParserUniquePtrDeleter> XMLParserUniquePtr;
-
-using LayerUniquePtr = std::unique_ptr<OGRLayer>;
 using LayerPoolUniquePtr = std::unique_ptr<OGRLayerPool>;
 
 /**
  * Vector holding pointers to OGRLayer.
  */
-using LayerVector = std::vector<std::pair<LayerType, LayerUniquePtr>>;
+using LayerVector = std::vector<std::pair<LayerType, OGRLayerUniquePtr>>;
 
 }
 
