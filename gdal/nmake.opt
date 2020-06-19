@@ -39,6 +39,12 @@
 !IFNDEF MSVC_VER
 #assume msvc VS2015.
 MSVC_VER=1900
+VSFRIENDLYVERSION=vs2015
+!ENDIF
+!IF $(MSVC_VER) >= 1920
+VSFRIENDLYVERSION=vs2019
+!ELSEIF $(MSVC_VER) >= 1910
+VSFRIENDLYVERSION=vs2017
 !ENDIF
 
 ###############################################################################
