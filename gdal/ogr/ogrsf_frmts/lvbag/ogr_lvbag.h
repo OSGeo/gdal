@@ -76,7 +76,7 @@ class OGRLVBAGLayer final: public OGRAbstractProxiedLayer, public OGRGetNextFeat
     
     FileDescriptorState eFileDescriptorsState;
 
-    OGRLVBAG::XMLParserUniquePtr  oParser;
+    OGRExpatUniquePtr   oParser;
     
     bool                bSchemaOnly;
     bool                bHasReadSchema;

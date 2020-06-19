@@ -34,13 +34,18 @@
 #include <algorithm>
 
 /************************************************************************/
-/*                          OGRLVBAGDataSource()                          */
+/*                          OGRLVBAGDataSource()                        */
 /************************************************************************/
 
 OGRLVBAGDataSource::OGRLVBAGDataSource() :
     poPool{ new OGRLayerPool{ } },
     papoLayers{ OGRLVBAG::LayerVector{ } }
-{}
+{
+    const int nMaxSimultaneouslyOpened =
+        std::max(atoi(CPLGetConfigOption("OGR_LVBAG_MAX_OPENED", "100")), 1);
+    if( poPool->GetMaxSimultaneouslyOpened() != nMaxSimultaneouslyOpened )
+        poPool.reset(new OGRLayerPool(nMaxSimultaneouslyOpened));
+}
 
 /************************************************************************/
 /*                                Open()                                */
@@ -115,6 +120,8 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
         int nSrcLayers = static_cast<int>(papoLayersIdx.size()) + 1;
         OGRLayer **papoSrcLayers = static_cast<OGRLayer **>(
             CPLRealloc(nullptr, sizeof(OGRLayer *) * nSrcLayers ));
+
+        CPLAssert(papoLayers[baseLayerIdx].second);
 
         int idx = 0;
         papoSrcLayers[idx++] = papoLayers[baseLayerIdx].second.release();

@@ -578,7 +578,7 @@ void OGRLVBAGLayer::ConfigureParser()
         static_cast<OGRLVBAGLayer *>(pUserData)->DataHandlerCbk(data, nLen);
     };
 
-    oParser = OGRLVBAG::XMLParserUniquePtr{ OGRCreateExpatXMLParser() };
+    oParser = OGRExpatUniquePtr{ OGRCreateExpatXMLParser() };
     XML_SetElementHandler(oParser.get(), startElementWrapper, endElementWrapper);
     XML_SetCharacterDataHandler(oParser.get(), dataHandlerWrapper);
     XML_SetUserData(oParser.get(), this);
