@@ -523,17 +523,48 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                 reinterpret_cast<OGRGeometry *>(OGR_G_CreateFromGML(osElementString.c_str())) };
             if( poGeom && !poGeom->IsEmpty() )
             {
-                if( !bSchemaOnly )
-                {
-                    poGeom->assignSpatialReference(GetSpatialRef());
-                    poFeature->SetGeometryDirectly(poGeom.release());
-                }
-                else
-                {
-                    OGRGeomFieldDefn *poGeomField = poFeatureDefn->GetGeomFieldDefn(0);
+                // The specification only accounts for 2-dimensional datasets
+                if( poGeom->Is3D() )
+                    poGeom->flattenTo2D();
+
+                OGRGeomFieldDefn *poGeomField = poFeatureDefn->GetGeomFieldDefn(0);
+                if( !poGeomField->GetSpatialRef() )
                     poGeomField->SetSpatialRef(poGeom->getSpatialReference());
+                if( poGeomField->GetType() == wkbUnknown )
                     poGeomField->SetType(poGeom->getGeometryType());
+
+                if( poGeomField->GetType() == wkbPoint )
+                {
+                    switch( poGeom->getGeometryType() )
+                    {
+                        case wkbPolygon:
+                        case wkbPolygon25D:
+                        case wkbPolygonM:
+                        case wkbPolygonZM:
+                        case wkbMultiPolygon:
+                        case wkbMultiPolygon25D:
+                        case wkbMultiPolygonM:
+                        case wkbMultiPolygonZM:
+                        {
+                            std::unique_ptr<OGRPoint> poPoint = std::unique_ptr<OGRPoint>{ new OGRPoint };
+#ifdef HAVE_GEOS
+                            if( poGeom->Centroid(poPoint.get()) == OGRERR_NONE )
+                                poGeom.reset(poPoint.release());
+#else
+                            CPLError( CE_Warning, CPLE_AppDefined,
+                                "Cannot convert polygon to point, enable GEOS support" );
+                            poGeom.reset(poPoint.release());
+#endif
+                            break;
+                        }
+
+                        default:
+                            break;
+                    }
                 }
+
+                poGeom->assignSpatialReference(GetSpatialRef());
+                poFeature->SetGeometryDirectly(poGeom.release());
             }
             else
             {
@@ -669,8 +700,6 @@ void OGRLVBAGLayer::ParseDocument()
             }
             
             case XML_FINISHED:
-                return;
-
             default:
                 return;
         }
