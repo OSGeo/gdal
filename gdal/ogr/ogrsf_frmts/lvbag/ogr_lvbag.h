@@ -92,6 +92,7 @@ class OGRLVBAGLayer final: public OGRAbstractProxiedLayer, public OGRGetNextFeat
 
     char                aBuf[BUFSIZ];
 
+    void                AddSpatialRef(OGRwkbGeometryType eTypeIn);
     void                AddOccurrenceFieldDefn();
     void                AddIdentifierFieldDefn();
     void                AddDocumentFieldDefn();

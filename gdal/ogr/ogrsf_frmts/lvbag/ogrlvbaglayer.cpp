@@ -30,6 +30,8 @@
 #include "ogr_lvbag.h"
 #include "ogr_p.h"
 
+constexpr const char *pszSpecificationUrn = "urn:ogc:def:crs:EPSG::28992";
+
 /************************************************************************/
 /*                           OGRLVBAGLayer()                            */
 /*                                                                      */
@@ -127,6 +129,20 @@ static inline const char* XMLTagSplit( const char *pszName )
 }
 
 /************************************************************************/
+/*                           AddSpatialRef()                            */
+/************************************************************************/
+
+void OGRLVBAGLayer::AddSpatialRef( OGRwkbGeometryType eTypeIn )
+{
+    OGRGeomFieldDefn *poGeomField = poFeatureDefn->GetGeomFieldDefn(0);
+    OGRSpatialReference* poSRS = new OGRSpatialReference{};
+    poSRS->importFromURN(pszSpecificationUrn);
+    poGeomField->SetSpatialRef(poSRS);
+    poGeomField->SetType(eTypeIn);
+    poSRS->Release();
+}
+
+/************************************************************************/
 /*                      AddIdentifierFieldDefn()                        */
 /************************************************************************/
 
@@ -206,6 +222,8 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
 
         poFeatureDefn->SetName("Pand");
         SetDescription(poFeatureDefn->GetName());
+
+        AddSpatialRef(wkbPolygon);
     }
     else if( EQUAL("num", pszDataset) )
     {
@@ -236,6 +254,8 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
 
         poFeatureDefn->SetName("Ligplaats");
         SetDescription(poFeatureDefn->GetName());
+
+        AddSpatialRef(wkbPolygon);
     }
     else if( EQUAL("sta", pszDataset) )
     {
@@ -245,6 +265,8 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
 
         poFeatureDefn->SetName("Standplaats");
         SetDescription(poFeatureDefn->GetName());
+
+        AddSpatialRef(wkbPolygon);
     }
     else if( EQUAL("opr", pszDataset) )
     {
@@ -275,6 +297,8 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
 
         poFeatureDefn->SetName("Verblijfsobject");
         SetDescription(poFeatureDefn->GetName());
+
+        AddSpatialRef(wkbPoint);
     }
     else if( EQUAL("wpl", pszDataset) )
     {
@@ -288,6 +312,8 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
 
         poFeatureDefn->SetName("Woonplaats");
         SetDescription(poFeatureDefn->GetName());
+
+        AddSpatialRef(wkbMultiPolygon);
     }
     else
         CPLError(CE_Failure, CPLE_AppDefined,
