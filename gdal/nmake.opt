@@ -36,19 +36,10 @@
 # 1910 = 15.0(2017)
 # 1900 = 14.0(2015)
 #
-#The VSFRIENDLYVERSION variable is not used by GDAL itself, but can help customizing path to
-#dependencies built with Visual Studio
-#
 
 !IFNDEF MSVC_VER
 #assume msvc VS2015.
 MSVC_VER=1900
-VSFRIENDLYVERSION=vs2015
-!ENDIF
-!IF $(MSVC_VER) >= 1920
-VSFRIENDLYVERSION=vs2019
-!ELSEIF $(MSVC_VER) >= 1910
-VSFRIENDLYVERSION=vs2017
 !ENDIF
 
 ###############################################################################
@@ -369,8 +360,10 @@ JPEG12_SUPPORTED = 1
 # Uncomment the following and update to enable ECW read support with the 5.0+ SDK
 #!IF $(MSVC_VER) < 1910
 #ECW_PLATFORM_TOOLSET_DIR = vc140
-#!ELSE
+#!ELSEIF $(MSVC_VER) < 1920
 #ECW_PLATFORM_TOOLSET_DIR = vc141
+#ELSE
+#ECW_PLATFORM_TOOLSET_DIR = vc142
 #!ENDIF
 
 #!IF "$(DEBUG)" == "1"
