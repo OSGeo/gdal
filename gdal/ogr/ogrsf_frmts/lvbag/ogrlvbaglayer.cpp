@@ -415,14 +415,10 @@ void OGRLVBAGLayer::StartElementCbk( const char *pszName, const char **ppszAttr 
     }
     else if( nFeatureElementDepth > 0 && nAttributeElementDepth == 0 &&
         nGeometryElementDepth == 0 && STARTS_WITH_CI(pszName, "objecten") )
-    {
         nAttributeElementDepth = nCurrentDepth;
-    }
     else if( nFeatureElementDepth > 0 && nAttributeElementDepth > 0 &&
              nGeometryElementDepth == 0 )
-    {
         StartDataCollect();
-    }
     else if( nGeometryElementDepth > 0 && STARTS_WITH_CI(pszName, "gml") )
     {
         osElementString += "<";
@@ -454,17 +450,12 @@ void OGRLVBAGLayer::StartElementCbk( const char *pszName, const char **ppszAttr 
              EQUAL("sl-bag-extract:bagObject", pszName) )
     {
         nFeatureElementDepth = nCurrentDepth;
-        if( !bSchemaOnly )
-            poFeature = new OGRFeature(poFeatureDefn);
+        poFeature = new OGRFeature(poFeatureDefn);
     }
     else if( nFeatureCollectionDepth == 0 && EQUAL("sl:standBestand", pszName) )
-    {
         nFeatureCollectionDepth = nCurrentDepth;
-    }
     else if( nFeatureCollectionDepth > 0 && EQUAL("sl:objectType", pszName) )
-    {
         StartDataCollect();
-    }
 
     nCurrentDepth++;
 }
@@ -486,42 +477,37 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
         StopDataCollect();
         if ( !osElementString.empty() )
         {
-            if( !bSchemaOnly )
+            const int iFieldIndex = poFeatureDefn->GetFieldIndex(pszTag);
+            if( iFieldIndex > -1 )
             {
-                const int iFieldIndex = poFeatureDefn->GetFieldIndex(pszTag);
-                if( iFieldIndex > -1 )
+                const char *pszValue = osElementString.c_str();
+                const OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iFieldIndex);
+                if( poFieldDefn->GetSubType() == OGRFieldSubType::OFSTBoolean )
                 {
-                    const char *pszValue = osElementString.c_str();
-                    const OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iFieldIndex);
-                    if( poFieldDefn->GetSubType() == OGRFieldSubType::OFSTBoolean )
-                    {
-                        if( EQUAL("n", pszValue) )
-                            poFeature->SetField(iFieldIndex, 0);
-                        else if( EQUAL("j", pszValue) )
-                            poFeature->SetField(iFieldIndex, 1);
-                        else
-                        {
-                            CPLError(CE_Failure, CPLE_AppDefined, "Parsing boolean failed");
-                            XML_StopParser(oParser.get(), XML_FALSE);
-                        }
-                    }
-                    else if( poFieldDefn->GetType() == OFTDate && osElementString.length() == 4 )
-                    {
-                        CPLString oFullDate{ pszValue };
-                        oFullDate += "-01-01";
-                        poFeature->SetField(iFieldIndex, oFullDate.c_str());
-                    }
+                    if( EQUAL("n", pszValue) )
+                        poFeature->SetField(iFieldIndex, 0);
+                    else if( EQUAL("j", pszValue) )
+                        poFeature->SetField(iFieldIndex, 1);
                     else
-                        poFeature->SetField(iFieldIndex, pszValue);
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined, "Parsing boolean failed");
+                        XML_StopParser(oParser.get(), XML_FALSE);
+                    }
                 }
+                else if( poFieldDefn->GetType() == OFTDate && osElementString.length() == 4 )
+                {
+                    CPLString oFullDate{ pszValue };
+                    oFullDate += "-01-01";
+                    poFeature->SetField(iFieldIndex, oFullDate.c_str());
+                }
+                else
+                    poFeature->SetField(iFieldIndex, pszValue);
             }
         }
         osElementString.Clear();
     }
     else if( nAttributeElementDepth == nCurrentDepth )
-    {
         nAttributeElementDepth = 0;
-    }
     else if( nGeometryElementDepth > 0 && nCurrentDepth > nGeometryElementDepth )
     {
         osElementString += "</";
@@ -563,15 +549,12 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
     {
         nFeatureElementDepth = 0;
 
-        if( !bSchemaOnly )
-            poFeature->SetFID(nNextFID++);
+        poFeature->SetFID(nNextFID++);
 
         XML_StopParser(oParser.get(), XML_TRUE);
     }
     else if( nFeatureCollectionDepth == nCurrentDepth )
-    {
         nFeatureCollectionDepth = 0;
-    }
     else if( EQUAL("sl:objectType", pszName) && !poFeatureDefn->GetFieldCount() )
     {
         StopDataCollect();
@@ -584,6 +567,11 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
         if( !bHasReadSchema )
             CreateFeatureDefn(osElementString.c_str());
         bHasReadSchema = true;
+
+        // The parser is suspended but never resumed. Stop
+        // without resume indicated an error.
+        if( bSchemaOnly )
+            XML_StopParser(oParser.get(), XML_TRUE);
     }
 }
 
