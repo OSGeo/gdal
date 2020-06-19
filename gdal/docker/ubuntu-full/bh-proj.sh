@@ -25,7 +25,7 @@ wget -q "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
     export CFLAGS="-DPROJ_RENAME_SYMBOLS -O2 -g"
     export CXXFLAGS="-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 -g"
 
-    ./configure "--prefix=${PROJ_INSTALL_PREFIX}" --disable-static
+    ./configure "--prefix=${PROJ_INSTALL_PREFIX:-/usr/local}" --disable-static
 
     make "-j$(nproc)"
     make install DESTDIR="/build"

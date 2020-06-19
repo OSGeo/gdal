@@ -5,7 +5,6 @@
 # Public domain
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG PROJ_INSTALL_PREFIX=/usr/local
 ARG BASE_IMAGE=ubuntu:20.04
 
 FROM $BASE_IMAGE as builder
@@ -138,7 +137,7 @@ ARG WITH_DEBUG_SYMBOLS=no
 
 # Build PROJ
 ARG PROJ_VERSION=master
-ARG PROJ_INSTALL_PREFIX
+ARG PROJ_INSTALL_PREFIX=/usr/local
 COPY ./bh-proj.sh /buildscripts/bh-proj.sh
 RUN /buildscripts/bh-proj.sh
 
@@ -155,15 +154,12 @@ FROM $BASE_IMAGE as runner
 
 RUN date
 
-# PROJ dependencies
 RUN apt-get update \
+# PROJ dependencies
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libsqlite3-0 libtiff5 libcurl4 \
         wget curl unzip ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-
 # GDAL dependencies
-RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libcharls2 libopenjp2-7 libcairo2 python3-numpy \
         libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos-3.8.0 libgeos-c1v5 \
@@ -175,28 +171,21 @@ RUN apt-get update \
         libmysqlclient21 libogdi4.1 libcfitsio8 openjdk-8-jre \
         libzstd1 bash bash-completion libpq5 libssl1.1 \
         libarmadillo9 libpython3.8 libopenexr24 \
+        python-is-python3 \
     && rm -rf /var/lib/apt/lists/*
 
-# Order layers starting with less frequently varying ones
-ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
-ARG PROJ_INSTALL_PREFIX
-RUN mkdir -p ${PROJ_INSTALL_PREFIX}/share/proj \
-    && wget --no-verbose --mirror https://cdn.proj.org/ \
-    && rm -f cdn.proj.org/*.js \
-    && rm -f cdn.proj.org/*.css \
-    && mv cdn.proj.org/* ${PROJ_INSTALL_PREFIX}/share/proj/ \
-    && rmdir cdn.proj.org
-
-RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y python-is-python3 \
-    && rm -rf /var/lib/apt/lists/*
+# Attempt to order layers starting with less frequently varying ones
 
 COPY --from=builder  /build_thirdparty/usr/ /usr/
 
+ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
+ARG PROJ_INSTALL_PREFIX=/usr/local
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/share/proj/ ${PROJ_INSTALL_PREFIX}/share/proj/
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/include/ ${PROJ_INSTALL_PREFIX}/include/
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/bin/ ${PROJ_INSTALL_PREFIX}/bin/
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PREFIX}/lib/
+RUN ldconfig \
+    && projsync --system-directory --all
 
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/

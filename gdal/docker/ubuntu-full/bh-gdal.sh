@@ -43,7 +43,7 @@ wget -q "https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz" \
         --with-liblzma \
         --with-webp \
         --with-epsilon \
-        --with-proj=/build/usr/local \
+        --with-proj="/build${PROJ_INSTALL_PREFIX-/usr/local}" \
         --with-poppler \
         --with-hdf5 \
         --with-dods-root=/usr \
