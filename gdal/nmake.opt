@@ -36,6 +36,7 @@
 # 1910 = 15.0(2017)
 # 1900 = 14.0(2015)
 #
+
 !IFNDEF MSVC_VER
 #assume msvc VS2015.
 MSVC_VER=1900
@@ -359,8 +360,10 @@ JPEG12_SUPPORTED = 1
 # Uncomment the following and update to enable ECW read support with the 5.0+ SDK
 #!IF $(MSVC_VER) < 1910
 #ECW_PLATFORM_TOOLSET_DIR = vc140
-#!ELSE
+#!ELSEIF $(MSVC_VER) < 1920
 #ECW_PLATFORM_TOOLSET_DIR = vc141
+#ELSE
+#ECW_PLATFORM_TOOLSET_DIR = vc142
 #!ENDIF
 
 #!IF "$(DEBUG)" == "1"
