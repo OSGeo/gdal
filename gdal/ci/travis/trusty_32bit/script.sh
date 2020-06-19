@@ -24,6 +24,3 @@ sudo i386 chroot "$chroot" pip install -U -r "$PWD/autotest/requirements.txt"
 
 # Run all the Python autotests
 i386 chroot "$chroot" sh -c "cd $PWD/autotest && $PYTEST"
-
-# Run Shellcheck
-shellcheck -e SC2086,SC2046 $(find $PWD/gdal -name '*.sh' -a -not -name ltmain.sh)
