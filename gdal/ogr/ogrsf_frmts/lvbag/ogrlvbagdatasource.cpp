@@ -151,18 +151,18 @@ void OGRLVBAGDataSource::TryCoalesceLayers()
         CPLFree(papoGeomFields);
         CPLFree(papoFields);
 
-        // Erase all released pointers
-        auto it = papoLayers.begin();
-        while( it != papoLayers.end() )
-        {
-            if( !it->second )
-                it = papoLayers.erase(it);
-            else
-                ++it;
-        }
-
         papoLayers.push_back({ OGRLVBAG::LayerType::LYR_RAW,
-            OGRLVBAG::LayerUniquePtr{ poLayer.release() } });
+            OGRLayerUniquePtr{ poLayer.release() } });
+    }
+
+    // Erase all released pointers
+    auto it = papoLayers.begin();
+    while( it != papoLayers.end() )
+    {
+        if( !it->second )
+            it = papoLayers.erase(it);
+        else
+            ++it;
     }
 }
 
