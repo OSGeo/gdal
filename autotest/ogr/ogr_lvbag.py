@@ -195,6 +195,31 @@ def test_ogr_lvbag_dataset_pnd():
     assert sr.GetAuthorityName(None) == 'EPSG'
     assert sr.GetAuthorityCode(None) == '28992'
 
+    feat = lyr.GetNextFeature()
+    if feat.GetField('oorspronkelijkBouwjaar') != '2009/01/01':
+        feat.DumpReadable()
+        pytest.fail()
+
+    feat = lyr.GetNextFeature()
+    feat = lyr.GetNextFeature()
+    feat = lyr.GetNextFeature()
+    if feat.GetField('oorspronkelijkBouwjaar') != '2007/01/01':
+        feat.DumpReadable()
+        pytest.fail()
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('oorspronkelijkBouwjaar') != '1975/01/01':
+        feat.DumpReadable()
+        pytest.fail()
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('oorspronkelijkBouwjaar') != '2001/01/01':
+        feat.DumpReadable()
+        pytest.fail()
+
+    feat = lyr.GetNextFeature()
+    assert feat is None
+
 def test_ogr_lvbag_dataset_sta():
 
     ds = ogr.Open('data/lvbag/sta.xml')

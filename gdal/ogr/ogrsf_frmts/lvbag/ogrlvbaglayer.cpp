@@ -467,7 +467,7 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                 {
                     const char *pszValue = osElementString.c_str();
                     const OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iFieldIndex);
-                    if (poFieldDefn->GetSubType() == OGRFieldSubType::OFSTBoolean)
+                    if( poFieldDefn->GetSubType() == OGRFieldSubType::OFSTBoolean )
                     {
                         if( EQUAL("n", pszValue) )
                             poFeature->SetField(iFieldIndex, 0);
@@ -478,6 +478,12 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                             CPLError(CE_Failure, CPLE_AppDefined, "Parsing boolean failed");
                             XML_StopParser(oParser.get(), XML_FALSE);
                         }
+                    }
+                    else if( poFieldDefn->GetType() == OFTDate && osElementString.length() == 4 )
+                    {
+                        CPLString oFullDate{ pszValue };
+                        oFullDate += "-01-01";
+                        poFeature->SetField(iFieldIndex, oFullDate.c_str());
                     }
                     else
                         poFeature->SetField(iFieldIndex, pszValue);
