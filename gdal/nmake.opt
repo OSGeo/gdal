@@ -36,6 +36,10 @@
 # 1910 = 15.0(2017)
 # 1900 = 14.0(2015)
 #
+#The VSFRIENDLYVERSION variable is not used by GDAL itself, but can help customizing path to
+#dependencies built with Visual Studio
+#
+
 !IFNDEF MSVC_VER
 #assume msvc VS2015.
 MSVC_VER=1900
