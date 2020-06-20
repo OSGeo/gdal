@@ -305,7 +305,7 @@ def test_ogr_lvbag_read_zip_3():
 
 def test_ogr_lvbag_invalid_polygon():
 
-    if not ogrtest.have_geos():
+    if not ogrtest.have_geos() and not ogrtest.have_sfcgal():
         pytest.skip()
 
     ds = ogr.Open('data/lvbag/inval_polygon.xml')
@@ -344,7 +344,7 @@ def test_ogr_lvbag_read_errors():
 # Run test_ogrsf
 
 
-def test_ogr_lvbag_test_ogrsf():
+def test_ogr_lvbag_test_ogrsf_wpl():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
