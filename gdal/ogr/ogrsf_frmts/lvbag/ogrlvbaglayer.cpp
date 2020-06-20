@@ -39,7 +39,7 @@ constexpr const char *pszSpecificationUrn = "urn:ogc:def:crs:EPSG::28992";
 /*      file pointer.                                                   */
 /************************************************************************/
 
-OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn ) :
+OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn, char **papszOpenOptions ) :
     OGRAbstractProxiedLayer{ poPoolIn },
     poFeatureDefn{ new OGRFeatureDefn{} },
     poFeature{ nullptr },
@@ -50,7 +50,7 @@ OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn ) 
     oParser{ nullptr },
     bSchemaOnly{ false },
     bHasReadSchema{ false },
-    bFitInvalidData{ true },
+    bFitInvalidData{ CPLFetchBool(papszOpenOptions, "AUTOCORRECT_INVALID_DATA", true) },
     nCurrentDepth{ 0 },
     nGeometryElementDepth{ 0 },
     nFeatureCollectionDepth{ 0 },
@@ -59,9 +59,9 @@ OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn ) 
     bCollectData{ false }
 {
     SetDescription(CPLGetBasename(pszFilename));
-    
+
     poFeatureDefn->Reference();
-    
+
     memset(aBuf, '\0', sizeof(aBuf));
 }
 

@@ -119,7 +119,7 @@ class OGRLVBAGLayer final: public OGRAbstractProxiedLayer, public OGRGetNextFeat
     friend class OGRLVBAGDataSource;
 
 public:
-    explicit OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn );
+    explicit OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn, char **papszOpenOptions );
     ~OGRLVBAGLayer();
 
     void                ResetReading() override;
@@ -146,7 +146,7 @@ class OGRLVBAGDataSource final: public GDALDataset
 public:
                         OGRLVBAGDataSource();
 
-    int                 Open( const char* pszFilename );
+    int                 Open( const char* pszFilename, char **papszOpenOptions );
 
     int                 GetLayerCount() override;
     OGRLayer*           GetLayer( int ) override;

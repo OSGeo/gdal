@@ -51,10 +51,10 @@ OGRLVBAGDataSource::OGRLVBAGDataSource() :
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRLVBAGDataSource::Open( const char* pszFilename )
+int OGRLVBAGDataSource::Open( const char* pszFilename, char **papszOpenOptionsIn )
 {
     auto poLayer = std::unique_ptr<OGRLVBAGLayer>{
-        new OGRLVBAGLayer{ pszFilename, poPool.get() } };
+        new OGRLVBAGLayer{ pszFilename, poPool.get(), papszOpenOptionsIn } };
     if( poLayer && !poLayer->TouchLayer() )
         return FALSE;
 
