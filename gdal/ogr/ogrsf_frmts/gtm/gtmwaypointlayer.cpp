@@ -154,7 +154,7 @@ void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float alti
                     brokendowndate.tm_min = min;
                     brokendowndate.tm_sec = sec;
                     GIntBig unixTime = CPLYMDHMSToUnixTime(&brokendowndate);
-                    if (TZFlag != 0)
+                    if (TZFlag != 0 && TZFlag != 1)
                         unixTime -= (TZFlag - 100) * 15;
                     if (unixTime <= GTM_EPOCH || (unixTime - GTM_EPOCH) != (int)(unixTime - GTM_EPOCH))
                     {
