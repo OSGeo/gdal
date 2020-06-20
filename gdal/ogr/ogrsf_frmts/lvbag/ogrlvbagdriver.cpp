@@ -127,7 +127,7 @@ void RegisterOGRLVBAG()
     if( GDALGetDriverByName( "LVBAG" ) != nullptr )
         return;
 
-    std::unique_ptr<GDALDriver> poDriver = std::unique_ptr<GDALDriver>(new GDALDriver());
+    std::unique_ptr<GDALDriver> poDriver = std::unique_ptr<GDALDriver>{ new GDALDriver };
 
     poDriver->SetDescription( "LVBAG" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );

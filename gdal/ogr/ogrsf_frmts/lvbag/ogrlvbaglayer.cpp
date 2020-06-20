@@ -503,6 +503,17 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                 }
                 else
                     poFeature->SetField(iFieldIndex, pszValue);
+                
+                if( bFitInvalidData
+                    && (poFieldDefn->GetType() == OFTDate || poFieldDefn->GetType() == OFTDateTime) )
+                {
+                    int nYear;
+                    poFeature->GetFieldAsDateTime(iFieldIndex, &nYear, nullptr, nullptr,
+                                                nullptr, nullptr,
+                                                static_cast<float*>(nullptr), nullptr);
+                    if( nYear > 2100 )
+                        poFeature->SetFieldNull(iFieldIndex);
+                }
             }
         }
         osElementString.Clear();
