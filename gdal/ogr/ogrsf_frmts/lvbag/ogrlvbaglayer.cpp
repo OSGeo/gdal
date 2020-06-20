@@ -552,7 +552,7 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                                 poGeom.reset(poPoint.release());
 #else
                             CPLError( CE_Warning, CPLE_AppDefined,
-                                "Cannot convert polygon to point, enable GEOS support" );
+                                "Cannot shape geometry, GEOS support not enabled." );
                             poGeom.reset(poPoint.release());
 #endif
                             break;
@@ -561,6 +561,13 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                         default:
                             break;
                     }
+                }
+                else if( poGeomField->GetType() == wkbMultiPolygon
+                    && poGeom->getGeometryType() == wkbPolygon )
+                {
+                    std::unique_ptr<OGRMultiPolygon> poMultiPolygon = std::unique_ptr<OGRMultiPolygon>{ new OGRMultiPolygon };
+                    poMultiPolygon->addGeometry(poGeom.get());
+                    poGeom.reset(poMultiPolygon.release());
                 }
 
                 poGeom->assignSpatialReference(GetSpatialRef());
