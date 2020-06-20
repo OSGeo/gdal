@@ -224,7 +224,7 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         poFeatureDefn->SetName("Pand");
         SetDescription(poFeatureDefn->GetName());
 
-        AddSpatialRef(wkbPolygon);
+        AddSpatialRef(wkbMultiPolygon);
     }
     else if( EQUAL("num", pszDataset) )
     {
@@ -549,13 +549,7 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                     switch( poGeom->getGeometryType() )
                     {
                         case wkbPolygon:
-                        case wkbPolygon25D:
-                        case wkbPolygonM:
-                        case wkbPolygonZM:
                         case wkbMultiPolygon:
-                        case wkbMultiPolygon25D:
-                        case wkbMultiPolygonM:
-                        case wkbMultiPolygonZM:
                         {
                             std::unique_ptr<OGRPoint> poPoint = std::unique_ptr<OGRPoint>{ new OGRPoint };
 #ifdef HAVE_GEOS
@@ -578,6 +572,16 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                 {
                     std::unique_ptr<OGRMultiPolygon> poMultiPolygon = std::unique_ptr<OGRMultiPolygon>{ new OGRMultiPolygon };
                     poMultiPolygon->addGeometry(poGeom.get());
+                    poGeom.reset(poMultiPolygon.release());
+                }
+                else if( poGeomField->GetType() == wkbMultiPolygon
+                    && poGeom->getGeometryType() == wkbGeometryCollection
+                    && dynamic_cast<OGRGeometryCollection*>(poGeom.get())->getNumGeometries() > 0
+                    && dynamic_cast<OGRGeometryCollection*>(poGeom.get())->getGeometryRef(0)->getGeometryType() == wkbPolygon )
+                {
+                    std::unique_ptr<OGRMultiPolygon> poMultiPolygon = std::unique_ptr<OGRMultiPolygon>{ new OGRMultiPolygon };
+                    for (auto &poChildGeom : dynamic_cast<OGRGeometryCollection*>(poGeom.get()))
+                        poMultiPolygon->addGeometry(poChildGeom);
                     poGeom.reset(poMultiPolygon.release());
                 }
 
