@@ -80,6 +80,7 @@ class OGRLVBAGLayer final: public OGRAbstractProxiedLayer, public OGRGetNextFeat
     
     bool                bSchemaOnly;
     bool                bHasReadSchema;
+    bool                bFitInvalidData;
     
     int                 nCurrentDepth;
     int                 nGeometryElementDepth;

@@ -33,6 +33,7 @@
 
 from osgeo import ogr
 import gdaltest
+import ogrtest
 import pytest
 
 pytestmark = pytest.mark.require_driver('LVBAG')
@@ -301,6 +302,31 @@ def test_ogr_lvbag_read_zip_3():
     lyr = ds.GetLayer(1)
     assert lyr.GetName() == 'Pand', 'bad layer name'
     assert lyr.GetFeatureCount() == 9
+
+def test_ogr_lvbag_invalid_polygon():
+
+    if not ogrtest.have_geos():
+        pytest.skip()
+
+    ds = ogr.Open('data/lvbag/inval_polygon.xml')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+    
+    lyr = ds.GetLayer(0)
+    
+    feat = lyr.GetNextFeature()
+    assert feat.GetGeomFieldRef(0).IsValid()
+
+    feat = lyr.GetNextFeature()
+    assert feat.GetGeomFieldRef(0).IsValid()
+
+    feat = lyr.GetNextFeature()
+    assert feat.GetGeomFieldRef(0).IsValid()
+
+    feat = lyr.GetNextFeature()
+    assert feat.GetGeomFieldRef(0).IsValid()
+
+    assert feat is None
 
 def test_ogr_lvbag_read_errors():
 

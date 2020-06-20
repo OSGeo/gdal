@@ -50,6 +50,7 @@ OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn ) 
     oParser{ nullptr },
     bSchemaOnly{ false },
     bHasReadSchema{ false },
+    bFitInvalidData{ true },
     nCurrentDepth{ 0 },
     nGeometryElementDepth{ 0 },
     nFeatureCollectionDepth{ 0 },
@@ -526,6 +527,16 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                 // The specification only accounts for 2-dimensional datasets
                 if( poGeom->Is3D() )
                     poGeom->flattenTo2D();
+
+#if defined(HAVE_SFCGAL) || defined(HAVE_GEOS)
+                if( !poGeom->IsValid() && bFitInvalidData )
+                {
+                    std::unique_ptr<OGRGeometry> poSubGeom = std::unique_ptr<OGRGeometry>{
+                        poGeom->MakeValid() };
+                    if( poSubGeom && poSubGeom->IsValid() )
+                        poGeom.reset(poSubGeom.release());
+                }
+#endif
 
                 OGRGeomFieldDefn *poGeomField = poFeatureDefn->GetGeomFieldDefn(0);
                 if( !poGeomField->GetSpatialRef() )
