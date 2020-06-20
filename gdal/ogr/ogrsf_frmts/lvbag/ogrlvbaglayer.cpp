@@ -581,7 +581,7 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                     poGeom.reset(poMultiPolygon.release());
                 }
 
-                if( !poGeomField->GetSpatialRef() )
+                if( poGeomField->GetSpatialRef() )
                     poGeom->assignSpatialReference(poGeomField->GetSpatialRef());
                 poFeature->SetGeometryDirectly(poGeom.release());
             }

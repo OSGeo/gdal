@@ -326,6 +326,7 @@ def test_ogr_lvbag_invalid_polygon():
     feat = lyr.GetNextFeature()
     assert feat.GetGeomFieldRef(0).IsValid()
 
+    feat = lyr.GetNextFeature()
     assert feat is None
 
 def test_ogr_lvbag_read_errors():
@@ -351,5 +352,27 @@ def test_ogr_lvbag_test_ogrsf():
 
     import gdaltest
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/lvbag/wpl.xml')
+
+    assert 'INFO' in ret and 'ERROR' not in ret
+
+def test_ogr_lvbag_test_ogrsf_pnd():
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    import gdaltest
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/lvbag/pnd.xml')
+
+    assert 'INFO' in ret and 'ERROR' not in ret
+
+def test_ogr_lvbag_test_ogrsf_num():
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    import gdaltest
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/lvbag/num.xml')
 
     assert 'INFO' in ret and 'ERROR' not in ret
