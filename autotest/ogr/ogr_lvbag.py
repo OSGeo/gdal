@@ -186,7 +186,7 @@ def test_ogr_lvbag_dataset_pnd():
 
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Pand', 'bad layer name'
-    assert lyr.GetGeomType() == ogr.wkbPolygon25D, 'bad layer geometry type'
+    assert lyr.GetGeomType() == ogr.wkbPolygon, 'bad layer geometry type'
     assert lyr.GetFeatureCount() == 6
     assert lyr.GetLayerDefn().GetFieldCount() == 18
 
@@ -252,7 +252,7 @@ def test_ogr_lvbag_dataset_wpl():
 
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Woonplaats', 'bad layer name'
-    assert lyr.GetGeomType() == ogr.wkbPolygon, 'bad layer geometry type'
+    assert lyr.GetGeomType() == ogr.wkbMultiPolygon, 'bad layer geometry type'
     assert lyr.GetFeatureCount() == 2
     assert lyr.GetLayerDefn().GetFieldCount() == 18
 
