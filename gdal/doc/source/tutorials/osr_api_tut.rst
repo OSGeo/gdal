@@ -423,7 +423,7 @@ coordinate operations transforming from the source CRS to the target CRS. Those
 candidate coordinate operations have each their own area of use. When Transform()
 is invoked, it will determine the most appropriate coordinate operation based on
 the coordinates of the point to transform and those area of use. For example,
-there are several dozains of possible coordinate operations for the NAD27 to WGS84
+there are several dozens of possible coordinate operations for the NAD27 to WGS84
 transformation.
 
 If a bounding box of the area of interest into which coordinates to transform
@@ -614,6 +614,6 @@ Consequently the OGRSpatialReference class has been modified to act mostly as
 a wrapper on top of PROJ PJ* CRS objects, and tries to abstract away from
 the OGC WKT 1 representation as much as possible. However, for backward compatibility,
 some methods still expect arguments or return values that are specific of OGC WKT 1.
-The design of th OGRSpatialReference class is also still monolothic. Users wanting
+The design of th OGRSpatialReference class is also still monolithic. Users wanting
 direct and fine grained access to CRS representations might want to directly use
 the PROJ 6 C or C++ API.
