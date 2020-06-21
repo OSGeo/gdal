@@ -63,3 +63,6 @@ cd ../../gdal
 ln -s /tmp/install/lib/libinternalproj.15.dylib /tmp/install/lib/libproj.15.dylib
 
 ccache -s
+
+# Post-install testing
+../autotest/postinstall/test_pkg-config.sh $HOME/install-gdal
