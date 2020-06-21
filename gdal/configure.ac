@@ -2189,18 +2189,29 @@ HAVE_CHARLS=no
 CHARLS_INC=
 
 if test "$with_charls" = "yes" -o "$with_charls" = "" ; then
-  dnl CharLS 1.x
-  AC_CHECK_HEADERS([CharLS/interface.h])
-  if test "$ac_cv_header_CharLS_interface_h" = "yes"; then
-    AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
+  dnl CharLS 2.1
+  AC_CHECK_HEADERS([charls/version.h])
+  if test "$ac_cv_header_charls_version_h" = "yes"; then
+    AC_LANG_PUSH([C++])
+    AC_CHECK_LIB(charls,JpegLsDecode,HAVE_CHARLS=yes)
+    AC_LANG_POP([C++])
     if test "$HAVE_CHARLS" = "yes"; then
-        LIBS="-lCharLS $LIBS"
-        CHARLS_INC="-DCHARLS_INTERFACE_H"
+        LIBS="-lcharls $LIBS"
+        CHARLS_INC="-DCHARLS_2_1"
     fi
   else
-    dnl CharLS 2.0
-    AC_CHECK_HEADERS([CharLS/charls.h])
-    if test "$ac_cv_header_CharLS_charls_h" = "yes"; then
+    dnl CharLS 1.x
+    AC_CHECK_HEADERS([CharLS/interface.h])
+    if test "$ac_cv_header_CharLS_interface_h" = "yes"; then
+      AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
+      if test "$HAVE_CHARLS" = "yes"; then
+          LIBS="-lCharLS $LIBS"
+          CHARLS_INC="-DCHARLS_INTERFACE_H"
+      fi
+    else
+      dnl CharLS 2.0
+      AC_CHECK_HEADERS([CharLS/charls.h])
+      if test "$ac_cv_header_CharLS_charls_h" = "yes"; then
         AC_LANG_PUSH([C++])
         AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
         AC_LANG_POP([C++])
@@ -2208,18 +2219,7 @@ if test "$with_charls" = "yes" -o "$with_charls" = "" ; then
             LIBS="-lCharLS $LIBS"
             CHARLS_INC="-DCHARLS_2"
         fi
-    else
-        dnl CharLS 2.1
-        AC_CHECK_HEADERS([charls/charls.h])
-        if test "$ac_cv_header_charls_charls_h" = "yes"; then
-            AC_LANG_PUSH([C++])
-            AC_CHECK_LIB(charls,JpegLsDecode,HAVE_CHARLS=yes)
-            AC_LANG_POP([C++])
-            if test "$HAVE_CHARLS" = "yes"; then
-                LIBS="-lcharls $LIBS"
-                CHARLS_INC="-DCHARLS_2_1"
-            fi
-        fi
+      fi
     fi
   fi
 fi
