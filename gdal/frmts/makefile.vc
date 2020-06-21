@@ -219,6 +219,10 @@ EXTRAFLAGS  =   $(EXTRAFLAGS) -DFRMT_dds
 EXTRAFLAGS  =   $(EXTRAFLAGS) -DFRMT_exr
 !ENDIF
 
+!IFDEF HEIF_INC
+EXTRAFLAGS  =   $(EXTRAFLAGS) -DFRMT_heif
+!ENDIF
+
 default:	o\gdalallregister.obj subdirs
 
 list:

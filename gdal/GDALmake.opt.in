@@ -561,6 +561,12 @@ FREEXL_INCLUDE = @FREEXL_INCLUDE@
 EXR_CFLAGS = @EXR_CFLAGS@
 
 #
+# HEIF stuff
+#
+
+HEIF_CFLAGS = @HEIF_CFLAGS@
+
+#
 # cryptopp stuff
 #
 HAVE_CRYPTOPP    =       @HAVE_CRYPTOPP@

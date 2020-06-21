@@ -87,6 +87,7 @@ Raster drivers
    gxf
    hdf4
    hdf5
+   heif
    hf2
    hfa
    ida
