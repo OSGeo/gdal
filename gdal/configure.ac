@@ -328,6 +328,7 @@ dnl Checks for library functions.
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(snprintf vsnprintf)
 AC_CHECK_FUNCS(atoll)
+AC_CHECK_FUNCS(strtoll)
 AC_CHECK_FUNCS(strtoull)
 AC_CHECK_FUNCS(strtof)
 AC_CHECK_FUNCS(getcwd)
