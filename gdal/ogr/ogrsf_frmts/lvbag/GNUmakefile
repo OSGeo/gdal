@@ -9,7 +9,7 @@ CPPFLAGS += -DHAVE_EXPAT
 endif
 
 ifeq ($(HAVE_GEOS),yes)
-CPPFLAGS += -DHAVE_GEOS
+CPPFLAGS += -DHAVE_GEOS $(GEOS_CFLAGS)
 endif
 
 CPPFLAGS	:=	-I.. -I../.. -I../generic $(EXPAT_INCLUDE) $(CPPFLAGS)

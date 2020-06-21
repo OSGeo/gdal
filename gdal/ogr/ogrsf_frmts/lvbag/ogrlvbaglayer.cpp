@@ -124,7 +124,7 @@ static inline const char* XMLTagSplit( const char *pszName )
 {
     const char *pszTag = pszName;
     const char *pszSep = strchr(pszTag, ':');
-    if (pszSep)
+    if( pszSep )
         pszTag = pszSep + 1;
 
     return pszTag;
@@ -150,13 +150,15 @@ void OGRLVBAGLayer::AddSpatialRef( OGRwkbGeometryType eTypeIn )
 
 void OGRLVBAGLayer::AddIdentifierFieldDefn()
 {
-    OGRFieldDefn oField0("namespace", OFTString);
-    OGRFieldDefn oField1("lokaalID", OFTString);
-    OGRFieldDefn oField2("versie", OFTString);
+    OGRFieldDefn oField0("lvID", OFTString);
+    OGRFieldDefn oField1("namespace", OFTString);
+    OGRFieldDefn oField2("lokaalID", OFTString);
+    OGRFieldDefn oField3("versie", OFTString);
 
     poFeatureDefn->AddFieldDefn(&oField0);
     poFeatureDefn->AddFieldDefn(&oField1);
     poFeatureDefn->AddFieldDefn(&oField2);
+    poFeatureDefn->AddFieldDefn(&oField3);
 }
 
 /************************************************************************/
@@ -168,8 +170,8 @@ void OGRLVBAGLayer::AddDocumentFieldDefn()
     OGRFieldDefn oField0("status", OFTString);
     OGRFieldDefn oField1("geconstateerd", OFTInteger);
     oField1.SetSubType(OFSTBoolean);
-    OGRFieldDefn oField2("documentdatum", OFTDate);
-    OGRFieldDefn oField3("documentnummer", OFTString);
+    OGRFieldDefn oField2("documentDatum", OFTDate);
+    OGRFieldDefn oField3("documentNummer", OFTString);
 
     poFeatureDefn->AddFieldDefn(&oField0);
     poFeatureDefn->AddFieldDefn(&oField1);
@@ -183,7 +185,7 @@ void OGRLVBAGLayer::AddDocumentFieldDefn()
 
 void OGRLVBAGLayer::AddOccurrenceFieldDefn()
 {
-    OGRFieldDefn oField0("voorkomenidentificatie", OFTInteger);
+    OGRFieldDefn oField0("voorkomenIdentificatie", OFTInteger);
     OGRFieldDefn oField1("beginGeldigheid", OFTDate);
     OGRFieldDefn oField2("eindGeldigheid", OFTDate);
     OGRFieldDefn oField3("tijdstipRegistratie", OFTDateTime);
@@ -231,10 +233,10 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
     {
         OGRFieldDefn oField0("huisnummer", OFTInteger);
         OGRFieldDefn oField1("huisletter", OFTString);
-        OGRFieldDefn oField2("huisnummertoevoeging", OFTString);
+        OGRFieldDefn oField2("huisnummerToevoeging", OFTString);
         OGRFieldDefn oField3("postcode", OFTString);
         OGRFieldDefn oField4("typeAdresseerbaarObject", OFTString);
-        OGRFieldDefn oField5("openbareruimteref", OFTString);
+        OGRFieldDefn oField5("openbareruimteRef", OFTString);
   
         poFeatureDefn->AddFieldDefn(&oField0);
         poFeatureDefn->AddFieldDefn(&oField1);
@@ -252,7 +254,7 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
     }
     else if( EQUAL("lig", pszDataset) )
     {
-        OGRFieldDefn oField0("nummeraanduidingref", OFTString);
+        OGRFieldDefn oField0("nummeraanduidingRef", OFTString);
 
         poFeatureDefn->AddFieldDefn(&oField0);
 
@@ -267,7 +269,7 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
     }
     else if( EQUAL("sta", pszDataset) )
     {
-        OGRFieldDefn oField0("nummeraanduidingref", OFTString);
+        OGRFieldDefn oField0("nummeraanduidingRef", OFTString);
 
         poFeatureDefn->AddFieldDefn(&oField0);
 
@@ -284,7 +286,7 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
     {
         OGRFieldDefn oField0("naam", OFTString);
         OGRFieldDefn oField1("type", OFTString);
-        OGRFieldDefn oField2("woonplaatsref", OFTString);
+        OGRFieldDefn oField2("woonplaatsRef", OFTString);
 
         poFeatureDefn->AddFieldDefn(&oField0);
         poFeatureDefn->AddFieldDefn(&oField1);
@@ -301,8 +303,8 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
     {
         OGRFieldDefn oField0("gebruiksdoel", OFTString);
         OGRFieldDefn oField1("oppervlakte", OFTInteger);
-        OGRFieldDefn oField2("nummeraanduidingref", OFTString);
-        OGRFieldDefn oField3("pandref", OFTString);
+        OGRFieldDefn oField2("nummeraanduidingRef", OFTString);
+        OGRFieldDefn oField3("pandRef", OFTString);
 
         poFeatureDefn->AddFieldDefn(&oField0);
         poFeatureDefn->AddFieldDefn(&oField1);
@@ -441,7 +443,10 @@ void OGRLVBAGLayer::StartElementCbk( const char *pszName, const char **ppszAttr 
         while( papszIter && *papszIter != nullptr )
         {
             if( EQUAL("xlink:href", papszIter[0]) )
+            {
                 osElementString = papszIter[1];
+                osElementString.toupper();
+            }
             papszIter += 2;
         }
     }
@@ -645,13 +650,26 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
     {
         nFeatureElementDepth = 0;
 
+        const int iFieldIndexNamespace = poFeatureDefn->GetFieldIndex("namespace");
+        const int iFieldIndexLocalId = poFeatureDefn->GetFieldIndex("lokaalID");
+
+        CPLAssert(poFeature->GetFieldAsString(iFieldIndexNamespace));
+        CPLAssert(poFeature->GetFieldAsString(iFieldIndexLocalId));
+
+        CPLString oLvId;
+        oLvId += poFeature->GetFieldAsString(iFieldIndexNamespace);
+        oLvId += ".";
+        oLvId += poFeature->GetFieldAsString(iFieldIndexLocalId);
+
+        poFeature->SetField(poFeatureDefn->GetFieldIndex("lvID"), oLvId.toupper().c_str());
+
         poFeature->SetFID(nNextFID++);
 
         XML_StopParser(oParser.get(), XML_TRUE);
     }
     else if( nFeatureCollectionDepth == nCurrentDepth )
         nFeatureCollectionDepth = 0;
-    else if( EQUAL("sl:objectType", pszName) && !poFeatureDefn->GetFieldCount() )
+    else if( EQUAL("sl:objecttype", pszName) && !poFeatureDefn->GetFieldCount() )
     {
         StopDataCollect();
         if ( osElementString.empty() )
