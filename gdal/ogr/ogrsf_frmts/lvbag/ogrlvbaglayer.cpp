@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include "cpl_conv.h"
+#include "ogr_geos.h"
 #include "ogr_lvbag.h"
 #include "ogr_p.h"
 
@@ -539,7 +540,9 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                 if( poGeom->Is3D() )
                     poGeom->flattenTo2D();
 
-#if defined(HAVE_SFCGAL) || defined(HAVE_GEOS)
+// GEOS >= 3.8.0 for MakeValid.
+#ifdef HAVE_GEOS
+#if GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 8)
                 if( !poGeom->IsValid() && bFitInvalidData )
                 {
                     std::unique_ptr<OGRGeometry> poSubGeom = std::unique_ptr<OGRGeometry>{
@@ -547,6 +550,7 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                     if( poSubGeom && poSubGeom->IsValid() )
                         poGeom.reset(poSubGeom.release());
                 }
+#endif
 #endif
 
                 OGRGeomFieldDefn *poGeomField = poFeatureDefn->GetGeomFieldDefn(0);
