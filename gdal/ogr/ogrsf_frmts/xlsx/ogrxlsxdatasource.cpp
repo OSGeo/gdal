@@ -529,6 +529,8 @@ static void SetField(OGRFeature* poFeature,
     {
         struct tm sTm;
         const double dfNumberOfDaysSince1900 = CPLAtof(pszValue);
+        if( !(std::fabs(dfNumberOfDaysSince1900) < 365.0 * 10000) )
+            return;
         double dfNumberOfSecsSince1900 = dfNumberOfDaysSince1900 * NUMBER_OF_SECONDS_PER_DAY;
         if( std::fabs(dfNumberOfSecsSince1900 - std::round(dfNumberOfSecsSince1900)) < 1e-3 )
             dfNumberOfSecsSince1900 = std::round(dfNumberOfSecsSince1900);
