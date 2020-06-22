@@ -1,3 +1,175 @@
+= GDAL/OGR 3.1.1 Release Notes =
+
+The 3.1.1 release is a bug fix release.
+
+== Build ==
+
+Unix:
+ * configure: fix CharLS 2.1 detection on case insensitive filesystems (#2710)
+ * GNUmakefile: split long line to avoid 32,000 character limit on MSYS2
+
+Windows:
+ * nmake.opt: mention shell32.lib in PROJ_LIBRARY (#2488)
+ * nmake.opt: revert unwanted change regarding OCI_LIB / OCI_INCLUDE, and also allow to override them (#2533)
+ * EXR: add missing Windows build support
+ * generate_vcxproj.bat: add vs2019 compatibility (#2676)
+ * nmake.opt: add a vc142 reference for ECW
+
+== Doc ==
+
+* generate man pages for gdalmdiminfo, gdalmdimtranslate and gdal_viewshed (#2538)
+* Various fixes
+
+== Misc ==
+
+* Driver metadata: fix XML errors in option declarations and add testing (#2656)
+
+== Port ==
+
+* CPLStrtodDelim(): recognize '1.#SNAN' as a NaN value
+* /vsiaz/: fix OpenDir()/NextDirEntry() that returned S_IFDIR for regular files
+* /vsimem/: fix normalization of slashes in filenames to avoid potential infinite loop in VSIDirGeneric::NextDirEntry()
+
+== GDAL algorithms ==
+
+* Warper/transformer: avoid error about invalid latitude when warping a dataset in Geographic CRS whose north/south lat is > 90deg (#2535)
+* Warper: fix average resampling that lead to very wrong results in some circumstances (#2665) (3.1.0 regression) (#2667)
+* Viewshed: adjust computation of observer position (#2599)
+
+== GDAL utilities ==
+
+* gdaldem: ignore 'nv' entry in color file if there is no nodata value in input file
+* gdal2tiles: make general cmd line switches like --formats work without exception (#2522)
+* gdal_calc.py: raise exception in case of I/O error. (QGIS #36867)
+* gdalwarp: fix crash if warping a dataset without source or target CRS when -ct is specified (#2675)
+* gdal_rasterzie: fix an error string regarding -ts parameter (#2698)
+
+== GDAL core ==
+
+* GDALDataset::IRasterIO(): Fixes wrong IO of subpixel shifted window (#2507)
+* GDALMDArray::GetScale() and GetOffset(): avoid nullptr dereference
+
+== GDAL drivers ==
+
+BAG driver:
+ * fix for big endian arch
+
+COG driver:
+ * avoid crash if passing an invalid (warp) resampling option
+ * add tolerance when computing tile numbers, so as to make -co TILING_SCHEME= idempotent on a file already properly tiled
+
+ECW driver:
+ * fix related to network files with SDK >= 5.5 (#2652)
+
+GPKG driver:
+ * fix GDAL 3.0 regression regarding some update scenarios (#2325)
+ * increase limitation of number of tables to 10000, and make it configurable through OGR_TABLE_LIMIT config option as for vector tables
+
+GRIB driver:
+ * avoid rejecting valid product due to over-zealous security check
+
+GTiff driver:
+ * fix reading/writing GEO_METADATA TIFF tag on big-endian
+ * fix importing WGS_1984_Web_Mercator / ESRI:102113 (#2560)
+ * Internal libtiff: TWebPSetupEncode(): fix logic problem in test that checks input is 8bit unsigned data
+ * fix potential crash when generating degenerate 1x1 overviews
+
+HDF5 driver:
+ * multidim API: fixes for big endian host
+
+HFA driver:
+ * do not report TOWGS84 when reading SRS with WGS84, NAD27 or NAD83 datums (unless OSR_STRIP_TOWGS84 config option is set to NO) (QGIS #36837)
+
+INGR driver:
+ * avoid invalid cast on corrupted data. (ossfuzz #22351)
+
+LCP driver:
+ * add extension checking in Identify() (#2641)
+
+PDS driver:
+ * take into account FIRST_STANDARD_PARALLEL for Mercator projection (#2490)
+
+TileDB driver:
+ * use returned length to truncate string for tiledb metadata
+
+VICAR driver:
+ * fix for Basic compression and non-Byte type on big endian host
+
+== OGR core ==
+
+* ogr_geometry.h: export OGRWktOptions class (#2576)
+* swq_op_general.cpp: Fix type conversion issues in some arithmetic expressions
+* OGR SQL: fix buffer overflow in BuildParseInfo for SQL query when joining multiple tables that each have implicit FID columns.
+
+== OGRSpatialReference ==
+
+* Make GetAuthorityCode('PROJCS') work on a WKT1 COMPD_CS with a VERT_DATUM type = 2002 (Ellipsoid height)
+* Avoid warnings and fix crash in GetProjTLSContextHolder() (#2691)
+
+== OGR utilities ==
+
+* ogr2ogr: add missing line feed in usage message (#2548)
+* ogr2ogr: make -f PostgreSQL work when using PG:service= syntax
+
+== OGR drivers ==
+
+DXF driver:
+ * avoid potential big stack calls when eliminated 999 comment lines (ossfuzz #22668)
+
+Elastisearch driver:
+ * make OVERWRITE_INDEX=YES work properly by re-creating the index afterwards
+
+GML driver:
+ * fix typo in VFR GFS files BonitovaneDilRizeniId -> BonitovanyDilRizeniId (#2682)
+
+GMLAS driver:
+ * fix so as to get same unique ids on big-endian arch
+
+GPKG driver:
+ * hide also view "geometry_columns" (#2518)
+ * fix wrong RTree _update3 trigger on existing files (QGIS #36935)
+
+GTM driver:
+ * writing: fix timezone handling issues (#2696)
+
+MITAB driver:
+ * fix reading and writing of Transverse Mercator projections based on KKJ
+ * .tab: fix writing empty/null Time fields (#2612)
+
+MVT driver:
+ * revise logic to attribute FID when reading directories (#2566)
+
+netCDF driver:
+ * fix for big-endian
+ * GrowDim(): fix issue with non-ASCII filename on Windows
+
+ODS driver:
+ * avoid potential deep call stack in formula evaluation (ossfuzz #22237)
+
+PDF driver:
+ * write correctly attribute object dictionary when there is no field to write, and read back correctly broken files we generated before (#2624)
+
+S57 driver:
+ * apply update to DSID_EDTN field (#2498)
+
+Shapefile driver:
+ * SHPRestoreSHX: fix for (64 bit) big endian
+
+SXF driver:
+ * fixes for big-endian
+
+XLSX driver:
+ * fix numeric precision issue when reading datetime that could lead to an error of 1 second (#2683)
+
+== SWIG bindings ==
+
+All:
+ * {OGRDriver}.CopyDataSource(): check that source dataset is not NULL
+ * validate range of resample_alg algorithm (#2591)
+
+Python bindings:
+ * Fix Python2 install to be synchronous and report all errors (#2515)
+
 = GDAL/OGR 3.1.0 Release Notes =
 
 == In a nutshell... ==
