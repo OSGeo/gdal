@@ -1270,7 +1270,7 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
             if ( poDS->nRasterXSize <= 0 )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                    "Width %i should be greater than zero.", pszXSize );
+                    "Width %i should be greater than zero.", poDS->nRasterXSize );
                 return nullptr;
             }
         }
@@ -1282,7 +1282,7 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
             if ( poDS->nRasterYSize <= 0 )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                    "Height %i should be greater than zero.", pszYSize );
+                    "Height %i should be greater than zero.", poDS->nRasterYSize );
                 return nullptr;
             }
         }
