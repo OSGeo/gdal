@@ -18,7 +18,8 @@ The driver is only available if GDAL/OGR is compiled against the Expat
 library.
 
 Each extract XML file is presented as a single OGR layer. The layers are
-georeferenced in their native (EPSG:28992) SRS.
+georeferenced in their native (EPSG:28992) SRS. Each dataset exposes the LvID
+field according to the BAG 2.0 specfication.
 
 More information about the LV BAG 2.0 can be found at https://zakelijk.kadaster.nl/bag-2.0
 
