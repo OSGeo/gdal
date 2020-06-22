@@ -21,9 +21,7 @@ Contributors:  Thomas Maurer
 */
 
 #include "CntZImage.h"
-#include "BitStufferV1.h"
 #include "BitMaskV1.h"
-#include "DefinesV1.h"
 #include <cmath>
 #include <cfloat>
 #include <cstring>
@@ -35,6 +33,7 @@ void LERC_BRKPNT() {}
 #endif
 
 NAMESPACE_LERC_START
+
 CntZImage::CntZImage()
 {
   type_ = CNT_Z;

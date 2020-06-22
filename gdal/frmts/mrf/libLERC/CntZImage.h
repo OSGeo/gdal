@@ -20,11 +20,51 @@ Contributors:  Thomas Maurer
 #define CNTZIMAGE_H
 
 // ---- includes ------------------------------------------------------------ ;
-
-#include "Image.h"
 #include "BitStufferV1.h"
 
 NAMESPACE_LERC_START
+
+class Image
+{
+public:
+
+    virtual ~Image() {}
+
+    enum Type
+    {
+        BYTE,
+        RGB,
+        SHORT,
+        LONG,
+        FLOAT,
+        DOUBLE,
+        COMPLEX,
+        POINT3F,
+        CNT_Z,
+        CNT_ZXY,
+        Last_Type_
+    };
+
+    bool isType(Type t) const { return t == type_; }
+    Type getType() const { return type_; }
+    int getWidth() const { return width_; }
+    int getHeight() const { return height_; }
+    int getSize() const { return width_ * height_; }
+
+    bool isInside(int row, int col) const
+    {
+        return row >= 0 && row < height_&& col >= 0 && col < width_;
+    }
+
+    const virtual std::string getTypeString() const = 0;
+
+protected:
+
+    Image() : type_(Last_Type_), width_(0), height_(0) {}
+
+    Type type_;
+    int width_, height_;
+};
 
 template<typename T >
 class TImage : public Image
