@@ -1,7 +1,7 @@
 .. _cpl_api:
 
 ================================================================================
-Common Portability Library
+Common Portability Library C API
 ================================================================================
 
 cpl_conv.h
@@ -38,12 +38,6 @@ cpl_multiproc.h
 ---------------
 
 .. doxygenfile:: cpl_multiproc.h
-   :project: api
-
-cpl_odbc.h
-----------
-
-.. doxygenfile:: cpl_odbc.h
    :project: api
 
 cpl_port.h
@@ -88,9 +82,6 @@ cpl_vsi.h
 .. doxygenfile:: cpl_vsi.h
    :project: api
 
-cpl_vsi_virtual.h
------------------
+.. seealso::
 
-.. doxygenfile:: cpl_vsi_virtual.h
-   :project: api
-
+   :ref:`cpl_cpp_api`.
