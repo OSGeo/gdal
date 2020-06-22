@@ -19,21 +19,52 @@ Contributors:  Thomas Maurer
 #ifndef CNTZIMAGE_H
 #define CNTZIMAGE_H
 
-// Define on big endian machines
-// #define BIG_ENDIAN
-
 // ---- includes ------------------------------------------------------------ ;
 
-#include "TImage.hpp"
+#include "Image.h"
 #include "BitStufferV1.h"
 
 NAMESPACE_LERC_START
 
-// -------------------------------------------------------------------------- ;
+template<typename T >
+class TImage : public Image
+{
+public:
+    TImage() : data_(nullptr) {}
+    virtual ~TImage() {
+        TImage::clear();
+    }
 
-// ---- related classes ----------------------------------------------------- ;
+    bool resize(int width, int height) {
+        if (width <= 0 || height <= 0)
+            return false;
 
-//class String;
+        if (width == width_ && height == height_ && nullptr != data_)
+            return true;
+
+        clear();
+        data_ = new T[width * height];
+
+        width_ = width;
+        height_ = height;
+
+        return true;
+    }
+
+    virtual void clear() {
+        delete[] data_;
+        data_ = nullptr;
+        width_ = 0;
+        height_ = 0;
+    }
+
+    const T& operator() (int row, int col) const { return data_[row * width_ + col]; }
+    void setPixel(int row, int col, T element) { data_[row * width_ + col] = element; }
+    T* getData() const { return data_; }
+
+protected:
+    T* data_;
+};
 
 // -------------------------------------------------------------------------- ;
 
@@ -43,6 +74,11 @@ NAMESPACE_LERC_START
  *      z can be elevation or intensity;
  */
 
+struct CntZ
+{
+    float cnt, z;
+};
+
 class CntZImage : public TImage< CntZ >
 {
 public:
@@ -50,8 +86,6 @@ public:
   const std::string getTypeString() const override { return "CntZImage "; }
 
   bool resizeFill0(int width, int height);
-  bool hasValidPixel() const;
-  void normalize();
 
   /// binary file IO with optional compression
   /// (maxZError = 0  means no lossy compression for Z; the Cnt part is compressed lossless or not at all)
@@ -74,26 +108,6 @@ public:
              double maxZError,
              bool onlyHeader = false,
              bool onlyZPart = false);
-
-  template<class T> bool ConvertToMemBlock(T* arr, T noDataValue) const
-  {
-    if (!arr)
-      return false;
-
-    const CntZ* srcPtr = getData();
-    T* dstPtr = arr;
-
-    for (int i = 0; i < height_*width_; i++)
-    {
-        if (srcPtr->cnt > 0)
-            *dstPtr++ = (T)srcPtr->z;
-        else
-            *dstPtr++ = noDataValue;
-        srcPtr++;
-    }
-
-    return true;
-  }
 
 protected:
 

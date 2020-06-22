@@ -47,38 +47,26 @@ bool BitMaskV1::RLEdecompress(const Byte* src, size_t nRemainingBytes) const {
     assert(src);
 
 // Read a two bye short int
-#define READ_COUNT if (true) { if (nRemainingBytes < 2 ) { LERC_BRKPNT(); return false; } count = *src++; count += (*src++ << 8); nRemainingBytes -= 2; }
+#define READ_COUNT if (true) { if (nRemainingBytes < 2 ) return false; count = *src++; count += (*src++ << 8); nRemainingBytes -= 2; }
 
     while (sz) { // One sequence per loop
         READ_COUNT;
         if (count < 0) { // negative count for repeats
             if (nRemainingBytes < 1 )
-            {
-                LERC_BRKPNT();
                 return false;
-            }
             Byte b = *src++;
             nRemainingBytes --;
             sz += count;
             if( sz < 0 )
-            {
-                LERC_BRKPNT();
                 return false;
-            }
             while (0 != count++)
                 *dst++ = b;
         } else { // No repeats
             sz -= count;
             if( sz < 0 )
-            {
-                LERC_BRKPNT();
                 return false;
-            }
             if (nRemainingBytes < static_cast<size_t>(count) )
-            {
-              LERC_BRKPNT();
               return false;
-            }
             nRemainingBytes -= count;
             while (0 != count--)
                 *dst++ = *src++;

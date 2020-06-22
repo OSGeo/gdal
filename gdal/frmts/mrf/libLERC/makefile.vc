@@ -7,8 +7,7 @@ OBJ	= \
 	CntZImage.obj
 
 HEADERS = \
-	BitMaskV1.h BitStufferV1.h CntZImage.h DefinesV1.h Image.h \
-	TImage.hpp
+	BitMaskV1.h BitStufferV1.h CntZImage.h DefinesV1.h Image.h
 
 LIBLERC = libLERC.obj
 

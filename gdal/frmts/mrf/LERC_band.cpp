@@ -24,23 +24,19 @@ Contributors:  Lucian Plesea
 #include "libLERC/CntZImage.h"
 #include <Lerc2.h>
 
-CPL_CVSID("$Id$")
-
 USING_NAMESPACE_LERC
-
 NAMESPACE_MRF_START
 
 // Read an unaligned 4 byte little endian int from location p, advances pointer
 static void READ_GINT32(int& X, const char*& p)
 {
     memcpy(&X, p, sizeof(GInt32));
-    SWAP_4(X);
     p+= sizeof(GInt32);
 }
+
 static void READ_FLOAT(float& X, const char*& p)
 {
     memcpy(&X, p, sizeof(float));
-    SWAP_4(X);
     p+= sizeof(float);
 }
 
@@ -161,8 +157,10 @@ template <typename T> static void CntZImgFill(CntZImage &zImg, T *src, const ILI
 
     for (int i = 0; i < h; i++)
         for (int j = 0; j < w; j++) {
-            zImg(i, j).z = float(*ptr++);
-            zImg(i, j).cnt = !CPLIsEqual(zImg(i, j).z, ndv);
+            CntZ pixel;
+            pixel.z = float(*ptr++);
+            pixel.cnt = CPLIsEqual(zImg(i, j).z, ndv) ? 0 : 1;
+            zImg.setPixel(i, j, pixel);
         }
     return;
 }

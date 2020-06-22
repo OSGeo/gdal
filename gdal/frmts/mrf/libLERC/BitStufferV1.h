@@ -43,8 +43,6 @@ public:
   static unsigned int numExtraBytesToAllocate()  { return 3; }
 
 protected:
-  static unsigned int findMax(const std::vector<unsigned int>& dataVec);
-
   // numBytes = 1, 2, or 4
   static bool writeUInt(Byte** ppByte, unsigned int k, int numBytes);
   static bool readUInt( Byte** ppByte, size_t& nRemainingBytes, unsigned int& k, int numBytes);

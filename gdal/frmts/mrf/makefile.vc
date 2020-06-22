@@ -20,11 +20,9 @@ PLUGIN_DLL =	gdal_mrf.dll
 
 !IF "$(HAVE_LERC)" == "1"
 # If the LERC folder exists, build LERC support
-!IF EXIST(libLERC)
 LIBLERC = libLERC.obj
 EXTRAFLAGS	= -DLERC -IlibLERC -I../../third_party/LercLib $(EXTRAFLAGS)
 OBJ = $(LIBLERC) LERC_Band.obj $(OBJ)
-!ENDIF
 !ENDIF
 
 !IFDEF JPEG_EXTERNAL_LIB
