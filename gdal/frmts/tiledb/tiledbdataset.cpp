@@ -1264,27 +1264,27 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
 
         char ** papszStructMeta = poDS->GetMetadata( "IMAGE_STRUCTURE" );
         const char* pszXSize = CSLFetchNameValue( papszStructMeta, "X_SIZE");
-        if ( pszXSize > 0 )
+        if ( pszXSize )
         {
             poDS->nRasterXSize = atoi( pszXSize );
-        }
-        else
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                "Width %i should be greater than zero.", pszXSize );
-            return nullptr;
+            if ( poDS->nRasterXSize <= 0 )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                    "Width %i should be greater than zero.", pszXSize );
+                return nullptr;
+            }
         }
 
         const char* pszYSize = CSLFetchNameValue( papszStructMeta, "Y_SIZE");
-        if ( pszYSize > 0 )
+        if ( pszYSize )
         {
             poDS->nRasterYSize = atoi( pszYSize );
-        }
-        else
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                "Height %i should be greater than zero.", pszYSize );
-            return nullptr;
+            if ( poDS->nRasterYSize <= 0 )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                    "Height %i should be greater than zero.", pszYSize );
+                return nullptr;
+            }
         }
 
         const char* pszNBits = CSLFetchNameValue( papszStructMeta, "NBITS");
