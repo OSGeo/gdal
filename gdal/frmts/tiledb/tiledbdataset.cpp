@@ -1264,15 +1264,27 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
 
         char ** papszStructMeta = poDS->GetMetadata( "IMAGE_STRUCTURE" );
         const char* pszXSize = CSLFetchNameValue( papszStructMeta, "X_SIZE");
-        if ( pszXSize )
+        if ( pszXSize > 0 )
         {
             poDS->nRasterXSize = atoi( pszXSize );
         }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                "Width %i should be greater than zero.", pszXSize );
+            return nullptr;
+        }
 
         const char* pszYSize = CSLFetchNameValue( papszStructMeta, "Y_SIZE");
-        if ( pszYSize )
+        if ( pszYSize > 0 )
         {
             poDS->nRasterYSize = atoi( pszYSize );
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                "Height %i should be greater than zero.", pszYSize );
+            return nullptr;
         }
 
         const char* pszNBits = CSLFetchNameValue( papszStructMeta, "NBITS");
@@ -1288,7 +1300,15 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
             GDALDataType eDT = GDALGetDataTypeByName( pszDataType );
             if ( eDT == GDT_Unknown )
             {
-                poDS->eDataType = static_cast<GDALDataType>( atoi( pszDataType ) );
+                int t = atoi( pszDataType );
+                if ( ( t > 0 ) && ( t < GDT_TypeCount ) )
+                    poDS->eDataType = static_cast<GDALDataType>( atoi( pszDataType ) );
+                else
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                        "Unknown data type %s.", pszDataType );
+                    return nullptr;
+                }
             }
             else
             {
