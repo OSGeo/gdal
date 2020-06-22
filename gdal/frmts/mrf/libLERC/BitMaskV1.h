@@ -30,40 +30,39 @@ NAMESPACE_LERC_START
 class BitMaskV1
 {
 public:
-  BitMaskV1(int nCols, int nRows) : m_pBits(nullptr), m_nRows(nRows), m_nCols(nCols)
-  {
-      m_pBits = new Byte[Size()];
-      if (!m_pBits)
-          m_nRows = m_nCols = 0;
-      else
-           m_pBits[Size() - 1] = 0; // Set potential pad bytes to zero
-  }
-  ~BitMaskV1()                                  { if (m_pBits) delete[] m_pBits; }
+    BitMaskV1(int nCols, int nRows) : m_pBits(nullptr), m_nRows(nRows), m_nCols(nCols) {
+        m_pBits = new Byte[Size()];
+        if (!m_pBits)
+            m_nRows = m_nCols = 0;
+        else
+            m_pBits[Size() - 1] = 0; // Set potential pad bytes to zero
+    }
+    ~BitMaskV1() { if (m_pBits) delete[] m_pBits; }
 
-  Byte  IsValid(int k) const                  { return (m_pBits[k >> 3] & Bit(k)) != 0; }
-  void  SetValid(int k) const                 { m_pBits[k >> 3] |= Bit(k); }
-  void  SetInvalid(int k) const               { m_pBits[k >> 3] &= ~Bit(k); }
-  int   Size() const                          { return (m_nCols * m_nRows - 1) / 8 + 1; }
+    Byte  IsValid(int k) const { return (m_pBits[k >> 3] & Bit(k)) != 0; }
+    void  SetValid(int k) const { m_pBits[k >> 3] |= Bit(k); }
+    void  SetInvalid(int k) const { m_pBits[k >> 3] &= ~Bit(k); }
+    int   Size() const { return (m_nCols * m_nRows - 1) / 8 + 1; }
 
-  // max RLE compressed size is n + 4 + 2 * (n - 1) / 32767
-  // Returns encoded size
-  int RLEcompress(Byte *aRLE) const;
-  // current encoded size
-  int RLEsize() const;
-  // Decompress a RLE bitmask, bitmask size should be already set
-  // Returns false if input seems wrong
-  bool RLEdecompress(const Byte* src, size_t nRemainingBytes) const;
+    // max RLE compressed size is n + 4 + 2 * (n - 1) / 32767
+    // Returns encoded size
+    int RLEcompress(Byte* aRLE) const;
+    // current encoded size
+    int RLEsize() const;
+    // Decompress a RLE bitmask, bitmask size should be already set
+    // Returns false if input seems wrong
+    bool RLEdecompress(const Byte* src, size_t nRemainingBytes) const;
 
 private:
-  Byte*  m_pBits;
-  int   m_nRows, m_nCols;
+    Byte* m_pBits;
+    int   m_nRows, m_nCols;
 
-  static Byte  Bit(int k)                      { return (1 << 7) >> (k & 7); }
+    static Byte  Bit(int k) { return (1 << 7) >> (k & 7); }
 
-  // Disable assignment op, default and copy constructor
-  BitMaskV1();
-  BitMaskV1(const BitMaskV1& copy);
-  BitMaskV1& operator=(const BitMaskV1& m);
+    // Disable assignment op, default and copy constructor
+    BitMaskV1();
+    BitMaskV1(const BitMaskV1& copy);
+    BitMaskV1& operator=(const BitMaskV1& m);
 };
 
 NAMESPACE_LERC_END
