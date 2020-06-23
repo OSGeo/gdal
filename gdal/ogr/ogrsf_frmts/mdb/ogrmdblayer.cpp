@@ -135,6 +135,7 @@ CPLErr OGRMDBLayer::BuildFeatureDefn()
         {
           case MDB_Boolean:
             oField.SetType( OFTInteger );
+            oField.SetSubType( OFSTBoolean );
             oField.SetWidth(1);
             break;
 
@@ -257,7 +258,8 @@ OGRFeature *OGRMDBLayer::GetNextRawFeature()
     {
         int iSrcField = panFieldOrdinals[iField]-1;
         char *pszValue = poMDBTable->GetColumnAsString( iSrcField );
-        OGRFieldType eType = poFeature->GetFieldDefnRef(iField)->GetType();
+        const auto poFieldDefn = poFeature->GetFieldDefnRef(iField);
+        const OGRFieldType eType = poFieldDefn->GetType();
 
         if( pszValue == nullptr )
             poFeature->SetFieldNull( iField );
@@ -270,9 +272,9 @@ OGRFeature *OGRMDBLayer::GetNextRawFeature()
                                  pData );
             CPLFree(pData);
         }
-        else if ( eType == OFTInteger && EQUAL(pszValue, "true"))
+        else if ( eType == OFTInteger && poFieldDefn->GetSubType() == OFSTBoolean )
         {
-           poFeature->SetField( iField, 1 );
+           poFeature->SetField( iField, EQUAL(pszValue, "true") ? 1 : 0 );
         }
         else
         {
