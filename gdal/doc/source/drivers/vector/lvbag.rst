@@ -18,16 +18,28 @@ The driver is only available if GDAL/OGR is compiled against the Expat
 library.
 
 Each extract XML file is presented as a single OGR layer. The layers are
-georeferenced in their native (EPSG:28992) SRS.
+georeferenced in their native (EPSG:28992) SRS. Each dataset exposes the LvID
+field according to the BAG 2.0 specfication.
 
 More information about the LV BAG 2.0 can be found at https://zakelijk.kadaster.nl/bag-2.0
 
 LV BAG model definitions are available at https://zakelijk.kadaster.nl/documents/20838/87954/XSD%27s+BAG+2.0+Extract
 
-Note 1 : the earlier BAG 1.0 extract is not supported by this driver.
+Note 1 : the earlier BAG 1.0 extract is **not supported**\ by this driver.
 
 Note 2 : the driver will only read ST (Standaard Levering) extract files. Mutation
 ML (Mutatie Levering) files are not supported.
+
+Open options
+------------
+
+The following open options can be specified
+(typically with the -oo name=value parameters of ogrinfo or ogr2ogr):
+
+-  **AUTOCORRECT_INVALID_DATA**\ =YES/NO (defaults to YES). Whether or not the driver must
+   try to adjust the data if a feature contains invalid or corrupted data. This typically
+   includes fixing invalid geometries (with GEOS >= 3.8.0), dates, object status etc. If
+   performance is essential set this option to NO.
 
 VSI Virtual File System API support
 -----------------------------------
@@ -73,6 +85,14 @@ Examples
        -f "PostgreSQL" PG:dbname="my_database" \
        9999PND18122019/ \
        -nln "name_of_new_table"
+
+- Create GeoPackage from 'Nummeraanduiding' dataset:
+
+   ::
+
+     ogr2ogr \
+       -f "GPKG" nummeraanduiding.gpkg \
+       0000NUM01052020/
 
 See Also
 --------
