@@ -43,7 +43,6 @@ constexpr const char *pszSpecificationUrn = "urn:ogc:def:crs:EPSG::28992";
 OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn, char **papszOpenOptions ) :
     OGRAbstractProxiedLayer{ poPoolIn },
     poFeatureDefn{ new OGRFeatureDefn{} },
-    poFeature{ nullptr },
     fp{ nullptr },
     nNextFID{ 0 },
     osFilename{ pszFilename },
@@ -72,6 +71,7 @@ OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn, c
 
 OGRLVBAGLayer::~OGRLVBAGLayer()
 {
+    delete m_poFeature;
     poFeatureDefn->Release();
     CloseUnderlyingLayer();
 }
@@ -484,7 +484,7 @@ void OGRLVBAGLayer::StartElementCbk( const char *pszName, const char **ppszAttr 
              EQUAL("sl-bag-extract:bagObject", pszName) )
     {
         nFeatureElementDepth = nCurrentDepth;
-        poFeature = new OGRFeature(poFeatureDefn);
+        m_poFeature = new OGRFeature(poFeatureDefn);
     }
     else if( nFeatureCollectionDepth == 0 && EQUAL("sl:standBestand", pszName) )
         nFeatureCollectionDepth = nCurrentDepth;
@@ -519,9 +519,9 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                 if( poFieldDefn->GetSubType() == OGRFieldSubType::OFSTBoolean )
                 {
                     if( EQUAL("n", pszValue) )
-                        poFeature->SetField(iFieldIndex, 0);
+                        m_poFeature->SetField(iFieldIndex, 0);
                     else if( EQUAL("j", pszValue) )
-                        poFeature->SetField(iFieldIndex, 1);
+                        m_poFeature->SetField(iFieldIndex, 1);
                     else
                     {
                         CPLError(CE_Failure, CPLE_AppDefined, "Parsing boolean failed");
@@ -532,20 +532,20 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                 {
                     CPLString oFullDate{ pszValue };
                     oFullDate += "-01-01";
-                    poFeature->SetField(iFieldIndex, oFullDate.c_str());
+                    m_poFeature->SetField(iFieldIndex, oFullDate.c_str());
                 }
                 else
-                    poFeature->SetField(iFieldIndex, pszValue);
+                    m_poFeature->SetField(iFieldIndex, pszValue);
                 
                 if( bFitInvalidData
                     && (poFieldDefn->GetType() == OFTDate || poFieldDefn->GetType() == OFTDateTime) )
                 {
                     int nYear;
-                    poFeature->GetFieldAsDateTime(iFieldIndex, &nYear, nullptr, nullptr,
+                    m_poFeature->GetFieldAsDateTime(iFieldIndex, &nYear, nullptr, nullptr,
                                                 nullptr, nullptr,
                                                 static_cast<float*>(nullptr), nullptr);
                     if( nYear > 2100 )
-                        poFeature->SetFieldNull(iFieldIndex);
+                        m_poFeature->SetFieldNull(iFieldIndex);
                 }
             }
         }
@@ -634,7 +634,7 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
 
                 if( poGeomField->GetSpatialRef() )
                     poGeom->assignSpatialReference(poGeomField->GetSpatialRef());
-                poFeature->SetGeometryDirectly(poGeom.release());
+                m_poFeature->SetGeometryDirectly(poGeom.release());
             }
             else
             {
@@ -653,17 +653,17 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
         const int iFieldIndexNamespace = poFeatureDefn->GetFieldIndex("namespace");
         const int iFieldIndexLocalId = poFeatureDefn->GetFieldIndex("lokaalID");
 
-        CPLAssert(poFeature->GetFieldAsString(iFieldIndexNamespace));
-        CPLAssert(poFeature->GetFieldAsString(iFieldIndexLocalId));
+        CPLAssert(m_poFeature->GetFieldAsString(iFieldIndexNamespace));
+        CPLAssert(m_poFeature->GetFieldAsString(iFieldIndexLocalId));
 
         CPLString oLvId;
-        oLvId += poFeature->GetFieldAsString(iFieldIndexNamespace);
+        oLvId += m_poFeature->GetFieldAsString(iFieldIndexNamespace);
         oLvId += ".";
-        oLvId += poFeature->GetFieldAsString(iFieldIndexLocalId);
+        oLvId += m_poFeature->GetFieldAsString(iFieldIndexLocalId);
 
-        poFeature->SetField(poFeatureDefn->GetFieldIndex("lvID"), oLvId.toupper().c_str());
+        m_poFeature->SetField(poFeatureDefn->GetFieldIndex("lvID"), oLvId.toupper().c_str());
 
-        poFeature->SetFID(nNextFID++);
+        m_poFeature->SetFID(nNextFID++);
 
         XML_StopParser(oParser.get(), XML_TRUE);
     }
@@ -736,11 +736,9 @@ bool OGRLVBAGLayer::IsParserFinished( XML_Status status )
                     XML_ErrorString(XML_GetErrorCode(oParser.get())),
                     static_cast<int>(XML_GetCurrentLineNumber(oParser.get())),
                     static_cast<int>(XML_GetCurrentColumnNumber(oParser.get())) );
-            if( poFeature )
-            {
-                delete poFeature;
-                poFeature = nullptr;
-            }
+
+            delete m_poFeature;
+            m_poFeature = nullptr;
             return true;
 
         case XML_STATUS_SUSPENDED:
@@ -823,10 +821,13 @@ OGRFeature* OGRLVBAGLayer::GetNextRawFeature()
     if (nNextFID == 0)
         ConfigureParser();
 
-    poFeature = nullptr;
-    ParseDocument();
+    delete m_poFeature;
+    m_poFeature = nullptr;
 
-    return poFeature;
+    ParseDocument();
+    OGRFeature* poFeatureRet = m_poFeature;
+    m_poFeature = nullptr;
+    return poFeatureRet;
 }
 
 /************************************************************************/

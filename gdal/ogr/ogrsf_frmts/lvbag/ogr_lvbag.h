@@ -62,7 +62,7 @@ class OGRLVBAGLayer final: public OGRAbstractProxiedLayer, public OGRGetNextFeat
     CPL_DISALLOW_COPY_ASSIGN(OGRLVBAGLayer)
 
     OGRFeatureDefn     *poFeatureDefn;
-    OGRFeature         *poFeature;
+    OGRFeature         *m_poFeature = nullptr;
     VSILFILE           *fp;
     int                 nNextFID;
     CPLString           osFilename;
