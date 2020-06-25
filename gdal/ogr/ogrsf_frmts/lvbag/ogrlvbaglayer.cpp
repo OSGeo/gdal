@@ -481,10 +481,12 @@ void OGRLVBAGLayer::StartElementCbk( const char *pszName, const char **ppszAttr 
         osElementString += ">";
     }
     else if( nFeatureCollectionDepth > 0 && nFeatureElementDepth == 0 &&
-             EQUAL("sl-bag-extract:bagObject", pszName) )
+             EQUAL("sl-bag-extract:bagObject", pszName) &&
+             bHasReadSchema )
     {
         nFeatureElementDepth = nCurrentDepth;
         m_poFeature = new OGRFeature(poFeatureDefn);
+        m_poFeature->SetFID(nNextFID++);
     }
     else if( nFeatureCollectionDepth == 0 && EQUAL("sl:standBestand", pszName) )
         nFeatureCollectionDepth = nCurrentDepth;
@@ -662,8 +664,6 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
         oLvId += m_poFeature->GetFieldAsString(iFieldIndexLocalId);
 
         m_poFeature->SetField(poFeatureDefn->GetFieldIndex("lvID"), oLvId.toupper().c_str());
-
-        m_poFeature->SetFID(nNextFID++);
 
         XML_StopParser(oParser.get(), XML_TRUE);
     }
