@@ -191,6 +191,14 @@ static bool IsGeoJSONLikeObject( const char* pszText, bool* pbMightBeSequence )
         return true;
     }
 
+    // See https://github.com/OSGeo/gdal/issues/2720
+    if( osWithoutSpace.find("{\"coordinates\":[") == 0 )
+    {
+        if( pbMightBeSequence )
+            *pbMightBeSequence = false;
+        return true;
+    }
+
     if( IsTypeSomething(pszText, "Feature") ||
            IsTypeSomething(pszText, "Point") ||
            IsTypeSomething(pszText, "LineString") ||
