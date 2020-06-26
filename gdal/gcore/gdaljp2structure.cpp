@@ -1006,6 +1006,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             else
             {
                 /* We have seek and check before we hit a EOC */
+                nOffset = nBoxDataOffset + nBoxDataLength - 2;
                 CreateMarker( psCSBox, psLastChildCSBox, "EOC", nOffset, 0 );
             }
             continue;
