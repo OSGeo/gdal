@@ -254,7 +254,16 @@ def test_tiff_ovr_6(both_endian):
 
         assert wrk_ds is not None, 'Failed to open test dataset.'
 
-        wrk_ds.BuildOverviews('AVERAGE', overviewlist=[2])
+        def cbk(pct, _, user_data):
+            if user_data[0] < 0:
+                assert pct == 0
+            assert pct >= user_data[0]
+            user_data[0] = pct
+            return 1
+
+        tab = [-1]
+        wrk_ds.BuildOverviews('AVERAGE', overviewlist=[2], callback=cbk, callback_data=tab)
+        assert tab[0] == 1.0
 
     try:
         os.stat('tmp/ovr6.aux')
