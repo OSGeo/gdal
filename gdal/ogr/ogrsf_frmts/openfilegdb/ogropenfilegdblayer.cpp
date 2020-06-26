@@ -287,6 +287,8 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10()
         return FALSE;
     }
 
+    m_bTimeInUTC = CPLTestBool(CPLGetXMLValue(psInfo, "IsTimeInUTC", "false"));
+
     /* We cannot trust the XML definition to build the field definitions. */
     /* It sometimes misses a few fields ! */
 
@@ -1538,9 +1540,10 @@ OGRFeature* OGROpenFileGDBLayer::GetCurrentFeature()
         }
         else
         {
-            if( !m_poFeatureDefn->GetFieldDefn(iOGRIdx)->IsIgnored() )
+            const OGRFieldDefn* poFieldDefn = m_poFeatureDefn->GetFieldDefn(iOGRIdx);
+            if( !poFieldDefn->IsIgnored() )
             {
-                const OGRField* psField = m_poLyrTable->GetFieldValue(iGDBIdx);
+                OGRField* psField = m_poLyrTable->GetFieldValue(iGDBIdx);
                 if( poFeature == nullptr )
                     poFeature = new OGRFeature(m_poFeatureDefn);
                 if( psField == nullptr )
@@ -1551,9 +1554,14 @@ OGRFeature* OGROpenFileGDBLayer::GetCurrentFeature()
                 {
 
                     if( iGDBIdx == m_iFieldToReadAsBinary )
-                        poFeature->SetField(iOGRIdx, (const char*) psField->Binary.paData);
+                        poFeature->SetField(iOGRIdx, reinterpret_cast<const char*>(psField->Binary.paData));
+                    else if( poFieldDefn->GetType() == OFTDateTime )
+                    {
+                        psField->Date.TZFlag = m_bTimeInUTC ? 100 : 0;
+                        poFeature->SetField(iOGRIdx, psField);
+                    }
                     else
-                        poFeature->SetField(iOGRIdx, (OGRField*) psField);
+                        poFeature->SetField(iOGRIdx, psField);
                 }
             }
             iOGRIdx ++;
