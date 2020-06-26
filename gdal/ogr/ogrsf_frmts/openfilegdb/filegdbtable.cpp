@@ -1406,9 +1406,9 @@ int FileGDBDoubleDateToOGRDate(double dfVal, OGRField* psField)
 /*                          GetFieldValue()                             */
 /************************************************************************/
 
-const OGRField* FileGDBTable::GetFieldValue(int iCol)
+OGRField* FileGDBTable::GetFieldValue(int iCol)
 {
-    const OGRField* errorRetValue = nullptr;
+    OGRField* errorRetValue = nullptr;
 
     returnErrorIf(nCurRow < 0 );
     returnErrorIf((GUInt32)iCol >= apoFields.size() );

@@ -2601,6 +2601,8 @@ bool FGdbLayer::Initialize(FGdbDataSource* pParentDataSource, Table* pTable,
     {
         CPLXMLNode *psNode;
 
+        m_bTimeInUTC = CPLTestBool(CPLGetXMLValue(pDataElementNode, "IsTimeInUTC", "false"));
+
         for( psNode = pDataElementNode->psChild;
         psNode != nullptr;
         psNode = psNode->psNext )
@@ -3373,7 +3375,8 @@ bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
                 }
 
                 pOutFeature->SetField(i, val.tm_year + 1900, val.tm_mon + 1,
-                                      val.tm_mday, val.tm_hour, val.tm_min, (float)val.tm_sec);
+                                      val.tm_mday, val.tm_hour, val.tm_min, (float)val.tm_sec,
+                                      m_bTimeInUTC ? 100 : 0);
             // Examine test data to figure out how to extract that
             }
             break;
