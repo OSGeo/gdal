@@ -691,7 +691,9 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      At this point we should be verifying that it refers to our      */
 /*      binary file, but that is a pretty involved test.                */
 /* -------------------------------------------------------------------- */
-    const char *pszLine = CPLReadLineL( fp );
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    const char *pszLine = CPLReadLine2L( fp, 1024, nullptr );
+    CPLPopErrorHandler();
 
     CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 
@@ -699,6 +701,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
         || (!STARTS_WITH_CI(pszLine, "AuxilaryTarget")
             && !STARTS_WITH_CI(pszLine, "AuxiliaryTarget")) )
     {
+        CPLErrorReset();
         return nullptr;
     }
 
@@ -711,7 +714,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Load the .aux file into a string list suitable to be            */
 /*      searched with CSLFetchNameValue().                              */
 /* -------------------------------------------------------------------- */
-    poDS->papszAuxLines = CSLLoad( osAuxFilename );
+    poDS->papszAuxLines = CSLLoad2( osAuxFilename, 1024, 1024, nullptr );
     poDS->pszAuxFilename = CPLStrdup(osAuxFilename);
 
 /* -------------------------------------------------------------------- */
