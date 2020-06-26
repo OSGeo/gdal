@@ -1692,9 +1692,9 @@ class GDAL2Tiles(object):
             def log2(x):
                 return math.log10(x) / math.log10(2)
 
-            self.nativezoom = int(
+            self.nativezoom = max(0, int(
                 max(math.ceil(log2(self.warped_input_dataset.RasterXSize / float(self.tile_size))),
-                    math.ceil(log2(self.warped_input_dataset.RasterYSize / float(self.tile_size)))))
+                    math.ceil(log2(self.warped_input_dataset.RasterYSize / float(self.tile_size))))))
 
             if self.options.verbose:
                 print("Native zoom of the raster:", self.nativezoom)
