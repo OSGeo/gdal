@@ -71,6 +71,7 @@ class OGROpenFileGDBLayer final: public OGRLayer
     OGRwkbGeometryType m_eGeomType;
     int               m_bValidLayerDefn;
     int               m_bEOF;
+    bool              m_bTimeInUTC = false;
 
     int               BuildLayerDefinition();
     int               BuildGeometryColumnGDBv10();

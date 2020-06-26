@@ -309,7 +309,7 @@ class FileGDBTable
        int                      HasGotError() const { return bError; }
        int                      GetCurRow() const { return nCurRow; }
        int                      IsCurRowDeleted() const { return bIsDeleted; }
-       const OGRField*          GetFieldValue(int iCol);
+       OGRField*                GetFieldValue(int iCol);
 
        int                      GetFeatureExtent(const OGRField* psGeomField,
                                                  OGREnvelope* psOutFeatureEnvelope);
