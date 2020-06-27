@@ -101,16 +101,16 @@ class GPKGChecker(object):
                 if name != expected_name:
                     continue
 
-                if expected_type == 'INTEGER' and expected_pk:
+                if 'INTEGER' in expected_type and expected_pk:
                     expected_notnull = 1
                 if typ == 'INTEGER' and pk:
                     notnull = 1
                 if not self.extended_pragma_info and expected_pk > 1:
                     expected_pk = 1
 
-                self._assert(typ == expected_type, req,
+                self._assert(typ in expected_type, req,
                              'Wrong type for %s of %s. Expected %s, got %s' %
-                             (name, table_name, expected_type, typ))
+                             (name, table_name, str(expected_type), typ))
                 self._assert(notnull == expected_notnull, req,
                              ('Wrong notnull for %s of %s. ' +
                               'Expected %s, got %s') %
@@ -535,11 +535,11 @@ class GPKGChecker(object):
             c.execute('PRAGMA table_info(%s)' % _esc_id(rtree_name))
             columns = c.fetchall()
             expected_columns = [
-                (0, 'id', '', 0, None, 0),
-                (1, 'minx', '', 0, None, 0),
-                (2, 'maxx', '', 0, None, 0),
-                (3, 'miny', '', 0, None, 0),
-                (4, 'maxy', '', 0, None, 0)
+                (0, 'id', ['', 'INT'], 0, None, 0),
+                (1, 'minx', ['', 'NUM', 'REAL'], 0, None, 0),
+                (2, 'maxx', ['', 'NUM', 'REAL'], 0, None, 0),
+                (3, 'miny', ['', 'NUM', 'REAL'], 0, None, 0),
+                (4, 'maxy', ['', 'NUM', 'REAL'], 0, None, 0)
             ]
             self._check_structure(columns, expected_columns, 77, rtree_name)
 
