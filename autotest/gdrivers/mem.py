@@ -29,7 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import array
+import struct
 from osgeo import gdal
 
 
@@ -52,7 +52,7 @@ def test_mem_1():
 
     assert ds.GetGeoTransform(can_return_null=True) is None, 'geotransform wrong'
 
-    raw_data = array.array('f', list(range(150))).tostring()
+    raw_data = b''.join(struct.pack('f', v) for v in range(150))
     ds.WriteRaster(0, 0, 50, 3, raw_data,
                    buf_type=gdal.GDT_Float32,
                    band_list=[1])

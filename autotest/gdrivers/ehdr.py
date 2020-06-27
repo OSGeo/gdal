@@ -30,7 +30,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import array
 import struct
 
 from osgeo import gdal
@@ -78,7 +77,7 @@ def test_ehdr_4():
     drv = gdal.GetDriverByName('EHdr')
     ds = drv.Create('tmp/test_4.bil', 200, 100, 1, gdal.GDT_Byte)
 
-    raw_data = array.array('h', list(range(200))).tostring()
+    raw_data = b''.join(struct.pack('h', v) for v in range(200))
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
