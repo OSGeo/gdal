@@ -172,6 +172,8 @@ RUN apt-get update \
         libzstd1 bash bash-completion libpq5 libssl1.1 \
         libarmadillo9 libpython3.8 libopenexr24 libheif1 \
         python-is-python3 \
+    # Workaround bug in ogdi packaging
+    && ln -s /usr/lib/ogdi/libvrf.so /usr/lib \
     && rm -rf /var/lib/apt/lists/*
 
 # Attempt to order layers starting with less frequently varying ones
