@@ -536,10 +536,10 @@ class GPKGChecker(object):
             columns = c.fetchall()
             expected_columns = [
                 (0, 'id', ['', 'INT'], 0, None, 0),
-                (1, 'minx', ['', 'REAL'], 0, None, 0),
-                (2, 'maxx', ['', 'REAL'], 0, None, 0),
-                (3, 'miny', ['', 'REAL'], 0, None, 0),
-                (4, 'maxy', ['', 'REAL'], 0, None, 0)
+                (1, 'minx', ['', 'NUM', 'REAL'], 0, None, 0),
+                (2, 'maxx', ['', 'NUM', 'REAL'], 0, None, 0),
+                (3, 'miny', ['', 'NUM', 'REAL'], 0, None, 0),
+                (4, 'maxy', ['', 'NUM', 'REAL'], 0, None, 0)
             ]
             self._check_structure(columns, expected_columns, 77, rtree_name)
 
