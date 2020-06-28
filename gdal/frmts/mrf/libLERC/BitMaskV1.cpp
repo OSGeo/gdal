@@ -40,40 +40,36 @@ NAMESPACE_LERC_START
 // Returns false if input seems wrong
 // Not safe if fed garbage !!!
 // Zero size mask is fine, only checks the end marker
-bool BitMaskV1::RLEdecompress(const Byte* src, size_t nRemainingBytes) const {
+bool BitMaskV1::RLEdecompress(const Byte* src, size_t n) const {
     Byte *dst = m_pBits;
     int sz = Size();
     short int count;
     assert(src);
 
-// Read a two bye short int
-#define READ_COUNT if (true) { if (nRemainingBytes < 2 ) return false; count = *src++; count += (*src++ << 8); nRemainingBytes -= 2; }
-
+// Read a low endian short int
+#define READ_COUNT if (true) { if (n < 2 ) return false; count = *src++; count += (*src++ << 8); }
     while (sz) { // One sequence per loop
         READ_COUNT;
+        n -= 2;
         if (count < 0) { // negative count for repeats
-            if (nRemainingBytes < 1 )
+            if (0 == n--)
                 return false;
             Byte b = *src++;
-            nRemainingBytes --;
             sz += count;
-            if( sz < 0 )
+            if (sz < 0)
                 return false;
             while (0 != count++)
                 *dst++ = b;
-        } else { // No repeats
-            sz -= count;
-            if( sz < 0 )
+        } else { // No repeats, count is positive
+            if (sz < count || n < static_cast<size_t>(count))
                 return false;
-            if (nRemainingBytes < static_cast<size_t>(count) )
-              return false;
-            nRemainingBytes -= count;
+            sz -= count;
+            n -= count;
             while (0 != count--)
                 *dst++ = *src++;
         }
     }
     READ_COUNT;
-    (void)nRemainingBytes;
     return (count == EOT);
 }
 
@@ -108,13 +104,13 @@ int BitMaskV1::RLEcompress(Byte *dst) const {
     // non-repeated byte count
     int oddrun = 0;
 
-// Store a two byte count in low endian
+// Store val as short low endian integer
 #define WRITE_COUNT(val) if (true) { *pCnt++ = Byte(val & 0xff); *pCnt++ = Byte(val >> 8); }
 // Flush an existing odd run
 #define FLUSH if (oddrun) { WRITE_COUNT(oddrun); pCnt += oddrun; dst = pCnt + 2; oddrun = 0; }
 
     dst += 2; // Skip the space for the first count
-    while (sz) {
+    while (sz > 0) {
         int run = run_length(src, sz);
         if (run < MIN_RUN) { // Use one byte
             *dst++ = *src++;
