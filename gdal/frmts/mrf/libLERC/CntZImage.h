@@ -77,6 +77,7 @@ public:
         width_ = width;
         height_ = height;
         values.resize(size_t(width) * height);
+        memset(values.data(), 0, values.size() * sizeof(T));
         return true;
     }
 

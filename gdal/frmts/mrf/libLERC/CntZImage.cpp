@@ -313,9 +313,6 @@ bool CntZImage::read(Byte** ppByte,
     if (!onlyZPart && !resize(width, height))
         return false;
 
-    CntZ cntzero = { 0.0, 0.0 };
-    values.resize(width * height, cntzero);
-
     bool zPart = onlyZPart;
     do {
         int numTilesVert = 0, numTilesHori = 0, numBytes = 0;
