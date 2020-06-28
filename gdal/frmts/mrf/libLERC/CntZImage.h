@@ -76,9 +76,7 @@ public:
             return false;
         width_ = width;
         height_ = height;
-        size_t newsize = size_t(width) * height;
-        CntZ CntZzero = { 0, 0 };
-        values.resize(newsize, CntZzero);
+        values.resize(size_t(width) * height);
         return true;
     }
 
@@ -101,6 +99,7 @@ protected:
 struct CntZ
 {
     float cnt, z;
+    CntZ() : cnt(0), z(0) {}
 };
 
 class CntZImage : public TImage<CntZ>
