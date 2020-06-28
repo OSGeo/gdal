@@ -28,11 +28,17 @@ Contributors:  Thomas Maurer
 
 using namespace std;
 
-#ifdef DEBUG
-void LERC_BRKPNT() {}
-#endif
-
 NAMESPACE_LERC_START
+
+static unsigned int computeNumBytesNeededByStuffer(unsigned int numElem, unsigned int maxElem)
+{
+    int numBits = 0;
+    while (maxElem >> numBits)
+        numBits++;
+    unsigned int numUInts = (numElem * numBits + 31) / 32;
+    return 1 + BitStufferV1::numBytesUInt(numElem) + numUInts * sizeof(unsigned int) -
+        BitStufferV1::numTailBytesNotNeeded(numElem, numBits);
+}
 
 // -------------------------------------------------------------------------- ;
 
@@ -161,22 +167,16 @@ bool CntZImage::write(Byte** ppByte,
     if (getSize() == 0)
         return false;
 
-    int versionSwap = version;
-    int typeSwap = type_;
-    int heightSwap = static_cast<int>(height_);
-    int widthSwap = static_cast<int>(width_);
-    double maxZErrorSwap = maxZError;
-
     Byte* ptr = *ppByte;
 
     memcpy(ptr, getTypeString().c_str(), getTypeString().length());
     ptr += getTypeString().length();
 
-    memcpy(ptr, &versionSwap, sizeof(int));  ptr += sizeof(int);
-    memcpy(ptr, &typeSwap, sizeof(int));  ptr += sizeof(int);
-    memcpy(ptr, &heightSwap, sizeof(int));  ptr += sizeof(int);
-    memcpy(ptr, &widthSwap, sizeof(int));  ptr += sizeof(int);
-    memcpy(ptr, &maxZErrorSwap, sizeof(double));  ptr += sizeof(double);
+    memcpy(ptr, &version, sizeof(int));  ptr += sizeof(int);
+    memcpy(ptr, &type_, sizeof(int));  ptr += sizeof(int);
+    memcpy(ptr, &height_, sizeof(int));  ptr += sizeof(int);
+    memcpy(ptr, &width_, sizeof(int));  ptr += sizeof(int);
+    memcpy(ptr, &maxZError, sizeof(double));  ptr += sizeof(double);
 
     *ppByte = ptr;
 
@@ -208,16 +208,11 @@ bool CntZImage::write(Byte** ppByte,
             maxValInImg = info.maxZInImg;
         }
 
-        int numTilesVertSwap = numTilesVert;
-        int numTilesHoriSwap = numTilesHori;
-        int numBytesOptSwap = numBytesOpt;
-        float maxValInImgSwap = maxValInImg;
-
         ptr = *ppByte;
-        memcpy(ptr, &numTilesVertSwap, sizeof(int));  ptr += sizeof(int);
-        memcpy(ptr, &numTilesHoriSwap, sizeof(int));  ptr += sizeof(int);
-        memcpy(ptr, &numBytesOptSwap, sizeof(int));  ptr += sizeof(int);
-        memcpy(ptr, &maxValInImgSwap, sizeof(float));  ptr += sizeof(float);
+        memcpy(ptr, &numTilesVert, sizeof(int));  ptr += sizeof(int);
+        memcpy(ptr, &numTilesHori, sizeof(int));  ptr += sizeof(int);
+        memcpy(ptr, &numBytesOpt, sizeof(int));  ptr += sizeof(int);
+        memcpy(ptr, &maxValInImg, sizeof(float));  ptr += sizeof(float);
 
         *ppByte = ptr;
         Byte* bArr = ptr;
@@ -606,7 +601,7 @@ int CntZImage::numBytesCntTile(int numPixel, float cntMin, float cntMax, bool cn
     }
     else {
         unsigned int maxElem = (unsigned int)(cntMax - cntMin + 0.5f);
-        return 1 + numBytesFlt(floorf(cntMin + 0.5f)) + BitStufferV1::computeNumBytesNeeded(numPixel, maxElem);
+        return 1 + numBytesFlt(floorf(cntMin + 0.5f)) + computeNumBytesNeededByStuffer(numPixel, maxElem);
     }
 }
 
@@ -622,7 +617,7 @@ int CntZImage::numBytesZTile(int numValidPixel, float zMin, float zMax, double m
     }
     else {
         unsigned int maxElem = (unsigned int)((double)(zMax - zMin) / (2 * maxZError) + 0.5);
-        return 1 + numBytesFlt(zMin) + (maxElem ? BitStufferV1::computeNumBytesNeeded(numValidPixel, maxElem) : 0);
+        return 1 + numBytesFlt(zMin) + (maxElem ? computeNumBytesNeededByStuffer(numValidPixel, maxElem) : 0);
     }
 }
 

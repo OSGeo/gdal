@@ -25,8 +25,8 @@ Contributors:  Thomas Maurer
 #include "DefinesV1.h"
 
 NAMESPACE_LERC_START
-/** Bit stuffer, for writing unsigned int arrays compressed lossless
- *
+/**
+ * Bit stuffer, for writing unsigned int arrays compressed lossless
  */
 
 class BitStufferV1
@@ -38,17 +38,13 @@ public:
   // these 2 do not allocate memory. Byte ptr is moved like a file pointer.
   static bool write(Byte** ppByte, const std::vector<unsigned int>& dataVec);
   static bool read( Byte** ppByte, size_t& nRemainingBytes, std::vector<unsigned int>& dataVec, size_t nMaxBufferVecElts);
+  static int numBytesUInt(unsigned int k) { return (k <= 0xff) ? 1 : (k <= 0xffff) ? 2 : 4; }
+  static unsigned int numTailBytesNotNeeded(unsigned int numElem, int numBits)
+  {
+      numBits = (numElem * numBits) & 31;
+      return (numBits == 0 || numBits > 24) ? 0 : (numBits > 16) ? 1 : (numBits > 8) ? 2 : 3;
+  }
 
-  static unsigned int computeNumBytesNeeded(unsigned int numElem, unsigned int maxElem);
-  static unsigned int numExtraBytesToAllocate()  { return 3; }
-
-protected:
-  // numBytes = 1, 2, or 4
-  static bool writeUInt(Byte** ppByte, unsigned int k, int numBytes);
-  static bool readUInt( Byte** ppByte, size_t& nRemainingBytes, unsigned int& k, int numBytes);
-
-  static int numBytesUInt(unsigned int k)  { return (k < 256) ? 1 : (k < (1 << 16)) ? 2 : 4; }
-  static unsigned int numTailBytesNotNeeded(unsigned int numElem, int numBits);
 };
 
 // -------------------------------------------------------------------------- ;

@@ -122,7 +122,6 @@ public:
         return computeNumBytesNeededToWrite(maxZError, onlyZPart, m_infoFromComputeNumBytes);
     }
 
-    static unsigned int numExtraBytesToAllocate() { return BitStufferV1::numExtraBytesToAllocate(); }
     static unsigned int computeNumBytesNeededToWriteVoidImage();
 
     /// these 2 do not allocate memory. Byte ptr is moved like a file pointer.

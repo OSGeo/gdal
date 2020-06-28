@@ -170,14 +170,13 @@ template <typename T> static bool CntZImgUFill(CntZImage &zImg, T *dst, size_t d
 {
     int h = static_cast<int>(zImg.getHeight());
     int w = static_cast<int>(zImg.getWidth());
-    if( dstBufferBytes < w * h* sizeof(T) )
+    if( dstBufferBytes < w * h * sizeof(T) )
         return false;
-    T *ptr = dst;
     // Use 0 if nodata is not defined
     const T ndv = img.hasNoData ? static_cast<T>(img.NoDataValue) : 0;
     for (int i = 0; i < h; i++)
         for (int j = 0; j < w; j++)
-            *ptr++ = (zImg(i, j).cnt == 0) ? ndv : static_cast<T>(zImg(i, j).z);
+            *dst++ = (zImg(i, j).cnt == 0) ? ndv : static_cast<T>(zImg(i, j).z);
     return true;
 }
 

@@ -24,13 +24,8 @@ Contributors:  Thomas Maurer
 #include "BitStufferV1.h"
 #include <cstring>
 
-// -------------------------------------------------------------------------- ;
-
 using namespace std;
-
 NAMESPACE_LERC_START
-
-// -------------------------------------------------------------------------- ;
 
 // see the old stream IO functions below on how to call.
 // if you change write(...) / read(...), don't forget to update computeNumBytesNeeded(...).
@@ -49,13 +44,14 @@ bool BitStufferV1::write(Byte** ppByte, const vector<unsigned int>& dataVec)
   unsigned int numUInts = (numElements * numBits + 31) / 32;
 
   // use the upper 2 bits to encode the type used for numElements: Byte, ushort, or uint
+  // n is 1, 2  or 4
   int n = numBytesUInt(numElements);
   int bits67 = (n == 4) ? 0 : 3 - n;
   **ppByte = Byte(numBits | (bits67 << 6));
   (*ppByte)++;
 
-  if (!writeUInt(ppByte, numElements, n))
-    return false;
+  memcpy(*ppByte, &numElements, n);
+  *ppByte += n;
 
   if (numUInts > 0)    // numBits can be 0, then we only write the header
   {
@@ -126,21 +122,25 @@ bool BitStufferV1::read(Byte** ppByte, size_t& nRemainingBytes, vector<unsigned 
   Byte numBitsByte = **ppByte;
   if( nRemainingBytes < 1 )
     return false;
-  (*ppByte)++;
+  *ppByte += 1;
   nRemainingBytes -= 1;
 
   int bits67 = numBitsByte >> 6;
-  int n = (bits67 == 0) ? 4 : 3 - bits67;
-
   numBitsByte &= 63;    // bits 0-5;
-
-  unsigned int numElements = 0;
-  if (!readUInt(ppByte, nRemainingBytes, numElements, n))
-    return false;
-  if(numElements > nMaxBufferVecElts)
-    return false;
-
   if (numBitsByte >= 32)
+      return false;
+
+  int n = (bits67 == 0) ? 4 : 3 - bits67;
+  if (n != 1 && n != 2 && n != 4) // only these values are valid
+      return false;
+  if (nRemainingBytes < n)
+      return false;
+  unsigned int numElements = 0;
+  memcpy(&numElements, *ppByte, n);
+  *ppByte += n;
+  nRemainingBytes -= n;
+
+  if(numElements > nMaxBufferVecElts)
     return false;
 
   int numBits = numBitsByte;
@@ -225,88 +225,5 @@ bool BitStufferV1::read(Byte** ppByte, size_t& nRemainingBytes, vector<unsigned 
 
   return true;
 }
-
-unsigned int BitStufferV1::computeNumBytesNeeded(unsigned int numElem, unsigned int maxElem)
-{
-  int numBits = 0;
-  while (maxElem >> numBits)
-    numBits++;
-  unsigned int numUInts = (numElem * numBits + 31) / 32;
-  unsigned int numBytes = 1 + numBytesUInt(numElem) + numUInts * sizeof(unsigned int) -
-    numTailBytesNotNeeded(numElem, numBits);
-
-  return numBytes;
-}
-
-// -------------------------------------------------------------------------- ;
-
-bool BitStufferV1::writeUInt(Byte** ppByte, unsigned int k, int numBytes)
-{
-  Byte* ptr = *ppByte;
-
-  if (numBytes == 1)
-  {
-    *ptr = (Byte)k;
-  }
-  else if (numBytes == 2)
-  {
-    unsigned short s = (unsigned short)k;
-    memcpy(ptr, &s, sizeof(unsigned short));
-  }
-  else if (numBytes == 4)
-  {
-    memcpy(ptr, &k, sizeof(unsigned int));
-  }
-  else
-    return false;
-
-  *ppByte = ptr + numBytes;
-  return true;
-}
-
-// -------------------------------------------------------------------------- ;
-
-bool BitStufferV1::readUInt(Byte** ppByte, size_t& nRemainingBytes, unsigned int& k, int numBytes)
-{
-  Byte* ptr = *ppByte;
-
-  if (numBytes == 1)
-  {
-    if( nRemainingBytes < static_cast<size_t>(numBytes) )
-      return false;
-    k = *ptr;
-  }
-  else if (numBytes == 2)
-  {
-    if( nRemainingBytes < static_cast<size_t>(numBytes) )
-      return false;
-    unsigned short s;
-    memcpy(&s, ptr, sizeof(unsigned short));
-    k = s;
-  }
-  else if (numBytes == 4)
-  {
-    if( nRemainingBytes < static_cast<size_t>(numBytes) )
-      return false;
-    memcpy(&k, ptr, sizeof(unsigned int));
-  }
-  else
-    return false;
-
-  *ppByte = ptr + numBytes;
-  nRemainingBytes -= numBytes;
-  return true;
-}
-
-// -------------------------------------------------------------------------- ;
-
-unsigned int BitStufferV1::numTailBytesNotNeeded(unsigned int numElem, int numBits)
-{
-  int numBitsTail = (numElem * numBits) & 31;
-  int numBytesTail = (numBitsTail + 7) >> 3;
-  return (numBytesTail > 0) ? 4 - numBytesTail : 0;
-}
-
-// -------------------------------------------------------------------------- ;
 
 NAMESPACE_LERC_END
