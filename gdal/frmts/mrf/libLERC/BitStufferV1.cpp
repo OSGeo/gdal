@@ -133,7 +133,7 @@ bool BitStufferV1::read(Byte** ppByte, size_t& nRemainingBytes, vector<unsigned 
   int n = (bits67 == 0) ? 4 : 3 - bits67;
   if (n != 1 && n != 2 && n != 4) // only these values are valid
       return false;
-  if (nRemainingBytes < n)
+  if (nRemainingBytes < static_cast<size_t>(n))
       return false;
   unsigned int numElements = 0;
   memcpy(&numElements, *ppByte, n);

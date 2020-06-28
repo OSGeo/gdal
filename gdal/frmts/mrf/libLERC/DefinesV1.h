@@ -20,9 +20,7 @@ Contributors:
 #ifndef LERC_DEFINESV1_H
 #define LERC_DEFINESV1_H
 
-// For std::pair
-#include <utility>
-#include <cstddef>
+#include <cstddef> // size_t
 
 #if defined(GDAL_COMPILATION)
 #include "cpl_port.h"
@@ -41,40 +39,7 @@ Contributors:
 #endif
 
 NAMESPACE_LERC_START
-
 typedef unsigned char Byte;
-
-// unsigned long pair sortable by first
-struct Quant : public std::pair<unsigned int, unsigned int>
-{
-    // This is default behavior in C++14, but not before
-    bool operator<(const Quant& other) const {
-        return first < other.first;
-    }
-};
-
-#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
-inline void Store(unsigned int* dst, int val)
-{
-    memcpy(dst, &val, sizeof(unsigned int));
-}
-inline unsigned int Load(const unsigned int* src)
-{
-    unsigned int res;
-    memcpy(&res, src, sizeof(unsigned int));
-    return res;
-}
-#else
-inline void Store(unsigned int* dst, unsigned int val)
-{
-    *dst = val;
-}
-inline unsigned int Load(const unsigned int* src)
-{
-    return *src;
-}
-#endif
-
 NAMESPACE_LERC_END
 
 #endif
