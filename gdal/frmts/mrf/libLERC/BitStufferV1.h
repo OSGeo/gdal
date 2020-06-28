@@ -29,18 +29,13 @@ NAMESPACE_LERC_START
  * Bit stuffer, for writing unsigned int arrays compressed lossless
  */
 
-class BitStufferV1
+struct BitStufferV1
 {
-public:
-  BitStufferV1()           {}
-  virtual ~BitStufferV1()  {}
-
   // these 2 do not allocate memory. Byte ptr is moved like a file pointer.
   static bool write(Byte** ppByte, const std::vector<unsigned int>& dataVec);
   static bool read( Byte** ppByte, size_t& nRemainingBytes, std::vector<unsigned int>& dataVec, size_t nMaxBufferVecElts);
   static int numBytesUInt(unsigned int k) { return (k <= 0xff) ? 1 : (k <= 0xffff) ? 2 : 4; }
-  static unsigned int numTailBytesNotNeeded(unsigned int numElem, int numBits)
-  {
+  static unsigned int numTailBytesNotNeeded(unsigned int numElem, int numBits) {
       numBits = (numElem * numBits) & 31;
       return (numBits == 0 || numBits > 24) ? 0 : (numBits > 16) ? 1 : (numBits > 8) ? 2 : 3;
   }

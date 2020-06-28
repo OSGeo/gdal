@@ -669,8 +669,7 @@ bool CntZImage::writeCntTile(Byte** ppByte, int& numBytes,
             for (int j = j0; j < j1; j++)
                 *dstPtr++ = (int)((*this)(i, j).cnt - offset + 0.5f);
 
-        BitStufferV1 bitStuffer;
-        if (!bitStuffer.write(&ptr, dataVec))
+        if (!BitStufferV1::write(&ptr, dataVec))
             return false;
     }
 
@@ -750,8 +749,7 @@ bool CntZImage::writeZTile(Byte** ppByte, int& numBytes,
             if (cntPixel != numValidPixel)
                 return false;
 
-            BitStufferV1 bitStuffer;
-            if (!bitStuffer.write(&ptr, dataVec))
+            if (!BitStufferV1::write(&ptr, dataVec))
                 return false;
         }
     }
