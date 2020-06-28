@@ -142,38 +142,30 @@ static GDALDataType GetL2DataType(Lerc2::DataType L2type) {
     return dt;
 }
 
-// Load a buffer into a zImg
+// Load a buffer of type T into zImg
 template <typename T> static void CntZImgFill(CntZImage &zImg, T *src, const ILImage &img)
 {
     int w = img.pagesize.x;
     int h = img.pagesize.y;
-
     zImg.resize(w, h);
-    T *ptr = src;
-
-    // No data value
-    float ndv = float(img.NoDataValue);
-    if (!img.hasNoData) ndv = 0;
-
+    const float ndv = static_cast<float>(img.hasNoData ? img.NoDataValue : 0);
     for (int i = 0; i < h; i++)
         for (int j = 0; j < w; j++) {
             CntZ pixel;
-            pixel.z = float(*ptr++);
-            pixel.cnt = CPLIsEqual(pixel.z, ndv) ? 0 : 1;
+            pixel.z = static_cast<float>(*src++);
+            pixel.cnt = static_cast<float>(CPLIsEqual(pixel.z, ndv) ? 0 : 1);
             zImg.setPixel(i, j, pixel);
         }
     return;
 }
 
-// Unload a zImg into a buffer
-template <typename T> static bool CntZImgUFill(CntZImage &zImg, T *dst, size_t dstBufferBytes, const ILImage &img)
+// Unload zImg into a type T buffer
+template <typename T> static bool CntZImgUFill(CntZImage &zImg, T *dst, const ILImage &img)
 {
     int h = static_cast<int>(zImg.getHeight());
     int w = static_cast<int>(zImg.getWidth());
-    if( dstBufferBytes < w * h * sizeof(T) )
-        return false;
     // Use 0 if nodata is not defined
-    const T ndv = img.hasNoData ? static_cast<T>(img.NoDataValue) : 0;
+    const T ndv = static_cast<T>(img.hasNoData ? img.NoDataValue) : 0);
     for (int i = 0; i < h; i++)
         for (int j = 0; j < w; j++)
             *dst++ = (zImg(i, j).cnt == 0) ? ndv : static_cast<T>(zImg(i, j).z);
@@ -240,7 +232,7 @@ static CPLErr DecompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img)
 
 // Unpack from zImg to dst buffer, calling the right type
     bool success = false;
-#define UFILL(T) success = CntZImgUFill(zImg, reinterpret_cast<T *>(dst.buffer), dst.size, img)
+#define UFILL(T) success = CntZImgUFill(zImg, reinterpret_cast<T *>(dst.buffer), img)
     switch (img.dt) {
     case GDT_Byte:      UFILL(GByte);   break;
     case GDT_UInt16:    UFILL(GUInt16); break;
