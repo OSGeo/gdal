@@ -99,7 +99,6 @@ protected:
 struct CntZ
 {
     float cnt, z;
-    CntZ() : cnt(0), z(0) {}
 };
 
 class CntZImage : public TImage<CntZ>
