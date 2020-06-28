@@ -159,7 +159,7 @@ template <typename T> static void CntZImgFill(CntZImage &zImg, T *src, const ILI
         for (int j = 0; j < w; j++) {
             CntZ pixel;
             pixel.z = float(*ptr++);
-            pixel.cnt = CPLIsEqual(zImg(i, j).z, ndv) ? 0 : 1;
+            pixel.cnt = CPLIsEqual(pixel.z, ndv) ? 0 : 1;
             zImg.setPixel(i, j, pixel);
         }
     return;
