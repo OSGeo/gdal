@@ -117,8 +117,7 @@ public:
     /// (maxZError = 0  means no lossy compression for Z; the Cnt part is compressed lossless or not at all)
     /// read succeeds only if maxZError on file <= maxZError requested (!)
 
-    unsigned int computeNumBytesNeededToWrite(double maxZError, bool onlyZPart = false)
-    {
+    unsigned int computeNumBytesNeededToWrite(double maxZError, bool onlyZPart = false) {
         return computeNumBytesNeededToWrite(maxZError, onlyZPart, m_infoFromComputeNumBytes);
     }
 

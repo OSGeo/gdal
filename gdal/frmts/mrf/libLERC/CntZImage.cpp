@@ -533,14 +533,14 @@ bool CntZImage::cntsNoInt() const
 // -------------------------------------------------------------------------- ;
 
 bool CntZImage::computeCntStats(int i0, int i1, int j0, int j1,
-    float& cntMinA, float& cntMaxA) const
+    float& cntMin, float& cntMax) const
 {
     if (i0 < 0 || j0 < 0 || i1 > height_ || j1 > width_)
         return false;
 
     // determine cnt ranges
-    float cntMin = FLT_MAX;
-    float cntMax = -FLT_MAX;
+    cntMin = FLT_MAX;
+    cntMax = -FLT_MAX;
 
     for (int i = i0; i < i1; i++) {
         for (int j = j0; j < j1; j++) {
@@ -550,24 +550,22 @@ bool CntZImage::computeCntStats(int i0, int i1, int j0, int j1,
         }
     }
 
-    cntMinA = cntMin;
-    cntMaxA = cntMax;
     return true;
 }
 
 // -------------------------------------------------------------------------- ;
 
 bool CntZImage::computeZStats(int i0, int i1, int j0, int j1,
-    float& zMinA, float& zMaxA, int& numValidPixelA) const
+    float& zMin, float& zMax, int& numValidPixel) const
 {
 
     if (i0 < 0 || j0 < 0 || i1 > height_ || j1 > width_)
         return false;
 
     // determine z ranges
-    float zMin = FLT_MAX;
-    float zMax = -FLT_MAX;
-    int numValidPixel = 0;
+    zMin = FLT_MAX;
+    zMax = -FLT_MAX;
+    numValidPixel = 0;
 
     for (int i = i0; i < i1; i++) {
         for (int j = j0; j < j1; j++) {
@@ -583,9 +581,6 @@ bool CntZImage::computeZStats(int i0, int i1, int j0, int j1,
     if (zMin > zMax)
         zMin = zMax = 0;
 
-    zMinA = zMin;
-    zMaxA = zMax;
-    numValidPixelA = numValidPixel;
     return true;
 }
 
