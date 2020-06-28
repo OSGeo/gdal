@@ -19,6 +19,7 @@ Contributors:  Thomas Maurer
 #ifndef BITMASKV1_H
 #define BITMASKV1_H
 #include "DefinesV1.h"
+#include <vector>
 
 NAMESPACE_LERC_START
 
@@ -30,18 +31,13 @@ NAMESPACE_LERC_START
 class BitMaskV1
 {
 public:
-    BitMaskV1(int nCols, int nRows) : m_pBits(nullptr), m_nRows(nRows), m_nCols(nCols) {
-        m_pBits = new Byte[Size()];
-        if (!m_pBits)
-            m_nRows = m_nCols = 0;
-        else
-            m_pBits[Size() - 1] = 0; // Set potential pad bytes to zero
+    BitMaskV1(int nCols, int nRows) : m_nRows(nRows), m_nCols(nCols)  {
+        bits.resize(Size(), 0);
     }
-    ~BitMaskV1() { if (m_pBits) delete[] m_pBits; }
 
-    Byte  IsValid(int k) const { return (m_pBits[k >> 3] & Bit(k)) != 0; }
-    void  SetValid(int k) const { m_pBits[k >> 3] |= Bit(k); }
-    void  SetInvalid(int k) const { m_pBits[k >> 3] &= ~Bit(k); }
+    Byte  IsValid(int k) const { return (bits[k >> 3] & Bit(k)) != 0; }
+    void  SetValid(int k) { bits[k >> 3] |= Bit(k); }
+    void  SetInvalid(int k) { bits[k >> 3] &= ~Bit(k); }
     int   Size() const { return (m_nCols * m_nRows - 1) / 8 + 1; }
 
     // max RLE compressed size is n + 4 + 2 * (n - 1) / 32767
@@ -51,13 +47,12 @@ public:
     int RLEsize() const;
     // Decompress a RLE bitmask, bitmask size should be already set
     // Returns false if input seems wrong
-    bool RLEdecompress(const Byte* src, size_t n) const;
+    bool RLEdecompress(const Byte* src, size_t n);
 
 private:
-    Byte* m_pBits;
     int   m_nRows, m_nCols;
-
-    static Byte  Bit(int k) { return (1 << 7) >> (k & 7); }
+    std::vector<Byte> bits;
+    static Byte  Bit(int k) { return static_cast<Byte>(0x80 >> (k & 7)); }
 
     // Disable assignment op, default and copy constructor
     BitMaskV1();

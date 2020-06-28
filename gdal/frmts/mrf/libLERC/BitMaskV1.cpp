@@ -40,15 +40,15 @@ NAMESPACE_LERC_START
 // Returns false if input seems wrong
 // Not safe if fed garbage !!!
 // Zero size mask is fine, only checks the end marker
-bool BitMaskV1::RLEdecompress(const Byte* src, size_t n) const {
-    Byte *dst = m_pBits;
+bool BitMaskV1::RLEdecompress(const Byte* src, size_t n) {
+    Byte *dst = bits.data();
     int sz = Size();
     short int count;
     assert(src);
 
 // Read a low endian short int
 #define READ_COUNT if (true) { if (n < 2 ) return false; count = *src++; count += (*src++ << 8); }
-    while (sz) { // One sequence per loop
+    while (sz > 0) { // One sequence per loop
         READ_COUNT;
         n -= 2;
         if (count < 0) { // negative count for repeats
@@ -94,7 +94,7 @@ inline static int run_length(const Byte *s, int max_count)
 int BitMaskV1::RLEcompress(Byte *dst) const {
     assert(dst);
     // Next input byte
-    Byte *src = m_pBits;
+    const Byte *src = bits.data();
     Byte *start = dst;
     // left to process
     int sz = Size();
@@ -138,7 +138,7 @@ int BitMaskV1::RLEcompress(Byte *dst) const {
 // calculate encoded size
 int BitMaskV1::RLEsize() const {
     // Next input byte
-    Byte *src = m_pBits;
+    const Byte *src = bits.data();
     // left to process
     int sz = Size();
     // current non-repeated byte count
