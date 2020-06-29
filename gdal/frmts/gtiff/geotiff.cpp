@@ -13111,8 +13111,7 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
-    if( poOpenInfo->eAccess == GA_Update &&
-        !CPLFetchBool(poOpenInfo->papszOpenOptions, "ALLOW_UPDATE", false) )
+    if( poOpenInfo->eAccess == GA_Update )
     {
         CPLError(
             CE_Warning, CPLE_AppDefined,
@@ -17731,18 +17730,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     const toff_t l_nDirOffset = TIFFCurrentDirOffset( l_hTIFF );
     TIFFFlush( l_hTIFF );
     XTIFFClose( l_hTIFF );
-    l_hTIFF = nullptr;
 
-    {
-        const CPLErr eErr = VSIFCloseL(l_fpL) == 0 ? CE_None : CE_Failure;
-        l_fpL = nullptr;
-
-        if( eErr != CE_None )
-        {
-            VSIUnlink( bStreaming ? l_osTmpFilename.c_str() : pszFilename );
-            return nullptr;
-        }
-    }
+    VSIFSeekL(l_fpL, 0, SEEK_SET);
 
     // fpStreaming will assigned to the instance and not closed here.
     VSILFILE *fpStreaming = nullptr;
@@ -17755,6 +17744,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if( fpStreaming == nullptr )
         {
             VSIUnlink(l_osTmpFilename);
+            CPL_IGNORE_RET_VAL( VSIFCloseL(l_fpL) );
             return nullptr;
         }
         if( static_cast<vsi_l_offset>(
@@ -17765,6 +17755,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                       static_cast<int>(nDataLength) );
             CPL_IGNORE_RET_VAL(VSIFCloseL( fpStreaming ));
             VSIUnlink(l_osTmpFilename);
+            CPL_IGNORE_RET_VAL( VSIFCloseL(l_fpL) );
             return nullptr;
         }
     }
@@ -17773,45 +17764,42 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Re-open as a dataset and copy over missing metadata using       */
 /*      PAM facilities.                                                 */
 /* -------------------------------------------------------------------- */
-    CPLString osFileName("GTIFF_RAW:");
-    const bool bAppend = CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false);
-    if( bAppend )
+    l_hTIFF =
+        VSI_TIFFOpen( bStreaming ? l_osTmpFilename.c_str() : pszFilename,
+                      "r+",
+                      l_fpL );
+    if( l_hTIFF == nullptr )
     {
-        osFileName += CPLSPrintf("GTIFF_DIR:off:" CPL_FRMT_GUIB ":",
-                                 static_cast<GUIntBig>(l_nDirOffset));
-    }
-
-    osFileName += bStreaming ? l_osTmpFilename.c_str() : pszFilename;
-
-    GDALOpenInfo oOpenInfo( osFileName, GA_Update );
-    if( bAppend )
-    {
-        static const char* const apszOpenOptions[] = { "ALLOW_UPDATE=YES", nullptr };
-        oOpenInfo.papszOpenOptions = const_cast<char**>(apszOpenOptions);
-    }
-    if( bStreaming )
-    {
-        // In case of single strip file, there's a libtiff check that would
-        // issue a warning since the file hasn't the required size.
-        CPLPushErrorHandler(CPLQuietErrorHandler);
-    }
-    GTiffDataset *poDS = cpl::down_cast<GTiffDataset *>( Open(&oOpenInfo) );
-    if( bStreaming )
-        CPLPopErrorHandler();
-    if( poDS == nullptr )
-    {
-        oOpenInfo.eAccess = GA_ReadOnly;
-        poDS = cpl::down_cast<GTiffDataset *>( Open(&oOpenInfo) );
-    }
-
-    if( poDS == nullptr )
-    {
-        VSIUnlink( bStreaming ? l_osTmpFilename.c_str() : pszFilename );
+        if( bStreaming ) VSIUnlink(l_osTmpFilename);
+        CPL_IGNORE_RET_VAL( VSIFCloseL(l_fpL) );
         return nullptr;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Create a corresponding GDALDataset.                             */
+/* -------------------------------------------------------------------- */
+    GTiffDataset *poDS = new GTiffDataset();
+    poDS->SetDescription( pszFilename );
     poDS->eAccess = GA_Update;
-    CPLFree(poDS->m_pszFilename);
     poDS->m_pszFilename = CPLStrdup(pszFilename);
+    poDS->m_fpL = l_fpL;
+    poDS->m_bCloseFile = true;
+    poDS->m_bIMDRPCMetadataLoaded = true;
+
+    const bool bAppend = CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false);
+    if( poDS->OpenOffset( l_hTIFF,
+                          bAppend ? l_nDirOffset : TIFFCurrentDirOffset(l_hTIFF),
+                          bAppend ? false : true, // bBaseIn
+                          GA_Update,
+                          false, // bAllowRGBAInterface
+                          true // bReadGeoTransform
+                         ) != CE_None )
+    {
+        delete poDS;
+        if( bStreaming ) VSIUnlink(l_osTmpFilename);
+        return nullptr;
+    }
+    poDS->oOvManager.Initialize( poDS, pszFilename );
 
     if( bStreaming )
     {
