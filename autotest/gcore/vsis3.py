@@ -2686,6 +2686,102 @@ def test_vsis3_no_useless_requests():
         assert gdal.VSIFOpenL('/vsis3/no_useless_requests/bar.txt', 'rb') is None
         assert gdal.VSIStatL('/vsis3/no_useless_requests/baz.txt') is None
 
+###############################################################################
+# Test w+ access
+
+def test_vsis3_random_write():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.error_handler():
+        assert gdal.VSIFOpenL('/vsis3/random_write/test.bin', 'w+b') is None
+
+    with gdaltest.config_option('CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE', 'YES'):
+        f = gdal.VSIFOpenL('/vsis3/random_write/test.bin', 'w+b')
+    assert f
+    assert gdal.VSIFWriteL('foo', 3, 1, f) == 1
+    assert gdal.VSIFSeekL(f, 0, 0) == 0
+    assert gdal.VSIFReadL(3, 1, f).decode('ascii') == 'foo'
+    assert gdal.VSIFEofL(f) == 0
+    assert gdal.VSIFTellL(f) == 3
+
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/random_write/test.bin', 200, {}, expected_body=b'foo')
+    with webserver.install_http_handler(handler):
+        assert gdal.VSIFCloseL(f) == 0
+
+###############################################################################
+# Test w+ access
+
+def test_vsis3_random_write_failure_1():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_option('CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE', 'YES'):
+        f = gdal.VSIFOpenL('/vsis3/random_write/test.bin', 'w+b')
+    assert f
+
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/random_write/test.bin', 400, {})
+    with webserver.install_http_handler(handler):
+        with gdaltest.error_handler():
+            assert gdal.VSIFCloseL(f) != 0
+
+
+###############################################################################
+# Test w+ access
+
+def test_vsis3_random_write_failure_2():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_option('CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE', 'YES'):
+        with gdaltest.config_option('VSIS3_CHUNK_SIZE_BYTES', '1'):
+            f = gdal.VSIFOpenL('/vsis3/random_write/test.bin', 'w+b')
+    assert f
+    assert gdal.VSIFWriteL('foo', 3, 1, f) == 1
+
+    handler = webserver.SequentialHandler()
+    handler.add('POST', '/random_write/test.bin?uploads', 400, {})
+    with webserver.install_http_handler(handler):
+        with gdaltest.error_handler():
+                assert gdal.VSIFCloseL(f) != 0
+
+###############################################################################
+# Test w+ access
+
+def test_vsis3_random_write_gtiff_create_copy():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/random_write/test.tif', 404, {})
+    handler.add('GET', '/random_write/?delimiter=%2F&max-keys=100&prefix=test.tif%2F', 404, {})
+    handler.add('GET', '/random_write/?delimiter=%2F', 404, {})
+
+    src_ds = gdal.Open('data/byte.tif')
+
+    with gdaltest.config_option('CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE', 'YES'):
+        with webserver.install_http_handler(handler):
+            ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsis3/random_write/test.tif', src_ds)
+    assert ds is not None
+
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/random_write/test.tif', 200, {})
+    with webserver.install_http_handler(handler):
+        ds = None
 
 ###############################################################################
 # Read credentials from simulated ~/.aws/credentials
