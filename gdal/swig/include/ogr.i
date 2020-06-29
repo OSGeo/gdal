@@ -2204,6 +2204,18 @@ public:
     OGR_Fld_SetName(self, name);
   }
 
+  const char * GetAlias() {
+    return (const char *) OGR_Fld_GetAliasRef(self);
+  }
+
+  const char * GetAliasRef() {
+    return (const char *) OGR_Fld_GetAliasRef(self);
+  }
+
+  void SetAlias( const char* alias) {
+    OGR_Fld_SetAlias(self, alias);
+  }
+
   OGRFieldType GetType() {
     return OGR_Fld_GetType(self);
   }

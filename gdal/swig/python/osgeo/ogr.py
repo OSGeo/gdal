@@ -5163,6 +5163,53 @@ class FieldDefn(_object):
         return _ogr.FieldDefn_SetName(self, *args)
 
 
+    def GetAlias(self, *args):
+        """GetAlias(FieldDefn self) -> char const *"""
+        return _ogr.FieldDefn_GetAlias(self, *args)
+
+
+    def GetAliasRef(self, *args):
+        """
+        GetAliasRef(FieldDefn self) -> char const *
+
+        const char*
+        OGR_Fld_GetAliasRef(OGRFieldDefnH hDefn)
+
+        Fetch the alias for this field.
+
+        This function is the same as the CPP method
+        OGRFieldDefn::GetAliasRef().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the field definition.
+
+        the alias for the field definition.
+        """
+        return _ogr.FieldDefn_GetAliasRef(self, *args)
+
+
+    def SetAlias(self, *args):
+        """
+        SetAlias(FieldDefn self, char const * alias)
+
+        void OGR_Fld_SetAlias(OGRFieldDefnH
+        hDefn, const char *pszAlias)
+
+        Reset the alias for this field.
+
+        This function is the same as the CPP method OGRFieldDefn::SetAlias().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the field definition to apply the new alias to.
+
+        pszAlias:  the new alias to apply.
+        """
+        return _ogr.FieldDefn_SetAlias(self, *args)
+
     def GetType(self, *args):
         """
         GetType(FieldDefn self) -> OGRFieldType

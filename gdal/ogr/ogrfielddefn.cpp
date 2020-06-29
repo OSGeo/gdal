@@ -58,6 +58,7 @@ CPL_CVSID("$Id$")
 
 OGRFieldDefn::OGRFieldDefn( const char * pszNameIn, OGRFieldType eTypeIn ) :
     pszName(CPLStrdup(pszNameIn)),
+    pszAlias(CPLStrdup("")),
     eType(eTypeIn),
     eJustify(OJUndefined),
     // Should nWidth & nPrecision be defined in some particular way for numbers?
@@ -84,6 +85,7 @@ OGRFieldDefn::OGRFieldDefn( const char * pszNameIn, OGRFieldType eTypeIn ) :
 
 OGRFieldDefn::OGRFieldDefn( const OGRFieldDefn *poPrototype ) :
     pszName(CPLStrdup(poPrototype->GetNameRef())),
+    pszAlias(CPLStrdup(poPrototype->GetAliasRef())),
     eType(poPrototype->GetType()),
     eJustify(poPrototype->GetJustify()),
     nWidth(poPrototype->GetWidth()),
@@ -126,6 +128,7 @@ OGRFieldDefn::~OGRFieldDefn()
 
 {
     CPLFree(pszName);
+    CPLFree(pszAlias);
     CPLFree(pszDefault);
 }
 
@@ -223,6 +226,95 @@ const char *OGR_Fld_GetNameRef( OGRFieldDefnH hDefn )
 
     return OGRFieldDefn::FromHandle(hDefn)->GetNameRef();
 }
+
+
+/************************************************************************/
+/*                              SetAlias()                               */
+/************************************************************************/
+
+/**
+ * \brief Reset the alias for this field.
+ *
+ * This method is the same as the C function OGR_Fld_SetAlias().
+ *
+ * @param pszAliasIn the new alias to apply.
+ *
+ * @since GDAL 3.2
+ */
+
+void OGRFieldDefn::SetAlias( const char * pszAliasIn )
+
+{
+    if( pszAlias != pszAliasIn )
+    {
+        CPLFree(pszAlias);
+        pszAlias = CPLStrdup(pszAliasIn);
+    }
+}
+
+/************************************************************************/
+/*                          OGR_Fld_SetAlias()                           */
+/************************************************************************/
+/**
+ * \brief Reset the alias for this field.
+ *
+ * This function is the same as the CPP method OGRFieldDefn::SetAlias().
+ *
+ * @param hDefn handle to the field definition to apply the new alias to.
+ * @param pszAlias the new alias to apply.
+ *
+ * @since GDAL 3.2
+ */
+
+void OGR_Fld_SetAlias( OGRFieldDefnH hDefn, const char *pszAlias )
+
+{
+    OGRFieldDefn::FromHandle(hDefn)->SetAlias(pszAlias);
+}
+
+/************************************************************************/
+/*                             GetAliasRef()                             */
+/************************************************************************/
+
+/**
+ * \fn const char *OGRFieldDefn::GetAliasRef();
+ *
+ * \brief Fetch alias for this field.
+ *
+ * This method is the same as the C function OGR_Fld_GetAliasRef().
+ *
+ * @return pointer to an internal alias string that should not be freed or
+ * modified.
+ *
+ * @since GDAL 3.2
+ */
+
+/************************************************************************/
+/*                         OGR_Fld_GetAliasRef()                         */
+/************************************************************************/
+/**
+ * \brief Fetch alias for this field.
+ *
+ * This function is the same as the CPP method OGRFieldDefn::GetAliasRef().
+ *
+ * @param hDefn handle to the field definition.
+ * @return the alias of the field definition.
+ *
+ * @since GDAL 3.2
+ */
+
+const char *OGR_Fld_GetAliasRef( OGRFieldDefnH hDefn )
+
+{
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_Fld_GetXXXX(hDefn, "GetAliasRef");
+#endif
+
+    return OGRFieldDefn::FromHandle(hDefn)->GetAliasRef();
+}
+
 
 /************************************************************************/
 /*                              GetType()                               */
@@ -1124,6 +1216,7 @@ int OGRFieldDefn::IsSame( const OGRFieldDefn * poOtherFieldDefn ) const
 {
     return
         strcmp(pszName, poOtherFieldDefn->pszName) == 0 &&
+        strcmp(pszAlias, poOtherFieldDefn->pszAlias) == 0 &&
         eType == poOtherFieldDefn->eType &&
         eSubType == poOtherFieldDefn->eSubType &&
         nWidth == poOtherFieldDefn->nWidth &&
