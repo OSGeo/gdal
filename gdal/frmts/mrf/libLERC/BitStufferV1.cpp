@@ -129,14 +129,14 @@ bool BitStufferV1::read(Byte** ppByte, size_t& size, vector<unsigned int>& dataV
             val = acc >> (32 - bits);
             val <<= (numBits - bits);
         }
-        unsigned int bytesRead = std::min(numBytes, 4u);
-        if (bytesRead == 0)
+        unsigned int nb = std::min(numBytes, 4u);
+        if (nb == 0)
             return false; // Need to read at least one byte
-        memcpy(&acc, *ppByte, bytesRead);
-        *ppByte += bytesRead;
-        numBytes -= bytesRead;
-        if (bytesRead < 4) // Shift partial int to top bits
-            acc <<= 8 * (4 - bytesRead);
+        acc = 0;
+        // read low endian int or just a few bytes in the high bytes
+        memcpy(reinterpret_cast<Byte*>(&acc) + (4 - nb), *ppByte, nb);
+        *ppByte += nb;
+        numBytes -= nb;
         bits += 32 - numBits;
         val |= acc >> bits;
         acc <<= 32 - bits;
