@@ -125,19 +125,21 @@ bool BitStufferV1::read(Byte** ppByte, size_t& size, vector<unsigned int>& dataV
             continue;
         }
 
+        // Need to reload the accumulator
         if (bits) {
             val = acc >> (32 - bits);
             val <<= (numBits - bits);
         }
         unsigned int nb = std::min(numBytes, 4u);
-        if (nb == 0)
-            return false; // Need to read at least one byte
-        acc = 0;
-        // read low endian int or just a few bytes in the high bytes
-        if (nb == 4)
+        switch (nb) {
+        case 4:
             memcpy(&acc, *ppByte, 4);
-        else
+            break;
+        case 0:
+            return false; // Need at least one byte
+        default: // read just a few bytes in the high bytes of an int
             memcpy(reinterpret_cast<Byte*>(&acc) + (4 - nb), *ppByte, nb);
+        }
         *ppByte += nb;
         numBytes -= nb;
         bits += 32 - numBits;
