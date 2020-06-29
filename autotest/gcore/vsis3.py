@@ -3117,6 +3117,7 @@ def test_vsis3_read_credentials_ec2_expiration():
 
     handler = webserver.SequentialHandler()
     handler.add('PUT', '/invalid/latest/api/token', 404)
+    handler.add('GET', '/invalid/latest/meta-data/iam/security-credentials/myprofile', 404)
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             f = open_for_read('/vsis3/s3_fake_bucket/bar')
