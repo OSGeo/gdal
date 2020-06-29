@@ -825,10 +825,10 @@ bool CntZImage::readCntTile(Byte** ppByte, size_t& nRemainingBytesInOut, int i0,
             return false;
 
         vector<unsigned int>& dataVec = m_tmpDataVec;
-        BitStufferV1 bitStuffer;
         size_t nMaxElts =
             static_cast<size_t>(i1 - i0) * static_cast<size_t>(j1 - j0);
-        if (!bitStuffer.read(&ptr, nRemainingBytes, dataVec, nMaxElts))
+        dataVec.resize(nMaxElts);
+        if (!BitStufferV1::read(&ptr, nRemainingBytes, dataVec))
             return false;
 
         size_t dataVecIdx = 0;
@@ -921,10 +921,10 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
         }
         else {
             vector<unsigned int>& dataVec = m_tmpDataVec;
-            BitStufferV1 bitStuffer;
             size_t nMaxElts =
                 static_cast<size_t>(i1 - i0) * static_cast<size_t>(j1 - j0);
-            if (!bitStuffer.read(&ptr, nRemainingBytes, dataVec, nMaxElts))
+            dataVec.resize(nMaxElts);
+            if (!BitStufferV1::read(&ptr, nRemainingBytes, dataVec))
                 return false;
 
             double invScale = 2 * maxZErrorInFile;

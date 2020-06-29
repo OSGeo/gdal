@@ -64,7 +64,7 @@ bool BitStufferV1::write(Byte** ppByte, const vector<unsigned int>& dataVec)
             acc |= val >> (numBits - bits);
             memcpy(*ppByte, &acc, sizeof(acc));
             *ppByte += sizeof(acc);
-            bits = 32 - (numBits - bits); // under 32
+            bits += 32 - numBits; // under 32
             acc = val << bits;
         }
     }
@@ -83,116 +83,65 @@ bool BitStufferV1::write(Byte** ppByte, const vector<unsigned int>& dataVec)
 
 // -------------------------------------------------------------------------- ;
 
-bool BitStufferV1::read(Byte** ppByte, size_t& nRemainingBytes, vector<unsigned int>& dataVec, size_t nMaxBufferVecElts)
+bool BitStufferV1::read(Byte** ppByte, size_t& size, vector<unsigned int>& dataVec)
 {
-  if (!ppByte)
-    return false;
+    if (!ppByte || !size)
+        return false;
 
-  Byte numBitsByte = **ppByte;
-  if( nRemainingBytes < 1 )
-    return false;
-  *ppByte += 1;
-  nRemainingBytes -= 1;
+    Byte numBits = **ppByte;
+    *ppByte += 1;
+    size -= 1;
 
-  int bits67 = numBitsByte >> 6;
-  numBitsByte &= 63;    // bits 0-5;
-  if (numBitsByte >= 32)
-      return false;
+    int vbytes[4] = { 4, 2, 1, 0 };
+    int n = vbytes[numBits >> 6];
+    numBits &= 63;  // bits 0-5;
+    if (numBits >= 32 || n == 0 || size < static_cast<size_t>(n))
+        return false;
 
-  int n = (bits67 == 0) ? 4 : 3 - bits67;
-  if (n != 1 && n != 2 && n != 4) // only these values are valid
-      return false;
-  if (nRemainingBytes < static_cast<size_t>(n))
-      return false;
-  unsigned int numElements = 0;
-  memcpy(&numElements, *ppByte, n);
-  *ppByte += n;
-  nRemainingBytes -= n;
+    unsigned int numElements = 0;
+    memcpy(&numElements, *ppByte, n);
+    *ppByte += n;
+    size -= n;
+    if (numElements > static_cast<int>(dataVec.size()))
+        return false;
+    // Force initialize with 0, without reallocation
+    dataVec.resize(0);
+    dataVec.resize(numElements, 0);
+    if (numBits == 0) // Nothing to read, all zeros
+        return true;
 
-  if(numElements > nMaxBufferVecElts)
-    return false;
+    unsigned int numBytes = (numElements * numBits + 7) / 8;
+    if (size < numBytes)
+        return false;
+    size -= numBytes;
 
-  int numBits = numBitsByte;
-  unsigned int numUInts = (numElements * numBits + 31) / 32;
-  dataVec.resize(numElements, 0);    // init with 0
-
-  if (numUInts > 0)    // numBits can be 0
-  {
-    unsigned int numBytes = numUInts * sizeof(unsigned int);
-    if( nRemainingBytes < numBytes )
-      return false;
-    unsigned int* arr = (unsigned int*)(*ppByte);
-
-    unsigned int* srcPtr = arr;
-    srcPtr += numUInts;
-
-    // needed to save the 0-3 bytes not used in the last UInt
-    srcPtr--;
-    unsigned int lastUInt;
-    memcpy(&lastUInt, srcPtr, sizeof(unsigned int));
-    unsigned int numBytesNotNeeded = numTailBytesNotNeeded(numElements, numBits);
-    unsigned int n2 = numBytesNotNeeded;
-    for (; n2; --n2)
-    {
-      unsigned int srcValue;
-      memcpy(&srcValue, srcPtr, sizeof(unsigned int));
-      srcValue <<= 8;
-      memcpy(srcPtr, &srcValue, sizeof(unsigned int));
-    }
-
-    // do the un-stuffing
-    srcPtr = arr;
-    unsigned int* dstPtr = &dataVec[0];
-    int bitPos = 0;
-
-    size_t nRemainingBytesTmp = nRemainingBytes;
-    for (unsigned int i = 0; i < numElements; i++)
-    {
-      if (32 - bitPos >= numBits)
-      {
-        unsigned int srcValue;
-        if( nRemainingBytesTmp < sizeof(unsigned) )
-          return false;
-        memcpy(&srcValue, srcPtr, sizeof(unsigned int));
-        unsigned int n3 = srcValue << bitPos;
-        *dstPtr++ = n3 >> (32 - numBits);
-        bitPos += numBits;
-        // cppcheck-suppress shiftTooManyBits
-        if (bitPos == 32)    // shift >= 32 is undefined
-        {
-          bitPos = 0;
-          srcPtr++;
-          nRemainingBytesTmp -= sizeof(unsigned);
+    int bits = 0; // Available in accumulator, at the high end
+    unsigned int acc = 0;
+    for (unsigned int& val : dataVec) {
+        if (bits >= numBits) { // Enough bits in accumulator
+            val = acc >> (32 - numBits);
+            acc <<= numBits;
+            bits -= numBits;
+            continue;
         }
-      }
-      else
-      {
-        unsigned int srcValue;
-        if( nRemainingBytesTmp < sizeof(unsigned) )
-          return false;
-        memcpy(&srcValue, srcPtr, sizeof(unsigned int));
-        srcPtr ++;
-        nRemainingBytesTmp -= sizeof(unsigned);
-        unsigned int n3 = srcValue << bitPos;
-        *dstPtr = n3 >> (32 - numBits);
-        bitPos -= (32 - numBits);
-        if( nRemainingBytesTmp < sizeof(unsigned) )
-          return false;
-        memcpy(&srcValue, srcPtr, sizeof(unsigned int));
-        *dstPtr++ |= srcValue >> (32 - bitPos);
-      }
+
+        if (bits) {
+            val = acc >> (32 - bits);
+            val <<= (numBits - bits);
+        }
+        unsigned int bytesRead = std::min(numBytes, 4u);
+        if (bytesRead == 0)
+            return false; // Need to read at least one byte
+        memcpy(&acc, *ppByte, bytesRead);
+        *ppByte += bytesRead;
+        numBytes -= bytesRead;
+        if (bytesRead < 4) // Shift partial int to top bits
+            acc <<= 8 * (4 - bytesRead);
+        bits += 32 - numBits;
+        val |= acc >> bits;
+        acc <<= 32 - bits;
     }
-
-    if (numBytesNotNeeded > 0)
-      memcpy(srcPtr, &lastUInt, sizeof(unsigned int)); // restore the last UInt
-
-    if( nRemainingBytes < numBytes - numBytesNotNeeded )
-      return false;
-    *ppByte += numBytes - numBytesNotNeeded;
-     nRemainingBytes -= numBytes - numBytesNotNeeded;
-  }
-
-  return true;
+    return numBytes == 0;
 }
 
 NAMESPACE_LERC_END

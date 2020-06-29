@@ -32,7 +32,8 @@ struct BitStufferV1
 {
   // these 2 do not allocate memory. Byte ptr is moved like a file pointer.
   static bool write(Byte** ppByte, const std::vector<unsigned int>& dataVec);
-  static bool read(Byte** ppByte, size_t& nRemainingBytes, std::vector<unsigned int>& dataVec, size_t nMaxBufferVecElts);
+  // dataVec is sized to max expected values. It is resized on return, based on read data
+  static bool read(Byte** ppByte, size_t& sz, std::vector<unsigned int>& dataVec);
   static int numBytesUInt(unsigned int k) { return (k <= 0xff) ? 1 : (k <= 0xffff) ? 2 : 4; }
   static unsigned int numTailBytesNotNeeded(unsigned int numElem, int numBits) {
       numBits = (numElem * numBits) & 31;
