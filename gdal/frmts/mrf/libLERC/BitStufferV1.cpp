@@ -102,7 +102,7 @@ bool BitStufferV1::read(Byte** ppByte, size_t& size, vector<unsigned int>& dataV
     memcpy(&numElements, *ppByte, n);
     *ppByte += n;
     size -= n;
-    if (numElements > static_cast<int>(dataVec.size()))
+    if (numElements > static_cast<unsigned int>(dataVec.size()))
         return false;
     // Force initialize with 0, without reallocation
     dataVec.resize(0);
