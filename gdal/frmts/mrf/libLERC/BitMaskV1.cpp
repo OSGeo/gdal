@@ -47,7 +47,7 @@ bool BitMaskV1::RLEdecompress(const Byte* src, size_t n) {
     assert(src);
 
 // Read a low endian short int
-#define READ_COUNT if (true) { if (n < 2 ) return false; count = *src++; count += (*src++ << 8); }
+#define READ_COUNT if (true) {if (n < 2) return false; count = *src++; count += (*src++ << 8);}
     while (sz > 0) { // One sequence per loop
         READ_COUNT;
         n -= 2;
@@ -93,16 +93,11 @@ inline static int run_length(const Byte *s, int max_count)
 //
 int BitMaskV1::RLEcompress(Byte *dst) const {
     assert(dst);
-    // Next input byte
-    const Byte *src = bits.data();
+    const Byte *src = bits.data();  // Next input byte
     Byte *start = dst;
-    // left to process
-    int sz = Size();
-
-    // Pointer to current sequence count
-    Byte *pCnt = dst;
-    // non-repeated byte count
-    int oddrun = 0;
+    int sz = Size(); // left to process
+    Byte *pCnt = dst; // Pointer to current sequence count
+    int oddrun = 0; // non-repeated byte count
 
 // Store val as short low endian integer
 #define WRITE_COUNT(val) if (true) { *pCnt++ = Byte(val & 0xff); *pCnt++ = Byte(val >> 8); }
@@ -137,16 +132,12 @@ int BitMaskV1::RLEcompress(Byte *dst) const {
 
 // calculate encoded size
 int BitMaskV1::RLEsize() const {
-    // Next input byte
-    const Byte *src = bits.data();
-    // left to process
-    int sz = Size();
-    // current non-repeated byte count
-    int oddrun = 0;
+    const Byte *src = bits.data(); // Next input byte
+    int sz = Size(); // left to process
+    int oddrun = 0; // current non-repeated byte count
     // Simulate an odd run flush
 #define SIMFLUSH if (oddrun) { osz += oddrun + 2; oddrun = 0; }
-    // output size, start with size of end marker
-    int osz = 2;
+    int osz = 2; // output size, start with size of end marker
     while (sz) {
         int run = run_length(src, sz);
         if (run < MIN_RUN) {
@@ -161,9 +152,7 @@ int BitMaskV1::RLEsize() const {
             osz += 3; // Any run is 3 bytes
         }
     }
-    SIMFLUSH;
-    (void)oddrun;
-    return osz;
+    return oddrun ? (osz + oddrun + 2) : osz;
 }
 
 NAMESPACE_LERC_END

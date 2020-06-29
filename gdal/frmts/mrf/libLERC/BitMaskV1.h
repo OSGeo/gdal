@@ -31,7 +31,7 @@ NAMESPACE_LERC_START
 class BitMaskV1
 {
 public:
-    BitMaskV1(int nCols, int nRows) : m_nRows(nRows), m_nCols(nCols)  {
+    BitMaskV1(int nCols, int nRows) : m_nRows(nRows), m_nCols(nCols) {
         bits.resize(Size(), 0);
     }
 
@@ -50,7 +50,7 @@ public:
     bool RLEdecompress(const Byte* src, size_t n);
 
 private:
-    int   m_nRows, m_nCols;
+    int m_nRows, m_nCols;
     std::vector<Byte> bits;
     static Byte  Bit(int k) { return static_cast<Byte>(0x80 >> (k & 7)); }
 

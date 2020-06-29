@@ -25,6 +25,7 @@ Contributors:  Thomas Maurer
 #include <cmath>
 #include <cfloat>
 #include <cstring>
+#include <algorithm>
 
 using namespace std;
 
@@ -455,7 +456,7 @@ bool CntZImage::writeTiles(bool zPart, double maxZError, bool cntsNoIntIn,
             if (!rv)
                 return false;
 
-            maxValInImg = zPart ? max(zMax, maxValInImg) : max(cntMax, maxValInImg);
+            maxValInImg = max(maxValInImg, zPart ? zMax : cntMax);
 
             int numBytesNeeded = zPart ? numBytesZTile(numValidPixel, zMin, zMax, maxZError) :
                 numBytesCntTile(tileH * tileW, cntMin, cntMax, cntsNoIntIn);

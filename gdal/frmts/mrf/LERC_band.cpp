@@ -162,12 +162,9 @@ template <typename T> static void CntZImgFill(CntZImage &zImg, T *src, const ILI
 // Unload zImg into a type T buffer
 template <typename T> static bool CntZImgUFill(CntZImage &zImg, T *dst, const ILImage &img)
 {
-    int h = static_cast<int>(zImg.getHeight());
-    int w = static_cast<int>(zImg.getWidth());
-    // Use 0 if nodata is not defined
     const T ndv = static_cast<T>(img.hasNoData ? img.NoDataValue : 0);
-    for (int i = 0; i < h; i++)
-        for (int j = 0; j < w; j++)
+    for (int i = 0; i < zImg.getHeight(); i++)
+        for (int j = 0; j < zImg.getWidth(); j++)
             *dst++ = (zImg(i, j).cnt == 0) ? ndv : static_cast<T>(zImg(i, j).z);
     return true;
 }
