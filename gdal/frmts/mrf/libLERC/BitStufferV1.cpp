@@ -134,7 +134,10 @@ bool BitStufferV1::read(Byte** ppByte, size_t& size, vector<unsigned int>& dataV
             return false; // Need to read at least one byte
         acc = 0;
         // read low endian int or just a few bytes in the high bytes
-        memcpy(reinterpret_cast<Byte*>(&acc) + (4 - nb), *ppByte, nb);
+        if (nb == 4)
+            memcpy(&acc, *ppByte, 4);
+        else
+            memcpy(reinterpret_cast<Byte*>(&acc) + (4 - nb), *ppByte, nb);
         *ppByte += nb;
         numBytes -= nb;
         bits += 32 - numBits;
