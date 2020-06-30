@@ -206,12 +206,14 @@ The file can be cached in RAM by setting the configuration option :decl_configop
 
 .. _`/vsis3/`:
 
-/vsis3/ (AWS S3 files: random reading)
-++++++++++++++++++++++++++++++++++++++
+/vsis3/ (AWS S3 files)
+++++++++++++++++++++++
 
 /vsis3/ is a file system handler that allows on-the-fly random reading of (primarily non-public) files available in AWS S3 buckets, without prior download of the entire file. It requires GDAL to be built against libcurl.
 
-It also allows sequential writing of files (no seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported). Deletion of files with :cpp:func:`VSIUnlink` is also supported. Starting with GDAL 2.3, creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
+It also allows sequential writing of files. No seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported, unless, if,
+starting with GDAL 3.2, the :decl_configoption:`CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE` configuration option is set to ``YES``, in which case random-write access is possible (involves the creation of a temporary local file, whose location is controlled by the :decl_configoption:`CPL_TMPDIR` configuration option).
+Deletion of files with :cpp:func:`VSIUnlink` is also supported. Starting with GDAL 2.3, creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
 
 Recognized filenames are of the form :file:`/vsis3/bucket/key`, where ``bucket`` is the name of the S3 bucket and ``key`` is the S3 object "key", i.e. a filename potentially containing subdirectories.
 
@@ -260,12 +262,13 @@ Authentication options, and read-only features, are identical to :ref:`/vsis3/ <
 
 .. _`/vsigs/`:
 
-/vsigs/ (Google Cloud Storage files: random reading)
-++++++++++++++++++++++++++++++++++++++++++++++++++++
+/vsigs/ (Google Cloud Storage files)
+++++++++++++++++++++++++++++++++++++
 
 /vsigs/ is a file system handler that allows on-the-fly random reading of (primarily non-public) files available in Google Cloud Storage buckets, without prior download of the entire file. It requires GDAL to be built against libcurl.
 
-Starting with GDAL 2.3, it also allows sequential writing of files (no seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported). Deletion of files with :cpp:func:`VSIUnlink`, creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
+Starting with GDAL 2.3, it also allows sequential writing of files. No seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported, unless, if, starting with GDAL 3.2, the :decl_configoption:`CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE` configuration option is set to ``YES``, in which case random-write access is possible (involves the creation of a temporary local file, whose location is controlled by the :decl_configoption:`CPL_TMPDIR` configuration option).
+Deletion of files with :cpp:func:`VSIUnlink`, creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
 
 Recognized filenames are of the form :file:`/vsigs/bucket/key` where ``bucket`` is the name of the bucket and ``key`` is the object "key", i.e. a filename potentially containing subdirectories.
 
@@ -300,12 +303,13 @@ Authentication options, and read-only features, are identical to :ref:`/vsigs/ <
 
 .. _`/vsiaz/`:
 
-/vsiaz/ (Microsoft Azure Blob files: random reading)
-++++++++++++++++++++++++++++++++++++++++++++++++++++
+/vsiaz/ (Microsoft Azure Blob files)
+++++++++++++++++++++++++++++++++++++
 
 /vsiaz/ is a file system handler that allows on-the-fly random reading of (primarily non-public) files available in Microsoft Azure Blob containers, without prior download of the entire file. It requires GDAL to be built against libcurl.
 
-It also allows sequential writing of files (no seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported). A block blob will be created if the file size is below 4 MB. Beyond, an append blob will be created (with a maximum file size of 195 GB).
+It also allows sequential writing of files. No seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported, unless, if, starting with GDAL 3.2, the :decl_configoption:`CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE` configuration option is set to ``YES``, in which case random-write access is possible (involves the creation of a temporary local file, whose location is controlled by the :decl_configoption:`CPL_TMPDIR` configuration option).
+A block blob will be created if the file size is below 4 MB. Beyond, an append blob will be created (with a maximum file size of 195 GB).
 
 Deletion of files with :cpp:func:`VSIUnlink`, creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible. Note: when using :cpp:func:`VSIMkdir`, a special hidden :file:`.gdal_marker_for_dir` empty file is created, since Azure Blob does not natively support empty directories. If that file is the last one remaining in a directory, :cpp:func:`VSIRmdir` will automatically remove it. This file will not be seen with :cpp:func:`VSIReadDir`. If removing files from directories not created with :cpp:func:`VSIMkdir`, when the last file is deleted, its directory is automatically removed by Azure, so the sequence ``VSIUnlink("/vsiaz/container/subdir/lastfile")`` followed by ``VSIRmdir("/vsiaz/container/subdir")`` will fail on the :cpp:func:`VSIRmdir` invocation.
 
@@ -337,12 +341,13 @@ Authentication options, and read-only features, are identical to :ref:`/vsiaz/ <
 
 .. _`/vsioss/`:
 
-/vsioss/ (Alibaba Cloud OSS files: random reading)
-++++++++++++++++++++++++++++++++++++++++++++++++++
+/vsioss/ (Alibaba Cloud OSS files)
+++++++++++++++++++++++++++++++++++
 
 /vsioss/ is a file system handler that allows on-the-fly random reading of (primarily non-public) files available in Alibaba Cloud Object Storage Service (OSS) buckets, without prior download of the entire file. It requires GDAL to be built against libcurl.
 
-It also allows sequential writing of files (no seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported). Deletion of files with :cpp:func:`VSIUnlink` is also supported. Creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
+It also allows sequential writing of files. No seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported, unless, if, starting with GDAL 3.2, the :decl_configoption:`CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE` configuration option is set to ``YES``, in which case random-write access is possible (involves the creation of a temporary local file, whose location is controlled by the :decl_configoption:`CPL_TMPDIR` configuration option).
+Deletion of files with :cpp:func:`VSIUnlink` is also supported. Creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
 
 Recognized filenames are of the form :file:`/vsioss/bucket/key` where ``bucket`` is the name of the OSS bucket and ``key`` is the OSS object "key", i.e. a filename potentially containing subdirectories.
 
@@ -369,12 +374,13 @@ Authentication options, and read-only features, are identical to :ref:`/vsioss/ 
 
 .. _`/vsiswift/`:
 
-/vsiswift/ (OpenStack Swift Object Storage: random reading)
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/vsiswift/ (OpenStack Swift Object Storage)
++++++++++++++++++++++++++++++++++++++++++++
 
 /vsiswift/ is a file system handler that allows on-the-fly random reading of (primarily non-public) files available in OpenStack Swift Object Storage (swift) buckets, without prior download of the entire file. It requires GDAL to be built against libcurl.
 
-It also allows sequential writing of files (no seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported). Deletion of files with :cpp:func:`VSIUnlink` is also supported. Creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
+It also allows sequential writing of files. No seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported, unless, if, starting with GDAL 3.2, the :decl_configoption:`CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE` configuration option is set to ``YES``, in which case random-write access is possible (involves the creation of a temporary local file, whose location is controlled by the :decl_configoption:`CPL_TMPDIR` configuration option).
+Deletion of files with :cpp:func:`VSIUnlink` is also supported. Creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
 
 Recognized filenames are of the form :file:`/vsiswift/bucket/key` where ``bucket`` is the name of the swift bucket and ``key`` is the swift object "key", i.e. a filename potentially containing subdirectories.
 
@@ -447,7 +453,8 @@ Examples:
 
     /vsiwebhdfs/http://localhost:50070/webhdfs/v1/mydir/byte.tif
 
-It also allows sequential writing of files (no seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported). Deletion of files with :cpp:func:`VSIUnlink` is also supported. Creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
+It also allows sequential writing of files. No seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported, unless, if, starting with GDAL 3.2, the :decl_configoption:`CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE` configuration option is set to ``YES``, in which case random-write access is possible (involves the creation of a temporary local file, whose location is controlled by the :decl_configoption:`CPL_TMPDIR` configuration option).
+Deletion of files with :cpp:func:`VSIUnlink` is also supported. Creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
 
 The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
 
