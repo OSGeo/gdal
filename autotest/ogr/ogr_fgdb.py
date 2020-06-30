@@ -2129,3 +2129,26 @@ def test_ogr_fgdb_utc_datetime():
     f = lyr.GetNextFeature()
     # Check that the timezone +00 is present
     assert f.GetFieldAsString('EditDate') == '2020/06/22 07:49:36+00'
+
+
+def test_ogr_fgdb_alias():
+    # We need the OpenFileGDB driver
+    ogrtest.openfilegdb_drv.Register()
+    ds = ogr.Open('data/filegdb/field_alias.gdb')
+    ogrtest.openfilegdb_drv.Deregister()
+    ogrtest.fgdb_drv.Deregister()
+    # Force OpenFileGDB first
+    ogrtest.openfilegdb_drv.Register()
+    ogrtest.fgdb_drv.Register()
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('text')).GetAlias() == 'My Text Field'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('short_int')).GetAlias() == 'My Short Int Field'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('long_int')).GetAlias() == 'My Long Int Field'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('float')).GetAlias() == 'My Float Field'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('double')).GetAlias() == 'My Double Field'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('date')).GetAlias() == 'My Date Field'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('blob')).GetAlias() == 'My Blob Field'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('guid')).GetAlias() == 'My GUID field'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('raster')).GetAlias() == 'My Raster Field'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('SHAPE_Length')).GetAlias() == ''
