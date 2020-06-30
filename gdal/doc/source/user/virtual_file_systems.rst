@@ -243,7 +243,10 @@ On writing, the file is uploaded using the S3 multipart upload API. The size of 
 
 Since GDAL 2.4, when listing a directory, files with GLACIER storage class are ignored unless the :decl_configoption:`CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE` configuration option is set to ``NO``.
 
-Since GDAL 3.1, the Rename() operation is supported (first doing a copy of the original file and then deleting it).
+Since GDAL 3.1, the :cpp:func:`VSIRename` operation is supported (first doing a copy of the original file and then deleting it)
+
+Since GDAL 3.1, the :cpp:func:`VSIRmdirRecursive` operation is supported (using batch deletion method). The :decl_configoption:`CPL_VSIS3_USE_BASE_RMDIR_RECURSIVE` configuration option can be set to YES if using a S3-like API that doesn't support batch deletion (GDAL >= 3.2)
+
 
 .. versionadded:: 2.1
 
@@ -322,7 +325,7 @@ Two authentication methods are possible, and are attempted in the following orde
 1. The :decl_configoption:`AZURE_STORAGE_CONNECTION_STRING` configuration option, given in the access key section of the administration interface. It contains both the account name and a secret key.
 2. The :decl_configoption:`AZURE_STORAGE_ACCOUNT` and :decl_configoption:`AZURE_STORAGE_ACCESS_KEY` configuration options pointing respectively to the account name and a secret key.
 
-Since GDAL 3.1, the Rename() operation is supported (first doing a copy of the original file and then deleting it).
+Since GDAL 3.1, the :cpp:func:`VSIRename` operation is supported (first doing a copy of the original file and then deleting it)
 
 .. versionadded:: 2.3
 

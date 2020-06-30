@@ -1889,6 +1889,10 @@ int* VSIS3FSHandler::UnlinkBatch( CSLConstList papszFiles )
 
 int VSIS3FSHandler::RmdirRecursive( const char* pszDirname )
 {
+    // Some S3-like APIs do not support DeleteObjects
+    if( !CPLTestBool(CPLGetConfigOption("CPL_VSIS3_USE_BASE_RMDIR_RECURSIVE", "NO")) )
+        return VSIFilesystemHandler::RmdirRecursive(pszDirname);
+
     CPLString osDirnameWithoutEndSlash(pszDirname);
     if( !osDirnameWithoutEndSlash.empty() && osDirnameWithoutEndSlash.back() == '/' )
         osDirnameWithoutEndSlash.resize( osDirnameWithoutEndSlash.size() - 1 );
