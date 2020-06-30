@@ -140,38 +140,43 @@ def test_gdal2tiles_py_resampling_option():
             pytest.fail('resample option {0!r} failed'.format(resample))
         ds = None
 
+    shutil.rmtree(out_dir, ignore_errors=True)
+
 
 def test_gdal2tiles_py_xyz():
     script_path = test_py_scripts.get_py_script('gdal2tiles')
     if script_path is None:
         pytest.skip()
 
-    shutil.copy('../gdrivers/data/small_world.tif', 'tmp/out_gdal2tiles_smallworld_xyz.tif')
+    try:
+        shutil.copy('../gdrivers/data/small_world.tif', 'tmp/out_gdal2tiles_smallworld_xyz.tif')
 
-    os.chdir('tmp')
-    ret = test_py_scripts.run_py_script(
-        script_path,
-        'gdal2tiles',
-        '-q --xyz --zoom=0-1 out_gdal2tiles_smallworld_xyz.tif')
-    os.chdir('..')
+        os.chdir('tmp')
+        ret = test_py_scripts.run_py_script(
+            script_path,
+            'gdal2tiles',
+            '-q --xyz --zoom=0-1 out_gdal2tiles_smallworld_xyz.tif')
+        os.chdir('..')
 
-    assert 'ERROR ret code' not in ret
+        assert 'ERROR ret code' not in ret
 
-    os.unlink('tmp/out_gdal2tiles_smallworld_xyz.tif')
+        os.unlink('tmp/out_gdal2tiles_smallworld_xyz.tif')
 
-    _verify_raster_band_checksums(
-        'tmp/out_gdal2tiles_smallworld_xyz/0/0/0.png',
-        expected_cs = [30616, 31851, 9392, 63557]
-    )
-    _verify_raster_band_checksums(
-        'tmp/out_gdal2tiles_smallworld_xyz/1/0/0.png',
-        expected_cs = [25095, 27337, 10068, 63699]
-    )
+        _verify_raster_band_checksums(
+            'tmp/out_gdal2tiles_smallworld_xyz/0/0/0.png',
+            expected_cs = [30616, 31851, 9392, 63557]
+        )
+        _verify_raster_band_checksums(
+            'tmp/out_gdal2tiles_smallworld_xyz/1/0/0.png',
+            expected_cs = [25095, 27337, 10068, 63699]
+        )
 
-    for filename in ['googlemaps.html', 'leaflet.html', 'openlayers.html', 'tilemapresource.xml']:
-        assert os.path.exists('tmp/out_gdal2tiles_smallworld_xyz/' + filename), \
-            ('%s missing' % filename)
-
+        for filename in ['googlemaps.html', 'leaflet.html', 'openlayers.html']:
+            assert os.path.exists('tmp/out_gdal2tiles_smallworld_xyz/' + filename), \
+                ('%s missing' % filename)
+        assert not os.path.exists('tmp/out_gdal2tiles_smallworld_xyz/tilemapresource.xml')
+    finally:
+        shutil.rmtree('tmp/out_gdal2tiles_smallworld_xyz')
 
 def test_gdal2tiles_py_invalid_srs():
     """
@@ -201,6 +206,7 @@ def test_gdal2tiles_py_invalid_srs():
 
     os.unlink('tmp/out_gdal2tiles_test_nosrs.vrt')
     os.unlink('tmp/byte.tif')
+    shutil.rmtree('tmp/out_gdal2tiles_test_nosrs')
 
     assert 'ERROR ret code = 2' in ret
     assert 'ERROR ret code' not in ret2
@@ -410,11 +416,98 @@ def test_exclude_transparent_tiles():
         assert ['22705.png'] == dir_files, \
             ('Generated empty tiles for row 21900: %s' % dir_files)
 
-        return
-
     finally:
         shutil.rmtree(output_folder)
 
 
+def test_gdal2tiles_py_profile_raster():
+
+    script_path = test_py_scripts.get_py_script('gdal2tiles')
+    if script_path is None:
+        pytest.skip()
+
+    shutil.rmtree('tmp/out_gdal2tiles_smallworld', ignore_errors=True)
+
+    test_py_scripts.run_py_script_as_external_script(
+        script_path,
+        'gdal2tiles',
+        '-q -p raster -z 0-1 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
+
+    if sys.platform != 'win32':
+        # For some reason, the checksums on the kml file on Windows are the ones of the below png
+        _verify_raster_band_checksums(
+            'tmp/out_gdal2tiles_smallworld/0/0/0.kml',
+            expected_cs = [29839, 34244, 42706, 64319]
+        )
+    _verify_raster_band_checksums(
+        'tmp/out_gdal2tiles_smallworld/0/0/0.png',
+        expected_cs = [10125, 10802, 27343, 48852]
+    )
+    _verify_raster_band_checksums(
+        'tmp/out_gdal2tiles_smallworld/1/0/0.png',
+        expected_cs = [62125, 59756, 43894, 38539]
+    )
+
+    shutil.rmtree('tmp/out_gdal2tiles_smallworld', ignore_errors=True)
 
 
+def test_gdal2tiles_py_profile_raster_xyz():
+
+    script_path = test_py_scripts.get_py_script('gdal2tiles')
+    if script_path is None:
+        pytest.skip()
+
+    shutil.rmtree('tmp/out_gdal2tiles_smallworld', ignore_errors=True)
+
+    test_py_scripts.run_py_script_as_external_script(
+        script_path,
+        'gdal2tiles',
+        '-q -p raster --xyz -z 0-1 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
+
+    if sys.platform != 'win32':
+        # For some reason, the checksums on the kml file on Windows are the ones of the below png
+        _verify_raster_band_checksums(
+            'tmp/out_gdal2tiles_smallworld/0/0/0.kml',
+            expected_cs = [27644, 31968, 38564, 64301]
+        )
+    _verify_raster_band_checksums(
+        'tmp/out_gdal2tiles_smallworld/0/0/0.png',
+        expected_cs = [11468, 10719, 27582, 48827]
+    )
+    _verify_raster_band_checksums(
+        'tmp/out_gdal2tiles_smallworld/1/0/0.png',
+        expected_cs = [60550, 62572, 46338, 38489]
+    )
+
+    shutil.rmtree('tmp/out_gdal2tiles_smallworld', ignore_errors=True)
+
+
+def test_gdal2tiles_py_profile_geodetic_tmscompatible_xyz():
+
+    script_path = test_py_scripts.get_py_script('gdal2tiles')
+    if script_path is None:
+        pytest.skip()
+
+    shutil.rmtree('tmp/out_gdal2tiles_smallworld', ignore_errors=True)
+
+    test_py_scripts.run_py_script_as_external_script(
+        script_path,
+        'gdal2tiles',
+        '-q -p geodetic --tmscompatible --xyz -z 0-1 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
+
+    if sys.platform != 'win32':
+        # For some reason, the checksums on the kml file on Windows are the ones of the below png
+        _verify_raster_band_checksums(
+            'tmp/out_gdal2tiles_smallworld/0/0/0.kml',
+            expected_cs = [12361, 18212, 21827, 5934]
+        )
+    _verify_raster_band_checksums(
+        'tmp/out_gdal2tiles_smallworld/0/0/0.png',
+        expected_cs = [8560, 8031, 7209, 17849]
+    )
+    _verify_raster_band_checksums(
+        'tmp/out_gdal2tiles_smallworld/1/0/0.png',
+        expected_cs = [2799, 3468, 8686, 17849]
+    )
+
+    shutil.rmtree('tmp/out_gdal2tiles_smallworld', ignore_errors=True)
