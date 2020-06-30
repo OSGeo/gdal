@@ -2132,14 +2132,15 @@ def test_ogr_fgdb_utc_datetime():
 
 
 def test_ogr_fgdb_alias():
+
     # We need the OpenFileGDB driver
-    ogrtest.openfilegdb_drv.Register()
-    ds = ogr.Open('data/filegdb/field_alias.gdb')
     ogrtest.openfilegdb_drv.Deregister()
     ogrtest.fgdb_drv.Deregister()
     # Force OpenFileGDB first
     ogrtest.openfilegdb_drv.Register()
     ogrtest.fgdb_drv.Register()
+
+    ds = ogr.Open('data/filegdb/field_alias.gdb')
 
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('text')).GetAlias() == 'My Text Field'
