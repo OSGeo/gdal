@@ -2204,16 +2204,16 @@ public:
     OGR_Fld_SetName(self, name);
   }
 
-  const char * GetAlias() {
-    return (const char *) OGR_Fld_GetAliasRef(self);
+  const char * GetAlternativeName() {
+    return OGR_Fld_GetAlternativeNameRef(self);
   }
 
-  const char * GetAliasRef() {
-    return (const char *) OGR_Fld_GetAliasRef(self);
+  const char * GetAlternativeNameRef() {
+    return OGR_Fld_GetAlternativeNameRef(self);
   }
 
-  void SetAlias( const char* alias) {
-    OGR_Fld_SetAlias(self, alias);
+  void SetAlternativeName( const char* alternativeName) {
+    OGR_Fld_SetAlternativeName(self, alternativeName);
   }
 
   OGRFieldType GetType() {

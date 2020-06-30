@@ -58,7 +58,7 @@ CPL_CVSID("$Id$")
 
 OGRFieldDefn::OGRFieldDefn( const char * pszNameIn, OGRFieldType eTypeIn ) :
     pszName(CPLStrdup(pszNameIn)),
-    pszAlias(CPLStrdup("")),
+    pszAlternativeName(CPLStrdup("")),
     eType(eTypeIn),
     eJustify(OJUndefined),
     // Should nWidth & nPrecision be defined in some particular way for numbers?
@@ -85,7 +85,7 @@ OGRFieldDefn::OGRFieldDefn( const char * pszNameIn, OGRFieldType eTypeIn ) :
 
 OGRFieldDefn::OGRFieldDefn( const OGRFieldDefn *poPrototype ) :
     pszName(CPLStrdup(poPrototype->GetNameRef())),
-    pszAlias(CPLStrdup(poPrototype->GetAliasRef())),
+    pszAlternativeName(CPLStrdup(poPrototype->GetAlternativeNameRef())),
     eType(poPrototype->GetType()),
     eJustify(poPrototype->GetJustify()),
     nWidth(poPrototype->GetWidth()),
@@ -128,7 +128,7 @@ OGRFieldDefn::~OGRFieldDefn()
 
 {
     CPLFree(pszName);
-    CPLFree(pszAlias);
+    CPLFree(pszAlternativeName);
     CPLFree(pszDefault);
 }
 
@@ -229,90 +229,122 @@ const char *OGR_Fld_GetNameRef( OGRFieldDefnH hDefn )
 
 
 /************************************************************************/
-/*                              SetAlias()                               */
+/*                              SetAlternativeName()                    */
 /************************************************************************/
 
 /**
- * \brief Reset the alias for this field.
+ * \brief Reset the alternative name (or "alias") for this field.
  *
- * This method is the same as the C function OGR_Fld_SetAlias().
+ * The alternative name is an optional attribute for a field which can provide
+ * a more user-friendly, descriptive name of a field which is not subject to
+ * the usual naming constraints defined by the data provider.
  *
- * @param pszAliasIn the new alias to apply.
+ * This is a metadata style attribute only: the alternative name cannot
+ * be used in place of the actual field name during SQL queries or other
+ * field name dependent API calls.
+ *
+ * This method is the same as the C function OGR_Fld_SetAlternativeName().
+ *
+ * @param pszAlternativeNameIn the new alternative name to apply.
  *
  * @since GDAL 3.2
  */
 
-void OGRFieldDefn::SetAlias( const char * pszAliasIn )
+void OGRFieldDefn::SetAlternativeName( const char * pszAlternativeNameIn )
 
 {
-    if( pszAlias != pszAliasIn )
+    if( pszAlternativeName != pszAlternativeNameIn )
     {
-        CPLFree(pszAlias);
-        pszAlias = CPLStrdup(pszAliasIn);
+        CPLFree(pszAlternativeName);
+        pszAlternativeName = CPLStrdup(pszAlternativeNameIn);
     }
 }
 
 /************************************************************************/
-/*                          OGR_Fld_SetAlias()                           */
+/*                          OGR_Fld_SetAlternativeName()                */
 /************************************************************************/
 /**
- * \brief Reset the alias for this field.
+ * \brief Reset the alternative name (or "alias") for this field.
  *
- * This function is the same as the CPP method OGRFieldDefn::SetAlias().
+ * The alternative name is an optional attribute for a field which can provide
+ * a more user-friendly, descriptive name of a field which is not subject to
+ * the usual naming constraints defined by the data provider.
  *
- * @param hDefn handle to the field definition to apply the new alias to.
- * @param pszAlias the new alias to apply.
+ * This is a metadata style attribute only: the alternative name cannot
+ * be used in place of the actual field name during SQL queries or other
+ * field name dependent API calls.
+ *
+ * This function is the same as the CPP method OGRFieldDefn::SetAlternativeName().
+ *
+ * @param hDefn handle to the field definition to apply the new alternative name to.
+ * @param pszAlternativeName the new alternative name to apply.
  *
  * @since GDAL 3.2
  */
 
-void OGR_Fld_SetAlias( OGRFieldDefnH hDefn, const char *pszAlias )
+void OGR_Fld_SetAlternativeName( OGRFieldDefnH hDefn, const char *pszAlternativeName )
 
 {
-    OGRFieldDefn::FromHandle(hDefn)->SetAlias(pszAlias);
+    OGRFieldDefn::FromHandle(hDefn)->SetAlternativeName(pszAlternativeName);
 }
 
 /************************************************************************/
-/*                             GetAliasRef()                             */
+/*                             GetAlternativeNameRef()                  */
 /************************************************************************/
 
 /**
- * \fn const char *OGRFieldDefn::GetAliasRef();
+ * \fn const char *OGRFieldDefn::GetAlternativeNameRef();
  *
- * \brief Fetch alias for this field.
+ * \brief Fetch the alternative name (or "alias") for this field.
  *
- * This method is the same as the C function OGR_Fld_GetAliasRef().
+ * The alternative name is an optional attribute for a field which can provide
+ * a more user-friendly, descriptive name of a field which is not subject to
+ * the usual naming constraints defined by the data provider.
  *
- * @return pointer to an internal alias string that should not be freed or
+ * This is a metadata style attribute only: the alternative name cannot
+ * be used in place of the actual field name during SQL queries or other
+ * field name dependent API calls.
+ *
+ * This method is the same as the C function OGR_Fld_GetAlternativeNameRef().
+ *
+ * @return pointer to an internal alternative name string that should not be freed or
  * modified.
  *
  * @since GDAL 3.2
  */
 
 /************************************************************************/
-/*                         OGR_Fld_GetAliasRef()                         */
+/*                         OGR_Fld_GetAlternativeNameRef()              */
 /************************************************************************/
 /**
- * \brief Fetch alias for this field.
+ * \brief Fetch the alternative name (or "alias") for this field.
  *
- * This function is the same as the CPP method OGRFieldDefn::GetAliasRef().
+ * The alternative name is an optional attribute for a field which can provide
+ * a more user-friendly, descriptive name of a field which is not subject to
+ * the usual naming constraints defined by the data provider.
+ *
+ * This is a metadata style attribute only: the alternative name cannot
+ * be used in place of the actual field name during SQL queries or other
+ * field name dependent API calls.
+ *
+ * This function is the same as the CPP method OGRFieldDefn::GetAlternativeNameRef().
  *
  * @param hDefn handle to the field definition.
- * @return the alias of the field definition.
+ * @return the alternative name of the field definition.
  *
  * @since GDAL 3.2
  */
 
-const char *OGR_Fld_GetAliasRef( OGRFieldDefnH hDefn )
+const char *OGR_Fld_GetAlternativeNameRef( OGRFieldDefnH hDefn )
 
 {
 
 #ifdef OGRAPISPY_ENABLED
     if( bOGRAPISpyEnabled )
-        OGRAPISpy_Fld_GetXXXX(hDefn, "GetAliasRef");
+        OGRAPISpy_Fld_GetXXXX(hDefn, "GetAlternativeNameRef");
 #endif
 
-    return OGRFieldDefn::FromHandle(hDefn)->GetAliasRef();
+    return OGRFieldDefn::FromHandle(hDefn)->GetAlternativeNameRef();
 }
 
 
@@ -1216,7 +1248,7 @@ int OGRFieldDefn::IsSame( const OGRFieldDefn * poOtherFieldDefn ) const
 {
     return
         strcmp(pszName, poOtherFieldDefn->pszName) == 0 &&
-        strcmp(pszAlias, poOtherFieldDefn->pszAlias) == 0 &&
+        strcmp(pszAlternativeName, poOtherFieldDefn->pszAlternativeName) == 0 &&
         eType == poOtherFieldDefn->eType &&
         eSubType == poOtherFieldDefn->eSubType &&
         nWidth == poOtherFieldDefn->nWidth &&

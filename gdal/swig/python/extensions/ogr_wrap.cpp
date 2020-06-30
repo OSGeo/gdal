@@ -4920,14 +4920,14 @@ SWIGINTERN char const *OGRFieldDefnShadow_GetNameRef(OGRFieldDefnShadow *self){
 SWIGINTERN void OGRFieldDefnShadow_SetName(OGRFieldDefnShadow *self,char const *name){
     OGR_Fld_SetName(self, name);
   }
-SWIGINTERN char const *OGRFieldDefnShadow_GetAlias(OGRFieldDefnShadow *self){
-    return (const char *) OGR_Fld_GetAliasRef(self);
+SWIGINTERN char const *OGRFieldDefnShadow_GetAlternativeName(OGRFieldDefnShadow *self){
+    return (const char *) OGR_Fld_GetAlternativeNameRef(self);
   }
-SWIGINTERN char const *OGRFieldDefnShadow_GetAliasRef(OGRFieldDefnShadow *self){
-    return (const char *) OGR_Fld_GetAliasRef(self);
+SWIGINTERN char const *OGRFieldDefnShadow_GetAlternativeNameRef(OGRFieldDefnShadow *self){
+    return (const char *) OGR_Fld_GetAlternativeNameRef(self);
   }
-SWIGINTERN void OGRFieldDefnShadow_SetAlias(OGRFieldDefnShadow *self,char const *alias){
-    OGR_Fld_SetAlias(self, alias);
+SWIGINTERN void OGRFieldDefnShadow_SetAlternativeName(OGRFieldDefnShadow *self,char const *alternativeName){
+    OGR_Fld_SetAlternativeName(self, alternativeName);
   }
 SWIGINTERN OGRFieldType OGRFieldDefnShadow_GetType(OGRFieldDefnShadow *self){
     return OGR_Fld_GetType(self);
@@ -19576,7 +19576,7 @@ fail:
   return NULL;
 }
 
-SWIGINTERN PyObject *_wrap_FieldDefn_GetAlias(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_FieldDefn_GetAlternativeName(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
   void *argp1 = 0 ;
@@ -19584,10 +19584,10 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetAlias(PyObject *SWIGUNUSEDPARM(self), Py
   PyObject * obj0 = 0 ;
   char *result = 0 ;
 
-  if (!PyArg_ParseTuple(args,(char *)"O:FieldDefn_GetAlias",&obj0)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"O:FieldDefn_GetAlternativeName",&obj0)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FieldDefn_GetAlias" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'");
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FieldDefn_GetAlternativeName" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'");
   }
   arg1 = reinterpret_cast< OGRFieldDefnShadow * >(argp1);
   {
@@ -19596,7 +19596,7 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetAlias(PyObject *SWIGUNUSEDPARM(self), Py
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      result = (char *)OGRFieldDefnShadow_GetAlias(arg1);
+      result = (char *)OGRFieldDefnShadow_GetAlternativeName(arg1);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -19616,7 +19616,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_FieldDefn_GetAliasRef(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_FieldDefn_GetAlternativeNameRef(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
   void *argp1 = 0 ;
@@ -19624,10 +19624,10 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetAliasRef(PyObject *SWIGUNUSEDPARM(self),
   PyObject * obj0 = 0 ;
   char *result = 0 ;
 
-  if (!PyArg_ParseTuple(args,(char *)"O:FieldDefn_GetAliasRef",&obj0)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"O:FieldDefn_GetAlternativeNameRef",&obj0)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FieldDefn_GetAliasRef" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'");
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FieldDefn_GetAlternativeNameRef" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'");
   }
   arg1 = reinterpret_cast< OGRFieldDefnShadow * >(argp1);
   {
@@ -19636,7 +19636,7 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetAliasRef(PyObject *SWIGUNUSEDPARM(self),
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      result = (char *)OGRFieldDefnShadow_GetAliasRef(arg1);
+      result = (char *)OGRFieldDefnShadow_GetAlternativeNameRef(arg1);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -19656,7 +19656,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_FieldDefn_SetAlias(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_FieldDefn_SetAlternativeName(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -19668,15 +19668,15 @@ SWIGINTERN PyObject *_wrap_FieldDefn_SetAlias(PyObject *SWIGUNUSEDPARM(self), Py
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
 
-  if (!PyArg_ParseTuple(args,(char *)"OO:FieldDefn_SetAlias",&obj0,&obj1)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OO:FieldDefn_SetAlternativeName",&obj0,&obj1)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FieldDefn_SetAlias" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'");
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FieldDefn_SetAlternativeName" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'");
   }
   arg1 = reinterpret_cast< OGRFieldDefnShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "FieldDefn_SetAlias" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "FieldDefn_SetAlternativeName" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
   {
@@ -19690,7 +19690,7 @@ SWIGINTERN PyObject *_wrap_FieldDefn_SetAlias(PyObject *SWIGUNUSEDPARM(self), Py
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      OGRFieldDefnShadow_SetAlias(arg1,(char const *)arg2);
+      OGRFieldDefnShadow_SetAlternativeName(arg1,(char const *)arg2);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -32559,41 +32559,57 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"pszName:  the new name to apply. \n"
 		""},
-    { (char *)"FieldDefn_GetAlias", _wrap_FieldDefn_GetAlias, METH_VARARGS, (char *)"FieldDefn_GetAlias(FieldDefn self) -> char const *"},
-    { (char *)"FieldDefn_GetAliasRef", _wrap_FieldDefn_GetAliasRef, METH_VARARGS, (char *)"\n"
-       "FieldDefn_GetAliasRef(FieldDefn self) -> char const *\n"
+    { (char *)"FieldDefn_GetAlternativeName", _wrap_FieldDefn_GetAlternativeName, METH_VARARGS, (char *)"FieldDefn_GetAlternativeName(FieldDefn self) -> char const *"},
+    { (char *)"FieldDefn_GetAlternativeNameRef", _wrap_FieldDefn_GetAlternativeNameRef, METH_VARARGS, (char *)"\n"
+       "FieldDefn_GetAlternativeNameRef(FieldDefn self) -> char const *\n"
        "\n"
        "const char*\n"
-       "OGR_Fld_GetAliasRef(OGRFieldDefnH hDefn)\n"
+       "OGR_Fld_GetAlternativeNameRef(OGRFieldDefnH hDefn)\n"
        "\n"
-       "Fetch the alias for this field.\n"
+       "Fetch the alternative name (or alias) for this field.\n"
+       "\n"
+       "The alternative name is an optional attribute for a field which can provide\n"
+       "a more user-friendly, descriptive name of a field which is not subject to\n"
+       "the usual naming constraints defined by the data provider.\n"
+       "\n"
+       "This is a metadata style attribute only: the alternative name cannot\n"
+       "be used in place of the actual field name during SQL queries or other\n"
+       "field name dependent API calls.\n"
        "\n"
        "This function is the same as the CPP method\n"
-       "OGRFieldDefn::GetAliasRef().\n"
+       "OGRFieldDefn::GetAlternativeNameRef().\n"
        "\n"
        "Parameters:\n"
        "-----------\n"
        "\n"
        "hDefn:  handle to the field definition.\n"
        "\n"
-       "the alias for the field definition. \n"
+       "the alternative name for the field definition. \n"
        ""},
-    { (char *)"FieldDefn_SetAlias", _wrap_FieldDefn_SetAlias, METH_VARARGS, (char *)"\n"
-       "FieldDefn_SetAlias(FieldDefn self, char const * alias)\n"
+    { (char *)"FieldDefn_SetAlternativeName", _wrap_FieldDefn_SetAlternativeName, METH_VARARGS, (char *)"\n"
+       "FieldDefn_SetAlternativeName(FieldDefn self, char const * alternativeName)\n"
        "\n"
-       "void OGR_Fld_SetAlias(OGRFieldDefnH\n"
-       "hDefn, const char *pszAlias)\n"
+       "void OGR_Fld_SetAlternativeName(OGRFieldDefnH\n"
+       "hDefn, const char *pszAlternativeName)\n"
        "\n"
-       "Reset the alias for this field.\n"
+       "Reset the alternative name (or alias) for this field.\n"
        "\n"
-       "This function is the same as the CPP method OGRFieldDefn::SetAlias().\n"
+       "The alternative name is an optional attribute for a field which can provide\n"
+       "a more user-friendly, descriptive name of a field which is not subject to\n"
+       "the usual naming constraints defined by the data provider.\n"
+       "\n"
+       "This is a metadata style attribute only: the alternative name cannot\n"
+       "be used in place of the actual field name during SQL queries or other\n"
+       "field name dependent API calls.\n"
+       "\n"
+       "This function is the same as the CPP method OGRFieldDefn::SetAlternativeName().\n"
        "\n"
        "Parameters:\n"
        "-----------\n"
        "\n"
-       "hDefn:  handle to the field definition to apply the new alias to.\n"
+       "hDefn:  handle to the field definition to apply the new alternative name to.\n"
        "\n"
-       "pszAlias:  the new alias to apply. \n"
+       "pszAlternativeName:  the new alternative name to apply. \n"
        ""},
 	 { (char *)"FieldDefn_GetType", _wrap_FieldDefn_GetType, METH_VARARGS, (char *)"\n"
 		"FieldDefn_GetType(FieldDefn self) -> OGRFieldType\n"

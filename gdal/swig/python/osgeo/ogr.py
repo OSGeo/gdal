@@ -5163,52 +5163,68 @@ class FieldDefn(_object):
         return _ogr.FieldDefn_SetName(self, *args)
 
 
-    def GetAlias(self, *args):
-        """GetAlias(FieldDefn self) -> char const *"""
-        return _ogr.FieldDefn_GetAlias(self, *args)
+    def GetAlternativeName(self, *args):
+        """GetAlternativeName(FieldDefn self) -> char const *"""
+        return _ogr.FieldDefn_GetAlternativeName(self, *args)
 
 
-    def GetAliasRef(self, *args):
+    def GetAlternativeNameRef(self, *args):
         """
-        GetAliasRef(FieldDefn self) -> char const *
+        GetAlternativeNameRef(FieldDefn self) -> char const *
 
         const char*
-        OGR_Fld_GetAliasRef(OGRFieldDefnH hDefn)
+        OGR_Fld_GetAlternativeNameRef(OGRFieldDefnH hDefn)
 
-        Fetch the alias for this field.
+        Fetch the alternative name (or alias) for this field.
+
+        The alternative name is an optional attribute for a field which can provide
+        a more user-friendly, descriptive name of a field which is not subject to
+        the usual naming constraints defined by the data provider.
+
+        This is a metadata style attribute only: the alternative name cannot
+        be used in place of the actual field name during SQL queries or other
+        field name dependent API calls.
 
         This function is the same as the CPP method
-        OGRFieldDefn::GetAliasRef().
+        OGRFieldDefn::GetAlternativeNameRef().
 
         Parameters:
         -----------
 
         hDefn:  handle to the field definition.
 
-        the alias for the field definition.
+        the alternative name for the field definition.
         """
-        return _ogr.FieldDefn_GetAliasRef(self, *args)
+        return _ogr.FieldDefn_GetAlternativeNameRef(self, *args)
 
 
-    def SetAlias(self, *args):
+    def SetAlternativeName(self, *args):
         """
-        SetAlias(FieldDefn self, char const * alias)
+        SetAlternativeName(FieldDefn self, char const * alternativeName)
 
-        void OGR_Fld_SetAlias(OGRFieldDefnH
-        hDefn, const char *pszAlias)
+        void OGR_Fld_SetAlternativeName(OGRFieldDefnH
+        hDefn, const char *pszAlternativeName)
 
-        Reset the alias for this field.
+        Reset the alternative name (or alias) for this field.
 
-        This function is the same as the CPP method OGRFieldDefn::SetAlias().
+        The alternative name is an optional attribute for a field which can provide
+        a more user-friendly, descriptive name of a field which is not subject to
+        the usual naming constraints defined by the data provider.
+
+        This is a metadata style attribute only: the alternative name cannot
+        be used in place of the actual field name during SQL queries or other
+        field name dependent API calls.
+
+        This function is the same as the CPP method OGRFieldDefn::SetAlternativeName().
 
         Parameters:
         -----------
 
-        hDefn:  handle to the field definition to apply the new alias to.
+        hDefn:  handle to the field definition to apply the new alternative name to.
 
-        pszAlias:  the new alias to apply.
+        pszAlternativeName:  the new alternative name to apply.
         """
-        return _ogr.FieldDefn_SetAlias(self, *args)
+        return _ogr.FieldDefn_SetAlternativeName(self, *args)
 
     def GetType(self, *args):
         """
