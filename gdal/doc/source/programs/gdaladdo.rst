@@ -157,8 +157,10 @@ See the documentation of the :ref:`raster.gtiff` driver for further explanations
 
 Setting blocksize in Geotiff overviews
 ---------------------------------------
+
 --config GDAL_TIFF_OVR_BLOCKSIZE <size> 
-example --config GDAL_TIFF_OVR_BLOCKSIZE 256
+
+Example: --config GDAL_TIFF_OVR_BLOCKSIZE 256
 
 Default value is 128, or starting with GDAL 3.1, if creating overviews on a tiled GeoTIFF file, the tile size of the full resolution image.
 Note: without this setting, the file can have the full resoultion image with a blocksize different from overviews blocksize.(e.g. full resolution image at blocksize 256, overviews at blocksize 128)
