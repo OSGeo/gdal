@@ -60,7 +60,7 @@ wget -q "https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz" \
     make "-j$(nproc)"
     make install DESTDIR="/build"
 
-    if [ -n "${RSYNC_REMOTE}" ]; then
+    if [ -n "${RSYNC_REMOTE:-}" ]; then
         ccache -s
 
         echo "Uploading cache..."
