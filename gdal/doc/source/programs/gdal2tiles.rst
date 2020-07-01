@@ -63,7 +63,6 @@ can publish a picture without proper georeferencing too.
 .. option:: --xyz
 
   Generate XYZ tiles (OSM Slippy Map standard) instead of TMS.
-  Only for mercator profile.
   In the default mode (TMS), tiles at y=0 are the southern-most tiles, whereas
   in XYZ mode (used by OGC WMTS too), tiles at y=0 are the northern-most tiles.
 
