@@ -161,7 +161,7 @@ Setting blocksize in Geotiff overviews
 example --config GDAL_TIFF_OVR_BLOCKSIZE 256
 
 default value is 128
-Note: without setting, the file can have level 0 with blocksize diffrent from overviews blocksize.(e.g. level 0 blocksize 256 ,levels 1-7 blocksize 128)
+Note: without this setting, the file can have the full resoultion image with a blocksize different from overviews blocksize.(e.g. full resolution image at blocksize 256, overviews at blocksize 128)
 
 
 Multithreading
