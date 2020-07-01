@@ -155,6 +155,15 @@ documented in the GeoTIFF driver documentation.
 
 See the documentation of the :ref:`raster.gtiff` driver for further explanations on all those options.
 
+Setting blocksize in Geotiff overviewrs
+---------------------------------------
+--config GDAL_TIFF_OVR_BLOCKSIZE <size> 
+example --config GDAL_TIFF_OVR_BLOCKSIZE 256
+
+default value is 128
+Note: without setting, the file can have level 0 with blocksize diffrent from overviews blocksize.(e.g. level 0 blocksize 256 ,levels 1-7 blocksize 128)
+
+
 Multithreading
 --------------
 
