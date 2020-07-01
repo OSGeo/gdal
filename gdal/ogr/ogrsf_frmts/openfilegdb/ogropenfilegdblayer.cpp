@@ -679,6 +679,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             }
         }
         OGRFieldDefn oFieldDefn(poGDBField->GetName().c_str(), eType);
+        oFieldDefn.SetAlternativeName(poGDBField->GetAlias().c_str());
         oFieldDefn.SetSubType(eSubType);
         // On creation in the FileGDB driver (GDBFieldTypeToWidthPrecision) if
         // string width is 0, we pick up 65535 by default to mean unlimited
