@@ -621,6 +621,26 @@ void CPLJSONObject::Add(const std::string &osName, const CPLJSONObject &oValue)
 
 /**
  * Add new key - value pair to json object.
+ * @param osName  Key name (do not split it on '/')
+ * @param oValue   Json object value.
+ *
+ * @since GDAL 3.2
+ */
+void CPLJSONObject::AddNoSplitName(const std::string &osName, const CPLJSONObject &oValue)
+{
+    if( m_osKey == INVALID_OBJ_KEY )
+        m_osKey.clear();
+    if( IsValid() &&
+        json_object_get_type(TO_JSONOBJ(m_poJsonObject)) == json_type_object )
+    {
+        json_object_object_add( TO_JSONOBJ(GetInternalHandle()),
+                                osName.c_str(),
+                                json_object_get( TO_JSONOBJ(oValue.GetInternalHandle()) ) );
+    }
+}
+
+/**
+ * Add new key - value pair to json object.
  * @param osName  Key name.
  * @param bValue   Boolean value.
  *

@@ -33,6 +33,7 @@
 
 #include "cpl_aws.h"
 #include "cpl_port.h"
+#include "cpl_json.h"
 #include "cpl_string.h"
 #include "cpl_vsil_curl_priv.h"
 #include "cpl_mem_cache.h"
@@ -42,6 +43,7 @@
 #include <set>
 #include <map>
 #include <memory>
+#include <mutex>
 
 //! @cond Doxygen_Suppress
 
@@ -506,6 +508,7 @@ class VSIS3WriteHandle final : public VSIVirtualHandle
     CPLString           m_osCurlErrBuf{};
     size_t              m_nChunkedBufferOff = 0;
     size_t              m_nChunkedBufferSize = 0;
+    size_t              m_nWrittenInPUT = 0;
 
     int                 m_nMaxRetry = 0;
     double              m_dfRetryDelay = 0.0;
@@ -599,6 +602,148 @@ struct CurlRequestHelper
                  VSICurlFilesystemHandler *poFS,
                  IVSIS3LikeHandleHelper *poS3HandleHelper);
 };
+
+/************************************************************************/
+/*                       NetworkStatisticsLogger                        */
+/************************************************************************/
+
+class NetworkStatisticsLogger
+{
+    static int gnEnabled;
+    static NetworkStatisticsLogger gInstance;
+
+    NetworkStatisticsLogger() = default;
+
+    std::mutex m_mutex{};
+
+    struct Counters
+    {
+        GIntBig nHEAD = 0;
+        GIntBig nGET = 0;
+        GIntBig nPUT = 0;
+        GIntBig nPOST = 0;
+        GIntBig nDELETE = 0;
+        GIntBig nGETDownloadedBytes = 0;
+        GIntBig nPUTUploadedBytes = 0;
+        GIntBig nPOSTDownloadedBytes = 0;
+        GIntBig nPOSTUploadedBytes = 0;
+    };
+
+    enum class ContextPathType
+    {
+        FILESYSTEM,
+        FILE,
+        ACTION,
+    };
+
+    struct ContextPathItem
+    {
+        ContextPathType eType;
+        CPLString       osName;
+
+        ContextPathItem(ContextPathType eTypeIn, const CPLString& osNameIn):
+            eType(eTypeIn), osName(osNameIn) {}
+
+        bool operator< (const ContextPathItem& other ) const
+        {
+            if( static_cast<int>(eType) < static_cast<int>(other.eType) )
+                return true;
+            if( static_cast<int>(eType) > static_cast<int>(other.eType) )
+                return false;
+            return osName < other.osName;
+        }
+    };
+
+    struct Stats
+    {
+        Counters counters{};
+        std::map<ContextPathItem, Stats> children{};
+
+        void AsJSON(CPLJSONObject& oJSON) const;
+    };
+
+    Stats m_stats{};
+    std::map<GIntBig, std::vector<ContextPathItem>> m_mapThreadIdToContextPath{};
+
+    static void ReadEnabled();
+
+    std::vector<Counters*> GetCountersForContext();
+
+public:
+
+    static inline bool IsEnabled()
+    {
+        if( gnEnabled < 0)
+        {
+            ReadEnabled();
+        }
+        return gnEnabled == TRUE;
+    }
+
+    static void EnterFileSystem(const char* pszName);
+
+    static void LeaveFileSystem();
+
+    static void EnterFile(const char* pszName);
+
+    static void LeaveFile();
+
+    static void EnterAction(const char* pszName);
+
+    static void LeaveAction();
+
+    static void LogHEAD();
+
+    static void LogGET(size_t nDownloadedBytes);
+
+    static void LogPUT(size_t nUploadedBytes);
+
+    static void LogPOST(size_t nUploadedBytes,
+                        size_t nDownloadedBytes);
+
+    static void LogDELETE();
+
+    static void Reset();
+
+    static CPLString GetReportAsSerializedJSON();
+};
+
+struct NetworkStatisticsFileSystem
+{
+    inline explicit NetworkStatisticsFileSystem(const char* pszName) {
+        NetworkStatisticsLogger::EnterFileSystem(pszName);
+    }
+
+    inline ~NetworkStatisticsFileSystem()
+    {
+        NetworkStatisticsLogger::LeaveFileSystem();
+    }
+};
+
+struct NetworkStatisticsFile
+{
+    inline explicit NetworkStatisticsFile(const char* pszName) {
+        NetworkStatisticsLogger::EnterFile(pszName);
+    }
+
+    inline ~NetworkStatisticsFile()
+    {
+        NetworkStatisticsLogger::LeaveFile();
+    }
+};
+
+struct NetworkStatisticsAction
+{
+    inline explicit NetworkStatisticsAction(const char* pszName) {
+        NetworkStatisticsLogger::EnterAction(pszName);
+    }
+
+    inline ~NetworkStatisticsAction()
+    {
+        NetworkStatisticsLogger::LeaveAction();
+    }
+};
+
 
 int VSICURLGetDownloadChunkSize();
 

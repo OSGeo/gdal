@@ -373,6 +373,9 @@ int CPL_DLL VSISync( const char* pszSource, const char* pszTarget,
 char CPL_DLL *VSIStrerror( int );
 GIntBig CPL_DLL VSIGetDiskFreeSpace(const char *pszDirname);
 
+void CPL_DLL VSINetworkStatsReset( void );
+char CPL_DLL *VSINetworkStatsGetAsSerializedJSON( char** papszOptions );
+
 /* ==================================================================== */
 /*      Install special file access handlers.                           */
 /* ==================================================================== */
