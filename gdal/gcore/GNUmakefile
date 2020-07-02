@@ -17,7 +17,7 @@ OBJ	=	gdalmultidim.o gdalopeninfo.o gdaldrivermanager.o gdaldriver.o gdaldataset
 		gdalpython.o gdalpythondriverloader.o tilematrixset.o \
 		gdal_thread_pool.o
 
-CPPFLAGS	:=	 -I../frmts/gtiff -I../frmts/mem -I../frmts/vrt -I../ogr -I../ogr/ogrsf_frmts/generic -I../gnm/ -I../gnm/gnm_frmts/ $(JSON_INCLUDE) -I../ogr/ogrsf_frmts/geojson $(CPPFLAGS) $(PAM_SETTING) $(XTRA_OPT)
+CPPFLAGS	:=	 -I../frmts/gtiff -I../frmts/mem -I../frmts/vrt -I../ogr -I../ogr/ogrsf_frmts/json -I../ogr/ogrsf_frmts/generic -I../gnm/ -I../gnm/gnm_frmts/ $(JSON_INCLUDE) -I../ogr/ogrsf_frmts/geojson $(CPPFLAGS) $(PAM_SETTING) $(XTRA_OPT)
 
 ifeq ($(HAVE_SQLITE),yes)
 CPPFLAGS :=	$(CPPFLAGS) -DSQLITE_ENABLED
@@ -29,6 +29,18 @@ endif
 
 ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	$(CPPFLAGS) -DHAVE_GEOS=1 $(GEOS_CFLAGS)
+endif
+
+#nasakeywordhandler is used by pds and hdf4
+compile_nasakeywordhandler = no
+ifeq ($(HAVE_HDF4),yes)
+  compile_nasakeywordhandler = yes
+endif
+ifeq ($(shell echo $(GDAL_FORMATS) | grep -w -o pds),pds)
+  compile_nasakeywordhandler = yes
+endif
+ifeq ($(compile_nasakeywordhandler),yes)
+    OBJ += nasakeywordhandler.o
 endif
 
 CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS) $(WARN_OLD_STYLE_CAST) $(CXXFLAGS)
