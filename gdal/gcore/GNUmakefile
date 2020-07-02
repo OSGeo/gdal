@@ -17,7 +17,7 @@ OBJ	=	gdalmultidim.o gdalopeninfo.o gdaldrivermanager.o gdaldriver.o gdaldataset
 		gdalpython.o gdalpythondriverloader.o tilematrixset.o \
 		gdal_thread_pool.o
 
-CPPFLAGS	:=	 -I../frmts/gtiff -I../frmts/mem -I../frmts/vrt -I../ogr -I../ogr/ogrsf_frmts/json -I../ogr/ogrsf_frmts/generic -I../gnm/ -I../gnm/gnm_frmts/ $(JSON_INCLUDE) -I../ogr/ogrsf_frmts/geojson $(CPPFLAGS) $(PAM_SETTING) $(XTRA_OPT)
+CPPFLAGS	:=	 -I../frmts/gtiff -I../frmts/mem -I../frmts/vrt -I../ogr -I../ogr/ogrsf_frmts/generic -I../gnm/ -I../gnm/gnm_frmts/ $(JSON_INCLUDE) -I../ogr/ogrsf_frmts/geojson $(CPPFLAGS) $(PAM_SETTING) $(XTRA_OPT)
 
 ifeq ($(HAVE_SQLITE),yes)
 CPPFLAGS :=	$(CPPFLAGS) -DSQLITE_ENABLED
