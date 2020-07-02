@@ -47,14 +47,14 @@
 
 class CPL_DLL NASAKeywordHandler
 {
-    char     **papszKeywordList;
+    char     **papszKeywordList = nullptr;
 
-    CPLString osHeaderText;
-    const char *pszHeaderNext;
+    CPLString osHeaderText{};
+    const char *pszHeaderNext = nullptr;
 
-    CPLJSONObject oJSon;
+    CPLJSONObject oJSon{};
 
-    bool m_bStripSurroundingQuotes;
+    bool m_bStripSurroundingQuotes = false;
 
     void    SkipWhite();
     int     ReadWord( CPLString &osWord,
@@ -63,6 +63,9 @@ class CPL_DLL NASAKeywordHandler
                       bool* pbIsString = nullptr);
     int     ReadPair( CPLString &osName, CPLString &osValue, CPLJSONObject &oCur );
     int     ReadGroup( const char *pszPathPrefix, CPLJSONObject &oCur, int nRecLevel );
+
+    NASAKeywordHandler(const NASAKeywordHandler&) = delete;
+    NASAKeywordHandler& operator=(const NASAKeywordHandler&) = delete;
 
 public:
     NASAKeywordHandler();
