@@ -34,6 +34,8 @@
 #ifndef NASAKEYWORDHANDLER_H
 #define NASAKEYWORDHANDLER_H
 
+//! @cond Doxygen_Suppress
+
 #include "cpl_json.h"
 #include "cpl_string.h"
 
@@ -80,5 +82,7 @@ public:
     char **GetKeywordList();
     CPLJSONObject GetJsonObject() const;
 };
+
+//! @endcond
 
 #endif //  NASAKEYWORDHANDLER_H

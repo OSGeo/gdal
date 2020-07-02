@@ -58,6 +58,8 @@
 
 CPL_CVSID("$Id$")
 
+//! @cond Doxygen_Suppress
+
 /************************************************************************/
 /* ==================================================================== */
 /*                          NASAKeywordHandler                          */
@@ -642,3 +644,5 @@ CPLJSONObject NASAKeywordHandler::GetJsonObject() const
 {
     return oJSon;
 }
+
+//! @endcond
