@@ -513,7 +513,7 @@ iField:  the field to fetch, from 0 to GetFieldCount()-1.
 the field value. ";
 
 %feature("docstring")  OGRFeatureFormatDateTimeBuffer "static void
-OGRFeatureFormatDateTimeBuffer(char szTempBuffer[TEMP_BUFFER_SIZE],
+OGRFeatureFormatDateTimeBuffer(char *szTempBuffer, size_t nMaxSize,
 int nYear, int nMonth, int nDay, int nHour, int nMinute, float
 fSecond, int nTZFlag) ";
 

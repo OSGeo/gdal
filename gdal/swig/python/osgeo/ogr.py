@@ -5175,11 +5175,11 @@ class FieldDefn(_object):
         const char*
         OGR_Fld_GetAlternativeNameRef(OGRFieldDefnH hDefn)
 
-        Fetch the alternative name (or alias) for this field.
+        Fetch the alternative name (or "alias") for this field.
 
-        The alternative name is an optional attribute for a field which can provide
-        a more user-friendly, descriptive name of a field which is not subject to
-        the usual naming constraints defined by the data provider.
+        The alternative name is an optional attribute for a field which can
+        provide a more user-friendly, descriptive name of a field which is not
+        subject to the usual naming constraints defined by the data provider.
 
         This is a metadata style attribute only: the alternative name cannot
         be used in place of the actual field name during SQL queries or other
@@ -5193,7 +5193,9 @@ class FieldDefn(_object):
 
         hDefn:  handle to the field definition.
 
-        the alternative name for the field definition.
+        the alternative name of the field definition.
+
+        GDAL 3.2 
         """
         return _ogr.FieldDefn_GetAlternativeNameRef(self, *args)
 
@@ -5202,29 +5204,35 @@ class FieldDefn(_object):
         """
         SetAlternativeName(FieldDefn self, char const * alternativeName)
 
-        void OGR_Fld_SetAlternativeName(OGRFieldDefnH
-        hDefn, const char *pszAlternativeName)
+        void
+        OGR_Fld_SetAlternativeName(OGRFieldDefnH hDefn, const char
+        *pszAlternativeName)
 
-        Reset the alternative name (or alias) for this field.
+        Reset the alternative name (or "alias") for this field.
 
-        The alternative name is an optional attribute for a field which can provide
-        a more user-friendly, descriptive name of a field which is not subject to
-        the usual naming constraints defined by the data provider.
+        The alternative name is an optional attribute for a field which can
+        provide a more user-friendly, descriptive name of a field which is not
+        subject to the usual naming constraints defined by the data provider.
 
         This is a metadata style attribute only: the alternative name cannot
         be used in place of the actual field name during SQL queries or other
         field name dependent API calls.
 
-        This function is the same as the CPP method OGRFieldDefn::SetAlternativeName().
+        This function is the same as the CPP method
+        OGRFieldDefn::SetAlternativeName().
 
         Parameters:
         -----------
 
-        hDefn:  handle to the field definition to apply the new alternative name to.
+        hDefn:  handle to the field definition to apply the new alternative
+        name to.
 
         pszAlternativeName:  the new alternative name to apply.
+
+        GDAL 3.2 
         """
         return _ogr.FieldDefn_SetAlternativeName(self, *args)
+
 
     def GetType(self, *args):
         """
@@ -5572,12 +5580,57 @@ class FieldDefn(_object):
 
 
     def IsUnique(self, *args):
-        """IsUnique(FieldDefn self) -> int"""
+        """
+        IsUnique(FieldDefn self) -> int
+
+        int OGR_Fld_IsUnique(OGRFieldDefnH
+        hDefn)
+
+        Return whether this field has a unique constraint.
+
+        By default, fields have no unique constraint.
+
+        This method is the same as the C++ method OGRFieldDefn::IsUnique().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the field definition
+
+        TRUE if the field has a unique constraint.
+
+        GDAL 3.2 
+        """
         return _ogr.FieldDefn_IsUnique(self, *args)
 
 
     def SetUnique(self, *args):
-        """SetUnique(FieldDefn self, int bUnique)"""
+        """
+        SetUnique(FieldDefn self, int bUnique)
+
+        void
+        OGR_Fld_SetUnique(OGRFieldDefnH hDefn, int bUniqueIn)
+
+        Set whether this field has a unique constraint.
+
+        By default, fields have no unique constraint, so this method is
+        generally called with TRUE to set a unique constraint.
+
+        Drivers that support writing unique constraint will advertise the
+        GDAL_DCAP_UNIQUE_FIELDS driver metadata item. field can receive null
+        values.
+
+        This method is the same as the C++ method OGRFieldDefn::SetUnique().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the field definition
+
+        bUniqueIn:  TRUE if the field must have a unique constraint.
+
+        GDAL 3.2 
+        """
         return _ogr.FieldDefn_SetUnique(self, *args)
 
 
