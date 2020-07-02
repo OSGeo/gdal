@@ -3378,6 +3378,12 @@ void ISIS3Dataset::WriteLabel()
     // Serialize label
     CPLString osLabel( SerializeAsPDL(m_oJSonLabel) );
     osLabel += "End\n";
+    if( m_osExternalFilename.empty() && osLabel.size() < 65536 )
+    {
+        // In-line labels have conventionally a minimize size of 65536 bytes
+        // See #2741
+        osLabel.resize(65536);
+    }
     char *pszLabel = &osLabel[0];
     const int nLabelSize = static_cast<int>(osLabel.size());
 
