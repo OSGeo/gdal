@@ -32,8 +32,6 @@ sudo apt-get install -y --allow-unauthenticated ccache libpng12-dev libjpeg-dev 
 # libgta-dev
 sudo apt-get install -y libqhull-dev
 sudo apt-get install -y libogdi3.2-dev
-# MONO
-sudo apt-get install -y mono-mcs libmono-system-drawing4.0-cil
 # Boost for Mongo
 #sudo apt-get install -y libboost-regex-dev libboost-system-dev libboost-thread-dev
 
