@@ -17,9 +17,6 @@ cd ../..
 cd swig/java
 make test
 cd ../..
-cd swig/csharp
-make test
-cd ../..
 # CPP unit tests
 cd ../autotest
 cd cpp
