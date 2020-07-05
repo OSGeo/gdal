@@ -26,6 +26,9 @@ sudo apt-get install -y doxygen texlive-latex-base make python-dev g++
 #sudo apt-get install -y --allow-unauthenticated libsfcgal-dev
 sudo apt-get install -y --allow-unauthenticated fossil libgeotiff-dev libcharls-dev libopenjp2-7-dev libcairo2-dev
 
+# MONO
+sudo apt-get install -y mono-mcs libmono-system-drawing4.0-cil
+
 # MSSQL: client side
 curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
 curl https://packages.microsoft.com/config/ubuntu/18.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
