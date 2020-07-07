@@ -14,7 +14,7 @@ jobs:
       - name: Install Requirements
         run: |
           sudo apt update
-          sudo apt install -y cppcheck libsqlite3-dev ccache
+          sudo apt install -y cppcheck libsqlite3-dev ccache sqlite3
 
       - name: Cache PROJ build
         uses: actions/cache@v2
@@ -48,7 +48,7 @@ jobs:
       - name: Install Requirements
         run: |
           sudo apt update
-          sudo apt install -y cppcheck libsqlite3-dev ccache
+          sudo apt install -y cppcheck libsqlite3-dev ccache sqlite3
 
       - name: Cache PROJ build
         uses: actions/cache@v2
