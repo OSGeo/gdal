@@ -1,3 +1,59 @@
+= GDAL/OGR 3.1.2 Release Notes =
+
+The 3.1.2 release is a bug fix release.
+
+== Build ==
+
+Windows:
+ * nmake.opt: add hint about adding ole32.lib to PROJ_LIBRARY for PROJ 7.1 when static linking (#2743)
+ * nmake.opt: fix ECW hints (#2748)
+
+== GDAL core ==
+
+* DumpJPK2CodeStream(): fix reported offset of EOC marker when PSOT = 0 (#2724)
+* Overview generation: fix progress percentage when using USE_RRD=YES (#2722)
+
+== GDAL utilities ==
+
+* gdal2tiles: fix issue in nativezoom computation with --profile=raster on a raster whose size is below the tile size
+* gdal2tiles: fix --xyz with -p raster, fix KML generation with --xyz (fixes #2463) and update OpenLayers export to OpenLayers 6.3.1 (#2732)
+* validate_gpkg.py: add expected column type for rtree with SQLite 3.31.1
+
+== GDAL drivers ==
+
+ISIS3 driver:
+ * make sure that in-line label size is at least 65536 bytes (fixes #2741)
+
+PAux driver:
+ * avoid ingesting large binary unrelated files (found when investigating #2722)
+
+== OGRSpatialReference ==
+
+* Fix crashing bug with PROJ context and OSRCleanup(), as triggered by PostGIS raster and GMT (#2744)
+
+== OGR drivers ==
+
+CouchDB driver:
+ * ogrcouchdblayer.cpp: fix compiler warning
+
+DXF driver:
+ * ogrdxf_leader.cpp: suppress false positive warning
+
+FileGDB and OpenFileGDB drivers:
+ * qualify DateTime values with UTC timezone when <IsTimeInUTC>true</IsTimeInUTC> is present in layer metadata (#2719)
+
+GeoJSON driver:
+ * fix opening of file starting with {"coordinates" (#2720)
+ * ogrgeojsonreader.cpp: fix compiler warning
+
+GML driver:
+ * when encountering XML issue, defer emission of error message until we return a NULL feature, so as to avoid to confuse ogr2ogr (#2730)
+
+== SWIG Bindings ==
+
+Python bindings:
+ * gdal.Info(): fix handling of -json in options (#2749)
+
 = GDAL/OGR 3.1.1 Release Notes =
 
 The 3.1.1 release is a bug fix release.
