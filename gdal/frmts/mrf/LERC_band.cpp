@@ -473,7 +473,7 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    if (size.x <= 0 && sHeader.size() >= CntZImage::computeNumBytesNeededToWriteVoidImage()) {
+    if (size.x <= 0 && sHeader.size() >= CntZImage::computeNumBytesNeededToReadVoidImage(false)) {
         CntZImage zImg;
         size_t nRemainingBytes = poOpenInfo->nHeaderBytes;
         Byte *pb = reinterpret_cast<Byte *>(psz);

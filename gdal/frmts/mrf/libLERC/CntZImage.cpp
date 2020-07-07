@@ -94,25 +94,16 @@ void CntZImage::normalize()
 // computes the size of a CntZImage of any width and height, but all void / invalid,
 // and then compressed
 
-unsigned int CntZImage::computeNumBytesNeededToWriteVoidImage()
+unsigned int CntZImage::computeNumBytesNeededToReadVoidImage(bool onlyZPart)
 {
-  unsigned int cnt = 0;
-
   CntZImage zImg;
-  cnt += (unsigned int)zImg.getTypeString().length();    // "CntZImage ", 10 bytes
-  cnt += 2 * sizeof(int);
-  cnt += 2 * sizeof(int);
-  cnt += 1 * sizeof(double);
-
-  // cnt part
-  cnt += 3 * sizeof(int);
-  cnt += sizeof(float);
-
-  // z part
-  cnt += 3 * sizeof(int);
-  cnt += sizeof(float);
+  unsigned int cnt = (unsigned int)zImg.getTypeString().length();  // "CntZImage ", 10 bytes
+  cnt += 4 * sizeof(int);       // version, type, width, height
+  cnt += 1 * sizeof(double);    // maxZError
+  if (!onlyZPart)
+    cnt += 3 * sizeof(int) + sizeof(float);    // cnt part
+  cnt += 3 * sizeof(int) + sizeof(float);    // z part
   cnt += 1;
-
   return cnt;
 }
 

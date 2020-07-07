@@ -24,7 +24,7 @@ Contributors:  Thomas Maurer
 #include "Defines.h"
 #include "Lerc.h"
 #include "Lerc2.h"
-
+#include <typeinfo>
 #include <limits>
 
 #ifdef HAVE_LERC1_DECODE
@@ -134,14 +134,15 @@ ErrCode Lerc::GetLercInfo(const Byte* pLercBlob, unsigned int numBytesBlob, stru
 
 #ifdef HAVE_LERC1_DECODE
   // only if not Lerc2, try legacy Lerc1
-  unsigned int numBytesHeader = CntZImage::computeNumBytesNeededToReadHeader();
+  unsigned int numBytesHeaderBand0 = CntZImage::computeNumBytesNeededToReadHeader(false);
+  unsigned int numBytesHeaderBand1 = CntZImage::computeNumBytesNeededToReadHeader(true);
   Byte* pByte = const_cast<Byte*>(pLercBlob);
 
   lercInfo.zMin =  FLT_MAX;
   lercInfo.zMax = -FLT_MAX;
 
   CntZImage cntZImg;
-  if (numBytesHeader <= numBytesBlob && cntZImg.read(&pByte, 1e12, true))    // read just the header
+  if (numBytesHeaderBand0 <= numBytesBlob && cntZImg.read(&pByte, 1e12, true))    // read just the header
   {
     size_t nBytesRead = pByte - pLercBlob;
     size_t nBytesNeeded = 10 + 4 * sizeof(int) + 1 * sizeof(double);
@@ -170,7 +171,7 @@ ErrCode Lerc::GetLercInfo(const Byte* pLercBlob, unsigned int numBytesBlob, stru
     Byte* pByte = const_cast<Byte*>(pLercBlob);
     bool onlyZPart = false;
 
-    while (lercInfo.blobSize + numBytesHeader < numBytesBlob)    // means there could be another band
+    while (lercInfo.blobSize + numBytesHeaderBand1 < numBytesBlob)    // means there could be another band
     {
       if (!cntZImg.read(&pByte, 1e12, false, onlyZPart))
         return (lercInfo.nBands > 0) ? ErrCode::Ok : ErrCode::Failed;    // no other band, we are done
@@ -388,11 +389,13 @@ ErrCode Lerc::DecodeTempl(T* pData, const Byte* pLercBlob, unsigned int numBytes
   else    // might be old Lerc1
   {
 #ifdef HAVE_LERC1_DECODE
-    unsigned int numBytesHeader = CntZImage::computeNumBytesNeededToReadHeader();
+    unsigned int numBytesHeaderBand0 = CntZImage::computeNumBytesNeededToReadHeader(false);
+    unsigned int numBytesHeaderBand1 = CntZImage::computeNumBytesNeededToReadHeader(true);
     CntZImage zImg;
 
     for (int iBand = 0; iBand < nBands; iBand++)
     {
+      unsigned int numBytesHeader = iBand == 0 ? numBytesHeaderBand0 : numBytesHeaderBand1;
       if ((size_t)(pByte - pLercBlob) + numBytesHeader > numBytesBlob)
         return ErrCode::BufferTooSmall;
 
