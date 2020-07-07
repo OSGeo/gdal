@@ -8,7 +8,7 @@ if [ "${GDAL_VERSION}" = "master" ]; then
     export GDAL_RELEASE_DATE
 fi
 
-if [ -n "${GDAL_BUILD_IS_RELEASE:-}" ]; then
+if [ -z "${GDAL_BUILD_IS_RELEASE:-}" ]; then
     export GDAL_SHA1SUM=${GDAL_VERSION}
 fi
 
