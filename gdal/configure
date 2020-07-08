@@ -1060,6 +1060,7 @@ enable_driver_sgi
 enable_driver_sigdem
 enable_driver_srtmhgt
 enable_driver_terragen
+enable_driver_tga
 enable_driver_til
 enable_driver_tsx
 enable_driver_usgsdem
@@ -1977,6 +1978,7 @@ Optional Features:
                           disable srtmhgt driver support (enabled by default)
   --disable-driver-terragen
                           disable terragen driver support (enabled by default)
+  --disable-driver-tga    disable tga driver support (enabled by default)
   --disable-driver-til    disable til driver support (enabled by default)
   --disable-driver-tsx    disable tsx driver support (enabled by default)
   --disable-driver-usgsdem
@@ -27719,6 +27721,34 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED terragen"
   INTERNAL_FORMAT_terragen_ENABLED=no
+fi
+
+# Check whether --enable-driver-tga was given.
+if test "${enable_driver_tga+set}" = set; then :
+  enableval=$enable_driver_tga;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_tga
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED tga"
+  INTERNAL_FORMAT_tga_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED tga"
+  INTERNAL_FORMAT_tga_ENABLED=no
 fi
 
 # Check whether --enable-driver-til was given.
