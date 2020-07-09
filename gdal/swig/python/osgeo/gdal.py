@@ -1832,6 +1832,14 @@ def VSICurlPartialClearCache(*args):
     """VSICurlPartialClearCache(char const * utf8_path)"""
     return _gdal.VSICurlPartialClearCache(*args)
 
+def NetworkStatsReset(*args):
+    """NetworkStatsReset()"""
+    return _gdal.NetworkStatsReset(*args)
+
+def NetworkStatsGetAsSerializedJSON(*args):
+    """NetworkStatsGetAsSerializedJSON(char ** options=None) -> retStringAndCPLFree *"""
+    return _gdal.NetworkStatsGetAsSerializedJSON(*args)
+
 def ParseCommandLine(*args):
     """ParseCommandLine(char const * utf8_path) -> char **"""
     return _gdal.ParseCommandLine(*args)

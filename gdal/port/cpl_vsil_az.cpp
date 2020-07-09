@@ -333,6 +333,9 @@ bool VSIDIRAz::IssueListDir()
     const CPLString l_osNextMarker(osNextMarker);
     clear();
 
+    NetworkStatisticsFileSystem oContextFS("/vsiaz/");
+    NetworkStatisticsAction oContextAction("ListBucket");
+
     CPLString osMaxKeys = CPLGetConfigOption("AZURE_MAX_RESULTS", "");
     const int AZURE_SERVER_LIMIT_SINGLE_REQUEST = 5000;
     if( nMaxFiles > 0 && nMaxFiles < AZURE_SERVER_LIMIT_SINGLE_REQUEST &&
@@ -384,6 +387,8 @@ bool VSIDIRAz::IssueListDir()
 
     if( headers != nullptr )
         curl_slist_free_all(headers);
+
+    NetworkStatisticsLogger::LogGET(sWriteFuncData.nSize);
 
     if( sWriteFuncData.pBuffer == nullptr)
     {
@@ -654,6 +659,10 @@ bool VSIAzureWriteHandle::Send(bool bIsLastBlock)
 
 bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
 {
+    NetworkStatisticsFileSystem oContextFS("/vsiaz/");
+    NetworkStatisticsFile oContextFile(m_osFilename);
+    NetworkStatisticsAction oContextAction("Write");
+
     bool bSuccess = true;
     const bool bSingleBlock = bIsLastBlock &&
                 ( m_nCurOffset <= static_cast<vsi_l_offset>(m_nBufferSize) );
@@ -738,6 +747,8 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
                      hCurlHandle);
 
         curl_slist_free_all(headers);
+
+        NetworkStatisticsLogger::LogPUT(m_nBufferOff);
 
         long response_code = 0;
         curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
@@ -913,6 +924,9 @@ int VSIAzureFSHandler::Mkdir( const char * pszDirname, long /* nMode */ )
     if( !STARTS_WITH_CI(pszDirname, GetFSPrefix()) )
         return -1;
 
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("Mkdir");
+
     CPLString osDirname(pszDirname);
     if( !osDirname.empty() && osDirname.back() != '/' )
         osDirname += "/";
@@ -954,6 +968,9 @@ int VSIAzureFSHandler::Rmdir( const char * pszDirname )
 {
     if( !STARTS_WITH_CI(pszDirname, GetFSPrefix()) )
         return -1;
+
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("Rmdir");
 
     CPLString osDirname(pszDirname);
     if( !osDirname.empty() && osDirname.back() != '/' )
@@ -1015,6 +1032,9 @@ int VSIAzureFSHandler::Rmdir( const char * pszDirname )
 int VSIAzureFSHandler::CopyObject( const char *oldpath, const char *newpath,
                                    CSLConstList /* papszMetadata */ )
 {
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("CopyObject");
+
     CPLString osTargetNameWithoutPrefix = newpath + GetFSPrefix().size();
     auto poS3HandleHelper =
         std::unique_ptr<IVSIS3LikeHandleHelper>(
@@ -1085,6 +1105,8 @@ int VSIAzureFSHandler::CopyObject( const char *oldpath, const char *newpath,
         VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
         curl_slist_free_all(headers);
+
+        NetworkStatisticsLogger::LogPUT(0);
 
         long response_code = 0;
         curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
@@ -1253,6 +1275,9 @@ VSIDIR* VSIAzureFSHandler::OpenDir( const char *pszPath,
 
     if( !STARTS_WITH_CI(pszPath, GetFSPrefix()) )
         return nullptr;
+
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("OpenDir");
 
     CPLString osDirnameWithoutPrefix = pszPath + GetFSPrefix().size();
     if( !osDirnameWithoutPrefix.empty() &&

@@ -28,6 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import json
 import os.path
 import stat
 import sys
@@ -1259,46 +1260,92 @@ def test_vsis3_4():
     assert gdal.GetLastErrorMsg() != ''
 
     # Nominal case
-    with webserver.install_http_handler(webserver.SequentialHandler()):
-        f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket3/another_file.bin', 'wb')
-        assert f is not None
-        assert gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) == 0
-        assert gdal.VSIFSeekL(f, 0, 1) == 0
-        assert gdal.VSIFSeekL(f, 0, 2) == 0
-        assert gdal.VSIFWriteL('foo', 1, 3, f) == 3
-        assert gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) == 0
-        assert gdal.VSIFWriteL('bar', 1, 3, f) == 3
 
-    handler = webserver.SequentialHandler()
+    gdal.NetworkStatsReset()
+    with gdaltest.config_option('CPL_VSIL_NETWORK_STATS_ENABLED', 'YES'):
+        with webserver.install_http_handler(webserver.SequentialHandler()):
+            f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket3/another_file.bin', 'wb')
+            assert f is not None
+            assert gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) == 0
+            assert gdal.VSIFSeekL(f, 0, 1) == 0
+            assert gdal.VSIFSeekL(f, 0, 2) == 0
+            assert gdal.VSIFWriteL('foo', 1, 3, f) == 3
+            assert gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) == 0
+            assert gdal.VSIFWriteL('bar', 1, 3, f) == 3
 
-    def method(request):
-        if request.headers['Content-Length'] != '6':
-            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
-            request.send_response(400)
+        handler = webserver.SequentialHandler()
+
+        def method(request):
+            if request.headers['Content-Length'] != '6':
+                sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+                request.send_response(400)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+                return
+
+            request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
+
+            content = request.rfile.read(6).decode('ascii')
+            if content != 'foobar':
+                sys.stderr.write('Did not get expected content: %s\n' % content)
+                request.send_response(400)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+                return
+
+            request.send_response(200)
             request.send_header('Content-Length', 0)
             request.end_headers()
-            return
 
-        request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
+        handler.add('PUT', '/s3_fake_bucket3/another_file.bin', custom_method=method)
 
-        content = request.rfile.read(6).decode('ascii')
-        if content != 'foobar':
-            sys.stderr.write('Did not get expected content: %s\n' % content)
-            request.send_response(400)
-            request.send_header('Content-Length', 0)
-            request.end_headers()
-            return
+        gdal.ErrorReset()
+        with webserver.install_http_handler(handler):
+            gdal.VSIFCloseL(f)
+        assert gdal.GetLastErrorMsg() == ''
 
-        request.send_response(200)
-        request.send_header('Content-Length', 0)
-        request.end_headers()
+    j = json.loads(gdal.NetworkStatsGetAsSerializedJSON())
+    #print(j)
+    assert j == {
+        "methods": {
+            "PUT": {
+                "count": 1,
+                "uploaded_bytes": 6
+            }
+        },
+        "handlers": {
+            "vsis3": {
+                "files": {
+                    "/vsis3/s3_fake_bucket3/another_file.bin": {
+                        "methods": {
+                            "PUT": {
+                                "count": 1,
+                                "uploaded_bytes": 6
+                            }
+                        },
+                        "actions": {
+                            "Write": {
+                                "methods": {
+                                    "PUT": {
+                                        "count": 1,
+                                        "uploaded_bytes": 6
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "methods": {
+                    "PUT": {
+                        "count": 1,
+                        "uploaded_bytes": 6
+                    }
+                }
+            }
+        }
+    }
 
-    handler.add('PUT', '/s3_fake_bucket3/another_file.bin', custom_method=method)
-
-    gdal.ErrorReset()
-    with webserver.install_http_handler(handler):
-        gdal.VSIFCloseL(f)
-    assert gdal.GetLastErrorMsg() == ''
+    gdal.NetworkStatsReset()
 
     # Redirect case
     with webserver.install_http_handler(webserver.SequentialHandler()):

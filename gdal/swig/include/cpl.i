@@ -184,6 +184,8 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (FileFromMemBuffer) wrapper_VSIFileFromMemBuffer;
 %rename (Unlink) VSIUnlink;
 %rename (HasThreadSupport) wrapper_HasThreadSupport;
+%rename (NetworkStatsReset) VSINetworkStatsReset;
+%rename (NetworkStatsGetAsSerializedJSON) VSINetworkStatsGetAsSerializedJSON;
 
 retStringAndCPLFree*
 GOA2GetAuthorizationURL( const char *pszScope );
@@ -773,6 +775,9 @@ void VSIStdoutUnsetRedirection()
 
 void VSICurlClearCache();
 void VSICurlPartialClearCache( const char* utf8_path );
+
+void VSINetworkStatsReset();
+retStringAndCPLFree* VSINetworkStatsGetAsSerializedJSON( char** options = NULL );
 
 #endif /* !defined(SWIGJAVA) */
 
