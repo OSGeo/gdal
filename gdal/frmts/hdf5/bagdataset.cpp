@@ -1929,6 +1929,11 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
         return nullptr;
     }
 
+    if( poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER )
+    {
+        return HDF5Dataset::OpenMultiDim(poOpenInfo);
+    }
+
     const char* pszMode = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
                                                "MODE", "AUTO");
     const bool bLowResGrid = EQUAL(pszMode, "LOW_RES_GRID");
@@ -4581,6 +4586,8 @@ void GDALRegister_BAG()
     "description='DEFLATE compression level 1-9' default='6' />"
 "  <Option name='BLOCK_SIZE' type='int' description='Chunk size' />"
 "</CreationOptionList>" );
+
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIDIM_RASTER, "YES" );
 
     poDriver->pfnOpen = BAGDataset::Open;
     poDriver->pfnIdentify = BAGDataset::Identify;
