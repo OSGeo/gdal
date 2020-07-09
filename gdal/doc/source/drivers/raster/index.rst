@@ -173,6 +173,7 @@ Raster drivers
    srp
    srtmhgt
    terragen
+   tga
    til
    tiledb
    tsx
