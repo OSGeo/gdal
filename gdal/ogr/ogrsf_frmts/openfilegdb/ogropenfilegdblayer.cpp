@@ -574,25 +574,11 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             TryToDetectMultiPatchKind();
         }
 
-        if( poGDBGeomField->Has3D() )
+        if( m_poLyrTable->GetGeomTypeHasZ() )
             m_eGeomType = wkbSetZ(m_eGeomType);
 
-
-        // Check that the first feature has actually a M value before advertizing
-        // it.
-        if( poGDBGeomField->HasM() &&
-            m_poLyrTable->GetValidRecordCount() > 0 &&
-            m_poLyrTable->GetAndSelectNextNonEmptyRow(0) >= 0 )
-        {
-            const OGRField* psField = m_poLyrTable->GetFieldValue(m_iGeomFieldIdx);
-            if( psField != nullptr )
-            {
-                OGRGeometry* poGeom = m_poGeomConverter->GetAsGeometry(psField);
-                if( poGeom != nullptr && poGeom->IsMeasured() )
-                    m_eGeomType = wkbSetM(m_eGeomType);
-                delete poGeom;
-            }
-        }
+        if( m_poLyrTable->GetGeomTypeHasM() )
+            m_eGeomType = wkbSetM(m_eGeomType);
 
         OGROpenFileGDBGeomFieldDefn* poGeomFieldDefn =
                 new OGROpenFileGDBGeomFieldDefn(nullptr, pszName, m_eGeomType);
