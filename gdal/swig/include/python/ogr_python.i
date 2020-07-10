@@ -224,6 +224,17 @@
     def __copy__(self):
         return self.Clone()
 
+    def _getfieldindex(self, fieldname):
+        case_insensitive_idx = -1
+        fdefn = _ogr.Feature_GetDefnRef(self)
+        for i in range(fdefn.GetFieldCount()):
+            name = fdefn.GetFieldDefn(i).GetName()
+            if name == fieldname:
+                return i
+            elif case_insensitive_idx < 0 and name.lower() == fieldname.lower():
+                case_insensitive_idx = i
+        return case_insensitive_idx
+
     # This makes it possible to fetch fields in the form "feature.area".
     # This has some risk of name collisions.
     def __getattr__(self, key):
@@ -231,7 +242,7 @@
         if key == 'this':
             return self.__dict__[key]
 
-        idx = self.GetFieldIndex(key)
+        idx = self._getfieldindex(key)
         if idx < 0:
             idx = self.GetGeomFieldIndex(key)
             if idx < 0:
@@ -248,7 +259,7 @@
         if key == 'this' or key == 'thisown':
             self.__dict__[key] = value
         else:
-            idx = self.GetFieldIndex(key)
+            idx = self._getfieldindex(key)
             if idx != -1:
                 self.SetField2(idx, value)
             else:
@@ -262,7 +273,7 @@
     def __getitem__(self, key):
         """Returns the values of fields by the given name / field_index"""
         if isinstance(key, (str, type(u''))):
-            fld_index = self.GetFieldIndex(key)
+            fld_index = self._getfieldindex(key)
         else:
             fld_index = key
             if key == self.GetFieldCount():
@@ -281,7 +292,7 @@
     def __setitem__(self, key, value):
         """Returns the value of a field by field name / index"""
         if isinstance(key, (str, type(u''))):
-            fld_index = self.GetFieldIndex(key)
+            fld_index = self._getfieldindex(key)
         else:
             fld_index = key
             if key == self.GetFieldCount():
@@ -298,7 +309,7 @@
 
     def GetField(self, fld_index):
         if isinstance(fld_index, (str, type(u''))):
-            fld_index = self.GetFieldIndex(fld_index)
+            fld_index = self._getfieldindex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
             raise KeyError("Illegal field requested in GetField()")
         if not (self.IsFieldSet(fld_index)) or self.IsFieldNull(fld_index):
@@ -349,21 +360,21 @@
         if len(args) == 2 and (type(args[1]) == type(1) or type(args[1]) == type(12345678901234)):
             fld_index = args[0]
             if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
-                fld_index = self.GetFieldIndex(fld_index)
+                fld_index = self._getfieldindex(fld_index)
             return _ogr.Feature_SetFieldInteger64(self, fld_index, args[1])
 
 
         if len(args) == 2 and isinstance(args[1], type(u'')):
             fld_index = args[0]
             if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
-                fld_index = self.GetFieldIndex(fld_index)
+                fld_index = self._getfieldindex(fld_index)
             return _ogr.Feature_SetFieldString(self, fld_index, args[1])
 
         return _ogr.Feature_SetField(self, *args)
 
     def SetField2(self, fld_index, value):
         if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
-            fld_index = self.GetFieldIndex(fld_index)
+            fld_index = self._getfieldindex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
             raise KeyError("Illegal field requested in SetField2()")
 

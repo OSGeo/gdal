@@ -605,43 +605,49 @@ int swq_identify_field_internal( const char* table_name,
 /* -------------------------------------------------------------------- */
 /*      Search for matching field.                                      */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; i < field_list->count; i++ )
+    for( int pass = 0; pass < 2; ++pass )
     {
-        if( !EQUAL( field_list->names[i], field_token ) )
-            continue;
-
-        int t_id = 0;
-
-        // Do the table specifications match?/
-        if( tables_enabled )
+        for( int i = 0; i < field_list->count; i++ )
         {
-            t_id = field_list->table_ids[i];
-            if( table_name[0] != '\0'
-                && !EQUAL(table_name, field_list->table_defs[t_id].table_alias))
+            if( (pass == 0 && strcmp( field_list->names[i], field_token ) != 0) ||
+                (pass == 1 && !EQUAL( field_list->names[i], field_token ) ) )
+            {
                 continue;
+            }
 
-            // if( t_id != 0 && table_name[0] == '\0' )
-            //     continue;
-        }
-        else if( table_name[0] != '\0' )
-            break;
+            int t_id = 0;
 
-        // We have a match, return various information.
-        if( this_type != nullptr )
-        {
-            if( field_list->types != nullptr )
-                *this_type = field_list->types[i];
+            // Do the table specifications match?/
+            if( tables_enabled )
+            {
+                t_id = field_list->table_ids[i];
+                if( table_name[0] != '\0'
+                    && !EQUAL(table_name, field_list->table_defs[t_id].table_alias))
+                    continue;
+
+                // if( t_id != 0 && table_name[0] == '\0' )
+                //     continue;
+            }
+            else if( table_name[0] != '\0' )
+                break;
+
+            // We have a match, return various information.
+            if( this_type != nullptr )
+            {
+                if( field_list->types != nullptr )
+                    *this_type = field_list->types[i];
+                else
+                    *this_type = SWQ_OTHER;
+            }
+
+            if( table_id != nullptr )
+                *table_id = t_id;
+
+            if( field_list->ids == nullptr )
+                return i;
             else
-                *this_type = SWQ_OTHER;
+                return field_list->ids[i];
         }
-
-        if( table_id != nullptr )
-            *table_id = t_id;
-
-        if( field_list->ids == nullptr )
-            return i;
-        else
-            return field_list->ids[i];
     }
 
 /* -------------------------------------------------------------------- */

@@ -34,6 +34,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <map>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -608,6 +609,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
 
     OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
     bool bHasOGR_STYLEField = false;
+    std::set<std::string> oSetNamesUC;
     for( int i = 0; i < poFDefn->GetFieldCount(); i++ )
     {
         if( bAddComma )
@@ -618,8 +620,21 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
         if( EQUAL(poFieldDefn->GetNameRef(), "OGR_STYLE") )
             bHasOGR_STYLEField = true;
 
+        CPLString osFieldName(poFieldDefn->GetNameRef());
+        int nCounter = 2;
+        while( oSetNamesUC.find(CPLString(osFieldName).toupper()) != oSetNamesUC.end() )
+        {
+            do
+            {
+                osFieldName.Printf("%s%d", poFieldDefn->GetNameRef(), nCounter);
+                nCounter++;
+            }
+            while( poFDefn->GetFieldIndex(osFieldName) >= 0 );
+        }
+        oSetNamesUC.insert(CPLString(osFieldName).toupper());
+
         osSQL += "\"";
-        osSQL += SQLEscapeName(poFieldDefn->GetNameRef());
+        osSQL += SQLEscapeName(osFieldName);
         osSQL += "\"";
         osSQL += " ";
         osSQL += OGRSQLiteFieldDefnToSQliteFieldDefn(poFieldDefn,
