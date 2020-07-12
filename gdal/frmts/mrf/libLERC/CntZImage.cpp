@@ -158,7 +158,6 @@ unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
         if (!computeCntStats(0, static_cast<int>(height_), 0, static_cast<int>(width_), cntMin, cntMax))
             return false;
 
-        bool bCntsNoInt = false;
         numTilesVert = 0;    // no tiling
         numTilesHori = 0;
         maxValInImg = cntMax;
@@ -181,7 +180,6 @@ unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
             numBytesOpt = static_cast<int>(bitMask.RLEsize());
         }
 
-        info.cntsNoInt = bCntsNoInt;
         info.numTilesVertCnt = numTilesVert;
         info.numTilesHoriCnt = numTilesHori;
         info.numBytesCnt = numBytesOpt;
@@ -193,7 +191,7 @@ unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
     }
 
     // z part
-    if (!findTiling(maxZError, false, numTilesVert, numTilesHori, numBytesOpt, maxValInImg))
+    if (!findTiling(maxZError, numTilesVert, numTilesHori, numBytesOpt, maxValInImg))
         return 0;
 
     info.maxZError = maxZError;
@@ -245,12 +243,10 @@ bool CntZImage::write(Byte** ppByte,
 
     bool zPart = onlyZPart;
     do {
-        bool bCntsNoInt = false;
         int numTilesVert, numTilesHori, numBytesOpt, numBytesWritten = 0;
         float maxValInImg;
 
         if (!zPart) {
-            bCntsNoInt = info.cntsNoInt;
             numTilesVert = info.numTilesVertCnt;
             numTilesHori = info.numTilesHoriCnt;
             numBytesOpt = info.numBytesCnt;
@@ -285,7 +281,7 @@ bool CntZImage::write(Byte** ppByte,
         }
         else { // encode tiles to buffer, alwasy z part
             float maxVal;
-            if (!writeTiles(maxZError, bCntsNoInt, numTilesVert, numTilesHori,
+            if (!writeTiles(maxZError, numTilesVert, numTilesHori,
                 bArr, numBytesWritten, maxVal))
                 return false;
         }
@@ -414,7 +410,7 @@ bool CntZImage::read(Byte** ppByte,
 
 // -------------------------------------------------------------------------- ;
 
-bool CntZImage::findTiling(double maxZError, bool cntsNoIntIn,
+bool CntZImage::findTiling(double maxZError,
     int& numTilesVertA,
     int& numTilesHoriA,
     int& numBytesOptA,
@@ -426,7 +422,7 @@ bool CntZImage::findTiling(double maxZError, bool cntsNoIntIn,
     // first, do the entire image as 1 block
     numTilesVertA = 1;
     numTilesHoriA = 1;
-    if (!writeTiles(maxZError, cntsNoIntIn, 1, 1, nullptr, numBytesOptA, maxValInImgA))
+    if (!writeTiles(maxZError, 1, 1, nullptr, numBytesOptA, maxValInImgA))
         return false;
 
     // if all is invalid so z part is empty, then we have to write the header only
@@ -444,7 +440,7 @@ bool CntZImage::findTiling(double maxZError, bool cntsNoIntIn,
 
         int numBytes = 0;
         float maxVal;
-        if (!writeTiles(maxZError, cntsNoIntIn, numTilesVert, numTilesHori, nullptr, numBytes, maxVal))
+        if (!writeTiles(maxZError, numTilesVert, numTilesHori, nullptr, numBytes, maxVal))
             return false;
 
         if (numBytes < numBytesOptA) {
@@ -464,8 +460,7 @@ bool CntZImage::findTiling(double maxZError, bool cntsNoIntIn,
 
 // -------------------------------------------------------------------------- ;
 
-bool CntZImage::writeTiles(double maxZError, bool cntsNoIntIn,
-    int numTilesVert, int numTilesHori,
+bool CntZImage::writeTiles(double maxZError, int numTilesVert, int numTilesHori,
     Byte* bArr, int& numBytes, float& maxValInImg) const
 {
     Byte* ptr = bArr;

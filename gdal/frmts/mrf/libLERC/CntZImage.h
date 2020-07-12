@@ -102,7 +102,6 @@ protected:
     struct InfoFromComputeNumBytes
     {
         double maxZError;
-        bool cntsNoInt;
         int numTilesVertCnt;
         int numTilesHoriCnt;
         int numBytesCnt;
@@ -116,11 +115,11 @@ protected:
     unsigned int computeNumBytesNeededToWrite(double maxZError, bool onlyZPart,
         InfoFromComputeNumBytes& info) const;
 
-    bool findTiling(double maxZError, bool cntsNoInt,
-        int& numTilesVert, int& numTilesHori, int& numBytesOpt, float& maxValInImg) const;
+    bool findTiling(double maxZError, int& numTilesVert, int& numTilesHori,
+        int& numBytesOpt, float& maxValInImg) const;
 
-    bool writeTiles(double maxZError, bool cntsNoInt,
-        int numTilesVert, int numTilesHori, Byte* bArr, int& numBytes, float& maxValInImg) const;
+    bool writeTiles(double maxZError, int numTilesVert, int numTilesHori,
+        Byte* bArr, int& numBytes, float& maxValInImg) const;
 
     bool readTiles(double maxZErrorInFile,
         int numTilesVert, int numTilesHori, float maxValInImg, Byte* bArr, size_t nRemainingBytes);
