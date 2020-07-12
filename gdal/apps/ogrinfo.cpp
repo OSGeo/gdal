@@ -405,6 +405,9 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
                 printf(" NOT NULL");
             if( poField->GetDefault() != nullptr )
                 printf(" DEFAULT %s", poField->GetDefault());
+            const char* pszAlias = poField->GetAlternativeNameRef();
+            if( pszAlias != nullptr && pszAlias[0])
+                printf(", alternative name=\"%s\"", pszAlias);
             printf("\n");
         }
     }
