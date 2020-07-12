@@ -25,50 +25,9 @@ Contributors:  Thomas Maurer
 
 NAMESPACE_LERC_START
 
-class Image
-{
-public:
+extern const int CNT_Z;
 
-    virtual ~Image() {}
-
-    enum Type
-    {
-        BYTE,
-        RGB,
-        SHORT,
-        LONG,
-        FLOAT,
-        DOUBLE,
-        COMPLEX,
-        POINT3F,
-        CNT_Z,
-        CNT_ZXY,
-        Last_Type_
-    };
-
-    bool isType(Type t) const { return t == type_; }
-    Type getType() const { return type_; }
-    int getWidth() const { return width_; }
-    int getHeight() const { return height_; }
-    int getSize() const { return width_ * height_; }
-
-    bool isInside(int row, int col) const
-    {
-        return row >= 0 && row < height_&& col >= 0 && col < width_;
-    }
-
-    const virtual std::string getTypeString() const = 0;
-
-protected:
-
-    Image() : type_(Last_Type_), width_(0), height_(0) {}
-
-    Type type_;
-    int width_, height_;
-};
-
-template<typename T >
-class TImage : public Image
+template<typename T > class TImage
 {
 public:
     bool resize(int width, int height) {
@@ -81,11 +40,20 @@ public:
         return true;
     }
 
+    int getWidth() const { return width_; }
+    int getHeight() const { return height_; }
+    int getSize() const { return width_ * height_; }
+
+    bool isInside(int row, int col) const {
+        return row >= 0 && row < height_&& col >= 0 && col < width_;
+    }
+
     const T operator() (int row, int col) const { return values[row * width_ + col]; }
     void setPixel(int row, int col, T value) { values[row * width_ + col] = value; }
     const T* data() const { return values.data(); }
 
 protected:
+    int width_, height_;
     std::vector<T> values;
 };
 
@@ -106,12 +74,11 @@ class CntZImage : public TImage<CntZ>
 {
 public:
     CntZImage() {
-        type_ = CNT_Z;
         memset(&m_infoFromComputeNumBytes, 0, sizeof(m_infoFromComputeNumBytes));
     }
     virtual ~CntZImage() {}
 
-    const std::string getTypeString() const override { return "CntZImage "; }
+    const std::string getTypeString() const { return "CntZImage "; }
 
     /// binary file IO with optional compression
     /// (maxZError = 0  means no lossy compression for Z; the Cnt part is compressed lossless or not at all)

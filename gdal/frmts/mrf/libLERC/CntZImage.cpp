@@ -31,6 +31,8 @@ using namespace std;
 
 NAMESPACE_LERC_START
 
+const int CNT_Z = 8;
+
 static unsigned int computeNumBytesNeededByStuffer(unsigned int numElem, unsigned int maxElem)
 {
     int numBits = 0;
@@ -174,7 +176,7 @@ bool CntZImage::write(Byte** ppByte,
     ptr += getTypeString().length();
 
     memcpy(ptr, &version, sizeof(int));  ptr += sizeof(int);
-    memcpy(ptr, &type_, sizeof(int));  ptr += sizeof(int);
+    memcpy(ptr, &CNT_Z, sizeof(int));  ptr += sizeof(int);
     memcpy(ptr, &height_, sizeof(int));  ptr += sizeof(int);
     memcpy(ptr, &width_, sizeof(int));  ptr += sizeof(int);
     memcpy(ptr, &maxZError, sizeof(double));  ptr += sizeof(double);
@@ -287,7 +289,7 @@ bool CntZImage::read(Byte** ppByte,
     *ppByte = ptr;
     nRemainingBytes -= 4 * sizeof(int) + sizeof(double);
 
-    if (version != 11 || type != type_)
+    if (version != 11 || type != CNT_Z)
         return false;
 
     if (width <= 0 || width > 20000 || height <= 0 || height > 20000)

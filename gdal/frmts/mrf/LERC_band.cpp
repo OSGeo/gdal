@@ -69,7 +69,7 @@ static int checkV1(const char *s, size_t sz)
 
     // Type
     READ_GINT32(i, s);
-    if (i != Image::CNT_Z) return 0;
+    if (i != CNT_Z) return 0;
 
     // Height
     READ_GINT32(i, s); // Arbitrary number in CntZImage::read()
