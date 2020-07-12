@@ -55,21 +55,21 @@ static int checkV1(const char *s, size_t sz)
 
     // Header is 34 bytes
     // band header is 16, first mask band then data band
-    if (sz < 66)
+    if (sz < static_cast<size_t>(CntZImage::computeNumBytesNeededToWriteVoidImage()))
         return 0;
     // First ten bytes are ASCII signature
     if (!STARTS_WITH(s, "CntZImage "))
         return 0;
     s += 10;
 
-    // Version
+    // Version 11
     int i;
     READ_GINT32(i, s);
     if (i != 11) return 0;
 
-    // Type
+    // Type 8 is CntZ
     READ_GINT32(i, s);
-    if (i != CNT_Z) return 0;
+    if (i != 8) return 0;
 
     // Height
     READ_GINT32(i, s); // Arbitrary number in CntZImage::read()

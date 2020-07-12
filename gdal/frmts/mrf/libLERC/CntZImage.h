@@ -25,9 +25,6 @@ Contributors:  Thomas Maurer
 
 NAMESPACE_LERC_START
 
-extern const int CNT_Z;
-extern const int CNT_Z_VER;
-
 template<typename T > class TImage
 {
 public:
@@ -78,8 +75,6 @@ public:
         memset(&m_infoFromComputeNumBytes, 0, sizeof(m_infoFromComputeNumBytes));
     }
     virtual ~CntZImage() {}
-
-    static std::string getTypeString() { return std::string("CntZImage "); }
 
     /// binary file IO with optional compression
     /// (maxZError = 0  means no lossy compression for Z; the Cnt part is compressed lossless or not at all)
@@ -140,11 +135,7 @@ protected:
 
     bool readZTile(Byte** ppByte, size_t& nRemainingBytes, int i0, int i1, int j0, int j1, double maxZErrorInFile, float maxZInImg);
 
-    static int numBytesFlt(float z);    // returns 1, 2, or 4
-    // These are not portable on architectures that enforce alignment
-    static bool writeFlt(Byte** ppByte, float z, int numBytes);
-    static bool readFlt(Byte** ppByte, size_t& nRemainingBytes, float& z, int numBytes);
-
+    // These three don't need to be member functions
     InfoFromComputeNumBytes m_infoFromComputeNumBytes;
     std::vector<unsigned int> m_tmpDataVec;    // used in read fcts
 };

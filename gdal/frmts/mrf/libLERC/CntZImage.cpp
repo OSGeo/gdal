@@ -31,8 +31,73 @@ using namespace std;
 
 NAMESPACE_LERC_START
 
-const int CNT_Z = 8;
-const int CNT_Z_VER = 11;
+static const int CNT_Z = 8;
+static const int CNT_Z_VER = 11;
+static const string sCntZImage("CntZImage "); // Includes a space
+
+// -------------------------------------------------------------------------- ;
+
+static int numBytesFlt(float z)
+{
+    short s = (short)z;
+    signed char c = static_cast<signed char>(s);
+    return ((float)c == z) ? 1 : ((float)s == z) ? 2 : 4;
+}
+
+// -------------------------------------------------------------------------- ;
+
+static bool writeFlt(Byte** ppByte, float z, int numBytes)
+{
+    Byte* ptr = *ppByte;
+    switch (numBytes) {
+    case 1:
+        *ptr = static_cast<Byte>(z);
+        break;
+    case 2: {
+        short s = static_cast<short>(z);
+        memcpy(ptr, &s, 2);
+    }
+          break;
+    case 4:
+        memcpy(ptr, &z, 4);
+        break;
+    default:
+        return false;
+    }
+
+    *ppByte = ptr + numBytes;
+    return true;
+}
+
+// -------------------------------------------------------------------------- ;
+
+static bool readFlt(Byte** ppByte, size_t& nRemainingBytes, float& z, int numBytes)
+{
+    if (nRemainingBytes < static_cast<size_t>(numBytes))
+        return false;
+
+    Byte* ptr = *ppByte;
+    switch (numBytes) {
+    case 1:
+        z = static_cast<float>(*reinterpret_cast<char*>(ptr));
+        break;
+    case 2: {
+        short s;
+        memcpy(&s, ptr, 2);
+        z = s;
+    }
+          break;
+    case 4:
+        memcpy(&z, ptr, 4);
+        break;
+    default:
+        return false;
+    }
+
+    *ppByte = ptr + numBytes;
+    nRemainingBytes -= numBytes;
+    return true;
+}
 
 static unsigned int computeNumBytesNeededByStuffer(unsigned int numElem, unsigned int maxElem)
 {
@@ -54,7 +119,7 @@ unsigned int CntZImage::computeNumBytesNeededToWriteVoidImage()
     unsigned int cnt = 0;
 
     CntZImage zImg;
-    cnt += (unsigned int)zImg.getTypeString().length();    // "CntZImage ", 10 bytes
+    cnt += (unsigned int)sCntZImage.size();    // "CntZImage ", 10 bytes
     cnt += 2 * sizeof(int);
     cnt += 2 * sizeof(int);
     cnt += 1 * sizeof(double);
@@ -79,7 +144,7 @@ unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
 {
     unsigned int cnt = 0;
 
-    cnt += (unsigned int)getTypeString().length();
+    cnt += (unsigned int)sCntZImage.size();
     cnt += 2 * sizeof(int);
     cnt += 2 * sizeof(int);
     cnt += 1 * sizeof(double);
@@ -159,8 +224,8 @@ bool CntZImage::write(Byte** ppByte,
 
     Byte* ptr = *ppByte;
 
-    memcpy(ptr, getTypeString().c_str(), getTypeString().length());
-    ptr += getTypeString().length();
+    memcpy(ptr, sCntZImage.c_str(), sCntZImage.size());
+    ptr += sCntZImage.length();
 
     memcpy(ptr, &CNT_Z_VER, sizeof(int));  ptr += sizeof(int);
     memcpy(ptr, &CNT_Z, sizeof(int));  ptr += sizeof(int);
@@ -242,12 +307,12 @@ bool CntZImage::read(Byte** ppByte,
     double maxZError,
     bool onlyZPart)
 {
-    size_t len = getTypeString().length();
+    size_t len = sCntZImage.length();
     if (nRemainingBytes < len)
         return false;
 
     string typeStr(reinterpret_cast<char *>(*ppByte), len);
-    if (typeStr != getTypeString())
+    if (typeStr != sCntZImage)
         return false;
     *ppByte += len;
     nRemainingBytes -= len;
@@ -740,68 +805,5 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
     return true;
 }
 
-// -------------------------------------------------------------------------- ;
-
-int CntZImage::numBytesFlt(float z)
-{
-    short s = (short)z;
-    signed char c = static_cast<signed char>(s);
-    return ((float)c == z) ? 1 : ((float)s == z) ? 2 : 4;
-}
-
-// -------------------------------------------------------------------------- ;
-
-bool CntZImage::writeFlt(Byte** ppByte, float z, int numBytes)
-{
-    Byte* ptr = *ppByte;
-    switch (numBytes) {
-    case 1:
-        *ptr = static_cast<Byte>(z);
-        break;
-    case 2: {
-        short s = static_cast<short>(z);
-        memcpy(ptr, &s, 2);
-    }
-        break;
-    case 4:
-        memcpy(ptr, &z, 4);
-        break;
-    default:
-        return false;
-    }
-
-    *ppByte = ptr + numBytes;
-    return true;
-}
-
-// -------------------------------------------------------------------------- ;
-
-bool CntZImage::readFlt(Byte** ppByte, size_t& nRemainingBytes, float& z, int numBytes)
-{
-    if (nRemainingBytes < static_cast<size_t>(numBytes))
-        return false;
-
-    Byte* ptr = *ppByte;
-    switch (numBytes) {
-    case 1:
-        z = static_cast<float>(*reinterpret_cast<char*>(ptr));
-        break;
-    case 2: {
-        short s;
-        memcpy(&s, ptr, 2);
-        z = s;
-    }
-        break;
-    case 4:
-        memcpy(&z, ptr, 4);
-        break;
-    default:
-        return false;
-    }
-
-    *ppByte = ptr + numBytes;
-    nRemainingBytes -= numBytes;
-    return true;
-}
 
 NAMESPACE_LERC_END
