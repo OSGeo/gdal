@@ -31,17 +31,14 @@ NAMESPACE_LERC_START
 class BitMaskV1
 {
 public:
-    BitMaskV1(int nCols, int nRows) : m_nRows(nRows), m_nCols(nCols) {
-        bits.resize(Size(), 0);
-    }
+    BitMaskV1(int nCols, int nRows) : m_nRows(nRows), m_nCols(nCols)
+    { bits.resize(Size(), 0); }
 
     Byte  IsValid(int k) const { return (bits[k >> 3] & Bit(k)) != 0; }
-    void  SetValid(int k) { bits[k >> 3] |= Bit(k); }
-    void  SetInvalid(int k) { bits[k >> 3] &= ~Bit(k); }
     int   Size() const { return (m_nCols * m_nRows - 1) / 8 + 1; }
-
     // max RLE compressed size is n + 4 + 2 * (n - 1) / 32767
     // Returns encoded size
+    void Set(int k, bool v) { if (v) SetValid(k); else SetInvalid(k); }
     int RLEcompress(Byte* aRLE) const;
     // current encoded size
     int RLEsize() const;
@@ -53,6 +50,8 @@ private:
     int m_nRows, m_nCols;
     std::vector<Byte> bits;
     static Byte  Bit(int k) { return static_cast<Byte>(0x80 >> (k & 7)); }
+    void  SetValid(int k) { bits[k >> 3] |= Bit(k); }
+    void  SetInvalid(int k) { bits[k >> 3] &= ~Bit(k); }
 
     // Disable assignment op, default and copy constructor
     BitMaskV1();

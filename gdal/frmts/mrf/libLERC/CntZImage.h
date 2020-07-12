@@ -26,6 +26,7 @@ Contributors:  Thomas Maurer
 NAMESPACE_LERC_START
 
 extern const int CNT_Z;
+extern const int CNT_Z_VER;
 
 template<typename T > class TImage
 {
@@ -48,7 +49,7 @@ public:
         return row >= 0 && row < height_&& col >= 0 && col < width_;
     }
 
-    const T operator() (int row, int col) const { return values[row * width_ + col]; }
+    const T& operator() (int row, int col) const { return values[row * width_ + col]; }
     void setPixel(int row, int col, T value) { values[row * width_ + col] = value; }
     const T* data() const { return values.data(); }
 
@@ -78,7 +79,7 @@ public:
     }
     virtual ~CntZImage() {}
 
-    const std::string getTypeString() const { return "CntZImage "; }
+    static std::string getTypeString() { return std::string("CntZImage "); }
 
     /// binary file IO with optional compression
     /// (maxZError = 0  means no lossy compression for Z; the Cnt part is compressed lossless or not at all)
@@ -99,7 +100,6 @@ public:
     bool read(Byte** ppByte,
         size_t& nRemainingBytes,
         double maxZError,
-        bool onlyHeader = false,
         bool onlyZPart = false);
 
 protected:
@@ -121,45 +121,29 @@ protected:
     unsigned int computeNumBytesNeededToWrite(double maxZError, bool onlyZPart,
         InfoFromComputeNumBytes& info) const;
 
-    bool findTiling(bool zPart, double maxZError, bool cntsNoInt,
+    bool findTiling(double maxZError, bool cntsNoInt,
         int& numTilesVert, int& numTilesHori, int& numBytesOpt, float& maxValInImg) const;
 
-    bool writeTiles(bool zPart, double maxZError, bool cntsNoInt,
+    bool writeTiles(double maxZError, bool cntsNoInt,
         int numTilesVert, int numTilesHori, Byte* bArr, int& numBytes, float& maxValInImg) const;
 
-    bool readTiles(bool zPart, double maxZErrorInFile,
+    bool readTiles(double maxZErrorInFile,
         int numTilesVert, int numTilesHori, float maxValInImg, Byte* bArr, size_t nRemainingBytes);
 
-    bool cntsNoInt() const;
     bool computeCntStats(int i0, int i1, int j0, int j1, float& cntMin, float& cntMax) const;
     bool computeZStats(int i0, int i1, int j0, int j1, float& zMin, float& zMax, int& numValidPixel) const;
 
-    int numBytesCntTile(int numPixel, float cntMin, float cntMax, bool cntsNoInt) const;
     int numBytesZTile(int numValidPixel, float zMin, float zMax, double maxZError) const;
-
-    bool writeCntTile(Byte** ppByte, int& numBytes, int i0, int i1, int j0, int j1,
-        float cntMin, float cntMax, bool cntsNoInt) const;
 
     bool writeZTile(Byte** ppByte, int& numBytes, int i0, int i1, int j0, int j1,
         int numValidPixel, float zMin, float zMax, double maxZError) const;
 
-    bool readCntTile(Byte** ppByte, size_t& nRemainingBytes, int i0, int i1, int j0, int j1);
     bool readZTile(Byte** ppByte, size_t& nRemainingBytes, int i0, int i1, int j0, int j1, double maxZErrorInFile, float maxZInImg);
 
     static int numBytesFlt(float z);    // returns 1, 2, or 4
     // These are not portable on architectures that enforce alignment
     static bool writeFlt(Byte** ppByte, float z, int numBytes);
     static bool readFlt(Byte** ppByte, size_t& nRemainingBytes, float& z, int numBytes);
-
-    // Portable versions of the above, endian independent if BIG_ENDIAN is defined when needed
-
-    // Writes a floating point value as 1 or 2 byte LSB int or 4 byte LSB float
-    // If numBytes is 0, it figures how many bytes to use
-    // returns the number of bytes used
-    static int writeVal(Byte** ppByte, float z, int numBytes = 0);
-    // Reads from an LSB int for 1, 2 bytes, or LSB float for 4
-    // Not safe when alliased, cannot be used to read in place
-    static void readVal(Byte** ppByte, float& z, int numBytes = 4);
 
     InfoFromComputeNumBytes m_infoFromComputeNumBytes;
     std::vector<unsigned int> m_tmpDataVec;    // used in read fcts
