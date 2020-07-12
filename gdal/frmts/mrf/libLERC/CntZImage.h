@@ -71,11 +71,6 @@ struct CntZ
 class CntZImage : public TImage<CntZ>
 {
 public:
-    CntZImage() {
-        memset(&m_infoFromComputeNumBytes, 0, sizeof(m_infoFromComputeNumBytes));
-    }
-    virtual ~CntZImage() {}
-
     /// binary file IO with optional compression
     /// (maxZError = 0  means no lossy compression for Z; the Cnt part is compressed lossless or not at all)
     /// read succeeds only if maxZError on file <= maxZError requested (!)
@@ -110,6 +105,9 @@ protected:
         int numTilesHoriZ;
         int numBytesZ;
         float maxZInImg;
+        struct InfoFromComputeNumBytes() {
+            memset(this, 0, sizeof(*this));
+        }
     };
 
     unsigned int computeNumBytesNeededToWrite(double maxZError, bool onlyZPart,
