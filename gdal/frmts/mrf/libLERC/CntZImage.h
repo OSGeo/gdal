@@ -134,7 +134,6 @@ protected:
 
     bool readZTile(Byte** ppByte, size_t& nRemainingBytes, int i0, int i1, int j0, int j1, double maxZErrorInFile, float maxZInImg);
 
-    // These three don't need to be member functions
     InfoFromComputeNumBytes m_infoFromComputeNumBytes;
     std::vector<unsigned int> m_tmpDataVec;    // used in read fcts
 };
