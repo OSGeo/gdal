@@ -2487,8 +2487,7 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
         CPLCreateXMLElementAndValue(defn_xml,"HasM", (has_m ? "true" : "false"));
         CPLCreateXMLElementAndValue(defn_xml,"HasZ", (has_z ? "true" : "false"));
 
-        /* TODO: Handle spatial indexes (layer creation option?) */
-        CPLCreateXMLElementAndValue(defn_xml,"HasSpatialIndex", "false");
+        CPLCreateXMLElementAndValue(defn_xml,"HasSpatialIndex", "true");
 
         /* These field are required for Arcmap to display aliases correctly */
         CPLCreateXMLNode(defn_xml, CXT_Element, "AreaFieldName");
