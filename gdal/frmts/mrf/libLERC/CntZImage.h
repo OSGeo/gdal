@@ -105,7 +105,7 @@ protected:
         int numTilesHoriZ;
         int numBytesZ;
         float maxZInImg;
-        struct InfoFromComputeNumBytes() {
+        InfoFromComputeNumBytes() {
             memset(this, 0, sizeof(*this));
         }
     };
