@@ -2175,7 +2175,7 @@ bool netCDFVariable::IReadWrite(const GUInt64* arrayStartIdx,
         }
 #endif
 
-        if( arrayStep[i] <= 0 )
+        if( count[i] != 1 && arrayStep[i] <= 0 )
             bUseSlowPath = true; // netCDF rejects negative or NULL strides
 
         if( bufferStride[i] < 0 )
@@ -2219,7 +2219,8 @@ bool netCDFVariable::IReadWrite(const GUInt64* arrayStartIdx,
         for( int i = m_nDims; i != 0; )
         {
             --i;
-            if( arrayStep[i] != 1 || bufferStride[i] != nExpectedBufferStride )
+            if( count[i] != 1 &&
+                (arrayStep[i] != 1 || bufferStride[i] != nExpectedBufferStride) )
             {
                 bUseSlowPath = true;
                 break;
@@ -2250,7 +2251,8 @@ bool netCDFVariable::IReadWrite(const GUInt64* arrayStartIdx,
     for( int i = m_nDims; i != 0; )
     {
         --i;
-        if( arrayStep[i] != 1 || bufferStride[i] != nExpectedBufferStride )
+        if( count[i] != 1 &&
+            (arrayStep[i] != 1 || bufferStride[i] != nExpectedBufferStride) )
         {
             bUseSlowPath = true;
             break;
@@ -2273,7 +2275,7 @@ bool netCDFVariable::IReadWrite(const GUInt64* arrayStartIdx,
         imapp.reserve(m_nDims);
         for( int i = 0; i < m_nDims; i++ )
         {
-            stridep.push_back(static_cast<ptrdiff_t>(arrayStep[i]));
+            stridep.push_back(static_cast<ptrdiff_t>(count[i] == 1 ? 1 : arrayStep[i]));
             imapp.push_back(static_cast<ptrdiff_t>(bufferStride[i]));
         }
 
