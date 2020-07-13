@@ -29,6 +29,9 @@ NAMESPACE_LERC_START
 template<typename T > class TImage
 {
 public:
+    TImage() : width_(0), height_(0) {};
+    ~TImage() {};
+
     bool resize(int width, int height) {
         if (width <= 0 || height <= 0)
             return false;
@@ -75,6 +78,9 @@ public:
     /// binary file IO with optional compression
     /// (maxZError = 0  means no lossy compression for Z; the Cnt part is compressed lossless or not at all)
     /// read succeeds only if maxZError on file <= maxZError requested (!)
+
+    CntZImage() {};
+    ~CntZImage() {};
 
     unsigned int computeNumBytesNeededToWrite(double maxZError, bool onlyZPart = false) {
         return computeNumBytesNeededToWrite(maxZError, onlyZPart, m_infoFromComputeNumBytes);
