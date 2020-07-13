@@ -196,7 +196,8 @@ static CPLErr CompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img, doubl
     }
 
     // write changes the value of the pointer, we can find the size by testing how far it moved
-    dst.size = ptr - (Byte *)dst.buffer;
+    // Add a couple of bytes, to avoid buffer overflow on reading
+    dst.size = ptr - (Byte *)dst.buffer + PADDING_BYTES;
     CPLDebug("MRF_LERC","LERC Compressed to %d\n", (int)dst.size);
     return CE_None;
 }
