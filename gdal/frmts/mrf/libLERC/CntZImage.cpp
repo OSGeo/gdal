@@ -1,5 +1,5 @@
 /*
-Copyright 2015 Esri
+Copyright 2015 - 2020 Esri
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ source distribution at:
 http://github.com/Esri/lerc/
 
 Contributors:  Thomas Maurer
+               Lucian Plesea
 */
 
 #include "CntZImage.h"
@@ -200,10 +201,12 @@ bool CntZImage::write(Byte** ppByte,
     memcpy(ptr, sCntZImage.c_str(), sCntZImage.size());
     ptr += sCntZImage.length();
 
+    int height = getHeight();
+    int width = getWidth();
     memcpy(ptr, &CNT_Z_VER, sizeof(int));  ptr += sizeof(int);
     memcpy(ptr, &CNT_Z, sizeof(int));  ptr += sizeof(int);
-    memcpy(ptr, &height_, sizeof(int));  ptr += sizeof(int);
-    memcpy(ptr, &width_, sizeof(int));  ptr += sizeof(int);
+    memcpy(ptr, &height, sizeof(int));  ptr += sizeof(int);
+    memcpy(ptr, &width, sizeof(int));  ptr += sizeof(int);
     memcpy(ptr, &maxZError, sizeof(double));  ptr += sizeof(double);
 
     *ppByte = ptr;
@@ -246,9 +249,9 @@ bool CntZImage::write(Byte** ppByte,
         if (!zPart && numTilesVert == 0 && numTilesHori == 0) { // no tiling for cnt part
             if (numBytesOpt > 0) { // cnt part is binary mask, use fast RLE class
                 // convert to bit mask
-                BitMaskV1 bitMask(width_, height_);
+                BitMaskV1 bitMask(width, height);
                 const CntZ* srcPtr = data();
-                for (int k = 0; k < width_ * height_; k++, srcPtr++)
+                for (int k = 0; k < getSize(); k++, srcPtr++)
                     bitMask.Set(k, srcPtr->cnt > 0);
                 // RLE encoding, update numBytesWritten
                 numBytesWritten = static_cast<int>(bitMask.RLEcompress(bArr));
@@ -348,12 +351,12 @@ bool CntZImage::read(Byte** ppByte,
         }
         nRemainingBytes -= 3 * sizeof(int) + sizeof(float);
 
-        if (onlyZPart) { // no tiling allowed for the cnt part
+        if (!onlyZPart) { // no tiling allowed for the cnt part
             if (numTilesVert != 0 && numTilesHori != 0)
                 return false;
             if (numBytes == 0) {   // cnt part is const
-                for (int i = 0; i < height_; i++) {
-                    for (int j = 0; j < width_; j++) {
+                for (int i = 0; i < height; i++) {
+                    for (int j = 0; j < width; j++) {
                         CntZ val = (*this)(i, j);
                         val.cnt = maxValInImg;
                         setPixel(i, j, val);
@@ -361,7 +364,7 @@ bool CntZImage::read(Byte** ppByte,
                 }
             } else {// cnt part is binary mask, RLE compressed
                 // Read bit mask
-                BitMaskV1 bitMask(width_, height_);
+                BitMaskV1 bitMask(width, height);
                 if (!bitMask.RLEdecompress(*ppByte, nRemainingBytes))
                     return false;
 
@@ -413,8 +416,8 @@ bool CntZImage::findTiling(double maxZError,
     int numBytesPrev = 0;
     for (int k = 0; k < numConfigs; k++) {
         int tileWidth = tileWidthArr[k];
-        int numTilesVert = static_cast<int>(height_ / tileWidth);
-        int numTilesHori = static_cast<int>(width_ / tileWidth);
+        int numTilesVert = static_cast<int>(getHeight() / tileWidth);
+        int numTilesHori = static_cast<int>(getWidth() / tileWidth);
 
         if (numTilesVert * numTilesHori < 2)
             return true;
@@ -451,19 +454,19 @@ bool CntZImage::writeTiles(double maxZError, int numTilesVert, int numTilesHori,
     if (numTilesVert == 0)
         return false;
     for (int iTile = 0; iTile <= numTilesVert; iTile++) {
-        int tileH = static_cast<int>(height_ / numTilesVert);
+        int tileH = static_cast<int>(getHeight() / numTilesVert);
         int i0 = iTile * tileH;
         if (iTile == numTilesVert)
-            tileH = height_ % numTilesVert;
+            tileH = getHeight() % numTilesVert;
 
         if (tileH == 0)
             continue;
 
         for (int jTile = 0; jTile <= numTilesHori; jTile++) {
-            int tileW = static_cast<int>(width_ / numTilesHori);
+            int tileW = static_cast<int>(getWidth() / numTilesHori);
             int j0 = jTile * tileW;
             if (jTile == numTilesHori)
-                tileW = width_ % numTilesHori;
+                tileW = getWidth() % numTilesHori;
 
             if (tileW == 0)
                 continue;
@@ -503,19 +506,19 @@ bool CntZImage::readTiles(double maxZErrorInFile,
     if (numTilesVert == 0)
         return false;
     for (int iTile = 0; iTile <= numTilesVert; iTile++) {
-        int tileH = static_cast<int>(height_ / numTilesVert);
+        int tileH = static_cast<int>(getHeight() / numTilesVert);
         int i0 = iTile * tileH;
         if (iTile == numTilesVert)
-            tileH = height_ % numTilesVert;
+            tileH = getHeight() % numTilesVert;
 
         if (tileH == 0)
             continue;
 
         for (int jTile = 0; jTile <= numTilesHori; jTile++) {
-            int tileW = static_cast<int>(width_ / numTilesHori);
+            int tileW = static_cast<int>(getWidth() / numTilesHori);
             int j0 = jTile * tileW;
             if (jTile == numTilesHori)
-                tileW = width_ % numTilesHori;
+                tileW = getWidth() % numTilesHori;
 
             if (tileW == 0)
                 continue;
@@ -549,7 +552,7 @@ bool CntZImage::computeZStats(int i0, int i1, int j0, int j1,
     float& zMin, float& zMax, int& numValidPixel) const
 {
 
-    if (i0 < 0 || j0 < 0 || i1 > height_ || j1 > width_)
+    if (i0 < 0 || j0 < 0 || i1 > getHeight() || j1 > getWidth())
         return false;
 
     // determine z ranges

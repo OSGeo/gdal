@@ -1,6 +1,6 @@
 
 /*
-Copyright 2015 Esri
+Copyright 2015 - 2020 Esri
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -14,6 +14,7 @@ A local copy of the license and additional notices are located with the
 source distribution at:
 http://github.com/Esri/lerc/
 Contributors:  Thomas Maurer
+               Lucian Plesea
 */
 
 #ifndef CNTZIMAGE_H
@@ -33,7 +34,7 @@ public:
             return false;
         width_ = width;
         height_ = height;
-        values.resize(size_t(width) * height);
+        values.resize(getSize());
         memset(values.data(), 0, values.size() * sizeof(T));
         return true;
     }
@@ -50,7 +51,7 @@ public:
     void setPixel(int row, int col, T value) { values[row * width_ + col] = value; }
     const T* data() const { return values.data(); }
 
-protected:
+private:
     int width_, height_;
     std::vector<T> values;
 };
