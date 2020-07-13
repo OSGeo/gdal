@@ -116,24 +116,15 @@ static unsigned int computeNumBytesNeededByStuffer(unsigned int numElem, unsigne
 
 unsigned int CntZImage::computeNumBytesNeededToWriteVoidImage()
 {
-    unsigned int cnt = 0;
-
-    CntZImage zImg;
-    cnt += (unsigned int)sCntZImage.size();    // "CntZImage ", 10 bytes
-    cnt += 2 * sizeof(int);
-    cnt += 2 * sizeof(int);
-    cnt += 1 * sizeof(double);
+    unsigned int sz = (unsigned int)sCntZImage.size()
+        + 4 * sizeof(int) + sizeof(double);
 
     // cnt part
-    cnt += 3 * sizeof(int);
-    cnt += sizeof(float);
+    sz += 3 * sizeof(int) + sizeof(float);
 
-    // z part
-    cnt += 3 * sizeof(int);
-    cnt += sizeof(float);
-    cnt += 1;
-
-    return cnt;
+    // z part, 1 is the empty Tile if all invalid
+    sz += 3 * sizeof(int) + sizeof(float) + 1;
+    return sz; // 67
 }
 
 // -------------------------------------------------------------------------- ;
