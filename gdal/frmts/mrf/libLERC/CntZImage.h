@@ -122,7 +122,7 @@ protected:
     bool readTiles(double maxZErrorInFile,
         int numTilesVert, int numTilesHori, float maxValInImg, Byte* bArr, size_t nRemainingBytes);
 
-    bool computeCntStats(int i0, int i1, int j0, int j1, float& cntMin, float& cntMax) const;
+    bool computeCntStats(float& cntMin, float& cntMax) const; // Across the whole image
     bool computeZStats(int i0, int i1, int j0, int j1, float& zMin, float& zMax, int& numValidPixel) const;
 
     int numBytesZTile(int numValidPixel, float zMin, float zMax, double maxZError) const;

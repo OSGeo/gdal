@@ -142,55 +142,42 @@ unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
     bool onlyZPart,
     InfoFromComputeNumBytes& info) const
 {
-    unsigned int cnt = 0;
+    unsigned int sz = (unsigned int)sCntZImage.size()
+        + 4 * sizeof(int) + sizeof(double);
 
-    cnt += (unsigned int)sCntZImage.size();
-    cnt += 2 * sizeof(int);
-    cnt += 2 * sizeof(int);
-    cnt += 1 * sizeof(double);
-
-    int numTilesVert, numTilesHori, numBytesOpt;
-    float maxValInImg;
-
-    // cnt part first
+    int numBytesOpt;
     if (!onlyZPart) {
         float cntMin, cntMax;
-        if (!computeCntStats(0, static_cast<int>(height_), 0, static_cast<int>(width_), cntMin, cntMax))
-            return false;
-
-        numTilesVert = 0;    // no tiling
-        numTilesHori = 0;
-        maxValInImg = cntMax;
+        computeCntStats(cntMin, cntMax);
 
         if (cntMin == cntMax) { // cnt part is const
             numBytesOpt = 0;    // nothing else to encode
         }
         else {
-            // cnt part is binary mask, use fast RLE class
-            // convert to bit mask
-            BitMaskV1 bitMask(width_, height_);
+            // binary mask, use fast RLE class
+            BitMaskV1 bitMask(getWidth(), getHeight());
             // in case bitMask allocation fails
             if (!bitMask.Size())
                 return 0;
             const CntZ* srcPtr = data();
-            for (int k = 0; k < width_ * height_; k++, srcPtr++)
+            for (int k = 0; k < getSize(); k++, srcPtr++)
                 bitMask.Set(k, srcPtr->cnt > 0);
 
             // determine numBytes needed to encode
             numBytesOpt = static_cast<int>(bitMask.RLEsize());
         }
 
-        info.numTilesVertCnt = numTilesVert;
-        info.numTilesHoriCnt = numTilesHori;
+        info.numTilesVertCnt = 0;
+        info.numTilesHoriCnt = 0;
         info.numBytesCnt = numBytesOpt;
-        info.maxCntInImg = maxValInImg;
+        info.maxCntInImg = cntMax;
 
-        cnt += 3 * sizeof(int);
-        cnt += sizeof(float);
-        cnt += numBytesOpt;
+        sz += 3 * sizeof(int) + sizeof(float) + numBytesOpt;
     }
 
     // z part
+    int numTilesVert, numTilesHori;
+    float maxValInImg;
     if (!findTiling(maxZError, numTilesVert, numTilesHori, numBytesOpt, maxValInImg))
         return 0;
 
@@ -200,11 +187,8 @@ unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
     info.numBytesZ = numBytesOpt;
     info.maxZInImg = maxValInImg;
 
-    cnt += 3 * sizeof(int);
-    cnt += sizeof(float);
-    cnt += numBytesOpt;
-
-    return cnt;
+    sz += 3 * sizeof(int) + sizeof(float) + numBytesOpt;
+    return sz;
 }
 
 // -------------------------------------------------------------------------- ;
@@ -551,21 +535,17 @@ bool CntZImage::readTiles(double maxZErrorInFile,
 
 // -------------------------------------------------------------------------- ;
 
-bool CntZImage::computeCntStats(int i0, int i1, int j0, int j1,
-    float& cntMin, float& cntMax) const
+bool CntZImage::computeCntStats(float& cntMin, float& cntMax) const
 {
-    if (i0 < 0 || j0 < 0 || i1 > height_ || j1 > width_)
-        return false;
-
-    // determine cnt ranges
-    cntMin = FLT_MAX;
-    cntMax = -FLT_MAX;
-
-    for (int i = i0; i < i1; i++) {
-        for (int j = j0; j < j1; j++) {
+    cntMin = cntMax = (*this)(0, 0).cnt;
+    for (int i = 0; i < height_; i++) {
+        for (int j = 0; j < width_; j++) {
             float cnt = (*this)(i, j).cnt;
             cntMin = min(cnt, cntMin);
             cntMax = max(cnt, cntMax);
+            // Early termination, this can only be 0.0 and 1.0
+            if (cntMin != cntMax)
+                return true;
         }
     }
 
@@ -597,7 +577,7 @@ bool CntZImage::computeZStats(int i0, int i1, int j0, int j1,
         }
     }
 
-    if (zMin > zMax)
+    if (!numValidPixel)
         zMin = zMax = 0;
 
     return true;
@@ -655,8 +635,7 @@ bool CntZImage::writeZTile(Byte** ppByte, int& numBytes,
 
         ptr += numValidPixel * sizeof(float);
     }
-    else {
-        // write z's as int arr bit stuffed
+    else { // write z's as int arr bit stuffed
         Byte flag = 1;
         unsigned int maxElem = (unsigned int)((double)(zMax - zMin) / (2 * maxZError) + 0.5);
         if (maxElem == 0)
