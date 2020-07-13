@@ -102,13 +102,14 @@ bool BitStufferV1::read(Byte** ppByte, size_t& size, vector<unsigned int>& dataV
     memcpy(&numElements, *ppByte, n);
     *ppByte += n;
     size -= n;
-    if (numElements > static_cast<unsigned int>(dataVec.size()))
+    if (static_cast<size_t>(numElements) > dataVec.size())
         return false;
-    // Force initialize with 0, without reallocation
-    dataVec.resize(0);
-    dataVec.resize(numElements, 0);
-    if (numBits == 0) // Nothing to read, all zeros
+    dataVec.resize(numElements);
+    if (numBits == 0) { // Nothing to read, all zeros
+        dataVec.resize(0);
+        dataVec.resize(numElements, 0);
         return true;
+    }
 
     unsigned int numBytes = (numElements * numBits + 7) / 8;
     if (size < numBytes)
@@ -126,6 +127,7 @@ bool BitStufferV1::read(Byte** ppByte, size_t& size, vector<unsigned int>& dataV
         }
 
         // Need to reload the accumulator
+        val = 0;
         if (bits) {
             val = acc >> (32 - bits);
             val <<= (numBits - bits);
