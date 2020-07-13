@@ -430,7 +430,7 @@ bool CntZImage::findTiling(double maxZError,
             numBytesOptA = numBytes;
         }
 
-        // we stop once things get worse by further increasing the block size
+        // we stop once things get worse
         if (k > 0 && numBytes > numBytesPrev)
             return true;
 
@@ -637,24 +637,21 @@ bool CntZImage::writeZTile(Byte** ppByte, int& numBytes,
             return false;
 
         if (maxElem > 0) {
-            vector<unsigned int> dataVec(numValidPixel, 0);
-            unsigned int* dstPtr = &dataVec[0];
+            vector<unsigned int> odataVec;
             double scale = 1 / (2 * maxZError);
 
             for (int i = i0; i < i1; i++) {
                 for (int j = j0; j < j1; j++) {
-                    CntZ val = (*this)(i, j);
-                    if (val.cnt > 0) {
-                        *dstPtr++ = (unsigned int)((val.z - zMin) * scale + 0.5);
-                        cntPixel++;
-                    }
+                    const CntZ &val = (*this)(i, j);
+                    if (val.cnt > 0)
+                        odataVec.push_back((unsigned int)((val.z - zMin) * scale + 0.5));
                 }
             }
 
-            if (cntPixel != numValidPixel)
+            if (odataVec.size() != static_cast<size_t>(numValidPixel))
                 return false;
 
-            if (!BitStufferV1::write(&ptr, dataVec))
+            if (!BitStufferV1::write(&ptr, odataVec))
                 return false;
         }
     }
