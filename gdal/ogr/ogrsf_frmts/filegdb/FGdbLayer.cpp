@@ -1702,9 +1702,14 @@ char* FGdbLayer::CreateFieldDefn(OGRFieldDefn& oField,
     /* We know nothing about Scale, so zero it out */
     CPLCreateXMLElementAndValue(defn_xml,"Scale", "0");
 
-    /*  Attempt to preserve the original fieldname */
-    if (fieldname != fieldname_clean)
+    const char* pszAlternativeName = oField.GetAlternativeNameRef();
+    if( pszAlternativeName != nullptr && pszAlternativeName[0] )
     {
+        CPLCreateXMLElementAndValue(defn_xml, "AliasName", pszAlternativeName);
+    }
+    else if (fieldname != fieldname_clean)
+    {
+        /*  Attempt to preserve the original fieldname */
         CPLCreateXMLElementAndValue(defn_xml, "AliasName", fieldname.c_str());
     }
 
@@ -2870,6 +2875,7 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
 
             CPLXMLNode* psFieldItemNode;
             std::string fieldName;
+            std::string fieldAlias;
             std::string fieldType;
             int nLength = 0;
             //int nPrecision = 0;
@@ -2890,6 +2896,13 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
                         char* pszUnescaped = CPLUnescapeString(
                             psFieldItemNode->psChild->pszValue, nullptr, CPLES_XML);
                         fieldName = pszUnescaped;
+                        CPLFree(pszUnescaped);
+                    }
+                    else if (EQUAL(psFieldItemNode->pszValue,"AliasName"))
+                    {
+                        char* pszUnescaped = CPLUnescapeString(
+                            psFieldItemNode->psChild->pszValue, nullptr, CPLES_XML);
+                        fieldAlias = pszUnescaped;
                         CPLFree(pszUnescaped);
                     }
                     else if (EQUAL(psFieldItemNode->pszValue,"Type") )
@@ -2954,6 +2967,11 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
             //TODO: Optimization - modify m_wstrSubFields so it only fetches fields that are mapped
 
             OGRFieldDefn fieldTemplate( fieldName.c_str(), ogrType);
+            if( fieldAlias != fieldName )
+            {
+                // The SDK generates an alias even with it is not explicitly written
+                fieldTemplate.SetAlternativeName(fieldAlias.c_str());
+            }
             fieldTemplate.SetSubType(eSubType);
             /* On creation (GDBFieldTypeToWidthPrecision) if string width is 0, we pick up */
             /* 65535 by default to mean unlimited string length, but we don't want */
