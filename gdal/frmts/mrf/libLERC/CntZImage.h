@@ -122,7 +122,7 @@ protected:
     bool readTiles(double maxZErrorInFile,
         int numTilesVert, int numTilesHori, float maxValInImg, Byte* bArr, size_t nRemainingBytes);
 
-    bool computeCntStats(float& cntMin, float& cntMax) const; // Across the whole image
+    void computeCntStats(float& cntMin, float& cntMax) const; // Across the whole image, always works
     bool computeZStats(int i0, int i1, int j0, int j1, float& zMin, float& zMax, int& numValidPixel) const;
 
     int numBytesZTile(int numValidPixel, float zMin, float zMax, double maxZError) const;
@@ -133,7 +133,7 @@ protected:
     bool readZTile(Byte** ppByte, size_t& nRemainingBytes, int i0, int i1, int j0, int j1, double maxZErrorInFile, float maxZInImg);
 
     InfoFromComputeNumBytes m_infoFromComputeNumBytes;
-    std::vector<unsigned int> m_tmpDataVec;    // used in read fcts
+    std::vector<unsigned int> dataVec;    // temporary buffer, reused in readZTile
 };
 
 // -------------------------------------------------------------------------- ;

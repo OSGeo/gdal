@@ -296,15 +296,17 @@ bool CntZImage::read(Byte** ppByte,
 
     if (nRemainingBytes < HDRSZ)
         return false;
-    Byte* ptr = *ppByte;
+    {
+        Byte* ptr = *ppByte;
 
-    memcpy(&version, ptr, sizeof(int));  ptr += sizeof(int);
-    memcpy(&type, ptr, sizeof(int));  ptr += sizeof(int);
-    memcpy(&height, ptr, sizeof(int));  ptr += sizeof(int);
-    memcpy(&width, ptr, sizeof(int));  ptr += sizeof(int);
-    memcpy(&maxZErrorInFile, ptr, sizeof(double));  ptr += sizeof(double);
+        memcpy(&version, ptr, sizeof(int));  ptr += sizeof(int);
+        memcpy(&type, ptr, sizeof(int));  ptr += sizeof(int);
+        memcpy(&height, ptr, sizeof(int));  ptr += sizeof(int);
+        memcpy(&width, ptr, sizeof(int));  ptr += sizeof(int);
+        memcpy(&maxZErrorInFile, ptr, sizeof(double));  ptr += sizeof(double);
 
-    *ppByte += HDRSZ;
+        *ppByte = ptr;
+    }
     nRemainingBytes -= HDRSZ;
 
     if (version != CNT_Z_VER || type != CNT_Z)
@@ -319,29 +321,34 @@ bool CntZImage::read(Byte** ppByte,
     if (maxZErrorInFile > maxZError)
         return false;
 
-    // Keep the size if only data is read, mask is assumed to be initialized
-    // resize does the allocation of the internal buffer
-    if (!onlyZPart && !resize(width, height))
-        return false;
+    if (onlyZPart) { // Keep the buffer because it includes the mask
+        // Check the matching size, otherwise this is an error
+        if (width != getWidth() || height != getHeight())
+            return false;
+    }
+    else {
+        // Resize clears the buffer
+        if (!resize(width, height))
+            return false;
+    }
 
-    bool zPart = onlyZPart;
     do {
         int numTilesVert = 0, numTilesHori = 0, numBytes = 0;
         float maxValInImg = 0;
 
         if (nRemainingBytes < 3 * sizeof(int) + sizeof(float))
             return false;
-        ptr = *ppByte;
-        memcpy(&numTilesVert, ptr, sizeof(int));  ptr += sizeof(int);
-        memcpy(&numTilesHori, ptr, sizeof(int));  ptr += sizeof(int);
-        memcpy(&numBytes, ptr, sizeof(int));  ptr += sizeof(int);
-        memcpy(&maxValInImg, ptr, sizeof(float));  ptr += sizeof(float);
-
-        *ppByte = ptr;
+        {
+            Byte* ptr = *ppByte;
+            memcpy(&numTilesVert, ptr, sizeof(int));  ptr += sizeof(int);
+            memcpy(&numTilesHori, ptr, sizeof(int));  ptr += sizeof(int);
+            memcpy(&numBytes, ptr, sizeof(int));  ptr += sizeof(int);
+            memcpy(&maxValInImg, ptr, sizeof(float));  ptr += sizeof(float);
+            *ppByte = ptr;
+        }
         nRemainingBytes -= 3 * sizeof(int) + sizeof(float);
-        Byte* bArr = ptr;
 
-        if (!zPart) { // no tiling allowed for the cnt part
+        if (onlyZPart) { // no tiling allowed for the cnt part
             if (numTilesVert != 0 && numTilesHori != 0)
                 return false;
             if (numBytes == 0) {   // cnt part is const
@@ -355,7 +362,7 @@ bool CntZImage::read(Byte** ppByte,
             } else {// cnt part is binary mask, RLE compressed
                 // Read bit mask
                 BitMaskV1 bitMask(width_, height_);
-                if (!bitMask.RLEdecompress(bArr, nRemainingBytes))
+                if (!bitMask.RLEdecompress(*ppByte, nRemainingBytes))
                     return false;
 
                 for (int i = 0; i < height; i++) {
@@ -368,7 +375,7 @@ bool CntZImage::read(Byte** ppByte,
             }
         }
         else {
-            if (!readTiles(maxZErrorInFile, numTilesVert, numTilesHori, maxValInImg, bArr, nRemainingBytes))
+            if (!readTiles(maxZErrorInFile, numTilesVert, numTilesHori, maxValInImg, *ppByte, nRemainingBytes))
                 return false;
         }
 
@@ -376,10 +383,9 @@ bool CntZImage::read(Byte** ppByte,
             return false;
         *ppByte += numBytes;
         nRemainingBytes -= numBytes;
-        zPart = !zPart;
-    } while (zPart);
+        onlyZPart = !onlyZPart;
+    } while (onlyZPart);
 
-    m_tmpDataVec.clear();
     return true;
 }
 
@@ -435,10 +441,10 @@ bool CntZImage::findTiling(double maxZError,
 
 // -------------------------------------------------------------------------- ;
 
+// if bArr is nullptr, it doesn't actually do the writing, only computes output values
 bool CntZImage::writeTiles(double maxZError, int numTilesVert, int numTilesHori,
     Byte* bArr, int& numBytes, float& maxValInImg) const
 {
-    Byte* ptr = bArr;
     numBytes = 0;
     maxValInImg = -FLT_MAX;
 
@@ -474,9 +480,9 @@ bool CntZImage::writeTiles(double maxZError, int numTilesVert, int numTilesHori,
             int numBytesNeeded = numBytesZTile(numValidPixel, zMin, zMax, maxZError);
             numBytes += numBytesNeeded;
 
-            if (bArr) {
+            if (bArr) { // Skip the actual write
                 int numBytesWritten = 0;
-                rv = writeZTile(&ptr, numBytesWritten, i0, i0 + tileH, j0, j0 + tileW, numValidPixel, zMin, zMax, maxZError);
+                rv = writeZTile(&bArr, numBytesWritten, i0, i0 + tileH, j0, j0 + tileW, numValidPixel, zMin, zMax, maxZError);
                 if (!rv)
                     return false;
                 if (numBytesWritten != numBytesNeeded)
@@ -494,8 +500,6 @@ bool CntZImage::readTiles(double maxZErrorInFile,
     int numTilesVert, int numTilesHori, float maxValInImg,
     Byte* bArr, size_t nRemainingBytes)
 {
-    Byte* ptr = bArr;
-
     if (numTilesVert == 0)
         return false;
     for (int iTile = 0; iTile <= numTilesVert; iTile++) {
@@ -516,7 +520,7 @@ bool CntZImage::readTiles(double maxZErrorInFile,
             if (tileW == 0)
                 continue;
 
-            if (!readZTile(&ptr, nRemainingBytes, i0, i0 + tileH, j0, j0 + tileW, maxZErrorInFile, maxValInImg))
+            if (!readZTile(&bArr, nRemainingBytes, i0, i0 + tileH, j0, j0 + tileW, maxZErrorInFile, maxValInImg))
                 return false;
         }
     }
@@ -526,21 +530,17 @@ bool CntZImage::readTiles(double maxZErrorInFile,
 
 // -------------------------------------------------------------------------- ;
 
-bool CntZImage::computeCntStats(float& cntMin, float& cntMax) const
+void CntZImage::computeCntStats(float& cntMin, float& cntMax) const
 {
-    cntMin = cntMax = (*this)(0, 0).cnt;
-    for (int i = 0; i < height_; i++) {
-        for (int j = 0; j < width_; j++) {
-            float cnt = (*this)(i, j).cnt;
-            cntMin = min(cnt, cntMin);
-            cntMax = max(cnt, cntMax);
-            // Early termination, this can only be 0.0 and 1.0
-            if (cntMin != cntMax)
-                return true;
-        }
+    auto v = data();
+    cntMin = cntMax = v[0].cnt;
+    for (int k = 0; k < getSize(); k++) {
+        auto cnt = v[k].cnt;
+        cntMin = min(cnt, cntMin);
+        cntMax = max(cnt, cntMax);
+        if (cntMin != cntMax)
+            return;
     }
-
-    return true;
 }
 
 // -------------------------------------------------------------------------- ;
@@ -579,14 +579,10 @@ int CntZImage::numBytesZTile(int numValidPixel, float zMin, float zMax, double m
 {
     if (numValidPixel == 0 || (zMin == 0 && zMax == 0))
         return 1;
-
-    if (maxZError == 0 || (double)(zMax - zMin) / (2 * maxZError) > (1 << 28)) {
+    if (maxZError == 0 || (double)(zMax - zMin) / (2 * maxZError) > (1 << 28))
         return(int)(1 + numValidPixel * sizeof(float));
-    }
-    else {
-        unsigned int maxElem = (unsigned int)((double)(zMax - zMin) / (2 * maxZError) + 0.5);
-        return 1 + numBytesFlt(zMin) + (maxElem ? computeNumBytesNeededByStuffer(numValidPixel, maxElem) : 0);
-    }
+    unsigned int maxElem = (unsigned int)((double)(zMax - zMin) / (2 * maxZError) + 0.5);
+    return 1 + numBytesFlt(zMin) + (maxElem ? computeNumBytesNeededByStuffer(numValidPixel, maxElem) : 0);
 }
 
 
@@ -739,7 +735,6 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
             }
         }
         else {
-            vector<unsigned int>& dataVec = m_tmpDataVec;
             size_t nMaxElts =
                 static_cast<size_t>(i1 - i0) * static_cast<size_t>(j1 - j0);
             dataVec.resize(nMaxElts);
