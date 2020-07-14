@@ -454,7 +454,7 @@ netCDFSharedResources::~netCDFSharedResources()
     if( m_cdfid > 0 )
     {
 #ifdef NCDF_DEBUG
-        CPLDebug("GDAL_netCDF", "calling nc_close( %d)", cdfid);
+        CPLDebug("GDAL_netCDF", "calling nc_close( %d)", m_cdfid);
 #endif
         int status = nc_close(m_cdfid);
         NCDF_ERR(status);
