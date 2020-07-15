@@ -3165,6 +3165,12 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
 
 class OGRMVTWriterLayer;
 
+struct OGRMVTFeatureContent
+{
+    std::vector<std::pair<std::string, MVTTileLayerValue>> oValues;
+    GIntBig nFID;
+};
+
 class OGRMVTWriterDataset final: public GDALDataset
 {
         class MVTFieldProperties
@@ -3233,7 +3239,7 @@ class OGRMVTWriterDataset final: public GDALDataset
         OGRErr              PreGenerateForTile(int nZ, int nX, int nY,
                                                const CPLString& osTargetName,
                                                bool bIsMaxZoomForLayer,
-                                               std::shared_ptr<OGRFeature> poFeature,
+                                               std::shared_ptr<OGRMVTFeatureContent> poFeatureContent,
                                                GIntBig nSerial,
                                                std::shared_ptr<OGRGeometry> poGeom,
                                                const OGREnvelope& sEnvelope) const;
@@ -3243,7 +3249,7 @@ class OGRMVTWriterDataset final: public GDALDataset
         OGRErr              PreGenerateForTileReal(int nZ, int nX, int nY,
                                                const CPLString& osTargetName,
                                                bool bIsMaxZoomForLayer,
-                                               const OGRFeature* poFeature,
+                                               const OGRMVTFeatureContent* poFeatureContent,
                                                GIntBig nSerial,
                                                const OGRGeometry* poGeom,
                                                const OGREnvelope& sEnvelope) const;
@@ -3942,7 +3948,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                                                int nZ, int nTileX, int nTileY,
                                                const CPLString& osTargetName,
                                                bool bIsMaxZoomForLayer,
-                                               const OGRFeature* poFeature,
+                                               const OGRMVTFeatureContent* poFeatureContent,
                                                GIntBig nSerial,
                                                const OGRGeometry* poGeom,
                                                const OGREnvelope& sEnvelope) const
@@ -4167,65 +4173,16 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     if( !bGeomOK )
         return OGRERR_NONE;
 
-    const OGRFeatureDefn* poFDefn = poFeature->GetDefnRef();
-    for( int i = 0; i < poFeature->GetFieldCount(); i++ )
+    for( const auto& pair: poFeatureContent->oValues )
     {
-        if( poFeature->IsFieldSetAndNotNull(i) )
-        {
-            MVTTileLayerValue oValue;
-            const OGRFieldDefn* poFieldDefn = poFDefn->GetFieldDefn(i);
-            OGRFieldType eFieldType = poFieldDefn->GetType();
-            if( eFieldType == OFTInteger ||
-                eFieldType == OFTInteger64 )
-            {
-                if( poFieldDefn->GetSubType() == OFSTBoolean )
-                {
-                    oValue.setBoolValue(
-                        poFeature->GetFieldAsInteger(i) != 0);
-                }
-                else
-                {
-                    oValue.setValue( poFeature->GetFieldAsInteger64(i) );
-                }
-            }
-            else if( eFieldType == OFTReal )
-            {
-                oValue.setValue( poFeature->GetFieldAsDouble(i) );
-            }
-            else if( eFieldType == OFTDate || eFieldType == OFTDateTime )
-            {
-                int nYear, nMonth, nDay, nHour, nMin, nTZ;
-                float fSec;
-                poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay,
-                                              &nHour, &nMin, &fSec, &nTZ);
-                CPLString osFormatted;
-                if( eFieldType == OFTDate )
-                {
-                    osFormatted.Printf("%04d-%02d-%02d", nYear, nMonth, nDay);
-                }
-                else
-                {
-                    char* pszFormatted =
-                        OGRGetXMLDateTime( poFeature->GetRawFieldRef(i) );
-                    osFormatted = pszFormatted;
-                    CPLFree(pszFormatted);
-                }
-                oValue.setStringValue( osFormatted );
-            }
-            else
-            {
-                oValue.setStringValue(
-                    std::string( poFeature->GetFieldAsString(i) ) );
-            }
-            GUInt32 nKey = poLayer->addKey(poFieldDefn->GetNameRef());
-            GUInt32 nVal = poLayer->addValue(oValue);
-            poGPBFeature->addTag(nKey);
-            poGPBFeature->addTag(nVal);
-        }
+        GUInt32 nKey = poLayer->addKey(pair.first);
+        GUInt32 nVal = poLayer->addValue(pair.second);
+        poGPBFeature->addTag(nKey);
+        poGPBFeature->addTag(nVal);
     }
-    if( poFeature->GetFID() >= 0 )
+    if( poFeatureContent->nFID >= 0 )
     {
-        poGPBFeature->setId( poFeature->GetFID() );
+        poGPBFeature->setId( poFeatureContent->nFID );
     }
 
 #ifdef notdef
@@ -4296,7 +4253,7 @@ class MVTWriterTask
         int nTileY;
         CPLString osTargetName;
         bool bIsMaxZoomForLayer;
-        std::shared_ptr<OGRFeature> poFeature;
+        std::shared_ptr<OGRMVTFeatureContent> poFeatureContent;
         GIntBig nSerial;
         std::shared_ptr<OGRGeometry> poGeom;
         OGREnvelope sEnvelope;
@@ -4315,7 +4272,7 @@ void OGRMVTWriterDataset::WriterTaskFunc(void* pParam)
                            poTask->nTileY,
                            poTask->osTargetName,
                            poTask->bIsMaxZoomForLayer,
-                           poTask->poFeature.get(),
+                           poTask->poFeatureContent.get(),
                            poTask->nSerial,
                            poTask->poGeom.get(),
                            poTask->sEnvelope);
@@ -4335,7 +4292,7 @@ void OGRMVTWriterDataset::WriterTaskFunc(void* pParam)
 OGRErr OGRMVTWriterDataset::PreGenerateForTile(int nZ, int nTileX, int nTileY,
                                                const CPLString& osTargetName,
                                                bool bIsMaxZoomForLayer,
-                                               std::shared_ptr<OGRFeature> poFeature,
+                                               std::shared_ptr<OGRMVTFeatureContent> poFeatureContent,
                                                GIntBig nSerial,
                                                std::shared_ptr<OGRGeometry> poGeom,
                                                const OGREnvelope& sEnvelope) const
@@ -4345,7 +4302,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTile(int nZ, int nTileX, int nTileY,
         return PreGenerateForTileReal(nZ, nTileX, nTileY,
                                       osTargetName,
                                       bIsMaxZoomForLayer,
-                                      poFeature.get(),
+                                      poFeatureContent.get(),
                                       nSerial,
                                       poGeom.get(), sEnvelope);
     }
@@ -4358,7 +4315,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTile(int nZ, int nTileX, int nTileY,
         poTask->nTileY = nTileY;
         poTask->osTargetName = osTargetName;
         poTask->bIsMaxZoomForLayer = bIsMaxZoomForLayer;
-        poTask->poFeature =poFeature;
+        poTask->poFeatureContent = poFeatureContent;
         poTask->nSerial = nSerial;
         poTask->poGeom = poGeom;
         poTask->sEnvelope = sEnvelope;
@@ -5756,12 +5713,67 @@ OGRErr OGRMVTWriterDataset::WriteFeature(OGRMVTWriterLayer* poLayer,
 
     if( !m_bReuseTempFile )
     {
-        // Small optimization to avoid cloning the geometry of the feature,
-        // since we don't need it
-        OGRGeometry* poGeomBak = poFeature->StealGeometry();
-        auto poSharedFeature = std::shared_ptr<OGRFeature>(poFeature->Clone());
-        poFeature->SetGeometryDirectly(poGeomBak);
+        auto poFeatureContent = std::shared_ptr<OGRMVTFeatureContent>(new OGRMVTFeatureContent());
         auto poSharedGeom = std::shared_ptr<OGRGeometry>(poGeom->clone());
+
+        poFeatureContent->nFID = poFeature->GetFID();
+
+        const OGRFeatureDefn* poFDefn = poFeature->GetDefnRef();
+        for( int i = 0; i < poFeature->GetFieldCount(); i++ )
+        {
+            if( poFeature->IsFieldSetAndNotNull(i) )
+            {
+                MVTTileLayerValue oValue;
+                const OGRFieldDefn* poFieldDefn = poFDefn->GetFieldDefn(i);
+                OGRFieldType eFieldType = poFieldDefn->GetType();
+                if( eFieldType == OFTInteger ||
+                    eFieldType == OFTInteger64 )
+                {
+                    if( poFieldDefn->GetSubType() == OFSTBoolean )
+                    {
+                        oValue.setBoolValue(
+                            poFeature->GetFieldAsInteger(i) != 0);
+                    }
+                    else
+                    {
+                        oValue.setValue( poFeature->GetFieldAsInteger64(i) );
+                    }
+                }
+                else if( eFieldType == OFTReal )
+                {
+                    oValue.setValue( poFeature->GetFieldAsDouble(i) );
+                }
+                else if( eFieldType == OFTDate || eFieldType == OFTDateTime )
+                {
+                    int nYear, nMonth, nDay, nHour, nMin, nTZ;
+                    float fSec;
+                    poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay,
+                                                &nHour, &nMin, &fSec, &nTZ);
+                    CPLString osFormatted;
+                    if( eFieldType == OFTDate )
+                    {
+                        osFormatted.Printf("%04d-%02d-%02d", nYear, nMonth, nDay);
+                    }
+                    else
+                    {
+                        char* pszFormatted =
+                            OGRGetXMLDateTime( poFeature->GetRawFieldRef(i) );
+                        osFormatted = pszFormatted;
+                        CPLFree(pszFormatted);
+                    }
+                    oValue.setStringValue( osFormatted );
+                }
+                else
+                {
+                    oValue.setStringValue(
+                        std::string( poFeature->GetFieldAsString(i) ) );
+                }
+
+                poFeatureContent->oValues.emplace_back(
+                    std::pair<std::string, MVTTileLayerValue>(
+                        poFieldDefn->GetNameRef(), oValue));
+            }
+        }
 
         for( int nZ = poLayer->m_nMinZoom; nZ <= poLayer->m_nMaxZoom; nZ++ )
         {
@@ -5781,7 +5793,7 @@ OGRErr OGRMVTWriterDataset::WriteFeature(OGRMVTWriterLayer* poLayer,
                 {
                     if( PreGenerateForTile(nZ, iX, iY, poLayer->m_osTargetName,
                             (nZ == poLayer->m_nMaxZoom),
-                            poSharedFeature,
+                            poFeatureContent,
                             nSerial,
                             poSharedGeom,
                             sExtent) != OGRERR_NONE )
