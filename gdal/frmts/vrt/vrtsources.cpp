@@ -215,7 +215,7 @@ void VRTSimpleSource::SetSrcMaskBand( GDALRasterBand *poNewSrcBand )
 static double RoundIfCloseToInt(double dfValue)
 {
     double dfClosestInt = floor(dfValue + 0.5);
-    return (fabs( dfValue - dfClosestInt ) < 1e-5) ? dfClosestInt : dfValue;
+    return (fabs( dfValue - dfClosestInt ) < 1e-3) ? dfClosestInt : dfValue;
 }
 
 /************************************************************************/
