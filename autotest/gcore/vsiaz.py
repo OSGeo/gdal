@@ -51,7 +51,7 @@ def test_vsiaz_init():
 
     gdaltest.az_vars = {}
     for var in ('AZURE_STORAGE_CONNECTION_STRING', 'AZURE_STORAGE_ACCOUNT',
-                'AZURE_STORAGE_ACCESS_KEY'):
+                'AZURE_STORAGE_ACCESS_KEY', 'AZURE_SAS', 'AZURE_NO_SIGN_REQUEST'):
         gdaltest.az_vars[var] = gdal.GetConfigOption(var)
         if gdaltest.az_vars[var] is not None:
             gdal.SetConfigOption(var, "")
@@ -110,6 +110,59 @@ def test_vsiaz_real_server_errors():
     with gdaltest.error_handler():
         f = open_for_read('/vsiaz_streaming/foo/bar.baz')
     assert f is None, gdal.VSIGetLastErrorMsg()
+
+    for var in ('AZURE_STORAGE_CONNECTION_STRING', 'AZURE_STORAGE_ACCOUNT',
+                'AZURE_STORAGE_ACCESS_KEY'):
+        gdal.SetConfigOption(var, None)
+
+###############################################################################
+# Test AZURE_NO_SIGN_REQUEST=YES
+
+
+def test_vsiaz_no_sign_request():
+
+    if not gdaltest.built_against_curl():
+        pytest.skip()
+
+    with gdaltest.config_options({ 'AZURE_STORAGE_ACCOUNT': 'naipblobs', 'AZURE_NO_SIGN_REQUEST': 'YES'}):
+        actual_url = gdal.GetActualURL('/vsiaz/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif')
+        assert actual_url == 'https://naipblobs.blob.core.windows.net/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif'
+        assert actual_url == gdal.GetSignedURL('/vsiaz/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif')
+
+        f = open_for_read('/vsiaz/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif')
+        if f is None:
+            if gdaltest.gdalurlopen('https://naipblobs.blob.core.windows.net/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif') is None:
+                pytest.skip('cannot open URL')
+            pytest.fail()
+
+        gdal.VSIFCloseL(f)
+
+        assert 'm_3008601_ne_16_1_20150804.tif' in gdal.ReadDir('/vsiaz/naip/v002/al/2015/al_100cm_2015/30086/')
+
+###############################################################################
+# Test AZURE_SAS option
+
+
+def test_vsiaz_sas():
+
+    if not gdaltest.built_against_curl():
+        pytest.skip()
+
+    # See https://azure.microsoft.com/en-us/services/open-datasets/catalog/naip/ for the value of AZURE_SAS
+    with gdaltest.config_options({ 'AZURE_STORAGE_ACCOUNT': 'naipblobs', 'AZURE_SAS': 'st=2019-07-18T03%3A53%3A22Z&se=2035-07-19T03%3A53%3A00Z&sp=rl&sv=2018-03-28&sr=c&sig=2RIXmLbLbiagYnUd49rgx2kOXKyILrJOgafmkODhRAQ%3D'}):
+        actual_url = gdal.GetActualURL('/vsiaz/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif')
+        assert actual_url == 'https://naipblobs.blob.core.windows.net/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif'
+        assert gdal.GetSignedURL('/vsiaz/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif') == 'https://naipblobs.blob.core.windows.net/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif?st=2019-07-18T03%3A53%3A22Z&se=2035-07-19T03%3A53%3A00Z&sp=rl&sv=2018-03-28&sr=c&sig=2RIXmLbLbiagYnUd49rgx2kOXKyILrJOgafmkODhRAQ%3D'
+
+        f = open_for_read('/vsiaz/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif')
+        if f is None:
+            if gdaltest.gdalurlopen('https://naipblobs.blob.core.windows.net/naip/v002/al/2015/al_100cm_2015/30086/m_3008601_ne_16_1_20150804.tif') is None:
+                pytest.skip('cannot open URL')
+            pytest.fail()
+
+        gdal.VSIFCloseL(f)
+
+        assert 'm_3008601_ne_16_1_20150804.tif' in gdal.ReadDir('/vsiaz/naip/v002/al/2015/al_100cm_2015/30086/')
 
 ###############################################################################
 
@@ -338,6 +391,43 @@ def test_vsiaz_fake_readdir():
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiaz/')
     assert dir_contents == ['mycontainer1', 'mycontainer2']
+
+###############################################################################
+# Test AZURE_SAS option with fake server
+
+
+def test_vsiaz_sas_fake():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_options({ 'AZURE_STORAGE_ACCOUNT': 'test', 'AZURE_SAS': 'sig=sas', 'CPL_AZURE_ENDPOINT' : '127.0.0.1:%d' % gdaltest.webserver_port, 'CPL_AZURE_USE_HTTPS': 'NO', 'AZURE_STORAGE_CONNECTION_STRING': ''}):
+
+        handler = webserver.SequentialHandler()
+
+        handler.add('GET', '/azure/blob/test/test?comp=list&delimiter=%2F&restype=container&sig=sas', 200,
+                {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix></Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>foo.bin</Name>
+                            <Properties>
+                              <Last-Modified>16 Oct 2016 12:34:56</Last-Modified>
+                              <Content-Length>456789</Content-Length>
+                            </Properties>
+                          </Blob>
+                        </Blobs>
+                    </EnumerationResults>
+                """)
+
+        with webserver.install_http_handler(handler):
+            assert 'foo.bin' in gdal.ReadDir('/vsiaz/test')
+
+        assert gdal.VSIStatL('/vsiaz/test/foo.bin').size == 456789
 
 ###############################################################################
 # Test write

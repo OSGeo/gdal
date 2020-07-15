@@ -4122,7 +4122,7 @@ void VSIS3FSHandler::UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelpe
 VSIS3Handle::VSIS3Handle( VSIS3FSHandler* poFSIn,
                           const char* pszFilename,
                           VSIS3HandleHelper* poS3HandleHelper ) :
-        IVSIS3LikeHandle(poFSIn, pszFilename, poS3HandleHelper->GetURL()),
+        IVSIS3LikeHandle(poFSIn, pszFilename, poS3HandleHelper->GetURLNoKVP()),
         m_poS3HandleHelper(poS3HandleHelper)
 {
 }
