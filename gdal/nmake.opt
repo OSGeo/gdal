@@ -359,7 +359,9 @@ JPEG12_SUPPORTED = 1
 # also need some adjustment.
 
 # Uncomment the following and update to enable ECW read support with the 5.0+ SDK
-#!IF $(MSVC_VER) < 1910
+#!IFNDEF MSVC_VER
+#ECW_PLATFORM_TOOLSET_DIR = vc140
+#!ELSEIF $(MSVC_VER) < 1910
 #ECW_PLATFORM_TOOLSET_DIR = vc140
 #!ELSEIF $(MSVC_VER) < 1920
 #ECW_PLATFORM_TOOLSET_DIR = vc141
