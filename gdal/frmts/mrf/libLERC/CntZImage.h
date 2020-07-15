@@ -61,7 +61,7 @@ public:
     { return computeNumBytesNeededToWrite(maxZError, onlyZPart, m_infoFromComputeNumBytes); }
 
   static unsigned int numExtraBytesToAllocate()    { return BitStufferV1::numExtraBytesToAllocate(); }
-  static unsigned int computeNumBytesNeededToWriteVoidImage();
+  static unsigned int computeNumBytesNeededToReadVoidImage(bool onlyZPart);
 
   /// these 2 do not allocate memory. Byte ptr is moved like a file pointer.
   bool write(Byte** ppByte,

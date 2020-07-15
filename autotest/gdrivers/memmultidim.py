@@ -1648,6 +1648,26 @@ def test_mem_md_array_get_mask():
     assert [x for x in struct.unpack('B' * 2, mask.Read())] == [1, 0]
 
 
+    # Test all data types
+    for dt, v, nv, expected in [ (gdal.GDT_Byte, 1, 1,[1, 0]),
+                                 (gdal.GDT_Byte, 1, 1.5, [1, 1]),
+                                 (gdal.GDT_Int16, 1, 1, [1, 0]),
+                                 (gdal.GDT_UInt16, 1, 1, [1, 0]),
+                                 (gdal.GDT_Int32, 1, 1, [1, 0]),
+                                 (gdal.GDT_UInt32, 1, 1, [1, 0]),
+                                 (gdal.GDT_Float32, 1, 1, [1, 0]),
+                                 (gdal.GDT_Float32, 1.5, 1.5, [1, 0]),
+                                 (gdal.GDT_Float64, 1, 1, [1, 0]),
+                                 (gdal.GDT_Float64, 1.5, 1.5, [1, 0]),
+                                 (gdal.GDT_CInt16, 1, 1, [1, 0]) ]:
+        myarray = rg.CreateMDArray("array_dt_" + gdal.GetDataTypeName(dt) + '_' + str(v) + '_' + str(nv), [ dim0 ],
+                               gdal.ExtendedDataType.Create(dt))
+        assert myarray.Write(struct.pack('d' * 2, 0, v), buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_Float64)) == gdal.CE_None
+        myarray.SetNoDataValueDouble(nv)
+        mask = myarray.GetMask()
+        assert [x for x in struct.unpack('B' * 2, mask.Read())] == expected, myarray.GetName()
+
+
 def XX_test_all_forever():
     while True:
         test_mem_md_basic()

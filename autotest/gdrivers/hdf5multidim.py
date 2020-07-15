@@ -246,6 +246,16 @@ def test_hdf5_multidim_read_array():
     data = var.Read(array_start_idx = [1, 1, 1], count = [3, 2, 2], buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_UInt16))
     assert struct.unpack('H' * (len(data) // 2), data) == got_data_ref
 
+    # Test reading from slice (most optimized path)
+    data = var.Read(array_start_idx = [3, 0, 0], count = [1, 2, 3])
+    data_from_slice = var[3].Read(count = [2, 3])
+    assert data_from_slice == data
+
+    # Test reading from slice (slow path)
+    data = var.Read(array_start_idx = [3, 0 + (2-1) * 2, 0 + (3-1) * 1], count = [1, 2, 3], array_step = [1, -2, -1])
+    data_from_slice = var[3].Read(array_start_idx = [0 + (2-1) * 2, 0 + (3-1) * 1], count = [2, 3], array_step = [-2, -1])
+    assert data_from_slice == data
+
     # 4D
     var = rg.OpenMDArray('ubyte_t2_z2_y2_x2_var')
     data = var.Read(count = [2, 3, 2, 3], array_step = [1, 1, 2, 1])

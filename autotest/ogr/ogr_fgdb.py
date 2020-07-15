@@ -2129,3 +2129,37 @@ def test_ogr_fgdb_utc_datetime():
     f = lyr.GetNextFeature()
     # Check that the timezone +00 is present
     assert f.GetFieldAsString('EditDate') == '2020/06/22 07:49:36+00'
+
+###############################################################################
+# Test field alias
+
+
+def test_ogr_fgdb_alias():
+
+    try:
+        shutil.rmtree("tmp/alias.gdb")
+    except OSError:
+        pass
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("WGS84")
+
+    ds = ogrtest.fgdb_drv.CreateDataSource('tmp/alias.gdb')
+    lyr = ds.CreateLayer('test', srs=srs, geom_type=ogr.wkbPoint)
+    fld_defn = ogr.FieldDefn('short_name', ogr.OFTInteger)
+    fld_defn.SetAlternativeName('longer name')
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn('regular_name', ogr.OFTInteger)
+    lyr.CreateField(fld_defn)
+    ds = None
+
+    ds = ogr.Open('tmp/alias.gdb')
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldDefn(0).GetAlternativeName() == 'longer name'
+    assert lyr_defn.GetFieldDefn(1).GetAlternativeName() == ''
+
+    try:
+        shutil.rmtree("tmp/alias.gdb")
+    except OSError:
+        pass

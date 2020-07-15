@@ -223,6 +223,8 @@ def InfoOptions(options=None, format='text', deserialize=True,
         new_options = options
         if format == 'json':
             new_options += ['-json']
+        if '-json' in new_options:
+            format = 'json'
         if computeMinMax:
             new_options += ['-mm']
         if reportHistograms:
@@ -1829,6 +1831,14 @@ def VSICurlClearCache(*args):
 def VSICurlPartialClearCache(*args):
     """VSICurlPartialClearCache(char const * utf8_path)"""
     return _gdal.VSICurlPartialClearCache(*args)
+
+def NetworkStatsReset(*args):
+    """NetworkStatsReset()"""
+    return _gdal.NetworkStatsReset(*args)
+
+def NetworkStatsGetAsSerializedJSON(*args):
+    """NetworkStatsGetAsSerializedJSON(char ** options=None) -> retStringAndCPLFree *"""
+    return _gdal.NetworkStatsGetAsSerializedJSON(*args)
 
 def ParseCommandLine(*args):
     """ParseCommandLine(char const * utf8_path) -> char **"""
