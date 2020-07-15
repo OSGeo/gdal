@@ -101,3 +101,14 @@ def test_gdalbuildvrt_lib_ovr():
     ds = None
     gdal.GetDriverByName('VRT').Delete(tmpfilename)
 
+
+
+def test_gdalbuildvrt_lib_te_partial_overlap():
+
+    ds = gdal.BuildVRT('', '../gcore/data/byte.tif', outputBounds=[440600, 3750060, 441860, 3751260], xRes=30, yRes=60)
+    assert ds is not None
+
+    assert ds.GetRasterBand(1).Checksum() == 8454
+    xml = ds.GetMetadata('xml:VRT')[0]
+    assert '<SrcRect xOff="0" yOff="1" xSize="19" ySize="19" />' in xml
+    assert '<DstRect xOff="4" yOff="0" xSize="38" ySize="19" />' in xml
