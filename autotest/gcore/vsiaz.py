@@ -150,7 +150,7 @@ def test_vsiaz_fake_basic():
         request.protocol_version = 'HTTP/1.1'
         h = request.headers
         if 'Authorization' not in h or \
-           h['Authorization'] != 'SharedKey myaccount:zKb0EXnM/RinBjcUE9EU+qfRIGaIItoUElSWc+FE24E=' or \
+           h['Authorization'] != 'SharedKey myaccount:C0sSaBzGbvadfuuMMjQiHCXCUzsGWj3uuE+UO8dDl0U=' or \
            'x-ms-date' not in h or h['x-ms-date'] != 'my_timestamp':
             sys.stderr.write('Bad headers: %s\n' % str(h))
             request.send_response(403)
@@ -177,7 +177,7 @@ def test_vsiaz_fake_basic():
         request.protocol_version = 'HTTP/1.1'
         h = request.headers
         if 'Authorization' not in h or \
-           h['Authorization'] != 'SharedKey myaccount:8d6IEeOsl7qGpKAxaTTxx2xMNpvqWq8DGlFE67lsmQ4=' or \
+           h['Authorization'] != 'SharedKey myaccount:bdrimjEtVnI51+rmJtfZddVn/u3N6MbtdEDnoyBByTo=' or \
            'x-ms-date' not in h or h['x-ms-date'] != 'my_timestamp' or \
            'Accept-Encoding' not in h or h['Accept-Encoding'] != 'gzip':
             sys.stderr.write('Bad headers: %s\n' % str(h))
@@ -359,7 +359,7 @@ def test_vsiaz_fake_write():
     def method(request):
         h = request.headers
         if 'Authorization' not in h or \
-           h['Authorization'] != 'SharedKey myaccount:AigkrY7q66WCrx3JRKBte56k7kxV2cxB/ZyGNubxk5I=' or \
+           h['Authorization'] != 'SharedKey myaccount:juvKZNo5zX5UXmLTK2BnPsezN0DCfUeW8RNZySbwN1o=' or \
            'Expect' not in h or h['Expect'] != '100-continue' or \
            'Content-Length' not in h or h['Content-Length'] != '40000' or \
            'x-ms-date' not in h or h['x-ms-date'] != 'my_timestamp' or \
@@ -474,7 +474,7 @@ def test_vsiaz_fake_write():
     def method(request):
         h = request.headers
         if 'Authorization' not in h or \
-           h['Authorization'] != 'SharedKey myaccount:KimVui3ptY9D5ftLlsI7CNOgK36CNAEzsXqcuHskdEY=' or \
+           h['Authorization'] != 'SharedKey myaccount:cEOpBBlEJNHqKyul2N7ZgyQoznDhPjIn293EWlm4t4o=' or \
            'Content-Length' not in h or h['Content-Length'] != '0' or \
            'x-ms-date' not in h or h['x-ms-date'] != 'my_timestamp' or \
            'x-ms-blob-type' not in h or h['x-ms-blob-type'] != 'AppendBlob':
