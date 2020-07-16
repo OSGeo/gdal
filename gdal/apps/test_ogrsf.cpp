@@ -1353,7 +1353,11 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer,
                CPLGetLastErrorMsg());
     }
 
+    // Drivers might or might not emit errors when attempting to iterate
+    // after EOF
+    CPLPushErrorHandler(CPLQuietErrorHandler);
     auto poFeat = LOG_ACTION(poLayer->GetNextFeature());
+    CPLPopErrorHandler();
     if( poFeat != nullptr )
     {
         bRet = FALSE;

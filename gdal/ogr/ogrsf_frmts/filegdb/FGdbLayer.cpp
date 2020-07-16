@@ -89,7 +89,7 @@ void FGdbBaseLayer::CloseGDBObjects()
 
 OGRFeature* FGdbBaseLayer::GetNextFeature()
 {
-    while (1) //want to skip errors
+    while (true) //want to skip errors
     {
         if (m_pEnumRows == nullptr)
             return nullptr;
@@ -123,7 +123,12 @@ OGRFeature* FGdbBaseLayer::GetNextFeature()
             continue; //skip feature
         }
 
-        return pOGRFeature;
+        if( (m_poFilterGeom == nullptr
+             || FilterGeometry( pOGRFeature->GetGeometryRef() )) )
+        {
+            return pOGRFeature;
+        }
+        delete pOGRFeature;
     }
 }
 
@@ -131,7 +136,7 @@ OGRFeature* FGdbBaseLayer::GetNextFeature()
 /*                              FGdbLayer()                             */
 /************************************************************************/
 FGdbLayer::FGdbLayer():
-    m_pDS(nullptr), m_pTable(nullptr), m_wstrSubfields(L"*"), m_pOGRFilterGeometry(nullptr),
+    m_pDS(nullptr), m_pTable(nullptr), m_wstrSubfields(L"*"),
     m_bFilterDirty(true),
     m_bLaunderReservedKeywords(true)
 {
@@ -156,12 +161,6 @@ FGdbLayer::FGdbLayer():
 FGdbLayer::~FGdbLayer()
 {
     FGdbLayer::CloseGDBObjects();
-
-    if (m_pOGRFilterGeometry)
-    {
-        OGRGeometryFactory::destroyGeometry(m_pOGRFilterGeometry);
-        m_pOGRFilterGeometry = nullptr;
-    }
 
     for(size_t i = 0; i < m_apoByteArrays.size(); i++ )
         delete m_apoByteArrays[i];
@@ -3076,7 +3075,7 @@ void FGdbLayer::ResetReading()
 
     EndBulkLoad();
 
-    if (m_pOGRFilterGeometry && !m_pOGRFilterGeometry->IsEmpty())
+    if (m_poFilterGeom && !m_poFilterGeom->IsEmpty())
     {
         // Search spatial
         // As of beta1, FileGDB only supports bbox searched, if we have GEOS installed,
@@ -3084,7 +3083,7 @@ void FGdbLayer::ResetReading()
 
         OGREnvelope ogrEnv;
 
-        m_pOGRFilterGeometry->getEnvelope(&ogrEnv);
+        m_poFilterGeom->getEnvelope(&ogrEnv);
 
         //spatial query
         FileGDBAPI::Envelope env(ogrEnv.MinX, ogrEnv.MaxX, ogrEnv.MinY, ogrEnv.MaxY);
@@ -3111,33 +3110,8 @@ void FGdbLayer::ResetReading()
 
 void FGdbLayer::SetSpatialFilter( OGRGeometry* pOGRGeom )
 {
-    if( !InstallFilter(pOGRGeom) )
-        return;
-
-    if (m_pOGRFilterGeometry)
-    {
-        OGRGeometryFactory::destroyGeometry(m_pOGRFilterGeometry);
-        m_pOGRFilterGeometry = nullptr;
-    }
-
-    if (pOGRGeom == nullptr || pOGRGeom->IsEmpty())
-    {
-        m_bFilterDirty = true;
-
-        return;
-    }
-
-    m_pOGRFilterGeometry = pOGRGeom->clone();
-
-    // NOTE: This is really special behavior: no other driver, nor core, does
-    // reprojection of filter geometry to source layer SRS. Should perhaps
-    // be removed for consistency
-    if( m_pOGRFilterGeometry->getSpatialReference() != nullptr )
-    {
-        m_pOGRFilterGeometry->transformTo(m_pSRS);
-    }
-
     m_bFilterDirty = true;
+    OGRLayer::SetSpatialFilter(pOGRGeom);
 }
 
 /************************************************************************/
@@ -3493,7 +3467,7 @@ GIntBig FGdbLayer::GetFeatureCount( CPL_UNUSED int bForce )
 
     EndBulkLoad();
 
-    if (m_pOGRFilterGeometry != nullptr || !m_wstrWhereClause.empty())
+    if (m_poFilterGeom != nullptr || !m_wstrWhereClause.empty())
     {
         ResetReading();
         if (m_pEnumRows == nullptr)
@@ -3516,7 +3490,33 @@ GIntBig FGdbLayer::GetFeatureCount( CPL_UNUSED int bForce )
             {
                 break;
             }
-            nFeatures ++;
+
+            if( m_poFilterGeom == nullptr )
+            {
+                nFeatures++;
+            }
+            else
+            {
+                ShapeBuffer gdbGeometry;
+                if (FAILED(hr = row.GetGeometry(gdbGeometry)))
+                {
+                    continue;
+                }
+
+                OGRGeometry* pOGRGeo = nullptr;
+                if( !GDBGeometryToOGRGeometry(m_forceMulti, &gdbGeometry, m_pSRS, &pOGRGeo) || pOGRGeo == nullptr)
+                {
+                    delete pOGRGeo;
+                    continue;
+                }
+
+                if( FilterGeometry( pOGRGeo ) )
+                {
+                    nFeatures ++;
+                }
+
+                delete pOGRGeo;
+            }
         }
         ResetReading();
         return nFeatures;
@@ -3560,7 +3560,7 @@ OGRErr FGdbLayer::GetExtent (OGREnvelope* psExtent, int bForce)
     if( m_pTable == nullptr )
         return OGRERR_FAILURE;
 
-    if (m_pOGRFilterGeometry != nullptr || !m_wstrWhereClause.empty() ||
+    if (m_poFilterGeom != nullptr || !m_wstrWhereClause.empty() ||
         m_strShapeFieldName.empty())
     {
         const int nFieldCount = m_pFeatureDefn->GetFieldCount();
@@ -3730,13 +3730,13 @@ int FGdbLayer::TestCapability( const char* pszCap )
         return TRUE;
 
     else if (EQUAL(pszCap,OLCFastFeatureCount))
-        return m_pOGRFilterGeometry == nullptr && m_wstrWhereClause.empty();
+        return m_poFilterGeom == nullptr && m_wstrWhereClause.empty();
 
     else if (EQUAL(pszCap,OLCFastSpatialFilter))
         return TRUE;
 
     else if (EQUAL(pszCap,OLCFastGetExtent))
-        return m_pOGRFilterGeometry == nullptr && m_wstrWhereClause.empty();
+        return m_poFilterGeom == nullptr && m_wstrWhereClause.empty();
 
     else if (EQUAL(pszCap,OLCCreateField)) /* CreateField() */
         return m_pDS->GetUpdate();
