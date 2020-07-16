@@ -3275,7 +3275,10 @@ void BAGDataset::LoadMetadata()
         static_cast<hsize_t>(0)
     };
 
-    if( n_dims == 1 )
+    if( n_dims == 1 &&
+        H5Tget_class(native) == H5T_STRING &&
+        !H5Tis_variable_str(native) &&
+        H5Tget_size(native) == 1 )
     {
         H5Sget_simple_extent_dims(dataspace, dims, maxdims);
 
