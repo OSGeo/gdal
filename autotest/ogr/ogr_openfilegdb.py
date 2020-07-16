@@ -987,7 +987,9 @@ def get_spi_state(ds, lyr):
     return value
 
 
-def test_ogr_openfilegdb_11():
+def test_ogr_openfilegdb_in_memory_spatial_filter():
+
+  with gdaltest.config_option('OPENFILEGDB_USE_SPATIAL_INDEX', 'NO'):
 
     # Test building spatial index with GetFeatureCount()
     ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
@@ -1120,6 +1122,95 @@ def test_ogr_openfilegdb_11():
     feat = None
     lyr = None
     ds = None
+
+
+def test_ogr_openfilegdb_spx_spatial_filter():
+
+    # Test GetFeatureCount() and then iterating
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
+    lyr = ds.GetLayerByName('several_polygons')
+    assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
+    assert lyr.TestCapability(ogr.OLCFastSpatialFilter) == 1
+    lyr.SetSpatialFilterRect(0.25, 0.25, 0.5, 0.5)
+    assert lyr.GetFeatureCount() == 1
+    c = 0
+    for f in lyr:
+        c += 1
+    assert c == 1
+
+    # Set another spatial filter
+    lyr.SetSpatialFilterRect(0, 2, 1, 5)
+    assert lyr.GetFeatureCount() == 2
+
+    # Unset spatial filter
+    lyr.SetSpatialFilter(None)
+    assert lyr.GetFeatureCount() == 9
+
+    # Set again a spatial filter
+    lyr.SetSpatialFilterRect(0.25, 0.25, 0.5, 0.5)
+    assert lyr.GetFeatureCount() == 1
+
+    lyr = None
+    ds = None
+
+    # Test iterating without spatial index already built
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
+    lyr = ds.GetLayerByName('several_polygons')
+    lyr.SetSpatialFilterRect(0.25, 0.25, 0.5, 0.5)
+    c = 0
+    for f in lyr:
+        c += 1
+    assert c == 1
+    lyr = None
+    ds = None
+
+    # Test GetFeatureCount(), with no matching feature when GEOS is available
+    if ogrtest.have_geos():
+        expected_count = 0
+    else:
+        expected_count = 5
+
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
+    lyr = ds.GetLayerByName('multipolygon')
+    lyr.SetSpatialFilterRect(1.4, 0.4, 1.6, 0.6)
+    assert lyr.GetFeatureCount() == expected_count
+    lyr = None
+    ds = None
+
+    # Test iterating, with no matching feature when GEOS is available
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
+    lyr = ds.GetLayerByName('multipolygon')
+    lyr.SetSpatialFilterRect(1.4, 0.4, 1.6, 0.6)
+    c = 0
+    for f in lyr:
+        c += 1
+    assert c == expected_count
+    assert lyr.GetFeatureCount() == expected_count
+    lyr = None
+    ds = None
+
+    # test with a SetAttributeFilter() with an index too
+    ds = ogr.Open('data/filegdb/test_spatial_index.gdb.zip')
+    lyr = ds.GetLayerByName('test')
+    lyr.SetAttributeFilter('id = 1')
+    lyr.SetSpatialFilterRect(400000, 0, 500100, 4500100)
+    assert lyr.GetFeatureCount() == 1
+    c = 0
+    for f in lyr:
+        c += 1
+    assert c == 1
+
+    # No intersection between filters
+    lyr.SetSpatialFilterRect(500100, 4500000, 500200, 4500100)
+    assert lyr.GetFeatureCount() == 0
+    c = 0
+    for f in lyr:
+        c += 1
+    assert c == 0
+
+    lyr.SetAttributeFilter(None)
+    assert lyr.GetFeatureCount() == 154
+
 
 ###############################################################################
 # Test opening a FGDB with both SRID and LatestSRID set (#5638)

@@ -1818,6 +1818,24 @@ int FileGDBTable::GetIndexCount()
 }
 
 /************************************************************************/
+/*                           HasSpatialIndex()                          */
+/************************************************************************/
+
+bool FileGDBTable::HasSpatialIndex()
+{
+    if( m_nHasSpatialIndex < 0 )
+    {
+        const char* pszSpxName = CPLFormFilename(
+            CPLGetPath(osFilename.c_str()),
+            CPLGetBasename(osFilename.c_str()), "spx");
+        VSIStatBufL sStat;
+        m_nHasSpatialIndex =
+            ( VSIStatExL( pszSpxName, &sStat, VSI_STAT_EXISTS_FLAG) == 0 );
+    }
+    return m_nHasSpatialIndex != FALSE;
+}
+
+/************************************************************************/
 /*                       InstallFilterEnvelope()                        */
 /************************************************************************/
 

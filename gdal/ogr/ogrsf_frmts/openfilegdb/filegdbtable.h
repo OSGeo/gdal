@@ -232,6 +232,8 @@ class FileGDBTable
         int                         bHasReadGDBIndexes;
         std::vector<FileGDBIndex*>  apoIndexes;
 
+        int                         m_nHasSpatialIndex = -1;
+
         GUIntBig                    nOffsetFieldDesc;
         GUInt32                     nFieldDescLength;
 
@@ -309,6 +311,7 @@ class FileGDBTable
 
        int                      GetIndexCount();
        const FileGDBIndex*      GetIndex(int i) const { return apoIndexes[i]; }
+       bool                     HasSpatialIndex();
 
        vsi_l_offset             GetOffsetInTableForRow(int iRow);
 
@@ -325,6 +328,7 @@ class FileGDBTable
        int                      GetFeatureExtent(const OGRField* psGeomField,
                                                  OGREnvelope* psOutFeatureEnvelope);
 
+       const std::vector<double>& GetSpatialIndexGridResolution() const { return m_adfSpatialIndexGridResolution; }
        void                     InstallFilterEnvelope(const OGREnvelope* psFilterEnvelope);
        int                      DoesGeometryIntersectsFilterEnvelope(const OGRField* psGeomField);
 };
@@ -378,10 +382,24 @@ class FileGDBIterator
                                                     int bAscending);
         static FileGDBIterator*      BuildNot(FileGDBIterator* poIterBase);
         static FileGDBIterator*      BuildAnd(FileGDBIterator* poIter1,
-                                              FileGDBIterator* poIter2);
+                                              FileGDBIterator* poIter2,
+                                              bool bTakeOwnershipOfIterators);
         static FileGDBIterator*      BuildOr(FileGDBIterator* poIter1,
                                              FileGDBIterator* poIter2,
                                              int bIteratorAreExclusive = FALSE);
+};
+
+/************************************************************************/
+/*                      FileGDBSpatialIndexIterator                     */
+/************************************************************************/
+
+class FileGDBSpatialIndexIterator: virtual public FileGDBIterator
+{
+    public:
+        virtual bool                 SetEnvelope(const OGREnvelope& sFilterEnvelope) = 0;
+
+        static FileGDBSpatialIndexIterator* Build(FileGDBTable* poParent,
+                                                  const OGREnvelope& sFilterEnvelope);
 };
 
 /************************************************************************/

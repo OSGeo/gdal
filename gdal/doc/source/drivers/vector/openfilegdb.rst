@@ -30,10 +30,12 @@ Driver capabilities
 Spatial filtering
 -----------------
 
-The driver cannot use the .spx files (when they are present) for spatial
-filtering. However, it will use the minimum bounding rectangle included
+Since GDAL 3.2, the driver can use the native .spx spatial indices for
+spatial filtering.
+
+In earlier versions, it uses the minimum bounding rectangle included
 at the beginning of the geometry blobs to speed up spatial filtering. By
-default, it will also build on the fly a in-memory spatial index during
+default, it also builds on the fly a in-memory spatial index during
 the first sequential read of a layer. Following spatial filtering
 operations on that layer will then benefit from that spatial index. The
 building of this in-memory spatial index can be disabled by setting the
@@ -73,7 +75,6 @@ Advantages of the OpenFileGDB driver:
 Drawbacks of the OpenFileGDB driver:
 
 -  Read-only.
--  Cannot use spatial indexes.
 -  Cannot read data from compressed data in CDF format (Compressed Data
    Format).
 
