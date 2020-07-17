@@ -316,9 +316,8 @@ std::vector<SearchResultItem> PackedRTree::streamSearch(
     auto levelBounds = generateLevelBounds(numItems, nodeSize);
     uint64_t leafNodesOffset = levelBounds.front().first;
     uint64_t numNodes = levelBounds.front().second;
-    std::vector<NodeItem> nodeItems;
-    nodeItems.reserve(nodeSize);
-    uint8_t *nodesBuf = reinterpret_cast<uint8_t *>(nodeItems.data());
+    NodeItem nodeItems[nodeSize];
+    uint8_t *nodesBuf = reinterpret_cast<uint8_t *>(nodeItems);
     // use ordered search queue to make index traversal in sequential order
     std::map<uint64_t, uint64_t> queue;
     std::vector<SearchResultItem> results;
