@@ -128,20 +128,20 @@ The photometric interpretation can be set with the :decl_configoption:`PHOTOMETR
 and the interleaving with the :decl_configoption:`INTERLEAVE_OVERVIEW` =PIXEL/BAND configuration option.
 
 For JPEG compressed external overviews, the JPEG quality can be set with
-"--config JPEG_QUALITY_OVERVIEW value"
+``--config JPEG_QUALITY_OVERVIEW value``.
 
 For LZW or DEFLATE compressed external overviews, the predictor value can be set
-with "--config PREDICTOR_OVERVIEW 1|2|3"
+with ``--config PREDICTOR_OVERVIEW 1|2|3``.
 
-To produce the smallest possible JPEG-In-TIFF overviews, you should use :
+To produce the smallest possible JPEG-In-TIFF overviews, you should use:
 
 ::
 
     --config COMPRESS_OVERVIEW JPEG --config PHOTOMETRIC_OVERVIEW YCBCR --config INTERLEAVE_OVERVIEW PIXEL
 
 External overviews can be created in the BigTIFF format by using
-the :decl_configoption:`BIGTIFF_OVERVIEW` configuration option :
---config BIGTIFF_OVERVIEW {IF_NEEDED|IF_SAFER|YES|NO}.
+the :decl_configoption:`BIGTIFF_OVERVIEW` configuration option:
+``--config BIGTIFF_OVERVIEW {IF_NEEDED|IF_SAFER|YES|NO}``.
 
 The default value is IF_SAFER starting with GDAL 2.3.0 (previously was IF_NEEDED).
 The behavior of this option is exactly the same as the BIGTIFF creation option
