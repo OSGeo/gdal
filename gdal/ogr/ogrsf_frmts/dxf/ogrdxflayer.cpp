@@ -2905,6 +2905,11 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( GUInt32 nInitialErrorCounter,
         OGRDXFFeature *poSubFeature =
             poBlock->apoFeatures[iSubFeat]->CloneDXFFeature();
 
+        // If the template feature is in PaperSpace, set this on the
+        // subfeature too
+        if ( poFeature->GetFieldAsInteger( "PaperSpace" ) )
+            poSubFeature->SetField( "PaperSpace", 1 );
+
         // Does this feature represent a block reference? If so,
         // insert that block
         if( bInlineRecursively && poSubFeature->IsBlockReference() )

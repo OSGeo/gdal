@@ -3321,6 +3321,9 @@ def test_ogr_dxf_48():
         f.DumpReadable()
         pytest.fail('Wrong style string on feature 11')
 
+    # Since the INSERT is in PaperSpace, this feature should be too
+    assert f.GetField('PaperSpace') == 1, 'Wrong PaperSpace on feature 11'
+
     # ByBlock feature in block
     f = lyr.GetFeature(12)
     if f.GetStyleString() != 'PEN(c:#a552a5)':
