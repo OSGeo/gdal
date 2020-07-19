@@ -647,6 +647,12 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo, bool bFileSizeCheck )
     }
     const GDALDataType eDataType = GDALGetDataTypeByName( pszDataType );
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+    if( nDTSize == 0 )
+    {
+        delete poDS;
+        CSLDestroy( papszXmlProps );
+        return nullptr;
+    }
     const char *pszScheme = CSLFetchNameValue( papszXmlProps, "SCHEME" );
     int nPixelOffset = 0;
     int nLineOffset = 0;
