@@ -35,6 +35,8 @@
 
 %include typemaps_csharp.i
 
+DEFINE_EXTERNAL_CLASS(OSRSpatialReferenceShadow, OSGeo.OSR.SpatialReference)
+
 %apply (int *pList) {int *band_list, int *panHistogram_in};
 %apply (double *OUTPUT) {double *min_ret, double *max_ret};
 %apply (int *nLen) {int *buckets_ret};
