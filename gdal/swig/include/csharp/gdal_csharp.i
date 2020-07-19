@@ -47,6 +47,10 @@
 %csmethodmodifiers __GetGCPs "private";
 %csmethodmodifiers GDALGCPsToGeoTransform "private";
 
+%apply (void *buffer_ptr) {GDALDatasetShadow** poObjects};
+%csmethodmodifiers wrapper_GDALWarpDestDS "private";
+%csmethodmodifiers wrapper_GDALWarpDestName "private";
+
 %apply (GDALProgressFunc callback) {GDALProgressFunc pfnProgress};
 %apply (void *buffer_ptr) {void *pProgressData};
 
@@ -303,4 +307,41 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
         handle.Free();
      }
   }
+
+  public static int Warp(Dataset dstDS, Dataset[] poObjects, GDALWarpAppOptions warpAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
+      int retval = 0;
+      if (poObjects.Length <= 0)
+        throw new ArgumentException("poObjects size is small (GDALWarpDestDS)");
+
+      int intPtrSize = Marshal.SizeOf(typeof(IntPtr));
+      IntPtr nativeArray = Marshal.AllocHGlobal(poObjects.Length * intPtrSize);
+      try {
+          for (int i=0; i < poObjects.Length; i++)
+            Marshal.WriteIntPtr(nativeArray, i * intPtrSize, Dataset.getCPtr(poObjects[i]).Handle);
+
+          retval  = wrapper_GDALWarpDestDS(dstDS, poObjects.Length, nativeArray, warpAppOptions, callback, callback_data);
+      } finally {
+          Marshal.FreeHGlobal(nativeArray);
+      }
+      return retval;
+   }
+
+   public static Dataset Warp(string dest, Dataset[] poObjects, GDALWarpAppOptions warpAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
+      Dataset retval = null;
+      if (poObjects.Length <= 0)
+        throw new ArgumentException("poObjects size is small (GDALWarpDestDS)");
+
+      int intPtrSize = Marshal.SizeOf(typeof(IntPtr));
+      IntPtr nativeArray = Marshal.AllocHGlobal(poObjects.Length * intPtrSize);
+      try {
+          for (int i=0; i < poObjects.Length; i++)
+            Marshal.WriteIntPtr(nativeArray, i * intPtrSize, Dataset.getCPtr(poObjects[i]).Handle);
+
+          retval  = wrapper_GDALWarpDestName(dest, poObjects.Length, nativeArray, warpAppOptions, callback, callback_data);
+      } finally {
+          Marshal.FreeHGlobal(nativeArray);
+      }
+      return retval;
+   }
+
 %}
