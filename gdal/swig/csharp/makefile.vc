@@ -54,7 +54,7 @@ all: ogr_dir gdal_dir osr_dir const_dir gdal_csharp samples
 gdal_csharp:
     $(CSC) $(CSDEBUG) /target:library /out:osr_csharp.dll osr\*.cs AssemblyInfo.cs
     $(CSC) $(CSDEBUG) /target:library /out:ogr_csharp.dll /r:osr_csharp.dll ogr\*.cs AssemblyInfo.cs
-    $(CSC) $(CSDEBUG) /target:library /out:gdal_csharp.dll /r:ogr_csharp.dll gdal\*.cs AssemblyInfo.cs
+    $(CSC) $(CSDEBUG) /target:library /out:gdal_csharp.dll /r:ogr_csharp.dll /r:osr_csharp.dll gdal\*.cs AssemblyInfo.cs
     $(CSC) $(CSDEBUG) /target:library /out:gdalconst_csharp.dll const\*.cs AssemblyInfo.cs
     link /dll $(OGR_INCLUDE) $(BASE_INCLUDE) ogr_wrap.obj \
 		$(EXTERNAL_LIBS) $(GDALLIB)\
@@ -144,6 +144,7 @@ test:
 	mono GDALCreateCopy.exe Data/sample.tif Data/sample2.tif
 	mono GDALOverviews.exe Data/sample.tif NEAREST 2 4
 	mono GDALInfo.exe Data/sample.tif
+	mono GDALInfo.exe ../../../autotest/gcore/data/byte.tif
 !ELSE
     createdata.exe Data pointlayer
     ogrinfo.exe Data/pointlayer.shp
@@ -153,6 +154,7 @@ test:
 	GDALCreateCopy.exe Data/sample.tif Data/sample2.tif
 	GDALOverviews.exe Data/sample.tif NEAREST 2 4
 	GDALInfo.exe Data/sample.tif
+	GDALInfo.exe ../../../autotest/gcore/data/byte.tif
 	ogrlayeralg.exe Intersection Data/pointlayer.shp pointlayer Data/pointlayer.shp pointlayer Data intersectionresult
 	ogrinfo.exe Data/intersectionresult.shp
 !ENDIF
