@@ -880,7 +880,7 @@ CPLErr VICARBASICRasterBand::IReadBlock( int /*nXBlock*/, int nYBlock, void *pIm
         VSIFReadL( &nSize, 1, sizeof(nSize), poGDS->fpImage);
         CPL_LSBPTR32(&nSize);
         if( (poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC &&
-             nSize < sizeof(GUInt32)) ||
+             nSize <= sizeof(GUInt32)) ||
             (poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC2 &&
              nSize == 0) )
         {
