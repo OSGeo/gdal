@@ -742,6 +742,7 @@ def test_vsiaz_fake_mkdir_rmdir():
                         </Blobs>
                     </EnumerationResults>
                 """)
+    handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=it_is_a_file%2F&restype=container', 200)
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsiaz/az_bucket_test_mkdir/it_is_a_file')
     assert ret != 0
@@ -957,6 +958,10 @@ def test_vsiaz_rmdirrecursive():
                     </EnumerationResults>""")
     handler.add('DELETE', '/azure/blob/myaccount/rmdirrec/subdir/test.txt', 202)
     handler.add('DELETE', '/azure/blob/myaccount/rmdirrec/subdir/subdir2/test.txt', 202)
+    handler.add('HEAD', '/azure/blob/myaccount/rmdirrec/subdir/subdir2/', 404)
+    handler.add('GET', '/azure/blob/myaccount/rmdirrec?comp=list&delimiter=%2F&maxresults=1&prefix=subdir%2Fsubdir2%2F&restype=container', 200)
+    handler.add('HEAD', '/azure/blob/myaccount/rmdirrec/subdir/', 404)
+    handler.add('GET', '/azure/blob/myaccount/rmdirrec?comp=list&delimiter=%2F&maxresults=1&prefix=subdir%2F&restype=container', 200)
     with webserver.install_http_handler(handler):
         assert gdal.RmdirRecursive('/vsiaz/rmdirrec/subdir') == 0
 
