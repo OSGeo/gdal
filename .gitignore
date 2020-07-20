@@ -24,3 +24,6 @@ __pycache__/
 # CMake
 CMakeLists.txt
 *.cmake
+
+gdal/packages*
+gdal/share
