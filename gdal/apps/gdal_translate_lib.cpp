@@ -918,10 +918,14 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                 oSRSDS.SetFromUserInput(pszProjection);
                 if( !oSRSIn.IsSame(&oSRSDS) )
                 {
+                    double adfCorners[8];
+                    adfCorners[0]=adfCorners[1]=psOptions->dfULX;
+                    adfCorners[2]=adfCorners[3]=psOptions->dfLRX;
+                    adfCorners[4]=adfCorners[6]=psOptions->dfLRY;
+                    adfCorners[5]=adfCorners[7]=psOptions->dfULY;
                     OGRCoordinateTransformation* poCT = OGRCreateCoordinateTransformation(&oSRSIn, &oSRSDS);
                     if( !(poCT &&
-                        poCT->Transform(1, &psOptions->dfULX, &psOptions->dfULY) &&
-                        poCT->Transform(1, &psOptions->dfLRX, &psOptions->dfLRY)) )
+                        poCT->Transform(4, adfCorners, adfCorners+4)) )
                     {
                         OGRCoordinateTransformation::DestroyCT(poCT);
 
@@ -929,6 +933,10 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                         GDALTranslateOptionsFree(psOptions);
                         return nullptr;
                     }
+                    psOptions->dfULX=MIN(adfCorners[0],adfCorners[1]);
+                    psOptions->dfLRX=MAX(adfCorners[2],adfCorners[3]);
+                    psOptions->dfLRY=MIN(adfCorners[4],adfCorners[6]);
+                    psOptions->dfULY=MAX(adfCorners[5],adfCorners[7]);
                     delete poCT;
                 }
             }
