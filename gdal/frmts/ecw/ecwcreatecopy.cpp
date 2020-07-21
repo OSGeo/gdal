@@ -762,6 +762,78 @@ CPLErr GDALECWCompressor::Initialize(
 
     if( bIsJPEG2000 )
     {
+#if ECWSDK_VERSION >= 60
+
+		pszOption = CSLFetchNameValue(papszOptions, "PROFILE");
+		if (pszOption != nullptr && EQUAL(pszOption, "BASELINE_0"))
+			parameters->jp2.compress.SetProfile(NCS::JPC::CJPC::Profile::BASELINE_0);
+		else if (pszOption != nullptr && EQUAL(pszOption, "BASELINE_1"))
+			parameters->jp2.compress.SetProfile(NCS::JPC::CJPC::Profile::BASELINE_1);
+		else if (pszOption != nullptr && EQUAL(pszOption, "BASELINE_2"))
+			parameters->jp2.compress.SetProfile(NCS::JPC::CJPC::Profile::BASELINE_2);
+		else if (pszOption != nullptr && EQUAL(pszOption, "NPJE"))
+			parameters->jp2.compress.SetProfile(NCS::JPC::CJPC::Profile::NITF_BIIF_NPJE);
+		else if (pszOption != nullptr && EQUAL(pszOption, "EPJE"))
+			parameters->jp2.compress.SetProfile(NCS::JPC::CJPC::Profile::NITF_BIIF_EPJE);
+
+		pszOption = CSLFetchNameValue(papszOptions, "CODESTREAM_ONLY");
+		if (pszOption == nullptr && EQUAL(CPLGetExtension(pszFilename), "j2k"))
+			pszOption = "YES";
+		if (pszOption != nullptr)
+			parameters->jp2.compress.SetWriteCodestreamOnly(CPLTestBool(pszOption));
+
+		pszOption = CSLFetchNameValue(papszOptions, "LEVELS");
+		if (pszOption != nullptr)
+			parameters->jp2.compress.SetLevels((UINT32)atoi(pszOption));
+
+		pszOption = CSLFetchNameValue(papszOptions, "LAYERS");
+		if (pszOption != nullptr)
+			parameters->jp2.compress.SetLayers((UINT32)atoi(pszOption));
+
+		pszOption = CSLFetchNameValue(papszOptions, "PRECINCT_WIDTH");
+		UINT32 width = 0;
+		UINT32 height = 0;
+		if (pszOption != nullptr)
+		{
+			width = (UINT32)atoi(pszOption);
+
+			pszOption = CSLFetchNameValue(papszOptions, "PRECINCT_HEIGHT");
+			if (pszOption != nullptr)
+			{
+				height = (UINT32)atoi(pszOption);
+				parameters->jp2.compress.SetPrecinctDimensions(width, height);
+			}
+		}
+		pszOption = CSLFetchNameValue(papszOptions, "TILE_WIDTH");
+		if (pszOption != nullptr)
+		{
+			width = (UINT32)atoi(pszOption);
+
+			pszOption = CSLFetchNameValue(papszOptions, "TILE_HEIGHT");
+			if (pszOption != nullptr)
+			{
+				height = (UINT32)atoi(pszOption);
+				parameters->jp2.compress.SetTileDimensions(width, height);
+			}
+		}
+
+		pszOption = CSLFetchNameValue(papszOptions, "INCLUDE_SOP");
+		if (pszOption != nullptr)
+			parameters->jp2.compress.SetIncludeSOP(CPLTestBool(pszOption));
+
+
+		pszOption = CSLFetchNameValue(papszOptions, "INCLUDE_EPH");
+		if (pszOption != nullptr)
+			parameters->jp2.compress.SetIncludeEPH(CPLTestBool(pszOption));
+
+		pszOption = CSLFetchNameValue(papszOptions, "PROGRESSION");
+		if (pszOption != nullptr && EQUAL(pszOption, "LRCP"))
+			parameters->jp2.compress.SetPrecinctProgressionOrder(NCS::JPC::CProgressionOrderType::Type::LRCP);
+		else if (pszOption != nullptr && EQUAL(pszOption, "RLCP"))
+			parameters->jp2.compress.SetPrecinctProgressionOrder(NCS::JPC::CProgressionOrderType::Type::RLCP);
+		else if (pszOption != nullptr && EQUAL(pszOption, "RPCL"))
+			parameters->jp2.compress.SetPrecinctProgressionOrder(NCS::JPC::CProgressionOrderType::Type::RPCL);
+#else
         pszOption = CSLFetchNameValue(papszOptions, "PROFILE");
         if( pszOption != nullptr && EQUAL(pszOption,"BASELINE_0") )
             SetParameter(
@@ -836,9 +908,10 @@ CPLErr GDALECWCompressor::Initialize(
             SetParameter(
                 CNCSJP2FileView::JP2_COMPRESS_PROGRESSION_RLCP );
 
-        else if( pszOption != nullptr && EQUAL(pszOption,"RPCL") )
-            SetParameter(
-                CNCSJP2FileView::JP2_COMPRESS_PROGRESSION_RPCL );
+		else if (pszOption != nullptr && EQUAL(pszOption, "RPCL"))
+			SetParameter(
+				CNCSJP2FileView::JP2_COMPRESS_PROGRESSION_RPCL);
+#endif
 
         pszOption = CSLFetchNameValue(papszOptions, "GEODATA_USAGE");
         if( pszOption == nullptr )
@@ -857,19 +930,33 @@ CPLErr GDALECWCompressor::Initialize(
         else if( EQUAL(pszOption,"ALL") )
             SetGeodataUsage( JP2_GEODATA_USE_GML_PCS_WLD );
 
+#if ECWSDK_VERSION >= 60
+		pszOption = CSLFetchNameValue(papszOptions, "DECOMPRESS_LAYERS");
+		if (pszOption != nullptr)
+			parameters->jp2.decompress.SetLayersToDecode((UINT32)atoi(pszOption));
+			
+
+		pszOption = CSLFetchNameValue(papszOptions,
+			"DECOMPRESS_RECONSTRUCTION_PARAMETER");
+		if (pszOption != nullptr)
+			parameters->jp2.decompress.SetReconstructionParameter((IEEE4)CPLAtof(pszOption));
+
+#else
         pszOption = CSLFetchNameValue(papszOptions, "DECOMPRESS_LAYERS");
         if( pszOption != nullptr )
             SetParameter(
                 CNCSJP2FileView::JP2_DECOMPRESS_LAYERS,
                 (UINT32) atoi(pszOption) );
 
-        pszOption = CSLFetchNameValue(papszOptions,
-                                      "DECOMPRESS_RECONSTRUCTION_PARAMETER");
-        if( pszOption != nullptr )
-            SetParameter(
-                CNCSJP2FileView::JPC_DECOMPRESS_RECONSTRUCTION_PARAMETER,
-                (IEEE4) CPLAtof(pszOption) );
-    }
+		pszOption = CSLFetchNameValue(papszOptions,
+			"DECOMPRESS_RECONSTRUCTION_PARAMETER");
+		if (pszOption != nullptr)
+			SetParameter(
+				CNCSJP2FileView::JPC_DECOMPRESS_RECONSTRUCTION_PARAMETER,
+				(IEEE4)CPLAtof(pszOption));
+	
+#endif
+	}
 
 /* -------------------------------------------------------------------- */
 /*      Georeferencing.                                                 */
