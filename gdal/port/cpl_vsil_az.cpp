@@ -345,7 +345,7 @@ bool VSIDIRAz::IssueListDir()
     }
 
     poHandleHelper->ResetQueryParameters();
-    CPLString osBaseURL(poHandleHelper->GetURL());
+    const CPLString osBaseURL(poHandleHelper->GetURLNoKVP());
 
     CURLM* hCurlMultiHandle = poFS->GetCurlMultiHandleFor(osBaseURL);
     CURL* hCurlHandle = curl_easy_init();
@@ -626,7 +626,7 @@ VSIAzureWriteHandle::~VSIAzureWriteHandle()
 void VSIAzureWriteHandle::InvalidateParentDirectory()
 {
     m_poFS->InvalidateCachedData(
-        m_poHandleHelper->GetURL().c_str() );
+        m_poHandleHelper->GetURLNoKVP().c_str() );
 
     CPLString osFilenameWithoutSlash(m_osFilename);
     if( !osFilenameWithoutSlash.empty() && osFilenameWithoutSlash.back() == '/' )
@@ -869,7 +869,7 @@ CPLString VSIAzureFSHandler::GetURLFromFilename( const CPLString& osFilename )
         VSIAzureBlobHandleHelper::BuildFromURI( osFilenameWithoutPrefix, GetFSPrefix() );
     if( poHandleHelper == nullptr )
         return CPLString();
-    CPLString osURL( poHandleHelper->GetURL() );
+    CPLString osURL( poHandleHelper->GetURLNoKVP() );
     delete poHandleHelper;
     return osURL;
 }
@@ -1054,7 +1054,7 @@ int VSIAzureFSHandler::CopyObject( const char *oldpath, const char *newpath,
     }
 
     CPLString osSourceHeader("x-ms-copy-source: ");
-    osSourceHeader += poS3HandleHelperSource->GetURL();
+    osSourceHeader += poS3HandleHelperSource->GetURLNoKVP();
 
     int nRet = 0;
 
@@ -1143,7 +1143,7 @@ int VSIAzureFSHandler::CopyObject( const char *oldpath, const char *newpath,
         }
         else
         {
-            InvalidateCachedData(poS3HandleHelper->GetURL().c_str());
+            InvalidateCachedData(poS3HandleHelper->GetURLNoKVP().c_str());
 
             CPLString osFilenameWithoutSlash(newpath);
             if( !osFilenameWithoutSlash.empty() && osFilenameWithoutSlash.back() == '/' )
@@ -1327,7 +1327,7 @@ VSIDIR* VSIAzureFSHandler::OpenDir( const char *pszPath,
 VSIAzureHandle::VSIAzureHandle( VSIAzureFSHandler* poFSIn,
                           const char* pszFilename,
                           VSIAzureBlobHandleHelper* poHandleHelper ) :
-        VSICurlHandle(poFSIn, pszFilename, poHandleHelper->GetURL()),
+        VSICurlHandle(poFSIn, pszFilename, poHandleHelper->GetURLNoKVP()),
         m_poHandleHelper(poHandleHelper)
 {
 }

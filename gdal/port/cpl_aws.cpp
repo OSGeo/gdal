@@ -1216,6 +1216,19 @@ void IVSIS3LikeHandleHelper::AddQueryParameter( const CPLString& osKey,
 }
 
 /************************************************************************/
+/*                           GetURLNoKVP()                              */
+/************************************************************************/
+
+CPLString IVSIS3LikeHandleHelper::GetURLNoKVP() const
+{
+    CPLString osURL(GetURL());
+    const auto nPos = osURL.find('?');
+    if( nPos != std::string::npos )
+        osURL.resize(nPos);
+    return osURL;
+}
+
+/************************************************************************/
 /*                           GetCurlHeaders()                           */
 /************************************************************************/
 

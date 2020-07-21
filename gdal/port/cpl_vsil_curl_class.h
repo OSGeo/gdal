@@ -474,7 +474,7 @@ class IVSIS3LikeHandle:  public VSICurlHandle
   public:
     IVSIS3LikeHandle( VSICurlFilesystemHandler* poFSIn,
                       const char* pszFilename,
-                      const char* pszURLIn = nullptr ) :
+                      const char* pszURLIn ) :
         VSICurlHandle(poFSIn, pszFilename, pszURLIn) {}
     ~IVSIS3LikeHandle() override {}
 };
