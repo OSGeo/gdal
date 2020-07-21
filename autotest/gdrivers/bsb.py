@@ -53,7 +53,7 @@ def test_bsb_1():
     if gdaltest.bsb_dr is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('BSB', 'rgbsmall.kap', 1, 30321)
+    tst = gdaltest.GDALTest('BSB', 'bsb/rgbsmall.kap', 1, 30321)
 
     return tst.testOpen()
 
@@ -69,7 +69,7 @@ def test_bsb_2():
     if 'DMD_CREATIONDATATYPES' not in md:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('BSB', 'rgbsmall.kap', 1, 30321)
+    tst = gdaltest.GDALTest('BSB', 'bsb/rgbsmall.kap', 1, 30321)
 
     return tst.testCreateCopy()
 
@@ -84,7 +84,7 @@ def test_bsb_3():
     if gdaltest.bsb_dr is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('BSB', 'rgbsmall_index.kap', 1, 30321)
+    tst = gdaltest.GDALTest('BSB', 'bsb/rgbsmall_index.kap', 1, 30321)
 
     return tst.testOpen()
 
@@ -98,7 +98,7 @@ def test_bsb_4():
     if gdaltest.bsb_dr is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('BSB', 'rgbsmall_with_line_break.kap', 1, 30321)
+    tst = gdaltest.GDALTest('BSB', 'bsb/rgbsmall_with_line_break.kap', 1, 30321)
 
     return tst.testOpen()
 
@@ -110,7 +110,7 @@ def test_bsb_5():
     if gdaltest.bsb_dr is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('BSB', 'rgbsmall_truncated.kap', 1, 29696)
+    tst = gdaltest.GDALTest('BSB', 'bsb/rgbsmall_truncated.kap', 1, 29696)
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = tst.testOpen()
@@ -126,7 +126,7 @@ def test_bsb_6():
     if gdaltest.bsb_dr is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('BSB', 'rgbsmall_truncated2.kap', 1, 29696)
+    tst = gdaltest.GDALTest('BSB', 'bsb/rgbsmall_truncated2.kap', 1, 29696)
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = tst.testOpen()
@@ -140,7 +140,7 @@ def test_bsb_tmerc():
     if gdaltest.bsb_dr is None:
         pytest.skip()
 
-    ds = gdal.Open('data/transverse_mercator.kap')
+    ds = gdal.Open('data/bsb/transverse_mercator.kap')
     gt = ds.GetGeoTransform()
     expected_gt = [28487.6637325402, 1.2711141208521637, 0.009061669923111566,
                    6539651.728646593, 0.015209115944776083, -1.267821834560455]
@@ -182,5 +182,12 @@ def test_bsb_tmerc():
        gcps[0].GCPY == pytest.approx(6538920.57567595, abs=1e-5) and \
        gcps[0].GCPZ == 0
 
+###############################################################################
 
 
+def test_bsb_cutline():
+    if gdaltest.bsb_dr is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/bsb/australia4c.kap')
+    assert ds.GetMetadataItem('BSB_CUTLINE') == 'POLYGON ((112.72859333333334 -8.25404666666667,156.57827333333333 -7.66159166666667,164.28394166666666 -40.89653000000000,106.53042166666667 -41.14970000000000))'

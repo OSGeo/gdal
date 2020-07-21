@@ -39,7 +39,7 @@ import gdaltest
 
 def test_genbin_1():
 
-    tst = gdaltest.GDALTest('GenBin', 'tm4628_96.bil', 1, 5738,
+    tst = gdaltest.GDALTest('GenBin', 'genbin/tm4628_96.bil', 1, 5738,
                             0, 0, 500, 1)
 
     sr = osr.SpatialReference()

@@ -33,25 +33,21 @@ from osgeo import ogr
 import pytest
 
 ###############################################################################
-# Verify we can open the test file.
-
-
-def test_ogr_dgn_1():
-
-    gdaltest.dgn_ds = ogr.Open('data/smalltest.dgn')
-    assert gdaltest.dgn_ds is not None, 'failed to open test file.'
-
-    gdaltest.dgn_lyr = gdaltest.dgn_ds.GetLayer(0)
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
+    yield
+    gdaltest.clean_tmp()
 
 ###############################################################################
 # Check first feature, a text element.
 
 
 def test_ogr_dgn_2():
-    if gdaltest.dgn_ds is None:
-        pytest.skip()
 
-    feat = gdaltest.dgn_lyr.GetNextFeature()
+    dgn_ds = ogr.Open('data/dgn/smalltest.dgn')
+    dgn_lyr = dgn_ds.GetLayer(0)
+
+    feat = dgn_lyr.GetNextFeature()
     assert feat.GetField('Type') == 17 and feat.GetField('Level') == 1, \
         'feature 1: expected attributes'
 
@@ -67,10 +63,12 @@ def test_ogr_dgn_2():
 
 
 def test_ogr_dgn_3():
-    if gdaltest.dgn_ds is None:
-        pytest.skip()
 
-    feat = gdaltest.dgn_lyr.GetNextFeature()
+    dgn_ds = ogr.Open('data/dgn/smalltest.dgn')
+    dgn_lyr = dgn_ds.GetLayer(0)
+
+    feat = dgn_lyr.GetNextFeature()
+    feat = dgn_lyr.GetNextFeature()
     assert feat.GetField('Type') == 15 and feat.GetField('Level') == 2, \
         'feature 2: expected attributes'
 
@@ -92,10 +90,13 @@ def test_ogr_dgn_3():
 
 
 def test_ogr_dgn_4():
-    if gdaltest.dgn_ds is None:
-        pytest.skip()
 
-    feat = gdaltest.dgn_lyr.GetNextFeature()
+    dgn_ds = ogr.Open('data/dgn/smalltest.dgn')
+    dgn_lyr = dgn_ds.GetLayer(0)
+
+    feat = dgn_lyr.GetNextFeature()
+    feat = dgn_lyr.GetNextFeature()
+    feat = dgn_lyr.GetNextFeature()
     assert feat.GetField('Type') == 6 and feat.GetField('Level') == 2 and feat.GetField('ColorIndex') == 83, \
         'feature 3: expected attributes'
 
@@ -106,20 +107,18 @@ def test_ogr_dgn_4():
     assert feat.GetStyleString() == 'BRUSH(fc:#b40000,id:"ogr-brush-0")', \
         'Style string different than expected.'
 
-    gdaltest.dgn_lyr.ResetReading()
-
 ###############################################################################
 # Use attribute query to pick just the type 15 level 2 object.
 
 
 def test_ogr_dgn_5():
 
-    if gdaltest.dgn_ds is None:
-        pytest.skip()
+    dgn_ds = ogr.Open('data/dgn/smalltest.dgn')
+    dgn_lyr = dgn_ds.GetLayer(0)
 
-    gdaltest.dgn_lyr.SetAttributeFilter('Type = 15 and Level = 2')
-    tr = ogrtest.check_features_against_list(gdaltest.dgn_lyr, 'Type', [15])
-    gdaltest.dgn_lyr.SetAttributeFilter(None)
+    dgn_lyr.SetAttributeFilter('Type = 15 and Level = 2')
+    tr = ogrtest.check_features_against_list(dgn_lyr, 'Type', [15])
+    dgn_lyr.SetAttributeFilter(None)
 
     assert tr
 
@@ -129,15 +128,15 @@ def test_ogr_dgn_5():
 
 def test_ogr_dgn_6():
 
-    if gdaltest.dgn_ds is None:
-        pytest.skip()
+    dgn_ds = ogr.Open('data/dgn/smalltest.dgn')
+    dgn_lyr = dgn_ds.GetLayer(0)
 
     geom = ogr.CreateGeometryFromWkt('LINESTRING(1.0 8.55, 2.5 6.86)')
-    gdaltest.dgn_lyr.SetSpatialFilter(geom)
+    dgn_lyr.SetSpatialFilter(geom)
     geom.Destroy()
 
-    tr = ogrtest.check_features_against_list(gdaltest.dgn_lyr, 'Type', [15])
-    gdaltest.dgn_lyr.SetSpatialFilter(None)
+    tr = ogrtest.check_features_against_list(dgn_lyr, 'Type', [15])
+    dgn_lyr.SetSpatialFilter(None)
 
     assert tr
 
@@ -147,9 +146,6 @@ def test_ogr_dgn_6():
 
 def test_ogr_dgn_7():
 
-    if gdaltest.dgn_ds is None:
-        pytest.skip()
-
     co_opts = ['UOR_PER_SUB_UNIT=100', 'SUB_UNITS_PER_MASTER_UNIT=100',
                'ORIGIN=-50,-50,0']
 
@@ -158,19 +154,17 @@ def test_ogr_dgn_7():
 
     dgn2_lyr = dgn2_ds.CreateLayer('elements')
 
-    gdaltest.dgn_lyr.ResetReading()
+    dgn_ds = ogr.Open('data/dgn/smalltest.dgn')
+    dgn_lyr = dgn_ds.GetLayer(0)
 
     dst_feat = ogr.Feature(feature_def=dgn2_lyr.GetLayerDefn())
 
-    feat = gdaltest.dgn_lyr.GetNextFeature()
+    feat = dgn_lyr.GetNextFeature()
     while feat is not None:
         dst_feat.SetFrom(feat)
         assert dgn2_lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
 
-        feat = gdaltest.dgn_lyr.GetNextFeature()
-
-    dgn2_lyr = None
-    dgn2_ds = None
+        feat = dgn_lyr.GetNextFeature()
 
 ###############################################################################
 # Verify that our copy is pretty similar.
@@ -181,9 +175,6 @@ def test_ogr_dgn_7():
 
 
 def test_ogr_dgn_8():
-
-    if gdaltest.dgn_ds is None:
-        pytest.skip()
 
     dgn2_ds = ogr.Open('tmp/dgn7.dgn')
 
@@ -231,8 +222,6 @@ def test_ogr_dgn_8():
     assert feat.GetStyleString() == 'PEN(id:"ogr-pen-0",c:#b40000)', \
         ('feature 3: Style string different than expected: ' + feat.GetStyleString())
 
-    dgn2_ds = None
-
 ###############################################################################
 # Test delta encoding (#6806)
 
@@ -249,18 +238,3 @@ def test_ogr_dgn_online_1():
     wkt = 'LINESTRING (82.9999500717185 23.2084166997284,83.0007450788903 23.2084495986816,83.00081490524 23.2068095339824,82.9999503769036 23.2067737968078)'
 
     assert not ogrtest.check_feature_geometry(feat, wkt)
-
-###############################################################################
-#  Cleanup
-
-
-def test_ogr_dgn_cleanup():
-
-    if gdaltest.dgn_ds is not None:
-        gdaltest.dgn_lyr = None
-        gdaltest.dgn_ds = None
-
-    gdaltest.clean_tmp()
-
-
-

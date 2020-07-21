@@ -1459,7 +1459,7 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj )
 
             const char* pszName = json_object_get_string( poNameURL );
 
-            // Mostly to emulate GDAL 2.x behaviour
+            // Mostly to emulate GDAL 2.x behavior
             // See https://github.com/OSGeo/gdal/issues/2035
             if( EQUAL(pszName, "urn:ogc:def:crs:OGC:1.3:CRS84") )
                 pszName = "EPSG:4326";
@@ -2433,9 +2433,9 @@ void OGRGeoJSONReaderSetField( OGRLayer* poLayer,
         const enum json_type eJSonType(json_object_get_type(poVal));
         if( eJSonType == json_type_array )
         {
-            const auto nLength = json_object_array_length(poVal);
+            auto nLength = json_object_array_length(poVal);
             char** papszVal = (char**)CPLMalloc(sizeof(char*) * (nLength+1));
-            auto i = decltype(nLength){0};
+            decltype(nLength) i = 0; // Used after for.
             for( ; i < nLength; i++ )
             {
                 json_object* poRow = json_object_array_get_idx(poVal, i);

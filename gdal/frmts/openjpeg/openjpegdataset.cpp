@@ -3360,7 +3360,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "INSPIRE_TG=YES implies following GMLJP2 specification which "
-                     "recommends advertize reader requirement 67 feature, and thus JPX capability");
+                     "recommends advertise reader requirement 67 feature, and thus JPX capability");
         }
         else if( poGMLJP2Box != nullptr && bJPXOption )
         {
@@ -3547,19 +3547,16 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         }
 
         // Add res box if needed
-        double dfXRes = 0.0;
-        double dfYRes = 0.0;
-        int nResUnit = 0;
         GDALJP2Box* poRes = nullptr;
         if( poSrcDS->GetMetadataItem("TIFFTAG_XRESOLUTION") != nullptr
             && poSrcDS->GetMetadataItem("TIFFTAG_YRESOLUTION") != nullptr
             && poSrcDS->GetMetadataItem("TIFFTAG_RESOLUTIONUNIT") != nullptr )
         {
-            dfXRes =
+            double dfXRes =
                 CPLAtof(poSrcDS->GetMetadataItem("TIFFTAG_XRESOLUTION"));
-            dfYRes =
+            double dfYRes =
                 CPLAtof(poSrcDS->GetMetadataItem("TIFFTAG_YRESOLUTION"));
-            nResUnit = atoi(poSrcDS->GetMetadataItem("TIFFTAG_RESOLUTIONUNIT"));
+            int nResUnit = atoi(poSrcDS->GetMetadataItem("TIFFTAG_RESOLUTIONUNIT"));
 #define PIXELS_PER_INCH 2
 #define PIXELS_PER_CM   3
 
@@ -4157,7 +4154,7 @@ void GDALRegister_JP2OpenJPEG()
 "       <Value>PROFILE_1</Value>"
 "   </Option>"
 "   <Option name='INSPIRE_TG' type='boolean' description='Whether to use features that comply with Inspire Orthoimagery Technical Guidelines' default='NO'/>"
-"   <Option name='JPX' type='boolean' description='Whether to advertize JPX features when a GMLJP2 box is written (or use JPX branding if GMLJP2 v2)' default='YES'/>"
+"   <Option name='JPX' type='boolean' description='Whether to advertise JPX features when a GMLJP2 box is written (or use JPX branding if GMLJP2 v2)' default='YES'/>"
 "   <Option name='GEOBOXES_AFTER_JP2C' type='boolean' description='Whether to place GeoJP2/GMLJP2 boxes after the code-stream' default='NO'/>"
 "   <Option name='PRECINCTS' type='string' description='Precincts size as a string of the form {w,h},{w,h},... with power-of-two values'/>"
 "   <Option name='TILEPARTS' type='string-select' description='Whether to generate tile-parts and according to which criterion' default='DISABLED'>"

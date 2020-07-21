@@ -60,7 +60,7 @@ typedef struct
     /*! Resampling algorithm to upsample spectral bands to pan band resolution. */
     GDALRIOResampleAlg   eResampleAlg;
 
-    /*! Bit depth of the spectral bands. Can be let to 0 for default behaviour. */
+    /*! Bit depth of the spectral bands. Can be let to 0 for default behavior. */
     int                  nBitDepth;
 
     /*! Number of weight coefficients in padfWeights. */
@@ -265,6 +265,7 @@ class GDALPansharpenOperation
                                                      size_t nBandValues,
                                                      T nMaxValue ) const;
 
+        // cppcheck-suppress functionStatic
         CPLErr PansharpenChunk( GDALDataType eWorkDataType, GDALDataType eBufDataType,
                                                      const void* pPanBuffer,
                                                      const void* pUpsampledSpectralBuffer,

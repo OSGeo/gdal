@@ -94,10 +94,6 @@ The BNA writer supports the following creation options (dataset options):
 VSI Virtual File System API support
 -----------------------------------
 
-.. versionadded:: 1.9.0
-
-    Some features below might require OGR >= 1.9.0
-
 The driver supports reading and writing to files managed by VSI Virtual
 File System API, which include "regular" files, as well as files in the
 /vsizip/ (read-write) , /vsigzip/ (read-write) , /vsicurl/ (read-only)

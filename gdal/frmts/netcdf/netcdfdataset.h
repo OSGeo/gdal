@@ -821,7 +821,7 @@ class netCDFDataset final: public GDALPamDataset
         SINGLE_LAYER,
         SEPARATE_FILES,
         SEPARATE_GROUPS
-    } MultipleLayerBehaviour;
+    } MultipleLayerBehavior;
 
     /* basic dataset vars */
     CPLString     osFilename;
@@ -844,7 +844,7 @@ class netCDFDataset final: public GDALPamDataset
     const char   *pszCFCoordinates;
     double        nCFVersion;
     bool          bSGSupport;
-    MultipleLayerBehaviour eMultipleLayerBehaviour;
+    MultipleLayerBehavior eMultipleLayerBehavior;
     std::vector<netCDFDataset*> apoVectorDatasets;
     std::string logHeader;
     int logCount;
@@ -1119,7 +1119,7 @@ class netCDFLayer final: public OGRLayer
         bool            m_bProfileVarUnlimited;
         int             m_nParentIndexVarID;
         std::shared_ptr<nccfdriver::SGeometry_Reader>       m_simpleGeometryReader;
-        std::unique_ptr<nccfdriver::netCDFVID>              layerVID_alloc; // Allocation wrapper for group specifc netCDFVID
+        std::unique_ptr<nccfdriver::netCDFVID>              layerVID_alloc; // Allocation wrapper for group specific netCDFVID
         nccfdriver::netCDFVID& layerVID; // refers to the "correct" VID
         std::string     m_sgCRSname;
         size_t          m_SGeometryFeatInd;
@@ -1164,7 +1164,7 @@ class netCDFLayer final: public OGRLayer
 
         int             GetCDFID() const { return m_nLayerCDFId; }
         void            SetCDFID(int nId) { m_nLayerCDFId = nId; }
-        void            SetSGeometryRepresentation(std::shared_ptr<nccfdriver::SGeometry_Reader> sg) { m_simpleGeometryReader = sg; }
+        void            SetSGeometryRepresentation(const std::shared_ptr<nccfdriver::SGeometry_Reader>& sg) { m_simpleGeometryReader = sg; }
         nccfdriver::ncLayer_SG_Metadata& getLayerSGMetadata() { return m_layerSGDefn; }
 
         virtual void ResetReading() override;

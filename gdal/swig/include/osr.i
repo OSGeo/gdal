@@ -340,6 +340,10 @@ public:
     return OSRIsGeographic(self);
   }
 
+  int IsDerivedGeographic() {
+    return OSRIsDerivedGeographic(self);
+  }
+
   int IsProjected() {
     return OSRIsProjected(self);
   }

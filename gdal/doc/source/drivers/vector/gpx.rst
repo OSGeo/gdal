@@ -63,10 +63,7 @@ Expat library supports reading the following built-in encodings :
 -  UTF-8
 -  UTF-16
 -  ISO-8859-1
-
-OGR 1.8.0 adds supports for Windows-1252 encoding (for previous
-versions, altering the encoding mentioned in the XML header to
-ISO-8859-1 might work in some cases).
+-  Windows-1252
 
 The content returned by OGR will be encoded in UTF-8, after the
 conversion from the encoding mentioned in the file header is.
@@ -145,7 +142,7 @@ Supported geometries :
 For route points and tracks points, if there is a Z coordinate, it is
 used to fill the elevation element of the corresponding points.
 
-Starting with GDAL/OGR 1.8.0, if a layer is named "track_points" with
+If a layer is named "track_points" with
 wkbPoint/wkbPoint25D geometries, the tracks in the GPX file will be
 built from the sequence of features in that layer. This is the way of
 setting GPX attributes for each track point, in addition to the raw
@@ -185,7 +182,7 @@ The GPX writer supports the following *dataset* creation options:
 -  **GPX_EXTENSIONS_NS_URL**: Only used if GPX_USE_EXTENSIONS=YES and
    GPX_EXTENSIONS_NS is set.
    The namespace URI. By default, "http://osgeo.org/gdal".
--  **LINEFORMAT**: (GDAL/OGR >= 1.8.0) By default files are created with
+-  **LINEFORMAT**: By default files are created with
    the line termination conventions of the local platform (CR/LF on
    win32 or LF on all other systems). This may be overridden through use
    of the LINEFORMAT layer creation option which may have a value of
@@ -207,7 +204,7 @@ Issues when translating to Shapefile
    names "track_seg_id" and "track_seg_point_id" are truncated to 10
    characters in the .DBF file, thus leading to duplicate names.
 
-   To avoid this, starting with GDAL 1.6.1, you can define the
+   To avoid this, you can define the
    GPX_SHORT_NAMES configuration option to TRUE to make them be reported
    respectively as "trksegid" and "trksegptid", which will allow them to
    be unique once translated to DBF. The "route_point_id" field of
@@ -225,14 +222,14 @@ Issues when translating to Shapefile
    fields of type Date. So by default, you will lose the
    hour:minute:second part of the *Time* elements of a GPX file.
 
-   Starting with GDAL 1.6.0, you can use the OGR SQL CAST operator to
+   You can use the OGR SQL CAST operator to
    convert the *time* field to a string :
 
    ::
 
           ogr2ogr out input.gpx -sql "SELECT ele, CAST(time AS character(32)) FROM waypoints"
 
-   Starting with GDAL 1.7.0, there is a more convenient way to select
+   There is a more convenient way to select
    all fields and ask for the conversion of the ones of a given type to
    strings:
 
@@ -242,8 +239,6 @@ Issues when translating to Shapefile
 
 VSI Virtual File System API support
 -----------------------------------
-
-(Some features below might require OGR >= 1.9.0)
 
 The driver supports reading and writing to files managed by VSI Virtual
 File System API, which include "regular" files, as well as files in the
@@ -284,7 +279,7 @@ Use of the *<extensions>* tag for output :
 
 which will give an output like the following one :
 
-::
+.. code-block:: XML
 
        <?xml version="1.0"?>
        <gpx version="1.1" creator="GDAL 1.5dev"
@@ -307,7 +302,7 @@ which will give an output like the following one :
        </gpx>
 
 Use of -sql option to remap field names to the ones allowed by the GPX
-schema (starting with GDAL 1.6.0):
+schema:
 
 ::
 

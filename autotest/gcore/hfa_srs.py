@@ -43,7 +43,7 @@ epsg_list = [
     # [2046, False],  # tmerc south oriented DISABLED. Not sure about the axis
     [3031, True],  # stere
     [32661, True],  # stere
-    [3408, False],  # laea
+    [6931, False],  # laea
     [2062, False],  # lcc
     #[2065, True],  # krovak South-West
     [5221, True],  # krovak east-north
@@ -105,3 +105,21 @@ def test_hfa_srs_wisconsin_tmerc():
     sr = osr.SpatialReference()
     sr.SetFromUserInput(wkt)
     assert sr.GetAuthorityCode(None) == '103300'
+
+
+def test_hfa_srs_NAD83_UTM():
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(26915)
+
+    ds = gdal.GetDriverByName('HFA').Create('/vsimem/TestHFASRS.img', 1, 1)
+    ds.SetProjection(sr.ExportToWkt())
+    ds = None
+
+    ds = gdal.Open('/vsimem/TestHFASRS.img')
+    wkt = ds.GetProjectionRef()
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == '26915'
+    ds = None
+
+    gdal.Unlink('/vsimem/TestHFASRS.img')
+
+    assert 'TOWGS84' not in wkt

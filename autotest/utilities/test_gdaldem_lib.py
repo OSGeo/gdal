@@ -338,11 +338,40 @@ def test_gdaldem_lib_color_relief():
     dst_wkt = ds.GetProjectionRef()
     assert dst_wkt.find('AUTHORITY["EPSG","4326"]') != -1, 'Bad projection'
 
+    ds = gdal.DEMProcessing('', src_ds, 'color-relief', format='MEM', colorFilename='data/color_file.txt', colorSelection='nearest_color_entry')
+    assert ds.GetRasterBand(1).Checksum() == 57296
+
+    ds = gdal.DEMProcessing('', src_ds, 'color-relief', format='MEM', colorFilename='data/color_file.txt', colorSelection='exact_color_entry')
+    assert ds.GetRasterBand(1).Checksum() == 0
+
+    ds = gdal.DEMProcessing('', src_ds, 'color-relief', format='MEM', colorFilename='data/color_file.txt', colorSelection='linear_interpolation')
+    assert ds.GetRasterBand(1).Checksum() == 55009
+
+    with pytest.raises(ValueError):
+        gdal.DEMProcessing('', src_ds, 'color-relief', format='MEM', colorFilename='data/color_file.txt', colorSelection='unsupported')
+
     ds = gdal.DEMProcessing('', src_ds, 'color-relief', format='MEM', colorFilename='data/color_file.txt', addAlpha=True)
     assert ds.RasterCount == 4, 'Bad RasterCount'
 
     src_ds = None
     ds = None
+
+
+def test_gdaldem_lib_color_relief_nodata_value():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    colorFilename = '/vsimem/color_file.txt'
+    gdal.FileFromMemBuffer(colorFilename, """nv 255 255 255""")
+
+    with gdaltest.error_handler():
+        ds = gdal.DEMProcessing('', src_ds, 'color-relief', format='MEM', colorFilename=colorFilename)
+    assert ds.GetRasterBand(1).Checksum() == 0
+
+    src_ds.GetRasterBand(1).SetNoDataValue(1)
+    ds = gdal.DEMProcessing('', src_ds, 'color-relief', format='MEM', colorFilename=colorFilename)
+    assert ds.GetRasterBand(1).Checksum() != 0
+
+    gdal.Unlink(colorFilename)
 
 ###############################################################################
 # Test gdaldem tpi

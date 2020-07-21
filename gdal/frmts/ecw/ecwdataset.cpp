@@ -35,7 +35,6 @@
 #include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 #include "ogr_api.h"
-#include "ogr_geometry.h"
 
 #include "../mem/memdataset.h"
 
@@ -206,7 +205,6 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDSIn, int nBandIn, int iOverviewIn,
 /************************************************************************/
 
 ECWRasterBand::~ECWRasterBand()
-
 {
     GDALRasterBand::FlushCache();
 
@@ -308,7 +306,8 @@ CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
     }
     GetBandIndexAndCountForStatistics(nStatsBandIndex, nStatsBandCount);
     bool bHistogramFromFile = false;
-    if ( poGDS->pStatistics != nullptr ){
+
+    if (poGDS->pStatistics != nullptr) {
         NCSBandStats& bandStats = poGDS->pStatistics->BandsStats[nStatsBandIndex];
         if ( bandStats.Histogram != nullptr && bandStats.nHistBucketCount > 0 ){
             *pnBuckets = bandStats.nHistBucketCount;
@@ -329,7 +328,7 @@ CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
         }
     }
 
-    if (!bHistogramFromFile ){
+    if (!bHistogramFromFile) {
         if (bForce == TRUE){
             //compute. Save.
             pamError = GDALPamRasterBand::GetDefaultHistogram(pdfMin, pdfMax, pnBuckets, ppanHistogram, TRUE, f,pProgressData);
@@ -2541,17 +2540,18 @@ CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
         {
             CPLDebug( "ECW", "Got mutex." );
         }
-        
+
         poFileView = new CNCSJP2FileView();
 
 #if ECWSDK_VERSION >= 55
-        NCS::CString streamName(pszDatasetName);
-        auto vsiIoStream = NCS::CView::FindSteamByStreamNameFromOpenDatasets(streamName);
-        if (!vsiIoStream) {
-            vsiIoStream = std::make_shared<VSIIOStream>();
-            std::static_pointer_cast<VSIIOStream>(vsiIoStream)->Access(fpVSIL, FALSE, TRUE, pszDatasetName, 0, -1);
-        }
-        oErr = poFileView->Open(vsiIoStream, bProgressive);
+       NCS::CString streamName(pszDatasetName);
+       auto vsiIoStream = NCS::CView::FindSteamByStreamNameFromOpenDatasets(streamName);
+       if (!vsiIoStream) {
+           vsiIoStream = std::make_shared<VSIIOStream>();
+           std::static_pointer_cast<VSIIOStream>(vsiIoStream)->Access(fpVSIL, FALSE, TRUE, pszDatasetName, 0, -1);
+           bUsingCustomStream = TRUE;
+       }
+       oErr = poFileView->Open(vsiIoStream, bProgressive);
 #else
         auto vsiIoStream = new VSIIOStream();
         vsiIoStream->Access(fpVSIL, FALSE, TRUE, pszDatasetName, 0, -1);
@@ -2574,7 +2574,7 @@ CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
         VSIIOStream * poUnderlyingIOStream =
             ((VSIIOStream *)(poFileView->GetStream()));
 
-        if ( poUnderlyingIOStream )
+        if (poUnderlyingIOStream)
             poUnderlyingIOStream->nFileViewCount++;
 
         if ( vsiIoStream != poUnderlyingIOStream )

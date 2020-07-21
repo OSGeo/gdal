@@ -7,13 +7,6 @@ export CCACHE_CPP2=yes
 export CC="ccache clang"
 export CXX="ccache clang++"
 
-cd gdal
-scripts/detect_tabulations.sh
-scripts/detect_printf.sh
-scripts/detect_self_assignment.sh
-scripts/detect_suspicious_char_digit_zero.sh
-cd ..
-
 SCRIPT_DIR=$(dirname "$0")
 case $SCRIPT_DIR in
     "/"*)

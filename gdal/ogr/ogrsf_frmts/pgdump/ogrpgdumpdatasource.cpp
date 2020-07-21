@@ -366,20 +366,13 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
 /*      Try to get the SRS Id of this spatial reference system,         */
 /*      adding tot the srs table if needed.                             */
 /* -------------------------------------------------------------------- */
-    int nUnknownSRSId = -1;
     const char* pszPostgisVersion =
-        CSLFetchNameValue( papszOptions, "POSTGIS_VERSION" );
-    int nPostGISMajor = 1;
-    int nPostGISMinor = 5;
-    if( pszPostgisVersion != nullptr && atoi(pszPostgisVersion) >= 2 )
-    {
-        nPostGISMajor = atoi(pszPostgisVersion);
-        if( strchr(pszPostgisVersion, '.') )
-            nPostGISMinor = atoi(strchr(pszPostgisVersion, '.')+1);
-        else
-            nPostGISMinor = 0;
-        nUnknownSRSId = 0;
-    }
+        CSLFetchNameValueDef( papszOptions, "POSTGIS_VERSION", "2.2" );
+    const int nPostGISMajor = atoi(pszPostgisVersion);
+    const char* pszPostgisVersionDot = strchr(pszPostgisVersion, '.');
+    const int nPostGISMinor =
+          pszPostgisVersionDot ? atoi(pszPostgisVersionDot+1) : 0;
+    const int nUnknownSRSId = nPostGISMajor >= 2 ? 0 : -1;
 
     int nSRSId = nUnknownSRSId;
     int nForcedSRSId = -2;

@@ -13,9 +13,10 @@
  * (http://www.opensource.org/licenses/mit-license.php)
  */
 
-// For uselocale
-#undef _XOPEN_SOURCE
+// For strdup() in uselocale
+#if ! defined(_XOPEN_SOURCE) || _XOPEN_SOURCE < 700
 #define _XOPEN_SOURCE 700
+#endif
 
 #include "config.h"
 

@@ -54,7 +54,7 @@ def test_ogr_pgdump_1():
 
     ######################################################
     # Create Layer
-    lyr = ds.CreateLayer('tpoly', options=['DIM=3'])
+    lyr = ds.CreateLayer('tpoly', options=['DIM=3', 'POSTGIS_VERSION=1.5'])
 
     ######################################################
     # Setup Schema
@@ -159,7 +159,6 @@ def test_ogr_pgdump_2():
     f.close()
 
     assert (not (sql.find("""DROP TABLE IF EXISTS "another_schema"."tpoly" CASCADE;""") == -1 or \
-       sql.find("""DELETE FROM geometry_columns WHERE f_table_name = 'tpoly' AND f_table_schema = 'another_schema';""") == -1 or \
        sql.find("""BEGIN;""") == -1 or \
        sql.find("""CREATE TABLE "another_schema"."tpoly" ( "ogc_fid" SERIAL, CONSTRAINT "tpoly_pk" PRIMARY KEY ("ogc_fid") );""") == -1 or \
        sql.find("""SELECT AddGeometryColumn('another_schema','tpoly','the_geom',4326,'POLYGON',2);""") == -1 or \
@@ -170,7 +169,7 @@ def test_ogr_pgdump_2():
        sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "shortname" VARCHAR(8);""") == -1 or \
        sql.find("""COPY "another_schema"."tpoly" ("the_geom", "area", "eas_id", "prfedea", "shortname") FROM STDIN;""") == -1 or \
        sql.find("0103000020E61000000100000005000000000000C01A481D4100000080072D524100000060AA461D4100000080FF2C52410000006060461D41000000400C2D5241000000A0DF471D4100000000142D5241000000C01A481D4100000080072D5241	5268.813	170	35043413	\\N") == -1 or \
-       sql.find("""\.""") == -1 or \
+       sql.find(r"""\.""") == -1 or \
        sql.find("""COMMIT;""") == -1))
 
 
@@ -293,15 +292,15 @@ def test_ogr_pgdump_4():
     f.close()
 
     assert (not (sql.find("""CREATE TABLE "public"."test" (    "ogc_fid" SERIAL,    CONSTRAINT "test_pk" PRIMARY KEY ("ogc_fid") )""") == -1 or \
-       sql.find("""SELECT AddGeometryColumn('public','test','point_nosrs',-1,'POINT',2)""") == -1 or \
+       sql.find("""SELECT AddGeometryColumn('public','test','point_nosrs',0,'POINT',2)""") == -1 or \
        sql.find("""CREATE INDEX "test_point_nosrs_geom_idx" ON "public"."test" USING GIST ("point_nosrs")""") == -1 or \
        sql.find("""SELECT AddGeometryColumn('public','test','poly',4326,'POLYGON',3)""") == -1 or \
        sql.find("""CREATE INDEX "test_poly_geom_idx" ON "public"."test" USING GIST ("poly")""") == -1 or \
        sql.find("""INSERT INTO "public"."test" DEFAULT VALUES""") == -1 or \
-       sql.find("""INSERT INTO "public"."test" ("point_nosrs" , "poly" ) VALUES (GeomFromEWKT('SRID=-1;POINT (1 2)'::TEXT) , GeomFromEWKT('SRID=4326;POLYGON Z ((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0))'::TEXT) )""") == -1))
+       sql.find("""INSERT INTO "public"."test" ("point_nosrs" , "poly" ) VALUES (GeomFromEWKT('SRID=0;POINT (1 2)'::TEXT) , GeomFromEWKT('SRID=4326;POLYGON Z ((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0))'::TEXT) )""") == -1))
 
 ###############################################################################
-# Test non nullable field support
+# Test non nullable and unique field support
 
 
 def test_ogr_pgdump_5():
@@ -312,6 +311,7 @@ def test_ogr_pgdump_5():
     field_defn.SetNullable(0)
     lyr.CreateField(field_defn)
     field_defn = ogr.FieldDefn('field_nullable', ogr.OFTString)
+    field_defn.SetUnique(True)
     lyr.CreateField(field_defn)
     field_defn = ogr.GeomFieldDefn('geomfield_not_nullable', ogr.wkbPoint)
     field_defn.SetNullable(0)
@@ -351,7 +351,7 @@ def test_ogr_pgdump_5():
     gdal.Unlink('/vsimem/ogr_pgdump_5.sql')
 
     assert (not (sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_not_nullable" VARCHAR NOT NULL;""") == -1 or \
-       sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_nullable" VARCHAR;""") == -1 or \
+       sql.find("""ALTER TABLE "public"."test" ADD COLUMN "field_nullable" VARCHAR UNIQUE;""") == -1 or \
        sql.find("""ALTER TABLE "test" ALTER COLUMN "geomfield_not_nullable" SET NOT NULL;""") == -1))
 
 ###############################################################################
@@ -702,7 +702,7 @@ def test_ogr_pgdump_10():
 def test_ogr_pgdump_11():
 
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_11.sql', options=['LINEFORMAT=LF'])
-    lyr = ds.CreateLayer('test', geom_type=ogr.wkbPoint, options=['POSTGIS_VERSION=2.2'])
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbPoint)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT EMPTY'))
     lyr.CreateFeature(f)
@@ -744,68 +744,69 @@ def test_ogr_pgdump_12():
 ###############################################################################
 # Test ZM support
 
+tests_zm = [[ogr.wkbUnknown, [], 'POINT ZM (1 2 3 4)', ["'GEOMETRY',2)", "0101000000000000000000F03F0000000000000040"]],
+    [ogr.wkbUnknown, ['GEOM_TYPE=geography'], 'POINT ZM (1 2 3 4)', ["geography(GEOMETRY)", "0101000000000000000000F03F0000000000000040"]],
+    [ogr.wkbUnknown, ['DIM=XYZ'], 'POINT ZM (1 2 3 4)', ["'GEOMETRY',3)", "0101000080000000000000F03F00000000000000400000000000000840"]],
+    [ogr.wkbUnknown, ['DIM=XYZ', 'GEOM_TYPE=geography'], 'POINT ZM (1 2 3 4)', ["geography(GEOMETRYZ)", "0101000080000000000000F03F00000000000000400000000000000840"]],
+    [ogr.wkbPoint, ['DIM=XYZ'], 'POINT ZM (1 2 3 4)', ["'POINT',3)", "0101000080000000000000F03F00000000000000400000000000000840"]],
+    [ogr.wkbPoint25D, [], 'POINT ZM (1 2 3 4)', ["'POINT',3)", "0101000080000000000000F03F00000000000000400000000000000840"]],
+    [ogr.wkbPoint, ['DIM=XYZ', 'GEOM_TYPE=geography'], 'POINT ZM (1 2 3 4)', ["geography(POINTZ)", "0101000080000000000000F03F00000000000000400000000000000840"]],
+    [ogr.wkbUnknown, ['DIM=XYM'], 'POINT ZM (1 2 3 4)', ["'GEOMETRY',3)", "01D1070000000000000000F03F00000000000000400000000000001040"]],
+    [ogr.wkbUnknown, ['DIM=XYM', 'GEOM_TYPE=geography'], 'POINT ZM (1 2 3 4)', ["geography(GEOMETRYM)", "01D1070000000000000000F03F00000000000000400000000000001040"]],
+    [ogr.wkbPoint, ['DIM=XYM'], 'POINT ZM (1 2 3 4)', ["'POINTM',3)", "01D1070000000000000000F03F00000000000000400000000000001040"]],
+    [ogr.wkbPointM, [], 'POINT ZM (1 2 3 4)', ["'POINTM',3)", "01D1070000000000000000F03F00000000000000400000000000001040"]],
+    [ogr.wkbPoint, ['DIM=XYM', 'GEOM_TYPE=geography'], 'POINT ZM (1 2 3 4)', ["geography(POINTM)", "01D1070000000000000000F03F00000000000000400000000000001040"]],
+    [ogr.wkbUnknown, ['DIM=XYZM'], 'POINT ZM (1 2 3 4)', ["'GEOMETRY',4)", "01B90B0000000000000000F03F000000000000004000000000000008400000000000001040"]],
+    [ogr.wkbUnknown, ['DIM=XYZM', 'GEOM_TYPE=geography'], 'POINT ZM (1 2 3 4)', ["geography(GEOMETRYZM)", "01B90B0000000000000000F03F000000000000004000000000000008400000000000001040"]],
+    [ogr.wkbPoint, ['DIM=XYZM'], 'POINT ZM (1 2 3 4)', ["'POINT',4)", "01B90B0000000000000000F03F000000000000004000000000000008400000000000001040"]],
+    [ogr.wkbPointZM, [], 'POINT ZM (1 2 3 4)', ["'POINT',4)", "01B90B0000000000000000F03F000000000000004000000000000008400000000000001040"]],
+    [ogr.wkbPoint, ['DIM=XYZM', 'GEOM_TYPE=geography'], 'POINT ZM (1 2 3 4)', ["geography(POINTZM)", "01B90B0000000000000000F03F000000000000004000000000000008400000000000001040"]],
+]
 
-def test_ogr_pgdump_13():
+@pytest.mark.parametrize('geom_type,options,wkt,expected_strings', tests_zm)
+def test_ogr_pgdump_zm(geom_type, options, wkt, expected_strings):
 
-    tests = [[ogr.wkbUnknown, [], 'POINT ZM (1 2 3 4)', ["'GEOMETRY',2)", "0101000000000000000000F03F0000000000000040"]],
-             [ogr.wkbUnknown, ['GEOM_TYPE=geography'], 'POINT ZM (1 2 3 4)', ["geography(GEOMETRY", "0101000000000000000000F03F0000000000000040"]],
-             [ogr.wkbUnknown, ['DIM=XYZ'], 'POINT ZM (1 2 3 4)', ["'GEOMETRY',3)", "0101000080000000000000F03F00000000000000400000000000000840"]],
-             [ogr.wkbUnknown, ['DIM=XYZ', 'GEOM_TYPE=geography'], 'POINT ZM (1 2 3 4)', ["geography(GEOMETRYZ,", "0101000080000000000000F03F00000000000000400000000000000840"]],
-             [ogr.wkbPoint, ['DIM=XYZ'], 'POINT ZM (1 2 3 4)', ["'POINT',3)", "0101000080000000000000F03F00000000000000400000000000000840"]],
-             [ogr.wkbPoint25D, [], 'POINT ZM (1 2 3 4)', ["'POINT',3)", "0101000080000000000000F03F00000000000000400000000000000840"]],
-             [ogr.wkbPoint, ['DIM=XYZ', 'GEOM_TYPE=geography'], 'POINT ZM (1 2 3 4)', ["geography(POINTZ,", "0101000080000000000000F03F00000000000000400000000000000840"]],
-             [ogr.wkbUnknown, ['DIM=XYM'], 'POINT ZM (1 2 3 4)', ["'GEOMETRY',3)", "0101000040000000000000F03F00000000000000400000000000001040"]],
-             [ogr.wkbUnknown, ['DIM=XYM', 'GEOM_TYPE=geography'], 'POINT ZM (1 2 3 4)', ["geography(GEOMETRYM,", "0101000040000000000000F03F00000000000000400000000000001040"]],
-             [ogr.wkbPoint, ['DIM=XYM'], 'POINT ZM (1 2 3 4)', ["'POINTM',3)", "0101000040000000000000F03F00000000000000400000000000001040"]],
-             [ogr.wkbPointM, [], 'POINT ZM (1 2 3 4)', ["'POINTM',3)", "0101000040000000000000F03F00000000000000400000000000001040"]],
-             [ogr.wkbPoint, ['DIM=XYM', 'GEOM_TYPE=geography'], 'POINT ZM (1 2 3 4)', ["geography(POINTM,", "0101000040000000000000F03F00000000000000400000000000001040"]],
-             [ogr.wkbUnknown, ['DIM=XYZM'], 'POINT ZM (1 2 3 4)', ["'GEOMETRY',4)", "01010000C0000000000000F03F000000000000004000000000000008400000000000001040"]],
-             [ogr.wkbUnknown, ['DIM=XYZM', 'GEOM_TYPE=geography'], 'POINT ZM (1 2 3 4)', ["geography(GEOMETRYZM,", "01010000C0000000000000F03F000000000000004000000000000008400000000000001040"]],
-             [ogr.wkbPoint, ['DIM=XYZM'], 'POINT ZM (1 2 3 4)', ["'POINT',4)", "01010000C0000000000000F03F000000000000004000000000000008400000000000001040"]],
-             [ogr.wkbPointZM, [], 'POINT ZM (1 2 3 4)', ["'POINT',4)", "01010000C0000000000000F03F000000000000004000000000000008400000000000001040"]],
-             [ogr.wkbPoint, ['DIM=XYZM', 'GEOM_TYPE=geography'], 'POINT ZM (1 2 3 4)', ["geography(POINTZM,", "01010000C0000000000000F03F000000000000004000000000000008400000000000001040"]],
-            ]
+    ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_13.sql', options=['LINEFORMAT=LF'])
+    lyr = ds.CreateLayer('test', geom_type=geom_type, options=options)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
 
-    for (geom_type, options, wkt, expected_strings) in tests:
-        ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_13.sql', options=['LINEFORMAT=LF'])
-        lyr = ds.CreateLayer('test', geom_type=geom_type, options=options)
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
-        lyr.CreateFeature(f)
-        f = None
-        ds = None
+    f = gdal.VSIFOpenL('/vsimem/ogr_pgdump_13.sql', 'rb')
+    sql = gdal.VSIFReadL(1, 10000, f).decode('utf8')
+    gdal.VSIFCloseL(f)
 
-        f = gdal.VSIFOpenL('/vsimem/ogr_pgdump_13.sql', 'rb')
-        sql = gdal.VSIFReadL(1, 10000, f).decode('utf8')
-        gdal.VSIFCloseL(f)
+    gdal.Unlink('/vsimem/ogr_pgdump_13.sql')
 
-        gdal.Unlink('/vsimem/ogr_pgdump_13.sql')
+    for expected_string in expected_strings:
+        assert expected_string in sql, (geom_type, options, wkt, expected_string)
 
-        for expected_string in expected_strings:
-            assert expected_string in sql, (geom_type, options, wkt, expected_string)
 
-        if 'GEOM_TYPE=geography' in options:
-            continue
+@pytest.mark.parametrize('geom_type,options,wkt,expected_strings', tests_zm)
+def test_ogr_pgdump_zm_creategeomfield(geom_type, options, wkt, expected_strings):
+    if 'GEOM_TYPE=geography' in options:
+        return
 
-        ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_13.sql', options=['LINEFORMAT=LF'])
-        lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone, options=options)
-        lyr.CreateGeomField(ogr.GeomFieldDefn("my_geom", geom_type))
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
-        lyr.CreateFeature(f)
-        f = None
-        ds = None
+    ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_13.sql', options=['LINEFORMAT=LF'])
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone, options=options)
+    lyr.CreateGeomField(ogr.GeomFieldDefn("my_geom", geom_type))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
 
-        f = gdal.VSIFOpenL('/vsimem/ogr_pgdump_13.sql', 'rb')
-        sql = gdal.VSIFReadL(1, 10000, f).decode('utf8')
-        gdal.VSIFCloseL(f)
+    f = gdal.VSIFOpenL('/vsimem/ogr_pgdump_13.sql', 'rb')
+    sql = gdal.VSIFReadL(1, 10000, f).decode('utf8')
+    gdal.VSIFCloseL(f)
 
-        gdal.Unlink('/vsimem/ogr_pgdump_13.sql')
+    gdal.Unlink('/vsimem/ogr_pgdump_13.sql')
 
-        for expected_string in expected_strings:
-            assert expected_string in sql, (geom_type, options, wkt, expected_string)
+    for expected_string in expected_strings:
+        assert expected_string in sql, (geom_type, options, wkt, expected_string)
 
-    
 ###############################################################################
 # Test description
 

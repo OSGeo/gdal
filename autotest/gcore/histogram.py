@@ -119,7 +119,7 @@ def test_histogram_5():
 
 def test_histogram_6():
 
-    shutil.copy('../gdrivers/data/albania.jpg', 'tmp/albania.jpg')
+    shutil.copy('../gdrivers/data/jpeg/albania.jpg', 'tmp/albania.jpg')
     ds = gdal.Open('tmp/albania.jpg')
     hist = ds.GetRasterBand(1).GetDefaultHistogram(force=0)
     assert hist is None, 'did not get expected histogram.'

@@ -59,7 +59,7 @@ You can use GDAL/OGR on all modern flavors of Unix: Linux, FreeBSD, Mac OS X; al
 Is there a graphical user interface to GDAL/OGR?
 ++++++++++++++++++++++++++++++++++++++++++++++++
 
-See :ref:`software_using_gdal`
+See :ref:`software_using_gdal`:
 
 .. toctree::
    :hidden:

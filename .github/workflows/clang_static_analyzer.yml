@@ -1,0 +1,37 @@
+name: CLang Static Analyzer
+
+on: [push, pull_request]
+
+jobs:
+
+  clang_static_analyzer_part_1:
+    runs-on: ubuntu-16.04
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Requirements
+        run: ./gdal/ci/travis/csa_part_1/before_install.sh
+
+      - name: Run analysis
+        run: ./gdal/ci/travis/csa_part_1/install.sh
+
+      - name: Parse analysis log
+        run: ./gdal/ci/travis/csa_part_1/script.sh
+
+  clang_static_analyzer_part_2:
+    runs-on: ubuntu-16.04
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Requirements
+        run: ./gdal/ci/travis/csa_part_2/before_install.sh
+
+      - name: Run analysis
+        run: ./gdal/ci/travis/csa_part_2/install.sh
+
+      - name: Parse analysis log
+        run: ./gdal/ci/travis/csa_part_2/script.sh

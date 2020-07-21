@@ -64,7 +64,7 @@ KML.
 Datasource creation options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Starting with OGR 1.11, the following datasource creation options can be
+The following datasource creation options can be
 used to generate a
 `<atom:Author> <https://developers.google.com/kml/documentation/kmlreference#atomauthor>`__
 element at the top Document level.
@@ -220,7 +220,7 @@ is supported for .kml files, .kmz files, and directories.
 Layer creation options
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Starting with OGR 1.11, the following layer creation options can be used
+The following layer creation options can be used
 to generate a
 `<LookAt> <https://developers.google.com/kml/documentation/kmlreference#lookat>`__
 element at the layer level.
@@ -369,8 +369,7 @@ associated camera if the camera_longitude, camera_latitude,
 camera_altitude, camera_altitudemode, head and/or tilt and/or roll
 fields are defined.
 
-Starting with OGR 1.10, KML
-`<GroundOverlay> <https://developers.google.com/kml/documentation/kmlreference#groundoverlay>`__
+KML `<GroundOverlay> <https://developers.google.com/kml/documentation/kmlreference#groundoverlay>`__
 elements are supported for reading (unless the
 LIBKML_READ_GROUND_OVERLAY configuration option is set to FALSE). For
 such elements, there are icon and drawOrder fields.
@@ -724,8 +723,6 @@ read.
 
 VSI Virtual File System API support
 -----------------------------------
-
-(Some features below might require OGR >= 1.9.0)
 
 The driver supports reading and writing to files managed by VSI Virtual
 File System API, which include "regular" files, as well as files in the

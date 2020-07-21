@@ -38,6 +38,7 @@ Synopsis
             [-clipdstwhere expression]
             [-wrapdateline] [-datelineoffset val]
             [[-simplify tolerance] | [-segmentize max_dist]]
+            [-makevalid]
             [-addfields] [-unsetFid]
             [-relaxedFieldNameMatch] [-forceNullable] [-unsetDefault]
             [-fieldTypeToString All|(type1[,type2]*)] [-unsetFieldWidth]
@@ -205,10 +206,10 @@ output coordinate system or even reprojecting the features during translation.
 
     Use the FID of the source features instead of letting the output driver
     automatically assign a new one (for formats that require an FID).  If not
-    in append mode, this behaviour is the default if the output driver has
+    in append mode, this behavior is the default if the output driver has
     a FID layer creation option, un which case the name of the source FID
     column will be used and source feature IDs will be attempted to be
-    preserved. This behaviour can be disabled by setting ``-unsetFid``.
+    preserved. This behavior can be disabled by setting ``-unsetFid``.
 
 .. option:: -fid fid
 
@@ -300,6 +301,14 @@ output coordinate system or even reprojecting the features during translation.
 .. option:: -segmentize <max_dist>
 
     Maximum distance between 2 nodes. Used to create intermediate points.
+
+.. option:: -makevalid
+
+    Run the :cpp:func:`OGRGeometry::MakeValid` operation, followed by
+    :cpp:func:`OGRGeometryFactory::removeLowerDimensionSubGeoms`, on geometries 
+    to ensure they are valid regarding the rules of the Simple Features specification.
+
+    .. versionadded: 3.1 (requires GEOS 3.8 or later)
 
 .. option:: -fieldTypeToString type1,...
 

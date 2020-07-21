@@ -80,6 +80,7 @@ class OGRGeoJSONWriteOptions
         bool bHonourReservedRFC7946Members = false;
         CPLString osIDField{};
         bool bForceIDFieldType = false;
+        bool bGenerateID = false;
         OGRFieldType eForcedIDFieldType = OFTString;
         bool bAllowNonFiniteValues = false;
 

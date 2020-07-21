@@ -97,6 +97,7 @@ void OGRMySQLLayer::ResetReading()
 
         poDS->InterruptLongResult();
     }
+    m_bEOF = false;
 }
 
 /************************************************************************/
@@ -106,6 +107,8 @@ void OGRMySQLLayer::ResetReading()
 OGRFeature *OGRMySQLLayer::GetNextFeature()
 
 {
+    if( m_bEOF )
+        return nullptr;
 
     while( true )
     {
@@ -113,7 +116,10 @@ OGRFeature *OGRMySQLLayer::GetNextFeature()
 
         poFeature = GetNextRawFeature();
         if( poFeature == nullptr )
+        {
+            m_bEOF = true;
             return nullptr;
+        }
 
         if( (m_poFilterGeom == nullptr
             || FilterGeometry( poFeature->GetGeometryRef() ) )

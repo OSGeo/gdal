@@ -138,7 +138,7 @@ static GDALDataset *OGRNGWDriverCreate( const char *pszName,
     oParent.Add( "id", atoi(stUri.osResourceId.c_str()) );
 
     std::string osNewResourceId = NGWAPI::CreateResource( stUri.osAddress,
-        oPayload.Format(CPLJSONObject::Plain), GetHeaders(osUserPwd) );
+        oPayload.Format(CPLJSONObject::PrettyFormat::Plain), GetHeaders(osUserPwd) );
     if( osNewResourceId == "-1" )
     {
         return nullptr;
@@ -341,7 +341,7 @@ static GDALDataset *OGRNGWDriverCreateCopy( const char *pszFilename,
     if( !oUploadMeta.IsValid() || oUploadMeta.Size() == 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Get unexpected response: %s.",
-            oFileJson.Format(CPLJSONObject::Plain).c_str());
+            oFileJson.Format(CPLJSONObject::PrettyFormat::Plain).c_str());
         return nullptr;
     }
 
@@ -372,7 +372,7 @@ static GDALDataset *OGRNGWDriverCreateCopy( const char *pszFilename,
 
     papszHTTPOptions = GetHeaders(osUserPwd);
     std::string osNewResourceId = NGWAPI::CreateResource( stUri.osAddress,
-        oPayloadRaster.Format(CPLJSONObject::Plain), papszHTTPOptions );
+        oPayloadRaster.Format(CPLJSONObject::PrettyFormat::Plain), papszHTTPOptions );
     if( osNewResourceId == "-1" )
     {
         return nullptr;
@@ -397,7 +397,7 @@ static GDALDataset *OGRNGWDriverCreateCopy( const char *pszFilename,
         if( !oUploadMeta.IsValid() || oUploadMeta.Size() == 0 )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Get unexpected response: %s.",
-                oFileJson.Format(CPLJSONObject::Plain).c_str());
+                oFileJson.Format(CPLJSONObject::PrettyFormat::Plain).c_str());
             return nullptr;
         }
         CPLJSONObject oQGISRasterStyle( "qgis_raster_style", oPayloadRasterStyle );
@@ -414,7 +414,7 @@ static GDALDataset *OGRNGWDriverCreateCopy( const char *pszFilename,
 
     papszHTTPOptions = GetHeaders(osUserPwd);
     osNewResourceId = NGWAPI::CreateResource( stUri.osAddress,
-        oPayloadRasterStyle.Format(CPLJSONObject::Plain), papszHTTPOptions );
+        oPayloadRasterStyle.Format(CPLJSONObject::PrettyFormat::Plain), papszHTTPOptions );
     if( osNewResourceId == "-1" )
     {
         return nullptr;

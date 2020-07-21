@@ -36,7 +36,7 @@ Additional details on the algorithm are available in the
 .. option:: -md max_distance
 
     The maximum distance (in pixels) that the algorithm will search out for
-    values to interpolate.
+    values to interpolate. The default is 100 pixels.
 
 .. option:: -si smooth_iterations
 

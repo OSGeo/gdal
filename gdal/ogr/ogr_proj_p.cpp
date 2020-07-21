@@ -80,7 +80,12 @@ struct OSRPJContextHolder
 #endif
 #endif
 
-    OSRPJContextHolder() = default;
+#if !defined(_WIN32)
+    OSRPJContextHolder(): curpid(getpid()) { init(); }
+#else
+    OSRPJContextHolder() { init(); }
+#endif
+
     ~OSRPJContextHolder();
 
     void init();
@@ -108,6 +113,7 @@ OSRPJContextHolder::~OSRPJContextHolder()
 
 void OSRPJContextHolder::deinit()
 {
+    searchPathGenerationCounter = 0;
     oCache.clear();
 
     // Destroy context in last
@@ -173,10 +179,13 @@ static OSRPJContextHolder& GetProjTLSContextHolder()
         l_projContext.context = nullptr;
         l_projContext.init();
 #else
+        const auto osr_proj_logger_none = [](void *, int, const char *) {};
+        proj_log_func (l_projContext.context, nullptr, osr_proj_logger_none);
         proj_context_set_autoclose_database(l_projContext.context, true);
         // dummy call to cause the database to be closed
         proj_context_get_database_path(l_projContext.context);
         proj_context_set_autoclose_database(l_projContext.context, false);
+        proj_log_func (l_projContext.context, nullptr, osr_proj_logger);
 #endif
     }
 
@@ -188,6 +197,9 @@ static OSRPJContextHolder& GetProjTLSContextHolder()
 PJ_CONTEXT* OSRGetProjTLSContext()
 {
     auto& l_projContext = GetProjTLSContextHolder();
+    // This .init() must be kept, even if OSRPJContextHolder constructor
+    // calls it. The reason is that OSRCleanupTLSContext() calls deinit(),
+    // so if reusing the object, we must re-init again.
     l_projContext.init();
     {
         // If OSRSetPROJSearchPaths() has been called since we created the context,

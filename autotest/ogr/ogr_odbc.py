@@ -52,14 +52,14 @@ def test_ogr_odbc_1():
     if ogrtest.odbc_drv is None:
         pytest.skip()
 
-    ds = ogrtest.odbc_drv.Open('data/empty.mdb')
+    ds = ogrtest.odbc_drv.Open('data/mdb/empty.mdb')
     if ds is None:
         ogrtest.odbc_drv = None
         pytest.skip()
 
     ds = None
 
-    shutil.copy('data/empty.mdb', 'tmp/odbc.mdb')
+    shutil.copy('data/mdb/empty.mdb', 'tmp/odbc.mdb')
 
     # Create and fill tables
     ds = ogrtest.odbc_drv.Open('tmp/odbc.mdb')

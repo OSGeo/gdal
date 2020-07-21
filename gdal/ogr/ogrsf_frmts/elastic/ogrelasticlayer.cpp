@@ -2065,7 +2065,7 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                         bHasWarned = true;
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "At least one geometry has a bounding box outside "
-                                 "of [-180,180] longitude range and/or [-90,90] latitude range. Undefined behaviour");
+                                 "of [-180,180] longitude range and/or [-90,90] latitude range. Undefined behavior");
                     }
                 }
 

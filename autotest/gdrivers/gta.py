@@ -37,7 +37,7 @@ from osgeo import gdal
 
 init_list = [
     ('byte.tif', 4672),
-    ('byte_signed.tif', 4672),
+    ('gtiff/byte_signed.tif', 4672),
     ('int16.tif', 4672),
     ('uint16.tif', 4672),
     ('int32.tif', 4672),
@@ -219,7 +219,7 @@ def test_gta_5():
 )
 @pytest.mark.require_driver('GTA')
 def test_gta_create(filename, checksum):
-    if filename != 'byte_signed.tif':
+    if filename != 'gtiff/byte_signed.tif':
         filename = '../../gcore/data/' + filename
     ut = gdaltest.GDALTest('GTA', filename, 1, checksum, options=[])
     ut.testCreateCopy()

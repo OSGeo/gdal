@@ -39,7 +39,7 @@ from osgeo import gdal
 
 def test_doq2_1():
 
-    ds = gdal.Open('data/C3607614_truncated.NWS')
+    ds = gdal.Open('data/doq2/C3607614_truncated.NWS')
 
     mem_ds = gdal.GetDriverByName('MEM').Create('mem_1.mem', 500, 1, gdal.GDT_Byte, 1)
 

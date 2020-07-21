@@ -81,7 +81,7 @@ def test_jp2openjpeg_2():
 """
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
-    tst = gdaltest.GDALTest('JP2OpenJPEG', 'byte.jp2', 1, 50054)
+    tst = gdaltest.GDALTest('JP2OpenJPEG', 'jpeg2000/byte.jp2', 1, 50054)
     return tst.testOpen(check_prj=srs, check_gt=gt)
 
 ###############################################################################
@@ -93,7 +93,7 @@ def test_jp2openjpeg_3():
     if gdaltest.jp2openjpeg_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/int16.jp2')
+    ds = gdal.Open('data/jpeg2000/int16.jp2')
     ds_ref = gdal.Open('data/int16.tif')
 
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
@@ -106,7 +106,7 @@ def test_jp2openjpeg_3():
     # Quite a bit of difference...
     assert maxdiff <= 6, 'Image too different from reference'
 
-    ds = ogr.Open('data/int16.jp2')
+    ds = ogr.Open('data/jpeg2000/int16.jp2')
     assert ds is None
 
 ###############################################################################
@@ -118,7 +118,7 @@ def test_jp2openjpeg_4(out_filename='tmp/jp2openjpeg_4.jp2'):
     if gdaltest.jp2openjpeg_drv is None:
         pytest.skip()
 
-    src_ds = gdal.Open('data/byte.jp2')
+    src_ds = gdal.Open('data/jpeg2000/byte.jp2')
     src_wkt = src_ds.GetProjectionRef()
     src_gt = src_ds.GetGeoTransform()
 
@@ -179,7 +179,7 @@ def test_jp2openjpeg_5():
     if gdaltest.jp2openjpeg_drv is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('JP2OpenJPEG', 'int16.jp2', 1, None, options=['REVERSIBLE=YES', 'QUALITY=100', 'CODEC=J2K'])
+    tst = gdaltest.GDALTest('JP2OpenJPEG', 'jpeg2000/int16.jp2', 1, None, options=['REVERSIBLE=YES', 'QUALITY=100', 'CODEC=J2K'])
     return tst.testCreateCopy()
 
 ###############################################################################
@@ -191,11 +191,11 @@ def test_jp2openjpeg_6():
     if gdaltest.jp2openjpeg_drv is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('JP2OpenJPEG', 'll.jp2', 1, None)
+    tst = gdaltest.GDALTest('JP2OpenJPEG', 'jpeg2000/ll.jp2', 1, None)
 
     tst.testOpen()
 
-    ds = gdal.Open('data/ll.jp2')
+    ds = gdal.Open('data/jpeg2000/ll.jp2')
     ds.GetRasterBand(1).Checksum()
     ds = None
 
@@ -208,8 +208,10 @@ def test_jp2openjpeg_7():
     if gdaltest.jp2openjpeg_drv is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('JP2OpenJPEG', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute=1)
-    return tst.testOpen()
+    tst = gdaltest.GDALTest('JP2OpenJPEG', '/vsigzip/data/jpeg2000/byte.jp2.gz', 1, 50054, filename_absolute=1)
+    ret = tst.testOpen()
+    gdal.Unlink('data/jpeg2000/byte.jp2.gz.properties')
+    return ret
 
 ###############################################################################
 # Test a JP2OpenJPEG with the 3 bands having 13bit depth and the 4th one 1 bit
@@ -220,7 +222,7 @@ def test_jp2openjpeg_8():
     if gdaltest.jp2openjpeg_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/3_13bit_and_1bit.jp2')
+    ds = gdal.Open('data/jpeg2000/3_13bit_and_1bit.jp2')
 
     expected_checksums = [64570, 57277, 56048, 61292]
 
@@ -239,7 +241,7 @@ def test_jp2openjpeg_9():
     if gdaltest.jp2openjpeg_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/byte_without_geotransform.jp2')
+    ds = gdal.Open('data/jpeg2000/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
     assert geotransform[0] == pytest.approx(440720, abs=0.1) and geotransform[1] == pytest.approx(60, abs=0.001) and geotransform[2] == pytest.approx(0, abs=0.001) and geotransform[3] == pytest.approx(3751320, abs=0.1) and geotransform[4] == pytest.approx(0, abs=0.001) and geotransform[5] == pytest.approx(-60, abs=0.001), \
@@ -278,7 +280,7 @@ def test_jp2openjpeg_11():
     if gdaltest.jp2openjpeg_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')
+    ds = gdal.Open('data/jpeg2000/stefan_full_rgba_alpha_1bit.jp2')
     fourth_band = ds.GetRasterBand(4)
     assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is None
     got_cs = fourth_band.Checksum()
@@ -301,7 +303,7 @@ def test_jp2openjpeg_11():
 
     assert jp2_fourth_band_data == gtiff_fourth_band_data
 
-    ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
+    ds = gdal.OpenEx('data/jpeg2000/stefan_full_rgba_alpha_1bit.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
     fourth_band = ds.GetRasterBand(4)
     assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '1'
 
@@ -315,7 +317,7 @@ def test_jp2openjpeg_12():
         pytest.skip()
 
     # Override projection
-    shutil.copy('data/byte.jp2', 'tmp/jp2openjpeg_12.jp2')
+    shutil.copy('data/jpeg2000/byte.jp2', 'tmp/jp2openjpeg_12.jp2')
 
     ds = gdal.Open('tmp/jp2openjpeg_12.jp2')
     sr = osr.SpatialReference()
@@ -332,7 +334,7 @@ def test_jp2openjpeg_12():
     assert '32631' in wkt
 
     # Override geotransform
-    shutil.copy('data/byte.jp2', 'tmp/jp2openjpeg_12.jp2')
+    shutil.copy('data/jpeg2000/byte.jp2', 'tmp/jp2openjpeg_12.jp2')
 
     ds = gdal.Open('tmp/jp2openjpeg_12.jp2')
     ds.SetGeoTransform([1000, 1, 0, 2000, 0, -1])
@@ -401,7 +403,7 @@ def test_jp2openjpeg_14():
     if gdaltest.jp2openjpeg_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/byte_2gcps.jp2')
+    ds = gdal.Open('data/jpeg2000/byte_2gcps.jp2')
     assert ds.GetGCPCount() == 2
 
 ###############################################################################
@@ -432,7 +434,7 @@ def test_jp2openjpeg_16():
     if gdaltest.jp2openjpeg_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/byte_point.jp2')
+    ds = gdal.Open('data/jpeg2000/byte_point.jp2')
     gt = ds.GetGeoTransform()
     assert ds.GetMetadataItem('AREA_OR_POINT') == 'Point', \
         'did not get AREA_OR_POINT = Point'
@@ -444,7 +446,7 @@ def test_jp2openjpeg_16():
 
     gdal.SetConfigOption('GTIFF_POINT_GEO_IGNORE', 'TRUE')
 
-    ds = gdal.Open('data/byte_point.jp2')
+    ds = gdal.Open('data/jpeg2000/byte_point.jp2')
     gt = ds.GetGeoTransform()
     ds = None
 
@@ -464,7 +466,7 @@ def test_jp2openjpeg_17():
     if gdaltest.jp2openjpeg_drv is None:
         pytest.skip()
 
-    src_ds = gdal.Open('data/byte_point.jp2')
+    src_ds = gdal.Open('data/jpeg2000/byte_point.jp2')
     ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_17.jp2', src_ds)
     ds = None
     src_ds = None
@@ -514,7 +516,7 @@ def test_jp2openjpeg_19():
     if gdaltest.jp2openjpeg_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/byte_gmljp2_with_nul_car.jp2')
+    ds = gdal.Open('data/jpeg2000/byte_gmljp2_with_nul_car.jp2')
     assert ds.GetProjectionRef() != ''
     ds = None
 
@@ -654,7 +656,7 @@ def test_jp2openjpeg_22():
     assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
     assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
     assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_AlphaBand
-    assert ds.GetRasterBand(1).Checksum() in [11457, 11450]
+    assert ds.GetRasterBand(1).Checksum() in [11457, 11450, 11498]
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_22.jp2')
 
@@ -1314,7 +1316,7 @@ def test_jp2openjpeg_34():
         pytest.skip()
 
     gdal.PushErrorHandler()
-    ds = gdal.Open('data/dimensions_above_31bit.jp2')
+    ds = gdal.Open('data/jpeg2000/dimensions_above_31bit.jp2')
     gdal.PopErrorHandler()
     assert ds is None
 
@@ -1328,7 +1330,7 @@ def test_jp2openjpeg_35():
         pytest.skip()
 
     gdal.PushErrorHandler()
-    ds = gdal.Open('data/truncated.jp2')
+    ds = gdal.Open('data/jpeg2000/truncated.jp2')
     gdal.PopErrorHandler()
     assert ds is None
 
@@ -1633,7 +1635,7 @@ def test_jp2openjpeg_41():
     if gdaltest.jp2openjpeg_drv is None:
         pytest.skip()
 
-    src_ds = gdal.Open('data/byte.jp2')
+    src_ds = gdal.Open('data/jpeg2000/byte.jp2')
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_41.jp2', src_ds,
                                                  options=['USE_SRC_CODESTREAM=YES', 'PROFILE=PROFILE_1', 'GEOJP2=NO', 'GMLJP2=NO'])
     assert src_ds.GetRasterBand(1).Checksum() == out_ds.GetRasterBand(1).Checksum()
@@ -1805,13 +1807,13 @@ def test_jp2openjpeg_42():
 
 def test_jp2openjpeg_43():
 
-    ret = gdal.GetJPEG2000StructureAsString('data/byte.jp2', ['ALL=YES'])
+    ret = gdal.GetJPEG2000StructureAsString('data/jpeg2000/byte.jp2', ['ALL=YES'])
     assert ret is not None
 
-    ret = gdal.GetJPEG2000StructureAsString('data/byte_tlm_plt.jp2', ['ALL=YES'])
+    ret = gdal.GetJPEG2000StructureAsString('data/jpeg2000/byte_tlm_plt.jp2', ['ALL=YES'])
     assert ret is not None
 
-    ret = gdal.GetJPEG2000StructureAsString('data/byte_one_poc.j2k', ['ALL=YES'])
+    ret = gdal.GetJPEG2000StructureAsString('data/jpeg2000/byte_one_poc.j2k', ['ALL=YES'])
     assert ret is not None
 
 ###############################################################################
@@ -1826,7 +1828,7 @@ def test_jp2openjpeg_44():
     src_ds = gdal.Open('data/utm.tif')
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_44.jp2', src_ds, options=['INSPIRE_TG=YES'])
     del out_ds
-    ret = validate('/vsimem/jp2openjpeg_44.jp2', oidoc='data/utm_inspire_tg_oi.xml')
+    ret = validate('/vsimem/jp2openjpeg_44.jp2', oidoc='data/jpeg2000/utm_inspire_tg_oi.xml')
     gdal.Unlink('/vsimem/jp2openjpeg_44.jp2')
     gdal.Unlink('/vsimem/jp2openjpeg_44.jp2.aux.xml')
 
@@ -1842,11 +1844,12 @@ def test_jp2openjpeg_45():
         pytest.skip()
 
     with gdaltest.error_handler():
-        if ogr.Open('../ogr/data/ionic_wfs.gml') is None:
+        if ogr.Open('../ogr/data/gml/ionic_wfs.gml') is None:
             pytest.skip('GML read support missing')
 
-    if gdal.GetDriverByName('KML') is None and gdal.GetDriverByName('LIBKML') is None:
-        pytest.skip('KML support missing')
+    with gdaltest.error_handler():
+        if ogr.Open('../ogr/data/kml/empty.kml') is None:
+            pytest.skip('KML support missing')
 
     # Test GMLJP2V2_DEF=YES
     src_ds = gdal.Open('data/byte.tif')
@@ -2094,7 +2097,7 @@ def test_jp2openjpeg_45():
 </gmljp2:dcMetadata>""")
 
     gdal.FileFromMemBuffer("/vsimem/feature.xml",
-                           """<FeatureCollection gml:id="myFC1">
+                           """<FeatureCollection gml:id="myFC1" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns="http://www.opengis.net/gml/3.2">
     <featureMember>
         <Observation gml:id="myFC1_Observation">
             <validTime/>
@@ -2165,7 +2168,7 @@ def test_jp2openjpeg_45():
         ds = None
 
     gdal.FileFromMemBuffer("/vsimem/feature2.gml",
-                           """<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://ogr.maptools.org/ http://dummy" gml:id="myFC3">
+                           """<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/ http://dummy" gml:id="myFC3">
     <featureMember>
         <Observation gml:id="myFC3_Observation">
             <validTime/>
@@ -2175,7 +2178,7 @@ def test_jp2openjpeg_45():
 </FeatureCollection>""")
 
     gdal.FileFromMemBuffer("/vsimem/feature3.gml",
-                           """<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd http://ogr.maptools.org/ http://dummy" gml:id="myFC4">
+                           """<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd http://ogr.maptools.org/ http://dummy" gml:id="myFC4">
     <featureMember>
         <Observation gml:id="myFC4_Observation">
             <validTime/>
@@ -2186,7 +2189,7 @@ def test_jp2openjpeg_45():
 
     gdal.FileFromMemBuffer("/vsimem/empty.kml",
                            """<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2" xsi:schemaLocation="http://www.opengis.net/kml/2.2 http://schemas.opengis.net/kml/2.2.0/ogckml22.xsd">
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/kml/2.2 http://schemas.opengis.net/kml/2.2.0/ogckml22.xsd">
     <Document id="empty_doc"/>
 </kml>
 """)
@@ -2433,10 +2436,10 @@ def test_jp2openjpeg_45():
     assert """<ogr2:FeatureCollection gml:id="ID_GMLJP2_0_2_aFeatureCollection" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" xmlns:ogr2="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2">""" in myshape2_gml
 
     feature2_gml = ds.GetMetadata_List("xml:feature2.gml")[0]
-    assert """<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" gml:id="ID_GMLJP2_0_3_myFC3">""" in feature2_gml
+    assert """<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" gml:id="ID_GMLJP2_0_3_myFC3">""" in feature2_gml
 
     feature3_gml = ds.GetMetadata_List("xml:feature3.gml")[0]
-    assert """<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" gml:id="ID_GMLJP2_0_4_myFC4">""" in feature3_gml
+    assert """<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" gml:id="ID_GMLJP2_0_4_myFC4">""" in feature3_gml
 
     myshape2_xsd = ds.GetMetadata_List("xml:a_schema.xsd")[0]
     assert """<xs:schema xmlns:ogr="http://ogr.maptools.org/" """ in myshape2_xsd
@@ -2448,7 +2451,7 @@ def test_jp2openjpeg_45():
     ds = None
 
     ds = ogr.Open('/vsimem/jp2openjpeg_45.jp2')
-    assert ds.GetLayerCount() == 6
+    assert ds.GetLayerCount() == 6, [ ds.GetLayer(j).GetName() for j in range(ds.GetLayerCount()) ]
     expected_layers = ['FC_GridCoverage_1_myshape',
                        'FC_CoverageCollection_1_Observation',
                        'FC_CoverageCollection_2_myshape',
@@ -2508,7 +2511,7 @@ def test_jp2openjpeg_45():
     gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
 
     # Test writing&reading a gmljp2:featureMember pointing to a remote resource
-    conf = {"root_instance": {"gml_filelist": [{"remote_resource": "https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/expected_gml_gml32.gml"}]}}
+    conf = {"root_instance": {"gml_filelist": [{"remote_resource": "https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/expected_gml_gml32.gml"}]}}
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options=['GMLJP2V2_DEF=' + json.dumps(conf)])
     del out_ds
 
@@ -2522,7 +2525,7 @@ def test_jp2openjpeg_45():
     gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
 
     if ds is None:
-        if gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/expected_gml_gml32.gml') is None:
+        if gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/expected_gml_gml32.gml') is None:
             pytest.skip()
         pytest.fail()
     assert ds.GetLayerCount() == 1
@@ -2721,7 +2724,7 @@ def test_jp2openjpeg_48():
     if gdaltest.jp2openjpeg_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/byte_tile_2048.jp2')
+    ds = gdal.Open('data/jpeg2000/byte_tile_2048.jp2')
     (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
     assert (blockxsize, blockysize) == (20, 20)
     assert ds.GetRasterBand(1).Checksum() == 4610
@@ -2902,11 +2905,11 @@ def test_jp2openjpeg_49():
 
     for (config_option_value, copy_pam, copy_worldfile, expected_srs, expected_gt) in tests:
         gdal.SetConfigOption('GDAL_GEOREF_SOURCES', config_option_value)
-        gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.jp2', open('data/byte_nogeoref.jp2', 'rb').read())
+        gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.jp2', open('data/jpeg2000/byte_nogeoref.jp2', 'rb').read())
         if copy_pam:
-            gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.jp2.aux.xml', open('data/byte_nogeoref.jp2.aux.xml', 'rb').read())
+            gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.jp2.aux.xml', open('data/jpeg2000/byte_nogeoref.jp2.aux.xml', 'rb').read())
         if copy_worldfile:
-            gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.j2w', open('data/byte_nogeoref.j2w', 'rb').read())
+            gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.j2w', open('data/jpeg2000/byte_nogeoref.j2w', 'rb').read())
         ds = gdal.Open('/vsimem/byte_nogeoref.jp2')
         gt = ds.GetGeoTransform()
         srs_wkt = ds.GetProjectionRef()
@@ -2957,11 +2960,11 @@ def test_jp2openjpeg_49():
              ]
 
     for (config_option_value, copy_pam, copy_worldfile, expected_srs, expected_gt) in tests:
-        gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.jp2', open('data/inconsitant_geojp2_gmljp2.jp2', 'rb').read())
+        gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.jp2', open('data/jpeg2000/inconsitant_geojp2_gmljp2.jp2', 'rb').read())
         if copy_pam:
-            gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.jp2.aux.xml', open('data/inconsitant_geojp2_gmljp2.jp2.aux.xml', 'rb').read())
+            gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.jp2.aux.xml', open('data/jpeg2000/inconsitant_geojp2_gmljp2.jp2.aux.xml', 'rb').read())
         if copy_worldfile:
-            gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.j2w', open('data/inconsitant_geojp2_gmljp2.j2w', 'rb').read())
+            gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.j2w', open('data/jpeg2000/inconsitant_geojp2_gmljp2.j2w', 'rb').read())
         open_options = []
         if config_option_value is not None:
             open_options += ['GEOREF_SOURCES=' + config_option_value]
@@ -2985,14 +2988,14 @@ def test_jp2openjpeg_49():
             print('Expected ' + expected_srs)
             pytest.fail('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
 
-    ds = gdal.OpenEx('data/inconsitant_geojp2_gmljp2.jp2', open_options=['GEOREF_SOURCES=PAM,WORLDFILE'])
+    ds = gdal.OpenEx('data/jpeg2000/inconsitant_geojp2_gmljp2.jp2', open_options=['GEOREF_SOURCES=PAM,WORLDFILE'])
     fl = ds.GetFileList()
-    assert set(fl) == set(['data/inconsitant_geojp2_gmljp2.jp2', 'data/inconsitant_geojp2_gmljp2.jp2.aux.xml']), \
+    assert set(fl) == set(['data/jpeg2000/inconsitant_geojp2_gmljp2.jp2', 'data/jpeg2000/inconsitant_geojp2_gmljp2.jp2.aux.xml']), \
         'Did not get expected filelist'
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
-        gdal.OpenEx('data/inconsitant_geojp2_gmljp2.jp2', open_options=['GEOREF_SOURCES=unhandled'])
+        gdal.OpenEx('data/jpeg2000/inconsitant_geojp2_gmljp2.jp2', open_options=['GEOREF_SOURCES=unhandled'])
         assert gdal.GetLastErrorMsg() != '', 'expected warning'
 
     
@@ -3005,7 +3008,7 @@ def test_jp2openjpeg_50():
     if gdaltest.jp2openjpeg_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/fake_sent2_preview.jp2')
+    ds = gdal.Open('data/jpeg2000/fake_sent2_preview.jp2')
     blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
     assert blockxsize == ds.RasterXSize and blockysize == ds.RasterYSize, \
         'expected warning'
@@ -3108,7 +3111,7 @@ def test_jp2openjpeg_odd_dimensions():
     if gdaltest.jp2openjpeg_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/513x513.jp2')
+    ds = gdal.Open('data/jpeg2000/513x513.jp2')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     ds = None
 
@@ -3127,7 +3130,7 @@ def test_jp2openjpeg_odd_dimensions_overviews():
         pytest.skip()
 
     # Check that we don't request outside of the full resolution coordinates
-    ds = gdal.Open('data/single_block_32769_16385.jp2')
+    ds = gdal.Open('data/jpeg2000/single_block_32769_16385.jp2')
     assert ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,2049,1025)
     assert gdal.GetLastErrorMsg() == ''
     ds = None
@@ -3141,7 +3144,7 @@ def test_jp2openjpeg_image_origin_not_zero():
     if gdaltest.jp2openjpeg_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/byte_image_origin_not_zero.jp2')
+    ds = gdal.Open('data/jpeg2000/byte_image_origin_not_zero.jp2')
     assert ds.GetRasterBand(1).Checksum() == 4672
     assert ds.GetRasterBand(1).ReadRaster(0,0,20,20,10,10) is not None
 

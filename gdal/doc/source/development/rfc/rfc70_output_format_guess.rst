@@ -32,7 +32,7 @@ have to specify respectively -of PNG and -f GPKG to get the expected
 result.
 
 Guessing the output format from the extension of the output filename is
-for example a behaviour found in ImageMagick convert utility, or in
+for example a behavior found in ImageMagick convert utility, or in
 OpenJPEG opj_compress/opj_decompress utilities.
 
 Changes in C/C++ and Python utilities
@@ -52,7 +52,7 @@ capabilities, declare to recognize the extension of the output filename.
 -  When no driver declares this extension, and the extension is not
    empty (e.g a .mpg filename), the utility will error out
 
-For completness:
+For completeness:
 
 -  When there's no extension, and no prefix is recognized (see below),
    the default output driver will be silently used, as currently
@@ -66,7 +66,7 @@ Similarly, for vector output, if doing something like "ogr2ogr
 PG:dbname=mydb out.shp", a PG:dbname=mydb directory is created with
 shapefiles, instead of ingesting the shapefile into PostgreSQL. A
 warning is emitted in that case since the PG driver declares the PG:
-prefix in its metadata. The new behaviour will be to imply the -update
+prefix in its metadata. The new behavior will be to imply the -update
 switch in such situation.
 
 When the utilities are available as library functions (GDALTranslate(),
@@ -112,7 +112,7 @@ Testing
 -------
 
 The existing autotest suite should continue to pass (with a few changes
-related to tests for the current behaviour)
+related to tests for the current behavior)
 
 Implementation
 --------------

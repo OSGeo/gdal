@@ -1,0 +1,37 @@
+name: MacOS build
+
+on: [push, pull_request]
+
+jobs:
+
+  macos_build:
+    runs-on: macos-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Cache build
+        uses: actions/cache@v2
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-cache-macos
+
+      - name: Install Requirements
+        run: ./gdal/ci/travis/osx/before_install.sh
+
+      - name: Additional build requirements
+        run: |
+            brew install pkg-config sqlite3 geos expat xerces-c openjpeg hdf5 netcdf
+ 
+      - name: Build
+        run: ./gdal/ci/travis/osx/install.sh
+        env:
+            WITH_EXPAT: --with-expat=/usr/local/opt/expat
+
+      - name: Run tests
+        run: ./gdal/ci/travis/osx/script.sh
+        env:
+            # Emulate a few Travis-CI env variable so that some tests get properly skipped
+            TRAVIS: true
+            TRAVIS_OS_NAME: osx

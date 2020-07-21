@@ -83,11 +83,11 @@ def test_http_2():
     if drv is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('GTiff', '/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gcore/data/byte.tif',
+    tst = gdaltest.GDALTest('GTiff', '/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/gcore/data/byte.tif',
                             1, 4672, filename_absolute=1)
     ret = tst.testOpen()
     if ret == 'fail':
-        conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gcore/data/byte.tif')
+        conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/gcore/data/byte.tif')
         if conn is None:
             pytest.skip('cannot open URL')
         conn.close()
@@ -184,9 +184,9 @@ def test_http_5():
     if drv is None:
         pytest.skip()
 
-    ds = gdal.Open('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gdrivers/data/s4103.blx')
+    ds = gdal.Open('https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/gdrivers/data/s4103.blx')
     if ds is None:
-        conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gdrivers/data/s4103.blx')
+        conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/gdrivers/data/s4103.blx')
         if conn is None:
             pytest.skip('cannot open URL')
         try:
@@ -213,9 +213,9 @@ def test_http_6():
     if drv is None:
         pytest.skip()
 
-    ds = ogr.Open('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/test.jml')
+    ds = ogr.Open('https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.dbf')
     if ds is None:
-        conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/test.jml')
+        conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.dbf')
         if conn is None:
             pytest.skip('cannot open URL')
         try:

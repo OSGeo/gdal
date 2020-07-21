@@ -58,6 +58,7 @@ CPL_CVSID("$Id$")
 
 OGRFieldDefn::OGRFieldDefn( const char * pszNameIn, OGRFieldType eTypeIn ) :
     pszName(CPLStrdup(pszNameIn)),
+    pszAlternativeName(CPLStrdup("")),
     eType(eTypeIn),
     eJustify(OJUndefined),
     // Should nWidth & nPrecision be defined in some particular way for numbers?
@@ -66,7 +67,8 @@ OGRFieldDefn::OGRFieldDefn( const char * pszNameIn, OGRFieldType eTypeIn ) :
     pszDefault(nullptr),
     bIgnore(FALSE),
     eSubType(OFSTNone),
-    bNullable(TRUE)
+    bNullable(TRUE),
+    bUnique(FALSE)
 {}
 
 /************************************************************************/
@@ -83,6 +85,7 @@ OGRFieldDefn::OGRFieldDefn( const char * pszNameIn, OGRFieldType eTypeIn ) :
 
 OGRFieldDefn::OGRFieldDefn( const OGRFieldDefn *poPrototype ) :
     pszName(CPLStrdup(poPrototype->GetNameRef())),
+    pszAlternativeName(CPLStrdup(poPrototype->GetAlternativeNameRef())),
     eType(poPrototype->GetType()),
     eJustify(poPrototype->GetJustify()),
     nWidth(poPrototype->GetWidth()),
@@ -90,7 +93,8 @@ OGRFieldDefn::OGRFieldDefn( const OGRFieldDefn *poPrototype ) :
     pszDefault(nullptr),
     bIgnore(FALSE),  // TODO(schwehr): Can we use IsIgnored()?
     eSubType(poPrototype->GetSubType()),
-    bNullable(poPrototype->IsNullable())
+    bNullable(poPrototype->IsNullable()),
+    bUnique(poPrototype->IsUnique())
 {
     SetDefault(poPrototype->GetDefault());
 }
@@ -124,6 +128,7 @@ OGRFieldDefn::~OGRFieldDefn()
 
 {
     CPLFree(pszName);
+    CPLFree(pszAlternativeName);
     CPLFree(pszDefault);
 }
 
@@ -221,6 +226,127 @@ const char *OGR_Fld_GetNameRef( OGRFieldDefnH hDefn )
 
     return OGRFieldDefn::FromHandle(hDefn)->GetNameRef();
 }
+
+
+/************************************************************************/
+/*                              SetAlternativeName()                    */
+/************************************************************************/
+
+/**
+ * \brief Reset the alternative name (or "alias") for this field.
+ *
+ * The alternative name is an optional attribute for a field which can provide
+ * a more user-friendly, descriptive name of a field which is not subject to
+ * the usual naming constraints defined by the data provider.
+ *
+ * This is a metadata style attribute only: the alternative name cannot
+ * be used in place of the actual field name during SQL queries or other
+ * field name dependent API calls.
+ *
+ * This method is the same as the C function OGR_Fld_SetAlternativeName().
+ *
+ * @param pszAlternativeNameIn the new alternative name to apply.
+ *
+ * @since GDAL 3.2
+ */
+
+void OGRFieldDefn::SetAlternativeName( const char * pszAlternativeNameIn )
+
+{
+    if( pszAlternativeName != pszAlternativeNameIn )
+    {
+        CPLFree(pszAlternativeName);
+        pszAlternativeName = CPLStrdup(pszAlternativeNameIn);
+    }
+}
+
+/************************************************************************/
+/*                          OGR_Fld_SetAlternativeName()                */
+/************************************************************************/
+/**
+ * \brief Reset the alternative name (or "alias") for this field.
+ *
+ * The alternative name is an optional attribute for a field which can provide
+ * a more user-friendly, descriptive name of a field which is not subject to
+ * the usual naming constraints defined by the data provider.
+ *
+ * This is a metadata style attribute only: the alternative name cannot
+ * be used in place of the actual field name during SQL queries or other
+ * field name dependent API calls.
+ *
+ * This function is the same as the CPP method OGRFieldDefn::SetAlternativeName().
+ *
+ * @param hDefn handle to the field definition to apply the new alternative name to.
+ * @param pszAlternativeName the new alternative name to apply.
+ *
+ * @since GDAL 3.2
+ */
+
+void OGR_Fld_SetAlternativeName( OGRFieldDefnH hDefn, const char *pszAlternativeName )
+
+{
+    OGRFieldDefn::FromHandle(hDefn)->SetAlternativeName(pszAlternativeName);
+}
+
+/************************************************************************/
+/*                             GetAlternativeNameRef()                  */
+/************************************************************************/
+
+/**
+ * \fn const char *OGRFieldDefn::GetAlternativeNameRef();
+ *
+ * \brief Fetch the alternative name (or "alias") for this field.
+ *
+ * The alternative name is an optional attribute for a field which can provide
+ * a more user-friendly, descriptive name of a field which is not subject to
+ * the usual naming constraints defined by the data provider.
+ *
+ * This is a metadata style attribute only: the alternative name cannot
+ * be used in place of the actual field name during SQL queries or other
+ * field name dependent API calls.
+ *
+ * This method is the same as the C function OGR_Fld_GetAlternativeNameRef().
+ *
+ * @return pointer to an internal alternative name string that should not be freed or
+ * modified.
+ *
+ * @since GDAL 3.2
+ */
+
+/************************************************************************/
+/*                         OGR_Fld_GetAlternativeNameRef()              */
+/************************************************************************/
+/**
+ * \brief Fetch the alternative name (or "alias") for this field.
+ *
+ * The alternative name is an optional attribute for a field which can provide
+ * a more user-friendly, descriptive name of a field which is not subject to
+ * the usual naming constraints defined by the data provider.
+ *
+ * This is a metadata style attribute only: the alternative name cannot
+ * be used in place of the actual field name during SQL queries or other
+ * field name dependent API calls.
+ *
+ * This function is the same as the CPP method OGRFieldDefn::GetAlternativeNameRef().
+ *
+ * @param hDefn handle to the field definition.
+ * @return the alternative name of the field definition.
+ *
+ * @since GDAL 3.2
+ */
+
+const char *OGR_Fld_GetAlternativeNameRef( OGRFieldDefnH hDefn )
+
+{
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_Fld_GetXXXX(hDefn, "GetAlternativeNameRef");
+#endif
+
+    return OGRFieldDefn::FromHandle(hDefn)->GetAlternativeNameRef();
+}
+
 
 /************************************************************************/
 /*                              GetType()                               */
@@ -418,7 +544,7 @@ void OGR_Fld_SetSubType( OGRFieldDefnH hDefn, OGRFieldSubType eSubType )
  * For a datetime literal value, format should be 'YYYY/MM/DD HH:MM:SS[.sss]'
  * (considered as UTC time).
  *
- * Drivers that support writing DEFAULT clauses will advertize the
+ * Drivers that support writing DEFAULT clauses will advertise the
  * GDAL_DCAP_DEFAULT_FIELDS driver metadata item.
  *
  * This function is the same as the C function OGR_Fld_SetDefault().
@@ -486,7 +612,7 @@ void OGRFieldDefn::SetDefault( const char* pszDefaultIn )
  * For a datetime literal value, format should be 'YYYY/MM/DD HH:MM:SS[.sss]'
  * (considered as UTC time).
  *
- * Drivers that support writing DEFAULT clauses will advertize the
+ * Drivers that support writing DEFAULT clauses will advertise the
  * GDAL_DCAP_DEFAULT_FIELDS driver metadata item.
  *
  * This function is the same as the C++ method OGRFieldDefn::SetDefault().
@@ -1122,6 +1248,7 @@ int OGRFieldDefn::IsSame( const OGRFieldDefn * poOtherFieldDefn ) const
 {
     return
         strcmp(pszName, poOtherFieldDefn->pszName) == 0 &&
+        strcmp(pszAlternativeName, poOtherFieldDefn->pszAlternativeName) == 0 &&
         eType == poOtherFieldDefn->eType &&
         eSubType == poOtherFieldDefn->eSubType &&
         nWidth == poOtherFieldDefn->nWidth &&
@@ -1189,7 +1316,7 @@ int OGR_Fld_IsNullable( OGRFieldDefnH hDefn )
  * By default, fields are nullable, so this method is generally called with
  * FALSE to set a not-null constraint.
  *
- * Drivers that support writing not-null constraint will advertize the
+ * Drivers that support writing not-null constraint will advertise the
  * GDAL_DCAP_NOTNULL_FIELDS driver metadata item.
  *
  * This method is the same as the C function OGR_Fld_SetNullable().
@@ -1208,7 +1335,7 @@ int OGR_Fld_IsNullable( OGRFieldDefnH hDefn )
  * By default, fields are nullable, so this method is generally called with
  * FALSE to set a not-null constraint.
  *
- * Drivers that support writing not-null constraint will advertize the
+ * Drivers that support writing not-null constraint will advertise the
  * GDAL_DCAP_NOTNULL_FIELDS driver metadata item.
  *
  * This method is the same as the C++ method OGRFieldDefn::SetNullable().
@@ -1221,6 +1348,91 @@ int OGR_Fld_IsNullable( OGRFieldDefnH hDefn )
 void OGR_Fld_SetNullable( OGRFieldDefnH hDefn, int bNullableIn )
 {
     OGRFieldDefn::FromHandle(hDefn)->SetNullable(bNullableIn);
+}
+
+/************************************************************************/
+/*                             IsUnique()                             */
+/************************************************************************/
+
+/**
+ * \fn int OGRFieldDefn::IsUnique() const
+ *
+ * \brief Return whether this field has a unique constraint.
+ *
+ * By default, fields have no unique constraint.
+ *
+ * This method is the same as the C function OGR_Fld_IsUnique().
+ *
+ * @return TRUE if the field has a unique constraint.
+ * @since GDAL 3.2
+ */
+
+/************************************************************************/
+/*                         OGR_Fld_IsUnique()                         */
+/************************************************************************/
+
+/**
+ * \brief Return whether this field has a unique constraint.
+ *
+ * By default, fields have no unique constraint.
+ *
+ * This method is the same as the C++ method OGRFieldDefn::IsUnique().
+ *
+ * @param hDefn handle to the field definition
+ * @return TRUE if the field has a unique constraint.
+ * @since GDAL 3.2
+ */
+
+int OGR_Fld_IsUnique( OGRFieldDefnH hDefn )
+{
+    return OGRFieldDefn::FromHandle(hDefn)->IsUnique();
+}
+
+/************************************************************************/
+/*                            SetUnique()                             */
+/************************************************************************/
+
+/**
+ * \fn void OGRFieldDefn::SetUnique( int bUniqueIn );
+ *
+ * \brief Set whether this field has a unique constraint.
+ *
+ * By default, fields have no unique constraint, so this method is generally called with
+ * TRUE to set a unique constraint.
+ *
+ * Drivers that support writing unique constraint will advertise the
+ * GDAL_DCAP_UNIQUE_FIELDS driver metadata item.
+ *
+ * This method is the same as the C function OGR_Fld_SetUnique().
+ *
+ * @param bUniqueIn TRUE if the field must have a unique constraint.
+ * @since GDAL 3.2
+ */
+
+/************************************************************************/
+/*                        OGR_Fld_SetUnique()                          */
+/************************************************************************/
+
+/**
+ * \brief Set whether this field has a unique constraint.
+ *
+ * By default, fields have no unique constraint, so this method is generally called with
+ * TRUE to set a unique constraint.
+ *
+ * Drivers that support writing unique constraint will advertise the
+ * GDAL_DCAP_UNIQUE_FIELDS driver metadata item.
+ *field can receive null values.
+ *
+ * This method is the same as the C++ method OGRFieldDefn::SetUnique().
+ *
+ * @param hDefn handle to the field definition
+ * @param bUniqueIn TRUE if the field must have a unique constraint.
+ * @since GDAL 3.2
+ */
+
+void OGR_Fld_SetUnique( OGRFieldDefnH hDefn, int bUniqueIn )
+{
+    OGRFieldDefn::FromHandle(hDefn)->SetUnique(bUniqueIn);
 }
 
 /************************************************************************/

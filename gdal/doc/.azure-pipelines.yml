@@ -37,7 +37,7 @@ jobs:
       - script: |
           set -e
           cd gdal/doc
-          make html
+          make html O="-D enable_redirects=1 -t website"
         displayName: 'Make html'
       - script: |
           set -e

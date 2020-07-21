@@ -343,6 +343,15 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                      GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour,
                      GDALProgressFunc callback = NULL,
                      void* callback_data=NULL) {
+    // This check is a bit too late. resample_alg should already have been
+    // validated, so we are a bit in undefined behaviour land, but compilers
+    // should hopefully do the right thing
+    if( static_cast<int>(resample_alg) < 0 ||
+        static_cast<int>(resample_alg) > static_cast<int>(GRIORA_LAST) )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Invalid value for resample_alg");
+        return CE_Failure;
+    }
     int nxsize = (buf_xsize==0) ? static_cast<int>(xsize) : *buf_xsize;
     int nysize = (buf_ysize==0) ? static_cast<int>(ysize) : *buf_ysize;
     GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
@@ -652,6 +661,15 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
                     GDALProgressFunc callback = NULL,
                     void* callback_data=NULL )
 {
+    // This check is a bit too late. resample_alg should already have been
+    // validated, so we are a bit in undefined behaviour land, but compilers
+    // should hopefully do the right thing
+    if( static_cast<int>(resample_alg) < 0 ||
+        static_cast<int>(resample_alg) > static_cast<int>(GRIORA_LAST) )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Invalid value for resample_alg");
+        return CE_Failure;
+    }
     int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
     GDALDataType ntype;
@@ -1188,6 +1206,8 @@ def InfoOptions(options=None, format='text', deserialize=True,
         new_options = options
         if format == 'json':
             new_options += ['-json']
+        if '-json' in new_options:
+            format = 'json'
         if computeMinMax:
             new_options += ['-mm']
         if reportHistograms:
@@ -1355,8 +1375,11 @@ def TranslateOptions(options=None, format=None,
         elif widthPct != 0 and heightPct != 0:
             new_options += ['-outsize', str(widthPct) + '%%', str(heightPct) + '%%']
         if creationOptions is not None:
-            for opt in creationOptions:
-                new_options += ['-co', opt]
+            if isinstance(creationOptions, str):
+                new_options += ['-co', creationOptions]
+            else:
+                for opt in creationOptions:
+                    new_options += ['-co', opt]
         if srcWin is not None:
             new_options += ['-srcwin', _strHighPrec(srcWin[0]), _strHighPrec(srcWin[1]), _strHighPrec(srcWin[2]), _strHighPrec(srcWin[3])]
         if strict:
@@ -1374,8 +1397,11 @@ def TranslateOptions(options=None, format=None,
         if outputBounds is not None:
             new_options += ['-a_ullr', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3])]
         if metadataOptions is not None:
-            for opt in metadataOptions:
-                new_options += ['-mo', opt]
+            if isinstance(metadataOptions, str):
+                new_options += ['-mo', metadataOptions]
+            else:
+                for opt in metadataOptions:
+                    new_options += ['-mo', opt]
         if outputSRS is not None:
             new_options += ['-a_srs', str(outputSRS)]
         if nogcp:
@@ -1657,6 +1683,7 @@ def VectorTranslateOptions(options=None, format=None,
          geometryType=None,
          dim=None,
          segmentizeMaxDist= None,
+         makeValid=False,
          zField=None,
          skipFailures=False,
          limit=None,
@@ -1685,6 +1712,7 @@ def VectorTranslateOptions(options=None, format=None,
           geometryType --- output layer geometry type ('POINT', ....)
           dim --- output dimension ('XY', 'XYZ', 'XYM', 'XYZM', 'layer_dim')
           segmentizeMaxDist --- maximum distance between consecutive nodes of a line geometry
+          makeValid --- run MakeValid() on geometries
           zField --- name of field to use to set the Z component of geometries
           skipFailures --- whether to skip failures
           limit -- maximum number of features to read per layer
@@ -1748,6 +1776,8 @@ def VectorTranslateOptions(options=None, format=None,
                     new_options += [lyr]
         if segmentizeMaxDist is not None:
             new_options += ['-segmentize', str(segmentizeMaxDist)]
+        if makeValid:
+            new_options += ['-makevalid']
         if spatFilter is not None:
             new_options += ['-spat', str(spatFilter[0]), str(spatFilter[1]), str(spatFilter[2]), str(spatFilter[3])]
         if spatSRS is not None:
@@ -1800,7 +1830,7 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
               zFactor=None, scale=None, azimuth=None, altitude=None,
               combined=False, multiDirectional=False, igor=False,
               slopeFormat=None, trigonometric=False, zeroForFlat=False,
-              addAlpha=None,
+              addAlpha=None, colorSelection=None,
               callback=None, callback_data=None):
     """ Create a DEMProcessingOptions() object that can be passed to gdal.DEMProcessing()
         Keyword arguments are :
@@ -1822,6 +1852,7 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
           trigonometric --- (aspect only) whether to return trigonometric angle instead of azimuth. Thus 0deg means East, 90deg North, 180deg West, 270deg South.
           zeroForFlat --- (aspect only) whether to return 0 for flat areas with slope=0, instead of -9999.
           addAlpha --- adds an alpha band to the output file (only for processing = 'color-relief')
+          colorSelection --- (color-relief only) Determines how color entries are selected from an input value. Can be "nearest_color_entry", "exact_color_entry" or "linear_interpolation". Defaults to "linear_interpolation"
           callback --- callback method
           callback_data --- user data for callback
     """
@@ -1861,6 +1892,15 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
             new_options += ['-trigonometric']
         if zeroForFlat:
             new_options += ['-zero_for_flat']
+        if colorSelection is not None:
+            if colorSelection == 'nearest_color_entry':
+                new_options += ['-nearest_color_entry']
+            elif colorSelection == 'exact_color_entry':
+                new_options += ['-exact_color_entry']
+            elif colorSelection == 'linear_interpolation':
+                pass
+            else:
+                raise ValueError("Unsupported value for colorSelection")
         if addAlpha:
             new_options += ['-alpha']
 
@@ -2069,6 +2109,7 @@ def RasterizeOptions(options=None, format=None,
          bands=None, inverse=False, allTouched=False,
          burnValues=None, attribute=None, useZ=False, layers=None,
          SQLStatement=None, SQLDialect=None, where=None, optim=None,
+         add=None,
          callback=None, callback_data=None):
     """ Create a RasterizeOptions() object that can be passed to gdal.Rasterize()
         Keyword arguments are :
@@ -2095,6 +2136,8 @@ def RasterizeOptions(options=None, format=None,
           SQLStatement --- SQL statement to apply to the source dataset
           SQLDialect --- SQL dialect ('OGRSQL', 'SQLITE', ...)
           where --- WHERE clause to apply to source layer(s)
+          optim --- optimization mode ('RASTER', 'VECTOR')
+          add --- set to True to use additive mode instead of replace when burning values
           callback --- callback method
           callback_data --- user data for callback
     """
@@ -2165,6 +2208,8 @@ def RasterizeOptions(options=None, format=None,
             new_options += ['-where', str(where)]
         if optim is not None:
             new_options += ['-optim', str(optim)]
+        if add:
+            new_options += ['-add']
 
     return (GDALRasterizeOptions(new_options), callback, callback_data)
 

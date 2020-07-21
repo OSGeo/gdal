@@ -249,156 +249,114 @@ sufficient to cover all the cases that we have encountered so far, new
 parameters might be added in the future to handle new types of graphical
 representation. Note again that all parameters are optional:
 
-+-----------------------------------+-----------------------------------+
-| param_name                        | Description                       |
-+===================================+===================================+
-| c                                 | **Pen Color**, expressed in       |
-|                                   | hexadecimal (#RRGGBB[AA])         |
-|                                   | [AA] the last 2 digits define the |
-|                                   | alpha channel value, with 0 being |
-|                                   | transparent and FF being opaque.  |
-|                                   | The default is FF (opaque)        |
-|                                   | Suggested default: black          |
-|                                   | (c:#000000)                       |
-|                                   | Example: PEN(c:#FF0000), or       |
-|                                   | PEN(C:#FF0000FF)                  |
-+-----------------------------------+-----------------------------------+
-| w                                 | **Pen Width**, expressed as a     |
-|                                   | numeric value with units (g, px,  |
-|                                   | pt, mm, cm, in)                   |
-|                                   | Suggested default: 1 pixel        |
-|                                   | Examples: PEN(c:#FF0000,w:5px),   |
-|                                   | PEN(w:3pt), PEN(w:50g)            |
-+-----------------------------------+-----------------------------------+
-| p                                 | **Pattern** - To create dash      |
-|                                   | lines. A list of pen-down/pen-up  |
-|                                   | distances                         |
-|                                   | Examples:                         |
-|                                   | |image0| =                        |
-|                                   | PEN(c:#FF0000,w:2px,p:"4px 5px")  |
-|                                   | - short-dash line                 |
-|                                   | |image1| =                        |
-|                                   | PEN(c:#FF0000,w:2px,p:"10px 5px") |
-|                                   | - long-dash line                  |
-|                                   | |image2| =                        |
-|                                   | PEN(c:#FF0000,w:2px,p:"10px 5px   |
-|                                   | 4px 5px") - long/short dash line  |
-+-----------------------------------+-----------------------------------+
-| id                                | **Comma-delimited list of Pen     |
-|                                   | Names or Ids** - For systems that |
-|                                   | identify pens with a name or an   |
-|                                   | id. The names in the              |
-|                                   | comma-delimited list of ids are   |
-|                                   | scanned until one is recognized   |
-|                                   | by the target system.             |
-|                                   | Pen Ids can be either             |
-|                                   | system-specific ids (see further  |
-|                                   | below) or be one of the           |
-|                                   | pre-defined OGR pen ids for well  |
-|                                   | known line patterns. The id       |
-|                                   | parameter should always include   |
-|                                   | one of the OGR ids at the end of  |
-|                                   | the comma-delimited list of ids   |
-|                                   | so that an application never has  |
-|                                   | to rely on understanding          |
-|                                   | system-specific ids.              |
-|                                   |                                   |
-|                                   | | Here is the current list of OGR |
-|                                   |   pen ids (this could grow over   |
-|                                   |   time):                          |
-|                                   |                                   |
-|                                   | -  ogr-pen-0: solid (the default  |
-|                                   |    when no id is provided)        |
-|                                   | -  ogr-pen-1: null pen            |
-|                                   |    (invisible)                    |
-|                                   | -  ogr-pen-2: dash                |
-|                                   | -  ogr-pen-3: short-dash          |
-|                                   | -  ogr-pen-4: long-dash           |
-|                                   | -  ogr-pen-5: dot line            |
-|                                   | -  ogr-pen-6: dash-dot line       |
-|                                   | -  ogr-pen-7: dash-dot-dot line   |
-|                                   | -  ogr-pen-8: alternate-line      |
-|                                   |    (sets every other pixel)       |
-|                                   |                                   |
-|                                   | | System-specific ids are very    |
-|                                   |   likely to be meaningful only to |
-|                                   |   that specific system that       |
-|                                   |   created them. The ids should    |
-|                                   |   start with the system's name,   |
-|                                   |   followed by a dash (-),         |
-|                                   |   followed by whatever            |
-|                                   |   information is meaningful to    |
-|                                   |   that system (a number, a name,  |
-|                                   |   a filename, etc.).              |
-|                                   | | e.g. "mapinfo-5", or            |
-|                                   |   "mysoft-lines.sym-123", or      |
-|                                   |   "othersystems-funnyline"        |
-|                                   |                                   |
-|                                   | System-specific ids are allowed   |
-|                                   | in order to prevent loss of       |
-|                                   | information when dealing with     |
-|                                   | data from systems that store line |
-|                                   | patterns in external files or     |
-|                                   | that have their own pre-defined   |
-|                                   | set of line styles (for instance, |
-|                                   | to do a MapInfo MIF to TAB        |
-|                                   | translation without any loss.)    |
-|                                   |                                   |
-|                                   | | Examples:                       |
-|                                   | | PEN(c:#00FF00,id:"ogr-pen-0") - |
-|                                   |   simple solid line               |
-|                                   | | PEN(c:#00FF00,id:"mapinfo-5,ogr |
-|                                   |   -pen-7")                        |
-|                                   |   - corresponds to MapInfo's Pen  |
-|                                   |   #5, and a system that can't     |
-|                                   |   understand MapInfo pens falls   |
-|                                   |   back on the default "ogr-pen-7" |
-|                                   |   pen (dot-dot line).             |
-+-----------------------------------+-----------------------------------+
-| cap                               | **Pen Cap** - Set the shape of    |
-|                                   | end points of lines.              |
-|                                   | "cap:b" - Butt: The ends of the   |
-|                                   | line don't extend beyond the end  |
-|                                   | points. This is the default.      |
-|                                   | "cap:r" - Round: Terminate lines  |
-|                                   | with a circle whose diameter is   |
-|                                   | equal to the line width.          |
-|                                   | "cap:p" - Projecting: Similar to  |
-|                                   | Butt, but the ends of the line    |
-|                                   | extend by half of line width      |
-|                                   | beyond the end points.            |
-+-----------------------------------+-----------------------------------+
-| j                                 | **Pen Join** - Set the shape of   |
-|                                   | the join point (vertex) of lines. |
-|                                   | "j:m" - Miter: Extend the outer   |
-|                                   | edge of the lines until they      |
-|                                   | touch. This is the default.       |
-|                                   | "j:r" - Rounded: Join lines with  |
-|                                   | an arc whose center is at the     |
-|                                   | join point and whose diameter is  |
-|                                   | equal to the line width.          |
-|                                   | "j:b" - Bevel: Join the lines     |
-|                                   | with butt end caps and fill the   |
-|                                   | resulting triangular notch at the |
-|                                   | join position.                    |
-+-----------------------------------+-----------------------------------+
-| dp                                | **Perpendicular Offset**,         |
-|                                   | expressed as a numeric value with |
-|                                   | units (g, px, pt, mm, cm, in)     |
-|                                   | Offset from the line center. If   |
-|                                   | the offset is negative then the   |
-|                                   | pen will be drawn left of the     |
-|                                   | main segment and right otherwise. |
-+-----------------------------------+-----------------------------------+
-| l                                 | **Priority Level** - Numeric      |
-|                                   | value defining the order in which |
-|                                   | style parts should be drawn.      |
-|                                   | Lower priority style parts are    |
-|                                   | drawn first, and higher priority  |
-|                                   | ones are drawn on top.            |
-|                                   | If priority level is unspecified, |
-|                                   | the default is 1.                 |
-+-----------------------------------+-----------------------------------+
+- ``c``: **Pen Color**, expressed hexadecimal (#RRGGBB[AA])
+
+  * [AA]: the last 2 digits define the alpha channel value, with 0 being
+    transparent and FF being opaque. The default is FF (opaque)
+  * Suggested default: black (c:#000000)
+  * Example: PEN(c:#FF0000), or PEN(C:#FF0000FF)
+
+
+- ``w``: **Pen Width**, expressed as a numeric value with units (g, px, pt, mm,
+  cm, in)
+
+  * Suggested default: 1 pixel
+  * Examples: PEN(c:#FF0000,w:5px), PEN(w:3pt), PEN(w:50g)
+
+- ``p``: **Pattern**. To create dash lines. A list of pen-down/pen-up distances
+
+  Examples:
+
+  * |style_pen1| = PEN(c:#FF0000,w:2px,p:"4px 5px"). short-dash line
+
+  * |style_pen2| = PEN(c:#FF0000,w:2px,p:"10px 5px"). long-dash line
+
+  * |style_pen3| = PEN(c:#FF0000,w:2px,p:"10px 5px 4px 5px"). long/short dash
+
+.. |style_pen1| image:: ../../images/style_pen1.png
+   :width: 75px
+   :height: 15px
+.. |style_pen2| image:: ../../images/style_pen2.png
+   :width: 75px
+   :height: 15px
+.. |style_pen3| image:: ../../images/style_pen3.png
+   :width: 75px
+   :height: 15px
+
+
+- ``id``: **Comma-delimited list of Pen Names or Ids**
+  For systems that identify pens with a name or an id. The names in the
+  comma-delimited list of ids are scanned until one is recognized by the target
+  system. Pen Ids can be either system-specific ids (see further below) or be
+  one of the pre-defined OGR pen ids for known line patterns. The id parameter
+  should always include one of the OGR ids at the end of the comma-delimited
+  list of ids so that an application never has to rely on understanding
+  system-specific ids.
+
+  Here is the current list of OGR pen ids (this could grow time):
+
+  -  ogr-pen-0: solid (the default when no id is provided)
+  -  ogr-pen-1: null pen (invisible)
+  -  ogr-pen-2: dash
+  -  ogr-pen-3: short-dash
+  -  ogr-pen-4: long-dash
+  -  ogr-pen-5: dot line
+  -  ogr-pen-6: dash-dot line
+  -  ogr-pen-7: dash-dot-dot line
+  -  ogr-pen-8: alternate-line (sets every other pixel)
+
+ System-specific ids are very likely to be meaningful only to that specific
+ system that created them. The ids should start with the system's name,
+ followed by a dash (-), followed by whatever information is meaningful to that
+ system (a number, a name, a filename, etc.).
+ e.g. "mapinfo-5", or "mysoft-lines.sym-123", or "othersystems-funnyline"
+ 
+ System-specific ids are allowed in order to prevent loss of information when
+ dealing with data from systems that store line patterns in external files or
+ that have their own pre-defined set of line styles (for instance, to do a
+ MapInfo MIF to TAB translation without any loss.
+
+ Examples:
+ 
+ - PEN(c:#00FF00,id:"ogr-pen-0") - simple solid line
+ - PEN(c:#00FF00,id:"mapinfo-5,ogr-pen-7") - corresponds to MapInfo's Pen #5,
+   and a system that can't understand MapInfo pens falls back on the default
+   "ogr-pen-7" pen (dot-dot line).
+
+
+- ``cap``: **Pen Cap** - Set the shape of  end points of lines.
+
+  * "cap:b" - Butt: The ends of the line don't extend beyond the end points.
+    This is the default.
+  * "cap:r" - Round: Terminate lines with a circle whose diameter is equal to
+    the line width.
+  * "cap:p" - Projecting: Similar to Butt, but the ends of the line extend by
+    half of line width beyond the end points.
+
+
+- ``j``: **Pen Join** - Set the shape of the join point (vertex) of lines.
+
+  * "j:m" - Miter: Extend the outer edge of the lines until they touch.
+    This is the default.
+  * "j:r" - Rounded: Join lines with an arc whose center is at the join point
+    and whose diameter is equal to the line width.
+  * "j:b" - Bevel: Join the lines with butt end caps and fill the resulting
+    triangular notch at the join position.
+
+
+- ``dp``: **Perpendicular Offset**, expressed as a numeric value units (g, px,
+  pt, mm, cm, in)
+
+  Offset from the line center. If the offset is negative then the pen will be
+  drawn left of the main segment and right otherwise.
+
+
+- ``l``: **Priority Level** - Numeric value defining the order in which style
+  parts should be drawn.
+
+  Lower priority style parts are drawn first, and higher priority ones are
+  drawn on top. If priority level is unspecified, the default is 1.
+
 
 2.4 Brush Tool Parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -413,138 +371,87 @@ Here is the current list of BRUSH tool parameters. Note again that that
 this list may be extended in the future, and all parameters are
 optional:
 
-+-----------------------------------+-----------------------------------+
-| param_name                        | Description                       |
-+===================================+===================================+
-| fc                                | | **Brush ForeColor**, expressed  |
-|                                   |   in hexadecimal (#RRGGBB[AA]).   |
-|                                   |   Used for painting the brush     |
-|                                   |   pattern itself.                 |
-|                                   | | [AA] the last 2 digits define   |
-|                                   |   the alpha channel value, with 0 |
-|                                   |   being transparent and FF being  |
-|                                   |   opaque. The default for [AA] is |
-|                                   |   FF (opaque).                    |
-|                                   | | Suggested default: 50% grey     |
-|                                   |   (c:#808080)                     |
-|                                   | | Example: BRUSH(fc:#FF0000)      |
-+-----------------------------------+-----------------------------------+
-| bc                                | | **Brush BackColor**, expressed  |
-|                                   |   in hexadecimal (#RRGGBB[AA]).   |
-|                                   |   Used for painting the area      |
-|                                   |   behind the brush pattern.       |
-|                                   | | [AA] the last 2 digits define   |
-|                                   |   the alpha channel value, with 0 |
-|                                   |   being transparent and FF being  |
-|                                   |   opaque. The default for [AA] is |
-|                                   |   FF (opaque)                     |
-|                                   | | Suggested default: transparent  |
-|                                   |   (c:#FFFFFF00)                   |
-|                                   | | Example:                        |
-|                                   |   BRUSH(fc:#FF0000,bc:#FFEEDD)    |
-+-----------------------------------+-----------------------------------+
-| id                                | **Brush Name or Brush Id** -      |
-|                                   | Comma-delimited list of brush     |
-|                                   | names or ids. The names in the    |
-|                                   | comma-delimited list of ids are   |
-|                                   | scanned until one is recognized   |
-|                                   | by the target system.             |
-|                                   |                                   |
-|                                   | Brush Ids can be either           |
-|                                   | system-specific ids (see further  |
-|                                   | below) or be one of the           |
-|                                   | pre-defined OGR brush ids for     |
-|                                   | well known brush patterns. The id |
-|                                   | parameter should always include   |
-|                                   | one of the OGR ids at the end of  |
-|                                   | the comma-delimited list of ids   |
-|                                   | so that an application never has  |
-|                                   | to rely on understanding          |
-|                                   | system-specific ids.              |
-|                                   |                                   |
-|                                   | | |image3| Here is the current    |
-|                                   |   list of OGR brush ids (this     |
-|                                   |   could grow over time):          |
-|                                   |                                   |
-|                                   | -  ogr-brush-0: solid foreground  |
-|                                   |    color (the default when no id  |
-|                                   |    is provided)                   |
-|                                   | -  ogr-brush-1: null brush        |
-|                                   |    (transparent - no fill,        |
-|                                   |    irrespective of fc or bc       |
-|                                   |    values)                        |
-|                                   | -  ogr-brush-2: horizontal hatch  |
-|                                   | -  ogr-brush-3: vertical hatch    |
-|                                   | -  ogr-brush-4: top-left to       |
-|                                   |    bottom-right diagonal hatch    |
-|                                   | -  ogr-brush-5: bottom-left to    |
-|                                   |    top-right diagonal hatch       |
-|                                   | -  ogr-brush-6: cross hatch       |
-|                                   | -  ogr-brush-7: diagonal cross    |
-|                                   |    hatch                          |
-|                                   |                                   |
-|                                   | Like with Pen Ids,                |
-|                                   | system-specific brush ids are     |
-|                                   | very likely to be meaningful only |
-|                                   | to that specific system that      |
-|                                   | created them. The ids should      |
-|                                   | start with the system's name,     |
-|                                   | followed by a dash (-), followed  |
-|                                   | by whatever information is        |
-|                                   | meaningful to that system (a      |
-|                                   | number, a name, a filename,       |
-|                                   | etc.).                            |
-|                                   |                                   |
-|                                   | The following conventions will be |
-|                                   | used for common system-specific   |
-|                                   | brush ids:                        |
-|                                   |                                   |
-|                                   | -  "bmp-filename.bmp" for Windows |
-|                                   |    BMP patterns                   |
-|                                   |                                   |
-|                                   | Other conventions may be added in |
-|                                   | the future (such as vector        |
-|                                   | symbols, WMF, etc).               |
-+-----------------------------------+-----------------------------------+
-| a                                 | **Angle** - Rotation angle (in    |
-|                                   | degrees, counterclockwise) to     |
-|                                   | apply to the brush pattern.       |
-+-----------------------------------+-----------------------------------+
-| s                                 | **Size or Scaling Factor** -      |
-|                                   | Numeric value with or without     |
-|                                   | units.                            |
-|                                   | If units are specified, then this |
-|                                   | value is the absolute size to     |
-|                                   | draw the brush or symbol.         |
-|                                   | If no units are specified then it |
-|                                   | is taken as a scaling factor      |
-|                                   | relative to the symbol's default  |
-|                                   | size.                             |
-+-----------------------------------+-----------------------------------+
-| dx, dy                            | **Spacing**, expressed as a       |
-|                                   | numeric value with units (g, px,  |
-|                                   | pt, mm, cm, in)                   |
-|                                   | If filling an area using point    |
-|                                   | symbols, these values will define |
-|                                   | the spacing to use between them.  |
-|                                   | "dx" is the horizontal distance   |
-|                                   | between the center of two         |
-|                                   | adjacent symbols and "dy" is the  |
-|                                   | vertical distance.                |
-|                                   | The default is to use the         |
-|                                   | symbol's bounding box width and   |
-|                                   | height for dx and dy              |
-|                                   | respectively.                     |
-+-----------------------------------+-----------------------------------+
-| l                                 | **Priority Level** - Numeric      |
-|                                   | value defining the order in which |
-|                                   | style parts should be drawn.      |
-|                                   | Lower priority style parts are    |
-|                                   | drawn first, and higher priority  |
-|                                   | ones are drawn on top.            |
-|                                   | If priority level is unspecified, |
-|                                   | the default is 1.                 |
-+-----------------------------------+-----------------------------------+
+- ``fc``: **Brush ForeColor**, expressed in hexadecimal (#RRGGBB[AA]).
+  Used for painting the brush pattern itself.
+
+  * [AA]: the last 2 digits define the alpha channel value, with 0 being
+    transparent and FF being opaque. The default is FF (opaque)
+  * Suggested default: 50% grey (c:#808080)
+  * Example: BRUSH(fc:#FF0000)
+
+
+- ``bc``: **Brush BackColor**, expressed in hexadecimal (#RRGGBB[AA]). 
+  Used for painting the area behind the brush pattern.
+
+  * [AA]: the last 2 digits define the alpha channel value, with 0 being
+    transparent and FF being opaque. The default is FF (opaque)
+  * Suggested default: transparent (c:#FFFFFF00)
+  * Example: BRUSH(fc:#FF0000,bc:#FFEEDD)
+
+
+- ``id``: **Brush Name or Brush Id** - Comma-delimited list of brush names or
+  ids. The names in the comma-delimited list of ids are scanned until one is
+  recognized by the target system.
+
+  Brush Ids can be either system-specific ids (see furtherbelow) or be one of
+  the pre-defined OGR brush ids for well known brush patterns. The id parameter
+  should always include one of the OGR ids at the end of the comma-delimited
+  list of ids so that an application never has to rely on understanding
+  system-specific ids.
+
+  Here is the current list of OGR brush ids (this could grow over time):
+
+  .. image:: ../../images/style_ogr_brush.png
+
+  - ogr-brush-0: solid foreground color (the default when no id  is provided)
+  - ogr-brush-1: null brush (transparent - no fill, irrespective of fc or bc
+    values
+  - ogr-brush-2: horizontal hatch
+  - ogr-brush-3: vertical hatch
+  - ogr-brush-4: top-left to bottom-right diagonal hatch
+  - ogr-brush-5: bottom-left to top-right diagonal hatch
+  - ogr-brush-6: cross hatch
+  - ogr-brush-7: diagonal cross hatch
+
+  Like with Pen Ids, system-specific brush ids are very likely to be meaningful
+  only to that specific system that created them. The ids should start with the
+  system's name, followed by a dash (-), followed by whatever information is
+  meaningful to that system (a number, a name, a filename, etc.).
+
+  The following conventions will be used for common system-specific brush ids:
+
+  - "bmp-filename.bmp" for Windows BMP patterns
+
+  Other conventions may be added in the future (such as vector symbols, WMF,
+  etc).
+
+
+- ``a``: **Angle** - Rotation angle (in degrees, counterclockwise) to apply to
+  the brush pattern.
+
+
+- ``s``: **Size or Scaling Factor** - Numeric value with or without units.
+
+  If units are specified, then this value is the absolute size to draw the
+  brush or symbol. If no units are specified then it is taken as a scaling
+  factor relative to the symbol's default size.
+
+
+- ``dx``, ``dy``: **Spacing**, expressed as a numeric value with units (g, px,
+  pt, mm, cm, in)
+
+  If filling an area using point symbols, these values will define the spacing
+  to use between them. "dx" is the horizontal distance between the center of
+  two adjacent symbols and "dy" is the vertical distance. The default is to use
+  the symbol's bounding box width and height for dx and dy respectively.
+
+
+- ``l``: **Priority Level** - Numeric value defining the order in which style
+  parts should be drawn.
+
+  Lower priority style parts are drawn first, and higher priority ones are drawn
+  on top. If priority level is unspecified, the default is 1.
+
 
 2.5 Symbol Tool Parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -560,163 +467,118 @@ Here is the current list of SYMBOL tool parameters. Note again that that
 this list may be extended in the future, and all parameters are
 optional:
 
-+-----------------------------------+-----------------------------------+
-| param_name                        | Description                       |
-+===================================+===================================+
-| id                                | **Symbol Name or Id** -           |
-|                                   | Comma-delimited list of symbol    |
-|                                   | names or ids. The names in the    |
-|                                   | comma-delimited list of ids are   |
-|                                   | scanned until one is recognized   |
-|                                   | by the target system.             |
-|                                   |                                   |
-|                                   | Symbol Ids can be either          |
-|                                   | system-specific ids (see further  |
-|                                   | below) or be one of the           |
-|                                   | pre-defined OGR symbol ids for    |
-|                                   | well known symbols. The id        |
-|                                   | parameter should always include   |
-|                                   | one of the OGR ids at the end of  |
-|                                   | the comma-delimited list of ids   |
-|                                   | so that an application never has  |
-|                                   | to rely on understanding          |
-|                                   | system-specific ids.              |
-|                                   |                                   |
-|                                   | | |image4| Here is the current    |
-|                                   |   list of OGR symbol ids (this    |
-|                                   |   could grow over time):          |
-|                                   |                                   |
-|                                   | -  ogr-sym-0: cross (+)           |
-|                                   | -  ogr-sym-1: diagcross (X)       |
-|                                   | -  ogr-sym-2: circle (not filled) |
-|                                   | -  ogr-sym-3: circle (filled)     |
-|                                   | -  ogr-sym-4: square (not filled) |
-|                                   | -  ogr-sym-5: square (filled)     |
-|                                   | -  ogr-sym-6: triangle (not       |
-|                                   |    filled)                        |
-|                                   | -  ogr-sym-7: triangle (filled)   |
-|                                   | -  ogr-sym-8: star (not filled)   |
-|                                   | -  ogr-sym-9: star (filled)       |
-|                                   | -  ogr-sym-10: vertical bar (can  |
-|                                   |    be rotated using angle         |
-|                                   |    attribute to produce diag bar) |
-|                                   |                                   |
-|                                   | Like with Pen Ids,                |
-|                                   | system-specific symbol ids are    |
-|                                   | very likely to be meaningful only |
-|                                   | to that specific system that      |
-|                                   | created them. The ids should      |
-|                                   | start with the system's name,     |
-|                                   | followed by a dash (-), followed  |
-|                                   | by whatever information is        |
-|                                   | meaningful to that system (a      |
-|                                   | number, a name, a filename,       |
-|                                   | etc.).                            |
-|                                   |                                   |
-|                                   | The following conventions will be |
-|                                   | used for common system-specific   |
-|                                   | symbol ids:                       |
-|                                   |                                   |
-|                                   | -  "bmp-filename.bmp" for Windows |
-|                                   |    BMP symbols                    |
-|                                   | -  "font-sym-%d" for a font       |
-|                                   |    symbols, where %d is a glyph   |
-|                                   |    number inside a font, font     |
-|                                   |    family is defined by **f**     |
-|                                   |    style field.                   |
-|                                   |                                   |
-|                                   | Other conventions may be added in |
-|                                   | the future (such as vector        |
-|                                   | symbols, WMF, etc).               |
-+-----------------------------------+-----------------------------------+
-| a                                 | **Angle** - Rotation angle (in    |
-|                                   | degrees, counterclockwise) to     |
-|                                   | apply to the symbol.              |
-+-----------------------------------+-----------------------------------+
-| c                                 | | **Symbol Color**, expressed in  |
-|                                   |   hexadecimal (#RRGGBB[AA])       |
-|                                   | | [AA] the last 2 digits define   |
-|                                   |   the alpha channel value, with 0 |
-|                                   |   being transparent and FF being  |
-|                                   |   opaque. The default for [AA] is |
-|                                   |   FF (opaque)                     |
-|                                   | | Suggested default symbol color: |
-|                                   |   black (c:#000000)               |
-|                                   | | Example: SYMBOL(c:#FF0000)      |
-+-----------------------------------+-----------------------------------+
-| o                                 | | **Symbol Outline Color**,       |
-|                                   |   expressed in hexadecimal        |
-|                                   |   (#RRGGBB[AA]).                  |
-|                                   | | If this parameter is set, an    |
-|                                   |   additional halo or border of    |
-|                                   |   this color is drawn around the  |
-|                                   |   symbol.                         |
-+-----------------------------------+-----------------------------------+
-| s                                 | **Size or Scaling Factor** -      |
-|                                   | Numeric value with or without     |
-|                                   | units.                            |
-|                                   | If units are specified, then this |
-|                                   | value is the absolute size to     |
-|                                   | draw the symbol.                  |
-|                                   | If no units are specified then it |
-|                                   | is taken as a scaling factor      |
-|                                   | relative to the symbol's default  |
-|                                   | size.                             |
-+-----------------------------------+-----------------------------------+
-| dx, dy                            | **X and Y offset** of the         |
-|                                   | symbol's insertion point,         |
-|                                   | expressed as a numeric value with |
-|                                   | units (g, px, pt, mm, cm, in)     |
-|                                   | Applies to point geometries, and  |
-|                                   | to symbols placed at each vertex  |
-|                                   | of a polyline.                    |
-+-----------------------------------+-----------------------------------+
-| ds, dp, di                        | **Spacing parameters** for        |
-|                                   | symbols spaced along a line,      |
-|                                   | expressed as a numeric value with |
-|                                   | units (g, px, pt, mm, cm, in).    |
-|                                   | "ds" is the step to use when      |
-|                                   | placing symbols along the line.   |
-|                                   | By default, symbols applied to a  |
-|                                   | feature with a line geometry are  |
-|                                   | placed at each vertex, but        |
-|                                   | setting "ds" triggers the         |
-|                                   | placement of symbols at an equal  |
-|                                   | distance along the line. "ds" has |
-|                                   | no effect for a feature with a    |
-|                                   | point geometry.                   |
-|                                   | "dp" can be used together with    |
-|                                   | "ds" to specify the perpendicular |
-|                                   | distance between the symbols'     |
-|                                   | center and the line along which   |
-|                                   | they're placed.                   |
-|                                   | Finally, "di" can be used to      |
-|                                   | specify an initial offset from    |
-|                                   | the beginning of the line.        |
-|                                   | Example:                          |
-|                                   | SYMBOL(id:123, s:5, di:5px,       |
-|                                   | ds:50px)                          |
-+-----------------------------------+-----------------------------------+
-| l                                 | **Priority Level** - Numeric      |
-|                                   | value defining the order in which |
-|                                   | style parts should be drawn.      |
-|                                   | Lower priority style parts are    |
-|                                   | drawn first, and higher priority  |
-|                                   | ones are drawn on top.            |
-|                                   | If priority level is unspecified, |
-|                                   | the default is 1.                 |
-+-----------------------------------+-----------------------------------+
-| f                                 | **Font Name** - Comma-delimited   |
-|                                   | list of fonts names. Works like   |
-|                                   | the CSS font-family property: the |
-|                                   | list of font names is scanned     |
-|                                   | until a known font name is        |
-|                                   | encountered.                      |
-|                                   | Example:                          |
-|                                   | SYMBOL(c:#00FF00,s:12pt,id:"font- |
-|                                   | sym-75,ogr-sym-9",f:"MapInfo_Cart |
-|                                   | ographic")                        |
-+-----------------------------------+-----------------------------------+
+- ``id``: **Symbol Name or Id** - Comma-delimited list of symbol names or ids.
+
+  The names in the comma-delimited list of ids are scanned until one is
+  recognized by the target system.
+
+  Symbol Ids can be either system-specific ids (see further below) or be one of
+  the pre-defined OGR symbol ids for well known symbols. The id parameter should
+  always include one of the OGR ids at the end of the comma-delimited list of
+  ids so that an application never has to rely on understanding system-specific
+  ids.
+
+  Here is the current list of OGR symbol ids (this could grow over time):
+
+  .. image:: ../../images/style_ogr_sym.png
+
+  - ogr-sym-0: cross (+)
+  - ogr-sym-1: diagcross (X)
+  - ogr-sym-2: circle (not filled)
+  - ogr-sym-3: circle (filled)
+  - ogr-sym-4: square (not filled)
+  - ogr-sym-5: square (filled)
+  - ogr-sym-6: triangle (not filled)
+  - ogr-sym-7: triangle (filled)
+  - ogr-sym-8: star (not filled)
+  - ogr-sym-9: star (filled)
+  - ogr-sym-10: vertical bar (can be rotated using angle attribute to produce
+    diagonal bar)
+
+  Like with Pen Ids, system-specific symbol ids are very likely to be meaningful
+  only to that specific system that created them. The ids should start with the
+  system's name, followed by a dash (-), followed by whatever information is
+  meaningful to that system (a number, a name, a filename, etc.).
+
+  The following conventions will be used for common system-specific symbol ids:
+
+  - "bmp-filename.bmp" for Windows BMP symbols
+  - "font-sym-%d" for a font symbols, where %d is a glyph number inside a font,
+    font family is defined by **f** style field.
+
+  Other conventions may be added in the future (such as vector symbols, WMF,
+  etc.)
+
+
+- ``a``: **Angle** - Rotation angle (in degrees, counterclockwise) to apply to
+  the symbol.
+
+
+- ``c``: **Symbol Color**, expressed in hexadecimal (#RRGGBB[AA])
+
+  * [AA]: the last 2 digits define the alpha channel value, with 0 being
+    transparent and FF being opaque. The default is FF (opaque)
+  * Suggested default symbol color: black (c:#000000) 
+  * Example ::
+
+        SYMBOL(c:#FF0000)
+
+- ``o``: **Symbol Outline Color**, expressed in hexadecimal (#RRGGBB[AA]).
+
+  If this parameter is set, an additional halo or border of this color is drawn
+  around the symbol.
+
+
+- ``s``:  **Size or Scaling Factor** - Numeric value with or without units.
+
+  If units are specified, then this value is the absolute size to draw the
+  symbol. If no units are specified then it is taken as a scaling factor
+  relative to the symbol's default size.
+
+
+- ``dx``, ``dy``: **X and Y offset**, of the symbol's insertion point, expressed
+  as a numeric value with units (g, px, pt, mm, cm, in)
+
+  Applies to point geometries, and to symbols placed at each vertex of a
+  polyline.
+
+
+- ``ds``, ``dp``, ``di``: **Spacing parameters** for symbols spaced along a
+  line, expressed as a numeric value with units (g, px, pt, mm, cm, in).
+
+  * ``ds`` is the step to use when  placing symbols along the line.
+    By default, symbols applied to a feature with a line geometry are placed at
+    each vertex, butsetting "ds" triggers the placement of symbols at an equal
+    distance along the line. "ds" has no effect for a feature with a point
+    geometry.
+
+  * ``dp`` can be used together with "ds" to specify the perpendicular distance
+    between the symbols' center and the line along which they're placed.
+
+  * ``di`` can be used to specify an initial offset from the beginning of the
+    line.
+
+  * Example ::
+
+        SYMBOL(id:123, s:5, di:5px, ds:50px)
+
+
+- ``l``: **Priority Level** - Numeric value defining the order in which style
+  parts should be drawn.
+
+  Lower priority style parts are drawn first, and higher priority ones are drawn
+  on top. If priority level is unspecified, the default is 1.
+
+
+- ``f``: **Font Name** - Comma-delimited list of fonts names.
+
+  Works like the CSS font-family property: the list of font names is scanned
+  until a known font name is encountered.
+
+  Example ::
+
+    SYMBOL(c:#00FF00,s:12pt,id:"font-sym-75,ogr-sym-9",f:"MapInfo_Cartographic")
+
 
 2.6 Label Tool Parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -733,46 +595,127 @@ Here is the current list of LABEL tool parameters. Note again that that
 this list may be extended in the future, and all parameters are
 optional:
 
-========== ==========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
-param_name Description
-========== ==========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
-f          **Font Name** - Comma-delimited list of fonts names. Works like the CSS font-family property: the list of font names is scanned until a known font name is encountered.
-           Example: LABEL(f:"Noto Sans, Helvetica", s:12pt, t:"Hello World!")
-s          **Font Size**, expressed as a numeric value with units (g, px, pt, mm, cm, in).
-           In the CAD world, font size, or "text height", determines the height of a capital letter – what typographers call "cap height". But in the worlds of typesetting, graphics and cartography, font size refers to the "em height" of the font, which is taller than the cap height. This means that text assigned a height of 1 inch in a DXF file will look larger (often about 45% larger) than 72-point text in a PDF file or MapInfo map. At present, GDAL vector drivers treat the "s:" style string value as whichever font size measurement (cap height or em height) is used natively by that format, which may result in incorrect text sizing when using the ogr2ogr tool. This parameter could be subject to clearer specification in the future.
-t          **Text String** - Can be a constant string, or a reference to an attribute field's value. If a double-quote character or backslash (\) character is present in the string, it is escaped with a backslash character before it.
-           Examples:
-           LABEL(f:"Arial, Helvetica", s:12pt, t:"Hello World!")
-           LABEL(f:"Arial, Helvetica", s:12pt, t:"Hello World with escaped \\"quotes\" and \\\backslash!")
-           LABEL(f:"Arial, Helvetica", s:12pt, t:{text_attribute})
-a          **Angle** - Rotation angle (in degrees, counterclockwise).
-c          **Text Foreground Color**, expressed in hexadecimal (#RRGGBB[AA])
-           Suggested default: black (c:#000000)
-b          **Text Background Color** - Color of the filled box to draw behind the label, expressed in hexadecimal (#RRGGBB[AA]). No box drawn if not set.
-o          **Text Outline Color** - Color of the text outline (halo in MapInfo terminology), expressed in hexadecimal (#RRGGBB[AA]). No outline if not set.
-h          **Shadow Color** - Color of the text shadow, expressed in hexadecimal (#RRGGBB[AA]). No shadow if not set.
-w          **Stretch** - The stretch factor changes the width of all characters in the font by the given percentage. For example, a setting of 150 results in all characters in the font being stretched to 150% of their usual width. The default stretch factor is 100.
-m          **Label Placement Mode** - How the text is drawn relative to the feature's geometry.
-           "m:p" - The default. A simple label is attached to a point or to the first vertex of a polyline.
-           "m:l" - Text is attached to the last vertex of a polyline. A PEN tool can be combined with this LABEL tool to draw the polyline as a leader to the label.
-           "m:s" - Stretch the text string along a polyline, with an equal spacing between each character.
-           "m:m" - Place text as a single label at the middle of a polyline (based on total line length).
-           "m:w" - One word per line segment in a polyline.
-           "m:h" - Every word of text attached to polyline is placed horizontally in its segment, anchor point is a center of segment.
-           "m:a" - Every word of text attached to polyline is stretched to fit the segment of polyline and placed along that segment. The anchor point is a start of a segment.
-p          |image5| **Anchor Position** - A value from 1 to 12 defining the label's position relative to the point to which it is attached. There are four vertical alignment modes: *baseline*, *center*, *top* and *bottom*; and three horizontal modes: *left*, *center* and *right*. The scheme is shown at right.
-           Currently, the precise interpretation of these values (for example, whether accents on uppercase letters sit above or below the alignment point with p:7) differs from file format to file format. This parameter could be subject to clearer specification in the future.
-dx, dy     **X and Y offset** of the label's insertion point, expressed as a numeric value with units (g, px, pt, mm, cm, in).
-           Applies to text placed on a point, or at each vertex of a polyline.
-dp         **Perpendicular Offset** for labels placed along a line, expressed as a numeric value with units (g, px, pt, mm, cm, in).
-           "dp" specifies the perpendicular distance between the label and the line along which it is placed. If the offset is negative then the label will be shifted left of the main segment, and right otherwise.
-bo         **Bold** - Set to 1 for bold text. Set to 0 or omitted otherwise.
-it         **Italic** - Set to 1 for italic text. Set to 0 or omitted otherwise.
-un         **Underline** - Set to 1 for underlined text. Set to 0 or omitted otherwise.
-st         **Strikethrough** - Set to 1 for struck-through text. Set to 0 or omitted otherwise.
-l          **Priority Level** - Numeric value defining the order in which style parts should be drawn. Lower priority style parts are drawn first, and higher priority ones are drawn on top.
-           If priority level is unspecified, the default is 1.
-========== ==========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+- ``f``: **Font Name** - Comma-delimited list of fonts names.
+
+  Works like the CSS font-family property: the list of font names is scanned
+  until a known font name is encountered.
+
+  Example ::
+
+    LABEL(f:"Noto Sans, Helvetica", s:12pt, t:"Hello World!")
+
+
+- ``s``: **Font Size**, expressed as a numeric value with units (g, px, pt,
+  mm, cm, in).
+
+  In the CAD world, font size, or "text height", determines the height of a
+  capital letter - what typographers call "cap height". But in the worlds of
+  typesetting, graphics and cartography, font size refers to the "em height"
+  of the font, which is taller than the cap height. This means that text
+  assigned a height of 1 inch in a DXF file will look larger (often about 45%
+  larger) than 72-point text in a PDF file or MapInfo map. At present, GDAL
+  vector drivers treat the "s:" style string value as whichever font size
+  measurement (cap height or em height) is used natively by that format, which
+  may result in incorrect text sizing when using the ogr2ogr tool. This
+  parameter could be subject to clearer specification in the future.
+
+
+- ``t``: **Text String** - Can be a constant string, or a reference to an
+  attribute field's value.
+
+  If a double-quote character or backslash (\) character is present in the
+  string, it is escaped with a backslash character before it.
+
+  Examples ::
+
+    LABEL(f:"Arial, Helvetica", s:12pt, t:"Hello World!")
+    LABEL(f:"Arial, Helvetica", s:12pt, t:"Hello World with escaped \\"quotes\" and \\\backslash!")
+    LABEL(f:"Arial, Helvetica", s:12pt, t:{text_attribute})
+
+
+- ``a``: **Angle** - Rotation angle (in degrees, counterclockwise).
+
+- ``c``: **Text Foreground Color**, expressed in hexadecimal (#RRGGBB[AA])
+  Suggested default: black (c:#000000)
+
+- ``b``: **Text Background Color** - Color of the filled box to draw behind the
+  label, expressed in hexadecimal (#RRGGBB[AA]). No box drawn if not set.
+
+- ``o``: **Text Outline Color** - Color of the text outline (halo in MapInfo
+  terminology), expressed in hexadecimal (#RRGGBB[AA]). No outline if not set.
+
+- ``h``: **Shadow Color** - Color of the text shadow, expressed in hexadecimal
+  (#RRGGBB[AA]). No shadow if not set.
+
+- ``w``: **Stretch** - The stretch factor changes the width of all characters in
+  the font by the given percentage. For example, a setting of 150 results in all
+  characters in the font being stretched to 150% of their usual width. The
+  default stretch factor is 100.
+
+- ``m``: **Label Placement Mode** - How the text is drawn relative to the
+  feature's geometry.
+
+  * "m:p" - The default. A simple label is attached to a point or to the first
+    vertex of a polyline.
+  * "m:l" - Text is attached to the last vertex of a polyline. A PEN tool can
+    be combined with this LABEL tool to draw the polyline as a leader to the
+    label.
+  * "m:s" - Stretch the text string along a polyline, with an equal spacing
+    between each character.
+  * "m:m" - Place text as a single label at the middle of a polyline (based on
+    total line length).
+  * "m:w" - One word per line segment in a polyline.
+  * "m:h" - Every word of text attached to polyline is placed horizontally in
+    its segment, anchor point is a center of segment.
+  * "m:a" - Every word of text attached to polyline is stretched to fit the
+    segment of polyline and placed along that segment. The anchor point is a
+    start of a segment.
+
+
+- ``p``: **Anchor Position** - A value from 1 to 12 defining the label's
+  position relative to the point to which it is attached
+
+  There are four vertical alignment modes: *baseline*, *center*, *top* and
+  *bottom*; and three horizontal modes: *left*, *center* and *right*.
+
+  .. image:: ../../images/style_textanchor.png
+
+  Currently, the precise interpretation of these values (for example, whether
+  accents on uppercase letters sit above or below the alignment point with p:7)
+  differs from file format to file format. This parameter could be subject to
+  clearer specification in the future.
+
+
+- ``dx``, ``dy``: **X and Y offset** of the label's insertion point, expressed
+  as a numeric value with units (g, px, pt, mm, cm, in).
+
+  Applies to text placed on a point, or at each vertex of a polyline.
+
+
+- ``dp``: **Perpendicular Offset** for labels placed along a line, expressed as
+  a numeric value with units (g, px, pt, mm, cm, in).
+
+  "dp" specifies the perpendicular distance between the label and the line along
+  which it is placed. If the offset is negative then the label will be shifted
+  left of the main segment, and right otherwise.
+
+
+- ``bo``: **Bold** - Set to 1 for bold text. Set to 0 or omitted otherwise.
+
+- ``it``: **Italic** - Set to 1 for italic text. Set to 0 or omitted otherwise.
+
+- ``un``: **Underline** - Set to 1 for underlined text. Set to 0 or omitted
+  otherwise.
+
+- ``st``:  **Strikethrough** - Set to 1 for struck-through text. Set to 0 or
+  omitted otherwise.
+
+- ``l``: **Priority Level** - Numeric value defining the order in which style
+  parts should be drawn.
+
+  Lower priority style parts are drawn first, and higher priority ones are drawn
+  on top. If priority level is unspecified, the default is 1.
+
 
 2.7 Styles Table Format
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -939,58 +882,45 @@ Here is some example C++ code:
        }
 
 
-REVISION HISTORY
-----------------
+.. only:: html
 
--  **Version 0.016 - 2018-12-03 - Andrew Sudorgin**
-   Restored and documented font property for point symbols
--  **Version 0.015 - 2018-01-08 - Alan Thomas**
-   Update outdated material; minor changes to BRUSH 'id' and LABEL 't',
-   'bo', 'it', 'un', 'st'; clarify BRUSH 'fc', 'bc', SYMBOL 'o' and
-   LABEL 's', 'w', 'p'
--  **Version 0.014 - 2011-07-24 - Even Rouault**
-   Mention the escaping of double-quote characters in the text string of
-   a LABEL (ticket #3675)
--  **Version 0.013 - 2008-07-29 - Daniel Morissette**
-   Added 'o:' for font point symbol outline color (ticket #2509)
--  **Version 0.012 - 2008-07-21 - Daniel Morissette**
-   Added 'o:' for text outline color and updated 'b:' to be specifically
-   a filled label background box (ticket #2480)
--  **Version 0.011 - 2008-02-28 - Tamas Szekeres**
-   Note about OGR SQL to transfer the style between the data sources
--  **Version 0.010 - 2006-09-23- Andrey Kiselev**
-   Added label styles 'w', 'st', 'h', 'm:h', 'm:a', 'p:{10,11,12}'
--  **Version 0.009 - 2005-03-11- Frank Warmerdam**
-   Remove reference to OGRWin, move into ogr distribution
--  **Version 0.008 - 2001-03-21- Frank Warmerdam**
-   Fix minor typos (h:12pt instead of s:12pt in examples)
--  **Version 0.008 - 2000-07-15 - Stephane Villeneuve**
-   Remove style table in Layer. Add forecolor and backcolor to brush.
--  **Version 0.007 - 2000-06-22 - Daniel Morissette**
-   Fixed typo and added offset param for PEN.
--  **Version 0.006 - 2000-06-20 - Daniel Morissette**
-   Added the OGR-Win idea and made small changes here and there.
--  **Version 0.005 - 2000-06-12 - Daniel Morissette**
-   Allow passing of comma-delimited list of names in PEN's "id"
-   parameter.
-   Defined system-independent pen style names.
--  **Version 0.004 - 2000-06-09 - Stephane Villeneuve**
-   Added PEN cap and join parameters
-   More clearly defined the API
--  **Version 0.003 - 2000-02-15 - Daniel Morissette**
-   First kind-of-complete version.
- 
+    Revision history
+    ----------------
 
-.. |image0| image:: ../../images/style_pen1.png
-   :width: 75px
-   :height: 15px
-.. |image1| image:: ../../images/style_pen2.png
-   :width: 75px
-   :height: 15px
-.. |image2| image:: ../../images/style_pen3.png
-   :width: 75px
-   :height: 15px
-.. |image3| image:: ../../images/style_ogr_brush.png
-.. |image4| image:: ../../images/style_ogr_sym.png
-.. |image5| image:: ../../images/style_textanchor.png
-
+    -  **Version 0.016 - 2018-12-03 - Andrew Sudorgin**
+       Restored and documented font property for point symbols
+    -  **Version 0.015 - 2018-01-08 - Alan Thomas**
+       Update outdated material; minor changes to BRUSH 'id' and LABEL 't',
+       'bo', 'it', 'un', 'st'; clarify BRUSH 'fc', 'bc', SYMBOL 'o' and
+       LABEL 's', 'w', 'p'
+    -  **Version 0.014 - 2011-07-24 - Even Rouault**
+       Mention the escaping of double-quote characters in the text string of
+       a LABEL (ticket #3675)
+    -  **Version 0.013 - 2008-07-29 - Daniel Morissette**
+       Added 'o:' for font point symbol outline color (ticket #2509)
+    -  **Version 0.012 - 2008-07-21 - Daniel Morissette**
+       Added 'o:' for text outline color and updated 'b:' to be specifically
+       a filled label background box (ticket #2480)
+    -  **Version 0.011 - 2008-02-28 - Tamas Szekeres**
+       Note about OGR SQL to transfer the style between the data sources
+    -  **Version 0.010 - 2006-09-23- Andrey Kiselev**
+       Added label styles 'w', 'st', 'h', 'm:h', 'm:a', 'p:{10,11,12}'
+    -  **Version 0.009 - 2005-03-11- Frank Warmerdam**
+       Remove reference to OGRWin, move into ogr distribution
+    -  **Version 0.008 - 2001-03-21- Frank Warmerdam**
+       Fix minor typos (h:12pt instead of s:12pt in examples)
+    -  **Version 0.008 - 2000-07-15 - Stephane Villeneuve**
+       Remove style table in Layer. Add forecolor and backcolor to brush.
+    -  **Version 0.007 - 2000-06-22 - Daniel Morissette**
+       Fixed typo and added offset param for PEN.
+    -  **Version 0.006 - 2000-06-20 - Daniel Morissette**
+       Added the OGR-Win idea and made small changes here and there.
+    -  **Version 0.005 - 2000-06-12 - Daniel Morissette**
+       Allow passing of comma-delimited list of names in PEN's "id"
+       parameter.
+       Defined system-independent pen style names.
+    -  **Version 0.004 - 2000-06-09 - Stephane Villeneuve**
+       Added PEN cap and join parameters
+       More clearly defined the API
+    -  **Version 0.003 - 2000-02-15 - Daniel Morissette**
+       First kind-of-complete version.

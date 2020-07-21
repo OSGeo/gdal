@@ -159,7 +159,13 @@ int OGRNASDataSource::Open( const char * pszNewName )
 /*      Save the schema file if possible.  Do not make a fuss if we     */
 /*      cannot.  It could be read-only directory or something.          */
 /* -------------------------------------------------------------------- */
-    if( !bHaveSchema && poReader->GetClassCount() > 0 )
+    if( !bHaveSchema && poReader->GetClassCount() > 0 &&
+        !STARTS_WITH_CI(pszNewName, "/vsitar/") &&
+        !STARTS_WITH_CI(pszNewName, "/vsizip/") &&
+        !STARTS_WITH_CI(pszNewName, "/vsigzip/vsi") &&
+        !STARTS_WITH_CI(pszNewName, "/vsigzip//vsi") &&
+        !STARTS_WITH_CI(pszNewName, "/vsicurl/") &&
+        !STARTS_WITH_CI(pszNewName, "/vsicurl_streaming/") )
     {
         VSILFILE *fp = nullptr;
 

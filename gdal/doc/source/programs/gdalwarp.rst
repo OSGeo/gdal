@@ -27,7 +27,7 @@ Synopsis
         [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]
         [-cutline datasource] [-cl layer] [-cwhere expression]
         [-csql statement] [-cblend dist_in_pixels] [-crop_to_cutline]
-        [-of format] [-co "NAME=VALUE"]* [-overwrite]
+        [-if format]* [-of format] [-co "NAME=VALUE"]* [-overwrite]
         [-nomd] [-cvmd meta_conflict_value] [-setci] [-oo NAME=VALUE]*
         [-doo NAME=VALUE]*
         srcfile* dstfile
@@ -126,7 +126,7 @@ with control information.
 
 .. option:: -tr <xres> <yres>
 
-    Sse output file resolution (in target georeferenced units)
+    Set output file resolution (in target georeferenced units)
 
 .. option:: -tap
 
@@ -177,7 +177,7 @@ with control information.
 
     ``lanczos``: Lanczos windowed sinc resampling.
 
-    ``average``: average resampling, computes the average of all non-NODATA contributing pixels.
+    ``average``: average resampling, computes the weighted average of all non-NODATA contributing pixels.
 
     ``mode``: mode resampling, selects the value which appears most often of all the sampled points.
 
@@ -190,6 +190,8 @@ with control information.
     ``q1``: first quartile resampling, selects the first quartile value of all non-NODATA contributing pixels.
 
     ``q3``: third quartile resampling, selects the third quartile value of all non-NODATA contributing pixels.
+
+    ``sum``: compute the weighted sum of all non-NODATA contributing pixels (since GDAL 3.1)
 
 .. option:: -srcnodata <value [value...]>
 
@@ -243,6 +245,8 @@ with control information.
 .. option:: -q
 
     Be quiet.
+
+.. include:: options/if.rst
 
 .. include:: options/of.rst
 

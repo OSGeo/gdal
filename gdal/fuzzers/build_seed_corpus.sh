@@ -87,7 +87,7 @@ rm -f $OUT/hfa_fuzzer_seed_corpus.zip
 cd $(dirname $0)/../../autotest/gcore/data
 zip -r $OUT/hfa_fuzzer_seed_corpus.zip ./*.img >/dev/null
 cd $OLDPWD
-cd $(dirname $0)/../../autotest/gdrivers/data
+cd $(dirname $0)/../../autotest/gdrivers/data/hfa
 zip -r $OUT/hfa_fuzzer_seed_corpus.zip ./*.img >/dev/null
 cd $OLDPWD
 
@@ -95,9 +95,9 @@ echo "Building adrg_fuzzer_seed_corpus.zip"
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:ABCDEF01.GEN\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/SMALL_ADRG/ABCDEF01.GEN
+    cat $(dirname $0)/../../autotest/gdrivers/data/adrg/SMALL_ADRG/ABCDEF01.GEN
     printf "***NEWFILE***:ABCDEF01.IMG\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/SMALL_ADRG/ABCDEF01.IMG
+    cat $(dirname $0)/../../autotest/gdrivers/data/adrg/SMALL_ADRG/ABCDEF01.IMG
 } > adrg.tar
 rm -f $OUT/adrg_fuzzer_seed_corpus.zip
 zip -r $OUT/adrg_fuzzer_seed_corpus.zip adrg.tar >/dev/null
@@ -107,11 +107,11 @@ echo "Building srp_fuzzer_seed_corpus.zip"
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:FKUSRP01.GEN\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/USRP_PCB0/FKUSRP01.GEN
+    cat $(dirname $0)/../../autotest/gdrivers/data/srp/USRP_PCB0/FKUSRP01.GEN
     printf "***NEWFILE***:FKUSRP01.IMG\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/USRP_PCB0/FKUSRP01.IMG
+    cat $(dirname $0)/../../autotest/gdrivers/data/srp/USRP_PCB0/FKUSRP01.IMG
     printf "***NEWFILE***:FKUSRP01.QAL\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/USRP_PCB0/FKUSRP01.QAL
+    cat $(dirname $0)/../../autotest/gdrivers/data/srp/USRP_PCB0/FKUSRP01.QAL
 } > srp.tar
 rm -f $OUT/srp_fuzzer_seed_corpus.zip
 zip -r $OUT/srp_fuzzer_seed_corpus.zip srp.tar >/dev/null
@@ -141,9 +141,9 @@ rm -f $OUT/envi_fuzzer_seed_corpus.zip
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:my.hdr\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/aea.hdr
+    cat $(dirname $0)/../../autotest/gdrivers/data/envi/aea.hdr
     printf "***NEWFILE***:my.dat\\n" >> aea.tar
-    cat $(dirname $0)/../../autotest/gdrivers/data/aea.dat
+    cat $(dirname $0)/../../autotest/gdrivers/data/envi/aea.dat
 } > aea.tar
 zip -r $OUT/envi_fuzzer_seed_corpus.zip aea.tar >/dev/null
 rm aea.tar
@@ -151,9 +151,9 @@ rm aea.tar
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:my.hdr\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/aea_compressed.hdr
+    cat $(dirname $0)/../../autotest/gdrivers/data/envi/aea_compressed.hdr
     printf "***NEWFILE***:my.dat\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/aea_compressed.dat
+    cat $(dirname $0)/../../autotest/gdrivers/data/envi/aea_compressed.dat
 } > aea_compressed.tar
 zip -r $OUT/envi_fuzzer_seed_corpus.zip aea_compressed.tar >/dev/null
 rm aea_compressed.tar
@@ -164,9 +164,9 @@ rm -f $OUT/ehdr_fuzzer_seed_corpus.zip
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:my.hdr\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/ehdr11.hdr
+    cat $(dirname $0)/../../autotest/gdrivers/data/ehdr/ehdr11.hdr
     printf "***NEWFILE***:my.dat\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/ehdr11.flt
+    cat $(dirname $0)/../../autotest/gdrivers/data/ehdr/ehdr11.flt
 } > ehdr11.tar
 zip -r $OUT/ehdr_fuzzer_seed_corpus.zip ehdr11.tar >/dev/null
 rm ehdr11.tar
@@ -177,9 +177,9 @@ rm -f $OUT/genbin_fuzzer_seed_corpus.zip
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:my.hdr\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/tm4628_96.hdr
+    cat $(dirname $0)/../../autotest/gdrivers/data/genbin/tm4628_96.hdr
     printf "***NEWFILE***:my.bil\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/tm4628_96.bil
+    cat $(dirname $0)/../../autotest/gdrivers/data/genbin/tm4628_96.bil
 } > genbin.tar
 zip -r $OUT/genbin_fuzzer_seed_corpus.zip genbin.tar >/dev/null
 rm genbin.tar
@@ -190,9 +190,9 @@ rm -f $OUT/isce_fuzzer_seed_corpus.zip
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:isce.slc\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/isce.slc
+    cat $(dirname $0)/../../autotest/gdrivers/data/isce/isce.slc
     printf "***NEWFILE***:isce.slc.xml\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/isce.slc.xml
+    cat $(dirname $0)/../../autotest/gdrivers/data/isce/isce.slc.xml
 } > isce.tar
 zip -r $OUT/isce_fuzzer_seed_corpus.zip isce.tar >/dev/null
 rm isce.tar
@@ -203,9 +203,9 @@ rm -f $OUT/roipac_fuzzer_seed_corpus.zip
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:srtm.dem\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/srtm.dem
+    cat $(dirname $0)/../../autotest/gdrivers/data/roipac/srtm.dem
     printf "***NEWFILE***:srtm.dem.rsc\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/srtm.dem.rsc
+    cat $(dirname $0)/../../autotest/gdrivers/data/roipac/srtm.dem.rsc
 } > roipac.tar
 zip -r $OUT/roipac_fuzzer_seed_corpus.zip roipac.tar >/dev/null
 rm roipac.tar
@@ -216,9 +216,9 @@ rm -f $OUT/rraster_fuzzer_seed_corpus.zip
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:my.grd\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/byte_rraster.grd
+    cat $(dirname $0)/../../autotest/gdrivers/data/rraster/byte_rraster.grd
     printf "***NEWFILE***:my.gri\\n"
-    cat $(dirname $0)/../../autotest/gdrivers/data/byte_rraster.gri
+    cat $(dirname $0)/../../autotest/gdrivers/data/rraster/byte_rraster.gri
 } > rraster.tar
 zip -r $OUT/rraster_fuzzer_seed_corpus.zip rraster.tar >/dev/null
 rm rraster.tar
@@ -251,7 +251,7 @@ echo "Building aig_fuzzer_seed_corpus.zip"
 printf "FUZZER_FRIENDLY_ARCHIVE\\n" > aig.tar
 for x in hdr.adf sta.adf dblbnd.adf vat.adf w001001.adf abc3x1.clr prj.adf w001001x.adf; do
     printf "***NEWFILE***:%s\\n" "$x" >> aig.tar
-    cat $(dirname $0)/../../autotest/gdrivers/data/abc3x1/$x >> aig.tar
+    cat $(dirname $0)/../../autotest/gdrivers/data/aigrid/abc3x1/$x >> aig.tar
 done
 rm -f $OUT/aig_fuzzer_seed_corpus.zip
 zip -r $OUT/aig_fuzzer_seed_corpus.zip aig.tar >/dev/null
@@ -259,18 +259,18 @@ rm aig.tar
 
 echo "Building get_jpeg2000_structure_fuzzer_seed_corpus.zip"
 rm -f $OUT/get_jpeg2000_structure_fuzzer_seed_corpus.zip
-cd $(dirname $0)/../../autotest/gdrivers/data
-zip -r $OUT/get_jpeg2000_structure_fuzzer_seed_corpus.zip ./*.jp2 >/dev/null
+cd $(dirname $0)/../../autotest/gdrivers/data/jpeg2000
+zip -r $OUT/get_jpeg2000_structure_fuzzer_seed_corpus.zip ./*.jp2 ./*.j2k >/dev/null
 cd $OLDPWD
 
 
 echo "Building gdal_fuzzer_seed_corpus.zip"
 cd $(dirname $0)/../../autotest/gcore/data
 rm -f $OUT/gdal_fuzzer_seed_corpus.zip
-zip -r $OUT/gdal_fuzzer_seed_corpus.zip . >/dev/null
+find . -type f -exec zip -j $OUT/gdal_fuzzer_seed_corpus.zip {} \; >/dev/null
 cd $OLDPWD
 cd $(dirname $0)/../../autotest/gdrivers/data
-zip -r $OUT/gdal_fuzzer_seed_corpus.zip . >/dev/null
+find . -type f -exec zip -j $OUT/gdal_fuzzer_seed_corpus.zip {} \; >/dev/null
 cd $OLDPWD
 
 echo "Building gdal_filesystem_fuzzer_seed_corpus.zip"
@@ -293,7 +293,7 @@ rm gdal_sdts.tar
 echo "Building ers_fuzzer_seed_corpus.zip"
 rm -f $OUT/ers_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD
-cd  $(dirname $0)/../../autotest/gdrivers/data
+cd  $(dirname $0)/../../autotest/gdrivers/data/ers
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:%s\\n" "test.ers"
@@ -318,7 +318,7 @@ rm srtm.tar ers_dem.tar
 echo "Building ogr_sdts_fuzzer_seed_corpus.zip"
 rm -f $OUT/ogr_sdts_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD
-cd  $(dirname $0)/../../autotest/ogr/data/D3607551_rd0s_1_sdts_truncated
+cd  $(dirname $0)/../../autotest/ogr/data/sdts/D3607551_rd0s_1_sdts_truncated
 printf "FUZZER_FRIENDLY_ARCHIVE\\n" > $CUR_DIR/ogr_sdts.tar
 for file in *.DDF; do
     printf "***NEWFILE***:%s\\n" "$file" >> $CUR_DIR/ogr_sdts.tar
@@ -332,10 +332,7 @@ echo "Building ogr_fuzzer_seed_corpus.zip"
 CUR_DIR=$PWD
 cd $(dirname $0)/../../autotest/ogr/data
 rm -f $OUT/ogr_fuzzer_seed_corpus.zip
-zip -r $OUT/ogr_fuzzer_seed_corpus.zip . >/dev/null
-cd mvt
-zip $OUT/ogr_fuzzer_seed_corpus.zip ./* >/dev/null
-cd ..
+find . -type f -exec zip -j $OUT/ogr_fuzzer_seed_corpus.zip {} \; >/dev/null
 cd $CUR_DIR
 
 echo "Building cad_fuzzer_seed_corpus.zip"
@@ -345,13 +342,13 @@ zip -r $OUT/cad_fuzzer_seed_corpus.zip . >/dev/null
 cd $OLDPWD
 
 echo "Building csv_fuzzer_seed_corpus.zip"
-cd $(dirname $0)/../../autotest/ogr/data
+cd $(dirname $0)/../../autotest/ogr/data/csv
 rm -f $OUT/csv_fuzzer_seed_corpus.zip
 zip -r $OUT/csv_fuzzer_seed_corpus.zip ./*.csv >/dev/null
 cd $OLDPWD
 
 echo "Building bna_fuzzer_seed_corpus.zip"
-cd $(dirname $0)/../../autotest/ogr/data
+cd $(dirname $0)/../../autotest/ogr/data/bna
 rm -f $OUT/bna_fuzzer_seed_corpus.zip
 zip -r $OUT/bna_fuzzer_seed_corpus.zip ./*.bna >/dev/null
 cd $OLDPWD
@@ -359,7 +356,7 @@ cd $OLDPWD
 echo "Building xlsx_fuzzer_seed_corpus.zip"
 rm -f $OUT/xlsx_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD
-cd  $(dirname $0)/../../autotest/ogr/data
+cd  $(dirname $0)/../../autotest/ogr/data/xlsx
 for filename in *.xlsx; do
     mkdir tmpxlsx
     (cd tmpxlsx
@@ -379,7 +376,7 @@ rm xlsx_*.tar
 echo "Building ods_fuzzer_seed_corpus.zip"
 rm -f $OUT/ods_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD
-cd  $(dirname $0)/../../autotest/ogr/data
+cd  $(dirname $0)/../../autotest/ogr/data/ods
 for filename in *.ods; do
     mkdir tmpods
     unzip -d tmpods $filename >/dev/null
@@ -396,7 +393,7 @@ rm ods_*.tar
 
 
 echo "Building rec_fuzzer_seed_corpus.zip"
-cd $(dirname $0)/../../autotest/ogr/data
+cd $(dirname $0)/../../autotest/ogr/data/rec
 rm -f $OUT/rec_fuzzer_seed_corpus.zip
 zip -r $OUT/rec_fuzzer_seed_corpus.zip ./*.rec >/dev/null
 cd $OLDPWD
@@ -422,13 +419,13 @@ echo "Building mitab_tab_fuzzer_seed_corpus.zip"
 printf "FUZZER_FRIENDLY_ARCHIVE\\n" > all_geoms_tab.tar
 for ext in tab map dat id; do
     printf "***NEWFILE***:my.%s\\n" "$ext" >> all_geoms_tab.tar
-    cat $(dirname $0)/../../autotest/ogr/data/all_geoms.$ext >> all_geoms_tab.tar
+    cat $(dirname $0)/../../autotest/ogr/data/mitab/all_geoms.$ext >> all_geoms_tab.tar
 done
 
 printf "FUZZER_FRIENDLY_ARCHIVE\\n" > poly_indexed.tar
 for ext in tab map dat id; do
     printf "***NEWFILE***:my.%s\\n" "$ext" >> poly_indexed.tar
-    cat $(dirname $0)/../../autotest/ogr/data/poly_indexed.$ext >> poly_indexed.tar
+    cat $(dirname $0)/../../autotest/ogr/data/mitab/poly_indexed.$ext >> poly_indexed.tar
 done
 
 printf "FUZZER_FRIENDLY_ARCHIVE\\n" > view.tar
@@ -451,9 +448,9 @@ echo "Building mitab_mif_fuzzer_seed_corpus.zip"
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:my.mif\\n"
-    cat $(dirname $0)/../../autotest/ogr/data/small.mif
+    cat $(dirname $0)/../../autotest/ogr/data/mitab/small.mif
     printf "***NEWFILE***:my.mid\\n" >> small_mif.tar
-    cat $(dirname $0)/../../autotest/ogr/data/small.mid
+    cat $(dirname $0)/../../autotest/ogr/data/mitab/small.mid
 } > small_mif.tar
 rm -f $OUT/mitab_mif_fuzzer_seed_corpus.zip
 zip -r $OUT/mitab_mif_fuzzer_seed_corpus.zip small_mif.tar >/dev/null
@@ -461,7 +458,7 @@ rm small_mif.tar
 
 echo "Building openfilegdb_fuzzer_seed_corpus.zip"
 rm -rf testopenfilegdb.gdb
-unzip $(dirname $0)/../../autotest/ogr/data/testopenfilegdb.gdb.zip >/dev/null
+unzip $(dirname $0)/../../autotest/ogr/data/filegdb/testopenfilegdb.gdb.zip >/dev/null
 printf "FUZZER_FRIENDLY_ARCHIVE\\n" > testopenfilegdb.gdb.tar
 for f in testopenfilegdb.gdb/*; do
     printf "***NEWFILE***:%s\\n" "$f" >> testopenfilegdb.gdb.tar
@@ -469,7 +466,7 @@ for f in testopenfilegdb.gdb/*; do
 done
 
 rm -rf testopenfilegdb92.gdb
-unzip $(dirname $0)/../../autotest/ogr/data/testopenfilegdb92.gdb.zip >/dev/null
+unzip $(dirname $0)/../../autotest/ogr/data/filegdb/testopenfilegdb92.gdb.zip >/dev/null
 printf "FUZZER_FRIENDLY_ARCHIVE\\n" > testopenfilegdb92.gdb.tar
 for f in testopenfilegdb92.gdb/*; do
     printf "***NEWFILE***:%s\\n" "$f" >> testopenfilegdb92.gdb.tar
@@ -486,7 +483,7 @@ rm testopenfilegdb92.gdb.tar
 echo "Building avcbin_fuzzer_seed_corpus.zip"
 rm -f $OUT/avcbin_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD
-cd  $(dirname $0)/../../autotest/ogr/data/testavc
+cd  $(dirname $0)/../../autotest/ogr/data/avc/testavc
 printf "FUZZER_FRIENDLY_ARCHIVE\\n" > $CUR_DIR/avcbin.tar
 find . -type f | while read -r f ; do
     printf "***NEWFILE***:%s\\n" "$f" >> $CUR_DIR/avcbin.tar
@@ -497,7 +494,7 @@ zip -r $OUT/avcbin_fuzzer_seed_corpus.zip avcbin.tar >/dev/null
 rm avcbin.tar
 
 echo "Building avce00_fuzzer_seed_corpus.zip"
-cd $(dirname $0)/../../autotest/ogr/data
+cd $(dirname $0)/../../autotest/ogr/data/avc
 rm -f $OUT/avce00_fuzzer_seed_corpus.zip
 zip -r $OUT/avce00_fuzzer_seed_corpus.zip ./*.e00 >/dev/null
 cd $OLDPWD
@@ -507,9 +504,9 @@ rm -f $OUT/gml_fuzzer_seed_corpus.zip
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"
     printf "***NEWFILE***:test.gml\\n"
-    cat $(dirname $0)/../../autotest/ogr/data/archsites.gml
+    cat $(dirname $0)/../../autotest/ogr/data/gml/archsites.gml
     printf "***NEWFILE***:test.xsd\\n"
-    cat $(dirname $0)/../../autotest/ogr/data/archsites.xsd
+    cat $(dirname $0)/../../autotest/ogr/data/gml/archsites.xsd
 } > $CUR_DIR/archsites_gml.tar
 zip -r $OUT/gml_fuzzer_seed_corpus.zip archsites_gml.tar >/dev/null
 rm archsites_gml.tar
@@ -518,6 +515,12 @@ echo "Building fgb_fuzzer_seed_corpus.zip"
 cd $(dirname $0)/../../autotest/ogr/data/testfgb
 rm -f $OUT/fgb_fuzzer_seed_corpus.zip
 zip -r $OUT/fgb_fuzzer_seed_corpus.zip ./*.fgb >/dev/null
+cd $OLDPWD
+
+echo "Building lvbag_fuzzer_seed_corpus.zip"
+cd $(dirname $0)/../../autotest/ogr/data/lvbag
+rm -f $OUT/lvbag_fuzzer_seed_corpus.zip
+zip -r $OUT/lvbag_fuzzer_seed_corpus.zip ./*.xml >/dev/null
 cd $OLDPWD
 
 

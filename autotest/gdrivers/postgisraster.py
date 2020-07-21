@@ -453,7 +453,7 @@ def test_postgisraster_test_serial():
         if k[-4:] == 'NAME':
             # Ensure the subdataset has upperleftx and upperlefty coords,
             # as there is no unique key on the table
-            assert re.search("where='\"serialid\" = \d+'", src_md[k]), (k, ':', src_md[k])
+            assert re.search(r"""where='"serialid" = \d+'""", src_md[k]), (k, ':', src_md[k])
 
     with gdaltest.error_handler():
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_serial' mode=2")
@@ -481,7 +481,7 @@ def test_postgisraster_test_unique():
         if k[-4:] == 'NAME':
             # Ensure the subdataset has upperleftx and upperlefty coords,
             # as there is no unique key on the table
-            assert re.search("where='\"uniq\" = \d+'", src_md[k]), (k, ':', src_md[k])
+            assert re.search(r"""where='"uniq" = \d+'""", src_md[k]), (k, ':', src_md[k])
 
     with gdaltest.error_handler():
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_unique' mode=2")

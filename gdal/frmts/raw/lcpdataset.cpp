@@ -176,6 +176,17 @@ int LCPDataset::Identify( GDALOpenInfo * poOpenInfo )
         return FALSE;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Check file extension                                            */
+/* -------------------------------------------------------------------- */
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    const char* pszFileExtension = CPLGetExtension( poOpenInfo->pszFilename );
+    if( ! EQUAL( pszFileExtension, "lcp" ) )
+    {
+        return FALSE;
+    }
+#endif
+
     return TRUE;
 }
 
@@ -1353,7 +1364,6 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
             VSIMalloc3( sizeof( GInt32 ), nBands, LCP_MAX_CLASSES ) );
     memset( panClasses, 0, sizeof( GInt32 ) * nBands * LCP_MAX_CLASSES );
 
-    CPLErr eErr = CE_None;
     if( bCalculateStats )
     {
 
@@ -1361,7 +1371,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
         {
             GDALRasterBand *poBand = poSrcDS->GetRasterBand( i + 1 );
             double dfDummy = 0.0;
-            eErr = poBand->GetStatistics( FALSE, TRUE, &padfMin[i],
+            CPLErr eErr = poBand->GetStatistics( FALSE, TRUE, &padfMin[i],
                                           &padfMax[i], &dfDummy, &dfDummy );
             if( eErr != CE_None )
             {
@@ -1585,7 +1595,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
         for( int iBand = 0; iBand < nBands; iBand++ )
         {
             GDALRasterBand * poBand = poSrcDS->GetRasterBand( iBand+1 );
-            eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1,
+            CPLErr eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1,
                                      panScanline + iBand, nXSize, 1, GDT_Int16,
                                      nBands * 2, nBands * nXSize * 2, nullptr );
             // Not sure what to do here.

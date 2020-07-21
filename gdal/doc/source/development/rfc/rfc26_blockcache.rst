@@ -122,7 +122,7 @@ codebase:
 -  port/cpl_hash_set.cpp / port/cpl_hash_set.h:
    CPLHashSetRemoveDeferRehash() function added to remove one element
    quickly. That is to say the potential resizing of the array used
-   internally is defered to a later operation
+   internally is deferred to a later operation
 
 -  port/cpl_hash_set.cpp / port/cpl_hash_set.h: improvements to
    "recycle" links from the linked lists and avoid useless
@@ -138,7 +138,7 @@ codebase:
    GDALHashSetBandBlockCacheCreate() functions. Modifications of
    GDALRasterBand, GDALDataset and GDALRasterBlock definitions.
 
--  gcore/gdalrasterband.cpp: InitBlockInfo() instanciates the
+-  gcore/gdalrasterband.cpp: InitBlockInfo() instantiates the
    appropriate band block cache implementation.
 
 -  gcore/gdalrasterband.cpp: the AdoptBlock(), UnreferenceBlock(),
@@ -165,7 +165,7 @@ codebase:
    GDALRasterBlock::Internalize() or FlushCacheBlock().
 
 -  gcore/gdalabstractbandblockcache.cpp: added. Contains logic to keep
-   instanciated GDALRasterBlock that were discarded by the global block
+   instantiated GDALRasterBlock that were discarded by the global block
    manager for their later reuse. Saves a few new/delete calls.
 
 -  gcore/gdalarraybandblockcache.cpp: the GDALArrayBandBlockCache class

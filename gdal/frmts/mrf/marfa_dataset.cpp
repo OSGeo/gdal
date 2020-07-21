@@ -830,8 +830,6 @@ static CPLErr Init_Raster(ILImage &image, GDALMRFDataset *ds, CPLXMLNode *defima
         int entries = static_cast<int>(getXMLNum(node, "Size", 255));
         GDALPaletteInterp eInterp = GPI_RGB;
         // A flag to convert from HLS to HSV
-        CPLString pModel = CPLGetXMLValue(node, "Model", "RGB");
-
         if ((entries > 0) && (entries < 257)) {
             GDALColorEntry ce_start = { 0, 0, 0, 255 }, ce_end = { 0, 0, 0, 255 };
 
@@ -1525,7 +1523,7 @@ GDALDataset *GDALMRFDataset::GetSrcDS() {
     // Try open the source dataset as is
     poSrcDS = GDALDataset::FromHandle(GDALOpenShared(source.c_str(), GA_ReadOnly));
 
-    // It the open failes, try again with the current dataset path prepended
+    // It the open fails, try again with the current dataset path prepended
     if (!poSrcDS && make_absolute(source, fname))
         poSrcDS = GDALDataset::FromHandle(GDALOpenShared(source.c_str(), GA_ReadOnly));
 
@@ -1936,7 +1934,7 @@ void GDALMRFDataset::ProcessCreateOptions(char **papszOptions)
     val = opt.FetchNameValue("BLOCKSIZE");
     if (val) img.pagesize.x = img.pagesize.y = atoi(val);
 
-    img.nbo = opt.FetchBoolean("NETBYTEORDER", FALSE);
+    img.nbo = opt.FetchBoolean("NETBYTEORDER", FALSE) != FALSE;
 
     val = opt.FetchNameValue("CACHEDSOURCE");
     if (val) {
@@ -2022,7 +2020,7 @@ GDALMRFDataset::Create(const char * pszName,
     img.dataoffset = 0;
     img.idxoffset = 0;
     img.hasNoData = false;
-    img.nbo = FALSE;
+    img.nbo = false;
 
     // Set the guard that tells us it needs saving before IO can take place
     poDS->bCrystalized = FALSE;

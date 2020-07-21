@@ -159,7 +159,7 @@ static bool TABAdjustCaseSensitiveFilename(char *pszFname)
 
     CPLAssert(iTmpPtr >= 0);
 
-    // Assume that CWD is valid.  Therefor an empty path is a valid.
+    // Assume that CWD is valid.  Therefore an empty path is a valid.
     if (iTmpPtr == 0)
         bValidPath = true;
 

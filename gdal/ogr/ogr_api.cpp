@@ -1819,7 +1819,7 @@ OGRGeometryH OGR_G_Value( OGRGeometryH hGeom, double dfDistance )
  * Libraries should generally *not* use that method, since that could interfere
  * with other libraries or applications.
  *
- * Note that it *does* not affect the behaviour of the C++ API.
+ * Note that it *does* not affect the behavior of the C++ API.
  *
  * @param bFlag TRUE if non-linear geometries might be returned (default value).
  *              FALSE to ask for non-linear geometries to be approximated as

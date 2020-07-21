@@ -114,9 +114,9 @@ JAVADOC_AUTOBRIEF      = YES
 
 # The MULTILINE_CPP_IS_BRIEF tag can be set to YES to make Doxygen
 # treat a multi-line C++ special comment block (i.e. a block of //! or ///
-# comments) as a brief description. This used to be the default behaviour.
+# comments) as a brief description. This used to be the default behavior.
 # The new default is to treat a multi-line C++ comment block as a detailed
-# description. Set this tag to YES if you prefer the old behaviour instead.
+# description. Set this tag to YES if you prefer the old behavior instead.
 
 MULTILINE_CPP_IS_BRIEF = NO
 
@@ -822,18 +822,6 @@ GENERATE_XML           = NO
 
 XML_OUTPUT             = xml
 
-# The XML_SCHEMA tag can be used to specify an XML schema,
-# which can be used by a validating XML parser to check the
-# syntax of the XML files.
-
-XML_SCHEMA             =
-
-# The XML_DTD tag can be used to specify an XML DTD,
-# which can be used by a validating XML parser to check the
-# syntax of the XML files.
-
-XML_DTD                =
-
 # If the XML_PROGRAMLISTING tag is set to YES Doxygen will
 # dump the program listings (including syntax highlighting
 # and cross-referencing information) to the XML output. Note that
@@ -954,7 +942,12 @@ PREDEFINED             = HAVE_DLFCN_H \
                          HAVE_LONG_LONG=1 \
                          HAVE_SC_PHYS_PAGES=1 \
                          final= \
-                         CPL_RESTRICT=
+                         CPL_RESTRICT= \
+                         CPL_WARN_UNUSED_RESULT= \
+                         CPL_RETURNS_NONNULL= \
+                         CPLSTRING_METHOD_DLL= \
+                         CPL_NO_RETURN= \
+                         EXPERIMENTAL_CPL_WARN_UNUSED_RESULT=
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then
 # this tag can be used to specify a list of macro names that should be expanded.
@@ -1008,11 +1001,6 @@ ALLEXTERNALS           = NO
 # be listed.
 
 EXTERNAL_GROUPS        = YES
-
-# The PERL_PATH should be the absolute path and name of the perl script
-# interpreter (i.e. the result of `which perl').
-
-PERL_PATH              = /usr/local/bin/perl
 
 #---------------------------------------------------------------------------
 # Configuration options related to the dot tool

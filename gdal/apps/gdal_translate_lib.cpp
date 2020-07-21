@@ -237,7 +237,7 @@ struct GDALTranslateOptions
     /*! If this option is set, GDALTranslateOptions::adfSrcWin or (GDALTranslateOptions::dfULX,
         GDALTranslateOptions::dfULY, GDALTranslateOptions::dfLRX, GDALTranslateOptions::dfLRY)
         values that falls partially outside the source raster extent will be considered
-        as an error. The default behaviour is to accept such requests. */
+        as an error. The default behavior is to accept such requests. */
     bool bErrorOnPartiallyOutside;
 
     /*! Same as bErrorOnPartiallyOutside, except that the criterion for
@@ -514,7 +514,7 @@ static GDALDatasetH GDALTranslateFlush(GDALDatasetH hOutDS)
 
 static CPLJSONObject Clone(const CPLJSONObject& obj)
 {
-    auto serialized = obj.Format(CPLJSONObject::Plain);
+    auto serialized = obj.Format(CPLJSONObject::PrettyFormat::Plain);
     CPLJSONDocument oJSONDocument;
     const GByte *pabyData = reinterpret_cast<const GByte *>(serialized.c_str());
     oJSONDocument.LoadMemory( pabyData );
@@ -558,7 +558,7 @@ static CPLString EditISIS3MetadataForBandChange(const char* pszJSON,
     }
 
     auto oBandBin = oRoot.GetObj( "IsisCube/BandBin" );
-    if( oBandBin.IsValid() && oBandBin.GetType() == CPLJSONObject::Object )
+    if( oBandBin.IsValid() && oBandBin.GetType() == CPLJSONObject::Type::Object )
     {
         // Backup original BandBin object
         oRoot.GetObj("IsisCube").Add("OriginalBandBin", Clone(oBandBin));
@@ -568,15 +568,15 @@ static CPLString EditISIS3MetadataForBandChange(const char* pszJSON,
         // source dataset.
         for( auto& child: oBandBin.GetChildren() )
         {
-            if( child.GetType() == CPLJSONObject::Array )
+            if( child.GetType() == CPLJSONObject::Type::Array )
             {
                 ReworkArray(oBandBin, child, nSrcBandCount, psOptions);
             }
-            else if( child.GetType() == CPLJSONObject::Object )
+            else if( child.GetType() == CPLJSONObject::Type::Object )
             {
                 auto oValue = child.GetObj("value");
                 auto oUnit = child.GetObj("unit");
-                if( oValue.GetType() == CPLJSONObject::Array )
+                if( oValue.GetType() == CPLJSONObject::Type::Array )
                 {
                     ReworkArray(child, oValue, nSrcBandCount, psOptions);
                 }
@@ -584,7 +584,7 @@ static CPLString EditISIS3MetadataForBandChange(const char* pszJSON,
         }
     }
 
-    return oRoot.Format(CPLJSONObject::Pretty);
+    return oRoot.Format(CPLJSONObject::PrettyFormat::Pretty);
 }
 
 /************************************************************************/
@@ -1051,7 +1051,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         // memory driver doesn't expect files with those names to be deleted
         // on a file system...
         // This is somewhat messy. Ideally there should be a way for the
-        // driver to overload the default behaviour
+        // driver to overload the default behavior
         if( !EQUAL(psOptions->pszFormat, "MEM") &&
             !EQUAL(psOptions->pszFormat, "Memory") )
         {
@@ -2119,7 +2119,7 @@ static void AttachMetadata( GDALDatasetH hDS, char **papszMetadataOptions )
 /************************************************************************/
 
 /* A bit of a clone of VRTRasterBand::CopyCommonInfoFrom(), but we need */
-/* more and more custom behaviour in the context of gdal_translate ... */
+/* more and more custom behavior in the context of gdal_translate ... */
 
 static void CopyBandInfo( GDALRasterBand * poSrcBand, GDALRasterBand * poDstBand,
                           int bCanCopyStatsMetadata, int bCopyScale, int bCopyNoData, bool bCopyRAT,
@@ -2800,6 +2800,21 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
         {
             psOptions->nLimitOutSize = atoi(papszArgv[i+1]);
             i++;
+        }
+
+        else if( i+1 < argc && EQUAL(papszArgv[i], "-if") )
+        {
+            i++;
+            if( psOptionsForBinary )
+            {
+                if( GDALGetDriverByName(papszArgv[i]) == nullptr )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "%s is not a recognized driver", papszArgv[i]);
+                }
+                psOptionsForBinary->papszAllowInputDrivers = CSLAddString(
+                    psOptionsForBinary->papszAllowInputDrivers, papszArgv[i] );
+            }
         }
 
         else if( papszArgv[i][0] == '-' )

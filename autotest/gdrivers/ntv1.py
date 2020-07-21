@@ -35,12 +35,12 @@ sys.path.append('../pymod')
 import gdaltest
 
 ###############################################################################
-# Open a little-endian NTv2 grid
+# Open a NTv1 grid
 
 
 def test_ntv1_1():
 
-    tst = gdaltest.GDALTest('NTV1', 'ntv1_can_truncated.dat', 1, 65532)
+    tst = gdaltest.GDALTest('NTV1', 'ntv1/ntv1_can_truncated.dat', 1, 65532)
     gt = (-44.375, 0.25, 0.0, 40.375, 0.0, -0.25)
     return tst.testOpen(check_gt=gt, check_prj='WGS84')
 

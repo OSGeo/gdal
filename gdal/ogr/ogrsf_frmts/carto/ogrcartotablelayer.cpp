@@ -623,7 +623,6 @@ OGRErr OGRCARTOTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
     }
     
     const char *pszNameIn = poGeomFieldIn->GetNameRef();
-    CPLString osGeomFieldName = CPLString(pszNameIn);
     if( pszNameIn == nullptr || EQUAL(pszNameIn, "") )
     {        
         CPLError(CE_Failure, CPLE_AppDefined,

@@ -55,7 +55,7 @@ def test_webp_2():
     if gdaltest.webp_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/rgbsmall.webp')
+    ds = gdal.Open('data/webp/rgbsmall.webp')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 21464 or cs == 21450 or cs == 21459, \
         'did not get expected checksum on band 1'

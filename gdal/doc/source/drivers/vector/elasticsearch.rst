@@ -7,8 +7,7 @@ Elasticsearch: Geographically Encoded Objects for Elasticsearch
 
 .. build_dependencies:: libcurl
 
-| Driver is read-write starting with GDAL 2.1 (was write only in GDAL
-  2.0 or earlier)
+| Driver is read-write starting with GDAL 2.1
 | As of GDAL 2.1, Elasticsearch 1.X and, partially, 2.X versions are
   supported (5.0 known not to work). GDAL 2.2 adds supports for
   Elasticsearch 2.X and 5.X
@@ -314,7 +313,7 @@ options:
    geometry fields. Defaults to AUTO. GEO_POINT uses the
    `geo_point <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html>`__
    mapping type. If used, the "centroid" of the geometry is used. This
-   is the behaviour of GDAL < 2.1. GEO_SHAPE uses the
+   is the behavior of GDAL < 2.1. GEO_SHAPE uses the
    `geo_shape <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html>`__
    mapping type, compatible of all geometry types. When using AUTO, for
    geometry fields of type Point, a geo_point is used. In other cases,
@@ -327,7 +326,7 @@ options:
    index. Setting to YES sets the `"store"
    property <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html>`__
    of the field mapping to "true" for all fields. Defaults to NO. (Note:
-   prior to GDAL 2.1, the default behaviour was to store fields) This
+   prior to GDAL 2.1, the default behavior was to store fields) This
    option is without effect if MAPPING is specified.
 -  **STORED_FIELDS**\ =List of comma separated field names that should
    be stored in the index. Those fields will have their `"store"

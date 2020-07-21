@@ -78,13 +78,13 @@ static void Usage(const char* pszErrorMsg = nullptr)
         "    [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]\n"
         "    [-cutline datasource] [-cl layer] [-cwhere expression]\n"
         "    [-csql statement] [-cblend dist_in_pixels] [-crop_to_cutline]\n"
-        "    [-of format] [-co \"NAME=VALUE\"]* [-overwrite]\n"
+        "    [-if format]* [-of format] [-co \"NAME=VALUE\"]* [-overwrite]\n"
         "    [-nomd] [-cvmd meta_conflict_value] [-setci] [-oo NAME=VALUE]*\n"
         "    [-doo NAME=VALUE]*\n"
         "    srcfile* dstfile\n"
         "\n"
         "Available resampling methods:\n"
-        "    near (default), bilinear, cubic, cubicspline, lanczos, average, mode,  max, min, med, Q1, Q3.\n" );
+        "    near (default), bilinear, cubic, cubicspline, lanczos, average, mode,  max, min, med, Q1, Q3, sum.\n" );
 
     if( pszErrorMsg != nullptr )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
@@ -114,6 +114,7 @@ static void GDALWarpAppOptionsForBinaryFree( GDALWarpAppOptionsForBinary* psOpti
         CSLDestroy(psOptionsForBinary->papszOpenOptions);
         CSLDestroy(psOptionsForBinary->papszDestOpenOptions);
         CSLDestroy(psOptionsForBinary->papszCreateOptions);
+        CSLDestroy(psOptionsForBinary->papszAllowInputDrivers);
         CPLFree(psOptionsForBinary);
     }
 }
@@ -228,7 +229,8 @@ MAIN_START(argc, argv)
     {
         nSrcCount++;
         pahSrcDS = static_cast<GDALDatasetH *>(CPLRealloc(pahSrcDS, sizeof(GDALDatasetH) * nSrcCount));
-        pahSrcDS[nSrcCount-1] = GDALOpenEx( psOptionsForBinary->papszSrcFiles[i], GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, nullptr,
+        pahSrcDS[nSrcCount-1] = GDALOpenEx( psOptionsForBinary->papszSrcFiles[i], GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+                                            psOptionsForBinary->papszAllowInputDrivers,
                                             psOptionsForBinary->papszOpenOptions, nullptr );
 
         if( pahSrcDS[nSrcCount-1] == nullptr )

@@ -34,6 +34,7 @@
 #include <cstring>
 #include <set>
 #include <string>
+#include <utility>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -938,6 +939,41 @@ void CPLXMLSchemaResolveInclude( const char *pszMainSchemaLocation,
 }
 
 /************************************************************************/
+/*                       GetUniqueConstraints()                         */
+/************************************************************************/
+
+static std::set<std::pair<std::string, std::string>>
+                                GetUniqueConstraints(const CPLXMLNode* psNode)
+{
+    /* Parse
+        <xs:unique name="uniqueConstraintpolyeas_id">
+            <xs:selector xpath="ogr:featureMember/ogr:poly"/>
+            <xs:field xpath="ogr:eas_id"/>
+        </xs:unique>
+    */
+    std::set<std::pair<std::string, std::string>> oSet;
+    for( const auto* psIter= psNode->psChild; psIter != nullptr; psIter = psIter->psNext )
+    {
+        if( psIter->eType == CXT_Element &&
+            EQUAL(psIter->pszValue, "unique") )
+        {
+            const char* pszSelector = CPLGetXMLValue(psIter, "selector.xpath", nullptr);
+            const char* pszField = CPLGetXMLValue(psIter, "field.xpath", nullptr);
+            if( pszSelector && pszField && pszField[0] != '@' )
+            {
+                const char* pszSlash = strchr(pszSelector, '/');
+                if( pszSlash )
+                {
+                    oSet.insert(std::pair<std::string,std::string>(
+                        StripNS(pszSlash+1), StripNS(pszField)));
+                }
+            }
+        }
+    }
+    return oSet;
+}
+
+/************************************************************************/
 /*                          GMLParseXSD()                               */
 /************************************************************************/
 
@@ -987,6 +1023,9 @@ bool GMLParseXSD( const char *pszFile,
 /*      Process each feature class definition.                          */
 /* ==================================================================== */
     CPLXMLNode *psThis = psSchemaNode->psChild;
+
+    std::set<std::pair<std::string, std::string>> oSetUniqueConstraints;
+
     for( ; psThis != nullptr; psThis = psThis->psNext )
     {
 /* -------------------------------------------------------------------- */
@@ -997,27 +1036,32 @@ bool GMLParseXSD( const char *pszFile,
             continue;
 
 /* -------------------------------------------------------------------- */
-/*      Check the substitution group.                                   */
+/*      Get name                                                        */
 /* -------------------------------------------------------------------- */
-        const char *pszSubGroup =
-            StripNS(CPLGetXMLValue(psThis, "substitutionGroup", ""));
-
-        // Old OGR produced elements for the feature collection.
-        if( EQUAL(pszSubGroup, "_FeatureCollection") )
-            continue;
-
-        // AbstractFeature used by GML 3.2.
-        if( !EQUAL(pszSubGroup, "_Feature") &&
-            !EQUAL(pszSubGroup, "AbstractFeature") )
+        const char *pszName = CPLGetXMLValue(psThis, "name", nullptr);
+        if( pszName == nullptr )
         {
             continue;
         }
 
 /* -------------------------------------------------------------------- */
-/*      Get name                                                        */
+/*      Check the substitution group.                                   */
 /* -------------------------------------------------------------------- */
-        const char *pszName = CPLGetXMLValue(psThis, "name", nullptr);
-        if( pszName == nullptr )
+        const char *pszSubGroup =
+            StripNS(CPLGetXMLValue(psThis, "substitutionGroup", ""));
+
+        if( EQUAL(pszName, "FeatureCollection") &&
+            (EQUAL(pszSubGroup, "_FeatureCollection") ||
+             EQUAL(pszSubGroup, "_GML") ||
+             EQUAL(pszSubGroup, "AbstractFeature")) )
+        {
+            oSetUniqueConstraints = GetUniqueConstraints(psThis);
+            continue;
+        }
+
+        // AbstractFeature used by GML 3.2.
+        if( !EQUAL(pszSubGroup, "_Feature") &&
+            !EQUAL(pszSubGroup, "AbstractFeature") )
         {
             continue;
         }
@@ -1085,6 +1129,23 @@ bool GMLParseXSD( const char *pszFile,
     }
 
     CPLDestroyXMLNode(psXSDTree);
+
+    // Attach unique constraints to fields
+    for( const auto& typeFieldPair: oSetUniqueConstraints )
+    {
+        for( const auto* poClass: aosClasses )
+        {
+            if( poClass->GetName() == typeFieldPair.first )
+            {
+                auto poProperty = poClass->GetProperty(typeFieldPair.second.c_str());
+                if( poProperty )
+                {
+                    poProperty->SetUnique(true);
+                }
+                break;
+            }
+        }
+    }
 
     return !aosClasses.empty();
 }

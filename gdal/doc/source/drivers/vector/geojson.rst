@@ -108,8 +108,7 @@ generated as `union <http://en.wikipedia.org/wiki/Union_(set_theory)>`__
 of all *Feature* properties.
 
 Schema detection will recognized fields of type String, Integer, Real,
-StringList, IntegerList and RealList. Starting with GDAL 2.0,
-Integer(Boolean), Date, Time and DateTime fields are also recognized.
+StringList, IntegerList and RealList, Integer(Boolean), Date, Time and DateTime.
 
 It is possible to tell the driver to not to process attributes by
 setting environment variable **ATTRIBUTES_SKIP=YES**. Default behavior
@@ -141,22 +140,21 @@ However, sometimes there is a need to generate a homogeneous layer from
 a set of heterogeneous features. For this purpose, it is possible to
 tell the driver to wrap all geometries with OGRGeometryCollection type
 as a common denominator. This behavior may be controlled by setting
-**GEOMETRY_AS_COLLECTION=YES** in the environment (default is **NO**).
+the :decl_configoption:`GEOMETRY_AS_COLLECTION` configuration option to YES
+(default is NO).
 
-Environment variables
+configuration options
 ---------------------
 
--  **GEOMETRY_AS_COLLECTION** - used to control translation of
+-  :decl_configoption:`GEOMETRY_AS_COLLECTION` - used to control translation of
    geometries: YES - wrap geometries with OGRGeometryCollection type
--  **ATTRIBUTES_SKIP** - controls translation of attributes: YES - skip
-   all attributes
--  **OGR_GEOJSON_MAX_OBJ_SIZE** - (GDAL >= 3.0.2) size in MBytes of the maximum
-   accepted single feature, default value is 200MB
+-  :decl_configoption:`ATTRIBUTES_SKIP` - controls translation of attributes:
+   YES - skip all attributes
+-  :decl_configoption:`OGR_GEOJSON_MAX_OBJ_SIZE` - (GDAL >= 3.0.2) size in
+   MBytes of the maximum accepted single feature, default value is 200MB
 
 Open options
 ------------
-
-(GDAL >= 2.0)
 
 -  **FLATTEN_NESTED_ATTRIBUTES** = YES/NO: Whether to recursively
    explore nested objects and produce flatten OGR attributes. Defaults
@@ -173,14 +171,14 @@ Open options
    enable this option, unless you specify its -noNativeData switch.
 -  **ARRAY_AS_STRING** = YES/NO: (GDAL >= 2.1) Whether to expose JSon
    arrays of strings, integers or reals as a OGR String. Default is NO.
-   Can also be set with the OGR_GEOJSON_ARRAY_AS_STRING configuration
-   option.
+   Can also be set with the :decl_configoption:`OGR_GEOJSON_ARRAY_AS_STRING`
+   configuration option.
 -  **DATE_AS_STRING** = YES/NO: (GDAL >= 3.0.3) Whether to expose
    date/time/date-time content using dedicated OGR date/time/date-time types
    or as a OGR String. Default is NO (that is date/time/date-time are
    detected as such).
-   Can also be set with the OGR_GEOJSON_DATE_AS_STRING configuration
-   option.
+   Can also be set with the :decl_configoption:`OGR_GEOJSON_DATE_AS_STRING`
+   configuration option.
 
 To explain FLATTEN_NESTED_ATTRIBUTES, consider the following GeoJSON
 fragment:
@@ -221,10 +219,10 @@ fragment:
 Layer creation options
 ----------------------
 
--  **WRITE_BBOX** = YES/NO: (OGR >= 1.9.0) Set to YES to write a bbox
+-  **WRITE_BBOX** = YES/NO: Set to YES to write a bbox
    property with the bounding box of the geometries at the feature and
    feature collection level. Defaults to NO.
--  **COORDINATE_PRECISION** = int_number: (OGR >= 1.9.0) Maximum number
+-  **COORDINATE_PRECISION** = int_number: Maximum number
    of figures after decimal separator to write in coordinates. Default
    to 15 for GeoJSON 2008, and 7 for RFC 7946. "Smart" truncation will
    occur to remove trailing zeros.
@@ -250,7 +248,8 @@ Layer creation options
 -  **ID_FIELD**\ =string. (OGR >= 2.3) Name of the source field that
    must be written as the 'id' member of Feature objects.
 -  **ID_TYPE**\ =AUTO/String/Integer. (OGR >= 2.3) Type of the 'id'
-   memer of Feature objects.
+   member of Feature objects.
+-  **ID_GENERATE**\ =YES/NO. (OGR >= 3.1) Auto-generate feature ids
 -  **WRITE_NON_FINITE_VALUES**\ =YES/NO. (OGR >= 2.4) Whether to write
    NaN / Infinity values. Such values are not allowed in strict JSon
    mode, but some JSon parsers (libjson-c >= 0.12 for exampl) can
@@ -258,8 +257,6 @@ Layer creation options
 
 VSI Virtual File System API support
 -----------------------------------
-
-Some features below require OGR >= 1.9.0.
 
 The driver supports reading and writing to files managed by VSI Virtual
 File System API, which includes "regular" files, as well as files in the
@@ -305,7 +302,7 @@ coordinates).
      ]
    }
 
-This behaviour can be turned off by specifying the **-noNativeData**
+This behavior can be turned off by specifying the **-noNativeData**
 switch of the ogr2ogr utility.
 
 RFC 7946 write support
@@ -319,7 +316,7 @@ The differences between the 2 versions are mentioned in `Appendix B of
 RFC 7946 <https://tools.ietf.org/html/rfc7946#appendix-B>`__ and
 recalled here for what matters to the driver:
 
--  Coordinates must be in longitude/latitude over the WGS 84 ellipsoid,
+-  Coordinates must be geographic over the WGS 84 ellipsoid,
    hence if the spatial reference system specified at layer creation
    time is not EPSG:4326, on-the-fly reprojection will be done by the
    driver.

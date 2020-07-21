@@ -126,7 +126,7 @@ def test_ogrmerge_5():
         pytest.skip()
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-                                  '-f VRT -o tmp/out.vrt ../ogr/data/poly.shp ../ogr/data/testpoly.shp -nln '
+                                  '-f VRT -o tmp/out.vrt ../ogr/data/poly.shp ../ogr/data/shp/testpoly.shp -nln '
                                   '"foo_{DS_NAME}_{DS_BASENAME}_{DS_INDEX}_{LAYER_NAME}_{LAYER_INDEX}"')
 
     ds = ogr.Open('tmp/out.vrt')
@@ -134,7 +134,7 @@ def test_ogrmerge_5():
     assert lyr.GetName() == 'foo_../ogr/data/poly.shp_poly_0_poly_0'
     assert lyr.GetFeatureCount() == 10
     lyr = ds.GetLayer(1)
-    assert lyr.GetName() == 'foo_../ogr/data/testpoly.shp_testpoly_1_testpoly_0'
+    assert lyr.GetName() == 'foo_../ogr/data/shp/testpoly.shp_testpoly_1_testpoly_0'
     assert lyr.GetFeatureCount() == 14
     ds = None
 

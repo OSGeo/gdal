@@ -35,8 +35,7 @@ Additional optional parameters can be specified such as *TYPENAME*,
 
 The name provided to the TYPENAME parameter must be exactly the layer
 name reported by OGR, in particular with its namespace prefix when its
-exists. Note: starting with GDAL 1.10, several type names can be
-provided and separated by comma.
+exists. Note: several type names can be provided and separated by comma.
 
 It is also possible to specify the name of an XML file whose content
 matches the following syntax (the <OGRWFSDataSource> element must be the
@@ -72,39 +71,17 @@ optionally set.
    paging" section.
 -  **PageSize**: Page size when paging is enabled. See "Request paging"
    section.
--  **BaseStartIndex**: (OGR >= 1.10) Base of the start index when paging
+-  **BaseStartIndex**: Base of the start index when paging
    is enabled (0 or 1). See "Request paging" section.
 -  **COOKIE**: HTTP cookies that are passed in HTTP requests, formatted
-   as COOKIE1=VALUE1; COOKIE2=VALUE2
+   as COOKIE1=VALUE1; COOKIE2=VALUE2... Starting with GDAL 2.3, additional
+   HTTP headers can be sent by setting the GDAL_HTTP_HEADER_FILE configuration
+   option to point to a filename of a text file with “key: value” HTTP headers.
 
 Request paging
 --------------
 
-Before OGR 1.10, when reading the first feature from a layer, the whole
-layer content will be fetched from the server.
-
-| Some servers (such as MapServer >= 6.0) support the use of STARTINDEX
-  that allows to do the requests per "page", and thus to avoid
-  downloading the whole content of the layer in a single request. Paging
-  was introduced in WFS 2.0.0 but servers may support it as an vendor
-  specific option also with WFS 1.0.0 and 1.1.0. The OGR WFS client will
-  use paging when the OGR_WFS_PAGING_ALLOWED configuration option is set
-  to ON. The page size (number of features fetched in a single request)
-  is limited to 100 by default. It can be changed by setting the
-  OGR_WFS_PAGE_SIZE configuration option.
-| WFS 2.0.2 specification has clarified that the first feature in paging
-  is at index 0. But some server implementations of WFS paging have
-  considered that it was at index 1 (including MapServer <= 6.2).
-  Starting with OGR 1.10, the default base start index is 0, as mandated
-  by the specification. The OGR_WFS_BASE_START_INDEX configuration
-  option can however be set to 1 to be compatible with the server
-  implementations that considered the first feature to be at index 1.
-| Those 3 options (OGR_WFS_PAGING_ALLOWED, OGR_WFS_PAGE_SIZE,
-  OGR_WFS_BASE_START_INDEX) can also be set in a WFS XML description
-  file with the elements of similar names (PagingAllowed, PageSize,
-  BaseStartIndex).
-
-Starting with OGR 1.10, the WFS driver will read the GML content as a
+The WFS driver will read the GML content as a
 stream instead as a whole file, which will improve interactivity and
 help when the content cannot fit into memory. This can be turned off by
 setting the OGR_WFS_USE_STREAMING configuration option to NO if this is
@@ -115,8 +92,31 @@ do on-the-fly compression, will cache on their side the whole content to
 be sent before sending the first bytes on the wire. To avoid this, you
 can set the CPL_CURL_GZIP configuration option to NO.
 
-Starting with GDAL 2.0, the WFS driver will automatically detect if
-server supports paging, when requesting a WFS 2.0 server.
+The WFS driver will automatically detect if server supports paging, when
+requesting a WFS 2.0 server.
+
+Some servers (such as MapServer >= 6.0) support the use of STARTINDEX
+that allows to do the requests per "page", and thus to avoid
+downloading the whole content of the layer in a single request. Paging
+was introduced in WFS 2.0.0 but servers may support it as an vendor
+specific option also with WFS 1.0.0 and 1.1.0. The OGR WFS client will
+use paging when the OGR_WFS_PAGING_ALLOWED configuration option is set
+to ON. The page size (number of features fetched in a single request)
+is limited to 100 by default. It can be changed by setting the
+OGR_WFS_PAGE_SIZE configuration option.
+
+WFS 2.0.2 specification has clarified that the first feature in paging
+is at index 0. But some server implementations of WFS paging have
+considered that it was at index 1 (including MapServer <= 6.2).
+The default base start index is 0, as mandated
+by the specification. The OGR_WFS_BASE_START_INDEX configuration
+option can however be set to 1 to be compatible with the server
+implementations that considered the first feature to be at index 1.
+
+Those 3 options (OGR_WFS_PAGING_ALLOWED, OGR_WFS_PAGE_SIZE,
+OGR_WFS_BASE_START_INDEX) can also be set in a WFS XML description
+file with the elements of similar names (PagingAllowed, PageSize,
+BaseStartIndex).
 
 Filtering
 ---------
@@ -129,7 +129,7 @@ possible, it will default to client-side only filtering, which can be a
 slow operation because involving fetching all the features from the
 servers.
 
-Starting with GDAL 2.0, the following spatial functions can be used :
+The following spatial functions can be used :
 
 -  the 8 spatial binary predicate: **ST_Equals, ST_Disjoint, ST_Touches,
    ST_Contains, ST_Intersects, ST_Within, ST_Crosses and ST_Overlaps**
@@ -152,7 +152,7 @@ filters.
 Layer joins
 -----------
 
-Starting with GDAL 2.0, and for WFS 2.0 servers that support joins,
+For WFS 2.0 servers that support joins,
 SELECT statements that involve joins will be run on server side. Spatial
 joins can also be done by using the above mentioned spatial functions,
 if the server supports spatial joins.
@@ -258,8 +258,6 @@ SetAttributeFilter() interfaces.
 Special layer : WFSLayerMetadata
 --------------------------------
 
-(OGR >= 1.9.0)
-
 A "hidden" layer called "WFSLayerMetadata" is filled with records with
 metadata for each WFS layer.
 
@@ -271,15 +269,13 @@ That layer is returned through GetLayerByName("WFSLayerMetadata").
 Special layer : WFSGetCapabilities
 ----------------------------------
 
-(OGR >= 1.9.0)
-
 A "hidden" layer called "WFSGetCapabilities" is filled with the raw XML
 result of the GetCapabilities request.
 
 That layer is returned through GetLayerByName("WFSGetCapabilities").
 
-Open options (GDAL >= 2.0)
---------------------------
+Open options
+------------
 
 The following options are available:
 
@@ -288,20 +284,20 @@ The following options are available:
 -  **TRUST_CAPABILITIES_BOUNDS**\ =YES/NO: Whether to trust layer bounds
    declared in GetCapabilities response, for faster GetExtent() runtime.
    Defaults to NO
--  **EMPTY_AS_NULL=YES/NO**: (GDAL >=2.0) By default
+-  **EMPTY_AS_NULL=YES/NO**: By default
    (EMPTY_AS_NULL=YES), fields with empty content will be reported as
    being NULL, instead of being an empty string. This is the historic
-   behaviour. However this will prevent such fields to be declared as
+   behavior. However this will prevent such fields to be declared as
    not-nullable if the application schema declared them as mandatory. So
    this option can be set to NO to have both empty strings being report
    as such, and mandatory fields being reported as not nullable.
--  **INVERT_AXIS_ORDER_IF_LAT_LONG=YES/NO**: (GDAL >=2.0) Whether to
+-  **INVERT_AXIS_ORDER_IF_LAT_LONG=YES/NO**: Whether to
    present SRS and coordinate ordering in traditional GIS order.
    Defaults to YES.
--  **CONSIDER_EPSG_AS_URN=YES/NO/AUTO**: (GDAL >=2.0) Whether to
+-  **CONSIDER_EPSG_AS_URN=YES/NO/AUTO**: Whether to
    consider srsName like EPSG:XXXX as respecting EPSG axis order.
    Defaults to AUTO.
--  **EXPOSE_GML_ID=YES/NO**: (GDAL >=2.0) Whether to expose the gml:id
+-  **EXPOSE_GML_ID=YES/NO**: Whether to expose the gml:id
    attribute of a GML feature as the gml_id OGR field. Note that hiding
    gml_id will prevent WFS-T from working. Defaults to YES.
 
@@ -334,7 +330,7 @@ tows:world layer :
 
    ogrinfo "WFS:http://www.tinyows.org/cgi-bin/tinyows" tows:world -ro -al -where "gml_id='world.2' or gml_id='world.3'"
 
-Display layer metadata (OGR >= 1.9.0):
+Display layer metadata:
 
 ::
 

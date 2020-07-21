@@ -87,7 +87,7 @@ def test_ngw_1():
         gdaltest.ngw_drv = None
         pytest.skip()
 
-    gdaltest.ngw_test_server = 'https://sandbox.nextgis.com' # 'http://dev.nextgis.com/sandbox'
+    gdaltest.ngw_test_server = 'https://sandbox.nextgis.com'
 
     if check_availability(gdaltest.ngw_test_server) == False:
         gdaltest.ngw_drv = None
@@ -169,7 +169,7 @@ def test_ngw_4():
     url = 'NGW:' + gdaltest.ngw_test_server + '/resource/' + resource_id + '/int16'
     ds = gdaltest.ngw_drv.CreateCopy(url, src_ds, options=[
         'DESCRIPTION=Test 16bit raster create',
-        'RASTER_QML_PATH=data/96.qml'
+        'RASTER_QML_PATH=data/ngw/96.qml'
     ])
     src_ds = None
 
@@ -226,7 +226,7 @@ def test_ngw_6():
         'Wrong band data type.'
 
 ###############################################################################
-# Check checksum for a small region.
+# Check checksum execute success for a small region.
 
 def test_ngw_7():
 
@@ -238,22 +238,20 @@ def test_ngw_7():
         gdaltest.ngw_drv = None
         pytest.skip()
 
+    gdal.ErrorReset()
     gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', 'ON')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
 
     ovr_band = gdaltest.ngw_ds.GetRasterBand(1).GetOverview(21)
-    cs = ovr_band.Checksum()
+    assert ovr_band is not None
+    ovr_band.Checksum()
 
     gdal.PopErrorHandler()
     gdal.SetConfigOption('CPL_ACCUM_ERROR_MSG', 'OFF')
     msg = gdal.GetLastErrorMsg()
+
+    assert gdal.GetLastErrorType() != gdal.CE_Failure, msg
     gdal.ErrorReset()
-
-    if msg is not None and msg != '':
-        print('Last error message: {}.'.format(msg))
-        pytest.skip()
-
-    assert cs == 5, 'Wrong checksum: ' + str(cs)
 
 ###############################################################################
 # Test getting subdatasets from GetCapabilities

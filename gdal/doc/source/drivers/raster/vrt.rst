@@ -84,7 +84,7 @@ The **dataAxisToSRSAxisMapping** attribute is allowed since GDAL 3.0 to describe
 
   <GeoTransform>440720.0,  60,  0.0,  3751320.0,  0.0, -60.0</GeoTransform>
 
-- **GCPList**: This element contains a list of Ground Control Points for the dataset, mapping between pixel/line coordinates and georeferenced coordinates. The Projection attribute should contain the SRS of the georeferenced coordinates in the same format as the SRS element.
+- **GCPList**: This element contains a list of Ground Control Points for the dataset, mapping between pixel/line coordinates and georeferenced coordinates. The Projection attribute should contain the SRS of the georeferenced coordinates in the same format as the SRS element. The dataAxisToSRSAxisMapping attribute is the same as in the SRS element.
 
 .. code-block:: xml
 
@@ -101,7 +101,7 @@ The **dataAxisToSRSAxisMapping** attribute is allowed since GDAL 3.0 to describe
     <MDI key="md_key">Metadata value</MDI>
   </Metadata>
 
-- **MaskBand**: (GDAL >= 1.8.0) This element represents a mask band that is shared between all bands on the dataset (see GMF_PER_DATASET in RFC 15). It must contain a single VRTRasterBand child element, that is the description of the mask band itself.
+- **MaskBand**: This element represents a mask band that is shared between all bands on the dataset (see GMF_PER_DATASET in RFC 15). It must contain a single VRTRasterBand child element, that is the description of the mask band itself.
 
 .. code-block:: xml
 
@@ -239,13 +239,13 @@ The allowed subelements for VRTRasterBand are :
 
 - **SimpleSource**: The SimpleSource_ indicates that raster data should be read from a separate dataset, indicating the dataset, and band to be read from, and how the data should map into this bands raster space.
 
-- **AveragedSource**: The AveragedSource is derived from the SimpleSource and shares the same properties except that it uses an averaging resampling instead of a nearest neighbour algorithm as in SimpleSource, when the size of the destination rectangle is not the same as the size of the source rectangle. Note: starting with GDAL 2.0, a more general mechanism to specify resampling algorithms can be used. See above paragraph about the 'resampling' attribute.
+- **AveragedSource**: The AveragedSource is derived from the SimpleSource and shares the same properties except that it uses an averaging resampling instead of a nearest neighbour algorithm as in SimpleSource, when the size of the destination rectangle is not the same as the size of the source rectangle. Note: a more general mechanism to specify resampling algorithms can be used. See above paragraph about the 'resampling' attribute.
 
 - **ComplexSource**: The ComplexSource_ is derived from the SimpleSource (so it shares the SourceFilename, SourceBand, SrcRect and DestRect elements), but it provides support to rescale and offset the range of the source values. Certain regions of the source can be masked by specifying the NODATA value.
 
 - **KernelFilteredSource**: The KernelFilteredSource_ is a pixel source derived from the Simple Source (so it shares the SourceFilename, SourceBand, SrcRect and DestRect elements, but it also passes the data through a simple filtering kernel specified with the Kernel element.
 
-- **MaskBand**: (GDAL >= 1.8.0) This element represents a mask band that is specific to the VRTRasterBand it contains. It must contain a single VRTRasterBand child element, that is the description of the mask band itself.
+- **MaskBand**: This element represents a mask band that is specific to the VRTRasterBand it contains. It must contain a single VRTRasterBand child element, that is the description of the mask band itself.
 
 Sources
 *******
@@ -262,7 +262,7 @@ The relativeToVRT attribute on the SourceFilename indicates whether the
 filename should be interpreted as relative to the .vrt file (value is 1)
 or not relative to the .vrt file (value is 0).  The default is 0.
 
-The shared attribute, added in GDAL 2.0.0, on the SourceFilename indicates whether the
+The shared attribute, on the SourceFilename indicates whether the
 dataset should be shared (value is 1) or not (value is 0). The default is 1.
 If several VRT datasets referring to the same underlying sources are used in a multithreaded context,
 shared should be set to 0. Alternatively, the VRT_SHARED_SOURCE configuration
@@ -275,7 +275,7 @@ when building VRTs with a big number of source datasets. The needed parameters a
 raster dimensions, the size of the blocks and the data type. If the SourceProperties
 tag is not present, the source dataset will be opened at the same time as the VRT itself.
 
-Starting with GDAL 1.8.0, the content of the SourceBand subelement can refer to
+The content of the SourceBand subelement can refer to
 a mask band. For example mask,1 means the mask band of the first band of the source.
 
 .. code-block:: xml
@@ -288,7 +288,7 @@ a mask band. For example mask,1 means the mask band of the first band of the sou
       <DstRect xOff="0" yOff="0" xSize="512" ySize="512"/>
     </SimpleSource>
 
-Starting with GDAL 2.0, a OpenOptions subelement can be added to specify
+A OpenOptions subelement can be added to specify
 the open options to apply when opening the source dataset. It has <OOI> (open option item)
 subelements which have a "key" attribute and the value as the data of the element.
 
@@ -305,7 +305,7 @@ subelements which have a "key" attribute and the value as the data of the elemen
       <DstRect xOff="0" yOff="0" xSize="256" ySize="256"/>
     </SimpleSource>
 
-Starting with GDAL 2.0, a resampling attribute can be specified on a SimpleSource
+A resampling attribute can be specified on a SimpleSource
 or ComplexSource element to specified the resampling algorithm used when the
 size of the destination rectangle is not the same as the size of the source
 rectangle. The values allowed for that attribute are : nearest,bilinear,cubic,
@@ -324,7 +324,7 @@ cubicspline,lanczos,average,mode.
 ComplexSource
 ~~~~~~~~~~~~~
 
-Starting with GDAL 1.11, alternatively to linear scaling, non-linear
+Alternatively to linear scaling, non-linear
 scaling using a power function can be used by specifying the Exponent,
 SrcMin, SrcMax, DstMin and DstMax elements. If SrcMin and SrcMax are
 not specified, they are computed from the source minimum and maximum
@@ -526,8 +526,8 @@ Another example, in this case a 400x300 RGB pixel interleaved image.
 Creation of VRT Datasets
 ------------------------
 
-The VRT driver supports several methods of creating VRT datasets.  As of
-GDAL 1.2.0 the vrtdataset.h include file should be installed with the core
+The VRT driver supports several methods of creating VRT datasets.
+The vrtdataset.h include file should be installed with the core
 GDAL include files, allowing direct access to the VRT classes.  However,
 even without that most capabilities remain available through standard GDAL
 interfaces.
@@ -879,9 +879,8 @@ Using Derived Bands (with pixel functions in Python)
 
 Starting with GDAL 2.2, in addition to pixel functions written in C/C++ as
 documented in the \ref gdal_vrttut_derived_c section, it is possible to use
-pixel functions written in Python. Both
-<a href="https://www.python.org/">CPython</a>
-and <a href="http://www.numpy.org/">NumPy</a> are requirements at run-time.
+pixel functions written in Python. Both `CPython <https://www.python.org/>`_
+and `NumPy <http://www.numpy.org/>`_ are requirements at run-time.
 
 The subelements for VRTRasterBand (whose subclass specification must be
 set to VRTDerivedRasterBand) are :
@@ -909,6 +908,14 @@ The signature of the Python pixel function must have the following arguments:
 - **buf_radius**: radius of the buffer (in pixels) added to the left, right, top and bottom of in_ar / out_ar. This is the value of the optional BufferRadius element that can be set so that the original pixel request is extended by a given amount of pixels.
 - **gt**: geotransform. Array of 6 double values.
 - **kwargs**: dictionary with user arguments defined in PixelFunctionArguments
+
+The provided ``out_ar`` array must be modified in-place. Any value currently
+returned by the pixel function is ignored.
+
+.. note::
+
+    If wanting to fill ``out_ar`` from another array, use the ``out_ar[:] = ...``
+    syntax.
 
 Examples
 ++++++++
@@ -1092,7 +1099,7 @@ directories of the PATH and will try to determine the related shared object
 (it will retry with "python3" if no "python" has been found). If the above
 was not successful, then a predefined list of shared objects names
 will be tried. At the time of writing, the order of versions searched is 2.7,
-3.5, 3.6, 3.7, 3.8, 3.4, 3.3, 3.2. Enabling debug information (CPL_DEBUG=ON) will
+3.5, 3.6, 3.7, 3.8, 3.9, 3.4, 3.3, 3.2. Enabling debug information (CPL_DEBUG=ON) will
 show which Python version is used.
 
 Just-in-time compilation
@@ -1334,7 +1341,7 @@ Near, CubicSpline, Bilinear, Lanczos.
 - **NumThreads**: Number of worker threads. Integer number or ALL_CPUS. If this option is not set, the GDAL_NUM_THREADS configuration option will be queried (its value can also be set to an integer or ALL_CPUS)
 - **BitDepth**: Can be used to specify the bit depth of the panchromatic and spectral bands (e.g. 12). If not specified, the NBITS metadata item from the panchromatic band will be used if it exists.
 - **NoData**: Nodata value to take into account for panchromatic and spectral bands. It will be also used as the output nodata value. If not specified and all input bands have the same nodata value, it will be implicitly used (unless the special None value is put in NoData to prevent that).
-- **SpatialExtentAdjustment**: Can be one of **Union** (default), **Intersection**, **None** or **NoneWithoutWarning**. Controls the behaviour when panchromatic
+- **SpatialExtentAdjustment**: Can be one of **Union** (default), **Intersection**, **None** or **NoneWithoutWarning**. Controls the behavior when panchromatic
 and spectral bands have not the same geospatial extent. By default, Union will take the union of all spatial extents. Intersection the intersection of all spatial extents.
 None will not proceed to any adjustment at all (might be useful if the geotransform are somehow dummy, and the top-left and bottom-right corners of all bands match), but will emit a warning. NoneWithoutWarning is the same as None, but in a silent way.
 
@@ -1461,7 +1468,7 @@ underlying datasets. So, if you open twice the same VRT dataset by the same
 thread, both VRT datasets will share the same handles to the underlying
 datasets.
 
-The shared attribute, added in GDAL 2.0.0, on the SourceFilename indicates whether the
+The shared attribute, on the SourceFilename indicates whether the
 dataset should be shared (value is 1) or not (value is 0). The default is 1.
 If several VRT datasets referring to the same underlying sources are used in a multithreaded context,
 shared should be set to 0. Alternatively, the VRT_SHARED_SOURCE configuration
@@ -1481,8 +1488,7 @@ limit of the pool can be increased by setting the GDAL_MAX_DATASET_POOL_SIZE
 configuration option to a bigger value. Note that a typical user process on
 Linux is limited to 1024 simultaneously opened files, and you should let some
 margin for shared libraries, etc...
-As of GDAL 2.0, gdal_translate and gdalwarp, by default, increase the pool size
-to 450.
+gdal_translate and gdalwarp, by default, increase the pool size to 450.
 
 Driver capabilities
 -------------------

@@ -1572,7 +1572,7 @@ static void GDALColorReliefProcessColors(ColorAssociation **ppasColorAssociation
             }
             else
             {
-                // Fallback to the old behaviour: keep equivalent entries as
+                // Fallback to the old behavior: keep equivalent entries as
                 // they are.
             }
 
@@ -1919,8 +1919,16 @@ ColorAssociation* GDALColorReliefParseColorFile( GDALRasterBandH hSrcBand,
             pasColorAssociation = static_cast<ColorAssociation *>(
                 CPLRealloc(pasColorAssociation,
                            (nColorAssociation + 1) * sizeof(ColorAssociation)));
-            if( EQUAL(papszFields[0], "nv") && bSrcHasNoData )
+            if( EQUAL(papszFields[0], "nv") )
             {
+                if( !bSrcHasNoData )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Input dataset has no nodata value. "
+                             "Ignoring 'nv' entry in color palette");
+                    CSLDestroy(papszFields);
+                    continue;
+                }
                 pasColorAssociation[nColorAssociation].dfVal = dfSrcNoDataValue;
             }
             else if( strlen(papszFields[0]) > 1 &&
@@ -2009,9 +2017,10 @@ GByte* GDALColorReliefPrecompute(GDALRasterBandH hSrcBand,
     const int nIndexOffset = (eDT == GDT_Int16) ? 32768 : 0;
     *pnIndexOffset = nIndexOffset;
     const int nXSize = GDALGetRasterBandXSize(hSrcBand);
-    const int nYSize = GDALGetRasterBandXSize(hSrcBand);
+    const int nYSize = GDALGetRasterBandYSize(hSrcBand);
     if( eDT == GDT_Byte ||
-        ((eDT == GDT_Int16 || eDT == GDT_UInt16) && nXSize * nYSize > 65536) )
+        ((eDT == GDT_Int16 || eDT == GDT_UInt16) &&
+         static_cast<GIntBig>(nXSize) * nYSize > 65536) )
     {
         const int iMax = (eDT == GDT_Byte) ? 256: 65536;
         pabyPrecomputed = static_cast<GByte *>(VSI_MALLOC2_VERBOSE(4, iMax));

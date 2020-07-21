@@ -686,12 +686,9 @@ void OGRSOSIDataSource::buildOGRLineStringFromArc(long iSerial) {
     poLS->setNumPoints(npt);
     dth = dth / (npt-1);
 
-    int i;
-    double dfEast = 0, dfNorth = 0;
-
-    for (i=0; i<npt; i++) {
-        dfEast  = cE + r * cos(th1 + dth * i);
-        dfNorth = cN + r * sin(th1 + dth * i);
+    for (int i=0; i<npt; i++) {
+        const double dfEast  = cE + r * cos(th1 + dth * i);
+        const double dfNorth = cN + r * sin(th1 + dth * i);
         if (dfEast != dfEast) { /* which is a wonderful property of nans */
           CPLError( CE_Warning, CPLE_AppDefined,
                     "Calculated %lf for point %d of %d in curve %li.", dfEast, i, npt, iSerial);

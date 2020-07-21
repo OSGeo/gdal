@@ -78,8 +78,8 @@ OGRPGDumpLayer::OGRPGDumpLayer( OGRPGDumpDataSource* poDSIn,
     nForcedSRSId(-2),
     nForcedGeometryTypeFlags(-1),
     bCreateSpatialIndexFlag(true),
-    nPostGISMajor(1),
-    nPostGISMinor(2),
+    nPostGISMajor(0),
+    nPostGISMinor(0),
     iNextShapeId(0),
     iFIDAsRegularColumnIndex(-1),
     bAutoFIDOnCreateViaCopy(true),
@@ -454,6 +454,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
                                           poFeature,
                                           pszFIDColumn,
                                           bFIDColumnInCopyFields,
+                                          std::vector<bool>(poFeatureDefn->GetFieldCount(), true),
                                           OGRPGDumpEscapeStringWithUserData,
                                           nullptr);
 
@@ -480,6 +481,7 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(
     OGRFeature* poFeature,
     const char* pszFIDColumn,
     bool bFIDColumnInCopyFields,
+    const std::vector<bool>& abFieldsToInclude,
     OGRPGCommonEscapeStringCbk pfnEscapeString,
     void* userdata )
 {
@@ -510,9 +512,13 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(
     int nFieldCount = poFeatureDefn->GetFieldCount();
     bool bAddTab = !osCommand.empty();
 
+    CPLAssert( nFieldCount == static_cast<int>(abFieldsToInclude.size()) );
+
     for( int i = 0; i < nFieldCount;  i++ )
     {
         if (i == nFIDIndex)
+            continue;
+        if( !abFieldsToInclude[i] )
             continue;
 
         const char *pszStrValue = poFeature->GetFieldAsString(i);
@@ -1553,7 +1559,7 @@ OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
     CPLString osFieldType;
     OGRFieldDefn oField( poFieldIn );
 
-    // Can be set to NO to test ogr2ogr default behaviour
+    // Can be set to NO to test ogr2ogr default behavior
     const bool bAllowCreationOfFieldWithFIDName =
         CPLTestBool(CPLGetConfigOption(
             "PGDUMP_DEBUG_ALLOW_CREATION_FIELD_WITH_FID_NAME", "YES"));
@@ -1614,6 +1620,8 @@ OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
                       osFieldType.c_str() );
     if( !oField.IsNullable() )
         osCommand += " NOT NULL";
+    if( oField.IsUnique() )
+        osCommand += " UNIQUE";
     if( oField.GetDefault() != nullptr && !oField.IsDefaultDriverSpecific() )
     {
         osCommand += " DEFAULT ";

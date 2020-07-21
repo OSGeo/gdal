@@ -139,7 +139,7 @@ def test_dted_6():
 
 
 def test_dted_7():
-    ds = gdal.Open('data/n43_wgs72.dt0')
+    ds = gdal.Open('data/dted/n43_wgs72.dt0')
 
     # a warning is issued
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -158,7 +158,7 @@ def test_dted_8():
     # this will enable DTED_VERIFY_CHECKSUM
     gdal.SetConfigOption('DTED_VERIFY_CHECKSUM', 'YES')
 
-    ds = gdal.Open('data/n43_bad_crc.dt0')
+    ds = gdal.Open('data/dted/n43_bad_crc.dt0')
     band = ds.GetRasterBand(1)
 
     # numerous errors would be reported
@@ -227,7 +227,7 @@ def test_dted_10():
 
 def test_dted_11():
 
-    ds = gdal.Open('data/n43_coord_inverted.dt0')
+    ds = gdal.Open('data/dted/n43_coord_inverted.dt0')
 
     gt = ds.GetGeoTransform()
 
@@ -251,7 +251,7 @@ def test_dted_11():
 
 def test_dted_12():
 
-    ds = gdal.Open('data/w118n033_trunc.dt1')
+    ds = gdal.Open('data/dted/w118n033_trunc.dt1')
     assert ds is not None
 
 ###############################################################################
@@ -261,7 +261,7 @@ def test_dted_12():
 
 def test_dted_13():
 
-    tst = gdaltest.GDALTest('dted', 'n43_partial_cols.dt0', 1, 56006)
+    tst = gdaltest.GDALTest('dted', 'dted/n43_partial_cols.dt0', 1, 56006)
     return tst.testOpen()
 
 ###############################################################################
@@ -271,7 +271,7 @@ def test_dted_13():
 
 def test_dted_14():
 
-    tst = gdaltest.GDALTest('dted', 'n43_sparse_cols.dt0', 1, 56369)
+    tst = gdaltest.GDALTest('dted', 'dted/n43_sparse_cols.dt0', 1, 56369)
     return tst.testOpen()
 
 ###############################################################################
@@ -285,6 +285,18 @@ def test_dted_15():
     ret = tst.testOpen()
     gdal.SetConfigOption('GDAL_DTED_SINGLE_BLOCK', None)
     return ret
+
+
+def test_dted_16():
+
+    with gdaltest.config_option('DTED_APPLY_PIXEL_IS_POINT', 'TRUE'):
+        ds = gdal.Open('data/n43.dt0')
+        assert ds is not None
+
+        max_error = 0.000001
+        gt = ds.GetGeoTransform()
+        assert gt == pytest.approx((-80.0, 0.0083333333333333332, 0, 44.0, 0, -0.0083333333333333332), abs=max_error)
+
 
 ###############################################################################
 # Cleanup.
@@ -303,7 +315,7 @@ def test_dted_cleanup():
         os.remove('tmp/n43.dt2')
     except OSError:
         pass
-    
+
 
 
 

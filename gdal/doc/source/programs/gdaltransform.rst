@@ -98,8 +98,8 @@ projection,including GCP-based transformations.
 
     File with destination projection definition. 
 
-Coordinates are read as pairs, triples for 3D or, since GDAL 3.0.0, quadruplets
-for X,Y,Z,time of numbers per line from standard
+Coordinates are read as pairs, triples (for 3D,) or (since GDAL 3.0.0,) quadruplets
+(for X,Y,Z,time) of numbers per line from standard
 input, transformed, and written out to standard output in the same way. All
 transformations offered by gdalwarp are handled, including gcp-based ones.
 

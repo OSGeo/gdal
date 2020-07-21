@@ -39,6 +39,7 @@
 #include "geometrywriter.h"
 
 #include <algorithm>
+#include <stdexcept>
 
 using namespace flatbuffers;
 using namespace FlatGeobuf;
@@ -131,7 +132,7 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
     OGRSpatialReference *poSpatialRef,
     OGRwkbGeometryType eGType,
     VSILFILE *poFpWrite,
-    std::string oTempFile,
+    const std::string& oTempFile,
     bool bCreateSpatialIndexAtClose) :
     m_eGType(eGType),
     m_poFpWrite(poFpWrite),
@@ -1174,7 +1175,7 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
 #endif
     if (ogrGeometry == nullptr || ogrGeometry->IsEmpty())
     {
-        CPLDebug("FlatGeobuf", "Skip writting feature without geometry");
+        CPLDebug("FlatGeobuf", "Skip writing feature without geometry");
         return OGRERR_NONE;
     }
     if (m_geometryType != GeometryType::Unknown && ogrGeometry->getGeometryType() != m_eGType) {

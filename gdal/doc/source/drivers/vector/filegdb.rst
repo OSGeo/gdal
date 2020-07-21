@@ -12,7 +12,7 @@ File Geodatabases (.gdb directories) created by ArcGIS 10 and above. The
 dataset name must be the directory/folder name, and it must end with the
 .gdb extension.
 
-Note : starting with OGR 1.11, the :ref:`OpenFileGDB
+Note : the :ref:`OpenFileGDB
 driver <vector.openfilegdb>` driver exists as an alternative
 built-in i.e. not depending on a third-party library) read-only driver.
 
@@ -26,14 +26,12 @@ Driver capabilities
 Requirements
 ------------
 
--  `FileGDB API
-   SDK <http://www.esri.com/apps/products/download/#File_Geodatabase_API_1.3>`__
--  OGR >= 1.9.0
+`FileGDB API SDK <http://www.esri.com/apps/products/download/#File_Geodatabase_API_1.3>`__
 
 Curve in geometries are supported on reading with GDAL >= 2.2.
 
-Bulk feature loading (OGR >= 1.9.2)
------------------------------------
+Bulk feature loading
+--------------------
 
 The FGDB_BULK_LOAD configuration option can be set to YES to speed-up
 feature insertion (or sometimes solve problems when inserting a lot of
@@ -42,13 +40,13 @@ this configuration option is to cause a write lock to be taken and a
 temporary disabling of the indexes. Those are restored when the
 datasource is closed or when a read operation is done.
 
-Starting with GDAL 2.0, bulk load is enabled by default for newly
+Bulk load is enabled by default for newly
 created layers (unless otherwise specified).
 
-SQL support (OGR >= 1.10)
--------------------------
+SQL support
+-----------
 
-Starting with OGR 1.10, SQL statements are run through the SQL engine of
+SQL statements are run through the SQL engine of
 the FileGDB SDK API. This holds for non-SELECT statements. However, due
 to partial/inaccurate support for SELECT statements in current FileGDB
 SDK API versions (v1.2), SELECT statements will be run by default by the
@@ -62,8 +60,8 @@ Special SQL requests
 can be used as special SQL requests to get respectively the definition
 and metadata of a FileGDB table as XML content.
 
-Transaction support (OGR >= 2.0)
---------------------------------
+Transaction support
+-------------------
 
 The FileGDB driver implements transactions at the database level,
 through an emulation (as per :ref:`rfc-54`),
@@ -76,7 +74,7 @@ might be costly when operating on huge geodatabases.
 Starting with GDAL 2.1, on Linux/Unix, instead of a full backup copy
 only layers that are modified are backed up.
 
-Note that this emulation has an unspecified behaviour in case of
+Note that this emulation has an unspecified behavior in case of
 concurrent updates (with different connections in the same or another
 process).
 
@@ -143,15 +141,15 @@ Layer Creation Options
       coordinate system, but the OGR default of -2147483647 is suitable
       with the default XYSCALE for all coordinate systems.
 
--  **XML_DEFINITION** : (GDAL >= 1.10) When this option is set, its
+-  **XML_DEFINITION** : When this option is set, its
    value will be used as the XML definition to create the new table. The
    root node of such a XML definition must be a <esri:DataElement>
    element conformant to FileGDBAPI.xsd
--  **CREATE_MULTIPATCH**\ =YES : (GDAL >= 1.11) When this option is set,
+-  **CREATE_MULTIPATCH**\ =YES : When this option is set,
    geometries of layers of type MultiPolygon will be written as
    MultiPatch
 -  **CONFIGURATION_KEYWORD**\ =DEFAULTS/TEXT_UTF16/MAX_FILE_SIZE_4GB/MAX_FILE_SIZE_256TB/GEOMETRY_OUTOFLINE/BLOB_OUTOFLINE/GEOMETRY_AND_BLOB_OUTOFLINE
-   : (GDAL >= 2.0) Customize how data is stored. By default text in
+   : Customize how data is stored. By default text in
    UTF-8 and data up to 1TB
 
 Examples

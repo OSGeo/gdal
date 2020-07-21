@@ -104,9 +104,9 @@ def test_gdal_ls_py_3():
 
 
 def test_gdal_ls_py_4():
-    ret_str = run_gdal_ls(['', '-l', '/vsizip/../ogr/data/poly.zip'])
+    ret_str = run_gdal_ls(['', '-l', '/vsizip/../ogr/data/shp/poly.zip'])
 
-    if ret_str.find('-r--r--r--  1 unknown unknown          415 2008-02-11 21:35 /vsizip/../ogr/data/poly.zip/poly.PRJ') == -1:
+    if ret_str.find('-r--r--r--  1 unknown unknown          415 2008-02-11 21:35 /vsizip/../ogr/data/shp/poly.zip/poly.PRJ') == -1:
         if gdaltest.skip_on_travis():
             # FIXME
             # Fails on Travis with dates at 1970-01-01 00:00
@@ -128,7 +128,7 @@ def test_gdal_ls_py_5():
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
         pytest.skip('would stall for a long time')
 
-    f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', 'rb')
+    f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
         pytest.skip()
     d = gdal.VSIFReadL(1, 1, f)
@@ -136,10 +136,10 @@ def test_gdal_ls_py_5():
     if not d:
         pytest.skip()
 
-    # ret_str = run_gdal_ls(['', '-R', 'https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/'])
+    # ret_str = run_gdal_ls(['', '-R', 'https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/'])
 
     #
-    # if ret_str.find('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/wkb_wkt/3d_broken_line.wkb') == -1:
+    # if ret_str.find('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/wkb_wkt/3d_broken_line.wkb') == -1:
     #    print(ret_str)
     #    pytest.fail()
 
@@ -154,7 +154,7 @@ def test_gdal_ls_py_6():
     if drv is None:
         pytest.skip()
 
-    f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', 'rb')
+    f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
         pytest.skip()
     d = gdal.VSIFReadL(1, 1, f)
@@ -162,9 +162,9 @@ def test_gdal_ls_py_6():
     if not d:
         pytest.skip()
 
-    ret_str = run_gdal_ls(['', '-l', '/vsizip/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip'])
+    ret_str = run_gdal_ls(['', '-l', '/vsizip/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip'])
 
-    if ret_str.find('-r--r--r--  1 unknown unknown          415 2008-02-11 21:35 /vsizip/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip/poly.PRJ') == -1:
+    if ret_str.find('-r--r--r--  1 unknown unknown          415 2008-02-11 21:35 /vsizip/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip/poly.PRJ') == -1:
         if gdaltest.skip_on_travis():
             # FIXME
             # Fails on Travis with dates at 1970-01-01 00:00
@@ -190,7 +190,7 @@ def test_gdal_ls_py_7():
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
         pytest.skip('would stall for a long time')
 
-    f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', 'rb')
+    f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
         pytest.skip()
     d = gdal.VSIFReadL(1, 1, f)
@@ -198,9 +198,9 @@ def test_gdal_ls_py_7():
     if not d:
         pytest.skip()
 
-    # ret_str = run_gdal_ls(['', '-R', '-Rzip', 'https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/'])
+    # ret_str = run_gdal_ls(['', '-R', '-Rzip', 'https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/'])
 
-    # if ret_str.find('/vsizip//vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip/poly.PRJ') == -1:
+    # if ret_str.find('/vsizip//vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip/poly.PRJ') == -1:
     #    print(ret_str)
     #    pytest.fail()
 
@@ -220,7 +220,7 @@ def test_gdal_ls_py_8():
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
         pytest.skip('would stall for a long time')
 
-    f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', 'rb')
+    f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
         pytest.skip()
     d = gdal.VSIFReadL(1, 1, f)

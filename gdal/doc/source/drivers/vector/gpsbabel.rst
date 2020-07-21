@@ -41,7 +41,7 @@ where :
    GPSBabel format (refer to the documentation of each GPSBabel format)
 -  *features=* can be used to modify the type of features that GPSBabel
    will import. waypoints matches the -w option of gpsbabel
-   commmandline, tracks matches -t and routes matches -r. This option
+   commandline, tracks matches -t and routes matches -r. This option
    can be used to require full data import from GPS receivers that are
    slow and for which GPSBabel would only fetch waypoints by default.
    See the documentation on `Route and Track

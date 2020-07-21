@@ -35,7 +35,6 @@ API
        gdaldataset_cpp
        gdalrasterband_cpp
        gdalwarp_cpp
-       ogrlayer_cpp
 
    Vector API
    +++++++++++++++++++++++++++
@@ -46,6 +45,7 @@ API
        ogrfeature_cpp
        ogrfeaturestyle_cpp
        ogrgeometry_cpp
+       ogrlayer_cpp
 
    Spatial reference system API
    ++++++++++++++++++++++++++++
@@ -68,12 +68,13 @@ API
        gdalattribute_cpp
        gdalextendeddatatype_cpp
 
-   Geographic networks API
+   Miscellaneous C++ API
    ++++++++++++++++++++++++++++
 
    .. toctree::
        :maxdepth: 1
 
+       cpl_cpp
        gnm_cpp
 
    Python API

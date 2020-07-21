@@ -31,6 +31,7 @@
 #include "gdal_vrt.h"
 #include "vrtdataset.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
@@ -364,10 +365,19 @@ int  VRTSourcedRasterBand::IGetDataCoverageStatus( int nXOff,
         }
         VRTSimpleSource* poSS = static_cast<VRTSimpleSource*>(papoSources[iSource]);
         // Check if the AOI is fully inside the source
-        if( nXOff >= poSS->m_dfDstXOff &&
-            nYOff >= poSS->m_dfDstYOff &&
-            nXOff + nXSize <= poSS->m_dfDstXOff + poSS->m_dfDstXSize &&
-            nYOff + nYSize <= poSS->m_dfDstYOff + poSS->m_dfDstYSize )
+        double dfDstXOff = std::max(0.0, poSS->m_dfDstXOff);
+        double dfDstYOff = std::max(0.0, poSS->m_dfDstYOff);
+        double dfDstXSize = poSS->m_dfDstXSize;
+        double dfDstYSize = poSS->m_dfDstYSize;
+        if( dfDstXSize == -1 )
+            dfDstXSize = poSS->m_poRasterBand->GetXSize() - dfDstXOff;
+        if( dfDstYSize == -1 )
+            dfDstYSize = poSS->m_poRasterBand->GetYSize() - dfDstYOff;
+
+        if( nXOff >= dfDstXOff &&
+            nYOff >= dfDstYOff &&
+            nXOff + nXSize <= dfDstXOff + dfDstXSize &&
+            nYOff + nYSize <= dfDstYOff + dfDstYSize )
         {
             if( pdfDataPct )
                 *pdfDataPct = 100.0;
@@ -375,26 +385,26 @@ int  VRTSourcedRasterBand::IGetDataCoverageStatus( int nXOff,
             return GDAL_DATA_COVERAGE_STATUS_DATA;
         }
         // Check intersection of bounding boxes.
-        if( poSS->m_dfDstXOff + poSS->m_dfDstXSize > nXOff &&
-            poSS->m_dfDstYOff + poSS->m_dfDstYSize > nYOff &&
-            poSS->m_dfDstXOff < nXOff + nXSize &&
-            poSS->m_dfDstYOff < nYOff + nYSize )
+        if( dfDstXOff + dfDstXSize > nXOff &&
+            dfDstYOff + dfDstYSize > nYOff &&
+            dfDstXOff < nXOff + nXSize &&
+            dfDstYOff < nYOff + nYSize )
         {
             nStatus |= GDAL_DATA_COVERAGE_STATUS_DATA;
             if( poPolyNonCoveredBySources != nullptr )
             {
                 OGRPolygon oPolySource;
                 poLR = new OGRLinearRing();
-                poLR->addPoint( poSS->m_dfDstXOff,
-                                poSS->m_dfDstYOff );
-                poLR->addPoint( poSS->m_dfDstXOff,
-                                poSS->m_dfDstYOff + poSS->m_dfDstYSize );
-                poLR->addPoint( poSS->m_dfDstXOff + poSS->m_dfDstXSize,
-                                poSS->m_dfDstYOff + poSS->m_dfDstYSize );
-                poLR->addPoint( poSS->m_dfDstXOff + poSS->m_dfDstXSize,
-                                poSS->m_dfDstYOff );
-                poLR->addPoint( poSS->m_dfDstXOff,
-                                poSS->m_dfDstYOff );
+                poLR->addPoint( dfDstXOff,
+                                dfDstYOff );
+                poLR->addPoint( dfDstXOff,
+                                dfDstYOff + dfDstYSize );
+                poLR->addPoint( dfDstXOff + dfDstXSize,
+                                dfDstYOff + dfDstYSize );
+                poLR->addPoint( dfDstXOff + dfDstXSize,
+                                dfDstYOff );
+                poLR->addPoint( dfDstXOff,
+                                dfDstYOff );
                 oPolySource.addRingDirectly(poLR);
                 OGRGeometry* poRes = poPolyNonCoveredBySources->Difference(&oPolySource);
                 if( poRes != nullptr && poRes->IsEmpty() )

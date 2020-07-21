@@ -36,6 +36,7 @@ import sys
 from osgeo import gdal
 from osgeo import osr
 from osgeo import ogr
+import gdaltest
 import pytest
 
 
@@ -172,8 +173,9 @@ def test_osr_ct_5():
 
 def test_osr_ct_6():
 
-    ct = osr.CreateCoordinateTransformation(None, None)
-    assert ct is None
+    with gdaltest.error_handler():
+        ct = osr.CreateCoordinateTransformation(None, None)
+        assert ct is None
 
     utm_srs = osr.SpatialReference()
     utm_srs.SetUTM(11)
@@ -423,3 +425,24 @@ def test_osr_ct_geocentric():
     assert x == pytest.approx(3353420.949, abs=1e-1)
     assert y == pytest.approx(1304075.021, abs=1e-1)
     assert z == pytest.approx(5248935.144, abs=1e-1)
+
+###############################################################################
+# Test with +lon_wrap=180
+
+
+def test_osr_ct_lon_wrap():
+
+    if osr.GetPROJVersionMajor() * 10000 + osr.GetPROJVersionMinor() * 100 + osr.GetPROJVersionMicro() < 70001:
+        # Issue before PROJ 7.0.1
+        pytest.skip()
+
+    s = osr.SpatialReference()
+    s.SetFromUserInput("+proj=longlat +ellps=GRS80")
+    t = osr.SpatialReference()
+    t.SetFromUserInput("+proj=longlat +ellps=GRS80 +lon_wrap=180")
+    ct = osr.CoordinateTransformation(s, t)
+    assert ct
+
+    x, y, _ = ct.TransformPoint(-25, 60, 0)
+    assert x == pytest.approx(-25 + 360, abs=1e-12)
+    assert y == pytest.approx(60, abs=1e-12)

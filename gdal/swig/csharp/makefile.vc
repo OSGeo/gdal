@@ -133,6 +133,7 @@ samples:
     $(CSC) $(CSDEBUG) /r:gdal_csharp.dll /r:System.Drawing.dll /out:GDALMemDataset.exe apps\GDALMemDataset.cs
 	$(CSC) $(CSDEBUG) /r:ogr_csharp.dll /r:osr_csharp.dll /out:OGRLayerAlg.exe apps\OGRLayerAlg.cs
 	$(CSC) $(CSDEBUG) /r:ogr_csharp.dll /r:osr_csharp.dll /out:OGRFeatureEdit.exe apps\OGRFeatureEdit.cs
+	$(CSC) $(CSDEBUG) /r:gdal_csharp.dll /out:GDALWarp.exe apps\GDALWarp.cs
 
 test:
 !IFDEF MONO
@@ -155,6 +156,7 @@ test:
 	GDALInfo.exe Data/sample.tif
 	ogrlayeralg.exe Intersection Data/pointlayer.shp pointlayer Data/pointlayer.shp pointlayer Data intersectionresult
 	ogrinfo.exe Data/intersectionresult.shp
+	gdalwarp.exe Data/testwarp.tif "-of GTiff -t_srs EPSG:32645 -overwrite" "../../../autotest/gcore/data/byte.tif"
 !ENDIF
 
 clean:

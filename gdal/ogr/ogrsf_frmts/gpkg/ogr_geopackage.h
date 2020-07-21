@@ -113,7 +113,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
     bool                m_bGridCellEncodingAsCO = false;
     bool                m_bHasReadMetadataFromStorage;
     bool                m_bMetadataDirty;
-    char              **m_papszSubDatasets;
+    CPLStringList       m_aosSubDatasets{};
     char               *m_pszProjection;
     bool                m_bRecordInsertedInGPKGContent;
     bool                m_bGeoTransformValid;
@@ -223,6 +223,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         bool                ConvertGpkgSpatialRefSysToExtensionWkt2();
 
         std::map<int, bool> m_oSetGPKGLayerWarnings{};
+
+        void                FixupWrongRTreeTrigger();
 
     public:
                             GDALGeoPackageDataset();
@@ -366,6 +368,7 @@ class OGRGeoPackageLayer CPL_NON_FINAL: public OGRLayer, public IOGRSQLiteGetSpa
 
     sqlite3_stmt        *m_poQueryStatement;
     bool                 bDoStep;
+    bool                 m_bEOF = false;
 
     char                *m_pszFidColumn;
 
@@ -411,6 +414,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     bool                        m_bIsInGpkgContents;
     bool                        m_bFeatureDefnCompleted;
     int                         m_iSrs;
+    int                         m_nZFlag = 0;
+    int                         m_nMFlag = 0;
     OGREnvelope*                m_poExtent;
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     GIntBig                     m_nTotalFeatureCount;
@@ -599,7 +604,7 @@ class OGRGeoPackageSelectLayer final : public OGRGeoPackageLayer, public IOGRSQL
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRGeoPackageSelectLayer)
 
-    OGRSQLiteSelectLayerCommonBehaviour* poBehaviour;
+    OGRSQLiteSelectLayerCommonBehaviour* poBehavior;
 
     virtual OGRErr      ResetStatement() override;
 

@@ -20,7 +20,7 @@ containing georeferencing ... the .geo files are currently ignored.
 This driver is based on work by Mike Higgins. See the
 frmts/bsb/bsb_read.c files for details on patents affecting BSB format.
 
-Starting with GDAL 1.6.0, it is possible to select an alternate color
+It is possible to select an alternate color
 palette via the BSB_PALETTE configuration option. The default value is
 RGB. Other common values that can be found are : DAY, DSK, NGT, NGR,
 GRY, PRC, PRG...
@@ -34,3 +34,18 @@ Driver capabilities
 .. supports_georeferencing::
 
 .. supports_virtualio::
+
+Metadata
+--------
+
+The following metadata items may be reported:
+
+- **BSB_KNP**: content of the KNP/ header field, giving information on the
+  coordinate reference system.
+
+- **BSB_KNQ**: content of the KNQ/ header field, giving information on the
+  coordinate reference system.
+
+- **BSB_CUTLINE**: (starting with GDAL 3.1). When PLY/ header is present,
+  Well-Known text representation of a polygon with coordinates in longitude,
+  latitude order, representing the cutline of the chart.

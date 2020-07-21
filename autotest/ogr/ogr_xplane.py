@@ -38,7 +38,7 @@ from osgeo import ogr
 
 def test_ogr_xplane_apt_dat():
 
-    xplane_apt_ds = ogr.Open('data/apt.dat')
+    xplane_apt_ds = ogr.Open('data/xplane/apt.dat')
 
     assert xplane_apt_ds is not None
 
@@ -77,7 +77,7 @@ def test_ogr_xplane_apt_dat():
 
 def test_ogr_xplane_apt_v810_dat():
 
-    xplane_apt_ds = ogr.Open('data/apt810/apt.dat')
+    xplane_apt_ds = ogr.Open('data/xplane/apt810/apt.dat')
 
     assert xplane_apt_ds is not None
 
@@ -116,7 +116,7 @@ def test_ogr_xplane_apt_v810_dat():
 
 def test_ogr_xplane_nav_dat():
 
-    xplane_nav_ds = ogr.Open('data/nav.dat')
+    xplane_nav_ds = ogr.Open('data/xplane/nav.dat')
 
     assert xplane_nav_ds is not None
 
@@ -145,7 +145,7 @@ def test_ogr_xplane_nav_dat():
 
 def test_ogr_xplane_awy_dat():
 
-    xplane_awy_ds = ogr.Open('data/awy.dat')
+    xplane_awy_ds = ogr.Open('data/xplane/awy.dat')
 
     assert xplane_awy_ds is not None
 
@@ -168,7 +168,7 @@ def test_ogr_xplane_awy_dat():
 
 def test_ogr_xplane_fix_dat():
 
-    xplane_fix_ds = ogr.Open('data/fix.dat')
+    xplane_fix_ds = ogr.Open('data/xplane/fix.dat')
 
     assert xplane_fix_ds is not None
 

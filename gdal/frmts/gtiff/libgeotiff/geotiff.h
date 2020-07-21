@@ -142,8 +142,14 @@ int  GTIF_DLL  GTIFSetVersionNumbers(GTIF* gtif,
 int  GTIF_DLL  GTIFKeyInfo(GTIF *gtif, geokey_t key, int *size, tagtype_t* type);
 int  GTIF_DLL  GTIFKeyGet(GTIF *gtif, geokey_t key, void *val, int index,
                          int count);
+int  GTIF_DLL  GTIFKeyGetASCII(GTIF *gtif, geokey_t key, char* szStr,
+                               int szStrMaxLen);
+int  GTIF_DLL  GTIFKeyGetSHORT(GTIF *gtif, geokey_t key, unsigned short *val, int index,
+                               int count);
+int  GTIF_DLL  GTIFKeyGetDOUBLE(GTIF *gtif, geokey_t key, double *val, int index,
+                                int count);
 int  GTIF_DLL  GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type,
-                         int count,...);
+                          int count,...);
 
 /* Metadata Import-Export utilities */
 void  GTIF_DLL  GTIFPrint(GTIF *gtif, GTIFPrintMethod print, void *aux);

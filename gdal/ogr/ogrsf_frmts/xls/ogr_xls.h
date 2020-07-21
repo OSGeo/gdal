@@ -38,7 +38,7 @@
 
 class OGRXLSDataSource;
 
-class OGRXLSLayer final: public OGRLayer
+class OGRXLSLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRXLSLayer>
 {
     OGRXLSDataSource*  poDS;
     OGRFeatureDefn*    poFeatureDefn;
@@ -66,7 +66,7 @@ class OGRXLSLayer final: public OGRLayer
                         virtual ~OGRXLSLayer();
 
     virtual void                ResetReading() override;
-    virtual OGRFeature *        GetNextFeature() override;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRXLSLayer)
 
     virtual OGRFeatureDefn *    GetLayerDefn() override;
     virtual GIntBig             GetFeatureCount( int bForce = TRUE ) override;

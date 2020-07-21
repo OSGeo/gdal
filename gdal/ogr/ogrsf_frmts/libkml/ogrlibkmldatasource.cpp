@@ -92,7 +92,7 @@ OGRLIBKMLDataSource::OGRLIBKMLDataSource( KmlFactory * poKmlFactory ) :
     m_pszName(nullptr),
     papoLayers(nullptr),
     nLayers(0),
-    nAlloced(0),
+    nAllocated(0),
     bUpdate(false),
     bUpdated(false),
     m_papszOptions(nullptr),
@@ -798,11 +798,11 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer(
     }
 
     /***** check to see if we have enough space to store the layer *****/
-    if( nLayers == nAlloced )
+    if( nLayers == nAllocated )
     {
-        nAlloced += nGuess;
+        nAllocated += nGuess;
         papoLayers = static_cast<OGRLIBKMLLayer **>(
-            CPLRealloc( papoLayers, sizeof(OGRLIBKMLLayer *) * nAlloced ) );
+            CPLRealloc( papoLayers, sizeof(OGRLIBKMLLayer *) * nAllocated ) );
     }
 
     /***** create the layer *****/

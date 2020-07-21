@@ -19,10 +19,6 @@ defaults to 5151. If the layer parameter is specified then the SDE
 driver is able to skip reading the summary metadata for each layer;
 skipping this step can be a significant time savings.
 
-**Note**: Only GDAL 1.6+ supports querying against versions and write
-operations. Older versions only support querying against the base
-(SDE.DEFAULT) version and no writing operations.
-
 ::
 
      SDE:server,instance,database,username,password[,layer]
@@ -87,8 +83,7 @@ Layer Creation Options
    time. By default, multiversion tables are created when layers are
    created on an SDE datasource.
 -  **USE_NSTRING**: If this option is set to "TRUE" then string fields
-   will be created as type NSTRING. This option was added for GDAL/OGR
-   1.9.0.
+   will be created as type NSTRING.
 
 Environment variables
 ~~~~~~~~~~~~~~~~~~~~~
@@ -105,9 +100,7 @@ Environment variables
    does nothing to reconcile any edits that existed on that version
    before doing so and essentially throws them away.
 -  **OGR_SDE_USE_NSTRING**: If this option is set to "TRUE" then string
-   fields will be created as type NSTRING. This option was added for
-   GDAL/OGR 1.9.0.
--  
+   fields will be created as type NSTRING.
 
 Examples
 ~~~~~~~~

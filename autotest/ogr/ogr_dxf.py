@@ -40,28 +40,11 @@ from osgeo import gdal
 from osgeo import ogr
 import pytest
 
+
 ###############################################################################
-# Check some general things to see if they meet expectations.
 
-
-def test_ogr_dxf_1():
-
-    gdaltest.dxf_ds = ogr.Open('data/assorted.dxf')
-
-    assert gdaltest.dxf_ds is not None
-
-    assert gdaltest.dxf_ds.GetLayerCount() == 1, 'expected exactly one layer!'
-
-    gdaltest.dxf_layer = gdaltest.dxf_ds.GetLayer(0)
-
-    assert gdaltest.dxf_layer.GetName() == 'entities', \
-        'did not get expected layer name.'
-
-    defn = gdaltest.dxf_layer.GetLayerDefn()
-    assert defn.GetFieldCount() == 6, 'did not get expected number of fields.'
-
-    fc = gdaltest.dxf_layer.GetFeatureCount()
-    assert fc == 22, ('did not get expected feature count, got %d' % fc)
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
 
     # Setup the utf-8 string.
     if version_info >= (3, 0, 0):
@@ -77,6 +60,29 @@ def test_ogr_dxf_1():
         gdaltest.sample_text += '"abc"'
         gdaltest.sample_text = gdaltest.sample_text.encode('utf-8')
 
+###############################################################################
+# Check some general things to see if they meet expectations.
+
+
+def test_ogr_dxf_1():
+
+    ds = ogr.Open('data/dxf/assorted.dxf')
+
+    assert ds is not None
+
+    assert ds.GetLayerCount() == 1, 'expected exactly one layer!'
+
+    layer = ds.GetLayer(0)
+
+    assert layer.GetName() == 'entities', \
+        'did not get expected layer name.'
+
+    defn = layer.GetLayerDefn()
+    assert defn.GetFieldCount() == 6, 'did not get expected number of fields.'
+
+    fc = layer.GetFeatureCount()
+    assert fc == 22, ('did not get expected feature count, got %d' % fc)
+
     
 ###############################################################################
 # Read the first feature, an ellipse and see if it generally meets expectations.
@@ -84,9 +90,10 @@ def test_ogr_dxf_1():
 
 def test_ogr_dxf_2():
 
-    gdaltest.dxf_layer.ResetReading()
+    ds = ogr.Open('data/dxf/assorted.dxf')
+    layer = ds.GetLayer(0)
 
-    feat = gdaltest.dxf_layer.GetNextFeature()
+    feat = layer.GetNextFeature()
 
     assert feat.Layer == '0', 'did not get expected layer for feature 0'
 
@@ -126,7 +133,11 @@ def test_ogr_dxf_2():
 
 def test_ogr_dxf_3():
 
-    feat = gdaltest.dxf_layer.GetNextFeature()
+    ds = ogr.Open('data/dxf/assorted.dxf')
+    layer = ds.GetLayer(0)
+    for _ in range(1):
+        layer.GetNextFeature()
+    feat = layer.GetNextFeature()
 
     geom = feat.GetGeometryRef()
 
@@ -147,7 +158,11 @@ def test_ogr_dxf_3():
 
 def test_ogr_dxf_4():
 
-    feat = gdaltest.dxf_layer.GetNextFeature()
+    ds = ogr.Open('data/dxf/assorted.dxf')
+    layer = ds.GetLayer(0)
+    for _ in range(2):
+        layer.GetNextFeature()
+    feat = layer.GetNextFeature()
 
     assert not ogrtest.check_feature_geometry(feat, 'POINT (83.5 160.0 0)')
 
@@ -160,7 +175,11 @@ def test_ogr_dxf_4():
 
 def test_ogr_dxf_5():
 
-    feat = gdaltest.dxf_layer.GetNextFeature()
+    ds = ogr.Open('data/dxf/assorted.dxf')
+    layer = ds.GetLayer(0)
+    for _ in range(3):
+        layer.GetNextFeature()
+    feat = layer.GetNextFeature()
 
     assert not ogrtest.check_feature_geometry(feat, 'LINESTRING (97.0 159.5 0,108.5 132.25 0)')
 
@@ -173,7 +192,11 @@ def test_ogr_dxf_5():
 
 def test_ogr_dxf_6():
 
-    feat = gdaltest.dxf_layer.GetNextFeature()
+    ds = ogr.Open('data/dxf/assorted.dxf')
+    layer = ds.GetLayer(0)
+    for _ in range(4):
+        layer.GetNextFeature()
+    feat = layer.GetNextFeature()
 
     assert not ogrtest.check_feature_geometry(feat, 'POINT (84 126)')
 
@@ -189,7 +212,11 @@ def test_ogr_dxf_6():
 
 def test_ogr_dxf_7():
 
-    feat = gdaltest.dxf_layer.GetNextFeature()
+    ds = ogr.Open('data/dxf/assorted.dxf')
+    layer = ds.GetLayer(0)
+    for _ in range(5):
+        layer.GetNextFeature()
+    feat = layer.GetNextFeature()
 
     geom = feat.GetGeometryRef()
 
@@ -211,13 +238,17 @@ def test_ogr_dxf_7():
 
 def test_ogr_dxf_8():
 
+    ds = ogr.Open('data/dxf/assorted.dxf')
+    layer = ds.GetLayer(0)
+    for _ in range(6):
+        layer.GetNextFeature()
     # Check that this line is in PaperSpace
-    feat = gdaltest.dxf_layer.GetNextFeature()
+    feat = layer.GetNextFeature()
 
     assert feat.GetField('PaperSpace') == 1, 'did not get expected PaperSpace'
 
     # Dimension lines
-    feat = gdaltest.dxf_layer.GetNextFeature()
+    feat = layer.GetNextFeature()
     geom = feat.GetGeometryRef()
 
     assert geom.GetGeometryType() == ogr.wkbMultiLineString, \
@@ -226,7 +257,7 @@ def test_ogr_dxf_8():
     assert not ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((63.8628719444825 149.209935992088,24.3419606685507 111.934531038653),(72.3255686642474 140.237438265109,63.0051995752285 150.119275371538),(32.8046573883157 102.962033311673,23.4842882992968 112.843870418103))')
 
     # Dimension arrowheads
-    feat = gdaltest.dxf_layer.GetNextFeature()
+    feat = layer.GetNextFeature()
     geom = feat.GetGeometryRef()
 
     assert geom.GetGeometryType() == ogr.wkbPolygon25D, \
@@ -234,7 +265,7 @@ def test_ogr_dxf_8():
 
     assert not ogrtest.check_feature_geometry(feat, 'POLYGON Z ((61.7583023958313 147.797704380064 0,63.8628719444825 149.209935992088 0,62.3300839753339 147.191478127097 0,61.7583023958313 147.797704380064 0))')
 
-    feat = gdaltest.dxf_layer.GetNextFeature()
+    feat = layer.GetNextFeature()
     geom = feat.GetGeometryRef()
 
     assert geom.GetGeometryType() == ogr.wkbPolygon25D, \
@@ -243,7 +274,7 @@ def test_ogr_dxf_8():
     assert not ogrtest.check_feature_geometry(feat, 'POLYGON Z ((26.4465302172018 113.346762650677 0,24.3419606685507 111.934531038653 0,25.8747486376992 113.952988903644 0,26.4465302172018 113.346762650677 0))')
 
     # Dimension text
-    feat = gdaltest.dxf_layer.GetNextFeature()
+    feat = layer.GetNextFeature()
     geom = feat.GetGeometryRef()
 
     assert not ogrtest.check_feature_geometry(feat, 'POINT (42.815907752635709 131.936242584545397)')
@@ -258,12 +289,17 @@ def test_ogr_dxf_8():
 
 def test_ogr_dxf_9():
 
+    ds = ogr.Open('data/dxf/assorted.dxf')
+    layer = ds.GetLayer(0)
+    for _ in range(11):
+        layer.GetNextFeature()
+
     # Skip two dimensions each with a line, two arrowheads and text.
     for _ in range(8):
-        feat = gdaltest.dxf_layer.GetNextFeature()
+        layer.GetNextFeature()
 
     # block (merged geometries)
-    feat = gdaltest.dxf_layer.GetNextFeature()
+    feat = layer.GetNextFeature()
     geom = feat.GetGeometryRef()
 
     assert geom.GetGeometryType() == ogr.wkbMultiLineString25D, \
@@ -272,7 +308,7 @@ def test_ogr_dxf_9():
     assert not ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((79.069506278985116 121.003652476272777 0,79.716898725419625 118.892590150942851 0),(79.716898725419625 118.892590150942851 0,78.140638855839953 120.440702522851453 0),(78.140638855839953 120.440702522851453 0,80.139111190485622 120.328112532167196 0),(80.139111190485622 120.328112532167196 0,78.619146316248077 118.920737648613908 0),(78.619146316248077 118.920737648613908 0,79.041358781314059 120.975504978601705 0))')
 
     # First of two MTEXTs
-    feat = gdaltest.dxf_layer.GetNextFeature()
+    feat = layer.GetNextFeature()
     assert feat.GetField('Text') == gdaltest.sample_text, \
         'Did not get expected first mtext.'
 
@@ -283,7 +319,7 @@ def test_ogr_dxf_9():
     assert not ogrtest.check_feature_geometry(feat, 'POINT (77.602201427662891 120.775897075866169 0)')
 
     # Second of two MTEXTs
-    feat = gdaltest.dxf_layer.GetNextFeature()
+    feat = layer.GetNextFeature()
     assert feat.GetField('Text') == 'Second', 'Did not get expected second mtext.'
 
     assert feat.GetField('SubClasses') == 'AcDbEntity:AcDbMText', \
@@ -297,7 +333,7 @@ def test_ogr_dxf_9():
 
 def test_ogr_dxf_10():
 
-    ocs_ds = ogr.Open('data/LWPOLYLINE-OCS.dxf')
+    ocs_ds = ogr.Open('data/dxf/LWPOLYLINE-OCS.dxf')
     ocs_lyr = ocs_ds.GetLayer(0)
 
     # Skip boring line.
@@ -327,7 +363,7 @@ def test_ogr_dxf_10():
 
 def test_ogr_dxf_11():
 
-    eo_ds = ogr.Open('data/entities_only.dxf')
+    eo_ds = ogr.Open('data/dxf/entities_only.dxf')
     eo_lyr = eo_ds.GetLayer(0)
 
     # Check first point.
@@ -434,7 +470,7 @@ def test_ogr_dxf_12():
 
 def test_ogr_dxf_13():
 
-    ds = ogr.Open('data/polyline_smooth.dxf')
+    ds = ogr.Open('data/dxf/polyline_smooth.dxf')
 
     layer = ds.GetLayer(0)
 
@@ -489,7 +525,7 @@ def test_ogr_dxf_14():
     # newer lwpolyline entity is used. See the comments in the
     # previous test regarding caveats, etc.
 
-    ds = ogr.Open('data/lwpolyline_smooth.dxf')
+    ds = ogr.Open('data/dxf/lwpolyline_smooth.dxf')
 
     layer = ds.GetLayer(0)
 
@@ -604,72 +640,73 @@ def test_ogr_dxf_15():
 def test_ogr_dxf_16():
 
     gdal.SetConfigOption('DXF_INLINE_BLOCKS', 'FALSE')
+    try:
 
-    dxf_ds = ogr.Open('data/assorted.dxf')
+        dxf_ds = ogr.Open('data/dxf/assorted.dxf')
 
-    assert dxf_ds is not None
+        assert dxf_ds is not None
 
-    assert dxf_ds.GetLayerCount() == 2, 'expected exactly two layers!'
+        assert dxf_ds.GetLayerCount() == 2, 'expected exactly two layers!'
 
-    dxf_layer = dxf_ds.GetLayer(1)
+        dxf_layer = dxf_ds.GetLayer(1)
 
-    assert dxf_layer.GetName() == 'entities', 'did not get expected layer name.'
+        assert dxf_layer.GetName() == 'entities', 'did not get expected layer name.'
 
-    # read through till we encounter the block reference.
-    feat = dxf_layer.GetNextFeature()
-    while feat.GetField('EntityHandle') != '55':
+        # read through till we encounter the block reference.
+        feat = dxf_layer.GetNextFeature()
+        while feat.GetField('EntityHandle') != '55':
+            feat = dxf_layer.GetNextFeature()
+
+        # check contents.
+        assert feat.GetField('BlockName') == 'STAR', 'Did not get blockname!'
+
+        assert feat.GetField('BlockAngle') == 0.0, 'Did not get expected angle.'
+
+        assert feat.GetField('BlockScale') == [1.0, 1.0, 1.0], \
+            'Did not get expected BlockScale'
+
+        assert not ogrtest.check_feature_geometry(feat, 'POINT (79.097653776656188 119.962195062443342 0)')
+
+        feat = None
+
+        # Now we need to check the blocks layer and ensure it is as expected.
+
+        dxf_layer = dxf_ds.GetLayer(0)
+
+        assert dxf_layer.GetName() == 'blocks', 'did not get expected layer name.'
+
+        # STAR geometry
         feat = dxf_layer.GetNextFeature()
 
-    # check contents.
-    assert feat.GetField('BlockName') == 'STAR', 'Did not get blockname!'
+        assert feat.GetField('Block') == 'STAR', 'Did not get expected block name.'
 
-    assert feat.GetField('BlockAngle') == 0.0, 'Did not get expected angle.'
+        assert not ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((-0.028147497671066 1.041457413829428 0,0.619244948763444 -1.069604911500494 0),(0.619244948763444 -1.069604911500494 0,-0.957014920816232 0.478507460408116 0),(-0.957014920816232 0.478507460408116 0,1.041457413829428 0.365917469723853 0),(1.041457413829428 0.365917469723853 0,-0.478507460408116 -1.041457413829428 0),(-0.478507460408116 -1.041457413829428 0,-0.056294995342131 1.013309916158363 0))')
 
-    assert feat.GetField('BlockScale') == [1.0, 1.0, 1.0], \
-        'Did not get expected BlockScale'
+        # First MTEXT
+        feat = dxf_layer.GetNextFeature()
+        assert feat.GetField('Text') == gdaltest.sample_text, \
+            'Did not get expected first mtext.'
 
-    assert not ogrtest.check_feature_geometry(feat, 'POINT (79.097653776656188 119.962195062443342 0)')
+        expected_style = 'LABEL(f:"Arial",t:"' + gdaltest.sample_style + '",a:45,s:0.5g,p:5,c:#000000)'
+        assert feat.GetStyleString() == expected_style, \
+            ('Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(), expected_style))
 
-    feat = None
+        assert not ogrtest.check_feature_geometry(feat, 'POINT (-1.495452348993292 0.813702013422821 0)')
 
-    # Now we need to check the blocks layer and ensure it is as expected.
+        # Second MTEXT
+        feat = dxf_layer.GetNextFeature()
+        assert feat.GetField('Text') == 'Second', 'Did not get expected second mtext.'
 
-    dxf_layer = dxf_ds.GetLayer(0)
+        assert feat.GetField('SubClasses') == 'AcDbEntity:AcDbMText', \
+            'Did not get expected subclasses.'
 
-    assert dxf_layer.GetName() == 'blocks', 'did not get expected layer name.'
+        assert not ogrtest.check_feature_geometry(feat, 'POINT (0.879677852348995 -0.263903355704699 0)')
 
-    # STAR geometry
-    feat = dxf_layer.GetNextFeature()
+        feat = None
 
-    assert feat.GetField('Block') == 'STAR', 'Did not get expected block name.'
-
-    assert not ogrtest.check_feature_geometry(feat, 'MULTILINESTRING ((-0.028147497671066 1.041457413829428 0,0.619244948763444 -1.069604911500494 0),(0.619244948763444 -1.069604911500494 0,-0.957014920816232 0.478507460408116 0),(-0.957014920816232 0.478507460408116 0,1.041457413829428 0.365917469723853 0),(1.041457413829428 0.365917469723853 0,-0.478507460408116 -1.041457413829428 0),(-0.478507460408116 -1.041457413829428 0,-0.056294995342131 1.013309916158363 0))')
-
-    # First MTEXT
-    feat = dxf_layer.GetNextFeature()
-    assert feat.GetField('Text') == gdaltest.sample_text, \
-        'Did not get expected first mtext.'
-
-    expected_style = 'LABEL(f:"Arial",t:"' + gdaltest.sample_style + '",a:45,s:0.5g,p:5,c:#000000)'
-    assert feat.GetStyleString() == expected_style, \
-        ('Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(), expected_style))
-
-    assert not ogrtest.check_feature_geometry(feat, 'POINT (-1.495452348993292 0.813702013422821 0)')
-
-    # Second MTEXT
-    feat = dxf_layer.GetNextFeature()
-    assert feat.GetField('Text') == 'Second', 'Did not get expected second mtext.'
-
-    assert feat.GetField('SubClasses') == 'AcDbEntity:AcDbMText', \
-        'Did not get expected subclasses.'
-
-    assert not ogrtest.check_feature_geometry(feat, 'POINT (0.879677852348995 -0.263903355704699 0)')
-
-    feat = None
-
-    # cleanup
-
-    gdal.SetConfigOption('DXF_INLINE_BLOCKS', 'TRUE')
+    finally:
+        # cleanup
+        gdal.SetConfigOption('DXF_INLINE_BLOCKS', None)
 
 ###############################################################################
 # Write a file with blocks defined from a source blocks layer.
@@ -678,7 +715,7 @@ def test_ogr_dxf_16():
 def test_ogr_dxf_17():
 
     ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/dxf_17.dxf',
-                                                     ['HEADER=data/header_extended.dxf'])
+                                                     ['HEADER=data/dxf/header_extended.dxf'])
 
     blyr = ds.CreateLayer('blocks')
     lyr = ds.CreateLayer('entities')
@@ -811,7 +848,7 @@ def test_ogr_dxf_17():
 def test_ogr_dxf_18():
 
     ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/dxf_18.dxf',
-                                                     ['HEADER=data/header_extended.dxf'])
+                                                     ['HEADER=data/dxf/header_extended.dxf'])
 
     lyr = ds.CreateLayer('entities')
 
@@ -912,7 +949,7 @@ def test_ogr_dxf_18():
 def test_ogr_dxf_19():
 
     ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/dxf_19.dxf',
-                                                     ['HEADER=data/header_extended.dxf'])
+                                                     ['HEADER=data/dxf/header_extended.dxf'])
 
     lyr = ds.CreateLayer('entities')
 
@@ -951,7 +988,7 @@ def test_ogr_dxf_19():
 
 def test_ogr_dxf_20():
 
-    ds = ogr.Open('data/spline_qcad.dxf')
+    ds = ogr.Open('data/dxf/spline_qcad.dxf')
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
@@ -965,7 +1002,7 @@ def test_ogr_dxf_20():
 
 def test_ogr_dxf_21():
 
-    ds = ogr.Open('data/circle.dxf')
+    ds = ogr.Open('data/dxf/circle.dxf')
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
@@ -989,7 +1026,7 @@ def test_ogr_dxf_21():
 def test_ogr_dxf_22():
 
     # Read MTEXT feature
-    ds = ogr.Open('data/text.dxf')
+    ds = ogr.Open('data/dxf/text.dxf')
     lyr = ds.GetLayer(0)
 
     if version_info >= (3, 0, 0):
@@ -1047,7 +1084,7 @@ def test_ogr_dxf_22():
 
     # Now try reading in the MTEXT feature without translating escape sequences
     gdal.SetConfigOption('DXF_TRANSLATE_ESCAPE_SEQUENCES', 'FALSE')
-    ds = ogr.Open('data/text.dxf')
+    ds = ogr.Open('data/dxf/text.dxf')
     gdal.SetConfigOption('DXF_TRANSLATE_ESCAPE_SEQUENCES', None)
     lyr = ds.GetLayer(0)
 
@@ -1097,7 +1134,7 @@ def test_ogr_dxf_23():
 
 def test_ogr_dxf_24():
 
-    ds = ogr.Open('data/hatch.dxf')
+    ds = ogr.Open('data/dxf/hatch.dxf')
     lyr = ds.GetLayer(0)
 
     gdal.SetConfigOption('OGR_ARC_STEPSIZE', '45')
@@ -1120,7 +1157,7 @@ def test_ogr_dxf_24():
 
 def test_ogr_dxf_25():
 
-    ds = ogr.Open('data/3dface.dxf')
+    ds = ogr.Open('data/dxf/3dface.dxf')
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
@@ -1141,7 +1178,7 @@ def test_ogr_dxf_25():
 
 def test_ogr_dxf_26():
 
-    ds = ogr.Open('data/solid.dxf')
+    ds = ogr.Open('data/dxf/solid.dxf')
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
@@ -1157,7 +1194,7 @@ def test_ogr_dxf_26():
 
 def test_ogr_dxf_27():
 
-    gdal.FileFromMemBuffer('/vsimem/a_dxf_without_extension', open('data/solid.dxf').read())
+    gdal.FileFromMemBuffer('/vsimem/a_dxf_without_extension', open('data/dxf/solid.dxf').read())
 
     ds = ogr.Open('/vsimem/a_dxf_without_extension')
     assert ds is not None
@@ -1170,7 +1207,7 @@ def test_ogr_dxf_27():
 
 def test_ogr_dxf_28():
 
-    ds = ogr.Open('data/ellipse_z_extrusion_minus_1.dxf')
+    ds = ogr.Open('data/dxf/ellipse_z_extrusion_minus_1.dxf')
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
@@ -1191,7 +1228,7 @@ def test_ogr_dxf_28():
 
 def test_ogr_dxf_29():
 
-    ds = ogr.Open('data/spline_weight.dxf')
+    ds = ogr.Open('data/dxf/spline_weight.dxf')
     lyr = ds.GetLayer(0)
 
     # spline 227, no weight
@@ -1220,7 +1257,7 @@ def test_ogr_dxf_29():
 
 def test_ogr_dxf_30():
 
-    ds = ogr.Open('data/spline_closed.dxf')
+    ds = ogr.Open('data/dxf/spline_closed.dxf')
     lyr = ds.GetLayer(0)
 
     # spline 24b, closed
@@ -1243,7 +1280,7 @@ def test_ogr_dxf_30():
 
 def test_ogr_dxf_31():
 
-    ds = ogr.Open('data/ocs2wcs1.dxf')
+    ds = ogr.Open('data/dxf/ocs2wcs1.dxf')
     lyr = ds.GetLayer(0)
 
 # INFO: Open of `ocs2wcs1.dxf' using driver `DXF' successful.
@@ -1683,7 +1720,7 @@ def test_ogr_dxf_31():
 def test_ogr_dxf_32():
 
     gdal.SetConfigOption('DXF_INCLUDE_RAW_CODE_VALUES', 'TRUE')
-    ds = ogr.Open('data/ocs2wcs2.dxf')
+    ds = ogr.Open('data/dxf/ocs2wcs2.dxf')
     gdal.SetConfigOption('DXF_INCLUDE_RAW_CODE_VALUES', None)
     lyr = ds.GetLayer(0)
 
@@ -2255,7 +2292,7 @@ def test_ogr_dxf_32():
 def test_ogr_dxf_33():
 
     gdal.SetConfigOption('DXF_3D_EXTENSIBLE_MODE', 'TRUE')
-    ds = ogr.Open('data/3d.dxf')
+    ds = ogr.Open('data/dxf/3d.dxf')
     gdal.SetConfigOption('DXF_3D_EXTENSIBLE_MODE', None)
 
     layer = ds.GetLayer(0)
@@ -2367,7 +2404,7 @@ def test_ogr_dxf_34():
 
 def test_ogr_dxf_35():
 
-    ds = ogr.Open('data/elliptical-arc-hatch-min.dxf')
+    ds = ogr.Open('data/dxf/elliptical-arc-hatch-min.dxf')
     lyr = ds.GetLayer(0)
 
     expected_wkt = "POLYGON Z ((10.0 5.0 0,10.0121275732481 0.823574944937595 0," + \
@@ -2570,7 +2607,7 @@ def test_ogr_dxf_35():
 def test_ogr_dxf_36():
 
     gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', 'FALSE')
-    ds = ogr.Open('data/insert_only.dxf')
+    ds = ogr.Open('data/dxf/insert_only.dxf')
     gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', None)
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 5
@@ -2612,7 +2649,7 @@ def test_ogr_dxf_37():
 
 def test_ogr_dxf_38():
 
-    ds = ogr.Open('data/solid-less-than-4-vertices.dxf')
+    ds = ogr.Open('data/dxf/solid-less-than-4-vertices.dxf')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (0 2)' \
@@ -2633,7 +2670,7 @@ def test_ogr_dxf_38():
 
 def test_ogr_dxf_39():
 
-    ds = ogr.Open('data/solid-vertex-ordering.dxf')
+    ds = ogr.Open('data/dxf/solid-vertex-ordering.dxf')
     lyr = ds.GetLayer(0)
 
     f = lyr.GetNextFeature()
@@ -2653,7 +2690,7 @@ def test_ogr_dxf_39():
 
 def test_ogr_dxf_40():
 
-    ds = ogr.Open('data/mtext-ocs-reduced.dxf')
+    ds = ogr.Open('data/dxf/mtext-ocs-reduced.dxf')
     lyr = ds.GetLayer(0)
     f = lyr.GetFeature(5)
     if ogrtest.check_feature_geometry(f, 'POINT (320000.0 5815007.5 0)') != 0:
@@ -2667,7 +2704,7 @@ def test_ogr_dxf_40():
 
 def test_ogr_dxf_41():
 
-    ds = ogr.Open('data/ocs2wcs3.dxf')
+    ds = ogr.Open('data/dxf/ocs2wcs3.dxf')
     lyr = ds.GetLayer(0)
 
     # INSERT #1: OCS normal vector (0,0,-1)
@@ -2761,14 +2798,14 @@ def test_ogr_dxf_41():
 def test_ogr_dxf_42():
 
     # Inlining, merging
-    ds = ogr.Open('data/block-insert-order.dxf')
+    ds = ogr.Open('data/dxf/block-insert-order.dxf')
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 2, \
         ('Defaults: Expected 2 features, found %d' % lyr.GetFeatureCount())
 
     # No inlining, merging
     gdal.SetConfigOption('DXF_INLINE_BLOCKS', 'FALSE')
-    ds = ogr.Open('data/block-insert-order.dxf')
+    ds = ogr.Open('data/dxf/block-insert-order.dxf')
     gdal.SetConfigOption('DXF_INLINE_BLOCKS', None)
 
     lyr = ds.GetLayerByName('entities')
@@ -2809,7 +2846,7 @@ def test_ogr_dxf_42():
 
     # Inlining, no merging
     gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', 'FALSE')
-    ds = ogr.Open('data/block-insert-order.dxf')
+    ds = ogr.Open('data/dxf/block-insert-order.dxf')
     gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', None)
 
     lyr = ds.GetLayer(0)
@@ -2822,7 +2859,7 @@ def test_ogr_dxf_42():
 
 def test_ogr_dxf_43():
 
-    ds = ogr.Open('data/insert-recursive-pair.dxf')
+    ds = ogr.Open('data/dxf/insert-recursive-pair.dxf')
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
 
@@ -2833,13 +2870,13 @@ def test_ogr_dxf_43():
 def test_ogr_dxf_44():
 
     with gdaltest.config_option('DXF_MAX_BSPLINE_CONTROL_POINTS', '1'):
-        ds = ogr.Open('data/leader-mleader.dxf')
+        ds = ogr.Open('data/dxf/leader-mleader.dxf')
         lyr = ds.GetLayer(0)
         with gdaltest.error_handler():
             lyr.GetFeatureCount()
         assert gdal.GetLastErrorMsg().find('DXF_MAX_BSPLINE_CONTROL_POINTS') >= 0
 
-    ds = ogr.Open('data/leader-mleader.dxf')
+    ds = ogr.Open('data/dxf/leader-mleader.dxf')
     lyr = ds.GetLayer(0)
 
     # LEADER with default arrowhead, plus a couple of DIMSTYLE overrides
@@ -3053,7 +3090,7 @@ def test_ogr_dxf_44():
 
 def test_ogr_dxf_45():
 
-    ds = ogr.Open('data/linetypes.dxf')
+    ds = ogr.Open('data/dxf/linetypes.dxf')
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
@@ -3086,7 +3123,7 @@ def test_ogr_dxf_45():
 
 def test_ogr_dxf_46():
 
-    ds = ogr.Open('data/dimension.dxf')
+    ds = ogr.Open('data/dxf/dimension.dxf')
     lyr = ds.GetLayer(0)
 
     # Extension lines
@@ -3135,7 +3172,7 @@ def test_ogr_dxf_46():
 
 def test_ogr_dxf_47():
 
-    ds = ogr.Open('data/dimension-entities-only.dxf')
+    ds = ogr.Open('data/dxf/dimension-entities-only.dxf')
     lyr = ds.GetLayer(0)
 
     # Basic DIMENSION inheriting default styling
@@ -3227,7 +3264,7 @@ def test_ogr_dxf_47():
 def test_ogr_dxf_48():
 
     gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', 'FALSE')
-    ds = ogr.Open('data/byblock-bylayer.dxf')
+    ds = ogr.Open('data/dxf/byblock-bylayer.dxf')
     gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', None)
 
     lyr = ds.GetLayer(0)
@@ -3284,6 +3321,9 @@ def test_ogr_dxf_48():
         f.DumpReadable()
         pytest.fail('Wrong style string on feature 11')
 
+    # Since the INSERT is in PaperSpace, this feature should be too
+    assert f.GetField('PaperSpace') == 1, 'Wrong PaperSpace on feature 11'
+
     # ByBlock feature in block
     f = lyr.GetFeature(12)
     if f.GetStyleString() != 'PEN(c:#a552a5)':
@@ -3336,7 +3376,7 @@ def test_ogr_dxf_48():
 def test_ogr_dxf_49():
 
     # Inline blocks mode
-    ds = ogr.Open('data/attrib.dxf')
+    ds = ogr.Open('data/dxf/attrib.dxf')
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 6, \
         ('Wrong feature count, got %d' % lyr.GetFeatureCount())
@@ -3360,7 +3400,7 @@ def test_ogr_dxf_49():
 
     # No inlining
     gdal.SetConfigOption('DXF_INLINE_BLOCKS', 'FALSE')
-    ds = ogr.Open('data/attrib.dxf')
+    ds = ogr.Open('data/dxf/attrib.dxf')
     gdal.SetConfigOption('DXF_INLINE_BLOCKS', None)
 
     lyr = ds.GetLayerByName('entities')
@@ -3395,7 +3435,7 @@ def test_ogr_dxf_49():
 def test_ogr_dxf_50():
 
     gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', 'FALSE')
-    ds = ogr.Open('data/text-fancy.dxf')
+    ds = ogr.Open('data/dxf/text-fancy.dxf')
     gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', None)
 
     lyr = ds.GetLayer(0)
@@ -3446,7 +3486,7 @@ def test_ogr_dxf_50():
 
 def test_ogr_dxf_51():
 
-    ds = ogr.Open('data/text-block-transform.dxf')
+    ds = ogr.Open('data/dxf/text-block-transform.dxf')
 
     lyr = ds.GetLayer(0)
 
@@ -3471,7 +3511,7 @@ def test_ogr_dxf_51():
 
 def test_ogr_dxf_52():
 
-    ds = ogr.Open('data/additional-entities.dxf')
+    ds = ogr.Open('data/dxf/additional-entities.dxf')
     lyr = ds.GetLayer(0)
 
     # HELIX
@@ -3573,7 +3613,7 @@ def test_ogr_dxf_52():
 
 def test_ogr_dxf_53():
 
-    ds = ogr.Open('data/block-basepoint.dxf')
+    ds = ogr.Open('data/dxf/block-basepoint.dxf')
     lyr = ds.GetLayer(0)
 
     f = lyr.GetNextFeature()
@@ -3582,12 +3622,33 @@ def test_ogr_dxf_53():
         pytest.fail('Wrong feature geometry')
 
     
+###############################################################################
+# Test frozen and off layers
+
+
+def test_ogr_dxf_54():
+
+    gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', 'FALSE')
+    ds = ogr.Open('data/dxf/frozen-off.dxf')
+    gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', None)
+    lyr = ds.GetLayer(0)
+
+    # Features should be visible/hidden in the following order:
+    featureVisibility = '.hhh..hhh..hhhhhhhhhhhhhh.hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh.hhh..hhhhhhhhhhhhhh.hhh'
+
+    for number, h in enumerate(featureVisibility):
+        f = lyr.GetNextFeature()
+        isFeatureVisible = '#000000)' in f.GetStyleString() or '#ff0000)' in f.GetStyleString()
+        if isFeatureVisible == (h == 'h'):
+            f.DumpReadable()
+            pytest.fail('Wrong visibility on feature %d' % number)
+
 
 ###############################################################################
 def test_ogr_dxf_insert_too_many_errors():
 
     with gdaltest.error_handler():
-        ogr.Open('data/insert-too-many-errors.dxf')
+        ogr.Open('data/dxf/insert-too-many-errors.dxf')
 
     
 
@@ -3615,7 +3676,7 @@ def test_ogr_dxf_write_geometry_collection_of_unsupported_type():
 
 def test_ogr_dxf_very_close_neg_to_zero_knot():
 
-    ds = ogr.Open('data/spline_with_very_close_neg_to_zero_knot.dxf')
+    ds = ogr.Open('data/dxf/spline_with_very_close_neg_to_zero_knot.dxf')
     lyr = ds.GetLayer(0)
 
     f = lyr.GetNextFeature()
@@ -3644,18 +3705,3 @@ def test_ogr_dxf_polygon_3D():
     got_g = f.GetGeometryRef()
     assert got_g.Equals(g)
     gdal.Unlink(tmpfile)
-
-
-###############################################################################
-# cleanup
-
-
-def test_ogr_dxf_cleanup():
-    gdaltest.dxf_layer = None
-    gdaltest.dxf_ds = None
-
-###############################################################################
-#
-
-
-

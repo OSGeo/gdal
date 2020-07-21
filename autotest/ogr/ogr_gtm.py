@@ -32,38 +32,28 @@
 import os
 
 
-import gdaltest
 import ogrtest
 from osgeo import ogr
 import pytest
 
+###############################################################################
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
 
-def test_ogr_gtm_init():
-    gdaltest.gtm_ds = None
+    yield
+    os.remove('tmp/gtm.gtm')
 
-    gdaltest.gtm_ds = ogr.Open('data/samplemap.gtm')
-
-    if gdaltest.gtm_ds is None:
-        gdaltest.have_gtm = 0
-    else:
-        gdaltest.have_gtm = 1
-
-    if not gdaltest.have_gtm:
-        pytest.skip()
-
-    assert gdaltest.gtm_ds.GetLayerCount() == 2, 'wrong number of layers'
 
 ###############################################################################
 # Test waypoints gtm layer.
 
 
 def test_ogr_gtm_read_1():
-    if not gdaltest.have_gtm:
-        pytest.skip()
 
-    assert gdaltest.gtm_ds is not None
+    gtm_ds = ogr.Open('data/gtm/samplemap.gtm')
+    assert gtm_ds.GetLayerCount() == 2, 'wrong number of layers'
 
-    lyr = gdaltest.gtm_ds.GetLayerByName('samplemap_waypoints')
+    lyr = gtm_ds.GetLayerByName('samplemap_waypoints')
 
     assert lyr.GetFeatureCount() == 3, 'wrong number of features'
 
@@ -115,12 +105,9 @@ def test_ogr_gtm_read_1():
 
 
 def test_ogr_gtm_read_2():
-    if not gdaltest.have_gtm:
-        pytest.skip()
 
-    assert gdaltest.gtm_ds is not None
-
-    lyr = gdaltest.gtm_ds.GetLayerByName('samplemap_tracks')
+    gtm_ds = ogr.Open('data/gtm/samplemap.gtm')
+    lyr = gtm_ds.GetLayerByName('samplemap_tracks')
 
     assert lyr.GetFeatureCount() == 3, 'wrong number of features'
 
@@ -242,8 +229,6 @@ def test_ogr_gtm_write_1():
 
 
 def test_ogr_gtm_check_write_1():
-    if not gdaltest.have_gtm:
-        pytest.skip()
 
     ds = ogr.Open('tmp/gtm.gtm')
     lyr = ds.GetLayerByName('gtm_waypoints')
@@ -328,15 +313,3 @@ def test_ogr_gtm_check_write_1():
 
     wkt = 'LINESTRING (-21.12 -47.1, -21.02 -47.0, -20.92 -46.9)'
     assert not ogrtest.check_feature_geometry(feat, wkt), 'Unexpected geometry'
-
-
-###############################################################################
-#
-
-def test_ogr_gtm_cleanup():
-
-    gdaltest.gtm_ds = None
-    os.remove('tmp/gtm.gtm')
-
-
-

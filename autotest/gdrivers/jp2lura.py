@@ -58,7 +58,7 @@ def test_jp2lura_1():
 
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2Lura')
 
-    ds = gdal.Open('data/byte.jp2')
+    ds = gdal.Open('data/jpeg2000/byte.jp2')
     if ds is None and gdal.GetLastErrorMsg().find('license') >= 0:
         gdaltest.jp2lura_drv = None
         pytest.skip('Driver JP2Lura is registered, but issue with license')
@@ -78,7 +78,7 @@ def test_jp2lura_missing_license_num():
     gdal.SetConfigOption('LURA_LICENSE_NUM_1', '')
     gdal.SetConfigOption('LURA_LICENSE_NUM_2', '')
     with gdaltest.error_handler():
-        ds = gdal.Open('data/byte.jp2')
+        ds = gdal.Open('data/jpeg2000/byte.jp2')
     gdal.SetConfigOption('LURA_LICENSE_NUM_1', old_num_1)
     gdal.SetConfigOption('LURA_LICENSE_NUM_2', old_num_2)
 
@@ -98,7 +98,7 @@ def test_jp2lura_invalid_license_num():
     gdal.SetConfigOption('LURA_LICENSE_NUM_1', '1')
     gdal.SetConfigOption('LURA_LICENSE_NUM_2', '1')
     with gdaltest.error_handler():
-        ds = gdal.Open('data/byte.jp2')
+        ds = gdal.Open('data/jpeg2000/byte.jp2')
     gdal.SetConfigOption('LURA_LICENSE_NUM_1', old_num_1)
     gdal.SetConfigOption('LURA_LICENSE_NUM_2', old_num_2)
 
@@ -169,7 +169,7 @@ def test_jp2lura_2():
 """
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
-    tst = gdaltest.GDALTest('JP2Lura', 'byte.jp2', 1, 50054)
+    tst = gdaltest.GDALTest('JP2Lura', 'jpeg2000/byte.jp2', 1, 50054)
     return tst.testOpen(check_prj=srs, check_gt=gt)
 
 ###############################################################################
@@ -194,7 +194,7 @@ def test_jp2lura_3():
     # Quite a bit of difference...
     assert maxdiff <= 6, 'Image too different from reference'
 
-    ds = ogr.Open('data/int16.jp2')
+    ds = ogr.Open('data/jpeg2000/int16.jp2')
     assert ds is None
 
 ###############################################################################
@@ -206,7 +206,7 @@ def test_jp2lura_4(out_filename='tmp/jp2lura_4.jp2'):
     if gdaltest.jp2lura_drv is None:
         pytest.skip()
 
-    src_ds = gdal.Open('data/byte.jp2')
+    src_ds = gdal.Open('data/jpeg2000/byte.jp2')
     src_wkt = src_ds.GetProjectionRef()
     src_gt = src_ds.GetGeoTransform()
 
@@ -269,7 +269,7 @@ def test_jp2lura_5():
     if gdaltest.jp2lura_drv is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('JP2Lura', 'int16.jp2', 1, None, options=['REVERSIBLE=YES', 'CODEC=J2K'])
+    tst = gdaltest.GDALTest('JP2Lura', 'jpeg2000/int16.jp2', 1, None, options=['REVERSIBLE=YES', 'CODEC=J2K'])
     return tst.testCreateCopy()
 
 ###############################################################################
@@ -281,11 +281,11 @@ def test_jp2lura_6():
     if gdaltest.jp2lura_drv is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('JP2Lura', 'll.jp2', 1, None)
+    tst = gdaltest.GDALTest('JP2Lura', 'jpeg2000/ll.jp2', 1, None)
 
     tst.testOpen()
 
-    ds = gdal.Open('data/ll.jp2')
+    ds = gdal.Open('data/jpeg2000/ll.jp2')
     ds.GetRasterBand(1).Checksum()
     ds = None
 
@@ -298,8 +298,10 @@ def test_jp2lura_7():
     if gdaltest.jp2lura_drv is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('JP2Lura', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute=1)
-    return tst.testOpen()
+    tst = gdaltest.GDALTest('JP2Lura', '/vsigzip/data/jpeg2000/byte.jp2.gz', 1, 50054, filename_absolute=1)
+    ret = tst.testOpen()
+    gdal.Unlink('data/jpeg2000/byte.jp2.gz.properties')
+    return ret
 
 ###############################################################################
 # Test a JP2Lura with the 3 bands having 13bit depth and the 4th one 1 bit
@@ -310,7 +312,7 @@ def test_jp2lura_8():
     if gdaltest.jp2lura_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/3_13bit_and_1bit.jp2')
+    ds = gdal.Open('data/jpeg2000/3_13bit_and_1bit.jp2')
 
     expected_checksums = [64570, 57277, 56048]  # 61292]
 
@@ -329,7 +331,7 @@ def test_jp2lura_9():
     if gdaltest.jp2lura_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/byte_without_geotransform.jp2')
+    ds = gdal.Open('data/jpeg2000/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
     assert geotransform[0] == pytest.approx(440720, abs=0.1) and geotransform[1] == pytest.approx(60, abs=0.001) and geotransform[2] == pytest.approx(0, abs=0.001) and geotransform[3] == pytest.approx(3751320, abs=0.1) and geotransform[4] == pytest.approx(0, abs=0.001) and geotransform[5] == pytest.approx(-60, abs=0.001), \
@@ -368,7 +370,7 @@ def DISABLED_jp2lura_11():
     if gdaltest.jp2lura_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/stefan_full_rgba_alpha_1bit.jp2')
+    ds = gdal.Open('data/jpeg2000/stefan_full_rgba_alpha_1bit.jp2')
     fourth_band = ds.GetRasterBand(4)
     assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is None
     got_cs = fourth_band.Checksum()
@@ -391,7 +393,7 @@ def DISABLED_jp2lura_11():
 
     assert jp2_fourth_band_data == gtiff_fourth_band_data
 
-    ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
+    ds = gdal.OpenEx('data/jpeg2000/stefan_full_rgba_alpha_1bit.jp2', open_options=['1BIT_ALPHA_PROMOTION=NO'])
     fourth_band = ds.GetRasterBand(4)
     assert fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') == '1'
 
@@ -405,7 +407,7 @@ def test_jp2lura_12():
         pytest.skip()
 
     # Override projection
-    shutil.copy('data/byte.jp2', 'tmp/jp2lura_12.jp2')
+    shutil.copy('data/jpeg2000/byte.jp2', 'tmp/jp2lura_12.jp2')
 
     ds = gdal.Open('tmp/jp2lura_12.jp2')
     sr = osr.SpatialReference()
@@ -422,7 +424,7 @@ def test_jp2lura_12():
     assert '32631' in wkt
 
     # Override geotransform
-    shutil.copy('data/byte.jp2', 'tmp/jp2lura_12.jp2')
+    shutil.copy('data/jpeg2000/byte.jp2', 'tmp/jp2lura_12.jp2')
 
     ds = gdal.Open('tmp/jp2lura_12.jp2')
     ds.SetGeoTransform([1000, 1, 0, 2000, 0, -1])
@@ -491,7 +493,7 @@ def test_jp2lura_14():
     if gdaltest.jp2lura_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/byte_2gcps.jp2')
+    ds = gdal.Open('data/jpeg2000/byte_2gcps.jp2')
     assert ds.GetGCPCount() == 2
 
 ###############################################################################
@@ -503,7 +505,7 @@ def test_jp2lura_16():
     if gdaltest.jp2lura_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/byte_point.jp2')
+    ds = gdal.Open('data/jpeg2000/byte_point.jp2')
     gt = ds.GetGeoTransform()
     assert ds.GetMetadataItem('AREA_OR_POINT') == 'Point', \
         'did not get AREA_OR_POINT = Point'
@@ -515,7 +517,7 @@ def test_jp2lura_16():
 
     gdal.SetConfigOption('GTIFF_POINT_GEO_IGNORE', 'TRUE')
 
-    ds = gdal.Open('data/byte_point.jp2')
+    ds = gdal.Open('data/jpeg2000/byte_point.jp2')
     gt = ds.GetGeoTransform()
     ds = None
 
@@ -535,7 +537,7 @@ def test_jp2lura_17():
     if gdaltest.jp2lura_drv is None:
         pytest.skip()
 
-    src_ds = gdal.Open('data/byte_point.jp2')
+    src_ds = gdal.Open('data/jpeg2000/byte_point.jp2')
     ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_17.jp2', src_ds)
     ds = None
     src_ds = None
@@ -585,7 +587,7 @@ def test_jp2lura_19():
     if gdaltest.jp2lura_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/byte_gmljp2_with_nul_car.jp2')
+    ds = gdal.Open('data/jpeg2000/byte_gmljp2_with_nul_car.jp2')
     assert ds.GetProjectionRef() != ''
     ds = None
 
@@ -1076,7 +1078,7 @@ def test_jp2lura_34():
         pytest.skip()
 
     gdal.PushErrorHandler()
-    ds = gdal.Open('data/dimensions_above_31bit.jp2')
+    ds = gdal.Open('data/jpeg2000/dimensions_above_31bit.jp2')
     gdal.PopErrorHandler()
     assert ds is None
 
@@ -1090,7 +1092,7 @@ def test_jp2lura_35():
         pytest.skip()
 
     gdal.PushErrorHandler()
-    ds = gdal.Open('data/truncated.jp2')
+    ds = gdal.Open('data/jpeg2000/truncated.jp2')
     gdal.PopErrorHandler()
     assert ds is None
 
@@ -1393,7 +1395,7 @@ def test_jp2lura_41():
     if gdaltest.jp2lura_drv is None:
         pytest.skip()
 
-    src_ds = gdal.Open('data/byte.jp2')
+    src_ds = gdal.Open('data/jpeg2000/byte.jp2')
     out_ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_41.jp2', src_ds,
                                              options=['USE_SRC_CODESTREAM=YES', '@PROFILE=PROFILE_1', 'GEOJP2=NO', 'GMLJP2=NO'])
     assert src_ds.GetRasterBand(1).Checksum() == out_ds.GetRasterBand(1).Checksum()
@@ -1432,7 +1434,7 @@ def test_jp2lura_41():
 
 def test_jp2lura_43():
 
-    ret = gdal.GetJPEG2000StructureAsString('data/byte.jp2', ['ALL=YES'])
+    ret = gdal.GetJPEG2000StructureAsString('data/jpeg2000/byte.jp2', ['ALL=YES'])
     assert ret is not None
 
 ###############################################################################
@@ -1548,7 +1550,7 @@ def test_jp2lura_48():
     if gdaltest.jp2lura_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/byte_tile_2048.jp2')
+    ds = gdal.Open('data/jpeg2000/byte_tile_2048.jp2')
     (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
     assert (blockxsize, blockysize) == (20, 20)
     assert ds.GetRasterBand(1).Checksum() == 4610
@@ -1731,11 +1733,11 @@ def test_jp2lura_49():
 
     for (config_option_value, copy_pam, copy_worldfile, expected_srs, expected_gt) in tests:
         gdal.SetConfigOption('GDAL_GEOREF_SOURCES', config_option_value)
-        gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.jp2', open('data/byte_nogeoref.jp2', 'rb').read())
+        gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.jp2', open('data/jpeg2000/byte_nogeoref.jp2', 'rb').read())
         if copy_pam:
-            gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.jp2.aux.xml', open('data/byte_nogeoref.jp2.aux.xml', 'rb').read())
+            gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.jp2.aux.xml', open('data/jpeg2000/byte_nogeoref.jp2.aux.xml', 'rb').read())
         if copy_worldfile:
-            gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.j2w', open('data/byte_nogeoref.j2w', 'rb').read())
+            gdal.FileFromMemBuffer('/vsimem/byte_nogeoref.j2w', open('data/jpeg2000/byte_nogeoref.j2w', 'rb').read())
         ds = gdal.Open('/vsimem/byte_nogeoref.jp2')
         gt = ds.GetGeoTransform()
         srs_wkt = ds.GetProjectionRef()
@@ -1784,11 +1786,11 @@ def test_jp2lura_49():
             ]
 
     for (config_option_value, copy_pam, copy_worldfile, expected_srs, expected_gt) in tests:
-        gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.jp2', open('data/inconsitant_geojp2_gmljp2.jp2', 'rb').read())
+        gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.jp2', open('data/jpeg2000/inconsitant_geojp2_gmljp2.jp2', 'rb').read())
         if copy_pam:
-            gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.jp2.aux.xml', open('data/inconsitant_geojp2_gmljp2.jp2.aux.xml', 'rb').read())
+            gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.jp2.aux.xml', open('data/jpeg2000/inconsitant_geojp2_gmljp2.jp2.aux.xml', 'rb').read())
         if copy_worldfile:
-            gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.j2w', open('data/inconsitant_geojp2_gmljp2.j2w', 'rb').read())
+            gdal.FileFromMemBuffer('/vsimem/inconsitant_geojp2_gmljp2.j2w', open('data/jpeg2000/inconsitant_geojp2_gmljp2.j2w', 'rb').read())
         open_options = []
         if config_option_value is not None:
             open_options += ['GEOREF_SOURCES=' + config_option_value]
@@ -1810,14 +1812,14 @@ def test_jp2lura_49():
             print('Expected ' + expected_srs)
             pytest.fail('Did not get expected SRS for %s,copy_pam=%s,copy_worldfile=%s' % (config_option_value, str(copy_pam), str(copy_worldfile)))
 
-    ds = gdal.OpenEx('data/inconsitant_geojp2_gmljp2.jp2', open_options=['GEOREF_SOURCES=PAM,WORLDFILE'])
+    ds = gdal.OpenEx('data/jpeg2000/inconsitant_geojp2_gmljp2.jp2', open_options=['GEOREF_SOURCES=PAM,WORLDFILE'])
     fl = ds.GetFileList()
-    assert set(fl) == set(['data/inconsitant_geojp2_gmljp2.jp2', 'data/inconsitant_geojp2_gmljp2.jp2.aux.xml']), \
+    assert set(fl) == set(['data/jpeg2000/inconsitant_geojp2_gmljp2.jp2', 'data/jpeg2000/inconsitant_geojp2_gmljp2.jp2.aux.xml']), \
         'Did not get expected filelist'
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
-        gdal.OpenEx('data/inconsitant_geojp2_gmljp2.jp2', open_options=['GEOREF_SOURCES=unhandled'])
+        gdal.OpenEx('data/jpeg2000/inconsitant_geojp2_gmljp2.jp2', open_options=['GEOREF_SOURCES=unhandled'])
         assert gdal.GetLastErrorMsg() != '', 'expected warning'
 
     
@@ -1830,7 +1832,7 @@ def test_jp2lura_50():
     if gdaltest.jp2lura_drv is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('JP2Lura', 'float32_ieee754_split_reversible.jp2', 1, 4672)
+    tst = gdaltest.GDALTest('JP2Lura', 'jpeg2000/float32_ieee754_split_reversible.jp2', 1, 4672)
     return tst.testOpen()
 
 ###############################################################################

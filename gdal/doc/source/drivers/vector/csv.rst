@@ -21,7 +21,7 @@ datasource at least half the files in the directory need to have the
 extension .csv. One layer (table) is produced from each .csv file
 accessed.
 
-Starting with GDAL 1.8.0, for files structured as CSV, but not ending
+For files structured as CSV, but not ending
 with .CSV extension, the 'CSV:' prefix can be added before the filename
 to force loading by the CSV driver.
 
@@ -42,7 +42,7 @@ to be listed with double quotes and be comma separated (e.g.,
 "Integer","String"). It is also possible to specify explicitly the width
 and precision of each column, e.g.
 "Integer(5)","Real(10.7)","String(15)". The driver will then use these
-types as specified for the csv columns. Starting with GDAL 2.0, subtypes
+types as specified for the csv columns. Subtypes
 can be passed between parenthesis, such as "Integer(Boolean)",
 "Integer(Int16)" and "Real(Float32)". Starting with GDAL 2.1,
 accordingly with the `GeoCSV
@@ -57,7 +57,7 @@ to the corresponding OGR StringList, IntegerList, Integer64List and
 RealList types. The field values are then encoded as JSon arrays, with
 proper CSV escaping.
 
-Starting with GDAL 2.0, automatic field type guessing can also be done
+Automatic field type guessing can also be done
 if specifying the open options described in the below "Open options"
 section.
 
@@ -78,7 +78,7 @@ The attribute field values are separated by commas. At least two fields
 per line must be present. Lines may be terminated by a DOS (CR/LF) or
 Unix (LF) style line terminators. Each record should have the same
 number of fields. The driver will also accept a semicolon, a tabulation
-or a space (GDAL >= 2.0 for the later) character as field separator .
+or a space character as field separator .
 This autodetection will work only if there's no other potential
 separator on the first line of the CSV file. Otherwise it will default
 to comma as separator.
@@ -91,14 +91,14 @@ By default, the driver attempts to treat the first line of the file as a
 list of field names for all the fields. However, if one or more of the
 names is all numeric it is assumed that the first line is actually data
 values and dummy field names are generated internally (field_1 through
-field_n) and the first record is treated as a feature. Starting with
-GDAL 1.9.0 numeric values are treated as field names if they are
-enclosed in double quotes. Starting with GDAL 2.1, this behaviour can be
+field_n) and the first record is treated as a feature.
+Numeric values are treated as field names if they are
+enclosed in double quotes. Starting with GDAL 2.1, this behavior can be
 modified via the HEADERS open option.
 
-All CSV files are treated as UTF-8 encoded. Starting with GDAL 1.9.0, a
+All CSV files are treated as UTF-8 encoded. A
 Byte Order Mark (BOM) at the beginning of the file will be parsed
-correctly. From 1.9.2, The option WRITE_BOM can be used to create a file
+correctly. The option WRITE_BOM can be used to create a file
 with a Byte Order Mark, which can improve compatibility with some
 software (particularly Excel).
 
@@ -243,7 +243,7 @@ AS float))) FROM test GROUP BY way_id"* will return :
 Open options
 ------------
 
-Starting with GDAL 2.0, the following open options can be specified
+The following open options can be specified
 (typically with the -oo name=value parameters of ogrinfo or ogr2ogr):
 
 -  **MERGE_SEPARATOR**\ =YES/NO (defaults to NO). Setting it to YES will
@@ -329,7 +329,7 @@ Layer Creation options:
    (CR/LF on win32 or LF on all other systems). This may be overridden
    through use of the LINEFORMAT layer creation option which may have a
    value of **CRLF** (DOS format) or **LF** (Unix format).
--  **GEOMETRY** (Starting with GDAL 1.6.0): By default, the geometry of
+-  **GEOMETRY**: By default, the geometry of
    a feature written to a .csv file is discarded. It is possible to
    export the geometry in its WKT representation by specifying
    GEOMETRY=\ **AS_WKT**. It is also possible to export point geometries
@@ -339,13 +339,13 @@ Layer Creation options:
    columns with the attributes values. It is also possible to export
    geometries in GeoJSON representation using SQLite SQL dialect query,
    see example below.
--  **CREATE_CSVT**\ =YES/NO (Starting with GDAL 1.7.0): Create the
+-  **CREATE_CSVT**\ =YES/NO: Create the
    associated .csvt file (see above paragraph) to describe the type of
    each column of the layer and its optional width and precision.
    Default value : NO
--  **SEPARATOR**\ =COMMA/SEMICOLON/TAB/SPACE (Starting with GDAL 1.7.0):
+-  **SEPARATOR**\ =COMMA/SEMICOLON/TAB/SPACE:
    Field separator character. Default value : COMMA
--  **WRITE_BOM**\ =YES/NO (Starting with GDAL 1.9.2): Write a UTF-8 Byte
+-  **WRITE_BOM**\ =YES/NO: Write a UTF-8 Byte
    Order Mark (BOM) at the start of the file. Default value : NO
 -  **GEOMETRY_NAME**\ =name (Starting with GDAL 2.1): Name of geometry
    column. Only used if GEOMETRY=AS_WKT and CREATE_CSVT=YES. Defaults to
@@ -353,24 +353,22 @@ Layer Creation options:
 -  **STRING_QUOTING**\ =IF_NEEDED/IF_AMBIGUOUS/ALWAYS (Starting with
    GDAL 2.3): whether to double-quote strings. IF_AMBIGUOUS means that
    string values that look like numbers will be quoted (it also implies
-   IF_NEEDED). Defaults to IF_AMBIGUOUS (behaviour in older versions was
+   IF_NEEDED). Defaults to IF_AMBIGUOUS (behavior in older versions was
    IF_NEEDED)
 
-Configuration options (set with "--config key value" on command line
+Configuration options (set with ``--config key value`` on command line
 utilities):
 
 -  **OGR_WKT_PRECISION**\ =int: Number of decimals for coordinate
    values. Default to 15. A heuristics is used to remove unsignificant
    trailing 00000x or 99999x that can appear when formatting decimal
    numbers.
--  **OGR_WKT_ROUND**\ =YES/NO: (GDAL >=2.3) Whether to enable the above
+-  **OGR_WKT_ROUND**\ =YES/NO: (GDAL >= 2.3) Whether to enable the above
    mentioned heuristics to remove unsignificant trailing 00000x or
    99999x. Default to YES.
 
 VSI Virtual File System API support
 -----------------------------------
-
-(Some features below might require OGR >= 1.9.0)
 
 The driver supports reading and writing to files managed by VSI Virtual
 File System API, which include "regular" files, as well as files in the
@@ -418,15 +416,15 @@ The CSV driver can also read files whose structure is close to CSV files
 -  Airport data files NfdcFacilities.xls, NfdcRunways.xls,
    NfdcRemarks.xls and NfdcSchedules.xls found on tha `FAA
    website <http://www.faa.gov/airports/airport_safety/airportdata_5010/menu/index.cfm>`__
-   (OGR >= 1.8.0)
+
 -  Files from the `USGS
    GNIS <http://geonames.usgs.gov/domestic/download_data.htm>`__
-   (Geographic Names Information System) (OGR >= 1.9.0)
+   (Geographic Names Information System)
+
 -  The allCountries file from `GeoNames <http://www.geonames.org>`__
-   (OGR >= 1.9.0 for direct import)
+
 -  `Eurostat .TSV
    files <http://epp.eurostat.ec.europa.eu/NavTree_prod/everybody/BulkDownloadListing?file=read_me.pdf>`__
-   (OGR >= 1.10.0)
 
 Other Notes
 -----------

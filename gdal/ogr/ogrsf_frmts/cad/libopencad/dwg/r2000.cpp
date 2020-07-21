@@ -1165,7 +1165,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
             // TODO: code can be much simplified if CADHandle will be used.
             // to do so, == and ++ operators should be implemented.
             unique_ptr<CADVertex3DObject> vertex;
-            long currentVertexH = cadPolyline3D->hVertexes[0].getAsLong();
+            long currentVertexH = cadPolyline3D->hVertices[0].getAsLong();
             while( currentVertexH != 0 )
             {
                 CADObject *poCADVertexObject = GetObject( currentVertexH );
@@ -1190,7 +1190,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
                 }
 
                 // Last vertex is reached. Read it and break reading.
-                if( currentVertexH == cadPolyline3D->hVertexes[1].getAsLong() )
+                if( currentVertexH == cadPolyline3D->hVertices[1].getAsLong() )
                 {
                     CADObject *poCADVertex3DObject = GetObject( currentVertexH );
                     vertex.reset( dynamic_cast<CADVertex3DObject *>(
@@ -1221,7 +1221,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
             lwPolyline->setClosed( cadlwPolyline->bClosed );
             lwPolyline->setConstWidth( cadlwPolyline->dfConstWidth );
             lwPolyline->setElevation( cadlwPolyline->dfElevation );
-            for( const CADVector& vertex : cadlwPolyline->avertVertexes )
+            for( const CADVector& vertex : cadlwPolyline->avertVertices )
                 lwPolyline->addVertex( vertex );
             lwPolyline->setVectExtrusion( cadlwPolyline->vectExtrusion );
             lwPolyline->setWidths( cadlwPolyline->astWidths );
@@ -1425,7 +1425,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
                                    cadImage->bClipping,
                                    cadImage->dBrightness,
                                    cadImage->dContrast );
-                for( const CADVector& clipPt : cadImage->avertClippingPolygonVertexes )
+                for( const CADVector& clipPt : cadImage->avertClippingPolygonVertices )
                 {
                     image->addClippingPoint( clipPt );
                 }
@@ -1447,7 +1447,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
 
             mline->setScale( cadmLine->dfScale );
             mline->setOpened( cadmLine->dOpenClosed == 1 ? true : false );
-            for( const CADMLineVertex& vertex : cadmLine->avertVertexes )
+            for( const CADMLineVertex& vertex : cadmLine->avertVertices )
                 mline->addVertex( vertex.vertPosition );
 
             poGeometry = mline;
@@ -1484,8 +1484,8 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
             // TODO: code can be much simplified if CADHandle will be used.
             // to do so, == and ++ operators should be implemented.
             unique_ptr<CADVertexPFaceObject> vertex;
-            auto dCurrentEntHandle = cadpolyPface->hVertexes[0].getAsLong();
-            auto dLastEntHandle = cadpolyPface->hVertexes[1].getAsLong();
+            auto dCurrentEntHandle = cadpolyPface->hVertices[0].getAsLong();
+            auto dLastEntHandle = cadpolyPface->hVertices[1].getAsLong();
             while( true )
             {
                 CADObject *pCADVertexPFaceObject = GetObject( dCurrentEntHandle );
@@ -1502,9 +1502,9 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
                 polyline->addVertex( vertex->vertPosition );
 
                 /* FIXME: somehow one more vertex which isnot presented is read.
-             * so, checking the number of added vertexes */
+             * so, checking the number of added vertices */
                 /*TODO: is this needed - check on real data
-            if ( polyline->hVertexes.size() == cadpolyPface->nNumVertexes )
+            if ( polyline->hVertices.size() == cadpolyPface->nNumVertices )
             {
                 delete( vertex );
                 break;
@@ -1946,8 +1946,8 @@ CADPolyline3DObject * DWGFileR2000::getPolyLine3D(unsigned int dObjectSize,
 
     fillCommonEntityHandleData( polyline, buffer );
 
-    polyline->hVertexes.push_back( buffer.ReadHANDLE() ); // 1st vertex
-    polyline->hVertexes.push_back( buffer.ReadHANDLE() ); // last vertex
+    polyline->hVertices.push_back( buffer.ReadHANDLE() ); // 1st vertex
+    polyline->hVertices.push_back( buffer.ReadHANDLE() ); // last vertex
 
     polyline->hSeqend = buffer.ReadHANDLE();
 
@@ -2218,8 +2218,8 @@ CADPolyline2DObject * DWGFileR2000::getPolyline2D(unsigned int dObjectSize,
 
     fillCommonEntityHandleData( polyline, buffer);
 
-    polyline->hVertexes.push_back( buffer.ReadHANDLE() ); // 1st vertex
-    polyline->hVertexes.push_back( buffer.ReadHANDLE() ); // last vertex
+    polyline->hVertices.push_back( buffer.ReadHANDLE() ); // 1st vertex
+    polyline->hVertices.push_back( buffer.ReadHANDLE() ); // last vertex
 
     polyline->hSeqend = buffer.ReadHANDLE();
 
@@ -2369,7 +2369,6 @@ CADLWPolylineObject * DWGFileR2000::getLWPolyLine(unsigned int dObjectSize,
     polyline->setSize( dObjectSize );
     polyline->stCed = stCommonEntityData;
 
-    double x             = 0.0, y = 0.0;
     int    vertixesCount = 0, nBulges = 0, nNumWidths = 0;
     short  dataFlag      = buffer.ReadBITSHORT();
     if( dataFlag & 4 )
@@ -2394,7 +2393,7 @@ CADLWPolylineObject * DWGFileR2000::getLWPolyLine(unsigned int dObjectSize,
     {
         // For some reason reserving huge amounts cause later segfaults
         // whereas an exception would have been expected
-        polyline->avertVertexes.reserve( static_cast<size_t>(vertixesCount) );
+        polyline->avertVertices.reserve( static_cast<size_t>(vertixesCount) );
     }
 
     if( dataFlag & 16 )
@@ -2437,7 +2436,7 @@ CADLWPolylineObject * DWGFileR2000::getLWPolyLine(unsigned int dObjectSize,
 
     // First of all, read first vertex.
     CADVector vertex = buffer.ReadRAWVector();
-    polyline->avertVertexes.push_back( vertex );
+    polyline->avertVertices.push_back( vertex );
 
     // All the others are not raw doubles; bitdoubles with default instead,
     // where default is previous point coords.
@@ -2445,8 +2444,8 @@ CADLWPolylineObject * DWGFileR2000::getLWPolyLine(unsigned int dObjectSize,
     for( int i = 1; i < vertixesCount; ++i )
     {
         prev = size_t( i - 1 );
-        x = buffer.ReadBITDOUBLEWD( polyline->avertVertexes[prev].getX() );
-        y = buffer.ReadBITDOUBLEWD( polyline->avertVertexes[prev].getY() );
+        double x = buffer.ReadBITDOUBLEWD( polyline->avertVertices[prev].getX() );
+        double y = buffer.ReadBITDOUBLEWD( polyline->avertVertices[prev].getY() );
         if( buffer.IsEOB() )
         {
             delete polyline;
@@ -2454,7 +2453,7 @@ CADLWPolylineObject * DWGFileR2000::getLWPolyLine(unsigned int dObjectSize,
         }
         vertex.setX( x );
         vertex.setY( y );
-        polyline->avertVertexes.push_back( vertex );
+        polyline->avertVertices.push_back( vertex );
     }
 
     for( int i = 0; i < nBulges; ++i )
@@ -3073,14 +3072,14 @@ CADMLineObject * DWGFileR2000::getMLine(unsigned int dObjectSize,
     mline->vectExtrusion = vectExtrusion;
     mline->dOpenClosed   = buffer.ReadBITSHORT();
     mline->nLinesInStyle = buffer.ReadCHAR();
-    mline->nNumVertexes  = buffer.ReadBITSHORT();
-    if(mline->nNumVertexes < 0)
+    mline->nNumVertices  = buffer.ReadBITSHORT();
+    if(mline->nNumVertices < 0)
     {
         delete mline;
         return nullptr;
     }
 
-    for( short i = 0; i < mline->nNumVertexes; ++i )
+    for( short i = 0; i < mline->nNumVertices; ++i )
     {
         CADMLineVertex stVertex;
 
@@ -3120,7 +3119,7 @@ CADMLineObject * DWGFileR2000::getMLine(unsigned int dObjectSize,
                 return nullptr;
             }
         }
-        mline->avertVertexes.push_back( stVertex );
+        mline->avertVertices.push_back( stVertex );
     }
 
     if( mline->stCed.bbEntMode == 0 )
@@ -3159,13 +3158,13 @@ CADPolylinePFaceObject * DWGFileR2000::getPolylinePFace(unsigned int dObjectSize
     polyline->setSize( dObjectSize );
     polyline->stCed = stCommonEntityData;
 
-    polyline->nNumVertexes = buffer.ReadBITSHORT();
+    polyline->nNumVertices = buffer.ReadBITSHORT();
     polyline->nNumFaces    = buffer.ReadBITSHORT();
 
     fillCommonEntityHandleData( polyline, buffer);
 
-    polyline->hVertexes.push_back( buffer.ReadHANDLE() ); // 1st vertex
-    polyline->hVertexes.push_back( buffer.ReadHANDLE() ); // last vertex
+    polyline->hVertices.push_back( buffer.ReadHANDLE() ); // 1st vertex
+    polyline->hVertices.push_back( buffer.ReadHANDLE() ); // last vertex
 
     polyline->hSeqend = buffer.ReadHANDLE();
 
@@ -3207,21 +3206,21 @@ CADImageObject * DWGFileR2000::getImage(unsigned int dObjectSize,
     if( image->dClipBoundaryType == 1 )
     {
         CADVector vertPoint1 = buffer.ReadRAWVector();
-        image->avertClippingPolygonVertexes.push_back( vertPoint1 );
+        image->avertClippingPolygonVertices.push_back( vertPoint1 );
 
         CADVector vertPoint2 = buffer.ReadRAWVector();
-        image->avertClippingPolygonVertexes.push_back( vertPoint2 );
+        image->avertClippingPolygonVertices.push_back( vertPoint2 );
     }
     else
     {
-        image->nNumberVertexesInClipPolygon = buffer.ReadBITLONG();
-        if(image->nNumberVertexesInClipPolygon < 0)
+        image->nNumberVerticesInClipPolygon = buffer.ReadBITLONG();
+        if(image->nNumberVerticesInClipPolygon < 0)
         {
             delete image;
             return nullptr;
         }
 
-        for( long i = 0; i < image->nNumberVertexesInClipPolygon; ++i )
+        for( long i = 0; i < image->nNumberVerticesInClipPolygon; ++i )
         {
             CADVector vertPoint = buffer.ReadRAWVector();
             if( buffer.IsEOB() )
@@ -3229,7 +3228,7 @@ CADImageObject * DWGFileR2000::getImage(unsigned int dObjectSize,
                 delete image;
                 return nullptr;
             }
-            image->avertClippingPolygonVertexes.push_back( vertPoint );
+            image->avertClippingPolygonVertices.push_back( vertPoint );
         }
     }
 

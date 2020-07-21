@@ -20,8 +20,7 @@ library (at least in its version 0.1) only offers compression and
 decompression of whole images, so RAM might be a limitation when dealing
 with big images (which are limited to 16383x16383 pixels).
 
-The WEBP driver supports 3 bands (RGB) images. It also supports 4 bands
-(RGBA) starting with GDAL 1.10 and libwebp 0.1.4.
+The WEBP driver supports 3 bands (RGB) images. It also supports 4 bands (RGBA)
 
 The WEBP driver can be used as the internal format used by the
 :ref:`raster.rasterlite` driver.
@@ -46,7 +45,7 @@ Various creation options exists, among them :
    range 1-100. Low values result in higher compression ratios, but
    poorer image quality.
 
--  **LOSSLESS=True/False** (GDAL >= 1.10 and libwebp >= 0.1.4): By
+-  **LOSSLESS=True/False** By
    default, lossy compression is used. If set to True, lossless
    compression will be used.
 

@@ -210,7 +210,7 @@ Drivers
 -------
 
 The GeoJSON driver will be modified to implement this RFC, in read and
-write, and thus wil\* :
+write, and thus will\* :
 
 -  declare a NATIVE_DATA open option to enable storing layer and feature
    native data.
@@ -274,7 +274,7 @@ Compatibility Issues
 --------------------
 
 Nothing severe expected. Potentially existing scripts might need to add
--noNativeData to get previous behaviour.
+-noNativeData to get previous behavior.
 
 Related ticket
 --------------

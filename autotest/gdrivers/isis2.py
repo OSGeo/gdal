@@ -39,7 +39,7 @@ import gdaltest
 
 def test_isis2_1():
 
-    tst = gdaltest.GDALTest('ISIS2', 'arvidson_original_truncated.cub', 1, 382)
+    tst = gdaltest.GDALTest('ISIS2', 'isis2/arvidson_original_truncated.cub', 1, 382)
     expected_prj = """PROJCS["SIMPLE_CYLINDRICAL VENUS",
     GEOGCS["GCS_VENUS",
         DATUM["D_VENUS",

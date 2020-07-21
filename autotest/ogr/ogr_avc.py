@@ -60,7 +60,7 @@ def check_content(ds):
 def test_ogr_avc_1():
 
     # Example given at Annex A of http://avce00.maptools.org/docs/v7_e00_cover.html
-    avc_ds = ogr.Open('data/test.e00')
+    avc_ds = ogr.Open('data/avc/test.e00')
     assert avc_ds.GetLayer(0).GetSpatialRef() is not None, 'expected SRS'
 
     if avc_ds is not None:
@@ -73,7 +73,7 @@ def test_ogr_avc_1():
 
 def test_ogr_avc_2():
 
-    avc_ds = ogr.Open('data/testavc/testavc')
+    avc_ds = ogr.Open('data/avc/testavc/testavc')
     assert avc_ds.GetLayer(0).GetSpatialRef() is not None, 'expected SRS'
 
     if avc_ds is not None:
@@ -87,7 +87,7 @@ def test_ogr_avc_2():
 def test_ogr_avc_3():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    avc_ds = ogr.Open('data/compressed.e00')
+    avc_ds = ogr.Open('data/avc/compressed.e00')
     gdal.PopErrorHandler()
     last_error_msg = gdal.GetLastErrorMsg()
 
@@ -101,7 +101,7 @@ def test_ogr_avc_3():
 
 def test_ogr_avc_4():
 
-    for filename in ['data/testpointavc/testpointavc', 'data/testpoint.e00']:
+    for filename in ['data/avc/testpointavc/testpointavc', 'data/avc/testpoint.e00']:
         avc_ds = ogr.Open(filename)
         lyr = avc_ds.GetLayer(0)
         last_feature = None
@@ -115,7 +115,7 @@ def test_ogr_avc_4():
         if last_feature.GetFieldCount() != 7:
             f.DumpReadable()
             pytest.fail(filename)
-        if filename == 'data/testpointavc/testpointavc':
+        if filename == 'data/avc/testpointavc/testpointavc':
             fld_name = 'TESTPOINTAVC-ID'
         else:
             fld_name = 'WELLS-ID'
@@ -130,7 +130,7 @@ def test_ogr_avc_4():
 
 def test_ogr_avc_5():
 
-    for filename in ['data/testpolyavc/testpolyavc', 'data/testpoly.e00']:
+    for filename in ['data/avc/testpolyavc/testpolyavc', 'data/avc/testpoly.e00']:
         avc_ds = ogr.Open(filename)
         lyr = avc_ds.GetLayerByName('PAL')
         last_feature = None
@@ -147,7 +147,7 @@ def test_ogr_avc_5():
         if last_feature.GetField('ArcIds') != [-4, -5] or last_feature.GetField('AREA') != pytest.approx(9939.059, abs=1e-3):
             f.DumpReadable()
             pytest.fail(filename)
-        if filename == 'data/testpolyavc/testpolyavc':
+        if filename == 'data/avc/testpolyavc/testpolyavc':
             expected_wkt = 'POLYGON ((340700.03125 4100199.5,340500.0 4100199.75,340599.96875 4100100.25,340700.03125 4100199.5))'
         else:
             expected_wkt = 'POLYGON ((340700.03 4100199.5,340500.0 4100199.8,340599.97 4100100.2,340700.03 4100199.5))'

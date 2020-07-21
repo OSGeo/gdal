@@ -83,7 +83,7 @@ Float32, Float64, CInt16, CInt32, CFloat32 or CFloat64.
 **Array**: This represents a :cpp:class:`GDALMDArray`. It must have a
 *name* attribute and a child *DataType* element. It may have 0 or more
 *DimensionRef* or *Dimension* child elements to define its dimensions. And
-the following elements may be optionaly specified to define its properties.
+the following elements may be optionally specified to define its properties.
 *SRS, *Unit*, *NoDataValue*, *Offset* and *Scale*.
 To define its values, it may have one *RegularlySpacedValues* element,
 or zero, one or several elements among *ConstantValue*, *InlineValues*, *InlineValuesWithValueElement* or
@@ -138,7 +138,7 @@ offset of the source, the number of values along each dimension and the step
 between source elements. It may have a *DestSlab* element with an *offset*
 attribute to define where the source data is placed into the target array.
 SourceSlab operates on the output of SourceView if specified, which operates
-itself on the ouput of SourceTranspose if specified.
+itself on the output of SourceTranspose if specified.
 
 .. code-block:: xml
 

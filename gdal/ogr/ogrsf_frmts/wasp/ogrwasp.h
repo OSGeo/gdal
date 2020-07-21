@@ -39,7 +39,7 @@
 /*                             OGRWAsPLayer                             */
 /************************************************************************/
 
-class OGRWAsPLayer final: public OGRLayer
+class OGRWAsPLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRWAsPLayer>
 {
     /* stuff for polygon processing */
 
@@ -124,6 +124,8 @@ class OGRWAsPLayer final: public OGRLayer
      * */
     OGRLineString * Simplify( const OGRLineString & line ) const;
 
+    OGRFeature *GetNextRawFeature();
+
   public:
                         /* For writing */
                         /* Takes ownership of poTolerance */
@@ -157,8 +159,7 @@ class OGRWAsPLayer final: public OGRLayer
 
     virtual OGRErr      ICreateFeature( OGRFeature * poFeature ) override;
 
-    virtual OGRFeature *GetNextFeature() override;
-    OGRFeature *GetNextRawFeature();
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRWAsPLayer)
     virtual const char *GetName() override { return sName.c_str(); }
 };
 

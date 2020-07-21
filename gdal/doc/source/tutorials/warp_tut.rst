@@ -199,7 +199,7 @@ There are a number of things that can be done to optimize the performance of the
 
 - Process all bands in one call. This ensures the transformation calculations don't have to be performed for each band.
 
-- Use the :cpp:func:`GDALWarpOperation::ChunkAndWarpMulti` method instead of :cpp:func:`GDALWarpOperation::ChunkAndWarpImage`. It uses a separate thread for the IO and the actual image warp operation allowing more effective use of CPU and IO bandwidth. For this to work GDAL needs to have been built with multi-threading support (default on Win32, default on Unix since GDAL 1.8.0, for previous versions -with-threads was required in configure).
+- Use the :cpp:func:`GDALWarpOperation::ChunkAndWarpMulti` method instead of :cpp:func:`GDALWarpOperation::ChunkAndWarpImage`. It uses a separate thread for the IO and the actual image warp operation allowing more effective use of CPU and IO bandwidth. For this to work GDAL needs to have been built with multi-threading support (default on Win32, default on Unix, for previous versions -with-threads was required in configure).
 
 - The resampling kernels vary is work required from nearest neighbour being least, then bilinear then cubic. Don't use a more complex resampling kernel than needed.
 

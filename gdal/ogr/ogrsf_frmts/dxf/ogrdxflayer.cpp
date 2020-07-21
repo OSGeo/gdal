@@ -7,7 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2009, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
- * Copyright (c) 2017, Alan Thomas <alant@outlook.com.au>
+ * Copyright (c) 2017-2020, Alan Thomas <alant@outlook.com.au>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -180,7 +180,8 @@ void OGRDXFLayer::TranslateGenericProperty( OGRDXFFeature *poFeature,
       break;
 
       case 60:
-        poFeature->oStyleProperties["Hidden"] = pszValue;
+        if( atoi(pszValue) )
+            poFeature->oStyleProperties["Hidden"] = "1";
         break;
 
       case 67:
@@ -579,7 +580,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMTEXT()
     // Font name
     osStyle.Printf("LABEL(f:\"");
 
-    // Preserve legacy behaviour of specifying "Arial" as a default font name.
+    // Preserve legacy behavior of specifying "Arial" as a default font name.
     osStyle += poDS->LookupTextStyleProperty( osStyleName, "Font", "Arial" );
 
     osStyle += "\"";
@@ -839,7 +840,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateTEXT( const bool bIsAttribOrAttdef )
     // Font name
     osStyle.Printf("LABEL(f:\"");
 
-    // Preserve legacy behaviour of specifying "Arial" as a default font name.
+    // Preserve legacy behavior of specifying "Arial" as a default font name.
     osStyle += poDS->LookupTextStyleProperty( osStyleName, "Font", "Arial" );
 
     osStyle += "\"";
@@ -1170,7 +1171,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateLWPOLYLINE()
         smoothPolyline.Close();
 
     smoothPolyline.SetUseMaxGapWhenTessellatingArcs( poDS->InlineBlocks() );
-    OGRGeometry* poGeom = smoothPolyline.Tesselate();
+    OGRGeometry* poGeom = smoothPolyline.Tessellate();
     poFeature->ApplyOCSTransformer( poGeom );
     poFeature->SetGeometryDirectly( poGeom );
 
@@ -1193,7 +1194,7 @@ static inline int SafeAbs(int x)
 /************************************************************************/
 /*                         TranslatePOLYLINE()                          */
 /*                                                                      */
-/*      We also capture the following VERTEXes.                         */
+/*      We also capture the following vertices.                         */
 /************************************************************************/
 
 OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
@@ -1235,7 +1236,7 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Collect VERTEXes as a smooth polyline.                          */
+/*      Collect vertices as a smooth polyline.                          */
 /* -------------------------------------------------------------------- */
     double dfX = 0.0;
     double dfY = 0.0;
@@ -1442,7 +1443,7 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
         smoothPolyline.Close();
 
     smoothPolyline.SetUseMaxGapWhenTessellatingArcs( poDS->InlineBlocks() );
-    OGRGeometry* poGeom = smoothPolyline.Tesselate();
+    OGRGeometry* poGeom = smoothPolyline.Tessellate();
 
     if( (nPolylineFlag & 8) == 0 )
         poFeature->ApplyOCSTransformer( poGeom );
@@ -2903,6 +2904,11 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( GUInt32 nInitialErrorCounter,
     {
         OGRDXFFeature *poSubFeature =
             poBlock->apoFeatures[iSubFeat]->CloneDXFFeature();
+
+        // If the template feature is in PaperSpace, set this on the
+        // subfeature too
+        if ( poFeature->GetFieldAsInteger( "PaperSpace" ) )
+            poSubFeature->SetField( "PaperSpace", 1 );
 
         // Does this feature represent a block reference? If so,
         // insert that block

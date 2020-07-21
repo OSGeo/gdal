@@ -77,7 +77,7 @@ the C++ code will:
 * if not already done, find Python symbols, or start Python (see below paragraph
   for more details)
 * if not already done, load the .py file as a Python module
-* if not already done, instanciate an instance of the Python class of the module
+* if not already done, instantiate an instance of the Python class of the module
   deriving from ``gdal_python_driver.BaseDriver``
 * call the  ``identify`` and ``open`` method depending on the originated API call.
 

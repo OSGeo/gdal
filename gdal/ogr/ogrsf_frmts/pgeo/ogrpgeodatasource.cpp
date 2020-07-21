@@ -106,14 +106,12 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
 /*                                                                      */
 /* -------------------------------------------------------------------- */
     char *pszDSN = nullptr;
-    const char* pszOptionName = "";
     const char* pszDSNStringTemplate = nullptr;
     if( STARTS_WITH_CI(pszNewName, "PGEO:") )
         pszDSN = CPLStrdup( pszNewName + 5 );
     else
     {
-        pszOptionName = "PGEO_DRIVER_TEMPLATE";
-        pszDSNStringTemplate = CPLGetConfigOption( pszOptionName, nullptr );
+        pszDSNStringTemplate = CPLGetConfigOption( "PGEO_DRIVER_TEMPLATE", nullptr );
         if( pszDSNStringTemplate == nullptr )
         {
             pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";

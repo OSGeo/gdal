@@ -66,7 +66,7 @@ Driver capabilities
 Access Databases (.MDB) support
 -------------------------------
 
-Starting with GDAL 1.10, and on Windows provided that the "Microsoft
+On Windows provided that the "Microsoft
 Access Driver (\*.mdb)" ODBC driver is installed, non-spatial MS Access
 Databases (not Personal Geodabases or Geomedia databases) can be opened
 directly by their filenames.

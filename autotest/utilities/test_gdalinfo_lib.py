@@ -61,7 +61,7 @@ def test_gdalinfo_lib_2():
 
 def test_gdalinfo_lib_3():
 
-    ds = gdal.Open('../gdrivers/data/fake_nsif.ntf')
+    ds = gdal.Open('../gdrivers/data/nitf/fake_nsif.ntf')
 
     ret = gdal.Info(ds, format='json')
     assert 'TRE' not in ret['metadata'], 'got unexpected extra MD.'
@@ -77,7 +77,7 @@ def test_gdalinfo_lib_3():
 
 def test_gdalinfo_lib_4():
 
-    ds = gdal.Open('../gdrivers/data/byte_with_xmp.tif')
+    ds = gdal.Open('../gdrivers/data/gtiff/byte_with_xmp.tif')
 
     ret = gdal.Info(ds, allMetadata=True, format='json')
     assert 'xml:XMP' in ret['metadata']
@@ -114,6 +114,7 @@ def test_gdalinfo_lib_6():
 
     ret = gdal.Info('../gcore/data/byte.tif', options='-json')
     assert ret['driverShortName'] == 'GTiff', 'wrong value for driverShortName.'
+    assert type(ret) == dict
 
 ###############################################################################
 # Test with unicode strings
@@ -123,6 +124,17 @@ def test_gdalinfo_lib_7():
 
     ret = gdal.Info('../gcore/data/byte.tif'.encode('ascii').decode('ascii'), options='-json'.encode('ascii').decode('ascii'))
     assert ret['driverShortName'] == 'GTiff', 'wrong value for driverShortName.'
+    assert type(ret) == dict
+
+###############################################################################
+# Test with list of strings
+
+
+def test_gdalinfo_lib_8():
+
+    ret = gdal.Info('../gcore/data/byte.tif', options=['-json'])
+    assert ret['driverShortName'] == 'GTiff', 'wrong value for driverShortName.'
+    assert type(ret) == dict
 
 ###############################################################################
 

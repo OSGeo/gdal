@@ -90,6 +90,7 @@ static void Usage( const char* pszAdditionalMsg = nullptr, bool bShort = true )
         "               [-clipdstwhere expression]\n"
         "               [-wrapdateline][-datelineoffset val]\n"
         "               [[-simplify tolerance] | [-segmentize max_dist]]\n"
+        "               [-makevalid]\n"
         "               [-addfields] [-unsetFid]\n"
         "               [-relaxedFieldNameMatch] [-forceNullable] [-unsetDefault]\n"
         "               [-fieldTypeToString All|(type1[,type2]*)] [-unsetFieldWidth]\n"
@@ -170,7 +171,7 @@ static void Usage( const char* pszAdditionalMsg = nullptr, bool bShort = true )
         "      starts at zero. There must be exactly as many values in the list as\n"
         "      the count of the fields in the source layer. We can use the 'identity'\n"
         "      setting to specify that the fields should be transferred by using the\n"
-        "      same order. This setting should be used along with the append setting.");
+        "      same order. This setting should be used along with the append setting.\n");
 
     printf(" -a_srs srs_def: Assign an output SRS\n"
            " -t_srs srs_def: Reproject/transform to this SRS on output\n"

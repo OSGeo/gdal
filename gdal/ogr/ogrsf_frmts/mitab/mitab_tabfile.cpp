@@ -814,8 +814,6 @@ int TABFile::ParseTABFileFields()
     char **papszTok = nullptr;
 
     const int numLines = CSLCount(m_papszTABFile);
-    int numTok = 0;
-    int nStatus = 0;
     for( int iLine=0; iLine<numLines; iLine++ )
     {
         /*-------------------------------------------------------------
@@ -862,7 +860,7 @@ int TABFile::ParseTABFileFields()
                 papszTok = CSLTokenizeStringComplex(m_papszTABFile[iLine],
                                                     " \t(),;",
                                                     TRUE, FALSE);
-                numTok = CSLCount(papszTok);
+                const int numTok = CSLCount(papszTok);
 
                 CPLAssert(m_poDefn);
                 poFieldDefn = nullptr;
@@ -875,6 +873,7 @@ int TABFile::ParseTABFileFields()
                         osFieldName.Recode( GetEncoding(), CPL_ENC_UTF8 );
                 }
 
+                int nStatus = -1;
                 if (numTok >= 3 && EQUAL(papszTok[1], "char"))
                 {
                     /*-------------------------------------------------
@@ -1009,7 +1008,9 @@ int TABFile::ParseTABFileFields()
                     poFieldDefn->SetWidth(1);
                 }
                 else
-                    nStatus = -1; // Unrecognized field type or line corrupt
+                {
+                    // Unrecognized field type or line corrupt
+                }
 
                 if (nStatus != 0)
                 {

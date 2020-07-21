@@ -135,8 +135,11 @@ typedef enum
     /*! Average */                                      GRIORA_Average = 5,
     /*! Mode (selects the value which appears most often of all the sampled points) */
                                                         GRIORA_Mode = 6,
-    /*! Gauss blurring */                               GRIORA_Gauss = 7
+    /*! Gauss blurring */                               GRIORA_Gauss = 7,
     /* NOTE: values 8 to 12 are reserved for max,min,med,Q1,Q3 */
+/*! @cond Doxygen_Suppress */
+                                                        GRIORA_LAST = GRIORA_Gauss
+/*! @endcond */
 } GDALRIOResampleAlg;
 
 /* NOTE to developers: only add members, and if so edit INIT_RASTERIO_EXTRA_ARG */
@@ -409,7 +412,7 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DCAP_CREATECOPY_MULTIDIMENSIONAL     "DCAP_CREATECOPY_MULTIDIMENSIONAL"
 
-/** Capability set by a driver that supports multidimensionnal data.
+/** Capability set by a driver that supports multidimensional data.
  * @since GDAL 3.1
  */
 #define GDAL_DCAP_MULTIDIM_RASTER     "DCAP_MULTIDIM_RASTER"
@@ -439,6 +442,11 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  * @since GDAL 2.0
  */
 #define GDAL_DCAP_NOTNULL_FIELDS "DCAP_NOTNULL_FIELDS"
+
+/** Capability set by a driver that can create fields with UNIQUE constraint.
+ * @since GDAL 3.2
+ */
+#define GDAL_DCAP_UNIQUE_FIELDS "DCAP_UNIQUE_FIELDS"
 
 /** Capability set by a driver that can create fields with DEFAULT values.
  * @since GDAL 2.0
@@ -547,7 +555,7 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess ) CPL_
  */
 #define     GDAL_OF_GNM             0x08
 
-/** Allow multidimensionnal raster drivers to be used.
+/** Allow multidimensional raster drivers to be used.
  * Used by GDALOpenEx().
  * @since GDAL 3.1
  */
@@ -948,7 +956,11 @@ CPLErr CPL_DLL CPL_STDCALL GDALGetRasterHistogram( GDALRasterBandH hBand,
                                        int nBuckets, int *panHistogram,
                                        int bIncludeOutOfRange, int bApproxOK,
                                        GDALProgressFunc pfnProgress,
-                                       void * pProgressData ) CPL_WARN_DEPRECATED("Use GDALGetRasterHistogramEx() instead");
+                                       void * pProgressData )
+/*! @cond Doxygen_Suppress */
+    CPL_WARN_DEPRECATED("Use GDALGetRasterHistogramEx() instead")
+/*! @endcond */
+    ;
 CPLErr CPL_DLL CPL_STDCALL GDALGetRasterHistogramEx( GDALRasterBandH hBand,
                                        double dfMin, double dfMax,
                                        int nBuckets, GUIntBig *panHistogram,
@@ -960,7 +972,11 @@ CPLErr CPL_DLL CPL_STDCALL GDALGetDefaultHistogram( GDALRasterBandH hBand,
                                        int *pnBuckets, int **ppanHistogram,
                                        int bForce,
                                        GDALProgressFunc pfnProgress,
-                                       void * pProgressData ) CPL_WARN_DEPRECATED("Use GDALGetDefaultHistogramEx() instead");
+                                       void * pProgressData )
+/*! @cond Doxygen_Suppress */
+    CPL_WARN_DEPRECATED("Use GDALGetDefaultHistogramEx() instead")
+/*! @endcond */
+    ;
 CPLErr CPL_DLL CPL_STDCALL GDALGetDefaultHistogramEx( GDALRasterBandH hBand,
                                        double *pdfMin, double *pdfMax,
                                        int *pnBuckets, GUIntBig **ppanHistogram,
@@ -969,7 +985,11 @@ CPLErr CPL_DLL CPL_STDCALL GDALGetDefaultHistogramEx( GDALRasterBandH hBand,
                                        void * pProgressData );
 CPLErr CPL_DLL CPL_STDCALL GDALSetDefaultHistogram( GDALRasterBandH hBand,
                                        double dfMin, double dfMax,
-                                       int nBuckets, int *panHistogram ) CPL_WARN_DEPRECATED("Use GDALSetDefaultHistogramEx() instead");
+                                       int nBuckets, int *panHistogram )
+/*! @cond Doxygen_Suppress */
+    CPL_WARN_DEPRECATED("Use GDALSetDefaultHistogramEx() instead")
+/*! @endcond */
+    ;
 CPLErr CPL_DLL CPL_STDCALL GDALSetDefaultHistogramEx( GDALRasterBandH hBand,
                                        double dfMin, double dfMax,
                                        int nBuckets, GUIntBig *panHistogram );
@@ -1395,7 +1415,7 @@ CPLXMLNode CPL_DLL* GDALGetJPEG2000Structure(const char* pszFilename,
                                              CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 
 /* ==================================================================== */
-/*      Multidimensionnal API_api                                       */
+/*      Multidimensional API_api                                       */
 /* ==================================================================== */
 
 GDALDatasetH CPL_DLL GDALCreateMultiDimensional( GDALDriverH hDriver,

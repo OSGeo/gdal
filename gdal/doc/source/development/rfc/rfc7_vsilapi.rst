@@ -45,7 +45,7 @@ RawRasterBand changes
    fpRaw is kept. The constructors will set the adequate member
    according to the value of the bIsVSIL parameter.
 -  A new method VSILFILE\* GetFPL() is added.
--  The old FILE\* GetFP() is adapted to have same behaviour as before
+-  The old FILE\* GetFP() is adapted to have same behavior as before
    (can return a standard FILE handle or a VSI*L handle depending on the
    handle that was passed to the constructor)
 
@@ -77,7 +77,7 @@ alias of FILE, unless the VSIL_STRICT_ENFORCE macro is defined.
    typedef FILE VSILFILE;
    #endif
 
-In a future release (GDAL 2.0 ?), the behaviour will be changed to
+In a future release (GDAL 2.0 ?), the behavior will be changed to
 enforce the new strong typing.
 
 Any future development done since the adoption of this RFC should use

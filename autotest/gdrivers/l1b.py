@@ -236,7 +236,7 @@ def test_l1b_metadata_after_noaa_15():
 
 def test_l1b_little_endian():
 
-    ds = gdal.Open('/vsizip/data/hrpt_little_endian.l1b.zip')
+    ds = gdal.Open('/vsizip/data/l1b/hrpt_little_endian.l1b.zip')
     assert ds.GetGCPProjection().find('GRS80') >= 0
     assert ds.GetRasterBand(1).Checksum() == 14145
     assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET

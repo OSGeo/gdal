@@ -37,6 +37,8 @@ from osgeo import gdal
 from osgeo import ogr
 import pytest
 
+pytestmark = pytest.mark.require_driver('XLSX')
+
 ###############################################################################
 # Check
 
@@ -101,13 +103,9 @@ def ogr_xlsx_check(ds):
 
 def test_ogr_xlsx_1():
 
-    drv = ogr.GetDriverByName('XLSX')
-    if drv is None:
-        pytest.skip()
+    assert ogr.GetDriverByName('XLSX').TestCapability("foo") == 0
 
-    assert drv.TestCapability("foo") == 0
-
-    ds = ogr.Open('data/test.xlsx')
+    ds = ogr.Open('data/xlsx/test.xlsx')
     assert ds is not None, 'cannot open dataset'
 
     return ogr_xlsx_check(ds)
@@ -118,12 +116,8 @@ def test_ogr_xlsx_1():
 
 def test_ogr_xlsx_2():
 
-    drv = ogr.GetDriverByName('XLSX')
-    if drv is None:
-        pytest.skip()
-
     gdal.SetConfigOption('OGR_XLSX_HEADERS', 'DISABLE')
-    ds = ogr.Open('data/test.xlsx')
+    ds = ogr.Open('data/xlsx/test.xlsx')
 
     lyr = ds.GetLayerByName('Feuille7')
 
@@ -137,12 +131,8 @@ def test_ogr_xlsx_2():
 
 def test_ogr_xlsx_3():
 
-    drv = ogr.GetDriverByName('XLSX')
-    if drv is None:
-        pytest.skip()
-
     gdal.SetConfigOption('OGR_XLSX_FIELD_TYPES', 'STRING')
-    ds = ogr.Open('data/test.xlsx')
+    ds = ogr.Open('data/xlsx/test.xlsx')
 
     lyr = ds.GetLayerByName('Feuille7')
 
@@ -156,15 +146,11 @@ def test_ogr_xlsx_3():
 
 def test_ogr_xlsx_4():
 
-    drv = ogr.GetDriverByName('XLSX')
-    if drv is None:
-        pytest.skip()
-
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.xlsx')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/xlsx/test.xlsx')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
@@ -174,15 +160,11 @@ def test_ogr_xlsx_4():
 
 def test_ogr_xlsx_5():
 
-    drv = ogr.GetDriverByName('XLSX')
-    if drv is None:
-        pytest.skip()
-
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is None:
         pytest.skip()
 
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f XLSX tmp/test.xlsx data/test.xlsx')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f XLSX tmp/test.xlsx data/xlsx/test.xlsx')
 
     ds = ogr.Open('tmp/test.xlsx')
     ret = ogr_xlsx_check(ds)
@@ -198,13 +180,9 @@ def test_ogr_xlsx_5():
 
 def test_ogr_xlsx_6():
 
-    drv = ogr.GetDriverByName('XLSX')
-    if drv is None:
-        pytest.skip()
-
     # In this dataset the column titles are not recognised by default.
     gdal.SetConfigOption('OGR_XLSX_HEADERS', 'FORCE')
-    ds = ogr.Open('data/inlineStr.xlsx')
+    ds = ogr.Open('data/xlsx/inlineStr.xlsx')
 
     lyr = ds.GetLayerByName('inlineStr')
 
@@ -225,12 +203,8 @@ def test_ogr_xlsx_6():
 
 def test_ogr_xlsx_7():
 
-    drv = ogr.GetDriverByName('XLSX')
-    if drv is None:
-        pytest.skip()
-
     gdal.Unlink('tmp/ogr_xlsx_7.xlsx')
-    shutil.copy('data/test.xlsx', 'tmp/ogr_xlsx_7.xlsx')
+    shutil.copy('data/xlsx/test.xlsx', 'tmp/ogr_xlsx_7.xlsx')
 
     ds = ogr.Open('tmp/ogr_xlsx_7.xlsx', update=1)
     lyr = ds.GetLayerByName('Feuille7')
@@ -263,11 +237,7 @@ def test_ogr_xlsx_7():
 
 def test_ogr_xlsx_8():
 
-    drv = ogr.GetDriverByName('XLSX')
-    if drv is None:
-        pytest.skip()
-
-    ds = drv.CreateDataSource('/vsimem/ogr_xlsx_8.xlsx')
+    ds = ogr.GetDriverByName('XLSX').CreateDataSource('/vsimem/ogr_xlsx_8.xlsx')
     lyr = ds.CreateLayer('foo')
     for i in range(30):
         lyr.CreateField(ogr.FieldDefn('Field%d' % (i + 1)))
@@ -292,11 +262,7 @@ def test_ogr_xlsx_8():
 
 def test_ogr_xlsx_9():
 
-    drv = ogr.GetDriverByName('XLSX')
-    if drv is None:
-        pytest.skip()
-
-    ds = drv.CreateDataSource('/vsimem/ogr_xlsx_9.xlsx')
+    ds = ogr.GetDriverByName('XLSX').CreateDataSource('/vsimem/ogr_xlsx_9.xlsx')
     lyr = ds.CreateLayer('foo')
     lyr.CreateField(ogr.FieldDefn('Field1', ogr.OFTInteger64))
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -327,11 +293,7 @@ def test_ogr_xlsx_9():
 
 def test_ogr_xlsx_10():
 
-    drv = ogr.GetDriverByName('XLSX')
-    if drv is None:
-        pytest.skip()
-
-    ds = drv.CreateDataSource('/vsimem/ogr_xlsx_10.xlsx')
+    ds = ogr.GetDriverByName('XLSX').CreateDataSource('/vsimem/ogr_xlsx_10.xlsx')
     lyr = ds.CreateLayer('foo')
     lyr.CreateField(ogr.FieldDefn('Field1', ogr.OFTDateTime))
     lyr.CreateField(ogr.FieldDefn('Field2', ogr.OFTDateTime))
@@ -368,11 +330,7 @@ def test_ogr_xlsx_10():
 
 def test_ogr_xlsx_11():
 
-    drv = ogr.GetDriverByName('XLSX')
-    if drv is None:
-        pytest.skip()
-
-    ds = ogr.Open('data/not_all_columns_present.xlsx')
+    ds = ogr.Open('data/xlsx/not_all_columns_present.xlsx')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     for i in (0, 27, 28, 29):
@@ -388,11 +346,7 @@ def test_ogr_xlsx_11():
 
 def test_ogr_xlsx_12():
 
-    drv = ogr.GetDriverByName('XLSX')
-    if drv is None:
-        pytest.skip()
-
-    ds = ogr.Open('data/absolute_sheet_filename.xlsx')
+    ds = ogr.Open('data/xlsx/absolute_sheet_filename.xlsx')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f is not None
@@ -404,12 +358,8 @@ def test_ogr_xlsx_12():
 
 def test_ogr_xlsx_13():
 
-    drv = ogr.GetDriverByName('XLSX')
-    if drv is None:
-        pytest.skip()
-
     gdal.SetConfigOption('OGR_XLSX_FIELD_TYPES', None)
-    ds = ogr.Open('data/test_missing_row1_data.xlsx')
+    ds = ogr.Open('data/xlsx/test_missing_row1_data.xlsx')
 
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Sheet1', 'bad layer name'
@@ -450,12 +400,8 @@ def test_ogr_xlsx_13():
 
 def test_ogr_xlsx_14():
 
-    drv = ogr.GetDriverByName('XLSX')
-    if drv is None:
-        pytest.skip()
-
     gdal.SetConfigOption('OGR_XLSX_FIELD_TYPES', None)
-    ds = ogr.Open('data/test_empty_last_field.xlsx')
+    ds = ogr.Open('data/xlsx/test_empty_last_field.xlsx')
 
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'Sheet1', 'bad layer name'
@@ -496,10 +442,6 @@ def test_ogr_xlsx_14():
 
 def test_ogr_xlsx_15():
 
-    drv = ogr.GetDriverByName('XLSX')
-    if drv is None:
-        pytest.skip()
-
     out_filename = '/vsimem/ogr_xlsx_15.xlsx'
     gdal.VectorTranslate(out_filename, 'data/poly.shp', options='-f XLSX -nln first')
     gdal.VectorTranslate(out_filename, 'data/poly.shp', options='-update -nln second')
@@ -517,12 +459,8 @@ def test_ogr_xlsx_15():
 
 def test_ogr_xlsx_boolean():
 
-    drv = ogr.GetDriverByName('XLSX')
-    if drv is None:
-        pytest.skip()
-
     out_filename = '/vsimem/ogr_xlsx_boolean.xlsx'
-    ds = drv.CreateDataSource(out_filename)
+    ds = ogr.GetDriverByName('XLSX').CreateDataSource(out_filename)
     lyr = ds.CreateLayer('foo')
     fld_defn = ogr.FieldDefn('Field1', ogr.OFTInteger)
     fld_defn.SetSubType(ogr.OFSTBoolean)
@@ -544,4 +482,22 @@ def test_ogr_xlsx_boolean():
     gdal.Unlink(out_filename)
 
 
+###############################################################################
+# Test reading DateTime, and numeric precision issues (#2683)
 
+
+def test_ogr_xlsx_read_datetime():
+
+    ds = ogr.Open('data/xlsx/datetime.xlsx')
+    lyr = ds.GetLayer(0)
+    got = [ f.GetFieldAsString(0) for f in lyr ]
+    assert got == ['2020/04/07 09:58:00',
+                   '2020/04/07 09:58:01',
+                   '2020/04/07 09:58:02',
+                   '2020/04/07 09:58:03',
+                   '2020/04/07 09:58:04',
+                   '2020/04/07 09:58:05',
+                   '2020/04/07 10:03:00',
+                   '2020/04/07 10:10:00',
+                   '2020/04/07 10:29:00',
+                   '2020/04/07 10:42:00']

@@ -32,6 +32,8 @@
 #include "cpl_vsil_curl_priv.h"
 #include "cpl_vsil_curl_class.h"
 
+#include <errno.h>
+
 #include <algorithm>
 #include <set>
 #include <map>
@@ -232,9 +234,10 @@ VSIWebHDFSWriteHandle::VSIWebHDFSWriteHandle( VSIWebHDFSFSHandler* poFS,
                                               const char* pszFilename) :
         VSIAppendWriteHandle(poFS, poFS->GetFSPrefix(), pszFilename,
                              GetWebHDFSBufferSize()),
-        m_osURL( pszFilename + poFS->GetFSPrefix().size() )
+        m_osURL( pszFilename + poFS->GetFSPrefix().size() ),
+        m_osDataNodeHost( GetWebHDFSDataNodeHost() )
 {
-    m_osDataNodeHost = GetWebHDFSDataNodeHost();
+    // cppcheck-suppress useInitializationList
     m_osUsernameParam = CPLGetConfigOption("WEBHDFS_USERNAME", "");
     if( !m_osUsernameParam.empty() )
         m_osUsernameParam = "&user.name=" + m_osUsernameParam;
@@ -297,6 +300,10 @@ bool VSIWebHDFSWriteHandle::CreateFile()
         return false;
     }
 
+    NetworkStatisticsFileSystem oContextFS(m_poFS->GetFSPrefix());
+    NetworkStatisticsFile oContextFile(m_osFilename);
+    NetworkStatisticsAction oContextAction("Write");
+
     CPLString osURL = m_osURL + "?op=CREATE&overwrite=true" +
         m_osUsernameParam + m_osDelegationParam;
 
@@ -335,6 +342,8 @@ retry:
     MultiPerform(m_poFS->GetCurlMultiHandleFor(m_osURL), hCurlHandle);
 
     curl_slist_free_all(headers);
+
+    NetworkStatisticsLogger::LogPUT(0);
 
     long response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
@@ -390,6 +399,10 @@ retry:
 
 bool VSIWebHDFSWriteHandle::Append()
 {
+    NetworkStatisticsFileSystem oContextFS(m_poFS->GetFSPrefix());
+    NetworkStatisticsFile oContextFile(m_osFilename);
+    NetworkStatisticsAction oContextAction("Write");
+
     CPLString osURL = m_osURL + "?op=APPEND" +
                       m_osUsernameParam + m_osDelegationParam;
 
@@ -411,6 +424,8 @@ bool VSIWebHDFSWriteHandle::Append()
     MultiPerform(m_poFS->GetCurlMultiHandleFor(m_osURL), hCurlHandle);
 
     curl_slist_free_all(headers);
+
+    NetworkStatisticsLogger::LogPOST(0, 0);
 
     long response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
@@ -472,6 +487,8 @@ bool VSIWebHDFSWriteHandle::Append()
 
     curl_slist_free_all(headers);
 
+    NetworkStatisticsLogger::LogPOST(m_nBufferOff, 0);
+
     response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
 
@@ -510,12 +527,26 @@ VSIVirtualHandle* VSIWebHDFSFSHandler::Open( const char *pszFilename,
     if( strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr )
     {
 #ifdef HAVE_CURLINFO_REDIRECT_URL
+        if( strchr(pszAccess, '+') != nullptr &&
+            !CPLTestBool(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO")) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                        "w+ not supported for /vsiwebhdfs, unless "
+                        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE is set to YES");
+            errno = EACCES;
+            return nullptr;
+        }
+
         VSIWebHDFSWriteHandle* poHandle =
             new VSIWebHDFSWriteHandle(this, pszFilename);
         if( !poHandle->IsOK() )
         {
             delete poHandle;
-            poHandle = nullptr;
+            return nullptr;
+        }
+        if( strchr(pszAccess, '+') != nullptr)
+        {
+            return VSICreateUploadOnCloseFile(poHandle);
         }
         return poHandle;
 #else
@@ -585,6 +616,9 @@ char** VSIWebHDFSFSHandler::GetFileList( const char *pszDirname,
         CPLDebug("WEBHDFS", "GetFileList(%s)" , pszDirname);
     *pbGotFileList = false;
 
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("ListBucket");
+
     CPLAssert( strlen(pszDirname) >= GetFSPrefix().size() );
     CPLString osDirnameWithoutPrefix = pszDirname + GetFSPrefix().size();
 
@@ -620,6 +654,8 @@ char** VSIWebHDFSFSHandler::GetFileList( const char *pszDirname,
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
     curl_slist_free_all(headers);
+
+    NetworkStatisticsLogger::LogGET(sWriteFuncData.nSize);
 
     long response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
@@ -683,6 +719,9 @@ int VSIWebHDFSFSHandler::Unlink( const char *pszFilename )
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return -1;
 
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("Unlink");
+
     CPLString osBaseURL = GetURLFromFilename(pszFilename);
 
     CURLM* hCurlMultiHandle = GetCurlMultiHandleFor(osBaseURL);
@@ -715,6 +754,8 @@ int VSIWebHDFSFSHandler::Unlink( const char *pszFilename )
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
     curl_slist_free_all(headers);
+
+    NetworkStatisticsLogger::LogDELETE();
 
     long response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
@@ -760,6 +801,9 @@ int VSIWebHDFSFSHandler::Unlink( const char *pszFilename )
 
 int VSIWebHDFSFSHandler::Rmdir( const char *pszFilename )
 {
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("Rmdir");
+
     return Unlink(pszFilename);
 }
 
@@ -789,6 +833,9 @@ int VSIWebHDFSFSHandler::Mkdir( const char *pszDirname, long nMode )
         // /vsiwebhdfs/http://localhost:50070/webhdfs/v1
         return -1;
     }
+
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("Mkdir");
 
     CPLString osBaseURL = GetURLFromFilename(osDirnameWithoutEndSlash);
 
@@ -827,6 +874,8 @@ int VSIWebHDFSFSHandler::Mkdir( const char *pszDirname, long nMode )
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
     curl_slist_free_all(headers);
+
+    NetworkStatisticsLogger::LogPUT(0);
 
     long response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
@@ -874,9 +923,10 @@ int VSIWebHDFSFSHandler::Mkdir( const char *pszDirname, long nMode )
 
 VSIWebHDFSHandle::VSIWebHDFSHandle( VSIWebHDFSFSHandler* poFSIn,
                           const char* pszFilename, const char* pszURL ) :
-        VSICurlHandle(poFSIn, pszFilename, pszURL)
+        VSICurlHandle(poFSIn, pszFilename, pszURL),
+        m_osDataNodeHost(GetWebHDFSDataNodeHost())
 {
-    m_osDataNodeHost = GetWebHDFSDataNodeHost();
+    // cppcheck-suppress useInitializationList
     m_osUsernameParam = CPLGetConfigOption("WEBHDFS_USERNAME", "");
     if( !m_osUsernameParam.empty() )
         m_osUsernameParam = "&user.name=" + m_osUsernameParam;
@@ -894,6 +944,10 @@ vsi_l_offset VSIWebHDFSHandle::GetFileSize( bool bSetError )
 {
     if( oFileProp.bHasComputedFileSize )
         return oFileProp.fileSize;
+
+    NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix());
+    NetworkStatisticsFile oContextFile(m_osFilename);
+    NetworkStatisticsAction oContextAction("GetFileSize");
 
     oFileProp.bHasComputedFileSize = true;
 
@@ -934,6 +988,8 @@ vsi_l_offset VSIWebHDFSHandle::GetFileSize( bool bSetError )
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
     curl_slist_free_all(headers);
+
+    NetworkStatisticsLogger::LogGET(sWriteFuncData.nSize);
 
     long response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
@@ -1007,6 +1063,10 @@ std::string VSIWebHDFSHandle::DownloadRegion( const vsi_l_offset startOffset,
     if( oFileProp.eExists == EXIST_NO )
         return std::string();
 
+    NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix());
+    NetworkStatisticsFile oContextFile(m_osFilename);
+    NetworkStatisticsAction oContextAction("Read");
+
     CURLM* hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
 
     CPLString osURL(m_pszURL);
@@ -1068,6 +1128,8 @@ retry:
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
     curl_slist_free_all(headers);
+
+    NetworkStatisticsLogger::LogGET(sWriteFuncData.nSize);
 
     if( sWriteFuncData.bInterrupted )
     {

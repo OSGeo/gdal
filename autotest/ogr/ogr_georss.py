@@ -38,10 +38,13 @@ from osgeo import osr
 from osgeo import gdal
 import pytest
 
+pytestmark = pytest.mark.require_driver('GeoRSS')
 
-def test_ogr_georss_init():
+###############################################################################
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
 
-    ds = ogr.Open('data/atom_rfc_sample.xml')
+    ds = ogr.Open('data/georss/atom_rfc_sample.xml')
     if ds is None:
         gdaltest.georss_read_support = 0
     else:
@@ -50,7 +53,7 @@ def test_ogr_georss_init():
 
     gdaltest.have_gml_reader = 0
     try:
-        ds = ogr.Open('data/ionic_wfs.gml')
+        ds = ogr.Open('data/gml/ionic_wfs.gml')
         if ds is not None:
             gdaltest.have_gml_reader = 1
             ds = None
@@ -76,6 +79,21 @@ def test_ogr_georss_init():
                                   ('content_type', 'xhtml', ogr.OFTString),
                                   ('content_xml_lang', 'en', ogr.OFTString),
                                   ('content_xml_base', 'http://diveintomark.org/', ogr.OFTString)]
+
+    yield
+
+    list_files = ['tmp/test_rss2.xml', 'tmp/test_atom.xml', 'tmp/test32631.rss', 'tmp/broken.rss', 'tmp/nonstandard.rss']
+    for filename in list_files:
+        try:
+            os.remove(filename)
+        except OSError:
+            pass
+
+    files = os.listdir('data')
+    for filename in files:
+        if len(filename) > 13 and filename[-13:] == '.resolved.gml':
+            os.unlink('data/georss/' + filename)
+
 
 ###############################################################################
 # Used by ogr_georss_1 and ogr_georss_1ter
@@ -106,7 +124,7 @@ def ogr_georss_test_atom(filename):
 
 def test_ogr_georss_1():
 
-    return ogr_georss_test_atom('data/atom_rfc_sample.xml')
+    return ogr_georss_test_atom('data/georss/atom_rfc_sample.xml')
 
 ###############################################################################
 # Test reading an ATOM document with atom: prefiw
@@ -114,7 +132,7 @@ def test_ogr_georss_1():
 
 def test_ogr_georss_1_atom_ns():
 
-    return ogr_georss_test_atom('data/atom_rfc_sample_atom_ns.xml')
+    return ogr_georss_test_atom('data/georss/atom_rfc_sample_atom_ns.xml')
 
 ###############################################################################
 # Test writing a Atom 1.0 document (doesn't need read support)
@@ -210,7 +228,7 @@ def ogr_georss_test_rss(filename, only_first_feature):
 
 def test_ogr_georss_2():
 
-    return ogr_georss_test_rss('data/test_georss_simple.xml', False)
+    return ogr_georss_test_rss('data/georss/test_georss_simple.xml', False)
 
 ###############################################################################
 # Test reading a RSS 2.0 document with GeoRSS GML geometries
@@ -221,7 +239,7 @@ def test_ogr_georss_3():
     if not gdaltest.have_gml_reader:
         pytest.skip()
 
-    return ogr_georss_test_rss('data/test_georss_gml.xml', False)
+    return ogr_georss_test_rss('data/georss/test_georss_gml.xml', False)
 
 ###############################################################################
 # Test writing a RSS 2.0 document (doesn't need read support)
@@ -542,25 +560,3 @@ def test_ogr_georss_15():
 
     # Release memory associated to the in-memory file
     gdal.Unlink('/vsimem/georssinmem')
-
-###############################################################################
-#
-
-
-def test_ogr_georss_cleanup():
-
-    list_files = ['tmp/test_rss2.xml', 'tmp/test_atom.xml', 'tmp/test32631.rss', 'tmp/broken.rss', 'tmp/nonstandard.rss']
-    for filename in list_files:
-        try:
-            os.remove(filename)
-        except OSError:
-            pass
-
-    files = os.listdir('data')
-    for filename in files:
-        if len(filename) > 13 and filename[-13:] == '.resolved.gml':
-            os.unlink('data/' + filename)
-
-    
-
-

@@ -43,20 +43,21 @@
  * Core portability services for cross-platform OGR code.
  */
 
-/**
- * Simple container for a bounding region.
- */
-
-/*! @cond Doxygen_Suppress */
-#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS) && !defined(DOXYGEN_SKIP)
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
 extern "C++"
 {
+#if !defined(DOXYGEN_SKIP)
 #include <limits>
+#endif
 
+/**
+ * Simple container for a bounding region (rectangle)
+ */
 class CPL_DLL OGREnvelope
 {
   public:
+        /** Default constructor. Defines an empty rectangle  */
         OGREnvelope() : MinX(std::numeric_limits<double>::infinity()),
                         MaxX(-std::numeric_limits<double>::infinity()),
                         MinY(std::numeric_limits<double>::infinity()),
@@ -64,27 +65,39 @@ class CPL_DLL OGREnvelope
         {
         }
 
+        /** Copy constructor */
         OGREnvelope(const OGREnvelope& oOther) :
             MinX(oOther.MinX),MaxX(oOther.MaxX), MinY(oOther.MinY), MaxY(oOther.MaxY)
         {
         }
+
+        /** Assignment operator */
         OGREnvelope& operator=(const OGREnvelope&) = default;
 
+    /** Minimum X value */
     double      MinX;
+
+    /** Maximum X value */
     double      MaxX;
+
+    /** Minimum Y value */
     double      MinY;
+
+    /** Maximum Y value */
     double      MaxY;
 
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
+    /** Return whether the object has been initialized, that is, is non empty */
     int  IsInit() const { return MinX != std::numeric_limits<double>::infinity(); }
 
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic pop
 #endif
 
+    /** Update the current object by computing its union with the other rectangle */
     void Merge( OGREnvelope const& sOther ) {
         MinX = MIN(MinX,sOther.MinX);
         MaxX = MAX(MaxX,sOther.MaxX);
@@ -92,6 +105,7 @@ class CPL_DLL OGREnvelope
         MaxY = MAX(MaxY,sOther.MaxY);
     }
 
+    /** Update the current object by computing its union with the provided point */
     void Merge( double dfX, double dfY ) {
         MinX = MIN(MinX,dfX);
         MaxX = MAX(MaxX,dfX);
@@ -99,6 +113,7 @@ class CPL_DLL OGREnvelope
         MaxY = MAX(MaxY,dfY);
     }
 
+    /** Update the current object by computing its intersection with the other rectangle */
     void Intersect( OGREnvelope const& sOther ) {
         if(Intersects(sOther))
         {
@@ -123,12 +138,14 @@ class CPL_DLL OGREnvelope
         }
     }
 
+    /** Return whether the current object intersects with the other rectangle */
     int Intersects(OGREnvelope const& other) const
     {
         return MinX <= other.MaxX && MaxX >= other.MinX &&
                MinY <= other.MaxY && MaxY >= other.MinY;
     }
 
+    /** Return whether the current object contains the other rectangle */
     int Contains(OGREnvelope const& other) const
     {
         return MinX <= other.MinX && MinY <= other.MinY &&
@@ -148,42 +165,50 @@ typedef struct
 } OGREnvelope;
 #endif
 
-/**
- * Simple container for a bounding region in 3D.
- */
-
-#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS) && !defined(DOXYGEN_SKIP)
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
 extern "C++" {
 
+/**
+ * Simple container for a bounding region in 3D.
+ */
 class CPL_DLL OGREnvelope3D : public OGREnvelope
 {
   public:
+        /** Default constructor. Defines an empty rectangle  */
         OGREnvelope3D() : OGREnvelope(),
                           MinZ(std::numeric_limits<double>::infinity()),
                           MaxZ(-std::numeric_limits<double>::infinity())
         {
         }
 
+        /** Copy constructor */
         OGREnvelope3D(const OGREnvelope3D& oOther) :
                             OGREnvelope(oOther),
                             MinZ(oOther.MinZ), MaxZ(oOther.MaxZ)
         {
         }
+
+        /** Assignment operator */
         OGREnvelope3D& operator=(const OGREnvelope3D&) = default;
 
+    /** Minimum Z value */
     double      MinZ;
+
+    /** Maximum Z value */
     double      MaxZ;
 
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
+    /** Return whether the object has been initialized, that is, is non empty */
     int  IsInit() const { return MinX != std::numeric_limits<double>::infinity(); }
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic pop
 #endif
 
+    /** Update the current object by computing its union with the other rectangle */
     void Merge( OGREnvelope3D const& sOther ) {
         MinX = MIN(MinX,sOther.MinX);
         MaxX = MAX(MaxX,sOther.MaxX);
@@ -193,6 +218,7 @@ class CPL_DLL OGREnvelope3D : public OGREnvelope
         MaxZ = MAX(MaxZ,sOther.MaxZ);
     }
 
+    /** Update the current object by computing its union with the provided point */
     void Merge( double dfX, double dfY, double dfZ ) {
         MinX = MIN(MinX,dfX);
         MaxX = MAX(MaxX,dfX);
@@ -202,6 +228,7 @@ class CPL_DLL OGREnvelope3D : public OGREnvelope
         MaxZ = MAX(MaxZ,dfZ);
     }
 
+    /** Update the current object by computing its intersection with the other rectangle */
     void Intersect( OGREnvelope3D const& sOther ) {
         if(Intersects(sOther))
         {
@@ -230,6 +257,7 @@ class CPL_DLL OGREnvelope3D : public OGREnvelope
         }
     }
 
+    /** Return whether the current object intersects with the other rectangle */
     int Intersects(OGREnvelope3D const& other) const
     {
         return MinX <= other.MaxX && MaxX >= other.MinX &&
@@ -237,6 +265,7 @@ class CPL_DLL OGREnvelope3D : public OGREnvelope
                MinZ <= other.MaxZ && MaxZ >= other.MinZ;
     }
 
+    /** Return whether the current object contains the other rectangle */
     int Contains(OGREnvelope3D const& other) const
     {
         return MinX <= other.MinX && MinY <= other.MinY &&
@@ -258,7 +287,6 @@ typedef struct
     double      MaxZ;
 } OGREnvelope3D;
 #endif
-/*! @endcond */
 
 CPL_C_START
 
@@ -396,6 +424,16 @@ typedef enum
     wkbTINZM = 3016,                /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
     wkbTriangleZM = 3017,           /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
 
+#if defined(DOXYGEN_SKIP)
+    // Sphinx doesn't like 0x8000000x constants
+    wkbPoint25D = -2147483647, /**< 2.5D extension as per 99-402 */
+    wkbLineString25D = -2147483646, /**< 2.5D extension as per 99-402 */
+    wkbPolygon25D = -2147483645, /**< 2.5D extension as per 99-402 */
+    wkbMultiPoint25D = -2147483644, /**< 2.5D extension as per 99-402 */
+    wkbMultiLineString25D = -2147483643, /**< 2.5D extension as per 99-402 */
+    wkbMultiPolygon25D = -2147483642, /**< 2.5D extension as per 99-402 */
+    wkbGeometryCollection25D = -2147483641 /**< 2.5D extension as per 99-402 */
+#else
     wkbPoint25D = 0x80000001, /**< 2.5D extension as per 99-402 */
     wkbLineString25D = 0x80000002, /**< 2.5D extension as per 99-402 */
     wkbPolygon25D = 0x80000003, /**< 2.5D extension as per 99-402 */
@@ -403,7 +441,7 @@ typedef enum
     wkbMultiLineString25D = 0x80000005, /**< 2.5D extension as per 99-402 */
     wkbMultiPolygon25D = 0x80000006, /**< 2.5D extension as per 99-402 */
     wkbGeometryCollection25D = 0x80000007 /**< 2.5D extension as per 99-402 */
-
+#endif
 } OGRwkbGeometryType;
 
 /**
@@ -535,10 +573,17 @@ typedef enum
  */
 #define ALTER_DEFAULT_FLAG         0x10
 
+/** Alter field UNIQUE constraint.
+ * Used by OGR_L_AlterFieldDefn().
+ * @since GDAL 3.2
+ */
+#define ALTER_UNIQUE_FLAG         0x20
+
+
 /** Alter all parameters of field definition.
  * Used by OGR_L_AlterFieldDefn().
  */
-#define ALTER_ALL_FLAG             (ALTER_NAME_FLAG | ALTER_TYPE_FLAG | ALTER_WIDTH_PRECISION_FLAG | ALTER_NULLABLE_FLAG | ALTER_DEFAULT_FLAG)
+#define ALTER_ALL_FLAG             (ALTER_NAME_FLAG | ALTER_TYPE_FLAG | ALTER_WIDTH_PRECISION_FLAG | ALTER_NULLABLE_FLAG | ALTER_DEFAULT_FLAG | ALTER_UNIQUE_FLAG)
 
 /** Validate that fields respect not-null constraints.
  * Used by OGR_F_Validate().

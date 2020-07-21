@@ -43,7 +43,7 @@ import pytest
 
 def test_vrtwarp_1():
 
-    tst = gdaltest.GDALTest('VRT', 'rgb_warp.vrt', 2, 21504)
+    tst = gdaltest.GDALTest('VRT', 'vrt/rgb_warp.vrt', 2, 21504)
     return tst.testOpen(check_filelist=False)
 
 ###############################################################################
@@ -394,7 +394,7 @@ def test_vrtwarp_10():
 
 def test_vrtwarp_11():
 
-    ds = gdal.Open('data/bug6581.vrt')
+    ds = gdal.Open('data/vrt/bug6581.vrt')
     cs1 = ds.GetRasterBand(1).Checksum()
     cs2 = ds.GetRasterBand(2).Checksum()
     cs3 = ds.GetRasterBand(3).Checksum()
@@ -408,7 +408,7 @@ def test_vrtwarp_11():
 
 def test_vrtwarp_read_vrt_of_warped_vrt():
 
-    ds = gdal.Open('data/vrt_of_warped_vrt.vrt')
+    ds = gdal.Open('data/vrt/vrt_of_warped_vrt.vrt')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4672
 
@@ -427,7 +427,7 @@ def test_vrtwarp_read_blocks_larger_than_2_gigapixels():
     if psutil.virtual_memory().available < 2 * 50000 * 50000:
         pytest.skip("Not enough virtual memory available")
 
-    ds = gdal.Open('data/test_deflate_2GB.vrt')
+    ds = gdal.Open('data/vrt/test_deflate_2GB.vrt')
 
     data  = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buf_xsize = 20, buf_ysize = 20)
     assert data
@@ -442,5 +442,5 @@ def test_vrtwarp_read_blocks_larger_than_2_gigapixels():
 
 def test_vrtwarp_read_blocks_in_space():
 
-    ds = gdal.Open('data/geos_vrtwarp.vrt')
+    ds = gdal.Open('data/vrt/geos_vrtwarp.vrt')
     assert ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512)

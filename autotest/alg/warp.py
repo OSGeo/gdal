@@ -1315,6 +1315,52 @@ def test_warp_40():
     assert maxdiff <= 1, 'Image too different from reference'
 
 ###############################################################################
+# test weighted average
+
+
+def test_warp_weighted_average():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
+    if gdaltest.tiff_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/3by3_average.vrt')
+    ref_ds = gdal.Open('data/3by3_average.tif')
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+
+    assert maxdiff <= 1, 'Image too different from reference'
+
+###############################################################################
+# test weighted average, with src offset (fix for #2665)
+
+
+def test_warp_weighted_average_with_srcoffset():
+
+    ds = gdal.Open('data/3by3_average_with_srcoffset.vrt')
+    val = struct.unpack('d', ds.ReadRaster(0, 0, 1, 1))[0]
+    assert val == pytest.approx(8.5, abs=1e-5)
+
+###############################################################################
+# test sum
+
+
+def test_warp_sum():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
+    if gdaltest.tiff_drv is None:
+        pytest.skip()
+
+    ds = gdal.Open('data/3by3_sum.vrt')
+    ref_ds = gdal.Open('data/3by3_sum.tif')
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+
+    assert maxdiff <= 1, 'Image too different from reference'
+
+###############################################################################
 # test GDALSuggestedWarpOutput (#5693)
 
 
@@ -1694,3 +1740,26 @@ def test_warp_nearest_real_nodata_multiple_band():
                             1, 0, 1])
     out_ds = gdal.Warp('', src_ds, options = '-of MEM')
     assert struct.unpack('d' * 4, out_ds.ReadRaster()) == struct.unpack('d' * 4, src_ds.ReadRaster())
+
+
+###############################################################################
+# Test bugfix for #2365
+
+def test_warp_med_out_of_bounds_src_pixels():
+
+    ds = gdal.Open('data/test_bug_2365_wraped_med.vrt')
+    cs = ds.GetRasterBand(1).Checksum()
+    assert cs == 0
+    ds = None
+
+###############################################################################
+# Test fix for #2460
+
+
+def test_warp_rpc_source_has_geotransform():
+
+    out_ds = gdal.Warp('', 'data/test_rpc_with_gt_bug_2460.tif',
+                       format='MEM',
+                       transformerOptions=['METHOD=RPC', 'RPC_HEIGHT=1118'])
+    cs = out_ds.GetRasterBand(1).Checksum()
+    assert cs == 60397

@@ -271,7 +271,7 @@ To increase export performance on very large databases, creating
 attribute indexes on the fields pointed by the 'layer_pkid_name'
 attribute in '_ogr_layers_metadata' might help.
 
-ogr2ogr behaviour
+ogr2ogr behavior
 ~~~~~~~~~~~~~~~~~
 
 When using ogr2ogr / GDALVectorTranslate() to convert to XML/GML from a

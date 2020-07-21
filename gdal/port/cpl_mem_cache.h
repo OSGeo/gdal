@@ -191,6 +191,12 @@ class Cache {
     std::for_each(keys_.begin(), keys_.end(), f);
   }
 
+  Cache(Cache&& other):
+    cache_(std::move(other.cache_)),
+    keys_(std::move(other.keys_)),
+    maxSize_(other.maxSize_),
+    elasticity_(other.elasticity_) {}
+
  protected:
   size_t prune() {
     size_t maxAllowed = maxSize_ + elasticity_;
@@ -207,7 +213,7 @@ class Cache {
   }
 
  private:
-  // Dissallow copying.
+  // Disallow copying.
   Cache(const Cache&) = delete;
   Cache& operator=(const Cache&) = delete;
 

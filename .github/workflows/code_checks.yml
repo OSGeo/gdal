@@ -1,0 +1,113 @@
+name: Code Checks
+
+on: [push, pull_request]
+
+jobs:
+
+  cppcheck_1604:
+    runs-on: ubuntu-16.04
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Requirements
+        run: |
+          sudo apt update
+          sudo apt install -y cppcheck libsqlite3-dev ccache sqlite3
+
+      - name: Cache PROJ build
+        uses: actions/cache@v2
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-cache-cppcheck-1604
+
+      - name: Build PROJ
+        run: |
+            curl http://download.osgeo.org/proj/proj-6.3.2.tar.gz > proj-6.3.2.tar.gz
+            tar xzf proj-6.3.2.tar.gz
+            mv proj-6.3.2 proj
+            cd proj
+            CC="ccache gcc" CXX="ccache g++" CFLAGS=-O0 CXXFLAGS=-O0 ./configure --without-static --prefix=/tmp/projinstall
+            make -j$(nproc)
+            make install -j$(nproc)
+ 
+      - name: Run configure
+        run: (cd gdal && ./configure --with-proj=/tmp/projinstall)
+
+      - name: Run cppcheck test
+        run: ./gdal/scripts/cppcheck.sh
+
+  cppcheck_1804:
+    runs-on: ubuntu-18.04
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Requirements
+        run: |
+          sudo apt update
+          sudo apt install -y cppcheck libsqlite3-dev ccache sqlite3
+
+      - name: Cache PROJ build
+        uses: actions/cache@v2
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-cache-cppcheck-1804
+
+      - name: Build PROJ
+        run: |
+            curl http://download.osgeo.org/proj/proj-6.3.2.tar.gz > proj-6.3.2.tar.gz
+            tar xzf proj-6.3.2.tar.gz
+            mv proj-6.3.2 proj
+            cd proj
+            CC="ccache gcc" CXX="ccache g++" CFLAGS=-O0 CXXFLAGS=-O0 ./configure --without-static --prefix=/tmp/projinstall
+            make -j$(nproc)
+            make install -j$(nproc)
+ 
+      - name: Run configure
+        run: (cd gdal && ./configure --with-proj=/tmp/projinstall)
+
+      - name: Run cppcheck test
+        run: ./gdal/scripts/cppcheck.sh
+
+  code_quality_checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Detect tabulations
+        run: ./gdal/scripts/detect_tabulations.sh
+
+      - name: Detect printf
+        run: ./gdal/scripts/detect_printf.sh
+
+      - name: Detect self assigments
+        run: ./gdal/scripts/detect_self_assignment.sh
+
+      - name: Detect suspicous char digit zero
+        run: ./gdal/scripts/detect_suspicious_char_digit_zero.sh
+
+      - name: Shellcheck
+        run: shellcheck -e SC2086,SC2046 $(find gdal -name '*.sh' -a -not -name ltmain.sh)
+
+  flake8:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Requirements
+        run: |
+            sudo apt install python3-pip
+            sudo pip3 install flake8
+
+      - name: Run flake8
+        run: |
+            # flake8 codes to just emulate pyflakes (http://flake8.pycqa.org/en/latest/user/error-codes.html)
+            export FLAKE8="flake8 --select=F401,F402,F403,F404,F405,F406,F407,F601,F602,F621,F622,F631,F701,F702,F703,F704,F705,F706,F707,F721,F722,F811,F812,F821,F822,F823,F831,F841,F901,E999"
+            $FLAKE8 autotest
+            $FLAKE8 gdal/swig/python/scripts
+            $FLAKE8 gdal/swig/python/samples

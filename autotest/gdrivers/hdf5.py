@@ -62,18 +62,18 @@ def check_no_file_leaks():
 
 
 def test_hdf5_2():
-    ds = gdal.Open('data/groups.h5')
+    ds = gdal.Open('data/hdf5/groups.h5')
 
     sds_list = ds.GetMetadata('SUBDATASETS')
 
     assert len(sds_list) == 4, 'Did not get expected subdataset count.'
 
-    assert sds_list['SUBDATASET_1_NAME'] == 'HDF5:"data/groups.h5"://MyGroup/Group_A/dset2' and sds_list['SUBDATASET_2_NAME'] == 'HDF5:"data/groups.h5"://MyGroup/dset1', \
+    assert sds_list['SUBDATASET_1_NAME'] == 'HDF5:"data/hdf5/groups.h5"://MyGroup/Group_A/dset2' and sds_list['SUBDATASET_2_NAME'] == 'HDF5:"data/hdf5/groups.h5"://MyGroup/dset1', \
         'did not get expected subdatasets.'
 
     ds = None
 
-    assert not gdaltest.is_file_open('data/groups.h5'), 'file still opened.'
+    assert not gdaltest.is_file_open('data/hdf5/groups.h5'), 'file still opened.'
 
 ###############################################################################
 # Confirm that single variable files can be accessed directly without
@@ -82,14 +82,14 @@ def test_hdf5_2():
 
 def test_hdf5_3():
 
-    ds = gdal.Open('HDF5:"data/u8be.h5"://TestArray')
+    ds = gdal.Open('HDF5:"data/hdf5/u8be.h5"://TestArray')
 
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 135, 'did not get expected checksum'
 
     ds = None
 
-    assert not gdaltest.is_file_open('data/u8be.h5'), 'file still opened.'
+    assert not gdaltest.is_file_open('data/hdf5/u8be.h5'), 'file still opened.'
 
 ###############################################################################
 # Confirm subdataset access, and checksum.
@@ -97,7 +97,7 @@ def test_hdf5_3():
 
 def test_hdf5_4():
 
-    ds = gdal.Open('HDF5:"data/u8be.h5"://TestArray')
+    ds = gdal.Open('HDF5:"data/hdf5/u8be.h5"://TestArray')
 
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 135, 'did not get expected checksum'
@@ -108,7 +108,7 @@ def test_hdf5_4():
 
 def test_hdf5_5():
 
-    ds = gdal.Open('HDF5:"data/groups.h5"://MyGroup/dset1')
+    ds = gdal.Open('HDF5:"data/hdf5/groups.h5"://MyGroup/dset1')
 
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 18, 'did not get expected checksum'
@@ -119,7 +119,7 @@ def test_hdf5_5():
 
 def test_hdf5_6():
 
-    shutil.copyfile('data/groups.h5', 'tmp/groups.h5')
+    shutil.copyfile('data/hdf5/groups.h5', 'tmp/groups.h5')
 
     ds = gdal.Open('HDF5:"tmp/groups.h5"://MyGroup/dset1')
     ds.BuildOverviews(overviewlist=[2])
@@ -148,12 +148,12 @@ def test_hdf5_6():
 
 def test_hdf5_7():
 
-    ds = gdal.Open('data/metadata.h5')
+    ds = gdal.Open('data/hdf5/metadata.h5')
     metadata = ds.GetMetadata()
     metadataList = ds.GetMetadata_List()
     ds = None
 
-    assert not gdaltest.is_file_open('data/metadata.h5'), 'file still opened.'
+    assert not gdaltest.is_file_open('data/hdf5/metadata.h5'), 'file still opened.'
 
     assert len(metadata) == len(metadataList), 'error in metadata dictionary setup'
 
@@ -170,7 +170,7 @@ def test_hdf5_7():
 
 def test_hdf5_8():
 
-    ds = gdal.Open('data/metadata.h5')
+    ds = gdal.Open('data/hdf5/metadata.h5')
     metadata = ds.GetMetadata()
     ds = None
 
@@ -226,10 +226,10 @@ def test_hdf5_9():
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
         pytest.skip('would crash')
 
-    ds = gdal.Open('data/vlstr_metadata.h5')
+    ds = gdal.Open('data/hdf5/vlstr_metadata.h5')
     metadata = ds.GetRasterBand(1).GetMetadata()
     ds = None
-    assert not gdaltest.is_file_open('data/vlstr_metadata.h5'), 'file still opened.'
+    assert not gdaltest.is_file_open('data/hdf5/vlstr_metadata.h5'), 'file still opened.'
 
     ref_metadata = {
         'TEST_BANDNAMES': 'SAA',
@@ -261,11 +261,11 @@ def test_hdf5_10():
 
     # Try opening the QLK subdataset to check that no error is generated
     gdal.ErrorReset()
-    ds = gdal.Open('HDF5:"data/CSK_DGM.h5"://S01/QLK')
+    ds = gdal.Open('HDF5:"data/hdf5/CSK_DGM.h5"://S01/QLK')
     assert ds is not None and gdal.GetLastErrorMsg() == ''
     ds = None
 
-    ds = gdal.Open('HDF5:"data/CSK_DGM.h5"://S01/SBI')
+    ds = gdal.Open('HDF5:"data/hdf5/CSK_DGM.h5"://S01/SBI')
     got_gcpprojection = ds.GetGCPProjection()
     assert got_gcpprojection.startswith('GEOGCS["WGS 84",DATUM["WGS_1984"')
 
@@ -276,7 +276,7 @@ def test_hdf5_10():
        got_gcps[0].GCPX == pytest.approx(12.2395902509238, abs=1e-5) and got_gcps[0].GCPY == pytest.approx(44.7280047434954, abs=1e-5))
 
     ds = None
-    assert not gdaltest.is_file_open('data/CSK_DGM.h5'), 'file still opened.'
+    assert not gdaltest.is_file_open('data/hdf5/CSK_DGM.h5'), 'file still opened.'
 
 ###############################################################################
 # Test CSK_GEC.h5 (#4160)
@@ -286,11 +286,11 @@ def test_hdf5_11():
 
     # Try opening the QLK subdataset to check that no error is generated
     gdal.ErrorReset()
-    ds = gdal.Open('HDF5:"data/CSK_GEC.h5"://S01/QLK')
+    ds = gdal.Open('HDF5:"data/hdf5/CSK_GEC.h5"://S01/QLK')
     assert ds is not None and gdal.GetLastErrorMsg() == ''
     ds = None
 
-    ds = gdal.Open('HDF5:"data/CSK_GEC.h5"://S01/SBI')
+    ds = gdal.Open('HDF5:"data/hdf5/CSK_GEC.h5"://S01/SBI')
     got_projection = ds.GetProjection()
     assert got_projection.startswith('PROJCS["Transverse_Mercator",GEOGCS["WGS 84",DATUM["WGS_1984"')
 
@@ -301,7 +301,7 @@ def test_hdf5_11():
 
     ds = None
 
-    assert not gdaltest.is_file_open('data/CSK_GEC.h5'), 'file still opened.'
+    assert not gdaltest.is_file_open('data/hdf5/CSK_GEC.h5'), 'file still opened.'
 
 ###############################################################################
 # Test ODIM_H5 (#5032)
@@ -344,17 +344,17 @@ def test_hdf5_13():
 
 def test_hdf5_14():
 
-    ds = gdal.Open('data/complex.h5')
+    ds = gdal.Open('data/hdf5/complex.h5')
     sds_list = ds.GetMetadata('SUBDATASETS')
 
     assert len(sds_list) == 6, 'Did not get expected complex subdataset count.'
 
-    assert sds_list['SUBDATASET_1_NAME'] == 'HDF5:"data/complex.h5"://f16' and sds_list['SUBDATASET_2_NAME'] == 'HDF5:"data/complex.h5"://f32' and sds_list['SUBDATASET_3_NAME'] == 'HDF5:"data/complex.h5"://f64', \
+    assert sds_list['SUBDATASET_1_NAME'] == 'HDF5:"data/hdf5/complex.h5"://f16' and sds_list['SUBDATASET_2_NAME'] == 'HDF5:"data/hdf5/complex.h5"://f32' and sds_list['SUBDATASET_3_NAME'] == 'HDF5:"data/hdf5/complex.h5"://f64', \
         'did not get expected subdatasets.'
 
     ds = None
 
-    assert not gdaltest.is_file_open('data/complex.h5'), 'file still opened.'
+    assert not gdaltest.is_file_open('data/hdf5/complex.h5'), 'file still opened.'
 
 ###############################################################################
 # Confirm complex subset data access and checksum
@@ -363,7 +363,7 @@ def test_hdf5_14():
 
 def test_hdf5_15():
 
-    ds = gdal.Open('HDF5:"data/complex.h5"://f32')
+    ds = gdal.Open('HDF5:"data/hdf5/complex.h5"://f32')
 
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 523, 'did not get expected checksum'
@@ -373,7 +373,7 @@ def test_hdf5_15():
 
 def test_hdf5_16():
 
-    ds = gdal.Open('HDF5:"data/complex.h5"://f64')
+    ds = gdal.Open('HDF5:"data/hdf5/complex.h5"://f64')
 
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 511, 'did not get expected checksum'
@@ -383,7 +383,7 @@ def test_hdf5_16():
 
 def test_hdf5_17():
 
-    ds = gdal.Open('HDF5:"data/complex.h5"://f16')
+    ds = gdal.Open('HDF5:"data/hdf5/complex.h5"://f16')
 
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 412, 'did not get expected checksum'
@@ -391,12 +391,12 @@ def test_hdf5_17():
 
 def test_hdf5_single_char_varname():
 
-    ds = gdal.Open('HDF5:"data/single_char_varname.h5"://e')
+    ds = gdal.Open('HDF5:"data/hdf5/single_char_varname.h5"://e')
     assert ds is not None
 
 def test_hdf5_attr_all_datatypes():
 
-    ds = gdal.Open('data/attr_all_datatypes.h5')
+    ds = gdal.Open('data/hdf5/attr_all_datatypes.h5')
     assert ds is not None
     assert ds.GetMetadata() == {'attr_float16': '125 ',
                                 'attr_float32': '125 ',
@@ -412,14 +412,14 @@ def test_hdf5_attr_all_datatypes():
 
 def test_hdf5_virtual_file():
     hdf5_files = [
-        'CSK_GEC.h5',
-        'vlstr_metadata.h5',
-        'groups.h5',
-        'complex.h5',
-        'single_char_varname.h5',
-        'CSK_DGM.h5',
-        'u8be.h5',
-        'metadata.h5'
+        'hdf5/CSK_GEC.h5',
+        'hdf5/vlstr_metadata.h5',
+        'hdf5/groups.h5',
+        'hdf5/complex.h5',
+        'hdf5/single_char_varname.h5',
+        'hdf5/CSK_DGM.h5',
+        'hdf5/u8be.h5',
+        'hdf5/metadata.h5'
     ]
     for hdf5_file in hdf5_files:
         assert uffd_compare(hdf5_file) is True
@@ -452,14 +452,14 @@ def test_hdf5(downloadURL, fileName, subdatasetname, checksum, download_size):
 
 
 def test_hdf5_dimension_labels_with_null():
-    assert gdal.Open('data/dimension_labels_with_null.h5')
+    assert gdal.Open('data/hdf5/dimension_labels_with_null.h5')
 
 
 def test_hdf5_recursive_groups():
 
     # File generated with
     # import h5py
-    # f = h5py.File('recursive_groups.h5','w')
+    # f = h5py.File('hdf5/recursive_groups.h5','w')
     # group = f.create_group("subgroup")
     # group['link_to_root'] = f
     # group['link_to_self'] = group
@@ -467,22 +467,22 @@ def test_hdf5_recursive_groups():
     # group['soft_link_to_self'] = h5py.SoftLink('/subgroup')
     # group['soft_link_to_not_existing'] = h5py.SoftLink('/not_existing')
     # group['hard_link_to_root'] = h5py.HardLink('/')
-    # group['ext_link_to_self_root'] = h5py.ExternalLink("recursive_groups.h5", "/")
+    # group['ext_link_to_self_root'] = h5py.ExternalLink("hdf5/recursive_groups.h5", "/")
     # f.close()
 
-    ds = gdal.Open('data/recursive_groups.h5')
+    ds = gdal.Open('data/hdf5/recursive_groups.h5')
     assert ds is not None
     ds.GetSubDatasets()
 
 
 def test_hdf5_family_driver():
 
-    assert gdal.Open('data/test_family_0.h5')
+    assert gdal.Open('data/hdf5/test_family_0.h5')
 
 
 def test_hdf5_single_dim():
 
-    ds = gdal.Open('HDF5:data/byte_chunked_multiple.nc://x')
+    ds = gdal.Open('HDF5:data/netcdf/byte_chunked_multiple.nc://x')
     assert ds
     b = ds.GetRasterBand(1)
     assert b.YSize == 1

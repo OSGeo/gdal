@@ -1512,6 +1512,7 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
 
             GDALRasterIOExtraArg sExtraArgs;
             INIT_RASTERIO_EXTRA_ARG(sExtraArgs);
+            // cppcheck-suppress redundantAssignment
             sExtraArgs.eResampleAlg = psExtraArg->eResampleAlg;
             CPLErr eErr = poVRTDS->RasterIO( eRWFlag,
                                              nReqXOff,
@@ -1568,6 +1569,7 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
 
         GDALRasterIOExtraArg sExtraArgs;
         INIT_RASTERIO_EXTRA_ARG(sExtraArgs);
+        // cppcheck-suppress redundantAssignment
         sExtraArgs.eResampleAlg = psExtraArg->eResampleAlg;
         sExtraArgs.pfnProgress = GDALScaledProgress;
         sExtraArgs.pProgressData =

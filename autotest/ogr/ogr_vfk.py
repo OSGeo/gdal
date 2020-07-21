@@ -51,7 +51,7 @@ def test_ogr_vfk_1():
 
     gdal.SetConfigOption('OGR_VFK_DB_OVERWRITE', 'YES')
 
-    gdaltest.vfk_ds = ogr.Open('data/bylany.vfk')
+    gdaltest.vfk_ds = ogr.Open('data/vfk/bylany.vfk')
 
     assert gdaltest.vfk_ds is not None
 
@@ -171,7 +171,7 @@ def test_ogr_vfk_6():
     gdaltest.vfk_layer_par = None
     gdaltest.vfk_layer_sobr = None
     gdaltest.vfk_ds = None
-    gdaltest.vfk_ds = ogr.Open('data/bylany.vfk')
+    gdaltest.vfk_ds = ogr.Open('data/vfk/bylany.vfk')
 
     assert gdaltest.vfk_ds is not None
 
@@ -221,13 +221,13 @@ def test_ogr_vfk_8():
         pytest.skip()
 
     # open by SQLite driver first
-    vfk_ds_db = ogr.Open('data/bylany.db')
+    vfk_ds_db = ogr.Open('data/vfk/bylany.db')
     count1 = vfk_ds_db.GetLayerCount()
     vfk_ds_db = None
 
     # then open by VFK driver
     os.environ['OGR_VFK_DB_READ'] = 'YES'
-    vfk_ds_db = ogr.Open('data/bylany.db')
+    vfk_ds_db = ogr.Open('data/vfk/bylany.db')
     count2 = vfk_ds_db.GetLayerCount()
     vfk_ds_db = None
 
@@ -247,7 +247,7 @@ def test_ogr_vfk_9():
 
     # open with suppressing geometry
     vfk_ds = None
-    vfk_ds = gdal.OpenEx('data/bylany.vfk', open_options=['SUPPRESS_GEOMETRY=YES'])
+    vfk_ds = gdal.OpenEx('data/vfk/bylany.vfk', open_options=['SUPPRESS_GEOMETRY=YES'])
 
     vfk_layer_par = vfk_ds.GetLayerByName('PAR')
 
@@ -271,7 +271,7 @@ def test_ogr_vfk_10():
 
     # open with suppressing geometry
     vfk_ds = None
-    vfk_ds = gdal.OpenEx('data/bylany.vfk', open_options=['FILE_FIELD=YES'])
+    vfk_ds = gdal.OpenEx('data/vfk/bylany.vfk', open_options=['FILE_FIELD=YES'])
 
     vfk_layer_par = vfk_ds.GetLayerByName('PAR')
 
@@ -347,7 +347,7 @@ def test_ogr_vfk_cleanup():
     gdaltest.vfk_ds = None
 
     try:
-        os.remove('data/bylany.db')
+        os.remove('data/vfk/bylany.db')
     except OSError:
         pass
 

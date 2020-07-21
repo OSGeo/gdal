@@ -317,10 +317,10 @@ void OGRCouchDBLayer::ParseFieldValue(OGRFeature* poFeature,
         {
             if ( json_object_get_type(poValue) == json_type_array )
             {
-                const auto nLength = json_object_array_length(poValue);
+                auto nLength = json_object_array_length(poValue);
                 char** papszVal = static_cast<char **>(
                     CPLMalloc(sizeof(char*) * (nLength+1)));
-                auto i = decltype(nLength){0};  // Used after for.
+                decltype(nLength) i = 0; // Used after for.
                 for( ; i < nLength; i++ )
                 {
                     json_object* poRow = json_object_array_get_idx(poValue, i);

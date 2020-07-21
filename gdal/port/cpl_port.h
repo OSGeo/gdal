@@ -344,7 +344,11 @@ typedef unsigned int  GUIntptr_t;
 
 #ifndef CPL_DLL
 #if defined(_MSC_VER) && !defined(CPL_DISABLE_DLL)
-#  define CPL_DLL     __declspec(dllexport)
+#  ifdef GDAL_COMPILATION
+#    define CPL_DLL __declspec(dllexport)
+#  else
+#    define CPL_DLL
+#  endif
 #  define CPL_INTERNAL
 #else
 #  if defined(USE_GCC_VISIBILITY_FLAG)
@@ -1053,7 +1057,7 @@ CPL_C_END
   static_cast<size_t>(!(sizeof(array) % sizeof(*(array)))))
 
 extern "C++" {
-template<class T> static void CPL_IGNORE_RET_VAL(T) {}
+template<class T> static void CPL_IGNORE_RET_VAL(const T&) {}
 inline static bool CPL_TO_BOOL(int x) { return x != 0; }
 } /* extern "C++" */
 

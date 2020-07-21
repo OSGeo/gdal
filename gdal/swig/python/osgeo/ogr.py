@@ -197,7 +197,9 @@ ALTER_NAME_FLAG = _ogr.ALTER_NAME_FLAG
 ALTER_TYPE_FLAG = _ogr.ALTER_TYPE_FLAG
 ALTER_WIDTH_PRECISION_FLAG = _ogr.ALTER_WIDTH_PRECISION_FLAG
 ALTER_NULLABLE_FLAG = _ogr.ALTER_NULLABLE_FLAG
+ALTER__FLAG = _ogr.ALTER__FLAG
 ALTER_DEFAULT_FLAG = _ogr.ALTER_DEFAULT_FLAG
+ALTER_UNIQUE_FLAG = _ogr.ALTER_UNIQUE_FLAG
 ALTER_ALL_FLAG = _ogr.ALTER_ALL_FLAG
 F_VAL_NULL = _ogr.F_VAL_NULL
 F_VAL_GEOM_TYPE = _ogr.F_VAL_GEOM_TYPE
@@ -4354,6 +4356,17 @@ class Feature(_object):
     def __copy__(self):
         return self.Clone()
 
+    def _getfieldindex(self, fieldname):
+        case_insensitive_idx = -1
+        fdefn = _ogr.Feature_GetDefnRef(self)
+        for i in range(fdefn.GetFieldCount()):
+            name = fdefn.GetFieldDefn(i).GetName()
+            if name == fieldname:
+                return i
+            elif case_insensitive_idx < 0 and name.lower() == fieldname.lower():
+                case_insensitive_idx = i
+        return case_insensitive_idx
+
     # This makes it possible to fetch fields in the form "feature.area".
     # This has some risk of name collisions.
     def __getattr__(self, key):
@@ -4361,7 +4374,7 @@ class Feature(_object):
         if key == 'this':
             return self.__dict__[key]
 
-        idx = self.GetFieldIndex(key)
+        idx = self._getfieldindex(key)
         if idx < 0:
             idx = self.GetGeomFieldIndex(key)
             if idx < 0:
@@ -4378,7 +4391,7 @@ class Feature(_object):
         if key == 'this' or key == 'thisown':
             self.__dict__[key] = value
         else:
-            idx = self.GetFieldIndex(key)
+            idx = self._getfieldindex(key)
             if idx != -1:
                 self.SetField2(idx, value)
             else:
@@ -4392,7 +4405,7 @@ class Feature(_object):
     def __getitem__(self, key):
         """Returns the values of fields by the given name / field_index"""
         if isinstance(key, (str, type(u''))):
-            fld_index = self.GetFieldIndex(key)
+            fld_index = self._getfieldindex(key)
         else:
             fld_index = key
             if key == self.GetFieldCount():
@@ -4411,7 +4424,7 @@ class Feature(_object):
     def __setitem__(self, key, value):
         """Returns the value of a field by field name / index"""
         if isinstance(key, (str, type(u''))):
-            fld_index = self.GetFieldIndex(key)
+            fld_index = self._getfieldindex(key)
         else:
             fld_index = key
             if key == self.GetFieldCount():
@@ -4428,7 +4441,7 @@ class Feature(_object):
 
     def GetField(self, fld_index):
         if isinstance(fld_index, (str, type(u''))):
-            fld_index = self.GetFieldIndex(fld_index)
+            fld_index = self._getfieldindex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
             raise KeyError("Illegal field requested in GetField()")
         if not (self.IsFieldSet(fld_index)) or self.IsFieldNull(fld_index):
@@ -4479,21 +4492,21 @@ class Feature(_object):
         if len(args) == 2 and (type(args[1]) == type(1) or type(args[1]) == type(12345678901234)):
             fld_index = args[0]
             if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
-                fld_index = self.GetFieldIndex(fld_index)
+                fld_index = self._getfieldindex(fld_index)
             return _ogr.Feature_SetFieldInteger64(self, fld_index, args[1])
 
 
         if len(args) == 2 and isinstance(args[1], type(u'')):
             fld_index = args[0]
             if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
-                fld_index = self.GetFieldIndex(fld_index)
+                fld_index = self._getfieldindex(fld_index)
             return _ogr.Feature_SetFieldString(self, fld_index, args[1])
 
         return _ogr.Feature_SetField(self, *args)
 
     def SetField2(self, fld_index, value):
         if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
-            fld_index = self.GetFieldIndex(fld_index)
+            fld_index = self._getfieldindex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
             raise KeyError("Illegal field requested in SetField2()")
 
@@ -5161,6 +5174,77 @@ class FieldDefn(_object):
         return _ogr.FieldDefn_SetName(self, *args)
 
 
+    def GetAlternativeName(self, *args):
+        """GetAlternativeName(FieldDefn self) -> char const *"""
+        return _ogr.FieldDefn_GetAlternativeName(self, *args)
+
+
+    def GetAlternativeNameRef(self, *args):
+        """
+        GetAlternativeNameRef(FieldDefn self) -> char const *
+
+        const char*
+        OGR_Fld_GetAlternativeNameRef(OGRFieldDefnH hDefn)
+
+        Fetch the alternative name (or "alias") for this field.
+
+        The alternative name is an optional attribute for a field which can
+        provide a more user-friendly, descriptive name of a field which is not
+        subject to the usual naming constraints defined by the data provider.
+
+        This is a metadata style attribute only: the alternative name cannot
+        be used in place of the actual field name during SQL queries or other
+        field name dependent API calls.
+
+        This function is the same as the CPP method
+        OGRFieldDefn::GetAlternativeNameRef().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the field definition.
+
+        the alternative name of the field definition.
+
+        GDAL 3.2 
+        """
+        return _ogr.FieldDefn_GetAlternativeNameRef(self, *args)
+
+
+    def SetAlternativeName(self, *args):
+        """
+        SetAlternativeName(FieldDefn self, char const * alternativeName)
+
+        void
+        OGR_Fld_SetAlternativeName(OGRFieldDefnH hDefn, const char
+        *pszAlternativeName)
+
+        Reset the alternative name (or "alias") for this field.
+
+        The alternative name is an optional attribute for a field which can
+        provide a more user-friendly, descriptive name of a field which is not
+        subject to the usual naming constraints defined by the data provider.
+
+        This is a metadata style attribute only: the alternative name cannot
+        be used in place of the actual field name during SQL queries or other
+        field name dependent API calls.
+
+        This function is the same as the CPP method
+        OGRFieldDefn::SetAlternativeName().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the field definition to apply the new alternative
+        name to.
+
+        pszAlternativeName:  the new alternative name to apply.
+
+        GDAL 3.2 
+        """
+        return _ogr.FieldDefn_SetAlternativeName(self, *args)
+
+
     def GetType(self, *args):
         """
         GetType(FieldDefn self) -> OGRFieldType
@@ -5489,7 +5573,7 @@ class FieldDefn(_object):
         By default, fields are nullable, so this method is generally called
         with FALSE to set a not-null constraint.
 
-        Drivers that support writing not-null constraint will advertize the
+        Drivers that support writing not-null constraint will advertise the
         GDAL_DCAP_NOTNULL_FIELDS driver metadata item.
 
         This method is the same as the C++ method OGRFieldDefn::SetNullable().
@@ -5504,6 +5588,61 @@ class FieldDefn(_object):
         GDAL 2.0 
         """
         return _ogr.FieldDefn_SetNullable(self, *args)
+
+
+    def IsUnique(self, *args):
+        """
+        IsUnique(FieldDefn self) -> int
+
+        int OGR_Fld_IsUnique(OGRFieldDefnH
+        hDefn)
+
+        Return whether this field has a unique constraint.
+
+        By default, fields have no unique constraint.
+
+        This method is the same as the C++ method OGRFieldDefn::IsUnique().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the field definition
+
+        TRUE if the field has a unique constraint.
+
+        GDAL 3.2 
+        """
+        return _ogr.FieldDefn_IsUnique(self, *args)
+
+
+    def SetUnique(self, *args):
+        """
+        SetUnique(FieldDefn self, int bUnique)
+
+        void
+        OGR_Fld_SetUnique(OGRFieldDefnH hDefn, int bUniqueIn)
+
+        Set whether this field has a unique constraint.
+
+        By default, fields have no unique constraint, so this method is
+        generally called with TRUE to set a unique constraint.
+
+        Drivers that support writing unique constraint will advertise the
+        GDAL_DCAP_UNIQUE_FIELDS driver metadata item. field can receive null
+        values.
+
+        This method is the same as the C++ method OGRFieldDefn::SetUnique().
+
+        Parameters:
+        -----------
+
+        hDefn:  handle to the field definition
+
+        bUniqueIn:  TRUE if the field must have a unique constraint.
+
+        GDAL 3.2 
+        """
+        return _ogr.FieldDefn_SetUnique(self, *args)
 
 
     def GetDefault(self, *args):
@@ -5554,7 +5693,7 @@ class FieldDefn(_object):
         literal value, format should be 'YYYY/MM/DD HH:MM:SS[.sss]'
         (considered as UTC time).
 
-        Drivers that support writing DEFAULT clauses will advertize the
+        Drivers that support writing DEFAULT clauses will advertise the
         GDAL_DCAP_DEFAULT_FIELDS driver metadata item.
 
         This function is the same as the C++ method
@@ -6380,6 +6519,11 @@ class Geometry(_object):
         GDAL 3.0 
         """
         return _ogr.Geometry_MakeValid(self, *args)
+
+
+    def RemoveLowerDimensionSubGeoms(self, *args):
+        """RemoveLowerDimensionSubGeoms(Geometry self) -> Geometry"""
+        return _ogr.Geometry_RemoveLowerDimensionSubGeoms(self, *args)
 
 
     def Buffer(self, *args, **kwargs):

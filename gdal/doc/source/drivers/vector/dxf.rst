@@ -27,7 +27,7 @@ fields:
 -  ExtendedEntity (GDAL <= 2.2.x): The values of extended entity
    attributes all appended to form a single text field, where available.
 -  RawCodeValues (GDAL >= 2.3.0): Only available when the configuration
-   option DXF_INCLUDE_RAW_CODE_VALUES is set to TRUE. A string list
+   option :decl_configoption:`DXF_INCLUDE_RAW_CODE_VALUES` is set to TRUE. A string list
    containing all group codes and values that are not handled by the DXF
    reader.
 -  Linetype: Where available, the line type used for this entity.
@@ -55,7 +55,7 @@ The following entity types are supported:
    By default, character escapes such as %%p are honored where
    applicable, and MTEXT control sequences like \\Wx.xx; are stripped.
    To disable this behavior and retrieve the raw text values, set the
-   configuration option DXF_TRANSLATE_ESCAPE_SEQUENCES to FALSE.
+   configuration option :decl_configoption:`DXF_TRANSLATE_ESCAPE_SEQUENCES` to FALSE.
 -  LINE, POLYLINE, LWPOLYLINE: Translated as a LINESTRING. Rounded
    polylines (those with their vertices' bulge attributes set) will be
    tessellated. Single-vertex polylines are translated to POINT.
@@ -82,13 +82,13 @@ The following entity types are supported:
    Three configuration options are available to control the behavior of
    INSERT entities:
 
-   -  DXF_MERGE_BLOCK_GEOMETRIES: To avoid merging blocks into a
+   -  :decl_configoption:`DXF_MERGE_BLOCK_GEOMETRIES`: To avoid merging blocks into a
       compound geometry the DXF_MERGE_BLOCK_GEOMETRIES config option may
       be set to FALSE. Use this option if you need to preserve the
       styling (such as colors) of individual linework entities within
       the block.
-   -  DXF_INLINE_BLOCKS: See below.
-   -  (GDAL >= 2.3.0) DXF_FEATURE_LIMIT_PER_BLOCK: Maximum number of
+   -  :decl_configoption:`DXF_INLINE_BLOCKS`: See below.
+   -  (GDAL >= 2.3.0) :decl_configoption:`DXF_FEATURE_LIMIT_PER_BLOCK`: Maximum number of
       features inserted from a single block. Set to -1 for no limit.
       Defaults to 10000.
 
@@ -104,7 +104,7 @@ The following entity types are supported:
    but no effort is currently made to represent the fill style of HATCH
    entities.
 
-   (GDAL >= 2.3.0) The DXF_HATCH_TOLERANCE config option determines the
+   (GDAL >= 2.3.0) The :decl_configoption:`DXF_HATCH_TOLERANCE` config option determines the
    tolerance used when looking for the next component to add to the
    hatch boundary.
 
@@ -149,9 +149,9 @@ styles.
 
 The approximation of arcs, ellipses, circles and rounded polylines as
 linestrings is done by splitting the arcs into subarcs of no more than a
-threshold angle. This angle is set using the OGR_ARC_STEPSIZE
+threshold angle. This angle is set using the :decl_configoption:`OGR_ARC_STEPSIZE`
 configuration option. This defaults to 4 degrees. You can also set the
-OGR_ARC_MAX_GAP configuration option to enforce a maximum distance
+:decl_configoption:`OGR_ARC_MAX_GAP` configuration option to enforce a maximum distance
 between adjacent points on the interpolated curve. Setting this option
 to 0 (the default) means no maximum distance applies.
 
@@ -168,7 +168,7 @@ DXF_INLINE_BLOCKS
 -----------------
 
 The default behavior is for INSERT entities to be exploded with the
-geometry of the BLOCK they reference. However, if the DXF_INLINE_BLOCKS
+geometry of the BLOCK they reference. However, if the :decl_configoption:`DXF_INLINE_BLOCKS`
 configuration option is set to the value FALSE, then the behavior is
 different as described here.
 
@@ -211,7 +211,7 @@ contain 3D modelling data in the undocumented Autodesk ShapeModeler
 (ASM) format. GDAL cannot transform these entities into OGR geometries,
 so they are skipped by default.
 
-Starting from GDAL 2.3.0, the DXF_3D_EXTENSIBLE_MODE configuration
+Starting from GDAL 2.3.0, the :decl_configoption:`DXF_3D_EXTENSIBLE_MODE` configuration
 option may be set to TRUE to include these entities with the raw ASM
 data stored in a field. This option will add two new fields:
 
@@ -228,14 +228,13 @@ Character Encodings
 Normally DXF files are in the ANSI_1252 / Win1252 encoding. GDAL/OGR
 attempts to translate this to UTF-8 when reading and back into ANSI_1252
 when writing. DXF files can also have a header field ($DWGCODEPAGE)
-indicating the encoding of the file. In GDAL 1.8.x and earlier this was
-ignored but from GDAL 1.9.0 and later an attempt is made to use this to
+indicating the encoding of the file. An attempt is made to use this to
 recode other code pages to UTF-8. Whether this works will depend on the
 code page naming and whether GDAL/OGR is built against the iconv library
 for character recoding.
 
 In some cases the $DWGCODEPAGE setting in a DXF file will be wrong, or
-unrecognised by OGR. It could be edited manually, or the DXF_ENCODING
+unrecognised by OGR. It could be edited manually, or the :decl_configoption:`DXF_ENCODING`
 configuration variable can be used to override what id will be used by
 OGR in transcoding. The value of DXF_ENCODING should be an encoding name
 supported by CPLRecode() (i.e. an iconv name), not a DXF $DWGCODEPAGE
@@ -262,7 +261,7 @@ file (but many DXF layers can be created - see below).
    written. An effort is made to preserve line width and color.
 -  Polygon, Triangle and MultiPolygon features are written as HATCH
    entities by default. To write these features as LWPOLYLINE/POLYLINE
-   entities instead, set the configuration option DXF_WRITE_HATCH to
+   entities instead, set the configuration option :decl_configoption:`DXF_WRITE_HATCH` to
    FALSE. You may need to do this if your geometries do not have a
    constant elevation, as the DXF HATCH entity cannot represent such
    geometries.
@@ -300,7 +299,7 @@ The dataset creation supports the following dataset creation options:
 -  **TRAILER=**\ *filename*: Override the trailer file used - in place
    of trailer.dxf located in the GDAL_DATA directory.
 
-Note that in GDAL 1.8 and later, the header and trailer templates can be
+The header and trailer templates can be
 complete DXF files. The driver will scan them and only extract the
 needed portions (portion before or after the ENTITIES section).
 

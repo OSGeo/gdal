@@ -26,7 +26,7 @@ All GDAL command line programs support the following common options.
 
 .. option:: --config <key> <value>
 
-    Sets the named configuration keyword to the given value, as opposed to setting them as environment variables. Some common configuration keywords are GDAL_CACHEMAX (memory used internally for caching in megabytes) and GDAL_DATA (path of the GDAL "data" directory). Individual drivers may be influenced by other configuration options.
+    Sets the named configuration keyword to the given value, as opposed to setting them as environment variables. Some common configuration keywords are GDAL_CACHEMAX (memory used internally for caching in megabytes) and :decl_configoption:`GDAL_DATA` (path of the GDAL "data" directory). Individual drivers may be influenced by other :ref:`configuration options <list_config_options>`.
 
 .. option:: --debug <value>
 

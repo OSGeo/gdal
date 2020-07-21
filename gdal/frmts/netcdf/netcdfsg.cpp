@@ -274,7 +274,7 @@ namespace nccfdriver
             } 
         }
 
-        // (1) the touple order for a single point
+        // (1) the tuple order for a single point
         // (2) the variable ids with the relevant coordinate values
         int X = INVALID_VAR_ID;
         int Y = INVALID_VAR_ID;
@@ -349,11 +349,10 @@ namespace nccfdriver
 
         int all_dim = INVALID_VAR_ID;
         bool dim_set = false;
-        int dimC = 0;
         //(1) one dimension check, each node_coordinates have same dimension
         for(size_t nvitr = 0; nvitr < nodec_varIds.size(); nvitr++)
         {
-            dimC = 0;
+            int dimC = 0;
             nc_inq_varndims(ncId, nodec_varIds[nvitr], &dimC);
 
             if(dimC != 1)
@@ -392,7 +391,7 @@ namespace nccfdriver
         }
     
 
-        // (3) check touple order
+        // (3) check tuple order
         if(this->touple_order < 2)
         {
             throw SG_Exception_Existential(container_name, "insufficent node coordinates must have at least two axis");    
@@ -658,12 +657,11 @@ namespace nccfdriver
                         size_t base = pnc_bl[featureInd]; // beginning of parts_count for this multigeometry
                         size_t seek = seek_begin; // beginning of node range for this multigeometry
                         size_t ir_base = base + 1;
-                        int rc_m = 1; 
 
                         // has interior rings,
                         for(int32_t itr = 0; itr < polys; itr++)
                         {    
-                            rc_m = 1;
+                            int rc_m = 1;
 
                             // count how many parts belong to each Polygon        
                             while(ir_base < int_rings.size() && int_rings[ir_base])
@@ -692,6 +690,7 @@ namespace nccfdriver
                             }
 
                             base += poly_parts.size();
+                            // cppcheck-suppress redundantAssignment
                             ir_base = base + 1;
                         }
                     }
@@ -916,7 +915,7 @@ namespace nccfdriver
 
     void inPlaceSerialize_Point(SGeometry_Reader * ge, size_t seek_pos, std::vector<unsigned char>& buffer)
     {
-        uint8_t order = 1;
+        uint8_t order = PLATFORM_HEADER;
         uint32_t t = ge->get_axisCount() == 2 ? wkbPoint:
                      ge->get_axisCount() == 3 ? wkbPoint25D: wkbNone;
 

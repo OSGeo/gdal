@@ -391,7 +391,7 @@ def main(argv=None):
 
         if bReportHistograms:
 
-            hist = hBand.GetDefaultHistogram(force=True, callback=gdal.TermProgress)
+            hist = hBand.GetDefaultHistogram(force=True, callback=gdal.TermProgress_nocb)
             if hist is not None:
                 dfMin = hist[0]
                 dfMax = hist[1]

@@ -37,30 +37,58 @@ from osgeo import ogr
 from osgeo import osr
 import pytest
 
+pytestmark = pytest.mark.require_driver('Elasticsearch')
+
+
 ###############################################################################
-# Test driver availability
-#
+# Cleanup
+
+def ogr_elasticsearch_delete_files():
+
+    for subdir in ['_search', '_cat', 'no_srs', 'non_standard_geometries', 'other_srs', 'a_layer']:
+        lst = gdal.ReadDir('/vsimem/fakeelasticsearch/' + subdir)
+        if lst:
+            for f in lst:
+                gdal.Unlink('/vsimem/fakeelasticsearch/' + subdir + '/' + f)
+
+        lst = gdal.ReadDir('/vsimem/fakeelasticsearch/' +
+                           subdir + '/FeatureCollection')
+        if lst:
+            for f in lst:
+                gdal.Unlink('/vsimem/fakeelasticsearch/' +
+                            subdir + '/FeatureCollection/' + f)
+
+    lst = gdal.ReadDir('/vsimem/fakeelasticsearch')
+    if lst:
+        for f in lst:
+            gdal.Unlink('/vsimem/fakeelasticsearch/' + f)
+
+    gdal.Unlink('/vsimem/fakeelasticsearch')
+    gdal.Unlink('/vsimem/fakeelasticsearch&USERPWD=user:pwd')
 
 
-def test_ogr_elasticsearch_init():
+###############################################################################
 
-    ogrtest.elasticsearch_drv = None
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
     ogrtest.srs_wgs84 = osr.SpatialReference()
     ogrtest.srs_wgs84.SetFromUserInput('WGS84')
 
     ogrtest.elasticsearch_drv = ogr.GetDriverByName('Elasticsearch')
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    yield
+
+    ogr_elasticsearch_delete_files()
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
 
 ###############################################################################
 # Test writing into an nonexistent Elasticsearch datastore.
 
 
 def test_ogr_elasticsearch_nonexistent_server():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     with gdaltest.error_handler():
         ds = ogrtest.elasticsearch_drv.CreateDataSource(
@@ -101,8 +129,6 @@ def test_ogr_elasticsearch_nonexistent_server():
 
 
 def test_ogr_elasticsearch_1():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch",
                            """{"version":{"number":"2.0.0"}}""")
@@ -191,7 +217,7 @@ def test_ogr_elasticsearch_1():
 
     gdal.FileFromMemBuffer(
         '/vsimem/fakeelasticsearch/foo2&CUSTOMREQUEST=PUT', '{}')
-    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2/_mapping/FeatureCollection&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { "properties": { "str_field": { "type": "string", "index": "not_analyzed" }, "int_field": { "type": "integer", "store": "yes" }, "int64_field": { "type": "long", "index": "no" }, "real_field": { "type": "double" }, "real_field_unset": { "type": "double" }, "boolean_field": { "type": "boolean" }, "strlist_field": { "type": "string" }, "intlist_field": { "type": "integer" }, "int64list_field": { "type": "long" }, "reallist_field": { "type": "double" }, "date_field": { "type": "date", "format": "yyyy\/MM\/dd HH:mm:ss.SSSZZ||yyyy\/MM\/dd HH:mm:ss.SSS||yyyy\/MM\/dd" }, "datetime_field": { "type": "date", "format": "yyyy\/MM\/dd HH:mm:ss.SSSZZ||yyyy\/MM\/dd HH:mm:ss.SSS||yyyy\/MM\/dd" }, "time_field": { "type": "date", "format": "HH:mm:ss.SSS" }, "binary_field": { "type": "binary" } } }, "geometry": { "properties": { "type": { "type": "string" }, "coordinates": { "type": "geo_point" } } } }, "_meta": { "fields": { "strlist_field": "StringList", "intlist_field": "IntegerList", "int64list_field": "Integer64List", "reallist_field": "RealList" } } } }', '{}')
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2/_mapping/FeatureCollection&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { "properties": { "str_field": { "type": "string", "index": "not_analyzed" }, "int_field": { "type": "integer", "store": "yes" }, "int64_field": { "type": "long", "index": "no" }, "real_field": { "type": "double" }, "real_field_unset": { "type": "double" }, "boolean_field": { "type": "boolean" }, "strlist_field": { "type": "string" }, "intlist_field": { "type": "integer" }, "int64list_field": { "type": "long" }, "reallist_field": { "type": "double" }, "date_field": { "type": "date", "format": "yyyy\\/MM\\/dd HH:mm:ss.SSSZZ||yyyy\\/MM\\/dd HH:mm:ss.SSS||yyyy\\/MM\\/dd" }, "datetime_field": { "type": "date", "format": "yyyy\\/MM\\/dd HH:mm:ss.SSSZZ||yyyy\\/MM\\/dd HH:mm:ss.SSS||yyyy\\/MM\\/dd" }, "time_field": { "type": "date", "format": "HH:mm:ss.SSS" }, "binary_field": { "type": "binary" } } }, "geometry": { "properties": { "type": { "type": "string" }, "coordinates": { "type": "geo_point" } } } }, "_meta": { "fields": { "strlist_field": "StringList", "intlist_field": "IntegerList", "int64list_field": "Integer64List", "reallist_field": "RealList" } } } }', '{}')
     lyr = ds.CreateLayer('foo2', srs=ogrtest.srs_wgs84, geom_type=ogr.wkbPoint,
                          options=['BULK_INSERT=NO', 'FID=', 'STORED_FIELDS=int_field', 'NOT_ANALYZED_FIELDS=str_field', 'NOT_INDEXED_FIELDS=int64_field'])
     lyr.CreateField(ogr.FieldDefn('str_field', ogr.OFTString))
@@ -237,14 +263,14 @@ def test_ogr_elasticsearch_1():
 
     # Success
     gdal.FileFromMemBuffer(
-        '/vsimem/fakeelasticsearch/foo2/FeatureCollection&POSTFIELDS={ "geometry": { "type": "Point", "coordinates": [ 0.0, 1.0 ] }, "type": "Feature", "properties": { "str_field": "a", "int_field": 1, "int64_field": 123456789012, "real_field": 2.34, "boolean_field": true, "strlist_field": [ "a", "b" ], "intlist_field": [ 1, 2 ], "int64list_field": [ 123456789012, 2 ], "reallist_field": [ 1.23, 4.56 ], "date_field": "2015\/08\/12", "datetime_field": "2015\/08\/12 12:34:56.789", "time_field": "12:34:56.789", "binary_field": "ASNGV4mrze8=" } }', '{ "_id": "my_id" }')
+        '/vsimem/fakeelasticsearch/foo2/FeatureCollection&POSTFIELDS={ "geometry": { "type": "Point", "coordinates": [ 0.0, 1.0 ] }, "type": "Feature", "properties": { "str_field": "a", "int_field": 1, "int64_field": 123456789012, "real_field": 2.34, "boolean_field": true, "strlist_field": [ "a", "b" ], "intlist_field": [ 1, 2 ], "int64list_field": [ 123456789012, 2 ], "reallist_field": [ 1.23, 4.56 ], "date_field": "2015\\/08\\/12", "datetime_field": "2015\\/08\\/12 12:34:56.789", "time_field": "12:34:56.789", "binary_field": "ASNGV4mrze8=" } }', '{ "_id": "my_id" }')
     ret = lyr.CreateFeature(feat)
     assert ret == 0
     assert feat['_id'] == 'my_id'
 
     # DateTime with TZ
     gdal.FileFromMemBuffer(
-        '/vsimem/fakeelasticsearch/foo2/FeatureCollection&POSTFIELDS={ "properties": { "datetime_field": "2015\/08\/12 12:34:56.789+03:00" } }', '{}')
+        '/vsimem/fakeelasticsearch/foo2/FeatureCollection&POSTFIELDS={ "properties": { "datetime_field": "2015\\/08\\/12 12:34:56.789+03:00" } }', '{}')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat['datetime_field'] = '2015/08/12 12:34:56.789+0300'
     ret = lyr.CreateFeature(feat)
@@ -339,8 +365,6 @@ def test_ogr_elasticsearch_1():
 
 
 def test_ogr_elasticsearch_2():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     ds = ogrtest.elasticsearch_drv.CreateDataSource(
         "/vsimem/fakeelasticsearch")
@@ -382,8 +406,6 @@ def test_ogr_elasticsearch_2():
 
 
 def test_ogr_elasticsearch_3():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     ds = ogrtest.elasticsearch_drv.CreateDataSource(
         "/vsimem/fakeelasticsearch")
@@ -424,8 +446,6 @@ def test_ogr_elasticsearch_3():
 
 
 def test_ogr_elasticsearch_4():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     with gdaltest.error_handler():
         ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
@@ -489,7 +509,7 @@ def test_ogr_elasticsearch_4():
                             "boolean_field": { "type": "boolean"},
                             "binary_field": { "type": "binary"},
                             "dt_field": { "type": "date"},
-                            "date_field": { "type": "date", "format": "yyyy\/MM\/dd"},
+                            "date_field": { "type": "date", "format": "yyyy\\/MM\\/dd"},
                             "time_field": { "type": "date", "format": "HH:mm:ss.SSS"},
                             "strlist_field": { "type": "string"},
                             "intlist_field": { "type": "integer"},
@@ -632,8 +652,8 @@ def test_ogr_elasticsearch_4():
                     "float_field": 3.45,
                     "boolean_field": true,
                     "binary_field": "ASNGV4mrze8=",
-                    "dt_field": "2015\/08\/12 12:34:56.789",
-                    "date_field": "2015\/08\/12",
+                    "dt_field": "2015\\/08\\/12 12:34:56.789",
+                    "date_field": "2015\\/08\\/12",
                     "time_field": "12:34:56.789",
                     "strlist_field": ["foo"],
                     "intlist_field": [1],
@@ -680,8 +700,8 @@ def test_ogr_elasticsearch_4():
                     "float_field": 3.45,
                     "boolean_field": true,
                     "binary_field": "ASNGV4mrze8=",
-                    "dt_field": "2015\/08\/12 12:34:56.789",
-                    "date_field": "2015\/08\/12",
+                    "dt_field": "2015\\/08\\/12 12:34:56.789",
+                    "date_field": "2015\\/08\\/12",
                     "time_field": "12:34:56.789",
                     "strlist_field": ["foo"],
                     "intlist_field": [1],
@@ -965,8 +985,6 @@ def test_ogr_elasticsearch_4():
 
 
 def test_ogr_elasticsearch_5():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch/_stats",
                            """{"_shards":{"total":0,"successful":0,"failed":0},"indices":{}}""")
@@ -1199,8 +1217,6 @@ def test_ogr_elasticsearch_5():
 
 
 def test_ogr_elasticsearch_6():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         """/vsimem/fakeelasticsearch/_cat/indices?h=i""", 'non_standard_geometries\n')
@@ -1295,8 +1311,6 @@ def test_ogr_elasticsearch_6():
 
 
 def test_ogr_elasticsearch_7():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch/_stats",
                            """{"_shards":{"total":0,"successful":0,"failed":0},"indices":{}}""")
@@ -1326,8 +1340,6 @@ def test_ogr_elasticsearch_7():
 
 
 def test_ogr_elasticsearch_8():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch/_stats",
                            """{"_shards":{"total":0,"successful":0,"failed":0},"indices":{}}""")
@@ -1380,8 +1392,6 @@ def test_ogr_elasticsearch_8():
 
 
 def test_ogr_elasticsearch_9():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     ogr_elasticsearch_delete_files()
 
@@ -1486,8 +1496,6 @@ def test_ogr_elasticsearch_9():
 
 
 def test_ogr_elasticsearch_10():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     ogr_elasticsearch_delete_files()
 
@@ -1522,7 +1530,7 @@ def test_ogr_elasticsearch_10():
                             "long_field": { "type": "long"},
                             "double_field": { "type": "double"},
                             "dt_field": { "type": "date"},
-                            "date_field": { "type": "date", "format": "yyyy\/MM\/dd"},
+                            "date_field": { "type": "date", "format": "yyyy\\/MM\\/dd"},
                             "time_field": { "type": "date", "format": "HH:mm:ss.SSS"},
                         }
                     }
@@ -1817,7 +1825,7 @@ def test_ogr_elasticsearch_10():
     assert f is not None
 
     lyr.SetAttributeFilter("dt_field > '2016/01/01 12:34:56.123'")
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "range": { "properties.dt_field": { "gt": "2016\/01\/01 12:34:56.123" } } } } } }""",
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "range": { "properties.dt_field": { "gt": "2016\\/01\\/01 12:34:56.123" } } } } } }""",
                            """{
 "_scroll_id": "my_scrollid",
     "hits":
@@ -1838,7 +1846,7 @@ def test_ogr_elasticsearch_10():
     assert f is not None
 
     lyr.SetAttributeFilter("NOT dt_field < '2016/01/01 12:34:56.123'")
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "bool": { "must_not": { "range": { "properties.dt_field": { "lt": "2016\/01\/01 12:34:56.123" } } } } } } } }""",
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "bool": { "must_not": { "range": { "properties.dt_field": { "lt": "2016\\/01\\/01 12:34:56.123" } } } } } } } }""",
                            """{
 "_scroll_id": "my_scrollid",
     "hits":
@@ -2098,8 +2106,6 @@ def test_ogr_elasticsearch_10():
 
 
 def test_ogr_elasticsearch_11():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     ogr_elasticsearch_delete_files()
 
@@ -2226,8 +2232,6 @@ def test_ogr_elasticsearch_11():
 # Test Elasticsearch 7.x (ignore MAPPING_NAME)
 
 def test_ogr_elasticsearch_12():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     ogr_elasticsearch_delete_files()
 
@@ -2261,8 +2265,6 @@ def test_ogr_elasticsearch_12():
 
 
 def test_ogr_elasticsearch_authentication():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     ogr_elasticsearch_delete_files()
 
@@ -2305,8 +2307,6 @@ def test_ogr_elasticsearch_authentication():
 
 
 def test_ogr_elasticsearch_http_headers_from_env():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
 
     ogr_elasticsearch_delete_files()
 
@@ -2359,40 +2359,3 @@ def test_ogr_elasticsearch_http_headers_from_env():
         f = sql_lyr.GetNextFeature()
         assert f['some_field'] == '5'
         ds.ReleaseResultSet(sql_lyr)
-
-
-###############################################################################
-# Cleanup
-
-
-def ogr_elasticsearch_delete_files():
-
-    for subdir in ['_search', '_cat', 'no_srs', 'non_standard_geometries', 'other_srs', 'a_layer']:
-        lst = gdal.ReadDir('/vsimem/fakeelasticsearch/' + subdir)
-        if lst:
-            for f in lst:
-                gdal.Unlink('/vsimem/fakeelasticsearch/' + subdir + '/' + f)
-
-        lst = gdal.ReadDir('/vsimem/fakeelasticsearch/' +
-                           subdir + '/FeatureCollection')
-        if lst:
-            for f in lst:
-                gdal.Unlink('/vsimem/fakeelasticsearch/' +
-                            subdir + '/FeatureCollection/' + f)
-
-    lst = gdal.ReadDir('/vsimem/fakeelasticsearch')
-    if lst:
-        for f in lst:
-            gdal.Unlink('/vsimem/fakeelasticsearch/' + f)
-
-    gdal.Unlink('/vsimem/fakeelasticsearch')
-    gdal.Unlink('/vsimem/fakeelasticsearch&USERPWD=user:pwd')
-
-
-def test_ogr_elasticsearch_cleanup():
-    if ogrtest.elasticsearch_drv is None:
-        pytest.skip()
-
-    ogr_elasticsearch_delete_files()
-
-    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)

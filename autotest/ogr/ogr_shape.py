@@ -265,7 +265,7 @@ def test_ogr_shape_9():
         pytest.skip()
 
     gdaltest.shape_ds = None
-    gdaltest.shape_ds = ogr.Open('data/testpoly.shp')
+    gdaltest.shape_ds = ogr.Open('data/shp/testpoly.shp')
     gdaltest.shape_lyr = gdaltest.shape_ds.GetLayer(0)
 
     gdaltest.shape_lyr.SetSpatialFilterRect(-10, -130, 10, -110)
@@ -329,7 +329,7 @@ def test_ogr_shape_12():
     if gdaltest.shape_ds is None:
         pytest.skip()
 
-    asm_ds = ogr.Open('data/asm.shp')
+    asm_ds = ogr.Open('data/shp/asm.shp')
     asm_lyr = asm_ds.GetLayer(0)
 
     feat = asm_lyr.GetNextFeature()
@@ -517,8 +517,8 @@ def test_ogr_shape_17():
     if gdaltest.shape_ds is None:
         pytest.skip()
 
-    shutil.copy('data/can_caps.shp', 'tmp/can_caps.shp')
-    shutil.copy('data/can_caps.shx', 'tmp/can_caps.shx')
+    shutil.copy('data/shp/can_caps.shp', 'tmp/can_caps.shp')
+    shutil.copy('data/shp/can_caps.shx', 'tmp/can_caps.shx')
 
     shp_ds = ogr.Open('tmp/can_caps.shp', update=1)
     shp_lyr = shp_ds.GetLayer(0)
@@ -574,7 +574,7 @@ def test_ogr_shape_18():
 
 def test_ogr_shape_19():
 
-    ds = ogr.Open('data/Stacks.shp')
+    ds = ogr.Open('data/shp/Stacks.shp')
     lyr = ds.GetLayer(0)
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
@@ -594,7 +594,7 @@ def test_ogr_shape_20():
     if gdaltest.shape_ds is None:
         pytest.skip()
 
-    ds = ogr.Open('data/emptymultipoint.shp')
+    ds = ogr.Open('data/shp/emptymultipoint.shp')
     lyr = ds.GetLayer(0)
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
@@ -602,7 +602,7 @@ def test_ogr_shape_20():
     assert feat is not None
     assert feat.GetGeometryRef() is None
 
-    ds = ogr.Open('data/emptymultiline.shp')
+    ds = ogr.Open('data/shp/emptymultiline.shp')
     lyr = ds.GetLayer(0)
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
@@ -610,7 +610,7 @@ def test_ogr_shape_20():
     assert feat is not None
     assert feat.GetGeometryRef() is None
 
-    ds = ogr.Open('data/emptymultipoly.shp')
+    ds = ogr.Open('data/shp/emptymultipoly.shp')
     lyr = ds.GetLayer(0)
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
@@ -627,11 +627,11 @@ def test_ogr_shape_21():
     if gdaltest.shape_ds is None:
         pytest.skip()
 
-    files = ['data/buggypoint.shp',
-             'data/buggymultipoint.shp',
-             'data/buggymultiline.shp',
-             'data/buggymultipoly.shp',
-             'data/buggymultipoly2.shp']
+    files = ['data/shp/buggypoint.shp',
+             'data/shp/buggymultipoint.shp',
+             'data/shp/buggymultiline.shp',
+             'data/shp/buggymultipoly.shp',
+             'data/shp/buggymultipoly2.shp']
     for f in files:
         ds = ogr.Open(f)
         lyr = ds.GetLayer(0)
@@ -975,7 +975,7 @@ def test_ogr_shape_26():
 
 
 def test_ogr_shape_27():
-    ds = ogr.Open('data/water_main_dist.dbf')
+    ds = ogr.Open('data/shp/water_main_dist.dbf')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
 
@@ -1283,7 +1283,7 @@ def test_ogr_shape_32():
 
 def test_ogr_shape_33():
 
-    ds = ogr.Open('data/bigoffset.shp')
+    ds = ogr.Open('data/shp/bigoffset.shp')
     lyr = ds.GetLayer(0)
     feat_read = lyr.GetNextFeature()
 
@@ -1348,7 +1348,7 @@ def test_ogr_shape_35():
 
 def test_ogr_shape_36():
 
-    ds = ogr.Open('/vsizip/data/poly.zip')
+    ds = ogr.Open('/vsizip/data/shp/poly.zip')
     assert ds is not None
 
     lyr = ds.GetLayer(0)
@@ -1368,7 +1368,7 @@ def test_ogr_shape_36():
 
 def test_ogr_shape_37():
 
-    ds = ogr.Open('/vsitar/data/poly.tar.gz')
+    ds = ogr.Open('/vsitar/data/shp/poly.tar.gz')
     assert ds is not None
 
     lyr = ds.GetLayer(0)
@@ -1391,7 +1391,7 @@ def test_ogr_shape_37():
         ('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
 
     ds = None
-    gdal.Unlink('data/poly.tar.gz.properties')
+    gdal.Unlink('data/shp/poly.tar.gz.properties')
 
 ###############################################################################
 # Check that we can read from a .tar file
@@ -1399,7 +1399,7 @@ def test_ogr_shape_37():
 
 def test_ogr_shape_37_bis():
 
-    ds = ogr.Open('/vsitar/data/poly.tar')
+    ds = ogr.Open('/vsitar/data/shp/poly.tar')
     assert ds is not None
 
     lyr = ds.GetLayer(0)
@@ -1442,7 +1442,7 @@ def test_ogr_shape_38():
 
 def test_ogr_shape_39():
 
-    ds = ogr.Open('data/multipatch.shp')
+    ds = ogr.Open('data/shp/multipatch.shp')
     lyr = ds.GetLayer(0)
     feat_read = lyr.GetNextFeature()
 
@@ -1462,9 +1462,9 @@ def test_ogr_shape_40():
     datafiles = ('gjpoint.dbf', 'gjpoint.shp', 'gjpoint.shx')
     indexfiles = ('gjpoint.sbn', 'gjpoint.sbx', 'gjpoint.qix')
     for f in datafiles:
-        shutil.copy(os.path.join('data', f), os.path.join('tmp', f))
+        shutil.copy(os.path.join('data', 'shp', f), os.path.join('tmp', f))
     for i in range(2):
-        shutil.copy(os.path.join('data', indexfiles[i]), os.path.join('tmp', indexfiles[i]))
+        shutil.copy(os.path.join('data', 'shp', indexfiles[i]), os.path.join('tmp', indexfiles[i]))
 
     gdaltest.shape_ds = ogr.Open('tmp/gjpoint.shp', update=1)
     gdaltest.shape_lyr = gdaltest.shape_ds.GetLayer(0)
@@ -1483,7 +1483,7 @@ def test_ogr_shape_40():
 
     # Check if adding a feature removes the indices
     for i in range(2):
-        shutil.copy(os.path.join('data', indexfiles[i]), os.path.join('tmp', indexfiles[i]))
+        shutil.copy(os.path.join('data', 'shp', indexfiles[i]), os.path.join('tmp', indexfiles[i]))
 
     gdaltest.shape_ds = ogr.Open('tmp/gjpoint.shp', update=1)
     gdaltest.shape_lyr = gdaltest.shape_ds.GetLayer(0)
@@ -1504,7 +1504,7 @@ def test_ogr_shape_40():
 
     # Check if deleting a feature removes the indices
     for i in range(2):
-        shutil.copy(os.path.join('data', indexfiles[i]), os.path.join('tmp', indexfiles[i]))
+        shutil.copy(os.path.join('data', 'shp', indexfiles[i]), os.path.join('tmp', indexfiles[i]))
     gdaltest.shape_ds = ogr.Open('tmp/gjpoint.shp', update=1)
     gdaltest.shape_lyr = gdaltest.shape_ds.GetLayer(0)
     gdaltest.shape_lyr.SetAttributeFilter(None)
@@ -1571,12 +1571,12 @@ def test_ogr_shape_43():
     if drv is None:
         pytest.skip()
 
-    conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip')
+    conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip')
     if conn is None:
         pytest.skip('cannot open URL')
     conn.close()
 
-    ds = ogr.Open('/vsizip//vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip')
+    ds = ogr.Open('/vsizip//vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip')
     assert ds is not None
 
     lyr = ds.GetLayer(0)
@@ -1598,12 +1598,12 @@ def ogr_shape_44_DISABLED():
     if drv is None:
         pytest.skip()
 
-    conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip')
+    conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip')
     if conn is None:
         pytest.skip('cannot open URL')
     conn.close()
 
-    ds = ogr.Open('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/testshp')
+    ds = ogr.Open('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/testshp')
     assert ds is not None
 
     lyr = ds.GetLayer(0)
@@ -1695,7 +1695,7 @@ def test_ogr_shape_47():
         pytest.skip()
 
     gdal.Unlink('tmp/poly.zip')
-    os.symlink('/vsizip/data/poly.zip', 'tmp/poly.zip')
+    os.symlink('/vsizip/data/shp/poly.zip', 'tmp/poly.zip')
 
     ds = ogr.Open('tmp/poly.zip')
     assert ds is not None, 'tmp/polyzip symlink does not open.'
@@ -1777,7 +1777,7 @@ def test_ogr_shape_48():
 
 def test_ogr_shape_49():
 
-    ds = ogr.Open('data/facility_surface_dd.dbf')
+    ds = ogr.Open('data/shp/facility_surface_dd.dbf')
     lyr = ds.GetLayer(0)
 
     assert lyr.GetMetadata_Dict('SHAPEFILE') == {
@@ -1805,7 +1805,7 @@ def test_ogr_shape_49():
 
 def test_ogr_shape_50():
 
-    ds = ogr.Open('data/chinese.dbf')
+    ds = ogr.Open('data/shp/chinese.dbf')
     if ds is None:
         pytest.skip()
     lyr = ds.GetLayer(0)
@@ -1882,7 +1882,7 @@ def test_ogr_shape_52():
 
     expected_geom = ogr.CreateGeometryFromWkt('MULTIPOLYGON (((175.524709766699999 -40.17203475,175.524757883299998 -40.172050566700001,175.52480505 -40.1720663,175.524858766699992 -40.172091433299997,175.524913916700001 -40.172112966699999,175.524966049999989 -40.172136933300003,175.525030633299991 -40.17216185,175.5250873 -40.17218215,175.52515168330001 -40.1722011,175.525217666700001 -40.172221216700002,175.525269416700013 -40.172234466699997,175.5253165 -40.1722478,175.52535415 -40.1722577667,175.52538385 -40.17226365,175.525436816699994 -40.1722814333,175.525507016700004 -40.17229905,175.525594783299994 -40.172322033299999,175.525669933300009 -40.172339533299997,175.52574 -40.17235335,175.525807566699996 -40.1723672,175.52585005 -40.17237395,175.52588115 -40.172378683300003,175.525969816700012 -40.172388633300002,175.526057266700008 -40.1724020833,175.52723455 -40.17253515,175.527275583299996 -40.1725388,175.527324533300003 -40.17254675,175.527394866700007 -40.172552766700001,175.527473066699997 -40.172561616700001,175.527576666700014 -40.172572916699998,175.527678333300003 -40.172584266699999,175.527787883299993 -40.17259845,175.52789345 -40.172609716700002,175.527953933300012 -40.17261295,175.528028083300001 -40.1726174,175.52809835 -40.1726219333,175.528151650000012 -40.172625833300003,175.528190349999988 -40.17262725,175.528230900000011 -40.172631183299998,175.5282776 -40.1726338,175.528322800000012 -40.172637633299999,175.5283648 -40.17263915,175.5284115 -40.172641766700004,175.528452133299993 -40.17264435,175.528492133300006 -40.172646033299998,175.52856465 -40.17264805,175.528621733300014 -40.1726492,175.52868035 -40.172650333299998,175.528751333299994 -40.172652383299997,175.528814566699992 -40.1726534,175.528883933299994 -40.172653116699998,175.528939383300013 -40.17265195,175.529002566700001 -40.1726518,175.529070350000012 -40.172650366699997,175.529136633299998 -40.17265015,175.529193616700013 -40.17264895,175.529250616700011 -40.172647733300003,175.529313800000011 -40.172647583299998,175.529376783299995 -40.172647016699997,175.52895773329999 -40.172694633299997,175.528450866700013 -40.172752216699998,175.52835635 -40.172753466700001,175.52741181670001 -40.1727757333,175.52685245 -40.172532333299998,175.52627245 -40.172501266700003,175.5262405167 -40.172502816700003,175.5258356 -40.172522816700003,175.5256125 -40.172533833300001,175.525424433300003 -40.172543116699998,175.524834133300004 -40.1725533,175.524739033299994 -40.172414983300001,175.5247128 -40.17207405,175.524709766699999 -40.17203475)),((175.531267916699989 -40.17286525,175.5312654 -40.172863283300003,175.531252849999987 -40.172853516700002,175.531054566699993 -40.172822366699997,175.530193283300008 -40.172687333299997,175.529890266699994 -40.1726398,175.529916116700008 -40.172639383300002,175.529972483300014 -40.172639216699999,175.53002885 -40.1726398,175.530085183300002 -40.17264115,175.530141500000013 -40.17264325,175.530197733300014 -40.172646133299999,175.530253916699991 -40.172649766699998,175.530309983299986 -40.172654166699999,175.53036595 -40.172659333299997,175.5304218 -40.17266525,175.53047748329999 -40.172671916699997,175.530533016699991 -40.17267935,175.5305883833 -40.1726875333,175.530643533300008 -40.172696466700003,175.530722333299991 -40.172710633299999,175.530800633300004 -40.1727263167,175.5308541 -40.17273795,175.5309073 -40.1727503,175.530960216700009 -40.172763366700003,175.531012816700013 -40.172777133300002,175.5310651 -40.1727916,175.53111705 -40.172806766699999,175.531168650000012 -40.172822633300001,175.531219883299997 -40.172839183299999,175.531270733300005 -40.1728564,175.531267916699989 -40.17286525)))')
 
-    ds = ogr.Open('data/test3356.shp')
+    ds = ogr.Open('data/shp/test3356.shp')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
 
@@ -2444,7 +2444,7 @@ def test_ogr_shape_59():
     if gdaltest.shape_ds is None:
         pytest.skip()
 
-    shp_ds = ogr.Open('data/testpointm.shp')
+    shp_ds = ogr.Open('data/shp/testpointm.shp')
     if shp_ds is None:
         pytest.skip()
     shp_lyr = shp_ds.GetLayer(0)
@@ -2460,7 +2460,7 @@ def test_ogr_shape_59():
         print(geom.GetPoint(0))
         pytest.fail('Did not get right point result.')
 
-    shp_ds = ogr.Open('data/arcm_with_m.shp')
+    shp_ds = ogr.Open('data/shp/arcm_with_m.shp')
     shp_lyr = shp_ds.GetLayer(0)
     feat = shp_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
@@ -2471,7 +2471,7 @@ def test_ogr_shape_59():
     geom = None
     feat = None
 
-    shp_ds = ogr.Open('data/polygonm_with_m.shp')
+    shp_ds = ogr.Open('data/shp/polygonm_with_m.shp')
     shp_lyr = shp_ds.GetLayer(0)
     feat = shp_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
@@ -2491,7 +2491,7 @@ def test_ogr_shape_60():
     if gdaltest.shape_ds is None:
         pytest.skip()
 
-    shp_ds = ogr.Open('data/testpointzm.shp')
+    shp_ds = ogr.Open('data/shp/testpointzm.shp')
     if shp_ds is None:
         pytest.skip()
     shp_lyr = shp_ds.GetLayer(0)
@@ -2712,7 +2712,7 @@ def test_ogr_shape_64():
 
 def test_ogr_shape_65():
 
-    ds = ogr.Open('data/nan.dbf')
+    ds = ogr.Open('data/shp/nan.dbf')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     val = feat.GetFieldAsDouble(0)
@@ -2760,10 +2760,10 @@ def test_ogr_shape_66():
 
 def test_ogr_shape_67():
 
-    shutil.copy('data/emptyshapefilewithsbn.shp', 'tmp/emptyshapefilewithsbn.shp')
-    shutil.copy('data/emptyshapefilewithsbn.shx', 'tmp/emptyshapefilewithsbn.shx')
-    shutil.copy('data/emptyshapefilewithsbn.sbn', 'tmp/emptyshapefilewithsbn.sbn')
-    shutil.copy('data/emptyshapefilewithsbn.sbx', 'tmp/emptyshapefilewithsbn.sbx')
+    shutil.copy('data/shp/emptyshapefilewithsbn.shp', 'tmp/emptyshapefilewithsbn.shp')
+    shutil.copy('data/shp/emptyshapefilewithsbn.shx', 'tmp/emptyshapefilewithsbn.shx')
+    shutil.copy('data/shp/emptyshapefilewithsbn.sbn', 'tmp/emptyshapefilewithsbn.sbn')
+    shutil.copy('data/shp/emptyshapefilewithsbn.sbx', 'tmp/emptyshapefilewithsbn.sbx')
 
     ds = ogr.Open('tmp/emptyshapefilewithsbn.shp', update=1)
     ds.ExecuteSQL('DROP SPATIAL INDEX ON emptyshapefilewithsbn')
@@ -3097,12 +3097,12 @@ def test_ogr_shape_75():
     assert ds.GetFileList() == ['data/idlink.dbf']
     ds = None
 
-    ds = gdal.OpenEx('data/testpoly.shp')
-    assert ds.GetFileList() == ['data/testpoly.shp', 'data/testpoly.shx', 'data/testpoly.dbf', 'data/testpoly.qix']
+    ds = gdal.OpenEx('data/shp/testpoly.shp')
+    assert ds.GetFileList() == ['data/shp/testpoly.shp', 'data/shp/testpoly.shx', 'data/shp/testpoly.dbf', 'data/shp/testpoly.qix']
     ds = None
 
-    ds = gdal.OpenEx('data/emptyshapefilewithsbn.shx')
-    assert ds.GetFileList() == ['data/emptyshapefilewithsbn.shp', 'data/emptyshapefilewithsbn.shx', 'data/emptyshapefilewithsbn.sbn', 'data/emptyshapefilewithsbn.sbx']
+    ds = gdal.OpenEx('data/shp/emptyshapefilewithsbn.shx')
+    assert ds.GetFileList() == ['data/shp/emptyshapefilewithsbn.shp', 'data/shp/emptyshapefilewithsbn.shx', 'data/shp/emptyshapefilewithsbn.sbn', 'data/shp/emptyshapefilewithsbn.sbx']
     ds = None
 
 ###############################################################################
@@ -3111,7 +3111,7 @@ def test_ogr_shape_75():
 
 def test_ogr_shape_76():
 
-    ds = ogr.Open('data/prjwithutf8bom.shp')
+    ds = ogr.Open('data/shp/prjwithutf8bom.shp')
     lyr = ds.GetLayer(0)
     sr = lyr.GetSpatialRef()
     assert sr.ExportToWkt().find('GEOGCS["NAD83"') == 0
@@ -3122,7 +3122,7 @@ def test_ogr_shape_76():
 
 def test_ogr_shape_77():
 
-    ds = ogr.Open('data/nonconformant_shx_ticket5608.shp')
+    ds = ogr.Open('data/shp/nonconformant_shx_ticket5608.shp')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
@@ -3219,7 +3219,7 @@ def test_ogr_shape_79():
 
 def test_ogr_shape_80():
 
-    ds = ogr.Open('data/extentnan.shp')
+    ds = ogr.Open('data/shp/extentnan.shp')
     lyr = ds.GetLayer(0)
     extent = lyr.GetExtent()
     assert extent is None or extent[0] == extent[0]
@@ -3470,7 +3470,7 @@ def test_ogr_shape_85():
 
 def test_ogr_shape_86():
 
-    ds = ogr.Open('data/mixed_shape_type_non_conformant.shp')
+    ds = ogr.Open('data/shp/mixed_shape_type_non_conformant.shp')
     sql_lyr = ds.ExecuteSQL("select count(distinct ogr_geometry) from mixed_shape_type_non_conformant")
     f = sql_lyr.GetNextFeature()
     val = f.GetField(0)
@@ -3483,7 +3483,7 @@ def test_ogr_shape_86():
 
 def test_ogr_shape_87():
 
-    ds = ogr.Open('data/weird_header_length.dbf')
+    ds = ogr.Open('data/shp/weird_header_length.dbf')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f.GetField(0) == 1
@@ -3604,12 +3604,12 @@ def test_ogr_shape_90():
 
 def test_ogr_shape_91():
 
-    ds = ogr.Open('data/arcm_without_m.shp')
+    ds = ogr.Open('data/shp/arcm_without_m.shp')
     lyr = ds.GetLayer(0)
     for _ in lyr:
         pass
 
-    ds = ogr.Open('data/polygonm_without_m.shp')
+    ds = ogr.Open('data/shp/polygonm_without_m.shp')
     lyr = ds.GetLayer(0)
     for _ in lyr:
         pass
@@ -3621,7 +3621,7 @@ def test_ogr_shape_91():
 
 def test_ogr_shape_92():
 
-    ds = ogr.Open('data/multipointz_without_m.shp')
+    ds = ogr.Open('data/shp/multipointz_without_m.shp')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     wkt = f.GetGeometryRef().ExportToIsoWkt()
@@ -3633,7 +3633,7 @@ def test_ogr_shape_92():
 
 def test_ogr_shape_93():
 
-    ds = ogr.Open('data/pointz_without_m.shp')
+    ds = ogr.Open('data/shp/pointz_without_m.shp')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     wkt = f.GetGeometryRef().ExportToIsoWkt()
@@ -3712,13 +3712,13 @@ def test_ogr_shape_94():
 
 def test_ogr_shape_95():
 
-    ds = gdal.OpenEx('data/pointzm_with_all_nodata_m.shp')
+    ds = gdal.OpenEx('data/shp/pointzm_with_all_nodata_m.shp')
     lyr = ds.GetLayer(0)
     assert lyr.GetGeomType() == ogr.wkbPoint25D
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToIsoWkt() == 'POINT Z (1 2 3)', lyr.GetGeomType()
 
-    ds = gdal.OpenEx('data/pointzm_with_all_nodata_m.shp', open_options=['ADJUST_GEOM_TYPE=NO'])
+    ds = gdal.OpenEx('data/shp/pointzm_with_all_nodata_m.shp', open_options=['ADJUST_GEOM_TYPE=NO'])
     lyr = ds.GetLayer(0)
     assert lyr.GetGeomType() == ogr.wkbPointZM
     f = lyr.GetNextFeature()
@@ -3726,11 +3726,11 @@ def test_ogr_shape_95():
         f.GetGeometryRef().ExportToIsoWkt()
 
     # The shape with a non nodata M is the second one
-    ds = gdal.OpenEx('data/pointzm_with_one_valid_m.shp', open_options=['ADJUST_GEOM_TYPE=FIRST_SHAPE'])
+    ds = gdal.OpenEx('data/shp/pointzm_with_one_valid_m.shp', open_options=['ADJUST_GEOM_TYPE=FIRST_SHAPE'])
     lyr = ds.GetLayer(0)
     assert lyr.GetGeomType() == ogr.wkbPoint25D
 
-    ds = gdal.OpenEx('data/pointzm_with_one_valid_m.shp', open_options=['ADJUST_GEOM_TYPE=ALL_SHAPES'])
+    ds = gdal.OpenEx('data/shp/pointzm_with_one_valid_m.shp', open_options=['ADJUST_GEOM_TYPE=ALL_SHAPES'])
     lyr = ds.GetLayer(0)
     assert lyr.GetGeomType() == ogr.wkbPointZM
 
@@ -3802,7 +3802,7 @@ def test_ogr_shape_98():
         pytest.skip()
 
     gdal.SetConfigOption('SHAPE_RESTORE_SHX', 'TRUE')
-    shutil.copy('data/can_caps.shp', 'tmp/can_caps.shp')
+    shutil.copy('data/shp/can_caps.shp', 'tmp/can_caps.shp')
 
     shp_ds = ogr.Open('tmp/can_caps.shp', update=1)
     shp_lyr = shp_ds.GetLayer(0)
@@ -3814,7 +3814,7 @@ def test_ogr_shape_98():
 
     gdal.SetConfigOption('SHAPE_RESTORE_SHX', None)
 
-    ref_shx = open('data/can_caps.shx', 'rb').read()
+    ref_shx = open('data/shp/can_caps.shx', 'rb').read()
     got_shx = open('tmp/can_caps.shx', 'rb').read()
 
     os.remove('tmp/can_caps.shp')
@@ -4290,7 +4290,7 @@ def test_ogr_shape_104():
 
 def test_ogr_shape_105():
 
-    ds = ogr.Open('data/padding_after_field_defns.dbf')
+    ds = ogr.Open('data/shp/padding_after_field_defns.dbf')
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldCount() == 2
     f = lyr.GetNextFeature()
@@ -4658,9 +4658,6 @@ def test_ogr_shape_114_shz():
 
 def test_ogr_shape_115_shp_zip():
 
-    if sys.platform == 'darwin':
-        pytest.skip("Regularly angs on MacOSX. Not sure why.")
-
     dirname = 'tmp/test_ogr_shape_115'
     gdal.RmdirRecursive(dirname)
     os.mkdir(dirname)
@@ -4790,7 +4787,7 @@ def test_ogr_shape_116_invalid_layer_name():
 def test_ogr_shape_ldid_and_cpg():
 
     gdal.FileFromMemBuffer('/vsimem/tmp.dbf',
-                           open('data/facility_surface_dd.dbf', 'rb').read())
+                           open('data/shp/facility_surface_dd.dbf', 'rb').read())
     gdal.FileFromMemBuffer('/vsimem/tmp.cpg', 'UTF-8')
     ds = gdal.OpenEx('/vsimem/tmp.dbf')
     lyr = ds.GetLayer(0)

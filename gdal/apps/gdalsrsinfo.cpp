@@ -295,7 +295,6 @@ bool FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
     GDALDataset *poGDALDS = nullptr;
     OGRLayer      *poLayer = nullptr;
     bool bIsFile = false;
-    OGRErr eErr = OGRERR_NONE;
 
     /* temporarily suppress error messages we may get from xOpen() */
     bool bDebug = CPLTestBool(CPLGetConfigOption("CPL_DEBUG", "OFF"));
@@ -351,12 +350,11 @@ bool FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
         else
             pszTemp = CSLLoad( pszInput );
 
+        OGRErr eErr = OGRERR_UNSUPPORTED_SRS;
         if( pszTemp ) {
             eErr = oSRS.importFromESRI( pszTemp );
             CSLDestroy( pszTemp );
         }
-        else
-            eErr = OGRERR_UNSUPPORTED_SRS;
 
         if( eErr != OGRERR_NONE ) {
             CPLDebug( "gdalsrsinfo", "did not get SRS from ESRI .prj file" );
@@ -379,7 +377,7 @@ bool FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
         if( CPLGetConfigOption("CPL_ALLOW_VSISTDIN", nullptr) == nullptr )
             CPLSetConfigOption("CPL_ALLOW_VSISTDIN", "YES");
 
-        eErr = oSRS.SetFromUserInput( pszInput );
+        const OGRErr eErr = oSRS.SetFromUserInput( pszInput );
 
        if(  eErr != OGRERR_NONE ) {
             CPLDebug( "gdalsrsinfo", "did not get SRS from user input" );

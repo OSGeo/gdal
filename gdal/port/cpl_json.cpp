@@ -339,11 +339,11 @@ static size_t CPLJSONWriteFunction(void *pBuffer, size_t nSize, size_t nMemb,
  */
 
 #ifdef HAVE_CURL
-bool CPLJSONDocument::LoadUrl(const std::string &osUrl, char **papszOptions,
+bool CPLJSONDocument::LoadUrl(const std::string &osUrl, const char* const* papszOptions,
                               GDALProgressFunc pfnProgress,
                               void *pProgressArg)
 #else
-bool CPLJSONDocument::LoadUrl(const std::string & /*osUrl*/, char ** /*papszOptions*/,
+bool CPLJSONDocument::LoadUrl(const std::string & /*osUrl*/, const char* const* /*papszOptions*/,
                               GDALProgressFunc /*pfnProgress*/,
                               void * /*pProgressArg*/)
 #endif // HAVE_CURL
@@ -615,6 +615,26 @@ void CPLJSONObject::Add(const std::string &osName, const CPLJSONObject &oValue)
     {
         json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()),
                                 objectName.c_str(),
+                                json_object_get( TO_JSONOBJ(oValue.GetInternalHandle()) ) );
+    }
+}
+
+/**
+ * Add new key - value pair to json object.
+ * @param osName  Key name (do not split it on '/')
+ * @param oValue   Json object value.
+ *
+ * @since GDAL 3.2
+ */
+void CPLJSONObject::AddNoSplitName(const std::string &osName, const CPLJSONObject &oValue)
+{
+    if( m_osKey == INVALID_OBJ_KEY )
+        m_osKey.clear();
+    if( IsValid() &&
+        json_object_get_type(TO_JSONOBJ(m_poJsonObject)) == json_type_object )
+    {
+        json_object_object_add( TO_JSONOBJ(GetInternalHandle()),
+                                osName.c_str(),
                                 json_object_get( TO_JSONOBJ(oValue.GetInternalHandle()) ) );
     }
 }
@@ -1038,17 +1058,17 @@ CPLJSONArray CPLJSONObject::ToArray() const
  *
  * @since GDAL 2.3
  */
-std::string CPLJSONObject::Format(enum PrettyFormat eFormat) const
+std::string CPLJSONObject::Format(PrettyFormat eFormat) const
 {
     if( m_poJsonObject )
     {
         const char *pszFormatString = nullptr;
         switch ( eFormat ) {
-            case Spaced:
+            case PrettyFormat::Spaced:
                 pszFormatString = json_object_to_json_string_ext(
                     TO_JSONOBJ(m_poJsonObject), JSON_C_TO_STRING_SPACED );
                 break;
-            case Pretty:
+            case PrettyFormat::Pretty:
                 pszFormatString = json_object_to_json_string_ext(
                     TO_JSONOBJ(m_poJsonObject), JSON_C_TO_STRING_PRETTY );
                 break;
@@ -1129,33 +1149,33 @@ CPLJSONObject::Type CPLJSONObject::GetType() const
     if(nullptr == m_poJsonObject)
     {
         if( m_osKey == INVALID_OBJ_KEY )
-            return CPLJSONObject::Unknown;
-        return CPLJSONObject::Null;
+            return CPLJSONObject::Type::Unknown;
+        return CPLJSONObject::Type::Null;
     }
     auto jsonObj(TO_JSONOBJ(m_poJsonObject));
     switch ( json_object_get_type( jsonObj ) )
     {
     case json_type_boolean:
-        return CPLJSONObject::Boolean;
+        return CPLJSONObject::Type::Boolean;
     case json_type_double:
-        return CPLJSONObject::Double;
+        return CPLJSONObject::Type::Double;
     case json_type_int:
     {
         if( CPL_INT64_FITS_ON_INT32( json_object_get_int64( jsonObj ) ) )
-            return CPLJSONObject::Integer;
+            return CPLJSONObject::Type::Integer;
         else
-            return CPLJSONObject::Long;
+            return CPLJSONObject::Type::Long;
     }
     case json_type_object:
-        return CPLJSONObject::Object;
+        return CPLJSONObject::Type::Object;
     case json_type_array:
-        return CPLJSONObject::Array;
+        return CPLJSONObject::Type::Array;
     case json_type_string:
-        return CPLJSONObject::String;
+        return CPLJSONObject::Type::String;
     default:
         break;
     }
-    return CPLJSONObject::Unknown;
+    return CPLJSONObject::Type::Unknown;
 }
 
 /**

@@ -80,15 +80,17 @@ other content before the ``<GDAL_WMS>`` element.
 <AdviseRead>true</AdviseRead>                                              Enable AdviseRead API call - download images into cache. (optional, defaults to false)
 <VerifyAdviseRead>true</VerifyAdviseRead>                                  Open each downloaded image and do some basic checks before writing into cache. Disabling can save some CPU cycles if server is trusted to always return correct images. (optional, defaults to true)
 <ClampRequests>false</ClampRequests>                                       Should requests, that otherwise would be partially outside of defined data window, be clipped resulting in smaller than block size request. (optional, defaults to true)
-<UserAgent>GDAL WMS driver (http://www.gdal.org/frmt_wms.html)</UserAgent> HTTP User-agent string. Some servers might require a well-known user-agent such as "Mozilla/5.0" (optional, defaults to "GDAL WMS driver (http://www.gdal.org/frmt_wms.html)"). Added in GDAL 1.8.0
-<UserPwd>user:password</UserPwd>                                           User and Password for HTTP authentication (optional). Added in GDAL 1.10.0
-<UnsafeSSL>true</UnsafeSSL>                                                Skip SSL certificate verification. May be needed if server is using a self signed certificate (optional, defaults to false). Added in GDAL 1.8.0.
-<Referer>http://example.foo/</Referer>                                     HTTP Referer string. Some servers might require it (optional). Added in GDAL 1.9.0
-<ZeroBlockHttpCodes>204,404</ZeroBlockHttpCodes>                           Comma separated list of HTTP response codes that will be interpreted as a 0 filled image (i.e. black for 3 bands, and transparent for 4 bands) instead of aborting the request. Added in GDAL 1.9.0. (optional, defaults to 204)
-<ZeroBlockOnServerException>true</ZeroBlockOnServerException>              Whether to treat a Service Exception returned by the server as a 0 filled image instead of aborting the request. Added in 1.9.0. (optional, defaults to false)
+<UserAgent>GDAL WMS driver (http://www.gdal.org/frmt_wms.html)</UserAgent> HTTP User-agent string. Some servers might require a well-known user-agent such as "Mozilla/5.0" (optional, defaults to "GDAL WMS driver (http://www.gdal.org/frmt_wms.html)"). When used with some servers, like OpenStreetMap ones, it is highly recommended to put a custom user agent to avoid being blocked if the default user agent had to be blocked.
+<UserPwd>user:password</UserPwd>                                           User and Password for HTTP authentication (optional).
+<UnsafeSSL>true</UnsafeSSL>                                                Skip SSL certificate verification. May be needed if server is using a self signed certificate (optional, defaults to false).
+<Referer>http://example.foo/</Referer>                                     HTTP Referer string. Some servers might require it (optional).
+<ZeroBlockHttpCodes>204,404</ZeroBlockHttpCodes>                           Comma separated list of HTTP response codes that will be interpreted as a 0 filled image (i.e. black for 3 bands, and transparent for 4 bands) instead of aborting the request. (optional, defaults to 204)
+<ZeroBlockOnServerException>true</ZeroBlockOnServerException>              Whether to treat a Service Exception returned by the server as a 0 filled image instead of aborting the request. (optional, defaults to false)
 </GDAL_WMS>
 \
 ========================================================================== ===============================================================================================================================================================================================================================================================================================================================
+
+Starting with GDAL 2.3, additional HTTP headers can be sent by setting the GDAL_HTTP_HEADER_FILE configuration option to point to a filename of a text file with “key: value” HTTP headers.
 
 Minidrivers
 -----------
@@ -103,7 +105,7 @@ WMS
 Communications with an OGC WMS server. Has support for both tiled and
 untiled requests.
 
-Starting with GDAL >= 1.10, WMS layers can be queried (through a
+WMS layers can be queried (through a
 GetFeatureInfo request) with the gdallocationinfo utility, or with a
 GetMetadataItem("Pixel_iCol_iLine", "LocationInfo") call on a band
 object.
@@ -171,8 +173,8 @@ WorldWind
 Access to web-based WorldWind tile services. Access is always tile
 based.
 
-TMS (GDAL 1.7.0 and later)
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+TMS
+~~~
 
 The TMS Minidriver is designed primarily to support the users of the
 `TMS
@@ -216,8 +218,8 @@ OpenStreetMap and many other popular tile services.
 Two examples of usage of the TMS service are included in the examples
 below.
 
-OnEarth Tiled WMS (GDAL 1.9.0 and later)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+OnEarth Tiled WMS
+~~~~~~~~~~~~~~~~~
 
 The OnEarth Tiled WMS minidriver supports the Tiled WMS specification
 implemented for the JPL OnEarth driver per the specification at
@@ -237,8 +239,8 @@ A typical OnEarth Tiled WMS configuration file might look like:
 Most of the other information is automatically fetched from the remote
 server using the GetTileService method at open time.
 
-VirtualEarth (GDAL 1.9.0 and later)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+VirtualEarth
+~~~~~~~~~~~~
 
 Access to web-based Virtual Earth tile services. Access is always tile
 based.
@@ -257,8 +259,8 @@ The DataWindow element might be omitted. The default values are :
 -  BlockSizeX = 256
 -  BlockSizeY = 256
 
-ArcGIS REST API (GDAL 2.0 and later)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ArcGIS REST API
+~~~~~~~~~~~~~~~
 
 Access to ArcGIS REST `map service
 resource <http://resources.arcgis.com/en/help/rest/apiref/mapserver.html>`__
@@ -320,9 +322,9 @@ Examples
 
       gdal_translate -of PNG -outsize 500 250 metacarta_wmsc.xml metacarta_wmsc.png
 
-    .. only:: html
+   .. only:: html
 
-        |example output 1|
+        .. image:: http://sydney.freeearthfoundation.com/gdalwms/metacarta_wmsc.png
 
 -  | `tileservice_bmng.xml <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_tileservice_bmng.xml>`__ -
      TileService, Blue Marble NG (January)
@@ -331,9 +333,9 @@ Examples
 
       gdal_translate -of JPEG -outsize 500 250 tileservice_bmng.xml tileservice_bmng.jpg
 
-    .. only:: html
+   .. only:: html
 
-        |example output 2|
+        .. image:: http://sydney.freeearthfoundation.com/gdalwms/tileservice_bmng.jpg
 
 -  | `tileservice_nysdop2004.xml <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_tileservice_nysdop2004.xml>`__
      - TileService, NYSDOP 2004
@@ -342,15 +344,17 @@ Examples
 
       gdal_translate -of JPEG -projwin -73.687030 41.262680 -73.686359 41.262345 -outsize 500 250 tileservice_nysdop2004.xml tileservice_nysdop2004.jpg
 
-    .. only:: html
+   .. only:: html
 
-        |example output 3|
+        .. image:: http://sydney.freeearthfoundation.com/gdalwms/tileservice_nysdop2004.jpg
 
 -  | `OpenStreetMap TMS Service
      Example <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_openstreetmap_tms.xml>`__: Connect to
      OpenStreetMap tile service. Note that this file takes advantage of
      the tile cache; more information about configuring the tile cache
-     settings is available above.
+     settings is available above. Please also change the <UserAgent>, to avoid the
+     default one being used, and potentially blocked by OSM servers in case a too
+     big usage of it would be seen.
    | ``gdal_translate -of PNG -outsize 512 512 frmt_wms_openstreetmap_tms.xml openstreetmap.png``
 
 -  | `MetaCarta TMS Layer Example <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_metacarta_tms.xml>`__,
@@ -396,7 +400,7 @@ The WMS driver can open :
 
       gdalinfo "<GDAL_WMS><Service name=\"TiledWMS\"><ServerUrl>http://onearth.jpl.nasa.gov/wms.cgi?</ServerUrl><TiledGroupName>Global SRTM Elevation</TiledGroupName></Service></GDAL_WMS>"
 
--  (GDAL >= 1.9.0) the base URL of a WMS service, prefixed with *WMS:* :
+-  the base URL of a WMS service, prefixed with *WMS:* :
 
    ::
 
@@ -405,14 +409,14 @@ The WMS driver can open :
    A list of subdatasets will be returned, resulting from the parsing of
    the GetCapabilities request on that server.
 
--  (GDAL >= 1.9.0) a pseudo GetMap request, such as the subdataset name
+-  a pseudo GetMap request, such as the subdataset name
    returned by the previous syntax :
 
    ::
 
       gdalinfo "WMS:http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=DNEC_250K%3AELEVATION%2FELEVATION&SRS=EPSG:42304&BBOX=-3000000,-1500000,6000000,4500000"
 
--  (GDAL >= 1.9.0) the base URL of a Tiled WMS service, prefixed with
+-  the base URL of a Tiled WMS service, prefixed with
    *WMS:* and with request=GetTileService as GET argument:
 
    ::
@@ -422,7 +426,7 @@ The WMS driver can open :
    A list of subdatasets will be returned, resulting from the parsing of
    the GetTileService request on that server.
 
--  (GDAL >= 2.0.0) the URL of a REST definition for a ArcGIS MapServer:
+-  the URL of a REST definition for a ArcGIS MapServer:
 
    ::
 
@@ -464,8 +468,4 @@ See Also
    specification <http://onearth.jpl.nasa.gov/tiled.html>`__
 -  `ArcGIS Server REST
    API <http://resources.arcgis.com/en/help/rest/apiref/>`__
-
-.. |example output 1| image:: http://sydney.freeearthfoundation.com/gdalwms/metacarta_wmsc.png
-.. |example output 2| image:: http://sydney.freeearthfoundation.com/gdalwms/tileservice_bmng.jpg
-.. |example output 3| image:: http://sydney.freeearthfoundation.com/gdalwms/tileservice_nysdop2004.jpg
-
+-  :ref:`raster.wmts` driver page.

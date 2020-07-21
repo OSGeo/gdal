@@ -1014,6 +1014,7 @@ def test_ogr_sqlite_23():
     shp_layer = gdaltest.sl_ds.GetLayerByName('tpoly')
     shp_layer.SetIgnoredFields(['AREA'])
 
+    shp_layer.ResetReading()
     feat = shp_layer.GetNextFeature()
 
     assert not feat.IsFieldSet('AREA'), 'got area despite request to ignore it.'
@@ -1227,19 +1228,19 @@ def test_ogr_sqlite_28():
         pytest.skip()
 
     # Test with a Spatialite 3.0 DB
-    shutil.copy('data/poly_spatialite.sqlite', 'tmp/poly_spatialite.sqlite')
+    shutil.copy('data/sqlite/poly_spatialite.sqlite', 'tmp/poly_spatialite.sqlite')
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/poly_spatialite.sqlite')
     os.unlink('tmp/poly_spatialite.sqlite')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
     # Test on a result SQL layer
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/poly_spatialite.sqlite -sql "SELECT * FROM poly"')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/sqlite/poly_spatialite.sqlite -sql "SELECT * FROM poly"')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
     # Test with a Spatialite 4.0 DB
-    shutil.copy('data/poly_spatialite4.sqlite', 'tmp/poly_spatialite4.sqlite')
+    shutil.copy('data/sqlite/poly_spatialite4.sqlite', 'tmp/poly_spatialite4.sqlite')
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/poly_spatialite4.sqlite')
     os.unlink('tmp/poly_spatialite4.sqlite')
 
@@ -1447,7 +1448,7 @@ def test_ogr_spatialite_2(require_spatialite):
 def test_ogr_spatialite_3(require_spatialite):
 
     ds = ogr.Open('tmp/spatialite_test.db', update=1)
-    ds.ExecuteSQL('CREATE VIRTUAL TABLE testpoly USING VirtualShape(data/testpoly, CP1252, -1)')
+    ds.ExecuteSQL('CREATE VIRTUAL TABLE testpoly USING VirtualShape(data/shp/testpoly, CP1252, -1)')
     ds.Destroy()
 
     ds = ogr.Open('tmp/spatialite_test.db')
@@ -2917,7 +2918,7 @@ def test_ogr_spatialite_12(require_spatialite):
     if gdal.GetDriverByName('SQLite').GetMetadataItem("ENABLE_SQL_SQLITE_FORMAT") != 'YES':
         pytest.skip()
 
-    ds = ogr.Open('data/poly_spatialite.sqlite.sql')
+    ds = ogr.Open('data/sqlite/poly_spatialite.sqlite.sql')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f is not None
@@ -2950,6 +2951,100 @@ def test_ogr_sqlite_iterate_and_update():
     ds = None
 
     gdal.Unlink(filename)
+
+###############################################################################
+# Test unique constraints on fields
+
+
+def test_ogr_sqlite_unique():
+
+    if gdaltest.is_travis_branch('trusty_32bit') or gdaltest.is_travis_branch('trusty_clang'):
+        pytest.skip('gcc too old')
+
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_gpkg_unique.db')
+    lyr = ds.CreateLayer('test', geom_type=ogr.wkbNone)
+
+    # Default: no unique constraints
+    field_defn = ogr.FieldDefn('field_default', ogr.OFTString)
+    lyr.CreateField(field_defn)
+
+    # Explicit: no unique constraints
+    field_defn = ogr.FieldDefn('field_no_unique', ogr.OFTString)
+    field_defn.SetUnique(0)
+    lyr.CreateField(field_defn)
+
+    # Explicit: unique constraints
+    field_defn = ogr.FieldDefn('field_unique', ogr.OFTString)
+    field_defn.SetUnique(1)
+    lyr.CreateField(field_defn)
+
+    # Now check for getters
+    layerDefinition = lyr.GetLayerDefn()
+    fldDef = layerDefinition.GetFieldDefn(0)
+    assert not fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(1)
+    assert not fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(2)
+    assert fldDef.IsUnique()
+
+
+    # Create another layer from SQL to test quoting of fields
+    # and indexes
+    # Note: leave create table in a single line because of regex spaces testing
+    sql = (
+        'CREATE TABLE IF NOT EXISTS "test2" ( "fid" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "field_default" TEXT, "field_no_unique" TEXT, "field_unique" TEXT UNIQUE,`field unique2` TEXT UNIQUE,field_unique3 TEXT UNIQUE, FIELD_UNIQUE_INDEX TEXT, `field unique index2`, "field_unique_index3" TEXT, NOT_UNIQUE TEXT);',
+        'CREATE UNIQUE INDEX test2_unique_idx ON test2(field_unique_index);', # field_unique_index in lowercase whereas in uppercase in CREATE TABLE statement
+        'CREATE UNIQUE INDEX test2_unique_idx2 ON test2(`field unique index2`);',
+        'CREATE UNIQUE INDEX test2_unique_idx3 ON test2("field_unique_index3");',
+    )
+
+    for s in sql:
+        ds.ExecuteSQL(s)
+
+    ds = None
+
+    # Reload
+    ds = ogr.Open('/vsimem/ogr_gpkg_unique.db')
+
+    lyr = ds.GetLayerByName('test')
+
+    layerDefinition = lyr.GetLayerDefn()
+    fldDef = layerDefinition.GetFieldDefn(0)
+    assert not fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(1)
+    assert not fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(2)
+    assert fldDef.IsUnique()
+
+    lyr = ds.GetLayerByName('test2')
+
+    layerDefinition = lyr.GetLayerDefn()
+    fldDef = layerDefinition.GetFieldDefn(0)
+    assert not fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(1)
+    assert not fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(2)
+    assert fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(3)
+    assert fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(4)
+    assert fldDef.IsUnique()
+
+    # Check the last 3 field where the unique constraint is defined
+    # from an index
+    fldDef = layerDefinition.GetFieldDefn(5)
+    assert fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(6)
+    assert fldDef.IsUnique()
+    fldDef = layerDefinition.GetFieldDefn(7)
+    assert fldDef.IsUnique()
+
+    fldDef = layerDefinition.GetFieldDefn(8)
+    assert not fldDef.IsUnique()
+
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gpkg_unique.db')
 
 ###############################################################################
 #

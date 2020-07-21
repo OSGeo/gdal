@@ -153,7 +153,7 @@
 #define multiply_ms gdal_multiply_ms
 #define NeXTDecode gdal_NeXTDecode
 #define NeXTPreDecode gdal_NeXTPreDecode
-#define NoSantizeSubUInt64 gdal_NoSantizeSubUInt64
+#define NoSanitizeSubUInt64 gdal_NoSanitizeSubUInt64
 #define _notConfigured gdal__notConfigured
 #define NotConfigured gdal_NotConfigured
 #define OJPEGCleanup gdal_OJPEGCleanup

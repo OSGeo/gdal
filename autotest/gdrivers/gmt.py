@@ -45,7 +45,7 @@ def test_gmt_1():
     if gdaltest.gmt_drv is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('GMT', 'gmt_1.grd', 1, 34762)
+    tst = gdaltest.GDALTest('GMT', 'gmt/gmt_1.grd', 1, 34762)
 
     gt = (59.958333333333336, 0.083333333333333, 0.0,
           25.041666666666668, 0.0, -0.083333333333333)

@@ -358,6 +358,7 @@ static XMLTokenType ReadToken( ParseContext *psContext, CPLErr& eLastErrorType )
              && psContext->pszInput[psContext->nInputOffset] == '>' )
     {
         chNext = ReadChar( psContext );
+        (void)chNext;
         CPLAssert( chNext == '>' );
 
         psContext->eTokenType = TSlashClose;
@@ -370,7 +371,7 @@ static XMLTokenType ReadToken( ParseContext *psContext, CPLErr& eLastErrorType )
              && psContext->pszInput[psContext->nInputOffset] == '>' )
     {
         chNext = ReadChar( psContext );
-
+        (void)chNext;
         CPLAssert( chNext == '>' );
 
         psContext->eTokenType = TQuestionClose;

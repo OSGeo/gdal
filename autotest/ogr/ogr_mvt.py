@@ -29,8 +29,6 @@
 ###############################################################################
 
 import json
-import sys
-
 
 import gdaltest
 import ogrtest
@@ -290,18 +288,10 @@ def test_ogr_mvt_point_polygon_clip():
     if not ogrtest.have_geos() or gdal.GetConfigOption('OGR_MVT_CLIP') is not None:
         pytest.skip()
 
-    if gdal.GetConfigOption('APPVEYOR') is not None:
-        pytest.skip()
-    if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
-        pytest.skip()
-    if gdaltest.is_travis_branch('sanitize') or gdaltest.is_travis_branch('python3'):
-        pytest.skip()
-
     ds = ogr.Open('data/mvt/point_polygon/1')
     lyr = ds.GetLayer(1)
     f = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(f, 'MULTIPOLYGON (((445169.252732867 450061.222543117,445169.252732867 0.0,220138.641461308 0.0,220138.641461308 225030.61127156,0.0 225030.61127156,0.0 450061.222543117,445169.252732867 450061.222543117)),((107623.335825528 58703.6377230138,107623.335825528 0.0,53811.6679127641 0.0,53811.6679127641 58703.6377230138,107623.335825528 58703.6377230138)))') != 0 and \
-       ogrtest.check_feature_geometry(f, 'MULTIPOLYGON (((445169.252732867 0.0,445169.252732867 -445169.252732867,0.0 -445169.252732867,0.0 -220138.641461308,220138.641461308 -220138.641461308,220138.641461308 0.0,445169.252732867 0.0)),((107623.335825528 0.0,107623.335825528 -53811.6679127641,53811.6679127641 -53811.6679127641,53811.6679127641 0.0,107623.335825528 0.0)))') != 0:
+    if ogrtest.check_feature_geometry(f, 'MULTIPOLYGON (((0.0 112515.30563578,0 0,-112515.30563578 0.0,-112515.30563578 112515.30563578,0.0 112515.30563578)))') != 0:
         f.DumpReadable()
         pytest.fail()
 

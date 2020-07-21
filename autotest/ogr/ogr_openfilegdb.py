@@ -96,10 +96,10 @@ def test_ogr_openfilegdb_init():
 def ogr_openfilegdb_make_test_data():
 
     try:
-        shutil.rmtree("data/testopenfilegdb.gdb")
+        shutil.rmtree("data/filegdb/testopenfilegdb.gdb")
     except OSError:
         pass
-    ds = ogrtest.fgdb_drv.CreateDataSource('data/testopenfilegdb.gdb')
+    ds = ogrtest.fgdb_drv.CreateDataSource('data/filegdb/testopenfilegdb.gdb')
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
@@ -257,17 +257,17 @@ def ogr_openfilegdb_make_test_data():
     ds.ExecuteSQL('CREATE INDEX idx_real ON big_layer(real)')
     ds = None
 
-    gdal.Unlink('data/testopenfilegdb.gdb.zip')
-    os.chdir('data')
+    gdal.Unlink('data/filegdb/testopenfilegdb.gdb.zip')
+    os.chdir('data/filegdb')
     os.system('zip -r -9 testopenfilegdb.gdb.zip testopenfilegdb.gdb')
-    os.chdir('..')
-    shutil.rmtree('data/testopenfilegdb.gdb')
+    os.chdir('../..')
+    shutil.rmtree('data/filegdb/testopenfilegdb.gdb')
 
 ###############################################################################
 # Basic tests
 
 
-def test_ogr_openfilegdb_1(filename='data/testopenfilegdb.gdb.zip', version10=True):
+def test_ogr_openfilegdb_1(filename='data/filegdb/testopenfilegdb.gdb.zip', version10=True):
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
@@ -378,17 +378,17 @@ def test_ogr_openfilegdb_1(filename='data/testopenfilegdb.gdb.zip', version10=Tr
 
 
 def test_ogr_openfilegdb_1_92():
-    return test_ogr_openfilegdb_1(filename='data/testopenfilegdb92.gdb.zip', version10=False)
+    return test_ogr_openfilegdb_1(filename='data/filegdb/testopenfilegdb92.gdb.zip', version10=False)
 
 
 def test_ogr_openfilegdb_1_93():
-    return test_ogr_openfilegdb_1(filename='data/testopenfilegdb93.gdb.zip', version10=False)
+    return test_ogr_openfilegdb_1(filename='data/filegdb/testopenfilegdb93.gdb.zip', version10=False)
 
 ###############################################################################
 # Run test_ogrsf
 
 
-def test_ogr_openfilegdb_2(filename='data/testopenfilegdb.gdb.zip'):
+def test_ogr_openfilegdb_2(filename='data/filegdb/testopenfilegdb.gdb.zip'):
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -400,11 +400,11 @@ def test_ogr_openfilegdb_2(filename='data/testopenfilegdb.gdb.zip'):
 
 
 def test_ogr_openfilegdb_2_92():
-    return test_ogr_openfilegdb_2(filename='data/testopenfilegdb92.gdb.zip')
+    return test_ogr_openfilegdb_2(filename='data/filegdb/testopenfilegdb92.gdb.zip')
 
 
 def test_ogr_openfilegdb_2_93():
-    return test_ogr_openfilegdb_2(filename='data/testopenfilegdb93.gdb.zip')
+    return test_ogr_openfilegdb_2(filename='data/filegdb/testopenfilegdb93.gdb.zip')
 
 ###############################################################################
 # Open a .gdbtable directly
@@ -412,7 +412,7 @@ def test_ogr_openfilegdb_2_93():
 
 def test_ogr_openfilegdb_3():
 
-    ds = ogr.Open('/vsizip/data/testopenfilegdb.gdb.zip/testopenfilegdb.gdb/a00000009.gdbtable')
+    ds = ogr.Open('/vsizip/data/filegdb/testopenfilegdb.gdb.zip/testopenfilegdb.gdb/a00000009.gdbtable')
     assert ds.GetLayerCount() == 1
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'none'
@@ -433,7 +433,7 @@ def test_ogr_openfilegdb_3():
 
 def test_ogr_openfilegdb_4():
 
-    ds = ogr.Open('/vsizip/data/testopenfilegdb.gdb.zip/testopenfilegdb.gdb')
+    ds = ogr.Open('/vsizip/data/filegdb/testopenfilegdb.gdb.zip/testopenfilegdb.gdb')
 
     lyr = ds.GetLayerByName('point')
     tests = [('id = 1', [1]),
@@ -624,7 +624,7 @@ def test_ogr_openfilegdb_5():
     except OSError:
         pass
     try:
-        gdaltest.unzip('tmp/', 'data/testopenfilegdb.gdb.zip')
+        gdaltest.unzip('tmp/', 'data/filegdb/testopenfilegdb.gdb.zip')
     except OSError:
         pytest.skip()
     try:
@@ -641,7 +641,7 @@ def test_ogr_openfilegdb_5():
 
 def test_ogr_openfilegdb_6():
 
-    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
 
     # With indices
     sql_lyr = ds.ExecuteSQL("select min(id), max(id), count(id), sum(id), avg(id), min(str), min(smallint), "
@@ -686,7 +686,7 @@ def test_ogr_openfilegdb_6():
 
 def test_ogr_openfilegdb_7():
 
-    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
 
     tests = [  # Optimized:
         ("select * from point order by id", 5, 1, 1),
@@ -742,7 +742,7 @@ def test_ogr_openfilegdb_7():
         if optimized and 'big_layer' not in sql:
             import test_cli_utilities
             if test_cli_utilities.get_test_ogrsf_path() is not None:
-                ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/testopenfilegdb.gdb.zip -sql "%s"' % sql)
+                ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/filegdb/testopenfilegdb.gdb.zip -sql "%s"' % sql)
                 assert ret.find('INFO') != -1 and ret.find('ERROR') == -1, \
                     (sql, feat_count, first_fid)
 
@@ -753,7 +753,7 @@ def test_ogr_openfilegdb_7():
 
 def test_ogr_openfilegdb_8():
 
-    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
     dict_feat_count = {}
     for i in range(ds.GetLayerCount()):
         lyr = ds.GetLayer(i)
@@ -762,7 +762,7 @@ def test_ogr_openfilegdb_8():
 
     dict_feat_count2 = {}
     gdal.SetConfigOption('OPENFILEGDB_IGNORE_GDBTABLX', 'YES')
-    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
     for i in range(ds.GetLayerCount()):
         lyr = ds.GetLayer(i)
         dict_feat_count2[lyr.GetName()] = lyr.GetFeatureCount()
@@ -987,10 +987,12 @@ def get_spi_state(ds, lyr):
     return value
 
 
-def test_ogr_openfilegdb_11():
+def test_ogr_openfilegdb_in_memory_spatial_filter():
+
+  with gdaltest.config_option('OPENFILEGDB_USE_SPATIAL_INDEX', 'NO'):
 
     # Test building spatial index with GetFeatureCount()
-    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
     lyr = ds.GetLayerByName('several_polygons')
     assert get_spi_state(ds, lyr) == SPI_IN_BUILDING
     lyr.ResetReading()
@@ -1013,7 +1015,7 @@ def test_ogr_openfilegdb_11():
     ds = None
 
     # Test iterating without spatial index already built
-    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
     lyr = ds.GetLayerByName('several_polygons')
     lyr.SetSpatialFilterRect(0.25, 0.25, 0.5, 0.5)
     c = 0
@@ -1035,7 +1037,7 @@ def test_ogr_openfilegdb_11():
     else:
         expected_count = 5
 
-    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
     lyr = ds.GetLayerByName('multipolygon')
     lyr.SetSpatialFilterRect(1.4, 0.4, 1.6, 0.6)
     assert lyr.GetFeatureCount() == expected_count
@@ -1044,7 +1046,7 @@ def test_ogr_openfilegdb_11():
 
     # Test iterating without spatial index already built, with no matching feature
     # when GEOS is available
-    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
     lyr = ds.GetLayerByName('multipolygon')
     lyr.SetSpatialFilterRect(1.4, 0.4, 1.6, 0.6)
     c = 0
@@ -1059,7 +1061,7 @@ def test_ogr_openfilegdb_11():
     ds = None
 
     # GetFeature() should not impact spatial index building
-    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
     lyr = ds.GetLayerByName('several_polygons')
     lyr.SetSpatialFilterRect(0.25, 0.25, 0.5, 0.5)
     feat = lyr.GetFeature(1)
@@ -1094,7 +1096,7 @@ def test_ogr_openfilegdb_11():
     ds = None
 
     # SetNextByIndex() impacts spatial index building
-    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
     lyr = ds.GetLayerByName('multipolygon')
     lyr.SetNextByIndex(3)
     assert get_spi_state(ds, lyr) == SPI_INVALID
@@ -1103,7 +1105,7 @@ def test_ogr_openfilegdb_11():
     ds = None
 
     # and ResetReading() as well
-    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
     lyr = ds.GetLayerByName('multipolygon')
     feat = lyr.GetNextFeature()
     lyr.ResetReading()
@@ -1113,7 +1115,7 @@ def test_ogr_openfilegdb_11():
     ds = None
 
     # and SetAttributeFilter() with an index too
-    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
     lyr = ds.GetLayerByName('point')
     lyr.SetAttributeFilter('id = 1')
     assert get_spi_state(ds, lyr) == SPI_INVALID
@@ -1121,13 +1123,102 @@ def test_ogr_openfilegdb_11():
     lyr = None
     ds = None
 
+
+def test_ogr_openfilegdb_spx_spatial_filter():
+
+    # Test GetFeatureCount() and then iterating
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
+    lyr = ds.GetLayerByName('several_polygons')
+    assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
+    assert lyr.TestCapability(ogr.OLCFastSpatialFilter) == 1
+    lyr.SetSpatialFilterRect(0.25, 0.25, 0.5, 0.5)
+    assert lyr.GetFeatureCount() == 1
+    c = 0
+    for f in lyr:
+        c += 1
+    assert c == 1
+
+    # Set another spatial filter
+    lyr.SetSpatialFilterRect(0, 2, 1, 5)
+    assert lyr.GetFeatureCount() == 2
+
+    # Unset spatial filter
+    lyr.SetSpatialFilter(None)
+    assert lyr.GetFeatureCount() == 9
+
+    # Set again a spatial filter
+    lyr.SetSpatialFilterRect(0.25, 0.25, 0.5, 0.5)
+    assert lyr.GetFeatureCount() == 1
+
+    lyr = None
+    ds = None
+
+    # Test iterating without spatial index already built
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
+    lyr = ds.GetLayerByName('several_polygons')
+    lyr.SetSpatialFilterRect(0.25, 0.25, 0.5, 0.5)
+    c = 0
+    for f in lyr:
+        c += 1
+    assert c == 1
+    lyr = None
+    ds = None
+
+    # Test GetFeatureCount(), with no matching feature when GEOS is available
+    if ogrtest.have_geos():
+        expected_count = 0
+    else:
+        expected_count = 5
+
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
+    lyr = ds.GetLayerByName('multipolygon')
+    lyr.SetSpatialFilterRect(1.4, 0.4, 1.6, 0.6)
+    assert lyr.GetFeatureCount() == expected_count
+    lyr = None
+    ds = None
+
+    # Test iterating, with no matching feature when GEOS is available
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
+    lyr = ds.GetLayerByName('multipolygon')
+    lyr.SetSpatialFilterRect(1.4, 0.4, 1.6, 0.6)
+    c = 0
+    for f in lyr:
+        c += 1
+    assert c == expected_count
+    assert lyr.GetFeatureCount() == expected_count
+    lyr = None
+    ds = None
+
+    # test with a SetAttributeFilter() with an index too
+    ds = ogr.Open('data/filegdb/test_spatial_index.gdb.zip')
+    lyr = ds.GetLayerByName('test')
+    lyr.SetAttributeFilter('id = 1')
+    lyr.SetSpatialFilterRect(400000, 0, 500100, 4500100)
+    assert lyr.GetFeatureCount() == 1
+    c = 0
+    for f in lyr:
+        c += 1
+    assert c == 1
+
+    # No intersection between filters
+    lyr.SetSpatialFilterRect(500100, 4500000, 500200, 4500100)
+    assert lyr.GetFeatureCount() == 0
+    c = 0
+    for f in lyr:
+        c += 1
+    assert c == 0
+
+    lyr.SetAttributeFilter(None)
+    assert lyr.GetFeatureCount() == 154
+
+
 ###############################################################################
 # Test opening a FGDB with both SRID and LatestSRID set (#5638)
 
 
 def test_ogr_openfilegdb_12():
 
-    ds = ogr.Open('/vsizip/data/test3005.gdb.zip')
+    ds = ogr.Open('/vsizip/data/filegdb/test3005.gdb.zip')
     lyr = ds.GetLayer(0)
     got_wkt = lyr.GetSpatialRef().ExportToWkt()
     sr = osr.SpatialReference()
@@ -1142,7 +1233,7 @@ def test_ogr_openfilegdb_12():
 
 def test_ogr_openfilegdb_13():
 
-    ds = ogr.Open('/vsizip/data/ESSENCE_NAIPF_ORI_PROV_sub93.gdb.zip')
+    ds = ogr.Open('/vsizip/data/filegdb/ESSENCE_NAIPF_ORI_PROV_sub93.gdb.zip')
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == 'DDE_ESSEN_NAIPF_ORI_VUE'
     assert lyr.GetSpatialRef() is None
@@ -1159,7 +1250,7 @@ def test_ogr_openfilegdb_13():
 
 def test_ogr_openfilegdb_14():
 
-    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    ds = ogr.Open('data/filegdb/testopenfilegdb.gdb.zip')
     lyr = ds.GetLayerByName('testnotnullable')
     assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable')).IsNullable() == 0
     assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nullable')).IsNullable() == 1
@@ -1172,7 +1263,7 @@ def test_ogr_openfilegdb_14():
 
 def test_ogr_openfilegdb_15():
 
-    ds = ogr.Open('data/test_default_val.gdb.zip')
+    ds = ogr.Open('data/filegdb/test_default_val.gdb.zip')
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('STR')).GetDefault() == "'default_val'"
     assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('STR')).GetWidth() == 50
@@ -1188,7 +1279,7 @@ def test_ogr_openfilegdb_15():
 
 def test_ogr_openfilegdb_16():
 
-    ds = ogr.Open('data/sparse.gdb.zip')
+    ds = ogr.Open('data/filegdb/sparse.gdb.zip')
     lyr = ds.GetLayer(0)
     for fid in [2, 3, 4, 7, 8, 9, 10, 2049, 8191, 16384, 10000000, 10000001]:
         f = lyr.GetNextFeature()
@@ -1211,7 +1302,7 @@ def test_ogr_openfilegdb_16():
 
 def test_ogr_openfilegdb_17():
 
-    ds = ogr.Open('data/multilinestringzm_with_dummy_m_array.gdb.zip')
+    ds = ogr.Open('data/filegdb/multilinestringzm_with_dummy_m_array.gdb.zip')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef() is not None
@@ -1222,9 +1313,9 @@ def test_ogr_openfilegdb_17():
 
 def test_ogr_openfilegdb_18():
 
-    ds = ogr.Open('data/curves.gdb')
+    ds = ogr.Open('data/filegdb/curves.gdb')
     lyr = ds.GetLayerByName('line')
-    ds_ref = ogr.Open('data/curves_line.csv')
+    ds_ref = ogr.Open('data/filegdb/curves_line.csv')
     lyr_ref = ds_ref.GetLayer(0)
     for f in lyr:
         f_ref = lyr_ref.GetNextFeature()
@@ -1233,7 +1324,7 @@ def test_ogr_openfilegdb_18():
             pytest.fail(f_ref.GetGeometryRef().ExportToWkt())
 
     lyr = ds.GetLayerByName('polygon')
-    ds_ref = ogr.Open('data/curves_polygon.csv')
+    ds_ref = ogr.Open('data/filegdb/curves_polygon.csv')
     lyr_ref = ds_ref.GetLayer(0)
     for f in lyr:
         f_ref = lyr_ref.GetNextFeature()
@@ -1241,9 +1332,9 @@ def test_ogr_openfilegdb_18():
             print(f.GetGeometryRef().ExportToWkt())
             pytest.fail(f_ref.GetGeometryRef().ExportToWkt())
 
-    ds = ogr.Open('data/curve_circle_by_center.gdb')
+    ds = ogr.Open('data/filegdb/curve_circle_by_center.gdb')
     lyr = ds.GetLayer(0)
-    ds_ref = ogr.Open('data/curve_circle_by_center.csv')
+    ds_ref = ogr.Open('data/filegdb/curve_circle_by_center.csv')
     lyr_ref = ds_ref.GetLayer(0)
     for f in lyr:
         f_ref = lyr_ref.GetNextFeature()
@@ -1258,9 +1349,9 @@ def test_ogr_openfilegdb_18():
 
 def test_ogr_openfilegdb_19():
 
-    os.chdir('data/curves.gdb')
+    os.chdir('data/filegdb/curves.gdb')
     ds = ogr.Open('.')
-    os.chdir('../..')
+    os.chdir('../../..')
     assert ds is not None
 
 ###############################################################################
@@ -1270,9 +1361,9 @@ def test_ogr_openfilegdb_19():
 
 def test_ogr_openfilegdb_20():
 
-    ds = ogr.Open('data/filegdb_polygonzm_m_not_closing_with_curves.gdb')
+    ds = ogr.Open('data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb')
     lyr = ds.GetLayer(0)
-    ds_ref = ogr.Open('data/filegdb_polygonzm_m_not_closing_with_curves.gdb.csv')
+    ds_ref = ogr.Open('data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb.csv')
     lyr_ref = ds_ref.GetLayer(0)
     for f in lyr:
         f_ref = lyr_ref.GetNextFeature()
@@ -1280,9 +1371,9 @@ def test_ogr_openfilegdb_20():
             print(f.GetGeometryRef().ExportToIsoWkt())
             pytest.fail(f_ref.GetGeometryRef().ExportToIsoWkt())
 
-    ds = ogr.Open('data/filegdb_polygonzm_nan_m_with_curves.gdb')
+    ds = ogr.Open('data/filegdb/filegdb_polygonzm_nan_m_with_curves.gdb')
     lyr = ds.GetLayer(0)
-    ds_ref = ogr.Open('data/filegdb_polygonzm_nan_m_with_curves.gdb.csv')
+    ds_ref = ogr.Open('data/filegdb/filegdb_polygonzm_nan_m_with_curves.gdb.csv')
     lyr_ref = ds_ref.GetLayer(0)
     for f in lyr:
         f_ref = lyr_ref.GetNextFeature()
@@ -1297,7 +1388,7 @@ def test_ogr_openfilegdb_20():
 
 def test_ogr_openfilegdb_21():
 
-    ds = ogr.Open('data/curves.gdb')
+    ds = ogr.Open('data/filegdb/curves.gdb')
     sql_lyr = ds.ExecuteSQL('SELECT OBJECTID FROM polygon WHERE OBJECTID = 2')
     assert sql_lyr is not None
     f = sql_lyr.GetNextFeature()
@@ -1324,12 +1415,44 @@ def test_ogr_openfilegdb_weird_winding_order():
     if not ogrtest.have_geos():
         pytest.skip()
 
-    ds = ogr.Open('/vsizip/data/weird_winding_order_fgdb.zip/roads_clip Drawing.gdb')
+    ds = ogr.Open('/vsizip/data/filegdb/weird_winding_order_fgdb.zip/roads_clip Drawing.gdb')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     g = f.GetGeometryRef()
     assert g.GetGeometryCount() == 1
     assert g.GetGeometryRef(0).GetGeometryCount() == 17
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/1369
+# where a polygon with inner rings has its exterior ring with wrong orientation
+
+def test_ogr_openfilegdb_utc_datetime():
+
+    ds = ogr.Open('data/filegdb/testdatetimeutc.gdb')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    # Check that the timezone +00 is present
+    assert f.GetFieldAsString('EditDate') == '2020/06/22 07:49:36+00'
+
+
+###############################################################################
+# Test that field alias are correctly read and mapped to OGR field alternativ
+# names
+
+def test_ogr_fgdb_alias():
+    ds = ogr.Open('data/filegdb/field_alias.gdb')
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('text')).GetAlternativeName() == 'My Text Field'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('short_int')).GetAlternativeName() == 'My Short Int Field'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('long_int')).GetAlternativeName() == 'My Long Int Field'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('float')).GetAlternativeName() == 'My Float Field'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('double')).GetAlternativeName() == 'My Double Field'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('date')).GetAlternativeName() == 'My Date Field'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('blob')).GetAlternativeName() == 'My Blob Field'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('guid')).GetAlternativeName() == 'My GUID field'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('raster')).GetAlternativeName() == 'My Raster Field'
+    assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('SHAPE_Length')).GetAlternativeName() == ''
 
 
 ###############################################################################

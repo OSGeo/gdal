@@ -40,7 +40,7 @@ from osgeo import gdal
 
 def test_til_1():
 
-    tst = gdaltest.GDALTest('TIL', 'testtil.til', 1, 4672)
+    tst = gdaltest.GDALTest('TIL', 'til/testtil.til', 1, 4672)
     return tst.testOpen()
 
 ###############################################################################
@@ -49,12 +49,7 @@ def test_til_1():
 
 def test_til_2():
 
-    try:
-        os.remove('data/testtil.til.aux.xml')
-    except OSError:
-        pass
-
-    ds = gdal.Open('data/testtil.til')
+    ds = gdal.Open('data/til/testtil.til')
     filelist = ds.GetFileList()
 
     assert len(filelist) == 3, 'did not get expected file list.'
@@ -67,7 +62,7 @@ def test_til_2():
 
     ds = None
 
-    assert not os.path.exists('data/testtil.til.aux.xml')
+    assert not os.path.exists('data/til/testtil.til.aux.xml')
     
 ###############################################################################
 # Check GetFileList() & XML
@@ -75,12 +70,7 @@ def test_til_2():
 
 def test_til_3():
 
-    try:
-        os.remove('data/testtil.til.aux.xml')
-    except OSError:
-        pass
-
-    ds = gdal.Open('data/testtil2.til')
+    ds = gdal.Open('data/til/testtil2.til')
     filelist = ds.GetFileList()
 
     assert len(filelist) == 3, 'did not get expected file list.'
@@ -93,6 +83,6 @@ def test_til_3():
 
     ds = None
 
-    assert not os.path.exists('data/testtil.til.aux.xml')
+    assert not os.path.exists('data/til/testtil.til.aux.xml')
 
 

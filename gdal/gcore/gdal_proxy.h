@@ -276,7 +276,7 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
     CPLErr GetGeoTransform( double * ) override;
     CPLErr SetGeoTransform( double * ) override;
 
-    // Special behaviour for the following methods : they return a pointer
+    // Special behavior for the following methods : they return a pointer
     // data type, that must be cached by the proxy, so it doesn't become invalid
     // when the underlying object get closed.
     char **GetMetadata( const char * pszDomain  ) override;
@@ -334,7 +334,7 @@ class CPL_DLL GDALProxyPoolRasterBand : public GDALProxyRasterBand
     void AddSrcMaskBandDescription( GDALDataType eDataType, int nBlockXSize,
                                     int nBlockYSize );
 
-    // Special behaviour for the following methods : they return a pointer
+    // Special behavior for the following methods : they return a pointer
     // data type, that must be cached by the proxy, so it doesn't become invalid
     // when the underlying object get closed.
     char **GetMetadata( const char * pszDomain ) override;

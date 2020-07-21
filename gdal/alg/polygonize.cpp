@@ -5,7 +5,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2008, Frank Warmerdam
- * Copyright (c) 2009-2011, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2009-2020, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,7 +35,9 @@
 #include <string.h>
 
 #include <algorithm>
+#include <map>
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "gdal_alg_priv.h"
@@ -65,14 +67,50 @@ public:
     double           dfPolyValue = 0.0;
     int              nLastLineUpdated = -1;
 
-    std::vector< std::vector<int> > aanXY{};
+    struct XY
+    {
+        int x;
+        int y;
+
+        bool operator< (const XY& other) const
+        {
+            if( x < other.x )
+                return true;
+            if( x > other.x )
+                return false;
+            return y < other.y;
+        }
+
+        bool operator== (const XY& other) const { return x == other.x && y == other.y; }
+    };
+
+    typedef int StringId;
+    typedef std::map< XY, std::pair<StringId, StringId>> MapExtremity;
+
+    std::map< StringId, std::vector<XY> > oMapStrings{};
+    MapExtremity oMapStartStrings{};
+    MapExtremity oMapEndStrings{};
+    StringId iNextStringId = 0;
+
+    static
+    StringId findExtremityNot(const MapExtremity& oMap,
+                              const XY& xy,
+                              StringId excludedId);
+
+    static void removeExtremity(MapExtremity& oMap,
+                                const XY& xy,
+                                StringId id);
+
+    static void insertExtremity(MapExtremity& oMap,
+                                const XY& xy,
+                                StringId id);
 
     explicit RPolygon( double dfValue ): dfPolyValue(dfValue) {}
 
     void             AddSegment( int x1, int y1, int x2, int y2 );
     void             Dump() const;
     void             Coalesce();
-    void             Merge( int iBaseString, int iSrcString, int iDirection );
+    void             Merge( StringId iBaseString, StringId iSrcString, int iDirection );
 };
 
 /************************************************************************/
@@ -83,16 +121,32 @@ void RPolygon::Dump() const
     /*ok*/printf( "RPolygon: Value=%g, LastLineUpdated=%d\n",
             dfPolyValue, nLastLineUpdated );
 
-    for( size_t iString = 0; iString < aanXY.size(); iString++ )
+    for( const auto& oStringIter: oMapStrings )
     {
-        const std::vector<int> &anString = aanXY[iString];
-
-        /*ok*/printf( "  String %d:\n", static_cast<int>(iString) );
-        for( size_t iVert = 0; iVert < anString.size(); iVert += 2 )
+        /*ok*/printf( "  String " CPL_FRMT_GIB ":\n", static_cast<GIntBig>(oStringIter.first) );
+        for( const auto& xy: oStringIter.second )
         {
-            /*ok*/printf( "    (%d,%d)\n", anString[iVert], anString[iVert+1] );
+            /*ok*/printf( "    (%d,%d)\n", xy.x, xy.y );
         }
     }
+}
+
+/************************************************************************/
+/*                           findExtremityNot()                         */
+/************************************************************************/
+
+RPolygon::StringId RPolygon::findExtremityNot(const MapExtremity& oMap,
+                                              const XY& xy,
+                                              StringId excludedId)
+{
+    auto oIter = oMap.find(xy);
+    if( oIter == oMap.end() )
+        return -1;
+    if( oIter->second.first != excludedId )
+        return oIter->second.first;
+    if( oIter->second.second != excludedId )
+        return oIter->second.second;
+    return -1;
 }
 
 /************************************************************************/
@@ -106,52 +160,85 @@ void RPolygon::Coalesce()
 /*      Iterate over loops starting from the first, trying to merge     */
 /*      other segments into them.                                       */
 /* -------------------------------------------------------------------- */
-    for( size_t iBaseString = 0; iBaseString < aanXY.size(); iBaseString++ )
+    for( auto& oStringIter: oMapStrings )
     {
-        std::vector<int> &anBase = aanXY[iBaseString];
-        bool bMergeHappened = true;
+        const auto thisId = oStringIter.first;
+        auto& oString = oStringIter.second;
 
 /* -------------------------------------------------------------------- */
-/*      Keep trying to merge the following strings into our target      */
-/*      "base" string till we have tried them all once without any      */
-/*      mergers.                                                        */
+/*      Keep trying to merge others strings into our target "base"      */
+/*      string while there are matches.                                 */
 /* -------------------------------------------------------------------- */
-        while( bMergeHappened )
+        while(true)
         {
-            bMergeHappened = false;
-
-/* -------------------------------------------------------------------- */
-/*      Loop over the following strings, trying to find one we can      */
-/*      merge onto the end of our base string.                          */
-/* -------------------------------------------------------------------- */
-            for( size_t iString = iBaseString+1;
-                 iString < aanXY.size();
-                 iString++ )
+            auto nOtherId = findExtremityNot(oMapStartStrings, oString.back(), thisId);
+            if( nOtherId != -1 )
             {
-                std::vector<int> &anString = aanXY[iString];
-
-                if( anBase[anBase.size() - 2] == anString[0]
-                    && anBase.back() == anString[1] )
+                Merge( thisId, nOtherId, 1 );
+                continue;
+            }
+            else
+            {
+                nOtherId = findExtremityNot(oMapEndStrings, oString.back(), thisId);
+                if( nOtherId != -1 )
                 {
-                    Merge( static_cast<int>(iBaseString),
-                           static_cast<int>(iString), 1 );
-                    bMergeHappened = true;
-                }
-                else if( anBase[anBase.size() - 2] ==
-                             anString[anString.size() - 2] &&
-                         anBase.back() ==
-                             anString.back() )
-                {
-                    Merge( static_cast<int>(iBaseString),
-                           static_cast<int>(iString), -1 );
-                    bMergeHappened = true;
+                    Merge( thisId, nOtherId, -1 );
+                    continue;
                 }
             }
+            break;
         }
 
         // At this point our loop *should* be closed!
-        CPLAssert( anBase[0] == anBase[anBase.size()-2]
-                   && anBase[1] == anBase.back() );
+        CPLAssert( oString.front() == oString.back() );
+    }
+}
+
+/************************************************************************/
+/*                           removeExtremity()                          */
+/************************************************************************/
+
+void RPolygon::removeExtremity(MapExtremity& oMap,
+                               const XY& xy,
+                               StringId id)
+{
+    auto oIter = oMap.find(xy);
+    CPLAssert( oIter != oMap.end() );
+    if( oIter->second.first == id )
+    {
+        oIter->second.first = oIter->second.second;
+        oIter->second.second = -1;
+        if( oIter->second.first < 0 )
+            oMap.erase(oIter);
+    }
+    else if( oIter->second.second == id )
+    {
+        oIter->second.second = -1;
+        CPLAssert( oIter->second.first >= 0 );
+    }
+    else
+    {
+        CPLAssert(false);
+    }
+}
+
+/************************************************************************/
+/*                           insertExtremity()                          */
+/************************************************************************/
+
+void RPolygon::insertExtremity(MapExtremity& oMap,
+                               const XY& xy,
+                               StringId id)
+{
+    auto oIter = oMap.find(xy);
+    if( oIter != oMap.end() )
+    {
+        CPLAssert( oIter->second.second == -1 );
+        oIter->second.second = id;
+    }
+    else
+    {
+        oMap[xy] = std::pair<StringId, StringId>(id, -1);
     }
 }
 
@@ -159,34 +246,36 @@ void RPolygon::Coalesce()
 /*                               Merge()                                */
 /************************************************************************/
 
-void RPolygon::Merge( int iBaseString, int iSrcString, int iDirection )
+void RPolygon::Merge( StringId iBaseString, StringId iSrcString, int iDirection )
 
 {
-    std::vector<int> &anBase = aanXY[iBaseString];
-    std::vector<int> &anString = aanXY[iSrcString];
+    auto &anBase = oMapStrings.find(iBaseString)->second;
+    auto anStringIter = oMapStrings.find(iSrcString);
+    auto& anString = anStringIter->second;
     int iStart = 1;
     int iEnd = -1;
 
     if( iDirection == 1 )
     {
-        iEnd = static_cast<int>(anString.size()) / 2;
+        iEnd = static_cast<int>(anString.size());
     }
     else
     {
-        iStart = static_cast<int>(anString.size()) / 2 - 2;
+        iStart = static_cast<int>(anString.size()) - 2;
     }
 
+    removeExtremity(oMapEndStrings, anBase.back(), iBaseString);
+
+    anBase.reserve(anBase.size() + anString.size() - 1);
     for( int i = iStart; i != iEnd; i += iDirection )
     {
-        anBase.push_back( anString[i*2+0] );
-        anBase.push_back( anString[i*2+1] );
+        anBase.push_back( anString[i] );
     }
 
-    if( iSrcString < static_cast<int>(aanXY.size()) - 1 )
-        aanXY[iSrcString] = aanXY[aanXY.size()-1];
-
-    const size_t nSize = aanXY.size();
-    aanXY.resize(nSize - 1);
+    removeExtremity(oMapStartStrings, anString.front(), iSrcString);
+    removeExtremity(oMapEndStrings, anString.back(), iSrcString);
+    oMapStrings.erase(anStringIter);
+    insertExtremity(oMapEndStrings, anBase.back(), iBaseString);
 }
 
 /************************************************************************/
@@ -201,57 +290,55 @@ void RPolygon::AddSegment( int x1, int y1, int x2, int y2 )
 /* -------------------------------------------------------------------- */
 /*      Is there an existing string ending with this?                   */
 /* -------------------------------------------------------------------- */
-    for( size_t iString = 0; iString < aanXY.size(); iString++ )
+
+    XY xy1 = { x1, y1 };
+    XY xy2 = { x2, y2 };
+
+    StringId iExistingString = findExtremityNot(oMapEndStrings, xy1, -1);
+    if( iExistingString >= 0 )
     {
-        std::vector<int> &anString = aanXY[iString];
+        std::swap( xy1, xy2 );
+    }
+    else
+    {
+        iExistingString = findExtremityNot(oMapEndStrings, xy2, -1);
+    }
+    if( iExistingString >= 0 )
+    {
+        auto& anString = oMapStrings[iExistingString];
         const size_t nSSize = anString.size();
 
-        if( anString[nSSize-2] == x1
-            && anString[nSSize-1] == y1 )
+        // We are going to add a segment, but should we just extend
+        // an existing segment already going in the right direction?
+
+        const int nLastLen =
+            std::max(std::abs(anString[nSSize - 2].x - anString[nSSize - 1].x),
+                     std::abs(anString[nSSize - 2].y - anString[nSSize - 1].y));
+
+        removeExtremity(oMapEndStrings, anString.back(), iExistingString);
+
+        if( (anString[nSSize - 2].x - anString[nSSize - 1].x
+                == (anString[nSSize - 1].x - xy1.x) * nLastLen)
+            && (anString[nSSize - 2].y - anString[nSSize - 1].y
+                == (anString[nSSize - 1].y - xy1.y) * nLastLen) )
         {
-            std::swap(x1, x2);
-            std::swap(y1, y2);
+            anString[nSSize - 1] = xy1;
         }
-
-        if( anString[nSSize - 2] == x2 &&
-            anString[nSSize - 1] == y2 )
+        else
         {
-            // We are going to add a segment, but should we just extend
-            // an existing segment already going in the right direction?
-
-            const int nLastLen =
-                std::max(std::abs(anString[nSSize - 4] - anString[nSSize - 2]),
-                         std::abs(anString[nSSize - 3] - anString[nSSize - 1]));
-
-            if( nSSize >= 4
-                && (anString[nSSize - 4] - anString[nSSize - 2]
-                    == (anString[nSSize - 2] - x1) * nLastLen)
-                && (anString[nSSize - 3] - anString[nSSize - 1]
-                    == (anString[nSSize - 1] - y1) * nLastLen) )
-            {
-                anString.pop_back();
-                anString.pop_back();
-            }
-
-            anString.push_back( x1 );
-            anString.push_back( y1 );
-            return;
+            anString.push_back( xy1 );
         }
+        insertExtremity(oMapEndStrings, anString.back(), iExistingString);
+        return;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Create a new string.                                            */
 /* -------------------------------------------------------------------- */
-    const size_t nSize = aanXY.size();
-    aanXY.resize(nSize + 1);
-    std::vector<int> &anString = aanXY[nSize];
-
-    anString.push_back( x1 );
-    anString.push_back( y1 );
-    anString.push_back( x2 );
-    anString.push_back( y2 );
-
-    return;
+    oMapStrings[iNextStringId] = std::vector<XY>{ xy1, xy2 };
+    insertExtremity(oMapStartStrings, xy1, iNextStringId);
+    insertExtremity(oMapEndStrings, xy2, iNextStringId);
+    iNextStringId ++;
 }
 
 /************************************************************************/
@@ -345,19 +432,19 @@ EmitPolygonToLayer( OGRLayerH hOutLayer, int iPixValField,
 /* -------------------------------------------------------------------- */
     OGRGeometryH hPolygon = OGR_G_CreateGeometry( wkbPolygon );
 
-    for( size_t iString = 0; iString < poRPoly->aanXY.size(); iString++ )
+    for( const auto& oIter: poRPoly->oMapStrings )
     {
-        std::vector<int> &anString = poRPoly->aanXY[iString];
+        const auto &anString = oIter.second;
         OGRGeometryH hRing = OGR_G_CreateGeometry( wkbLinearRing );
 
         // We go last to first to ensure the linestring is allocated to
         // the proper size on the first try.
-        for( int iVert = static_cast<int>(anString.size()) / 2 - 1;
+        for( int iVert = static_cast<int>(anString.size()) - 1;
              iVert >= 0;
              iVert-- )
         {
-            const int nPixelX = anString[iVert*2];
-            const int nPixelY = anString[iVert*2+1];
+            const int nPixelX = anString[iVert].x;
+            const int nPixelY = anString[iVert].y;
 
             const double dfX =
                 padfGeoTransform[0]

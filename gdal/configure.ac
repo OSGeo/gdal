@@ -328,6 +328,7 @@ dnl Checks for library functions.
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(snprintf vsnprintf)
 AC_CHECK_FUNCS(atoll)
+AC_CHECK_FUNCS(strtoll)
 AC_CHECK_FUNCS(strtoull)
 AC_CHECK_FUNCS(strtof)
 AC_CHECK_FUNCS(getcwd)
@@ -1090,6 +1091,25 @@ AC_DEFINE_UNQUOTED(HAVE_SC_PHYS_PAGES, 1,
 AC_MSG_RESULT([no])
 ])
 
+dnl '---------------------------------------------------------------------------
+dnl Remove possible system library paths from a *_LIB variable to prevent other, perhaps unrelated, system libraries
+dnl from shadowing custom libraries of the same name the user might have installed e.g. under /usr/local.
+dnl System library paths are things like /lib, /usr/lib, /lib64, /usr/lib64, and /usr/lib/x86_64-linux-gnu.
+dnl There may be others as well, that will need be addressed as they arise. We avoid wildcards such as
+dnl /usr/lib/* to avoid potential cases such as /usr/lib/mysql/lib, which might not have an /etc/ld.so.conf.d
+dnl entry and would not shadow any possible custom installs anyway:
+
+AC_DEFUN([STRIP_SYSTEM_LIBRARY_PATHS],[
+    if echo "x" | sed -E "s/x/y/" >/dev/null 2>/dev/null; then
+        STRIPPED_LIBRARY_NAME="$(echo [$1] | sed -E 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[[:space:]]]+::')"
+    elif echo "x" | sed -r "s/x/y/" >/dev/null 2>/dev/null; then
+        dnl Compatibility with older GNU sed that doesn't support -E
+        STRIPPED_LIBRARY_NAME="$(echo [$1] | sed -r 's:-L/(usr/)?(lib(64)?|lib/x86_64-linux-gnu)/*[[[:space:]]]+::')"
+    else
+        STRIPPED_LIBRARY_NAME="$(echo [$1])"
+    fi
+])
+
 dnl ---------------------------------------------------------------------------
 dnl Check if libz is available.
 dnl ---------------------------------------------------------------------------
@@ -1154,7 +1174,7 @@ dnl ---------------------------------------------------------------------------
 AM_ICONV
 
 dnl Extra test needed for GCC 4.5 on Solaris 11, where there is
-dnl a different behaviour if the tests are compiled with gcc or g++.
+dnl a different behavior if the tests are compiled with gcc or g++.
 dnl So we introduce a ICONV_CPP_CONST that must be used instead of
 dnl ICONV_CONST when used from .cpp files.
 if test "$am_func_iconv" = "yes"; then
@@ -1192,6 +1212,226 @@ else
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Select a libtiff library to use.
+dnl Proj depends on it so it must appear before.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(libtiff,[  --with-libtiff=ARG    Libtiff library to use (ARG=internal, yes or path)],,)
+
+AC_MSG_CHECKING([for libtiff])
+
+if test "x${with_libtiff}" = "xyes" -o "x${with_libtiff}" = "x" ; then
+
+  dnl Only automatically pick up the external libtiff if it is >= 4.0.
+  AC_CHECK_LIB(tiff,TIFFScanlineSize64,TIFF_SETTING=external HAVE_BIGTIFF=yes,TIFF_SETTING=internal HAVE_BIGTIFF=yes,)
+
+  if test "$TIFF_SETTING" = "external" ; then
+    dnl Cygwin takes a somewhat restrictive view of what should be exported
+    dnl from the dll, so don't use the external library if missing semi-private
+    dnl functions.
+    AC_CHECK_LIB(tiff,_TIFFsetDoubleArray,TIFF_SETTING=external,TIFF_SETTING=internal,)
+  fi
+
+  if test "$TIFF_SETTING" = "external" ; then
+    LIBS="-ltiff $LIBS"
+    AC_MSG_RESULT([using pre-installed libtiff.])
+  else
+    AC_MSG_RESULT([using internal TIFF code.])
+  fi
+
+elif test "x${with_libtiff}" = "xno" ; then
+
+  AC_MSG_ERROR([libtiff is a required dependency])
+
+elif test "x${with_libtiff}" = "xinternal" ; then
+
+  TIFF_SETTING=internal
+  HAVE_BIGTIFF=yes
+
+  AC_MSG_RESULT([using internal TIFF code.])
+
+else
+
+  TIFF_SETTING=external
+  if test -r "$with_libtiff/tiff.h" ; then
+    LIBS="-L$with_libtiff -ltiff $LIBS"
+    EXTRA_INCLUDES="-I$with_libtiff $EXTRA_INCLUDES"
+  else
+    LIBS="-L$with_libtiff/lib -ltiff $LIBS"
+    EXTRA_INCLUDES="-I$with_libtiff/include $EXTRA_INCLUDES"
+  fi
+
+  AC_MSG_RESULT([using libtiff from ${with_libtiff}.])
+
+  dnl Check for the BigTIFF enabled library (libtiff >= 4.0)
+  AC_CHECK_LIB(tiff,TIFFScanlineSize64,HAVE_BIGTIFF=yes,HAVE_BIGTIFF=no,)
+
+fi
+
+if test "${HAVE_BIGTIFF}" != "yes" ; then
+  AC_MSG_ERROR([libtiff >= 4.0 is required.])
+fi
+
+AC_SUBST(TIFF_SETTING,${TIFF_SETTING})
+
+dnl ---------------------------------------------------------------------------
+dnl Check for curl (i.e. for wcs).
+dnl Proj depends on it so it must appear before.
+dnl ---------------------------------------------------------------------------
+CURL_SETTING=no
+CURL_INC=
+CURL_LIB=
+
+AC_ARG_WITH(curl,
+    [  --with-curl[=ARG]       Include curl (ARG=path to curl-config.)],,,)
+
+dnl Clear some cache variables
+unset ac_cv_path_LIBCURL
+
+if test "`basename xx/$with_curl`" = "curl-config" ; then
+  LIBCURL_CONFIG="$with_curl"
+elif test "$with_curl" = "no" ; then
+  LIBCURL_CONFIG=no
+else
+  AC_PATH_PROG(LIBCURL_CONFIG, curl-config, no)
+fi
+
+if test "$LIBCURL_CONFIG" != "no" ; then
+
+  CURL_VERNUM=`$LIBCURL_CONFIG --vernum`
+  CURL_VER=`$LIBCURL_CONFIG --version | awk '{print $2}'`
+
+  AC_MSG_RESULT([        found libcurl version $CURL_VER])
+
+  AC_CHECK_LIB(curl,curl_global_init,CURL_SETTING=yes,CURL_SETTING=no,`$LIBCURL_CONFIG --libs`)
+
+fi
+
+AC_SUBST(CURL_SETTING,$CURL_SETTING)
+AC_SUBST(CURL_INC,    $CURL_INC)
+AC_SUBST(CURL_LIB,    $CURL_LIB)
+
+dnl ---------------------------------------------------------------------------
+dnl Check for SpatiaLite.
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING(for spatialite)
+
+AC_ARG_WITH(spatialite,
+    [  --with-spatialite=ARG Include SpatiaLite support (ARG=no(default), yes, dlopen (only supported for Spatialite >= 4.1.2) or path)],
+    ,,)
+
+AC_ARG_WITH(spatialite-soname,
+    [  --with-spatialite-soname=ARG Spatialite shared object name (e.g. libspatialite.so), only used if --with-spatialite=dlopen],
+    ,,)
+
+HAVE_SPATIALITE=no
+SPATIALITE_AMALGAMATION=no
+
+if test -z "$with_spatialite" -o "$with_spatialite" = "no"; then
+    AC_MSG_RESULT(disabled)
+elif test "$with_spatialite" = "yes"; then
+    AC_CHECK_HEADERS(sqlite3.h)
+    if test "$ac_cv_header_sqlite3_h" = "yes"; then
+        AC_MSG_CHECKING([for spatialite.h in /usr/include or /usr/local/include])
+        if test -f "/usr/include/spatialite.h" -o -f "/usr/local/include/spatialite.h"; then
+            AC_MSG_RESULT(found)
+            AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,-lsqlite3)
+            if test "$SPATIALITE_INIT_FOUND" = "yes"; then
+                HAVE_SPATIALITE=yes
+                SPATIALITE_LIBS="-lspatialite -lsqlite3"
+                LIBS="$LIBS $SPATIALITE_LIBS"
+                HAVE_SQLITE3=yes
+            fi
+        else
+            AC_MSG_RESULT(not found : spatialite support disabled)
+        fi
+    fi
+elif test "$with_spatialite" = "dlopen"; then
+  HAVE_SPATIALITE=dlopen
+  AC_MSG_RESULT(dlopen)
+
+  if test "$with_spatialite_soname" != ""; then
+      SPATIALITE_SONAME="$with_spatialite_soname"
+  else
+      SPATIALITE_SONAME="spatialite.so"
+  fi
+else
+    AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,-L$with_spatialite/lib -lspatialite)
+    if test -f "$with_spatialite/include/spatialite.h" -a \
+        -f "$with_spatialite/include/spatialite/sqlite3.h" -a \
+        "$SPATIALITE_INIT_FOUND" = "yes"; then
+
+        AC_MSG_RESULT(enabled)
+        HAVE_SPATIALITE=yes
+        SPATIALITE_AMALGAMATION=yes
+
+        # SpatiaLite amalgamation availability implies SQLite availability
+        # Caution : don't include the include/spatialite subdir in the include dir
+        # as there's a spatialite.h file in it, which we don't want to include.
+        # We want to include include/spatialite.h instead !
+        SQLITE3_CFLAGS="-I$with_spatialite/include"
+        SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite"
+        LIBS="$LIBS $SPATIALITE_LIBS"
+        HAVE_SQLITE3=yes
+
+    elif test -f "$with_spatialite/include/spatialite.h" -a \
+        "$SPATIALITE_INIT_FOUND" = "yes"; then
+
+        SQLITE3_REQ_VERSION="3.0.0"
+        AX_LIB_SQLITE3($SQLITE3_REQ_VERSION)
+
+        if test "$HAVE_SQLITE3" = "yes"; then
+            SPATIALITE_INC="-I$with_spatialite/include"
+            HAVE_SPATIALITE=yes
+            SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite"
+            LIBS="$SQLITE3_LDFLAGS $LIBS $SPATIALITE_LIBS"
+            AC_MSG_RESULT(spatialite enabled)
+        else
+            AC_MSG_RESULT(spatialite disabled)
+        fi
+    else
+        AC_MSG_RESULT(disabled)
+    fi
+fi
+
+if test "$HAVE_SPATIALITE" = "yes"; then
+    ax_save_LIBS="${LIBS}"
+    LIBS="$SPATIALITE_LIBS"
+    AC_CHECK_LIB(spatialite,spatialite_target_cpu,SPATIALITE_412_OR_LATER=yes,SPATIALITE_412_OR_LATER=no)
+    LIBS="${ax_save_LIBS}"
+fi
+
+AC_SUBST([HAVE_SPATIALITE], $HAVE_SPATIALITE)
+AC_SUBST([SPATIALITE_SONAME], $SPATIALITE_SONAME)
+AC_SUBST([SPATIALITE_INC], $SPATIALITE_INC)
+AC_SUBST([SPATIALITE_AMALGAMATION], $SPATIALITE_AMALGAMATION)
+AC_SUBST([SPATIALITE_412_OR_LATER], $SPATIALITE_412_OR_LATER)
+
+dnl ---------------------------------------------------------------------------
+dnl Check for SQLite (only if SpatiaLite is not detected).
+dnl Proj depends on it so it must appear before.
+dnl ---------------------------------------------------------------------------
+
+if test "${HAVE_SPATIALITE}" = "no" -o "${HAVE_SPATIALITE}" = "dlopen" ; then
+    SQLITE3_REQ_VERSION="3.0.0"
+    AX_LIB_SQLITE3($SQLITE3_REQ_VERSION)
+
+    if test "$HAVE_SQLITE3" = "yes"; then
+        LIBS="$SQLITE3_LDFLAGS $LIBS"
+    fi
+fi
+
+if test "$HAVE_SQLITE3" = "yes"; then
+    AC_CHECK_LIB(sqlite3,sqlite3_column_table_name,SQLITE_HAS_COLUMN_METADATA=yes,SQLITE_HAS_COLUMN_METADATA=no,$LIBS)
+fi
+
+AC_SUBST([SQLITE_INC], $SQLITE3_CFLAGS)
+AC_SUBST([HAVE_SQLITE], $HAVE_SQLITE3)
+AC_SUBST([SQLITE_HAS_COLUMN_METADATA], $SQLITE_HAS_COLUMN_METADATA)
+HAVE_SQLITE=$HAVE_SQLITE3
+
+dnl ---------------------------------------------------------------------------
 dnl PROJ.6 related stuff
 dnl ---------------------------------------------------------------------------
 
@@ -1211,7 +1451,7 @@ else
 
   if test "x$with_proj" = "xyes" -o "x$with_proj" = "x"; then
     ORIG_LIBS="$LIBS"
-    LIBS="-lproj $ORIG_LIBS"
+    LIBS="-lproj $with_proj_extra_lib_for_test $ORIG_LIBS"
     AC_LANG_PUSH([C++])
     AC_CHECK_LIB(proj,proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
     AC_LANG_POP([C++])
@@ -1243,24 +1483,31 @@ else
     fi
   else
     ORIG_LIBS="$LIBS"
-    LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
+    LIBS="-L$with_proj/lib -lproj $with_proj_extra_lib_for_test $ORIG_LIBS"
     AC_LANG_PUSH([C++])
     AC_CHECK_LIB(proj,proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
     AC_LANG_POP([C++])
     if test "$PROJ_FOUND" = "no"; then
-        LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
+        LIBS="-L$with_proj/lib -lproj $with_proj_extra_lib_for_test $ORIG_LIBS"
         unset ac_cv_lib_proj_proj_create_from_wkt
         AC_LANG_PUSH([C++])
         AC_CHECK_LIB(proj,proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
         AC_LANG_POP([C++])
     fi
     if test "$PROJ_FOUND" = "no"; then
-        LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
+        LIBS="-L$with_proj/lib64 -lproj $with_proj_extra_lib_for_test $ORIG_LIBS"
+        unset ac_cv_lib_proj_proj_create_from_wkt
+        AC_LANG_PUSH([C++])
+        AC_CHECK_LIB(proj,proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
+        AC_LANG_POP([C++])
+    fi
+    if test "$PROJ_FOUND" = "no"; then
+        LIBS="-L$with_proj/lib -lproj $with_proj_extra_lib_for_test $ORIG_LIBS"
         AC_LANG_PUSH([C++])
         AC_CHECK_LIB(proj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
         AC_LANG_POP([C++])
         if test "$PROJ_FOUND" = "no"; then
-            LIBS="-L$with_proj/lib -lproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
+            LIBS="-L$with_proj/lib -lproj $with_proj_extra_lib_for_test $ORIG_LIBS"
             unset ac_cv_lib_proj_internal_proj_create_from_wkt
             AC_LANG_PUSH([C++])
             AC_CHECK_LIB(proj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
@@ -1271,12 +1518,12 @@ else
         fi
     fi
     if test "$PROJ_FOUND" = "no"; then
-        LIBS="-L$with_proj/lib -linternalproj -lsqlite3 $with_proj_extra_lib_for_test $ORIG_LIBS"
+        LIBS="-L$with_proj/lib -linternalproj $with_proj_extra_lib_for_test $ORIG_LIBS"
         AC_LANG_PUSH([C++])
         AC_CHECK_LIB(internalproj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
         AC_LANG_POP([C++])
         if test "$PROJ_FOUND" = "no"; then
-            LIBS="-L$with_proj/lib -linternalproj -lsqlite3 $with_proj_extra_lib_for_test  $ORIG_LIBS"
+            LIBS="-L$with_proj/lib -linternalproj $with_proj_extra_lib_for_test $ORIG_LIBS"
             unset ac_cv_lib_internal_proj_internal_proj_create_from_wkt
             AC_LANG_PUSH([C++])
             AC_CHECK_LIB(internalproj,internal_proj_create_from_wkt,PROJ_FOUND=yes,PROJ_FOUND=no,)
@@ -1357,20 +1604,24 @@ fi
 
 AC_SUBST(ZSTD_SETTING,$ZSTD_SETTING)
 
+dnl ---------------------------------------------------------------------------
+dnl Set up drivers and formats
+dnl ---------------------------------------------------------------------------
+
 GDALFORMATS_ENABLED=
 GDALFORMATS_DISABLED=
 OGRFORMATS_ENABLED=
 OGRFORMATS_ENABLED_CFLAGS=
 OGRFORMATS_DISABLED=
 
-AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp bsb cals ceos ceos2 coasp cosar ctg dimap dted e00grid elas envisat ers fit gff gsg gxf hf2 idrisi ignfheightasciigrid ilwis ingr iris iso8211 jaxapalsar jdem kmlsuperoverlay l1b leveller map mrf msgn ngsgeoid nitf northwood pds prf r raw rmf rs2 safe saga sdts sentinel2 sgi sigdem srtmhgt terragen til tsx usgsdem xpm xyz zmap])
+AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp bsb cals ceos ceos2 coasp cosar ctg dimap dted e00grid elas envisat ers esric fit gff gsg gxf hf2 idrisi ignfheightasciigrid ilwis ingr iris iso8211 jaxapalsar jdem kmlsuperoverlay l1b leveller map mrf msgn ngsgeoid nitf northwood pds prf r raw rmf rs2 safe saga sdts sentinel2 sgi sigdem srtmhgt terragen tga til tsx usgsdem xpm xyz zmap])
 AC_DEFUN([INTERNAL_OPT_FORMATS],[grib ozi pdf rik])
-AC_DEFUN([INTERNAL_DRIVERS],[aeronavfaa arcgen avc bna cad csv dgn dxf edigeo flatgeobuf geoconcept georss gml gmt gpsbabel gpx gtm htf jml mvt ntf openair openfilegdb pgdump rec s57 segukooa segy selafin shape sua svg sxf tiger vdv wasp xplane])dnl
+AC_DEFUN([INTERNAL_DRIVERS],[aeronavfaa arcgen avc bna cad csv dgn dxf edigeo flatgeobuf geoconcept georss gml gmt gpsbabel gpx gtm htf jml mapml mvt ntf openair openfilegdb pgdump rec s57 segukooa segy selafin shape sua svg sxf tiger vdv wasp xplane])dnl
 AC_DEFUN([CURL_FORMATS],[eeda plmosaic rda wcs wms wmts daas])dnl
 AC_DEFUN([CURL_DRIVERS],[amigocloud carto cloudant couchdb csw elastic ngw plscenes wfs])dnl
 AC_DEFUN([SQLITE_FORMATS],[rasterlite mbtiles])dnl
 AC_DEFUN([SQLITE_DRIVERS],[gpkg vfk osm])dnl
-AC_DEFUN([EXPAT_DRIVERS],[ods xlsx])dnl
+AC_DEFUN([EXPAT_DRIVERS],[ods xlsx lvbag])dnl
 AC_DEFUN([XERCES_DRIVERS],[nas ili gmlas])dnl
 AC_DEFUN([ODBC_DRIVERS],[odbc pgeo mssqlspatial geomedia walk])dnl
 
@@ -1545,13 +1796,49 @@ AC_SUBST(GDALFORMATS_ENABLED,$GDALFORMATS_ENABLED)
 if test "$LIBZ_SETTING" != "no" ; then
   if test "x$INTERNAL_FORMAT_rik_ENABLED" = "xyes"; then
       GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED rik"
-  fi 
+  fi
   if test "x$INTERNAL_FORMAT_ozi_ENABLED" = "xyes"; then
       GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED ozi"
-  fi 
+  fi
 fi
 
+if test "$CURL_SETTING" = "yes" ; then
 
+  CURL_INC=`$LIBCURL_CONFIG --cflags`
+  CURL_LIB=`$LIBCURL_CONFIG --libs`
+m4_foreach_w([frmt],CURL_FORMATS,[
+  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
+  if test "x$driver_enabled" = "xyes"; then
+    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED frmt"
+  fi
+])
+m4_foreach_w([frmt],CURL_DRIVERS,[
+  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
+  fi
+])
+
+fi
+
+if test "$HAVE_SQLITE3" = "yes"; then
+m4_foreach_w([frmt],SQLITE_FORMATS,[
+  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
+  if test "x$driver_enabled" = "xyes"; then
+    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED frmt"
+  fi
+])
+
+m4_foreach_w([frmt],SQLITE_DRIVERS,[
+  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
+  if test "x$driver_enabled" = "xyes"; then
+    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
+    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
+  fi
+])
+
+fi
 
 dnl ---------------------------------------------------------------------------
 dnl Select an PostgreSQL Library to use, or disable driver.
@@ -1942,68 +2229,6 @@ if test "$with_pcidsk" != "no" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
-dnl Select a libtiff library to use.
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(libtiff,[  --with-libtiff=ARG    Libtiff library to use (ARG=internal, yes or path)],,)
-
-AC_MSG_CHECKING([for libtiff])
-
-if test "x${with_libtiff}" = "xyes" -o "x${with_libtiff}" = "x" ; then
-
-  dnl Only automatically pick up the external libtiff if it is >= 4.0.
-  AC_CHECK_LIB(tiff,TIFFScanlineSize64,TIFF_SETTING=external HAVE_BIGTIFF=yes,TIFF_SETTING=internal HAVE_BIGTIFF=yes,)
-
-  if test "$TIFF_SETTING" = "external" ; then
-    dnl Cygwin takes a somewhat restrictive view of what should be exported
-    dnl from the dll, so don't use the external library if missing semi-private
-    dnl functions.
-    AC_CHECK_LIB(tiff,_TIFFsetDoubleArray,TIFF_SETTING=external,TIFF_SETTING=internal,)
-  fi
-
-  if test "$TIFF_SETTING" = "external" ; then
-    LIBS="-ltiff $LIBS"
-    AC_MSG_RESULT([using pre-installed libtiff.])
-  else
-    AC_MSG_RESULT([using internal TIFF code.])
-  fi
-
-elif test "x${with_libtiff}" = "xno" ; then
-
-  AC_MSG_ERROR([libtiff is a required dependency])
-
-elif test "x${with_libtiff}" = "xinternal" ; then
-
-  TIFF_SETTING=internal
-  HAVE_BIGTIFF=yes
-
-  AC_MSG_RESULT([using internal TIFF code.])
-
-else
-
-  TIFF_SETTING=external
-  if test -r "$with_libtiff/tiff.h" ; then
-    LIBS="-L$with_libtiff -ltiff $LIBS"
-    EXTRA_INCLUDES="-I$with_libtiff $EXTRA_INCLUDES"
-  else
-    LIBS="-L$with_libtiff/lib -ltiff $LIBS"
-    EXTRA_INCLUDES="-I$with_libtiff/include $EXTRA_INCLUDES"
-  fi
-
-  AC_MSG_RESULT([using libtiff from ${with_libtiff}.])
-
-  dnl Check for the BigTIFF enabled library (libtiff >= 4.0)
-  AC_CHECK_LIB(tiff,TIFFScanlineSize64,HAVE_BIGTIFF=yes,HAVE_BIGTIFF=no,)
-
-fi
-
-if test "${HAVE_BIGTIFF}" != "yes" ; then
-  AC_MSG_ERROR([libtiff >= 4.0 is required.])
-fi
-
-AC_SUBST(TIFF_SETTING,${TIFF_SETTING})
-
-dnl ---------------------------------------------------------------------------
 dnl Select a libgeotiff library to use.
 dnl ---------------------------------------------------------------------------
 
@@ -2163,17 +2388,29 @@ HAVE_CHARLS=no
 CHARLS_INC=
 
 if test "$with_charls" = "yes" -o "$with_charls" = "" ; then
-
-  AC_CHECK_HEADERS([CharLS/interface.h])
-  if test "$ac_cv_header_CharLS_interface_h" = "yes"; then
-    AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
+  dnl CharLS 2.1
+  AC_CHECK_HEADERS([charls/version.h])
+  if test "$ac_cv_header_charls_version_h" = "yes"; then
+    AC_LANG_PUSH([C++])
+    AC_CHECK_LIB(charls,JpegLsDecode,HAVE_CHARLS=yes)
+    AC_LANG_POP([C++])
     if test "$HAVE_CHARLS" = "yes"; then
-        LIBS="-lCharLS $LIBS"
-        CHARLS_INC="-DCHARLS_INTERFACE_H"
+        LIBS="-lcharls $LIBS"
+        CHARLS_INC="-DCHARLS_2_1"
     fi
   else
-    AC_CHECK_HEADERS([CharLS/charls.h])
-    if test "$ac_cv_header_CharLS_charls_h" = "yes"; then
+    dnl CharLS 1.x
+    AC_CHECK_HEADERS([CharLS/interface.h])
+    if test "$ac_cv_header_CharLS_interface_h" = "yes"; then
+      AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
+      if test "$HAVE_CHARLS" = "yes"; then
+          LIBS="-lCharLS $LIBS"
+          CHARLS_INC="-DCHARLS_INTERFACE_H"
+      fi
+    else
+      dnl CharLS 2.0
+      AC_CHECK_HEADERS([CharLS/charls.h])
+      if test "$ac_cv_header_CharLS_charls_h" = "yes"; then
         AC_LANG_PUSH([C++])
         AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
         AC_LANG_POP([C++])
@@ -2181,6 +2418,7 @@ if test "$with_charls" = "yes" -o "$with_charls" = "" ; then
             LIBS="-lCharLS $LIBS"
             CHARLS_INC="-DCHARLS_2"
         fi
+      fi
     fi
   fi
 fi
@@ -2899,6 +3137,8 @@ else
     NETCDF_PREFIX=`$NETCDF_NCCONFIG --prefix`
     NETCDF_INCLUDEDIR=`$NETCDF_NCCONFIG --includedir`
     NETCDF_LIBS=`$NETCDF_NCCONFIG --libs`
+    STRIP_SYSTEM_LIBRARY_PATHS("${NETCDF_LIBS}")
+    NETCDF_LIBS="$STRIPPED_LIBRARY_NAME"
     echo ""
     AC_MSG_RESULT([ got version="$NETCDF_VERSION", prefix="$NETCDF_PREFIX",
  libs="$NETCDF_LIBS", includedir="$NETCDF_INCLUDEDIR"])
@@ -2911,7 +3151,7 @@ else
       LIBS="$NETCDF_LIBS $LIBS"
     fi
 
-dnl previous behaviour without nc-config
+dnl previous behavior without nc-config
 
 dnl test linking using default settings
 elif test "$with_netcdf" = "yes" -o "$with_netcdf" = "" ; then
@@ -3710,6 +3950,8 @@ else
   else
       HAVE_MYSQL=yes
       MYSQL_LIB="`$MYSQL_CONFIG --libs`"
+      STRIP_SYSTEM_LIBRARY_PATHS("${MYSQL_LIB}")
+      MYSQL_LIB="$STRIPPED_LIBRARY_NAME"
       MYSQL_INC="`$MYSQL_CONFIG --include`"
       AC_MSG_RESULT([yes])
   fi
@@ -4003,62 +4245,6 @@ dnl This is used by the GNUmakefile in frmts/dods (via GDALmake.opt)
 AC_SUBST(DODS_INC)
 
 dnl ---------------------------------------------------------------------------
-dnl Check for curl (i.e. for wcs).
-dnl ---------------------------------------------------------------------------
-CURL_SETTING=no
-CURL_INC=
-CURL_LIB=
-
-AC_ARG_WITH(curl,
-    [  --with-curl[=ARG]       Include curl (ARG=path to curl-config.)],,,)
-
-dnl Clear some cache variables
-unset ac_cv_path_LIBCURL
-
-if test "`basename xx/$with_curl`" = "curl-config" ; then
-  LIBCURL_CONFIG="$with_curl"
-elif test "$with_curl" = "no" ; then
-  LIBCURL_CONFIG=no
-else
-  AC_PATH_PROG(LIBCURL_CONFIG, curl-config, no)
-fi
-
-if test "$LIBCURL_CONFIG" != "no" ; then
-
-  CURL_VERNUM=`$LIBCURL_CONFIG --vernum`
-  CURL_VER=`$LIBCURL_CONFIG --version | awk '{print $2}'`
-
-  AC_MSG_RESULT([        found libcurl version $CURL_VER])
-
-  AC_CHECK_LIB(curl,curl_global_init,CURL_SETTING=yes,CURL_SETTING=no,`$LIBCURL_CONFIG --libs`)
-
-fi
-
-if test "$CURL_SETTING" = "yes" ; then
-
-  CURL_INC=`$LIBCURL_CONFIG --cflags`
-  CURL_LIB=`$LIBCURL_CONFIG --libs`
-m4_foreach_w([frmt],CURL_FORMATS,[
-  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
-  if test "x$driver_enabled" = "xyes"; then
-    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED frmt"
-  fi 
-])
-m4_foreach_w([frmt],CURL_DRIVERS,[
-  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
-  if test "x$driver_enabled" = "xyes"; then
-    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
-    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
-  fi 
-])
-
-fi
-
-AC_SUBST(CURL_SETTING,$CURL_SETTING)
-AC_SUBST(CURL_INC,    $CURL_INC)
-AC_SUBST(CURL_LIB,    $CURL_LIB)
-
-dnl ---------------------------------------------------------------------------
 dnl Check for libxml2.
 dnl ---------------------------------------------------------------------------
 
@@ -4096,144 +4282,6 @@ fi
 AC_SUBST(HAVE_LIBXML2,$HAVE_LIBXML2)
 AC_SUBST(LIBXML2_INC, $LIBXML2_INC)
 AC_SUBST(LIBXML2_LIB, $LIBXML2_LIB)
-
-dnl ---------------------------------------------------------------------------
-dnl Check for SpatiaLite.
-dnl ---------------------------------------------------------------------------
-
-AC_MSG_CHECKING(for spatialite)
-
-AC_ARG_WITH(spatialite,
-    [  --with-spatialite=ARG Include SpatiaLite support (ARG=no(default), yes, dlopen (only supported for Spatialite >= 4.1.2) or path)],
-    ,,)
-
-AC_ARG_WITH(spatialite-soname,
-    [  --with-spatialite-soname=ARG Spatialite shared object name (e.g. libspatialite.so), only used if --with-spatiliate=dlopen],
-    ,,)
-
-HAVE_SPATIALITE=no
-SPATIALITE_AMALGAMATION=no
-
-if test -z "$with_spatialite" -o "$with_spatialite" = "no"; then
-    AC_MSG_RESULT(disabled)
-elif test "$with_spatialite" = "yes"; then
-    AC_CHECK_HEADERS(sqlite3.h)
-    if test "$ac_cv_header_sqlite3_h" = "yes"; then
-        AC_MSG_CHECKING([for spatialite.h in /usr/include or /usr/local/include])
-        if test -f "/usr/include/spatialite.h" -o -f "/usr/local/include/spatialite.h"; then
-            AC_MSG_RESULT(found)
-            AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,-lsqlite3 -lproj)
-            if test "$SPATIALITE_INIT_FOUND" = "yes"; then
-                HAVE_SPATIALITE=yes
-                SPATIALITE_LIBS="-lspatialite -lsqlite3 -lproj"
-                LIBS="$LIBS $SPATIALITE_LIBS"
-                HAVE_SQLITE3=yes
-            fi
-        else
-            AC_MSG_RESULT(not found : spatialite support disabled)
-        fi
-    fi
-elif test "$with_spatialite" = "dlopen"; then
-  HAVE_SPATIALITE=dlopen
-  AC_MSG_RESULT(dlopen)
-
-  if test "$with_spatialite_soname" != ""; then
-      SPATIALITE_SONAME="$with_spatialite_soname"
-  else
-      SPATIALITE_SONAME="spatialite.so"
-  fi
-else
-    AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,-L$with_spatialite/lib -lspatialite)
-    if test -f "$with_spatialite/include/spatialite.h" -a \
-        -f "$with_spatialite/include/spatialite/sqlite3.h" -a \
-        "$SPATIALITE_INIT_FOUND" = "yes"; then
-
-        AC_MSG_RESULT(enabled)
-        HAVE_SPATIALITE=yes
-        SPATIALITE_AMALGAMATION=yes
-
-        # SpatiaLite amalgamation availability implies SQLite availability
-        # Caution : don't include the include/spatialite subdir in the include dir
-        # as there's a spatialite.h file in it, which we don't want to include.
-        # We want to include include/spatialite.h instead !
-        SQLITE3_CFLAGS="-I$with_spatialite/include"
-        SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite"
-        LIBS="$LIBS $SPATIALITE_LIBS"
-        HAVE_SQLITE3=yes
-
-    elif test -f "$with_spatialite/include/spatialite.h" -a \
-        "$SPATIALITE_INIT_FOUND" = "yes"; then
-
-        SQLITE3_REQ_VERSION="3.0.0"
-        AX_LIB_SQLITE3($SQLITE3_REQ_VERSION)
-
-        if test "$HAVE_SQLITE3" = "yes"; then
-            SPATIALITE_INC="-I$with_spatialite/include"
-            HAVE_SPATIALITE=yes
-            SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite"
-            LIBS="$SQLITE3_LDFLAGS $LIBS $SPATIALITE_LIBS"
-            AC_MSG_RESULT(spatialite enabled)
-        else
-            AC_MSG_RESULT(spatialite disabled)
-        fi
-    else
-        AC_MSG_RESULT(disabled)
-    fi
-fi
-
-if test "$HAVE_SPATIALITE" = "yes"; then
-    ax_save_LIBS="${LIBS}"
-    LIBS="$SPATIALITE_LIBS"
-    AC_CHECK_LIB(spatialite,spatialite_target_cpu,SPATIALITE_412_OR_LATER=yes,SPATIALITE_412_OR_LATER=no)
-    LIBS="${ax_save_LIBS}"
-fi
-
-AC_SUBST([HAVE_SPATIALITE], $HAVE_SPATIALITE)
-AC_SUBST([SPATIALITE_SONAME], $SPATIALITE_SONAME)
-AC_SUBST([SPATIALITE_INC], $SPATIALITE_INC)
-AC_SUBST([SPATIALITE_AMALGAMATION], $SPATIALITE_AMALGAMATION)
-AC_SUBST([SPATIALITE_412_OR_LATER], $SPATIALITE_412_OR_LATER)
-
-dnl ---------------------------------------------------------------------------
-dnl Check for SQLite (only if SpatiaLite is not detected)
-dnl ---------------------------------------------------------------------------
-
-if test "${HAVE_SPATIALITE}" = "no" -o "${HAVE_SPATIALITE}" = "dlopen" ; then
-    SQLITE3_REQ_VERSION="3.0.0"
-    AX_LIB_SQLITE3($SQLITE3_REQ_VERSION)
-
-    if test "$HAVE_SQLITE3" = "yes"; then
-        LIBS="$SQLITE3_LDFLAGS $LIBS"
-    fi
-fi
-
-if test "$HAVE_SQLITE3" = "yes"; then
-    AC_CHECK_LIB(sqlite3,sqlite3_column_table_name,SQLITE_HAS_COLUMN_METADATA=yes,SQLITE_HAS_COLUMN_METADATA=no,$LIBS)
-fi
-
-AC_SUBST([SQLITE_INC], $SQLITE3_CFLAGS)
-AC_SUBST([HAVE_SQLITE], $HAVE_SQLITE3)
-AC_SUBST([SQLITE_HAS_COLUMN_METADATA], $SQLITE_HAS_COLUMN_METADATA)
-HAVE_SQLITE=$HAVE_SQLITE3
-
-if test "$HAVE_SQLITE3" = "yes"; then
-m4_foreach_w([frmt],SQLITE_FORMATS,[
-  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
-  if test "x$driver_enabled" = "xyes"; then
-    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED frmt"
-  fi 
-])
-
-m4_foreach_w([frmt],SQLITE_DRIVERS,[
-  driver_enabled=m4_join([_],[$INTERNAL_FORMAT],frmt,[ENABLED])
-  if test "x$driver_enabled" = "xyes"; then
-    OGRFORMATS_ENABLED="$OGRFORMATS_ENABLED frmt"
-    OGRFORMATS_ENABLED_CFLAGS="$OGRFORMATS_ENABLED_CFLAGS _OGRDEFINE(frmt)"
-  fi 
-])
-
-fi
-
 
 dnl ---------------------------------------------------------------------------
 dnl Check for librasterlite2.
@@ -4558,6 +4606,8 @@ HAVE_GEOS_RESULT="no"
 if test "${HAVE_GEOS}" = "yes" ; then
 
   AC_MSG_NOTICE([Using C API from GEOS $GEOS_VERSION])
+  STRIP_SYSTEM_LIBRARY_PATHS("${GEOS_LIBS}")
+  GEOS_LIBS="$STRIPPED_LIBRARY_NAME"
   LIBS="${GEOS_LIBS} ${LIBS}"
   HAVE_GEOS_RESULT="yes"
 fi
@@ -4571,6 +4621,8 @@ HAVE_SFCGAL_RESULT="no"
 if test "${HAVE_SFCGAL}" = "yes" ; then
 
   AC_MSG_NOTICE([Using C API from SFCGAL $SFCGAL_VERSION])
+  STRIP_SYSTEM_LIBRARY_PATHS("${SFCGAL_LIBS}")
+  SFCGAL_LIBS="$STRIPPED_LIBRARY_NAME"
   LIBS="${SFCGAL_LIBS} ${LIBS}"
   HAVE_SFCGAL_RESULT="yes"
 fi
@@ -5919,6 +5971,43 @@ fi
 AC_SUBST(EXR_CFLAGS,$EXR_CFLAGS)
 
 dnl ---------------------------------------------------------------------------
+dnl Detect libheif
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(heif,[  --with-heif            Include HEIF support via libheif library],,)
+
+HAVE_HEIF=no
+HEIF_CFLAGS=""
+
+if test "$with_heif" = "no" ; then
+
+  AC_MSG_NOTICE([HEIF support disabled.])
+
+else
+
+  PKG_PROG_PKG_CONFIG([0.21])
+  PKG_CHECK_MODULES([HEIF], [libheif >= 1.1], [], [HAVE_HEIF=no])
+
+  if test -n "$HEIF_LIBS"; then
+
+    # Test that the package found is for the right architecture
+    saved_LIBS="$LIBS"
+    LIBS="$HEIF_LIBS"
+    AC_CHECK_LIB(heif,heif_context_get_list_of_top_level_image_IDs, [HAVE_HEIF=yes], [HAVE_HEIF=no])
+    LIBS="$saved_LIBS"
+
+    if test "$HAVE_HEIF" = "yes"; then
+        OPT_GDAL_FORMATS="heif $OPT_GDAL_FORMATS"
+        LIBS="$HEIF_LIBS $LIBS"
+    else
+        HEIF_CFLAGS=""
+    fi
+  fi
+fi
+
+AC_SUBST(HEIF_CFLAGS,$HEIF_CFLAGS)
+
+dnl ---------------------------------------------------------------------------
 dnl Test if sprintf can be overloaded with _XOPEN_SOURCE being defined or other,
 dnl includes being included before, which mingw64 4.8 doesn't like (#6390)
 dnl ---------------------------------------------------------------------------
@@ -6065,6 +6154,7 @@ LOC_MSG([  MongoCXX v3 support:       ${MONGOCXXV3_ENABLED}])
 LOC_MSG([  HDFS support:              ${HDFS_ENABLED}])
 LOC_MSG([  TileDB support:            ${TILEDB_SETTING}])
 LOC_MSG([  EXR support:               ${HAVE_EXR}])
+LOC_MSG([  HEIF support:              ${HAVE_HEIF}])
 LOC_MSG([  userfaultfd support:       ${ENABLE_UFFD}])
 LOC_MSG([  misc. gdal formats:       ${GDALFORMATS_ENABLED}])
 LOC_MSG([  disabled gdal formats:    ${GDALFORMATS_DISABLED}])

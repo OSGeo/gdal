@@ -43,9 +43,9 @@ import pytest
 
 def test_ers_1():
 
-    tst = gdaltest.GDALTest('ERS', 'srtm.ers', 1, 64074)
+    tst = gdaltest.GDALTest('ERS', 'ers/srtm.ers', 1, 64074)
     tst.testOpen()
-    ds = gdal.Open('data/srtm.ers')
+    ds = gdal.Open('data/ers/srtm.ers')
     md = ds.GetRasterBand(1).GetMetadata()
     expected_md = {'STATISTICS_MEAN': '-4020.25', 'STATISTICS_MINIMUM': '-4315', 'STATISTICS_MAXIMUM': '-3744', 'STATISTICS_MEDIAN': '-4000'}
     assert md == expected_md
@@ -56,7 +56,7 @@ def test_ers_1():
 
 def test_ers_2():
 
-    tst = gdaltest.GDALTest('ERS', 'float32.bil', 1, 27)
+    tst = gdaltest.GDALTest('ERS', 'ehdr/float32.bil', 1, 27)
     return tst.testCreateCopy(new_filename='tmp/float32.ers',
                               check_gt=1, vsimem=1)
 
@@ -82,7 +82,7 @@ def test_ers_4():
     PRIMEM["Greenwich",0],
     UNIT["degree",0.0174532925199433]]"""
 
-    tst = gdaltest.GDALTest('ERS', 'ers_dem.ers', 1, 56588)
+    tst = gdaltest.GDALTest('ERS', 'ers/ers_dem.ers', 1, 56588)
     return tst.testOpen(check_prj=srs, check_gt=gt)
 
 ###############################################################################
@@ -91,7 +91,7 @@ def test_ers_4():
 
 def test_ers_5():
 
-    ds = gdal.Open('data/8s.ers')
+    ds = gdal.Open('data/ers/8s.ers')
     md = ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE')
 
     assert md['PIXELTYPE'] == 'SIGNEDBYTE', 'Failed to detect SIGNEDBYTE'
@@ -106,7 +106,7 @@ def test_ers_6():
 
     drv = gdal.GetDriverByName('ERS')
 
-    src_ds = gdal.Open('data/8s.ers')
+    src_ds = gdal.Open('data/ers/8s.ers')
 
     ds = drv.CreateCopy('tmp/8s.ers', src_ds)
 
@@ -124,7 +124,7 @@ def test_ers_6():
 
 def test_ers_7():
 
-    ds = gdal.Open('data/caseinsensitive.ers')
+    ds = gdal.Open('data/ers/caseinsensitive.ers')
 
     desc = ds.GetRasterBand(1).GetDescription()
 
@@ -290,7 +290,7 @@ def test_ers_10():
 
 
 def test_ers_recursive_opening():
-    ds = gdal.Open('/vsitar/data/test_ers_recursive.tar/test.ers')
+    ds = gdal.Open('/vsitar/data/ers/test_ers_recursive.tar/test.ers')
     ds.GetFileList()
 
 ###############################################################################

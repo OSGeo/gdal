@@ -15,7 +15,7 @@ following the `GeoServices REST
 Specification <http://www.esri.com/industries/landing-pages/geoservices/geoservices.html>`__,
 like implemented by `ArcGIS Server REST
 API <http://help.arcgis.com/en/arcgisserver/10.0/apis/rest/index.html>`__.
-Starting with OGR 2.0, the driver can scroll through such result sets
+The driver can scroll through such result sets
 that are spread over multiple pages (for ArcGIS servers >= 10.3). This
 is automatically enabled if URL does not contain an explicit
 *resultOffset* parameter. If it contains this parameter and scrolling is
@@ -53,8 +53,6 @@ ESRIJSON: to avoid any ambiguity with other drivers.
 
 Open options
 ------------
-
-(GDAL >= 2.0)
 
 -  **FEATURE_SERVER_PAGING** = YES/NO: Whether to automatically scroll
    through results with a ArcGIS Feature Service endpoint.

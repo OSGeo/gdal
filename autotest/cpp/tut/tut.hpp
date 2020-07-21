@@ -198,7 +198,7 @@ class test_group : public group_base, public test_group_posix
          * Specially treats exceptions in test object destructor;
          * if test itself failed, exceptions in destructor
          * are ignored; if test was successful and destructor failed,
-         * warning exception throwed.
+         * warning exception thrown.
          */
         void release()
         {

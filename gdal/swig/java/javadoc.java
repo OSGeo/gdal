@@ -193,7 +193,7 @@ public class gdal:public static int SetErrorHandler()
  * CE_Fatal meaning that a fatal error has occurred, and that Error()
  * should not return.
  * <p>
- * The default behaviour of Error() is to report errors to stderr,
+ * The default behavior of Error() is to report errors to stderr,
  * and to abort() after reporting a gdalconst.CE_Fatal error.  It is expected that
  * some applications will want to suppress error reporting, and will want to
  * install a C++ exception, or longjmp() approach to no local fatal error
@@ -900,7 +900,7 @@ public class gdal:public static int FillNodata(Band targetBand, Band maskBand, d
  * Removes small raster polygons.
  * <p>
  * The function removes raster polygons smaller than a provided
- * threshold size (in pixels) and replaces replaces them with the pixel value
+ * threshold size (in pixels) and replaces them with the pixel value
  * of the largest neighbour polygon.
  * <p>
  * Polygon are determined (per GDALRasterPolygonEnumerator) as regions of
@@ -4972,8 +4972,8 @@ public class org.gdal.gdal.Driver:public Dataset CreateCopy(String name, Dataset
  * <p>
  * The driver will attempt to delete the named dataset in a driver specific
  * fashion.  Full featured drivers will delete all associated files,
- * database objects, or whatever is appropriate.  The default behaviour when
- * no driver specific behaviour is provided is to attempt to delete the
+ * database objects, or whatever is appropriate.  The default behavior when
+ * no driver specific behavior is provided is to attempt to delete the
  * passed name as a single file.
  * <p>
  * It is unwise to have open dataset handles on this dataset when it is
@@ -9661,7 +9661,7 @@ public class ogr
 /**
  * Use exceptions instead of error return codes.
  * <p>
- * This is the default behaviour : methods that in C/C++ return an OGRErr return code
+ * This is the default behavior : methods that in C/C++ return an OGRErr return code
  * would throw a RuntimeException() in case the code it is different
  * from ogr.OGRERR_NONE. By calling this method, you can get
  * back to that original state if DontUseExceptions() was called in-between.
@@ -11923,7 +11923,7 @@ public class osr
 /**
  * Use exceptions instead of error return codes.
  * <p>
- * This is the default behaviour : methods that in C/C++ return an OGRErr return code
+ * This is the default behavior : methods that in C/C++ return an OGRErr return code
  * would throw a RuntimeException() in case the code it is different
  * from ogr.OGRERR_NONE. By calling this method, you can get
  * back to that original state if DontUseExceptions() was called in-between.

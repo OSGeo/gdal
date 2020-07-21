@@ -484,7 +484,7 @@ int GDALOvLevelAdjust2( int nOvLevel, int nXSize, int nYSize )
 {
     // Select the larger dimension to have increased accuracy, but
     // with a slight preference to x even if (a bit) smaller than y
-    // in an attempt to behave closer as previous behaviour.
+    // in an attempt to behave closer as previous behavior.
     if( nXSize >= nYSize / 2 && !(nXSize < nYSize && nXSize < nOvLevel) )
     {
         const int nOXSize = (nXSize + nOvLevel - 1) / nOvLevel;
@@ -506,7 +506,7 @@ int GDALComputeOvFactor( int nOvrXSize, int nRasterXSize,
 {
     // Select the larger dimension to have increased accuracy, but
     // with a slight preference to x even if (a bit) smaller than y
-    // in an attempt to behave closer as previous behaviour.
+    // in an attempt to behave closer as previous behavior.
     if( nRasterXSize >= nRasterYSize / 2 )
     {
         return static_cast<int>(0.5 + nRasterXSize / static_cast<double>(nOvrXSize));
@@ -797,6 +797,9 @@ GDALDefaultOverviews::BuildOverviews(
                                      pszResampling,
                                      GDALScaledProgress, pScaledProgress );
         }
+
+        // HFAAuxBuildOverviews doesn't actually generate overviews
+        dfAreaNewOverviews = 0.0;
         for( int j = 0; j < nOverviews; j++ )
         {
             if( abValidLevel[j] )

@@ -426,6 +426,7 @@ void GMLReader::CleanupParser()
     nFeatureTabLength = 0;
     nFeatureTabAlloc = 0;
     ppoFeatureTab = nullptr;
+    m_osErrorMessage.clear();
 
 #endif
 
@@ -506,15 +507,19 @@ GMLFeature *GMLReader::NextFeatureExpat()
         m_bReadStarted = true;
     }
 
-    if (fpGML == nullptr || m_bStopParsing)
-        return nullptr;
-
     if (nFeatureTabIndex < nFeatureTabLength)
     {
         return ppoFeatureTab[nFeatureTabIndex++];
     }
 
-    if (VSIFEofL(fpGML))
+    if( !m_osErrorMessage.empty() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", m_osErrorMessage.c_str());
+        m_osErrorMessage.clear();
+        return nullptr;
+    }
+
+    if (fpGML == nullptr || m_bStopParsing || VSIFEofL(fpGML))
         return nullptr;
 
     nFeatureTabLength = 0;
@@ -540,7 +545,8 @@ GMLFeature *GMLReader::NextFeatureExpat()
 
         if (XML_Parse(oParser, pabyBuf, nLen, nDone) == XML_STATUS_ERROR)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
+            // Defer emission of the error message until we have to return nullptr
+            m_osErrorMessage.Printf(
                      "XML parsing of GML file failed : %s "
                      "at line %d, column %d",
                      XML_ErrorString(XML_GetErrorCode(oParser)),
@@ -553,7 +559,16 @@ GMLFeature *GMLReader::NextFeatureExpat()
                 HasStoppedParsing();
     } while (!nDone && !m_bStopParsing && nFeatureTabLength == 0);
 
-    return nFeatureTabLength ? ppoFeatureTab[nFeatureTabIndex++] : nullptr;
+    if( nFeatureTabLength )
+        return ppoFeatureTab[nFeatureTabIndex++];
+
+    if( !m_osErrorMessage.empty() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", m_osErrorMessage.c_str());
+        m_osErrorMessage.clear();
+    }
+
+    return nullptr;
 }
 #endif
 

@@ -1,0 +1,18 @@
+
+OBJ	=	ogrlvbagdriver.obj ogrlvbagdatasource.obj ogrlvbaglayer.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!IFDEF EXPAT_DIR
+EXTRAFLAGS =	-I.. -I..\.. -I..\generic $(EXPAT_INCLUDE) $(GEOS_CFLAGS) -DHAVE_EXPAT=1 
+!ELSE
+EXTRAFLAGS =	-I.. -I..\.. -I..\generic $(GEOS_CFLAGS)
+!ENDIF
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+

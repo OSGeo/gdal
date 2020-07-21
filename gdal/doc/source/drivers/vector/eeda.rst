@@ -91,27 +91,55 @@ above mentioned schema guessing will not done.
 
 The following attributes will always be present:
 
-=================== ========= ====================================================================================================================== ==================================================
-Field name          Type      Meaning                                                                                                                Server-side filter compatible
-=================== ========= ====================================================================================================================== ==================================================
-name                String    Image name (e.g. projects/earthengine-public/assets/COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG)              No
-id                  String    Image ID; equivalent to name without the "projects/\*/assets/" prefix (e.g. users/USER/ASSET)                          No
-path                String    (Deprecated) Image path; equivalent to id                                                                              No
-gdal_dataset        String    GDAL dataset name (e.g. EEDAI:projects/earthengine-public/assets/COPERNICUS/S2/20170430T190351_20170430T190351_T10SEG) No
-                              that can be opened with the :ref:`Google Earth Engine Data API Image driver <raster.eedai>`                           
-startTime           DateTime  Acquisition start date                                                                                                 **Yes (restricted to >= comparison on top level)**
-endTime             DateTime  Acquisition end date                                                                                                   **Yes (restricted to <= comparison on top level)**
-updateTime          DateTime  Update date                                                                                                            No
-sizeBytes           Integer64 File size in bytes                                                                                                     No
-band_count          Integer   Number of bands                                                                                                        No
-band_max_width      Integer   Maximum width among bands                                                                                              No
-band_max_height     Integer   Maximum height among bands                                                                                             No
-band_min_pixel_size Real      Minimum pixel size among bands                                                                                         No
-band_upper_left_x   Real      X origin (only set if equal among all bands)                                                                           No
-band_upper_left_y   Real      Y origin (only set if equal among all bands)                                                                           No
-band_crs            String    CRS as EPSG:XXXX or WKT (only set if equal among all bands)                                                            No
-other_properties    String    Serialized JSon dictionary with key/value pairs where key is not a standalone field.                                   No
-=================== ========= ====================================================================================================================== ==================================================
+.. table::
+    :widths: 15, 10, 30, 20
+
+    +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
+    | Field name          | Type      | Meaning                                                      | Server-side filter compatible |
+    +=====================+===========+==============================================================+===============================+
+    | name                | String    | Image name (e.g. projects/earthengine-public/                | No                            |
+    |                     |           | assets/COPERNICUS/S2/20170430T190351\_                       |                               |
+    |                     |           | 20170430T190351_T10SEG)                                      |                               |
+    +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
+    | id                  | String    | Image ID; equivalent to name without the                     | No                            |
+    |                     |           | "projects/\*/assets/" prefix (e.g. users/USER/ASSET)         |                               |
+    +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
+    | path                | String    | (Deprecated) Image path; equivalent to id                    | No                            |
+    +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
+    | gdal_dataset        | String    | GDAL dataset name (e.g.                                      | No                            |
+    |                     |           | EEDAI:projects/earthengine-public/                           |                               |
+    |                     |           | assets/COPERNICUS/S2/                                        |                               |
+    |                     |           | 20170430T190351_20170430T190351\_                            |                               |
+    |                     |           | T10SEG) that can be opened with the :ref:`raster.eedai`      |                               |
+    |                     |           | driver                                                       |                               |
+    +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
+    | startTime           | DateTime  | Acquisition start date                                       | **Yes** (restricted to >=     |
+    |                     |           |                                                              | comparison on top level)      |
+    +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
+    | endTime             | DateTime  | Acquisition end date                                         | **Yes** (restricted to <=     |
+    |                     |           |                                                              | comparison on top level)      |
+    +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
+    | updateTime          | DateTime  | Update date                                                  | No                            |
+    +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
+    | sizeBytes           | Integer64 | File size in bytes                                           | No                            |
+    +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
+    | band_count          | Integer   | Number of bands                                              | No                            |
+    +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
+    | band_max_width      | Integer   | Maximum width among bands                                    | No                            |
+    +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
+    | band_max_height     | Integer   | Maximum height among bands                                   | No                            |
+    +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
+    | band_min_pixel_size | Real      | Minimum pixel size among bands                               | No                            |
+    +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
+    | band_upper_left_x   | Real      | X origin (only set if equal among all bands)                 | No                            |
+    +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
+    | band_upper_left_y   | Real      | Y origin (only set if equal among all bands)                 | No                            |
+    +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
+    | band_crs            | String    | CRS as EPSG:XXXX or WKT (only set if equal among all bands)  | No                            |
+    +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
+    | other_properties    | String    | Serialized JSon dictionary with key/value pairs where key is | No                            |
+    |                     |           | not a standalone field                                       |                               |
+    +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
 
 "Server-side filter compatible" means that when this field is included
 in an attribute filter, it is forwarded to the server (otherwise only

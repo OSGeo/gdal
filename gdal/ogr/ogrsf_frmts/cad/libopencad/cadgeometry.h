@@ -189,7 +189,7 @@ public:
     virtual void print() const override;
     virtual void transform( const Matrix& matrix ) override;
 protected:
-    std::vector<CADVector> vertexes;
+    std::vector<CADVector> vertices;
 };
 
 /**
@@ -553,7 +553,7 @@ public:
     virtual void print() const override;
     virtual void transform( const Matrix& matrix ) override;
 protected:
-    std::vector<CADVector> vertexes;
+    std::vector<CADVector> vertices;
 };
 
 /**
@@ -592,7 +592,7 @@ protected:
     //char dJust;
     bool              opened; // 1 == open, 0 == close
     // TODO: do we need more properties here?
-    std::vector<CADVector> avertVertexes;
+    std::vector<CADVector> avertVertices;
 };
 
 /**

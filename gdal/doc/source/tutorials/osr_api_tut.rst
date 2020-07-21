@@ -1,7 +1,7 @@
 .. _osr_api_tut:
 
 ================================================================================
-OGR Coordinate Reference Systems and Coodinate Transformation tutorial
+OGR Coordinate Reference Systems and Coordinate Transformation tutorial
 ================================================================================
 
 .. highlight:: cpp
@@ -69,12 +69,12 @@ to the user.  However, the datum name "World Geodetic System 1984" is used as a 
 the datum, and should be set to a known value from the EPSG registry, so that
 appropriate datum transformations can be done during coordinate operations.
 The list of valid geodetic datum can be seen in the 3rd column of the
-`geodetic_datum.sq <https://github.com/OSGeo/proj.4/blob/master/data/sql/geodetic_datum.sql>`_
+`geodetic_datum.sql <https://github.com/OSGeo/PROJ/blob/master/data/sql/geodetic_datum.sql>`_
 file.
 
 .. note::
 
-    In WKT 1, space characters in datum nams are normally replaced by underscore.
+    In WKT 1, space characters in datum names are normally replaced by underscore.
     And WGS_1984 is used as an alias of "World Geodetic System 1984"
 
 The OGRSpatialReference has built in support for a few well known CRS,
@@ -213,7 +213,7 @@ The argument passed to :cpp:func:`OGRSpatialReference::SetAxisMappingStrategy` i
 data axis to CRS axis mapping strategy.
 
 - :c:macro:`OAMS_TRADITIONAL_GIS_ORDER` means that for geographic CRS with lat/long order, the data will still be long/lat ordered. Similarly for a projected CRS with northing/easting order, the data will still be easting/northing ordered.
-- :c:macro:`OAMS_AUTHORITY_COMPLIANT` means that the data axis will be identical to the CRS axis. This is the fdefault value when instanciating OGRSpatialReference.
+- :c:macro:`OAMS_AUTHORITY_COMPLIANT` means that the data axis will be identical to the CRS axis. This is the fdefault value when instantiating OGRSpatialReference.
 - :c:macro:`OAMS_CUSTOM` means that the data axis are customly defined with SetDataAxisToSRSAxisMapping().
 
 What has been discussed in this section for the particular case of Geographic
@@ -390,7 +390,7 @@ The following example shows how to conveniently create a long/lat coordinate
 system using the same geographic CRS as a projected coordinate
 system, and using that to transform between projected coordinates and
 long/lat. The returned coordinates will be in longitude, latitude order due to
-the call to SetDataAxisToSRSAxisMapping(OAMS_TRADITIONAL_GIS_ORDER)
+the call to SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER)
 
 .. code-block::
 
@@ -402,7 +402,7 @@ the call to SetDataAxisToSRSAxisMapping(OAMS_TRADITIONAL_GIS_ORDER)
     oUTM.SetUTM( 17 );
 
     poLongLat = oUTM.CloneGeogCS();
-    poLongLat->SetDataAxisToSRSAxisMapping(OAMS_TRADITIONAL_GIS_ORDER);
+    poLongLat->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     poTransform = OGRCreateCoordinateTransformation( &oUTM, poLongLat );
     if( poTransform == NULL )
@@ -423,7 +423,7 @@ coordinate operations transforming from the source CRS to the target CRS. Those
 candidate coordinate operations have each their own area of use. When Transform()
 is invoked, it will determine the most appropriate coordinate operation based on
 the coordinates of the point to transform and those area of use. For example,
-there are several dozains of possible coordinate operations for the NAD27 to WGS84
+there are several dozens of possible coordinate operations for the NAD27 to WGS84
 transformation.
 
 If a bounding box of the area of interest into which coordinates to transform
@@ -603,7 +603,7 @@ the :ref:`wktproblems` page.
 The class was mostly containing a in-memory tree-like representation of WKT 1 strings.
 The class used to directly implement import and export to OGC WKT 1, WKT-ESRI and PROJ.4
 formats. Reprojection services were only available if GDAL had been build against
-the PROJ.4 library.
+the PROJ library.
 
 Starting with GDAL 3.0, the `PROJ <https://proj4.org>`_ >= 6.0 library
 has become a required dependency of GDAL.
@@ -614,6 +614,6 @@ Consequently the OGRSpatialReference class has been modified to act mostly as
 a wrapper on top of PROJ PJ* CRS objects, and tries to abstract away from
 the OGC WKT 1 representation as much as possible. However, for backward compatibility,
 some methods still expect arguments or return values that are specific of OGC WKT 1.
-The design of th OGRSpatialReference class is also still monolothic. Users wanting
+The design of th OGRSpatialReference class is also still monolithic. Users wanting
 direct and fine grained access to CRS representations might want to directly use
 the PROJ 6 C or C++ API.

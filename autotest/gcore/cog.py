@@ -33,6 +33,7 @@ import pytest
 import sys
 
 from osgeo import gdal
+from osgeo import osr
 
 import gdaltest
 
@@ -50,6 +51,32 @@ def _check_cog(filename):
         assert not errors, 'validate_cloud_optimized_geotiff failed'
     except OSError:
         pytest.fail('validate_cloud_optimized_geotiff failed')
+
+
+###############################################################################
+
+def check_libtiff_internal_or_at_least(expected_maj, expected_min, expected_micro):
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['LIBTIFF'] == 'INTERNAL':
+        return True
+    if md['LIBTIFF'].startswith('LIBTIFF, Version '):
+        version = md['LIBTIFF'][len('LIBTIFF, Version '):]
+        version = version[0:version.find('\n')]
+        got_maj, got_min, got_micro = version.split('.')
+        got_maj = int(got_maj)
+        got_min = int(got_min)
+        got_micro = int(got_micro)
+        if got_maj > expected_maj:
+            return True
+        if got_maj < expected_maj:
+            return False
+        if got_min > expected_min:
+            return True
+        if got_min < expected_min:
+            return False
+        return got_micro >= expected_micro
+    return False
 
 ###############################################################################
 # Basic test
@@ -371,8 +398,41 @@ def test_cog_byte_to_web_mercator():
     ds = None
     _check_cog(filename)
 
+    # Use our generated COG as the input of the same COG generation: reprojection
+    # should be skipped
+    filename2 = directory + '/cog2.tif'
+    src_ds = gdal.Open(filename)
+
+    class my_error_handler(object):
+        def __init__(self):
+            self.debug_msg_list = []
+            self.other_msg_list = []
+
+        def handler(self, eErrClass, err_no, msg):
+            if eErrClass == gdal.CE_Debug:
+                self.debug_msg_list.append(msg)
+            else:
+                self.other_msg_list.append(msg)
+
+    handler = my_error_handler();
+    try:
+        gdal.PushErrorHandler(handler.handler)
+        gdal.SetCurrentErrorHandlerCatchDebug(True)
+        with gdaltest.config_option('CPL_DEBUG', 'COG'):
+            ds = gdal.GetDriverByName('COG').CreateCopy(filename2, src_ds,
+                options = ['TILING_SCHEME=GoogleMapsCompatible', 'ALIGNED_LEVELS=3'])
+    finally:
+        gdal.PopErrorHandler()
+
+    assert ds
+    assert 'COG: Skipping reprojection step: source dataset matches reprojection specifications' in handler.debug_msg_list
+    assert handler.other_msg_list == []
     src_ds = None
+    ds = None
+
+    # Cleanup
     gdal.GetDriverByName('GTiff').Delete(filename)
+    gdal.GetDriverByName('GTiff').Delete(filename2)
     gdal.Unlink(directory)
 
 
@@ -586,3 +646,338 @@ def test_cog_invalidation_by_metadata_change():
 
     with gdaltest.error_handler():
         gdal.GetDriverByName('GTiff').Delete(filename)
+
+
+###############################################################################
+# Test a tiling scheme with a CRS with northing/easting axis order
+# and non power-of-two ratios of scales.
+
+
+def test_cog_northing_easting_and_non_power_of_two_ratios():
+
+    filename = '/vsimem/cog.tif'
+
+    x0_NZTM2000 = -1000000
+    y0_NZTM2000 = 10000000
+    blocksize = 256
+    scale_denom_zoom_level_14 = 1000
+    scale_denom_zoom_level_13 = 2500
+    scale_denom_zoom_level_12 = 5000
+
+    ds = gdal.Translate(filename, 'data/byte.tif',
+        options='-of COG -a_srs EPSG:2193 -a_ullr 1000001 5000001 1000006.6 4999995.4 -co TILING_SCHEME=NZTM2000 -co ALIGNED_LEVELS=2')
+    assert ds.RasterXSize == 1280
+    assert ds.RasterYSize == 1280
+    b = ds.GetRasterBand(1)
+    assert [(b.GetOverview(i).XSize, b.GetOverview(i).YSize) for i in range(b.GetOverviewCount())] == [(512, 512), (256, 256)]
+
+    gt = ds.GetGeoTransform()
+    res_zoom_level_14 = scale_denom_zoom_level_14 * 0.28e-3 # According to OGC Tile Matrix Set formula
+    assert gt == pytest.approx((999872, res_zoom_level_14, 0, 5000320, 0, -res_zoom_level_14), abs=1e-8)
+
+    # Check that gt origin matches the corner of a tile at zoom 14
+    res = gt[1]
+    tile_x = (gt[0] - x0_NZTM2000) / (blocksize * res)
+    assert tile_x == pytest.approx(round(tile_x))
+    tile_y = (y0_NZTM2000 - gt[3]) / (blocksize * res)
+    assert tile_y == pytest.approx(round(tile_y))
+
+    # Check that overview=0 corresponds to the resolution of zoom level=13 / OGC ScaleDenom = 2500
+    ovr0_xsize = b.GetOverview(0).XSize
+    assert float(ovr0_xsize) / ds.RasterXSize == float(scale_denom_zoom_level_14) / scale_denom_zoom_level_13
+    # Check that gt origin matches the corner of a tile at zoom 13
+    ovr0_res = res * scale_denom_zoom_level_13 / scale_denom_zoom_level_14
+    tile_x = (gt[0] - x0_NZTM2000) / (blocksize * ovr0_res)
+    assert tile_x == pytest.approx(round(tile_x))
+    tile_y = (y0_NZTM2000 - gt[3]) / (blocksize * ovr0_res)
+    assert tile_y == pytest.approx(round(tile_y))
+
+    # Check that overview=1 corresponds to the resolution of zoom level=12 / OGC ScaleDenom = 5000
+    ovr1_xsize = b.GetOverview(1).XSize
+    assert float(ovr1_xsize) / ds.RasterXSize == float(scale_denom_zoom_level_14) / scale_denom_zoom_level_12
+    # Check that gt origin matches the corner of a tile at zoom 12
+    ovr1_res = res * scale_denom_zoom_level_12 / scale_denom_zoom_level_14
+    tile_x = (gt[0] - x0_NZTM2000) / (blocksize * ovr1_res)
+    assert tile_x == pytest.approx(round(tile_x))
+    tile_y = (y0_NZTM2000 - gt[3]) / (blocksize * ovr1_res)
+    assert tile_y == pytest.approx(round(tile_y))
+
+    assert ds.GetMetadata("TILING_SCHEME") == {
+        "NAME": "NZTM2000",
+        "ZOOM_LEVEL": "14",
+        "ALIGNED_LEVELS": "2"
+    }
+
+    ds = None
+    gdal.GetDriverByName('GTiff').Delete(filename)
+
+
+###############################################################################
+# Test SPARSE_OK=YES
+
+
+def test_cog_sparse():
+
+    filename = '/vsimem/cog.tif'
+    src_ds = gdal.GetDriverByName('MEM').Create('', 512, 512)
+    src_ds.GetRasterBand(1).Fill(255)
+    src_ds.WriteRaster(0, 0, 256, 256, '\x00' * 256 * 256)
+    src_ds.WriteRaster(256, 256, 128, 128, '\x00' * 128 * 128)
+    src_ds.BuildOverviews('NEAREST', [2])
+    gdal.GetDriverByName('COG').CreateCopy(filename, src_ds, options = ['BLOCKSIZE=128', 'SPARSE_OK=YES', 'COMPRESS=LZW'])
+    _check_cog(filename)
+    with gdaltest.config_option('GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE', 'YES'):
+        ds = gdal.Open(filename)
+        assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_1_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_2_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('BLOCK_OFFSET_1_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512)
+        assert ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256) == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256)
+
+        if check_libtiff_internal_or_at_least(4, 0, 11):
+            # This file is the same as the one generated above, except that we have,
+            # with an hex editor, zeroify all entries of TileByteCounts except the
+            # last tile of the main IFD, and for a tile when the next tile is sparse
+            ds = gdal.Open('data/cog_sparse_strile_arrays_zeroified_when_possible.tif')
+            assert ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512)
+
+    ds = None
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test SPARSE_OK=YES with mask
+
+
+def test_cog_sparse_mask():
+
+    filename = '/vsimem/cog.tif'
+    src_ds = gdal.GetDriverByName('MEM').Create('', 512, 512, 4)
+    for i in range(4):
+        src_ds.GetRasterBand(i+1).SetColorInterpretation(gdal.GCI_RedBand + i)
+        src_ds.GetRasterBand(i+1).Fill(255)
+        src_ds.GetRasterBand(i+1).WriteRaster(0, 0, 256, 256, '\x00' * 256 * 256)
+        src_ds.GetRasterBand(i+1).WriteRaster(256, 256, 128, 128, '\x00' * 128 * 128)
+    src_ds.BuildOverviews('NEAREST', [2])
+    gdal.GetDriverByName('COG').CreateCopy(filename, src_ds, options = ['BLOCKSIZE=128', 'SPARSE_OK=YES', 'COMPRESS=JPEG', 'RESAMPLING=NEAREST'])
+    _check_cog(filename)
+    with gdaltest.config_option('GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE', 'YES'):
+        ds = gdal.Open(filename)
+        assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_1_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_2_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_1_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_2_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('BLOCK_OFFSET_1_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_1_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512)
+        assert ds.GetRasterBand(1).GetMaskBand().ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(4).ReadRaster(0, 0, 512, 512)
+        assert ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256) == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256)
+        assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().ReadRaster(0, 0, 256, 256) == src_ds.GetRasterBand(4).GetOverview(0).ReadRaster(0, 0, 256, 256)
+
+    ds = None
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test SPARSE_OK=YES with imagery at 0 and mask at 255
+
+
+def test_cog_sparse_imagery_0_mask_255():
+
+    filename = '/vsimem/cog.tif'
+    src_ds = gdal.GetDriverByName('MEM').Create('', 512, 512, 4)
+    for i in range(4):
+        src_ds.GetRasterBand(i+1).SetColorInterpretation(gdal.GCI_RedBand + i)
+        src_ds.GetRasterBand(i+1).Fill(0 if i < 3 else 255)
+    src_ds.BuildOverviews('NEAREST', [2])
+    gdal.GetDriverByName('COG').CreateCopy(filename, src_ds, options = ['BLOCKSIZE=128', 'SPARSE_OK=YES', 'COMPRESS=JPEG'])
+    _check_cog(filename)
+    with gdaltest.config_option('GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE', 'YES'):
+        ds = gdal.Open(filename)
+        assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512)
+        assert ds.GetRasterBand(1).GetMaskBand().ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(4).ReadRaster(0, 0, 512, 512)
+        assert ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256) == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256)
+        assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().ReadRaster(0, 0, 256, 256) == src_ds.GetRasterBand(4).GetOverview(0).ReadRaster(0, 0, 256, 256)
+
+    ds = None
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test SPARSE_OK=YES with imagery at 0 or 255 and mask at 255
+
+
+def test_cog_sparse_imagery_0_or_255_mask_255():
+
+    filename = '/vsimem/cog.tif'
+    src_ds = gdal.GetDriverByName('MEM').Create('', 512, 512, 4)
+    for i in range(4):
+        src_ds.GetRasterBand(i+1).SetColorInterpretation(gdal.GCI_RedBand + i)
+    for i in range(3):
+        src_ds.GetRasterBand(i+1).Fill(255)
+        src_ds.GetRasterBand(i+1).WriteRaster(0, 0, 256, 256, '\x00' * 256 * 256)
+        src_ds.GetRasterBand(i+1).WriteRaster(256, 256, 128, 128, '\x00' * 128 * 128)
+    src_ds.GetRasterBand(4).Fill(255)
+    src_ds.BuildOverviews('NEAREST', [2])
+    gdal.GetDriverByName('COG').CreateCopy(filename, src_ds, options = ['BLOCKSIZE=128', 'SPARSE_OK=YES', 'COMPRESS=JPEG', 'RESAMPLING=NEAREST'])
+    _check_cog(filename)
+    with gdaltest.config_option('GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE', 'YES'):
+        ds = gdal.Open(filename)
+        assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_2_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is not None
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512)
+        assert ds.GetRasterBand(1).GetMaskBand().ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(4).ReadRaster(0, 0, 512, 512)
+        assert ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256) == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256)
+        assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().ReadRaster(0, 0, 256, 256) == src_ds.GetRasterBand(4).GetOverview(0).ReadRaster(0, 0, 256, 256)
+
+    ds = None
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test SPARSE_OK=YES with imagery and mask at 0
+
+
+def test_cog_sparse_imagery_mask_0():
+
+    filename = '/vsimem/cog.tif'
+    src_ds = gdal.GetDriverByName('MEM').Create('', 512, 512, 4)
+    for i in range(4):
+        src_ds.GetRasterBand(i+1).SetColorInterpretation(gdal.GCI_RedBand + i)
+        src_ds.GetRasterBand(i+1).Fill(0)
+    src_ds.BuildOverviews('NEAREST', [2])
+    gdal.GetDriverByName('COG').CreateCopy(filename, src_ds, options = ['BLOCKSIZE=128', 'SPARSE_OK=YES', 'COMPRESS=JPEG'])
+    _check_cog(filename)
+    with gdaltest.config_option('GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE', 'YES'):
+        ds = gdal.Open(filename)
+        assert ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is None
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512)
+        assert ds.GetRasterBand(1).GetMaskBand().ReadRaster(0, 0, 512, 512) == src_ds.GetRasterBand(4).ReadRaster(0, 0, 512, 512)
+        assert ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256) == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 0, 256, 256)
+        assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().ReadRaster(0, 0, 256, 256) == src_ds.GetRasterBand(4).GetOverview(0).ReadRaster(0, 0, 256, 256)
+
+    ds = None
+    gdal.Unlink(filename)
+
+
+
+###############################################################################
+# Test ZOOM_LEVEL_STRATEGY option
+
+@pytest.mark.parametrize('zoom_level_strategy,expected_gt',
+    [('AUTO', (-13110479.09147343, 76.43702828517416, 0.0, 4030983.1236470547, 0.0, -76.43702828517416)),
+     ('LOWER', (-13110479.09147343, 76.43702828517416, 0.0, 4030983.1236470547, 0.0, -76.43702828517416)),
+     ('UPPER', (-13100695.151852928, 38.21851414258708, 0.0, 4021199.1840265524, 0.0, -38.21851414258708))
+    ])
+def test_cog_zoom_level_strategy(zoom_level_strategy,expected_gt):
+
+    filename = '/vsimem/test_cog_zoom_level_strategy.tif'
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+        options = ['TILING_SCHEME=GoogleMapsCompatible',
+                   'ZOOM_LEVEL_STRATEGY=' + zoom_level_strategy])
+    gt = ds.GetGeoTransform()
+    assert gt == pytest.approx(expected_gt, rel=1e-10)
+
+    # Test that the zoom level strategy applied on input data already on a
+    # zoom level doesn't lead to selecting another zoom level
+    filename2 = '/vsimem/test_cog_zoom_level_strategy_2.tif'
+    src_ds = gdal.Open('data/byte.tif')
+    ds2 = gdal.GetDriverByName('COG').CreateCopy(filename2, ds,
+        options = ['TILING_SCHEME=GoogleMapsCompatible',
+                    'ZOOM_LEVEL_STRATEGY=' + zoom_level_strategy])
+    gt = ds2.GetGeoTransform()
+    assert gt == pytest.approx(expected_gt, rel=1e-10)
+    ds2 = None
+    gdal.Unlink(filename2)
+
+    ds = None
+    gdal.Unlink(filename)
+
+
+
+###############################################################################
+
+def test_cog_resampling_options():
+
+    filename = '/vsimem/test_cog_resampling_options.tif'
+    src_ds = gdal.Open('data/byte.tif')
+
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+        options = ['TILING_SCHEME=GoogleMapsCompatible', 'WARP_RESAMPLING=NEAREST'])
+    cs1 = ds.GetRasterBand(1).Checksum()
+
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+        options = ['TILING_SCHEME=GoogleMapsCompatible', 'WARP_RESAMPLING=CUBIC'])
+    cs2 = ds.GetRasterBand(1).Checksum()
+
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+        options = ['TILING_SCHEME=GoogleMapsCompatible', 'RESAMPLING=NEAREST', 'WARP_RESAMPLING=CUBIC'])
+    cs3 = ds.GetRasterBand(1).Checksum()
+
+    assert cs1 != cs2
+    assert cs2 == cs3
+
+    src_ds = gdal.Translate('', 'data/byte.tif', options='-of MEM -outsize 129 0')
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+        options = ['BLOCKSIZE=128', 'OVERVIEW_RESAMPLING=NEAREST'])
+    cs1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+        options = ['BLOCKSIZE=128','OVERVIEW_RESAMPLING=BILINEAR'])
+    cs2 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+        options = ['BLOCKSIZE=128','RESAMPLING=NEAREST', 'OVERVIEW_RESAMPLING=BILINEAR'])
+    cs3 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+
+    assert cs1 != cs2
+    assert cs2 == cs3
+
+    ds = None
+    gdal.Unlink(filename)
+
+
+###############################################################################
+
+def test_cog_invalid_warp_resampling():
+
+    filename = '/vsimem/test_cog_invalid_warp_resampling.tif'
+    src_ds = gdal.Open('data/byte.tif')
+
+    with gdaltest.error_handler():
+        assert gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
+            options = ['TILING_SCHEME=GoogleMapsCompatible', 'RESAMPLING=INVALID']) is None
+    gdal.Unlink(filename)
+
+
+###############################################################################
+
+def test_cog_overview_size():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 20480 // 4, 40960 // 4)
+    src_ds.SetGeoTransform([1723840, 7 * 4, 0, 5555840, 0, -7 * 4])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(2193)
+    src_ds.SetProjection(srs.ExportToWkt())
+    filename = '/vsimem/test_cog_overview_size.tif'
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds, options = ['TILING_SCHEME=NZTM2000', 'ALIGNED_LEVELS=4', 'OVERVIEW_RESAMPLING=NONE'])
+    assert (ds.RasterXSize, ds.RasterYSize) == (20480 // 4, 40960 // 4)
+    ovr_size = [ (ds.GetRasterBand(1).GetOverview(i).XSize, ds.GetRasterBand(1).GetOverview(i).YSize) for i in range(ds.GetRasterBand(1).GetOverviewCount()) ]
+    assert ovr_size == [(2048, 4096), (1024, 2048), (512, 1024), (256, 512), (128, 256)]

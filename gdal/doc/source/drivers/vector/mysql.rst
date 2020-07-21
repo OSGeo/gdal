@@ -118,7 +118,7 @@ Layer Creation Options
 -  **FID**: This option specifies the name of the FID column. The
    default value is "OGR_FID". Note: option was called MYSQL_FID in
    releases before GDAL 2
--  **FID64**: (GDAL >= 2.0) This may be "TRUE" to create a FID column
+-  **FID64**: This may be "TRUE" to create a FID column
    that can support 64 bit identifiers. The default value is "FALSE".
 -  **SPATIAL_INDEX**: May be "NO" to stop automatic creation of a
    spatial index on the geometry column, allowing NULL geometries and

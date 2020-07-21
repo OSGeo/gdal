@@ -8,8 +8,8 @@ MapInfo TAB and MIF/MID
 .. built_in_by_default::
 
 MapInfo datasets in native (TAB) format and in interchange (MIF/MID)
-format are supported for reading and writing. Starting with GDAL 2.0,
-update of existing TAB files is supported (append of new features,
+format are supported for reading and writing.
+Update of existing TAB files is supported (append of new features,
 modifications and deletions of existing features,
 adding/renaming/deleting fields, ...). Update of existing MIF/MID files
 is not supported.
@@ -55,8 +55,7 @@ the following default bounds when a new layer is created:
    -15000000 + false_northing) (30000000 + false_easting, 15000000 +
    false_northing)
 
-Starting with GDAL 2.0, it is possible to override those bounds through
-two mechanisms.
+It is possible to override those bounds through two mechanisms.
 
 -  specify a user-defined file that contain projection definitions with
    bounds. The name of this file must be specified with the
@@ -111,11 +110,9 @@ Dataset Creation Options
 -  **SPATIAL_INDEX_MODE=QUICK/OPTIMIZED**: The default is QUICK force
    "quick spatial index mode". In this mode writing files can be about 5
    times faster, but spatial queries can be up to 30 times slower. This
-   can be set to OPTIMIZED in GDAL 2.0 to generate optimized spatial
-   index.
--  **BLOCKSIZE=[512,1024,...,32256]** (multiples of 512): (GDAL >=
-   2.0.2) Block size for .map files. Defaults to 512. GDAL 2.0.1 and
-   earlier versions only supported BLOCKSIZE=512 in reading and writing.
+   can be set to OPTIMIZED to generate optimized spatial index.
+-  **BLOCKSIZE=[512,1024,...,32256]** (multiples of 512):
+   Block size for .map files. Defaults to 512.
    MapInfo 15.2 and above creates .tab files with a blocksize of 16384
    bytes. Any MapInfo version should be able to handle block sizes from
    512 to 32256.
@@ -123,7 +120,7 @@ Dataset Creation Options
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
 
--  **BOUNDS=xmin,ymin,xmax,ymax**: (GDAL >=2.0) Define custom layer
+-  **BOUNDS=xmin,ymin,xmax,ymax**: Define custom layer
    bounds to increase the accuracy of the coordinates. Note: the
    geometry of written features must be within the defined box.
 -  **ENCODING=**\ *value*: (GDAL >=2.3) Define the encoding for field
@@ -139,7 +136,7 @@ Configuration options
 ~~~~~~~~~~~~~~~~~~~~~
 
 -  :decl_configoption:`MITAB_SET_TOWGS84_ON_KNOWN_DATUM` =YES/NO:
-   (GDAL >= 3.0.3). The default behaviour, starting with GDAL 3.0.3, is NO.
+   (GDAL >= 3.0.3). The default behavior, starting with GDAL 3.0.3, is NO.
    That is, the TOWGS84 parameters read from the .tab header will *not* be set
    on the Datum object of the CRS, when the datum can be inferred.
 

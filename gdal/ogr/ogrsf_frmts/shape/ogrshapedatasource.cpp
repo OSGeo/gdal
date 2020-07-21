@@ -1418,27 +1418,22 @@ char** OGRShapeDataSource::GetFileList()
 }
 
 /************************************************************************/
-//                          RefeshLockFile()                            */
+//                          RefreshLockFile()                            */
 /************************************************************************/
 
-void OGRShapeDataSource::RefeshLockFile(void* _self)
+void OGRShapeDataSource::RefreshLockFile(void* _self)
 {
     OGRShapeDataSource* self = static_cast<OGRShapeDataSource*>(_self);
     CPLAssert(self->m_psLockFile);
     CPLAcquireMutex(self->m_poRefreshLockFileMutex, 1000);
     CPLCondSignal(self->m_poRefreshLockFileCond);
     unsigned int nInc = 0;
-    while(true)
+    while(!(self->m_bExitRefreshLockFileThread))
     {
         auto ret = CPLCondTimedWait(self->m_poRefreshLockFileCond,
                                     self->m_poRefreshLockFileMutex,
                                     self->m_dfRefreshLockDelay);
-        if( ret == COND_TIMED_WAIT_COND )
-        {
-            if( self->m_bExitRefreshLockFileThread )
-                break;
-        }
-        else if( ret == COND_TIMED_WAIT_TIME_OUT )
+        if( ret == COND_TIMED_WAIT_TIME_OUT )
         {
             CPLAssert(self->m_psLockFile);
             VSIFSeekL(self->m_psLockFile, 0, SEEK_SET);
@@ -1536,7 +1531,7 @@ bool OGRShapeDataSource::UncompressIfNeeded()
             CPLGetConfigOption("OGR_SHAPE_LOCK_DELAY",
                             CPLSPrintf("%d", knREFRESH_LOCK_FILE_DELAY_SEC)));
         m_hRefreshLockFileThread = CPLCreateJoinableThread(
-            OGRShapeDataSource::RefeshLockFile, this);
+            OGRShapeDataSource::RefreshLockFile, this);
         if( !m_hRefreshLockFileThread )
         {
             VSIFCloseL(m_psLockFile);

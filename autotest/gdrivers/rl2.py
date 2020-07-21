@@ -58,7 +58,7 @@ def test_rl2_2():
     if gdaltest.rl2_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/byte.rl2')
+    ds = gdal.Open('data/rasterlite2/byte.rl2')
 
     assert ds.RasterCount == 1, 'expected 1 band'
 
@@ -88,7 +88,7 @@ def test_rl2_2():
     assert subds == expected_subds
 
     gdal.SetConfigOption('RL2_SHOW_ALL_PYRAMID_LEVELS', 'YES')
-    ds = gdal.Open('data/byte.rl2')
+    ds = gdal.Open('data/rasterlite2/byte.rl2')
     gdal.SetConfigOption('RL2_SHOW_ALL_PYRAMID_LEVELS', None)
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -103,7 +103,7 @@ def test_rl2_3():
     if gdaltest.rl2_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/small_world.rl2')
+    ds = gdal.Open('data/rasterlite2/small_world.rl2')
 
     assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
 
@@ -121,10 +121,10 @@ def test_rl2_3():
     assert cs == 51412
 
     subds = ds.GetSubDatasets()
-    expected_subds = [('RASTERLITE2:data/small_world.rl2:small_world:1:world_west', 'Coverage small_world, section world_west / 1'), ('RASTERLITE2:data/small_world.rl2:small_world:2:world_east', 'Coverage small_world, section world_east / 2')]
+    expected_subds = [('RASTERLITE2:data/rasterlite2/small_world.rl2:small_world:1:world_west', 'Coverage small_world, section world_west / 1'), ('RASTERLITE2:data/rasterlite2/small_world.rl2:small_world:2:world_east', 'Coverage small_world, section world_east / 2')]
     assert subds == expected_subds
 
-    ds = gdal.Open('RASTERLITE2:data/small_world.rl2:small_world:1:world_west')
+    ds = gdal.Open('RASTERLITE2:data/rasterlite2/small_world.rl2:small_world:1:world_west')
 
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 3721
@@ -143,7 +143,7 @@ def test_rl2_4():
     if gdaltest.rl2_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/small_world_pct.rl2')
+    ds = gdal.Open('data/rasterlite2/small_world_pct.rl2')
 
     assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_PaletteIndex
 
@@ -169,27 +169,27 @@ def test_rl2_5():
     if gdaltest.rl2_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/multi_type.rl2')
+    ds = gdal.Open('data/rasterlite2/multi_type.rl2')
 
     subds = ds.GetSubDatasets()
-    expected_subds = [('RASTERLITE2:data/multi_type.rl2:uint8', 'Coverage uint8'), ('RASTERLITE2:data/multi_type.rl2:int8', 'Coverage int8'), ('RASTERLITE2:data/multi_type.rl2:uint16', 'Coverage uint16'), ('RASTERLITE2:data/multi_type.rl2:int16', 'Coverage int16'), ('RASTERLITE2:data/multi_type.rl2:uint32', 'Coverage uint32'), ('RASTERLITE2:data/multi_type.rl2:int32', 'Coverage int32'), ('RASTERLITE2:data/multi_type.rl2:float', 'Coverage float'), ('RASTERLITE2:data/multi_type.rl2:double', 'Coverage double'), ('RASTERLITE2:data/multi_type.rl2:1bit', 'Coverage 1bit'), ('RASTERLITE2:data/multi_type.rl2:2bit', 'Coverage 2bit'), ('RASTERLITE2:data/multi_type.rl2:4bit', 'Coverage 4bit')]
+    expected_subds = [('RASTERLITE2:data/rasterlite2/multi_type.rl2:uint8', 'Coverage uint8'), ('RASTERLITE2:data/rasterlite2/multi_type.rl2:int8', 'Coverage int8'), ('RASTERLITE2:data/rasterlite2/multi_type.rl2:uint16', 'Coverage uint16'), ('RASTERLITE2:data/rasterlite2/multi_type.rl2:int16', 'Coverage int16'), ('RASTERLITE2:data/rasterlite2/multi_type.rl2:uint32', 'Coverage uint32'), ('RASTERLITE2:data/rasterlite2/multi_type.rl2:int32', 'Coverage int32'), ('RASTERLITE2:data/rasterlite2/multi_type.rl2:float', 'Coverage float'), ('RASTERLITE2:data/rasterlite2/multi_type.rl2:double', 'Coverage double'), ('RASTERLITE2:data/rasterlite2/multi_type.rl2:1bit', 'Coverage 1bit'), ('RASTERLITE2:data/rasterlite2/multi_type.rl2:2bit', 'Coverage 2bit'), ('RASTERLITE2:data/rasterlite2/multi_type.rl2:4bit', 'Coverage 4bit')]
     assert subds == expected_subds
 
-    tests = [('RASTERLITE2:data/multi_type.rl2:uint8', gdal.GDT_Byte, 4672),
-             ('RASTERLITE2:data/multi_type.rl2:int8', gdal.GDT_Byte, 4575),
-             ('RASTERLITE2:data/multi_type.rl2:uint16', gdal.GDT_UInt16, 4457),
-             ('RASTERLITE2:data/multi_type.rl2:int16', gdal.GDT_Int16, 4457),
-             ('RASTERLITE2:data/multi_type.rl2:uint32', gdal.GDT_UInt32, 4457),
-             ('RASTERLITE2:data/multi_type.rl2:int32', gdal.GDT_Int32, 4457),
-             ('RASTERLITE2:data/multi_type.rl2:float', gdal.GDT_Float32, 4457),
-             ('RASTERLITE2:data/multi_type.rl2:double', gdal.GDT_Float64, 4457),
-             ('RASTERLITE2:data/multi_type.rl2:1bit', gdal.GDT_Byte, 4873)]
+    tests = [('RASTERLITE2:data/rasterlite2/multi_type.rl2:uint8', gdal.GDT_Byte, 4672),
+             ('RASTERLITE2:data/rasterlite2/multi_type.rl2:int8', gdal.GDT_Byte, 4575),
+             ('RASTERLITE2:data/rasterlite2/multi_type.rl2:uint16', gdal.GDT_UInt16, 4457),
+             ('RASTERLITE2:data/rasterlite2/multi_type.rl2:int16', gdal.GDT_Int16, 4457),
+             ('RASTERLITE2:data/rasterlite2/multi_type.rl2:uint32', gdal.GDT_UInt32, 4457),
+             ('RASTERLITE2:data/rasterlite2/multi_type.rl2:int32', gdal.GDT_Int32, 4457),
+             ('RASTERLITE2:data/rasterlite2/multi_type.rl2:float', gdal.GDT_Float32, 4457),
+             ('RASTERLITE2:data/rasterlite2/multi_type.rl2:double', gdal.GDT_Float64, 4457),
+             ('RASTERLITE2:data/rasterlite2/multi_type.rl2:1bit', gdal.GDT_Byte, 4873)]
     for (subds_name, dt, expected_cs) in tests:
         ds = gdal.Open(subds_name)
         assert ds.GetRasterBand(1).DataType == dt, subds_name
         cs = ds.GetRasterBand(1).Checksum()
         assert cs == expected_cs
-        if subds_name == 'RASTERLITE2:data/multi_type.rl2:int8':
+        if subds_name == 'RASTERLITE2:data/rasterlite2/multi_type.rl2:int8':
             assert ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE'
 
     
@@ -522,7 +522,7 @@ def test_rl2_24():
     if gdal.GetDriverByName('SQLite').GetMetadataItem("ENABLE_SQL_SQLITE_FORMAT") != 'YES':
         pytest.skip()
 
-    ds = gdal.Open('data/byte.rl2.sql')
+    ds = gdal.Open('data/rasterlite2/byte.rl2.sql')
     assert ds.GetRasterBand(1).Checksum() == 4672, 'validation failed'
 
 ###############################################################################

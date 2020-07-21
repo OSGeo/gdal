@@ -1,0 +1,30 @@
+<VRTDataset rasterXSize="50000" rasterYSize="42992" subClass="VRTWarpedDataset">
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTWarpedRasterBand">
+    <ColorInterp>Gray</ColorInterp>
+  </VRTRasterBand>
+  <BlockXSize>50000</BlockXSize>
+  <BlockYSize>42992</BlockYSize>
+  <GDALWarpOptions>
+    <WarpMemoryLimit>6.71089e+07</WarpMemoryLimit>
+    <ResampleAlg>NearestNeighbour</ResampleAlg>
+    <WorkingDataType>Byte</WorkingDataType>
+    <Option name="INIT_DEST">0</Option>
+    <SourceDataset relativeToVRT="0">/vsizip/data/vrt/test_deflate_2GB.tif.zip/test_deflate_2GB.tif</SourceDataset>
+    <Transformer>
+      <ApproxTransformer>
+        <MaxError>0.125</MaxError>
+        <BaseTransformer>
+          <GenImgProjTransformer>
+            <SrcGeoTransform>0,1,0,0,0,1</SrcGeoTransform>
+            <SrcInvGeoTransform>0,1,0,0,0,1</SrcInvGeoTransform>
+            <DstGeoTransform>0,1,0,0,0,1</DstGeoTransform>
+            <DstInvGeoTransform>0,1,0,0,0,1</DstInvGeoTransform>
+          </GenImgProjTransformer>
+        </BaseTransformer>
+      </ApproxTransformer>
+    </Transformer>
+    <BandList>
+      <BandMapping src="1" dst="1" />
+    </BandList>
+  </GDALWarpOptions>
+</VRTDataset>

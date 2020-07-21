@@ -18,7 +18,7 @@ Synopsis
     gdalinfo [--help-general] [-json] [-mm] [-stats] [-hist] [-nogcp] [-nomd]
              [-norat] [-noct] [-nofl] [-checksum] [-proj4]
              [-listmdd] [-mdd domain|`all`]* [-wkt_format WKT1|WKT2|...]
-             [-sd subdataset] [-oo NAME=VALUE]* datasetname
+             [-sd subdataset] [-oo NAME=VALUE]* [-if format]* datasetname
 
 Description
 -----------
@@ -122,6 +122,9 @@ The following command line parameters can appear in any order
 .. option:: -oo <NAME=VALUE>
 
     Dataset open option (format specific).
+
+.. include:: options/if.rst
+
 
 The gdalinfo will report all of the following (if known):
 

@@ -40,12 +40,12 @@ Configuration
 In the *data* folder of the GDAL distribution, you can find a
 `osmconf.ini <https://github.com/OSGeo/gdal/blob/master/gdal/data/osmconf.ini>`__
 file that can be customized to fit your needs. You can also define an
-alternate path with the OSM_CONFIG_FILE configuration option.
+alternate path with the :decl_configoption:`OSM_CONFIG_FILE` configuration option.
 
 The customization is essentially which OSM attributes and keys should be
 translated into OGR layer fields.
 
-Starting with GDAL 2.0, fields can be computed with SQL expressions
+Fields can be computed with SQL expressions
 (evaluated by SQLite engine) from other fields/tags. For example to
 compute the z_order attribute.
 
@@ -79,8 +79,8 @@ The driver will use an internal SQLite database to resolve geometries.
 If that database remains under 100 MB it will reside in RAM. If it grows
 above, it will be written in a temporary file on disk. By default, this
 file will be written in the current directory, unless you define the
-CPL_TMPDIR configuration option. The 100 MB default threshold can be
-adjusted with the OSM_MAX_TMPFILE_SIZE configuration option (value in
+:decl_configoption:`CPL_TMPDIR` configuration option. The 100 MB default threshold can be
+adjusted with the :decl_configoption:`OSM_MAX_TMPFILE_SIZE` configuration option (value in
 MB).
 
 For indexation of nodes, a custom mechanism not relying on SQLite is
@@ -88,10 +88,10 @@ used by default (indexation of ways to solve relations is still relying
 on SQLite). It can speed up operations significantly. However, in some
 situations (non increasing node ids, or node ids not in expected range),
 it might not work and the driver will output an error message suggesting
-to relaunch by defining the OSM_USE_CUSTOM_INDEXING configuration option
+to relaunch by defining the :decl_configoption:`OSM_USE_CUSTOM_INDEXING` configuration option
 to NO.
 
-When custom indexing is used (default case), the OSM_COMPRESS_NODES
+When custom indexing is used (default case), the :decl_configoption:`OSM_COMPRESS_NODES`
 configuration option can be set to YES (the default is NO). This option
 might be turned on to improve performances when I/O access is the
 limiting factor (typically the case of rotational disk), and will be
@@ -185,16 +185,16 @@ And to combine the above steps :
 Open options
 ------------
 
--  **CONFIG_FILE=filename**: (GDAL >=2.0) Configuration filename.
+-  **CONFIG_FILE=filename**: Configuration filename.
    Defaults to {GDAL_DATA}/osmconf.ini.
--  **USE_CUSTOM_INDEXING=YES/NO**: (GDAL >=2.0) Whether to enable custom
+-  **USE_CUSTOM_INDEXING=YES/NO**: Whether to enable custom
    indexing. Defaults to YES.
--  **COMPRESS_NODES=YES/NO**: (GDAL >=2.0) Whether to compress nodes in
+-  **COMPRESS_NODES=YES/NO**: Whether to compress nodes in
    temporary DB. Defaults to NO.
--  **MAX_TMPFILE_SIZE=int_val**: (GDAL >=2.0) Maximum size in MB of
+-  **MAX_TMPFILE_SIZE=int_val**: Maximum size in MB of
    in-memory temporary file. If it exceeds that value, it will go to
    disk. Defaults to 100.
--  **INTERLEAVED_READING=YES/NO**: (GDAL >=2.0) Whether to enable
+-  **INTERLEAVED_READING=YES/NO**: Whether to enable
    interleaved reading. Defaults to NO.
 
 See Also

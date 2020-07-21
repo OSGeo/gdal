@@ -59,9 +59,18 @@ formula:
 where:
 
 - :math:`Z_i` is a known value at point :math:`i`,
-- :math:`r` is a distance from the grid node to point :math:`i`,
+- :math:`r_i` is a distance from the grid node to point :math:`i`,
 - :math:`p` is a weighting power,
 - :math:`n` is a number of points in `Search Ellipse`_.
+
+The smoothing parameter :math:`s` is used as an additive term in the Euclidean distance calculation:
+
+.. math::
+
+    {r_i}=\sqrt{{r_{ix}}^2 + {r_{iy}}^2 + s^2}
+
+where :math:`r_{ix}` and :math:`r_{iy}` are the horizontal and vertical
+distances between the grid node to point :math:`i` respectively.
 
 In this method the weighting factor :math:`w` is
 

@@ -31,20 +31,18 @@
 
 
 import gdaltest
-import ogrtest
 from osgeo import ogr
 from osgeo import gdal
 import pytest
 
+pytestmark = [ pytest.mark.require_driver('GPSBabel'),
+               pytest.mark.require_driver('GPX') ]
+
 ###############################################################################
-# Check that dependencies are met
-
-
-def test_ogr_gpsbabel_init():
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
 
     # Test if the gpsbabel is accessible
-    ogrtest.have_gpsbabel = False
-    ogrtest.have_read_gpsbabel = False
     try:
         ret = gdaltest.runexternal('gpsbabel -V')
     except OSError:
@@ -52,25 +50,13 @@ def test_ogr_gpsbabel_init():
     if ret.find('GPSBabel') == -1:
         pytest.skip('Cannot access GPSBabel utility')
 
-    ds = ogr.Open('data/test.gpx')
-
-    if ds is None:
-        print('GPX driver not configured for read support')
-    else:
-        ogrtest.have_read_gpsbabel = True
-
-    ogrtest.have_gpsbabel = True
-
 ###############################################################################
 # Test reading with explicit subdriver
 
 
 def test_ogr_gpsbabel_1():
 
-    if not ogrtest.have_read_gpsbabel:
-        pytest.skip()
-
-    ds = ogr.Open('GPSBabel:nmea:data/nmea.txt')
+    ds = ogr.Open('GPSBabel:nmea:data/gpsbabel/nmea.txt')
     assert ds is not None
 
     assert ds.GetLayerCount() == 2
@@ -81,10 +67,7 @@ def test_ogr_gpsbabel_1():
 
 def test_ogr_gpsbabel_2():
 
-    if not ogrtest.have_read_gpsbabel:
-        pytest.skip()
-
-    ds = ogr.Open('data/nmea.txt')
+    ds = ogr.Open('data/gpsbabel/nmea.txt')
     assert ds is not None
 
     assert ds.GetLayerCount() == 2
@@ -94,9 +77,6 @@ def test_ogr_gpsbabel_2():
 
 
 def test_ogr_gpsbabel_3():
-
-    if not ogrtest.have_gpsbabel:
-        pytest.skip()
 
     ds = ogr.GetDriverByName('GPSBabel').CreateDataSource('GPSBabel:nmea:tmp/nmea.txt')
     lyr = ds.CreateLayer('track_points', geom_type=ogr.wkbPoint)
@@ -129,7 +109,3 @@ def test_ogr_gpsbabel_3():
     assert (not (res.find('$GPRMC') == -1 or \
        res.find('$GPGGA') == -1 or \
        res.find('$GPGSA') == -1)), 'did not get expected result'
-
-
-
-

@@ -327,6 +327,8 @@ def doit(opts, args):
                     myval = gdalnumeric.BandReadAsArray(myFiles[i].GetRasterBand(myBandNo),
                                                         xoff=myX, yoff=myY,
                                                         win_xsize=nXValid, win_ysize=nYValid)
+                    if myval is None:
+                        raise Exception('Input block reading failed')
 
                     # fill in nodata values
                     if myNDV[i] is not None:
@@ -355,7 +357,14 @@ def doit(opts, args):
 
                 # write data block to the output file
                 myOutB = myOut.GetRasterBand(bandNo)
-                gdalnumeric.BandWriteArray(myOutB, myResult, xoff=myX, yoff=myY)
+                if gdalnumeric.BandWriteArray(myOutB, myResult, xoff=myX, yoff=myY) != 0:
+                    raise Exception('Block writing failed')
+
+    gdal.ErrorReset()
+    myOut.FlushCache()
+    myOut = None
+    if gdal.GetLastErrorMsg() != '':
+        raise Exception('Dataset writing failed')
 
     if not opts.quiet:
         print("100 - Done")
@@ -365,7 +374,7 @@ def doit(opts, args):
 
 def Calc(calc, outfile, NoDataValue=None, type=None, format=None, creation_options=None, allBands='', overwrite=False, debug=False, quiet=False, **input_files):
     """ Perform raster calculations with numpy syntax.
-    Use any basic arithmetic supported by numpy arrays such as +-*\ along with logical
+    Use any basic arithmetic supported by numpy arrays such as +-* along with logical
     operators such as >. Note that all files must have the same dimensions, but no projection checking is performed.
 
     Keyword arguments:

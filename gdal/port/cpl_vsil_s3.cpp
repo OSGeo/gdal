@@ -36,6 +36,8 @@
 #include "cpl_vsil_curl_priv.h"
 #include "cpl_vsil_curl_class.h"
 
+#include <errno.h>
+
 #include <algorithm>
 #include <functional>
 #include <set>
@@ -393,6 +395,9 @@ bool VSIDIRS3::IssueListDir()
         osMaxKeys.Printf("%d", nMaxFiles);
     }
 
+    NetworkStatisticsFileSystem oContextFS(poS3FS->GetFSPrefix());
+    NetworkStatisticsAction oContextAction("ListBucket");
+
     const CPLString l_osNextMarker(osNextMarker);
     clear();
 
@@ -428,6 +433,8 @@ bool VSIDIRS3::IssueListDir()
         CurlRequestHelper requestHelper;
         const long response_code =
             requestHelper.perform(hCurlHandle, headers, poFS, poS3HandleHelper);
+
+        NetworkStatisticsLogger::LogGET(requestHelper.sWriteFuncData.nSize);
 
         if( requestHelper.sWriteFuncData.pBuffer == nullptr)
         {
@@ -729,6 +736,10 @@ CPLString IVSIS3LikeFSHandler::InitiateMultipartUpload(
             int nMaxRetry,
             double dfRetryDelay)
 {
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsFile oContextFile(osFilename.c_str());
+    NetworkStatisticsAction oContextAction("InitiateMultipartUpload");
+
     CPLString osUploadID;
     bool bRetry;
     int nRetryCount = 0;
@@ -749,6 +760,8 @@ CPLString IVSIS3LikeFSHandler::InitiateMultipartUpload(
         CurlRequestHelper requestHelper;
         const long response_code =
             requestHelper.perform(hCurlHandle, headers, this, poS3HandleHelper);
+
+        NetworkStatisticsLogger::LogPOST(0, requestHelper.sWriteFuncData.nSize);
 
         if( response_code != 200 || requestHelper.sWriteFuncData.pBuffer == nullptr )
         {
@@ -883,6 +896,9 @@ CPLString IVSIS3LikeFSHandler::UploadPart(const CPLString& osFilename,
                                           int nMaxRetry,
                                           double dfRetryDelay)
 {
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsFile oContextFile(osFilename);
+    NetworkStatisticsAction oContextAction("UploadPart");
 
     bool bRetry;
     int nRetryCount = 0;
@@ -918,6 +934,8 @@ CPLString IVSIS3LikeFSHandler::UploadPart(const CPLString& osFilename,
         CurlRequestHelper requestHelper;
         const long response_code =
             requestHelper.perform(hCurlHandle, headers, this, poS3HandleHelper);
+
+        NetworkStatisticsLogger::LogPUT(nBufferSize);
 
         if( response_code != 200 || requestHelper.sWriteFuncHeaderData.pBuffer == nullptr )
         {
@@ -991,10 +1009,10 @@ size_t VSIS3WriteHandle::ReadCallBackBufferChunked( char *buffer, size_t size,
     }
     const size_t nSizeMax = size * nitems;
     size_t nSizeToWrite = nSizeMax;
-    size_t nChunckedBufferRemainingSize =
+    size_t nChunkedBufferRemainingSize =
                 poThis->m_nChunkedBufferSize - poThis->m_nChunkedBufferOff;
-    if( nChunckedBufferRemainingSize < nSizeToWrite )
-        nSizeToWrite = nChunckedBufferRemainingSize;
+    if( nChunkedBufferRemainingSize < nSizeToWrite )
+        nSizeToWrite = nChunkedBufferRemainingSize;
     memcpy(buffer,
            static_cast<const GByte*>(poThis->m_pBuffer) + poThis->m_nChunkedBufferOff,
            nSizeToWrite);
@@ -1134,6 +1152,8 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
             CPLMultiPerformWait(m_hCurlMulti, repeats);
         }
 
+        m_nWrittenInPUT += nBytesToWrite;
+
         curl_slist_free_all(headers);
 
         m_pBuffer = nullptr;
@@ -1194,6 +1214,13 @@ int VSIS3WriteHandle::FinishChunkedTransfer()
 {
     if( m_hCurl == nullptr )
         return -1;
+
+    NetworkStatisticsFileSystem oContextFS(m_poFS->GetFSPrefix());
+    NetworkStatisticsFile oContextFile(m_osFilename.c_str());
+    NetworkStatisticsAction oContextAction("Write");
+
+    NetworkStatisticsLogger::LogPUT(m_nWrittenInPUT);
+    m_nWrittenInPUT = 0;
 
     m_pBuffer = nullptr;
     m_nChunkedBufferOff = 0;
@@ -1307,6 +1334,10 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
     double dfRetryDelay = m_dfRetryDelay;
     int nRetryCount = 0;
 
+    NetworkStatisticsFileSystem oContextFS(m_poFS->GetFSPrefix());
+    NetworkStatisticsFile oContextFile(m_osFilename.c_str());
+    NetworkStatisticsAction oContextAction("Write");
+
     do
     {
         bRetry = false;
@@ -1335,6 +1366,8 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
         CurlRequestHelper requestHelper;
         const long response_code =
             requestHelper.perform(hCurlHandle, headers, m_poFS, m_poS3HandleHelper);
+
+        NetworkStatisticsLogger::LogPUT(m_nBufferOff);
 
         if( response_code != 200 && response_code != 201 )
         {
@@ -1414,12 +1447,16 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
 
 bool IVSIS3LikeFSHandler::CompleteMultipart(const CPLString& osFilename,
                                             const CPLString& osUploadID,
-                                            const std::vector<CPLString> aosEtags,
+                                            const std::vector<CPLString>& aosEtags,
                                             IVSIS3LikeHandleHelper *poS3HandleHelper,
                                             int nMaxRetry,
                                             double dfRetryDelay)
 {
     bool bSuccess = true;
+
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsFile oContextFile(osFilename);
+    NetworkStatisticsAction oContextAction("CompleteMultipart");
 
     CPLString osXML = "<CompleteMultipartUpload>\n";
     for( size_t i = 0; i < aosEtags.size(); i++ )
@@ -1465,6 +1502,9 @@ bool IVSIS3LikeFSHandler::CompleteMultipart(const CPLString& osFilename,
         CurlRequestHelper requestHelper;
         const long response_code =
             requestHelper.perform(hCurlHandle, headers, this, poS3HandleHelper);
+
+        NetworkStatisticsLogger::LogPOST(osXML.size(),
+                                         requestHelper.sWriteFuncHeaderData.nSize);
 
         if( response_code != 200 )
         {
@@ -1516,6 +1556,10 @@ bool IVSIS3LikeFSHandler::AbortMultipart(const CPLString& osFilename,
 {
     bool bSuccess = true;
 
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsFile oContextFile(osFilename);
+    NetworkStatisticsAction oContextAction("AbortMultipart");
+
     int nRetryCount = 0;
     bool bRetry;
     do
@@ -1535,6 +1579,8 @@ bool IVSIS3LikeFSHandler::AbortMultipart(const CPLString& osFilename,
         CurlRequestHelper requestHelper;
         const long response_code =
             requestHelper.perform(hCurlHandle, headers, this, poS3HandleHelper);
+
+        NetworkStatisticsLogger::LogDELETE();
 
         if( response_code != 204 )
         {
@@ -1631,12 +1677,16 @@ VSIVirtualHandle* VSIS3FSHandler::Open( const char *pszFilename,
 
     if( strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr )
     {
-        /*if( strchr(pszAccess, '+') != nullptr)
+        if( strchr(pszAccess, '+') != nullptr &&
+            !CPLTestBool(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO")) )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                    "w+ not supported for /vsis3. Only w");
+                        "w+ not supported for /vsis3, unless "
+                        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE is set to YES");
+            errno = EACCES;
             return nullptr;
-        }*/
+        }
+
         VSIS3HandleHelper* poS3HandleHelper =
             VSIS3HandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
                                             GetFSPrefix().c_str(), false);
@@ -1648,9 +1698,39 @@ VSIVirtualHandle* VSIS3FSHandler::Open( const char *pszFilename,
         if( !poHandle->IsOK() )
         {
             delete poHandle;
-            poHandle = nullptr;
+            return nullptr;
+        }
+        if( strchr(pszAccess, '+') != nullptr)
+        {
+            return VSICreateUploadOnCloseFile(poHandle);
         }
         return poHandle;
+    }
+
+    if( CPLString(pszFilename).back() != '/' )
+    {
+        // If there's directory content for the directory where this file belongs to,
+        // use it to detect if the object does not exist
+        CachedDirList cachedDirList;
+        const CPLString osDirname(CPLGetDirname(pszFilename));
+        if( STARTS_WITH_CI(osDirname, GetFSPrefix()) &&
+            GetCachedDirList(osDirname, cachedDirList) && cachedDirList.bGotFileList )
+        {
+            const CPLString osFilenameOnly(CPLGetFilename(pszFilename));
+            bool bFound = false;
+            for( int i = 0; i < cachedDirList.oFileList.size(); i++ )
+            {
+                if( cachedDirList.oFileList[i] == osFilenameOnly )
+                {
+                    bFound = true;
+                    break;
+                }
+            }
+            if( !bFound )
+            {
+                return nullptr;
+            }
+        }
     }
 
     return
@@ -1853,6 +1933,13 @@ int* VSIS3FSHandler::UnlinkBatch( CSLConstList papszFiles )
 
 int VSIS3FSHandler::RmdirRecursive( const char* pszDirname )
 {
+    // Some S3-like APIs do not support DeleteObjects
+    if( CPLTestBool(CPLGetConfigOption("CPL_VSIS3_USE_BASE_RMDIR_RECURSIVE", "NO")) )
+        return VSIFilesystemHandler::RmdirRecursive(pszDirname);
+
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("RmdirRecursive");
+
     CPLString osDirnameWithoutEndSlash(pszDirname);
     if( !osDirnameWithoutEndSlash.empty() && osDirnameWithoutEndSlash.back() == '/' )
         osDirnameWithoutEndSlash.resize( osDirnameWithoutEndSlash.size() - 1 );
@@ -1907,6 +1994,9 @@ std::set<CPLString> VSIS3FSHandler::DeleteObjects(const char* pszBucket,
     if( !poS3HandleHelper )
         return std::set<CPLString>();
 
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("DeleteObjects");
+
     std::set<CPLString> oDeletedKeys;
     bool bRetry;
     // coverity[tainted_data]
@@ -1949,6 +2039,9 @@ std::set<CPLString> VSIS3FSHandler::DeleteObjects(const char* pszBucket,
         CurlRequestHelper requestHelper;
         const long response_code =
             requestHelper.perform(hCurlHandle, headers, this, poS3HandleHelper.get());
+
+        NetworkStatisticsLogger::LogPOST(strlen(pszXML),
+                                         requestHelper.sWriteFuncData.nSize);
 
         if( response_code != 200 || requestHelper.sWriteFuncData.pBuffer == nullptr )
         {
@@ -2047,6 +2140,9 @@ char** VSIS3FSHandler::GetFileMetadata( const char* pszFilename,
     if( !poS3HandleHelper )
         return nullptr;
 
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("GetFileMetadata");
+
     bool bRetry;
     // coverity[tainted_data]
     double dfRetryDelay = CPLAtof(CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
@@ -2072,6 +2168,9 @@ char** VSIS3FSHandler::GetFileMetadata( const char* pszFilename,
         CurlRequestHelper requestHelper;
         const long response_code =
             requestHelper.perform(hCurlHandle, headers, this, poS3HandleHelper.get());
+
+        NetworkStatisticsLogger::LogGET(requestHelper.sWriteFuncData.nSize);
+
         if( response_code != 200 || requestHelper.sWriteFuncData.pBuffer == nullptr )
         {
             // Look if we should attempt a retry
@@ -2172,6 +2271,9 @@ bool VSIS3FSHandler::SetFileMetadata( const char * pszFilename,
     if( !poS3HandleHelper )
         return false;
 
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("SetFileMetadata");
+
     bool bRetry;
     // coverity[tainted_data]
     double dfRetryDelay = CPLAtof(CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
@@ -2249,11 +2351,13 @@ bool VSIS3FSHandler::SetFileMetadata( const char * pszFilename,
                             poS3HandleHelper->GetCurlHeaders("PUT", headers,
                                                             osXML.c_str(),
                                                             osXML.size()));
+            NetworkStatisticsLogger::LogPUT(osXML.size());
         }
         else
         {
             headers = VSICurlMergeHeaders(headers,
                             poS3HandleHelper->GetCurlHeaders("DELETE", headers));
+            NetworkStatisticsLogger::LogDELETE();
         }
 
         CurlRequestHelper requestHelper;
@@ -2319,6 +2423,9 @@ int IVSIS3LikeFSHandler::MkdirInternal( const char * pszDirname, bool bDoStatChe
     if( !STARTS_WITH_CI(pszDirname, GetFSPrefix()) )
         return -1;
 
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("Mkdir");
+
     CPLString osDirname(pszDirname);
     if( !osDirname.empty() && osDirname.back() != '/' )
         osDirname += "/";
@@ -2379,6 +2486,9 @@ int IVSIS3LikeFSHandler::Rmdir( const char * pszDirname )
 {
     if( !STARTS_WITH_CI(pszDirname, GetFSPrefix()) )
         return -1;
+
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("Rmdir");
 
     CPLString osDirname(pszDirname);
     if( !osDirname.empty() && osDirname.back() != '/' )
@@ -2443,9 +2553,40 @@ int IVSIS3LikeFSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
     if( !IsAllowedFilename( pszFilename ) )
         return -1;
 
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("Stat");
+
     CPLString osFilename(pszFilename);
     if( osFilename.find('/', GetFSPrefix().size()) == std::string::npos )
         osFilename += "/";
+
+    CPLString osFilenameWithoutSlash(osFilename);
+    if( osFilenameWithoutSlash.back() == '/' )
+        osFilenameWithoutSlash.resize(osFilenameWithoutSlash.size()-1);
+
+    // If there's directory content for the directory where this file belongs to,
+    // use it to detect if the object does not exist
+    CachedDirList cachedDirList;
+    const CPLString osDirname(CPLGetDirname(osFilenameWithoutSlash));
+    if( STARTS_WITH_CI(osDirname, GetFSPrefix()) &&
+        GetCachedDirList(osDirname, cachedDirList) && cachedDirList.bGotFileList )
+    {
+        const CPLString osFilenameOnly(CPLGetFilename(osFilenameWithoutSlash));
+        bool bFound = false;
+        for( int i = 0; i < cachedDirList.oFileList.size(); i++ )
+        {
+            if( cachedDirList.oFileList[i] == osFilenameOnly )
+            {
+                bFound = true;
+                break;
+            }
+        }
+        if( !bFound )
+        {
+            return -1;
+        }
+    }
+
     if( VSICurlFilesystemHandler::Stat(osFilename, pStatBuf, nFlags) == 0 )
     {
         return 0;
@@ -2539,6 +2680,9 @@ int IVSIS3LikeFSHandler::Unlink( const char *pszFilename )
         return -1;
     }
 
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("Unlink");
+
     VSIStatBufL sStat;
     if( VSIStatL(pszFilename, &sStat) != 0 )
     {
@@ -2566,6 +2710,10 @@ int IVSIS3LikeFSHandler::Rename( const char *oldpath, const char *newpath )
         return -1;
     if( !STARTS_WITH_CI(newpath, GetFSPrefix()) )
         return -1;
+
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("Rename");
+
     VSIStatBufL sStat;
     if( VSIStatL(oldpath, &sStat) != 0 )
     {
@@ -2627,6 +2775,9 @@ int IVSIS3LikeFSHandler::CopyObject( const char *oldpath, const char *newpath,
         return -1;
     }
 
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("CopyObject");
+
     std::string osSourceHeader(poS3HandleHelper->GetCopySourceHeader());
     if( osSourceHeader.empty() )
     {
@@ -2668,17 +2819,17 @@ int IVSIS3LikeFSHandler::CopyObject( const char *oldpath, const char *newpath,
         if( papszMetadata && papszMetadata[0] )
         {
             headers = curl_slist_append(headers, "x-amz-metadata-directive: REPLACE");
-        }
-        for( int i = 0; papszMetadata && papszMetadata[i]; i++ )
-        {
-            char* pszKey = nullptr;
-            const char* pszValue = CPLParseNameValue(papszMetadata[i], &pszKey);
-            if( pszKey && pszValue )
+            for( int i = 0; papszMetadata[i]; i++ )
             {
-                headers = curl_slist_append(headers,
-                                            CPLSPrintf("%s: %s", pszKey, pszValue));
+                char* pszKey = nullptr;
+                const char* pszValue = CPLParseNameValue(papszMetadata[i], &pszKey);
+                if( pszKey && pszValue )
+                {
+                    headers = curl_slist_append(headers,
+                                                CPLSPrintf("%s: %s", pszKey, pszValue));
+                }
+                CPLFree(pszKey);
             }
-            CPLFree(pszKey);
         }
         headers = VSICurlMergeHeaders(headers,
                         poS3HandleHelper->GetCurlHeaders("PUT", headers));
@@ -2686,6 +2837,8 @@ int IVSIS3LikeFSHandler::CopyObject( const char *oldpath, const char *newpath,
         CurlRequestHelper requestHelper;
         const long response_code =
             requestHelper.perform(hCurlHandle, headers, this, poS3HandleHelper.get());
+
+        NetworkStatisticsLogger::LogPUT(0);
 
         if( response_code != 200)
         {
@@ -2759,6 +2912,9 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
     }
     UpdateHandleFromMap(poS3HandleHelper);
 
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("DeleteObject");
+
     int nRet = 0;
 
     bool bRetry;
@@ -2785,6 +2941,8 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
         CurlRequestHelper requestHelper;
         const long response_code =
             requestHelper.perform(hCurlHandle, headers, this, poS3HandleHelper);
+
+        NetworkStatisticsLogger::LogDELETE();
 
         // S3 and GS respond with 204. Azure with 202
         if( response_code != 204 && response_code != 202)
@@ -2900,6 +3058,9 @@ VSIDIR* IVSIS3LikeFSHandler::OpenDir( const char *pszPath,
     if( !STARTS_WITH_CI(pszPath, GetFSPrefix()) )
         return nullptr;
 
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("OpenDir");
+
     CPLString osDirnameWithoutPrefix = pszPath + GetFSPrefix().size();
     if( !osDirnameWithoutPrefix.empty() &&
                                 osDirnameWithoutPrefix.back() == '/' )
@@ -2994,6 +3155,9 @@ bool IVSIS3LikeFSHandler::CopyFile(VSILFILE* fpIn,
 {
     CPLString osMsg;
     osMsg.Printf("Copying of %s", pszSource);
+
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("CopyFile");
 
     const CPLString osPrefix(GetFSPrefix());
     if( STARTS_WITH(pszSource, osPrefix) &&
@@ -3155,6 +3319,9 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
     {
         *ppapszOutputs = nullptr;
     }
+
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("Sync");
 
     CPLString osSource(pszSource);
     CPLString osSourceWithoutSlash(pszSource);

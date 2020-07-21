@@ -31,7 +31,7 @@ find /tmp/install/lib
 
 # build GDAL
 cd gdal
-./configure --prefix=$HOME/install-gdal --enable-debug --with-jpeg12 --with-geotiff=internal --with-png=internal --with-proj=/tmp/install --with-sqlite3=/usr/local/opt/sqlite --without-pg --without-jasper --without-webp
+./configure --prefix=$HOME/install-gdal --enable-debug --with-jpeg12 --with-geotiff=internal --with-png=internal --with-proj=/tmp/install --with-sqlite3=/usr/local/opt/sqlite --without-pg --without-jasper --without-webp ${WITH_EXPAT}
 make USER_DEFS="-Wextra -Werror" -j3
 cd apps
 make USER_DEFS="-Wextra -Werror" test_ogrsf
@@ -45,7 +45,6 @@ make install
 export PATH=$HOME/install-gdal/bin:$PWD/apps/.libs:$PATH
 export DYLD_LIBRARY_PATH=$HOME/install-gdal/lib:/tmp/install/lib
 export GDAL_DATA=$HOME/install-gdal/share/gdal
-export PYTHONPATH=$PWD/swig/python/build/lib.macosx-10.12-intel-2.7:$PWD/swig/python/build/lib.macosx-10.11-x86_64-2.7:$PWD/swig/python/build/lib.macosx-10.12-x86_64-2.7
 
 cd ../autotest/cpp
 echo $PATH
@@ -64,3 +63,6 @@ cd ../../gdal
 ln -s /tmp/install/lib/libinternalproj.15.dylib /tmp/install/lib/libproj.15.dylib
 
 ccache -s
+
+# Post-install testing
+../autotest/postinstall/test_pkg-config.sh $HOME/install-gdal

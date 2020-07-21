@@ -67,7 +67,7 @@ The following methods are added to the OGRFieldDefn class
     * By default, fields are nullable, so this method is generally called with FALSE
     * to set a not-null constraint.
     *
-    * Drivers that support writing not-null constraint will advertize the
+    * Drivers that support writing not-null constraint will advertise the
     * GDAL_DCAP_NOTNULL_FIELDS driver metadata item.
     *
     * This method is the same as the C function OGR_Fld_SetNullable().
@@ -76,7 +76,7 @@ The following methods are added to the OGRFieldDefn class
     * @since GDAL 2.0
     */
 
-As this holds true for geometry fields, those 2 methods are also addd to
+As this holds true for geometry fields, those 2 methods are also add to
 the OGRGeometryFieldDefn class.
 
 Note that adding a field with a NOT NULL constraint on a non-empty layer
@@ -154,7 +154,7 @@ OGRLayer::AlterFieldDefn() so as to set or drop NULL / NOT-NULL
 constraints (for drivers that implement it).
 
 Drivers that handle NOT NULL constraint for regular attribute fields
-should advertize the new GDAL_DCAP_NOTNULL_FIELDS and/or
+should advertise the new GDAL_DCAP_NOTNULL_FIELDS and/or
 GDAL_DCAP_NOTNULL_GEOMFIELDS driver metadata items.
 
 Drivers that do not implement the OGRLayer::CreateGeomField() interface
@@ -240,7 +240,7 @@ The following methods are added/modified to the OGRFieldDefn class
     * For a datetime literal value, format should be 'YYYY/MM/DD HH:MM:SS[.sss]'
     * (considered as UTC time).
     *
-    * Drivers that support writing DEFAULT clauses will advertize the
+    * Drivers that support writing DEFAULT clauses will advertise the
     * GDAL_DCAP_DEFAULT_FIELDS driver metadata item.
     *
     * This function is the same as the C function OGR_Fld_SetDefault().
@@ -317,7 +317,7 @@ A new flag ALTER_DEFAULT_FLAG = 0x8 is added to be passed to
 OGRLayer::AlterFieldDefn() so as to set, drop or modify default values
 (for drivers that implement it)
 
-Drivers that handle default values should advertize the new
+Drivers that handle default values should advertise the new
 GDAL_DCAP_DEFAULT_FIELDS driver metadata items.
 
 Note: due to the way they are commonly written, the CreateField()
@@ -374,7 +374,7 @@ values. e.g.
 -  -unsetDefault to remove DEFAULT values (DEFAULT values are propagated
    by default from source to target layer)
 
-Unless it is explicitely specified, ogr2ogr will also automatically set
+Unless it is explicitly specified, ogr2ogr will also automatically set
 the GEOMETRY_NULLABLE=NO creation option to target layers that support
 it, if the source layer has its first geometry field with a NOT NULL
 constraint.
@@ -421,7 +421,7 @@ interfaces.
 -  FileGDB: supports NOT NULL (for attribute and its single geometry
    field) on read/write. GEOMETRY_NULLABLE layer creation added. DEFAULT
    supported for String,Integer and Real fieds on creation/read (with
-   some bugs/weird behaviour seen in FileGDB SDK and E$RI tools,
+   some bugs/weird behavior seen in FileGDB SDK and E$RI tools,
    workarounded by using the OpenFileGDB driver in problematic
    cases...). DEFAULT supported for DateTime on read, but unsupported on
    creation to bug in FileGDB SDK.
@@ -440,7 +440,7 @@ The test suite is extended to test:
    ogr_feature.py
 -  updated drivers: PG, PGDump, CartoDB, GPKG, SQLite, MySQL, OCI, VRT,
    GML, FileGDB, OpenFileGDB
--  new options of ogr2ogr, and default behaviour with NOT NULL / DEFAULT
+-  new options of ogr2ogr, and default behavior with NOT NULL / DEFAULT
    propagation
 
 Compatibility Issues
@@ -454,12 +454,12 @@ wasn't used in any drivers, was documented as being prone to be removed
 in the future, and so was unlikely to be used in applications either
 (there was no C binding)
 
-When not using the new API, behaviour should remain unchanged w.r.t GDAL
+When not using the new API, behavior should remain unchanged w.r.t GDAL
 1.X when operating on layers created by GDAL. If reading layers created
 by other tools, then NOT NULL and/or DEFAULT can be read, and
 propagated. We cannot exclude that propagation of NOT NULL / DEFAULT can
 cause problems in some situations. In which case the new options of
-ogr2ogr will revert to a behaviour that was the one of the GDAL 1.X era.
+ogr2ogr will revert to a behavior that was the one of the GDAL 1.X era.
 
 Related topics out of scope of this RFC
 ---------------------------------------
@@ -477,10 +477,10 @@ Consider the 2 following statements :
 
 They are not equivalent when COL2 has a default value.
 
-The behaviour of the modified drivers by this RFC is to *NOT* emit NULL
+The behavior of the modified drivers by this RFC is to *NOT* emit NULL
 at CreateFeature() time when a field is unset, so that the low-level
 layer of the driver can replace it with its default value if it exists.
-This is generally the wished behaviour.
+This is generally the wished behavior.
 
 If explicit NULL insertion is wanted, then using SetFeature() afterwards
 might be needed, if supported by the drivers (some drivers will likely
@@ -493,7 +493,7 @@ always associate DEFAULT with NOT NULL, then it becomes a non-issue as
 the database would refuse explicit NULL values.
 
 Solving the confusion would require to add a new state to an
-instanciated field within a feature to distinguish explicit NULL from
+instantiated field within a feature to distinguish explicit NULL from
 unset, but this would have deep impact in drivers and application code.
 
 Implementation

@@ -52,7 +52,7 @@ typedef struct
 /*                         OGRAeronavFAALayer                           */
 /************************************************************************/
 
-class OGRAeronavFAALayer CPL_NON_FINAL: public OGRLayer
+class OGRAeronavFAALayer CPL_NON_FINAL: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRAeronavFAALayer>
 {
 protected:
     OGRFeatureDefn*    poFeatureDefn;
@@ -72,7 +72,7 @@ protected:
                         virtual ~OGRAeronavFAALayer();
 
     virtual void                ResetReading() override;
-    virtual OGRFeature *        GetNextFeature() override;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRAeronavFAALayer)
 
     virtual OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 

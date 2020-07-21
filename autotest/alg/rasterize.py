@@ -385,3 +385,40 @@ def test_rasterize_merge_alg_add_multiple_segment_linestring():
                 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
                 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     assert got == expected, '%s' % str(got)
+
+###############################################################################
+# Test rasterizing polygon with horizontal segments and MERGE_ALG=ADD
+# to check that we don't redraw several times the top segment, depending on
+# the winding order
+
+
+@pytest.mark.parametrize("wkt",
+                         ['POLYGON((0 0,0 1,1 1,1 0,0 0))',
+                          'POLYGON((0 0,1 0,1 1,0 1,0 0))'],
+                         ids=['clockwise', 'counterclockwise'])
+def test_rasterize_merge_alg_add_polygon(wkt):
+
+    # Setup working spatial reference
+    sr_wkt = 'LOCAL_CS["arbitrary"]'
+    sr = osr.SpatialReference(sr_wkt)
+
+    data_source = ogr.GetDriverByName('MEMORY').CreateDataSource('')
+    layer = data_source.CreateLayer('', sr, geom_type=ogr.wkbPolygon)
+    feature = ogr.Feature(layer.GetLayerDefn())
+    feature.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
+    layer.CreateFeature(feature)
+
+    ds = gdal.GetDriverByName('Mem').Create('', 5, 5, 1, gdal.GDT_Byte)
+    ds.SetGeoTransform([-0.125, 0.25, 0, 1.125, 0, -0.25])
+    ds.SetProjection(sr_wkt)
+
+    ds.GetRasterBand(1).Fill(0)
+    gdal.RasterizeLayer(ds, [1], layer, burn_values=[10], options=["MERGE_ALG=ADD"])
+
+    got = struct.unpack('B' * 25, ds.ReadRaster())
+    expected = (0, 10, 10, 10, 10,
+                0, 10, 10, 10, 10,
+                0, 10, 10, 10, 10,
+                0, 10, 10, 10, 10,
+                0, 10, 10, 10, 10,)
+    assert got == expected, '%s' % str(got)

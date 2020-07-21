@@ -42,7 +42,7 @@ import pytest
 
 def test_lcp_1():
 
-    ds = gdal.Open('data/test_FARSITE_UTM12.LCP')
+    ds = gdal.Open('data/lcp/test_FARSITE_UTM12.LCP')
     assert ds.RasterCount == 8, 'wrong number of bands'
 
     assert ds.GetProjectionRef().find('NAD83 / UTM zone 12N') != -1, \
@@ -133,7 +133,7 @@ def test_lcp_1():
 
 def test_lcp_2():
 
-    ds = gdal.Open('data/test_USGS_LFNM_Alb83.lcp')
+    ds = gdal.Open('data/lcp/test_USGS_LFNM_Alb83.lcp')
     assert ds.RasterCount == 8, 'wrong number of bands'
 
     metadata = [('LATITUDE', '48'),
@@ -221,7 +221,7 @@ def test_lcp_2():
 
 def test_lcp_3():
 
-    ds = gdal.Open('data/test_USGS_LFNM_Alb83.lcp')
+    ds = gdal.Open('data/lcp/test_USGS_LFNM_Alb83.lcp')
     assert ds is not None
     wkt = ds.GetProjection()
     assert wkt is not None, 'Got None from GetProjection()'
@@ -232,7 +232,7 @@ def test_lcp_3():
 
 def test_lcp_4():
 
-    ds = gdal.Open('data/test_USGS_LFNM_Alb83.lcp')
+    ds = gdal.Open('data/lcp/test_USGS_LFNM_Alb83.lcp')
     assert ds is not None
     fl = ds.GetFileList()
     assert len(fl) == 1, 'Invalid file list'
@@ -243,7 +243,7 @@ def test_lcp_4():
 
 def test_lcp_5():
 
-    ds = gdal.Open('data/test_FARSITE_UTM12.LCP')
+    ds = gdal.Open('data/lcp/test_FARSITE_UTM12.LCP')
     assert ds is not None
     wkt = ds.GetProjection()
     assert not (wkt is None or wkt == ''), 'Got invalid wkt from GetProjection()'
@@ -255,7 +255,7 @@ def test_lcp_5():
 def test_lcp_6():
 
     retval = 'success'
-    ds = gdal.Open('data/test_FARSITE_UTM12.LCP')
+    ds = gdal.Open('data/lcp/test_FARSITE_UTM12.LCP')
     assert ds is not None
     fl = ds.GetFileList()
     if len(fl) != 2:
@@ -263,7 +263,7 @@ def test_lcp_6():
         retval = 'fail'
     ds = None
     try:
-        os.remove('data/test_FARSITE_UTM12.LCP.aux.xml')
+        os.remove('data/lcp/test_FARSITE_UTM12.LCP.aux.xml')
     except OSError:
         pass
 

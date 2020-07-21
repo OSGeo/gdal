@@ -50,7 +50,7 @@ void DeleteWKBGeometry(WKBGeometry &obj);
 
 class OGRWalkDataSource;
 
-class OGRWalkLayer CPL_NON_FINAL: public OGRLayer
+class OGRWalkLayer CPL_NON_FINAL: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRWalkLayer>
 {
 protected:
     OGRFeatureDefn     *poFeatureDefn;
@@ -76,13 +76,14 @@ protected:
     virtual CPLODBCStatement *  GetStatement() { return poStmt; }
     void                LookupSpatialRef( const char * );
 
+    OGRFeature *        GetNextRawFeature();
+
 public:
                         OGRWalkLayer();
                         virtual ~OGRWalkLayer();
 
     void                ResetReading() override;
-    OGRFeature *        GetNextFeature() override;
-    OGRFeature *        GetNextRawFeature();
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRWalkLayer)
 
     OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 

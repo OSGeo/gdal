@@ -8,22 +8,6 @@ GDAL - Geospatial Data Abstraction Library
 [![Documentation build Status](https://dev.azure.com/osgeo/gdal/_apis/build/status/OSGeo.gdal.doc?branchName=master&jobName=Documentation)](https://dev.azure.com/osgeo/gdal/_build/latest?definitionId=2&branchName=master&jobName=Documentation)
 [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/gdal.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:gdal)
 
-| Tested configurations    |
-| ------------------------ |
-| Ubuntu 14.04 32 bit      |
-| Ubuntu 14.04 64 bit      |
-| Ubuntu 16.04 64 / CL 3.9 |
-| Ubuntu 18.04 64 bit      |
-| Python 3                 |
-| MacOS X                  |
-| MSVC 2015-64b & 2017-32b |
-| MinGW_W64                |
-| Android                  |
-| Big endian host          |
-| GCC 5.2 C++14 -fsanitize |
-| Clang Static Analyzer    |
-| Coverity Scan            |
-
 GDAL is an open source X/MIT licensed translator library for raster and vector geospatial data formats.
 
 * Main site: http://www.gdal.org - Developer and user docs, links to other resources

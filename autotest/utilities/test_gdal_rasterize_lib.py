@@ -319,6 +319,42 @@ def test_gdal_rasterize_lib_4():
 
         target_ds = None
 
-    
 
+def test_gdal_rasterize_lib_multipolygon():
 
+    sr_wkt = 'LOCAL_CS["arbitrary"]'
+    sr = osr.SpatialReference(sr_wkt)
+
+    # Try rasterizing a multipolygon
+    vector_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
+    layer = vector_ds.CreateLayer('', sr)
+    feature = ogr.Feature(layer.GetLayerDefn())
+    feature.SetGeometryDirectly(ogr.CreateGeometryFromWkt('MULTIPOLYGON (((0 0,0 1,1 1,0 0)),((1 1,2 1,2 0,1 1)))'))
+    layer.CreateFeature(feature)
+
+    target_ds = gdal.GetDriverByName('MEM').Create('', 3, 2)
+    target_ds.SetGeoTransform((-0.5, 1, 0, 1.5, 0, -1))
+    target_ds.SetSpatialRef(sr)
+    ret = gdal.Rasterize(target_ds, vector_ds, burnValues=[10])
+    assert ret == 1
+    cs1 = target_ds.GetRasterBand(1).Checksum()
+
+    # And now each of its parts
+    vector_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
+    layer = vector_ds.CreateLayer('', sr)
+    feature = ogr.Feature(layer.GetLayerDefn())
+    feature.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 1,1 1,0 0))'))
+    layer.CreateFeature(feature)
+    feature = ogr.Feature(layer.GetLayerDefn())
+    feature.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON ((1 1,2 1,2 0,1 1))'))
+    layer.CreateFeature(feature)
+
+    target_ds = gdal.GetDriverByName('MEM').Create('', 3, 2)
+    target_ds.SetGeoTransform((-0.5, 1, 0, 1.5, 0, -1))
+    target_ds.SetSpatialRef(sr)
+    ret = gdal.Rasterize(target_ds, vector_ds, burnValues=[10])
+    assert ret == 1
+    cs2 = target_ds.GetRasterBand(1).Checksum()
+
+    # Check that results are the same
+    assert cs1 == cs2

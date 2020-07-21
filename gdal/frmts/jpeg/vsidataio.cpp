@@ -57,7 +57,7 @@ constexpr size_t INPUT_BUF_SIZE = 4096;
 // Initialize source --- called by jpeg_read_header
 // before any data is actually read.
 
-METHODDEF(void)
+static void
 init_source(j_decompress_ptr cinfo)
 {
     my_src_ptr src = (my_src_ptr)cinfo->src;
@@ -99,7 +99,7 @@ init_source(j_decompress_ptr cinfo)
 // Data beyond this point must be rescanned after resumption, so move it to
 // the front of the buffer rather than discarding it.
 
-METHODDEF(boolean)
+static boolean
 fill_input_buffer(j_decompress_ptr cinfo)
 {
     my_src_ptr src = (my_src_ptr)cinfo->src;
@@ -132,7 +132,7 @@ fill_input_buffer(j_decompress_ptr cinfo)
 // copies the remaining buffer bytes to the front of the buffer,
 // then fills up the rest with new data.
 #ifdef IPPJ_HUFF
-METHODDEF(boolean)
+static boolean
 fill_input_buffer_ipp(j_decompress_ptr cinfo)
 {
     my_src_ptr src = (my_src_ptr)cinfo->src;
@@ -192,7 +192,7 @@ fill_input_buffer_ipp(j_decompress_ptr cinfo)
 // Arranging for additional bytes to be discarded before reloading the input
 // buffer is the application writer's problem.
 
-METHODDEF(void)
+static void
 skip_input_data(j_decompress_ptr cinfo, long num_bytes)
 {
     my_src_ptr src = (my_src_ptr)cinfo->src;
@@ -227,7 +227,7 @@ skip_input_data(j_decompress_ptr cinfo, long num_bytes)
 // application must deal with any cleanup that should happen even
 // for error exit.
 
-METHODDEF(void)
+static void
 term_source(CPL_UNUSED j_decompress_ptr cinfo)
 {
     // No work necessary here.
@@ -295,7 +295,7 @@ constexpr size_t OUTPUT_BUF_SIZE = 4096;
 // Initialize destination --- called by jpeg_start_compress
 // before any data is actually written.
 
-METHODDEF(void)
+static void
 init_destination(j_compress_ptr cinfo)
 {
     my_dest_ptr dest = (my_dest_ptr)cinfo->dest;
@@ -329,7 +329,7 @@ init_destination(j_compress_ptr cinfo)
 // Data beyond this point will be regenerated after resumption, so do not
 // write it out when emptying the buffer externally.
 
-METHODDEF(boolean)
+static boolean
 empty_output_buffer(j_compress_ptr cinfo)
 {
     my_dest_ptr dest = (my_dest_ptr)cinfo->dest;
@@ -364,7 +364,7 @@ empty_output_buffer(j_compress_ptr cinfo)
 // NB://not* called by jpeg_abort or jpeg_destroy; surrounding
 // application must deal with any cleanup that should happen even
 // for error exit.
-METHODDEF(void)
+static void
 term_destination(j_compress_ptr cinfo)
 {
     my_dest_ptr dest = (my_dest_ptr)cinfo->dest;

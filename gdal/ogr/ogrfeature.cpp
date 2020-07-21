@@ -2199,8 +2199,8 @@ double OGR_F_GetFieldAsDouble( OGRFeatureH hFeat, int iField )
 /*                      OGRFeatureFormatDateTimeBuffer()                */
 /************************************************************************/
 
-constexpr int TEMP_BUFFER_SIZE = 80;
-static void OGRFeatureFormatDateTimeBuffer( char szTempBuffer[TEMP_BUFFER_SIZE],
+static void OGRFeatureFormatDateTimeBuffer( char* szTempBuffer,
+                                            size_t nMaxSize,
                                             int nYear, int nMonth, int nDay,
                                             int nHour, int nMinute,
                                             float fSecond,
@@ -2208,7 +2208,7 @@ static void OGRFeatureFormatDateTimeBuffer( char szTempBuffer[TEMP_BUFFER_SIZE],
 {
     const int ms = OGR_GET_MS(fSecond);
     if( ms != 0 )
-        CPLsnprintf( szTempBuffer, TEMP_BUFFER_SIZE,
+        CPLsnprintf( szTempBuffer, nMaxSize,
                   "%04d/%02d/%02d %02d:%02d:%06.3f",
                   nYear,
                   nMonth,
@@ -2225,7 +2225,7 @@ static void OGRFeatureFormatDateTimeBuffer( char szTempBuffer[TEMP_BUFFER_SIZE],
                      "OGRFeatureFormatDateTimeBuffer: fSecond is invalid.  "
                      "Forcing '%f' to 0.0.", fSecond);
         }
-        snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
+        snprintf( szTempBuffer, nMaxSize,
                   "%04d/%02d/%02d %02d:%02d:%02d",
                   nYear,
                   nMonth,
@@ -2237,27 +2237,28 @@ static void OGRFeatureFormatDateTimeBuffer( char szTempBuffer[TEMP_BUFFER_SIZE],
 
     if( nTZFlag > 1 )
     {
+        char chSign;
         const int nOffset = (nTZFlag - 100) * 15;
         int nHours = static_cast<int>(nOffset / 60);  // Round towards zero.
         const int nMinutes = std::abs(nOffset - nHours * 60);
 
         if( nOffset < 0 )
         {
-            strcat( szTempBuffer, "-" );
+            chSign = '-';
             nHours = std::abs(nHours);
         }
         else
         {
-            strcat( szTempBuffer, "+" );
+            chSign = '+';
         }
 
         if( nMinutes == 0 )
             snprintf( szTempBuffer+strlen(szTempBuffer),
-                      TEMP_BUFFER_SIZE-strlen(szTempBuffer), "%02d", nHours );
+                      nMaxSize-strlen(szTempBuffer), "%c%02d", chSign, nHours );
         else
             snprintf( szTempBuffer+strlen(szTempBuffer),
-                      TEMP_BUFFER_SIZE-strlen(szTempBuffer),
-                      "%02d%02d", nHours, nMinutes );
+                      nMaxSize-strlen(szTempBuffer),
+                      "%c%02d%02d", chSign, nHours, nMinutes );
     }
 }
 
@@ -2297,8 +2298,6 @@ static void OGRFeatureFormatDateTimeBuffer( char szTempBuffer[TEMP_BUFFER_SIZE],
 const char *OGRFeature::GetFieldAsString( int iField ) const
 
 {
-    char szTempBuffer[TEMP_BUFFER_SIZE] = {};
-
     CPLFree(m_pszTmpFieldValue);
     m_pszTmpFieldValue = nullptr;
 
@@ -2309,11 +2308,12 @@ const char *OGRFeature::GetFieldAsString( int iField ) const
         switch( iSpecialField )
         {
           case SPF_FID:
-            CPLsnprintf( szTempBuffer, TEMP_BUFFER_SIZE, CPL_FRMT_GIB, GetFID() );
-            m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
-            if( m_pszTmpFieldValue == nullptr )
-                return "";
+          {
+            constexpr size_t MAX_SIZE = 20 + 1;
+            m_pszTmpFieldValue = static_cast<char*>(CPLMalloc( MAX_SIZE ));
+            CPLsnprintf( m_pszTmpFieldValue, MAX_SIZE, CPL_FRMT_GIB, GetFID() );
             return m_pszTmpFieldValue;
+          }
 
           case SPF_OGR_GEOMETRY:
             if( GetGeomFieldCount() > 0 && papoGeometries[0] != nullptr )
@@ -2340,16 +2340,17 @@ const char *OGRFeature::GetFieldAsString( int iField ) const
           }
 
           case SPF_OGR_GEOM_AREA:
+          {
             if( GetGeomFieldCount() == 0 || papoGeometries[0] == nullptr )
                 return "";
 
+            constexpr size_t MAX_SIZE = 20 + 1;
+            m_pszTmpFieldValue = static_cast<char*>(CPLMalloc( MAX_SIZE ));
             CPLsnprintf(
-                szTempBuffer, TEMP_BUFFER_SIZE, "%.16g",
+                m_pszTmpFieldValue, MAX_SIZE, "%.16g",
                 OGR_G_Area(OGRGeometry::ToHandle(papoGeometries[0])));
-            m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
-            if( m_pszTmpFieldValue == nullptr )
-                return "";
             return m_pszTmpFieldValue;
+          }
 
           default:
             return "";
@@ -2374,25 +2375,25 @@ const char *OGRFeature::GetFieldAsString( int iField ) const
     }
     else if( eType == OFTInteger )
     {
-        snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
+        constexpr size_t MAX_SIZE = 11 + 1;
+        m_pszTmpFieldValue = static_cast<char*>(CPLMalloc( MAX_SIZE ));
+        snprintf( m_pszTmpFieldValue, MAX_SIZE,
                   "%d", pauFields[iField].Integer );
-        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
-        if( m_pszTmpFieldValue == nullptr )
-            return "";
         return m_pszTmpFieldValue;
     }
     else if( eType == OFTInteger64 )
     {
-        CPLsnprintf( szTempBuffer, TEMP_BUFFER_SIZE,
+        constexpr size_t MAX_SIZE = 20 + 1;
+        m_pszTmpFieldValue = static_cast<char*>(CPLMalloc( MAX_SIZE ));
+        CPLsnprintf( m_pszTmpFieldValue, MAX_SIZE,
                   CPL_FRMT_GIB, pauFields[iField].Integer64 );
-        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
-        if( m_pszTmpFieldValue == nullptr )
-            return "";
         return m_pszTmpFieldValue;
     }
     else if( eType == OFTReal )
     {
-        char szFormat[64] = {};
+        char szFormat[32] = {};
+        constexpr int TEMP_BUFFER_SIZE = 80;
+        char szTempBuffer[TEMP_BUFFER_SIZE] = {};
 
         if( poFDefn->GetWidth() != 0 )
         {
@@ -2414,7 +2415,12 @@ const char *OGRFeature::GetFieldAsString( int iField ) const
     }
     else if( eType == OFTDateTime )
     {
-        OGRFeatureFormatDateTimeBuffer(szTempBuffer,
+        // "YYYY/MM/DD HH:MM:SS.sss+ZZ"
+        constexpr size_t EXTRA_SPACE_FOR_NEGATIVE_OR_LARGE_YEARS = 5;
+        constexpr size_t MAX_SIZE = 26 + EXTRA_SPACE_FOR_NEGATIVE_OR_LARGE_YEARS + 1;
+        m_pszTmpFieldValue = static_cast<char*>(CPLMalloc( MAX_SIZE ));
+        OGRFeatureFormatDateTimeBuffer(m_pszTmpFieldValue,
+                                       MAX_SIZE,
                                        pauFields[iField].Date.Year,
                                        pauFields[iField].Date.Month,
                                        pauFields[iField].Date.Day,
@@ -2423,73 +2429,58 @@ const char *OGRFeature::GetFieldAsString( int iField ) const
                                        pauFields[iField].Date.Second,
                                        pauFields[iField].Date.TZFlag );
 
-        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
-        if( m_pszTmpFieldValue == nullptr )
-            return "";
         return m_pszTmpFieldValue;
     }
     else if( eType == OFTDate )
     {
-        snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "%04d/%02d/%02d",
+        constexpr size_t EXTRA_SPACE_FOR_NEGATIVE_OR_LARGE_YEARS = 5;
+        constexpr size_t MAX_SIZE = 10 + EXTRA_SPACE_FOR_NEGATIVE_OR_LARGE_YEARS + 1;
+        m_pszTmpFieldValue = static_cast<char*>(CPLMalloc( MAX_SIZE ));
+        snprintf( m_pszTmpFieldValue, MAX_SIZE, "%04d/%02d/%02d",
                   pauFields[iField].Date.Year,
                   pauFields[iField].Date.Month,
                   pauFields[iField].Date.Day );
-
-        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
-        if( m_pszTmpFieldValue == nullptr )
-            return "";
         return m_pszTmpFieldValue;
     }
     else if( eType == OFTTime )
     {
+        constexpr size_t EXTRA_SPACE_TO_MAKE_GCC_HAPPY = 2;
+        constexpr size_t MAX_SIZE = 12 + EXTRA_SPACE_TO_MAKE_GCC_HAPPY + 1;
+        m_pszTmpFieldValue = static_cast<char*>(CPLMalloc( MAX_SIZE ));
         const int ms = OGR_GET_MS(pauFields[iField].Date.Second);
         if( ms != 0 || CPLIsNan(pauFields[iField].Date.Second) )
             snprintf(
-                szTempBuffer, TEMP_BUFFER_SIZE, "%02d:%02d:%06.3f",
+                m_pszTmpFieldValue, MAX_SIZE, "%02d:%02d:%06.3f",
                 pauFields[iField].Date.Hour,
                 pauFields[iField].Date.Minute,
                 pauFields[iField].Date.Second );
         else
             snprintf(
-                szTempBuffer, TEMP_BUFFER_SIZE, "%02d:%02d:%02d",
+                m_pszTmpFieldValue, MAX_SIZE, "%02d:%02d:%02d",
                 pauFields[iField].Date.Hour,
                 pauFields[iField].Date.Minute,
                 static_cast<int>(pauFields[iField].Date.Second) );
 
-        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
-        if( m_pszTmpFieldValue == nullptr )
-            return "";
         return m_pszTmpFieldValue;
     }
     else if( eType == OFTIntegerList )
     {
         char szItem[32] = {};
         const int nCount = pauFields[iField].IntegerList.nCount;
+        CPLString osBuffer;
 
-        snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "(%d:", nCount );
-        int i = 0;  // Used after for.
-        for( ; i < nCount; i++ )
+        osBuffer.Printf("(%d:", nCount );
+        for(int i = 0; i < nCount; i++ )
         {
             snprintf( szItem, sizeof(szItem), "%d",
                       pauFields[iField].IntegerList.paList[i] );
-            if( strlen(szTempBuffer) + strlen(szItem) + 6
-                >= sizeof(szTempBuffer) )
-            {
-                break;
-            }
-
             if( i > 0 )
-                strcat( szTempBuffer, "," );
-
-            strcat( szTempBuffer, szItem );
+                osBuffer += ',';
+            osBuffer += szItem;
         }
+        osBuffer += ')';
 
-        if( i < nCount )
-            strcat( szTempBuffer, ",...)" );
-        else
-            strcat( szTempBuffer, ")" );
-
-        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
+        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( osBuffer.c_str() );
         if( m_pszTmpFieldValue == nullptr )
             return "";
         return m_pszTmpFieldValue;
@@ -2498,31 +2489,20 @@ const char *OGRFeature::GetFieldAsString( int iField ) const
     {
         char szItem[32] = {};
         const int nCount = pauFields[iField].Integer64List.nCount;
+        CPLString osBuffer;
 
-        snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "(%d:", nCount );
-        int i = 0;  // Used after for.
-        for( ; i < nCount; i++ )
+        osBuffer.Printf("(%d:", nCount );
+        for(int i = 0; i < nCount; i++ )
         {
             CPLsnprintf( szItem, sizeof(szItem), CPL_FRMT_GIB,
                       pauFields[iField].Integer64List.paList[i] );
-            if( strlen(szTempBuffer) + strlen(szItem) + 6
-                >= sizeof(szTempBuffer) )
-            {
-                break;
-            }
-
             if( i > 0 )
-                strcat( szTempBuffer, "," );
-
-            strcat( szTempBuffer, szItem );
+                osBuffer += ',';
+            osBuffer += szItem;
         }
+        osBuffer += ')';
 
-        if( i < nCount )
-            strcat( szTempBuffer, ",...)" );
-        else
-            strcat( szTempBuffer, ")" );
-
-        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
+        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( osBuffer.c_str() );
         if( m_pszTmpFieldValue == nullptr )
             return "";
         return m_pszTmpFieldValue;
@@ -2541,30 +2521,20 @@ const char *OGRFeature::GetFieldAsString( int iField ) const
         else
             strcpy( szFormat, "%.16g" );
 
-        snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "(%d:", nCount );
-        int i = 0;  // Used after for.
-        for( ; i < nCount; i++ )
+        CPLString osBuffer;
+
+        osBuffer.Printf("(%d:", nCount );
+        for(int i = 0; i < nCount; i++ )
         {
             CPLsnprintf( szItem, sizeof(szItem), szFormat,
                       pauFields[iField].RealList.paList[i] );
-            if( strlen(szTempBuffer) + strlen(szItem) + 6
-                >= sizeof(szTempBuffer) )
-            {
-                break;
-            }
-
             if( i > 0 )
-                strcat( szTempBuffer, "," );
-
-            strcat( szTempBuffer, szItem );
+                osBuffer += ',';
+            osBuffer += szItem;
         }
+        osBuffer += ')';
 
-        if( i < nCount )
-            strcat( szTempBuffer, ",...)" );
-        else
-            strcat( szTempBuffer, ")" );
-
-        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
+        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( osBuffer.c_str() );
         if( m_pszTmpFieldValue == nullptr )
             return "";
         return m_pszTmpFieldValue;
@@ -2573,52 +2543,28 @@ const char *OGRFeature::GetFieldAsString( int iField ) const
     {
         const int nCount = pauFields[iField].StringList.nCount;
 
-        snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "(%d:", nCount );
-        int i = 0;  // Used after for.
-        for( ; i < nCount; i++ )
+        CPLString osBuffer;
+
+        osBuffer.Printf("(%d:", nCount );
+        for(int i = 0; i < nCount; i++ )
         {
             const char *pszItem = pauFields[iField].StringList.paList[i];
-
-            if( strlen(szTempBuffer) + strlen(pszItem) + 6
-                >= sizeof(szTempBuffer) )
-            {
-                break;
-            }
-
             if( i > 0 )
-                strcat( szTempBuffer, "," );
-
-            strcat( szTempBuffer, pszItem );
+                osBuffer += ',';
+            osBuffer += pszItem;
         }
+        osBuffer += ')';
 
-        if( i < nCount )
-            strcat( szTempBuffer, ",...)" );
-        else
-            strcat( szTempBuffer, ")" );
-
-        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
+        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( osBuffer.c_str() );
         if( m_pszTmpFieldValue == nullptr )
             return "";
         return m_pszTmpFieldValue;
     }
     else if( eType == OFTBinary )
     {
-        int nCount = pauFields[iField].Binary.nCount;
-
-        if( nCount > static_cast<int>(sizeof(szTempBuffer)) / 2 - 4 )
-            nCount = sizeof(szTempBuffer) / 2 - 4;
-
-        char *pszHex =
+        const int nCount = pauFields[iField].Binary.nCount;
+        m_pszTmpFieldValue =
             CPLBinaryToHex( nCount, pauFields[iField].Binary.paData );
-
-        memcpy( szTempBuffer, pszHex, 2 * nCount );
-        szTempBuffer[nCount*2] = '\0';
-        if( nCount < pauFields[iField].Binary.nCount )
-            strcat( szTempBuffer, "..." );
-
-        CPLFree( pszHex );
-
-        m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
         if( m_pszTmpFieldValue == nullptr )
             return "";
         return m_pszTmpFieldValue;
@@ -4888,8 +4834,11 @@ void OGRFeature::SetField( int iField, int nYear, int nMonth, int nDay,
     }
     else if( eType == OFTString || eType == OFTStringList )
     {
-        char szTempBuffer[TEMP_BUFFER_SIZE] = {};
+        // "YYYY/MM/DD HH:MM:SS.sss+ZZ"
+        constexpr size_t MAX_SIZE = 26 + 1;
+        char szTempBuffer[MAX_SIZE] = {};
         OGRFeatureFormatDateTimeBuffer(szTempBuffer,
+                                       MAX_SIZE,
                                        nYear,
                                        nMonth,
                                        nDay,

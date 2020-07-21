@@ -33,8 +33,6 @@ sudo chroot "$chroot" sh -c "cd $PWD/proj && make -j3 install && mv /usr/local/l
 
 chroot "$chroot" sh -c "cd $PWD/gdal && CCACHE_CPP2=yes CC='ccache $PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang' CXX='ccache $PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang' LDFLAGS='-lstdc++' ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-epsilon --with-proj=/usr/local --with-poppler --with-podofo --with-hdf5 --with-dods-root=/usr --with-sosi --with-mysql --with-rasterlite2 --with-fgdb=$PWD/FileGDB_API-64gcc51 --with-pdfium"
 
-chroot "$chroot" bash -c "cd $PWD/gdal && scripts/cppcheck.sh"
-
 chroot "$chroot" sh -c "cd $PWD/gdal && make doxygen >docs_log.txt 2>&1"
 chroot "$chroot" sh -c "cd $PWD/gdal && if grep -i warning docs_log.txt | grep -v -e russian -e brazilian -e setlocale -e 'has become obsolete' -e 'To avoid this warning'; then echo 'Doxygen warnings found' && cat docs_log.txt && /bin/false; else echo 'No Doxygen warnings found'; fi"
 #chroot "$chroot" sh -c "cd $PWD/gdal && make man >man_log.txt 2>&1"

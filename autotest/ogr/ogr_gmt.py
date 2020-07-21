@@ -34,17 +34,16 @@ import gdaltest
 import ogrtest
 from osgeo import gdal
 from osgeo import ogr
+import pytest
+
+
+pytestmark = pytest.mark.require_driver('GMT')
 
 ###############################################################################
-# Open Memory datasource.
-
-
-def test_ogr_gmt_1():
-
-    gmt_drv = ogr.GetDriverByName('GMT')
-    gdaltest.gmt_ds = gmt_drv.CreateDataSource('tmp/tpoly.gmt')
-
-    assert gdaltest.gmt_ds is not None
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
+    yield
+    gdaltest.clean_tmp()
 
 ###############################################################################
 # Create table from data/poly.shp
@@ -52,13 +51,16 @@ def test_ogr_gmt_1():
 
 def test_ogr_gmt_2():
 
+    gmt_drv = ogr.GetDriverByName('GMT')
+    gmt_ds = gmt_drv.CreateDataSource('tmp/tpoly.gmt')
+
     #######################################################
     # Create gmtory Layer
-    gdaltest.gmt_lyr = gdaltest.gmt_ds.CreateLayer('tpoly')
+    gmt_lyr = gmt_ds.CreateLayer('tpoly')
 
     #######################################################
     # Setup Schema
-    ogrtest.quick_create_layer_def(gdaltest.gmt_lyr,
+    ogrtest.quick_create_layer_def(gmt_lyr,
                                    [('AREA', ogr.OFTReal),
                                     ('EAS_ID', ogr.OFTInteger),
                                     ('PRFEDEA', ogr.OFTString)])
@@ -66,46 +68,39 @@ def test_ogr_gmt_2():
     #######################################################
     # Copy in poly.shp
 
-    dst_feat = ogr.Feature(feature_def=gdaltest.gmt_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=gmt_lyr.GetLayerDefn())
 
     shp_ds = ogr.Open('data/poly.shp')
-    gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
 
     feat = shp_lyr.GetNextFeature()
-    gdaltest.poly_feat = []
+    poly_feat = []
 
     while feat is not None:
 
-        gdaltest.poly_feat.append(feat)
+        poly_feat.append(feat)
 
         dst_feat.SetFrom(feat)
-        gdaltest.gmt_lyr.CreateFeature(dst_feat)
+        gmt_lyr.CreateFeature(dst_feat)
 
         feat = shp_lyr.GetNextFeature()
 
-    gdaltest.gmt_lyr = None
-    gdaltest.gmt_ds = None
 
-###############################################################################
-# Verify that stuff we just wrote is still OK.
+    # Verify that stuff we just wrote is still OK.
 
-
-def test_ogr_gmt_3():
-
-    gdaltest.gmt_ds = ogr.Open('tmp/tpoly.gmt')
-    gdaltest.gmt_lyr = gdaltest.gmt_ds.GetLayer(0)
+    gmt_ds = ogr.Open('tmp/tpoly.gmt')
+    gmt_lyr = gmt_ds.GetLayer(0)
 
     expect = [168, 169, 166, 158, 165]
 
-    gdaltest.gmt_lyr.SetAttributeFilter('eas_id < 170')
-    tr = ogrtest.check_features_against_list(gdaltest.gmt_lyr,
+    gmt_lyr.SetAttributeFilter('eas_id < 170')
+    tr = ogrtest.check_features_against_list(gmt_lyr,
                                              'eas_id', expect)
-    gdaltest.gmt_lyr.SetAttributeFilter(None)
+    gmt_lyr.SetAttributeFilter(None)
 
-    for i in range(len(gdaltest.poly_feat)):
-        orig_feat = gdaltest.poly_feat[i]
-        read_feat = gdaltest.gmt_lyr.GetNextFeature()
+    for i in range(len(poly_feat)):
+        orig_feat = poly_feat[i]
+        read_feat = gmt_lyr.GetNextFeature()
 
         assert (ogrtest.check_feature_geometry(read_feat, orig_feat.GetGeometryRef(),
                                           max_error=0.000000001) == 0)
@@ -113,11 +108,6 @@ def test_ogr_gmt_3():
         for fld in range(3):
             assert orig_feat.GetField(fld) == read_feat.GetField(fld), \
                 ('Attribute %d does not match' % fld)
-
-    gdaltest.poly_feat = None
-    gdaltest.shp_ds = None
-    gdaltest.gmt_lyr = None
-    gdaltest.gmt_ds = None
 
     assert tr
 
@@ -127,7 +117,7 @@ def test_ogr_gmt_3():
 
 def test_ogr_gmt_4():
 
-    ds = ogr.Open('data/test_multi.gmt')
+    ds = ogr.Open('data/gmt/test_multi.gmt')
     lyr = ds.GetLayer(0)
 
     assert lyr.GetLayerDefn().GetGeomType() == ogr.wkbMultiLineString, \
@@ -158,33 +148,33 @@ def test_ogr_gmt_5():
     #######################################################
     # Create gmtory Layer
     gmt_drv = ogr.GetDriverByName('GMT')
-    gdaltest.gmt_ds = gmt_drv.CreateDataSource('tmp/mpoly.gmt')
-    gdaltest.gmt_lyr = gdaltest.gmt_ds.CreateLayer('mpoly')
+    gmt_ds = gmt_drv.CreateDataSource('tmp/mpoly.gmt')
+    gmt_lyr = gmt_ds.CreateLayer('mpoly')
 
     #######################################################
     # Setup Schema
-    ogrtest.quick_create_layer_def(gdaltest.gmt_lyr,
+    ogrtest.quick_create_layer_def(gmt_lyr,
                                    [('ID', ogr.OFTInteger)])
 
     #######################################################
     # Write a first multipolygon
 
-    dst_feat = ogr.Feature(feature_def=gdaltest.gmt_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=gmt_lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(
         ogr.CreateGeometryFromWkt('MULTIPOLYGON(((0 0,0 10,10 10,0 10,0 0),(3 3,4 4, 3 4,3 3)),((12 0,14 0,12 3,12 0)))'))
     dst_feat.SetField('ID', 15)
     gdal.SetConfigOption('GMT_USE_TAB', 'TRUE')  # Ticket #6453
-    gdaltest.gmt_lyr.CreateFeature(dst_feat)
+    gmt_lyr.CreateFeature(dst_feat)
     gdal.SetConfigOption('GMT_USE_TAB', None)
 
-    dst_feat = ogr.Feature(feature_def=gdaltest.gmt_lyr.GetLayerDefn())
+    dst_feat = ogr.Feature(feature_def=gmt_lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(
         ogr.CreateGeometryFromWkt('MULTIPOLYGON(((30 20,40 20,30 30,30 20)))'))
     dst_feat.SetField('ID', 16)
-    gdaltest.gmt_lyr.CreateFeature(dst_feat)
+    gmt_lyr.CreateFeature(dst_feat)
 
-    gdaltest.gmt_lyr = None
-    gdaltest.gmt_ds = None
+    gmt_lyr = None
+    gmt_ds = None
 
     # Reopen.
 
@@ -221,17 +211,3 @@ def test_ogr_gmt_coord_only():
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         assert not ogrtest.check_feature_geometry(f, 'POINT Z (1 2 3)'), f.GetGeometryRef().ExportToIsoWkt()
-
-###############################################################################
-#
-
-def test_ogr_gmt_cleanup():
-
-    if gdaltest.gmt_ds is not None:
-        gdaltest.gmt_lyr = None
-        gdaltest.gmt_ds = None
-
-    gdaltest.clean_tmp()
-
-
-

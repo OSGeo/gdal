@@ -77,6 +77,7 @@ void OGRGeoPackageLayer::ResetReading()
 {
     ClearStatement();
     iNextShapeId = 0;
+    m_bEOF = false;
 }
 
 /************************************************************************/
@@ -101,15 +102,18 @@ void OGRGeoPackageLayer::ClearStatement()
 OGRFeature *OGRGeoPackageLayer::GetNextFeature()
 
 {
+    if( m_bEOF )
+        return nullptr;
+
+    if( m_poQueryStatement == nullptr )
+    {
+        ResetStatement();
+        if (m_poQueryStatement == nullptr)
+            return nullptr;
+    }
+
     for( ; true; )
     {
-        if( m_poQueryStatement == nullptr )
-        {
-            ResetStatement();
-            if (m_poQueryStatement == nullptr)
-                return nullptr;
-        }
-
     /* -------------------------------------------------------------------- */
     /*      Fetch a record (unless otherwise instructed)                    */
     /* -------------------------------------------------------------------- */
@@ -127,6 +131,7 @@ OGRFeature *OGRGeoPackageLayer::GetNextFeature()
                 }
 
                 ClearStatement();
+                m_bEOF = true;
 
                 return nullptr;
             }

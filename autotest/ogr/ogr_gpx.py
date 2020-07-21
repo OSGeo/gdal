@@ -37,32 +37,33 @@ from osgeo import ogr
 from osgeo import gdal
 import pytest
 
+pytestmark = pytest.mark.require_driver('GPX')
 
-def test_ogr_gpx_init():
-    gdaltest.gpx_ds = None
 
-    gdaltest.gpx_ds = ogr.Open('data/test.gpx')
-    if gdaltest.gpx_ds is None:
-        gdaltest.have_gpx = 0
-    else:
-        gdaltest.have_gpx = 1
+###############################################################################
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
 
-    if not gdaltest.have_gpx:
+    if ogr.Open('data/gpx/test.gpx') is None:
         pytest.skip()
 
-    assert gdaltest.gpx_ds.GetLayerCount() == 5, 'wrong number of layers'
+    yield
+
+    try:
+        os.remove('tmp/gpx.gpx')
+    except OSError:
+        pass
 
 ###############################################################################
 # Test waypoints gpx layer.
 
 
 def test_ogr_gpx_1():
-    if not gdaltest.have_gpx:
-        pytest.skip()
+    gpx_ds = ogr.Open('data/gpx/test.gpx')
 
-    assert gdaltest.gpx_ds is not None
+    assert gpx_ds.GetLayerCount() == 5, 'wrong number of layers'
 
-    lyr = gdaltest.gpx_ds.GetLayerByName('waypoints')
+    lyr = gpx_ds.GetLayerByName('waypoints')
 
     expect = [2, None]
 
@@ -140,12 +141,9 @@ def test_ogr_gpx_1():
 
 
 def test_ogr_gpx_2():
-    if not gdaltest.have_gpx:
-        pytest.skip()
+    gpx_ds = ogr.Open('data/gpx/test.gpx')
 
-    assert gdaltest.gpx_ds is not None
-
-    lyr = gdaltest.gpx_ds.GetLayerByName('routes')
+    lyr = gpx_ds.GetLayerByName('routes')
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
@@ -159,12 +157,9 @@ def test_ogr_gpx_2():
 # Test route_points gpx layer.
 
 def test_ogr_gpx_3():
-    if not gdaltest.have_gpx:
-        pytest.skip()
+    gpx_ds = ogr.Open('data/gpx/test.gpx')
 
-    assert gdaltest.gpx_ds is not None
-
-    lyr = gdaltest.gpx_ds.GetLayerByName('route_points')
+    lyr = gpx_ds.GetLayerByName('route_points')
 
     expect = ['route point name', None, None]
 
@@ -180,12 +175,9 @@ def test_ogr_gpx_3():
 
 
 def test_ogr_gpx_4():
-    if not gdaltest.have_gpx:
-        pytest.skip()
+    gpx_ds = ogr.Open('data/gpx/test.gpx')
 
-    assert gdaltest.gpx_ds is not None
-
-    lyr = gdaltest.gpx_ds.GetLayerByName('tracks')
+    lyr = gpx_ds.GetLayerByName('tracks')
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
@@ -203,12 +195,9 @@ def test_ogr_gpx_4():
 
 
 def test_ogr_gpx_5():
-    if not gdaltest.have_gpx:
-        pytest.skip()
+    gpx_ds = ogr.Open('data/gpx/test.gpx')
 
-    assert gdaltest.gpx_ds is not None
-
-    lyr = gdaltest.gpx_ds.GetLayerByName('track_points')
+    lyr = gpx_ds.GetLayerByName('track_points')
 
     expect = ['track point name', None, None, None]
 
@@ -224,12 +213,7 @@ def test_ogr_gpx_5():
 
 
 def test_ogr_gpx_6():
-    if not gdaltest.have_gpx:
-        pytest.skip()
-
-    if gdaltest.gpx_ds is None:
-        pytest.skip()
-
+    gpx_ds = ogr.Open('data/gpx/test.gpx')
     try:
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         ogr.GetDriverByName('CSV').DeleteDataSource('tmp/gpx.gpx')
@@ -240,7 +224,7 @@ def test_ogr_gpx_6():
     co_opts = []
 
     # Duplicate waypoints
-    gpx_lyr = gdaltest.gpx_ds.GetLayerByName('waypoints')
+    gpx_lyr = gpx_ds.GetLayerByName('waypoints')
 
     gpx2_ds = ogr.GetDriverByName('GPX').CreateDataSource('tmp/gpx.gpx',
                                                           options=co_opts)
@@ -259,7 +243,7 @@ def test_ogr_gpx_6():
         feat = gpx_lyr.GetNextFeature()
 
     # Duplicate routes
-    gpx_lyr = gdaltest.gpx_ds.GetLayerByName('routes')
+    gpx_lyr = gpx_ds.GetLayerByName('routes')
 
     gpx2_lyr = gpx2_ds.CreateLayer('routes', geom_type=ogr.wkbLineString)
 
@@ -275,7 +259,7 @@ def test_ogr_gpx_6():
         feat = gpx_lyr.GetNextFeature()
 
     # Duplicate tracks
-    gpx_lyr = gdaltest.gpx_ds.GetLayerByName('tracks')
+    gpx_lyr = gpx_ds.GetLayerByName('tracks')
 
     gpx2_lyr = gpx2_ds.CreateLayer('tracks', geom_type=ogr.wkbMultiLineString)
 
@@ -290,25 +274,13 @@ def test_ogr_gpx_6():
 
         feat = gpx_lyr.GetNextFeature()
 
-    gpx_lyr = None
-    gpx2_lyr = None
-
-    gpx2_ds = None
-    gdaltest.gpx_ds = None
-
-    gdaltest.gpx_ds = ogr.Open('tmp/gpx.gpx')
-
 ###############################################################################
 # Output extra fields as <extensions>.
 
 
 def test_ogr_gpx_7():
-    if not gdaltest.have_gpx:
-        pytest.skip()
 
-    gdaltest.gpx_ds = None
-
-    bna_ds = ogr.Open('data/bna_for_gpx.bna')
+    bna_ds = ogr.Open('data/gpx/bna_for_gpx.bna')
 
     try:
         os.remove('tmp/gpx.gpx')
@@ -320,10 +292,10 @@ def test_ogr_gpx_7():
     # Duplicate waypoints
     bna_lyr = bna_ds.GetLayerByName('bna_for_gpx_points')
 
-    gdaltest.gpx_ds = ogr.GetDriverByName('GPX').CreateDataSource('tmp/gpx.gpx',
+    gpx_ds = ogr.GetDriverByName('GPX').CreateDataSource('tmp/gpx.gpx',
                                                                   options=co_opts)
 
-    gpx_lyr = gdaltest.gpx_ds.CreateLayer('waypoints', geom_type=ogr.wkbPoint)
+    gpx_lyr = gpx_ds.CreateLayer('waypoints', geom_type=ogr.wkbPoint)
 
     bna_lyr.ResetReading()
 
@@ -340,11 +312,11 @@ def test_ogr_gpx_7():
 
         feat = bna_lyr.GetNextFeature()
 
-    gdaltest.gpx_ds = None
+    gpx_ds = None
 
 # Now check that the extensions fields have been well written
-    gdaltest.gpx_ds = ogr.Open('tmp/gpx.gpx')
-    gpx_lyr = gdaltest.gpx_ds.GetLayerByName('waypoints')
+    gpx_ds = ogr.Open('tmp/gpx.gpx')
+    gpx_lyr = gpx_ds.GetLayerByName('waypoints')
 
     expect = ['PID1', 'PID2']
 
@@ -370,19 +342,15 @@ def test_ogr_gpx_7():
 
 
 def test_ogr_gpx_8():
-    if not gdaltest.have_gpx:
-        pytest.skip()
-
-    gdaltest.gpx_ds = None
 
     try:
         os.remove('tmp/gpx.gpx')
     except OSError:
         pass
 
-    gdaltest.gpx_ds = ogr.GetDriverByName('GPX').CreateDataSource('tmp/gpx.gpx', options=['LINEFORMAT=LF'])
+    gpx_ds = ogr.GetDriverByName('GPX').CreateDataSource('tmp/gpx.gpx', options=['LINEFORMAT=LF'])
 
-    lyr = gdaltest.gpx_ds.CreateLayer('route_points', geom_type=ogr.wkbPoint)
+    lyr = gpx_ds.CreateLayer('route_points', geom_type=ogr.wkbPoint)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
@@ -411,7 +379,7 @@ def test_ogr_gpx_8():
     feat.SetGeometry(geom)
     lyr.CreateFeature(feat)
 
-    lyr = gdaltest.gpx_ds.CreateLayer('track_points', geom_type=ogr.wkbPoint)
+    lyr = gpx_ds.CreateLayer('track_points', geom_type=ogr.wkbPoint)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
@@ -444,10 +412,10 @@ def test_ogr_gpx_8():
     feat.SetGeometry(geom)
     lyr.CreateFeature(feat)
 
-    gdaltest.gpx_ds = None
+    gpx_ds = None
 
     f = open('tmp/gpx.gpx', 'rb')
-    f_ref = open('data/ogr_gpx_8_ref.txt', 'rb')
+    f_ref = open('data/gpx/ogr_gpx_8_ref.txt', 'rb')
     f_content = f.read()
     f_ref_content = f_ref.read()
     f.close()
@@ -460,28 +428,10 @@ def test_ogr_gpx_8():
 
 
 def test_ogr_gpx_9():
-    if not gdaltest.have_gpx:
-        pytest.skip()
 
-    ds = ogr.Open('data/track_with_time_extension.gpx')
+    ds = ogr.Open('data/gpx/track_with_time_extension.gpx')
     lyr = ds.GetLayerByName('tracks')
     f = lyr.GetNextFeature()
     if f['time'] != '2015-10-11T15:06:33Z':
         f.DumpReadable()
         pytest.fail('did not get expected result')
-
-    
-###############################################################################
-#
-
-
-def test_ogr_gpx_cleanup():
-
-    gdaltest.gpx_ds = None
-    try:
-        os.remove('tmp/gpx.gpx')
-    except OSError:
-        pass
-    
-
-

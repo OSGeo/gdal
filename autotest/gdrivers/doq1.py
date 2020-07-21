@@ -39,7 +39,7 @@ import gdaltest
 
 def test_doq1_1():
 
-    tst = gdaltest.GDALTest('DOQ1', 'fakedoq1.doq', 1, 1)
+    tst = gdaltest.GDALTest('DOQ1', 'doq1/fakedoq1.doq', 1, 1)
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = tst.testOpen()
     gdal.PopErrorHandler()

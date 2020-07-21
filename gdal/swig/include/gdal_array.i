@@ -63,6 +63,19 @@
 typedef int CPLErr;
 typedef int GDALRIOResampleAlg;
 
+%typemap(check) GDALRIOResampleAlg
+{
+    // %typemap(check) GDALRIOResampleAlg
+    // This check is a bit too late, since $1 has already been cast
+    // to GDALRIOResampleAlg, so we are a bit in undefined behaviour land,
+    // but compilers should hopefully do the right thing
+    if( static_cast<int>($1) < 0 ||
+        static_cast<int>($1) > static_cast<int>(GRIORA_LAST) )
+    {
+        SWIG_exception(SWIG_ValueError, "Invalid value for resample_alg");
+    }
+}
+
 %include "python_strings.i"
 
 %{
@@ -1418,10 +1431,12 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
         interleave = True
         xdim = 2
         ydim = 1
+        banddim = 0
     elif interleave == 'pixel':
         interleave = False
         xdim = 1
         ydim = 0
+        banddim = 2
     else:
         raise ValueError('Interleave should be band or pixel')
 
@@ -1469,8 +1484,8 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
             raise ValueError('Specified buf_xsize not consistent with array shape')
         if buf_ysize is not None and buf_ysize != shape_buf_ysize:
             raise ValueError('Specified buf_ysize not consistent with array shape')
-        if buf_obj.shape[0] != ds.RasterCount:
-            raise ValueError('Array should have space for %d bands' % ds.RasterCount)
+        if buf_obj.shape[banddim] != ds.RasterCount:
+            raise ValueError('Dimension %d of array should have size %d to store bands)' % (banddim, ds.RasterCount))
 
         datatype = NumericTypeCodeToGDALTypeCode(buf_obj.dtype.type)
         if not datatype:

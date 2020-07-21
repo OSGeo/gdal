@@ -59,6 +59,58 @@ hDefn:  handle to the field definition.
 
 the name of the field definition. ";
 
+%feature("docstring")  SetAlternativeName "void
+OGR_Fld_SetAlternativeName(OGRFieldDefnH hDefn, const char
+*pszAlternativeName)
+
+Reset the alternative name (or \"alias\") for this field.
+
+The alternative name is an optional attribute for a field which can
+provide a more user-friendly, descriptive name of a field which is not
+subject to the usual naming constraints defined by the data provider.
+
+This is a metadata style attribute only: the alternative name cannot
+be used in place of the actual field name during SQL queries or other
+field name dependent API calls.
+
+This function is the same as the CPP method
+OGRFieldDefn::SetAlternativeName().
+
+Parameters:
+-----------
+
+hDefn:  handle to the field definition to apply the new alternative
+name to.
+
+pszAlternativeName:  the new alternative name to apply.
+
+GDAL 3.2 ";
+
+%feature("docstring")  GetAlternativeNameRef "const char*
+OGR_Fld_GetAlternativeNameRef(OGRFieldDefnH hDefn)
+
+Fetch the alternative name (or \"alias\") for this field.
+
+The alternative name is an optional attribute for a field which can
+provide a more user-friendly, descriptive name of a field which is not
+subject to the usual naming constraints defined by the data provider.
+
+This is a metadata style attribute only: the alternative name cannot
+be used in place of the actual field name during SQL queries or other
+field name dependent API calls.
+
+This function is the same as the CPP method
+OGRFieldDefn::GetAlternativeNameRef().
+
+Parameters:
+-----------
+
+hDefn:  handle to the field definition.
+
+the alternative name of the field definition.
+
+GDAL 3.2 ";
+
 %feature("docstring")  GetType "OGRFieldType
 OGR_Fld_GetType(OGRFieldDefnH hDefn)
 
@@ -147,7 +199,7 @@ expression (that might be ignored by other drivers). For a datetime
 literal value, format should be 'YYYY/MM/DD HH:MM:SS[.sss]'
 (considered as UTC time).
 
-Drivers that support writing DEFAULT clauses will advertize the
+Drivers that support writing DEFAULT clauses will advertise the
 GDAL_DCAP_DEFAULT_FIELDS driver metadata item.
 
 This function is the same as the C++ method
@@ -431,7 +483,7 @@ Set whether this field can receive null values.
 By default, fields are nullable, so this method is generally called
 with FALSE to set a not-null constraint.
 
-Drivers that support writing not-null constraint will advertize the
+Drivers that support writing not-null constraint will advertise the
 GDAL_DCAP_NOTNULL_FIELDS driver metadata item.
 
 This method is the same as the C++ method OGRFieldDefn::SetNullable().
@@ -444,6 +496,47 @@ hDefn:  handle to the field definition
 bNullableIn:  FALSE if the field must have a not-null constraint.
 
 GDAL 2.0 ";
+
+%feature("docstring")  IsUnique "int OGR_Fld_IsUnique(OGRFieldDefnH
+hDefn)
+
+Return whether this field has a unique constraint.
+
+By default, fields have no unique constraint.
+
+This method is the same as the C++ method OGRFieldDefn::IsUnique().
+
+Parameters:
+-----------
+
+hDefn:  handle to the field definition
+
+TRUE if the field has a unique constraint.
+
+GDAL 3.2 ";
+
+%feature("docstring")  SetUnique "void
+OGR_Fld_SetUnique(OGRFieldDefnH hDefn, int bUniqueIn)
+
+Set whether this field has a unique constraint.
+
+By default, fields have no unique constraint, so this method is
+generally called with TRUE to set a unique constraint.
+
+Drivers that support writing unique constraint will advertise the
+GDAL_DCAP_UNIQUE_FIELDS driver metadata item. field can receive null
+values.
+
+This method is the same as the C++ method OGRFieldDefn::SetUnique().
+
+Parameters:
+-----------
+
+hDefn:  handle to the field definition
+
+bUniqueIn:  TRUE if the field must have a unique constraint.
+
+GDAL 3.2 ";
 
 %feature("docstring")  OGRUpdateFieldType "void
 OGRUpdateFieldType(OGRFieldDefn *poFDefn, OGRFieldType eNewType,

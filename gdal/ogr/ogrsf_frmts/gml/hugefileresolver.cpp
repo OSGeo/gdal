@@ -997,7 +997,7 @@ static void gmlHugeFileHrefReset( huge_helper *helper )
     helper->pLastHref = nullptr;
 }
 
-static int gmlHugeFileHrefCheck( huge_helper *helper )
+static bool gmlHugeFileHrefCheck( huge_helper *helper )
 {
     // Testing for unresolved items.
     bool bError = false;
@@ -1541,7 +1541,7 @@ static struct huge_parent *gmlHugeFindParent( huge_helper *helper,
     return pItem;
 }
 
-static int gmlHugeSetChild( struct huge_parent *pParent,
+static bool gmlHugeSetChild( struct huge_parent *pParent,
                             struct huge_href *pItem )
 {
     // Setting a Child Node to be rewritten.
@@ -1558,7 +1558,7 @@ static int gmlHugeSetChild( struct huge_parent *pParent,
     return false;
 }
 
-static int gmlHugeResolveEdges( CPL_UNUSED huge_helper *helper,
+static bool gmlHugeResolveEdges( CPL_UNUSED huge_helper *helper,
                                 CPL_UNUSED CPLXMLNode *psNode,
                                 sqlite3 *hDB )
 {
@@ -1732,6 +1732,7 @@ static bool gmlHugeFileWriteResolved( huge_helper *helper,
 
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
     VSIFPrintfL(fp, "<ResolvedTopoFeatureCollection  "
+                    "xmlns:xlink=\"http://www.w3.org/1999/xlink\" "
                     "xmlns:gml=\"http://www.opengis.net/gml\">\n");
     VSIFPrintfL(fp, "  <ResolvedTopoFeatureMembers>\n");
 

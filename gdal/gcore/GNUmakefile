@@ -9,12 +9,13 @@ OBJ	=	gdalmultidim.o gdalopeninfo.o gdaldrivermanager.o gdaldriver.o gdaldataset
 		gdal_rat.o gdalpamproxydb.o \
                 gdalallvalidmaskband.o gdalnodatamaskband.o \
 		gdalproxydataset.o gdalproxypool.o gdaldefaultasync.o \
-		gdalnodatavaluesmaskband.o gdaldllmain.o gdalexif.o gdalclientserver.o \
+		gdalnodatavaluesmaskband.o gdaldllmain.o gdalexif.o \
 		gdalgeorefpamdataset.o gdaljp2abstractdataset.o gdalvirtualmem.o \
 		gdaloverviewdataset.o gdalrescaledalphaband.o gdaljp2structure.o \
 		gdal_mdreader.o gdaljp2metadatagenerator.o gdalabstractbandblockcache.o \
 		gdalarraybandblockcache.o gdalhashsetbandblockcache.o rawdataset.o \
-		gdalpython.o gdalpythondriverloader.o
+		gdalpython.o gdalpythondriverloader.o tilematrixset.o \
+		gdal_thread_pool.o
 
 CPPFLAGS	:=	 -I../frmts/gtiff -I../frmts/mem -I../frmts/vrt -I../ogr -I../ogr/ogrsf_frmts/generic -I../gnm/ -I../gnm/gnm_frmts/ $(JSON_INCLUDE) -I../ogr/ogrsf_frmts/geojson $(CPPFLAGS) $(PAM_SETTING) $(XTRA_OPT)
 
@@ -28,6 +29,18 @@ endif
 
 ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	$(CPPFLAGS) -DHAVE_GEOS=1 $(GEOS_CFLAGS)
+endif
+
+#nasakeywordhandler is used by pds and hdf4
+compile_nasakeywordhandler = no
+ifeq ($(HAVE_HDF4),yes)
+  compile_nasakeywordhandler = yes
+endif
+ifeq ($(shell echo $(GDAL_FORMATS) | grep -w -o pds),pds)
+  compile_nasakeywordhandler = yes
+endif
+ifeq ($(compile_nasakeywordhandler),yes)
+    OBJ += nasakeywordhandler.o
 endif
 
 CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS) $(WARN_OLD_STYLE_CAST) $(CXXFLAGS)

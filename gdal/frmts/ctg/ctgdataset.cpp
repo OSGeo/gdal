@@ -354,7 +354,7 @@ int CTGDataset::ReadImagery()
 
 int CTGDataset::Identify( GDALOpenInfo * poOpenInfo )
 {
-    CPLString osFilename(poOpenInfo->pszFilename);
+    CPLString osFilename; // let in that scope
 
     GDALOpenInfo* poOpenInfoToDelete = nullptr;
     /*  GZipped grid_cell.gz files are common, so automagically open them */

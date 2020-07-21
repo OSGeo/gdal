@@ -92,7 +92,7 @@ static const char* const szOpenOptionList =
 #elif defined(HAVE_PODOFO)
   "default='PODOFO'"
 #endif  // ~ default PDF_LIB
-  "alt_config_option='GDAL_PDF_LIB'>"
+  " alt_config_option='GDAL_PDF_LIB'>"
 #if defined(HAVE_POPPLER)
 "     <Value>POPPLER</Value>\n"
 #endif  // HAVE_POPPLER
@@ -1549,7 +1549,7 @@ public:
             // but we set a special flag to allow vector&raster operations so
             // that the rendering will happen in the next phase
             if( bTemporaryEnableVectorForTextStroking )
-                return FALSE; // this is the default behaviour of the parent
+                return FALSE; // this is the default behavior of the parent
             bTemporaryEnableVectorForTextStroking = true;
             bool bRet = m_pDevice->DrawNormalText(nChars, pCharPos,
                                                      pFont,
@@ -1685,7 +1685,7 @@ void myRenderPageImpl(PDFDataset* poDS,
 }
 
 static
-void myRenderPageWithContext(PDFDataset* poDS, 
+void myRenderPageWithContext(PDFDataset* poDS,
                              CPDF_PageRenderContext* pContext,
                            FPDF_PAGE page,
                            int start_x,

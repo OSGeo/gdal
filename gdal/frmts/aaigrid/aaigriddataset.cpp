@@ -1519,13 +1519,13 @@ void GDALRegister_AAIGrid()
 "   <Option name='SIGNIFICANT_DIGITS' type='int' description='Number of significant digits when writing floating-point numbers(%g).'/>\n"
 "</CreationOptionList>\n");
     poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST,
-"<OpenOptionLists>\n"
+"<OpenOptionList>\n"
 "   <Option name='DATATYPE' type='string-select' description='Data type to be used.'>\n"
 "       <Value>Int32</Value>\n"
 "       <Value>Float32</Value>\n"
 "       <Value>Float64</Value>\n"
 "   </Option>\n"
-"</OpenOptionLists>\n");
+"</OpenOptionList>\n");
 
     poDriver->pfnOpen = AAIGDataset::Open;
     poDriver->pfnIdentify = AAIGDataset::Identify;

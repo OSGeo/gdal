@@ -6,15 +6,16 @@
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
 ARG PROJ_INSTALL_PREFIX=/usr/local
+ARG BASE_IMAGE=ubuntu:20.04
 
-FROM ubuntu:18.04 as builder
+FROM $BASE_IMAGE as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
-MAINTAINER Even Rouault <even.rouault@spatialys.com>
+LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 
 # Setup build env for PROJ
 RUN apt-get update -y \
-    && apt-get install -y --fix-missing --no-install-recommends \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
             software-properties-common build-essential ca-certificates \
             git make cmake wget unzip libtool automake \
             zlib1g-dev libsqlite3-dev pkg-config sqlite3 libcurl4-gnutls-dev \
@@ -22,17 +23,17 @@ RUN apt-get update -y \
 
 # Setup build env for GDAL
 RUN apt-get update -y \
-    && apt-get install -y --fix-missing --no-install-recommends \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
        python3-dev python3-numpy \
        libjpeg-dev libgeos-dev \
        libexpat-dev libxerces-c-dev \
        libwebp-dev \
-       libzstd1-dev bash zip curl \
-       libpq-dev libssl-dev \
+       libzstd-dev bash zip curl \
+       libpq-dev libssl-dev libopenjp2-7-dev \
        autoconf automake sqlite3 bash-completion
 
 # Build openjpeg
-ARG OPENJPEG_VERSION=2.3.1
+ARG OPENJPEG_VERSION=
 RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
     wget -q https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
     && tar xzf v${OPENJPEG_VERSION}.tar.gz \
@@ -64,7 +65,7 @@ ARG RSYNC_REMOTE
 # Build PROJ
 ARG PROJ_VERSION=master
 RUN mkdir proj \
-    && wget -q https://github.com/OSGeo/proj.4/archive/${PROJ_VERSION}.tar.gz -O - \
+    && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
     && ./autogen.sh \
@@ -77,7 +78,7 @@ RUN mkdir proj \
         export PROJ_DB_CACHE_DIR="$HOME/.ccache"; \
         ccache -M 100M; \
     fi \
-    && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -O2' \
+    && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2' \
         ./configure --prefix=${PROJ_INSTALL_PREFIX} --disable-static \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
@@ -163,7 +164,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build final image
-FROM ubuntu:18.04 as runner
+FROM $BASE_IMAGE as runner
 
 RUN date
 
@@ -176,15 +177,19 @@ RUN apt-get update; \
 # GDAL dependencies
 RUN apt-get update -y; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
-        python3-numpy libpython3.6 \
-        libjpeg-turbo8 libgeos-3.6.2 libgeos-c1v5 \
+        python3-numpy libpython3.8 \
+        libjpeg-turbo8 libgeos-3.8.0 libgeos-c1v5 \
         libexpat1 \
         libxerces-c3.2 \
         libwebp6 \
-        libzstd1 bash libpq5 libssl1.1
+        libzstd1 bash libpq5 libssl1.1 libopenjp2-7
+
+RUN apt-get update; \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y python-is-python3
 
 # Order layers starting with less frequently varying ones
-COPY --from=builder  /build_thirdparty/usr/ /usr/
+# Only used for custom libopenjp2
+# COPY --from=builder  /build_thirdparty/usr/ /usr/
 
 COPY --from=builder  /build_projgrids/usr/ /usr/
 

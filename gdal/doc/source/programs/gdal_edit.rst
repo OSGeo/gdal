@@ -51,8 +51,6 @@ It works only with raster formats that support update access to existing dataset
     the dataset in update-mode. In which case, updated information will go into
     PAM :file:`.aux.xml` files.
 
-    .. versionadded:: 1.11
-
 .. option:: -a_srs <srs_def>
 
     Defines the target coordinate system.
@@ -158,7 +156,7 @@ It works only with raster formats that support update access to existing dataset
 
     .. versionadded:: 3.1
 
--.. option:: colorinterp_X red|green|blue|alpha|gray|undefined
+.. option:: colorinterp_X red|green|blue|alpha|gray|undefined
 
     Change the color interpretation of band X (where X is a valid band
     number, starting at 1).

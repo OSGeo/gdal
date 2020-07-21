@@ -45,16 +45,14 @@ pytestmark = pytest.mark.require_driver('CSW')
 
 @pytest.fixture(autouse=True, scope='module')
 def ogr_csw_init():
-    gdaltest.csw_drv = ogr.GetDriverByName('CSW')
 
-    gml_ds = ogr.Open('data/ionic_wfs.gml')
+    gml_ds = ogr.Open('data/gml/ionic_wfs.gml')
     if gml_ds is None:
-        gdaltest.csw_drv = None
         if gdal.GetLastErrorMsg().find('Xerces') != -1:
             pytest.skip()
         pytest.skip('failed to open test file.')
 
-    
+
 ###############################################################################
 # Test reading a pyCSW server
 

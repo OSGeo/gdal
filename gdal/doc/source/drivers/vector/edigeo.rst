@@ -23,7 +23,7 @@ files.
 
 In order the SRS of the layers to be correctly built, the IGNF file that
 contains the definition of IGN SRS must be placed in the directory of
-PROJ.4 resource files.
+PROJ resource files.
 
 The whole set of files will be parsed into memory. This may be a
 limitation if dealing with big EDIGEO exchanges.
@@ -50,8 +50,8 @@ It will also add the following fields :
 -  OGR_ANGLE: the rotation angle in degrees (0 = horizontal,
    counter-clock-wise oriented)
 -  OGR_FONT_SIZE: the value of the HEI attribute multiplied by the value
-   of the configuration option OGR_EDIGEO_FONT_SIZE_FACTOR that defaults
-   to 2.
+   of the configuration option :decl_configoption:`OGR_EDIGEO_FONT_SIZE_FACTOR`
+   that defaults to 2.
 
 Combined with the FON (font family) attributes, they can be used to
 define the styling in QGIS for example.

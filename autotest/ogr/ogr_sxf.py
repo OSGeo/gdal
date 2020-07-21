@@ -27,6 +27,7 @@
 ###############################################################################
 
 import shutil
+import sys
 
 import gdaltest
 from osgeo import gdal
@@ -42,7 +43,7 @@ def test_ogr_sxf_1():
     gdaltest.sxf_ds = None
     with gdaltest.error_handler():
         # Expect Warning 0 and Warning 6.
-        gdaltest.sxf_ds = ogr.Open('data/100_test.sxf')
+        gdaltest.sxf_ds = ogr.Open('data/sxf/100_test.sxf')
 
     if gdaltest.sxf_ds is not None:
         return
@@ -58,7 +59,7 @@ def test_ogr_sxf_2():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' data/100_test.sxf')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' data/sxf/100_test.sxf')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
@@ -74,7 +75,7 @@ def test_ogr_sxf_3():
     rsc_name = 'tmp/test_ogr_sxf_3.rsc'
     fake_rsc = open(rsc_name, 'w')
     fake_rsc.close()
-    shutil.copy('data/100_test.sxf', sxf_name)
+    shutil.copy('data/sxf/100_test.sxf', sxf_name)
     sxf_ds = gdal.OpenEx(sxf_name, gdal.OF_VECTOR, open_options=['SXF_RSC_FILENAME=' + rsc_name])
 
     assert sxf_ds is not None
@@ -97,20 +98,21 @@ def test_ogr_sxf_4(capsys):
                  'ГИДРОГРАФИЯ (РЕЛЬЕФ)',
                  'МАТЕМАТИЧЕСКАЯ ОСНОВА',
                  'Not_Classified']
-    sxf_name = 'data/100_test.sxf'
+    sxf_name = 'data/sxf/100_test.sxf'
     sxf_ds = gdal.OpenEx(sxf_name, gdal.OF_VECTOR, open_options=['SXF_LAYER_FULLNAME=YES'])
 
     assert sxf_ds is not None
     assert sxf_ds.GetLayerCount() == len(lyr_names)
 
-    with capsys.disabled():
-        print('Expected:')
-        for n in lyr_names:
-            print(n)
-        print('In fact:')
-        for layer_n in range(sxf_ds.GetLayerCount()):
-            lyr = sxf_ds.GetLayer(layer_n)
-            print(lyr.GetName())
+    if sys.platform != 'win32':
+        with capsys.disabled():
+            print('Expected:')
+            for n in lyr_names:
+                print(n)
+            print('In fact:')
+            for layer_n in range(sxf_ds.GetLayerCount()):
+                lyr = sxf_ds.GetLayer(layer_n)
+                print(lyr.GetName())
 
     for layer_n in range(sxf_ds.GetLayerCount()):
         lyr = sxf_ds.GetLayer(layer_n)

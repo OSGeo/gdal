@@ -58,7 +58,7 @@ Updated drivers
 The following drivers will be updated: GTiff, MEM, VRT and KEA.
 
 For GTiff, the TIFFTAG_GDAL_NODATA TIFF tag is unset if GDAL is built
-against libtiff 4.X, which is the appropriate behaviour. For libtiff 3.X
+against libtiff 4.X, which is the appropriate behavior. For libtiff 3.X
 where TIFFUnsetField() does not exist, the tag is set to the empty
 string : GDAL 2.0 will detect that as the absence of a nodata value,
 older versions will parse it as 0.

@@ -46,7 +46,7 @@ def test_ogr_vrt_1():
 
     with gdaltest.error_handler():
         # Complains about dummySrcDataSource as expected.
-        gdaltest.vrt_ds = ogr.Open('data/vrt_test.vrt')
+        gdaltest.vrt_ds = ogr.Open('data/vrt/vrt_test.vrt')
 
     if gdaltest.vrt_ds is not None:
         return
@@ -281,10 +281,10 @@ def test_ogr_vrt_10():
     if gdaltest.vrt_ds is None:
         pytest.skip()
 
-    vrt_xml = '<OGRVRTDataSource><OGRVRTLayer name="test"><SrcDataSource relativeToVRT="0">data/testpoly.shp</SrcDataSource><SrcLayer>testpoly</SrcLayer></OGRVRTLayer></OGRVRTDataSource>'
+    vrt_xml = '<OGRVRTDataSource><OGRVRTLayer name="test"><SrcDataSource relativeToVRT="0">data/shp/testpoly.shp</SrcDataSource><SrcLayer>testpoly</SrcLayer></OGRVRTLayer></OGRVRTDataSource>'
     vrt_ds = ogr.Open(vrt_xml)
     vrt_lyr = vrt_ds.GetLayerByName('test')
-    src_ds = ogr.Open('data/testpoly.shp')
+    src_ds = ogr.Open('data/shp/testpoly.shp')
     src_lyr = src_ds.GetLayer(0)
 
     assert vrt_lyr.TestCapability(ogr.OLCFastFeatureCount) == src_lyr.TestCapability(ogr.OLCFastFeatureCount)
@@ -745,7 +745,7 @@ def test_ogr_vrt_19_optimized():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/poly_vrt.vrt')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/vrt/poly_vrt.vrt')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
@@ -761,7 +761,7 @@ def test_ogr_vrt_19_nonoptimized():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/poly_nonoptimized_vrt.vrt')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/vrt/poly_nonoptimized_vrt.vrt')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
@@ -881,94 +881,94 @@ def ogr_vrt_21_internal():
     if gdaltest.vrt_ds is None:
         pytest.skip()
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test3')
     assert lyr.GetName() == 'test3'
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test3')
     assert lyr.GetGeomType() == ogr.wkbPoint
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test3')
     assert lyr.GetSpatialRef().ExportToWkt().find('84') != -1
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test3')
     lyr.ResetReading()
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test3')
     assert lyr.GetNextFeature() is not None
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test3')
     assert lyr.GetFeature(1) is not None
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test3')
     assert lyr.GetFeatureCount() != 0
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test3')
     assert lyr.SetNextByIndex(1) == 0
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test3')
     assert lyr.GetLayerDefn().GetFieldCount() != 0
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test3')
     assert lyr.SetAttributeFilter('') == 0
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test3')
     lyr.SetSpatialFilter(None)
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test3')
     assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test3')
     assert lyr.GetExtent() is not None
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test3')
     assert lyr.GetFIDColumn() == 'fid'
     ds = None
 
     feature_defn = ogr.FeatureDefn()
     feat = ogr.Feature(feature_defn)
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test3')
     lyr.CreateFeature(feat)
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test3')
     lyr.SetFeature(feat)
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test3')
     lyr.DeleteFeature(0)
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test3')
     lyr.SyncToDisk()
     ds = None
@@ -992,109 +992,109 @@ def ogr_vrt_22_internal():
     if gdaltest.vrt_ds is None:
         pytest.skip()
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     assert lyr.GetName() == 'test5'
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     assert lyr.GetGeomType() == ogr.wkbPoint
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     assert lyr.GetSpatialRef().ExportToWkt().find('84') != -1
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     lyr.ResetReading()
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     assert lyr.GetNextFeature() is None
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     assert lyr.GetFeature(1) is None
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     assert lyr.GetFeatureCount() == 0
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     assert lyr.SetNextByIndex(1) != 0
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     assert lyr.GetLayerDefn().GetFieldCount() == 0
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     assert lyr.SetAttributeFilter('') != 0
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     lyr.SetSpatialFilter(None)
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 0
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     assert lyr.GetFIDColumn() == ''
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     lyr.GetExtent()
     ds = None
 
     feature_defn = ogr.FeatureDefn()
     feat = ogr.Feature(feature_defn)
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     lyr.CreateFeature(feat)
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     lyr.SetFeature(feat)
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     lyr.DeleteFeature(0)
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     lyr.SyncToDisk()
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     lyr.StartTransaction()
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     lyr.CommitTransaction()
     ds = None
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    ds = ogr.Open('data/vrt/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
     lyr.RollbackTransaction()
     ds = None
@@ -1191,7 +1191,7 @@ def test_ogr_vrt_24():
 def test_ogr_vrt_25():
 
     with gdaltest.error_handler():
-        ds = ogr.Open('data/vrt_test.vrt')
+        ds = ogr.Open('data/vrt/vrt_test.vrt')
 
     # test3 layer just declares fid, and implicit fields (so all source
     # fields are taken as VRT fields), we can report the fid column
@@ -1323,7 +1323,7 @@ def test_ogr_vrt_28():
     gdal.Unlink("/vsimem/ogr_vrt_28_invalid.vrt")
 
     with gdaltest.error_handler():
-        ds = ogr.Open("data/invalid.vrt")
+        ds = ogr.Open("data/vrt/invalid.vrt")
     assert ds is not None
 
     for i in range(ds.GetLayerCount()):
@@ -1343,12 +1343,12 @@ def test_ogr_vrt_28():
     assert gdal.GetLastErrorMsg() != '', 'expected error message on datasource opening'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = ogr.Open("data/invalid2.vrt")
+    ds = ogr.Open("data/vrt/invalid2.vrt")
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg() != '', 'expected error message on datasource opening'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = ogr.Open("data/invalid3.vrt")
+    ds = ogr.Open("data/vrt/invalid3.vrt")
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorMsg() != '', 'expected error message on datasource opening'
 
@@ -2858,19 +2858,19 @@ def test_ogr_vrt_36():
     gdal.Unlink('/vsimem/ogr_vrt_36.vrt')
 
 ###############################################################################
-# Test implict non-spatial layers (#6336)
+# Test implicit non-spatial layers (#6336)
 
 
 def test_ogr_vrt_37():
 
     with gdaltest.error_handler():
-        ds = ogr.Open('data/vrt_test.vrt')
+        ds = ogr.Open('data/vrt/vrt_test.vrt')
 
     lyr = ds.GetLayerByName('test6')
     assert lyr.GetGeomType() == ogr.wkbNone
 
     with gdaltest.error_handler():
-        ds = ogr.Open('data/vrt_test.vrt')
+        ds = ogr.Open('data/vrt/vrt_test.vrt')
 
     lyr = ds.GetLayerByName('test6')
     assert lyr.GetLayerDefn().GetGeomFieldCount() == 0
@@ -3017,7 +3017,52 @@ def test_ogr_vrt_41():
     with gdaltest.error_handler():
         lyr.GetExtent()
 
-    
+
+###############################################################################
+# Test reading nullable, default, unique
+
+
+def test_ogr_vrt_nullable_unique():
+
+    ds = ogr.Open("""<OGRVRTDataSource>
+  <OGRVRTLayer name="poly">
+    <SrcDataSource>data/poly.shp</SrcDataSource>
+    <SrcLayer>poly</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <Field name="area" type="Real"/>
+    <Field name="eas_id" type="Integer64" width="11" nullable="false" unique="true"/>
+    <Field name="prfedea" type="String"/>
+  </OGRVRTLayer>
+</OGRVRTDataSource>
+""")
+    lyr = ds.GetLayer(0)
+    feat_defn = lyr.GetLayerDefn()
+    assert feat_defn.GetFieldDefn(0).IsNullable()
+    assert not feat_defn.GetFieldDefn(0).IsUnique()
+    assert not feat_defn.GetFieldDefn(1).IsNullable()
+    assert feat_defn.GetFieldDefn(1).IsUnique()
+
+
+###############################################################################
+# Test field names with same case
+
+
+def test_ogr_vrt_field_names_same_case():
+
+    ds = ogr.Open("""<OGRVRTDataSource>
+  <OGRVRTLayer name="test">
+    <SrcDataSource>{"type":"Feature","id":"foo","geometry":null,"properties":{"ID":"bar"}}</SrcDataSource>
+    <SrcLayer>OGRGeoJSON</SrcLayer>
+    <Field name="id" type="String" src="id"/>
+    <Field name="id_from_uc" type="String" src="ID"/>
+  </OGRVRTLayer>
+</OGRVRTDataSource>
+""")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f['id'] == 'foo'
+    assert f['id_from_uc'] == 'bar'
+
 ###############################################################################
 #
 

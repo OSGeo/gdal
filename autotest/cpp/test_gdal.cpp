@@ -29,6 +29,7 @@
 #include "gdal_utils.h"
 #include "gdal_priv_templates.hpp"
 #include "gdal.h"
+#include "tilematrixset.hpp"
 
 #include <limits>
 #include <string>
@@ -1079,7 +1080,7 @@ namespace tut
         // ENVI
         {
             GDALDatasetUniquePtr poDS(
-                GDALDataset::Open(GDRIVERS_DATA_DIR "envi_rgbsmall_bip.img"));
+                GDALDataset::Open(GDRIVERS_DATA_DIR "envi/envi_rgbsmall_bip.img"));
             ensure( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
             ensure( poDS->GetRawBinaryLayout(sLayout) );
@@ -1095,7 +1096,7 @@ namespace tut
         }
         {
             GDALDatasetUniquePtr poDS(
-                GDALDataset::Open(GDRIVERS_DATA_DIR "envi_rgbsmall_bil.img"));
+                GDALDataset::Open(GDRIVERS_DATA_DIR "envi/envi_rgbsmall_bil.img"));
             ensure( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
             ensure( poDS->GetRawBinaryLayout(sLayout) );
@@ -1111,7 +1112,7 @@ namespace tut
         }
         {
             GDALDatasetUniquePtr poDS(
-                GDALDataset::Open(GDRIVERS_DATA_DIR "envi_rgbsmall_bsq.img"));
+                GDALDataset::Open(GDRIVERS_DATA_DIR "envi/envi_rgbsmall_bsq.img"));
             ensure( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
             ensure( poDS->GetRawBinaryLayout(sLayout) );
@@ -1252,7 +1253,7 @@ namespace tut
         // ISIS3
         {
             GDALDatasetUniquePtr poDS(
-                GDALDataset::Open(GDRIVERS_DATA_DIR "isis3_detached.lbl"));
+                GDALDataset::Open(GDRIVERS_DATA_DIR "isis3/isis3_detached.lbl"));
             ensure( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
             ensure( poDS->GetRawBinaryLayout(sLayout) );
@@ -1270,7 +1271,7 @@ namespace tut
         // VICAR
         {
             GDALDatasetUniquePtr poDS(
-                GDALDataset::Open(GDRIVERS_DATA_DIR "test_vicar_truncated.bin"));
+                GDALDataset::Open(GDRIVERS_DATA_DIR "vicar/test_vicar_truncated.bin"));
             ensure( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
             ensure( poDS->GetRawBinaryLayout(sLayout) );
@@ -1320,7 +1321,7 @@ namespace tut
         // PDS 3
         {
             GDALDatasetUniquePtr poDS(
-                GDALDataset::Open(GDRIVERS_DATA_DIR "mc02_truncated.img"));
+                GDALDataset::Open(GDRIVERS_DATA_DIR "pds/mc02_truncated.img"));
             ensure( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
             ensure( poDS->GetRawBinaryLayout(sLayout) );
@@ -1338,7 +1339,7 @@ namespace tut
         // PDS 4
         {
             GDALDatasetUniquePtr poDS(
-                GDALDataset::Open(GDRIVERS_DATA_DIR "byte_pds4_cart_1700.xml"));
+                GDALDataset::Open(GDRIVERS_DATA_DIR "pds4/byte_pds4_cart_1700.xml"));
             ensure( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
             ensure( poDS->GetRawBinaryLayout(sLayout) );
@@ -1351,6 +1352,220 @@ namespace tut
             ensure_equals( sLayout.nPixelOffset, 1 );
             ensure_equals( sLayout.nLineOffset, 20 );
             ensure_equals( sLayout.nBandOffset, 0 ); // doesn't matter on single band
+        }
+    }
+
+    // Test TileMatrixSet
+    template<> template<> void object::test<20>()
+    {
+        // TODO investigate what fails exactly
+        if( EQUAL(CPLGetConfigOption("GITHUB_WORKFLOW", ""), "MacOS build") )
+            return;
+
+        {
+            auto l = gdal::TileMatrixSet::listPredefinedTileMatrixSets();
+            ensure( l.find("GoogleMapsCompatible") != l.end() );
+            ensure( l.find("NZTM2000") != l.end() );
+        }
+
+        {
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            ensure( gdal::TileMatrixSet::parse("i_dont_exist") == nullptr );
+            CPLPopErrorHandler();
+        }
+
+        {
+            CPLErrorReset();
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            // Invalid JSON
+            ensure( gdal::TileMatrixSet::parse("http://127.0.0.1:98765/example.json") == nullptr );
+            CPLPopErrorHandler();
+            ensure( CPLGetLastErrorType() != 0 );
+        }
+
+        {
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            // Invalid JSON
+            ensure( gdal::TileMatrixSet::parse("{\"type\": \"TileMatrixSetType\" invalid") == nullptr );
+            CPLPopErrorHandler();
+        }
+
+        {
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            // No tileMatrix
+            ensure( gdal::TileMatrixSet::parse("{\"type\": \"TileMatrixSetType\" }") == nullptr );
+            CPLPopErrorHandler();
+        }
+
+        {
+            auto poTMS = gdal::TileMatrixSet::parse("LINZAntarticaMapTileGrid");
+            ensure( poTMS != nullptr );
+            ensure( poTMS->haveAllLevelsSameTopLeft() );
+            ensure( poTMS->haveAllLevelsSameTileSize() );
+            ensure( poTMS->hasOnlyPowerOfTwoVaryingScales() );
+            ensure( !poTMS->hasVariableMatrixWidth() );
+        }
+
+        {
+            auto poTMS = gdal::TileMatrixSet::parse("NZTM2000");
+            ensure( poTMS != nullptr );
+            ensure( poTMS->haveAllLevelsSameTopLeft() );
+            ensure( poTMS->haveAllLevelsSameTileSize() );
+            ensure( !poTMS->hasOnlyPowerOfTwoVaryingScales() );
+            ensure( !poTMS->hasVariableMatrixWidth() );
+        }
+
+        // Inline JSON with minimal structure
+        {
+            auto poTMS = gdal::TileMatrixSet::parse("{\"type\": \"TileMatrixSetType\", \"tileMatrix\": [{ \"topLeftCorner\": [-180, 90],\"scaleDenominator\":1.0}] }");
+            ensure( poTMS != nullptr );
+            ensure( poTMS->haveAllLevelsSameTopLeft() );
+            ensure( poTMS->haveAllLevelsSameTileSize() );
+            ensure( poTMS->hasOnlyPowerOfTwoVaryingScales() );
+            ensure( !poTMS->hasVariableMatrixWidth() );
+        }
+
+        // Invalid scaleDenominator
+        {
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            ensure( gdal::TileMatrixSet::parse("{\"type\": \"TileMatrixSetType\", \"tileMatrix\": [{ \"topLeftCorner\": [-180, 90],\"scaleDenominator\":0.0}] }") == nullptr);
+            CPLPopErrorHandler();
+        }
+
+        {
+            const char* pszJSON =
+            "{"
+            "    \"type\": \"TileMatrixSetType\","
+            "    \"title\": \"CRS84 for the World\","
+            "    \"identifier\": \"WorldCRS84Quad\","
+            "    \"abstract\": \"my abstract\","
+            "    \"boundingBox\":"
+            "    {"
+            "        \"type\": \"BoundingBoxType\","
+            "        \"crs\": \"http://www.opengis.net/def/crs/OGC/1.X/CRS84\"," // 1.3 modified to 1.X to test difference with supportedCRS
+            "        \"lowerCorner\": [-180, -90],"
+            "        \"upperCorner\": [180, 90]"
+            "    },"
+            "    \"supportedCRS\": \"http://www.opengis.net/def/crs/OGC/1.3/CRS84\","
+            "    \"wellKnownScaleSet\": \"http://www.opengis.net/def/wkss/OGC/1.0/GoogleCRS84Quad\","
+            "    \"tileMatrix\":"
+            "    ["
+            "        {"
+            "            \"type\": \"TileMatrixType\","
+            "            \"identifier\": \"0\","
+            "            \"scaleDenominator\": 279541132.014358,"
+            "            \"topLeftCorner\": [-180, 90],"
+            "            \"tileWidth\": 256,"
+            "            \"tileHeight\": 256,"
+            "            \"matrixWidth\": 2,"
+            "            \"matrixHeight\": 1"
+            "        },"
+            "        {"
+            "            \"type\": \"TileMatrixType\","
+            "            \"identifier\": \"1\","
+            "            \"scaleDenominator\": 139770566.007179,"
+            "            \"topLeftCorner\": [-180, 90],"
+            "            \"tileWidth\": 256,"
+            "            \"tileHeight\": 256,"
+            "            \"matrixWidth\": 4,"
+            "            \"matrixHeight\": 2"
+            "        }"
+            "    ]"
+            "}";
+            VSIFCloseL(VSIFileFromMemBuffer("/vsimem/tmp.json",
+                                            reinterpret_cast<GByte*>(const_cast<char*>(pszJSON)),
+                                            strlen(pszJSON),
+                                            false));
+            auto poTMS = gdal::TileMatrixSet::parse("/vsimem/tmp.json");
+            VSIUnlink("/vsimem/tmp.json");
+
+            ensure( poTMS != nullptr );
+            ensure_equals( poTMS->title(), "CRS84 for the World" );
+            ensure_equals( poTMS->identifier(), "WorldCRS84Quad" );
+            ensure_equals( poTMS->abstract(), "my abstract" );
+            ensure_equals( poTMS->crs(), "http://www.opengis.net/def/crs/OGC/1.3/CRS84" );
+            ensure_equals( poTMS->wellKnownScaleSet(), "http://www.opengis.net/def/wkss/OGC/1.0/GoogleCRS84Quad" );
+            ensure_equals( poTMS->bbox().mCrs, "http://www.opengis.net/def/crs/OGC/1.X/CRS84" );
+            ensure_equals( poTMS->bbox().mLowerCornerX, -180.0 );
+            ensure_equals( poTMS->bbox().mLowerCornerY, -90.0 );
+            ensure_equals( poTMS->bbox().mUpperCornerX, 180.0 );
+            ensure_equals( poTMS->bbox().mUpperCornerY, 90.0 );
+            ensure_equals( poTMS->tileMatrixList().size(), 2U );
+            ensure( poTMS->haveAllLevelsSameTopLeft() );
+            ensure( poTMS->haveAllLevelsSameTileSize() );
+            ensure( poTMS->hasOnlyPowerOfTwoVaryingScales() );
+            ensure( !poTMS->hasVariableMatrixWidth() );
+            const auto &tm = poTMS->tileMatrixList()[0];
+            ensure_equals( tm.mId, "0" );
+            ensure_equals( tm.mScaleDenominator, 279541132.014358 );
+            ensure_equals( tm.mResX, tm.mScaleDenominator * 0.28e-3 / (6378137. * M_PI / 180) );
+            ensure( fabs(tm.mResX - 180. / 256) < 1e-14 );
+            ensure_equals( tm.mResY, tm.mResX );
+            ensure_equals( tm.mTopLeftX, -180.0 );
+            ensure_equals( tm.mTopLeftY, 90.0 );
+            ensure_equals( tm.mTileWidth, 256 );
+            ensure_equals( tm.mTileHeight, 256 );
+            ensure_equals( tm.mMatrixWidth, 2 );
+            ensure_equals( tm.mMatrixHeight, 1 );
+        }
+
+        {
+            auto poTMS = gdal::TileMatrixSet::parse(
+            "{"
+            "    \"type\": \"TileMatrixSetType\","
+            "    \"title\": \"CRS84 for the World\","
+            "    \"identifier\": \"WorldCRS84Quad\","
+            "    \"boundingBox\":"
+            "    {"
+            "        \"type\": \"BoundingBoxType\","
+            "        \"crs\": \"http://www.opengis.net/def/crs/OGC/1.X/CRS84\"," // 1.3 modified to 1.X to test difference with supportedCRS
+            "        \"lowerCorner\": [-180, -90],"
+            "        \"upperCorner\": [180, 90]"
+            "    },"
+            "    \"supportedCRS\": \"http://www.opengis.net/def/crs/OGC/1.3/CRS84\","
+            "    \"wellKnownScaleSet\": \"http://www.opengis.net/def/wkss/OGC/1.0/GoogleCRS84Quad\","
+            "    \"tileMatrix\":"
+            "    ["
+            "        {"
+            "            \"type\": \"TileMatrixType\","
+            "            \"identifier\": \"0\","
+            "            \"scaleDenominator\": 279541132.014358,"
+            "            \"topLeftCorner\": [-180, 90],"
+            "            \"tileWidth\": 256,"
+            "            \"tileHeight\": 256,"
+            "            \"matrixWidth\": 2,"
+            "            \"matrixHeight\": 1"
+            "        },"
+            "        {"
+            "            \"type\": \"TileMatrixType\","
+            "            \"identifier\": \"1\","
+            "            \"scaleDenominator\": 100000000,"
+            "            \"topLeftCorner\": [-123, 90],"
+            "            \"tileWidth\": 128,"
+            "            \"tileHeight\": 256,"
+            "            \"matrixWidth\": 4,"
+            "            \"matrixHeight\": 2,"
+            "            \"variableMatrixWidth\": [{"
+            "               \"type\": \"VariableMatrixWidthType\","
+            "               \"coalesce\" : 2,"
+            "               \"minTileRow\": 0,"
+            "               \"maxTileRow\": 1"
+            "            }]"
+            "        }"
+            "    ]"
+            "}");
+            ensure( poTMS != nullptr );
+            ensure_equals( poTMS->tileMatrixList().size(), 2U );
+            ensure( !poTMS->haveAllLevelsSameTopLeft() );
+            ensure( !poTMS->haveAllLevelsSameTileSize() );
+            ensure( !poTMS->hasOnlyPowerOfTwoVaryingScales() );
+            ensure( poTMS->hasVariableMatrixWidth() );
+            const auto &tm = poTMS->tileMatrixList()[1];
+            ensure_equals( tm.mVariableMatrixWidthList.size(), 1U );
+            const auto& vmw = tm.mVariableMatrixWidthList[0];
+            ensure_equals( vmw.mCoalesce, 2 );
+            ensure_equals( vmw.mMinTileRow, 0 );
+            ensure_equals( vmw.mMaxTileRow, 1 );
         }
     }
 

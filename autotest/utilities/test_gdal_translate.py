@@ -120,7 +120,7 @@ def test_gdal_translate_5():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
 
-    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -expand rgb ../gdrivers/data/bug407.gif tmp/test5.tif')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -expand rgb ../gdrivers/data/gif/bug407.gif tmp/test5.tif')
 
     ds = gdal.Open('tmp/test5.tif')
     assert ds is not None
@@ -316,7 +316,7 @@ def test_gdal_translate_15():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
 
-    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -sds ../gdrivers/data/A.TOC tmp/test15.tif')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -sds ../gdrivers/data/nitf/A.TOC tmp/test15.tif')
 
     ds = gdal.Open('tmp/test15_1.tif')
     assert ds is not None
@@ -348,7 +348,7 @@ def test_gdal_translate_17():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
 
-    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT -expand rgba ../gdrivers/data/bug407.gif tmp/test17.vrt')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT -expand rgba ../gdrivers/data/gif/bug407.gif tmp/test17.vrt')
 
     ds = gdal.Open('tmp/test17.vrt')
     assert ds is not None
@@ -531,7 +531,7 @@ def test_gdal_translate_25():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
 
-    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -q ../gdrivers/data/int.img tmp/test_gdal_translate_25.tif -norat')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -q ../gdrivers/data/hfa/int.img tmp/test_gdal_translate_25.tif -norat')
 
     ds = gdal.Open('tmp/test_gdal_translate_25.tif')
     assert ds.GetRasterBand(1).GetDefaultRAT() is None, 'RAT unexpected'
@@ -612,7 +612,7 @@ def test_gdal_translate_28():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
 
-    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gdrivers/data/float64.asc tmp/test_gdal_translate_28.tif -oo datatype=float64')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gdrivers/data/aaigrid/float64.asc tmp/test_gdal_translate_28.tif -oo datatype=float64')
 
     ds = gdal.Open('tmp/test_gdal_translate_28.tif')
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Float64
@@ -854,6 +854,25 @@ def test_gdal_translate_39():
     assert len(gcps) == 0, 'GCP count wrong.'
 
     ds = None
+
+
+###############################################################################
+# Test -if option
+
+
+def test_gdal_translate_if_option():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        pytest.skip()
+
+    ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' -if GTiff ../gcore/data/byte.tif /vsimem/out.tif')
+    assert err is None or err == ''
+
+    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' -if invalid_driver_name ../gcore/data/byte.tif /vsimem/out.tif')
+    assert err is not None
+    assert 'invalid_driver_name' in err
+
+    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' -if HFA ../gcore/data/byte.tif /vsimem/out.tif')
+    assert err is not None
 
 
 ###############################################################################

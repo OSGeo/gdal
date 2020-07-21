@@ -1118,7 +1118,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
 
         for( auto&& poMember: poGC )
         {
-            if( poMember->getGeometryType() != wkbLineString )
+            if( wkbFlatten(poMember->getGeometryType()) != wkbLineString )
             {
                 return poGeom;
             }
@@ -1301,6 +1301,111 @@ OGRGeometryH OGR_G_ForceToMultiLineString( OGRGeometryH hGeom )
 }
 
 /************************************************************************/
+/*                      removeLowerDimensionSubGeoms()                  */
+/************************************************************************/
+
+/** \brief Remove sub-geometries from a geometry collection that do not have
+ *         the maximum topological dimensionality of the collection.
+ *
+ * This is typically to be used as a cleanup phase after running OGRGeometry::MakeValid()
+ *
+ * For example, MakeValid() on a polygon can return a geometry collection of
+ * polygons and linestrings. Calling this method will return either a polygon
+ * or multipolygon by dropping those linestrings.
+ *
+ * On a non-geometry collection, this will return a clone of the passed geometry.
+ *
+ * @param poGeom input geometry
+ * @return a new geometry.
+ *
+ * @since GDAL 3.1.0
+ */
+OGRGeometry* OGRGeometryFactory::removeLowerDimensionSubGeoms( const OGRGeometry* poGeom )
+{
+    if( poGeom == nullptr )
+        return nullptr;
+    if( wkbFlatten(poGeom->getGeometryType()) != wkbGeometryCollection ||
+        poGeom->IsEmpty() )
+    {
+        return poGeom->clone();
+    }
+    const OGRGeometryCollection* poGC = poGeom->toGeometryCollection();
+    int nMaxDim = 0;
+    OGRBoolean bHasCurve = FALSE;
+    for( const auto poSubGeom: *poGC )
+    {
+        nMaxDim = std::max(nMaxDim, poSubGeom->getDimension());
+        bHasCurve |= poSubGeom->hasCurveGeometry();
+    }
+    int nCountAtMaxDim = 0;
+    const OGRGeometry* poGeomAtMaxDim = nullptr;
+    for( const auto poSubGeom: *poGC )
+    {
+        if( poSubGeom->getDimension() == nMaxDim )
+        {
+            poGeomAtMaxDim = poSubGeom;
+            nCountAtMaxDim ++;
+        }
+    }
+    if( nCountAtMaxDim == 1 && poGeomAtMaxDim != nullptr )
+    {
+        return poGeomAtMaxDim->clone();
+    }
+    OGRGeometryCollection* poRet =
+        (nMaxDim == 0) ?               static_cast<OGRGeometryCollection*>(new OGRMultiPoint()) :
+        (nMaxDim == 1 && !bHasCurve) ? static_cast<OGRGeometryCollection*>(new OGRMultiLineString()) :
+        (nMaxDim == 1 && bHasCurve) ?  static_cast<OGRGeometryCollection*>(new OGRMultiCurve()) :
+        (nMaxDim == 2 && !bHasCurve) ? static_cast<OGRGeometryCollection*>(new OGRMultiPolygon()) :
+                                       static_cast<OGRGeometryCollection*>(new OGRMultiSurface());
+    for( const auto poSubGeom: *poGC )
+    {
+        if( poSubGeom->getDimension() == nMaxDim )
+        {
+            if( OGR_GT_IsSubClassOf(poSubGeom->getGeometryType(), wkbGeometryCollection) )
+            {
+                const OGRGeometryCollection* poSubGeomAsGC = poSubGeom->toGeometryCollection();
+                for( const auto poSubSubGeom: *poSubGeomAsGC )
+                {
+                    if( poSubSubGeom->getDimension() == nMaxDim )
+                    {
+                        poRet->addGeometryDirectly(poSubSubGeom->clone());
+                    }
+                }
+            }
+            else
+            {
+                poRet->addGeometryDirectly(poSubGeom->clone());
+            }
+        }
+    }
+    return poRet;
+}
+
+/************************************************************************/
+/*                  OGR_G_RemoveLowerDimensionSubGeoms()                */
+/************************************************************************/
+
+/** \brief Remove sub-geometries from a geometry collection that do not have
+ *         the maximum topological dimensionality of the collection.
+ *
+ * This function is the same as the C++ method
+ * OGRGeometryFactory::removeLowerDimensionSubGeoms().
+ *
+ * @param hGeom handle to the geometry to convert
+ * @return a new geometry.
+ *
+ * @since GDAL 3.1.0
+ */
+
+OGRGeometryH OGR_G_RemoveLowerDimensionSubGeoms( const OGRGeometryH hGeom )
+
+{
+    return OGRGeometry::ToHandle(
+        OGRGeometryFactory::removeLowerDimensionSubGeoms(
+            OGRGeometry::FromHandle(hGeom)));
+}
+
+/************************************************************************/
 /*                          organizePolygons()                          */
 /************************************************************************/
 
@@ -1392,7 +1497,7 @@ enum OrganizePolygonMethod
  * with care.
  *
  * If the OGR_ORGANIZE_POLYGONS configuration option is defined, its value will override
- * the value of the METHOD option of papszOptions (useful to modify the behaviour of the
+ * the value of the METHOD option of papszOptions (useful to modify the behavior of the
  * shapefile driver)
  *
  * @param papoPolygons array of geometry pointers - should all be OGRPolygons.
@@ -3699,7 +3804,7 @@ OGRGeometryFactory::TransformWithOptionsCache::~TransformWithOptionsCache()
  * @param poSrcGeom source geometry
  * @param poCT coordinate transformation object, or NULL.
  * @param papszOptions options. Including WRAPDATELINE=YES and DATELINEOFFSET=.
- * @param cache Cache. May increase performance if persisted between invokations
+ * @param cache Cache. May increase performance if persisted between invocations
  * @return (new) transformed geometry.
  */
 OGRGeometry* OGRGeometryFactory::transformWithOptions(

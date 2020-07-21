@@ -135,7 +135,7 @@ def test_exr_compression_dwa_compression_level():
                                                            'DWA_COMPRESSION_LEVEL=100'])
     assert ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE') == 'DWAB'
     band = ds.GetRasterBand(1)
-    assert band.Checksum() == 12863
+    assert band.Checksum() in (12863, 12864) # 12864 on s390x
     ds = None
     gdal.Unlink(tmpfilename)
 

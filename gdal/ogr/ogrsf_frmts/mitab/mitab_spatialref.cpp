@@ -248,7 +248,7 @@ const MapInfoDatumInfo asDatumInfoList[] =
 { 0,    1013,"Russia_SK42",                52, 23.92,-141.27,-80.9, 0, -0.35,-0.82, -0.12, 0},
 { 0,    1014,"Russia_SK95",                52, 24.82,-131.21,-82.66,0,0,-0.16,-0.12, 0},
 { 6301, 1015,"Tokyo",                      10, -146.414, 507.337, 680.507,0,0,0,0,0},
-{ 0,    1016,"Finnish_KKJ",                4, -96.062, -82.428, -121.754, -4.801, -0.345, 1.376, 1.496, 0},
+{ 6123, 1016,"Kartastokoordinaattijarjestelma_1966", 4, -96.062, -82.428, -121.754, -4.801, -0.345, 1.376, 1.496, 0},
 { 6610, 1017,"Xian 1980",                  53, 24, -123, -94, -0.02, -0.25, 0.13, 1.1, 0},
 { 0,    1018,"Lithuanian Pulkovo 1942",    4, -40.59527, -18.54979, -69.33956, -2.508, -1.8319, 2.6114, -4.2991, 0},
 { 6313, 1019,"Belgian 1972 7 Parameter",   4, -99.059, 53.322, -112.486, -0.419, 0.83, -1.885, 0.999999, 0},
@@ -895,7 +895,8 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
          * Transverse Mercator,(modified for Danish System 34 Jylland-Fyn)
          *---------------------------------------------------------------*/
       case 21:
-         poSpatialRef->SetTMVariant( SRS_PT_TRANSVERSE_MERCATOR_MI_21,
+         //poSpatialRef->SetTMVariant( SRS_PT_TRANSVERSE_MERCATOR_MI_21,
+         poSpatialRef->SetTM(
                                        sTABProj.adProjParams[1],
                                        sTABProj.adProjParams[0],
                                        sTABProj.adProjParams[2],
@@ -907,7 +908,8 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
          * Transverse Mercator,(modified for Danish System 34 Sjaelland)
          *-------------------------------------------------------------*/
       case 22:
-         poSpatialRef->SetTMVariant( SRS_PT_TRANSVERSE_MERCATOR_MI_22,
+         //poSpatialRef->SetTMVariant( SRS_PT_TRANSVERSE_MERCATOR_MI_22,
+         poSpatialRef->SetTM(
                                        sTABProj.adProjParams[1],
                                        sTABProj.adProjParams[0],
                                        sTABProj.adProjParams[2],
@@ -919,7 +921,8 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
          * Transverse Mercator,(modified for Danish System 34/45 Bornholm)
          *---------------------------------------------------------------*/
       case 23:
-         poSpatialRef->SetTMVariant( SRS_PT_TRANSVERSE_MERCATOR_MI_23,
+         //poSpatialRef->SetTMVariant( SRS_PT_TRANSVERSE_MERCATOR_MI_23,
+         poSpatialRef->SetTM(
                                        sTABProj.adProjParams[1],
                                        sTABProj.adProjParams[0],
                                        sTABProj.adProjParams[2],
@@ -931,7 +934,8 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
          * Transverse Mercator,(modified for Finnish KKJ)
          *-------------------------------------------------------------*/
       case 24:
-         poSpatialRef->SetTMVariant( SRS_PT_TRANSVERSE_MERCATOR_MI_24,
+         //poSpatialRef->SetTMVariant( SRS_PT_TRANSVERSE_MERCATOR_MI_24,
+        poSpatialRef->SetTM(
                                        sTABProj.adProjParams[1],
                                        sTABProj.adProjParams[0],
                                        sTABProj.adProjParams[2],
@@ -1535,6 +1539,17 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     if( dfLinearConv == 0.0 )
         dfLinearConv = 1.0;
 
+    // Get datum information
+    const char *pszWKTDatum = poSpatialRef->GetAttrValue("DATUM");
+    int nDatumEPSGCode = -1;
+    const char *pszDatumAuthority = poSpatialRef->GetAuthorityName("DATUM");
+    const char *pszDatumCode = poSpatialRef->GetAuthorityCode("DATUM");
+
+    if (pszDatumCode && pszDatumAuthority && EQUAL(pszDatumAuthority, "EPSG"))
+    {
+        nDatumEPSGCode = atoi(pszDatumCode);
+    }
+
     /*-----------------------------------------------------------------
      * Transform the projection and projection parameters.
      *----------------------------------------------------------------*/
@@ -1794,6 +1809,12 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) )
     {
         sTABProj.nProjId = 8;
+        if( (pszWKTDatum && EQUAL(pszWKTDatum,
+                "Kartastokoordinaattijarjestelma_1966")) || nDatumEPSGCode == 6123 )
+        {
+            // Special case for Finnish KKJ
+            sTABProj.nProjId = 24;
+        }
         parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
@@ -1897,17 +1918,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     /* ==============================================================
      * Translate Datum and Ellipsoid
      * ============================================================== */
-    const char *pszWKTDatum = poSpatialRef->GetAttrValue("DATUM");
     const MapInfoDatumInfo *psDatumInfo = nullptr;
-
-    int nDatumEPSGCode = -1;
-    const char *pszDatumAuthority = poSpatialRef->GetAuthorityName("DATUM");
-    const char *pszDatumCode = poSpatialRef->GetAuthorityCode("DATUM");
-
-    if (pszDatumCode && pszDatumAuthority && EQUAL(pszDatumAuthority, "EPSG"))
-    {
-        nDatumEPSGCode = atoi(pszDatumCode);
-    }
 
     /*-----------------------------------------------------------------
      * Default to WGS84 if we have no datum at all.

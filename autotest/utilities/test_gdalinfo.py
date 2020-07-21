@@ -83,10 +83,10 @@ def test_gdalinfo_4():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/bug407.gif')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/gif/bug407.gif')
     assert ret.find('0: 255,255,255,255') != -1
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -noct ../gdrivers/data/bug407.gif')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -noct ../gdrivers/data/gif/bug407.gif')
     assert ret.find('0: 255,255,255,255') == -1
 
 ###############################################################################
@@ -119,7 +119,7 @@ def test_gdalinfo_6():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/int.img')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/hfa/int.img')
     assert ret.find('Overviews') != -1
     assert ret.find('GDALRasterAttributeTable') != -1
 
@@ -174,10 +174,10 @@ def test_gdalinfo_9():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/fake_nsif.ntf')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/nitf/fake_nsif.ntf')
     assert ret.find('BLOCKA=010000001000000000') == -1, 'got unexpected extra MD.'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -mdd TRE ../gdrivers/data/fake_nsif.ntf')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -mdd TRE ../gdrivers/data/nitf/fake_nsif.ntf')
     assert ret.find('BLOCKA=010000001000000000') != -1, 'did not get extra MD.'
 
 ###############################################################################
@@ -389,7 +389,7 @@ def test_gdalinfo_25():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/byte_with_xmp.tif -listmdd', check_memleak=False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/gtiff/byte_with_xmp.tif -listmdd', check_memleak=False)
     assert 'Metadata domains:' in ret
     assert '  xml:XMP' in ret
 
@@ -401,7 +401,7 @@ def test_gdalinfo_26():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/byte_with_xmp.tif -mdd all', check_memleak=False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/gtiff/byte_with_xmp.tif -mdd all', check_memleak=False)
     assert 'Metadata (xml:XMP)' in ret
 
 ###############################################################################
@@ -412,7 +412,7 @@ def test_gdalinfo_27():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/float64.asc -oo datatype=float64', check_memleak=False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/aaigrid/float64.asc -oo datatype=float64', check_memleak=False)
     assert 'Type=Float64' in ret
 
 ###############################################################################
@@ -464,11 +464,11 @@ def test_gdalinfo_31():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/bug407.gif')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/gif/bug407.gif')
     ret = json.loads(ret)
     assert ret['bands'][0]['colorTable']['entries'][0] == [255, 255, 255, 255]
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json -noct ../gdrivers/data/bug407.gif')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json -noct ../gdrivers/data/gif/bug407.gif')
     ret = json.loads(ret)
     assert 'colorTable' not in ret['bands'][0]
 
@@ -505,7 +505,7 @@ def test_gdalinfo_33():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/int.img')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/hfa/int.img')
     ret = json.loads(ret)
     assert 'overviews' in ret['bands'][0]
     assert 'rat' in ret
@@ -561,11 +561,11 @@ def test_gdalinfo_36():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/fake_nsif.ntf')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/nitf/fake_nsif.ntf')
     ret = json.loads(ret)
     assert 'TRE' not in ret['metadata'], 'got unexpected extra MD.'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json -mdd TRE ../gdrivers/data/fake_nsif.ntf')
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json -mdd TRE ../gdrivers/data/nitf/fake_nsif.ntf')
     ret = json.loads(ret)
     assert ret['metadata']['TRE']['BLOCKA'].find('010000001000000000') != -1, \
         'did not get extra MD.'
@@ -594,7 +594,7 @@ def test_gdalinfo_38():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/byte_with_xmp.tif -listmdd', check_memleak=False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/gtiff/byte_with_xmp.tif -listmdd', check_memleak=False)
     ret = json.loads(ret)
     assert 'metadataDomains' in ret['metadata']
     assert ret['metadata']['metadataDomains'][0] == 'xml:XMP'
@@ -607,7 +607,7 @@ def test_gdalinfo_39():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/byte_with_xmp.tif -mdd all', check_memleak=False)
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/gtiff/byte_with_xmp.tif -mdd all', check_memleak=False)
     ret = json.loads(ret)
     assert 'xml:XMP' in ret['metadata']
 
@@ -628,5 +628,21 @@ def test_gdalinfo_40():
     assert ret['wgs84Extent']['coordinates'] == [[[-180.0, 90.0], [-180.0, -90.0], [180.0, -90.0], [180.0, 90.0], [-180.0, 90.0]]]
 
 
+###############################################################################
+# Test -if option
 
 
+def test_gdalinfo_if_option():
+    if test_cli_utilities.get_gdalinfo_path() is None:
+        pytest.skip()
+
+    ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -if GTiff ../gcore/data/byte.tif', encoding = 'UTF-8')
+    assert (err is None or err == ''), 'got error/warning'
+    assert ret.find('Driver: GTiff/GeoTIFF') != -1
+
+    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -if invalid_driver_name ../gcore/data/byte.tif', encoding = 'UTF-8')
+    assert err is not None
+    assert 'invalid_driver_name' in err
+
+    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' -if HFA ../gcore/data/byte.tif', encoding = 'UTF-8')
+    assert err is not None

@@ -35,7 +35,7 @@
 
 #include "cpl_vsi_virtual.h"
 
-LT_USE_NAMESPACE(LizardTech)
+using namespace LizardTech;
 
 class LTIVSIStream : public LTIOStreamInf
 {

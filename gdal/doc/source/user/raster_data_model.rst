@@ -132,7 +132,7 @@ For example, an NITF with two images might have the following subdataset list.
 
 The value of the _NAME is the string that can be passed to :cpp:func:`GDALOpen` to access the file. The _DESC value is intended to be a more user friendly string that can be displayed to the user in a selector.
 
-Drivers which support subdatasets advertize the ``DMD_SUBDATASETS`` capability. This information is reported when the --format and --formats options are passed to the command line utilities.
+Drivers which support subdatasets advertise the ``DMD_SUBDATASETS`` capability. This information is reported when the --format and --formats options are passed to the command line utilities.
 
 Currently, drivers which support subdatasets are: ADRG, ECRGTOC, GEORASTER, GTiff, HDF4, HDF5, netCDF, NITF, NTv2, OGDI, PDF, PostGISRaster, Rasterlite, RPFTOC, RS2, TileDB, WCS, and WMS.
 

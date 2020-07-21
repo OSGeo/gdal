@@ -105,6 +105,23 @@
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
 
 /************************************************************************/
+/*                         GTIFKeyGetSSHORT()                           */
+/************************************************************************/
+
+// Geotiff SHORT keys are supposed to be unsigned, but geo_normalize interface
+// uses signed short...
+static int GTIFKeyGetSSHORT( GTIF *gtif, geokey_t key, short* pnVal )
+{
+    unsigned short sVal;
+    if( GTIFKeyGetSHORT(gtif, key, &sVal, 0, 1) == 1 )
+    {
+        memcpy(pnVal, &sVal, 2);
+        return 1;
+    }
+    return 0;
+}
+
+/************************************************************************/
 /*                           GTIFGetPCSInfo()                           */
 /************************************************************************/
 
@@ -156,6 +173,9 @@ int GTIFGetPCSInfoEx( void* ctxIn,
             return TRUE;
         }
     }
+
+    if( nPCSCode == KvUserDefined )
+        return FALSE;
 
     {
         char szCode[12];
@@ -446,6 +466,10 @@ int GTIFGetGCSInfoEx( void* ctxIn,
         return TRUE;
     }
 
+
+    if( nGCSCode == KvUserDefined )
+        return FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Search the database.                                            */
 /* -------------------------------------------------------------------- */
@@ -634,6 +658,9 @@ int GTIFGetEllipsoidInfoEx( void* ctxIn,
         return TRUE;
     }
 
+    if( nEllipseCode == KvUserDefined )
+        return FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Search the database.                                            */
 /* -------------------------------------------------------------------- */
@@ -705,6 +732,10 @@ int GTIFGetPMInfoEx( void* ctxIn,
             *ppszName = CPLStrdup( "Greenwich" );
         return TRUE;
     }
+
+
+    if( nPMCode == KvUserDefined )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Search the database.                                            */
@@ -804,6 +835,9 @@ int GTIFGetDatumInfoEx( void* ctxIn,
 
         return TRUE;
     }
+
+    if( nDatumCode == KvUserDefined )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Search the database.                                            */
@@ -919,6 +953,9 @@ int GTIFGetUOMLengthInfoEx( void* ctxIn,
 
         return TRUE;
     }
+
+    if( nUOMLengthCode == KvUserDefined )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Search the units database for this unit.  If we don't find      */
@@ -1428,6 +1465,9 @@ int GTIFGetProjTRFInfoEx( void* ctxIn,
         return TRUE;
     }
 
+    if( nProjTRFCode == KvUserDefined )
+        return FALSE;
+
     {
         int     nProjMethod, i, anEPSGCodes[7];
         double  adfProjParms[7];
@@ -1616,59 +1656,6 @@ int GTIFGetProjTRFInfo( /* Conversion code */
         ctx, nProjTRFCode, ppszProjTRFName, pnProjMethod, padfProjParms);
     proj_context_destroy(ctx);
     return ret;
-}
-
-/************************************************************************/
-/*                       GTIFKeyGetInternal()                           */
-/************************************************************************/
-
-static int GTIFKeyGetInternal( GTIF *psGTIF, geokey_t key,
-                           void* pData,
-                           int nIndex,
-                           int nCount,
-                           tagtype_t expected_tagtype )
-{
-    tagtype_t tagtype;
-    if( !GTIFKeyInfo(psGTIF, key, NULL, &tagtype) )
-        return 0;
-    if( tagtype != expected_tagtype )
-    {
-        if( psGTIF->gt_error_callback )
-        {
-            psGTIF->gt_error_callback(
-                psGTIF,
-                LIBGEOTIFF_WARNING,
-                "Expected key %s to be of type %s. Got %s",
-                GTIFKeyName(key), GTIFTypeName(expected_tagtype),
-                GTIFTypeName(tagtype));
-        }
-        return 0;
-    }
-    return GTIFKeyGet( psGTIF, key, pData, nIndex, nCount );
-}
-
-/************************************************************************/
-/*                          GTIFKeyGetSHORT()                           */
-/************************************************************************/
-
-static int GTIFKeyGetSHORT( GTIF *psGTIF, geokey_t key,
-                                 short* pnVal,
-                                 int nIndex,
-                                 int nCount )
-{
-    return GTIFKeyGetInternal(psGTIF, key, pnVal, nIndex, nCount, TYPE_SHORT);
-}
-
-/************************************************************************/
-/*                        GDALGTIFKeyGetDOUBLE()                        */
-/************************************************************************/
-
-static int GTIFKeyGetDOUBLE( GTIF *psGTIF, geokey_t key,
-                                 double* pdfVal,
-                                 int nIndex,
-                                 int nCount )
-{
-    return GTIFKeyGetInternal(psGTIF, key, pdfVal, nIndex, nCount, TYPE_DOUBLE);
 }
 
 /************************************************************************/
@@ -2465,13 +2452,13 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
 /*	Try to get the overall model type.				*/
 /* -------------------------------------------------------------------- */
-    GTIFKeyGetSHORT(psGTIF,GTModelTypeGeoKey,&(psDefn->Model),0,1);
+    GTIFKeyGetSSHORT(psGTIF,GTModelTypeGeoKey,&(psDefn->Model));
 
 /* -------------------------------------------------------------------- */
 /*	Extract the Geog units.  					*/
 /* -------------------------------------------------------------------- */
     nGeogUOMLinear = 9001; /* Linear_Meter */
-    if( GTIFKeyGetSHORT(psGTIF, GeogLinearUnitsGeoKey, &nGeogUOMLinear, 0, 1 ) == 1 )
+    if( GTIFKeyGetSSHORT(psGTIF, GeogLinearUnitsGeoKey, &nGeogUOMLinear) == 1 )
     {
         psDefn->UOMLength = nGeogUOMLinear;
     }
@@ -2479,7 +2466,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
 /*      Try to get a PCS.                                               */
 /* -------------------------------------------------------------------- */
-    if( GTIFKeyGetSHORT(psGTIF,ProjectedCSTypeGeoKey, &(psDefn->PCS),0,1) == 1
+    if( GTIFKeyGetSSHORT(psGTIF,ProjectedCSTypeGeoKey, &(psDefn->PCS)) == 1
         && psDefn->PCS != KvUserDefined )
     {
         /*
@@ -2512,7 +2499,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /*      If the Proj_ code is specified directly, use that.              */
 /* -------------------------------------------------------------------- */
     if( psDefn->ProjCode == KvUserDefined )
-        GTIFKeyGetSHORT(psGTIF, ProjectionGeoKey, &(psDefn->ProjCode), 0, 1 );
+        GTIFKeyGetSSHORT(psGTIF, ProjectionGeoKey, &(psDefn->ProjCode));
 
     if( psDefn->ProjCode != KvUserDefined )
     {
@@ -2543,7 +2530,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /*      Try to get a GCS.  If found, it will override any implied by    */
 /*      the PCS.                                                        */
 /* -------------------------------------------------------------------- */
-    GTIFKeyGetSHORT(psGTIF, GeographicTypeGeoKey, &(psDefn->GCS), 0, 1 );
+    GTIFKeyGetSSHORT(psGTIF, GeographicTypeGeoKey, &(psDefn->GCS));
     if( psDefn->GCS < 1 || psDefn->GCS >= KvUserDefined )
         psDefn->GCS = KvUserDefined;
 
@@ -2561,7 +2548,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /*      Handle the GCS angular units.  GeogAngularUnitsGeoKey           */
 /*      overrides the GCS or PCS setting.                               */
 /* -------------------------------------------------------------------- */
-    GTIFKeyGetSHORT(psGTIF, GeogAngularUnitsGeoKey, &(psDefn->UOMAngle), 0, 1 );
+    GTIFKeyGetSSHORT(psGTIF, GeogAngularUnitsGeoKey, &(psDefn->UOMAngle));
     if( psDefn->UOMAngle != KvUserDefined )
     {
         GTIFGetUOMAngleInfoEx( psGTIF->pj_context,
@@ -2573,7 +2560,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /*      Check for a datum setting, and then use the datum to derive     */
 /*      an ellipsoid.                                                   */
 /* -------------------------------------------------------------------- */
-    GTIFKeyGetSHORT(psGTIF, GeogGeodeticDatumGeoKey, &(psDefn->Datum), 0, 1 );
+    GTIFKeyGetSSHORT(psGTIF, GeogGeodeticDatumGeoKey, &(psDefn->Datum));
 
     if( psDefn->Datum != KvUserDefined )
     {
@@ -2585,7 +2572,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /*      Check for an explicit ellipsoid.  Use the ellipsoid to          */
 /*      derive the ellipsoid characteristics, if possible.              */
 /* -------------------------------------------------------------------- */
-    GTIFKeyGetSHORT(psGTIF, GeogEllipsoidGeoKey, &(psDefn->Ellipsoid), 0, 1 );
+    GTIFKeyGetSSHORT(psGTIF, GeogEllipsoidGeoKey, &(psDefn->Ellipsoid));
 
     if( psDefn->Ellipsoid != KvUserDefined )
     {
@@ -2615,7 +2602,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
 /*      Get the prime meridian info.                                    */
 /* -------------------------------------------------------------------- */
-    GTIFKeyGetSHORT(psGTIF, GeogPrimeMeridianGeoKey, &(psDefn->PM), 0, 1 );
+    GTIFKeyGetSSHORT(psGTIF, GeogPrimeMeridianGeoKey, &(psDefn->PM));
 
     if( psDefn->PM != KvUserDefined )
     {
@@ -2646,7 +2633,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /*      but these are very rarely not decimal degrees for actual        */
 /*      file coordinates.                                               */
 /* -------------------------------------------------------------------- */
-    GTIFKeyGetSHORT(psGTIF,ProjLinearUnitsGeoKey,&(psDefn->UOMLength),0,1);
+    GTIFKeyGetSSHORT(psGTIF,ProjLinearUnitsGeoKey,&(psDefn->UOMLength));
 
     if( psDefn->UOMLength != KvUserDefined )
     {
@@ -2662,8 +2649,8 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
 /*      Handle a variety of user defined transform types.               */
 /* -------------------------------------------------------------------- */
-    if( GTIFKeyGetSHORT(psGTIF,ProjCoordTransGeoKey,
-                   &(psDefn->CTProjection),0,1) == 1)
+    if( GTIFKeyGetSSHORT(psGTIF,ProjCoordTransGeoKey,
+                   &(psDefn->CTProjection)) == 1)
     {
         GTIFFetchProjParms( psGTIF, psDefn );
     }

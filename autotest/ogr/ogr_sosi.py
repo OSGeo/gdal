@@ -64,7 +64,7 @@ def test_ogr_sosi_2():
     if ogr.GetDriverByName('SOSI') is None:
         pytest.skip()
 
-        ds = gdal.OpenEx('data/test_duplicate_fields.sos', open_options=[])
+        ds = gdal.OpenEx('data/sosi/test_duplicate_fields.sos', open_options=[])
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 17
         lyr = ds.GetLayer(1)
@@ -81,7 +81,7 @@ def test_ogr_sosi_3():
     if ogr.GetDriverByName('SOSI') is None:
         pytest.skip()
 
-        ds = gdal.OpenEx('data/test_duplicate_fields.sos',
+        ds = gdal.OpenEx('data/sosi/test_duplicate_fields.sos',
                          open_options=['appendFieldsMap=BEITEBRUKERID&OPPHAV'])
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 17
@@ -99,7 +99,7 @@ def test_ogr_sosi_4():
     if ogr.GetDriverByName('SOSI') is None:
         pytest.skip()
 
-        ds = gdal.OpenEx('data/test_duplicate_fields.sos',
+        ds = gdal.OpenEx('data/sosi/test_duplicate_fields.sos',
                          open_options=['appendFieldsMap=BEITEBRUKERID:;&OPPHAV:;'])
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 17

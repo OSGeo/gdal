@@ -79,7 +79,7 @@ project.
 -  Add a bug reference like "(#1232)" at the end of SVN commit log
    entries when committing changes related to a ticket in Trac. The '#'
    character enables Trac to create a hyperlink from the changeset to
-   the mentionned ticket.
+   the mentioned ticket.
 -  After committing changes related to a ticket in Trac, write the tree
    and revision in which it was fixed in the ticket description. Such as
    "Fixed in trunk (r12345) and in branches/1.7 (r12346)". The 'r'

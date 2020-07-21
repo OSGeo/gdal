@@ -52,7 +52,10 @@ set _vcver_=%1
 set _clver_=1600
 set _vstoolset_=v100
 
-if "%_vcver_%"=="15.0" (
+if "%_vcver_%"=="16.0" (
+	set _clver_=1920
+	set _vstoolset_=v142
+) else if "%_vcver_%"=="15.0" (
 	set _clver_=1910
 	set _vstoolset_=v141
 ) else if "%_vcver_%"=="14.0" (
@@ -103,6 +106,7 @@ echo Examples:
 echo    generate_vcxproj 12.0 64 gdal_vs2013
 echo    generate_vcxproj 14.0 64 gdal_vs2015
 echo    generate_vcxproj 15.0 64 gdal_vs2017
+echo    generate_vcxproj 16.0 64 gdal_vs2019
 echo WARNING: GDAL requires C++11. It is not guaranteed to build with VS2013.
 
 goto :end

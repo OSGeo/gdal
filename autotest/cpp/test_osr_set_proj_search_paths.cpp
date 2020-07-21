@@ -61,10 +61,33 @@ static void func2(void*)
     OSRDestroySpatialReference(hSRS);
 }
 
+static void func3(void*)
+{
+    OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
+    if( OSRImportFromEPSG(hSRS, 32631) != OGRERR_NONE )
+    {
+        fprintf(stderr, "failure not expected (3)\n");
+        exit(1);
+    }
+
+    // Test cleanup effect
+    OSRCleanup();
+
+    for(int epsg = 32601; epsg <= 32661; epsg++ )
+    {
+        if( OSRImportFromEPSG(hSRS, epsg) != OGRERR_NONE ||
+            OSRImportFromEPSG(hSRS, epsg+100) != OGRERR_NONE )
+        {
+            fprintf(stderr, "failure not expected (4)\n");
+            exit(1);
+        }
+    }
+    OSRDestroySpatialReference(hSRS);
+}
+
 int main()
 {
-    auto info = proj_info();
-    auto tokens = CSLTokenizeString2(info.searchpath, ";", 0);
+    auto tokens = OSRGetPROJSearchPaths();
 
     // Overriding PROJ_LIB
     setenv("PROJ_LIB", "/i_do/not_exist", true);
@@ -88,6 +111,17 @@ int main()
 
     CSLDestroy(tokens);
     OSRCleanup();
+
+    // Test fix for #2744
+    CPLJoinableThread* ahThreads[4];
+    for( int i = 0; i< 4; i++ )
+    {
+        ahThreads[i] = CPLCreateJoinableThread(func3, nullptr);
+    }
+    for( int i = 0; i< 4; i++ )
+    {
+        CPLJoinThread(ahThreads[i]);
+    }
 
     return 0;
 }

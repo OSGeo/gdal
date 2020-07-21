@@ -28,6 +28,7 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
+#include <algorithm>
 #include <mutex>
 
 #include "openexr_headers.h"

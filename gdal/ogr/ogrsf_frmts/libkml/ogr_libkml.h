@@ -44,7 +44,7 @@ CPLString OGRLIBKMLGetSanitizedNCName(const char* pszName);
   layer class
 ******************************************************************************/
 
-class OGRLIBKMLLayer final: public OGRLayer
+class OGRLIBKMLLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRLIBKMLLayer>
 {
     int                       bUpdate;
 
@@ -82,6 +82,8 @@ class OGRLIBKMLLayer final: public OGRLayer
 
     bool                      m_bUpdateIsFolder;
 
+    OGRFeature               *GetNextRawFeature();
+
   public:
     OGRLIBKMLLayer            ( const char *pszLayerName,
                                 OGRwkbGeometryType eGType,
@@ -95,8 +97,7 @@ class OGRLIBKMLLayer final: public OGRLayer
     virtual ~OGRLIBKMLLayer();
 
     void                      ResetReading() override { iFeature = 0; nFID = 1; }
-    OGRFeature               *GetNextFeature() override;
-    OGRFeature               *GetNextRawFeature();
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRLIBKMLLayer)
     OGRFeatureDefn           *GetLayerDefn() override { return m_poOgrFeatureDefn; }
     // OGRErr                    SetAttributeFilter(const char * );
     OGRErr                    ICreateFeature( OGRFeature * poOgrFeat ) override;
@@ -185,7 +186,7 @@ class OGRLIBKMLDataSource final: public OGRDataSource
     /***** layers *****/
     OGRLIBKMLLayer          **papoLayers;
     int                       nLayers;
-    int                       nAlloced;
+    int                       nAllocated;
     std::map<CPLString, OGRLIBKMLLayer*> m_oMapLayers;
 
     bool                      bUpdate;

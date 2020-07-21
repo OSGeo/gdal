@@ -33,6 +33,8 @@
 #include "ogrsf_frmts.h"
 #include "cpl_string.h"
 
+#include <vector>
+
 CPLString OGRPGDumpEscapeColumnName(const char* pszColumnName);
 CPLString OGRPGDumpEscapeString( const char* pszStrValue, int nMaxLength = -1,
                                  const char* pszFieldName = "");
@@ -58,6 +60,7 @@ OGRPGCommonAppendCopyFieldsExceptGeom(
     OGRFeature* poFeature,
     const char* pszFIDColumn,
     bool bFIDColumnInCopyFields,
+    const std::vector<bool>& abFieldsToInclude,
     OGRPGCommonEscapeStringCbk pfnEscapeString,
     void* userdata );
 

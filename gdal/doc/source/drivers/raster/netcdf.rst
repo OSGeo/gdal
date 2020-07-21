@@ -296,13 +296,6 @@ Variables attributes for: tos, lon, lat and time
      time#bounds=time_bnds
      time#original_units=seconds since 2001-1-1
 
-Driver Improvements (GDAL >= 1.9.0)
------------------------------------
-
-The driver has undergone significant changes in GDAL 1.9.0, see NEWS
-file and `NetCDF
-Improvements <http://trac.osgeo.org/gdal/wiki/NetCDF_Improvements>`__.
-
 Important Changes
 ~~~~~~~~~~~~~~~~~
 
@@ -422,7 +415,7 @@ NetCDF-4 groups on reading:
 
 -  When searching for a variable containing auxiliary information on the
    selected subdataset, like coordinate variables or grid_mapping, we
-   now also search in parent groups and their childs as specified in
+   now also search in parent groups and their children as specified in
    `Support of groups in
    CF <https://github.com/cf-convention/cf-conventions/issues/144>`__
 

@@ -165,14 +165,14 @@ class PCIDSK2Band final: public GDALPamRasterBand
 /*                             OGRPCIDSKLayer                              */
 /************************************************************************/
 
-class OGRPCIDSKLayer final: public OGRLayer
+class OGRPCIDSKLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRPCIDSKLayer>
 {
     PCIDSK::PCIDSKVectorSegment *poVecSeg;
     PCIDSK::PCIDSKSegment       *poSeg;
 
     OGRFeatureDefn     *poFeatureDefn;
 
-    OGRFeature *        GetNextUnfilteredFeature();
+    OGRFeature *        GetNextRawFeature();
 
     int                 iRingStartField;
     PCIDSK::ShapeId     hLastShapeId;
@@ -182,13 +182,15 @@ class OGRPCIDSKLayer final: public OGRLayer
     OGRSpatialReference *poSRS;
 
     std::unordered_map<std::string, int> m_oMapFieldNameToIdx{};
+    bool                m_bEOF = false;
 
   public:
     OGRPCIDSKLayer( PCIDSK::PCIDSKSegment*, PCIDSK::PCIDSKVectorSegment *, bool bUpdate );
     virtual ~OGRPCIDSKLayer();
 
     void                ResetReading() override;
-    OGRFeature *        GetNextFeature() override;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRPCIDSKLayer)
+
     OGRFeature         *GetFeature( GIntBig nFeatureId ) override;
     virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
 

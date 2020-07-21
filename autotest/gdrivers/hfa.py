@@ -30,7 +30,7 @@
 ###############################################################################
 
 import os
-import array
+import struct
 from osgeo import gdal
 
 
@@ -139,7 +139,7 @@ def test_hfa_histrewrite():
 
 def test_hfa_int_stats_1():
 
-    ds = gdal.Open('data/int.img')
+    ds = gdal.Open('data/hfa/int.img')
     md = ds.GetRasterBand(1).GetMetadata()
     ds = None
 
@@ -163,7 +163,7 @@ def test_hfa_int_stats_1():
 
 def test_hfa_int_stats_2():
 
-    ds = gdal.Open('data/int.img')
+    ds = gdal.Open('data/hfa/int.img')
     stats = ds.GetRasterBand(1).GetStatistics(False, True)
     ds = None
 
@@ -183,7 +183,7 @@ def test_hfa_int_stats_2():
 
 def test_hfa_float_stats_1():
 
-    ds = gdal.Open('data/float.img')
+    ds = gdal.Open('data/hfa/float.img')
     md = ds.GetRasterBand(1).GetMetadata()
     ds = None
 
@@ -215,7 +215,7 @@ def test_hfa_float_stats_1():
 
 def test_hfa_float_stats_2():
 
-    ds = gdal.Open('data/float.img')
+    ds = gdal.Open('data/hfa/float.img')
     stats = ds.GetRasterBand(1).GetStatistics(False, True)
     ds = None
 
@@ -235,7 +235,7 @@ def test_hfa_float_stats_2():
 
 def test_hfa_int_read():
 
-    ds = gdal.Open('data/int.img')
+    ds = gdal.Open('data/hfa/int.img')
     band = ds.GetRasterBand(1)
     cs = band.Checksum()
     band.ReadRaster(100, 100, 1, 1)
@@ -249,7 +249,7 @@ def test_hfa_int_read():
 
 def test_hfa_float_read():
 
-    ds = gdal.Open('data/float.img')
+    ds = gdal.Open('data/hfa/float.img')
     band = ds.GetRasterBand(1)
     cs = band.Checksum()
     data = band.ReadRaster(100, 100, 1, 1)
@@ -269,7 +269,7 @@ def test_hfa_float_read():
 
 def test_hfa_pe_read():
 
-    ds = gdal.Open('data/87test.img')
+    ds = gdal.Open('data/hfa/87test.img')
     wkt = ds.GetProjectionRef()
     expected = 'PROJCS["World_Cube",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["Degree",0.0174532925199433]],PROJECTION["Cube"],PARAMETER["False_Easting",0],PARAMETER["False_Northing",0],PARAMETER["Central_Meridian",0],PARAMETER["Option",1],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
 
@@ -282,7 +282,7 @@ def test_hfa_pe_read():
 def test_hfa_pe_write():
 
     drv = gdal.GetDriverByName('HFA')
-    ds_src = gdal.Open('data/87test.img')
+    ds_src = gdal.Open('data/hfa/87test.img')
     out_ds = drv.CreateCopy('tmp/87test.img', ds_src)
     del out_ds
     ds_src = None
@@ -350,7 +350,7 @@ def test_hfa_grow_rrdlist():
 
     import shutil
 
-    shutil.copyfile('data/bug_1109.img', 'tmp/bug_1109.img')
+    shutil.copyfile('data/hfa/bug_1109.img', 'tmp/bug_1109.img')
     # os.system("copy data\\bug_1109.img tmp")
 
     # Add two overview levels.
@@ -420,7 +420,7 @@ def test_hfa_corrupt_aux():
     # dataset.
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = gdal.Open('data/F0116231.aux')
+    ds = gdal.Open('data/hfa/F0116231.aux')
     gdal.PopErrorHandler()
 
     assert ds.RasterXSize == 1104, 'did not get expected dataset characteristics'
@@ -440,7 +440,7 @@ def test_hfa_mapinformation_units():
     # dataset.
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = gdal.Open('data/fg118-91.aux')
+    ds = gdal.Open('data/hfa/fg118-91.aux')
     gdal.PopErrorHandler()
 
     wkt = ds.GetProjectionRef()
@@ -460,7 +460,7 @@ def test_hfa_nodata_write():
     ds = drv.Create('tmp/nodata.img', 7, 7, 1, gdal.GDT_Byte)
 
     p = [1, 2, 1, 4, 1, 2, 1]
-    raw_data = array.array('h', p).tostring()
+    raw_data = b''.join(struct.pack('h', x) for x in p)
 
     for line in range(7):
         ds.WriteRaster(0, line, 7, 1, raw_data,
@@ -505,7 +505,7 @@ def test_hfa_nodata_read():
 
 def test_hfa_rotated_read():
 
-    ds = gdal.Open('data/fg118-91.aux')
+    ds = gdal.Open('data/hfa/fg118-91.aux')
 
     check_gt = (11856857.07898215, 0.895867662235625, 0.02684252936279331,
                 7041861.472946444, 0.01962103617166367, -0.9007880319529181)
@@ -607,7 +607,7 @@ def test_hfa_vsimem():
 def test_hfa_proName():
 
     drv = gdal.GetDriverByName('HFA')
-    src_ds = gdal.Open('data/stateplane.vrt')
+    src_ds = gdal.Open('data/hfa/stateplane.vrt')
     dst_ds = drv.CreateCopy('tmp/proname.img', src_ds)
 
     del dst_ds
@@ -663,7 +663,7 @@ def test_hfa_read_empty_compressed():
 
 def test_hfa_unique_values_color_table():
 
-    ds = gdal.Open('data/i8u_c_i.img')
+    ds = gdal.Open('data/hfa/i8u_c_i.img')
 
     ct = ds.GetRasterBand(1).GetRasterColorTable()
 
@@ -686,7 +686,7 @@ def test_hfa_unique_values_hist():
     except:
         pytest.skip()
 
-    ds = gdal.Open('data/i8u_c_i.img')
+    ds = gdal.Open('data/hfa/i8u_c_i.img')
 
     md = ds.GetRasterBand(1).GetMetadata()
 
@@ -715,7 +715,7 @@ def test_hfa_unique_values_hist():
 
 def test_hfa_xforms_3rd():
 
-    ds = gdal.Open('data/42BW_420730_VT2.aux')
+    ds = gdal.Open('data/hfa/42BW_420730_VT2.aux')
 
     check_list = [
         ('XFORM_STEPS', 2),
@@ -758,7 +758,7 @@ def test_hfa_xforms_3rd():
 
 def test_hfa_delete_colortable():
     # copy a file to tmp dir to modify.
-    open('tmp/i8u.img', 'wb').write(open('data/i8u_c_i.img', 'rb').read())
+    open('tmp/i8u.img', 'wb').write(open('data/hfa/i8u_c_i.img', 'rb').read())
 
     # clear color table.
     ds = gdal.Open('tmp/i8u.img', gdal.GA_Update)
@@ -826,7 +826,7 @@ def test_hfa_delete_colortable2():
 
 def test_hfa_excluded_values():
 
-    ds = gdal.Open('data/dem10.img')
+    ds = gdal.Open('data/hfa/dem10.img')
     md = ds.GetRasterBand(1).GetMetadata()
     ds = None
 
@@ -834,13 +834,13 @@ def test_hfa_excluded_values():
         'STATISTICS_EXCLUDEDVALUE is wrong.'
 
 ###############################################################################
-# verify that we propagate nodata to overviews in .img/.rrd format.
+# verify that we propagate nodata to overviews in .hfa/.rrd format.
 
 
 def test_hfa_ov_nodata():
 
     drv = gdal.GetDriverByName('HFA')
-    src_ds = gdal.Open('data/nodata_int.asc')
+    src_ds = gdal.Open('data/aaigrid/nodata_int.asc')
     wrk_ds = drv.CreateCopy('/vsimem/ov_nodata.img', src_ds)
     src_ds = None
 
@@ -874,7 +874,7 @@ def test_hfa_ov_nodata():
 
 def test_hfa_read_bit2grayscale():
 
-    ds = gdal.Open('data/small1bit.img')
+    ds = gdal.Open('data/hfa/small1bit.img')
     band = ds.GetRasterBand(1)
     ov = band.GetOverview(0)
 
@@ -893,8 +893,8 @@ def test_hfa_write_bit2grayscale():
 
     import shutil
 
-    shutil.copyfile('data/small1bit.img', 'tmp/small1bit.img')
-    shutil.copyfile('data/small1bit.rrd', 'tmp/small1bit.rrd')
+    shutil.copyfile('data/hfa/small1bit.img', 'tmp/small1bit.img')
+    shutil.copyfile('data/hfa/small1bit.rrd', 'tmp/small1bit.rrd')
 
     gdal.SetConfigOption('USE_RRD', 'YES')
     gdal.SetConfigOption('HFA_USE_RRD', 'YES')
@@ -923,7 +923,7 @@ def test_hfa_write_bit2grayscale():
 
 def test_hfa_camera_md():
 
-    ds = gdal.Open('/vsisparse/data/251_sparse.xml')
+    ds = gdal.Open('/vsisparse/data/hfa/251_sparse.xml')
 
     md = ds.GetMetadata('CAMERA_MODEL')
 
@@ -1022,7 +1022,7 @@ def test_hfa_rde_overviews():
 
     # Create an imagine file, forcing creation of an .ige file.
 
-    ds = gdal.Open('data/spill.img')
+    ds = gdal.Open('data/hfa/spill.img')
 
     exp_cs = 1631
     cs = ds.GetRasterBand(1).Checksum()
@@ -1035,10 +1035,8 @@ def test_hfa_rde_overviews():
     assert exp_cs == cs, 'did not get expected overview checksum'
 
     filelist = ds.GetFileList()
-    exp_filelist = ['data/spill.img', 'data/spill.ige', 'data/spill.rrd', 'data/spill.rde']
-    exp_filelist_win32 = ['data/spill.img', 'data\\spill.ige', 'data\\spill.rrd', 'data\\spill.rde']
-    assert filelist == exp_filelist or filelist == exp_filelist_win32, \
-        'did not get expected file list.'
+    exp_filelist = ['data/hfa/spill.img', 'data/hfa/spill.ige', 'data/hfa/spill.rrd', 'data/hfa/spill.rde']
+    assert [x.replace('\\', '/') for x in filelist] == exp_filelist
 
     ds = None
 
@@ -1050,7 +1048,7 @@ def test_hfa_rde_overviews():
 def test_hfa_copyfiles():
 
     drv = gdal.GetDriverByName('HFA')
-    drv.CopyFiles('tmp/newnamexxx_after_copy.img', 'data/spill.img')
+    drv.CopyFiles('tmp/newnamexxx_after_copy.img', 'data/hfa/spill.img')
 
     drv.Rename('tmp/newnamexxx.img', 'tmp/newnamexxx_after_copy.img')
 
@@ -1092,7 +1090,7 @@ def test_hfa_write_rat():
 
     drv = gdal.GetDriverByName('HFA')
 
-    src_ds = gdal.Open('data/i8u_c_i.img')
+    src_ds = gdal.Open('data/hfa/i8u_c_i.img')
 
     rat = src_ds.GetRasterBand(1).GetDefaultRAT()
 

@@ -31,6 +31,8 @@ It is possible to chain multiple file system handlers.
     # ogrinfo a shapefile in a zip file on an ftp:
 
     ogrinfo -ro -al -so /vsizip//vsicurl/ftp://user:password@example.com/foldername/file.zip/example.shp
+    
+(Note is also OK to say /vsizip/vsicurl/... with a single slash. (But when writing documentation please still use two.))    
 
 Drivers supporting virtual file systems
 ---------------------------------------
@@ -154,9 +156,9 @@ Example using :program:`ogrinfo` to read a shapefile on the internet:
 
 Starting with GDAL 2.3, options can be passed in the filename with the following syntax: ``/vsicurl?[option_i=val_i&]*url=http://...`` where each option name and value (including the value of "url") is URL-encoded. Currently supported options are:
 
-- use_head=yes/no: whether the HTTP HEAD request can be emitted. Default to YES. Setting this option overrides the behaviour of the :decl_configoption:`CPL_VSIL_CURL_USE_HEAD` configuration option.
-- max_retry=number: default to 0. Setting this option overrides the behaviour of the :decl_configoption:`GDAL_HTTP_MAX_RETRY` configuration option.
-- retry_delay=number_in_seconds: default to 30. Setting this option overrides the behaviour of the :decl_configoption:`GDAL_HTTP_RETRY_DELAY` configuration option.
+- use_head=yes/no: whether the HTTP HEAD request can be emitted. Default to YES. Setting this option overrides the behavior of the :decl_configoption:`CPL_VSIL_CURL_USE_HEAD` configuration option.
+- max_retry=number: default to 0. Setting this option overrides the behavior of the :decl_configoption:`GDAL_HTTP_MAX_RETRY` configuration option.
+- retry_delay=number_in_seconds: default to 30. Setting this option overrides the behavior of the :decl_configoption:`GDAL_HTTP_RETRY_DELAY` configuration option.
 - list_dir=yes/no: whether an attempt to read the file list of the directory where the file is located should be done. Default to YES.
 
 Partial downloads (requires the HTTP server to support random reading) are done with a 16 KB granularity by default. Starting with GDAL 2.3, the chunk size can be configured with the :decl_configoption:`CPL_VSIL_CURL_CHUNK_SIZE` configuration option, with a value in bytes. If the driver detects sequential reading it will progressively increase the chunk size up to 2 MB to improve download performance. Starting with GDAL 2.3, the :decl_configoption:`GDAL_INGESTED_BYTES_AT_OPEN` configuration option can be set to impose the number of bytes read in one GET call at file opening (can help performance to read Cloud optimized geotiff with a large header).
@@ -165,7 +167,7 @@ The :decl_configoption:`GDAL_HTTP_PROXY`, :decl_configoption:`GDAL_HTTP_PROXYUSE
 
 Starting with GDAL 2.1.3, the :decl_configoption:`CURL_CA_BUNDLE` or :decl_configoption:`SSL_CERT_FILE` configuration options can be used to set the path to the Certification Authority (CA) bundle file (if not specified, curl will use a file in a system location).
 
-Starting with GDAL 2.3, additional HTTP headers can be sent by setting the :decl_configoption:`GDAL_HTTP_HEADER_FILE` configuration option to point to a filename of a text file with "key: value" HTTP headers.
+Starting with GDAL 2.3, additional HTTP headers can be sent by setting the :decl_configoption:`GDAL_HTTP_HEADER_FILE` configuration option to point to a filename of a text file with "key: value" HTTP headers.   :decl_configoption:`CPL_CURL_VERBOSE`=YES allows one to see them and more, when combined with ``--debug``.
 
 Starting with GDAL 2.3, the :decl_configoption:`GDAL_HTTP_MAX_RETRY` (number of attempts) and :decl_configoption:`GDAL_HTTP_RETRY_DELAY` (in seconds) configuration option can be set, so that request retries are done in case of HTTP errors 429, 502, 503 or 504.
 
@@ -177,7 +179,7 @@ In addition, a global least-recently-used cache of 16 MB shared among all downlo
 
 Starting with GDAL 2.3, the :decl_configoption:`CPL_VSIL_CURL_NON_CACHED` configuration option can be set to values like :file:`/vsicurl/http://example.com/foo.tif:/vsicurl/http://example.com/some_directory`, so that at file handle closing, all cached content related to the mentioned file(s) is no longer cached. This can help when dealing with resources that can be modified during execution of GDAL related code. Alternatively, :cpp:func:`VSICurlClearCache` can be used.
 
-Starting with GDAL 2.1, ``/vsicurl/`` will try to query directly redirected URLs to Amazon S3 signed URLs during their validity period, so as to minimize round-trips. This behaviour can be disabled by setting the configuration option :decl_configoption:`CPL_VSIL_CURL_USE_S3_REDIRECT` to ``NO``.
+Starting with GDAL 2.1, ``/vsicurl/`` will try to query directly redirected URLs to Amazon S3 signed URLs during their validity period, so as to minimize round-trips. This behavior can be disabled by setting the configuration option :decl_configoption:`CPL_VSIL_CURL_USE_S3_REDIRECT` to ``NO``.
 
 :cpp:func:`VSIStatL` will return the size in st_size member and file nature- file or directory - in st_mode member (the later only reliable with FTP resources for now).
 
@@ -204,12 +206,14 @@ The file can be cached in RAM by setting the configuration option :decl_configop
 
 .. _`/vsis3/`:
 
-/vsis3/ (AWS S3 files: random reading)
-++++++++++++++++++++++++++++++++++++++
+/vsis3/ (AWS S3 files)
+++++++++++++++++++++++
 
 /vsis3/ is a file system handler that allows on-the-fly random reading of (primarily non-public) files available in AWS S3 buckets, without prior download of the entire file. It requires GDAL to be built against libcurl.
 
-It also allows sequential writing of files (no seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported). Deletion of files with :cpp:func:`VSIUnlink` is also supported. Starting with GDAL 2.3, creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
+It also allows sequential writing of files. No seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported, unless, if,
+starting with GDAL 3.2, the :decl_configoption:`CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE` configuration option is set to ``YES``, in which case random-write access is possible (involves the creation of a temporary local file, whose location is controlled by the :decl_configoption:`CPL_TMPDIR` configuration option).
+Deletion of files with :cpp:func:`VSIUnlink` is also supported. Starting with GDAL 2.3, creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
 
 Recognized filenames are of the form :file:`/vsis3/bucket/key`, where ``bucket`` is the name of the S3 bucket and ``key`` is the S3 object "key", i.e. a filename potentially containing subdirectories.
 
@@ -219,7 +223,7 @@ Several authentication methods are possible, and are attempted in the following 
 
 1. If :decl_configoption:`AWS_NO_SIGN_REQUEST=YES` configuration option is set, request signing is disabled. This option might be used for buckets with public access rights. Available since GDAL 2.3
 2. The :decl_configoption:`AWS_SECRET_ACCESS_KEY` and :decl_configoption:`AWS_ACCESS_KEY_ID` configuration options can be set. The :decl_configoption:`AWS_SESSION_TOKEN` configuration option must be set when temporary credentials are used.
-3. Starting with GDAL 2.3, alternate ways of providing credentials similar to what the "aws" command line utility or Boto3 support can be used. If the above mentioned environment variables are not provided, the ``~/.aws/credentials`` or ``UserProfile%/.aws/credentials`` file will be read (or the file pointed by :decl_configoption:`CPL_AWS_CREDENTIALS_FILE`). The profile may be specified with the :decl_configoption:`AWS_DEFAULT_PROFILE` environment variable (the default profile is "default")
+3. Starting with GDAL 2.3, alternate ways of providing credentials similar to what the "aws" command line utility or Boto3 support can be used. If the above mentioned environment variables are not provided, the ``~/.aws/credentials`` or ``UserProfile%/.aws/credentials`` file will be read (or the file pointed by :decl_configoption:`CPL_AWS_CREDENTIALS_FILE`). The profile may be specified with the :decl_configoption:`AWS_DEFAULT_PROFILE` environment variable, or starting with GDAL 3.2 with the :decl_configoption:`AWS_PROFILE` environment variable (the default profile is "default")
 4. The ``~/.aws/config`` or ``UserProfile%/.aws/config`` file may also be used (or the file pointer by :decl_configoption:`AWS_CONFIG_FILE`) to retrieve credentials and the AWS region.
 5. If none of the above method succeeds, instance profile credentials will be retrieved when GDAL is used on EC2 instances.
 
@@ -239,7 +243,10 @@ On writing, the file is uploaded using the S3 multipart upload API. The size of 
 
 Since GDAL 2.4, when listing a directory, files with GLACIER storage class are ignored unless the :decl_configoption:`CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE` configuration option is set to ``NO``.
 
-Since GDAL 3.1, the Rename() operation is supported (first doing a copy of the original file and then deleting it).
+Since GDAL 3.1, the :cpp:func:`VSIRename` operation is supported (first doing a copy of the original file and then deleting it)
+
+Since GDAL 3.1, the :cpp:func:`VSIRmdirRecursive` operation is supported (using batch deletion method). The :decl_configoption:`CPL_VSIS3_USE_BASE_RMDIR_RECURSIVE` configuration option can be set to YES if using a S3-like API that doesn't support batch deletion (GDAL >= 3.2)
+
 
 .. versionadded:: 2.1
 
@@ -258,12 +265,13 @@ Authentication options, and read-only features, are identical to :ref:`/vsis3/ <
 
 .. _`/vsigs/`:
 
-/vsigs/ (Google Cloud Storage files: random reading)
-++++++++++++++++++++++++++++++++++++++++++++++++++++
+/vsigs/ (Google Cloud Storage files)
+++++++++++++++++++++++++++++++++++++
 
 /vsigs/ is a file system handler that allows on-the-fly random reading of (primarily non-public) files available in Google Cloud Storage buckets, without prior download of the entire file. It requires GDAL to be built against libcurl.
 
-Starting with GDAL 2.3, it also allows sequential writing of files (no seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported). Deletion of files with :cpp:func:`VSIUnlink`, creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
+Starting with GDAL 2.3, it also allows sequential writing of files. No seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported, unless, if, starting with GDAL 3.2, the :decl_configoption:`CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE` configuration option is set to ``YES``, in which case random-write access is possible (involves the creation of a temporary local file, whose location is controlled by the :decl_configoption:`CPL_TMPDIR` configuration option).
+Deletion of files with :cpp:func:`VSIUnlink`, creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
 
 Recognized filenames are of the form :file:`/vsigs/bucket/key` where ``bucket`` is the name of the bucket and ``key`` is the object "key", i.e. a filename potentially containing subdirectories.
 
@@ -275,7 +283,7 @@ Several authentication methods are possible, and are attempted in the following 
 2. The :decl_configoption:`GDAL_HTTP_HEADER_FILE` configuration option to point to a filename of a text file with "key: value" headers. Typically, it must contain a "Authorization: Bearer XXXXXXXXX" line.
 3. (GDAL >= 2.3) The :decl_configoption:`GS_OAUTH2_REFRESH_TOKEN` configuration option can be set to use OAuth2 client authentication. See http://code.google.com/apis/accounts/docs/OAuth2.html This refresh token can be obtained with the ``gdal_auth.py -s storage`` or ``gdal_auth.py -s storage-rw`` script Note: instead of using the default GDAL application credentials, you may define the :decl_configoption:`GS_OAUTH2_CLIENT_ID` and :decl_configoption:`GS_OAUTH2_CLIENT_SECRET` configuration options (need to be defined both for gdal_auth.py and later execution of /vsigs)
 4. (GDAL >= 2.3) The :decl_configoption:`GOOGLE_APPLICATION_CREDENTIALS` configuration option can be set to point to a JSON file containing OAuth2 service account credentials, in particular a private key and a client email. See https://developers.google.com/identity/protocols/OAuth2ServiceAccount for more details on this authentication method. The bucket must grant the "Storage Legacy Bucket Owner" or "Storage Legacy Bucket Reader" permissions to the service account. The :decl_configoption:`GS_OAUTH2_SCOPE` configuration option can be set to change the default permission scope from "https://www.googleapis.com/auth/devstorage.read_write" to "https://www.googleapis.com/auth/devstorage.read_only" if needed.
-5. (GDAL >= 2.3) Variant of the previous method. The :decl_configoption:`GS_OAUTH2_PRIVATE_KEY` (or :decl_configoption:`GS_OAUTH2_PRIVATE_KEY_FILE)` and :decl_configoption:`GS_OAUTH2_CLIENT_EMAIL` can be set to use OAuth2 service account authentication. See https://developers.google.com/identity/protocols/OAuth2ServiceAccount for more details on this authentication method. The :decl_configoption:`GS_OAUTH2_PRIVATE_KEY` configuration option must contain the private key as a inline string, starting with "-----BEGIN PRIVATE KEY-----" Alternatively the :decl_configoption:`GS_OAUTH2_PRIVATE_KEY_FILE` configuration option can be set to indicate a filename that contains such a private key. The bucket must grant the "Storage Legacy Bucket Owner" or "Storage Legacy Bucket Reader" permissions to the service account. The :decl_configoption:`GS_OAUTH2_SCOPE` configuration option can be set to change the default permission scope from "https://www.googleapis.com/auth/devstorage.read_write" to "https://www.googleapis.com/auth/devstorage.read_only" if needed.
+5. (GDAL >= 2.3) Variant of the previous method. The :decl_configoption:`GS_OAUTH2_PRIVATE_KEY` (or :decl_configoption:`GS_OAUTH2_PRIVATE_KEY_FILE)` and :decl_configoption:`GS_OAUTH2_CLIENT_EMAIL` can be set to use OAuth2 service account authentication. See https://developers.google.com/identity/protocols/OAuth2ServiceAccount for more details on this authentication method. The :decl_configoption:`GS_OAUTH2_PRIVATE_KEY` configuration option must contain the private key as a inline string, starting with ``-----BEGIN PRIVATE KEY-----``. Alternatively the :decl_configoption:`GS_OAUTH2_PRIVATE_KEY_FILE` configuration option can be set to indicate a filename that contains such a private key. The bucket must grant the "Storage Legacy Bucket Owner" or "Storage Legacy Bucket Reader" permissions to the service account. The :decl_configoption:`GS_OAUTH2_SCOPE` configuration option can be set to change the default permission scope from "https://www.googleapis.com/auth/devstorage.read_write" to "https://www.googleapis.com/auth/devstorage.read_only" if needed.
 6. (GDAL >= 2.3) An alternate way of providing credentials similar to what the "gsutil" command line utility or Boto3 support can be used. If the above mentioned environment variables are not provided, the :file:`~/.boto` or :file:`UserProfile%/.boto` file will be read (or the file pointed by :decl_configoption:`CPL_GS_CREDENTIALS_FILE`) for the gs_secret_access_key and gs_access_key_id entries for AWS style authentication. If not found, it will look for the gs_oauth2_refresh_token (and optionally client_id and client_secret) entry for OAuth2 client authentication.
 7. (GDAL >= 2.3) Finally if none of the above method succeeds, the code will check if the current machine is a Google Compute Engine instance, and if so will use the permissions associated to it (using the default service account associated with the VM). To force a machine to be detected as a GCE instance (for example for code running in a container with no access to the boot logs), you can set :decl_configoption:`CPL_MACHINE_IS_GCE` to ``YES``.
 
@@ -298,12 +306,13 @@ Authentication options, and read-only features, are identical to :ref:`/vsigs/ <
 
 .. _`/vsiaz/`:
 
-/vsiaz/ (Microsoft Azure Blob files: random reading)
-++++++++++++++++++++++++++++++++++++++++++++++++++++
+/vsiaz/ (Microsoft Azure Blob files)
+++++++++++++++++++++++++++++++++++++
 
 /vsiaz/ is a file system handler that allows on-the-fly random reading of (primarily non-public) files available in Microsoft Azure Blob containers, without prior download of the entire file. It requires GDAL to be built against libcurl.
 
-It also allows sequential writing of files (no seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported). A block blob will be created if the file size is below 4 MB. Beyond, an append blob will be created (with a maximum file size of 195 GB).
+It also allows sequential writing of files. No seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported, unless, if, starting with GDAL 3.2, the :decl_configoption:`CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE` configuration option is set to ``YES``, in which case random-write access is possible (involves the creation of a temporary local file, whose location is controlled by the :decl_configoption:`CPL_TMPDIR` configuration option).
+A block blob will be created if the file size is below 4 MB. Beyond, an append blob will be created (with a maximum file size of 195 GB).
 
 Deletion of files with :cpp:func:`VSIUnlink`, creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible. Note: when using :cpp:func:`VSIMkdir`, a special hidden :file:`.gdal_marker_for_dir` empty file is created, since Azure Blob does not natively support empty directories. If that file is the last one remaining in a directory, :cpp:func:`VSIRmdir` will automatically remove it. This file will not be seen with :cpp:func:`VSIReadDir`. If removing files from directories not created with :cpp:func:`VSIMkdir`, when the last file is deleted, its directory is automatically removed by Azure, so the sequence ``VSIUnlink("/vsiaz/container/subdir/lastfile")`` followed by ``VSIRmdir("/vsiaz/container/subdir")`` will fail on the :cpp:func:`VSIRmdir` invocation.
 
@@ -316,7 +325,7 @@ Two authentication methods are possible, and are attempted in the following orde
 1. The :decl_configoption:`AZURE_STORAGE_CONNECTION_STRING` configuration option, given in the access key section of the administration interface. It contains both the account name and a secret key.
 2. The :decl_configoption:`AZURE_STORAGE_ACCOUNT` and :decl_configoption:`AZURE_STORAGE_ACCESS_KEY` configuration options pointing respectively to the account name and a secret key.
 
-Since GDAL 3.1, the Rename() operation is supported (first doing a copy of the original file and then deleting it).
+Since GDAL 3.1, the :cpp:func:`VSIRename` operation is supported (first doing a copy of the original file and then deleting it)
 
 .. versionadded:: 2.3
 
@@ -335,12 +344,13 @@ Authentication options, and read-only features, are identical to :ref:`/vsiaz/ <
 
 .. _`/vsioss/`:
 
-/vsioss/ (Alibaba Cloud OSS files: random reading)
-++++++++++++++++++++++++++++++++++++++++++++++++++
+/vsioss/ (Alibaba Cloud OSS files)
+++++++++++++++++++++++++++++++++++
 
 /vsioss/ is a file system handler that allows on-the-fly random reading of (primarily non-public) files available in Alibaba Cloud Object Storage Service (OSS) buckets, without prior download of the entire file. It requires GDAL to be built against libcurl.
 
-It also allows sequential writing of files (no seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported). Deletion of files with :cpp:func:`VSIUnlink` is also supported. Creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
+It also allows sequential writing of files. No seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported, unless, if, starting with GDAL 3.2, the :decl_configoption:`CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE` configuration option is set to ``YES``, in which case random-write access is possible (involves the creation of a temporary local file, whose location is controlled by the :decl_configoption:`CPL_TMPDIR` configuration option).
+Deletion of files with :cpp:func:`VSIUnlink` is also supported. Creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
 
 Recognized filenames are of the form :file:`/vsioss/bucket/key` where ``bucket`` is the name of the OSS bucket and ``key`` is the OSS object "key", i.e. a filename potentially containing subdirectories.
 
@@ -367,12 +377,13 @@ Authentication options, and read-only features, are identical to :ref:`/vsioss/ 
 
 .. _`/vsiswift/`:
 
-/vsiswift/ (OpenStack Swift Object Storage: random reading)
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/vsiswift/ (OpenStack Swift Object Storage)
++++++++++++++++++++++++++++++++++++++++++++
 
 /vsiswift/ is a file system handler that allows on-the-fly random reading of (primarily non-public) files available in OpenStack Swift Object Storage (swift) buckets, without prior download of the entire file. It requires GDAL to be built against libcurl.
 
-It also allows sequential writing of files (no seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported). Deletion of files with :cpp:func:`VSIUnlink` is also supported. Creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
+It also allows sequential writing of files. No seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported, unless, if, starting with GDAL 3.2, the :decl_configoption:`CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE` configuration option is set to ``YES``, in which case random-write access is possible (involves the creation of a temporary local file, whose location is controlled by the :decl_configoption:`CPL_TMPDIR` configuration option).
+Deletion of files with :cpp:func:`VSIUnlink` is also supported. Creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
 
 Recognized filenames are of the form :file:`/vsiswift/bucket/key` where ``bucket`` is the name of the swift bucket and ``key`` is the swift object "key", i.e. a filename potentially containing subdirectories.
 
@@ -393,7 +404,9 @@ Three authentication methods are possible, and are attempted in the following or
    - `OS_PROJECT_DOMAIN_NAME`
    - `OS_REGION_NAME`
 
-This file system handler also allows sequential writing of files (no seeks or read operations are then allowed)
+This file system handler also allows sequential writing of files (no seeks or read operations are then allowed).
+
+In some versions of OpenStack Swift, the access to large (segmented) files fails unless they are explicitly marked as static large objects, instead of being dynamic large objects which is the default. Using the python-swiftclient this can be achieved when uploading the file by passing the ``--use-slo`` flag (see https://docs.openstack.org/python-swiftclient/latest/cli/index.html#swift-upload for all options). For more information about large objects see https://docs.openstack.org/swift/latest/api/large_objects.html.
 
 .. versionadded:: 2.3
 
@@ -443,7 +456,8 @@ Examples:
 
     /vsiwebhdfs/http://localhost:50070/webhdfs/v1/mydir/byte.tif
 
-It also allows sequential writing of files (no seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported). Deletion of files with :cpp:func:`VSIUnlink` is also supported. Creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
+It also allows sequential writing of files. No seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported, unless, if, starting with GDAL 3.2, the :decl_configoption:`CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE` configuration option is set to ``YES``, in which case random-write access is possible (involves the creation of a temporary local file, whose location is controlled by the :decl_configoption:`CPL_TMPDIR` configuration option).
+Deletion of files with :cpp:func:`VSIUnlink` is also supported. Creation of directories with :cpp:func:`VSIMkdir` and deletion of (empty) directories with :cpp:func:`VSIRmdir` are also possible.
 
 The generalities of :ref:`/vsicurl/ </vsicurl/>` apply.
 
@@ -567,7 +581,7 @@ This is not a proper virtual file system handler, but a C function that takes a 
 
 The :cpp:class:`VSICachedFile` class only handles read operations at that time, and will error out on write operations.
 
-This is done with the :cpp:func:`VSICreateCachedFile` function, that is implictly used by a number of the above mentioned file systems (namely the default one for standard file system operations, and the /vsicurl/ and other related network file systems) if the ``VSI_CACHE`` configuration option is set to ``YES``.
+This is done with the :cpp:func:`VSICreateCachedFile` function, that is implicitly used by a number of the above mentioned file systems (namely the default one for standard file system operations, and the /vsicurl/ and other related network file systems) if the ``VSI_CACHE`` configuration option is set to ``YES``.
 
 The default size of caching for each file is 25 MB (25 MB for each file that is cached), and can be controlled with the ``VSI_CACHE_SIZE`` configuration option (value in bytes).
 

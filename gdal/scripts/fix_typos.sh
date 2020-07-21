@@ -52,8 +52,8 @@ if ! test -d fix_typos; then
      git clone https://github.com/rouault/codespell
      (cd codespell && git checkout gdal_improvements)
      # Aggregate base dictionary + QGIS one + Debian Lintian one
-     curl https://raw.githubusercontent.com/qgis/QGIS/master/scripts/spelling.dat | sed "s/:/->/" | grep -v "colour->" | grep -v "colours->" > qgis.txt
-     curl https://anonscm.debian.org/cgit/lintian/lintian.git/plain/data/spelling/corrections| grep "||" | grep -v "#" | sed "s/||/->/" > debian.txt
+     curl https://raw.githubusercontent.com/qgis/QGIS/master/scripts/spell_check/spelling.dat | sed "s/:/->/" | grep -v "colour->" | grep -v "colours->" > qgis.txt
+     curl https://salsa.debian.org/lintian/lintian/-/raw/master/data/spelling/corrections | grep "||" | grep -v "#" | sed "s/||/->/" > debian.txt
      cat codespell/data/dictionary.txt qgis.txt debian.txt | awk 'NF' > gdal_dict.txt
      echo "difered->deferred" >> gdal_dict.txt
      echo "differed->deferred" >> gdal_dict.txt
@@ -62,30 +62,46 @@ if ! test -d fix_typos; then
     )
 fi
 
-EXCLUDED_FILES="*/.svn*,configure,config.status,config.sub,*/autom4te.cache/*,*.ai"
+EXCLUDED_FILES="*/.svn*,configure,config.status,config.guess,config.sub,*/autom4te.cache/*,*.ai"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/hdf-eos/*,teststream.out,ogrogdilayer.cpp"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/doc/br/*,*/data/*,figures.mp,*/tmp/*,*/ruby/*"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/fix_typos/*,fix_typos.sh,*.eps,geopackage_aspatial.html"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/kdu_cache_wrapper.h,*/PublicDecompWT/*,*/man/*,./html/*"
 EXCLUDED_FILES="$EXCLUDED_FILES,PROVENANCE.TXT,libtool,ltmain.sh,libtool.m4,./m4/*"
-WORDS_WHITE_LIST="poSession,FIDN,TRAFIC,HTINK,repID,oCurr,INTREST,oPosition"
-WORDS_WHITE_LIST="$WORDS_WHITE_LIST,CPL_SUPRESS_CPLUSPLUS,SRP_NAM,ADRG_NAM,'SRP_NAM,AuxilaryTarget"
+EXCLUDED_FILES="$EXCLUDED_FILES,WFSServersList.txt"
+AUTHORIZED_LIST="poSession,FIDN,TRAFIC,HTINK,repID,oCurr,INTREST,oPosition"
+AUTHORIZED_LIST="$AUTHORIZED_LIST,CPL_SUPRESS_CPLUSPLUS,SRP_NAM,ADRG_NAM,'SRP_NAM,AuxilaryTarget"
 # IRIS driver metadata item names: FIXME ?
-WORDS_WHITE_LIST="$WORDS_WHITE_LIST,TOP_OF_HEIGTH_INTERVAL,BOTTOM_OF_HEIGTH_INTERVAL"
+AUTHORIZED_LIST="$AUTHORIZED_LIST,TOP_OF_HEIGTH_INTERVAL,BOTTOM_OF_HEIGTH_INTERVAL"
 # libjpeg
-WORDS_WHITE_LIST="$WORDS_WHITE_LIST,JBUF_PASS_THRU"
+AUTHORIZED_LIST="$AUTHORIZED_LIST,JBUF_PASS_THRU"
 # libgif
-WORDS_WHITE_LIST="$WORDS_WHITE_LIST,IS_WRITEABLE,E_GIF_ERR_NOT_WRITEABLE"
+AUTHORIZED_LIST="$AUTHORIZED_LIST,IS_WRITEABLE,E_GIF_ERR_NOT_WRITEABLE"
 # libtiff
-WORDS_WHITE_LIST="$WORDS_WHITE_LIST,THRESHHOLD_BILEVEL,THRESHHOLD_HALFTONE,THRESHHOLD_ERRORDIFFUSE"
+AUTHORIZED_LIST="$AUTHORIZED_LIST,THRESHHOLD_BILEVEL,THRESHHOLD_HALFTONE,THRESHHOLD_ERRORDIFFUSE"
 # mffdataset.cpp
-WORDS_WHITE_LIST="$WORDS_WHITE_LIST,oUTMorLL"
+AUTHORIZED_LIST="$AUTHORIZED_LIST,oUTMorLL"
 # hf2dataset.cpp
-WORDS_WHITE_LIST="$WORDS_WHITE_LIST,fVertPres"
+AUTHORIZED_LIST="$AUTHORIZED_LIST,fVertPres"
+# kml_generate_test_files.py
+AUTHORIZED_LIST="$AUTHORIZED_LIST,Lod,LOD"
+# Many .py (nd for nodata)
+AUTHORIZED_LIST="$AUTHORIZED_LIST,nd"
+# vsis3.py
+AUTHORIZED_LIST="$AUTHORIZED_LIST,iam"
+# NITF
+AUTHORIZED_LIST="$AUTHORIZED_LIST,TRE"
+# autotest/cpp
+AUTHORIZED_LIST="$AUTHORIZED_LIST,TUT_USE_SEH,SEH_OK,SEH_CTOR,SEH_TEST,SEH_DUMMY,SEH"
+AUTHORIZED_LIST="$AUTHORIZED_LIST,NPY_ARRAY_WRITEABLE"
+AUTHORIZED_LIST="$AUTHORIZED_LIST,cartesian,Cartesian,CARTESIAN,Australia"
+AUTHORIZED_LIST="$AUTHORIZED_LIST,cJP2_Error_Decompression_Cancelled"
+AUTHORIZED_LIST="$AUTHORIZED_LIST,ADVERTIZE_UTF8,SetAdvertizeUTF8,m_bAdvertizeUTF8,bAdvertizeUTF8In"
+AUTHORIZED_LIST="$AUTHORIZED_LIST,poTransactionBehaviour,IOGRTransactionBehaviour"
 
 python3 fix_typos/codespell/codespell.py -w -i 3 -q 2 -S "$EXCLUDED_FILES" \
-    -x scripts/typos_whitelist.txt --words-white-list=$WORDS_WHITE_LIST \
+    -x scripts/typos_allowlist.txt --words-white-list=$AUTHORIZED_LIST \
     ../autotest
 python3 fix_typos/codespell/codespell.py -w -i 3 -q 2 -S "$EXCLUDED_FILES" \
-    -x scripts/typos_whitelist.txt --words-white-list=$WORDS_WHITE_LIST \
+    -x scripts/typos_allowlist.txt --words-white-list=$AUTHORIZED_LIST \
     -D ./fix_typos/gdal_dict.txt  .

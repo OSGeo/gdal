@@ -569,7 +569,7 @@ L1BDataset::L1BDataset( L1BFileFormat eL1BFormatIn ) :
     iGCPCodeOffset(0),
     iCLAVRStart(0),
     nGCPsPerLine(0),
-    eLocationIndicator(DESCEND), // XXX: should be initialised
+    eLocationIndicator(DESCEND), // XXX: should be initialized
     iGCPStart(0),
     iGCPStep(0),
     eL1BFormat(eL1BFormatIn),

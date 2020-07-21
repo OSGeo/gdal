@@ -37,18 +37,19 @@ from osgeo import osr
 from osgeo import gdal
 import pytest
 
+pytestmark = pytest.mark.require_driver('JML')
 
-def test_ogr_jml_init():
 
-    ds = ogr.Open('data/test.jml')
+###############################################################################
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
 
-    if ds is None:
-        gdaltest.jml_read_support = 0
-    else:
-        gdaltest.jml_read_support = 1
-        ds = None
+    gdaltest.jml_read_support = ogr.Open('data/jml/test.jml') is not None
 
-    
+    yield
+
+    gdal.Unlink('/vsimem/ogr_jml.jml')
+
 ###############################################################################
 # Test reading
 
@@ -58,7 +59,7 @@ def test_ogr_jml_1():
     if not gdaltest.jml_read_support:
         pytest.skip()
 
-    ds = ogr.Open('data/test.jml')
+    ds = ogr.Open('data/jml/test.jml')
     assert ds.GetLayerCount() == 1
     assert ds.GetLayer(1) is None
     assert ds.TestCapability(ogr.ODsCCreateLayer) == 0
@@ -404,7 +405,7 @@ def test_ogr_jml_3():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.jml')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/jml/test.jml')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
@@ -596,19 +597,11 @@ def test_ogr_jml_read_srs():
     if not gdaltest.jml_read_support:
         pytest.skip()
 
-    ds = ogr.Open('data/one_point_srid_4326.jml')
+    ds = ogr.Open('data/jml/one_point_srid_4326.jml')
     lyr = ds.GetLayer(0)
     assert lyr.GetSpatialRef().ExportToWkt().find('4326') >= 0
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef() is not None
-
-###############################################################################
-#
-
-
-def test_ogr_jml_cleanup():
-
-    gdal.Unlink('/vsimem/ogr_jml.jml')
 
 
 

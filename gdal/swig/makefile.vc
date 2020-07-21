@@ -10,7 +10,7 @@ gdalvars:
         findstr /c:"define GDAL_RELEASE_NAME " ..\gcore\gdal_version.h  >> $(SCRIPT_CONFIG)
 #echo $(EXTERNAL_LIBS) >> $(SCRIPT_CONFIG)
 
-python: gdalvars 
+python: gdalvars
         cd python
         -del setup_vars.ini
         echo 'GNM_ENABLED=$(INCLUDE_GNM_FRMTS)' > setup_vars.ini
@@ -20,7 +20,7 @@ python: gdalvars
         $(SWIG) -c++ -python -modern -new_repr -I../include/python -I../include/python/docs -o extensions/ogr_wrap.cpp -outdir osgeo ..\include\ogr.i
         $(SWIG) -c++ -python -modern -new_repr -I../include/python -I../include/python/docs -o extensions/gnm_wrap.cpp -outdir osgeo ..\include\gnm.i
         $(SWIG) -c++ -python -modern -new_repr -I../include/python -I../include/python/docs -o extensions/gdal_array_wrap.cpp -outdir osgeo ..\include\gdal_array.i
-        $(PYDIR)\python.exe setup.py build
+        $(PYDIR)\$(PYEXEC) setup.py build
 	cd ..
 
 python_install: python
@@ -28,7 +28,7 @@ python_install: python
 	if not exist $(GDAL_HOME)\python         mkdir $(GDAL_HOME)\python\Lib\site-packages
 	if not exist $(GDAL_HOME)\python\script  mkdir $(GDAL_HOME)\python\script
 	set PYTHONPATH=$(GDAL_HOME)\python\Lib\site-packages
-	$(PYDIR)\python.exe setup.py install --prefix $(GDAL_HOME)\python
+	$(PYDIR)\$(PYEXEC) setup.py install --prefix $(GDAL_HOME)\python
 	$(INSTALL) scripts\*.py $(GDAL_HOME)\python\script
 	cd ..
 
@@ -88,7 +88,7 @@ java_install: java
 
 test: gdalvars
 	cd $(GDAL_HOME)\..\gdalautotest
-	$(PYDIR)/python.exe -m pytest -vv
+	$(PYDIR)/$(PYEXEC) -m pytest -vv
 
 clean:
         -del setup.ini

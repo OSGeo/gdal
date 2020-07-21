@@ -197,7 +197,7 @@ def test_tiff_ovr_4(both_endian):
             total += ord(ovimage[i])
 
     average = total / pix_count
-    exp_average = 153.0656
+    exp_average = 154.0992
     assert average == pytest.approx(exp_average, abs=0.1), 'got wrong average for overview image'
 
     # Read base band as overview resolution and verify we aren't getting
@@ -254,7 +254,16 @@ def test_tiff_ovr_6(both_endian):
 
         assert wrk_ds is not None, 'Failed to open test dataset.'
 
-        wrk_ds.BuildOverviews('AVERAGE', overviewlist=[2])
+        def cbk(pct, _, user_data):
+            if user_data[0] < 0:
+                assert pct == 0
+            assert pct >= user_data[0]
+            user_data[0] = pct
+            return 1
+
+        tab = [-1]
+        wrk_ds.BuildOverviews('AVERAGE', overviewlist=[2], callback=cbk, callback_data=tab)
+        assert tab[0] == 1.0
 
     try:
         os.stat('tmp/ovr6.aux')
@@ -1152,9 +1161,9 @@ def test_tiff_ovr_37(both_endian):
     ds = None
 
     predictor2_size = os.stat('tmp/ovr37.dt0.ovr')[stat.ST_SIZE]
-    # 3957 : on little-endian host
-    # XXXX : on big-endian host ??? FIXME: To be updated
-    assert predictor2_size == 3957, 'did not get expected file size.'
+    # 3789 : on little-endian host
+    # 3738 : on big-endian host
+    assert predictor2_size in (3789, 3738), 'did not get expected file size.'
 
 ###############################################################################
 # Test that the predictor flag gets well propagated to internal overviews
@@ -1257,7 +1266,7 @@ def test_tiff_ovr_40(both_endian):
             total += ord(ovimage[i])
 
     average = total / pix_count
-    exp_average = 153.0656
+    exp_average = 154.0992
     assert average == pytest.approx(exp_average, abs=0.1), 'got wrong average for overview image'
 
     # Read base band as overview resolution and verify we aren't getting
@@ -1828,6 +1837,59 @@ def test_tiff_ovr_average_multiband_vs_singleband():
     gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_average_multiband_pixel.tif')
 
     assert cs_band == cs_pixel
+
+###############################################################################
+
+
+def test_tiff_ovr_multithreading_multiband():
+
+    # Test multithreading through GDALRegenerateOverviewsMultiBand
+    ds = gdal.Translate('/vsimem/test.tif', 'data/stefan_full_rgba.tif',
+                        creationOptions=['COMPRESS=LZW', 'TILED=YES',
+                                         'BLOCKXSIZE=16', 'BLOCKYSIZE=16'])
+    with gdaltest.config_options({'GDAL_NUM_THREADS': '8',
+                                  'GDAL_OVR_CHUNK_MAX_SIZE': '100'}):
+        ds.BuildOverviews('AVERAGE', [2])
+    ds = None
+    ds = gdal.Open('/vsimem/test.tif')
+    assert [ds.GetRasterBand(i+1).Checksum() for i in range(4)] == [12603, 58561, 36064, 10807]
+    ds = None
+    gdal.Unlink('/vsimem/test.tif')
+
+###############################################################################
+
+
+def test_tiff_ovr_multithreading_singleband():
+
+    # Test multithreading through GDALRegenerateOverviews
+    ds = gdal.Translate('/vsimem/test.tif', 'data/stefan_full_rgba.tif',
+                        creationOptions=['INTERLEAVE=BAND'])
+    with gdaltest.config_options({'GDAL_NUM_THREADS': '8',
+                                  'GDAL_OVR_CHUNKYSIZE': '1'}):
+        ds.BuildOverviews('AVERAGE', [2, 4])
+    ds = None
+    ds = gdal.Open('/vsimem/test.tif')
+    assert [ds.GetRasterBand(i+1).Checksum() for i in range(4)] == [12603, 58561, 36064, 10807]
+    ds = None
+    gdal.Unlink('/vsimem/test.tif')
+
+###############################################################################
+
+
+def test_tiff_ovr_multiband_code_path_degenerate():
+
+    temp_path = '/vsimem/test.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(temp_path, 5, 6)
+    ds.GetRasterBand(1).Fill(255)
+    del ds
+    ds = gdal.OpenEx(temp_path, gdal.GA_ReadOnly)
+    with gdaltest.config_option('COMPRESS_OVERVIEW', 'LZW'):
+        ds.BuildOverviews('nearest', overviewlist=[2, 4, 8])
+    assert ds.GetRasterBand(1).GetOverview(0).Checksum() != 0
+    assert ds.GetRasterBand(1).GetOverview(1).Checksum() != 0
+    assert ds.GetRasterBand(1).GetOverview(2).Checksum() != 0
+    del ds
+    gdal.GetDriverByName('GTiff').Delete(temp_path)
 
 
 ###############################################################################

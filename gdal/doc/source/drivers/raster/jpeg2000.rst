@@ -47,7 +47,7 @@ mentioned sources and ignore GMLJP2 boxes.
 Option Options
 --------------
 
-(GDAL >= 2.0 ) The following open option is available:
+The following open option is available:
 
 -  **1BIT_ALPHA_PROMOTION=YES/NO**: Whether a 1-bit alpha channel should
    be promoted to 8-bit. Defaults to YES.
@@ -62,12 +62,12 @@ Creation Options
 -  **WORLDFILE=ON**: Force the generation of an associated ESRI world
    file (.wld).
 -  **FORMAT=JP2|JPC**: Specify output file format.
--  **GMLJP2=YES/NO**: (Starting with GDAL 2.0) Indicates whether a GML
+-  **GMLJP2=YES/NO**: Indicates whether a GML
    box conforming to the OGC GML in JPEG2000 specification should be
    included in the file. Unless GMLJP2V2_DEF is used, the version of the
    GMLJP2 box will be version 1. As implemented currently, the GMLJP2
    box will be written after the codestream. Defaults to YES.
--  **GMLJP2V2_DEF=filename**: (Starting with GDAL 2.0) Indicates whether
+-  **GMLJP2V2_DEF=filename**: Indicates whether
    a GML box conforming to the `OGC GML in JPEG2000, version
    2 <http://docs.opengeospatial.org/is/08-085r4/08-085r4.html>`__
    specification should be included in the file. *filename* must point
@@ -79,8 +79,7 @@ Creation Options
    string. If filename is just set to YES, a minimal instance will be
    built. As implemented currently, the GMLJP2 box will be written after
    the codestream.
--  **GeoJP2=YES/NO**: (Option starting with GDAL 2.0, but already
-   enabled in previous versions. Require a modified Jasper with GeoJP2
+-  **GeoJP2=YES/NO**: Require a modified Jasper with GeoJP2
    support enabled) Indicates whether a UUID/GeoTIFF box conforming to
    the GeoJP2 (GeoTIFF in JPEG2000) specification should be included in
    the file. Defaults to YES.

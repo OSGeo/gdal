@@ -606,7 +606,7 @@ static void basic_decode(const unsigned char* code,
             {
                 buf[ip] = static_cast<unsigned char>(nval);
                 runInt--;
-                continue; 
+                continue;
             }
             unsigned char val = grab1(3, code, code_size, buffer_pos, bit1ptr);
 
@@ -880,7 +880,7 @@ CPLErr VICARBASICRasterBand::IReadBlock( int /*nXBlock*/, int nYBlock, void *pIm
         VSIFReadL( &nSize, 1, sizeof(nSize), poGDS->fpImage);
         CPL_LSBPTR32(&nSize);
         if( (poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC &&
-             nSize < sizeof(GUInt32)) ||
+             nSize <= sizeof(GUInt32)) ||
             (poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC2 &&
              nSize == 0) )
         {
@@ -940,7 +940,12 @@ CPLErr VICARBASICRasterBand::IReadBlock( int /*nXBlock*/, int nYBlock, void *pIm
     {
         return CE_Failure;
     }
-
+#ifdef CPL_MSB
+    if( nDTSize > 1 )
+    {
+        GDALSwapWords(pImage, nDTSize, nRasterXSize, nDTSize);
+    }
+#endif
     return CE_None;
 }
 
@@ -993,6 +998,13 @@ CPLErr VICARBASICRasterBand::IWriteBlock( int /*nXBlock*/, int nYBlock,
         }
     }
 
+#ifdef CPL_MSB
+    if( nDTSize > 1 )
+    {
+        GDALSwapWords(pImage, nDTSize, nRasterXSize, nDTSize);
+    }
+#endif
+
     size_t nCodedSize = 0;
     try
     {
@@ -1005,6 +1017,13 @@ CPLErr VICARBASICRasterBand::IWriteBlock( int /*nXBlock*/, int nYBlock,
     {
         return CE_Failure;
     }
+
+#ifdef CPL_MSB
+    if( nDTSize > 1 )
+    {
+        GDALSwapWords(pImage, nDTSize, nRasterXSize, nDTSize);
+    }
+#endif
 
     if( poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC )
     {
@@ -1219,7 +1238,7 @@ char **VICARDataset::GetMetadata( const char* pszDomain )
                 BuildLabel();
             }
             CPLAssert( m_oJSonLabel.IsValid() );
-            const CPLString osJson = m_oJSonLabel.Format(CPLJSONObject::Pretty);
+            const CPLString osJson = m_oJSonLabel.Format(CPLJSONObject::PrettyFormat::Pretty);
             m_aosVICARMD.InsertString(0, osJson.c_str());
         }
         return m_aosVICARMD.List();
@@ -1340,7 +1359,7 @@ static void WriteLabelItemValue(std::string& osLabel,
     }
     else
     {
-        osLabel += SerializeString(obj.Format(CPLJSONObject::Plain));
+        osLabel += SerializeString(obj.Format(CPLJSONObject::PrettyFormat::Plain));
     }
 }
 
@@ -1372,7 +1391,7 @@ static std::string SanitizeItemName(const std::string& osItemName)
     if( osRet != osItemName )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Lable item name %s has been sanitized to %s",
+                 "Label item name %s has been sanitized to %s",
                  osItemName.c_str(), osRet.c_str());
     }
     return osRet;
@@ -1562,7 +1581,7 @@ static CPLJSONObject GetOrCreateJSONObject(CPLJSONObject &oParent,
                                            const std::string &osKey)
 {
     CPLJSONObject oChild = oParent[osKey];
-    if( oChild.IsValid() && oChild.GetType() != CPLJSONObject::Object )
+    if( oChild.IsValid() && oChild.GetType() != CPLJSONObject::Type::Object )
     {
         oParent.Delete( osKey );
         oChild.Deinit();
@@ -1648,7 +1667,7 @@ void VICARDataset::BuildLabel()
     {
         auto oMap = oLabel.GetObj("PROPERTY/MAP");
         if( oMap.IsValid() &&
-            oMap.GetType() == CPLJSONObject::Object )
+            oMap.GetType() == CPLJSONObject::Type::Object )
         {
             if( !m_osTargetName.empty() )
                 oMap.Set( "TARGET_NAME", m_osTargetName );
@@ -2304,7 +2323,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         const int nRecords = poDS->nRasterYSize * nBands;
         try
         {
-            // + 1 to store implictly the size of the last record
+            // + 1 to store implicitly the size of the last record
             poDS->m_anRecordOffsets.resize( nRecords + 1 );
         }
         catch( const std::exception& e )
@@ -2706,7 +2725,7 @@ VICARDataset *VICARDataset::CreateInternal(const char* pszFilename,
         }
         try
         {
-            // + 1 to store implictly the size of the last record
+            // + 1 to store implicitly the size of the last record
             anRecordOffsets.resize( nYSize + 1 );
         }
         catch( const std::exception& e )
@@ -2941,14 +2960,14 @@ void GDALRegister_VICAR()
 "  </Option>"
 "  <Option name='TARGET_NAME' type='string' description='Value of "
     "MAP.TARGET_NAME'/>"
-"  <Option name='USE_SRC_LABEL' type='boolean'"
+"  <Option name='USE_SRC_LABEL' type='boolean' "
     "description='Whether to use source label in VICAR to VICAR conversions' "
     "default='YES'/>"
-"  <Option name='USE_SRC_MAP' type='boolean'"
+"  <Option name='USE_SRC_MAP' type='boolean' "
     "description='Whether to use MAP property from source label in "
                  "VICAR to VICAR conversions' "
     "default='NO'/>"
-"  <Option name='LABEL' type='string'"
+"  <Option name='LABEL' type='string' "
     "description='Label to use, either as a JSON string or a filename containing one'/>"
 "  <Option name='COMPRESS' type='string-select' "
     "description='Compression method' default='NONE'>"

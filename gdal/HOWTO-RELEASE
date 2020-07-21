@@ -61,7 +61,9 @@ Perl module maintainer to make a CPAN release.
 4) Update LIBGDAL_CURRENT/REVISION/AGE macros in GDALmake.opt.in.
    - For a release with no interface changes just bump REVISION.
    - Adding interfaces, bump CURRENT/AGE, set REVISION to 0.
-   - Deleting interfaces / compatibility issues - bump CURRENT, others to zero.
+   - Deleting/changing interfaces in C or C++ API, or modification of
+     the C++ ABI (e.g. addition of virtual method, new argument with default value, etc.):
+     bump CURRENT, set others to zero.
 
 5) Prepare release overview in the NEWS file. For example, to get all changes
    from v2.2.0 to current HEAD (from gdal/ subdirectory)
@@ -125,14 +127,12 @@ Perl module maintainer to make a CPAN release.
 
 8.3) Create a snapshot of the documentation (only for feature releases)
 
- Old procedure (defunct now) was:
-
- i.e. On www.gdal.org:
- % cd /var/www/gdal
- % ./gdal-web-refresh.sh
- % zip -r ~/gdal230beta1doc.zip gdal-web --exclude "gdal-web/1.11/*" --exclude "gdal-web/daily/*"
-
- New procedure: TODO. involves "make html" in doc/ directory
+    0. Potentially refresh
+       https://download.osgeo.org/gdal/for_doc/javadoc.zip (./make_doc.sh from swig/java)
+       https://download.osgeo.org/gdal/for_doc/python-doc.tar.gz (make doc-tarball from swig/python)
+    1. cd doc
+    2. ./build_doc_snapshot 310
+       This generates gdal310doc.zip
 
 8.4) Publish the resulting files on download.osgeo.org, 
     in /osgeo/download/gdal/X.Y.Z (where X.Y.Z is the version number)
@@ -157,17 +157,19 @@ Perl module maintainer to make a CPAN release.
 11.2) Log on download.osgeo.org, go to /osgeo/download/gdal/X.Y.Z
 
       Remove the RC suffixes for the final RC, like:
-      mv gdal-3.0.1rc1.tar.xz gdal-3.0.1.tar.xz
-      mv gdal-3.0.1rc1.tar.xz.md5 gdal-3.0.1.tar.xz.md5
-      mv gdal301rc1.zip gdal301.zip
-      mv gdal301rc1.zip.md5 gdal301.zip.md5
-      mv gdalautotest-3.0.1rc1.tar.gz gdalautotest-3.0.1.tar.gz
-      mv gdalautotest-3.0.1rc1.zip gdalautotest-3.0.1.zip
+      mv gdal-3.1.0rc1.tar.xz gdal-3.1.0.tar.xz
+      mv gdal-3.1.0rc1.tar.xz.md5 gdal-3.1.0.tar.xz.md5
+      mv gdal-3.1.0rc1.tar.gz gdal-3.1.0.tar.gz
+      mv gdal-3.1.0rc1.tar.gz.md5 gdal-3.1.0.tar.gz.md5
+      mv gdal310rc1.zip gdal310.zip
+      mv gdal310rc1.zip.md5 gdal310.zip.md5
+      mv gdalautotest-3.1.0rc1.tar.gz gdalautotest-3.1.0.tar.gz
+      mv gdalautotest-3.1.0rc1.zip gdalautotest-3.1.0.zip
 
       And edit the .md5 file to remove the reference to RC in the names they contain
-      vim gdal-3.0.1.tar.gz.md5
-      vim gdal-3.0.1.tar.xz.md5
-      vim gdal301.zip.md5
+      vim gdal-3.1.0.tar.gz.md5
+      vim gdal-3.1.0.tar.xz.md5
+      vim gdal310.zip.md5
 
       Check that everything is fine:
       md5sum -c *.md5
@@ -176,13 +178,9 @@ Perl module maintainer to make a CPAN release.
 
   % ln -sf X.Y.Z CURRENT
 
-12) Update Trac 
-a) Update the GDAL http://trac.osgeo.org/gdal/wiki/DownloadSource topic to
-   refer to the latest available source.
-b) Update http://trac.osgeo.org/gdal/wiki (Releases section)
-c) Update http://trac.osgeo.org/gdal/wiki/NewsAndStatus
+12) (Removed)
 
-13) Update doc/source/about_no_title.rst and doc/source/download.rst to advertize the new release and link to the release notes
+13) Update doc/source/about_no_title.rst and doc/source/download.rst to advertise the new release and link to the release notes
 
 14) Update GitHub to close the release milestone. 
     Then create a new milestone for the next release.
@@ -340,7 +338,7 @@ e) Click the "Release" button and that is it! The release should be available in
 
    Example:
     - bugfix release: https://lists.osgeo.org/pipermail/gdal-dev/2019-July/050543.html
-    - feature release: https://lists.osgeo.org/pipermail/gdal-dev/2019-May/050202.html
+    - feature release: https://lists.osgeo.org/pipermail/gdal-dev/2020-May/052117.html
 
 Note: gdal-announce@ is moderated. Make sure that your email address is approved
 ('mod' tick disabled in https://lists.osgeo.org/mailman/admin/gdal-announce/members),

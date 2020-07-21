@@ -2904,8 +2904,12 @@ def test_tiff_read_progressive_jpeg_denial_of_service():
     # Should error out with 'JPEGPreDecode:Reading this strip would require
     # libjpeg to allocate at least...'
     gdal.ErrorReset()
-    ds = gdal.Open('/vsizip/data/eofloop_valid_huff.tif.zip')
     with gdaltest.error_handler():
+        os.environ['JPEGMEM'] = '10M'
+        os.environ['LIBTIFF_JPEG_MAX_ALLOWED_SCAN_NUMBER'] = '1000'
+        ds = gdal.Open('/vsizip/data/eofloop_valid_huff.tif.zip')
+        del os.environ['LIBTIFF_JPEG_MAX_ALLOWED_SCAN_NUMBER']
+        del os.environ['JPEGMEM']
         cs = ds.GetRasterBand(1).Checksum()
         assert cs == 0 and gdal.GetLastErrorMsg() != ''
 
@@ -2918,9 +2922,8 @@ def test_tiff_read_progressive_jpeg_denial_of_service():
         cs = ds.GetRasterBand(1).Checksum()
         del os.environ['LIBTIFF_ALLOW_LARGE_LIBJPEG_MEM_ALLOC']
         del os.environ['LIBTIFF_JPEG_MAX_ALLOWED_SCAN_NUMBER']
-        assert gdal.GetLastErrorMsg() != ''
+        assert cs == 0 and gdal.GetLastErrorMsg() != ''
 
-    
 
 ###############################################################################
 # Test reading old-style LZW
@@ -3434,3 +3437,28 @@ def test_tiff_read_bigtiff_invalid_slong8_for_stripoffsets():
         ds = gdal.Open('data/byte_bigtiff_invalid_slong8_for_stripoffsets.tif')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4672
+
+
+###############################################################################
+# Test reading a file with a single band, and WhitePoint and PrimaryChromaticities
+# tags
+
+
+def test_tiff_read_tiff_single_band_with_whitepoint_primarychroma_tags():
+
+    ds = gdal.Open('data/tiff_single_band_with_whitepoint_primarychroma_tags.tif')
+    # Check that it doesn't crash. We could perhaps return something more
+    # useful
+    assert ds.GetMetadata('COLOR_PROFILE') == {}
+
+
+###############################################################################
+# Test that subdataset names for Geodetic TIFF grids (GTG)
+# (https://proj.org/specifications/geodetictiffgrids.html)
+# include the grid_name
+
+
+def test_tiff_read_geodetic_tiff_grid():
+
+    ds = gdal.Open('data/test_hgrid_with_subgrid.tif')
+    assert ds.GetSubDatasets()[0][1] == 'Page 1 (10P x 10L x 2B): CAwest'

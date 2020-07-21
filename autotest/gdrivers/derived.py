@@ -146,7 +146,7 @@ def test_derived_test3():
 
     with gdaltest.error_handler():
         # Raster with zero band
-        ds = gdal.Open('DERIVED_SUBDATASET:LOGAMPLITUDE:data/CSK_DGM.h5')
+        ds = gdal.Open('DERIVED_SUBDATASET:LOGAMPLITUDE:data/hdf5/CSK_DGM.h5')
     assert ds is None
 
     for function in ['real', 'imag', 'complex', 'mod', 'phase', 'conj',

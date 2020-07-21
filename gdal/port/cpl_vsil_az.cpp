@@ -33,6 +33,8 @@
 #include "cpl_vsil_curl_priv.h"
 #include "cpl_vsil_curl_class.h"
 
+#include <errno.h>
+
 #include <algorithm>
 #include <set>
 #include <map>
@@ -78,9 +80,9 @@ struct VSIDIRAz: public VSIDIR
     IVSIS3LikeFSHandler* poFS = nullptr;
     IVSIS3LikeHandleHelper* poHandleHelper = nullptr;
     int nMaxFiles = 0;
-    bool bCacheResults = true;
+    bool bCacheEntries = true;
 
-    VSIDIRAz(IVSIS3LikeFSHandler *poFSIn): poFS(poFSIn) {}
+    explicit VSIDIRAz(IVSIS3LikeFSHandler *poFSIn): poFS(poFSIn) {}
     ~VSIDIRAz()
     {
         delete poHandleHelper;
@@ -209,7 +211,7 @@ bool VSIDIRAz::AnalyseAzureFileList(
                     entry->nSize = static_cast<GUIntBig>(
                         CPLAtoGIntBig(CPLGetXMLValue(psIter, "Properties.Content-Length", "0")));
                     entry->bSizeKnown = true;
-                    entry->nMode = S_IFDIR;
+                    entry->nMode = S_IFREG;
                     entry->bModeKnown = true;
 
                     CPLString ETag = CPLGetXMLValue(psIter, "Etag", "");
@@ -243,7 +245,7 @@ bool VSIDIRAz::AnalyseAzureFileList(
                         entry->bMTimeKnown = true;
                     }
 
-                    if( bCacheResults )
+                    if( bCacheEntries )
                     {
                         FileProp prop;
                         prop.eExists = EXIST_YES;
@@ -290,7 +292,7 @@ bool VSIDIRAz::AnalyseAzureFileList(
                         entry->nMode = S_IFDIR;
                         entry->bModeKnown = true;
 
-                        if( bCacheResults )
+                        if( bCacheEntries )
                         {
                             FileProp prop;
                             prop.eExists = EXIST_YES;
@@ -330,6 +332,9 @@ bool VSIDIRAz::IssueListDir()
     WriteFuncStruct sWriteFuncData;
     const CPLString l_osNextMarker(osNextMarker);
     clear();
+
+    NetworkStatisticsFileSystem oContextFS("/vsiaz/");
+    NetworkStatisticsAction oContextAction("ListBucket");
 
     CPLString osMaxKeys = CPLGetConfigOption("AZURE_MAX_RESULTS", "");
     const int AZURE_SERVER_LIMIT_SINGLE_REQUEST = 5000;
@@ -382,6 +387,8 @@ bool VSIDIRAz::IssueListDir()
 
     if( headers != nullptr )
         curl_slist_free_all(headers);
+
+    NetworkStatisticsLogger::LogGET(sWriteFuncData.nSize);
 
     if( sWriteFuncData.pBuffer == nullptr)
     {
@@ -484,7 +491,7 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 
     char** GetFileList( const char *pszFilename,
                         int nMaxFiles,
-                        bool bCacheResults,
+                        bool bCacheEntries,
                         bool* pbGotFileList );
 
     VSIDIR* OpenDir( const char *pszPath, int nRecurseDepth,
@@ -652,6 +659,10 @@ bool VSIAzureWriteHandle::Send(bool bIsLastBlock)
 
 bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
 {
+    NetworkStatisticsFileSystem oContextFS("/vsiaz/");
+    NetworkStatisticsFile oContextFile(m_osFilename);
+    NetworkStatisticsAction oContextAction("Write");
+
     bool bSuccess = true;
     const bool bSingleBlock = bIsLastBlock &&
                 ( m_nCurOffset <= static_cast<vsi_l_offset>(m_nBufferSize) );
@@ -737,6 +748,8 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
 
         curl_slist_free_all(headers);
 
+        NetworkStatisticsLogger::LogPUT(m_nBufferOff);
+
         long response_code = 0;
         curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
 
@@ -818,18 +831,27 @@ VSIVirtualHandle* VSIAzureFSHandler::Open( const char *pszFilename,
 
     if( strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr )
     {
-        /*if( strchr(pszAccess, '+') != nullptr)
+        if( strchr(pszAccess, '+') != nullptr &&
+            !CPLTestBool(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO")) )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                    "w+ not supported for /vsis3. Only w");
+                        "w+ not supported for /vsiaz, unless "
+                        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE is set to YES");
+            errno = EACCES;
             return nullptr;
-        }*/
+        }
+
         VSIAzureBlobHandleHelper* poHandleHelper =
             VSIAzureBlobHandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
                                             GetFSPrefix().c_str());
         if( poHandleHelper == nullptr )
             return nullptr;
-        return new VSIAzureWriteHandle(this, pszFilename, poHandleHelper);
+        auto poHandle = new VSIAzureWriteHandle(this, pszFilename, poHandleHelper);
+        if( strchr(pszAccess, '+') != nullptr)
+        {
+            return VSICreateUploadOnCloseFile(poHandle);
+        }
+        return poHandle;
     }
 
     return
@@ -902,6 +924,9 @@ int VSIAzureFSHandler::Mkdir( const char * pszDirname, long /* nMode */ )
     if( !STARTS_WITH_CI(pszDirname, GetFSPrefix()) )
         return -1;
 
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("Mkdir");
+
     CPLString osDirname(pszDirname);
     if( !osDirname.empty() && osDirname.back() != '/' )
         osDirname += "/";
@@ -944,6 +969,9 @@ int VSIAzureFSHandler::Rmdir( const char * pszDirname )
     if( !STARTS_WITH_CI(pszDirname, GetFSPrefix()) )
         return -1;
 
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("Rmdir");
+
     CPLString osDirname(pszDirname);
     if( !osDirname.empty() && osDirname.back() != '/' )
         osDirname += "/";
@@ -953,9 +981,9 @@ int VSIAzureFSHandler::Rmdir( const char * pszDirname )
     {
         InvalidateCachedData(
             GetURLFromFilename(osDirname.substr(0, osDirname.size() - 1)) );
-        CPLDebug(GetDebugKey(), "%s is not a object", pszDirname);
-        errno = ENOENT;
-        return -1;
+        // The directory might have not been created by GDAL, and thus lacking the
+        // GDAL marker file, so do not turn non-existence as an error
+        return 0;
     }
     else if( sStat.st_mode != S_IFDIR )
     {
@@ -988,7 +1016,13 @@ int VSIAzureFSHandler::Rmdir( const char * pszDirname )
         return -1;
     }
 
-    return DeleteObject((osDirname + GDAL_MARKER_FOR_DIR).c_str());
+    if( DeleteObject((osDirname + GDAL_MARKER_FOR_DIR).c_str()) == 0 )
+        return 0;
+    // The directory might have not been created by GDAL, and thus lacking the
+    // GDAL marker file, so check if is there, and if not, return success.
+    if( VSIStatL(osDirname, &sStat) != 0 )
+        return 0;
+    return -1;
 }
 
 /************************************************************************/
@@ -998,6 +1032,9 @@ int VSIAzureFSHandler::Rmdir( const char * pszDirname )
 int VSIAzureFSHandler::CopyObject( const char *oldpath, const char *newpath,
                                    CSLConstList /* papszMetadata */ )
 {
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("CopyObject");
+
     CPLString osTargetNameWithoutPrefix = newpath + GetFSPrefix().size();
     auto poS3HandleHelper =
         std::unique_ptr<IVSIS3LikeHandleHelper>(
@@ -1069,6 +1106,8 @@ int VSIAzureFSHandler::CopyObject( const char *oldpath, const char *newpath,
 
         curl_slist_free_all(headers);
 
+        NetworkStatisticsLogger::LogPUT(0);
+
         long response_code = 0;
         curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
         if( response_code != 202)
@@ -1137,7 +1176,7 @@ char** VSIAzureFSHandler::GetFileList( const char *pszDirname,
 
 char** VSIAzureFSHandler::GetFileList( const char *pszDirname,
                                        int nMaxFiles,
-                                       bool bCacheResults,
+                                       bool bCacheEntries,
                                        bool* pbGotFileList )
 {
     if( ENABLE_DEBUG )
@@ -1148,7 +1187,7 @@ char** VSIAzureFSHandler::GetFileList( const char *pszDirname,
     char** papszOptions = CSLSetNameValue(nullptr,
                                 "MAXFILES", CPLSPrintf("%d", nMaxFiles));
     papszOptions = CSLSetNameValue(papszOptions,
-                            "CACHE_RESULTS", bCacheResults ? "YES" : "NO");
+                            "CACHE_ENTRIES", bCacheEntries ? "YES" : "NO");
     auto dir = OpenDir(pszDirname, 0, papszOptions);
     CSLDestroy(papszOptions);
     if( !dir )
@@ -1237,6 +1276,9 @@ VSIDIR* VSIAzureFSHandler::OpenDir( const char *pszPath,
     if( !STARTS_WITH_CI(pszPath, GetFSPrefix()) )
         return nullptr;
 
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("OpenDir");
+
     CPLString osDirnameWithoutPrefix = pszPath + GetFSPrefix().size();
     if( !osDirnameWithoutPrefix.empty() &&
                                 osDirnameWithoutPrefix.back() == '/' )
@@ -1267,8 +1309,8 @@ VSIDIR* VSIAzureFSHandler::OpenDir( const char *pszPath,
     dir->osBucket = osBucket;
     dir->osObjectKey = osObjectKey;
     dir->nMaxFiles = atoi(CSLFetchNameValueDef(papszOptions, "MAXFILES", "0"));
-    dir->bCacheResults = CPLTestBool(
-        CSLFetchNameValueDef(papszOptions, "CACHE_RESULTS", "YES"));
+    dir->bCacheEntries = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "CACHE_ENTRIES", "YES"));
     if( !dir->IssueListDir() )
     {
         delete dir;

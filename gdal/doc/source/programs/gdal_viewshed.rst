@@ -6,9 +6,9 @@ gdal_viewshed
 
 .. only:: html
 
-    Calculates a viewshed raster from an input raster DEM using method defined in [Wang2000]_ for a user defined point.
+    .. versionadded:: 3.1.0
 
-.. versionadded:: 3.1.0
+    Calculates a viewshed raster from an input raster DEM using method defined in [Wang2000]_ for a user defined point.
 
 .. Index:: gdal_viewshed
 

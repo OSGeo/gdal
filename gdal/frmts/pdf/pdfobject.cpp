@@ -2468,7 +2468,7 @@ void GDALPDFStreamPdfium::Decompress()
     m_nSize = static_cast<int>(acc->GetSize());
     m_pData.reset();
     // We don't use m_pData->Detach() as we don't want to deal with
-    // std::unique_ptr<uint8_t, FxFreeDeleter>, and FxFreeDeleter behaviour
+    // std::unique_ptr<uint8_t, FxFreeDeleter>, and FxFreeDeleter behavior
     // depends on whether GDAL and pdfium are compiled with the same
     // NDEBUG and DCHECK_ALWAYS_ON settings
     if( m_nSize )
@@ -2518,7 +2518,7 @@ void GDALPDFStreamPdfium::FillRaw()
     m_nRawSize = static_cast<int>(acc->GetSize());
     m_pRawData.reset();
     // We don't use m_pData->Detach() as we don't want to deal with
-    // std::unique_ptr<uint8_t, FxFreeDeleter>, and FxFreeDeleter behaviour
+    // std::unique_ptr<uint8_t, FxFreeDeleter>, and FxFreeDeleter behavior
     // depends on whether GDAL and pdfium are compiled with the same
     // NDEBUG and DCHECK_ALWAYS_ON settings
     if( m_nRawSize )

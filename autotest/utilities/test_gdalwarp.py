@@ -883,7 +883,7 @@ def test_gdalwarp_39():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
 
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' ../gdrivers/data/float64.asc tmp/test_gdalwarp_39.tif -oo DATATYPE=Float64 -overwrite')
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' ../gdrivers/data/aaigrid/float64.asc tmp/test_gdalwarp_39.tif -oo DATATYPE=Float64 -overwrite')
 
     ds = gdal.Open('tmp/test_gdalwarp_39.tif')
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Float64
@@ -1243,6 +1243,25 @@ def test_gdalwarp_47_append_subdataset():
 
     ds = None
     gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test -if option
+
+
+def test_gdalwarp_if_option():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        pytest.skip()
+
+    ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' -if GTiff ../gcore/data/byte.tif /vsimem/out.tif')
+    assert err is None or err == ''
+
+    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' -if invalid_driver_name ../gcore/data/byte.tif /vsimem/out.tif')
+    assert err is not None
+    assert 'invalid_driver_name' in err
+
+    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' -if HFA ../gcore/data/byte.tif /vsimem/out.tif')
+    assert err is not None
 
 ###############################################################################
 # Cleanup

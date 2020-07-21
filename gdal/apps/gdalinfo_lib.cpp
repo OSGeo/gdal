@@ -188,6 +188,22 @@ static void Concat( CPLString& osRet, bool bStdoutOutput,
 }
 
 /************************************************************************/
+/*           gdal_json_object_new_double_or_str_for_non_finite()        */
+/************************************************************************/
+
+static
+json_object *gdal_json_object_new_double_or_str_for_non_finite(
+                                        double dfVal, int nCoordPrecision)
+{
+    if( std::isinf(dfVal) )
+        return json_object_new_string(dfVal < 0 ? "-Infinity" : "Infinity");
+    else if( std::isnan(dfVal) )
+        return json_object_new_string("NaN");
+    else
+        return json_object_new_double_with_precision(dfVal, nCoordPrecision);
+}
+
+/************************************************************************/
 /*                             GDALInfo()                               */
 /************************************************************************/
 
@@ -790,7 +806,7 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                     if( bJson )
                     {
                         json_object *poMin =
-                            json_object_new_double_with_precision(dfMin, 3);
+                            gdal_json_object_new_double_or_str_for_non_finite(dfMin, 3);
                         json_object_object_add(poBand, "min", poMin);
                     }
                     else
@@ -804,7 +820,7 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                     if( bJson )
                     {
                         json_object *poMax =
-                            json_object_new_double_with_precision(dfMax, 3);
+                            gdal_json_object_new_double_or_str_for_non_finite(dfMax, 3);
                         json_object_object_add(poBand, "max", poMax);
                     }
                     else
@@ -824,10 +840,10 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                         if( bJson )
                         {
                             json_object *poComputedMin =
-                                json_object_new_double_with_precision(
+                                gdal_json_object_new_double_or_str_for_non_finite(
                                     adfCMinMax[0], 3);
                             json_object *poComputedMax =
-                                json_object_new_double_with_precision(
+                                gdal_json_object_new_double_or_str_for_non_finite(
                                     adfCMinMax[1], 3);
                             json_object_object_add(poBand, "computedMin",
                                                    poComputedMin);
@@ -860,17 +876,19 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
             if( bJson )
             {
                 json_object *poMinimum =
-                    json_object_new_double_with_precision(dfMinStat, 3);
-                json_object *poMaximum =
-                    json_object_new_double_with_precision(dfMaxStat, 3);
-                json_object *poMean =
-                    json_object_new_double_with_precision(dfMean, 3);
-                json_object *poStdDev =
-                    json_object_new_double_with_precision(dfStdDev, 3);
-
+                    gdal_json_object_new_double_or_str_for_non_finite(dfMinStat, 3);
                 json_object_object_add(poBand, "minimum", poMinimum);
+
+                json_object *poMaximum =
+                    gdal_json_object_new_double_or_str_for_non_finite(dfMaxStat, 3);
                 json_object_object_add(poBand, "maximum", poMaximum);
+
+                json_object *poMean =
+                    gdal_json_object_new_double_or_str_for_non_finite(dfMean, 3);
                 json_object_object_add(poBand, "mean", poMean);
+
+                json_object *poStdDev =
+                    gdal_json_object_new_double_or_str_for_non_finite(dfStdDev, 3);
                 json_object_object_add(poBand, "stdDev", poStdDev);
             }
             else
@@ -967,34 +985,21 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
         const double dfNoData = GDALGetRasterNoDataValue( hBand, &bGotNodata );
         if( bGotNodata )
         {
-            if( CPLIsNan(dfNoData) )
+            if( bJson )
             {
-                if( bJson )
-                {
-                    json_object *poNoDataValue = json_object_new_string("nan");
-                    json_object_object_add(poBand, "noDataValue",
-                                           poNoDataValue);
-                }
-                else
-                {
-                    Concat(osStr, psOptions->bStdoutOutput,
-                           "  NoData Value=nan\n" );
-                }
+                json_object *poNoDataValue = gdal_json_object_new_double_or_str_for_non_finite(dfNoData, 18);
+                json_object_object_add(poBand, "noDataValue",
+                                        poNoDataValue);
+            }
+            else if( CPLIsNan(dfNoData) )
+            {
+                Concat(osStr, psOptions->bStdoutOutput,
+                        "  NoData Value=nan\n" );
             }
             else
             {
-                if(bJson)
-                {
-                    json_object *poNoDataValue =
-                        json_object_new_double_with_precision(dfNoData, 18);
-                    json_object_object_add(poBand, "noDataValue",
-                                           poNoDataValue);
-                }
-                else
-                {
-                    Concat(osStr, psOptions->bStdoutOutput,
-                           "  NoData Value=%.18g\n", dfNoData );
-                }
+                Concat(osStr, psOptions->bStdoutOutput,
+                        "  NoData Value=%.18g\n", dfNoData );
             }
         }
 
@@ -1714,6 +1719,7 @@ static void GDALInfoReportMetadata( const GDALInfoOptions* psOptions,
             {
                 if( !EQUAL(*papszIter, "") &&
                     !EQUAL(*papszIter, "IMAGE_STRUCTURE") &&
+                    !EQUAL(*papszIter, "TILING_SCHEME") &&
                     !EQUAL(*papszIter, "SUBDATASETS") &&
                     !EQUAL(*papszIter, "GEOLOCATION") &&
                     !EQUAL(*papszIter, "RPC") )
@@ -1766,6 +1772,8 @@ static void GDALInfoReportMetadata( const GDALInfoOptions* psOptions,
 
     if (!bIsBand)
     {
+        GDALInfoPrintMetadata( psOptions, hObject, "TILING_SCHEME", "Tiling Scheme",
+                               pszIndent, bJson, poMetadata, osStr );
         GDALInfoPrintMetadata( psOptions, hObject, "SUBDATASETS", "Subdatasets",
                                pszIndent, bJson, poMetadata, osStr );
         GDALInfoPrintMetadata( psOptions, hObject, "GEOLOCATION", "Geolocation",
@@ -1885,6 +1893,21 @@ GDALInfoOptions *GDALInfoOptionsNew(
         {
             CPLFree(psOptions->pszWKTFormat);
             psOptions->pszWKTFormat = CPLStrdup( papszArgv[++i] );
+        }
+
+        else if( EQUAL(papszArgv[i], "-if") && papszArgv[i+1] != nullptr )
+        {
+            i++;
+            if( psOptionsForBinary )
+            {
+                if( GDALGetDriverByName(papszArgv[i]) == nullptr )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "%s is not a recognized driver", papszArgv[i]);
+                }
+                psOptionsForBinary->papszAllowInputDrivers = CSLAddString(
+                    psOptionsForBinary->papszAllowInputDrivers, papszArgv[i] );
+            }
         }
 
         else if( papszArgv[i][0] == '-' )

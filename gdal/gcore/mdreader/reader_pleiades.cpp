@@ -54,25 +54,25 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
     m_osIMDSourceFilename( CPLString() ),
     m_osRPBSourceFilename( CPLString() )
 {
-    const char* pszBaseName = CPLGetBasename(pszPath);
-    size_t nBaseNameLen = strlen(pszBaseName);
+    const CPLString osBaseName = CPLGetBasename(pszPath);
+    const size_t nBaseNameLen = osBaseName.size();
     if( nBaseNameLen < 4 || nBaseNameLen > 511 )
         return;
 
-    const char* pszDirName = CPLGetDirname(pszPath);
+    const CPLString osDirName = CPLGetDirname(pszPath);
 
-    CPLString osIMDSourceFilename = CPLFormFilename( pszDirName,
-                                CPLSPrintf("DIM_%s", pszBaseName + 4), "XML" );
-    CPLString osRPBSourceFilename = CPLFormFilename( pszDirName,
-                                CPLSPrintf("RPC_%s", pszBaseName + 4), "XML" );
+    CPLString osIMDSourceFilename = CPLFormFilename( osDirName,
+                                CPLSPrintf("DIM_%s", osBaseName.c_str() + 4), "XML" );
+    CPLString osRPBSourceFilename = CPLFormFilename( osDirName,
+                                CPLSPrintf("RPC_%s", osBaseName.c_str() + 4), "XML" );
 
     // find last underline
     char sBaseName[512];
     size_t nLastUnderline = 0;
     for(size_t i = 4; i < nBaseNameLen; i++)
     {
-        sBaseName[i - 4] = pszBaseName[i];
-        if(pszBaseName[i] == '_')
+        sBaseName[i - 4] = osBaseName[i];
+        if(osBaseName[i] == '_')
             nLastUnderline = i - 4U;
     }
 
@@ -81,10 +81,9 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
     // Check if last 4 characters are fit in mask RjCj
     unsigned int iRow, iCol;
     bool bHasRowColPart = nBaseNameLen > nLastUnderline + 5U;
-    if(!bHasRowColPart || sscanf (pszBaseName + nLastUnderline + 5U, "R%uC%u",
+    if(!bHasRowColPart || sscanf (osBaseName.c_str() + nLastUnderline + 5U, "R%uC%u",
         &iRow, &iCol) != 2)
     {
-        CPLDebug( "MDReaderPleiades", "Not a Pleiades product" );
         return;
     }
 
@@ -94,7 +93,7 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
     }
     else
     {
-        osIMDSourceFilename = CPLFormFilename( pszDirName, CPLSPrintf("DIM_%s",
+        osIMDSourceFilename = CPLFormFilename( osDirName, CPLSPrintf("DIM_%s",
                                                             sBaseName), "XML" );
         if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
@@ -108,7 +107,7 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
     }
     else
     {
-        osRPBSourceFilename = CPLFormFilename( pszDirName, CPLSPrintf("RPC_%s",
+        osRPBSourceFilename = CPLFormFilename( osDirName, CPLSPrintf("RPC_%s",
                                                             sBaseName), "XML" );
         if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
         {

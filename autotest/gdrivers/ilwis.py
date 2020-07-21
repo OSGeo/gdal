@@ -38,7 +38,7 @@ import gdaltest
 
 def test_ilwis_1():
 
-    tst = gdaltest.GDALTest('ilwis', 'LanduseSmall.mpr', 1, 2351)
+    tst = gdaltest.GDALTest('ilwis', 'ilwis/LanduseSmall.mpr', 1, 2351)
 
     srs = """PROJCS["UTM",
     GEOGCS["PSAD56",
@@ -82,7 +82,7 @@ def test_ilwis_2():
 
 def test_ilwis_3():
 
-    tst = gdaltest.GDALTest('ilwis', 'float.img', 1, 23529)
+    tst = gdaltest.GDALTest('ilwis', 'hfa/float.img', 1, 23529)
 
     return tst.testCreate(new_filename='tmp/float.mpr', out_bands=1)
 

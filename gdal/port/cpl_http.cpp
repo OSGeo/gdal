@@ -44,6 +44,12 @@
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
 
+// clang complains about C-style cast in #define like CURL_ZERO_TERMINATED
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wold-style-cast"
+#endif
+
 #ifdef HAVE_CURL
 #  include <curl/curl.h>
 // CURLINFO_RESPONSE_CODE was known as CURLINFO_HTTP_CODE in libcurl 7.10.7 and
@@ -427,16 +433,15 @@ static int NewProcessFunction(void *p,
 {
     CurlProcessDataL pData = static_cast<CurlProcessDataL>(p);
     if( nullptr != pData && pData->pfnProgress ) {
-        double dfDone = 0.0;
         if( dltotal > 0 )
         {
-            dfDone = double(dlnow) / dltotal;
+            const double dfDone = double(dlnow) / dltotal;
             return pData->pfnProgress(dfDone, "Downloading ...",
                 pData->pProgressArg) == TRUE ? 0 : 1;
         }
         else if( ultotal > 0 )
         {
-            dfDone = double(ulnow) / ultotal;
+            const double dfDone = double(ulnow) / ultotal;
             return pData->pfnProgress(dfDone, "Uploading ...",
                 pData->pProgressArg) == TRUE ? 0 : 1;
         }
@@ -2040,24 +2045,18 @@ void CPLHTTPCleanup()
         CPLMutexHolder oHolder( &hSessionMapMutex );
         if( poSessionMap )
         {
-            for( std::map<CPLString, CURL *>::iterator oIt =
-                     poSessionMap->begin();
-                 oIt != poSessionMap->end();
-                 oIt++ )
+            for( auto& kv : *poSessionMap )
             {
-                curl_easy_cleanup( oIt->second );
+                curl_easy_cleanup( kv.second );
             }
             delete poSessionMap;
             poSessionMap = nullptr;
         }
         if( poSessionMultiMap )
         {
-            for( std::map<CPLString, CURLM *>::iterator oIt =
-                     poSessionMultiMap->begin();
-                 oIt != poSessionMultiMap->end();
-                 oIt++ )
+            for( auto& kv : *poSessionMultiMap )
             {
-                curl_multi_cleanup( oIt->second );
+                curl_multi_cleanup( kv.second );
             }
             delete poSessionMultiMap;
             poSessionMultiMap = nullptr;
@@ -2304,3 +2303,7 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
 
     return TRUE;
 }
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif

@@ -790,6 +790,10 @@ OGRwkbGeometryType OGRGeometry::getIsoGeometryType() const
  * \brief Modify the geometry such it has no segment longer then the
  * given distance.
  *
+ * This method modifies the geometry to add intermediate vertices if necessary
+ * so that the maximum length between 2 consecutive vertices is lower than
+ * dfMaxLength.
+ *
  * Interpolated points will have Z and M values (if needed) set to 0.
  * Distance computation is performed in 2d only
  *
@@ -3577,6 +3581,9 @@ static OGRBoolean OGRGEOSBooleanPredicate(
  *
  * Already-valid geometries are cloned without further intervention.
  *
+ * Running OGRGeometryFactory::removeLowerDimensionSubGeoms() as a post-processing
+ * step is often desired.
+ *
  * This method is the same as the C function OGR_G_MakeValid().
  *
  * This function is built on the GEOS >= 3.8 library, check it for the definition
@@ -6133,18 +6140,6 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
 
     return pszTextBuf;
 }
-
-/**
- * \fn void OGRGeometry::segmentize(double dfMaxLength);
- *
- * \brief Add intermediate vertices to a geometry.
- *
- * This method modifies the geometry to add intermediate vertices if necessary
- * so that the maximum length between 2 consecutive vertices is lower than
- * dfMaxLength.
- *
- * @param dfMaxLength maximum length between 2 consecutive vertices.
- */
 
 /************************************************************************/
 /*                       importPreambleFromWkb()                       */

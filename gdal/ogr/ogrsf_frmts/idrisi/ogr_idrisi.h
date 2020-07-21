@@ -36,7 +36,7 @@
 /*                         OGRIdrisiLayer                               */
 /************************************************************************/
 
-class OGRIdrisiLayer final: public OGRLayer
+class OGRIdrisiLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRIdrisiLayer>
 {
 protected:
     OGRFeatureDefn*    poFeatureDefn;
@@ -60,7 +60,7 @@ protected:
     bool               Detect_AVL_ADC( const char* pszFilename );
     void               ReadAVLLine( OGRFeature* poFeature );
 
-    virtual OGRFeature *       GetNextRawFeature();
+    OGRFeature *       GetNextRawFeature();
 
   public:
     OGRIdrisiLayer( const char* pszFilename,
@@ -69,7 +69,7 @@ protected:
     virtual ~OGRIdrisiLayer();
 
     virtual void                ResetReading() override;
-    virtual OGRFeature *        GetNextFeature() override;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRIdrisiLayer)
 
     virtual OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 

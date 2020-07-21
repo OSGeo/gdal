@@ -692,7 +692,7 @@ OGRFeature *OGRDWGLayer::TranslateLWPOLYLINE( OdDbEntityPtr poEntity )
         oSmoothPolyline.Close();
 
     poFeature->SetGeometryDirectly(
-        oSmoothPolyline.Tesselate() );
+        oSmoothPolyline.Tessellate() );
 
     PrepareLineStyle( poFeature );
 
@@ -1080,6 +1080,8 @@ public:
 
     OGRSpatialReference *GetSourceCS() override { return nullptr; }
     OGRSpatialReference *GetTargetCS() override { return nullptr; }
+
+    OGRCoordinateTransformation* Clone() const override { return new GeometryInsertTransformer(*this); }
 
     int Transform( int nCount,
                      double *x, double *y, double *z = nullptr,

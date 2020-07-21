@@ -34,9 +34,7 @@ fact you may get less than 51 GCPs, especially at end of scanlines.
 Another approach to rectification is manual selection of the GCPs using
 external source of georeference information.
 
-Before GDAL 1.10.2, a maximum of 11 x 20 GCPs were reported. This might
-be unsuitable for correct warping. Starting with GDAL 1.10.2, a much
-higher density will be reported, unless the L1B_HIGH_GCP_DENSITY
+A high density of GCPs will be reported, unless the L1B_HIGH_GCP_DENSITY
 configuration option is set to NO.
 
 Precision of the GCPs determination depends from the satellite type. In
@@ -46,7 +44,7 @@ positions more precise than 1/128=0.0078125 of degree (~28"). In NOAA-15
 -- NOAA-17 datasets we have much more precise positions, they are stored
 as 10000th of degree.
 
-Starting with GDAL 1.11, the GCPs will also be reported as a
+The GCPs will also be reported as a
 :ref:`geolocation array <rfc-41>`,
 with Lagrangian interpolation of the 51 GCPs per scanline to the number
 of pixels per scanline width.
@@ -88,7 +86,7 @@ Metadata records:
    when satellite moves from low latitudes to high latitudes and
    **Descending** in other case.
 
-Starting with GDAL 1.11, most metadata records can be written to a .CSV
+Most metadata records can be written to a .CSV
 file when the L1B_FETCH_METADATA configuration file is set to YES. By
 default, the filename will be called "[l1b_dataset_name]_metadata.csv",
 and located in the same directory as the L1B dataset. By defining the
@@ -103,19 +101,19 @@ for NOAA >=15.
 Subdatasets
 -----------
 
-NOAA <=14 datasets advertize a
+NOAA <=14 datasets advertise a
 L1B_SOLAR_ZENITH_ANGLES:"l1b_dataset_name" subdataset that contains a
 maximum of 51 solar zenith angles for each scanline ( beginning at
 sample 5 with a step of 8 samples for GAC data, beginning at sample 25
 with a step of 40 samples for HRPT/LAC/FRAC data).
 
-NOAA >=15 datasets advertize a L1B_ANGLES:"l1b_dataset_name" subdataset
+NOAA >=15 datasets advertise a L1B_ANGLES:"l1b_dataset_name" subdataset
 that contains 3 bands (solar zenith angles, satellite zenith angles and
 relative azimuth angles) with 51 values for each scanline ( beginning at
 sample 5 with a step of 8 samples for GAC data, beginning at sample 25
 with a step of 40 samples for HRPT/LAC/FRAC data).
 
-NOAA >=15 datasets advertize a L1B_CLOUDS:"l1b_dataset_name" subdataset
+NOAA >=15 datasets advertise a L1B_CLOUDS:"l1b_dataset_name" subdataset
 that contains a band of same dimensions as bands of the main L1B
 dataset. The values of each pixel are 0 = unknown; 1 = clear; 2 =
 cloudy; 3 = partly cloudy.

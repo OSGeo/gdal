@@ -311,7 +311,7 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
         key = server + '-' + version
         if key in urls and test in urls[key]:
             _, got = self.path.split('SERVICE=WCS')
-            got = re.sub('\&test=.*', '', got)
+            got = re.sub(r'\&test=.*', '', got)
             _, have = urls[key][test].split('SERVICE=WCS')
             have += '&server=' + server
             if got == have:

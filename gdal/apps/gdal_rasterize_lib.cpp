@@ -225,13 +225,13 @@ static CPLErr ProcessLayer(
 
     while( (hFeat = OGR_L_GetNextFeature( hSrcLayer )) != nullptr )
     {
-        if( OGR_F_GetGeometryRef( hFeat ) == nullptr )
+        OGRGeometryH hGeom = OGR_F_StealGeometry( hFeat );
+        if( hGeom == nullptr )
         {
             OGR_F_Destroy( hFeat );
             continue;
         }
 
-        OGRGeometryH hGeom = OGR_G_Clone( OGR_F_GetGeometryRef( hFeat ) );
         if( hCT != nullptr )
         {
             if( OGR_G_Transform(hGeom, hCT) != OGRERR_NONE )
@@ -1072,7 +1072,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             if (psOptions->nXSize <= 0 || psOptions->nYSize <= 0)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Wrong value for -outsize parameter.");
+                         "Wrong value for -ts parameter.");
                 GDALRasterizeOptionsFree(psOptions);
                 return nullptr;
             }

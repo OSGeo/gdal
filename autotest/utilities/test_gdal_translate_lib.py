@@ -122,7 +122,7 @@ def test_gdal_translate_lib_4():
 
 def test_gdal_translate_lib_5():
 
-    ds = gdal.Open('../gdrivers/data/bug407.gif')
+    ds = gdal.Open('../gdrivers/data/gif/bug407.gif')
     ds = gdal.Translate('tmp/test5.tif', ds, rgbExpand='rgb')
     assert ds is not None
 
@@ -259,14 +259,23 @@ def test_gdal_translate_lib_12():
 
 def test_gdal_translate_lib_13():
 
-    ds = gdal.Open('../gcore/data/byte.tif')
-    ds = gdal.Translate('tmp/test13.tif', ds, metadataOptions=['TIFFTAG_DOCUMENTNAME=test13'])
+    src_ds = gdal.Open('../gcore/data/byte.tif')
+
+    ds = gdal.Translate('/vsimem/test13.tif', src_ds, metadataOptions=['TIFFTAG_DOCUMENTNAME=test13'])
     assert ds is not None
 
     md = ds.GetMetadata()
     assert 'TIFFTAG_DOCUMENTNAME' in md, 'Did not get TIFFTAG_DOCUMENTNAME'
-
     ds = None
+    gdal.Unlink('/vsimem/test13.tif')
+
+    ds = gdal.Translate('/vsimem/test13.tif', src_ds, metadataOptions='TIFFTAG_DOCUMENTNAME=test13')
+    assert ds is not None
+
+    md = ds.GetMetadata()
+    assert 'TIFFTAG_DOCUMENTNAME' in md, 'Did not get TIFFTAG_DOCUMENTNAME'
+    ds = None
+    gdal.Unlink('/vsimem/test13.tif')
 
 ###############################################################################
 # Test creationOptions
@@ -295,7 +304,7 @@ def test_gdal_translate_lib_100():
 
     # Will create an implicit options structure
     with gdaltest.error_handler():
-        gdal.TranslateInternal('', gdal.Open('../gcore/data/byte.tif'), None, gdal.TermProgress)
+        gdal.TranslateInternal('', gdal.Open('../gcore/data/byte.tif'), None, gdal.TermProgress_nocb)
 
     # Null dest name
     try:

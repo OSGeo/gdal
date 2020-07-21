@@ -29,13 +29,13 @@ data types and deleting, renaming or copying the files.
 
     Mode of operation
 
-    **identify** `` `` *<datasetname>*:
+    **identify** *<datasetname>*:
         List data format of file.
-    **copy** `` `` *<datasetname>* `` `` *<newdatasetname>*:
+    **copy** *<datasetname>* *<newdatasetname>*:
         Create a copy of the raster file with a new name.
-    **rename** `` `` *<datasetname>* `` ``  *<newdatasetname>*:
+    **rename** *<datasetname>* *<newdatasetname>*:
         Change the name of the raster file.
-    **delete** `` `` *<datasetname>*:
+    **delete** *<datasetname>*:
         Delete raster file.
 
 .. option:: -r

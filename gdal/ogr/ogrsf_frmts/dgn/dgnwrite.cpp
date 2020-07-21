@@ -1048,8 +1048,6 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
 /*      Setup Raw data for the arc section.                             */
 /* -------------------------------------------------------------------- */
-    GInt32 nAngle = 0;
-
     if( nType == DGNT_ARC )
     {
         double dfScaledAxis;
@@ -1062,7 +1060,7 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
             CPLCalloc(psCore->raw_bytes, 1));
 
         /* start angle */
-        nAngle = (int) (dfStartAngle * 360000.0);
+        GInt32 nAngle = (int) (dfStartAngle * 360000.0);
         DGN_WRITE_INT32( nAngle, psCore->raw_data + 36 );
 
         /* sweep angle */
@@ -1164,7 +1162,7 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
         else
         {
             /* rotation */
-            nAngle = (int) (dfRotation * 360000.0);
+            GInt32 nAngle = (int) (dfRotation * 360000.0);
             DGN_WRITE_INT32( nAngle, psCore->raw_data + 52 );
 
             /* origin */
@@ -1477,6 +1475,7 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
         0.0
     };
 
+#if 0
     //calculate rotated bounding box coordinates
     const double length = sMax.x-sMin.x;
     const double height = sMax.y-sMin.y;
@@ -1507,6 +1506,7 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
                       std::max(sLowRight.x, std::max(sUpLeft.x, sUpRight.x)));
     sMax.y = std::max(sLowLeft.y,
                       std::max(sLowRight.y, std::max(sUpLeft.y, sUpRight.y)));
+#endif
     sMin.x = dfOriginX - dfLengthMult * strlen(pszText);
     sMin.y = dfOriginY - dfHeightMult;
     sMin.z = 0.0;
@@ -2123,18 +2123,19 @@ static void DGNPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
     {
         GInt32 nCTI = static_cast<GInt32>(
             std::max(-2147483647.0, std::min(2147483647.0,adfCT[i])));
-        unsigned char *pabyCTI = (unsigned char *) &nCTI;
+        unsigned char abyCTI[4];
+        memcpy(abyCTI, &nCTI, sizeof(GInt32));
 
 #ifdef WORDS_BIGENDIAN
-        pabyTarget[i*4+0] = pabyCTI[1];
-        pabyTarget[i*4+1] = pabyCTI[0];
-        pabyTarget[i*4+2] = pabyCTI[3];
-        pabyTarget[i*4+3] = pabyCTI[2];
+        pabyTarget[i*4+0] = abyCTI[1];
+        pabyTarget[i*4+1] = abyCTI[0];
+        pabyTarget[i*4+2] = abyCTI[3];
+        pabyTarget[i*4+3] = abyCTI[2];
 #else
-        pabyTarget[i*4+3] = pabyCTI[1];
-        pabyTarget[i*4+2] = pabyCTI[0];
-        pabyTarget[i*4+1] = pabyCTI[3];
-        pabyTarget[i*4+0] = pabyCTI[2];
+        pabyTarget[i*4+3] = abyCTI[1];
+        pabyTarget[i*4+2] = abyCTI[0];
+        pabyTarget[i*4+1] = abyCTI[3];
+        pabyTarget[i*4+0] = abyCTI[2];
 #endif
     }
 }

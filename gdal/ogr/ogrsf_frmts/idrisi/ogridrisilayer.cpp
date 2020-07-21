@@ -260,36 +260,6 @@ void OGRIdrisiLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                           GetNextFeature()                           */
-/************************************************************************/
-
-OGRFeature *OGRIdrisiLayer::GetNextFeature()
-{
-    while( true )
-    {
-        if( bEOF )
-            return nullptr;
-
-        OGRFeature *poFeature = GetNextRawFeature();
-        if( poFeature == nullptr )
-        {
-            bEOF = true;
-            return nullptr;
-        }
-
-        if( (m_poFilterGeom == nullptr
-             || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == nullptr
-                || m_poAttrQuery->Evaluate( poFeature )) )
-        {
-            return poFeature;
-        }
-
-        delete poFeature;
-    }
-}
-
-/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
@@ -311,6 +281,9 @@ int OGRIdrisiLayer::TestCapability( const char * pszCap )
 
 OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
 {
+    if( bEOF )
+        return nullptr;
+
     while( true )
     {
         if (eGeomType == wkbPoint)
@@ -362,6 +335,7 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
                 VSIFReadL(&dfMinYShape, sizeof(double), 1, fp) != 1 ||
                 VSIFReadL(&dfMaxYShape, sizeof(double), 1, fp) != 1 )
             {
+                bEOF = true;
                 return nullptr;
             }
             CPL_LSBPTR64(&dfId);
@@ -373,12 +347,16 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
             unsigned int nNodes = 0;
             if( VSIFReadL(&nNodes, sizeof(unsigned int), 1, fp) != 1 )
             {
+                bEOF = true;
                 return nullptr;
             }
             CPL_LSBPTR32(&nNodes);
 
             if( nNodes > 100 * 1000 * 1000 )
+            {
+                bEOF = true;
                 return nullptr;
+            }
 
             if( m_poFilterGeom != nullptr &&
                 (dfMaxXShape < m_sFilterEnvelope.MinX ||
@@ -395,6 +373,7 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
                 VSI_MALLOC2_VERBOSE(sizeof(OGRRawPoint), nNodes) );
             if (poRawPoints == nullptr)
             {
+                bEOF = true;
                 return nullptr;
             }
 
@@ -402,6 +381,7 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
                     poRawPoints, sizeof(OGRRawPoint), nNodes, fp)) != nNodes )
             {
                 VSIFree(poRawPoints);
+                bEOF = true;
                 return nullptr;
             }
 
@@ -441,6 +421,7 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
                 VSIFReadL(&dfMinYShape, sizeof(double), 1, fp) != 1 ||
                 VSIFReadL(&dfMaxYShape, sizeof(double), 1, fp) != 1)
             {
+                bEOF = true;
                 return nullptr;
             }
             CPL_LSBPTR64(&dfId);
@@ -453,13 +434,17 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
             if (VSIFReadL(&nParts, sizeof(unsigned int), 1, fp) != 1 ||
                 VSIFReadL(&nTotalNodes, sizeof(unsigned int), 1, fp) != 1)
             {
+                bEOF = true;
                 return nullptr;
             }
             CPL_LSBPTR32(&nParts);
             CPL_LSBPTR32(&nTotalNodes);
 
             if (nParts > 100000 || nTotalNodes > 100 * 1000 * 1000)
+            {
+                bEOF = true;
                 return nullptr;
+            }
 
             if (m_poFilterGeom != nullptr &&
                 (dfMaxXShape < m_sFilterEnvelope.MinX ||
@@ -477,6 +462,7 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
                 VSI_MALLOC2_VERBOSE(sizeof(OGRRawPoint), nTotalNodes) );
             if (poRawPoints == nullptr)
             {
+                bEOF = true;
                 return nullptr;
             }
             unsigned int* panNodesCount = nullptr;
@@ -489,6 +475,7 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
                 {
                     VSIFree(poRawPoints);
                     VSIFree(panNodesCount);
+                    bEOF = true;
                     return nullptr;
                 }
 #if defined(CPL_MSB)
@@ -504,12 +491,14 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
                 if (VSIFReadL(&nNodes, sizeof(unsigned int) * nParts, 1, fp) != 1)
                 {
                     VSIFree(poRawPoints);
+                    bEOF = true;
                     return nullptr;
                 }
                 CPL_LSBPTR32(&nNodes);
                 if( nNodes != nTotalNodes )
                 {
                     VSIFree(poRawPoints);
+                    bEOF = true;
                     return nullptr;
                 }
             }
@@ -527,6 +516,7 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
                     VSIFree(poRawPoints);
                     VSIFree(panNodesCount);
                     delete poGeom;
+                    bEOF = true;
                     return nullptr;
                 }
 

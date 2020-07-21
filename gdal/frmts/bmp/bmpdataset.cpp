@@ -760,7 +760,6 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn ) :
         pabyUncomprBuf = nullptr;
         return;
     }
-    unsigned int k = 0;
     unsigned int iLength = 0;
     unsigned int i = 0;
     unsigned int j = 0;
@@ -820,7 +819,7 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn ) :
                         iLength = pabyComprBuf[i++];
                     if( j == iUncomprSize )
                         break;
-                    for ( k = 0; k < iLength && j < iUncomprSize && i < iComprSize; k++ )
+                    for ( unsigned k = 0; k < iLength && j < iUncomprSize && i < iComprSize; k++ )
                         pabyUncomprBuf[j++] = pabyComprBuf[i++];
                     if ( i & 0x01 )
                         i++;
@@ -887,7 +886,7 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn ) :
                         iLength = pabyComprBuf[i++];
                     if( j == iUncomprSize )
                         break;
-                    for ( k = 0; k < iLength && j < iUncomprSize && i < iComprSize; k++ )
+                    for ( unsigned k = 0; k < iLength && j < iUncomprSize && i < iComprSize; k++ )
                     {
                         if ( k & 0x01 )
                             pabyUncomprBuf[j++] = pabyComprBuf[i++] & 0x0F;

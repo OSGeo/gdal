@@ -128,7 +128,7 @@ GDAL_INCLUDE	=	-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore \
 
 # libtool targets and help variables
 LIBGDAL	:=		libgdal.la
-LIBGDAL_CURRENT	:=	26
+LIBGDAL_CURRENT	:=	27
 LIBGDAL_REVISION	:=	0
 LIBGDAL_AGE	:=	0
 
@@ -559,6 +559,12 @@ FREEXL_INCLUDE = @FREEXL_INCLUDE@
 #
 
 EXR_CFLAGS = @EXR_CFLAGS@
+
+#
+# HEIF stuff
+#
+
+HEIF_CFLAGS = @HEIF_CFLAGS@
 
 #
 # cryptopp stuff

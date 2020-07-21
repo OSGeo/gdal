@@ -752,7 +752,7 @@ def test_gdalwarp_lib_121():
 
     # Will create an implicit options structure
     with gdaltest.error_handler():
-        gdal.wrapper_GDALWarpDestName('', [], None, gdal.TermProgress)
+        gdal.wrapper_GDALWarpDestName('', [], None, gdal.TermProgress_nocb)
 
     # Null dest name
     try:
@@ -766,7 +766,7 @@ def test_gdalwarp_lib_121():
 
     # Will create an implicit options structure
     with gdaltest.error_handler():
-        gdal.wrapper_GDALWarpDestDS(gdal.GetDriverByName('MEM').Create('', 1, 1), [], None, gdal.TermProgress)
+        gdal.wrapper_GDALWarpDestDS(gdal.GetDriverByName('MEM').Create('', 1, 1), [], None, gdal.TermProgress_nocb)
 
     
 ###############################################################################
@@ -1979,6 +1979,14 @@ def test_gdalwarp_lib_multiple_source_incompatible_buildvrt_to_cog_reprojection_
     gdal.Unlink('/vsimem/left.tif')
     gdal.Unlink('/vsimem/right.tif')
 
+###############################################################################
+
+def test_gdalwarp_lib_no_crs():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    src_ds.SetGeoTransform([0, 10, 0, 0, 0, -10])
+    out_ds = gdal.Warp('', src_ds, options = '-of MEM -ct "+proj=unitconvert +xy_in=1 +xy_out=2"')
+    assert out_ds.GetGeoTransform() == (0.0, 5.0, 0.0, 0.0, 0.0, -5.0)
 
 ###############################################################################
 # Cleanup

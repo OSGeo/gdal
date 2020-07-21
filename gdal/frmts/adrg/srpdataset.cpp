@@ -1220,8 +1220,6 @@ void SRPDataset::AddMetadatafromFromTHF(const char* pszFileName)
     if (!module.Open(pszFileName, TRUE))
         return ;
 
-    CPLString osDirName(CPLGetDirname(pszFileName));
-
     while( true )
     {
         CPLPushErrorHandler( CPLQuietErrorHandler );

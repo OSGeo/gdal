@@ -295,7 +295,7 @@ For each 2D geometry type there is a corresponding 2.5D type code.  The 2D
 and 2.5D geometry cases are handled by the same C++ class, so our code will
 handle 2D or 3D cases properly.
 
-Starting with OGR 1.11, several geometry fields can be associated to a feature.
+Several geometry fields can be associated to a feature.
 
 In C++ :
 
@@ -367,7 +367,7 @@ In Python:
 Note that :cpp:func:`OGRFeature::GetGeometryRef` and :cpp:func:`OGRFeature::GetGeomFieldRef`
 return a pointer to
 the internal geometry owned by the OGRFeature.  There we don't actually
-deleted the return geometry.
+delete the return geometry.
 
 
 With GDAL 2.3 and C++11, the looping over features is simply terminated by
@@ -789,7 +789,7 @@ In C :
 
 Now that the layer exists, we need to create any attribute fields that should
 appear on the layer.  Fields must be added to the layer before any features
-are written.  To create a field we initialize an :cpp:class:`OGRField` object with the
+are written.  To create a field we initialize an :cpp:union:`OGRField` object with the
 information about the field.  In the case of Shapefiles, the field width and
 precision is significant in the creation of the output .dbf file, so we
 set it specifically, though generally the defaults are OK.  For this example
@@ -1160,7 +1160,7 @@ In Python :
     ds = None
 
 
-Starting with OGR 1.11, everal geometry fields< can be associated to a feature. This capability
+Several geometry fields can be associated to a feature. This capability
 is just available for a few file formats, such as PostGIS.
 
 To create such datasources, geometry fields must be first created.

@@ -401,9 +401,44 @@ int OGRPGTableLayer::ReadTableDefinition()
 
     poDS->EndCopy();
 
-    CPLString osSchemaClause;
-    osSchemaClause.Printf("AND n.nspname=%s",
-                              OGRPGEscapeString(hPGConn, pszSchemaName).c_str());
+/* -------------------------------------------------------------------- */
+/*      Get the OID of the table.                                       */
+/* -------------------------------------------------------------------- */
+
+    CPLString osCommand;
+    osCommand.Printf("SELECT c.oid FROM pg_class c "
+                     "JOIN pg_namespace n ON c.relnamespace=n.oid "
+                     "WHERE c.relname = %s AND n.nspname = %s",
+                     OGRPGEscapeString(hPGConn, pszTableName).c_str(),
+                     OGRPGEscapeString(hPGConn, pszSchemaName).c_str());
+    unsigned int nTableOID = 0;
+    {
+        PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
+        if ( hResult && PGRES_TUPLES_OK == PQresultStatus(hResult) )
+        {
+            if ( PQntuples( hResult ) == 1 && PQgetisnull( hResult,0,0 ) == false )
+            {
+                nTableOID = static_cast<unsigned>(CPLAtoGIntBig(PQgetvalue(hResult, 0, 0)));
+                OGRPGClearResult( hResult );
+            }
+            else
+            {
+                CPLDebug("PG", "Could not retrieve table oid for %s", pszTableName);
+                OGRPGClearResult( hResult );
+                return FALSE;
+            }
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s", PQerrorMessage(hPGConn) );
+            return FALSE;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Identify the integer primary key.                               */
+/* -------------------------------------------------------------------- */
 
     const char* pszTypnameEqualsAnyClause =
         poDS->sPostgreSQLVersion.nMajor == 7 &&
@@ -421,21 +456,19 @@ int OGRPGTableLayer::ReadTableDefinition()
         "OR i.indkey[6]=a.attnum OR i.indkey[7]=a.attnum OR i.indkey[8]=a.attnum "
         "OR i.indkey[9]=a.attnum)";
 
-    CPLString osEscapedTableNameSingleQuote = OGRPGEscapeString(hPGConn, pszTableName);
-    const char* pszEscapedTableNameSingleQuote = osEscapedTableNameSingleQuote.c_str();
-
     /* See #1889 for why we don't use 'AND a.attnum = ANY(i.indkey)' */
-    CPLString osCommand;
-    osCommand.Printf("SELECT a.attname, a.attnum, t.typname, "
-              "t.typname = %s AS isfid "
-              "FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n, pg_index i "
-              "WHERE a.attnum > 0 AND a.attrelid = c.oid "
-              "AND a.atttypid = t.oid AND c.relnamespace = n.oid "
-              "AND c.oid = i.indrelid AND i.indisprimary = 't' "
-              "AND t.typname !~ '^geom' AND c.relname = %s "
-              "AND %s %s ORDER BY a.attnum",
-              pszTypnameEqualsAnyClause, pszEscapedTableNameSingleQuote,
-              pszAttnumEqualAnyIndkey, osSchemaClause.c_str() );
+    osCommand.Printf(
+              "SELECT a.attname, a.attnum, t.typname, t.typname = %s AS isfid "
+              "FROM pg_attribute a "
+              "JOIN pg_type t ON t.oid = a.atttypid "
+              "JOIN pg_index i ON i.indrelid = a.attrelid "
+              "WHERE a.attnum > 0 AND a.attrelid = %u "
+              "AND i.indisprimary = 't' "
+              "AND t.typname !~ '^geom' "
+              "AND %s ORDER BY a.attnum",
+              pszTypnameEqualsAnyClause,
+              nTableOID,
+              pszAttnumEqualAnyIndkey );
 
     PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
 
@@ -472,19 +505,24 @@ int OGRPGTableLayer::ReadTableDefinition()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Fire off commands to get back the columns of the table.          */
+/*      Fire off commands to get back the columns of the table.         */
 /* -------------------------------------------------------------------- */
     osCommand.Printf(
-                "SELECT DISTINCT a.attname, t.typname, a.attlen,"
-                "       format_type(a.atttypid,a.atttypmod), a.attnum, a.attnotnull, a.atthasdef "
-                "FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n "
-                "WHERE c.relname = %s "
-                "AND a.attnum > 0 AND a.attrelid = c.oid "
-                "AND a.atttypid = t.oid "
-                "AND c.relnamespace=n.oid "
-                "%s "
-                "ORDER BY a.attnum",
-                pszEscapedTableNameSingleQuote, osSchemaClause.c_str());
+        "SELECT a.attname, t.typname, a.attlen,"
+        "       format_type(a.atttypid,a.atttypmod), a.attnotnull, def.def, i.indisunique%s "
+        "FROM pg_attribute a "
+        "JOIN pg_type t ON t.oid = a.atttypid "
+        "LEFT JOIN "
+        "(SELECT adrelid, adnum, pg_get_expr(adbin, adrelid) AS def FROM pg_attrdef) def "
+        "ON def.adrelid = a.attrelid AND def.adnum = a.attnum "
+        // Find unique constraints that are on a single column only
+        "LEFT JOIN "
+        "(SELECT DISTINCT indrelid, indkey, indisunique FROM pg_index WHERE indisunique) i "
+        "ON i.indrelid = a.attrelid AND i.indkey[0] = a.attnum AND i.indkey[1] IS NULL "
+        "WHERE a.attnum > 0 AND a.attrelid = %u "
+        "ORDER BY a.attnum",
+        (poDS->sPostgreSQLVersion.nMajor >= 12 ? ", a.attgenerated" : ""),
+        nTableOID);
 
     hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
 
@@ -510,7 +548,6 @@ int OGRPGTableLayer::ReadTableDefinition()
 /* -------------------------------------------------------------------- */
 /*      Parse the returned table information.                           */
 /* -------------------------------------------------------------------- */
-    bool bHasDefault = false;
     for( int iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
     {
         OGRFieldDefn    oField( PQgetvalue( hResult, iRecord, 0 ), OFTString);
@@ -518,13 +555,16 @@ int OGRPGTableLayer::ReadTableDefinition()
         const char      *pszType = PQgetvalue(hResult, iRecord, 1 );
         int nWidth = atoi(PQgetvalue(hResult,iRecord,2));
         const char      *pszFormatType = PQgetvalue(hResult,iRecord,3);
-        const char      *pszNotNull = PQgetvalue(hResult,iRecord,5);
-        const char      *pszHasDef = PQgetvalue(hResult,iRecord,6);
+        const char      *pszNotNull = PQgetvalue(hResult,iRecord,4);
+        const char      *pszDefault = PQgetisnull(hResult,iRecord,5) ? nullptr : PQgetvalue(hResult,iRecord,5);
+        const char      *pszIsUnique = PQgetvalue(hResult,iRecord,6);
+        const char      *pszGenerated =
+            poDS->sPostgreSQLVersion.nMajor >= 12 ? PQgetvalue( hResult, iRecord, 7 ) : "";
 
         if( pszNotNull && EQUAL(pszNotNull, "t") )
             oField.SetNullable(FALSE);
-        if( pszHasDef && EQUAL(pszHasDef, "t") )
-            bHasDefault = true;
+        if( pszIsUnique && EQUAL(pszIsUnique, "t") )
+            oField.SetUnique(TRUE);
 
         if( EQUAL(oField.GetNameRef(),osPrimaryKey) )
         {
@@ -573,48 +613,18 @@ int OGRPGTableLayer::ReadTableDefinition()
 
         OGRPGCommonLayerSetType(oField, pszType, pszFormatType, nWidth);
 
+        if( pszDefault )
+        {
+            OGRPGCommonLayerNormalizeDefault(&oField, pszDefault);
+        }
+
         //CPLDebug("PG", "name=%s, type=%s", oField.GetNameRef(), pszType);
         poFeatureDefn->AddFieldDefn( &oField );
+        m_abGeneratedColumns.push_back(
+            pszGenerated != nullptr && pszGenerated[0] != '\0' );
     }
 
     OGRPGClearResult( hResult );
-
-    if( bHasDefault )
-    {
-        osCommand.Printf(
-                 "SELECT a.attname, pg_get_expr(def.adbin, c.oid) "
-                 "FROM pg_attrdef def, pg_class c, pg_attribute a, pg_type t, pg_namespace n "
-                 "WHERE c.relname = %s AND a.attnum > 0 AND a.attrelid = c.oid "
-                 "AND a.atttypid = t.oid AND c.relnamespace=n.oid AND "
-                 "def.adrelid = c.oid AND def.adnum = a.attnum "
-                 "%s "
-                 "ORDER BY a.attnum",
-                 pszEscapedTableNameSingleQuote, osSchemaClause.c_str());
-
-        hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
-        if( !hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK )
-        {
-            OGRPGClearResult( hResult );
-
-            CPLError( CE_Failure, CPLE_AppDefined,
-                    "%s", PQerrorMessage(hPGConn) );
-            return bTableDefinitionValid;
-        }
-
-        for( int iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
-        {
-            const char      *pszName = PQgetvalue( hResult, iRecord, 0 );
-            const char      *pszDefault = PQgetvalue( hResult, iRecord, 1 );
-            int nIdx = poFeatureDefn->GetFieldIndex(pszName);
-            if( nIdx >= 0 )
-            {
-                OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(nIdx);
-                OGRPGCommonLayerNormalizeDefault(poFieldDefn, pszDefault);
-            }
-        }
-
-        OGRPGClearResult( hResult );
-    }
 
     bTableDefinitionValid = TRUE;
 
@@ -637,19 +647,18 @@ int OGRPGTableLayer::ReadTableDefinition()
       /* Get the geometry type and dimensions from the table, or */
       /* from its parents if it is a derived table, or from the parent of the parent, etc.. */
       int bGoOn = poDS->m_bHasGeometryColumns;
-      int bHasPostGISGeometry =
+      const bool bHasPostGISGeometry =
         (poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY);
 
       while(bGoOn)
       {
-        osEscapedTableNameSingleQuote = OGRPGEscapeString(hPGConn,
-                (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName);
-        pszEscapedTableNameSingleQuote = osEscapedTableNameSingleQuote.c_str();
-
+        const CPLString osEscapedThisOrParentTableName(
+            OGRPGEscapeString(hPGConn,
+                (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName));
         osCommand.Printf(
             "SELECT type, coord_dimension, srid FROM %s WHERE f_table_name = %s",
             (bHasPostGISGeometry) ? "geometry_columns" : "geography_columns",
-            pszEscapedTableNameSingleQuote);
+            osEscapedThisOrParentTableName.c_str());
 
         osCommand += CPLString().Printf(" AND %s=%s",
             (bHasPostGISGeometry) ? "f_geometry_column" : "f_geography_column",
@@ -700,7 +709,7 @@ int OGRPGTableLayer::ReadTableDefinition()
                 "(SELECT c.oid FROM pg_class c, pg_namespace n "
                 "WHERE c.relname = %s AND c.relnamespace=n.oid AND "
                 "n.nspname = %s))",
-                            pszEscapedTableNameSingleQuote,
+                            osEscapedThisOrParentTableName.c_str(),
                             OGRPGEscapeString(hPGConn, pszSchemaName).c_str() );
 
             OGRPGClearResult( hResult );
@@ -1368,6 +1377,9 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
             continue;
         if( !poFeature->IsFieldSet(i) )
             continue;
+        if( m_abGeneratedColumns[i] )
+            continue;
+
         if( bNeedComma )
             osCommand += ", ";
         else
@@ -1721,6 +1733,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
             continue;
         if( !poFeature->IsFieldSet( i ) )
             continue;
+        if( m_abGeneratedColumns[i] )
+            continue;
 
         if( !bNeedComma )
             bNeedComma = TRUE;
@@ -1841,6 +1855,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
             continue;
         if( !poFeature->IsFieldSet( i ) )
             continue;
+        if( m_abGeneratedColumns[i] )
+            continue;
 
         if( bNeedComma )
             osCommand += ", ";
@@ -1958,10 +1974,15 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
         }
     }
 
+    std::vector<bool> abFieldsToInclude(m_abGeneratedColumns.size(), true);
+    for(size_t i = 0; i < abFieldsToInclude.size(); i++)
+        abFieldsToInclude[i] = !m_abGeneratedColumns[i];
+
     OGRPGCommonAppendCopyFieldsExceptGeom(osCommand,
                                           poFeature,
                                           pszFIDColumn,
                                           CPL_TO_BOOL(bFIDColumnInCopyFields),
+                                          abFieldsToInclude,
                                           (OGRPGCommonEscapeStringCbk)OGRPGEscapeString,
                                           hPGConn);
 
@@ -2139,13 +2160,15 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
             return OGRERR_FAILURE;
     }
 
-    CPLString osNotNullDefault;
+    CPLString osConstraints;
     if( !oField.IsNullable() )
-        osNotNullDefault += " NOT NULL";
+        osConstraints += " NOT NULL";
+    if( oField.IsUnique() )
+        osConstraints += " UNIQUE";
     if( oField.GetDefault() != nullptr && !oField.IsDefaultDriverSpecific() )
     {
-        osNotNullDefault += " DEFAULT ";
-        osNotNullDefault += OGRPGCommonLayerGetPGDefault(&oField);
+        osConstraints += " DEFAULT ";
+        osConstraints += OGRPGCommonLayerGetPGDefault(&oField);
     }
 
 /* -------------------------------------------------------------------- */
@@ -2159,7 +2182,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
             osCreateTable += OGRPGEscapeColumnName(oField.GetNameRef());
             osCreateTable += " ";
             osCreateTable += osFieldType;
-            osCreateTable += osNotNullDefault;
+            osCreateTable += osConstraints;
         }
     }
     else
@@ -2169,7 +2192,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
         osCommand.Printf( "ALTER TABLE %s ADD COLUMN %s %s",
                         pszSqlTableName, OGRPGEscapeColumnName(oField.GetNameRef()).c_str(),
                         osFieldType.c_str() );
-        osCommand += osNotNullDefault;
+        osCommand += osConstraints;
 
         PGresult* hResult = OGRPG_PQexec(hPGConn, osCommand);
         if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
@@ -2188,6 +2211,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     }
 
     poFeatureDefn->AddFieldDefn( &oField );
+    m_abGeneratedColumns.resize( poFeatureDefn->GetFieldCount() );
 
     if( pszFIDColumn != nullptr &&
         EQUAL( oField.GetNameRef(), pszFIDColumn ) )
@@ -2445,6 +2469,8 @@ OGRErr OGRPGTableLayer::DeleteField( int iField )
 
     OGRPGClearResult( hResult );
 
+    m_abGeneratedColumns.erase(m_abGeneratedColumns.begin() + iField);
+
     return poFeatureDefn->DeleteFieldDefn( iField );
 }
 
@@ -2562,6 +2588,42 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
         OGRPGClearResult( hResult );
     }
 
+    // Only supports adding a unique constraint
+    if( (nFlagsIn & ALTER_UNIQUE_FLAG) &&
+        !poFieldDefn->IsUnique() &&
+        poNewFieldDefn->IsUnique() )
+    {
+        oField.SetUnique(poNewFieldDefn->IsUnique());
+
+        osCommand.Printf( "ALTER TABLE %s ADD UNIQUE (%s)",
+                pszSqlTableName,
+                OGRPGEscapeColumnName(poFieldDefn->GetNameRef()).c_str() );
+
+        PGresult* hResult = OGRPG_PQexec(hPGConn, osCommand);
+        if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "%s\n%s",
+                    osCommand.c_str(),
+                    PQerrorMessage(hPGConn) );
+
+            OGRPGClearResult( hResult );
+
+            poDS->SoftRollbackTransaction();
+
+            return OGRERR_FAILURE;
+        }
+        OGRPGClearResult( hResult );
+    }
+    else if( (nFlagsIn & ALTER_UNIQUE_FLAG) &&
+              poFieldDefn->IsUnique() &&
+              !poNewFieldDefn->IsUnique() )
+    {
+        oField.SetUnique(TRUE);
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Dropping a UNIQUE constraint is not supported currently");
+    }
+
     if( (nFlagsIn & ALTER_DEFAULT_FLAG) &&
         ((poFieldDefn->GetDefault() == nullptr && poNewFieldDefn->GetDefault() != nullptr) ||
          (poFieldDefn->GetDefault() != nullptr && poNewFieldDefn->GetDefault() == nullptr) ||
@@ -2656,6 +2718,8 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
         poFieldDefn->SetNullable(oField.IsNullable());
     if (nFlagsIn & ALTER_DEFAULT_FLAG)
         poFieldDefn->SetDefault(oField.GetDefault());
+    if (nFlagsIn & ALTER_UNIQUE_FLAG)
+        poFieldDefn->SetUnique(oField.IsUnique());
 
     return OGRERR_NONE;
 }
@@ -3006,6 +3070,8 @@ CPLString OGRPGTableLayer::BuildCopyFields()
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         if (i == nFIDIndex)
+            continue;
+        if( m_abGeneratedColumns[i] )
             continue;
 
         const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();

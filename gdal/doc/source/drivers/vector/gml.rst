@@ -36,12 +36,12 @@ Parsers
 -------
 
 The reading part of the driver only works if OGR is built with Xerces
-linked in. Starting with OGR 1.7.0, when Xerces is unavailable, read
+linked in. When Xerces is unavailable, read
 support also works if OGR is built with Expat linked in. XML validation
 is disabled by default. GML writing is always supported, even without
 Xerces or Expat.
 
-Note: starting with OGR 1.9.0, if both Xerces and Expat are available at
+Note: if both Xerces and Expat are available at
 build time, the GML driver will preferentially select at runtime the
 Expat parser for cases where it is possible (GML file in a compatible
 encoding), and default back to Xerces parser in other cases. However,
@@ -51,7 +51,7 @@ the choice of the parser can be overridden by specifying the
 CRS support
 -----------
 
-Since OGR 1.8.0, the GML driver has coordinate system support. This is
+The GML driver has coordinate system support. This is
 only reported when all the geometries of a layer have a srsName
 attribute, whose value is the same for all geometries. For srsName such
 as "urn:ogc:def:crs:EPSG:" (or "http://www.opengis.net/def/crs/EPSG/0/"
@@ -73,7 +73,7 @@ report the coordinates in (latitude,longitude) order. However, if you
 set the configuration option **GML_CONSIDER_EPSG_AS_URN** to **YES**,
 the rules explained in the previous paragraph will be applied.
 
-Since OGR 1.10, the above also applied for projected coordinate systems
+The above also applied for projected coordinate systems
 whose EPSG preferred axis order is (northing, easting).
 
 Starting with GDAL 2.1.2, the SWAP_COORDINATES open option (or
@@ -99,10 +99,10 @@ the gml namespace to determine the organization. While this approach is
 error prone, it has the advantage of working for GML files even if the
 associated schema (.xsd) file has been lost.
 
-Starting with OGR 1.10, it is possible to specify an explicit filename
+It is possible to specify an explicit filename
 for the XSD schema to use, by using
 "a_filename.gml,xsd=another_filename.xsd" as a connection string.
-Staring with GDAL 2.0, the XSD can also be specified as the value of the
+The XSD can also be specified as the value of the
 XSD open option.
 
 The first time a GML file is opened, if the associated .xsd is absent or
@@ -122,7 +122,7 @@ type of the field. In some applications it is easier if all fields are
 just treated as string fields. This can be accomplished by setting the
 configuration option **GML_FIELDTYPES** to the value **ALWAYS_STRING**.
 
-Starting with GDAL 1.11, the **GML_ATTRIBUTES_TO_OGR_FIELDS**
+The **GML_ATTRIBUTES_TO_OGR_FIELDS**
 configuration option can be set to **YES** so that attributes of GML
 elements are also taken into account to create OGR fields.
 
@@ -132,20 +132,19 @@ or as environment variables.
 Particular GML application schemas
 ----------------------------------
 
-OGR 1.8.0 adds support for detecting feature attributes in nested GML
-elements (non-flat attribute hierarchy) that can be found in some GML
-profiles such as UK Ordnance Survey MasterMap. OGR 1.8.0 also brings
-support for reading IntegerList, RealList and StringList field types
-when a GML element has several occurrences.
+Feature attributes in nested GML elements (non-flat attribute hierarchy) that
+can be found in some GML profiles, such as UK Ordnance Survey MasterMap, are
+detected. IntegerList, RealList and StringList field types
+when a GML element has several occurrences are also supported.
 
-Since OGR 1.8.0, a specialized GML driver - the :ref:`NAS <vector.nas>`
+A specialized GML driver - the :ref:`NAS <vector.nas>`
 driver - is available to read German AAA GML Exchange Format
 (NAS/ALKIS).
 
-Since OGR 1.8.0, the GML driver has partial support for reading AIXM or
+The GML driver has partial support for reading AIXM or
 CityGML files.
 
-Since OGR 1.11, the GML driver supports reading :
+The GML driver supports reading :
 
 -  `Finnish National Land Survey GML files (a.k.a MTK GML) for
    topographic
@@ -157,8 +156,7 @@ Since OGR 1.11, the GML driver supports reading :
 -  `Czech RUIAN Exchange Format
    (VFR) <http://www.cuzk.cz/Uvod/Produkty-a-sluzby/RUIAN/2-Poskytovani-udaju-RUIAN-ISUI-VDP/Vymenny-format-RUIAN/Vymenny-format-RUIAN-%28VFR%29.aspx>`__.
 
-Since OGR 2.0, the GML driver supports reading responses to CSW
-GetRecords queries.
+The GML driver supports reading responses to CSW GetRecords queries.
 
 Since OGR 2.2, the GML driver supports reading Japanese FGD GML v4
 files.
@@ -170,22 +168,22 @@ When reading a feature, the driver will by default only take into
 account the last recognized GML geometry found (in case they are
 multiples) in the XML subtree describing the feature.
 
-But, starting with OGR 1.11, if the .xsd schema is understood by the XSD
+But, if the .xsd schema is understood by the XSD
 parser and declares several geometry fields, or the .gfs file declares
 several geometry fields, multiple geometry fields will be reported by
 the GML driver according to :ref:`rfc-41`.
 
-Starting with OGR 1.10, in case of multiple geometry occurrences, if a
+In case of multiple geometry occurrences, if a
 geometry is in a <geometry> element, this will be the one selected. This
-will make default behaviour consistent with Inspire objects.
+will make default behavior consistent with Inspire objects.
 
-Starting with OGR 1.8.0, the user can change the .gfs file to select the
+The user can change the .gfs file to select the
 appropriate geometry by specifying its path with the
 <GeometryElementPath> element. See the description of the .gfs syntax
 below.
 
-OGR 1.8.0 adds support for more GML geometries including TopoCurve,
-TopoSurface, MultiCurve. The TopoCurve type GML geometry can be
+GML geometries including TopoCurve, TopoSurface, MultiCurve are also supported.
+The TopoCurve type GML geometry can be
 interpreted as either of two types of geometries. The Edge elements in
 it contain curves and their corresponding nodes. By default only the
 curves, the main geometries, are reported as OGRMultiLineString. To
@@ -193,7 +191,7 @@ retrieve the nodes, as OGRMultiPoint, the configuration option
 **GML_GET_SECONDARY_GEOM** should be set to the value **YES**. When this
 is set only the secondary geometries are reported.
 
-Starting with GDAL 2.0, Arc, ArcString, ArcByBulge, ArcByCenterPoint,
+Arc, ArcString, ArcByBulge, ArcByCenterPoint,
 Circle and CircleByCenterPoints will be returned as circular string OGR
 geometries. If they are included in other GML elements such as
 CurveComposite, MultiCurve, Surface, corresponding non-linear OGR
@@ -207,7 +205,7 @@ type.
 gml:xlink resolving
 -------------------
 
-OGR 1.8.0 adds support for gml:xlink resolving. When the resolver finds
+gml:xlink resolving is supported. When the resolver finds
 an element containing the tag xlink:href, it tries to find the
 corresponding element with the gml:id in the same gml file, other gml
 file in the file system or on the web using cURL. Set the configuration
@@ -215,7 +213,7 @@ option **GML_SKIP_RESOLVE_ELEMS** to **NONE** to enable resolution.
 
 By default the resolved file will be saved in the same directory as the
 original file with the extension ".resolved.gml", if it doesn't exist
-already. This behaviour can be changed using the configuration option
+already. This behavior can be changed using the configuration option
 **GML_SAVE_RESOLVED_TO**. Set it to **SAME** to overwrite the original
 file. Set it to a **filename ending with .gml** to save it to that
 location. Any other values are ignored. If the resolver cannot write to
@@ -234,7 +232,7 @@ list of names of such elements with the configuration option
 altogether (default action). Set it to **NONE** to resolve all the
 xlinks.
 
-Starting since OGR 1.9.0 an alternative resolution method is available.
+An alternative resolution method is available.
 This alternative method will be activated using the configuration option
 **GML_SKIP_RESOLVE_ELEMS HUGE**. In this case any gml:xlink will be
 resolved using a temporary SQLite DB so to identify any corresponding
@@ -270,7 +268,7 @@ resolve gml:xlink and gml:id relations are the following:
 TopoSurface interpretation rules [polygons and internal holes]
 --------------------------------------------------------------
 
-Starting since OGR 1.9.0 the GML driver is able to recognize two
+The GML driver is able to recognize two
 different interpretation rules for TopoSurface when a polygon contains
 any internal hole:
 
@@ -320,10 +318,7 @@ Expat library supports reading the following built-in encodings :
 -  UTF-8
 -  UTF-16
 -  ISO-8859-1
-
-When used with Expat library, OGR 1.8.0 adds supports for Windows-1252
-encoding ( for previous versions, altering the encoding mentioned in the
-XML header to ISO-8859-1 might work in some cases).
+-  Windows-1252
 
 The content returned by OGR will be encoded in UTF-8, after the
 conversion from the encoding mentioned in the file header is.
@@ -346,19 +341,19 @@ the schema file contains non-ascii characters, it is better to use
 Feature id (fid / gml:id)
 -------------------------
 
-Starting with OGR 1.8.0, the driver exposes the content of the gml:id
+The driver exposes the content of the gml:id
 attribute as a string field called *gml_id*, when reading GML WFS
 documents. When creating a GML3 document, if a field is called *gml_id*,
 its content will also be used to write the content of the gml:id
 attribute of the created feature.
 
-Starting with OGR 1.9.0, the driver autodetects the presence of a fid
+The driver autodetects the presence of a fid
 (GML2) (resp. gml:id (GML3)) attribute at the beginning of the file,
 and, if found, exposes it by default as a *fid* (resp. *gml_id*) field.
 The autodetection can be overridden by specifying the **GML_EXPOSE_FID**
 or **GML_EXPOSE_GML_ID** configuration option to **YES** or **NO**.
 
-Starting with OGR 1.9.0, when creating a GML2 document, if a field is
+When creating a GML2 document, if a field is
 called *fid*, its content will also be used to write the content of the
 fid attribute of the created feature.
 
@@ -370,7 +365,7 @@ layers. By default, the GML driver will restart reading from the
 beginning of the file, each time a layer is accessed for the first time,
 which can lead to poor performance with large GML files.
 
-Starting with OGR 1.9.0, the **GML_READ_MODE** configuration option can
+The **GML_READ_MODE** configuration option can
 be set to **SEQUENTIAL_LAYERS** if all features belonging to the same
 layer are written sequentially in the file. The reader will then avoid
 unnecessary resets when layers are read completely one after the other.
@@ -384,7 +379,7 @@ be written in the .gfs file, so that the GML_READ_MODE will be
 automatically initialized to SEQUENTIAL_LAYERS if not explicitly set by
 the user.
 
-Starting with OGR 1.9.0, the GML_READ_MODE configuration option can be
+The GML_READ_MODE configuration option can be
 set to INTERLEAVED_LAYERS to be able to read a GML file whose features
 from different layers are interleaved. In the case, the semantics of the
 GetNextFeature() will be slightly altered, in a way where a NULL return
@@ -416,32 +411,32 @@ with code similar to the following one :
 Open options
 ------------
 
--  **XSD=filename**: (GDAL >=2.0) to specify an explicit filename for
+-  **XSD=filename**: to specify an explicit filename for
    the XSD application schema to use.
--  **FORCE_SRS_DETECTION=YES/NO**: (GDAL >=2.0) Force a full scan to
+-  **FORCE_SRS_DETECTION=YES/NO**: Force a full scan to
    detect the SRS of layers. This option may be needed in the case where
    the .gml file is accompanied with a .xsd. Normally in that situation,
    OGR would not detect the SRS, because this requires to do a full scan
    of the file. Defaults to NO
--  **EMPTY_AS_NULL=YES/NO**: (GDAL >=2.0) By default
+-  **EMPTY_AS_NULL=YES/NO**: By default
    (EMPTY_AS_NULL=YES), fields with empty content will be reported as
    being NULL, instead of being an empty string. This is the historic
-   behaviour. However this will prevent such fields to be declared as
+   behavior. However this will prevent such fields to be declared as
    not-nullable if the application schema declared them as mandatory. So
    this option can be set to NO to have both empty strings being report
    as such, and mandatory fields being reported as not nullable.
--  **GML_ATTRIBUTES_TO_OGR_FIELDS=YES/NO**: (GDAL >=2.0) Whether GML
+-  **GML_ATTRIBUTES_TO_OGR_FIELDS=YES/NO**: Whether GML
    attributes should be reported as OGR fields. Note that this option
    has only an effect the first time a GML file is opened (before the
    .gfs file is created), and if it has no valid associated .xsd.
    Defaults to NO.
--  **INVERT_AXIS_ORDER_IF_LAT_LONG=YES/NO**: (GDAL >=2.0) Whether to
+-  **INVERT_AXIS_ORDER_IF_LAT_LONG=YES/NO**: Whether to
    present SRS and coordinate ordering in traditional GIS order.
    Defaults to YES.
--  **CONSIDER_EPSG_AS_URN=YES/NO/AUTO**: (GDAL >=2.0) Whether to
+-  **CONSIDER_EPSG_AS_URN=YES/NO/AUTO**: Whether to
    consider srsName like EPSG:XXXX as respecting EPSG axis order.
    Defaults to AUTO.
--  **SWAP_COORDINATES**\ =AUTO/YES/NO: (GDAL >=2.1.2) Whether the order
+-  **SWAP_COORDINATES**\ =AUTO/YES/NO: (GDAL >= 2.1.2) Whether the order
    of the x/y or long/lat coordinates should be swapped. In AUTO mode,
    the driver will determine if swapping must be done from the srsName
    and value of other options like CONSIDER_EPSG_AS_URN and
@@ -450,15 +445,15 @@ Open options
    the GML, and when it set to NO, they will be kept in the same order.
    The default is AUTO.
 -  **READ_MODE=AUTO/STANDARD/SEQUENTIAL_LAYERS/INTERLEAVED_LAYERS**:
-   (GDAL >=2.0) Read mode. Defaults to AUTO.
--  **EXPOSE_GML_ID=YES/NO/AUTO**: (GDAL >=2.0) Whether to make feature
+   Read mode. Defaults to AUTO.
+-  **EXPOSE_GML_ID=YES/NO/AUTO**: Whether to make feature
    gml:id as a gml_id attribute. Defaults to AUTO.
--  **EXPOSE_FID=YES/NO/AUTO**: (GDAL >=2.0) Whether to make feature fid
+-  **EXPOSE_FID=YES/NO/AUTO**: Whether to make feature fid
    as a fid attribute. Defaults to AUTO.
--  **DOWNLOAD_SCHEMA=YES/NO**: (GDAL >=2.0) Whether to download the
+-  **DOWNLOAD_SCHEMA=YES/NO**: Whether to download the
    remote application schema if needed (only for WFS currently).
    Defaults to YES.
--  **REGISTRY=filename**: (GDAL >=2.0) Filename of the registry with
+-  **REGISTRY=filename**: Filename of the registry with
    application schemas. Defaults to {GDAL_DATA}/gml_registry.xml.
 
 Creation Issues
@@ -481,31 +476,31 @@ The GML writer supports the following dataset creation options:
    the schema is written within the GML file, but this is experimental
    and almost certainly not valid XML. OFF disables schema generation
    (and is implicit if XSISCHEMAURI is used).
--  **PREFIX** (OGR >= 1.10) Defaults to 'ogr'. This is the prefix for
+-  **PREFIX** Defaults to 'ogr'. This is the prefix for
    the application target namespace.
--  **STRIP_PREFIX** (OGR >= 1.11) Defaults to FALSE. Can be set to TRUE
+-  **STRIP_PREFIX** Defaults to FALSE. Can be set to TRUE
    to avoid writing the prefix of the application target namespace in
    the GML file.
--  **TARGET_NAMESPACE** (OGR >= 1.10) Defaults to
+-  **TARGET_NAMESPACE** Defaults to
    'http://ogr.maptools.org/'. This is the application target namespace.
--  **FORMAT**: (OGR >= 1.8.0) This can be set to :
+-  **FORMAT**: This can be set to :
 
    -  *GML3* in order to write GML files that follow GML 3.1.1 SF-0
       profile.
-   -  *GML3Deegree* (OGR >= 1.9.0) in order to produce a GML 3.1.1 .XSD
+   -  *GML3Deegree* in order to produce a GML 3.1.1 .XSD
       schema, with a few variations with respect to what is recommended
       by GML3 SF-0 profile, but that will be better accepted by some
       software (such as Deegree 3).
-   -  *GML3.2*\ (OGR >= 1.9.0) in order to write GML files that follow
+   -  *GML3.2*\ in order to write GML files that follow
       GML 3.2.1 SF-0 profile.
 
    If not specified, GML2 will be used.
-   Starting with GDAL 2.0, non-linear geometries can be written. This is
+   Non-linear geometries can be written. This is
    only compatible with selecting on of that above GML3 format variant.
    Otherwise, such geometries will be approximating into their closest
    matching linear geometry.
-   Note: starting with OGR 1.11, fields of type StringList, RealList or
-   IntegerList can be written. This will cause to advertize the SF-1
+   Note: fields of type StringList, RealList or
+   IntegerList can be written. This will cause to advertise the SF-1
    profile in the .XSD schema (such types are not supported by SF-0).
 -  **GML_FEATURE_COLLECTION**\ =YES/NO (OGR >= 2.3) Whether to use the
    gml:FeatureCollection, instead of creating a dedicated container
@@ -515,7 +510,7 @@ The GML writer supports the following dataset creation options:
    simple features profile" (for GML 3.1.1) and OGC 10-100r3 "Geography
    Markup Language (GML) simple features profile (with Corrigendum)"
    (for GML 3.2) specifications.
--  **GML3_LONGSRS**\ =YES/NO. (OGR >= 1.8.0, only valid when
+-  **GML3_LONGSRS**\ =YES/NO. (only valid when
    FORMAT=GML3/GML3Degree/GML3.2) Deprecated by SRSNAME_FORMAT in GDAL
    2.2. Default to YES. If YES, SRS with EPSG authority will be written
    with the "urn:ogc:def:crs:EPSG::" prefix. In the case the SRS is a
@@ -536,17 +531,17 @@ The GML writer supports the following dataset creation options:
    ImportFromEPSGA() should be treated as lat/long or northing/easting,
    then the function will take care of coordinate order swapping.
 -  **SRSDIMENSION_LOC**\ =POSLIST/GEOMETRY/GEOMETRY,POSLIST. (Only valid
-   for FORMAT=GML3/GML3Degree/GML3.2, GDAL >= 2.0) Default to POSLIST.
+   for FORMAT=GML3/GML3Degree/GML3.2) Default to POSLIST.
    For 2.5D geometries, define the location where to attach the
    srsDimension attribute. There are diverging implementations. Some put
    in on the <gml:posList> element, other on the top geometry element.
--  **WRITE_FEATURE_BOUNDED_BY**\ =YES/NO. (OGR >= 1.11, only valid when
+-  **WRITE_FEATURE_BOUNDED_BY**\ =YES/NO. (only valid when
    FORMAT=GML3/GML3Degree/GML3.2) Default to YES. If set to NO, the
    <gml:boundedBy> element will not be written for each feature.
--  **SPACE_INDENTATION**\ =YES/NO. (OGR >= 1.8.0) Default to YES. If
+-  **SPACE_INDENTATION**\ =YES/NO. Default to YES. If
    YES, the output will be indented with spaces for more readability,
    but at the expense of file size.
--  **GML_ID**\ =string. (Only valid for GML 3.2, GDAL >= 2.0) Value of
+-  **GML_ID**\ =string. (Only valid for GML 3.2) Value of
    feature collection gml:id. Default value is "aFeatureCollection".
 -  **NAME**\ =string. Content of GML name element. Can also be set as
    the NAME metadata item on the dataset.
@@ -555,8 +550,6 @@ The GML writer supports the following dataset creation options:
 
 VSI Virtual File System API support
 -----------------------------------
-
-(Some features below might require OGR >= 1.9.0)
 
 The driver supports reading and writing to files managed by VSI Virtual
 File System API, which include "regular" files, as well as files in the
@@ -573,7 +566,7 @@ Syntax of .gfs file by example
 
 Let's consider the following test.gml file :
 
-::
+.. code-block:: XML
 
    <?xml version="1.0" encoding="UTF-8"?>
    <gml:FeatureCollection xmlns:gml="http://www.opengis.net/gml">
@@ -597,7 +590,7 @@ Let's consider the following test.gml file :
 
 and the following associated .gfs file.
 
-::
+.. code-block:: XML
 
    <GMLFeatureClassList>
      <GMLFeatureClass>
@@ -621,8 +614,8 @@ and the following associated .gfs file.
 
 Note the presence of the '|' character in the <ElementPath> and
 <GeometryElementPath> elements to specify the wished field/geometry
-element that is a nested XML element. Nested field elements are only
-supported from OGR 1.8.0, as well as specifying <GeometryElementPath> If
+element that is a nested XML element. Nested field elements are supported,
+as well as specifying <GeometryElementPath> If
 GeometryElementPath is not specified, the GML driver will use the last
 recognized geometry element.
 
@@ -631,19 +624,19 @@ Accepted values are : 0 (any geometry type), 1 (point), 2 (linestring),
 3 (polygon), 4 (multipoint), 5 (multilinestring), 6 (multipolygon), 7
 (geometrycollection).
 
-Starting with OGR 1.11, the <GeometryElementPath> and <GeometryType> can
+The <GeometryElementPath> and <GeometryType> can
 be specified as many times as there are geometry fields in the GML file.
 Another possibility is to define a <GeomPropertyDefn>element as many
 times as necessary:
 
-::
+.. code-block:: XML
 
    <GMLFeatureClassList>
      <GMLFeatureClass>
        <Name>LAYER</Name>
        <ElementPath>LAYER</ElementPath>
        <GeomPropertyDefn>
-           <Name>geometry</Name> <-- OGR geometry name -->
+           <Name>geometry</Name> <!-- OGR geometry name -->
            <ElementPath>geometry</ElementPath> <!-- XML element name possibly with '|' to specify the path -->
            <Type>MultiPolygon</Type>
        </GeomPropertyDefn>
@@ -673,15 +666,15 @@ The output of *ogrinfo test.gml -ro -al* is:
      attrib2 (String) = attrib2_value
      POINT (3 50)
 
-Advanced .gfs syntax (OGR >= 1.11)
-----------------------------------
+Advanced .gfs syntax
+--------------------
 
 Specifying ElementPath to find objects embedded into top level objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Let's consider the following test.gml file :
 
-::
+.. code-block:: XML
 
    <?xml version="1.0" encoding="utf-8"?>
    <gml:FeatureCollection xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -722,12 +715,12 @@ Let's consider the following test.gml file :
    </gml:FeatureCollection>
 
 By default, only the TopLevelObject object would be reported and it
-would only use the second geometry. This is not the desired behaviour in
+would only use the second geometry. This is not the desired behavior in
 that instance. You can edit the generated .gfs and modify it like the
 following in order to specify a full path to the element (top level XML
 element being omitted) :
 
-::
+.. code-block:: XML
 
    <GMLFeatureClassList>
      <GMLFeatureClass>
@@ -751,7 +744,7 @@ fetched.
 
 Let's consider the following test.gml file :
 
-::
+.. code-block:: XML
 
    <?xml version="1.0" encoding="UTF-8"?>
    <gml:FeatureCollection xmlns:gml="http://www.opengis.net/gml">
@@ -764,7 +757,7 @@ Let's consider the following test.gml file :
 
 and the following associated .gfs file.
 
-::
+.. code-block:: XML
 
    <GMLFeatureClassList>
      <GMLFeatureClass>
@@ -815,7 +808,7 @@ with <Condition> that must be mutually exclusive.
 
 Let's consider the following testcondition.gml file :
 
-::
+.. code-block:: XML
 
    <?xml version="1.0" encoding="utf-8" ?>
    <ogr:FeatureCollection
@@ -832,7 +825,7 @@ Let's consider the following testcondition.gml file :
 
 and the following associated .gfs file.
 
-::
+.. code-block:: XML
 
    <GMLFeatureClassList>
      <GMLFeatureClass>
@@ -887,8 +880,8 @@ The output of *ogrinfo testcondition.gml -ro -al* is:
      name_others_lang (StringList) = (1:de)
      name_others (StringList) = (1:Deutsche name)
 
-Registry for GML application schemas (OGR >= 1.11)
---------------------------------------------------
+Registry for GML application schemas
+------------------------------------
 
 The "data" directory of the GDAL installation contains a
 "gml_registry.xml" file that links feature types of GML application
@@ -900,7 +893,7 @@ its full pathname to the GML_REGISTRY configuration option.
 
 An example of such a file is :
 
-::
+.. code-block:: XML
 
    <gml_registry>
        <!-- Finnish National Land Survey cadastral data -->
@@ -1004,12 +997,12 @@ myFeature.2      otherFeature.10
 Reading datasets resulting from a WFS 2.0 join queries
 ------------------------------------------------------
 
-Starting with GDAL 2.0, the GML driver can read datasets resulting from
-a WFS 2.0 join queries.
+The GML driver can read datasets resulting from a WFS 2.0 join queries.
 
 Such datasets typically look like:
 
-::
+.. code-block:: XML
+
 
    <wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
        xmlns:app="http://app.com"

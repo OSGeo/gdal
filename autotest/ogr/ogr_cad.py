@@ -38,50 +38,37 @@ from osgeo import gdal
 from osgeo import ogr
 import pytest
 
-###############################################################################
-# Check driver existence.
 
+pytestmark = pytest.mark.require_driver('CAD')
 
-def test_ogr_cad_1():
-
-    gdaltest.cad_ds = None
-    gdaltest.cad_dr = None
-
-    gdaltest.cad_dr = ogr.GetDriverByName('CAD')
-    if gdaltest.cad_dr is None:
-        pytest.skip()
-
-    
 ###############################################################################
 # Check driver properly opens simple file, reads correct feature (ellipse).
 
 
 def test_ogr_cad_2():
-    if gdaltest.cad_dr is None:
-        pytest.skip()
 
-    gdaltest.cad_ds = gdal.OpenEx('data/cad/ellipse_r2000.dwg', allowed_drivers=['CAD'])
+    ds = gdal.OpenEx('data/cad/ellipse_r2000.dwg', allowed_drivers=['CAD'])
 
-    assert gdaltest.cad_ds is not None
+    assert ds is not None
 
-    assert gdaltest.cad_ds.GetLayerCount() == 1, 'expected exactly one layer.'
+    assert ds.GetLayerCount() == 1, 'expected exactly one layer.'
 
-    gdaltest.cad_layer = gdaltest.cad_ds.GetLayer(0)
+    layer = ds.GetLayer(0)
 
-    assert gdaltest.cad_layer.GetName() == '0', \
+    assert layer.GetName() == '0', \
         'layer name is expected to be default = 0.'
 
-    defn = gdaltest.cad_layer.GetLayerDefn()
+    defn = layer.GetLayerDefn()
     assert defn.GetFieldCount() == 5, \
         ('did not get expected number of fields in defn. got %d'
                              % defn.GetFieldCount())
 
-    fc = gdaltest.cad_layer.GetFeatureCount()
+    fc = layer.GetFeatureCount()
     assert fc == 1, ('did not get expected feature count, got %d' % fc)
 
-    gdaltest.cad_layer.ResetReading()
+    layer.ResetReading()
 
-    feat = gdaltest.cad_layer.GetNextFeature()
+    feat = layer.GetNextFeature()
 
     assert feat is not None, 'cad feature 0 get failed.'
 
@@ -110,39 +97,35 @@ def test_ogr_cad_2():
 
     assert geom.GetPointCount() > 2, 'cad geometry is invalid'
 
-    gdaltest.cad_ds = None
-
 ###############################################################################
 # Check proper read of 3 layers (one circle on each) with different parameters.
 
 
 def test_ogr_cad_3():
-    if gdaltest.cad_dr is None:
-        pytest.skip()
 
-    gdaltest.cad_ds = gdal.OpenEx('data/cad/triple_circles_r2000.dwg', allowed_drivers=['CAD'])
+    ds = gdal.OpenEx('data/cad/triple_circles_r2000.dwg', allowed_drivers=['CAD'])
 
-    assert gdaltest.cad_ds is not None
+    assert ds is not None
 
-    assert gdaltest.cad_ds.GetLayerCount() == 3, 'expected 3 layers.'
+    assert ds.GetLayerCount() == 3, 'expected 3 layers.'
 
     # test first layer and circle
-    gdaltest.cad_layer = gdaltest.cad_ds.GetLayer(0)
+    layer = ds.GetLayer(0)
 
-    assert gdaltest.cad_layer.GetName() == '0', \
+    assert layer.GetName() == '0', \
         'layer name is expected to be default = 0.'
 
-    defn = gdaltest.cad_layer.GetLayerDefn()
+    defn = layer.GetLayerDefn()
     assert defn.GetFieldCount() == 5, \
         ('did not get expected number of fields in defn. got %d'
                              % defn.GetFieldCount())
 
-    fc = gdaltest.cad_layer.GetFeatureCount()
+    fc = layer.GetFeatureCount()
     assert fc == 1, ('did not get expected feature count, got %d' % fc)
 
-    gdaltest.cad_layer.ResetReading()
+    layer.ResetReading()
 
-    feat = gdaltest.cad_layer.GetNextFeature()
+    feat = layer.GetNextFeature()
 
     assert feat.cadgeom_type == 'CADCircle', \
         ('cad geometry type is wrong. Expected CADCircle, got: %s'
@@ -165,21 +148,21 @@ def test_ogr_cad_3():
         'did not get expected geometry type.'
 
     # test second layer and circle
-    gdaltest.cad_layer = gdaltest.cad_ds.GetLayer(1)
+    layer = ds.GetLayer(1)
 
-    assert gdaltest.cad_layer.GetName() == '1', 'layer name is expected to be 1.'
+    assert layer.GetName() == '1', 'layer name is expected to be 1.'
 
-    defn = gdaltest.cad_layer.GetLayerDefn()
+    defn = layer.GetLayerDefn()
     assert defn.GetFieldCount() == 5, \
         ('did not get expected number of fields in defn. got %d'
                              % defn.GetFieldCount())
 
-    fc = gdaltest.cad_layer.GetFeatureCount()
+    fc = layer.GetFeatureCount()
     assert fc == 1, ('did not get expected feature count, got %d' % fc)
 
-    gdaltest.cad_layer.ResetReading()
+    layer.ResetReading()
 
-    feat = gdaltest.cad_layer.GetNextFeature()
+    feat = layer.GetNextFeature()
 
     assert feat.cadgeom_type == 'CADCircle', \
         ('cad geometry type is wrong. Expected CADCircle, got: %s'
@@ -202,21 +185,21 @@ def test_ogr_cad_3():
         'did not get expected geometry type.'
 
     # test third layer and circle
-    gdaltest.cad_layer = gdaltest.cad_ds.GetLayer(2)
+    layer = ds.GetLayer(2)
 
-    assert gdaltest.cad_layer.GetName() == '2', 'layer name is expected to be 2.'
+    assert layer.GetName() == '2', 'layer name is expected to be 2.'
 
-    defn = gdaltest.cad_layer.GetLayerDefn()
+    defn = layer.GetLayerDefn()
     assert defn.GetFieldCount() == 5, \
         ('did not get expected number of fields in defn. got %d'
                              % defn.GetFieldCount())
 
-    fc = gdaltest.cad_layer.GetFeatureCount()
+    fc = layer.GetFeatureCount()
     assert fc == 1, ('did not get expected feature count, got %d' % fc)
 
-    gdaltest.cad_layer.ResetReading()
+    layer.ResetReading()
 
-    feat = gdaltest.cad_layer.GetNextFeature()
+    feat = layer.GetNextFeature()
 
     assert feat.cadgeom_type == 'CADCircle', \
         ('cad geometry type is wrong. Expected CADCircle, got: %s'
@@ -238,53 +221,44 @@ def test_ogr_cad_3():
     assert geom.GetGeometryType() == ogr.wkbCircularStringZ, \
         'did not get expected geometry type.'
 
-    gdaltest.cad_ds = None
 
 ###############################################################################
 # Check reading of a single point.
 
 
 def test_ogr_cad_4():
-    if gdaltest.cad_dr is None:
-        pytest.skip()
 
-    gdaltest.cad_ds = gdal.OpenEx('data/cad/point2d_r2000.dwg', allowed_drivers=['CAD'])
+    ds = gdal.OpenEx('data/cad/point2d_r2000.dwg', allowed_drivers=['CAD'])
 
-    assert gdaltest.cad_ds.GetLayerCount() == 1, 'expected exactly one layer.'
+    assert ds.GetLayerCount() == 1, 'expected exactly one layer.'
 
-    gdaltest.cad_layer = gdaltest.cad_ds.GetLayer(0)
+    layer = ds.GetLayer(0)
 
-    assert gdaltest.cad_layer.GetFeatureCount() == 1, 'expected exactly one feature.'
+    assert layer.GetFeatureCount() == 1, 'expected exactly one feature.'
 
-    feat = gdaltest.cad_layer.GetNextFeature()
+    feat = layer.GetNextFeature()
 
     assert not ogrtest.check_feature_geometry(feat, 'POINT (50 50 0)'), \
         'got feature which does not fit expectations.'
-
-    gdaltest.cad_ds = None
 
 ###############################################################################
 # Check reading of a simple line.
 
 
 def test_ogr_cad_5():
-    if gdaltest.cad_dr is None:
-        pytest.skip()
 
-    gdaltest.cad_ds = gdal.OpenEx('data/cad/line_r2000.dwg', allowed_drivers=['CAD'])
+    ds = gdal.OpenEx('data/cad/line_r2000.dwg', allowed_drivers=['CAD'])
 
-    assert gdaltest.cad_ds.GetLayerCount() == 1, 'expected exactly one layer.'
+    assert ds.GetLayerCount() == 1, 'expected exactly one layer.'
 
-    gdaltest.cad_layer = gdaltest.cad_ds.GetLayer(0)
+    layer = ds.GetLayer(0)
 
-    assert gdaltest.cad_layer.GetFeatureCount() == 1, 'expected exactly one feature.'
+    assert layer.GetFeatureCount() == 1, 'expected exactly one feature.'
 
-    feat = gdaltest.cad_layer.GetNextFeature()
+    feat = layer.GetNextFeature()
 
     assert not ogrtest.check_feature_geometry(feat, 'LINESTRING (50 50 0,100 100 0)'), \
         'got feature which does not fit expectations.'
-
-    gdaltest.cad_ds = None
 
 ###############################################################################
 # Check reading of a text (point with attached 'text' attribute, and set up
@@ -292,19 +266,17 @@ def test_ogr_cad_5():
 
 
 def test_ogr_cad_6():
-    if gdaltest.cad_dr is None:
-        pytest.skip()
 
-    gdaltest.cad_ds = gdal.OpenEx('data/cad/text_mtext_attdef_r2000.dwg', allowed_drivers=['CAD'])
+    ds = gdal.OpenEx('data/cad/text_mtext_attdef_r2000.dwg', allowed_drivers=['CAD'])
 
-    assert gdaltest.cad_ds.GetLayerCount() == 1, 'expected exactly one layer.'
+    assert ds.GetLayerCount() == 1, 'expected exactly one layer.'
 
-    gdaltest.cad_layer = gdaltest.cad_ds.GetLayer(0)
+    layer = ds.GetLayer(0)
 
-    assert gdaltest.cad_layer.GetFeatureCount() == 3, ('expected 3 features, got: %d'
-                             % gdaltest.cad_layer.GetFeatureCount())
+    assert layer.GetFeatureCount() == 3, ('expected 3 features, got: %d'
+                             % layer.GetFeatureCount())
 
-    feat = gdaltest.cad_layer.GetNextFeature()
+    feat = layer.GetNextFeature()
 
     assert not ogrtest.check_feature_geometry(feat, 'POINT(0.7413 1.7794 0)')
 
@@ -314,16 +286,17 @@ def test_ogr_cad_6():
                              % (feat.GetStyleString(), expected_style))
         return 'expected_fail'  # cannot sure iconv is buildin
 
-    
 ###############################################################################
 # Check MTEXT as TEXT geometry.
 
 
 def test_ogr_cad_7():
-    if gdaltest.cad_dr is None:
-        pytest.skip()
 
-    feat = gdaltest.cad_layer.GetNextFeature()
+    ds = gdal.OpenEx('data/cad/text_mtext_attdef_r2000.dwg', allowed_drivers=['CAD'])
+    layer = ds.GetLayer(0)
+
+    feat = layer.GetNextFeature()
+    feat = layer.GetNextFeature()
 
     assert not ogrtest.check_feature_geometry(feat, 'POINT(2.8139 5.7963 0)')
 
@@ -337,10 +310,13 @@ def test_ogr_cad_7():
 
 
 def test_ogr_cad_8():
-    if gdaltest.cad_dr is None:
-        pytest.skip()
 
-    feat = gdaltest.cad_layer.GetNextFeature()
+    ds = gdal.OpenEx('data/cad/text_mtext_attdef_r2000.dwg', allowed_drivers=['CAD'])
+    layer = ds.GetLayer(0)
+
+    feat = layer.GetNextFeature()
+    feat = layer.GetNextFeature()
+    feat = layer.GetNextFeature()
 
     assert not ogrtest.check_feature_geometry(feat, 'POINT(4.98953601938918 2.62670161690571 0)')
 
@@ -354,22 +330,9 @@ def test_ogr_cad_8():
 
 
 def test_ogr_cad_9():
-    if gdaltest.cad_dr is None:
-        pytest.skip()
 
     with gdaltest.error_handler():
-        ds = gdal.OpenEx('data/AC1018_signature.dwg', allowed_drivers=['CAD'])
+        ds = gdal.OpenEx('data/cad/AC1018_signature.dwg', allowed_drivers=['CAD'])
     assert ds is None
     msg = gdal.GetLastErrorMsg()
     assert 'does not support this version' in msg
-
-###############################################################################
-# Cleanup
-
-
-def test_ogr_cad_cleanup():
-    gdaltest.cad_layer = None
-    gdaltest.cad_ds = None
-
-
-

@@ -248,6 +248,7 @@ class OGRSQLiteLayer CPL_NON_FINAL: public OGRLayer, public IOGRSQLiteGetSpatial
 
     sqlite3_stmt        *hStmt;
     int                  bDoStep;
+    bool                 m_bEOF = false;
 
     OGRSQLiteDataSource *poDS;
 
@@ -611,7 +612,7 @@ class OGRSQLiteSelectLayerCommonBehaviour
 
 class OGRSQLiteSelectLayer CPL_NON_FINAL: public OGRSQLiteLayer, public IOGRSQLiteSelectLayer
 {
-    OGRSQLiteSelectLayerCommonBehaviour* poBehaviour;
+    OGRSQLiteSelectLayerCommonBehaviour* poBehavior;
 
     virtual OGRErr      ResetStatement() override;
 

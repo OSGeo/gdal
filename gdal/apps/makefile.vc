@@ -20,7 +20,7 @@ GNM_PROGRAMS =	gnmmanage.exe gnmanalyse.exe
 !ENDIF
 
 
-default:	gdal_translate.exe gdalinfo.exe gdalserver.exe gdaladdo.exe gdalwarp.exe \
+default:	gdal_translate.exe gdalinfo.exe gdaladdo.exe gdalwarp.exe \
 		nearblack.exe gdalmanage.exe gdalenhance.exe gdaltransform.exe\
 		gdaldem.exe gdallocationinfo.exe gdalsrsinfo.exe gdalmdiminfo.exe gdalmdimtranslate.exe gdal_viewshed.exe $(OGR_PROGRAMS) $(GNM_PROGRAMS)
 
@@ -46,11 +46,6 @@ gdalmdiminfo.exe:	gdalmdiminfo_bin.cpp $(GDALLIB) $(XTRAOBJ)
 gdalmdimtranslate.exe:	gdalmdimtranslate_bin.cpp $(GDALLIB) $(XTRAOBJ)
 	$(CC) $(CFLAGS) gdalmdimtranslate_bin.cpp $(XTRAOBJ) $(LIBS) \
 		/Fe$@ /link $(LINKER_FLAGS)
-	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
-
-gdalserver.exe:	gdalserver.cpp $(GDALLIB) $(XTRAOBJ)
-	$(CC) $(CFLAGS) gdalserver.cpp ws2_32.lib $(XTRAOBJ) $(LIBS) \
-		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
 gdal_translate.exe:	gdal_translate_bin.cpp $(GDALLIB) $(XTRAOBJ)

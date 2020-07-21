@@ -138,7 +138,7 @@ Otherwise it will return wkbNone.
 
 It is strongly advised that there is name uniqueness among the combined
 set of regular field names and the geometry field names. Failing to do
-so will result in unspecified behaviour in SQL queries. This advice will
+so will result in unspecified behavior in SQL queries. This advice will
 not be checked by the code (it is currently not done for regular
 fields).
 
@@ -344,7 +344,7 @@ different in most use cases.
 (On the other side, if we introduce 64bit integer as a OGR type (this is
 an RFC that is waiting for implementation...), the above code would
 still produce a meaningful result. The string reprentation of a 64bit
-integer is not that bad as a default behaviour.)
+integer is not that bad as a default behavior.)
 
 GetFieldCount() would also take into account geometry fields, but in
 most cases, you would need to subtract them.
@@ -420,17 +420,17 @@ OGR SQL engine
 --------------
 
 Currently, "SELECT fieldname1[, ...fieldnameN] FROM layername" returns
-the specified fields, as well as the associated geometry. This behaviour
-is clearly not following the behaviour of spatial RDBMS where the
-geometry field must be explicitely specified.
+the specified fields, as well as the associated geometry. This behavior
+is clearly not following the behavior of spatial RDBMS where the
+geometry field must be explicitly specified.
 
 The following compromise between backward compatibility and the new
 capabilities of this RFC is adopted :
 
--  if no geometry field is explicitely specified in the SELECT clause,
+-  if no geometry field is explicitly specified in the SELECT clause,
    and there is only one geometry fields associated with the layer, then
-   return it implicitely
--  otherwise, only return the explicitely mentionned geometry fields (or
+   return it implicitly
+-  otherwise, only return the explicitly mentioned geometry fields (or
    all geometry fields if "*" is used).
 
 Limitations
@@ -456,7 +456,7 @@ Updated drivers in the context of this RFC
    -  a ad-hoc form of support already exists. Tables with multiple
       geometries are reported currently as layers called
       "table_name(geometry_col_name)" (as many layers as geometry
-      columns). This behaviour will be changed so that the table is
+      columns). This behavior will be changed so that the table is
       reported only once as a OGR layer.
 
 -  PGDump:
@@ -480,7 +480,7 @@ Other candidate drivers (upgrade not originally covered by this RFC)
    implemented post RFC in GDAL 1.11
 -  SQLite driver :
 
-   -  currently, same behaviour as current PostGIS driver.
+   -  currently, same behavior as current PostGIS driver.
    -  both the driver and the SQLite dialect could be updated to support
       multi-geometry layers. --> implemented post RFC in GDAL 2.0
 
@@ -589,8 +589,8 @@ Enhacements :
    supported by output layer (OLCCreateGeomField capability). In case it
    is not supported, only translates the first geometry.
 -  "-select" option. If only attribute field names are specified, all
-   input geometries will be implicitely selected (backward compatible
-   behaviour). If one or several geometry field names are specified,
+   input geometries will be implicitly selected (backward compatible
+   behavior). If one or several geometry field names are specified,
    only those ones will be selected.
 -  add a "-geomfield" option to specify on which field the -spat option
    applies
@@ -615,9 +615,7 @@ Documentation
 -------------
 
 In addition to function level documentation, the new capability will be
-documented in the `OGR
-Architecture <http://gdal.org/ogr/ogr_arch.html>`__ and `OGR API
-tutorial <http://gdal.org/ogr/ogr_apitut.html>`__ documents.
+documented in the :ref:`vector_data_model` and :ref:`vector_api_tut` documents.
 
 Python and other language bindings
 ----------------------------------
@@ -630,11 +628,11 @@ Compatibility
 -------------
 
 -  Changes are only additions to the existing API, and existing
-   behaviour should be preserved, so this will be backwards compatible.
+   behavior should be preserved, so this will be backwards compatible.
 
 -  C++ ABI changes
 
--  Change of behaviour in PostGIS driver w.r.t GDAL 1.10 for tables with
+-  Change of behavior in PostGIS driver w.r.t GDAL 1.10 for tables with
    multiple geometries.
 
 Implementation

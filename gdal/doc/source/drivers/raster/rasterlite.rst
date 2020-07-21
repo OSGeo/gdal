@@ -123,12 +123,12 @@ and reading internal overviews.
 If no internal overview is detected, the driver will try using external
 overviews (.ovr files).
 
-Starting with GDAL 1.10, options can be used for internal overviews
+Options can be used for internal overviews
 building. They can be specified with the RASTERLITE_OVR_OPTIONS
 configuration option, as a comma separated list of the above creation
 options. See below examples.
 
-Starting with GDAL 1.10, all resampling methods supported by GDAL
+All resampling methods supported by GDAL
 overviews are available.
 
 Performance hints

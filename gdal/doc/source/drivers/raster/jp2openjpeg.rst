@@ -21,10 +21,10 @@ XML raw content in the xml:XMP metadata domain.
 The driver supports writing georeferencing information as GeoJP2 and
 GMLJP2 boxes.
 
-Starting with GDAL 2.0, the driver supports creating files with
+The driver supports creating files with
 transparency, arbitrary band count, and adding/reading metadata. Update
 of georeferencing or metadata of existing file is also supported.
-Optional intellectual property metdata can be read/written in the
+Optional intellectual property metadata can be read/written in the
 xml:IPR box.
 
 Driver capabilities
@@ -62,7 +62,7 @@ Thread support
 
 By default, if the JPEG2000 file has internal tiling, GDAL will try to
 decode several tiles in multiple threads if the RasterIO() request it
-receives intersect several tiles. This behaviour can be controlled with
+receives intersect several tiles. This behavior can be controlled with
 the GDAL_NUM_THREADS configuration option that defaults to ALL_CPUS in
 that context. In case RAM is limited, it can be needed to set this
 configuration option to 1 to disable multi-threading
@@ -80,7 +80,7 @@ Both multi-threading mechanism can be combined together.
 Option Options
 --------------
 
-(GDAL >= 2.0 ) The following open option is available:
+The following open option is available:
 
 -  **1BIT_ALPHA_PROMOTION=YES/NO**: Whether a 1-bit alpha channel should
    be promoted to 8-bit. Defaults to YES.
@@ -102,11 +102,11 @@ Creation Options
    data. The value is determined automatically from the file extension.
    If it is neither JP2 nor J2K, J2K codec is used.
 
--  **GMLJP2=YES/NO**: (Starting with GDAL 1.10) Indicates whether a GML
+-  **GMLJP2=YES/NO**: Indicates whether a GML
    box conforming to the OGC GML in JPEG2000 specification should be
    included in the file. Unless GMLJP2V2_DEF is used, the version of the
    GMLJP2 box will be version 1. Defaults to YES.
--  **GMLJP2V2_DEF=filename**: (Starting with GDAL 2.0) Indicates whether
+-  **GMLJP2V2_DEF=filename**: Indicates whether
    a GML box conforming to the `OGC GML in JPEG2000, version
    2.0.1 <http://docs.opengeospatial.org/is/08-085r5/08-085r5.html>`__
    specification should be included in the file. *filename* must point
@@ -120,14 +120,14 @@ Creation Options
    specification, that differ essentially by the content of the
    gml:domainSet, gml:rangeSet and gmlcov:rangeType elements of
    gmljp2:GMLJP2CoverageCollection.
--  **GeoJP2=YES/NO**: (Starting with GDAL 1.10) Indicates whether a
+-  **GeoJP2=YES/NO**: Indicates whether a
    UUID/GeoTIFF box conforming to the GeoJP2 (GeoTIFF in JPEG2000)
    specification should be included in the file. Defaults to YES.
 -  **QUALITY=float_value,float_value,...** : Percentage between 0 and
    100. A value of 50 means the file will be half-size in comparison to
    uncompressed data, 33 means 1/3, etc.. Defaults to 25 (unless the
    dataset is made of a single band with color table, in which case the
-   default quality is 100). Starting with GDAL 2.0, it is possible to
+   default quality is 100). It is possible to
    specify several quality values (comma separated) to ask for several
    quality layers. Quality values should be increasing.
 
@@ -153,17 +153,17 @@ Creation Options
 -  **EPH=YES/NO** : YES means generate EPH (End of Packet Header) marker
    segments. Defaults to NO.
 
--  **YCBCR420=YES/NO** : (GDAL >= 1.11) YES if RGB must be resampled to
+-  **YCBCR420=YES/NO** : YES if RGB must be resampled to
    YCbCr 4:2:0. Defaults to NO.
 
--  **YCC=YES/NO** : (GDAL >= 2.0) YES if RGB must be transformed to YCC
+-  **YCC=YES/NO** : YES if RGB must be transformed to YCC
    color space ("MCT transform", i.e. internal transform, without visual
    degration). Defaults to YES.
 
--  **NBITS=int_value** : (GDAL >= 2.0) Bits (precision) for sub-byte
+-  **NBITS=int_value** : Bits (precision) for sub-byte
    files (1-7), sub-uint16 (9-15), sub-uint32 (17-31).
 
--  **1BIT_ALPHA=YES/NO**: (GDAL >= 2.0) Whether to encode the alpha
+-  **1BIT_ALPHA=YES/NO**: Whether to encode the alpha
    channel as a 1-bit channel (when there's an alpha channel). Defaults
    to NO, unless INSPIRE_TG=YES. Enabling this option might cause
    compatibility problems with some readers. At the time of writing,
@@ -172,22 +172,22 @@ Creation Options
    with lossy/irreversible compression gives visual artifacts (OK with
    lossless encoding).
 
--  **ALPHA=YES/NO**: (GDAL >= 2.0) Whether to force encoding last
+-  **ALPHA=YES/NO**: Whether to force encoding last
    channel as alpha channel. Only useful if the color interpretation of
    that channel is not already Alpha. Defaults to NO.
 
--  **PROFILE=AUTO/UNRESTRICTED/PROFILE_1**: (GDAL >= 2.0) Determine
+-  **PROFILE=AUTO/UNRESTRICTED/PROFILE_1**: Determine
    which codestream profile to use. UNRESTRICTED corresponds to the
    "Unrestricted JPEG 2000 Part 1 codestream" (RSIZ=0). PROFILE_1
    corresponds to the "JPEG 2000 Part 1 Profile 1 codestream" (RSIZ=2),
    which add constraints on tile dimensions and number of resolutions.
    In AUTO mode, the driver will determine if the BLOCKXSIZE,
    BLOCKYSIZE, RESOLUTIONS, CODEBLOCK_WIDTH and CODEBLOCK_HEIGHT values
-   are compatible with PROFILE_1 and advertize it in the relevant case.
+   are compatible with PROFILE_1 and advertise it in the relevant case.
    Note that the default values of those options are compatible with
    PROFILE_1. Otherwise UNRESTRICTED is advertized. Defaults to AUTO.
 
--  **INSPIRE_TG=YES/NO**: (GDAL >= 2.0) Whether to use JPEG2000 features
+-  **INSPIRE_TG=YES/NO**: Whether to use JPEG2000 features
    that comply with `Inspire Orthoimagery Technical
    Guidelines <http://inspire.ec.europa.eu/documents/Data_Specifications/INSPIRE_DataSpecification_OI_v3.0.pdf>`__.
    Defaults to NO. When set to YES, implies PROFILE=PROFILE_1,
@@ -196,17 +196,17 @@ Creation Options
    CODEBLOCK_HEIGHT options will be checked against the requirements and
    recommendations of the Technical Guidelines.
 
--  **JPX=YES/NO**: (GDAL >= 2.0) Whether to advertize JPX features, and
+-  **JPX=YES/NO**: Whether to advertise JPX features, and
    add a Reader requirement box, when a GMLJP2 box is written. Defaults
    to YES. This option should not be used unless compatibility problems
    with a reader occur.
 
--  **GEOBOXES_AFTER_JP2C=YES/NO**: (GDAL >= 2.0) Whether to place
+-  **GEOBOXES_AFTER_JP2C=YES/NO**: Whether to place
    GeoJP2/GMLJP2 boxes after the code-stream. Defaults to NO, unless
    INSPIRE_TG=YES. This option should not be used unless compatibility
    problems with a reader occur.
 
--  **PRECINCTS={prec_w,prec_h},{prec_w,prec_h},...**: (GDAL >= 2.0) A
+-  **PRECINCTS={prec_w,prec_h},{prec_w,prec_h},...**: A
    list of {precincts width,precincts height} tuples to specify
    precincts size. Each value should be a multiple of 2. The maximum
    number of tuples used will be the number of resolutions. The first
@@ -218,17 +218,17 @@ Creation Options
    An empty string may be used to disable precincts ( i.e. the default
    {32767,32767},{32767,32767}, ... will then be used).
 
--  **TILEPARTS=DISABLED/RESOLUTIONS/LAYERS/COMPONENTS**: (GDAL >= 2.0)
+-  **TILEPARTS=DISABLED/RESOLUTIONS/LAYERS/COMPONENTS**:
    Whether to generate tile-parts and according to which criterion.
    Defaults to DISABLED.
 
--  **CODEBLOCK_WIDTH=int_value**: (GDAL >= 2.0) Codeblock width: power
+-  **CODEBLOCK_WIDTH=int_value**: Codeblock width: power
    of two value between 4 and 1024. Defaults to 64. Note that
    CODEBLOCK_WIDTH \* CODEBLOCK_HEIGHT must not be greater than 4096.
    For PROFILE_1 compatibility, CODEBLOCK_WIDTH must not be greater than
    64.
 
--  **CODEBLOCK_HEIGHT=int_value**: (GDAL >= 2.0) Codeblock height: power
+-  **CODEBLOCK_HEIGHT=int_value**: Codeblock height: power
    of two value between 4 and 1024. Defaults to 64. Note that
    CODEBLOCK_WIDTH \* CODEBLOCK_HEIGHT must not be greater than 4096.
    For PROFILE_1 compatibility, CODEBLOCK_HEIGHT must not be greater
@@ -258,7 +258,7 @@ Creation Options
    increase codestream size, but improve either coding/decoding speed or
    resilience/error detection.
 
--  **WRITE_METADATA=YES/NO**: (GDAL >= 2.0) Whether metadata should be
+-  **WRITE_METADATA=YES/NO**: Whether metadata should be
    written, in a dedicated JP2 'xml ' box. Defaults to NO. The content
    of the 'xml ' box will be like:
 
@@ -286,11 +286,11 @@ Creation Options
    If there is a metadata domain whose name is "xml:IPR", its content
    will be written as a JP2 'jp2i' box.
 
--  **MAIN_MD_DOMAIN_ONLY=YES/NO**: (GDAL >= 2.0) (Only if
+-  **MAIN_MD_DOMAIN_ONLY=YES/NO**: (Only if
    WRITE_METADATA=YES) Whether only metadata from the main domain should
    be written. Defaults to NO.
 
--  **USE_SRC_CODESTREAM=YES/NO**: (GDAL >= 2.0) (EXPERIMENTAL!) When
+-  **USE_SRC_CODESTREAM=YES/NO**: (EXPERIMENTAL!) When
    source dataset is JPEG2000, whether to reuse the codestream of the
    source dataset unmodified. Defaults to NO. Note that enabling that
    feature might result in inconsistent content of the JP2 boxes w.r.t.
@@ -501,7 +501,7 @@ metadata of GeoEye/WorldView imagery can be found
 Vector information
 ------------------
 
-Starting with GDAL 2.0, a JPEG2000 file containing a GMLJP2 v2 box with
+A JPEG2000 file containing a GMLJP2 v2 box with
 GML feature collections and/or KML annotations embedded can be opened as
 a vector file with the OGR API. For example:
 

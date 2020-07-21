@@ -53,8 +53,8 @@ struct test_result : public test_result_posix
     /**
      * ok - test finished successfully
      * fail - test failed with ensure() or fail() methods
-     * ex - test throwed an exceptions
-     * warn - test finished successfully, but test destructor throwed
+     * ex - test thrown an exceptions
+     * warn - test finished successfully, but test destructor thrown
      * term - test forced test application to terminate abnormally
      */
     enum result_type

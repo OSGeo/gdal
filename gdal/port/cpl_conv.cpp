@@ -1053,6 +1053,8 @@ GIntBig CPLAtoGIntBigEx( const char* pszString, int bWarn, int *pbOverflow )
     errno = 0;
 #if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
     GIntBig nVal = _atoi64(pszString);
+#elif HAVE_STRTOLL
+    GIntBig nVal = strtoll(pszString, nullptr, 10);
 #elif HAVE_ATOLL
     GIntBig nVal = atoll(pszString);
 #else

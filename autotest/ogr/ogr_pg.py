@@ -124,11 +124,20 @@ def test_ogr_pg_1():
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
     gdaltest.pg_retrieve_fid = False
-    if version_str[0:11] == "PostgreSQL ":
-        v = version_str[11:14]
-        if v.endswith('b'):
-            v = v[0:-1]
-        if float(v) >= 8.2:
+    gdaltest.pg_version = (0,)
+    v = version_str
+    pos = v.find(' ') # "PostgreSQL 12.0beta1" or "PostgreSQL 12.2 ...."
+    if pos > 0:
+        v = v[pos+1:]
+        pos = v.find('beta')
+        if pos > 0:
+            v = v[0:pos]
+        pos = v.find(' ')
+        if pos > 0:
+            v = v[0:pos]
+        gdaltest.pg_version = tuple([int(x) for x in v.split('.')])
+        #print(gdaltest.pg_version)
+        if gdaltest.pg_version >= (8,2):
             gdaltest.pg_retrieve_fid = True
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -4509,6 +4518,140 @@ def test_ogr_pg_json():
     sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT * FROM ogr_pg_json')
     assert sql_lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTJSON
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+
+###############################################################################
+# Test generated columns
+
+
+def test_ogr_pg_generated_columns():
+
+    if gdaltest.pg_ds is None:
+        pytest.skip()
+    if gdaltest.pg_version < (12,):
+        pytest.skip()
+
+    gdaltest.pg_ds.ExecuteSQL("DROP TABLE IF EXISTS test_ogr_pg_generated_columns")
+    gdaltest.pg_ds.ExecuteSQL("CREATE TABLE test_ogr_pg_generated_columns(id SERIAL PRIMARY KEY, unused VARCHAR, foo INTEGER, bar INTEGER GENERATED ALWAYS AS (foo+1) STORED)")
+    gdaltest.pg_ds.ExecuteSQL("INSERT INTO test_ogr_pg_generated_columns VALUES (DEFAULT,NULL, 10,DEFAULT)")
+
+    gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
+    lyr = gdaltest.pg_ds.GetLayer('test_ogr_pg_generated_columns')
+    f = lyr.GetNextFeature()
+
+    assert f['foo'] == 10
+    assert f['bar'] == 11
+    f['foo'] = 20
+    assert lyr.SetFeature(f) == 0
+
+    f = lyr.GetFeature(1)
+    assert f['foo'] == 20
+    assert f['bar'] == 21
+    f = None
+
+    lyr.ResetReading()
+    lyr.DeleteField(lyr.GetLayerDefn().GetFieldIndex('unused'))
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['foo'] = 30
+    f['bar'] = 123456 # will be ignored
+    assert lyr.CreateFeature(f) == 0
+
+    f = lyr.GetFeature(2)
+    assert f['foo'] == 30
+    assert f['bar'] == 31
+
+    gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
+    lyr = gdaltest.pg_ds.GetLayer('test_ogr_pg_generated_columns')
+    with gdaltest.config_option('PG_USE_COPY', 'YES'):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f['foo'] = 40
+        f['bar'] = 123456 # will be ignored
+        assert lyr.CreateFeature(f) == 0
+
+    f = lyr.GetFeature(3)
+    assert f['foo'] == 40
+    assert f['bar'] == 41
+
+    gdaltest.pg_ds.ExecuteSQL('DELLAYER:test_ogr_pg_generated_columns')
+    gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
+
+###############################################################################
+# Test UNIQUE constraints
+
+
+def test_ogr_pg_unique():
+
+    if gdaltest.pg_ds is None:
+        pytest.skip()
+
+    # Create table to test UNIQUE constraints
+    gdaltest.pg_ds.ExecuteSQL("DROP TABLE IF EXISTS test_ogr_pg_unique CASCADE")
+    lyr = gdaltest.pg_ds.CreateLayer('test_ogr_pg_unique')
+
+    fld_defn = ogr.FieldDefn('with_unique', ogr.OFTString)
+    fld_defn.SetUnique(True)
+    lyr.CreateField(fld_defn)
+
+    fld_defn = ogr.FieldDefn('with_unique_and_explicit_unique_idx', ogr.OFTString)
+    fld_defn.SetUnique(True)
+    lyr.CreateField(fld_defn)
+
+    lyr.CreateField(ogr.FieldDefn('without_unique', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('unique_on_several_col1', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('unique_on_several_col2', ogr.OFTString))
+    gdaltest.pg_ds.ExecuteSQL("CREATE UNIQUE INDEX unique_idx_with_unique_and_explicit_unique_idx ON test_ogr_pg_unique(with_unique_and_explicit_unique_idx)")
+    gdaltest.pg_ds.ExecuteSQL("CREATE UNIQUE INDEX unique_idx_unique_constraints ON test_ogr_pg_unique(unique_on_several_col1, unique_on_several_col2)")
+
+    # Check after re-opening
+    gdaltest.pg_ds = None
+    gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
+    lyr = gdaltest.pg_ds.GetLayerByName('test_ogr_pg_unique')
+    feat_defn = lyr.GetLayerDefn()
+    assert feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('with_unique')).IsUnique()
+    assert feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('with_unique_and_explicit_unique_idx')).IsUnique()
+    assert not feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('without_unique')).IsUnique()
+    assert not feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('unique_on_several_col1')).IsUnique()
+    assert not feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('unique_on_several_col2')).IsUnique()
+
+    # Test AlterFieldDefn()
+
+    # Unchanged state: no unique
+    fld_defn = ogr.FieldDefn('without_unique', ogr.OFTString)
+    fld_defn.SetUnique(False)
+    assert lyr.AlterFieldDefn(feat_defn.GetFieldIndex(fld_defn.GetName()), fld_defn, ogr.ALTER_UNIQUE_FLAG) == ogr.OGRERR_NONE
+    assert not feat_defn.GetFieldDefn(feat_defn.GetFieldIndex(fld_defn.GetName())).IsUnique()
+
+    # Unchanged state: unique
+    fld_defn = ogr.FieldDefn('with_unique', ogr.OFTString)
+    fld_defn.SetUnique(True)
+    assert lyr.AlterFieldDefn(feat_defn.GetFieldIndex(fld_defn.GetName()), fld_defn, ogr.ALTER_UNIQUE_FLAG) == ogr.OGRERR_NONE
+    assert feat_defn.GetFieldDefn(feat_defn.GetFieldIndex(fld_defn.GetName())).IsUnique()
+
+    # no unique -> unique
+    fld_defn = ogr.FieldDefn('without_unique', ogr.OFTString)
+    fld_defn.SetUnique(True)
+    assert lyr.AlterFieldDefn(feat_defn.GetFieldIndex(fld_defn.GetName()), fld_defn, ogr.ALTER_UNIQUE_FLAG) == ogr.OGRERR_NONE
+    assert feat_defn.GetFieldDefn(feat_defn.GetFieldIndex(fld_defn.GetName())).IsUnique()
+
+    # unique -> no unique : unsupported
+    fld_defn = ogr.FieldDefn('without_unique', ogr.OFTString)
+    fld_defn.SetUnique(False)
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        assert lyr.AlterFieldDefn(feat_defn.GetFieldIndex(fld_defn.GetName()), fld_defn, ogr.ALTER_UNIQUE_FLAG) == ogr.OGRERR_NONE
+    assert gdal.GetLastErrorMsg() != ''
+    assert feat_defn.GetFieldDefn(feat_defn.GetFieldIndex(fld_defn.GetName())).IsUnique()
+
+    # Check after re-opening
+    gdaltest.pg_ds = None
+    gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
+    lyr = gdaltest.pg_ds.GetLayerByName('test_ogr_pg_unique')
+    feat_defn = lyr.GetLayerDefn()
+    assert feat_defn.GetFieldDefn(feat_defn.GetFieldIndex('without_unique')).IsUnique()
+
+    # Cleanup
+    gdaltest.pg_ds.ExecuteSQL('DELLAYER:test_ogr_pg_unique')
+    gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=1)
 
 ###############################################################################
 #

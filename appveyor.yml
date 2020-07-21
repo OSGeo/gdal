@@ -5,12 +5,20 @@ branches:
 
 environment:
   matrix:
-  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-    VS_VERSION: Visual Studio 15
-    platform: x86
+  #- APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+  #  VS_VERSION: Visual Studio 16
+  #  VS_VER: 2019
+  #  SDK: release-1911 # gisinternals SDK version still to 2017
+  #  MSVC_VER: 1920
+  #  platform: x86
+  #  PROJ_BRANCH: 7.0
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     VS_VERSION: Visual Studio 14
+    VS_VER: 2015
+    SDK: release-1900-x64 # gisinternals SDK version
+    MSVC_VER: 1900
     platform: x64
+    PROJ_BRANCH: 6.3
 
 shallow_clone: true
 
@@ -25,22 +33,16 @@ init:
       if($env:platform -eq "x86")
       {
         $env:PATH="c:\Python27;c:\Python27\Scripts;$env:PATH"
-        $env:VS_VER=2017
-        $env:SDK="release-1911"
-        $env:MSVC_VER=1911
         $env:ARCHITECTURE="x86"
         $env:WIN64_ARG=""
-        $env:VS_FULL="$env:VS_VERSION"
+        $env:CMAKE_ARCHITECTURE="Win32"
       }
       else
       {
         $env:PATH="c:\Python27-x64;c:\Python27-x64\Scripts;$env:PATH"
-        $env:VS_VER=2015
-        $env:SDK="release-1900-x64"
-        $env:MSVC_VER=1900
         $env:ARCHITECTURE="amd64"
         $env:WIN64_ARG="WIN64=YES"
-        $env:VS_FULL="$env:VS_VERSION Win64"
+        $env:CMAKE_ARCHITECTURE="x64"
       }
       function exec
       {
@@ -64,8 +66,11 @@ init:
 
 
 install:
+  - if "%VS_VER%" == "2019" CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\VsDevCmd.bat" -arch=%ARCHITECTURE%
   - git clone https://github.com/microsoft/vcpkg
   - cd vcpkg
+# Workaround https://github.com/microsoft/vcpkg/issues/11666
+  - if "%VS_VER%" == "2015" git checkout a64dc07690bc8806e717e190f62eb58e198b599c
   - bootstrap-vcpkg.bat
   - set PATH=%CD%;%PATH%
   - cd ..
@@ -78,7 +83,13 @@ install:
       # Install SWIG and VC for Python2.7 by Choco
       cinst -y --no-progress --version 3.0.12 --force swig
       cinst -y --no-progress vcpython27
-      Import-VisualStudioVars -VisualStudioVersion $env:VS_VER -Architecture $env:ARCHITECTURE
+      if($env:VS_VER -eq "2019")
+      {
+      }
+      else
+      {
+        Import-VisualStudioVars -VisualStudioVersion $env:VS_VER -Architecture $env:ARCHITECTURE
+      }
       exec { pip install numpy }
       $env:SDK_ZIP="$env:SDK"+"-dev.zip"
       $env:SDK_URL="http://download.gisinternals.com/sdk/downloads/$env:SDK_ZIP"
@@ -141,7 +152,7 @@ install:
       $env:NMAKE_LOCAL | Set-Content "$env:APPVEYOR_BUILD_FOLDER\gdal\nmake.local"
       #
       cd $env:APPVEYOR_BUILD_FOLDER
-      exec { git clone --depth=1 -b 6.3 https://github.com/OSGeo/proj.4 proj }
+      exec { git clone --depth=1 -b $env:PROJ_BRANCH https://github.com/OSGeo/PROJ proj }
       cd proj
       exec { mkdir build }
       cd build
@@ -153,7 +164,7 @@ install:
       $env:PATH="$env:APPVEYOR_BUILD_FOLDER;$env:PATH"
       $env:PROJ_INSTALL_DIR="$env:APPVEYOR_BUILD_FOLDER"+"\install-proj"
       $env:CMAKE_INSTALL_PREFIX="-DCMAKE_INSTALL_PREFIX=" + $env:PROJ_INSTALL_DIR
-      exec { cmake -G $env:VS_FULL .. $env:CMAKE_INSTALL_PREFIX -DPROJ_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBPROJ_SHARED=ON -DCMAKE_TOOLCHAIN_FILE=c:/projects/gdal/vcpkg/scripts/buildsystems/vcpkg.cmake }
+      exec { cmake -G $env:VS_VERSION -A $env:CMAKE_ARCHITECTURE .. $env:CMAKE_INSTALL_PREFIX -DPROJ_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBPROJ_SHARED=ON -DCMAKE_TOOLCHAIN_FILE=c:/projects/gdal/vcpkg/scripts/buildsystems/vcpkg.cmake -DBUILD_SHARED_LIBS=ON -DENABLE_CURL=OFF -DENABLE_TIFF=OFF -DBUILD_PROJSYNC=OFF }
       exec { cmake --build . --config Release --target install }
       cd $env:APPVEYOR_BUILD_FOLDER\install-proj\share\proj
       appveyor DownloadFile https://download.osgeo.org/proj/proj-datumgrid-1.8.zip

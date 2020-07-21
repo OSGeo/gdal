@@ -275,11 +275,12 @@ def test_ogr_sql_11():
 
     expect = [None]
 
-    sql_lyr = gdaltest.ds.ExecuteSQL("select max(eas_id) from empty")
+    ds = ogr.Open('data/shp/empty.shp')
+    sql_lyr = ds.ExecuteSQL("select max(eas_id) from empty")
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'max_eas_id', expect)
 
-    gdaltest.ds.ReleaseResultSet(sql_lyr)
+    ds.ReleaseResultSet(sql_lyr)
 
     assert tr
 
@@ -291,11 +292,12 @@ def test_ogr_sql_12():
 
     expect = []
 
-    sql_lyr = gdaltest.ds.ExecuteSQL("select distinct eas_id from empty")
+    ds = ogr.Open('data/shp/empty.shp')
+    sql_lyr = ds.ExecuteSQL("select distinct eas_id from empty")
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'eas_id', expect)
 
-    gdaltest.ds.ReleaseResultSet(sql_lyr)
+    ds.ReleaseResultSet(sql_lyr)
 
     assert tr
 
@@ -326,7 +328,7 @@ def test_ogr_sql_14():
         'BRUSH(fc:#000000,bc:#ffffff,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0")',
         'BRUSH(fc:#000000,bc:#ffffff,id:"mapinfo-brush-1,ogr-brush-1");PEN(w:1px,c:#000000,id:"mapinfo-pen-2,ogr-pen-0")']
 
-    ds = ogr.Open('data/small.mif')
+    ds = ogr.Open('data/mitab/small.mif')
     sql_lyr = ds.ExecuteSQL("select ogr_style from small where ogr_geom_wkt LIKE 'POLYGON%'")
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'ogr_style', expect)
@@ -359,7 +361,7 @@ def test_ogr_sql_16():
 
     expect = [2]
 
-    ds = ogr.Open('data/small.mif')
+    ds = ogr.Open('data/mitab/small.mif')
     sql_lyr = ds.ExecuteSQL("select fid from small where owner < 'H'")
 
     tr = ogrtest.check_features_against_list(sql_lyr, 'fid', expect)
@@ -377,7 +379,7 @@ def test_ogr_sql_17():
 
     expect = ['1', '2']
 
-    ds = ogr.Open('data/small.mif')
+    ds = ogr.Open('data/mitab/small.mif')
     sql_lyr = ds.ExecuteSQL("select CAST(fid as CHARACTER(10)), CAST(data as numeric(7,3)) from small")
 
     fld_def = sql_lyr.GetLayerDefn().GetFieldDefn(0)
@@ -424,7 +426,7 @@ def test_ogr_sql_18():
     if sys.version_info >= (3, 0, 0):
         pytest.skip()
 
-    name = 'data/departs.vrt'
+    name = 'data/shp/departs.vrt'
 
     ds = ogr.Open(name)
     assert ds is not None
@@ -558,7 +560,7 @@ def test_ogr_sql_24():
 
     result = 'success'
 
-    ds = ogr.Open('data/smalltest.dgn')
+    ds = ogr.Open('data/dgn/smalltest.dgn')
 
     sql_layer = ds.ExecuteSQL('SELECT * from elements where colorindex=83 and type=3')
 
@@ -633,7 +635,7 @@ def test_ogr_sql_26():
 
 def test_ogr_sql_27():
 
-    ds = ogr.Open('data/testdatetime.csv')
+    ds = ogr.Open('data/csv/testdatetime.csv')
 
     sql_lyr = ds.ExecuteSQL("SELECT * FROM testdatetime WHERE "
                             "timestamp < '2010/04/01 00:00:00' AND "
@@ -1368,7 +1370,7 @@ def test_ogr_sql_46():
 
 def test_ogr_sql_47():
 
-    ds = ogr.Open('data/sort_test.dbf')
+    ds = ogr.Open('data/shp/sort_test.dbf')
     sql_lyr = ds.ExecuteSQL('SELECT * FROM sort_test ORDER BY text_value')
     prec_val = ''
     for f in sql_lyr:
@@ -1406,10 +1408,62 @@ def test_ogr_sql_48():
     ds.ReleaseResultSet(sql_lyr)
     assert i == 1001
 
+###############################################################################
+# Test arithmetic expressions
+
+
+def test_ogr_sql_49():
+
+    # expressions and expected result
+    expressions = [ ( "1/1", 1),
+                    ( "1/1.", 1.),
+                    ( "cast((1) as integer)/1." , 1. ),
+                    ( "1./cast((1) as integer)" , 1. ),
+                    ( "1.5+1" , 2.5 ),
+                    ( "(1*1)+1.5" , 2.5 ),
+                    ( "1+1" , 2 ),
+                    ( "cast(1 as integer)+ 1234567890123" , 1234567890124 ),
+                    ( "cast(1 as integer)* 1234567890123" , 1234567890123 )
+    ]
+
+    for expression, expected in expressions:
+        sql_lyr = gdaltest.ds.ExecuteSQL('select {} as result from poly limit 1'.format( expression ) )
+        tr = ogrtest.check_features_against_list(sql_lyr, 'result', [expected])
+
+        gdaltest.ds.ReleaseResultSet(sql_lyr)
+
+        assert tr
+
+
+
+
+###############################################################################
+# Test field names with same case
+
+
+def test_ogr_sql_field_names_same_case():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('id'))
+    lyr.CreateField(ogr.FieldDefn('ID'))
+    lyr.CreateField(ogr.FieldDefn('ID2'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['id'] = 'foo'
+    f['ID'] = 'bar'
+    f['ID2'] = 'baz'
+    lyr.CreateFeature(f)
+
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM test')
+    f = sql_lyr.GetNextFeature()
+    ds.ReleaseResultSet(sql_lyr)
+    assert f['id'] == 'foo'
+    assert f['ID'] == 'bar'
+    assert f['ID2'] == 'baz'
+
+###############################################################################
+
 
 def test_ogr_sql_cleanup():
     gdaltest.lyr = None
     gdaltest.ds = None
-
-
-

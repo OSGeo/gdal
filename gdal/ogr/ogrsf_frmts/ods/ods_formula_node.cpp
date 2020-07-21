@@ -283,28 +283,38 @@ void  ods_formula_node::FreeSubExpr()
 
 bool ods_formula_node::Evaluate(IODSCellEvaluator* poEvaluator)
 {
+    if (poEvaluator->m_nDepth == 64 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Max depth for ods_formula_node::Evaluate() reached");
+        return false;
+    }
+
     if (eNodeType == SNT_CONSTANT)
         return true;
 
     CPLAssert( eNodeType == SNT_OPERATION );
 
+    bool ret = false;
+    poEvaluator->m_nDepth ++;
     switch (eOp)
     {
-        case ODS_OR: return EvaluateOR(poEvaluator);
-        case ODS_AND: return EvaluateAND(poEvaluator);
-        case ODS_NOT: return EvaluateNOT(poEvaluator);
-        case ODS_IF: return EvaluateIF(poEvaluator);
+        case ODS_OR: ret = EvaluateOR(poEvaluator); break;
+        case ODS_AND: ret = EvaluateAND(poEvaluator); break;
+        case ODS_NOT: ret = EvaluateNOT(poEvaluator); break;
+        case ODS_IF: ret = EvaluateIF(poEvaluator); break;
 
         case ODS_PI:
             eNodeType = SNT_CONSTANT;
             field_type = ODS_FIELD_TYPE_FLOAT;
             float_value = M_PI;
-            return true;
+            ret = true;
+            break;
 
-        case ODS_LEN : return EvaluateLEN(poEvaluator);
-        case ODS_LEFT : return EvaluateLEFT(poEvaluator);
-        case ODS_RIGHT : return EvaluateRIGHT(poEvaluator);
-        case ODS_MID : return EvaluateMID(poEvaluator);
+        case ODS_LEN : ret = EvaluateLEN(poEvaluator); break;
+        case ODS_LEFT : ret = EvaluateLEFT(poEvaluator); break;
+        case ODS_RIGHT : ret = EvaluateRIGHT(poEvaluator); break;
+        case ODS_MID : ret = EvaluateMID(poEvaluator); break;
 
         case ODS_SUM:
         case ODS_AVERAGE:
@@ -312,7 +322,8 @@ bool ods_formula_node::Evaluate(IODSCellEvaluator* poEvaluator)
         case ODS_MAX:
         case ODS_COUNT:
         case ODS_COUNTA:
-            return EvaluateListArgOp(poEvaluator);
+            ret = EvaluateListArgOp(poEvaluator);
+            break;
 
         case ODS_ABS:
         case ODS_SQRT:
@@ -325,34 +336,38 @@ bool ods_formula_node::Evaluate(IODSCellEvaluator* poEvaluator)
         case ODS_EXP:
         case ODS_LN:
         case ODS_LOG:
-            return EvaluateSingleArgOp(poEvaluator);
+            ret = EvaluateSingleArgOp(poEvaluator);
+            break;
 
-        case ODS_EQ: return EvaluateEQ(poEvaluator);
-        case ODS_NE: return EvaluateNE(poEvaluator);
-        case ODS_LE: return EvaluateLE(poEvaluator);
-        case ODS_GE: return EvaluateGE(poEvaluator);
-        case ODS_LT: return EvaluateLT(poEvaluator);
-        case ODS_GT: return EvaluateGT(poEvaluator);
+        case ODS_EQ: ret = EvaluateEQ(poEvaluator); break;
+        case ODS_NE: ret = EvaluateNE(poEvaluator); break;
+        case ODS_LE: ret = EvaluateLE(poEvaluator); break;
+        case ODS_GE: ret = EvaluateGE(poEvaluator); break;
+        case ODS_LT: ret = EvaluateLT(poEvaluator); break;
+        case ODS_GT: ret = EvaluateGT(poEvaluator); break;
 
         case ODS_ADD:
         case ODS_SUBTRACT:
         case ODS_MULTIPLY:
         case ODS_DIVIDE:
         case ODS_MODULUS:
-            return EvaluateBinaryArithmetic(poEvaluator);
+            ret = EvaluateBinaryArithmetic(poEvaluator); break;
 
-        case ODS_CONCAT: return EvaluateCONCAT(poEvaluator);
+        case ODS_CONCAT: ret = EvaluateCONCAT(poEvaluator); break;
 
-        case ODS_CELL: return EvaluateCELL(poEvaluator);
+        case ODS_CELL: ret = EvaluateCELL(poEvaluator); break;
 
         default:
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unhandled case in Evaluate() for %s",
                      ODSGetOperatorName(eOp));
-            return false;
+            ret = false;
+            break;
         }
     }
+    poEvaluator->m_nDepth --;
+    return ret;
 }
 
 /************************************************************************/

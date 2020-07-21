@@ -43,7 +43,7 @@ def test_ogr_rec_1():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.rec')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/rec/test.rec')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 

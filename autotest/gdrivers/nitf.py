@@ -108,7 +108,11 @@ def nitf_create(creation_options, set_inverted_color_interp=True, createcopy=Fal
         ds.GetRasterBand(3).SetRasterColorInterpretation(gdal.GCI_BlueBand)
 
     my_list = list(range(200)) + list(range(20, 220)) + list(range(30, 230))
-    raw_data = array.array('h', my_list).tostring()
+    try:
+        raw_data = array.array('h', my_list).tobytes()
+    except:
+        # Python 2
+        raw_data = array.array('h', my_list).tostring()
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
@@ -178,7 +182,7 @@ def test_nitf_5():
 
 def test_nitf_6():
 
-    tst = gdaltest.GDALTest('NITF', 'rgb.ntf', 3, 21349)
+    tst = gdaltest.GDALTest('NITF', 'nitf/rgb.ntf', 3, 21349)
     return tst.testOpen(check_prj='WGS84',
                         check_gt=(-44.842029478458, 0.003503401360, 0,
                                   -22.930748299319, 0, -0.003503401360))
@@ -198,7 +202,7 @@ def test_nitf_7():
 
 def test_nitf_8():
 
-    ds = gdal.Open('data/fake_nsif.ntf')
+    ds = gdal.Open('data/nitf/fake_nsif.ntf')
 
     chksum = ds.GetRasterBand(1).Checksum()
     chksum_expect = 12033
@@ -255,7 +259,7 @@ def test_nitf_10():
 def test_nitf_11():
 
     # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/i_3034c.ntf
-    tst = gdaltest.GDALTest('NITF', 'i_3034c.ntf', 1, 170)
+    tst = gdaltest.GDALTest('NITF', 'nitf/i_3034c.ntf', 1, 170)
     return tst.testOpen()
 
 ###############################################################################
@@ -264,7 +268,7 @@ def test_nitf_11():
 
 def test_nitf_12():
 
-    ds = gdal.Open('data/fake_nsif.ntf')
+    ds = gdal.Open('data/nitf/fake_nsif.ntf')
 
     mdTRE = ds.GetMetadata('TRE')
 
@@ -307,7 +311,11 @@ def test_nitf_13():
     ds.SetProjection('PROJCS["UTM Zone 11, Southern Hemisphere",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",10000000],UNIT["Meter",1]]')
 
     my_list = list(range(200))
-    raw_data = array.array('f', my_list).tostring()
+    try:
+        raw_data = array.array('f', my_list).tobytes()
+    except:
+        # Python 2
+        raw_data = array.array('f', my_list).tostring()
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
@@ -354,7 +362,7 @@ def test_nitf_15():
 def test_nitf_16():
 
     # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/ns3034d.nsf
-    tst = gdaltest.GDALTest('NITF', 'ns3034d.nsf', 1, 170)
+    tst = gdaltest.GDALTest('NITF', 'nitf/ns3034d.nsf', 1, 170)
     return tst.testOpen()
 
 
@@ -365,7 +373,7 @@ def test_nitf_16():
 def test_nitf_17():
 
     # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/i_3034f.ntf
-    tst = gdaltest.GDALTest('NITF', 'i_3034f.ntf', 1, 170)
+    tst = gdaltest.GDALTest('NITF', 'nitf/i_3034f.ntf', 1, 170)
     return tst.testOpen()
 
 ###############################################################################
@@ -377,7 +385,7 @@ def test_nitf_18():
     # Shut up the warning about missing image segment
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv1_1/U_0006A.NTF
-    ds = gdal.Open("data/U_0006A.NTF")
+    ds = gdal.Open("data/nitf/U_0006A.NTF")
     gdal.PopErrorHandler()
 
     assert ds.RasterCount == 0
@@ -389,7 +397,7 @@ def test_nitf_18():
 def test_nitf_19():
 
     # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_0/U_1050A.NTF
-    tst = gdaltest.GDALTest('NITF', 'U_1050A.NTF', 1, 65024)
+    tst = gdaltest.GDALTest('NITF', 'nitf/U_1050A.NTF', 1, 65024)
 
     return tst.testOpen()
 
@@ -402,7 +410,7 @@ def test_nitf_20():
     # Shut up the warning about file either corrupt or empty
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv1_1/U_0002A.NTF
-    ds = gdal.Open("data/U_0002A.NTF")
+    ds = gdal.Open("data/nitf/U_0002A.NTF")
     gdal.PopErrorHandler()
 
     assert ds is None
@@ -417,7 +425,7 @@ def test_nitf_21():
 
     # Shut up the warning about missing image segment
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = gdal.Open('data/ns3114a.nsf')
+    ds = gdal.Open('data/nitf/ns3114a.nsf')
     gdal.PopErrorHandler()
 
     mdTEXT = ds.GetMetadata('TEXT')
@@ -675,7 +683,7 @@ def test_nitf_29():
 
 def test_nitf_30():
 
-    src_ds = gdal.Open('data/fake_nsif.ntf')
+    src_ds = gdal.Open('data/nitf/fake_nsif.ntf')
     ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf30.ntf', src_ds)
 
     chksum = ds.GetRasterBand(1).Checksum()
@@ -814,7 +822,7 @@ def test_nitf_34():
 
 def test_nitf_35():
 
-    src_ds = gdal.Open('data/text_md.vrt')
+    src_ds = gdal.Open('data/nitf/text_md.vrt')
     ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf_35.ntf', src_ds)
     src_ds = None
     ds = None
@@ -885,12 +893,6 @@ def test_nitf_36():
 
 
 def test_nitf_37():
-    try:
-        if int(gdal.VersionInfo('VERSION_NUM')) < 1700:
-            pytest.skip()
-    except:
-        # OG-python bindings don't have gdal.VersionInfo. Too bad, but let's hope that GDAL's version isn't too old !
-        pass
 
     ds = gdal.GetDriverByName('NITF').Create('tmp/nitf37.ntf', 1, 1, 69999)
     ds = None
@@ -1058,21 +1060,15 @@ def test_nitf_41(not_jpeg_9b):
         sys.stdout.write('(12bit jpeg not available) ... ')
         pytest.skip()
 
-    try:
-        os.remove('data/U_4017A.NTF.aux.xml')
-    except OSError:
-        pass
+    gdal.Unlink('data/nitf/U_4017A.NTF.aux.xml')
 
-    ds = gdal.Open('data/U_4017A.NTF')
+    ds = gdal.Open('data/nitf/U_4017A.NTF')
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     assert stats[2] >= 2385 and stats[2] <= 2386
     ds = None
 
-    try:
-        os.remove('data/U_4017A.NTF.aux.xml')
-    except OSError:
-        pass
+    gdal.Unlink('data/nitf/U_4017A.NTF.aux.xml')
 
 
 ###############################################################################
@@ -1087,7 +1083,7 @@ def test_nitf_42(not_jpeg_9b):
         sys.stdout.write('(12bit jpeg not available) ... ')
         pytest.skip()
 
-    ds = gdal.Open('data/U_4017A.NTF')
+    ds = gdal.Open('data/nitf/U_4017A.NTF')
     out_ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf42.ntf', ds, options=['IC=C3', 'FHDR=NITF02.10'])
     del out_ds
 
@@ -1181,7 +1177,7 @@ def test_nitf_45():
     except OSError:
         pass
 
-    shutil.copyfile('data/two_images_jpeg.ntf', 'tmp/nitf45.ntf')
+    shutil.copyfile('data/nitf/two_images_jpeg.ntf', 'tmp/nitf45.ntf')
 
     ds = gdal.Open('NITF_IM:1:tmp/nitf45.ntf', gdal.GA_Update)
     ds.BuildOverviews(overviewlist=[2])
@@ -1217,7 +1213,7 @@ def nitf_46(driver_to_test):
     except OSError:
         pass
 
-    shutil.copyfile('data/two_images_jp2.ntf', 'tmp/nitf46.ntf')
+    shutil.copyfile('data/nitf/two_images_jp2.ntf', 'tmp/nitf46.ntf')
 
     ds = gdal.Open('NITF_IM:1:tmp/nitf46.ntf', gdal.GA_Update)
     ds.BuildOverviews(overviewlist=[2])
@@ -1269,7 +1265,7 @@ def nitf_46_openjpeg():
 
 def test_nitf_47():
 
-    ds = gdal.Open('data/rset.ntf.r0')
+    ds = gdal.Open('data/nitf/rset.ntf.r0')
 
     band = ds.GetRasterBand(2)
     assert band.GetOverviewCount() == 2, \
@@ -1294,9 +1290,9 @@ def test_nitf_48():
     except OSError:
         pass
 
-    shutil.copyfile('data/rset.ntf.r0', 'tmp/rset.ntf.r0')
-    shutil.copyfile('data/rset.ntf.r1', 'tmp/rset.ntf.r1')
-    shutil.copyfile('data/rset.ntf.r2', 'tmp/rset.ntf.r2')
+    shutil.copyfile('data/nitf/rset.ntf.r0', 'tmp/rset.ntf.r0')
+    shutil.copyfile('data/nitf/rset.ntf.r1', 'tmp/rset.ntf.r1')
+    shutil.copyfile('data/nitf/rset.ntf.r2', 'tmp/rset.ntf.r2')
 
     ds = gdal.Open('tmp/rset.ntf.r0', gdal.GA_Update)
     ds.BuildOverviews(overviewlist=[3])
@@ -1335,7 +1331,7 @@ def test_nitf_49():
                "CGM=SEGMENT_0_SALVL=1",
                "CGM=SEGMENT_0_DATA=XYZ"]
 
-    src_ds = gdal.Open('data/text_md.vrt')
+    src_ds = gdal.Open('data/nitf/text_md.vrt')
 
     # This will check that the creation option overrides the TEXT metadata domain from the source
     ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf49.ntf', src_ds,
@@ -1662,8 +1658,8 @@ def test_nitf_read_IMRFCA_IMASDA():
 
 def test_nitf_59():
 
-    shutil.copyfile('data/nitf59.nfw', 'tmp/nitf59.nfw')
-    shutil.copyfile('data/nitf59.hdr', 'tmp/nitf59.hdr')
+    shutil.copyfile('data/nitf/nitf59.nfw', 'tmp/nitf59.nfw')
+    shutil.copyfile('data/nitf/nitf59.hdr', 'tmp/nitf59.hdr')
     ds = gdal.GetDriverByName('NITF').Create('tmp/nitf59.ntf', 1, 1, options=['ICORDS=N'])
     ds = None
 
@@ -1686,7 +1682,7 @@ def test_nitf_60():
 
     # Shut down errors because the file is truncated
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = gdal.Open('data/testtest.on9')
+    ds = gdal.Open('data/nitf/testtest.on9')
     gdal.PopErrorHandler()
     wkt = ds.GetProjectionRef()
     gt = ds.GetGeoTransform()
@@ -1708,7 +1704,7 @@ def test_nitf_61():
 
     # Derived from http://www.gwg.nga.mil/ntb/baseline/software/testfile/rsm/SampleFiles/FrameSet1/NITF_Files/i_6130a.zip
     # but hand edited to have just 1x1 imagery
-    ds = gdal.Open('data/i_6130a_truncated.ntf')
+    ds = gdal.Open('data/nitf/i_6130a_truncated.ntf')
     md = ds.GetMetadata('TRE')
     xml_tre = ds.GetMetadata('xml:TRE')[0]
     ds = None
@@ -1892,11 +1888,11 @@ def test_nitf_67():
 
 def test_nitf_68():
 
-    ds = gdal.Open('data/rgb.ntf')
+    ds = gdal.Open('data/nitf/rgb.ntf')
     assert len(ds.GetMetadata('NITF_METADATA')) == 2
     ds = None
 
-    ds = gdal.Open('data/rgb.ntf')
+    ds = gdal.Open('data/nitf/rgb.ntf')
     assert ds.GetMetadataItem('NITFFileHeader', 'NITF_METADATA')
     ds = None
 
@@ -2332,7 +2328,7 @@ def test_nitf_72():
 def test_nitf_73():
 
     with gdaltest.error_handler():
-        gdal.Open('data/oss_fuzz_1525.ntf')
+        gdal.Open('data/nitf/oss_fuzz_1525.ntf')
 
     
 ###############################################################################
@@ -2569,7 +2565,7 @@ def test_nitf_75():
 
 def test_nitf_read_C4():
 
-    ds = gdal.Open('data/RPFTOC01.ON2')
+    ds = gdal.Open('data/nitf/RPFTOC01.ON2')
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 53599
 
@@ -2579,7 +2575,7 @@ def test_nitf_read_C4():
 
 def test_nitf_SENSRB():
 
-    ds = gdal.Open('data/SENSRB_TRE.ntf')
+    ds = gdal.Open('data/nitf/SENSRB_TRE.ntf')
     data = ds.GetMetadata('xml:TRE')[0]
     ds = None
 
@@ -2692,7 +2688,7 @@ def test_nitf_SENSRB():
 
 def test_nitf_valid_udid():
 
-    ds = gdal.Open('data/valid_udid.ntf')
+    ds = gdal.Open('data/nitf/valid_udid.ntf')
 
     md = ds.GetMetadata()
     assert md['NITF_CSDIDA_YEAR'] == '2019', \
@@ -2706,7 +2702,7 @@ def test_nitf_valid_udid():
 
 def test_nitf_invalid_udid():
 
-    ds = gdal.Open('data/invalid_udid.ntf')
+    ds = gdal.Open('data/nitf/invalid_udid.ntf')
 
     md = ds.GetMetadata()
     assert 'NITF_CSDIDA_YEAR' not in md, \

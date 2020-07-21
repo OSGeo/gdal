@@ -1598,6 +1598,7 @@ GIntBig OGROAPIFLayer::GetFeatureCount(int bForce)
                 if( psDoc )
                 {
                     CPLXMLTreeCloser oCloser(psDoc);
+                    CPL_IGNORE_RET_VAL(oCloser);
                     CPLStripXMLNamespace(psDoc, nullptr, true);
                     CPLString osNumberMatched =
                         CPLGetXMLValue(psDoc,
@@ -2343,7 +2344,7 @@ int OGROAPIFLayer::TestCapability(const char* pszCap)
     {
         return TRUE;
     }
-    // Don't advertize OLCRandomRead as it requires a GET per feature
+    // Don't advertise OLCRandomRead as it requires a GET per feature
     return FALSE;
 }
 

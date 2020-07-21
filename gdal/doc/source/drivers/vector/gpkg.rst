@@ -25,11 +25,11 @@ This driver reads and writes SQLite files from the file system, so it
 must be run by a user with read/write access to the files it is working
 with.
 
-Starting with GDAL 2.0, the driver also supports reading and writing the
+The driver also supports reading and writing the
 following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE,
 CURVEPOLYGON, MULTICURVE and MULTISURFACE
 
-Starting with GDAL 2.0, GeoPackage raster/tiles are supported. See
+GeoPackage raster/tiles are supported. See
 :ref:`GeoPackage raster <raster.gpkg>` documentation page
 
 Driver capabilities
@@ -63,7 +63,7 @@ The driver supports OGR attribute filters, and users are expected to
 provide filters in the SQLite dialect, as they will be executed directly
 against the database.
 
-Starting with GDAL 2.0, SQL SELECT statements passed to ExecuteSQL() are
+SQL SELECT statements passed to ExecuteSQL() are
 also executed directly against the database. If Spatialite is used, a
 recent version (4.2.0) is needed and use of explicit cast operators
 AsGPB() is required to transform GeoPackage geometries to Spatialite
@@ -91,8 +91,7 @@ that this will result in a full rewrite of the file.
 SQL functions
 ~~~~~~~~~~~~~
 
-Starting with GDAL 2.0, the following SQL functions, from the GeoPackage
-specification, are available :
+The following SQL functions, from the GeoPackage specification, are available :
 
 -  ST_MinX(geom *Geometry*) : returns the minimum X coordinate of the
    geometry
@@ -124,7 +123,7 @@ Spatialite, are also available :
 Link with Spatialite
 ~~~~~~~~~~~~~~~~~~~~
 
-Starting with GDAL 2.0, if it has been compiled against Spatialite 4.2
+If it has been compiled against Spatialite 4.2
 or later, it is also possible to use Spatialite SQL functions. Explicit
 transformation from GPKG geometry binary encoding to Spatialite geometry
 binary encoding must be done.
@@ -135,8 +134,8 @@ binary encoding must be done.
 
 Starting with Spatialite 4.3, CastAutomagic is no longer needed.
 
-Transaction support (GDAL >= 2.0)
----------------------------------
+Transaction support
+-------------------
 
 The driver implements transactions at the database level, per :ref:`rfc-54`
 
@@ -187,32 +186,32 @@ Layer Creation Options
 -  **GEOMETRY_NAME**: Column to use for the geometry column. Default to
    "geom". Note: This option was called GEOMETRY_COLUMN in releases before
    GDAL 2
--  **GEOMETRY_NULLABLE**: (GDAL >=2.0) Whether the values of the
+-  **GEOMETRY_NULLABLE**: Whether the values of the
    geometry column can be NULL. Can be set to NO so that geometry is
    required. Default to "YES"
 -  **FID**: Column name to use for the OGR FID (primary key in the
    SQLite database). Default to "fid"
 -  **OVERWRITE**: If set to "YES" will delete any existing layers that
    have the same name as the layer being created. Default to NO
--  **SPATIAL_INDEX**: (GDAL >=2.0) If set to "YES" will create a spatial
+-  **SPATIAL_INDEX**: If set to "YES" will create a spatial
    index for this layer. Default to YES
--  **PRECISION**: (GDAL >=2.0) This may be "YES" to force new fields
+-  **PRECISION**: This may be "YES" to force new fields
    created on this layer to try and represent the width of text fields
    (in terms of UTF-8 characters, not bytes), if available using
    TEXT(width) types. If "NO" then the type TEXT will be used instead.
    The default is "YES".
--  **TRUNCATE_FIELDS**: (GDAL >=2.0) This may be "YES" to force
+-  **TRUNCATE_FIELDS**: This may be "YES" to force
    truncated of field values that exceed the maximum allowed width of
    text fields, and also to "fix" the passed string if needed to make it
    a valid UTF-8 string. If "NO" then the value is not truncated nor
    modified. The default is "NO".
--  **IDENTIFIER**\ =string: (GDAL >=2.0) Identifier of the layer, as put
+-  **IDENTIFIER**\ =string: Identifier of the layer, as put
    in the contents table.
--  **DESCRIPTION**\ =string: (GDAL >=2.0) Description of the layer, as
+-  **DESCRIPTION**\ =string: Description of the layer, as
    put in the contents table.
 -  **ASPATIAL_VARIANT**\ =GPKG_ATTRIBUTES/OGR_ASPATIAL/NOT_REGISTERED:
    (GDAL >=2.2) How to register non spatial tables. Defaults to
-   GPKG_ATTRIBUTES in GDAL 2.2 or later (behaviour in previous version
+   GPKG_ATTRIBUTES in GDAL 2.2 or later (behavior in previous version
    was equivalent to OGR_ASPATIAL). Starting with GeoPackage 1.2, non
    spatial tables are part of the specification. They are recorded with
    data_type="attributes" in the gpkg_contents table. This is only
@@ -227,7 +226,7 @@ Layer Creation Options
 Metadata
 --------
 
-(GDAL >=2.0) GDAL uses the standardized
+GDAL uses the standardized
 `gpkg_metadata <http://www.geopackage.org/spec/#_metadata_table>`__
 and
 `gpkg_metadata_reference <http://www.geopackage.org/spec/#_metadata_reference_table>`__
@@ -260,8 +259,7 @@ The core GeoPackage specification of GeoPackage 1.0 and 1.1 did not
 support non-spatial tables. This was added in GeoPackage 1.2 as the
 "attributes" data type.
 
-Starting with GDAL 2.0, the driver allows creating and reading
-non-spatial tables with the :ref:`vector.aspatial`.
+The driver allows creating and reading non-spatial tables with the :ref:`vector.geopackage_aspatial`.
 
 Starting with GDAL 2.2, the driver will also, by default, list non
 spatial tables that are not registered through the gdal_aspatial
@@ -315,19 +313,19 @@ Level of support of GeoPackage Extensions
      - Yes, since GDAL 2.1
    * - `RTree Spatial Indexes <http://www.geopackage.org/guidance/extensions/rtree_spatial_indexes.html>`__
      - Yes
-     - Yes, since GDAL 2.0
+     - Yes
    * - `Metadata <http://www.geopackage.org/guidance/extensions/metadata.html>`__
      - Yes
-     - Yes, since GDAL 1.11
+     - Yes
    * - `Schema <http://www.geopackage.org/guidance/extensions/schema.html>`__
      - Yes
      - No
    * - `WKT for Coordinate Reference Systems <http://www.geopackage.org/guidance/extensions/wkt_for_crs.md>`__ (WKT v2)
      - Yes
      -  Partially, since GDAL 2.2. GDAL can read databases using this extension, but cannot interpret a SRS entry that has only a WKT v2 entry.
-   * - :ref:`vector.aspatial`
+   * - :ref:`vector.geopackage_aspatial`
      - No
-     - Yes, since GDAL 2.0. Deprecated in GDAL 2.2 for the *attributes* official data_type
+     - Yes. Deprecated in GDAL 2.2 for the *attributes* official data_type
 
 Examples
 --------
@@ -374,4 +372,4 @@ See Also
 .. toctree::
    :hidden:
 
-   aspatial
+   geopackage_aspatial

@@ -1024,8 +1024,6 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
         if (psWFSCapabilities == nullptr)
         {
             CPLHTTPResult* psResult = SendGetCapabilities(pszBaseURL, strOriginalTypeName);
-            osTypeName = WFS_DecodeURL(strOriginalTypeName);
-
             if (psResult == nullptr)
             {
                 CPLDestroyXMLNode( psXML );

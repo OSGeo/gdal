@@ -927,11 +927,3 @@ def test_ogr_feature_null_field():
     assert f.Equal(f_clone)
 
     f = None
-
-
-def test_ogr_feature_cleanup():
-
-    gdaltest.src_feature = None
-
-
-

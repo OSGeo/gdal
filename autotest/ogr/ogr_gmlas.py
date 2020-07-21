@@ -51,6 +51,28 @@ from osgeo import ogr
 import pytest
 
 
+pytestmark = pytest.mark.require_driver('GMLAS')
+
+###############################################################################
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
+
+    gdal.SetConfigOption('GMLAS_WARN_UNEXPECTED', 'YES')
+
+    # FileGDB embedded libxml2 cause random crashes with CPLValidateXML() use of external libxml2
+    old_val_GDAL_XML_VALIDATION = gdal.GetConfigOption('GDAL_XML_VALIDATION')
+    if ogr.GetDriverByName('FileGDB') is not None and old_val_GDAL_XML_VALIDATION is None:
+        gdal.SetConfigOption('GDAL_XML_VALIDATION', 'NO')
+
+    yield
+
+    files = gdal.ReadDir('/vsimem/')
+    if files is not None:
+        print('Remaining files: ' + str(files))
+
+    gdal.SetConfigOption('GMLAS_WARN_UNEXPECTED', None)
+    gdal.SetConfigOption('GDAL_XML_VALIDATION', old_val_GDAL_XML_VALIDATION)
+
 ###############################################################################
 
 def compare_ogrinfo_output(gmlfile, reffile, options=''):
@@ -86,16 +108,6 @@ def compare_ogrinfo_output(gmlfile, reffile, options=''):
 
 def test_ogr_gmlas_basic():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
-    gdal.SetConfigOption('GMLAS_WARN_UNEXPECTED', 'YES')
-
-    # FileGDB embedded libxml2 cause random crashes with CPLValidateXML() use of external libxml2
-    ogrtest.old_val_GDAL_XML_VALIDATION = gdal.GetConfigOption('GDAL_XML_VALIDATION')
-    if ogr.GetDriverByName('FileGDB') is not None and ogrtest.old_val_GDAL_XML_VALIDATION is None:
-        gdal.SetConfigOption('GDAL_XML_VALIDATION', 'NO')
-
     ds = ogr.Open('GMLAS:data/gmlas/gmlas_test1.xml')
     assert ds is not None
     ds = None
@@ -112,9 +124,6 @@ def test_ogr_gmlas_basic():
 
 
 def test_ogr_gmlas_test_ogrsf():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     # Skip tests when -fsanitize is used
     if gdaltest.is_travis_branch('sanitize'):
@@ -134,9 +143,6 @@ def test_ogr_gmlas_test_ogrsf():
 
 
 def test_ogr_gmlas_virtual_file():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_8.xml',
                            """<myns:main_elt xmlns:myns="http://myns"
@@ -163,9 +169,6 @@ def test_ogr_gmlas_virtual_file():
 
 def test_ogr_gmlas_datafile_with_xsd_option():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_test1.xml', open_options=['XSD=data/gmlas/gmlas_test1.xsd'])
     assert ds is not None
 
@@ -175,9 +178,6 @@ def test_ogr_gmlas_datafile_with_xsd_option():
 
 def test_ogr_gmlas_no_datafile_with_xsd_option():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     ds = gdal.OpenEx('GMLAS:', open_options=['XSD=data/gmlas/gmlas_test1.xsd'])
     assert ds is not None
 
@@ -186,9 +186,6 @@ def test_ogr_gmlas_no_datafile_with_xsd_option():
 
 
 def test_ogr_gmlas_no_datafile_xsd_which_is_not_xsd():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     with gdaltest.error_handler():
         ds = gdal.OpenEx('GMLAS:', open_options=['XSD=data/gmlas/gmlas_test1.xml'])
@@ -201,9 +198,6 @@ def test_ogr_gmlas_no_datafile_xsd_which_is_not_xsd():
 
 def test_ogr_gmlas_no_datafile_no_xsd():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     with gdaltest.error_handler():
         ds = gdal.OpenEx('GMLAS:')
     assert ds is None
@@ -214,9 +208,6 @@ def test_ogr_gmlas_no_datafile_no_xsd():
 
 
 def test_ogr_gmlas_non_existing_gml():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     with gdaltest.error_handler():
         ds = gdal.OpenEx('GMLAS:/vsimem/i_do_not_exist.gml')
@@ -229,9 +220,6 @@ def test_ogr_gmlas_non_existing_gml():
 
 def test_ogr_gmlas_non_existing_xsd():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     with gdaltest.error_handler():
         ds = gdal.OpenEx('GMLAS:', open_options=['XSD=/vsimem/i_do_not_exist.xsd'])
     assert ds is None
@@ -242,9 +230,6 @@ def test_ogr_gmlas_non_existing_xsd():
 
 
 def test_ogr_gmlas_gml_without_schema_location():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_gml_without_schema_location.xml',
                            """<MYNS:main_elt xmlns:MYNS="http://myns"/>""")
@@ -262,9 +247,6 @@ def test_ogr_gmlas_gml_without_schema_location():
 
 def test_ogr_gmlas_invalid_schema():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     with gdaltest.error_handler():
         ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_invalid_schema.xml')
     assert ds is None
@@ -275,9 +257,6 @@ def test_ogr_gmlas_invalid_schema():
 
 
 def test_ogr_gmlas_invalid_xml():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_invalid_xml.xml')
     lyr = ds.GetLayer(0)
@@ -291,9 +270,6 @@ def test_ogr_gmlas_invalid_xml():
 
 
 def test_ogr_gmlas_gml_Reference():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     ds = ogr.Open('GMLAS:data/gmlas/gmlas_test_targetelement.xml')
     assert ds.GetLayerCount() == 3
@@ -318,9 +294,6 @@ def test_ogr_gmlas_gml_Reference():
 
 def test_ogr_gmlas_same_element_in_different_ns():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_same_element_in_different_ns.xml')
     assert ds is not None
     # for i in range(ds.GetLayerCount()):
@@ -343,9 +316,6 @@ def test_ogr_gmlas_same_element_in_different_ns():
 
 def test_ogr_gmlas_corner_case_relative_path():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     ds = ogr.Open('GMLAS:../ogr/data/gmlas/gmlas_test1.xml')
     assert ds is not None
 
@@ -354,9 +324,6 @@ def test_ogr_gmlas_corner_case_relative_path():
 
 
 def test_ogr_gmlas_unexpected_repeated_element():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_unexpected_repeated_element.xml')
     lyr = ds.GetLayer(0)
@@ -376,9 +343,6 @@ def test_ogr_gmlas_unexpected_repeated_element():
 
 def test_ogr_gmlas_unexpected_repeated_element_variant():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_unexpected_repeated_element_variant.xml')
     lyr = ds.GetLayer(0)
     with gdaltest.error_handler():
@@ -396,9 +360,6 @@ def test_ogr_gmlas_unexpected_repeated_element_variant():
 
 
 def test_ogr_gmlas_geometryproperty():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32.gml', open_options=[
         'CONFIG_FILE=<Configuration><LayerBuildingRules><GML><IncludeGeometryXML>true</IncludeGeometryXML></GML></LayerBuildingRules></Configuration>'])
@@ -522,9 +483,6 @@ def test_ogr_gmlas_geometryproperty():
 
 def test_ogr_gmlas_abstractgeometry():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_abstractgeometry_gml32.gml', open_options=[
         'CONFIG_FILE=<Configuration><LayerBuildingRules><GML><IncludeGeometryXML>true</IncludeGeometryXML></GML></LayerBuildingRules></Configuration>'])
     lyr = ds.GetLayer(0)
@@ -562,9 +520,6 @@ class MyHandler(object):
 
 
 def test_ogr_gmlas_validate():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     # By default check we are silent about validation error
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_validate.xml')
@@ -638,9 +593,6 @@ def test_ogr_gmlas_validate():
 
 def test_ogr_gmlas_test_ns_prefix():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     # The schema doesn't directly import xlink, but indirectly references it
     ds = gdal.OpenEx('GMLAS:', open_options=['XSD=data/gmlas/gmlas_test_targetelement.xsd'])
 
@@ -657,9 +609,6 @@ def test_ogr_gmlas_test_ns_prefix():
 
 def test_ogr_gmlas_no_namespace():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     ds = ogr.Open('GMLAS:data/gmlas/gmlas_no_namespace.xml')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -673,9 +622,6 @@ def test_ogr_gmlas_no_namespace():
 
 
 def test_ogr_gmlas_conf():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     # Non existing file
     with gdaltest.error_handler():
@@ -750,9 +696,6 @@ def test_ogr_gmlas_conf():
 
 
 def test_ogr_gmlas_conf_ignored_xpath():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     # Test unsupported and invalid XPaths
     for xpath in ['',
@@ -901,9 +844,6 @@ class GMLASHTTPHandler(BaseHTTPRequestHandler):
 
 def test_ogr_gmlas_cache():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     drv = gdal.GetDriverByName('HTTP')
 
     if drv is None:
@@ -1030,9 +970,6 @@ def test_ogr_gmlas_cache():
 
 def test_ogr_gmlas_link_nested_independant_child():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     ds = ogr.Open('GMLAS:data/gmlas/gmlas_link_nested_independant_child.xml')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1046,9 +983,6 @@ def test_ogr_gmlas_link_nested_independant_child():
 
 
 def test_ogr_gmlas_composition_compositionPart():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     ds = ogr.Open('GMLAS:data/gmlas/gmlas_composition_compositionPart.xml')
 
@@ -1080,9 +1014,6 @@ def test_ogr_gmlas_composition_compositionPart():
 
 def test_ogr_gmlas_instantiate_only_gml_feature():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     with gdaltest.tempfile('/vsimem/with space/gmlas_instantiate_only_gml_feature.xsd',
                        open('data/gmlas/gmlas_instantiate_only_gml_feature.xsd', 'rb').read()):
         with gdaltest.tempfile('/vsimem/with space/gmlas_fake_gml32.xsd',
@@ -1097,9 +1028,6 @@ def test_ogr_gmlas_instantiate_only_gml_feature():
 
 
 def test_ogr_gmlas_timestamp_ignored_for_hash():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     ds = ogr.Open('GMLAS:data/gmlas/gmlas_timestamp_ignored_for_hash_foo.xml')
     lyr = ds.GetLayer(0)
@@ -1119,9 +1047,6 @@ def test_ogr_gmlas_timestamp_ignored_for_hash():
 
 
 def test_ogr_gmlas_dataset_getnextfeature():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_test1.xml')
 
@@ -1243,9 +1168,6 @@ def test_ogr_gmlas_dataset_getnextfeature():
 
 def test_ogr_gmlas_inline_identifier():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     ds = gdal.OpenEx('GMLAS:', open_options=['XSD=data/gmlas/gmlas_inline_identifier.xsd'])
     if ds.GetLayerCount() != 2:
         for i in range(ds.GetLayerCount()):
@@ -1260,9 +1182,6 @@ def test_ogr_gmlas_inline_identifier():
 
 def test_ogr_gmlas_avoid_same_name_inlined_classes():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     ds = gdal.OpenEx('GMLAS:', open_options=['XSD=data/gmlas/gmlas_avoid_same_name_inlined_classes.xsd'])
     assert ds.GetLayerCount() == 3
     lyr = ds.GetLayerByName('myFeature_ns1_dt')
@@ -1275,9 +1194,6 @@ def test_ogr_gmlas_avoid_same_name_inlined_classes():
 #  Test validation with an optional fixed attribute that is ignored
 
 def test_ogr_gmlas_validate_ignored_fixed_attribute():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     myhandler = MyHandler()
     gdal.PushErrorHandler(myhandler.error_handler)
@@ -1292,9 +1208,6 @@ def test_ogr_gmlas_validate_ignored_fixed_attribute():
 #  Test REMOVE_UNUSED_LAYERS and REMOVE_UNUSED_FIELDS options
 
 def test_ogr_gmlas_remove_unused_layers_and_fields():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_remove_unused_layers_and_fields.xml',
                      open_options=['REMOVE_UNUSED_LAYERS=YES',
@@ -1331,9 +1244,6 @@ def test_ogr_gmlas_remove_unused_layers_and_fields():
 
 
 def test_ogr_gmlas_xlink_resolver():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     drv = gdal.GetDriverByName('HTTP')
     if drv is None:
@@ -1788,9 +1698,6 @@ bar""" or \
 
 def test_ogr_gmlas_recoding():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     if sys.version_info >= (3, 0, 0):
         accent = '\u00e9'
     else:
@@ -1810,9 +1717,6 @@ def test_ogr_gmlas_recoding():
 
 
 def test_ogr_gmlas_schema_without_namespace_prefix():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     # Generic http:// namespace URI
     ds = gdal.OpenEx('GMLAS:', open_options=['XSD=data/gmlas/gmlas_schema_without_namespace_prefix_generic_http_uri.xsd'])
@@ -1851,9 +1755,6 @@ def test_ogr_gmlas_schema_without_namespace_prefix():
 
 def test_ogr_gmlas_truncated_xml():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_truncated_xml.xml')
     lyr = ds.GetLayer(0)
     with gdaltest.error_handler():
@@ -1868,9 +1769,6 @@ def test_ogr_gmlas_truncated_xml():
 
 
 def test_ogr_gmlas_identifier_truncation():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     ds = gdal.OpenEx('GMLAS:', open_options=[
         'XSD=data/gmlas/gmlas_identifier_truncation.xsd',
@@ -1905,9 +1803,6 @@ def test_ogr_gmlas_identifier_truncation():
 
 def test_ogr_gmlas_identifier_case_ambiguity():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     ds = gdal.OpenEx('GMLAS:', open_options=[
         'XSD=data/gmlas/gmlas_identifier_case_ambiguity.xsd',
         'CONFIG_FILE=<Configuration><LayerBuildingRules><PostgreSQLIdentifierLaundering>false</PostgreSQLIdentifierLaundering></LayerBuildingRules></Configuration>'])
@@ -1926,9 +1821,6 @@ def test_ogr_gmlas_identifier_case_ambiguity():
 
 
 def test_ogr_gmlas_writer():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     if ogr.GetDriverByName('SQLite') is None:
         pytest.skip()
@@ -1949,9 +1841,6 @@ def test_ogr_gmlas_writer():
 
 
 def test_ogr_gmlas_writer_check_xml_xsd():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     if ogr.GetDriverByName('SQLite') is None:
         pytest.skip()
@@ -2001,9 +1890,6 @@ def test_ogr_gmlas_writer_check_xml_xsd():
 
 
 def test_ogr_gmlas_writer_check_xml_read_back():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     if ogr.GetDriverByName('SQLite') is None:
         pytest.skip()
@@ -2065,9 +1951,6 @@ def test_ogr_gmlas_writer_check_xml_read_back():
 
 def test_ogr_gmlas_writer_gml():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml',
                          open_options=['EXPOSE_METADATA_LAYERS=YES', '@HASH=hash'])
     tmp_ds = gdal.VectorTranslate('', src_ds, format='Memory')
@@ -2105,9 +1988,6 @@ def test_ogr_gmlas_writer_gml():
 
 
 def test_ogr_gmlas_writer_gml_assign_srs():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml',
                          open_options=['EXPOSE_METADATA_LAYERS=YES', '@HASH=hash'])
@@ -2163,9 +2043,6 @@ def test_ogr_gmlas_writer_gml_assign_srs():
 
 def test_ogr_gmlas_writer_gml_original_xml():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml',
                          open_options=['EXPOSE_METADATA_LAYERS=YES',
                                        'CONFIG_FILE=<Configuration><LayerBuildingRules><GML><IncludeGeometryXML>true</IncludeGeometryXML></GML></LayerBuildingRules></Configuration>'])
@@ -2201,9 +2078,6 @@ def test_ogr_gmlas_writer_gml_original_xml():
 
 
 def test_ogr_gmlas_writer_options():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml', open_options=['@HASH=hash'])
     tmp_ds = gdal.VectorTranslate('', src_ds, format='Memory')
@@ -2318,9 +2192,6 @@ def test_ogr_gmlas_writer_options():
 
 def test_ogr_gmlas_writer_errors():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     # Source dataset is empty
     with gdaltest.error_handler():
         ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', gdal.GetDriverByName('Memory').Create('', 0, 0, 0, 0), format='GMLAS')
@@ -2420,10 +2291,7 @@ def test_ogr_gmlas_writer_errors():
 
 def test_ogr_gmlas_read_fake_gmljp2():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
-    ds = gdal.OpenEx('GMLAS:data/fake_gmljp2.xml')
+    ds = gdal.OpenEx('GMLAS:data/gmlas/fake_gmljp2.xml')
 
     count = 0
     while True:
@@ -2440,9 +2308,6 @@ def test_ogr_gmlas_read_fake_gmljp2():
 
 
 def test_ogr_gmlas_typing_constraints():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     # One substitution, no repetition
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_typing_constraints_one_subst_no_repetition.xml',
@@ -2537,9 +2402,6 @@ def test_ogr_gmlas_typing_constraints():
 
 def test_ogr_gmlas_swe_dataarray():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_swe_dataarray.xml')
 
     lyr = ds.GetLayerByName('dataarray_1_components')
@@ -2608,9 +2470,6 @@ def test_ogr_gmlas_swe_dataarray():
 
 def test_ogr_gmlas_swe_datarecord():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     gdal.ErrorReset()
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_swe_datarecord.xml', open_options=['VALIDATE=YES'])
     assert gdal.GetLastErrorMsg() == ''
@@ -2638,9 +2497,6 @@ def test_ogr_gmlas_swe_datarecord():
 
 def test_ogr_gmlas_any_field_at_end_of_declaration():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     # Simplified test case for
     # http://schemas.earthresourceml.org/earthresourceml-lite/1.0/erml-lite.xsd
     # http://services.ga.gov.au/earthresource/ows?service=wfs&version=2.0.0&request=GetFeature&typenames=erl:CommodityResourceView&count=10
@@ -2666,9 +2522,6 @@ def test_ogr_gmlas_any_field_at_end_of_declaration():
 
 def test_ogr_gmlas_aux_schema_without_namespace_prefix():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_aux_schema_without_namespace_prefix.xml')
     lyr = ds.GetLayerByName('main_elt')
     f = lyr.GetNextFeature()
@@ -2684,9 +2537,6 @@ def test_ogr_gmlas_aux_schema_without_namespace_prefix():
 
 def test_ogr_gmlas_geometry_as_substitutiongroup():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometry_as_substitutiongroup.xml')
     lyr = ds.GetLayerByName('foo')
     f = lyr.GetNextFeature()
@@ -2701,9 +2551,6 @@ def test_ogr_gmlas_geometry_as_substitutiongroup():
 @pytest.mark.require_run_on_demand
 def test_ogr_gmlas_extra_piezometre():
 
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
     return compare_ogrinfo_output('data/gmlas/real_world/Piezometre.06512X0037.STREMY.2.gml',
                                   'data/gmlas/real_world/output/Piezometre.06512X0037.STREMY.2.txt',
                                   options='-oo REMOVE_UNUSED_LAYERS=YES')
@@ -2713,9 +2560,6 @@ def test_ogr_gmlas_extra_piezometre():
 
 @pytest.mark.require_run_on_demand
 def test_ogr_gmlas_extra_eureg():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     return compare_ogrinfo_output('data/gmlas/real_world/EUReg.example.gml',
                                   'data/gmlas/real_world/output/EUReg.example.txt',
@@ -2727,9 +2571,6 @@ def test_ogr_gmlas_extra_eureg():
 # schema
 
 def test_ogr_gmlas_no_element_in_first_choice_schema():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     ds = gdal.OpenEx('GMLAS:', open_options=['XSD=data/gmlas/gmlas_no_element_in_first_choice_schema.xsd'])
     lyr = ds.GetLayerByName('_ogr_layers_metadata')
@@ -2744,9 +2585,6 @@ def test_ogr_gmlas_no_element_in_first_choice_schema():
 # Test cross-layer links with xlink:href="#my_id"
 
 def test_ogr_gmlas_internal_xlink_href():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
 
     with gdaltest.error_handler():
         ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_internal_xlink_href.xml')
@@ -2875,20 +2713,3 @@ def test_ogr_gmlas_internal_xlink_href():
        f['child_pkid'] != 'ogr_pkid':
         f.DumpReadable()
         pytest.fail()
-
-    
-###############################################################################
-#  Cleanup
-
-
-def test_ogr_gmlas_cleanup():
-
-    if ogr.GetDriverByName('GMLAS') is None:
-        pytest.skip()
-
-    files = gdal.ReadDir('/vsimem/')
-    if files is not None:
-        print('Remaining files: ' + str(files))
-
-    gdal.SetConfigOption('GMLAS_WARN_UNEXPECTED', None)
-    gdal.SetConfigOption('GDAL_XML_VALIDATION', ogrtest.old_val_GDAL_XML_VALIDATION)

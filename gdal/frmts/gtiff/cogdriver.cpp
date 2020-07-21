@@ -34,6 +34,8 @@
 #include "cogdriver.h"
 #include "geotiff.h"
 
+#include "tilematrixset.hpp"
+
 #include <algorithm>
 #include <memory>
 #include <vector>
@@ -86,6 +88,7 @@ static const char* GetResampling(GDALDataset* poSrcDS)
 /*                     COGGetWarpingCharacteristics()                   */
 /************************************************************************/
 
+static
 bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
                                   const char * const* papszOptions,
                                   CPLString& osResampling,
@@ -95,7 +98,10 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
                                   double& dfMinX,
                                   double& dfMinY,
                                   double& dfMaxX,
-                                  double& dfMaxY)
+                                  double& dfMaxY,
+                                  std::unique_ptr<gdal::TileMatrixSet>& poTM,
+                                  int& nZoomLevel,
+                                  int& nAlignedLevels)
 {
     osTargetSRS = CSLFetchNameValueDef(papszOptions, "TARGET_SRS", "");
     CPLString osTilingScheme(CSLFetchNameValueDef(papszOptions,
@@ -105,8 +111,43 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
 
     CPLString osExtent(CSLFetchNameValueDef(papszOptions, "EXTENT", ""));
     CPLString osRes(CSLFetchNameValueDef(papszOptions, "RES", ""));
-    if( EQUAL(osTilingScheme, "GoogleMapsCompatible") )
-        osTargetSRS = "EPSG:3857";
+    if( !EQUAL(osTilingScheme, "CUSTOM") )
+    {
+        poTM = gdal::TileMatrixSet::parse(osTilingScheme);
+        if( poTM == nullptr )
+            return false;
+        if( !poTM->haveAllLevelsSameTopLeft() )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                    "Unsupported tiling scheme: not all zoom levels have same top left corner");
+            return false;
+        }
+        if( !poTM->haveAllLevelsSameTileSize() )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                    "Unsupported tiling scheme: not all zoom levels have same tile size");
+            return false;
+        }
+        if( poTM->hasVariableMatrixWidth() )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                    "Unsupported tiling scheme: some levels have variable matrix width");
+            return false;
+        }
+        osTargetSRS = poTM->crs();
+
+        // "Normalize" SRS as AUTH:CODE
+        OGRSpatialReference oTargetSRS;
+        oTargetSRS.SetFromUserInput(osTargetSRS);
+        const char* pszAuthCode = oTargetSRS.GetAuthorityCode(nullptr);
+        const char* pszAuthName = oTargetSRS.GetAuthorityName(nullptr);
+        if( pszAuthName && pszAuthCode )
+        {
+            osTargetSRS = pszAuthName;
+            osTargetSRS += ':';
+            osTargetSRS += pszAuthCode;
+        }
+    }
 
     CPLStringList aosTO;
     aosTO.SetNameValue( "DST_SRS", osTargetSRS );
@@ -195,60 +236,142 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
     dfMaxY = adfExtent[3];
     double dfRes = adfGeoTransform[1];
 
-    if( EQUAL(osTilingScheme, "GoogleMapsCompatible") )
+    if( poTM )
     {
+        const bool bInvertAxis =
+            oTargetSRS.EPSGTreatsAsLatLong() != FALSE ||
+            oTargetSRS.EPSGTreatsAsNorthingEasting() != FALSE;
+
+        const auto& bbox = poTM->bbox();
+        if( bbox.mCrs == poTM->crs() )
+        {
+            if( dfMaxX < (bInvertAxis ? bbox.mLowerCornerY : bbox.mLowerCornerX) ||
+                dfMinX > (bInvertAxis ? bbox.mUpperCornerY : bbox.mUpperCornerX) ||
+                dfMaxY < (bInvertAxis ? bbox.mLowerCornerX : bbox.mLowerCornerY) ||
+                dfMinY > (bInvertAxis ? bbox.mUpperCornerX : bbox.mUpperCornerY) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Raster extent completely outside of tile matrix set bounding box");
+                return false;
+            }
+        }
+
+        const auto& tmList = poTM->tileMatrixList();
         const int nBlockSize = atoi(CSLFetchNameValueDef(
-            papszOptions, "BLOCKSIZE", "256"));
-        const double dfPixelXSizeZoomLevel0 = 156543.0339280410 * 256 / nBlockSize;
-        const double dfOriX = -(dfPixelXSizeZoomLevel0 * nBlockSize) / 2.0;
-        const double dfOriY = -dfOriX;
+            papszOptions, "BLOCKSIZE", CPLSPrintf("%d", tmList[0].mTileWidth)));
+        const double dfOriX = bInvertAxis ? tmList[0].mTopLeftY : tmList[0].mTopLeftX;
+        const double dfOriY = bInvertAxis ? tmList[0].mTopLeftX : tmList[0].mTopLeftY;
         double dfComputedRes = adfGeoTransform[1];
         double dfPrevRes = 0.0;
         dfRes = 0.0;
-        int nZoomLevel = 0;  // Used after for.
-        for( ; nZoomLevel < 25; nZoomLevel++ )
+        for( ; nZoomLevel < static_cast<int>(tmList.size()); nZoomLevel++ )
         {
-            dfRes = dfPixelXSizeZoomLevel0 / (1 << nZoomLevel);
-            if( dfComputedRes > dfRes )
+            dfRes = tmList[nZoomLevel].mResX * tmList[0].mTileWidth / nBlockSize;
+            if( dfComputedRes > dfRes || fabs( dfComputedRes - dfRes ) / dfRes <= 1e-8 )
                 break;
             dfPrevRes = dfRes;
         }
-        if( nZoomLevel == 25 )
+        if( nZoomLevel == static_cast<int>(tmList.size()) )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Could not find an appropriate zoom level");
             return false;
         }
-        if( nZoomLevel > 0 )
+
+        if( nZoomLevel > 0 && fabs( dfComputedRes - dfRes ) / dfRes > 1e-8 )
         {
-            if( dfPrevRes / dfComputedRes < dfComputedRes / dfRes )
+            const char* pszZoomLevelStrategy = CSLFetchNameValueDef(papszOptions,
+                                                                    "ZOOM_LEVEL_STRATEGY",
+                                                                    "AUTO");
+            if( EQUAL(pszZoomLevelStrategy, "LOWER") )
             {
                 nZoomLevel --;
-                dfRes = dfPixelXSizeZoomLevel0 / (1 << nZoomLevel);
             }
+            else if( EQUAL(pszZoomLevelStrategy, "UPPER") )
+            {
+                /* do nothing */
+            }
+            else
+            {
+                if( dfPrevRes / dfComputedRes < dfComputedRes / dfRes )
+                    nZoomLevel --;
+            }
+            dfRes = tmList[nZoomLevel].mResX * tmList[0].mTileWidth / nBlockSize;
         }
+
         CPLDebug("COG", "Using ZOOM_LEVEL %d", nZoomLevel);
 
         const double dfTileExtent = dfRes * nBlockSize;
-        int nTLTileX = static_cast<int>(std::floor((dfMinX - dfOriX) / dfTileExtent));
-        int nTLTileY = static_cast<int>(std::floor((dfOriY - dfMaxY) / dfTileExtent));
-        int nBRTileX = static_cast<int>(std::ceil((dfMaxX - dfOriX) / dfTileExtent));
-        int nBRTileY = static_cast<int>(std::ceil((dfOriY - dfMinY) / dfTileExtent));
+        int nTLTileX = static_cast<int>(std::floor((dfMinX - dfOriX) / dfTileExtent + 1e-10));
+        int nTLTileY = static_cast<int>(std::floor((dfOriY - dfMaxY) / dfTileExtent + 1e-10));
+        int nBRTileX = static_cast<int>(std::ceil((dfMaxX - dfOriX) / dfTileExtent - 1e-10));
+        int nBRTileY = static_cast<int>(std::ceil((dfOriY - dfMinY) / dfTileExtent - 1e-10));
 
-        const int nAlignedLevels = std::min(10, atoi(
-        CSLFetchNameValueDef(papszOptions, "ALIGNED_LEVELS", "0")));
-        if( nAlignedLevels >= 1 )
+        nAlignedLevels = std::min(std::min(10, atoi(
+            CSLFetchNameValueDef(papszOptions, "ALIGNED_LEVELS", "0"))), nZoomLevel);
+        int nAccDivisor = 1;
+        for( int i = 0; i < nAlignedLevels - 1; i++ )
         {
-            const int nAlignment = ((1 << (nAlignedLevels-1))-1);
-            nTLTileX &= ~nAlignment;
-            nTLTileY &= ~nAlignment;
-            nBRTileY = (nBRTileY + nAlignment) & ~nAlignment;
-            nBRTileX = (nBRTileX + nAlignment) & ~nAlignment;
+            const int nCurLevel = nZoomLevel - i;
+            const double dfResRatio =
+                tmList[nCurLevel-1].mResX / tmList[nCurLevel].mResX;
+            // Magical number that has a great number of divisors
+            // For example if previous scale denom was 50K and current one
+            // is 20K, then dfResRatio = 2.5 and dfScaledInvResRatio = 24
+            // We must then simplify 60 / 24 as 5 / 2, and make sure to
+            // align tile coordinates on multiple of the 5 numerator
+            constexpr int MAGICAL = 60;
+            const double dfScaledInvResRatio = MAGICAL / dfResRatio;
+            if( dfScaledInvResRatio < 1 || dfScaledInvResRatio > 60 ||
+                std::abs(std::round(dfScaledInvResRatio) - dfScaledInvResRatio) > 1e-10 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                            "Unsupported ratio of resolution for "
+                            "ALIGNED_LEVELS between zoom level %d and %d = %g",
+                            nCurLevel-1, nCurLevel, dfResRatio);
+                return false;
+            }
+            const int nScaledInvResRatio = static_cast<int>(
+                std::round(dfScaledInvResRatio));
+            int nNumerator = 0;
+            for( int nDivisor = nScaledInvResRatio; nDivisor >= 2; --nDivisor )
+            {
+                if( (MAGICAL % nDivisor) == 0 && (nScaledInvResRatio % nDivisor) == 0 )
+                {
+                    nNumerator = MAGICAL / nDivisor;
+                    break;
+                }
+            }
+            if( nNumerator == 0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                            "Unsupported ratio of resolution for "
+                            "ALIGNED_LEVELS between zoom level %d and %d = %g",
+                            nCurLevel-1, nCurLevel, dfResRatio);
+                return false;
+            }
+            nAccDivisor *= nNumerator;
+        }
+        if( nAccDivisor > 1 )
+        {
+            nTLTileX = (nTLTileX / nAccDivisor) * nAccDivisor;
+            nTLTileY = (nTLTileY / nAccDivisor) * nAccDivisor;
+            nBRTileY = ((nBRTileY + nAccDivisor - 1) / nAccDivisor) * nAccDivisor;
+            nBRTileX = ((nBRTileX + nAccDivisor - 1) / nAccDivisor) * nAccDivisor;
+        }
+
+        if( nTLTileX < 0 || nTLTileY < 0 ||
+            nBRTileX > tmList[nZoomLevel].mMatrixWidth ||
+            nBRTileY > tmList[nZoomLevel].mMatrixHeight )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Raster extent partially outside of tile matrix "
+                     "bounding box. Clamping it to it");
         }
         nTLTileX = std::max(0, nTLTileX);
         nTLTileY = std::max(0, nTLTileY);
-        nBRTileX = std::min(1 << nZoomLevel, nBRTileX);
-        nBRTileY = std::min(1 << nZoomLevel, nBRTileY);
+        nBRTileX = std::min(tmList[nZoomLevel].mMatrixWidth, nBRTileX);
+        nBRTileY = std::min(tmList[nZoomLevel].mMatrixHeight, nBRTileY);
 
         dfMinX = dfOriX + nTLTileX * dfTileExtent;
         dfMinY = dfOriY - nBRTileY * dfTileExtent;
@@ -278,9 +401,35 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
     nYSize = static_cast<int>(std::round((dfMaxY - dfMinY) / dfRes));
 
     osResampling = CSLFetchNameValueDef(papszOptions,
-        "RESAMPLING", GetResampling(poSrcDS));
+        "WARP_RESAMPLING",
+        CSLFetchNameValueDef(papszOptions,
+            "RESAMPLING", GetResampling(poSrcDS)));
 
     return true;
+}
+
+// Used by gdalwarp
+bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
+                                  const char * const* papszOptions,
+                                  CPLString& osResampling,
+                                  CPLString& osTargetSRS,
+                                  int& nXSize,
+                                  int& nYSize,
+                                  double& dfMinX,
+                                  double& dfMinY,
+                                  double& dfMaxX,
+                                  double& dfMaxY)
+{
+    std::unique_ptr<gdal::TileMatrixSet> poTM;
+    int nZoomLevel = 0;
+    int nAlignedLevels = 0;
+    return COGGetWarpingCharacteristics(poSrcDS,
+                                        papszOptions,
+                                        osResampling,
+                                        osTargetSRS,
+                                        nXSize, nYSize,
+                                        dfMinX, dfMinY, dfMaxX, dfMaxY,
+                                        poTM, nZoomLevel, nAlignedLevels);
 }
 
 /************************************************************************/
@@ -305,6 +454,7 @@ void COGRemoveWarpingOptions(CPLStringList& aosOptions)
     aosOptions.SetNameValue("EXTENT", nullptr);
     aosOptions.SetNameValue("RES", nullptr);
     aosOptions.SetNameValue("ALIGNED_LEVELS", nullptr);
+    aosOptions.SetNameValue("ZOOM_LEVEL_STRATEGY", nullptr);
 }
 
 /************************************************************************/
@@ -315,28 +465,19 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
                                 const char* pszDstFilename,
                                 GDALDataset *poSrcDS,
                                 const char * const* papszOptions,
+                                const CPLString& osResampling,
+                                const CPLString& osTargetSRS,
+                                const int nXSize,
+                                const int nYSize,
+                                const double dfMinX,
+                                const double dfMinY,
+                                const double dfMaxX,
+                                const double dfMaxY,
                                 GDALProgressFunc pfnProgress,
                                 void * pProgressData,
                                 double& dfCurPixels,
                                 double& dfTotalPixelsToProcess)
 {
-    CPLString osResampling;
-    CPLString osTargetSRS;
-    int nXSize = 0;
-    int nYSize = 0;
-    double dfMinX = 0;
-    double dfMinY = 0;
-    double dfMaxX = 0;
-    double dfMaxY = 0;
-    if( !COGGetWarpingCharacteristics(poSrcDS, papszOptions,
-                                      osResampling,
-                                      osTargetSRS,
-                                      nXSize, nYSize,
-                                      dfMinX, dfMinY, dfMaxX, dfMaxY) )
-    {
-        return nullptr;
-    }
-
     char** papszArg = nullptr;
     // We could have done a warped VRT, but overview building on it might be
     // slow, so materialize as GTiff
@@ -374,6 +515,8 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
     }
     papszArg = CSLAddString(papszArg, "-r");
     papszArg = CSLAddString(papszArg, osResampling);
+    papszArg = CSLAddString(papszArg, "-wo");
+    papszArg = CSLAddString(papszArg, "SAMPLE_GRID=YES");
     const char* pszNumThreads = CSLFetchNameValue(papszOptions, "NUM_THREADS");
     if( pszNumThreads )
     {
@@ -397,6 +540,9 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
 
     auto psOptions = GDALWarpAppOptionsNew(papszArg, nullptr);
     CSLDestroy(papszArg);
+    if( psOptions == nullptr )
+        return nullptr;
+
     const double dfNextPixels =
         double(nXSize) * nYSize * (nBands + (bHasMask ? 1 : 0));
     void* pScaledProgress = GDALCreateScaledProgress(
@@ -405,7 +551,7 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
                 pfnProgress, pProgressData );
     dfCurPixels = dfNextPixels;
 
-    CPLDebug("COG", "Reprojecting source dataset");
+    CPLDebug("COG", "Reprojecting source dataset: start");
     GDALWarpAppOptionsSetProgress(psOptions, GDALScaledProgress, pScaledProgress );
     CPLString osTmpFile(GetTmpFilename(pszDstFilename, "warped.tif.tmp"));
     auto hSrcDS = GDALDataset::ToHandle(poSrcDS);
@@ -413,6 +559,7 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
                           1, &hSrcDS,
                           psOptions, nullptr);
     GDALWarpAppOptionsFree(psOptions);
+    CPLDebug("COG", "Reprojecting source dataset: end");
 
     GDALDestroyScaledProgress(pScaledProgress);
 
@@ -491,15 +638,87 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     double dfTotalPixelsToProcess = 0;
     GDALDataset* poCurDS = poSrcDS;
 
+    std::unique_ptr<gdal::TileMatrixSet> poTM;
+    int nZoomLevel = 0;
+    int nAlignedLevels = 0;
     if( COGHasWarpingOptions(papszOptions) )
     {
-        m_poReprojectedDS =
-            CreateReprojectedDS(pszFilename, poCurDS,
-                                papszOptions, pfnProgress, pProgressData,
-                                dfCurPixels, dfTotalPixelsToProcess);
-        if( !m_poReprojectedDS )
+        CPLString osTargetResampling;
+        CPLString osTargetSRS;
+        int nTargetXSize = 0;
+        int nTargetYSize = 0;
+        double dfTargetMinX = 0;
+        double dfTargetMinY = 0;
+        double dfTargetMaxX = 0;
+        double dfTargetMaxY = 0;
+        if( !COGGetWarpingCharacteristics(poCurDS, papszOptions,
+                                          osTargetResampling,
+                                          osTargetSRS,
+                                          nTargetXSize, nTargetYSize,
+                                          dfTargetMinX, dfTargetMinY,
+                                          dfTargetMaxX, dfTargetMaxY,
+                                          poTM, nZoomLevel, nAlignedLevels) )
+        {
             return nullptr;
-        poCurDS = m_poReprojectedDS.get();
+        }
+
+        // Collect information on source dataset to see if it already
+        // matches the warping specifications
+        CPLString osSrcSRS;
+        const auto poSrcSRS = poCurDS->GetSpatialRef();
+        if( poSrcSRS )
+        {
+            const char* pszAuthName = poSrcSRS->GetAuthorityName(nullptr);
+            const char* pszAuthCode = poSrcSRS->GetAuthorityCode(nullptr);
+            if( pszAuthName && pszAuthCode )
+            {
+                osSrcSRS = pszAuthName;
+                osSrcSRS += ':';
+                osSrcSRS += pszAuthCode;
+            }
+        }
+        double dfSrcMinX = 0;
+        double dfSrcMinY = 0;
+        double dfSrcMaxX = 0;
+        double dfSrcMaxY = 0;
+        double adfSrcGT[6];
+        const int nSrcXSize = poCurDS->GetRasterXSize();
+        const int nSrcYSize = poCurDS->GetRasterYSize();
+        if( poCurDS->GetGeoTransform(adfSrcGT) == CE_None )
+        {
+            dfSrcMinX = adfSrcGT[0];
+            dfSrcMaxY = adfSrcGT[3];
+            dfSrcMaxX = adfSrcGT[0] + nSrcXSize * adfSrcGT[1];
+            dfSrcMinY = adfSrcGT[3] + nSrcYSize * adfSrcGT[5];
+        }
+
+        if( nTargetXSize == nSrcXSize &&
+            nTargetYSize == nSrcYSize &&
+            osTargetSRS == osSrcSRS &&
+            fabs(dfSrcMinX - dfTargetMinX) < 1e-10 * fabs(dfSrcMinX) &&
+            fabs(dfSrcMinY - dfTargetMinY) < 1e-10 * fabs(dfSrcMinY) &&
+            fabs(dfSrcMaxX - dfTargetMaxX) < 1e-10 * fabs(dfSrcMaxX) &&
+            fabs(dfSrcMaxY - dfTargetMaxY) < 1e-10 * fabs(dfSrcMaxY) )
+        {
+            CPLDebug("COG", "Skipping reprojection step: "
+                     "source dataset matches reprojection specifications");
+        }
+        else
+        {
+            m_poReprojectedDS =
+                CreateReprojectedDS(pszFilename, poCurDS,
+                                    papszOptions,
+                                    osTargetResampling,
+                                    osTargetSRS,
+                                    nTargetXSize, nTargetYSize,
+                                    dfTargetMinX, dfTargetMinY,
+                                    dfTargetMaxX, dfTargetMaxY,
+                                    pfnProgress, pProgressData,
+                                    dfCurPixels, dfTotalPixelsToProcess);
+            if( !m_poReprojectedDS )
+                return nullptr;
+            poCurDS = m_poReprojectedDS.get();
+        }
     }
 
     CPLString osCompress = CSLFetchNameValueDef(papszOptions, "COMPRESS", "NONE");
@@ -539,11 +758,14 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     CPLString osBlockSize(CSLFetchNameValueDef(papszOptions, "BLOCKSIZE", ""));
     if( osBlockSize.empty() )
     {
-        if( EQUAL(CSLFetchNameValueDef(papszOptions, "TILING_SCHEME", "CUSTOM"),
-            "GoogleMapsCompatible") )
-            osBlockSize = "256";
+        if( poTM )
+        {
+            osBlockSize.Printf("%d", poTM->tileMatrixList()[0].mTileWidth);
+        }
         else
+        {
             osBlockSize = "512";
+        }
     }
 
     const int nOvrThresholdSize = atoi(osBlockSize);
@@ -567,16 +789,31 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
         (EQUAL(osOverviews, "IGNORE_EXISTING") ||
          poFirstBand->GetOverviewCount() == 0);
 
-    std::vector<int> anOverviewLevels;
+    std::vector<std::pair<int, int>> asOverviewDims;
     int nTmpXSize = nXSize;
     int nTmpYSize = nYSize;
-    int nOvrFactor = 2;
-    while( nTmpXSize > nOvrThresholdSize || nTmpYSize > nOvrThresholdSize )
+    if( poTM )
     {
-        anOverviewLevels.push_back(nOvrFactor);
-        nOvrFactor *= 2;
-        nTmpXSize /= 2;
-        nTmpYSize /= 2;
+        const auto& tmList = poTM->tileMatrixList();
+        int nCurLevel = nZoomLevel;
+        while( nTmpXSize > nOvrThresholdSize || nTmpYSize > nOvrThresholdSize )
+        {
+            const double dfResRatio = (nCurLevel >= 1) ?
+                tmList[nCurLevel-1].mResX / tmList[nCurLevel].mResX : 2;
+            nTmpXSize = static_cast<int>(nTmpXSize / dfResRatio + 0.5);
+            nTmpYSize = static_cast<int>(nTmpYSize / dfResRatio + 0.5);
+            asOverviewDims.push_back(std::pair<int,int>(nTmpXSize, nTmpYSize));
+            nCurLevel --;
+        }
+    }
+    else
+    {
+        while( nTmpXSize > nOvrThresholdSize || nTmpYSize > nOvrThresholdSize )
+        {
+            nTmpXSize /= 2;
+            nTmpYSize /= 2;
+            asOverviewDims.push_back(std::pair<int,int>(nTmpXSize, nTmpYSize));
+        }
     }
 
     if( dfTotalPixelsToProcess == 0.0 )
@@ -594,14 +831,17 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     aosOverviewOptions.SetNameValue("NUM_THREADS",
                         CSLFetchNameValue(papszOptions, "NUM_THREADS"));
     aosOverviewOptions.SetNameValue("BIGTIFF", "YES");
+    aosOverviewOptions.SetNameValue("SPARSE_OK", "YES");
 
     if( bGenerateMskOvr )
     {
-        CPLDebug("COG", "Generating overviews of the mask");
+        CPLDebug("COG", "Generating overviews of the mask: start");
         m_osTmpMskOverviewFilename = GetTmpFilename(pszFilename, "msk.ovr.tmp");
         GDALRasterBand* poSrcMask = poFirstBand->GetMaskBand();
         const char* pszResampling = CSLFetchNameValueDef(papszOptions,
-            "RESAMPLING", GetResampling(poSrcDS));
+            "OVERVIEW_RESAMPLING",
+                CSLFetchNameValueDef(papszOptions,
+                    "RESAMPLING", GetResampling(poSrcDS)));
 
         double dfNextPixels = dfCurPixels + double(nXSize) * nYSize / 3;
         void* pScaledProgress = GDALCreateScaledProgress(
@@ -617,11 +857,12 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
         CPLErr eErr = GTIFFBuildOverviewsEx(
             m_osTmpMskOverviewFilename,
             1, &poSrcMask,
-            static_cast<int>(anOverviewLevels.size()),
-            &anOverviewLevels[0],
+            static_cast<int>(asOverviewDims.size()),
+            nullptr, asOverviewDims.data(),
             pszResampling,
             aosOverviewOptions.List(),
             GDALScaledProgress, pScaledProgress );
+        CPLDebug("COG", "Generating overviews of the mask: end");
 
         GDALDestroyScaledProgress(pScaledProgress);
         if( eErr != CE_None )
@@ -632,13 +873,15 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
 
     if( bGenerateOvr )
     {
-        CPLDebug("COG", "Generating overviews of the imagery");
+        CPLDebug("COG", "Generating overviews of the imagery: start");
         m_osTmpOverviewFilename = GetTmpFilename(pszFilename, "ovr.tmp");
         std::vector<GDALRasterBand*> apoSrcBands;
         for( int i = 0; i < nBands; i++ )
             apoSrcBands.push_back( poCurDS->GetRasterBand(i+1) );
         const char* pszResampling = CSLFetchNameValueDef(papszOptions,
-            "RESAMPLING", GetResampling(poSrcDS));
+            "OVERVIEW_RESAMPLING",
+                CSLFetchNameValueDef(papszOptions,
+                    "RESAMPLING", GetResampling(poSrcDS)));
 
         double dfNextPixels = dfCurPixels + double(nXSize) * nYSize * nBands / 3;
         void* pScaledProgress = GDALCreateScaledProgress(
@@ -659,11 +902,12 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
         CPLErr eErr = GTIFFBuildOverviewsEx(
             m_osTmpOverviewFilename,
             nBands, &apoSrcBands[0],
-            static_cast<int>(anOverviewLevels.size()),
-            &anOverviewLevels[0],
+            static_cast<int>(asOverviewDims.size()),
+            nullptr, asOverviewDims.data(),
             pszResampling,
             aosOverviewOptions.List(),
             GDALScaledProgress, pScaledProgress );
+        CPLDebug("COG", "Generating overviews of the imagery: end");
 
         GDALDestroyScaledProgress(pScaledProgress);
         if( eErr != CE_None )
@@ -729,6 +973,8 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
                                 CSLFetchNameValue(papszOptions, "NUM_THREADS"));
     aosOptions.SetNameValue("GEOTIFF_VERSION",
                             CSLFetchNameValue(papszOptions, "GEOTIFF_VERSION"));
+    aosOptions.SetNameValue("SPARSE_OK",
+                            CSLFetchNameValue(papszOptions, "SPARSE_OK"));
 
     if( EQUAL( osOverviews, "NONE") )
     {
@@ -746,6 +992,20 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
         }
     }
 
+    const CPLString osTilingScheme(CSLFetchNameValueDef(papszOptions,
+                                                "TILING_SCHEME", "CUSTOM"));
+    if( osTilingScheme != "CUSTOM" )
+    {
+         aosOptions.SetNameValue("@TILING_SCHEME_NAME", osTilingScheme);
+         aosOptions.SetNameValue("@TILING_SCHEME_ZOOM_LEVEL",
+                                 CPLSPrintf("%d", nZoomLevel));
+         if( nAlignedLevels > 0 )
+         {
+             aosOptions.SetNameValue("@TILING_SCHEME_ALIGNED_LEVELS",
+                                     CPLSPrintf("%d", nAlignedLevels));
+         }
+    }
+
     GDALDriver* poGTiffDrv = GDALDriver::FromHandle(GDALGetDriverByName("GTiff"));
     if( !poGTiffDrv )
         return nullptr;
@@ -757,12 +1017,17 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     CPLConfigOptionSetter oSetterInternalMask(
         "GDAL_TIFF_INTERNAL_MASK", "YES", false);
 
+    CPLDebug("COG", "Generating final product: start");
     auto poRet = poGTiffDrv->CreateCopy(pszFilename, poCurDS, false,
                                         aosOptions.List(),
                                         GDALScaledProgress, pScaledProgress);
 
     GDALDestroyScaledProgress(pScaledProgress);
 
+    if( poRet )
+        poRet->FlushCache();
+
+    CPLDebug("COG", "Generating final product: end");
     return poRet;
 }
 
@@ -784,21 +1049,55 @@ static GDALDataset* COGCreateCopy( const char * pszFilename,
 /*                          GDALRegister_COG()                          */
 /************************************************************************/
 
-void GDALRegister_COG()
-
+class GDALCOGDriver final: public GDALDriver
 {
-    if( GDALGetDriverByName( "COG" ) != nullptr )
-        return;
+        bool m_bInitialized = false;
 
-    bool bHasLZW = false;
-    bool bHasDEFLATE = false;
-    bool bHasLZMA = false;
-    bool bHasZSTD = false;
-    bool bHasJPEG = false;
-    bool bHasWebP = false;
-    CPLString osCompressValues(GTiffGetCompressValues(
+        bool bHasLZW = false;
+        bool bHasDEFLATE = false;
+        bool bHasLZMA = false;
+        bool bHasZSTD = false;
+        bool bHasJPEG = false;
+        bool bHasWebP = false;
+        std::string osCompressValues{};
+
+        void InitializeCreationOptionList();
+
+    public:
+        GDALCOGDriver();
+
+        const char* GetMetadataItem(const char* pszName, const char* pszDomain) override
+        {
+            if( EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST) )
+            {
+                InitializeCreationOptionList();
+            }
+            return GDALDriver::GetMetadataItem(pszName, pszDomain);
+        }
+
+        char** GetMetadata(const char* pszDomain) override
+        {
+            InitializeCreationOptionList();
+            return GDALDriver::GetMetadata(pszDomain);
+        }
+};
+
+GDALCOGDriver::GDALCOGDriver()
+{
+    // We could defer this in InitializeCreationOptionList() but with currently
+    // released libtiff versions where there was a bug (now fixed) in
+    // TIFFGetConfiguredCODECs(), this wouldn't work properly if the LERC codec
+    // had been registered in between
+    osCompressValues = GTiffGetCompressValues(
         bHasLZW, bHasDEFLATE, bHasLZMA, bHasZSTD, bHasJPEG, bHasWebP,
-        true /* bForCOG */));
+        true /* bForCOG */);
+}
+
+void GDALCOGDriver::InitializeCreationOptionList()
+{
+    if( m_bInitialized )
+        return;
+    m_bInitialized = true;
 
     CPLString osOptions;
     osOptions = "<CreationOptionList>"
@@ -840,17 +1139,45 @@ void GDALRegister_COG()
 "   </Option>"
 "   <Option name='RESAMPLING' type='string' "
         "description='Resampling method for overviews or warping'/>"
+"   <Option name='OVERVIEW_RESAMPLING' type='string' "
+        "description='Resampling method for overviews'/>"
+"   <Option name='WARP_RESAMPLING' type='string' "
+        "description='Resampling method for warping'/>"
 "   <Option name='OVERVIEWS' type='string-select' description='"
-        "Behaviour regarding overviews'>"
+        "Behavior regarding overviews'>"
 "     <Value>AUTO</Value>"
 "     <Value>IGNORE_EXISTING</Value>"
 "     <Value>FORCE_USE_EXISTING</Value>"
 "     <Value>NONE</Value>"
 "   </Option>"
-"  <Option name='TILING_SCHEME' type='string-select' description='"
-        "Which tiling scheme to use' default='CUSTOM'>"
-"    <Value>CUSTOM</Value>"
-"    <Value>GoogleMapsCompatible</Value>"
+"  <Option name='TILING_SCHEME' type='string' description='"
+        "Which tiling scheme to use pre-defined value or custom inline/outline "
+        "JSON definition' default='CUSTOM'>"
+"    <Value>CUSTOM</Value>";
+
+    const auto tmsList = gdal::TileMatrixSet::listPredefinedTileMatrixSets();
+    for( const auto& tmsName: tmsList )
+    {
+        const auto poTM = gdal::TileMatrixSet::parse(tmsName.c_str());
+        if( poTM &&
+            poTM->haveAllLevelsSameTopLeft() &&
+            poTM->haveAllLevelsSameTileSize() &&
+            !poTM->hasVariableMatrixWidth() )
+        {
+            osOptions += "    <Value>";
+            osOptions += tmsName;
+            osOptions += "</Value>";
+        }
+    }
+
+    osOptions +=
+"  </Option>"
+"  <Option name='ZOOM_LEVEL_STRATEGY' type='string-select' "
+        "description='Strategy to determine zoom level. "
+        "Only used for TILING_SCHEME != CUSTOM' default='AUTO'>"
+"    <Value>AUTO</Value>"
+"    <Value>LOWER</Value>"
+"    <Value>UPPER</Value>"
 "  </Option>"
 "   <Option name='TARGET_SRS' type='string' "
         "description='Target SRS as EPSG:XXXX, WKT or PROJ string for reprojection'/>"
@@ -859,8 +1186,8 @@ void GDALRegister_COG()
 "  <Option name='EXTENT' type='string' description='"
         "Target extent as minx,miny,maxx,maxy for reprojection'/>"
 "  <Option name='ALIGNED_LEVELS' type='int' description='"
-        "Number of overview levels for which GeoTIFF tile and WebMercator "
-        "tiles match'/>"
+        "Number of overview levels for which the tiles from GeoTIFF and the "
+        "specified tiling scheme match'/>"
 "  <Option name='ADD_ALPHA' type='boolean' description='Can be set to NO to "
         "disable the addition of an alpha band in case of reprojection' default='YES'/>"
 #if LIBGEOTIFF_VERSION >= 1600
@@ -870,14 +1197,23 @@ void GDALRegister_COG()
 "       <Value>1.1</Value>"
 "   </Option>"
 #endif
+"   <Option name='SPARSE_OK' type='boolean' description='Should empty blocks be omitted on disk?' default='FALSE'/>"
 "</CreationOptionList>";
 
-    auto poDriver = new GDALDriver();
+    SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, osOptions.c_str());
+}
+
+void GDALRegister_COG()
+
+{
+    if( GDALGetDriverByName( "COG" ) != nullptr )
+        return;
+
+    auto poDriver = new GDALCOGDriver();
     poDriver->SetDescription( "COG" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Cloud optimized GeoTIFF generator" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/cog.html" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, osOptions );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte UInt16 Int16 UInt32 Int32 Float32 "

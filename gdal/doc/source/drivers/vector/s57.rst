@@ -49,7 +49,7 @@ transfer will have in excess of 100 layers.
 Each feature type has a predefined set of attributes as defined by the
 S-57 standard. For instance, the airport (AIRARE) object class can have
 the AIRARE, CATAIR, CONDTN, CONVIS, NOBJNM, OBJNAM, STATUS, INFORM,
-NINFOM, NTXTDS, PICREP, SCAMAX, SCAMIN, TXTDSC, ,RECDAT, RECIND, SORDAT,
+NINFOM, NTXTDS, PICREP, SCAMAX, SCAMIN, TXTDSC, RECDAT, RECIND, SORDAT,
 and SORIND attributes. These short names can be related to longer, more
 meaningful names using an S-57 object/attribute catalog such as the S-57
 standard document itself, or the catalog files (s57attributes.csv, and
@@ -64,36 +64,29 @@ which appear on all feature, regardless of object class. is turned on.
      Attribute Name  Description                            Defined On
      --------------  -----------                            ----------
 
-     GRUP            Group number.                  All features
+     GRUP            Group number.                          All features
 
-     OBJL            Object label code.  This number    All features
-                 indicates the object class of the
+     OBJL            Object label code.  This number        All features
+                     indicates the object class of the
                      feature.
 
      RVER            Record version.
 
      AGEN            Numeric agency code, such as 50 for    All features
                      the Canadian Hydrographic Service.
-             A potentially outdated list is
-             available in agencode.txt.
 
      FIDN            Feature identification number.         All features
 
      FIDS            Feature identification subdivision.    All features
 
-     DSNM            Dataset name.  The name of the file    All features
-                     the feature came from.  Used with
-                     LNAM to form a unique dataset wide
-             identifier for a feature.
-
      INFORM          Informational text.                    Some features
 
-     NINFOM      Informational text in national         Some features
+     NINFOM          Informational text in national         Some features
                      language.
 
-     OBJNAM          Object name                Some features
+     OBJNAM          Object name                            Some features
 
-     NOBJNM          Object name in national        Some features
+     NOBJNM          Object name in national                Some features
                      language.
 
      SCAMAX          Maximum scale for display              Some features
@@ -116,6 +109,16 @@ The following are present if LNAM_REFS is enabled:
      FFPT_RIND       Relationship indicators for each of    All Features
                      the LNAM_REFS relationships.
 
+
+DSID layer
+----------
+
+Dataset wide fields, such as DSID (Data Set Identification), DSSI
+(Data Set Structure Information) and DSPM (Data Set Parameter) are exposed
+in a layer ``DSID`` which has a single feature.
+See paragraph 7.3.1 "Data set general information record structure" of
+`IHO S-57 Edition 3.1 standard (main)`_
+
 Soundings
 ---------
 
@@ -133,8 +136,7 @@ There are several control options which can be used to alter the
 behavior of the S-57 reader. Users can set these by appending them in
 the OGR_S57_OPTIONS environment variable.
 
-Starting with GDAL 2.0, they can also be specified independently as open
-options to the driver.
+They can also be specified independently as open options to the driver.
 
 -  **UPDATES**\ =APPLY/IGNORE: Should update files be incorporated into
    the base data on the fly. Default is APPLY.
@@ -161,9 +163,13 @@ options to the driver.
    features to their underlying geometric primitives be attached. These
    are the values of the FSPT group, and are primarily needed when doing
    S-57 to S-57 translations. Default is OFF.
--  **RECODE_BY_DSSI**\ =ON/OFF: (OGR >= 1.10) Should attribute values be
+-  **RECODE_BY_DSSI**\ =ON/OFF: Should attribute values be
    recoded to UTF-8 from the character encoding specified in the S57
    DSSI record. Default is OFF.
+-  **LIST_AS_STRING**\ =ON/OFF: (GDAL >= 3.2) Whether attributes tagged as list in S57
+   dictionaries should be reported as a String field, instead of a StringList.
+   Default is OFF. Before GDAL 3.2, the behaviour was equivalent to setting
+   this option to ON.
 
 Example:
 
@@ -174,10 +180,9 @@ Example:
 S-57 Export
 -----------
 
-Preliminary S-57 export capability has been added in GDAL/OGR 1.2.0 but
-is intended only for specialized use, and is not properly documented at
-this time. Setting the following options is a minimum required to
-support S-57 to S-57 conversion via OGR.
+Preliminary S-57 export capability is intended only for specialized use, and is
+not properly documented at this time. Setting the following options is a minimum
+required to support S-57 to S-57 conversion via OGR.
 
 ::
 
@@ -223,5 +228,7 @@ See Also
 -  `Frank's S-57 Page (at
    archive.org) <https://web.archive.org/web/20130730111701/http://home.gdal.org/projects/s57/index.html>`__:
    Links to other resources, and sample datasets.
--  `IHO S-57 Edition 3.1
-   (main) <http://www.iho.int/iho_pubs/standard/S-57Ed3.1/31Main.pdf>`__
+-  `IHO S-57 Edition 3.1 standard (main)`_
+-  `S-57 Appendix B <https://iho.int/uploads/user/pubs/standards/s-57/20ApB1.pdf>`__
+
+.. _`IHO S-57 Edition 3.1 standard (main)`: https://web.archive.org/web/20190330184049/http://www.iho.int/iho_pubs/standard/S-57Ed3.1/31Main.pdf

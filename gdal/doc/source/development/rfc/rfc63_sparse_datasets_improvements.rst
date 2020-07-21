@@ -199,7 +199,7 @@ Extract of the documentation of the driver:
    GDAL makes a special interpretation of a TIFF tile or strip whose offset
    and byte count are set to 0, that is to say a tile or strip that has no corresponding
    allocated physical storage. On reading, such tiles or strips are considered to
-   be implictly set to 0 or to the nodata value when it is defined. On writing, it
+   be implicitly set to 0 or to the nodata value when it is defined. On writing, it
    is possible to enable generating such files through the Create() interface by setting
    the SPARSE_OK creation option to YES. Then, blocks that are never written
    through the IWriteBlock()/IRasterIO() interfaces will have their offset and

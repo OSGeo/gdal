@@ -13,22 +13,25 @@ template="""<html>
 </html>"""
 
 
-def gather_redirects():
+def gather_redirects(src_dir):
     output = {}
 
     def fetch(path, d, prefix):
-        files = os.listdir(path)
+        files = os.listdir(os.path.join(src_dir, path))
         for f in files:
             driver = f.split('.')[0]
             if driver not in 'gpkg':
                 entry = {'%s_%s.html'% (prefix,driver) : os.path.join(path,driver)+'.html' }
                 d.update(entry)
+                if prefix == 'drv':
+                    entry = {'ogr/%s_%s.html'% (prefix,driver) : os.path.join('..', path,driver)+'.html' }
+                    d.update(entry)
 
     fetch('./drivers/raster', output, 'frmt')
     fetch('./drivers/vector', output, 'drv')
 
     output.update({ 'drv_geopackage.html' : os.path.join('./drivers/vector', 'gpkg') + '.html' })
-    output.update({ 'geopackage_aspatial.html' : os.path.join('./driver/vector', 'aspatial') + '.html' })
+    output.update({ 'geopackage_aspatial.html' : os.path.join('./drivers/vector', 'geopackage_aspatial') + '.html' })
     output.update({ 'drv_geopackage_raster.html' : os.path.join('./drivers/raster', 'gpkg') + '.html' })
     output.update({ 'ogr_feature_style.html' : os.path.join('./user', 'ogr_feature_style') + '.html' })
     output.update({ 'gdal_virtual_file_systems.html' : os.path.join('./user', 'virtual_file_systems') + '.html' })
@@ -36,6 +39,10 @@ def gather_redirects():
     output.update({ 'formats_list.html' : os.path.join('./drivers/raster', 'index') + '.html' })
     output.update({ 'frmt_various.html' : os.path.join('./drivers/raster', 'index') + '.html' })
     output.update({ 'gdal_vrttut.html' : os.path.join('./drivers/raster', 'vrt') + '.html' })
+    output.update({ 'ogr/ogr_apitut.html' : os.path.join('../tutorials', 'vector_api_tut') + '.html' })
+    output.update({ 'ogr_apitut.html' : os.path.join('./tutorials', 'vector_api_tut') + '.html' })
+    output.update({ 'ogr/ogr_arch.html' : os.path.join('../user', 'vector_data_model') + '.html' })
+    output.update({ 'ogr_arch.html' : os.path.join('./user', 'vector_data_model') + '.html' })
 
     # Legacy WFS3 renamed as OAPIF
     output.update({ 'drv_wfs3.html' : os.path.join('./drivers/vector', 'oapif') + '.html' })
@@ -97,23 +104,25 @@ def gather_redirects():
     return output
 
 
-
-
-from shutil import copyfile
 # copy legacy redirects
 def copy_legacy_redirects(app, docname): # Sphinx expects two arguments
-    if app.builder.name == 'html':
-        for key in app.config.redirect_files:
+    if app.config.enable_redirects and app.builder.name == 'html':
+        redirect_files = gather_redirects(app.srcdir)
+        for key in redirect_files:
             src = key
-            tgt = app.config.redirect_files[key]
+            tgt = redirect_files[key]
             html = template % (tgt, tgt)
-            with open(os.path.join(app.outdir, src), 'wb') as f:
+            outfilename = os.path.join(app.outdir, src)
+            dirname = os.path.dirname(outfilename)
+            if not os.path.exists(dirname):
+                os.makedirs(dirname)
+            with open(outfilename, 'wb') as f:
                 f.write(html.encode('utf-8'))
                 f.close()
 
 
 
 def setup(app):
-    app.add_config_value('redirect_files', {}, 'html')
+    app.add_config_value('enable_redirects', False, 'html')
     app.connect('build-finished', copy_legacy_redirects)
-    return { 'parallel_read_safe': False, 'parallel_write_safe': True }
+    return { 'parallel_read_safe': True, 'parallel_write_safe': True }

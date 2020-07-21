@@ -154,7 +154,7 @@ static inline void CompareNeighbour( int nPolyId1, int nPolyId2,
  * Removes small raster polygons.
  *
  * The function removes raster polygons smaller than a provided
- * threshold size (in pixels) and replaces replaces them with the pixel value
+ * threshold size (in pixels) and replaces them with the pixel value
  * of the largest neighbour polygon.
  *
  * Polygon are determined (per GDALRasterPolygonEnumerator) as regions of

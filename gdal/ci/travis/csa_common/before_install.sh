@@ -3,13 +3,13 @@
 set -e
 
 sudo apt-get purge -y libgeos*
-sudo mv /etc/apt/sources.list.d/pgdg* /tmp
+(sudo mv /etc/apt/sources.list.d/pgdg* /tmp || /bin/true)
 #sudo apt-get remove postgresql-9.2
 #sudo apt-get remove postgis libpq5 libpq-dev postgresql-9.1-postgis postgresql-9.1-postgis-2.2-scripts postgresql-9.2-postgis postgresql-9.3-postgis postgresql-9.1 postgresql-9.2 postgresql-9.3 libgdal1
 sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
 #sudo add-apt-repository -y ppa:marlam/gta
 sudo apt-get update -qq
-sudo apt-get install python-numpy postgis libpq-dev libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libpoppler-private-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libhdf5-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev openjdk-8-jdk libepsilon-dev liblcms2-2 libpcre3-dev mercurial cmake libkml-dev libopenjp2-7-dev libzstd1-dev
+sudo apt-get install python-numpy postgis libpq-dev libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libpoppler-private-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libhdf5-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev openjdk-8-jdk libepsilon-dev liblcms2-2 libpcre3-dev mercurial cmake libkml-dev libopenjp2-7-dev libzstd1-dev sqlite3
 # libgda-dev
 # libcrypto++-dev
 #sudo apt-get install python-lxml
@@ -46,5 +46,6 @@ make -j4;
 sudo make install)
 sudo ldconfig
 
-wget http://releases.llvm.org/9.0.0/clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz
-tar xJf clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz
+FILE=clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz
+URL_ROOT=https://github.com/rouault/gdal_ci_tools/raw/master/${FILE}
+curl -Ls ${URL_ROOT}aa ${URL_ROOT}ab ${URL_ROOT}ac ${URL_ROOT}ad ${URL_ROOT}ae | tar xJf -

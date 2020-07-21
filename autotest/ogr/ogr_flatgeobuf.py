@@ -45,6 +45,14 @@ import ogrtest
 import pytest
 import webserver
 
+pytestmark = pytest.mark.require_driver('FlatGeobuf')
+
+###############################################################################
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
+    yield
+    gdaltest.clean_tmp()
+
 ### utils
 
 def verify_flatgeobuf_copy(name, fids, names):
@@ -103,8 +111,6 @@ def verify_flatgeobuf_copy(name, fids, names):
 
 
 def copy_shape_to_flatgeobuf(name, wkbType, compress=None, options=[]):
-    if gdaltest.flatgeobuf_drv is None:
-        return False
 
     if compress is not None:
         if compress[0:5] == '/vsig':
@@ -118,7 +124,7 @@ def copy_shape_to_flatgeobuf(name, wkbType, compress=None, options=[]):
     else:
         dst_name = os.path.join('tmp', name + '.fgb')
 
-    ds = gdaltest.flatgeobuf_drv.CreateDataSource(dst_name)
+    ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource(dst_name)
     if ds is None:
         return False
 
@@ -129,7 +135,7 @@ def copy_shape_to_flatgeobuf(name, wkbType, compress=None, options=[]):
         return False
 
     ######################################################
-    # Setup schema (all test shapefiles use common schmea)
+    # Setup schema (all test shapefiles use common schema)
     ogrtest.quick_create_layer_def(lyr,
                                    [('FID', ogr.OFTReal),
                                     ('NAME', ogr.OFTString)])
@@ -139,7 +145,7 @@ def copy_shape_to_flatgeobuf(name, wkbType, compress=None, options=[]):
 
     dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
 
-    src_name = os.path.join('data', name + '.shp')
+    src_name = os.path.join('data', 'shp', name + '.shp')
     shp_ds = ogr.Open(src_name)
     shp_lyr = shp_ds.GetLayer(0)
 
@@ -162,14 +168,6 @@ def copy_shape_to_flatgeobuf(name, wkbType, compress=None, options=[]):
     return True
 
 ### tests
-
-def test_ogr_flatgeobuf_1():
-
-    gdaltest.flatgeobuf_drv = ogr.GetDriverByName('FlatGeobuf')
-
-    if gdaltest.flatgeobuf_drv is not None:
-        return
-    pytest.fail()
 
 def test_ogr_flatgeobuf_2():
     fgb_ds = ogr.Open('data/testfgb/poly.fgb')
@@ -279,8 +277,6 @@ def wktRoundtrip(expected):
     assert actual == expected
 
 def test_ogr_flatgeobuf_3():
-    if gdaltest.flatgeobuf_drv is None:
-        pytest.skip()
     wkts = ogrtest.get_wkt_data_series(with_z=True, with_m=True, with_gc=True, with_circular=True, with_surface=True)
     for wkt in wkts:
         wktRoundtrip(wkt)
@@ -296,8 +292,6 @@ def test_ogr_flatgeobuf_8():
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
 def test_ogr_flatgeobuf_9():
-    if gdaltest.flatgeobuf_drv is None:
-        pytest.skip()
 
     gdaltest.tests = [
         ['gjpoint', [1], ['Point 1'], ogr.wkbPoint],
@@ -331,8 +325,6 @@ def test_ogr_flatgeobuf_9():
 
 
 def test_ogr_flatgeobuf_directory():
-    if gdaltest.flatgeobuf_drv is None:
-        pytest.skip()
 
     ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource('/vsimem/multi_layer')
     with gdaltest.error_handler(): # name will be laundered

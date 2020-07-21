@@ -413,7 +413,8 @@ bool OGRDXFDataSource::ReadLayerDefinition()
           case 62:
             oLayerProperties["Color"] = szLineBuf;
 
-            if( atoi(szLineBuf) < 0 ) // Is layer off?
+            // Is layer off?
+            if( atoi(szLineBuf) < 0 && oLayerProperties["Hidden"] != "2" )
                 oLayerProperties["Hidden"] = "1";
             break;
 
@@ -423,8 +424,10 @@ bool OGRDXFDataSource::ReadLayerDefinition()
 
           case 70:
             oLayerProperties["Flags"] = szLineBuf;
-            if( atoi(szLineBuf) & 0x01 ) // Is layer frozen?
-                oLayerProperties["Hidden"] = "1";
+
+            // Is layer frozen?
+            if( atoi(szLineBuf) & 0x01 )
+                oLayerProperties["Hidden"] = "2";
             break;
 
           case 370:

@@ -396,6 +396,11 @@ class SpatialReference(_object):
         return _osr.SpatialReference_IsGeographic(self, *args)
 
 
+    def IsDerivedGeographic(self, *args):
+        """IsDerivedGeographic(SpatialReference self) -> int"""
+        return _osr.SpatialReference_IsDerivedGeographic(self, *args)
+
+
     def IsProjected(self, *args):
         """IsProjected(SpatialReference self) -> int"""
         return _osr.SpatialReference_IsProjected(self, *args)

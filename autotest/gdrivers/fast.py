@@ -58,7 +58,7 @@ def test_fast_2():
     # Actually, the band (a placeholder) is of 0 bytes size,
     # so the checksum is 0 expected.
 
-    tst = gdaltest.GDALTest('fast', 'L71118038_03820020111_HPN.FST', 1, 60323,
+    tst = gdaltest.GDALTest('fast', 'fast/L71118038_03820020111_HPN.FST', 1, 60323,
                             0, 0, 5000, 1)
     return tst.testOpen()
 
@@ -71,7 +71,7 @@ def test_fast_3():
     if gdaltest.fast_drv is None:
         pytest.skip()
 
-    gdaltest.fast_ds = gdal.Open('data/L71118038_03820020111_HPN.FST')
+    gdaltest.fast_ds = gdal.Open('data/fast/L71118038_03820020111_HPN.FST')
     ds = gdaltest.fast_ds
     assert ds is not None, 'Missing test dataset'
 
@@ -130,7 +130,7 @@ def test_fast_5():
     if gdaltest.fast_drv is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('fast', 'L71230079_07920021111_HTM.FST', 2, 19110,
+    tst = gdaltest.GDALTest('fast', 'fast/L71230079_07920021111_HTM.FST', 2, 19110,
                             0, 0, 7000, 1)
 
     # Expected parameters of the geotransform
@@ -169,7 +169,7 @@ def test_fast_6():
     if gdaltest.fast_drv is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('fast', 'n0o0y867.0fl', 1, 0, 0, 0, 2741, 1)
+    tst = gdaltest.GDALTest('fast', 'fast/n0o0y867.0fl', 1, 0, 0, 0, 2741, 1)
 
     # Expected parameters of the geotransform
     gt = (14640936.89174916, 1.008817518246492, 24.9876841746236,
@@ -190,7 +190,7 @@ def test_fast_7():
     if gdaltest.fast_drv is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('fast', 'h0o0y867.1ah', 1, 0, 0, 0, 5815, 1)
+    tst = gdaltest.GDALTest('fast', 'fast/h0o0y867.1ah', 1, 0, 0, 0, 5815, 1)
 
     # Expected parameters of the geotransform
     gt = (676565.09, 5, 0, 5348341.5, 0, -5)
@@ -222,7 +222,7 @@ def test_fast_8():
     if gdaltest.fast_drv is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('fast', 'w0y13a4t.010', 1, 0, 0, 0, 4748, 1)
+    tst = gdaltest.GDALTest('fast', 'fast/w0y13a4t.010', 1, 0, 0, 0, 4748, 1)
 
     # Expected parameters of the geotransform
     gt = (-336965.0150603952, 176.0817495260164, -37.35662873563219,
@@ -256,7 +256,7 @@ def test_fast_9():
     if gdaltest.fast_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/HEADER.DAT')
+    ds = gdal.Open('data/fast/HEADER.DAT')
     assert ds.GetMetadataItem('SENSOR') == '', 'Did not get expected SENSOR value.'
 
     assert ds.RasterCount == 7, 'Did not get expected band count.'

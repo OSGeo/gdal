@@ -83,33 +83,6 @@ void OGRAeronavFAALayer::ResetReading()
 }
 
 /************************************************************************/
-/*                           GetNextFeature()                           */
-/************************************************************************/
-
-OGRFeature *OGRAeronavFAALayer::GetNextFeature()
-{
-    while( true )
-    {
-        if( bEOF )
-            return nullptr;
-
-        OGRFeature  *poFeature = GetNextRawFeature();
-        if (poFeature == nullptr)
-            return nullptr;
-
-        if((m_poFilterGeom == nullptr
-            || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == nullptr
-            || m_poAttrQuery->Evaluate( poFeature )) )
-        {
-            return poFeature;
-        }
-        else
-            delete poFeature;
-    }
-}
-
-/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
@@ -218,6 +191,9 @@ OGRFeature *OGRAeronavFAADOFLayer::GetNextRawFeature()
 {
     char szBuffer[130];
 
+    if( bEOF )
+        return nullptr;
+
     while( true )
     {
         const char* pszLine = CPLReadLine2L(fpAeronavFAA, 130, nullptr);
@@ -320,6 +296,9 @@ OGRFeature *OGRAeronavFAANAVAIDLayer::GetNextRawFeature()
 {
     char szBuffer[134];
 
+    if( bEOF )
+        return nullptr;
+
     while( true )
     {
         const char* pszLine = CPLReadLine2L(fpAeronavFAA, 134, nullptr);
@@ -417,6 +396,9 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
 {
     OGRFeature* poFeature = nullptr;
     OGRLineString* poLS = nullptr;
+
+    if( bEOF )
+        return nullptr;
 
     while( true )
     {
@@ -612,6 +594,9 @@ OGRFeature *OGRAeronavFAAIAPLayer::GetNextRawFeature()
 {
     char szBuffer[87];
     int nCountUnderscoreLines = 0;
+
+    if( bEOF )
+        return nullptr;
 
     while( true )
     {

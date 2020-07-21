@@ -1610,15 +1610,15 @@ bool PythonPluginDriver::LoadPlugin()
         return false;
     }
 
-    PyObject* poInstanciate = PyObject_GetAttrString(gpoGDALPythonDriverModule,
+    PyObject* poInstantiate = PyObject_GetAttrString(gpoGDALPythonDriverModule,
                                                      "_instantiate_plugin" );
-    CPLAssert(poInstanciate);
+    CPLAssert(poInstantiate);
 
     PyObject* pyArgs = PyTuple_New(1);
     PyTuple_SetItem(pyArgs, 0, poModule);
-    PyObject* poPlugin = PyObject_Call(poInstanciate, pyArgs, nullptr);
+    PyObject* poPlugin = PyObject_Call(poInstantiate, pyArgs, nullptr);
     Py_DecRef(pyArgs);
-    Py_DecRef(poInstanciate);
+    Py_DecRef(poInstantiate);
 
     if( ErrOccurredEmitCPLError() )
     {

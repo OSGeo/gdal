@@ -874,7 +874,7 @@ CPLErr HKVDataset::_SetProjection( const char * pszNewProjection )
     }
     else
     {
-        // Default to previous behaviour if spheroid not found by radius and
+        // Default to previous behavior if spheroid not found by radius and
         // inverse flattening.
         if( strstr(pszNewProjection,"Bessel") != nullptr )
         {

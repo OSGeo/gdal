@@ -1,0 +1,214 @@
+name: Windows builds
+
+on: [push, pull_request]
+
+jobs:
+
+  windows_build:
+    runs-on: windows-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
+
+    strategy:
+      matrix:
+        include:
+          - VS_VERSION: Visual Studio 16
+            VS_VER: 2019
+            SDK: release-1911 # gisinternals SDK version still to 2017
+            MSVC_VER: 1920
+            platform: x86
+            PROJ_BRANCH: "7.0"
+
+    env:
+        VS_VERSION: ${{ matrix.VS_VERSION }}
+        VS_VER: ${{ matrix.VS_VER }}
+        SDK: ${{ matrix.SDK }}
+        MSVC_VER: ${{ matrix.MSVC_VER }}
+        platform: ${{ matrix.platform }}
+        PROJ_BRANCH: "${{ matrix.PROJ_BRANCH }}"
+        APPVEYOR: true # to skip some tests
+        PYTHON_VERSION: "3.7.8"
+
+    steps:
+
+      # To avoid git clone to mess with the line endings of GDAL autotest data
+      # files that look like text, but should be handled as binary content
+      - name: Set git core.autocrlf to false
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set environment
+        shell: pwsh
+        run: |
+            $env:PATH="C:\hostedtoolcache\windows\Python\$env:PYTHON_VERSION\$env:platform;C:\hostedtoolcache\windows\Python\$env:PYTHON_VERSION\$env:platform\Scripts;$env:PATH"
+            if($env:platform -eq "x86")
+            {
+                $env:ARCHITECTURE="x86"
+                $env:WIN64_ARG=""
+                $env:CMAKE_ARCHITECTURE="Win32"
+            }
+            else
+            {
+                $env:ARCHITECTURE="amd64"
+                $env:WIN64_ARG="WIN64=YES"
+                $env:CMAKE_ARCHITECTURE="x64"
+            }
+            echo "::set-env name=PATH::$env:PATH"
+            echo "::set-env name=ARCHITECTURE::$env:ARCHITECTURE"
+            echo "::set-env name=WIN64_ARG::$env:WIN64_ARG"
+            echo "::set-env name=CMAKE_ARCHITECTURE::$env:CMAKE_ARCHITECTURE"
+
+      - name: Set compiler environment
+        shell: cmd
+        run: |
+            if "%VS_VER%" == "2019" CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=%ARCHITECTURE%
+            echo ::set-env name=PATH::%PATH%
+            echo ::set-env name=INCLUDE::%INCLUDE%
+            echo ::set-env name=LIB::%LIB%
+            echo ::set-env name=LIBPATH::%LIBPATH%
+
+      - name: Build
+        shell: pwsh
+        run: |
+            $ErrorActionPreference = 'continue'
+            function exec
+            {
+                param ( [ScriptBlock] $ScriptBlock )
+                & $ScriptBlock 2>&1 | ForEach-Object -Process { "$_" }
+                if ($LastExitCode -ne 0) { exit $LastExitCode }
+            }
+            exec { git clone --depth=1 -b $env:PROJ_BRANCH https://github.com/OSGeo/PROJ proj }
+            Import-PackageProvider NuGet -Force
+            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+            Install-Module Pscx -AllowClobber
+            Install-Module VSSetup -Scope CurrentUser
+            # Install SWIG by Choco
+            exec { cinst -y --no-progress --version 3.0.12 --force swig }
+            if($env:VS_VER -eq "2019")
+            {
+            }
+            else
+            {
+                Import-VisualStudioVars -VisualStudioVersion $env:VS_VER -Architecture $env:ARCHITECTURE
+            }
+            exec { pip install numpy }
+            $env:SDK_ZIP="$env:SDK"+"-dev.zip"
+            $env:SDK_URL="http://download.gisinternals.com/sdk/downloads/$env:SDK_ZIP"
+            if(-Not (Test-Path -Path downloads)) { mkdir downloads }
+            cd downloads
+            if(-Not (Test-Path -Path $env:SDK_ZIP )) { Invoke-WebRequest "$env:SDK_URL" -OutFile "$env:SDK_ZIP" }
+            cd ..
+            mkdir sdk
+            cd sdk
+            exec { 7z x ..\downloads\$env:SDK_ZIP }
+            $env:SDK_PREFIX="$env:GITHUB_WORKSPACE\sdk\$env:SDK"
+            $env:SDK_INC="$env:SDK_PREFIX\include"
+            $env:SDK_LIB="$env:SDK_PREFIX\lib"
+            $env:NMAKE_LOCAL= "GEOS_CFLAGS=-I`$(SDK_INC) -DHAVE_GEOS`n"
+            $env:NMAKE_LOCAL+="GEOS_LIB=`$(SDK_LIB)\geos_c.lib`n"
+            $env:NMAKE_LOCAL+="PG_INC_DIR=`$(SDK_INC)`n"
+            $env:NMAKE_LOCAL+="PG_LIB=`$(SDK_LIB)\libpqdll.lib wsock32.lib`n"
+            $env:NMAKE_LOCAL+="CURL_DIR=bla`n"
+            $env:NMAKE_LOCAL+="CURL_INC=-I`$(SDK_INC)`n"
+            $env:NMAKE_LOCAL+="CURL_LIB=`$(SDK_LIB)\libcurl_imp.lib wsock32.lib wldap32.lib winmm.lib`n"
+            $env:NMAKE_LOCAL+="SQLITE_INC=-I`$(SDK_INC) -DHAVE_SPATIALITE -DSPATIALITE_AMALGAMATION`n"
+            $env:NMAKE_LOCAL+="SQLITE_LIB=`$(SDK_LIB)\spatialite_i.lib `$(SDK_LIB)\sqlite3_i.lib`n"
+            $env:NMAKE_LOCAL+="KMLSUPEROVERLAY_SUPPORTED = YES`n"
+            $env:NMAKE_LOCAL+="MINIZIP_INCLUDE = -I`$(SDK_INC)`n"
+            $env:NMAKE_LOCAL+="MINIZIP_LIBRARY = `$(SDK_LIB)\minizip.lib`n"
+            $env:NMAKE_LOCAL+="MYSQL_INC_DIR=`$(SDK_INC)`n"
+            $env:NMAKE_LOCAL+="MYSQL_LIB=`$(SDK_LIB)\libmysql.lib advapi32.lib`n"
+            $env:NMAKE_LOCAL+="XERCES_DIR=bla`n"
+            $env:NMAKE_LOCAL+="XERCES_INCLUDE=-I`$(SDK_INC) -I`$(SDK_INC)\xercesc`n"
+            $env:NMAKE_LOCAL+="XERCES_LIB=`$(SDK_LIB)\xerces-c_3.lib`n"
+            $env:NMAKE_LOCAL+="ILI_ENABLED = YES`n"
+            $env:NMAKE_LOCAL+="EXPAT_DIR=bla`n"
+            $env:NMAKE_LOCAL+="EXPAT_INCLUDE=-I`$(SDK_INC)`n"
+            $env:NMAKE_LOCAL+="EXPAT_LIB=`$(SDK_LIB)\expat.lib`n"
+            $env:NMAKE_LOCAL+="LIBKML_DIR=bla`n"
+            $env:NMAKE_LOCAL+="LIBKML_INCLUDE=-I`$(SDK_INC)`n"
+            $env:NMAKE_LOCAL+="LIBKML_LIBS=`$(SDK_LIB)\libkmlbase.lib `$(SDK_LIB)\libkmlconvenience.lib `$(SDK_LIB)\libkmldom.lib `$(SDK_LIB)\libkmlengine.lib `$(SDK_LIB)\libkmlregionator.lib `$(SDK_LIB)\libkmlxsd.lib `$(SDK_LIB)\expat.lib `$(SDK_LIB)\zdll.lib`n"
+            $env:NMAKE_LOCAL+="POPPLER_ENABLED = YES`n"
+            $env:NMAKE_LOCAL+="POPPLER_CFLAGS = -I`$(SDK_INC) -I`$(SDK_INC)\poppler`n"
+            $env:NMAKE_LOCAL+="POPPLER_MAJOR_VERSION = 0`n"
+            $env:NMAKE_LOCAL+="POPPLER_MINOR_VERSION = 30`n"
+            $env:NMAKE_LOCAL+="POPPLER_LIBS = `$(SDK_LIB)\poppler.lib `$(SDK_LIB)\freetype.lib `$(SDK_LIB)\harfbuzz.lib advapi32.lib gdi32.lib`n"
+            $env:NMAKE_LOCAL+="OPENJPEG_ENABLED = YES`n"
+            $env:NMAKE_LOCAL+="OPENJPEG_CFLAGS = -I`$(SDK_INC)\openjpeg-2.1`n"
+            $env:NMAKE_LOCAL+="OPENJPEG_LIB = `$(SDK_LIB)\openjp2.lib`n"
+            $env:NMAKE_LOCAL+="ECWDIR=bla`n"
+            $env:NMAKE_LOCAL+="ECWLIB=`$(SDK_LIB)\libecwj2.lib`n"
+            $env:NMAKE_LOCAL+="ECWFLAGS=-DECWSDK_VERSION=33 -I`$(SDK_INC) /D_MBCS /D_UNICODE /DUNICODE /D_WINDOWS  /DLIBECWJ2 /DWIN32 /D_WINDLL -DNO_X86_MMI`n"
+            $env:NMAKE_LOCAL+="HDF5_DIR = `$(SDK_PREFIX)`n"
+            $env:NMAKE_LOCAL+="HDF5_LIB = `$(SDK_LIB)\hdf5.lib`n"
+            $env:NMAKE_LOCAL+="KEA_CFLAGS = -I`$(SDK_INC)`n"
+            $env:NMAKE_LOCAL+="KEA_LIB = `$(SDK_LIB)\libkea.lib `$(SDK_LIB)\hdf5_cpp.lib`n"
+            $env:NMAKE_LOCAL+="NETCDF_SETTING=yes`n"
+            $env:NMAKE_LOCAL+="NETCDF_LIB=`$(SDK_LIB)\netcdf.lib`n"
+            $env:NMAKE_LOCAL+="NETCDF_INC_DIR=`$(SDK_INC)`n"
+            $env:NMAKE_LOCAL+="NETCDF_HAS_NC4 = yes`n"
+            $env:NMAKE_LOCAL+="PROJ_INCLUDE=-I$env:GITHUB_WORKSPACE\install-proj\include`n"
+            $env:NMAKE_LOCAL+="PROJ_LIBRARY=$env:GITHUB_WORKSPACE\install-proj\lib\proj.lib`n"
+            $env:NMAKE_LOCAL | Set-Content "$env:GITHUB_WORKSPACE\gdal\nmake.local"
+            #
+            cd $env:GITHUB_WORKSPACE
+            cd proj
+            mkdir build
+            cd build
+            $env:VCPKG_PLATFORM="$env:platform"+"-windows"
+            exec { vcpkg install sqlite3:$env:VCPKG_PLATFORM }
+            Invoke-WebRequest "https://sqlite.org/2018/sqlite-tools-win32-x86-3250100.zip" -OutFile "sqlite-tools-win32-x86-3250100.zip"
+            7z x sqlite-tools-win32-x86-3250100.zip
+            copy sqlite-tools-win32-x86-3250100/sqlite3.exe $env:GITHUB_WORKSPACE
+            $env:PATH="$env:GITHUB_WORKSPACE;$env:PATH"
+            $env:PROJ_INSTALL_DIR="$env:GITHUB_WORKSPACE"+"\install-proj"
+            $env:CMAKE_INSTALL_PREFIX="-DCMAKE_INSTALL_PREFIX=" + $env:PROJ_INSTALL_DIR
+            cmake -G $env:VS_VERSION -A $env:CMAKE_ARCHITECTURE .. $env:CMAKE_INSTALL_PREFIX -DPROJ_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBPROJ_SHARED=ON -DCMAKE_TOOLCHAIN_FILE=c:/vcpkg/scripts/buildsystems/vcpkg.cmake -DBUILD_SHARED_LIBS=ON -DENABLE_CURL=OFF -DENABLE_TIFF=OFF -DBUILD_PROJSYNC=OFF
+            exec { cmake --build . --config Release --target install }
+            cd $env:GITHUB_WORKSPACE\install-proj\share\proj
+            Invoke-WebRequest "https://download.osgeo.org/proj/proj-datumgrid-1.8.zip" -OutFile "proj-datumgrid-1.8.zip"
+            7z x proj-datumgrid-1.8.zip -aoa
+            #
+            cd $env:GITHUB_WORKSPACE\gdal
+            copy $env:GITHUB_WORKSPACE\install-proj\bin\*.dll .
+            exec { nmake /f makefile.vc MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS=/WX }
+            cd apps
+            exec { nmake /f makefile.vc test_ogrsf.exe MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS=/WX }
+            $env:DISTUTILS_USE_SDK=1
+            $env:MSSdk=1
+            cd $env:GITHUB_WORKSPACE\gdal\swig\python
+            exec { python setup.py build }
+            exec { python setup.py install }
+            cd $env:GITHUB_WORKSPACE\gdal\swig\csharp
+            exec { nmake /f makefile.vc interface }
+            exec { nmake /f makefile.vc all $env:WIN64_ARG }
+            cd $env:GITHUB_WORKSPACE\autotest\cpp
+            exec { nmake /f makefile.vc MSVC_VER=$env:MSVC_VER $env:WIN64_ARG }
+
+      - name: Run tests
+        shell: pwsh
+        run: |
+            $ErrorActionPreference = 'continue'
+            function exec
+            {
+                param ( [ScriptBlock] $ScriptBlock )
+                & $ScriptBlock 2>&1 | ForEach-Object -Process { "$_" }
+                if ($LastExitCode -ne 0) { exit $LastExitCode }
+            }
+            $env:SDK_PREFIX="$env:GITHUB_WORKSPACE\sdk\$env:SDK"
+            $env:SDK_BIN="$env:SDK_PREFIX\bin"
+            $env:PATH="$env:GITHUB_WORKSPACE\gdal;$env:GITHUB_WORKSPACE\gdal\apps;$env:SDK_BIN;$env:PATH"
+            $env:GDAL_DATA="$env:GITHUB_WORKSPACE\gdal\data"
+            $env:DO_NOT_FAIL_ON_RECODE_ERRORS="YES"
+            # The ca-bundle.crt file which we could point to is invalid in the current SDK
+            # See https://github.com/gisinternals/buildsystem/issues/104
+            $env:GDAL_HTTP_UNSAFESSL="YES"
+            cd $env:GITHUB_WORKSPACE\autotest\cpp
+            nmake /f makefile.vc check MSVC_VER=$env:MSVC_VER $env:WIN64_ARG
+            cd $env:GITHUB_WORKSPACE\autotest
+            pip install -Ur requirements.txt
+            exec { pytest -vv }
+            cd $env:GITHUB_WORKSPACE\gdal\swig\csharp
+            exec { nmake /f makefile.vc test }

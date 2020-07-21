@@ -254,7 +254,7 @@ modify the WKT version used by exportToWk() (when no explicit version is
 passed in the options of exportToWkt())
 
 The gdalinfo, ogrinfo and gdalsrsinfo utililies will default to
-outputing WKT2:2018
+outputting WKT2:2018
 
 Axis order issues
 ~~~~~~~~~~~~~~~~~
@@ -456,7 +456,7 @@ Changes in utilities
    +ellps=WGS84" when transforming from EPSG:4326 to EPSG:32631.
 
 -  gdalsrsinfo is enhanced to be able to specify the 2 new supported WKT
-   variants: WKT2_2015 and WKT2_2018. It will default to outputing
+   variants: WKT2_2015 and WKT2_2018. It will default to outputting
    WKT2_2018
 
 SWIG binding changes

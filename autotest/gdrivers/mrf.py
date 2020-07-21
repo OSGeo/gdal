@@ -72,7 +72,7 @@ mrf_list = [
     ('rgbsmall.tif', 21212, [21266, 21369, 21256, 21495], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99']),
     ('rgbsmall.tif', 21212, [21261, 21209, 21254, 21215], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=RGB']),
     ('rgbsmall.tif', 21212, [21283, 21127, 21278, 21124], ['INTERLEAVE=PIXEL', 'COMPRESS=JPEG', 'QUALITY=99', 'PHOTOMETRIC=YCC']),
-    ('12bit_rose_extract.jpg', 30075, [29650, 29680, 29680, 29650], ['COMPRESS=JPEG']),
+    ('jpeg/12bit_rose_extract.jpg', 30075, [29650, 29680, 29680, 29650], ['COMPRESS=JPEG']),
 ]
 
 
@@ -82,7 +82,11 @@ mrf_list = [
     ids=['{0}-{3}'.format(*r) for r in mrf_list],
 )
 def test_mrf(src_filename, chksum, chksum_after_reopening, options):
-    if src_filename == '12bit_rose_extract.jpg':
+
+    if 'COMPRESS=LERC' in options and 'LERC' not in gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST'):
+        pytest.skip()
+
+    if src_filename == 'jpeg/12bit_rose_extract.jpg':
         import jpeg
         jpeg.test_jpeg_1()
         if gdaltest.jpeg_version == '9b':
@@ -123,7 +127,7 @@ def test_mrf_zen_test():
 '''
     for interleave in 'PIXEL', 'BAND':
         co = ['COMPRESS=JPEG', 'INTERLEAVE=' + interleave]
-        gdal.Translate('tmp/masked.mrf', 'data/masked.jpg', format='MRF', creationOptions=co)
+        gdal.Translate('tmp/masked.mrf', 'data/jpeg/masked.jpg', format='MRF', creationOptions=co)
         ds = gdal.Open(testvrt)
         cs = ds.GetRasterBand(1).Checksum()
         if cs != expectedCS:
@@ -317,6 +321,9 @@ def test_mrf_overview_external():
 
 def test_mrf_lerc_nodata():
 
+    if 'LERC' not in gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST'):
+        pytest.skip()
+
     gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF',
                    noData=107, creationOptions=['COMPRESS=LERC'])
     ds = gdal.Open('/vsimem/out.mrf')
@@ -335,6 +342,9 @@ def test_mrf_lerc_nodata():
 
 
 def test_mrf_lerc_with_huffman():
+
+    if 'LERC' not in gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST'):
+        pytest.skip()
 
     gdal.Translate('/vsimem/out.mrf', 'data/small_world.tif', format='MRF',
                    width=5000, height=5000, creationOptions=['COMPRESS=LERC'])
@@ -521,7 +531,7 @@ def test_mrf_versioned():
 def test_mrf_cleanup():
 
     files = [
-        '12bit_rose_extract.jpg.*',
+        'jpeg/12bit_rose_extract.jpg.*',
         'byte.tif.*',
         'int16.tif.*',
         'out.idx',
