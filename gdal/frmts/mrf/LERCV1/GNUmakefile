@@ -4,10 +4,7 @@
 #
 include ../../../GDALmake.opt
 
-OBJ = \
-	BitMaskV1.o\
-	BitStufferV1.o\
-	CntZImage.o
+OBJ = CntZImage.o
 
 O_OBJ   =       $(foreach file,$(OBJ),../../o/$(file))
 

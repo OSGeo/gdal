@@ -41,10 +41,10 @@ XTRA_OPT        :=      $(XTRA_OPT) -I../zlib
 endif
 
 ifeq ($(HAVE_LERC),yes)
-LIBLERC	= libLERC
+LERCV1	= LERCV1
 OBJ	:=	$(OBJ) LERC_band.o
 XTRA_OPT	:=	$(XTRA_OPT) -DLERC -I$(LIBLERC) -I../../third_party/LercLib
-SUBLIBS := lib-libLERC
+SUBLIBS := lib-LERCV1
 endif
 
 CPPFLAGS        :=  $(XTRA_OPT)  $(CPPFLAGS)
@@ -57,8 +57,8 @@ clean:
 
 install-obj:	$(PREDEPEND) $(SUBLIBS) $(O_OBJ:.o=.$(OBJ_EXT))
 
-lib-libLERC:
-	(cd libLERC; $(MAKE) install-obj)
+lib-LERCV1:
+	(cd $(LERCV1); $(MAKE) install-obj)
 
 $(OBJ) $(O_OBJ):    $(DEPENDS)
 

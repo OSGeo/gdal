@@ -20,11 +20,18 @@ Contributors:  Thomas Maurer
 #ifndef CNTZIMAGE_H
 #define CNTZIMAGE_H
 
-// ---- includes ------------------------------------------------------------ ;
-#include "BitStufferV1.h"
 #include <string>
+#include <vector>
+
+#ifndef NAMESPACE_LERC_START
+#define NAMESPACE_LERC_START namespace GDAL_LercNS {
+#define NAMESPACE_LERC_END }
+#define USING_NAMESPACE_LERC using namespace GDAL_LercNS;
+#endif
 
 NAMESPACE_LERC_START
+
+typedef unsigned char Byte;
 
 template<typename T > class TImage
 {

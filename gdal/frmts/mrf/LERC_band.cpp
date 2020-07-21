@@ -21,11 +21,13 @@ Contributors:  Lucian Plesea
 
 #include "marfa.h"
 #include <algorithm>
-#include "libLERC/CntZImage.h"
+#include "LERCV1/CntZImage.h"
 #include <Lerc2.h>
 
 USING_NAMESPACE_LERC
 NAMESPACE_MRF_START
+
+typedef unsigned char Byte;
 
 // Read an unaligned 4 byte little endian int from location p, advances pointer
 static void READ_GINT32(int& X, const char*& p)

@@ -22,15 +22,317 @@ Contributors:  Thomas Maurer
 */
 
 #include "CntZImage.h"
-#include "BitMaskV1.h"
 #include <cmath>
 #include <cfloat>
 #include <cstring>
+#include <cassert>
 #include <algorithm>
 
 using namespace std;
 
 NAMESPACE_LERC_START
+
+/** BitMaskV1 - Convenient and fast access to binary mask bits
+* includes RLE compression and decompression, in BitMaskV1.cpp
+*
+*/
+
+class BitMaskV1
+{
+public:
+    BitMaskV1(int nCols, int nRows) : m_nRows(nRows), m_nCols(nCols)
+    {
+        bits.resize(Size(), 0);
+    }
+
+    Byte  IsValid(int k) const { return (bits[k >> 3] & Bit(k)) != 0; }
+    int   Size() const { return (m_nCols * m_nRows - 1) / 8 + 1; }
+    // max RLE compressed size is n + 4 + 2 * (n - 1) / 32767
+    // Returns encoded size
+    void Set(int k, bool v) { if (v) SetValid(k); else SetInvalid(k); }
+    int RLEcompress(Byte* aRLE) const;
+    // current encoded size
+    int RLEsize() const;
+    // Decompress a RLE bitmask, bitmask size should be already set
+    // Returns false if input seems wrong
+    bool RLEdecompress(const Byte* src, size_t n);
+
+private:
+    int m_nRows, m_nCols;
+    std::vector<Byte> bits;
+    static Byte  Bit(int k) { return static_cast<Byte>(0x80 >> (k & 7)); }
+    void  SetValid(int k) { bits[k >> 3] |= Bit(k); }
+    void  SetInvalid(int k) { bits[k >> 3] &= ~Bit(k); }
+
+    // Disable assignment op, default and copy constructor
+    BitMaskV1();
+    BitMaskV1(const BitMaskV1& copy);
+    BitMaskV1& operator=(const BitMaskV1& m);
+};
+
+struct BitStufferV1
+{
+    // these 2 do not allocate memory. Byte ptr is moved like a file pointer.
+    static bool write(Byte** ppByte, const std::vector<unsigned int>& dataVec);
+    // dataVec is sized to max expected values. It is resized on return, based on read data
+    static bool read(Byte** ppByte, size_t& sz, std::vector<unsigned int>& dataVec);
+    static int numBytesUInt(unsigned int k) { return (k <= 0xff) ? 1 : (k <= 0xffff) ? 2 : 4; }
+    static unsigned int numTailBytesNotNeeded(unsigned int numElem, int numBits) {
+        numBits = (numElem * numBits) & 31;
+        return (numBits == 0 || numBits > 24) ? 0 : (numBits > 16) ? 1 : (numBits > 8) ? 2 : 3;
+    }
+
+};
+
+#define MAX_RUN 32767
+#define MIN_RUN 5
+// End of Transmission
+#define EOT -(MAX_RUN + 1)
+
+// Decode a RLE bitmask, size should be already set
+// Returns false if input seems wrong
+// Not safe if fed garbage !!!
+// Zero size mask is fine, only checks the end marker
+bool BitMaskV1::RLEdecompress(const Byte* src, size_t n) {
+    Byte* dst = bits.data();
+    int sz = Size();
+    short int count;
+    assert(src);
+
+    // Read a low endian short int
+#define READ_COUNT if (true) {if (n < 2) return false; count = *src++; count += (*src++ << 8);}
+    while (sz > 0) { // One sequence per loop
+        READ_COUNT;
+        n -= 2;
+        if (count < 0) { // negative count for repeats
+            if (0 == n--)
+                return false;
+            Byte b = *src++;
+            sz += count;
+            if (sz < 0)
+                return false;
+            while (0 != count++)
+                *dst++ = b;
+        }
+        else { // No repeats, count is positive
+            if (sz < count || n < static_cast<size_t>(count))
+                return false;
+            sz -= count;
+            n -= count;
+            while (0 != count--)
+                *dst++ = *src++;
+        }
+    }
+    READ_COUNT;
+    return (count == EOT);
+}
+
+// Encode helper function
+// It returns how many times the byte at *s is repeated
+// a value between 1 and min(max_count, MAX_RUN)
+inline static int run_length(const Byte* s, int max_count)
+{
+    assert(max_count && s);
+    if (max_count > MAX_RUN)
+        max_count = MAX_RUN;
+    const Byte c = *s++;
+    for (int count = 1; count < max_count; count++)
+        if (c != *s++)
+            return count;
+    return max_count;
+}
+
+//
+// RLE compressed size is bound by n + 4 + 2 * (n - 1) / 32767
+//
+int BitMaskV1::RLEcompress(Byte* dst) const {
+    assert(dst);
+    const Byte* src = bits.data();  // Next input byte
+    Byte* start = dst;
+    int sz = Size(); // left to process
+    Byte* pCnt = dst; // Pointer to current sequence count
+    int oddrun = 0; // non-repeated byte count
+
+// Store val as short low endian integer
+#define WRITE_COUNT(val) if (true) { *pCnt++ = Byte(val & 0xff); *pCnt++ = Byte(val >> 8); }
+// Flush an existing odd run
+#define FLUSH if (oddrun) { WRITE_COUNT(oddrun); pCnt += oddrun; dst = pCnt + 2; oddrun = 0; }
+
+    dst += 2; // Skip the space for the first count
+    while (sz > 0) {
+        int run = run_length(src, sz);
+        if (run < MIN_RUN) { // Use one byte
+            *dst++ = *src++;
+            sz--;
+            if (MAX_RUN == ++oddrun)
+                FLUSH;
+        }
+        else { // Found a run
+            FLUSH;
+            WRITE_COUNT(-run);
+            *pCnt++ = *src;
+            src += run;
+            sz -= run;
+            // cppcheck-suppress redundantAssignment
+            dst = pCnt + 2; // after the next marker
+        }
+    }
+    // cppcheck-suppress uselessAssignmentPtrArg
+    FLUSH;
+    (void)oddrun;
+    WRITE_COUNT(EOT); // End marker
+    // return compressed output size
+    return int(pCnt - start);
+}
+
+// calculate encoded size
+int BitMaskV1::RLEsize() const {
+    const Byte* src = bits.data(); // Next input byte
+    int sz = Size(); // left to process
+    int oddrun = 0; // current non-repeated byte count
+    // Simulate an odd run flush
+#define SIMFLUSH if (oddrun) { osz += oddrun + 2; oddrun = 0; }
+    int osz = 2; // output size, start with size of end marker
+    while (sz) {
+        int run = run_length(src, sz);
+        if (run < MIN_RUN) {
+            src++;
+            sz--;
+            if (MAX_RUN == ++oddrun)
+                SIMFLUSH;
+        }
+        else {
+            SIMFLUSH;
+            src += run;
+            sz -= run;
+            osz += 3; // Any run is 3 bytes
+        }
+    }
+    return oddrun ? (osz + oddrun + 2) : osz;
+}
+
+// see the old stream IO functions below on how to call.
+// if you change write(...) / read(...), don't forget to update computeNumBytesNeeded(...).
+
+bool BitStufferV1::write(Byte** ppByte, const vector<unsigned int>& dataVec)
+{
+    if (!ppByte || dataVec.empty())
+        return false;
+
+    unsigned int maxElem = *max_element(dataVec.begin(), dataVec.end());
+    int numBits = 0; // 0 to 23
+    while (maxElem >> numBits)
+        numBits++;
+    unsigned int numElements = (unsigned int)dataVec.size();
+
+    // use the upper 2 bits to encode the type used for numElements: Byte, ushort, or uint
+    // n is 1, 2  or 4
+    int n = numBytesUInt(numElements);
+    const Byte bits67[5] = { 0xff, 0x80, 0x40, 0xff, 0 };
+    **ppByte = static_cast<Byte>(numBits | bits67[n]);
+    (*ppByte)++;
+    memcpy(*ppByte, &numElements, n);
+    *ppByte += n;
+    if (numBits == 0)
+        return true;
+
+    int bits = 32; // Available
+    unsigned int acc = 0;   // Accumulator
+    for (unsigned int val : dataVec) {
+        if (bits >= numBits) { // no accumulator overflow
+            acc |= val << (bits - numBits);
+            bits -= numBits;
+        }
+        else { // accum overflowing
+            acc |= val >> (numBits - bits);
+            memcpy(*ppByte, &acc, sizeof(acc));
+            *ppByte += sizeof(acc);
+            bits += 32 - numBits; // under 32
+            acc = val << bits;
+        }
+    }
+
+    // There are between 1 and 31 bits left to write
+    int nbytes = 4;
+    while (bits >= 8) {
+        acc >>= 8;
+        bits -= 8;
+        nbytes--;
+    }
+    memcpy(*ppByte, &acc, nbytes);
+    *ppByte += nbytes;
+    return true;
+}
+
+// -------------------------------------------------------------------------- ;
+
+bool BitStufferV1::read(Byte** ppByte, size_t& size, vector<unsigned int>& dataVec)
+{
+    if (!ppByte || !size)
+        return false;
+
+    Byte numBits = **ppByte;
+    *ppByte += 1;
+    size -= 1;
+
+    int vbytes[4] = { 4, 2, 1, 0 };
+    int n = vbytes[numBits >> 6];
+    numBits &= 63;  // bits 0-5;
+    if (numBits >= 32 || n == 0 || size < static_cast<size_t>(n))
+        return false;
+
+    unsigned int numElements = 0;
+    memcpy(&numElements, *ppByte, n);
+    *ppByte += n;
+    size -= n;
+    if (static_cast<size_t>(numElements) > dataVec.size())
+        return false;
+    dataVec.resize(numElements);
+    if (numBits == 0) { // Nothing to read, all zeros
+        dataVec.resize(0);
+        dataVec.resize(numElements, 0);
+        return true;
+    }
+
+    unsigned int numBytes = (numElements * numBits + 7) / 8;
+    if (size < numBytes)
+        return false;
+    size -= numBytes;
+
+    int bits = 0; // Available in accumulator, at the high end
+    unsigned int acc = 0;
+    for (unsigned int& val : dataVec) {
+        if (bits >= numBits) { // Enough bits in accumulator
+            val = acc >> (32 - numBits);
+            acc <<= numBits;
+            bits -= numBits;
+            continue;
+        }
+
+        // Need to reload the accumulator
+        val = 0;
+        if (bits) {
+            val = acc >> (32 - bits);
+            val <<= (numBits - bits);
+        }
+        unsigned int nb = std::min(numBytes, 4u);
+        switch (nb) {
+        case 4:
+            memcpy(&acc, *ppByte, 4);
+            break;
+        case 0:
+            return false; // Need at least one byte
+        default: // read just a few bytes in the high bytes of an int
+            memcpy(reinterpret_cast<Byte*>(&acc) + (4 - nb), *ppByte, nb);
+        }
+        *ppByte += nb;
+        numBytes -= nb;
+        bits += 32 - numBits;
+        val |= acc >> bits;
+        acc <<= 32 - bits;
+    }
+    return numBytes == 0;
+}
 
 static const int CNT_Z = 8;
 static const int CNT_Z_VER = 11;
