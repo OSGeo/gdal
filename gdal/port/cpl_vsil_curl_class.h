@@ -32,6 +32,7 @@
 #ifdef HAVE_CURL
 
 #include "cpl_aws.h"
+#include "cpl_azure.h"
 #include "cpl_port.h"
 #include "cpl_json.h"
 #include "cpl_string.h"
@@ -118,6 +119,25 @@ struct WriteFuncStruct
     // CURLOPT_SUPPRESS_CONNECT_HEADERS fixes this
     bool            bIsProxyConnectHeader = false;
 #endif
+};
+
+struct PutData
+{
+    const GByte* pabyData = nullptr;
+    size_t       nOff = 0;
+    size_t       nTotalSize = 0;
+
+    static size_t ReadCallBackBuffer( char *buffer, size_t size,
+                                        size_t nitems, void *instream )
+    {
+        PutData* poThis = static_cast<PutData *>(instream);
+        const size_t nSizeMax = size * nitems;
+        const size_t nSizeToWrite =
+            std::min(nSizeMax, poThis->nTotalSize - poThis->nOff);
+        memcpy(buffer, poThis->pabyData + poThis->nOff, nSizeToWrite);
+        poThis->nOff += nSizeToWrite;
+        return nSizeToWrite;
+    }
 };
 
 /************************************************************************/
@@ -383,7 +403,7 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
                      const char* pszTarget,
                      GDALProgressFunc pProgressFunc,
                      void *pProgressData);
-    int MkdirInternal( const char *pszDirname, bool bDoStatCheck );
+    virtual int MkdirInternal( const char *pszDirname, bool bDoStatCheck );
 
   protected:
     char** GetFileList( const char *pszFilename,
@@ -423,12 +443,12 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
                              const char* const *papszOptions) override;
 
     // Multipart upload
-    CPLString InitiateMultipartUpload(
+    virtual CPLString InitiateMultipartUpload(
                                 const std::string& osFilename,
                                 IVSIS3LikeHandleHelper *poS3HandleHelper,
                                 int nMaxRetry,
                                 double dfRetryDelay);
-    CPLString UploadPart(const CPLString& osFilename,
+    virtual CPLString UploadPart(const CPLString& osFilename,
                          int nPartNumber,
                          const std::string& osUploadID,
                          const void* pabyBuffer,
@@ -436,13 +456,13 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
                          IVSIS3LikeHandleHelper *poS3HandleHelper,
                          int nMaxRetry,
                          double dfRetryDelay);
-    bool CompleteMultipart(const CPLString& osFilename,
+    virtual bool CompleteMultipart(const CPLString& osFilename,
                            const CPLString& osUploadID,
                            const std::vector<CPLString>& aosEtags,
                            IVSIS3LikeHandleHelper *poS3HandleHelper,
                            int nMaxRetry,
                            double dfRetryDelay);
-    bool AbortMultipart(const CPLString& osFilename,
+    virtual bool AbortMultipart(const CPLString& osFilename,
                         const CPLString& osUploadID,
                         IVSIS3LikeHandleHelper *poS3HandleHelper,
                         int nMaxRetry,
@@ -474,7 +494,7 @@ class IVSIS3LikeHandle:  public VSICurlHandle
   public:
     IVSIS3LikeHandle( VSICurlFilesystemHandler* poFSIn,
                       const char* pszFilename,
-                      const char* pszURLIn = nullptr ) :
+                      const char* pszURLIn ) :
         VSICurlHandle(poFSIn, pszFilename, pszURLIn) {}
     ~IVSIS3LikeHandle() override {}
 };

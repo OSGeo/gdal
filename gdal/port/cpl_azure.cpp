@@ -88,8 +88,15 @@ struct curl_slist* GetAzureBlobHeaders( const CPLString& osVerb,
     {
         osDate = IVSIS3LikeHandleHelper::GetRFC822DateTime();
     }
+    if( osStorageKeyB64.empty() )
+    {
+        struct curl_slist *headers=nullptr;
+        headers = curl_slist_append(
+            headers, CPLSPrintf("x-ms-date: %s", osDate.c_str()));
+        return headers;
+    }
 
-    CPLString osMsVersion("2015-02-21");
+    CPLString osMsVersion("2019-12-12");
     std::map<CPLString, CPLString> oSortedMapMSHeaders;
     oSortedMapMSHeaders["x-ms-version"] = osMsVersion;
     oSortedMapMSHeaders["x-ms-date"] = osDate;
@@ -164,15 +171,17 @@ VSIAzureBlobHandleHelper::VSIAzureBlobHandleHelper(
                                             const CPLString& osObjectKey,
                                             const CPLString& osStorageAccount,
                                             const CPLString& osStorageKey,
+                                            const CPLString& osSAS,
                                             bool bUseHTTPS ) :
     m_osURL(BuildURL(osEndpoint, osBlobEndpoint, osStorageAccount,
-            osBucket, osObjectKey, bUseHTTPS)),
+            osBucket, osObjectKey, osSAS, bUseHTTPS)),
     m_osEndpoint(osEndpoint),
     m_osBlobEndpoint(osBlobEndpoint),
     m_osBucket(osBucket),
     m_osObjectKey(osObjectKey),
     m_osStorageAccount(osStorageAccount),
     m_osStorageKey(osStorageKey),
+    m_osSAS(osSAS),
     m_bUseHTTPS(bUseHTTPS)
 {
 }
@@ -222,7 +231,8 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(CSLConstList papszOptions,
                                                 CPLString& osEndpoint,
                                                 CPLString& osBlobEndpoint,
                                                 CPLString& osStorageAccount,
-                                                CPLString& osStorageKey)
+                                                CPLString& osStorageKey,
+                                                CPLString& osSAS)
 {
     bUseHTTPS = CPLTestBool(CPLGetConfigOption("CPL_AZURE_USE_HTTPS", "YES"));
     osEndpoint =
@@ -271,18 +281,27 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(CSLConstList papszOptions,
                 CPLGetConfigOption("AZURE_STORAGE_ACCESS_KEY", ""));
             if( osStorageKey.empty() )
             {
-                const char* pszMsg =
-                    "AZURE_STORAGE_ACCESS_KEY configuration option "
-                    "not defined";
-                CPLDebug("AZURE", "%s", pszMsg);
-                VSIError(VSIE_AWSInvalidCredentials, "%s", pszMsg);
-                return false;
+                osSAS = CPLGetConfigOption("AZURE_SAS", "");
+                if( osSAS.empty() )
+                {
+                    if( CPLTestBool(CPLGetConfigOption("AZURE_NO_SIGN_REQUEST", "NO")) )
+                    {
+                        return true;
+                    }
+
+                    const char* pszMsg =
+                        "AZURE_STORAGE_ACCESS_KEY or AZURE_SAS or AZURE_NO_SIGN_REQUEST configuration option "
+                        "not defined";
+                    CPLDebug("AZURE", "%s", pszMsg);
+                    VSIError(VSIE_AWSInvalidCredentials, "%s", pszMsg);
+                    return false;
+                }
             }
             return true;
         }
     }
     const char* pszMsg = "Missing AZURE_STORAGE_ACCOUNT+"
-                         "AZURE_STORAGE_ACCESS_KEY or "
+                         "(AZURE_STORAGE_ACCESS_KEY or AZURE_SAS or AZURE_NO_SIGN_REQUEST) or "
                          "AZURE_STORAGE_CONNECTION_STRING "
                          "configuration options";
     CPLDebug("AZURE", "%s", pszMsg);
@@ -304,10 +323,11 @@ VSIAzureBlobHandleHelper* VSIAzureBlobHandleHelper::BuildFromURI( const char* ps
     CPLString osStorageKey;
     CPLString osEndpoint;
     CPLString osBlobEndpoint;
+    CPLString osSAS;
 
     if( !GetConfiguration(papszOptions,
                     bUseHTTPS, osEndpoint, osBlobEndpoint,
-                    osStorageAccount, osStorageKey) )
+                    osStorageAccount, osStorageKey, osSAS) )
     {
         return nullptr;
     }
@@ -329,6 +349,7 @@ VSIAzureBlobHandleHelper* VSIAzureBlobHandleHelper::BuildFromURI( const char* ps
                                   osObjectKey,
                                   osStorageAccount,
                                   osStorageKey,
+                                  osSAS,
                                   bUseHTTPS );
 }
 
@@ -341,6 +362,7 @@ CPLString VSIAzureBlobHandleHelper::BuildURL(const CPLString& osEndpoint,
                                              const CPLString& osStorageAccount,
                                              const CPLString& osBucket,
                                              const CPLString& osObjectKey,
+                                             const CPLString& osSAS,
                                              bool bUseHTTPS)
 {
     CPLString osURL = (bUseHTTPS) ? "https://" : "http://";
@@ -360,6 +382,8 @@ CPLString VSIAzureBlobHandleHelper::BuildURL(const CPLString& osEndpoint,
     osURL += CPLAWSURLEncode(osBucket,false);
     if( !osObjectKey.empty() )
         osURL += "/" + CPLAWSURLEncode(osObjectKey,false);
+    if( !osSAS.empty() )
+        osURL += '?' + osSAS;
     return osURL;
 }
 
@@ -371,8 +395,10 @@ CPLString VSIAzureBlobHandleHelper::BuildURL(const CPLString& osEndpoint,
 void VSIAzureBlobHandleHelper::RebuildURL()
 {
     m_osURL = BuildURL(m_osEndpoint, m_osBlobEndpoint, m_osStorageAccount,
-                       m_osBucket, m_osObjectKey, m_bUseHTTPS);
+                       m_osBucket, m_osObjectKey, CPLString(), m_bUseHTTPS);
     m_osURL += GetQueryString(false);
+    if( !m_osSAS.empty() )
+        m_osURL += (m_oMapQueryParameters.empty() ? '?' : '&') + m_osSAS;
 }
 
 /************************************************************************/
@@ -403,6 +429,9 @@ VSIAzureBlobHandleHelper::GetCurlHeaders( const CPLString& osVerb,
 
 CPLString VSIAzureBlobHandleHelper::GetSignedURL(CSLConstList papszOptions)
 {
+    if( m_osStorageKey.empty() )
+        return m_osURL;
+
     CPLString osStartDate(CPLGetAWS_SIGN4_Timestamp());
     const char* pszStartDate = CSLFetchNameValue(papszOptions, "START_DATE");
     if( pszStartDate )
