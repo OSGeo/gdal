@@ -203,7 +203,7 @@ def test_vsiaz_fake_basic():
         request.protocol_version = 'HTTP/1.1'
         h = request.headers
         if 'Authorization' not in h or \
-           h['Authorization'] != 'SharedKey myaccount:zKb0EXnM/RinBjcUE9EU+qfRIGaIItoUElSWc+FE24E=' or \
+           h['Authorization'] != 'SharedKey myaccount:C0sSaBzGbvadfuuMMjQiHCXCUzsGWj3uuE+UO8dDl0U=' or \
            'x-ms-date' not in h or h['x-ms-date'] != 'my_timestamp':
             sys.stderr.write('Bad headers: %s\n' % str(h))
             request.send_response(403)
@@ -230,7 +230,7 @@ def test_vsiaz_fake_basic():
         request.protocol_version = 'HTTP/1.1'
         h = request.headers
         if 'Authorization' not in h or \
-           h['Authorization'] != 'SharedKey myaccount:8d6IEeOsl7qGpKAxaTTxx2xMNpvqWq8DGlFE67lsmQ4=' or \
+           h['Authorization'] != 'SharedKey myaccount:bdrimjEtVnI51+rmJtfZddVn/u3N6MbtdEDnoyBByTo=' or \
            'x-ms-date' not in h or h['x-ms-date'] != 'my_timestamp' or \
            'Accept-Encoding' not in h or h['Accept-Encoding'] != 'gzip':
             sys.stderr.write('Bad headers: %s\n' % str(h))
@@ -449,7 +449,7 @@ def test_vsiaz_fake_write():
     def method(request):
         h = request.headers
         if 'Authorization' not in h or \
-           h['Authorization'] != 'SharedKey myaccount:AigkrY7q66WCrx3JRKBte56k7kxV2cxB/ZyGNubxk5I=' or \
+           h['Authorization'] != 'SharedKey myaccount:juvKZNo5zX5UXmLTK2BnPsezN0DCfUeW8RNZySbwN1o=' or \
            'Expect' not in h or h['Expect'] != '100-continue' or \
            'Content-Length' not in h or h['Content-Length'] != '40000' or \
            'x-ms-date' not in h or h['x-ms-date'] != 'my_timestamp' or \
@@ -564,7 +564,7 @@ def test_vsiaz_fake_write():
     def method(request):
         h = request.headers
         if 'Authorization' not in h or \
-           h['Authorization'] != 'SharedKey myaccount:KimVui3ptY9D5ftLlsI7CNOgK36CNAEzsXqcuHskdEY=' or \
+           h['Authorization'] != 'SharedKey myaccount:cEOpBBlEJNHqKyul2N7ZgyQoznDhPjIn293EWlm4t4o=' or \
            'Content-Length' not in h or h['Content-Length'] != '0' or \
            'x-ms-date' not in h or h['x-ms-date'] != 'my_timestamp' or \
            'x-ms-blob-type' not in h or h['x-ms-blob-type'] != 'AppendBlob':
@@ -1054,6 +1054,123 @@ def test_vsiaz_rmdirrecursive():
     handler.add('GET', '/azure/blob/myaccount/rmdirrec?comp=list&delimiter=%2F&maxresults=1&prefix=subdir%2F&restype=container', 200)
     with webserver.install_http_handler(handler):
         assert gdal.RmdirRecursive('/vsiaz/rmdirrec/subdir') == 0
+
+
+###############################################################################
+# Test Sync() and multithreaded download and CHUNK_SIZE
+
+
+def test_vsiaz_fake_sync_multithreaded_upload_chunk_size():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    gdal.Mkdir('/vsimem/test', 0)
+    gdal.FileFromMemBuffer('/vsimem/test/foo', 'foo\n')
+
+    tab = [ -1 ]
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/azure/blob/myaccount/test_bucket?comp=list&prefix=test%2F&restype=container', 200,
+                {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix></Prefix>
+                        <Blobs/>
+                    </EnumerationResults>
+                """)
+    handler.add('HEAD', '/azure/blob/myaccount/test_bucket/test', 404)
+    handler.add('GET', '/azure/blob/myaccount/test_bucket?comp=list&delimiter=%2F&maxresults=1&prefix=test%2F&restype=container', 200,
+                {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>test/</Prefix>
+                        <Blobs/>
+                    </EnumerationResults>
+                """)
+    handler.add('HEAD', '/azure/blob/myaccount/test_bucket', 404)
+    handler.add('GET', '/azure/blob/myaccount/test_bucket?comp=list&delimiter=%2F&maxresults=1&restype=container', 200,
+                {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix></Prefix>
+                        <Blobs>
+                            <BlobPrefix>
+                                <Name>something</Name>
+                            </BlobPrefix>
+                        </Blobs>
+                    </EnumerationResults>
+                """)
+    handler.add('HEAD', '/azure/blob/myaccount/test_bucket/test/', 404)
+    handler.add('GET', '/azure/blob/myaccount/test_bucket?comp=list&delimiter=%2F&maxresults=1&prefix=test%2F&restype=container', 200,
+                {'Content-type': 'application/xml'},
+                """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>test/</Prefix>
+                        <Blobs/>
+                    </EnumerationResults>
+                """)
+    handler.add('PUT', '/azure/blob/myaccount/test_bucket/test/.gdal_marker_for_dir', 201)
+
+    # Simulate an existing blob of another type
+    handler.add('PUT', '/azure/blob/myaccount/test_bucket/test/foo?blockid=000000000001&comp=block',
+                409,
+                expected_headers={'Content-Length': '3'})
+
+    handler.add('DELETE', '/azure/blob/myaccount/test_bucket/test/foo', 202)
+
+    handler.add('PUT', '/azure/blob/myaccount/test_bucket/test/foo?blockid=000000000001&comp=block',
+                201,
+                expected_headers={'Content-Length': '3'})
+
+    handler.add('PUT', '/azure/blob/myaccount/test_bucket/test/foo?blockid=000000000002&comp=block',
+                201,
+                expected_headers={'Content-Length': '1'})
+
+    def method(request):
+        h = request.headers
+        if 'Content-Length' not in h or h['Content-Length'] != '124':
+            sys.stderr.write('Bad headers: %s\n' % str(h))
+            request.send_response(403)
+            return
+
+        request.protocol_version = 'HTTP/1.1'
+        request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
+        content = request.rfile.read(124).decode('ascii')
+        if content != """<?xml version="1.0" encoding="utf-8"?>
+<BlockList>
+<Latest>000000000001</Latest>
+<Latest>000000000002</Latest>
+</BlockList>
+""":
+            sys.stderr.write('Bad content: %s\n' % str(content))
+            request.send_response(403)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
+            return
+        request.send_response(201)
+        request.send_header('Content-Length', 0)
+        request.end_headers()
+
+    handler.add('PUT', '/azure/blob/myaccount/test_bucket/test/foo?comp=blocklist',
+                custom_method = method)
+
+    def cbk(pct, _, tab):
+        assert pct >= tab[0]
+        tab[0] = pct
+        return True
+
+    with gdaltest.config_option('VSIS3_SIMULATE_THREADING', 'YES'):
+        with webserver.install_http_handler(handler):
+            assert gdal.Sync('/vsimem/test',
+                             '/vsiaz/test_bucket',
+                             options=['NUM_THREADS=1', 'CHUNK_SIZE=3'],
+                             callback=cbk, callback_data=tab)
+    assert tab[0] == 1.0
+
+    gdal.RmdirRecursive('/vsimem/test')
+
 
 ###############################################################################
 

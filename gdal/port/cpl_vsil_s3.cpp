@@ -866,27 +866,6 @@ bool VSIS3WriteHandle::UploadPart()
     return !osEtag.empty();
 }
 
-namespace {
-    struct PutData
-    {
-        const GByte* pabyData;
-        size_t       nOff;
-        size_t       nTotalSize;
-
-        static size_t ReadCallBackBuffer( char *buffer, size_t size,
-                                          size_t nitems, void *instream )
-        {
-            PutData* poThis = static_cast<PutData *>(instream);
-            const size_t nSizeMax = size * nitems;
-            const size_t nSizeToWrite =
-                std::min(nSizeMax, poThis->nTotalSize - poThis->nOff);
-            memcpy(buffer, poThis->pabyData + poThis->nOff, nSizeToWrite);
-            poThis->nOff += nSizeToWrite;
-            return nSizeToWrite;
-        }
-    };
-}
-
 CPLString IVSIS3LikeFSHandler::UploadPart(const CPLString& osFilename,
                                           int nPartNumber,
                                           const std::string& osUploadID,
@@ -3511,12 +3490,13 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
         const char* pszChunkSize = CSLFetchNameValue(papszOptions, "CHUNK_SIZE");
         const int nRequestedThreads = atoi(CSLFetchNameValueDef(papszOptions, "NUM_THREADS", "1"));
         const bool bUploadToS3 = bUploadFromLocalToNetwork && STARTS_WITH(pszTarget, "/vsis3/");
+        const bool bUploadToAZ = bUploadFromLocalToNetwork && STARTS_WITH(pszTarget, "/vsiaz/");
         const bool bSimulateThreading = CPLTestBool(CPLGetConfigOption("VSIS3_SIMULATE_THREADING", "NO"));
-        const int nMinSizeChunk = bUploadToS3 && !bSimulateThreading ? 5242880 : 1; // 5242880 defines by S3 API
+        const int nMinSizeChunk = (bUploadToS3 || bUploadToAZ) && !bSimulateThreading ? 5242880 : 1; // 5242880 defines by S3 API
         const int nMinThreads = bSimulateThreading ? 0 : 1;
         const size_t nMaxChunkSize =
             pszChunkSize && nRequestedThreads > nMinThreads &&
-            (bDownloadFromNetworkToLocal || bUploadToS3) ?
+            (bDownloadFromNetworkToLocal || bUploadToS3 || bUploadToAZ) ?
                 static_cast<size_t>(std::min(1024 * 1024 * 1024,
                                     std::max(nMinSizeChunk,
                                              atoi(pszChunkSize)))): 0;
@@ -3617,10 +3597,8 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
             {
                 for( const auto& kv: m_oMapMultiPartDefs )
                 {
-                    auto poS3HandleHelper = std::unique_ptr<VSIS3HandleHelper>(
-                        VSIS3HandleHelper::BuildFromURI(
-                            kv.first.c_str() + m_poFS->GetFSPrefix().size(),
-                            m_poFS->GetFSPrefix().c_str(), false));
+                    auto poS3HandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+                        m_poFS->CreateHandleHelper(kv.first.c_str() + m_poFS->GetFSPrefix().size(), false));
                     if( poS3HandleHelper )
                     {
                         m_poFS->UpdateHandleFromMap(poS3HandleHelper.get());
@@ -3702,11 +3680,10 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                         // for parallelized writing
                         VSIUnlink(osSubTarget);
                     }
-                    else
+                    else if( bUploadToS3 || bUploadToAZ )
                     {
-                        auto poS3HandleHelper = std::unique_ptr<VSIS3HandleHelper>(
-                            VSIS3HandleHelper::BuildFromURI(osSubTarget.c_str() + GetFSPrefix().size(),
-                                                            GetFSPrefix().c_str(), false));
+                        auto poS3HandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+                            CreateHandleHelper(osSubTarget.c_str() + GetFSPrefix().size(), false));
                         if( poS3HandleHelper == nullptr )
                             return false;
                         UpdateHandleFromMap(poS3HandleHelper.get());
@@ -3724,6 +3701,10 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                         def.nExpectedCount = static_cast<int>(
                             (chunk.nTotalSize + chunk.nSize - 1) / chunk.nSize);
                         oMapMultiPartDefs[osSubTarget] = def;
+                    }
+                    else
+                    {
+                        CPLAssert(false);
                     }
 
                     // Include all remaining chunks of the same file
@@ -3755,6 +3736,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                 std::mutex sMutex{};
                 uint64_t nTotalCopied = 0;
                 bool bUploadToS3 = false;
+                bool bUploadToAZ = false;
                 size_t nMaxChunkSize = 0;
                 int nMaxRetry = 0;
                 double dfRetryDelay = 0.0;
@@ -3766,6 +3748,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                          const CPLString& osSourceDirIn,
                          const CPLString& osTargetDirIn,
                          bool bUploadToS3In,
+                         bool bUploadToAZIn,
                          size_t nMaxChunkSizeIn,
                          int nMaxRetryIn,
                          double dfRetryDelayIn):
@@ -3776,6 +3759,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                     osSourceDir(osSourceDirIn),
                     osTargetDir(osTargetDirIn),
                     bUploadToS3(bUploadToS3In),
+                    bUploadToAZ(bUploadToAZIn),
                     nMaxChunkSize(nMaxChunkSizeIn),
                     nMaxRetry(nMaxRetryIn),
                     dfRetryDelay(dfRetryDelayIn)
@@ -3827,17 +3811,16 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                     {
                         const size_t nSizeToRead = static_cast<size_t>(chunk.nSize);
                         bool bSuccess = false;
-                        if( queue->bUploadToS3 )
+                        if( queue->bUploadToS3 || queue->bUploadToAZ )
                         {
                             const auto iter = queue->oMapMultiPartDefs.find(osSubTarget);
                             CPLAssert(iter != queue->oMapMultiPartDefs.end());
 
                             VSILFILE* fpIn = VSIFOpenL(osSubSource, "rb");
                             void* pBuffer = VSI_MALLOC_VERBOSE(nSizeToRead);
-                            auto poS3HandleHelper = std::unique_ptr<VSIS3HandleHelper>(
-                                VSIS3HandleHelper::BuildFromURI(
-                                    osSubTarget.c_str() + queue->poFS->GetFSPrefix().size(),
-                                    queue->poFS->GetFSPrefix().c_str(), false));
+                            auto poS3HandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+                                queue->poFS->CreateHandleHelper(
+                                    osSubTarget.c_str() + queue->poFS->GetFSPrefix().size(), false));
                             if( fpIn && pBuffer && poS3HandleHelper &&
                                 VSIFSeekL(fpIn, chunk.nStartOffset, SEEK_SET) == 0 &&
                                 VSIFReadL(pBuffer, 1, nSizeToRead, fpIn) == nSizeToRead )
@@ -3899,7 +3882,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
             JobQueue sJobQueue(this, aoChunksToCopy, anIndexToCopy,
                                oMapMultiPartDefs,
                                osSourceWithoutSlash, osTargetDir,
-                               bUploadToS3, nMaxChunkSize,
+                               bUploadToS3, bUploadToAZ, nMaxChunkSize,
                                nMaxRetry, dfRetryDelay);
 
             if( CPLTestBool(CPLGetConfigOption("VSIS3_SYNC_MULTITHREADING", "YES")) )
@@ -3949,15 +3932,13 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
             }
 
             // Finalize multipart uploads
-            if( sJobQueue.ret )
+            if( sJobQueue.ret && (bUploadToS3 || bUploadToAZ))
             {
                 std::set<CPLString> oSetKeysToRemove;
                 for( const auto& kv: oMapMultiPartDefs )
                 {
-                    auto poS3HandleHelper = std::unique_ptr<VSIS3HandleHelper>(
-                        VSIS3HandleHelper::BuildFromURI(
-                            kv.first.c_str() + GetFSPrefix().size(),
-                            GetFSPrefix().c_str(), false));
+                    auto poS3HandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+                        CreateHandleHelper(kv.first.c_str() + GetFSPrefix().size(), false));
                     sJobQueue.ret = false;
                     if( poS3HandleHelper )
                     {

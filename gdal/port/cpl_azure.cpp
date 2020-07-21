@@ -96,7 +96,7 @@ struct curl_slist* GetAzureBlobHeaders( const CPLString& osVerb,
         return headers;
     }
 
-    CPLString osMsVersion("2015-02-21");
+    CPLString osMsVersion("2019-12-12");
     std::map<CPLString, CPLString> oSortedMapMSHeaders;
     oSortedMapMSHeaders["x-ms-version"] = osMsVersion;
     oSortedMapMSHeaders["x-ms-date"] = osDate;
