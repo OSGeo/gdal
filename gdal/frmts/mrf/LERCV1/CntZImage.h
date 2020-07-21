@@ -20,7 +20,7 @@ Contributors:  Thomas Maurer
 #ifndef CNTZIMAGE_H
 #define CNTZIMAGE_H
 
-#include <string>
+#include <cstring>
 #include <vector>
 
 #ifndef NAMESPACE_LERC_START
