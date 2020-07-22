@@ -43,7 +43,7 @@ endif
 ifeq ($(HAVE_LERC),yes)
 LERCV1	= LERCV1
 OBJ	:=	$(OBJ) LERC_band.o
-XTRA_OPT	:=	$(XTRA_OPT) -DLERC -I$(LIBLERC) -I../../third_party/LercLib
+XTRA_OPT	:=	$(XTRA_OPT) -DLERC -I../../third_party/LercLib
 SUBLIBS := lib-LERCV1
 endif
 
