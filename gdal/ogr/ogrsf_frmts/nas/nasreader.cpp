@@ -999,6 +999,30 @@ void NASReader::CheckForFID( const Attributes &attrs,
 }
 
 /************************************************************************/
+/*                            CheckForRID()                             */
+/*                                                                      */
+/*      Merge the rid attribute into the current field text.            */
+/************************************************************************/
+
+void NASReader::CheckForRID( const Attributes &attrs,
+                             char **ppszCurField )
+
+{
+    const XMLCh  Name[] = { 'r', 'i', 'd', '\0' };
+    int nIndex = attrs.getIndex( Name );
+
+    if( nIndex != -1 )
+    {
+        CPLString osCurField = *ppszCurField;
+
+        osCurField += transcode( attrs.getValue( nIndex ) );
+
+        CPLFree( *ppszCurField );
+        *ppszCurField = CPLStrdup(osCurField);
+    }
+}
+
+/************************************************************************/
 /*                         CheckForRelations()                          */
 /************************************************************************/
 
