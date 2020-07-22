@@ -72,7 +72,7 @@ private:
 
 struct BitStufferV1
 {
-    // these 2 do not allocate memory. Byte ptr is moved like a file pointer.
+    // these 2 functions do not allocate memory. Byte ptr is moved like a file pointer
     static bool write(Byte** ppByte, const std::vector<unsigned int>& dataVec);
     // dataVec is sized to max expected values. It is resized on return, based on read data
     static bool read(Byte** ppByte, size_t& sz, std::vector<unsigned int>& dataVec);
@@ -81,7 +81,6 @@ struct BitStufferV1
         numBits = (numElem * numBits) & 31;
         return (numBits == 0 || numBits > 24) ? 0 : (numBits > 16) ? 1 : (numBits > 8) ? 2 : 3;
     }
-
 };
 
 #define MAX_RUN 32767
@@ -211,6 +210,10 @@ int BitMaskV1::RLEsize() const {
     return oddrun ? (osz + oddrun + 2) : osz;
 }
 
+// Lookup tables for number of bytes in float and int
+static const Byte bits67[4] = { 0x80, 0x40, 0xc0, 0 };
+static const Byte stib67[4] = { 4, 2, 1, 3 };
+
 // see the old stream IO functions below on how to call.
 // if you change write(...) / read(...), don't forget to update computeNumBytesNeeded(...).
 
@@ -226,10 +229,10 @@ bool BitStufferV1::write(Byte** ppByte, const vector<unsigned int>& dataVec)
     unsigned int numElements = (unsigned int)dataVec.size();
 
     // use the upper 2 bits to encode the type used for numElements: Byte, ushort, or uint
-    // n is 1, 2  or 4
+    // n is in {1, 2, 4}
     int n = numBytesUInt(numElements);
-    const Byte bits67[5] = { 0xff, 0x80, 0x40, 0xff, 0 };
-    **ppByte = static_cast<Byte>(numBits | bits67[n]);
+    // 0xc0 is invalid, will trigger an error
+    **ppByte = static_cast<Byte>(numBits | bits67[n-1]);
     (*ppByte)++;
     memcpy(*ppByte, &numElements, n);
     *ppByte += n;
@@ -334,20 +337,12 @@ bool BitStufferV1::read(Byte** ppByte, size_t& size, vector<unsigned int>& dataV
     return numBytes == 0;
 }
 
-static const int CNT_Z = 8;
-static const int CNT_Z_VER = 11;
-static const string sCntZImage("CntZImage "); // Includes a space
-
-// -------------------------------------------------------------------------- ;
-
 static int numBytesFlt(float z)
 {
     short s = (short)z;
     signed char c = static_cast<signed char>(s);
     return ((float)c == z) ? 1 : ((float)s == z) ? 2 : 4;
 }
-
-// -------------------------------------------------------------------------- ;
 
 static bool writeFlt(Byte** ppByte, float z, int numBytes)
 {
@@ -371,8 +366,6 @@ static bool writeFlt(Byte** ppByte, float z, int numBytes)
     *ppByte = ptr + numBytes;
     return true;
 }
-
-// -------------------------------------------------------------------------- ;
 
 static bool readFlt(Byte** ppByte, size_t& nRemainingBytes, float& z, int numBytes)
 {
@@ -412,8 +405,11 @@ static unsigned int computeNumBytesNeededByStuffer(unsigned int numElem, unsigne
         BitStufferV1::numTailBytesNotNeeded(numElem, numBits);
 }
 
-// -------------------------------------------------------------------------- ;
+static const int CNT_Z = 8;
+static const int CNT_Z_VER = 11;
+static const string sCntZImage("CntZImage "); // Includes a space
 
+// -------------------------------------------------------------------------- ;
 // computes the size of a CntZImage of any width and height, but all void / invalid,
 // and then compressed
 
@@ -429,8 +425,6 @@ unsigned int CntZImage::computeNumBytesNeededToWriteVoidImage()
     sz += 3 * sizeof(int) + sizeof(float) + 1;
     return sz; // 67
 }
-
-// -------------------------------------------------------------------------- ;
 
 unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
     bool onlyZPart,
@@ -575,8 +569,6 @@ bool CntZImage::write(Byte** ppByte,
 
     return true;
 }
-
-// -------------------------------------------------------------------------- ;
 
 bool CntZImage::read(Byte** ppByte,
     size_t& nRemainingBytes,
@@ -933,10 +925,8 @@ bool CntZImage::writeZTile(Byte** ppByte, int& numBytes,
         if (maxElem == 0)
             flag = 3;    // set compression flag to 3 to mark tile as constant zMin
 
-        int n = numBytesFlt(zMin);
-        int bits67 = (n == 4) ? 0 : 3 - n;
-        flag |= bits67 << 6;
-        *ptr++ = flag;
+        int n = numBytesFlt(zMin); // n in { 1, 2, 4 }
+        *ptr++ = (flag | bits67[n-1]);
 
         if (!writeFlt(&ptr, zMin, n))
             return false;
@@ -979,7 +969,8 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
         return false;
     Byte comprFlag = *ptr++;
     nRemainingBytes -= 1;
-    int bits67 = comprFlag >> 6;
+    // Used if bit-stuffed
+    int n = stib67[comprFlag >> 6];
     comprFlag &= 63;
 
     if (comprFlag == 2) {
@@ -1020,7 +1011,6 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
     }
     else {
         // read z's as int arr bit stuffed
-        int n = (bits67 == 0) ? 4 : 3 - bits67;
         float offset = 0;
         if (!readFlt(&ptr, nRemainingBytes, offset, n))
             return false;
@@ -1066,6 +1056,5 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
     nRemainingBytesInOut = nRemainingBytes;
     return true;
 }
-
 
 NAMESPACE_LERC_END
