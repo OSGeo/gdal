@@ -54,7 +54,9 @@ def test_mem_md_basic():
     assert not rg.GetAttributes()
     assert not rg.GetDimensions()
     assert not rg.OpenMDArray("not existing")
+    assert not rg.OpenMDArrayFromFullname("not existing")
     assert not rg.OpenGroup("not existing")
+    assert not rg.OpenGroupFromFullname("not existing")
     assert not rg.GetAttribute("not existing")
 
 
@@ -78,6 +80,15 @@ def test_mem_md_subgroup():
 
     subsubg = subg.CreateGroup('subsubgroup')
     assert subsubg.GetFullName() == '/subgroup/subsubgroup'
+
+    subsubg = rg.OpenGroupFromFullname('/subgroup/subsubgroup')
+    assert subsubg is not None
+    assert subsubg.GetFullName() == '/subgroup/subsubgroup'
+
+    subg.CreateMDArray("myarray", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    array = rg.OpenMDArrayFromFullname('/subgroup/myarray')
+    assert array is not None
+    assert array.GetFullName() == '/subgroup/myarray'
 
     copy_ds = drv.CreateCopy('', ds)
     assert copy_ds

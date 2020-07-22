@@ -677,6 +677,25 @@ std::shared_ptr<GDALMDArray> GDALGroup::OpenMDArrayFromFullname(
 }
 
 /************************************************************************/
+/*                       OpenGroupFromFullname()                        */
+/************************************************************************/
+
+/** Get a group from its fully qualified name.
+ * @since GDAL 3.2
+ */
+std::shared_ptr<GDALGroup> GDALGroup::OpenGroupFromFullname(
+                                                const std::string& osFullName,
+                                                CSLConstList papszOptions) const
+{
+    std::string osName;
+    std::shared_ptr<GDALGroup> curGroupHolder;
+    auto poGroup(GetInnerMostGroup(osFullName, curGroupHolder, osName));
+    if( poGroup == nullptr )
+        return nullptr;
+    return poGroup->OpenGroup(osName, papszOptions);
+}
+
+/************************************************************************/
 /*                      OpenDimensionFromFullname()                     */
 /************************************************************************/
 
@@ -5984,6 +6003,29 @@ GDALMDArrayH GDALGroupOpenMDArray(GDALGroupH hGroup, const char* pszMDArrayName,
 }
 
 /************************************************************************/
+/*                  GDALGroupOpenMDArrayFromFullname()                  */
+/************************************************************************/
+
+/** Open and return a multidimensional array from its fully qualified name.
+ *
+ * This is the same as the C++ method GDALGroup::OpenMDArrayFromFullname().
+ *
+ * @return the array, to be freed with GDALMDArrayRelease(), or nullptr.
+ *
+ * @since GDAL 3.2
+ */
+GDALMDArrayH GDALGroupOpenMDArrayFromFullname(GDALGroupH hGroup, const char* pszFullname,
+                                  CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1( hGroup, __func__, nullptr );
+    VALIDATE_POINTER1( pszFullname, __func__, nullptr );
+    auto array = hGroup->m_poImpl->OpenMDArrayFromFullname(std::string(pszFullname), papszOptions);
+    if( !array )
+        return nullptr;
+    return new GDALMDArrayHS(array);
+}
+
+/************************************************************************/
 /*                        GDALGroupGetGroupNames()                      */
 /************************************************************************/
 
@@ -6021,6 +6063,29 @@ GDALGroupH GDALGroupOpenGroup(GDALGroupH hGroup, const char* pszSubGroupName,
     VALIDATE_POINTER1( hGroup, __func__, nullptr );
     VALIDATE_POINTER1( pszSubGroupName, __func__, nullptr );
     auto subGroup = hGroup->m_poImpl->OpenGroup(std::string(pszSubGroupName), papszOptions);
+    if( !subGroup )
+        return nullptr;
+    return new GDALGroupHS(subGroup);
+}
+
+/************************************************************************/
+/*                       GDALGroupOpenMDArrayFromFullname()             */
+/************************************************************************/
+
+/** Open and return a sub-group from its fully qualified name.
+ *
+ * This is the same as the C++ method GDALGroup::OpenGroupFromFullname().
+ *
+ * @return the sub-group, to be freed with GDALGroupRelease(), or nullptr.
+ *
+ * @since GDAL 3.2
+ */
+GDALGroupH GDALGroupOpenGroupFromFullname(GDALGroupH hGroup, const char* pszFullname,
+                                          CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1( hGroup, __func__, nullptr );
+    VALIDATE_POINTER1( pszFullname, __func__, nullptr );
+    auto subGroup = hGroup->m_poImpl->OpenGroupFromFullname(std::string(pszFullname), papszOptions);
     if( !subGroup )
         return nullptr;
     return new GDALGroupHS(subGroup);
