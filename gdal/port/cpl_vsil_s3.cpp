@@ -3420,9 +3420,92 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
         return false;
     };
 
+    struct ChunkToCopy
+    {
+        CPLString    osFilename{};
+        GIntBig      nMTime = 0;
+        CPLString    osETag{};
+        vsi_l_offset nTotalSize = 0;
+        vsi_l_offset nStartOffset = 0;
+        vsi_l_offset nSize = 0;
+    };
+    std::vector<ChunkToCopy> aoChunksToCopy;
+    std::set<CPLString> aoSetDirsToCreate;
+    const char* pszChunkSize = CSLFetchNameValue(papszOptions, "CHUNK_SIZE");
+    const int nRequestedThreads = atoi(CSLFetchNameValueDef(papszOptions, "NUM_THREADS", "1"));
+    const bool bUploadToS3 = bUploadFromLocalToNetwork && STARTS_WITH(pszTarget, "/vsis3/");
+    const bool bUploadToAZ = bUploadFromLocalToNetwork && STARTS_WITH(pszTarget, "/vsiaz/");
+    const bool bSimulateThreading = CPLTestBool(CPLGetConfigOption("VSIS3_SIMULATE_THREADING", "NO"));
+    const int nMinSizeChunk = (bUploadToS3 || bUploadToAZ) && !bSimulateThreading ? 5242880 : 1; // 5242880 defines by S3 API
+    const int nMinThreads = bSimulateThreading ? 0 : 1;
+    const size_t nMaxChunkSize =
+        pszChunkSize && nRequestedThreads > nMinThreads &&
+        (bDownloadFromNetworkToLocal || bUploadToS3 || bUploadToAZ) ?
+            static_cast<size_t>(std::min(1024 * 1024 * 1024,
+                                std::max(nMinSizeChunk,
+                                            atoi(pszChunkSize)))): 0;
+
+    uint64_t nTotalSize = 0;
+    std::vector<size_t> anIndexToCopy; // points to aoChunksToCopy
+
+    struct MultiPartDef
+    {
+        CPLString osUploadID{};
+        int nCountValidETags = 0;
+        int nExpectedCount = 0;
+        std::vector<CPLString> aosEtags{};
+    };
+    std::map<CPLString, MultiPartDef> oMapMultiPartDefs;
+
+    // Cleanup pending uploads in case of early exit
+    struct CleanupPendingUploads
+    {
+        IVSIS3LikeFSHandler* m_poFS;
+        std::map<CPLString, MultiPartDef>& m_oMapMultiPartDefs;
+        int m_nMaxRetry;
+        double m_dfRetryDelay;
+
+        CleanupPendingUploads(
+            IVSIS3LikeFSHandler* poFSIn,
+            std::map<CPLString, MultiPartDef>& oMapMultiPartDefsIn,
+            int nMaxRetryIn,
+            double dfRetryDelayIn):
+            m_poFS(poFSIn),
+            m_oMapMultiPartDefs(oMapMultiPartDefsIn),
+            m_nMaxRetry(nMaxRetryIn),
+            m_dfRetryDelay(dfRetryDelayIn)
+        {}
+
+        ~CleanupPendingUploads()
+        {
+            for( const auto& kv: m_oMapMultiPartDefs )
+            {
+                auto poS3HandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+                    m_poFS->CreateHandleHelper(kv.first.c_str() + m_poFS->GetFSPrefix().size(), false));
+                if( poS3HandleHelper )
+                {
+                    m_poFS->UpdateHandleFromMap(poS3HandleHelper.get());
+                    m_poFS->AbortMultipart(kv.first, kv.second.osUploadID,
+                                            poS3HandleHelper.get(),
+                                            m_nMaxRetry, m_dfRetryDelay);
+                }
+            }
+        }
+
+        CleanupPendingUploads(const CleanupPendingUploads&) = delete;
+        CleanupPendingUploads& operator=(const CleanupPendingUploads&) = delete;
+    };
+    const CleanupPendingUploads cleanupPendingUploads(this,
+                                                        oMapMultiPartDefs,
+                                                        nMaxRetry,
+                                                        dfRetryDelay);
+
+    CPLString osTargetDir; // set in the VSI_ISDIR(sSource.st_mode) case
+    CPLString osTarget; // set in the !(VSI_ISDIR(sSource.st_mode)) case
+
     if( VSI_ISDIR(sSource.st_mode) )
     {
-        CPLString osTargetDir(pszTarget);
+        osTargetDir = pszTarget;
         if( osSource.back() != '/' )
         {
             osTargetDir = CPLFormFilename(osTargetDir,
@@ -3476,30 +3559,6 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
         }
 
         // Enumerate source files and directories
-        struct ChunkToCopy
-        {
-            CPLString    osFilename{};
-            GIntBig      nMTime = 0;
-            CPLString    osETag{};
-            vsi_l_offset nTotalSize = 0;
-            vsi_l_offset nStartOffset = 0;
-            vsi_l_offset nSize = 0;
-        };
-        std::vector<ChunkToCopy> aoChunksToCopy;
-        std::set<CPLString> aoSetDirsToCreate;
-        const char* pszChunkSize = CSLFetchNameValue(papszOptions, "CHUNK_SIZE");
-        const int nRequestedThreads = atoi(CSLFetchNameValueDef(papszOptions, "NUM_THREADS", "1"));
-        const bool bUploadToS3 = bUploadFromLocalToNetwork && STARTS_WITH(pszTarget, "/vsis3/");
-        const bool bUploadToAZ = bUploadFromLocalToNetwork && STARTS_WITH(pszTarget, "/vsiaz/");
-        const bool bSimulateThreading = CPLTestBool(CPLGetConfigOption("VSIS3_SIMULATE_THREADING", "NO"));
-        const int nMinSizeChunk = (bUploadToS3 || bUploadToAZ) && !bSimulateThreading ? 5242880 : 1; // 5242880 defines by S3 API
-        const int nMinThreads = bSimulateThreading ? 0 : 1;
-        const size_t nMaxChunkSize =
-            pszChunkSize && nRequestedThreads > nMinThreads &&
-            (bDownloadFromNetworkToLocal || bUploadToS3 || bUploadToAZ) ?
-                static_cast<size_t>(std::min(1024 * 1024 * 1024,
-                                    std::max(nMinSizeChunk,
-                                             atoi(pszChunkSize)))): 0;
         while( true )
         {
             const auto entry = VSIGetNextDirEntry(poSourceDir.get());
@@ -3562,61 +3621,6 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
 
         // Collect source files to copy
         const size_t nChunkCount = aoChunksToCopy.size();
-        uint64_t nTotalSize = 0;
-        std::vector<size_t> anIndexToCopy; // points to aoChunksToCopy
-
-        struct MultiPartDef
-        {
-            CPLString osUploadID{};
-            int nCountValidETags = 0;
-            int nExpectedCount = 0;
-            std::vector<CPLString> aosEtags{};
-        };
-        std::map<CPLString, MultiPartDef> oMapMultiPartDefs;
-
-        // Cleanup pending uploads in case of early exit
-        struct CleanupPendingUploads
-        {
-            IVSIS3LikeFSHandler* m_poFS;
-            std::map<CPLString, MultiPartDef>& m_oMapMultiPartDefs;
-            int m_nMaxRetry;
-            double m_dfRetryDelay;
-
-            CleanupPendingUploads(
-                IVSIS3LikeFSHandler* poFSIn,
-                std::map<CPLString, MultiPartDef>& oMapMultiPartDefsIn,
-                int nMaxRetryIn,
-                double dfRetryDelayIn):
-                m_poFS(poFSIn),
-                m_oMapMultiPartDefs(oMapMultiPartDefsIn),
-                m_nMaxRetry(nMaxRetryIn),
-                m_dfRetryDelay(dfRetryDelayIn)
-            {}
-
-            ~CleanupPendingUploads()
-            {
-                for( const auto& kv: m_oMapMultiPartDefs )
-                {
-                    auto poS3HandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
-                        m_poFS->CreateHandleHelper(kv.first.c_str() + m_poFS->GetFSPrefix().size(), false));
-                    if( poS3HandleHelper )
-                    {
-                        m_poFS->UpdateHandleFromMap(poS3HandleHelper.get());
-                        m_poFS->AbortMultipart(kv.first, kv.second.osUploadID,
-                                               poS3HandleHelper.get(),
-                                               m_nMaxRetry, m_dfRetryDelay);
-                    }
-                }
-            }
-
-            CleanupPendingUploads(const CleanupPendingUploads&) = delete;
-            CleanupPendingUploads& operator=(const CleanupPendingUploads&) = delete;
-        };
-        const CleanupPendingUploads cleanupPendingUploads(this,
-                                                          oMapMultiPartDefs,
-                                                          nMaxRetry,
-                                                          dfRetryDelay);
-
         for( size_t iChunk = 0; iChunk < nChunkCount; ++iChunk )
         {
             const auto& chunk = aoChunksToCopy[iChunk];
@@ -3687,7 +3691,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                         if( poS3HandleHelper == nullptr )
                             return false;
                         UpdateHandleFromMap(poS3HandleHelper.get());
-                        const auto osUploadID = 
+                        const auto osUploadID =
                             InitiateMultipartUpload(osSubTarget,
                                                     poS3HandleHelper.get(),
                                                     nMaxRetry,
@@ -3719,363 +3723,450 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
         }
 
         const int nThreads = std::min(std::max(1, nRequestedThreads),
-                                        static_cast<int>(anIndexToCopy.size()));
-        if( nThreads > nMinThreads )
+                                    static_cast<int>(anIndexToCopy.size()));
+        if( nThreads <= nMinThreads )
         {
-            struct JobQueue
+            // Proceed to file copy
+            bool ret = true;
+            uint64_t nAccSize = 0;
+            for( const size_t iChunk: anIndexToCopy )
             {
-                IVSIS3LikeFSHandler* poFS;
-                const std::vector<ChunkToCopy>& aoChunksToCopy;
-                const std::vector<size_t>& anIndexToCopy;
-                std::map<CPLString, MultiPartDef>& oMapMultiPartDefs;
-                volatile int iCurIdx = 0;
-                volatile bool ret = true;
-                volatile bool stop = false;
-                CPLString osSourceDir{};
-                CPLString osTargetDir{};
-                std::mutex sMutex{};
-                uint64_t nTotalCopied = 0;
-                bool bUploadToS3 = false;
-                bool bUploadToAZ = false;
-                size_t nMaxChunkSize = 0;
-                int nMaxRetry = 0;
-                double dfRetryDelay = 0.0;
+                const auto& chunk = aoChunksToCopy[iChunk];
+                CPLAssert(chunk.nStartOffset == 0);
+                const CPLString osSubSource(
+                    CPLFormFilename(osSourceWithoutSlash, chunk.osFilename, nullptr) );
+                const CPLString osSubTarget(
+                    CPLFormFilename(osTargetDir, chunk.osFilename, nullptr) );
+                // coverity[divide_by_zero]
+                void* pScaledProgress = GDALCreateScaledProgress(
+                    double(nAccSize) / nTotalSize, double(nAccSize + chunk.nSize) / nTotalSize,
+                    pProgressFunc, pProgressData);
+                ret = CopyFile(nullptr, chunk.nSize,
+                                osSubSource, osSubTarget,
+                                GDALScaledProgress, pScaledProgress);
+                GDALDestroyScaledProgress(pScaledProgress);
+                if( !ret )
+                {
+                    break;
+                }
+                nAccSize += chunk.nSize;
+            }
 
-                JobQueue(IVSIS3LikeFSHandler* poFSIn,
-                         const std::vector<ChunkToCopy>& aoChunksToCopyIn,
-                         const std::vector<size_t>& anIndexToCopyIn,
-                         std::map<CPLString, MultiPartDef>& oMapMultiPartDefsIn,
-                         const CPLString& osSourceDirIn,
-                         const CPLString& osTargetDirIn,
-                         bool bUploadToS3In,
-                         bool bUploadToAZIn,
-                         size_t nMaxChunkSizeIn,
-                         int nMaxRetryIn,
-                         double dfRetryDelayIn):
-                    poFS(poFSIn),
-                    aoChunksToCopy(aoChunksToCopyIn),
-                    anIndexToCopy(anIndexToCopyIn),
-                    oMapMultiPartDefs(oMapMultiPartDefsIn),
-                    osSourceDir(osSourceDirIn),
-                    osTargetDir(osTargetDirIn),
-                    bUploadToS3(bUploadToS3In),
-                    bUploadToAZ(bUploadToAZIn),
-                    nMaxChunkSize(nMaxChunkSizeIn),
-                    nMaxRetry(nMaxRetryIn),
-                    dfRetryDelay(dfRetryDelayIn)
-                {}
+            return ret;
+        }
+    }
+    else
+    {
+        CPLString osMsg;
+        osMsg.Printf("Copying of %s", osSourceWithoutSlash.c_str());
 
-                JobQueue(const JobQueue&) = delete;
-                JobQueue& operator=(const JobQueue&) = delete;
-            };
-            const auto threadFunc = [](void* pDataIn)
+        VSIStatBufL sTarget;
+        osTarget = pszTarget;
+        bool bTargetIsFile = false;
+        sTarget.st_size = 0;
+        if( VSIStatL(osTarget, &sTarget) == 0 )
+        {
+            bTargetIsFile = true;
+            if( VSI_ISDIR(sTarget.st_mode) )
             {
-                struct ProgressData
-                {
-                    uint64_t nFileSize;
-                    double dfLastPct;
-                    JobQueue* queue;
-                };
+                osTarget = CPLFormFilename(osTarget, CPLGetFilename(pszSource), nullptr);
+                bTargetIsFile = VSIStatL(osTarget, &sTarget) == 0 && 
+                                !CPL_TO_BOOL(VSI_ISDIR(sTarget.st_mode));
+            }
+        }
 
-                JobQueue* queue = static_cast<JobQueue*>(pDataIn);
-                while( !queue->stop )
+        // Download from network to local file system ?
+        if( bTargetIsFile && bDownloadFromNetworkToLocal && sSource.st_size == sTarget.st_size )
+        {
+            if( CanSkipDownloadFromNetworkToLocal(
+                osSourceWithoutSlash,
+                osTarget,
+                sSource.st_mtime,
+                sTarget.st_mtime,
+                [this](const char* pszFilename)
                 {
-                    const int idx = CPLAtomicInc(&(queue->iCurIdx)) - 1;
-                    if( static_cast<size_t>(idx) >= queue->anIndexToCopy.size() )
+                    FileProp cachedFileProp;
+                    if( GetCachedFileProp(GetURLFromFilename(pszFilename),
+                                        cachedFileProp) )
                     {
-                        queue->stop = true;
-                        break;
+                        return cachedFileProp.ETag;
                     }
-                    const auto& chunk = queue->aoChunksToCopy[queue->anIndexToCopy[idx]];
-                    const CPLString osSubSource(
-                        CPLFormFilename(queue->osSourceDir, chunk.osFilename, nullptr) );
-                    const CPLString osSubTarget(
-                        CPLFormFilename(queue->osTargetDir, chunk.osFilename, nullptr) );
+                    return CPLString();
+                }) )
+            {
+                if( pProgressFunc )
+                {
+                    pProgressFunc(1.0, osMsg.c_str(), pProgressData);
+                }
+                return true;
+            }
+        }
 
-                    const auto progressFunc = [](double pct, const char*, void* pProgressDataIn)
-                    {
-                        ProgressData* pProgress = static_cast<ProgressData*>(pProgressDataIn);
-                        const auto nInc = static_cast<uint64_t>(
-                            (pct - pProgress->dfLastPct) * pProgress->nFileSize + 0.5);
-                        pProgress->queue->sMutex.lock();
-                        pProgress->queue->nTotalCopied += nInc;
-                        pProgress->queue->sMutex.unlock();
-                        pProgress->dfLastPct = pct;
-                        return TRUE;
-                    };
-                    ProgressData progressData;
-                    progressData.nFileSize = chunk.nSize;
-                    progressData.dfLastPct = 0;
-                    progressData.queue = queue;
-                    if( chunk.nSize < chunk.nTotalSize )
-                    {
-                        const size_t nSizeToRead = static_cast<size_t>(chunk.nSize);
-                        bool bSuccess = false;
-                        if( queue->bUploadToS3 || queue->bUploadToAZ )
-                        {
-                            const auto iter = queue->oMapMultiPartDefs.find(osSubTarget);
-                            CPLAssert(iter != queue->oMapMultiPartDefs.end());
+        VSILFILE* fpIn = nullptr;
 
-                            VSILFILE* fpIn = VSIFOpenL(osSubSource, "rb");
-                            void* pBuffer = VSI_MALLOC_VERBOSE(nSizeToRead);
-                            auto poS3HandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
-                                queue->poFS->CreateHandleHelper(
-                                    osSubTarget.c_str() + queue->poFS->GetFSPrefix().size(), false));
-                            if( fpIn && pBuffer && poS3HandleHelper &&
-                                VSIFSeekL(fpIn, chunk.nStartOffset, SEEK_SET) == 0 &&
-                                VSIFReadL(pBuffer, 1, nSizeToRead, fpIn) == nSizeToRead )
-                            {
-                                queue->poFS->UpdateHandleFromMap(poS3HandleHelper.get());
-                                const int nPartNumber = 1 + static_cast<int>(
-                                    chunk.nStartOffset / queue->nMaxChunkSize);
-                                const CPLString osEtag = queue->poFS->UploadPart(
-                                    osSubTarget, nPartNumber,
-                                    iter->second.osUploadID,
-                                    pBuffer, nSizeToRead,
-                                    poS3HandleHelper.get(),
-                                    queue->nMaxRetry,
-                                    queue->dfRetryDelay);
-                                if( !osEtag.empty() )
-                                {
-                                    iter->second.nCountValidETags ++;
-                                    iter->second.aosEtags.resize(
-                                        std::max(nPartNumber,
-                                                 static_cast<int>(iter->second.aosEtags.size())));
-                                    iter->second.aosEtags[nPartNumber-1] = osEtag;
-                                    bSuccess = true;
-                                }
-                            }
-                            if( fpIn )
-                                VSIFCloseL(fpIn);
-                            VSIFree(pBuffer);
-                        }
-                        else
+        // Upload from local file system to network ?
+        if( bUploadFromLocalToNetwork && sSource.st_size == sTarget.st_size )
+        {
+            if( CanSkipUploadFromLocalToNetwork(
+                fpIn,
+                osSourceWithoutSlash,
+                osTarget,
+                sSource.st_mtime,
+                sTarget.st_mtime,
+                [this](const char* pszFilename)
+                {
+                    FileProp cachedFileProp;
+                    if( GetCachedFileProp(GetURLFromFilename(pszFilename),
+                                        cachedFileProp) )
+                    {
+                        return cachedFileProp.ETag;
+                    }
+                    return CPLString();
+                }) )
+            {
+                if( pProgressFunc )
+                {
+                    pProgressFunc(1.0, osMsg.c_str(), pProgressData);
+                }
+                return true;
+            }
+        }
+
+        // Split file in possibly multiple chunks
+        const vsi_l_offset nChunksLarge = nMaxChunkSize == 0 ? 1 :
+                (sSource.st_size + nMaxChunkSize - 1) / nMaxChunkSize;
+        if( nChunksLarge > 1000 ) // must also be below knMAX_PART_NUMBER for upload
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                        "Too small CHUNK_SIZE w.r.t file size");
+            return false;
+        }
+        ChunkToCopy chunk;
+        chunk.nMTime = sSource.st_mtime;
+        chunk.nTotalSize = sSource.st_size;
+        nTotalSize = chunk.nTotalSize;
+        const size_t nChunks = static_cast<size_t>(nChunksLarge);
+        for( size_t iChunk = 0; iChunk < nChunks; iChunk++ )
+        {
+            chunk.nStartOffset = iChunk * nMaxChunkSize;
+            chunk.nSize = nChunks == 1 ? sSource.st_size:
+                std::min(sSource.st_size - chunk.nStartOffset,
+                            static_cast<vsi_l_offset>(nMaxChunkSize));
+            aoChunksToCopy.push_back(chunk);
+            anIndexToCopy.push_back(iChunk);
+
+            if( nChunks > 1 )
+            {
+                if( iChunk == 0 )
+                {
+                    if( bDownloadFromNetworkToLocal )
+                    {
+                        // Suppress target file as we're going to open in wb+ mode
+                        // for parallelized writing
+                        VSIUnlink(osTarget);
+                    }
+                    else if( bUploadToS3 || bUploadToAZ )
+                    {
+                        auto poS3HandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+                            CreateHandleHelper(osTarget.c_str() + GetFSPrefix().size(), false));
+                        if( poS3HandleHelper == nullptr )
+                            return false;
+                        UpdateHandleFromMap(poS3HandleHelper.get());
+                        const auto osUploadID = 
+                            InitiateMultipartUpload(osTarget,
+                                                    poS3HandleHelper.get(),
+                                                    nMaxRetry,
+                                                    dfRetryDelay);
+                        if( osUploadID.empty() )
                         {
-                            bSuccess = CopyChunk(osSubSource, osSubTarget,
-                                                 chunk.nStartOffset,
-                                                 nSizeToRead);
+                            return false;
                         }
-                        if( bSuccess )
-                        {
-                            progressFunc(1.0, "", &progressData);
-                        }
-                        else
-                        {
-                            queue->ret = false;
-                            queue->stop = true;
-                        }
+                        MultiPartDef def;
+                        def.osUploadID = osUploadID;
+                        def.nExpectedCount = static_cast<int>(
+                            (chunk.nTotalSize + chunk.nSize - 1) / chunk.nSize);
+                        oMapMultiPartDefs[osTarget] = def;
                     }
                     else
                     {
-                        CPLAssert( chunk.nStartOffset == 0 );
-                        if( !queue->poFS->CopyFile(nullptr, chunk.nTotalSize,
-                                    osSubSource, osSubTarget,
-                                    progressFunc, &progressData) )
-                        {
-                            queue->ret = false;
-                            queue->stop = true;
-                        }
+                        CPLAssert(false);
                     }
                 }
-            };
+            }
+        }
 
-            JobQueue sJobQueue(this, aoChunksToCopy, anIndexToCopy,
-                               oMapMultiPartDefs,
-                               osSourceWithoutSlash, osTargetDir,
-                               bUploadToS3, bUploadToAZ, nMaxChunkSize,
-                               nMaxRetry, dfRetryDelay);
+        const int nThreads = std::min(std::max(1, nRequestedThreads),
+                                    static_cast<int>(anIndexToCopy.size()));
+        if( nThreads <= nMinThreads )
+        {
+            return CopyFile(fpIn, sSource.st_size,
+                            osSourceWithoutSlash,
+                            osTarget,
+                            pProgressFunc,
+                            pProgressData);
+        }
+        if( fpIn )
+        {
+            VSIFCloseL(fpIn);
+        }
+    }
 
-            if( CPLTestBool(CPLGetConfigOption("VSIS3_SYNC_MULTITHREADING", "YES")) )
+
+    const int nThreads = std::min(std::max(1, nRequestedThreads),
+                                    static_cast<int>(anIndexToCopy.size()));
+
+    struct JobQueue
+    {
+        IVSIS3LikeFSHandler* poFS;
+        const std::vector<ChunkToCopy>& aoChunksToCopy;
+        const std::vector<size_t>& anIndexToCopy;
+        std::map<CPLString, MultiPartDef>& oMapMultiPartDefs;
+        volatile int iCurIdx = 0;
+        volatile bool ret = true;
+        volatile bool stop = false;
+        CPLString osSourceDir{};
+        CPLString osTargetDir{};
+        CPLString osSource{};
+        CPLString osTarget{};
+        std::mutex sMutex{};
+        uint64_t nTotalCopied = 0;
+        bool bUploadToS3 = false;
+        bool bUploadToAZ = false;
+        size_t nMaxChunkSize = 0;
+        int nMaxRetry = 0;
+        double dfRetryDelay = 0.0;
+
+        JobQueue(IVSIS3LikeFSHandler* poFSIn,
+                    const std::vector<ChunkToCopy>& aoChunksToCopyIn,
+                    const std::vector<size_t>& anIndexToCopyIn,
+                    std::map<CPLString, MultiPartDef>& oMapMultiPartDefsIn,
+                    const CPLString& osSourceDirIn,
+                    const CPLString& osTargetDirIn,
+                    const CPLString& osSourceIn,
+                    const CPLString& osTargetIn,
+                    bool bUploadToS3In,
+                    bool bUploadToAZIn,
+                    size_t nMaxChunkSizeIn,
+                    int nMaxRetryIn,
+                    double dfRetryDelayIn):
+            poFS(poFSIn),
+            aoChunksToCopy(aoChunksToCopyIn),
+            anIndexToCopy(anIndexToCopyIn),
+            oMapMultiPartDefs(oMapMultiPartDefsIn),
+            osSourceDir(osSourceDirIn),
+            osTargetDir(osTargetDirIn),
+            osSource(osSourceIn),
+            osTarget(osTargetIn),
+            bUploadToS3(bUploadToS3In),
+            bUploadToAZ(bUploadToAZIn),
+            nMaxChunkSize(nMaxChunkSizeIn),
+            nMaxRetry(nMaxRetryIn),
+            dfRetryDelay(dfRetryDelayIn)
+        {}
+
+        JobQueue(const JobQueue&) = delete;
+        JobQueue& operator=(const JobQueue&) = delete;
+    };
+    const auto threadFunc = [](void* pDataIn)
+    {
+        struct ProgressData
+        {
+            uint64_t nFileSize;
+            double dfLastPct;
+            JobQueue* queue;
+        };
+
+        JobQueue* queue = static_cast<JobQueue*>(pDataIn);
+        while( !queue->stop )
+        {
+            const int idx = CPLAtomicInc(&(queue->iCurIdx)) - 1;
+            if( static_cast<size_t>(idx) >= queue->anIndexToCopy.size() )
             {
-                std::vector<CPLJoinableThread*> ahThreads;
-                for( int i = 0; i < nThreads; i++ )
+                queue->stop = true;
+                break;
+            }
+            const auto& chunk = queue->aoChunksToCopy[queue->anIndexToCopy[idx]];
+            const CPLString osSubSource(
+                queue->osTargetDir.empty() ? queue->osSource.c_str() :
+                CPLFormFilename(queue->osSourceDir, chunk.osFilename, nullptr) );
+            const CPLString osSubTarget(
+                queue->osTargetDir.empty() ? queue->osTarget.c_str():
+                CPLFormFilename(queue->osTargetDir, chunk.osFilename, nullptr) );
+
+            const auto progressFunc = [](double pct, const char*, void* pProgressDataIn)
+            {
+                ProgressData* pProgress = static_cast<ProgressData*>(pProgressDataIn);
+                const auto nInc = static_cast<uint64_t>(
+                    (pct - pProgress->dfLastPct) * pProgress->nFileSize + 0.5);
+                pProgress->queue->sMutex.lock();
+                pProgress->queue->nTotalCopied += nInc;
+                pProgress->queue->sMutex.unlock();
+                pProgress->dfLastPct = pct;
+                return TRUE;
+            };
+            ProgressData progressData;
+            progressData.nFileSize = chunk.nSize;
+            progressData.dfLastPct = 0;
+            progressData.queue = queue;
+            if( chunk.nSize < chunk.nTotalSize )
+            {
+                const size_t nSizeToRead = static_cast<size_t>(chunk.nSize);
+                bool bSuccess = false;
+                if( queue->bUploadToS3 || queue->bUploadToAZ )
                 {
-                    auto hThread = CPLCreateJoinableThread(threadFunc, &sJobQueue);
-                    if( !hThread )
+                    const auto iter = queue->oMapMultiPartDefs.find(osSubTarget);
+                    CPLAssert(iter != queue->oMapMultiPartDefs.end());
+
+                    VSILFILE* fpIn = VSIFOpenL(osSubSource, "rb");
+                    void* pBuffer = VSI_MALLOC_VERBOSE(nSizeToRead);
+                    auto poS3HandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+                        queue->poFS->CreateHandleHelper(
+                            osSubTarget.c_str() + queue->poFS->GetFSPrefix().size(), false));
+                    if( fpIn && pBuffer && poS3HandleHelper &&
+                        VSIFSeekL(fpIn, chunk.nStartOffset, SEEK_SET) == 0 &&
+                        VSIFReadL(pBuffer, 1, nSizeToRead, fpIn) == nSizeToRead )
                     {
-                        sJobQueue.ret = false;
-                        sJobQueue.stop = true;
-                        break;
-                    }
-                    ahThreads.push_back(hThread);
-                }
-                if( pProgressFunc )
-                {
-                    while( !sJobQueue.stop )
-                    {
-                        CPLSleep(0.1);
-                        sJobQueue.sMutex.lock();
-                        const auto nTotalCopied = sJobQueue.nTotalCopied;
-                        sJobQueue.sMutex.unlock();
-                        // coverity[divide_by_zero]
-                        if( !pProgressFunc(double(nTotalCopied) / nTotalSize,
-                                        "", pProgressData) )
+                        queue->poFS->UpdateHandleFromMap(poS3HandleHelper.get());
+                        const int nPartNumber = 1 + static_cast<int>(
+                            chunk.nStartOffset / queue->nMaxChunkSize);
+                        const CPLString osEtag = queue->poFS->UploadPart(
+                            osSubTarget, nPartNumber,
+                            iter->second.osUploadID,
+                            pBuffer, nSizeToRead,
+                            poS3HandleHelper.get(),
+                            queue->nMaxRetry,
+                            queue->dfRetryDelay);
+                        if( !osEtag.empty() )
                         {
-                            sJobQueue.ret = false;
-                            sJobQueue.stop = true;
+                            iter->second.nCountValidETags ++;
+                            iter->second.aosEtags.resize(
+                                std::max(nPartNumber,
+                                            static_cast<int>(iter->second.aosEtags.size())));
+                            iter->second.aosEtags[nPartNumber-1] = osEtag;
+                            bSuccess = true;
                         }
                     }
-                    if( sJobQueue.ret )
-                    {
-                        pProgressFunc(1.0, "", pProgressData);
-                    }
+                    if( fpIn )
+                        VSIFCloseL(fpIn);
+                    VSIFree(pBuffer);
                 }
-                for( auto hThread: ahThreads )
+                else
                 {
-                    CPLJoinThread(hThread);
+                    bSuccess = CopyChunk(osSubSource, osSubTarget,
+                                            chunk.nStartOffset,
+                                            nSizeToRead);
+                }
+                if( bSuccess )
+                {
+                    progressFunc(1.0, "", &progressData);
+                }
+                else
+                {
+                    queue->ret = false;
+                    queue->stop = true;
                 }
             }
             else
             {
-                // Only for simulation case
-                threadFunc(&sJobQueue);
-            }
-
-            // Finalize multipart uploads
-            if( sJobQueue.ret && (bUploadToS3 || bUploadToAZ))
-            {
-                std::set<CPLString> oSetKeysToRemove;
-                for( const auto& kv: oMapMultiPartDefs )
+                CPLAssert( chunk.nStartOffset == 0 );
+                if( !queue->poFS->CopyFile(nullptr, chunk.nTotalSize,
+                            osSubSource, osSubTarget,
+                            progressFunc, &progressData) )
                 {
-                    auto poS3HandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
-                        CreateHandleHelper(kv.first.c_str() + GetFSPrefix().size(), false));
-                    sJobQueue.ret = false;
-                    if( poS3HandleHelper )
-                    {
-                        CPLAssert(kv.second.nCountValidETags == kv.second.nExpectedCount);
-                        UpdateHandleFromMap(poS3HandleHelper.get());
-                        if( CompleteMultipart(kv.first, kv.second.osUploadID,
-                                              kv.second.aosEtags,
-                                              poS3HandleHelper.get(),
-                                              nMaxRetry, dfRetryDelay) )
-                        {
-                            sJobQueue.ret = true;
-                            oSetKeysToRemove.insert(kv.first);
-
-                            InvalidateCachedData(
-                                poS3HandleHelper->GetURL().c_str() );
-                            InvalidateDirContent( CPLGetDirname(kv.first) );
-                        }
-                    }
-                }
-                for( const auto& key: oSetKeysToRemove )
-                {
-                    oMapMultiPartDefs.erase(key);
+                    queue->ret = false;
+                    queue->stop = true;
                 }
             }
-
-            return sJobQueue.ret;
         }
+    };
 
-        // Proceed to file copy
-        bool ret = true;
-        uint64_t nAccSize = 0;
-        for( const size_t iChunk: anIndexToCopy )
+    JobQueue sJobQueue(this, aoChunksToCopy, anIndexToCopy,
+                        oMapMultiPartDefs,
+                        osSourceWithoutSlash, osTargetDir,
+                        osSourceWithoutSlash, osTarget,
+                        bUploadToS3, bUploadToAZ, nMaxChunkSize,
+                        nMaxRetry, dfRetryDelay);
+
+    if( CPLTestBool(CPLGetConfigOption("VSIS3_SYNC_MULTITHREADING", "YES")) )
+    {
+        std::vector<CPLJoinableThread*> ahThreads;
+        for( int i = 0; i < nThreads; i++ )
         {
-            const auto& chunk = aoChunksToCopy[iChunk];
-            CPLAssert(chunk.nStartOffset == 0);
-            const CPLString osSubSource(
-                CPLFormFilename(osSourceWithoutSlash, chunk.osFilename, nullptr) );
-            const CPLString osSubTarget(
-                CPLFormFilename(osTargetDir, chunk.osFilename, nullptr) );
-            // coverity[divide_by_zero]
-            void* pScaledProgress = GDALCreateScaledProgress(
-                double(nAccSize) / nTotalSize, double(nAccSize + chunk.nSize) / nTotalSize,
-                pProgressFunc, pProgressData);
-            ret = CopyFile(nullptr, chunk.nSize,
-                           osSubSource, osSubTarget,
-                           GDALScaledProgress, pScaledProgress);
-            GDALDestroyScaledProgress(pScaledProgress);
-            if( !ret )
+            auto hThread = CPLCreateJoinableThread(threadFunc, &sJobQueue);
+            if( !hThread )
             {
+                sJobQueue.ret = false;
+                sJobQueue.stop = true;
                 break;
             }
-            nAccSize += chunk.nSize;
+            ahThreads.push_back(hThread);
         }
-
-        return ret;
-    }
-
-    CPLString osMsg;
-    osMsg.Printf("Copying of %s", osSourceWithoutSlash.c_str());
-
-    VSIStatBufL sTarget;
-    CPLString osTarget(pszTarget);
-    bool bTargetIsFile = false;
-    sTarget.st_size = 0;
-    if( VSIStatL(osTarget, &sTarget) == 0 )
-    {
-        bTargetIsFile = true;
-        if( VSI_ISDIR(sTarget.st_mode) )
+        if( pProgressFunc )
         {
-            osTarget = CPLFormFilename(osTarget, CPLGetFilename(pszSource), nullptr);
-            bTargetIsFile = VSIStatL(osTarget, &sTarget) == 0 && 
-                            !CPL_TO_BOOL(VSI_ISDIR(sTarget.st_mode));
-        }
-    }
-
-    // Download from network to local file system ?
-    if( bTargetIsFile && bDownloadFromNetworkToLocal && sSource.st_size == sTarget.st_size )
-    {
-        if( CanSkipDownloadFromNetworkToLocal(
-            osSourceWithoutSlash,
-            osTarget,
-            sSource.st_mtime,
-            sTarget.st_mtime,
-            [this](const char* pszFilename)
+            while( !sJobQueue.stop )
             {
-                FileProp cachedFileProp;
-                if( GetCachedFileProp(GetURLFromFilename(pszFilename),
-                                      cachedFileProp) )
+                CPLSleep(0.1);
+                sJobQueue.sMutex.lock();
+                const auto nTotalCopied = sJobQueue.nTotalCopied;
+                sJobQueue.sMutex.unlock();
+                // coverity[divide_by_zero]
+                if( !pProgressFunc(double(nTotalCopied) / nTotalSize,
+                                "", pProgressData) )
                 {
-                    return cachedFileProp.ETag;
+                    sJobQueue.ret = false;
+                    sJobQueue.stop = true;
                 }
-                return CPLString();
-            }) )
-        {
-            if( pProgressFunc )
-            {
-                pProgressFunc(1.0, osMsg.c_str(), pProgressData);
             }
-            return true;
+            if( sJobQueue.ret )
+            {
+                pProgressFunc(1.0, "", pProgressData);
+            }
+        }
+        for( auto hThread: ahThreads )
+        {
+            CPLJoinThread(hThread);
         }
     }
-
-    VSILFILE* fpIn = nullptr;
-
-    // Upload from local file system to network ?
-    if( bUploadFromLocalToNetwork && sSource.st_size == sTarget.st_size )
+    else
     {
-        if( CanSkipUploadFromLocalToNetwork(
-            fpIn,
-            osSourceWithoutSlash,
-            osTarget,
-            sSource.st_mtime,
-            sTarget.st_mtime,
-            [this](const char* pszFilename)
-            {
-                FileProp cachedFileProp;
-                if( GetCachedFileProp(GetURLFromFilename(pszFilename),
-                                      cachedFileProp) )
-                {
-                    return cachedFileProp.ETag;
-                }
-                return CPLString();
-            }) )
+        // Only for simulation case
+        threadFunc(&sJobQueue);
+    }
+
+    // Finalize multipart uploads
+    if( sJobQueue.ret && (bUploadToS3 || bUploadToAZ))
+    {
+        std::set<CPLString> oSetKeysToRemove;
+        for( const auto& kv: oMapMultiPartDefs )
         {
-            if( pProgressFunc )
+            auto poS3HandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+                CreateHandleHelper(kv.first.c_str() + GetFSPrefix().size(), false));
+            sJobQueue.ret = false;
+            if( poS3HandleHelper )
             {
-                pProgressFunc(1.0, osMsg.c_str(), pProgressData);
+                CPLAssert(kv.second.nCountValidETags == kv.second.nExpectedCount);
+                UpdateHandleFromMap(poS3HandleHelper.get());
+                if( CompleteMultipart(kv.first, kv.second.osUploadID,
+                                        kv.second.aosEtags,
+                                        poS3HandleHelper.get(),
+                                        nMaxRetry, dfRetryDelay) )
+                {
+                    sJobQueue.ret = true;
+                    oSetKeysToRemove.insert(kv.first);
+
+                    InvalidateCachedData(
+                        poS3HandleHelper->GetURL().c_str() );
+                    InvalidateDirContent( CPLGetDirname(kv.first) );
+                }
             }
-            return true;
+        }
+        for( const auto& key: oSetKeysToRemove )
+        {
+            oMapMultiPartDefs.erase(key);
         }
     }
 
-    return CopyFile(fpIn, sSource.st_size,
-                    osSourceWithoutSlash,
-                    osTarget,
-                    pProgressFunc,
-                    pProgressData);
+    return sJobQueue.ret;
 }
 
 /************************************************************************/
