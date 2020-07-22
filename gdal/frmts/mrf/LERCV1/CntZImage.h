@@ -45,7 +45,7 @@ public:
         width_ = width;
         height_ = height;
         values.resize(getSize());
-        memset(values.data(), 0, values.size() * sizeof(T));
+        std::memset(values.data(), 0, values.size() * sizeof(T));
         return true;
     }
 
@@ -120,7 +120,7 @@ protected:
         int numBytesZ;
         float maxZInImg;
         InfoFromComputeNumBytes() {
-            memset(this, 0, sizeof(*this));
+            std::memset(this, 0, sizeof(*this));
         }
     };
 

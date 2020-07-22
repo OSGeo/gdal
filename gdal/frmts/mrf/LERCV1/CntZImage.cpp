@@ -24,7 +24,7 @@ Contributors:  Thomas Maurer
 #include "CntZImage.h"
 #include <cmath>
 #include <cfloat>
-#include <cstring>
+#include <string>
 #include <cassert>
 #include <algorithm>
 
