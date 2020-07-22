@@ -99,7 +99,7 @@ public:
         const   XMLCh* const    uri,
         const   XMLCh* const    localname,
         const   XMLCh* const    qname,
-        const   Attributes& attrs
+        const   Attributes&     attrs
     ) override;
     void endElement(
         const   XMLCh* const    uri,
@@ -241,6 +241,7 @@ public:
     bool        HasStoppedParsing() override { return m_bStopParsing; }
 
     void        CheckForFID( const Attributes &attrs, char **ppszCurField );
+    void        CheckForRID( const Attributes &attrs, char **ppszCurField );
     void        CheckForRelations( const char *pszElement,
                                    const Attributes &attrs,
                                    char **ppszCurField );
