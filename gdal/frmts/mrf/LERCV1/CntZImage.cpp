@@ -131,19 +131,15 @@ bool BitMaskV1::RLEdecompress(const Byte* src, size_t n) {
 // a value between 1 and min(max_count, MAX_RUN)
 inline static int run_length(const Byte* s, int max_count)
 {
-    assert(max_count && s);
     if (max_count > MAX_RUN)
         max_count = MAX_RUN;
-    const Byte c = *s++;
-    for (int count = 1; count < max_count; count++)
-        if (c != *s++)
-            return count;
+    for (int i = 1; i < max_count; i++)
+        if (s[0] != s[i])
+            return i;
     return max_count;
 }
 
-//
 // RLE compressed size is bound by n + 4 + 2 * (n - 1) / 32767
-//
 int BitMaskV1::RLEcompress(Byte* dst) const {
     assert(dst);
     const Byte* src = bits.data();  // Next input byte
@@ -216,7 +212,6 @@ static const Byte stib67[4] = { 4, 2, 1, 3 };
 
 // see the old stream IO functions below on how to call.
 // if you change write(...) / read(...), don't forget to update computeNumBytesNeeded(...).
-
 bool BitStufferV1::write(Byte** ppByte, const vector<unsigned int>& dataVec)
 {
     if (!ppByte || dataVec.empty())
@@ -267,7 +262,6 @@ bool BitStufferV1::write(Byte** ppByte, const vector<unsigned int>& dataVec)
     return true;
 }
 
-// -------------------------------------------------------------------------- ;
 
 bool BitStufferV1::read(Byte** ppByte, size_t& size, vector<unsigned int>& dataVec)
 {
@@ -278,8 +272,7 @@ bool BitStufferV1::read(Byte** ppByte, size_t& size, vector<unsigned int>& dataV
     *ppByte += 1;
     size -= 1;
 
-    int vbytes[4] = { 4, 2, 1, 0 };
-    int n = vbytes[numBits >> 6];
+    int n = stib67[numBits >> 6];
     numBits &= 63;  // bits 0-5;
     if (numBits >= 32 || n == 0 || size < static_cast<size_t>(n))
         return false;
@@ -337,15 +330,13 @@ bool BitStufferV1::read(Byte** ppByte, size_t& size, vector<unsigned int>& dataV
     return numBytes == 0;
 }
 
-static int numBytesFlt(float z)
-{
+static int numBytesFlt(float z) {
     short s = (short)z;
     signed char c = static_cast<signed char>(s);
     return ((float)c == z) ? 1 : ((float)s == z) ? 2 : 4;
 }
 
-static bool writeFlt(Byte** ppByte, float z, int numBytes)
-{
+static bool writeFlt(Byte** ppByte, float z, int numBytes) {
     Byte* ptr = *ppByte;
     switch (numBytes) {
     case 1:
@@ -367,8 +358,7 @@ static bool writeFlt(Byte** ppByte, float z, int numBytes)
     return true;
 }
 
-static bool readFlt(Byte** ppByte, size_t& nRemainingBytes, float& z, int numBytes)
-{
+static bool readFlt(Byte** ppByte, size_t& nRemainingBytes, float& z, int numBytes) {
     if (nRemainingBytes < static_cast<size_t>(numBytes))
         return false;
 
@@ -395,8 +385,7 @@ static bool readFlt(Byte** ppByte, size_t& nRemainingBytes, float& z, int numByt
     return true;
 }
 
-static unsigned int computeNumBytesNeededByStuffer(unsigned int numElem, unsigned int maxElem)
-{
+static unsigned int computeNumBytesNeededByStuffer(unsigned int numElem, unsigned int maxElem) {
     int numBits = 0;
     while (maxElem >> numBits)
         numBits++;
@@ -409,10 +398,8 @@ static const int CNT_Z = 8;
 static const int CNT_Z_VER = 11;
 static const string sCntZImage("CntZImage "); // Includes a space
 
-// -------------------------------------------------------------------------- ;
 // computes the size of a CntZImage of any width and height, but all void / invalid,
 // and then compressed
-
 unsigned int CntZImage::computeNumBytesNeededToWriteVoidImage()
 {
     unsigned int sz = (unsigned int)sCntZImage.size()
@@ -425,6 +412,7 @@ unsigned int CntZImage::computeNumBytesNeededToWriteVoidImage()
     sz += 3 * sizeof(int) + sizeof(float) + 1;
     return sz; // 67
 }
+
 
 unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
     bool onlyZPart,
@@ -479,11 +467,9 @@ unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
     return sz;
 }
 
-// -------------------------------------------------------------------------- ;
 // if you change the file format, don't forget to update not only write and
 // read functions, and the file version number, but also the computeNumBytes...
 // and numBytes... functions
-
 bool CntZImage::write(Byte** ppByte,
     double maxZError,
     bool useInfoFromPrevComputeNumBytes,
@@ -566,9 +552,9 @@ bool CntZImage::write(Byte** ppByte,
         *ppByte += numBytesWritten;
         zPart = !zPart;
     } while (zPart);
-
     return true;
 }
+
 
 bool CntZImage::read(Byte** ppByte,
     size_t& nRemainingBytes,
@@ -682,11 +668,9 @@ bool CntZImage::read(Byte** ppByte,
         nRemainingBytes -= numBytes;
         onlyZPart = !onlyZPart;
     } while (onlyZPart);
-
     return true;
 }
 
-// -------------------------------------------------------------------------- ;
 
 bool CntZImage::findTiling(double maxZError,
     int& numTilesVertA,
@@ -694,22 +678,13 @@ bool CntZImage::findTiling(double maxZError,
     int& numBytesOptA,
     float& maxValInImgA) const
 {
-    const int tileWidthArr[] = { 8, 11, 15, 20, 32, 64 };
-    const int numConfigs = 6;
-
-    // first, do the entire image as 1 block
-    numTilesVertA = 1;
-    numTilesHoriA = 1;
+    // entire image as 1 block
+    numTilesVertA = numTilesHoriA = 1;
     if (!writeTiles(maxZError, 1, 1, nullptr, numBytesOptA, maxValInImgA))
         return false;
 
-    // if all is invalid so z part is empty, then we have to write the header only
-    if (numBytesOptA == numBytesZTile(0, 0, 0, 0))
-        return true;
-
-    int numBytesPrev = 0;
-    for (int k = 0; k < numConfigs; k++) {
-        int tileWidth = tileWidthArr[k];
+    static const vector<int> tileWidthArr = { 8, 11, 15, 20, 32, 64 };
+    for (auto tileWidth : tileWidthArr) {
         int numTilesVert = static_cast<int>(getHeight() / tileWidth);
         int numTilesHori = static_cast<int>(getWidth() / tileWidth);
 
@@ -721,22 +696,16 @@ bool CntZImage::findTiling(double maxZError,
         if (!writeTiles(maxZError, numTilesVert, numTilesHori, nullptr, numBytes, maxVal))
             return false;
 
+        if (numBytes > numBytesOptA)
+            return true; // Stop when size start to increase
         if (numBytes < numBytesOptA) {
             numTilesVertA = numTilesVert;
             numTilesHoriA = numTilesHori;
             numBytesOptA = numBytes;
         }
-
-        // we stop once things get worse
-        if (k > 0 && numBytes > numBytesPrev)
-            return true;
-
-        numBytesPrev = numBytes;
     }
     return true;
 }
-
-// -------------------------------------------------------------------------- ;
 
 // if bArr is nullptr, it doesn't actually do the writing, only computes output values
 bool CntZImage::writeTiles(double maxZError, int numTilesVert, int numTilesHori,
@@ -787,11 +756,9 @@ bool CntZImage::writeTiles(double maxZError, int numTilesVert, int numTilesHori,
             }
         }
     }
-
     return true;
 }
 
-// -------------------------------------------------------------------------- ;
 
 bool CntZImage::readTiles(double maxZErrorInFile,
     int numTilesVert, int numTilesHori, float maxValInImg,
@@ -821,11 +788,9 @@ bool CntZImage::readTiles(double maxZErrorInFile,
                 return false;
         }
     }
-
     return true;
 }
 
-// -------------------------------------------------------------------------- ;
 
 void CntZImage::computeCntStats(float& cntMin, float& cntMax) const
 {
@@ -836,16 +801,14 @@ void CntZImage::computeCntStats(float& cntMin, float& cntMax) const
         cntMin = min(cnt, cntMin);
         cntMax = max(cnt, cntMax);
         if (cntMin != cntMax)
-            return;
+            break;
     }
 }
 
-// -------------------------------------------------------------------------- ;
 
 bool CntZImage::computeZStats(int i0, int i1, int j0, int j1,
     float& zMin, float& zMax, int& numValidPixel) const
 {
-
     if (i0 < 0 || j0 < 0 || i1 > getHeight() || j1 > getWidth())
         return false;
 
@@ -867,7 +830,6 @@ bool CntZImage::computeZStats(int i0, int i1, int j0, int j1,
 
     if (!numValidPixel)
         zMin = zMax = 0;
-
     return true;
 }
 
@@ -876,9 +838,9 @@ int CntZImage::numBytesZTile(int numValidPixel, float zMin, float zMax, double m
 {
     if (numValidPixel == 0 || (zMin == 0 && zMax == 0))
         return 1;
-    if (maxZError == 0 || (double)(zMax - zMin) / (2 * maxZError) > (1 << 28))
+    if (maxZError == 0 || ((double)zMax - zMin) / (2 * maxZError) > 0x10000000)
         return(int)(1 + numValidPixel * sizeof(float));
-    unsigned int maxElem = (unsigned int)((double)(zMax - zMin) / (2 * maxZError) + 0.5);
+    unsigned int maxElem = (unsigned int)(((double)zMax - zMin) / (2 * maxZError) + 0.5);
     return 1 + numBytesFlt(zMin) + (maxElem ? computeNumBytesNeededByStuffer(numValidPixel, maxElem) : 0);
 }
 
@@ -1009,8 +971,7 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
         }
         ptr += numPixel * sizeof(float);
     }
-    else {
-        // read z's as int arr bit stuffed
+    else { // read z's as int arr bit stuffed
         float offset = 0;
         if (!readFlt(&ptr, nRemainingBytes, offset, n))
             return false;
@@ -1027,9 +988,7 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
             }
         }
         else {
-            size_t nMaxElts =
-                static_cast<size_t>(i1 - i0) * static_cast<size_t>(j1 - j0);
-            dataVec.resize(nMaxElts);
+            dataVec.resize((i1-i0) * (j1-j0));
             if (!BitStufferV1::read(&ptr, nRemainingBytes, dataVec))
                 return false;
 
@@ -1040,7 +999,7 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
                 for (int j = j0; j < j1; j++) {
                     CntZ val = (*this)(i, j);
                     if (val.cnt > 0) {
-                        if (nDataVecIdx == dataVec.size())
+                        if (nDataVecIdx >= dataVec.size())
                             return false;
                         val.z = (float)(offset + dataVec[nDataVecIdx++] * invScale);
                         if (val.z > maxZInImg)
