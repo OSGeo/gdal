@@ -2961,3 +2961,15 @@ def test_ogr_geojson_starting_with_coordinates():
     assert ds is not None
 
     gdal.Unlink(tmpfilename)
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/2787
+
+def test_ogr_geojson_starting_with_geometry_coordinates():
+
+    tmpfilename = '/vsimem/temp.json'
+    gdal.FileFromMemBuffer(tmpfilename, '{ "geometry": {"coordinates": [' + (' ' * 10000) + '2,49], "type": "Point"}, "type": "Feature", "properties": {} }')
+    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR)
+    assert ds is not None
+
+    gdal.Unlink(tmpfilename)
