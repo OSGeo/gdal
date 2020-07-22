@@ -1112,7 +1112,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
         nBands = atoi(CPLGetXMLValue(psRoot, "BandsCount", "4"));
         const char *pszDataType = CPLGetXMLValue(psRoot, "DataType", "Byte");
         eDataType = GDALGetDataTypeByName(pszDataType);
-        if (eDataType == GDT_Unknown || eDataType >= GDT_TypeCount)
+        if ((eDataType == GDT_Unknown) || (eDataType >= GDT_TypeCount))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                 "GDALWMTS: Invalid value in DataType. Data type \"%s\" is not supported.", pszDataType);
