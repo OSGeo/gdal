@@ -139,7 +139,7 @@ protected:
     void computeCntStats(float& cntMin, float& cntMax) const; // Across the whole image, always works
     bool computeZStats(int i0, int i1, int j0, int j1, float& zMin, float& zMax, int& numValidPixel) const;
 
-    int numBytesZTile(int numValidPixel, float zMin, float zMax, double maxZError) const;
+    static int numBytesZTile(int numValidPixel, float zMin, float zMax, double maxZError);
 
     bool writeZTile(Byte** ppByte, int& numBytes, int i0, int i1, int j0, int j1,
         int numValidPixel, float zMin, float zMax, double maxZError) const;

@@ -834,7 +834,7 @@ bool CntZImage::computeZStats(int i0, int i1, int j0, int j1,
 }
 
 
-int CntZImage::numBytesZTile(int numValidPixel, float zMin, float zMax, double maxZError) const
+int CntZImage::numBytesZTile(int numValidPixel, float zMin, float zMax, double maxZError)
 {
     if (numValidPixel == 0 || (zMin == 0 && zMax == 0))
         return 1;
