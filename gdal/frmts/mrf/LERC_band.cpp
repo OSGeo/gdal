@@ -24,7 +24,9 @@ Contributors:  Lucian Plesea
 #include "LERCV1/CntZImage.h"
 #include <Lerc2.h>
 
+USING_NAMESPACE_LERC1
 USING_NAMESPACE_LERC
+
 NAMESPACE_MRF_START
 
 typedef unsigned char Byte;
@@ -220,13 +222,13 @@ static CPLErr DecompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img)
         return CE_Failure;
     }
     if (actual < 0) { // Negative return means buffer is too short
-            CPLError(CE_Failure, CPLE_AppDefined, "MRF: Lerc object too large");
-            return CE_Failure;
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Lerc object too large");
+        return CE_Failure;
     }
 
     if (!zImg.read(&ptr, nRemainingBytes, 1e12))
     {
-        CPLError(CE_Failure,CPLE_AppDefined,"MRF: Error during LERC decompression");
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during LERC decompression");
         return CE_Failure;
     }
 

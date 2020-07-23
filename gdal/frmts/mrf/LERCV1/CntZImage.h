@@ -23,13 +23,13 @@ Contributors:  Thomas Maurer
 #include <cstring>
 #include <vector>
 
-#ifndef NAMESPACE_LERC_START
-#define NAMESPACE_LERC_START namespace GDAL_LercNS {
-#define NAMESPACE_LERC_END }
-#define USING_NAMESPACE_LERC using namespace GDAL_LercNS;
+#ifndef NAMESPACE_LERC1_START
+#define NAMESPACE_LERC1_START namespace GDAL_Lerc1NS {
+#define NAMESPACE_LERC1_END }
+#define USING_NAMESPACE_LERC1 using namespace GDAL_Lerc1NS;
 #endif
 
-NAMESPACE_LERC_START
+NAMESPACE_LERC1_START
 
 typedef unsigned char Byte;
 
@@ -66,16 +66,8 @@ private:
     std::vector<T> values;
 };
 
-// -------------------------------------------------------------------------- ;
-
-/**     count / z image
- *
- *      count can also be a weight, therefore float;
- *      z can be elevation or intensity;
- */
-
-struct CntZ
-{
+ // cnt is a mask, > 0 if valid;
+struct CntZ {
     float cnt, z;
 };
 
@@ -152,5 +144,5 @@ protected:
 
 // -------------------------------------------------------------------------- ;
 
-NAMESPACE_LERC_END
+NAMESPACE_LERC1_END
 #endif

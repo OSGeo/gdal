@@ -30,7 +30,7 @@ Contributors:  Thomas Maurer
 
 using namespace std;
 
-NAMESPACE_LERC_START
+NAMESPACE_LERC1_START
 
 /** BitMaskV1 - Convenient and fast access to binary mask bits
 * includes RLE compression and decompression, in BitMaskV1.cpp
@@ -40,22 +40,21 @@ NAMESPACE_LERC_START
 class BitMaskV1
 {
 public:
-    BitMaskV1(int nCols, int nRows) : m_nRows(nRows), m_nCols(nCols)
-    {
+    BitMaskV1(int nCols, int nRows) : m_nRows(nRows), m_nCols(nCols) {
         bits.resize(Size(), 0);
     }
 
     Byte  IsValid(int k) const { return (bits[k >> 3] & Bit(k)) != 0; }
-    int   Size() const { return (m_nCols * m_nRows - 1) / 8 + 1; }
+    int   Size() const { return 1 + (m_nCols * m_nRows - 1) / 8; }
+    void Set(int k, bool v) { if (v) SetValid(k); else SetInvalid(k); }
     // max RLE compressed size is n + 4 + 2 * (n - 1) / 32767
     // Returns encoded size
-    void Set(int k, bool v) { if (v) SetValid(k); else SetInvalid(k); }
     int RLEcompress(Byte* aRLE) const;
     // current encoded size
     int RLEsize() const;
     // Decompress a RLE bitmask, bitmask size should be already set
     // Returns false if input seems wrong
-    bool RLEdecompress(const Byte* src, size_t n);
+    bool RLEdecompress(const Byte* src, size_t sz);
 
 private:
     int m_nRows, m_nCols;
@@ -272,7 +271,7 @@ bool BitStufferV1::read(Byte** ppByte, size_t& size, vector<unsigned int>& dataV
     *ppByte += 1;
     size -= 1;
 
-    int n = stib67[numBits >> 6];
+    Byte n = stib67[numBits >> 6];
     numBits &= 63;  // bits 0-5;
     if (numBits >= 32 || n == 0 || size < static_cast<size_t>(n))
         return false;
@@ -678,11 +677,11 @@ bool CntZImage::findTiling(double maxZError,
     int& numBytesOptA,
     float& maxValInImgA) const
 {
-    // entire image as 1 block
+    // entire image as 1 block, this is usually the worst case
     numTilesVertA = numTilesHoriA = 1;
     if (!writeTiles(maxZError, 1, 1, nullptr, numBytesOptA, maxValInImgA))
         return false;
-
+    // The actual figure may be different due to round-down
     static const vector<int> tileWidthArr = { 8, 11, 15, 20, 32, 64 };
     for (auto tileWidth : tileWidthArr) {
         int numTilesVert = static_cast<int>(getHeight() / tileWidth);
@@ -697,7 +696,7 @@ bool CntZImage::findTiling(double maxZError,
             return false;
 
         if (numBytes > numBytesOptA)
-            return true; // Stop when size start to increase
+            break; // Stop when size start to increase
         if (numBytes < numBytesOptA) {
             numTilesVertA = numTilesVert;
             numTilesHoriA = numTilesHori;
@@ -812,7 +811,6 @@ bool CntZImage::computeZStats(int i0, int i1, int j0, int j1,
     if (i0 < 0 || j0 < 0 || i1 > getHeight() || j1 > getWidth())
         return false;
 
-    // determine z ranges
     zMin = FLT_MAX;
     zMax = -FLT_MAX;
     numValidPixel = 0;
@@ -932,7 +930,7 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
     Byte comprFlag = *ptr++;
     nRemainingBytes -= 1;
     // Used if bit-stuffed
-    int n = stib67[comprFlag >> 6];
+    Byte n = stib67[comprFlag >> 6];
     comprFlag &= 63;
 
     if (comprFlag == 2) {
@@ -988,7 +986,7 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
             }
         }
         else {
-            dataVec.resize((i1-i0) * (j1-j0));
+            dataVec.resize((i1-i0) * (j1-j0)); // max size
             if (!BitStufferV1::read(&ptr, nRemainingBytes, dataVec))
                 return false;
 
@@ -1016,4 +1014,4 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
     return true;
 }
 
-NAMESPACE_LERC_END
+NAMESPACE_LERC1_END
