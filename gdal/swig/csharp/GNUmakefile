@@ -64,7 +64,7 @@ $(CSHARP_MODULES): lib%csharp.$(SO_EXT): %_wrap.$(OBJ_EXT)
 gdal_csharp:
 	$(CSC) /debug:full /target:library /out:osr_csharp.dll osr/*.cs AssemblyInfo.cs
 	$(CSC) /debug:full /target:library /out:ogr_csharp.dll /r:osr_csharp.dll ogr/*.cs AssemblyInfo.cs
-	$(CSC) /debug:full /target:library /out:gdal_csharp.dll /r:ogr_csharp.dll gdal/*.cs AssemblyInfo.cs
+	$(CSC) /debug:full /target:library /out:gdal_csharp.dll /r:ogr_csharp.dll /r:osr_csharp.dll gdal/*.cs AssemblyInfo.cs
 	$(CSC) /debug:full /target:library /out:gdalconst_csharp.dll const/*.cs AssemblyInfo.cs
 
 samples:
