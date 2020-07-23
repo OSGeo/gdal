@@ -5435,11 +5435,17 @@ SWIGINTERN char **GDALGroupHS_GetMDArrayNames(GDALGroupHS *self,char **options=0
 SWIGINTERN GDALMDArrayHS *GDALGroupHS_OpenMDArray(GDALGroupHS *self,char const *name,char **options=0){
     return GDALGroupOpenMDArray(self, name, options);
   }
+SWIGINTERN GDALMDArrayHS *GDALGroupHS_OpenMDArrayFromFullname(GDALGroupHS *self,char const *name,char **options=0){
+    return GDALGroupOpenMDArrayFromFullname(self, name, options);
+  }
 SWIGINTERN char **GDALGroupHS_GetGroupNames(GDALGroupHS *self,char **options=0){
     return GDALGroupGetGroupNames( self, options );
   }
 SWIGINTERN GDALGroupHS *GDALGroupHS_OpenGroup(GDALGroupHS *self,char const *name,char **options=0){
     return GDALGroupOpenGroup(self, name, options);
+  }
+SWIGINTERN GDALGroupHS *GDALGroupHS_OpenGroupFromFullname(GDALGroupHS *self,char const *name,char **options=0){
+    return GDALGroupOpenGroupFromFullname(self, name, options);
   }
 SWIGINTERN void GDALGroupHS_GetDimensions(GDALGroupHS *self,GDALDimensionHS ***pdims,size_t *pnCount,char **options=0){
     *pdims = GDALGroupGetDimensions(self, pnCount, options);
@@ -21324,6 +21330,84 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Group_OpenMDArrayFromFullname(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALGroupHS *arg1 = (GDALGroupHS *) 0 ;
+  char *arg2 = (char *) 0 ;
+  char **arg3 = (char **) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  GDALMDArrayHS *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO|O:Group_OpenMDArrayFromFullname",&obj0,&obj1,&obj2)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALGroupHS, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Group_OpenMDArrayFromFullname" "', argument " "1"" of type '" "GDALGroupHS *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALGroupHS * >(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Group_OpenMDArrayFromFullname" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  if (obj2) {
+    {
+      /* %typemap(in) char **options */
+      int bErr = FALSE;
+      arg3 = CSLFromPySequence(obj2, &bErr);
+      if( bErr )
+      {
+        SWIG_fail;
+      }
+    }
+  }
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (GDALMDArrayHS *)GDALGroupHS_OpenMDArrayFromFullname(arg1,(char const *)arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALMDArrayHS, SWIG_POINTER_OWN |  0 );
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg3 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg3 );
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Group_GetGroupNames(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALGroupHS *arg1 = (GDALGroupHS *) 0 ;
@@ -21450,6 +21534,84 @@ SWIGINTERN PyObject *_wrap_Group_OpenGroup(PyObject *SWIGUNUSEDPARM(self), PyObj
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
       result = (GDALGroupHS *)GDALGroupHS_OpenGroup(arg1,(char const *)arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALGroupHS, SWIG_POINTER_OWN |  0 );
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg3 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg3 );
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Group_OpenGroupFromFullname(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALGroupHS *arg1 = (GDALGroupHS *) 0 ;
+  char *arg2 = (char *) 0 ;
+  char **arg3 = (char **) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  GDALGroupHS *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO|O:Group_OpenGroupFromFullname",&obj0,&obj1,&obj2)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALGroupHS, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Group_OpenGroupFromFullname" "', argument " "1"" of type '" "GDALGroupHS *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALGroupHS * >(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Group_OpenGroupFromFullname" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  if (obj2) {
+    {
+      /* %typemap(in) char **options */
+      int bErr = FALSE;
+      arg3 = CSLFromPySequence(obj2, &bErr);
+      if( bErr )
+      {
+        SWIG_fail;
+      }
+    }
+  }
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (GDALGroupHS *)GDALGroupHS_OpenGroupFromFullname(arg1,(char const *)arg2,arg3);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -41817,8 +41979,10 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Group_GetFullName", _wrap_Group_GetFullName, METH_VARARGS, (char *)"Group_GetFullName(Group self) -> char const *"},
 	 { (char *)"Group_GetMDArrayNames", _wrap_Group_GetMDArrayNames, METH_VARARGS, (char *)"Group_GetMDArrayNames(Group self, char ** options=None) -> char **"},
 	 { (char *)"Group_OpenMDArray", _wrap_Group_OpenMDArray, METH_VARARGS, (char *)"Group_OpenMDArray(Group self, char const * name, char ** options=None) -> MDArray"},
+	 { (char *)"Group_OpenMDArrayFromFullname", _wrap_Group_OpenMDArrayFromFullname, METH_VARARGS, (char *)"Group_OpenMDArrayFromFullname(Group self, char const * name, char ** options=None) -> MDArray"},
 	 { (char *)"Group_GetGroupNames", _wrap_Group_GetGroupNames, METH_VARARGS, (char *)"Group_GetGroupNames(Group self, char ** options=None) -> char **"},
 	 { (char *)"Group_OpenGroup", _wrap_Group_OpenGroup, METH_VARARGS, (char *)"Group_OpenGroup(Group self, char const * name, char ** options=None) -> Group"},
+	 { (char *)"Group_OpenGroupFromFullname", _wrap_Group_OpenGroupFromFullname, METH_VARARGS, (char *)"Group_OpenGroupFromFullname(Group self, char const * name, char ** options=None) -> Group"},
 	 { (char *)"Group_GetDimensions", _wrap_Group_GetDimensions, METH_VARARGS, (char *)"Group_GetDimensions(Group self, char ** options=None)"},
 	 { (char *)"Group_GetAttribute", _wrap_Group_GetAttribute, METH_VARARGS, (char *)"Group_GetAttribute(Group self, char const * name) -> Attribute"},
 	 { (char *)"Group_GetAttributes", _wrap_Group_GetAttributes, METH_VARARGS, (char *)"Group_GetAttributes(Group self, char ** options=None)"},

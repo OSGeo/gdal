@@ -66,6 +66,11 @@ public:
     return GDALGroupOpenMDArray(self, name, options);
   }
 
+%newobject OpenMDArrayFromFullname;
+  GDALMDArrayHS* OpenMDArrayFromFullname( const char* name, char** options = 0) {
+    return GDALGroupOpenMDArrayFromFullname(self, name, options);
+  }
+
 %apply (char **CSL) {char **};
   char **GetGroupNames(char** options = 0) {
     return GDALGroupGetGroupNames( self, options );
@@ -75,6 +80,11 @@ public:
 %newobject OpenGroup;
   GDALGroupHS* OpenGroup( const char* name, char** options = 0) {
     return GDALGroupOpenGroup(self, name, options);
+  }
+
+%newobject OpenGroupFromFullname;
+  GDALGroupHS* OpenGroupFromFullname( const char* name, char** options = 0) {
+    return GDALGroupOpenGroupFromFullname(self, name, options);
   }
 
 #if defined(SWIGPYTHON)

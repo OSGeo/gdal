@@ -2681,6 +2681,11 @@ class Group(_object):
         return _gdal.Group_OpenMDArray(self, *args)
 
 
+    def OpenMDArrayFromFullname(self, *args):
+        """OpenMDArrayFromFullname(Group self, char const * name, char ** options=None) -> MDArray"""
+        return _gdal.Group_OpenMDArrayFromFullname(self, *args)
+
+
     def GetGroupNames(self, *args):
         """GetGroupNames(Group self, char ** options=None) -> char **"""
         return _gdal.Group_GetGroupNames(self, *args)
@@ -2689,6 +2694,11 @@ class Group(_object):
     def OpenGroup(self, *args):
         """OpenGroup(Group self, char const * name, char ** options=None) -> Group"""
         return _gdal.Group_OpenGroup(self, *args)
+
+
+    def OpenGroupFromFullname(self, *args):
+        """OpenGroupFromFullname(Group self, char const * name, char ** options=None) -> Group"""
+        return _gdal.Group_OpenGroupFromFullname(self, *args)
 
 
     def GetDimensions(self, *args):
