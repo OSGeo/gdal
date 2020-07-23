@@ -1259,7 +1259,7 @@ public:
 /*                   GetCRSInfoListFromDatabase()                       */
 /************************************************************************/
 
-#ifdef SWIGPYTHON
+#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
 
 %rename (CRSType) OSRCRSType;
 typedef enum OSRCRSType
@@ -1405,6 +1405,9 @@ const char* OSRCRSInfo_projection_method_get( OSRCRSInfo *crsInfo ) {
 
 %}
 
+#endif
+
+#ifdef SWIGPYTHON
 %inline %{
 void GetCRSInfoListFromDatabase( const char *authName,
                                  OSRCRSInfo*** pList,
