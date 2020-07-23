@@ -29,8 +29,6 @@ USING_NAMESPACE_LERC
 
 NAMESPACE_MRF_START
 
-typedef unsigned char Byte;
-
 // Read an unaligned 4 byte little endian int from location p, advances pointer
 static void READ_GINT32(int& X, const char*& p)
 {
@@ -191,7 +189,7 @@ static CPLErr CompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img, doubl
     }
 #undef FILL
 
-    Byte *ptr = (Byte *)dst.buffer;
+    Byte *ptr = reinterpret_cast<Byte *>(dst.buffer);
 
     // if it can't compress in output buffer it will crash
     if (!zImg.write(&ptr, precision)) {
@@ -201,7 +199,7 @@ static CPLErr CompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img, doubl
 
     // write changes the value of the pointer, we can find the size by testing how far it moved
     // Add a couple of bytes, to avoid buffer overflow on reading
-    dst.size = ptr - (Byte *)dst.buffer + PADDING_BYTES;
+    dst.size = ptr - reinterpret_cast<Byte *>(dst.buffer) + PADDING_BYTES;
     CPLDebug("MRF_LERC","LERC Compressed to %d\n", (int)dst.size);
     return CE_None;
 }
@@ -213,7 +211,7 @@ static CPLErr DecompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img)
     // we need to add the padding bytes so that out-of-buffer-access checksum
     // don't false-positively trigger.
     size_t nRemainingBytes = src.size + PADDING_BYTES;
-    Byte *ptr = (Byte *)src.buffer;
+    Byte *ptr = reinterpret_cast<Byte *>(src.buffer);
 
     // Check that input passes snicker test
     int actual = checkV1(src.buffer, src.size);
@@ -307,7 +305,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
     // Default to LERC2 V2
     lerc2.SetEncoderToOldVersion(2);
     bool success = false;
-    Byte *ptr = (Byte *)dst.buffer;
+    GDAL_LercNS::Byte *ptr = reinterpret_cast<GDAL_LercNS::Byte *>(dst.buffer);
 
     long sz = 0;
     switch (img.dt) {
@@ -330,7 +328,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
     }
 
     // write changes the value of the pointer, we can find the size by testing how far it moved
-    dst.size = (char *)ptr - dst.buffer;
+    dst.size = reinterpret_cast<char *>(ptr) - dst.buffer;
     if (!success || sz != static_cast<long>(dst.size)) {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during LERC2 compression");
         return CE_Failure;
@@ -358,7 +356,7 @@ template <typename T> static void UnMask(BitMask &bitMask, T *arr, const ILImage
 
 CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
 {
-    const Byte *ptr = reinterpret_cast<Byte *>(src.buffer);
+    const GDAL_LercNS::Byte *ptr = reinterpret_cast<GDAL_LercNS::Byte *>(src.buffer);
     Lerc2::HeaderInfo hdInfo;
     Lerc2 lerc2;
 
@@ -456,7 +454,7 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
         Lerc2 l2;
         Lerc2::HeaderInfo hinfo;
         hinfo.RawInit();
-        if (l2.GetHeaderInfo(reinterpret_cast<Byte *>(psz), poOpenInfo->nHeaderBytes, hinfo)) {
+        if (l2.GetHeaderInfo(reinterpret_cast<GDAL_LercNS::Byte *>(psz), poOpenInfo->nHeaderBytes, hinfo)) {
             size.x = hinfo.nCols;
             size.y = hinfo.nRows;
             // Set the datatype, which marks it as valid
