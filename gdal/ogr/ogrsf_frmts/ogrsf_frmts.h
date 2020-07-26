@@ -571,6 +571,7 @@ void CPL_DLL RegisterOGRMVT();
 void CPL_DLL RegisterOGRNGW();
 void CPL_DLL RegisterOGRMapML();
 void CPL_DLL RegisterOGRLVBAG();
+void CPL_DLL RegisterOGREdg();
 // @endcond
 
 CPL_C_END
