@@ -20,7 +20,8 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-rec
     libcfitsio-dev openjdk-8-jdk libzstd-dev \
     libpq-dev libssl-dev libboost-dev \
     autoconf automake bash-completion libarmadillo-dev \
-    libopenexr-dev libheif-dev
+    libopenexr-dev libheif-dev \
+    mono-mcs libmono-system-drawing4.0-cil
 
 # Build likbkea
 KEA_VERSION=1.4.13
