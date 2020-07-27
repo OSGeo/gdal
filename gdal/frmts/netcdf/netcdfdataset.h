@@ -1195,6 +1195,10 @@ bool NCDFIsUserDefinedType(int ncid, int type);
 
 CPLString NCDFGetGroupFullName(int nGroupId);
 
+CPLErr NCDFResolveVar( int nStartGroupId, const char *pszVar,
+                       int *pnGroupId, int *pnVarId,
+                       bool bMandatory = false );
+
 // Dimension check functions.
 bool NCDFIsVarLongitude( int nCdfId, int nVarId,
                                 const char *pszVarName );

@@ -1292,3 +1292,34 @@ def test_netcdf_multidim_getmdarraynames_options(netcdf_setup):  # noqa
     rg = ds.GetRootGroup()
     assert 'mygridmapping' not in rg.GetMDArrayNames()
     assert 'mygridmapping' in rg.GetMDArrayNames(['SHOW_ZERO_DIM=YES'])
+
+
+def test_netcdf_multidim_indexing_var_through_coordinates(netcdf_setup):  # noqa
+
+    tmpfilename = 'tmp/test_netcdf_multidim_indexing_var_through_coordinates.nc'
+    drv = gdal.GetDriverByName('netCDF')
+
+    def create():
+        ds = drv.CreateMultiDimensional(tmpfilename)
+        rg = ds.GetRootGroup()
+        dim1 = rg.CreateDimension('dim1', None, None, 1)
+        dim2 = rg.CreateDimension('dim2', None, None, 2)
+        var = rg.CreateMDArray('var', [dim1, dim2],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        att = var.CreateAttribute('coordinates', [], gdal.ExtendedDataType.CreateString())
+        assert att
+        assert att.Write('dim1_var dim2_var') == gdal.CE_None
+        rg.CreateMDArray('dim1_var', [dim1],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+        rg.CreateMDArray('dim2_var', [dim2],  gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+
+    def check():
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        dims = rg.GetDimensions()
+        dim1 = [x for x in dims if x.GetName() == 'dim1'][0]
+        assert dim1.GetIndexingVariable().GetName() == 'dim1_var'
+        dim2 = [x for x in dims if x.GetName() == 'dim2'][0]
+        assert dim2.GetIndexingVariable().GetName() == 'dim2_var'
+
+    create()
+    check()
+    gdal.Unlink(tmpfilename)

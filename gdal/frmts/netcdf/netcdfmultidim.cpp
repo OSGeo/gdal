@@ -53,6 +53,7 @@ class netCDFSharedResources
 #endif
     bool m_bDefineMode = false;
     std::map<int, int> m_oMapDimIdToGroupId{};
+    bool m_bIsInIndexingVariable = false;
 
 public:
     netCDFSharedResources();
@@ -63,6 +64,9 @@ public:
     bool SetDefineMode(bool bNewDefineMode);
     int GetBelongingGroupOfDim(int startgid, int dimid);
     inline bool GetImappIsInElements() const { return m_bImappIsInElements; }
+
+    void SetIsInGetIndexingVariable(bool b) { m_bIsInIndexingVariable = b; }
+    bool GetIsInIndexingVariable() const { return m_bIsInIndexingVariable; }
 };
 
 /************************************************************************/
@@ -1152,10 +1156,34 @@ netCDFDimension::netCDFDimension(
 /*                         GetIndexingVariable()                        */
 /************************************************************************/
 
+namespace {
+    struct SetIsInGetIndexingVariable
+    {
+        netCDFSharedResources* m_poShared;
+
+        explicit SetIsInGetIndexingVariable(netCDFSharedResources* poSharedResources): m_poShared(poSharedResources)
+        {
+            m_poShared->SetIsInGetIndexingVariable(true);
+        }
+
+        ~SetIsInGetIndexingVariable()
+        {
+            m_poShared->SetIsInGetIndexingVariable(false);
+        }
+    };
+}
+
 std::shared_ptr<GDALMDArray> netCDFDimension::GetIndexingVariable() const
 {
+    if( m_poShared->GetIsInIndexingVariable() )
+        return nullptr;
+
+    SetIsInGetIndexingVariable setterIsInGetIndexingVariable(m_poShared.get());
+
     CPLMutexHolderD(&hNCMutex);
 
+    // First try to find a variable in this group with the same name as the
+    // dimension
     int nVarId = 0;
     if( nc_inq_varid(m_gid, GetName().c_str(), &nVarId) == NC_NOERR )
     {
@@ -1183,6 +1211,58 @@ std::shared_ptr<GDALMDArray> netCDFDimension::GetIndexingVariable() const
                 return netCDFVariable::Create(m_poShared, m_gid, nVarId,
                     std::vector<std::shared_ptr<GDALDimension>>(),
                     nullptr);
+            }
+        }
+    }
+
+    // Otherwise explore the variables in this group to find one that has a
+    // "coordinates" attribute that references this dimension. If so, let's
+    // return the variable pointed by the value of "coordinates" as the indexing
+    // variable. This assumes that there is no other variable that would use
+    // another variable for the matching dimension of its "coordinates".
+    netCDFGroup oGroup(m_poShared, m_gid);
+    const auto arrayNames = oGroup.GetMDArrayNames(nullptr);
+    for(const auto& arrayName: arrayNames)
+    {
+        const auto poArray = oGroup.OpenMDArray(arrayName, nullptr);
+        if( poArray )
+        {
+            const auto poArrayNC = std::dynamic_pointer_cast<netCDFVariable>(poArray);
+            const auto poCoordinates = poArray->GetAttribute("coordinates");
+            if( poArrayNC && poCoordinates &&
+                poCoordinates->GetDataType().GetClass() == GEDTC_STRING )
+            {
+                const CPLStringList aosCoordinates(
+                    CSLTokenizeString2(poCoordinates->ReadAsString(), " ", 0));
+                const auto apoArrayDims = poArray->GetDimensions();
+                if( apoArrayDims.size() ==
+                    static_cast<size_t>(aosCoordinates.size()) )
+                {
+                    for(size_t i = 0; i < apoArrayDims.size(); ++i)
+                    {
+                        const auto& poArrayDim =  apoArrayDims[i];
+                        const auto poArrayDimNC = std::dynamic_pointer_cast<
+                        netCDFDimension>(poArrayDim);
+                        if( poArrayDimNC &&
+                            poArrayDimNC->m_gid == m_gid &&
+                            poArrayDimNC->m_dimid == m_dimid )
+                        {
+                            int nIndexingVarGroupId = -1;
+                            int nIndexingVarId = -1;
+                            if( NCDFResolveVar(poArrayNC->GetGroupId(),
+                                               aosCoordinates[i],
+                                               &nIndexingVarGroupId,
+                                               &nIndexingVarId,
+                                               false) == CE_None )
+                            {
+                                return netCDFVariable::Create(m_poShared,
+                                    nIndexingVarGroupId, nIndexingVarId,
+                                    std::vector<std::shared_ptr<GDALDimension>>(),
+                                    nullptr);
+                            }
+                        }
+                    }
+                }
             }
         }
     }
