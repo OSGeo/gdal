@@ -510,9 +510,6 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(CPL_UNUSED
         case RL2_COMPRESSION_LZW:
             pszCompression = "LZW";
             break;
-        case RL2_COMPRESSION_CHARLS:
-            pszCompression = "CHARLS";
-            break;
         case RL2_COMPRESSION_LOSSY_JP2:
             pszCompression = "JPEG2000";
             break;
@@ -1781,8 +1778,6 @@ GDALDataset *OGRSQLiteDriverCreateCopy( const char* pszName,
             nCompression = RL2_COMPRESSION_LOSSY_WEBP;
             nQuality = 75;
         }
-        else if( EQUAL( pszCompression, "CHARLS") )
-            nCompression = RL2_COMPRESSION_CHARLS;
         else if( EQUAL( pszCompression, "JPEG2000") )
         {
             nCompression = RL2_COMPRESSION_LOSSY_JP2;
