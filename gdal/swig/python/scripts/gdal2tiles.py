@@ -1920,7 +1920,7 @@ class GDAL2Tiles(object):
                     tsize = int(self.tsize[tz])   # tile_size in raster coordinates for actual zoom
                     xsize = self.warped_input_dataset.RasterXSize     # size of the raster in pixels
                     ysize = self.warped_input_dataset.RasterYSize
-                    if tz >= self.nativezoom:
+                    if tz >= self.tmaxz:
                         querysize = self.tile_size
 
                     rx = tx * tsize
