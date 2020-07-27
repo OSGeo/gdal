@@ -71,6 +71,11 @@ public:
     return GDALGroupOpenMDArrayFromFullname(self, name, options);
   }
 
+%newobject ResolveMDArray;
+  GDALMDArrayHS* ResolveMDArray( const char* name, const char* starting_point, char** options = 0) {
+    return GDALGroupResolveMDArray(self, name, starting_point, options);
+  }
+
 %apply (char **CSL) {char **};
   char **GetGroupNames(char** options = 0) {
     return GDALGroupGetGroupNames( self, options );
