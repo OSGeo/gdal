@@ -40,7 +40,7 @@ def Usage():
     print("""
 gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n]
                   [-of format] [-co name=value]*
-                  [-ot Byte/Int16/Int32/Float32/etc]
+                  [-ot Byte/UInt16/UInt32/Float32/etc]
                   [-values n,n,n] [-distunits PIXEL/GEO]
                   [-maxdist n] [-nodata n] [-use_input_nodata YES/NO]
                   [-fixed-buf-val n] [-q] """)
