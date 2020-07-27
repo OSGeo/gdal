@@ -337,8 +337,6 @@ void RegisterOGRSQLite()
         osCreationOptions += "    <Value>JPEG</Value>";
     if( rl2_is_supported_codec( RL2_COMPRESSION_LOSSY_WEBP ) )
         osCreationOptions += "    <Value>WEBP</Value>";
-    if( rl2_is_supported_codec( RL2_COMPRESSION_CHARLS ) )
-        osCreationOptions += "    <Value>CHARLS</Value>";
     if( rl2_is_supported_codec( RL2_COMPRESSION_LOSSY_JP2 ) )
         osCreationOptions += "    <Value>JPEG2000</Value>";
 #endif
