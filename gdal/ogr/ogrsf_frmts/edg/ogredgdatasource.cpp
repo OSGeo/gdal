@@ -38,11 +38,11 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGREdgDataSource::OGREdgDataSource() :
-	pszName(nullptr),
-	poLayer(nullptr),
-	nLayers(0),
-	psDestinationFilename(""),
-	bUpdate(false)
+    pszName(nullptr),
+    poLayer(nullptr),
+    nLayers(0),
+    psDestinationFilename(""),
+    bUpdate(false)
 {}
 
 /************************************************************************/
@@ -51,7 +51,7 @@ OGREdgDataSource::OGREdgDataSource() :
 
 OGREdgDataSource::~OGREdgDataSource()
 {
-	delete poLayer;
+    delete poLayer;
 }
 
 /************************************************************************/
@@ -60,10 +60,10 @@ OGREdgDataSource::~OGREdgDataSource()
 
 int OGREdgDataSource::Open(const char *pszFilename)
 {
-	nLayers = 1;
-	poLayer = new OGREdgLayer(pszFilename, nullptr, false);
+    nLayers = 1;
+    poLayer = new OGREdgLayer(pszFilename, nullptr, false);
 
-	return TRUE;
+    return TRUE;
 }
 
 
@@ -77,8 +77,8 @@ int OGREdgDataSource::Open(const char *pszFilename)
 
 int OGREdgDataSource::Create(const char *pszDSName, char ** papszOptions )
 {
-	psDestinationFilename = pszDSName;
-	return TRUE;
+    psDestinationFilename = pszDSName;
+    return TRUE;
 }
 
 
@@ -87,49 +87,49 @@ int OGREdgDataSource::Create(const char *pszDSName, char ** papszOptions )
 /************************************************************************/
 
 OGRLayer *OGREdgDataSource::ICreateLayer(const char * pszLayerName,
-	OGRSpatialReference *poSRS,
-	OGRwkbGeometryType eType,
-	CPL_UNUSED char ** papszOptions)
+    OGRSpatialReference *poSRS,
+    OGRwkbGeometryType eType,
+    CPL_UNUSED char ** papszOptions)
 {
-	
-	if (eType != wkbPolygon    
-		&& eType != wkbMultiPolygon)
-	{
-		CPLError(CE_Failure,
-			CPLE_NotSupported,
-			"unsupported geometry type %s", OGRGeometryTypeToName(eType));
-		return nullptr;
-	}
+    
+    if (eType != wkbPolygon    
+        && eType != wkbMultiPolygon)
+    {
+        CPLError(CE_Failure,
+            CPLE_NotSupported,
+            "unsupported geometry type %s", OGRGeometryTypeToName(eType));
+        return nullptr;
+    }
 
-	//	Close the previous layer (if there is one open). It will be written to the file.
-	if (GetLayerCount() > 0)
-	{
-		delete poLayer;
-	}
+    // Close the previous layer (if there is one open). It will be written to the file.
+    if (GetLayerCount() > 0)
+    {
+        delete poLayer;
+    }
 
-	CPLString sPath = CPLGetPath(psDestinationFilename);
-	CPLString sBasename = CPLGetBasename(psDestinationFilename);
-	CPLString sExtension = CPLGetExtension(psDestinationFilename);
+    CPLString sPath = CPLGetPath(psDestinationFilename);
+    CPLString sBasename = CPLGetBasename(psDestinationFilename);
+    CPLString sExtension = CPLGetExtension(psDestinationFilename);
 
-	// if not edg extension, keep full filename but add edg later
-	if (!EQUAL(sExtension, "edg")) 
-		sBasename += sExtension;
+    // if not edg extension, keep full filename but add edg later
+    if (!EQUAL(sExtension, "edg")) 
+        sBasename += sExtension;
 
-	// add a layer identifier for any layer beyond the first
-	if (GetLayerCount() > 0) { 
-		sBasename += CPLSPrintf(".%i", nLayers + 1);
-	}
+    // add a layer identifier for any layer beyond the first
+    if (GetLayerCount() > 0) { 
+        sBasename += CPLSPrintf(".%i", nLayers + 1);
+    }
 
-	CPLString sFilename = CPLFormFilename(sPath, sBasename, "edg");
+    CPLString sFilename = CPLFormFilename(sPath, sBasename, "edg");
 
-	/* -------------------------------------------------------------------- */
-	/*      Create the layer object.                                        */
-	/* -------------------------------------------------------------------- */
-	
-	poLayer = new OGREdgLayer(sFilename, poSRS, true);
-	nLayers++;
+    /* -------------------------------------------------------------------- */
+    /*      Create the layer object.                                        */
+    /* -------------------------------------------------------------------- */
+    
+    poLayer = new OGREdgLayer(sFilename, poSRS, true);
+    nLayers++;
 
-	return poLayer;
+    return poLayer;
 }
 
 /************************************************************************/
@@ -138,10 +138,10 @@ OGRLayer *OGREdgDataSource::ICreateLayer(const char * pszLayerName,
 
 int OGREdgDataSource::TestCapability(const char * pszCap)
 {
-	if (EQUAL(pszCap, ODsCCreateLayer))
-		return TRUE;
+    if (EQUAL(pszCap, ODsCCreateLayer))
+        return TRUE;
 
-	return FALSE;
+    return FALSE;
 }
 
 /************************************************************************/
@@ -150,8 +150,8 @@ int OGREdgDataSource::TestCapability(const char * pszCap)
 
 OGRLayer *OGREdgDataSource::GetLayer(int iLayer)
 {
-	if (iLayer != 0)
-		return nullptr;
+    if (iLayer != 0)
+        return nullptr;
 
-	return poLayer;
+    return poLayer;
 }

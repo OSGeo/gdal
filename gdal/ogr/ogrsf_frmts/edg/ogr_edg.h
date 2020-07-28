@@ -46,42 +46,42 @@
 
 class EdgAppendix
 {
-	bool									bAppendixLoaded;
-	std::vector<std::string>				vsIds;
-	std::vector<std::string>				vsCores;
-	std::vector<std::string>				vsAgeLabels;
-	std::vector<std::string>				vsSexLabels;
-	std::vector<std::string>				vsMetaDataStrings;
+    bool                                    bAppendixLoaded;
+    std::vector<std::string>                vsIds;
+    std::vector<std::string>                vsCores;
+    std::vector<std::string>                vsAgeLabels;
+    std::vector<std::string>                vsSexLabels;
+    std::vector<std::string>                vsMetaDataStrings;
 
-	std::string								sReferenceEllipsoid;
-	int										iLongitudeZone;
-	char  									cLatitudeZone;
+    std::string                             sReferenceEllipsoid;
+    int                                     iLongitudeZone;
+    char                                    cLatitudeZone;
 
-	OGREnvelope								oEnvelope;
-	
+    OGREnvelope                             oEnvelope;
+    
 public:
-	EdgAppendix();			
-	~EdgAppendix();
-	
-	bool									ReadAppendix(VSILFILE* fp);
-	const std::vector<std::string>&			GetIds() const { return vsIds; }
-	const std::vector<std::string>&			GetCores() const { return vsCores; }
-	const std::vector<int>					GetOrderedCores();
-	const std::vector<std::string>&			GetAgeLabels() const { return vsAgeLabels; }
-	const std::vector<std::string>&			GetSexLabels() const { return vsSexLabels; }
-	const std::vector<std::string>&			GetMetaDataStrings() const { return vsMetaDataStrings; }
+    EdgAppendix();
+    ~EdgAppendix();
+    
+    bool                                    ReadAppendix(VSILFILE* fp);
+    const std::vector<std::string>&         GetIds() const { return vsIds; }
+    const std::vector<std::string>&         GetCores() const { return vsCores; }
+    const std::vector<int>                  GetOrderedCores();
+    const std::vector<std::string>&         GetAgeLabels() const { return vsAgeLabels; }
+    const std::vector<std::string>&         GetSexLabels() const { return vsSexLabels; }
+    const std::vector<std::string>&         GetMetaDataStrings() const { return vsMetaDataStrings; }
 
-	void									AddId(std::string psId) { vsIds.push_back(psId); }
-	void									AddCore(std::string piCore) { vsCores.push_back(piCore); }
-	void									AddAgeLabel(std::string psAgeLabel) { vsAgeLabels.push_back(psAgeLabel); }
-	void									AddSexLabel(std::string psSexLabel) { vsSexLabels.push_back(psSexLabel); }
-	void									UpdateMetaDataString(std::string sMetaDataString, int piPosition);
-	int										GetHemisphereFromUTMLatitudeZone();
-	std::string								GetAppendixString();
-	
-	OGRSpatialReference*					GetSpatialReference();
-	void									GrowExtents(OGREnvelope *psGeomBounds);
-	void									setUTMZone(char pcLatitudeZone, int piLongitudeZone) { cLatitudeZone = pcLatitudeZone; iLongitudeZone = piLongitudeZone; };
+    void                                    AddId(std::string psId) { vsIds.push_back(psId); }
+    void                                    AddCore(std::string piCore) { vsCores.push_back(piCore); }
+    void                                    AddAgeLabel(std::string psAgeLabel) { vsAgeLabels.push_back(psAgeLabel); }
+    void                                    AddSexLabel(std::string psSexLabel) { vsSexLabels.push_back(psSexLabel); }
+    void                                    UpdateMetaDataString(std::string sMetaDataString, int piPosition);
+    int                                     GetHemisphereFromUTMLatitudeZone();
+    std::string                             GetAppendixString();
+    
+    OGRSpatialReference*                    GetSpatialReference();
+    void                                    GrowExtents(OGREnvelope *psGeomBounds);
+    void                                    setUTMZone(char pcLatitudeZone, int piLongitudeZone) { cLatitudeZone = pcLatitudeZone; iLongitudeZone = piLongitudeZone; };
 
 };
 
@@ -91,38 +91,38 @@ public:
 
 class OGREdgLayer : public OGRLayer
 {
-	OGRFeatureDefn							*poFeatureDefn = nullptr;
-	CPLString								psFilename;
-	VSILFILE								*fp;
-	int										nNextFID;
-	bool									bWriter;
-	OGRSpatialReference						*poSRSIn;
-	OGRCoordinateTransformation				*poCT;
-	bool									bCTSet;
-	EdgAppendix*							poEdgAppendix;
+    OGRFeatureDefn                          *poFeatureDefn = nullptr;
+    CPLString                               psFilename;
+    VSILFILE                                *fp;
+    int                                     nNextFID;
+    bool                                    bWriter;
+    OGRSpatialReference                     *poSRSIn;
+    OGRCoordinateTransformation             *poCT;
+    bool                                    bCTSet;
+    EdgAppendix*                            poEdgAppendix;
 
-	std::map<std::pair<int, int>, std::vector<std::string>>  geometryMap;
+    std::map<std::pair<int, int>, std::vector<std::string>>  geometryMap;
 
-	void									SetupFeatureDefinition();
-	void									InitialiseReading();
-	bool									CollectGeometry(OGRGeometry *poGeometry, std::vector<std::string> &pvsGeometryPolygons);
-	void									CollectGeometryLine(const OGRLineString *poLine, bool bIsHole, std::vector<std::string> &pvsGeometryPolygons);
-	int										GetRangeParameterFromField(CPLString pszRaw, std::vector<std::string> lookupVector, std::function<void(std::string)> updateFunction);
-	void									WriteEdgFile();
-	void									GetUTMZone(double pdLat, double pdLon, char *pcLatZone, int *piLonZone, int *pbNorth);
-	void									CreateCoordinateTransform(OGREnvelope sSourceGeomBounds);
+    void                                    SetupFeatureDefinition();
+    void                                    InitialiseReading();
+    bool                                    CollectGeometry(OGRGeometry *poGeometry, std::vector<std::string> &pvsGeometryPolygons);
+    static void                             CollectGeometryLine(const OGRLineString *poLine, bool bIsHole, std::vector<std::string> &pvsGeometryPolygons);
+    static int                              GetRangeParameterFromField(CPLString pszRaw, std::vector<std::string> lookupVector, std::function<void(std::string)> updateFunction);
+    void                                    WriteEdgFile();
+    static void                             GetUTMZone(double pdLat, double pdLon, char *pcLatZone, int *piLonZone, int *pbNorth);
+    void                                    CreateCoordinateTransform(OGREnvelope sSourceGeomBounds);
 
 public:
-	OGREdgLayer(const char * pszFilenameP,
-					OGRSpatialReference *poSRSInP,
-					bool bWriterInP);
-	~OGREdgLayer();
+    OGREdgLayer(const char * pszFilenameP,
+                    OGRSpatialReference *poSRSInP,
+                    bool bWriterInP);
+    ~OGREdgLayer();
 
-	void									ResetReading();
-	OGRFeature *							GetNextFeature();
-	OGRFeatureDefn *						GetLayerDefn() { return poFeatureDefn; }
-	int										TestCapability(const char *) { return FALSE; }
-	OGRErr									ICreateFeature(OGRFeature* poFeature) override;
+    void                                    ResetReading();
+    OGRFeature *                            GetNextFeature();
+    OGRFeatureDefn *                        GetLayerDefn() { return poFeatureDefn; }
+    int                                     TestCapability(const char *) { return FALSE; }
+    OGRErr                                  ICreateFeature(OGRFeature* poFeature) override;
 };
 
 /************************************************************************/
@@ -131,29 +131,29 @@ public:
 
 class OGREdgDataSource final : public OGRDataSource
 {
-	char									*pszName;
-	OGREdgLayer								*poLayer;
-	int										nLayers;
-	CPLString								psDestinationFilename;
-	bool									bUpdate;
+    char                                    *pszName;
+    OGREdgLayer                             *poLayer;
+    int                                     nLayers;
+    CPLString                               psDestinationFilename;
+    bool                                    bUpdate;
 
 public:
-	OGREdgDataSource();
-	virtual ~OGREdgDataSource();
+    OGREdgDataSource();
+    virtual ~OGREdgDataSource();
 
-	int										Open(const char *pszFilename);
-	int										Create(const char *pszFilename, char **papszOptions);
+    int                                     Open(const char *pszFilename);
+    int                                     Create(const char *pszFilename, char **papszOptions);
 
-	const char								*GetName() override { return pszName; }
-	int										GetLayerCount() override { return nLayers; }
-	OGRLayer								*GetLayer(int) override;
+    const char                              *GetName() override { return pszName; }
+    int                                     GetLayerCount() override { return nLayers; }
+    OGRLayer                                *GetLayer(int) override;
 
-	virtual OGRLayer						*ICreateLayer(const char *,
-													OGRSpatialReference * = nullptr,
-													OGRwkbGeometryType = wkbUnknown,
-													char ** = nullptr) override;
-	int										TestCapability(const char *) override;
-	
+    virtual OGRLayer                        *ICreateLayer(const char *,
+                                                    OGRSpatialReference * = nullptr,
+                                                    OGRwkbGeometryType = wkbUnknown,
+                                                    char ** = nullptr) override;
+    int                                     TestCapability(const char *) override;
+    
 };
 
 #endif  // ndef OGREDG_H_INCLUDED

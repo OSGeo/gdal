@@ -5,32 +5,32 @@ GDAL_ROOT	=	..\..
 !IFDEF INCLUDE_OGR_FRMTS
 
 DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
-			avc rec mem vrt csv gmt bna kml gpx \
-			geoconcept xplane georss gtm dxf pgdump gpsbabel \
-			sua openair pds htf aeronavfaa edigeo svg idrisi arcgen \
-			segukooa segy sxf openfilegdb wasp selafin jml vdv mvt flatgeobuf mapml edg\
-			$(ARCOBJECTS_DIR) \
-			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
-			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
-			$(SDE_DIR) $(IDB_DIR) $(NAS_DIR) $(DODSDIR) \
-			$(LIBKMLDIR) $(WFSDIR) $(SOSIDIR) \
-			$(COUCHDBDIR) $(CLOUDANTDIR) $(FGDB_DIR) $(XLSDIR) $(ODSDIR) $(XLSXDIR) $(LVBAGDIR) \
-			$(INGRESDIR) $(ELASTICDIR) $(GPKGDIR) $(OSMDIR) $(VFKDIR) $(CARTODIR) $(AMIGOCLOUD_DIR) \
-			$(PLSCENESDIR) $(CSWDIR) $(MONGODBDIR) $(MONGODBV3DIR) $(GMLAS_DIR) $(CAD_DIR) $(NGW_DIR)
+            avc rec mem vrt csv gmt bna kml gpx \
+            geoconcept xplane georss gtm dxf pgdump gpsbabel \
+            sua openair pds htf aeronavfaa edigeo svg idrisi arcgen \
+            segukooa segy sxf openfilegdb wasp selafin jml vdv mvt flatgeobuf mapml edg\
+            $(ARCOBJECTS_DIR) \
+            $(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
+            $(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
+            $(SDE_DIR) $(IDB_DIR) $(NAS_DIR) $(DODSDIR) \
+            $(LIBKMLDIR) $(WFSDIR) $(SOSIDIR) \
+            $(COUCHDBDIR) $(CLOUDANTDIR) $(FGDB_DIR) $(XLSDIR) $(ODSDIR) $(XLSXDIR) $(LVBAGDIR) \
+            $(INGRESDIR) $(ELASTICDIR) $(GPKGDIR) $(OSMDIR) $(VFKDIR) $(CARTODIR) $(AMIGOCLOUD_DIR) \
+            $(PLSCENESDIR) $(CSWDIR) $(MONGODBDIR) $(MONGODBV3DIR) $(GMLAS_DIR) $(CAD_DIR) $(NGW_DIR)
 
 PLUGINDIRLIST	=	$(PLUGIN_ARCOBJECTS_DIR) \
-			$(PLUGIN_DWG_DIR) \
-			$(PLUGIN_PG_DIR) \
-			$(PLUGIN_SOSI_DIR) \
-			$(PLUGIN_FGDB_DIR) \
-			$(PLUGIN_AMIGOCLOUD_DIR) \
-			$(PLUGIN_OCIDIR) \
-			$(PLUGIN_SDE_DIR) \
-			$(PLUGIN_INGRESDIR) \
-			$(PLUGIN_LIBKMLDIR) \
-			$(PLUGIN_MONGODBDIR) \
-			$(PLUGIN_MONGODBV3DIR) \
-			$(PLUGIN_MSSPATIALDIR)
+            $(PLUGIN_DWG_DIR) \
+            $(PLUGIN_PG_DIR) \
+            $(PLUGIN_SOSI_DIR) \
+            $(PLUGIN_FGDB_DIR) \
+            $(PLUGIN_AMIGOCLOUD_DIR) \
+            $(PLUGIN_OCIDIR) \
+            $(PLUGIN_SDE_DIR) \
+            $(PLUGIN_INGRESDIR) \
+            $(PLUGIN_LIBKMLDIR) \
+            $(PLUGIN_MONGODBDIR) \
+            $(PLUGIN_MONGODBV3DIR) \
+            $(PLUGIN_MSSPATIALDIR)
 
 !IFDEF OGDIDIR
 OGDIDIR	=	ogdi
@@ -268,48 +268,48 @@ DIRLIST		=	generic mitab
 !ENDIF
 
 default:
-	for %d in ( $(DIRLIST) ) do \
-		cd %d \
-		&& $(MAKE) /f makefile.vc \
-		&& cd .. \
-		|| exit 1
+    for %d in ( $(DIRLIST) ) do \
+        cd %d \
+        && $(MAKE) /f makefile.vc \
+        && cd .. \
+        || exit 1
 
-	lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj ntf\*.obj \
-				 sdts\*.obj s57\*.obj tiger\*.obj gml\*.obj \
-				 mitab\*.obj dgn\*.obj avc\*.obj mem\*.obj \
-				 vrt\*.obj csv\*.obj rec\*.obj kml\*.obj \
-				 gmt\*.obj bna\*.obj geoconcept\*.obj \
-				 geojson\*.obj geojson\libjson\*.obj \
-				 gpx\*.obj xplane\*.obj georss\*.obj gtm\*.obj \
-				 dxf\*.obj pgdump\*.obj gpsbabel\*.obj \
-				 sua\*.obj openair\*.obj pds\*.obj htf\*.obj \
-				 aeronavfaa\*.obj edigeo\*.obj svg\*.obj idrisi\*.obj \
-				 arcgen\*.obj segukooa\*.obj segy\*.obj sxf\*.obj \
-				 openfilegdb\*.obj wasp\*.obj selafin\*.obj jml\*.obj \
-				 vdv\*.obj mvt\*.obj flatgeobuf\*.obj mapml\*.obj edg\*.obj \
-				$(OGDIOBJ) $(ODBCOBJ) $(SQLITE_OBJ) \
-				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ) $(MYSQL_OBJ) \
-				$(ILI_OBJ) $(DWG_OBJ) $(SDE_OBJ) $(FGDB_OBJ) $(ARCDRIVER_OBJ) $(IDB_OBJ) \
-				$(DODS_OBJ) $(NAS_OBJ) $(LIBKMLOBJ) $(WFS_OBJ) \
-				$(SOSI_OBJ) $(COUCHDB_OBJ) $(CLOUDANT_OBJ) $(XLS_OBJ) $(ODS_OBJ) $(XLSX_OBJ) $(LVBAG_OBJ)  \
-				$(INGRESOBJ) $(ELASTIC_OBJ) $(GPKG_OBJ) $(OSM_OBJ) $(VFK_OBJ) $(CARTO_OBJ) $(AMIGOCLOUD_OBJ) $(PLSCENES_OBJ) \
-				$(CSW_OBJ) $(MONGODBOBJ) $(MONGODBV3OBJ) $(GMLAS_OBJ) $(CAD_OBJ) $(NGW_OBJ)
-	lib /out:ogrsf_frmts_sup.lib \
-				 ..\..\frmts\iso8211\*.obj \
-				 ..\..\frmts\sdts\sdtsattrreader.obj \
-				 ..\..\frmts\sdts\sdtscatd.obj \
-				 ..\..\frmts\sdts\sdtsiref.obj \
-				 ..\..\frmts\sdts\sdtslib.obj \
-				 ..\..\frmts\sdts\sdtslinereader.obj \
-				 ..\..\frmts\sdts\sdtspointreader.obj \
-				 ..\..\frmts\sdts\sdtspolygonreader.obj \
-				 ..\..\frmts\sdts\sdtsrasterreader.obj \
-				 ..\..\frmts\sdts\sdtstransfer.obj \
-				 ..\..\frmts\sdts\sdtsindexedreader.obj \
-				 ..\..\frmts\sdts\sdtsxref.obj
+    lib /out:ogrsf_frmts.lib generic\*.obj shape\*.obj ntf\*.obj \
+                 sdts\*.obj s57\*.obj tiger\*.obj gml\*.obj \
+                 mitab\*.obj dgn\*.obj avc\*.obj mem\*.obj \
+                 vrt\*.obj csv\*.obj rec\*.obj kml\*.obj \
+                 gmt\*.obj bna\*.obj geoconcept\*.obj \
+                 geojson\*.obj geojson\libjson\*.obj \
+                 gpx\*.obj xplane\*.obj georss\*.obj gtm\*.obj \
+                 dxf\*.obj pgdump\*.obj gpsbabel\*.obj \
+                 sua\*.obj openair\*.obj pds\*.obj htf\*.obj \
+                 aeronavfaa\*.obj edigeo\*.obj svg\*.obj idrisi\*.obj \
+                 arcgen\*.obj segukooa\*.obj segy\*.obj sxf\*.obj \
+                 openfilegdb\*.obj wasp\*.obj selafin\*.obj jml\*.obj \
+                 vdv\*.obj mvt\*.obj flatgeobuf\*.obj mapml\*.obj edg\*.obj \
+                $(OGDIOBJ) $(ODBCOBJ) $(SQLITE_OBJ) \
+                $(FMEOBJ) $(OCIOBJ) $(PG_OBJ) $(MYSQL_OBJ) \
+                $(ILI_OBJ) $(DWG_OBJ) $(SDE_OBJ) $(FGDB_OBJ) $(ARCDRIVER_OBJ) $(IDB_OBJ) \
+                $(DODS_OBJ) $(NAS_OBJ) $(LIBKMLOBJ) $(WFS_OBJ) \
+                $(SOSI_OBJ) $(COUCHDB_OBJ) $(CLOUDANT_OBJ) $(XLS_OBJ) $(ODS_OBJ) $(XLSX_OBJ) $(LVBAG_OBJ)  \
+                $(INGRESOBJ) $(ELASTIC_OBJ) $(GPKG_OBJ) $(OSM_OBJ) $(VFK_OBJ) $(CARTO_OBJ) $(AMIGOCLOUD_OBJ) $(PLSCENES_OBJ) \
+                $(CSW_OBJ) $(MONGODBOBJ) $(MONGODBV3OBJ) $(GMLAS_OBJ) $(CAD_OBJ) $(NGW_OBJ)
+    lib /out:ogrsf_frmts_sup.lib \
+                 ..\..\frmts\iso8211\*.obj \
+                 ..\..\frmts\sdts\sdtsattrreader.obj \
+                 ..\..\frmts\sdts\sdtscatd.obj \
+                 ..\..\frmts\sdts\sdtsiref.obj \
+                 ..\..\frmts\sdts\sdtslib.obj \
+                 ..\..\frmts\sdts\sdtslinereader.obj \
+                 ..\..\frmts\sdts\sdtspointreader.obj \
+                 ..\..\frmts\sdts\sdtspolygonreader.obj \
+                 ..\..\frmts\sdts\sdtsrasterreader.obj \
+                 ..\..\frmts\sdts\sdtstransfer.obj \
+                 ..\..\frmts\sdts\sdtsindexedreader.obj \
+                 ..\..\frmts\sdts\sdtsxref.obj
 
 plugindirs:
-	@echo plugins: $(PLUGINDIRLIST)
+    @echo plugins: $(PLUGINDIRLIST)
         -for %d in ( $(PLUGINDIRLIST) ) do \
                 cd %d \
                 && $(MAKE) /f makefile.vc plugin \
@@ -317,13 +317,13 @@ plugindirs:
                 || exit 1
 
 clean:
-	-del ogrsf_frmts.lib
-	-del ogrsf_frmts_sup.lib
-	for %d in ( $(DIRLIST) $(PLUGINDIRLIST) ) do \
-		cd %d \
-		&& $(MAKE) /f makefile.vc clean \
-		&& cd .. \
-		|| exit 1
+    -del ogrsf_frmts.lib
+    -del ogrsf_frmts_sup.lib
+    for %d in ( $(DIRLIST) $(PLUGINDIRLIST) ) do \
+        cd %d \
+        && $(MAKE) /f makefile.vc clean \
+        && cd .. \
+        || exit 1
 
 plugins-install:
         -for %d in ( $(PLUGINDIRLIST) ) do \

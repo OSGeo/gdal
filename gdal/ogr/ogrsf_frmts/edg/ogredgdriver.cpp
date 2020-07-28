@@ -40,8 +40,8 @@ CPL_CVSID("$Id$")
 
 static int OGREdgDriverIdentify(GDALOpenInfo* poOpenInfo)
 {
-	// Does this appear to be an .edg file?
-	return EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "edg");
+    // Does this appear to be an .edg file?
+    return EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "edg");
 }
 
 /************************************************************************/
@@ -50,22 +50,22 @@ static int OGREdgDriverIdentify(GDALOpenInfo* poOpenInfo)
 
 static GDALDataset *OGREdgDriverOpen(GDALOpenInfo* poOpenInfo)
 {
-	if (poOpenInfo->eAccess == GA_Update ||
-		poOpenInfo->fpL == nullptr )
-		return nullptr;
+    if (poOpenInfo->eAccess == GA_Update ||
+        poOpenInfo->fpL == nullptr )
+        return nullptr;
 
 
-	if (!OGREdgDriverIdentify(poOpenInfo))
-		return nullptr;
+    if (!OGREdgDriverIdentify(poOpenInfo))
+        return nullptr;
 
-	OGREdgDataSource *poDS = new OGREdgDataSource();
-	if (!poDS->Open(poOpenInfo->pszFilename))
-	{
-		delete poDS;
-		return nullptr;
-	}
+    OGREdgDataSource *poDS = new OGREdgDataSource();
+    if (!poDS->Open(poOpenInfo->pszFilename))
+    {
+        delete poDS;
+        return nullptr;
+    }
 
-	return poDS;
+    return poDS;
 }
 
 
@@ -74,24 +74,24 @@ static GDALDataset *OGREdgDriverOpen(GDALOpenInfo* poOpenInfo)
 /************************************************************************/
 
 static GDALDataset *OGREdgDriverCreate(const char * pszName,
-	CPL_UNUSED int nBands,
-	CPL_UNUSED int nXSize,
-	CPL_UNUSED int nYSize,
-	CPL_UNUSED GDALDataType eDT,
-	char **papszOptions)
+    CPL_UNUSED int nBands,
+    CPL_UNUSED int nXSize,
+    CPL_UNUSED int nYSize,
+    CPL_UNUSED GDALDataType eDT,
+    char **papszOptions)
 {
-	CPLAssert(nullptr != pszName);
-	CPLDebug("Anatrack EDG", "Attempt to create: %s", pszName);
+    CPLAssert(nullptr != pszName);
+    CPLDebug("Anatrack EDG", "Attempt to create: %s", pszName);
 
-	OGREdgDataSource *poDS = new OGREdgDataSource();
+    OGREdgDataSource *poDS = new OGREdgDataSource();
 
-	if (!poDS->Create(pszName, papszOptions))
-	{
-		delete poDS;
-		poDS = nullptr;
-	}
+    if (!poDS->Create(pszName, papszOptions))
+    {
+        delete poDS;
+        poDS = nullptr;
+    }
 
-	return poDS;
+    return poDS;
 }
 
 
@@ -107,15 +107,15 @@ void RegisterOGREdg()
 
     GDALDriver *poDriver = new GDALDriver();
 
-	poDriver->SetDescription("Anatrack EDG");
-	poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
-	poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Anatrack Ranges EDG File");
-	poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "edg");
-	poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drv_edg.html");
+    poDriver->SetDescription("Anatrack EDG");
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Anatrack Ranges EDG File");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "edg");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drv_edg.html");
 
-	poDriver->pfnOpen = OGREdgDriverOpen;
-	poDriver->pfnIdentify = OGREdgDriverIdentify;
-	poDriver->pfnCreate = OGREdgDriverCreate;
+    poDriver->pfnOpen = OGREdgDriverOpen;
+    poDriver->pfnIdentify = OGREdgDriverIdentify;
+    poDriver->pfnCreate = OGREdgDriverCreate;
 
-	GetGDALDriverManager()->RegisterDriver(poDriver);
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

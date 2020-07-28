@@ -1,13 +1,13 @@
 
 OBJ     =       ogredgdriver.obj ogredgdatasource.obj ogredglayer.obj edgappendix.obj
-EXTRAFLAGS =	-I.. -I..\.. 
+EXTRAFLAGS =    -I.. -I..\.. 
 
-GDAL_ROOT	=	..\..\..
+GDAL_ROOT =   ..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-default:	$(OBJ)
+default:    $(OBJ)
 
 clean:
-	-del *.obj *.pdb
+    -del *.obj *.pdb
 

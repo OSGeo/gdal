@@ -318,7 +318,7 @@ void OGRRegisterAllInternal()
     RegisterOGRMapML();
 #endif
 #ifdef EDG_ENABLED
-	RegisterOGREdg();
+    RegisterOGREdg();
 #endif
 
 /* Put TIGER and AVCBIN at end since they need poOpenInfo->GetSiblingFiles() */
