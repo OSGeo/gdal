@@ -1721,7 +1721,7 @@ class GDAL2Tiles(object):
             self.tminmax = list(range(0, self.tmaxz + 1))
             self.tsize = list(range(0, self.tmaxz + 1))
             for tz in range(0, self.tmaxz + 1):
-                tsize = 2.0**(self.nativezoom - tz) * self.tile_size
+                tsize = 2.0**(self.tmaxz - tz) * self.tile_size
                 tminx, tminy = 0, 0
                 tmaxx = int(math.ceil(self.warped_input_dataset.RasterXSize / tsize)) - 1
                 tmaxy = int(math.ceil(self.warped_input_dataset.RasterYSize / tsize)) - 1
@@ -2671,7 +2671,7 @@ class GDAL2Tiles(object):
 
         elif self.options.profile == 'raster':
 
-            base_res =  2**(self.nativezoom) * self.out_gt[1]
+            base_res =  2**(self.tmaxz) * self.out_gt[1]
             args['maxres'] = base_res
             resolutions = [ base_res / 2**i for i in range(self.tmaxz+1) ]
             args['resolutions'] = '[' + ','.join('%.18g' % res for res in resolutions) + ']'
