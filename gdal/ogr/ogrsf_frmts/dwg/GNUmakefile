@@ -3,6 +3,12 @@ TDXXFLAGS = \
 	-I$(TEIGHA_DIR)/Core/Include \
 	-I$(TEIGHA_DIR)/Core/Extensions/ExServices \
 	-I$(TEIGHA_DIR)/Core/Examples/Common \
+	-I$(TEIGHA_DIR)/ThirdParty/activation \
+	-I$(TEIGHA_DIR)/KernelBase/Include \
+	-I$(TEIGHA_DIR)/Kernel/Include \
+	-I$(TEIGHA_DIR)/Kernel/Extensions/ExServices \
+	-I$(TEIGHA_DIR)/Drawing/Include \
+	-I$(TEIGHA_DIR)/Drawing/Extensions/ExServices \
 	-I$(TEIGHA_DIR)/Dgn/include \
 	-I$(TEIGHA_DIR)/Dgn/Extensions/ExServices
 
