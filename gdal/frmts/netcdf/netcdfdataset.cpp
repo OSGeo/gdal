@@ -119,9 +119,7 @@ static CPLErr NCDFGetGroupFullName( int nGroupId, char **ppszFullName,
 static CPLErr NCDFGetVarFullName( int nGroupId, int nVarId,
                                   char **ppszFullName, bool bNC3Compat=true );
 static CPLErr NCDFGetRootGroup( int nStartGroupId, int *pnRootGroupId );
-static CPLErr NCDFResolveVar( int nStartGroupId, const char *pszVar,
-                              int *pnGroupId, int *pnVarId,
-                              bool bMandatory=false );
+
 static CPLErr NCDFResolveVarFullName( int nStartGroupId, const char *pszVar,
                                       char **ppszFullName,
                                       bool bMandatory=false );
@@ -11222,7 +11220,7 @@ static CPLErr NCDFResolveElem( int nStartGroupId,
 // TODO: CF specifies that the width-wise search order is "left-to-right" so
 //       maybe we must sort sibling groups alphabetically? but maybe not
 //       necessary if nc_inq_grps() already sort them?
-static CPLErr NCDFResolveVar( int nStartGroupId, const char *pszVar,
+CPLErr NCDFResolveVar( int nStartGroupId, const char *pszVar,
                               int *pnGroupId, int *pnVarId,
                               bool bMandatory )
 {
