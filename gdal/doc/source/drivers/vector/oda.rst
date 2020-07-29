@@ -93,6 +93,24 @@ You have different alternative options to compile and run GDAL/OGR with ODA:
 -  Adding ODA folder to the system library path (`echo "/home/jgr/dev/cpp/ODA21.6/base_7.2/bin/lnxX64_7.2dll" | sudo tee -a /etc/ld.so.conf.d/z_gdal-ODA.conf`)
 -  Setting a run time path (`rpath`) when compiling GDAL (like `LDFLAGS="-Wl,-rpath=/home/jgr/dev/cpp/ODA21.6/base_7.2/bin/lnxX64_7.2dll"`).
 
+
+ODA library names
+
+Some ODA library names do not conform the usual Linux standard `lib*.so`. If you don't use `rpath`, for the other alternatives listed above, you might have to create symbolic links from the actual names. Example:
+
+::
+
+   cd ~/dev/cpp/ODA21.6/base_7.2/bin/lnxX64_7.2dll
+   for f in *.tx
+   do
+      echo "Processing $f"
+      ln -s $f lib$f.so
+   done
+   sudo ldconfig
+
+Check with `ldconfig -v` if all ODA libraries are now visible.
+
+
 Compiling GDAL
 --------------
 
@@ -150,11 +168,10 @@ If a file is DGNv8, you will see that driver in action when opening the file:
 
 ::
 
-   ogrinfo 275_2_13_MNT.dgn
-   INFO: Open of `275_2_13_MNT.dgn'
-      using driver `DGNV8' successful.
-   1: Model-1
-   2: LouriceiraMesmoFinal
+   ogrinfo ~/dev/cpp/gdal/autotest/ogr/data/dgnv8/test_dgnv8.dgn
+   INFO: Open of `/home/jgr/dev/cpp/gdal/autotest/ogr/data/dgnv8/test_dgnv8.dgn'
+         using driver `DGNV8' successful.
+   1: my_model
 
 Troubleshooting
 ---------------
@@ -177,7 +194,7 @@ You can force a run time location (with `rpath`) with:
    ./configure --without-libtool LDFLAGS="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath=/home/jgr/dev/cpp/ODA21.6/base_7.2/bin/lnxX64_7.2dll" --with-python=python3 --with-proj=/usr/local --with-pg=yes --with-poppler --with-teigha=/home/jgr/dev/cpp/ODA21.6/base_7.2 --with-teigha-plt=lnxX64_7.2dll   
 
 
-Adjust these settings, according to your build environment.
+Adjust these settings, according to your build environment. 
 
 See Also
 --------

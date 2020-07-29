@@ -155,6 +155,11 @@ Building
 
 See :ref:`ODA platform support <vector.oda>` for building GDAL with ODA support.
 
+.. toctree::
+   :hidden:
+
+   oda
+
 --------------
 
 -  :ref:`DGN (v7) driver <vector.dgn>`
