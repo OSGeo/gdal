@@ -2002,6 +2002,10 @@ public:
                                         const std::string& osFullName,
                                         CSLConstList papszOptions = nullptr) const;
 
+    std::shared_ptr<GDALMDArray> ResolveMDArray(const std::string& osName,
+                                                const std::string& osStartingPath,
+                                                CSLConstList papszOptions = nullptr) const;
+
     std::shared_ptr<GDALGroup> OpenGroupFromFullname(
                                         const std::string& osFullName,
                                         CSLConstList papszOptions = nullptr) const;

@@ -30,6 +30,8 @@
 
 #include <assert.h>
 #include <algorithm>
+#include <queue>
+#include <set>
 
 #include "gdal_priv.h"
 #include "cpl_safemaths.hpp"
@@ -643,6 +645,11 @@ const GDALGroup* GDALGroup::GetInnerMostGroup(
     const GDALGroup* poCurGroup = this;
     CPLStringList aosTokens(CSLTokenizeString2(
         osPathOrArrayOrDim.c_str(), "/", 0));
+    if( aosTokens.size() == 0 )
+    {
+        return nullptr;
+    }
+
     for( int i = 0; i < aosTokens.size() - 1; i++ )
     {
         curGroupHolder = poCurGroup->OpenGroup(aosTokens[i], nullptr);
@@ -674,6 +681,123 @@ std::shared_ptr<GDALMDArray> GDALGroup::OpenMDArrayFromFullname(
     if( poGroup == nullptr )
         return nullptr;
     return poGroup->OpenMDArray(osName, papszOptions);
+}
+
+/************************************************************************/
+/*                          ResolveMDArray()                            */
+/************************************************************************/
+
+/** Locate an array in a group and its subgroups by name.
+ *
+ * If osName is a fully qualified name, then OpenMDArrayFromFullname() is first
+ * used
+ * Otherwise the search will start from the group identified by osStartingPath,
+ * and an array whose name is osName will be looked for in this group (if
+ * osStartingPath is empty or "/", then the current group is used). If there
+ * is no match, then a recursive descendent search will be made in its subgroups.
+ * If there is no match in the subgroups, then the parent (if existing) of the
+ * group pointed by osStartingPath will be used as the new starting point for the
+ * search.
+ *
+ * @param osName name, qualified or not
+ * @param osStartingPath fully qualified name of the (sub-)group from which
+ *                       the search should be started. If this is a non-empty
+ *                       string, the group on which this method is called should
+ *                       nominally be the root group (otherwise the path will
+ *                       be interpretated as from the current group)
+ * @param papszOptions options to pass to OpenMDArray()
+ * @since GDAL 3.2
+ */
+std::shared_ptr<GDALMDArray> GDALGroup::ResolveMDArray(
+                                                const std::string& osName,
+                                                const std::string& osStartingPath,
+                                                CSLConstList papszOptions) const
+{
+    if( !osName.empty() && osName[0] == '/' )
+    {
+        auto poArray = OpenMDArrayFromFullname(osName, papszOptions);
+        if( poArray )
+            return poArray;
+    }
+    std::string osPath(osStartingPath);
+    std::set<std::string> oSetAlreadyVisited;
+
+    while(true)
+    {
+        std::shared_ptr<GDALGroup> curGroupHolder;
+        std::shared_ptr<GDALGroup> poGroup;
+
+        std::queue<std::shared_ptr<GDALGroup>> oQueue;
+        bool goOn = false;
+        if( osPath.empty() || osPath == "/" )
+        {
+            goOn = true;
+        }
+        else
+        {
+            std::string osLastPart;
+            const GDALGroup* poGroupPtr = GetInnerMostGroup(osPath, curGroupHolder, osLastPart);
+            if( poGroupPtr )
+                poGroup = poGroupPtr->OpenGroup(osLastPart);
+            if( poGroup &&
+                oSetAlreadyVisited.find(poGroup->GetFullName()) ==
+                    oSetAlreadyVisited.end() )
+            {
+                oQueue.push(poGroup);
+                goOn = true;
+            }
+        }
+
+        if( goOn )
+        {
+            do
+            {
+                const GDALGroup* groupPtr;
+                if( !oQueue.empty() )
+                {
+                    poGroup = oQueue.front();
+                    oQueue.pop();
+                    groupPtr = poGroup.get();
+                }
+                else
+                {
+                    groupPtr = this;
+                }
+
+                auto poArray = groupPtr->OpenMDArray(osName, papszOptions);
+                if( poArray )
+                    return poArray;
+
+                const auto aosGroupNames = groupPtr->GetGroupNames();
+                for( const auto& osGroupName : aosGroupNames )
+                {
+                    auto poSubGroup = groupPtr->OpenGroup(osGroupName);
+                    if( poSubGroup &&
+                        oSetAlreadyVisited.find(poSubGroup->GetFullName()) ==
+                            oSetAlreadyVisited.end() )
+                    {
+                        oQueue.push(poSubGroup);
+                        oSetAlreadyVisited.insert(poSubGroup->GetFullName());
+                    }
+                }
+            }
+            while( !oQueue.empty() );
+        }
+
+        if( osPath.empty() || osPath == "/" )
+            break;
+
+        const auto nPos = osPath.rfind('/');
+        if( nPos == 0 )
+            osPath = "/";
+        else
+        {
+            if( nPos == std::string::npos )
+                break;
+            osPath.resize(nPos);
+        }
+    }
+    return nullptr;
 }
 
 /************************************************************************/
@@ -6020,6 +6144,33 @@ GDALMDArrayH GDALGroupOpenMDArrayFromFullname(GDALGroupH hGroup, const char* psz
     VALIDATE_POINTER1( hGroup, __func__, nullptr );
     VALIDATE_POINTER1( pszFullname, __func__, nullptr );
     auto array = hGroup->m_poImpl->OpenMDArrayFromFullname(std::string(pszFullname), papszOptions);
+    if( !array )
+        return nullptr;
+    return new GDALMDArrayHS(array);
+}
+
+
+
+/************************************************************************/
+/*                      GDALGroupResolveMDArray()                       */
+/************************************************************************/
+
+/** Locate an array in a group and its subgroups by name.
+ *
+ * See GDALGroup::ResolveMDArray() for description of the behavior.
+ * @since GDAL 3.2
+ */
+GDALMDArrayH GDALGroupResolveMDArray(GDALGroupH hGroup,
+                                     const char* pszName,
+                                     const char* pszStartingPoint,
+                                     CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1( hGroup, __func__, nullptr );
+    VALIDATE_POINTER1( pszName, __func__, nullptr );
+    VALIDATE_POINTER1( pszStartingPoint, __func__, nullptr );
+    auto array = hGroup->m_poImpl->ResolveMDArray(std::string(pszName),
+                                                  std::string(pszStartingPoint),
+                                                  papszOptions);
     if( !array )
         return nullptr;
     return new GDALMDArrayHS(array);

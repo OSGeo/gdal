@@ -2686,6 +2686,11 @@ class Group(_object):
         return _gdal.Group_OpenMDArrayFromFullname(self, *args)
 
 
+    def ResolveMDArray(self, *args):
+        """ResolveMDArray(Group self, char const * name, char const * starting_point, char ** options=None) -> MDArray"""
+        return _gdal.Group_ResolveMDArray(self, *args)
+
+
     def GetGroupNames(self, *args):
         """GetGroupNames(Group self, char ** options=None) -> char **"""
         return _gdal.Group_GetGroupNames(self, *args)
