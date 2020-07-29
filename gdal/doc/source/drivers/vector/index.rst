@@ -83,6 +83,7 @@ Vector drivers
    ntf
    oapif
    oci
+   oda
    odbc
    ods
    ogdi
