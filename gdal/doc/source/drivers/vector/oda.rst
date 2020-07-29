@@ -88,6 +88,7 @@ This might be an issue.
 
 You have different alternative options to compile and run GDAL/OGR with ODA:
 
+-  copy the ODA libraries to a standard location
 -  set LD_LIBRARY_PATH (like `LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/jgr/dev/cpp/ODA21.6/base_7.2/bin/lnxX64_7.2dll`).
 -  Adding ODA folder to the system library path (`echo "/home/jgr/dev/cpp/ODA21.6/base_7.2/bin/lnxX64_7.2dll" | sudo tee -a /etc/ld.so.conf.d/z_gdal-ODA.conf`)
 -  Setting a run time path (`rpath`) when compiling GDAL (like `LDFLAGS="-Wl,-rpath=/home/jgr/dev/cpp/ODA21.6/base_7.2/bin/lnxX64_7.2dll"`).
