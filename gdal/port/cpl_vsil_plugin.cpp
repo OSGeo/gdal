@@ -131,7 +131,11 @@ VSIVirtualHandle* VSIPluginFilesystemHandler::Open( const char *pszFilename,
         }
         return nullptr;
     }
-    return new VSIPluginHandle(this, cbData);
+    if ( m_cb->nBufferSize<=0 ) {
+        return new VSIPluginHandle(this, cbData);
+    } else {
+        return VSICreateBufferedReaderHandle(new VSIPluginHandle(this, cbData), m_cb->nBufferSize);
+    }
 }
 
 const char* VSIPluginFilesystemHandler::GetCallbackFilename(const char *pszFilename) {

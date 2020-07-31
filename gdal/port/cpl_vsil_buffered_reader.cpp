@@ -50,8 +50,6 @@
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 
-constexpr int MAX_BUFFER_SIZE = 65536;
-
 CPL_CVSID("$Id$")
 
 class VSIBufferedReaderHandle final : public VSIVirtualHandle
@@ -66,14 +64,16 @@ class VSIBufferedReaderHandle final : public VSIVirtualHandle
     bool              bNeedBaseHandleSeek = false;
     bool              bEOF =  false;
     vsi_l_offset      nCheatFileSize = 0;
+    size_t            m_bufferSize = 0;
 
     int               SeekBaseTo( vsi_l_offset nTargetOffset );
 
   public:
-    explicit VSIBufferedReaderHandle( VSIVirtualHandle* poBaseHandle );
+    explicit VSIBufferedReaderHandle( VSIVirtualHandle* poBaseHandle, size_t bufferSize );
     VSIBufferedReaderHandle( VSIVirtualHandle* poBaseHandle,
                              const GByte* pabyBeginningContent,
-                             vsi_l_offset nCheatFileSizeIn );
+                             vsi_l_offset nCheatFileSizeIn,
+                             size_t bufferSize );
     // TODO(schwehr): Add override when support dropped for VS2008.
     ~VSIBufferedReaderHandle() override;
 
@@ -81,6 +81,7 @@ class VSIBufferedReaderHandle final : public VSIVirtualHandle
     vsi_l_offset Tell() override;
     size_t Read( void *pBuffer, size_t nSize,
                  size_t nMemb ) override;
+    int ReadMultiRange( int nRanges, void ** ppData, const vsi_l_offset* panOffsets, const size_t* panSizes ) override;
     size_t Write( const void *pBuffer, size_t nSize,
                   size_t nMemb ) override;
     int Eof() override;
@@ -95,19 +96,21 @@ class VSIBufferedReaderHandle final : public VSIVirtualHandle
 /************************************************************************/
 
 VSIVirtualHandle *
-VSICreateBufferedReaderHandle( VSIVirtualHandle* poBaseHandle )
+VSICreateBufferedReaderHandle( VSIVirtualHandle* poBaseHandle, size_t bufferSize) 
 {
-    return new VSIBufferedReaderHandle(poBaseHandle);
+    return new VSIBufferedReaderHandle(poBaseHandle, bufferSize);
 }
 
 VSIVirtualHandle* VSICreateBufferedReaderHandle(
     VSIVirtualHandle* poBaseHandle,
     const GByte* pabyBeginningContent,
-    vsi_l_offset nCheatFileSizeIn )
+    vsi_l_offset nCheatFileSizeIn,
+    size_t bufferSize)
 {
     return new VSIBufferedReaderHandle(poBaseHandle,
                                        pabyBeginningContent,
-                                       nCheatFileSizeIn);
+                                       nCheatFileSizeIn,
+                                       bufferSize);
 }
 
 //! @cond Doxygen_Suppress
@@ -117,25 +120,28 @@ VSIVirtualHandle* VSICreateBufferedReaderHandle(
 /************************************************************************/
 
 VSIBufferedReaderHandle::VSIBufferedReaderHandle(
-    VSIVirtualHandle* poBaseHandle) :
+    VSIVirtualHandle* poBaseHandle, size_t bufferSize) :
     m_poBaseHandle(poBaseHandle),
-    pabyBuffer(static_cast<GByte*>(CPLMalloc(MAX_BUFFER_SIZE)))
+    pabyBuffer(static_cast<GByte*>(CPLMalloc(bufferSize))),
+    m_bufferSize(bufferSize)
 {}
 
 VSIBufferedReaderHandle::VSIBufferedReaderHandle(
     VSIVirtualHandle* poBaseHandle,
     const GByte* pabyBeginningContent,
-    vsi_l_offset nCheatFileSizeIn ) :
+    vsi_l_offset nCheatFileSizeIn,
+    size_t bufferSize ) :
     m_poBaseHandle(poBaseHandle),
     pabyBuffer(static_cast<GByte *>(
-        CPLMalloc(std::max(MAX_BUFFER_SIZE,
-                           static_cast<int>(poBaseHandle->Tell()))))),
+        CPLMalloc(std::max(bufferSize,
+                           static_cast<size_t>(poBaseHandle->Tell()))))),
     nBufferOffset(0),
-    nBufferSize(static_cast<int>(poBaseHandle->Tell())),
+    nBufferSize(static_cast<size_t>(poBaseHandle->Tell())),
     nCurOffset(0),
     bNeedBaseHandleSeek(true),
     bEOF(false),
-    nCheatFileSize(nCheatFileSizeIn)
+    nCheatFileSize(nCheatFileSizeIn),
+    m_bufferSize(bufferSize)
 {
     memcpy(pabyBuffer, pabyBeginningContent, nBufferSize);
 }
@@ -279,19 +285,31 @@ size_t VSIBufferedReaderHandle::Read( void *pBuffer, size_t nSize,
 #ifdef DEBUG_VERBOSE
             CPLAssert(m_poBaseHandle->Tell() == nBufferOffset + nBufferSize);
 #endif
+            size_t nRead=0;
+            if (nToReadInFile <= static_cast<size_t>(m_bufferSize)) {
+                const size_t nReadInFile =
+                    m_poBaseHandle->Read(pabyBuffer,1,m_bufferSize);
 
-            const size_t nReadInFile =
-                m_poBaseHandle->Read(
-                    static_cast<GByte *>(pBuffer) + nReadInBuffer,
-                    1, nToReadInFile);
-            const size_t nRead = nReadInBuffer + nReadInFile;
+                nBufferSize = nReadInFile;
+                nBufferOffset += nBufferSize;
+                memcpy(static_cast<GByte *>(pBuffer) + nReadInBuffer,
+                       pabyBuffer,
+                       std::min(nToReadInFile,nReadInFile));
+                nRead = nReadInBuffer + std::min(nToReadInFile,nReadInFile);
+            } else {
+                const size_t nReadInFile =
+                    m_poBaseHandle->Read(
+                        static_cast<GByte *>(pBuffer) + nReadInBuffer,
+                        1, nToReadInFile);
+                nRead = nReadInBuffer + nReadInFile;
 
-            nBufferSize = static_cast<int>(
-                std::min(nRead, static_cast<size_t>(MAX_BUFFER_SIZE)));
-            nBufferOffset = nCurOffset + nRead - nBufferSize;
-            memcpy(pabyBuffer,
-                   static_cast<GByte *>(pBuffer) + nRead - nBufferSize,
-                   nBufferSize);
+                nBufferSize = static_cast<int>(
+                    std::min(nRead, static_cast<size_t>(m_bufferSize)));
+                nBufferOffset = nCurOffset + nRead - nBufferSize;
+                memcpy(pabyBuffer,
+                       static_cast<GByte *>(pBuffer) + nRead - nBufferSize,
+                       nBufferSize);
+            }
 
             nCurOffset += nRead;
 #ifdef DEBUG_VERBOSE
@@ -317,16 +335,29 @@ size_t VSIBufferedReaderHandle::Read( void *pBuffer, size_t nSize,
         if( !SeekBaseTo(nCurOffset) )
             return 0;
         bNeedBaseHandleSeek = false;
-        const size_t nReadInFile =
-            m_poBaseHandle->Read(pBuffer, 1, nTotalToRead);
-        nBufferSize = static_cast<int>(
-            std::min(nReadInFile, static_cast<size_t>(MAX_BUFFER_SIZE)));
-        nBufferOffset = nCurOffset + nReadInFile - nBufferSize;
-        memcpy(pabyBuffer,
-               static_cast<GByte *>(pBuffer) + nReadInFile - nBufferSize,
-               nBufferSize);
+        size_t nRead = 0;
+        if (nTotalToRead <= static_cast<size_t>(m_bufferSize) )
+        {
+            const size_t nReadInFile = m_poBaseHandle->Read(pabyBuffer, 1, m_bufferSize);
+            nBufferSize = nReadInFile;
+            nBufferOffset = nCurOffset;
+            nRead = std::min(nTotalToRead, nReadInFile);
+            memcpy(static_cast<GByte *>(pBuffer),
+                   pabyBuffer,
+                   nRead);
+        }
+        else
+        {
+            nRead = m_poBaseHandle->Read(pBuffer, 1, nTotalToRead);
+            nBufferSize = static_cast<int>(
+                std::min(nRead, static_cast<size_t>(m_bufferSize)));
+            nBufferOffset = nCurOffset;
+            memcpy(pabyBuffer,
+                   static_cast<GByte *>(pBuffer),
+                   nBufferSize);
+        }
 
-        nCurOffset += nReadInFile;
+        nCurOffset += nRead;
 #ifdef DEBUG_VERBOSE
         CPLAssert(m_poBaseHandle->Tell() == nBufferOffset + nBufferSize);
         CPLAssert(m_poBaseHandle->Tell() == nCurOffset);
@@ -334,10 +365,14 @@ size_t VSIBufferedReaderHandle::Read( void *pBuffer, size_t nSize,
 
         bEOF = CPL_TO_BOOL(m_poBaseHandle->Eof());
 
-        return nReadInFile / nSize;
+        return nRead / nSize;
     }
 }
 
+
+int VSIBufferedReaderHandle::ReadMultiRange( int nRanges, void ** ppData, const vsi_l_offset* panOffsets, const size_t* panSizes ) {
+    return m_poBaseHandle->ReadMultiRange(nRanges,ppData,panOffsets,panSizes);
+}
 /************************************************************************/
 /*                              Write()                                 */
 /************************************************************************/

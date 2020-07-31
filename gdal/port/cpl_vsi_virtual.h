@@ -263,10 +263,11 @@ struct CPL_DLL VSIDIR
 
 #endif /* #ifndef DOXYGEN_SKIP */
 
-VSIVirtualHandle CPL_DLL *VSICreateBufferedReaderHandle(VSIVirtualHandle* poBaseHandle);
+VSIVirtualHandle CPL_DLL *VSICreateBufferedReaderHandle(VSIVirtualHandle* poBaseHandle, size_t bufferSize=65536);
 VSIVirtualHandle* VSICreateBufferedReaderHandle(VSIVirtualHandle* poBaseHandle,
                                                 const GByte* pabyBeginningContent,
-                                                vsi_l_offset nCheatFileSize);
+                                                vsi_l_offset nCheatFileSize,
+                                                size_t bufferSize=65536);
 VSIVirtualHandle CPL_DLL *VSICreateCachedFile( VSIVirtualHandle* poBaseHandle, size_t nChunkSize = 32768, size_t nCacheSize = 0 );
 
 const int CPL_DEFLATE_TYPE_GZIP = 0;
