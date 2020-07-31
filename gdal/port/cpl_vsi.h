@@ -524,6 +524,7 @@ typedef struct {
      * Optional opaque pointer passed back to filemanager callbacks (e.g. open, stat, rmdir)
      */ 
     void                                        *pUserData;
+    bool                                        bBuffered; /**< buffer small reads (makes handler read only) */
     VSIFilesystemPluginStatCallback             stat; /**< stat handle by name (rw)*/
     VSIFilesystemPluginUnlinkCallback           unlink; /**< unlink handle by name ()*/
     VSIFilesystemPluginRenameCallback           rename; /**< rename handle ()*/
