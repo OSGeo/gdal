@@ -17,6 +17,9 @@ GDAL_ROOT	=	..\..
 
 !INCLUDE csharp.opt
 
+GDAL_VERSION= \
+!INCLUDE $(GDAL_ROOT)\VERSION
+
 !IFDEF CSHARP_STATIC_LINKAGE
 GDALLIB	= $(GDAL_ROOT)\$(GDAL_LIB_NAME)
 !ELSE
@@ -62,9 +65,11 @@ template.csproj:
     echo ^<Project Sdk="Microsoft.NET.Sdk"^> > $@
     echo ^<PropertyGroup^> >> $@
     echo ^<TargetFramework^>$(NETSTANDARD)^</TargetFramework^> >> $@
-    echo ^<AssemblyVersion^>3.1.2.0^</AssemblyVersion^> >> $@
+    echo ^<AssemblyVersion^>$(GDAL_VERSION).0^</AssemblyVersion^> >> $@
     echo ^</PropertyGroup^> >> $@
     echo ^</Project^> >> $@
+!ELSE
+    echo > $@
 !ENDIF
 
 {apps}.cs{apps}.csproj:
@@ -73,13 +78,15 @@ template.csproj:
     echo ^<PropertyGroup^> >> $@
     echo ^<OutputType^>Exe^</OutputType^> >> $@
     echo ^<TargetFramework^>$(NETCORE)^</TargetFramework^> >> $@
-    echo ^<AssemblyVersion^>3.1.2.0^</AssemblyVersion^> >> $@
+    echo ^<AssemblyVersion^>$(GDAL_VERSION).0^</AssemblyVersion^> >> $@
     echo ^<EnableDefaultCompileItems^>false^</EnableDefaultCompileItems^>  >> $@
     echo ^</PropertyGroup^> >> $@
     echo ^<ItemGroup^> >> $@
     echo ^<Compile Include="$(<F)" /^> >> $@
     echo ^</ItemGroup^> >> $@
     echo ^</Project^> >> $@
+!ELSE
+    echo > $@
 !ENDIF
 
 gdal_csharp: template.csproj
@@ -226,6 +233,11 @@ samples: sampleprojects
     dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALWarp.csproj
     dotnet add GetCRSInfo.csproj reference ..\osr\osr_csharp.csproj
     dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GetCRSInfo.csproj
+    move /Y *.dll ..
+    move /Y *.exe ..
+    move /Y *.pdb ..
+    move /Y *.json ..
+    move /Y *.md ..
     cd ..    
 !ELSE
     $(CSC) $(CSDEBUG) /r:ogr_csharp.dll /r:osr_csharp.dll /out:ogrinfo.exe apps\ogrinfo.cs
@@ -272,6 +284,7 @@ test:
 	GDALWrite.exe Data/sample.tif
 	GDALDatasetWrite.exe Data/sample1.tif
 	GDALCreateCopy.exe Data/sample.tif Data/sample2.tif
+    GDALReadDirect.exe Data/sample.tif Data/sample.png
 	GDALOverviews.exe Data/sample.tif NEAREST 2 4
 	GDALInfo.exe Data/sample.tif
 	GDALInfo.exe ../../../autotest/gcore/data/byte.tif
@@ -295,8 +308,6 @@ clean:
 	$(MAKE) /f makefile.vc clean
 	cd ..
 	-del $(GDAL_LIB_NAME)
-	-del *_wrap.dll
-	-del *_csharp.dll
 	-del *.obj
 	-del *.exp
 	-del *.ilk
@@ -309,13 +320,13 @@ clean:
     -del *.json
 	-rd /q /s Data
     -del apps\*.csproj
-    -del apps\*.dll
-    -del apps\*.pdb
-    -del apps\*.exe
-    -del apps\*.json
-    -del apps\*.csproj
+    -del *.dll
+    -del *.pdb
+    -del *.exe
+    -del *.json
     -rd /q /s apps\obj
     -del template.csproj
+    -del SOS_README.md
 
 install:
     -mkdir $(GDAL_HOME)\csharp
