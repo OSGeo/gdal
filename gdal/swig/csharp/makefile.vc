@@ -239,11 +239,11 @@ samples: sampleprojects
     dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GDALWarp.csproj
     dotnet add GetCRSInfo.csproj reference ..\osr\osr_csharp.csproj
     dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID) GetCRSInfo.csproj
-    move /Y *.dll ..
-    move /Y *.exe ..
-    move /Y *.pdb ..
-    move /Y *.json ..
-    move /Y *.md ..
+    -move /Y *.dll ..
+    -move /Y *.exe ..
+    -move /Y *.pdb ..
+    -move /Y *.json ..
+    -move /Y *.md ..
     cd ..    
 !ELSE
     $(CSC) $(CSDEBUG) /r:ogr_csharp.dll /r:osr_csharp.dll /out:ogrinfo.exe apps\ogrinfo.cs
