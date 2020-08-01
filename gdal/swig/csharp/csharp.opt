@@ -11,5 +11,5 @@
 #CSHARP_STATIC_LINKAGE = YES
 
 #Uncomment these lines if we are targeting .NET standard/core
-NETSTANDARD = netstandard2.1
-NETCORE = netcoreapp3.1
+NETSTANDARD = netstandard2.0
+NETCORE = netcoreapp2.1
