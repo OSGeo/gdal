@@ -1063,7 +1063,7 @@ def test_ogr_gpkg_15():
     gpkg_ds.ReleaseResultSet(sql_lyr)
     if has_spatialite_4_3_or_later:
         sql_lyr = gpkg_ds.ExecuteSQL(
-            "SELECT ST_Buffer(geom, 0) FROM tbl_linestring_renamed")
+            "SELECT ST_Buffer(geom, 1e-10) FROM tbl_linestring_renamed")
         assert sql_lyr.GetGeomType() == ogr.wkbPolygon
         assert sql_lyr.GetSpatialRef().ExportToWkt().find('32631') >= 0
         gpkg_ds.ReleaseResultSet(sql_lyr)

@@ -1312,117 +1312,15 @@ AC_SUBST(CURL_INC,    $CURL_INC)
 AC_SUBST(CURL_LIB,    $CURL_LIB)
 
 dnl ---------------------------------------------------------------------------
-dnl Check for SpatiaLite.
-dnl ---------------------------------------------------------------------------
-
-AC_MSG_CHECKING(for spatialite)
-
-AC_ARG_WITH(spatialite,
-    [  --with-spatialite=ARG Include SpatiaLite support (ARG=no(default), yes, dlopen (only supported for Spatialite >= 4.1.2) or path)],
-    ,,)
-
-AC_ARG_WITH(spatialite-soname,
-    [  --with-spatialite-soname=ARG Spatialite shared object name (e.g. libspatialite.so), only used if --with-spatialite=dlopen],
-    ,,)
-
-HAVE_SPATIALITE=no
-SPATIALITE_AMALGAMATION=no
-
-if test -z "$with_spatialite" -o "$with_spatialite" = "no"; then
-    AC_MSG_RESULT(disabled)
-elif test "$with_spatialite" = "yes"; then
-    AC_CHECK_HEADERS(sqlite3.h)
-    if test "$ac_cv_header_sqlite3_h" = "yes"; then
-        AC_MSG_CHECKING([for spatialite.h in /usr/include or /usr/local/include])
-        if test -f "/usr/include/spatialite.h" -o -f "/usr/local/include/spatialite.h"; then
-            AC_MSG_RESULT(found)
-            AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,-lsqlite3)
-            if test "$SPATIALITE_INIT_FOUND" = "yes"; then
-                HAVE_SPATIALITE=yes
-                SPATIALITE_LIBS="-lspatialite -lsqlite3"
-                LIBS="$LIBS $SPATIALITE_LIBS"
-                HAVE_SQLITE3=yes
-            fi
-        else
-            AC_MSG_RESULT(not found : spatialite support disabled)
-        fi
-    fi
-elif test "$with_spatialite" = "dlopen"; then
-  HAVE_SPATIALITE=dlopen
-  AC_MSG_RESULT(dlopen)
-
-  if test "$with_spatialite_soname" != ""; then
-      SPATIALITE_SONAME="$with_spatialite_soname"
-  else
-      SPATIALITE_SONAME="spatialite.so"
-  fi
-else
-    AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,-L$with_spatialite/lib -lspatialite)
-    if test -f "$with_spatialite/include/spatialite.h" -a \
-        -f "$with_spatialite/include/spatialite/sqlite3.h" -a \
-        "$SPATIALITE_INIT_FOUND" = "yes"; then
-
-        AC_MSG_RESULT(enabled)
-        HAVE_SPATIALITE=yes
-        SPATIALITE_AMALGAMATION=yes
-
-        # SpatiaLite amalgamation availability implies SQLite availability
-        # Caution : don't include the include/spatialite subdir in the include dir
-        # as there's a spatialite.h file in it, which we don't want to include.
-        # We want to include include/spatialite.h instead !
-        SQLITE3_CFLAGS="-I$with_spatialite/include"
-        SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite"
-        LIBS="$LIBS $SPATIALITE_LIBS"
-        HAVE_SQLITE3=yes
-
-    elif test -f "$with_spatialite/include/spatialite.h" -a \
-        "$SPATIALITE_INIT_FOUND" = "yes"; then
-
-        SQLITE3_REQ_VERSION="3.0.0"
-        AX_LIB_SQLITE3($SQLITE3_REQ_VERSION)
-
-        if test "$HAVE_SQLITE3" = "yes"; then
-            SPATIALITE_INC="-I$with_spatialite/include"
-            HAVE_SPATIALITE=yes
-            SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite"
-            LIBS="$SQLITE3_LDFLAGS $LIBS $SPATIALITE_LIBS"
-            AC_MSG_RESULT(spatialite enabled)
-        else
-            AC_MSG_RESULT(spatialite disabled)
-        fi
-    else
-        AC_MSG_RESULT(disabled)
-    fi
-fi
-
-if test "$HAVE_SPATIALITE" = "yes"; then
-    ax_save_LIBS="${LIBS}"
-    LIBS="$SPATIALITE_LIBS"
-    AC_CHECK_LIB(spatialite,spatialite_target_cpu,SPATIALITE_412_OR_LATER=yes,SPATIALITE_412_OR_LATER=no)
-    LIBS="${ax_save_LIBS}"
-fi
-
-AC_SUBST([HAVE_SPATIALITE], $HAVE_SPATIALITE)
-AC_SUBST([SPATIALITE_SONAME], $SPATIALITE_SONAME)
-AC_SUBST([SPATIALITE_INC], $SPATIALITE_INC)
-AC_SUBST([SPATIALITE_AMALGAMATION], $SPATIALITE_AMALGAMATION)
-AC_SUBST([SPATIALITE_412_OR_LATER], $SPATIALITE_412_OR_LATER)
-
-dnl ---------------------------------------------------------------------------
-dnl Check for SQLite (only if SpatiaLite is not detected).
+dnl Check for SQLite
 dnl Proj depends on it so it must appear before.
 dnl ---------------------------------------------------------------------------
 
-if test "${HAVE_SPATIALITE}" = "no" -o "${HAVE_SPATIALITE}" = "dlopen" ; then
-    SQLITE3_REQ_VERSION="3.0.0"
-    AX_LIB_SQLITE3($SQLITE3_REQ_VERSION)
-
-    if test "$HAVE_SQLITE3" = "yes"; then
-        LIBS="$SQLITE3_LDFLAGS $LIBS"
-    fi
-fi
+SQLITE3_REQ_VERSION="3.0.0"
+AX_LIB_SQLITE3($SQLITE3_REQ_VERSION)
 
 if test "$HAVE_SQLITE3" = "yes"; then
+    LIBS="$SQLITE3_LDFLAGS $LIBS"
     AC_CHECK_LIB(sqlite3,sqlite3_column_table_name,SQLITE_HAS_COLUMN_METADATA=yes,SQLITE_HAS_COLUMN_METADATA=no,$LIBS)
 fi
 
@@ -1546,6 +1444,79 @@ else
 fi
 
 AC_SUBST(PROJ_INCLUDE)
+
+dnl ---------------------------------------------------------------------------
+dnl Check for SpatiaLite.
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING(for spatialite)
+
+AC_ARG_WITH(spatialite,
+    [  --with-spatialite=ARG Include SpatiaLite support (ARG=no(default), yes, dlopen (only supported for Spatialite >= 4.1.2) or path)],
+    ,,)
+
+AC_ARG_WITH(spatialite-soname,
+    [  --with-spatialite-soname=ARG Spatialite shared object name (e.g. libspatialite.so), only used if --with-spatialite=dlopen],
+    ,,)
+
+HAVE_SPATIALITE=no
+
+if test -z "$with_spatialite" -o "$with_spatialite" = "no"; then
+    AC_MSG_RESULT(disabled)
+elif test "$with_spatialite" = "yes"; then
+    AC_CHECK_HEADERS(sqlite3.h)
+    if test "$ac_cv_header_sqlite3_h" = "yes"; then
+        AC_MSG_CHECKING([for spatialite.h in /usr/include or /usr/local/include])
+        if test -f "/usr/include/spatialite.h" -o -f "/usr/local/include/spatialite.h"; then
+            AC_MSG_RESULT(found)
+            AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,-lsqlite3)
+            if test "$SPATIALITE_INIT_FOUND" = "yes"; then
+                HAVE_SPATIALITE=yes
+                SPATIALITE_LIBS="-lspatialite -lsqlite3"
+                LIBS="$LIBS $SPATIALITE_LIBS"
+                HAVE_SQLITE3=yes
+            fi
+        else
+            AC_MSG_RESULT(not found : spatialite support disabled)
+        fi
+    fi
+elif test "$with_spatialite" = "dlopen"; then
+  HAVE_SPATIALITE=dlopen
+  AC_MSG_RESULT(dlopen)
+
+  if test "$with_spatialite_soname" != ""; then
+      SPATIALITE_SONAME="$with_spatialite_soname"
+  else
+      SPATIALITE_SONAME="spatialite.so"
+  fi
+else
+    AC_CHECK_LIB(spatialite,spatialite_init,SPATIALITE_INIT_FOUND=yes,SPATIALITE_INIT_FOUND=no,-L$with_spatialite/lib -lspatialite)
+
+    if test -f "$with_spatialite/include/spatialite.h" -a \
+        "$SPATIALITE_INIT_FOUND" = "yes"; then
+
+        if test "$HAVE_SQLITE3" = "yes"; then
+            SPATIALITE_INC="-I$with_spatialite/include"
+            HAVE_SPATIALITE=yes
+            SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite"
+            LIBS="$SQLITE3_LDFLAGS $LIBS $SPATIALITE_LIBS"
+            AC_MSG_RESULT(spatialite enabled)
+        else
+            AC_MSG_RESULT(spatialite disabled)
+        fi
+    else
+        AC_MSG_RESULT(disabled)
+    fi
+fi
+
+if test "$HAVE_SPATIALITE" = "yes"; then
+    AC_CHECK_LIB(spatialite,spatialite_target_cpu,SPATIALITE_412_OR_LATER=yes,SPATIALITE_412_OR_LATER=no)
+fi
+
+AC_SUBST([HAVE_SPATIALITE], $HAVE_SPATIALITE)
+AC_SUBST([SPATIALITE_SONAME], $SPATIALITE_SONAME)
+AC_SUBST([SPATIALITE_INC], $SPATIALITE_INC)
+AC_SUBST([SPATIALITE_412_OR_LATER], $SPATIALITE_412_OR_LATER)
 
 dnl ---------------------------------------------------------------------------
 dnl Check if liblzma is available.
