@@ -42,6 +42,8 @@ from __future__ import print_function, division
 import math
 from multiprocessing import Pool
 from functools import partial
+import glob
+import json
 import os
 import tempfile
 import threading
@@ -67,8 +69,136 @@ __version__ = "$Id$"
 resampling_list = (
     'average', 'near', 'bilinear', 'cubic', 'cubicspline', 'lanczos',
     'antialias', 'mode', 'max', 'min', 'med', 'q1', 'q3')
-profile_list = ('mercator', 'geodetic', 'raster')
-webviewer_list = ('all', 'google', 'openlayers', 'leaflet', 'none')
+webviewer_list = ('all', 'google', 'openlayers', 'leaflet', 'mapml', 'none')
+
+class UnsupportedTileMatrixSet(Exception):
+    pass
+
+class TileMatrixSet(object):
+    def __init__(self):
+        self.identifier = None
+        self.srs = None
+        self.topleft_x = None
+        self.topleft_y = None
+        self.matrix_width = None        # at zoom 0
+        self.matrix_height = None       # at zoom 0
+        self.tile_size = None
+        self.resolution = None          # at zoom 0
+        self.level_count = None
+
+    def GeorefCoordToTileCoord(self, x, y, z, overriden_tile_size):
+        res = self.resolution * self.tile_size / overriden_tile_size / (2**z)
+        tx = int((x - self.topleft_x) / (res * overriden_tile_size))
+        # In default mode, we use a bottom-y origin
+        ty = int((y - (self.topleft_y - self.matrix_height * self.tile_size * self.resolution)) / (res * overriden_tile_size))
+        return tx, ty
+
+    def ZoomForPixelSize(self, pixelSize, overriden_tile_size):
+        "Maximal scaledown zoom of the pyramid closest to the pixelSize."
+
+        for i in range(self.level_count):
+            res = self.resolution * self.tile_size / overriden_tile_size / (2**i)
+            if pixelSize > res:
+                return max(0, i - 1)    # We don't want to scale up
+        return self.level_count - 1
+
+    def PixelsToMeters(self, px, py, zoom, overriden_tile_size):
+        "Converts pixel coordinates in given zoom level of pyramid to EPSG:3857"
+
+        res = self.resolution * self.tile_size / overriden_tile_size / (2**zoom)
+        mx = px * res + self.topleft_x
+        my = py * res + (self.topleft_y - self.matrix_height * self.tile_size * self.resolution)
+        return mx, my
+
+    def TileBounds(self, tx, ty, zoom, overriden_tile_size):
+        "Returns bounds of the given tile in georef coordinates"
+
+        minx, miny = self.PixelsToMeters(tx * overriden_tile_size, ty * overriden_tile_size, zoom, overriden_tile_size)
+        maxx, maxy = self.PixelsToMeters((tx + 1) * overriden_tile_size, (ty + 1) * overriden_tile_size, zoom, overriden_tile_size)
+        return (minx, miny, maxx, maxy)
+
+    @staticmethod
+    def parse(j):
+        assert 'identifier' in j
+        assert 'supportedCRS' in j
+        assert 'tileMatrix' in j
+        assert isinstance(j['tileMatrix'], list)
+        srs = osr.SpatialReference()
+        assert srs.SetFromUserInput(str(j['supportedCRS'])) == 0
+        swapaxis = srs.EPSGTreatsAsLatLong() or srs.EPSGTreatsAsNorthingEasting()
+        metersPerUnit = 1.0
+        if srs.IsProjected():
+            metersPerUnit = srs.GetLinearUnits()
+        elif srs.IsGeographic():
+            metersPerUnit = srs.GetSemiMajor() * math.pi / 180;
+        tms = TileMatrixSet()
+        tms.srs = srs
+        tms.identifier = str(j['identifier'])
+        for i, tileMatrix in enumerate(j['tileMatrix']):
+            assert 'topLeftCorner' in tileMatrix
+            assert isinstance(tileMatrix['topLeftCorner'], list)
+            topLeftCorner = tileMatrix['topLeftCorner']
+            assert len(topLeftCorner) == 2
+            assert 'scaleDenominator' in tileMatrix
+            assert 'tileWidth' in tileMatrix
+            assert 'tileHeight' in tileMatrix
+
+            topleft_x = topLeftCorner[0]
+            topleft_y = topLeftCorner[1]
+            tileWidth = tileMatrix['tileWidth']
+            tileHeight = tileMatrix['tileHeight']
+            if tileWidth != tileHeight:
+                raise UnsupportedTileMatrixSet('Only square tiles supported')
+            # Convention in OGC TileMatrixSet definition. See gcore/tilematrixset.cpp
+            resolution = tileMatrix['scaleDenominator'] * 0.28e-3 / metersPerUnit
+            if swapaxis:
+                topleft_x, topleft_y = topleft_y, topleft_x
+            if i == 0:
+                tms.topleft_x = topleft_x
+                tms.topleft_y = topleft_y
+                tms.resolution = resolution
+                tms.tile_size = tileWidth
+
+                assert 'matrixWidth' in tileMatrix
+                assert 'matrixHeight' in tileMatrix
+                tms.matrix_width = tileMatrix['matrixWidth']
+                tms.matrix_height = tileMatrix['matrixHeight']
+            else:
+                if topleft_x != tms.topleft_x or topleft_y != tms.topleft_y:
+                    raise UnsupportedTileMatrixSet('All levels should have same origin')
+                if abs(tms.resolution / (1 << i) - resolution) > 1e-8 * resolution:
+                    raise UnsupportedTileMatrixSet('Only resolutions varying as power-of-two supported')
+                if tileWidth != tms.tile_size:
+                    raise UnsupportedTileMatrixSet('All levels should have same tile size')
+        tms.level_count = len(j['tileMatrix'])
+        return tms
+
+tmsMap = {}
+
+profile_list = ['mercator', 'geodetic', 'raster']
+
+# Read additional tile matrix sets from GDAL data directory
+filename = gdal.FindFile('gdal', 'tms_MapML_APSTILE.json')
+if filename:
+    dirname = os.path.dirname(filename)
+    for tmsfilename in glob.glob(os.path.join(dirname, "tms_*.json")):
+        data = open(tmsfilename, 'rb').read()
+        try:
+            j = json.loads(data.decode('utf-8'))
+        except:
+            j = None
+        if j is None:
+            print('Cannot parse ' + tmsfilename)
+            continue
+        try:
+            tms = TileMatrixSet.parse(j)
+        except UnsupportedTileMatrixSet:
+            continue
+        except:
+            print('Cannot parse ' + tmsfilename)
+            continue
+        tmsMap[tms.identifier] = tms
+        profile_list.append(tms.identifier)
 
 threadLocal = threading.local()
 
@@ -748,15 +878,17 @@ def setup_output_srs(input_srs, options):
     Setup the desired SRS (based on options)
     """
     output_srs = osr.SpatialReference()
-    output_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
 
     if options.profile == 'mercator':
         output_srs.ImportFromEPSG(3857)
     elif options.profile == 'geodetic':
         output_srs.ImportFromEPSG(4326)
-    else:
+    elif options.profile == 'raster':
         output_srs = input_srs
+    else:
+        output_srs = tmsMap[options.profile].srs.Clone()
 
+    output_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     return output_srs
 
 
@@ -1027,13 +1159,15 @@ def create_base_tile(tile_job_info, tile_detail):
 
     # Create a KML file for this tile.
     if tile_job_info.kml:
-        kmlfilename = os.path.join(output, str(tz), str(tx), '%d.kml' % GDAL2Tiles.getYTile(ty, tz, options))
-        if not options.resume or not os.path.exists(kmlfilename):
-            with open(kmlfilename, 'wb') as f:
-                f.write(generate_kml(
-                    tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
-                    get_tile_swne(tile_job_info, options), tile_job_info.options
-                ).encode('utf-8'))
+        swne = get_tile_swne(tile_job_info, options)
+        if swne is not None:
+            kmlfilename = os.path.join(output, str(tz), str(tx), '%d.kml' % GDAL2Tiles.getYTile(ty, tz, options))
+            if not options.resume or not os.path.exists(kmlfilename):
+                with open(kmlfilename, 'wb') as f:
+                    f.write(generate_kml(
+                        tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
+                        swne, tile_job_info.options
+                    ).encode('utf-8'))
 
 
 
@@ -1155,14 +1289,16 @@ def create_overview_tiles(tile_job_info, output_folder, options):
 
                     # Create a KML file for this tile.
                     if tile_job_info.kml:
-                        with open(os.path.join(
-                            output_folder,
-                            '%d/%d/%d.kml' % (tz, tx, ytile)
-                        ), 'wb') as f:
-                            f.write(generate_kml(
-                                tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
-                                get_tile_swne(tile_job_info, options), options, children
-                            ).encode('utf-8'))
+                        swne = get_tile_swne(tile_job_info, options)
+                        if swne is not None:
+                            with open(os.path.join(
+                                output_folder,
+                                '%d/%d/%d.kml' % (tz, tx, ytile)
+                            ), 'wb') as f:
+                                f.write(generate_kml(
+                                    tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
+                                    swne, options, children
+                                ).encode('utf-8'))
 
                 if not options.verbose and not options.quiet:
                     progress_bar.log_progress()
@@ -1240,6 +1376,17 @@ def optparse_init():
                  help="Bing Maps API key from https://www.bingmapsportal.com/")
     p.add_option_group(g)
 
+    # MapML options
+    g = OptionGroup(p, "MapML options",
+                    "Options for generated MapML file")
+    g.add_option("--mapml-template", dest='mapml_template', action="store_true",
+                 help=("Filename of a template mapml file where variables will "
+                       "be substituted. If not specified, the generic "
+                       "template_tiles.mapml file from GDAL data resources "
+                       "will be used"))
+    p.add_option_group(g)
+
+
     p.set_defaults(verbose=False, profile="mercator", kml=False, url='',
                    webviewer='all', copyright='', resampling='average', resume=False,
                    googlekey='INSERT_YOUR_KEY_HERE', bingkey='INSERT_YOUR_KEY_HERE',
@@ -1269,6 +1416,11 @@ def process_args(argv):
     else:
         # Directory with input filename without extension in actual directory
         output_folder = os.path.splitext(os.path.basename(input_file))[0]
+
+    if options.webviewer == 'mapml':
+        options.xyz = True
+        if options.profile == 'geodetic':
+            options.tmscompatible = True
 
     options = options_post_processing(options, input_file, output_folder)
 
@@ -1541,7 +1693,7 @@ class GDAL2Tiles(object):
 
         self.warped_input_dataset = None
 
-        if self.options.profile in ('mercator', 'geodetic'):
+        if self.options.profile != 'raster':
 
             if not self.in_srs:
                 exit_with_error(
@@ -1650,6 +1802,8 @@ class GDAL2Tiles(object):
             if self.tmaxz is None:
                 self.tmaxz = self.mercator.ZoomForPixelSize(self.out_gt[1])
 
+            self.tminz = min(self.tminz, self.tmaxz)
+
             if self.options.verbose:
                 print("Bounds (latlong):",
                       self.mercator.MetersToLatLon(self.ominx, self.ominy),
@@ -1661,7 +1815,7 @@ class GDAL2Tiles(object):
                       self.mercator.Resolution(self.tmaxz),
                       ")")
 
-        if self.options.profile == 'geodetic':
+        elif self.options.profile == 'geodetic':
 
             self.geodetic = GlobalGeodetic(self.options.tmscompatible, tile_size=self.tile_size)
 
@@ -1694,10 +1848,12 @@ class GDAL2Tiles(object):
             if self.tmaxz is None:
                 self.tmaxz = self.geodetic.ZoomForPixelSize(self.out_gt[1])
 
+            self.tminz = min(self.tminz, self.tmaxz)
+
             if self.options.verbose:
                 print("Bounds (latlong):", self.ominx, self.ominy, self.omaxx, self.omaxy)
 
-        if self.options.profile == 'raster':
+        elif self.options.profile == 'raster':
 
             def log2(x):
                 return math.log10(x) / math.log10(2)
@@ -1752,6 +1908,43 @@ class GDAL2Tiles(object):
             else:
                 self.tileswne = lambda x, y, z: (0, 0, 0, 0)   # noqa
 
+        else:
+
+            tms = tmsMap[self.options.profile]
+
+            # Function which generates SWNE in LatLong for given tile
+            self.tileswne = None # not implemented
+
+            # Generate table with min max tile coordinates for all zoomlevels
+            self.tminmax = list(range(0, tms.level_count+1))
+            for tz in range(0, tms.level_count+1):
+                tminx, tminy = tms.GeorefCoordToTileCoord(self.ominx, self.ominy, tz, self.tile_size)
+                tmaxx, tmaxy = tms.GeorefCoordToTileCoord(self.omaxx, self.omaxy, tz, self.tile_size)
+                tminx, tminy = max(0, tminx), max(0, tminy)
+                tmaxx, tmaxy = min(tms.matrix_width * 2**tz - 1, tmaxx), min(tms.matrix_height * 2**tz - 1, tmaxy)
+                self.tminmax[tz] = (tminx, tminy, tmaxx, tmaxy)
+
+            # Get the minimal zoom level (map covers area equivalent to one tile)
+            if self.tminz is None:
+                self.tminz = tms.ZoomForPixelSize(
+                    self.out_gt[1] *
+                    max(self.warped_input_dataset.RasterXSize,
+                        self.warped_input_dataset.RasterYSize) /
+                    float(self.tile_size), self.tile_size)
+
+            # Get the maximal zoom level
+            # (closest possible zoom level up on the resolution of raster)
+            if self.tmaxz is None:
+                self.tmaxz = tms.ZoomForPixelSize(self.out_gt[1], self.tile_size)
+
+            self.tminz = min(self.tminz, self.tmaxz)
+
+            if self.options.verbose:
+                print("Bounds (georef):", self.ominx, self.ominy, self.omaxx, self.omaxy)
+                print('MinZoomLevel:', self.tminz)
+                print("MaxZoomLevel:", self.tmaxz)
+
+
     def generate_metadata(self):
         """
         Generation of main metadata files and HTML viewers (metadata related to particular
@@ -1776,13 +1969,6 @@ class GDAL2Tiles(object):
                     with open(os.path.join(self.output_folder, 'googlemaps.html'), 'wb') as f:
                         f.write(self.generate_googlemaps().encode('utf-8'))
 
-            # Generate openlayers.html
-            if self.options.webviewer in ('all', 'openlayers'):
-                if (not self.options.resume or not
-                        os.path.exists(os.path.join(self.output_folder, 'openlayers.html'))):
-                    with open(os.path.join(self.output_folder, 'openlayers.html'), 'wb') as f:
-                        f.write(self.generate_openlayers().encode('utf-8'))
-
             # Generate leaflet.html
             if self.options.webviewer in ('all', 'leaflet'):
                 if (not self.options.resume or not
@@ -1798,13 +1984,6 @@ class GDAL2Tiles(object):
             north, east = min(90.0, north), min(180.0, east)
             self.swne = (south, west, north, east)
 
-            # Generate openlayers.html
-            if self.options.webviewer in ('all', 'openlayers'):
-                if (not self.options.resume or not
-                        os.path.exists(os.path.join(self.output_folder, 'openlayers.html'))):
-                    with open(os.path.join(self.output_folder, 'openlayers.html'), 'wb') as f:
-                        f.write(self.generate_openlayers().encode('utf-8'))
-
         elif self.options.profile == 'raster':
 
             west, south = self.ominx, self.ominy
@@ -1812,19 +1991,32 @@ class GDAL2Tiles(object):
 
             self.swne = (south, west, north, east)
 
-            # Generate openlayers.html
-            if self.options.webviewer in ('all', 'openlayers'):
-                if (not self.options.resume or not
-                        os.path.exists(os.path.join(self.output_folder, 'openlayers.html'))):
-                    with open(os.path.join(self.output_folder, 'openlayers.html'), 'wb') as f:
-                        f.write(self.generate_openlayers().encode('utf-8'))
+        else:
+            self.swne = None
+
+        # Generate openlayers.html
+        if self.options.webviewer in ('all', 'openlayers'):
+            if (not self.options.resume or not
+                    os.path.exists(os.path.join(self.output_folder, 'openlayers.html'))):
+                with open(os.path.join(self.output_folder, 'openlayers.html'), 'wb') as f:
+                    f.write(self.generate_openlayers().encode('utf-8'))
 
         # Generate tilemapresource.xml.
-        if not self.options.xyz and (not self.options.resume or not os.path.exists(os.path.join(self.output_folder, 'tilemapresource.xml'))):
+        if not self.options.xyz and self.swne is not None and (not self.options.resume or not os.path.exists(os.path.join(self.output_folder, 'tilemapresource.xml'))):
             with open(os.path.join(self.output_folder, 'tilemapresource.xml'), 'wb') as f:
                 f.write(self.generate_tilemapresource().encode('utf-8'))
 
-        if self.kml:
+        # Generate mapml file
+        if self.options.webviewer in ('all', 'mapml') and \
+           self.options.xyz and \
+           self.options.profile != 'raster' and \
+           (self.options.profile != 'geodetic' or self.options.tmscompatible) and \
+           (not self.options.resume or not os.path.exists(os.path.join(self.output_folder, 'mapml.mapml'))):
+            with open(os.path.join(self.output_folder, 'mapml.mapml'), 'wb') as f:
+                f.write(self.generate_mapml().encode('utf-8'))
+
+
+        if self.kml and self.tileswne is not None:
             # TODO: Maybe problem for not automatically generated tminz
             # The root KML should contain links to all tiles in the tminz level
             children = []
@@ -1897,11 +2089,13 @@ class GDAL2Tiles(object):
                     b = self.mercator.TileBounds(tx, ty, tz)
                 elif self.options.profile == 'geodetic':
                     b = self.geodetic.TileBounds(tx, ty, tz)
+                elif self.options.profile != 'raster':
+                    b = tmsMap[self.options.profile].TileBounds(tx, ty, tz, self.tile_size)
 
                 # Don't scale up by nearest neighbour, better change the querysize
                 # to the native resolution (and return smaller query tile) for scaling
 
-                if self.options.profile in ('mercator', 'geodetic'):
+                if self.options.profile != 'raster':
                     rb, wb = self.geo_query(ds, b[0], b[3], b[2], b[1])
 
                     # Pixel size in the raster covering query geo extent
@@ -2711,6 +2905,59 @@ class GDAL2Tiles(object):
                     ]
                 }),""" % args    # noqa
 
+        else:
+
+            tms = tmsMap[self.options.profile]
+            base_res = tms.resolution
+            resolutions = [ base_res / 2**i for i in range(self.tmaxz+1) ]
+            args['maxres'] = resolutions[self.tminz]
+            args['resolutions'] = '[' + ','.join('%.18g' % res for res in resolutions) + ']'
+            args['matrixsizes'] = '[' + ','.join('[%d,%d]' % (tms.matrix_width << i, tms.matrix_height << i) for i in range(len(resolutions))) + ']'
+
+            if self.options.xyz:
+                args['origin'] = '[%.18g,%.18g]' % (tms.topleft_x, tms.topleft_y)
+                args['y_formula'] = 'tileCoord[2]'
+            else:
+                args['origin'] = '[%.18g,%.18g]' % (tms.topleft_x, tms.topleft_y - tms.resolution * tms.tile_size)
+                args['y_formula'] = '- 1 - tileCoord[2]'
+
+            args['tilegrid_extent'] = '[%.18g,%.18g,%.18g,%.18g]' % ( \
+                tms.topleft_x,
+                tms.topleft_y - tms.matrix_height * tms.resolution * tms.tile_size,
+                tms.topleft_x + tms.matrix_width * tms.resolution * tms.tile_size,
+                tms.topleft_y)
+
+            s += """
+            layers: [
+                new ol.layer.Group({
+                    title: 'Overlay',
+                    layers: [
+                        new ol.layer.Tile({
+                            title: 'Overlay',
+                            // opacity: 0.7,
+                            extent: [%(ominx)f, %(ominy)f,%(omaxx)f, %(omaxy)f],
+                            source: new ol.source.TileImage({
+                                attributions: '%(copyright)s',
+                                minZoom: %(minzoom)d,
+                                maxZoom: %(maxzoom)d,
+                                tileGrid: new ol.tilegrid.TileGrid({
+                                    extent: %(tilegrid_extent)s,
+                                    origin: %(origin)s,
+                                    resolutions: %(resolutions)s,
+                                    sizes: %(matrixsizes)s,
+                                    tileSize: [%(tile_size)d, %(tile_size)d]
+                                }),
+                                tileUrlFunction: function(tileCoord) {
+                                    return ('./{z}/{x}/{y}.%(tileformat)s'
+                                        .replace('{z}', String(tileCoord[0]))
+                                        .replace('{x}', String(tileCoord[1]))
+                                        .replace('{y}', String(%(y_formula)s)));
+                                },
+                            })
+                        }),
+                    ]
+                }),""" % args    # noqa
+
         s += """
             ],
             view: new ol.View({
@@ -2718,7 +2965,7 @@ class GDAL2Tiles(object):
 
         if self.options.profile in ('mercator', 'geodetic'):
             args['view_zoom'] = args['minzoom']
-            if self.options.tmscompatible:
+            if self.options.profile == 'geodetic' and self.options.tmscompatible:
                 args['view_zoom'] += 1
             s += """
                 zoom: %(view_zoom)d,""" % args  # noqa
@@ -2729,7 +2976,7 @@ class GDAL2Tiles(object):
         if self.options.profile == 'geodetic':
             s += """
                 projection: 'EPSG:4326',"""
-        elif self.options.profile == 'raster':
+        elif self.options.profile != 'mercator':
             if self.in_srs and self.in_srs.IsProjected() and self.in_srs.GetAuthorityName(None) == 'EPSG':
                 s += """
                 projection: new ol.proj.Projection({code: 'EPSG:%s', units:'m'}),""" % self.in_srs.GetAuthorityCode(None)
@@ -2747,6 +2994,35 @@ class GDAL2Tiles(object):
 
         return s
 
+    def generate_mapml(self):
+
+        if self.options.mapml_template:
+            template = self.options.mapml_template
+        else:
+            template = gdal.FindFile('gdal', 'template_tiles.mapml')
+        s = open(template, 'rb').read().decode('utf-8')
+
+        if self.options.profile == 'mercator':
+            tiling_scheme = 'OSMTILE'
+        elif self.options.profile == 'geodetic':
+            tiling_scheme = 'WGS84'
+        else:
+            tiling_scheme = self.options.profile
+
+        s = s.replace('${TILING_SCHEME}', tiling_scheme)
+        s = s.replace('${URL}', self.options.url if self.options.url else "./")
+        tminx, tminy, tmaxx, tmaxy = self.tminmax[self.tmaxz]
+        s = s.replace('${MINTILEX}', str(tminx))
+        s = s.replace('${MINTILEY}', str(GDAL2Tiles.getYTile(tmaxy, self.tmaxz, self.options)))
+        s = s.replace('${MAXTILEX}', str(tmaxx))
+        s = s.replace('${MAXTILEY}', str(GDAL2Tiles.getYTile(tminy, self.tmaxz, self.options)))
+        s = s.replace('${CURZOOM}', str(self.tmaxz))
+        s = s.replace('${MINZOOM}', str(self.tminz))
+        s = s.replace('${MAXZOOM}', str(self.tmaxz))
+        s = s.replace('${TILEEXT}', str(self.tileext))
+
+        return s
+
     @staticmethod
     def getYTile(ty, tz, options):
         """
@@ -2756,7 +3032,12 @@ class GDAL2Tiles(object):
         :return: The transformed y-tile number
         """
         if options.xyz and options.profile != 'raster':
-            return (2**tz - 1) - ty  # Convert from TMS to XYZ numbering system
+            if options.profile in ('mercator', 'geodetic'):
+                return (2**tz - 1) - ty  # Convert from TMS to XYZ numbering system
+
+            tms = tmsMap[options.profile]
+            return (tms.matrix_height * 2**tz - 1) - ty  # Convert from TMS to XYZ numbering system
+
         return ty
 
 
@@ -2834,7 +3115,7 @@ def get_tile_swne(tile_job_info, options):
         else:
             tile_swne = lambda x, y, z: (0, 0, 0, 0)   # noqa
     else:
-        tile_swne = lambda x, y, z: (0, 0, 0, 0)   # noqa
+        tile_swne = None
 
     return tile_swne
 
