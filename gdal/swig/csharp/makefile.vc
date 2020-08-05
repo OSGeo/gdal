@@ -337,5 +337,12 @@ clean:
 install:
     -mkdir $(GDAL_HOME)\csharp
 	xcopy /Y /R /F *_wrap.dll $(GDAL_HOME)\csharp
-	xcopy /Y /R /F *_csharp.dll $(GDAL_HOME)\csharp
+!IFDEF NETSTANDARD
+	xcopy /Y /R /F const\gdalconst_csharp.dll $(GDAL_HOME)\csharp
+    xcopy /Y /R /F osr\osr_csharp.dll $(GDAL_HOME)\csharp
+    xcopy /Y /R /F ogr\ogr_csharp.dll $(GDAL_HOME)\csharp
+    xcopy /Y /R /F gdal\gdal_csharp.dll $(GDAL_HOME)\csharp
+!ELSE
+    xcopy /Y /R /F *_csharp.dll $(GDAL_HOME)\csharp
+!ENDIF
 
