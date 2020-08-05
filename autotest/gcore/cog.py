@@ -92,6 +92,8 @@ def test_cog_basic():
 
     filename = '/vsimem/cog.tif'
     src_ds = gdal.Open('data/byte.tif')
+    assert src_ds.GetMetadataItem('GDAL_STRUCTURAL_METADATA', 'TIFF') is None
+
     ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
                                                 callback = my_cbk,
                                                 callback_data = tab)
@@ -105,6 +107,13 @@ def test_cog_basic():
     assert ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE') is None
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
     assert ds.GetRasterBand(1).GetBlockSize() == [512, 512]
+    assert ds.GetMetadataItem('GDAL_STRUCTURAL_METADATA', 'TIFF') == """GDAL_STRUCTURAL_METADATA_SIZE=000140 bytes
+LAYOUT=IFDS_BEFORE_DATA
+BLOCK_ORDER=ROW_MAJOR
+BLOCK_LEADER=SIZE_AS_UINT4
+BLOCK_TRAILER=LAST_4_BYTES_REPEATED
+KNOWN_INCOMPATIBLE_EDITION=NO
+ """
     ds = None
     _check_cog(filename)
     gdal.GetDriverByName('GTiff').Delete(filename)
