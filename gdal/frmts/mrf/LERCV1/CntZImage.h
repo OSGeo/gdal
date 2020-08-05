@@ -33,6 +33,43 @@ NAMESPACE_LERC1_START
 
 typedef unsigned char Byte;
 
+/** BitMaskV1 - Convenient and fast access to binary mask bits
+* includes RLE compression and decompression
+*
+*/
+
+class BitMaskV1
+{
+public:
+    BitMaskV1(int nCols, int nRows) : m_nRows(nRows), m_nCols(nCols) {
+        bits.resize(Size(), 0);
+    }
+
+    Byte  IsValid(int k) const { return (bits[k >> 3] & Bit(k)) != 0; }
+    int   Size() const { return 1 + (m_nCols * m_nRows - 1) / 8; }
+    void Set(int k, bool v) { if (v) SetValid(k); else SetInvalid(k); }
+    // max RLE compressed size is n + 4 + 2 * (n - 1) / 32767
+    // Returns encoded size
+    int RLEcompress(Byte* aRLE) const;
+    // current encoded size
+    int RLEsize() const;
+    // Decompress a RLE bitmask, bitmask size should be already set
+    // Returns false if input seems wrong
+    bool RLEdecompress(const Byte* src, size_t sz);
+
+private:
+    int m_nRows, m_nCols;
+    std::vector<Byte> bits;
+    static Byte  Bit(int k) { return static_cast<Byte>(0x80 >> (k & 7)); }
+    void  SetValid(int k) { bits[k >> 3] |= Bit(k); }
+    void  SetInvalid(int k) { bits[k >> 3] &= ~Bit(k); }
+
+    // Disable assignment op, default and copy constructor
+    BitMaskV1();
+    BitMaskV1(const BitMaskV1& copy);
+    BitMaskV1& operator=(const BitMaskV1& m);
+};
+
 template<typename T > class TImage
 {
 public:
@@ -52,10 +89,6 @@ public:
     int getWidth() const { return width_; }
     int getHeight() const { return height_; }
     int getSize() const { return width_ * height_; }
-
-    bool isInside(int row, int col) const {
-        return row >= 0 && row < height_&& col >= 0 && col < width_;
-    }
 
     const T& operator() (int row, int col) const { return values[row * width_ + col]; }
     void setPixel(int row, int col, T value) { values[row * width_ + col] = value; }
