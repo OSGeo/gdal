@@ -494,9 +494,9 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
     return config;
 }
 
-LERC_Band::LERC_Band(GDALMRFDataset *pDS, const ILImage &image,
+LERC_Band::LERC_Band(MRFDataset *pDS, const ILImage &image,
                       int b, int level ) :
-    GDALMRFRasterBand(pDS, image, b, level)
+    MRFRasterBand(pDS, image, b, level)
 {
     // Pick 1/1000 for floats and 0.5 losless for integers.
     if (eDataType == GDT_Float32 || eDataType == GDT_Float64 )
@@ -508,12 +508,12 @@ LERC_Band::LERC_Band(GDALMRFDataset *pDS, const ILImage &image,
     // Encode in V2 by default.
     version = GetOptlist().FetchBoolean("V1", FALSE) ? 1 : 2;
 
-    if( image.pageSizeBytes > INT_MAX / 2 )
+    if( image.pageSizeBytes > INT_MAX / 4 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
+        CPLError(CE_Failure, CPLE_AppDefined, "LERC page too large");
         return;
     }
-    // Enlarge the page buffer in this case, LERC may expand data.
+    // Enlarge the page buffer, LERC may expand data.
     pDS->SetPBufferSize( 2 * image.pageSizeBytes);
 }
 

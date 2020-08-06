@@ -222,9 +222,9 @@ CPLErr TIF_Band::Compress(buf_mgr &dst, buf_mgr &src)
     return CompressTIF(dst,src,img, papszOptions);
 }
 
-TIF_Band::TIF_Band( GDALMRFDataset *pDS, const ILImage &image,
+TIF_Band::TIF_Band( MRFDataset *pDS, const ILImage &image,
                     int b, int level ):
-    GDALMRFRasterBand(pDS, image, b, int(level))
+    MRFRasterBand(pDS, image, b, int(level))
 {
     // Increase the page buffer by 1K in case Tiff expands data
     pDS->SetPBufferSize(image.pageSizeBytes + 1024);

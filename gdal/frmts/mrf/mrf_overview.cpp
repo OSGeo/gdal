@@ -238,7 +238,7 @@ template<> void AverageByFour<double>(double *buff, int xsz, int ysz, double ndv
  * either side
  */
 
-CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
+CPLErr MRFDataset::PatchOverview(int BlockX,int BlockY,
                                      int Width,int Height,
                                      int srcLevel, int recursive,
                                      int sampling_mode)
@@ -297,7 +297,7 @@ CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
             // If none of the source blocks exists, there is no need to read/write the blocks themselves
             bool has_data = false;
             for (int band = 0; band < check_bands; band++) {
-                GDALMRFRasterBand *bsrc = reinterpret_cast<GDALMRFRasterBand *>(src_b[band]);
+                MRFRasterBand *bsrc = reinterpret_cast<MRFRasterBand *>(src_b[band]);
                 has_data = has_data || bsrc->TestBlock(src_offset_x, src_offset_y);
                 has_data = has_data || bsrc->TestBlock(src_offset_x + 1, src_offset_y);
                 has_data = has_data || bsrc->TestBlock(src_offset_x, src_offset_y + 1);
@@ -308,7 +308,7 @@ CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
             if (!has_data) {
                 // check that the output already is void, otherwise write an empty block
                 for (int band = 0; band < check_bands; band++) {
-                    GDALMRFRasterBand *bdst = reinterpret_cast<GDALMRFRasterBand *>(dst_b[band]);
+                    MRFRasterBand *bdst = reinterpret_cast<MRFRasterBand *>(dst_b[band]);
                     if (bdst->TestBlock(dst_offset_x, dst_offset_y)) {
                         // Output block exists, but it should not, force it
                         ILSize req(dst_offset_x, dst_offset_y, 0, band, bdst->m_l);
@@ -323,8 +323,8 @@ CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
             for (int band=0; band<bands; band++) { // Counting from zero in a vector
 
                 int sz_x = 2*tsz_x ,sz_y = 2*tsz_y ;
-                GDALMRFRasterBand *bsrc = static_cast<GDALMRFRasterBand *>(src_b[band]);
-                GDALMRFRasterBand *bdst = static_cast<GDALMRFRasterBand *>(dst_b[band]);
+                MRFRasterBand *bsrc = static_cast<MRFRasterBand *>(src_b[band]);
+                MRFRasterBand *bdst = static_cast<MRFRasterBand *>(dst_b[band]);
 
                 //
                 // Clip to the size to the input image
