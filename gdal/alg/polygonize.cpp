@@ -498,7 +498,7 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
 /*      vectors into georeferenced coordinates.                         */
 /* -------------------------------------------------------------------- */
     double adfGeoTransform[6] = { 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
-
+    bool bGotGeoTransform = false;
     const char* pszDatasetForGeoRef = CSLFetchNameValue(papszOptions,
                                                         "DATASET_FOR_GEOREF");
     if( pszDatasetForGeoRef )
@@ -506,7 +506,7 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
         GDALDatasetH hSrcDS = GDALOpen(pszDatasetForGeoRef, GA_ReadOnly);
         if( hSrcDS )
         {
-            GDALGetGeoTransform( hSrcDS, adfGeoTransform );
+            bGotGeoTransform = GDALGetGeoTransform( hSrcDS, adfGeoTransform ) == CE_None;
             GDALClose(hSrcDS);
         }
     }
@@ -514,7 +514,16 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
     {
         GDALDatasetH hSrcDS = GDALGetBandDataset( hSrcBand );
         if( hSrcDS )
-            GDALGetGeoTransform( hSrcDS, adfGeoTransform );
+            bGotGeoTransform = GDALGetGeoTransform( hSrcDS, adfGeoTransform ) == CE_None;
+    }
+    if( !bGotGeoTransform )
+    {
+        adfGeoTransform[0] = 0;
+        adfGeoTransform[1] = 1;
+        adfGeoTransform[2] = 0;
+        adfGeoTransform[3] = 0;
+        adfGeoTransform[4] = 0;
+        adfGeoTransform[5] = 1;
     }
 
 /* -------------------------------------------------------------------- */
