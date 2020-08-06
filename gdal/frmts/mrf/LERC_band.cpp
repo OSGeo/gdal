@@ -144,7 +144,7 @@ static GDALDataType GetL2DataType(Lerc2::DataType L2type) {
     return dt;
 }
 
-// Load a buffer of type T into zImg
+// Load a buffer of type T into a LERC1 zImg
 template <typename T> static void CntZImgFill(CntZImage &zImg, T *src, const ILImage &img)
 {
     int w = img.pagesize.x;
@@ -153,26 +153,24 @@ template <typename T> static void CntZImgFill(CntZImage &zImg, T *src, const ILI
     const float ndv = static_cast<float>(img.hasNoData ? img.NoDataValue : 0);
     for (int i = 0; i < h; i++)
         for (int j = 0; j < w; j++) {
-            CntZ pixel;
-            pixel.z = static_cast<float>(*src++);
-            pixel.cnt = static_cast<float>(CPLIsEqual(pixel.z, ndv) ? 0 : 1);
-            zImg.setPixel(i, j, pixel);
+            float val = static_cast<float>(*src++);
+            zImg(i, j) = val;
+            zImg.mask.Set(i * zImg.getWidth() + j, !CPLIsEqual(ndv, val));
         }
     return;
 }
 
-// Unload zImg into a type T buffer
+// Unload LERC1 zImg into a type T buffer
 template <typename T> static bool CntZImgUFill(CntZImage &zImg, T *dst, const ILImage &img)
 {
     const T ndv = static_cast<T>(img.hasNoData ? img.NoDataValue : 0);
     for (int i = 0; i < zImg.getHeight(); i++)
         for (int j = 0; j < zImg.getWidth(); j++)
-            *dst++ = (zImg(i, j).cnt == 0) ? ndv : static_cast<T>(zImg(i, j).z);
+            *dst++ = zImg.IsValid(i, j) ? static_cast<T>(zImg(i, j)) : ndv;
     return true;
 }
 
-//  LERC 1 compression
-static CPLErr CompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img, double precision)
+static CPLErr CompressLERC1(buf_mgr &dst, buf_mgr &src, const ILImage &img, double precision)
 {
     CntZImage zImg;
     // Fill data into zImg
@@ -204,7 +202,8 @@ static CPLErr CompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img, doubl
     return CE_None;
 }
 
-static CPLErr DecompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img)
+// LERC 1 Decompression
+static CPLErr DecompressLERC1(buf_mgr &dst, buf_mgr &src, const ILImage &img)
 {
     CntZImage zImg;
 
@@ -337,7 +336,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
     return CE_None;
 }
 
-// Populate a bitmask based on comparison with the image no data value
+// Populate a LERC 2 bitmask based on comparison with the image no data value
 template <typename T> static void UnMask(BitMask &bitMask, T *arr, const ILImage &img)
 {
     int w = img.pagesize.x;
@@ -362,7 +361,7 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
 
     // If not Lerc2 switch to Lerc
     if (!lerc2.GetHeaderInfo(ptr, src.size, hdInfo))
-        return DecompressLERC(dst, src, img);
+        return DecompressLERC1(dst, src, img);
 
     // It is Lerc2 test that it looks reasonable
     if (static_cast<size_t>(hdInfo.blobSize) > src.size) {
@@ -424,7 +423,7 @@ CPLErr LERC_Band::Compress(buf_mgr &dst, buf_mgr &src)
     if (version == 2)
         return CompressLERC2(dst, src, img, precision);
     else
-        return CompressLERC(dst, src, img, precision);
+        return CompressLERC1(dst, src, img, precision);
 }
 
 CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)

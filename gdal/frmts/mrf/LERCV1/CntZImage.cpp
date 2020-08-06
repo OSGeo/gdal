@@ -35,9 +35,9 @@ NAMESPACE_LERC1_START
 struct BitStufferV1
 {
     // these 2 functions do not allocate memory. Byte ptr is moved like a file pointer
-    static bool write(Byte** ppByte, const std::vector<unsigned int>& dataVec);
+    static bool blockwrite(Byte** ppByte, const std::vector<unsigned int>& d);
     // dataVec is sized to max expected values. It is resized on return, based on read data
-    static bool read(Byte** ppByte, size_t& sz, std::vector<unsigned int>& dataVec);
+    static bool blockread(Byte** ppByte, size_t& sz, std::vector<unsigned int>& d);
     static int numBytesUInt(unsigned int k) { return (k <= 0xff) ? 1 : (k <= 0xffff) ? 2 : 4; }
     static unsigned int numTailBytesNotNeeded(unsigned int numElem, int numBits) {
         numBits = (numElem * numBits) & 31;
@@ -56,7 +56,7 @@ struct BitStufferV1
 // Zero size mask is fine, only checks the end marker
 bool BitMaskV1::RLEdecompress(const Byte* src, size_t n) {
     Byte* dst = bits.data();
-    int sz = Size();
+    int sz = size();
     short int count;
     assert(src);
 
@@ -106,7 +106,7 @@ int BitMaskV1::RLEcompress(Byte* dst) const {
     assert(dst);
     const Byte* src = bits.data();  // Next input byte
     Byte* start = dst;
-    int sz = Size(); // left to process
+    int sz = size(); // left to process
     Byte* pCnt = dst; // Pointer to current sequence count
     int oddrun = 0; // non-repeated byte count
 
@@ -145,7 +145,7 @@ int BitMaskV1::RLEcompress(Byte* dst) const {
 // calculate encoded size
 int BitMaskV1::RLEsize() const {
     const Byte* src = bits.data(); // Next input byte
-    int sz = Size(); // left to process
+    int sz = size(); // left to process
     int oddrun = 0; // current non-repeated byte count
     // Simulate an odd run flush
 #define SIMFLUSH if (oddrun) { osz += oddrun + 2; oddrun = 0; }
@@ -174,16 +174,16 @@ static const Byte stib67[4] = { 4, 2, 1, 3 };
 
 // see the old stream IO functions below on how to call.
 // if you change write(...) / read(...), don't forget to update computeNumBytesNeeded(...).
-bool BitStufferV1::write(Byte** ppByte, const vector<unsigned int>& dataVec)
+bool BitStufferV1::blockwrite(Byte** ppByte, const vector<unsigned int>& d)
 {
-    if (!ppByte || dataVec.empty())
+    if (!ppByte || d.empty())
         return false;
 
-    unsigned int maxElem = *max_element(dataVec.begin(), dataVec.end());
+    unsigned int maxElem = *max_element(d.begin(), d.end());
     int numBits = 0; // 0 to 23
     while (maxElem >> numBits)
         numBits++;
-    unsigned int numElements = (unsigned int)dataVec.size();
+    unsigned int numElements = (unsigned int)d.size();
 
     // use the upper 2 bits to encode the type used for numElements: Byte, ushort, or uint
     // n is in {1, 2, 4}
@@ -198,7 +198,7 @@ bool BitStufferV1::write(Byte** ppByte, const vector<unsigned int>& dataVec)
 
     int bits = 32; // Available
     unsigned int acc = 0;   // Accumulator
-    for (unsigned int val : dataVec) {
+    for (unsigned int val : d) {
         if (bits >= numBits) { // no accumulator overflow
             acc |= val << (bits - numBits);
             bits -= numBits;
@@ -225,7 +225,7 @@ bool BitStufferV1::write(Byte** ppByte, const vector<unsigned int>& dataVec)
 }
 
 
-bool BitStufferV1::read(Byte** ppByte, size_t& size, vector<unsigned int>& dataVec)
+bool BitStufferV1::blockread(Byte** ppByte, size_t& size, vector<unsigned int>& d)
 {
     if (!ppByte || !size)
         return false;
@@ -243,12 +243,12 @@ bool BitStufferV1::read(Byte** ppByte, size_t& size, vector<unsigned int>& dataV
     memcpy(&numElements, *ppByte, n);
     *ppByte += n;
     size -= n;
-    if (static_cast<size_t>(numElements) > dataVec.size())
+    if (static_cast<size_t>(numElements) > d.size())
         return false;
-    dataVec.resize(numElements);
+    d.resize(numElements);
     if (numBits == 0) { // Nothing to read, all zeros
-        dataVec.resize(0);
-        dataVec.resize(numElements, 0);
+        d.resize(0);
+        d.resize(numElements, 0);
         return true;
     }
 
@@ -259,7 +259,7 @@ bool BitStufferV1::read(Byte** ppByte, size_t& size, vector<unsigned int>& dataV
 
     int bits = 0; // Available in accumulator, at the high end
     unsigned int acc = 0;
-    for (unsigned int& val : dataVec) {
+    for (unsigned int& val : d) {
         if (bits >= numBits) { // Enough bits in accumulator
             val = acc >> (32 - numBits);
             acc <<= numBits;
@@ -308,8 +308,8 @@ static bool writeFlt(Byte** ppByte, float z, int numBytes) {
     case 2: {
         short s = static_cast<short>(z);
         memcpy(ptr, &s, 2);
+        break;
     }
-          break;
     case 4:
         memcpy(ptr, &z, 4);
         break;
@@ -334,8 +334,8 @@ static bool readFlt(Byte** ppByte, size_t& nRemainingBytes, float& z, int numByt
         short s;
         memcpy(&s, ptr, 2);
         z = s;
+        break;
     }
-          break;
     case 4:
         memcpy(&z, ptr, 4);
         break;
@@ -379,7 +379,7 @@ unsigned int CntZImage::computeNumBytesNeededToWriteVoidImage()
 
 unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
     bool onlyZPart,
-    InfoFromComputeNumBytes& info) const
+    InfoFromComputeNumBytes* info) const
 {
     unsigned int sz = (unsigned int)sCntZImage.size()
         + 4 * sizeof(int) + sizeof(double);
@@ -389,27 +389,14 @@ unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
         float cntMin, cntMax;
         computeCntStats(cntMin, cntMax);
 
-        if (cntMin == cntMax) { // cnt part is const
-            numBytesOpt = 0;    // nothing else to encode
-        }
-        else {
-            // binary mask, use fast RLE class
-            BitMaskV1 bitMask(getWidth(), getHeight());
-            // in case bitMask allocation fails
-            if (!bitMask.Size())
-                return 0;
-            const CntZ* srcPtr = data();
-            for (int k = 0; k < getSize(); k++, srcPtr++)
-                bitMask.Set(k, srcPtr->cnt > 0);
+        numBytesOpt = 0;
+        if (cntMin != cntMax)
+            numBytesOpt = mask.RLEsize();
 
-            // determine numBytes needed to encode
-            numBytesOpt = static_cast<int>(bitMask.RLEsize());
-        }
-
-        info.numTilesVertCnt = 0;
-        info.numTilesHoriCnt = 0;
-        info.numBytesCnt = numBytesOpt;
-        info.maxCntInImg = cntMax;
+        info->numTilesVertCnt = 0;
+        info->numTilesHoriCnt = 0;
+        info->numBytesCnt = numBytesOpt;
+        info->maxCntInImg = cntMax;
 
         sz += 3 * sizeof(int) + sizeof(float) + numBytesOpt;
     }
@@ -420,11 +407,11 @@ unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
     if (!findTiling(maxZError, numTilesVert, numTilesHori, numBytesOpt, maxValInImg))
         return 0;
 
-    info.maxZError = maxZError;
-    info.numTilesVertZ = numTilesVert;
-    info.numTilesHoriZ = numTilesHori;
-    info.numBytesZ = numBytesOpt;
-    info.maxZInImg = maxValInImg;
+    info->maxZError = maxZError;
+    info->numTilesVertZ = numTilesVert;
+    info->numTilesHoriZ = numTilesHori;
+    info->numBytesZ = numBytesOpt;
+    info->maxZInImg = maxValInImg;
 
     sz += 3 * sizeof(int) + sizeof(float) + numBytesOpt;
     return sz;
@@ -435,14 +422,13 @@ unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
 // and numBytes... functions
 bool CntZImage::write(Byte** ppByte,
     double maxZError,
-    bool useInfoFromPrevComputeNumBytes,
-    bool onlyZPart) const
+    bool zPart) const
 {
     if (getSize() == 0)
         return false;
 
     Byte* ptr = *ppByte;
-
+    // signature
     memcpy(ptr, sCntZImage.c_str(), sCntZImage.size());
     ptr += sCntZImage.length();
 
@@ -458,13 +444,9 @@ bool CntZImage::write(Byte** ppByte,
 
     InfoFromComputeNumBytes info;
     memset(&info, 0, sizeof(InfoFromComputeNumBytes));
-
-    if (useInfoFromPrevComputeNumBytes && (maxZError == m_infoFromComputeNumBytes.maxZError))
-        info = m_infoFromComputeNumBytes;
-    else if (0 == computeNumBytesNeededToWrite(maxZError, onlyZPart, info))
+    if (0 == computeNumBytesNeededToWrite(maxZError, zPart, &info))
         return false;
 
-    bool zPart = onlyZPart;
     do {
         int numTilesVert, numTilesHori, numBytesOpt, numBytesWritten = 0;
         float maxValInImg;
@@ -492,15 +474,8 @@ bool CntZImage::write(Byte** ppByte,
         Byte* bArr = ptr;
 
         if (!zPart && numTilesVert == 0 && numTilesHori == 0) { // no tiling for cnt part
-            if (numBytesOpt > 0) { // cnt part is binary mask, use fast RLE class
-                // convert to bit mask
-                BitMaskV1 bitMask(width, height);
-                const CntZ* srcPtr = data();
-                for (int k = 0; k < getSize(); k++, srcPtr++)
-                    bitMask.Set(k, srcPtr->cnt > 0);
-                // RLE encoding, update numBytesWritten
-                numBytesWritten = static_cast<int>(bitMask.RLEcompress(bArr));
-            }
+            if (numBytesOpt > 0) // cnt part is binary mask, use fast RLE class
+                numBytesWritten = mask.RLEcompress(bArr);
         }
         else { // encode tiles to buffer, alwasy z part
             float maxVal;
@@ -561,14 +536,13 @@ bool CntZImage::read(Byte** ppByte,
     if (width <= 0 || width > 20000 || height <= 0 || height > 20000)
         return false;
     // To avoid excessive memory allocation attempts, this is still 1.8GB!!
-    if (width * height > 1800 * 1000 * 1000 / static_cast<int>(sizeof(CntZ)))
+    if (width * height > 1800 * 1000 * 1000 / static_cast<int>(sizeof(float)))
         return false;
 
     if (maxZErrorInFile > maxZError)
         return false;
 
-    if (onlyZPart) { // Keep the buffer because it includes the mask
-        // Check the matching size, otherwise this is an error
+    if (onlyZPart) {
         if (width != getWidth() || height != getHeight())
             return false;
     }
@@ -598,26 +572,11 @@ bool CntZImage::read(Byte** ppByte,
             if (numTilesVert != 0 && numTilesHori != 0)
                 return false;
             if (numBytes == 0) {   // cnt part is const
-                for (int i = 0; i < height; i++) {
-                    for (int j = 0; j < width; j++) {
-                        CntZ val = (*this)(i, j);
-                        val.cnt = maxValInImg;
-                        setPixel(i, j, val);
-                    }
-                }
+                for (int k = 0; k < getSize(); k++)
+                    mask.Set(k, maxValInImg != 0);
             } else {// cnt part is binary mask, RLE compressed
-                // Read bit mask
-                BitMaskV1 bitMask(width, height);
-                if (!bitMask.RLEdecompress(*ppByte, nRemainingBytes))
+                if (!mask.RLEdecompress(*ppByte, nRemainingBytes))
                     return false;
-
-                for (int i = 0; i < height; i++) {
-                    for (int j = 0; j < width; j++) {
-                        CntZ val = (*this)(i, j);
-                        val.cnt = bitMask.IsValid(i * width + j) ? 1.0f : 0.0f;
-                        setPixel(i, j, val);
-                    }
-                }
             }
         }
         else {
@@ -757,14 +716,12 @@ bool CntZImage::readTiles(double maxZErrorInFile,
 
 void CntZImage::computeCntStats(float& cntMin, float& cntMax) const
 {
-    auto v = data();
-    cntMin = cntMax = v[0].cnt;
-    for (int k = 0; k < getSize(); k++) {
-        auto cnt = v[k].cnt;
-        cntMin = min(cnt, cntMin);
-        cntMax = max(cnt, cntMax);
-        if (cntMin != cntMax)
-            break;
+    cntMin = cntMax = static_cast<float>(mask.IsValid(0) ? 1.0f : 0.0f);
+    for (int k = 0; k < getSize() && cntMin == cntMax; k++) {
+        if (mask.IsValid(k))
+            cntMax = 1.0f;
+        else
+            cntMin = 0.0f;
     }
 }
 
@@ -781,16 +738,15 @@ bool CntZImage::computeZStats(int i0, int i1, int j0, int j1,
 
     for (int i = i0; i < i1; i++) {
         for (int j = j0; j < j1; j++) {
-            const CntZ &val = (*this)(i, j);
-            if (val.cnt > 0) {  // cnt <= 0 means ignore z
-                zMin = min(val.z, zMin);
-                zMax = max(val.z, zMax);
+            if (IsValid(i, j)) {
+                zMin = min(zMin, (*this)(i, j));
+                zMax = max(zMax, (*this)(i, j));
                 numValidPixel++;
             }
         }
     }
 
-    if (!numValidPixel)
+    if (0 == numValidPixel)
         zMin = zMax = 0;
     return true;
 }
@@ -830,9 +786,8 @@ bool CntZImage::writeZTile(Byte** ppByte, int& numBytes,
 
         for (int i = i0; i < i1; i++) {
             for (int j = j0; j < j1; j++) {
-                CntZ val = (*this)(i, j);
-                if (val.cnt > 0) {
-                    *dstPtr++ = val.z;
+                if (IsValid(i, j)) {
+                    *dstPtr++ = (*this)(i, j);
                     cntPixel++;
                 }
             }
@@ -859,18 +814,15 @@ bool CntZImage::writeZTile(Byte** ppByte, int& numBytes,
             vector<unsigned int> odataVec;
             double scale = 1 / (2 * maxZError);
 
-            for (int i = i0; i < i1; i++) {
-                for (int j = j0; j < j1; j++) {
-                    const CntZ &val = (*this)(i, j);
-                    if (val.cnt > 0)
-                        odataVec.push_back((unsigned int)((val.z - zMin) * scale + 0.5));
-                }
-            }
+            for (int i = i0; i < i1; i++)
+                for (int j = j0; j < j1; j++)
+                    if (IsValid(i, j))
+                        odataVec.push_back((unsigned int)(((*this)(i, j) - zMin) * scale + 0.5));
 
             if (odataVec.size() != static_cast<size_t>(numValidPixel))
                 return false;
 
-            if (!BitStufferV1::write(&ptr, odataVec))
+            if (!BitStufferV1::blockwrite(&ptr, odataVec))
                 return false;
         }
     }
@@ -887,7 +839,6 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
 {
     size_t nRemainingBytes = nRemainingBytesInOut;
     Byte* ptr = *ppByte;
-    int numPixel = 0;
 
     if (nRemainingBytes < 1)
         return false;
@@ -899,14 +850,9 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
 
     if (comprFlag == 2) {
         // entire zTile is constant 0 (if valid or invalid doesn't matter)
-        for (int i = i0; i < i1; i++) {
-            for (int j = j0; j < j1; j++) {
-                CntZ val = (*this)(i, j);
-                val.z = 0;
-                setPixel(i, j, val);
-            }
-        }
-
+        for (int i = i0; i < i1; i++)
+            for (int j = j0; j < j1; j++)
+                (*this)(i, j) = 0.0f;
         *ppByte = ptr;
         nRemainingBytesInOut = nRemainingBytes;
         return true;
@@ -916,42 +862,32 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
         return false;
 
     if (comprFlag == 0) {
-        // read z's as flt arr uncompressed
-        const float* srcPtr = (const float*)ptr;
+        // read z's as float array
         for (int i = i0; i < i1; i++) {
             for (int j = j0; j < j1; j++) {
-                CntZ val = (*this)(i, j);
-                if (val.cnt > 0) {
+                if (IsValid(i, j)) {
                     if (nRemainingBytes < sizeof(float))
                         return false;
-                    val.z = *srcPtr++;
-                    setPixel(i, j, val);
+                    memcpy(&(*this)(i, j), ptr, sizeof(float));
+                    ptr += sizeof(float);
                     nRemainingBytes -= sizeof(float);
-                    numPixel++;
                 }
             }
         }
-        ptr += numPixel * sizeof(float);
     }
     else { // read z's as int arr bit stuffed
-        float offset = 0;
-        if (!readFlt(&ptr, nRemainingBytes, offset, n))
+        float bminval = 0;
+        if (!readFlt(&ptr, nRemainingBytes, bminval, n))
             return false;
 
-        if (comprFlag == 3) {
-            for (int i = i0; i < i1; i++) {
-                for (int j = j0; j < j1; j++) {
-                    CntZ val = (*this)(i, j);
-                    if (val.cnt > 0) {
-                        val.z = offset;
-                        setPixel(i, j, val);
-                    }
-                }
-            }
+        if (comprFlag == 3) { // all min val, regardless of mask
+            for (int i = i0; i < i1; i++)
+                for (int j = j0; j < j1; j++)
+                    (*this)(i, j) = bminval;
         }
         else {
-            dataVec.resize((i1-i0) * (j1-j0)); // max size
-            if (!BitStufferV1::read(&ptr, nRemainingBytes, dataVec))
+            idataVec.resize((i1-i0) * (j1-j0)); // max size
+            if (!BitStufferV1::blockread(&ptr, nRemainingBytes, idataVec))
                 return false;
 
             double invScale = 2 * maxZErrorInFile;
@@ -959,14 +895,10 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
 
             for (int i = i0; i < i1; i++) {
                 for (int j = j0; j < j1; j++) {
-                    CntZ val = (*this)(i, j);
-                    if (val.cnt > 0) {
-                        if (nDataVecIdx >= dataVec.size())
+                    if (IsValid(i, j)) {
+                        if (nDataVecIdx >= idataVec.size())
                             return false;
-                        val.z = (float)(offset + dataVec[nDataVecIdx++] * invScale);
-                        if (val.z > maxZInImg)
-                            val.z = maxZInImg;
-                        setPixel(i, j, val);
+                        (*this)(i, j) = static_cast<float>(bminval + idataVec[nDataVecIdx++] * invScale);
                     }
                 }
             }
