@@ -28,6 +28,18 @@ GDALLIB	= $(GDAL_ROOT)\$(GDAL_LIB_NAME)
 
 !IFDEF MONO
 CSC = mcs
+!ENDIF
+
+!IFDEF NETFRAMEWORK
+!IF $(MSVC_VER) >= 1400
+!IFDEF WIN64
+CSC = csc /platform:anycpu
+!ELSE
+CSC = csc /platform:x86
+!ENDIF
+!ELSE
+CSC = csc
+!ENDIF
 !ELSE
 !IFNDEF NETSTANDARD
 NETSTANDARD = netstandard2.0
@@ -35,16 +47,10 @@ NETSTANDARD = netstandard2.0
 !IFNDEF NETCORE
 NETCORE = netcoreapp2.1
 !ENDIF
-!IF $(MSVC_VER) >= 1400
 !IFDEF WIN64
-CSC = csc /platform:anycpu
 DOTNET_RID = win-x64
 !ELSE
-CSC = csc /platform:x86
 DOTNET_RID = win-x86
-!ENDIF
-!ELSE
-CSC = csc
 !ENDIF
 !ENDIF
 
