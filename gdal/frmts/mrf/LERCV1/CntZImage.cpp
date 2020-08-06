@@ -903,7 +903,7 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
                     if (IsValid(i, j)) {
                         if (nDataVecIdx >= idataVec.size())
                             return false;
-                        (*this)(i, j) = static_cast<float>(bminval + idataVec[nDataVecIdx++] * invScale);
+                        (*this)(i, j) = min(maxZInImg, static_cast<float>(bminval + idataVec[nDataVecIdx++] * invScale));
                     }
                 }
             }

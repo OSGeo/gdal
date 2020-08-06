@@ -41,7 +41,7 @@ typedef unsigned char Byte;
 class BitMaskV1
 {
 public:
-    BitMaskV1() : m_nRows(0), m_nCols(0) {};
+    BitMaskV1() : m_nRows(0), m_nCols(0) {}
 
     void resize(int nCols, int nRows) {
         m_nRows = nRows;
