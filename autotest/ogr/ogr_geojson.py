@@ -2003,6 +2003,28 @@ def test_ogr_geojson_56():
 """
     assert json.loads(got) == json.loads(expected)
 
+
+    # Test polygon geometry that covers the whole world (#2833)
+    gdal.VectorTranslate('/vsimem/out.json', """{
+  "type": "FeatureCollection",
+  "features": [
+      { "type": "Feature", "geometry": {"type":"Polygon","coordinates":[[[-180,-90.0],[180,-90.0],[180,90.0],[-180,90.0],[-180,-90.0]]]} }
+  ]
+}""", format='GeoJSON', layerCreationOptions=['RFC7946=YES', 'WRITE_BBOX=YES'])
+
+    got = read_file('/vsimem/out.json')
+    gdal.Unlink('/vsimem/out.json')
+    expected = """{
+"type": "FeatureCollection",
+"bbox": [ -180.0000000, -90.0000000, 180.0000000, 90.0000000 ],
+"features": [
+{ "type": "Feature", "properties": { }, "bbox": [ -180.0, -90.0, 180.0, 90.0 ], "geometry": { "type": "Polygon", "coordinates": [ [ [ -180.0, -90.0 ], [ 180.0, -90.0 ], [ 180.0, 90.0 ], [ -180.0, 90.0 ], [ -180.0, -90.0 ] ] ] } }
+]
+}
+"""
+    assert json.loads(got) == json.loads(expected)
+
+
 ###############################################################################
 # Test RFC 7946 and reprojection
 
