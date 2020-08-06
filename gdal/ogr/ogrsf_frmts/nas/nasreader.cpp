@@ -383,10 +383,11 @@ bool NASReader::IsFeatureElement( const char *pszElement )
     const int nLen = static_cast<int>(strlen(pszLast));
 
     // There seem to be two major NAS classes of feature identifiers
-    // -- either a wfs:Insert or a gml:featureMember.
+    // -- either a wfs:Insert or a gml:featureMember/wfs:member
 
     if( (nLen < 6 || !EQUAL(pszLast+nLen-6,"Insert"))
         && (nLen < 13 || !EQUAL(pszLast+nLen-13,"featureMember"))
+        && (nLen < 6 || !EQUAL(pszLast+nLen-6,"member"))
         && (nLen < 7 || !EQUAL(pszLast+nLen-7,"Replace")) )
         return false;
 
