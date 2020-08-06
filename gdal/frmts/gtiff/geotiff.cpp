@@ -12563,7 +12563,8 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
         poOpenInfo->nHeaderBytes &&
         ((poOpenInfo->pabyHeader[2] == 0x2B ||
          poOpenInfo->pabyHeader[3] == 0x2B )) ? 16 : 8;
-    if( poOpenInfo->nHeaderBytes > nOffsetOfStructuralMetadata&&
+    if( poOpenInfo->nHeaderBytes > nOffsetOfStructuralMetadata +
+            static_cast<int>(strlen("GDAL_STRUCTURAL_METADATA_SIZE=")) &&
         memcmp(poOpenInfo->pabyHeader + nOffsetOfStructuralMetadata,
                "GDAL_STRUCTURAL_METADATA_SIZE=",
                strlen("GDAL_STRUCTURAL_METADATA_SIZE=")) == 0 )
@@ -19046,6 +19047,47 @@ const char *GTiffDataset::GetMetadataItem( const char *pszName,
             return m_bHasUsedReadEncodedAPI ? "1" : "0";
         }
         return nullptr;
+    }
+
+    else if( pszDomain != nullptr && EQUAL(pszDomain, "TIFF") &&
+             pszName != nullptr )
+    {
+        if( EQUAL(pszName, "GDAL_STRUCTURAL_METADATA") )
+        {
+            const auto nOffset = VSIFTellL(m_fpL);
+            VSIFSeekL( m_fpL, 0, SEEK_SET );
+            GByte abyData[1024];
+            size_t nRead = VSIFReadL(abyData, 1, sizeof(abyData)-1, m_fpL);
+            abyData[nRead] = 0;
+            VSIFSeekL( m_fpL, nOffset, SEEK_SET );
+            if( nRead > 4 )
+            {
+                const int nOffsetOfStructuralMetadata =
+                    (abyData[2] == 0x2B || abyData[3] == 0x2B ) ? 16 : 8;
+                const int nSizePatternLen = static_cast<int>(strlen("XXXXXX bytes\n"));
+                if( nRead > nOffsetOfStructuralMetadata +
+                            strlen("GDAL_STRUCTURAL_METADATA_SIZE=") + nSizePatternLen &&
+                    memcmp(abyData + nOffsetOfStructuralMetadata,
+                            "GDAL_STRUCTURAL_METADATA_SIZE=",
+                            strlen("GDAL_STRUCTURAL_METADATA_SIZE=")) == 0 )
+                {
+                    char* pszStructuralMD = reinterpret_cast<char*>(
+                        abyData + nOffsetOfStructuralMetadata);
+                    const int nLenMD = atoi(pszStructuralMD +
+                                    strlen("GDAL_STRUCTURAL_METADATA_SIZE="));
+                    if( nOffsetOfStructuralMetadata +
+                        strlen("GDAL_STRUCTURAL_METADATA_SIZE=") +
+                        nSizePatternLen + nLenMD <= nRead )
+                    {
+                        pszStructuralMD[
+                            strlen("GDAL_STRUCTURAL_METADATA_SIZE=") +
+                            nSizePatternLen + nLenMD] = 0;
+                        return CPLSPrintf("%s", pszStructuralMD);
+                    }
+                }
+            }
+            return nullptr;
+        }
     }
 
     return m_oGTiffMDMD.GetMetadataItem( pszName, pszDomain );
