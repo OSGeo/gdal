@@ -1406,7 +1406,11 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
         json_object_object_add(poJsonObject, "bands", poBands);
         Concat(osStr, psOptions->bStdoutOutput, "%s",
                json_object_to_json_string_ext(poJsonObject,
-                                              JSON_C_TO_STRING_PRETTY));
+                                              JSON_C_TO_STRING_PRETTY
+#ifdef JSON_C_TO_STRING_NOSLASHESCAPE
+                                              | JSON_C_TO_STRING_NOSLASHESCAPE
+#endif
+                                             ));
         json_object_put(poJsonObject);
     }
 
