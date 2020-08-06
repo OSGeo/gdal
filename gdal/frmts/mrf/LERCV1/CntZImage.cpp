@@ -732,20 +732,25 @@ bool CntZImage::computeZStats(int i0, int i1, int j0, int j1,
     if (i0 < 0 || j0 < 0 || i1 > getHeight() || j1 > getWidth())
         return false;
 
-    zMin = FLT_MAX;
-    zMax = -FLT_MAX;
+    float zMi = FLT_MAX;
+    float zMa = -FLT_MAX;
     numValidPixel = 0;
 
     for (int i = i0; i < i1; i++) {
         for (int j = j0; j < j1; j++) {
             if (IsValid(i, j)) {
-                zMin = min(zMin, (*this)(i, j));
-                zMax = max(zMax, (*this)(i, j));
+                float val = (*this)(i, j);
+                if (val < zMi)
+                    zMi = val;
+                if (val > zMa)
+                    zMa = val;
                 numValidPixel++;
             }
         }
     }
 
+    zMin = zMi;
+    zMax = zMa;
     if (0 == numValidPixel)
         zMin = zMax = 0;
     return true;
