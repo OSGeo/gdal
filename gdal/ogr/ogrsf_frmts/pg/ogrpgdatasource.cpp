@@ -365,6 +365,22 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
     pszName = CPLStrdup( pszNewName );
 
+    const auto QuoteAndEscapeConnectionParam = [](const char* pszParam)
+    {
+        CPLString osRet("\'");
+        for( int i = 0; pszParam[i]; ++i )
+        {
+            if( pszParam[i] == '\'' )
+                osRet += "\\'";
+            else if( pszParam[i] == '\\' )
+                osRet += "\\\\";
+            else
+                osRet += pszParam[i];
+        }
+        osRet += '\'';
+        return osRet;
+    };
+
     CPLString osConnectionName(pszName);
     const char* apszOpenOptions[] = { "service", "dbname", "port", "user", "password",
                                       "host", "active_schema", "schemas", "tables" };
@@ -377,7 +393,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                 osConnectionName += " ";
             osConnectionName += apszOpenOptions[i];
             osConnectionName += "=";
-            osConnectionName += pszVal;
+            osConnectionName += QuoteAndEscapeConnectionParam(pszVal);
         }
     }
 
@@ -385,7 +401,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /*      Set application name if not found in connection string          */
 /* -------------------------------------------------------------------- */
 
-    if (strstr(pszName, "application_name=") == nullptr &&
+    if (strstr(pszName, "application_name") == nullptr &&
         getenv("PGAPPNAME") == nullptr )
     {
         if( osConnectionName.back() != ':' )
@@ -397,34 +413,104 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         osConnectionName += "'";
     }
 
+    const auto ParseAndRemoveParam = [](char* pszStr, const char* pszParamName,
+                                        CPLString& osValue)
+    {
+        const int nParamNameLen = static_cast<int>(strlen(pszParamName));
+        bool bInSingleQuotedString = false;
+        for( int i = 0; pszStr[i]; i++ )
+        {
+            if( bInSingleQuotedString )
+            {
+                if( pszStr[i] == '\\' )
+                {
+                    if( pszStr[i + 1] == '\\' ||
+                        pszStr[i + 1] == '\'' )
+                    {
+                        ++i;
+                    }
+                }
+                else if( pszStr[i] == '\'' )
+                {
+                    bInSingleQuotedString = false;
+                }
+            }
+            else if( pszStr[i] == '\'' )
+            {
+                bInSingleQuotedString = true;
+            }
+            else if( EQUALN(pszStr + i, pszParamName, nParamNameLen) &&
+                        (pszStr[i + nParamNameLen] == '=' ||
+                         pszStr[i + nParamNameLen] == ' ' ) )
+            {
+                const int iStart = i;
+                i += nParamNameLen;
+                while( pszStr[i] == ' ' )
+                    ++i;
+                if( pszStr[i] == '=' )
+                {
+                    ++i;
+                    while( pszStr[i] == ' ' )
+                        ++i;
+                    if( pszStr[i] == '\'' )
+                    {
+                        ++i;
+                        for( ; pszStr[i]; i++ )
+                        {
+                            if( pszStr[i] == '\\' )
+                            {
+                                if( pszStr[i + 1] == '\\' ||
+                                    pszStr[i + 1] == '\'' )
+                                {
+                                    osValue += pszStr[i+1];
+                                    ++i;
+                                }
+                            }
+                            else if( pszStr[i] == '\'' )
+                            {
+                                ++i;
+                                break;
+                            }
+                            else
+                            {
+                                osValue += pszStr[i];
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for( ; pszStr[i] && pszStr[i] != ' '; i++ )
+                        {
+                            osValue += pszStr[i];
+                        }
+                    }
+
+                    // Edit pszStr to remove the parameter and its value
+                    if( pszStr[i] == ' ' )
+                    {
+                        memmove(pszStr + iStart, pszStr + i,
+                                strlen(pszStr + i) + 1);
+                    }
+                    else
+                    {
+                        pszStr[iStart] = 0;
+                    }
+
+                }
+                return true;
+            }
+        }
+        return false;
+    };
+
     char* pszConnectionName = CPLStrdup(osConnectionName);
+    char* pszConnectionNameNoPrefix = pszConnectionName + (STARTS_WITH_CI(pszNewName, "PGB:") ? 4 : 3);
 
 /* -------------------------------------------------------------------- */
 /*      Determine if the connection string contains an optional         */
 /*      ACTIVE_SCHEMA portion. If so, parse it out.                     */
 /* -------------------------------------------------------------------- */
-    char *pszActiveSchemaStart = strstr(pszConnectionName, "active_schema=");
-    if (pszActiveSchemaStart == nullptr)
-        pszActiveSchemaStart = strstr(pszConnectionName, "ACTIVE_SCHEMA=");
-    if (pszActiveSchemaStart != nullptr)
-    {
-        char *pszActiveSchema =
-            CPLStrdup( pszActiveSchemaStart + strlen("active_schema=") );
-
-        const char *pszEnd = strchr(pszActiveSchemaStart, ' ');
-        if( pszEnd == nullptr )
-            pszEnd = pszConnectionName + strlen(pszConnectionName);
-
-        // Remove ACTIVE_SCHEMA=xxxxx from pszConnectionName string
-        memmove( pszActiveSchemaStart, pszEnd, strlen(pszEnd) + 1 );
-
-        pszActiveSchema[pszEnd - pszActiveSchemaStart -
-                        strlen("active_schema=")] = '\0';
-
-        osActiveSchema = pszActiveSchema;
-        CPLFree(pszActiveSchema);
-    }
-    else
+    if( !ParseAndRemoveParam(pszConnectionNameNoPrefix, "active_schema", osActiveSchema) )
     {
         osActiveSchema = "public";
     }
@@ -433,26 +519,10 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /*      Determine if the connection string contains an optional         */
 /*      SCHEMAS portion. If so, parse it out.                           */
 /* -------------------------------------------------------------------- */
-    char             *pszSchemasStart;
-    pszSchemasStart = strstr(pszConnectionName, "schemas=");
-    if (pszSchemasStart == nullptr)
-        pszSchemasStart = strstr(pszConnectionName, "SCHEMAS=");
-    if (pszSchemasStart != nullptr)
+    CPLString osSchemas;
+    if( ParseAndRemoveParam(pszConnectionNameNoPrefix, "schemas", osSchemas) )
     {
-        char *pszSchemas = CPLStrdup( pszSchemasStart + strlen("schemas=") );
-
-        const char *pszEnd = strchr(pszSchemasStart, ' ');
-        if( pszEnd == nullptr )
-            pszEnd = pszConnectionName + strlen(pszConnectionName);
-
-        // Remove SCHEMAS=xxxxx from pszConnectionName string
-        memmove( pszSchemasStart, pszEnd, strlen(pszEnd) + 1 );
-
-        pszSchemas[pszEnd - pszSchemasStart - strlen("schemas=")] = '\0';
-
-        papszSchemaList = CSLTokenizeString2( pszSchemas, ",", 0 );
-
-        CPLFree(pszSchemas);
+        papszSchemaList = CSLTokenizeString2( osSchemas, ",", 0 );
 
         /* If there is only one schema specified, make it the active schema */
         if (CSLCount(papszSchemaList) == 1)
@@ -472,28 +542,16 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /*      string; PQconnectdb() does not like unknown directives          */
 /* -------------------------------------------------------------------- */
 
-    char *pszTableStart = strstr(pszConnectionName, "tables=");
-    if (pszTableStart == nullptr)
-        pszTableStart = strstr(pszConnectionName, "TABLES=");
-
-    if( pszTableStart != nullptr )
+    CPLString osForcedTables;
+    if( ParseAndRemoveParam(pszConnectionNameNoPrefix, "tables", osForcedTables) )
     {
-        pszForcedTables = CPLStrdup( pszTableStart + 7 );
-
-        const char* pszEnd = strchr(pszTableStart, ' ');
-        if( pszEnd == nullptr )
-            pszEnd = pszConnectionName + strlen(pszConnectionName);
-
-        // Remove TABLES=xxxxx from pszConnectionName string
-        memmove( pszTableStart, pszEnd, strlen(pszEnd) + 1 );
-
-        pszForcedTables[pszEnd - pszTableStart - 7] = '\0';
+        pszForcedTables = CPLStrdup(osForcedTables);
     }
 
 /* -------------------------------------------------------------------- */
 /*      Try to establish connection.                                    */
 /* -------------------------------------------------------------------- */
-    hPGConn = PQconnectdb( pszConnectionName + (STARTS_WITH_CI(pszNewName, "PGB:") ? 4 : 3) );
+    hPGConn = PQconnectdb( pszConnectionNameNoPrefix );
     CPLFree(pszConnectionName);
     pszConnectionName = nullptr;
 
