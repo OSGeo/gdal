@@ -51,7 +51,7 @@ static void Usage(const char* pszErrorMsg = nullptr)
         "    [-clipsrcsql sql_statement] [-clipsrclayer layer]\n"
         "    [-clipsrcwhere expression]\n"
         "    [-l layername]* [-where expression] [-sql select_statement]\n"
-        "    [-txe xmin xmax] [-tye ymin ymax] [-outsize xsize ysize]\n"
+        "    [-txe xmin xmax] [-tye ymin ymax] [-tr xres yres] [-outsize xsize ysize]\n"
         "    [-a algorithm[:parameter1=value1]*]"
         "    [-q]\n"
         "    <src_datasource> <dst_filename>\n"
