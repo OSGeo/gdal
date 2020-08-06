@@ -46,7 +46,7 @@ public:
     void resize(int nCols, int nRows) {
         m_nRows = nRows;
         m_nCols = nCols;
-        bits.resize(size(), 0);
+        bits.resize(size());
     }
     Byte  IsValid(int k) const { return (bits[k >> 3] & Bit(k)) != 0; }
     int   size() const { return 1 + (m_nCols * m_nRows - 1) / 8; }
@@ -74,11 +74,10 @@ public:
     TImage() : width_(0), height_(0) {}
     ~TImage() {}
 
-    virtual bool resize(int width, int height) {
+    bool setsize(int width, int height) {
         width_ = width;
         height_ = height;
         values.resize(getSize());
-        std::memset(values.data(), 0, values.size() * sizeof(T));
         return true;
     }
 
@@ -160,8 +159,8 @@ public:
         double maxZError,
         bool onlyZPart = false);
 
-    virtual bool resize(int width, int height) override {
-        TImage<float>::resize(width, height);
+    bool resize(int width, int height) {
+        setsize(width, height);
         mask.resize(getWidth(), getHeight());
         return true;
     }
