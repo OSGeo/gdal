@@ -32,18 +32,7 @@ using namespace std;
 
 NAMESPACE_LERC1_START
 
-struct BitStufferV1
-{
-    // these 2 functions do not allocate memory. Byte ptr is moved like a file pointer
-    static bool blockwrite(Byte** ppByte, const std::vector<unsigned int>& d);
-    // dataVec is sized to max expected values. It is resized on return, based on read data
-    static bool blockread(Byte** ppByte, size_t& sz, std::vector<unsigned int>& d);
-    static int numBytesUInt(unsigned int k) { return (k <= 0xff) ? 1 : (k <= 0xffff) ? 2 : 4; }
-    static unsigned int numTailBytesNotNeeded(unsigned int numElem, int numBits) {
-        numBits = (numElem * numBits) & 31;
-        return (numBits == 0 || numBits > 24) ? 0 : (numBits > 16) ? 1 : (numBits > 8) ? 2 : 3;
-    }
-};
+static int numBytesUInt(unsigned int k) { return (k <= 0xff) ? 1 : (k <= 0xffff) ? 2 : 4; }
 
 #define MAX_RUN 32767
 #define MIN_RUN 5
@@ -174,7 +163,7 @@ static const Byte stib67[4] = { 4, 2, 1, 3 };
 
 // see the old stream IO functions below on how to call.
 // if you change write(...) / read(...), don't forget to update computeNumBytesNeeded(...).
-bool BitStufferV1::blockwrite(Byte** ppByte, const vector<unsigned int>& d)
+static bool blockwrite(Byte** ppByte, const vector<unsigned int>& d)
 {
     if (!ppByte || d.empty())
         return false;
@@ -225,7 +214,7 @@ bool BitStufferV1::blockwrite(Byte** ppByte, const vector<unsigned int>& d)
 }
 
 
-bool BitStufferV1::blockread(Byte** ppByte, size_t& size, vector<unsigned int>& d)
+static bool blockread(Byte** ppByte, size_t& size, vector<unsigned int>& d)
 {
     if (!ppByte || !size)
         return false;
@@ -348,13 +337,18 @@ static bool readFlt(Byte** ppByte, size_t& nRemainingBytes, float& z, int numByt
     return true;
 }
 
+static unsigned int numTailBytesNotNeeded(unsigned int numElem, int numBits) {
+    numBits = (numElem * numBits) & 31;
+    return (numBits == 0 || numBits > 24) ? 0 : (numBits > 16) ? 1 : (numBits > 8) ? 2 : 3;
+}
+
 static unsigned int computeNumBytesNeededByStuffer(unsigned int numElem, unsigned int maxElem) {
     int numBits = 0;
     while (maxElem >> numBits)
         numBits++;
     unsigned int numUInts = (numElem * numBits + 31) / 32;
-    return 1 + BitStufferV1::numBytesUInt(numElem) + numUInts * sizeof(unsigned int) -
-        BitStufferV1::numTailBytesNotNeeded(numElem, numBits);
+    return 1 + numBytesUInt(numElem) + numUInts * sizeof(unsigned int) -
+        numTailBytesNotNeeded(numElem, numBits);
 }
 
 static const int CNT_Z = 8;
@@ -827,7 +821,7 @@ bool CntZImage::writeZTile(Byte** ppByte, int& numBytes,
             if (odataVec.size() != static_cast<size_t>(numValidPixel))
                 return false;
 
-            if (!BitStufferV1::blockwrite(&ptr, odataVec))
+            if (!blockwrite(&ptr, odataVec))
                 return false;
         }
     }
@@ -866,8 +860,7 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
     if (comprFlag > 3)
         return false;
 
-    if (comprFlag == 0) {
-        // read z's as float array
+    if (comprFlag == 0) { // Stored
         for (int i = i0; i < i1; i++) {
             for (int j = j0; j < j1; j++) {
                 if (IsValid(i, j)) {
@@ -892,7 +885,7 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
         }
         else {
             idataVec.resize((i1-i0) * (j1-j0)); // max size
-            if (!BitStufferV1::blockread(&ptr, nRemainingBytes, idataVec))
+            if (!blockread(&ptr, nRemainingBytes, idataVec))
                 return false;
 
             double invScale = 2 * maxZErrorInFile;
@@ -903,7 +896,8 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
                     if (IsValid(i, j)) {
                         if (nDataVecIdx >= idataVec.size())
                             return false;
-                        (*this)(i, j) = min(maxZInImg, static_cast<float>(bminval + idataVec[nDataVecIdx++] * invScale));
+                        (*this)(i, j) = min(maxZInImg,
+                            static_cast<float>(bminval + idataVec[nDataVecIdx++] * invScale));
                     }
                 }
             }

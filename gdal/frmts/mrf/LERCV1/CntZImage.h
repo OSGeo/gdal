@@ -42,19 +42,18 @@ class BitMaskV1
 {
 public:
     BitMaskV1() : m_nRows(0), m_nCols(0) {}
-
+    int size() const { return 1 + (m_nCols * m_nRows - 1) / 8; }
+    void Set(int k, bool v) { if (v) SetValid(k); else SetInvalid(k); }
+    Byte IsValid(int k) const { return (bits[k >> 3] & Bit(k)) != 0; }
     void resize(int nCols, int nRows) {
         m_nRows = nRows;
         m_nCols = nCols;
         bits.resize(size());
     }
-    Byte  IsValid(int k) const { return (bits[k >> 3] & Bit(k)) != 0; }
-    int   size() const { return 1 + (m_nCols * m_nRows - 1) / 8; }
-    void Set(int k, bool v) { if (v) SetValid(k); else SetInvalid(k); }
     // max RLE compressed size is n + 4 + 2 * (n - 1) / 32767
     // Returns encoded size
     int RLEcompress(Byte* aRLE) const;
-    // current encoded size
+    // Encoded size, without doing the work
     int RLEsize() const;
     // Decompress a RLE bitmask, bitmask size should be already set
     // Returns false if input seems wrong
@@ -124,16 +123,17 @@ protected:
         int numTilesVert, int numTilesHori, float maxValInImg, Byte* bArr, size_t nRemainingBytes);
 
     void computeCntStats(float& cntMin, float& cntMax) const; // Across the whole image, always works
-    bool computeZStats(int i0, int i1, int j0, int j1, float& zMin, float& zMax, int& numValidPixel) const;
+    bool computeZStats(int i0, int i1, int j0, int j1,
+        float& zMin, float& zMax, int& numValidPixel) const;
 
     static int numBytesZTile(int numValidPixel, float zMin, float zMax, double maxZError);
 
     bool writeZTile(Byte** ppByte, int& numBytes, int i0, int i1, int j0, int j1,
         int numValidPixel, float zMin, float zMax, double maxZError) const;
 
-    bool readZTile(Byte** ppByte, size_t& nRemainingBytes, int i0, int i1, int j0, int j1, double maxZErrorInFile, float maxZInImg);
+    bool readZTile(Byte** ppByte, size_t& nRemainingBytes, int i0, int i1, int j0, int j1,
+        double maxZErrorInFile, float maxZInImg);
 
-    InfoFromComputeNumBytes m_infoFromComputeNumBytes;
     std::vector<unsigned int> idataVec;    // temporary buffer, reused in readZTile
 
 public:

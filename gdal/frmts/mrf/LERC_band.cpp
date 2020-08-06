@@ -471,10 +471,9 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
             size.x = zImg.getWidth();
             size.y = zImg.getHeight();
 
-            // Read as byte by default, otherwise LERC can be read as anything
             // Get the desired type
-            const char *pszDataType = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "DATATYPE");
-            dt = pszDataType ? GDALGetDataTypeByName(pszDataType) : GDT_Byte;
+            dt = GDALGetDataTypeByName(
+                CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "DATATYPE", "Byte"));
         }
     }
 
@@ -489,7 +488,7 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
     CPLCreateXMLElementAndValue(raster, "Compression", CompName(IL_LERC));
     CPLCreateXMLElementAndValue(raster, "DataType", GDALGetDataTypeName(dt));
     CPLCreateXMLElementAndValue(raster, "DataFile", poOpenInfo->pszFilename);
-    // Set a magic index file name to prevent the driver from attempting to open itd
+    // Set a magic index file name to prevent the driver from attempting to open it
     CPLCreateXMLElementAndValue(raster, "IndexFile", "(null)");
 
     return config;
