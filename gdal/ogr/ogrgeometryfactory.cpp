@@ -2924,12 +2924,17 @@ static void CutGeometryOnDateLineAndAddToMulti( OGRGeometryCollection* poMulti,
                 {
                     double dfMaxSmallDiffLong = 0;
                     bool bHasBigDiff = false;
+                    bool bOnlyAtPlusMinus180 = poLS->getNumPoints() > 0 &&
+                        ( fabs(fabs(poLS->getX(0)) - 180) < 1e-10 );
                     // Detect big gaps in longitude.
                     for( int i = 1; i < poLS->getNumPoints(); i++ )
                     {
                         const double dfPrevX = poLS->getX(i-1) + dfXOffset;
                         const double dfX = poLS->getX(i) + dfXOffset;
                         const double dfDiffLong = fabs(dfX - dfPrevX);
+                        if( fabs(fabs(poLS->getX(i)) - 180) > 1e-10 )
+                            bOnlyAtPlusMinus180 = false;
+
                         if( dfDiffLong > dfDiffSpace &&
                             ((dfX > dfLeftBorderX &&
                               dfPrevX < dfRightBorderX) ||
@@ -2939,7 +2944,8 @@ static void CutGeometryOnDateLineAndAddToMulti( OGRGeometryCollection* poMulti,
                         else if( dfDiffLong > dfMaxSmallDiffLong )
                             dfMaxSmallDiffLong = dfDiffLong;
                     }
-                    if( bHasBigDiff && dfMaxSmallDiffLong < dfDateLineOffset )
+                    if( bHasBigDiff && !bOnlyAtPlusMinus180 &&
+                        dfMaxSmallDiffLong < dfDateLineOffset )
                     {
                         if( eGeomType == wkbLineString )
                             bSplitLineStringAtDateline = true;
