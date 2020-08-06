@@ -716,7 +716,7 @@ CPLErr MRFDataset::LevelInit(const int l) {
 
     // Add the bands, copy constructor so they can be closed independently
     for (int i = 1; i <= nBands; i++)
-        SetBand(i, new GDALMRFLRasterBand(reinterpret_cast<MRFRasterBand *>
+        SetBand(i, new MRFLRasterBand(reinterpret_cast<MRFRasterBand *>
                                             (cds->GetRasterBand(i)->GetOverview(l))));
     return CE_None;
 }

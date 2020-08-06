@@ -760,9 +760,9 @@ protected:
  * Stand alone definition of a derived band, used in access to a specific level in an MRF
  *
  */
-class GDALMRFLRasterBand final: public GDALPamRasterBand {
+class MRFLRasterBand final: public GDALPamRasterBand {
 public:
-    explicit GDALMRFLRasterBand(MRFRasterBand *b) {
+    explicit MRFLRasterBand(MRFRasterBand *b) {
         pBand = b;
         eDataType = b->GetRasterDataType();
         b->GetBlockSize(&nBlockXSize, &nBlockYSize);
