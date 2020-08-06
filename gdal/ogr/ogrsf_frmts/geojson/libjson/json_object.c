@@ -92,8 +92,9 @@ static int json_escape_str(struct printbuf *pb, const char *str, size_t len, int
 {
 	int pos = 0, start_offset = 0;
 	unsigned char c;
-	while (len--)
+	while (len)
 	{
+                len--;
 		c = str[pos];
 		switch (c)
 		{
