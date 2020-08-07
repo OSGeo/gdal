@@ -145,59 +145,95 @@ static GDALDataType GetL2DataType(Lerc2::DataType L2type) {
 }
 
 // Load a buffer of type T into a LERC1 zImg
-template <typename T> static void CntZImgFill(CntZImage &zImg, T *src, const ILImage &img)
+//template <typename T> static void CntZImgFill(CntZImage &zImg, T *src, const ILImage &img)
+//{
+//    int w = img.pagesize.x;
+//    int h = img.pagesize.y;
+//    zImg.resize(w, h);
+//    const float ndv = static_cast<float>(img.hasNoData ? img.NoDataValue : 0);
+//    for (int i = 0; i < h; i++)
+//        for (int j = 0; j < w; j++) {
+//            float val = static_cast<float>(*src++);
+//            zImg(i, j) = val;
+//            zImg.mask.Set(i * zImg.getWidth() + j, !CPLIsEqual(ndv, val));
+//        }
+//    return;
+//}
+//
+
+// Load a buffer of type T into a LERC1 zImg, with a given stride
+template <typename T> static void CntZImgFill(CntZImage& zImg, T* src, const ILImage& img, GInt32 stride)
 {
     int w = img.pagesize.x;
     int h = img.pagesize.y;
     zImg.resize(w, h);
     const float ndv = static_cast<float>(img.hasNoData ? img.NoDataValue : 0);
+    if (stride == 1) {
+        for (int i = 0; i < h; i++)
+            for (int j = 0; j < w; j++) {
+                float val = static_cast<float>(*src++);
+                zImg(i, j) = val;
+                zImg.mask.Set(i * zImg.getWidth() + j, !CPLIsEqual(ndv, val));
+            }
+        return;
+    }
     for (int i = 0; i < h; i++)
         for (int j = 0; j < w; j++) {
-            float val = static_cast<float>(*src++);
+            float val = static_cast<float>(*src);
+            src += stride;
             zImg(i, j) = val;
             zImg.mask.Set(i * zImg.getWidth() + j, !CPLIsEqual(ndv, val));
         }
-    return;
 }
 
 // Unload LERC1 zImg into a type T buffer
-template <typename T> static bool CntZImgUFill(CntZImage &zImg, T *dst, const ILImage &img)
+template <typename T> static bool CntZImgUFill(CntZImage &zImg, T *dst, const ILImage &img, GInt32 stride)
 {
     const T ndv = static_cast<T>(img.hasNoData ? img.NoDataValue : 0);
+    if (img.pagesize.y != zImg.getHeight() || img.pagesize.x != zImg.getWidth())
+        return false;
+    if (1 == stride) {
+        for (int i = 0; i < zImg.getHeight(); i++)
+            for (int j = 0; j < zImg.getWidth(); j++)
+                *dst++ = zImg.IsValid(i, j) ? static_cast<T>(zImg(i, j)) : ndv;
+        return true;
+    }
     for (int i = 0; i < zImg.getHeight(); i++)
-        for (int j = 0; j < zImg.getWidth(); j++)
-            *dst++ = zImg.IsValid(i, j) ? static_cast<T>(zImg(i, j)) : ndv;
+        for (int j = 0; j < zImg.getWidth(); j++) {
+            *dst = zImg.IsValid(i, j) ? static_cast<T>(zImg(i, j)) : ndv;
+            dst += stride;
+        }
     return true;
 }
 
 static CPLErr CompressLERC1(buf_mgr &dst, buf_mgr &src, const ILImage &img, double precision)
 {
     CntZImage zImg;
-    // Fill data into zImg
-#define FILL(T) CntZImgFill(zImg, reinterpret_cast<T *>(src.buffer), img)
-    switch (img.dt) {
-    case GDT_Byte:      FILL(GByte);    break;
-    case GDT_UInt16:    FILL(GUInt16);  break;
-    case GDT_Int16:     FILL(GInt16);   break;
-    case GDT_Int32:     FILL(GInt32);   break;
-    case GDT_UInt32:    FILL(GUInt32);  break;
-    case GDT_Float32:   FILL(float);    break;
-    case GDT_Float64:   FILL(double);   break;
-    default: break;
-    }
+    GInt32 stride = img.pagesize.c;
+    Byte* ptr = reinterpret_cast<Byte*>(dst.buffer);
+
+    for (int c = 0; c < stride; c++) {
+#define FILL(T) CntZImgFill(zImg, reinterpret_cast<T *>(src.buffer) + c, img, stride)
+        switch (img.dt) {
+        case GDT_Byte:      FILL(GByte);    break;
+        case GDT_UInt16:    FILL(GUInt16);  break;
+        case GDT_Int16:     FILL(GInt16);   break;
+        case GDT_Int32:     FILL(GInt32);   break;
+        case GDT_UInt32:    FILL(GUInt32);  break;
+        case GDT_Float32:   FILL(float);    break;
+        case GDT_Float64:   FILL(double);   break;
+        default: break;
+        }
 #undef FILL
-
-    Byte *ptr = reinterpret_cast<Byte *>(dst.buffer);
-
-    // if it can't compress in output buffer it will crash
-    if (!zImg.write(&ptr, precision)) {
-        CPLError(CE_Failure,CPLE_AppDefined,"MRF: Error during LERC compression");
-        return CE_Failure;
+        if (!zImg.write(&ptr, precision)) {
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during LERC compression");
+            return CE_Failure;
+        }
     }
 
     // write changes the value of the pointer, we can find the size by testing how far it moved
     // Add a couple of bytes, to avoid buffer overflow on reading
-    dst.size = ptr - reinterpret_cast<Byte *>(dst.buffer) + PADDING_BYTES;
+    dst.size = ptr - reinterpret_cast<Byte*>(dst.buffer) + PADDING_BYTES;
     CPLDebug("MRF_LERC","LERC Compressed to %d\n", (int)dst.size);
     return CE_None;
 }
@@ -207,46 +243,43 @@ static CPLErr DecompressLERC1(buf_mgr &dst, buf_mgr &src, const ILImage &img)
 {
     CntZImage zImg;
 
-    // we need to add the padding bytes so that out-of-buffer-access checksum
-    // don't false-positively trigger.
+    // need to add the padding bytes so that out-of-buffer-access
     size_t nRemainingBytes = src.size + PADDING_BYTES;
     Byte *ptr = reinterpret_cast<Byte *>(src.buffer);
+    GInt32 stride = img.pagesize.c;
+    for (int c = 0; c < stride; c++) {
+        // Check that input passes snicker test
+        if (checkV1(reinterpret_cast<char *>(ptr), nRemainingBytes) <= 0) {
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: LERC1 tile format error");
+            return CE_Failure;
+        }
 
-    // Check that input passes snicker test
-    int actual = checkV1(src.buffer, src.size);
-    if (actual == 0) {
-        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Not a supported LERC format");
-        return CE_Failure;
-    }
-    if (actual < 0) { // Negative return means buffer is too short
-        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Lerc object too large");
-        return CE_Failure;
-    }
+        if (!zImg.read(&ptr, nRemainingBytes, 1e12))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during LERC decompression");
+            return CE_Failure;
+        }
 
-    if (!zImg.read(&ptr, nRemainingBytes, 1e12))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during LERC decompression");
-        return CE_Failure;
-    }
-
-// Unpack from zImg to dst buffer, calling the right type
-    bool success = false;
-#define UFILL(T) success = CntZImgUFill(zImg, reinterpret_cast<T *>(dst.buffer), img)
-    switch (img.dt) {
-    case GDT_Byte:      UFILL(GByte);   break;
-    case GDT_UInt16:    UFILL(GUInt16); break;
-    case GDT_Int16:     UFILL(GInt16);  break;
-    case GDT_Int32:     UFILL(GInt32);  break;
-    case GDT_UInt32:    UFILL(GUInt32); break;
-    case GDT_Float32:   UFILL(float);   break;
-    case GDT_Float64:   UFILL(double);  break;
-    default: break;
-    }
+        // Unpack from zImg to dst buffer, calling the right type
+        bool success = false;
+#define UFILL(T) success = CntZImgUFill(zImg, reinterpret_cast<T *>(dst.buffer) + c, img, stride)
+        switch (img.dt) {
+        case GDT_Byte:      UFILL(GByte);   break;
+        case GDT_UInt16:    UFILL(GUInt16); break;
+        case GDT_Int16:     UFILL(GInt16);  break;
+        case GDT_Int32:     UFILL(GInt32);  break;
+        case GDT_UInt32:    UFILL(GUInt32); break;
+        case GDT_Float32:   UFILL(float);   break;
+        case GDT_Float64:   UFILL(double);  break;
+        default: break;
+        }
 #undef UFILL
-    if (!success) {
-        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during LERC compression");
-        return CE_Failure;
+        if (!success) {
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during LERC compression");
+            return CE_Failure;
+        }
     }
+
     return CE_None;
 }
 
@@ -294,7 +327,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
         case GDT_UInt32:        MASK(GUInt32);  break;
         case GDT_Float32:       MASK(float);    break;
         case GDT_Float64:       MASK(double);   break;
-        default:                CPLAssert(false); break;
+        default:                break;
 
 #undef MASK
         }
@@ -321,7 +354,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
     case GDT_UInt32:    ENCODE(GUInt32);    break;
     case GDT_Float32:   ENCODE(float);      break;
     case GDT_Float64:   ENCODE(double);     break;
-    default:            CPLAssert(false); break;
+    default:            break;
 
 #undef ENCODE
     }
