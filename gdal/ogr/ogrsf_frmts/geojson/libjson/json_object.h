@@ -50,6 +50,11 @@ extern "C" {
  */
 #define JSON_C_TO_STRING_NOZERO     (1<<2)
 
+/**
+ * Don't escape forward slashes.
+ */
+#define JSON_C_TO_STRING_NOSLASHESCAPE (1 << 4)
+
 #undef FALSE
 #define FALSE ((json_bool)0)
 
