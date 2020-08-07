@@ -708,6 +708,12 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
                               &(psDefn->SemiMajor), 0, 1 );
         GDALGTIFKeyGetDOUBLE( hGTIF, GeogInvFlatteningGeoKey,
                               &dfInvFlattening, 0, 1 );
+        if( std::isinf(dfInvFlattening) )
+        {
+            // Deal with the non-nominal case of
+            // https://github.com/OSGeo/PROJ/issues/2317
+            dfInvFlattening = 0;
+        }
     }
     if( !pszPMName )
     {
