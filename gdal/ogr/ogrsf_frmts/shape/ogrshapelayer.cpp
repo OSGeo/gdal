@@ -2224,6 +2224,33 @@ OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
                 }
                 else
                 {
+                    // If there are several matches >= 90%, take the only one
+                    // that is EPSG
+                    int iEPSG = -1;
+                    for(int i = 0; i < nEntries; i++ )
+                    {
+                        if( panConfidence[i] >= 90 )
+                        {
+                            const char* pszAuthName =
+                                reinterpret_cast<OGRSpatialReference*>(pahSRS[i])->GetAuthorityName(nullptr);
+                            if( pszAuthName != nullptr && EQUAL(pszAuthName, "EPSG") )
+                            {
+                                if( iEPSG < 0 )
+                                    iEPSG = i;
+                                else
+                                {
+                                    iEPSG = -1;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if( iEPSG >= 0 )
+                    {
+                        poSRS->Release();
+                        poSRS = reinterpret_cast<OGRSpatialReference*>(pahSRS[iEPSG])->Clone();
+                        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                    }
                     OSRFreeSRSArray(pahSRS);
                 }
                 CPLFree(panConfidence);
