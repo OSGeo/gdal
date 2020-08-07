@@ -116,6 +116,9 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
                                         ODBC_FILENAME_MAX, nullptr, fRequest,
                                         &m_nUsageCount) )
         {
+            // if installing the driver fails, we need to roll back the changes to ODBCSYSINI environment
+            // variable or all subsequent use of ODBC calls will fail
+            unsetenv( "ODBCSYSINI" );
             CPL_UNUSED RETCODE cRet = SQLInstallerError( nErrorNum, &m_nErrorCode,
                             m_szError, SQL_MAX_MESSAGE_LENGTH, nullptr );
             (void)cRet;
