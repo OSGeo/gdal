@@ -116,7 +116,7 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
         pszDSNStringTemplate = CPLGetConfigOption( pszOptionName, nullptr );
         if( pszDSNStringTemplate == nullptr )
         {
-            pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";
+            pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=\"%s\"";
         }
         if (!CheckDSNStringTemplate(pszDSNStringTemplate))
         {
@@ -142,7 +142,7 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
         if( !STARTS_WITH_CI(pszNewName, "PGEO:") )
         {
             // Trying with another template (#5594)
-            pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=%s";
+            pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=\"%s\"";
             CPLFree( pszDSN );
             pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
             snprintf( pszDSN,
