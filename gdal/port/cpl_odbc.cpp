@@ -90,10 +90,10 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
         // system-wide default location, so try to install to HOME.
 
         static char* pszEnvIni = nullptr;
+        const char* pszEnvHome = getenv("HOME");
         if( pszEnvIni == nullptr )
         {
             // Read HOME location.
-            char* pszEnvHome = getenv("HOME");
 
             CPLAssert( nullptr != pszEnvHome );
             CPLDebug( "ODBC", "HOME=%s", pszEnvHome );
@@ -112,7 +112,7 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
         }
 
         // Try to install ODBC driver in new location.
-        if( FALSE == SQLInstallDriverEx(pszDriver, nullptr, m_szPathOut,
+        if( FALSE == SQLInstallDriverEx(pszDriver, pszEnvHome, m_szPathOut,
                                         ODBC_FILENAME_MAX, nullptr, fRequest,
                                         &m_nUsageCount) )
         {
