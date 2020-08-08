@@ -289,6 +289,7 @@ template <typename T> static int MaskFill(BitMask &bitMask, T *src, const ILImag
 {
     int w = img.pagesize.x;
     int h = img.pagesize.y;
+    int stride = img.pagesize.c;
     int count = 0;
 
     bitMask.SetSize(w, h);
@@ -298,12 +299,22 @@ template <typename T> static int MaskFill(BitMask &bitMask, T *src, const ILImag
     T ndv = static_cast<T>(img.NoDataValue);
     if (!img.hasNoData) ndv = 0; // It really doesn't get called when img doesn't have NoDataValue
 
-    for (int i = 0; i < h; i++)
-        for (int j = 0; j < w; j++)
-            if (ndv == *src++) {
-                bitMask.SetInvalid(i, j);
-                count++;
-            }
+    if (1 == stride) {
+        for (int i = 0; i < h; i++)
+            for (int j = 0; j < w; j++)
+                if (ndv == *src++) {
+                    bitMask.SetInvalid(i, j);
+                    count++;
+                }
+    } else {
+        // Test only the first band for the ndv value
+        for (int i = 0; i < h; i++)
+            for (int j = 0; j < w; j++, src += stride)
+                if (ndv == *src) {
+                    bitMask.SetInvalid(i, j);
+                    count++;
+                }
+    }
 
     return count;
 }
@@ -312,6 +323,8 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
 {
     int w = img.pagesize.x;
     int h = img.pagesize.y;
+    int stride = img.pagesize.c;
+
     // So we build a bitmask to pass a pointer to bytes, which gets converted to a bitmask?
     BitMask bitMask;
     int ndv_count = 0;
@@ -332,20 +345,23 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
 #undef MASK
         }
     }
-    // Set bitmask if it has some ndvs
-    Lerc2 lerc2(1, w, h, (ndv_count == 0) ? nullptr : bitMask.Bits());
-    // Default to LERC2 V2
-    lerc2.SetEncoderToOldVersion(2);
-    bool success = false;
-    GDAL_LercNS::Byte *ptr = reinterpret_cast<GDAL_LercNS::Byte *>(dst.buffer);
 
-    long sz = 0;
+    GDAL_LercNS::Byte* ptr = reinterpret_cast<GDAL_LercNS::Byte*>(dst.buffer);
+    size_t sz = 0;
+    bool success = false;
+
+    // Set bitmask if it has the ndv defined
+    Lerc2 lerc2(stride, w, h, (ndv_count == 0) ? nullptr : bitMask.Bits());
+    // Default to LERC2 V2 for single band, otherwise go with the default, currently >= 4
+    if (stride == 1)
+        lerc2.SetEncoderToOldVersion(2);
+
     switch (img.dt) {
 
-#define ENCODE(T) if (true) { \
+#define ENCODE(T) if (true) {\
     sz = lerc2.ComputeNumBytesNeededToWrite(reinterpret_cast<T *>(src.buffer), precision, ndv_count != 0);\
     success = lerc2.Encode(reinterpret_cast<T *>(src.buffer), &ptr);\
-    }
+}
 
     case GDT_Byte:      ENCODE(GByte);      break;
     case GDT_UInt16:    ENCODE(GUInt16);    break;
@@ -369,23 +385,34 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
     return CE_None;
 }
 
-// Populate a LERC 2 bitmask based on comparison with the image no data value
+// Fill in no data values based on a LERC2 bitmask
 template <typename T> static void UnMask(BitMask &bitMask, T *arr, const ILImage &img)
 {
     int w = img.pagesize.x;
     int h = img.pagesize.y;
+    int stride = img.pagesize.c;
     if (w * h == bitMask.CountValidBits())
         return;
     T *ptr = arr;
     T ndv = T(img.NoDataValue);
     if (!img.hasNoData) ndv = 0; // It doesn't get called when img doesn't have NoDataValue
-    for (int i = 0; i < h; i++)
-        for (int j = 0; j < w; j++, ptr++)
-            if (!bitMask.IsValid(i, j))
-                *ptr = ndv;
+    if (1 == stride) {
+        for (int i = 0; i < h; i++)
+            for (int j = 0; j < w; j++, ptr++)
+                if (!bitMask.IsValid(i, j))
+                    *ptr = ndv;
+    }
+    else {
+        for (int i = 0; i < h; i++)
+            for (int j = 0; j < w; j++, ptr += stride)
+                if (!bitMask.IsValid(i, j))
+                    for (int c = 0 ; c < stride; c++)
+                        ptr[c] = ndv;
+    }
     return;
 }
 
+// LERC1 splits of at the begining, so this is mostly LERC2
 CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
 {
     const GDAL_LercNS::Byte *ptr = reinterpret_cast<GDAL_LercNS::Byte *>(src.buffer);
@@ -405,15 +432,15 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
     if (img.pagesize.x != hdInfo.nCols
         || img.pagesize.y != hdInfo.nRows
         || img.dt != GetL2DataType(hdInfo.dt)
-        || hdInfo.nDim != 1
-        || dst.size < static_cast<size_t>(hdInfo.nCols * hdInfo.nRows * GDALGetDataTypeSizeBytes(img.dt))) {
+        || img.pagesize.c != hdInfo.nDim
+        || dst.size < static_cast<size_t>(hdInfo.nCols * hdInfo.nRows * hdInfo.nDim * GDALGetDataTypeSizeBytes(img.dt))) {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: Lerc2 format error");
         return CE_Failure;
     }
 
     bool success = false;
     // we need to add the padding bytes so that out-of-buffer-access checksum
-    // don't false-positively trigger.
+    // don't false-positively trigger.  Is this still needed with Lerc2?
     size_t nRemainingBytes = src.size + PADDING_BYTES;
     BitMask bitMask(img.pagesize.x, img.pagesize.y);
     switch (img.dt) {
@@ -425,14 +452,15 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
     case GDT_UInt32:    DECODE(GUInt32);    break;
     case GDT_Float32:   DECODE(float);      break;
     case GDT_Float64:   DECODE(double);     break;
-    default:            CPLAssert(false);   break;
+    default:            break;
 #undef DECODE
     }
     if (!success) {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during LERC2 decompression");
         return CE_Failure;
     }
-    if (!img.hasNoData)
+
+    if (!img.hasNoData || bitMask.CountValidBits() == img.pagesize.x * img.pagesize.y)
         return CE_None;
 
     // Fill in no data values
@@ -445,7 +473,7 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
     case GDT_UInt32:    UNMASK(GUInt32);    break;
     case GDT_Float32:   UNMASK(float);      break;
     case GDT_Float64:   UNMASK(double);     break;
-    default:            CPLAssert(false);   break;
+    default:            break;
 #undef DECODE
     }
     return CE_None;
@@ -465,7 +493,8 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
         || poOpenInfo->pszFilename == nullptr
         || poOpenInfo->pabyHeader == nullptr
         || strlen(poOpenInfo->pszFilename) < 2)
-        // Header of Lerc2 takes 58 bytes, an empty area 62.  Lerc 1 empty file is 67.
+        // Header of Lerc2 takes 58 bytes, an empty area 62 or more, depending on the subversion.
+        // Size of Lerc1 empty file is 67
         // || poOpenInfo->nHeaderBytes < static_cast<int>(Lerc2::ComputeNumBytesHeader()))
         return nullptr;
 
@@ -489,6 +518,8 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
         if (l2.GetHeaderInfo(reinterpret_cast<GDAL_LercNS::Byte *>(psz), poOpenInfo->nHeaderBytes, hinfo)) {
             size.x = hinfo.nCols;
             size.y = hinfo.nRows;
+            if (hinfo.version >= 4) // subversion 4 introduces bands
+                size.c = hinfo.nDim;
             // Set the datatype, which marks it as valid
             dt = GetL2DataType(hinfo.dt);
         }
