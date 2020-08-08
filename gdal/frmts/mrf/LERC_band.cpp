@@ -377,11 +377,11 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
 
     // write changes the value of the pointer, we can find the size by testing how far it moved
     dst.size = reinterpret_cast<char *>(ptr) - dst.buffer;
-    if (!success || sz != static_cast<long>(dst.size)) {
+    if (!success || sz != dst.size) {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during LERC2 compression");
         return CE_Failure;
     }
-    CPLDebug("MRF_LERC", "LERC2 Compressed to %d\n", (int)sz);
+    CPLDebug("MRF_LERC", "LERC2 Compressed to %d\n", static_cast<int>(sz));
     return CE_None;
 }
 
