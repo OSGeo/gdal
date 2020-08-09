@@ -121,7 +121,7 @@ def test_ogr_dgnv8_5():
                'CATEGORY=category',
                'MANAGER=manager',
                'COMPANY=company']
-    ds = gdaltest.dgnv8_drv.CreateDataSource(tmp_dgn, options=options)
+    ds = ogr.GetDriverByName('DGNv8').CreateDataSource(tmp_dgn, options=options)
     lyr = ds.CreateLayer('my_layer')
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 1)'))
@@ -133,7 +133,7 @@ def test_ogr_dgnv8_5():
     ds = None
 
     tmp2_dgn = 'tmp/ogr_dgnv8_5_2.dgn'
-    gdaltest.dgnv8_drv.CreateDataSource(tmp2_dgn, options=['SEED=' + tmp_dgn, 'TITLE=another_title'])
+    ogr.GetDriverByName('DGNv8').CreateDataSource(tmp2_dgn, options=['SEED=' + tmp_dgn, 'TITLE=another_title'])
     ds = ogr.Open(tmp2_dgn)
     assert ds.GetMetadataItem('TITLE', 'DGN') == 'another_title' and ds.GetMetadataItem('APPLICATION', 'DGN') == 'application', \
         ds.GetMetadata('DGN')
@@ -142,7 +142,7 @@ def test_ogr_dgnv8_5():
     assert lyr.GetFeatureCount() == 0
     ds = None
 
-    ds = gdaltest.dgnv8_drv.CreateDataSource(tmp2_dgn, options=['SEED=' + tmp_dgn])
+    ds = ogr.GetDriverByName('DGNv8').CreateDataSource(tmp2_dgn, options=['SEED=' + tmp_dgn])
     lyr = ds.CreateLayer('a_layer', options=['DESCRIPTION=my_layer', 'DIM=2'])
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2 3)'))

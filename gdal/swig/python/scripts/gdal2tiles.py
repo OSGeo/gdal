@@ -42,6 +42,8 @@ from __future__ import print_function, division
 import math
 from multiprocessing import Pool
 from functools import partial
+import glob
+import json
 import os
 import tempfile
 import threading
@@ -67,8 +69,136 @@ __version__ = "$Id$"
 resampling_list = (
     'average', 'near', 'bilinear', 'cubic', 'cubicspline', 'lanczos',
     'antialias', 'mode', 'max', 'min', 'med', 'q1', 'q3')
-profile_list = ('mercator', 'geodetic', 'raster')
-webviewer_list = ('all', 'google', 'openlayers', 'leaflet', 'none')
+webviewer_list = ('all', 'google', 'openlayers', 'leaflet', 'mapml', 'none')
+
+class UnsupportedTileMatrixSet(Exception):
+    pass
+
+class TileMatrixSet(object):
+    def __init__(self):
+        self.identifier = None
+        self.srs = None
+        self.topleft_x = None
+        self.topleft_y = None
+        self.matrix_width = None        # at zoom 0
+        self.matrix_height = None       # at zoom 0
+        self.tile_size = None
+        self.resolution = None          # at zoom 0
+        self.level_count = None
+
+    def GeorefCoordToTileCoord(self, x, y, z, overriden_tile_size):
+        res = self.resolution * self.tile_size / overriden_tile_size / (2**z)
+        tx = int((x - self.topleft_x) / (res * overriden_tile_size))
+        # In default mode, we use a bottom-y origin
+        ty = int((y - (self.topleft_y - self.matrix_height * self.tile_size * self.resolution)) / (res * overriden_tile_size))
+        return tx, ty
+
+    def ZoomForPixelSize(self, pixelSize, overriden_tile_size):
+        "Maximal scaledown zoom of the pyramid closest to the pixelSize."
+
+        for i in range(self.level_count):
+            res = self.resolution * self.tile_size / overriden_tile_size / (2**i)
+            if pixelSize > res:
+                return max(0, i - 1)    # We don't want to scale up
+        return self.level_count - 1
+
+    def PixelsToMeters(self, px, py, zoom, overriden_tile_size):
+        "Converts pixel coordinates in given zoom level of pyramid to EPSG:3857"
+
+        res = self.resolution * self.tile_size / overriden_tile_size / (2**zoom)
+        mx = px * res + self.topleft_x
+        my = py * res + (self.topleft_y - self.matrix_height * self.tile_size * self.resolution)
+        return mx, my
+
+    def TileBounds(self, tx, ty, zoom, overriden_tile_size):
+        "Returns bounds of the given tile in georef coordinates"
+
+        minx, miny = self.PixelsToMeters(tx * overriden_tile_size, ty * overriden_tile_size, zoom, overriden_tile_size)
+        maxx, maxy = self.PixelsToMeters((tx + 1) * overriden_tile_size, (ty + 1) * overriden_tile_size, zoom, overriden_tile_size)
+        return (minx, miny, maxx, maxy)
+
+    @staticmethod
+    def parse(j):
+        assert 'identifier' in j
+        assert 'supportedCRS' in j
+        assert 'tileMatrix' in j
+        assert isinstance(j['tileMatrix'], list)
+        srs = osr.SpatialReference()
+        assert srs.SetFromUserInput(str(j['supportedCRS'])) == 0
+        swapaxis = srs.EPSGTreatsAsLatLong() or srs.EPSGTreatsAsNorthingEasting()
+        metersPerUnit = 1.0
+        if srs.IsProjected():
+            metersPerUnit = srs.GetLinearUnits()
+        elif srs.IsGeographic():
+            metersPerUnit = srs.GetSemiMajor() * math.pi / 180;
+        tms = TileMatrixSet()
+        tms.srs = srs
+        tms.identifier = str(j['identifier'])
+        for i, tileMatrix in enumerate(j['tileMatrix']):
+            assert 'topLeftCorner' in tileMatrix
+            assert isinstance(tileMatrix['topLeftCorner'], list)
+            topLeftCorner = tileMatrix['topLeftCorner']
+            assert len(topLeftCorner) == 2
+            assert 'scaleDenominator' in tileMatrix
+            assert 'tileWidth' in tileMatrix
+            assert 'tileHeight' in tileMatrix
+
+            topleft_x = topLeftCorner[0]
+            topleft_y = topLeftCorner[1]
+            tileWidth = tileMatrix['tileWidth']
+            tileHeight = tileMatrix['tileHeight']
+            if tileWidth != tileHeight:
+                raise UnsupportedTileMatrixSet('Only square tiles supported')
+            # Convention in OGC TileMatrixSet definition. See gcore/tilematrixset.cpp
+            resolution = tileMatrix['scaleDenominator'] * 0.28e-3 / metersPerUnit
+            if swapaxis:
+                topleft_x, topleft_y = topleft_y, topleft_x
+            if i == 0:
+                tms.topleft_x = topleft_x
+                tms.topleft_y = topleft_y
+                tms.resolution = resolution
+                tms.tile_size = tileWidth
+
+                assert 'matrixWidth' in tileMatrix
+                assert 'matrixHeight' in tileMatrix
+                tms.matrix_width = tileMatrix['matrixWidth']
+                tms.matrix_height = tileMatrix['matrixHeight']
+            else:
+                if topleft_x != tms.topleft_x or topleft_y != tms.topleft_y:
+                    raise UnsupportedTileMatrixSet('All levels should have same origin')
+                if abs(tms.resolution / (1 << i) - resolution) > 1e-8 * resolution:
+                    raise UnsupportedTileMatrixSet('Only resolutions varying as power-of-two supported')
+                if tileWidth != tms.tile_size:
+                    raise UnsupportedTileMatrixSet('All levels should have same tile size')
+        tms.level_count = len(j['tileMatrix'])
+        return tms
+
+tmsMap = {}
+
+profile_list = ['mercator', 'geodetic', 'raster']
+
+# Read additional tile matrix sets from GDAL data directory
+filename = gdal.FindFile('gdal', 'tms_MapML_APSTILE.json')
+if filename:
+    dirname = os.path.dirname(filename)
+    for tmsfilename in glob.glob(os.path.join(dirname, "tms_*.json")):
+        data = open(tmsfilename, 'rb').read()
+        try:
+            j = json.loads(data.decode('utf-8'))
+        except:
+            j = None
+        if j is None:
+            print('Cannot parse ' + tmsfilename)
+            continue
+        try:
+            tms = TileMatrixSet.parse(j)
+        except UnsupportedTileMatrixSet:
+            continue
+        except:
+            print('Cannot parse ' + tmsfilename)
+            continue
+        tmsMap[tms.identifier] = tms
+        profile_list.append(tms.identifier)
 
 threadLocal = threading.local()
 
@@ -518,7 +648,8 @@ def generate_kml(tx, ty, tz, tileext, tile_size, tileswne, options, children=Non
         args['title'] = options.title
     else:
         tilekml = True
-        args['title'] = "%d/%d/%d.kml" % (tz, tx, ty)
+        args['realtiley'] = GDAL2Tiles.getYTile(ty, tz, options)
+        args['title'] = "%d/%d/%d.kml" % (tz, tx, args['realtiley'])
         args['south'], args['west'], args['north'], args['east'] = tileswne(tx, ty, tz)
 
     if tx == 0:
@@ -562,7 +693,7 @@ def generate_kml(tx, ty, tz, tileext, tile_size, tileswne, options, children=Non
     <GroundOverlay>
       <drawOrder>%(drawOrder)d</drawOrder>
       <Icon>
-        <href>%(ty)d.%(tileformat)s</href>
+        <href>%(realtiley)d.%(tileformat)s</href>
       </Icon>
       <LatLonBox>
         <north>%(north).14f</north>
@@ -575,6 +706,7 @@ def generate_kml(tx, ty, tz, tileext, tile_size, tileswne, options, children=Non
 
     for cx, cy, cz in children:
         csouth, cwest, cnorth, ceast = tileswne(cx, cy, cz)
+        ytile = GDAL2Tiles.getYTile(cy, cz, options)
         s += """
     <NetworkLink>
       <name>%d/%d/%d.%s</name>
@@ -596,8 +728,8 @@ def generate_kml(tx, ty, tz, tileext, tile_size, tileswne, options, children=Non
         <viewFormat/>
       </Link>
     </NetworkLink>
-        """ % (cz, cx, cy, args['tileformat'], cnorth, csouth, ceast, cwest,
-               args['minlodpixels'], url, cz, cx, cy)
+        """ % (cz, cx, ytile, args['tileformat'], cnorth, csouth, ceast, cwest,
+               args['minlodpixels'], url, cz, cx, ytile)
 
     s += """      </Document>
 </kml>
@@ -746,15 +878,17 @@ def setup_output_srs(input_srs, options):
     Setup the desired SRS (based on options)
     """
     output_srs = osr.SpatialReference()
-    output_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
 
     if options.profile == 'mercator':
         output_srs.ImportFromEPSG(3857)
     elif options.profile == 'geodetic':
         output_srs.ImportFromEPSG(4326)
-    else:
+    elif options.profile == 'raster':
         output_srs = input_srs
+    else:
+        output_srs = tmsMap[options.profile].srs.Clone()
 
+    output_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     return output_srs
 
 
@@ -1025,13 +1159,15 @@ def create_base_tile(tile_job_info, tile_detail):
 
     # Create a KML file for this tile.
     if tile_job_info.kml:
-        kmlfilename = os.path.join(output, str(tz), str(tx), '%d.kml' % ty)
-        if not options.resume or not os.path.exists(kmlfilename):
-            with open(kmlfilename, 'wb') as f:
-                f.write(generate_kml(
-                    tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
-                    get_tile_swne(tile_job_info, options), tile_job_info.options
-                ).encode('utf-8'))
+        swne = get_tile_swne(tile_job_info, options)
+        if swne is not None:
+            kmlfilename = os.path.join(output, str(tz), str(tx), '%d.kml' % GDAL2Tiles.getYTile(ty, tz, options))
+            if not options.resume or not os.path.exists(kmlfilename):
+                with open(kmlfilename, 'wb') as f:
+                    f.write(generate_kml(
+                        tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
+                        swne, tile_job_info.options
+                    ).encode('utf-8'))
 
 
 
@@ -1112,16 +1248,23 @@ def create_overview_tiles(tile_job_info, output_folder, options):
                             dsquerytile = gdal.Open(
                                 base_tile_path,
                                 gdal.GA_ReadOnly)
-                            if (ty == 0 and y == 1) or (ty != 0 and (y % (2 * ty)) != 0):
-                                tileposy = 0
-                            else:
-                                tileposy = tile_job_info.tile_size
-                            if tx:
-                                tileposx = x % (2 * tx) * tile_job_info.tile_size
-                            elif tx == 0 and x == 1:
-                                tileposx = tile_job_info.tile_size
-                            else:
+
+                            if x == 2*tx:
                                 tileposx = 0
+                            else:
+                                tileposx = tile_job_info.tile_size
+
+                            if options.xyz and options.profile == 'raster':
+                                if y == 2*ty:
+                                    tileposy = 0
+                                else:
+                                    tileposy = tile_job_info.tile_size
+                            else:
+                                if y == 2*ty:
+                                    tileposy = tile_job_info.tile_size
+                                else:
+                                    tileposy = 0
+
                             dsquery.WriteRaster(
                                 tileposx, tileposy, tile_job_info.tile_size,
                                 tile_job_info.tile_size,
@@ -1146,14 +1289,16 @@ def create_overview_tiles(tile_job_info, output_folder, options):
 
                     # Create a KML file for this tile.
                     if tile_job_info.kml:
-                        with open(os.path.join(
-                            output_folder,
-                            '%d/%d/%d.kml' % (tz, tx, ty)
-                        ), 'wb') as f:
-                            f.write(generate_kml(
-                                tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
-                                get_tile_swne(tile_job_info, options), options, children
-                            ).encode('utf-8'))
+                        swne = get_tile_swne(tile_job_info, options)
+                        if swne is not None:
+                            with open(os.path.join(
+                                output_folder,
+                                '%d/%d/%d.kml' % (tz, tx, ytile)
+                            ), 'wb') as f:
+                                f.write(generate_kml(
+                                    tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
+                                    swne, options, children
+                                ).encode('utf-8'))
 
                 if not options.verbose and not options.quiet:
                     progress_bar.log_progress()
@@ -1231,6 +1376,17 @@ def optparse_init():
                  help="Bing Maps API key from https://www.bingmapsportal.com/")
     p.add_option_group(g)
 
+    # MapML options
+    g = OptionGroup(p, "MapML options",
+                    "Options for generated MapML file")
+    g.add_option("--mapml-template", dest='mapml_template', action="store_true",
+                 help=("Filename of a template mapml file where variables will "
+                       "be substituted. If not specified, the generic "
+                       "template_tiles.mapml file from GDAL data resources "
+                       "will be used"))
+    p.add_option_group(g)
+
+
     p.set_defaults(verbose=False, profile="mercator", kml=False, url='',
                    webviewer='all', copyright='', resampling='average', resume=False,
                    googlekey='INSERT_YOUR_KEY_HERE', bingkey='INSERT_YOUR_KEY_HERE',
@@ -1260,6 +1416,11 @@ def process_args(argv):
     else:
         # Directory with input filename without extension in actual directory
         output_folder = os.path.splitext(os.path.basename(input_file))[0]
+
+    if options.webviewer == 'mapml':
+        options.xyz = True
+        if options.profile == 'geodetic':
+            options.tmscompatible = True
 
     options = options_post_processing(options, input_file, output_folder)
 
@@ -1406,6 +1567,7 @@ class GDAL2Tiles(object):
         self.output_folder = None
 
         self.isepsg4326 = None
+        self.in_srs = None
         self.in_srs_wkt = None
 
         # Tile format
@@ -1522,18 +1684,18 @@ class GDAL2Tiles(object):
                                                input_dataset.RasterYSize,
                                                input_dataset.RasterCount))
 
-        in_srs, self.in_srs_wkt = setup_input_srs(input_dataset, self.options)
+        self.in_srs, self.in_srs_wkt = setup_input_srs(input_dataset, self.options)
 
-        self.out_srs = setup_output_srs(in_srs, self.options)
+        self.out_srs = setup_output_srs(self.in_srs, self.options)
 
         # If input and output reference systems are different, we reproject the input dataset into
         # the output reference system for easier manipulation
 
         self.warped_input_dataset = None
 
-        if self.options.profile in ('mercator', 'geodetic'):
+        if self.options.profile != 'raster':
 
-            if not in_srs:
+            if not self.in_srs:
                 exit_with_error(
                     "Input file has unknown SRS.",
                     "Use --s_srs EPSG:xyz (or similar) to provide source reference system.")
@@ -1546,10 +1708,10 @@ class GDAL2Tiles(object):
                     "software for georeference e.g. gdal_transform -gcp / -a_ullr / -a_srs"
                 )
 
-            if ((in_srs.ExportToProj4() != self.out_srs.ExportToProj4()) or
+            if ((self.in_srs.ExportToProj4() != self.out_srs.ExportToProj4()) or
                     (input_dataset.GetGCPCount() != 0)):
                 self.warped_input_dataset = reproject_dataset(
-                    input_dataset, in_srs, self.out_srs)
+                    input_dataset, self.in_srs, self.out_srs)
 
                 if in_nodata:
                     self.warped_input_dataset = update_no_data_values(
@@ -1640,6 +1802,8 @@ class GDAL2Tiles(object):
             if self.tmaxz is None:
                 self.tmaxz = self.mercator.ZoomForPixelSize(self.out_gt[1])
 
+            self.tminz = min(self.tminz, self.tmaxz)
+
             if self.options.verbose:
                 print("Bounds (latlong):",
                       self.mercator.MetersToLatLon(self.ominx, self.ominy),
@@ -1651,7 +1815,7 @@ class GDAL2Tiles(object):
                       self.mercator.Resolution(self.tmaxz),
                       ")")
 
-        if self.options.profile == 'geodetic':
+        elif self.options.profile == 'geodetic':
 
             self.geodetic = GlobalGeodetic(self.options.tmscompatible, tile_size=self.tile_size)
 
@@ -1684,17 +1848,19 @@ class GDAL2Tiles(object):
             if self.tmaxz is None:
                 self.tmaxz = self.geodetic.ZoomForPixelSize(self.out_gt[1])
 
+            self.tminz = min(self.tminz, self.tmaxz)
+
             if self.options.verbose:
                 print("Bounds (latlong):", self.ominx, self.ominy, self.omaxx, self.omaxy)
 
-        if self.options.profile == 'raster':
+        elif self.options.profile == 'raster':
 
             def log2(x):
                 return math.log10(x) / math.log10(2)
 
-            self.nativezoom = int(
+            self.nativezoom = max(0, int(
                 max(math.ceil(log2(self.warped_input_dataset.RasterXSize / float(self.tile_size))),
-                    math.ceil(log2(self.warped_input_dataset.RasterYSize / float(self.tile_size)))))
+                    math.ceil(log2(self.warped_input_dataset.RasterYSize / float(self.tile_size))))))
 
             if self.options.verbose:
                 print("Native zoom of the raster:", self.nativezoom)
@@ -1711,7 +1877,7 @@ class GDAL2Tiles(object):
             self.tminmax = list(range(0, self.tmaxz + 1))
             self.tsize = list(range(0, self.tmaxz + 1))
             for tz in range(0, self.tmaxz + 1):
-                tsize = 2.0**(self.nativezoom - tz) * self.tile_size
+                tsize = 2.0**(self.tmaxz - tz) * self.tile_size
                 tminx, tminy = 0, 0
                 tmaxx = int(math.ceil(self.warped_input_dataset.RasterXSize / tsize)) - 1
                 tmaxy = int(math.ceil(self.warped_input_dataset.RasterYSize / tsize)) - 1
@@ -1720,14 +1886,18 @@ class GDAL2Tiles(object):
 
             # Function which generates SWNE in LatLong for given tile
             if self.kml and self.in_srs_wkt:
-                ct = osr.CoordinateTransformation(in_srs, srs4326)
+                ct = osr.CoordinateTransformation(self.in_srs, srs4326)
 
                 def rastertileswne(x, y, z):
                     pixelsizex = (2**(self.tmaxz - z) * self.out_gt[1])       # X-pixel size in level
                     west = self.out_gt[0] + x * self.tile_size * pixelsizex
                     east = west + self.tile_size * pixelsizex
-                    south = self.ominy + y * self.tile_size * pixelsizex
-                    north = south + self.tile_size * pixelsizex
+                    if self.options.xyz:
+                        north = self.omaxy - y * self.tile_size * pixelsizex
+                        south = north - self.tile_size * pixelsizex
+                    else:
+                        south = self.ominy + y * self.tile_size * pixelsizex
+                        north = south + self.tile_size * pixelsizex
                     if not self.isepsg4326:
                         # Transformation to EPSG:4326 (WGS84 datum)
                         west, south = ct.TransformPoint(west, south)[:2]
@@ -1737,6 +1907,43 @@ class GDAL2Tiles(object):
                 self.tileswne = rastertileswne
             else:
                 self.tileswne = lambda x, y, z: (0, 0, 0, 0)   # noqa
+
+        else:
+
+            tms = tmsMap[self.options.profile]
+
+            # Function which generates SWNE in LatLong for given tile
+            self.tileswne = None # not implemented
+
+            # Generate table with min max tile coordinates for all zoomlevels
+            self.tminmax = list(range(0, tms.level_count+1))
+            for tz in range(0, tms.level_count+1):
+                tminx, tminy = tms.GeorefCoordToTileCoord(self.ominx, self.ominy, tz, self.tile_size)
+                tmaxx, tmaxy = tms.GeorefCoordToTileCoord(self.omaxx, self.omaxy, tz, self.tile_size)
+                tminx, tminy = max(0, tminx), max(0, tminy)
+                tmaxx, tmaxy = min(tms.matrix_width * 2**tz - 1, tmaxx), min(tms.matrix_height * 2**tz - 1, tmaxy)
+                self.tminmax[tz] = (tminx, tminy, tmaxx, tmaxy)
+
+            # Get the minimal zoom level (map covers area equivalent to one tile)
+            if self.tminz is None:
+                self.tminz = tms.ZoomForPixelSize(
+                    self.out_gt[1] *
+                    max(self.warped_input_dataset.RasterXSize,
+                        self.warped_input_dataset.RasterYSize) /
+                    float(self.tile_size), self.tile_size)
+
+            # Get the maximal zoom level
+            # (closest possible zoom level up on the resolution of raster)
+            if self.tmaxz is None:
+                self.tmaxz = tms.ZoomForPixelSize(self.out_gt[1], self.tile_size)
+
+            self.tminz = min(self.tminz, self.tmaxz)
+
+            if self.options.verbose:
+                print("Bounds (georef):", self.ominx, self.ominy, self.omaxx, self.omaxy)
+                print('MinZoomLevel:', self.tminz)
+                print("MaxZoomLevel:", self.tmaxz)
+
 
     def generate_metadata(self):
         """
@@ -1762,13 +1969,6 @@ class GDAL2Tiles(object):
                     with open(os.path.join(self.output_folder, 'googlemaps.html'), 'wb') as f:
                         f.write(self.generate_googlemaps().encode('utf-8'))
 
-            # Generate openlayers.html
-            if self.options.webviewer in ('all', 'openlayers'):
-                if (not self.options.resume or not
-                        os.path.exists(os.path.join(self.output_folder, 'openlayers.html'))):
-                    with open(os.path.join(self.output_folder, 'openlayers.html'), 'wb') as f:
-                        f.write(self.generate_openlayers().encode('utf-8'))
-
             # Generate leaflet.html
             if self.options.webviewer in ('all', 'leaflet'):
                 if (not self.options.resume or not
@@ -1784,13 +1984,6 @@ class GDAL2Tiles(object):
             north, east = min(90.0, north), min(180.0, east)
             self.swne = (south, west, north, east)
 
-            # Generate openlayers.html
-            if self.options.webviewer in ('all', 'openlayers'):
-                if (not self.options.resume or not
-                        os.path.exists(os.path.join(self.output_folder, 'openlayers.html'))):
-                    with open(os.path.join(self.output_folder, 'openlayers.html'), 'wb') as f:
-                        f.write(self.generate_openlayers().encode('utf-8'))
-
         elif self.options.profile == 'raster':
 
             west, south = self.ominx, self.ominy
@@ -1798,19 +1991,32 @@ class GDAL2Tiles(object):
 
             self.swne = (south, west, north, east)
 
-            # Generate openlayers.html
-            if self.options.webviewer in ('all', 'openlayers'):
-                if (not self.options.resume or not
-                        os.path.exists(os.path.join(self.output_folder, 'openlayers.html'))):
-                    with open(os.path.join(self.output_folder, 'openlayers.html'), 'wb') as f:
-                        f.write(self.generate_openlayers().encode('utf-8'))
+        else:
+            self.swne = None
+
+        # Generate openlayers.html
+        if self.options.webviewer in ('all', 'openlayers'):
+            if (not self.options.resume or not
+                    os.path.exists(os.path.join(self.output_folder, 'openlayers.html'))):
+                with open(os.path.join(self.output_folder, 'openlayers.html'), 'wb') as f:
+                    f.write(self.generate_openlayers().encode('utf-8'))
 
         # Generate tilemapresource.xml.
-        if not self.options.resume or not os.path.exists(os.path.join(self.output_folder, 'tilemapresource.xml')):
+        if not self.options.xyz and self.swne is not None and (not self.options.resume or not os.path.exists(os.path.join(self.output_folder, 'tilemapresource.xml'))):
             with open(os.path.join(self.output_folder, 'tilemapresource.xml'), 'wb') as f:
                 f.write(self.generate_tilemapresource().encode('utf-8'))
 
-        if self.kml:
+        # Generate mapml file
+        if self.options.webviewer in ('all', 'mapml') and \
+           self.options.xyz and \
+           self.options.profile != 'raster' and \
+           (self.options.profile != 'geodetic' or self.options.tmscompatible) and \
+           (not self.options.resume or not os.path.exists(os.path.join(self.output_folder, 'mapml.mapml'))):
+            with open(os.path.join(self.output_folder, 'mapml.mapml'), 'wb') as f:
+                f.write(self.generate_mapml().encode('utf-8'))
+
+
+        if self.kml and self.tileswne is not None:
             # TODO: Maybe problem for not automatically generated tminz
             # The root KML should contain links to all tiles in the tminz level
             children = []
@@ -1883,11 +2089,13 @@ class GDAL2Tiles(object):
                     b = self.mercator.TileBounds(tx, ty, tz)
                 elif self.options.profile == 'geodetic':
                     b = self.geodetic.TileBounds(tx, ty, tz)
+                elif self.options.profile != 'raster':
+                    b = tmsMap[self.options.profile].TileBounds(tx, ty, tz, self.tile_size)
 
                 # Don't scale up by nearest neighbour, better change the querysize
                 # to the native resolution (and return smaller query tile) for scaling
 
-                if self.options.profile in ('mercator', 'geodetic'):
+                if self.options.profile != 'raster':
                     rb, wb = self.geo_query(ds, b[0], b[3], b[2], b[1])
 
                     # Pixel size in the raster covering query geo extent
@@ -1906,28 +2114,31 @@ class GDAL2Tiles(object):
                     tsize = int(self.tsize[tz])   # tile_size in raster coordinates for actual zoom
                     xsize = self.warped_input_dataset.RasterXSize     # size of the raster in pixels
                     ysize = self.warped_input_dataset.RasterYSize
-                    if tz >= self.nativezoom:
+                    if tz >= self.tmaxz:
                         querysize = self.tile_size
 
-                    rx = (tx) * tsize
+                    rx = tx * tsize
                     rxsize = 0
                     if tx == tmaxx:
                         rxsize = xsize % tsize
                     if rxsize == 0:
                         rxsize = tsize
 
+                    ry = ty * tsize
                     rysize = 0
                     if ty == tmaxy:
                         rysize = ysize % tsize
                     if rysize == 0:
                         rysize = tsize
-                    ry = ysize - (ty * tsize) - rysize
 
                     wx, wy = 0, 0
                     wxsize = int(rxsize / float(tsize) * self.tile_size)
                     wysize = int(rysize / float(tsize) * self.tile_size)
-                    if wysize != self.tile_size:
-                        wy = self.tile_size - wysize
+
+                    if not self.options.xyz:
+                        ry = ysize - (ty * tsize) - rysize
+                        if wysize != self.tile_size:
+                            wy = self.tile_size - wysize
 
                 # Read the source raster if anything is going inside the tile as per the computed
                 # geo_query
@@ -2484,337 +2695,331 @@ class GDAL2Tiles(object):
 
     def generate_openlayers(self):
         """
-        Template for openlayers.html implementing overlay of available Spherical Mercator layers.
+        Template for openlayers.html, with the tiles as overlays, and base layers.
 
-        It returns filled string. Expected variables:
-        title, bingkey, north, south, east, west, minzoom, maxzoom, tile_size, tileformat, publishurl
+        It returns filled string.
         """
 
         args = {}
         args['title'] = self.options.title
         args['bingkey'] = self.options.bingkey
-        args['south'], args['west'], args['north'], args['east'] = self.swne
         args['minzoom'] = self.tminz
         args['maxzoom'] = self.tmaxz
         args['tile_size'] = self.tile_size
         args['tileformat'] = self.tileext
         args['publishurl'] = self.options.url
         args['copyright'] = self.options.copyright
-        if self.options.tmscompatible:
-            args['tmsoffset'] = "-1"
+        if self.options.xyz:
+            args['sign_y'] = ''
         else:
-            args['tmsoffset'] = ""
-        if self.options.profile == 'raster':
-            args['rasterzoomlevels'] = self.tmaxz + 1
-            args['rastermaxresolution'] = 2**(self.nativezoom) * self.out_gt[1]
+            args['sign_y'] = '-'
+
+        args['ominx'] = self.ominx
+        args['ominy'] = self.ominy
+        args['omaxx'] = self.omaxx
+        args['omaxy'] = self.omaxy
+        args['center_x'] = (self.ominx + self.omaxx) / 2
+        args['center_y'] = (self.ominy + self.omaxy) / 2
 
         s = r"""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-        <html xmlns="http://www.w3.org/1999/xhtml"
-          <head>
-            <title>%(title)s</title>
-            <meta http-equiv='imagetoolbar' content='no'/>
-            <style type="text/css"> v\:* {behavior:url(#default#VML);}
-                html, body { overflow: hidden; padding: 0; height: 100%%; width: 100%%; font-family: 'Lucida Grande',Geneva,Arial,Verdana,sans-serif; }
-                body { margin: 10px; background: #fff; }
-                h1 { margin: 0; padding: 6px; border:0; font-size: 20pt; }
-            #header { height: 43px; padding: 0; background-color: #eee; border: 1px solid #888; }
-            #subheader { height: 12px; text-align: right; font-size: 10px; color: #555;}
-            #map { height: 95%%; border: 1px solid #888; }
-            .olImageLoadError { display: none; }
-            .olControlLayerSwitcher .layersDiv { border-radius: 10px 0 0 10px; }
-        </style>""" % args    # noqa
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+    <title>%(title)s</title>
+    <meta http-equiv='imagetoolbar' content='no'/>
+    <style type="text/css"> v\:* {behavior:url(#default#VML);}
+        html, body { overflow: hidden; padding: 0; height: 100%%; width: 100%%; font-family: 'Lucida Grande',Geneva,Arial,Verdana,sans-serif; }
+        body { margin: 10px; background: #fff; }
+        h1 { margin: 0; padding: 6px; border:0; font-size: 20pt; }
+        #header { height: 43px; padding: 0; background-color: #eee; border: 1px solid #888; }
+        #subheader { height: 12px; text-align: right; font-size: 10px; color: #555;}
+        #map { height: 90%%; border: 1px solid #888; }
+    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.3.1/css/ol.css" type="text/css">
+    <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.3.1/build/ol.js"></script>
+    <script src="https://unpkg.com/ol-layerswitcher@3.5.0"></script>
+    <link rel="stylesheet" href="https://unpkg.com/ol-layerswitcher@3.5.0/src/ol-layerswitcher.css" />
+</head>
+<body>
+    <div id="header"><h1>%(title)s</h1></div>
+    <div id="subheader">Generated by <a href="https://gdal.org/programs/gdal2tiles.html">GDAL2Tiles</a>&nbsp;&nbsp;&nbsp;&nbsp;</div>
+    <div id="map" class="map"></div>
+    <div id="mouse-position"></div>
+    <script type="text/javascript">
+        var mousePositionControl = new ol.control.MousePosition({
+            className: 'custom-mouse-position',
+            target: document.getElementById('mouse-position'),
+            undefinedHTML: '&nbsp;'
+        });
+        var map = new ol.Map({
+            controls: ol.control.defaults().extend([mousePositionControl]),
+            target: 'map',
+""" % args
+
+        if self.options.profile == 'mercator' or self.options.profile == 'geodetic':
+            s += """
+            layers: [
+                new ol.layer.Group({
+                        title: 'Base maps',
+                        layers: [
+                            new ol.layer.Tile({
+                                title: 'OpenStreetMap',
+                                type: 'base',
+                                visible: true,
+                                source: new ol.source.OSM()
+                            }),
+                            new ol.layer.Tile({
+                                title: 'Bing Roads',
+                                type: 'base',
+                                visible: false,
+                                source: new ol.source.BingMaps({
+                                    key: "%(bingkey)s",
+                                    imagerySet: 'Road'
+                                })
+                            }),
+                            new ol.layer.Tile({
+                                title: 'Bing Aerial',
+                                type: 'base',
+                                visible: false,
+                                source: new ol.source.BingMaps({
+                                    key: "%(bingkey)s",
+                                    imagerySet: 'Aerial'
+                                })
+                            }),
+                            new ol.layer.Tile({
+                                title: 'Bing Hybrid',
+                                type: 'base',
+                                visible: false,
+                                source: new ol.source.BingMaps({
+                                    key: "%(bingkey)s",
+                                    imagerySet: 'AerialWithLabels'
+                                })
+                            }),
+                        ]
+                }),""" % args    # noqa
 
         if self.options.profile == 'mercator':
             s += """
-            <script src='http://maps.google.com/maps/api/js?sensor=false&v=3.7'></script>
-            """ % args
+                new ol.layer.Group({
+                    title: 'Overlay',
+                    layers: [
+                        new ol.layer.Tile({
+                            title: 'Overlay',
+                            // opacity: 0.7,
+                            extent: [%(ominx)f, %(ominy)f,%(omaxx)f, %(omaxy)f],
+                            source: new ol.source.XYZ({
+                                attributions: '%(copyright)s',
+                                minZoom: %(minzoom)d,
+                                maxZoom: %(maxzoom)d,
+                                url: './{z}/{x}/{%(sign_y)sy}.%(tileformat)s',
+                                tileSize: [%(tile_size)d, %(tile_size)d]
+                            })
+                        }),
+                    ]
+                }),""" % args    # noqa
 
-        s += """
-            <script src="http://www.openlayers.org/api/2.12/OpenLayers.js"></script>
-            <script>
-              var map;
-              var mapBounds = new OpenLayers.Bounds( %(west)s, %(south)s, %(east)s, %(north)s);
-              var mapMinZoom = %(minzoom)s;
-              var mapMaxZoom = %(maxzoom)s;
-              var emptyTileURL = "http://www.maptiler.org/img/none.png";
-              OpenLayers.IMAGE_RELOAD_ATTEMPTS = 3;
+        elif self.options.profile == 'geodetic':
 
-              function init(){""" % args
-
-        if self.options.profile == 'mercator':
-            s += """
-                  var options = {
-                      div: "map",
-                      controls: [],
-                      projection: "EPSG:3857",
-                      displayProjection: new OpenLayers.Projection("EPSG:4326"),
-                      numZoomLevels: 20
-                  };
-                  map = new OpenLayers.Map(options);
-
-                  // Create Google Mercator layers
-                  var gmap = new OpenLayers.Layer.Google("Google Streets",
-                  {
-                      type: google.maps.MapTypeId.ROADMAP,
-                      sphericalMercator: true
-                  });
-                  var gsat = new OpenLayers.Layer.Google("Google Satellite",
-                  {
-                      type: google.maps.MapTypeId.SATELLITE,
-                      sphericalMercator: true
-                  });
-                  var ghyb = new OpenLayers.Layer.Google("Google Hybrid",
-                  {
-                      type: google.maps.MapTypeId.HYBRID,
-                      sphericalMercator: true
-                  });
-                  var gter = new OpenLayers.Layer.Google("Google Terrain",
-                  {
-                      type: google.maps.MapTypeId.TERRAIN,
-                      sphericalMercator: true
-                  });
-
-                  // Create Bing layers
-                  var broad = new OpenLayers.Layer.Bing({
-                      name: "Bing Roads",
-                      key: "%(bingkey)s",
-                      type: "Road",
-                      sphericalMercator: true
-                  });
-                  var baer = new OpenLayers.Layer.Bing({
-                      name: "Bing Aerial",
-                      key: "%(bingkey)s",
-                      type: "Aerial",
-                      sphericalMercator: true
-                  });
-                  var bhyb = new OpenLayers.Layer.Bing({
-                      name: "Bing Hybrid",
-                      key: "%(bingkey)s",
-                      type: "AerialWithLabels",
-                      sphericalMercator: true
-                  });
-
-                  // Create OSM layer
-                  var osm = new OpenLayers.Layer.OSM("OpenStreetMap");
-
-            """ % args    # noqa
+            if self.options.tmscompatible:
+                base_res = 180. / self.tile_size
+            else:
+                base_res = 360. / self.tile_size
+            resolutions = [ base_res / 2**i for i in range(self.tmaxz+1) ]
+            args['resolutions'] = '[' + ','.join('%.18g' % res for res in resolutions) + ']'
 
             if self.options.xyz:
-                s += """
-                  // create TMS Overlay layer
-                  var tmsoverlay = new OpenLayers.Layer.XYZ("XYZ Overlay",
-                      "${z}/${x}/${y}.png", {
-                      transitionEffect: 'resize',
-                      isBaseLayer: false
-                  });
-
-                """ % args    # noqa
+                args['origin'] = '[-180,90]'
+                args['y_formula'] = 'tileCoord[2]'
             else:
+                args['origin'] = '[-180,-90]'
+                args['y_formula'] = '- 1 - tileCoord[2]'
+
+            s += """
+                new ol.layer.Group({
+                    title: 'Overlay',
+                    layers: [
+                        new ol.layer.Tile({
+                            title: 'Overlay',
+                            // opacity: 0.7,
+                            extent: [%(ominx)f, %(ominy)f,%(omaxx)f, %(omaxy)f],
+                            source: new ol.source.TileImage({
+                                attributions: '%(copyright)s',
+                                projection: 'EPSG:4326',
+                                minZoom: %(minzoom)d,
+                                maxZoom: %(maxzoom)d,
+                                tileGrid: new ol.tilegrid.TileGrid({
+                                    extent: [-180,-90,180,90],
+                                    origin: %(origin)s,
+                                    resolutions: %(resolutions)s,
+                                    tileSize: [%(tile_size)d, %(tile_size)d]
+                                }),
+                                tileUrlFunction: function(tileCoord) {
+                                    return ('./{z}/{x}/{y}.%(tileformat)s'
+                                        .replace('{z}', String(tileCoord[0]))
+                                        .replace('{x}', String(tileCoord[1]))
+                                        .replace('{y}', String(%(y_formula)s)));
+                                },
+                            })
+                        }),
+                    ]
+                }),""" % args    # noqa
+
+        elif self.options.profile == 'raster':
+
+            base_res =  2**(self.tmaxz) * self.out_gt[1]
+            args['maxres'] = base_res
+            resolutions = [ base_res / 2**i for i in range(self.tmaxz+1) ]
+            args['resolutions'] = '[' + ','.join('%.18g' % res for res in resolutions) + ']'
+            args['tilegrid_extent'] = '[%.18g,%.18g,%.18g,%.18g]' % (self.ominx, self.ominy, self.omaxx, self.omaxy)
+
+            if self.options.xyz:
+                args['origin'] = '[%.18g,%.18g]' % (self.ominx, self.omaxy)
+                args['y_formula'] = 'tileCoord[2]'
+            else:
+                args['origin'] = '[%.18g,%.18g]' % (self.ominx, self.ominy)
+                args['y_formula'] = '- 1 - tileCoord[2]'
+
+            s += """
+            layers: [
+                new ol.layer.Group({
+                    title: 'Overlay',
+                    layers: [
+                        new ol.layer.Tile({
+                            title: 'Overlay',
+                            // opacity: 0.7,
+                            source: new ol.source.TileImage({
+                                attributions: '%(copyright)s',
+                                tileGrid: new ol.tilegrid.TileGrid({
+                                    extent: %(tilegrid_extent)s,
+                                    origin: %(origin)s,
+                                    resolutions: %(resolutions)s,
+                                    tileSize: [%(tile_size)d, %(tile_size)d]
+                                }),
+                                tileUrlFunction: function(tileCoord) {
+                                    return ('./{z}/{x}/{y}.%(tileformat)s'
+                                        .replace('{z}', String(tileCoord[0]))
+                                        .replace('{x}', String(tileCoord[1]))
+                                        .replace('{y}', String(%(y_formula)s)));
+                                },
+                            })
+                        }),
+                    ]
+                }),""" % args    # noqa
+
+        else:
+
+            tms = tmsMap[self.options.profile]
+            base_res = tms.resolution
+            resolutions = [ base_res / 2**i for i in range(self.tmaxz+1) ]
+            args['maxres'] = resolutions[self.tminz]
+            args['resolutions'] = '[' + ','.join('%.18g' % res for res in resolutions) + ']'
+            args['matrixsizes'] = '[' + ','.join('[%d,%d]' % (tms.matrix_width << i, tms.matrix_height << i) for i in range(len(resolutions))) + ']'
+
+            if self.options.xyz:
+                args['origin'] = '[%.18g,%.18g]' % (tms.topleft_x, tms.topleft_y)
+                args['y_formula'] = 'tileCoord[2]'
+            else:
+                args['origin'] = '[%.18g,%.18g]' % (tms.topleft_x, tms.topleft_y - tms.resolution * tms.tile_size)
+                args['y_formula'] = '- 1 - tileCoord[2]'
+
+            args['tilegrid_extent'] = '[%.18g,%.18g,%.18g,%.18g]' % ( \
+                tms.topleft_x,
+                tms.topleft_y - tms.matrix_height * tms.resolution * tms.tile_size,
+                tms.topleft_x + tms.matrix_width * tms.resolution * tms.tile_size,
+                tms.topleft_y)
+
+            s += """
+            layers: [
+                new ol.layer.Group({
+                    title: 'Overlay',
+                    layers: [
+                        new ol.layer.Tile({
+                            title: 'Overlay',
+                            // opacity: 0.7,
+                            extent: [%(ominx)f, %(ominy)f,%(omaxx)f, %(omaxy)f],
+                            source: new ol.source.TileImage({
+                                attributions: '%(copyright)s',
+                                minZoom: %(minzoom)d,
+                                maxZoom: %(maxzoom)d,
+                                tileGrid: new ol.tilegrid.TileGrid({
+                                    extent: %(tilegrid_extent)s,
+                                    origin: %(origin)s,
+                                    resolutions: %(resolutions)s,
+                                    sizes: %(matrixsizes)s,
+                                    tileSize: [%(tile_size)d, %(tile_size)d]
+                                }),
+                                tileUrlFunction: function(tileCoord) {
+                                    return ('./{z}/{x}/{y}.%(tileformat)s'
+                                        .replace('{z}', String(tileCoord[0]))
+                                        .replace('{x}', String(tileCoord[1]))
+                                        .replace('{y}', String(%(y_formula)s)));
+                                },
+                            })
+                        }),
+                    ]
+                }),""" % args    # noqa
+
+        s += """
+            ],
+            view: new ol.View({
+                center: [%(center_x)f, %(center_y)f],""" % args  # noqa
+
+        if self.options.profile in ('mercator', 'geodetic'):
+            args['view_zoom'] = args['minzoom']
+            if self.options.profile == 'geodetic' and self.options.tmscompatible:
+                args['view_zoom'] += 1
+            s += """
+                zoom: %(view_zoom)d,""" % args  # noqa
+        else:
+            s += """
+                resolution: %(maxres)f,""" % args  # noqa
+
+        if self.options.profile == 'geodetic':
+            s += """
+                projection: 'EPSG:4326',"""
+        elif self.options.profile != 'mercator':
+            if self.in_srs and self.in_srs.IsProjected() and self.in_srs.GetAuthorityName(None) == 'EPSG':
                 s += """
-                  // create TMS Overlay layer
-                  var tmsoverlay = new OpenLayers.Layer.TMS("TMS Overlay", "",
-                  {
-                      serviceVersion: '.',
-                      layername: '.',
-                      alpha: true,
-                      type: '%(tileformat)s',
-                      isBaseLayer: false,
-                      getURL: getURL
-                  });
-
-                """ % args    # noqa
-
-            s += """
-                  if (OpenLayers.Util.alphaHack() == false) {
-                      tmsoverlay.setOpacity(0.7);
-                  }
-
-                  map.addLayers([gmap, gsat, ghyb, gter,
-                                 broad, baer, bhyb,
-                                 osm, tmsoverlay]);
-
-                  var switcherControl = new OpenLayers.Control.LayerSwitcher();
-                  map.addControl(switcherControl);
-                  switcherControl.maximizeControl();
-
-                  map.zoomToExtent(mapBounds.transform(map.displayProjection, map.projection));
-        """ % args    # noqa
-
-        elif self.options.profile == 'geodetic':
-            s += """
-                  var options = {
-                      div: "map",
-                      controls: [],
-                      projection: "EPSG:4326"
-                  };
-                  map = new OpenLayers.Map(options);
-
-                  var wms = new OpenLayers.Layer.WMS("VMap0",
-                      "http://tilecache.osgeo.org/wms-c/Basic.py?",
-                      {
-                          layers: 'basic',
-                          format: 'image/png'
-                      }
-                  );
-                  var tmsoverlay = new OpenLayers.Layer.TMS("TMS Overlay", "",
-                  {
-                      serviceVersion: '.',
-                      layername: '.',
-                      alpha: true,
-                      type: '%(tileformat)s',
-                      isBaseLayer: false,
-                      getURL: getURL
-                  });
-                  if (OpenLayers.Util.alphaHack() == false) {
-                      tmsoverlay.setOpacity(0.7);
-                  }
-
-                  map.addLayers([wms,tmsoverlay]);
-
-                  var switcherControl = new OpenLayers.Control.LayerSwitcher();
-                  map.addControl(switcherControl);
-                  switcherControl.maximizeControl();
-
-                  map.zoomToExtent(mapBounds);
-            """ % args   # noqa
-
-        elif self.options.profile == 'raster':
-            s += """
-                  var options = {
-                      div: "map",
-                      controls: [],
-                      maxExtent: new OpenLayers.Bounds(%(west)s, %(south)s, %(east)s, %(north)s),
-                      maxResolution: %(rastermaxresolution)f,
-                      numZoomLevels: %(rasterzoomlevels)d
-                  };
-                  map = new OpenLayers.Map(options);
-
-                  var layer = new OpenLayers.Layer.TMS("TMS Layer", "",
-                  {
-                      serviceVersion: '.',
-                      layername: '.',
-                      alpha: true,
-                      type: '%(tileformat)s',
-                      getURL: getURL
-                  });
-
-                  map.addLayer(layer);
-                  map.zoomToExtent(mapBounds);
-            """ % args    # noqa
+                projection: new ol.proj.Projection({code: 'EPSG:%s', units:'m'}),""" % self.in_srs.GetAuthorityCode(None)
 
         s += """
-                  map.addControls([new OpenLayers.Control.PanZoomBar(),
-                                   new OpenLayers.Control.Navigation(),
-                                   new OpenLayers.Control.MousePosition(),
-                                   new OpenLayers.Control.ArgParser(),
-                                   new OpenLayers.Control.Attribution()]);
-              }
-        """ % args
-
-        if self.options.profile == 'mercator' and self.options.xyz is None:
+            })
+        });"""
+        if self.options.profile in ('mercator', 'geodetic'):
             s += """
-              function getURL(bounds) {
-                  bounds = this.adjustBounds(bounds);
-                  var res = this.getServerResolution();
-                  var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
-                  var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tileSize.h));
-                  var z = this.getServerZoom();
-                  if (this.map.baseLayer.CLASS_NAME === 'OpenLayers.Layer.Bing') {
-                      z+=1;
-                  }
-                  var path = this.serviceVersion + "/" + this.layername + "/" + z + "/" + x + "/" + y + "." + this.type;
-                  var url = this.url;
-                  if (OpenLayers.Util.isArray(url)) {
-                      url = this.selectUrl(path, url);
-                  }
-                  if (mapBounds.intersectsBounds(bounds) && (z >= mapMinZoom) && (z <= mapMaxZoom)) {
-                      return url + path;
-                  }
-                  return emptyTileURL;
-              }
-            """ % args    # noqa
-
-        elif self.options.profile == 'geodetic':
-            s += """
-              function getURL(bounds) {
-                  bounds = this.adjustBounds(bounds);
-                  var res = this.getServerResolution();
-                  var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
-                  var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tileSize.h));
-                  var z = this.getServerZoom()%(tmsoffset)s;
-                  var path = this.serviceVersion + "/" + this.layername + "/" + z + "/" + x + "/" + y + "." + this.type;
-                  var url = this.url;
-                  if (OpenLayers.Util.isArray(url)) {
-                      url = this.selectUrl(path, url);
-                  }
-                  if (mapBounds.intersectsBounds(bounds) && (z >= mapMinZoom) && (z <= mapMaxZoom)) {
-                      return url + path;
-                  }
-                  return emptyTileURL;
-              }
-            """ % args    # noqa
-
-        elif self.options.profile == 'raster':
-            s += """
-              function getURL(bounds) {
-                  bounds = this.adjustBounds(bounds);
-                  var res = this.getServerResolution();
-                  var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
-                  var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tileSize.h));
-                  var z = this.getServerZoom();
-                  var path = this.serviceVersion + "/" + this.layername + "/" + z + "/" + x + "/" + y + "." + this.type;
-                  var url = this.url;
-                  if (OpenLayers.Util.isArray(url)) {
-                      url = this.selectUrl(path, url);
-                  }
-                  if (mapBounds.intersectsBounds(bounds) && (z >= mapMinZoom) && (z <= mapMaxZoom)) {
-                      return url + path;
-                  }
-                  return emptyTileURL;
-              }
-            """ % args    # noqa
-
+        map.addControl(new ol.control.LayerSwitcher());"""
         s += """
-            function getWindowHeight() {
-                if (self.innerHeight) return self.innerHeight;
-                if (document.documentElement && document.documentElement.clientHeight)
-                    return document.documentElement.clientHeight;
-                if (document.body) return document.body.clientHeight;
-                return 0;
-            }
+    </script>
+</body>
+</html>"""
 
-            function getWindowWidth() {
-                if (self.innerWidth) return self.innerWidth;
-                if (document.documentElement && document.documentElement.clientWidth)
-                    return document.documentElement.clientWidth;
-                if (document.body) return document.body.clientWidth;
-                return 0;
-            }
+        return s
 
-            function resize() {
-                var map = document.getElementById("map");
-                var header = document.getElementById("header");
-                var subheader = document.getElementById("subheader");
-                map.style.height = (getWindowHeight()-80) + "px";
-                map.style.width = (getWindowWidth()-20) + "px";
-                header.style.width = (getWindowWidth()-20) + "px";
-                subheader.style.width = (getWindowWidth()-20) + "px";
-                if (map.updateSize) { map.updateSize(); };
-            }
+    def generate_mapml(self):
 
-            onresize=function(){ resize(); };
+        if self.options.mapml_template:
+            template = self.options.mapml_template
+        else:
+            template = gdal.FindFile('gdal', 'template_tiles.mapml')
+        s = open(template, 'rb').read().decode('utf-8')
 
-            </script>
-            </head>
-            <body onload="init()">
-            <div id="header"><h1>%(title)s</h1></div>
-            <div id="subheader">Generated by <a href="http://www.klokan.cz/projects/gdal2tiles/">GDAL2Tiles</a>, Copyright &copy; 2008 <a href="http://www.klokan.cz/">Klokan Petr Pridal</a>,  <a href="http://www.gdal.org/">GDAL</a> &amp; <a href="http://www.osgeo.org/">OSGeo</a> <a href="http://code.google.com/soc/">GSoC</a>
-            <!-- PLEASE, LET THIS NOTE ABOUT AUTHOR AND PROJECT SOMEWHERE ON YOUR WEBSITE, OR AT LEAST IN THE COMMENT IN HTML. THANK YOU -->
-            </div>
-            <div id="map"></div>
-            <script type="text/javascript" >resize()</script>
-            </body>
-        </html>""" % args   # noqa
+        if self.options.profile == 'mercator':
+            tiling_scheme = 'OSMTILE'
+        elif self.options.profile == 'geodetic':
+            tiling_scheme = 'WGS84'
+        else:
+            tiling_scheme = self.options.profile
+
+        s = s.replace('${TILING_SCHEME}', tiling_scheme)
+        s = s.replace('${URL}', self.options.url if self.options.url else "./")
+        tminx, tminy, tmaxx, tmaxy = self.tminmax[self.tmaxz]
+        s = s.replace('${MINTILEX}', str(tminx))
+        s = s.replace('${MINTILEY}', str(GDAL2Tiles.getYTile(tmaxy, self.tmaxz, self.options)))
+        s = s.replace('${MAXTILEX}', str(tmaxx))
+        s = s.replace('${MAXTILEY}', str(GDAL2Tiles.getYTile(tminy, self.tmaxz, self.options)))
+        s = s.replace('${CURZOOM}', str(self.tmaxz))
+        s = s.replace('${MINZOOM}', str(self.tminz))
+        s = s.replace('${MAXZOOM}', str(self.tmaxz))
+        s = s.replace('${TILEEXT}', str(self.tileext))
 
         return s
 
@@ -2826,8 +3031,13 @@ class GDAL2Tiles(object):
         :param tz: The z-tile number
         :return: The transformed y-tile number
         """
-        if options.xyz:
-            return (2**tz - 1) - ty  # Convert from TMS to XYZ numbering system
+        if options.xyz and options.profile != 'raster':
+            if options.profile in ('mercator', 'geodetic'):
+                return (2**tz - 1) - ty  # Convert from TMS to XYZ numbering system
+
+            tms = tmsMap[options.profile]
+            return (tms.matrix_height * 2**tz - 1) - ty  # Convert from TMS to XYZ numbering system
+
         return ty
 
 
@@ -2889,8 +3099,12 @@ def get_tile_swne(tile_job_info, options):
                 pixelsizex = (2 ** (tile_job_info.tmaxz - z) * tile_job_info.out_geo_trans[1])
                 west = tile_job_info.out_geo_trans[0] + x * tile_job_info.tile_size * pixelsizex
                 east = west + tile_job_info.tile_size * pixelsizex
-                south = tile_job_info.ominy + y * tile_job_info.tile_size * pixelsizex
-                north = south + tile_job_info.tile_size * pixelsizex
+                if options.xyz:
+                    north = tile_job_info.out_geo_trans[3] - y * tile_job_info.tile_size * pixelsizex
+                    south = north - tile_job_info.tile_size * pixelsizex
+                else:
+                    south = tile_job_info.ominy + y * tile_job_info.tile_size * pixelsizex
+                    north = south + tile_job_info.tile_size * pixelsizex
                 if not tile_job_info.is_epsg_4326:
                     # Transformation to EPSG:4326 (WGS84 datum)
                     west, south = ct.TransformPoint(west, south)[:2]
@@ -2901,7 +3115,7 @@ def get_tile_swne(tile_job_info, options):
         else:
             tile_swne = lambda x, y, z: (0, 0, 0, 0)   # noqa
     else:
-        tile_swne = lambda x, y, z: (0, 0, 0, 0)   # noqa
+        tile_swne = None
 
     return tile_swne
 

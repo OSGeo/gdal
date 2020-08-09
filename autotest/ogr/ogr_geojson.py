@@ -2003,6 +2003,28 @@ def test_ogr_geojson_56():
 """
     assert json.loads(got) == json.loads(expected)
 
+
+    # Test polygon geometry that covers the whole world (#2833)
+    gdal.VectorTranslate('/vsimem/out.json', """{
+  "type": "FeatureCollection",
+  "features": [
+      { "type": "Feature", "geometry": {"type":"Polygon","coordinates":[[[-180,-90.0],[180,-90.0],[180,90.0],[-180,90.0],[-180,-90.0]]]} }
+  ]
+}""", format='GeoJSON', layerCreationOptions=['RFC7946=YES', 'WRITE_BBOX=YES'])
+
+    got = read_file('/vsimem/out.json')
+    gdal.Unlink('/vsimem/out.json')
+    expected = """{
+"type": "FeatureCollection",
+"bbox": [ -180.0000000, -90.0000000, 180.0000000, 90.0000000 ],
+"features": [
+{ "type": "Feature", "properties": { }, "bbox": [ -180.0, -90.0, 180.0, 90.0 ], "geometry": { "type": "Polygon", "coordinates": [ [ [ -180.0, -90.0 ], [ 180.0, -90.0 ], [ 180.0, 90.0 ], [ -180.0, 90.0 ], [ -180.0, -90.0 ] ] ] } }
+]
+}
+"""
+    assert json.loads(got) == json.loads(expected)
+
+
 ###############################################################################
 # Test RFC 7946 and reprojection
 
@@ -2947,5 +2969,29 @@ def test_ogr_geojson_update_in_loop():
         layer.SetFeature(feature)
     assert fids == [1, 3]
     ds = None
+
+    gdal.Unlink(tmpfilename)
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/2720
+
+def test_ogr_geojson_starting_with_coordinates():
+
+    tmpfilename = '/vsimem/temp.json'
+    gdal.FileFromMemBuffer(tmpfilename, '{ "coordinates": [' + (' ' * 10000) + '2,49], "type": "Point"}')
+    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR)
+    assert ds is not None
+
+    gdal.Unlink(tmpfilename)
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/2787
+
+def test_ogr_geojson_starting_with_geometry_coordinates():
+
+    tmpfilename = '/vsimem/temp.json'
+    gdal.FileFromMemBuffer(tmpfilename, '{ "geometry": {"coordinates": [' + (' ' * 10000) + '2,49], "type": "Point"}, "type": "Feature", "properties": {} }')
+    ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR)
+    assert ds is not None
 
     gdal.Unlink(tmpfilename)

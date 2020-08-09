@@ -109,6 +109,7 @@ public:
                                        bool /*bSetError*/, bool* /*pbUpdateMap*/ = nullptr) { return false;}
 
         virtual const CPLString& GetURL() const = 0;
+        CPLString GetURLNoKVP() const;
 
         virtual CPLString GetCopySourceHeader() const { return std::string(); }
 

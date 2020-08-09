@@ -113,6 +113,7 @@ OSRPJContextHolder::~OSRPJContextHolder()
 
 void OSRPJContextHolder::deinit()
 {
+    searchPathGenerationCounter = 0;
     oCache.clear();
 
     // Destroy context in last
@@ -196,6 +197,10 @@ static OSRPJContextHolder& GetProjTLSContextHolder()
 PJ_CONTEXT* OSRGetProjTLSContext()
 {
     auto& l_projContext = GetProjTLSContextHolder();
+    // This .init() must be kept, even if OSRPJContextHolder constructor
+    // calls it. The reason is that OSRCleanupTLSContext() calls deinit(),
+    // so if reusing the object, we must re-init again.
+    l_projContext.init();
     {
         // If OSRSetPROJSearchPaths() has been called since we created the context,
         // set the new search paths on the context.

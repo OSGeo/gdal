@@ -1657,21 +1657,21 @@ bool HDF5Array::IRead(const GUInt64* arrayStartIdx,
     size_t nEltCount = 1;
     for( size_t i = 0; i < nDims; ++i )
     {
-        if( arrayStep[i] < 0 || bufferStride[i] < 0)
+        if( count[i] != 1 && (arrayStep[i] < 0 || bufferStride[i] < 0) )
         {
             return ReadSlow(arrayStartIdx, count, arrayStep, bufferStride,
                             bufferDataType, pDstBuffer);
         }
         anOffset[i] = static_cast<hsize_t>(arrayStartIdx[i]);
         anCount[i] = static_cast<hsize_t>(count[i]);
-        anStep[i] = static_cast<hsize_t>(arrayStep[i]);
+        anStep[i] = static_cast<hsize_t>(count[i] == 1 ? 1 : arrayStep[i]);
         nEltCount *= count[i];
     }
     size_t nCurStride = 1;
     for( size_t i = nDims; i > 0; )
     {
         --i;
-        if( static_cast<size_t>(bufferStride[i]) != nCurStride )
+        if( count[i] != 1 && static_cast<size_t>(bufferStride[i]) != nCurStride )
         {
             return ReadSlow(arrayStartIdx, count, arrayStep, bufferStride,
                             bufferDataType, pDstBuffer);

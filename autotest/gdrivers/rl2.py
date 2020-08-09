@@ -427,7 +427,6 @@ def test_rl2_21():
              ('WEBP', None),
              ('WEBP', 50),
              ('WEBP', 100),
-             ('CHARLS', None),
              ('JPEG2000', None),
              ('JPEG2000', 50),
              ('JPEG2000', 100)]

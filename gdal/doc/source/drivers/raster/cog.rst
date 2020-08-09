@@ -344,6 +344,12 @@ line).
      mask.TileByteCounts[i], but none of them actually need to be read)
    * trailer of mask data (4 bytes)
 
+.. note::
+
+    The content of the header ghost area can be retrieved by getting the
+    ``GDAL_STRUCTURAL_METADATA`` metadata item of the ``TIFF`` metadata domain
+    on the datasett object (with GetMetadataItem())
+
 .. _cog.tile_data_leader_trailer:
 
 Tile data leader and trailer

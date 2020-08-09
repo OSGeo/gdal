@@ -36,7 +36,7 @@ RUN apt-get update -y \
        libcfitsio-dev openjdk-8-jdk libzstd-dev \
        libpq-dev libssl-dev libboost-dev \
        autoconf automake bash-completion libarmadillo-dev \
-       libopenexr-dev \
+       libopenexr-dev libheif-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Build likbkea
@@ -170,8 +170,10 @@ RUN apt-get update \
         libkmlbase1 libkmlconvenience1 libkmldom1 libkmlengine1 libkmlregionator1 libkmlxsd1 \
         libmysqlclient21 libogdi4.1 libcfitsio8 openjdk-8-jre \
         libzstd1 bash bash-completion libpq5 libssl1.1 \
-        libarmadillo9 libpython3.8 libopenexr24 \
+        libarmadillo9 libpython3.8 libopenexr24 libheif1 \
         python-is-python3 \
+    # Workaround bug in ogdi packaging
+    && ln -s /usr/lib/ogdi/libvrf.so /usr/lib \
     && rm -rf /var/lib/apt/lists/*
 
 # Attempt to order layers starting with less frequently varying ones

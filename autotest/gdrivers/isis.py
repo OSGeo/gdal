@@ -1186,7 +1186,7 @@ def test_isis_27():
             f = gdal.VSIFOpenL('/vsimem/out2.lbl', 'rb')
             content = None
             if f is not None:
-                content = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
+                content = gdal.VSIFReadL(1, 100000, f).decode('ASCII')
                 gdal.VSIFCloseL(f)
 
             ds = gdal.Open('/vsimem/out2.lbl')
@@ -1196,6 +1196,8 @@ def test_isis_27():
             size = lbl["History"]["Bytes"]
 
             if dst_location == 'EXTERNAL':
+                assert lbl["Label"]["Bytes"] < 65536
+
                 history_filename = lbl['History']['^History']
                 if history_filename != 'out2.History.IsisCube':
                     print(src_location)
@@ -1205,7 +1207,7 @@ def test_isis_27():
                 f = gdal.VSIFOpenL('/vsimem/' + history_filename, 'rb')
                 history = None
                 if f is not None:
-                    history = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
+                    history = gdal.VSIFReadL(1, 100000, f).decode('ASCII')
                     gdal.VSIFCloseL(f)
 
                 if offset != 0 or size != len(history):
@@ -1213,6 +1215,7 @@ def test_isis_27():
                     print(dst_location)
                     pytest.fail(content)
             else:
+                assert lbl["Label"]["Bytes"] >= 65536
                 if offset + size != len(content):
                     print(src_location)
                     pytest.fail(dst_location)
@@ -1235,7 +1238,7 @@ def test_isis_27():
     f = gdal.VSIFOpenL('/vsimem/out.lbl', 'rb')
     content = None
     if f is not None:
-        content = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
+        content = gdal.VSIFReadL(1, 100000, f).decode('ASCII')
         gdal.VSIFCloseL(f)
     assert 'foo' in content
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/out.lbl')
@@ -1292,7 +1295,7 @@ End""")
             f = gdal.VSIFOpenL('/vsimem/out.lbl', 'rb')
             content = None
             if f is not None:
-                content = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
+                content = gdal.VSIFReadL(1, 100000, f).decode('ASCII')
                 gdal.VSIFCloseL(f)
 
             ds = gdal.Open('/vsimem/out.lbl')
@@ -1311,7 +1314,7 @@ End""")
                 f = gdal.VSIFOpenL('/vsimem/' + table_filename, 'rb')
                 table = None
                 if f is not None:
-                    table = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
+                    table = gdal.VSIFReadL(1, 100000, f).decode('ASCII')
                     gdal.VSIFCloseL(f)
 
                 if offset != 0 or size != 3 or size != len(table):

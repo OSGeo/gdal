@@ -2814,18 +2814,17 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
 /*      we may need to collect data if some portion of the              */
 /*      resampling kernel could be on-image.                            */
 /* -------------------------------------------------------------------- */
-    int nResWinSize = GWKGetFilterRadius(psOptions->eResampleAlg);
+    const int nResWinSize = GWKGetFilterRadius(psOptions->eResampleAlg);
 
     // Take scaling into account.
     const double dfXScale =
         static_cast<double>(nDstXSize) / (dfMaxXOut - dfMinXOut);
     const double dfYScale =
         static_cast<double>(nDstYSize) / (dfMaxYOut - dfMinYOut);
-    const int nXRadius = dfXScale < 0.95 ?
+    int nXRadius = dfXScale < 0.95 ?
         static_cast<int>(ceil( nResWinSize / dfXScale )) : nResWinSize;
-    const int nYRadius = dfYScale < 0.95 ?
+    int nYRadius = dfYScale < 0.95 ?
         static_cast<int>(ceil( nResWinSize / dfYScale )) : nResWinSize;
-    nResWinSize = std::max(nXRadius, nYRadius);
 
 /* -------------------------------------------------------------------- */
 /*      Allow addition of extra sample pixels to source window to       */
@@ -2836,12 +2835,15 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
     if( CSLFetchNameValue( psOptions->papszWarpOptions,
                            "SOURCE_EXTRA" ) != nullptr )
     {
-        nResWinSize += atoi(
+        const int nSrcExtra = atoi(
             CSLFetchNameValue( psOptions->papszWarpOptions, "SOURCE_EXTRA" ));
+        nXRadius += nSrcExtra;
+        nYRadius += nSrcExtra;
     }
     else if( nFailedCount > 0 )
     {
-        nResWinSize += 10;
+        nXRadius += 10;
+        nYRadius += 10;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2878,9 +2880,9 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
     else
     {
         *pnSrcXOff = std::max(0,
-                        std::min(nMinXOutClamped - nResWinSize, nRasterXSize));
+                        std::min(nMinXOutClamped - nXRadius, nRasterXSize));
         *pnSrcXSize = std::max(0, std::min(nRasterXSize - *pnSrcXOff,
-                                nMaxXOutClamped - *pnSrcXOff + nResWinSize));
+                                nMaxXOutClamped - *pnSrcXOff + nXRadius));
     }
 
     if( nMaxYOutClamped - nMinYOutClamped > 0.9 * nRasterYSize )
@@ -2891,9 +2893,9 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
     else
     {
         *pnSrcYOff = std::max(0,
-                        std::min(nMinYOutClamped - nResWinSize, nRasterYSize));
+                        std::min(nMinYOutClamped - nYRadius, nRasterYSize));
         *pnSrcYSize = std::max(0, std::min(nRasterYSize - *pnSrcYOff,
-                                nMaxYOutClamped - *pnSrcYOff + nResWinSize));
+                                nMaxYOutClamped - *pnSrcYOff + nYRadius));
     }
 
     if( pdfSrcXExtraSize )
@@ -2907,8 +2909,8 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
         *pdfSrcFillRatio =
             static_cast<double>(*pnSrcXSize) * (*pnSrcYSize) /
             std::max(1.0,
-                     (dfMaxXOut - dfMinXOut + 2 * nResWinSize) *
-                     (dfMaxYOut - dfMinYOut + 2 * nResWinSize));
+                     (dfMaxXOut - dfMinXOut + 2 * nXRadius) *
+                     (dfMaxYOut - dfMinYOut + 2 * nYRadius));
 
     return CE_None;
 }

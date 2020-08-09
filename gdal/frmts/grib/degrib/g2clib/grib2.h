@@ -3,6 +3,9 @@
 #include<stdio.h>
 
 #define G2_VERSION "g2clib-1.6.0"
+
+#include "gdal_g2clib_symbol_rename.h"
+
 /*                .      .    .                                       .
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-10-25
 //

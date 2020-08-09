@@ -5,7 +5,7 @@ OBJ	=	hdf4dataset.o hdf4imagedataset.o hdf4multidim.o
 
 SUBLIBS 	= lib-hdfeos
 
-CPPFLAGS	:=	-I../pds -Ihdf-eos $(HDF4_INCLUDE) $(HDF4_FLAGS) $(CPPFLAGS)
+CPPFLAGS	:=	-Ihdf-eos $(HDF4_INCLUDE) $(HDF4_FLAGS) $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT)) $(SUBLIBS)
 

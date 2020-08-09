@@ -163,6 +163,7 @@ class ENVIRasterBand final: public RawRasterBand
     ~ENVIRasterBand() override {}
 
     void SetDescription( const char * ) override;
+    CPLErr SetNoDataValue( double ) override;
 
     CPLErr SetCategoryNames( char ** ) override;
 };

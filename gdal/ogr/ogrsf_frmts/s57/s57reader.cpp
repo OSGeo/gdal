@@ -2879,6 +2879,8 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
         DDFField *poSrcSG2D = poUpdate->FindField( "SG2D" );
         DDFField *poDstSG2D = poTarget->FindField( "SG2D" );
 
+        const int nCCUI = poUpdate->GetIntSubfield( "SGCC", 0, "CCUI", 0 );
+
         /* If we don't have SG2D, check for SG3D */
         if( poDstSG2D == nullptr )
         {
@@ -2887,28 +2889,30 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             {
                 poSrcSG2D = poUpdate->FindField("SG3D");
             }
+            else
+            {
+                if ( nCCUI != 1 )
+                {
+                    // CPLAssert( false );
+                    return false;
+                }
+
+                poTarget->AddField(poTarget->GetModule()->FindFieldDefn("SG2D"));
+                poDstSG2D = poTarget->FindField("SG2D");
+                if (poDstSG2D == nullptr) {
+                    // CPLAssert( false );
+                    return false;
+                }
+
+                // Delete null default data that was created
+                poTarget->SetFieldRaw( poDstSG2D, 0, nullptr, 0 );
+            }
         }
 
-        const int nCCUI = poUpdate->GetIntSubfield( "SGCC", 0, "CCUI", 0 );
-
-        if( (poSrcSG2D == nullptr && nCCUI != 2)
-            || (poDstSG2D == nullptr && nCCUI != 1) )
+        if( poSrcSG2D == nullptr && nCCUI != 2 )
         {
             // CPLAssert( false );
             return false;
-        }
-
-        if (poDstSG2D == nullptr)
-        {
-            poTarget->AddField(poTarget->GetModule()->FindFieldDefn("SG2D"));
-            poDstSG2D = poTarget->FindField("SG2D");
-            if (poDstSG2D == nullptr) {
-                // CPLAssert( false );
-                return false;
-            }
-
-            // Delete null default data that was created
-            poTarget->SetFieldRaw( poDstSG2D, 0, nullptr, 0 );
         }
 
         int nCoordSize = poDstSG2D->GetFieldDefn()->GetFixedWidth();

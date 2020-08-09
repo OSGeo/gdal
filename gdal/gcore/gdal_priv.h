@@ -2002,6 +2002,14 @@ public:
                                         const std::string& osFullName,
                                         CSLConstList papszOptions = nullptr) const;
 
+    std::shared_ptr<GDALMDArray> ResolveMDArray(const std::string& osName,
+                                                const std::string& osStartingPath,
+                                                CSLConstList papszOptions = nullptr) const;
+
+    std::shared_ptr<GDALGroup> OpenGroupFromFullname(
+                                        const std::string& osFullName,
+                                        CSLConstList papszOptions = nullptr) const;
+
     std::shared_ptr<GDALDimension> OpenDimensionFromFullname(
                                         const std::string& osFullName) const;
 
@@ -2696,7 +2704,7 @@ GIntBig GDALGetResponsiblePIDForCurrentThread();
 CPLString GDALFindAssociatedFile( const char *pszBasename, const char *pszExt,
                                   CSLConstList papszSiblingFiles, int nFlags );
 
-CPLErr EXIFExtractMetadata(char**& papszMetadata,
+CPLErr CPL_DLL EXIFExtractMetadata(char**& papszMetadata,
                            void *fpL, int nOffset,
                            int bSwabflag, int nTIFFHEADER,
                            int& nExifOffset, int& nInterOffset, int& nGPSOffset);

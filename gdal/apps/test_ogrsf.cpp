@@ -33,6 +33,7 @@
 #include "ogr_api.h"
 #include "ogr_p.h"
 #include "ogrsf_frmts.h"
+#include "ogr_swq.h"
 #include "commonutils.h"
 
 #include <algorithm>
@@ -1352,7 +1353,11 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer,
                CPLGetLastErrorMsg());
     }
 
+    // Drivers might or might not emit errors when attempting to iterate
+    // after EOF
+    CPLPushErrorHandler(CPLQuietErrorHandler);
     auto poFeat = LOG_ACTION(poLayer->GetNextFeature());
+    CPLPopErrorHandler();
     if( poFeat != nullptr )
     {
         bRet = FALSE;
@@ -2364,7 +2369,10 @@ static int TestAttributeFilter( CPL_UNUSED GDALDataset* poDS,
 /* -------------------------------------------------------------------- */
 
     CPLString osAttributeFilter;
-    if( pszFieldName[0] == '\0' || strchr(pszFieldName, '_') || strchr(pszFieldName, ' ') )
+    const bool bMustQuoteAttrName =
+        pszFieldName[0] == '\0' || strchr(pszFieldName, '_') ||
+        strchr(pszFieldName, ' ') || swq_is_reserved_keyword(pszFieldName);
+    if( bMustQuoteAttrName )
     {
         osAttributeFilter = "\"";
         osAttributeFilter += pszFieldName;
@@ -2422,7 +2430,7 @@ static int TestAttributeFilter( CPL_UNUSED GDALDataset* poDS,
 /* -------------------------------------------------------------------- */
 /*      Construct exclusive filter.                                     */
 /* -------------------------------------------------------------------- */
-    if( pszFieldName[0] == '\0' || strchr(pszFieldName, '_') || strchr(pszFieldName, ' ') )
+    if( bMustQuoteAttrName )
     {
         osAttributeFilter = "\"";
         osAttributeFilter += pszFieldName;

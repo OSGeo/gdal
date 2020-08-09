@@ -4920,6 +4920,15 @@ SWIGINTERN char const *OGRFieldDefnShadow_GetNameRef(OGRFieldDefnShadow *self){
 SWIGINTERN void OGRFieldDefnShadow_SetName(OGRFieldDefnShadow *self,char const *name){
     OGR_Fld_SetName(self, name);
   }
+SWIGINTERN char const *OGRFieldDefnShadow_GetAlternativeName(OGRFieldDefnShadow *self){
+    return OGR_Fld_GetAlternativeNameRef(self);
+  }
+SWIGINTERN char const *OGRFieldDefnShadow_GetAlternativeNameRef(OGRFieldDefnShadow *self){
+    return OGR_Fld_GetAlternativeNameRef(self);
+  }
+SWIGINTERN void OGRFieldDefnShadow_SetAlternativeName(OGRFieldDefnShadow *self,char const *alternativeName){
+    OGR_Fld_SetAlternativeName(self, alternativeName);
+  }
 SWIGINTERN OGRFieldType OGRFieldDefnShadow_GetType(OGRFieldDefnShadow *self){
     return OGR_Fld_GetType(self);
   }
@@ -19568,6 +19577,137 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_FieldDefn_GetAlternativeName(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:FieldDefn_GetAlternativeName",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FieldDefn_GetAlternativeName" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRFieldDefnShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRFieldDefnShadow_GetAlternativeName(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_FieldDefn_GetAlternativeNameRef(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  char *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:FieldDefn_GetAlternativeNameRef",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FieldDefn_GetAlternativeNameRef" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRFieldDefnShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRFieldDefnShadow_GetAlternativeNameRef(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_FieldDefn_SetAlternativeName(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:FieldDefn_SetAlternativeName",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FieldDefn_SetAlternativeName" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRFieldDefnShadow * >(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "FieldDefn_SetAlternativeName" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFieldDefnShadow_SetAlternativeName(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_FieldDefn_GetType(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
@@ -32415,6 +32555,65 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"pszName:  the new name to apply. \n"
 		""},
+	 { (char *)"FieldDefn_GetAlternativeName", _wrap_FieldDefn_GetAlternativeName, METH_VARARGS, (char *)"FieldDefn_GetAlternativeName(FieldDefn self) -> char const *"},
+	 { (char *)"FieldDefn_GetAlternativeNameRef", _wrap_FieldDefn_GetAlternativeNameRef, METH_VARARGS, (char *)"\n"
+		"FieldDefn_GetAlternativeNameRef(FieldDefn self) -> char const *\n"
+		"\n"
+		"const char*\n"
+		"OGR_Fld_GetAlternativeNameRef(OGRFieldDefnH hDefn)\n"
+		"\n"
+		"Fetch the alternative name (or \"alias\") for this field.\n"
+		"\n"
+		"The alternative name is an optional attribute for a field which can\n"
+		"provide a more user-friendly, descriptive name of a field which is not\n"
+		"subject to the usual naming constraints defined by the data provider.\n"
+		"\n"
+		"This is a metadata style attribute only: the alternative name cannot\n"
+		"be used in place of the actual field name during SQL queries or other\n"
+		"field name dependent API calls.\n"
+		"\n"
+		"This function is the same as the CPP method\n"
+		"OGRFieldDefn::GetAlternativeNameRef().\n"
+		"\n"
+		"Parameters:\n"
+		"-----------\n"
+		"\n"
+		"hDefn:  handle to the field definition.\n"
+		"\n"
+		"the alternative name of the field definition.\n"
+		"\n"
+		"GDAL 3.2 \n"
+		""},
+	 { (char *)"FieldDefn_SetAlternativeName", _wrap_FieldDefn_SetAlternativeName, METH_VARARGS, (char *)"\n"
+		"FieldDefn_SetAlternativeName(FieldDefn self, char const * alternativeName)\n"
+		"\n"
+		"void\n"
+		"OGR_Fld_SetAlternativeName(OGRFieldDefnH hDefn, const char\n"
+		"*pszAlternativeName)\n"
+		"\n"
+		"Reset the alternative name (or \"alias\") for this field.\n"
+		"\n"
+		"The alternative name is an optional attribute for a field which can\n"
+		"provide a more user-friendly, descriptive name of a field which is not\n"
+		"subject to the usual naming constraints defined by the data provider.\n"
+		"\n"
+		"This is a metadata style attribute only: the alternative name cannot\n"
+		"be used in place of the actual field name during SQL queries or other\n"
+		"field name dependent API calls.\n"
+		"\n"
+		"This function is the same as the CPP method\n"
+		"OGRFieldDefn::SetAlternativeName().\n"
+		"\n"
+		"Parameters:\n"
+		"-----------\n"
+		"\n"
+		"hDefn:  handle to the field definition to apply the new alternative\n"
+		"name to.\n"
+		"\n"
+		"pszAlternativeName:  the new alternative name to apply.\n"
+		"\n"
+		"GDAL 3.2 \n"
+		""},
 	 { (char *)"FieldDefn_GetType", _wrap_FieldDefn_GetType, METH_VARARGS, (char *)"\n"
 		"FieldDefn_GetType(FieldDefn self) -> OGRFieldType\n"
 		"\n"
@@ -32696,8 +32895,53 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"GDAL 2.0 \n"
 		""},
-	 { (char *)"FieldDefn_IsUnique", _wrap_FieldDefn_IsUnique, METH_VARARGS, (char *)"FieldDefn_IsUnique(FieldDefn self) -> int"},
-	 { (char *)"FieldDefn_SetUnique", _wrap_FieldDefn_SetUnique, METH_VARARGS, (char *)"FieldDefn_SetUnique(FieldDefn self, int bUnique)"},
+	 { (char *)"FieldDefn_IsUnique", _wrap_FieldDefn_IsUnique, METH_VARARGS, (char *)"\n"
+		"FieldDefn_IsUnique(FieldDefn self) -> int\n"
+		"\n"
+		"int OGR_Fld_IsUnique(OGRFieldDefnH\n"
+		"hDefn)\n"
+		"\n"
+		"Return whether this field has a unique constraint.\n"
+		"\n"
+		"By default, fields have no unique constraint.\n"
+		"\n"
+		"This method is the same as the C++ method OGRFieldDefn::IsUnique().\n"
+		"\n"
+		"Parameters:\n"
+		"-----------\n"
+		"\n"
+		"hDefn:  handle to the field definition\n"
+		"\n"
+		"TRUE if the field has a unique constraint.\n"
+		"\n"
+		"GDAL 3.2 \n"
+		""},
+	 { (char *)"FieldDefn_SetUnique", _wrap_FieldDefn_SetUnique, METH_VARARGS, (char *)"\n"
+		"FieldDefn_SetUnique(FieldDefn self, int bUnique)\n"
+		"\n"
+		"void\n"
+		"OGR_Fld_SetUnique(OGRFieldDefnH hDefn, int bUniqueIn)\n"
+		"\n"
+		"Set whether this field has a unique constraint.\n"
+		"\n"
+		"By default, fields have no unique constraint, so this method is\n"
+		"generally called with TRUE to set a unique constraint.\n"
+		"\n"
+		"Drivers that support writing unique constraint will advertise the\n"
+		"GDAL_DCAP_UNIQUE_FIELDS driver metadata item. field can receive null\n"
+		"values.\n"
+		"\n"
+		"This method is the same as the C++ method OGRFieldDefn::SetUnique().\n"
+		"\n"
+		"Parameters:\n"
+		"-----------\n"
+		"\n"
+		"hDefn:  handle to the field definition\n"
+		"\n"
+		"bUniqueIn:  TRUE if the field must have a unique constraint.\n"
+		"\n"
+		"GDAL 3.2 \n"
+		""},
 	 { (char *)"FieldDefn_GetDefault", _wrap_FieldDefn_GetDefault, METH_VARARGS, (char *)"\n"
 		"FieldDefn_GetDefault(FieldDefn self) -> char const *\n"
 		"\n"

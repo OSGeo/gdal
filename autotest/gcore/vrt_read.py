@@ -1289,8 +1289,8 @@ def test_vrt_shared_no_proxy_pool():
 
     after = gdaltest.get_opened_files()
 
-    if len(before) != len(after) and (gdaltest.is_travis_branch('trusty_clang') or gdaltest.is_travis_branch('trusty_32bit')):
-        pytest.xfail('Mysterious failure on trusty_clang/trusty_32bit')
+    if len(before) != len(after) and (gdaltest.is_travis_branch('trusty_clang') or gdaltest.is_travis_branch('trusty_32bit') or gdaltest.is_travis_branch('ubuntu_1604')):
+        pytest.xfail('Mysterious failure')
 
     assert len(before) == len(after)
 

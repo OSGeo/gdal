@@ -71,8 +71,8 @@ Notes on driver variations
 For GRASS 5.7 Radim Blazek has moved the driver to using the GRASS
 shared libraries directly instead of using libgrass. Currently (GDAL
 1.2.2 and later) both version of the driver are available and can be
-configured using "--with-libgrass" for the libgrass variant or
-"--with-grass=<dir>" for the new GRASS 5.7+ library based version. The
+configured using ``--with-libgrass`` for the libgrass variant or
+``--with-grass=<dir>`` for the new GRASS 5.7+ library based version. The
 GRASS 5.7+ driver version is currently not supporting coordinate system
 access, though it is hoped that will be corrected at some point.
 

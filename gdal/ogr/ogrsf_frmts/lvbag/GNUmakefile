@@ -5,7 +5,11 @@ include ../../../GDALmake.opt
 OBJ	=	ogrlvbagdriver.o ogrlvbagdatasource.o ogrlvbaglayer.o
 
 ifeq ($(HAVE_EXPAT),yes)
-CPPFLAGS +=   -DHAVE_EXPAT
+CPPFLAGS += -DHAVE_EXPAT
+endif
+
+ifeq ($(HAVE_GEOS),yes)
+CPPFLAGS += -DHAVE_GEOS $(GEOS_CFLAGS)
 endif
 
 CPPFLAGS	:=	-I.. -I../.. -I../generic $(EXPAT_INCLUDE) $(CPPFLAGS)
