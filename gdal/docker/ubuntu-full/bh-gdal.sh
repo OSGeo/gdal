@@ -8,7 +8,7 @@ if [ "${GDAL_VERSION}" = "master" ]; then
     export GDAL_RELEASE_DATE
 fi
 
-if [ -n "${GDAL_BUILD_IS_RELEASE:-}" ]; then
+if [ -z "${GDAL_BUILD_IS_RELEASE:-}" ]; then
     export GDAL_SHA1SUM=${GDAL_VERSION}
 fi
 
@@ -60,7 +60,7 @@ wget -q "https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz" \
     make "-j$(nproc)"
     make install DESTDIR="/build"
 
-    if [ -n "${RSYNC_REMOTE}" ]; then
+    if [ -n "${RSYNC_REMOTE:-}" ]; then
         ccache -s
 
         echo "Uploading cache..."

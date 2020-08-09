@@ -123,6 +123,7 @@ static int ArgIsNumeric( const char *pszArg )
 static int  GetSrcDstWin(DatasetProperty* psDP,
                   double we_res, double ns_res,
                   double minX, double minY, double maxX, double maxY,
+                  int nTargetXSize, int nTargetYSize,
                   double* pdfSrcXOff, double* pdfSrcYOff, double* pdfSrcXSize, double* pdfSrcYSize,
                   double* pdfDstXOff, double* pdfDstYOff, double* pdfDstXSize, double* pdfDstYSize)
 {
@@ -140,8 +141,6 @@ static int  GetSrcDstWin(DatasetProperty* psDP,
     if ( psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] < minY )
          return FALSE;
 
-    *pdfSrcXSize = psDP->nRasterXSize;
-    *pdfSrcYSize = psDP->nRasterYSize;
     if ( psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] < minX )
     {
         *pdfSrcXOff = (minX - psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X]) /
@@ -166,10 +165,30 @@ static int  GetSrcDstWin(DatasetProperty* psDP,
         *pdfDstYOff =
             ((maxY - psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y]) / -ns_res);
     }
-    *pdfDstXSize = (psDP->nRasterXSize *
-         psDP->adfGeoTransform[GEOTRSFRM_WE_RES] / we_res);
-    *pdfDstYSize = (psDP->nRasterYSize *
-         psDP->adfGeoTransform[GEOTRSFRM_NS_RES] / ns_res);
+
+    *pdfSrcXSize = psDP->nRasterXSize;
+    *pdfSrcYSize = psDP->nRasterYSize;
+    if( *pdfSrcXOff > 0 )
+        *pdfSrcXSize -= *pdfSrcXOff;
+    if( *pdfSrcYOff > 0 )
+        *pdfSrcYSize -= *pdfSrcYOff;
+
+    const double dfSrcToDstXSize = psDP->adfGeoTransform[GEOTRSFRM_WE_RES] / we_res;
+    *pdfDstXSize = *pdfSrcXSize * dfSrcToDstXSize;
+    const double dfSrcToDstYSize = psDP->adfGeoTransform[GEOTRSFRM_NS_RES] / ns_res;
+    *pdfDstYSize = *pdfSrcYSize * dfSrcToDstYSize;
+
+    if( *pdfDstXOff + *pdfDstXSize > nTargetXSize )
+    {
+        *pdfDstXSize = nTargetXSize - *pdfDstXOff;
+        *pdfSrcXSize = *pdfDstXSize / dfSrcToDstXSize;
+    }
+
+    if( *pdfDstYOff + *pdfDstYSize > nTargetYSize )
+    {
+        *pdfDstYSize = nTargetYSize - *pdfDstYOff;
+        *pdfSrcYSize = *pdfDstYSize / dfSrcToDstYSize;
+    }
 
     return TRUE;
 }
@@ -932,6 +951,7 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
         {
             if ( ! GetSrcDstWin(psDatasetProperties,
                         we_res, ns_res, minX, minY, maxX, maxY,
+                        nRasterXSize, nRasterYSize,
                         &dfSrcXOff, &dfSrcYOff, &dfSrcXSize, &dfSrcYSize,
                         &dfDstXOff, &dfDstYOff, &dfDstXSize, &dfDstYSize) )
                 continue;
@@ -1062,6 +1082,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
         double dfDstYSize;
         if ( ! GetSrcDstWin(psDatasetProperties,
                         we_res, ns_res, minX, minY, maxX, maxY,
+                        nRasterXSize, nRasterYSize,
                         &dfSrcXOff, &dfSrcYOff, &dfSrcXSize, &dfSrcYSize,
                         &dfDstXOff, &dfDstYOff, &dfDstXSize, &dfDstYSize) )
             continue;

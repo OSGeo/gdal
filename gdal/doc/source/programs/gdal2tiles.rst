@@ -52,6 +52,10 @@ can publish a picture without proper georeferencing too.
 
   Tile cutting profile (mercator, geodetic, raster) - default 'mercator' (Google Maps compatible).
 
+  Starting with GDAL 3.2, additional profiles are available from tms_XXXX.json files
+  placed in GDAL data directory (provided all zoom levels use same origin, tile dimensions,
+  and resolution between consecutive zoom levels vary by a factor of two).
+
 .. option:: -r <RESAMPLING>, --resampling=<RESAMPLING>
 
   Resampling method (average, near, bilinear, cubic, cubicspline, lanczos, antialias, mode, max, min, med, q1, q3) - default 'average'.
@@ -63,7 +67,6 @@ can publish a picture without proper georeferencing too.
 .. option:: --xyz
 
   Generate XYZ tiles (OSM Slippy Map standard) instead of TMS.
-  Only for mercator profile.
   In the default mode (TMS), tiles at y=0 are the southern-most tiles, whereas
   in XYZ mode (used by OGC WMTS too), tiles at y=0 are the northern-most tiles.
 
@@ -138,7 +141,7 @@ Options for generated HTML viewers a la Google Maps
 
 .. option:: -w <WEBVIEWER>, --webviewer=<WEBVIEWER>
 
-  Web viewer to generate (all, google, openlayers, leaflet, none) - default 'all'.
+  Web viewer to generate (all, google, openlayers, leaflet, mapml, none) - default 'all'.
 
 .. option:: -t <TITLE>, --title=<TITLE>
 
@@ -161,6 +164,31 @@ Options for generated HTML viewers a la Google Maps
 
     gdal2tiles.py is a Python script that needs to be run against Python GDAL binding.
 
+MapML options
++++++++++++++
+
+MapML support is new to GDAL 3.2. When --webviewer=mapml is specified,
+--xyz is implied, as well as --tmscompatible if --profile=geodetic.
+
+The following profiles are supported:
+
+- mercator: mapped to OSMTILE MapML tiling scheme
+- geodetic: mapped to WGS84 MapML tiling scheme
+- APSTILE: from the tms_MapML_APSTILE.json data file
+- CBMTILE: from the tms_MapML_CBMTILE.json data file
+
+The generated MapML file in the output directory is ``mapml.mapl``
+
+Available options are:
+
+.. option:: --mapml-template=<filename>
+
+    Filename of a template mapml file where variables will
+    be substituted. If not specified, the generic
+    template_tiles.mapml file from GDAL data resources
+    will be used
+
+The --url option is also used to substitue ``${URL}`` in the template MapML file.
 
 Examples
 --------
@@ -170,3 +198,10 @@ Basic example:
 .. code-block::
 
   gdal2tiles.py --zoom=2-5 input.tif output_folder
+
+
+MapML generation:
+
+.. code-block::
+
+  gdal2tiles.py --zoom=16-18 -w mapml -p APSTILE --url "https://example.com" input.tif output_folder

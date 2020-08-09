@@ -1889,3 +1889,29 @@ def test_ogr_sql_sqlite_st_makevalid():
 
     if make_valid_available:
         assert wkt == 'MULTIPOLYGON (((0.5 0.5,0 0,0 1,0.5 0.5)),((0.5 0.5,1 1,1 0,0.5 0.5)))'
+
+
+
+###############################################################################
+# Test field names with same case
+
+
+def test_ogr_sql_sqlite_field_names_same_case():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('id'))
+    lyr.CreateField(ogr.FieldDefn('ID'))
+    lyr.CreateField(ogr.FieldDefn('ID2'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['id'] = 'foo'
+    f['ID'] = 'bar'
+    f['ID2'] = 'baz'
+    lyr.CreateFeature(f)
+
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM test', dialect='SQLite')
+    f = sql_lyr.GetNextFeature()
+    ds.ReleaseResultSet(sql_lyr)
+    assert f['id'] == 'foo'
+    assert f['ID3'] == 'bar'
+    assert f['ID2'] == 'baz'

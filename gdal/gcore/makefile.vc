@@ -17,7 +17,7 @@ OBJ	=	gdalopeninfo.obj gdaldrivermanager.obj gdaldriver.obj \
 		gdalarraybandblockcache.obj gdalhashsetbandblockcache.obj \
 		gdalmultidim.obj \
 		gdalpython.obj gdalpythondriverloader.obj tilematrixset.obj \
-		gdal_thread_pool.obj
+		gdal_thread_pool.obj nasakeywordhandler.obj
 
 RES	=	Version.res
 

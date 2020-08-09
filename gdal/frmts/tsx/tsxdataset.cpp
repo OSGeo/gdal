@@ -60,16 +60,16 @@ enum eProductType {
 /* GetFilePath: return a relative path to a file within an XML node.
  * Returns Null on failure
  */
-static const char *GetFilePath(CPLXMLNode *psXMLNode, const char **pszNodeType) {
+static CPLString GetFilePath(CPLXMLNode *psXMLNode, const char **pszNodeType) {
     const char *pszDirectory = CPLGetXMLValue( psXMLNode, "file.location.path", "" );
     const char *pszFilename = CPLGetXMLValue( psXMLNode, "file.location.filename", "" );
     *pszNodeType = CPLGetXMLValue (psXMLNode, "type", " " );
 
     if (pszDirectory == nullptr || pszFilename == nullptr) {
-        return nullptr;
+        return "";
     }
 
-    return CPLFormFilename( pszDirectory, pszFilename, "" );
+    return CPLString( pszDirectory ) + '/' + pszFilename;
 }
 
 /************************************************************************/
@@ -558,7 +558,7 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
         const char *pszType = nullptr;
         const char *pszPath = CPLFormFilename(
                 CPLGetDirname( osFilename ),
-                GetFilePath(psComponent, &pszType),
+                GetFilePath(psComponent, &pszType).c_str(),
                 "" );
         const char *pszPolLayer = CPLGetXMLValue(psComponent, "polLayer", " ");
 

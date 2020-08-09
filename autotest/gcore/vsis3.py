@@ -28,6 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import json
 import os.path
 import stat
 import sys
@@ -1259,46 +1260,92 @@ def test_vsis3_4():
     assert gdal.GetLastErrorMsg() != ''
 
     # Nominal case
-    with webserver.install_http_handler(webserver.SequentialHandler()):
-        f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket3/another_file.bin', 'wb')
-        assert f is not None
-        assert gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) == 0
-        assert gdal.VSIFSeekL(f, 0, 1) == 0
-        assert gdal.VSIFSeekL(f, 0, 2) == 0
-        assert gdal.VSIFWriteL('foo', 1, 3, f) == 3
-        assert gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) == 0
-        assert gdal.VSIFWriteL('bar', 1, 3, f) == 3
 
-    handler = webserver.SequentialHandler()
+    gdal.NetworkStatsReset()
+    with gdaltest.config_option('CPL_VSIL_NETWORK_STATS_ENABLED', 'YES'):
+        with webserver.install_http_handler(webserver.SequentialHandler()):
+            f = gdal.VSIFOpenL('/vsis3/s3_fake_bucket3/another_file.bin', 'wb')
+            assert f is not None
+            assert gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) == 0
+            assert gdal.VSIFSeekL(f, 0, 1) == 0
+            assert gdal.VSIFSeekL(f, 0, 2) == 0
+            assert gdal.VSIFWriteL('foo', 1, 3, f) == 3
+            assert gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) == 0
+            assert gdal.VSIFWriteL('bar', 1, 3, f) == 3
 
-    def method(request):
-        if request.headers['Content-Length'] != '6':
-            sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
-            request.send_response(400)
+        handler = webserver.SequentialHandler()
+
+        def method(request):
+            if request.headers['Content-Length'] != '6':
+                sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+                request.send_response(400)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+                return
+
+            request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
+
+            content = request.rfile.read(6).decode('ascii')
+            if content != 'foobar':
+                sys.stderr.write('Did not get expected content: %s\n' % content)
+                request.send_response(400)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+                return
+
+            request.send_response(200)
             request.send_header('Content-Length', 0)
             request.end_headers()
-            return
 
-        request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
+        handler.add('PUT', '/s3_fake_bucket3/another_file.bin', custom_method=method)
 
-        content = request.rfile.read(6).decode('ascii')
-        if content != 'foobar':
-            sys.stderr.write('Did not get expected content: %s\n' % content)
-            request.send_response(400)
-            request.send_header('Content-Length', 0)
-            request.end_headers()
-            return
+        gdal.ErrorReset()
+        with webserver.install_http_handler(handler):
+            gdal.VSIFCloseL(f)
+        assert gdal.GetLastErrorMsg() == ''
 
-        request.send_response(200)
-        request.send_header('Content-Length', 0)
-        request.end_headers()
+    j = json.loads(gdal.NetworkStatsGetAsSerializedJSON())
+    #print(j)
+    assert j == {
+        "methods": {
+            "PUT": {
+                "count": 1,
+                "uploaded_bytes": 6
+            }
+        },
+        "handlers": {
+            "vsis3": {
+                "files": {
+                    "/vsis3/s3_fake_bucket3/another_file.bin": {
+                        "methods": {
+                            "PUT": {
+                                "count": 1,
+                                "uploaded_bytes": 6
+                            }
+                        },
+                        "actions": {
+                            "Write": {
+                                "methods": {
+                                    "PUT": {
+                                        "count": 1,
+                                        "uploaded_bytes": 6
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "methods": {
+                    "PUT": {
+                        "count": 1,
+                        "uploaded_bytes": 6
+                    }
+                }
+            }
+        }
+    }
 
-    handler.add('PUT', '/s3_fake_bucket3/another_file.bin', custom_method=method)
-
-    gdal.ErrorReset()
-    with webserver.install_http_handler(handler):
-        gdal.VSIFCloseL(f)
-    assert gdal.GetLastErrorMsg() == ''
+    gdal.NetworkStatsReset()
 
     # Redirect case
     with webserver.install_http_handler(webserver.SequentialHandler()):
@@ -2686,6 +2733,102 @@ def test_vsis3_no_useless_requests():
         assert gdal.VSIFOpenL('/vsis3/no_useless_requests/bar.txt', 'rb') is None
         assert gdal.VSIStatL('/vsis3/no_useless_requests/baz.txt') is None
 
+###############################################################################
+# Test w+ access
+
+def test_vsis3_random_write():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.error_handler():
+        assert gdal.VSIFOpenL('/vsis3/random_write/test.bin', 'w+b') is None
+
+    with gdaltest.config_option('CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE', 'YES'):
+        f = gdal.VSIFOpenL('/vsis3/random_write/test.bin', 'w+b')
+    assert f
+    assert gdal.VSIFWriteL('foo', 3, 1, f) == 1
+    assert gdal.VSIFSeekL(f, 0, 0) == 0
+    assert gdal.VSIFReadL(3, 1, f).decode('ascii') == 'foo'
+    assert gdal.VSIFEofL(f) == 0
+    assert gdal.VSIFTellL(f) == 3
+
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/random_write/test.bin', 200, {}, expected_body=b'foo')
+    with webserver.install_http_handler(handler):
+        assert gdal.VSIFCloseL(f) == 0
+
+###############################################################################
+# Test w+ access
+
+def test_vsis3_random_write_failure_1():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_option('CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE', 'YES'):
+        f = gdal.VSIFOpenL('/vsis3/random_write/test.bin', 'w+b')
+    assert f
+
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/random_write/test.bin', 400, {})
+    with webserver.install_http_handler(handler):
+        with gdaltest.error_handler():
+            assert gdal.VSIFCloseL(f) != 0
+
+
+###############################################################################
+# Test w+ access
+
+def test_vsis3_random_write_failure_2():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_option('CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE', 'YES'):
+        with gdaltest.config_option('VSIS3_CHUNK_SIZE_BYTES', '1'):
+            f = gdal.VSIFOpenL('/vsis3/random_write/test.bin', 'w+b')
+    assert f
+    assert gdal.VSIFWriteL('foo', 3, 1, f) == 1
+
+    handler = webserver.SequentialHandler()
+    handler.add('POST', '/random_write/test.bin?uploads', 400, {})
+    with webserver.install_http_handler(handler):
+        with gdaltest.error_handler():
+                assert gdal.VSIFCloseL(f) != 0
+
+###############################################################################
+# Test w+ access
+
+def test_vsis3_random_write_gtiff_create_copy():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/random_write/test.tif', 404, {})
+    handler.add('GET', '/random_write/?delimiter=%2F&max-keys=100&prefix=test.tif%2F', 404, {})
+    handler.add('GET', '/random_write/?delimiter=%2F', 404, {})
+
+    src_ds = gdal.Open('data/byte.tif')
+
+    with gdaltest.config_option('CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE', 'YES'):
+        with webserver.install_http_handler(handler):
+            ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsis3/random_write/test.tif', src_ds)
+    assert ds is not None
+
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/random_write/test.tif', 200, {})
+    with webserver.install_http_handler(handler):
+        ds = None
 
 ###############################################################################
 # Read credentials from simulated ~/.aws/credentials
@@ -3117,6 +3260,7 @@ def test_vsis3_read_credentials_ec2_expiration():
 
     handler = webserver.SequentialHandler()
     handler.add('PUT', '/invalid/latest/api/token', 404)
+    handler.add('GET', '/invalid/latest/meta-data/iam/security-credentials/myprofile', 404)
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             f = open_for_read('/vsis3/s3_fake_bucket/bar')

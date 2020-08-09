@@ -88,6 +88,7 @@ protected:
 
   bool  m_suppressColumnMappingError;
   bool  m_forceMulti;
+  bool  m_bTimeInUTC = false;
 
   bool OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature);
 
@@ -239,7 +240,6 @@ protected:
 
   std::wstring m_wstrSubfields;
   std::wstring m_wstrWhereClause;
-  OGRGeometry* m_pOGRFilterGeometry;
 
   bool        m_bFilterDirty; //optimization to avoid multiple calls to search until necessary
 

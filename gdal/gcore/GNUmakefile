@@ -31,6 +31,18 @@ ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	$(CPPFLAGS) -DHAVE_GEOS=1 $(GEOS_CFLAGS)
 endif
 
+#nasakeywordhandler is used by pds and hdf4
+compile_nasakeywordhandler = no
+ifeq ($(HAVE_HDF4),yes)
+  compile_nasakeywordhandler = yes
+endif
+ifeq ($(shell echo $(GDAL_FORMATS) | grep -w -o pds),pds)
+  compile_nasakeywordhandler = yes
+endif
+ifeq ($(compile_nasakeywordhandler),yes)
+    OBJ += nasakeywordhandler.o
+endif
+
 CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS) $(WARN_OLD_STYLE_CAST) $(CXXFLAGS)
 
 GENERATE_GDAL_VERSION_H := $(shell ./generate_gdal_version_h.sh)

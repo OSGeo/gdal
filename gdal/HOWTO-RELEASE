@@ -158,8 +158,8 @@ Perl module maintainer to make a CPAN release.
 
       Remove the RC suffixes for the final RC, like:
       mv gdal-3.1.0rc1.tar.xz gdal-3.1.0.tar.xz
-      mv gdal-3.1.0rc1.tar.xz.md5 gdal-3.1.0.tar.gz.md5
-      mv gdal-3.1.0rc1.tar.gz gdal-3.1.0.tar.xz
+      mv gdal-3.1.0rc1.tar.xz.md5 gdal-3.1.0.tar.xz.md5
+      mv gdal-3.1.0rc1.tar.gz gdal-3.1.0.tar.gz
       mv gdal-3.1.0rc1.tar.gz.md5 gdal-3.1.0.tar.gz.md5
       mv gdal310rc1.zip gdal310.zip
       mv gdal310rc1.zip.md5 gdal310.zip.md5

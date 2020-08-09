@@ -420,3 +420,22 @@ def test_envi_interleaving():
         assert ds.GetRasterBand(2).Checksum() == 20669, filename
         assert ds.GetRasterBand(3).Checksum() == 20895, filename
         ds = None
+
+###############################################################################
+# Test nodata
+
+
+def test_envi_nodata():
+
+    filename = '/vsimem/test_envi_nodata.dat'
+    ds = gdal.GetDriverByName('ENVI').Create(filename, 1, 1)
+    ds.GetRasterBand(1).SetNoDataValue(1)
+    ds = None
+
+    gdal.Unlink(filename + '.aux.xml')
+
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == 1.0
+    ds = None
+
+    gdal.GetDriverByName('ENVI').Delete(filename)

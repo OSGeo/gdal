@@ -223,6 +223,8 @@ def InfoOptions(options=None, format='text', deserialize=True,
         new_options = options
         if format == 'json':
             new_options += ['-json']
+        if '-json' in new_options:
+            format = 'json'
         if computeMinMax:
             new_options += ['-mm']
         if reportHistograms:
@@ -1830,6 +1832,14 @@ def VSICurlPartialClearCache(*args):
     """VSICurlPartialClearCache(char const * utf8_path)"""
     return _gdal.VSICurlPartialClearCache(*args)
 
+def NetworkStatsReset(*args):
+    """NetworkStatsReset()"""
+    return _gdal.NetworkStatsReset(*args)
+
+def NetworkStatsGetAsSerializedJSON(*args):
+    """NetworkStatsGetAsSerializedJSON(char ** options=None) -> retStringAndCPLFree *"""
+    return _gdal.NetworkStatsGetAsSerializedJSON(*args)
+
 def ParseCommandLine(*args):
     """ParseCommandLine(char const * utf8_path) -> char **"""
     return _gdal.ParseCommandLine(*args)
@@ -2671,6 +2681,16 @@ class Group(_object):
         return _gdal.Group_OpenMDArray(self, *args)
 
 
+    def OpenMDArrayFromFullname(self, *args):
+        """OpenMDArrayFromFullname(Group self, char const * name, char ** options=None) -> MDArray"""
+        return _gdal.Group_OpenMDArrayFromFullname(self, *args)
+
+
+    def ResolveMDArray(self, *args):
+        """ResolveMDArray(Group self, char const * name, char const * starting_point, char ** options=None) -> MDArray"""
+        return _gdal.Group_ResolveMDArray(self, *args)
+
+
     def GetGroupNames(self, *args):
         """GetGroupNames(Group self, char ** options=None) -> char **"""
         return _gdal.Group_GetGroupNames(self, *args)
@@ -2679,6 +2699,11 @@ class Group(_object):
     def OpenGroup(self, *args):
         """OpenGroup(Group self, char const * name, char ** options=None) -> Group"""
         return _gdal.Group_OpenGroup(self, *args)
+
+
+    def OpenGroupFromFullname(self, *args):
+        """OpenGroupFromFullname(Group self, char const * name, char ** options=None) -> Group"""
+        return _gdal.Group_OpenGroupFromFullname(self, *args)
 
 
     def GetDimensions(self, *args):

@@ -741,7 +741,8 @@ def test_vsisync():
 
     if sys.platform != 'win32':
         with gdaltest.error_handler():
-            assert not gdal.Sync('/vsimem/test_sync/', '/i_do_not/exist')
+            # even root cannot write into /proc
+            assert not gdal.Sync('/vsimem/test_sync/', '/proc/i_do_not/exist')
 
     assert gdal.Sync('/vsimem/test_sync/', '/vsimem/out')
     assert gdal.ReadDir('/vsimem/out') == [ 'foo.txt', 'subdir' ]

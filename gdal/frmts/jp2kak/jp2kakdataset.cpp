@@ -2323,6 +2323,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
           "{512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}",
           "ORGgen_plt", "yes",
           "ORGgen_tlm", nullptr,
+          "ORGtparts", nullptr,
           "Qguard", nullptr,
           "Cmodes", nullptr,
           "Clevels", nullptr,
@@ -2752,6 +2753,7 @@ void GDALRegister_JP2KAK()
 "   <Option name='Clevels' type='string'/>"
 "   <Option name='ORGgen_plt' type='string'/>"
 "   <Option name='ORGgen_tlm' type='string'/>"
+"   <Option name='ORGtparts' type='string'/>"
 "   <Option name='Qguard' type='integer'/>"
 "   <Option name='Sprofile' type='string'/>"
 "   <Option name='Rshift' type='string'/>"

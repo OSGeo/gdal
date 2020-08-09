@@ -1435,6 +1435,32 @@ def test_ogr_sql_49():
         assert tr
 
 
+
+
+###############################################################################
+# Test field names with same case
+
+
+def test_ogr_sql_field_names_same_case():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('id'))
+    lyr.CreateField(ogr.FieldDefn('ID'))
+    lyr.CreateField(ogr.FieldDefn('ID2'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['id'] = 'foo'
+    f['ID'] = 'bar'
+    f['ID2'] = 'baz'
+    lyr.CreateFeature(f)
+
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM test')
+    f = sql_lyr.GetNextFeature()
+    ds.ReleaseResultSet(sql_lyr)
+    assert f['id'] == 'foo'
+    assert f['ID'] == 'bar'
+    assert f['ID2'] == 'baz'
+
 ###############################################################################
 
 

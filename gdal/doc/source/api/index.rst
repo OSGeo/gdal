@@ -68,12 +68,13 @@ API
        gdalattribute_cpp
        gdalextendeddatatype_cpp
 
-   Geographic networks API
+   Miscellaneous C++ API
    ++++++++++++++++++++++++++++
 
    .. toctree::
        :maxdepth: 1
 
+       cpl_cpp
        gnm_cpp
 
    Python API

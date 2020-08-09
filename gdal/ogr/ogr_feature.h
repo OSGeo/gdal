@@ -79,6 +79,7 @@ class OGRStyleTable;
  * Definition of an attribute of an OGRFeatureDefn. A field is described by :
  * <ul>
  * <li>a name. See SetName() / GetNameRef()</li>
+ * <li>an alternative name (optional): alternative descriptive name for the field (sometimes referred to as an "alias"). See SetAlternativeName() / GetAlternativeNameRef()</li>
  * <li>a type: OFTString, OFTInteger, OFTReal, ... See SetType() / GetType()</li>
  * <li>a subtype (optional): OFSTBoolean, ... See SetSubType() / GetSubType()</li>
  * <li>a width (optional): maximal number of characters. See SetWidth() / GetWidth()</li>
@@ -94,6 +95,7 @@ class CPL_DLL OGRFieldDefn
 {
   private:
     char                *pszName;
+    char                *pszAlternativeName;
     OGRFieldType        eType;
     OGRJustification    eJustify;
     int                 nWidth;  // Zero is variable.
@@ -113,6 +115,9 @@ class CPL_DLL OGRFieldDefn
 
     void                SetName( const char * );
     const char         *GetNameRef() const { return pszName; }
+
+    void                SetAlternativeName( const char * );
+    const char         *GetAlternativeNameRef() const { return pszAlternativeName; }
 
     OGRFieldType        GetType() const { return eType; }
     void                SetType( OGRFieldType eTypeIn );

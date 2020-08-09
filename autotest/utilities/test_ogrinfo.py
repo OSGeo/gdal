@@ -521,7 +521,7 @@ def test_ogrinfo_sql_filename():
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
 
-    open('tmp/my.sql', 'wt').write('-- initial comment\nselect * from poly\n-- trailing comment')
+    open('tmp/my.sql', 'wt').write("""-- initial comment\nselect\n'--''--',* from --comment\npoly\n-- trailing comment""")
     (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' -q ../ogr/data/poly.shp -sql @tmp/my.sql')
     os.unlink('tmp/my.sql')
     assert (err is None or err == ''), 'got error/warning'

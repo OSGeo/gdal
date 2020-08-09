@@ -46,6 +46,7 @@ class VSIAzureBlobHandleHelper final: public IVSIS3LikeHandleHelper
         CPLString m_osObjectKey;
         CPLString m_osStorageAccount;
         CPLString m_osStorageKey;
+        CPLString m_osSAS;
         bool      m_bUseHTTPS;
 
         static bool     GetConfiguration(CSLConstList papszOptions,
@@ -53,13 +54,15 @@ class VSIAzureBlobHandleHelper final: public IVSIS3LikeHandleHelper
                                          CPLString& osEndpoint,
                                          CPLString& osBlobEndpoint,
                                          CPLString& osStorageAccount,
-                                         CPLString& osStorageKey);
+                                         CPLString& osStorageKey,
+                                         CPLString& osSAS);
 
         static CPLString BuildURL(const CPLString& osEndpoint,
                                   const CPLString& osBlobEndpoint,
                                   const CPLString& osStorageAccount,
                                   const CPLString& osBucket,
                                   const CPLString& osObjectKey,
+                                  const CPLString& osSAS,
                                   bool bUseHTTPS);
 
         void RebuildURL() override;
@@ -71,6 +74,7 @@ class VSIAzureBlobHandleHelper final: public IVSIS3LikeHandleHelper
                                  const CPLString& osObjectKey,
                                  const CPLString& osStorageAccount,
                                  const CPLString& osStorageKey,
+                                 const CPLString& osSAS,
                                  bool bUseHTTPS);
        ~VSIAzureBlobHandleHelper();
 

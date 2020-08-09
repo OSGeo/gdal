@@ -899,18 +899,22 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Initialize info for later overview discovery.                   */
 /* -------------------------------------------------------------------- */
-    if( fp != nullptr && poDS != nullptr )
-    {
-        poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-        if( poOpenInfo->AreSiblingFilesLoaded() )
-            poDS->oOvManager.TransferSiblingFiles(
-                poOpenInfo->StealSiblingFiles() );
-    }
 
-    if( poDS && poDS->eAccess == GA_Update &&
-        poDS->m_poRootGroup && !STARTS_WITH_CI(poOpenInfo->pszFilename, "<VRT") )
+    if( poDS != nullptr )
     {
-        poDS->m_poRootGroup->SetFilename(poOpenInfo->pszFilename);
+        if( fp != nullptr )
+        {
+            poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+            if( poOpenInfo->AreSiblingFilesLoaded() )
+                poDS->oOvManager.TransferSiblingFiles(
+                    poOpenInfo->StealSiblingFiles() );
+        }
+
+        if (poDS->eAccess == GA_Update &&
+            poDS->m_poRootGroup && !STARTS_WITH_CI(poOpenInfo->pszFilename, "<VRT") )
+        {
+            poDS->m_poRootGroup->SetFilename(poOpenInfo->pszFilename);
+        }
     }
 
     return poDS;

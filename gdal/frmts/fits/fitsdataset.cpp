@@ -304,6 +304,12 @@ FITSDataset::FITSDataset():
     bFITSInfoChanged(false)
 {
     oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    adfGeoTransform[0] = 0;
+    adfGeoTransform[1] = 1;
+    adfGeoTransform[2] = 0;
+    adfGeoTransform[3] = 0;
+    adfGeoTransform[4] = 0;
+    adfGeoTransform[5] = 1;
 }
 
 /************************************************************************/

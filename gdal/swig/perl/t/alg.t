@@ -63,8 +63,10 @@ BEGIN { use_ok('Geo::GDAL') };
 }
 
 {
-    my $b = Geo::GDAL::Driver('MEM')->Create(Width => 40, Height => 40)->Band;
+    my $dataset = Geo::GDAL::Driver('MEM')->Create(Width => 40, Height => 40);
+    my $b = $dataset->Band;
     my $d = $b->ReadTile;
+    $dataset->SetGeoTransform([0,1,0,0,0,-1]);
     for my $y (20..29) {
         for my $x (10..19) {
             $d->[$y][$x] = 1;

@@ -109,7 +109,7 @@ bool OGRTEIGHAInitialize()
     catch ( const std::exception& e )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "An exception occurred in OGRTEIGHAInitialize(): %S", e.what());
+                 "An exception occurred in OGRTEIGHAInitialize(): %s", e.what());
     }
     catch ( ... )
     {

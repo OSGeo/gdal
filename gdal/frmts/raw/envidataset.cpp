@@ -458,6 +458,13 @@ void ENVIDataset::FlushCache()
     }
     bOK &= VSIFPrintfL(fp, "}\n") >= 0;
 
+    int bHasNoData = FALSE;
+    double dfNoDataValue = band->GetNoDataValue(&bHasNoData);
+    if( bHasNoData )
+    {
+        bOK &= VSIFPrintfL(fp, "data ignore value = %.18g\n", dfNoDataValue) >= 0;
+    }
+
     // Write the metadata that was read into the ENVI domain.
     char **papszENVIMetadata = GetMetadata("ENVI");
 
@@ -497,7 +504,8 @@ void ENVIDataset::FlushCache()
              poKey == "class names" ||
              poKey == "band names" ||
              poKey == "map info" ||
-             poKey == "projection info" )
+             poKey == "projection info" ||
+             poKey == "data ignore value" )
         {
             CSLDestroy(papszTokens);
             continue;
@@ -2791,6 +2799,16 @@ CPLErr ENVIRasterBand::SetCategoryNames( char **papszCategoryNamesIn )
 {
     reinterpret_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
     return RawRasterBand::SetCategoryNames(papszCategoryNamesIn);
+}
+
+/************************************************************************/
+/*                            SetNoDataValue()                          */
+/************************************************************************/
+
+CPLErr ENVIRasterBand::SetNoDataValue( double dfNoDataValue )
+{
+    reinterpret_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
+    return RawRasterBand::SetNoDataValue(dfNoDataValue);
 }
 
 /************************************************************************/
