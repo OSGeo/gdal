@@ -144,23 +144,6 @@ static GDALDataType GetL2DataType(Lerc2::DataType L2type) {
     return dt;
 }
 
-// Load a buffer of type T into a LERC1 zImg
-//template <typename T> static void CntZImgFill(CntZImage &zImg, T *src, const ILImage &img)
-//{
-//    int w = img.pagesize.x;
-//    int h = img.pagesize.y;
-//    zImg.resize(w, h);
-//    const float ndv = static_cast<float>(img.hasNoData ? img.NoDataValue : 0);
-//    for (int i = 0; i < h; i++)
-//        for (int j = 0; j < w; j++) {
-//            float val = static_cast<float>(*src++);
-//            zImg(i, j) = val;
-//            zImg.mask.Set(i * zImg.getWidth() + j, !CPLIsEqual(ndv, val));
-//        }
-//    return;
-//}
-//
-
 // Load a buffer of type T into a LERC1 zImg, with a given stride
 template <typename T> static void CntZImgFill(CntZImage& zImg, T* src, const ILImage& img, GInt32 stride)
 {

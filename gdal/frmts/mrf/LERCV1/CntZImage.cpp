@@ -437,7 +437,6 @@ bool CntZImage::write(Byte** ppByte,
     *ppByte = ptr;
 
     InfoFromComputeNumBytes info;
-    memset(&info, 0, sizeof(InfoFromComputeNumBytes));
     if (0 == computeNumBytesNeededToWrite(maxZError, zPart, &info))
         return false;
 
