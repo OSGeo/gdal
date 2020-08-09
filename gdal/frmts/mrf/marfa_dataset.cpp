@@ -1965,10 +1965,6 @@ void MRFDataset::ProcessCreateOptions(char **papszOptions)
         img.pagesize.c = img.size.c;
 
     // Compression dependent fixups
-#if defined(LERC)
-    if (IL_LERC == img.comp)
-        img.pagesize.c = 1;
-#endif
 }
 
 /**
