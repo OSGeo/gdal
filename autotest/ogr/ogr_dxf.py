@@ -2357,7 +2357,7 @@ def test_ogr_dxf_33():
         feat.DumpReadable()
         pytest.fail('wrong ASMData on second 3DSOLID')
 
-    if feat.GetField('ASMTransform') != [-0.18750000000000006, 0.3247595264191645, 0.0, 0.08660254037844387, 0.05000000000000002, 0.0, 0.0, 0.0, -1.0, 5.75, 1.125, 0.0]:
+    if feat.GetField('ASMTransform') != pytest.approx([-0.1875, 0.3247595264191645, 0.0, 0.08660254037844387, 0.05, 0.0, 0.0, 0.0, -1.0, 5.75, 1.125, 0.0]):
         feat.DumpReadable()
         pytest.fail('wrong ASMTransform on second 3DSOLID')
 
@@ -2368,7 +2368,7 @@ def test_ogr_dxf_33():
     # 3DSOLID inside a block where the INSERT has rotation and OCS
     feat = layer.GetNextFeature()
 
-    if feat.GetField('ASMTransform') != [-6.123233995736766e-17, 0.0, 1.0, 1.0, 0.0, 6.123233995736766e-17, 0.0, 1.0, 0.0, 100.0, 200.0, 300.0]:
+    if feat.GetField('ASMTransform') != pytest.approx([0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 100.0, 200.0, 300.0]):
         feat.DumpReadable()
         pytest.fail('wrong ASMTransform on third 3DSOLID')
 
