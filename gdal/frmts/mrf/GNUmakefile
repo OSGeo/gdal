@@ -53,7 +53,7 @@ default:  $(PREDEPEND)	$(OBJ:.o=.$(OBJ_EXT)) $(SUBLIBS)
 
 clean:
 	rm -rf *.o *.lo .libs/$(OBJ) .libs $(O_OBJ) $(LO_O_OBJ) gdal_mrf.so.1
-	(cd libLERC; $(MAKE) clean)
+	(cd $(LERCV1); $(MAKE) clean)
 
 install-obj:	$(PREDEPEND) $(SUBLIBS) $(O_OBJ:.o=.$(OBJ_EXT))
 
