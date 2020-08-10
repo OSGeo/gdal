@@ -132,9 +132,15 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
             else
             {
                 // ODBCSYSINI not previously set, so remove
-                const size_t nLen = 11;
-                pszEnvRollback = static_cast<char *>(CPLMalloc(nLen));
-                snprintf( pszEnvRollback, nLen, "ODBCSYSINI" );
+#ifdef _MSC_VER
+                // for MSVC an environment variable is removed by setting to empty string
+                // https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/putenv-wputenv?view=vs-2019
+                pszEnvRollback = CPLStrdup("ODBCSYSINI=");
+#else
+                // for gnuc an environment variable is removed by not including the equal sign
+                // https://man7.org/linux/man-pages/man3/putenv.3.html
+                pszEnvRollback = CPLStrdup("ODBCSYSINI");
+#endif
             }
 
             // A 'man putenv' shows that we cannot free pszEnvRollback
