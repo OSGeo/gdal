@@ -1,9 +1,9 @@
 GDAL_ROOT	=	..\..\..
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-OBJ	= CntZImage.obj
+OBJ	= Lerc1Image.obj
 
-HEADERS = CntZImage.h
+HEADERS = Lerc1Image.h
 
 LERCV1 = LERCV1.obj
 

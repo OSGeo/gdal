@@ -21,7 +21,7 @@ Contributors:  Thomas Maurer
                Lucian Plesea
 */
 
-#include "CntZImage.h"
+#include "Lerc1Image.h"
 #include <cmath>
 #include <cfloat>
 #include <string>
@@ -357,7 +357,7 @@ static const string sCntZImage("CntZImage "); // Includes a space
 
 // computes the size of a CntZImage of any width and height, but all void / invalid,
 // and then compressed
-unsigned int CntZImage::computeNumBytesNeededToWriteVoidImage()
+unsigned int Lerc1Image::computeNumBytesNeededToWriteVoidImage()
 {
     unsigned int sz = (unsigned int)sCntZImage.size()
         + 4 * sizeof(int) + sizeof(double);
@@ -371,7 +371,7 @@ unsigned int CntZImage::computeNumBytesNeededToWriteVoidImage()
 }
 
 
-unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
+unsigned int Lerc1Image::computeNumBytesNeededToWrite(double maxZError,
     bool onlyZPart,
     InfoFromComputeNumBytes* info) const
 {
@@ -414,7 +414,7 @@ unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
 // if you change the file format, don't forget to update not only write and
 // read functions, and the file version number, but also the computeNumBytes...
 // and numBytes... functions
-bool CntZImage::write(Byte** ppByte,
+bool Lerc1Image::write(Byte** ppByte,
     double maxZError,
     bool zPart) const
 {
@@ -487,7 +487,7 @@ bool CntZImage::write(Byte** ppByte,
 }
 
 
-bool CntZImage::read(Byte** ppByte,
+bool Lerc1Image::read(Byte** ppByte,
     size_t& nRemainingBytes,
     double maxZError,
     bool onlyZPart)
@@ -587,7 +587,7 @@ bool CntZImage::read(Byte** ppByte,
 }
 
 
-bool CntZImage::findTiling(double maxZError,
+bool Lerc1Image::findTiling(double maxZError,
     int& numTilesVertA,
     int& numTilesHoriA,
     int& numBytesOptA,
@@ -623,7 +623,7 @@ bool CntZImage::findTiling(double maxZError,
 }
 
 // if bArr is nullptr, it doesn't actually do the writing, only computes output values
-bool CntZImage::writeTiles(double maxZError, int numTilesVert, int numTilesHori,
+bool Lerc1Image::writeTiles(double maxZError, int numTilesVert, int numTilesHori,
     Byte* bArr, int& numBytes, float& maxValInImg) const
 {
     numBytes = 0;
@@ -675,7 +675,7 @@ bool CntZImage::writeTiles(double maxZError, int numTilesVert, int numTilesHori,
 }
 
 
-bool CntZImage::readTiles(double maxZErrorInFile,
+bool Lerc1Image::readTiles(double maxZErrorInFile,
     int numTilesVert, int numTilesHori, float maxValInImg,
     Byte* bArr, size_t nRemainingBytes)
 {
@@ -707,7 +707,7 @@ bool CntZImage::readTiles(double maxZErrorInFile,
 }
 
 
-void CntZImage::computeCntStats(float& cntMin, float& cntMax) const
+void Lerc1Image::computeCntStats(float& cntMin, float& cntMax) const
 {
     cntMin = cntMax = static_cast<float>(mask.IsValid(0) ? 1.0f : 0.0f);
     for (int k = 0; k < getSize() && cntMin == cntMax; k++) {
@@ -719,7 +719,7 @@ void CntZImage::computeCntStats(float& cntMin, float& cntMax) const
 }
 
 
-bool CntZImage::computeZStats(int i0, int i1, int j0, int j1,
+bool Lerc1Image::computeZStats(int i0, int i1, int j0, int j1,
     float& zMin, float& zMax, int& numValidPixel) const
 {
     if (i0 < 0 || j0 < 0 || i1 > getHeight() || j1 > getWidth())
@@ -750,7 +750,7 @@ bool CntZImage::computeZStats(int i0, int i1, int j0, int j1,
 }
 
 
-int CntZImage::numBytesZTile(int numValidPixel, float zMin, float zMax, double maxZError)
+int Lerc1Image::numBytesZTile(int numValidPixel, float zMin, float zMax, double maxZError)
 {
     if (numValidPixel == 0 || (zMin == 0 && zMax == 0))
         return 1;
@@ -761,7 +761,7 @@ int CntZImage::numBytesZTile(int numValidPixel, float zMin, float zMax, double m
 }
 
 
-bool CntZImage::writeZTile(Byte** ppByte, int& numBytes,
+bool Lerc1Image::writeZTile(Byte** ppByte, int& numBytes,
     int i0, int i1, int j0, int j1,
     int numValidPixel,
     float zMin, float zMax, double maxZError) const
@@ -831,7 +831,7 @@ bool CntZImage::writeZTile(Byte** ppByte, int& numBytes,
 }
 
 
-bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
+bool Lerc1Image::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
     int i0, int i1, int j0, int j1,
     double maxZErrorInFile, float maxZInImg)
 {

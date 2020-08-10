@@ -21,7 +21,7 @@ Contributors:  Lucian Plesea
 
 #include "marfa.h"
 #include <algorithm>
-#include "LERCV1/CntZImage.h"
+#include "LERCV1/Lerc1Image.h"
 #include <Lerc2.h>
 
 USING_NAMESPACE_LERC1
@@ -30,14 +30,12 @@ USING_NAMESPACE_LERC
 NAMESPACE_MRF_START
 
 // Read an unaligned 4 byte little endian int from location p, advances pointer
-static void READ_GINT32(int& X, const char*& p)
-{
+static void READ_GINT32(int& X, const char*& p) {
     memcpy(&X, p, sizeof(GInt32));
     p+= sizeof(GInt32);
 }
 
-static void READ_FLOAT(float& X, const char*& p)
-{
+static void READ_FLOAT(float& X, const char*& p) {
     memcpy(&X, p, sizeof(float));
     p+= sizeof(float);
 }
@@ -57,7 +55,7 @@ static int checkV1(const char *s, size_t sz)
 
     // Header is 34 bytes
     // band header is 16, first mask band then data band
-    if (sz < static_cast<size_t>(CntZImage::computeNumBytesNeededToWriteVoidImage()))
+    if (sz < static_cast<size_t>(Lerc1Image::computeNumBytesNeededToWriteVoidImage()))
         return 0;
     // First ten bytes are ASCII signature
     if (!STARTS_WITH(s, "CntZImage "))
@@ -74,7 +72,7 @@ static int checkV1(const char *s, size_t sz)
     if (i != 8) return 0;
 
     // Height
-    READ_GINT32(i, s); // Arbitrary number in CntZImage::read()
+    READ_GINT32(i, s); // Arbitrary number in Lerc1Image::read()
     if (i > 20000 || i <= 0) return 0;
 
     // Width
@@ -145,7 +143,7 @@ static GDALDataType GetL2DataType(Lerc2::DataType L2type) {
 }
 
 // Load a buffer of type T into a LERC1 zImg, with a given stride
-template <typename T> static void CntZImgFill(CntZImage& zImg, T* src, const ILImage& img, GInt32 stride)
+template <typename T> static void Lerc1ImgFill(Lerc1Image& zImg, T* src, const ILImage& img, GInt32 stride)
 {
     int w = img.pagesize.x;
     int h = img.pagesize.y;
@@ -170,7 +168,7 @@ template <typename T> static void CntZImgFill(CntZImage& zImg, T* src, const ILI
 }
 
 // Unload LERC1 zImg into a type T buffer
-template <typename T> static bool CntZImgUFill(CntZImage &zImg, T *dst, const ILImage &img, GInt32 stride)
+template <typename T> static bool Lerc1ImgUFill(Lerc1Image &zImg, T *dst, const ILImage &img, GInt32 stride)
 {
     const T ndv = static_cast<T>(img.hasNoData ? img.NoDataValue : 0);
     if (img.pagesize.y != zImg.getHeight() || img.pagesize.x != zImg.getWidth())
@@ -191,12 +189,12 @@ template <typename T> static bool CntZImgUFill(CntZImage &zImg, T *dst, const IL
 
 static CPLErr CompressLERC1(buf_mgr &dst, buf_mgr &src, const ILImage &img, double precision)
 {
-    CntZImage zImg;
+    Lerc1Image zImg;
     GInt32 stride = img.pagesize.c;
-    Byte* ptr = reinterpret_cast<Byte*>(dst.buffer);
+    Lerc1NS::Byte* ptr = reinterpret_cast<Lerc1NS::Byte*>(dst.buffer);
 
     for (int c = 0; c < stride; c++) {
-#define FILL(T) CntZImgFill(zImg, reinterpret_cast<T *>(src.buffer) + c, img, stride)
+#define FILL(T) Lerc1ImgFill(zImg, reinterpret_cast<T *>(src.buffer) + c, img, stride)
         switch (img.dt) {
         case GDT_Byte:      FILL(GByte);    break;
         case GDT_UInt16:    FILL(GUInt16);  break;
@@ -216,7 +214,7 @@ static CPLErr CompressLERC1(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
 
     // write changes the value of the pointer, we can find the size by testing how far it moved
     // Add a couple of bytes, to avoid buffer overflow on reading
-    dst.size = ptr - reinterpret_cast<Byte*>(dst.buffer) + PADDING_BYTES;
+    dst.size = reinterpret_cast<char *>(ptr) - dst.buffer + PADDING_BYTES;
     CPLDebug("MRF_LERC","LERC Compressed to %d\n", (int)dst.size);
     return CE_None;
 }
@@ -224,11 +222,11 @@ static CPLErr CompressLERC1(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
 // LERC 1 Decompression
 static CPLErr DecompressLERC1(buf_mgr &dst, buf_mgr &src, const ILImage &img)
 {
-    CntZImage zImg;
+    Lerc1Image zImg;
 
     // need to add the padding bytes so that out-of-buffer-access
     size_t nRemainingBytes = src.size + PADDING_BYTES;
-    Byte *ptr = reinterpret_cast<Byte *>(src.buffer);
+    Lerc1NS::Byte *ptr = reinterpret_cast<Lerc1NS::Byte *>(src.buffer);
     GInt32 stride = img.pagesize.c;
     for (int c = 0; c < stride; c++) {
         // Check that input passes snicker test
@@ -245,7 +243,7 @@ static CPLErr DecompressLERC1(buf_mgr &dst, buf_mgr &src, const ILImage &img)
 
         // Unpack from zImg to dst buffer, calling the right type
         bool success = false;
-#define UFILL(T) success = CntZImgUFill(zImg, reinterpret_cast<T *>(dst.buffer) + c, img, stride)
+#define UFILL(T) success = Lerc1ImgUFill(zImg, reinterpret_cast<T *>(dst.buffer) + c, img, stride)
         switch (img.dt) {
         case GDT_Byte:      UFILL(GByte);   break;
         case GDT_UInt16:    UFILL(GUInt16); break;
@@ -508,10 +506,10 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    if (size.x <= 0 && sHeader.size() >= CntZImage::computeNumBytesNeededToWriteVoidImage()) {
-        CntZImage zImg;
+    if (size.x <= 0 && sHeader.size() >= Lerc1Image::computeNumBytesNeededToWriteVoidImage()) {
+        Lerc1Image zImg;
         size_t nRemainingBytes = poOpenInfo->nHeaderBytes;
-        Byte *pb = reinterpret_cast<Byte *>(psz);
+        Lerc1NS::Byte *pb = reinterpret_cast<Lerc1NS::Byte *>(psz);
         // Read only the header, changes pb
         if (zImg.read(&pb, nRemainingBytes, 1e12, true))
         {

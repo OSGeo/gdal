@@ -4,7 +4,7 @@
 #
 include ../../../GDALmake.opt
 
-OBJ = CntZImage.o
+OBJ = LercV1Image.o
 
 O_OBJ   =       $(foreach file,$(OBJ),../../o/$(file))
 

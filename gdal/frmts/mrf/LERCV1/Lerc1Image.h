@@ -17,16 +17,16 @@ Contributors:  Thomas Maurer
                Lucian Plesea
 */
 
-#ifndef CNTZIMAGE_H
-#define CNTZIMAGE_H
+#ifndef LERC1IMAGE_H
+#define LERC1IMAGE_H
 
 #include <cstring>
 #include <vector>
 
 #ifndef NAMESPACE_LERC1_START
-#define NAMESPACE_LERC1_START namespace GDAL_Lerc1NS {
+#define NAMESPACE_LERC1_START namespace Lerc1NS {
 #define NAMESPACE_LERC1_END }
-#define USING_NAMESPACE_LERC1 using namespace GDAL_Lerc1NS;
+#define USING_NAMESPACE_LERC1 using namespace Lerc1NS;
 #endif
 
 NAMESPACE_LERC1_START
@@ -93,7 +93,7 @@ private:
     std::vector<T> values;
 };
 
-class CntZImage : public TImage<float>
+class Lerc1Image : public TImage<float>
 {
 protected:
 
@@ -141,8 +141,8 @@ public:
     /// (maxZError = 0  means no lossy compression for Z; the mask part is compressed lossless or not at all)
     /// read succeeds only if maxZError on file <= maxZError requested (!)
 
-    CntZImage() {}
-    ~CntZImage() {}
+    Lerc1Image() {}
+    ~Lerc1Image() {}
 
     unsigned int computeNumBytesNeededToWrite(double maxZError, bool onlyZPart,
         InfoFromComputeNumBytes* info) const;
