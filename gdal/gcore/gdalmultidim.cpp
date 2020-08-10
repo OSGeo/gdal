@@ -1970,7 +1970,7 @@ namespace
  *                      nullptr, unless for a zero-dimensional array.
  *
  * @param chunkSize     Values representing the chunk size in each dimension.
- *                      Might typically the outptu of GetProcessingChunkSize().
+ *                      Might typically the output of GetProcessingChunkSize().
  *                      Array of GetDimensionCount() values. Must not be
  *                      nullptr, unless for a zero-dimensional array.
  *
