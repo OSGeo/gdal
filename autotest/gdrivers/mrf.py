@@ -65,6 +65,8 @@ mrf_list = [
     ('../../gcore/data/float64.tif', 4672, [5015], ['COMPRESS=LERC', 'OPTIONS:LERC_PREC=10']),
     ('../../gcore/data/float64.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/utmsmall.tif', 50054, [50054], []),
+    ('small_world.tif', 30111, [30111], ['COMPRESS=LERC', 'INTERLEAVE=PIXEL']),
+    ('small_world.tif', 30111, [30111], ['COMPRESS=LERC', 'OPTIONS=V1:1', 'INTERLEAVE=PIXEL']),
     ('small_world_pct.tif', 14890, [14890], ['COMPRESS=PPNG']),
     ('byte.tif', 4672, [4603, 4652], ['COMPRESS=JPEG', 'QUALITY=99']),
     # following expected checksums are for: gcc 4.4 debug, mingw/vc9 32-bit, mingw-w64/vc12 64bit, MacOSX

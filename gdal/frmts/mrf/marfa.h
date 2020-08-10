@@ -104,8 +104,8 @@ extern char const * const * ILComp_Name;
 extern char const * const * ILComp_Ext;
 extern char const * const * ILOrder_Name;
 
-class GDALMRFDataset;
-class GDALMRFRasterBand;
+class MRFDataset;
+class MRFRasterBand;
 
 typedef struct {
     char   *buffer;
@@ -307,15 +307,15 @@ GIntBig IdxOffset(const ILSize &pos, const ILImage &img);
 
 enum { SAMPLING_ERR, SAMPLING_Avg, SAMPLING_Near };
 
-GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *, const ILImage &, int, int level = 0);
+MRFRasterBand *newMRFRasterBand(MRFDataset *, const ILImage &, int, int level = 0);
 
-class GDALMRFDataset final: public GDALPamDataset {
-    friend class GDALMRFRasterBand;
-    friend GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *, const ILImage &, int, int level);
+class MRFDataset final: public GDALPamDataset {
+    friend class MRFRasterBand;
+    friend MRFRasterBand *newMRFRasterBand(MRFDataset *, const ILImage &, int, int level);
 
 public:
-    GDALMRFDataset();
-    virtual ~GDALMRFDataset();
+    MRFDataset();
+    virtual ~MRFDataset();
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
@@ -496,7 +496,7 @@ protected:
     int level;
 
     // Child dataset, if picking a specific level
-    GDALMRFDataset *cds;
+    MRFDataset *cds;
     // A small int actually due to GDAL limitations
     double scale;
 
@@ -526,11 +526,11 @@ protected:
     std::vector<double> vNoData, vMin, vMax;
 };
 
-class GDALMRFRasterBand CPL_NON_FINAL: public GDALPamRasterBand {
-    friend class GDALMRFDataset;
+class MRFRasterBand CPL_NON_FINAL: public GDALPamRasterBand {
+    friend class MRFDataset;
 public:
-    GDALMRFRasterBand(GDALMRFDataset *, const ILImage &, int, int);
-    virtual ~GDALMRFRasterBand();
+    MRFRasterBand(MRFDataset *, const ILImage &, int, int);
+    virtual ~MRFRasterBand();
     virtual CPLErr IReadBlock(int xblk, int yblk, void *buffer) override;
     virtual CPLErr IWriteBlock(int xblk, int yblk, void *buffer) override;
 
@@ -570,7 +570,7 @@ public:
 
 protected:
     // Pointer to the GDALMRFDataset
-    GDALMRFDataset *poDS;
+    MRFDataset *poDS;
     // Deflate page requested, named to avoid conflict with libz deflate()
     int deflatep;
     int deflate_flags;
@@ -578,7 +578,7 @@ protected:
     GInt32 m_l;
     // The info about the current image, to enable R-sets
     ILImage img;
-    std::vector<GDALMRFRasterBand *> overviews;
+    std::vector<MRFRasterBand *> overviews;
 
     VSILFILE *IdxFP() { return poDS->IdxFP(); }
     GDALRWFlag IdxMode() { return poDS->IdxMode(); }
@@ -609,7 +609,7 @@ protected:
     // These are called only in the base level RasterBand
     virtual int GetOverviewCount() override;
     virtual GDALRasterBand *GetOverview(int n) override;
-    void AddOverview(GDALMRFRasterBand *b) { overviews.push_back(b); }
+    void AddOverview(MRFRasterBand *b) { overviews.push_back(b); }
 };
 
 /**
@@ -643,10 +643,10 @@ private:
     PNG_Codec& operator= (const PNG_Codec& src); // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
 };
 
-class PNG_Band final: public GDALMRFRasterBand {
-    friend class GDALMRFDataset;
+class PNG_Band final: public MRFRasterBand {
+    friend class MRFDataset;
 public:
-    PNG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level);
+    PNG_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
 
 protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
@@ -683,10 +683,10 @@ private:
     JPEG_Codec& operator= (const JPEG_Codec& src); // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
 };
 
-class JPEG_Band final: public GDALMRFRasterBand {
-    friend class GDALMRFDataset;
+class JPEG_Band final: public MRFRasterBand {
+    friend class MRFDataset;
 public:
-    JPEG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level);
+    JPEG_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
     virtual ~JPEG_Band() {}
 
 protected:
@@ -697,10 +697,10 @@ protected:
 };
 
 // A 2 or 4 band, with JPEG and/or PNG page encoding, optimized for size
-class JPNG_Band final: public GDALMRFRasterBand {
-    friend class GDALMRFDataset;
+class JPNG_Band final: public MRFRasterBand {
+    friend class MRFDataset;
 public:
-    JPNG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level);
+    JPNG_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
     virtual ~JPNG_Band();
 protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
@@ -711,21 +711,21 @@ protected:
     bool rgb, sameres, optimize;
 };
 
-class Raw_Band final: public GDALMRFRasterBand {
-    friend class GDALMRFDataset;
+class Raw_Band final: public MRFRasterBand {
+    friend class MRFDataset;
 public:
-    Raw_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level) :
-        GDALMRFRasterBand(pDS, image, b, int(level)) {}
+    Raw_Band(MRFDataset *pDS, const ILImage &image, int b, int level) :
+        MRFRasterBand(pDS, image, b, int(level)) {}
     virtual ~Raw_Band() {}
 protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
     virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
 };
 
-class TIF_Band final: public GDALMRFRasterBand {
-    friend class GDALMRFDataset;
+class TIF_Band final: public MRFRasterBand {
+    friend class MRFDataset;
 public:
-    TIF_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level);
+    TIF_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
     virtual ~TIF_Band();
 protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
@@ -736,10 +736,10 @@ protected:
 };
 
 #if defined(LERC)
-class LERC_Band final: public GDALMRFRasterBand {
-    friend class GDALMRFDataset;
+class LERC_Band final: public MRFRasterBand {
+    friend class MRFDataset;
 public:
-    LERC_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level);
+    LERC_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
     virtual ~LERC_Band();
 protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
@@ -760,9 +760,9 @@ protected:
  * Stand alone definition of a derived band, used in access to a specific level in an MRF
  *
  */
-class GDALMRFLRasterBand final: public GDALPamRasterBand {
+class MRFLRasterBand final: public GDALPamRasterBand {
 public:
-    explicit GDALMRFLRasterBand(GDALMRFRasterBand *b) {
+    explicit MRFLRasterBand(MRFRasterBand *b) {
         pBand = b;
         eDataType = b->GetRasterDataType();
         b->GetBlockSize(&nBlockXSize, &nBlockYSize);
@@ -796,7 +796,7 @@ protected:
     virtual int GetOverviewCount() override { return 0; }
     virtual GDALRasterBand *GetOverview(int ) override { return nullptr; }
 
-    GDALMRFRasterBand *pBand;
+    MRFRasterBand *pBand;
 };
 
 NAMESPACE_MRF_END

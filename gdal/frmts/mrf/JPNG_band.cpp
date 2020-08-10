@@ -184,9 +184,9 @@ CPLErr JPNG_Band::Compress(buf_mgr &dst, buf_mgr &src)
 * The presence of the PNGColors and PNGAlpha is used as a flag for PPNG only
 */
 
-JPNG_Band::JPNG_Band( GDALMRFDataset *pDS, const ILImage &image,
+JPNG_Band::JPNG_Band( MRFDataset *pDS, const ILImage &image,
                       int b, int level ) :
-    GDALMRFRasterBand(pDS, image, b, level),
+    MRFRasterBand(pDS, image, b, level),
     rgb(FALSE),
     sameres(FALSE),
     optimize(false)

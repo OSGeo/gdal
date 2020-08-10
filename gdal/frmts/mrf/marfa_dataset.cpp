@@ -70,7 +70,7 @@ NAMESPACE_MRF_START
 #endif
 
 // Initialize as invalid
-GDALMRFDataset::GDALMRFDataset() :
+MRFDataset::MRFDataset() :
     zslice(0),
     idxSize(0),
     clonedSource(FALSE),
@@ -104,7 +104,7 @@ GDALMRFDataset::GDALMRFDataset() :
     ifp.acc = GF_Read;
 }
 
-bool GDALMRFDataset::SetPBuffer(unsigned int sz)
+bool MRFDataset::SetPBuffer(unsigned int sz)
 {
     if (sz == 0) {
         CPLFree(pbuffer);
@@ -126,7 +126,7 @@ bool GDALMRFDataset::SetPBuffer(unsigned int sz)
 // Called by dataset destructor or at GDAL termination, to avoid
 // closing datasets whose drivers have already been unloaded
 //
-int GDALMRFDataset::CloseDependentDatasets()
+int MRFDataset::CloseDependentDatasets()
 {
     int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
 
@@ -146,12 +146,12 @@ int GDALMRFDataset::CloseDependentDatasets()
     return bHasDroppedRef;
 }
 
-GDALMRFDataset::~GDALMRFDataset()
+MRFDataset::~MRFDataset()
 
 {   // Make sure everything gets written
-    GDALMRFDataset::FlushCache();
+    MRFDataset::FlushCache();
 
-    GDALMRFDataset::CloseDependentDatasets();
+    MRFDataset::CloseDependentDatasets();
 
     if (ifp.FP)
         VSIFCloseL(ifp.FP);
@@ -191,7 +191,7 @@ CPLErr GDALMRFDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
  *
  *
  */
-CPLErr GDALMRFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+CPLErr MRFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
     int nBandCount, int *panBandMap,
 #if GDAL_VERSION_MAJOR >= 2
@@ -224,7 +224,7 @@ CPLErr GDALMRFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int n
 *  if nOverviews is 0, erase the overviews (reduce to base image only)
 */
 
-CPLErr GDALMRFDataset::IBuildOverviews(
+CPLErr MRFDataset::IBuildOverviews(
     const char * pszResampling,
     int nOverviews, int * panOverviewList,
     int nBandsIn, int * panBandList,
@@ -373,7 +373,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
             };
 
             int srclevel = int(logbase(panOverviewListNew[i], scale) - 0.5);
-            GDALMRFRasterBand *b = static_cast<GDALMRFRasterBand *>(GetRasterBand(1));
+            MRFRasterBand *b = static_cast<MRFRasterBand *>(GetRasterBand(1));
 
             // Warn for requests for invalid levels
             if (srclevel >= b->GetOverviewCount()) {
@@ -390,7 +390,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
                 int sampling = EQUALN("Avg", pszResampling, 3) ? SAMPLING_Avg : SAMPLING_Near;
                 // Internal, using PatchOverview
                 if (srclevel > 0)
-                    b = static_cast<GDALMRFRasterBand *>(b->GetOverview(srclevel - 1));
+                    b = static_cast<MRFRasterBand *>(b->GetOverview(srclevel - 1));
 
                 eErr = PatchOverview(0, 0, b->nBlocksPerRow, b->nBlocksPerColumn, srclevel,
                     0, sampling);
@@ -457,15 +457,15 @@ static void list2vec(std::vector<double> &v, const char *pszList) {
     CSLDestroy(papszTokens);
 }
 
-void GDALMRFDataset::SetNoDataValue(const char *pszVal) {
+void MRFDataset::SetNoDataValue(const char *pszVal) {
     list2vec(vNoData, pszVal);
 }
 
-void GDALMRFDataset::SetMinValue(const char *pszVal) {
+void MRFDataset::SetMinValue(const char *pszVal) {
     list2vec(vMin, pszVal);
 }
 
-void GDALMRFDataset::SetMaxValue(const char *pszVal) {
+void MRFDataset::SetMaxValue(const char *pszVal) {
     list2vec(vMax, pszVal);
 }
 
@@ -475,7 +475,7 @@ void GDALMRFDataset::SetMaxValue(const char *pszVal) {
 * Lightweight test, otherwise Open gets called.
 *
 */
-int GDALMRFDataset::Identify(GDALOpenInfo *poOpenInfo)
+int MRFDataset::Identify(GDALOpenInfo *poOpenInfo)
 
 {
   if (STARTS_WITH(poOpenInfo->pszFilename, "<MRF_META>"))
@@ -509,7 +509,7 @@ int GDALMRFDataset::Identify(GDALOpenInfo *poOpenInfo)
 * @return NULL on failure, or the document tree on success.
 *
 */
-CPLXMLNode *GDALMRFDataset::ReadConfig() const
+CPLXMLNode *MRFDataset::ReadConfig() const
 {
     if (fname[0] == '<')
         return CPLParseXMLString(fname);
@@ -525,7 +525,7 @@ CPLXMLNode *GDALMRFDataset::ReadConfig() const
 * @param config The document tree to write
 * @return TRUE on success, FALSE otherwise
 */
-int GDALMRFDataset::WriteConfig(CPLXMLNode *config)
+int MRFDataset::WriteConfig(CPLXMLNode *config)
 {
     if (fname[0] == '<') return FALSE;
     return CPLSerializeXMLTreeToFile(config, fname);
@@ -562,7 +562,7 @@ static int getnum(const vector<string> &theStringVector, const char prefix, int 
 *\brief Open a MRF file
 *
 */
-GDALDataset *GDALMRFDataset::Open(GDALOpenInfo *poOpenInfo)
+GDALDataset *MRFDataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
     if( !Identify(poOpenInfo) )
@@ -611,7 +611,7 @@ GDALDataset *GDALMRFDataset::Open(GDALOpenInfo *poOpenInfo)
     if (!config)
         return nullptr;
 
-    GDALMRFDataset *ds = new GDALMRFDataset();
+    MRFDataset *ds = new MRFDataset();
     ds->fname = pszFileName;
     ds->eAccess = poOpenInfo->eAccess;
     ds->level = level;
@@ -622,7 +622,7 @@ GDALDataset *GDALMRFDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (level != -1) {
         // Open the whole dataset, then pick one level
-        ds->cds = new GDALMRFDataset();
+        ds->cds = new MRFDataset();
         ds->cds->fname = pszFileName;
         ds->cds->eAccess = ds->eAccess;
         ds->zslice = zslice;
@@ -665,17 +665,17 @@ GDALDataset *GDALMRFDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 // Adjust the band images with the right offset, then adjust the sizes
-CPLErr GDALMRFDataset::SetVersion(int version) {
+CPLErr MRFDataset::SetVersion(int version) {
     if (!hasVersions || version > verCount) {
         CPLError(CE_Failure, CPLE_AppDefined, "GDAL MRF: Version number error!");
         return CE_Failure;
     }
     // Size of one version index
     for (int bcount = 1; bcount <= nBands; bcount++) {
-        GDALMRFRasterBand *srcband = reinterpret_cast<GDALMRFRasterBand *>(GetRasterBand(bcount));
+        MRFRasterBand *srcband = reinterpret_cast<MRFRasterBand *>(GetRasterBand(bcount));
         srcband->img.idxoffset += idxSize*verCount;
         for (int l = 0; l < srcband->GetOverviewCount(); l++) {
-            GDALMRFRasterBand *band = reinterpret_cast<GDALMRFRasterBand *>(srcband->GetOverview(l));
+            MRFRasterBand *band = reinterpret_cast<MRFRasterBand *>(srcband->GetOverview(l));
             if( band != nullptr )
                 band->img.idxoffset += idxSize*verCount;
         }
@@ -684,15 +684,15 @@ CPLErr GDALMRFDataset::SetVersion(int version) {
     return CE_None;
 }
 
-CPLErr GDALMRFDataset::LevelInit(const int l) {
+CPLErr MRFDataset::LevelInit(const int l) {
     // Test that this level does exist
     if (l < 0 || l >= cds->GetRasterBand(1)->GetOverviewCount()) {
         CPLError(CE_Failure, CPLE_AppDefined, "GDAL MRF: Overview not present!");
         return CE_Failure;
     }
 
-    GDALMRFRasterBand *srcband =
-        reinterpret_cast<GDALMRFRasterBand *>(cds->GetRasterBand(1)->GetOverview(l));
+    MRFRasterBand *srcband =
+        reinterpret_cast<MRFRasterBand *>(cds->GetRasterBand(1)->GetOverview(l));
 
     // Copy the sizes from this level
     full = srcband->img;
@@ -716,7 +716,7 @@ CPLErr GDALMRFDataset::LevelInit(const int l) {
 
     // Add the bands, copy constructor so they can be closed independently
     for (int i = 1; i <= nBands; i++)
-        SetBand(i, new GDALMRFLRasterBand(reinterpret_cast<GDALMRFRasterBand *>
+        SetBand(i, new MRFLRasterBand(reinterpret_cast<MRFRasterBand *>
                                             (cds->GetRasterBand(i)->GetOverview(l))));
     return CE_None;
 }
@@ -739,7 +739,7 @@ inline bool on(const char *pszValue) {
 *
 */
 
-static CPLErr Init_Raster(ILImage &image, GDALMRFDataset *ds, CPLXMLNode *defimage)
+static CPLErr Init_Raster(ILImage &image, MRFDataset *ds, CPLXMLNode *defimage)
 {
     CPLXMLNode *node; // temporary
     if (!defimage) {
@@ -958,7 +958,7 @@ static CPLErr Init_Raster(ILImage &image, GDALMRFDataset *ds, CPLXMLNode *defima
     return CE_None;
 }
 
-char      **GDALMRFDataset::GetFileList()
+char      **MRFDataset::GetFileList()
 {
     char** papszFileList = nullptr;
 
@@ -994,7 +994,7 @@ static void mkdir_r(string const &fname) {
 }
 
 // Returns the dataset index file or null
-VSILFILE *GDALMRFDataset::IdxFP() {
+VSILFILE *MRFDataset::IdxFP() {
     if (ifp.FP != nullptr)
         return ifp.FP;
 
@@ -1117,7 +1117,7 @@ VSILFILE *GDALMRFDataset::IdxFP() {
 // Returns the dataset data file or null
 // Data file is opened either in Read or Append mode, never in straight write
 //
-VSILFILE *GDALMRFDataset::DataFP() {
+VSILFILE *MRFDataset::DataFP() {
     if (dfp.FP != nullptr)
         return dfp.FP;
     const char *mode = "rb";
@@ -1165,7 +1165,7 @@ io_error:
 }
 
 // Builds an XML tree from the current MRF.  If written to a file it becomes an MRF
-CPLXMLNode * GDALMRFDataset::BuildConfig()
+CPLXMLNode * MRFDataset::BuildConfig()
 {
     CPLXMLNode *config = CPLCreateXMLNode(nullptr, CXT_Element, "MRF_META");
 
@@ -1284,7 +1284,7 @@ CPLXMLNode * GDALMRFDataset::BuildConfig()
 *
 *
 */
-CPLErr GDALMRFDataset::Initialize(CPLXMLNode *config)
+CPLErr MRFDataset::Initialize(CPLXMLNode *config)
 
 {
     // We only need a basic initialization here, usually gets overwritten by the image params
@@ -1406,7 +1406,7 @@ CPLErr GDALMRFDataset::Initialize(CPLXMLNode *config)
     // We have the options, so we can call rasterband
     for (int i = 1; i <= nBands; i++) {
         // The overviews are low resolution copies of the current one.
-        GDALMRFRasterBand *band = newMRFRasterBand(this, current, i);
+        MRFRasterBand *band = newMRFRasterBand(this, current, i);
         if (!band)
             return CE_Failure;
 
@@ -1516,7 +1516,7 @@ static inline bool make_absolute(CPLString &name, const CPLString &path)
 /**
 *\brief Get the source dataset, open it if necessary
 */
-GDALDataset *GDALMRFDataset::GetSrcDS() {
+GDALDataset *MRFDataset::GetSrcDS() {
     if (poSrcDS) return poSrcDS;
     if (source.empty()) return nullptr;
 
@@ -1529,7 +1529,7 @@ GDALDataset *GDALMRFDataset::GetSrcDS() {
 
     if (0 == source.find("<MRF_META>") && has_path(fname))
     {   // MRF XML source, might need to patch the file names with the current one
-        GDALMRFDataset *poMRFDS = dynamic_cast<GDALMRFDataset *>(poSrcDS);
+        MRFDataset *poMRFDS = dynamic_cast<MRFDataset *>(poSrcDS);
         if( !poMRFDS )
         {
             delete poSrcDS;
@@ -1549,7 +1549,7 @@ GDALDataset *GDALMRFDataset::GetSrcDS() {
 * @return size of the index file
 */
 
-GIntBig GDALMRFDataset::AddOverviews(int scaleIn) {
+GIntBig MRFDataset::AddOverviews(int scaleIn) {
     // Fit the overlays
     ILImage img = current;
     while (1 != img.pagecount.x*img.pagecount.y)
@@ -1569,7 +1569,7 @@ GIntBig GDALMRFDataset::AddOverviews(int scaleIn) {
 
         // Create and register the the overviews for each band
         for (int i = 1; i <= nBands; i++) {
-            GDALMRFRasterBand *b = reinterpret_cast<GDALMRFRasterBand *>(GetRasterBand(i));
+            MRFRasterBand *b = reinterpret_cast<MRFRasterBand *>(GetRasterBand(i));
             if (!(b->GetOverview(static_cast<int>(img.size.l) - 1)))
                 b->AddOverview(newMRFRasterBand(this, img, i, static_cast<int>(img.size.l)));
         }
@@ -1580,7 +1580,7 @@ GIntBig GDALMRFDataset::AddOverviews(int scaleIn) {
 }
 
 // CreateCopy implemented based on Create
-GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
+GDALDataset *MRFDataset::CreateCopy(const char *pszFilename,
     GDALDataset *poSrcDS, int /*bStrict*/, char **papszOptions,
     GDALProgressFunc pfnProgress, void *pProgressData)
 {
@@ -1611,9 +1611,9 @@ GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
         options = CSLAddIfMissing(options, "BLOCKYSIZE", PrintDouble(yb, "%d").c_str());
     }
 
-    GDALMRFDataset *poDS = nullptr;
+    MRFDataset *poDS = nullptr;
     try {
-        poDS = reinterpret_cast<GDALMRFDataset *>(
+        poDS = reinterpret_cast<MRFDataset *>(
             Create(pszFilename, x, y, nBands, dt, options));
 
         if (poDS == nullptr || poDS->bCrystalized)
@@ -1749,7 +1749,7 @@ template<typename T> static void ZenFilter(T* buffer, GByte *mask, int nPixels, 
 // Custom CopyWholeRaster for Zen JPEG, called when the input has a PER_DATASET mask
 // Works like GDALDatasetCopyWholeRaster, but it does filter the input data based on the mask
 //
-CPLErr GDALMRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress, void * pProgressData)
+CPLErr MRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress, void * pProgressData)
 {
     VALIDATE_POINTER1(poSrc, "MRF:ZenCopy", CE_Failure);
 
@@ -1895,7 +1895,7 @@ CPLErr GDALMRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
 
 // Apply open options to the current dataset
 // Called before the configuration is read
-void GDALMRFDataset::ProcessOpenOptions(char **papszOptions)
+void MRFDataset::ProcessOpenOptions(char **papszOptions)
 {
     CPLStringList opt(papszOptions, FALSE);
     no_errors = opt.FetchBoolean("NOERRORS", FALSE);
@@ -1905,7 +1905,7 @@ void GDALMRFDataset::ProcessOpenOptions(char **papszOptions)
 }
 
 // Apply create options to the current dataset, only valid during creation
-void GDALMRFDataset::ProcessCreateOptions(char **papszOptions)
+void MRFDataset::ProcessCreateOptions(char **papszOptions)
 {
     assert(!bCrystalized);
     CPLStringList opt(papszOptions, FALSE);
@@ -1965,10 +1965,6 @@ void GDALMRFDataset::ProcessCreateOptions(char **papszOptions)
         img.pagesize.c = img.size.c;
 
     // Compression dependent fixups
-#if defined(LERC)
-    if (IL_LERC == img.comp)
-        img.pagesize.c = 1;
-#endif
 }
 
 /**
@@ -1979,7 +1975,7 @@ void GDALMRFDataset::ProcessCreateOptions(char **papszOptions)
  */
 
 GDALDataset *
-GDALMRFDataset::Create(const char * pszName,
+MRFDataset::Create(const char * pszName,
     int nXSize, int nYSize, int nBands,
     GDALDataType eType, char ** papszOptions)
 
@@ -1990,7 +1986,7 @@ GDALMRFDataset::Create(const char * pszName,
         return nullptr;
     }
 
-    GDALMRFDataset *poDS = new GDALMRFDataset();
+    MRFDataset *poDS = new MRFDataset();
     CPLErr err = CE_None;
     poDS->fname = pszName;
     poDS->nBands = nBands;
@@ -2075,7 +2071,7 @@ GDALMRFDataset::Create(const char * pszName,
     return poDS;
 }
 
-void GDALMRFDataset::Crystalize()
+void MRFDataset::Crystalize()
 
 {
     if (bCrystalized || eAccess != GA_Update)
@@ -2096,7 +2092,7 @@ void GDALMRFDataset::Crystalize()
 }
 
 // Copy the first index at the end of the file and bump the version count
-CPLErr GDALMRFDataset::AddVersion()
+CPLErr MRFDataset::AddVersion()
 {
     VSILFILE *l_ifp = IdxFP();
 
@@ -2119,7 +2115,7 @@ CPLErr GDALMRFDataset::AddVersion()
 // To make it multi-processor safe, open the file in append mode
 // and verify after write
 //
-CPLErr GDALMRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
+CPLErr MRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
 {
     CPLErr ret = CE_None;
     ILIdx tinfo = { 0, 0 };
@@ -2261,7 +2257,7 @@ CPLErr GDALMRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
     return ret;
 }
 
-CPLErr GDALMRFDataset::SetGeoTransform(double *gt)
+CPLErr MRFDataset::SetGeoTransform(double *gt)
 
 {
     if (GetAccess() == GA_Update)
@@ -2275,17 +2271,17 @@ CPLErr GDALMRFDataset::SetGeoTransform(double *gt)
     return CE_Failure;
 }
 
-bool GDALMRFDataset::IsSingleTile()
+bool MRFDataset::IsSingleTile()
 {
     if (current.pagecount.l != 1 || !source.empty() || nullptr == DataFP())
         return FALSE;
-    return 0 == reinterpret_cast<GDALMRFRasterBand *>(GetRasterBand(1))->GetOverviewCount();
+    return 0 == reinterpret_cast<MRFRasterBand *>(GetRasterBand(1))->GetOverviewCount();
 }
 
 /*
 *  Returns 0,1,0,0,0,1 even if it was not set
 */
-CPLErr GDALMRFDataset::GetGeoTransform(double *gt)
+CPLErr MRFDataset::GetGeoTransform(double *gt)
 {
     memcpy(gt, GeoTransform, 6 * sizeof(double));
     if (GetMetadata("RPC") || GetGCPCount())
@@ -2301,7 +2297,7 @@ CPLErr GDALMRFDataset::GetGeoTransform(double *gt)
 * The bias is non-zero only when the cloned index is read
 */
 
-CPLErr GDALMRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos, const ILImage &img, const GIntBig bias)
+CPLErr MRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos, const ILImage &img, const GIntBig bias)
 
 {
     VSILFILE *l_ifp = IdxFP();
@@ -2361,7 +2357,7 @@ CPLErr GDALMRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos, const ILImag
     ILIdx *buffer = &buf[0]; // Buffer to copy the source to the clone index
 
     // Fetch the data from the cloned index
-    GDALMRFDataset *pSrc = static_cast<GDALMRFDataset *>(GetSrcDS());
+    MRFDataset *pSrc = static_cast<MRFDataset *>(GetSrcDS());
     if( pSrc == nullptr )
     {
         CPLError(CE_Failure, CPLE_FileIO, "Can't open cloned source index");

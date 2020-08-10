@@ -344,9 +344,9 @@ CPLErr PNG_Band::Compress(buf_mgr &dst, buf_mgr &src)
  * The presence of the PNGColors and PNGAlpha is used as a flag for PPNG only
  */
 
-PNG_Band::PNG_Band( GDALMRFDataset *pDS, const ILImage &image,
+PNG_Band::PNG_Band( MRFDataset *pDS, const ILImage &image,
                     int b, int level ) :
-    GDALMRFRasterBand(pDS, image, b, level),
+    MRFRasterBand(pDS, image, b, level),
     codec(image)
 {   // Check error conditions
     if (image.dt != GDT_Byte && image.dt != GDT_Int16 && image.dt != GDT_UInt16)
