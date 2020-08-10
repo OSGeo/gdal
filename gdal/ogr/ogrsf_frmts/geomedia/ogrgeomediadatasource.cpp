@@ -118,7 +118,7 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
     {
         const char *pszDSNStringTemplate = 
             CPLGetConfigOption( "GEOMEDIA_DRIVER_TEMPLATE",
-                            "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s");
+                            "DRIVER=Microsoft Access Driver (*.mdb);DBQ=\"%s\"");
         if (!CheckDSNStringTemplate(pszDSNStringTemplate))
         {
             CPLError( CE_Failure, CPLE_AppDefined,
