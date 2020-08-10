@@ -19,7 +19,7 @@ OBJ	=	Packer_RLE.obj Tif_band.obj Raw_band.obj PNG_band.obj JPEG_band.obj JPNG_b
 PLUGIN_DLL =	gdal_mrf.dll
 
 !IF "$(HAVE_LERC)" == "1"
-LERC1 = CntZImage.obj
+LERC1 = Lerc1Image.obj
 EXTRAFLAGS	= -DLERC -ILERCV1 -I../../third_party/LercLib $(EXTRAFLAGS)
 OBJ = $(LERC1) LERC_Band.obj $(OBJ)
 !ENDIF
