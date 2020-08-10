@@ -90,13 +90,17 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
         // system-wide default location, so try to install to HOME.
 
         static char* pszEnvIni = nullptr;
+
+        // Read HOME location.
         const char* pszEnvHome = getenv("HOME");
+        CPLAssert( nullptr != pszEnvHome );
+        CPLDebug( "ODBC", "HOME=%s", pszEnvHome );
+
+        const char* pszEnvOdbcSysIni = nullptr;
         if( pszEnvIni == nullptr )
         {
-            // Read HOME location.
-
-            CPLAssert( nullptr != pszEnvHome );
-            CPLDebug( "ODBC", "HOME=%s", pszEnvHome );
+            // record previous value, so we can rollback on failure
+            pszEnvOdbcSysIni = getenv("ODBCSYSINI");
 
             // Set ODBCSYSINI variable pointing to HOME location.
             const size_t nLen = strlen(pszEnvHome) + 12;
@@ -118,7 +122,26 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
         {
             // if installing the driver fails, we need to roll back the changes to ODBCSYSINI environment
             // variable or all subsequent use of ODBC calls will fail
-            unsetenv( "ODBCSYSINI" );
+            char * pszEnvRollback = nullptr;
+            if ( pszEnvOdbcSysIni )
+            {
+                const size_t nLen = strlen( pszEnvOdbcSysIni ) + 12;
+                pszEnvRollback = static_cast<char *>(CPLMalloc(nLen));
+                snprintf( pszEnvRollback, nLen, "ODBCSYSINI=%s", pszEnvOdbcSysIni );
+            }
+            else
+            {
+                // ODBCSYSINI not previously set, so remove
+                const size_t nLen = 11;
+                pszEnvRollback = static_cast<char *>(CPLMalloc(nLen));
+                snprintf( pszEnvRollback, nLen, "ODBCSYSINI" );
+            }
+
+            // A 'man putenv' shows that we cannot free pszEnvRollback
+            // because the pointer is used directly by putenv in old glibc.
+            // coverity[tainted_string]
+            putenv( pszEnvRollback );
+
             CPL_UNUSED RETCODE cRet = SQLInstallerError( nErrorNum, &m_nErrorCode,
                             m_szError, SQL_MAX_MESSAGE_LENGTH, nullptr );
             (void)cRet;
