@@ -2109,5 +2109,11 @@ GDALDataset *HDF5Dataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
                                             poSharedResources, {},
                                             hGroup,
                                             oStatbuf.objno));
+
+    poDS->SetDescription(poOpenInfo->pszFilename);
+
+    // Setup/check for pam .aux.xml.
+    poDS->TryLoadXML();
+
     return poDS;
 }

@@ -1720,6 +1720,59 @@ def test_mem_md_array_resolvemdarray():
     assert b.ResolveMDArray("var_c", "").GetFullName() == "/b/var_c"
 
 
+def test_mem_md_array_statistics():
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.CreateMultiDimensional('myds')
+    rg = ds.GetRootGroup()
+    dim0 = rg.CreateDimension("dim0", "unspecified type", "unspecified direction", 2)
+    dim1 = rg.CreateDimension("dim1", "unspecified type", "unspecified direction", 3)
+    float64dt = gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    ar = rg.CreateMDArray("myarray", [dim0, dim1], float64dt)
+    ar.SetNoDataValueDouble(6)
+    data = struct.pack('d' * 6, 1, 2, 3, 4, 5, 6)
+    ar.Write(data)
+
+    stats = ar.ComputeStatistics(None, False)
+    assert stats.min == 1.0
+    assert stats.max == 5.0
+    assert stats.mean == 3.0
+    assert stats.std_dev == pytest.approx(1.4142135623730951)
+    assert stats.valid_count == 5
+
+    stats = ar.GetStatistics(None, False, False)
+    assert stats is None
+
+    stats = ar.GetStatistics(None, False, True)
+    assert stats is not None
+    assert stats.min == 1.0
+    assert stats.max == 5.0
+    assert stats.mean == 3.0
+    assert stats.std_dev == pytest.approx(1.4142135623730951)
+    assert stats.valid_count == 5
+
+
+def test_mem_md_array_statistics_float32():
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.CreateMultiDimensional('myds')
+    rg = ds.GetRootGroup()
+    dim0 = rg.CreateDimension("dim0", "unspecified type", "unspecified direction", 2)
+    dim1 = rg.CreateDimension("dim1", "unspecified type", "unspecified direction", 3)
+    float32dt = gdal.ExtendedDataType.Create(gdal.GDT_Float32)
+    ar = rg.CreateMDArray("myarray", [dim0, dim1], float32dt)
+    ar.SetNoDataValueDouble(6)
+    data = struct.pack('f' * 6, 1, 2, 3, 4, 5, 6)
+    ar.Write(data)
+
+    stats = ar.ComputeStatistics(None, False)
+    assert stats.min == 1.0
+    assert stats.max == 5.0
+    assert stats.mean == 3.0
+    assert stats.std_dev == pytest.approx(1.4142135623730951)
+    assert stats.valid_count == 5
+
+
 def XX_test_all_forever():
     while True:
         test_mem_md_basic()

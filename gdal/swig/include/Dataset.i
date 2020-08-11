@@ -993,6 +993,11 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
     return GDALDatasetRollbackTransaction(self);
   }
 
+  void ClearStatistics()
+  {
+      GDALDatasetClearStatistics(self);
+  }
+
 } /* extend */
 }; /* GDALDatasetShadow */
 

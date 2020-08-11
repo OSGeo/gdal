@@ -621,6 +621,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     char **GetMetadataDomainList() override;
 
+    virtual void ClearStatistics();
+
     /** Convert a GDALDataset* to a GDALDatasetH.
      * @since GDAL 2.3
      */
@@ -2338,6 +2340,12 @@ class CPL_DLL GDALMDArray: virtual public GDALAbstractMDArray, public GDALIHasAt
         return atInternal(indices, tail...);
     }
 
+    bool SetStatistics( GDALDataset* poDS,
+                        bool bApproxStats,
+                        double dfMin, double dfMax,
+                        double dfMean, double dfStdDev,
+                        GUInt64 nValidCount );
+
 protected:
 //! @cond Doxygen_Suppress
     GDALMDArray(const std::string& osParentName, const std::string& osName);
@@ -2413,6 +2421,20 @@ public:
     virtual std::shared_ptr<GDALMDArray> GetMask(CSLConstList papszOptions) const;
 
     virtual GDALDataset* AsClassicDataset(size_t iXDim, size_t iYDim) const;
+
+    virtual CPLErr GetStatistics( GDALDataset* poDS,
+                                  bool bApproxOK, bool bForce,
+                                  double *pdfMin, double *pdfMax,
+                                  double *pdfMean, double *padfStdDev,
+                                  GUInt64* pnValidCount,
+                                  GDALProgressFunc pfnProgress, void *pProgressData );
+
+    virtual bool ComputeStatistics( GDALDataset* poDS,
+                                    bool bApproxOK,
+                                    double *pdfMin, double *pdfMax,
+                                    double *pdfMean, double *pdfStdDev,
+                                    GUInt64* pnValidCount,
+                                    GDALProgressFunc, void *pProgressData );
 
 //! @cond Doxygen_Suppress
     static constexpr GUInt64 COPY_COST = 1000;

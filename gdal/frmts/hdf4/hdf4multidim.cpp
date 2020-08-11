@@ -3123,4 +3123,9 @@ void HDF4Dataset::OpenMultiDim(const char* pszFilename)
     hSD = -1;
 
     m_poRootGroup = std::make_shared<HDF4Group>(std::string(), "/", poShared);
+
+    SetDescription(pszFilename);
+
+    // Setup/check for pam .aux.xml.
+    TryLoadXML();
 }
