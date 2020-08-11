@@ -90,13 +90,17 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
         // system-wide default location, so try to install to HOME.
 
         static char* pszEnvIni = nullptr;
+
+        // Read HOME location.
+        const char* pszEnvHome = getenv("HOME");
+        CPLAssert( nullptr != pszEnvHome );
+        CPLDebug( "ODBC", "HOME=%s", pszEnvHome );
+
+        const char* pszEnvOdbcSysIni = nullptr;
         if( pszEnvIni == nullptr )
         {
-            // Read HOME location.
-            char* pszEnvHome = getenv("HOME");
-
-            CPLAssert( nullptr != pszEnvHome );
-            CPLDebug( "ODBC", "HOME=%s", pszEnvHome );
+            // record previous value, so we can rollback on failure
+            pszEnvOdbcSysIni = getenv("ODBCSYSINI");
 
             // Set ODBCSYSINI variable pointing to HOME location.
             const size_t nLen = strlen(pszEnvHome) + 12;
@@ -112,10 +116,38 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
         }
 
         // Try to install ODBC driver in new location.
-        if( FALSE == SQLInstallDriverEx(pszDriver, nullptr, m_szPathOut,
+        if( FALSE == SQLInstallDriverEx(pszDriver, pszEnvHome, m_szPathOut,
                                         ODBC_FILENAME_MAX, nullptr, fRequest,
                                         &m_nUsageCount) )
         {
+            // if installing the driver fails, we need to roll back the changes to ODBCSYSINI environment
+            // variable or all subsequent use of ODBC calls will fail
+            char * pszEnvRollback = nullptr;
+            if ( pszEnvOdbcSysIni )
+            {
+                const size_t nLen = strlen( pszEnvOdbcSysIni ) + 12;
+                pszEnvRollback = static_cast<char *>(CPLMalloc(nLen));
+                snprintf( pszEnvRollback, nLen, "ODBCSYSINI=%s", pszEnvOdbcSysIni );
+            }
+            else
+            {
+                // ODBCSYSINI not previously set, so remove
+#ifdef _MSC_VER
+                // for MSVC an environment variable is removed by setting to empty string
+                // https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/putenv-wputenv?view=vs-2019
+                pszEnvRollback = CPLStrdup("ODBCSYSINI=");
+#else
+                // for gnuc an environment variable is removed by not including the equal sign
+                // https://man7.org/linux/man-pages/man3/putenv.3.html
+                pszEnvRollback = CPLStrdup("ODBCSYSINI");
+#endif
+            }
+
+            // A 'man putenv' shows that we cannot free pszEnvRollback
+            // because the pointer is used directly by putenv in old glibc.
+            // coverity[tainted_string]
+            putenv( pszEnvRollback );
+
             CPL_UNUSED RETCODE cRet = SQLInstallerError( nErrorNum, &m_nErrorCode,
                             m_szError, SQL_MAX_MESSAGE_LENGTH, nullptr );
             (void)cRet;
