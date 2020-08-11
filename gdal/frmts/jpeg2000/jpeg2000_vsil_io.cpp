@@ -94,13 +94,23 @@ typedef struct {
 * File stream object.
 \******************************************************************************/
 
+// PRIjas_seqent macro is defined since Jasper 2.0.17
+
+#ifndef PRIjas_seqent
 static int JPEG2000_VSIL_read(jas_stream_obj_t *obj, char *buf, int cnt)
+#else
+static int JPEG2000_VSIL_read(jas_stream_obj_t *obj, char *buf, unsigned cnt)
+#endif
 {
     jas_stream_VSIFL_t *fileobj = JAS_CAST(jas_stream_VSIFL_t *, obj);
     return static_cast<int>(VSIFReadL(buf, 1, cnt, fileobj->fp));
 }
 
+#ifndef PRIjas_seqent
 static int JPEG2000_VSIL_write(jas_stream_obj_t *obj, char *buf, int cnt)
+#else
+static int JPEG2000_VSIL_write(jas_stream_obj_t *obj, char *buf, unsigned int cnt)
+#endif
 {
     jas_stream_VSIFL_t *fileobj = JAS_CAST(jas_stream_VSIFL_t *, obj);
     return static_cast<int>(VSIFWriteL(buf, 1, cnt, fileobj->fp));
