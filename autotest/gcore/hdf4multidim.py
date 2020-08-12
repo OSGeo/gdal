@@ -95,6 +95,7 @@ def test_hdf4multidim_hdfeos_swath():
                                                 17318, 17317,
                                                 17318, 17317)
 
+
     got_data = array.Read(array_start_idx = [13, 0], count = [3, 2],
                           buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_Int32))
     assert len(got_data) == 3 * 2 * 4
@@ -257,6 +258,12 @@ def test_hdf4multidim_gdal_sds_3d():
     assert len(got_data) == 2 * 2
     assert struct.unpack('B' * 4, got_data) == (107, 123,
                                                 115, 132)
+
+    got_data = array.Transpose([2,1,0]).Read(array_start_idx = [0, 0, 0], count = [1, 2, 2])
+    assert len(got_data) == 2 * 2
+    assert struct.unpack('B' * 4, got_data) == (107, 115,
+                                                123, 132)
+
     assert array.GetSpatialRef()
 
     X = dims[0].GetIndexingVariable()
