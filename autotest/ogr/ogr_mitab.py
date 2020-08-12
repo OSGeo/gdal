@@ -1539,10 +1539,10 @@ def test_ogr_mitab_35():
     coordsys = get_coordsys_from_srs(srs)
     assert coordsys == 'CoordSys Earth Projection 8, 104, "m", 3, 0, 0.9996, 500000, 0'
 
-    # Test round-tripping of projection methods
+    # Test round-tripping of projection methods and a few units
     for coordsys in ['CoordSys Earth Projection 1, 104',
-                     'CoordSys Earth Projection 2, 104, "m", 1, 2',
-                     'CoordSys Earth Projection 3, 104, "m", 1, 2, 3, 4, 5, 6',
+                     'CoordSys Earth Projection 2, 104, "survey ft", 1, 2',
+                     'CoordSys Earth Projection 3, 104, "ft", 1, 2, 3, 4, 5, 6',
                      'CoordSys Earth Projection 4, 104, "m", 1, 90, 90',
                      'CoordSys Earth Projection 5, 104, "m", 1, 90, 90',
                      'CoordSys Earth Projection 6, 104, "m", 1, 2, 3, 4, 5, 6',

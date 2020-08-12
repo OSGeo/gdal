@@ -1130,14 +1130,11 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
     /*-----------------------------------------------------------------
      * Collect units definition.
      *----------------------------------------------------------------*/
-    if( sTABProj.nProjId != 0 && sTABProj.nProjId != 1 && poSpatialRef->GetRoot() != nullptr )
+    if( sTABProj.nProjId != 0 && sTABProj.nProjId != 1 && CPLAtof( pszUnitsConv ) != 1 )
     {
-        OGR_SRSNode     *poUnits = new OGR_SRSNode("UNIT");
-
-        poSpatialRef->GetRoot()->AddChild(poUnits);
-
-        poUnits->AddChild( new OGR_SRSNode( pszUnitsName ) );
-        poUnits->AddChild( new OGR_SRSNode( pszUnitsConv ) );
+        poSpatialRef->SetTargetLinearUnits(nullptr,
+                                           pszUnitsName,
+                                           CPLAtof( pszUnitsConv ));
     }
 
     /*-----------------------------------------------------------------
@@ -2098,7 +2095,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( dfLinearConv == 0.0254 || EQUAL(pszLinearUnits,"Inch")
              || EQUAL(pszLinearUnits,"IINCH") )
         sTABProj.nUnitsId = 2;
-    else if( dfLinearConv == CPLAtof(SRS_UL_FOOT_CONV)
+    else if( fabs(dfLinearConv - CPLAtof(SRS_UL_FOOT_CONV)) < 1e-15 * dfLinearConv
              || EQUAL(pszLinearUnits,SRS_UL_FOOT) )
         sTABProj.nUnitsId = 3;
     else if( EQUAL(pszLinearUnits,"YARD") || EQUAL(pszLinearUnits,"IYARD")
@@ -2110,10 +2107,10 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
         sTABProj.nUnitsId = 6;
     else if( dfLinearConv == 1.0 )
         sTABProj.nUnitsId = 7;
-    else if( dfLinearConv == CPLAtof(SRS_UL_US_FOOT_CONV)
+    else if( fabs(dfLinearConv - CPLAtof(SRS_UL_US_FOOT_CONV)) < 1e-15 * dfLinearConv
              || EQUAL(pszLinearUnits,SRS_UL_US_FOOT) )
         sTABProj.nUnitsId = 8;
-    else if( EQUAL(pszLinearUnits,SRS_UL_NAUTICAL_MILE) )
+    else if( dfLinearConv == 1852.0 || EQUAL(pszLinearUnits,SRS_UL_NAUTICAL_MILE) )
         sTABProj.nUnitsId = 9;
     else if( EQUAL(pszLinearUnits,SRS_UL_LINK)
              || EQUAL(pszLinearUnits,"GUNTERLINK") )
