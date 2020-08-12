@@ -920,6 +920,7 @@ std::vector<std::shared_ptr<GDALAttribute>> HDF4Group::GetAttributes(
                      "Attribute with same name (%s) found, but different value",
                      poNewAttr->GetName().c_str());
         }
+        // cppcheck-suppress unreadVariable
         oMapAttrs[poNewAttr->GetName()] = poNewAttr;
         ret.emplace_back(poNewAttr);
     };
