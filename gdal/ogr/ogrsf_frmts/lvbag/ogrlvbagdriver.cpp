@@ -76,7 +76,7 @@ GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo )
 
     if( !poOpenInfo->bIsDirectory && poOpenInfo->fpL != nullptr )
     {
-        if( !poDS->Open( poOpenInfo->pszFilename ) )
+        if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->papszOpenOptions ) )
             poDS.reset();
     }
     else if( poOpenInfo->bIsDirectory && poOpenInfo->fpL == nullptr )
@@ -98,7 +98,7 @@ GDALDataset *OGRLVBAGDriverOpen( GDALOpenInfo* poOpenInfo )
             if( !OGRLVBAGDriverIdentify(&oOpenInfo) )
                 continue;
 
-            if( !poDS->Open( oSubFilename ) )
+            if( !poDS->Open( oSubFilename, poOpenInfo->papszOpenOptions ) )
                 continue;
         }
 
@@ -127,7 +127,7 @@ void RegisterOGRLVBAG()
     if( GDALGetDriverByName( "LVBAG" ) != nullptr )
         return;
 
-    std::unique_ptr<GDALDriver> poDriver = std::unique_ptr<GDALDriver>(new GDALDriver());
+    std::unique_ptr<GDALDriver> poDriver = std::unique_ptr<GDALDriver>{ new GDALDriver };
 
     poDriver->SetDescription( "LVBAG" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
@@ -135,6 +135,11 @@ void RegisterOGRLVBAG()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xml" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/lvbag.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"  <Option name='AUTOCORRECT_INVALID_DATA' type='boolean' description='whether driver should try to fix invalid data' default='YES'/>"
+"</OpenOptionList>" );
 
     poDriver->pfnOpen = OGRLVBAGDriverOpen;
     poDriver->pfnIdentify = OGRLVBAGDriverIdentify;

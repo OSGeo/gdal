@@ -586,6 +586,7 @@ def test_wmts_14():
     <LowerRightY>-20037508.34278254</LowerRightY>
   </DataWindow>
   <BandsCount>4</BandsCount>
+  <DataType>Byte</DataType>
   <Cache />
   <UnsafeSSL>true</UnsafeSSL>
   <ZeroBlockHttpCodes>204,404</ZeroBlockHttpCodes>

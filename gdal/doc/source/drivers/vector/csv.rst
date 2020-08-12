@@ -356,7 +356,7 @@ Layer Creation options:
    IF_NEEDED). Defaults to IF_AMBIGUOUS (behavior in older versions was
    IF_NEEDED)
 
-Configuration options (set with "--config key value" on command line
+Configuration options (set with ``--config key value`` on command line
 utilities):
 
 -  **OGR_WKT_PRECISION**\ =int: Number of decimals for coordinate

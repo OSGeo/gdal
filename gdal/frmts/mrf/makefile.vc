@@ -19,12 +19,9 @@ OBJ	=	Packer_RLE.obj Tif_band.obj Raw_band.obj PNG_band.obj JPEG_band.obj JPNG_b
 PLUGIN_DLL =	gdal_mrf.dll
 
 !IF "$(HAVE_LERC)" == "1"
-# If the LERC folder exists, build LERC support
-!IF EXIST(libLERC)
-LIBLERC = libLERC.obj
-EXTRAFLAGS	= -DLERC -IlibLERC -I../../third_party/LercLib $(EXTRAFLAGS)
-OBJ = $(LIBLERC) LERC_Band.obj $(OBJ)
-!ENDIF
+LERC1 = Lerc1Image.obj
+EXTRAFLAGS	= -DLERC -ILERCV1 -I../../third_party/LercLib $(EXTRAFLAGS)
+OBJ = $(LERC1) LERC_Band.obj $(OBJ)
 !ENDIF
 
 !IFDEF JPEG_EXTERNAL_LIB
@@ -63,9 +60,9 @@ default:	$(OBJ)
 
 $(OBJ): marfa.h
 
-!IFDEF LIBLERC
-$(LIBLERC):
-	cd libLERC
+!IFDEF LERC1
+$(LERC1):
+	cd LERCV1
 	nmake /f makefile.vc
 	cd ..
 !ENDIF
@@ -77,8 +74,8 @@ clean:
 	-del *.lib
 	-del *.manifest
 	-del *.exe
-!IFDEF LIBLERC
-	cd libLERC
+!IFDEF LERC1
+	cd LERCV1
 	nmake /f makefile.vc clean
 	cd ..
 !ENDIF

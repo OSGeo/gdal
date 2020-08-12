@@ -706,6 +706,15 @@ def test_ogr_basic_dataset_copy_layer_dst_srswkt():
     assert out_lyr.GetSpatialRef().IsSame(sr)
 
 
+def test_ogr_basic_field_alternative_name():
+    field_defn = ogr.FieldDefn('test')
+
+    assert field_defn.GetAlternativeName() == ''
+
+    field_defn.SetAlternativeName('my alias')
+    assert field_defn.GetAlternativeName() == 'my alias'
+
+
 ###############################################################################
 # cleanup
 

@@ -41,12 +41,10 @@ XTRA_OPT        :=      $(XTRA_OPT) -I../zlib
 endif
 
 ifeq ($(HAVE_LERC),yes)
-ifneq ("$(wildcard libLERC)","")
-LIBLERC	= libLERC
+LERCV1	= LERCV1
 OBJ	:=	$(OBJ) LERC_band.o
-XTRA_OPT	:=	$(XTRA_OPT) -DLERC -I$(LIBLERC) -I../../third_party/LercLib
-SUBLIBS := lib-libLERC
-endif
+XTRA_OPT	:=	$(XTRA_OPT) -DLERC -I../../third_party/LercLib
+SUBLIBS := lib-LERCV1
 endif
 
 CPPFLAGS        :=  $(XTRA_OPT)  $(CPPFLAGS)
@@ -55,12 +53,12 @@ default:  $(PREDEPEND)	$(OBJ:.o=.$(OBJ_EXT)) $(SUBLIBS)
 
 clean:
 	rm -rf *.o *.lo .libs/$(OBJ) .libs $(O_OBJ) $(LO_O_OBJ) gdal_mrf.so.1
-	(cd libLERC; $(MAKE) clean)
+	(cd $(LERCV1); $(MAKE) clean)
 
 install-obj:	$(PREDEPEND) $(SUBLIBS) $(O_OBJ:.o=.$(OBJ_EXT))
 
-lib-libLERC:
-	(cd libLERC; $(MAKE) install-obj)
+lib-LERCV1:
+	(cd $(LERCV1); $(MAKE) install-obj)
 
 $(OBJ) $(O_OBJ):    $(DEPENDS)
 

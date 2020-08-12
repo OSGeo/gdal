@@ -63,6 +63,4 @@ will be available via the blocks layer.
 Building
 --------
 
-Currently DWG building is somewhat adhoc. On linux the normal practice
-is to hand edit gdal/ogr/ogrsf_frmts/dwg/GNUmakefile, update paths, and
-then build the driver as a plugin using the "make plugin" target.
+See :ref:`ODA platform support <vector.oda>` for building GDAL with ODA support.

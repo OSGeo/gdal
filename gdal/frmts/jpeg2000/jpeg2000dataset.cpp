@@ -484,7 +484,7 @@ int JPEG2000Dataset::DecodeImage()
     /* the JP2 boxes match the ones of the code stream */
     if (nBands != 0)
     {
-        if (nBands != jas_image_numcmpts( psImage ))
+        if (nBands != static_cast<int>(jas_image_numcmpts( psImage )))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "The number of components indicated in the IHDR box (%d) mismatch "
@@ -595,7 +595,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     int         iFormat;
-    char        *pszFormatName = nullptr;
+    const char *pszFormatName = nullptr;
 
     if (!Identify(poOpenInfo))
         return nullptr;

@@ -551,7 +551,7 @@ work properly with GDAL.
 With GDAL >= 3.1.0
 +++++++++++++++++++
 
-The scripts in the <https://github.com/rouault/pdfium_build_gdal_3_1>`__
+The scripts in the `<https://github.com/rouault/pdfium_build_gdal_3_1>`__
 repository must be used to build a patched version of PDFium.
 
 With GDAL >= 2.2.0 and < 3.1

@@ -900,6 +900,31 @@ std::vector<std::shared_ptr<GDALAttribute>> HDF4Group::GetAttributes(
     int32 nAttributes = 0;
     if ( SDfileinfo( m_poShared->GetSDHandle(), &nDatasets, &nAttributes ) != 0 )
         return ret;
+
+    std::map<CPLString, std::shared_ptr<GDALAttribute>> oMapAttrs;
+    const auto AddAttribute = [&ret, &oMapAttrs](const std::shared_ptr<GDALAttribute>& poNewAttr)
+    {
+        auto oIter = oMapAttrs.find(poNewAttr->GetName());
+        if( oIter != oMapAttrs.end() )
+        {
+            const char* pszOldVal = oIter->second->ReadAsString();
+            const char* pszNewVal = poNewAttr->ReadAsString();
+            // As found in MOD35_L2.A2017161.1525.061.2017315035809.hdf
+            // product of https://github.com/OSGeo/gdal/issues/2848,
+            // the identifier_product_doi attribute is found in a
+            // HDF4EOS attribute bundle, as well as a standalone attribute
+            if( pszOldVal && pszNewVal && strcmp(pszOldVal, pszNewVal) == 0 )
+                return;
+            // TODO
+            CPLDebug("HDF4",
+                     "Attribute with same name (%s) found, but different value",
+                     poNewAttr->GetName().c_str());
+        }
+        // cppcheck-suppress unreadVariable
+        oMapAttrs[poNewAttr->GetName()] = poNewAttr;
+        ret.emplace_back(poNewAttr);
+    };
+
     for( int32 iAttribute = 0; iAttribute < nAttributes; iAttribute++ )
     {
         int32 iNumType = 0;
@@ -932,7 +957,7 @@ std::vector<std::shared_ptr<GDALAttribute>> HDF4Group::GetAttributes(
                 const char* pszValue = CPLParseNameValue(*iter, &pszKey);
                 if( pszKey && pszValue )
                 {
-                    ret.emplace_back(std::make_shared<GDALAttributeString>(
+                    AddAttribute(std::make_shared<GDALAttributeString>(
                                                             GetFullName(),
                                                             pszKey,
                                                             pszValue));
@@ -950,7 +975,7 @@ std::vector<std::shared_ptr<GDALAttribute>> HDF4Group::GetAttributes(
         }
         else
         {
-            ret.emplace_back(std::make_shared<HDF4SDAttribute>(GetFullName(),
+            AddAttribute(std::make_shared<HDF4SDAttribute>(GetFullName(),
                                                              osAttrName,
                                                              m_poShared,
                                                              nullptr,
@@ -1317,7 +1342,8 @@ std::vector<std::shared_ptr<GDALAttribute>> HDF4SwathGroup::GetAttributes(
         int32 iNumType = 0;
         int32 nSize = 0;
 
-        if( SWattrinfo( m_poSwathHandle->m_handle, aosAttrs[i],
+        const auto& osAttrName = aosAttrs[i];
+        if( SWattrinfo( m_poSwathHandle->m_handle, osAttrName,
                         &iNumType, &nSize ) < 0 )
             continue;
         const int nDataTypeSize = HDF4Dataset::GetDataTypeSize(iNumType);
@@ -1325,7 +1351,7 @@ std::vector<std::shared_ptr<GDALAttribute>> HDF4SwathGroup::GetAttributes(
             continue;
 
         ret.emplace_back(std::make_shared<HDF4SwathAttribute>(GetFullName(),
-                                                        aosAttrs[i],
+                                                        osAttrName,
                                                         m_poShared,
                                                         m_poSwathHandle,
                                                         iNumType,
@@ -1500,7 +1526,6 @@ static bool ReadPixels(const GUInt64* arrayStartIdx,
         if( newBufferStride[i] != static_cast<GPtrDiff_t>(nExpectedStride) )
         {
             bContiguousStride = false;
-            break;
         }
         nExpectedStride *= count[i];
     }
@@ -1523,7 +1548,7 @@ static bool ReadPixels(const GUInt64* arrayStartIdx,
                    &sw_start[0], &sw_stride[0], &sw_edge[0],
                    pabyTemp) :
         readFunc.pReadData(handle, &sw_start[0], &sw_stride[0], &sw_edge[0],
-                  pabyDstBuffer);
+                  pabyTemp);
     if( status != 0 )
     {
         VSIFree(pabyTemp);

@@ -631,6 +631,8 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+HEIF_LIBS
+HEIF_CFLAGS
 EXR_LIBS
 EXR_CFLAGS
 HAVE_LERC
@@ -826,15 +828,15 @@ OGRFORMATS_ENABLED_CFLAGS
 OGRFORMATS_ENABLED
 ZSTD_SETTING
 LIBLZMA_SETTING
-PROJ_INCLUDE
-SQLITE_HAS_COLUMN_METADATA
-HAVE_SQLITE
-SQLITE_INC
 SPATIALITE_412_OR_LATER
 SPATIALITE_AMALGAMATION
 SPATIALITE_INC
 SPATIALITE_SONAME
 HAVE_SPATIALITE
+PROJ_INCLUDE
+SQLITE_HAS_COLUMN_METADATA
+HAVE_SQLITE
+SQLITE_INC
 SQLITE3_LDFLAGS
 SQLITE3_CFLAGS
 SQLITE3_VERSION
@@ -993,11 +995,11 @@ with_libiconv_prefix
 with_bash_completion
 with_libtiff
 with_curl
-with_spatialite
-with_spatialite_soname
 with_sqlite3
 with_proj
 with_proj_extra_lib_for_test
+with_spatialite
+with_spatialite_soname
 with_liblzma
 with_zstd
 enable_all_optional_drivers
@@ -1021,6 +1023,7 @@ enable_driver_e00grid
 enable_driver_elas
 enable_driver_envisat
 enable_driver_ers
+enable_driver_esric
 enable_driver_fit
 enable_driver_gff
 enable_driver_gsg
@@ -1057,6 +1060,7 @@ enable_driver_sgi
 enable_driver_sigdem
 enable_driver_srtmhgt
 enable_driver_terragen
+enable_driver_tga
 enable_driver_til
 enable_driver_tsx
 enable_driver_usgsdem
@@ -1231,6 +1235,7 @@ with_crypto
 with_lerc
 with_null
 with_exr
+with_heif
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1265,7 +1270,9 @@ LIBXML2_LIBS
 POPPLER_CFLAGS
 POPPLER_LIBS
 EXR_CFLAGS
-EXR_LIBS'
+EXR_LIBS
+HEIF_CFLAGS
+HEIF_LIBS'
 
 
 # Initialize some variables set by options.
@@ -1924,6 +1931,7 @@ Optional Features:
   --disable-driver-envisat
                           disable envisat driver support (enabled by default)
   --disable-driver-ers    disable ers driver support (enabled by default)
+  --disable-driver-esric  disable esric driver support (enabled by default)
   --disable-driver-fit    disable fit driver support (enabled by default)
   --disable-driver-gff    disable gff driver support (enabled by default)
   --disable-driver-gsg    disable gsg driver support (enabled by default)
@@ -1970,6 +1978,7 @@ Optional Features:
                           disable srtmhgt driver support (enabled by default)
   --disable-driver-terragen
                           disable terragen driver support (enabled by default)
+  --disable-driver-tga    disable tga driver support (enabled by default)
   --disable-driver-til    disable til driver support (enabled by default)
   --disable-driver-tsx    disable tsx driver support (enabled by default)
   --disable-driver-usgsdem
@@ -2140,12 +2149,12 @@ Optional Packages:
                           Install Bash completions (ARG=yes or path)
   --with-libtiff=ARG    Libtiff library to use (ARG=internal, yes or path)
   --with-curl=ARG       Include curl (ARG=path to curl-config.)
-  --with-spatialite=ARG Include SpatiaLite support (ARG=no(default), yes, dlopen (only supported for Spatialite >= 4.1.2) or path)
-  --with-spatialite-soname=ARG Spatialite shared object name (e.g. libspatialite.so), only used if --with-spatialite=dlopen
   --with-sqlite3=[ARG]    use SQLite 3 library [default=yes], optionally
                           specify the prefix for sqlite3 library
   --with-proj=ARG Compile with PROJ.x (ARG=yes or path)
   --with-proj-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (i.e. -lcurl -ltiff ...). Mainly for static libproj
+  --with-spatialite=ARG Include SpatiaLite support (ARG=no(default), yes, dlopen (only supported for Spatialite >= 4.1.2) or path)
+  --with-spatialite-soname=ARG Spatialite shared object name (e.g. libspatialite.so), only used if --with-spatialite=dlopen
   --with-liblzma=ARG       Include liblzma support (ARG=yes/no)
   --with-zstd=ARG       Include zstd support (ARG=yes/no/installation_prefix)
   --with-pg=ARG           Include PostgreSQL GDAL/OGR Support (ARG=yes,no)
@@ -2250,6 +2259,7 @@ Optional Packages:
   --with-null             Enable NULL driver (only useful for development
                           purposes
   --with-exr            Include EXR support via OpenEXR library
+  --with-heif            Include HEIF support via libheif library
 
 Some influential environment variables:
   CC          C compiler command
@@ -2295,6 +2305,8 @@ Some influential environment variables:
               linker flags for POPPLER, overriding pkg-config
   EXR_CFLAGS  C compiler flags for EXR, overriding pkg-config
   EXR_LIBS    linker flags for EXR, overriding pkg-config
+  HEIF_CFLAGS C compiler flags for HEIF, overriding pkg-config
+  HEIF_LIBS   linker flags for HEIF, overriding pkg-config
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -21388,6 +21400,17 @@ _ACEOF
 fi
 done
 
+for ac_func in strtoll
+do :
+  ac_fn_c_check_func "$LINENO" "strtoll" "ac_cv_func_strtoll"
+if test "x$ac_cv_func_strtoll" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STRTOLL 1
+_ACEOF
+
+fi
+done
+
 for ac_func in strtoull
 do :
   ac_fn_c_check_func "$LINENO" "strtoull" "ac_cv_func_strtoull"
@@ -24316,176 +24339,7 @@ CURL_LIB=$CURL_LIB
 
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite" >&5
-$as_echo_n "checking for spatialite... " >&6; }
-
-
-# Check whether --with-spatialite was given.
-if test "${with_spatialite+set}" = set; then :
-  withval=$with_spatialite;
-fi
-
-
-
-# Check whether --with-spatialite-soname was given.
-if test "${with_spatialite_soname+set}" = set; then :
-  withval=$with_spatialite_soname;
-fi
-
-
-HAVE_SPATIALITE=no
-SPATIALITE_AMALGAMATION=no
-
-if test -z "$with_spatialite" -o "$with_spatialite" = "no"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
-$as_echo "disabled" >&6; }
-elif test "$with_spatialite" = "yes"; then
-    for ac_header in sqlite3.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "sqlite3.h" "ac_cv_header_sqlite3_h" "$ac_includes_default"
-if test "x$ac_cv_header_sqlite3_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_SQLITE3_H 1
-_ACEOF
-
-fi
-
-done
-
-    if test "$ac_cv_header_sqlite3_h" = "yes"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite.h in /usr/include or /usr/local/include" >&5
-$as_echo_n "checking for spatialite.h in /usr/include or /usr/local/include... " >&6; }
-        if test -f "/usr/include/spatialite.h" -o -f "/usr/local/include/spatialite.h"; then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
-$as_echo "found" >&6; }
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite_init in -lspatialite" >&5
-$as_echo_n "checking for spatialite_init in -lspatialite... " >&6; }
-if ${ac_cv_lib_spatialite_spatialite_init+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lspatialite -lsqlite3 $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char spatialite_init ();
-int
-main ()
-{
-return spatialite_init ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_spatialite_spatialite_init=yes
-else
-  ac_cv_lib_spatialite_spatialite_init=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_spatialite_spatialite_init" >&5
-$as_echo "$ac_cv_lib_spatialite_spatialite_init" >&6; }
-if test "x$ac_cv_lib_spatialite_spatialite_init" = xyes; then :
-  SPATIALITE_INIT_FOUND=yes
-else
-  SPATIALITE_INIT_FOUND=no
-fi
-
-            if test "$SPATIALITE_INIT_FOUND" = "yes"; then
-                HAVE_SPATIALITE=yes
-                SPATIALITE_LIBS="-lspatialite -lsqlite3"
-                LIBS="$LIBS $SPATIALITE_LIBS"
-                HAVE_SQLITE3=yes
-            fi
-        else
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found : spatialite support disabled" >&5
-$as_echo "not found : spatialite support disabled" >&6; }
-        fi
-    fi
-elif test "$with_spatialite" = "dlopen"; then
-  HAVE_SPATIALITE=dlopen
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: dlopen" >&5
-$as_echo "dlopen" >&6; }
-
-  if test "$with_spatialite_soname" != ""; then
-      SPATIALITE_SONAME="$with_spatialite_soname"
-  else
-      SPATIALITE_SONAME="spatialite.so"
-  fi
-else
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite_init in -lspatialite" >&5
-$as_echo_n "checking for spatialite_init in -lspatialite... " >&6; }
-if ${ac_cv_lib_spatialite_spatialite_init+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lspatialite -L$with_spatialite/lib -lspatialite $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char spatialite_init ();
-int
-main ()
-{
-return spatialite_init ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_spatialite_spatialite_init=yes
-else
-  ac_cv_lib_spatialite_spatialite_init=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_spatialite_spatialite_init" >&5
-$as_echo "$ac_cv_lib_spatialite_spatialite_init" >&6; }
-if test "x$ac_cv_lib_spatialite_spatialite_init" = xyes; then :
-  SPATIALITE_INIT_FOUND=yes
-else
-  SPATIALITE_INIT_FOUND=no
-fi
-
-    if test -f "$with_spatialite/include/spatialite.h" -a \
-        -f "$with_spatialite/include/spatialite/sqlite3.h" -a \
-        "$SPATIALITE_INIT_FOUND" = "yes"; then
-
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
-$as_echo "enabled" >&6; }
-        HAVE_SPATIALITE=yes
-        SPATIALITE_AMALGAMATION=yes
-
-        # SpatiaLite amalgamation availability implies SQLite availability
-        # Caution : don't include the include/spatialite subdir in the include dir
-        # as there's a spatialite.h file in it, which we don't want to include.
-        # We want to include include/spatialite.h instead !
-        SQLITE3_CFLAGS="-I$with_spatialite/include"
-        SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite"
-        LIBS="$LIBS $SPATIALITE_LIBS"
-        HAVE_SQLITE3=yes
-
-    elif test -f "$with_spatialite/include/spatialite.h" -a \
-        "$SPATIALITE_INIT_FOUND" = "yes"; then
-
-        SQLITE3_REQ_VERSION="3.0.0"
+SQLITE3_REQ_VERSION="3.0.0"
 
 
 # Check whether --with-sqlite3 was given.
@@ -24791,398 +24645,9 @@ $as_echo "$as_me: WARNING: Can not find SQLITE_VERSION macro in sqlite3.h header
 $as_echo "disabled" >&6; }
     fi
 
-
-        if test "$HAVE_SQLITE3" = "yes"; then
-            SPATIALITE_INC="-I$with_spatialite/include"
-            HAVE_SPATIALITE=yes
-            SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite"
-            LIBS="$SQLITE3_LDFLAGS $LIBS $SPATIALITE_LIBS"
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: spatialite enabled" >&5
-$as_echo "spatialite enabled" >&6; }
-        else
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: spatialite disabled" >&5
-$as_echo "spatialite disabled" >&6; }
-        fi
-    else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
-$as_echo "disabled" >&6; }
-    fi
-fi
-
-if test "$HAVE_SPATIALITE" = "yes"; then
-    ax_save_LIBS="${LIBS}"
-    LIBS="$SPATIALITE_LIBS"
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite_target_cpu in -lspatialite" >&5
-$as_echo_n "checking for spatialite_target_cpu in -lspatialite... " >&6; }
-if ${ac_cv_lib_spatialite_spatialite_target_cpu+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lspatialite  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char spatialite_target_cpu ();
-int
-main ()
-{
-return spatialite_target_cpu ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_spatialite_spatialite_target_cpu=yes
-else
-  ac_cv_lib_spatialite_spatialite_target_cpu=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_spatialite_spatialite_target_cpu" >&5
-$as_echo "$ac_cv_lib_spatialite_spatialite_target_cpu" >&6; }
-if test "x$ac_cv_lib_spatialite_spatialite_target_cpu" = xyes; then :
-  SPATIALITE_412_OR_LATER=yes
-else
-  SPATIALITE_412_OR_LATER=no
-fi
-
-    LIBS="${ax_save_LIBS}"
-fi
-
-HAVE_SPATIALITE=$HAVE_SPATIALITE
-
-SPATIALITE_SONAME=$SPATIALITE_SONAME
-
-SPATIALITE_INC=$SPATIALITE_INC
-
-SPATIALITE_AMALGAMATION=$SPATIALITE_AMALGAMATION
-
-SPATIALITE_412_OR_LATER=$SPATIALITE_412_OR_LATER
-
-
-
-if test "${HAVE_SPATIALITE}" = "no" -o "${HAVE_SPATIALITE}" = "dlopen" ; then
-    SQLITE3_REQ_VERSION="3.0.0"
-
-
-# Check whether --with-sqlite3 was given.
-if test "${with_sqlite3+set}" = set; then :
-  withval=$with_sqlite3;
-        if test "$withval" = "no"; then
-            WANT_SQLITE3="no"
-        elif test "$withval" = "yes"; then
-            WANT_SQLITE3="yes"
-            ac_sqlite3_path=""
-        else
-            WANT_SQLITE3="yes"
-            ac_sqlite3_path="$withval"
-        fi
-
-else
-  WANT_SQLITE3="yes"
-
-fi
-
-
-    SQLITE3_CFLAGS=""
-    SQLITE3_LDFLAGS=""
-    SQLITE3_VERSION=""
-    HAVE_SQLITE3="no"
-
-    sqlite3_version_req=$SQLITE3_REQ_VERSION
-    sqlite3_version_req_shorten=`expr $sqlite3_version_req : '\([0-9]*\.[0-9]*\)'`
-    sqlite3_version_req_major=`expr $sqlite3_version_req : '\([0-9]*\)'`
-    sqlite3_version_req_minor=`expr $sqlite3_version_req : '[0-9]*\.\([0-9]*\)'`
-    sqlite3_version_req_micro=`expr $sqlite3_version_req : '[0-9]*\.[0-9]*\.\([0-9]*\)'`
-    if test "x$sqlite3_version_req_micro" = "x" ; then
-        sqlite3_version_req_micro="0"
-    fi
-
-    sqlite3_version_req_number=`expr $sqlite3_version_req_major \* 1000000 \
-                               \+ $sqlite3_version_req_minor \* 1000 \
-                               \+ $sqlite3_version_req_micro`
-
-    if test "x$WANT_SQLITE3" = "xyes"; then
-        ac_sqlite3_header="sqlite3.h"
-        LIB_SQLITE3_FOUND=no
-
-        if test "$ac_sqlite3_path" != ""; then
-
-            unset ac_cv_lib_sqlite3_sqlite3_open
-            saved_LIBS="$LIBS"
-            LIBS=""
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sqlite3_open in -lsqlite3" >&5
-$as_echo_n "checking for sqlite3_open in -lsqlite3... " >&6; }
-if ${ac_cv_lib_sqlite3_sqlite3_open+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lsqlite3 -L$ac_sqlite3_path/lib $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char sqlite3_open ();
-int
-main ()
-{
-return sqlite3_open ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_sqlite3_sqlite3_open=yes
-else
-  ac_cv_lib_sqlite3_sqlite3_open=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sqlite3_sqlite3_open" >&5
-$as_echo "$ac_cv_lib_sqlite3_sqlite3_open" >&6; }
-if test "x$ac_cv_lib_sqlite3_sqlite3_open" = xyes; then :
-  LIB_SQLITE3_FOUND=yes
-else
-  LIB_SQLITE3_FOUND=no
-fi
-
-            LIBS="$saved_LIBS"
-            if test "$LIB_SQLITE3_FOUND" = "yes"; then
-                ac_sqlite3_ldflags="-L$ac_sqlite3_path/lib"
-            fi
-
-            ac_sqlite3_cppflags="-I$ac_sqlite3_path/include"
-        else
-            for ac_sqlite3_path_tmp in /usr /usr/local /opt ; do
-                if test -f "$ac_sqlite3_path_tmp/include/$ac_sqlite3_header" \
-                    && test -r "$ac_sqlite3_path_tmp/include/$ac_sqlite3_header"; then
-                    ac_sqlite3_path=$ac_sqlite3_path_tmp
-
-                    unset ac_cv_lib_sqlite3_sqlite3_open
-                    saved_LIBS="$LIBS"
-                    LIBS=""
-                    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sqlite3_open in -lsqlite3" >&5
-$as_echo_n "checking for sqlite3_open in -lsqlite3... " >&6; }
-if ${ac_cv_lib_sqlite3_sqlite3_open+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lsqlite3  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char sqlite3_open ();
-int
-main ()
-{
-return sqlite3_open ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_sqlite3_sqlite3_open=yes
-else
-  ac_cv_lib_sqlite3_sqlite3_open=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sqlite3_sqlite3_open" >&5
-$as_echo "$ac_cv_lib_sqlite3_sqlite3_open" >&6; }
-if test "x$ac_cv_lib_sqlite3_sqlite3_open" = xyes; then :
-  LIB_SQLITE3_FOUND=yes
-else
-  LIB_SQLITE3_FOUND=no
-fi
-
-                    LIBS="$saved_LIBS"
-                    if test "$LIB_SQLITE3_FOUND" = "yes"; then
-                        ac_sqlite3_ldflags=""
-                    else
-                        unset ac_cv_lib_sqlite3_sqlite3_open
-                        saved_LIBS="$LIBS"
-                        LIBS=""
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sqlite3_open in -lsqlite3" >&5
-$as_echo_n "checking for sqlite3_open in -lsqlite3... " >&6; }
-if ${ac_cv_lib_sqlite3_sqlite3_open+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lsqlite3 -L$ac_sqlite3_path_tmp/lib $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char sqlite3_open ();
-int
-main ()
-{
-return sqlite3_open ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_sqlite3_sqlite3_open=yes
-else
-  ac_cv_lib_sqlite3_sqlite3_open=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sqlite3_sqlite3_open" >&5
-$as_echo "$ac_cv_lib_sqlite3_sqlite3_open" >&6; }
-if test "x$ac_cv_lib_sqlite3_sqlite3_open" = xyes; then :
-  LIB_SQLITE3_FOUND=yes
-else
-  LIB_SQLITE3_FOUND=no
-fi
-
-                        LIBS="$saved_LIBS"
-                        if test "$LIB_SQLITE3_FOUND" = "yes"; then
-                            ac_sqlite3_ldflags="-L$ac_sqlite3_path_tmp/lib"
-                        fi
-                    fi
-
-                    ac_sqlite3_cppflags="-I$ac_sqlite3_path_tmp/include"
-                    break;
-                fi
-            done
-        fi
-
-        if test "$LIB_SQLITE3_FOUND" = "no"; then
-            WANT_SQLITE3="no"
-        fi
-    fi
-
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SQLite3 library >= $sqlite3_version_req" >&5
-$as_echo_n "checking for SQLite3 library >= $sqlite3_version_req... " >&6; }
-
-    if test "x$WANT_SQLITE3" = "xyes"; then
-
-        ac_sqlite3_ldflags="$ac_sqlite3_ldflags -lsqlite3"
-
-        saved_CPPFLAGS="$CPPFLAGS"
-        CPPFLAGS="$CPPFLAGS $ac_sqlite3_cppflags"
-
-        ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-
-        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-            #include <sqlite3.h>
-int
-main ()
-{
-
-#if (SQLITE_VERSION_NUMBER >= $sqlite3_version_req_number)
-// Everything is okay
-#else
-#  error SQLite version is too old
-#endif
-
-
-  ;
-  return 0;
-}
-
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-            HAVE_SQLITE3="yes"
-            success="yes"
-
-else
-
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-            HAVE_SQLITE3="no"
-            success="no"
-
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-        ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-
-        CPPFLAGS="$saved_CPPFLAGS"
-
-        if test "$success" = "yes"; then
-
-            SQLITE3_CFLAGS="$ac_sqlite3_cppflags"
-            SQLITE3_LDFLAGS="$ac_sqlite3_ldflags"
-
-            ac_sqlite3_header_path="$ac_sqlite3_path/include/$ac_sqlite3_header"
-
-                        if test "x$ac_sqlite3_header_path" != "x"; then
-                ac_sqlite3_version=`cat $ac_sqlite3_header_path \
-                    | grep '#define.*SQLITE_VERSION.*\"' | sed -e 's/.* "//' \
-                        | sed -e 's/"//'`
-                if test "$ac_sqlite3_version" != ""; then
-                    SQLITE3_VERSION=$ac_sqlite3_version
-                else
-                    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Can not find SQLITE_VERSION macro in sqlite3.h header to retrieve SQLite version!" >&5
-$as_echo "$as_me: WARNING: Can not find SQLITE_VERSION macro in sqlite3.h header to retrieve SQLite version!" >&2;}
-                fi
-            fi
-
-
-        fi
-
-
-
-
-    else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
-$as_echo "disabled" >&6; }
-    fi
-
-
-    if test "$HAVE_SQLITE3" = "yes"; then
-        LIBS="$SQLITE3_LDFLAGS $LIBS"
-    fi
-fi
 
 if test "$HAVE_SQLITE3" = "yes"; then
+    LIBS="$SQLITE3_LDFLAGS $LIBS"
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sqlite3_column_table_name in -lsqlite3" >&5
 $as_echo_n "checking for sqlite3_column_table_name in -lsqlite3... " >&6; }
 if ${ac_cv_lib_sqlite3_sqlite3_column_table_name+:} false; then :
@@ -25262,7 +24727,7 @@ else
 
   if test "x$with_proj" = "xyes" -o "x$with_proj" = "x"; then
     ORIG_LIBS="$LIBS"
-    LIBS="-lproj $ORIG_LIBS"
+    LIBS="-lproj $with_proj_extra_lib_for_test $ORIG_LIBS"
     ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -25879,6 +25344,232 @@ $as_echo "$as_me: proj.h found" >&6;}
   fi
 fi
 
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite" >&5
+$as_echo_n "checking for spatialite... " >&6; }
+
+
+# Check whether --with-spatialite was given.
+if test "${with_spatialite+set}" = set; then :
+  withval=$with_spatialite;
+fi
+
+
+
+# Check whether --with-spatialite-soname was given.
+if test "${with_spatialite_soname+set}" = set; then :
+  withval=$with_spatialite_soname;
+fi
+
+
+HAVE_SPATIALITE=no
+SPATIALITE_AMALGAMATION=no
+
+if test -z "$with_spatialite" -o "$with_spatialite" = "no"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
+$as_echo "disabled" >&6; }
+elif test "$with_spatialite" = "yes"; then
+    for ac_header in sqlite3.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sqlite3.h" "ac_cv_header_sqlite3_h" "$ac_includes_default"
+if test "x$ac_cv_header_sqlite3_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SQLITE3_H 1
+_ACEOF
+
+fi
+
+done
+
+    if test "$ac_cv_header_sqlite3_h" = "yes"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite.h in /usr/include or /usr/local/include" >&5
+$as_echo_n "checking for spatialite.h in /usr/include or /usr/local/include... " >&6; }
+        if test -f "/usr/include/spatialite.h" -o -f "/usr/local/include/spatialite.h"; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
+$as_echo "found" >&6; }
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite_init in -lspatialite" >&5
+$as_echo_n "checking for spatialite_init in -lspatialite... " >&6; }
+if ${ac_cv_lib_spatialite_spatialite_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lspatialite -lsqlite3 $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char spatialite_init ();
+int
+main ()
+{
+return spatialite_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_spatialite_spatialite_init=yes
+else
+  ac_cv_lib_spatialite_spatialite_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_spatialite_spatialite_init" >&5
+$as_echo "$ac_cv_lib_spatialite_spatialite_init" >&6; }
+if test "x$ac_cv_lib_spatialite_spatialite_init" = xyes; then :
+  SPATIALITE_INIT_FOUND=yes
+else
+  SPATIALITE_INIT_FOUND=no
+fi
+
+            if test "$SPATIALITE_INIT_FOUND" = "yes"; then
+                HAVE_SPATIALITE=yes
+                SPATIALITE_LIBS="-lspatialite -lsqlite3"
+                LIBS="$LIBS $SPATIALITE_LIBS"
+                HAVE_SQLITE3=yes
+            fi
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found : spatialite support disabled" >&5
+$as_echo "not found : spatialite support disabled" >&6; }
+        fi
+    fi
+elif test "$with_spatialite" = "dlopen"; then
+  HAVE_SPATIALITE=dlopen
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: dlopen" >&5
+$as_echo "dlopen" >&6; }
+
+  if test "$with_spatialite_soname" != ""; then
+      SPATIALITE_SONAME="$with_spatialite_soname"
+  else
+      SPATIALITE_SONAME="spatialite.so"
+  fi
+else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite_init in -lspatialite" >&5
+$as_echo_n "checking for spatialite_init in -lspatialite... " >&6; }
+if ${ac_cv_lib_spatialite_spatialite_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lspatialite -L$with_spatialite/lib -lspatialite $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char spatialite_init ();
+int
+main ()
+{
+return spatialite_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_spatialite_spatialite_init=yes
+else
+  ac_cv_lib_spatialite_spatialite_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_spatialite_spatialite_init" >&5
+$as_echo "$ac_cv_lib_spatialite_spatialite_init" >&6; }
+if test "x$ac_cv_lib_spatialite_spatialite_init" = xyes; then :
+  SPATIALITE_INIT_FOUND=yes
+else
+  SPATIALITE_INIT_FOUND=no
+fi
+
+
+    if test -f "$with_spatialite/include/spatialite.h" -a \
+        "$SPATIALITE_INIT_FOUND" = "yes"; then
+
+        if test "$HAVE_SQLITE3" = "yes"; then
+            SPATIALITE_INC="-I$with_spatialite/include"
+            HAVE_SPATIALITE=yes
+            SPATIALITE_LIBS="-L$with_spatialite/lib -lspatialite"
+            LIBS="$SQLITE3_LDFLAGS $LIBS $SPATIALITE_LIBS"
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: spatialite enabled" >&5
+$as_echo "spatialite enabled" >&6; }
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: spatialite disabled" >&5
+$as_echo "spatialite disabled" >&6; }
+        fi
+    else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
+$as_echo "disabled" >&6; }
+    fi
+fi
+
+if test "$HAVE_SPATIALITE" = "yes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for spatialite_target_cpu in -lspatialite" >&5
+$as_echo_n "checking for spatialite_target_cpu in -lspatialite... " >&6; }
+if ${ac_cv_lib_spatialite_spatialite_target_cpu+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lspatialite  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char spatialite_target_cpu ();
+int
+main ()
+{
+return spatialite_target_cpu ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_spatialite_spatialite_target_cpu=yes
+else
+  ac_cv_lib_spatialite_spatialite_target_cpu=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_spatialite_spatialite_target_cpu" >&5
+$as_echo "$ac_cv_lib_spatialite_spatialite_target_cpu" >&6; }
+if test "x$ac_cv_lib_spatialite_spatialite_target_cpu" = xyes; then :
+  SPATIALITE_412_OR_LATER=yes
+else
+  SPATIALITE_412_OR_LATER=no
+fi
+
+fi
+
+HAVE_SPATIALITE=$HAVE_SPATIALITE
+
+SPATIALITE_SONAME=$SPATIALITE_SONAME
+
+SPATIALITE_INC=$SPATIALITE_INC
+
+SPATIALITE_AMALGAMATION=$SPATIALITE_AMALGAMATION
+
+SPATIALITE_412_OR_LATER=$SPATIALITE_412_OR_LATER
 
 
 
@@ -26662,6 +26353,34 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED ers"
   INTERNAL_FORMAT_ers_ENABLED=no
+fi
+
+# Check whether --enable-driver-esric was given.
+if test "${enable_driver_esric+set}" = set; then :
+  enableval=$enable_driver_esric;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_esric
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED esric"
+  INTERNAL_FORMAT_esric_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED esric"
+  INTERNAL_FORMAT_esric_ENABLED=no
 fi
 
 # Check whether --enable-driver-fit was given.
@@ -27670,6 +27389,34 @@ if test "$cur_driver_enabled" = "yes"; then :
 else
   GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED terragen"
   INTERNAL_FORMAT_terragen_ENABLED=no
+fi
+
+# Check whether --enable-driver-tga was given.
+if test "${enable_driver_tga+set}" = set; then :
+  enableval=$enable_driver_tga;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_tga
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED tga"
+  INTERNAL_FORMAT_tga_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED tga"
+  INTERNAL_FORMAT_tga_ENABLED=no
 fi
 
 # Check whether --enable-driver-til was given.
@@ -31462,7 +31209,77 @@ HAVE_CHARLS=no
 CHARLS_INC=
 
 if test "$with_charls" = "yes" -o "$with_charls" = "" ; then
-    for ac_header in CharLS/interface.h
+    for ac_header in charls/version.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "charls/version.h" "ac_cv_header_charls_version_h" "$ac_includes_default"
+if test "x$ac_cv_header_charls_version_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_CHARLS_VERSION_H 1
+_ACEOF
+
+fi
+
+done
+
+  if test "$ac_cv_header_charls_version_h" = "yes"; then
+    ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JpegLsDecode in -lcharls" >&5
+$as_echo_n "checking for JpegLsDecode in -lcharls... " >&6; }
+if ${ac_cv_lib_charls_JpegLsDecode+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcharls  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char JpegLsDecode ();
+int
+main ()
+{
+return JpegLsDecode ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_charls_JpegLsDecode=yes
+else
+  ac_cv_lib_charls_JpegLsDecode=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_charls_JpegLsDecode" >&5
+$as_echo "$ac_cv_lib_charls_JpegLsDecode" >&6; }
+if test "x$ac_cv_lib_charls_JpegLsDecode" = xyes; then :
+  HAVE_CHARLS=yes
+fi
+
+    ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+    if test "$HAVE_CHARLS" = "yes"; then
+        LIBS="-lcharls $LIBS"
+        CHARLS_INC="-DCHARLS_2_1"
+    fi
+  else
+        for ac_header in CharLS/interface.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "CharLS/interface.h" "ac_cv_header_CharLS_interface_h" "$ac_includes_default"
 if test "x$ac_cv_header_CharLS_interface_h" = xyes; then :
@@ -31474,8 +31291,8 @@ fi
 
 done
 
-  if test "$ac_cv_header_CharLS_interface_h" = "yes"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JpegLsDecode in -lCharLS" >&5
+    if test "$ac_cv_header_CharLS_interface_h" = "yes"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JpegLsDecode in -lCharLS" >&5
 $as_echo_n "checking for JpegLsDecode in -lCharLS... " >&6; }
 if ${ac_cv_lib_CharLS_JpegLsDecode+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -31515,12 +31332,12 @@ if test "x$ac_cv_lib_CharLS_JpegLsDecode" = xyes; then :
   HAVE_CHARLS=yes
 fi
 
-    if test "$HAVE_CHARLS" = "yes"; then
-        LIBS="-lCharLS $LIBS"
-        CHARLS_INC="-DCHARLS_INTERFACE_H"
-    fi
-  else
-        for ac_header in CharLS/charls.h
+      if test "$HAVE_CHARLS" = "yes"; then
+          LIBS="-lCharLS $LIBS"
+          CHARLS_INC="-DCHARLS_INTERFACE_H"
+      fi
+    else
+            for ac_header in CharLS/charls.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "CharLS/charls.h" "ac_cv_header_CharLS_charls_h" "$ac_includes_default"
 if test "x$ac_cv_header_CharLS_charls_h" = xyes; then :
@@ -31532,7 +31349,7 @@ fi
 
 done
 
-    if test "$ac_cv_header_CharLS_charls_h" = "yes"; then
+      if test "$ac_cv_header_CharLS_charls_h" = "yes"; then
         ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -31589,77 +31406,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
             LIBS="-lCharLS $LIBS"
             CHARLS_INC="-DCHARLS_2"
         fi
-    else
-                for ac_header in charls/charls.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "charls/charls.h" "ac_cv_header_charls_charls_h" "$ac_includes_default"
-if test "x$ac_cv_header_charls_charls_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_CHARLS_CHARLS_H 1
-_ACEOF
-
-fi
-
-done
-
-        if test "$ac_cv_header_charls_charls_h" = "yes"; then
-            ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JpegLsDecode in -lcharls" >&5
-$as_echo_n "checking for JpegLsDecode in -lcharls... " >&6; }
-if ${ac_cv_lib_charls_JpegLsDecode+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lcharls  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char JpegLsDecode ();
-int
-main ()
-{
-return JpegLsDecode ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_link "$LINENO"; then :
-  ac_cv_lib_charls_JpegLsDecode=yes
-else
-  ac_cv_lib_charls_JpegLsDecode=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_charls_JpegLsDecode" >&5
-$as_echo "$ac_cv_lib_charls_JpegLsDecode" >&6; }
-if test "x$ac_cv_lib_charls_JpegLsDecode" = xyes; then :
-  HAVE_CHARLS=yes
-fi
-
-            ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-            if test "$HAVE_CHARLS" = "yes"; then
-                LIBS="-lcharls $LIBS"
-                CHARLS_INC="-DCHARLS_2_1"
-            fi
-        fi
+      fi
     fi
   fi
 fi
@@ -38268,14 +38015,30 @@ fi
         HAVE_TEIGHA=yes
         TEIGHA_PLT=$with_teigha_plt
         LIBS="${LIBS} ${TEIGHA_DIR}/bin/${TEIGHA_PLT}/TG_Db.tx"
+        if test -f "${TEIGHA_DIR}/bin/${TEIGHA_PLT}/TD_DbEntities.tx"; then
+            LIBS="${LIBS} ${TEIGHA_DIR}/bin/${TEIGHA_PLT}/TD_DbEntities.tx"
+            LIBS="${LIBS} ${TEIGHA_DIR}/lib/${TEIGHA_PLT}/libTD_DrawingsExamplesCommon.a"
+        fi
         LIBS="${LIBS} ${TEIGHA_DIR}/lib/${TEIGHA_PLT}/libTG_ExamplesCommon.a"
         LIBS="${LIBS} ${TEIGHA_DIR}/lib/${TEIGHA_PLT}/libTD_ExamplesCommon.a"
         LIBS="${LIBS} ${TEIGHA_DIR}/lib/${TEIGHA_PLT}/libTD_Key.a"
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Db"
+        if test -f "${TEIGHA_DIR}/bin/${TEIGHA_PLT}/libTD_DbCore.*"; then
+            LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_DbCore"
+        fi
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_DbRoot"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Gi"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_SpatialIndex"
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Root"
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Ge"
+        if test -f "${TEIGHA_DIR}/bin/${TEIGHA_PLT}/libTD_Zlib.*"; then
+            LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Zlib"
+        fi
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Alloc"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -loless"
+        if test -f "${TEIGHA_DIR}/bin/${TEIGHA_PLT}/liblibcrypto.*"; then
+            LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -llibcrypto"
+        fi
         if test -f "${TEIGHA_DIR}/bin/${TEIGHA_PLT}/libTD_Db.so"; then
             TEIGHA_CPPFLAGS="-D_TOOLKIT_IN_DLL_"
         fi
@@ -40729,8 +40492,8 @@ $as_echo "yes" >&6; }
 fi
     if test "$POPPLER_VERSION" != ""; then
         HAVE_POPPLER=yes
-        POPPLER_MAJOR_VERSION=`expr $POPPLER_VERSION : '\([0-9]*\)'`
-        POPPLER_MINOR_VERSION=`expr $POPPLER_VERSION : '[0-9]*\.\([0-9]*\)'`
+        POPPLER_MAJOR_VERSION=`echo $POPPLER_VERSION | cut -d'.' -f1`
+        POPPLER_MINOR_VERSION=`echo $POPPLER_VERSION | cut -d'.' -f2 | sed -e 's/^0//'`
         POPPLER_CFLAGS=`echo $POPPLER_CFLAGS $POPPLER_CFLAGS | sed "s/include\/poppler/include/"`
     fi
 else
@@ -42678,6 +42441,273 @@ fi
 fi
 
 EXR_CFLAGS=$EXR_CFLAGS
+
+
+
+
+# Check whether --with-heif was given.
+if test "${with_heif+set}" = set; then :
+  withval=$with_heif;
+fi
+
+
+HAVE_HEIF=no
+HEIF_CFLAGS=""
+
+if test "$with_heif" = "no" ; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: HEIF support disabled." >&5
+$as_echo "$as_me: HEIF support disabled." >&6;}
+
+else
+
+
+
+if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
+	if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
+set dummy ${ac_tool_prefix}pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+if test -n "$PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
+$as_echo "$PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_path_PKG_CONFIG"; then
+  ac_pt_PKG_CONFIG=$PKG_CONFIG
+  # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_ac_pt_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $ac_pt_PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ac_pt_PKG_CONFIG="$ac_pt_PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_ac_pt_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+ac_pt_PKG_CONFIG=$ac_cv_path_ac_pt_PKG_CONFIG
+if test -n "$ac_pt_PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_pt_PKG_CONFIG" >&5
+$as_echo "$ac_pt_PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_pt_PKG_CONFIG" = x; then
+    PKG_CONFIG=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    PKG_CONFIG=$ac_pt_PKG_CONFIG
+  fi
+else
+  PKG_CONFIG="$ac_cv_path_PKG_CONFIG"
+fi
+
+fi
+if test -n "$PKG_CONFIG"; then
+	_pkg_min_version=0.21
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
+$as_echo_n "checking pkg-config is at least version $_pkg_min_version... " >&6; }
+	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		PKG_CONFIG=""
+	fi
+
+fi
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for HEIF" >&5
+$as_echo_n "checking for HEIF... " >&6; }
+
+if test -n "$PKG_CONFIG"; then
+    if test -n "$HEIF_CFLAGS"; then
+        pkg_cv_HEIF_CFLAGS="$HEIF_CFLAGS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libheif >= 1.1\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libheif >= 1.1") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_HEIF_CFLAGS=`$PKG_CONFIG --cflags "libheif >= 1.1" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+if test -n "$PKG_CONFIG"; then
+    if test -n "$HEIF_LIBS"; then
+        pkg_cv_HEIF_LIBS="$HEIF_LIBS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libheif >= 1.1\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libheif >= 1.1") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_HEIF_LIBS=`$PKG_CONFIG --libs "libheif >= 1.1" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        HEIF_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "libheif >= 1.1"`
+        else
+	        HEIF_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "libheif >= 1.1"`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$HEIF_PKG_ERRORS" >&5
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                HAVE_HEIF=no
+elif test $pkg_failed = untried; then
+	HAVE_HEIF=no
+else
+	HEIF_CFLAGS=$pkg_cv_HEIF_CFLAGS
+	HEIF_LIBS=$pkg_cv_HEIF_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	:
+fi
+
+  if test -n "$HEIF_LIBS"; then
+
+    # Test that the package found is for the right architecture
+    saved_LIBS="$LIBS"
+    LIBS="$HEIF_LIBS"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for heif_context_get_list_of_top_level_image_IDs in -lheif" >&5
+$as_echo_n "checking for heif_context_get_list_of_top_level_image_IDs in -lheif... " >&6; }
+if ${ac_cv_lib_heif_heif_context_get_list_of_top_level_image_IDs+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lheif  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char heif_context_get_list_of_top_level_image_IDs ();
+int
+main ()
+{
+return heif_context_get_list_of_top_level_image_IDs ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_heif_heif_context_get_list_of_top_level_image_IDs=yes
+else
+  ac_cv_lib_heif_heif_context_get_list_of_top_level_image_IDs=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_heif_heif_context_get_list_of_top_level_image_IDs" >&5
+$as_echo "$ac_cv_lib_heif_heif_context_get_list_of_top_level_image_IDs" >&6; }
+if test "x$ac_cv_lib_heif_heif_context_get_list_of_top_level_image_IDs" = xyes; then :
+  HAVE_HEIF=yes
+else
+  HAVE_HEIF=no
+fi
+
+    LIBS="$saved_LIBS"
+
+    if test "$HAVE_HEIF" = "yes"; then
+        OPT_GDAL_FORMATS="heif $OPT_GDAL_FORMATS"
+        LIBS="$HEIF_LIBS $LIBS"
+    else
+        HEIF_CFLAGS=""
+    fi
+  fi
+fi
+
+HEIF_CFLAGS=$HEIF_CFLAGS
 
 
 
@@ -45299,6 +45329,9 @@ echo "  TileDB support:            ${TILEDB_SETTING}"
 
 
 echo "  EXR support:               ${HAVE_EXR}"
+
+
+echo "  HEIF support:              ${HAVE_HEIF}"
 
 
 echo "  userfaultfd support:       ${ENABLE_UFFD}"

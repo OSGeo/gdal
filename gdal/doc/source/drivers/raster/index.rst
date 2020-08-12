@@ -62,6 +62,7 @@ Raster drivers
    envi
    epsilon
    esat
+   esric
    ers
    exr
    fast
@@ -86,6 +87,7 @@ Raster drivers
    gxf
    hdf4
    hdf5
+   heif
    hf2
    hfa
    ida
@@ -171,6 +173,7 @@ Raster drivers
    srp
    srtmhgt
    terragen
+   tga
    til
    tiledb
    tsx

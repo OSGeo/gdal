@@ -35,7 +35,7 @@ OBJ =	cpl_conv.o cpl_error.o cpl_string.o cplgetsymbol.o cplstringlist.o \
 	cpl_google_cloud.o cpl_azure.o cpl_alibaba_oss.o cpl_json_streaming_parser.o \
 	cpl_json.o cpl_md5.o cpl_swift.o cpl_vsil_plugin.o \
 	cpl_vsil_hdfs.o cpl_userfaultfd.o cpl_json_streaming_writer.o \
-	cpl_vax.o
+	cpl_vax.o cpl_vsil_uploadonclose.o
 
 ifeq ($(ODBC_SETTING),yes)
 OBJ	:= 	$(OBJ) cpl_odbc.o

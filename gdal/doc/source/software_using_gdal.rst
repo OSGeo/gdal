@@ -42,6 +42,7 @@ Software using GDAL
 - `GPSeismic  <http://www.gpseismic.com>`_  A suite of applications for seismic survey.
 - `GRASS GIS  <http://grass.osgeo.org>`_  A raster/vector open source GIS that uses GDAL for raster/vector import and export (via r.in.gdal/r.out.gdal)
 - `gstat  <http://www.gstat.org>`_  a geostatistical modelling package.
+- `GuidosToolbox  <https://forest.jrc.ec.europa.eu/en/activities/lpa/gtb/>`_  A multi-platform desktop application for generic image object analysis.
 - `gvSIG  <http://www.gvsig.com>`_  Desktop GIS Client.
 - `HydroDaVE Explorer  <http://www.hydrodave.com>`_  A web-enabled client that provides users an easy to use, secure, and reliable data management platform to efficienctly manage, access, and analyze environmental data.
 - `IDRISI  <http://www.idrisi.com>`_  A GIS and Image Processing Windows Desktop application. Uses GDAL to import/export/warp raster data.

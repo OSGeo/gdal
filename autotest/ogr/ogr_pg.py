@@ -2007,7 +2007,7 @@ def test_ogr_pg_43():
     if gdaltest.pg_ds is None:
         pytest.skip()
 
-    ds = ogr.Open('PG:' + gdaltest.pg_connection_string + ' schemas=public,AutoTest-schema', update=1)
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string + " application_name='foo\\\\ \\'bar' schemas = 'public,AutoTest-schema'", update=1)
 
     # tpoly without schema refers to the active schema, that is to say public
     found = ogr_pg_check_layer_in_list(ds, 'tpoly')

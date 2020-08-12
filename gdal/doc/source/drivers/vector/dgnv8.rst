@@ -149,6 +149,17 @@ The layer creation supports the following options:
 -  **DIM=**\ *2/3*: Dimension (ie 2D vs 3D) of the layer. By default, 3,
    unless the model is reused from the seed file.
 
+
+Building
+--------
+
+See :ref:`ODA platform support <vector.oda>` for building GDAL with ODA support.
+
+.. toctree::
+   :hidden:
+
+   oda
+
 --------------
 
 -  :ref:`DGN (v7) driver <vector.dgn>`

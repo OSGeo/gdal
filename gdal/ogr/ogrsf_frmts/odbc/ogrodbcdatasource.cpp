@@ -114,7 +114,7 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
         if( pszDSNStringTemplate == nullptr )
         {
             pszOptionName = "";
-            pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";
+            pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=\"%s\"";
         }
     }
     if (!CheckDSNStringTemplate(pszDSNStringTemplate))
@@ -140,7 +140,7 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
         if( EQUAL(pszDSN, "") )
         {
             // Trying with another template (#5594)
-            pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=%s";
+            pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=\"%s\"";
             CPLFree( pszDSN );
             pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
             snprintf( pszDSN,

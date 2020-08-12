@@ -60,7 +60,7 @@ other content before the ``<GDAL_WMS>`` element.
 <Projection>EPSG:4326</Projection>                                         Image projection (optional, defaults to value reported by mini-driver or EPSG:4326)
 <IdentificationTolerance>2</IdentificationTolerance>                       Identification tolerance (optional, defaults to 2)
 <BandsCount>3</BandsCount>                                                 Number of bands/channels, 1 for grayscale data, 3 for RGB, 4 for RGBA. (optional, defaults to 3)
-<DataType>Byte</DataType>                                                  Band data type, amont Byte, Int16, UInt16, Int32, UInt32, Float32, Float64, etc.. (optional, defaults to Byte)
+<DataType>Byte</DataType>                                                  Band data type, one of: Byte, Int16, UInt16, Int32, UInt32, Float32, Float64, etc.. (optional, defaults to Byte)
 <DataValues NoData="0 0 0" min="1 1 1" max="255 255 255" />                Define NoData and/or minimum and/or maximum value for bands. nodata_values, min_values, max_values can be one single value, or a value per band, with a space separator between value
 <BlockSizeX>1024</BlockSizeX>                                              Block size in pixels. (optional, defaults to 1024, except for VirtualEarth)
 <BlockSizeY>1024</BlockSizeY>                                              Block size in pixels. (optional, defaults to 1024, except for VirtualEarth)

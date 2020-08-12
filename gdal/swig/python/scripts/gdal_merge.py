@@ -325,8 +325,8 @@ class file_info(object):
             return 1
 
         # Compute source window in pixel coordinates.
-        sw_xoff = int((tgw_ulx - self.geotransform[0]) / self.geotransform[1])
-        sw_yoff = int((tgw_uly - self.geotransform[3]) / self.geotransform[5])
+        sw_xoff = int((tgw_ulx - self.geotransform[0]) / self.geotransform[1] + 0.1)
+        sw_yoff = int((tgw_uly - self.geotransform[3]) / self.geotransform[5] + 0.1)
         sw_xsize = int((tgw_lrx - self.geotransform[0]) /
                        self.geotransform[1] + 0.5) - sw_xoff
         sw_ysize = int((tgw_lry - self.geotransform[3]) /

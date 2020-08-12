@@ -37,6 +37,8 @@
 #include <memory>
 
 #include "cpl_aws.h"
+#include "cpl_json.h"
+#include "cpl_json_header.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
@@ -69,6 +71,18 @@ void VSICurlAuthParametersChanged()
 {
     // Not supported.
 }
+
+void VSINetworkStatsReset( void )
+{
+    // Not supported
+}
+
+char *VSINetworkStatsGetAsSerializedJSON( char** /* papszOptions */ )
+{
+    // Not supported
+    return nullptr;
+}
+
 
 /************************************************************************/
 /*                      VSICurlInstallReadCbk()                         */
@@ -812,6 +826,10 @@ vsi_l_offset VSICurlHandle::GetFileSizeOrHeaders( bool bSetError, bool bGetHeade
     if( oFileProp.bHasComputedFileSize && !bGetHeaders )
         return oFileProp.fileSize;
 
+    NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix());
+    NetworkStatisticsFile oContextFile(m_osFilename);
+    NetworkStatisticsAction oContextAction("GetFileSize");
+
     oFileProp.bHasComputedFileSize = true;
 
     CURLM* hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
@@ -904,6 +922,11 @@ retry:
 
     long mtime = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_FILETIME, &mtime);
+
+    if( osVerb == "GET" )
+        NetworkStatisticsLogger::LogGET(sWriteFuncData.nSize);
+    else
+        NetworkStatisticsLogger::LogHEAD();
 
     if( STARTS_WITH(osURL, "ftp") )
     {
@@ -1378,6 +1401,8 @@ retry:
 
     curl_slist_free_all(headers);
 
+    NetworkStatisticsLogger::LogGET(sWriteFuncData.nSize);
+
     if( sWriteFuncData.bInterrupted )
     {
         bInterrupted = true;
@@ -1664,6 +1689,10 @@ void VSICurlHandle::DownloadRegionPostProcess( const vsi_l_offset startOffset,
 size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
                             size_t const  nMemb )
 {
+    NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix());
+    NetworkStatisticsFile oContextFile(m_osFilename);
+    NetworkStatisticsAction oContextAction("Read");
+
     size_t nBufferRequestSize = nSize * nMemb;
     if( nBufferRequestSize == 0 )
         return 0;
@@ -1795,6 +1824,10 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
     poFS->GetCachedFileProp(m_pszURL, oFileProp);
     if( oFileProp.eExists == EXIST_NO )
         return -1;
+
+    NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix());
+    NetworkStatisticsFile oContextFile(m_osFilename);
+    NetworkStatisticsAction oContextAction("ReadMultiRange");
 
     const char* pszMultiRangeStrategy =
         CPLGetConfigOption("GDAL_HTTP_MULTIRANGE", "");
@@ -1939,6 +1972,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
     int nRet = 0;
     size_t iReq = 0;
     int iRange = 0;
+    size_t nTotalDownloaded = 0;
     for( ; iReq < aHandles.size(); iReq++, iRange++ )
     {
         while( iRange < nRanges && panSizes[iRange] == 0 )
@@ -1986,6 +2020,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
         {
             size_t nOffset = 0;
             size_t nRemainingSize = asWriteFuncData[iReq].nSize;
+            nTotalDownloaded += nRemainingSize;
             CPLAssert( iRange < nRanges );
             while( true )
             {
@@ -2026,6 +2061,8 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
         CPLFree(asWriteFuncHeaderData[iReq].pBuffer);
         curl_slist_free_all(aHeaders[iReq]);
     }
+
+    NetworkStatisticsLogger::LogGET(nTotalDownloaded);
 
     if( ENABLE_DEBUG )
         CPLDebug("VSICURL", "Download completed");
@@ -2141,6 +2178,8 @@ int VSICurlHandle::ReadMultiRangeSingleGet(
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
     curl_slist_free_all(headers);
+
+    NetworkStatisticsLogger::LogGET(sWriteFuncData.nSize);
 
     if( sWriteFuncData.bInterrupted )
     {
@@ -3877,6 +3916,8 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
 
         curl_slist_free_all(headers);
 
+        NetworkStatisticsLogger::LogGET(sWriteFuncData.nSize);
+
         if( sWriteFuncData.pBuffer == nullptr )
         {
             curl_easy_cleanup(hCurlHandle);
@@ -3939,6 +3980,9 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename,
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) &&
         !STARTS_WITH_CI(pszFilename, "/vsicurl?") )
         return -1;
+
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("Stat");
 
     const CPLString osFilename(pszFilename);
 
@@ -4093,6 +4137,9 @@ char** VSICurlFilesystemHandler::ReadDirInternal( const char *pszDirname,
         return nullptr;
     }
 
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("ReadDir");
+
     CPLMutexHolder oHolder( &hMutex );
 
     // If we know the file exists and is not a directory,
@@ -4182,6 +4229,10 @@ char** VSICurlFilesystemHandler::GetFileMetadata( const char* pszFilename,
     std::unique_ptr<VSICurlHandle> poHandle(CreateFileHandle(pszFilename));
     if( poHandle == nullptr )
         return nullptr;
+
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsAction oContextAction("GetFileMetadata");
+
     poHandle->GetFileSizeOrHeaders(true, true);
     return CSLDuplicate(poHandle->GetHeaders().List());
 }
@@ -4399,6 +4450,246 @@ long CurlRequestHelper::perform(CURL* hCurlHandle,
     return response_code;
 }
 
+/************************************************************************/
+/*                       NetworkStatisticsLogger                        */
+/************************************************************************/
+
+// Global variable
+NetworkStatisticsLogger NetworkStatisticsLogger::gInstance{};
+int NetworkStatisticsLogger::gnEnabled = -1; // unknown state
+
+static void ShowNetworkStats()
+{
+     printf("Network statistics:\n%s\n",    // ok
+            NetworkStatisticsLogger::GetReportAsSerializedJSON().c_str());
+}
+
+void NetworkStatisticsLogger::ReadEnabled()
+{
+    const bool bShowNetworkStats =
+        CPLTestBool(CPLGetConfigOption("CPL_VSIL_SHOW_NETWORK_STATS", "NO"));
+    gnEnabled = (bShowNetworkStats || CPLTestBool(
+        CPLGetConfigOption("CPL_VSIL_NETWORK_STATS_ENABLED", "NO"))) ? TRUE : FALSE;
+    if( bShowNetworkStats )
+    {
+        static bool bRegistered = false;
+        if( !bRegistered )
+        {
+            bRegistered = true;
+            atexit( ShowNetworkStats );
+        }
+    }
+}
+
+void NetworkStatisticsLogger::EnterFileSystem(const char* pszName)
+{
+    if( !IsEnabled() ) return;
+    std::lock_guard<std::mutex> oLock(gInstance.m_mutex);
+    gInstance.m_mapThreadIdToContextPath[CPLGetPID()].push_back(
+        ContextPathItem(ContextPathType::FILESYSTEM, pszName));
+}
+
+void NetworkStatisticsLogger::LeaveFileSystem()
+{
+    if( !IsEnabled() ) return;
+    std::lock_guard<std::mutex> oLock(gInstance.m_mutex);
+    gInstance.m_mapThreadIdToContextPath[CPLGetPID()].pop_back();
+}
+
+void NetworkStatisticsLogger::EnterFile(const char* pszName)
+{
+    if( !IsEnabled() ) return;
+    std::lock_guard<std::mutex> oLock(gInstance.m_mutex);
+    gInstance.m_mapThreadIdToContextPath[CPLGetPID()].push_back(
+        ContextPathItem(ContextPathType::FILE, pszName));
+}
+
+void NetworkStatisticsLogger::LeaveFile()
+{
+    if( !IsEnabled() ) return;
+    std::lock_guard<std::mutex> oLock(gInstance.m_mutex);
+    gInstance.m_mapThreadIdToContextPath[CPLGetPID()].pop_back();
+}
+
+void NetworkStatisticsLogger::EnterAction(const char* pszName)
+{
+    if( !IsEnabled() ) return;
+    std::lock_guard<std::mutex> oLock(gInstance.m_mutex);
+    gInstance.m_mapThreadIdToContextPath[CPLGetPID()].push_back(
+        ContextPathItem(ContextPathType::ACTION, pszName));
+}
+
+void NetworkStatisticsLogger::LeaveAction()
+{
+    if( !IsEnabled() ) return;
+    std::lock_guard<std::mutex> oLock(gInstance.m_mutex);
+    gInstance.m_mapThreadIdToContextPath[CPLGetPID()].pop_back();
+}
+
+std::vector<NetworkStatisticsLogger::Counters*>
+NetworkStatisticsLogger::GetCountersForContext()
+{
+    std::vector<Counters*> v;
+    auto& contextPath = gInstance.m_mapThreadIdToContextPath[CPLGetPID()];
+
+    Stats* curStats = &m_stats;
+    v.push_back(&(curStats->counters));
+
+    bool inFileSystem = false;
+    bool inFile = false;
+    bool inAction = false;
+    for(const auto& item: contextPath )
+    {
+        if( item.eType == ContextPathType::FILESYSTEM )
+        {
+            if( inFileSystem )
+                continue;
+            inFileSystem = true;
+        }
+        else if( item.eType == ContextPathType::FILE )
+        {
+            if( inFile )
+                continue;
+            inFile = true;
+        }
+        else if( item.eType == ContextPathType::ACTION )
+        {
+            if( inAction )
+                continue;
+            inAction = true;
+        }
+
+        curStats = &(curStats->children[item]);
+        v.push_back(&(curStats->counters));
+    }
+
+    return v;
+}
+
+void NetworkStatisticsLogger::LogGET(size_t nDownloadedBytes)
+{
+    if( !IsEnabled() ) return;
+    std::lock_guard<std::mutex> oLock(gInstance.m_mutex);
+    for( auto counters: gInstance.GetCountersForContext() )
+    {
+        counters->nGET ++;
+        counters->nGETDownloadedBytes += nDownloadedBytes;
+    }
+}
+
+void NetworkStatisticsLogger::LogPUT(size_t nUploadedBytes)
+{
+    if( !IsEnabled() ) return;
+    std::lock_guard<std::mutex> oLock(gInstance.m_mutex);
+    for( auto counters: gInstance.GetCountersForContext() )
+    {
+        counters->nPUT ++;
+        counters->nPUTUploadedBytes += nUploadedBytes;
+    }
+}
+
+void NetworkStatisticsLogger::LogHEAD()
+{
+    if( !IsEnabled() ) return;
+    std::lock_guard<std::mutex> oLock(gInstance.m_mutex);
+    for( auto counters: gInstance.GetCountersForContext() )
+    {
+        counters->nHEAD++;
+    }
+}
+
+void NetworkStatisticsLogger::LogPOST(size_t nUploadedBytes,
+                                      size_t nDownloadedBytes)
+{
+    if( !IsEnabled() ) return;
+    std::lock_guard<std::mutex> oLock(gInstance.m_mutex);
+    for( auto counters: gInstance.GetCountersForContext() )
+    {
+        counters->nPOST++;
+        counters->nPOSTUploadedBytes += nUploadedBytes;
+        counters->nPOSTDownloadedBytes += nDownloadedBytes;
+    }
+}
+
+void NetworkStatisticsLogger::LogDELETE()
+{
+    if( !IsEnabled() ) return;
+    std::lock_guard<std::mutex> oLock(gInstance.m_mutex);
+    for( auto counters: gInstance.GetCountersForContext() )
+    {
+        counters->nDELETE++;
+    }
+}
+
+void NetworkStatisticsLogger::Reset()
+{
+    std::lock_guard<std::mutex> oLock(gInstance.m_mutex);
+    gInstance.m_stats = Stats();
+    gnEnabled = -1;
+}
+
+void NetworkStatisticsLogger::Stats::AsJSON(CPLJSONObject& oJSON) const
+{
+    CPLJSONObject oMethods;
+    if( counters.nHEAD )
+        oMethods.Add("HEAD/count", counters.nHEAD);
+    if( counters.nGET )
+        oMethods.Add("GET/count", counters.nGET);
+    if( counters.nGETDownloadedBytes )
+        oMethods.Add("GET/downloaded_bytes", counters.nGETDownloadedBytes);
+    if( counters.nPUT )
+        oMethods.Add("PUT/count", counters.nPUT);
+    if( counters.nPUTUploadedBytes )
+        oMethods.Add("PUT/uploaded_bytes", counters.nPUTUploadedBytes);
+    if( counters.nPOST )
+        oMethods.Add("POST/count", counters.nPOST);
+    if( counters.nPOSTUploadedBytes )
+        oMethods.Add("POST/uploaded_bytes", counters.nPOSTUploadedBytes);
+    if( counters.nPOSTDownloadedBytes )
+        oMethods.Add("POST/downloaded_bytes", counters.nPOSTDownloadedBytes);
+    if( counters.nDELETE )
+        oMethods.Add("DELETE/count", counters.nDELETE);
+    oJSON.Add("methods", oMethods);
+    CPLJSONObject oFiles;
+    bool bFilesAdded = false;
+    for( const auto &kv: children )
+    {
+        CPLJSONObject childJSON;
+        kv.second.AsJSON(childJSON);
+        if( kv.first.eType == ContextPathType::FILESYSTEM )
+        {
+            CPLString osName( kv.first.osName );
+            if( !osName.empty() && osName[0] == '/' )
+                osName = osName.substr(1);
+            if( !osName.empty() && osName.back() == '/' )
+                osName.resize(osName.size() - 1);
+            oJSON.Add( ("handlers/" + osName).c_str(), childJSON);
+        }
+        else if( kv.first.eType == ContextPathType::FILE )
+        {
+            if( !bFilesAdded )
+            {
+                bFilesAdded = true;
+                oJSON.Add("files", oFiles);
+            }
+            oFiles.AddNoSplitName(kv.first.osName.c_str(), childJSON);
+        }
+        else if( kv.first.eType == ContextPathType::ACTION )
+        {
+            oJSON.Add( ("actions/" + kv.first.osName).c_str(), childJSON);
+        }
+    }
+}
+
+CPLString NetworkStatisticsLogger::GetReportAsSerializedJSON()
+{
+    std::lock_guard<std::mutex> oLock(gInstance.m_mutex);
+
+    CPLJSONObject oJSON;
+    gInstance.m_stats.AsJSON(oJSON);
+    return oJSON.Format(CPLJSONObject::PrettyFormat::Pretty);
+}
+
 
 } /* end of namespace cpl */
 
@@ -4555,6 +4846,123 @@ void VSICurlPartialClearCache(const char* pszFilenamePrefix)
 
     if( poFSHandler )
         poFSHandler->PartialClearCache(pszFilenamePrefix);
+}
+
+/************************************************************************/
+/*                        VSINetworkStatsReset()                        */
+/************************************************************************/
+
+/**
+ * \brief Clear network related statistics.
+ *
+ * The effect of the CPL_VSIL_NETWORK_STATS_ENABLED configuration option
+ * will also be reset. That is, that the next network access will check its
+ * value again.
+ *
+ * @since GDAL 3.2.0
+ */
+
+void VSINetworkStatsReset( void )
+{
+    cpl::NetworkStatisticsLogger::Reset();
+}
+
+/************************************************************************/
+/*                 VSINetworkStatsGetAsSerializedJSON()                 */
+/************************************************************************/
+
+/**
+ * \brief Return network related statistics, as a JSON serialized object.
+ *
+ * Statistics collecting should be enabled with the CPL_VSIL_NETWORK_STATS_ENABLED
+ * configuration option set to YES before any network activity starts
+ * (for efficiency, reading it is cached on first access, until VSINetworkStatsReset() is called)
+ *
+ * Statistics can also be emitted on standard output at process termination if
+ * the CPL_VSIL_SHOW_NETWORK_STATS configuration option is set to YES.
+ *
+ * Example of output:
+ * <pre>
+ * {
+ *   "methods":{
+ *     "GET":{
+ *       "count":6,
+ *       "downloaded_bytes":40825
+ *     },
+ *     "PUT":{
+ *       "count":1,
+ *       "uploaded_bytes":35472
+ *     }
+ *   },
+ *   "handlers":{
+ *     "vsigs":{
+ *       "methods":{
+ *         "GET":{
+ *           "count":2,
+ *           "downloaded_bytes":446
+ *         },
+ *         "PUT":{
+ *           "count":1,
+ *           "uploaded_bytes":35472
+ *         }
+ *       },
+ *       "files":{
+ *         "\/vsigs\/spatialys\/byte.tif":{
+ *           "methods":{
+ *             "PUT":{
+ *               "count":1,
+ *               "uploaded_bytes":35472
+ *             }
+ *           },
+ *           "actions":{
+ *             "Write":{
+ *               "methods":{
+ *                 "PUT":{
+ *                   "count":1,
+ *                   "uploaded_bytes":35472
+ *                 }
+ *               }
+ *             }
+ *           }
+ *         }
+ *       },
+ *       "actions":{
+ *         "Stat":{
+ *           "methods":{
+ *             "GET":{
+ *               "count":2,
+ *               "downloaded_bytes":446
+ *             }
+ *           },
+ *           "files":{
+ *             "\/vsigs\/spatialys\/byte.tif\/":{
+ *               "methods":{
+ *                 "GET":{
+ *                   "count":1,
+ *                   "downloaded_bytes":181
+ *                 }
+ *               }
+ *             }
+ *           }
+ *         }
+ *       }
+ *     },
+ *     "vsis3":{
+ *          [...]
+ *     } 
+ *   }
+ * }
+
+ * </pre>
+ *
+ * @param papszOptions Unused.
+ * @return a JSON serialized string to free with VSIFree(), or nullptr
+ * @since GDAL 3.2.0
+ */
+
+char* VSINetworkStatsGetAsSerializedJSON( CPL_UNUSED char** papszOptions )
+{
+    return CPLStrdup(cpl::NetworkStatisticsLogger::GetReportAsSerializedJSON());
 }
 
 #endif /* HAVE_CURL */

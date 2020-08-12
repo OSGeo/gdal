@@ -5915,22 +5915,22 @@ static void GWKAverageOrModeThread( void* pData)
             // [iDstX,iDstY]x[iDstX+1,iDstY+1] square back to source
             // coordinates, and take the bounding box of the got source
             // coordinates.
-            const double dfXMin = std::min(padfX[iDstX],padfX2[iDstX]);
+            const double dfXMin = std::min(padfX[iDstX],padfX2[iDstX]) -
+                                    poWK->nSrcXOff;
             int iSrcXMin =
-                std::max(static_cast<int>(floor(dfXMin + 1e-10)) -
-                            poWK->nSrcXOff, 0);
-            const double dfXMax = std::max(padfX[iDstX],padfX2[iDstX]);
+                std::max(static_cast<int>(floor(dfXMin + 1e-10)), 0);
+            const double dfXMax = std::max(padfX[iDstX],padfX2[iDstX])  -
+                                    poWK->nSrcXOff;
             int iSrcXMax =
-                std::min(static_cast<int>(ceil(dfXMax - 1e-10)) -
-                            poWK->nSrcXOff, nSrcXSize);
-            const double dfYMin = std::min(padfY[iDstX],padfY2[iDstX]);
+                std::min(static_cast<int>(ceil(dfXMax - 1e-10)), nSrcXSize);
+            const double dfYMin = std::min(padfY[iDstX],padfY2[iDstX]) -
+                                    poWK->nSrcYOff;
             int iSrcYMin =
-                std::max(static_cast<int>(floor(dfYMin + 1e-10)) -
-                            poWK->nSrcYOff, 0);
-            const double dfYMax = std::max(padfY[iDstX],padfY2[iDstX]);
+                std::max(static_cast<int>(floor(dfYMin + 1e-10)), 0);
+            const double dfYMax = std::max(padfY[iDstX],padfY2[iDstX]) -
+                                    poWK->nSrcYOff;
             int iSrcYMax =
-                std::min(static_cast<int>(ceil(dfYMax - 1e-10)) -
-                            poWK->nSrcYOff, nSrcYSize);
+                std::min(static_cast<int>(ceil(dfYMax - 1e-10)), nSrcYSize);
 
             if( iSrcXMin == iSrcXMax && iSrcXMax < nSrcXSize )
                 iSrcXMax++;

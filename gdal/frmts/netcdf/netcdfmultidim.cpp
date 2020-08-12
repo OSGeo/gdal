@@ -53,6 +53,7 @@ class netCDFSharedResources
 #endif
     bool m_bDefineMode = false;
     std::map<int, int> m_oMapDimIdToGroupId{};
+    bool m_bIsInIndexingVariable = false;
 
 public:
     netCDFSharedResources();
@@ -63,6 +64,9 @@ public:
     bool SetDefineMode(bool bNewDefineMode);
     int GetBelongingGroupOfDim(int startgid, int dimid);
     inline bool GetImappIsInElements() const { return m_bImappIsInElements; }
+
+    void SetIsInGetIndexingVariable(bool b) { m_bIsInIndexingVariable = b; }
+    bool GetIsInIndexingVariable() const { return m_bIsInIndexingVariable; }
 };
 
 /************************************************************************/
@@ -346,7 +350,8 @@ class netCDFVariable final: public GDALMDArray
               typename NCGetPutVaraFuncType,
               typename NCGetPutVarmFuncType,
               typename ReadOrWriteOneElementType >
-    bool IReadWrite(const GUInt64* arrayStartIdx,
+    bool IReadWrite(const bool bIsRead,
+                    const GUInt64* arrayStartIdx,
                                     const size_t* count,
                                     const GInt64* arrayStep,
                                     const GPtrDiff_t* bufferStride,
@@ -453,7 +458,7 @@ netCDFSharedResources::~netCDFSharedResources()
     if( m_cdfid > 0 )
     {
 #ifdef NCDF_DEBUG
-        CPLDebug("GDAL_netCDF", "calling nc_close( %d)", cdfid);
+        CPLDebug("GDAL_netCDF", "calling nc_close( %d)", m_cdfid);
 #endif
         int status = nc_close(m_cdfid);
         NCDF_ERR(status);
@@ -903,7 +908,7 @@ std::vector<std::string> netCDFGroup::GetMDArrayNames(CSLConstList papszOptions)
     const bool bBounds = bAll || CPLTestBool(CSLFetchNameValueDef(papszOptions, "SHOW_BOUNDS", "YES"));
     const bool bIndexing = bAll || CPLTestBool(CSLFetchNameValueDef(papszOptions, "SHOW_INDEXING", "YES"));
     const bool bTime = bAll || CPLTestBool(CSLFetchNameValueDef(papszOptions, "SHOW_TIME", "YES"));
-    std::set<std::string> blackList;
+    std::set<std::string> ignoreList;
     if( !bCoordinates || !bBounds )
     {
         for( const auto& varid: anVarIds )
@@ -925,7 +930,7 @@ std::vector<std::string> netCDFGroup::GetMDArrayNames(CSLConstList papszOptions)
                 CPLFree(pszTemp);
             }
             for( char** iter = papszTokens; iter && iter[0]; ++iter )
-                blackList.insert(*iter);
+                ignoreList.insert(*iter);
             CSLDestroy(papszTokens);
         }
     }
@@ -967,7 +972,7 @@ std::vector<std::string> netCDFGroup::GetMDArrayNames(CSLConstList papszOptions)
             }
         }
 
-        if( blackList.find(szName) == blackList.end() )
+        if( ignoreList.find(szName) == ignoreList.end() )
         {
             names.emplace_back(szName);
         }
@@ -1151,10 +1156,34 @@ netCDFDimension::netCDFDimension(
 /*                         GetIndexingVariable()                        */
 /************************************************************************/
 
+namespace {
+    struct SetIsInGetIndexingVariable
+    {
+        netCDFSharedResources* m_poShared;
+
+        explicit SetIsInGetIndexingVariable(netCDFSharedResources* poSharedResources): m_poShared(poSharedResources)
+        {
+            m_poShared->SetIsInGetIndexingVariable(true);
+        }
+
+        ~SetIsInGetIndexingVariable()
+        {
+            m_poShared->SetIsInGetIndexingVariable(false);
+        }
+    };
+}
+
 std::shared_ptr<GDALMDArray> netCDFDimension::GetIndexingVariable() const
 {
+    if( m_poShared->GetIsInIndexingVariable() )
+        return nullptr;
+
+    SetIsInGetIndexingVariable setterIsInGetIndexingVariable(m_poShared.get());
+
     CPLMutexHolderD(&hNCMutex);
 
+    // First try to find a variable in this group with the same name as the
+    // dimension
     int nVarId = 0;
     if( nc_inq_varid(m_gid, GetName().c_str(), &nVarId) == NC_NOERR )
     {
@@ -1182,6 +1211,58 @@ std::shared_ptr<GDALMDArray> netCDFDimension::GetIndexingVariable() const
                 return netCDFVariable::Create(m_poShared, m_gid, nVarId,
                     std::vector<std::shared_ptr<GDALDimension>>(),
                     nullptr);
+            }
+        }
+    }
+
+    // Otherwise explore the variables in this group to find one that has a
+    // "coordinates" attribute that references this dimension. If so, let's
+    // return the variable pointed by the value of "coordinates" as the indexing
+    // variable. This assumes that there is no other variable that would use
+    // another variable for the matching dimension of its "coordinates".
+    netCDFGroup oGroup(m_poShared, m_gid);
+    const auto arrayNames = oGroup.GetMDArrayNames(nullptr);
+    for(const auto& arrayName: arrayNames)
+    {
+        const auto poArray = oGroup.OpenMDArray(arrayName, nullptr);
+        if( poArray )
+        {
+            const auto poArrayNC = std::dynamic_pointer_cast<netCDFVariable>(poArray);
+            const auto poCoordinates = poArray->GetAttribute("coordinates");
+            if( poArrayNC && poCoordinates &&
+                poCoordinates->GetDataType().GetClass() == GEDTC_STRING )
+            {
+                const CPLStringList aosCoordinates(
+                    CSLTokenizeString2(poCoordinates->ReadAsString(), " ", 0));
+                const auto apoArrayDims = poArray->GetDimensions();
+                if( apoArrayDims.size() ==
+                    static_cast<size_t>(aosCoordinates.size()) )
+                {
+                    for(size_t i = 0; i < apoArrayDims.size(); ++i)
+                    {
+                        const auto& poArrayDim =  apoArrayDims[i];
+                        const auto poArrayDimNC = std::dynamic_pointer_cast<
+                        netCDFDimension>(poArrayDim);
+                        if( poArrayDimNC &&
+                            poArrayDimNC->m_gid == m_gid &&
+                            poArrayDimNC->m_dimid == m_dimid )
+                        {
+                            int nIndexingVarGroupId = -1;
+                            int nIndexingVarId = -1;
+                            if( NCDFResolveVar(poArrayNC->GetGroupId(),
+                                               aosCoordinates[i],
+                                               &nIndexingVarGroupId,
+                                               &nIndexingVarId,
+                                               false) == CE_None )
+                            {
+                                return netCDFVariable::Create(m_poShared,
+                                    nIndexingVarGroupId, nIndexingVarId,
+                                    std::vector<std::shared_ptr<GDALDimension>>(),
+                                    nullptr);
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -2142,7 +2223,8 @@ template< typename BufferType,
           typename NCGetPutVaraFuncType,
           typename NCGetPutVarmFuncType,
           typename ReadOrWriteOneElementType >
-bool netCDFVariable::IReadWrite(const GUInt64* arrayStartIdx,
+bool netCDFVariable::IReadWrite(const bool bIsRead,
+                                const GUInt64* arrayStartIdx,
                                   const size_t* count,
                                   const GInt64* arrayStep,
                                   const GPtrDiff_t* bufferStride,
@@ -2156,9 +2238,14 @@ bool netCDFVariable::IReadWrite(const GUInt64* arrayStartIdx,
     CPLMutexHolderD(&hNCMutex);
     m_poShared->SetDefineMode(false);
 
+    const auto& eDT = GetDataType();
     std::vector<size_t> startp;
     startp.reserve(m_nDims);
-    bool bUseSlowPath = !m_bPerfectDataTypeMatch;
+    bool bUseSlowPath = !m_bPerfectDataTypeMatch &&
+        !(bIsRead &&
+          bufferDataType.GetClass() == GEDTC_NUMERIC &&
+          eDT.GetClass() == GEDTC_NUMERIC &&
+          bufferDataType.GetSize() >= eDT.GetSize());
     for( int i = 0; i < m_nDims; i++ )
     {
 #if SIZEOF_VOIDP == 4
@@ -2175,20 +2262,20 @@ bool netCDFVariable::IReadWrite(const GUInt64* arrayStartIdx,
         }
 #endif
 
-        if( arrayStep[i] <= 0 )
+        if( count[i] != 1 && arrayStep[i] <= 0 )
             bUseSlowPath = true; // netCDF rejects negative or NULL strides
 
         if( bufferStride[i] < 0 )
             bUseSlowPath = true; // and it seems to silently cast to size_t imapp
     }
 
-    if( GetDataType().GetClass() == GEDTC_STRING &&
+    if( eDT.GetClass() == GEDTC_STRING &&
         bufferDataType.GetClass() == GEDTC_STRING &&
         m_nVarType == NC_STRING )
     {
         if( m_nDims == 0 )
         {
-            return (this->*ReadOrWriteOneElement)(GetDataType(), bufferDataType,
+            return (this->*ReadOrWriteOneElement)(eDT, bufferDataType,
                                 nullptr, buffer);
         }
 
@@ -2198,28 +2285,29 @@ bool netCDFVariable::IReadWrite(const GUInt64* arrayStartIdx,
                             NCGetPutVar1Func, ReadOrWriteOneElement);
     }
 
-    if( !CheckNumericDataType(GetDataType()) )
+    if( !CheckNumericDataType(eDT) )
         return false;
     if( !CheckNumericDataType(bufferDataType) )
         return false;
 
     if( m_nDims == 0 )
     {
-        return (this->*ReadOrWriteOneElement)(GetDataType(), bufferDataType,
+        return (this->*ReadOrWriteOneElement)(eDT, bufferDataType,
                               nullptr, buffer);
     }
 
     if( !bUseSlowPath &&
         ((GDALDataTypeIsComplex(bufferDataType.GetNumericDataType()) ||
          bufferDataType.GetClass() == GEDTC_COMPOUND) &&
-        bufferDataType == GetDataType()) )
+        bufferDataType == eDT) )
     {
         // nc_get_varm() not supported for non-atomic types.
         ptrdiff_t nExpectedBufferStride = 1;
         for( int i = m_nDims; i != 0; )
         {
             --i;
-            if( arrayStep[i] != 1 || bufferStride[i] != nExpectedBufferStride )
+            if( count[i] != 1 &&
+                (arrayStep[i] != 1 || bufferStride[i] != nExpectedBufferStride) )
             {
                 bUseSlowPath = true;
                 break;
@@ -2236,8 +2324,9 @@ bool netCDFVariable::IReadWrite(const GUInt64* arrayStartIdx,
 
     if( bUseSlowPath || 
         bufferDataType.GetClass() == GEDTC_COMPOUND ||
-        GetDataType().GetClass() == GEDTC_COMPOUND ||
-        bufferDataType.GetNumericDataType() != GetDataType().GetNumericDataType() )
+        eDT.GetClass() == GEDTC_COMPOUND ||
+        (!bIsRead && bufferDataType.GetNumericDataType() != eDT.GetNumericDataType()) ||
+        (bIsRead && bufferDataType.GetSize() < eDT.GetSize()) )
     {
         return IReadWriteGeneric(
                             startp.data(), count, arrayStep,
@@ -2250,7 +2339,8 @@ bool netCDFVariable::IReadWrite(const GUInt64* arrayStartIdx,
     for( int i = m_nDims; i != 0; )
     {
         --i;
-        if( arrayStep[i] != 1 || bufferStride[i] != nExpectedBufferStride )
+        if( count[i] != 1 &&
+            (arrayStep[i] != 1 || bufferStride[i] != nExpectedBufferStride) )
         {
             bUseSlowPath = true;
             break;
@@ -2262,24 +2352,77 @@ bool netCDFVariable::IReadWrite(const GUInt64* arrayStartIdx,
         // nc_get_varm() is terribly inefficient, so use nc_get_vara()
         // when possible.
         int ret = NCGetPutVaraFunc(m_gid, m_varid, startp.data(), count, buffer);
-        NCDF_ERR(ret);
-        return ret == NC_NOERR;
+        if( ret != NC_NOERR )
+            return false;
+        if( bIsRead &&
+            (!m_bPerfectDataTypeMatch ||
+             bufferDataType.GetNumericDataType() != eDT.GetNumericDataType()) )
+        {
+            // If the buffer data type is "larger" or of the same size as the
+            // native data type, we can do a in-place conversion
+            GByte* pabyBuffer = static_cast<GByte*>(const_cast<void*>(buffer));
+            CPLAssert( bufferDataType.GetSize() >= eDT.GetSize() );
+            const auto nDTSize = eDT.GetSize();
+            const auto nBufferDTSize = bufferDataType.GetSize();
+            if( !m_bPerfectDataTypeMatch && (m_nVarType == NC_CHAR || m_nVarType == NC_BYTE) )
+            {
+                // native NC type translates into GDAL data type of larger size
+                for( ptrdiff_t i = nExpectedBufferStride - 1; i >= 0; --i )
+                {
+                    GByte abySrc[2];
+                    abySrc[0] = *(pabyBuffer + i);
+                    ConvertNCToGDAL(&abySrc[0]);
+                    GDALExtendedDataType::CopyValue(
+                        &abySrc[0], eDT,
+                        pabyBuffer + i * nBufferDTSize, bufferDataType);
+                }
+            }
+            else if( !m_bPerfectDataTypeMatch )
+            {
+                // native NC type translates into GDAL data type of same size
+                CPLAssert( m_nVarType == NC_INT64 || m_nVarType == NC_UINT64 );
+                for( ptrdiff_t i = nExpectedBufferStride - 1; i >= 0; --i )
+                {
+                    ConvertNCToGDAL(pabyBuffer + i * nDTSize);
+                    GDALExtendedDataType::CopyValue(
+                        pabyBuffer + i * nDTSize, eDT,
+                        pabyBuffer + i * nBufferDTSize, bufferDataType);
+                }
+            }
+            else
+            {
+                for( ptrdiff_t i = nExpectedBufferStride - 1; i >= 0; --i )
+                {
+                    GDALExtendedDataType::CopyValue(
+                        pabyBuffer + i * nDTSize, eDT,
+                        pabyBuffer + i * nBufferDTSize, bufferDataType);
+                }
+            }
+        }
+        return true;
     }
     else
     {
+        if( bufferDataType.GetNumericDataType() != eDT.GetNumericDataType() )
+        {
+            return IReadWriteGeneric(
+                                startp.data(), count, arrayStep,
+                                bufferStride, bufferDataType, buffer,
+                                NCGetPutVar1Func, ReadOrWriteOneElement);
+        }
         std::vector<ptrdiff_t> stridep;
         stridep.reserve(m_nDims);
         std::vector<ptrdiff_t> imapp;
         imapp.reserve(m_nDims);
         for( int i = 0; i < m_nDims; i++ )
         {
-            stridep.push_back(static_cast<ptrdiff_t>(arrayStep[i]));
+            stridep.push_back(static_cast<ptrdiff_t>(count[i] == 1 ? 1 : arrayStep[i]));
             imapp.push_back(static_cast<ptrdiff_t>(bufferStride[i]));
         }
 
         if( !m_poShared->GetImappIsInElements() )
         {
-            const size_t nMul = GetNCTypeSize(GetDataType(),
+            const size_t nMul = GetNCTypeSize(eDT,
                                             m_bPerfectDataTypeMatch, m_nVarType);
             for( int i = 0; i < m_nDims; ++i )
             {
@@ -2397,7 +2540,8 @@ bool netCDFVariable::IRead(const GUInt64* arrayStartIdx,
     }
 
     return IReadWrite
-                (arrayStartIdx, count, arrayStep, bufferStride,
+                (true,
+                 arrayStartIdx, count, arrayStep, bufferStride,
                  bufferDataType, pDstBuffer,
                  nc_get_var1,
                  nc_get_vara,
@@ -2503,7 +2647,8 @@ bool netCDFVariable::IWrite(const GUInt64* arrayStartIdx,
     }
 
     return IReadWrite
-                (arrayStartIdx, count, arrayStep, bufferStride,
+                (false,
+                 arrayStartIdx, count, arrayStep, bufferStride,
                  bufferDataType, pSrcBuffer,
                  nc_put_var1,
                  nc_put_vara,

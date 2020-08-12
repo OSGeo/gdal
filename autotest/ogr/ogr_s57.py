@@ -61,7 +61,7 @@ def test_ogr_s57_1():
 # matches our expectations.
 
 
-def test_ogr_s57_2():
+def test_ogr_s57_check_layers():
     if gdaltest.s57_ds is None:
         pytest.skip()
 
@@ -101,7 +101,7 @@ def test_ogr_s57_2():
 # Check the COALNE feature.
 
 
-def test_ogr_s57_3():
+def test_ogr_s57_COALNE():
     if gdaltest.s57_ds is None:
         pytest.skip()
 
@@ -120,7 +120,7 @@ def test_ogr_s57_3():
 # Check the M_QUAL feature.
 
 
-def test_ogr_s57_4():
+def test_ogr_s57_M_QUAL():
     if gdaltest.s57_ds is None:
         pytest.skip()
 
@@ -139,7 +139,7 @@ def test_ogr_s57_4():
 # Check the SOUNDG feature.
 
 
-def test_ogr_s57_5():
+def test_ogr_s57_SOUNDG():
     if gdaltest.s57_ds is None:
         pytest.skip()
 
@@ -149,6 +149,8 @@ def test_ogr_s57_5():
 
     assert feat.GetField('RCID') == 20 and feat.GetField('OBJL') == 129 and feat.GetField('AGEN') == 65535, \
         'SOUNDG: did not get expected attributes'
+
+    assert feat.GetField('QUASOU') == ['1']
 
     wkt = 'MULTIPOINT (60.98164400 -32.49449000 3.400,60.98134400 -32.49642400 1.400,60.97814200 -32.49487400 -3.200,60.98071200 -32.49519600 1.200)'
 
@@ -160,7 +162,7 @@ def test_ogr_s57_5():
 # Test reading features from dataset with some double byte attributes. (#1526)
 
 
-def test_ogr_s57_6():
+def test_ogr_s57_double_byte_attrs():
 
     ds = ogr.Open('data/s57/bug1526.000')
 
@@ -175,7 +177,7 @@ def test_ogr_s57_6():
 # Test handling of a dataset with a multilinestring feature (#2147).
 
 
-def test_ogr_s57_7():
+def test_ogr_s57_multilinestring():
 
     ds = ogr.Open('data/s57/bug2147_3R7D0889.000')
 
@@ -191,7 +193,7 @@ def test_ogr_s57_7():
 # Run test_ogrsf
 
 
-def test_ogr_s57_8():
+def test_ogr_s57_test_ogrsf():
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -205,7 +207,7 @@ def test_ogr_s57_8():
 # Test S57 to S57 conversion
 
 
-def test_ogr_s57_9():
+def test_ogr_s57_write():
 
     gdal.Unlink('tmp/ogr_s57_9.000')
 
@@ -228,17 +230,17 @@ def test_ogr_s57_9():
     assert ds is not None
 
     gdaltest.s57_ds = ds
-    test_ogr_s57_2()
-    test_ogr_s57_3()
-    test_ogr_s57_4()
-    test_ogr_s57_5()
+    test_ogr_s57_check_layers()
+    test_ogr_s57_COALNE()
+    test_ogr_s57_M_QUAL()
+    test_ogr_s57_SOUNDG()
 
     gdaltest.s57_ds = None
 
     gdal.Unlink('tmp/ogr_s57_9.000')
 
     gdal.SetConfigOption('OGR_S57_OPTIONS', 'RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON')
-    gdal.VectorTranslate('tmp/ogr_s57_9.000', 'data/s57/1B5X02NE.000', options="-f S57 IsolatedNode ConnectedNode Edge Face M_QUAL")
+    gdal.VectorTranslate('tmp/ogr_s57_9.000', 'data/s57/1B5X02NE.000', options="-f S57 IsolatedNode ConnectedNode Edge Face M_QUAL SOUNDG")
     gdal.SetConfigOption('OGR_S57_OPTIONS', None)
 
     ds = gdal.OpenEx('tmp/ogr_s57_9.000', open_options=['RETURN_PRIMITIVES=ON'])
@@ -247,7 +249,8 @@ def test_ogr_s57_9():
     assert ds.GetLayerByName('IsolatedNode') is not None
 
     gdaltest.s57_ds = ds
-    test_ogr_s57_4()
+    test_ogr_s57_M_QUAL()
+    test_ogr_s57_SOUNDG()
 
     gdaltest.s57_ds = None
 

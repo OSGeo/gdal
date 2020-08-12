@@ -797,9 +797,12 @@ int VSIMemFilesystemHandler::Rename( const char *pszOldPath,
 
 std::string VSIMemFilesystemHandler::NormalizePath( const std::string &in )
 {
-    std::string s(in);
+    CPLString s(in);
     std::replace(s.begin(), s.end(), '\\', '/');
-    return s;
+    s.replaceAll("//", '/');
+    if( !s.empty() && s.back() == '/' )
+        s.resize(s.size() - 1);
+    return std::move(s);
 }
 
 /************************************************************************/

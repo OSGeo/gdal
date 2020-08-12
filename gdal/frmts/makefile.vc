@@ -3,7 +3,7 @@ GDAL_ROOT = ..
 
 EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_sdts -DFRMT_raw -DFRMT_gxf -DFRMT_ceos2 -DFRMT_png \
-		-DFRMT_dted -DFRMT_mem -DFRMT_jdem -DFRMT_gif \
+		-DFRMT_dted -DFRMT_mem -DFRMT_jdem -DFRMT_gif -DFRMT_esric \
 		-DFRMT_envisat -DFRMT_aaigrid -DFRMT_usgsdem -DFRMT_l1b \
 		-DFRMT_fit -DFRMT_vrt -DFRMT_xpm -DFRMT_bmp -DFRMT_rmf \
 		-DFRMT_nitf -DFRMT_pcidsk -DFRMT_airsar -DFRMT_rs2 \
@@ -16,7 +16,7 @@ EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_kmlsuperoverlay -DFRMT_ozi -DFRMT_ctg -DFRMT_e00grid \
 		-DFRMT_zmap -DFRMT_ngsgeoid -DFRMT_iris -DFRMT_map -DFRMT_cals \
 		-DFRMT_safe -DFRMT_sentinel2 -DFRMT_derived -DFRMT_prf \
-		-DFRMT_sigdem -DFRMT_ignfheightasciigrid
+		-DFRMT_sigdem -DFRMT_ignfheightasciigrid -DFRMT_tga
 
 MOREEXTRA 	=	
 
@@ -213,6 +213,14 @@ EXTRAFLAGS  =   $(EXTRAFLAGS) -DFRMT_rdb
 
 !IFDEF CRUNCH_INC
 EXTRAFLAGS  =   $(EXTRAFLAGS) -DFRMT_dds
+!ENDIF
+
+!IFDEF OPENEXR_INC
+EXTRAFLAGS  =   $(EXTRAFLAGS) -DFRMT_exr
+!ENDIF
+
+!IFDEF HEIF_INC
+EXTRAFLAGS  =   $(EXTRAFLAGS) -DFRMT_heif
 !ENDIF
 
 default:	o\gdalallregister.obj subdirs

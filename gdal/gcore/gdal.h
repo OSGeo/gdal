@@ -956,7 +956,11 @@ CPLErr CPL_DLL CPL_STDCALL GDALGetRasterHistogram( GDALRasterBandH hBand,
                                        int nBuckets, int *panHistogram,
                                        int bIncludeOutOfRange, int bApproxOK,
                                        GDALProgressFunc pfnProgress,
-                                       void * pProgressData ) CPL_WARN_DEPRECATED("Use GDALGetRasterHistogramEx() instead");
+                                       void * pProgressData )
+/*! @cond Doxygen_Suppress */
+    CPL_WARN_DEPRECATED("Use GDALGetRasterHistogramEx() instead")
+/*! @endcond */
+    ;
 CPLErr CPL_DLL CPL_STDCALL GDALGetRasterHistogramEx( GDALRasterBandH hBand,
                                        double dfMin, double dfMax,
                                        int nBuckets, GUIntBig *panHistogram,
@@ -968,7 +972,11 @@ CPLErr CPL_DLL CPL_STDCALL GDALGetDefaultHistogram( GDALRasterBandH hBand,
                                        int *pnBuckets, int **ppanHistogram,
                                        int bForce,
                                        GDALProgressFunc pfnProgress,
-                                       void * pProgressData ) CPL_WARN_DEPRECATED("Use GDALGetDefaultHistogramEx() instead");
+                                       void * pProgressData )
+/*! @cond Doxygen_Suppress */
+    CPL_WARN_DEPRECATED("Use GDALGetDefaultHistogramEx() instead")
+/*! @endcond */
+    ;
 CPLErr CPL_DLL CPL_STDCALL GDALGetDefaultHistogramEx( GDALRasterBandH hBand,
                                        double *pdfMin, double *pdfMax,
                                        int *pnBuckets, GUIntBig **ppanHistogram,
@@ -977,7 +985,11 @@ CPLErr CPL_DLL CPL_STDCALL GDALGetDefaultHistogramEx( GDALRasterBandH hBand,
                                        void * pProgressData );
 CPLErr CPL_DLL CPL_STDCALL GDALSetDefaultHistogram( GDALRasterBandH hBand,
                                        double dfMin, double dfMax,
-                                       int nBuckets, int *panHistogram ) CPL_WARN_DEPRECATED("Use GDALSetDefaultHistogramEx() instead");
+                                       int nBuckets, int *panHistogram )
+/*! @cond Doxygen_Suppress */
+    CPL_WARN_DEPRECATED("Use GDALSetDefaultHistogramEx() instead")
+/*! @endcond */
+    ;
 CPLErr CPL_DLL CPL_STDCALL GDALSetDefaultHistogramEx( GDALRasterBandH hBand,
                                        double dfMin, double dfMax,
                                        int nBuckets, GUIntBig *panHistogram );
@@ -1441,8 +1453,14 @@ const char CPL_DLL *GDALGroupGetName(GDALGroupH hGroup);
 const char CPL_DLL *GDALGroupGetFullName(GDALGroupH hGroup);
 char CPL_DLL **GDALGroupGetMDArrayNames(GDALGroupH hGroup, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 GDALMDArrayH CPL_DLL GDALGroupOpenMDArray(GDALGroupH hGroup, const char* pszMDArrayName, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+GDALMDArrayH CPL_DLL GDALGroupOpenMDArrayFromFullname(GDALGroupH hGroup, const char* pszMDArrayName, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+GDALMDArrayH CPL_DLL  GDALGroupResolveMDArray(GDALGroupH hGroup,
+                                     const char* pszName,
+                                     const char* pszStartingPoint,
+                                     CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL **GDALGroupGetGroupNames(GDALGroupH hGroup, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 GDALGroupH CPL_DLL GDALGroupOpenGroup(GDALGroupH hGroup, const char* pszSubGroupName, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+GDALGroupH CPL_DLL GDALGroupOpenGroupFromFullname(GDALGroupH hGroup, const char* pszMDArrayName, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 GDALDimensionH CPL_DLL *GDALGroupGetDimensions(GDALGroupH hGroup, size_t* pnCount, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 GDALAttributeH CPL_DLL GDALGroupGetAttribute(GDALGroupH hGroup, const char* pszName) CPL_WARN_UNUSED_RESULT;
 GDALAttributeH CPL_DLL *GDALGroupGetAttributes(GDALGroupH hGroup, size_t* pnCount, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;

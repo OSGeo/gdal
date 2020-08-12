@@ -27,8 +27,11 @@
  ****************************************************************************/
 
 #include "cpl_conv.h"
+#include "ogr_geos.h"
 #include "ogr_lvbag.h"
 #include "ogr_p.h"
+
+constexpr const char *pszSpecificationUrn = "urn:ogc:def:crs:EPSG::28992";
 
 /************************************************************************/
 /*                           OGRLVBAGLayer()                            */
@@ -37,10 +40,9 @@
 /*      file pointer.                                                   */
 /************************************************************************/
 
-OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn ) :
+OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn, char **papszOpenOptions ) :
     OGRAbstractProxiedLayer{ poPoolIn },
     poFeatureDefn{ new OGRFeatureDefn{} },
-    poFeature{ nullptr },
     fp{ nullptr },
     nNextFID{ 0 },
     osFilename{ pszFilename },
@@ -48,6 +50,7 @@ OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn ) 
     oParser{ nullptr },
     bSchemaOnly{ false },
     bHasReadSchema{ false },
+    bFitInvalidData{ CPLFetchBool(papszOpenOptions, "AUTOCORRECT_INVALID_DATA", true) },
     nCurrentDepth{ 0 },
     nGeometryElementDepth{ 0 },
     nFeatureCollectionDepth{ 0 },
@@ -56,9 +59,9 @@ OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn ) 
     bCollectData{ false }
 {
     SetDescription(CPLGetBasename(pszFilename));
-    
+
     poFeatureDefn->Reference();
-    
+
     memset(aBuf, '\0', sizeof(aBuf));
 }
 
@@ -68,6 +71,7 @@ OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn ) 
 
 OGRLVBAGLayer::~OGRLVBAGLayer()
 {
+    delete m_poFeature;
     poFeatureDefn->Release();
     CloseUnderlyingLayer();
 }
@@ -120,10 +124,24 @@ static inline const char* XMLTagSplit( const char *pszName )
 {
     const char *pszTag = pszName;
     const char *pszSep = strchr(pszTag, ':');
-    if (pszSep)
+    if( pszSep )
         pszTag = pszSep + 1;
 
     return pszTag;
+}
+
+/************************************************************************/
+/*                           AddSpatialRef()                            */
+/************************************************************************/
+
+void OGRLVBAGLayer::AddSpatialRef( OGRwkbGeometryType eTypeIn )
+{
+    OGRGeomFieldDefn *poGeomField = poFeatureDefn->GetGeomFieldDefn(0);
+    OGRSpatialReference* poSRS = new OGRSpatialReference{};
+    poSRS->importFromURN(pszSpecificationUrn);
+    poGeomField->SetSpatialRef(poSRS);
+    poGeomField->SetType(eTypeIn);
+    poSRS->Release();
 }
 
 /************************************************************************/
@@ -132,13 +150,15 @@ static inline const char* XMLTagSplit( const char *pszName )
 
 void OGRLVBAGLayer::AddIdentifierFieldDefn()
 {
-    OGRFieldDefn oField0("namespace", OFTString);
-    OGRFieldDefn oField1("lokaalID", OFTString);
-    OGRFieldDefn oField2("versie", OFTString);
+    OGRFieldDefn oField0("lvID", OFTString);
+    OGRFieldDefn oField1("namespace", OFTString);
+    OGRFieldDefn oField2("lokaalID", OFTString);
+    OGRFieldDefn oField3("versie", OFTString);
 
     poFeatureDefn->AddFieldDefn(&oField0);
     poFeatureDefn->AddFieldDefn(&oField1);
     poFeatureDefn->AddFieldDefn(&oField2);
+    poFeatureDefn->AddFieldDefn(&oField3);
 }
 
 /************************************************************************/
@@ -150,8 +170,8 @@ void OGRLVBAGLayer::AddDocumentFieldDefn()
     OGRFieldDefn oField0("status", OFTString);
     OGRFieldDefn oField1("geconstateerd", OFTInteger);
     oField1.SetSubType(OFSTBoolean);
-    OGRFieldDefn oField2("documentdatum", OFTDate);
-    OGRFieldDefn oField3("documentnummer", OFTString);
+    OGRFieldDefn oField2("documentDatum", OFTDate);
+    OGRFieldDefn oField3("documentNummer", OFTString);
 
     poFeatureDefn->AddFieldDefn(&oField0);
     poFeatureDefn->AddFieldDefn(&oField1);
@@ -165,7 +185,7 @@ void OGRLVBAGLayer::AddDocumentFieldDefn()
 
 void OGRLVBAGLayer::AddOccurrenceFieldDefn()
 {
-    OGRFieldDefn oField0("voorkomenidentificatie", OFTInteger);
+    OGRFieldDefn oField0("voorkomenIdentificatie", OFTInteger);
     OGRFieldDefn oField1("beginGeldigheid", OFTDate);
     OGRFieldDefn oField2("eindGeldigheid", OFTDate);
     OGRFieldDefn oField3("tijdstipRegistratie", OFTDateTime);
@@ -206,20 +226,24 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
 
         poFeatureDefn->SetName("Pand");
         SetDescription(poFeatureDefn->GetName());
+
+        AddSpatialRef(wkbMultiPolygon);
     }
     else if( EQUAL("num", pszDataset) )
     {
         OGRFieldDefn oField0("huisnummer", OFTInteger);
         OGRFieldDefn oField1("huisletter", OFTString);
-        OGRFieldDefn oField2("huisnummertoevoeging", OFTString);
+        OGRFieldDefn oField2("huisnummerToevoeging", OFTString);
         OGRFieldDefn oField3("postcode", OFTString);
         OGRFieldDefn oField4("typeAdresseerbaarObject", OFTString);
+        OGRFieldDefn oField5("openbareruimteRef", OFTString);
   
         poFeatureDefn->AddFieldDefn(&oField0);
         poFeatureDefn->AddFieldDefn(&oField1);
         poFeatureDefn->AddFieldDefn(&oField2);
         poFeatureDefn->AddFieldDefn(&oField3);
         poFeatureDefn->AddFieldDefn(&oField4);
+        poFeatureDefn->AddFieldDefn(&oField5);
  
         AddIdentifierFieldDefn();
         AddDocumentFieldDefn();
@@ -230,29 +254,43 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
     }
     else if( EQUAL("lig", pszDataset) )
     {
+        OGRFieldDefn oField0("nummeraanduidingRef", OFTString);
+
+        poFeatureDefn->AddFieldDefn(&oField0);
+
         AddIdentifierFieldDefn();
         AddDocumentFieldDefn();
         AddOccurrenceFieldDefn();
 
         poFeatureDefn->SetName("Ligplaats");
         SetDescription(poFeatureDefn->GetName());
+
+        AddSpatialRef(wkbPolygon);
     }
     else if( EQUAL("sta", pszDataset) )
     {
+        OGRFieldDefn oField0("nummeraanduidingRef", OFTString);
+
+        poFeatureDefn->AddFieldDefn(&oField0);
+
         AddIdentifierFieldDefn();
         AddDocumentFieldDefn();
         AddOccurrenceFieldDefn();
 
         poFeatureDefn->SetName("Standplaats");
         SetDescription(poFeatureDefn->GetName());
+
+        AddSpatialRef(wkbPolygon);
     }
     else if( EQUAL("opr", pszDataset) )
     {
         OGRFieldDefn oField0("naam", OFTString);
         OGRFieldDefn oField1("type", OFTString);
+        OGRFieldDefn oField2("woonplaatsRef", OFTString);
 
         poFeatureDefn->AddFieldDefn(&oField0);
         poFeatureDefn->AddFieldDefn(&oField1);
+        poFeatureDefn->AddFieldDefn(&oField2);
  
         AddIdentifierFieldDefn();
         AddDocumentFieldDefn();
@@ -265,9 +303,13 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
     {
         OGRFieldDefn oField0("gebruiksdoel", OFTString);
         OGRFieldDefn oField1("oppervlakte", OFTInteger);
+        OGRFieldDefn oField2("nummeraanduidingRef", OFTString);
+        OGRFieldDefn oField3("pandRef", OFTString);
 
         poFeatureDefn->AddFieldDefn(&oField0);
         poFeatureDefn->AddFieldDefn(&oField1);
+        poFeatureDefn->AddFieldDefn(&oField2);
+        poFeatureDefn->AddFieldDefn(&oField3);
  
         AddIdentifierFieldDefn();
         AddDocumentFieldDefn();
@@ -275,6 +317,8 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
 
         poFeatureDefn->SetName("Verblijfsobject");
         SetDescription(poFeatureDefn->GetName());
+
+        AddSpatialRef(wkbPoint);
     }
     else if( EQUAL("wpl", pszDataset) )
     {
@@ -288,6 +332,8 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
 
         poFeatureDefn->SetName("Woonplaats");
         SetDescription(poFeatureDefn->GetName());
+
+        AddSpatialRef(wkbMultiPolygon);
     }
     else
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -389,14 +435,24 @@ void OGRLVBAGLayer::StartElementCbk( const char *pszName, const char **ppszAttr 
     }
     else if( nFeatureElementDepth > 0 && nAttributeElementDepth == 0 &&
         nGeometryElementDepth == 0 && STARTS_WITH_CI(pszName, "objecten") )
-    {
         nAttributeElementDepth = nCurrentDepth;
+    else if( nFeatureElementDepth > 0 && nAttributeElementDepth > 0 &&
+             nGeometryElementDepth == 0 && STARTS_WITH_CI(pszName, "objecten-ref")  )
+    {
+        const char** papszIter = ppszAttr;
+        while( papszIter && *papszIter != nullptr )
+        {
+            if( EQUAL("xlink:href", papszIter[0]) )
+            {
+                osElementString = papszIter[1];
+                osElementString.toupper();
+            }
+            papszIter += 2;
+        }
     }
     else if( nFeatureElementDepth > 0 && nAttributeElementDepth > 0 &&
              nGeometryElementDepth == 0 )
-    {
         StartDataCollect();
-    }
     else if( nGeometryElementDepth > 0 && STARTS_WITH_CI(pszName, "gml") )
     {
         osElementString += "<";
@@ -425,20 +481,17 @@ void OGRLVBAGLayer::StartElementCbk( const char *pszName, const char **ppszAttr 
         osElementString += ">";
     }
     else if( nFeatureCollectionDepth > 0 && nFeatureElementDepth == 0 &&
-             EQUAL("sl-bag-extract:bagObject", pszName) )
+             EQUAL("sl-bag-extract:bagObject", pszName) &&
+             bHasReadSchema )
     {
         nFeatureElementDepth = nCurrentDepth;
-        if( !bSchemaOnly )
-            poFeature = new OGRFeature(poFeatureDefn);
+        m_poFeature = new OGRFeature(poFeatureDefn);
+        m_poFeature->SetFID(nNextFID++);
     }
     else if( nFeatureCollectionDepth == 0 && EQUAL("sl:standBestand", pszName) )
-    {
         nFeatureCollectionDepth = nCurrentDepth;
-    }
     else if( nFeatureCollectionDepth > 0 && EQUAL("sl:objectType", pszName) )
-    {
         StartDataCollect();
-    }
 
     nCurrentDepth++;
 }
@@ -460,36 +513,48 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
         StopDataCollect();
         if ( !osElementString.empty() )
         {
-            if( !bSchemaOnly )
+            const int iFieldIndex = poFeatureDefn->GetFieldIndex(pszTag);
+            if( iFieldIndex > -1 )
             {
-                const int iFieldIndex = poFeatureDefn->GetFieldIndex(pszTag);
-                if( iFieldIndex > -1 )
+                const char *pszValue = osElementString.c_str();
+                const OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iFieldIndex);
+                if( poFieldDefn->GetSubType() == OGRFieldSubType::OFSTBoolean )
                 {
-                    const char *pszValue = osElementString.c_str();
-                    const OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iFieldIndex);
-                    if (poFieldDefn->GetSubType() == OGRFieldSubType::OFSTBoolean)
-                    {
-                        if( EQUAL("n", pszValue) )
-                            poFeature->SetField(iFieldIndex, 0);
-                        else if( EQUAL("j", pszValue) )
-                            poFeature->SetField(iFieldIndex, 1);
-                        else
-                        {
-                            CPLError(CE_Failure, CPLE_AppDefined, "Parsing boolean failed");
-                            XML_StopParser(oParser.get(), XML_FALSE);
-                        }
-                    }
+                    if( EQUAL("n", pszValue) )
+                        m_poFeature->SetField(iFieldIndex, 0);
+                    else if( EQUAL("j", pszValue) )
+                        m_poFeature->SetField(iFieldIndex, 1);
                     else
-                        poFeature->SetField(iFieldIndex, pszValue);
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined, "Parsing boolean failed");
+                        XML_StopParser(oParser.get(), XML_FALSE);
+                    }
+                }
+                else if( poFieldDefn->GetType() == OFTDate && osElementString.length() == 4 )
+                {
+                    CPLString oFullDate{ pszValue };
+                    oFullDate += "-01-01";
+                    m_poFeature->SetField(iFieldIndex, oFullDate.c_str());
+                }
+                else
+                    m_poFeature->SetField(iFieldIndex, pszValue);
+                
+                if( bFitInvalidData
+                    && (poFieldDefn->GetType() == OFTDate || poFieldDefn->GetType() == OFTDateTime) )
+                {
+                    int nYear;
+                    m_poFeature->GetFieldAsDateTime(iFieldIndex, &nYear, nullptr, nullptr,
+                                                nullptr, nullptr,
+                                                static_cast<float*>(nullptr), nullptr);
+                    if( nYear > 2100 )
+                        m_poFeature->SetFieldNull(iFieldIndex);
                 }
             }
         }
         osElementString.Clear();
     }
     else if( nAttributeElementDepth == nCurrentDepth )
-    {
         nAttributeElementDepth = 0;
-    }
     else if( nGeometryElementDepth > 0 && nCurrentDepth > nGeometryElementDepth )
     {
         osElementString += "</";
@@ -505,17 +570,73 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                 reinterpret_cast<OGRGeometry *>(OGR_G_CreateFromGML(osElementString.c_str())) };
             if( poGeom && !poGeom->IsEmpty() )
             {
-                if( !bSchemaOnly )
+                // The specification only accounts for 2-dimensional datasets
+                if( poGeom->Is3D() )
+                    poGeom->flattenTo2D();
+
+// GEOS >= 3.8.0 for MakeValid.
+#ifdef HAVE_GEOS
+#if GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 8)
+                if( !poGeom->IsValid() && bFitInvalidData )
                 {
-                    poGeom->assignSpatialReference(GetSpatialRef());
-                    poFeature->SetGeometryDirectly(poGeom.release());
+                    std::unique_ptr<OGRGeometry> poSubGeom = std::unique_ptr<OGRGeometry>{
+                        poGeom->MakeValid() };
+                    if( poSubGeom && poSubGeom->IsValid() )
+                        poGeom.reset(poSubGeom.release());
                 }
-                else
-                {
-                    OGRGeomFieldDefn *poGeomField = poFeatureDefn->GetGeomFieldDefn(0);
+#endif
+#endif
+
+                OGRGeomFieldDefn *poGeomField = poFeatureDefn->GetGeomFieldDefn(0);
+                if( !poGeomField->GetSpatialRef() )
                     poGeomField->SetSpatialRef(poGeom->getSpatialReference());
+                if( poGeomField->GetType() == wkbUnknown )
                     poGeomField->SetType(poGeom->getGeometryType());
+
+                if( poGeomField->GetType() == wkbPoint )
+                {
+                    switch( poGeom->getGeometryType() )
+                    {
+                        case wkbPolygon:
+                        case wkbMultiPolygon:
+                        {
+                            std::unique_ptr<OGRPoint> poPoint = std::unique_ptr<OGRPoint>{ new OGRPoint };
+#ifdef HAVE_GEOS
+                            if( poGeom->Centroid(poPoint.get()) == OGRERR_NONE )
+                                poGeom.reset(poPoint.release());
+#else
+                            CPLError( CE_Warning, CPLE_AppDefined,
+                                "Cannot shape geometry, GEOS support not enabled." );
+                            poGeom.reset(poPoint.release());
+#endif
+                            break;
+                        }
+
+                        default:
+                            break;
+                    }
                 }
+                else if( poGeomField->GetType() == wkbMultiPolygon
+                    && poGeom->getGeometryType() == wkbPolygon )
+                {
+                    std::unique_ptr<OGRMultiPolygon> poMultiPolygon = std::unique_ptr<OGRMultiPolygon>{ new OGRMultiPolygon };
+                    poMultiPolygon->addGeometry(poGeom.get());
+                    poGeom.reset(poMultiPolygon.release());
+                }
+                else if( poGeomField->GetType() == wkbMultiPolygon
+                    && poGeom->getGeometryType() == wkbGeometryCollection
+                    && dynamic_cast<OGRGeometryCollection*>(poGeom.get())->getNumGeometries() > 0
+                    && dynamic_cast<OGRGeometryCollection*>(poGeom.get())->getGeometryRef(0)->getGeometryType() == wkbPolygon )
+                {
+                    std::unique_ptr<OGRMultiPolygon> poMultiPolygon = std::unique_ptr<OGRMultiPolygon>{ new OGRMultiPolygon };
+                    for (auto &poChildGeom : dynamic_cast<OGRGeometryCollection*>(poGeom.get()))
+                        poMultiPolygon->addGeometry(poChildGeom);
+                    poGeom.reset(poMultiPolygon.release());
+                }
+
+                if( poGeomField->GetSpatialRef() )
+                    poGeom->assignSpatialReference(poGeomField->GetSpatialRef());
+                m_poFeature->SetGeometryDirectly(poGeom.release());
             }
             else
             {
@@ -531,16 +652,24 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
     {
         nFeatureElementDepth = 0;
 
-        if( !bSchemaOnly )
-            poFeature->SetFID(nNextFID++);
+        const int iFieldIndexNamespace = poFeatureDefn->GetFieldIndex("namespace");
+        const int iFieldIndexLocalId = poFeatureDefn->GetFieldIndex("lokaalID");
+
+        CPLAssert(m_poFeature->GetFieldAsString(iFieldIndexNamespace));
+        CPLAssert(m_poFeature->GetFieldAsString(iFieldIndexLocalId));
+
+        CPLString oLvId;
+        oLvId += m_poFeature->GetFieldAsString(iFieldIndexNamespace);
+        oLvId += ".";
+        oLvId += m_poFeature->GetFieldAsString(iFieldIndexLocalId);
+
+        m_poFeature->SetField(poFeatureDefn->GetFieldIndex("lvID"), oLvId.toupper().c_str());
 
         XML_StopParser(oParser.get(), XML_TRUE);
     }
     else if( nFeatureCollectionDepth == nCurrentDepth )
-    {
         nFeatureCollectionDepth = 0;
-    }
-    else if( EQUAL("sl:objectType", pszName) && !poFeatureDefn->GetFieldCount() )
+    else if( EQUAL("sl:objecttype", pszName) && !poFeatureDefn->GetFieldCount() )
     {
         StopDataCollect();
         if ( osElementString.empty() )
@@ -552,6 +681,11 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
         if( !bHasReadSchema )
             CreateFeatureDefn(osElementString.c_str());
         bHasReadSchema = true;
+
+        // The parser is suspended but never resumed. Stop
+        // without resume indicated an error.
+        if( bSchemaOnly )
+            XML_StopParser(oParser.get(), XML_TRUE);
     }
 }
 
@@ -578,7 +712,7 @@ void OGRLVBAGLayer::ConfigureParser()
         static_cast<OGRLVBAGLayer *>(pUserData)->DataHandlerCbk(data, nLen);
     };
 
-    oParser = OGRLVBAG::XMLParserUniquePtr{ OGRCreateExpatXMLParser() };
+    oParser = OGRExpatUniquePtr{ OGRCreateExpatXMLParser() };
     XML_SetElementHandler(oParser.get(), startElementWrapper, endElementWrapper);
     XML_SetCharacterDataHandler(oParser.get(), dataHandlerWrapper);
     XML_SetUserData(oParser.get(), this);
@@ -602,11 +736,9 @@ bool OGRLVBAGLayer::IsParserFinished( XML_Status status )
                     XML_ErrorString(XML_GetErrorCode(oParser.get())),
                     static_cast<int>(XML_GetCurrentLineNumber(oParser.get())),
                     static_cast<int>(XML_GetCurrentColumnNumber(oParser.get())) );
-            if( poFeature )
-            {
-                delete poFeature;
-                poFeature = nullptr;
-            }
+
+            delete m_poFeature;
+            m_poFeature = nullptr;
             return true;
 
         case XML_STATUS_SUSPENDED:
@@ -649,8 +781,6 @@ void OGRLVBAGLayer::ParseDocument()
             }
             
             case XML_FINISHED:
-                return;
-
             default:
                 return;
         }
@@ -691,10 +821,13 @@ OGRFeature* OGRLVBAGLayer::GetNextRawFeature()
     if (nNextFID == 0)
         ConfigureParser();
 
-    poFeature = nullptr;
-    ParseDocument();
+    delete m_poFeature;
+    m_poFeature = nullptr;
 
-    return poFeature;
+    ParseDocument();
+    OGRFeature* poFeatureRet = m_poFeature;
+    m_poFeature = nullptr;
+    return poFeatureRet;
 }
 
 /************************************************************************/

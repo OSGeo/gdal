@@ -195,7 +195,12 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
         /* Separate "Feature" entries in "FeatureCollection" object. */
         VSIFPrintfL( fp, ",\n" );
     }
-    VSIFPrintfL( fp, "%s", json_object_to_json_string( poObj ) );
+    VSIFPrintfL( fp, "%s", json_object_to_json_string_ext( poObj,
+        JSON_C_TO_STRING_SPACED
+#ifdef JSON_C_TO_STRING_NOSLASHESCAPE
+        | JSON_C_TO_STRING_NOSLASHESCAPE
+#endif
+    ) );
 
     json_object_put( poObj );
 

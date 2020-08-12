@@ -589,3 +589,17 @@ def test_ogr2ogr_lib_makevalid():
     assert ogrtest.check_feature_geometry(f, "MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))") == 0
     f = lyr.GetNextFeature()
     assert ogrtest.check_feature_geometry(f, "POLYGON ((0 0,0 1,0.5 1.0,1 1,1 0,0 0))") == 0
+
+
+
+###############################################################################
+# Test SQLStatement with -sql @filename syntax
+
+
+def test_ogr2ogr_lib_sql_filename():
+
+    with gdaltest.tempfile('/vsimem/my.sql', """-- initial comment\nselect\n'--''--' as literalfield,* from --comment\npoly\n-- trailing comment"""):
+        ds = gdal.VectorTranslate('', '../ogr/data/poly.shp', options = '-f Memory -sql @/vsimem/my.sql')
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 10
+    assert lyr.GetLayerDefn().GetFieldIndex('literalfield') == 0

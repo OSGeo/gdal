@@ -87,7 +87,7 @@ typedef GDALDimensionHS GDALDimensionHS;
 
 %}
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL)
+#if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL) || defined(SWIGCSHARP)
 %{
 #ifdef DEBUG
 typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;

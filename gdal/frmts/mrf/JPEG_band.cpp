@@ -656,9 +656,9 @@ CPLErr JPEG_Band::Compress(buf_mgr &dst, buf_mgr &src)
 }
 
 // PHOTOMETRIC == MULTISPECTRAL turns off YCbCr conversion and downsampling
-JPEG_Band::JPEG_Band( GDALMRFDataset *pDS, const ILImage &image,
+JPEG_Band::JPEG_Band( MRFDataset *pDS, const ILImage &image,
                       int b, int level ) :
-    GDALMRFRasterBand(pDS, image, b, int(level)),
+    MRFRasterBand(pDS, image, b, int(level)),
     codec(image)
 {
     const int nbands = image.pagesize.c;

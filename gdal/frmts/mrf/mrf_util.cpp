@@ -294,10 +294,10 @@ bool is_Endianess_Dependent(GDALDataType dt, ILCompression comp) {
     return false;
 }
 
-GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *pDS, const ILImage &image, int b, int level)
+MRFRasterBand *newMRFRasterBand(MRFDataset *pDS, const ILImage &image, int b, int level)
 
 {
-    GDALMRFRasterBand *bnd = nullptr;
+    MRFRasterBand *bnd = nullptr;
     CPLErrorReset();
     switch(pDS->current.comp)
     {
@@ -655,10 +655,10 @@ void GDALRegister_mrf()
       "</OpenOptionList>"
       );
 
-    driver->pfnOpen = GDALMRFDataset::Open;
-    driver->pfnIdentify = GDALMRFDataset::Identify;
-    driver->pfnCreateCopy = GDALMRFDataset::CreateCopy;
-    driver->pfnCreate = GDALMRFDataset::Create;
-    driver->pfnDelete = GDALMRFDataset::Delete;
+    driver->pfnOpen = MRFDataset::Open;
+    driver->pfnIdentify = MRFDataset::Identify;
+    driver->pfnCreateCopy = MRFDataset::CreateCopy;
+    driver->pfnCreate = MRFDataset::Create;
+    driver->pfnDelete = MRFDataset::Delete;
     GetGDALDriverManager()->RegisterDriver(driver);
 }

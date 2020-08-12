@@ -293,7 +293,11 @@ class CPL_DLL OGRSpatialReference
                                       const char *pszUnitAuthority = nullptr,
                                       const char *pszUnitCode = nullptr);
 
-    double      GetLinearUnits( char ** ) const CPL_WARN_DEPRECATED("Use GetLinearUnits(const char**) instead");
+    double      GetLinearUnits( char ** ) const
+/*! @cond Doxygen_Suppress */
+        CPL_WARN_DEPRECATED("Use GetLinearUnits(const char**) instead")
+/*! @endcond */
+        ;
     double      GetLinearUnits( const char ** = nullptr ) const;
 /*! @cond Doxygen_Suppress */
     double      GetLinearUnits( std::nullptr_t ) const
@@ -302,7 +306,10 @@ class CPL_DLL OGRSpatialReference
 
     double      GetTargetLinearUnits( const char *pszTargetKey,
                                       char ** ppszRetName ) const
-            CPL_WARN_DEPRECATED("Use GetTargetLinearUnits(const char*, const char**)");
+/*! @cond Doxygen_Suppress */
+            CPL_WARN_DEPRECATED("Use GetTargetLinearUnits(const char*, const char**)")
+/*! @endcond */
+            ;
     double      GetTargetLinearUnits( const char *pszTargetKey,
                                       const char ** ppszRetName = nullptr ) const;
 /*! @cond Doxygen_Suppress */
@@ -311,14 +318,22 @@ class CPL_DLL OGRSpatialReference
 /*! @endcond */
 
     OGRErr      SetAngularUnits( const char *pszName, double dfInRadians );
-    double      GetAngularUnits( char ** ) const CPL_WARN_DEPRECATED("Use GetAngularUnits(const char**) instead");
+    double      GetAngularUnits( char ** ) const
+/*! @cond Doxygen_Suppress */
+        CPL_WARN_DEPRECATED("Use GetAngularUnits(const char**) instead")
+/*! @endcond */
+        ;
     double      GetAngularUnits( const char ** = nullptr ) const;
 /*! @cond Doxygen_Suppress */
     double      GetAngularUnits( std::nullptr_t ) const
         { return GetAngularUnits( static_cast<const char**>(nullptr) ); }
 /*! @endcond */
 
-    double      GetPrimeMeridian( char ** ) const CPL_WARN_DEPRECATED("Use GetPrimeMeridian(const char**) instead");
+    double      GetPrimeMeridian( char ** ) const
+/*! @cond Doxygen_Suppress */
+        CPL_WARN_DEPRECATED("Use GetPrimeMeridian(const char**) instead")
+/*! @endcond */
+        ;
     double      GetPrimeMeridian( const char ** = nullptr ) const;
 /*! @cond Doxygen_Suppress */
     double      GetPrimeMeridian( std::nullptr_t ) const

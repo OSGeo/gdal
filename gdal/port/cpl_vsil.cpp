@@ -613,7 +613,7 @@ int VSIRename( const char * oldpath, const char * newpath )
  * Currently accepted options are:
  * <ul>
  * <li>RECURSIVE=NO (the default is YES)</li>
- * <li>SYNC_STRATEGY=TIMESTAMP/ETAG. Determines which criterion is used to
+ * <li>SYNC_STRATEGY=TIMESTAMP/ETAG/OVERWRITE. Determines which criterion is used to
  *     determine if a target file must be replaced when it already exists and
  *     has the same file size as the source.
  *     Only applies for a source or target being a network filesystem.
@@ -629,15 +629,19 @@ int VSIRename( const char * oldpath, const char * newpath )
  *     for files not using KMS server side encryption and uploaded in a single
  *     PUT operation (so smaller than 50 MB given the default used by GDAL).
  *     Only to be used for /vsis3/, /vsigs/ or other filesystems using a
- *     MD5Sum as ETAG.</li>
+ *     MD5Sum as ETAG.
+ *
+ *     The OVERWRITE strategy (GDAL >= 3.2) will always overwrite the target file
+ *     with the source one.
+ * </li>
  * <li>NUM_THREADS=integer. Number of threads to use for parallel file copying.
  *     Only use for when /vsis3/, /vsigs/ or /vsiaz/ is in source or target.
  *     Since GDAL 3.1</li>
  * <li>CHUNK_SIZE=integer. Maximum size of chunk (in bytes) to use to split
  *     large objects when downloading them from /vsis3/, /vsigs/ or /vsiaz/ to
- *     local file system, or for upload to /vsis3/ from local file system.
+ *     local file system, or for upload to /vsis3/ or /vsiaz/ from local file system.
  *     Only used if NUM_THREADS > 1.
- *     For upload to /vsis3/, this chunk size will be set at least to 5 MB.
+ *     For upload to /vsis3/, this chunk size must be set at least to 5 MB.
  *     Since GDAL 3.1</li>
  * </ul>
  * @param pProgressFunc Progress callback, or NULL.
@@ -1513,39 +1517,43 @@ int* VSIFilesystemHandler::UnlinkBatch( CSLConstList papszFiles )
 
 int VSIFilesystemHandler::RmdirRecursive( const char* pszDirname )
 {
-    char** papszFiles = VSIReadDir(pszDirname);
-    for( char** papszIter = papszFiles; papszIter && *papszIter; ++papszIter )
+    CPLString osDirnameWithoutEndSlash(pszDirname);
+    if( !osDirnameWithoutEndSlash.empty() && osDirnameWithoutEndSlash.back() == '/' )
+        osDirnameWithoutEndSlash.resize( osDirnameWithoutEndSlash.size() - 1 );
+
+    CPLStringList aosOptions;
+    auto poDir = std::unique_ptr<VSIDIR>(OpenDir(pszDirname, -1, aosOptions.List()));
+    if( !poDir )
+        return -1;
+    std::vector<std::string> aosDirs;
+    while( true )
     {
-        if( (*papszIter)[0] == '\0' ||
-            strcmp(*papszIter, ".") == 0 ||
-            strcmp(*papszIter, "..") == 0 )
+        auto entry = poDir->NextDirEntry();
+        if( !entry )
+            break;
+
+        const CPLString osFilename(osDirnameWithoutEndSlash + '/' + entry->pszName);
+        if( (entry->nMode & S_IFDIR) )
         {
-            continue;
+            aosDirs.push_back(osFilename);
         }
-        VSIStatBufL sStat;
-        const CPLString osFilename(
-            CPLFormFilename(pszDirname, *papszIter, nullptr));
-        if( VSIStatL(osFilename, &sStat) == 0 )
+        else
         {
-            if( VSI_ISDIR(sStat.st_mode) )
-            {
-                if( RmdirRecursive(osFilename) != 0 )
-                {
-                    CSLDestroy(papszFiles);
-                    return -1;
-                }
-            }
-            else
-            {
-                if( VSIUnlink(osFilename) != 0 )
-                {
-                    CSLDestroy(papszFiles);
-                    return -1;
-                }
-            }
+            if( VSIUnlink(osFilename) != 0 )
+                return -1;
         }
     }
-    CSLDestroy(papszFiles);
+
+    // Sort in reverse order, so that inner-most directories are deleted first
+    std::sort(aosDirs.begin(), aosDirs.end(),
+              [](const std::string& a, const std::string& b) {return a > b; });
+
+    for(const auto& osDir: aosDirs )
+    {
+        if( VSIRmdir(osDir.c_str()) != 0 )
+            return -1;
+    }
+
     return VSIRmdir(pszDirname);
 }
 

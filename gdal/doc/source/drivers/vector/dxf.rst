@@ -15,6 +15,16 @@ compatible with AutoCAD 2004 and later.
 DXF files are considered to have no georeferencing information through
 OGR.
 
+Driver capabilities
+-------------------
+
+.. supports_create::
+
+.. supports_virtualio::
+
+DXF Reader
+----------
+
 By default, the entire contents of the file are represented as a single
 OGR layer named "entities". Features will all have the following generic
 fields:
@@ -34,15 +44,8 @@ fields:
 -  EntityHandle: The hexadecimal entity handle. A sort of feature id.
 -  Text: The text of labels.
 
-Driver capabilities
--------------------
-
-.. supports_create::
-
-.. supports_virtualio::
-
 Supported Entities
-------------------
+~~~~~~~~~~~~~~~~~~
 
 The following entity types are supported:
 
@@ -139,7 +142,7 @@ The following entity types are supported:
       Spline leaders are tessellated into line segments.
    -  (GDAL <= 2.2.x) No support.
 
--  3DSOLID, REGION, SURFACE: See below.
+-  3DSOLID, REGION, BODY, SURFACE: See below.
 
 A reasonable attempt is made to preserve color, line width (lineweight),
 line type, text size and orientation via OGR feature styling information
@@ -165,7 +168,7 @@ entity types also currently lack support for elevations; the geometries
 will always be 2D.
 
 DXF_INLINE_BLOCKS
------------------
+~~~~~~~~~~~~~~~~~
 
 The default behavior is for INSERT entities to be exploded with the
 geometry of the BLOCK they reference. However, if the :decl_configoption:`DXF_INLINE_BLOCKS`
@@ -204,26 +207,27 @@ will be available via the blocks layer. On export this configuration
 will result in the creation of similar blocks.
 
 3D Extensibility
-----------------
+~~~~~~~~~~~~~~~~
 
-DXF files may contain 3DSOLID, REGION and SURFACE entities, which
-contain 3D modelling data in the undocumented Autodesk ShapeModeler
-(ASM) format. GDAL cannot transform these entities into OGR geometries,
-so they are skipped by default.
+DXF files may contain 3DSOLID, REGION, BODY and SURFACE entities, which
+contain 3D modelling data in the proprietary Autodesk ShapeManager (ASM) format,
+a broadly compatible fork of the ACIS format. GDAL cannot transform these
+entities into OGR geometries, so they are skipped by default.
 
 Starting from GDAL 2.3.0, the :decl_configoption:`DXF_3D_EXTENSIBLE_MODE` configuration
 option may be set to TRUE to include these entities with the raw ASM
-data stored in a field. This option will add two new fields:
+data stored in a field, allowing for interoperability with commercial conversion
+tools. This option adds two new fields:
 
 -  ASMData: A binary field that contains the ASM data.
--  ASMTransform: A list of 12 real values indicating the affine
+-  ASMTransform: A column-major list of 12 real values indicating the affine
    transformation to be applied to the entity.
 
 This feature only works for DXF files in AutoCAD 2013 (AC1027) format
 and later.
 
 Character Encodings
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 Normally DXF files are in the ANSI_1252 / Win1252 encoding. GDAL/OGR
 attempts to translate this to UTF-8 when reading and back into ANSI_1252
@@ -243,8 +247,8 @@ recode the text as it is read.
 
 --------------
 
-Creation Issues
----------------
+DXF Writer
+----------
 
 DXF files are written in AutoCAD 2004 format. A standard header
 (everything up to the ENTITIES keyword) is written from the
@@ -341,6 +345,7 @@ template header then a new layer definition will be introduced, copied
 from the definition of the default layer ("0").
 
 Linetype Definitions
+~~~~~~~~~~~~~~~~~~~~
 
 When writing linestring geometries, the following rules apply with
 regard to linetype (dash pattern) definitions.
@@ -368,6 +373,7 @@ defining the line pattern. If not, the scaling of the DXF patterns is
 likely to be wrong - potentially very wrong.
 
 Units
+~~~~~
 
 GDAL writes DXF files with measurement units set to "Imperial - Inches".
 If you need to change the units, edit the

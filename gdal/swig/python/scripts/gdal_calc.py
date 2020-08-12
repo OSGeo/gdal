@@ -41,6 +41,9 @@
 
 # example 3 - set values of zero and below to null
 # gdal_calc.py -A input.tif --outfile=result.tif --calc="A*(A>0)" --NoDataValue=0
+
+# example 4 - using logical operator to keep a range of values from input:
+# gdal_calc.py -A input.tif --outfile=result.tif --calc="A*logical_and(A>100,A<150)"
 ################################################################
 
 from optparse import OptionParser, OptionConflictError, Values

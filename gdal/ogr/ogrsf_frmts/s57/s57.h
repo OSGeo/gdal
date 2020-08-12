@@ -56,6 +56,7 @@ char **S57FileCollector( const char * pszDataset );
 #define S57O_RETURN_LINKAGES "RETURN_LINKAGES"
 #define S57O_RETURN_DSID     "RETURN_DSID"
 #define S57O_RECODE_BY_DSSI  "RECODE_BY_DSSI"
+#define S57O_LIST_AS_STRING "LIST_AS_STRING"
 
 #define S57M_UPDATES                    0x01
 #define S57M_LNAM_REFS                  0x02
@@ -66,6 +67,7 @@ char **S57FileCollector( const char * pszDataset );
 #define S57M_RETURN_LINKAGES            0x40
 #define S57M_RETURN_DSID                0x80
 #define S57M_RECODE_BY_DSSI             0x100
+#define S57M_LIST_AS_STRING             0x200
 
 /* -------------------------------------------------------------------- */
 /*      RCNM values.                                                    */

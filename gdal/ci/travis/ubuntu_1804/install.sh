@@ -51,3 +51,6 @@ cd "$CURRENT_DIR"
 (cd autotest/cpp && CCACHE_CPP2=yes make -j3)
 
 ccache -s
+
+# Post-install testing
+./autotest/postinstall/test_pkg-config.sh /usr

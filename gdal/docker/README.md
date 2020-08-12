@@ -35,11 +35,11 @@ See [alpine-small/Dockerfile](alpine-small/Dockerfile)
 
 ## Normal: `osgeo/gdal:alpine-normal-latest`
 
-* Image size: ~ 175 MB
+* Image size: ~ 226 MB
 * Raster drivers: small + netCDF, HDF5, BAG
 * Vector drivers: small + Spatialite, XLS
 * External libraries enabled: small + libgeos, libhdf5, libhdf5, libkea, libnetcdf, libfreexl,
-  libspatialite, libxml2, libpoppler
+  libspatialite, libxml2, libpoppler, openexr, libheif
 * GDAL Python (Python 3.7)
 * Base PROJ grid package
 * Overall licensing terms of the GDAL build: copy-left (GPL) + LGPL + permissive
@@ -63,12 +63,12 @@ See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
 
 ## Full: `osgeo/gdal:ubuntu-full-latest` (aliased to `osgeo/gdal`)
 
-* Image size: ~ 1.2 GB
+* Image size: ~ 1.35 GB
 * Raster drivers: all based on almost all possible free and open-source dependencies
 * Vector drivers: all based on almost all possible free and open-source dependencies
 * External libraries enabled: small + libnetcdf, libhdf4, libhdf5, libtiledb, libkea,
   mongocxx 3.4, libspatialite, unixodbc, libxml2, libcfitsio, libmysqlclient,
-  libkml, libpoppler
+  libkml, libpoppler, openexr, libheif
 * GDAL Python (Python 3.8)
 * *All* PROJ grid packages
 * Overall licensing terms of the GDAL build: copy-left (GPL) + LGPL + permissive

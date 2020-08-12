@@ -5,7 +5,6 @@
 # Public domain
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG PROJ_INSTALL_PREFIX=/usr/local
 ARG BASE_IMAGE=ubuntu:20.04
 
 FROM $BASE_IMAGE as builder
@@ -19,7 +18,8 @@ RUN apt-get update -y \
             software-properties-common build-essential ca-certificates \
             git make cmake wget unzip libtool automake \
             zlib1g-dev libsqlite3-dev pkg-config sqlite3 libcurl4-gnutls-dev \
-            libtiff5-dev
+            libtiff5-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Setup build env for GDAL
 RUN apt-get update -y \
@@ -36,7 +36,8 @@ RUN apt-get update -y \
        libcfitsio-dev openjdk-8-jdk libzstd-dev \
        libpq-dev libssl-dev libboost-dev \
        autoconf automake bash-completion libarmadillo-dev \
-       libopenexr-dev
+       libopenexr-dev libheif-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Build likbkea
 ARG KEA_VERSION=1.4.13
@@ -128,129 +129,38 @@ RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
     ); fi
 
 RUN apt-get update -y \
-    && apt-get install -y --fix-missing --no-install-recommends rsync ccache
+    && apt-get install -y --fix-missing --no-install-recommends rsync ccache \
+    && rm -rf /var/lib/apt/lists/*
 ARG RSYNC_REMOTE
+
+ARG WITH_DEBUG_SYMBOLS=no
 
 # Build PROJ
 ARG PROJ_VERSION=master
-ARG PROJ_INSTALL_PREFIX
-RUN mkdir proj \
-    && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
-        | tar xz -C proj --strip-components=1 \
-    && cd proj \
-    && ./autogen.sh \
-    && if test "${RSYNC_REMOTE}" != ""; then \
-        echo "Downloading cache..."; \
-        rsync -ra ${RSYNC_REMOTE}/proj/ $HOME/; \
-        echo "Finished"; \
-        export CC="ccache gcc"; \
-        export CXX="ccache g++"; \
-        export PROJ_DB_CACHE_DIR="$HOME/.ccache"; \
-        ccache -M 100M; \
-    fi \
-    && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2' \
-        ./configure --prefix=${PROJ_INSTALL_PREFIX} --disable-static \
-    && make -j$(nproc) \
-    && make install DESTDIR="/build" \
-    && if test "${RSYNC_REMOTE}" != ""; then \
-        ccache -s; \
-        echo "Uploading cache..."; \
-        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/proj/; \
-        echo "Finished"; \
-        rm -rf $HOME/.ccache; \
-        unset CC; \
-        unset CXX; \
-    fi \
-    && cd .. \
-    && rm -rf proj \
-    && PROJ_SO=$(readlink /build${PROJ_INSTALL_PREFIX}/lib/libproj.so | sed "s/libproj\.so\.//") \
-    && PROJ_SO_FIRST=$(echo $PROJ_SO | awk 'BEGIN {FS="."} {print $1}') \
-    && mv /build${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO} \
-    && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO_FIRST} \
-    && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so \
-    && rm /build${PROJ_INSTALL_PREFIX}/lib/libproj.*  \
-    && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO_FIRST} \
-    && strip -s /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO} \
-    && for i in /build${PROJ_INSTALL_PREFIX}/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
+ARG PROJ_INSTALL_PREFIX=/usr/local
+COPY ./bh-proj.sh /buildscripts/bh-proj.sh
+RUN /buildscripts/bh-proj.sh
 
 ARG GDAL_VERSION=master
 ARG GDAL_RELEASE_DATE
 ARG GDAL_BUILD_IS_RELEASE
 
 # Build GDAL
-RUN if test "${GDAL_VERSION}" = "master"; then \
-        export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
-        export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
-    fi \
-    && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then \
-        export GDAL_SHA1SUM=${GDAL_VERSION}; \
-    fi \
-    && mkdir gdal \
-    && wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz -O - \
-        | tar xz -C gdal --strip-components=1 \
-    && cd gdal/gdal \
-    && if test "${RSYNC_REMOTE}" != ""; then \
-        echo "Downloading cache..."; \
-        rsync -ra ${RSYNC_REMOTE}/gdal/ $HOME/; \
-        echo "Finished"; \
-        # Little trick to avoid issues with Python bindings
-        printf "#!/bin/sh\nccache gcc \$*" > ccache_gcc.sh; \
-        chmod +x ccache_gcc.sh; \
-        printf "#!/bin/sh\nccache g++ \$*" > ccache_g++.sh; \
-        chmod +x ccache_g++.sh; \
-        export CC=$PWD/ccache_gcc.sh; \
-        export CXX=$PWD/ccache_g++.sh; \
-        ccache -M 1G; \
-    fi \
-    && ./configure --prefix=/usr --without-libtool \
-    --with-hide-internal-symbols \
-    --with-jpeg12 \
-    --with-python --with-poppler --with-spatialite --with-mysql --with-liblzma \
-    --with-webp --with-epsilon --with-proj=/build/usr/local --with-poppler \
-    --with-hdf5 --with-dods-root=/usr --with-sosi --with-mysql \
-    --with-libtiff=internal --with-rename-internal-libtiff-symbols \
-    --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
-    --with-kea=/usr/bin/kea-config --with-mongocxxv3 --with-tiledb \
-    --with-crypto \
-    && make -j$(nproc) \
-    && make install DESTDIR="/build" \
-    && if test "${RSYNC_REMOTE}" != ""; then \
-        ccache -s; \
-        echo "Uploading cache..."; \
-        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/gdal/; \
-        echo "Finished"; \
-        rm -rf $HOME/.ccache; \
-        unset CC; \
-        unset CXX; \
-    fi \
-    && cd ../.. \
-    && rm -rf gdal \
-    && mkdir -p /build_gdal_python/usr/lib \
-    && mkdir -p /build_gdal_python/usr/bin \
-    && mkdir -p /build_gdal_version_changing/usr/include \
-    && mv /build/usr/lib/python3            /build_gdal_python/usr/lib \
-    && mv /build/usr/lib                    /build_gdal_version_changing/usr \
-    && mv /build/usr/include/gdal_version.h /build_gdal_version_changing/usr/include \
-    && mv /build/usr/bin/*.py               /build_gdal_python/usr/bin \
-    && mv /build/usr/bin                    /build_gdal_version_changing/usr \
-    && for i in /build_gdal_version_changing/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_gdal_python/usr/lib/python3/dist-packages/osgeo/*.so; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
+COPY ./bh-gdal.sh /buildscripts/bh-gdal.sh
+RUN /buildscripts/bh-gdal.sh
 
 # Build final image
 FROM $BASE_IMAGE as runner
 
 RUN date
 
+RUN apt-get update \
 # PROJ dependencies
-RUN apt-get update; \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libsqlite3-0 libtiff5 libcurl4 \
-        wget curl unzip ca-certificates
-
+        wget curl unzip ca-certificates \
 # GDAL dependencies
-RUN apt-get update; \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libcharls2 libopenjp2-7 libcairo2 python3-numpy \
         libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos-3.8.0 libgeos-c1v5 \
         libxml2 libexpat1 \
@@ -260,28 +170,24 @@ RUN apt-get update; \
         libkmlbase1 libkmlconvenience1 libkmldom1 libkmlengine1 libkmlregionator1 libkmlxsd1 \
         libmysqlclient21 libogdi4.1 libcfitsio8 openjdk-8-jre \
         libzstd1 bash bash-completion libpq5 libssl1.1 \
-        libarmadillo9 libpython3.8 libopenexr24
+        libarmadillo9 libpython3.8 libopenexr24 libheif1 \
+        python-is-python3 \
+    # Workaround bug in ogdi packaging
+    && ln -s /usr/lib/ogdi/libvrf.so /usr/lib \
+    && rm -rf /var/lib/apt/lists/*
 
-# Order layers starting with less frequently varying ones
-ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
-ARG PROJ_INSTALL_PREFIX
-RUN \
-    mkdir -p ${PROJ_INSTALL_PREFIX}/share/proj; \
-    wget --no-verbose --mirror https://cdn.proj.org/; \
-    rm -f cdn.proj.org/*.js; \
-    rm -f cdn.proj.org/*.css; \
-    mv cdn.proj.org/* ${PROJ_INSTALL_PREFIX}/share/proj/; \
-    rmdir cdn.proj.org
-
-RUN apt-get update; \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y python-is-python3
+# Attempt to order layers starting with less frequently varying ones
 
 COPY --from=builder  /build_thirdparty/usr/ /usr/
 
+ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
+ARG PROJ_INSTALL_PREFIX=/usr/local
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/share/proj/ ${PROJ_INSTALL_PREFIX}/share/proj/
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/include/ ${PROJ_INSTALL_PREFIX}/include/
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/bin/ ${PROJ_INSTALL_PREFIX}/bin/
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PREFIX}/lib/
+RUN ldconfig \
+    && projsync --system-directory --all
 
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/

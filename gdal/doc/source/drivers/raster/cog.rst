@@ -122,6 +122,18 @@ General creation options
    For paletted images,
    NEAREST is used by default, otherwise it is CUBIC.
 
+-  **OVERVIEW_RESAMPLING=[NEAREST/AVERAGE/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS]**:
+   (since GDAL 3.2)
+   Resampling method used for overview generation.
+   For paletted images, NEAREST is used by default, otherwise it is CUBIC.
+   This overrides, for overview generation, the value of ``RESAMPLING`` if it specified.
+
+-  **WARP_RESAMPLING=[NEAREST/AVERAGE/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS]**:
+   (since GDAL 3.2)
+   Resampling method used for reprojection.
+   For paletted images, NEAREST is used by default, otherwise it is CUBIC.
+   This overrides, for reprojection, the value of ``RESAMPLING`` if it specified.
+
 - **OVERVIEWS=[AUTO/IGNORE_EXISTING/FORCE_USE_EXISTING/NONE]**: Describe the behavior
   regarding overview generation and use of source overviews.
   
@@ -331,6 +343,12 @@ line).
    * mask data (starting at mask.TileOffsets[i] and of size
      mask.TileByteCounts[i], but none of them actually need to be read)
    * trailer of mask data (4 bytes)
+
+.. note::
+
+    The content of the header ghost area can be retrieved by getting the
+    ``GDAL_STRUCTURAL_METADATA`` metadata item of the ``TIFF`` metadata domain
+    on the datasett object (with GetMetadataItem())
 
 .. _cog.tile_data_leader_trailer:
 

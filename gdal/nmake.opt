@@ -36,6 +36,7 @@
 # 1910 = 15.0(2017)
 # 1900 = 14.0(2015)
 #
+
 !IFNDEF MSVC_VER
 #assume msvc VS2015.
 MSVC_VER=1900
@@ -257,9 +258,10 @@ INCLUDE_GNM_FRMTS = YES
 
 # PROJ stuff (required dependency: PROJ >= 6)
 #PROJ_INCLUDE = -Id:\install-proj\local\include
-# Note: shell32.lib is needed starting with PROJ 7.0 in some circumstances
-# See https://github.com/OSGeo/gdal/issues/2488
-#PROJ_LIBRARY = d:\install-proj\local\lib\proj_6_0.lib shell32.lib
+# Note: add shell32.lib is needed starting with PROJ 7.0 in some circumstances
+# for static linking. See https://github.com/OSGeo/gdal/issues/2488
+# And ole32.lib also since PROJ 7.1 (see https://github.com/OSGeo/gdal/issues/2743)
+#PROJ_LIBRARY = d:\install-proj\local\lib\proj_6_0.lib shell32.lib ole32.lib
 
 # Uncomment to build with libiconv library to support extended character
 # recoding capabilities. GDAL's internal stub implementation supports
@@ -357,8 +359,12 @@ JPEG12_SUPPORTED = 1
 # also need some adjustment.
 
 # Uncomment the following and update to enable ECW read support with the 5.0+ SDK
-#!IF $(MSVC_VER) < 1910
+#!IFNDEF MSVC_VER
 #ECW_PLATFORM_TOOLSET_DIR = vc140
+#!ELSEIF $(MSVC_VER) < 1910
+#ECW_PLATFORM_TOOLSET_DIR = vc140
+#!ELSEIF $(MSVC_VER) < 1920
+#ECW_PLATFORM_TOOLSET_DIR = vc141
 #!ELSE
 #ECW_PLATFORM_TOOLSET_DIR = vc141
 #!ENDIF
@@ -929,6 +935,13 @@ HAVE_LERC=1
 #CRUNCH_INC = -Ic:\dev\install-crunch\include\crunch
 #CRUNCH_LIB = c:\dev\install-crunch\lib\crunch.lib
 
+# Comment out for OpenEXR driver
+#OPENEXR_INC = -Ic:\dev\install-openexr\include\OpenEXR -DOPENEXR_DLL
+#OPENEXR_LIB = c:\dev\install-openexr\lib\IlmImf-2_4.lib c:\dev\install-openexr\lib\Iex-2_4.lib c:\dev\install-openexr\lib\Half-2_4.lib
+
+# Comment out for HEIF driver
+#HEIF_INC = -Ic:\dev\install-libheif\include
+#HEIF_LIB = C:\dev\install-libheif\lib\heif.lib
 
 ########### END OF STUFF THAT NORMALLY NEEDS TO BE UPDATED ##################
 
@@ -1138,5 +1151,5 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) $(ZSTD_LIBS) \
 	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(TILEDB_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
 	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) $(MONGODBV3_LIB_LINK) $(CRYPTOPP_LIB) $(OPENSSL_LIB) $(CHARLS_LIB) ws2_32.lib \
-	$(RDB_LIB) $(CRUNCH_LIB) \
+	$(RDB_LIB) $(CRUNCH_LIB) $(OPENEXR_LIB) $(HEIF_LIB) \
     kernel32.lib psapi.lib

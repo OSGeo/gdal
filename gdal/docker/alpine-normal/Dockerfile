@@ -30,29 +30,13 @@ RUN apk add --no-cache \
     libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev \
     py3-numpy-dev python3-dev py3-numpy \
     ${POPPLER_DEV} postgresql-dev \
-    openexr-dev \
+    openexr-dev libheif-dev xerces-c-dev geos-dev cfitsio-dev \
     # For spatialite (and GDAL)
     libxml2-dev \
     && mkdir -p /build_thirdparty/usr/lib
 
-# Build xerces-c
-ARG XERCESC_VERSION=3.2.3
-RUN if test "${XERCESC_VERSION}" != ""; then ( \
-    wget -q https://www-eu.apache.org/dist//xerces/c/3/sources/xerces-c-${XERCESC_VERSION}.zip \
-    && unzip -q xerces-c-${XERCESC_VERSION}.zip  \
-    && rm -f xerces-c-${XERCESC_VERSION}.zip \
-    && cd xerces-c-${XERCESC_VERSION} \
-    && ./configure --prefix=/usr --disable-static \
-    && make -j$(nproc) \
-    && make install \
-    && cp -P /usr/lib/libxerces-c*.so* /build_thirdparty/usr/lib \
-    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd .. \
-    && rm -rf xerces-c-${XERCESC_VERSION} \
-    ); fi
-
 # Build geos
-ARG GEOS_VERSION=3.8.1
+ARG GEOS_VERSION=
 RUN if test "${GEOS_VERSION}" != ""; then ( \
     wget -q http://download.osgeo.org/geos/geos-${GEOS_VERSION}.tar.bz2 \
     && tar xjf geos-${GEOS_VERSION}.tar.bz2  \
@@ -138,9 +122,9 @@ RUN if test "${HDF4_VERSION}" != ""; then ( \
     ); fi
 
 # Build freexl
-ARG FREEXL_VERSION=1.0.5
+ARG FREEXL_VERSION=1.0.6
 RUN if test "${FREEXL_VERSION}" != ""; then ( \
-    wget -q http://www.gaia-gis.it/gaia-sins/freexl-${FREEXL_VERSION}.tar.gz \
+    wget -q http://www.gaia-gis.it/gaia-sins/freexl-sources/freexl-${FREEXL_VERSION}.tar.gz \
     && tar xzf freexl-${FREEXL_VERSION}.tar.gz \
     && rm -f freexl-${FREEXL_VERSION}.tar.gz \
     && cd freexl-${FREEXL_VERSION} \
@@ -373,7 +357,7 @@ RUN apk add --no-cache \
         libjpeg-turbo libpng libwebp expat \
         icu-libs \
         python3 py3-numpy ${POPPLER} pcre libpq libxml2 portablexdr openjpeg \
-        openexr \
+        openexr libheif xerces-c geos cfitsio \
     # Remove /usr/lib/libopenjp2.so.2.3.0 since we are building v2.3.1 manually
     # && rm -f /usr/lib/libopenjp2.so.2.3.0 \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*

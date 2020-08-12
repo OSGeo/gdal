@@ -13,7 +13,8 @@ jobs:
 
       - name: Install Requirements
         run: |
-          sudo apt install -y cppcheck libsqlite3-dev ccache
+          sudo apt update
+          sudo apt install -y cppcheck libsqlite3-dev ccache sqlite3
 
       - name: Cache PROJ build
         uses: actions/cache@v2
@@ -46,7 +47,8 @@ jobs:
 
       - name: Install Requirements
         run: |
-          sudo apt install -y cppcheck libsqlite3-dev ccache
+          sudo apt update
+          sudo apt install -y cppcheck libsqlite3-dev ccache sqlite3
 
       - name: Cache PROJ build
         uses: actions/cache@v2
@@ -87,6 +89,9 @@ jobs:
 
       - name: Detect suspicous char digit zero
         run: ./gdal/scripts/detect_suspicious_char_digit_zero.sh
+
+      - name: Shellcheck
+        run: shellcheck -e SC2086,SC2046 $(find gdal -name '*.sh' -a -not -name ltmain.sh)
 
   flake8:
     runs-on: ubuntu-latest
