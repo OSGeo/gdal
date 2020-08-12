@@ -454,7 +454,7 @@ std::shared_ptr<GDALGroup> VRTGroup::CreateGroup(const std::string& osName,
     if( m_oMapGroups.find(osName) != m_oMapGroups.end() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "A group with same name already exists");
+                 "A group with same name (%s) already exists", osName.c_str());
         return nullptr;
     }
     SetDirty();
@@ -483,7 +483,7 @@ std::shared_ptr<GDALDimension> VRTGroup::CreateDimension(const std::string& osNa
     if( m_oMapDimensions.find(osName) != m_oMapDimensions.end() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "A dimension with same name already exists");
+                 "A dimension with same name (%s) already exists", osName.c_str());
         return nullptr;
     }
     SetDirty();
@@ -535,7 +535,7 @@ std::shared_ptr<GDALMDArray> VRTGroup::CreateMDArray(const std::string& osName,
     if( m_oMapMDArrays.find(osName) != m_oMapMDArrays.end() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "An array with same name already exists");
+                 "An array with same name (%s) already exists", osName.c_str());
         return nullptr;
     }
     for( auto& poDim: aoDimensions )
@@ -753,7 +753,7 @@ bool VRTAttribute::CreationCommonChecks(const std::string& osName,
     if( oMapAttributes.find(osName) != oMapAttributes.end() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "An attribute with same name already exists");
+                 "An attribute with same name (%s) already exists", osName.c_str());
         return false;
     }
     if( anDimensions.size() >= 2 )
