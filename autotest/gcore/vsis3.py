@@ -2297,6 +2297,47 @@ def test_vsis3_sync_timestamp():
     gdal.Unlink('/vsimem/testsync.txt')
 
 ###############################################################################
+# Test vsisync() with SYNC_STRATEGY=OVERWRITE
+
+
+def test_vsis3_sync_overwrite():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    options = ['SYNC_STRATEGY=OVERWRITE']
+
+    gdal.FileFromMemBuffer('/vsimem/testsync.txt', 'foo')
+
+    # S3 to local: S3 file is newer
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/out/testsync.txt', 206,
+                { 'Content-Length' : '3',
+                  'Content-Range': 'bytes 0-2/3',
+                  'Last-Modified': 'Mon, 01 Jan 2037 00:00:01 GMT' }, "foo")
+    handler.add('GET', '/out/testsync.txt', 200,
+                { 'Content-Length' : '3',
+                  'Last-Modified': 'Mon, 01 Jan 2037 00:00:01 GMT' }, "foo")
+    with webserver.install_http_handler(handler):
+        assert gdal.Sync( '/vsis3/out/testsync.txt', '/vsimem/',
+                         options=options)
+
+    # Local to S3: S3 file is newer
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/out/testsync.txt', 206,
+                { 'Content-Length' : '3',
+                  'Content-Range': 'bytes 0-2/3',
+                  'Last-Modified': 'Mon, 01 Jan 2037 00:00:01 GMT' }, "foo")
+    handler.add('PUT', '/out/testsync.txt', 200)
+    with webserver.install_http_handler(handler):
+        assert gdal.Sync( '/vsimem/testsync.txt', '/vsis3/out/testsync.txt',
+                         options=options)
+
+    gdal.Unlink('/vsimem/testsync.txt')
+
+###############################################################################
 # Test vsisync() with source and target in /vsis3
 
 

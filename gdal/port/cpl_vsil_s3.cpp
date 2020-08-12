@@ -3316,8 +3316,28 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                                 CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY))));
 
     const bool bRecursive = CPLFetchBool(papszOptions, "RECURSIVE", true);
-    const bool bETagStrategy = EQUAL(CSLFetchNameValueDef(
-        papszOptions, "SYNC_STRATEGY", "TIMESTAMP"), "ETAG");
+
+    enum class SyncStrategy
+    {
+        TIMESTAMP,
+        ETAG,
+        OVERWRITE
+    };
+    SyncStrategy eSyncStrategy = SyncStrategy::TIMESTAMP;
+    const char* pszSyncStrategy = CSLFetchNameValueDef(
+        papszOptions, "SYNC_STRATEGY", "TIMESTAMP");
+    if( EQUAL(pszSyncStrategy, "TIMESTAMP") )
+        eSyncStrategy = SyncStrategy::TIMESTAMP;
+    else if( EQUAL(pszSyncStrategy, "ETAG") )
+        eSyncStrategy = SyncStrategy::ETAG;
+    else if( EQUAL(pszSyncStrategy, "OVERWRITE") )
+        eSyncStrategy = SyncStrategy::OVERWRITE;
+    else
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Unsupported value for SYNC_STRATEGY: %s", pszSyncStrategy);
+    }
+
     const bool bDownloadFromNetworkToLocal =
         (!STARTS_WITH(pszTarget, "/vsi") || STARTS_WITH(pszTarget, "/vsimem/")) &&
         STARTS_WITH(pszSource, GetFSPrefix());
@@ -3343,47 +3363,58 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
         return false;
     }
 
-    const auto CanSkipDownloadFromNetworkToLocal = [this, bETagStrategy](
+    const auto CanSkipDownloadFromNetworkToLocal = [this, eSyncStrategy](
         const char* l_pszSource,
         const char* l_pszTarget,
         GIntBig sourceTime,
         GIntBig targetTime,
         const std::function<CPLString(const char*)>& getETAGSourceFile)
     {
-        if( bETagStrategy )
+        switch( eSyncStrategy )
         {
-            VSILFILE* fpOutAsIn = VSIFOpenExL(l_pszTarget, "rb", TRUE);
-            if( fpOutAsIn )
+            case SyncStrategy::ETAG:
             {
-                CPLString md5 = ComputeMD5OfLocalFile(fpOutAsIn);
-                VSIFCloseL(fpOutAsIn);
-                if( getETAGSourceFile(l_pszSource) == md5 )
+                VSILFILE* fpOutAsIn = VSIFOpenExL(l_pszTarget, "rb", TRUE);
+                if( fpOutAsIn )
                 {
-                    CPLDebug(GetDebugKey(),
-                                "%s has already same content as %s",
-                            l_pszTarget, l_pszSource);
+                    CPLString md5 = ComputeMD5OfLocalFile(fpOutAsIn);
+                    VSIFCloseL(fpOutAsIn);
+                    if( getETAGSourceFile(l_pszSource) == md5 )
+                    {
+                        CPLDebug(GetDebugKey(),
+                                    "%s has already same content as %s",
+                                l_pszTarget, l_pszSource);
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            case SyncStrategy::TIMESTAMP:
+            {
+                if( targetTime <= sourceTime )
+                {
+                    // Our local copy is older than the source, so
+                    // presumably the source was uploaded from it. Nothing to do
+                    CPLDebug(GetDebugKey(), "%s is older than %s. "
+                                "Do not replace %s assuming it was used to "
+                                "upload %s",
+                                l_pszTarget, l_pszSource,
+                                l_pszTarget, l_pszSource);
                     return true;
                 }
+                return false;
             }
-        }
-        else
-        {
-            if( targetTime <= sourceTime )
+
+            case SyncStrategy::OVERWRITE:
             {
-                // Our local copy is older than the source, so
-                // presumably the source was uploaded from it. Nothing to do
-                CPLDebug(GetDebugKey(), "%s is older than %s. "
-                            "Do not replace %s assuming it was used to "
-                            "upload %s",
-                            l_pszTarget, l_pszSource,
-                            l_pszTarget, l_pszSource);
-                return true;
+                break;
             }
         }
         return false;
     };
 
-    const auto CanSkipUploadFromLocalToNetwork = [this, bETagStrategy](
+    const auto CanSkipUploadFromLocalToNetwork = [this, eSyncStrategy](
         VSILFILE*& l_fpIn,
         const char* l_pszSource,
         const char* l_pszTarget,
@@ -3391,30 +3422,41 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
         GIntBig targetTime,
         const std::function<CPLString(const char*)>& getETAGTargetFile)
     {
-        if( bETagStrategy )
+        switch( eSyncStrategy )
         {
-            l_fpIn = VSIFOpenExL(l_pszSource, "rb", TRUE);
-            if( l_fpIn && getETAGTargetFile(l_pszTarget) == ComputeMD5OfLocalFile(l_fpIn) )
+            case SyncStrategy::ETAG:
             {
-                CPLDebug(GetDebugKey(), "%s has already same content as %s",
-                         l_pszTarget, l_pszSource);
-                VSIFCloseL(l_fpIn);
-                l_fpIn = nullptr;
-                return true;
-            }
-        }
-        else
-        {
-            if( targetTime >= sourceTime )
-            {
-                // The remote copy is more recent than the source, so
-                // presumably it was uploaded from the source. Nothing to do
-                CPLDebug(GetDebugKey(), "%s is more recent than %s. "
-                            "Do not replace %s assuming it was uploaded from "
-                            "%s",
-                            l_pszTarget, l_pszSource,
+                l_fpIn = VSIFOpenExL(l_pszSource, "rb", TRUE);
+                if( l_fpIn && getETAGTargetFile(l_pszTarget) == ComputeMD5OfLocalFile(l_fpIn) )
+                {
+                    CPLDebug(GetDebugKey(), "%s has already same content as %s",
                             l_pszTarget, l_pszSource);
-                return true;
+                    VSIFCloseL(l_fpIn);
+                    l_fpIn = nullptr;
+                    return true;
+                }
+                return false;
+            }
+
+            case SyncStrategy::TIMESTAMP:
+            {
+                if( targetTime >= sourceTime )
+                {
+                    // The remote copy is more recent than the source, so
+                    // presumably it was uploaded from the source. Nothing to do
+                    CPLDebug(GetDebugKey(), "%s is more recent than %s. "
+                                "Do not replace %s assuming it was uploaded from "
+                                "%s",
+                                l_pszTarget, l_pszSource,
+                                l_pszTarget, l_pszSource);
+                    return true;
+                }
+                return false;
+            }
+
+            case SyncStrategy::OVERWRITE:
+            {
+                break;
             }
         }
         return false;
