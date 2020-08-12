@@ -990,6 +990,11 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
                 if( nFetchType == SQL_C_CHAR )
                     while( (cbDataLen > 1) && (szWrkData[cbDataLen - 1] == 0) )
                         --cbDataLen;  // Trimming the extra terminators: bug 990
+                else if( nFetchType == SQL_C_BINARY )
+                {
+                    if( (cbDataLen > 1) && (szWrkData[cbDataLen - 1] == 0) )
+                        --cbDataLen;  // Trim the extra terminator: bug 990
+                }
                 else if( nFetchType == SQL_C_WCHAR )
                     while( (cbDataLen > 1) && (szWrkData[cbDataLen - 1] == 0 )
                         && (szWrkData[cbDataLen - 2] == 0))
@@ -1029,6 +1034,12 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
                         while( (nChunkLen > 1)
                                && (szWrkData[nChunkLen - 1] == 0) )
                             --nChunkLen;  // Trimming the extra terminators.
+                    else if ( nFetchType == SQL_C_BINARY )
+                    {
+                        if( (nChunkLen > 1)
+                            && (szWrkData[nChunkLen - 1] == 0) )
+                            --nChunkLen;  // Trim the extra terminator.
+                    }
                     else if( nFetchType == SQL_C_WCHAR )
                         while( (nChunkLen > 1)
                                && (szWrkData[nChunkLen - 1] == 0)
