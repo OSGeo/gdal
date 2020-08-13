@@ -64,8 +64,10 @@ Prerequisites
 ~~~~~~~~~~~~~
 
 #. Install `unixODBC <http://www.unixodbc.org>`__ >= 2.2.11
-#. Install `MDB Tools <http://mdbtools.sourceforge.net/>`__ >= 0.6. I
-   also tested with 0.5.99 (0.6 pre-release).
+#. Install MDB Tools. While the official upstream of mdbtools is abandoned and
+   contains many bugs which prevent correct parsing of Personal Geodatabase geometry
+   data, the maintained fork at `https://github.com/evanmiller/mdbtools <https://github.com/evanmiller/mdbtools>`__
+   contains all required fixes to allow GDAL to successfully read Personal Geodatabases.
 
 (On Ubuntu 8.04 : sudo apt-get install unixodbc libmdbodbc)
 
