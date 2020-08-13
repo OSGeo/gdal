@@ -56,7 +56,8 @@ computer.
 
 .. option:: -tr <xres> <yres>
 
-    Set output file resolution (in target georeferenced units)
+    Set output file resolution (in target georeferenced units).
+    Note that :option:`-tr` just works in combination with a valid input from :option:`-txe` and :option:`-tye`
 
     .. versionadded:: 3.2
 
