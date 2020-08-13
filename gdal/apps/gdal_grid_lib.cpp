@@ -835,7 +835,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
 
     int nXSize;
     int nYSize;
-    if ( psOptions->dfXRes && psOptions->dfYRes )
+    if ( psOptions->dfXRes != 0 && psOptions->dfYRes != 0 )
     {
         if (!(psOptions->dfXMax - psOptions->dfXMin) || !(psOptions->dfYMax - psOptions->dfYMin)) {
             CPLError( CE_Failure, CPLE_IllegalArg,
