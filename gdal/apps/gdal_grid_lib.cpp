@@ -845,7 +845,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
             nXSize = static_cast<int>(dfXSize);
             nYSize = static_cast<int>(dfYSize);
         } else {
-            CPLError( CE_Failure, CPLE_AppDefined, "Invalid output size detected. Please check your -tr argument");
+            CPLError( CE_Failure, CPLE_IllegalArg, "Invalid output size detected. Please check your -tr argument");
 
             if(pbUsageError)
                 *pbUsageError = TRUE;
@@ -1137,7 +1137,7 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
         {
             psOptions->dfXRes = CPLAtofM(papszArgv[++i]);
             psOptions->dfYRes = CPLAtofM(papszArgv[++i]);
-            if( psOptions->dfXRes == 0 || psOptions->dfYRes == 0 )
+            if( psOptions->dfXRes <= 0 || psOptions->dfYRes <= 0 )
             {
                 CPLError(CE_Failure, CPLE_IllegalArg, "Wrong value for -tr parameters.");
                 GDALGridOptionsFree(psOptions);
