@@ -58,6 +58,8 @@ computer.
 
     Set output file resolution (in target georeferenced units)
 
+    .. versionadded:: 3.2
+
 .. option:: -outsize <xsize ysize>
 
     Set the size of the output file in pixels and lines.
