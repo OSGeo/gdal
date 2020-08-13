@@ -32,6 +32,7 @@
 #include "gdal_utils_priv.h"
 #include "commonutils.h"
 
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -836,9 +837,18 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
     int nYSize;
     if ( psOptions->dfXRes && psOptions->dfYRes )
     {
-        double dfXSize = (psOptions->dfXMax - psOptions->dfXMin + (psOptions->dfXRes/2.0)) /
+        if (!(psOptions->dfXMax - psOptions->dfXMin) || !(psOptions->dfYMax - psOptions->dfYMin)) {
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                    "Invalid txe or tye paramaters detected. Please check your -txe or -tye argument.");
+
+            if(pbUsageError)
+                *pbUsageError = TRUE;
+            return nullptr;
+        }
+
+        double dfXSize = (std::fabs(psOptions->dfXMax - psOptions->dfXMin) + (psOptions->dfXRes/2.0)) /
             psOptions->dfXRes;
-        double dfYSize = (psOptions->dfYMax - psOptions->dfYMin + (psOptions->dfYRes/2.0)) /
+        double dfYSize = (std::fabs(psOptions->dfYMax - psOptions->dfYMin) + (psOptions->dfYRes/2.0)) /
             psOptions->dfYRes;
 
         if (dfXSize >= 1 && dfXSize <= INT_MAX && dfYSize >= 1 && dfYSize <= INT_MAX) {
