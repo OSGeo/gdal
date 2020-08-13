@@ -32,7 +32,7 @@
 #include "gdal_utils_priv.h"
 #include "commonutils.h"
 
-#include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <algorithm>
@@ -836,12 +836,21 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
     int nYSize;
     if ( psOptions->dfXRes && psOptions->dfYRes )
     {
-        nXSize = static_cast<int>(
-            (psOptions->dfXMax - psOptions->dfXMin + (psOptions->dfXRes/2.0)) /
-            psOptions->dfXRes);
-        nYSize = static_cast<int>(
-            (std::fabs(psOptions->dfYMax - psOptions->dfYMin) + (psOptions->dfYRes/2.0)) /
-            psOptions->dfYRes);
+        double dfXSize = (psOptions->dfXMax - psOptions->dfXMin + (psOptions->dfXRes/2.0)) /
+            psOptions->dfXRes;
+        double dfYSize = (psOptions->dfYMax - psOptions->dfYMin + (psOptions->dfYRes/2.0)) /
+            psOptions->dfYRes;
+
+        if (dfXSize >= 1 && dfXSize <= INT_MAX && dfYSize >= 1 && dfYSize <= INT_MAX) {
+            nXSize = static_cast<int>(dfXSize);
+            nYSize = static_cast<int>(dfYSize);
+        } else {
+            CPLError( CE_Failure, CPLE_AppDefined, "Invalid output size detected. Please check your -tr argument");
+
+            if(pbUsageError)
+                *pbUsageError = TRUE;
+            return nullptr;
+        }
     }
     else
     {
