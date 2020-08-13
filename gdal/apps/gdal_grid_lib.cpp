@@ -772,7 +772,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
         return nullptr;
     }
 
-    if ( (psOptions->nXSize || psOptions->nYSize) && (psOptions->dfXRes || psOptions->dfYRes) ) {
+    if ( (psOptions->nXSize != 0 || psOptions->nYSize != 0) && (psOptions->dfXRes != 0 || psOptions->dfYRes != 0) ) {
         CPLError(CE_Failure, CPLE_IllegalArg, "-outsize and -tr options cannot be used at the same time.");
         GDALGridOptionsFree(psOptionsToFree);
         return nullptr;
@@ -837,7 +837,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
     int nYSize;
     if ( psOptions->dfXRes != 0 && psOptions->dfYRes != 0 )
     {
-        if (!(psOptions->dfXMax - psOptions->dfXMin) || !(psOptions->dfYMax - psOptions->dfYMin)) {
+        if ((psOptions->dfXMax == psOptions->dfXMin) || (psOptions->dfYMax == psOptions->dfYMin)) {
             CPLError( CE_Failure, CPLE_IllegalArg,
                     "Invalid txe or tye paramaters detected. Please check your -txe or -tye argument.");
 
