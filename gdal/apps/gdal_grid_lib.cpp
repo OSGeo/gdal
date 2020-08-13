@@ -32,6 +32,8 @@
 #include "gdal_utils_priv.h"
 #include "commonutils.h"
 
+#include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <algorithm>
@@ -87,6 +89,8 @@ struct GDALGridOptions
     char            **papszCreateOptions;
     int             nXSize;
     int             nYSize;
+    double          dfXRes;
+    double          dfYRes;
     double          dfXMin;
     double          dfXMax;
     double          dfYMin;
@@ -768,6 +772,12 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
         return nullptr;
     }
 
+    if ( (psOptions->nXSize != 0 || psOptions->nYSize != 0) && (psOptions->dfXRes != 0 || psOptions->dfYRes != 0) ) {
+        CPLError(CE_Failure, CPLE_IllegalArg, "-outsize and -tr options cannot be used at the same time.");
+        GDALGridOptionsFree(psOptionsToFree);
+        return nullptr;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Find the output driver.                                         */
 /* -------------------------------------------------------------------- */
@@ -823,13 +833,45 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
     if ( psOptions->pszSQL )
         nBands++;
 
-    // FIXME
-    int nXSize = psOptions->nXSize;
-    if ( nXSize == 0 )
-        nXSize = 256;
-    int nYSize = psOptions->nYSize;
-    if ( nYSize == 0 )
-        nYSize = 256;
+    int nXSize;
+    int nYSize;
+    if ( psOptions->dfXRes != 0 && psOptions->dfYRes != 0 )
+    {
+        if ((psOptions->dfXMax == psOptions->dfXMin) || (psOptions->dfYMax == psOptions->dfYMin)) {
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                    "Invalid txe or tye paramaters detected. Please check your -txe or -tye argument.");
+
+            if(pbUsageError)
+                *pbUsageError = TRUE;
+            return nullptr;
+        }
+
+        double dfXSize = (std::fabs(psOptions->dfXMax - psOptions->dfXMin) + (psOptions->dfXRes/2.0)) /
+            psOptions->dfXRes;
+        double dfYSize = (std::fabs(psOptions->dfYMax - psOptions->dfYMin) + (psOptions->dfYRes/2.0)) /
+            psOptions->dfYRes;
+
+        if (dfXSize >= 1 && dfXSize <= INT_MAX && dfYSize >= 1 && dfYSize <= INT_MAX) {
+            nXSize = static_cast<int>(dfXSize);
+            nYSize = static_cast<int>(dfYSize);
+        } else {
+            CPLError( CE_Failure, CPLE_IllegalArg, "Invalid output size detected. Please check your -tr argument");
+
+            if(pbUsageError)
+                *pbUsageError = TRUE;
+            return nullptr;
+        }
+    }
+    else
+    {
+        // FIXME
+        nXSize = psOptions->nXSize;
+        if ( nXSize == 0 )
+            nXSize = 256;
+        nYSize = psOptions->nYSize;
+        if ( nYSize == 0 )
+            nYSize = 256;
+    }
 
     GDALDatasetH hDstDS =
         GDALCreate(hDriver, pszDest, nXSize, nYSize, nBands,
@@ -1012,6 +1054,8 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
     psOptions->papszCreateOptions = nullptr;
     psOptions->nXSize = 0;
     psOptions->nYSize = 0;
+    psOptions->dfXRes = 0;
+    psOptions->dfYRes = 0;
     psOptions->dfXMin = 0.0;
     psOptions->dfXMax = 0.0;
     psOptions->dfYMin = 0.0;
@@ -1097,6 +1141,18 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
             psOptions->nXSize = atoi(papszArgv[i+1]);
             psOptions->nYSize = atoi(papszArgv[i+2]);
             i += 2;
+        }
+
+        else if( i+2 < argc && EQUAL(papszArgv[i],"-tr") )
+        {
+            psOptions->dfXRes = CPLAtofM(papszArgv[++i]);
+            psOptions->dfYRes = CPLAtofM(papszArgv[++i]);
+            if( psOptions->dfXRes <= 0 || psOptions->dfYRes <= 0 )
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg, "Wrong value for -tr parameters.");
+                GDALGridOptionsFree(psOptions);
+                return nullptr;
+            }
         }
 
         else if( i+1 < argc && EQUAL(papszArgv[i],"-co") )

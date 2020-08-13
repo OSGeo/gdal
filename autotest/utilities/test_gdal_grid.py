@@ -888,6 +888,33 @@ def test_gdal_grid_clipsrc():
     ds = None
 
 ###############################################################################
+# Test -tr
+
+
+def test_gdal_grid_tr():
+    if gdal_grid is None:
+        pytest.skip()
+
+    #################
+    outfiles.append('tmp/grid_count_70_70.tif')
+    try:
+        os.remove(outfiles[-1])
+    except OSError:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    gdaltest.runexternal(gdal_grid + ' -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -tr 60 60 -ot Byte -l grid -a count:radius1=70.0:radius2=70.0:angle=0.0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/grid_count_70_70.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_count_70_70.tif')
+    assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum(), \
+        ('bad checksum : got %d, expected %d' %
+              (ds.GetRasterBand(1).Checksum(), ds_ref.GetRasterBand(1).checksum_ref))
+    ds_ref = None
+    ds = None
+
+###############################################################################
 # Cleanup
 
 
