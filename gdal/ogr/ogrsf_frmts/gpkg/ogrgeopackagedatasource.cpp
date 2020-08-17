@@ -40,6 +40,7 @@
 #include <cstdlib>
 
 #include <algorithm>
+#include <limits>
 
 CPL_CVSID("$Id$")
 
@@ -2283,6 +2284,11 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
                 m_usGPKGNull = static_cast<GUInt16>(dfGPKGNoDataValue);
                 if( m_eDT == GDT_Int16 && m_usGPKGNull > 32767 )
                     dfGPKGNoDataValue = -32768.0;
+                else if( m_eDT == GDT_Float32 )
+                {
+                    // Pick a value that is unlikely to be hit with offset & scale
+                    dfGPKGNoDataValue = -std::numeric_limits<float>::max();
+                }
                 poBand->SetNoDataValueInternal(dfGPKGNoDataValue);
             }
         }

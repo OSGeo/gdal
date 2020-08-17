@@ -2660,8 +2660,9 @@ def test_gpkg_39():
     gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format='GPKG', noData=74, creationOptions=['TILE_FORMAT=PNG'])
     ds = gdal.Open('/vsimem/gpkg_39.gpkg')
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
+    assert ds.GetRasterBand(1).GetNoDataValue() == pytest.approx(-3.4028234663852885981e+38, rel=1e-8)
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 4680
+    assert cs == 4651
     sql_lyr = ds.ExecuteSQL('SELECT scale, offset FROM gpkg_2d_gridded_tile_ancillary')
     f = sql_lyr.GetNextFeature()
     assert f['scale'] != 1.0 and f.IsFieldSetAndNotNull('scale')
