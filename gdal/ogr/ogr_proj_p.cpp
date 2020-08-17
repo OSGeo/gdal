@@ -319,6 +319,11 @@ void OSRSetPROJSearchPaths( const char* const * papszPaths )
 char** OSRGetPROJSearchPaths()
 {
     std::lock_guard<std::mutex> oLock(g_oSearchPathMutex);
+    if( g_searchPathGenerationCounter > 0 )
+    {
+        return CSLDuplicate(g_aosSearchpaths.List());
+    }
+
     const char* pszSep =
 #ifdef _WIN32
                         ";"
