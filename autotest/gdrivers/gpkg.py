@@ -1424,15 +1424,6 @@ def test_gpkg_17():
     assert ret != 0
     out_ds = None
 
-    # Test gpkg_zoom_other extension
-    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
-    # Will fail because results in a 6x6 overview
-    gdal.PushErrorHandler()
-    ret = out_ds.BuildOverviews('NEAR', [3])
-    gdal.PopErrorHandler()
-    assert ret != 0
-    out_ds = None
-
     # Test building overviews on read-only dataset
     out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER)
     gdal.PushErrorHandler()
