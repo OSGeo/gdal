@@ -420,3 +420,24 @@ def test_envi_interleaving():
         assert ds.GetRasterBand(2).Checksum() == 20669, filename
         assert ds.GetRasterBand(3).Checksum() == 20895, filename
         ds = None
+
+
+###############################################################################
+# Test reading and writing geotransform matrix with rotation = 180
+
+
+def test_envi_rotation_180():
+
+    filename = '/vsimem/test_envi_rotation_180.dat'
+    ds = gdal.GetDriverByName('ENVI').Create(filename, 1, 1)
+    ds.SetGeoTransform([0,10,0,0,0,10])
+    ds = None
+
+    gdal.Unlink(filename + '.aux.xml')
+
+    ds = gdal.Open(filename)
+    got_gt = ds.GetGeoTransform()
+    assert got_gt == (0,10,0,0,0,10)
+    ds = None
+
+    gdal.GetDriverByName('ENVI').Delete(filename)
