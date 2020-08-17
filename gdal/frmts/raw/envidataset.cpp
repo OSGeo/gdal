@@ -628,7 +628,12 @@ void ENVIDataset::WriteProjectionInfo()
         adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0 ||
         adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0 ||
         adfGeoTransform[4] != 0.0 || adfGeoTransform[5] != 1.0;
-    if( bHasNonDefaultGT )
+    if( adfGeoTransform[1] > 0.0 && adfGeoTransform[2] == 0.0 &&
+        adfGeoTransform[4] == 0.0 && adfGeoTransform[5] > 0.0 )
+    {
+        osRotation = ", rotation=180";
+    }
+    else if( bHasNonDefaultGT )
     {
         const double dfRotation1 =
             -atan2(-adfGeoTransform[2], adfGeoTransform[1]) * kdfRadToDeg;
@@ -1384,6 +1389,7 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     char **papszFields = SplitList(pszMapinfo);
     const char *pszUnits = nullptr;
     double dfRotation = 0.0;
+    bool bUpsideDown = false;
     const int nCount = CSLCount(papszFields);
 
     if( nCount < 7 )
@@ -1402,8 +1408,9 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
         else if ( STARTS_WITH(papszFields[i], "rotation=") )
         {
             dfRotation =
-                CPLAtof(papszFields[i] + strlen("rotation=")) *
-                kdfDegToRad * -1.0;
+                CPLAtof(papszFields[i] + strlen("rotation="));
+            bUpsideDown = fabs(dfRotation) == 180.0;
+            dfRotation *= kdfDegToRad * -1.0;
         }
     }
 
@@ -1440,6 +1447,13 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     adfGeoTransform[3] = pixelNorthing + (yReference - 1) * yPixelSize;
     adfGeoTransform[4] = -sin(dfRotation) * yPixelSize;
     adfGeoTransform[5] = -cos(dfRotation) * yPixelSize;
+    if( bUpsideDown ) // to avoid numeric approximations
+    {
+        adfGeoTransform[1] = xPixelSize;
+        adfGeoTransform[2] = 0;
+        adfGeoTransform[4] = 0;
+        adfGeoTransform[5] = yPixelSize;
+    }
 
     // TODO(schwehr): Symbolic constants for the fields.
     // Capture projection.
