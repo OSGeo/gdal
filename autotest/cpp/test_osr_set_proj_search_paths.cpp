@@ -99,6 +99,18 @@ int main()
     auto t1 = CPLCreateJoinableThread(func1, nullptr);
     CPLJoinThread(t1);
 
+    {
+        const char* const apszDummyPaths[] = { "/i/am/dummy", nullptr };
+        OSRSetPROJSearchPaths(apszDummyPaths);
+        auto tokens2 = OSRGetPROJSearchPaths();
+        if( strcmp(tokens2[0], "/i/am/dummy") != 0 )
+        {
+            fprintf(stderr, "failure not expected (5)\n");
+            exit(1);
+        }
+        CSLDestroy(tokens2);
+    }
+
     // Use OSRSetPROJSearchPaths to restore search paths
     OSRSetPROJSearchPaths(tokens);
 
