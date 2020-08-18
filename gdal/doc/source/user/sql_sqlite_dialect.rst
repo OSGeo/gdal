@@ -64,7 +64,7 @@ If the master datasource is SQLite database (GeoPackage, SpatiaLite) it is neces
 use indirect SQLite dialect. Otherwise additional datasources are never opened but tables to 
 be used in joins are searched from the master database.
 
-.. code-block::
+.. code-block:: shell
 
     ogrinfo jointest.gpkg -dialect INDIRECT_SQLITE -sql "SELECT a.ID,b.ID FROM jointest a JOIN \"jointest2.shp\".\"jointest2\" b ON a.ID=b.ID"
 
