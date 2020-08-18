@@ -2931,7 +2931,7 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
         if( dims[0] != 1 )
         {
             CPLDebug("BAG",
-                    "Unexpected dimension for m_hVarresMetadata");
+                    "Unexpected dimension for m_hVarresRefinements");
             return false;
         }
         nRefinementsSize = dims[1];
