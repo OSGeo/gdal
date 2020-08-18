@@ -348,7 +348,7 @@ def test_bag_vr_resampled():
         'bands': [
             {'band': 1,
              'block': [36, 24],
-             'checksum': 4582,
+             'checksum': 4555,
              'colorInterpretation': 'Undefined',
              'description': 'elevation',
              'max': 10.0,
@@ -358,7 +358,7 @@ def test_bag_vr_resampled():
              'type': 'Float32'},
             {'band': 2,
              'block': [36, 24],
-             'checksum': 6237,
+             'checksum': 6234,
              'colorInterpretation': 'Undefined',
              'description': 'uncertainty',
              'max': 10.0,
@@ -472,7 +472,7 @@ def test_bag_vr_resampled():
     got = (gt[1], gt[5])
     assert got == (8.0, -8.0)
     got = (ds.GetRasterBand(1).Checksum(), ds.GetRasterBand(2).Checksum())
-    assert got == (2099, 2747)
+    assert got == (2021, 2722)
 
     ds = gdal.OpenEx('data/bag/test_vr.bag',
                      open_options=['MODE=RESAMPLED_GRID',
@@ -481,7 +481,7 @@ def test_bag_vr_resampled():
     got = (gt[1], gt[5])
     assert got == (8.0, -8.0)
     got = (ds.GetRasterBand(1).Checksum(), ds.GetRasterBand(2).Checksum())
-    assert got == (2099, 2747)
+    assert got == (2021, 2722)
 
     ds = gdal.OpenEx('data/bag/test_vr.bag',
                      open_options=['MODE=RESAMPLED_GRID',
@@ -491,7 +491,7 @@ def test_bag_vr_resampled():
     got = (gt[1], gt[5])
     assert got == (16.0, -16.0)
     got = (ds.GetRasterBand(1).Checksum(), ds.GetRasterBand(2).Checksum())
-    assert got == (796, 864)
+    assert got == (728, 848)
 
     ds = gdal.OpenEx('data/bag/test_vr.bag',
                      open_options=['MODE=RESAMPLED_GRID',
@@ -588,7 +588,7 @@ def test_bag_vr_resampled_mask():
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
     assert ds.GetRasterBand(1).GetNoDataValue() is None
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 4507
+    assert cs == 4552
 
 
 ###############################################################################
@@ -601,7 +601,7 @@ def test_bag_vr_resampled_interpolated():
                      open_options=['MODE=RESAMPLED_GRID',
                                    'INTERPOLATION=INVDIST'])
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 2175
+    assert cs == 2107
 
     # Test overviews
     with gdaltest.config_option('GDAL_BAG_MIN_OVR_SIZE', '4'):

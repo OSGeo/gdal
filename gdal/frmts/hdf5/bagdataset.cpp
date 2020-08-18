@@ -1012,10 +1012,11 @@ CPLErr BAGResampledBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 static_cast<int>((dfInterMinX - dfMinX) / rgrid.fResX));
             const int nMinSrcY = std::max(0,
                 static_cast<int>((dfInterMinY - dfMinY) / rgrid.fResY));
+            // Need to use ceil due to numerical imprecision
             const int nMaxSrcX = std::min(static_cast<int>(rgrid.nWidth) - 1,
-                static_cast<int>((dfInterMaxX - dfMinX + 1e-8) / rgrid.fResX));
+                static_cast<int>(std::ceil((dfInterMaxX - dfMinX) / rgrid.fResX)));
             const int nMaxSrcY = std::min(static_cast<int>(rgrid.nHeight) - 1,
-                static_cast<int>((dfInterMaxY - dfMinY + 1e-8) / rgrid.fResY));
+                static_cast<int>(std::ceil((dfInterMaxY - dfMinY) / rgrid.fResY)));
 #ifdef DEBUG_VERBOSE
             CPLDebug("BAG",
                      "y = %d, x = %d, minx = %d, miny = %d, maxx = %d, maxy = %d",
