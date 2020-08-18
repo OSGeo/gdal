@@ -24,7 +24,7 @@ and therefore operations like ALTER TABLE are not supported.
 If the datasource is SQLite database (GeoPackage, SpatiaLite) then SQLite dialect
 acts as native SQL dialect and Virtual Table Mechanism is not used. It is possible to
 force GDAL to use Virtual Tables even in this case by specifying 
-"-dialect INDIRECT_SQLITE".
+"-dialect INDIRECT_SQLITE". This should be used only when necessary, since going through the virtual table mechanism might affect performance.
 
 The syntax of the SQL statements is fully the one of the SQLite SQL engine. You can
 refer to the following pages:
