@@ -198,6 +198,12 @@ If ``varres_keys`` is absent, record 1 of ``values`` is assumed to be met for
 each elevation point that does not match the nodata value of the variable resultion
 elevation band.
 
+Tracking list support
+---------------------
+
+When the dataset is opened in vector mode (ogrinfo, ogr2ogr, etc.), the tracking_list
+dataset will be reported as a OGR vector layer
+
 Creation support
 ----------------
 
@@ -359,6 +365,12 @@ Usage examples
    ::
 
       $ gdal_translate data/test_vr.bag -oo MODE=RESAMPLED_GRID -oo RESX=5 -oo RESY=5 out.bag -co "VAR_ABSTRACT=My abstract"
+
+-  Displaying the tracking list:
+
+   ::
+
+      $ ogrinfo -al data/my.bal
 
 See Also
 --------

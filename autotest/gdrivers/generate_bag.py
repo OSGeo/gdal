@@ -305,3 +305,7 @@ layer = Georef_metadata.create_group("layer_with_values_only")
 values = layer.create_dataset("values", (2,), dtype = comp_type)
 data = np.array([(i, "Val   ", i + 1.25) for i in range(2) ], dtype = comp_type)
 values[...] = data
+
+tracking_list_struct_type = np.dtype([('row', 'I'), ('col', 'I'), ('depth', 'f4'), ('uncertainty', 'f4'), ('track_code', 'B'), ('list_series', 'h')])
+tracking_list = bag_root.create_dataset("tracking_list", (2,), dtype = tracking_list_struct_type)
+tracking_list[...] = np.array([(0,1,2.5,3.5,4,5),(6,7,8.5,9.5,10,11)], dtype = tracking_list_struct_type)

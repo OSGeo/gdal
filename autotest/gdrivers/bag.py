@@ -38,6 +38,7 @@ import os
 import pytest
 import struct
 from osgeo import gdal
+from osgeo import ogr
 
 pytestmark = pytest.mark.require_driver('BAG')
 
@@ -816,3 +817,33 @@ def test_bag_write_single_band_create_two_bands():
     assert '<bar />' in xml
     ds = None
     gdal.GetDriverByName('BAG').Delete(tmpfilename)
+
+###############################################################################
+#
+
+
+def test_bag_read_tracking_list():
+
+    ds = ogr.Open('data/bag/test_georef_metadata.bag')
+    assert ds is not None
+    assert ds.GetLayerCount() == 1
+    assert ds.GetLayer(1) is None
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 2
+    lyr.ResetReading()
+
+    f = lyr.GetNextFeature()
+    assert f['row'] == 0
+    assert f['col'] == 1
+    assert f['depth'] == 2.5
+    assert f['uncertainty'] == 3.5
+    assert f['track_code'] == 4
+    assert f['list_series'] == 5
+
+    f = lyr.GetNextFeature()
+    assert f['row'] == 6
+    assert f['col'] == 7
+    assert f['depth'] == 8.5
+    assert f['uncertainty'] == 9.5
+    assert f['track_code'] == 10
+    assert f['list_series'] == 11
