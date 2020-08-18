@@ -17,7 +17,9 @@ sys.path.insert(1, os.path.dirname(__file__))
 
 # These files may be non-importable, and don't contain tests anyway.
 # So we skip searching them during test collection.
-collect_ignore = ["kml_generate_test_files.py", "gdrivers/netcdf_cfchecks.py"]
+collect_ignore = ["kml_generate_test_files.py",
+                  "gdrivers/netcdf_cfchecks.py",
+                  "gdrivers/generate_bag.py"]
 
 # we set ECW to not resolve projection and datum strings to get 3.x behavior.
 gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")

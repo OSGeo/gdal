@@ -36,6 +36,7 @@ from xml.etree import ElementTree
 import gdaltest
 import os
 import pytest
+import struct
 from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver('BAG')
@@ -701,3 +702,102 @@ def test_bag_read_incorrect_northeast_corner():
     assert corner_points == '100.000000000000,500000.000000000000 250.000000000000,500096.000000000000'
 
     del ds
+
+
+###############################################################################
+# Test reading georeferenced metadata
+
+
+def test_bag_read_georef_metadata():
+
+    ds = gdal.Open('data/bag/test_georef_metadata.bag')
+    assert ds is not None
+    sub_ds = ds.GetSubDatasets()
+    assert len(sub_ds) == 2
+
+    assert sub_ds[0][0] == 'BAG:"data/bag/test_georef_metadata.bag":georef_metadata:layer_with_keys_values'
+    assert sub_ds[1][0] == 'BAG:"data/bag/test_georef_metadata.bag":georef_metadata:layer_with_values_only'
+
+    ds = gdal.OpenEx('data/bag/test_georef_metadata.bag', open_options=['MODE=LIST_SUPERGRIDS'])
+    assert ds is not None
+    sub_ds = ds.GetSubDatasets()
+    assert len(sub_ds) == 74
+    assert sub_ds[1][0] == 'BAG:"data/bag/test_georef_metadata.bag":georef_metadata:layer_with_keys_values:0:0'
+
+    with gdaltest.error_handler():
+        assert gdal.Open('BAG:"data/bag/test_georef_metadata.bag":georef_metadata:not_existing') is None
+
+    ds = gdal.Open('BAG:"data/bag/test_georef_metadata.bag":georef_metadata:layer_with_keys_values')
+    assert ds is not None
+    assert ds.RasterXSize == 6
+    assert ds.RasterYSize == 4
+    assert ds.RasterCount == 1
+    band = ds.GetRasterBand(1)
+    data = band.ReadRaster()
+    data = struct.unpack('i' * 24, data)
+    assert data == (0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5)
+    assert band.GetNoDataValue() == 0
+    rat = band.GetDefaultRAT()
+    assert rat is not None
+    assert rat.GetRowCount() == 6
+    assert rat.GetColumnCount() == 3
+    assert rat.GetNameOfCol(0) == 'int'
+    assert rat.GetTypeOfCol(0) == gdal.GFT_Integer
+    assert rat.GetNameOfCol(1) == 'str'
+    assert rat.GetTypeOfCol(1) == gdal.GFT_String
+    assert rat.GetNameOfCol(2) == 'float64'
+    assert rat.GetTypeOfCol(2) == gdal.GFT_Real
+    assert rat.GetValueAsInt(0, 0) == 0
+    assert rat.GetValueAsString(0, 1) == 'Val   '
+    assert rat.GetValueAsDouble(0, 2) == 1.25
+    assert rat.GetValueAsInt(1, 0) == 1
+
+    ds = gdal.Open('BAG:"data/bag/test_georef_metadata.bag":georef_metadata:layer_with_values_only')
+    assert ds is not None
+    assert ds.RasterXSize == 6
+    assert ds.RasterYSize == 4
+    assert ds.RasterCount == 1
+    band = ds.GetRasterBand(1)
+    data = band.ReadRaster()
+    data = struct.unpack('B' * 24, data)
+    assert data == (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1)
+
+    ds = gdal.Open('BAG:"data/bag/test_georef_metadata.bag":georef_metadata:layer_with_keys_values:0:0')
+    assert ds is not None
+    assert ds.RasterXSize == 2
+    assert ds.RasterYSize == 2
+    assert ds.RasterCount == 1
+    band = ds.GetRasterBand(1)
+    data = band.ReadRaster()
+    data = struct.unpack('i' * 4, data)
+    assert data == (1, 0, 1, 1)
+
+    ds = gdal.Open('BAG:"data/bag/test_georef_metadata.bag":georef_metadata:layer_with_keys_values:0:1')
+    assert ds is not None
+    assert ds.RasterXSize == 2
+    assert ds.RasterYSize == 2
+    assert ds.RasterCount == 1
+    band = ds.GetRasterBand(1)
+    data = band.ReadRaster()
+    data = struct.unpack('i' * 4, data)
+    assert data == (1, 1, 0, 1)
+
+    ds = gdal.Open('BAG:"data/bag/test_georef_metadata.bag":georef_metadata:layer_with_values_only:0:0')
+    assert ds is not None
+    assert ds.RasterXSize == 2
+    assert ds.RasterYSize == 2
+    assert ds.RasterCount == 1
+    band = ds.GetRasterBand(1)
+    data = band.ReadRaster()
+    data = struct.unpack('B' * 4, data)
+    assert data == (1, 1, 0, 1)
+
+    ds = gdal.Open('BAG:"data/bag/test_georef_metadata.bag":georef_metadata:layer_with_values_only:0:1')
+    assert ds is not None
+    assert ds.RasterXSize == 2
+    assert ds.RasterYSize == 2
+    assert ds.RasterCount == 1
+    band = ds.GetRasterBand(1)
+    data = band.ReadRaster()
+    data = struct.unpack('B' * 4, data)
+    assert data == (1, 0, 1, 1)

@@ -169,6 +169,30 @@ MODE open option:
    -  NODATA_VALUE=value. Override the default value, which is usually
       1000000.
 
+Spatial metadata support
+------------------------
+
+Starting with GDAL 3.2, GDAL can expose BAG files with `spatial metadata
+<https://github.com/OpenNavigationSurface/BAG/issues/2>`__.
+
+When such spatial metadata is present, the subdataset list will include
+names of the form 'BAG:"{filename}":georef_metadata:{name_of_layer}'
+where ``name_of_layer`` is the name of a subgroup under ``/BAG_root/Georef_metadata``
+
+The values of the ``keys`` dataset under each metadata layer are used as the
+GDAL raster value. And the corresponding ``values`` dataset is exposed as a
+GDAL Raster Attribute Table associated to the GDAL raster band. If ``keys``
+is absent, record 1 of ``values`` is assumed to be met for each elevation point
+that does not match the nodata value of the elevation band.
+
+When variable resolution grids are present, the MODE=LIST_SUPERGRIDS open option
+will cause subdatasets of names of the form 'BAG:"{filename}":georef_metadata:{name_of_layer}:{y}:{x}'
+to be reported. When opening such a subdataset, the ``varres_keys`` dataset will
+be used to populate the GDAL raster value.
+If ``varres_keys`` is absent, record 1 of ``values`` is assumed to be met for
+each elevation point that does not match the nodata value of the variable resultion
+elevation band.
+
 Creation support
 ----------------
 
