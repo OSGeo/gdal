@@ -97,8 +97,8 @@ the working of the underlying HDF5 format.
 See Also
 --------
 
--  `libkea bitbucket
-   repository <https://bitbucket.org/chchrsc/kealib>`__
+-  `libkea GitHub
+   repository <https://github.com/ubarsc/kealib>`__
 -  `The KEAimage file format, by Peter Bunting and Sam Gillingham,
    published in
    Computers&Geosciences <http://www.sciencedirect.com/science/article/pii/S0098300413001015>`__
