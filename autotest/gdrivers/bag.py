@@ -591,34 +591,6 @@ def test_bag_vr_resampled_mask():
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4552
 
-
-###############################################################################
-#
-
-
-def test_bag_vr_resampled_interpolated():
-
-    ds = gdal.OpenEx('data/bag/test_vr.bag',
-                     open_options=['MODE=RESAMPLED_GRID',
-                                   'INTERPOLATION=INVDIST'])
-    cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 2107
-
-    # Test overviews
-    with gdaltest.config_option('GDAL_BAG_MIN_OVR_SIZE', '4'):
-        ds = gdal.OpenEx('data/bag/test_vr.bag',
-                         open_options=['MODE=RESAMPLED_GRID'])
-    assert ds.GetRasterBand(1).GetOverviewCount() == 2
-
-    # Incompatible options
-    with gdaltest.error_handler():
-        ds = gdal.OpenEx('data/bag/test_vr.bag',
-                         open_options=['MODE=RESAMPLED_GRID',
-                                       'SUPERGRIDS_MASK=YES',
-                                       'INTERPOLATION=INVDIST'])
-    assert ds is None
-
-
 ###############################################################################
 #
 

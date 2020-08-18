@@ -96,9 +96,8 @@ MODE open option:
    the driver will find the nodes of the supergrids that fall into that
    cell. By default, it will select the node with the maximum elevation
    value to populate the cell value. Or if no node of any supergrid are
-   found, the cell value will be set to the nodata value. Interpolation
-   of cells at nodata value can also be done using a inverse distance
-   weighting interpolation. Overviews are reported: note that, those
+   found, the cell value will be set to the nodata value.
+   Overviews are reported: note that, those
    overviews correspond to resampled grids computed with different
    values of the RESX and RESY parameters, but using the same value
    population rules (and not nearest neighbour resampling of the full
@@ -162,10 +161,6 @@ MODE open option:
       if elevation values at nodata are due to no source supergrid node
       falling into them, or if that/those supergrid nodes were
       themselves at the nodata value.
-   -  INTERPOLATION=NO/INVDIST. Default to NO. If set to INVDIST, a
-      inverse distance weighting interpolation of nodata values is
-      applied after the above describe value population. Interpolation
-      cannot be used together with SUPERGRIDS_MASK=YES.
    -  NODATA_VALUE=value. Override the default value, which is usually
       1000000.
 
@@ -312,8 +307,7 @@ Usage examples
       $ gdalinfo BAG:"data/test_vr.bag":supergrid:3:5
 
 -  Converting a BAG in resampling mode with default parameters (use of
-   minimum resolution of supergrids, MAX value population rule, no
-   interpolation):
+   minimum resolution of supergrids, MAX value population rule):
 
    ::
 
@@ -332,13 +326,6 @@ Usage examples
    ::
 
       $ gdal_translate data/test_vr.bag -oo MODE=RESAMPLED_GRID -oo SUPERGRIDS_MASK=YES out.tif
-
--  Converting a BAG in resampling mode, with interpolation of nodata
-   values.
-
-   ::
-
-      $ gdal_translate data/test_vr.bag -oo MODE=RESAMPLED_GRID -oo INTERPOLATION=INVDIST out.tif
 
 -  Converting a BAG in resampling mode, by filtering on supergrid
    resolutions (and the resampled grid will use 4 meter resolution by

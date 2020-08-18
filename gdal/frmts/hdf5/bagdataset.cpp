@@ -96,7 +96,6 @@ class BAGDataset final: public GDALPamDataset
     friend class BAGBaseBand;
     friend class BAGResampledBand;
     friend class BAGGeorefMDSuperGridBand;
-    friend class BAGInterpolatedBand;
 
     bool         m_bReportVertCRS = true;
 
@@ -111,7 +110,6 @@ class BAGDataset final: public GDALPamDataset
 
     bool         m_bIsChild = false;
     std::vector<std::unique_ptr<BAGDataset>> m_apoOverviewDS{};
-    std::unique_ptr<BAGDataset> m_poUninterpolatedDS{};
 
     std::shared_ptr<GDAL::HDF5SharedResources> m_poSharedResources{};
     std::shared_ptr<GDALGroup> m_poRootGroup{};
@@ -315,7 +313,6 @@ public:
 class BAGResampledBand final: public BAGBaseBand
 {
     friend class BAGDataset;
-    friend class BAGInterpolatedBand;
 
     bool        m_bMinMaxSet = false;
     double      m_dfMinimum = 0.0;
@@ -329,26 +326,6 @@ public:
     virtual ~BAGResampledBand();
 
     void            InitializeMinMax();
-
-    CPLErr          IReadBlock( int, int, void * ) override;
-
-    double GetMinimum( int *pbSuccess = nullptr ) override;
-    double GetMaximum( int *pbSuccess = nullptr ) override;
-};
-
-/************************************************************************/
-/* ==================================================================== */
-/*                          BAGInterpolatedBand                         */
-/* ==================================================================== */
-/************************************************************************/
-
-class BAGInterpolatedBand final: public BAGBaseBand
-{
-    BAGResampledBand* m_poUninterpolatedBand = nullptr;
-
-public:
-    BAGInterpolatedBand( BAGDataset *, int nBandIn);
-    virtual ~BAGInterpolatedBand();
 
     CPLErr          IReadBlock( int, int, void * ) override;
 
@@ -1147,616 +1124,6 @@ CPLErr BAGResampledBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     return CE_None;
 }
 
-/************************************************************************/
-/*                        BAGInterpolatedBand()                         */
-/************************************************************************/
-
-BAGInterpolatedBand::BAGInterpolatedBand( BAGDataset *poDSIn, int nBandIn)
-{
-    poDS = poDSIn;
-    nBand = nBandIn;
-    m_poUninterpolatedBand = cpl::down_cast<BAGResampledBand*>(
-        poDSIn->m_poUninterpolatedDS->GetRasterBand(nBand));
-    m_poUninterpolatedBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
-    eDataType = m_poUninterpolatedBand->GetRasterDataType();
-    GDALRasterBand::SetDescription( m_poUninterpolatedBand->GetDescription() );
-    m_poUninterpolatedBand->m_fNoSuperGridValue = std::numeric_limits<float>::infinity();
-    m_fNoDataValue = m_poUninterpolatedBand->m_fNoDataValue;
-    m_bHasNoData = m_poUninterpolatedBand->m_bHasNoData;
-}
-
-/************************************************************************/
-/*                        ~BAGInterpolatedBand()                        */
-/************************************************************************/
-
-BAGInterpolatedBand::~BAGInterpolatedBand() = default;
-
-/************************************************************************/
-/*                             GetMinimum()                             */
-/************************************************************************/
-
-double BAGInterpolatedBand::GetMinimum( int * pbSuccess )
-
-{
-    return m_poUninterpolatedBand->GetMinimum(pbSuccess);
-}
-
-/************************************************************************/
-/*                             GetMaximum()                             */
-/************************************************************************/
-
-double BAGInterpolatedBand::GetMaximum( int *pbSuccess )
-
-{
-    return m_poUninterpolatedBand->GetMaximum(pbSuccess);
-}
-
-/************************************************************************/
-/*                             IReadBlock()                             */
-/************************************************************************/
-
-#ifdef OLD_MANUAL_INTERPOLATION_WHICH_CAN_BE_SLOW_WITH_BIG_RADIUS
-CPLErr BAGInterpolatedBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                     void *pImage )
-{
-    BAGDataset* poGDS = cpl::down_cast<BAGDataset*>(poDS);
-
-    GDALRasterBlock* poBlock =
-        m_poUninterpolatedBand->GetLockedBlockRef(nBlockXOff, nBlockYOff);
-    if( !poBlock )
-    {
-        return CE_Failure;
-    }
-    const float* pafSrcValues = static_cast<float*>(poBlock->GetDataRef());
-    float* pafValues = static_cast<float*>(pImage);
-    const int nReqCountX = std::min(nBlockXSize,
-                              nRasterXSize - nBlockXOff * nBlockXSize);
-    const int nReqCountY = std::min(nBlockYSize,
-                              nRasterYSize - nBlockYOff * nBlockYSize);
-    if( nReqCountX < nBlockXSize || nReqCountY < nBlockYSize )
-    {
-        GDALCopyWords(&poGDS->m_fNoDataValue, GDT_Float32, 0,
-                    pImage, GDT_Float32, static_cast<int>(sizeof(float)),
-                    nBlockXSize * nBlockYSize);
-    }
-    const int nXBlocks = (nRasterXSize + nBlockXSize - 1) / nBlockXSize;
-    const int nYBlocks = (nRasterYSize + nBlockYSize - 1) / nBlockYSize;
-
-    // Create memory space to receive the data.
-    hsize_t countVarresMD[2] = { static_cast<hsize_t>(1), static_cast<hsize_t>(1)};
-    const hid_t memspaceVarresMD = H5Screate_simple(2, countVarresMD, nullptr);
-    H5OFFSET_TYPE mem_offset[2] = { static_cast<H5OFFSET_TYPE>(0),
-                                    static_cast<H5OFFSET_TYPE>(0) };
-    if( H5Sselect_hyperslab(memspaceVarresMD, H5S_SELECT_SET,
-                            mem_offset, nullptr, countVarresMD, nullptr) < 0 )
-    {
-        H5Sclose(memspaceVarresMD);
-        poBlock->DropLock();
-        return CE_Failure;
-    }
-    const double dfLowResResX = (poGDS->m_dfLowResMaxX -
-                    poGDS->m_dfLowResMinX) / poGDS->m_nLowResWidth;
-    const double dfLowResResY = (poGDS->m_dfLowResMaxY -
-                        poGDS->m_dfLowResMinY) / poGDS->m_nLowResHeight;
-
-    int nLastLowResX = -1;
-    int nLastLowResY = -1;
-    bool bLastSupergridPresent = false;
-    for(int y = 0; y < nReqCountY; y++ )
-    {
-        const double dfY = poGDS->adfGeoTransform[3] +
-            (nBlockYOff * nBlockYSize + y + 0.5) * poGDS->adfGeoTransform[5];
-        const int nLowResY = static_cast<int>((dfY - poGDS->m_dfLowResMinY) / dfLowResResY);
-
-        for(int x = 0; x < nReqCountX; x++ )
-        {
-            if( pafSrcValues[y * nBlockXSize + x] !=
-                            m_poUninterpolatedBand->m_fNoSuperGridValue )
-            {
-                pafValues[y * nBlockXSize + x] =
-                    pafSrcValues[y * nBlockXSize + x];
-                continue;
-            }
-
-            const double dfX = poGDS->adfGeoTransform[0] +
-                (nBlockXOff * nBlockXSize + x + 0.5) * poGDS->adfGeoTransform[1];
-            const int nLowResX = static_cast<int>((dfX - poGDS->m_dfLowResMinX) / dfLowResResX);
-            if( nLowResX < 0 || nLowResY < 0 ||
-                nLowResX >= poGDS->m_nLowResWidth ||
-                nLowResY >= poGDS->m_nLowResHeight )
-            {
-                pafValues[y * nBlockXSize + x] = poGDS->m_fNoDataValue;
-                continue;
-            }
-            if( nLowResX != nLastLowResX ||
-                nLowResY != nLastLowResY )
-            {
-                BAGRefinementGrid rgrid;
-                nLastLowResX = nLowResX;
-                nLastLowResY = nLowResY;
-                bLastSupergridPresent =
-                    poGDS->ReadVarresMetadataValue(nLowResY, nLowResX,
-                                                   memspaceVarresMD,
-                                                   &rgrid, 1, 1) &&
-                    rgrid.nWidth > 0;
-            }
-            if( !bLastSupergridPresent )
-            {
-                pafValues[y * nBlockXSize + x] = poGDS->m_fNoDataValue;
-                continue;
-            }
-
-
-            bool bFoundOctant[8] = {};
-            bool bStop = false;
-
-#ifdef notdef
-            bool bTrace = false;
-            if( nBlockXOff * nBlockXSize + x == 3461 &&
-                nBlockYOff * nBlockYSize + y == 4116 )
-            {
-                bTrace = true;
-            }
-#endif
-
-            unsigned maxDistSquare = std::numeric_limits<unsigned>::max();
-            for(unsigned radius = 1; radius <= 8; radius++ )
-            {
-                for( unsigned idx = 0; idx < 8 * radius; idx++ )
-                {
-                    int y2, x2;
-                    if( idx < 2 * radius )
-                    {
-                        y2 = y - radius;
-                        x2 = x - radius + idx;
-                    }
-                    else if( idx < 4U * radius )
-                    {
-                        x2 = x + radius;
-                        y2 = y - radius + (idx - 2U * radius);
-                    }
-                    else if( idx < 6 * radius )
-                    {
-                        y2 = y + radius;
-                        x2 = x - radius + (idx - 4U * radius);
-                    }
-                    else
-                    {
-                        x2 = x - radius;
-                        y2 = y - radius + (idx - 6U * radius);
-                    }
-
-                    float fSrcValue;
-                    if( x2 >= 0 && y2 >= 0 && x2 < nReqCountX &&
-                        y2 < nReqCountY )
-                    {
-                        fSrcValue = pafSrcValues[
-                            static_cast<unsigned>(y2) *
-                                static_cast<unsigned>(nBlockXSize) +
-                                    static_cast<unsigned>(x2)];
-                    }
-                    else
-                    {
-                        int nBlockXOff2 = nBlockXOff;
-                        int nBlockYOff2 = nBlockYOff;
-                        if( x2 < 0 )
-                            nBlockXOff2--;
-                        else if( x2 >= nReqCountX )
-                            nBlockXOff2++;
-                        if( y2 < 0 )
-                            nBlockYOff2--;
-                        else if( y2 >= nReqCountY )
-                            nBlockYOff2++;
-                        if( nBlockXOff2 >= 0 && nBlockYOff2 >= 0 &&
-                            nBlockXOff2 < nXBlocks && nBlockYOff2 < nYBlocks )
-                        {
-                            GDALRasterBlock* poBlock2 =
-                                m_poUninterpolatedBand->GetLockedBlockRef(
-                                    nBlockXOff2, nBlockYOff2);
-                            if( !poBlock2 )
-                                continue;
-                            const float* pafSrcValues2 =
-                                static_cast<float*>(poBlock2->GetDataRef());
-                            fSrcValue = pafSrcValues2[
-                                (((y2 + nBlockYSize) % nBlockYSize) *
-                                    nBlockXSize) +
-                                        ((x2 + nBlockXSize) % nBlockXSize)];
-                            poBlock2->DropLock();
-                        }
-                        else
-                        {
-                            continue;
-                        }
-                    }
-
-                    if( fSrcValue == poGDS->m_fNoDataValue  )
-                    {
-                        bStop = true;
-                        pafValues[y * nBlockXSize + x] = poGDS->m_fNoDataValue;
-                        break;
-                    }
-                    if( fSrcValue !=
-                            m_poUninterpolatedBand->m_fNoSuperGridValue )
-                    {
-                        int iOctant;
-                        unsigned diffXAbs;
-                        unsigned diffYAbs;
-                        if( y2 < y )
-                        {
-                            diffYAbs = y - y2;
-                            if( x2 < x )
-                            {
-                                diffXAbs = x - x2;
-                                iOctant = 0;
-                            }
-                            else if( x2 == x )
-                            {
-                                diffXAbs = 0;
-                                iOctant = 1;
-                            }
-                            else
-                            {
-                                diffXAbs = x2 - x;
-                                iOctant = 2;
-                            }
-                        }
-                        else if( y2 == y )
-                        {
-                            diffYAbs = 0;
-                            if( x2 < x )
-                            {
-                                diffXAbs = x - x2;
-                                iOctant = 7;
-                            }
-                            else
-                            {
-                                diffXAbs = x2 - x;
-                                iOctant = 3;
-                            }
-                        }
-                        else
-                        {
-                            diffYAbs = y2 - y;
-                            if( x2 < x )
-                            {
-                                diffXAbs = x - x2;
-                                iOctant = 6;
-                            }
-                            else if( x2 == x )
-                            {
-                                diffXAbs = 0;
-                                iOctant = 5;
-                            }
-                            else
-                            {
-                                diffXAbs = x2 - x;
-                                iOctant = 4;
-                            }
-                        }
-
-                        bFoundOctant[iOctant] = true;
-                        unsigned distSquare = diffXAbs * diffXAbs +
-                                                diffYAbs * diffYAbs;
-#ifdef notdef
-                        if( bTrace )
-                        {
-                            fprintf(stderr, "%d,%d -> %d, %u, %f\n", /* ok */
-                                    y2, x2, iOctant, distSquare, fSrcValue);
-                        }
-#endif
-                        if( distSquare < maxDistSquare )
-                        {
-                            pafValues[y * nBlockXSize + x] = fSrcValue;
-                            maxDistSquare = distSquare;
-                        }
-
-                        if( (bFoundOctant[0] && bFoundOctant[4]) ||
-                            (bFoundOctant[1] && bFoundOctant[5]) ||
-                            (bFoundOctant[2] && bFoundOctant[6]) ||
-                            (bFoundOctant[3] && bFoundOctant[7]) )
-                        {
-                            bStop = true;
-                            break;
-                        }
-                    }
-                }
-                if( bStop )
-                {
-                    break;
-                }
-            }
-            if( !bStop )
-            {
-                pafValues[y * nBlockXSize + x] = poGDS->m_fNoDataValue;
-            }
-        }
-    }
-    poBlock->DropLock();
-    H5Sclose(memspaceVarresMD);
-    return CE_None;
-}
-#endif // OLD_MANUAL_INTERPOLATION_WHICH_CAN_BE_SLOW_WITH_BIG_RADIUS
-
-
-CPLErr BAGInterpolatedBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                        void *pImage )
-{
-    BAGDataset* poGDS = cpl::down_cast<BAGDataset*>(poDS);
-    GDALDriverH hMemDriver = GDALGetDriverByName("MEM");
-    if( !hMemDriver )
-        return CE_Failure;
-
-    const int nReqCountX = std::min(nBlockXSize,
-                              nRasterXSize - nBlockXOff * nBlockXSize);
-    const int nReqCountY = std::min(nBlockYSize,
-                              nRasterYSize - nBlockYOff * nBlockYSize);
-    const int nXBlocks = (nRasterXSize + nBlockXSize - 1) / nBlockXSize;
-    const int nYBlocks = (nRasterYSize + nBlockYSize - 1) / nBlockYSize;
-
-    // This should not be larger than the block dimension, otherwise we
-    // would need to fetch more neighbour blocks.
-    const int nSearchDist = 64;
-
-    // Instantiate a temporary buffer that contains the target block, and
-    // its neighbour blocks.
-    int nBufferXSize = nBlockXSize;
-    int nBufferXInterestOff = 0;
-    if( nBlockXOff > 0 )
-    {
-        nBufferXInterestOff = nBlockXSize;
-        nBufferXSize += nBlockXSize;
-    }
-    if( nBlockXOff + 1 < nXBlocks )
-    {
-        nBufferXSize += nBlockXSize;
-    }
-
-    int nBufferYSize = nBlockYSize;
-    int nBufferYInterestOff = 0;
-    if( nBlockYOff > 0 )
-    {
-        nBufferYInterestOff = nBlockYSize;
-        nBufferYSize += nBlockYSize;
-    }
-    if( nBlockYOff + 1 < nYBlocks )
-    {
-        nBufferYSize += nBlockYSize;
-    }
-
-    std::vector<float> afBuffer(nBufferXSize * nBufferYSize);
-
-    // Create a in-memory dataset wrapping afBuffer
-    GDALDataset* poDSToInterpolate =
-        reinterpret_cast<GDALDriver*>(hMemDriver)->Create(
-            "band_to_interpolate", nBufferXSize, nBufferYSize,
-            0, GDT_Float32, nullptr);
-    {
-        char szBuffer[32] = { '\0' };
-        int nRet =
-            CPLPrintPointer(szBuffer, afBuffer.data(), sizeof(szBuffer));
-        szBuffer[nRet] = '\0';
-        char szBuffer0[64] = { '\0' };
-        snprintf(szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer);
-        char* apszOptions[2] = { szBuffer0, nullptr };
-        poDSToInterpolate->AddBand(GDT_Float32, apszOptions);
-    }
-
-    // Create memory space to receive the data.
-    hsize_t countVarresMD[2] = { static_cast<hsize_t>(1), static_cast<hsize_t>(1)};
-    const hid_t memspaceVarresMD = H5Screate_simple(2, countVarresMD, nullptr);
-    H5OFFSET_TYPE mem_offset[2] = { static_cast<H5OFFSET_TYPE>(0),
-                                    static_cast<H5OFFSET_TYPE>(0) };
-    if( H5Sselect_hyperslab(memspaceVarresMD, H5S_SELECT_SET,
-                            mem_offset, nullptr, countVarresMD, nullptr) < 0 )
-    {
-        H5Sclose(memspaceVarresMD);
-        return CE_Failure;
-    }
-
-    const double dfLowResResX = (poGDS->m_dfLowResMaxX -
-                    poGDS->m_dfLowResMinX) / poGDS->m_nLowResWidth;
-    const double dfLowResResY = (poGDS->m_dfLowResMaxY -
-                    poGDS->m_dfLowResMinY) / poGDS->m_nLowResHeight;
-
-    int nLastLowResX = -1;
-    int nLastLowResY = -1;
-    bool bLastSupergridPresent = false;
-    std::vector<GByte> abyMask(nBufferXSize * nBufferYSize, 1);
-
-    // Loop over blocks in Y direction
-    for(int iY = ((nBlockYOff > 0) ? -1 : 0),
-            nOutYOffset = 0;
-            iY <= ((nBlockYOff + 1 < nYBlocks) ? 1: 0);
-            iY++,
-            nOutYOffset += nBlockYSize )
-    {
-        int ymin = 0;
-        int ymax = nBlockYSize;
-        if( iY == 0 )
-        {
-            ymax = nReqCountY;
-        }
-        else if( iY == -1 )
-        {
-            ymin = std::max(ymin, nBlockYSize - nSearchDist);
-        }
-        else if( iY == 1 )
-        {
-            ymax = std::min(ymax, nSearchDist);
-        }
-
-        // Loop over blocks in X direction
-        for(int iX = ((nBlockXOff > 0) ? -1 : 0),
-                nOutXOffset = 0;
-                iX <= ((nBlockXOff + 1 < nXBlocks) ? 1: 0);
-                iX++,
-                nOutXOffset += nBlockXSize )
-        {
-            int xmin = 0;
-            int xmax = nBlockXSize;
-            if( iX == 0 )
-            {
-                xmax = nReqCountX;
-            }
-            else if( iX == -1 )
-            {
-                xmin = std::max(xmin, nBlockXSize - nSearchDist);
-            }
-            else if( iX == 1 )
-            {
-                xmax = std::min(xmax, nSearchDist);
-            }
-
-            // Copy block data into afBuffer
-            GDALRasterBlock* poBlock =
-                m_poUninterpolatedBand->GetLockedBlockRef(
-                    nBlockXOff + iX, nBlockYOff + iY);
-            if( !poBlock )
-            {
-                H5Sclose(memspaceVarresMD);
-                return CE_Failure;
-            }
-
-            const float* pafSrcValues = static_cast<float*>(poBlock->GetDataRef());
-            for( int y = 0; y < nBlockYSize; y++ )
-            {
-                float* pafDstValues = afBuffer.data() +
-                            nBufferXSize * nOutYOffset +
-                            nOutXOffset + y * nBufferXSize;
-                memcpy(pafDstValues,
-                       pafSrcValues + y * nBlockXSize,
-                       sizeof(float) * nBlockXSize);
-
-                // Replace m_fNoSuperGridValue by m_fNoDataValue
-                // Note: we could likely just make them equal in the first place.
-                for( int x = 0; x < nBlockXSize; x++ )
-                {
-                    if( pafDstValues[x] ==
-                            m_poUninterpolatedBand->m_fNoSuperGridValue )
-                    {
-                        pafDstValues[x] = m_fNoDataValue;
-                    }
-                }
-            }
-            poBlock->DropLock();
-
-            for( int y = ymin; y < ymax; y++ )
-            {
-                const double dfY = poGDS->adfGeoTransform[3] +
-                    ((nBlockYOff + iY) * nBlockYSize + y + 0.5) *
-                        poGDS->adfGeoTransform[5];
-                const int nLowResY = static_cast<int>(
-                    (dfY - poGDS->m_dfLowResMinY) / dfLowResResY);
-
-                for( int x = xmin; x < xmax; x++ )
-                {
-                    const int nMaskOffset = (y + nOutYOffset) * nBufferXSize +
-                                            (x + nOutXOffset);
-
-                    // Figure out if the target pixel is within a supergrid
-                    // If not, we should not interpolate it
-                    const double dfX = poGDS->adfGeoTransform[0] +
-                        ((nBlockXOff + iX) * nBlockXSize + x + 0.5) *
-                            poGDS->adfGeoTransform[1];
-                    const int nLowResX = static_cast<int>(
-                        (dfX - poGDS->m_dfLowResMinX) / dfLowResResX);
-                    if( nLowResX < 0 || nLowResY < 0 ||
-                        nLowResX >= poGDS->m_nLowResWidth ||
-                        nLowResY >= poGDS->m_nLowResHeight )
-                    {
-                        afBuffer[nMaskOffset] = m_fNoDataValue;
-                        continue;
-                    }
-                    if( nLowResX != nLastLowResX ||
-                        nLowResY != nLastLowResY )
-                    {
-                        BAGRefinementGrid rgrid;
-                        nLastLowResX = nLowResX;
-                        nLastLowResY = nLowResY;
-                        bLastSupergridPresent = 
-                            poGDS->ReadVarresMetadataValue(nLowResY, nLowResX,
-                                                        memspaceVarresMD,
-                                                        &rgrid, 1, 1) &&
-                            rgrid.nWidth > 0;
-                        if( bLastSupergridPresent )
-                        {
-                            const float gridRes = std::max(rgrid.fResX,
-                                                           rgrid.fResY);
-                            bLastSupergridPresent =
-                                (gridRes > poGDS->m_dfResFilterMin &&
-                                gridRes <= poGDS->m_dfResFilterMax);
-                        }
-                    }
-                    if( !bLastSupergridPresent )
-                    {
-                        afBuffer[nMaskOffset] = m_fNoDataValue;
-                        continue;
-                    }
-
-                    // If the target pixel is nodata, interpolate it
-                    if( afBuffer[nMaskOffset] == m_fNoDataValue )
-                    {
-                        abyMask[nMaskOffset] = 0;
-                    }
-                }
-            }
-        }
-    }
-
-    H5Sclose(memspaceVarresMD);
-
-    // Create a in-memory dataset wrapping abyMask
-    GDALDataset* poDSMask =
-        reinterpret_cast<GDALDriver*>(hMemDriver)->Create(
-            "mask", nBufferXSize, nBufferYSize,
-            0, GDT_Byte, nullptr);
-    {
-        char szBuffer[32] = { '\0' };
-        int nRet =
-            CPLPrintPointer(szBuffer, abyMask.data(), sizeof(szBuffer));
-        szBuffer[nRet] = '\0';
-        char szBuffer0[64] = { '\0' };
-        snprintf(szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer);
-        char* apszOptions[2] = { szBuffer0, nullptr };
-        poDSMask->AddBand(GDT_Byte, apszOptions);
-    }
-
-    // Run GDALFillNodata() to do the actual interpolation
-    {
-        const double dfMaxSearchDist = nSearchDist;
-        const int nSmoothingIterations = 0;
-        char** papszOptions = CSLSetNameValue(nullptr, "TEMP_FILE_DRIVER", "MEM");
-        papszOptions = CSLSetNameValue(papszOptions, "NODATA",
-                    CPLSPrintf("%.9g", m_fNoDataValue));
-        GDALFillNodata(
-            GDALRasterBand::ToHandle(poDSToInterpolate->GetRasterBand(1)),
-            GDALRasterBand::ToHandle(poDSMask->GetRasterBand(1)),
-            dfMaxSearchDist,
-            false, /* unused */
-            nSmoothingIterations,
-            papszOptions,
-            nullptr, nullptr /* progress */);
-        CSLDestroy(papszOptions);
-    }
-
-    // Cleanup temporary in-memory datasets
-    delete poDSToInterpolate;
-    delete poDSMask;
-
-    // Recopy are of interest from temporary buffer to final buffer
-    float* pafValues = static_cast<float*>(pImage);
-    for(int iY = 0; iY < nBlockYSize; iY++)
-    {
-        memcpy(pafValues + iY * nBlockXSize,
-               afBuffer.data() +
-                (iY + nBufferYInterestOff) * nBufferXSize + nBufferXInterestOff,
-               nBlockXSize * sizeof(float));
-    }
-
-    return CE_None;
-}
-
-
 static GDALRasterAttributeTable* CreateRAT( const std::shared_ptr<GDALMDArray>& poValues )
 {
     auto poRAT = new GDALDefaultRasterAttributeTable();
@@ -2189,7 +1556,6 @@ BAGDataset::~BAGDataset()
 {
     FlushCache();
 
-    m_poUninterpolatedDS.reset();
     m_apoOverviewDS.clear();
     if( !m_bIsChild )
     {
@@ -2845,52 +2211,20 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
                                         dfMaxX >= poDS->m_dfLowResMaxX &&
                                         dfMaxY >= poDS->m_dfLowResMaxY );
 
-        const char* pszInterpolation = CSLFetchNameValueDef(
-            poOpenInfo->papszOpenOptions, "INTERPOLATION", "NO");
-        if( !EQUAL(pszInterpolation, "NO") && !EQUAL(pszInterpolation, "INVDIST") )
+        if( poDS->m_bMask )
         {
-            CPLError(CE_Warning, CPLE_NotSupported,
-                     "Unsupported value for INTERPOLATION. Assuming NO");
-            pszInterpolation = "NO";
-        }
-        if( !EQUAL(pszInterpolation, "NO") && poDS->m_bMask )
-        {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                        "SUPERGRIDS_MASK=NO cannot be used together "
-                        "with INTERPOLATION.");
-            delete poDS;
-            return nullptr;
-        }
-        if( EQUAL(pszInterpolation, "INVDIST") )
-        {
-            poDS->m_poUninterpolatedDS.reset(new BAGDataset(poDS, 1));
-            poDS->m_poUninterpolatedDS->SetBand(1, new BAGResampledBand(
-                poDS->m_poUninterpolatedDS.get(), 1, bHasNoData, fNoDataValue,
-                bInitializeMinMax));
-            poDS->m_poUninterpolatedDS->SetBand(2, new BAGResampledBand(
-                poDS->m_poUninterpolatedDS.get(), 2, bHasNoData, fNoDataValue,
-                bInitializeMinMax));
-
-            poDS->SetBand(1, new BAGInterpolatedBand(poDS, 1));
-            poDS->SetBand(2, new BAGInterpolatedBand(poDS, 2));
+            poDS->SetBand(1, new BAGResampledBand(poDS, 1,
+                                                    false, 0.0f, false));
         }
         else
         {
-            if( poDS->m_bMask )
-            {
-                poDS->SetBand(1, new BAGResampledBand(poDS, 1,
-                                                      false, 0.0f, false));
-            }
-            else
-            {
-                poDS->SetBand(1, new BAGResampledBand(poDS, 1, bHasNoData,
-                                                  fNoDataValue,
-                                                  bInitializeMinMax));
+            poDS->SetBand(1, new BAGResampledBand(poDS, 1, bHasNoData,
+                                                fNoDataValue,
+                                                bInitializeMinMax));
 
-                poDS->SetBand(2, new BAGResampledBand(poDS, 2, bHasNoData,
-                                                      fNoDataValue,
-                                                      bInitializeMinMax));
-            }
+            poDS->SetBand(2, new BAGResampledBand(poDS, 2, bHasNoData,
+                                                    fNoDataValue,
+                                                    bInitializeMinMax));
         }
 
         if( poDS->GetRasterCount() > 1 )
@@ -2909,28 +2243,10 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
         {
             BAGDataset* poOvrDS = new BAGDataset(poDS, nOvrFactor);
 
-            if( EQUAL(pszInterpolation, "INVDIST") )
-            {
-                poOvrDS->m_poUninterpolatedDS.reset(new BAGDataset(poOvrDS, 1));
-                poOvrDS->m_poUninterpolatedDS->SetBand(1, new BAGResampledBand(
-                    poOvrDS->m_poUninterpolatedDS.get(), 1, bHasNoData,
-                    fNoDataValue, bInitializeMinMax));
-                poOvrDS->m_poUninterpolatedDS->SetBand(2, new BAGResampledBand(
-                    poOvrDS->m_poUninterpolatedDS.get(), 2, bHasNoData,
-                    fNoDataValue, bInitializeMinMax));
-            }
-
             for( int i = 1; i <= poDS->GetRasterCount(); i++ )
             {
-                if( EQUAL(pszInterpolation, "INVDIST") )
-                {
-                    poOvrDS->SetBand(i, new BAGInterpolatedBand(poOvrDS, i));
-                }
-                else
-                {
-                    poOvrDS->SetBand(i, new BAGResampledBand(poOvrDS, i,
-                                            bHasNoData, fNoDataValue, false));
-                }
+                poOvrDS->SetBand(i, new BAGResampledBand(poOvrDS, i,
+                                        bHasNoData, fNoDataValue, false));
             }
 
             if( poOvrDS->GetRasterCount() > 1 )
@@ -5199,8 +4515,6 @@ void GDALRegister_BAG()
     "'Whether the dataset should consist of a mask band indicating if a "
     "supergrid node matches each target pixel. Only used for "
     "MODE=RESAMPLED_GRID' default='NO'/>"
-"   <Option name='INTERPOLATION' type='string' description="
-    "'Interpolation method. Currently only INVDIST supported' default='NO'/>"
 "   <Option name='NODATA_VALUE' type='float' default='1000000'/>"
 "   <Option name='REPORT_VERTCRS' type='boolean' default='YES'/>"
 "</OpenOptionList>" );
