@@ -61,8 +61,6 @@ def check_no_file_leaks():
 
 
 def test_bag_2():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
 
     ds = gdal.Open('data/bag/true_n_nominal.bag')
 
@@ -105,8 +103,6 @@ def test_bag_2():
 
 
 def test_bag_3():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
 
     ds = gdal.Open('data/bag/southern_hemi_false_northing.bag')
 
@@ -130,8 +126,6 @@ def test_bag_3():
 
 
 def test_bag_read_resolution():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
 
     # BAG version 1.1
     ds = gdal.Open('data/bag/true_n_nominal.bag')
@@ -158,8 +152,6 @@ def test_bag_read_resolution():
 
 
 def test_bag_vr_normal():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
 
     ds = gdal.Open('data/bag/test_vr.bag')
     assert ds is not None
@@ -187,8 +179,10 @@ def test_bag_vr_normal():
              'min': 0.0,
              'noDataValue': 1000000.0,
              'type': 'Float32'}],
-        'coordinateSystem': {'dataAxisToSRSAxisMapping': [1, 2],
-                             'wkt': 'PROJCS["NAD83 / UTM zone 10N",\n    GEOGCS["NAD83",\n        DATUM["North_American_Datum_1983",\n            SPHEROID["GRS 1980",6378137,298.257222101004,\n                AUTHORITY["EPSG","7019"]],\n            TOWGS84[0,0,0,0,0,0,0],\n            AUTHORITY["EPSG","6269"]],\n        PRIMEM["Greenwich",0,\n            AUTHORITY["EPSG","8901"]],\n        UNIT["degree",0.0174532925199433,\n            AUTHORITY["EPSG","9122"]],\n        AUTHORITY["EPSG","4269"]],\n    PROJECTION["Transverse_Mercator"],\n    PARAMETER["latitude_of_origin",0],\n    PARAMETER["central_meridian",-123],\n    PARAMETER["scale_factor",0.9996],\n    PARAMETER["false_easting",500000],\n    PARAMETER["false_northing",0],\n    UNIT["metre",1,\n        AUTHORITY["EPSG","9001"]],\n    AXIS["Easting",EAST],\n    AXIS["Northing",NORTH],\n    AUTHORITY["EPSG","26910"]]'},
+         'coordinateSystem': {
+            'dataAxisToSRSAxisMapping': [1, 2, 3],
+            'wkt': 'COMPD_CS["NAD83 / UTM zone 10N + MLLW depth",\n    PROJCS["NAD83 / UTM zone 10N",\n        GEOGCS["NAD83",\n            DATUM["North_American_Datum_1983",\n                SPHEROID["GRS 1980",6378137,298.257222101004,\n                    AUTHORITY["EPSG","7019"]],\n                TOWGS84[0,0,0,0,0,0,0],\n                AUTHORITY["EPSG","6269"]],\n            PRIMEM["Greenwich",0,\n                AUTHORITY["EPSG","8901"]],\n            UNIT["degree",0.0174532925199433,\n                AUTHORITY["EPSG","9122"]],\n            AUTHORITY["EPSG","4269"]],\n        PROJECTION["Transverse_Mercator"],\n        PARAMETER["latitude_of_origin",0],\n        PARAMETER["central_meridian",-123],\n        PARAMETER["scale_factor",0.9996],\n        PARAMETER["false_easting",500000],\n        PARAMETER["false_northing",0],\n        UNIT["metre",1,\n            AUTHORITY["EPSG","9001"]],\n        AXIS["Easting",EAST],\n        AXIS["Northing",NORTH],\n        AUTHORITY["EPSG","26910"]],\n    VERT_CS["MLLW depth",\n        VERT_DATUM["Mean Lower Low Water",2005,\n            AUTHORITY["EPSG","1089"]],\n        UNIT["metre",1,\n            AUTHORITY["EPSG","9001"]],\n        AXIS["Depth",DOWN],\n        AUTHORITY["EPSG","5866"]]]'},
+
         'geoTransform': [85.0, 30.0, 0.0, 500112.0, 0.0, -32.0],
         'metadata': {'': {'AREA_OR_POINT': 'Point',
                           'BAG_DATETIME': '2018-08-08T12:34:56',
@@ -222,8 +216,6 @@ def test_bag_vr_normal():
 
 
 def test_bag_vr_list_supergrids():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
 
     ds = gdal.OpenEx('data/bag/test_vr.bag', open_options=['MODE=LIST_SUPERGRIDS'])
     assert ds is not None
@@ -279,10 +271,8 @@ def test_bag_vr_list_supergrids():
 
 
 def test_bag_vr_open_supergrids():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
 
-    ds = gdal.Open('BAG:"data/bag/test_vr.bag":supergrid:0:0')
+    ds = gdal.OpenEx('BAG:"data/bag/test_vr.bag":supergrid:0:0', open_options = ['REPORT_VERTCRS=NO'])
     assert ds is not None
 
     got_md = gdal.Info(ds, computeChecksum=True, format='json', wktFormat='WKT1')
@@ -349,10 +339,8 @@ def test_bag_vr_open_supergrids():
 
 
 def test_bag_vr_resampled():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
 
-    ds = gdal.OpenEx('data/bag/test_vr.bag', open_options=['MODE=RESAMPLED_GRID'])
+    ds = gdal.OpenEx('data/bag/test_vr.bag', open_options=['MODE=RESAMPLED_GRID', 'REPORT_VERTCRS=NO'])
     assert ds is not None
 
     got_md = gdal.Info(ds, computeChecksum=True, format='json', wktFormat='WKT1')
@@ -591,8 +579,6 @@ def test_bag_vr_resampled():
 
 
 def test_bag_vr_resampled_mask():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
 
     ds = gdal.OpenEx('data/bag/test_vr.bag',
                      open_options=['MODE=RESAMPLED_GRID',
@@ -610,8 +596,6 @@ def test_bag_vr_resampled_mask():
 
 
 def test_bag_vr_resampled_interpolated():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
 
     ds = gdal.OpenEx('data/bag/test_vr.bag',
                      open_options=['MODE=RESAMPLED_GRID',
@@ -639,8 +623,6 @@ def test_bag_vr_resampled_interpolated():
 
 
 def test_bag_write_single_band():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
 
     tst = gdaltest.GDALTest('BAG', 'byte.tif', 1, 4672)
     ret = tst.testCreateCopy(quiet_error_handler=False,
@@ -653,8 +635,6 @@ def test_bag_write_single_band():
 
 
 def test_bag_write_two_bands():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
 
     tst = gdaltest.GDALTest('BAG', 'bag/test_vr.bag', 2, 60,
                             options=['BLOCK_SIZE=2',
@@ -668,6 +648,7 @@ def test_bag_write_two_bands():
     xml = ds.GetMetadata_List('xml:BAG')[0]
     assert '<bar />' in xml
     assert 'Generated by GDAL ' in xml
+    assert 'VERT_CS["MLLW depth"' in xml
 
     gdal.Unlink('/vsimem/out.bag')
 
@@ -677,8 +658,6 @@ def test_bag_write_two_bands():
 
 
 def test_bag_write_south_up():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
 
     # Generate a south-up dataset
     src_ds = gdal.Warp('', 'data/byte.tif',
@@ -705,8 +684,6 @@ def test_bag_write_south_up():
 
 
 def test_bag_read_invalid_bag_vlen_bag_version():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
 
     os.stat('data/bag/invalid_bag_vlen_bag_version.bag')
     ds = gdal.Open('data/bag/invalid_bag_vlen_bag_version.bag')
@@ -714,8 +691,6 @@ def test_bag_read_invalid_bag_vlen_bag_version():
 
 
 def test_bag_read_incorrect_northeast_corner():
-    if gdaltest.bag_drv is None:
-        pytest.skip()
 
     ds = gdal.Open('data/bag/test_offset_ne_corner.bag')
 

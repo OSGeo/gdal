@@ -96,6 +96,8 @@ class BAGDataset final: public GDALPamDataset
     friend class BAGResampledBand;
     friend class BAGInterpolatedBand;
 
+    bool         m_bReportVertCRS = true;
+
     enum class Population
     {
         MAX,
@@ -2103,6 +2105,9 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
 
     poDS->SetDescription(poOpenInfo->pszFilename);
 
+    poDS->m_bReportVertCRS = CPLTestBool(CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "REPORT_VERTCRS", "YES"));
+
     // Load the XML metadata.
     poDS->LoadMetadata();
 
@@ -3528,13 +3533,54 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
         return OGRERR_NONE;
     }
 
-    if( STARTS_WITH_CI(pszSRCodeString, "VERTCS") )
+    if( m_bReportVertCRS &&
+        (STARTS_WITH_CI(pszSRCodeString, "VERTCS") ||
+         STARTS_WITH_CI(pszSRCodeString, "VERT_CS")) )
     {
-        CPLString oString(pszProjection);
-        CPLFree(pszProjection);
-        oString += ",";
-        oString += pszSRCodeString;
-        pszProjection = CPLStrdup(oString);
+        OGR_SRSNode oVertCRSRootNode;
+        const char* pszInput = pszSRCodeString;
+        if( oVertCRSRootNode.importFromWkt(&pszInput) == OGRERR_NONE )
+        {
+            if( oVertCRSRootNode.GetNode("UNIT") == nullptr )
+            {
+                // UNIT is required
+                auto poUnits = new OGR_SRSNode( "UNIT" );
+                poUnits->AddChild( new OGR_SRSNode( "metre" ) );
+                poUnits->AddChild( new OGR_SRSNode( "1.0" ) );
+                oVertCRSRootNode.AddChild( poUnits );
+            }
+            if( oVertCRSRootNode.GetNode("AXIS") == nullptr )
+            {
+                // If AXIS is missing, add an explicit Depth AXIS
+                auto poAxis = new OGR_SRSNode( "AXIS" );
+                poAxis->AddChild( new OGR_SRSNode( "Depth" ) );
+                poAxis->AddChild( new OGR_SRSNode( "DOWN" ) );
+                oVertCRSRootNode.AddChild( poAxis );
+            }
+
+            char* pszVertCRSWKT = nullptr;
+            oVertCRSRootNode.exportToWkt(&pszVertCRSWKT);
+
+            OGRSpatialReference oVertCRS;
+            if( oVertCRS.importFromWkt(pszVertCRSWKT) == OGRERR_NONE )
+            {
+                if( EQUAL(oVertCRS.GetName(), "MLLW") )
+                {
+                    oVertCRS.importFromEPSG(5866);
+                }
+
+                OGRSpatialReference oCompoundCRS;
+                oCompoundCRS.SetCompoundCS(
+                    (CPLString(oSRS.GetName()) + " + " + oVertCRS.GetName()).c_str(),
+                    &oSRS,
+                    &oVertCRS);
+                CPLFree(pszProjection);
+                oCompoundCRS.exportToWkt(&pszProjection);
+            }
+
+            CPLFree(pszVertCRSWKT);
+
+        }
     }
 
     CPLDestroyXMLNode(psRoot);
@@ -4571,6 +4617,7 @@ void GDALRegister_BAG()
 "   <Option name='INTERPOLATION' type='string' description="
     "'Interpolation method. Currently only INVDIST supported' default='NO'/>"
 "   <Option name='NODATA_VALUE' type='float' default='1000000'/>"
+"   <Option name='REPORT_VERTCRS' type='boolean' default='YES'/>"
 "</OpenOptionList>" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,

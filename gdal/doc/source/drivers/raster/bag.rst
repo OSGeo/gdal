@@ -36,6 +36,17 @@ Driver capabilities
 
 .. supports_virtualio::
 
+Open options
+------------
+
+For open options specific to variable resolution, see following chapter.
+
+Other open options are:
+
+- REPORT_VERTCRS=YES/NO (starting with GDAL 3.2). Defaults to YES. To report
+  the vertical CRS from BAG XML metadata as the vertical component of a
+  compound CRS. If set to NO, only the horizontal part will be reported.
+
 Variable resolution (VR) grid support
 -------------------------------------
 
