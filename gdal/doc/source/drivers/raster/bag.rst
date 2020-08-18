@@ -14,9 +14,11 @@ a specific product profile in an HDF5 file, but a custom driver exists
 to present the data in a more convenient manner than is available
 through the generic HDF5 driver.
 
-BAG files have two or three image bands representing Elevation (band 1),
-Uncertainty (band 2) and Nominal Elevation (band 3) values for each cell
-in a raster grid area.
+BAG files have two image bands representing Elevation (band 1),
+Uncertainty (band 2) values for each cell in a raster grid area.
+Nominal Elevation values may also be present, and starting with GDAL 3.2, any
+2D array of numeric data type and with the same dimensions as Elevation present
+under BAG_root will be reported as a GDAL band.
 
 The geotransform and coordinate system is extracted from the internal
 XML metadata provided with the dataset. However, some products may have

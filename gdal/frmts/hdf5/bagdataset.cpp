@@ -1933,16 +1933,34 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
             delete poUBand;
         }
 
-        // Try to do the same for the nominal_elevation band.
-        hid_t hNominal = GH5DopenNoWarning(hHDF5, "/BAG_root/nominal_elevation");
-        BAGRasterBand *const poNBand = new BAGRasterBand(poDS, nNextBand);
-        if( hNominal >= 0 && poNBand->Initialize(hNominal, "nominal_elevation") )
+        // Load other root datasets (such as nominal_elevation)
+        auto poBAG_root = poDS->m_poRootGroup->OpenGroup("BAG_root", nullptr);
+        if( poBAG_root )
         {
-            poDS->SetBand(nNextBand++, poNBand);
-        }
-        else
-        {
-            delete poNBand;
+            const auto arrayNames = poBAG_root->GetMDArrayNames(nullptr);
+            for( const auto& arrayName: arrayNames )
+            {
+                if( arrayName != "elevation" && arrayName != "uncertainty" )
+                {
+                    auto poArray = poBAG_root->OpenMDArray(arrayName, nullptr);
+                    if( poArray && poArray->GetDimensions().size() == 2 &&
+                        poArray->GetDimensions()[0]->GetSize() == static_cast<unsigned>(poDS->nRasterYSize) &&
+                        poArray->GetDimensions()[1]->GetSize() == static_cast<unsigned>(poDS->nRasterXSize) &&
+                        poArray->GetDataType().GetClass() == GEDTC_NUMERIC )
+                    {
+                        hid_t hBandId = GH5DopenNoWarning(hHDF5, ("/BAG_root/" + arrayName).c_str() );
+                        BAGRasterBand *const poBand = new BAGRasterBand(poDS, nNextBand);
+                        if( hBandId >= 0 && poBand->Initialize(hBandId, arrayName.c_str()) )
+                        {
+                            poDS->SetBand(nNextBand++, poBand);
+                        }
+                        else
+                        {
+                            delete poBand;
+                        }
+                    }
+                }
+            }
         }
     }
 
