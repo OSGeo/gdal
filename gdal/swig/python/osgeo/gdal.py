@@ -2441,6 +2441,11 @@ class Dataset(MajorObject):
         return _gdal.Dataset_RollbackTransaction(self, *args)
 
 
+    def ClearStatistics(self, *args):
+        """ClearStatistics(Dataset self)"""
+        return _gdal.Dataset_ClearStatistics(self, *args)
+
+
     def ReadRaster1(self, *args, **kwargs):
         """ReadRaster1(Dataset self, int xoff, int yoff, int xsize, int ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GIntBig * buf_band_space=None, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"""
         return _gdal.Dataset_ReadRaster1(self, *args, **kwargs)
@@ -2748,6 +2753,42 @@ class Group(_object):
 Group_swigregister = _gdal.Group_swigregister
 Group_swigregister(Group)
 
+class Statistics(_object):
+    """Proxy of C++ Statistics class."""
+
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, Statistics, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, Statistics, name)
+    __repr__ = _swig_repr
+    __swig_getmethods__["min"] = _gdal.Statistics_min_get
+    if _newclass:
+        min = _swig_property(_gdal.Statistics_min_get)
+    __swig_getmethods__["max"] = _gdal.Statistics_max_get
+    if _newclass:
+        max = _swig_property(_gdal.Statistics_max_get)
+    __swig_getmethods__["mean"] = _gdal.Statistics_mean_get
+    if _newclass:
+        mean = _swig_property(_gdal.Statistics_mean_get)
+    __swig_getmethods__["std_dev"] = _gdal.Statistics_std_dev_get
+    if _newclass:
+        std_dev = _swig_property(_gdal.Statistics_std_dev_get)
+    __swig_getmethods__["valid_count"] = _gdal.Statistics_valid_count_get
+    if _newclass:
+        valid_count = _swig_property(_gdal.Statistics_valid_count_get)
+    __swig_destroy__ = _gdal.delete_Statistics
+    __del__ = lambda self: None
+
+    def __init__(self, *args):
+        """__init__(Statistics self) -> Statistics"""
+        this = _gdal.new_Statistics(*args)
+        try:
+            self.this.append(this)
+        except __builtin__.Exception:
+            self.this = this
+Statistics_swigregister = _gdal.Statistics_swigregister
+Statistics_swigregister(Statistics)
+
 class MDArray(_object):
     """Proxy of C++ GDALMDArrayHS class."""
 
@@ -2925,6 +2966,16 @@ class MDArray(_object):
     def AsClassicDataset(self, *args):
         """AsClassicDataset(MDArray self, size_t iXDim, size_t iYDim) -> Dataset"""
         return _gdal.MDArray_AsClassicDataset(self, *args)
+
+
+    def GetStatistics(self, *args, **kwargs):
+        """GetStatistics(MDArray self, Dataset ds=None, bool approx_ok=False, bool force=True, GDALProgressFunc callback=0, void * callback_data=None) -> Statistics"""
+        return _gdal.MDArray_GetStatistics(self, *args, **kwargs)
+
+
+    def ComputeStatistics(self, *args, **kwargs):
+        """ComputeStatistics(MDArray self, Dataset ds=None, bool approx_ok=False, GDALProgressFunc callback=0, void * callback_data=None) -> Statistics"""
+        return _gdal.MDArray_ComputeStatistics(self, *args, **kwargs)
 
 
     def Read(self,

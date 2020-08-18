@@ -183,7 +183,7 @@ class netCDFRasterBand final: public GDALPamRasterBand
                                       void* pImage );
 
   protected:
-    CPLXMLNode *SerializeToXML( const char *pszVRTPath ) override;
+    CPLXMLNode *SerializeToXML( const char *pszUnused ) override;
 
   public:
     netCDFRasterBand( netCDFDataset *poDS,
@@ -2402,6 +2402,8 @@ CPLXMLNode *netCDFDataset::SerializeToXML( const char *pszUnused )
         if( psBandTree != nullptr )
             CPLAddXMLChild(psDSTree, psBandTree);
     }
+
+    SerializeMDArrayStatistics(psDSTree);
 
     // We don't want to return anything if we had no metadata to attach.
     if( psDSTree->psChild == nullptr )

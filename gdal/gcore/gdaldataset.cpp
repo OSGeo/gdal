@@ -8039,6 +8039,7 @@ std::shared_ptr<GDALGroup> GDALDataset::GetRootGroup() const
 /*                        GetRawBinaryLayout()                          */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 /**
  \brief Return the layout of a dataset that can be considered as a raw binary format.
 
@@ -8047,10 +8048,46 @@ std::shared_ptr<GDALGroup> GDALDataset::GetRootGroup() const
  @since GDAL 3.1
 */
 
-//! @cond Doxygen_Suppress
 bool GDALDataset::GetRawBinaryLayout(RawBinaryLayout& sLayout)
 {
     CPL_IGNORE_RET_VAL(sLayout);
     return false;
 }
 //! @endcond
+
+
+/************************************************************************/
+/*                          ClearStatistics()                           */
+/************************************************************************/
+
+/**
+ \brief Clear statistics
+
+ Only implemented for now in PAM supported datasets
+
+ This is the same as the C function GDALDatasetClearStatistics().
+
+ @since GDAL 3.2
+*/
+
+void GDALDataset::ClearStatistics()
+{
+}
+
+/************************************************************************/
+/*                        GDALDatasetClearStatistics()                  */
+/************************************************************************/
+
+/**
+ \brief Clear statistics
+
+ This is the same as the C++ method GDALDataset::ClearStatistics().
+
+ @since GDAL 3.2
+*/
+
+void GDALDatasetClearStatistics(GDALDatasetH hDS)
+{
+    VALIDATE_POINTER0(hDS, __func__);
+    GDALDataset::FromHandle(hDS)->ClearStatistics();
+}

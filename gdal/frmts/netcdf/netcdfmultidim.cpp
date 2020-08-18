@@ -3532,6 +3532,8 @@ GDALDataset *netCDFDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
 
     poDS->m_poRootGroup.reset(new netCDFGroup(poSharedResources, cdfid));
 
+    poDS->TryLoadXML();
+
     return poDS;
 }
 

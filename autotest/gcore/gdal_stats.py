@@ -701,8 +701,19 @@ def test_stats_float32_with_nodata_slightly_above_float_max():
         'did not get expected stats'
 
 
-###############################################################################
-# Run tests
+def test_stats_clear():
 
+    filename = '/vsimem/out.tif'
+    gdal.Translate(filename, 'data/byte.tif')
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetStatistics(False, False) == [0,0,0,-1]
+    assert ds.GetRasterBand(1).ComputeStatistics(False) != [0,0,0,-1]
 
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetStatistics(False, False) != [0,0,0,-1]
+    ds.ClearStatistics()
 
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetStatistics(False, False) == [0,0,0,-1]
+
+    gdal.GetDriverByName('GTiff').Delete(filename)
