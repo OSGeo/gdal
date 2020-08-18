@@ -103,7 +103,8 @@ class BAGDataset final: public GDALPamDataset
     {
         MAX,
         MIN,
-        MEAN
+        MEAN,
+        COUNT
     };
     Population   m_ePopulation = Population::MAX;
     bool         m_bMask = false;
@@ -737,6 +738,11 @@ BAGResampledBand::BAGResampledBand( BAGDataset *poDSIn, int nBandIn,
     {
         eDataType = GDT_Byte;
     }
+    else if( poDSIn->m_ePopulation == BAGDataset::Population::COUNT )
+    {
+        eDataType = GDT_UInt32;
+        GDALRasterBand::SetDescription( "count" );
+    }
     else
     {
         m_bHasNoData = true;
@@ -892,6 +898,11 @@ CPLErr BAGResampledBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         counts.resize(nBlockXSize * nBlockYSize);
     }
+    else if( poGDS->m_ePopulation == BAGDataset::Population::COUNT )
+    {
+        CPLAssert(pImage); // to make CLang Static Analyzer happy
+        memset(pImage, 0, nBlockXSize * nBlockYSize * GDALGetDataTypeSizeBytes(eDataType));
+    }
 
     const int nReqCountX = std::min(nBlockXSize,
                               nRasterXSize - nBlockXOff * nBlockXSize);
@@ -1039,6 +1050,12 @@ CPLErr BAGResampledBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     if( poGDS->m_bMask )
                     {
                         static_cast<GByte*>(pImage)[nTargetIdx] = 255;
+                        continue;
+                    }
+
+                    if( poGDS->m_ePopulation == BAGDataset::Population::COUNT )
+                    {
+                        static_cast<GUInt32*>(pImage)[nTargetIdx] ++;
                         continue;
                     }
 
@@ -2056,9 +2073,15 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
         {
             poDS->m_ePopulation = BAGDataset::Population::MEAN;
         }
-        else
+        else if( EQUAL(pszValuePopStrategy, "MAX") )
         {
             poDS->m_ePopulation = BAGDataset::Population::MAX;
+        }
+        else
+        {
+            poDS->m_ePopulation = BAGDataset::Population::COUNT;
+            bHasNoData = false;
+            fNoDataValue = 0;
         }
 
         const char* pszResX = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "RESX");
@@ -2206,12 +2229,13 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
         // Use min/max BAG refinement metadata items only if the
         // GDAL dataset bounding box is equal or larger to the BAG dataset
         const bool bInitializeMinMax = ( !poDS->m_bMask &&
+                                        poDS->m_ePopulation != BAGDataset::Population::COUNT &&
                                         dfMinX <= poDS->m_dfLowResMinX &&
                                         dfMinY <= poDS->m_dfLowResMinY &&
                                         dfMaxX >= poDS->m_dfLowResMaxX &&
                                         dfMaxY >= poDS->m_dfLowResMaxY );
 
-        if( poDS->m_bMask )
+        if( poDS->m_bMask || poDS->m_ePopulation == BAGDataset::Population::COUNT )
         {
             poDS->SetBand(1, new BAGResampledBand(poDS, 1,
                                                     false, 0.0f, false));
@@ -4510,6 +4534,7 @@ void GDALRegister_BAG()
 "       <Value>MIN</Value>"
 "       <Value>MAX</Value>"
 "       <Value>MEAN</Value>"
+"       <Value>COUNT</Value>"
 "   </Option>"
 "   <Option name='SUPERGRIDS_MASK' type='boolean' description="
     "'Whether the dataset should consist of a mask band indicating if a "

@@ -140,7 +140,7 @@ MODE open option:
       of supergrids available. If this value is specified and none of
       RES_STRATEGY, RESX or RESY is specified, this will also be used as
       the resolution for the resampled grid.
-   -  VALUE_POPULATION=MIN/MAX/MEAN: Which value population strategy to
+   -  VALUE_POPULATION=MIN/MAX/MEAN/COUNT: Which value population strategy to
       apply to compute the resampled cell values. This default to MAX:
       the elevation value of a target cell is the maximum elevation of
       all supergrid nodes (potentially filtered with RES_FILTER_MIN
@@ -149,9 +149,11 @@ MODE open option:
       maximum elevation si reached. If no supergrid node fall into the
       target cell, the nodata value is set. The MIN strategy is similar,
       except that this is the minimum elevation value among intersecting
-      nodes that is selected. The MEAN strategy use the mean value of
+      nodes that is selected. The MEAN strategy uses the mean value of
       the elevation of intersecting nodes, and the maximum uncertainty
       of those nodes.
+      The COUNT strategy (GDAL >= 3.2) exposes one single UInt32 band where
+      each target cell contains the count of supergrid nodes that fall into it.
    -  SUPERGRIDS_MASK=YES/NO. Default to NO. If set to YES, instead of
       the elevation and uncertainty band, the dataset contains a single
       Byte band which is boolean valued. For a target cell, if at least

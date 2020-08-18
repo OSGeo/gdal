@@ -574,6 +574,15 @@ def test_bag_vr_resampled():
         print(m1_min, M1_min, mean1_min)
         pytest.fail(m2_min, M2_min, mean2_min)
 
+    ds = gdal.OpenEx('data/bag/test_vr.bag',
+                     open_options=['MODE=RESAMPLED_GRID',
+                                   'RES_STRATEGY=MEAN',
+                                   'VALUE_POPULATION=COUNT'])
+    assert ds is not None
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt32
+    assert ds.GetRasterBand(1).Checksum() == 549
+
 
 ###############################################################################
 #
