@@ -34,6 +34,12 @@ Driver capabilities
 
 .. supports_createcopy::
 
+.. supports_create::
+
+    This driver supports the :cpp:func:`GDALDriver::Create` operation
+
+    .. versionadded:: 3.2
+
 .. supports_georeferencing::
 
 .. supports_virtualio::

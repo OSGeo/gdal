@@ -782,3 +782,37 @@ def test_bag_read_georef_metadata():
     data = band.ReadRaster()
     data = struct.unpack('B' * 4, data)
     assert data == (1, 0, 1, 1)
+
+###############################################################################
+#
+
+
+def test_bag_write_single_band_create():
+
+    tmpfilename = '/vsimem/out.bag'
+    gdal.Warp(tmpfilename, 'data/byte.tif', options='-ot Float32')
+    ds = gdal.Open(tmpfilename)
+    srs = ds.GetSpatialRef()
+    assert srs.GetAuthorityCode('PROJCS') == '26711'
+    assert ds.GetGeoTransform() == (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    assert ds.GetRasterBand(1).GetMinimum() == 74.0
+    assert ds.GetRasterBand(1).GetMaximum() == 255.0
+    ds = None
+    gdal.GetDriverByName('BAG').Delete(tmpfilename)
+
+###############################################################################
+#
+
+
+def test_bag_write_single_band_create_two_bands():
+
+    tmpfilename = '/vsimem/out.bag'
+    gdal.Warp(tmpfilename, 'data/bag/test_vr.bag', options='-co BLOCK_SIZE=2 -co VAR_XML_IDENTIFICATION_CITATION=<bar/>')
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).Checksum() == 65529
+    assert ds.GetRasterBand(2).Checksum() == 60
+    xml = ds.GetMetadata_List('xml:BAG')[0]
+    assert '<bar />' in xml
+    ds = None
+    gdal.GetDriverByName('BAG').Delete(tmpfilename)
