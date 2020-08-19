@@ -59,9 +59,7 @@ OGRDataSource *OGRODBCDriver::Open( const char * pszFilename,
 
 {
     if( !STARTS_WITH_CI(pszFilename, "ODBC:")
-#ifdef WIN32
         && !EQUAL(CPLGetExtension(pszFilename), "MDB")
-#endif
         )
         return nullptr;
 
