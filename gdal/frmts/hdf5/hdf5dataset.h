@@ -87,6 +87,34 @@ hid_t GDAL_HDF5Open(const std::string& osFilename );
 #  define H5OFFSET_TYPE  hsize_t
 #endif
 
+class HDF5Dataset;
+class BAGDataset;
+
+namespace GDAL
+{
+
+/************************************************************************/
+/*                         HDF5SharedResources                          */
+/************************************************************************/
+
+class HDF5SharedResources
+{
+    friend class ::HDF5Dataset;
+    friend class ::BAGDataset;
+
+    bool m_bReadOnly = true;
+    hid_t            m_hHDF5 = 0;
+    CPLString        m_osFilename{};
+public:
+    HDF5SharedResources() = default;
+    ~HDF5SharedResources();
+
+    inline hid_t GetHDF5() const { return m_hHDF5; }
+    inline bool IsReadOnly() const { return m_bReadOnly; }
+};
+
+} // namespace GDAL
+
 /************************************************************************/
 /* ==================================================================== */
 /*                              HDF5Dataset                             */
@@ -147,6 +175,7 @@ protected:
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *OpenMultiDim(GDALOpenInfo *);
+    static std::shared_ptr<GDALGroup> OpenGroup(std::shared_ptr<GDAL::HDF5SharedResources> poSharedResources);
     static int Identify(GDALOpenInfo *);
 
     static GDALDataType GetDataType(hid_t);
