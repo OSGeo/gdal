@@ -1122,6 +1122,7 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
 
     if( CSLFetchNameValue(papszOptions, "POSTFIELDS") )
         curl_easy_setopt(http_handle, CURLOPT_POST, 0 );
+    curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, nullptr);
 
     if( !pszPersistent )
         curl_easy_cleanup( http_handle );
