@@ -116,9 +116,15 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
         pszDSN = CPLStrdup( pszNewName + 9 );
     else
     {
-        const char *pszDSNStringTemplate = 
-            CPLGetConfigOption( "GEOMEDIA_DRIVER_TEMPLATE",
-                            "DRIVER=Microsoft Access Driver (*.mdb);DBQ=\"%s\"");
+#ifdef WIN32
+        const char *pszDSNStringTemplate =
+            CPLGetConfigOption("GEOMEDIA_DRIVER_TEMPLATE",
+                "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s");
+#else
+        const char *pszDSNStringTemplate =
+            CPLGetConfigOption("GEOMEDIA_DRIVER_TEMPLATE",
+                "DRIVER=Microsoft Access Driver (*.mdb);DBQ=\"%s\"");
+#endif
         if (!CheckDSNStringTemplate(pszDSNStringTemplate))
         {
             CPLError( CE_Failure, CPLE_AppDefined,
