@@ -137,7 +137,7 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
     if( !oSession.EstablishSession( pszDSN, nullptr, nullptr ) )
     {
         int bError = TRUE;
-        if( EQUAL(pszDSN, "") )
+        if( EQUAL(pszOptionName, "") )
         {
             // Trying with another template (#5594)
             pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=\"%s\"";
