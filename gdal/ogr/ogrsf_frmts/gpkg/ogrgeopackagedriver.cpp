@@ -440,6 +440,7 @@ void RegisterOGRGeoPackage()
 "  <Option name='USE_TILE_EXTENT' type='boolean' description='Use tile extent of content to determine area of interest' default='NO'/>"
 "  <Option name='WHERE' type='string' description='SQL WHERE clause to be appended to tile requests'/>"
 COMPRESSION_OPTIONS
+"  <Option name='PRELUDE_STATEMENTS' type='string' description='SQL statement(s) to send on the SQLite connection before any other ones'/>"
 "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,

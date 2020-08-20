@@ -1655,9 +1655,9 @@ def test_ogr_gpkg_21():
     assert gdal.GetLastErrorMsg() != ''
 
     f = lyr.GetFeature(f.GetFID())
-    if f.GetField(0) != 'ab':
-        gdal.Unlink('/vsimem/ogr_gpkg_21.gpkg')
+    assert f.GetField(0) == 'ab'
 
+    gdal.Unlink('/vsimem/ogr_gpkg_21.gpkg')
 
 ###############################################################################
 # Test FID64 support
@@ -1928,6 +1928,7 @@ def test_ogr_gpkg_unique():
     assert not fldDef.IsUnique()
 
     ds = None
+    gdal.Unlink('/vsimem/ogr_gpkg_unique.gpkg')
 
 ###############################################################################
 # Test default values
@@ -4103,3 +4104,17 @@ def test_ogr_gpkg_fixup_wrong_rtree_trigger():
     assert sql == 'CREATE TRIGGER "rtree_test_geometry_update3" AFTER UPDATE ON "test" WHEN OLD."fid" != NEW."fid" AND (NEW."geometry" NOTNULL AND NOT ST_IsEmpty(NEW."geometry")) BEGIN DELETE FROM "rtree_test_geometry" WHERE id = OLD."fid"; INSERT OR REPLACE INTO "rtree_test_geometry" VALUES (NEW."fid",ST_MinX(NEW."geometry"), ST_MaxX(NEW."geometry"),ST_MinY(NEW."geometry"), ST_MaxY(NEW."geometry")); END'
     assert sql2 == 'CREATE TRIGGER "rtree_test2_geometry_update3" AFTER UPDATE    ON test2 WHEN OLD."fid" != NEW."fid" AND (NEW."geometry" NOTNULL AND NOT ST_IsEmpty(NEW."geometry")) BEGIN DELETE FROM "rtree_test_geometry" WHERE id = OLD."fid"; INSERT OR REPLACE INTO "rtree_test_geometry" VALUES (NEW."fid",ST_MinX(NEW."geometry"), ST_MaxX(NEW."geometry"),ST_MinY(NEW."geometry"), ST_MaxY(NEW."geometry")); END'
 
+
+###############################################################################
+# Test PRELUDE_STATEMENTS open option
+
+
+def test_ogr_gpkg_prelude_statements():
+
+    gdal.VectorTranslate('/vsimem/test.gpkg', 'data/poly.shp', format='GPKG')
+    ds = gdal.OpenEx('/vsimem/test.gpkg',
+                     open_options=["PRELUDE_STATEMENTS=ATTACH DATABASE '/vsimem/test.gpkg' AS other"])
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM poly JOIN other.poly USING (eas_id)')
+    assert sql_lyr.GetFeatureCount() == 10
+    ds.ReleaseResultSet(sql_lyr)
+    gdal.Unlink('/vsimem/test.gpkg')

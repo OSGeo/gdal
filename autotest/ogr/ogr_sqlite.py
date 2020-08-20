@@ -3047,6 +3047,18 @@ def test_ogr_sqlite_unique():
     gdal.Unlink('/vsimem/ogr_gpkg_unique.db')
 
 ###############################################################################
+# Test PRELUDE_STATEMENTS open option
+
+
+def test_ogr_sqlite_prelude_statements(require_spatialite):
+
+    ds = gdal.OpenEx('data/sqlite/poly_spatialite.sqlite',
+                     open_options=["PRELUDE_STATEMENTS=ATTACH DATABASE 'data/sqlite/poly_spatialite.sqlite' AS other"])
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM poly JOIN other.poly USING (eas_id)')
+    assert sql_lyr.GetFeatureCount() == 10
+    ds.ReleaseResultSet(sql_lyr)
+
+###############################################################################
 #
 
 
