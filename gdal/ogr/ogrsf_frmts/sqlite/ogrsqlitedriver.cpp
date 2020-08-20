@@ -306,7 +306,10 @@ void RegisterOGRSQLite()
 "<OpenOptionList>"
 "  <Option name='LIST_ALL_TABLES' type='boolean' description='Whether all tables, including non-spatial ones, should be listed' default='NO'/>"
 "  <Option name='LIST_VIRTUAL_OGR' type='boolean' description='Whether VirtualOGR virtual tables should be listed. Should only be enabled on trusted datasources to avoid potential safety issues' default='NO'/>"
-"  <Option name='1BIT_AS_8BIT' type='boolean' description='Whether to promote 1-bit monochrome raster as 8-bit, so as to have higher quality overviews' default='YES'/>"
+"  <Option name='PRELUDE_STATEMENTS' type='string' description='SQL statement(s) to send on the SQLite connection before any other ones'/>"
+#ifdef HAVE_RASTERLITE2
+"  <Option name='1BIT_AS_8BIT' type='boolean' scope='raster' description='Whether to promote 1-bit monochrome raster as 8-bit, so as to have higher quality overviews' default='YES'/>"
+#endif
 "</OpenOptionList>");
 
     CPLString osCreationOptions(

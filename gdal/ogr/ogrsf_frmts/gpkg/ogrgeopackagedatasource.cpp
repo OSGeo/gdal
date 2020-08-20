@@ -1305,6 +1305,14 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         }
     }
 
+    const char* pszPreludeStatements = CSLFetchNameValue(
+        poOpenInfo->papszOpenOptions, "PRELUDE_STATEMENTS");
+    if( pszPreludeStatements )
+    {
+        if( SQLCommand(hDB, pszPreludeStatements) != OGRERR_NONE )
+            return FALSE;
+    }
+
     /* Requirement 6: The SQLite PRAGMA integrity_check SQL command SHALL return “ok” */
     /* http://opengis.github.io/geopackage/#_file_integrity */
     /* Disable integrity check by default, since it is expensive on big files */

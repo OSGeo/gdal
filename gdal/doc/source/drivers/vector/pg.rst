@@ -141,7 +141,7 @@ Dataset open options
    including non-spatial ones, to be listed.
 -  **PRELUDE_STATEMENTS**\ =string (GDAL >= 2.1). SQL statement(s) to
    send on the PostgreSQL client connection before any other ones. In
-   case of several statement, they must be separated with the
+   case of several statements, they must be separated with the
    semi-column (;) sign. The driver will specifically recognize BEGIN as
    the first statement to avoid emitting BEGIN/COMMIT itself. This
    option may be useful when using the driver with pg_bouncer in
@@ -149,7 +149,7 @@ Dataset open options
    "1h";'
 -  **CLOSING_STATEMENTS**\ =string (GDAL >= 2.1). SQL statement(s) to
    send on the PostgreSQL client connection after any other ones. In
-   case of several statement, they must be separated with the
+   case of several statements, they must be separated with the
    semi-column (;) sign. With the above example value for
    PRELUDE_STATEMENTS, the appropriate CLOSING_STATEMENTS would be
    "COMMIT".
