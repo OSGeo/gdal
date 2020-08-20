@@ -493,7 +493,7 @@ CPLErr GRASSRasterBand::IReadBlock( int /*nBlockXOff*/, int nBlockYOff,
     // open for reading
     if (hCell < 0) {
         if ( (hCell = G_open_cell_old((char *) pszCellName, (char *) pszMapset)) < 0 ) {
-            CPLError( CE_Warning, CPLE_AppDefined, "GRASS: Cannot open raster '%s'", pszCellName );
+            CPLError( CE_Failure, CPLE_AppDefined, "GRASS: Cannot open raster '%s'", pszCellName );
             return CE_Failure;
         }
     }
