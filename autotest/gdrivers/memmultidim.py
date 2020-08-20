@@ -1572,9 +1572,9 @@ def test_mem_md_array_get_mask():
 
     myarray = rg.CreateMDArray("myarray_emptydim", [],
                                gdal.ExtendedDataType.Create(gdal.GDT_Int16))
-    # No-dim array unsupported
-    with gdaltest.error_handler():
-        assert not myarray.GetMask()
+    mask = myarray.GetMask()
+    assert mask is not None
+    assert struct.unpack('B', mask.Read())[0] == 1
 
     dim0 = rg.CreateDimension("dim0", None, None, 2)
     dim1 = rg.CreateDimension("dim1", None, None, 3)

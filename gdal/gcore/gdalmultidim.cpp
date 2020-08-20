@@ -4345,16 +4345,18 @@ bool GDALMDArrayMask::IRead(const GUInt64* arrayStartIdx,
 {
     size_t nElts = 1;
     const size_t nDims = GetDimensionCount();
-    assert(nDims >= 1);
     std::vector<GPtrDiff_t> tmpBufferStrideVector(nDims);
     for( size_t i = 0; i < nDims; i++ )
         nElts *= count[i];
-    tmpBufferStrideVector.back() = 1;
-    for( size_t i = nDims - 1; i > 0; )
+    if( nDims > 0 )
     {
-        --i;
-        tmpBufferStrideVector[i] =
-            tmpBufferStrideVector[i+1] * count[i+1];
+        tmpBufferStrideVector.back() = 1;
+        for( size_t i = nDims - 1; i > 0; )
+        {
+            --i;
+            tmpBufferStrideVector[i] =
+                tmpBufferStrideVector[i+1] * count[i+1];
+        }
     }
 
     const auto GetSingleValNumericAttr = [this]
@@ -4559,7 +4561,7 @@ template<typename Type> void GDALMDArrayMask::ReadInternal(
         GPtrDiff_t   src_inc_offset = 0;
         GPtrDiff_t   dst_inc_offset = 0;
     };
-    std::vector<Stack> stack(nDims);
+    std::vector<Stack> stack(std::max(static_cast<size_t>(1), nDims));
     const size_t nBufferDTSize = bufferDataType.GetSize();
     for( size_t i = 0; i < nDims; i++ )
     {
@@ -4572,7 +4574,7 @@ template<typename Type> void GDALMDArrayMask::ReadInternal(
     stack[0].dst_ptr = static_cast<GByte*>(pDstBuffer);
 
     size_t dimIdx = 0;
-    const size_t nDimsMinus1 = nDims - 1;
+    const size_t nDimsMinus1 = nDims > 0 ? nDims - 1 : 0;
     const void* pSrcRawNoDataValue = m_poParent->GetRawNoDataValue();
     const bool bBufferDataTypeIsDT = bufferDataType == m_dt;
     GByte abyZeroOrOne[2][16]; // 16 is sizeof GDT_CFloat64
@@ -4611,7 +4613,7 @@ template<typename Type> void GDALMDArrayMask::ReadInternal(
 lbl_next_depth:
     if( dimIdx == nDimsMinus1 )
     {
-        auto nIters = count[dimIdx];
+        auto nIters = nDims > 0 ? count[dimIdx] : 1;
         const GByte* src_ptr = stack[dimIdx].src_ptr;
         GByte* dst_ptr = stack[dimIdx].dst_ptr;
 
@@ -4714,13 +4716,6 @@ std::shared_ptr<GDALMDArray> GDALMDArray::GetMask(CPL_UNUSED
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "GetMask() only supports numeric data type");
-        return nullptr;
-    }
-    if( GetDimensionCount() == 0 )
-    {
-        // Limitation for the sake of implementation simplicity
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "GetMask() only supports non-scalar arrays");
         return nullptr;
     }
     return GDALMDArrayMask::Create(self);
@@ -5351,6 +5346,9 @@ CPLErr GDALMDArray::GetStatistics( GDALDataset* poDS,
  * Returns the minimum, maximum, mean and standard deviation of all
  * pixel values in this array.
  *
+ * Pixels taken into account in statistics are those whose mask value
+ * (as determined by GetMask()) is non-zero.
+ *
  * Once computed, the statistics will generally be "set" back on the
  * owing dataset (if poDS is not NULL).
  *
@@ -5397,6 +5395,7 @@ bool GDALMDArray::ComputeStatistics( GDALDataset* poDS,
     struct StatsPerChunkType
     {
         const GDALMDArray* array = nullptr;
+        std::shared_ptr<GDALMDArray> poMask{};
         double dfMin = std::numeric_limits<double>::max();
         double dfMax = -std::numeric_limits<double>::max();
         double dfMean = 0.0;
@@ -5404,6 +5403,7 @@ bool GDALMDArray::ComputeStatistics( GDALDataset* poDS,
         GUInt64 nValidCount = 0;
         std::vector<GByte> abyData{};
         std::vector<double> adfData{};
+        std::vector<GByte> abyMaskData{};
         GDALProgressFunc pfnProgress = nullptr;
         void* pProgressData = nullptr;
     };
@@ -5417,11 +5417,22 @@ bool GDALMDArray::ComputeStatistics( GDALDataset* poDS,
     {
         StatsPerChunkType* data = static_cast<StatsPerChunkType*>(pUserData);
         const GDALMDArray* array = data->array;
-        const auto& oType = array->GetDataType();
+        const GDALMDArray* poMask = data->poMask.get();
         const size_t nDims = array->GetDimensionCount();
         size_t nVals = 1;
         for( size_t i = 0; i < nDims; i++ )
             nVals *= chunkCount[i];
+
+        // Get mask
+        data->abyMaskData.resize(nVals);
+        if( !(poMask->Read(chunkArrayStartIdx, chunkCount, nullptr, nullptr,
+                           poMask->GetDataType(), &data->abyMaskData[0])) )
+        {
+            return false;
+        }
+
+        // Get data
+        const auto& oType = array->GetDataType();
         if( oType.GetNumericDataType() == GDT_Float64 )
         {
             data->adfData.resize(nVals);
@@ -5446,13 +5457,11 @@ bool GDALMDArray::ComputeStatistics( GDALDataset* poDS,
                              static_cast<int>(sizeof(double)),
                              static_cast<GPtrDiff_t>(nVals) );
         }
-        bool bHasNoData = false;
-        const double dfNoData = array->GetNoDataValueAsDouble(&bHasNoData);
         for( size_t i = 0; i < nVals; i++ )
         {
-            const double dfValue = data->adfData[i];
-            if( (!bHasNoData || dfNoData != dfValue) && !std::isnan(dfValue) )
+            if( data->abyMaskData[i] )
             {
+                const double dfValue = data->adfData[i];
                 data->dfMin = std::min(data->dfMin, dfValue);
                 data->dfMax = std::max(data->dfMax, dfValue);
                 data->nValidCount++;
@@ -5497,6 +5506,11 @@ bool GDALMDArray::ComputeStatistics( GDALDataset* poDS,
                         GDALGetCacheMax64() / 4));
     StatsPerChunkType sData;
     sData.array = this;
+    sData.poMask = GetMask(nullptr);
+    if( sData.poMask == nullptr )
+    {
+        return false;
+    }
     sData.pfnProgress = pfnProgress;
     sData.pProgressData = pProgressData;
     if( !ProcessPerChunk(arrayStartIdx.data(), count.data(),
