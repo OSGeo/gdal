@@ -1981,13 +1981,6 @@ if test "x${with_libtiff}" = "xyes" -o "x${with_libtiff}" = "x" ; then
   AC_CHECK_LIB(tiff,TIFFScanlineSize64,TIFF_SETTING=external HAVE_BIGTIFF=yes,TIFF_SETTING=internal HAVE_BIGTIFF=yes,)
 
   if test "$TIFF_SETTING" = "external" ; then
-    dnl Cygwin takes a somewhat restrictive view of what should be exported
-    dnl from the dll, so don't use the external library if missing semi-private
-    dnl functions.
-    AC_CHECK_LIB(tiff,_TIFFsetDoubleArray,TIFF_SETTING=external,TIFF_SETTING=internal,)
-  fi
-
-  if test "$TIFF_SETTING" = "external" ; then
     LIBS="-ltiff $LIBS"
     AC_MSG_RESULT([using pre-installed libtiff.])
   else
@@ -2139,7 +2132,7 @@ elif test "$with_jpeg" = "yes" -o "$with_jpeg" = "" ; then
     echo '#include <stdio.h>' >> conftest.c
     echo '#include "jpeglib.h"' >> conftest.c
     echo 'int main() { jpeg_component_info *comptr=0; int i; i = comptr->width_in_blocks; }' >> conftest.c
-    if test -z "`${CC} -o conftest conftest.c 2>&1`" ; then
+    if test -z "`${CC} ${CPPFLAGS} ${CFLAGS} -c conftest.c 2>&1`" ; then
       AC_MSG_RESULT([yes])
     else
       AC_MSG_RESULT([no])
