@@ -296,7 +296,9 @@ bool OGROAPIFDataset::Download(
     papszOptions =
         CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=OAPIF:%p", this));
     CPLString osURLWithQueryParameters(osURL);
-    if( !m_osUserQueryParams.empty() )
+    if( !m_osUserQueryParams.empty() &&
+        osURL.find('?' + m_osUserQueryParams) == std::string::npos &&
+        osURL.find('&' + m_osUserQueryParams) == std::string::npos )
     {
         if( osURL.find('?') == std::string::npos )
         {
