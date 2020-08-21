@@ -193,6 +193,7 @@ class GRASSRasterBand final: public GDALRasterBand
     double GetNoDataValue( int *pbSuccess = NULL ) override;
 
   private:
+    void SetWindow( struct Cell_head * );
     CPLErr ResetReading( struct Cell_head * );
 };
 
@@ -410,10 +411,37 @@ GRASSRasterBand::~GRASSRasterBand()
 }
 
 /************************************************************************/
+/*                             SetWindow                                */
+/*                                                                      */
+/* Helper for ResetReading                                              */
+/* close the current GRASS raster band, actually set the new window,    */
+/* reset GRASS variables                                                */
+/*                                                                      */
+/* Returns nothing                       */
+/************************************************************************/
+void GRASSRasterBand::SetWindow ( struct Cell_head *sNewWindow )
+{
+    if( hCell >= 0 ) {
+        G_close_cell( hCell );
+        hCell = -1;
+    }
+
+    /* Set window */
+    G_set_window( sNewWindow );
+
+    /* Set GRASS env to the current raster, don't open the raster */
+    G__setenv( "GISDBASE", ((GRASSDataset *)poDS)->pszGisdbase );
+    G__setenv( "LOCATION_NAME", ((GRASSDataset *)poDS)->pszLocation );
+    G__setenv( "MAPSET", pszMapset);
+    G_reset_mapsets();
+    G_add_mapset_to_search_path ( pszMapset );
+}
+
+/************************************************************************/
 /*                             ResetReading                             */
 /*                                                                      */
-/* Reset current window and reopen cell if the window has changed,      */
-/* reset GRASS variables                                                */
+/* Reset current window for a new reading request,                      */
+/* close the current GRASS raster band, reset GRASS variables           */
 /*                                                                      */
 /* Returns CE_Failure if fails, otherwise CE_None                       */
 /************************************************************************/
@@ -426,21 +454,7 @@ CPLErr GRASSRasterBand::ResetReading ( struct Cell_head *sNewWindow )
          sNewWindow->ew_res != sOpenWindow.ew_res || sNewWindow->ns_res != sOpenWindow.ns_res ||
          sNewWindow->rows   != sOpenWindow.rows   || sNewWindow->cols   != sOpenWindow.cols )
     {
-        if( hCell >= 0 ) {
-            G_close_cell( hCell );
-            hCell = -1;
-        }
-
-        /* Set window */
-        G_set_window( sNewWindow );
-
-        /* Set GRASS env to the current raster, don't open the raster */
-        G__setenv( "GISDBASE", ((GRASSDataset *)poDS)->pszGisdbase );
-        G__setenv( "LOCATION_NAME", ((GRASSDataset *)poDS)->pszLocation );
-        G__setenv( "MAPSET", pszMapset);
-        G_reset_mapsets();
-        G_add_mapset_to_search_path ( pszMapset );
-
+        SetWindow ( sNewWindow );
         G_copy((void *) &sOpenWindow, (void *) sNewWindow, sizeof(struct Cell_head));
     }
     else
@@ -456,19 +470,7 @@ CPLErr GRASSRasterBand::ResetReading ( struct Cell_head *sNewWindow )
              sNewWindow->rows   != sCurrentWindow.rows   || sNewWindow->cols   != sCurrentWindow.cols
              )
         {
-            if( hCell >= 0 ) {
-                G_close_cell( hCell );
-                hCell = -1;
-            }
-            /* Reset window */
-            G_set_window( sNewWindow );
-
-            /* Set GRASS env to the current raster, don't open the raster */
-            G__setenv( "GISDBASE", ((GRASSDataset *)poDS)->pszGisdbase );
-            G__setenv( "LOCATION_NAME", ((GRASSDataset *)poDS)->pszLocation );
-            G__setenv( "MAPSET", pszMapset);
-            G_reset_mapsets();
-            G_add_mapset_to_search_path ( pszMapset );
+            SetWindow ( sNewWindow );
         }
     }
 
