@@ -34,6 +34,9 @@ jobs:
       - name: Build
         run: docker build -f .github/workflows/ubuntu_20.04/Dockerfile -t gdal .
 
-      - name: Run tests
+      - name: Run pytest
         # --security-opt seccomp=unconfined, so that the userfaulfd syscall is available
         run: docker run --security-opt seccomp=unconfined --rm gdal sh -c "cd /build/autotest && pip3 install -U -r requirements.txt && pytest"
+
+      - name: Run SWIG C# tests
+        run: docker run --rm gdal sh -c "cd /build/gdal/swig/csharp && make && make && make test"
