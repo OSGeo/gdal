@@ -141,8 +141,12 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char* fileOrDef)
     }
 
     bool loadOk = false;
-    if( strstr(fileOrDef, "\"type\"") != nullptr &&
-        strstr(fileOrDef, "\"TileMatrixSetType\"") != nullptr )
+    if( (strstr(fileOrDef, "\"type\"") != nullptr &&
+         strstr(fileOrDef, "\"TileMatrixSetType\"") != nullptr) ||
+        (strstr(fileOrDef, "\"identifier\"") != nullptr &&
+         strstr(fileOrDef, "\"boundingBox\"") != nullptr &&
+         (strstr(fileOrDef, "\"tileMatrix\"") != nullptr ||
+          strstr(fileOrDef, "\"tileMatrices\"") != nullptr)) )
     {
         loadOk = oDoc.LoadMemory(fileOrDef);
     }
@@ -180,7 +184,9 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char* fileOrDef)
     }
 
     auto oRoot = oDoc.GetRoot();
-    if( oRoot.GetString("type") != "TileMatrixSetType" )
+    if( oRoot.GetString("type") != "TileMatrixSetType" &&
+        !oRoot.GetObj("tileMatrix").IsValid() &&
+        !oRoot.GetObj("tileMatrices").IsValid() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Expected type = TileMatrixSetType");
         return nullptr;
@@ -221,7 +227,9 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char* fileOrDef)
         dfMetersPerUnit = oCrs.GetSemiMajor() * M_PI / 180;
     }
 
-    const auto oTileMatrix = oRoot.GetArray("tileMatrix");
+    const auto oTileMatrix = oRoot.GetObj("tileMatrix").IsValid() ?
+        oRoot.GetArray("tileMatrix") :
+        oRoot.GetArray("tileMatrices");
     if( oTileMatrix.IsValid() )
     {
         double dfLastScaleDenominator = std::numeric_limits<double>::max();
@@ -253,7 +261,9 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char* fileOrDef)
             tm.mMatrixWidth = oTM.GetInteger("matrixWidth");
             tm.mMatrixHeight = oTM.GetInteger("matrixHeight");
 
-            const auto oVariableMatrixWidth = oTM.GetArray("variableMatrixWidth");
+            const auto oVariableMatrixWidth = oTM.GetObj("variableMatrixWidth").IsValid() ?
+                oTM.GetArray("variableMatrixWidth") :
+                oTM.GetArray("variableMatrixWidths");
             if( oVariableMatrixWidth.IsValid() )
             {
                 for( const auto& oVMW: oVariableMatrixWidth )

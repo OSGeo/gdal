@@ -1567,6 +1567,61 @@ namespace tut
             ensure_equals( vmw.mMinTileRow, 0 );
             ensure_equals( vmw.mMaxTileRow, 1 );
         }
+
+        {
+            auto poTMS = gdal::TileMatrixSet::parse(
+                "{"
+                "    \"identifier\" : \"CDBGlobalGrid\","
+                "    \"title\" : \"CDBGlobalGrid\","
+                "    \"boundingBox\" : {"
+                "        \"crs\" : \"http://www.opengis.net/def/crs/EPSG/0/4326\","
+                "        \"lowerCorner\" : ["
+                "            -90,"
+                "            -180"
+                "        ],"
+                "        \"upperCorner\" : ["
+                "            90,"
+                "            180"
+                "        ]"
+                "    },"
+                "    \"supportedCRS\" : \"http://www.opengis.net/def/crs/EPSG/0/4326\","
+                "    \"wellKnownScaleSet\" : \"http://www.opengis.net/def/wkss/OGC/1.0/CDBGlobalGrid\","
+                "    \"tileMatrices\" : ["
+                "        {"
+                "            \"identifier\" : \"-10\","
+                "            \"scaleDenominator\" : 397569609.975977063179,"
+                "            \"matrixWidth\" : 360,"
+                "            \"matrixHeight\" : 180,"
+                "            \"tileWidth\" : 1,"
+                "            \"tileHeight\" : 1,"
+                "            \"topLeftCorner\" : ["
+                "                90,"
+                "                -180"
+                "            ],"
+                "            \"variableMatrixWidths\" : ["
+                "                {"
+                "                \"coalesce\" : 12,"
+                "                \"minTileRow\" : 0,"
+                "                \"maxTileRow\" : 0"
+                "                },"
+                "                {"
+                "                \"coalesce\" : 12,"
+                "                \"minTileRow\" : 179,"
+                "                \"maxTileRow\" : 179"
+                "                }"
+                "            ]"
+                "        }"
+                "    ]"
+                "}");
+            ensure( poTMS != nullptr );
+            ensure_equals( poTMS->tileMatrixList().size(), 1U );
+            const auto &tm = poTMS->tileMatrixList()[0];
+            ensure_equals( tm.mVariableMatrixWidthList.size(), 2U );
+            const auto& vmw = tm.mVariableMatrixWidthList[0];
+            ensure_equals( vmw.mCoalesce, 12 );
+            ensure_equals( vmw.mMinTileRow, 0 );
+            ensure_equals( vmw.mMaxTileRow, 0 );
+        }
     }
 
 } // namespace tut
