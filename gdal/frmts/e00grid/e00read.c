@@ -400,16 +400,16 @@ static char _GetNextSourceChar(E00ReadPtr psInfo)
 {
     char c = '\0';
 
-    if (!psInfo->bEOF)
+    while (!psInfo->bEOF)
     {
         if (psInfo->szInBuf[psInfo->iInBufPtr] == '\0')
         {
             _ReadNextSourceLine(psInfo);
-            c = _GetNextSourceChar(psInfo);
         }
         else
         {
             c = psInfo->szInBuf[psInfo->iInBufPtr++];
+            break;
         }
     }
 
