@@ -150,6 +150,11 @@ def test_extensions():
     if ogrtest.odbc_drv is None:
         pytest.skip()
 
+    ds = ogrtest.odbc_drv.Open('data/mdb/empty.mdb')
+    if ds is None:
+        # likely odbc driver for mdb is not installed (or a broken old version of mdbtools is installed!)
+        pytest.skip()
+
     ds = ogrtest.odbc_drv.Open('data/mdb/empty.style')
     assert ds is not None
     lyr = ds.GetLayerByName('Line Symbols')
