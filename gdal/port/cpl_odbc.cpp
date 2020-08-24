@@ -413,6 +413,63 @@ int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
 }
 
 /************************************************************************/
+/*                          ConnectToMsAccess()                          */
+/************************************************************************/
+
+
+bool CPLODBCSession::ConnectToMsAccess(const char *pszName, const char *pszDSNStringTemplate)
+{
+    char *pszDSN = nullptr;
+
+    const bool usingAutomaticDSNStringTemplate = pszDSNStringTemplate == nullptr;
+
+    if( usingAutomaticDSNStringTemplate )
+    {
+#ifdef WIN32
+        pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=%s";
+#else
+        pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=\"%s\"";
+#endif
+    }
+    pszDSN = (char *) CPLMalloc(strlen(pszName)+strlen(pszDSNStringTemplate)+100);
+    /* coverity[tainted_string] */
+    snprintf( pszDSN,
+        strlen(pszName)+strlen(pszDSNStringTemplate)+100,
+        pszDSNStringTemplate,  pszName );
+
+    CPLDebug( "ODBC", "EstablishSession(%s)", pszDSN );
+    int bError = !EstablishSession( pszDSN, nullptr, nullptr );
+    if( bError && usingAutomaticDSNStringTemplate )
+    {
+        // Trying with another template (#5594)
+#ifdef WIN32
+        pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";
+#else
+        pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=\"%s\"";
+#endif
+        CPLFree( pszDSN );
+        pszDSN = (char *) CPLMalloc(strlen(pszName)+strlen(pszDSNStringTemplate)+100);
+        snprintf( pszDSN,
+            strlen(pszName)+strlen(pszDSNStringTemplate)+100,
+            pszDSNStringTemplate,  pszName );
+        CPLDebug( "ODBC", "EstablishSession(%s)", pszDSN );
+        bError = !EstablishSession( pszDSN, nullptr, nullptr );
+    }
+
+    if ( bError )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to initialize ODBC connection to DSN for %s,\n"
+                  "%s", pszDSN, GetLastError() );
+        CPLFree( pszDSN );
+        return FALSE;
+    }
+
+    CPLFree( pszDSN );
+    return TRUE;
+}
+
+/************************************************************************/
 /*                          EstablishSession()                          */
 /************************************************************************/
 

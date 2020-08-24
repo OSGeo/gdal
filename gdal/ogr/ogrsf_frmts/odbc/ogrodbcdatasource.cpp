@@ -114,11 +114,6 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
         if( pszDSNStringTemplate == nullptr )
         {
             pszOptionName = "";
-#ifdef WIN32
-            pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=%s";
-#else
-            pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=\"%s\"";
-#endif
         }
     }
     if (!CheckDSNStringTemplate(pszDSNStringTemplate))
@@ -127,50 +122,11 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
                     "Illegal value for %s option", pszOptionName );
         return FALSE;
     }
-    char* pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
-    /* coverity[tainted_string] */
-    snprintf( pszDSN,
-              strlen(pszNewName)+strlen(pszDSNStringTemplate)+100,
-              pszDSNStringTemplate,  pszNewName );
 
-/* -------------------------------------------------------------------- */
-/*      Initialize based on the DSN.                                    */
-/* -------------------------------------------------------------------- */
-    CPLDebug( "ODBC", "EstablishSession(%s)", pszDSN );
-
-    if( !oSession.EstablishSession( pszDSN, nullptr, nullptr ) )
+    if ( !oSession.ConnectToMsAccess( pszNewName, pszDSNStringTemplate ) )
     {
-        int bError = TRUE;
-        if( EQUAL(pszOptionName, "") )
-        {
-            // Trying with another template (#5594)
-#ifdef WIN32
-            pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";
-#else
-            pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=\"%s\"";
-#endif
-            CPLFree( pszDSN );
-            pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
-            snprintf( pszDSN,
-                      strlen(pszNewName)+strlen(pszDSNStringTemplate)+100,
-                      pszDSNStringTemplate,  pszNewName );
-            CPLDebug( "ODBC", "EstablishSession(%s)", pszDSN );
-            if( oSession.EstablishSession( pszDSN, nullptr, nullptr ) )
-            {
-                bError = FALSE;
-            }
-        }
-        if( bError )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                    "Unable to initialize ODBC connection to DSN for %s,\n"
-                    "%s", pszDSN, oSession.GetLastError() );
-            CPLFree( pszDSN );
-            return FALSE;
-        }
+        return FALSE;
     }
-
-    CPLFree( pszDSN );
 
     pszName = CPLStrdup( pszNewName );
 

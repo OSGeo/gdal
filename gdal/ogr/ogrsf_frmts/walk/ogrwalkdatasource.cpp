@@ -70,41 +70,27 @@ int OGRWalkDataSource::Open( const char * pszNewName, int /* bUpdate */ )
 /*      appropriate connection string.  Otherwise clip of WALK: to      */
 /*      get the DSN.                                                    */
 /* -------------------------------------------------------------------- */
-    char *pszDSN = nullptr;
-
     if( STARTS_WITH_CI(pszNewName, "WALK:") )
     {
+        char *pszDSN = nullptr;
         pszDSN = CPLStrdup( pszNewName + 5 );
+        CPLDebug( "Walk", "EstablishSession(%s)", pszDSN );
+        if( !oSession.EstablishSession( pszDSN, nullptr, nullptr ) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Unable to initialize ODBC connection to DSN for %s,\n"
+                      "%s", pszDSN, oSession.GetLastError() );
+            CPLFree( pszDSN );
+            return FALSE;
+        }
     }
     else
     {
-#ifdef WIN32
-        const char *pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";
-#else
-        const char *pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=\"%s\"";
-#endif
-        pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
-
-        snprintf( pszDSN,
-                  strlen(pszNewName)+strlen(pszDSNStringTemplate)+100,
-                  pszDSNStringTemplate,  pszNewName );
+        if ( !oSession.ConnectToMsAccess( pszNewName, nullptr ) )
+        {
+           return FALSE;
+        }
     }
-
-/* -------------------------------------------------------------------- */
-/*      Initialize based on the DSN.                                    */
-/* -------------------------------------------------------------------- */
-    CPLDebug( "Walk", "EstablishSession(%s)", pszDSN );
-
-    if( !oSession.EstablishSession( pszDSN, nullptr, nullptr ) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to initialize ODBC connection to DSN for %s,\n"
-                  "%s", pszDSN, oSession.GetLastError() );
-        CPLFree( pszDSN );
-        return FALSE;
-    }
-
-    CPLFree( pszDSN );
 
     pszName = CPLStrdup( pszNewName );
 
