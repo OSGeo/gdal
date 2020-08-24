@@ -134,6 +134,11 @@ def test_ogr_odbc_2():
     if ogrtest.odbc_drv is None:
         pytest.skip()
 
+    ds = ogrtest.odbc_drv.Open('data/mdb/empty.mdb')
+    if ds is None:
+        # likely odbc driver for mdb is not installed (or a broken old version of mdbtools is installed!)
+        pytest.skip()
+
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
