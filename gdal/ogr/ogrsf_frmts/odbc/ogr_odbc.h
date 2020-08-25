@@ -206,6 +206,8 @@ class OGRODBCDataSource final: public OGRDataSource
                                     const char *pszDialect ) override;
     virtual void        ReleaseResultSet( OGRLayer * poLayer ) override;
 
+    static bool         IsSupportedMsAccessFileExtension( const char* pszExtension );
+
     // Internal use
     CPLODBCSession     *GetSession() { return &oSession; }
 };

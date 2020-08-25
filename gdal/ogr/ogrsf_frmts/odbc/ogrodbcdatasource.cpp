@@ -252,7 +252,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 {
     CPLAssert( nLayers == 0 );
 
-    if( !STARTS_WITH_CI(pszNewName, "ODBC:") && EQUAL(CPLGetExtension(pszNewName), "MDB") )
+    if( !STARTS_WITH_CI(pszNewName, "ODBC:") && IsSupportedMsAccessFileExtension(CPLGetExtension(pszNewName)))
         return OpenMDB(pszNewName, bUpdate);
 
 /* -------------------------------------------------------------------- */
@@ -661,4 +661,16 @@ void OGRODBCDataSource::ReleaseResultSet( OGRLayer * poLayer )
 
 {
     delete poLayer;
+}
+
+/************************************************************************/
+/*                  IsSupportedMsAccessFileExtension()                  */
+/************************************************************************/
+
+bool OGRODBCDataSource::IsSupportedMsAccessFileExtension(const char *pszExtension)
+{
+    // these are all possible extensions for MS Access databases
+    return EQUAL(pszExtension, "MDB") ||
+        EQUAL(pszExtension, "ACCDB") ||
+        EQUAL(pszExtension, "STYLE");
 }
