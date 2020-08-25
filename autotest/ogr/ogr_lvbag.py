@@ -350,6 +350,19 @@ def test_ogr_lvbag_read_errors():
         assert lyr.GetName() == ''
         assert lyr.GetFeatureCount() == 0
 
+def test_ogr_lvbag_fix_lokaalid():
+
+    ds = ogr.Open('data/lvbag/pnd2.xml')
+    assert ds is not None, 'cannot open dataset'
+    assert ds.GetLayerCount() == 1, 'bad layer count'
+    
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == 'Pand', 'bad layer name'
+    assert lyr.GetFeatureCount() == 1
+
+    feat = lyr.GetNextFeature()
+    assert len(feat.GetField('lokaalID')) == 16
+
 ###############################################################################
 # Run test_ogrsf
 
