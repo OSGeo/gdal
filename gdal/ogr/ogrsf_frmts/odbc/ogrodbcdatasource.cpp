@@ -116,7 +116,7 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
             pszOptionName = "";
         }
     }
-    if (!CheckDSNStringTemplate(pszDSNStringTemplate))
+    if (pszDSNStringTemplate && !CheckDSNStringTemplate(pszDSNStringTemplate))
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                     "Illegal value for %s option", pszOptionName );
