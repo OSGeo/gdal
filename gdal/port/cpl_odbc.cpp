@@ -446,7 +446,7 @@ bool CPLODBCSession::ConnectToMsAccess(const char *pszName, const char *pszDSNSt
         pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=\"%s\"";
 #endif
     }
-    pszDSN = (char *) CPLMalloc(strlen(pszName)+strlen(pszDSNStringTemplate)+100);
+    pszDSN = static_cast< char * >( CPLMalloc(strlen(pszName)+strlen(pszDSNStringTemplate)+100) );
     /* coverity[tainted_string] */
     snprintf( pszDSN,
         strlen(pszName)+strlen(pszDSNStringTemplate)+100,
@@ -463,7 +463,7 @@ bool CPLODBCSession::ConnectToMsAccess(const char *pszName, const char *pszDSNSt
         pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=\"%s\"";
 #endif
         CPLFree( pszDSN );
-        pszDSN = (char *) CPLMalloc(strlen(pszName)+strlen(pszDSNStringTemplate)+100);
+        pszDSN = static_cast< char * >( CPLMalloc(strlen(pszName)+strlen(pszDSNStringTemplate)+100) );
         snprintf( pszDSN,
             strlen(pszName)+strlen(pszDSNStringTemplate)+100,
             pszDSNStringTemplate,  pszName );
@@ -477,11 +477,11 @@ bool CPLODBCSession::ConnectToMsAccess(const char *pszName, const char *pszDSNSt
                   "Unable to initialize ODBC connection to DSN for %s,\n"
                   "%s", pszDSN, GetLastError() );
         CPLFree( pszDSN );
-        return FALSE;
+        return false;
     }
 
     CPLFree( pszDSN );
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
