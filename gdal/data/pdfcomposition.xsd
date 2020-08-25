@@ -521,6 +521,9 @@
             - another one, when the georeferencingId attribute is defined, and
               reference a georeferenced area. In that case, the vector georeferenced
               coordinates will be used to correctly place it in the georeferenced area.
+
+            Note: OGR Feature Style strings containing a LABEL tool will not work with
+            this element, to display labels use a VectorLabel element instead.
         </xs:documentation></xs:annotation>
         <xs:sequence>
             <xs:element name="Blending" type="BlendingType" minOccurs="0"/>
