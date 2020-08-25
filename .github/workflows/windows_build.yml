@@ -26,7 +26,7 @@ jobs:
         platform: ${{ matrix.platform }}
         PROJ_BRANCH: "${{ matrix.PROJ_BRANCH }}"
         APPVEYOR: true # to skip some tests
-        PYTHON_VERSION: "3.7.8"
+        PYTHON_VERSION: "3.7.9"
 
     steps:
 
