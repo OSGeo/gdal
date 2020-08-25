@@ -547,7 +547,11 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                                                 nullptr, nullptr,
                                                 static_cast<float*>(nullptr), nullptr);
                     if( nYear > 2100 )
+                    {
                         m_poFeature->SetFieldNull(iFieldIndex);
+                        CPLError(CE_Warning, CPLE_AppDefined, 
+                            "Invalid date : %s, invalid value set to null", pszValue);
+                    }
                 }
             }
         }
