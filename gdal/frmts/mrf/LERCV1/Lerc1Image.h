@@ -119,18 +119,18 @@ protected:
         Byte* bArr, int& numBytes, float& maxValInImg) const;
 
     bool readTiles(double maxZErrorInFile,
-        int numTilesVert, int numTilesHori, float maxValInImg, Byte* bArr, size_t nRemainingBytes);
+        int numTilesVert, int numTilesHori, float maxValInImg, Byte* bArr, size_t &nRemainingBytes);
 
     void computeCntStats(float& cntMin, float& cntMax) const; // Across the whole image, always works
-    bool computeZStats(int i0, int i1, int j0, int j1,
+    bool computeZStats(int r0, int r1, int c0, int c1,
         float& zMin, float& zMax, int& numValidPixel) const;
 
     static int numBytesZTile(int numValidPixel, float zMin, float zMax, double maxZError);
 
-    bool writeZTile(Byte** ppByte, int& numBytes, int i0, int i1, int j0, int j1,
+    bool writeZTile(Byte** ppByte, int& numBytes, int r0, int r1, int c0, int c1,
         int numValidPixel, float zMin, float zMax, double maxZError) const;
 
-    bool readZTile(Byte** ppByte, size_t& nRemainingBytes, int i0, int i1, int j0, int j1,
+    bool readZTile(Byte** ppByte, size_t& nRemainingBytes, int r0, int r1, int c0, int c1,
         double maxZErrorInFile, float maxZInImg);
 
     std::vector<unsigned int> idataVec;    // temporary buffer, reused in readZTile
