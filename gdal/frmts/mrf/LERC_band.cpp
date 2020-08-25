@@ -256,7 +256,7 @@ static CPLErr DecompressLERC1(buf_mgr &dst, buf_mgr &src, const ILImage &img)
         }
 #undef UFILL
         if (!success) {
-            CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during LERC compression");
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during LERC decompression");
             return CE_Failure;
         }
     }
