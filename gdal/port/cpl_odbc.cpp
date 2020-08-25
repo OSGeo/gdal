@@ -416,7 +416,22 @@ int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
 /*                          ConnectToMsAccess()                          */
 /************************************************************************/
 
-
+/**
+ * Connects to a Microsoft Access database.
+ *
+ * @param pszName The file name of the Access database to connect to.  This is not
+ * optional.
+ *
+ * @param pszDSNStringTemplate optional DSN string template for Microsoft Access
+ * ODBC Driver. If not specified, then a set of known driver templates will
+ * be used automatically as a fallback. If specified, it is the caller's responsibility
+ * to ensure that the template is correctly formatted.
+ *
+ * @return TRUE on success or FALSE on failure. Errors will automatically be reported
+ * via CPLError.
+ *
+ * @since GDAL 3.2
+ */
 bool CPLODBCSession::ConnectToMsAccess(const char *pszName, const char *pszDSNStringTemplate)
 {
     char *pszDSN = nullptr;
