@@ -56,15 +56,24 @@ def drv(request):
 # Basic testing
 
 
-def switch_driver(tested_driver='PGeo', other_driver='MDB'):
-
+def switch_driver(tested_driver_name='PGeo', other_driver_name='MDB'):
     ogrtest.pgeo_ds = None
 
-    ogrtest.other_driver = ogr.GetDriverByName(other_driver)
+    if not hasattr(ogrtest, 'drivers'):
+        # store both drivers on first run
+        ogrtest.drivers = {'PGeo': ogr.GetDriverByName('PGeo'),
+                           'MDB': ogr.GetDriverByName('MDB')}
+
+    ogrtest.active_driver = ogrtest.drivers[tested_driver_name]
+    ogrtest.other_driver = ogrtest.drivers[other_driver_name]
+
+    if ogrtest.active_driver:
+        ogrtest.active_driver.Register()
+
     if ogrtest.other_driver is not None:
         print('Unregistering %s driver' % ogrtest.other_driver.GetName())
         ogrtest.other_driver.Deregister()
-        if other_driver == 'PGeo':
+        if other_driver_name == 'PGeo':
             # Re-register Geomedia and WALK at the end, *after* MDB
             geomedia_driver = ogr.GetDriverByName('Geomedia')
             if geomedia_driver is not None:
@@ -75,10 +84,8 @@ def switch_driver(tested_driver='PGeo', other_driver='MDB'):
                 walk_driver.Deregister()
                 walk_driver.Register()
 
-    drv = ogr.GetDriverByName(tested_driver)
-
-    if drv is None:
-        pytest.skip("Driver not available: %s" % tested_driver)
+    if ogrtest.active_driver is None:
+        pytest.skip("Driver not available: %s" % tested_driver_name)
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/pgeo/PGeoTest.zip', 'PGeoTest.zip'):
         pytest.skip()
