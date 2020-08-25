@@ -72,8 +72,7 @@ int OGRWalkDataSource::Open( const char * pszNewName, int /* bUpdate */ )
 /* -------------------------------------------------------------------- */
     if( STARTS_WITH_CI(pszNewName, "WALK:") )
     {
-        char *pszDSN = nullptr;
-        pszDSN = CPLStrdup( pszNewName + 5 );
+        char *pszDSN = CPLStrdup( pszNewName + 5 );
         CPLDebug( "Walk", "EstablishSession(%s)", pszDSN );
         if( !oSession.EstablishSession( pszDSN, nullptr, nullptr ) )
         {

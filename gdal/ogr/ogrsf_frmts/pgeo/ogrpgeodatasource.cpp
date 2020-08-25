@@ -108,8 +108,7 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     if( STARTS_WITH_CI(pszNewName, "PGEO:") )
     {
-        char *pszDSN = nullptr;
-        pszDSN = CPLStrdup( pszNewName + 5 );
+        char *pszDSN = CPLStrdup( pszNewName + 5 );
         CPLDebug( "PGeo", "EstablishSession(%s)", pszDSN );
         if( !oSession.EstablishSession( pszDSN, nullptr, nullptr ) )
         {
