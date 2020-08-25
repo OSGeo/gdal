@@ -611,7 +611,7 @@ bool Lerc1Image::computeZStats(int r0, int r1, int c0, int c1,
             if (IsValid(row, col)) {
                 numValidPixel++;
                 float val = (*this)(row, col);
-                if (!isfinite(val))
+                if (!std::isfinite(val))
                     zMin = val;
                 if (val < zMin)
                     zMin = val;
@@ -646,7 +646,8 @@ static Byte* writeFlt(Byte* ptr, float z, int n) {
 int Lerc1Image::numBytesZTile(int numValidPixel, float zMin, float zMax, double maxZError) {
     if (numValidPixel == 0 || (zMin == 0 && zMax == 0))
         return 1;
-    if (maxZError == 0 || !isfinite(zMin) || !isfinite(zMax) || ((double)zMax - zMin) / (2 * maxZError) > 0x10000000)
+    if (maxZError == 0 || !std::isfinite(zMin) || !std::isfinite(zMax)
+        || ((double)zMax - zMin) / (2 * maxZError) > 0x10000000)
         return(int)(1 + numValidPixel * sizeof(float));
     unsigned int maxElem = (unsigned int)(((double)zMax - zMin) / (2 * maxZError) + 0.5);
     return 1 + numBytesFlt(zMin) + (maxElem ? computeNumBytesNeededByStuffer(numValidPixel, maxElem) : 0);
@@ -669,7 +670,7 @@ bool Lerc1Image::writeZTile(Byte** ppByte, int& numBytes,
         return true;
     }
 
-    if (maxZError == 0 || !isfinite(zMin) || !isfinite(zMax) ||
+    if (maxZError == 0 || !std::isfinite(zMin) || !std::isfinite(zMax) ||
         ((double)zMax - zMin) / (2 * maxZError) > 0x10000000) {  // we'd need > 28 bit
         // write z's as flt arr uncompressed
         *ptr++ = 0; // flag
