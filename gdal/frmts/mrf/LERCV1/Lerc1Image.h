@@ -1,4 +1,3 @@
-
 /*
 Copyright 2015 - 2020 Esri
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -149,16 +148,6 @@ public:
 
     static unsigned int computeNumBytesNeededToWriteVoidImage();
 
-    // Read and write into a memory buffer
-    bool write(Byte** ppByte,
-        double maxZError = 0,
-        bool onlyZPart = false) const;
-
-    bool read(Byte** ppByte,
-        size_t& nRemainingBytes,
-        double maxZError,
-        bool onlyZPart = false);
-
     bool resize(int width, int height) {
         setsize(width, height);
         mask.resize(getWidth(), getHeight());
@@ -169,10 +158,12 @@ public:
         return mask.IsValid(row * getWidth() + col) != 0;
     }
 
+    // Read and write into a memory buffer
+    bool write(Byte** ppByte, double maxZError = 0, bool onlyZPart = false) const;
+    bool read(Byte** ppByte, size_t& nRemainingBytes, double maxZError, bool onlyZPart = false);
+
     BitMaskV1 mask;
 };
-
-// -------------------------------------------------------------------------- ;
 
 NAMESPACE_LERC1_END
 #endif
