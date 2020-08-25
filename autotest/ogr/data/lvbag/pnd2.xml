@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sl-bag-extract:bagStand xmlns:DatatypenNEN3610="www.kadaster.nl/schemas/lvbag/imbag/datatypennen3610/v20180601" xmlns:Objecten="www.kadaster.nl/schemas/lvbag/imbag/objecten/v20180601" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:Historie="www.kadaster.nl/schemas/lvbag/imbag/historie/v20180601" xmlns:Objecten-ref="www.kadaster.nl/schemas/lvbag/imbag/objecten-ref/v20180601" xmlns:nen5825="www.kadaster.nl/schemas/lvbag/imbag/nen5825/v20180601" xmlns:KenmerkInOnderzoek="www.kadaster.nl/schemas/lvbag/imbag/kenmerkinonderzoek/v20180601" xmlns:selecties-extract="http://www.kadaster.nl/schemas/lvbag/extract-selecties/v20180601" xmlns:sl-bag-extract="http://www.kadaster.nl/schemas/lvbag/extract-deelbestand-lvc/v20180601" xmlns:sl="http://www.kadaster.nl/schemas/standlevering-generiek/1.0">
+    <sl-bag-extract:bagInfo>
+        <selecties-extract:Gebied-Registratief>
+            <selecties-extract:Gebied-GEM>
+                <selecties-extract:GemeenteCollectie>
+                    <selecties-extract:Gemeente>
+                        <selecties-extract:GemeenteIdentificatie>1978</selecties-extract:GemeenteIdentificatie>
+                    </selecties-extract:Gemeente>
+                </selecties-extract:GemeenteCollectie>
+            </selecties-extract:Gebied-GEM>
+        </selecties-extract:Gebied-Registratief>
+        <selecties-extract:LVC-Extract>
+            <selecties-extract:StandTechnischeDatum>2020-05-01</selecties-extract:StandTechnischeDatum>
+        </selecties-extract:LVC-Extract>
+    </sl-bag-extract:bagInfo>
+    <sl:standBestand>
+        <sl:dataset>LVBAG</sl:dataset>
+        <sl:inhoud>
+            <sl:gebied>GEMEENTE</sl:gebied>
+            <sl:leveringsId>0000000001</sl:leveringsId>
+            <sl:objectTypen>
+                <sl:objectType>PND</sl:objectType>
+            </sl:objectTypen>
+        </sl:inhoud>
+        <sl:stand>
+            <sl-bag-extract:bagObject>
+                <Objecten:Pand>
+                    <Objecten:identificatie>
+                        <DatatypenNEN3610:namespace>NL.IMBAG.Pand</DatatypenNEN3610:namespace>
+                        <DatatypenNEN3610:lokaalID>571100000003518</DatatypenNEN3610:lokaalID>
+                    </Objecten:identificatie>
+                    <Objecten:geometrie>
+                        <gml:Polygon srsName="urn:ogc:def:crs:EPSG::28992" srsDimension="3" gml:id="PND_0571100000003518_1_1291824083">
+                            <gml:exterior>
+<gml:LinearRing>
+    <gml:posList count="5">105495.5 432931.5 0.0 105503.7 432933.1 0.0 105503.0 432937.2 0.0 105494.7 432935.8 0.0 105495.5 432931.5 0.0</gml:posList>
+</gml:LinearRing>
+                            </gml:exterior>
+                        </gml:Polygon>
+                    </Objecten:geometrie>
+                    <Objecten:oorspronkelijkBouwjaar>2008</Objecten:oorspronkelijkBouwjaar>
+                    <Objecten:status>Pand in gebruik</Objecten:status>
+                    <Objecten:geconstateerd>N</Objecten:geconstateerd>
+                    <Objecten:documentdatum>2010-11-02</Objecten:documentdatum>
+                    <Objecten:documentnummer>NLL-0902474/VB03292</Objecten:documentnummer>
+                    <Objecten:voorkomen>
+                        <Historie:Voorkomen>
+                            <Historie:voorkomenidentificatie>1</Historie:voorkomenidentificatie>
+                            <Historie:beginGeldigheid>2010-11-02</Historie:beginGeldigheid>
+                            <Historie:tijdstipRegistratie>2010-12-08T16:39:14.000</Historie:tijdstipRegistratie>
+                            <Historie:BeschikbaarLV>
+<Historie:tijdstipRegistratieLV>2010-12-08T17:01:23.658</Historie:tijdstipRegistratieLV>
+                            </Historie:BeschikbaarLV>
+                        </Historie:Voorkomen>
+                    </Objecten:voorkomen>
+                </Objecten:Pand>
+            </sl-bag-extract:bagObject>
+        </sl:stand>
+    </sl:standBestand>
+</sl-bag-extract:bagStand>
