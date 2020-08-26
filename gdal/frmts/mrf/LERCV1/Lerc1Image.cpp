@@ -203,7 +203,6 @@ static bool blockwrite(Byte** ppByte, const std::vector<unsigned int>& d) {
     return true;
 }
 
-
 static bool blockread(Byte** ppByte, size_t& size, std::vector<unsigned int>& d) {
     if (!ppByte || !size)
         return false;
@@ -293,7 +292,6 @@ unsigned int Lerc1Image::computeNumBytesNeededToWriteVoidImage() {
     sz += 3 * sizeof(int) + sizeof(float) + 1;
     return sz; // 67
 }
-
 
 unsigned int Lerc1Image::computeNumBytesNeededToWrite(double maxZError,
     bool onlyZPart, InfoFromComputeNumBytes* info) const
@@ -559,7 +557,6 @@ bool Lerc1Image::writeTiles(double maxZError, int numTilesV, int numTilesH,
     return true;
 }
 
-
 bool Lerc1Image::readTiles(double maxZErrorInFile,  int numTilesV, int numTilesH,
     float maxValInImg, Byte* bArr, size_t nRemainingBytes)
 {
@@ -584,7 +581,6 @@ bool Lerc1Image::readTiles(double maxZErrorInFile,  int numTilesV, int numTilesH
     return true;
 }
 
-
 void Lerc1Image::computeCntStats(float& cntMin, float& cntMax) const {
     cntMin = cntMax = static_cast<float>(mask.IsValid(0) ? 1.0f : 0.0f);
     for (int k = 0; k < getSize() && cntMin == cntMax; k++)
@@ -608,7 +604,7 @@ bool Lerc1Image::computeZStats(int r0, int r1, int c0, int c1,
                 numValidPixel++;
                 float val = (*this)(row, col);
                 if (!std::isfinite(val))
-                    zMin = val;
+                    zMin = NAN; // Serves as a flag, this block will be stored
                 if (val < zMin)
                     zMin = val;
                 if (val > zMax)
@@ -719,7 +715,6 @@ static float readFlt(const Byte* ptr, int n) {
     }
     return static_cast<float>(static_cast<signed char>(*ptr));
 }
-
 
 bool Lerc1Image::readZTile(Byte** ppByte, size_t& nRemainingBytes,
     int r0, int r1, int c0, int c1, double maxZErrorInFile, float maxZInImg)
