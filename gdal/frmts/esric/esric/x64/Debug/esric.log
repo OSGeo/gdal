@@ -1,8 +1,0 @@
-﻿  
-  Microsoft (R) Program Maintenance Utility Version 14.26.28805.0
-  Copyright (C) Microsoft Corporation.  All rights reserved.
-  
-  	mkdir ""\GDAL\bin"\gdalplugins"
-  A subdirectory or file \GDAL\bin\gdalplugins already exists.
-  	xcopy /y /r /d /f /I gdal_ESRIC.dll ""\GDAL\bin"\gdalplugins"
-  0 File(s) copied
