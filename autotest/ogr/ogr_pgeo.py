@@ -99,7 +99,8 @@ def switch_driver(tested_driver='PGeo', other_driver='MDB'):
     if ogrtest.pgeo_ds is None:
         pytest.skip('could not open DB. Driver probably misconfigured')
 
-    assert ogrtest.pgeo_ds.GetLayerCount() == 3, 'did not get expected layer count'
+    # PGEO driver reports non spatial tables, MDB driver doesn't
+    assert ogrtest.pgeo_ds.GetLayerCount() == 3 if tested_driver_name =='MDB' else 34, 'did not get expected layer count'
 
     lyr = ogrtest.pgeo_ds.GetLayer(0)
     feat = lyr.GetNextFeature()
@@ -244,7 +245,44 @@ def test_ogr_pgeo_7():
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
 
 ###############################################################################
+# Open mdb with non-spatial tables
 
+
+def test_ogr_pgeo_8():
+    if ogrtest.pgeo_ds is None:
+        pytest.skip()
+
+    if ogrtest.active_driver.GetName() != 'PGeo':
+        # MDB driver doesn't report non-spatial tables
+        pytest.skip()
+
+    ogrtest.pgeo_ds = ogr.Open('data/pgeo/sample.mdb')
+    if ogrtest.pgeo_ds is None:
+        pytest.skip('could not open DB. Driver probably misconfigured')
+
+    assert ogrtest.pgeo_ds.GetLayerCount() == 4, 'did not get expected layer count'
+
+    layer_names = [ogrtest.pgeo_ds.GetLayer(n).GetName() for n in range(4)]
+    assert set(layer_names) == {'lines', 'polys', 'points', 'non_spatial'}, 'did not get expected layer names'
+
+    non_spatial_layer = ogrtest.pgeo_ds.GetLayerByName('non_spatial')
+    feat = non_spatial_layer.GetNextFeature()
+    if feat.GetField('text_field') != 'Record 1' or \
+       feat.GetField('int_field') != 13 or \
+       feat.GetField('long_int_field') != 10001 or \
+       feat.GetField('float_field') != 13.5 or \
+       feat.GetField('double_field') != 14.5 or \
+       feat.GetField('date_field') != '2020/01/30 00:00:00':
+        feat.DumpReadable()
+        pytest.fail('did not get expected attributes')
+
+    feat_count = non_spatial_layer.GetFeatureCount()
+    assert feat_count == 2, 'did not get expected feature count'
+
+
+
+
+###############################################################################
 
 def test_ogr_pgeo_cleanup():
 
