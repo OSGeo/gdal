@@ -31,6 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include <vector>
+#include <unordered_set>
 
 CPL_CVSID("$Id$")
 
@@ -202,9 +203,17 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
     papoLayers = (OGRPGeoLayer **) CPLCalloc(apapszGeomColumns.size(),
                                              sizeof(void*));
 
+    std::unordered_set<std::string> oSetSpatialTableNames;
     for( unsigned int iTable = 0; iTable < apapszGeomColumns.size(); iTable++ )
     {
         char **papszRecord = apapszGeomColumns[iTable];
+        if ( EQUAL(papszRecord[0], "GDB_Items"))
+        {
+            // don't expose this internal layer
+            CSLDestroy( papszRecord );
+            continue;
+        }
+
         OGRPGeoTableLayer  *poLayer = new OGRPGeoTableLayer( this );
 
         if( poLayer->Initialize( papszRecord[0],         // TableName
@@ -221,10 +230,76 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
             delete poLayer;
         }
         else
+        {
             papoLayers[nLayers++] = poLayer;
+            oSetSpatialTableNames.insert( CPLString( papszRecord[ 0 ] ) );
+        }
 
         CSLDestroy( papszRecord );
     }
+
+
+    /* -------------------------------------------------------------------- */
+    /*      Add non-spatial tables.                       */
+    /* -------------------------------------------------------------------- */
+        CPLODBCStatement oTableList( &oSession );
+
+        if( oTableList.GetTables() )
+        {
+            while( oTableList.Fetch() )
+            {
+                CPLString osTableName = CPLString( oTableList.GetColData(2) );
+                // a bunch of internal tables we don't want to expose...
+                if( !osTableName.empty()
+                        && osTableName != "MSysObjects"
+                        && osTableName != "MSysACEs"
+                        && osTableName != "MSysQueries"
+                        && osTableName != "MSysRelationships"
+                        && osTableName != "GDB_ColumnInfo"
+                        && osTableName != "GDB_DatabaseLocks"
+                        && osTableName != "GDB_GeomColumns"
+                        && osTableName != "GDB_ItemRelationships"
+                        && osTableName != "GDB_ItemRelationshipTypes"
+                        && osTableName != "GDB_Items"
+                        && osTableName != "GDB_Items_Shape_Index"
+                        && osTableName != "GDB_ItemTypes"
+                        && osTableName != "GDB_RasterColumns"
+                        && osTableName != "GDB_ReplicaLog"
+                        && osTableName != "GDB_SpatialRefs"
+                        && osTableName != "MSysAccessStorage"
+                        && osTableName != "MSysNavPaneGroupCategories"
+                        && osTableName != "MSysNavPaneGroups"
+                        && osTableName != "MSysNavPaneGroupToObjects"
+                        && osTableName != "MSysNavPaneObjectIDs"
+                        && oSetSpatialTableNames.find( osTableName ) == oSetSpatialTableNames.end()
+                        && !osTableName.endsWith( "_Shape_Index")
+                        )
+                {
+                    OGRPGeoTableLayer  *poLayer = new OGRPGeoTableLayer( this );
+
+                    if( poLayer->Initialize( osTableName.c_str(),         // TableName
+                                             nullptr,         // FieldName
+                                             0,   // ShapeType (ESRI_LAYERGEOMTYPE_NULL)
+                                             0,   // ExtentLeft
+                                             0,   // ExtentRight
+                                             0,   // ExtentBottom
+                                             0,   // ExtentTop
+                                             0,   // SRID
+                                             0)  // HasZ
+                        != CE_None )
+                    {
+                        delete poLayer;
+                    }
+                    else
+                    {
+                        papoLayers = static_cast< OGRPGeoLayer **>( CPLRealloc(papoLayers, sizeof(void*) * ( nLayers+1 ) ) );
+                        papoLayers[nLayers++] = poLayer;
+                    }
+                }
+            }
+
+            return TRUE;
+        }
 
     return TRUE;
 }
