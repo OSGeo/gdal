@@ -1,4 +1,3 @@
-
 /*
 Copyright 2015 - 2020 Esri
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -123,15 +122,15 @@ protected:
         int numTilesVert, int numTilesHori, float maxValInImg, Byte* bArr, size_t nRemainingBytes);
 
     void computeCntStats(float& cntMin, float& cntMax) const; // Across the whole image, always works
-    bool computeZStats(int i0, int i1, int j0, int j1,
+    bool computeZStats(int r0, int r1, int c0, int c1,
         float& zMin, float& zMax, int& numValidPixel) const;
 
     static int numBytesZTile(int numValidPixel, float zMin, float zMax, double maxZError);
 
-    bool writeZTile(Byte** ppByte, int& numBytes, int i0, int i1, int j0, int j1,
+    bool writeZTile(Byte** ppByte, int& numBytes, int r0, int r1, int c0, int c1,
         int numValidPixel, float zMin, float zMax, double maxZError) const;
 
-    bool readZTile(Byte** ppByte, size_t& nRemainingBytes, int i0, int i1, int j0, int j1,
+    bool readZTile(Byte** ppByte, size_t& nRemainingBytes, int r0, int r1, int c0, int c1,
         double maxZErrorInFile, float maxZInImg);
 
     std::vector<unsigned int> idataVec;    // temporary buffer, reused in readZTile
@@ -149,16 +148,6 @@ public:
 
     static unsigned int computeNumBytesNeededToWriteVoidImage();
 
-    // Read and write into a memory buffer
-    bool write(Byte** ppByte,
-        double maxZError = 0,
-        bool onlyZPart = false) const;
-
-    bool read(Byte** ppByte,
-        size_t& nRemainingBytes,
-        double maxZError,
-        bool onlyZPart = false);
-
     bool resize(int width, int height) {
         setsize(width, height);
         mask.resize(getWidth(), getHeight());
@@ -169,10 +158,12 @@ public:
         return mask.IsValid(row * getWidth() + col) != 0;
     }
 
+    // Read and write into a memory buffer
+    bool write(Byte** ppByte, double maxZError = 0, bool onlyZPart = false) const;
+    bool read(Byte** ppByte, size_t& nRemainingBytes, double maxZError, bool onlyZPart = false);
+
     BitMaskV1 mask;
 };
-
-// -------------------------------------------------------------------------- ;
 
 NAMESPACE_LERC1_END
 #endif
