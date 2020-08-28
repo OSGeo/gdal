@@ -394,7 +394,8 @@ Example on how to use the API:
 
 A sample Python script
 `gdal_create_pdf.py <https://raw.githubusercontent.com/OSGeo/gdal/master/gdal/swig/python/samples/gdal_create_pdf.py>`__
-is also available.
+is also available. Starting with GDAL 3.2, the :ref:`gdal_create` utility can
+also be used.
 
 Example of a composition XML file:
 

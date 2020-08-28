@@ -43,6 +43,7 @@ Raster programs
    gdalmanage
    gdalcompare
    gdal_viewshed
+   gdal_create
 
 .. only:: html
 
@@ -78,6 +79,7 @@ Raster programs
     - :ref:`gdalmanage`: Identify, delete, rename and copy raster data files.
     - :ref:`gdalcompare`: Compare two images.
     - :ref:`gdal_viewshed`: Compute a visibility mask for a raster.
+    - :ref:`gdal_create`: Create a raster file (without source dataset).
 
 Multidimensional Raster programs
 --------------------------------

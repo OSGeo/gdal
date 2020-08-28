@@ -643,6 +643,36 @@ _gdal_viewshed()
   return 0
 }
 complete -o default -F _gdal_viewshed gdal_viewshed
+_gdal_create()
+{
+  local cur prev
+  COMPREPLY=()
+  _get_comp_words_by_ref cur prev
+  case "$cur" in
+    -*)
+      key_list="--help-general -of -outsize -bands -burn -ot -strict -a_srs -a_ullr -a_nodata -mo -q -co --version --license --formats --format --optfile --config --debug --pause --locale "
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      return 0
+      ;;
+  esac
+  tool=${COMP_WORDS[0]}
+  case "$prev" in
+    -ot)
+      key_list="Byte Int16 UInt16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      ;;
+    -of)
+      key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      ;;
+    --format)
+      key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      ;;
+  esac
+  return 0
+}
+complete -o default -F _gdal_create gdal_create
 _ogr2ogr()
 {
   local cur prev
