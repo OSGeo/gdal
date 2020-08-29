@@ -242,7 +242,8 @@ def main(argv):
                  "gdaltindex",\
                  "gdaltransform",\
                  "gdal_translate",\
-                 "gdalwarp"]
+                 "gdalwarp",\
+                 "gdal_viewshed"]
 
     ogrtools = ["ogr2ogr",
                 "ogrinfo",
