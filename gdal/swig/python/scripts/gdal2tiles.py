@@ -2181,8 +2181,8 @@ class GDAL2Tiles(object):
         geotran = ds.GetGeoTransform()
         rx = int((ulx - geotran[0]) / geotran[1] + 0.001)
         ry = int((uly - geotran[3]) / geotran[5] + 0.001)
-        rxsize = int((lrx - ulx) / geotran[1] + 0.5)
-        rysize = int((lry - uly) / geotran[5] + 0.5)
+        rxsize = max(1, int((lrx - ulx) / geotran[1] + 0.5))
+        rysize = max(1, int((lry - uly) / geotran[5] + 0.5))
 
         if not querysize:
             wxsize, wysize = rxsize, rysize
