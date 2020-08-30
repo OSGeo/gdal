@@ -62,14 +62,14 @@ OGRDataSource *OGRIDBDriver::Open( const char * pszFilename,
     OGRIDBDataSource     *poDS;
 
     if( !STARTS_WITH_CI(pszFilename, "IDB:") )
-        return NULL;
+        return nullptr;
 
     poDS = new OGRIDBDataSource();
 
     if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     else
         return poDS;
@@ -86,7 +86,7 @@ OGRDataSource *OGRIDBDriver::CreateDataSource( const char * pszName,
     OGRIDBDataSource     *poDS;
 
     if( !STARTS_WITH_CI(pszName, "IDB:") )
-        return NULL;
+        return nullptr;
 
     poDS = new OGRIDBDataSource();
 
@@ -95,7 +95,7 @@ OGRDataSource *OGRIDBDriver::CreateDataSource( const char * pszName,
         delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined,
          "IDB driver doesn't currently support database creation.");
-        return NULL;
+        return nullptr;
     }
 
     return poDS;

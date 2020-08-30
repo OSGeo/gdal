@@ -33,7 +33,7 @@
 
 #include "ogrsf_frmts.h"
 #include "cpl_error.h"
-#include <it.h>
+#include "idb_headers.h"
 
 /************************************************************************/
 /*                            OGRIDBLayer                              */
@@ -46,7 +46,7 @@ class OGRIDBLayer CPL_NON_FINAL: public OGRLayer
   protected:
     OGRFeatureDefn     *poFeatureDefn;
 
-    ITCursor   *poCurr;
+    ITCursor   *m_poCurr;
 
     // Layer spatial reference system, and srid.
     OGRSpatialReference *poSRS;
@@ -63,7 +63,7 @@ class OGRIDBLayer CPL_NON_FINAL: public OGRLayer
     CPLErr              BuildFeatureDefn( const char *pszLayerName,
                                           ITCursor *poCurr );
 
-    virtual ITCursor *  GetQuery() { return poCurr; }
+    virtual ITCursor *  GetQuery() { return m_poCurr; }
 
   public:
                         OGRIDBLayer();
@@ -100,7 +100,7 @@ class OGRIDBTableLayer final: public OGRIDBLayer
     void                ClearQuery();
     OGRErr              ResetQuery();
 
-    virtual ITCursor *  GetQuery();
+    virtual ITCursor *  GetQuery() override;
 
   public:
     explicit            OGRIDBTableLayer( OGRIDBDataSource * );
@@ -140,7 +140,7 @@ class OGRIDBSelectLayer final: public OGRIDBLayer
     void                ClearQuery();
     OGRErr              ResetQuery();
 
-    virtual ITCursor *  GetQuery();
+    virtual ITCursor *  GetQuery() override;
 
   public:
                         OGRIDBSelectLayer( OGRIDBDataSource *,

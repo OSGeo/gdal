@@ -41,19 +41,19 @@ CPL_CVSID("$Id$")
 OGRIDBLayer::OGRIDBLayer()
 
 {
-    poDS = NULL;
+    poDS = nullptr;
 
     bGeomColumnWKB = FALSE;
-    pszFIDColumn = NULL;
-    pszGeomColumn = NULL;
+    pszFIDColumn = nullptr;
+    pszGeomColumn = nullptr;
 
-    poCurr = NULL;
+    m_poCurr = nullptr;
 
     iNextShapeId = 0;
 
-    poSRS = NULL;
+    poSRS = nullptr;
     nSRSId = -2; // we haven't even queried the database for it yet.
-    poFeatureDefn = NULL;
+    poFeatureDefn = nullptr;
 }
 
 /************************************************************************/
@@ -63,11 +63,11 @@ OGRIDBLayer::OGRIDBLayer()
 OGRIDBLayer::~OGRIDBLayer()
 
 {
-    if( poCurr != NULL )
+    if( m_poCurr != nullptr )
     {
-        poCurr->Close();
-        delete poCurr;
-        poCurr = NULL;
+        m_poCurr->Close();
+        delete m_poCurr;
+        m_poCurr = nullptr;
     }
 
     if( pszGeomColumn )
@@ -79,7 +79,7 @@ OGRIDBLayer::~OGRIDBLayer()
     if( poFeatureDefn )
     {
         poFeatureDefn->Release();
-        poFeatureDefn = NULL;
+        poFeatureDefn = nullptr;
     }
 
     if( poSRS )
@@ -114,10 +114,10 @@ CPLErr OGRIDBLayer::BuildFeatureDefn( const char *pszLayerName,
 
         oField.SetWidth( MAX(0,poTI->Bound()) );
 
-        if ( pszGeomColumn != NULL && EQUAL(pszColName,pszGeomColumn) )
+        if ( pszGeomColumn != nullptr && EQUAL(pszColName,pszGeomColumn) )
             continue;
 
-        if ( STARTS_WITH_CI(pszTypName, "st_") && pszGeomColumn == NULL )
+        if ( STARTS_WITH_CI(pszTypName, "st_") && pszGeomColumn == nullptr )
         {
             // We found spatial column!
             pszGeomColumn = CPLStrdup(pszColName);
@@ -200,14 +200,14 @@ CPLErr OGRIDBLayer::BuildFeatureDefn( const char *pszLayerName,
 /*      If we don't already have an FID, check if there is a special    */
 /*      FID named column available.                                     */
 /* -------------------------------------------------------------------- */
-    if( pszFIDColumn == NULL )
+    if( pszFIDColumn == nullptr )
     {
         const char *pszOGR_FID = CPLGetConfigOption("IDB_OGR_FID","OGR_FID");
         if( poFeatureDefn->GetFieldIndex( pszOGR_FID ) != -1 )
             pszFIDColumn = CPLStrdup(pszOGR_FID);
     }
 
-    if( pszFIDColumn != NULL )
+    if( pszFIDColumn != nullptr )
         CPLDebug( "OGR_IDB", "Using column %s as FID for table %s.",
                   pszFIDColumn, poFeatureDefn->GetName() );
     else
@@ -239,12 +239,12 @@ OGRFeature *OGRIDBLayer::GetNextFeature()
         OGRFeature      *poFeature;
 
         poFeature = GetNextRawFeature();
-        if( poFeature == NULL )
-            return NULL;
+        if( poFeature == nullptr )
+            return nullptr;
 
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
             || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature )) )
             return poFeature;
 
@@ -259,18 +259,18 @@ OGRFeature *OGRIDBLayer::GetNextFeature()
 OGRFeature *OGRIDBLayer::GetNextRawFeature()
 
 {
-    if( GetQuery() == NULL )
-        return NULL;
+    if( GetQuery() == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      If we are marked to restart then do so, and fetch a record.     */
 /* -------------------------------------------------------------------- */
-    ITRow * row = poCurr->NextRow();
+    ITRow * row = m_poCurr->NextRow();
     if ( ! row )
     {
-        delete poCurr;
-        poCurr = NULL;
-        return NULL;
+        delete m_poCurr;
+        m_poCurr = nullptr;
+        return nullptr;
     }
 
     iNextShapeId++;
@@ -282,7 +282,7 @@ OGRFeature *OGRIDBLayer::GetNextRawFeature()
     int         iField;
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
-    const ITTypeInfo * poRowType = poCurr->RowType();
+    const ITTypeInfo * poRowType = m_poCurr->RowType();
     int nFieldCount = poRowType->ColumnCount();
 
     for ( iField = 0; iField < nFieldCount; iField++ )
@@ -290,17 +290,17 @@ OGRFeature *OGRIDBLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
 /*      Handle FID column                                               */
 /* -------------------------------------------------------------------- */
-        if ( pszFIDColumn != NULL &&
+        if ( pszFIDColumn != nullptr &&
              EQUAL( poRowType->ColumnName( iField ), pszFIDColumn ) )
             poFeature->SetFID( atoi( row->Column( iField )->Printable() ) );
 
 /* -------------------------------------------------------------------- */
 /*      Handle geometry                                                 */
 /* -------------------------------------------------------------------- */
-        if( pszGeomColumn != NULL &&
+        if( pszGeomColumn != nullptr &&
             EQUAL( poRowType->ColumnName( iField ), pszGeomColumn ) )
         {
-            OGRGeometry *poGeom = NULL;
+            OGRGeometry *poGeom = nullptr;
             OGRErr eErr = OGRERR_NONE;
 
             ITValue * v = row->Column( iField );
@@ -308,14 +308,14 @@ OGRFeature *OGRIDBLayer::GetNextRawFeature()
             if( ! v->IsNull() && ! bGeomColumnWKB )
             {
                 const char *pszGeomText = v->Printable();
-                if ( pszGeomText != NULL )
+                if ( pszGeomText != nullptr )
                 eErr =
                     OGRGeometryFactory::createFromWkt(pszGeomText,
                                                     poSRS, &poGeom);
             }
             else if( ! v->IsNull() && bGeomColumnWKB )
             {
-                ITDatum *rv = 0;
+                ITDatum *rv = nullptr;
                 if ( v->QueryInterface( ITDatumIID, (void **) &rv ) ==
                      IT_QUERYINTERFACE_SUCCESS )
                 {
@@ -351,7 +351,7 @@ OGRFeature *OGRIDBLayer::GetNextRawFeature()
                         "GetNextRawFeature(): %s", pszMessage);
             }
 
-            if( poGeom != NULL )
+            if( poGeom != nullptr )
             {
                 poFeature->SetGeometryDirectly( poGeom );
             }
@@ -424,7 +424,7 @@ OGRSpatialReference *OGRIDBLayer::GetSpatialRef()
 const char *OGRIDBLayer::GetFIDColumn()
 
 {
-    if( pszFIDColumn != NULL )
+    if( pszFIDColumn != nullptr )
         return pszFIDColumn;
     else
         return "";
@@ -437,7 +437,7 @@ const char *OGRIDBLayer::GetFIDColumn()
 const char *OGRIDBLayer::GetGeometryColumn()
 
 {
-    if( pszGeomColumn != NULL )
+    if( pszGeomColumn != nullptr )
         return pszGeomColumn;
     else
         return "";
