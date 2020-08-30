@@ -99,21 +99,21 @@ gdal_csharp: template.csproj
 !IFDEF NETSTANDARD
     cd const
     copy ..\template.csproj gdalconst_csharp.csproj
-    dotnet build -unsafe -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID)
+    dotnet build -p:unsafe=true -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID)
     cd ..
     cd osr
     copy ..\template.csproj osr_csharp.csproj
-    dotnet build -unsafe -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID)
+    dotnet build -p:unsafe=true -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID)
     cd ..
     cd ogr
     copy ..\template.csproj ogr_csharp.csproj
     dotnet add reference ..\osr\osr_csharp.csproj
-    dotnet build -unsafe -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID)
+    dotnet build -p:unsafe=true -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID)
     cd ..
     cd gdal
     copy ..\template.csproj gdal_csharp.csproj
     dotnet add reference ..\osr\osr_csharp.csproj ..\ogr\ogr_csharp.csproj
-    dotnet build -unsafe -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID)
+    dotnet build -p:unsafe=true -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID)
     cd ..
 !ELSE
     $(CSC) $(CSDEBUG) /unsafe /target:library /out:osr_csharp.dll osr\*.cs AssemblyInfo.cs
