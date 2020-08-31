@@ -130,6 +130,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
 
     bool                m_bTableCreated;
 
+    bool                m_bDateTimeWithTZ = true;
+
     CPLString           m_osTilingScheme;
 
         bool            ComputeTileAndPixelShifts();

@@ -32,6 +32,7 @@
 #include "ogrsqliteutility.h"
 #include "cpl_time.h"
 #include "ogr_p.h"
+#include <cmath>
 
 CPL_CVSID("$Id$")
 
@@ -268,10 +269,10 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                     const char *pszVal = poFeature->GetFieldAsString(i);
                     int nValLengthBytes = (int)strlen(pszVal);
                     char szVal[32];
-                    int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZFlag;
                     CPLString osTemp;
                     if( poFieldDefn->GetType() == OFTDate )
                     {
+                        int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZFlag;
                         poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond, &nTZFlag);
                         snprintf(szVal, sizeof(szVal), "%04d-%02d-%02d", nYear, nMonth, nDay);
                         pszVal = szVal;
@@ -279,21 +280,39 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                     }
                     else if( poFieldDefn->GetType() == OFTDateTime )
                     {
-                        float fSecond = 0.0f;
-                        poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay,
-                                                      &nHour, &nMinute,
-                                                      &fSecond, &nTZFlag);
-                        if( nTZFlag == 0 || nTZFlag == 100 )
+                        OGRField sField(*(poFeature->GetRawFieldRef(i)));
+
+                        if( !m_poDS->m_bDateTimeWithTZ &&
+                                (sField.Date.TZFlag == 0 || sField.Date.TZFlag == 1) )
                         {
-                            if( OGR_GET_MS(fSecond) )
-                                snprintf(szVal, sizeof(szVal), "%04d-%02d-%02dT%02d:%02d:%06.3fZ",
-                                     nYear, nMonth, nDay, nHour, nMinute, fSecond);
-                            else
-                                snprintf(szVal, sizeof(szVal), "%04d-%02d-%02dT%02d:%02d:%02dZ",
-                                     nYear, nMonth, nDay, nHour, nMinute, (int)fSecond);
-                            pszVal = szVal;
-                            nValLengthBytes = (int)strlen(pszVal);
+                            sField.Date.TZFlag = 100;
                         }
+                        else if( !m_poDS->m_bDateTimeWithTZ && sField.Date.TZFlag != 100 )
+                        {
+                            struct tm brokendowntime;
+                            brokendowntime.tm_year = sField.Date.Year - 1900;
+                            brokendowntime.tm_mon = sField.Date.Month -1;
+                            brokendowntime.tm_mday = sField.Date.Day;
+                            brokendowntime.tm_hour = sField.Date.Hour;
+                            brokendowntime.tm_min = sField.Date.Minute;
+                            brokendowntime.tm_sec = 0;
+                            GIntBig nDT = CPLYMDHMSToUnixTime(&brokendowntime);
+                            const int TZOffset = std::abs(sField.Date.TZFlag - 100) * 15;
+                            nDT -= TZOffset * 60;
+                            CPLUnixTimeToYMDHMS(nDT, &brokendowntime);
+                            sField.Date.Year = static_cast<GInt16>(brokendowntime.tm_year + 1900);
+                            sField.Date.Month = static_cast<GByte>(brokendowntime.tm_mon + 1);
+                            sField.Date.Day = static_cast<GByte>(brokendowntime.tm_mday);
+                            sField.Date.Hour = static_cast<GByte>(brokendowntime.tm_hour);
+                            sField.Date.Minute = static_cast<GByte>(brokendowntime.tm_min);
+                            sField.Date.TZFlag = 100;
+                        }
+
+                        char* pszXMLDateTime = OGRGetXMLDateTime(&sField);
+                        osTemp = pszXMLDateTime;
+                        pszVal = osTemp.c_str();
+                        nValLengthBytes = static_cast<int>(osTemp.size());
+                        CPLFree(pszXMLDateTime);
                     }
                     else if( poFieldDefn->GetType() == OFTString &&
                              poFieldDefn->GetWidth() > 0 )
