@@ -28,6 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import sys
 import shutil
 from osgeo import ogr
@@ -165,8 +166,12 @@ def test_extensions():
     lyr = ds.GetLayerByName('Line Symbols')
     assert lyr is not None
 
-    ds = ogrtest.odbc_drv.Open('data/mdb/empty.accdb')
-    assert ds is not None
+    if os.environ.get('GITHUB_WORKFLOW', '') != 'Windows builds':
+        # can't run this on Github "Windows builds" workflow, as that has the older
+        # 'Microsoft Access Driver (*.mdb)' ODBC driver only, which doesn't support accdb
+        # databases
+        ds = ogrtest.odbc_drv.Open('data/mdb/empty.accdb')
+        assert ds is not None
 
 ###############################################################################
 # Cleanup
