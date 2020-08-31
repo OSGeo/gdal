@@ -541,6 +541,8 @@ typedef struct {
     VSIFilesystemPluginFlushCallback            flush; /**< sync bytes (w) */
     VSIFilesystemPluginTruncateCallback         truncate; /**< truncate handle (w?) */
     VSIFilesystemPluginCloseCallback            close; /**< close handle  (rw) */
+    size_t                                      nBufferSize; /**< buffer small reads (makes handler read only) */
+    size_t                                      nCacheSize; /**< max mem to use per file when buffering */
 /* 
     Callbacks are defined as a struct allocated by a call to VSIAllocFilesystemPluginCallbacksStruct
     in order to try to maintain ABI stability when eventually adding a new member.
