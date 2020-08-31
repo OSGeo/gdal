@@ -102,8 +102,11 @@ static double NCDFGetDefaultNoDataValue( int nCdfId, int nVarId, int nVarType, b
 
 // Replace this where used.
 static char **NCDFTokenizeArray( const char *pszValue );
-static void CopyMetadata( void  *poDS, int fpImage, int CDFVarID,
-                          const char *pszMatchPrefix=nullptr, bool bIsBand=true );
+static void CopyMetadata( GDALDataset* poSrcDS,
+                          GDALRasterBand* poSrcBand,
+                          GDALRasterBand* poDstBand,
+                          int fpImage, int CDFVarID,
+                          const char *pszMatchPrefix=nullptr );
 
 // NetCDF-4 groups helper functions.
 // They all work also for NetCDF-3 files which are considered as
@@ -8052,8 +8055,11 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
 /*      Create a copy of metadata for NC_GLOBAL or a variable           */
 /************************************************************************/
 
-static void CopyMetadata( void *poDS, int fpImage, int CDFVarID,
-                          const char *pszPrefix, bool bIsBand )
+static void CopyMetadata( GDALDataset* poSrcDS,
+                          GDALRasterBand* poSrcBand,
+                          GDALRasterBand* poDstBand,
+                          int fpImage, int CDFVarID,
+                          const char *pszPrefix )
 {
     char **papszFieldData = nullptr;
 
@@ -8065,13 +8071,13 @@ static void CopyMetadata( void *poDS, int fpImage, int CDFVarID,
     const char *papszIgnoreGlobal[] = { "NETCDF_DIM_EXTRA", nullptr };
 
     char **papszMetadata = nullptr;
-    if( CDFVarID == NC_GLOBAL )
+    if( poSrcDS )
     {
-        papszMetadata = GDALGetMetadata((GDALDataset *)poDS, "");
+        papszMetadata = poSrcDS->GetMetadata();
     }
     else
     {
-        papszMetadata = GDALGetMetadata((GDALRasterBandH)poDS, nullptr);
+        papszMetadata = poSrcBand->GetMetadata();
     }
 
     const int nItems = CSLCount(papszMetadata);
@@ -8175,19 +8181,18 @@ static void CopyMetadata( void *poDS, int fpImage, int CDFVarID,
     if( papszFieldData ) CSLDestroy(papszFieldData);
 
     // Set add_offset and scale_factor here if present.
-    if( CDFVarID != NC_GLOBAL && bIsBand )
+    if( poSrcBand && poDstBand )
     {
 
-        GDALRasterBandH poRB = poDS;
         int bGotAddOffset = FALSE;
-        const double dfAddOffset = GDALGetRasterOffset(poRB, &bGotAddOffset);
+        const double dfAddOffset = poSrcBand->GetOffset(&bGotAddOffset);
         int bGotScale = FALSE;
-        const double dfScale = GDALGetRasterScale(poRB, &bGotScale);
+        const double dfScale = poSrcBand->GetScale(&bGotScale);
 
         if( bGotAddOffset && dfAddOffset != 0.0 )
-            GDALSetRasterOffset(poRB, dfAddOffset);
+            poDstBand->SetOffset(dfAddOffset);
         if( bGotScale && dfScale != 1.0 )
-            GDALSetRasterScale(poRB, dfScale);
+            poDstBand->SetScale(dfScale);
     }
 }
 
@@ -8517,7 +8522,7 @@ netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
 
     // Copy global metadata.
     // Add Conventions, GDAL info and history.
-    CopyMetadata((void *)poSrcDS, poDS->cdfid, NC_GLOBAL, nullptr, false);
+    CopyMetadata(poSrcDS, nullptr, nullptr, poDS->cdfid, NC_GLOBAL, nullptr);
     NCDFAddGDALHistory(poDS->cdfid, pszFilename,
                        poSrcDS->GetMetadataItem("NC_GLOBAL#history", ""),
                        "CreateCopy");
@@ -8608,7 +8613,7 @@ netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
 
             // Add dim metadata, using global var# items.
             snprintf(szTemp, sizeof(szTemp), "%s#", papszExtraDimNames[i]);
-            CopyMetadata(poSrcDS, poDS->cdfid, panDimVarIds[i], szTemp, false);
+            CopyMetadata(poSrcDS, nullptr, nullptr, poDS->cdfid, panDimVarIds[i], szTemp);
         }
     }
 
@@ -8740,8 +8745,10 @@ netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
         }
 
         // Copy Metadata for band.
-        CopyMetadata((void *)GDALGetRasterBand(poSrcDS, iBand),
-                      poDS->cdfid, poBand->nZId);
+        CopyMetadata(nullptr,
+                     poSrcDS->GetRasterBand(iBand),
+                     poBand,
+                     poDS->cdfid, poBand->nZId);
 
         // If more than 2D pass the first band's netcdf var ID to subsequent
         // bands.
