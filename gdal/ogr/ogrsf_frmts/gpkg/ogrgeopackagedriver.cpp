@@ -380,6 +380,10 @@ COMPRESSION_OPTIONS
 "     <Value>1.1</Value>"
 "     <Value>1.2</Value>"
 "  </Option>"
+"  <Option name='DATETIME_FORMAT' type='string-select' description='How to encode DateTime not in UTC' default='WITH_TZ'>"
+"     <Value>WITH_TZ</Value>"
+"     <Value>UTC</Value>"
+"  </Option>"
 #ifdef ENABLE_GPKG_OGR_CONTENTS
 "  <Option name='ADD_GPKG_OGR_CONTENTS' type='boolean' description='Whether to add a gpkg_ogr_contents table to keep feature count' default='YES'/>"
 #endif
