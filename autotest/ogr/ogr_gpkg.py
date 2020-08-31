@@ -432,7 +432,7 @@ def test_ogr_gpkg_8():
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != 10 or feat.GetField(1) != 'test string 0 test' or \
        feat.GetField(2) != 3.14159 or feat.GetField(3) != '2014/05/17' or \
-       feat.GetField(4) != '2014/05/17 12:34:56+00' or feat.GetField(5) != 'FFFE' or \
+       feat.GetField(4) != '2014/05/17 12:34:56' or feat.GetField(5) != 'FFFE' or \
        feat.GetField(6) != 1 or feat.GetField(7) != -32768 or feat.GetField(8) != 1.23 or \
        feat.GetField(9) != 1000000000000:
         feat.DumpReadable()
@@ -4118,3 +4118,31 @@ def test_ogr_gpkg_prelude_statements():
     assert sql_lyr.GetFeatureCount() == 10
     ds.ReleaseResultSet(sql_lyr)
     gdal.Unlink('/vsimem/test.gpkg')
+
+###############################################################################
+# Test DATETIME_FORMAT
+
+
+def test_ogr_gpkg_datetime_timezones():
+
+    filename = '/vsimem/test_ogr_gpkg_datetime_timezones.gpkg'
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename, options = ['DATETIME_FORMAT=UTC'])
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('dt', ogr.OFTDateTime))
+    for val in ['2020/01/01 01:34:56', '2020/01/01 01:34:56+00', '2020/01/01 01:34:56.789+02']:
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetField('dt', val)
+        lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetField('dt') == '2020/01/01 01:34:56+00'
+    f = lyr.GetNextFeature()
+    assert f.GetField('dt') == '2020/01/01 01:34:56+00'
+    f = lyr.GetNextFeature()
+    assert f.GetField('dt') == '2019/12/31 23:34:56.789+00'
+    ds = None
+
+    gdal.Unlink(filename)

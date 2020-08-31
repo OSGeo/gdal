@@ -186,6 +186,12 @@ raster) are available:
 -  **ADD_GPKG_OGR_CONTENTS**\ =YES/NO: (GDAL >= 2.2) Defines whether to
    add a gpkg_ogr_contents table to keep feature count, and associated
    triggers. Defaults to YES.
+-  **DATETIME_FORMAT**\ =WITH_TZ/UTC: (GDAL >= 3.2) Defines whether to keep the
+   DateTime values in the time zones as used in the data source (WITH_TZ),
+   or to convert the date and time expressions to UTC (Coordinated Universal Time).
+   Defaults to WITH_TZ. Pedantically, non-UTC time zones are not currently supported
+   by GeoPackage v1.3 (see https://github.com/opengeospatial/geopackage/issues/530).
+   When using UTC format, with a unspecified timezone, UTC will be assumed.
 
 Other options are available for raster. See the :ref:`GeoPackage raster <raster.gpkg>`
 documentation page
