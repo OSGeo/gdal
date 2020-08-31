@@ -195,6 +195,9 @@ class CPL_DLL CPLODBCSession {
     HDBC        GetConnection() { return m_hDBC; }
     /** Return GetEnvironment handle */
     HENV        GetEnvironment()  { return m_hEnv; }
+
+    bool ConnectToMsAccess( const char * pszName, const char* pszDSNStringTemplate );
+
 };
 
 /**
