@@ -29,7 +29,7 @@
 ###############################################################################
 
 
-
+from osgeo import gdal
 import gdaltest
 
 ###############################################################################
@@ -76,4 +76,23 @@ def test_safe_5():
     return tst.testOpen()
 
 
+def test_safe_WV():
+
+    ds = gdal.Open('data/SAFE_FAKE_WV')
+    assert ds is not None
+    subds = ds.GetSubDatasets()
+    assert len(subds) == 2
+
+    ds = gdal.Open(subds[0][0])
+    assert ds is not None
+    assert len(ds.GetSubDatasets()) == 0
+    assert len(ds.GetGCPs()) == 1
+
+    ds = gdal.Open(subds[1][0])
+    assert ds is not None
+    assert len(ds.GetSubDatasets()) == 0
+    assert len(ds.GetGCPs()) == 2
+
+    with gdaltest.error_handler():
+        assert gdal.Open(subds[0][0] + 'xxxx') is None
 
