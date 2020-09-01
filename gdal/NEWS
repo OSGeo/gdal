@@ -1,3 +1,143 @@
+= GDAL/OGR 3.1.3 Release Notes =
+
+The 3.1.3 release is a bug fix release.
+
+== Build ==
+
+* configure: fix detection of libtiff and libjpeg on mingw (#2881)
+* configure: fix linking order for Informix libraries
+* Unix: GNUmakefile: make 'all' target an alias of the default one to avoid potential double build of OGR objects (#2777)
+* Unix: fix detection of minor version number of Poppler with the new YY.MM.X numbering scheme (#2823)
+* gdallinearsystem.cpp: add missing include to fix compilation issue on Slackware 14.2 (#2883)
+* fix build with Jasper 2.0.19 (#2844)
+
+== Port ==
+
+* CPLHTTPFetch(): unset CURLOPT_POST after request has been issued (in case of re-use of a connection and doing a POST and then a GET)
+* CPLHTTPFetch(): reset CURLOPT_HTTPHEADER after request
+* VSI Plugin: add caching option (#2901)
+
+== Algorithms ==
+
+* warping: ComputeSourceWindow(): modify extra source pixel computation
+* plygonize: make sure not to use dummy geotransform
+
+== GDAL utilities ==
+
+* gdal2tiles: Fix layer generation with raster profile and nonnative zoom (#2799)
+* gdal2tiles: fix generation of tiles at high zoom levels when input is small (#2896)
+* gdal_merge: fix rounding of source coordinates, when they are very close to an integer, which would otherwise result in a one-pixel shift
+
+== GDAL drivers ==
+
+BAG driver:
+ * avoid crash on non-standard dataset
+
+E00grid driver:
+ * avoid recursive call in _GetNextSourceChar(). Fixes ossfuzz#25161
+
+ENVI driver:
+ * add support for writing south-up / rotation=180 datasets
+
+FITS driver:
+ * initialize default geotransform
+
+GPKG driver:
+ * more robust and simple logic to build overviews and compute overview factor (#2858) (#2860)
+ * on reading of gridded coverage data with PNG tiles, select -FLT_MAX as the nodata value (#2857)
+
+GeoTIFF driver:
+ * fix wrong direction for half-pixel shift with GCPs and PixelIsPoint convention (https://github.com/opengeospatial/OGC-API-Sprint-August-2020/issues/18)
+ * SRS reader: interpret infinite value in GeogInvFlatteningGeoKey as 0 (fixes PROJ#2317)
+ * Internal libgeotiff: avoid look up of user-defined GeogGeodeticDatumGeoKey that cause PROJ warnings (fixes libgeotiff#41)
+
+Grass driver:
+ * fix reading GRASS groups (#2876)
+
+HDF4 driver:
+ * multidim: fix issue when reading transposed array, and duplicate attribute names (#2848)
+
+HDF5 driver:
+ * multidim: fix performance issue when reading from sliced array
+
+ISCE driver:
+ * avoid crashing division by zero on corrupted datasets. Fixes ossfuzz #24252
+
+netCDF driver:
+ * multidim: fix performance issue when reading from sliced array
+ * fix setting offset and scale in CreateCopy()
+
+RasterLite2 driver:
+ * remove support for CharLS compression since it is removed from upstream librasterlite2
+
+SAFE driver:
+ * deal correctly with WV swaths (#2843)
+
+TSX driver:
+ * fix issue with reading dataset in .zip file on Windows (#2814)
+
+VICAR driver:
+ * avoid potential null-dereference on corrupted dataset. Fixes ossfuzz #24254
+
+VRT driver:
+ * round src/dst coordinates to integer within 1e-3 margin
+
+== OGRSpatialReference ==
+
+* Make OSRGetPROJSearchPaths() return the value set by OSRSetPROJSearchPaths()
+
+== OGR utilities ==
+
+* ogrinfo/ogr2ogr: fix issues with -sql @filename where SQL comments are not at start of line (#2811)
+
+== OGR drivers ==
+
+DGNv8/DWG driver:
+ * ogrteigha.cpp: use correct printf formatter (fix 44ce5be4)
+
+FlatGeobuf driver:
+ * fix illegal use of std::vector (#2773)
+ * make GetExtent() work on feature write (#2874)
+
+GeoJSON driver:
+ * fix opening of file starting with {geometry:{coordinates (fixes #2787)
+ * RFC7946 writer: fix processing of geometry that covers the whole world (#2833)
+
+GML driver:
+ * writer: correctly format OFTDate and OFTDateTime fields (#2897)
+
+GPKG driver:
+ * add a DATETIME_FORMAT=WITH_TZ/UTC dataset creation option (defaults to WITH_TZ) to specify how to deal with non-UTC datetime values (#2898)
+
+MITAB driver:
+ * fix reading and writing of non-metre linear units
+
+MVT driver:
+ * writing: fix crashes in multi-threading mode (#2764)
+
+OAPIF driver:
+ * avoid re-adding user query parameters if they are found in URLs returned by the API (relates to #2873)
+
+ODBC driver:
+ * Fix ODBC driver fails to correctly fallback to alternative Access ODBC driver name
+ * Fix DSN string construction for Windows Access ODBC driver, template candidate preference order (#2878)
+
+PGeo/ODBC/Geomedia/Walk drivers:
+ * Quote DBQ value in driver template to avoid issues opening MDB paths with spaces
+ * Correctly handle datetime fields provided by the mdbtools ODBC driver
+
+PGeo driver:
+ * Fixes to automatic ODBC driver installation (#2838)
+
+Shapefile driver:
+ * when several candidate SRS are found with confidence >= 90%, take the one from EPSG (contributes to fixes QGIS#32255)
+
+== CSharp bindings ==
+
+* Adding typemaps C# for wrapper_GDALWarpDestDS and wrapper_GDALWarpDestName (#2621)
+* Expose Dataset.GetSpatialRef (#2620)
+* Expose GetCRSInfoListFromDatabase (#1665)
+
 = GDAL/OGR 3.1.2 Release Notes =
 
 The 3.1.2 release is a bug fix release.
