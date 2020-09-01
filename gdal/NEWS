@@ -20,7 +20,7 @@ The 3.1.3 release is a bug fix release.
 == Algorithms ==
 
 * warping: ComputeSourceWindow(): modify extra source pixel computation
-* plygonize: make sure not to use dummy geotransform
+* polygonize: make sure not to use dummy geotransform
 
 == GDAL utilities ==
 
