@@ -72,6 +72,7 @@ template.csproj:
     echo ^<PropertyGroup^> >> $@
     echo ^<TargetFramework^>$(NETSTANDARD)^</TargetFramework^> >> $@
     echo ^<AssemblyVersion^>$(GDAL_VERSION).0^</AssemblyVersion^> >> $@
+	echo ^<AllowUnsafeBlocks^>true^</AllowUnsafeBlocks^> >> $@
     echo ^</PropertyGroup^> >> $@
     echo ^</Project^> >> $@
 !ELSE
@@ -116,10 +117,10 @@ gdal_csharp: template.csproj
     dotnet build -c $(DOTNET_CONFIG) -o "." -r $(DOTNET_RID)
     cd ..
 !ELSE
-    $(CSC) $(CSDEBUG) /target:library /out:osr_csharp.dll osr\*.cs AssemblyInfo.cs
-    $(CSC) $(CSDEBUG) /target:library /out:ogr_csharp.dll /r:osr_csharp.dll ogr\*.cs AssemblyInfo.cs
-    $(CSC) $(CSDEBUG) /target:library /out:gdal_csharp.dll /r:ogr_csharp.dll /r:osr_csharp.dll gdal\*.cs AssemblyInfo.cs
-    $(CSC) $(CSDEBUG) /target:library /out:gdalconst_csharp.dll const\*.cs AssemblyInfo.cs
+    $(CSC) $(CSDEBUG) /unsafe /target:library /out:osr_csharp.dll osr\*.cs AssemblyInfo.cs
+    $(CSC) $(CSDEBUG) /unsafe /target:library /out:ogr_csharp.dll /r:osr_csharp.dll ogr\*.cs AssemblyInfo.cs
+    $(CSC) $(CSDEBUG) /unsafe /target:library /out:gdal_csharp.dll /r:ogr_csharp.dll /r:osr_csharp.dll gdal\*.cs AssemblyInfo.cs
+    $(CSC) $(CSDEBUG) /unsafe /target:library /out:gdalconst_csharp.dll const\*.cs AssemblyInfo.cs
 !ENDIF
     link /dll $(OGR_INCLUDE) $(BASE_INCLUDE) ogr_wrap.obj \
 		$(EXTERNAL_LIBS) $(GDALLIB)\
