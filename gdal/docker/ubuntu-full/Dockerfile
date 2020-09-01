@@ -92,7 +92,7 @@ RUN mkdir mongocxx \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build tiledb
-ARG TILEDB_VERSION=2.0.2
+ARG TILEDB_VERSION=2.0.8
 RUN mkdir tiledb \
     && wget -q https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz -O - \
         | tar xz -C tiledb --strip-components=1 \
