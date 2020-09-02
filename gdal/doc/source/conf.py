@@ -178,6 +178,13 @@ man_pages = [
         1
     ),
     (
+        'programs/gdal_create',
+        'gdal_create',
+        u'Create a raster file (without source dataset)',
+        [author_evenr],
+        1
+    ),
+    (
         'programs/rgb2pct',
         'rgb2pct',
         u'Convert a 24bit RGB image to 8bit paletted.',

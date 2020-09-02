@@ -80,6 +80,7 @@ apps/test_ogrsf
 apps/dumpoverviews
 apps/gdalwarpsimple
 apps/multireadtest
+apps/gdal_create
 port/dllbuild.prev
 port/prev_dllbuild.bat
 swig/java/build
