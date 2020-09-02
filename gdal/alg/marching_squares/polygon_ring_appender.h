@@ -31,7 +31,9 @@
 #include <vector>
 #include <list>
 #include <map>
+#include <deque>
 #include <cassert>
+#include <iterator>
 
 #include "point.h"
 #include "ogr_geometry.h"
@@ -51,51 +53,41 @@ private:
         Ring& operator=( const Ring& other ) = default;
 
         LineString points;
-        
-        mutable std::list<const Ring*> interiorRings;
+
+        mutable std::vector<Ring> interiorRings;
 
         const Ring* closestExterior = nullptr;
 
         bool isIn( const Ring& other ) const
         {
-            // FIXME
-            // This could probably be optimized by avoiding copies
-            // (and a dependency to OGR/GEOS)
-
-            assert( other.points.size() >= 4 );
-            Point p = points.front();
-
-            OGRLinearRing r;
-            for ( const auto& pt : other.points ) {
-                r.addPoint( pt.x, pt.y );
-            }
-            OGRPolygon poly;
-            poly.addRing( &r );
-
-            OGRPoint toTest( p.x, p.y );
-
-            return toTest.Within( &poly ) != 0;
-        }
-
-        void checkInclusionWith( const Ring& other )
-        {
-            if ( isIn( other ) ) {
-                if ( closestExterior ) {
-                    if ( other.isIn( *closestExterior ) ) {
-                        closestExterior = &other;
+            // Check if this is inside other using the winding number algorithm
+            auto checkPoint = this->points.front();
+            int windingNum = 0;
+            auto otherIter = other.points.begin();
+            // p1 and p2 define each segment of the ring other that will be tested
+            auto p1 = *otherIter;
+            while(true) {
+                otherIter++;
+                if (otherIter == other.points.end()) {
+                    break;
+                }
+                auto p2 = *otherIter;
+                if ( p1.y <= checkPoint.y ) {
+                    if ( p2.y  > checkPoint.y ) {
+                        if ( isLeft(p1, p2, checkPoint) )  {
+                             ++windingNum;
+                        }
+                    }
+                } else {
+                    if ( p2.y <= checkPoint.y ) {
+                        if ( !isLeft( p1, p2, checkPoint)  ) {
+                            --windingNum;
+                        }
                     }
                 }
-                else {
-                    // no closest parent yet
-                    closestExterior = &other;
-                }
+                p1 = p2;
             }
-        }
-
-        // recursive function to test if a ring is an inner ring
-        bool isInnerRing() const
-        {
-            return (closestExterior != nullptr) && ( !closestExterior->isInnerRing() );
+            return windingNum != 0;
         }
 
 #ifdef DEBUG
@@ -103,7 +95,7 @@ private:
         {
             return size_t(static_cast<const void*>(this)) & 0xffff;
         }
-        
+
         void print( std::ostream& ostr ) const
         {
             ostr << id() << ":";
@@ -114,8 +106,22 @@ private:
 #endif
     };
 
+    void processTree(const std::vector<Ring> &tree, int level) {
+        if ( level % 2 == 0 ) {
+            for( auto &r: tree ) {
+                writer_.addPart(r.points);
+                for( auto &innerRing: r.interiorRings ) {
+                    writer_.addInteriorRing(innerRing.points);
+                }
+            }
+        }
+        for( auto &r: tree ) {
+            processTree(r.interiorRings, level + 1);
+        }
+    }
+
     // level -> rings
-    std::map<double, std::list<Ring>> rings_;
+    std::map<double, std::vector<Ring>> rings_;
 
     PolygonWriter& writer_;
 
@@ -129,49 +135,71 @@ public:
 
     void addLine( double level, LineString& ls, bool )
     {
-        Ring r;
-        r.points.swap( ls );
-        rings_[level].push_back( std::move(r) );
+        // Create a new ring from the LineString
+        Ring newRing;
+        newRing.points.swap( ls );
+        auto &levelRings = rings_[level];
+        // This queue holds the rings to be checked
+        std::deque<Ring*> queue;
+        std::transform(levelRings.begin(),
+                       levelRings.end(),
+                       std::back_inserter(queue),
+                       [](Ring &r) {
+                           return &r;
+                       });
+        Ring *parentRing = nullptr;
+        while( !queue.empty() ) {
+            Ring *curRing = queue.front();
+            queue.pop_front();
+            if ( newRing.isIn(*curRing) ) {
+                // We know that there should only be one ring per level that we should fit in,
+                // so we can discard the rest of the queue and try again with the children of this ring
+                parentRing = curRing;
+                queue.clear();
+                std::transform(curRing->interiorRings.begin(),
+                            curRing->interiorRings.end(),
+                            std::back_inserter(queue),
+                            [](Ring &r) {
+                                return &r;
+                            });
+            }
+        }
+        // Get a pointer to the list we need to check for rings to include in this ring
+        std::vector<Ring> *parentRingList;
+        if ( parentRing == nullptr ) {
+            parentRingList = &levelRings;
+        } else {
+            parentRingList = &(parentRing->interiorRings);
+        }
+        // We found a valid parent, so we need to:
+        // 1. Find all the inner rings of the parent that are inside the new ring
+        auto trueGroupIt = std::partition(
+            parentRingList->begin(),
+            parentRingList->end(),
+            [newRing](Ring &pRing) {
+                return !pRing.isIn(newRing);
+            }
+        );
+        // 2. Move those rings out of the parent and into the new ring's interior rings
+        std::move(trueGroupIt, parentRingList->end(), std::back_inserter(newRing.interiorRings));
+        // 3. Get rid of the moved-from elements in the parent's interior rings
+        parentRingList->erase(trueGroupIt, parentRingList->end());
+        // 4. Add the new ring to the parent's interior rings
+        parentRingList->push_back(newRing);
     }
 
     ~PolygonRingAppender()
     {
-        // FIXME
-        // This "ring sorting" algorithm could be optimized. There is no need to
-        // wait for the completion of contour ring computation to sort them out.
-        // For each new ring closed, we can determine which other rings are inside
-        // it and do not consider them anymore.
-
+        // If there's no rings, nothing to do here
         if ( rings_.size() == 0 )
             return;
 
-        // compute inner rings
-        for ( auto& itLevel: rings_ ) {
-            for ( auto& currentRing: itLevel.second ) {
-                for ( const auto& otherRing: itLevel.second ) {
-                    currentRing.checkInclusionWith( otherRing );
-                }
-            }
-
-            // sort inner / outer rings
-            for ( auto& currentRing: itLevel.second ) {
-                if ( currentRing.isInnerRing() ) {
-                    currentRing.closestExterior->interiorRings.push_back( &currentRing );
-                }
-            }
-        }
-
-        // emit each polygon with its parts and interior rings
-        for ( const auto& r: rings_ ) {
+        // Traverse tree of rings
+        for ( auto& r: rings_ ) {
+            // For each level, create a multipolygon by traversing the tree of
+            // rings and adding a part for every other level
             writer_.startPolygon( r.first );
-            for ( const auto& part : r.second ) {
-                if ( ! part.isInnerRing() ) {
-                    writer_.addPart( part.points );
-                    for ( const Ring* interiorRing : part.interiorRings ) {
-                        writer_.addInteriorRing( interiorRing->points );
-                    }
-                }
-            }
+            processTree(r.second, 0);
             writer_.endPolygon();
         }
     }
