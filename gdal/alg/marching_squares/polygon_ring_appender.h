@@ -33,6 +33,7 @@
 #include <map>
 #include <deque>
 #include <cassert>
+#include <iterator>
 
 #include "point.h"
 #include "ogr_geometry.h"
