@@ -315,10 +315,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_WMS();
 #endif
 
-#ifdef FRMT_sde
-    GDALRegister_SDE();
-#endif
-
 #ifdef FRMT_msgn
     GDALRegister_MSGN();
 #endif

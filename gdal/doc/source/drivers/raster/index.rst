@@ -165,7 +165,6 @@ Raster drivers
    sar_ceos
    sdat
    sdts
-   sde
    sentinel2
    sgi
    sigdem

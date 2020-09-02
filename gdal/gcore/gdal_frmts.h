@@ -126,7 +126,6 @@ void CPL_DLL GDALRegister_Terragen(void);
 void CPL_DLL GDALRegister_WCS(void);
 void CPL_DLL GDALRegister_WMS(void);
 void CPL_DLL GDALRegister_HTTP(void);
-void CPL_DLL GDALRegister_SDE(void);
 void CPL_DLL GDALRegister_GSAG(void);
 void CPL_DLL GDALRegister_GSBG(void);
 void CPL_DLL GDALRegister_GS7BG(void);
