@@ -65,24 +65,27 @@ private:
             auto otherIter = other.points.begin();
             // p1 and p2 define each segment of the ring other that will be tested
             auto p1 = *otherIter;
-            do {
+            while(true) {
                 otherIter++;
+                if (otherIter == other.points.end()) {
+                    break;
+                }
                 auto p2 = *otherIter;
                 if ( p1.y <= checkPoint.y ) {
                     if ( p2.y  > checkPoint.y ) {
-                        if ( isLeft(p1, p2, checkPoint) > 0 )  {
+                        if ( isLeft(p1, p2, checkPoint) )  {
                              ++windingNum;
                         }
                     }
                 } else {
                     if ( p2.y <= checkPoint.y ) {
-                        if ( isLeft( p1, p2, checkPoint) < 0 ) {
+                        if ( !isLeft( p1, p2, checkPoint)  ) {
                             --windingNum;
                         }
                     }
                 }
                 p1 = p2;
-            } while(otherIter != other.points.end());
+            }
             return windingNum != 0;
         }
 
@@ -102,7 +105,7 @@ private:
 #endif
     };
 
-    void processTree(std::vector<Ring> &tree, int level) {
+    void processTree(const std::vector<Ring> &tree, int level) {
         if ( level % 2 == 0 ) {
             for( auto &r: tree ) {
                 writer_.addPart(r.points);
@@ -160,26 +163,28 @@ public:
                             });
             }
         }
+        // Get a pointer to the list we need to check for rings to include in this ring
+        std::vector<Ring> *parentRingList;
         if ( parentRing == nullptr ) {
-            // Then we never found anything and this must be a new top level ring for this level
-            levelRings.push_back(newRing);
+            parentRingList = &levelRings;
         } else {
-            // We found a valid parent, so we need to:
-            // 1. Find all the inner rings of the parent that are inside the new ring
-            auto trueGroupIt = std::partition(
-                parentRing->interiorRings.begin(),
-                parentRing->interiorRings.begin(),
-                [newRing](Ring &pRing) {
-                    return !pRing.isIn(newRing);
-                }
-            );
-            // 2. Move those rings out of the parent and into the new ring's interior rings
-            std::move(trueGroupIt, parentRing->interiorRings.end(), std::back_inserter(newRing.interiorRings));
-            // 3. Get rid of the moved-from elements in the parent's interior rings
-            parentRing->interiorRings.erase(trueGroupIt, parentRing->interiorRings.end());
-            // 4. Add the new ring to the parent's interior rings
-            parentRing->interiorRings.push_back(newRing);
+            parentRingList = &(parentRing->interiorRings);
         }
+        // We found a valid parent, so we need to:
+        // 1. Find all the inner rings of the parent that are inside the new ring
+        auto trueGroupIt = std::partition(
+            parentRingList->begin(),
+            parentRingList->end(),
+            [newRing](Ring &pRing) {
+                return !pRing.isIn(newRing);
+            }
+        );
+        // 2. Move those rings out of the parent and into the new ring's interior rings
+        std::move(trueGroupIt, parentRingList->end(), std::back_inserter(newRing.interiorRings));
+        // 3. Get rid of the moved-from elements in the parent's interior rings
+        parentRingList->erase(trueGroupIt, parentRingList->end());
+        // 4. Add the new ring to the parent's interior rings
+        parentRingList->push_back(newRing);
     }
 
     ~PolygonRingAppender()
