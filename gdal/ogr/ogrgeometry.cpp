@@ -4808,7 +4808,10 @@ OGRGeometry::Crosses( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
 
         sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL(poOtherGeom);
         if (poOther == nullptr)
+        {
+            sfcgal_geometry_delete(poThis);
             return FALSE;
+        }
 
         int res = sfcgal_geometry_intersects_3d(poThis, poOther);
 
