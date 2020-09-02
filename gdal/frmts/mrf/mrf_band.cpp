@@ -531,6 +531,8 @@ CPLErr MRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
     if (isAllVal(eDataType, ob, img.pageSizeBytes, val)) {
         // Mark it empty and checked, ignore the possible write error
         poDS->WriteTile((void *)1, infooffset, 0);
+        if (1 == cstride)
+            return CE_None;
         return ReadInterleavedBlock(xblk, yblk, buffer);
     }
 
