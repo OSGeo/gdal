@@ -149,8 +149,9 @@ int MRFDataset::CloseDependentDatasets()
 MRFDataset::~MRFDataset()
 
 {   // Make sure everything gets written
+    if (eAccess != GA_ReadOnly && !bCrystalized)
+        Crystalize();
     MRFDataset::FlushCache();
-
     MRFDataset::CloseDependentDatasets();
 
     if (ifp.FP)
@@ -207,6 +208,8 @@ CPLErr MRFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSiz
         static_cast<int>(nPixelSpace), static_cast<int>(nLineSpace),
         static_cast<int>(nBandSpace));
 
+    if (eRWFlag == GF_Write && !bCrystalized)
+        Crystalize();
     //
     // Call the parent implementation, which splits it into bands and calls their IRasterIO
     //
