@@ -81,12 +81,23 @@ public:
     }
 
     ~VRTOverviewInfo() {
+        CloseDataset();
+    }
+
+    bool CloseDataset()
+    {
         if( poBand == nullptr )
-            /* do nothing */;
-        else if( poBand->GetDataset()->GetShared() )
-            GDALClose( /* (GDALDatasetH) */ poBand->GetDataset() );
+            return false;
+
+        GDALDataset* poDS = poBand->GetDataset();
+        // Nullify now, to prevent recursion in some cases !
+        poBand = nullptr;
+        if( poDS->GetShared() )
+            GDALClose( /* (GDALDatasetH) */ poDS );
         else
-            poBand->GetDataset()->Dereference();
+            poDS->Dereference();
+
+        return true;
     }
 };
 
@@ -192,6 +203,8 @@ class CPL_DLL VRTDataset CPL_NON_FINAL: public GDALDataset
 
     std::map<CPLString, GDALDataset*> m_oMapSharedSources{};
     std::shared_ptr<VRTGroup> m_poRootGroup{};
+
+    int            m_nRecursionCounter = 0;
 
     VRTRasterBand*      InitBand(const char* pszSubclass, int nBand,
                                  bool bAllowPansharpened);

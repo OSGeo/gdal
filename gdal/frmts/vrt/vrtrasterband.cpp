@@ -1310,7 +1310,15 @@ void VRTRasterBand::SetIsMaskBand()
 
 int VRTRasterBand::CloseDependentDatasets()
 {
-    return FALSE;
+    int ret = FALSE;
+    for( auto& oOverviewInfo: m_apoOverviews )
+    {
+        if( oOverviewInfo.CloseDataset() )
+        {
+            ret = TRUE;
+        }
+    }
+    return ret;
 }
 
 /*! @endcond */
