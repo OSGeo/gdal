@@ -1377,5 +1377,5 @@ def test_vrt_dataset_rasterio_recursion_detection():
 
     ds = gdal.Open('/vsimem/test.vrt')
     with gdaltest.error_handler():
-        assert ds.ReadRaster(0,0,20,20,10,10) is None
+        ds.ReadRaster(0,0,20,20,10,10)
     gdal.Unlink('/vsimem/test.vrt')
