@@ -216,7 +216,12 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char* fileOrDef)
     poTMS->mWellKnownScaleSet = oRoot.GetString("wellKnownScaleSet");
 
     OGRSpatialReference oCrs;
-    oCrs.SetFromUserInput(poTMS->mCrs.c_str());
+    if( oCrs.SetFromUserInput(poTMS->mCrs.c_str()) != OGRERR_NONE )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot parse CRS %s", poTMS->mCrs.c_str());
+        return nullptr;
+    }
     double dfMetersPerUnit = 1.0;
     if( oCrs.IsProjected() )
     {

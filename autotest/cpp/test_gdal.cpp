@@ -1417,7 +1417,7 @@ namespace tut
 
         // Inline JSON with minimal structure
         {
-            auto poTMS = gdal::TileMatrixSet::parse("{\"type\": \"TileMatrixSetType\", \"tileMatrix\": [{ \"topLeftCorner\": [-180, 90],\"scaleDenominator\":1.0}] }");
+            auto poTMS = gdal::TileMatrixSet::parse("{\"type\": \"TileMatrixSetType\", \"supportedCRS\": \"http://www.opengis.net/def/crs/OGC/1.3/CRS84\", \"tileMatrix\": [{ \"topLeftCorner\": [-180, 90],\"scaleDenominator\":1.0}] }");
             ensure( poTMS != nullptr );
             ensure( poTMS->haveAllLevelsSameTopLeft() );
             ensure( poTMS->haveAllLevelsSameTileSize() );
@@ -1428,7 +1428,7 @@ namespace tut
         // Invalid scaleDenominator
         {
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            ensure( gdal::TileMatrixSet::parse("{\"type\": \"TileMatrixSetType\", \"tileMatrix\": [{ \"topLeftCorner\": [-180, 90],\"scaleDenominator\":0.0}] }") == nullptr);
+            ensure( gdal::TileMatrixSet::parse("{\"type\": \"TileMatrixSetType\", \"supportedCRS\": \"http://www.opengis.net/def/crs/OGC/1.3/CRS84\", \"tileMatrix\": [{ \"topLeftCorner\": [-180, 90],\"scaleDenominator\":0.0}] }") == nullptr);
             CPLPopErrorHandler();
         }
 
