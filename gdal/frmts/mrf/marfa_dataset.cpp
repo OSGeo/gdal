@@ -151,7 +151,7 @@ MRFDataset::~MRFDataset()
 {   // Make sure everything gets written
     if (eAccess != GA_ReadOnly && !bCrystalized)
         if (!Crystalize()) {
-            // Can't return from a destructor, just flag the error
+            // Can't return error code from a destructor, just emit the error
             CPLError(CE_Failure, CPLE_FileIO, "Error creating files");
         }
 
