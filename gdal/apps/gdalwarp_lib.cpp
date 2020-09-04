@@ -2113,6 +2113,13 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
     void* hUniqueTransformArg = nullptr;
     const bool bInitDestSetByUser = ( CSLFetchNameValue( psOptions->papszWarpOptions, "INIT_DEST" ) != nullptr );
 
+    const bool bOutputBoundsAndResSetByUser =
+       ((psOptions->nForcePixels != 0 && psOptions->nForceLines != 0) ||
+        (psOptions->dfXRes != 0 && psOptions->dfYRes != 0)) &&
+        !(psOptions->dfMinX == 0.0 && psOptions->dfMinY == 0.0 &&
+            psOptions->dfMaxX == 0.0 && psOptions->dfMaxY == 0.0);
+    const bool bExistingOutputFile = (hDstDS != nullptr);
+
     if( hDstDS == nullptr )
     {
         hDstDS = CreateOutput(pszDest, nSrcCount, pahSrcDS, psOptions,
@@ -2300,44 +2307,91 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
         int nOvCount = poSrcDS->GetRasterBand(1)->GetOverviewCount();
         if( psOptions->nOvLevel <= -2 && nOvCount > 0 )
         {
-            double adfSuggestedGeoTransform[6];
-            double adfExtent[4];
-            int    nPixels, nLines;
-            /* Compute what the "natural" output resolution (in pixels) would be for this */
-            /* input dataset */
-            if( GDALSuggestedWarpOutput2(hSrcDS, pfnTransformer, hTransformArg,
-                                         adfSuggestedGeoTransform, &nPixels, &nLines,
-                                         adfExtent, 0) == CE_None)
+            double dfTargetRatio = 0;
+            if( bOutputBoundsAndResSetByUser || bExistingOutputFile )
             {
-                double dfTargetRatio = 1.0 / adfSuggestedGeoTransform[1];
-                if( dfTargetRatio > 1.0 )
+                // If the user has explicitly set the target bounds and resolution,
+                // or we're updating an existing file, then figure out which
+                // source window corresponds to the target raster.
+                constexpr int nPointsOneDim = 10;
+                constexpr int nPoints = nPointsOneDim * nPointsOneDim;
+                std::vector<double> adfX(nPoints);
+                std::vector<double> adfY(nPoints);
+                std::vector<double> adfZ(nPoints);
+                const int nDstXSize = GDALGetRasterXSize( hDstDS );
+                const int nDstYSize = GDALGetRasterYSize( hDstDS );
+                int iPoint = 0;
+                for( int iX = 0; iX < nPointsOneDim; ++iX )
                 {
-                    int iOvr = -1;
-                    for( ; iOvr < nOvCount-1; iOvr++ )
+                    for( int iY = 0; iY < nPointsOneDim; ++iY )
                     {
-                        const double dfOvrRatio =
-                            iOvr < 0
-                            ? 1.0
-                            : static_cast<double>(poSrcDS->GetRasterXSize()) /
-                              poSrcDS->GetRasterBand(1)->GetOverview(iOvr)->
-                                  GetXSize();
-                        const double dfNextOvrRatio =
-                            static_cast<double>(poSrcDS->GetRasterXSize()) /
-                            poSrcDS->GetRasterBand(1)->GetOverview(iOvr+1)->
+                        adfX[iPoint] = nDstXSize * static_cast<double>(iX) / (nPointsOneDim-1);
+                        adfY[iPoint] = nDstYSize * static_cast<double>(iY) / (nPointsOneDim-1);
+                        iPoint++;
+                    }
+                }
+                std::vector<int> abSuccess(nPoints);
+                if( pfnTransformer( hTransformArg, TRUE, nPoints,
+                                    &adfX[0], &adfY[0], &adfZ[0], &abSuccess[0] ) )
+                {
+                    double dfMinSrcX = std::numeric_limits<double>::infinity();
+                    double dfMaxSrcX = -std::numeric_limits<double>::infinity();
+                    for( int i = 0; i < nPoints; i++ )
+                    {
+                        if( abSuccess[i] )
+                        {
+                            dfMinSrcX = std::min(dfMinSrcX, adfX[i]);
+                            dfMaxSrcX = std::max(dfMaxSrcX, adfX[i]);
+                        }
+                    }
+                    if( dfMaxSrcX > dfMinSrcX )
+                    {
+                        dfTargetRatio = (dfMaxSrcX - dfMinSrcX) / GDALGetRasterXSize(hDstDS);
+                    }
+                }
+            }
+            else
+            {
+                /* Compute what the "natural" output resolution (in pixels) would be for this */
+                /* input dataset */
+                double adfSuggestedGeoTransform[6];
+                double adfExtent[4];
+                int    nPixels, nLines;
+                if( GDALSuggestedWarpOutput2(hSrcDS, pfnTransformer, hTransformArg,
+                                         adfSuggestedGeoTransform, &nPixels, &nLines,
+                                         adfExtent, 0) == CE_None )
+                {
+                    dfTargetRatio = 1.0 / adfSuggestedGeoTransform[1];
+                }
+            }
+
+            if( dfTargetRatio > 1.0 )
+            {
+                int iOvr = -1;
+                for( ; iOvr < nOvCount-1; iOvr++ )
+                {
+                    const double dfOvrRatio =
+                        iOvr < 0
+                        ? 1.0
+                        : static_cast<double>(poSrcDS->GetRasterXSize()) /
+                            poSrcDS->GetRasterBand(1)->GetOverview(iOvr)->
                                 GetXSize();
-                        if( dfOvrRatio < dfTargetRatio &&
-                            dfNextOvrRatio > dfTargetRatio )
-                            break;
-                        if( fabs(dfOvrRatio - dfTargetRatio) < 1e-1 )
-                            break;
-                    }
-                    iOvr += (psOptions->nOvLevel+2);
-                    if( iOvr >= 0 )
-                    {
-                        CPLDebug("WARP", "Selecting overview level %d for %s",
-                                 iOvr, GDALGetDescription(hSrcDS));
-                        poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, iOvr, FALSE );
-                    }
+                    const double dfNextOvrRatio =
+                        static_cast<double>(poSrcDS->GetRasterXSize()) /
+                        poSrcDS->GetRasterBand(1)->GetOverview(iOvr+1)->
+                            GetXSize();
+                    if( dfOvrRatio < dfTargetRatio &&
+                        dfNextOvrRatio > dfTargetRatio )
+                        break;
+                    if( fabs(dfOvrRatio - dfTargetRatio) < 1e-1 )
+                        break;
+                }
+                iOvr += (psOptions->nOvLevel+2);
+                if( iOvr >= 0 )
+                {
+                    CPLDebug("WARP", "Selecting overview level %d for %s",
+                                iOvr, GDALGetDescription(hSrcDS));
+                    poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, iOvr, FALSE );
                 }
             }
         }
