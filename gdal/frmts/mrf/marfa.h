@@ -319,7 +319,6 @@ public:
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
-    void Crystalize();
 
     static GDALDataset *CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         int bStrict, char **papszOptions, GDALProgressFunc pfnProgress,
@@ -380,6 +379,9 @@ public:
     }
 
 protected:
+    // False if it failed
+    int Crystalize();
+
     CPLErr LevelInit(const int l);
 
     // Reads the XML metadata and returns the XML

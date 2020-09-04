@@ -150,7 +150,11 @@ MRFDataset::~MRFDataset()
 
 {   // Make sure everything gets written
     if (eAccess != GA_ReadOnly && !bCrystalized)
-        Crystalize();
+        if (!Crystalize()) {
+            // Can't return from a destructor, just flag the error
+            CPLError(CE_Failure, CPLE_FileIO, "Error creating files");
+        }
+
     MRFDataset::FlushCache();
     MRFDataset::CloseDependentDatasets();
 
@@ -209,7 +213,11 @@ CPLErr MRFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSiz
         static_cast<int>(nBandSpace));
 
     if (eRWFlag == GF_Write && !bCrystalized)
-        Crystalize();
+        if (!Crystalize()) {
+            CPLError(CE_Failure, CPLE_FileIO, "MRF: Error creating files");
+            return CE_Failure;
+        }
+
     //
     // Call the parent implementation, which splits it into bands and calls their IRasterIO
     //
@@ -789,7 +797,7 @@ static CPLErr Init_Raster(ILImage &image, MRFDataset *ds, CPLXMLNode *defimage)
             image.pagesize.y < 1 ||
             image.pagesize.c <= 0 )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Invalid PageSize");
+            CPLError(CE_Failure, CPLE_IllegalArg, "Invalid PageSize");
             return CE_Failure;
         }
     }
@@ -805,7 +813,7 @@ static CPLErr Init_Raster(ILImage &image, MRFDataset *ds, CPLXMLNode *defimage)
     image.comp = CompToken(CPLGetXMLValue(defimage, "Compression", "PNG"));
 
     if (image.comp == IL_ERR_COMP) {
-        CPLError(CE_Failure, CPLE_AppDefined,
+        CPLError(CE_Failure, CPLE_IllegalArg,
             "GDAL MRF: Compression %s is unknown",
             CPLGetXMLValue(defimage, "Compression", nullptr));
         return CE_Failure;
@@ -846,7 +854,7 @@ static CPLErr Init_Raster(ILImage &image, MRFDataset *ds, CPLXMLNode *defimage)
                 ce_start = GetXMLColorEntry(p);
                 int start_idx = static_cast<int>(getXMLNum(p, "idx", 0));
                 if (start_idx < 0) {
-                    CPLError(CE_Failure, CPLE_AppDefined,
+                    CPLError(CE_Failure, CPLE_IllegalArg,
                         "GDAL MRF: Palette index %d not allowed", start_idx);
                     delete poColorTable;
                     return CE_Failure;
@@ -857,7 +865,7 @@ static CPLErr Init_Raster(ILImage &image, MRFDataset *ds, CPLXMLNode *defimage)
                     ce_end = GetXMLColorEntry(p);
                     int end_idx = static_cast<int>(getXMLNum(p, "idx", start_idx + 1));
                     if ((end_idx <= start_idx) || (start_idx >= entries)) {
-                        CPLError(CE_Failure, CPLE_AppDefined,
+                        CPLError(CE_Failure, CPLE_IllegalArg,
                             "GDAL MRF: Index Error at index %d", end_idx);
                         delete poColorTable;
                         return CE_Failure;
@@ -871,7 +879,7 @@ static CPLErr Init_Raster(ILImage &image, MRFDataset *ds, CPLXMLNode *defimage)
             ds->SetColorTable(poColorTable);
         }
         else {
-            CPLError(CE_Failure, CPLE_AppDefined, "GDAL MRF: Palette definition error");
+            CPLError(CE_Failure, CPLE_IllegalArg, "GDAL MRF: Palette definition error");
             return CE_Failure;
         }
     }
@@ -1042,7 +1050,7 @@ VSILFILE *MRFDataset::IdxFP() {
 
     if (nullptr != ifp.FP) {
         if (!bCrystalized && !CheckFileSize(current.idxfname, expected_size, GA_Update)) {
-            CPLError(CE_Failure, CPLE_AppDefined, "Can't extend the cache index file %s",
+            CPLError(CE_Failure, CPLE_FileIO, "MRF: Can't extend the cache index file %s",
                 current.idxfname.c_str());
             return nullptr;
         }
@@ -1620,7 +1628,7 @@ GDALDataset *MRFDataset::CreateCopy(const char *pszFilename,
             Create(pszFilename, x, y, nBands, dt, options));
 
         if (poDS == nullptr || poDS->bCrystalized)
-            throw CPLString().Printf("Can't create %s",pszFilename);
+            throw CPLString().Printf("MRF: Can't create %s",pszFilename);
 
         img = poDS->current; // Deal with the current one here
 
@@ -1666,7 +1674,8 @@ GDALDataset *MRFDataset::CreateCopy(const char *pszFilename,
             poDS->SetColorTable(poSrcBand1->GetColorTable()->Clone());
 
         // Finally write the XML in the right file name
-        poDS->Crystalize();
+        if (!poDS->Crystalize())
+            throw CPLString("MRF: Error creating files");
     }
     catch (const CPLString& e) {
         if (poDS)
@@ -1981,8 +1990,7 @@ GDALDataset *
 MRFDataset::Create(const char * pszName,
     int nXSize, int nYSize, int nBands,
     GDALDataType eType, char ** papszOptions)
-
-{   // Pending create
+{
     if( nBands == 0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "nBands == 0 not supported");
@@ -2006,6 +2014,18 @@ MRFDataset::Create(const char * pszName,
         //version = getnum(tokens, 'V', 0);
         poDS->zslice = getnum(tokens, 'Z', 0);
         poDS->fname.resize(pos); // Cut the ornamentations
+    }
+
+    // Try creating the mrf file early, to prevent failure on Crystalize later
+    if (poDS->fname != 0 && !EQUALN(poDS->fname.c_str(), "<MRF_META>", 10)) {
+        // Try opening it
+        VSILFILE* mainfile = VSIFOpenL(poDS->fname.c_str(), "w+b");
+        if (!mainfile) {
+            CPLError(CE_Failure, CPLE_OpenFailed, "MRF: Can't open %s for writing", poDS->fname.c_str());
+            delete poDS;
+            return nullptr;
+        }
+        VSIFCloseL(mainfile);
     }
 
     // Use the full, set some initial parameters
@@ -2074,24 +2094,29 @@ MRFDataset::Create(const char * pszName,
     return poDS;
 }
 
-void MRFDataset::Crystalize()
-
+int MRFDataset::Crystalize()
 {
-    if (bCrystalized || eAccess != GA_Update)
-        return;
+    if (bCrystalized || eAccess != GA_Update) {
+        bCrystalized = TRUE;
+        return TRUE;
+    }
 
     // No need to write to disk if there is no filename.  This is a
     // memory only dataset.
     if (strlen(GetDescription()) == 0
-        || EQUALN(GetDescription(), "<MRF_META>", 10))
-        return;
+        || EQUALN(GetDescription(), "<MRF_META>", 10)) {
+        bCrystalized = TRUE;
+        return TRUE;
+    }
 
     CPLXMLNode *config = BuildConfig();
-    WriteConfig(config);
+    if (!WriteConfig(config))
+        return FALSE;
     CPLDestroyXMLNode(config);
     if (!nocopy && (!IdxFP() || !DataFP()))
-        throw CPLString().Printf("MRF: %s", strerror(errno));
+        return FALSE;
     bCrystalized = TRUE;
+    return TRUE;
 }
 
 // Copy the first index at the end of the file and bump the version count
