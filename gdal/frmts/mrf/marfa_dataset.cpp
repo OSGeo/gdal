@@ -2016,14 +2016,17 @@ MRFDataset::Create(const char * pszName,
         poDS->fname.resize(pos); // Cut the ornamentations
     }
 
-    // Try creating the mrf file early, to prevent failure on Crystalize later
-    if (poDS->fname != 0 && !EQUALN(poDS->fname.c_str(), "<MRF_META>", 10)) {
-        // Try opening it
-        VSILFILE* mainfile = VSIFOpenL(poDS->fname.c_str(), "w+b");
-        if (!mainfile) {
-            CPLError(CE_Failure, CPLE_OpenFailed, "MRF: Can't open %s for writing", poDS->fname.c_str());
-            delete poDS;
-            return nullptr;
+    // Try creating the mrf file early, to avoid failing on Crystalize later
+    if (!STARTS_WITH(poDS->fname.c_str(), "<MRF_META>")) {
+        // Try opening it first, even though we still clobber it later
+        VSILFILE* mainfile = VSIFOpenL(poDS->fname.c_str(), "r+b");
+        if (!mainfile) { // Then try creating it
+            mainfile = VSIFOpenL(poDS->fname.c_str(), "w+b");
+            if (!mainfile) {
+                CPLError(CE_Failure, CPLE_OpenFailed, "MRF: Can't open %s for writing", poDS->fname.c_str());
+                delete poDS;
+                return nullptr;
+            }
         }
         VSIFCloseL(mainfile);
     }
