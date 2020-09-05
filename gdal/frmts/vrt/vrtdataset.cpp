@@ -1775,7 +1775,8 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
                               GSpacing nBandSpace,
                               GDALRasterIOExtraArg* psExtraArg )
 {
-    if( m_nRecursionCounter > 0 )
+    // It may be valid to recurse one when dealing with a subsampled request
+    if( m_nRecursionCounter > 1 )
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
