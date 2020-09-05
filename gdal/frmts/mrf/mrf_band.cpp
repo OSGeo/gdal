@@ -867,7 +867,10 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 
     // Finish the Create call
     if (!poDS->bCrystalized)
-        poDS->Crystalize();
+        if (!poDS->Crystalize()) {
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error creating files");
+            return CE_Failure;
+        }
 
     if (1 == cstride) {     // Separate bands, we can write it as is
         // Empty page skip
