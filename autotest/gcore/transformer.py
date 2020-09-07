@@ -465,6 +465,8 @@ def test_transformer_12():
 
     tr = gdal.Transformer(ds, None, ['METHOD=GCP_TPS'])
     assert tr is not None
+    (success, pnt) = tr.TransformPoint(0, 0, 0)
+    assert success and pnt[0] == pytest.approx(0, abs=1e-7) and pnt[1] == pytest.approx(0, abs=1e-7)
 
     ds = gdal.Open("""
     <VRTDataset rasterXSize="20" rasterYSize="20">
