@@ -161,7 +161,9 @@ Fax3PreDecode(TIFF* tif, uint16 s)
 	 */
 	sp->bitmap =
 	    TIFFGetBitRevTable(tif->tif_dir.td_fillorder != FILLORDER_LSB2MSB);
+	sp->curruns = sp->runs;
 	if (sp->refruns) {		/* init reference line to white */
+		sp->refruns = sp->runs + sp->nruns;
 		sp->refruns[0] = (uint32) sp->b.rowpixels;
 		sp->refruns[1] = 0;
 	}
