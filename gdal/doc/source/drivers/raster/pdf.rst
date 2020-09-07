@@ -518,7 +518,8 @@ available.
 Poppler
 ~~~~~~~
 
-libpoppler itself must have been configured with --enable-xpdf-headers
+libpoppler itself must have been configured with
+-DENABLE_UNSTABLE_API_ABI_HEADERS=ON
 so that the xpdf C++ headers are available. Note: the poppler C++ API
 isn't stable, so the driver compilation may fail with too old or too
 recent poppler versions.
