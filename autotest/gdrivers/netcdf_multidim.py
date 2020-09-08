@@ -771,7 +771,8 @@ def test_netcdf_multidim_create_nc4(netcdf_setup):  # noqa
 
         var = rg.CreateMDArray('my_var_x', [dim_x],
                                gdal.ExtendedDataType.Create(gdal.GDT_Float64),
-                               ['BLOCKSIZE=1', 'COMPRESS=DEFLATE', 'ZLEVEL=6'])
+                               ['BLOCKSIZE=1', 'COMPRESS=DEFLATE', 'ZLEVEL=6',
+                                'CHECKSUM=YES'])
         assert var.Write(struct.pack('f' * 2, 1.25, 2.25),
                 buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_Float32)) == gdal.CE_None
         assert struct.unpack('d' * 2, var.Read()) == (1.25, 2.25)
@@ -779,6 +780,14 @@ def test_netcdf_multidim_create_nc4(netcdf_setup):  # noqa
         assert var
         assert var.GetBlockSize() == [1]
         assert var.GetStructuralInfo() == { 'COMPRESS': 'DEFLATE' }
+
+        # Try with random filter id. Just to test that FILTER is taken
+        # into account
+        with gdaltest.error_handler():
+            var = rg.CreateMDArray('my_var_x', [dim_x],
+                                gdal.ExtendedDataType.Create(gdal.GDT_Float64),
+                                ['FILTER=123456789,2'])
+        assert var is None
 
         var = rg.OpenMDArray('my_var_x')
         assert var
