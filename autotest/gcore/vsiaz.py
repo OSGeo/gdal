@@ -288,15 +288,15 @@ def test_vsiaz_fake_readdir():
         pytest.skip()
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&prefix=a_dir%2F&restype=container', 200,
+    handler.add('GET', '/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&prefix=a_dir%20with_space%2F&restype=container', 200,
                 {'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <EnumerationResults>
-                        <Prefix>a_dir/</Prefix>
+                        <Prefix>a_dir with_space/</Prefix>
                         <NextMarker>bla</NextMarker>
                         <Blobs>
                           <Blob>
-                            <Name>a_dir/resource3.bin</Name>
+                            <Name>a_dir with_space/resource3 with_space.bin</Name>
                             <Properties>
                               <Last-Modified>01 Jan 1970 00:00:01</Last-Modified>
                               <Content-Length>123456</Content-Length>
@@ -305,28 +305,28 @@ def test_vsiaz_fake_readdir():
                         </Blobs>
                     </EnumerationResults>
                 """)
-    handler.add('GET', '/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&marker=bla&prefix=a_dir%2F&restype=container', 200,
+    handler.add('GET', '/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&marker=bla&prefix=a_dir%20with_space%2F&restype=container', 200,
                 {'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <EnumerationResults>
-                        <Prefix>a_dir/</Prefix>
+                        <Prefix>a_dir with_space/</Prefix>
                         <Blobs>
                           <Blob>
-                            <Name>a_dir/resource4.bin</Name>
+                            <Name>a_dir with_space/resource4.bin</Name>
                             <Properties>
                               <Last-Modified>16 Oct 2016 12:34:56</Last-Modified>
                               <Content-Length>456789</Content-Length>
                             </Properties>
                           </Blob>
                           <BlobPrefix>
-                            <Name>a_dir/subdir/</Name>
+                            <Name>a_dir with_space/subdir/</Name>
                           </BlobPrefix>
                         </Blobs>
                     </EnumerationResults>
                 """)
 
     with webserver.install_http_handler(handler):
-        f = open_for_read('/vsiaz/az_fake_bucket2/a_dir/resource3.bin')
+        f = open_for_read('/vsiaz/az_fake_bucket2/a_dir with_space/resource3 with_space.bin')
     if f is None:
 
         if gdaltest.is_travis_branch('trusty'):
@@ -335,13 +335,13 @@ def test_vsiaz_fake_readdir():
         pytest.fail()
     gdal.VSIFCloseL(f)
 
-    dir_contents = gdal.ReadDir('/vsiaz/az_fake_bucket2/a_dir')
-    assert dir_contents == ['resource3.bin', 'resource4.bin', 'subdir']
-    assert gdal.VSIStatL('/vsiaz/az_fake_bucket2/a_dir/resource3.bin').size == 123456
-    assert gdal.VSIStatL('/vsiaz/az_fake_bucket2/a_dir/resource3.bin').mtime == 1
+    dir_contents = gdal.ReadDir('/vsiaz/az_fake_bucket2/a_dir with_space')
+    assert dir_contents == ['resource3 with_space.bin', 'resource4.bin', 'subdir']
+    assert gdal.VSIStatL('/vsiaz/az_fake_bucket2/a_dir with_space/resource3 with_space.bin').size == 123456
+    assert gdal.VSIStatL('/vsiaz/az_fake_bucket2/a_dir with_space/resource3 with_space.bin').mtime == 1
 
     # ReadDir on something known to be a file shouldn't cause network access
-    dir_contents = gdal.ReadDir('/vsiaz/az_fake_bucket2/a_dir/resource3.bin')
+    dir_contents = gdal.ReadDir('/vsiaz/az_fake_bucket2/a_dir with_space/resource3 with_space.bin')
     assert dir_contents is None
 
     # Test error on ReadDir()

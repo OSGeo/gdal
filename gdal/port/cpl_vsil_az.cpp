@@ -256,7 +256,8 @@ bool VSIDIRAz::AnalyseAzureFileList(
                         prop.ETag = ETag;
 
                         CPLString osCachedFilename =
-                            osBaseURL + "/" + osPrefix + entry->pszName;
+                            osBaseURL + "/" + CPLAWSURLEncode(osPrefix, false) +
+                            CPLAWSURLEncode(entry->pszName, false);
 #if DEBUG_VERBOSE
                         CPLDebug("AZURE", "Cache %s", osCachedFilename.c_str());
 #endif
@@ -302,7 +303,8 @@ bool VSIDIRAz::AnalyseAzureFileList(
                             prop.mTime = 0;
 
                             CPLString osCachedFilename =
-                                osBaseURL + "/" + osPrefix + entry->pszName;
+                                osBaseURL + "/" + CPLAWSURLEncode(osPrefix, false) +
+                                CPLAWSURLEncode(entry->pszName, false);
 #if DEBUG_VERBOSE
                             CPLDebug("AZURE", "Cache %s", osCachedFilename.c_str());
 #endif
