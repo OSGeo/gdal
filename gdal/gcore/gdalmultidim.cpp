@@ -3071,6 +3071,12 @@ public:
         }
         return ret;
     }
+
+    std::shared_ptr<GDALAttribute> GetAttribute(const std::string& osName) const override
+        { return m_poParent->GetAttribute(osName); }
+
+    std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList papszOptions = nullptr) const override
+        { return m_poParent->GetAttributes(papszOptions); }
 };
 
 /************************************************************************/
@@ -3877,6 +3883,11 @@ public:
         return ret;
     }
 
+    std::shared_ptr<GDALAttribute> GetAttribute(const std::string& osName) const override
+        { return m_poParent->GetAttribute(osName); }
+
+    std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList papszOptions = nullptr) const override
+        { return m_poParent->GetAttributes(papszOptions); }
 };
 
 /************************************************************************/

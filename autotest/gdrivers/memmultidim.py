@@ -824,6 +824,10 @@ def test_mem_md_array_slice():
     with pytest.raises(Exception):
         ar.GetView(None)
 
+    attr = ar.CreateAttribute('attr', [],
+                              gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+    assert attr.Write(1) == gdal.CE_None
+
     with gdaltest.error_handler():
         assert not ar.GetView("")
         assert not ar.GetView("x")
@@ -845,6 +849,8 @@ def test_mem_md_array_slice():
 
     sliced_ar = ar[1]
     assert sliced_ar
+    assert sliced_ar.GetAttribute('attr') is not None
+    assert len(sliced_ar.GetAttributes()) == 1
     assert sliced_ar.GetBlockSize() == ar.GetBlockSize()[1:]
     assert sliced_ar.GetDimensionCount() == ar.GetDimensionCount() - 1
     assert sliced_ar.GetDataType() == ar.GetDataType()
@@ -1244,6 +1250,10 @@ def test_mem_md_array_transpose():
     ar = rg.CreateMDArray("ar", [ dim_z, dim_y, dim_x ],
                           gdal.ExtendedDataType.Create(gdal.GDT_UInt16))
 
+    attr = ar.CreateAttribute('attr', [],
+                              gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+    assert attr.Write(1) == gdal.CE_None
+
     data = array.array('H', [i for i in range(24)])
     if sys.version_info >= (3, 0, 0):
         data = data.tobytes()
@@ -1274,6 +1284,8 @@ def test_mem_md_array_transpose():
     assert transposed.GetOffset() == ar.GetOffset()
     assert transposed.GetNoDataValueAsRaw() == ar.GetNoDataValueAsRaw()
     assert transposed.GetSpatialRef() is None
+    assert transposed.GetAttribute('attr') is not None
+    assert len(transposed.GetAttributes()) == 1
 
     assert ar.SetUnit("foo") == gdal.CE_None
     assert ar.SetScale(1) == gdal.CE_None
