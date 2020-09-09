@@ -516,7 +516,6 @@ void CPL_DLL RegisterOGRDXF();
 void CPL_DLL RegisterOGRCAD();
 void CPL_DLL RegisterOGRDWG();
 void CPL_DLL RegisterOGRDGNV8();
-void CPL_DLL RegisterOGRSDE();
 void CPL_DLL RegisterOGRIDB();
 void CPL_DLL RegisterOGRGMT();
 void CPL_DLL RegisterOGRBNA();

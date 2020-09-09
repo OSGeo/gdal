@@ -96,7 +96,6 @@ Vector drivers
    pg
    plscenes
    s57
-   sde
    sdts
    segukooa
    segy
