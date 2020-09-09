@@ -162,7 +162,7 @@ static void GDALInfoReportMetadata( GDALMajorObjectH hObject,
 
             while( papszIter != nullptr && *papszIter != nullptr )
             {
-                if( !EQUAL(*papszIter, "") )
+                if( !EQUAL(*papszIter, "") && !EQUAL(*papszIter, "SUBDATASETS") )
                 {
                     papszExtraMDDomainsExpanded = CSLAddString(papszExtraMDDomainsExpanded, *papszIter);
                 }
@@ -189,6 +189,7 @@ static void GDALInfoReportMetadata( GDALMajorObjectH hObject,
 
         CSLDestroy(papszExtraMDDomainsExpanded);
     }
+    GDALInfoPrintMetadata(hObject, "SUBDATASETS", "Subdatasets", pszIndent);
 }
 
 /************************************************************************/
