@@ -229,7 +229,7 @@ JP2LuraDataset::~JP2LuraDataset()
 /*                            Identify()                                */
 /************************************************************************/
 
-constexpr unsigned char jpc_header[] = {0xff,0x4f};
+constexpr unsigned char jpc_header[] = {0xff,0x4f,0xff,0x51}; // SOC + RSIZ markers
 constexpr unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
 
 int JP2LuraDataset::Identify( GDALOpenInfo * poOpenInfo )
