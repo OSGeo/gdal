@@ -1601,7 +1601,7 @@ CPLErr JP2OpenJPEGDataset::SetMetadataItem( const char * pszName,
 /*                            Identify()                                */
 /************************************************************************/
 
-static const unsigned char jpc_header[] = {0xff,0x4f};
+static const unsigned char jpc_header[] = {0xff,0x4f,0xff,0x51}; // SOC + RSIZ markers
 static const unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
 
 int JP2OpenJPEGDataset::Identify( GDALOpenInfo * poOpenInfo )
