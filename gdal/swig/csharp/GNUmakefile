@@ -18,6 +18,7 @@ LINK_EXTRAFLAGS = -rpath $(INST_LIB) -no-undefined -version-info $(LIBGDAL_CURRE
 OBJ_EXT = lo
 endif
 
+SUPPRESSW = -Wno-missing-prototypes -Wno-missing-declarations -Wno-deprecated-declarations -Wno-unused-parameter -Wno-unused-function
 
 CSHARP_MODULES = libgdalcsharp.$(SO_EXT) libogrcsharp.$(SO_EXT) libgdalconstcsharp.$(SO_EXT) libosrcsharp.$(SO_EXT)
 CSHARP_OBJECTS = const/gdalconst_wrap.$(OBJ_EXT) gdal/gdal_wrap.$(OBJ_EXT) osr/osr_wrap.$(OBJ_EXT) ogr/ogr_wrap.$(OBJ_EXT)
@@ -53,19 +54,19 @@ $(CSHARP_MODULES): lib%csharp.$(SO_EXT): %_wrap.$(OBJ_EXT)
 	echo "</configuration>" >> $*_csharp.dll.config
 
 %.$(OBJ_EXT): %.cpp
-	$(CXX) $(CFLAGS) $(GDAL_INCLUDE) -c $<
+	$(CXX) $(CFLAGS) $(SUPPRESSW) $(GDAL_INCLUDE) -c $<
 
 %.$(OBJ_EXT): %.cxx
-	$(CXX) $(CFLAGS) $(GDAL_INCLUDE) -c $<
+	$(CXX) $(CFLAGS) $(SUPPRESSW) $(GDAL_INCLUDE) -c $<
 
 %.$(OBJ_EXT): %.c
-	$(CC) $(CFLAGS) $(GDAL_INCLUDE) -c $<
+	$(CC) $(CFLAGS) $(SUPPRESSW) $(GDAL_INCLUDE) -c $<
 
 gdal_csharp:
-	$(CSC) /debug:full /target:library /out:osr_csharp.dll osr/*.cs AssemblyInfo.cs
-	$(CSC) /debug:full /target:library /out:ogr_csharp.dll /r:osr_csharp.dll ogr/*.cs AssemblyInfo.cs
-	$(CSC) /debug:full /target:library /out:gdal_csharp.dll /r:ogr_csharp.dll /r:osr_csharp.dll gdal/*.cs AssemblyInfo.cs
-	$(CSC) /debug:full /target:library /out:gdalconst_csharp.dll const/*.cs AssemblyInfo.cs
+	$(CSC) /unsafe /debug:full /target:library /out:osr_csharp.dll osr/*.cs AssemblyInfo.cs
+	$(CSC) /unsafe /debug:full /target:library /out:ogr_csharp.dll /r:osr_csharp.dll ogr/*.cs AssemblyInfo.cs
+	$(CSC) /unsafe /debug:full /target:library /out:gdal_csharp.dll /r:ogr_csharp.dll /r:osr_csharp.dll gdal/*.cs AssemblyInfo.cs
+	$(CSC) /unsafe /debug:full /target:library /out:gdalconst_csharp.dll const/*.cs AssemblyInfo.cs
 
 samples:
 	$(CSC) /r:ogr_csharp.dll /r:osr_csharp.dll /out:ogrinfo.exe apps/ogrinfo.cs

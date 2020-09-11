@@ -152,9 +152,6 @@ void OGRRegisterAllInternal()
 #ifdef INGRES_ENABLED
     RegisterOGRIngres();
 #endif
-#ifdef SDE_ENABLED
-    RegisterOGRSDE();
-#endif
 /* Register OpenFileGDB before FGDB as it is more capable for read-only */
 #ifdef OPENFILEGDB_ENABLED
     RegisterOGROpenFileGDB();

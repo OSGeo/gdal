@@ -240,7 +240,7 @@ _gdal_grid()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general -ot -of -co -zfield -z_increase -z_multiply -a_srs -spat -clipsrc -clipsrcsql -clipsrclayer -clipsrcwhere -l -where -sql -txe -tye -outsize -a -q --version --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general -ot -of -co -zfield -z_increase -z_multiply -a_srs -spat -clipsrc -clipsrcsql -clipsrclayer -clipsrcwhere -l -where -sql -txe -tye -tr -outsize -a -q --version --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -300,7 +300,7 @@ _gdalinfo()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general -json -mm -stats -hist -nogcp -nomd -norat -noct -nofl -checksum -proj4 -listmdd -mdd -wkt_format -sd -oo --version --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general -json -mm -stats -hist -nogcp -nomd -norat -noct -nofl -checksum -proj4 -listmdd -mdd -wkt_format -sd -oo -if --version --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -575,7 +575,7 @@ _gdal_translate()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general --long-usage -ot -strict -of -b -mask -expand -outsize -tr -r -unscale -scale -exponent -srcwin -epo -eco -projwin -projwin_srs -a_srs -a_ullr -a_nodata -a_scale -a_offset -nogcp -gcp -colorinterp{_bn} -colorinterp -mo -q -sds -co -stats -norat -oo --version --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general --long-usage -ot -strict -if -of -b -mask -expand -outsize -tr -r -unscale -scale -exponent -srcwin -epo -eco -projwin -projwin_srs -a_srs -a_ullr -a_nodata -a_scale -a_offset -nogcp -gcp -colorinterp{_bn} -colorinterp -mo -q -sds -co -stats -norat -oo --version --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -605,7 +605,7 @@ _gdalwarp()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general --formats -s_srs -t_srs -to -novshiftgrid -order -tps -rpc -geoloc -et -refine_gcps -te -tr -tap -ts -ovr -wo -ot -wt -srcnodata -dstnodata -dstalpha -r -wm -multi -q -cutline -cl -cwhere -csql -cblend -crop_to_cutline -of -co -overwrite -nomd -cvmd -setci -oo -doo --version --license --format --optfile --config --debug --pause --locale "
+      key_list="--help-general --formats -s_srs -t_srs -to -novshiftgrid -order -tps -rpc -geoloc -et -refine_gcps -te -tr -tap -ts -ovr -wo -ot -wt -srcnodata -dstnodata -dstalpha -r -wm -multi -q -cutline -cl -cwhere -csql -cblend -crop_to_cutline -if -of -co -overwrite -nomd -cvmd -setci -oo -doo --version --license --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -628,6 +628,51 @@ _gdalwarp()
   return 0
 }
 complete -o default -F _gdalwarp gdalwarp
+_gdal_viewshed()
+{
+  local cur prev
+  COMPREPLY=()
+  _get_comp_words_by_ref cur prev
+  case "$cur" in
+    -*)
+      key_list="-b -a_nodata -f -oz -tz -md -ox -oy -vv -iv -ov -cc -co -q -om "
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      return 0
+      ;;
+  esac
+  return 0
+}
+complete -o default -F _gdal_viewshed gdal_viewshed
+_gdal_create()
+{
+  local cur prev
+  COMPREPLY=()
+  _get_comp_words_by_ref cur prev
+  case "$cur" in
+    -*)
+      key_list="--help-general -of -outsize -bands -burn -ot -strict -a_srs -a_ullr -a_nodata -mo -q -co --version --license --formats --format --optfile --config --debug --pause --locale "
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      return 0
+      ;;
+  esac
+  tool=${COMP_WORDS[0]}
+  case "$prev" in
+    -ot)
+      key_list="Byte Int16 UInt16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      ;;
+    -of)
+      key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      ;;
+    --format)
+      key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      ;;
+  esac
+  return 0
+}
+complete -o default -F _gdal_create gdal_create
 _ogr2ogr()
 {
   local cur prev

@@ -14861,8 +14861,8 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
 
                 if( bPixelIsPoint && !bPointGeoIgnore )
                 {
-                    m_pasGCPList[iGCP].dfGCPPixel -= 0.5;
-                    m_pasGCPList[iGCP].dfGCPLine -= 0.5;
+                    m_pasGCPList[iGCP].dfGCPPixel += 0.5;
+                    m_pasGCPList[iGCP].dfGCPLine += 0.5;
                 }
             }
             m_nGeoTransformGeorefSrcIndex = m_nINTERNALGeorefSrcIndex;
@@ -17649,8 +17649,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
             if( bPixelIsPoint && !bPointGeoIgnore )
             {
-                padfTiePoints[iGCP*6+0] += 0.5;
-                padfTiePoints[iGCP*6+1] += 0.5;
+                padfTiePoints[iGCP*6+0] -= 0.5;
+                padfTiePoints[iGCP*6+1] -= 0.5;
             }
         }
 

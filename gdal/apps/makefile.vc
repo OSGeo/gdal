@@ -22,7 +22,8 @@ GNM_PROGRAMS =	gnmmanage.exe gnmanalyse.exe
 
 default:	gdal_translate.exe gdalinfo.exe gdaladdo.exe gdalwarp.exe \
 		nearblack.exe gdalmanage.exe gdalenhance.exe gdaltransform.exe\
-		gdaldem.exe gdallocationinfo.exe gdalsrsinfo.exe gdalmdiminfo.exe gdalmdimtranslate.exe gdal_viewshed.exe $(OGR_PROGRAMS) $(GNM_PROGRAMS)
+		gdaldem.exe gdallocationinfo.exe gdalsrsinfo.exe gdalmdiminfo.exe \
+		gdalmdimtranslate.exe gdal_viewshed.exe gdal_create.exe $(OGR_PROGRAMS) $(GNM_PROGRAMS)
 
 all:	default multireadtest.exe \
 			dumpoverviews.exe gdalwarpsimple.exe gdalflattenmask.exe \
@@ -90,6 +91,11 @@ gdal_contour.exe:	gdal_contour.cpp $(GDALLIB) $(XTRAOBJ)
 
 gdal_viewshed.exe:	gdal_viewshed.cpp $(GDALLIB) $(XTRAOBJ)
 	$(CC) $(CFLAGS) gdal_viewshed.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+
+gdal_create.exe:	gdal_create.cpp $(GDALLIB) $(XTRAOBJ)
+	$(CC) $(CFLAGS) gdal_create.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 

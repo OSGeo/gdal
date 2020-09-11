@@ -3569,6 +3569,40 @@ def test_tiff_write_98():
     gdaltest.tiff_drv.Delete('tmp/test_98.tif')
 
 ###############################################################################
+# Create a rotated geotiff file (uses a geomatrix) with - PixelIsPoint
+
+
+def test_tiff_write_tiepoints_pixelispoint():
+
+    tmpfilename = '/vsimem/test_tiff_write_tiepoints_pixelispoint.tif'
+
+    gdal.Translate(tmpfilename, 'data/byte_gcp_pixelispoint.tif')
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetMetadataItem('AREA_OR_POINT') == 'Point'
+    assert ds.GetGCPCount() == 4
+    gcp = ds.GetGCPs()[0]
+    assert (gcp.GCPPixel == pytest.approx(0.5, abs=1e-5) and \
+       gcp.GCPLine == pytest.approx(0.5, abs=1e-5) and \
+       gcp.GCPX == pytest.approx(-180, abs=1e-5) and \
+       gcp.GCPY == pytest.approx(90, abs=1e-5) and \
+       gcp.GCPZ == pytest.approx(0, abs=1e-5))
+
+
+    with gdaltest.config_option('GTIFF_POINT_GEO_IGNORE', 'YES'):
+        gdal.Translate(tmpfilename, 'data/byte_gcp_pixelispoint.tif')
+        ds = gdal.Open(tmpfilename)
+        assert ds.GetMetadataItem('AREA_OR_POINT') == 'Point'
+        assert ds.GetGCPCount() == 4
+        gcp = ds.GetGCPs()[0]
+        assert (gcp.GCPPixel == pytest.approx(0, abs=1e-5) and \
+        gcp.GCPLine == pytest.approx(0, abs=1e-5) and \
+        gcp.GCPX == pytest.approx(-180, abs=1e-5) and \
+        gcp.GCPY == pytest.approx(90, abs=1e-5) and \
+        gcp.GCPZ == pytest.approx(0, abs=1e-5))
+
+    gdal.Unlink(tmpfilename)
+
+###############################################################################
 # Create copy into a RGB JPEG-IN-TIFF (#3887)
 
 

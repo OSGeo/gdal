@@ -1173,6 +1173,13 @@ GDALRasterBand *VRTRasterBand::GetOverview( int iOverview )
 
             if( poSrcDS == nullptr )
                 return nullptr;
+            if( poSrcDS == poDS )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Recursive opening attempt");
+                GDALClose( GDALDataset::ToHandle(poSrcDS) );
+                return nullptr;
+            }
 
             m_apoOverviews[iOverview].poBand = poSrcDS->GetRasterBand(
                 m_apoOverviews[iOverview].nBand );
@@ -1310,7 +1317,15 @@ void VRTRasterBand::SetIsMaskBand()
 
 int VRTRasterBand::CloseDependentDatasets()
 {
-    return FALSE;
+    int ret = FALSE;
+    for( auto& oOverviewInfo: m_apoOverviews )
+    {
+        if( oOverviewInfo.CloseDataset() )
+        {
+            ret = TRUE;
+        }
+    }
+    return ret;
 }
 
 /*! @endcond */

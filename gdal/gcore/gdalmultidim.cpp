@@ -34,6 +34,7 @@
 #include <set>
 
 #include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "cpl_safemaths.hpp"
 
 #if defined(__clang__) || defined(_MSC_VER)
@@ -2955,12 +2956,13 @@ private:
 protected:
     explicit GDALSlicedMDArray(
         const std::shared_ptr<GDALMDArray>& poParent,
+        const std::string& viewExpr,
         std::vector<std::shared_ptr<GDALDimension>>&& dims,
         std::vector<size_t>&& mapDimIdxToParentDimIdx,
         std::vector<Range>&& parentRanges)
     :
-        GDALAbstractMDArray(std::string(), "Sliced view of " + poParent->GetName()),
-        GDALMDArray(std::string(), "Sliced view of " + poParent->GetName()),
+        GDALAbstractMDArray(std::string(), "Sliced view of " + poParent->GetFullName() + " (" + viewExpr + ")"),
+        GDALMDArray(std::string(), "Sliced view of " + poParent->GetFullName() + " (" + viewExpr + ")"),
         m_poParent(std::move(poParent)),
         m_dims(std::move(dims)),
         m_mapDimIdxToParentDimIdx(std::move(mapDimIdxToParentDimIdx)),
@@ -2989,6 +2991,7 @@ protected:
 public:
     static std::shared_ptr<GDALSlicedMDArray> Create(
                     const std::shared_ptr<GDALMDArray>& poParent,
+                    const std::string& viewExpr,
                     std::vector<std::shared_ptr<GDALDimension>>&& dims,
                     std::vector<size_t>&& mapDimIdxToParentDimIdx,
                     std::vector<Range>&& parentRanges)
@@ -2997,7 +3000,7 @@ public:
         CPLAssert(parentRanges.size() == poParent->GetDimensionCount());
 
         auto newAr(std::shared_ptr<GDALSlicedMDArray>(new GDALSlicedMDArray(
-            poParent, std::move(dims), std::move(mapDimIdxToParentDimIdx),
+            poParent, viewExpr, std::move(dims), std::move(mapDimIdxToParentDimIdx),
             std::move(parentRanges))));
         newAr->SetSelf(newAr);
         return newAr;
@@ -3068,6 +3071,12 @@ public:
         }
         return ret;
     }
+
+    std::shared_ptr<GDALAttribute> GetAttribute(const std::string& osName) const override
+        { return m_poParent->GetAttribute(osName); }
+
+    std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList papszOptions = nullptr) const override
+        { return m_poParent->GetAttributes(papszOptions); }
 };
 
 /************************************************************************/
@@ -3154,6 +3163,7 @@ bool GDALSlicedMDArray::IWrite(const GUInt64* arrayStartIdx,
 
 static std::shared_ptr<GDALMDArray> CreateSlicedArray(
                                 const std::shared_ptr<GDALMDArray>& self,
+                                const std::string& viewExpr,
                                 const std::string& activeSlice,
                                 bool bRenameDimensions,
                                 std::vector<GDALMDArray::ViewSpec>& viewSpecs)
@@ -3355,6 +3365,7 @@ static std::shared_ptr<GDALMDArray> CreateSlicedArray(
     viewSpecs.emplace_back(std::move(viewSpec));
 
     return GDALSlicedMDArray::Create(self,
+                                     viewExpr,
                                      std::move(newDims),
                                      std::move(mapDimIdxToParentDimIdx),
                                      std::move(parentRanges));
@@ -3375,12 +3386,13 @@ private:
 protected:
     GDALExtractFieldMDArray(
         const std::shared_ptr<GDALMDArray>& poParent,
+        const std::string& fieldName,
         const std::unique_ptr<GDALEDTComponent>& srcComp)
     :
         GDALAbstractMDArray(
-            std::string(), "Extract field view of " + poParent->GetName()),
+            std::string(), "Extract field " + fieldName + " of " + poParent->GetFullName()),
         GDALMDArray(
-            std::string(), "Extract field view of " + poParent->GetName()),
+            std::string(), "Extract field " + fieldName + " of " + poParent->GetFullName()),
         m_poParent(poParent),
         m_dt(srcComp->GetType()),
         m_srcCompName(srcComp->GetName())
@@ -3398,10 +3410,11 @@ protected:
 public:
     static std::shared_ptr<GDALExtractFieldMDArray> Create(
                     const std::shared_ptr<GDALMDArray>& poParent,
+                    const std::string& fieldName,
                     const std::unique_ptr<GDALEDTComponent>& srcComp)
     {
         auto newAr(std::shared_ptr<GDALExtractFieldMDArray>(
-            new GDALExtractFieldMDArray(poParent, srcComp)));
+            new GDALExtractFieldMDArray(poParent, fieldName, srcComp)));
         newAr->SetSelf(newAr);
         return newAr;
     }
@@ -3497,7 +3510,7 @@ static std::shared_ptr<GDALMDArray> CreateFieldNameExtractArray(
                  fieldName.c_str());
         return nullptr;
     }
-    return GDALExtractFieldMDArray::Create(self, *srcComp);
+    return GDALExtractFieldMDArray::Create(self, fieldName, *srcComp);
 }
 
 /************************************************************************/
@@ -3665,7 +3678,7 @@ std::shared_ptr<GDALMDArray> GDALMDArray::GetView(const std::string& viewExpr,
 
         auto newArray = !fieldName.empty() ?
             CreateFieldNameExtractArray(self, fieldName):
-            CreateSlicedArray(self, activeSlice, bRenameDimensions, viewSpecs);
+            CreateSlicedArray(self, viewExpr, activeSlice, bRenameDimensions, viewSpecs);
 
         if( endExpr == curExpr.size() - 1 )
         {
@@ -3729,14 +3742,28 @@ private:
                              const GInt64* arrayStep,
                              const GPtrDiff_t* bufferStride) const;
 
+    static std::string MappingToStr(const std::vector<int>& anMapNewAxisToOldAxis)
+    {
+        std::string ret;
+        ret += '[';
+        for( size_t i = 0; i < anMapNewAxisToOldAxis.size(); ++i )
+        {
+            if( i > 0 )
+                ret += ',';
+            ret += CPLSPrintf("%d", anMapNewAxisToOldAxis[i]);
+        }
+        ret += ']';
+        return ret;
+    }
+
 protected:
     GDALMDArrayTransposed(
         const std::shared_ptr<GDALMDArray>& poParent,
         const std::vector<int>& anMapNewAxisToOldAxis,
         std::vector<std::shared_ptr<GDALDimension>>&& dims)
     :
-        GDALAbstractMDArray(std::string(), "Transposed view of " + poParent->GetName()),
-        GDALMDArray(std::string(), "Transposed view of " + poParent->GetName()),
+        GDALAbstractMDArray(std::string(), "Transposed view of " + poParent->GetFullName() + " along " + MappingToStr(anMapNewAxisToOldAxis)),
+        GDALMDArray(std::string(), "Transposed view of " + poParent->GetFullName() + " along " + MappingToStr(anMapNewAxisToOldAxis)),
         m_poParent(std::move(poParent)),
         m_anMapNewAxisToOldAxis(anMapNewAxisToOldAxis),
         m_dims(std::move(dims)),
@@ -3856,6 +3883,11 @@ public:
         return ret;
     }
 
+    std::shared_ptr<GDALAttribute> GetAttribute(const std::string& osName) const override
+        { return m_poParent->GetAttribute(osName); }
+
+    std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList papszOptions = nullptr) const override
+        { return m_poParent->GetAttributes(papszOptions); }
 };
 
 /************************************************************************/
@@ -4004,8 +4036,8 @@ private:
 
 protected:
     explicit GDALMDArrayUnscaled(const std::shared_ptr<GDALMDArray>& poParent):
-        GDALAbstractMDArray(std::string(), "Unscaled view of " + poParent->GetName()),
-        GDALMDArray(std::string(), "Unscaled view of " + poParent->GetName()),
+        GDALAbstractMDArray(std::string(), "Unscaled view of " + poParent->GetFullName()),
+        GDALMDArray(std::string(), "Unscaled view of " + poParent->GetFullName()),
         m_poParent(std::move(poParent)),
         m_dt(GDALExtendedDataType::Create(GDALDataTypeIsComplex(
             m_poParent->GetDataType().GetNumericDataType()) ?
@@ -4277,8 +4309,8 @@ private:
 
 protected:
     explicit GDALMDArrayMask(const std::shared_ptr<GDALMDArray>& poParent):
-        GDALAbstractMDArray(std::string(), "Mask of " + poParent->GetName()),
-        GDALMDArray(std::string(), "Mask of " + poParent->GetName()),
+        GDALAbstractMDArray(std::string(), "Mask of " + poParent->GetFullName()),
+        GDALMDArray(std::string(), "Mask of " + poParent->GetFullName()),
         m_poParent(std::move(poParent))
     {
     }
@@ -4324,16 +4356,18 @@ bool GDALMDArrayMask::IRead(const GUInt64* arrayStartIdx,
 {
     size_t nElts = 1;
     const size_t nDims = GetDimensionCount();
-    assert(nDims >= 1);
     std::vector<GPtrDiff_t> tmpBufferStrideVector(nDims);
     for( size_t i = 0; i < nDims; i++ )
         nElts *= count[i];
-    tmpBufferStrideVector.back() = 1;
-    for( size_t i = nDims - 1; i > 0; )
+    if( nDims > 0 )
     {
-        --i;
-        tmpBufferStrideVector[i] =
-            tmpBufferStrideVector[i+1] * count[i+1];
+        tmpBufferStrideVector.back() = 1;
+        for( size_t i = nDims - 1; i > 0; )
+        {
+            --i;
+            tmpBufferStrideVector[i] =
+                tmpBufferStrideVector[i+1] * count[i+1];
+        }
     }
 
     const auto GetSingleValNumericAttr = [this]
@@ -4538,7 +4572,7 @@ template<typename Type> void GDALMDArrayMask::ReadInternal(
         GPtrDiff_t   src_inc_offset = 0;
         GPtrDiff_t   dst_inc_offset = 0;
     };
-    std::vector<Stack> stack(nDims);
+    std::vector<Stack> stack(std::max(static_cast<size_t>(1), nDims));
     const size_t nBufferDTSize = bufferDataType.GetSize();
     for( size_t i = 0; i < nDims; i++ )
     {
@@ -4551,7 +4585,7 @@ template<typename Type> void GDALMDArrayMask::ReadInternal(
     stack[0].dst_ptr = static_cast<GByte*>(pDstBuffer);
 
     size_t dimIdx = 0;
-    const size_t nDimsMinus1 = nDims - 1;
+    const size_t nDimsMinus1 = nDims > 0 ? nDims - 1 : 0;
     const void* pSrcRawNoDataValue = m_poParent->GetRawNoDataValue();
     const bool bBufferDataTypeIsDT = bufferDataType == m_dt;
     GByte abyZeroOrOne[2][16]; // 16 is sizeof GDT_CFloat64
@@ -4590,7 +4624,7 @@ template<typename Type> void GDALMDArrayMask::ReadInternal(
 lbl_next_depth:
     if( dimIdx == nDimsMinus1 )
     {
-        auto nIters = count[dimIdx];
+        auto nIters = nDims > 0 ? count[dimIdx] : 1;
         const GByte* src_ptr = stack[dimIdx].src_ptr;
         GByte* dst_ptr = stack[dimIdx].dst_ptr;
 
@@ -4693,13 +4727,6 @@ std::shared_ptr<GDALMDArray> GDALMDArray::GetMask(CPL_UNUSED
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "GetMask() only supports numeric data type");
-        return nullptr;
-    }
-    if( GetDimensionCount() == 0 )
-    {
-        // Limitation for the sake of implementation simplicity
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "GetMask() only supports non-scalar arrays");
         return nullptr;
     }
     return GDALMDArrayMask::Create(self);
@@ -5225,6 +5252,340 @@ GDALDataset* GDALMDArray::AsClassicDataset(size_t iXDim, size_t iYDim) const
     }
     return new GDALDatasetFromArray(self, iXDim, iYDim);
 }
+
+/************************************************************************/
+/*                           GetStatistics()                            */
+/************************************************************************/
+
+/**
+ * \brief Fetch statistics.
+ *
+ * Returns the minimum, maximum, mean and standard deviation of all
+ * pixel values in this array.
+ *
+ * If bForce is FALSE results will only be returned if it can be done
+ * quickly (i.e. without scanning the data).  If bForce is FALSE and
+ * results cannot be returned efficiently, the method will return CE_Warning
+ * but no warning will have been issued.   This is a non-standard use of
+ * the CE_Warning return value to indicate "nothing done".
+ *
+ * When cached statistics are not available, and bForce is TRUE,
+ * ComputeStatistics() is called.
+ *
+ * Note that file formats using PAM (Persistent Auxiliary Metadata) services
+ * will generally cache statistics in the .aux.xml file allowing fast fetch
+ * after the first request.
+ *
+ * Cached statistics can be cleared with GDALDataset::ClearStatistics().
+ *
+ * This method is the same as the C function GDALMDArrayGetStatistics().
+ *
+ * @param poDS Owing dataset. If set to NULL, this method will always call
+ * ComputeStatistics(). If set to non-NULL, the method will attempt to retrieve
+ * from it (generally its persistent auxiliary metadata) already cached
+ * statistics.
+ *
+ * @param bApproxOK Currently ignored. In the future, should be set to true
+ * if statistics on the whole array are wished, or to false if a subset of it
+ * may be used.
+ *
+ * @param bForce If false statistics will only be returned if it can
+ * be done without rescanning the image.
+ *
+ * @param pdfMin Location into which to load image minimum (may be NULL).
+ *
+ * @param pdfMax Location into which to load image maximum (may be NULL).-
+ *
+ * @param pdfMean Location into which to load image mean (may be NULL).
+ *
+ * @param pdfStdDev Location into which to load image standard deviation
+ * (may be NULL).
+ *
+ * @param pnValidCount Number of samples whose value is different from the nodata
+ * value. (may be NULL)
+ * 
+ * @param pfnProgress a function to call to report progress, or NULL.
+ *
+ * @param pProgressData application data to pass to the progress function.
+ *
+ * @return CE_None on success, CE_Warning if no values returned,
+ * CE_Failure if an error occurs.
+ *
+ * @since GDAL 3.2
+ */
+
+CPLErr GDALMDArray::GetStatistics( GDALDataset* poDS,
+                                   bool bApproxOK, bool bForce,
+                                   double *pdfMin, double *pdfMax,
+                                   double *pdfMean, double *pdfStdDev,
+                                   GUInt64* pnValidCount,
+                                   GDALProgressFunc pfnProgress, void *pProgressData )
+{
+    GDALPamDataset* poPamDS = dynamic_cast<GDALPamDataset*>(poDS);
+    if( poPamDS != nullptr )
+    {
+        bool bGotApproxStats = false;
+        if( poPamDS->GetMDArrayStatistics(GetFullName().c_str(),
+                                          &bGotApproxStats,
+                                          pdfMin, pdfMax,
+                                          pdfMean, pdfStdDev,
+                                          pnValidCount) )
+        {
+            if( bApproxOK )
+                return CE_None;
+            if( !bGotApproxStats )
+                return CE_None;
+        }
+    }
+
+    if( !bForce )
+        return CE_Warning;
+
+    return ComputeStatistics(poDS, bApproxOK, pdfMin, pdfMax, pdfMean,
+                             pdfStdDev, pnValidCount,
+                             pfnProgress, pProgressData)
+                ? CE_None: CE_Failure;
+}
+
+/************************************************************************/
+/*                         ComputeStatistics()                          */
+/************************************************************************/
+
+/**
+ * \brief Compute statistics.
+ *
+ * Returns the minimum, maximum, mean and standard deviation of all
+ * pixel values in this array.
+ *
+ * Pixels taken into account in statistics are those whose mask value
+ * (as determined by GetMask()) is non-zero.
+ *
+ * Once computed, the statistics will generally be "set" back on the
+ * owing dataset (if poDS is not NULL).
+ *
+ * Cached statistics can be cleared with GDALDataset::ClearStatistics().
+ *
+ * This method is the same as the C function GDALMDArrayComputeStatistics().
+ *
+ * @param poDS Owing dataset. If set to non-NULL, the method will attempt to
+ * store computed statistics in it (generally its persistent auxiliary metadata)
+ * for further retrieval by GetStatistics()
+ *
+ * @param bApproxOK Currently ignored. In the future, should be set to true
+ * if statistics on the whole array are wished, or to false if a subset of it
+ * may be used.
+ *
+ * @param pdfMin Location into which to load image minimum (may be NULL).
+ *
+ * @param pdfMax Location into which to load image maximum (may be NULL).-
+ *
+ * @param pdfMean Location into which to load image mean (may be NULL).
+ *
+ * @param pdfStdDev Location into which to load image standard deviation
+ * (may be NULL).
+ *
+ * @param pnValidCount Number of samples whose value is different from the nodata
+ * value. (may be NULL)
+ * 
+ * @param pfnProgress a function to call to report progress, or NULL.
+ *
+ * @param pProgressData application data to pass to the progress function.
+ *
+ * @return true on success
+ *
+ * @since GDAL 3.2
+ */
+
+bool GDALMDArray::ComputeStatistics( GDALDataset* poDS,
+                                    bool bApproxOK,
+                                    double *pdfMin, double *pdfMax,
+                                    double *pdfMean, double *pdfStdDev,
+                                    GUInt64* pnValidCount,
+                                    GDALProgressFunc pfnProgress, void *pProgressData )
+{
+    struct StatsPerChunkType
+    {
+        const GDALMDArray* array = nullptr;
+        std::shared_ptr<GDALMDArray> poMask{};
+        double dfMin = std::numeric_limits<double>::max();
+        double dfMax = -std::numeric_limits<double>::max();
+        double dfMean = 0.0;
+        double dfM2 = 0.0;
+        GUInt64 nValidCount = 0;
+        std::vector<GByte> abyData{};
+        std::vector<double> adfData{};
+        std::vector<GByte> abyMaskData{};
+        GDALProgressFunc pfnProgress = nullptr;
+        void* pProgressData = nullptr;
+    };
+
+    const auto PerChunkFunc = [](GDALAbstractMDArray*,
+                                 const GUInt64* chunkArrayStartIdx,
+                                 const size_t* chunkCount,
+                                 GUInt64 iCurChunk,
+                                 GUInt64 nChunkCount,
+                                 void* pUserData)
+    {
+        StatsPerChunkType* data = static_cast<StatsPerChunkType*>(pUserData);
+        const GDALMDArray* array = data->array;
+        const GDALMDArray* poMask = data->poMask.get();
+        const size_t nDims = array->GetDimensionCount();
+        size_t nVals = 1;
+        for( size_t i = 0; i < nDims; i++ )
+            nVals *= chunkCount[i];
+
+        // Get mask
+        data->abyMaskData.resize(nVals);
+        if( !(poMask->Read(chunkArrayStartIdx, chunkCount, nullptr, nullptr,
+                           poMask->GetDataType(), &data->abyMaskData[0])) )
+        {
+            return false;
+        }
+
+        // Get data
+        const auto& oType = array->GetDataType();
+        if( oType.GetNumericDataType() == GDT_Float64 )
+        {
+            data->adfData.resize(nVals);
+            if( !array->Read(chunkArrayStartIdx, chunkCount, nullptr, nullptr,
+                            oType, &data->adfData[0]) )
+            {
+                return false;
+            }
+        }
+        else
+        {
+            data->abyData.resize(nVals * oType.GetSize());
+            if( !array->Read(chunkArrayStartIdx, chunkCount, nullptr, nullptr,
+                            oType, &data->abyData[0]) )
+            {
+                return false;
+            }
+            data->adfData.resize(nVals);
+            GDALCopyWords64( &data->abyData[0], oType.GetNumericDataType(),
+                             static_cast<int>(oType.GetSize()),
+                             &data->adfData[0], GDT_Float64,
+                             static_cast<int>(sizeof(double)),
+                             static_cast<GPtrDiff_t>(nVals) );
+        }
+        for( size_t i = 0; i < nVals; i++ )
+        {
+            if( data->abyMaskData[i] )
+            {
+                const double dfValue = data->adfData[i];
+                data->dfMin = std::min(data->dfMin, dfValue);
+                data->dfMax = std::max(data->dfMax, dfValue);
+                data->nValidCount++;
+                const double dfDelta = dfValue - data->dfMean;
+                data->dfMean += dfDelta / data->nValidCount;
+                data->dfM2 += dfDelta * (dfValue - data->dfMean);
+            }
+        }
+        if( data->pfnProgress &&
+            !data->pfnProgress(static_cast<double>(iCurChunk+1) / nChunkCount,
+                               "", data->pProgressData) )
+        {
+            return false;
+        }
+        return true;
+    };
+
+    const auto& oType = GetDataType();
+    if( oType.GetClass() != GEDTC_NUMERIC ||
+        GDALDataTypeIsComplex(oType.GetNumericDataType()) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Statistics can only be computed on non-complex numeric data type");
+        return false;
+    }
+
+    const size_t nDims = GetDimensionCount();
+    std::vector<GUInt64> arrayStartIdx(nDims);
+    std::vector<GUInt64> count(nDims);
+    const auto& poDims = GetDimensions();
+    for( size_t i = 0; i < nDims; i++ )
+    {
+        count[i] = poDims[i]->GetSize();
+    }
+    const char* pszSwathSize = CPLGetConfigOption("GDAL_SWATH_SIZE", nullptr);
+    const size_t nMaxChunkSize = pszSwathSize ?
+        static_cast<size_t>(
+            std::min(GIntBig(std::numeric_limits<size_t>::max() / 2),
+                        CPLAtoGIntBig(pszSwathSize))) :
+        static_cast<size_t>(
+            std::min(GIntBig(std::numeric_limits<size_t>::max() / 2),
+                        GDALGetCacheMax64() / 4));
+    StatsPerChunkType sData;
+    sData.array = this;
+    sData.poMask = GetMask(nullptr);
+    if( sData.poMask == nullptr )
+    {
+        return false;
+    }
+    sData.pfnProgress = pfnProgress;
+    sData.pProgressData = pProgressData;
+    if( !ProcessPerChunk(arrayStartIdx.data(), count.data(),
+                         GetProcessingChunkSize(nMaxChunkSize).data(),
+                         PerChunkFunc, &sData) )
+    {
+        return false;
+    }
+
+    if( pdfMin )
+        *pdfMin = sData.dfMin;
+
+    if( pdfMax )
+        *pdfMax = sData.dfMax;
+
+    if( pdfMean )
+        *pdfMean = sData.dfMean;
+
+    const double dfStdDev = sData.nValidCount > 0 ? sqrt(sData.dfM2 / sData.nValidCount) : 0.0;
+    if( pdfStdDev )
+        *pdfStdDev = dfStdDev;
+
+    if( pnValidCount )
+        *pnValidCount = sData.nValidCount;
+
+    if( poDS )
+    {
+        SetStatistics(poDS, bApproxOK,
+                      sData.dfMin, sData.dfMax, sData.dfMean, dfStdDev,
+                      sData.nValidCount);
+    }
+
+    return true;
+}
+
+bool GDALMDArray::SetStatistics( GDALDataset* poDS,
+                                 bool bApproxStats,
+                                 double dfMin, double dfMax,
+                                 double dfMean, double dfStdDev,
+                                 GUInt64 nValidCount )
+{
+    if( poDS == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Dataset should be defined to enable serialization");
+        return false;
+    }
+
+    GDALPamDataset* poPamDS = dynamic_cast<GDALPamDataset*>(poDS);
+    if( poPamDS == nullptr )
+    {
+        CPLDebug("GDAL", "Cannot save statistics on a non-PAM dataset");
+        return false;
+    }
+
+    poPamDS->StoreMDArrayStatistics(GetFullName().c_str(),
+                                    bApproxStats,
+                                    dfMin, dfMax,
+                                    dfMean, dfStdDev,
+                                    nValidCount );
+
+    return false;
+}
+
 
 /************************************************************************/
 /*                       ~GDALExtendedDataType()                        */
@@ -7233,6 +7594,64 @@ OGRSpatialReferenceH GDALMDArrayGetSpatialRef(GDALMDArrayH hArray)
     VALIDATE_POINTER1( hArray, __func__, nullptr );
     auto poSRS = hArray->m_poImpl->GetSpatialRef();
     return poSRS ? OGRSpatialReference::ToHandle(poSRS->Clone()) : nullptr;
+}
+
+/************************************************************************/
+/*                      GDALMDArrayGetStatistics()                      */
+/************************************************************************/
+
+/**
+ * \brief Fetch statistics.
+ *
+ * This is the same as the C++ method GDALMDArray::GetStatistics().
+ *
+ * @since GDAL 3.2
+ */
+
+CPLErr GDALMDArrayGetStatistics(
+                        GDALMDArrayH hArray,
+                        GDALDatasetH hDS, int bApproxOK, int bForce,
+                        double *pdfMin, double *pdfMax,
+                        double *pdfMean, double *pdfStdDev,
+                        GUInt64* pnValidCount,
+                        GDALProgressFunc pfnProgress, void *pProgressData )
+{
+    VALIDATE_POINTER1( hArray, __func__, CE_Failure );
+    return hArray->m_poImpl->GetStatistics(
+        GDALDataset::FromHandle(hDS),
+        CPL_TO_BOOL(bApproxOK),
+        CPL_TO_BOOL(bForce),
+        pdfMin, pdfMax, pdfMean, pdfStdDev, pnValidCount,
+        pfnProgress, pProgressData);
+}
+
+/************************************************************************/
+/*                      GDALMDArrayComputeStatistics()                  */
+/************************************************************************/
+
+/**
+ * \brief Compute statistics.
+ *
+ * This is the same as the C++ method GDALMDArray::ComputeStatistics().
+ *
+ * @since GDAL 3.2
+ */
+
+int GDALMDArrayComputeStatistics( GDALMDArrayH hArray,
+                                  GDALDatasetH hDS,
+                                    int bApproxOK,
+                                    double *pdfMin, double *pdfMax,
+                                    double *pdfMean, double *pdfStdDev,
+                                    GUInt64* pnValidCount,
+                                    GDALProgressFunc pfnProgress,
+                                  void *pProgressData )
+{
+    VALIDATE_POINTER1( hArray, __func__, FALSE );
+    return hArray->m_poImpl->ComputeStatistics(
+        GDALDataset::FromHandle(hDS),
+        CPL_TO_BOOL(bApproxOK),
+        pdfMin, pdfMax, pdfMean, pdfStdDev, pnValidCount,
+        pfnProgress, pProgressData);
 }
 
 /************************************************************************/

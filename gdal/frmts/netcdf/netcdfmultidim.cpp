@@ -313,6 +313,7 @@ class netCDFVariable final: public GDALMDArray
     mutable bool m_bPerfectDataTypeMatch = false;
     mutable std::vector<GByte> m_abyNoData{};
     mutable bool m_bGetRawNoDataValueHasRun = false;
+    bool m_bHasWrittenData = true;
     std::string m_osUnit{};
     CPLStringList m_aosStructuralInfo{};
     mutable bool m_bSRSRead = false;
@@ -387,11 +388,13 @@ public:
                    const std::shared_ptr<netCDFSharedResources>& poShared,
                    int gid, int varid,
                    const std::vector<std::shared_ptr<GDALDimension>>& dims,
-                   CSLConstList papszOptions)
+                   CSLConstList papszOptions,
+                   bool bCreate)
     {
         auto var(std::shared_ptr<netCDFVariable>(new netCDFVariable(
             poShared, gid, varid, dims, papszOptions)));
         var->SetSelf(var);
+        var->m_bHasWrittenData = !bCreate;
         return var;
     }
 
@@ -826,7 +829,46 @@ std::shared_ptr<GDALMDArray> netCDFGroup::CreateMDArray(
             return nullptr;
     }
 
-    return netCDFVariable::Create(m_poShared, m_gid, nVarId, dims, papszOptions);
+    const char* pszFilter = CSLFetchNameValue(papszOptions, "FILTER");
+    if( pszFilter )
+    {
+#ifdef NC_EFILTER
+        const auto aosTokens(CPLStringList(CSLTokenizeString2(pszFilter, ",", 0)));
+        if( !aosTokens.empty() )
+        {
+            const unsigned nFilterId = static_cast<unsigned>(
+                CPLAtoGIntBig(aosTokens[0]));
+            std::vector<unsigned> anParams;
+            for( int i = 1; i < aosTokens.size(); ++i )
+            {
+                anParams.push_back(
+                    static_cast<unsigned>(CPLAtoGIntBig(aosTokens[i])));
+            }
+            int ret = nc_def_var_filter(m_gid, nVarId, nFilterId,
+                                        anParams.size(), anParams.data());
+            NCDF_ERR(ret);
+            if( ret != NC_NOERR )
+                return nullptr;
+        }
+#else
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "netCDF 4.6 or later needed for FILTER option");
+        return nullptr;
+#endif
+    }
+
+    const bool bChecksum = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "CHECKSUM", "FALSE"));
+    if( bChecksum )
+    {
+        int ret = nc_def_var_fletcher32(m_gid, nVarId, TRUE);
+        NCDF_ERR(ret);
+        if( ret != NC_NOERR )
+            return nullptr;
+    }
+
+    return netCDFVariable::Create(m_poShared, m_gid, nVarId, dims, papszOptions,
+                                  true);
 }
 
 /************************************************************************/
@@ -993,7 +1035,7 @@ std::shared_ptr<GDALMDArray> netCDFGroup::OpenMDArray(
         return nullptr;
     return netCDFVariable::Create(m_poShared, m_gid, nVarId,
                                   std::vector<std::shared_ptr<GDALDimension>>(),
-                                  nullptr);
+                                  nullptr, false);
 }
 
 /************************************************************************/
@@ -1210,7 +1252,7 @@ std::shared_ptr<GDALMDArray> netCDFDimension::GetIndexingVariable() const
 
                 return netCDFVariable::Create(m_poShared, m_gid, nVarId,
                     std::vector<std::shared_ptr<GDALDimension>>(),
-                    nullptr);
+                    nullptr, false);
             }
         }
     }
@@ -1258,7 +1300,7 @@ std::shared_ptr<GDALMDArray> netCDFDimension::GetIndexingVariable() const
                                 return netCDFVariable::Create(m_poShared,
                                     nIndexingVarGroupId, nIndexingVarId,
                                     std::vector<std::shared_ptr<GDALDimension>>(),
-                                    nullptr);
+                                    nullptr, false);
                             }
                         }
                     }
@@ -2616,6 +2658,8 @@ bool netCDFVariable::IWrite(const GUInt64* arrayStartIdx,
                                const GDALExtendedDataType& bufferDataType,
                                const void* pSrcBuffer)
 {
+    m_bHasWrittenData = true;
+
     if( m_nDims == 2 && m_nVarType == NC_CHAR && GetDimensions().size() == 1 )
     {
         CPLMutexHolderD(&hNCMutex);
@@ -2717,6 +2761,13 @@ bool netCDFVariable::SetRawNoDataValue(const void* pNoData)
         std::vector<GByte> abyTmp(nSize);
         memcpy(&abyTmp[0], pNoData, nSize);
         ConvertGDALToNC(&abyTmp[0]);
+
+        if( !m_bHasWrittenData )
+        {
+            ret = nc_def_var_fill(m_gid, m_varid, NC_FILL, &abyTmp[0]);
+            NCDF_ERR(ret);
+        }
+
         ret = nc_put_att(m_gid, m_varid, _FillValue, m_nVarType, 1, &abyTmp[0]);
     }
     NCDF_ERR(ret);
@@ -3531,6 +3582,8 @@ GDALDataset *netCDFDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
     }
 
     poDS->m_poRootGroup.reset(new netCDFGroup(poSharedResources, cdfid));
+
+    poDS->TryLoadXML();
 
     return poDS;
 }

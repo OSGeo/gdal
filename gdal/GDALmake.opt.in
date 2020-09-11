@@ -31,9 +31,7 @@ INSTALL_LIB 	=	$(LIBTOOL_INSTALL) $(GDAL_ROOT)/install-sh -c
 INSTALL_DATA	= 	$(GDAL_ROOT)/install-sh -c -m 0644
 INSTALL_DIR	= 	$(GDAL_ROOT)/install-sh -d
 
-# SDE_LIB needs to be first because it embeds zlib.  We need to use its symbols instead of -lz's
-
-LIBS	=	$(SDE_LIB) @LIBS@ $(KAK_LIBS) $(DWG_LIBS) $(CURL_LIB) \
+LIBS	=	@LIBS@ $(KAK_LIBS) $(DWG_LIBS) $(CURL_LIB) \
 		$(MRSID_LIBS) $(MRSID_LIDAR_LIBS) $(ECW_LIBS) $(INGRES_LIB) \
 		$(PCIDSK_LIB) $(RASDAMAN_LIB) $(SOSI_LIB) \
 		$(OPENCL_LIB) $(JVM_LIB) $(LIBICONV) $(FGDB_LIB) $(LIBXML2_LIB) $(MONGODB_LIB) \
@@ -318,13 +316,6 @@ GRASS_SETTING	=	@GRASS_SETTING@
 GRASS_INCLUDE	=	@GRASS_INCLUDE@
 GRASS_GISBASE	=	@GRASS_GISBASE@
 HAVE_GRASS	=	@HAVE_GRASS@
-
-#
-# SDE
-#
-HAVE_SDE = @SDE_ENABLED@
-SDE_LIB	= @SDE_LIB@
-SDE_INC = @SDE_INC@
 
 #
 # FileGDB

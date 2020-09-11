@@ -529,10 +529,20 @@ def test_netcdf_12():
     scale = ds.GetRasterBand(1).GetScale()
     offset = ds.GetRasterBand(1).GetOffset()
 
-    assert scale == 0.01 and offset == 1.5, \
-        ('Incorrect scale(%f) or offset(%f)' % (scale, offset))
+    assert scale == 0.01 and offset == 1.5
 
+    gdaltest.netcdf_drv.CreateCopy('tmp/tmp.nc', ds)
     ds = None
+
+    ds = gdal.Open('tmp/tmp.nc')
+
+    scale = ds.GetRasterBand(1).GetScale()
+    offset = ds.GetRasterBand(1).GetOffset()
+
+    assert scale == 0.01 and offset == 1.5
+    ds = None
+
+    gdaltest.netcdf_drv.Delete('tmp/tmp.nc')
 
 ###############################################################################
 # check for scale/offset = None if no scale or offset is available
@@ -572,9 +582,6 @@ def test_netcdf_14():
     ds = None
 
     ds = gdal.Open('NETCDF:data/netcdf/two_vars_scale_offset.nc:q')
-
-    scale = ds.GetRasterBand(1).GetScale()
-    offset = ds.GetRasterBand(1).GetOffset()
 
     scale = ds.GetRasterBand(1).GetScale()
     offset = ds.GetRasterBand(1).GetOffset()

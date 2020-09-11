@@ -30,7 +30,9 @@ Connecting to a database
 ------------------------
 
 | To connect to a Postgres datasource, use a connection string
-  specifying the database name, with additional parameters as necessary
+  specifying the database name, with additional parameters as necessary.
+  The PG: prefix is used to mark the name as a postgres connection
+  string.
 
    ::
 
@@ -41,8 +43,15 @@ Connecting to a database
    ::
 
       PG:"dbname='databasename' host='addr' port='5432' user='x' password='y'"
+      
+   In this syntax each parameter setting is in the form keyword = value. 
+   Spaces around the equal sign are optional. To write an empty value, or a 
+   value containing spaces, surround it with single quotes, e.g., 
+   keyword = 'a value'. Single quotes and backslashes within the value must 
+   be escaped with a backslash, i.e., \' and \\.
+  
 
-   *or* starting with GDAL 3.1:
+   Starting with GDAL 3.1 also this syntax is supported:
 
    ::
 
@@ -50,13 +59,9 @@ Connecting to a database
 
 | It's also possible to omit the database name and connect to a
   *default* database, with the same name as the user name.
-| **Note**: We use PQconnectdb() to make the connection, so any other
-  options and defaults that would apply to it, apply to the name here
-  (refer to the documentation of the PostgreSQL server. Here for
-  `PostgreSQL
-  8.4 <http://www.postgresql.org/docs/8.4/interactive/libpq-connect.html>`__).
-  The PG: prefix is used to mark the name as a postgres connection
-  string.
+| **Note**: We use PQconnectdb() to make the connection. See details from
+  `PostgreSQL libpq documentation <https://www.postgresql.org/docs/12/libpq-connect.html>`__).
+  
 
 Geometry columns
 ----------------
@@ -136,7 +141,7 @@ Dataset open options
    including non-spatial ones, to be listed.
 -  **PRELUDE_STATEMENTS**\ =string (GDAL >= 2.1). SQL statement(s) to
    send on the PostgreSQL client connection before any other ones. In
-   case of several statement, they must be separated with the
+   case of several statements, they must be separated with the
    semi-column (;) sign. The driver will specifically recognize BEGIN as
    the first statement to avoid emitting BEGIN/COMMIT itself. This
    option may be useful when using the driver with pg_bouncer in
@@ -144,7 +149,7 @@ Dataset open options
    "1h";'
 -  **CLOSING_STATEMENTS**\ =string (GDAL >= 2.1). SQL statement(s) to
    send on the PostgreSQL client connection after any other ones. In
-   case of several statement, they must be separated with the
+   case of several statements, they must be separated with the
    semi-column (;) sign. With the above example value for
    PRELUDE_STATEMENTS, the appropriate CLOSING_STATEMENTS would be
    "COMMIT".
@@ -281,7 +286,7 @@ Examples
 
      ogr2ogr \
        -f GPKG output.gpkg \
-       PG:dbname="my_database" "my_table"
+       PG:"dbname='my_database'" "my_table"
 
 - Export many Postgres tables to GeoPackage:
 
@@ -289,7 +294,7 @@ Examples
 
      ogr2ogr \
        -f GPKG output.gpkg \
-       PG:'dbname=my_database tables=table_1,table_3'
+       PG:"dbname='my_database' tables='table_1,table_3'"
 
 - Export a whole Postgres database to GeoPackage:
 
@@ -305,7 +310,7 @@ Examples
    ::
 
      ogr2ogr \
-       -f "PostgreSQL" PG:dbname="my_database" \
+       -f "PostgreSQL" PG:"dbname='my_database'" \
        input.gpkg \
        -nln "name_of_new_table"
 
@@ -334,14 +339,14 @@ Examples
 
    ::
 
-      ogrinfo -ro PG:'host=myserver.velocet.ca user=postgres dbname=warmerda'
+      ogrinfo -ro PG:"host='myserver.velocet.ca' user='postgres' dbname='warmerda'"
 
 -  This example shows use of PRELUDE_STATEMENTS and CLOSING_STATEMENTS
    as destination open options of ogr2ogr.
 
    ::
 
-      ogrinfo "pg:dbname=mydb" poly.shp -doo "PRELUDE_STATEMENTS=BEGIN; SET LOCAL statement_timeout TO '1h';" -doo CLOSING_STATEMENTS=COMMIT
+      ogrinfo PG:"dbname='mydb'" poly -doo "PRELUDE_STATEMENTS=BEGIN; SET LOCAL statement_timeout TO '1h';" -doo CLOSING_STATEMENTS=COMMIT
 
 FAQs
 ----

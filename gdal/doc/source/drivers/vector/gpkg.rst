@@ -152,6 +152,16 @@ The following open options are available:
    YES, all tables including those not listed in gpkg_contents will be
    listed, in all cases. If NO, only tables registered as 'features',
    'attributes' or 'aspatial' will be listed.
+-  **PRELUDE_STATEMENTS**\ =string (GDAL >= 3.2). SQL statement(s) to
+   send on the SQLite3 connection before any other ones. In
+   case of several statements, they must be separated with the
+   semi-column (;) sign. This option may be useful to
+   `attach another database <https://www.sqlite.org/lang_attach.html>`__
+   to the current one and issue cross-database requests.
+
+   .. note::
+        The attached database must be a GeoPackage one too, so
+        that its geometry blobs are properly recognized (so typically not a Spatialite one)
 
 Note: open options are typically specified with "-oo name=value" syntax
 in most OGR utilities, or with the GDALOpenEx() API call.
@@ -176,6 +186,12 @@ raster) are available:
 -  **ADD_GPKG_OGR_CONTENTS**\ =YES/NO: (GDAL >= 2.2) Defines whether to
    add a gpkg_ogr_contents table to keep feature count, and associated
    triggers. Defaults to YES.
+-  **DATETIME_FORMAT**\ =WITH_TZ/UTC: (GDAL >= 3.2) Defines whether to keep the
+   DateTime values in the time zones as used in the data source (WITH_TZ),
+   or to convert the date and time expressions to UTC (Coordinated Universal Time).
+   Defaults to WITH_TZ. Pedantically, non-UTC time zones are not currently supported
+   by GeoPackage v1.3 (see https://github.com/opengeospatial/geopackage/issues/530).
+   When using UTC format, with a unspecified timezone, UTC will be assumed.
 
 Other options are available for raster. See the :ref:`GeoPackage raster <raster.gpkg>`
 documentation page
@@ -355,6 +371,14 @@ Examples
    ::
 
       % ogr2ogr -f GPKG filename.gpkg PG:'dbname=mydatabase host=localhost'
+
+- Perform a join between 2 GeoPackage databases:
+
+    ::
+
+      % ogrinfo my_spatial.gpkg \
+        -sql "SELECT poly.id, other.foo FROM poly JOIN other_schema.other USING (id)" \
+        -oo PRELUDE_STATEMENTS="ATTACH DATABASE 'other.gpkg' AS other_schema"
 
 See Also
 --------

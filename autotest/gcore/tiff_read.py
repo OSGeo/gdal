@@ -803,6 +803,33 @@ def test_tiff_read_geomatrix():
     gdal.SetConfigOption('GTIFF_POINT_GEO_IGNORE', None)
 
 ###############################################################################
+# Test reading a GeoTIFF file with tiepoints in PixelIsPoint format.
+
+
+def test_tiff_read_tiepoints_pixelispoint():
+
+    ds = gdal.Open('data/byte_gcp_pixelispoint.tif')
+    assert ds.GetMetadataItem('AREA_OR_POINT') == 'Point'
+    assert ds.GetGCPCount() == 4
+    gcp = ds.GetGCPs()[0]
+    assert (gcp.GCPPixel == pytest.approx(0.5, abs=1e-5) and \
+       gcp.GCPLine == pytest.approx(0.5, abs=1e-5) and \
+       gcp.GCPX == pytest.approx(-180, abs=1e-5) and \
+       gcp.GCPY == pytest.approx(90, abs=1e-5) and \
+       gcp.GCPZ == pytest.approx(0, abs=1e-5))
+
+    with gdaltest.config_option('GTIFF_POINT_GEO_IGNORE', 'YES'):
+        ds = gdal.Open('data/byte_gcp_pixelispoint.tif')
+        assert ds.GetMetadataItem('AREA_OR_POINT') == 'Point'
+        assert ds.GetGCPCount() == 4
+        gcp = ds.GetGCPs()[0]
+        assert (gcp.GCPPixel == pytest.approx(0, abs=1e-5) and \
+        gcp.GCPLine == pytest.approx(0, abs=1e-5) and \
+        gcp.GCPX == pytest.approx(-180, abs=1e-5) and \
+        gcp.GCPY == pytest.approx(90, abs=1e-5) and \
+        gcp.GCPZ == pytest.approx(0, abs=1e-5))
+
+###############################################################################
 # Test that we don't crash when reading a TIFF with corrupted GeoTIFF tags
 
 

@@ -31,5 +31,6 @@ make "-j$(nproc)" USER_DEFS=-Werror
 make install "-j$(nproc)"
 ldconfig
 
-cd ../autotest/cpp
-make "-j$(nproc)" 
+(cd ../autotest/cpp && make "-j$(nproc)")
+
+(cd ./swig/csharp && make generate)

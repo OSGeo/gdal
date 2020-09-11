@@ -959,6 +959,13 @@ def test_gdalwarp_40():
     assert ds.GetRasterBand(1).Checksum() == cs_ov0
     ds = None
 
+    # Should select overview 0 through VRT
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.vrt -overwrite -ts 10 10 -te 440720 3750120 441920 3751320 -of VRT')
+
+    ds = gdal.Open('tmp/test_gdalwarp_40.vrt')
+    assert ds.GetRasterBand(1).Checksum() == cs_ov0
+    ds = None
+
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_40_src.tif -oo OVERVIEW_LEVEL=0 tmp/test_gdalwarp_40.tif -overwrite -ts 7 7')
     ds = gdal.Open('tmp/test_gdalwarp_40.tif')
     expected_cs = ds.GetRasterBand(1).Checksum()

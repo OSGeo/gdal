@@ -705,10 +705,10 @@ def test_vsis3_readdir():
                 request.send_header('Content-type', 'application/xml')
                 response = """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
-                        <Prefix>a_dir/</Prefix>
+                        <Prefix>a_dir with_space/</Prefix>
                         <NextMarker>bla</NextMarker>
                         <Contents>
-                            <Key>a_dir/resource3.bin</Key>
+                            <Key>a_dir with_space/resource3 with_space.bin</Key>
                             <LastModified>1970-01-01T00:00:01.000Z</LastModified>
                             <Size>123456</Size>
                         </Contents>
@@ -724,9 +724,9 @@ def test_vsis3_readdir():
             sys.stderr.write('Bad headers: %s\n' % str(request.headers))
             request.send_response(403)
 
-    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', custom_method=method)
-    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', custom_method=method)
-    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', custom_method=method)
+    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%20with_space%2F', custom_method=method)
+    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%20with_space%2F', custom_method=method)
+    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%20with_space%2F', custom_method=method)
 
     def method(request):
         # /vsis3/ should have remembered the change of region and endpoint
@@ -740,20 +740,20 @@ def test_vsis3_readdir():
         request.send_header('Content-type', 'application/xml')
         response = """<?xml version="1.0" encoding="UTF-8"?>
             <ListBucketResult>
-                <Prefix>a_dir/</Prefix>
+                <Prefix>a_dir with_space/</Prefix>
                 <Contents>
-                    <Key>a_dir/resource4.bin</Key>
+                    <Key>a_dir with_space/resource4.bin</Key>
                     <LastModified>2015-10-16T12:34:56.000Z</LastModified>
                     <Size>456789</Size>
                 </Contents>
                 <Contents>
-                    <Key>a_dir/i_am_a_glacier_file</Key>
+                    <Key>a_dir with_space/i_am_a_glacier_file</Key>
                     <LastModified>2015-10-16T12:34:56.000Z</LastModified>
                     <Size>456789</Size>
                      <StorageClass>GLACIER</StorageClass>
                 </Contents>
                 <CommonPrefixes>
-                    <Prefix>a_dir/subdir/</Prefix>
+                    <Prefix>a_dir with_space/subdir/</Prefix>
                 </CommonPrefixes>
             </ListBucketResult>
         """
@@ -761,10 +761,10 @@ def test_vsis3_readdir():
         request.end_headers()
         request.wfile.write(response.encode('ascii'))
 
-    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&marker=bla&prefix=a_dir%2F', custom_method=method)
+    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&marker=bla&prefix=a_dir%20with_space%2F', custom_method=method)
 
     with webserver.install_http_handler(handler):
-        f = open_for_read('/vsis3/s3_fake_bucket2/a_dir/resource3.bin')
+        f = open_for_read('/vsis3/s3_fake_bucket2/a_dir with_space/resource3 with_space.bin')
     if f is None:
 
         if gdaltest.is_travis_branch('trusty'):
@@ -774,36 +774,36 @@ def test_vsis3_readdir():
     gdal.VSIFCloseL(f)
 
     with webserver.install_http_handler(webserver.SequentialHandler()):
-        dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir')
-    assert dir_contents == ['resource3.bin', 'resource4.bin', 'subdir']
+        dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir with_space')
+    assert dir_contents == ['resource3 with_space.bin', 'resource4.bin', 'subdir']
 
-    assert gdal.VSIStatL('/vsis3/s3_fake_bucket2/a_dir/resource3.bin').size == 123456
-    assert gdal.VSIStatL('/vsis3/s3_fake_bucket2/a_dir/resource3.bin').mtime == 1
+    assert gdal.VSIStatL('/vsis3/s3_fake_bucket2/a_dir with_space/resource3 with_space.bin').size == 123456
+    assert gdal.VSIStatL('/vsis3/s3_fake_bucket2/a_dir with_space/resource3 with_space.bin').mtime == 1
 
     # Same as above: cached
-    dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir')
-    assert dir_contents == ['resource3.bin', 'resource4.bin', 'subdir']
+    dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir with_space')
+    assert dir_contents == ['resource3 with_space.bin', 'resource4.bin', 'subdir']
 
     # ReadDir on something known to be a file shouldn't cause network access
-    dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir/resource3.bin')
+    dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir with_space/resource3 with_space.bin')
     assert dir_contents is None
 
     # Test unrelated partial clear of the cache
     gdal.VSICurlPartialClearCache('/vsis3/s3_fake_bucket_unrelated')
 
-    assert gdal.VSIStatL('/vsis3/s3_fake_bucket2/a_dir/resource3.bin').size == 123456
+    assert gdal.VSIStatL('/vsis3/s3_fake_bucket2/a_dir with_space/resource3 with_space.bin').size == 123456
 
-    dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir')
-    assert dir_contents == ['resource3.bin', 'resource4.bin', 'subdir']
+    dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir with_space')
+    assert dir_contents == ['resource3 with_space.bin', 'resource4.bin', 'subdir']
 
     # Test partial clear of the cache
-    gdal.VSICurlPartialClearCache('/vsis3/s3_fake_bucket2/a_dir')
+    gdal.VSICurlPartialClearCache('/vsis3/s3_fake_bucket2/a_dir with_space')
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/s3_fake_bucket2/a_dir/resource3.bin', 400)
-    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&max-keys=100&prefix=a_dir%2Fresource3.bin%2F', 400)
+    handler.add('GET', '/s3_fake_bucket2/a_dir%20with_space/resource3%20with_space.bin', 400)
+    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&max-keys=100&prefix=a_dir%20with_space%2Fresource3%20with_space.bin%2F', 400)
     with webserver.install_http_handler(handler):
-        gdal.VSIStatL('/vsis3/s3_fake_bucket2/a_dir/resource3.bin')
+        gdal.VSIStatL('/vsis3/s3_fake_bucket2/a_dir with_space/resource3 with_space.bin')
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', 200, {'Content-type': 'application/xml'},

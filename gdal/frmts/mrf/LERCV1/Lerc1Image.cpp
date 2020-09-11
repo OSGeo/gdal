@@ -25,15 +25,9 @@ Contributors:  Thomas Maurer
 #include <cmath>
 #include <cfloat>
 #include <string>
-#include <cassert>
 #include <algorithm>
 
-using namespace std;
-
 NAMESPACE_LERC1_START
-
-static int numBytesUInt(unsigned int k) { return (k <= 0xff) ? 1 : (k <= 0xffff) ? 2 : 4; }
-
 #define MAX_RUN 32767
 #define MIN_RUN 5
 // End of Transmission
@@ -41,22 +35,21 @@ static int numBytesUInt(unsigned int k) { return (k <= 0xff) ? 1 : (k <= 0xffff)
 
 // Decode a RLE bitmask, size should be already set
 // Returns false if input seems wrong
-// Not safe if fed garbage !!!
 // Zero size mask is fine, only checks the end marker
 bool BitMaskV1::RLEdecompress(const Byte* src, size_t n) {
     Byte* dst = bits.data();
     int sz = size();
     short int count;
-    assert(src);
 
-    // Read a low endian short int
+// Read a low endian short int
 #define READ_COUNT if (true) {if (n < 2) return false; count = *src++; count += (*src++ << 8);}
     while (sz > 0) { // One sequence per loop
         READ_COUNT;
         n -= 2;
         if (count < 0) { // negative count for repeats
-            if (0 == n--)
+            if (0 == n)
                 return false;
+            --n; // only decrement after checking for 0 to avoid a (harmless) unsigned integer overflow warning with ossfuzz
             Byte b = *src++;
             sz += count;
             if (sz < 0)
@@ -80,8 +73,7 @@ bool BitMaskV1::RLEdecompress(const Byte* src, size_t n) {
 // Encode helper function
 // It returns how many times the byte at *s is repeated
 // a value between 1 and min(max_count, MAX_RUN)
-inline static int run_length(const Byte* s, int max_count)
-{
+inline static int run_length(const Byte* s, int max_count) {
     if (max_count > MAX_RUN)
         max_count = MAX_RUN;
     for (int i = 1; i < max_count; i++)
@@ -92,7 +84,6 @@ inline static int run_length(const Byte* s, int max_count)
 
 // RLE compressed size is bound by n + 4 + 2 * (n - 1) / 32767
 int BitMaskV1::RLEcompress(Byte* dst) const {
-    assert(dst);
     const Byte* src = bits.data();  // Next input byte
     Byte* start = dst;
     int sz = size(); // left to process
@@ -157,26 +148,26 @@ int BitMaskV1::RLEsize() const {
     return oddrun ? (osz + oddrun + 2) : osz;
 }
 
-// Lookup tables for number of bytes in float and int
-static const Byte bits67[4] = { 0x80, 0x40, 0xc0, 0 };
-static const Byte stib67[4] = { 4, 2, 1, 3 };
+// Lookup tables for number of bytes in float and int, forward and reverse
+static const Byte bits67[4] = { 0x80, 0x40, 0xc0, 0 }; // shifted left 6 bits
+static const Byte stib67[4] = { 4, 2, 1, 0 }; // 0 is invalid
+static int numBytesUInt(unsigned int k) { return (k <= 0xff) ? 1 : (k <= 0xffff) ? 2 : 4; }
 
 // see the old stream IO functions below on how to call.
 // if you change write(...) / read(...), don't forget to update computeNumBytesNeeded(...).
-static bool blockwrite(Byte** ppByte, const vector<unsigned int>& d)
-{
+static bool blockwrite(Byte** ppByte, const std::vector<unsigned int>& d) {
     if (!ppByte || d.empty())
         return false;
 
-    unsigned int maxElem = *max_element(d.begin(), d.end());
+    unsigned int maxElem = *std::max_element(d.begin(), d.end());
+    unsigned int numElements = (unsigned int)d.size();
+    int n = numBytesUInt(numElements);
     int numBits = 0; // 0 to 23
     while (maxElem >> numBits)
         numBits++;
-    unsigned int numElements = (unsigned int)d.size();
 
     // use the upper 2 bits to encode the type used for numElements: Byte, ushort, or uint
     // n is in {1, 2, 4}
-    int n = numBytesUInt(numElements);
     // 0xc0 is invalid, will trigger an error
     **ppByte = static_cast<Byte>(numBits | bits67[n-1]);
     (*ppByte)++;
@@ -186,7 +177,7 @@ static bool blockwrite(Byte** ppByte, const vector<unsigned int>& d)
         return true;
 
     int bits = 32; // Available
-    unsigned int acc = 0;   // Accumulator
+    unsigned int acc = 0; // Accumulator
     for (unsigned int val : d) {
         if (bits >= numBits) { // no accumulator overflow
             acc |= val << (bits - numBits);
@@ -213,20 +204,17 @@ static bool blockwrite(Byte** ppByte, const vector<unsigned int>& d)
     return true;
 }
 
-
-static bool blockread(Byte** ppByte, size_t& size, vector<unsigned int>& d)
-{
+static bool blockread(Byte** ppByte, size_t& size, std::vector<unsigned int>& d) {
     if (!ppByte || !size)
         return false;
 
     Byte numBits = **ppByte;
-    *ppByte += 1;
-    size -= 1;
-
     Byte n = stib67[numBits >> 6];
     numBits &= 63;  // bits 0-5;
     if (numBits >= 32 || n == 0 || size < static_cast<size_t>(n))
         return false;
+    *ppByte += 1;
+    size -= 1;
 
     unsigned int numElements = 0;
     memcpy(&numElements, *ppByte, n);
@@ -281,104 +269,37 @@ static bool blockread(Byte** ppByte, size_t& size, vector<unsigned int>& d)
     return numBytes == 0;
 }
 
-// Only small, exact integer values return 1 or 2
-static int numBytesFlt(float z) {
-    float s = static_cast<float>(static_cast<short>(z));
-    float c = static_cast<float>(static_cast<signed char>(z));
-    return (c == z) ? 1 : (s == z) ? 2 : 4;
-}
-
-static bool writeFlt(Byte** ppByte, float z, int numBytes) {
-    Byte* ptr = *ppByte;
-    switch (numBytes) {
-    case 1:
-        *ptr = static_cast<Byte>(z);
-        break;
-    case 2: {
-        short s = static_cast<short>(z);
-        memcpy(ptr, &s, 2);
-        break;
-    }
-    case 4:
-        memcpy(ptr, &z, 4);
-        break;
-    default:
-        return false;
-    }
-
-    *ppByte = ptr + numBytes;
-    return true;
-}
-
-static bool readFlt(Byte** ppByte, size_t& nRemainingBytes, float& z, int numBytes) {
-    if (nRemainingBytes < static_cast<size_t>(numBytes))
-        return false;
-
-    Byte* ptr = *ppByte;
-    switch (numBytes) {
-    case 1:
-        z = static_cast<float>(*reinterpret_cast<char*>(ptr));
-        break;
-    case 2: {
-        short s;
-        memcpy(&s, ptr, 2);
-        z = s;
-        break;
-    }
-    case 4:
-        memcpy(&z, ptr, 4);
-        break;
-    default:
-        return false;
-    }
-
-    *ppByte = ptr + numBytes;
-    nRemainingBytes -= numBytes;
-    return true;
-}
-
-static unsigned int numTailBytesNotNeeded(unsigned int numElem, int numBits) {
-    numBits = (numElem * numBits) & 31;
-    return (numBits == 0 || numBits > 24) ? 0 : (numBits > 16) ? 1 : (numBits > 8) ? 2 : 3;
-}
-
 static unsigned int computeNumBytesNeededByStuffer(unsigned int numElem, unsigned int maxElem) {
+    static const Byte ntbnn[32] = { 0,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0 };
     int numBits = 0;
     while (maxElem >> numBits)
         numBits++;
     unsigned int numUInts = (numElem * numBits + 31) / 32;
-    return 1 + numBytesUInt(numElem) + numUInts * sizeof(unsigned int) -
-        numTailBytesNotNeeded(numElem, numBits);
+    return 1 + numBytesUInt(numElem) + numUInts * sizeof(unsigned int) - ntbnn[(numElem * numBits) & 0x1f];
 }
 
 static const int CNT_Z = 8;
 static const int CNT_Z_VER = 11;
-static const string sCntZImage("CntZImage "); // Includes a space
+static const std::string sCntZImage("CntZImage "); // Includes a space
 
 // computes the size of a CntZImage of any width and height, but all void / invalid,
 // and then compressed
-unsigned int Lerc1Image::computeNumBytesNeededToWriteVoidImage()
-{
+unsigned int Lerc1Image::computeNumBytesNeededToWriteVoidImage() {
     unsigned int sz = (unsigned int)sCntZImage.size()
         + 4 * sizeof(int) + sizeof(double);
-
     // cnt part
     sz += 3 * sizeof(int) + sizeof(float);
-
     // z part, 1 is the empty Tile if all invalid
     sz += 3 * sizeof(int) + sizeof(float) + 1;
     return sz; // 67
 }
 
-
 unsigned int Lerc1Image::computeNumBytesNeededToWrite(double maxZError,
-    bool onlyZPart,
-    InfoFromComputeNumBytes* info) const
+    bool onlyZPart, InfoFromComputeNumBytes* info) const
 {
+    int numBytesOpt;
     unsigned int sz = (unsigned int)sCntZImage.size()
         + 4 * sizeof(int) + sizeof(double);
-
-    int numBytesOpt;
     if (!onlyZPart) {
         float cntMin, cntMax;
         computeCntStats(cntMin, cntMax);
@@ -414,27 +335,24 @@ unsigned int Lerc1Image::computeNumBytesNeededToWrite(double maxZError,
 // if you change the file format, don't forget to update not only write and
 // read functions, and the file version number, but also the computeNumBytes...
 // and numBytes... functions
-bool Lerc1Image::write(Byte** ppByte,
-    double maxZError,
-    bool zPart) const
+bool Lerc1Image::write(Byte** ppByte, double maxZError, bool zPart) const
 {
+// Local macro, write an unaligned variable, adjust pointer
+#define WRVAR(VAR, PTR) memcpy((PTR), &(VAR), sizeof(VAR)); (PTR) += sizeof(VAR)
     if (getSize() == 0)
         return false;
 
-    Byte* ptr = *ppByte;
     // signature
-    memcpy(ptr, sCntZImage.c_str(), sCntZImage.size());
-    ptr += sCntZImage.length();
+    memcpy(*ppByte, sCntZImage.c_str(), sCntZImage.size());
+    *ppByte += sCntZImage.size();
 
     int height = getHeight();
     int width = getWidth();
-    memcpy(ptr, &CNT_Z_VER, sizeof(int));  ptr += sizeof(int);
-    memcpy(ptr, &CNT_Z, sizeof(int));  ptr += sizeof(int);
-    memcpy(ptr, &height, sizeof(int));  ptr += sizeof(int);
-    memcpy(ptr, &width, sizeof(int));  ptr += sizeof(int);
-    memcpy(ptr, &maxZError, sizeof(double));  ptr += sizeof(double);
-
-    *ppByte = ptr;
+    WRVAR(CNT_Z_VER, *ppByte);
+    WRVAR(CNT_Z, *ppByte);
+    WRVAR(height, *ppByte);
+    WRVAR(width, *ppByte);
+    WRVAR(maxZError, *ppByte);
 
     InfoFromComputeNumBytes info;
     if (0 == computeNumBytesNeededToWrite(maxZError, zPart, &info))
@@ -457,23 +375,19 @@ bool Lerc1Image::write(Byte** ppByte,
             maxValInImg = info.maxZInImg;
         }
 
-        ptr = *ppByte;
-        memcpy(ptr, &numTilesVert, sizeof(int));  ptr += sizeof(int);
-        memcpy(ptr, &numTilesHori, sizeof(int));  ptr += sizeof(int);
-        memcpy(ptr, &numBytesOpt, sizeof(int));  ptr += sizeof(int);
-        memcpy(ptr, &maxValInImg, sizeof(float));  ptr += sizeof(float);
-
-        *ppByte = ptr;
-        Byte* bArr = ptr;
+        WRVAR(numTilesVert, *ppByte);
+        WRVAR(numTilesHori, *ppByte);
+        WRVAR(numBytesOpt, *ppByte);
+        WRVAR(maxValInImg, *ppByte);
 
         if (!zPart && numTilesVert == 0 && numTilesHori == 0) { // no tiling for cnt part
             if (numBytesOpt > 0) // cnt part is binary mask, use fast RLE class
-                numBytesWritten = mask.RLEcompress(bArr);
+                numBytesWritten = mask.RLEcompress(*ppByte);
         }
         else { // encode tiles to buffer, alwasy z part
             float maxVal;
             if (!writeTiles(maxZError, numTilesVert, numTilesHori,
-                bArr, numBytesWritten, maxVal))
+                *ppByte, numBytesWritten, maxVal))
                 return false;
         }
 
@@ -484,19 +398,19 @@ bool Lerc1Image::write(Byte** ppByte,
         zPart = !zPart;
     } while (zPart);
     return true;
+#undef WRVAR
 }
 
-
-bool Lerc1Image::read(Byte** ppByte,
-    size_t& nRemainingBytes,
-    double maxZError,
-    bool onlyZPart)
+bool Lerc1Image::read(Byte** ppByte, size_t& nRemainingBytes,
+    double maxZError, bool ZPart)
 {
+// Local macro, read an unaligned variable, adjust pointer
+#define RDVAR(PTR, VAR) memcpy(&(VAR), (PTR), sizeof(VAR)); (PTR) += sizeof(VAR)
     size_t len = sCntZImage.length();
     if (nRemainingBytes < len)
         return false;
 
-    string typeStr(reinterpret_cast<char *>(*ppByte), len);
+    std::string typeStr(reinterpret_cast<char *>(*ppByte), len);
     if (typeStr != sCntZImage)
         return false;
     *ppByte += len;
@@ -506,41 +420,28 @@ bool Lerc1Image::read(Byte** ppByte,
     int width = 0, height = 0;
     double maxZErrorInFile = 0;
 
-    static const size_t HDRSZ = 4 * sizeof(int) + sizeof(double);
-
-    if (nRemainingBytes < HDRSZ)
+    if (nRemainingBytes < (4 * sizeof(int) + sizeof(double)))
         return false;
-    {
-        Byte* ptr = *ppByte;
-
-        memcpy(&version, ptr, sizeof(int));  ptr += sizeof(int);
-        memcpy(&type, ptr, sizeof(int));  ptr += sizeof(int);
-        memcpy(&height, ptr, sizeof(int));  ptr += sizeof(int);
-        memcpy(&width, ptr, sizeof(int));  ptr += sizeof(int);
-        memcpy(&maxZErrorInFile, ptr, sizeof(double));  ptr += sizeof(double);
-
-        *ppByte = ptr;
-    }
-    nRemainingBytes -= HDRSZ;
+    RDVAR(*ppByte, version);
+    RDVAR(*ppByte, type);
+    RDVAR(*ppByte, height);
+    RDVAR(*ppByte, width);
+    RDVAR(*ppByte, maxZErrorInFile);
+    nRemainingBytes -= 4 * sizeof(int) + sizeof(double);
 
     if (version != CNT_Z_VER || type != CNT_Z)
         return false;
-
-    if (width <= 0 || width > 20000 || height <= 0 || height > 20000)
+    if (width <= 0 || width > 20000 || height <= 0 || height > 20000 || maxZErrorInFile > maxZError)
         return false;
     // To avoid excessive memory allocation attempts, this is still 1.8GB!!
     if (width * height > 1800 * 1000 * 1000 / static_cast<int>(sizeof(float)))
         return false;
 
-    if (maxZErrorInFile > maxZError)
-        return false;
-
-    if (onlyZPart) {
+    if (ZPart) {
         if (width != getWidth() || height != getHeight())
             return false;
     }
-    else {
-        // Resize clears the buffer
+    else { // Resize clears the buffer
         if (!resize(width, height))
             return false;
     }
@@ -548,57 +449,52 @@ bool Lerc1Image::read(Byte** ppByte,
     do {
         int numTilesVert = 0, numTilesHori = 0, numBytes = 0;
         float maxValInImg = 0;
-
         if (nRemainingBytes < 3 * sizeof(int) + sizeof(float))
             return false;
-        {
-            Byte* ptr = *ppByte;
-            memcpy(&numTilesVert, ptr, sizeof(int));  ptr += sizeof(int);
-            memcpy(&numTilesHori, ptr, sizeof(int));  ptr += sizeof(int);
-            memcpy(&numBytes, ptr, sizeof(int));  ptr += sizeof(int);
-            memcpy(&maxValInImg, ptr, sizeof(float));  ptr += sizeof(float);
-            *ppByte = ptr;
-        }
+        RDVAR(*ppByte, numTilesVert);
+        RDVAR(*ppByte, numTilesHori);
+        RDVAR(*ppByte, numBytes);
+        RDVAR(*ppByte, maxValInImg);
         nRemainingBytes -= 3 * sizeof(int) + sizeof(float);
 
-        if (!onlyZPart) { // no tiling allowed for the cnt part
+        if (numBytes < 0 || nRemainingBytes < static_cast<size_t>(numBytes))
+            return false;
+        if (ZPart) {
+            if (!readTiles(maxZErrorInFile, numTilesVert, numTilesHori, maxValInImg, *ppByte, numBytes))
+                return false;
+        }
+        else { // no tiling allowed for the cnt part
             if (numTilesVert != 0 && numTilesHori != 0)
                 return false;
             if (numBytes == 0) {   // cnt part is const
+                if (maxValInImg != 0.0 && maxValInImg != 1.0)
+                    return false; // Only 0 and 1 are valid
+                bool v = (maxValInImg != 0.0);
                 for (int k = 0; k < getSize(); k++)
-                    mask.Set(k, maxValInImg != 0);
+                    mask.Set(k, v);
             } else {// cnt part is binary mask, RLE compressed
-                if (!mask.RLEdecompress(*ppByte, nRemainingBytes))
+                if (!mask.RLEdecompress(*ppByte, static_cast<size_t>(numBytes)))
                     return false;
             }
         }
-        else {
-            if (!readTiles(maxZErrorInFile, numTilesVert, numTilesHori, maxValInImg, *ppByte, nRemainingBytes))
-                return false;
-        }
-
-        if (nRemainingBytes < static_cast<size_t>(numBytes))
-            return false;
         *ppByte += numBytes;
         nRemainingBytes -= numBytes;
-        onlyZPart = !onlyZPart;
-    } while (onlyZPart);
+        ZPart = !ZPart;
+    } while (ZPart); // Stop after writing Z
     return true;
+#undef RDVAR
 }
 
-
 bool Lerc1Image::findTiling(double maxZError,
-    int& numTilesVertA,
-    int& numTilesHoriA,
-    int& numBytesOptA,
-    float& maxValInImgA) const
+    int& numTilesVertA, int& numTilesHoriA,
+    int& numBytesOptA, float& maxValInImgA) const
 {
     // entire image as 1 block, this is usually the worst case
     numTilesVertA = numTilesHoriA = 1;
     if (!writeTiles(maxZError, 1, 1, nullptr, numBytesOptA, maxValInImgA))
         return false;
     // The actual figure may be different due to round-down
-    static const vector<int> tileWidthArr = { 8, 11, 15, 20, 32, 64 };
+    static const std::vector<int> tileWidthArr = { 8, 11, 15, 20, 32, 64 };
     for (auto tileWidth : tileWidthArr) {
         int numTilesVert = static_cast<int>(getHeight() / tileWidth);
         int numTilesHori = static_cast<int>(getWidth() / tileWidth);
@@ -610,7 +506,6 @@ bool Lerc1Image::findTiling(double maxZError,
         float maxVal;
         if (!writeTiles(maxZError, numTilesVert, numTilesHori, nullptr, numBytes, maxVal))
             return false;
-
         if (numBytes > numBytesOptA)
             break; // Stop when size start to increase
         if (numBytes < numBytesOptA) {
@@ -622,204 +517,180 @@ bool Lerc1Image::findTiling(double maxZError,
     return true;
 }
 
-// if bArr is nullptr, it doesn't actually do the writing, only computes output values
-bool Lerc1Image::writeTiles(double maxZError, int numTilesVert, int numTilesHori,
+// Pass bArr==nulptr to estimate the size but skip the write
+bool Lerc1Image::writeTiles(double maxZError, int numTilesV, int numTilesH,
     Byte* bArr, int& numBytes, float& maxValInImg) const
 {
+    if (numTilesV == 0 || numTilesH == 0)
+        return false;
     numBytes = 0;
     maxValInImg = -FLT_MAX;
-
-    if (numTilesVert == 0)
-        return false;
-    for (int iTile = 0; iTile <= numTilesVert; iTile++) {
-        int tileH = static_cast<int>(getHeight() / numTilesVert);
-        int i0 = iTile * tileH;
-        if (iTile == numTilesVert)
-            tileH = getHeight() % numTilesVert;
-
-        if (tileH == 0)
-            continue;
-
-        for (int jTile = 0; jTile <= numTilesHori; jTile++) {
-            int tileW = static_cast<int>(getWidth() / numTilesHori);
-            int j0 = jTile * tileW;
-            if (jTile == numTilesHori)
-                tileW = getWidth() % numTilesHori;
-
-            if (tileW == 0)
-                continue;
-
+    int tileHeight = static_cast<int>(getHeight() / numTilesV);
+    int tileWidth = static_cast<int>(getWidth() / numTilesH);
+    int v0 = 0;
+    while (v0 < getHeight()) {
+        int v1 = std::min(getHeight(), v0 + tileHeight);
+        int h0 = 0;
+        while (h0 < getWidth()) {
+            int h1 = std::min(getWidth(), h0 + tileWidth);
             float zMin = 0, zMax = 0;
             int numValidPixel = 0;
-
-            bool rv = computeZStats(i0, i0 + tileH, j0, j0 + tileW, zMin, zMax, numValidPixel);
-            if (!rv)
+            if (!computeZStats(v0, v1, h0, h1, zMin, zMax, numValidPixel))
                 return false;
 
-            maxValInImg = max(maxValInImg, zMax);
+            if (maxValInImg < zMax)
+                maxValInImg = zMax;
 
             int numBytesNeeded = numBytesZTile(numValidPixel, zMin, zMax, maxZError);
             numBytes += numBytesNeeded;
 
-            if (bArr) { // Skip the actual write
+            if (bArr) { // Skip the write if no pointer was provided
                 int numBytesWritten = 0;
-                rv = writeZTile(&bArr, numBytesWritten, i0, i0 + tileH, j0, j0 + tileW, numValidPixel, zMin, zMax, maxZError);
-                if (!rv)
+                if (!writeZTile(&bArr, numBytesWritten, v0, v1, h0, h1, numValidPixel, zMin, zMax, maxZError))
                     return false;
                 if (numBytesWritten != numBytesNeeded)
                     return false;
             }
+            h0 = h1;
         }
+        v0 = v1;
     }
     return true;
 }
 
-
-bool Lerc1Image::readTiles(double maxZErrorInFile,
-    int numTilesVert, int numTilesHori, float maxValInImg,
-    Byte* bArr, size_t nRemainingBytes)
+bool Lerc1Image::readTiles(double maxZErrorInFile,  int numTilesV, int numTilesH,
+    float maxValInImg, Byte* bArr, size_t nRemainingBytes)
 {
-    if (numTilesVert == 0)
+    if (numTilesV == 0 || numTilesH == 0)
         return false;
-    for (int iTile = 0; iTile <= numTilesVert; iTile++) {
-        int tileH = static_cast<int>(getHeight() / numTilesVert);
-        int i0 = iTile * tileH;
-        if (iTile == numTilesVert)
-            tileH = getHeight() % numTilesVert;
-
-        if (tileH == 0)
-            continue;
-
-        for (int jTile = 0; jTile <= numTilesHori; jTile++) {
-            int tileW = static_cast<int>(getWidth() / numTilesHori);
-            int j0 = jTile * tileW;
-            if (jTile == numTilesHori)
-                tileW = getWidth() % numTilesHori;
-
-            if (tileW == 0)
-                continue;
-
-            if (!readZTile(&bArr, nRemainingBytes, i0, i0 + tileH, j0, j0 + tileW, maxZErrorInFile, maxValInImg))
+    int tileHeight = static_cast<int>(getHeight() / numTilesV);
+    int tileWidth = static_cast<int>(getWidth() / numTilesH);
+    if (tileWidth <= 0 || tileHeight <= 0) // Prevent infinite loop
+        return false;
+    int r0 = 0;
+    while (r0 < getHeight()) {
+        int r1 = std::min(getHeight(), r0 + tileHeight);
+        int c0 = 0;
+        while (c0 < getWidth()) {
+            int c1 = std::min(getWidth(), c0 + tileWidth);
+            if (!readZTile(&bArr, nRemainingBytes, r0, r1, c0, c1, maxZErrorInFile, maxValInImg))
                 return false;
+            c0 = c1;
         }
+        r0 = r1;
     }
     return true;
 }
 
-
-void Lerc1Image::computeCntStats(float& cntMin, float& cntMax) const
-{
+void Lerc1Image::computeCntStats(float& cntMin, float& cntMax) const {
     cntMin = cntMax = static_cast<float>(mask.IsValid(0) ? 1.0f : 0.0f);
-    for (int k = 0; k < getSize() && cntMin == cntMax; k++) {
+    for (int k = 0; k < getSize() && cntMin == cntMax; k++)
         if (mask.IsValid(k))
             cntMax = 1.0f;
         else
             cntMin = 0.0f;
-    }
 }
 
-
-bool Lerc1Image::computeZStats(int i0, int i1, int j0, int j1,
+bool Lerc1Image::computeZStats(int r0, int r1, int c0, int c1,
     float& zMin, float& zMax, int& numValidPixel) const
 {
-    if (i0 < 0 || j0 < 0 || i1 > getHeight() || j1 > getWidth())
+    if (r0 < 0 || c0 < 0 || r1 > getHeight() || c1 > getWidth())
         return false;
-
-    float zMi = FLT_MAX;
-    float zMa = -FLT_MAX;
+    zMin = FLT_MAX;
+    zMax = -FLT_MAX;
     numValidPixel = 0;
-
-    for (int i = i0; i < i1; i++) {
-        for (int j = j0; j < j1; j++) {
-            if (IsValid(i, j)) {
-                float val = (*this)(i, j);
-                if (val < zMi)
-                    zMi = val;
-                if (val > zMa)
-                    zMa = val;
+    for (int row = r0; row < r1; row++)
+        for (int col = c0; col < c1; col++)
+            if (IsValid(row, col)) {
                 numValidPixel++;
+                float val = (*this)(row, col);
+                if (!std::isfinite(val))
+                    zMin = NAN; // Serves as a flag, this block will be stored
+                if (val < zMin)
+                    zMin = val;
+                if (val > zMax)
+                    zMax = val;
             }
-        }
-    }
-
-    zMin = zMi;
-    zMax = zMa;
     if (0 == numValidPixel)
         zMin = zMax = 0;
     return true;
 }
 
+// Only small, exact integer values return 1 or 2, otherwise 4
+static int numBytesFlt(float z) {
+    float s = static_cast<float>(static_cast<signed short>(z));
+    float c = static_cast<float>(static_cast<signed char>(z));
+    return (c == z) ? 1 : (s == z) ? 2 : 4;
+}
 
-int Lerc1Image::numBytesZTile(int numValidPixel, float zMin, float zMax, double maxZError)
-{
+// n is 1, 2 or 4
+static Byte* writeFlt(Byte* ptr, float z, int n) {
+    if (4 == n)
+        memcpy(ptr, &z, 4);
+    else if (1 == n)
+        *ptr = static_cast<Byte>(static_cast<signed char>(z));
+    else {
+        signed short s = static_cast<signed short>(z);
+        memcpy(ptr, &s, 2);
+    }
+    return ptr + n;
+}
+
+int Lerc1Image::numBytesZTile(int numValidPixel, float zMin, float zMax, double maxZError) {
     if (numValidPixel == 0 || (zMin == 0 && zMax == 0))
         return 1;
-    if (maxZError == 0 || ((double)zMax - zMin) / (2 * maxZError) > 0x10000000)
+    if (maxZError == 0 || !std::isfinite(zMin) || !std::isfinite(zMax)
+        || ((double)zMax - zMin) / (2 * maxZError) > 0x10000000)
         return(int)(1 + numValidPixel * sizeof(float));
     unsigned int maxElem = (unsigned int)(((double)zMax - zMin) / (2 * maxZError) + 0.5);
     return 1 + numBytesFlt(zMin) + (maxElem ? computeNumBytesNeededByStuffer(numValidPixel, maxElem) : 0);
 }
 
-
+//
+// Assumes that buffer at *ppByte is large enough for this particular block
+// Returns number of bytes used in numBytes
+//
 bool Lerc1Image::writeZTile(Byte** ppByte, int& numBytes,
-    int i0, int i1, int j0, int j1,
-    int numValidPixel,
+    int r0, int r1, int c0, int c1, int numValidPixel,
     float zMin, float zMax, double maxZError) const
 {
     Byte* ptr = *ppByte;
     int cntPixel = 0;
-
     if (numValidPixel == 0 || (zMin == 0 && zMax == 0)) { // special cases
-        *ptr++ = 2;    // set compression flag to 2 to mark tile as constant 0
+        *(*ppByte)++ = 2; // set compression flag to 2 to mark tile as constant 0
         numBytes = 1;
-        *ppByte = ptr;
         return true;
     }
-
-    if (maxZError == 0 ||                                       // user asks lossless OR
-        (double)(zMax - zMin) / (2 * maxZError) > (1 << 28)) {  // we'd need > 28 bit
+    if (maxZError == 0 || !std::isfinite(zMin) || !std::isfinite(zMax) ||
+        ((double)zMax - zMin) / (2 * maxZError) > 0x10000000) {  // we'd need > 28 bit
         // write z's as flt arr uncompressed
-        *ptr++ = 0;
-        float* dstPtr = (float*)ptr;
-
-        for (int i = i0; i < i1; i++) {
-            for (int j = j0; j < j1; j++) {
-                if (IsValid(i, j)) {
-                    *dstPtr++ = (*this)(i, j);
+        *ptr++ = 0; // flag
+        for (int row = r0; row < r1; row++)
+            for (int col = c0; col < c1; col++)
+                if (IsValid(row, col)) {
+                    memcpy(ptr, &((*this)(row, col)), sizeof(float));
+                    ptr += sizeof(float);
                     cntPixel++;
                 }
-            }
-        }
-
         if (cntPixel != numValidPixel)
             return false;
-
-        ptr += numValidPixel * sizeof(float);
     }
     else { // write z's as int arr bit stuffed
         Byte flag = 1;
-        unsigned int maxElem = (unsigned int)((double)(zMax - zMin) / (2 * maxZError) + 0.5);
+        unsigned int maxElem = (unsigned int)(((double)zMax - zMin) / (2 * maxZError) + 0.5);
         if (maxElem == 0)
             flag = 3;    // set compression flag to 3 to mark tile as constant zMin
-
         int n = numBytesFlt(zMin); // n in { 1, 2, 4 }
         *ptr++ = (flag | bits67[n-1]);
-
-        if (!writeFlt(&ptr, zMin, n))
-            return false;
-
+        ptr = writeFlt(ptr, zMin, n);
         if (maxElem > 0) {
-            vector<unsigned int> odataVec;
-            double scale = 1 / (2 * maxZError);
-
-            for (int i = i0; i < i1; i++)
-                for (int j = j0; j < j1; j++)
-                    if (IsValid(i, j))
-                        odataVec.push_back((unsigned int)(((*this)(i, j) - zMin) * scale + 0.5));
-
+            std::vector<unsigned int> odataVec;
+            for (int row = r0; row < r1; row++)
+                for (int col = c0; col < c1; col++)
+                    if (IsValid(row, col))
+                        odataVec.push_back((unsigned int)(((double)(*this)(row, col) - zMin) / ( 2 * maxZError) + 0.5));
             if (odataVec.size() != static_cast<size_t>(numValidPixel))
                 return false;
-
             if (!blockwrite(&ptr, odataVec))
                 return false;
         }
@@ -830,12 +701,25 @@ bool Lerc1Image::writeZTile(Byte** ppByte, int& numBytes,
     return true;
 }
 
+// Read a float encoded as unsigned char, signed short or float
+// n is the number of bytes
+static float readFlt(const Byte* ptr, int n) {
+    if (n == 4) {
+        float val;
+        memcpy(&val, ptr, 4);
+        return val;
+    }
+    if (n == 2) {
+        signed short s;
+        memcpy(&s, ptr, 2);
+        return static_cast<float>(s);
+    }
+    return static_cast<float>(static_cast<signed char>(*ptr));
+}
 
-bool Lerc1Image::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
-    int i0, int i1, int j0, int j1,
-    double maxZErrorInFile, float maxZInImg)
+bool Lerc1Image::readZTile(Byte** ppByte, size_t& nRemainingBytes,
+    int r0, int r1, int c0, int c1, double maxZErrorInFile, float maxZInImg)
 {
-    size_t nRemainingBytes = nRemainingBytesInOut;
     Byte* ptr = *ppByte;
 
     if (nRemainingBytes < 1)
@@ -845,66 +729,61 @@ bool Lerc1Image::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
     // Used if bit-stuffed
     Byte n = stib67[comprFlag >> 6];
     comprFlag &= 63;
+    if (n == 0 || comprFlag > 3)
+        return false;
 
-    if (comprFlag == 2) {
-        // entire zTile is constant 0 (if valid or invalid doesn't matter)
-        for (int i = i0; i < i1; i++)
-            for (int j = j0; j < j1; j++)
-                (*this)(i, j) = 0.0f;
+    if (comprFlag == 2) { // entire zTile is 0
+        for (int row = r0; row < r1; row++)
+            for (int col = c0; col < c1; col++)
+                (*this)(row, col) = 0.0f;
         *ppByte = ptr;
-        nRemainingBytesInOut = nRemainingBytes;
         return true;
     }
 
-    if (comprFlag > 3)
-        return false;
-
     if (comprFlag == 0) { // Stored
-        for (int i = i0; i < i1; i++) {
-            for (int j = j0; j < j1; j++) {
-                if (IsValid(i, j)) {
+        for (int row = r0; row < r1; row++)
+            for (int col = c0; col < c1; col++)
+                if (IsValid(row, col)) {
                     if (nRemainingBytes < sizeof(float))
                         return false;
-                    memcpy(&(*this)(i, j), ptr, sizeof(float));
+                    memcpy(&(*this)(row, col), ptr, sizeof(float));
                     ptr += sizeof(float);
                     nRemainingBytes -= sizeof(float);
                 }
-            }
-        }
+        *ppByte = ptr;
+        return true;
     }
-    else { // read z's as int arr bit stuffed
-        float bminval = 0;
-        if (!readFlt(&ptr, nRemainingBytes, bminval, n))
-            return false;
 
-        if (comprFlag == 3) { // all min val, regardless of mask
-            for (int i = i0; i < i1; i++)
-                for (int j = j0; j < j1; j++)
-                    (*this)(i, j) = bminval;
-        }
-        else {
-            idataVec.resize((i1-i0) * (j1-j0)); // max size
-            if (!blockread(&ptr, nRemainingBytes, idataVec))
-                return false;
+    if (nRemainingBytes < n)
+        return false;
+    float bminval = readFlt(ptr, n);
+    ptr += n;
+    nRemainingBytes -= n;
 
-            double invScale = 2 * maxZErrorInFile;
-            size_t nDataVecIdx = 0;
-
-            for (int i = i0; i < i1; i++) {
-                for (int j = j0; j < j1; j++) {
-                    if (IsValid(i, j)) {
-                        if (nDataVecIdx >= idataVec.size())
-                            return false;
-                        (*this)(i, j) = min(maxZInImg,
-                            static_cast<float>(bminval + idataVec[nDataVecIdx++] * invScale));
-                    }
-                }
-            }
-        }
+    if (comprFlag == 3) { // all min val, regardless of mask
+        for (int row = r0; row < r1; row++)
+            for (int col = c0; col < c1; col++)
+                (*this)(row, col) = bminval;
+        *ppByte = ptr;
+        return true;
     }
+
+    // read z's as int arr bit stuffed
+    idataVec.resize((r1 - r0) * (c1 - c0)); // max size
+    if (!blockread(&ptr, nRemainingBytes, idataVec))
+        return false;
+
+    size_t nDataVecIdx = 0;
+    for (int row = r0; row < r1; row++)
+        for (int col = c0; col < c1; col++)
+            if (IsValid(row, col)) {
+                if (nDataVecIdx >= idataVec.size())
+                    return false;
+                (*this)(row, col) = std::min(maxZInImg,
+                    static_cast<float>(bminval + maxZErrorInFile * 2 * idataVec[nDataVecIdx++]));
+            }
 
     *ppByte = ptr;
-    nRemainingBytesInOut = nRemainingBytes;
     return true;
 }
 

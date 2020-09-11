@@ -33,6 +33,45 @@
 
 /* CSHARP TYPEMAPS */
 
+%typemap(csdispose) SWIGTYPE %{
+  ~$csclassname() {
+    Dispose();
+  }
+%}
+
+%typemap(csdispose_derived) SWIGTYPE %{
+  ~$csclassname() {
+    Dispose();
+  }
+%}
+
+%typemap(csdisposing, methodname="Dispose", methodmodifiers="public", parameters="") SWIGTYPE {
+    lock(this) {
+      if (swigCPtr.Handle != global::System.IntPtr.Zero) {
+        if (swigCMemOwn) {
+          swigCMemOwn = false;
+          $imcall;
+        }
+        swigCPtr = new global::System.Runtime.InteropServices.HandleRef(null, global::System.IntPtr.Zero);
+      }
+      global::System.GC.SuppressFinalize(this);
+    }
+  }
+
+%typemap(csdisposing_derived, methodname="Dispose", methodmodifiers="public", parameters="") SWIGTYPE {
+    lock(this) {
+      if (swigCPtr.Handle != global::System.IntPtr.Zero) {
+        if (swigCMemOwn) {
+          swigCMemOwn = false;
+          $imcall;
+        }
+        swigCPtr = new global::System.Runtime.InteropServices.HandleRef(null, global::System.IntPtr.Zero);
+      }
+      global::System.GC.SuppressFinalize(this);
+      base.Dispose();
+    }
+  }
+
 %apply (int) {VSI_RETVAL};
 
 %fragment("OGRErrMessages","header") %{
@@ -401,15 +440,15 @@ OPTIONAL_POD(int, int);
     return bytes;
   }
 
-  internal static string Utf8BytesToString(IntPtr pNativeData)
+  internal unsafe static string Utf8BytesToString(IntPtr pNativeData)
   {
     if (pNativeData == IntPtr.Zero)
         return null;
 
-    int length = Marshal.PtrToStringAnsi(pNativeData).Length;
-    byte[] strbuf = new byte[length];
-    Marshal.Copy(pNativeData, strbuf, 0, length);
-    return System.Text.Encoding.UTF8.GetString(strbuf);
+    byte* pStringUtf8 = (byte*) pNativeData;
+    int len = 0;
+    while (pStringUtf8[len] != 0) len++;
+    return System.Text.Encoding.UTF8.GetString(pStringUtf8, len);
   }
 %}
 

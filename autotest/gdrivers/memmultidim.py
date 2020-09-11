@@ -824,6 +824,10 @@ def test_mem_md_array_slice():
     with pytest.raises(Exception):
         ar.GetView(None)
 
+    attr = ar.CreateAttribute('attr', [],
+                              gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+    assert attr.Write(1) == gdal.CE_None
+
     with gdaltest.error_handler():
         assert not ar.GetView("")
         assert not ar.GetView("x")
@@ -845,6 +849,8 @@ def test_mem_md_array_slice():
 
     sliced_ar = ar[1]
     assert sliced_ar
+    assert sliced_ar.GetAttribute('attr') is not None
+    assert len(sliced_ar.GetAttributes()) == 1
     assert sliced_ar.GetBlockSize() == ar.GetBlockSize()[1:]
     assert sliced_ar.GetDimensionCount() == ar.GetDimensionCount() - 1
     assert sliced_ar.GetDataType() == ar.GetDataType()
@@ -1244,6 +1250,10 @@ def test_mem_md_array_transpose():
     ar = rg.CreateMDArray("ar", [ dim_z, dim_y, dim_x ],
                           gdal.ExtendedDataType.Create(gdal.GDT_UInt16))
 
+    attr = ar.CreateAttribute('attr', [],
+                              gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+    assert attr.Write(1) == gdal.CE_None
+
     data = array.array('H', [i for i in range(24)])
     if sys.version_info >= (3, 0, 0):
         data = data.tobytes()
@@ -1274,6 +1284,8 @@ def test_mem_md_array_transpose():
     assert transposed.GetOffset() == ar.GetOffset()
     assert transposed.GetNoDataValueAsRaw() == ar.GetNoDataValueAsRaw()
     assert transposed.GetSpatialRef() is None
+    assert transposed.GetAttribute('attr') is not None
+    assert len(transposed.GetAttributes()) == 1
 
     assert ar.SetUnit("foo") == gdal.CE_None
     assert ar.SetScale(1) == gdal.CE_None
@@ -1572,9 +1584,9 @@ def test_mem_md_array_get_mask():
 
     myarray = rg.CreateMDArray("myarray_emptydim", [],
                                gdal.ExtendedDataType.Create(gdal.GDT_Int16))
-    # No-dim array unsupported
-    with gdaltest.error_handler():
-        assert not myarray.GetMask()
+    mask = myarray.GetMask()
+    assert mask is not None
+    assert struct.unpack('B', mask.Read())[0] == 1
 
     dim0 = rg.CreateDimension("dim0", None, None, 2)
     dim1 = rg.CreateDimension("dim1", None, None, 3)
@@ -1718,6 +1730,59 @@ def test_mem_md_array_resolvemdarray():
     assert rg.ResolveMDArray("var_c", "/b").GetFullName() == "/b/var_c"
     assert a.ResolveMDArray("var_c", "").GetFullName() == "/a/var_c"
     assert b.ResolveMDArray("var_c", "").GetFullName() == "/b/var_c"
+
+
+def test_mem_md_array_statistics():
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.CreateMultiDimensional('myds')
+    rg = ds.GetRootGroup()
+    dim0 = rg.CreateDimension("dim0", "unspecified type", "unspecified direction", 2)
+    dim1 = rg.CreateDimension("dim1", "unspecified type", "unspecified direction", 3)
+    float64dt = gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    ar = rg.CreateMDArray("myarray", [dim0, dim1], float64dt)
+    ar.SetNoDataValueDouble(6)
+    data = struct.pack('d' * 6, 1, 2, 3, 4, 5, 6)
+    ar.Write(data)
+
+    stats = ar.ComputeStatistics(None, False)
+    assert stats.min == 1.0
+    assert stats.max == 5.0
+    assert stats.mean == 3.0
+    assert stats.std_dev == pytest.approx(1.4142135623730951)
+    assert stats.valid_count == 5
+
+    stats = ar.GetStatistics(None, False, False)
+    assert stats is None
+
+    stats = ar.GetStatistics(None, False, True)
+    assert stats is not None
+    assert stats.min == 1.0
+    assert stats.max == 5.0
+    assert stats.mean == 3.0
+    assert stats.std_dev == pytest.approx(1.4142135623730951)
+    assert stats.valid_count == 5
+
+
+def test_mem_md_array_statistics_float32():
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.CreateMultiDimensional('myds')
+    rg = ds.GetRootGroup()
+    dim0 = rg.CreateDimension("dim0", "unspecified type", "unspecified direction", 2)
+    dim1 = rg.CreateDimension("dim1", "unspecified type", "unspecified direction", 3)
+    float32dt = gdal.ExtendedDataType.Create(gdal.GDT_Float32)
+    ar = rg.CreateMDArray("myarray", [dim0, dim1], float32dt)
+    ar.SetNoDataValueDouble(6)
+    data = struct.pack('f' * 6, 1, 2, 3, 4, 5, 6)
+    ar.Write(data)
+
+    stats = ar.ComputeStatistics(None, False)
+    assert stats.min == 1.0
+    assert stats.max == 5.0
+    assert stats.mean == 3.0
+    assert stats.std_dev == pytest.approx(1.4142135623730951)
+    assert stats.valid_count == 5
 
 
 def XX_test_all_forever():

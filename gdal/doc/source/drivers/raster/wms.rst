@@ -74,7 +74,7 @@ other content before the ``<GDAL_WMS>`` element.
 <MaxSize>67108864</MaxSize>                                                The cache maximum size in bytes. If cache reached maximum size, expired cached files will be deleted. Default value is 64 Mb (67108864 bytes).
 <Unique>True</Unique>                                                      If set to true the path will appended with md5 hash of ServerURL. Default value is true.
 </Cache>
-<MaxConnections>2</MaxConnections>                                         Maximum number of simultaneous connections. (optional, defaults to 2)
+<MaxConnections>2</MaxConnections>                                         Maximum number of simultaneous connections. (optional, defaults to 2). Can also be set with the :decl_configoption:`GDAL_MAX_CONNECTIONS` configuration option (GDAL >= 3.2)
 <Timeout>300</Timeout>                                                     Connection timeout in seconds. (optional, defaults to 300)
 <OfflineMode>true</OfflineMode>                                            Do not download any new images, use only what is in cache. Useful only with cache enabled. (optional, defaults to false)
 <AdviseRead>true</AdviseRead>                                              Enable AdviseRead API call - download images into cache. (optional, defaults to false)

@@ -1226,13 +1226,6 @@ if test "x${with_libtiff}" = "xyes" -o "x${with_libtiff}" = "x" ; then
   AC_CHECK_LIB(tiff,TIFFScanlineSize64,TIFF_SETTING=external HAVE_BIGTIFF=yes,TIFF_SETTING=internal HAVE_BIGTIFF=yes,)
 
   if test "$TIFF_SETTING" = "external" ; then
-    dnl Cygwin takes a somewhat restrictive view of what should be exported
-    dnl from the dll, so don't use the external library if missing semi-private
-    dnl functions.
-    AC_CHECK_LIB(tiff,_TIFFsetDoubleArray,TIFF_SETTING=external,TIFF_SETTING=internal,)
-  fi
-
-  if test "$TIFF_SETTING" = "external" ; then
     LIBS="-ltiff $LIBS"
     AC_MSG_RESULT([using pre-installed libtiff.])
   else
@@ -2309,7 +2302,7 @@ elif test "$with_jpeg" = "yes" -o "$with_jpeg" = "" ; then
     echo '#include <stdio.h>' >> conftest.c
     echo '#include "jpeglib.h"' >> conftest.c
     echo 'int main() { jpeg_component_info *comptr=0; int i; i = comptr->width_in_blocks; }' >> conftest.c
-    if test -z "`${CC} -o conftest conftest.c 2>&1`" ; then
+    if test -z "`${CC} ${CPPFLAGS} ${CFLAGS} -c conftest.c 2>&1`" ; then
       AC_MSG_RESULT([yes])
     else
       AC_MSG_RESULT([no])
@@ -4417,7 +4410,7 @@ else
     LIBS_CPPIF="-L${with_idb}/lib/c++ -lifc++"
 
     IDB_INC="-I${with_idb}/incl/ -I${with_idb}/incl/dmi -I${with_idb}/incl/c++"
-    IDB_LIB="${LIBS_DIRS} ${LIBS_ESQL} ${LIBS_LIBMI} ${LIBS_CPPIF}"
+    IDB_LIB="${LIBS_CPPIF} ${LIBS_LIBMI} ${LIBS_DIRS} ${LIBS_ESQL}"
 
     ax_save_LIBS="${LIBS}"
     LIBS="${IDB_LIB} -ldl -lcrypt"
@@ -4437,80 +4430,6 @@ fi
 AC_SUBST(HAVE_IDB,${HAVE_IDB})
 AC_SUBST(IDB_INC,${IDB_INC})
 AC_SUBST(IDB_LIB,${IDB_LIB})
-
-dnl ---------------------------------------------------------------------
-dnl Find ESRI SDE ONLY IF REQUESTED.
-dnl ---------------------------------------------------------------------
-
-SDE_ENABLED=no
-
-AC_CHECKING(whether we should include ESRI SDE support)
-AC_ARG_WITH(sde,
-[  --with-sde[=DIR]        Include ESRI SDE support (DIR is SDE's install dir).],,)
-
-AC_ARG_WITH(sde-version,
-[  --with-sde-version[=VERSION NUMBER]  Set ESRI SDE version number (Default is 80).],SDE_VERSION=$with_sde_version,SDE_VERSION=80)
-
-if test -z "$SDE_VERSION" -o `expr "$SDE_VERSION" \>\= 92` = 1; then
-SDE_VERSION=""
-fi
-if test "$with_sde" = "yes" ; then
-
-  AC_CHECK_LIB(sde$SDE_VERSION,SE_connection_create,SDE_ENABLED=yes,,,)
-
-  if test -n "$SDE_ENABLED" ; then
-      SDE_LIB="-lsde$SDE_VERSION -lpe$SDE_VERSION -lsg$SDE_VERSION"
-      AC_CHECK_LIB(pthread, main, SDE_LIB="$SDE_LIB -lpthread",,)
-      AC_CHECK_LIB(socket, main, SDE_LIB="$SDE_LIB -lsocket",,)
-      AC_CHECK_LIB(dl, main, SDE_LIB="$SDE_LIB -ldl",,)
-      AC_MSG_RESULT([        using ESRI SDE from system libs.])
-  else
-      AC_MSG_WARN([        ESRI SDE not found in system libs... use --with-sde=DIR.])
-  fi
-
-elif test -n "$with_sde" -a "$with_sde" != "no" ; then
-
-  SDE_DIR=$with_sde
-
-  test -f $SDE_DIR/arcsde/coverages/include/sdetype.h && SDE_INCDIR="$SDE_DIR/arcsde/coverages/include"
-  test -f $SDE_DIR/include/sdetype.h && SDE_INCDIR="$SDE_DIR/include"
-  test -f $SDE_DIR/sdetype.h && SDE_INCDIR="$SDE_DIR"
-
-  test -f $SDE_DIR/lib/libsde$SDE_VERSION.a && SDE_LIBDIR="$SDE_DIR/lib"
-  test -f $SDE_DIR/lib64/libsde$SDE_VERSION.a && SDE_LIBDIR="$SDE_DIR/lib64"
-  test -f $SDE_DIR/libsde$SDE_VERSION.a && SDE_LIBDIR="$SDE_DIR"
-
-  test -f $SDE_DIR/lib/libsde$SDE_VERSION.so -o -f $SDE_DIR/lib/libsde$SDE_VERSION.sl && SDE_LIBDIR="$SDE_DIR/lib"
-  test -f $SDE_DIR/lib64/libsde$SDE_VERSION.so -o -f $SDE_DIR/lib64/libsde$SDE_VERSION.sl && SDE_LIBDIR="$SDE_DIR/lib64"
-  test -f $SDE_DIR/libsde$SDE_VERSION.so -o -f $SDE_DIR/libsde$SDE_VERSION.sl && SDE_LIBDIR="$SDE_DIR"
-
-  if test -n "$SDE_INCDIR" -a -n "$SDE_LIBDIR" ; then
-      SDE_INC=-I$SDE_INCDIR
-      SDE_LIB="-L$SDE_LIBDIR -lsde$SDE_VERSION -lpe$SDE_VERSION -lsg$SDE_VERSION"
-      AC_CHECK_LIB(pthread, main, SDE_LIB="$SDE_LIB -lpthread",,)
-      AC_CHECK_LIB(socket, main, SDE_LIB="$SDE_LIB -lsocket",,)
-      AC_CHECK_LIB(dl, main, SDE_LIB="$SDE_LIB -ldl",,)
-  else
-      AC_MSG_ERROR("Could not find sdetype.h or libsde$SDE_VERSION.a/libsde$SDE_VERSION.so in $SDE_DIR.")
-  fi
-
-  if test "`arch`" = "x86_64" ; then
-    AC_MSG_RESULT([        Adding -DSDE64 for 64bit platform.])
-    SDE_INC="$SDE_INC -DSDE64"
-  fi
-
-  SDE_ENABLED=yes
-  OPT_GDAL_FORMATS="sde $OPT_GDAL_FORMATS"
-  AC_MSG_RESULT([        using ESRI SDE from $SDE_DIR.])
-
-else
-
-  AC_MSG_RESULT([        ESRI SDE support not requested.])
-fi
-
-AC_SUBST(SDE_ENABLED,$SDE_ENABLED)
-AC_SUBST(SDE_INC,    $SDE_INC)
-AC_SUBST(SDE_LIB,    $SDE_LIB)
 
 dnl ---------------------------------------------------------------------------
 dnl Check if epsilon library is available.
@@ -6113,7 +6032,6 @@ LOC_MSG([  MDB support:               ${MDB_ENABLED}])
 LOC_MSG([  PCIDSK support:            ${PCIDSK_SETTING}])
 LOC_MSG([  OCI support:               ${HAVE_OCI}])
 LOC_MSG([  GEORASTER support:         ${HAVE_GEORASTER}])
-LOC_MSG([  SDE support:               ${SDE_ENABLED}])
 LOC_MSG([  Rasdaman support:          ${RASDAMAN_ENABLED}])
 LOC_MSG([  RDB support:               ${RDB_SETTING}])
 LOC_MSG([  DODS support:              ${HAVE_DODS}])

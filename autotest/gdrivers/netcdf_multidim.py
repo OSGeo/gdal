@@ -34,6 +34,7 @@ from gdrivers.netcdf import netcdf_setup  # noqa
 netcdf_setup; # to please pyflakes
 
 import gdaltest
+import os
 import pytest
 import struct
 import sys
@@ -770,7 +771,8 @@ def test_netcdf_multidim_create_nc4(netcdf_setup):  # noqa
 
         var = rg.CreateMDArray('my_var_x', [dim_x],
                                gdal.ExtendedDataType.Create(gdal.GDT_Float64),
-                               ['BLOCKSIZE=1', 'COMPRESS=DEFLATE', 'ZLEVEL=6'])
+                               ['BLOCKSIZE=1', 'COMPRESS=DEFLATE', 'ZLEVEL=6',
+                                'CHECKSUM=YES'])
         assert var.Write(struct.pack('f' * 2, 1.25, 2.25),
                 buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_Float32)) == gdal.CE_None
         assert struct.unpack('d' * 2, var.Read()) == (1.25, 2.25)
@@ -778,6 +780,14 @@ def test_netcdf_multidim_create_nc4(netcdf_setup):  # noqa
         assert var
         assert var.GetBlockSize() == [1]
         assert var.GetStructuralInfo() == { 'COMPRESS': 'DEFLATE' }
+
+        # Try with random filter id. Just to test that FILTER is taken
+        # into account
+        with gdaltest.error_handler():
+            var = rg.CreateMDArray('my_var_x', [dim_x],
+                                gdal.ExtendedDataType.Create(gdal.GDT_Float64),
+                                ['FILTER=123456789,2'])
+        assert var is None
 
         var = rg.OpenMDArray('my_var_x')
         assert var
@@ -1323,3 +1333,92 @@ def test_netcdf_multidim_indexing_var_through_coordinates(netcdf_setup):  # noqa
     create()
     check()
     gdal.Unlink(tmpfilename)
+
+
+def test_netcdf_multidim_stats(netcdf_setup):  # noqa
+
+    tmpfilename = 'tmp/test_netcdf_multidim_stats.nc'
+    drv = gdal.GetDriverByName('netCDF')
+
+    def create():
+        ds = drv.CreateMultiDimensional(tmpfilename)
+        rg = ds.GetRootGroup()
+        dim0 = rg.CreateDimension("dim0", "unspecified type", "unspecified direction", 2)
+        dim1 = rg.CreateDimension("dim1", "unspecified type", "unspecified direction", 3)
+        float64dt = gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+        ar = rg.CreateMDArray("myarray", [dim0, dim1], float64dt)
+        ar.SetNoDataValueDouble(6)
+        data = struct.pack('d' * 6, 1, 2, 3, 4, 5, 6)
+        ar.Write(data)
+
+    def compute_stats():
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray('myarray')
+
+        stats = ar.GetStatistics(ds, False, force=False)
+        assert stats is None
+
+        stats = ar.GetStatistics(ds, False, force=True)
+        assert stats is not None
+        assert stats.min == 1.0
+        assert stats.max == 5.0
+        assert stats.mean == 3.0
+        assert stats.std_dev == pytest.approx(1.4142135623730951)
+        assert stats.valid_count == 5
+
+        view = ar.GetView("[0,0]")
+        stats = view.GetStatistics(ds, False, force=False)
+        assert stats is None
+
+        stats = view.GetStatistics(ds, False, force=True)
+        assert stats is not None
+        assert stats.min == 1.0
+        assert stats.max == 1.0
+
+    # Check that we can read stats from the .aux.xml
+    def reopen():
+        assert os.path.exists(tmpfilename + '.aux.xml')
+
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray('myarray')
+
+        stats = ar.GetStatistics(ds, False, force=False)
+        assert stats is not None
+        assert stats.min == 1.0
+        assert stats.max == 5.0
+        assert stats.mean == 3.0
+        assert stats.std_dev == pytest.approx(1.4142135623730951)
+        assert stats.valid_count == 5
+
+        view = ar.GetView("[0,0]")
+        stats = view.GetStatistics(ds, False, force=False)
+        assert stats is not None
+        assert stats.min == 1.0
+        assert stats.max == 1.0
+
+    def clear_stats():
+        assert os.path.exists(tmpfilename + '.aux.xml')
+
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
+        ds.ClearStatistics()
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray('myarray')
+        stats = ar.GetStatistics(ds, False, force=False)
+        assert stats is None
+        ds = None
+
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray('myarray')
+        stats = ar.GetStatistics(ds, False, force=False)
+        assert stats is None
+
+    try:
+        create()
+        compute_stats()
+        reopen()
+        clear_stats()
+    finally:
+        drv.Delete(tmpfilename)

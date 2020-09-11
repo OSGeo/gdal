@@ -295,6 +295,11 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszUnused )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Save MDArray statistics                                         */
+/* -------------------------------------------------------------------- */
+    SerializeMDArrayStatistics(psDSTree);
+
+/* -------------------------------------------------------------------- */
 /*      We don't want to return anything if we had no metadata to       */
 /*      attach.                                                         */
 /* -------------------------------------------------------------------- */
@@ -305,6 +310,44 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszUnused )
     }
 
     return psDSTree;
+}
+
+/************************************************************************/
+/*                       SerializeMDArrayStatistics()                   */
+/************************************************************************/
+
+void GDALPamDataset::SerializeMDArrayStatistics(CPLXMLNode* psDSTree)
+
+{
+    if( !psPam->oMapMDArrayStatistics.empty() )
+    {
+        CPLXMLNode* psMDArrayStats = CPLCreateXMLNode(
+            psDSTree, CXT_Element, "MDArrayStatistics" );
+        for( const auto& kv: psPam->oMapMDArrayStatistics )
+        {
+            CPLXMLNode* psMDArray = CPLCreateXMLNode(
+                psMDArrayStats, CXT_Element, "MDArray" );
+            CPLAddXMLAttributeAndValue(psMDArray, "id", kv.first.c_str());
+            CPLCreateXMLElementAndValue(psMDArray,
+                                        "ApproxStats",
+                                        kv.second.bApproxStats ? "1" : "0");
+            CPLCreateXMLElementAndValue(psMDArray,
+                                        "Minimum",
+                                        CPLSPrintf("%.18g", kv.second.dfMin));
+            CPLCreateXMLElementAndValue(psMDArray,
+                                        "Maximum",
+                                        CPLSPrintf("%.18g", kv.second.dfMax));
+            CPLCreateXMLElementAndValue(psMDArray,
+                                        "Mean",
+                                        CPLSPrintf("%.18g", kv.second.dfMean));
+            CPLCreateXMLElementAndValue(psMDArray,
+                                        "StdDev",
+                                        CPLSPrintf("%.18g", kv.second.dfStdDev));
+            CPLCreateXMLElementAndValue(psMDArray,
+                                        "ValidSampleCount",
+                                        CPLSPrintf(CPL_FRMT_GUIB, kv.second.nValidCount));
+        }
+    }
 }
 
 /************************************************************************/
@@ -588,6 +631,41 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
             GetRasterBand(nBand) );
 
         poPamBand->XMLInit( psBandTree, pszUnused );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Load MDArray statistics                                         */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode* psMDArrayStats = CPLGetXMLNode(psTree, "MDArrayStatistics" );
+    if( psMDArrayStats )
+    {
+        for( CPLXMLNode *psIter = psMDArrayStats->psChild;
+            psIter != nullptr;
+            psIter = psIter->psNext )
+        {
+            if( psIter->eType != CXT_Element
+                || !EQUAL(psIter->pszValue,"MDArray") )
+                continue;
+
+            const char* pszId = CPLGetXMLValue(psIter, "id", nullptr);
+            if( pszId == nullptr )
+                continue;
+
+            GDALDatasetPamInfo::Statistics sStats;
+            sStats.bApproxStats = CPLTestBool(
+                CPLGetXMLValue(psIter, "ApproxStats", "false"));
+            sStats.dfMin = CPLAtofM(
+                CPLGetXMLValue(psIter, "Minimum", "0"));
+            sStats.dfMax = CPLAtofM(
+                CPLGetXMLValue(psIter, "Maximum", "0"));
+            sStats.dfMean = CPLAtofM(
+                CPLGetXMLValue(psIter, "Mean", "0"));
+            sStats.dfStdDev = CPLAtofM(
+                CPLGetXMLValue(psIter, "StdDev", "0"));
+            sStats.nValidCount = static_cast<GUInt64>(CPLAtoGIntBig(
+                CPLGetXMLValue(psIter, "ValidSampleCount", "0")));
+            psPam->oMapMDArrayStatistics[pszId] = sStats;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1681,5 +1759,108 @@ CPLErr GDALPamDataset::_SetGCPs( int nGCPCount,
         return GDALPamDataset::SetGCPs(nGCPCount, pasGCPList,
                        static_cast<const OGRSpatialReference*>(nullptr));
     }
+}
+//! @endcond
+
+/************************************************************************/
+/*                          ClearStatistics()                           */
+/************************************************************************/
+
+void GDALPamDataset::ClearStatistics()
+{
+    PamInitialize();
+    if( !psPam )
+        return;
+    for( int i = 1; i <= nBands; ++i )
+    {
+        bool bChanged = false;
+        GDALRasterBand* poBand = GetRasterBand(i);
+        char** papszOldMD = poBand->GetMetadata();
+        char** papszNewMD = nullptr;
+        for( char** papszIter = papszOldMD; papszIter && papszIter[0]; ++papszIter )
+        {
+            if( STARTS_WITH_CI(*papszIter, "STATISTICS_") )
+            {
+                MarkPamDirty();
+                bChanged = true;
+            }
+            else
+            {
+                papszNewMD = CSLAddString(papszNewMD, *papszIter);
+            }
+        }
+        if( bChanged )
+        {
+            poBand->SetMetadata(papszNewMD);
+        }
+        CSLDestroy(papszNewMD);
+    }
+
+    if( !psPam->oMapMDArrayStatistics.empty() )
+    {
+        MarkPamDirty();
+        psPam->oMapMDArrayStatistics.clear();
+    }
+}
+
+/************************************************************************/
+/*                       GetMDArrayStatistics()                         */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+bool GDALPamDataset::GetMDArrayStatistics( const char* pszMDArrayId,
+                                           bool *pbApprox,
+                                           double *pdfMin, double *pdfMax,
+                                           double *pdfMean, double *pdfStdDev,
+                                           GUInt64 *pnValidCount )
+{
+    PamInitialize();
+    if( !psPam )
+    {
+        return false;
+    }
+    auto oIter = psPam->oMapMDArrayStatistics.find(pszMDArrayId);
+    if( oIter == psPam->oMapMDArrayStatistics.end() )
+    {
+        return false;
+    }
+    if( pbApprox )
+        *pbApprox = oIter->second.bApproxStats;
+    if( pdfMin )
+        *pdfMin = oIter->second.dfMin;
+    if( pdfMax )
+        *pdfMax = oIter->second.dfMax;
+    if( pdfMean )
+        *pdfMean = oIter->second.dfMean;
+    if( pdfStdDev )
+        *pdfStdDev = oIter->second.dfStdDev;
+    if( pnValidCount )
+        *pnValidCount = oIter->second.nValidCount;
+    return true;
+}
+
+/************************************************************************/
+/*                      StoreMDArrayStatistics()                        */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void GDALPamDataset::StoreMDArrayStatistics( const char* pszMDArrayId,
+                                 bool bApproxStats,
+                                 double dfMin, double dfMax,
+                                 double dfMean, double dfStdDev,
+                                 GUInt64 nValidCount )
+{
+    PamInitialize();
+    if( !psPam )
+        return;
+    MarkPamDirty();
+    GDALDatasetPamInfo::Statistics sStats;
+    sStats.bApproxStats = bApproxStats;
+    sStats.dfMin = dfMin;
+    sStats.dfMax = dfMax;
+    sStats.dfMean = dfMean;
+    sStats.dfStdDev = dfStdDev;
+    sStats.nValidCount = nValidCount;
+    psPam->oMapMDArrayStatistics[pszMDArrayId] = sStats;
 }
 //! @endcond

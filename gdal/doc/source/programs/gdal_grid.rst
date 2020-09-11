@@ -24,7 +24,7 @@ Synopsis
               [-clipsrcsql sql_statement] [-clipsrclayer layer]
               [-clipsrcwhere expression]
               [-l layername]* [-where expression] [-sql select_statement]
-              [-txe xmin xmax] [-tye ymin ymax] [-outsize xsize ysize]
+              [-txe xmin xmax] [-tye ymin ymax] [-tr xres yres] [-outsize xsize ysize]
               [-a algorithm[:parameter1=value1]*] [-q]
               <src_datasource> <dst_filename>
 
@@ -54,9 +54,17 @@ computer.
 
     Set georeferenced Y extents of output file to be created.
 
+.. option:: -tr <xres> <yres>
+
+    Set output file resolution (in target georeferenced units).
+    Note that :option:`-tr` just works in combination with a valid input from :option:`-txe` and :option:`-tye`
+
+    .. versionadded:: 3.2
+
 .. option:: -outsize <xsize ysize>
 
     Set the size of the output file in pixels and lines.
+    Note that :option:`-outsize` cannot be used with :option:`-tr`
 
 .. option:: -a_srs <srs_def>
 

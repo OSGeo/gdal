@@ -59,6 +59,16 @@ std::ostream & operator<<(std::ostream & o, const Point& p)
     return o;
 }
 
+// Test if a point is to the left or right of an infinite line.
+// Returns true if it is to the left and right otherwise
+// 0 if p2 is on the line and less than if p2 is to the right of the line
+inline bool
+isLeft(const Point& p0, const Point& p1, const Point& p2 )
+{
+    return ( (p1.x - p0.x) * (p2.y - p0.y)
+            - (p2.x -  p0.x) * (p1.y - p0.y) ) > 0;
+}
+
 // LineString type
 typedef std::list<Point> LineString;
 

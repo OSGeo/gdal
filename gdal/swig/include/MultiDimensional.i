@@ -162,6 +162,42 @@ public:
 } /* extend */
 }; /* GDALGroupH */
 
+//************************************************************************
+//
+// Statistics
+//
+//************************************************************************
+
+#ifndef SWIGCSHARP
+%{
+typedef struct
+{
+  double min;
+  double max;
+  double mean;
+  double std_dev;
+  GIntBig valid_count;
+} Statistics;
+%}
+
+struct Statistics
+{
+%immutable;
+  double min;
+  double max;
+  double mean;
+  double std_dev;
+  GIntBig valid_count;
+%mutable;
+
+%extend {
+
+  ~Statistics() {
+    CPLFree(self);
+  }
+} /* extend */
+} /* Statistics */ ;
+#endif
 
 //************************************************************************
 //
@@ -839,6 +875,56 @@ public:
   {
     return (GDALDatasetShadow*)GDALMDArrayAsClassicDataset(self, iXDim, iYDim);
   }
+
+#ifndef SWIGCSHARP
+%newobject Statistics;
+%feature ("kwargs") GetStatistics;
+  Statistics* GetStatistics( GDALDatasetShadow* ds = NULL,
+                             bool approx_ok = FALSE,
+                             bool force = TRUE,
+                             GDALProgressFunc callback = NULL,
+                             void* callback_data=NULL)
+  {
+        GUInt64 nValidCount = 0;
+        Statistics* psStatisticsOut = (Statistics*)CPLMalloc(sizeof(Statistics));
+        CPLErr eErr = GDALMDArrayGetStatistics(self, ds, approx_ok, force,
+                                 &(psStatisticsOut->min),
+                                 &(psStatisticsOut->max),
+                                 &(psStatisticsOut->mean),
+                                 &(psStatisticsOut->std_dev),
+                                 &nValidCount,
+                                 callback, callback_data);
+        psStatisticsOut->valid_count = static_cast<GIntBig>(nValidCount);
+        if( eErr == CE_None )
+            return psStatisticsOut;
+        CPLFree(psStatisticsOut);
+        return NULL;
+  }
+
+%newobject Statistics;
+%feature ("kwargs") ComputeStatistics;
+  Statistics* ComputeStatistics( GDALDatasetShadow* ds = NULL,
+                                 bool approx_ok = FALSE,
+                                 GDALProgressFunc callback = NULL,
+                                 void* callback_data=NULL)
+  {
+        GUInt64 nValidCount = 0;
+        Statistics* psStatisticsOut = (Statistics*)CPLMalloc(sizeof(Statistics));
+        int nSuccess = GDALMDArrayComputeStatistics(self, ds, approx_ok,
+                                 &(psStatisticsOut->min),
+                                 &(psStatisticsOut->max),
+                                 &(psStatisticsOut->mean),
+                                 &(psStatisticsOut->std_dev),
+                                 &nValidCount,
+                                 callback, callback_data);
+        psStatisticsOut->valid_count = static_cast<GIntBig>(nValidCount);
+        if( nSuccess )
+            return psStatisticsOut;
+        CPLFree(psStatisticsOut);
+        return NULL;
+  }
+#endif
+
 } /* extend */
 }; /* GDALMDArrayH */
 

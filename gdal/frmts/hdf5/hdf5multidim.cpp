@@ -35,25 +35,6 @@ namespace GDAL
 {
 
 /************************************************************************/
-/*                         HDF5SharedResources                          */
-/************************************************************************/
-
-class HDF5SharedResources
-{
-    friend class ::HDF5Dataset;
-
-    bool m_bReadOnly = true;
-    hid_t            m_hHDF5 = 0;
-    CPLString        m_osFilename{};
-public:
-    HDF5SharedResources() = default;
-    ~HDF5SharedResources();
-
-    inline hid_t GetHDF5() const { return m_hHDF5; }
-    inline bool IsReadOnly() const { return m_bReadOnly; }
-};
-
-/************************************************************************/
 /*                               HDF5Group                              */
 /************************************************************************/
 
@@ -2089,25 +2070,45 @@ GDALDataset *HDF5Dataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
         return nullptr;
     }
 
-    H5G_stat_t oStatbuf;
-    if(  H5Gget_objinfo(hHDF5, "/", FALSE, &oStatbuf) < 0 )
-    {
-        return nullptr;
-    }
-    auto hGroup = H5Gopen(hHDF5, "/");
-    if( hGroup < 0 )
-    {
-        H5Fclose(hHDF5);
-        return nullptr;
-    }
-
     auto poSharedResources = std::make_shared<GDAL::HDF5SharedResources>();
     poSharedResources->m_hHDF5 = hHDF5;
 
+    auto poGroup(OpenGroup(poSharedResources));
+    if( poGroup == nullptr )
+    {
+        return nullptr;
+    }
+
     auto poDS(new HDF5Dataset());
-    poDS->m_poRootGroup.reset(new GDAL::HDF5Group(std::string(), "/",
-                                            poSharedResources, {},
-                                            hGroup,
-                                            oStatbuf.objno));
+    poDS->m_poRootGroup = poGroup;
+
+    poDS->SetDescription(poOpenInfo->pszFilename);
+
+    // Setup/check for pam .aux.xml.
+    poDS->TryLoadXML();
+
     return poDS;
+}
+
+/************************************************************************/
+/*                            OpenGroup()                               */
+/************************************************************************/
+
+std::shared_ptr<GDALGroup> HDF5Dataset::OpenGroup(std::shared_ptr<GDAL::HDF5SharedResources> poSharedResources)
+{
+    H5G_stat_t oStatbuf;
+    if(  H5Gget_objinfo(poSharedResources->m_hHDF5, "/", FALSE, &oStatbuf) < 0 )
+    {
+        return nullptr;
+    }
+    auto hGroup = H5Gopen(poSharedResources->m_hHDF5, "/");
+    if( hGroup < 0 )
+    {
+        return nullptr;
+    }
+
+    return std::shared_ptr<GDALGroup>(new GDAL::HDF5Group(std::string(), "/",
+                                                          poSharedResources, {},
+                                                          hGroup,
+                                                          oStatbuf.objno));
 }

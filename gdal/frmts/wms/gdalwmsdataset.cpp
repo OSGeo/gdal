@@ -156,6 +156,9 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
 
     if (ret == CE_None) {
         const char *max_conn = CPLGetXMLValue(config, "MaxConnections", "");
+        if (max_conn[0] == '\0') {
+            max_conn = CPLGetConfigOption("GDAL_MAX_CONNECTIONS", "");
+        }
         if (max_conn[0] != '\0') {
             m_http_max_conn = atoi(max_conn);
         }

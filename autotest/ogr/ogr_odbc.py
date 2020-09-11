@@ -28,6 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import sys
 import shutil
 from osgeo import ogr
@@ -44,12 +45,11 @@ import pytest
 
 def test_ogr_odbc_1():
 
-    ogrtest.odbc_drv = None
-    if sys.platform != 'win32':
-        pytest.skip()
-
     ogrtest.odbc_drv = ogr.GetDriverByName('ODBC')
     if ogrtest.odbc_drv is None:
+        pytest.skip()
+
+    if sys.platform != 'win32':
         pytest.skip()
 
     ds = ogrtest.odbc_drv.Open('data/mdb/empty.mdb')
@@ -135,6 +135,11 @@ def test_ogr_odbc_2():
     if ogrtest.odbc_drv is None:
         pytest.skip()
 
+    ds = ogrtest.odbc_drv.Open('data/mdb/empty.mdb')
+    if ds is None:
+        # likely odbc driver for mdb is not installed (or a broken old version of mdbtools is installed!)
+        pytest.skip()
+
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
@@ -142,6 +147,31 @@ def test_ogr_odbc_2():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/odbc.mdb')
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
+
+###############################################################################
+# Test that alternative MS Access file extensions can be read
+
+
+def test_extensions():
+    if ogrtest.odbc_drv is None:
+        pytest.skip()
+
+    ds = ogrtest.odbc_drv.Open('data/mdb/empty.mdb')
+    if ds is None:
+        # likely odbc driver for mdb is not installed (or a broken old version of mdbtools is installed!)
+        pytest.skip()
+
+    ds = ogrtest.odbc_drv.Open('data/mdb/empty.style')
+    assert ds is not None
+    lyr = ds.GetLayerByName('Line Symbols')
+    assert lyr is not None
+
+    if os.environ.get('GITHUB_WORKFLOW', '') != 'Windows builds':
+        # can't run this on Github "Windows builds" workflow, as that has the older
+        # 'Microsoft Access Driver (*.mdb)' ODBC driver only, which doesn't support accdb
+        # databases
+        ds = ogrtest.odbc_drv.Open('data/mdb/empty.accdb')
+        assert ds is not None
 
 ###############################################################################
 # Cleanup

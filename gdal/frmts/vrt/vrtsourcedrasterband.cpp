@@ -1706,8 +1706,10 @@ void VRTSourcedRasterBand::GetFileList( char*** ppapszFileList, int *pnSize,
 
 int VRTSourcedRasterBand::CloseDependentDatasets()
 {
+    int ret = VRTRasterBand::CloseDependentDatasets();
+
     if( nSources == 0 )
-        return FALSE;
+        return ret;
 
     for( int i = 0; i < nSources; i++ )
         delete papoSources[i];

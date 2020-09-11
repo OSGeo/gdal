@@ -71,6 +71,15 @@ Access Driver (\*.mdb)" ODBC driver is installed, non-spatial MS Access
 Databases (not Personal Geodabases or Geomedia databases) can be opened
 directly by their filenames.
 
+On Linux opening non-spatial MS Access Databases using the ODBC driver
+is possible via installation of unixODBC and mdbtools. See
+:ref:`MDB <vector.pgeo>` for instructions on how to enable this.
+
+The driver supports either .mdb or .accdb extensions for
+Microsft Access databases. Additionally, it also supports
+opening files with the ESRI .style database extension (which is just
+an alias for the .mdb file extension).
+
 Creation Issues
 ---------------
 

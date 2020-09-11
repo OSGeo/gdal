@@ -1775,6 +1775,18 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
                               GSpacing nBandSpace,
                               GDALRasterIOExtraArg* psExtraArg )
 {
+    // It may be valid to recurse one when dealing with a subsampled request
+    if( m_nRecursionCounter > 1 )
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "VRTDataset::IRasterIO() called recursively on the "
+            "same dataset. It looks like the VRT is referencing itself." );
+        return CE_Failure;
+    }
+
+    m_nRecursionCounter ++;
+
     bool bLocalCompatibleForDatasetIO = CPL_TO_BOOL(CheckCompatibleForDatasetIO());
     if( bLocalCompatibleForDatasetIO && eRWFlag == GF_Read &&
         (nBufXSize < nXSize || nBufYSize < nYSize) )
@@ -1790,7 +1802,10 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
                                                  psExtraArg,
                                                  &bTried );
         if( bTried )
+        {
+            m_nRecursionCounter --;
             return eErr;
+        }
 
         for(int iBand = 0; iBand < nBands; iBand++)
         {
@@ -1908,15 +1923,18 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
         psExtraArg->pfnProgress = pfnProgressGlobal;
         psExtraArg->pProgressData = pProgressDataGlobal;
 
+        m_nRecursionCounter --;
         return eErr;
     }
 
-    return GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+    CPLErr eErr = GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                    pData, nBufXSize, nBufYSize,
                                    eBufType,
                                    nBandCount, panBandMap,
                                    nPixelSpace, nLineSpace, nBandSpace,
                                    psExtraArg );
+    m_nRecursionCounter --;
+    return eErr;
 }
 
 /************************************************************************/

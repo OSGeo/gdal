@@ -1356,3 +1356,57 @@ def test_vrt_source_no_dstrect():
     ds = None
     gdal.Unlink(filename)
 
+
+def test_vrt_dataset_rasterio_recursion_detection():
+
+    gdal.FileFromMemBuffer('/vsimem/test.vrt', """<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+    </SimpleSource>
+    <Overview>
+        <SourceFilename relativeToVRT="0">/vsimem/test.vrt</SourceFilename>
+        <SourceBand>1</SourceBand>
+    </Overview>
+  </VRTRasterBand>
+</VRTDataset>""")
+
+    ds = gdal.Open('/vsimem/test.vrt')
+    with gdaltest.error_handler():
+        ds.ReadRaster(0,0,20,20,10,10)
+    gdal.Unlink('/vsimem/test.vrt')
+
+def test_vrt_dataset_rasterio_recursion_detection_does_not_trigger():
+
+    vrt_text = """<VRTDataset rasterXSize="50" rasterYSize="50">
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Red</ColorInterp>
+    <ComplexSource>
+      <SourceFilename>data/rgbsmall.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </ComplexSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2">
+    <ColorInterp>Green</ColorInterp>
+    <ComplexSource>
+      <SourceFilename>data/rgbsmall.tif</SourceFilename>
+      <SourceBand>2</SourceBand>
+    </ComplexSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="3">
+    <ColorInterp>Blue</ColorInterp>
+    <ComplexSource>
+      <SourceFilename>data/rgbsmall.tif</SourceFilename>
+      <SourceBand>3</SourceBand>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+    ds = gdal.Open(vrt_text)
+    got_data = ds.ReadRaster(0,0,50,50,25,25,resample_alg=gdal.GRIORA_Cubic)
+    ds = gdal.Open('data/rgbsmall.tif')
+    ref_data = ds.ReadRaster(0,0,50,50,25,25,resample_alg=gdal.GRIORA_Cubic)
+    assert got_data == ref_data

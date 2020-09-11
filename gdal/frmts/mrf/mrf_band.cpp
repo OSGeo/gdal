@@ -531,7 +531,9 @@ CPLErr MRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
     if (isAllVal(eDataType, ob, img.pageSizeBytes, val)) {
         // Mark it empty and checked, ignore the possible write error
         poDS->WriteTile((void *)1, infooffset, 0);
-        return CE_None;
+        if (1 == cstride)
+            return CE_None;
+        return ReadInterleavedBlock(xblk, yblk, buffer);
     }
 
     // Write the page in the local cache
@@ -865,7 +867,10 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 
     // Finish the Create call
     if (!poDS->bCrystalized)
-        poDS->Crystalize();
+        if (!poDS->Crystalize()) {
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error creating files");
+            return CE_Failure;
+        }
 
     if (1 == cstride) {     // Separate bands, we can write it as is
         // Empty page skip

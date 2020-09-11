@@ -40,6 +40,7 @@
 #include <cstdlib>
 
 #include <algorithm>
+#include <limits>
 
 CPL_CVSID("$Id$")
 
@@ -1304,6 +1305,14 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         }
     }
 
+    const char* pszPreludeStatements = CSLFetchNameValue(
+        poOpenInfo->papszOpenOptions, "PRELUDE_STATEMENTS");
+    if( pszPreludeStatements )
+    {
+        if( SQLCommand(hDB, pszPreludeStatements) != OGRERR_NONE )
+            return FALSE;
+    }
+
     /* Requirement 6: The SQLite PRAGMA integrity_check SQL command SHALL return “ok” */
     /* http://opengis.github.io/geopackage/#_file_integrity */
     /* Disable integrity check by default, since it is expensive on big files */
@@ -2283,6 +2292,11 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
                 m_usGPKGNull = static_cast<GUInt16>(dfGPKGNoDataValue);
                 if( m_eDT == GDT_Int16 && m_usGPKGNull > 32767 )
                     dfGPKGNoDataValue = -32768.0;
+                else if( m_eDT == GDT_Float32 )
+                {
+                    // Pick a value that is unlikely to be hit with offset & scale
+                    dfGPKGNoDataValue = -std::numeric_limits<float>::max();
+                }
                 poBand->SetNoDataValueInternal(dfGPKGNoDataValue);
             }
         }
@@ -2773,16 +2787,6 @@ OGRErr GDALGeoPackageDataset::UpdateGpkgContentsLastChange(
 /*                          IBuildOverviews()                           */
 /************************************************************************/
 
-static int GetFloorPowerOfTwo(int n)
-{
-    int p2 = 1;
-    while( (n = n >> 1) > 0 )
-    {
-        p2 <<= 1;
-    }
-    return p2;
-}
-
 CPLErr GDALGeoPackageDataset::IBuildOverviews(
                         const char * pszResampling,
                         int nOverviews, int * panOverviewList,
@@ -2872,28 +2876,9 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
         int nMaxOvFactor = 0;
         for( int j = 0; j < m_nOverviewCount; j++ )
         {
-            GDALDataset* poODS = m_papoOverviewDS[j];
-
-            int nOvFactor = GDALComputeOvFactor(poODS->GetRasterXSize(),
-                                                GetRasterXSize(),
-                                                poODS->GetRasterYSize(),
-                                                GetRasterYSize());
-            if( GetRasterXSize() / panOverviewList[i] == poODS->GetRasterXSize() &&
-                GetRasterYSize() / panOverviewList[i] == poODS->GetRasterYSize() )
-            {
-                nOvFactor = panOverviewList[i];
-            }
-            else if( nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
-                                                      GetRasterXSize(),
-                                                      GetRasterYSize() ) )
-            {
-                nOvFactor = panOverviewList[i];
-            }
-            else if( nOvFactor > 64 &&
-                     std::abs(nOvFactor - GetFloorPowerOfTwo(nOvFactor+2)) <= 2 )
-            {
-                nOvFactor = GetFloorPowerOfTwo(nOvFactor+2);
-            }
+            auto poODS = m_papoOverviewDS[j];
+            const int nOvFactor = static_cast<int>(
+                0.5 + poODS->m_adfGeoTransform[1] / m_adfGeoTransform[1]);
 
             nMaxOvFactor = nOvFactor;
 
@@ -2915,26 +2900,10 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                 CPLString osOvrList;
                 for(int j=0;j<m_nOverviewCount;j++)
                 {
-                    GDALDataset* poODS = m_papoOverviewDS[j];
+                    auto poODS = m_papoOverviewDS[j];
+                    const int nOvFactor = static_cast<int>(
+                        0.5 + poODS->m_adfGeoTransform[1] / m_adfGeoTransform[1]);
 
-                    /* Compute overview factor */
-                    int nOvFactor = (int)
-                        (0.5 + GetRasterXSize() / (double) poODS->GetRasterXSize());
-                    int nODSXSize = (int)(0.5 + GetRasterXSize() / (double) nOvFactor);
-                    if( nODSXSize != poODS->GetRasterXSize() )
-                    {
-                        int nOvFactorPowerOfTwo = GetFloorPowerOfTwo(nOvFactor);
-                        nODSXSize = (int)(0.5 + GetRasterXSize() / (double) nOvFactorPowerOfTwo);
-                        if( nODSXSize == poODS->GetRasterXSize() )
-                            nOvFactor = nOvFactorPowerOfTwo;
-                        else
-                        {
-                            nOvFactorPowerOfTwo <<= 1;
-                            nODSXSize = (int)(0.5 + GetRasterXSize() / (double) nOvFactorPowerOfTwo);
-                            if( nODSXSize == poODS->GetRasterXSize() )
-                                nOvFactor = nOvFactorPowerOfTwo;
-                        }
-                    }
                     if( j != 0 )
                         osOvrList += " ";
                     osOvrList += CPLSPrintf("%d", nOvFactor);
@@ -2949,15 +2918,8 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                 if( jCandidate < 0 )
                     jCandidate = m_nOverviewCount;
 
-                int nOvXSize = GetRasterXSize() / nOvFactor;
-                int nOvYSize = GetRasterYSize() / nOvFactor;
-                if( nOvXSize < 8 || nOvYSize < 8)
-                {
-                    CPLError(CE_Failure, CPLE_NotSupported,
-                             "Too big overview factor : %d. Would result in a %dx%d overview",
-                             nOvFactor, nOvXSize, nOvYSize);
-                    return CE_Failure;
-                }
+                int nOvXSize = std::max(1, GetRasterXSize() / nOvFactor);
+                int nOvYSize = std::max(1, GetRasterYSize() / nOvFactor);
                 if( !(jCandidate == m_nOverviewCount && nOvFactor == 2 * nMaxOvFactor) &&
                     !m_bZoomOther )
                 {
@@ -3070,29 +3032,9 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
             int j = 0;  // Used after for.
             for( ; j < m_nOverviewCount; j++ )
             {
-                GDALDataset* poODS = m_papoOverviewDS[j];
-
-                int nOvFactor =
-                    GDALComputeOvFactor(poODS->GetRasterXSize(),
-                                        GetRasterXSize(),
-                                        poODS->GetRasterYSize(),
-                                        GetRasterYSize());
-                if( GetRasterXSize() / panOverviewList[i] == poODS->GetRasterXSize() &&
-                    GetRasterYSize() / panOverviewList[i] == poODS->GetRasterYSize() )
-                {
-                    nOvFactor = panOverviewList[i];
-                }
-                else if( nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
-                                                        GetRasterXSize(),
-                                                        GetRasterYSize() ) )
-                {
-                    nOvFactor = panOverviewList[i];
-                }
-                else if( nOvFactor > 64 &&
-                        std::abs(nOvFactor - GetFloorPowerOfTwo(nOvFactor+2)) <= 2 )
-                {
-                    nOvFactor = GetFloorPowerOfTwo(nOvFactor+2);
-                }
+                auto poODS = m_papoOverviewDS[j];
+                const int nOvFactor = static_cast<int>(
+                    0.5 + poODS->m_adfGeoTransform[1] / m_adfGeoTransform[1]);
 
                 if( nOvFactor == panOverviewList[i] )
                 {
@@ -3927,6 +3869,8 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
     m_pszFilename = CPLStrdup(pszFilename);
     m_bNew = true;
     eAccess = GA_Update;
+    m_bDateTimeWithTZ = EQUAL(CSLFetchNameValueDef(
+        papszOptions, "DATETIME_FORMAT", "WITH_TZ"), "WITH_TZ");
 
     // for test/debug purposes only. true is the nominal value
     m_bPNGSupports2Bands = CPLTestBool(CPLGetConfigOption("GPKG_PNG_SUPPORTS_2BANDS", "TRUE"));

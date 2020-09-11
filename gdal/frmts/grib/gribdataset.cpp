@@ -1940,6 +1940,15 @@ GDALDataset *GRIBDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
 
     poDS->fp = nullptr;
     poDS->m_poRootGroup = poRootGroup;
+
+    poDS->SetDescription(poOpenInfo->pszFilename);
+
+    // Release hGRIBMutex otherwise we'll deadlock with GDALDataset own
+    // hGRIBMutex.
+    CPLReleaseMutex(hGRIBMutex);
+    poDS->TryLoadXML();
+    CPLAcquireMutex(hGRIBMutex, 1000.0);
+
     return poDS;
 }
 

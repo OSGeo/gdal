@@ -150,20 +150,20 @@ template <typename T> static void Lerc1ImgFill(Lerc1Image& zImg, T* src, const I
     zImg.resize(w, h);
     const float ndv = static_cast<float>(img.hasNoData ? img.NoDataValue : 0);
     if (stride == 1) {
-        for (int i = 0; i < h; i++)
-            for (int j = 0; j < w; j++) {
+        for (int row = 0; row < h; row++)
+            for (int col = 0; col < w; col++) {
                 float val = static_cast<float>(*src++);
-                zImg(i, j) = val;
-                zImg.mask.Set(i * zImg.getWidth() + j, !CPLIsEqual(ndv, val));
+                zImg(row, col) = val;
+                zImg.mask.Set(row * w + col, !CPLIsEqual(ndv, val));
             }
         return;
     }
-    for (int i = 0; i < h; i++)
-        for (int j = 0; j < w; j++) {
+    for (int row = 0; row < h; row++)
+        for (int col = 0; col < w; col++) {
             float val = static_cast<float>(*src);
             src += stride;
-            zImg(i, j) = val;
-            zImg.mask.Set(i * zImg.getWidth() + j, !CPLIsEqual(ndv, val));
+            zImg(row, col) = val;
+            zImg.mask.Set(row * w + col, !CPLIsEqual(ndv, val));
         }
 }
 
@@ -173,15 +173,17 @@ template <typename T> static bool Lerc1ImgUFill(Lerc1Image &zImg, T *dst, const 
     const T ndv = static_cast<T>(img.hasNoData ? img.NoDataValue : 0);
     if (img.pagesize.y != zImg.getHeight() || img.pagesize.x != zImg.getWidth())
         return false;
+    int w = img.pagesize.x;
+    int h = img.pagesize.y;
     if (1 == stride) {
-        for (int i = 0; i < zImg.getHeight(); i++)
-            for (int j = 0; j < zImg.getWidth(); j++)
-                *dst++ = zImg.IsValid(i, j) ? static_cast<T>(zImg(i, j)) : ndv;
+        for (int row = 0; row < h; row++)
+            for (int col = 0; col < w; col++)
+                *dst++ = zImg.IsValid(row, col) ? static_cast<T>(zImg(row, col)) : ndv;
         return true;
     }
-    for (int i = 0; i < zImg.getHeight(); i++)
-        for (int j = 0; j < zImg.getWidth(); j++) {
-            *dst = zImg.IsValid(i, j) ? static_cast<T>(zImg(i, j)) : ndv;
+    for (int row = 0; row < h; row++)
+        for (int col = 0; col < w; col++) {
+            *dst = zImg.IsValid(row, col) ? static_cast<T>(zImg(row, col)) : ndv;
             dst += stride;
         }
     return true;
@@ -256,7 +258,7 @@ static CPLErr DecompressLERC1(buf_mgr &dst, buf_mgr &src, const ILImage &img)
         }
 #undef UFILL
         if (!success) {
-            CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during LERC compression");
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during LERC decompression");
             return CE_Failure;
         }
     }
@@ -264,7 +266,7 @@ static CPLErr DecompressLERC1(buf_mgr &dst, buf_mgr &src, const ILImage &img)
     return CE_None;
 }
 
-// Populate a bitmask based on comparison with the image no data value
+// Populate a LERC2 bitmask based on comparison with the image no data value
 // Returns the number of NoData values found
 template <typename T> static int MaskFill(BitMask &bitMask, T *src, const ILImage &img)
 {
@@ -281,18 +283,18 @@ template <typename T> static int MaskFill(BitMask &bitMask, T *src, const ILImag
     if (!img.hasNoData) ndv = 0; // It really doesn't get called when img doesn't have NoDataValue
 
     if (1 == stride) {
-        for (int i = 0; i < h; i++)
-            for (int j = 0; j < w; j++)
+        for (int row = 0; row < h; row++)
+            for (int col = 0; col < w; col++)
                 if (ndv == *src++) {
-                    bitMask.SetInvalid(i, j);
+                    bitMask.SetInvalid(row, col);
                     count++;
                 }
     } else {
         // Test only the first band for the ndv value
-        for (int i = 0; i < h; i++)
-            for (int j = 0; j < w; j++, src += stride)
+        for (int row = 0; row < h; row++)
+            for (int col = 0; col < w; col++, src += stride)
                 if (ndv == *src) {
-                    bitMask.SetInvalid(i, j);
+                    bitMask.SetInvalid(row, col);
                     count++;
                 }
     }
@@ -378,15 +380,15 @@ template <typename T> static void UnMask(BitMask &bitMask, T *arr, const ILImage
     T ndv = T(img.NoDataValue);
     if (!img.hasNoData) ndv = 0; // It doesn't get called when img doesn't have NoDataValue
     if (1 == stride) {
-        for (int i = 0; i < h; i++)
-            for (int j = 0; j < w; j++, ptr++)
-                if (!bitMask.IsValid(i, j))
+        for (int row = 0; row < h; row++)
+            for (int col = 0; col < w; col++, ptr++)
+                if (!bitMask.IsValid(row, col))
                     *ptr = ndv;
     }
     else {
-        for (int i = 0; i < h; i++)
-            for (int j = 0; j < w; j++, ptr += stride)
-                if (!bitMask.IsValid(i, j))
+        for (int row = 0; row < h; row++)
+            for (int col = 0; col < w; col++, ptr += stride)
+                if (!bitMask.IsValid(row, col))
                     for (int c = 0 ; c < stride; c++)
                         ptr[c] = ndv;
     }
