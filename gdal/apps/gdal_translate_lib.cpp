@@ -664,7 +664,7 @@ static double AdjustNoDataValue( double dfInputNoDataValue,
  * @param pszDest the destination dataset path.
  * @param hSrcDataset the source dataset handle.
  * @param psOptionsIn the options struct returned by GDALTranslateOptionsNew() or NULL.
- * @param pbUsageError the pointer to int variable to determine any usage error has occurred or NULL.
+ * @param pbUsageError pointer to a integer output variable to store if any usage error has occurred or NULL.
  * @return the output dataset (new dataset that must be closed using GDALClose()) or NULL in case of error.
  *
  * @since GDAL 2.1

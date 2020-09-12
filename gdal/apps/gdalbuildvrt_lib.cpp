@@ -1552,7 +1552,7 @@ GDALBuildVRTOptions* GDALBuildVRTOptionsClone(const GDALBuildVRTOptions *psOptio
  * @param pahSrcDS the list of input datasets (or NULL, exclusive with papszSrcDSNames)
  * @param papszSrcDSNames the list of input dataset names (or NULL, exclusive with pahSrcDS)
  * @param psOptionsIn the options struct returned by GDALBuildVRTOptionsNew() or NULL.
- * @param pbUsageError the pointer to int variable to determine any usage error has occurred.
+ * @param pbUsageError pointer to a integer output variable to store if any usage error has occurred.
  * @return the output dataset (new dataset that must be closed using GDALClose()) or NULL in case of error.
  *
  * @since GDAL 2.1

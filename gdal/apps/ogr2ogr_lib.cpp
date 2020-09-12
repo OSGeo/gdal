@@ -1978,7 +1978,7 @@ static GDALDataset* GDALVectorTranslateCreateCopy(
  * @param nSrcCount the number of input datasets (only 1 supported currently)
  * @param pahSrcDS the list of input datasets.
  * @param psOptionsIn the options struct returned by GDALVectorTranslateOptionsNew() or NULL.
- * @param pbUsageError the pointer to int variable to determine any usage error has occurred
+ * @param pbUsageError pointer to a integer output variable to store if any usage error has occurred, or NULL.
  * @return the output dataset (new dataset that must be closed using GDALClose(), or hDstDS is not NULL) or NULL in case of error.
  *
  * @since GDAL 2.1
