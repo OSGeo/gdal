@@ -1907,12 +1907,32 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
         return eErr;
     }
 
-    return GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+    CPLErr eErr;
+    if( eRWFlag == GF_Read &&
+        psExtraArg->eResampleAlg != GRIORA_NearestNeighbour &&
+        nBufXSize < nXSize && nBufYSize < nYSize && nBandCount > 1 )
+    {
+        // Force going through VRTSourcedRasterBand::IRasterIO(), otherwise
+        // GDALDataset::IRasterIOResampled() would be used without source
+        // overviews being potentially used.
+        eErr = GDALDataset::BandBasedRasterIO(
+                                   eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                    pData, nBufXSize, nBufYSize,
                                    eBufType,
                                    nBandCount, panBandMap,
                                    nPixelSpace, nLineSpace, nBandSpace,
                                    psExtraArg );
+    }
+    else
+    {
+        eErr = GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                    pData, nBufXSize, nBufYSize,
+                                    eBufType,
+                                    nBandCount, panBandMap,
+                                    nPixelSpace, nLineSpace, nBandSpace,
+                                    psExtraArg );
+    }
+    return eErr;
 }
 
 /************************************************************************/
