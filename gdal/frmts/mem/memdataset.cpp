@@ -398,45 +398,11 @@ CPLErr MEMDataset::IRasterIO( GDALRWFlag eRWFlag,
                                    nPixelSpaceBuf, nLineSpaceBuf, nBandSpaceBuf,
                                    psExtraArg );
 
-    GDALProgressFunc pfnProgressGlobal = psExtraArg->pfnProgress;
-    void *pProgressDataGlobal = psExtraArg->pProgressData;
-
-    CPLErr eErr = CE_None;
-    for( int iBandIndex = 0;
-         iBandIndex < nBandCount && eErr == CE_None;
-         iBandIndex++ )
-    {
-        GDALRasterBand *poBand = GetRasterBand(panBandMap[iBandIndex]);
-
-        if (poBand == nullptr)
-        {
-            eErr = CE_Failure;
-            break;
-        }
-
-        GByte *pabyBandData
-            = reinterpret_cast<GByte *>(pData) + iBandIndex * nBandSpaceBuf;
-
-        psExtraArg->pfnProgress = GDALScaledProgress;
-        psExtraArg->pProgressData =
-            GDALCreateScaledProgress( 1.0 * iBandIndex / nBandCount,
-                                      1.0 * (iBandIndex + 1) / nBandCount,
-                                      pfnProgressGlobal,
-                                      pProgressDataGlobal );
-
-        eErr = poBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                 reinterpret_cast<void *>( pabyBandData ),
-                                 nBufXSize, nBufYSize,
-                                 eBufType, nPixelSpaceBuf, nLineSpaceBuf,
-                                 psExtraArg );
-
-        GDALDestroyScaledProgress( psExtraArg->pProgressData );
-    }
-
-    psExtraArg->pfnProgress = pfnProgressGlobal;
-    psExtraArg->pProgressData = pProgressDataGlobal;
-
-    return eErr;
+    return GDALDataset::BandBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                   pData, nBufXSize, nBufYSize,
+                                   eBufType, nBandCount, panBandMap,
+                                   nPixelSpaceBuf, nLineSpaceBuf, nBandSpaceBuf,
+                                   psExtraArg );
 }
 
 /************************************************************************/
