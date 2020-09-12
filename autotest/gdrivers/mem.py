@@ -609,6 +609,24 @@ def test_mem_colortable():
 
 
 ###############################################################################
+# Test dataset RasterIO with non nearest resampling
+
+def test_mem_dataset_rasterio_non_nearest_resampling_source_with_ovr():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 3)
+    ds.GetRasterBand(1).Fill(255)
+    ds.BuildOverviews('NONE', [2])
+    ds.GetRasterBand(1).GetOverview(0).Fill(10)
+
+    got_data = ds.ReadRaster(0,0,10,10,5,5)
+    got_data = struct.unpack('B' * 5 * 5 * 3, got_data)
+    assert got_data[0] == 10
+
+    got_data = ds.ReadRaster(0,0,10,10,5,5,resample_alg=gdal.GRIORA_Cubic)
+    got_data = struct.unpack('B' * 5 * 5 * 3, got_data)
+    assert got_data[0] == 10
+
+###############################################################################
 # cleanup
 
 def test_mem_cleanup():
