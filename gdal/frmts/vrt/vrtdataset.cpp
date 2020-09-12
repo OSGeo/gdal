@@ -2080,15 +2080,17 @@ void VRTDataset::BuildVirtualOverviews()
 
         const auto CreateOverviewBand =
             [&poOvrVDS, nOvrXSize, nOvrYSize, dfXRatio, dfYRatio]
-            (GDALRasterBand* poBand)
+            (VRTSourcedRasterBand* poVRTBand)
         {
-            VRTSourcedRasterBand* poVRTBand
-                = cpl::down_cast<VRTSourcedRasterBand *>(poBand);
             VRTSourcedRasterBand* poOvrVRTBand = new VRTSourcedRasterBand(
                 poOvrVDS,
-                poBand->GetBand(),
+                poVRTBand->GetBand(),
                 poVRTBand->GetRasterDataType(),
                 nOvrXSize, nOvrYSize);
+            poOvrVRTBand->CopyCommonInfoFrom(poVRTBand);
+            poOvrVRTBand->m_bNoDataValueSet = poVRTBand->m_bNoDataValueSet;
+            poOvrVRTBand->m_dfNoDataValue = poVRTBand->m_dfNoDataValue;
+            poOvrVRTBand->m_bHideNoDataValue = poVRTBand->m_bHideNoDataValue;
 
             VRTSimpleSource* poSrcSource = cpl::down_cast<VRTSimpleSource *>(
                 poVRTBand->papoSources[0] );
@@ -2110,7 +2112,7 @@ void VRTDataset::BuildVirtualOverviews()
             }
             if( poNewSource )
             {
-                auto poNewSourceBand = poBand->GetBand() == 0 ?
+                auto poNewSourceBand = poVRTBand->GetBand() == 0 ?
                     poNewSource->GetMaskBandMainBand() :
                     poNewSource->GetBand();
                 CPLAssert(poNewSourceBand);
@@ -2125,13 +2127,19 @@ void VRTDataset::BuildVirtualOverviews()
 
         for( int i = 0; i < nBands; i++ )
         {
-            poOvrVDS->SetBand( poOvrVDS->GetRasterCount() + 1,
-                               CreateOverviewBand(GetRasterBand(i+1)) );
+            VRTSourcedRasterBand* poSrcBand
+                = cpl::down_cast<VRTSourcedRasterBand *>(GetRasterBand(i+1));
+            auto poOvrVRTBand = CreateOverviewBand(poSrcBand);
+            poOvrVDS->SetBand( poOvrVDS->GetRasterCount() + 1, poOvrVRTBand );
+
         }
 
         if( m_poMaskBand )
         {
-            poOvrVDS->SetMaskBand( CreateOverviewBand(m_poMaskBand) );
+            VRTSourcedRasterBand* poSrcBand
+                = cpl::down_cast<VRTSourcedRasterBand *>(m_poMaskBand);
+            auto poOvrVRTBand = CreateOverviewBand(poSrcBand);
+            poOvrVDS->SetMaskBand(poOvrVRTBand);
         }
     }
 }

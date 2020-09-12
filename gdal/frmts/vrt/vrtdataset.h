@@ -451,6 +451,8 @@ public:
 class CPL_DLL VRTRasterBand CPL_NON_FINAL: public GDALRasterBand
 {
   protected:
+    friend class VRTDataset;
+
     int            m_bIsMaskBand;
 
     int            m_bNoDataValueSet;
