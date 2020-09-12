@@ -2032,7 +2032,6 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
                                GDALRasterIOExtraArg* psExtraArg )
 
 {
-
     const char *pszInterleave = nullptr;
 
     CPLAssert(nullptr != pData);
@@ -2061,6 +2060,23 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
          psExtraArg->eResampleAlg == GRIORA_Lanczos) &&
         !(nXSize == nBufXSize && nYSize == nBufYSize) && nBandCount > 1 )
     {
+        if( nBufXSize < nXSize && nBufYSize < nYSize )
+        {
+            int bTried = FALSE;
+            const CPLErr eErr =
+                TryOverviewRasterIO( eRWFlag,
+                                    nXOff, nYOff, nXSize, nYSize,
+                                    pData, nBufXSize, nBufYSize,
+                                    eBufType,
+                                    nBandCount, panBandMap,
+                                    nPixelSpace, nLineSpace,
+                                    nBandSpace,
+                                    psExtraArg,
+                                    &bTried );
+            if( bTried )
+                return eErr;
+        }
+
         GDALDataType eFirstBandDT = GDT_Unknown;
         int nFirstMaskFlags = 0;
         GDALRasterBand *poFirstMaskBand = nullptr;
