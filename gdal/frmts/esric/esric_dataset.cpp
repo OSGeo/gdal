@@ -301,6 +301,7 @@ Bundle& ECDataset::GetBundle(const char* fname) {
         }
     }
     // No empties, eject one
+    // coverity[dont_call]
     Bundle& bundle = bundles[rand() % bundles.size()];
     bundle.Init(fname);
     return bundle;
