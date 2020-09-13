@@ -936,6 +936,14 @@ CPLString IVSIS3LikeFSHandler::UploadPart(const CPLString& osFilename,
                 nRetryCount++;
                 bRetry = true;
             }
+            else if( requestHelper.sWriteFuncData.pBuffer != nullptr &&
+                     poS3HandleHelper->CanRestartOnError(requestHelper.sWriteFuncData.pBuffer,
+                                                         requestHelper.sWriteFuncHeaderData.pBuffer,
+                                                         false) )
+            {
+                UpdateMapFromHandle(poS3HandleHelper);
+                bRetry = true;
+            }
             else
             {
                 CPLDebug(GetDebugKey(), "%s",
@@ -1014,6 +1022,7 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
         m_hCurlMulti = curl_multi_init();
     }
 
+    WriteFuncStruct sWriteFuncData;
     double dfRetryDelay = m_dfRetryDelay;
     int nRetryCount = 0;
     // We can only easily retry at the first chunk of a transfer
@@ -1030,6 +1039,11 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
             curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION,
                             ReadCallBackBufferChunked);
             curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, this);
+
+            VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
+            curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+            curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+                            VSICurlHandleWriteFunc);
 
             VSICURLInitWriteFuncStruct(&m_sWriteFuncHeaderData, nullptr, nullptr, nullptr);
             curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &m_sWriteFuncHeaderData);
@@ -1092,13 +1106,6 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
                                 m_sWriteFuncHeaderData.pBuffer,
                                 m_osCurlErrBuf.c_str()) : 0.0;
 
-                            curl_multi_remove_handle(m_hCurlMulti, m_hCurl);
-                            curl_easy_cleanup(m_hCurl);
-                            m_hCurl = nullptr;
-
-                            CPLFree(m_sWriteFuncHeaderData.pBuffer);
-                            m_sWriteFuncHeaderData.pBuffer = nullptr;
-
                             if( dfNewRetryDelay > 0 &&
                                 nRetryCount < m_nMaxRetry )
                             {
@@ -1113,6 +1120,14 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
                                 nRetryCount++;
                                 bRetry = true;
                             }
+                            else if( sWriteFuncData.pBuffer != nullptr &&
+                                m_poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
+                                                                      m_sWriteFuncHeaderData.pBuffer,
+                                                                      false) )
+                            {
+                                m_poFS->UpdateMapFromHandle(m_poS3HandleHelper);
+                                bRetry = true;
+                            }
                             else
                             {
                                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -1121,8 +1136,20 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
                                         m_osCurlErrBuf.c_str());
 
                                 curl_slist_free_all(headers);
-                                return 0;
+                                bRetry = false;
                             }
+
+                            curl_multi_remove_handle(m_hCurlMulti, m_hCurl);
+                            curl_easy_cleanup(m_hCurl);
+
+                            CPLFree(sWriteFuncData.pBuffer);
+                            CPLFree(m_sWriteFuncHeaderData.pBuffer);
+
+                            m_hCurl = nullptr;
+                            sWriteFuncData.pBuffer = nullptr;
+                            m_sWriteFuncHeaderData.pBuffer = nullptr;
+                            if( !bRetry )
+                                return 0;
                         }
                     }
                 }
@@ -1148,12 +1175,6 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
                     bCanRetry ? CPLHTTPGetNewRetryDelay(
                     static_cast<int>(response_code), dfRetryDelay,
                     m_sWriteFuncHeaderData.pBuffer, m_osCurlErrBuf.c_str()) : 0.0;
-                curl_multi_remove_handle(m_hCurlMulti, m_hCurl);
-                curl_easy_cleanup(m_hCurl);
-                m_hCurl = nullptr;
-
-                CPLFree(m_sWriteFuncHeaderData.pBuffer);
-                m_sWriteFuncHeaderData.pBuffer = nullptr;
 
                 if( dfNewRetryDelay > 0 &&
                     nRetryCount < m_nMaxRetry )
@@ -1169,14 +1190,33 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
                     nRetryCount++;
                     bRetry = true;
                 }
+                else if( sWriteFuncData.pBuffer != nullptr &&
+                    m_poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
+                                                          m_sWriteFuncHeaderData.pBuffer,
+                                                          false) )
+                {
+                    m_poFS->UpdateMapFromHandle(m_poS3HandleHelper);
+                    bRetry = true;
+                }
                 else
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                                 "Error %d: %s",
                                 static_cast<int>(response_code),
                                 m_osCurlErrBuf.c_str());
-                    return 0;
+                    bRetry = false;
+                    nMemb = 0;
                 }
+
+                curl_multi_remove_handle(m_hCurlMulti, m_hCurl);
+                curl_easy_cleanup(m_hCurl);
+
+                CPLFree(sWriteFuncData.pBuffer);
+                CPLFree(m_sWriteFuncHeaderData.pBuffer);
+
+                m_hCurl = nullptr;
+                sWriteFuncData.pBuffer = nullptr;
+                m_sWriteFuncHeaderData.pBuffer = nullptr;
             }
         }
     }
@@ -1505,7 +1545,15 @@ bool IVSIS3LikeFSHandler::CompleteMultipart(const CPLString& osFilename,
                 nRetryCount++;
                 bRetry = true;
             }
-            else 
+            else if( requestHelper.sWriteFuncData.pBuffer != nullptr &&
+                poS3HandleHelper->CanRestartOnError(requestHelper.sWriteFuncData.pBuffer,
+                                                    requestHelper.sWriteFuncHeaderData.pBuffer,
+                                                    false) )
+            {
+                UpdateMapFromHandle(poS3HandleHelper);
+                bRetry = true;
+            }
+            else
             {
                 CPLDebug("S3", "%s",
                     requestHelper.sWriteFuncData.pBuffer ? requestHelper.sWriteFuncData.pBuffer : "(null)");
@@ -1581,7 +1629,15 @@ bool IVSIS3LikeFSHandler::AbortMultipart(const CPLString& osFilename,
                 nRetryCount++;
                 bRetry = true;
             }
-            else 
+            else if( requestHelper.sWriteFuncData.pBuffer != nullptr &&
+                poS3HandleHelper->CanRestartOnError(requestHelper.sWriteFuncData.pBuffer,
+                                                    requestHelper.sWriteFuncHeaderData.pBuffer,
+                                                    false) )
+            {
+                UpdateMapFromHandle(poS3HandleHelper);
+                bRetry = true;
+            }
+            else
             {
                 CPLDebug("S3", "%s",
                         requestHelper.sWriteFuncData.pBuffer ? requestHelper.sWriteFuncData.pBuffer : "(null)");
@@ -3812,7 +3868,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
             if( VSI_ISDIR(sTarget.st_mode) )
             {
                 osTarget = CPLFormFilename(osTarget, CPLGetFilename(pszSource), nullptr);
-                bTargetIsFile = VSIStatL(osTarget, &sTarget) == 0 && 
+                bTargetIsFile = VSIStatL(osTarget, &sTarget) == 0 &&
                                 !CPL_TO_BOOL(VSI_ISDIR(sTarget.st_mode));
             }
         }
@@ -3914,7 +3970,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                         if( poS3HandleHelper == nullptr )
                             return false;
                         UpdateHandleFromMap(poS3HandleHelper.get());
-                        const auto osUploadID = 
+                        const auto osUploadID =
                             InitiateMultipartUpload(osTarget,
                                                     poS3HandleHelper.get(),
                                                     nMaxRetry,
