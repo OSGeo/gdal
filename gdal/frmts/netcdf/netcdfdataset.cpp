@@ -8045,18 +8045,18 @@ static void CopyMetadata( GDALDataset* poSrcDS,
     char **papszFieldData = nullptr;
 
     // Remove the following band meta but set them later from band data.
-    const char *papszIgnoreBand[] = { CF_ADD_OFFSET, CF_SCALE_FACTOR,
+    const char * const papszIgnoreBand[] = { CF_ADD_OFFSET, CF_SCALE_FACTOR,
                                       "valid_range", "_Unsigned",
                                       _FillValue, "coordinates",
                                       nullptr };
-    const char *papszIgnoreGlobal[] = { "NETCDF_DIM_EXTRA", nullptr };
+    const char * const papszIgnoreGlobal[] = { "NETCDF_DIM_EXTRA", nullptr };
 
     char **papszMetadata = nullptr;
     if( poSrcDS )
     {
         papszMetadata = poSrcDS->GetMetadata();
     }
-    else
+    else if( poSrcBand )
     {
         papszMetadata = poSrcBand->GetMetadata();
     }
