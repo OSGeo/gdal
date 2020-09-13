@@ -466,10 +466,6 @@ int GTIFGetGCSInfoEx( void* ctxIn,
         return TRUE;
     }
 
-
-    if( nGCSCode == KvUserDefined )
-        return FALSE;
-
 /* -------------------------------------------------------------------- */
 /*      Search the database.                                            */
 /* -------------------------------------------------------------------- */
