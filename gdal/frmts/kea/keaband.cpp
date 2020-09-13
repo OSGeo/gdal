@@ -198,8 +198,11 @@ CPLErr KEARasterBand::SetHistogramFromString(const char *pszString)
 
     GDALRasterAttributeTable *pTable = this->GetDefaultRAT();
     if( pTable == nullptr )
+    {
+        CPLFree(pszBinValues);
         return CE_Failure;
-        
+    }
+
     // find histogram column if it exists
     int nCol = pTable->GetColOfUsage(GFU_PixelCount);
     if( nCol == -1 )
