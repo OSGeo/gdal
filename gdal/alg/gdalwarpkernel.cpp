@@ -342,6 +342,8 @@ void* GWKThreadsCreate( char** papszWarpOptions,
         psThreadData->poJobQueue = poThreadPool->CreateJobQueue();
         psThreadData->pTransformerArgInput = pTransformerArg;
     }
+    else if( hCond )
+        CPLDestroyCond(hCond);
 
     return psThreadData;
 }
