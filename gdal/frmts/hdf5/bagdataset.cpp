@@ -1766,7 +1766,7 @@ CPLErr BAGGeorefMDSuperGridBand::IReadBlock( int nBlockXOff, int nBlockYOff, voi
         const GUInt64 arrayStartIdx[2] = {
             0,
             poGDS->m_nSuperGridRefinementStartIndex +
-                (nRasterYSize - 1 - nBlockYOff) * nBlockXSize
+                static_cast<GUInt64>(nRasterYSize - 1 - nBlockYOff) * nBlockXSize
         };
         size_t count[2] = { 1, static_cast<size_t>(nBlockXSize) };
         const GInt64 arrayStep[2] = {1, 1};
