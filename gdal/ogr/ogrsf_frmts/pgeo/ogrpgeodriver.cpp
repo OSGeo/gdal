@@ -207,7 +207,7 @@ bool OGRODBCMDBDriver::FindDriverLib()
     const int nLibNames = sizeof(aszDefaultLibName) / sizeof(aszDefaultLibName[0]);
     const char* libPath[] = {
         "/usr/lib64",
-        "/usr/local/lib64"
+        "/usr/local/lib64",
         "/usr/lib",
         "/usr/local/lib"
     };
