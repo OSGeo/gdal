@@ -806,12 +806,14 @@ OGRMapMLWriterDataset::~OGRMapMLWriterDataset()
             if( psExtra )
             {
                 CPLXMLNode* psLastChild = m_psExtent->psChild;
-                while( psLastChild->psNext )
-                    psLastChild = psLastChild->psNext;
                 if( psLastChild == nullptr )
                     m_psExtent->psChild = psExtra;
                 else
+                {
+                    while( psLastChild->psNext )
+                        psLastChild = psLastChild->psNext;
                     psLastChild->psNext = psExtra;
+                }
             }
         }
 
