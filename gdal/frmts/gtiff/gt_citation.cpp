@@ -493,8 +493,11 @@ OGRBoolean SetCitationToSRS( GTIF* hGTIF, char* szCTString, int nCTStringLen,
                 }
             }
             if( unitSize == 0.0 )
-                GDALGTIFKeyGetDOUBLE( hGTIF, ProjLinearUnitSizeGeoKey,
-                                      &unitSize, 0, 1 );
+            {
+                CPL_IGNORE_RET_VAL(
+                    GDALGTIFKeyGetDOUBLE( hGTIF, ProjLinearUnitSizeGeoKey,
+                                      &unitSize, 0, 1 ));
+            }
             poSRS->SetLinearUnits( ctNames[CitLUnitsName], unitSize);
             *linearUnitIsSet = TRUE;
         }
