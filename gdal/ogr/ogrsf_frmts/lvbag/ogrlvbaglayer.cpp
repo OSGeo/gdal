@@ -647,11 +647,11 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                 }
                 else if( poGeomField->GetType() == wkbMultiPolygon
                     && poGeom->getGeometryType() == wkbGeometryCollection
-                    && dynamic_cast<OGRGeometryCollection*>(poGeom.get())->getNumGeometries() > 0
-                    && dynamic_cast<OGRGeometryCollection*>(poGeom.get())->getGeometryRef(0)->getGeometryType() == wkbPolygon )
+                    && poGeom->toGeometryCollection()->getNumGeometries() > 0
+                    && poGeom->toGeometryCollection()->getGeometryRef(0)->getGeometryType() == wkbPolygon )
                 {
                     std::unique_ptr<OGRMultiPolygon> poMultiPolygon = std::unique_ptr<OGRMultiPolygon>{ new OGRMultiPolygon };
-                    for (auto &poChildGeom : dynamic_cast<OGRGeometryCollection*>(poGeom.get()))
+                    for (auto &poChildGeom : poGeom->toGeometryCollection())
                         poMultiPolygon->addGeometry(poChildGeom);
                     poGeom.reset(poMultiPolygon.release());
                 }
