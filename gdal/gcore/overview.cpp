@@ -3125,7 +3125,10 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     // Only configurable for debug / testing
     const char* pszChunkYSize = CPLGetConfigOption("GDAL_OVR_CHUNKYSIZE", nullptr);
     if( pszChunkYSize )
+    {
+        // coverity[tainted_data]
         nFullResYChunk = atoi(pszChunkYSize);
+    }
 
     const GDALDataType eSrcDataType = poSrcBand->GetRasterDataType();
     const GDALDataType eWrkDataType = GDALDataTypeIsComplex( eSrcDataType )?
