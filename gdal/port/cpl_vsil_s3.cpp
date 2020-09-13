@@ -436,13 +436,7 @@ bool VSIDIRS3::IssueListDir()
 
         NetworkStatisticsLogger::LogGET(requestHelper.sWriteFuncData.nSize);
 
-        if( requestHelper.sWriteFuncData.pBuffer == nullptr)
-        {
-            curl_easy_cleanup(hCurlHandle);
-            return false;
-        }
-
-        if( response_code != 200 )
+        if( response_code != 200 || requestHelper.sWriteFuncData.pBuffer == nullptr )
         {
             bool bUpdateMap = true;
             if( requestHelper.sWriteFuncData.pBuffer != nullptr &&
