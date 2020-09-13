@@ -1497,8 +1497,7 @@ void OGRUpdateFieldType( OGRFieldDefn* poFDefn,
         else if( eNewType == OFTInteger64List ||
                  eNewType == OFTRealList || eNewType == OFTStringList )
         {
-            if( eNewType != OFTIntegerList )
-                poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetSubType(OFSTNone);
             poFDefn->SetType(eNewType);
         }
         else if( eNewType != OFTInteger && eNewType != OFTInteger64 )
