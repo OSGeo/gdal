@@ -215,12 +215,13 @@ RUN mkdir proj \
     && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build spatialite
-ARG SPATIALITE_VERSION=4.3.0a
+ARG SPATIALITE_VERSION=5.0.0
 RUN if test "${SPATIALITE_VERSION}" != ""; then ( \
     wget -q http://www.gaia-gis.it/gaia-sins/libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && tar xzf libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && rm -f libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && cd libspatialite-${SPATIALITE_VERSION} \
+    && apk add --no-cache minizip-dev \
     && if test "${RSYNC_REMOTE}" != ""; then \
         echo "Downloading cache..."; \
         rsync -ra ${RSYNC_REMOTE}/spatialite/ $HOME/; \
@@ -229,7 +230,7 @@ RUN if test "${SPATIALITE_VERSION}" != ""; then ( \
         export CXX="ccache g++"; \
         ccache -M 100M; \
     fi \
-    && CFLAGS="-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H -O2" ./configure --prefix=/usr --disable-static \
+    && ./configure --prefix=/usr --disable-static \
     && make -j$(nproc) \
     && make install \
     && if test "${RSYNC_REMOTE}" != ""; then \
@@ -357,7 +358,7 @@ RUN apk add --no-cache \
         libjpeg-turbo libpng libwebp expat \
         icu-libs \
         python3 py3-numpy ${POPPLER} pcre libpq libxml2 portablexdr openjpeg \
-        openexr libheif xerces-c geos cfitsio \
+        openexr libheif xerces-c geos cfitsio minizip \
     # Remove /usr/lib/libopenjp2.so.2.3.0 since we are building v2.3.1 manually
     # && rm -f /usr/lib/libopenjp2.so.2.3.0 \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*
