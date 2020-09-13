@@ -4395,10 +4395,6 @@ static bool SetupCT( TargetLayerInfo* psInfo,
                     return false;
                 }
                 poCT = new CompositeCT( poGCPCoordTrans, false, poCT, true );
-            }
-
-            if( poCT != psInfo->m_apoCT[iGeom].get() )
-            {
                 psInfo->m_apoCT[iGeom].reset(poCT);
             }
         }
