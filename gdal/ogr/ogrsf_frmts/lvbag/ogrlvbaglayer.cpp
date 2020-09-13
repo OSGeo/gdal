@@ -139,7 +139,7 @@ static inline const char* XMLTagSplit( const char *pszName )
 void OGRLVBAGLayer::AddSpatialRef( OGRwkbGeometryType eTypeIn )
 {
     OGRGeomFieldDefn *poGeomField = poFeatureDefn->GetGeomFieldDefn(0);
-    OGRSpatialReference* poSRS = new OGRSpatialReference{};
+    OGRSpatialReference* poSRS = new OGRSpatialReference();
     poSRS->importFromURN(pszSpecificationUrn);
     poGeomField->SetSpatialRef(poSRS);
     poGeomField->SetType(eTypeIn);
@@ -466,7 +466,7 @@ void OGRLVBAGLayer::StartElementCbk( const char *pszName, const char **ppszAttr 
             OGRGeomFieldDefn *poGeomField = poFeatureDefn->GetGeomFieldDefn(0);
             if( EQUAL("srsname", papszIter[0]) && poGeomField->GetSpatialRef() == nullptr )
             {
-                OGRSpatialReference* poSRS = new OGRSpatialReference{};
+                OGRSpatialReference* poSRS = new OGRSpatialReference();
                 poSRS->importFromURN(papszIter[1]);
                 poGeomField->SetSpatialRef(poSRS);
                 poSRS->Release();
