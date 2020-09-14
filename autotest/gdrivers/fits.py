@@ -7,7 +7,7 @@
 # Author:   Even Rouault <even dot rouault @ spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2008, Even Rouault <even dot rouault at spatialys.com>
+# Copyright (c) 2008,2020, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -28,10 +28,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import pytest
 
 from osgeo import gdal
-
+import gdaltest
 
 pytestmark = pytest.mark.require_driver('FITS')
 
@@ -131,3 +132,80 @@ def test_fits_read_georef_merc():
     assert wkt == 'PROJCS["Mercator_Earth",GEOGCS["GCS_Earth",DATUM["D_Earth",SPHEROID["Earth",6378206.4,294.978698213898]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
     gt = ds.GetGeoTransform()
     assert gt == pytest.approx((-13095897.481058259, 72.23522015778646, 0.0, 3991653.2130816197, 0.0, -72.23522015778646), abs=1e-3)
+
+
+def test_fits_read_empty_primary_hdu():
+
+    filename = 'data/fits/empty_primary_hdu.fits'
+    assert os.path.exists(filename)
+    with gdaltest.error_handler():
+        assert gdal.Open(filename) is None
+
+def test_fits_read_image_in_second_hdu():
+
+    ds = gdal.Open('data/fits/image_in_second_hdu.fits')
+    assert gdal.GetLastErrorMsg() == ''
+    assert ds is not None
+    assert ds.RasterXSize == 1
+    assert ds.RasterYSize == 2
+    assert ds.RasterCount == 1
+    assert ds.GetMetadata() == {'BAR': 'BAZ     ', 'FOO': 'BAR_override', 'FOO2': 'BAR2    '}
+
+
+def test_fits_read_image_in_first_and_second_hdu():
+
+    ds = gdal.Open('data/fits/image_in_first_and_second_hdu.fits')
+    assert gdal.GetLastErrorMsg() == ''
+    assert ds is not None
+    assert ds.RasterCount == 0
+    assert ds.GetMetadata() == {'EXTNAME': 'FIRST_IMAGE'}
+
+    sub_ds = ds.GetSubDatasets()
+    assert len(sub_ds) == 2
+    assert sub_ds[0][0] == 'FITS:"data/fits/image_in_first_and_second_hdu.fits":1'
+    assert sub_ds[0][1] == 'HDU 1 (1x2, 1 band), FIRST_IMAGE'
+    assert sub_ds[1][0] == 'FITS:"data/fits/image_in_first_and_second_hdu.fits":2'
+    assert sub_ds[1][1] == 'HDU 2 (1x3, 1 band)'
+
+    with gdaltest.error_handler():
+        assert gdal.Open('FITS:') is None
+        assert gdal.Open('FITS:"data/fits/image_in_first_and_second_hdu.fits"') is None
+        assert gdal.Open('FITS:"data/fits/image_in_first_and_second_hdu.fits":0') is None
+        assert gdal.Open('FITS:"data/fits/image_in_first_and_second_hdu.fits":3') is None
+        assert gdal.Open('FITS:"data/fits/non_existing.fits":1') is None
+
+    ds = gdal.Open('FITS:"data/fits/image_in_first_and_second_hdu.fits":1')
+    assert ds.GetSubDatasets() == []
+    assert ds.RasterXSize == 1
+    assert ds.RasterYSize == 2
+    assert ds.GetMetadata() == {'EXTNAME': 'FIRST_IMAGE'}
+
+    ds = gdal.Open('FITS:"data/fits/image_in_first_and_second_hdu.fits":2')
+    assert ds.GetSubDatasets() == []
+    assert ds.RasterXSize == 1
+    assert ds.RasterYSize == 3
+    assert ds.GetMetadata() == {}
+
+
+def test_fits_read_image_in_second_and_fourth_hdu_table_in_third():
+
+    ds = gdal.Open('data/fits/image_in_second_and_fourth_hdu_table_in_third.fits')
+    assert gdal.GetLastErrorMsg() == ''
+    assert ds is not None
+    assert ds.RasterCount == 0
+    assert ds.GetMetadata() == {'FOO': 'BAR     '}
+
+    sub_ds = ds.GetSubDatasets()
+    assert len(sub_ds) == 2
+
+    ds = gdal.Open(sub_ds[0][0])
+    assert ds.GetSubDatasets() == []
+    assert ds.RasterXSize == 1
+    assert ds.RasterYSize == 2
+    assert ds.GetMetadata() == {'EXTNAME': 'FIRST_IMAGE', 'FOO': 'BAR     '}
+
+    ds = gdal.Open(sub_ds[1][0])
+    assert ds.GetSubDatasets() == []
+    assert ds.RasterXSize == 1
+    assert ds.RasterYSize == 3
+    assert ds.GetMetadata() == {'EXTNAME': 'SECOND_IMAGE', 'FOO': 'BAR     '}

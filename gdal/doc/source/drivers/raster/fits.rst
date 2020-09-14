@@ -43,6 +43,64 @@ are managed via standard :cpp:func:`GDALRasterBand::GetOffset` / :cpp:func:`GDAL
 and :cpp:func:`GDALRasterBand::GetScale` / :cpp:func:`GDALRasterBand::SetScale` GDAL functions and no more
 referred as metadata.
 
+Multiple image support
+----------------------
+
+Starting with GDAL 3.2, Multi-Extension FITS (MEF) files that contain one or
+more extensions following the primary HDU are supported. When more than 2 image
+HDUs are found, they are reported as subdatasets.
+
+The connection string for a given subdataset/HDU is ``FITS:"filename.fits":hdu_number``
+
+Examples
+--------
+
+* Listing subdatasets in a MEF .fits:
+
+    ::
+
+        $ gdalinfo ../autotest/gdrivers/data/fits/image_in_first_and_second_hdu.fits
+
+        Driver: FITS/Flexible Image Transport System
+        Files: ../autotest/gdrivers/data/fits/image_in_first_and_second_hdu.fits
+        Size is 512, 512
+        Metadata:
+        EXTNAME=FIRST_IMAGE
+        Subdatasets:
+        SUBDATASET_1_NAME=FITS:"../autotest/gdrivers/data/fits/image_in_first_and_second_hdu.fits":1
+        SUBDATASET_1_DESC=HDU 1 (1x2, 1 band), FIRST_IMAGE
+        SUBDATASET_2_NAME=FITS:"../autotest/gdrivers/data/fits/image_in_first_and_second_hdu.fits":2
+        SUBDATASET_2_DESC=HDU 2 (1x3, 1 band)
+        Corner Coordinates:
+        Upper Left  (    0.0,    0.0)
+        Lower Left  (    0.0,  512.0)
+        Upper Right (  512.0,    0.0)
+        Lower Right (  512.0,  512.0)
+        Center      (  256.0,  256.0)
+
+* Opening a given HDU:
+
+    ::
+
+        $ gdalinfo FITS:"../autotest/gdrivers/data/fits/image_in_first_and_second_hdu.fits":1
+
+        Driver: FITS/Flexible Image Transport System
+        Files: none associated
+        Size is 1, 2
+        Metadata:
+        EXTNAME=FIRST_IMAGE
+        Corner Coordinates:
+        Upper Left  (    0.0,    0.0)
+        Lower Left  (    0.0,    2.0)
+        Upper Right (    1.0,    0.0)
+        Lower Right (    1.0,    2.0)
+        Center      (    0.5,    1.0)
+        Band 1 Block=1x1 Type=Byte, ColorInterp=Undefined
+
+
+Other
+-----
+
 NOTE: Implemented as ``gdal/frmts/fits/fitsdataset.cpp``.
 
 .. _notes-on-cfitsio-linking:
@@ -58,8 +116,6 @@ Install CFITSIO headers from your distro (eg, cfitsio-devel on Fedora; libcfitsi
 From distros
 """"""""""""
 On Fedora/CentOS install CFITSIO then GDAL with dnf (yum): cfitsio is automatically linked.
-
-Starting from Debian 10, Ubuntu 18.04 GDAL is packaged disabling CFITSIO link (see https://bugs.debian.org/422537): having GDAL linked against CFITSIO asks for recompile from source.
 
 MacOSX
 ^^^^^^
