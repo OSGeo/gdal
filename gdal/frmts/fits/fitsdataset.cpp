@@ -1598,6 +1598,7 @@ void GDALRegister_FITS()
                                "drivers/raster/fits.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte UInt16 Int16 UInt32 Int32 Float32 Float64" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "fits" );
 
     poDriver->pfnOpen = FITSDataset::Open;
     poDriver->pfnCreate = FITSDataset::Create;
