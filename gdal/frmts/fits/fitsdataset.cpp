@@ -54,31 +54,31 @@ class FITSDataset final : public GDALPamDataset {
 
   friend class FITSRasterBand;
 
-  fitsfile* hFITS;
+  fitsfile* m_hFITS = nullptr;
 
-  GDALDataType gdalDataType;   // GDAL code for the image type
-  int fitsDataType;   // FITS code for the image type
+  GDALDataType m_gdalDataType = GDT_Unknown;   // GDAL code for the image type
+  int m_fitsDataType = 0;   // FITS code for the image type
 
-  bool isExistingFile;
-  long highestOffsetWritten;  // How much of image has been written
+  bool m_isExistingFile = false;
+  long m_highestOffsetWritten = 0;  // How much of image has been written
 
-  bool        bNoDataChanged;
-  bool        bNoDataSet;
-  double      dfNoDataValue;
+  bool        m_bNoDataChanged = false;
+  bool        m_bNoDataSet = false;
+  double      m_dfNoDataValue = -9999.0;
 
-  bool        bMetadataChanged;
+  bool        m_bMetadataChanged = false;
 
   FITSDataset();     // Others should not call this constructor explicitly
 
-  CPLErr Init(fitsfile* hFITS_, bool isExistingFile_);
+  CPLErr Init(fitsfile* hFITS, bool isExistingFile);
 
-  OGRSpatialReference oSRS{};
+  OGRSpatialReference m_oSRS{};
 
-  double      adfGeoTransform[6];
-  bool        bGeoTransformValid;
+  double      m_adfGeoTransform[6];
+  bool        m_bGeoTransformValid = false;
 
   void        WriteFITSInfo();
-  bool        bFITSInfoChanged;
+  bool        m_bFITSInfoChanged = false;
 
   void        LoadGeoreferencing();
   void        LoadFITSInfo();
@@ -110,15 +110,15 @@ class FITSRasterBand final: public GDALPamRasterBand {
 
   friend class  FITSDataset;
 
-  bool               bHaveOffsetScale;
-  double             dfOffset;
-  double             dfScale;
+  bool               m_bHaveOffsetScale = false;
+  double             m_dfOffset = 0.0;
+  double             m_dfScale = 1.0;
 
  protected:
-    FITSDataset       *poFDS;
+    FITSDataset       *m_poFDS = nullptr;
 
-    bool               bNoDataSet;
-    double             dfNoDataValue;
+    bool               m_bNoDataSet = false;
+    double             m_dfNoDataValue = -9999.0;
 
  public:
 
@@ -144,16 +144,11 @@ class FITSRasterBand final: public GDALPamRasterBand {
 /************************************************************************/
 
 FITSRasterBand::FITSRasterBand( FITSDataset *poDSIn, int nBandIn ) :
-  bHaveOffsetScale(false),
-  dfOffset(0.0),
-  dfScale(1.0),
-  poFDS(poDSIn),
-  bNoDataSet(false),
-  dfNoDataValue(-9999.0)
+  m_poFDS(poDSIn)
 {
   poDS = poDSIn;
   nBand = nBandIn;
-  eDataType = poDSIn->gdalDataType;
+  eDataType = poDSIn->m_gdalDataType;
   nBlockXSize = poDSIn->nRasterXSize;
   nBlockYSize = 1;
 }
@@ -174,8 +169,8 @@ FITSRasterBand::~FITSRasterBand()
 CPLErr FITSRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                   void* pImage ) {
   // A FITS block is one row (we assume BSQ formatted data)
-  FITSDataset* dataset = (FITSDataset*) poDS;
-  fitsfile* hFITS = dataset->hFITS;
+  FITSDataset* dataset = m_poFDS;
+  fitsfile* hFITS = dataset->m_hFITS;
   int status = 0;
 
   // Since a FITS block is a whole row, nBlockXOff must be zero
@@ -192,14 +187,14 @@ CPLErr FITSRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
   // If we haven't written this block to the file yet, then attempting
   // to read causes an error, so in this case, just return zeros.
-  if (!dataset->isExistingFile && offset > dataset->highestOffsetWritten) {
+  if (!dataset->m_isExistingFile && offset > dataset->m_highestOffsetWritten) {
     memset(pImage, 0, nBlockXSize * nBlockYSize
            * GDALGetDataTypeSize(eDataType) / 8);
     return CE_None;
   }
 
   // Otherwise read in the image data
-  fits_read_img(hFITS, dataset->fitsDataType, offset, nElements,
+  fits_read_img(hFITS, dataset->m_fitsDataType, offset, nElements,
                 nullptr, pImage, nullptr, &status);
 
   // Capture special case of non-zero status due to data range
@@ -226,8 +221,8 @@ CPLErr FITSRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 CPLErr FITSRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                     void* pImage )
 {
-  FITSDataset* dataset = (FITSDataset*) poDS;
-  fitsfile* hFITS = dataset->hFITS;
+  FITSDataset* dataset = m_poFDS;
+  fitsfile* hFITS = dataset->m_hFITS;
   int status = 0;
 
   // Since a FITS block is a whole row, nBlockXOff must be zero
@@ -239,7 +234,7 @@ CPLErr FITSRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
   LONGLONG offset = static_cast<LONGLONG>(nBand - 1) * nRasterXSize * nRasterYSize +
     static_cast<LONGLONG>(nBlockYOff) * nRasterXSize + 1;
   long nElements = nRasterXSize;
-  fits_write_img(hFITS, dataset->fitsDataType, offset, nElements,
+  fits_write_img(hFITS, dataset->m_fitsDataType, offset, nElements,
                  pImage, &status);
 
   // Capture special case of non-zero status due to data range
@@ -257,8 +252,8 @@ CPLErr FITSRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
   }
 
   // When we write a block, update the offset counter that we've written
-  if (offset > dataset->highestOffsetWritten)
-    dataset->highestOffsetWritten = offset;
+  if (offset > dataset->m_highestOffsetWritten)
+    dataset->m_highestOffsetWritten = offset;
 
   return CE_None;
 }
@@ -291,26 +286,15 @@ static bool isIgnorableFITSHeader(const char* name) {
 /*                            FITSDataset()                            */
 /************************************************************************/
 
-FITSDataset::FITSDataset():
-    hFITS(nullptr),
-    gdalDataType(GDT_Unknown),
-    fitsDataType(0),
-    isExistingFile(false),
-    highestOffsetWritten(0),
-    bNoDataChanged(false),
-    bNoDataSet(false),
-    dfNoDataValue(-9999.0),
-    bMetadataChanged(false),
-    bGeoTransformValid(false),
-    bFITSInfoChanged(false)
+FITSDataset::FITSDataset()
 {
-    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    adfGeoTransform[0] = 0;
-    adfGeoTransform[1] = 1;
-    adfGeoTransform[2] = 0;
-    adfGeoTransform[3] = 0;
-    adfGeoTransform[4] = 0;
-    adfGeoTransform[5] = 1;
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_adfGeoTransform[0] = 0;
+    m_adfGeoTransform[1] = 1;
+    m_adfGeoTransform[2] = 0;
+    m_adfGeoTransform[3] = 0;
+    m_adfGeoTransform[4] = 0;
+    m_adfGeoTransform[5] = 1;
 }
 
 /************************************************************************/
@@ -320,7 +304,7 @@ FITSDataset::FITSDataset():
 FITSDataset::~FITSDataset() {
 
   int status;
-  if( hFITS )
+  if( m_hFITS )
   {
     if(eAccess == GA_Update)
     {
@@ -328,8 +312,8 @@ FITSDataset::~FITSDataset() {
       // capability.  Write any meta data to the file that's compatible with
       // FITS.
       status = 0;
-      fits_movabs_hdu(hFITS, 1, nullptr, &status);
-      fits_write_key_longwarn(hFITS, &status);
+      fits_movabs_hdu(m_hFITS, 1, nullptr, &status);
+      fits_write_key_longwarn(m_hFITS, &status);
       if (status) {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Couldn't move to first HDU in FITS file %s (%d).\n",
@@ -363,7 +347,7 @@ FITSDataset::~FITSDataset() {
                 // handle. Note: to avoid a compiler warning we copy the
                 // const value string to a non const one.
                 char* valueCpy = CPLStrdup(value);
-                fits_update_key_longstr(hFITS, key, valueCpy, nullptr, &status);
+                fits_update_key_longstr(m_hFITS, key, valueCpy, nullptr, &status);
                 CPLFree(valueCpy);
 
                 // Check for errors.
@@ -383,8 +367,8 @@ FITSDataset::~FITSDataset() {
       }
 
       // Writing nodata value
-      if (gdalDataType != GDT_Float32 && gdalDataType != GDT_Float64) {
-        fits_update_key( hFITS, TDOUBLE, "BLANK", &dfNoDataValue, nullptr, &status);
+      if (m_gdalDataType != GDT_Float32 && m_gdalDataType != GDT_Float64) {
+        fits_update_key( m_hFITS, TDOUBLE, "BLANK", &m_dfNoDataValue, nullptr, &status);
         if (status)
         {
             // Throw a warning with CFITSIO error status, then ignore status 
@@ -401,8 +385,8 @@ FITSDataset::~FITSDataset() {
       GDALRasterBand* poSrcBand = GDALPamDataset::GetRasterBand(1);
       double dfScale = poSrcBand->GetScale(&pbSuccess);
       double dfOffset = poSrcBand->GetOffset(&pbSuccess);
-      if (bMetadataChanged) {
-        fits_update_key( hFITS, TDOUBLE, "BSCALE", &dfScale, nullptr, &status);
+      if (m_bMetadataChanged) {
+        fits_update_key( m_hFITS, TDOUBLE, "BSCALE", &dfScale, nullptr, &status);
         if (status)
         {
             // Throw a warning with CFITSIO error status, then ignore status 
@@ -412,7 +396,7 @@ FITSDataset::~FITSDataset() {
             status = 0;
             return;
         }
-        fits_update_key( hFITS, TDOUBLE, "BZERO", &dfOffset, nullptr, &status);
+        fits_update_key( m_hFITS, TDOUBLE, "BZERO", &dfOffset, nullptr, &status);
         if (status)
         {
             // Throw a warning with CFITSIO error status, then ignore status 
@@ -428,7 +412,7 @@ FITSDataset::~FITSDataset() {
       GDALPamDataset::SetSpatialRef(GDALPamDataset::GetSpatialRef());
 
       // Write geographic info
-      if (bFITSInfoChanged) {
+      if (m_bFITSInfoChanged) {
         WriteFITSInfo();
       }
 
@@ -437,7 +421,7 @@ FITSDataset::~FITSDataset() {
     }
 
     // Close the FITS handle
-    fits_close_file(hFITS, &status);
+    fits_close_file(m_hFITS, &status);
   }
 }
 
@@ -449,7 +433,7 @@ FITSDataset::~FITSDataset() {
 bool FITSDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
 {
     int status = 0;
-    if( fits_is_compressed_image( hFITS, &status) )
+    if( fits_is_compressed_image( m_hFITS, &status) )
         return false;
     GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
     if( eDT == GDT_UInt16 || eDT == GDT_UInt32 )
@@ -459,7 +443,7 @@ bool FITSDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
     OFF_T headerstart = 0;
     OFF_T datastart = 0;
     OFF_T dataend = 0;
-    fits_get_hduoff(hFITS, &headerstart, &datastart, &dataend, &status);
+    fits_get_hduoff(m_hFITS, &headerstart, &datastart, &dataend, &status);
     if( nBands > 1 )
         sLayout.eInterleaving = RawBinaryLayout::Interleaving::BSQ;
     sLayout.eDataType = eDT;
@@ -475,15 +459,15 @@ bool FITSDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
 /*                           Init()                                     */
 /************************************************************************/
 
-CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
+CPLErr FITSDataset::Init(fitsfile* hFITS, bool isExistingFile) {
 
-  hFITS = hFITS_;
-  isExistingFile = isExistingFile_;
-  highestOffsetWritten = 0;
+  m_hFITS = hFITS;
+  m_isExistingFile = isExistingFile;
+  m_highestOffsetWritten = 0;
   int status = 0;
 
   // Move to the primary HDU
-  fits_movabs_hdu(hFITS, 1, nullptr, &status);
+  fits_movabs_hdu(m_hFITS, 1, nullptr, &status);
   if (status) {
     CPLError(CE_Failure, CPLE_AppDefined,
              "Couldn't move to first HDU in FITS file %s (%d).\n",
@@ -514,44 +498,44 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
     offset = 0.;
   }
 
-  fits_read_key(hFITS, TDOUBLE, "BLANK", &dfNoDataValue, nullptr, &status);
-  bNoDataSet = !status;
+  fits_read_key(hFITS, TDOUBLE, "BLANK", &m_dfNoDataValue, nullptr, &status);
+  m_bNoDataSet = !status;
   status = 0;
 
   // Determine data type and nodata value if BLANK keyword is absent
   if (bitpix == BYTE_IMG) {
-     gdalDataType = GDT_Byte;
-     fitsDataType = TBYTE;
+     m_gdalDataType = GDT_Byte;
+     m_fitsDataType = TBYTE;
   }
   else if (bitpix == SHORT_IMG) {
     if (offset == 32768.)
     {
-      gdalDataType = GDT_UInt16;
-      fitsDataType = TUSHORT;
+      m_gdalDataType = GDT_UInt16;
+      m_fitsDataType = TUSHORT;
     }
     else {
-      gdalDataType = GDT_Int16;
-      fitsDataType = TSHORT;
+      m_gdalDataType = GDT_Int16;
+      m_fitsDataType = TSHORT;
     }
   }
   else if (bitpix == LONG_IMG) {
     if (offset == 2147483648.)
     {
-      gdalDataType = GDT_UInt32;
-      fitsDataType = TUINT;
+      m_gdalDataType = GDT_UInt32;
+      m_fitsDataType = TUINT;
     }
     else {
-      gdalDataType = GDT_Int32;
-      fitsDataType = TINT;
+      m_gdalDataType = GDT_Int32;
+      m_fitsDataType = TINT;
     }
   }
   else if (bitpix == FLOAT_IMG) {
-    gdalDataType = GDT_Float32;
-    fitsDataType = TFLOAT;
+    m_gdalDataType = GDT_Float32;
+    m_fitsDataType = TFLOAT;
   }
   else if (bitpix == DOUBLE_IMG) {
-    gdalDataType = GDT_Float64;
-    fitsDataType = TDOUBLE;
+    m_gdalDataType = GDT_Float64;
+    m_fitsDataType = TDOUBLE;
   }
   else {
     CPLError(CE_Failure, CPLE_AppDefined,
@@ -592,10 +576,10 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
 
   int nKeys = 0;
   int nMoreKeys = 0;
-  fits_get_hdrspace(hFITS, &nKeys, &nMoreKeys, &status);
+  fits_get_hdrspace(m_hFITS, &nKeys, &nMoreKeys, &status);
   for(keyNum = 1; keyNum <= nKeys; keyNum++)
   {
-    fits_read_keyn(hFITS, keyNum, key, value, nullptr, &status);
+    fits_read_keyn(m_hFITS, keyNum, key, value, nullptr, &status);
     if (status) {
       CPLError(CE_Failure, CPLE_AppDefined,
                "Error while reading key %d from FITS file %s (%d)",
@@ -678,8 +662,8 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
   FITSDataset* dataset = new FITSDataset();
   dataset->eAccess = poOpenInfo->eAccess;
 
-  dataset->bMetadataChanged = false;
-  dataset->bNoDataChanged = false;
+  dataset->m_bMetadataChanged = false;
+  dataset->m_bNoDataChanged = false;
 
   // Set up the description and initialize the dataset
   dataset->SetDescription(poOpenInfo->pszFilename);
@@ -819,7 +803,7 @@ void FITSDataset::WriteFITSInfo()
 /* -------------------------------------------------------------------- */
 /*      Write out projection definition.                                */
 /* -------------------------------------------------------------------- */
-    const bool bHasProjection = !oSRS.IsEmpty();
+    const bool bHasProjection = !m_oSRS.IsEmpty();
     if( bHasProjection )
     {
 
@@ -827,7 +811,7 @@ void FITSDataset::WriteFITSInfo()
 
         std::string object, ctype1, ctype2;
         
-        const char* target = oSRS.GetAttrValue("DATUM",0);
+        const char* target = m_oSRS.GetAttrValue("DATUM",0);
         if ( target ) {
             if ( strstr(target, "Moon") ) {
               object.assign("Moon");
@@ -867,18 +851,18 @@ void FITSDataset::WriteFITSInfo()
               ctype2.assign("EA");
             }
 
-            fits_update_key( hFITS, TSTRING, "OBJECT",
+            fits_update_key( m_hFITS, TSTRING, "OBJECT",
                              const_cast<void*>(static_cast<const void*>(object.c_str())),
                              nullptr, &status);
         }
 
-        double aradius = oSRS.GetSemiMajor();
+        double aradius = m_oSRS.GetSemiMajor();
         double bradius = aradius;
-        double cradius = oSRS.GetSemiMinor();
+        double cradius = m_oSRS.GetSemiMinor();
 
         cfactor = aradius * DEG2RAD;
 
-        fits_update_key( hFITS, TDOUBLE, "A_RADIUS", &aradius, nullptr, &status);
+        fits_update_key( m_hFITS, TDOUBLE, "A_RADIUS", &aradius, nullptr, &status);
         if (status)
         {
             // Throw a warning with CFITSIO error status, then ignore status 
@@ -888,7 +872,7 @@ void FITSDataset::WriteFITSInfo()
             status = 0;
             return;
         }
-        fits_update_key( hFITS, TDOUBLE, "B_RADIUS", &bradius, nullptr, &status);
+        fits_update_key( m_hFITS, TDOUBLE, "B_RADIUS", &bradius, nullptr, &status);
         if (status)
         {
             // Throw a warning with CFITSIO error status, then ignore status 
@@ -898,7 +882,7 @@ void FITSDataset::WriteFITSInfo()
             status = 0;
             return;
         }
-        fits_update_key( hFITS, TDOUBLE, "C_RADIUS", &cradius, nullptr, &status);
+        fits_update_key( m_hFITS, TDOUBLE, "C_RADIUS", &cradius, nullptr, &status);
         if (status)
         {
             // Throw a warning with CFITSIO error status, then ignore status 
@@ -909,7 +893,7 @@ void FITSDataset::WriteFITSInfo()
             return;
         }
 
-        const char* unit = oSRS.GetAttrValue("UNIT",0);
+        const char* unit = m_oSRS.GetAttrValue("UNIT",0);
 
         ctype1.append("LN-");
         ctype2.append("LT-"); 
@@ -918,29 +902,29 @@ void FITSDataset::WriteFITSInfo()
         // strcat(ctype2a, "PY-"); 
 
         std::string fitsproj;
-        const char* projection = oSRS.GetAttrValue("PROJECTION",0);
+        const char* projection = m_oSRS.GetAttrValue("PROJECTION",0);
         double centlon = 0, centlat = 0;
 
         if (projection) {
             if ( strstr(projection, "Sinusoidal") ) {
               fitsproj.assign("SFL");
-              centlon = oSRS.GetProjParm("central_meridian", 0, nullptr);
+              centlon = m_oSRS.GetProjParm("central_meridian", 0, nullptr);
             } else if ( strstr(projection, "Equirectangular") ) {
               fitsproj.assign("CAR");
-              centlat = oSRS.GetProjParm("standard_parallel_1", 0, nullptr);
-              centlon = oSRS.GetProjParm("central_meridian", 0, nullptr);
+              centlat = m_oSRS.GetProjParm("standard_parallel_1", 0, nullptr);
+              centlon = m_oSRS.GetProjParm("central_meridian", 0, nullptr);
             } else if ( strstr(projection, "Orthographic") ) {
               fitsproj.assign("SIN");
-              centlat = oSRS.GetProjParm("standard_parallel_1", 0, nullptr);
-              centlon = oSRS.GetProjParm("central_meridian", 0, nullptr);
+              centlat = m_oSRS.GetProjParm("standard_parallel_1", 0, nullptr);
+              centlon = m_oSRS.GetProjParm("central_meridian", 0, nullptr);
             } else if ( strstr(projection, "Mercator_1SP") || strstr(projection, "Mercator") ) {
               fitsproj.assign("MER");
-              centlat = oSRS.GetProjParm("standard_parallel_1", 0, nullptr);
-              centlon = oSRS.GetProjParm("central_meridian", 0, nullptr);
+              centlat = m_oSRS.GetProjParm("standard_parallel_1", 0, nullptr);
+              centlon = m_oSRS.GetProjParm("central_meridian", 0, nullptr);
             } else if ( strstr(projection, "Polar_Stereographic") || strstr(projection, "Stereographic_South_Pole") || strstr(projection, "Stereographic_North_Pole") ) {
               fitsproj.assign("STG");
-              centlat = oSRS.GetProjParm("latitude_of_origin", 0, nullptr);
-              centlon = oSRS.GetProjParm("central_meridian", 0, nullptr);
+              centlat = m_oSRS.GetProjParm("latitude_of_origin", 0, nullptr);
+              centlon = m_oSRS.GetProjParm("central_meridian", 0, nullptr);
             }
 
 /*
@@ -960,7 +944,7 @@ void FITSDataset::WriteFITSInfo()
             ctype1.append(fitsproj);
             ctype2.append(fitsproj);
 
-            fits_update_key( hFITS, TSTRING, "CTYPE1",
+            fits_update_key( m_hFITS, TSTRING, "CTYPE1",
                              const_cast<void*>(
                                  static_cast<const void*>(ctype1.c_str())),
                              nullptr, &status);
@@ -974,7 +958,7 @@ void FITSDataset::WriteFITSInfo()
                 return;
             }
 
-            fits_update_key( hFITS, TSTRING, "CTYPE2",
+            fits_update_key( m_hFITS, TSTRING, "CTYPE2",
                              const_cast<void*>(
                                  static_cast<const void*>(ctype2.c_str())),
                              nullptr, &status);
@@ -990,16 +974,16 @@ void FITSDataset::WriteFITSInfo()
         }
 
 
-        UpperLeftCornerX = adfGeoTransform[0] - falseEast;
-        UpperLeftCornerY = adfGeoTransform[3] - falseNorth;
+        UpperLeftCornerX = m_adfGeoTransform[0] - falseEast;
+        UpperLeftCornerY = m_adfGeoTransform[3] - falseNorth;
 
         if ( centlon > 180. ) {
           centlon = centlon - 180.;
         }
         if ( strstr(unit, "metre") ) {
           // convert degrees/pixel to m/pixel 
-          mapres = 1. / adfGeoTransform[1] ; // mapres is pixel/meters
-          mres = adfGeoTransform[1] / cfactor ; // mres is deg/pixel
+          mapres = 1. / m_adfGeoTransform[1] ; // mapres is pixel/meters
+          mres = m_adfGeoTransform[1] / cfactor ; // mres is deg/pixel
           crpix1 = - (UpperLeftCornerX * mapres) + centlon / mres + 0.5;
           // assuming that center latitude is also the origin of the coordinate
           // system: this is not always true.
@@ -1007,8 +991,8 @@ void FITSDataset::WriteFITSInfo()
           crpix2 = (UpperLeftCornerY * mapres) + 0.5; // - (centlat / mres);
         } else if ( strstr(unit, "degree") ) {
           //convert m/pixel to pixel/degree
-          mapres = 1. / adfGeoTransform[1] / cfactor; // mapres is pixel/deg
-          mres = adfGeoTransform[1] ; // mres is meters/pixel
+          mapres = 1. / m_adfGeoTransform[1] / cfactor; // mapres is pixel/deg
+          mres = m_adfGeoTransform[1] ; // mres is meters/pixel
           crpix1 = - (UpperLeftCornerX * mres) + centlon / mapres + 0.5;
           // assuming that center latitude is also the origin of the coordinate
           // system: this is not always true.
@@ -1018,7 +1002,7 @@ void FITSDataset::WriteFITSInfo()
 
         /// Write WCS CRPIXia CRVALia CTYPEia here
 
-        fits_update_key( hFITS, TDOUBLE, "CRVAL1", &centlon, nullptr, &status);
+        fits_update_key( m_hFITS, TDOUBLE, "CRVAL1", &centlon, nullptr, &status);
         if (status)
         {
             // Throw a warning with CFITSIO error status, then ignore status 
@@ -1028,7 +1012,7 @@ void FITSDataset::WriteFITSInfo()
             status = 0;
             return;
         }
-        fits_update_key( hFITS, TDOUBLE, "CRVAL2", &centlat, nullptr, &status);
+        fits_update_key( m_hFITS, TDOUBLE, "CRVAL2", &centlat, nullptr, &status);
         if (status)
         {
             // Throw a warning with CFITSIO error status, then ignore status 
@@ -1038,7 +1022,7 @@ void FITSDataset::WriteFITSInfo()
             status = 0;
             return;
         }
-        fits_update_key( hFITS, TDOUBLE, "CRPIX1", &crpix1, nullptr, &status);
+        fits_update_key( m_hFITS, TDOUBLE, "CRPIX1", &crpix1, nullptr, &status);
         if (status)
         {
             // Throw a warning with CFITSIO error status, then ignore status 
@@ -1048,7 +1032,7 @@ void FITSDataset::WriteFITSInfo()
             status = 0;
             return;
         }
-        fits_update_key( hFITS, TDOUBLE, "CRPIX2", &crpix2, nullptr, &status);
+        fits_update_key( m_hFITS, TDOUBLE, "CRPIX2", &crpix2, nullptr, &status);
         if (status)
         {
             // Throw a warning with CFITSIO error status, then ignore status 
@@ -1062,7 +1046,7 @@ void FITSDataset::WriteFITSInfo()
 /* -------------------------------------------------------------------- */
 /*      Write geotransform if valid.                                    */
 /* -------------------------------------------------------------------- */
-        if( bGeoTransformValid )
+        if( m_bGeoTransformValid )
         {
 
 /* -------------------------------------------------------------------- */
@@ -1072,10 +1056,10 @@ void FITSDataset::WriteFITSInfo()
             /// Write WCS CDELTia and PCi_ja here
 
             double cd[4];
-            cd[0] = adfGeoTransform[1] / cfactor;
-            cd[1] = adfGeoTransform[2] / cfactor;
-            cd[2] = adfGeoTransform[4] / cfactor;
-            cd[3] = adfGeoTransform[5] / cfactor;
+            cd[0] = m_adfGeoTransform[1] / cfactor;
+            cd[1] = m_adfGeoTransform[2] / cfactor;
+            cd[2] = m_adfGeoTransform[4] / cfactor;
+            cd[3] = m_adfGeoTransform[5] / cfactor;
 
             double pc[4];
             pc[0] = 1.;
@@ -1083,7 +1067,7 @@ void FITSDataset::WriteFITSInfo()
             pc[2] = cd[2] / cd[3];
             pc[3] = - 1.;
 
-            fits_update_key( hFITS, TDOUBLE, "CDELT1", &cd[0], nullptr, &status);
+            fits_update_key( m_hFITS, TDOUBLE, "CDELT1", &cd[0], nullptr, &status);
             if (status)
             {
                 // Throw a warning with CFITSIO error status, then ignore status 
@@ -1094,7 +1078,7 @@ void FITSDataset::WriteFITSInfo()
                 return;
             }
 
-            fits_update_key( hFITS, TDOUBLE, "CDELT2", &cd[3], nullptr, &status);
+            fits_update_key( m_hFITS, TDOUBLE, "CDELT2", &cd[3], nullptr, &status);
             if (status)
             {
                 // Throw a warning with CFITSIO error status, then ignore status 
@@ -1105,7 +1089,7 @@ void FITSDataset::WriteFITSInfo()
                 return;
             }
 
-            fits_update_key( hFITS, TDOUBLE, "PC1_1", &pc[0], nullptr, &status);
+            fits_update_key( m_hFITS, TDOUBLE, "PC1_1", &pc[0], nullptr, &status);
             if (status)
             {
                 // Throw a warning with CFITSIO error status, then ignore status 
@@ -1116,7 +1100,7 @@ void FITSDataset::WriteFITSInfo()
                 return;
             }
 
-            fits_update_key( hFITS, TDOUBLE, "PC1_2", &pc[1], nullptr, &status);
+            fits_update_key( m_hFITS, TDOUBLE, "PC1_2", &pc[1], nullptr, &status);
             if (status)
             {
                 // Throw a warning with CFITSIO error status, then ignore status 
@@ -1127,7 +1111,7 @@ void FITSDataset::WriteFITSInfo()
                 return;
             }
 
-            fits_update_key( hFITS, TDOUBLE, "PC2_1", &pc[2], nullptr, &status);
+            fits_update_key( m_hFITS, TDOUBLE, "PC2_1", &pc[2], nullptr, &status);
             if (status)
             {
                 // Throw a warning with CFITSIO error status, then ignore status 
@@ -1138,7 +1122,7 @@ void FITSDataset::WriteFITSInfo()
                 return;
             }
 
-            fits_update_key( hFITS, TDOUBLE, "PC2_2", &pc[3], nullptr, &status);
+            fits_update_key( m_hFITS, TDOUBLE, "PC2_2", &pc[3], nullptr, &status);
             if (status)
             {
                 // Throw a warning with CFITSIO error status, then ignore status 
@@ -1160,7 +1144,7 @@ void FITSDataset::WriteFITSInfo()
 const OGRSpatialReference* FITSDataset::GetSpatialRef() const
 
 {
-    return oSRS.IsEmpty() ? nullptr : &oSRS;
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/
@@ -1172,15 +1156,15 @@ CPLErr FITSDataset::SetSpatialRef( const OGRSpatialReference * poSRS )
 {
     if( poSRS == nullptr || poSRS->IsEmpty() )
     {
-        oSRS.Clear();
+        m_oSRS.Clear();
     }
     else
     {
-        oSRS = *poSRS;
-        oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        m_oSRS = *poSRS;
+        m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
 
-    bFITSInfoChanged = true;
+    m_bFITSInfoChanged = true;
 
     return CE_None;
 }
@@ -1192,9 +1176,9 @@ CPLErr FITSDataset::SetSpatialRef( const OGRSpatialReference * poSRS )
 CPLErr FITSDataset::GetGeoTransform( double * padfTransform )
 
 {
-    memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
+    memcpy( padfTransform, m_adfGeoTransform, sizeof(double) * 6 );
 
-    if( !bGeoTransformValid )
+    if( !m_bGeoTransformValid )
         return CE_Failure;
 
     return CE_None;
@@ -1207,10 +1191,8 @@ CPLErr FITSDataset::GetGeoTransform( double * padfTransform )
 CPLErr FITSDataset::SetGeoTransform( double * padfTransform )
 
 {
-    bGeoTransformValid = false;
-
-    memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
-    bGeoTransformValid = true;
+    memcpy( m_adfGeoTransform, padfTransform, sizeof(double)*6 );
+    m_bGeoTransformValid = true;
 
     return CE_None;
 }
@@ -1223,8 +1205,8 @@ double FITSRasterBand::GetOffset( int *pbSuccess )
 
 {
     if( pbSuccess )
-        *pbSuccess = bHaveOffsetScale;
-    return dfOffset;
+        *pbSuccess = m_bHaveOffsetScale;
+    return m_dfOffset;
 }
 
 /************************************************************************/
@@ -1234,11 +1216,11 @@ double FITSRasterBand::GetOffset( int *pbSuccess )
 CPLErr FITSRasterBand::SetOffset( double dfNewValue )
 
 {
-    if( !bHaveOffsetScale || dfNewValue != dfOffset )
-        poFDS->bMetadataChanged = true;
+    if( !m_bHaveOffsetScale || dfNewValue != m_dfOffset )
+        m_poFDS->m_bMetadataChanged = true;
 
-    bHaveOffsetScale = true;
-    dfOffset = dfNewValue;
+    m_bHaveOffsetScale = true;
+    m_dfOffset = dfNewValue;
     return CE_None;
 }
 
@@ -1250,8 +1232,8 @@ double FITSRasterBand::GetScale( int *pbSuccess )
 
 {
     if( pbSuccess )
-        *pbSuccess = bHaveOffsetScale;
-    return dfScale;
+        *pbSuccess = m_bHaveOffsetScale;
+    return m_dfScale;
 }
 
 /************************************************************************/
@@ -1261,11 +1243,11 @@ double FITSRasterBand::GetScale( int *pbSuccess )
 CPLErr FITSRasterBand::SetScale( double dfNewValue )
 
 {
-    if( !bHaveOffsetScale || dfNewValue != dfScale )
-        poFDS->bMetadataChanged = true;
+    if( !m_bHaveOffsetScale || dfNewValue != m_dfScale )
+        m_poFDS->m_bMetadataChanged = true;
 
-    bHaveOffsetScale = true;
-    dfScale = dfNewValue;
+    m_bHaveOffsetScale = true;
+    m_dfScale = dfNewValue;
     return CE_None;
 }
 
@@ -1276,20 +1258,20 @@ CPLErr FITSRasterBand::SetScale( double dfNewValue )
 double FITSRasterBand::GetNoDataValue( int * pbSuccess )
 
 {
-    if( bNoDataSet )
+    if( m_bNoDataSet )
     {
         if( pbSuccess )
             *pbSuccess = TRUE;
 
-        return dfNoDataValue;
+        return m_dfNoDataValue;
     }
 
-    if( poFDS->bNoDataSet )
+    if( m_poFDS->m_bNoDataSet )
     {
         if( pbSuccess )
             *pbSuccess = TRUE;
 
-        return poFDS->dfNoDataValue;
+        return m_poFDS->m_dfNoDataValue;
     }
 
     return GDALPamRasterBand::GetNoDataValue( pbSuccess );
@@ -1302,20 +1284,20 @@ double FITSRasterBand::GetNoDataValue( int * pbSuccess )
 CPLErr FITSRasterBand::SetNoDataValue( double dfNoData )
 
 {
-    if( poFDS->bNoDataSet && poFDS->dfNoDataValue == dfNoData )
+    if( m_poFDS->m_bNoDataSet && m_poFDS->m_dfNoDataValue == dfNoData )
     {
-        bNoDataSet = true;
-        dfNoDataValue = dfNoData;
+        m_bNoDataSet = true;
+        m_dfNoDataValue = dfNoData;
         return CE_None;
     }
 
-    poFDS->bNoDataSet = true;
-    poFDS->dfNoDataValue = dfNoData;
+    m_poFDS->m_bNoDataSet = true;
+    m_poFDS->m_dfNoDataValue = dfNoData;
 
-    poFDS->bNoDataChanged = true;
+    m_poFDS->m_bNoDataChanged = true;
 
-    bNoDataSet = true;
-    dfNoDataValue = dfNoData;
+    m_bNoDataSet = true;
+    m_dfNoDataValue = dfNoData;
     return CE_None;
 }
 
@@ -1326,16 +1308,16 @@ CPLErr FITSRasterBand::SetNoDataValue( double dfNoData )
 CPLErr FITSRasterBand::DeleteNoDataValue()
 
 {
-    if( !poFDS->bNoDataSet )
+    if( !m_poFDS->m_bNoDataSet )
         return CE_None;
 
-    poFDS->bNoDataSet = false;
-    poFDS->dfNoDataValue = -9999.0;
+    m_poFDS->m_bNoDataSet = false;
+    m_poFDS->m_dfNoDataValue = -9999.0;
 
-    poFDS->bNoDataChanged = true;
+    m_poFDS->m_bNoDataChanged = true;
 
-    bNoDataSet = false;
-    dfNoDataValue = -9999.0;
+    m_bNoDataSet = false;
+    m_dfNoDataValue = -9999.0;
     return CE_None;
 }
 
@@ -1359,7 +1341,7 @@ void FITSDataset::LoadGeoreferencing()
 /*      Get the transform from the FITS file.                           */
 /* -------------------------------------------------------------------- */
 
-    fits_read_key(hFITS, TSTRING, "OBJECT", target, nullptr, &status);
+    fits_read_key(m_hFITS, TSTRING, "OBJECT", target, nullptr, &status);
     if( status )
     {
         strncpy(target, "Undefined", 10);
@@ -1372,14 +1354,14 @@ void FITSDataset::LoadGeoreferencing()
     DatumName.assign("D_");
     DatumName.append(target);
 
-    fits_read_key(hFITS, TDOUBLE, "A_RADIUS", &aRadius, nullptr, &status);
+    fits_read_key(m_hFITS, TDOUBLE, "A_RADIUS", &aRadius, nullptr, &status);
     if( status )
     {
         CPLDebug("FITS",
             "No Radii keyword available, metadata will not contain DATUM information.");
         return;
     } else {
-        fits_read_key(hFITS, TDOUBLE, "C_RADIUS", &cRadius, nullptr, &status);
+        fits_read_key(m_hFITS, TDOUBLE, "C_RADIUS", &cRadius, nullptr, &status);
         if( status )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
@@ -1395,16 +1377,16 @@ void FITSDataset::LoadGeoreferencing()
 
     /* Waiting for linear keywords standardization only deg ctype are used */
     /* Check if WCS are there */
-    fits_read_key(hFITS, TSTRING, "CTYPE1", ctype, nullptr, &status);
+    fits_read_key(m_hFITS, TSTRING, "CTYPE1", ctype, nullptr, &status);
     if ( !status ) {
         /* Check if angular WCS are there */
         if ( strstr(ctype, "LN") )
         {
             /* Reading reference points */
-            fits_read_key(hFITS, TDOUBLE, "CRPIX1", &crpix1, nullptr, &status);
-            fits_read_key(hFITS, TDOUBLE, "CRPIX2", &crpix2, nullptr, &status);
-            fits_read_key(hFITS, TDOUBLE, "CRVAL1", &crval1, nullptr, &status);
-            fits_read_key(hFITS, TDOUBLE, "CRVAL2", &crval2, nullptr, &status);
+            fits_read_key(m_hFITS, TDOUBLE, "CRPIX1", &crpix1, nullptr, &status);
+            fits_read_key(m_hFITS, TDOUBLE, "CRPIX2", &crpix2, nullptr, &status);
+            fits_read_key(m_hFITS, TDOUBLE, "CRVAL1", &crval1, nullptr, &status);
+            fits_read_key(m_hFITS, TDOUBLE, "CRVAL2", &crval2, nullptr, &status);
             if( status )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -1412,13 +1394,13 @@ void FITSDataset::LoadGeoreferencing()
                 status = 0;
             } else {
                 /* Check for CDELT and PC matrix representation */
-                fits_read_key(hFITS, TDOUBLE, "CDELT1", &cdelt1, nullptr, &status);
+                fits_read_key(m_hFITS, TDOUBLE, "CDELT1", &cdelt1, nullptr, &status);
                 if ( ! status ) {
-                    fits_read_key(hFITS, TDOUBLE, "CDELT2", &cdelt2, nullptr, &status);
-                    fits_read_key(hFITS, TDOUBLE, "PC1_1", &pc[0], nullptr, &status);
-                    fits_read_key(hFITS, TDOUBLE, "PC1_2", &pc[1], nullptr, &status);
-                    fits_read_key(hFITS, TDOUBLE, "PC2_1", &pc[2], nullptr, &status);
-                    fits_read_key(hFITS, TDOUBLE, "PC2_2", &pc[3], nullptr, &status);
+                    fits_read_key(m_hFITS, TDOUBLE, "CDELT2", &cdelt2, nullptr, &status);
+                    fits_read_key(m_hFITS, TDOUBLE, "PC1_1", &pc[0], nullptr, &status);
+                    fits_read_key(m_hFITS, TDOUBLE, "PC1_2", &pc[1], nullptr, &status);
+                    fits_read_key(m_hFITS, TDOUBLE, "PC2_1", &pc[2], nullptr, &status);
+                    fits_read_key(m_hFITS, TDOUBLE, "PC2_2", &pc[3], nullptr, &status);
                     cd[0] = cdelt1 * pc[0];
                     cd[1] = cdelt1 * pc[1];
                     cd[2] = cdelt2 * pc[2];
@@ -1426,31 +1408,31 @@ void FITSDataset::LoadGeoreferencing()
                     status = 0;
                 } else {
                     /* Look for CD matrix representation */
-                    fits_read_key(hFITS, TDOUBLE, "CD1_1", &cd[0], nullptr, &status);
-                    fits_read_key(hFITS, TDOUBLE, "CD1_2", &cd[1], nullptr, &status);
-                    fits_read_key(hFITS, TDOUBLE, "CD2_1", &cd[2], nullptr, &status);
-                    fits_read_key(hFITS, TDOUBLE, "CD2_2", &cd[3], nullptr, &status);
+                    fits_read_key(m_hFITS, TDOUBLE, "CD1_1", &cd[0], nullptr, &status);
+                    fits_read_key(m_hFITS, TDOUBLE, "CD1_2", &cd[1], nullptr, &status);
+                    fits_read_key(m_hFITS, TDOUBLE, "CD2_1", &cd[2], nullptr, &status);
+                    fits_read_key(m_hFITS, TDOUBLE, "CD2_2", &cd[3], nullptr, &status);
                 }
 
                 double radfac = DEG2RAD * aRadius;
 
-                adfGeoTransform[1] = cd[0] * radfac;
-                adfGeoTransform[2] = cd[1] * radfac;
-                adfGeoTransform[4] = cd[2] * radfac;
-                adfGeoTransform[5] = - cd[3] * radfac ;
+                m_adfGeoTransform[1] = cd[0] * radfac;
+                m_adfGeoTransform[2] = cd[1] * radfac;
+                m_adfGeoTransform[4] = cd[2] * radfac;
+                m_adfGeoTransform[5] = - cd[3] * radfac ;
                 if ( crval1 > 180. ) {
                     crval1 = crval1 - 180.;
                 }
 
                 /* NOTA BENE: FITS standard define pixel integers at the center of the pixel,
                    0.5 must be subtract to have UpperLeft corner */
-                adfGeoTransform[0] = crval1 * radfac - adfGeoTransform[1] * (crpix1-0.5);
+                m_adfGeoTransform[0] = crval1 * radfac - m_adfGeoTransform[1] * (crpix1-0.5);
                 // assuming that center latitude is also the origin of the coordinate
                 // system: this is not always true.
                 // More generic implementation coming soon
-                adfGeoTransform[3] = - adfGeoTransform[5] * (crpix2-0.5);
+                m_adfGeoTransform[3] = - m_adfGeoTransform[5] * (crpix2-0.5);
                                                          //+ crval2 * radfac;
-                bGeoTransformValid = true;
+                m_bGeoTransformValid = true;
             }
 
             char* pstr = strrchr(ctype, '-');
@@ -1465,13 +1447,13 @@ void FITSDataset::LoadGeoreferencing()
                 /* Sinusoidal / SFL projection */
                 if( strcmp(pstr,"SFL" ) == 0 ) {
                     projName.assign("Sinusoidal_");
-                    oSRS.SetSinusoidal(crval1, falseEast, falseNorth);
+                    m_oSRS.SetSinusoidal(crval1, falseEast, falseNorth);
 
                 /* Mercator, Oblique (Hotine) Mercator, Transverse Mercator */
                 /* Mercator / MER projection */
                 } else if( strcmp(pstr,"MER" ) == 0 ) {
                     projName.assign("Mercator_");
-                    oSRS.SetMercator(crval2, crval1, scale, falseEast, falseNorth);
+                    m_oSRS.SetMercator(crval2, crval1, scale, falseEast, falseNorth);
 
                 /* Equirectangular / CAR projection */
                 } else if( strcmp(pstr,"CAR" ) == 0 ) {
@@ -1482,43 +1464,43 @@ void FITSDataset::LoadGeoreferencing()
                 But FITS WCS only supports projections on the sphere
                 we assume here that the local radius is the one computed at the projection center
                 */
-                    oSRS.SetEquirectangular2(crval2, crval1, crval2, falseEast, falseNorth);
+                    m_oSRS.SetEquirectangular2(crval2, crval1, crval2, falseEast, falseNorth);
                 /* Lambert Azimuthal Equal Area / ZEA projection */
                 } else if( strcmp(pstr,"ZEA" ) == 0 ) {
                     projName.assign("Lambert_Azimuthal_Equal_Area_");
-                    oSRS.SetLAEA(crval2, crval1, falseEast, falseNorth);
+                    m_oSRS.SetLAEA(crval2, crval1, falseEast, falseNorth);
 
                 /* Lambert Conformal Conic 1SP / COO projection */
                 } else if( strcmp(pstr,"COO" ) == 0 ) {
                     projName.assign("Lambert_Conformal_Conic_1SP_");
-                    oSRS.SetLCC1SP (crval2, crval1, scale, falseEast, falseNorth);
+                    m_oSRS.SetLCC1SP (crval2, crval1, scale, falseEast, falseNorth);
 
                 /* Orthographic / SIN projection */
                 } else if( strcmp(pstr,"SIN" ) == 0 ) {
                     projName.assign("Orthographic_");
-                    oSRS.SetOrthographic(crval2, crval1, falseEast, falseNorth);
+                    m_oSRS.SetOrthographic(crval2, crval1, falseEast, falseNorth);
 
                 /* Point Perspective / AZP projection */
                 } else if( strcmp(pstr,"AZP" ) == 0 ) {
                     projName.assign("perspective_point_height_");
-                    oSRS.SetProjection(SRS_PP_PERSPECTIVE_POINT_HEIGHT);
+                    m_oSRS.SetProjection(SRS_PP_PERSPECTIVE_POINT_HEIGHT);
                     /* # appears to need height... maybe center lon/lat */
 
                 /* Polar Stereographic / STG projection */
                 } else if( strcmp(pstr,"STG" ) == 0 ) {
                     projName.assign("Polar_Stereographic_");
-                    oSRS.SetStereographic(crval2, crval1, scale, falseEast, falseNorth);
+                    m_oSRS.SetStereographic(crval2, crval1, scale, falseEast, falseNorth);
                 } else {
                     CPLError(CE_Failure, CPLE_AppDefined, "Unknown projection.");
                 }
 
                 projName.append(target);
-                oSRS.SetProjParm(SRS_PP_FALSE_EASTING,0.0);
-                oSRS.SetProjParm(SRS_PP_FALSE_NORTHING,0.0);
+                m_oSRS.SetProjParm(SRS_PP_FALSE_EASTING,0.0);
+                m_oSRS.SetProjParm(SRS_PP_FALSE_NORTHING,0.0);
 
-                oSRS.SetNode("PROJCS",projName.c_str());
+                m_oSRS.SetNode("PROJCS",projName.c_str());
 
-                oSRS.SetGeogCS(GeogName.c_str(), DatumName.c_str(), target, aRadius, invFlattening,
+                m_oSRS.SetGeogCS(GeogName.c_str(), DatumName.c_str(), target, aRadius, invFlattening,
                     "Reference_Meridian", 0.0, "degree", 0.0174532925199433);
             }  else {
                 CPLError(CE_Failure, CPLE_AppDefined, "Unknown projection.");
@@ -1543,24 +1525,24 @@ void FITSDataset::LoadFITSInfo()
 
     LoadGeoreferencing();
 
-    CPLAssert(!bMetadataChanged);
-    CPLAssert(!bNoDataChanged);
+    CPLAssert(!m_bMetadataChanged);
+    CPLAssert(!m_bNoDataChanged);
 
-    bMetadataChanged = false;
-    bNoDataChanged = false;
+    m_bMetadataChanged = false;
+    m_bNoDataChanged = false;
 
-    bitpix = this->fitsDataType;
+    bitpix = this->m_fitsDataType;
     FITSRasterBand *poBand = cpl::down_cast<FITSRasterBand*>(GetRasterBand(1));
 
     if (bitpix != TUSHORT && bitpix != TUINT)
     {
-        fits_read_key(hFITS, TDOUBLE, "BSCALE", &dfScale, nullptr, &status);
+        fits_read_key(m_hFITS, TDOUBLE, "BSCALE", &dfScale, nullptr, &status);
         if( status )
         {
             status = 0;
             dfScale = 1.;
         }
-        fits_read_key(hFITS, TDOUBLE, "BZERO", &dfOffset, nullptr, &status);
+        fits_read_key(m_hFITS, TDOUBLE, "BZERO", &dfOffset, nullptr, &status);
         if( status )
         {
             status = 0;
@@ -1568,14 +1550,14 @@ void FITSDataset::LoadFITSInfo()
         }
         if ( dfScale != 1. || dfOffset != 0. )
         {
-            poBand->bHaveOffsetScale = true;
-            poBand->dfScale = dfScale;
-            poBand->dfOffset = dfOffset;
+            poBand->m_bHaveOffsetScale = true;
+            poBand->m_dfScale = dfScale;
+            poBand->m_dfOffset = dfOffset;
         }
     }
 
-    fits_read_key(hFITS, TDOUBLE, "BLANK", &dfNoDataValue, nullptr, &status);
-    bNoDataSet = !status;
+    fits_read_key(m_hFITS, TDOUBLE, "BLANK", &m_dfNoDataValue, nullptr, &status);
+    m_bNoDataSet = !status;
 }
 
 /************************************************************************/
