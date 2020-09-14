@@ -80,6 +80,7 @@ class FITSDataset final : public GDALPamDataset {
   void        WriteFITSInfo();
   bool        bFITSInfoChanged;
 
+  void        LoadGeoreferencing();
   void        LoadFITSInfo();
 
 public:
@@ -1339,15 +1340,12 @@ CPLErr FITSRasterBand::DeleteNoDataValue()
 }
 
 /************************************************************************/
-/*                     LoadFITSInfo()                                   */
+/*                         LoadGeoreferencing()                         */
 /************************************************************************/
 
-void FITSDataset::LoadFITSInfo()
-
+void FITSDataset::LoadGeoreferencing()
 {
     int status = 0;
-    int bitpix;
-    double dfScale, dfOffset;
     double crpix1, crpix2, crval1, crval2, cdelt1, cdelt2, pc[4], cd[4];
     double aRadius, cRadius, invFlattening = 0.0;
     double falseEast = 0.0, falseNorth = 0.0, scale = 1.0;
@@ -1365,8 +1363,7 @@ void FITSDataset::LoadFITSInfo()
     if( status )
     {
         strncpy(target, "Undefined", 10);
-        CPLError(CE_Failure, CPLE_AppDefined,
-             "OBJECT keyword is missing");
+        CPLDebug("FITS", "OBJECT keyword is missing");
         status = 0;
     }
 
@@ -1378,14 +1375,14 @@ void FITSDataset::LoadFITSInfo()
     fits_read_key(hFITS, TDOUBLE, "A_RADIUS", &aRadius, nullptr, &status);
     if( status )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
+        CPLDebug("FITS",
             "No Radii keyword available, metadata will not contain DATUM information.");
-        status = 0;
+        return;
     } else {
         fits_read_key(hFITS, TDOUBLE, "C_RADIUS", &cRadius, nullptr, &status);
         if( status )
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
+            CPLError(CE_Warning, CPLE_AppDefined,
                 "No polar radius keyword available, setting C_RADIUS = A_RADIUS");
             cRadius = aRadius;
             status = 0;
@@ -1528,10 +1525,23 @@ void FITSDataset::LoadFITSInfo()
             }
         }
     } else {
-        CPLError(CE_Failure, CPLE_AppDefined,
+        CPLError(CE_Warning, CPLE_AppDefined,
              "No CTYPE keywords: no geospatial information available.");
-        status = 0;
     }
+}
+
+/************************************************************************/
+/*                     LoadFITSInfo()                                   */
+/************************************************************************/
+
+void FITSDataset::LoadFITSInfo()
+
+{
+    int status = 0;
+    int bitpix;
+    double dfScale, dfOffset;
+
+    LoadGeoreferencing();
 
     CPLAssert(!bMetadataChanged);
     CPLAssert(!bNoDataChanged);
