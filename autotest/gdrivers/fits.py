@@ -32,6 +32,7 @@ import os
 import pytest
 
 from osgeo import gdal
+from osgeo import ogr
 import gdaltest
 
 pytestmark = pytest.mark.require_driver('FITS')
@@ -209,3 +210,336 @@ def test_fits_read_image_in_second_and_fourth_hdu_table_in_third():
     assert ds.RasterXSize == 1
     assert ds.RasterYSize == 3
     assert ds.GetMetadata() == {'EXTNAME': 'SECOND_IMAGE', 'FOO': 'BAR     '}
+
+
+# Test opening raster files in vector mode
+def test_fits_open_raster_only_in_vector_mode():
+
+    filename = 'data/fits/empty_primary_hdu.fits'
+    assert os.path.exists(filename)
+    with gdaltest.error_handler():
+        assert ogr.Open(filename) is None
+
+    filename = 'data/fits/byte_merc.fits'
+    assert os.path.exists(filename)
+    with gdaltest.error_handler():
+        assert ogr.Open(filename) is None
+
+    filename = 'data/fits/image_in_first_and_second_hdu.fits'
+    assert os.path.exists(filename)
+    with gdaltest.error_handler():
+        assert ogr.Open(filename) is None
+
+    ds = gdal.OpenEx('data/fits/image_in_second_and_fourth_hdu_table_in_third.fits', gdal.OF_VECTOR)
+    assert ds.GetMetadata('SUBDATASETS') == {}
+
+
+# Test opening vector files in raster mode
+def test_fits_open_vector_only_in_raster_mode():
+
+    filename = 'data/fits/binary_table.fits'
+    assert os.path.exists(filename)
+    with gdaltest.error_handler():
+        assert gdal.Open(filename) is None
+
+
+# Test opening with gdal.OF_RASTER | gdal.OF_VECTOR
+def test_fits_open_mix_mode():
+
+    # Raster only content
+    ds = gdal.OpenEx('data/fits/byte_merc.fits', gdal.OF_RASTER | gdal.OF_VECTOR)
+    assert ds.RasterCount != 0
+    assert ds.GetLayerCount() == 0
+
+    # Vector only content
+    ds = gdal.OpenEx('data/fits/binary_table.fits', gdal.OF_RASTER | gdal.OF_VECTOR)
+    assert ds.RasterCount == 0
+    assert ds.GetLayerCount() != 0
+
+    # Mix of raster and vector
+    ds = gdal.OpenEx('data/fits/image_in_second_and_fourth_hdu_table_in_third.fits', gdal.OF_RASTER | gdal.OF_VECTOR)
+    assert ds.GetMetadata('SUBDATASETS') != {}
+    assert ds.GetLayerCount() != 0
+
+
+def test_fits_vector():
+
+    ds = ogr.Open('data/fits/binary_table.fits')
+    assert ds.GetLayerCount() == 1
+    assert ds.GetLayer(-1) is None
+    assert ds.GetLayer(1) is None
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == 'MyTable'
+    assert lyr.GetGeomType() == ogr.wkbNone
+    assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
+    assert lyr.TestCapability(ogr.OLCRandomRead) == 1
+    assert lyr.TestCapability("something_else") == 0
+    assert lyr.GetFeatureCount() == 3
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldCount() == 78
+    mapType = {}
+    for x in ["ogr.OFTInteger", "ogr.OFTInteger64", "ogr.OFTReal",
+              "ogr.OFTString", "ogr.OFTIntegerList", "ogr.OFTInteger64List",
+              "ogr.OFTRealList", "ogr.OFTStringList"]:
+        mapType[eval(x)] = x
+    mapSubType = {}
+    for x in ["ogr.OFSTNone", "ogr.OFSTBoolean", "ogr.OFSTFloat32", "ogr.OFSTInt16"]:
+        mapSubType[eval(x)] = x
+    got = [(lyr_defn.GetFieldDefn(i).GetNameRef(),
+            mapType[lyr_defn.GetFieldDefn(i).GetType()],
+            mapSubType[lyr_defn.GetFieldDefn(i).GetSubType()],
+            lyr_defn.GetFieldDefn(i).GetWidth()) for i in range(lyr_defn.GetFieldCount())]
+    expected = [('B_scaled_integer', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('B_scaled', 'ogr.OFTReal', 'ogr.OFSTNone', 0),
+                ('I_scaled_integer', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('I_scaled', 'ogr.OFTReal', 'ogr.OFSTNone', 0),
+                ('J_scaled_integer', 'ogr.OFTInteger64', 'ogr.OFSTNone', 0),
+                ('J_scaled', 'ogr.OFTReal', 'ogr.OFSTNone', 0),
+                ('K_scaled', 'ogr.OFTReal', 'ogr.OFSTNone', 0),
+                ('E_scaled', 'ogr.OFTReal', 'ogr.OFSTNone', 0),
+                ('D_scaled', 'ogr.OFTReal', 'ogr.OFSTNone', 0),
+                ('C_scaled', 'ogr.OFTString', 'ogr.OFSTNone', 0),
+                ('M_scaled', 'ogr.OFTString', 'ogr.OFSTNone', 0),
+                ('L', 'ogr.OFTInteger', 'ogr.OFSTBoolean', 0),
+                ('2L', 'ogr.OFTIntegerList', 'ogr.OFSTBoolean', 0),
+                ('PL', 'ogr.OFTIntegerList', 'ogr.OFSTBoolean', 0),
+                ('QL', 'ogr.OFTIntegerList', 'ogr.OFSTBoolean', 0),
+                ('X_bit1', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit1', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit2', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit3', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit4', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit5', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit6', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit7', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit8', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit9', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit10', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit11', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit12', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit13', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit14', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit15', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit16', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit17', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit18', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit19', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit20', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit21', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit22', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit23', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit24', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit25', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit26', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit27', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit28', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit29', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit30', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit31', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit32', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('33X_bit33', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('B', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('2B', 'ogr.OFTIntegerList', 'ogr.OFSTNone', 0),
+                ('PB', 'ogr.OFTIntegerList', 'ogr.OFSTNone', 0),
+                ('BDIM', 'ogr.OFTIntegerList', 'ogr.OFSTNone', 0),
+                ('I', 'ogr.OFTInteger', 'ogr.OFSTInt16', 0),
+                ('2I', 'ogr.OFTIntegerList', 'ogr.OFSTInt16', 0),
+                ('PI', 'ogr.OFTIntegerList', 'ogr.OFSTInt16', 0),
+                ('J', 'ogr.OFTInteger', 'ogr.OFSTNone', 0),
+                ('2J', 'ogr.OFTIntegerList', 'ogr.OFSTNone', 0),
+                ('PJ', 'ogr.OFTIntegerList', 'ogr.OFSTNone', 0),
+                ('K', 'ogr.OFTInteger64', 'ogr.OFSTNone', 0),
+                ('2K', 'ogr.OFTInteger64List', 'ogr.OFSTNone', 0),
+                ('PK', 'ogr.OFTInteger64List', 'ogr.OFSTNone', 0),
+                ('A', 'ogr.OFTString', 'ogr.OFSTNone', 1),
+                ('A2', 'ogr.OFTString', 'ogr.OFSTNone', 2),
+                ('PA', 'ogr.OFTString', 'ogr.OFSTNone', 0),
+                ('ADIM', 'ogr.OFTStringList', 'ogr.OFSTNone', 2),
+                ('E', 'ogr.OFTReal', 'ogr.OFSTFloat32', 0),
+                ('2E', 'ogr.OFTRealList', 'ogr.OFSTFloat32', 0),
+                ('PE', 'ogr.OFTRealList', 'ogr.OFSTFloat32', 0),
+                ('D', 'ogr.OFTReal', 'ogr.OFSTNone', 0),
+                ('2D', 'ogr.OFTRealList', 'ogr.OFSTNone', 0),
+                ('PD', 'ogr.OFTRealList', 'ogr.OFSTNone', 0),
+                ('C', 'ogr.OFTString', 'ogr.OFSTNone', 0),
+                ('2C', 'ogr.OFTStringList', 'ogr.OFSTNone', 0),
+                ('PC', 'ogr.OFTStringList', 'ogr.OFSTNone', 0),
+                ('M', 'ogr.OFTString', 'ogr.OFSTNone', 0),
+                ('2M', 'ogr.OFTStringList', 'ogr.OFSTNone', 0),
+                ('PM', 'ogr.OFTStringList', 'ogr.OFSTNone', 0)]
+    if got != expected:
+        import pprint
+        pp = pprint.PrettyPrinter()
+        pp.pprint(got)
+        assert False
+
+    expected_f1 = [
+        -128,
+        5.5,
+        0,
+        -49149.5,
+        0,
+        -3221225469.5,
+        -1.3835058055282164e+19,
+        4.375,
+        4.375,
+        '4.375 + 5.875j',
+        '4.375 + 5.875j',
+        0,
+        [0, 0],
+        [1, 0],
+        [1, 0],
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        [255, 0],
+        [255, 0],
+        [0, 255, 0, 255, 0, 255],
+        -32768,
+        [-32768, 32767],
+        [-32768, 32767],
+        -2147483648,
+        [-2147483648, 2147483647],
+        [-2147483648, 2147483647],
+        -9223372036854775808,
+        [-9223372036854775808, 9223372036854775807],
+        [-9223372036854775808, 9223372036854775807],
+        'A',
+        'AB',
+        'AB',
+        ['AB', 'ab', 'Ab'],
+        1.25,
+        [1.25, 2.25],
+        [1.25, 2.25],
+        1.2534,
+        [1.2534, 2.25],
+        [1.2534, 2.25],
+        '1.25 + 2.25j',
+        ['1.25 + 2.25j', '2.25 + 1.25j'],
+        ['1.25 + 2.25j', '2.25 + 1.25j'],
+        '1.25340000000000007 + 2.25j',
+        ['1.25340000000000007 + 2.25j', '2.25 + 1.25j'],
+        ['1.25340000000000007 + 2.25j', '2.25 + 1.25j']]
+
+    f = lyr.GetNextFeature()
+    got = [f.GetField(i) for i in range(f.GetFieldCount())]
+    assert got == expected_f1
+
+    expected_f2 = [
+        127,
+        385.0,
+        65535,
+        49153.0,
+        4294967295,
+        3221225473.0,
+        1.3835058055282164e+19,
+        5.875,
+        5.875,
+        '2.5 + 2.5j',
+        '2.5 + 2.5j',
+        0,
+        [0, 0],
+        [0, 1, 0],
+        [0, 1, 0],
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1,
+        255,
+        [0, 255],
+        [0, 255, 0],
+        [255, 255, 0, 0, 0, 255],
+        32767,
+        [32767, -32768],
+        [32767, 0, -32768],
+        2147483647,
+        [2147483647, -2147483648],
+        [2147483647, 0, -2147483648],
+        9223372036854775807,
+        [9223372036854775807, -9223372036854775808],
+        [9223372036854775807, 0, -9223372036854775808],
+        'B',
+        'CD',
+        'CDE',
+        ['CD', 'cd', 'Cd'],
+        2.25,
+        [2.25, 1.25],
+        [2.25, 1.25, 2.25],
+        2.25,
+        [2.2534, 1.25],
+        [2.2534, 1.25, 2.25],
+        '2.25 + 1.25j',
+        ['2.25 + 1.25j', '1.25 + 2.25j'],
+        ['2.25 + 1.25j', '1.25 + 2.25j', '2.25 + 1.25j'],
+        '2.25 + 1.25j',
+        ['2.25 + 1.25j', '1.25 + 2.25j'],
+        ['2.25 + 1.25j', '1.25 + 2.25j', '2.25 + 1.25j']]
+
+    f = lyr.GetNextFeature()
+    got = [f.GetField(i) for i in range(f.GetFieldCount())]
+    assert got == expected_f2
+
+    f = lyr.GetNextFeature()
+    assert f.GetField('B') is None
