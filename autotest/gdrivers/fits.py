@@ -114,3 +114,20 @@ def test_fits_offscale():
     assert offset == -0.0039525691699605
     assert scale == 1.00395256917
 
+
+def test_fits_read_offset_scale_no_georef():
+
+    ds = gdal.Open('data/fits/offset_scale_no_georef.fits')
+    assert gdal.GetLastErrorMsg() == ''
+    assert ds.GetRasterBand(1).GetOffset() != 0
+    assert ds.GetRasterBand(1).GetScale() != 1
+
+
+def test_fits_read_georef_merc():
+
+    ds = gdal.Open('data/fits/byte_merc.fits')
+    assert gdal.GetLastErrorMsg() == ''
+    wkt = ds.GetProjectionRef()
+    assert wkt == 'PROJCS["Mercator_Earth",GEOGCS["GCS_Earth",DATUM["D_Earth",SPHEROID["Earth",6378206.4,294.978698213898]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
+    gt = ds.GetGeoTransform()
+    assert gt == pytest.approx((-13095897.481058259, 72.23522015778646, 0.0, 3991653.2130816197, 0.0, -72.23522015778646), abs=1e-3)
