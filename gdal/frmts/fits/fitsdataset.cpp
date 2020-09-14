@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2001, Simon Perkins
- * Copyright (c) 2008-2018, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2008-2020, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2018, Chiara Marmo <chiara dot marmo at u-psud dot fr>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -56,6 +56,7 @@ class FITSDataset final : public GDALPamDataset {
 
   fitsfile* m_hFITS = nullptr;
 
+  int       m_hduNum = 0;
   GDALDataType m_gdalDataType = GDT_Unknown;   // GDAL code for the image type
   int m_fitsDataType = 0;   // FITS code for the image type
 
@@ -68,25 +69,30 @@ class FITSDataset final : public GDALPamDataset {
 
   bool        m_bMetadataChanged = false;
 
-  FITSDataset();     // Others should not call this constructor explicitly
-
-  CPLErr Init(fitsfile* hFITS, bool isExistingFile);
+  CPLStringList m_aosSubdatasets{};
 
   OGRSpatialReference m_oSRS{};
 
   double      m_adfGeoTransform[6];
   bool        m_bGeoTransformValid = false;
 
-  void        WriteFITSInfo();
   bool        m_bFITSInfoChanged = false;
+
+
+  FITSDataset();     // Others should not call this constructor explicitly
+
+  CPLErr Init(fitsfile* hFITS, bool isExistingFile, int hduNum);
 
   void        LoadGeoreferencing();
   void        LoadFITSInfo();
+  void        WriteFITSInfo();
+  void        LoadMetadata();
 
 public:
   ~FITSDataset();
 
   static GDALDataset* Open( GDALOpenInfo* );
+  static int          Identify( GDALOpenInfo* );
   static GDALDataset* Create( const char* pszFilename,
                               int nXSize, int nYSize, int nBands,
                               GDALDataType eType,
@@ -95,6 +101,7 @@ public:
   CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
   virtual CPLErr GetGeoTransform( double * ) override;
   virtual CPLErr SetGeoTransform( double * ) override;
+  char** GetMetadata(const char* papszDomain = nullptr) override;
 
   bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
 
@@ -268,15 +275,15 @@ CPLErr FITSRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
 // Simple static function to determine if FITS header keyword should
 // be saved in meta data.
-constexpr int ignorableHeaderCount = 18;
-static const char* const ignorableFITSHeaders[ignorableHeaderCount] = {
+static const char* const ignorableFITSHeaders[] = {
   "SIMPLE", "BITPIX", "NAXIS", "NAXIS1", "NAXIS2", "NAXIS3", "END",
   "XTENSION", "PCOUNT", "GCOUNT", "EXTEND", "CONTINUE",
-  "COMMENT", "", "LONGSTRN", "BZERO", "BSCALE", "BLANK"
+  "COMMENT", "", "LONGSTRN", "BZERO", "BSCALE", "BLANK",
+  "CHECKSUM", "DATASUM",
 };
 static bool isIgnorableFITSHeader(const char* name) {
-  for (int i = 0; i < ignorableHeaderCount; ++i) {
-    if (strcmp(name, ignorableFITSHeaders[i]) == 0)
+  for (const char* keyword: ignorableFITSHeaders) {
+    if (strcmp(name, keyword) == 0)
       return true;
   }
   return false;
@@ -306,13 +313,13 @@ FITSDataset::~FITSDataset() {
   int status;
   if( m_hFITS )
   {
-    if(eAccess == GA_Update)
+    if(m_hduNum > 0 && eAccess == GA_Update)
     {
       // Only do this if we've successfully opened the file and update
       // capability.  Write any meta data to the file that's compatible with
       // FITS.
       status = 0;
-      fits_movabs_hdu(m_hFITS, 1, nullptr, &status);
+      fits_movabs_hdu(m_hFITS, m_hduNum, nullptr, &status);
       fits_write_key_longwarn(m_hFITS, &status);
       if (status) {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -432,6 +439,8 @@ FITSDataset::~FITSDataset() {
 
 bool FITSDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
 {
+    if( m_hduNum == 0 )
+        return false;
     int status = 0;
     if( fits_is_compressed_image( m_hFITS, &status) )
         return false;
@@ -459,174 +468,227 @@ bool FITSDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
 /*                           Init()                                     */
 /************************************************************************/
 
-CPLErr FITSDataset::Init(fitsfile* hFITS, bool isExistingFile) {
+CPLErr FITSDataset::Init(fitsfile* hFITS, bool isExistingFile, int hduNum) {
 
-  m_hFITS = hFITS;
-  m_isExistingFile = isExistingFile;
-  m_highestOffsetWritten = 0;
-  int status = 0;
+    m_hFITS = hFITS;
+    m_isExistingFile = isExistingFile;
 
-  // Move to the primary HDU
-  fits_movabs_hdu(m_hFITS, 1, nullptr, &status);
-  if (status) {
-    CPLError(CE_Failure, CPLE_AppDefined,
-             "Couldn't move to first HDU in FITS file %s (%d).\n",
-             GetDescription(), status);
-    return CE_Failure;
-  }
+    int status = 0;
+    double offset;
 
-  // Get the image info for this dataset (note that all bands in a FITS dataset
-  // have the same type)
-  int bitpix;
-  int naxis;
-  const int maxdim = 3;
-  long naxes[maxdim];
-  double offset;
-  
-  fits_get_img_param(hFITS, maxdim, &bitpix, &naxis, naxes, &status);
-  if (status) {
-    CPLError(CE_Failure, CPLE_AppDefined,
-             "Couldn't determine image parameters of FITS file %s (%d).",
-             GetDescription(), status);
-    return CE_Failure;
-  }
-  fits_read_key(hFITS, TDOUBLE, "BZERO", &offset, nullptr, &status);
-  if( status )
-  {
-    // BZERO is not mandatory offset defaulted to 0 if BZERO is missing
-    status = 0;
-    offset = 0.;
-  }
-
-  fits_read_key(hFITS, TDOUBLE, "BLANK", &m_dfNoDataValue, nullptr, &status);
-  m_bNoDataSet = !status;
-  status = 0;
-
-  // Determine data type and nodata value if BLANK keyword is absent
-  if (bitpix == BYTE_IMG) {
-     m_gdalDataType = GDT_Byte;
-     m_fitsDataType = TBYTE;
-  }
-  else if (bitpix == SHORT_IMG) {
-    if (offset == 32768.)
+    int hduType = 0;
+    fits_movabs_hdu(hFITS, hduNum, &hduType, &status);
+    if (status)
     {
-      m_gdalDataType = GDT_UInt16;
-      m_fitsDataType = TUSHORT;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Couldn't move to HDU %d in FITS file %s (%d).",
+                hduNum, GetDescription(), status);
+        return CE_Failure;
     }
-    else {
-      m_gdalDataType = GDT_Int16;
-      m_fitsDataType = TSHORT;
-    }
-  }
-  else if (bitpix == LONG_IMG) {
-    if (offset == 2147483648.)
+
+    if( hduType != IMAGE_HDU )
     {
-      m_gdalDataType = GDT_UInt32;
-      m_fitsDataType = TUINT;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "HDU %d is not an image.", hduNum);
+        return CE_Failure;
     }
-    else {
-      m_gdalDataType = GDT_Int32;
-      m_fitsDataType = TINT;
-    }
-  }
-  else if (bitpix == FLOAT_IMG) {
-    m_gdalDataType = GDT_Float32;
-    m_fitsDataType = TFLOAT;
-  }
-  else if (bitpix == DOUBLE_IMG) {
-    m_gdalDataType = GDT_Float64;
-    m_fitsDataType = TDOUBLE;
-  }
-  else {
-    CPLError(CE_Failure, CPLE_AppDefined,
-             "FITS file %s has unknown data type: %d.", GetDescription(),
-             bitpix);
-    return CE_Failure;
-  }
 
-  // Determine image dimensions - we assume BSQ ordering
-  if (naxis == 2) {
-    nRasterXSize = static_cast<int>(naxes[0]);
-    nRasterYSize = static_cast<int>(naxes[1]);
-    nBands = 1;
-  }
-  else if (naxis == 3) {
-    nRasterXSize = static_cast<int>(naxes[0]);
-    nRasterYSize = static_cast<int>(naxes[1]);
-    nBands = static_cast<int>(naxes[2]);
-  }
-  else {
-    CPLError(CE_Failure, CPLE_AppDefined,
-             "FITS file %s does not have 2 or 3 dimensions.",
-             GetDescription());
-    return CE_Failure;
-  }
-
-  // Create the bands
-  for (int i = 0; i < nBands; ++i)
-    SetBand(i+1, new FITSRasterBand(this, i+1));
-
-  // Read header information from file and use it to set metadata
-  // This process understands the CONTINUE standard for long strings.
-  // We don't bother to capture header names that duplicate information
-  // already captured elsewhere (e.g. image dimensions and type)
-  int keyNum;
-  char key[100];
-  char value[100];
-
-  int nKeys = 0;
-  int nMoreKeys = 0;
-  fits_get_hdrspace(m_hFITS, &nKeys, &nMoreKeys, &status);
-  for(keyNum = 1; keyNum <= nKeys; keyNum++)
-  {
-    fits_read_keyn(m_hFITS, keyNum, key, value, nullptr, &status);
+    // Get the image info for this dataset (note that all bands in a FITS dataset
+    // have the same type)
+    int bitpix = 0;
+    int naxis = 0;
+    const int maxdim = 3;
+    long naxes[maxdim] = {0,0,0};
+    fits_get_img_param(hFITS, maxdim, &bitpix, &naxis, naxes, &status);
     if (status) {
-      CPLError(CE_Failure, CPLE_AppDefined,
-               "Error while reading key %d from FITS file %s (%d)",
-               keyNum, GetDescription(), status);
-      return CE_Failure;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Couldn't determine image parameters of FITS file %s (%d)",
+                GetDescription(), status);
+        return CE_Failure;
     }
-    if (strcmp(key, "END") == 0) {
-        // We should not get here in principle since the END
-        // keyword shouldn't be counted in nKeys, but who knows.
-        break;
-    }
-    else if (isIgnorableFITSHeader(key)) {
-      // Ignore it
-    }
-    else {   // Going to store something, but check for long strings etc
-      // Strip off leading and trailing quote if present
-      char* newValue = value;
-      if (value[0] == '\'' && value[strlen(value) - 1] == '\'')
-      {
-          newValue = value + 1;
-          value[strlen(value) - 1] = '\0';
-      }
-      // Check for long string
-      if (strrchr(newValue, '&') == newValue + strlen(newValue) - 1)
-      {
-          // Value string ends in "&", so use long string conventions
-          char* longString = nullptr;
-          fits_read_key_longstr(hFITS, key, &longString, nullptr, &status);
-          // Note that read_key_longstr already strips quotes
-          if( status )
-          {
-              CPLError(CE_Failure, CPLE_AppDefined,
-                       "Error while reading long string for key %s from "
-                       "FITS file %s (%d)", key, GetDescription(), status);
-              return CE_Failure;
-          }
-          SetMetadataItem(key, longString);
-          free(longString);
-      }
-      else
-      {  // Normal keyword
-          SetMetadataItem(key, newValue);
-      }
-    }
-  }
 
-  return CE_None;
+    m_hduNum = hduNum;
+
+    fits_read_key(hFITS, TDOUBLE, "BZERO", &offset, nullptr, &status);
+    if( status )
+    {
+        // BZERO is not mandatory offset defaulted to 0 if BZERO is missing
+        status = 0;
+        offset = 0.;
+    }
+
+    fits_read_key(hFITS, TDOUBLE, "BLANK", &m_dfNoDataValue, nullptr, &status);
+    m_bNoDataSet = !status;
+    status = 0;
+
+    // Determine data type and nodata value if BLANK keyword is absent
+    if (bitpix == BYTE_IMG) {
+        m_gdalDataType = GDT_Byte;
+        m_fitsDataType = TBYTE;
+    }
+    else if (bitpix == SHORT_IMG) {
+        if (offset == 32768.)
+        {
+            m_gdalDataType = GDT_UInt16;
+            m_fitsDataType = TUSHORT;
+        }
+        else {
+            m_gdalDataType = GDT_Int16;
+            m_fitsDataType = TSHORT;
+        }
+    }
+    else if (bitpix == LONG_IMG) {
+        if (offset == 2147483648.)
+        {
+            m_gdalDataType = GDT_UInt32;
+            m_fitsDataType = TUINT;
+        }
+        else {
+            m_gdalDataType = GDT_Int32;
+            m_fitsDataType = TINT;
+        }
+    }
+    else if (bitpix == FLOAT_IMG) {
+        m_gdalDataType = GDT_Float32;
+        m_fitsDataType = TFLOAT;
+    }
+    else if (bitpix == DOUBLE_IMG) {
+        m_gdalDataType = GDT_Float64;
+        m_fitsDataType = TDOUBLE;
+    }
+    else {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "FITS file %s has unknown data type: %d.", GetDescription(),
+                bitpix);
+        return CE_Failure;
+    }
+
+    // Determine image dimensions - we assume BSQ ordering
+    if (naxis == 2) {
+        nRasterXSize = static_cast<int>(naxes[0]);
+        nRasterYSize = static_cast<int>(naxes[1]);
+        nBands = 1;
+    }
+    else if (naxis == 3) {
+        nRasterXSize = static_cast<int>(naxes[0]);
+        nRasterYSize = static_cast<int>(naxes[1]);
+        nBands = static_cast<int>(naxes[2]);
+    }
+    else {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "FITS file %s does not have 2 or 3 dimensions.",
+                GetDescription());
+        return CE_Failure;
+    }
+
+    // Create the bands
+    for (int i = 0; i < nBands; ++i)
+        SetBand(i+1, new FITSRasterBand(this, i+1));
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                         LoadMetadata()                               */
+/************************************************************************/
+
+void FITSDataset::LoadMetadata()
+{
+    // Read header information from file and use it to set metadata
+    // This process understands the CONTINUE standard for long strings.
+    // We don't bother to capture header names that duplicate information
+    // already captured elsewhere (e.g. image dimensions and type)
+    int keyNum;
+    char key[100];
+    char value[100];
+    CPLStringList aosMD;
+
+    int nKeys = 0;
+    int nMoreKeys = 0;
+    int status = 0;
+    fits_get_hdrspace(m_hFITS, &nKeys, &nMoreKeys, &status);
+    for(keyNum = 1; keyNum <= nKeys; keyNum++)
+    {
+        fits_read_keyn(m_hFITS, keyNum, key, value, nullptr, &status);
+        if (status) {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Error while reading key %d from FITS file %s (%d)",
+                    keyNum, GetDescription(), status);
+            return;
+        }
+        if (strcmp(key, "END") == 0) {
+            // We should not get here in principle since the END
+            // keyword shouldn't be counted in nKeys, but who knows.
+            break;
+        }
+        else if (isIgnorableFITSHeader(key)) {
+        // Ignore it
+        }
+        else {   // Going to store something, but check for long strings etc
+            // Strip off leading and trailing quote if present
+            char* newValue = value;
+            if (value[0] == '\'' && value[strlen(value) - 1] == '\'')
+            {
+                newValue = value + 1;
+                value[strlen(value) - 1] = '\0';
+            }
+            // Check for long string
+            if (strrchr(newValue, '&') == newValue + strlen(newValue) - 1)
+            {
+                // Value string ends in "&", so use long string conventions
+                char* longString = nullptr;
+                fits_read_key_longstr(m_hFITS, key, &longString, nullptr, &status);
+                // Note that read_key_longstr already strips quotes
+                if( status )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "Error while reading long string for key %s from "
+                            "FITS file %s (%d)", key, GetDescription(), status);
+                    return;
+                }
+                SetMetadataItem(key, longString);
+                free(longString);
+            }
+            else
+            {  // Normal keyword
+                SetMetadataItem(key, newValue);
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                           Identify()                                 */
+/************************************************************************/
+
+int FITSDataset::Identify(GDALOpenInfo* poOpenInfo)
+{
+    if( STARTS_WITH(poOpenInfo->pszFilename, "FITS:") )
+        return true;
+
+    const char* fitsID = "SIMPLE  =                    T";  // Spaces important!
+    const size_t fitsIDLen = strlen(fitsID);  // Should be 30 chars long
+
+    if (static_cast<size_t>(poOpenInfo->nHeaderBytes) < fitsIDLen)
+        return false;
+    if (memcmp(poOpenInfo->pabyHeader, fitsID, fitsIDLen) != 0)
+        return false;
+    return true;
+}
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char **FITSDataset::GetMetadata( const char *pszDomain )
+
+{
+    if( pszDomain != nullptr && EQUAL(pszDomain,"SUBDATASETS") )
+    {
+        return m_aosSubdatasets.List();
+    }
+
+    return GDALPamDataset::GetMetadata(pszDomain);
 }
 
 /************************************************************************/
@@ -635,58 +697,213 @@ CPLErr FITSDataset::Init(fitsfile* hFITS, bool isExistingFile) {
 
 GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
 
-  const char* fitsID = "SIMPLE  =                    T";  // Spaces important!
-  size_t fitsIDLen = strlen(fitsID);  // Should be 30 chars long
+    if( !Identify(poOpenInfo) )
+        return nullptr;
 
-  if ((size_t)poOpenInfo->nHeaderBytes < fitsIDLen)
-    return nullptr;
-  if (memcmp(poOpenInfo->pabyHeader, fitsID, fitsIDLen))
-    return nullptr;
+    CPLString osFilename(poOpenInfo->pszFilename);
+    int iSelectedHDU = 0;
+    if( STARTS_WITH(poOpenInfo->pszFilename, "FITS:") )
+    {
+        const CPLStringList aosTokens(
+            CSLTokenizeString2(poOpenInfo->pszFilename, ":",
+                            CSLT_HONOURSTRINGS | CSLT_PRESERVEESCAPES));
+        if( aosTokens.size() != 3 )
+        {
+            return nullptr;
+        }
+        osFilename = aosTokens[1];
+        iSelectedHDU = atoi(aosTokens[2]);
+        if( iSelectedHDU <= 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid HDU number");
+            return nullptr;
+        }
+    }
 
-  // Get access mode and attempt to open the file
-  int status = 0;
-  fitsfile* hFITS = nullptr;
-  if (poOpenInfo->eAccess == GA_ReadOnly)
-    fits_open_file(&hFITS, poOpenInfo->pszFilename, READONLY, &status);
-  else
-    fits_open_file(&hFITS, poOpenInfo->pszFilename, READWRITE, &status);
-  if (status) {
-    CPLError(CE_Failure, CPLE_AppDefined,
-             "Error while opening FITS file %s (%d).\n",
-             poOpenInfo->pszFilename, status);
-    fits_close_file(hFITS, &status);
-    return nullptr;
-  }
+    // Get access mode and attempt to open the file
+    int status = 0;
+    fitsfile* hFITS = nullptr;
+    if (poOpenInfo->eAccess == GA_ReadOnly)
+        fits_open_file(&hFITS, osFilename.c_str(), READONLY, &status);
+    else
+        fits_open_file(&hFITS, osFilename.c_str(), READWRITE, &status);
+    if (status) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Error while opening FITS file %s (%d).\n",
+                osFilename.c_str(), status);
+        fits_close_file(hFITS, &status);
+        return nullptr;
+    }
 
-  // Create a FITSDataset object and initialize it from the FITS handle
-  FITSDataset* dataset = new FITSDataset();
-  dataset->eAccess = poOpenInfo->eAccess;
-
-  dataset->m_bMetadataChanged = false;
-  dataset->m_bNoDataChanged = false;
-
-  // Set up the description and initialize the dataset
-  dataset->SetDescription(poOpenInfo->pszFilename);
-  if (dataset->Init(hFITS, true) != CE_None) {
-    delete dataset;
-    return nullptr;
-  }
-  else
-  {
 /* -------------------------------------------------------------------- */
-/*      Initialize any information.                                 */
+/*      Iterate over HDUs                                               */
 /* -------------------------------------------------------------------- */
-      dataset->SetDescription( poOpenInfo->pszFilename );
-      dataset->LoadFITSInfo();
-      dataset->TryLoadXML();
+    bool firstHDUIsDummy = false;
+    int firstValidHDU = 0;
+    CPLStringList aosSubdatasets;
+    if( iSelectedHDU == 0 )
+    {
+        int numHDUs = 0;
+        fits_get_num_hdus(hFITS, &numHDUs, &status);
+        if( numHDUs <= 0 )
+        {
+            fits_close_file(hFITS, &status);
+            return nullptr;
+        }
+
+        for( int iHDU = 1; iHDU <= numHDUs; iHDU++ )
+        {
+            int hduType = 0;
+            fits_movabs_hdu(hFITS, iHDU, &hduType, &status);
+            if (status)
+            {
+                continue;
+            }
+
+            if( hduType != IMAGE_HDU )
+            {
+                continue;
+            }
+
+            int bitpix = 0;
+            int naxis = 0;
+            const int maxdim = 3;
+            long naxes[maxdim] = {0,0,0};
+            fits_get_img_param(hFITS, maxdim, &bitpix, &naxis, naxes, &status);
+            if (status)
+            {
+                continue;
+            }
+
+            if( naxis != 2 && naxis != 3 )
+            {
+                if( naxis == 0 && iHDU == 1 )
+                {
+                    firstHDUIsDummy = true;
+                }
+                continue;
+            }
+
+            char szExtname[81] = { 0 };
+            fits_read_key(hFITS, TSTRING, "EXTNAME", szExtname, nullptr, &status);
+            status = 0;
+
+            const int nIdx = aosSubdatasets.size() / 2 + 1;
+            aosSubdatasets.AddNameValue(
+                CPLSPrintf("SUBDATASET_%d_NAME", nIdx),
+                CPLSPrintf("FITS:\"%s\":%d", poOpenInfo->pszFilename, iHDU));
+            CPLString osDesc(CPLSPrintf("HDU %d (%dx%d, %d band%s)", iHDU,
+                        static_cast<int>(naxes[0]),
+                        static_cast<int>(naxes[1]),
+                        naxis == 3 ? static_cast<int>(naxes[2]) : 1,
+                        (naxis == 3 && naxes[2] > 1) ? "s" : ""));
+            if( szExtname[0] )
+            {
+                osDesc += ", ";
+                osDesc += szExtname;
+            }
+            aosSubdatasets.AddNameValue(
+                CPLSPrintf("SUBDATASET_%d_DESC", nIdx),
+                osDesc);
+
+            if( firstValidHDU == 0 )
+            {
+                firstValidHDU = iHDU;
+            }
+        }
+        if( aosSubdatasets.size() == 2 )
+        {
+            aosSubdatasets.Clear();
+        }
+    }
+    else
+    {
+        if( iSelectedHDU != 1 )
+        {
+            int hduType = 0;
+            fits_movabs_hdu(hFITS, 1, &hduType, &status);
+            if( status == 0 )
+            {
+                int bitpix = 0;
+                int naxis = 0;
+                const int maxdim = 3;
+                long naxes[maxdim] = {0,0,0};
+                fits_get_img_param(hFITS, maxdim, &bitpix, &naxis, naxes, &status);
+                if( status == 0 && naxis == 0 )
+                {
+                    firstHDUIsDummy = true;
+                }
+            }
+            status = 0;
+        }
+        firstValidHDU = iSelectedHDU;
+    }
+
+    if( firstValidHDU == 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot find HDU of image type with 2 or 3 axes");
+        fits_close_file(hFITS, &status);
+        return nullptr;
+    }
+
+    // Create a FITSDataset object and initialize it from the FITS handle
+    FITSDataset* dataset = new FITSDataset();
+    dataset->eAccess = poOpenInfo->eAccess;
+    dataset->m_aosSubdatasets = aosSubdatasets;
+
+    // Set up the description and initialize the dataset
+    dataset->SetDescription(poOpenInfo->pszFilename);
+    if( aosSubdatasets.size() > 2 )
+    {
+        firstValidHDU = 0;
+        dataset->m_hFITS = hFITS;
+        dataset->m_isExistingFile = true;
+        int hduType = 0;
+        fits_movabs_hdu(hFITS, 1, &hduType, &status);
+    }
+    else
+    {
+        if (dataset->Init(hFITS, true, firstValidHDU) != CE_None) {
+            delete dataset;
+            return nullptr;
+        }
+    }
+
+    // If the first HDU is a dummy one, load its metadata first, and then
+    // add/override it by the one of the image HDU
+    if( firstHDUIsDummy && firstValidHDU > 1 )
+    {
+        int hduType = 0;
+        status = 0;
+        fits_movabs_hdu(hFITS, 1, &hduType, &status);
+        if( status == 0 )
+        {
+            dataset->LoadMetadata();
+        }
+        status = 0;
+        fits_movabs_hdu(hFITS, firstValidHDU, &hduType, &status);
+        if( status ) {
+            delete dataset;
+            return nullptr;
+        }
+    }
+    dataset->LoadMetadata();
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any information.                                     */
+/* -------------------------------------------------------------------- */
+    dataset->SetDescription( poOpenInfo->pszFilename );
+    dataset->LoadFITSInfo();
+    dataset->TryLoadXML();
 
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
-      dataset->oOvManager.Initialize( dataset, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
+    dataset->oOvManager.Initialize( dataset, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
 
-      return dataset;
-  }
+    return dataset;
 }
 
 /************************************************************************/
@@ -773,7 +990,7 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
   dataset->SetDescription(pszFilename);
 
   // Init recalculates a lot of stuff we already know, but...
-  if (dataset->Init(hFITS, false) != CE_None) {
+  if (dataset->Init(hFITS, false, 1) != CE_None) {
     delete dataset;
     return nullptr;
   }
@@ -1583,6 +1800,7 @@ void GDALRegister_FITS()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "fits" );
 
     poDriver->pfnOpen = FITSDataset::Open;
+    poDriver->pfnIdentify = FITSDataset::Identify;
     poDriver->pfnCreate = FITSDataset::Create;
     poDriver->pfnCreateCopy = nullptr;
 
