@@ -2779,6 +2779,9 @@ void GDALSerializeOpenOptionsToXML( CPLXMLNode* psParentNode, char** papszOpenOp
 char** GDALDeserializeOpenOptionsFromXML( CPLXMLNode* psParentNode );
 
 int GDALCanFileAcceptSidecarFile(const char* pszFilename);
+
+bool GDALCanReliablyUseSiblingFileList(const char* pszFilename);
+
 //! @endcond
 
 #endif /* ndef GDAL_PRIV_H_INCLUDED */

@@ -839,7 +839,8 @@ CPLErr GDALPamDataset::TryLoadXML(char **papszSiblingFiles)
     int nLastErrNo = CPLGetLastErrorNo();
     CPLString osLastErrorMsg = CPLGetLastErrorMsg();
 
-    if (papszSiblingFiles != nullptr && IsPamFilenameAPotentialSiblingFile())
+    if( papszSiblingFiles != nullptr && IsPamFilenameAPotentialSiblingFile() &&
+        GDALCanReliablyUseSiblingFileList(psPam->pszPamFilename) )
     {
         const int iSibling =
             CSLFindString( papszSiblingFiles,
@@ -1195,6 +1196,7 @@ char **GDALPamDataset::GetFileList()
     char **papszFileList = GDALDataset::GetFileList();
 
     if( psPam && !psPam->osPhysicalFilename.empty()
+        && GDALCanReliablyUseSiblingFileList(psPam->osPhysicalFilename.c_str())
         && CSLFindString( papszFileList, psPam->osPhysicalFilename ) == -1 )
     {
         papszFileList = CSLInsertString( papszFileList, 0,
@@ -1207,7 +1209,9 @@ char **GDALPamDataset::GetFileList()
         if (!bAddPamFile)
         {
             VSIStatBufL sStatBuf;
-            if (oOvManager.GetSiblingFiles() != nullptr && IsPamFilenameAPotentialSiblingFile())
+            if (oOvManager.GetSiblingFiles() != nullptr &&
+                IsPamFilenameAPotentialSiblingFile() &&
+                GDALCanReliablyUseSiblingFileList(psPam->pszPamFilename) )
             {
                 bAddPamFile = CSLFindString(oOvManager.GetSiblingFiles(),
                                   CPLGetFilename(psPam->pszPamFilename)) >= 0;
@@ -1225,6 +1229,7 @@ char **GDALPamDataset::GetFileList()
     }
 
     if( psPam && !psPam->osAuxFilename.empty() &&
+        GDALCanReliablyUseSiblingFileList(psPam->osAuxFilename.c_str()) &&
         CSLFindString( papszFileList, psPam->osAuxFilename ) == -1 )
     {
         papszFileList = CSLAddString( papszFileList, psPam->osAuxFilename );
@@ -1556,7 +1561,7 @@ CPLErr GDALPamDataset::TryLoadAux(char **papszSiblingFiles)
     if( strlen(pszPhysicalFile) == 0 )
         return CE_None;
 
-    if( papszSiblingFiles )
+    if( papszSiblingFiles && GDALCanReliablyUseSiblingFileList(pszPhysicalFile) )
     {
         CPLString osAuxFilename = CPLResetExtension( pszPhysicalFile, "aux");
         int iSibling = CSLFindString( papszSiblingFiles,
