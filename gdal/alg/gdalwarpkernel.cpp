@@ -683,14 +683,14 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  *
  * \code
  *   float dfPixelValue;
- *   int   nBand = 1;  // Band indexes are zero based.
+ *   int   nBand = 2-1;  // Band indexes are zero based.
  *   int   nPixel = 3; // Zero based.
  *   int   nLine = 4;  // Zero based.
  *
  *   assert( nPixel >= 0 && nPixel < poKern->nSrcXSize );
  *   assert( nLine >= 0 && nLine < poKern->nSrcYSize );
  *   assert( nBand >= 0 && nBand < poKern->nBands );
- *   dfPixelValue = ((float *) poKern->papabySrcImage[nBand-1])
+ *   dfPixelValue = ((float *) poKern->papabySrcImage[nBand])
  *                                  [nPixel + nLine * poKern->nSrcXSize];
  * \endcode
  *
@@ -712,7 +712,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  *
  * \code
  *   int   bIsValid = TRUE;
- *   int   nBand = 1;  // Band indexes are zero based.
+ *   int   nBand = 2-1;  // Band indexes are zero based.
  *   int   nPixel = 3; // Zero based.
  *   int   nLine = 4;  // Zero based.
  *
@@ -806,14 +806,14 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  *
  * \code
  *   float dfPixelValue;
- *   int   nBand = 1;  // Band indexes are zero based.
+ *   int   nBand = 2-1;  // Band indexes are zero based.
  *   int   nPixel = 3; // Zero based.
  *   int   nLine = 4;  // Zero based.
  *
  *   assert( nPixel >= 0 && nPixel < poKern->nDstXSize );
  *   assert( nLine >= 0 && nLine < poKern->nDstYSize );
  *   assert( nBand >= 0 && nBand < poKern->nBands );
- *   dfPixelValue = ((float *) poKern->papabyDstImage[nBand-1])
+ *   dfPixelValue = ((float *) poKern->papabyDstImage[nBand])
  *                                  [nPixel + nLine * poKern->nSrcYSize];
  * \endcode
  *
