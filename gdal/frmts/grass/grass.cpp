@@ -373,6 +373,33 @@ GRASSRasterBand::~GRASSRasterBand()
 }
 
 /************************************************************************/
+/*                             SetWindow                                */
+/*                                                                      */
+/* Helper for ResetReading                                              */
+/* close the current GRASS raster band, actually set the new window,    */
+/* reset GRASS variables                                                */
+/*                                                                      */
+/* Returns nothing                       */
+/************************************************************************/
+void GRASSRasterBand::SetWindow ( struct Cell_head *sNewWindow )
+{
+    if( hCell >= 0 ) {
+        Rast_close( hCell );
+        hCell = -1;
+    }
+
+    /* Set window */
+    G_set_window( sNewWindow );
+
+    /* Set GRASS env to the current raster, don't open the raster */
+    G_setenv_nogisrc( "GISDBASE", ((GRASSDataset *)poDS)->pszGisdbase );
+    G_setenv_nogisrc( "LOCATION_NAME", ((GRASSDataset *)poDS)->pszLocation );
+    G_setenv_nogisrc( "MAPSET", pszMapset);
+    G_reset_mapsets();
+    G_add_mapset_to_search_path ( pszMapset );
+}
+
+/************************************************************************/
 /*                             ResetReading                             */
 /*                                                                      */
 /* Reset current window for a new reading request,                      */
