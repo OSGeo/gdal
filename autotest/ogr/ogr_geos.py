@@ -340,7 +340,7 @@ def test_ogr_geos_unioncascaded():
     gdal.ErrorReset()
     cascadedunion = g1.UnionCascaded()
 
-    assert cascadedunion.ExportToWkt() == 'POLYGON ((0 0,0 1,0.5 1.0,0.5 1.5,1.5 1.5,1.5 0.5,1.0 0.5,1 0,0 0))', \
+    assert ogrtest.check_feature_geometry(cascadedunion, 'POLYGON ((0 0,0 1,0.5 1.0,0.5 1.5,1.5 1.5,1.5 0.5,1.0 0.5,1 0,0 0))') == 0, \
         ('Got: %s' % cascadedunion.ExportToWkt())
 
 ###############################################################################

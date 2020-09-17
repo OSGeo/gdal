@@ -291,9 +291,10 @@ def test_ogr_mvt_point_polygon_clip():
     ds = ogr.Open('data/mvt/point_polygon/1')
     lyr = ds.GetLayer(1)
     f = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(f, 'MULTIPOLYGON (((0.0 112515.30563578,0 0,-112515.30563578 0.0,-112515.30563578 112515.30563578,0.0 112515.30563578)))') != 0:
-        f.DumpReadable()
-        pytest.fail()
+    expected_wkt = 'MULTIPOLYGON (((0.0 112515.30563578,0 0,-112515.30563578 0.0,-112515.30563578 112515.30563578,0.0 112515.30563578)))'
+    expected_wkt2 = 'MULTIPOLYGON (((-112515.30563578 112515.30563578,0.0 112515.30563578,0 0,-112515.30563578 0.0,-112515.30563578 112515.30563578)))'
+    assert ogrtest.check_feature_geometry(f, expected_wkt) == 0 or ogrtest.check_feature_geometry(f, expected_wkt2) == 0, \
+            f.GetGeometryRef().ExportToWkt()
 
     
 ###############################################################################
