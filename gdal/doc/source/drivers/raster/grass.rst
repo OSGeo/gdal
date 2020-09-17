@@ -68,13 +68,13 @@ Driver capabilities
 Notes on driver variations
 --------------------------
 
-For GRASS 5.7 Radim Blazek has moved the driver to using the GRASS
-shared libraries directly instead of using libgrass. Currently both
-versions of the driver are available and can be configured using
-``--with-libgrass`` for the libgrass variant or ``--with-grass=<dir>``
-for the GRASS 7+ library based version. The GRASS 7+ driver version is
-currently not supporting coordinate system access, though it is hoped
-that will be corrected at some point.
+The driver is able to use the GRASS GIS shared libraries directly
+instead of using libgrass (not recommended due to potentially circular
+dependencies). Currently both versions of the driver are available and
+can be configured using ``--with-libgrass`` for the libgrass variant or
+``--with-grass=<dir>`` for the GRASS GIS library based version. The
+GRASS driver version currently does not support coordinate system
+access, though it is hoped that will be corrected at some point.
 
 See Also
 --------
