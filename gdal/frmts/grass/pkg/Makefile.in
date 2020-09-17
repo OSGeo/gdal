@@ -33,8 +33,8 @@ distclean: clean
 	rm -fr Makefile config.status config.log autom*.cache
 
 
-$(GLIBNAME):	grass57dataset.o
-	$(LD_SHARED) $(LDFLAGS) grass57dataset.o $(LIBS) -o $(GLIBNAME)
+$(GLIBNAME):	grass.o
+	$(LD_SHARED) $(LDFLAGS) grass.o $(LIBS) -o $(GLIBNAME)
 
 $(OLIBNAME):	ogrgrassdriver.o ogrgrassdatasource.o ogrgrasslayer.o
 	$(LD_SHARED) $(LDFLAGS) ogrgrassdriver.o ogrgrassdatasource.o ogrgrasslayer.o $(LIBS) -o $(OLIBNAME)
