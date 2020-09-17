@@ -2,13 +2,7 @@
 
 include ../../GDALmake.opt
 
-#OBJ	=	grassdataset.o
-
-ifeq ($(GRASS_SETTING),libgrass)
-OBJ	=	grassdataset.o
-else
 OBJ	=	grass.o
-endif
 
 CPPFLAGS	:=	 -DGRASS_GISBASE=\"$(GRASS_GISBASE)\" $(GRASS_INCLUDE) $(PROJ_INCLUDE) $(CPPFLAGS)
 
