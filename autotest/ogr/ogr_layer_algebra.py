@@ -188,10 +188,10 @@ def test_algebra_intersection():
             break
 
         g = feat.GetGeometryRef()
-        if g.Equals(f1[0]):
+        if ogrtest.check_feature_geometry(g, f1[0]) == 0:
             assert feat.GetField('A') == f1[1] and feat.GetField('B') == f1[2], \
                 'Did not get expected field values.'
-        elif g.Equals(f2[0]):
+        elif ogrtest.check_feature_geometry(g, f2[0]) == 0:
             assert feat.GetField('A') == f2[1] and feat.GetField('B') == f2[2], \
                 'Did not get expected field values.'
         else:
@@ -220,10 +220,10 @@ def test_algebra_intersection():
             break
 
         g = feat.GetGeometryRef()
-        if g.Equals(f1[0]):
+        if ogrtest.check_feature_geometry(g, f1[0]) == 0:
             assert feat.GetField('A') == f1[1] and feat.GetField('B') == f1[2], \
                 'Did not get expected field values. (1)'
-        elif g.Equals(f2[0]):
+        elif ogrtest.check_feature_geometry(g, f2[0]) == 0:
             assert feat.GetField('A') == f2[1] and feat.GetField('B') == f2[2], \
                 'Did not get expected field values. (2)'
         else:

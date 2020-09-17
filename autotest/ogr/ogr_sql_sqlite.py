@@ -1888,7 +1888,7 @@ def test_ogr_sql_sqlite_st_makevalid():
     ds.ReleaseResultSet(sql_lyr)
 
     if make_valid_available:
-        assert wkt == 'MULTIPOLYGON (((0.5 0.5,0 0,0 1,0.5 0.5)),((0.5 0.5,1 1,1 0,0.5 0.5)))'
+        assert ogrtest.check_feature_geometry(ogr.CreateGeometryFromWkt(wkt), 'MULTIPOLYGON (((0.5 0.5,0 0,0 1,0.5 0.5)),((0.5 0.5,1 1,1 0,0.5 0.5)))') == 0, wkt
 
 
 
