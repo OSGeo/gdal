@@ -170,17 +170,17 @@ General creation options
 
   .. note:: Write support for GeoTIFF 1.1 requires libgeotiff 1.6.0 or later.
 
-- **SPARSE_OK=TRUE/FALSE** ((GDAL >= 3.2): Should empty blocks be omitted on disk?
-   When this option is set, any attempt of writing a
-   block whose all pixels are 0 or the nodata value will cause it not to
-   be written at all (unless there is a corresponding block already
-   allocated in the file). Sparse files have 0 tile/strip offsets for
-   blocks never written and save space; however, most non-GDAL packages
-   cannot read such files.
-   On the reading side, the presence of a omitted tile after a non-empty one
-   may cause optimized readers to have to issue an extra GET request to the
-   TileByteCounts array.
-   The default is FALSE.
+- **SPARSE_OK=TRUE/FALSE** ((GDAL >= 3.2): Should empty blocks be
+  omitted on disk? When this option is set, any attempt of writing a
+  block whose all pixels are 0 or the nodata value will cause it not to
+  be written at all (unless there is a corresponding block already
+  allocated in the file). Sparse files have 0 tile/strip offsets for
+  blocks never written and save space; however, most non-GDAL packages
+  cannot read such files.
+  On the reading side, the presence of a omitted tile after a non-empty one
+  may cause optimized readers to have to issue an extra GET request to the
+  TileByteCounts array.
+  The default is FALSE.
 
 Reprojection related creation options
 *************************************
