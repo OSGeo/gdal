@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
- * Copyright (c) 2007-2009, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2007-2020, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -127,15 +127,15 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
     this->poDS = poDS;
     this->nBand = nBand;
 
-    G_get_cellhd( (char *) pszCellName, (char *) pszMapset, &sCellInfo );
-    nGRSType = G_raster_map_type( (char *) pszCellName, (char *) pszMapset );
+    Rast_get_cellhd( (char *) pszCellName, (char *) pszMapset, &sCellInfo );
+    nGRSType = Rast_map_type( (char *) pszCellName, (char *) pszMapset );
 
 /* -------------------------------------------------------------------- */
 /*      Get min/max values.                                             */
 /* -------------------------------------------------------------------- */
     struct FPRange sRange;
 
-    if( G_read_fp_range( (char *) pszCellName, (char *) pszMapset,
+    if( Rast_read_fp_range( (char *) pszCellName, (char *) pszMapset,
                          &sRange ) == -1 )
     {
         bHaveMinMax = FALSE;
@@ -143,7 +143,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
     else
     {
         bHaveMinMax = TRUE;
-        G_get_fp_range_min_max( &sRange, &dfCellMin, &dfCellMax );
+        Rast_get_fp_range_min_max( &sRange, &dfCellMin, &dfCellMax );
     }
 
 /* -------------------------------------------------------------------- */
@@ -190,7 +190,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
     nBlockXSize = poDS->nRasterXSize;
     nBlockYSize = 1;
 
-    hCell = G_open_cell_old((char *) pszCellName, (char *) pszMapset);
+    hCell = Rast_open_old((char *) pszCellName, (char *) pszMapset);
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a color table?                                       */
@@ -198,7 +198,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
     struct Colors sGrassColors;
 
     poCT = NULL;
-    if( G_read_colors( (char *) pszCellName, (char *) pszMapset,
+    if( Rast_read_colors( (char *) pszCellName, (char *) pszMapset,
                        &sGrassColors ) == 1 )
     {
         poCT = new GDALColorTable();
@@ -227,7 +227,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
             }
         }
 
-        G_free_colors( &sGrassColors );
+        Rast_free_colors( &sGrassColors );
     }
 }
 
@@ -242,7 +242,7 @@ GRASSRasterBand::~GRASSRasterBand()
         delete poCT;
 
     if( hCell >= 0 )
-        G_close_cell( hCell );
+        Rast_close( hCell );
 }
 
 /************************************************************************/
@@ -507,7 +507,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     struct Cell_head sCellInfo;
 
-    if( G_get_cellhd( papszCells[0], papszMapsets[0], &sCellInfo ) != 0 )
+    if( Rast_get_cellhd( papszCells[0], papszMapsets[0], &sCellInfo ) != 0 )
     {
         /* notdef: report failure. */
         return NULL;
@@ -516,7 +516,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = sCellInfo.cols;
     poDS->nRasterYSize = sCellInfo.rows;
 
-    G_set_window( &sCellInfo );
+    Rast_set_window( &sCellInfo );
 
     poDS->adfGeoTransform[0] = sCellInfo.west;
     poDS->adfGeoTransform[1] = sCellInfo.ew_res;
