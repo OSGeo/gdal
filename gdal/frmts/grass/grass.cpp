@@ -265,7 +265,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDSIn, int nBandIn,
     nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
 
-    Rast_set_window( &(poDSIn->sCellInfo) );
+    Rast_set_window ( &(poDSIn->sCellInfo) );
     // open the raster only for actual reading
     hCell = -1;
     memcpy((void *) &sOpenWindow, (void *) &(poDSIn->sCellInfo), sizeof(struct Cell_head));
@@ -389,7 +389,7 @@ void GRASSRasterBand::SetWindow ( struct Cell_head *sNewWindow )
     }
 
     /* Set window */
-    G_set_window( sNewWindow );
+    Rast_set_window( sNewWindow );
 
     /* Set GRASS env to the current raster, don't open the raster */
     G_setenv_nogisrc( "GISDBASE", ((GRASSDataset *)poDS)->pszGisdbase );
@@ -416,7 +416,7 @@ CPLErr GRASSRasterBand::ResetReading ( struct Cell_head *sNewWindow )
          sNewWindow->ew_res != sOpenWindow.ew_res || sNewWindow->ns_res != sOpenWindow.ns_res ||
          sNewWindow->rows   != sOpenWindow.rows   || sNewWindow->cols   != sOpenWindow.cols )
     {
-        Rast_set_window ( sNewWindow );
+        SetWindow ( sNewWindow );
         memcpy((void *) &sOpenWindow, (void *) sNewWindow, sizeof(struct Cell_head));
     }
     else
@@ -432,7 +432,7 @@ CPLErr GRASSRasterBand::ResetReading ( struct Cell_head *sNewWindow )
              sNewWindow->rows   != sCurrentWindow.rows   || sNewWindow->cols   != sCurrentWindow.cols
              )
         {
-            Rast_set_window ( sNewWindow );
+            SetWindow ( sNewWindow );
         }
     }
 
