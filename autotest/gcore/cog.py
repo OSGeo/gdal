@@ -990,3 +990,4 @@ def test_cog_overview_size():
     assert (ds.RasterXSize, ds.RasterYSize) == (20480 // 4, 40960 // 4)
     ovr_size = [ (ds.GetRasterBand(1).GetOverview(i).XSize, ds.GetRasterBand(1).GetOverview(i).YSize) for i in range(ds.GetRasterBand(1).GetOverviewCount()) ]
     assert ovr_size == [(2048, 4096), (1024, 2048), (512, 1024), (256, 512), (128, 256)]
+    gdal.Unlink(filename)
