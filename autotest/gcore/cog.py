@@ -30,6 +30,7 @@
 ###############################################################################
 
 import pytest
+import struct
 import sys
 
 from osgeo import gdal
@@ -599,3 +600,25 @@ def test_cog_invalid_warp_resampling():
         assert gdal.GetDriverByName('COG').CreateCopy(filename, src_ds,
             options = ['TILING_SCHEME=GoogleMapsCompatible', 'RESAMPLING=INVALID']) is None
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/2946
+
+
+def test_cog_float32_color_table():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1024, 1024, 1, gdal.GDT_Float32) 
+    src_ds.GetRasterBand(1).Fill(1.0)
+    ct = gdal.ColorTable()
+    src_ds.GetRasterBand(1).SetColorTable(ct)
+    filename = '/vsimem/test_cog_float32_color_table.tif'
+    # Silence warning about color table not being copied
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds) # segfault
+    assert ds
+    assert ds.GetRasterBand(1).GetColorTable() is None
+    assert struct.unpack('f', ds.ReadRaster(0,0,1,1))[0] == 1.0
+    assert struct.unpack('f', ds.GetRasterBand(1).GetOverview(0).ReadRaster(0,0,1,1))[0] == 1.0
+    gdal.Unlink(filename)
+
