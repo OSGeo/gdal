@@ -1043,14 +1043,14 @@ void OGROAPIFLayer::GetSchema()
 
     if( m_bDescribedByIsXML )
     {
-        std::vector<GMLFeatureClass*> aosClasses;
+        std::vector<GMLFeatureClass*> apoClasses;
         bool bFullyUnderstood = false;
-        bool bHaveSchema = GMLParseXSD( m_osDescribedByURL, aosClasses,
+        bool bHaveSchema = GMLParseXSD( m_osDescribedByURL, apoClasses,
                                         bFullyUnderstood );
-        if (bHaveSchema && aosClasses.size() == 1)
+        if (bHaveSchema && apoClasses.size() == 1)
         {
             CPLDebug("OAPIF", "Using XML schema");
-            const auto poGMLFeatureClass = aosClasses[0];
+            auto poGMLFeatureClass = apoClasses[0];
             if( poGMLFeatureClass->GetGeometryPropertyCount() ==  1 )
             {
                 // Force linear type as we work with GeoJSON data
@@ -1085,6 +1085,9 @@ void OGROAPIFLayer::GetSchema()
                 m_apoFieldsFromSchema.emplace_back(std::move(oField));
             }
         }
+
+        for( auto poFeatureClass: apoClasses )
+            delete poFeatureClass;
     }
     else
     {
