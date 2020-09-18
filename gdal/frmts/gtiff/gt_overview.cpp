@@ -546,6 +546,8 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
     if( nBands == 3 )
         nPhotometric = PHOTOMETRIC_RGB;
     else if( papoBandList[0]->GetColorTable() != nullptr
+             && (papoBandList[0]->GetRasterDataType() == GDT_Byte ||
+                 papoBandList[0]->GetRasterDataType() == GDT_UInt16)
              && !STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2") )
     {
         nPhotometric = PHOTOMETRIC_PALETTE;
