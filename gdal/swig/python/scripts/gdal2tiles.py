@@ -3195,6 +3195,13 @@ def main():
     # TODO: gbataille - use mkdtemp to work in a temp directory
     # TODO: gbataille - debug intermediate tiles.vrt not produced anymore?
     # TODO: gbataille - Refactor generate overview tiles to not depend on self variables
+
+    # For multiprocessing, we need to propagate the configuration options to
+    # the environment, so that forked processes can inherit them.
+    for i in range(len(sys.argv)):
+        if sys.argv[i] == '--config' and i + 2 < len(sys.argv):
+            os.environ[sys.argv[i+1]] = sys.argv[i+2]
+
     argv = gdal.GeneralCmdLineProcessor(sys.argv)
     if argv is None:
         return
