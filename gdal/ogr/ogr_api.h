@@ -658,6 +658,7 @@ OGRLayerH CPL_DLL OGR_DS_CopyLayer( OGRDataSourceH, OGRLayerH, const char *,
 int    CPL_DLL OGR_DS_TestCapability( OGRDataSourceH, const char * );
 OGRLayerH CPL_DLL OGR_DS_ExecuteSQL( OGRDataSourceH, const char *,
                                      OGRGeometryH, const char * );
+void CPL_DLL OGR_DS_AbortSQL( OGRDataSourceH );
 void   CPL_DLL OGR_DS_ReleaseResultSet( OGRDataSourceH, OGRLayerH );
 /*! @cond Doxygen_Suppress */
 int    CPL_DLL OGR_DS_Reference( OGRDataSourceH );

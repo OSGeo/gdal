@@ -853,6 +853,10 @@ public:
     return layer;
   }
 
+  void AbortSQL(){
+    OGR_DS_AbortSQL((OGRDataSourceShadow*)self);
+  }
+
 %apply SWIGTYPE *DISOWN {OGRLayerShadow *layer};
   void ReleaseResultSet(OGRLayerShadow *layer){
     OGR_DS_ReleaseResultSet(self, layer);

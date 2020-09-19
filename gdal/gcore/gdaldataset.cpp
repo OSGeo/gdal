@@ -4578,6 +4578,30 @@ OGRLayerH GDALDatasetExecuteSQL( GDALDatasetH hDS,
             pszDialect));
 }
 
+
+/************************************************************************/
+/*                        GDALDatasetAbortSQL()                       */
+/************************************************************************/
+
+/**
+ \brief Abort any SQL statement running in the data store.
+
+ This method is the same as the C++ method GDALDataset::AbortSQL()
+
+ @since GDAL 3.1.4
+
+ @param hDS the dataset handle.
+
+*/
+
+void GDALDatasetAbortSQL( GDALDatasetH hDS )
+
+{
+    VALIDATE_POINTER0(hDS, "GDALDatasetAbortSQL");
+    GDALDataset::FromHandle(hDS)->AbortSQL();
+}
+
+
 /************************************************************************/
 /*                      GDALDatasetGetStyleTable()                      */
 /************************************************************************/
@@ -6156,6 +6180,24 @@ GDALDataset::ExecuteSQL( const char *pszStatement,
     return new OGRUnionLayer("SELECT", nSrcLayers, papoSrcLayers, TRUE);
 }
 //! @endcond
+
+
+/************************************************************************/
+/*                             AbortSQL()                             */
+/************************************************************************/
+
+/**
+ \brief Abort a SQL statement running in the data store.
+
+ This method is the same as the C function GDALDatasetAbortSQL() .
+
+*/
+
+void GDALDataset::AbortSQL(  )
+{
+    // noop
+}
+
 
 /************************************************************************/
 /*                        BuildLayerFromSelectInfo()                    */

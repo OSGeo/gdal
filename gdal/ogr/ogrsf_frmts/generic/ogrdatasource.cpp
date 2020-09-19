@@ -232,6 +232,19 @@ OGRLayerH OGR_DS_ExecuteSQL( OGRDataSourceH hDS,
 }
 
 /************************************************************************/
+/*                         OGR_DS_AbortSQL()                            */
+/************************************************************************/
+
+void OGR_DS_AbortSQL( OGRDataSourceH hDS )
+
+{
+    VALIDATE_POINTER0( hDS, "OGR_DS_AbortSQL" );
+
+    reinterpret_cast<GDALDataset *>(hDS)->AbortSQL( );
+
+}
+
+/************************************************************************/
 /*                      OGR_DS_ReleaseResultSet()                       */
 /************************************************************************/
 

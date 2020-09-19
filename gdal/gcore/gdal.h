@@ -833,6 +833,7 @@ OGRFeatureH CPL_DLL GDALDatasetGetNextFeature( GDALDatasetH hDS,
 int    CPL_DLL GDALDatasetTestCapability( GDALDatasetH, const char * );
 OGRLayerH CPL_DLL GDALDatasetExecuteSQL( GDALDatasetH, const char *,
                                      OGRGeometryH, const char * );
+void   CPL_DLL GDALDatasetAbortSQL( GDALDatasetH );
 void   CPL_DLL GDALDatasetReleaseResultSet( GDALDatasetH, OGRLayerH );
 OGRStyleTableH CPL_DLL GDALDatasetGetStyleTable( GDALDatasetH );
 void   CPL_DLL GDALDatasetSetStyleTableDirectly( GDALDatasetH, OGRStyleTableH );
