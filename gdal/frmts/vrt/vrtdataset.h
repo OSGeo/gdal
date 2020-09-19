@@ -474,7 +474,7 @@ class CPL_DLL VRTRasterBand CPL_NON_FINAL: public GDALRasterBand
 
     void           Initialize( int nXSize, int nYSize );
 
-    std::vector<VRTOverviewInfo> m_apoOverviews{};
+    std::vector<VRTOverviewInfo> m_aoOverviewInfos{};
 
     VRTRasterBand *m_poMaskBand;
 
