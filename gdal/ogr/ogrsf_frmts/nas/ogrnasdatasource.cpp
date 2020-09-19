@@ -110,6 +110,7 @@ int OGRNASDataSource::Open( const char * pszNewName )
                      pszNASTemplateName );
             return FALSE;
         }
+        bHaveSchema = true;
 
         CPLDebug("NAS", "Schema loaded.");
     }
