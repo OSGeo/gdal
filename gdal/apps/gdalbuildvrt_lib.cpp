@@ -200,49 +200,50 @@ static int  GetSrcDstWin(DatasetProperty* psDP,
 class VRTBuilder
 {
     /* Input parameters */
-    char               *pszOutputFilename;
-    int                 nInputFiles;
-    char              **ppszInputFilenames;
-    GDALDatasetH       *pahSrcDS;
-    int                 nBands;
-    int                *panBandList;
-    int                 nMaxBandNo;
-    ResolutionStrategy  resolutionStrategy;
-    double              we_res;
-    double              ns_res;
-    int                 bTargetAlignedPixels;
-    double              minX;
-    double              minY;
-    double              maxX;
-    double              maxY;
-    int                 bSeparate;
-    int                 bAllowProjectionDifference;
-    int                 bAddAlpha;
-    int                 bHideNoData;
-    int                 nSubdataset;
-    char               *pszSrcNoData;
-    char               *pszVRTNoData;
-    char               *pszOutputSRS;
-    char               *pszResampling;
-    char              **papszOpenOptions;
+    char               *pszOutputFilename = nullptr;
+    int                 nInputFiles = 0;
+    char              **ppszInputFilenames = nullptr;
+    int                 nSrcDSCount = 0;
+    GDALDatasetH       *pahSrcDS = nullptr;
+    int                 nBands = 0;
+    int                *panBandList = nullptr;
+    int                 nMaxBandNo = 0;
+    ResolutionStrategy  resolutionStrategy = AVERAGE_RESOLUTION;
+    double              we_res = 0;
+    double              ns_res = 0;
+    int                 bTargetAlignedPixels = 0;
+    double              minX = 0;
+    double              minY = 0;
+    double              maxX = 0;
+    double              maxY = 0;
+    int                 bSeparate = 0;
+    int                 bAllowProjectionDifference = 0;
+    int                 bAddAlpha = 0;
+    int                 bHideNoData = 0;
+    int                 nSubdataset = 0;
+    char               *pszSrcNoData = nullptr;
+    char               *pszVRTNoData = nullptr;
+    char               *pszOutputSRS = nullptr;
+    char               *pszResampling = nullptr;
+    char              **papszOpenOptions = nullptr;
 
     /* Internal variables */
-    char               *pszProjectionRef;
-    BandProperty       *pasBandProperties;
-    int                 bFirst;
-    int                 bHasGeoTransform;
-    int                 nRasterXSize;
-    int                 nRasterYSize;
-    DatasetProperty    *pasDatasetProperties;
-    int                 bUserExtent;
-    int                 bAllowSrcNoData;
-    double             *padfSrcNoData;
-    int                 nSrcNoDataCount;
-    int                 bAllowVRTNoData;
-    double             *padfVRTNoData;
-    int                 nVRTNoDataCount;
-    int                 bHasRunBuild;
-    int                 bHasDatasetMask;
+    char               *pszProjectionRef = nullptr;
+    BandProperty       *pasBandProperties = nullptr;
+    int                 bFirst = TRUE;
+    int                 bHasGeoTransform = 0;
+    int                 nRasterXSize = 0;
+    int                 nRasterYSize = 0;
+    DatasetProperty    *pasDatasetProperties = nullptr;
+    int                 bUserExtent = 0;
+    int                 bAllowSrcNoData = TRUE;
+    double             *padfSrcNoData = nullptr;
+    int                 nSrcNoDataCount = 0;
+    int                 bAllowVRTNoData = TRUE;
+    double             *padfVRTNoData = nullptr;
+    int                 nVRTNoDataCount = 0;
+    int                 bHasRunBuild = 0;
+    int                 bHasDatasetMask = 0;
 
     int         AnalyseRaster(GDALDatasetH hDS,
                               DatasetProperty* psDatasetProperties);
@@ -294,8 +295,6 @@ VRTBuilder::VRTBuilder(const char* pszOutputFilenameIn,
 {
     pszOutputFilename = CPLStrdup(pszOutputFilenameIn);
     nInputFiles = nInputFilesIn;
-    pahSrcDS = nullptr;
-    ppszInputFilenames = nullptr;
     papszOpenOptions = CSLDuplicate(const_cast<char**>(papszOpenOptionsIn));
 
     if( ppszInputFilenamesIn )
@@ -309,6 +308,7 @@ VRTBuilder::VRTBuilder(const char* pszOutputFilenameIn,
     }
     else if( pahSrcDSIn )
     {
+        nSrcDSCount = nInputFiles;
         pahSrcDS = static_cast<GDALDatasetH *>(
             CPLMalloc(nInputFiles * sizeof(GDALDatasetH)));
         memcpy(pahSrcDS, pahSrcDSIn, nInputFiles * sizeof(GDALDatasetH));
@@ -321,7 +321,6 @@ VRTBuilder::VRTBuilder(const char* pszOutputFilenameIn,
     }
 
     nBands = nBandCount;
-    panBandList = nullptr;
     if( nBandCount )
     {
         panBandList = static_cast<int *>(CPLMalloc(nBands * sizeof(int)));
@@ -346,23 +345,6 @@ VRTBuilder::VRTBuilder(const char* pszOutputFilenameIn,
     pszVRTNoData = (pszVRTNoDataIn) ? CPLStrdup(pszVRTNoDataIn) : nullptr;
     pszOutputSRS = (pszOutputSRSIn) ? CPLStrdup(pszOutputSRSIn) : nullptr;
     pszResampling = (pszResamplingIn) ? CPLStrdup(pszResamplingIn) : nullptr;
-
-    bUserExtent = FALSE;
-    pszProjectionRef = nullptr;
-    pasBandProperties = nullptr;
-    bFirst = TRUE;
-    bHasGeoTransform = FALSE;
-    nRasterXSize = 0;
-    nRasterYSize = 0;
-    pasDatasetProperties = nullptr;
-    bAllowSrcNoData = TRUE;
-    padfSrcNoData = nullptr;
-    nSrcNoDataCount = 0;
-    bAllowVRTNoData = TRUE;
-    padfVRTNoData = nullptr;
-    nVRTNoDataCount = 0;
-    bHasRunBuild = FALSE;
-    bHasDatasetMask = FALSE;
 }
 
 /************************************************************************/
@@ -1089,28 +1071,44 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
 
         const char* dsFileName = ppszInputFilenames[i];
 
-        GDALProxyPoolDatasetH hProxyDS =
-            GDALProxyPoolDatasetCreate(dsFileName,
-                                        psDatasetProperties->nRasterXSize,
-                                        psDatasetProperties->nRasterYSize,
-                                        GA_ReadOnly, TRUE, pszProjectionRef,
-                                        psDatasetProperties->adfGeoTransform);
-        reinterpret_cast<GDALProxyPoolDataset*>(hProxyDS)->
-                                        SetOpenOptions( papszOpenOptions );
+        GDALDatasetH hSourceDS;
+        bool bDropRef = false;
 
-        for(int j=0;j<nMaxBandNo;j++)
+        if( nSrcDSCount == nInputFiles &&
+            GDALGetDatasetDriver(pahSrcDS[i]) != nullptr &&
+            ( dsFileName[0] == '\0' || // could be a unnamed VRT file
+              EQUAL(GDALGetDescription(GDALGetDatasetDriver(pahSrcDS[i])), "MEM")) )
         {
-            GDALProxyPoolDatasetAddSrcBandDescription(hProxyDS,
-                                            pasBandProperties[j].dataType,
-                                            psDatasetProperties->nBlockXSize,
-                                            psDatasetProperties->nBlockYSize);
+            hSourceDS = pahSrcDS[i];
         }
-        if (bHasDatasetMask && !bAddAlpha)
+        else
         {
-            static_cast<GDALProxyPoolRasterBand*>(reinterpret_cast<GDALProxyPoolDataset*>(hProxyDS)->GetRasterBand(1))->
-                    AddSrcMaskBandDescription  (GDT_Byte,
-                                                psDatasetProperties->nMaskBlockXSize,
-                                                psDatasetProperties->nMaskBlockYSize);
+            bDropRef = true;
+            GDALProxyPoolDatasetH hProxyDS =
+                GDALProxyPoolDatasetCreate(dsFileName,
+                                            psDatasetProperties->nRasterXSize,
+                                            psDatasetProperties->nRasterYSize,
+                                            GA_ReadOnly, TRUE, pszProjectionRef,
+                                            psDatasetProperties->adfGeoTransform);
+            reinterpret_cast<GDALProxyPoolDataset*>(hProxyDS)->
+                                            SetOpenOptions( papszOpenOptions );
+
+            for(int j=0;j<nMaxBandNo;j++)
+            {
+                GDALProxyPoolDatasetAddSrcBandDescription(hProxyDS,
+                                                pasBandProperties[j].dataType,
+                                                psDatasetProperties->nBlockXSize,
+                                                psDatasetProperties->nBlockYSize);
+            }
+            if (bHasDatasetMask && !bAddAlpha)
+            {
+                static_cast<GDALProxyPoolRasterBand*>(reinterpret_cast<GDALProxyPoolDataset*>(hProxyDS)->GetRasterBand(1))->
+                        AddSrcMaskBandDescription  (GDT_Byte,
+                                                    psDatasetProperties->nMaskBlockXSize,
+                                                    psDatasetProperties->nMaskBlockYSize);
+            }
+
+            hSourceDS = static_cast<GDALDatasetH>(hProxyDS);
         }
 
         for(int j=0;j<nBands;j++)
@@ -1133,7 +1131,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             if( pszResampling )
                 poSimpleSource->SetResampling(pszResampling);
             poVRTBand->ConfigureSource( poSimpleSource,
-                                        static_cast<GDALRasterBand*>(GDALGetRasterBand(static_cast<GDALDatasetH>(hProxyDS), nSelBand + 1)),
+                                        static_cast<GDALRasterBand*>(GDALGetRasterBand(hSourceDS, nSelBand + 1)),
                                         FALSE,
                                         dfSrcXOff, dfSrcYOff,
                                         dfSrcXSize, dfSrcYSize,
@@ -1150,7 +1148,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             /* Little trick : we use an offset of 255 and a scaling of 0, so that in areas covered */
             /* by the source, the value of the alpha band will be 255, otherwise it will be 0 */
             static_cast<VRTSourcedRasterBand *>(hVRTBand)->AddComplexSource(
-                                            static_cast<GDALRasterBand*>(GDALGetRasterBand(static_cast<GDALDatasetH>(hProxyDS), 1)),
+                                            static_cast<GDALRasterBand*>(GDALGetRasterBand(hSourceDS, 1)),
                                             dfSrcXOff, dfSrcYOff,
                                             dfSrcXSize, dfSrcYSize,
                                             dfDstXOff, dfDstYOff,
@@ -1163,7 +1161,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             if( pszResampling )
                 poSimpleSource->SetResampling(pszResampling);
             poMaskVRTBand->ConfigureSource( poSimpleSource,
-                                            static_cast<GDALRasterBand*>(GDALGetRasterBand(static_cast<GDALDatasetH>(hProxyDS), 1)),
+                                            static_cast<GDALRasterBand*>(GDALGetRasterBand(hSourceDS, 1)),
                                             TRUE,
                                             dfSrcXOff, dfSrcYOff,
                                             dfSrcXSize, dfSrcYSize,
@@ -1173,7 +1171,10 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             poMaskVRTBand->AddSource( poSimpleSource );
         }
 
-        GDALDereferenceDataset(hProxyDS);
+        if( bDropRef )
+        {
+            GDALDereferenceDataset(hSourceDS);
+        }
     }
 }
 
