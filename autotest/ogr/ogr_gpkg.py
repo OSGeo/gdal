@@ -4155,12 +4155,8 @@ def test_ogr_gpkg_datetime_timezones():
 
 def test_abort_sql():
 
-    filename = '/vsimem/test_ogr_gpkg_abort_sql.gpkg'
-    ds = ogr.GetDriverByName('GPKG').CreateDataSource(filename)
-    ds.CreateLayer('test')
-    ds = None
-
-    ds = ogr.Open(filename, update=1)
+    filename = 'data/gpkg/poly_non_conformant.gpkg'
+    ds = ogr.Open(filename)
 
     def abortAfterDelay():
         print("Aborting SQL...")
@@ -4177,7 +4173,7 @@ def test_abort_sql():
             VALUES(0)
             UNION ALL
             SELECT i FROM r
-            LIMIT 10000000
+            LIMIT 100000000
             )
         SELECT i FROM r WHERE i = 1;"""
 
