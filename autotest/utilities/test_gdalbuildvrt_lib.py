@@ -152,3 +152,34 @@ def test_gdalbuildvrt_lib_mem_sources():
 
     scenario_1()
     scenario_2()
+
+###############################################################################
+# Test BuildVRT() with virtual overviews
+
+
+def test_gdalbuildvrt_lib_virtual_overviews():
+
+    src1_ds = gdal.GetDriverByName('MEM').Create('', 1000, 1000)
+    src1_ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    src1_ds.BuildOverviews('NEAR', [2, 4, 8])
+
+    src2_ds = gdal.GetDriverByName('MEM').Create('', 2000, 2000)
+    src2_ds.SetGeoTransform([3,0.001,0,49,0,-0.001])
+    src2_ds.BuildOverviews('NEAR', [2, 4, 16])
+
+    vrt_ds = gdal.BuildVRT('', [src1_ds, src2_ds])
+    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 2
+
+
+def test_gdalbuildvrt_lib_virtual_overviews_not_same_res():
+
+    src1_ds = gdal.GetDriverByName('MEM').Create('', 1000, 1000)
+    src1_ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    src1_ds.BuildOverviews('NEAR', [2, 4])
+
+    src2_ds = gdal.GetDriverByName('MEM').Create('', 500, 500)
+    src2_ds.SetGeoTransform([3,0.002,0,49,0,-0.002])
+    src2_ds.BuildOverviews('NEAR', [2, 4])
+
+    vrt_ds = gdal.BuildVRT('', [src1_ds, src2_ds])
+    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 0

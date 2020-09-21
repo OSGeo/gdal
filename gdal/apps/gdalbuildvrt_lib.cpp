@@ -42,6 +42,7 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
+#include <set>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -93,6 +94,7 @@ struct DatasetProperty
     int    bHasDatasetMask = 0;
     int    nMaskBlockXSize = 0;
     int    nMaskBlockYSize = 0;
+    std::vector<int> anOverviewFactors{};
 
     DatasetProperty()
     {
@@ -611,6 +613,33 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
                         &psDatasetProperties->nMaskBlockXSize,
                         &psDatasetProperties->nMaskBlockYSize);
 
+    // Collect overview factors. We only handle power-of-two situations for now
+    const int nOverviews = poFirstBand->GetOverviewCount();
+    int nExpectedOvFactor = 2;
+    for(int j=0; j < nOverviews; j++)
+    {
+        GDALRasterBand* poOverview = poFirstBand->GetOverview(j);
+        if( !poOverview )
+            continue;
+        if( poOverview->GetXSize() < 128 &&
+            poOverview->GetYSize() < 128 )
+        {
+            break;
+        }
+
+        const int nOvFactor =
+            GDALComputeOvFactor(poOverview->GetXSize(),
+                                poFirstBand->GetXSize(),
+                                poOverview->GetYSize(),
+                                poFirstBand->GetYSize());
+
+        if( nOvFactor != nExpectedOvFactor )
+            break;
+
+        psDatasetProperties->anOverviewFactors.push_back(nOvFactor);
+        nExpectedOvFactor *= 2;
+    }
+
     for(int j=0;j<_nBands;j++)
     {
         GDALRasterBand* poBand = poDS->GetRasterBand(j+1);
@@ -1019,6 +1048,10 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
         poMaskVRTBand = static_cast<VRTSourcedRasterBand*>(poVRTDS->GetRasterBand(1)->GetMaskBand());
     }
 
+    bool bCanCollectOverviewFactors = true;
+    std::set<int> anOverviewFactorsSet;
+    std::vector<int> anIdxValidDatasets;
+
     for( int i = 0; ppszInputFilenames != nullptr && i < nInputFiles; i++ )
     {
         DatasetProperty* psDatasetProperties = &asDatasetProperties[i];
@@ -1040,6 +1073,23 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
                         &dfSrcXOff, &dfSrcYOff, &dfSrcXSize, &dfSrcYSize,
                         &dfDstXOff, &dfDstYOff, &dfDstXSize, &dfDstYSize) )
             continue;
+
+        anIdxValidDatasets.push_back(i);
+
+        if( bCanCollectOverviewFactors )
+        {
+            if( std::abs(psDatasetProperties->adfGeoTransform[1] - we_res) > 1e-8 * std::abs(we_res) ||
+                std::abs(psDatasetProperties->adfGeoTransform[5] - ns_res) > 1e-8 * std::abs(ns_res) )
+            {
+                bCanCollectOverviewFactors = false;
+                anOverviewFactorsSet.clear();
+            }
+        }
+        if( bCanCollectOverviewFactors )
+        {
+            for( int nOvFactor: psDatasetProperties->anOverviewFactors )
+                anOverviewFactorsSet.insert(nOvFactor);
+        }
 
         const char* dsFileName = ppszInputFilenames[i];
 
@@ -1147,6 +1197,43 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
         {
             GDALDereferenceDataset(hSourceDS);
         }
+    }
+
+    for( int i: anIdxValidDatasets )
+    {
+        const DatasetProperty* psDatasetProperties = &asDatasetProperties[i];
+        for( auto oIter = anOverviewFactorsSet.begin(); oIter != anOverviewFactorsSet.end(); )
+        {
+            const int nGlobalOvrFactor = *oIter;
+            auto oIterNext = oIter;
+            ++oIterNext;
+
+            if( psDatasetProperties->nRasterXSize / nGlobalOvrFactor < 128 &&
+                psDatasetProperties->nRasterYSize / nGlobalOvrFactor < 128 )
+            {
+                break;
+            }
+            if( std::find(psDatasetProperties->anOverviewFactors.begin(),
+                          psDatasetProperties->anOverviewFactors.end(),
+                          nGlobalOvrFactor) == psDatasetProperties->anOverviewFactors.end() )
+            {
+                anOverviewFactorsSet.erase(oIter);
+            }
+
+            oIter = oIterNext;
+        }
+    }
+    if( !anOverviewFactorsSet.empty() )
+    {
+        std::vector<int> anOverviewFactors;
+        anOverviewFactors.insert(anOverviewFactors.end(),
+                                 anOverviewFactorsSet.begin(),
+                                 anOverviewFactorsSet.end());
+        CPLConfigOptionSetter oSetter("VRT_VIRTUAL_OVERVIEWS", "YES", false);
+        poVRTDS->BuildOverviews(pszResampling ? pszResampling : "nearest",
+                                static_cast<int>(anOverviewFactors.size()),
+                                &anOverviewFactors[0],
+                                0, nullptr, nullptr, nullptr);
     }
 }
 
