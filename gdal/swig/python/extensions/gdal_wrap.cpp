@@ -9097,6 +9097,8 @@ SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject
   char *arg2 = (char *) 0 ;
   int arg3 = (int) CPLES_SQL ;
   int alloc1 = 0 ;
+  bool viewIsValid1 = false ;
+  Py_buffer view1 ;
   int val3 ;
   int ecode3 = 0 ;
   PyObject * obj0 = 0 ;
@@ -9110,17 +9112,19 @@ SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject
   {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
     {
-      Py_ssize_t safeLen = 0;
-      const void *safeBuf = 0;
-      int res = PyObject_AsReadBuffer(obj0, &safeBuf, &safeLen);
-      if (res == 0) {
-        if( safeLen > INT_MAX ) {
+      if (PyObject_GetBuffer(obj0, &view1, PyBUF_SIMPLE) == 0)
+      {
+        if( view1.len > INT_MAX ) {
+          PyBuffer_Release(&view1);
           SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
         }
-        arg1 = (int) safeLen;
-        arg2 = (char *) safeBuf;
+        viewIsValid1 = true;
+        arg1 = (int) view1.len;
+        arg2 = (char *) view1.buf;
         goto ok;
-      } else {
+      }
+      else
+      {
         PyErr_Clear();
       }
     }
@@ -9212,7 +9216,10 @@ SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject
   }
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
+    if( viewIsValid1 ) {
+      PyBuffer_Release(&view1);
+    }
+    else if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
       delete[] arg2;
     }
   }
@@ -9221,7 +9228,10 @@ SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject
 fail:
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
+    if( viewIsValid1 ) {
+      PyBuffer_Release(&view1);
+    }
+    else if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
       delete[] arg2;
     }
   }
@@ -10423,6 +10433,8 @@ SWIGINTERN PyObject *_wrap_CPLBinaryToHex(PyObject *SWIGUNUSEDPARM(self), PyObje
   int arg1 ;
   GByte *arg2 = (GByte *) 0 ;
   int alloc1 = 0 ;
+  bool viewIsValid1 = false ;
+  Py_buffer view1 ;
   PyObject * obj0 = 0 ;
   retStringAndCPLFree *result = 0 ;
   
@@ -10430,17 +10442,19 @@ SWIGINTERN PyObject *_wrap_CPLBinaryToHex(PyObject *SWIGUNUSEDPARM(self), PyObje
   {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
     {
-      Py_ssize_t safeLen = 0;
-      const void *safeBuf = 0;
-      int res = PyObject_AsReadBuffer(obj0, &safeBuf, &safeLen);
-      if (res == 0) {
-        if( safeLen > INT_MAX ) {
+      if (PyObject_GetBuffer(obj0, &view1, PyBUF_SIMPLE) == 0)
+      {
+        if( view1.len > INT_MAX ) {
+          PyBuffer_Release(&view1);
           SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
         }
-        arg1 = (int) safeLen;
-        arg2 = (GByte *) safeBuf;
+        viewIsValid1 = true;
+        arg1 = (int) view1.len;
+        arg2 = (GByte *) view1.buf;
         goto ok;
-      } else {
+      }
+      else
+      {
         PyErr_Clear();
       }
     }
@@ -10525,7 +10539,10 @@ SWIGINTERN PyObject *_wrap_CPLBinaryToHex(PyObject *SWIGUNUSEDPARM(self), PyObje
   }
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
+    if( viewIsValid1 ) {
+      PyBuffer_Release(&view1);
+    }
+    else if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
       delete[] arg2;
     }
   }
@@ -10534,7 +10551,10 @@ SWIGINTERN PyObject *_wrap_CPLBinaryToHex(PyObject *SWIGUNUSEDPARM(self), PyObje
 fail:
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
+    if( viewIsValid1 ) {
+      PyBuffer_Release(&view1);
+    }
+    else if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
       delete[] arg2;
     }
   }
@@ -12858,6 +12878,8 @@ SWIGINTERN PyObject *_wrap_VSIFWriteL(PyObject *SWIGUNUSEDPARM(self), PyObject *
   int arg4 ;
   VSILFILE *arg5 = (VSILFILE *) 0 ;
   int alloc1 = 0 ;
+  bool viewIsValid1 = false ;
+  Py_buffer view1 ;
   int val3 ;
   int ecode3 = 0 ;
   int val4 ;
@@ -12874,17 +12896,19 @@ SWIGINTERN PyObject *_wrap_VSIFWriteL(PyObject *SWIGUNUSEDPARM(self), PyObject *
   {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
     {
-      Py_ssize_t safeLen = 0;
-      const void *safeBuf = 0;
-      int res = PyObject_AsReadBuffer(obj0, &safeBuf, &safeLen);
-      if (res == 0) {
-        if( safeLen > INT_MAX ) {
+      if (PyObject_GetBuffer(obj0, &view1, PyBUF_SIMPLE) == 0)
+      {
+        if( view1.len > INT_MAX ) {
+          PyBuffer_Release(&view1);
           SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
         }
-        arg1 = (int) safeLen;
-        arg2 = (char *) safeBuf;
+        viewIsValid1 = true;
+        arg1 = (int) view1.len;
+        arg2 = (char *) view1.buf;
         goto ok;
-      } else {
+      }
+      else
+      {
         PyErr_Clear();
       }
     }
@@ -12976,7 +13000,10 @@ SWIGINTERN PyObject *_wrap_VSIFWriteL(PyObject *SWIGUNUSEDPARM(self), PyObject *
   resultobj = SWIG_From_int(static_cast< int >(result));
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
+    if( viewIsValid1 ) {
+      PyBuffer_Release(&view1);
+    }
+    else if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
       delete[] arg2;
     }
   }
@@ -12985,7 +13012,10 @@ SWIGINTERN PyObject *_wrap_VSIFWriteL(PyObject *SWIGUNUSEDPARM(self), PyObject *
 fail:
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
+    if( viewIsValid1 ) {
+      PyBuffer_Release(&view1);
+    }
+    else if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
       delete[] arg2;
     }
   }
