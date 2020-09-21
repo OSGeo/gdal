@@ -236,9 +236,7 @@ static bool blockread(Byte** ppByte, size_t& size, std::vector<unsigned int>& d)
 
     int bits = 0; // Available in accumulator, at the high end
     unsigned int acc = 0;
-    int countElts = 0;
     for (unsigned int& val : d) {
-        countElts ++;
         if (bits >= numBits) { // Enough bits in accumulator
             val = acc >> (32 - numBits);
             acc <<= numBits;
