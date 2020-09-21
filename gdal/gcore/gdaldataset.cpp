@@ -4585,10 +4585,14 @@ OGRLayerH GDALDatasetExecuteSQL( GDALDatasetH hDS,
 
 /**
  \brief Abort any SQL statement running in the data store.
+ 
+ This function can be safely called from any thread (pending that the dataset object is still alive). Driver implementations will make sure that it can be called in a thread-safe way.
+ 
+ This might not be implemented by all drivers. At time of writing, only SQLite, GPKG and PG drivers implement it
 
  This method is the same as the C++ method GDALDataset::AbortSQL()
 
- @since GDAL 3.1.4
+ @since GDAL 3.2.0
 
  @param hDS the dataset handle.
 
