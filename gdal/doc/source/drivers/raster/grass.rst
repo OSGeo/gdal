@@ -42,7 +42,7 @@ GRASS raster maps/imagery groups can be selected in several ways.
 
 #. If there is a correct ``.grassrc7/rc`` (GRASS 7) setup file in the
    user's home directory then raster maps or imagery groups may be opened
-   just by the cell name.
+   just by the cell or group name.
    This only works for raster maps or imagery groups in the
    current GRASS location and mapset as defined in the GRASS setup file.
 
