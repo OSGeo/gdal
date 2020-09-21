@@ -211,7 +211,7 @@ static bool blockread(Byte** ppByte, size_t& size, std::vector<unsigned int>& d)
     Byte numBits = **ppByte;
     Byte n = stib67[numBits >> 6];
     numBits &= 63;  // bits 0-5;
-    if (numBits >= 32 || n == 0 || size < static_cast<size_t>(n))
+    if (numBits >= 32 || n == 0 || size < 1 + static_cast<size_t>(n))
         return false;
     *ppByte += 1;
     size -= 1;
@@ -236,7 +236,9 @@ static bool blockread(Byte** ppByte, size_t& size, std::vector<unsigned int>& d)
 
     int bits = 0; // Available in accumulator, at the high end
     unsigned int acc = 0;
+    int countElts = 0;
     for (unsigned int& val : d) {
+        countElts ++;
         if (bits >= numBits) { // Enough bits in accumulator
             val = acc >> (32 - numBits);
             acc <<= numBits;
