@@ -80,7 +80,7 @@ void CPCIDSKADS40ModelSegment::Load()
         return;
     }
     
-    if( data_size - 1024 != 1 * 512 )
+    if( data_size != 1024 + 1 * 512 )
     {
         return ThrowPCIDSKException("Wrong data_size in CPCIDSKADS40ModelSegment");
     }
