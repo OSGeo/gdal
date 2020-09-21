@@ -4580,7 +4580,7 @@ OGRLayerH GDALDatasetExecuteSQL( GDALDatasetH hDS,
 
 
 /************************************************************************/
-/*                        GDALDatasetAbortSQL()                       */
+/*                        GDALDatasetAbortSQL()                         */
 /************************************************************************/
 
 /**

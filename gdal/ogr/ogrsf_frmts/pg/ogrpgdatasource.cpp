@@ -3005,6 +3005,12 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
     return nullptr;
 }
 
+
+/************************************************************************/
+/*                          AbortSQL()                                  */
+/************************************************************************/
+
+
 OGRErr OGRPGDataSource::AbortSQL()
 {
   auto cancel = PQgetCancel( hPGConn ) ;

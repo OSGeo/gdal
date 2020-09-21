@@ -3784,7 +3784,7 @@ void OGRSQLiteBaseDataSource::SetEnvelopeForSQL(const CPLString& osSQL,
 }
 
 /************************************************************************/
-/*                         AbortSQL()                          */
+/*                         AbortSQL()                                   */
 /************************************************************************/
 
 OGRErr OGRSQLiteBaseDataSource::AbortSQL()
