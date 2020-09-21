@@ -21297,6 +21297,8 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
   char *arg2 = (char *) 0 ;
   OSRSpatialReferenceShadow *arg3 = (OSRSpatialReferenceShadow *) NULL ;
   int alloc1 = 0 ;
+  bool viewIsValid1 = false ;
+  Py_buffer view1 ;
   void *argp3 = 0 ;
   int res3 = 0 ;
   PyObject * obj0 = 0 ;
@@ -21310,17 +21312,19 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
   {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
     {
-      Py_ssize_t safeLen = 0;
-      const void *safeBuf = 0;
-      int res = PyObject_AsReadBuffer(obj0, &safeBuf, &safeLen);
-      if (res == 0) {
-        if( safeLen > INT_MAX ) {
+      if (PyObject_GetBuffer(obj0, &view1, PyBUF_SIMPLE) == 0)
+      {
+        if( view1.len > INT_MAX ) {
+          PyBuffer_Release(&view1);
           SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
         }
-        arg1 = (int) safeLen;
-        arg2 = (char *) safeBuf;
+        viewIsValid1 = true;
+        arg1 = (int) view1.len;
+        arg2 = (char *) view1.buf;
         goto ok;
-      } else {
+      }
+      else
+      {
         PyErr_Clear();
       }
     }
@@ -21399,7 +21403,10 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
+    if( viewIsValid1 ) {
+      PyBuffer_Release(&view1);
+    }
+    else if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
       delete[] arg2;
     }
   }
@@ -21408,7 +21415,10 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
 fail:
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
+    if( viewIsValid1 ) {
+      PyBuffer_Release(&view1);
+    }
+    else if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
       delete[] arg2;
     }
   }
@@ -22114,6 +22124,8 @@ SWIGINTERN PyObject *_wrap_new_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject
   char *buf2 = 0 ;
   int alloc2 = 0 ;
   int alloc3 = 0 ;
+  bool viewIsValid3 = false ;
+  Py_buffer view3 ;
   int res5 ;
   char *buf5 = 0 ;
   int alloc5 = 0 ;
@@ -22145,17 +22157,19 @@ SWIGINTERN PyObject *_wrap_new_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject
     {
       /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
       {
-        Py_ssize_t safeLen = 0;
-        const void *safeBuf = 0;
-        int res = PyObject_AsReadBuffer(obj2, &safeBuf, &safeLen);
-        if (res == 0) {
-          if( safeLen > INT_MAX ) {
+        if (PyObject_GetBuffer(obj2, &view3, PyBUF_SIMPLE) == 0)
+        {
+          if( view3.len > INT_MAX ) {
+            PyBuffer_Release(&view3);
             SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
           }
-          arg3 = (int) safeLen;
-          arg4 = (char *) safeBuf;
+          viewIsValid3 = true;
+          arg3 = (int) view3.len;
+          arg4 = (char *) view3.buf;
           goto ok;
-        } else {
+        }
+        else
+        {
           PyErr_Clear();
         }
       }
@@ -22236,7 +22250,10 @@ SWIGINTERN PyObject *_wrap_new_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if (ReturnSame(alloc3) == SWIG_NEWOBJ ) {
+    if( viewIsValid3 ) {
+      PyBuffer_Release(&view3);
+    }
+    else if (ReturnSame(alloc3) == SWIG_NEWOBJ ) {
       delete[] arg4;
     }
   }
@@ -22247,7 +22264,10 @@ fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if (ReturnSame(alloc3) == SWIG_NEWOBJ ) {
+    if( viewIsValid3 ) {
+      PyBuffer_Release(&view3);
+    }
+    else if (ReturnSame(alloc3) == SWIG_NEWOBJ ) {
       delete[] arg4;
     }
   }
