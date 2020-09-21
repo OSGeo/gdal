@@ -740,7 +740,7 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL: public GDALPamDataset
 
     virtual std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> GetLayerWithGetSpatialWhereByName( const char* pszName ) = 0;
 
-    virtual void        AbortSQL() override;
+    virtual OGRErr     AbortSQL() override;
 
     virtual OGRErr      StartTransaction(int bForce = FALSE) override;
     virtual OGRErr      CommitTransaction() override;

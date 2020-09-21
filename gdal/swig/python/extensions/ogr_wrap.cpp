@@ -4060,8 +4060,8 @@ SWIGINTERN OGRLayerShadow *OGRDataSourceShadow_ExecuteSQL(OGRDataSourceShadow *s
                                                       dialect);
     return layer;
   }
-SWIGINTERN void OGRDataSourceShadow_AbortSQL(OGRDataSourceShadow *self){
-    OGR_DS_AbortSQL((OGRDataSourceShadow*)self);
+SWIGINTERN OGRErr OGRDataSourceShadow_AbortSQL(OGRDataSourceShadow *self){
+    return GDALDatasetAbortSQL((OGRDataSourceShadow*)self);
   }
 SWIGINTERN void OGRDataSourceShadow_ReleaseResultSet(OGRDataSourceShadow *self,OGRLayerShadow *layer){
     OGR_DS_ReleaseResultSet(self, layer);
@@ -8239,6 +8239,7 @@ SWIGINTERN PyObject *_wrap_DataSource_AbortSQL(PyObject *SWIGUNUSEDPARM(self), P
   void *argp1 = 0 ;
   int res1 = 0 ;
   PyObject * obj0 = 0 ;
+  OGRErr result;
   
   if (!PyArg_ParseTuple(args,(char *)"O:DataSource_AbortSQL",&obj0)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRDataSourceShadow, 0 |  0 );
@@ -8252,7 +8253,7 @@ SWIGINTERN PyObject *_wrap_DataSource_AbortSQL(PyObject *SWIGUNUSEDPARM(self), P
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      OGRDataSourceShadow_AbortSQL(arg1);
+      result = (OGRErr)OGRDataSourceShadow_AbortSQL(arg1);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -8264,7 +8265,23 @@ SWIGINTERN PyObject *_wrap_DataSource_AbortSQL(PyObject *SWIGUNUSEDPARM(self), P
     }
 #endif
   }
-  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if ( ReturnSame(resultobj == Py_None || resultobj == 0) ) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
@@ -29191,7 +29208,7 @@ static PyMethodDef SwigMethods[] = {
 		"an handle to a OGRLayer containing the results of the query.\n"
 		"Deallocate with OGR_DS_ReleaseResultSet(). \n"
 		""},
-	 { (char *)"DataSource_AbortSQL", _wrap_DataSource_AbortSQL, METH_VARARGS, (char *)"DataSource_AbortSQL(DataSource self)"},
+	 { (char *)"DataSource_AbortSQL", _wrap_DataSource_AbortSQL, METH_VARARGS, (char *)"DataSource_AbortSQL(DataSource self) -> OGRErr"},
 	 { (char *)"DataSource_ReleaseResultSet", _wrap_DataSource_ReleaseResultSet, METH_VARARGS, (char *)"\n"
 		"DataSource_ReleaseResultSet(DataSource self, Layer layer)\n"
 		"\n"

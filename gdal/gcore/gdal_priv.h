@@ -813,7 +813,7 @@ private:
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect,
                                     swq_select_parse_options* poSelectParseOptions);
-    virtual void        AbortSQL( );
+    virtual OGRErr      AbortSQL( );
 //! @endcond
 
   protected:

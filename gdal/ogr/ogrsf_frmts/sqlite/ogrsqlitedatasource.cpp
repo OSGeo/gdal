@@ -3780,14 +3780,15 @@ const OGREnvelope* OGRSQLiteBaseDataSource::GetEnvelopeFromSQL(const CPLString& 
 void OGRSQLiteBaseDataSource::SetEnvelopeForSQL(const CPLString& osSQL,
                                             const OGREnvelope& oEnvelope)
 {
-  oMapSQLEnvelope[osSQL] = oEnvelope;
+    oMapSQLEnvelope[osSQL] = oEnvelope;
 }
 
 /************************************************************************/
 /*                         AbortSQL()                          */
 /************************************************************************/
 
-void OGRSQLiteBaseDataSource::AbortSQL()
+OGRErr OGRSQLiteBaseDataSource::AbortSQL()
 {
-  sqlite3_interrupt( hDB );
+    sqlite3_interrupt( hDB );
+    return OGRERR_NONE;
 }

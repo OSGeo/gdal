@@ -4745,7 +4745,7 @@ def test_abort_sql():
 
     def abortAfterDelay():
         print("Aborting SQL...")
-        gdaltest.pg_ds.AbortSQL()
+        assert gdaltest.pg_ds.AbortSQL() == ogr.OGRERR_NONE
 
     t = threading.Timer(0.5, abortAfterDelay)
     t.start()
@@ -4757,6 +4757,7 @@ def test_abort_sql():
 
     end = time.time()
     assert int(end - start) < 1
+
 
 def test_ogr_pg_cleanup():
 

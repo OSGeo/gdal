@@ -4596,13 +4596,16 @@ OGRLayerH GDALDatasetExecuteSQL( GDALDatasetH hDS,
 
  @param hDS the dataset handle.
 
+ @return OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if AbortSQL
+ is not supported for this datasource. .
+
 */
 
-void GDALDatasetAbortSQL( GDALDatasetH hDS )
+OGRErr GDALDatasetAbortSQL( GDALDatasetH hDS )
 
 {
-    VALIDATE_POINTER0(hDS, "GDALDatasetAbortSQL");
-    GDALDataset::FromHandle(hDS)->AbortSQL();
+    VALIDATE_POINTER1(hDS, "GDALDatasetAbortSQL", OGRERR_FAILURE );
+    return GDALDataset::FromHandle(hDS)->AbortSQL();
 }
 
 
@@ -6191,15 +6194,24 @@ GDALDataset::ExecuteSQL( const char *pszStatement,
 /************************************************************************/
 
 /**
- \brief Abort a SQL statement running in the data store.
+ \brief Abort any SQL statement running in the data store.
 
- This method is the same as the C function GDALDatasetAbortSQL() .
+ This function can be safely called from any thread (pending that the dataset object is still alive). Driver implementations will make sure that it can be called in a thread-safe way.
+
+ This might not be implemented by all drivers. At time of writing, only SQLite, GPKG and PG drivers implement it
+
+ This method is the same as the C method GDALDatasetAbortSQL()
+
+ @since GDAL 3.2.0
+
+ @param hDS the dataset handle.
 
 */
 
-void GDALDataset::AbortSQL(  )
-{
-    // noop
+OGRErr GDALDataset::AbortSQL(  )
+{  
+  CPLError(CE_Failure, CPLE_NotSupported, "AbortSQL is not supported for this driver.");
+  return OGRERR_UNSUPPORTED_OPERATION;
 }
 
 

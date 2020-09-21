@@ -803,7 +803,7 @@ class DataSource(MajorObject):
 
 
     def AbortSQL(self, *args):
-        """AbortSQL(DataSource self)"""
+        """AbortSQL(DataSource self) -> OGRErr"""
         return _ogr.DataSource_AbortSQL(self, *args)
 
 

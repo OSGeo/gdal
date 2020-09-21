@@ -4160,11 +4160,11 @@ def test_abort_sql():
     ds.CreateLayer('test')
     ds = None
 
-    ds = ogr.Open(filename, update = 1)
+    ds = ogr.Open(filename, update=1)
 
     def abortAfterDelay():
         print("Aborting SQL...")
-        ds.AbortSQL()
+        assert ds.AbortSQL() == ogr.OGRERR_NONE
 
     t = threading.Timer(0.5, abortAfterDelay)
     t.start()
