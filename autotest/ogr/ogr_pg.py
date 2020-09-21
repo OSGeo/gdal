@@ -4753,7 +4753,26 @@ def test_abort_sql():
     start = time.time()
 
     # Long running query
-    gdaltest.pg_ds.ExecuteSQL("SELECT pg_sleep(3)")
+    sql = "SELECT pg_sleep(3)"
+    gdaltest.pg_ds.ExecuteSQL(sql)
+
+    end = time.time()
+    assert int(end - start) < 1
+
+    # Same test with a GDAL dataset
+    ds2 = gdal.OpenEx('PG:' + gdaltest.pg_connection_string, gdal.OF_VECTOR)
+
+    def abortAfterDelay2():
+        print("Aborting SQL...")
+        assert ds2.AbortSQL() == ogr.OGRERR_NONE
+
+    t = threading.Timer(0.5, abortAfterDelay2)
+    t.start()
+
+    start = time.time()
+
+    # Long running query
+    ds2.ExecuteSQL(sql)
 
     end = time.time()
     assert int(end - start) < 1
