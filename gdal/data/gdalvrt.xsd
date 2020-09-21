@@ -45,6 +45,7 @@
                     <xs:element name="GDALWarpOptions" type="GDALWarpOptionsType"/> <!-- only if subClass="VRTWarpedDataset" -->
                     <xs:element name="PansharpeningOptions" type="PansharpeningOptionsType"/> <!-- only if subClass="VRTPansharpenedDataset" -->
                     <xs:element name="Group" type="GroupType"/> <!-- only for multidimensionnal dataset -->
+                    <xs:element name="OverviewList" type="OverviewListType"/>
                 </xs:choice>
             </xs:sequence>
             <xs:attribute name="subClass" type="xs:string"/>
@@ -52,6 +53,18 @@
             <xs:attribute name="rasterYSize" type="nonNegativeInteger32"/>
         </xs:complexType>
     </xs:element>
+
+    <xs:complexType name="OverviewListType">
+        <xs:simpleContent>
+            <xs:extension base="integerList">
+                <xs:attribute name="resampling" type="xs:string"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:simpleType name="integerList">
+        <xs:list itemType="xs:integer"/>
+    </xs:simpleType>
 
     <xs:complexType name="SRSType">
         <xs:simpleContent>
