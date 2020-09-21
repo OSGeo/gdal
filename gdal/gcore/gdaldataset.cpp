@@ -6204,7 +6204,6 @@ GDALDataset::ExecuteSQL( const char *pszStatement,
 
  @since GDAL 3.2.0
 
- @param hDS the dataset handle.
 
 */
 
