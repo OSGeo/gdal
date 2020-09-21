@@ -944,6 +944,7 @@ void *OGRSQLiteBaseDataSource::GetInternalHandle( const char * pszKey )
     return nullptr;
 }
 
+
 /************************************************************************/
 /*                               Create()                               */
 /************************************************************************/
@@ -3780,4 +3781,14 @@ void OGRSQLiteBaseDataSource::SetEnvelopeForSQL(const CPLString& osSQL,
                                             const OGREnvelope& oEnvelope)
 {
     oMapSQLEnvelope[osSQL] = oEnvelope;
+}
+
+/************************************************************************/
+/*                         AbortSQL()                                   */
+/************************************************************************/
+
+OGRErr OGRSQLiteBaseDataSource::AbortSQL()
+{
+    sqlite3_interrupt( hDB );
+    return OGRERR_NONE;
 }

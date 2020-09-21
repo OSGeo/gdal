@@ -34,6 +34,8 @@ import os
 import struct
 import sys
 import pytest
+import time
+import threading
 
 from osgeo import gdal
 from osgeo import ogr
@@ -4146,3 +4148,58 @@ def test_ogr_gpkg_datetime_timezones():
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test AbortSQL
+
+def test_abort_sql():
+
+    filename = '/vsimem/test_ogr_gpkg_abort_sql.gpkg'
+    ds = ogr.GetDriverByName('GPKG').CreateDataSource(filename)
+    ds.CreateLayer('test')
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+
+    def abortAfterDelay():
+        print("Aborting SQL...")
+        assert ds.AbortSQL() == ogr.OGRERR_NONE
+
+    t = threading.Timer(0.5, abortAfterDelay)
+    t.start()
+
+    start = time.time()
+
+    # Long running query
+    sql = """
+        WITH RECURSIVE r(i) AS (
+            VALUES(0)
+            UNION ALL
+            SELECT i FROM r
+            LIMIT 10000000
+            )
+        SELECT i FROM r WHERE i = 1;"""
+
+    ds.ExecuteSQL(sql)
+
+    end = time.time()
+    assert int(end - start) < 1
+
+    # Same test with a GDAL dataset
+    ds2 = gdal.OpenEx(filename, gdal.OF_VECTOR)
+
+    def abortAfterDelay2():
+        print("Aborting SQL...")
+        assert ds2.AbortSQL() == ogr.OGRERR_NONE
+
+    t = threading.Timer(0.5, abortAfterDelay2)
+    t.start()
+
+    start = time.time()
+
+    # Long running query
+    ds2.ExecuteSQL(sql)
+
+    end = time.time()
+    assert int(end - start) < 1

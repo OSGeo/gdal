@@ -802,6 +802,11 @@ class DataSource(MajorObject):
         return _ogr.DataSource_ExecuteSQL(self, *args, **kwargs)
 
 
+    def AbortSQL(self, *args):
+        """AbortSQL(DataSource self) -> OGRErr"""
+        return _ogr.DataSource_AbortSQL(self, *args)
+
+
     def ReleaseResultSet(self, *args):
         """
         ReleaseResultSet(DataSource self, Layer layer)

@@ -2426,6 +2426,11 @@ class Dataset(MajorObject):
         return _gdal.Dataset_SetStyleTable(self, *args)
 
 
+    def AbortSQL(self, *args):
+        """AbortSQL(Dataset self) -> OGRErr"""
+        return _gdal.Dataset_AbortSQL(self, *args)
+
+
     def StartTransaction(self, *args, **kwargs):
         """StartTransaction(Dataset self, int force=False) -> OGRErr"""
         return _gdal.Dataset_StartTransaction(self, *args, **kwargs)

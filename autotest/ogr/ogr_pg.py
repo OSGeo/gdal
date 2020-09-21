@@ -30,6 +30,8 @@
 import os
 import sys
 import shutil
+import time
+import threading
 
 import pytest
 
@@ -4732,6 +4734,48 @@ def test_ogr_pg_table_cleanup():
     # Drop 'AutoTest-schema' (here, double quotes are required)
     gdaltest.pg_ds.ExecuteSQL('DROP SCHEMA \"AutoTest-schema\" CASCADE')
     gdal.PopErrorHandler()
+
+###############################################################################
+# Test AbortSQL
+
+def test_abort_sql():
+
+    if gdaltest.pg_ds is None:
+        pytest.skip()
+
+    def abortAfterDelay():
+        print("Aborting SQL...")
+        assert gdaltest.pg_ds.AbortSQL() == ogr.OGRERR_NONE
+
+    t = threading.Timer(0.5, abortAfterDelay)
+    t.start()
+
+    start = time.time()
+
+    # Long running query
+    sql = "SELECT pg_sleep(3)"
+    gdaltest.pg_ds.ExecuteSQL(sql)
+
+    end = time.time()
+    assert int(end - start) < 1
+
+    # Same test with a GDAL dataset
+    ds2 = gdal.OpenEx('PG:' + gdaltest.pg_connection_string, gdal.OF_VECTOR)
+
+    def abortAfterDelay2():
+        print("Aborting SQL...")
+        assert ds2.AbortSQL() == ogr.OGRERR_NONE
+
+    t = threading.Timer(0.5, abortAfterDelay2)
+    t.start()
+
+    start = time.time()
+
+    # Long running query
+    ds2.ExecuteSQL(sql)
+
+    end = time.time()
+    assert int(end - start) < 1
 
 
 def test_ogr_pg_cleanup():

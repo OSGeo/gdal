@@ -791,6 +791,7 @@ private:
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect );
     virtual void        ReleaseResultSet( OGRLayer * poResultsSet );
+    virtual OGRErr      AbortSQL( );
 
     int                 GetRefCount() const;
     int                 GetSummaryRefCount() const;
