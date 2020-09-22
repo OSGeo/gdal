@@ -106,7 +106,9 @@ void CPCIDSKSegment::LoadSegmentPointer( const char *segment_pointer )
     PCIDSKBuffer segptr( segment_pointer, 32 );
 
     segment_flag = segptr.buffer[0];
-    segment_type = (eSegType) (atoi(segptr.Get(1,3)));
+    const int segment_type_int = atoi(segptr.Get(1,3));
+    segment_type = SegmentTypeName(segment_type_int) == "UNKNOWN" ?
+        SEG_UNKNOWN : static_cast<eSegType>(segment_type_int);
     data_offset = atouint64(segptr.Get(12,11));
     if( data_offset == 0 )
         data_offset = 0; // throw exception maybe ?
