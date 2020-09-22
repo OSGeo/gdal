@@ -240,6 +240,11 @@ static const char* StateNames[] = {
  * current row and reset decoding state.
  */
 #define SETVALUE(x) do {							\
+    if (pa >= thisrun + sp->nruns) {					\
+        TIFFErrorExt(tif->tif_clientdata, module, "Buffer overflow at line %u of %s %u",	\
+                    sp->line, isTiled(tif) ? "tile" : "strip", isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);	\
+        return (-1);							\
+    }									\
     *pa++ = RunLength + (x);						\
     a0 += (x);								\
     RunLength = 0;							\
