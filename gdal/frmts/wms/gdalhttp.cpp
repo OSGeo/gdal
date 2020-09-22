@@ -68,7 +68,7 @@ static size_t WriteFunc(void *buffer, size_t count, size_t nmemb, void *req) {
 }
 
 // Process curl errors
-static void ProcessCurlErros(CURLMsg* msg, WMSHTTPRequest* pasRequest, int nRequestCount)
+static void ProcessCurlErrors(CURLMsg* msg, WMSHTTPRequest* pasRequest, int nRequestCount)
 {
     CPLAssert(msg != nullptr);
     CPLAssert(msg->msg == CURLMSG_DONE);
@@ -200,7 +200,7 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
         do {
             CURLMsg *m = curl_multi_info_read(curl_multi, &msgs_in_queue);
             if (m && (m->msg == CURLMSG_DONE)) {
-                ProcessCurlErros(m, pasRequest, nRequestCount);
+                ProcessCurlErrors(m, pasRequest, nRequestCount);
 
                 curl_multi_remove_handle(curl_multi, m->easy_handle);
                 if (conn_i < nRequestCount) {
@@ -227,7 +227,7 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
         msg = curl_multi_info_read(curl_multi, &msgs_in_queue);
         if (msg != nullptr) {
             if (msg->msg == CURLMSG_DONE) {
-                ProcessCurlErros(msg, pasRequest, nRequestCount);
+                ProcessCurlErrors(msg, pasRequest, nRequestCount);
             }
         }
     } while (msg != nullptr);
