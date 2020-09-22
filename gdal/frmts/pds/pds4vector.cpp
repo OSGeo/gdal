@@ -78,6 +78,7 @@ bool PDS4TableBaseLayer::RenameFileTo(const char* pszNewName)
 {
     if( m_fp )
         VSIFCloseL(m_fp);
+    m_fp = nullptr;
     CPLString osBackup(pszNewName);
     osBackup += ".bak";
     VSIRename(pszNewName, osBackup);
@@ -1082,6 +1083,7 @@ static OGRFieldType GetFieldTypeFromPDS4DataType(const char* pszDataType,
 
 bool PDS4FixedWidthTable::ReadTableDef(const CPLXMLNode* psTable)
 {
+    CPLAssert( m_fp == nullptr );
     m_fp = VSIFOpenL(m_osFilename,
                      (m_poDS->GetAccess() == GA_ReadOnly ) ? "rb" : "r+b");
     if( !m_fp )
@@ -1432,6 +1434,7 @@ bool PDS4FixedWidthTable::InitializeNewLayer(
                                 OGRwkbGeometryType eGType,
                                 const char* const* papszOptions)
 {
+    CPLAssert( m_fp == nullptr );
     m_fp = VSIFOpenL(m_osFilename, "wb+");
     if( !m_fp )
     {
@@ -2065,6 +2068,7 @@ OGRErr PDS4DelimitedTable::CreateField( OGRFieldDefn *poFieldIn, int )
 
 bool PDS4DelimitedTable::ReadTableDef(const CPLXMLNode* psTable)
 {
+    CPLAssert( m_fp == nullptr );
     m_fp = VSIFOpenL(m_osFilename,
                      (m_poDS->GetAccess() == GA_ReadOnly ) ? "rb" : "r+b");
     if( !m_fp )
@@ -2367,6 +2371,7 @@ bool PDS4DelimitedTable::InitializeNewLayer(
                                 OGRwkbGeometryType eGType,
                                 const char* const* papszOptions)
 {
+    CPLAssert( m_fp == nullptr );
     m_fp = VSIFOpenL(m_osFilename, "wb+");
     if( !m_fp )
     {
