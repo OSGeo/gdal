@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Radim Blazek <radim.blazek@gmail.com>
- * Copyright (c) 2008-2010, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2008-2020, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -641,11 +641,7 @@ bool OGRGRASSLayer::SetSpatialMatch()
 
         Vect_cidx_get_cat_by_index ( poMap, iLayerIndex, cidx, &cat, &type, &id );
 
-#if GRASS_VERSION_MAJOR  >= 7
-    struct bound_box box;
-#else
-        BOUND_BOX box;
-#endif
+        struct bound_box box;
 
         switch ( type )
         {
@@ -1013,11 +1009,7 @@ GIntBig OGRGRASSLayer::GetFeatureCount( int bForce )
 /************************************************************************/
 OGRErr OGRGRASSLayer::GetExtent (OGREnvelope *psExtent, int /*bForce*/)
 {
-#if GRASS_VERSION_MAJOR  >= 7
     struct bound_box box;
-#else
-    BOUND_BOX box;
-#endif
 
     Vect_get_map_box ( poMap, &box );
 

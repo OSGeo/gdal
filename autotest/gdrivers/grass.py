@@ -73,7 +73,7 @@ def test_grass_2():
 
     ret = tst.testOpen(check_prj=srs)
     if ret != 'success':
-        gdaltest.post_reason('If that test fails, checks that the GISBASE environment variable point to the root of your GRASS install. For example GIS_BASE=/usr/local/grass-6.4.svn')
+        gdaltest.post_reason('If that test fails, checks that the GISBASE environment variable point to the root of your GRASS install. For example GIS_BASE=/usr/lib64/grass78')
     return ret
 
 
