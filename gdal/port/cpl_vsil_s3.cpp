@@ -2337,7 +2337,9 @@ bool VSIS3FSHandler::SetFileMetadata( const char * pszFilename,
             CPLFree(pszKey);
         }
 
-        osXML = CPLSerializeXMLTree(psXML);
+        char* pszXML = CPLSerializeXMLTree(psXML);
+        osXML = pszXML;
+        CPLFree(pszXML);
         CPLDestroyXMLNode(psXML);
     }
 
