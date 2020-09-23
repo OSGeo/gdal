@@ -111,7 +111,8 @@ VRTSimpleSource::VRTSimpleSource() :
     m_dfNoDataValue(VRT_NODATA_UNSET),
     m_nMaxValue(0),
     m_bRelativeToVRTOri(-1),
-    m_nExplicitSharedStatus(-1)
+    m_nExplicitSharedStatus(-1),
+    m_bDropRefOnSrcBand(true)
 {}
 
 /************************************************************************/
@@ -134,7 +135,8 @@ VRTSimpleSource::VRTSimpleSource( const VRTSimpleSource* poSrcSource,
     m_dfNoDataValue(poSrcSource->m_dfNoDataValue),
     m_nMaxValue(poSrcSource->m_nMaxValue),
     m_bRelativeToVRTOri(-1),
-    m_nExplicitSharedStatus(poSrcSource->m_nExplicitSharedStatus)
+    m_nExplicitSharedStatus(poSrcSource->m_nExplicitSharedStatus),
+    m_bDropRefOnSrcBand(poSrcSource->m_bDropRefOnSrcBand)
 {}
 
 /************************************************************************/
@@ -144,6 +146,9 @@ VRTSimpleSource::VRTSimpleSource( const VRTSimpleSource* poSrcSource,
 VRTSimpleSource::~VRTSimpleSource()
 
 {
+    if( !m_bDropRefOnSrcBand )
+        return;
+
     if( m_poMaskBandMainBand != nullptr )
     {
         if( m_poMaskBandMainBand->GetDataset() != nullptr )

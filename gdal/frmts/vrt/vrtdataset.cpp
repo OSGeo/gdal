@@ -49,16 +49,7 @@ CPL_CVSID("$Id$")
 /*                            VRTDataset()                             */
 /************************************************************************/
 
-VRTDataset::VRTDataset( int nXSize, int nYSize ) :
-    m_bGeoTransformSet(FALSE),
-    m_nGCPCount(0),
-    m_pasGCPList(nullptr),
-    m_bNeedsFlush(FALSE),
-    m_bWritable(TRUE),
-    m_pszVRTPath(nullptr),
-    m_poMaskBand(nullptr),
-    m_bCompatibleForDatasetIO(-1),
-    m_papszXMLVRTMetadata(nullptr)
+VRTDataset::VRTDataset( int nXSize, int nYSize )
 {
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
@@ -164,10 +155,10 @@ template<class T> void VRTFlushCacheStruct<T>::FlushCache(T& obj)
 {
     obj.GDALDataset::FlushCache();
 
-    if( !obj.m_bNeedsFlush || obj.m_bWritable == FALSE)
+    if( !obj.m_bNeedsFlush || !obj.m_bWritable )
         return;
 
-    obj.m_bNeedsFlush = FALSE;
+    obj.m_bNeedsFlush = false;
 
     // We don't write to disk if there is no filename.  This is a
     // memory only dataset.
@@ -388,6 +379,28 @@ CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPathIn )
         }
     }
 
+    /* -------------------------------------------------------------------- */
+    /*      Overview factors.                                               */
+    /* -------------------------------------------------------------------- */
+    if( !m_anOverviewFactors.empty() )
+    {
+        CPLString osOverviewList;
+        for( int nOvFactor: m_anOverviewFactors )
+        {
+            if( !osOverviewList.empty() )
+                osOverviewList += " ";
+            osOverviewList += CPLSPrintf("%d", nOvFactor);
+        }
+        CPLXMLNode* psOverviewList = CPLCreateXMLElementAndValue(
+            psDSTree, "OverviewList", osOverviewList);
+        if( !m_osOverviewResampling.empty() )
+        {
+            CPLAddXMLAttributeAndValue( psOverviewList,
+                                        "resampling",
+                                        m_osOverviewResampling );
+        }
+    }
+
     return psDSTree;
 }
 
@@ -604,6 +617,31 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Create virtual overviews.                                       */
+/* -------------------------------------------------------------------- */
+    const char* pszSubClass = CPLGetXMLValue(psTree, "subClass", "");
+    if( EQUAL(pszSubClass, "") )
+    {
+        CPLStringList aosTokens(CSLTokenizeString(
+            CPLGetXMLValue( psTree, "OverviewList", "" ) ));
+        m_osOverviewResampling =
+            CPLGetXMLValue( psTree, "OverviewList.resampling", "" );
+        for( int iOverview = 0; iOverview < aosTokens.size(); iOverview++ )
+        {
+            const int nOvFactor = atoi(aosTokens[iOverview]);
+            if( nOvFactor <= 1 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Invalid overview factor");
+                return CE_Failure;
+            }
+
+            AddVirtualOverview(nOvFactor, m_osOverviewResampling.empty() ?
+                                    "nearest" : m_osOverviewResampling.c_str());
+        }
+    }
+
     return CE_None;
 }
 
@@ -649,7 +687,7 @@ CPLErr VRTDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
 
     m_pasGCPList = GDALDuplicateGCPs( nGCPCountIn, pasGCPListIn );
 
-    m_bNeedsFlush = TRUE;
+    SetNeedsFlush();
 
     return CE_None;
 }
@@ -668,7 +706,7 @@ CPLErr VRTDataset::SetSpatialRef(const OGRSpatialReference* poSRS)
     else
         m_poSRS = nullptr;
 
-    m_bNeedsFlush = TRUE;
+    SetNeedsFlush();
 
     return CE_None;
 }
@@ -683,7 +721,7 @@ CPLErr VRTDataset::SetGeoTransform( double *padfGeoTransformIn )
     memcpy( m_adfGeoTransform, padfGeoTransformIn, sizeof(double) * 6 );
     m_bGeoTransformSet = TRUE;
 
-    m_bNeedsFlush = TRUE;
+    SetNeedsFlush();
 
     return CE_None;
 }
@@ -873,7 +911,7 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
         OpenXML( pszXML, pszVRTPath, poOpenInfo->eAccess ) );
 
     if( poDS != nullptr )
-        poDS->m_bNeedsFlush = FALSE;
+        poDS->m_bNeedsFlush =false;
 
     if( poDS != nullptr )
     {
@@ -1106,7 +1144,7 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath,
 CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
 
 {
-    m_bNeedsFlush = TRUE;
+    SetNeedsFlush();
 
 /* ==================================================================== */
 /*      Handle a new raw band.                                          */
@@ -1350,7 +1388,7 @@ VRTDataset::Create( const char * pszName,
     for( int iBand = 0; iBand < nBands; iBand++ )
         poDS->AddBand( eType, nullptr );
 
-    poDS->m_bNeedsFlush = TRUE;
+    poDS->SetNeedsFlush();
 
     poDS->oOvManager.Initialize( poDS, pszName );
 
@@ -1789,7 +1827,7 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
 
     bool bLocalCompatibleForDatasetIO = CPL_TO_BOOL(CheckCompatibleForDatasetIO());
     if( bLocalCompatibleForDatasetIO && eRWFlag == GF_Read &&
-        (nBufXSize < nXSize || nBufYSize < nYSize) )
+        (nBufXSize < nXSize || nBufYSize < nYSize) && m_apoOverviews.empty() )
     {
         int bTried = FALSE;
         const CPLErr eErr = TryOverviewRasterIO( eRWFlag,
@@ -1801,6 +1839,7 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
                                                  nBandSpace,
                                                  psExtraArg,
                                                  &bTried );
+
         if( bTried )
         {
             m_nRecursionCounter --;
@@ -2062,6 +2101,13 @@ void VRTDataset::BuildVirtualOverviews()
         return;
     }
 
+    VRTSourcedRasterBand* l_poVRTBand
+        = cpl::down_cast<VRTSourcedRasterBand *>(papoBands[0]);
+    VRTSimpleSource* poSource
+        = cpl::down_cast<VRTSimpleSource *>( l_poVRTBand->papoSources[0] );
+    const double dfDstToSrcXRatio = poSource->m_dfDstXSize / poSource->m_dfSrcXSize;
+    const double dfDstToSrcYRatio = poSource->m_dfDstYSize / poSource->m_dfSrcYSize;
+
     for( int j = 0; j < nOverviews; j++)
     {
         auto poOvrBand = poFirstBand->GetOverview(j);
@@ -2071,6 +2117,11 @@ void VRTDataset::BuildVirtualOverviews()
             poOvrBand->GetXSize() ) / poFirstBand->GetXSize();
         const double dfYRatio = static_cast<double>(
             poOvrBand->GetYSize() ) / poFirstBand->GetYSize();
+        if( dfXRatio >= dfDstToSrcXRatio ||
+            dfYRatio >= dfDstToSrcYRatio )
+        {
+            continue;
+        }
         const int nOvrXSize = static_cast<int>(0.5 + nRasterXSize * dfXRatio);
         const int nOvrYSize = static_cast<int>(0.5 + nRasterYSize * dfYRatio);
         if( nOvrXSize < 128 || nOvrYSize < 128 )
@@ -2145,6 +2196,47 @@ void VRTDataset::BuildVirtualOverviews()
 }
 
 /************************************************************************/
+/*                        AddVirtualOverview()                          */
+/************************************************************************/
+
+bool VRTDataset::AddVirtualOverview(int nOvFactor, const char* pszResampling)
+{
+    if( nRasterXSize / nOvFactor == 0 ||
+        nRasterYSize / nOvFactor == 0 )
+    {
+        return false;
+    }
+
+    CPLStringList argv;
+    argv.AddString("-of");
+    argv.AddString("VRT");
+    argv.AddString("-outsize");
+    argv.AddString(CPLSPrintf("%d", nRasterXSize / nOvFactor));
+    argv.AddString(CPLSPrintf("%d", nRasterYSize / nOvFactor));
+    argv.AddString("-r");
+    argv.AddString(pszResampling);
+
+    GDALTranslateOptions* psOptions = GDALTranslateOptionsNew(argv.List(), nullptr);
+
+    // Add a dummy overview so that BuildVirtualOverviews() doesn't trigger
+    m_apoOverviews.push_back(nullptr);
+    CPLAssert(m_bCanTakeRef);
+    m_bCanTakeRef = false; // we don't want hOverviewDS to take a reference on ourselves.
+    GDALDatasetH hOverviewDS = GDALTranslate("", GDALDataset::ToHandle(this),
+                                    psOptions, nullptr);
+    m_bCanTakeRef = true;
+    m_apoOverviews.resize(m_apoOverviews.size() - 1);
+
+    GDALTranslateOptionsFree( psOptions );
+    if( hOverviewDS == nullptr )
+        return false;
+
+    m_anOverviewFactors.push_back(nOvFactor);
+    m_apoOverviews.push_back(GDALDataset::FromHandle(hOverviewDS));
+    return true;
+}
+
+/************************************************************************/
 /*                          IBuildOverviews()                           */
 /************************************************************************/
 
@@ -2157,6 +2249,31 @@ VRTDataset::IBuildOverviews( const char *pszResampling,
                              GDALProgressFunc pfnProgress,
                              void * pProgressData )
 {
+    if( CPLTestBool(CPLGetConfigOption("VRT_VIRTUAL_OVERVIEWS", "NO")) )
+    {
+        SetNeedsFlush();
+        if( nOverviews == 0 ||
+            (!m_apoOverviews.empty() && m_anOverviewFactors.empty()) )
+        {
+            m_anOverviewFactors.clear();
+            m_apoOverviewsBak.insert(m_apoOverviewsBak.end(),
+                                     m_apoOverviews.begin(),
+                                     m_apoOverviews.end());
+            m_apoOverviews.clear();
+        }
+        m_osOverviewResampling = pszResampling;
+        for(int i = 0; i < nOverviews; i++ )
+        {
+            if( std::find(m_anOverviewFactors.begin(),
+                          m_anOverviewFactors.end(),
+                          panOverviewList[i]) == m_anOverviewFactors.end() )
+            {
+                AddVirtualOverview(panOverviewList[i], pszResampling);
+            }
+        }
+        return CE_None;
+    }
+
     if( !oOvManager.IsInitialized() )
     {
         const char* pszDesc = GetDescription();
@@ -2171,8 +2288,10 @@ VRTDataset::IBuildOverviews( const char *pszResampling,
     // in GDAL API?
     if( !m_apoOverviews.empty() )
     {
-        m_apoOverviewsBak = m_apoOverviews;
-        m_apoOverviews.resize(0);
+        m_apoOverviewsBak.insert(m_apoOverviewsBak.end(),
+                                 m_apoOverviews.begin(),
+                                 m_apoOverviews.end());
+        m_apoOverviews.clear();
     }
     else
     {
@@ -2181,13 +2300,16 @@ VRTDataset::IBuildOverviews( const char *pszResampling,
         m_apoOverviews.push_back(nullptr);
     }
 
-    return GDALDataset::IBuildOverviews( pszResampling,
+    CPLErr eErr = GDALDataset::IBuildOverviews( pszResampling,
                                          nOverviews,
                                          panOverviewList,
                                          nListBands,
                                          panBandList,
                                          pfnProgress,
                                          pProgressData );
+
+    m_apoOverviews.clear();
+    return eErr;
 }
 
 /*! @endcond */
