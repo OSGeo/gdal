@@ -82,6 +82,11 @@ public:
         }
     }
 
+    virtual long GetCleanThreadRunTimeout() override
+    {
+        return m_nCleanThreadRunTimeout;
+    }
+
     virtual CPLErr Insert(const char *pszKey, const CPLString &osFileName) override
     {
         // Warns if it fails to write, but returns success
@@ -269,8 +274,9 @@ CPLErr GDALWMSCache::Insert(const char *pszKey, const CPLString &soFileName)
         if( result == CE_None )
         {
             // Start clean thread
-            if( ( m_nCleanThreadRunTimeout >= 0 ) &&
-                ( !m_bIsCleanThreadRunning && time(nullptr) - m_nCleanThreadLastRunTime > m_nCleanThreadRunTimeout) )
+            if( m_poCache->GetCleanThreadRunTimeout >= 0 &&
+                !m_bIsCleanThreadRunning && 
+                time(nullptr) - m_nCleanThreadLastRunTime > m_poCache->GetCleanThreadRunTimeout ) 
             {
                 if( m_hThread )
                     CPLJoinThread(m_hThread);
