@@ -694,8 +694,10 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
 
     CPLString osURLRefreshCredentials;
     const CPLString osEC2DefaultURL("http://169.254.169.254");
+    // coverity[tainted_data]
     const CPLString osEC2RootURL(
         CPLGetConfigOption("CPL_AWS_EC2_API_ROOT_URL", osEC2DefaultURL));
+    // coverity[tainted_data]
     const CPLString osECSRelativeURI(
         CPLGetConfigOption("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", ""));
     CPLString osToken;
