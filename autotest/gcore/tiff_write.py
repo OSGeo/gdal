@@ -7196,6 +7196,22 @@ def test_tiff_write_too_many_tiles():
 
 
 ###############################################################################
+# 
+
+
+def test_tiff_write_jpeg_incompatible_of_paletted():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        pytest.skip()
+
+    src_ds = gdal.Open('data/test_average_palette.tif')
+    with gdaltest.error_handler():
+        assert not gdaltest.tiff_drv.CreateCopy('/vsimem/tmp.tif', src_ds, options = ['COMPRESS=JPEG'])
+    gdal.Unlink('/vsimem/tmp.tif')
+
+
+###############################################################################
 
 
 def test_tiff_write_cleanup():
