@@ -65,7 +65,11 @@ def test_grib_1():
 def test_grib_2():
 
     tst = gdaltest.GDALTest('GRIB', 'grib/Sample_QuikSCAT.grb', 4, 50714)
-    return tst.testOpen()
+    tst.testOpen()
+
+    ds = gdal.Open('data/grib/Sample_QuikSCAT.grb')
+    assert ds.GetRasterBand(1).GetNoDataValue() == 9999.0
+    assert ds.GetRasterBand(1).GetNoDataValue() == 9999.0 # do it again to test correct caching
 
 ###############################################################################
 # This file has different raster sizes for some of the products, which
@@ -257,6 +261,9 @@ def test_grib_grib1_read_rotated_pole_lonlat():
 
     assert ds.RasterXSize == 726 and ds.RasterYSize == 550, \
         'Did not get expected dimensions'
+
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
+    assert ds.GetRasterBand(1).GetNoDataValue() is None # do it again to test correct caching
 
     projection = ds.GetProjectionRef()
     expected_projection_proj_7 = 'GEOGCRS["Coordinate System imported from GRIB file",BASEGEOGCRS["Coordinate System imported from GRIB file",DATUM["unnamed",ELLIPSOID["Sphere",6367470,0,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],DERIVINGCONVERSION["Pole rotation (GRIB convention)",METHOD["Pole rotation (GRIB convention)"],PARAMETER["Latitude of the southern pole (GRIB convention)",-30,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["Longitude of the southern pole (GRIB convention)",-15,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["Axis rotation (GRIB convention)",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],CS[ellipsoidal,2],AXIS["latitude",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],AXIS["longitude",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]]'
