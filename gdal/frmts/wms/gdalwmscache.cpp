@@ -82,7 +82,7 @@ public:
         }
     }
 
-    virtual long GetCleanThreadRunTimeout() override
+    virtual int GetCleanThreadRunTimeout() override
     {
         return m_nCleanThreadRunTimeout;
     }
@@ -212,7 +212,7 @@ private:
     int m_nDepth;
     int m_nExpires;
     long m_nMaxSize;
-    long m_nCleanThreadRunTimeout;
+    int m_nCleanThreadRunTimeout;
 };
 
 //------------------------------------------------------------------------------
