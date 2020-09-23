@@ -1142,13 +1142,15 @@ CPLErr GDALWarpKernel::PerformWarp()
                     nCountPointScale ++;
                 }
             }
-
-            const double dfXScaleFromSampling = dfSumPointXScale / nCountPointScale;
+            if( nCountPointScale > 0 ) // should always be true
+            {
+                const double dfXScaleFromSampling = dfSumPointXScale / nCountPointScale;
 #if DEBUG_VERBOSE
-            CPLDebug("WARP", "Correcting dfXScale from %f to %f",
-                     dfXScale, dfXScaleFromSampling);
+                CPLDebug("WARP", "Correcting dfXScale from %f to %f",
+                        dfXScale, dfXScaleFromSampling);
 #endif
-            dfXScale = dfXScaleFromSampling;
+                dfXScale = dfXScaleFromSampling;
+            }
         }
     }
 
