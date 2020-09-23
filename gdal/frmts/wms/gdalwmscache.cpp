@@ -53,7 +53,7 @@ public:
         m_nDepth(2),
         m_nExpires(604800),   // 7 days
         m_nMaxSize(67108864),  // 64 Mb
-		m_nCleanThreadRunTimeout(120)  // 3 min
+        m_nCleanThreadRunTimeout(120)  // 3 min
     {
         const char *pszCacheDepth = CPLGetXMLValue( pConfig, "Depth", "2" );
         if( pszCacheDepth != nullptr )
@@ -69,17 +69,17 @@ public:
             m_nExpires = atoi( pszCacheExpires );
             CPLDebug("WMS", "Cache expires in %d sec", m_nExpires);
         }
-        
-		const char *pszCacheMaxSize = CPLGetXMLValue( pConfig, "MaxSize", nullptr );
+
+        const char *pszCacheMaxSize = CPLGetXMLValue( pConfig, "MaxSize", nullptr );
         if( pszCacheMaxSize != nullptr )
             m_nMaxSize = atol( pszCacheMaxSize );
-		
+
         const char *pszCleanThreadRunTimeout = CPLGetXMLValue( pConfig, "CleanTimeout", nullptr );
         if( pszCleanThreadRunTimeout != nullptr )
         {
             m_nCleanThreadRunTimeout = atoi( pszCleanThreadRunTimeout );
             CPLDebug("WMS", "Clean Thread Run Timeout is %d sec", m_nCleanThreadRunTimeout);
-        }		
+        }
     }
 
     virtual CPLErr Insert(const char *pszKey, const CPLString &osFileName) override
@@ -207,7 +207,7 @@ private:
     int m_nDepth;
     int m_nExpires;
     long m_nMaxSize;
-    long m_nCleanThreadRunTimeout;	
+    long m_nCleanThreadRunTimeout;
 };
 
 //------------------------------------------------------------------------------
@@ -270,7 +270,7 @@ CPLErr GDALWMSCache::Insert(const char *pszKey, const CPLString &soFileName)
         {
             // Start clean thread
             if( ( m_nCleanThreadRunTimeout >= 0 ) &&
-			    ( !m_bIsCleanThreadRunning && time(nullptr) - m_nCleanThreadLastRunTime > m_nCleanThreadRunTimeout) )
+                ( !m_bIsCleanThreadRunning && time(nullptr) - m_nCleanThreadLastRunTime > m_nCleanThreadRunTimeout) )
             {
                 if( m_hThread )
                     CPLJoinThread(m_hThread);
