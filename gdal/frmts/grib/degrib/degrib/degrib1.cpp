@@ -1755,7 +1755,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
       if (resetPrim != 0) {
          meta->gridAttrib.missPri = resetPrim;
       }
-      if (data != NULL && resetPrim != 0) {
+      if (data != nullptr && resetPrim != 0) {
          for (i = 0; i < meta->gds.numPts; i++) {
             /* Find the destination index. */
             if (f_convert) {
