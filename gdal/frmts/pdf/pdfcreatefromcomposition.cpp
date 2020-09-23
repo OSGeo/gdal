@@ -1012,8 +1012,6 @@ bool GDALPDFComposerWriter::GeneratePage(const CPLXMLNode* psPage)
                  "Missing or invalid Width and/or Height");
         return false;
     }
-    double dfUserUnit = CPLAtof(CPLGetXMLValue(psPage, "DPI",
-                        CPLSPrintf("%f", DEFAULT_DPI))) * USER_UNIT_IN_INCH;
 
     std::vector<GDALPDFObjectNum> anViewportIds;
     std::vector<GDALPDFObjectNum> anLGIDictIds;
@@ -1124,7 +1122,6 @@ bool GDALPDFComposerWriter::GeneratePage(const CPLXMLNode* psPage)
                                ->Add(0).Add(0).
                                  Add(dfWidthInUserUnit).
                                  Add(dfHeightInUserUnit)))
-             .Add("UserUnit", dfUserUnit)
              .Add("Contents", nContentId, 0)
              .Add("Resources", nResourcesId, 0);
 
