@@ -20,6 +20,7 @@ endif
 
 ifeq ($(HAVE_PDFIUM),yes)
 CPPFLAGS +=  -DHAVE_PDFIUM
+CXX := $(subst -std=c++11,-std=c++14,${CXX})
 # -Wzero-as-null-pointer-constant  isn't compatible of pdfium headers
 # /home/even/pdfium/install/include/pdfium/third_party/base/numerics/safe_conversions.h: In instantiation of ‘Dst pdfium::base::checked_cast(Src) [with Dst = int; Src = long unsigned int]’:
 # /home/even/pdfium/install/include/pdfium/core/include/fxcrt/fx_string.h:43:26:   required from here

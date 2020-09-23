@@ -4995,12 +4995,13 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
     rm -f testpdfium.*
     echo '#include "public/fpdfview.h"' > testpdfium.cpp
     echo '#include "core/fpdfapi/page/cpdf_page.h"' >> testpdfium.cpp
+    echo '#include "constants/transparency.h"' >> testpdfium.cpp # specific to pdfium_build_gdal_3_2
     echo 'int main(int argc, char** argv) { FPDF_InitLibrary(); FPDF_DestroyLibrary(); return 0; } ' >> testpdfium.cpp
     TEST_CXX_FLAGS=""
     if test ! -z "`uname | grep Darwin`" ; then
         TEST_CXX_FLAGS="$TEST_CXX_FLAGS -stdlib=libstdc++"
     fi
-    if ${CXX} ${CXXFLAGS} ${CPPFLAGS} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${PDFIUM_INC} ${PDFIUM_LIB} >/dev/null 2>/dev/null; then
+    if ${CXX} ${CXXFLAGS} ${CPPFLAGS} $TEST_CXX_FLAGS -std=c++14 testpdfium.cpp -o testpdfium ${PDFIUM_INC} ${PDFIUM_LIB} >/dev/null 2>/dev/null; then
         HAVE_PDFIUM=yes
         CXXFLAGS="$TEST_CXX_FLAGS $CXXFLAGS"
         if test "$PDF_PLUGIN" = "no"; then
@@ -5013,7 +5014,7 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
     rm -f testpdfium
 
     if test "$HAVE_PDFIUM" = "no" -a "$with_pdfium" != ""; then
-        AC_MSG_ERROR([pdfium requested but not found. Must come from https://github.com/rouault/pdfium_build_gdal_3_1])
+        AC_MSG_ERROR([pdfium requested but not found. Must come from https://github.com/rouault/pdfium_build_gdal_3_2])
     fi
 else
     AC_MSG_RESULT([disabled])
