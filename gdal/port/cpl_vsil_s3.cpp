@@ -4121,8 +4121,9 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                         VSIFReadL(pBuffer, 1, nSizeToRead, fpIn) == nSizeToRead )
                     {
                         queue->poFS->UpdateHandleFromMap(poS3HandleHelper.get());
-                        const int nPartNumber = 1 + static_cast<int>(
-                            chunk.nStartOffset / queue->nMaxChunkSize);
+                        const int nPartNumber = 1 +
+                            (queue->nMaxChunkSize == 0 ? 0 /* shouldn't happen */ :
+                                static_cast<int>(chunk.nStartOffset / queue->nMaxChunkSize));
                         const CPLString osEtag = queue->poFS->UploadPart(
                             osSubTarget, nPartNumber,
                             iter->second.osUploadID,
