@@ -17457,7 +17457,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if( l_nCompression == COMPRESSION_JPEG )
     {
-        int l_nPhotometric = 0;
+        uint16 l_nPhotometric = 0;
         TIFFGetField(l_hTIFF, TIFFTAG_PHOTOMETRIC, &l_nPhotometric);
         // Check done in tif_jpeg.c later, but not with a very clear error message
         if( l_nPhotometric == PHOTOMETRIC_PALETTE )
