@@ -17455,6 +17455,22 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             "can only be written to 1 band or 2 bands Byte or "
             "UInt16 GeoTIFF files." );
 
+    if( l_nCompression == COMPRESSION_JPEG )
+    {
+        int l_nPhotometric = 0;
+        TIFFGetField(l_hTIFF, TIFFTAG_PHOTOMETRIC, &l_nPhotometric);
+        // Check done in tif_jpeg.c later, but not with a very clear error message
+        if( l_nPhotometric == PHOTOMETRIC_PALETTE )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "JPEG compression not supported with paletted image");
+            XTIFFClose( l_hTIFF );
+            VSIUnlink(l_osTmpFilename);
+            CPL_IGNORE_RET_VAL( VSIFCloseL(l_fpL) );
+            return nullptr;
+        }
+    }
+
     if( l_nBands == 2
         && poSrcDS->GetRasterBand(1)->GetColorTable() != nullptr
         && (eType == GDT_Byte || eType == GDT_UInt16) )
