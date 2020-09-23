@@ -315,6 +315,7 @@ bool VSISwiftHandleHelper::AuthV3(CPLString& osStorageURL,
     CPLJSONObject postObject(CreateAuthV3RequestObject());
     std::string post = postObject.Format(CPLJSONObject::PrettyFormat::Plain);
 
+    // coverity[tainted_data]
     CPLString osAuthURL = CPLGetConfigOption("OS_AUTH_URL", "");
     std::string url = osAuthURL;
     if( !url.empty() && url.back() != '/' )
