@@ -136,6 +136,7 @@ Raster drivers
    ntv1
    ntv2
    nwtgrd
+   ogcapi
    ozi
    palsar
    paux
