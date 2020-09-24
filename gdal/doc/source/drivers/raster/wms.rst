@@ -72,6 +72,7 @@ other content before the ``<GDAL_WMS>`` element.
 <Type>file</Type>                                                          Cache type. Now supported only 'file' type. In 'file' cache type files are stored in file system folders.
 <Expires>604800</Expires>                                                  Time in seconds cached files will stay valid. If cached file expires it is deleted when maximum size of cache is reached. Also expired file can be overwritten by the new one from web. Default value is 7 days (604800s).
 <MaxSize>67108864</MaxSize>                                                The cache maximum size in bytes. If cache reached maximum size, expired cached files will be deleted. Default value is 64 Mb (67108864 bytes).
+<CleanTimeout>120</CleanTimeout>                                           Clean Thread Run Timeout in seconds. How often to run the clean thread, which finds and deletes expired cached files. Use value of 0 to disable the Clean Thread. Default value is 120s. ("disabled" was the only option for GDAL <= 2.2; "120s" was the only option for 2.3 <= GDAL <= 3.1). 
 <Unique>True</Unique>                                                      If set to true the path will appended with md5 hash of ServerURL. Default value is true.
 </Cache>
 <MaxConnections>2</MaxConnections>                                         Maximum number of simultaneous connections. (optional, defaults to 2). Can also be set with the :decl_configoption:`GDAL_MAX_CONNECTIONS` configuration option (GDAL >= 3.2)
