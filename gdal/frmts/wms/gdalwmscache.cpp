@@ -275,7 +275,7 @@ CPLErr GDALWMSCache::Insert(const char *pszKey, const CPLString &soFileName)
         {
             // Start clean thread
             int cleanThreadRunTimeout = m_poCache->GetCleanThreadRunTimeout();
-            if(  cleanThreadRunTimeout >= 0 &&
+            if(  cleanThreadRunTimeout > 0 &&
                 !m_bIsCleanThreadRunning && 
                 time(nullptr) - m_nCleanThreadLastRunTime > cleanThreadRunTimeout ) 
             {
