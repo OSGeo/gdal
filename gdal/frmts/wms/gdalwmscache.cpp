@@ -274,9 +274,10 @@ CPLErr GDALWMSCache::Insert(const char *pszKey, const CPLString &soFileName)
         if( result == CE_None )
         {
             // Start clean thread
-            if( m_poCache->GetCleanThreadRunTimeout >= 0 &&
+            int cleanThreadRunTimeout = m_poCache->GetCleanThreadRunTimeout();
+            if(  cleanThreadRunTimeout >= 0 &&
                 !m_bIsCleanThreadRunning && 
-                time(nullptr) - m_nCleanThreadLastRunTime > m_poCache->GetCleanThreadRunTimeout ) 
+                time(nullptr) - m_nCleanThreadLastRunTime > cleanThreadRunTimeout ) 
             {
                 if( m_hThread )
                     CPLJoinThread(m_hThread);
