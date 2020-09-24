@@ -1,13 +1,10 @@
 /******************************************************************************
- * $Id$
- *
  * Project:  WMS Client Driver
- * Purpose:  Implementation of Dataset and RasterBand classes for WMS
- *           and other similar services.
- * Author:   Chris Schmidt
+ * Purpose:  OGC API maps
+ * Author:   Even Rouault
  *
  ******************************************************************************
- * Copyright (c) 2007, Chris Schmidt
+ * Copyright (c) 2020, Even Rouault
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,12 +25,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-class WMSMiniDriver_TMS : public WMSMiniDriver {
-    int m_nTileXMultiplier = 1;
-
+class WMSMiniDriver_OGCAPIMaps : public WMSMiniDriver {
 public:
-    WMSMiniDriver_TMS();
-    virtual ~WMSMiniDriver_TMS();
+    WMSMiniDriver_OGCAPIMaps() = default;
 
 public:
     virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;

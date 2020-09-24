@@ -1,13 +1,10 @@
 /******************************************************************************
- * $Id$
- *
  * Project:  WMS Client Driver
- * Purpose:  Implementation of Dataset and RasterBand classes for WMS
- *           and other similar services.
- * Author:   Chris Schmidt
+ * Purpose:  OGC API maps
+ * Author:   Even Rouault
  *
  ******************************************************************************
- * Copyright (c) 2007, Chris Schmidt
+ * Copyright (c) 2020, Even Rouault
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,16 +25,43 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-class WMSMiniDriver_TMS : public WMSMiniDriver {
-    int m_nTileXMultiplier = 1;
+#include "wmsdriver.h"
+#include "minidriver_ogcapimaps.h"
 
-public:
-    WMSMiniDriver_TMS();
-    virtual ~WMSMiniDriver_TMS();
+CPL_CVSID("$Id$")
 
-public:
-    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;
-    virtual CPLErr TiledImageRequest(WMSHTTPRequest &request,
-                                     const GDALWMSImageRequestInfo &iri,
-                                     const GDALWMSTiledImageRequestInfo &tiri) override;
-};
+CPLErr WMSMiniDriver_OGCAPIMaps::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
+    CPLErr ret = CE_None;
+
+    {
+        const char *base_url = CPLGetXMLValue(config, "ServerURL", "");
+        if (base_url[0] != '\0') {
+            m_base_url = base_url;
+        } else {
+            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS, OGCAPIMaps mini-driver: ServerURL missing.");
+            ret = CE_Failure;
+        }
+    }
+
+    return ret;
+}
+
+CPLErr WMSMiniDriver_OGCAPIMaps::TiledImageRequest(WMSHTTPRequest &request,
+                                            const GDALWMSImageRequestInfo &iri,
+                                            const GDALWMSTiledImageRequestInfo &)
+{
+    CPLString &url = request.URL;
+
+    url = m_base_url;
+
+    URLPrepare(url);
+    url += CPLOPrintf("width=%d&height=%d&bbox=%.18g,%.18g,%.18g,%.18g",
+                        iri.m_sx,
+                        iri.m_sy,
+                        iri.m_x0,
+                        iri.m_y1,
+                        iri.m_x1,
+                        iri.m_y0);
+
+    return CE_None;
+}
