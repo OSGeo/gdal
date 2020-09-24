@@ -261,6 +261,33 @@ def compare_sds(golden_db, new_db, options=None):
 #######################################################
 
 
+def find_diff(golden_file, new_file, check_sds=False):
+    # Compare Files
+    found_diff = 0
+
+    # compare raw binary files.
+    try:
+        os.stat(golden_file)
+
+        if not filecmp.cmp(golden_file, new_file):
+            print('Files differ at the binary level.')
+            found_diff += 1
+    except OSError:
+        print('Skipped binary file comparison, golden file not in filesystem.')
+
+    # compare as GDAL Datasets.
+    golden_db = gdal.Open(golden_file)
+    new_db = gdal.Open(new_file)
+    found_diff += compare_db(golden_db, new_db)
+
+    if check_sds:
+        found_diff += compare_sds(golden_db, new_db)
+
+    return found_diff
+
+#######################################################
+
+
 def Usage():
     print('Usage: gdalcompare.py [-sds] <golden_file> <new_file>')
     sys.exit(1)
@@ -299,34 +326,12 @@ if __name__ == '__main__':
             new_file = argv[i]
 
         else:
-            print('Urecognised argument: ' + argv[i])
+            print('Unrecognised argument: ' + argv[i])
             Usage()
 
         i = i + 1
         # next argument
 
-    # Compare Files
-
-    found_diff = 0
-
-    # compare raw binary files.
-    try:
-        os.stat(golden_file)
-
-        if not filecmp.cmp(golden_file, new_file):
-            print('Files differ at the binary level.')
-            found_diff += 1
-    except OSError:
-        print('Skipped binary file comparison, golden file not in filesystem.')
-
-    # compare as GDAL Datasets.
-    golden_db = gdal.Open(golden_file)
-    new_db = gdal.Open(new_file)
-    found_diff += compare_db(golden_db, new_db)
-
-    if check_sds:
-        found_diff += compare_sds(golden_db, new_db)
-
+    found_diff = find_diff(golden_file, new_file, check_sds)
     print('Differences Found: ' + str(found_diff))
-
     sys.exit(found_diff)
