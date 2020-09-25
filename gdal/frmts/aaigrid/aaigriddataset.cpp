@@ -1037,7 +1037,7 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo *poOpenInfo,
         // Scan for dot in subsequent chunks of data.
         while( !VSIFEofL(poDS->fp) )
         {
-            const size_t nLen = VSIFReadL(pabyChunk, nChunkSize, 1, poDS->fp);
+            const size_t nLen = VSIFReadL(pabyChunk, 1, nChunkSize, poDS->fp);
 
             for( size_t i = 0; i < nLen; i++)
             {
