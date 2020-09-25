@@ -1037,11 +1037,11 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo *poOpenInfo,
         // Scan for dot in subsequent chunks of data.
         while( !VSIFEofL(poDS->fp) )
         {
-            CPL_IGNORE_RET_VAL(VSIFReadL(pabyChunk, nChunkSize, 1, poDS->fp));
+            const size_t nLen = VSIFReadL(pabyChunk, nChunkSize, 1, poDS->fp);
 
-            for( int i = 0; i < static_cast<int>(nChunkSize); i++)
+            for( size_t i = 0; i < nLen; i++)
             {
-                GByte ch = pabyChunk[i];
+                const GByte ch = pabyChunk[i];
                 if (ch == '.' || ch == ',' || ch == 'e' || ch == 'E')
                 {
                     poDS->eDataType = GDT_Float32;
