@@ -119,7 +119,7 @@ Average of two layers:
    
    .. code-block::
 
-      gdal_calc.py -A input.tif -B input2.tif --outfile=result.tif --calc="(A+B)/2.0"
+      gdal_calc.py -A input.tif -B input2.tif --outfile=result.tif --calc="(A.astype(numpy.float64) + B) / 2"
 
 Set values of zero and below to null:
 
