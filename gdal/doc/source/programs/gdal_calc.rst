@@ -132,9 +132,3 @@ Using logical operator to keep a range of values from input:
 .. code-block::
 
     gdal_calc.py -A input.tif --outfile=result.tif --calc="A*logical_and(A>100,A<150)"
-
-
-
-.. code-block::
-
-    gdal_calc.py -A input.tif --outfile=result.tif --calc="A*logical_and(A>100,A<150)"
