@@ -422,6 +422,35 @@ static size_t CPLHdrWriteFct( void *buffer, size_t size, size_t nmemb,
     return nmemb;
 }
 
+#if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
+/************************************************************************/
+/*                        CPLHTTPReadFunction()                         */
+/************************************************************************/
+static size_t CPLHTTPReadFunction(char *buffer, size_t size, size_t nitems, void *arg)
+{
+    return VSIFReadL(buffer, size, nitems, static_cast<VSILFILE*>(arg));
+}
+
+/************************************************************************/
+/*                        CPLHTTPSeekFunction()                         */
+/************************************************************************/
+static int CPLHTTPSeekFunction(void *arg, curl_off_t offset, int origin)
+{
+    if( VSIFSeekL( static_cast<VSILFILE*>(arg), offset, origin ) == 0 )
+        return CURL_SEEKFUNC_OK;
+    else
+        return CURL_SEEKFUNC_FAIL;
+}
+
+/************************************************************************/
+/*                        CPLHTTPFreeFunction()                         */
+/************************************************************************/
+static void CPLHTTPFreeFunction(void *arg)
+{
+    VSIFCloseL(static_cast<VSILFILE*>(arg));
+}
+#endif // LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
+
 typedef struct {
     GDALProgressFunc pfnProgress;
     void *pProgressArg;
@@ -940,14 +969,25 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
         {
             const char* pszFormFileName = CSLFetchNameValue( papszOptions,
                 "FORM_FILE_NAME" );
+            const char* pszFilename = CPLGetFilename( pszFormFilePath );
             if( pszFormFileName == nullptr )
             {
-                pszFormFileName = CPLGetFilename( pszFormFilePath );
+                pszFormFileName = pszFilename;
             }
 
 #if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
-            curl_mime_name(mimepart, pszFormFileName);
-            curl_mime_filedata(mimepart, pszFormFilePath);
+            VSIStatBufL sStat;
+            if( VSIStatL( pszFormFilePath, &sStat ) == 0)
+            {
+                VSILFILE *mime_fp = VSIFOpenL( pszFormFilePath, "rb" );
+                if( mime_fp != nullptr )
+                {
+                    curl_mime_name(mimepart, pszFormFileName);
+                    curl_mime_filename(mimepart, pszFilename);
+                    curl_mime_data_cb(mimepart, sStat.st_size, 
+                        CPLHTTPReadFunction, CPLHTTPSeekFunction, CPLHTTPFreeFunction, mime_fp);
+                }
+            }
 #else // LIBCURL_VERSION_NUM >= 0x073800
             curl_formadd(&formpost, &lastptr,
                 CURLFORM_COPYNAME, pszFormFileName,
