@@ -439,6 +439,25 @@
         <field name="PSO" length="15" type="real"/>
     </tre>
 
+    <!-- STDI-0002-1 Appendix AK: Table AK.6-5: MATESA -->
+    <tre name="MATESA" location="file">
+        <field name="CUR_SOURCE" length="42" type="string"/>
+        <field name="CUR_MATE_TYPE" length="16" type="string"/>
+        <field name="CUR_FILE_ID_LEN" length="4" type="integer" minval="1" maxval="9999"/>
+        <field name="CUR_FILE_ID" length_var="CUR_FILE_ID_LEN" type="string"/>
+        <field name="NUM_GROUPS" length="4" type="integer" minval="1" maxval="9999"/>
+        <loop counter="NUM_GROUPS" md_prefix="GROUP_%d" name="GROUPS">
+            <field name="RELATIONSHIP" length="24" type="string"/>
+            <field name="NUM_MATES" length="4" type="integer" minval="1" maxval="9999"/>
+            <loop counter="NUM_MATES" md_prefix="MATE_%d" name="MATES">
+                 <field name="SOURCE" length="42" type="string"/>
+                 <field name="MATE_TYPE" length="16" type="string"/>
+                 <field name="MATE_ID_LEN" length="4" type="integer" minval="1" maxval="9999"/>
+                 <field name="MATE_ID" length_var="MATE_ID_LEN" type="string"/>
+            </loop>
+        </loop>
+    </tre>
+
     <tre name="MENSRB" location="image">
         <field name="ACFT_LOC" length="25" type="string"/>
         <field name="ACFT_LOC_ACCY" length ="6" type="real"/>
