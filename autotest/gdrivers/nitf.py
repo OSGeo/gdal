@@ -2660,6 +2660,38 @@ def test_nitf_76():
     assert data == expected_data
 
 ###############################################################################
+# Test parsing MATESA TRE (STDI-0002 App AK)
+
+def test_nitf_77():
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_77.ntf', 1, 1, options=['TRE=GRDPSB=01+000027.81PIX_LATLON0000000000010000000000010000000000000000000000'])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_77.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_77.ntf')
+
+    expected_data = """<tres>
+  <tre name="GRDPSB" location="image">
+    <field name="NUM_GRDS" value="01" />
+    <repeated name="GRDS" number="1">
+      <group index="0">
+        <field name="ZVL" value="+000027.81" />
+        <field name="BAD" value="PIX_LATLON" />
+        <field name="LOD" value="000000000001" />
+        <field name="LAD" value="000000000001" />
+        <field name="LSO" value="00000000000" />
+        <field name="PSO" value="00000000000" />
+      </group>
+    </repeated>
+  </tre>
+</tres>
+"""
+    assert data == expected_data
+
+###############################################################################
 # Test reading C4 compressed file
 
 

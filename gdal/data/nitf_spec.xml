@@ -335,6 +335,19 @@
         <field name="ZNA" length="4" type="integer" minval="0"/>
     </tre>
 
+    <!-- STDI-0002-1, App. P Table P-4 Grid Reference Data (GRDPSB) TRE -->
+    <tre name="GRDPSB" location="image">
+        <field name="NUM_GRDS" length="2" minval="1" type="integer"/>
+        <loop counter="NUM_GRDS" md_prefix="GRD_%02d_" name="GRDS">
+            <field name="ZVL" length="10" unit="m" type="real"/>
+            <field name="BAD" length="10" type="string"/>
+            <field name="LOD" length="12" type="real"/>
+            <field name="LAD" length="12" type="real"/>
+            <field name="LSO" length="11" type="real"/>
+            <field name="PSO" length="11" type="real"/>
+        </loop>
+    </tre>
+
     <tre name="HISTOA" minlength="115" maxlength="83512" location="image">
         <field name="SYSTYPE" length="20"/>
         <field name="PC" length="12"/>
