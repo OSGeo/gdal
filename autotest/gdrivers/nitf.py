@@ -2560,6 +2560,138 @@ def test_nitf_75():
     assert data == expected_data
 
 ###############################################################################
+# Test parsing MATESA TRE (STDI-0002 App AK)
+
+def test_nitf_76():
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_76.ntf', 1, 1, options=['FILE_TRE=MATESA=EO-1_HYPERION                             FTITLE          006307APR2005_Hyperion_331406N0442000E_SWIR172_001_L1R-01B-BIB-GLAS0005RADIOMTRC_CALIB         0001EO-1_HYPERION                             FILENAME        0020HypGain_revC.dat.svfPARENT                  0001EO-1_HYPERION                             FILENAME        0032EO12005097_020D020C_r1_WPS_01.L0PRE_DARKCOLLECT         0001EO-1_HYPERION                             FILENAME        0032EO12005097_020A0209_r1_WPS_01.L0POST_DARKCOLLECT        0001EO-1_HYPERION                             FILENAME        0032EO12005097_020F020E_r1_WPS_01.L0PARENT                  0003EO-1_HYPERION                             FILENAME        0026EO1H1680372005097110PZ.L1REO-1_HYPERION                             FILENAME        0026EO1H1680372005097110PZ.AUXEO-1_HYPERION                             FILENAME        0026EO1H1680372005097110PZ.MET'])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_76.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_76.ntf')
+
+    expected_data = """<tres>
+  <tre name="MATESA" location="file">
+    <field name="CUR_SOURCE" value="EO-1_HYPERION" />
+    <field name="CUR_MATE_TYPE" value="FTITLE" />
+    <field name="CUR_FILE_ID_LEN" value="0063" />
+    <field name="CUR_FILE_ID" value="07APR2005_Hyperion_331406N0442000E_SWIR172_001_L1R-01B-BIB-GLAS" />
+    <field name="NUM_GROUPS" value="0005" />
+    <repeated name="GROUPS" number="5">
+      <group index="0">
+        <field name="RELATIONSHIP" value="RADIOMTRC_CALIB" />
+        <field name="NUM_MATES" value="0001" />
+        <repeated name="MATES" number="1">
+          <group index="0">
+            <field name="SOURCE" value="EO-1_HYPERION" />
+            <field name="MATE_TYPE" value="FILENAME" />
+            <field name="MATE_ID_LEN" value="0020" />
+            <field name="MATE_ID" value="HypGain_revC.dat.svf" />
+          </group>
+        </repeated>
+      </group>
+      <group index="1">
+        <field name="RELATIONSHIP" value="PARENT" />
+        <field name="NUM_MATES" value="0001" />
+        <repeated name="MATES" number="1">
+          <group index="0">
+            <field name="SOURCE" value="EO-1_HYPERION" />
+            <field name="MATE_TYPE" value="FILENAME" />
+            <field name="MATE_ID_LEN" value="0032" />
+            <field name="MATE_ID" value="EO12005097_020D020C_r1_WPS_01.L0" />
+          </group>
+        </repeated>
+      </group>
+      <group index="2">
+        <field name="RELATIONSHIP" value="PRE_DARKCOLLECT" />
+        <field name="NUM_MATES" value="0001" />
+        <repeated name="MATES" number="1">
+          <group index="0">
+            <field name="SOURCE" value="EO-1_HYPERION" />
+            <field name="MATE_TYPE" value="FILENAME" />
+            <field name="MATE_ID_LEN" value="0032" />
+            <field name="MATE_ID" value="EO12005097_020A0209_r1_WPS_01.L0" />
+          </group>
+        </repeated>
+      </group>
+      <group index="3">
+        <field name="RELATIONSHIP" value="POST_DARKCOLLECT" />
+        <field name="NUM_MATES" value="0001" />
+        <repeated name="MATES" number="1">
+          <group index="0">
+            <field name="SOURCE" value="EO-1_HYPERION" />
+            <field name="MATE_TYPE" value="FILENAME" />
+            <field name="MATE_ID_LEN" value="0032" />
+            <field name="MATE_ID" value="EO12005097_020F020E_r1_WPS_01.L0" />
+          </group>
+        </repeated>
+      </group>
+      <group index="4">
+        <field name="RELATIONSHIP" value="PARENT" />
+        <field name="NUM_MATES" value="0003" />
+        <repeated name="MATES" number="3">
+          <group index="0">
+            <field name="SOURCE" value="EO-1_HYPERION" />
+            <field name="MATE_TYPE" value="FILENAME" />
+            <field name="MATE_ID_LEN" value="0026" />
+            <field name="MATE_ID" value="EO1H1680372005097110PZ.L1R" />
+          </group>
+          <group index="1">
+            <field name="SOURCE" value="EO-1_HYPERION" />
+            <field name="MATE_TYPE" value="FILENAME" />
+            <field name="MATE_ID_LEN" value="0026" />
+            <field name="MATE_ID" value="EO1H1680372005097110PZ.AUX" />
+          </group>
+          <group index="2">
+            <field name="SOURCE" value="EO-1_HYPERION" />
+            <field name="MATE_TYPE" value="FILENAME" />
+            <field name="MATE_ID_LEN" value="0026" />
+            <field name="MATE_ID" value="EO1H1680372005097110PZ.MET" />
+          </group>
+        </repeated>
+      </group>
+    </repeated>
+  </tre>
+</tres>
+"""
+    assert data == expected_data
+
+###############################################################################
+# Test parsing MATESA TRE (STDI-0002 App AK)
+
+def test_nitf_77():
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_77.ntf', 1, 1, options=['TRE=GRDPSB=01+000027.81PIX_LATLON0000000000010000000000010000000000000000000000'])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_77.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_77.ntf')
+
+    expected_data = """<tres>
+  <tre name="GRDPSB" location="image">
+    <field name="NUM_GRDS" value="01" />
+    <repeated name="GRDS" number="1">
+      <group index="0">
+        <field name="ZVL" value="+000027.81" />
+        <field name="BAD" value="PIX_LATLON" />
+        <field name="LOD" value="000000000001" />
+        <field name="LAD" value="000000000001" />
+        <field name="LSO" value="00000000000" />
+        <field name="PSO" value="00000000000" />
+      </group>
+    </repeated>
+  </tre>
+</tres>
+"""
+    assert data == expected_data
+
+###############################################################################
 # Test reading C4 compressed file
 
 
