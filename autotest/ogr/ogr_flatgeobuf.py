@@ -638,3 +638,62 @@ def test_ogr_flatgeobuf_huge_number_of_columns():
     ds = None
 
     ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
+
+def test_ogr_flatgeobuf_column_metadata():
+    ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource('/vsimem/test.fgb')
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint)
+
+    fld_defn = ogr.FieldDefn('int', ogr.OFTInteger)
+    fld_defn.SetAlternativeName('an integer')
+    lyr.CreateField(fld_defn)
+
+    fld_defn = ogr.FieldDefn('str1', ogr.OFTString)
+    lyr.CreateField(fld_defn)
+
+    fld_defn = ogr.FieldDefn('str2', ogr.OFTString)
+    fld_defn.SetWidth(2)
+    fld_defn.SetNullable(False)
+    fld_defn.SetUnique(True)
+    lyr.CreateField(fld_defn)
+
+    fld_defn = ogr.FieldDefn('float1', ogr.OFTReal)
+    lyr.CreateField(fld_defn)
+
+    fld_defn = ogr.FieldDefn('float2', ogr.OFTReal)
+    fld_defn.SetWidth(5)
+    fld_defn.SetPrecision(3)
+    lyr.CreateField(fld_defn)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['int'] = 1
+    f['str1'] = 'test1';
+    f['str2'] = 'test2';
+    f['float1'] = 1.1234;
+    f['float2'] = 12.123;
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (0 0)'))
+    lyr.CreateFeature(f)
+
+    ds = None
+
+    ds = ogr.Open('/vsimem/test.fgb')
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == 'an integer'
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetWidth() == 0
+    assert lyr.GetLayerDefn().GetFieldDefn(1).IsNullable() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(1).IsUnique() == 0
+    assert lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTString
+    assert lyr.GetLayerDefn().GetFieldDefn(2).GetWidth() == 2
+    assert lyr.GetLayerDefn().GetFieldDefn(2).IsNullable() == 0
+    assert lyr.GetLayerDefn().GetFieldDefn(2).IsUnique() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(3).GetType() == ogr.OFTReal
+    assert lyr.GetLayerDefn().GetFieldDefn(3).GetWidth() == 0
+    assert lyr.GetLayerDefn().GetFieldDefn(3).GetPrecision() == 0
+    assert lyr.GetLayerDefn().GetFieldDefn(4).GetType() == ogr.OFTReal
+    assert lyr.GetLayerDefn().GetFieldDefn(4).GetWidth() == 5
+    assert lyr.GetLayerDefn().GetFieldDefn(4).GetPrecision() == 3
+    ds = None
+
+    ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
+    assert not gdal.VSIStatL('/vsimem/test.fgb')
