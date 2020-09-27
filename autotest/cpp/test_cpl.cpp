@@ -2890,4 +2890,28 @@ namespace tut
         }
     }
 
+    // Test CPLHTTPFetch
+    template<>
+    template<>
+    void object::test<41>()
+    {
+#ifdef HAVE_CURL        
+        CPLStringList oOptions;
+        oOptions.AddNameVlue("FORM_ITEM_COUNT", "5");
+        oOptions.AddNameVlue("FORM_KEY_0", "qqq");
+        oOptions.AddNameVlue("FORM_VALUE_0", "www");
+        CPLHTTPResult *pResult = CPLHTTPFetch("http://example.com", oOptions);
+        ensure_equals(pResult->nStatus, 34);
+        CPLHTTPDestroyResult(pResult);
+        pResult = nullptr;
+        oOptions.Clear();
+
+        oOptions.AddNameVlue("FORM_FILE_PATH", "not_existed");
+        pResult = CPLHTTPFetch("http://example.com", oOptions);
+        ensure_equals(pResult->nStatus, 34);
+        CPLHTTPDestroyResult(pResult);
+
+#endif // HAVE_CURL        
+    }    
+
 } // namespace tut
