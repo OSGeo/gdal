@@ -259,7 +259,6 @@ void OGRFlatGeobufLayer::readColumns()
         const auto precision = column->precision();
         const auto scale = column->scale();
         const auto nullable = column->nullable();
-        const auto unique = column->unique();
         OGRFieldSubType eSubType = OFSTNone;
         const auto ogrType = toOGRFieldType(column->type(), eSubType);
         OGRFieldDefn field(name, ogrType);
