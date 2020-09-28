@@ -235,7 +235,7 @@ const std::vector<Offset<Column>> OGRFlatGeobufLayer::writeColumns(FlatBufferBui
         else
             width = field->GetWidth();
         auto nullable = CPL_TO_BOOL(field->IsNullable());
-        auto unique = CPL_TO_BOOL(field->IsUnique());
+        auto unique = false;
         auto primaryKey = false;
         //CPLDebugOnly("FlatGeobuf", "Create column %s (index %d)", name, i);
         const auto column = CreateColumnDirect(fbb, name, columnType, title, description, width, precision, scale, nullable, unique, primaryKey);
@@ -270,7 +270,6 @@ void OGRFlatGeobufLayer::readColumns()
             field.SetWidth(precision);
         field.SetPrecision(scale != -1 ? scale : 0);
         field.SetNullable(nullable);
-        field.SetUnique(unique);
         m_poFeatureDefn->AddFieldDefn(&field);
         //CPLDebugOnly("FlatGeobuf", "DEBUG readColumns: Read column %s added as index %d", name, i);
     }
