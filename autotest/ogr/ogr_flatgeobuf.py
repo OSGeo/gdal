@@ -660,7 +660,6 @@ def test_ogr_flatgeobuf_column_metadata():
     fld_defn = ogr.FieldDefn('str2', ogr.OFTString)
     fld_defn.SetWidth(2)
     fld_defn.SetNullable(False)
-    fld_defn.SetUnique(True)
     lyr.CreateField(fld_defn)
 
     fld_defn = ogr.FieldDefn('float1', ogr.OFTReal)
@@ -688,11 +687,9 @@ def test_ogr_flatgeobuf_column_metadata():
     assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
     assert lyr.GetLayerDefn().GetFieldDefn(1).GetWidth() == 0
     assert lyr.GetLayerDefn().GetFieldDefn(1).IsNullable() == 1
-    assert lyr.GetLayerDefn().GetFieldDefn(1).IsUnique() == 0
     assert lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTString
     assert lyr.GetLayerDefn().GetFieldDefn(2).GetWidth() == 2
     assert lyr.GetLayerDefn().GetFieldDefn(2).IsNullable() == 0
-    assert lyr.GetLayerDefn().GetFieldDefn(2).IsUnique() == 1
     assert lyr.GetLayerDefn().GetFieldDefn(3).GetType() == ogr.OFTReal
     assert lyr.GetLayerDefn().GetFieldDefn(3).GetWidth() == 0
     assert lyr.GetLayerDefn().GetFieldDefn(3).GetPrecision() == 0
