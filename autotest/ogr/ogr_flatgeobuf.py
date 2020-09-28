@@ -652,7 +652,6 @@ def test_ogr_flatgeobuf_column_metadata():
     lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint)
 
     fld_defn = ogr.FieldDefn('int', ogr.OFTInteger)
-    fld_defn.SetAlternativeName('an integer')
     lyr.CreateField(fld_defn)
 
     fld_defn = ogr.FieldDefn('str1', ogr.OFTString)
@@ -686,7 +685,6 @@ def test_ogr_flatgeobuf_column_metadata():
     ds = ogr.Open('/vsimem/test.fgb')
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == 'an integer'
     assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
     assert lyr.GetLayerDefn().GetFieldDefn(1).GetWidth() == 0
     assert lyr.GetLayerDefn().GetFieldDefn(1).IsNullable() == 1
