@@ -63,6 +63,9 @@ CPLErr WMSMiniDriver_TMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papsz
     const char *format = CPLGetXMLValue(config, "Format", "jpg");
     URLSearchAndReplace(&m_base_url, "${format}", "%s", format);
 
+    m_nTileXMultiplier = atoi(
+        CPLGetXMLValue(config, "TileXMultiplier", "1"));
+
     return ret;
 }
 
@@ -88,7 +91,7 @@ CPLErr WMSMiniDriver_TMS::TiledImageRequest(WMSHTTPRequest &request,
     // http://tms25.arc.nasa.gov/tile/tile.aspx?T=geocover2000&L=0&X=86&Y=39
     url = m_base_url;
 
-    URLSearchAndReplace(&url, "${x}", "%d", tiri.m_x);
+    URLSearchAndReplace(&url, "${x}", "%d", tiri.m_x * m_nTileXMultiplier);
     URLSearchAndReplace(&url, "${y}", "%d", tms_y);
     URLSearchAndReplace(&url, "${z}", "%d", tiri.m_level);
 

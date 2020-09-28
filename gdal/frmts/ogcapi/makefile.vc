@@ -1,0 +1,16 @@
+
+OBJ	=	gdalogcapidataset.obj
+
+EXTRAFLAGS = $(CURL_CFLAGS) $(CURL_INC) -I$(GDAL_ROOT)/ogr/ogrsf_frmts/gml
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj
+	-del *.dll

@@ -536,6 +536,12 @@ bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject& oCollection)
 {
     if( oCollection.GetType() != CPLJSONObject::Type::Object )
         return false;
+
+    // As used by https://maps.ecere.com/ogcapi/collections?f=json
+    const auto osLayerDataType = oCollection.GetString("layerDataType");
+    if( osLayerDataType == "Raster" || osLayerDataType == "Coverage" )
+        return false;
+
     CPLString osName( oCollection.GetString("id") );
 #ifndef REMOVE_SUPPORT_FOR_OLD_VERSIONS
     if( osName.empty() )

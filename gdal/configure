@@ -1112,6 +1112,7 @@ enable_driver_wcs
 enable_driver_wms
 enable_driver_wmts
 enable_driver_daas
+enable_driver_ogcapi
 enable_driver_amigocloud
 enable_driver_carto
 enable_driver_cloudant
@@ -2048,6 +2049,8 @@ Optional Features:
   --disable-driver-wmts   disable wmts format support (enabled by default,
                           requires curl)
   --disable-driver-daas   disable daas format support (enabled by default,
+                          requires curl)
+  --disable-driver-ogcapi disable ogcapi format support (enabled by default,
                           requires curl)
   --disable-driver-amigocloud
                           disable amigocloud driver support (enabled by default,
@@ -28964,6 +28967,33 @@ else
   INTERNAL_FORMAT_daas_ENABLED=no
 fi
 
+# Check whether --enable-driver-ogcapi was given.
+if test "${enable_driver_ogcapi+set}" = set; then :
+  enableval=$enable_driver_ogcapi;
+fi
+cur_driver_enabled=yes
+requested=$enable_driver_ogcapi
+if test "$all_drivers_disabled" = "yes"; then :
+  if test "x$requested" = "xyes"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+else
+  if test "x$requested" != "xno"; then :
+    cur_driver_enabled=yes
+  else
+    cur_driver_enabled=no
+  fi
+fi
+
+if test "$cur_driver_enabled" = "yes"; then :
+  INTERNAL_FORMAT_ogcapi_ENABLED=yes
+else
+  GDALFORMATS_DISABLED="$GDALFORMATS_DISABLED ogcapi"
+  INTERNAL_FORMAT_ogcapi_ENABLED=no
+fi
+
 
 
 # Check whether --enable-driver-amigocloud was given.
@@ -29706,6 +29736,11 @@ if test "$CURL_SETTING" = "yes" ; then
   driver_enabled=$INTERNAL_FORMAT_daas_ENABLED
   if test "x$driver_enabled" = "xyes"; then
     GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED daas"
+  fi
+
+  driver_enabled=$INTERNAL_FORMAT_ogcapi_ENABLED
+  if test "x$driver_enabled" = "xyes"; then
+    GDALFORMATS_ENABLED="$GDALFORMATS_ENABLED ogcapi"
   fi
 
 
