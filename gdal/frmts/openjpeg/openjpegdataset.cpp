@@ -1884,6 +1884,9 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->m_nX0 = psImage->x0;
     poDS->m_nY0 = psImage->y0;
 
+    int nBlockXSize = (int)nTileW;
+    int nBlockYSize = (int)nTileH;
+
     if( CPLFetchBool(poOpenInfo->papszOpenOptions, "USE_TILE_AS_BLOCK", false) )
     {
         poDS->bUseSetDecodeArea = false;
@@ -1894,8 +1897,8 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
              nTileW < 32 && nTileH < 32 )
     {
         poDS->bUseSetDecodeArea = true;
-        nTileW = poDS->nRasterXSize;
-        nTileH = poDS->nRasterYSize;
+        nBlockXSize = poDS->nRasterXSize;
+        nBlockYSize = poDS->nRasterYSize;
     }
     else
     {
@@ -1911,10 +1914,10 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->nRasterYSize < (int)nTileH )
         {
             poDS->bUseSetDecodeArea = TRUE;
-            nTileW = poDS->nRasterXSize;
-            nTileH = poDS->nRasterYSize;
-            if (nTileW > 2048) nTileW = 2048;
-            if (nTileH > 2048) nTileH = 2048;
+            nBlockXSize = poDS->nRasterXSize;
+            nBlockYSize = poDS->nRasterYSize;
+            if (nBlockXSize > 2048) nBlockXSize = 2048;
+            if (nBlockYSize > 2048) nBlockYSize = 2048;
         }
         else if (poDS->bUseSetDecodeArea)
         {
@@ -1927,8 +1930,8 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
             }
             else
             {
-                if (nTileW > 1024) nTileW = 1024;
-                if (nTileH > 1024) nTileH = 1024;
+                if (nBlockXSize > 1024) nBlockXSize = 1024;
+                if (nBlockYSize > 1024) nBlockYSize = 1024;
             }
         }
     }
@@ -2140,7 +2143,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
             new JP2OpenJPEGRasterBand( poDS, iBand, eDataType,
                                         bPromoteTo8Bit ? 8: psImage->comps[iBand-1].prec,
                                         bPromoteTo8Bit,
-                                        nTileW, nTileH);
+                                        nBlockXSize, nBlockYSize);
         if( iBand == 1 && poCT != nullptr )
             poBand->poCT = poCT;
         poDS->SetBand( iBand, poBand );
@@ -2195,15 +2198,13 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             nTileW /= 2;
             nTileH /= 2;
+            nBlockXSize = (int)nTileW;
+            nBlockYSize = (int)nTileH;
         }
         else
         {
-            if (nW < (int)nTileW || nH < (int)nTileH)
-            {
-                nTileW = nW;
-                nTileH = nH;
-                poODS->bUseSetDecodeArea = FALSE;
-            }
+            nBlockXSize = std::min(nW, (int)nTileW);
+            nBlockYSize = std::min(nH, (int)nTileH);
         }
 
         poODS->eColorSpace = poDS->eColorSpace;
@@ -2241,7 +2242,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
             poODS->SetBand( iBand, new JP2OpenJPEGRasterBand( poODS, iBand, eDataType,
                                                               bPromoteTo8Bit ? 8: psImage->comps[iBand-1].prec,
                                                               bPromoteTo8Bit,
-                                                              nTileW, nTileH ) );
+                                                              nBlockXSize, nBlockYSize ) );
         }
 
         poDS->papoOverviewDS[poDS->nOverviewCount ++] = poODS;
@@ -2490,16 +2491,17 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         atoi(CSLFetchNameValueDef(papszOptions, "BLOCKXSIZE", "1024"));
     int nBlockYSize =
         atoi(CSLFetchNameValueDef(papszOptions, "BLOCKYSIZE", "1024"));
-    if (nBlockXSize < 32 || nBlockYSize < 32)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported, "Invalid block size");
-        return nullptr;
-    }
 
     // By default do not generate tile sizes larger than the dataset
     // dimensions
     if( !CPLFetchBool(papszOptions, "BLOCKSIZE_STRICT", false) )
     {
+        if (nBlockXSize < 32 || nBlockYSize < 32)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Invalid block size");
+            return nullptr;
+        }
+
         if (nXSize < nBlockXSize)
         {
             CPLDebug("OPENJPEG", "Adjusting block width from %d to %d",
