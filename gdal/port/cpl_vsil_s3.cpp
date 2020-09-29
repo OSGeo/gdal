@@ -28,6 +28,7 @@
 
 #include "cpl_atomic_ops.h"
 #include "cpl_port.h"
+#include "cpl_auto_close.h"
 #include "cpl_http.h"
 #include "cpl_md5.h"
 #include "cpl_minixml.h"
@@ -407,6 +408,11 @@ bool VSIDIRS3::IssueListDir()
         const CPLString osBaseURL(poS3HandleHelper->GetURL());
 
         CURL* hCurlHandle = curl_easy_init();
+        CPL_AUTO_CLOSE_WARP(hCurlHandle, curl_easy_cleanup);
+
+        curl_easy_setopt(hCurlHandle, CURLOPT_NOSIGNAL, 1L );
+        curl_easy_setopt(hCurlHandle, CURLOPT_FORBID_REUSE, 1L );
+
 
         if( !osBucket.empty() )
         {
@@ -454,7 +460,6 @@ bool VSIDIRS3::IssueListDir()
                 CPLDebug(poS3FS->GetDebugKey(), "%s",
                          requestHelper.sWriteFuncData.pBuffer
                          ? requestHelper.sWriteFuncData.pBuffer : "(null)");
-                curl_easy_cleanup(hCurlHandle);
                 return false;
             }
         }
@@ -467,12 +472,9 @@ bool VSIDIRS3::IssueListDir()
                                           requestHelper.sWriteFuncData.pBuffer,
                                           bIgnoreGlacier,
                                           bIsTruncated );
-
-            curl_easy_cleanup(hCurlHandle);
             return ret;
         }
-
-        curl_easy_cleanup(hCurlHandle);
+        
     }
 }
 
@@ -741,6 +743,11 @@ CPLString IVSIS3LikeFSHandler::InitiateMultipartUpload(
     {
         bRetry = false;
         CURL* hCurlHandle = curl_easy_init();
+        CPL_AUTO_CLOSE_WARP(hCurlHandle, curl_easy_cleanup);
+
+        curl_easy_setopt(hCurlHandle, CURLOPT_NOSIGNAL, 1L );
+        curl_easy_setopt(hCurlHandle, CURLOPT_FORBID_REUSE, 1L );
+
         poS3HandleHelper->AddQueryParameter("uploads", "");
         curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "POST");
 
@@ -821,8 +828,6 @@ CPLString IVSIS3LikeFSHandler::InitiateMultipartUpload(
                     osFilename.c_str());
             }
         }
-
-        curl_easy_cleanup(hCurlHandle);
     }
     while( bRetry );
     return osUploadID;
@@ -882,6 +887,11 @@ CPLString IVSIS3LikeFSHandler::UploadPart(const CPLString& osFilename,
         bRetry = false;
 
         CURL* hCurlHandle = curl_easy_init();
+        CPL_AUTO_CLOSE_WARP(hCurlHandle, curl_easy_cleanup);
+
+        curl_easy_setopt(hCurlHandle, CURLOPT_NOSIGNAL, 1L );
+        curl_easy_setopt(hCurlHandle, CURLOPT_FORBID_REUSE, 1L );
+
         poS3HandleHelper->AddQueryParameter("partNumber",
                                             CPLSPrintf("%d", nPartNumber));
         poS3HandleHelper->AddQueryParameter("uploadId", osUploadID);
@@ -968,7 +978,6 @@ CPLString IVSIS3LikeFSHandler::UploadPart(const CPLString& osFilename,
             }
         }
 
-        curl_easy_cleanup(hCurlHandle);
     }
     while( bRetry );
 
@@ -1029,6 +1038,10 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
         if( m_hCurl == nullptr )
         {
             CURL* hCurlHandle = curl_easy_init();
+
+        curl_easy_setopt(hCurlHandle, CURLOPT_NOSIGNAL, 1L );
+        curl_easy_setopt(hCurlHandle, CURLOPT_FORBID_REUSE, 1L );
+
             curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
             curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION,
                             ReadCallBackBufferChunked);
@@ -1361,6 +1374,11 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
         putData.nTotalSize = m_nBufferOff;
 
         CURL* hCurlHandle = curl_easy_init();
+        CPL_AUTO_CLOSE_WARP(hCurlHandle, curl_easy_cleanup);
+
+        curl_easy_setopt(hCurlHandle, CURLOPT_NOSIGNAL, 1L );
+        curl_easy_setopt(hCurlHandle, CURLOPT_FORBID_REUSE, 1L );
+
         curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
         curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION, PutData::ReadCallBackBuffer);
         curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, &putData);
@@ -1448,7 +1466,6 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
             }
         }
 
-        curl_easy_cleanup(hCurlHandle);
     }
     while( bRetry );
     return bSuccess;
@@ -1494,6 +1511,11 @@ bool IVSIS3LikeFSHandler::CompleteMultipart(const CPLString& osFilename,
         putData.nTotalSize = osXML.size();
 
         CURL* hCurlHandle = curl_easy_init();
+        CPL_AUTO_CLOSE_WARP(hCurlHandle, curl_easy_cleanup);
+
+        curl_easy_setopt(hCurlHandle, CURLOPT_NOSIGNAL, 1L );
+        curl_easy_setopt(hCurlHandle, CURLOPT_FORBID_REUSE, 1L );
+
         poS3HandleHelper->AddQueryParameter("uploadId", osUploadID);
         curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
         curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION,
@@ -1558,7 +1580,6 @@ bool IVSIS3LikeFSHandler::CompleteMultipart(const CPLString& osFilename,
             }
         }
 
-        curl_easy_cleanup(hCurlHandle);
     }
     while( bRetry );
 
@@ -1587,6 +1608,11 @@ bool IVSIS3LikeFSHandler::AbortMultipart(const CPLString& osFilename,
     {
         bRetry = false;
         CURL* hCurlHandle = curl_easy_init();
+        CPL_AUTO_CLOSE_WARP(hCurlHandle, curl_easy_cleanup);
+
+        curl_easy_setopt(hCurlHandle, CURLOPT_NOSIGNAL, 1L );
+        curl_easy_setopt(hCurlHandle, CURLOPT_FORBID_REUSE, 1L );
+
         poS3HandleHelper->AddQueryParameter("uploadId", osUploadID);
         curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "DELETE");
 
@@ -1642,7 +1668,6 @@ bool IVSIS3LikeFSHandler::AbortMultipart(const CPLString& osFilename,
             }
         }
 
-        curl_easy_cleanup(hCurlHandle);
     }
     while( bRetry );
 
@@ -2050,6 +2075,11 @@ std::set<CPLString> VSIS3FSHandler::DeleteObjects(const char* pszBucket,
     {
         bRetry = false;
         CURL* hCurlHandle = curl_easy_init();
+        CPL_AUTO_CLOSE_WARP(hCurlHandle, curl_easy_cleanup);
+
+        curl_easy_setopt(hCurlHandle, CURLOPT_NOSIGNAL, 1L );
+        curl_easy_setopt(hCurlHandle, CURLOPT_FORBID_REUSE, 1L );
+
         poS3HandleHelper->AddQueryParameter("delete", "");
         curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "POST");
         curl_easy_setopt(hCurlHandle, CURLOPT_POSTFIELDS, pszXML );
@@ -2140,7 +2170,6 @@ std::set<CPLString> VSIS3FSHandler::DeleteObjects(const char* pszBucket,
             }
         }
 
-        curl_easy_cleanup(hCurlHandle);
     }
     while( bRetry );
     return oDeletedKeys;
@@ -2185,6 +2214,11 @@ char** VSIS3FSHandler::GetFileMetadata( const char* pszFilename,
     {
         bRetry = false;
         CURL* hCurlHandle = curl_easy_init();
+        CPL_AUTO_CLOSE_WARP(hCurlHandle, curl_easy_cleanup);
+
+        curl_easy_setopt(hCurlHandle, CURLOPT_NOSIGNAL, 1L );
+        curl_easy_setopt(hCurlHandle, CURLOPT_FORBID_REUSE, 1L );
+
         poS3HandleHelper->AddQueryParameter("tagging", "");
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
@@ -2263,7 +2297,6 @@ char** VSIS3FSHandler::GetFileMetadata( const char* pszFilename,
             }
         }
 
-        curl_easy_cleanup(hCurlHandle);
     }
     while( bRetry );
     return CSLDuplicate(aosTags.List());
@@ -2363,6 +2396,11 @@ bool VSIS3FSHandler::SetFileMetadata( const char * pszFilename,
     {
         bRetry = false;
         CURL* hCurlHandle = curl_easy_init();
+        CPL_AUTO_CLOSE_WARP(hCurlHandle, curl_easy_cleanup);
+
+        curl_easy_setopt(hCurlHandle, CURLOPT_NOSIGNAL, 1L );
+        curl_easy_setopt(hCurlHandle, CURLOPT_FORBID_REUSE, 1L );
+
         poS3HandleHelper->AddQueryParameter("tagging", "");
         curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, osXML.empty() ? "DELETE" : "PUT");
         if( !osXML.empty() )
@@ -2439,7 +2477,6 @@ bool VSIS3FSHandler::SetFileMetadata( const char * pszFilename,
             bRet = true;
         }
 
-        curl_easy_cleanup(hCurlHandle);
     }
     while( bRetry );
     return bRet;
@@ -2839,6 +2876,11 @@ int IVSIS3LikeFSHandler::CopyObject( const char *oldpath, const char *newpath,
     {
         bRetry = false;
         CURL* hCurlHandle = curl_easy_init();
+        CPL_AUTO_CLOSE_WARP(hCurlHandle, curl_easy_cleanup);
+
+        curl_easy_setopt(hCurlHandle, CURLOPT_NOSIGNAL, 1L );
+        curl_easy_setopt(hCurlHandle, CURLOPT_FORBID_REUSE, 1L );
+
         curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
@@ -2921,7 +2963,6 @@ int IVSIS3LikeFSHandler::CopyObject( const char *oldpath, const char *newpath,
             InvalidateDirContent( CPLGetDirname(osFilenameWithoutSlash) );
         }
 
-        curl_easy_cleanup(hCurlHandle);
     }
     while( bRetry );
 
@@ -2960,6 +3001,11 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
     {
         bRetry = false;
         CURL* hCurlHandle = curl_easy_init();
+        CPL_AUTO_CLOSE_WARP(hCurlHandle, curl_easy_cleanup);
+
+        curl_easy_setopt(hCurlHandle, CURLOPT_NOSIGNAL, 1L );
+        curl_easy_setopt(hCurlHandle, CURLOPT_FORBID_REUSE, 1L );
+        
         curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "DELETE");
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
@@ -3026,7 +3072,6 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
             InvalidateDirContent( CPLGetDirname(osFilenameWithoutSlash) );
         }
 
-        curl_easy_cleanup(hCurlHandle);
     }
     while( bRetry );
 
