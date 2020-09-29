@@ -123,6 +123,14 @@ char **VSIReadDirEx( const char *pszPath, int nMaxFiles )
     return poFSHandler->ReadDirEx( pszPath, nMaxFiles );
 }
 
+char **VSISiblingFiles( const char *pszPath)
+{
+    VSIFilesystemHandler *poFSHandler =
+        VSIFileManager::GetHandler( pszPath );
+
+    return poFSHandler->SiblingFiles( pszPath );
+}
+
 /************************************************************************/
 /*                             VSIReadRecursive()                       */
 /************************************************************************/

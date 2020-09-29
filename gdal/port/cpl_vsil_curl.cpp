@@ -4217,6 +4217,22 @@ char** VSICurlFilesystemHandler::ReadDirEx( const char *pszDirname,
 }
 
 /************************************************************************/
+/*                             SiblingFiles()                           */
+/************************************************************************/
+
+char** VSICurlFilesystemHandler::SiblingFiles( const char *pszFilename )
+{
+    /* Small optimization to avoid unnecessary stat'ing from PAux or ENVI */
+    /* drivers. The MBTiles driver needs no companion file. */
+    if( EQUAL(CPLGetExtension( pszFilename ),"mbtiles") )
+    {
+        return CSLAddString( nullptr, CPLGetFilename(pszFilename) );
+    }
+    return nullptr;
+    
+}
+
+/************************************************************************/
 /*                          GetFileMetadata()                           */
 /************************************************************************/
 
