@@ -2692,6 +2692,52 @@ def test_nitf_77():
     assert data == expected_data
 
 ###############################################################################
+# Test parsing BANDSB TRE (STDI-0002 App X)
+
+def test_nitf_78():
+    # Fill non-character fields with zero
+    float_data = r"\0\0\0\0"
+    bit_mask = r"\0\0\0\0"
+
+    tre_data = "FILE_TRE=BANDSB=00001RADIANCE                S" + float_data*2 + \
+                "0030.00M0030.00M-------M-------M                                                " + \
+                bit_mask + "DETECTOR                " + float_data
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_78.ntf', 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_78.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_78.ntf')
+
+    expected_data = """<tres>
+  <tre name="BANDSB" location="file">
+    <field name="COUNT" value="00001" />
+    <field name="RADIOMETRIC_QUANTITY" value="RADIANCE" />
+    <field name="RADIOMETRIC_QUANTITY_UNIT" value="S" />
+    <field name="SCALE_FACTOR" value="0.000000" />
+    <field name="ADDITIVE_FACTOR" value="0.000000" />
+    <field name="ROW_GSD" value="0030.00" />
+    <field name="ROW_GSD_UNIT" value="M" />
+    <field name="COL_GSD" value="0030.00" />
+    <field name="COL_GSD_UNIT" value="M" />
+    <field name="SPT_RESP_ROW" value="-------" />
+    <field name="SPT_RESP_UNIT_ROW" value="M" />
+    <field name="SPT_RESP_COL" value="-------" />
+    <field name="SPT_RESP_UNIT_COL" value="M" />
+    <field name="DATA_FLD_1" value="" />
+    <field name="EXISTENCE_MASK" value="0" />
+    <repeated name="BANDS" number="1">
+      <group index="0" />
+    </repeated>
+  </tre>
+</tres>
+"""
+    assert data == expected_data
+
+###############################################################################
 # Test reading C4 compressed file
 
 
