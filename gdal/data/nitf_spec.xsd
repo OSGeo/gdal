@@ -130,7 +130,7 @@
                     <xs:enumeration value="string"/>
                     <xs:enumeration value="integer"/>
                     <xs:enumeration value="real"/>
-                    <xs:enumeration value="float_raw"/>
+                    <xs:enumeration value="IEEE754_Float32_BigEndian"/>
                     <xs:enumeration value="bitmask"/>
                 </xs:restriction>
             </xs:simpleType>

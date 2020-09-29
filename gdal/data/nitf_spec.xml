@@ -118,8 +118,8 @@
         <field name="COUNT" length="5" type="integer"/>
         <field name="RADIOMETRIC_QUANTITY" length="24" type="string"/>
         <field name="RADIOMETRIC_QUANTITY_UNIT" length="1" type="string"/>
-        <field name="SCALE_FACTOR" length="4" type="float_raw"/>
-        <field name="ADDITIVE_FACTOR" length="4" type="float_raw"/>
+        <field name="SCALE_FACTOR" length="4" type="IEEE754_Float32_BigEndian"/>
+        <field name="ADDITIVE_FACTOR" length="4" type="IEEE754_Float32_BigEndian"/>
         <field name="ROW_GSD" length="7" type="real"/>
         <field name="ROW_GSD_UNIT" length="1" type="string"/>
         <field name="COL_GSD" length="7" type="real"/>
@@ -132,7 +132,7 @@
         <field name="EXISTENCE_MASK" length="4" type="bitmask"/>
         <if cond="EXISTENCE_MASK:31">
             <field name="RADIOMETRIC_ADJUSTMENT_SURFACE" length="24" type="string"/>
-            <field name="ATMOSPHERIC_ADJUSTMENT_ALTITUDE" length="4" type="float_raw"/>
+            <field name="ATMOSPHERIC_ADJUSTMENT_ALTITUDE" length="4" type="IEEE754_Float32_BigEndian"/>
         </if>
         <if cond="EXISTENCE_MASK:30">
             <field name="DIAMETER" length="7" type="real"/>
@@ -176,8 +176,8 @@
                 <field name="UBOUND" length="7" type="real"/>
             </if>
             <if cond="EXISTENCE_MASK:18">
-                <field name="SCALE_FACTOR" length="4" type="float_raw"/>
-                <field name="ADDITIVE_FACTOR" length="4" type="float_raw"/>
+                <field name="SCALE_FACTOR" length="4" type="IEEE754_Float32_BigEndian"/>
+                <field name="ADDITIVE_FACTOR" length="4" type="IEEE754_Float32_BigEndian"/>
             </if>
             <if cond="EXISTENCE_MASK:17">
                 <field name="START_TIME" length="16" type="string"/>
@@ -249,7 +249,7 @@
                         <field name="APN" length="10" type="integer"/>
                     </if>
                     <if cond="BAPF=R">
-                        <field name="APR" length="4" type="float_raw"/>
+                        <field name="APR" length="4" type="IEEE754_Float32_BigEndian"/>
                     </if>
                     <if cond="BAPF=A">
                         <field name="APA" length="20" type="string"/>
@@ -263,7 +263,7 @@
                     <field name="APN" length="10" type="integer"/>
                 </if>
                 <if cond="CAPF=R">
-                    <field name="APR" length="4" type="float_raw"/>
+                    <field name="APR" length="4" type="IEEE754_Float32_BigEndian"/>
                 </if>
                 <if cond="CAPF=A">
                     <field name="APA" length="20" type="string"/>

@@ -2251,7 +2251,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 pszMDItemName = CPLStrdup(
                             CPLSPrintf("%s%s", pszMDPrefix, pszName));
 
-                if (strcmp(pszType, "float_raw") == 0)
+                if (strcmp(pszType, "IEEE754_Float32_BigEndian") == 0)
                 {
                     if( nLength == 4 )
                     {
@@ -2267,19 +2267,18 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                     {
                         *pbError = TRUE;
                         CPLError( CE_Warning, CPLE_AppDefined,
-                                  "Raw float field must be 4 bytes in %s TRE ", pszTREName);
+                                  "IEEE754_Float32_BigEndian field must be 4 bytes in %s TRE ", pszTREName);
                         break;
                     }
                 }
                 else if (strcmp(pszType, "bitmask") == 0)
                 {
-                    if( nLength <= 4 )
+                    if( nLength == 4 )
                     {
                         const size_t nBufferSize = 11;
-                        unsigned int nVal = 0;
-                        memcpy(&nVal, pachTRE + *pnTreOffset, nLength);
+                        unsigned int nVal;
+                        memcpy(&nVal, pachTRE + *pnTreOffset, 4);
                         CPL_MSBPTR32(&nVal);
-                        nVal >>= 8 * (4 - nLength);
                         pszValue = (char*)CPLMalloc(nBufferSize);
                         CPLsnprintf(pszValue, nBufferSize, "%u", nVal);
                         papszTmp = CSLSetNameValue(papszTmp, pszMDItemName, pszValue);
@@ -2288,7 +2287,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                     {
                         *pbError = TRUE;
                         CPLError( CE_Warning, CPLE_AppDefined,
-                                  "bitmask field must be <= 4 bytes in %s TRE ", pszTREName);
+                                  "bitmask field must be 4 bytes in %s TRE ", pszTREName);
                         break;
                     }
                 }

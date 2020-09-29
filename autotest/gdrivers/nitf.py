@@ -2727,7 +2727,7 @@ def test_nitf_78():
     <field name="SPT_RESP_UNIT_ROW" value="M" />
     <field name="SPT_RESP_COL" value="-------" />
     <field name="SPT_RESP_UNIT_COL" value="M" />
-    <field name="DATA_FIELD_1" value="" />
+    <field name="DATA_FLD_1" value="" />
     <field name="EXISTENCE_MASK" value="0" />
     <repeated name="BANDS" number="1">
       <group index="0" />
