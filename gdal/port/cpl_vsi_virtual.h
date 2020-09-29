@@ -105,7 +105,7 @@ public:
                       { (void) pszDirname; return nullptr; }
     virtual char **ReadDirEx( const char *pszDirname, int /* nMaxFiles */ )
                       { return ReadDir(pszDirname); }
-    virtual char **SiblingFiles( const char */*pszFilename*/ )
+    virtual char **SiblingFiles( const char * /*pszFilename*/ )
                       { return nullptr; }
     virtual int Rename( const char *oldpath, const char *newpath )
                       { (void) oldpath; (void)newpath; errno=ENOENT; return -1; }
