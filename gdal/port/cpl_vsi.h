@@ -456,7 +456,11 @@ typedef int            (*VSIFilesystemPluginRmdirCallback)         ( void *pUser
  */
 typedef char**         (*VSIFilesystemPluginReadDirCallback)       ( void *pUserData, const char *pszDirname, int nMaxFiles );
 /** 
- * List related files. Optional 
+ * List related files. Must return NULL if unknown, or a list of relative filenames
+ * that can be opened along the main file. If no other file than pszFilename needs to
+ * be opened, return static_cast<char**> (calloc(1,sizeof(char*)));
+ * 
+ * Optional
  * @since GDAL 3.2
  */
 typedef char**         (*VSIFilesystemPluginSiblingFilesCallback)       ( void *pUserData, const char *pszDirname );

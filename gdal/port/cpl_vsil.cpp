@@ -123,12 +123,30 @@ char **VSIReadDirEx( const char *pszPath, int nMaxFiles )
     return poFSHandler->ReadDirEx( pszPath, nMaxFiles );
 }
 
-char **VSISiblingFiles( const char *pszPath)
+/************************************************************************/
+/*                             VSISiblingFiles()                        */
+/************************************************************************/
+
+/**
+ * \brief Return related filenames
+ *
+ * @param pszFilename the path of a filename to inspect
+ * UTF-8 encoded.
+ * @return The list of entries, relative to the directory, of all sidecar
+ * files available or NULL if the list is not known. 
+ * Filenames are returned in UTF-8 encoding.
+ * Most implementations will return NULL, and a subsequent ReadDir will
+ * list all files available in the file's directory. This function will be
+ * overriden by VSI FilesystemHandlers that wish to force e.g. an empty list
+ * to avoid opening non-existant files on slow filesystems.
+ * @since GDAL 3.2
+ */
+char **VSISiblingFiles( const char *pszFilename)
 {
     VSIFilesystemHandler *poFSHandler =
-        VSIFileManager::GetHandler( pszPath );
+        VSIFileManager::GetHandler( pszFilename );
 
-    return poFSHandler->SiblingFiles( pszPath );
+    return poFSHandler->SiblingFiles( pszFilename );
 }
 
 /************************************************************************/
