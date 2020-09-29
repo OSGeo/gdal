@@ -3148,6 +3148,21 @@ def test_jp2openjpeg_image_origin_not_zero():
     assert ds.GetRasterBand(1).Checksum() == 4672
     assert ds.GetRasterBand(1).ReadRaster(0,0,20,20,10,10) is not None
 
+
+###############################################################################
+# Test reading an image whose tile size is 16 (#2984)
+
+
+def test_jp2openjpeg_tilesize_16():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        pytest.skip()
+
+    # Generated with gdal_translate byte.tif foo.jp2 -of jp2openjpeg -outsize 256 256 -co blockxsize=16 -co blockysize=16 -co BLOCKSIZE_STRICT=true -co resolutions=3
+    ds = gdal.Open('data/jpeg2000/tile_size_16.jp2')
+    assert ds.GetRasterBand(1).Checksum() == 44216
+    assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 61711
+
 ###############################################################################
 
 
