@@ -304,6 +304,7 @@ void SHPAPI_CALL
 DBFUpdateHeader( DBFHandle psDBF )
 
 {
+    unsigned char abyFileHeader[XBASE_FILEHDR_SZ] = {0}; 
 
     if( psDBF->bNoHeader )
         DBFWriteHeader( psDBF );
@@ -311,7 +312,6 @@ DBFUpdateHeader( DBFHandle psDBF )
     if( !DBFFlushRecord( psDBF ) )
         return;
 
-    unsigned char abyFileHeader[XBASE_FILEHDR_SZ] = {0}; 
     psDBF->sHooks.FSeek( psDBF->fp, 0, 0 );
     psDBF->sHooks.FRead( abyFileHeader, 1, sizeof(abyFileHeader), psDBF->fp );
 
@@ -963,6 +963,7 @@ DBFAddNativeFieldType(DBFHandle psDBF, const char * pszFieldName,
         /* load record */
         psDBF->sHooks.FSeek( psDBF->fp, nRecordOffset, 0 );
         if (psDBF->sHooks.FRead(pszRecord, nOldRecordLength, 1, psDBF->fp) != 1) { 
+          free(pszRecord);
           return -1;
         }
 
@@ -1902,6 +1903,7 @@ DBFDeleteField(DBFHandle psDBF, int iField)
         /* load record */
         psDBF->sHooks.FSeek( psDBF->fp, nRecordOffset, 0 );
         if (psDBF->sHooks.FRead(pszRecord, nOldRecordLength, 1, psDBF->fp) != 1) {
+          free(pszRecord);
           return FALSE;
         }
 
@@ -1995,6 +1997,8 @@ DBFReorderFields( DBFHandle psDBF, int* panMap )
     free(psDBF->pszHeader);
     psDBF->pszHeader = pszHeaderNew;
 
+    bool errorAbort = FALSE;
+    
     /* we're done if we're dealing with not yet created .dbf */
     if ( !(psDBF->bNoHeader && psDBF->nRecords == 0) )
     {
@@ -2015,7 +2019,8 @@ DBFReorderFields( DBFHandle psDBF, int* panMap )
             /* load record */
             psDBF->sHooks.FSeek( psDBF->fp, nRecordOffset, 0 );
             if (psDBF->sHooks.FRead(pszRecord, psDBF->nRecordLength, 1, psDBF->fp) != 1) {
-              return FALSE;
+              errorAbort = TRUE;
+              break; 
             }
 
             pszRecordNew[0] = pszRecord[0];
@@ -2037,6 +2042,17 @@ DBFReorderFields( DBFHandle psDBF, int* panMap )
         free(pszRecordNew);
     }
 
+    if (errorAbort) {
+      free(panFieldOffsetNew); 
+      free(panFieldSizeNew);
+      free(panFieldDecimalsNew); 
+      free(pachFieldTypeNew);
+      psDBF->nCurrentRecord = -1;
+      psDBF->bCurrentRecordModified = FALSE;
+      psDBF->bUpdated = FALSE; 
+      return FALSE; 
+    }
+    
     free(psDBF->panFieldOffset);
     free(psDBF->panFieldSize);
     free(psDBF->panFieldDecimals);
@@ -2150,6 +2166,7 @@ DBFAlterFieldDefn( DBFHandle psDBF, int iField, const char * pszFieldName,
     psDBF->bNoHeader = TRUE;
     DBFUpdateHeader( psDBF );
 
+    bool errorAbort = FALSE;
     if (nWidth < nOldWidth || (nWidth == nOldWidth && chType != chOldType))
     {
         char* pszRecord = STATIC_CAST(char *, malloc(sizeof(char) * nOldRecordLength));
@@ -2167,7 +2184,8 @@ DBFAlterFieldDefn( DBFHandle psDBF, int iField, const char * pszFieldName,
             /* load record */
             psDBF->sHooks.FSeek( psDBF->fp, nRecordOffset, 0 );
             if (psDBF->sHooks.FRead( pszRecord, nOldRecordLength, 1, psDBF->fp ) != 1) {
-              return FALSE; 
+              errorAbort = TRUE;
+              break; 
             }
 
             memcpy(pszOldField, pszRecord + nOffset, nOldWidth);
@@ -2204,7 +2222,7 @@ DBFAlterFieldDefn( DBFHandle psDBF, int iField, const char * pszFieldName,
             psDBF->sHooks.FWrite( pszRecord, psDBF->nRecordLength, 1, psDBF->fp );
         }
 
-        if( psDBF->bWriteEndOfFileChar )
+        if( !errorAbort && psDBF->bWriteEndOfFileChar )
         {
             char ch = END_OF_FILE_CHARACTER;
 
@@ -2236,7 +2254,8 @@ DBFAlterFieldDefn( DBFHandle psDBF, int iField, const char * pszFieldName,
             /* load record */
             psDBF->sHooks.FSeek( psDBF->fp, nRecordOffset, 0 );
             if (psDBF->sHooks.FRead( pszRecord, nOldRecordLength, 1, psDBF->fp )!= 1) {
-              return FALSE;
+              errorAbort = TRUE;
+              break; 
             }
 
             memcpy(pszOldField, pszRecord + nOffset, nOldWidth);
@@ -2278,7 +2297,7 @@ DBFAlterFieldDefn( DBFHandle psDBF, int iField, const char * pszFieldName,
             psDBF->sHooks.FWrite( pszRecord, psDBF->nRecordLength, 1, psDBF->fp );
         }
 
-        if( psDBF->bWriteEndOfFileChar )
+        if( !errorAbort && psDBF->bWriteEndOfFileChar )
         {
             char ch = END_OF_FILE_CHARACTER;
 
@@ -2293,6 +2312,13 @@ DBFAlterFieldDefn( DBFHandle psDBF, int iField, const char * pszFieldName,
         free(pszOldField);
     }
 
+    if (errorAbort) {
+      psDBF->nCurrentRecord = -1;
+      psDBF->bCurrentRecordModified = TRUE; 
+      psDBF->bUpdated = FALSE; 
+
+      return FALSE; 
+    } 
     psDBF->nCurrentRecord = -1;
     psDBF->bCurrentRecordModified = FALSE;
     psDBF->bUpdated = TRUE;
