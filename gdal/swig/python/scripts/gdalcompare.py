@@ -243,7 +243,7 @@ def compare_sds(golden_db, new_db, options=None):
     golden_sds = golden_db.GetMetadata('SUBDATASETS')
     new_sds = new_db.GetMetadata('SUBDATASETS')
 
-    count = len(list(golden_sds.keys())) / 2
+    count = len(list(golden_sds.keys())) // 2
     for i in range(count):
         key = 'SUBDATASET_%d_NAME' % (i + 1)
 
