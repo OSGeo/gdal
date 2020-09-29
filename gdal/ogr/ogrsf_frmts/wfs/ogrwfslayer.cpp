@@ -673,12 +673,16 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
     CPLString osOutputFormat = CPLURLGetValue(osURL, "OUTPUTFORMAT");
 
     if (CPLTestBool(CPLGetConfigOption("OGR_WFS_USE_STREAMING", "YES"))) {
-        const char* pszStreamingName = CPLSPrintf("/vsicurl_streaming/%s",
-                                                        osURL.c_str());
+        CPLString osStreamingName;
         if( STARTS_WITH(osURL, "/vsimem/") &&
                 CPLTestBool(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
         {
-            pszStreamingName = osURL.c_str();
+            osStreamingName = osURL;
+        }
+        else
+        {
+            osStreamingName += "/vsicurl_streaming/";
+            osStreamingName += osURL;
         }
 
         GDALDataset* poOutputDS = nullptr;
@@ -716,7 +720,7 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
             }
 
             poOutputDS = (GDALDataset*)
-                    GDALOpenEx(pszStreamingName, GDAL_OF_VECTOR, apszAllowedDrivers,
+                    GDALOpenEx(osStreamingName, GDAL_OF_VECTOR, apszAllowedDrivers,
                             apszOpenOptions, nullptr);
 
         }
@@ -728,7 +732,7 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
             const char* const apszAllowedDrivers[] = { "FlatGeobuf", nullptr };
 
             GDALDataset* poFlatGeobuf_DS = (GDALDataset*)
-                    GDALOpenEx(pszStreamingName, GDAL_OF_VECTOR, apszAllowedDrivers,
+                    GDALOpenEx(osStreamingName, GDAL_OF_VECTOR, apszAllowedDrivers,
                             nullptr, nullptr);
             if( poFlatGeobuf_DS )
             {
@@ -751,7 +755,7 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
             /* it, if it is XML error content */
             char szBuffer[2048];
             int nRead = 0;
-            VSILFILE* fp = VSIFOpenL(pszStreamingName, "rb");
+            VSILFILE* fp = VSIFOpenL(osStreamingName, "rb");
             if (fp)
             {
                 nRead = (int)VSIFReadL(szBuffer, 1, sizeof(szBuffer) - 1, fp);
