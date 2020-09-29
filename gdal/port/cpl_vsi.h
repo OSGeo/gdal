@@ -458,7 +458,7 @@ typedef char**         (*VSIFilesystemPluginReadDirCallback)       ( void *pUser
 /** 
  * List related files. Must return NULL if unknown, or a list of relative filenames
  * that can be opened along the main file. If no other file than pszFilename needs to
- * be opened, return static_cast<char**> (calloc(1,sizeof(char*)));
+ * be opened, return static_cast<char**> (CPLCalloc(1,sizeof(char*)));
  * 
  * Optional
  * @since GDAL 3.2

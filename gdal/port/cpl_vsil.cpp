@@ -129,6 +129,8 @@ char **VSIReadDirEx( const char *pszPath, int nMaxFiles )
 
 /**
  * \brief Return related filenames
+  *
+  * This function is essentially meant at being used by GDAL internals.
  *
  * @param pszFilename the path of a filename to inspect
  * UTF-8 encoded.
@@ -138,7 +140,7 @@ char **VSIReadDirEx( const char *pszPath, int nMaxFiles )
  * Most implementations will return NULL, and a subsequent ReadDir will
  * list all files available in the file's directory. This function will be
  * overriden by VSI FilesystemHandlers that wish to force e.g. an empty list
- * to avoid opening non-existant files on slow filesystems.
+ * to avoid opening non-existant files on slow filesystems. The return value shall be destroyed with CSLDestroy()
  * @since GDAL 3.2
  */
 char **VSISiblingFiles( const char *pszFilename)

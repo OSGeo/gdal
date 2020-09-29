@@ -4226,7 +4226,7 @@ char** VSICurlFilesystemHandler::SiblingFiles( const char *pszFilename )
     /* drivers. The MBTiles driver needs no companion file. */
     if( EQUAL(CPLGetExtension( pszFilename ),"mbtiles") )
     {
-        return static_cast<char**> (calloc(1,sizeof(char*)));
+        return static_cast<char**> (CPLCalloc(1,sizeof(char*)));
     }
     return nullptr;
     
