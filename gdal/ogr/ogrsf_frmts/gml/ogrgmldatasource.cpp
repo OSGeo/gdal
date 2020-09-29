@@ -699,13 +699,16 @@ bool OGRGMLDataSource::Open( GDALOpenInfo *poOpenInfo )
     if( szSRSName[0] != '\0' )
         poReader->SetGlobalSRSName(szSRSName);
 
+    const bool bIsWFSFromServer =
+        CPLString(pszFilename).ifind("SERVICE=WFS") != std::string::npos;
+
     // Resolve the xlinks in the source file and save it with the
     // extension ".resolved.gml". The source file will to set to that.
     char *pszXlinkResolvedFilename = nullptr;
     const char *pszOption = CPLGetConfigOption("GML_SAVE_RESOLVED_TO", nullptr);
     bool bResolve = true;
     bool bHugeFile = false;
-    if( pszOption != nullptr && STARTS_WITH_CI(pszOption, "SAME") )
+    if( bIsWFSFromServer || (pszOption != nullptr && STARTS_WITH_CI(pszOption, "SAME")) )
     {
         // "SAME" will overwrite the existing gml file.
         pszXlinkResolvedFilename = CPLStrdup(pszFilename);
@@ -820,12 +823,16 @@ bool OGRGMLDataSource::Open( GDALOpenInfo *poOpenInfo )
         }
     }
 
-    CPLString osGFSFilename = CPLResetExtension(pszFilename, "gfs");
-    if (STARTS_WITH(osGFSFilename, "/vsigzip/"))
-        osGFSFilename = osGFSFilename.substr(strlen("/vsigzip/"));
+    CPLString osGFSFilename;
+    if( !bIsWFSFromServer )
+    {
+        osGFSFilename = CPLResetExtension(pszFilename, "gfs");
+        if (STARTS_WITH(osGFSFilename, "/vsigzip/"))
+            osGFSFilename = osGFSFilename.substr(strlen("/vsigzip/"));
+    }
 
     // Can we find a GML Feature Schema (.gfs) for the input file?
-    if( !bHaveSchema && osXSDFilename.empty())
+    if( !osGFSFilename.empty() && !bHaveSchema && osXSDFilename.empty())
     {
         VSIStatBufL sGFSStatBuf;
         if( bCheckAuxFile && VSIStatL(osGFSFilename, &sGFSStatBuf) == 0 )
