@@ -774,8 +774,9 @@ static void swq_fixup_expression(swq_expr_node* node)
         nodes.pop();
         if( node->eNodeType == SNT_OPERATION )
         {
-            if( node->nOperation == SWQ_OR && node->nSubExprCount > 2 )
+            if( ( node->nOperation == SWQ_OR || node->nOperation == SWQ_AND ) && node->nSubExprCount > 2 )
             {
+                auto op = node->nOperation;
                 std::vector<swq_expr_node*> exprs;
                 for( int i = 0; i < node->nSubExprCount; i++ )
                     exprs.push_back(node->papoSubExpr[i]);
@@ -790,7 +791,7 @@ static void swq_fixup_expression(swq_expr_node* node)
                     {
                         if( i + 1 < exprs.size() )
                         {
-                            auto cur_expr = new swq_expr_node( SWQ_OR );
+                            auto cur_expr = new swq_expr_node( op );
                             cur_expr->field_type = SWQ_BOOLEAN;
                             cur_expr->PushSubExpression(exprs[i]);
                             cur_expr->PushSubExpression(exprs[i+1]);
