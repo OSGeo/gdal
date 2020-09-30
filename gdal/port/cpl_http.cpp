@@ -762,6 +762,121 @@ static void CPLHTTPFetchCleanup(CURL *http_handle, struct curl_slist* headers,
 }
 #endif // HAVE_CURL
 
+struct CPLHTTPFetchContext
+{
+    std::vector< std::pair<CPLHTTPFetchCallbackFunc, void*> > stack{};
+};
+
+/************************************************************************/
+/*                        GetHTTPFetchContext()                         */
+/************************************************************************/
+
+static CPLHTTPFetchContext* GetHTTPFetchContext(bool bAlloc)
+{
+    int bError = FALSE;
+    CPLHTTPFetchContext *psCtx =
+        static_cast<CPLHTTPFetchContext *>(
+            CPLGetTLSEx( CTLS_HTTPFETCHCALLBACK, &bError ) );
+    if( bError )
+        return nullptr;
+
+    if( psCtx == nullptr && bAlloc)
+    {
+        const auto FreeFunc = [](void* pData)
+        {
+            delete static_cast<CPLHTTPFetchContext*>(pData);
+        };
+        psCtx = new CPLHTTPFetchContext();
+        CPLSetTLSWithFreeFuncEx( CTLS_HTTPFETCHCALLBACK, psCtx, FreeFunc, &bError );
+        if( bError )
+        {
+            delete psCtx;
+            psCtx = nullptr;
+        }
+    }
+    return psCtx;
+}
+
+/************************************************************************/
+/*                      CPLHTTPSetFetchCallback()                       */
+/************************************************************************/
+
+static CPLHTTPFetchCallbackFunc gpsHTTPFetchCallbackFunc = nullptr;
+static void* gpHTTPFetchCallbackUserData = nullptr;
+
+/** Installs an alternate callback to the default implementation of CPLHTTPFetchEx().
+ *
+ * This callback will be used by all threads, unless contextual callbacks are
+ * installed with CPLHTTPPushFetchCallback().
+ *
+ * It is the responsibility of the caller to make sure this function is not
+ * called concurrently, or during CPLHTTPFetchEx() execution.
+ *
+ * @param pFunc Callback function to be called with CPLHTTPFetchEx() is called
+ *              (or NULL to restore default handler)
+ * @param pUserData Last argument to provide to the pFunc callback.
+ *
+ * @since GDAL 3.2
+ */
+void CPLHTTPSetFetchCallback( CPLHTTPFetchCallbackFunc pFunc, void* pUserData )
+{
+    gpsHTTPFetchCallbackFunc = pFunc;
+    gpHTTPFetchCallbackUserData = pUserData;
+}
+
+/************************************************************************/
+/*                      CPLHTTPPushFetchCallback()                      */
+/************************************************************************/
+
+/** Installs an alternate callback to the default implementation of CPLHTTPFetchEx().
+ *
+ * This callback will only be used in the thread where this function has been
+ * called. It must be un-installed by CPLHTTPPopFetchCallback(), which must also
+ * be called from the same thread.
+ *
+ * @param pFunc Callback function to be called with CPLHTTPFetchEx() is called.
+ * @param pUserData Last argument to provide to the pFunc callback.
+ * @return TRUE in case of success.
+ *
+ * @since GDAL 3.2
+ */
+int CPLHTTPPushFetchCallback( CPLHTTPFetchCallbackFunc pFunc, void* pUserData )
+{
+    auto psCtx = GetHTTPFetchContext(true);
+    if( psCtx == nullptr )
+        return false;
+    psCtx->stack.emplace_back(
+        std::pair<CPLHTTPFetchCallbackFunc, void*>(pFunc, pUserData) );
+    return true;
+}
+
+/************************************************************************/
+/*                       CPLHTTPPopFetchCallback()                      */
+/************************************************************************/
+
+/** Uninstalls a callback set by CPLHTTPPushFetchCallback().
+ *
+ * @see CPLHTTPPushFetchCallback()
+ * @return TRUE in case of success.
+ * @since GDAL 3.2
+ */
+int CPLHTTPPopFetchCallback(void)
+{
+    auto psCtx = GetHTTPFetchContext(false);
+    if( psCtx == nullptr || psCtx->stack.empty() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CPLHTTPPushFetchCallback / CPLHTTPPopFetchCallback not balanced");
+        return false;
+    }
+    else
+    {
+        psCtx->stack.pop_back();
+        return true;
+    }
+}
+
+
 /************************************************************************/
 /*                           CPLHTTPFetch()                             */
 /************************************************************************/
@@ -947,14 +1062,50 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
         return psResult;
     }
 
-#ifndef HAVE_CURL
-    (void) papszOptions;
-    (void) pszURL;
-    (void) pfnProgress;
-    (void) pProgressArg;
-    (void) pfnWrite;
-    (void) pWriteArg;
+    // Try to user alternate network layer if set.
+    auto pCtx = GetHTTPFetchContext(false);
+    if( pCtx )
+    {
+        for( size_t i = pCtx->stack.size(); i > 0; )
+        {
+            --i;
+            auto& cbk = pCtx->stack[i];
+            auto cbkFunc = cbk.first;
+            auto pUserData = cbk.second;
+            auto res = cbkFunc( pszURL, papszOptions,
+                                pfnProgress, pProgressArg,
+                                pfnWrite, pWriteArg,
+                                pUserData );
+            if( res )
+            {
+                if( CSLFetchNameValue( papszOptions, "CLOSE_PERSISTENT" ) )
+                {
+                    CPLHTTPDestroyResult(res);
+                    res = nullptr;
+                }
+                return res;
+            }
+        }
+    }
 
+    if( gpsHTTPFetchCallbackFunc )
+    {
+        auto res = gpsHTTPFetchCallbackFunc( pszURL, papszOptions,
+                                pfnProgress, pProgressArg,
+                                pfnWrite, pWriteArg,
+                                gpHTTPFetchCallbackUserData );
+        if( res )
+        {
+            if( CSLFetchNameValue( papszOptions, "CLOSE_PERSISTENT" ) )
+            {
+                CPLHTTPDestroyResult(res);
+                res = nullptr;
+            }
+            return res;
+        }
+    }
+
+#ifndef HAVE_CURL
     CPLError( CE_Failure, CPLE_NotSupported,
               "GDAL/OGR not compiled with libcurl support, "
               "remote requests not supported." );
