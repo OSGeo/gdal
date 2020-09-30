@@ -1361,6 +1361,8 @@ namespace tut
         // TODO investigate what fails exactly
         if( EQUAL(CPLGetConfigOption("GITHUB_WORKFLOW", ""), "MacOS build") )
             return;
+        if( EQUAL(CPLGetConfigOption("APPVEYOR_BUILD_WORKER_IMAGE", ""), "Visual Studio 2015") )
+            return;
 
         {
             auto l = gdal::TileMatrixSet::listPredefinedTileMatrixSets();
