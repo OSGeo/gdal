@@ -1963,6 +1963,7 @@ DBFReorderFields( DBFHandle psDBF, int* panMap )
     char    *pszHeaderNew;
     char    *pszRecord;
     char    *pszRecordNew;
+    int errorAbort = FALSE;
 
     if ( psDBF->nFields == 0 )
         return TRUE;
@@ -1997,8 +1998,6 @@ DBFReorderFields( DBFHandle psDBF, int* panMap )
     free(psDBF->pszHeader);
     psDBF->pszHeader = pszHeaderNew;
 
-    bool errorAbort = FALSE;
-    
     /* we're done if we're dealing with not yet created .dbf */
     if ( !(psDBF->bNoHeader && psDBF->nRecords == 0) )
     {
@@ -2091,6 +2090,7 @@ DBFAlterFieldDefn( DBFHandle psDBF, int iField, const char * pszFieldName,
     char  chOldType;
     int   bIsNULL;
     char chFieldFill;
+    int errorAbort = FALSE;
 
     if (iField < 0 || iField >= psDBF->nFields)
         return FALSE;
@@ -2166,7 +2166,6 @@ DBFAlterFieldDefn( DBFHandle psDBF, int iField, const char * pszFieldName,
     psDBF->bNoHeader = TRUE;
     DBFUpdateHeader( psDBF );
 
-    bool errorAbort = FALSE;
     if (nWidth < nOldWidth || (nWidth == nOldWidth && chType != chOldType))
     {
         char* pszRecord = STATIC_CAST(char *, malloc(sizeof(char) * nOldRecordLength));
