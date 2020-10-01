@@ -924,6 +924,7 @@ bool OGCAPIDataset::InitWithMapAPI(GDALOpenInfo* poOpenInfo,
         poOpenInfo->papszOpenOptions, "MAX_CONNECTIONS",
         CPLGetConfigOption("GDAL_MAX_CONNECTIONS", "5")));
     CPLString osWMS_XML;
+    char* pszEscapedURL = CPLEscapeString(osImageURL, -1, CPLES_XML);
     osWMS_XML.Printf(
         "<GDAL_WMS>"
         "    <Service name=\"OGCAPIMaps\">"
@@ -944,7 +945,7 @@ bool OGCAPIDataset::InitWithMapAPI(GDALOpenInfo* poOpenInfo,
         "    <MaxConnections>%d</MaxConnections>"
         "    %s"
         "</GDAL_WMS>",
-        osImageURL.c_str(),
+        pszEscapedURL,
         dfXMin, dfYMax,
         dfXMax, dfYMin,
         nRasterXSize,
@@ -953,6 +954,7 @@ bool OGCAPIDataset::InitWithMapAPI(GDALOpenInfo* poOpenInfo,
         l_nBands,
         nMaxConnections,
         bCache ? "<Cache />" : "");
+    CPLFree(pszEscapedURL);
     CPLDebug("OGCAPI", "%s", osWMS_XML.c_str());
     m_poWMSDS.reset(GDALDataset::Open(osWMS_XML, GDAL_OF_RASTER | GDAL_OF_INTERNAL));
     if( m_poWMSDS == nullptr )
@@ -1410,7 +1412,6 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
                 int minRow, int rowCount, int nCoalesce,
                 double& dfStripMinY, double& dfStripMaxY)
             {
-                CPLString osWMS_XML;
                 int minCol = 0;
                 int maxCol = tileMatrix.mMatrixWidth - 1;
                 int maxRow = minRow + rowCount - 1;
@@ -1430,6 +1431,8 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
                     (maxCol + 1) * tileMatrix.mTileWidth * tileMatrix.mResX;
                 dfStripMaxY = dfOriY - minRow * tileMatrix.mTileHeight * tileMatrix.mResY;
                 dfStripMinY = dfOriY - (maxRow + 1) * tileMatrix.mTileHeight * tileMatrix.mResY;
+                CPLString osWMS_XML;
+                char* pszEscapedURL = CPLEscapeString(osURL, -1, CPLES_XML);
                 osWMS_XML.Printf(
                     "<GDAL_WMS>"
                     "    <Service name=\"TMS\">"
@@ -1453,7 +1456,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
                     "    <MaxConnections>%d</MaxConnections>"
                     "    %s"
                     "</GDAL_WMS>",
-                    osURL.c_str(),
+                    pszEscapedURL,
                     nCoalesce,
                     dfStripMinX,
                     dfStripMaxY,
@@ -1467,7 +1470,8 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
                     l_nBands,
                     nMaxConnections,
                     bCache ? "<Cache />" : "");
-                    return osWMS_XML;
+                CPLFree(pszEscapedURL);
+                return osWMS_XML;
             };
 
             auto vmwl = tileMatrix.mVariableMatrixWidthList;
