@@ -10,14 +10,14 @@ OGCAPI -- OGC API Tiles / Maps
 
 .. build_dependencies:: libcurl
 
-Access to server implementing OGC API - Tiles or OGC API - Maps.
+Access to server implementing OGC API - Tiles, OGC API - Maps or OGC API - Coverage.
 This driver has raster and vector capabilities.
 
 .. warning::
 
     This driver is experimental, and has been developed to demonstrate work
     related to the "Modular OGC API Workflows" initiative.
-    It implements non-finalized versions of OGC API - Tiles and OGC API - Maps.
+    It implements non-finalized versions of OGC API - Tiles, - Maps and - Coverage.
     Its interface may change at any time, or it might be removed.
     It might also be eventually merged with the OAPIF driver.
 
@@ -74,11 +74,13 @@ Open options
 
 The following open options are available:
 
-- **API=AUTO/MAPS/TILES**: Which API to use for pixel acquisition. Default is
-  AUTO, which uses tiles if available, and fallbacks to maps otherwise.
+- **API=AUTO/MAPS/TILES/COVERAGE**: Which API to use for pixel acquisition. Default is
+  AUTO, which uses coverage if available, and fallback first to tiles and 
+  finally maps otherwise.
 
 - **IMAGE_FORMAT=AUTO/PNG/PNG_PREFERRED/JPEG/JPEG_PREFERRED**:
-  Which format to use for pixel acquisition. Defaults to AUTO, which means
+  Which format to use for pixel acquisition, for tiles or map API.
+  Defaults to AUTO, which means
   that PNG will be used if available, and fallback to JPEG otherwise.
   If specifying PNG or JPEG, they must be available, otherwise the driver will
   return an error. If specifying the one of the PNG_PREFERRED or JPEG_PREFERRED
