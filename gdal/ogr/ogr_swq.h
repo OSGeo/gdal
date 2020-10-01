@@ -144,7 +144,7 @@ public:
     /* only for SNT_OPERATION */
     void        PushSubExpression( swq_expr_node * );
     void        ReverseSubExpressions();
-    int         nOperation = 0;
+    swq_op      nOperation = SWQ_OR;
     int         nSubExprCount = 0;
     swq_expr_node **papoSubExpr = nullptr;
 
