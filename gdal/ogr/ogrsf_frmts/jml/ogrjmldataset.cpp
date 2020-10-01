@@ -222,7 +222,7 @@ void RegisterOGRJML()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "OpenJUMP JML" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jml" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_jml.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/jml.html" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );

@@ -74,7 +74,7 @@ void RegisterOGRHTF()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "Hydrographic Transfer Vector" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_htf.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/htf.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = OGRHTFDriverOpen;

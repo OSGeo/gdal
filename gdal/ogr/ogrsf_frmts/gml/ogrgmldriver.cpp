@@ -142,7 +142,7 @@ void RegisterOGRGML()
                                "Geography Markup Language (GML)" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gml" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "gml xml" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_gml.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/gml.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"

@@ -814,7 +814,7 @@ void RegisterOGRFileGDB()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                 "ESRI FileGDB" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gdb" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_filegdb.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/filegdb.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
                                "<CreationOptionList/>" );

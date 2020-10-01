@@ -297,7 +297,7 @@ void RegisterOGRPGeo()
 
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ESRI Personal GeoDatabase" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mdb" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_pgeo.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/pgeo.html" );
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }

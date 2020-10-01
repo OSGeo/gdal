@@ -111,7 +111,7 @@ void RegisterOGRCouchDB()
     poDriver->SetDescription( "CouchDB" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "CouchDB / GeoCouch" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_couchdb.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/couchdb.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "CouchDB:" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
                                "<CreationOptionList/>");

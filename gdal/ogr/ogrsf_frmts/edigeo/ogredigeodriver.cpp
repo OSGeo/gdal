@@ -85,7 +85,7 @@ void RegisterOGREDIGEO()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "French EDIGEO exchange format" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "thf" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_edigeo.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/edigeo.html" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );

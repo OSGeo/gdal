@@ -112,7 +112,7 @@ void RegisterOGRWAsP()
 
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "WAsP .map format" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "map" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_wasp.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/wasp.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);

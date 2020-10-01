@@ -118,7 +118,7 @@ void RegisterOGRARCGEN()
     poDriver->SetDescription( "ARCGEN" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Arc/Info Generate" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_arcgen.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/arcgen.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->pfnOpen = OGRARCGENDriverOpen;
 

@@ -6230,7 +6230,7 @@ void RegisterOGRMVT()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Mapbox Vector Tiles" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_mvt.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/mvt.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "mvt mvt.gz pbf" );
 

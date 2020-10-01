@@ -76,7 +76,7 @@ void RegisterOGRPDS()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Planetary Data Systems TABLE" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_pds.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/pds.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = OGRPDSDriverOpen;
