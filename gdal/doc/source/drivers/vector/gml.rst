@@ -129,6 +129,16 @@ elements are also taken into account to create OGR fields.
 Configuration options can be set via the CPLSetConfigOption() function
 or as environment variables.
 
+You can use **GML_GFS_TEMPLATE** configuration option (or **GFS_TEMPLATE**
+open option) set to a **path_to_template.gfs** in order
+to unconditionally use a predefined GFS file. This option is
+really useful when you are planning to import many distinct GML
+files in subsequent steps [**-append**] and you absolutely want to
+preserve a fully consistent data layout for the whole GML set.
+Please, pay attention not to use the **-lco LAUNDER=yes** setting
+when using **GML_GFS_TEMPLATE**; this should break the correct
+recognition of attribute names between subsequent GML import runs.
+
 Particular GML application schemas
 ----------------------------------
 
@@ -257,15 +267,6 @@ resolve gml:xlink and gml:id relations are the following:
    or so on).
 -  The **GML_SKIP_RESOLVE_ELEMS HUGE** method supports the following
    further configuration option:
-
-   -  you can use **GML_GFS_TEMPLATE** **path_to_template.gfs** in order
-      to unconditionally use a predefined GFS file. This option is
-      really useful when you are planning to import many distinct GML
-      files in subsequent steps [**-append**] and you absolutely want to
-      preserve a fully consistent data layout for the whole GML set.
-      Please, pay attention not to use the **-lco LAUNDER=yes** setting
-      when using **GML_GFS_TEMPLATE**; this should break the correct
-      recognition of attribute names between subsequent GML import runs.
 
 TopoSurface interpretation rules [polygons and internal holes]
 --------------------------------------------------------------
@@ -418,6 +419,13 @@ Open options
 
 -  **XSD=filename**: (GDAL >=2.0) to specify an explicit filename for
    the XSD application schema to use.
+-  **GFS_TEMPLATE=filename**: to unconditionally use a predefined GFS file.
+   This option is really useful when you are planning to import many distinct GML
+   files in subsequent steps [**-append**] and you absolutely want to
+   preserve a fully consistent data layout for the whole GML set.
+   Please, pay attention not to use the **-lco LAUNDER=yes** setting
+   when this option; this should break the correct
+   recognition of attribute names between subsequent GML import runs.
 -  **FORCE_SRS_DETECTION=YES/NO**: (GDAL >=2.0) Force a full scan to
    detect the SRS of layers. This option may be needed in the case where
    the .gml file is accompanied with a .xsd. Normally in that situation,
