@@ -774,7 +774,7 @@ static void swq_fixup_expression(swq_expr_node* node)
         nodes.pop();
         if( node->eNodeType == SNT_OPERATION )
         {
-            const swq_op eOp = static_cast<swq_op>(node->nOperation);
+            const swq_op eOp = node->nOperation;
             if( (eOp == SWQ_OR || eOp == SWQ_AND) && node->nSubExprCount > 2 )
             {
                 std::vector<swq_expr_node*> exprs;

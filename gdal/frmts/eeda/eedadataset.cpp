@@ -701,7 +701,7 @@ bool GDALEEDALayer::IsSimpleComparison(const swq_expr_node* poNode)
 /*                             GetOperatorText()                        */
 /************************************************************************/
 
-static const char* GetOperatorText(int nOp)
+static const char* GetOperatorText(swq_op nOp)
 {
     if( nOp == SWQ_LT )
         return "<";
