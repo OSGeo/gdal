@@ -2491,6 +2491,11 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         atoi(CSLFetchNameValueDef(papszOptions, "BLOCKXSIZE", "1024"));
     int nBlockYSize =
         atoi(CSLFetchNameValueDef(papszOptions, "BLOCKYSIZE", "1024"));
+    if (nBlockXSize <= 0 || nBlockYSize <= 0)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Invalid block size");
+        return nullptr;
+    }
 
     // By default do not generate tile sizes larger than the dataset
     // dimensions
