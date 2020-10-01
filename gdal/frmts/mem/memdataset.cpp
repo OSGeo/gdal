@@ -93,7 +93,7 @@ MEMRasterBand::MEMRasterBand( GByte *pabyDataIn, GDALDataType eTypeIn,
                               int nXSizeIn, int nYSizeIn ) :
     GDALPamRasterBand(FALSE),
     pabyData(pabyDataIn),
-    nPixelOffset(0),
+    nPixelOffset(GDALGetDataTypeSizeBytes(eTypeIn)),
     nLineOffset(0),
     bOwnData(true),
     bNoDataSet(FALSE),
@@ -109,7 +109,6 @@ MEMRasterBand::MEMRasterBand( GByte *pabyDataIn, GDALDataType eTypeIn,
     nRasterYSize = nYSizeIn;
     nBlockXSize = nXSizeIn;
     nBlockYSize = 1;
-    nPixelOffset = GDALGetDataTypeSizeBytes(eTypeIn);
     nLineOffset = nPixelOffset * static_cast<size_t>(nBlockXSize);
 }
 

@@ -1764,7 +1764,7 @@ int CPLRemoveXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
     CPLXMLNode *psThis = nullptr;
     for( psThis = psParent->psChild;
          psThis != nullptr;
-         psLast = psThis, psThis = psThis->psNext )
+         psThis = psThis->psNext )
     {
         if( psThis == psChild )
         {
@@ -1776,6 +1776,7 @@ int CPLRemoveXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
             psThis->psNext = nullptr;
             return TRUE;
         }
+        psLast = psThis;
     }
 
     return FALSE;
