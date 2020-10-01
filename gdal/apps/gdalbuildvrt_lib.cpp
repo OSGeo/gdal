@@ -643,7 +643,7 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
     for(int j=0;j<_nBands;j++)
     {
         GDALRasterBand* poBand = poDS->GetRasterBand(j+1);
-        if (nSrcNoDataCount > 0)
+        if (!bSeparate && nSrcNoDataCount > 0)
         {
             psDatasetProperties->abHasNoData[j] = true;
             if (j < nSrcNoDataCount)
@@ -973,15 +973,40 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
 
         VRTSourcedRasterBand* poVRTBand = static_cast<VRTSourcedRasterBand*>(hVRTBand);
 
-        VRTSimpleSource* poSimpleSource;
-        if (bAllowSrcNoData && psDatasetProperties->abHasNoData[0])
+        if( bAllowVRTNoData )
         {
-            GDALSetRasterNoDataValue(hVRTBand, psDatasetProperties->adfNoDataValues[0]);
+            if (nVRTNoDataCount > 0)
+            {
+                if (iBand-1 < nVRTNoDataCount)
+                    GDALSetRasterNoDataValue(hVRTBand, padfVRTNoData[iBand-1]);
+                else
+                    GDALSetRasterNoDataValue(hVRTBand, padfVRTNoData[nVRTNoDataCount - 1]);
+            }
+            else if( psDatasetProperties->abHasNoData[0] )
+            {
+                GDALSetRasterNoDataValue(hVRTBand, psDatasetProperties->adfNoDataValues[0]);
+            }
+        }
+
+        VRTSimpleSource* poSimpleSource;
+        if (bAllowSrcNoData)
+        {
             poSimpleSource = new VRTComplexSource();
-            poSimpleSource->SetNoDataValue( psDatasetProperties->adfNoDataValues[0] );
+            if (nSrcNoDataCount > 0)
+            {
+                if (iBand-1 < nSrcNoDataCount)
+                    poSimpleSource->SetNoDataValue( padfSrcNoData[iBand-1] );
+                else
+                    poSimpleSource->SetNoDataValue( padfSrcNoData[nSrcNoDataCount - 1] );
+            }
+            else if( psDatasetProperties->abHasNoData[0] )
+            {
+                poSimpleSource->SetNoDataValue( psDatasetProperties->adfNoDataValues[0] );
+            }
         }
         else
             poSimpleSource = new VRTSimpleSource();
+
         if( pszResampling )
             poSimpleSource->SetResampling(pszResampling);
         poVRTBand->ConfigureSource( poSimpleSource,
