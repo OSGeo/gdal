@@ -147,7 +147,7 @@ void RegisterOGRGML()
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='XSD' type='string' description='Name of the related application schema file (.xsd).'/>"
-"  <Option name='GFS_TEMPLATE' type='string' description='Filename of a .gfs template file to appli.'/>"
+"  <Option name='GFS_TEMPLATE' type='string' description='Filename of a .gfs template file to apply.'/>"
 "  <Option name='FORCE_SRS_DETECTION' type='boolean' description='Force a full scan to detect the SRS of layers.' default='NO'/>"
 "  <Option name='EMPTY_AS_NULL' type='boolean' description='Force empty fields to be reported as NULL. Set to NO so that not-nullable fields can be exposed' default='YES'/>"
 "  <Option name='GML_ATTRIBUTES_TO_OGR_FIELDS' type='boolean' description='Whether GML attributes should be reported as OGR fields' default='NO'/>"
