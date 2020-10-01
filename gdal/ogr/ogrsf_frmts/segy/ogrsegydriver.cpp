@@ -163,7 +163,6 @@ static GDALDataset *OGRSEGYDriverOpen( GDALOpenInfo* poOpenInfo )
     if( !poDS->Open( poOpenInfo->pszFilename,
                      (const char*)pabyASCIITextHeader ) )
     {
-        CPLFree(pabyASCIITextHeader);
         delete poDS;
         poDS = nullptr;
     }
