@@ -2121,11 +2121,11 @@ TileDBDataset::Create( const char * pszFilename, int nXSize, int nYSize, int nBa
             TileDBDataset::CreateLL( osArrayPath, nXSize, nYSize,
                                     nBands, eType, papszOptions ));
 
-        tiledb::Array::create( osArrayPath, *poDS->m_schema );
-        poDS->m_array.reset( new tiledb::Array( *poDS->m_ctx, osArrayPath, TILEDB_WRITE ) );
-
         if( !poDS )
             return nullptr;
+
+        tiledb::Array::create( osArrayPath, *poDS->m_schema );
+        poDS->m_array.reset( new tiledb::Array( *poDS->m_ctx, osArrayPath, TILEDB_WRITE ) );
 
         for( int i = 0; i < poDS->nBands;i++ )
         {
