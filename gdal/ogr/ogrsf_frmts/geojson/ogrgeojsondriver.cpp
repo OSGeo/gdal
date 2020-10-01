@@ -240,8 +240,9 @@ GIntBig OGRESRIFeatureServiceLayer::GetFeatureCount( int bForce )
     GIntBig nFeatureCount = -1;
     if( m_poAttrQuery == nullptr && m_poFilterGeom == nullptr )
     {
-        const CPLString osNewURL =
+        CPLString osNewURL =
             CPLURLAddKVP(poDS->GetURL(), "returnCountOnly", "true");
+        osNewURL = CPLURLAddKVP(osNewURL, "resultRecordCount", nullptr);
         CPLErrorReset();
         CPLHTTPResult* pResult = CPLHTTPFetch( osNewURL, nullptr );
         if( pResult != nullptr &&
@@ -278,6 +279,7 @@ OGRErr OGRESRIFeatureServiceLayer::GetExtent( OGREnvelope *psExtent,
     OGRErr eErr = OGRERR_FAILURE;
     CPLString osNewURL =
         CPLURLAddKVP(poDS->GetURL(), "returnExtentOnly", "true");
+    osNewURL = CPLURLAddKVP(osNewURL, "resultRecordCount", nullptr);
     osNewURL = CPLURLAddKVP(osNewURL, "f", "geojson");
     CPLErrorReset();
     CPLHTTPResult* pResult = CPLHTTPFetch( osNewURL, nullptr );
