@@ -101,3 +101,96 @@ def test_gdalbuildvrt_lib_ovr():
     ds = None
     gdal.GetDriverByName('VRT').Delete(tmpfilename)
 
+
+###############################################################################
+def test_gdalbuildvrt_lib_separate_nodata():
+
+    src1_ds = gdal.GetDriverByName('MEM').Create('', 1000, 1000)
+    src1_ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    src1_ds.GetRasterBand(1).SetNoDataValue(1)
+
+    src2_ds = gdal.GetDriverByName('MEM').Create('', 1000, 1000)
+    src2_ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    src2_ds.GetRasterBand(1).SetNoDataValue(2)
+
+    gdal.BuildVRT('/vsimem/out.vrt', [src1_ds, src2_ds], separate=True)
+
+    f = gdal.VSIFOpenL('/vsimem/out.vrt', 'rb')
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    gdal.Unlink('/vsimem/out.vrt')
+
+    assert b'<NoDataValue>1</NoDataValue>' in data
+    assert b'<NODATA>1</NODATA>' in data
+    assert b'<NoDataValue>2</NoDataValue>' in data
+    assert b'<NODATA>2</NODATA>' in data
+
+
+###############################################################################
+def test_gdalbuildvrt_lib_separate_nodata_2():
+
+    src1_ds = gdal.GetDriverByName('MEM').Create('', 1000, 1000)
+    src1_ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    src1_ds.GetRasterBand(1).SetNoDataValue(1)
+
+    src2_ds = gdal.GetDriverByName('MEM').Create('', 1000, 1000)
+    src2_ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    src2_ds.GetRasterBand(1).SetNoDataValue(2)
+
+    gdal.BuildVRT('/vsimem/out.vrt', [src1_ds, src2_ds], separate=True, srcNodata='3 4')
+
+    f = gdal.VSIFOpenL('/vsimem/out.vrt', 'rb')
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    gdal.Unlink('/vsimem/out.vrt')
+
+    assert b'<NoDataValue>3</NoDataValue>' in data
+    assert b'<NODATA>3</NODATA>' in data
+    assert b'<NoDataValue>4</NoDataValue>' in data
+    assert b'<NODATA>4</NODATA>' in data
+
+
+###############################################################################
+def test_gdalbuildvrt_lib_separate_nodata_3():
+
+    src1_ds = gdal.GetDriverByName('MEM').Create('', 1000, 1000)
+    src1_ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    src1_ds.GetRasterBand(1).SetNoDataValue(1)
+
+    src2_ds = gdal.GetDriverByName('MEM').Create('', 1000, 1000)
+    src2_ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    src2_ds.GetRasterBand(1).SetNoDataValue(2)
+
+    gdal.BuildVRT('/vsimem/out.vrt', [src1_ds, src2_ds], separate=True, srcNodata='3 4', VRTNodata='5 6')
+
+    f = gdal.VSIFOpenL('/vsimem/out.vrt', 'rb')
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    gdal.Unlink('/vsimem/out.vrt')
+
+    assert b'<NoDataValue>5</NoDataValue>' in data
+    assert b'<NODATA>3</NODATA>' in data
+    assert b'<NoDataValue>6</NoDataValue>' in data
+    assert b'<NODATA>4</NODATA>' in data
+
+
+###############################################################################
+def test_gdalbuildvrt_lib_separate_nodata_4():
+
+    src1_ds = gdal.GetDriverByName('MEM').Create('', 1000, 1000)
+    src1_ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    src1_ds.GetRasterBand(1).SetNoDataValue(1)
+
+    src2_ds = gdal.GetDriverByName('MEM').Create('', 1000, 1000)
+    src2_ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    src2_ds.GetRasterBand(1).SetNoDataValue(2)
+
+    gdal.BuildVRT('/vsimem/out.vrt', [src1_ds, src2_ds], separate=True, srcNodata='None', VRTNodata='None')
+
+    f = gdal.VSIFOpenL('/vsimem/out.vrt', 'rb')
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    gdal.Unlink('/vsimem/out.vrt')
+
+    assert b'<NoDataValue>' not in data
+    assert b'<NODATA>' not in data
