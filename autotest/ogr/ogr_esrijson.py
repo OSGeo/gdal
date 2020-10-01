@@ -559,7 +559,7 @@ def test_ogr_esrijson_featureservice_scrolling():
             gdal.PopErrorHandler()
             assert fc == 2
 
-            gdal.FileFromMemBuffer('/vsimem/esrijson/test.json?resultRecordCount=1&returnCountOnly=true',
+            gdal.FileFromMemBuffer('/vsimem/esrijson/test.json?returnCountOnly=true',
                                 """{ "count": 123456}""")
             fc = lyr.GetFeatureCount()
             assert fc == 123456
@@ -569,7 +569,7 @@ def test_ogr_esrijson_featureservice_scrolling():
             gdal.PopErrorHandler()
             assert extent == (2, 2, 49, 49)
 
-            gdal.FileFromMemBuffer('/vsimem/esrijson/test.json?resultRecordCount=1&returnExtentOnly=true&f=geojson',
+            gdal.FileFromMemBuffer('/vsimem/esrijson/test.json?returnExtentOnly=true&f=geojson',
                                 """{"type":"FeatureCollection","bbox":[1, 2, 3, 4],"features":[]}""")
             extent = lyr.GetExtent()
             assert extent == (1.0, 3.0, 2.0, 4.0)
