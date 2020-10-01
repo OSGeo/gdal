@@ -104,7 +104,7 @@ void RegisterOGRCloudant()
     poDriver->SetDescription( "Cloudant" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Cloudant / CouchDB" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_cloudant.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/cloudant.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "Cloudant:" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
                                "<CreationOptionList/>");

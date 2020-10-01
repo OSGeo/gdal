@@ -122,7 +122,7 @@ void RegisterOGRBNA()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Atlas BNA" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bna" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_bna.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/bna.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"

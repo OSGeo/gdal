@@ -110,7 +110,7 @@ void RegisterOGRPG()
     poDriver->SetDescription( "PostgreSQL" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "PostgreSQL/PostGIS" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_pg.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/pg.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "PG:" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,

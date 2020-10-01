@@ -111,7 +111,7 @@ void RegisterOGROSM()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "OpenStreetMap XML and PBF" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "osm pbf" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_osm.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/osm.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,

@@ -187,7 +187,7 @@ void RegisterOGRXLSX()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "MS Office Open XML spreadsheet" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "xlsx xlsm" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_xlsx.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/xlsx.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Integer64 Real String Date DateTime "

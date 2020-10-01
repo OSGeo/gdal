@@ -187,7 +187,7 @@ void RegisterOGRSEGY()
     poDriver->SetDescription( "SEGY" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "SEG-Y" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_segy.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/segy.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = OGRSEGYDriverOpen;

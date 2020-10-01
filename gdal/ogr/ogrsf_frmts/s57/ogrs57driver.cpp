@@ -172,7 +172,7 @@ void RegisterOGRS57()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "IHO S-57 (ENC)" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "000" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_s57.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/s57.html" );
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,

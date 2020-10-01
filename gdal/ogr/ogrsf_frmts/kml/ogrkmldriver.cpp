@@ -138,7 +138,7 @@ void RegisterOGRKML()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Keyhole Markup Language (KML)" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "kml" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_kml.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/kml.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"

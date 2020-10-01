@@ -89,7 +89,7 @@ void RegisterOGRGMLAS()
                                "Geography Markup Language (GML) "
                                "driven by application schemas" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "gml xml" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_gmlas.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/gmlas.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, szGMLAS_PREFIX );
 

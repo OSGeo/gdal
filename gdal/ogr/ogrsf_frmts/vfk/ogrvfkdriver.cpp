@@ -103,7 +103,7 @@ void RegisterOGRVFK()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Czech Cadastral Exchange Data Format" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vfk" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_vfk.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/vfk.html" );
 
     poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
