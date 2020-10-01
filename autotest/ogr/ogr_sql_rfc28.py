@@ -1357,6 +1357,29 @@ def test_ogr_rfc28_many_or():
     f = lyr.GetNextFeature()
     assert f is not None
 
+
+###############################################################################
+
+def test_ogr_rfc28_many_and():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('lyr')
+    fld_defn = ogr.FieldDefn('val', ogr.OFTInteger)
+    lyr.CreateField(fld_defn)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('val', -15)
+    lyr.CreateFeature(feat)
+
+    sql = '1 = 1 AND (' + ' AND '.join('val = -1' for i in range(1024)) + ')'
+    assert lyr.SetAttributeFilter(sql) == 0
+    f = lyr.GetNextFeature()
+    assert f is None
+
+    sql = '1 = 1 AND (' + ' AND '.join('val = -15' for i in range(1024)) + ')'
+    assert lyr.SetAttributeFilter(sql) == 0
+    f = lyr.GetNextFeature()
+    assert f is not None
+
 ###############################################################################
 
 
