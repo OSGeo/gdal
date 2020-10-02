@@ -1117,7 +1117,7 @@ int DIMAPDataset::ReadImageInformation2()
                 {
                     int nRow = atoi(pszR);
                     int nCol = atoi(pszC);
-                    if( nRow == 1 && nCol == 1 )
+                    if( (nRow == 1 && nCol == 1) || osImageDSFilename.empty() )
                         osImageDSFilename =
                             CPLFormCIFilename( osPath, pszHref, nullptr );
                     if( nRow > nRows ) nRows = nRow;
