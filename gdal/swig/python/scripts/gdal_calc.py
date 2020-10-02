@@ -44,8 +44,12 @@
 
 # example 4 - using logical operator to keep a range of values from input:
 # gdal_calc.py -A input.tif --outfile=result.tif --calc="A*logical_and(A>100,A<150)"
+
+# example 5 - work with multiple bands:
+# gdal_calc.py -A input.tif --A_band=1 -B input.tif --B_band=2 --outfile=result.tif --calc="(A+B)/2" --calc="A*logical_and(A>100,A<150)"
 ################################################################
 
+import builtins
 from optparse import OptionParser, OptionConflictError, Values
 import os
 import os.path
@@ -182,6 +186,8 @@ def doit(opts, args):
     allBandsIndex = None
     allBandsCount = 1
     if opts.allBands:
+        if len(opts.calc) > 1:
+            raise Exception("Error! --allBands implies a single --calc")
         try:
             allBandsIndex = myAlphaList.index(opts.allBands)
         except ValueError:
@@ -189,6 +195,8 @@ def doit(opts, args):
         allBandsCount = myFiles[allBandsIndex].RasterCount
         if allBandsCount <= 1:
             allBandsIndex = None
+    else:
+        allBandsCount = len(opts.calc)
 
     ################################################################
     # set up output file
@@ -198,6 +206,8 @@ def doit(opts, args):
     if os.path.isfile(opts.outF) and not opts.overwrite:
         if allBandsIndex is not None:
             raise Exception("Error! allBands option was given but Output file exists, must use --overwrite option!")
+        if len(opts.calc) > 1:
+            raise Exception("Error! multiple calc options were given but Output file exists, must use --overwrite option!")
         if opts.debug:
             print("Output file %s exists - filling in results into file" % (opts.outF))
         myOut = gdal.Open(opts.outF, gdal.GA_Update)
@@ -345,10 +355,11 @@ def doit(opts, args):
                     myval = None
 
                 # try the calculation on the array blocks
+                calc = opts.calc[bandNo-1 if len(opts.calc) > 1 else 0]
                 try:
-                    myResult = eval(opts.calc, global_namespace, local_namespace)
+                    myResult = eval(calc, global_namespace, local_namespace)
                 except:
-                    print("evaluation of calculation %s failed" % (opts.calc))
+                    print("evaluation of calculation %s failed" % (calc))
                     raise
 
                 # Propagate nodata values (set nodata cells to zero
@@ -393,10 +404,18 @@ def Calc(calc, outfile, NoDataValue=None, type=None, format=None, creation_optio
 
     set values of zero and below to null:
         Calc(calc="A*(A>0)", A="input.tif", A_band=2, outfile="result.tif", NoDataValue=0)
+
+    work with two bands:
+        Calc(["(A+B)/2", "A*(A>0)"], A="input.tif", A_band=1, B="input.tif", B_band=2, outfile="result.tif", NoDataValue=0)
     """
     opts = Values()
     opts.input_files = input_files
-    opts.calc = calc
+    # Single calc value compatiblity
+    # (type is overriden in the parameter list)
+    if builtins.type(calc) is not list:
+        opts.calc = [ calc ]
+    else:
+        opts.calc = calc
     opts.outF = outfile
     opts.NoDataValue = NoDataValue
     opts.type = type
@@ -434,7 +453,7 @@ def main():
     parser = OptionParser(usage)
 
     # define options
-    parser.add_option("--calc", dest="calc", help="calculation in gdalnumeric syntax using +-/* or any numpy array functions (i.e. log10())", metavar="expression")
+    parser.add_option("--calc", dest="calc", action="append", help="calculation in gdalnumeric syntax using +-/* or any numpy array functions (i.e. log10()), may appear multiple times to produce a multi-band file", metavar="expression")
     add_alpha_args(parser, sys.argv)
 
     parser.add_option("--outfile", dest="outF", help="output file to generate or fill", metavar="filename")
