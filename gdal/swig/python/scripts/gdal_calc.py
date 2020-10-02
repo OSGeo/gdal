@@ -452,7 +452,7 @@ def main():
     parser = OptionParser(usage)
 
     # define options
-    parser.add_option("--calc", dest="calc", action="append", help="calculation in gdalnumeric syntax using +-/* or any numpy array functions (i.e. log10()), may appear multiple times to produce a multi-band file", metavar="expression")
+    parser.add_option("--calc", dest="calc", action="append", help="calculation in gdalnumeric syntax using +-/* or any numpy array functions (i.e. log10()). May appear multiple times to produce a multi-band file", metavar="expression")
     add_alpha_args(parser, sys.argv)
 
     parser.add_option("--outfile", dest="outF", help="output file to generate or fill", metavar="filename")
