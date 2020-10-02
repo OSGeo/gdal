@@ -3718,3 +3718,85 @@ def test_ogr_gml_unique(gml_format, constraint_met):
     finally:
         gdal.Unlink("/vsimem/test_ogr_gml_unique.gml")
         gdal.Unlink("/vsimem/test_ogr_gml_unique.xsd")
+
+###############################################################################
+
+
+def test_ogr_gml_write_gfs_no():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    gdal.Unlink('/vsimem/test.gfs')
+    gdal.Unlink('/vsimem/test.xsd')
+    gdal.FileFromMemBuffer('/vsimem/test.gml',
+                           open('data/gml/expected_gml_gml32.gml', 'rb').read())
+
+    assert gdal.OpenEx('/vsimem/test.gml') is not None
+    assert gdal.VSIStatL('/vsimem/test.gfs') is not None
+    gdal.Unlink('/vsimem/test.gfs')
+
+    assert gdal.OpenEx('/vsimem/test.gml', open_options = ['WRITE_GFS=NO']) is not None
+    assert gdal.VSIStatL('/vsimem/test.gfs') is None
+
+    gdal.Unlink('/vsimem/test.gml')
+
+
+###############################################################################
+
+
+def test_ogr_gml_write_gfs_yes():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    gdal.Unlink('/vsimem/test.gfs')
+    gdal.FileFromMemBuffer('/vsimem/test.gml',
+                           open('data/gml/expected_gml_gml32.gml', 'rb').read())
+    gdal.FileFromMemBuffer('/vsimem/test.xsd',
+                           open('data/gml/expected_gml_gml32.xsd', 'rb').read())
+
+    assert gdal.OpenEx('/vsimem/test.gml') is not None
+    assert gdal.VSIStatL('/vsimem/test.gfs') is None
+
+    assert gdal.OpenEx('/vsimem/test.gml', open_options = ['WRITE_GFS=YES']) is not None
+    assert gdal.VSIStatL('/vsimem/test.gfs') is not None
+
+    gdal.Unlink('/vsimem/test.gml')
+    gdal.Unlink('/vsimem/test.gfs')
+    gdal.Unlink('/vsimem/test.xsd')
+
+###############################################################################
+
+
+def test_ogr_gml_no_gfs_rewriting():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    gdal.Unlink('/vsimem/test.gfs')
+    gdal.Unlink('/vsimem/test.xsd')
+    gdal.FileFromMemBuffer('/vsimem/test.gml',
+                           open('data/gml/expected_gml_gml32.gml', 'rb').read())
+
+    assert gdal.OpenEx('/vsimem/test.gml') is not None
+    assert gdal.VSIStatL('/vsimem/test.gfs') is not None
+
+    f = gdal.VSIFOpenL('/vsimem/test.gfs', 'rb+')
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFSeekL(f, 0, 0)
+    data += b'<!-- mycomment -->'
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFCloseL(f)
+
+    assert gdal.OpenEx('/vsimem/test.gml') is not None
+
+    f = gdal.VSIFOpenL('/vsimem/test.gfs', 'rb+')
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+
+    assert b'<!-- mycomment -->' in data
+
+    gdal.Unlink('/vsimem/test.gml')
+    gdal.Unlink('/vsimem/test.gfs')
+

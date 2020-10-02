@@ -414,6 +414,11 @@ Open options
 
 -  **XSD=filename**: to specify an explicit filename for
    the XSD application schema to use.
+-  **WRITE_GFS=AUTO/YES/NO**: (GDAL >= 3.2) whether to write a .gfs file.
+   In AUTO mode, the .gfs file is only written if there is no recognized .xsd
+   file, no existing .gfs file and for non-network file systems. This option
+   can be set to YES for force .gfs file writing in situations where AUTO would
+   not attempt to do it. Or it can be set to NO to disable .gfs file writing.
 -  **GFS_TEMPLATE=filename**: to unconditionally use a predefined GFS file.
    This option is really useful when you are planning to import many distinct GML
    files in subsequent steps [**-append**] and you absolutely want to
