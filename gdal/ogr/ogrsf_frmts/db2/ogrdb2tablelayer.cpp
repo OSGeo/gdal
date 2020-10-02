@@ -39,7 +39,10 @@ void OGRDB2AppendEscaped( OGRDB2Statement* poStatement,
                           const char* pszStrValue)
 {
     if (!pszStrValue)
+    {
         poStatement->Append("null");
+        return;
+    }
 
     size_t  iIn, iOut , nTextLen = strlen(pszStrValue);
     char    *pszEscapedText = (char *) VSIMalloc(nTextLen*2 + 3);

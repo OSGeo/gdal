@@ -130,12 +130,13 @@ GDALPansharpenOptions* GDALClonePansharpenOptions(
     psNewOptions->nInputSpectralBands = psOptions->nInputSpectralBands;
     if( psOptions->pahInputSpectralBands )
     {
+        const size_t nSize = sizeof(GDALRasterBandH) *
+                                psOptions->nInputSpectralBands;
         psNewOptions->pahInputSpectralBands = static_cast<GDALRasterBandH *>(
-            CPLMalloc(sizeof(GDALRasterBandH) *
-                      psOptions->nInputSpectralBands));
+            CPLMalloc(nSize));
         memcpy(psNewOptions->pahInputSpectralBands,
                psOptions->pahInputSpectralBands,
-               sizeof(GDALRasterBandH) * psOptions->nInputSpectralBands);
+               nSize);
     }
     psNewOptions->nOutPansharpenedBands = psOptions->nOutPansharpenedBands;
     if( psOptions->panOutPansharpenedBands )

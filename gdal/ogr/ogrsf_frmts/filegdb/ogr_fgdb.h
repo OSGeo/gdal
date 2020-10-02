@@ -224,6 +224,8 @@ protected:
 
   bool GDBToOGRFields(CPLXMLNode* psFields);
   bool ParseGeometryDef(CPLXMLNode* psGeometryDef);
+
+  static
   bool ParseSpatialReference(CPLXMLNode* psSpatialRefNode, std::string* pOutWkt,
                              std::string* pOutWKID, std::string* pOutLatestWKID);
 

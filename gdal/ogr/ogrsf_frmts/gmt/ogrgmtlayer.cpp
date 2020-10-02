@@ -572,6 +572,8 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                     }
                 }
 
+                CPLAssert( poGeom != nullptr );
+                // cppcheck-suppress nullPointerRedundantCheck
                 switch( wkbFlatten(poGeom->getGeometryType()) )
                 {
                   case wkbPoint:

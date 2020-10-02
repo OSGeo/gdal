@@ -41,6 +41,7 @@ int main()
 {
     {
         MVTTile oEmptyTile;
+        // cppcheck-suppress unassignedVariable
         CPLAssert( oEmptyTile.getSize() == 0 );
     }
 

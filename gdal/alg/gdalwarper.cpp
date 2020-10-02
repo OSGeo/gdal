@@ -1296,6 +1296,7 @@ GDALCloneWarpOptions( const GDALWarpOptions *psSrcOptions )
     COPY_MEM( padfSrcNoDataImag, double, psSrcOptions->nBandCount );
     COPY_MEM( padfDstNoDataReal, double, psSrcOptions->nBandCount );
     COPY_MEM( padfDstNoDataImag, double, psSrcOptions->nBandCount );
+    // cppcheck-suppress pointerSize
     COPY_MEM( papfnSrcPerBandValidityMaskFunc, GDALMaskFunc,
               psSrcOptions->nBandCount );
     psDstOptions->papSrcPerBandValidityMaskFuncArg = nullptr;
