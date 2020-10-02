@@ -49,7 +49,6 @@
 # gdal_calc.py -A input.tif --A_band=1 -B input.tif --B_band=2 --outfile=result.tif --calc="(A+B)/2" --calc="A*logical_and(A>100,A<150)"
 ################################################################
 
-import builtins
 from optparse import OptionParser, OptionConflictError, Values
 import os
 import os.path
@@ -412,10 +411,10 @@ def Calc(calc, outfile, NoDataValue=None, type=None, format=None, creation_optio
     opts.input_files = input_files
     # Single calc value compatiblity
     # (type is overriden in the parameter list)
-    if builtins.type(calc) is not list:
-        opts.calc = [ calc ]
-    else:
+    if isinstance(calc, list):
         opts.calc = calc
+    else:
+        opts.calc = [calc]
     opts.outF = outfile
     opts.NoDataValue = NoDataValue
     opts.type = type
