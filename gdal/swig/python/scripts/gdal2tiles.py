@@ -757,6 +757,9 @@ def setup_output_srs(input_srs, options):
     else:
         output_srs = input_srs
 
+    if output_srs:
+        output_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
     return output_srs
 
 
