@@ -3466,7 +3466,21 @@ GDALDataset *netCDFDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
     CPLAcquireMutex(hNCMutex, 1000.0);
 
     auto poSharedResources(std::make_shared<netCDFSharedResources>());
-    poSharedResources->m_osFilename = poOpenInfo->pszFilename;
+
+    // For example to open DAP datasets
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "NETCDF:") )
+    {
+        poSharedResources->m_osFilename = poOpenInfo->pszFilename + strlen("NETCDF:");
+        if( !poSharedResources->m_osFilename.empty() &&
+            poSharedResources->m_osFilename[0] == '"' &&
+            poSharedResources->m_osFilename.back() == '"' )
+        {
+            poSharedResources->m_osFilename = poSharedResources->m_osFilename.
+                substr(1, poSharedResources->m_osFilename.size() - 2);
+        }
+    }
+    else
+        poSharedResources->m_osFilename = poOpenInfo->pszFilename;
 
     poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->papszOpenOptions = CSLDuplicate(poOpenInfo->papszOpenOptions);
