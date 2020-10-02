@@ -1098,7 +1098,7 @@ int DIMAPDataset::ReadImageInformation2()
          </Data_Files>
     */
     std::map< std::pair<int,int>, CPLString > oMapRowColumnToName;
-    int nImageDSRow,nImageDSCol;
+    int nImageDSRow=0, nImageDSCol=0;
     if( psDataFiles )
     {
         int nRows = 1;
