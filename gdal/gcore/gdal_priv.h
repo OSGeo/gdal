@@ -2350,6 +2350,10 @@ class CPL_DLL GDALMDArray: virtual public GDALAbstractMDArray, public GDALIHasAt
 protected:
 //! @cond Doxygen_Suppress
     GDALMDArray(const std::string& osParentName, const std::string& osName);
+
+    virtual bool IAdviseRead(const GUInt64* arrayStartIdx,
+                             const size_t* count) const;
+
 //! @endcond
 
 public:
@@ -2436,6 +2440,9 @@ public:
                                     double *pdfMean, double *pdfStdDev,
                                     GUInt64* pnValidCount,
                                     GDALProgressFunc, void *pProgressData );
+
+    bool AdviseRead(const GUInt64* arrayStartIdx,
+                    const size_t* count) const;
 
 //! @cond Doxygen_Suppress
     static constexpr GUInt64 COPY_COST = 1000;

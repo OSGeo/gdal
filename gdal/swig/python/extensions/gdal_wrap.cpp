@@ -5964,6 +5964,39 @@ SWIGINTERN CPLErr GDALMDArrayHS_Write(GDALMDArrayHS *self,int nDims1,GUIntBig *a
                                    (size_t)buf_len ) ? CE_None : CE_Failure;
     return eErr;
   }
+SWIGINTERN CPLErr GDALMDArrayHS_AdviseRead(GDALMDArrayHS *self,int nDims1,GUIntBig *array_start_idx,int nDims2,GUIntBig *count){
+
+    const int nExpectedDims = (int)GDALMDArrayGetDimensionCount(self);
+    if( nDims1 != nExpectedDims )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Wrong number of values in array_start_idx");
+        return CE_Failure;
+    }
+    if( nDims2 != nExpectedDims )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Wrong number of values in count");
+        return CE_Failure;
+    }
+
+    std::vector<size_t> count_internal(nExpectedDims+1);
+    for( int i = 0; i < nExpectedDims; i++ )
+    {
+        count_internal[i] = (size_t)count[i];
+        if( count_internal[i] != count[i] )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
+            return CE_Failure;
+        }
+    }
+
+    if( !(GDALMDArrayAdviseRead( self, array_start_idx, count_internal.data() )) )
+    {
+        return CE_Failure;
+    }
+    return CE_None;
+  }
 SWIGINTERN GDALAttributeHS *GDALMDArrayHS_GetAttribute(GDALMDArrayHS *self,char const *name){
     return GDALMDArrayGetAttribute(self, name);
   }
@@ -24106,6 +24139,128 @@ fail:
     /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
     if( alloc11 == SWIG_NEWOBJ ) {
       delete[] arg12;
+    }
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_MDArray_AdviseRead(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALMDArrayHS *arg1 = (GDALMDArrayHS *) 0 ;
+  int arg2 ;
+  GUIntBig *arg3 = (GUIntBig *) 0 ;
+  int arg4 ;
+  GUIntBig *arg5 = (GUIntBig *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  CPLErr result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOO:MDArray_AdviseRead",&obj0,&obj1,&obj2)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMDArrayHS, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MDArray_AdviseRead" "', argument " "1"" of type '" "GDALMDArrayHS *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALMDArrayHS * >(argp1);
+  {
+    /* %typemap(in,numinputs=1) (int nList, GUIntBig* pList)*/
+    /* check if is List */
+    if ( !PySequence_Check(obj1) ) {
+      PyErr_SetString(PyExc_TypeError, "not a sequence");
+      SWIG_fail;
+    }
+    Py_ssize_t size = PySequence_Size(obj1);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    arg2 = (int)size;
+    arg3 = (GUIntBig*) malloc(arg2*sizeof(GUIntBig));
+    for( int i = 0; i<arg2; i++ ) {
+      PyObject *o = PySequence_GetItem(obj1,i);
+      PY_LONG_LONG val;
+      if ( !PyArg_Parse(o,"K",&val) ) {
+        PyErr_SetString(PyExc_TypeError, "not an integer");
+        Py_DECREF(o);
+        SWIG_fail;
+      }
+      arg3[i] = (GUIntBig)val;
+      Py_DECREF(o);
+    }
+  }
+  {
+    /* %typemap(in,numinputs=1) (int nList, GUIntBig* pList)*/
+    /* check if is List */
+    if ( !PySequence_Check(obj2) ) {
+      PyErr_SetString(PyExc_TypeError, "not a sequence");
+      SWIG_fail;
+    }
+    Py_ssize_t size = PySequence_Size(obj2);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    arg4 = (int)size;
+    arg5 = (GUIntBig*) malloc(arg4*sizeof(GUIntBig));
+    for( int i = 0; i<arg4; i++ ) {
+      PyObject *o = PySequence_GetItem(obj2,i);
+      PY_LONG_LONG val;
+      if ( !PyArg_Parse(o,"K",&val) ) {
+        PyErr_SetString(PyExc_TypeError, "not an integer");
+        Py_DECREF(o);
+        SWIG_fail;
+      }
+      arg5[i] = (GUIntBig)val;
+      Py_DECREF(o);
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      CPL_IGNORE_RET_VAL(result = (CPLErr)GDALMDArrayHS_AdviseRead(arg1,arg2,arg3,arg4,arg5));
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(freearg) (int nList, GUIntBig* pList) */
+    if (arg3) {
+      free((void*) arg3);
+    }
+  }
+  {
+    /* %typemap(freearg) (int nList, GUIntBig* pList) */
+    if (arg5) {
+      free((void*) arg5);
+    }
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (int nList, GUIntBig* pList) */
+    if (arg3) {
+      free((void*) arg3);
+    }
+  }
+  {
+    /* %typemap(freearg) (int nList, GUIntBig* pList) */
+    if (arg5) {
+      free((void*) arg5);
     }
   }
   return NULL;
@@ -42781,6 +42936,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"MDArray_Read", _wrap_MDArray_Read, METH_VARARGS, (char *)"MDArray_Read(MDArray self, int nDims1, int nDims2, int nDims3, int nDims4, ExtendedDataType buffer_datatype) -> CPLErr"},
 	 { (char *)"MDArray_WriteStringArray", _wrap_MDArray_WriteStringArray, METH_VARARGS, (char *)"MDArray_WriteStringArray(MDArray self, int nDims1, int nDims2, int nDims3, ExtendedDataType buffer_datatype, char ** options) -> CPLErr"},
 	 { (char *)"MDArray_Write", _wrap_MDArray_Write, METH_VARARGS, (char *)"MDArray_Write(MDArray self, int nDims1, int nDims2, int nDims3, int nDims4, ExtendedDataType buffer_datatype, GIntBig buf_len) -> CPLErr"},
+	 { (char *)"MDArray_AdviseRead", _wrap_MDArray_AdviseRead, METH_VARARGS, (char *)"MDArray_AdviseRead(MDArray self, int nDims1, int nDims2) -> CPLErr"},
 	 { (char *)"MDArray_GetAttribute", _wrap_MDArray_GetAttribute, METH_VARARGS, (char *)"MDArray_GetAttribute(MDArray self, char const * name) -> Attribute"},
 	 { (char *)"MDArray_GetAttributes", _wrap_MDArray_GetAttributes, METH_VARARGS, (char *)"MDArray_GetAttributes(MDArray self, char ** options=None)"},
 	 { (char *)"MDArray_CreateAttribute", _wrap_MDArray_CreateAttribute, METH_VARARGS, (char *)"MDArray_CreateAttribute(MDArray self, char const * name, int nDimensions, ExtendedDataType data_type, char ** options=None) -> Attribute"},

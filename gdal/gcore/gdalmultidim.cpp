@@ -2932,6 +2932,100 @@ CSLConstList GDALMDArray::GetStructuralInfo() const
 }
 
 /************************************************************************/
+/*                          AdviseRead()                                */
+/************************************************************************/
+
+/** Advise driver of upcoming read requests.
+ *
+ * Some GDAL drivers operate more efficiently if they know in advance what
+ * set of upcoming read requests will be made.  The AdviseRead() method allows
+ * an application to notify the driver of the region of interest.
+ *
+ * Many drivers just ignore the AdviseRead() call, but it can dramatically
+ * accelerate access via some drivers. One such case is when reading through
+ * a DAP dataset with the netCDF driver (a in-memory cache array is then created
+ * with the region of interest defined by AdviseRead())
+ *
+ * This is the same as the C function GDALMDArrayAdviseRead().
+ *
+ * @param arrayStartIdx Values representing the starting index to read
+ *                      in each dimension (in [0, aoDims[i].GetSize()-1] range).
+ *                      Array of GetDimensionCount() values.
+ *                      Can be nullptr as a synonymous for [0 for i in range(GetDimensionCount() ]
+ *
+ * @param count         Values representing the number of values to extract in
+ *                      each dimension.
+ *                      Array of GetDimensionCount() values.
+ *                      Can be nullptr as a synonymous for
+ *                      [ aoDims[i].GetSize() - arrayStartIdx[i] for i in range(GetDimensionCount() ]
+ * @return true in case of success (ignoring the advice is a success)
+ *
+ * @since GDAL 3.2
+ */
+bool GDALMDArray::AdviseRead(const GUInt64* arrayStartIdx,
+                             const size_t* count) const
+{
+    std::vector<GUInt64> tmp_arrayStartIdx;
+    const auto nDimCount = GetDimensionCount();
+    if( arrayStartIdx == nullptr && nDimCount > 0 )
+    {
+        tmp_arrayStartIdx.resize(nDimCount);
+        arrayStartIdx = tmp_arrayStartIdx.data();
+    }
+
+    std::vector<size_t> tmp_count;
+    if( count == nullptr && nDimCount > 0 )
+    {
+        tmp_count.resize(nDimCount);
+        const auto& dims = GetDimensions();
+        for( size_t i = 0; i < nDimCount; i++ )
+        {
+            const GUInt64 nSize = dims[i]->GetSize() - arrayStartIdx[i];
+#if SIZEOF_VOIDP < 8
+            if( nSize != static_cast<size_t>(nSize) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
+                return false;
+            }
+#endif
+            tmp_count[i] = static_cast<size_t>(nSize);
+        }
+        count = tmp_count.data();
+    }
+
+    std::vector<GInt64> tmp_arrayStep;
+    std::vector<GPtrDiff_t> tmp_bufferStride;
+    const GInt64* arrayStep = nullptr;
+    const GPtrDiff_t* bufferStride = nullptr;
+    if( !CheckReadWriteParams(arrayStartIdx,
+                              count,
+                              arrayStep,
+                              bufferStride,
+                              GDALExtendedDataType::Create(GDT_Unknown),
+                              nullptr,
+                              nullptr,
+                              0,
+                              tmp_arrayStep,
+                              tmp_bufferStride) )
+    {
+        return false;
+    }
+
+    return IAdviseRead(arrayStartIdx, count);
+}
+
+/************************************************************************/
+/*                             IAdviseRead()                            */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+bool GDALMDArray::IAdviseRead(const GUInt64*, const size_t*) const
+{
+    return true;
+}
+//! @endcond
+
+/************************************************************************/
 /*                       GDALSlicedMDArray                              */
 /************************************************************************/
 
@@ -2987,6 +3081,9 @@ protected:
                       const GPtrDiff_t* bufferStride,
                       const GDALExtendedDataType& bufferDataType,
                       const void* pSrcBuffer) override;
+
+    bool IAdviseRead(const GUInt64* arrayStartIdx,
+                     const size_t* count) const override;
 
 public:
     static std::shared_ptr<GDALSlicedMDArray> Create(
@@ -3108,11 +3205,17 @@ void GDALSlicedMDArray::PrepareParentArrays(const GUInt64* arrayStartIdx,
                         arrayStartIdx[i] *
                         static_cast<GUInt64>(-m_parentRanges[iParent].m_nIncr);
             m_parentCount[iParent] = count[i];
-            m_parentStep[iParent] = count[i] == 1 ? 1 :
-                        // other checks should have ensured this does not
-                        // overflow
-                        arrayStep[i] * m_parentRanges[iParent].m_nIncr;
-            m_parentStride[iParent] = bufferStride[i];
+            if( arrayStep )
+            {
+                m_parentStep[iParent] = count[i] == 1 ? 1 :
+                            // other checks should have ensured this does not
+                            // overflow
+                            arrayStep[i] * m_parentRanges[iParent].m_nIncr;
+            }
+            if( bufferStride )
+            {
+                m_parentStride[iParent] = bufferStride[i];
+            }
         }
     }
 }
@@ -3155,6 +3258,18 @@ bool GDALSlicedMDArray::IWrite(const GUInt64* arrayStartIdx,
                              m_parentStride.data(),
                              bufferDataType,
                              pSrcBuffer);
+}
+
+/************************************************************************/
+/*                             IAdviseRead()                            */
+/************************************************************************/
+
+bool GDALSlicedMDArray::IAdviseRead(const GUInt64* arrayStartIdx,
+                                    const size_t* count) const
+{
+    PrepareParentArrays(arrayStartIdx, count, nullptr, nullptr);
+    return m_poParent->AdviseRead(m_parentStart.data(),
+                                  m_parentCount.data());
 }
 
 /************************************************************************/
@@ -3788,6 +3903,8 @@ protected:
                       const GDALExtendedDataType& bufferDataType,
                       const void* pSrcBuffer) override;
 
+    bool IAdviseRead(const GUInt64* arrayStartIdx,
+                     const size_t* count) const override;
 
 public:
     static std::shared_ptr<GDALMDArrayTransposed> Create(
@@ -3906,8 +4023,14 @@ void GDALMDArrayTransposed::PrepareParentArrays(const GUInt64* arrayStartIdx,
         {
             m_parentStart[iOldAxis] = arrayStartIdx[i];
             m_parentCount[iOldAxis] = count[i];
-            m_parentStep[iOldAxis] = arrayStep[i];
-            m_parentStride[iOldAxis] = bufferStride[i];
+            if( arrayStep )
+            {
+                m_parentStep[iOldAxis] = arrayStep[i];
+            }
+            if( bufferStride )
+            {
+                m_parentStride[iOldAxis] = bufferStride[i];
+            }
         }
     }
 }
@@ -3950,6 +4073,18 @@ bool GDALMDArrayTransposed::IWrite(const GUInt64* arrayStartIdx,
                              m_parentStride.data(),
                              bufferDataType,
                              pSrcBuffer);
+}
+
+/************************************************************************/
+/*                             IAdviseRead()                            */
+/************************************************************************/
+
+bool GDALMDArrayTransposed::IAdviseRead(const GUInt64* arrayStartIdx,
+                                        const size_t* count) const
+{
+    PrepareParentArrays(arrayStartIdx, count, nullptr, nullptr);
+    return m_poParent->AdviseRead(m_parentStart.data(),
+                                  m_parentCount.data());
 }
 
 /************************************************************************/
@@ -7061,6 +7196,27 @@ int GDALMDArrayWrite(GDALMDArrayH hArray,
                                   pSrcBuffer,
                                   pSrcBufferAllocStart,
                                   nSrcBufferAllocSize);
+}
+
+/************************************************************************/
+/*                       GDALMDArrayAdviseRead()                        */
+/************************************************************************/
+
+/** Advise driver of upcoming read requests.
+ *
+ * This is the same as the C++ method GDALMDArray::AdviseRead()
+ *
+ * @return TRUE in case of success.
+ *
+ * @since GDAL 3.2
+ */
+int GDALMDArrayAdviseRead(GDALMDArrayH hArray,
+                          const GUInt64* arrayStartIdx,
+                          const size_t* count)
+{
+    VALIDATE_POINTER1( hArray, __func__, FALSE );
+    // coverity[var_deref_model]
+    return hArray->m_poImpl->AdviseRead(arrayStartIdx, count);
 }
 
 /************************************************************************/

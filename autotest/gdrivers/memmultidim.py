@@ -144,6 +144,8 @@ def test_mem_md_array_nodim():
     assert len(got_data) == 2
     assert struct.unpack('H', got_data) == (65535, )
 
+    myarray.AdviseRead()
+
     copy_ds = drv.CreateCopy('', ds)
     assert copy_ds
     copy_rg = copy_ds.GetRootGroup()
@@ -178,6 +180,8 @@ def test_mem_md_array_single_dim():
     got_data = myarray.Read()
     assert len(got_data) == 2
     assert struct.unpack('B' * 2, got_data) == (0, 0)
+
+    myarray.AdviseRead()
 
     attr = myarray.CreateAttribute('attr', [],
                                    gdal.ExtendedDataType.Create(gdal.GDT_Byte))

@@ -702,6 +702,44 @@ public:
     return eErr;
   }
 %clear (void **buf );
+
+
+%apply (int nList, GUIntBig* pList) {(int nDims1, GUIntBig *array_start_idx)};
+%apply (int nList, GUIntBig* pList) {(int nDims2, GUIntBig *count)};
+  CPLErr AdviseRead( int nDims1, GUIntBig* array_start_idx,
+                     int nDims2, GUIntBig* count ) {
+
+    const int nExpectedDims = (int)GDALMDArrayGetDimensionCount(self);
+    if( nDims1 != nExpectedDims )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Wrong number of values in array_start_idx");
+        return CE_Failure;
+    }
+    if( nDims2 != nExpectedDims )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Wrong number of values in count");
+        return CE_Failure;
+    }
+
+    std::vector<size_t> count_internal(nExpectedDims+1);
+    for( int i = 0; i < nExpectedDims; i++ )
+    {
+        count_internal[i] = (size_t)count[i];
+        if( count_internal[i] != count[i] )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
+            return CE_Failure;
+        }
+    }
+
+    if( !(GDALMDArrayAdviseRead( self, array_start_idx, count_internal.data() )) )
+    {
+        return CE_Failure;
+    }
+    return CE_None;
+  }
 #endif
 
 %newobject GetAttribute;
