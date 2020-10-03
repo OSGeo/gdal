@@ -25,7 +25,7 @@ usage()
     echo "--gdal tag|sha1|master: GDAL version to use. Defaults to master"
     echo "--proj tag|sha1|master: PROJ version to use. Defaults to master"
     echo "--release. Whether this is a release build. In which case --gdal tag must be used."
-    echo "--with-debug-symbols/--without-debug-symbols. Whether to include debug symbols. Only applies to ubuntu-full, default is to incude for non-release builds."
+    echo "--with-debug-symbols/--without-debug-symbols. Whether to include debug symbols. Only applies to ubuntu-full, default is to include for non-release builds."
     exit 1
 }
 

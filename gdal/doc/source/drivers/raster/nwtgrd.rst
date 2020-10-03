@@ -52,7 +52,7 @@ Metadata
 
 GDAL Metadata items are stored in the PAM .aux.xml file
 
-Northwood Grid itself does not natively support arbritrary metadata
+Northwood Grid itself does not natively support arbitrary metadata
 
 Nodata values
 -------------

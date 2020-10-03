@@ -385,7 +385,7 @@ bool Lerc1Image::write(Byte** ppByte, double maxZError, bool zPart) const
             if (numBytesOpt > 0) // cnt part is binary mask, use fast RLE class
                 numBytesWritten = mask.RLEcompress(*ppByte);
         }
-        else { // encode tiles to buffer, alwasy z part
+        else { // encode tiles to buffer, always z part
             float maxVal;
             if (!writeTiles(maxZError, numTilesVert, numTilesHori,
                 *ppByte, numBytesWritten, maxVal))

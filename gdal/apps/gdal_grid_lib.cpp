@@ -839,7 +839,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
     {
         if ((psOptions->dfXMax == psOptions->dfXMin) || (psOptions->dfYMax == psOptions->dfYMin)) {
             CPLError( CE_Failure, CPLE_IllegalArg,
-                    "Invalid txe or tye paramaters detected. Please check your -txe or -tye argument.");
+                    "Invalid txe or tye parameters detected. Please check your -txe or -tye argument.");
 
             if(pbUsageError)
                 *pbUsageError = TRUE;

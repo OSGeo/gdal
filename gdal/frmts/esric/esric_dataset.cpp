@@ -222,7 +222,7 @@ CPLErr ECDataset::Initialize(CPLXMLNode* CacheInfo) {
         gt[5] = -res;
         memcpy(GeoTransform, gt, sizeof(gt));
 
-        // Assume symetric coverage, check custom end
+        // Assume symmetric coverage, check custom end
         double maxx = -gt[0];
         double miny = -gt[3];
         const char* pszmaxx = CPLGetXMLValue(TCI, "TileEnd.X", nullptr);

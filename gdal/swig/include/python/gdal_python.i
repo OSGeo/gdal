@@ -344,7 +344,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                      GDALProgressFunc callback = NULL,
                      void* callback_data=NULL) {
     // This check is a bit too late. resample_alg should already have been
-    // validated, so we are a bit in undefined behaviour land, but compilers
+    // validated, so we are a bit in undefined behavior land, but compilers
     // should hopefully do the right thing
     if( static_cast<int>(resample_alg) < 0 ||
         static_cast<int>(resample_alg) > static_cast<int>(GRIORA_LAST) )
@@ -662,7 +662,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
                     void* callback_data=NULL )
 {
     // This check is a bit too late. resample_alg should already have been
-    // validated, so we are a bit in undefined behaviour land, but compilers
+    // validated, so we are a bit in undefined behavior land, but compilers
     // should hopefully do the right thing
     if( static_cast<int>(resample_alg) < 0 ||
         static_cast<int>(resample_alg) > static_cast<int>(GRIORA_LAST) )

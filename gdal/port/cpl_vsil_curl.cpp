@@ -158,7 +158,7 @@ static void VSICURLReadGlobalEnvVariables()
                 static_cast<int>(nCacheSize / DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY));
         }
     };
-    static Initializer initalizer;
+    static Initializer initializer;
 }
 
 /************************************************************************/

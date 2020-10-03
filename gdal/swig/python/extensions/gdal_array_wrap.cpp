@@ -5438,7 +5438,7 @@ SWIGINTERN PyObject *_wrap_BandRasterIONumPy(PyObject *SWIGUNUSEDPARM(self), PyO
   {
     // %typemap(check) GDALRIOResampleAlg
     // This check is a bit too late, since arg9 has already been cast
-    // to GDALRIOResampleAlg, so we are a bit in undefined behaviour land,
+    // to GDALRIOResampleAlg, so we are a bit in undefined behavior land,
     // but compilers should hopefully do the right thing
     if( static_cast<int>(arg9) < 0 ||
       static_cast<int>(arg9) > static_cast<int>(GRIORA_LAST) )
@@ -5633,7 +5633,7 @@ SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObje
   {
     // %typemap(check) GDALRIOResampleAlg
     // This check is a bit too late, since arg9 has already been cast
-    // to GDALRIOResampleAlg, so we are a bit in undefined behaviour land,
+    // to GDALRIOResampleAlg, so we are a bit in undefined behavior land,
     // but compilers should hopefully do the right thing
     if( static_cast<int>(arg9) < 0 ||
       static_cast<int>(arg9) > static_cast<int>(GRIORA_LAST) )

@@ -395,7 +395,7 @@ template <typename T> static void UnMask(BitMask &bitMask, T *arr, const ILImage
     return;
 }
 
-// LERC1 splits of at the begining, so this is mostly LERC2
+// LERC1 splits of at the beginning, so this is mostly LERC2
 CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
 {
     const GDAL_LercNS::Byte *ptr = reinterpret_cast<GDAL_LercNS::Byte *>(src.buffer);

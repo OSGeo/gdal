@@ -83,7 +83,7 @@ can publish a picture without proper georeferencing too.
 .. option:: -a <NODATA>, --srcnodata=<NODATA>
 
   Value in the input dataset considered as transparent. If the input dataset
-  had already an associate nodata value, it is overriden by the specified value.
+  had already an associate nodata value, it is overridden by the specified value.
 
 .. option:: -v, --verbose
 

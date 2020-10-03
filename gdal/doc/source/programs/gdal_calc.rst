@@ -115,7 +115,7 @@ Average of two layers:
 .. note::
 
    In the previous example, beware that if A and B inputs are of the same datatype, for example integers, you
-   may need to force the convertion of one of the operands before the division operation.
+   may need to force the conversion of one of the operands before the division operation.
    
    .. code-block::
 

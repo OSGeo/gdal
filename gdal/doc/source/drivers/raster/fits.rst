@@ -65,7 +65,7 @@ The FITS data types are mapped to OGR data types as the following:
 
    * - TFORM value
      - TSCAL, TOFFSET value
-     - Occurence count
+     - Occurrence count
      - OGR field type
      - OGR field subtype
    * - 'L' (Logical)
