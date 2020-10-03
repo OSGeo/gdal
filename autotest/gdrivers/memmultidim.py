@@ -144,7 +144,7 @@ def test_mem_md_array_nodim():
     assert len(got_data) == 2
     assert struct.unpack('H', got_data) == (65535, )
 
-    myarray.AdviseRead()
+    assert myarray.AdviseRead() == gdal.CE_None
 
     copy_ds = drv.CreateCopy('', ds)
     assert copy_ds
@@ -181,7 +181,7 @@ def test_mem_md_array_single_dim():
     assert len(got_data) == 2
     assert struct.unpack('B' * 2, got_data) == (0, 0)
 
-    myarray.AdviseRead()
+    assert myarray.AdviseRead() == gdal.CE_None
 
     attr = myarray.CreateAttribute('attr', [],
                                    gdal.ExtendedDataType.Create(gdal.GDT_Byte))
@@ -395,6 +395,8 @@ def test_mem_md_array_compoundtype():
 
     with gdaltest.error_handler():
         assert not y_ar.GetView('["y"]')
+
+    assert y_ar.AdviseRead() == gdal.CE_None
 
     y_ar = myarray["y"][1]
     got_data = y_ar.Read()
@@ -1567,6 +1569,8 @@ def test_mem_md_array_get_unscaled_1dim_complex():
 
     assert myarray.GetUnscaled().Read() == myarray.Read()
 
+    assert myarray.GetUnscaled().AdviseRead() == gdal.CE_None
+
     myarray.SetOffset(1.5)
     myarray.SetScale(200.5)
     myarray.SetNoDataValueRaw(struct.pack('H' * 2, 1, 2))
@@ -1591,6 +1595,8 @@ def test_mem_md_array_get_mask():
     mask = myarray.GetMask()
     assert mask is not None
     assert struct.unpack('B', mask.Read())[0] == 1
+
+    assert myarray.GetMask().AdviseRead() == gdal.CE_None
 
     dim0 = rg.CreateDimension("dim0", None, None, 2)
     dim1 = rg.CreateDimension("dim1", None, None, 3)

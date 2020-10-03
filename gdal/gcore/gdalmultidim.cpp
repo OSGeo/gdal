@@ -3522,6 +3522,10 @@ protected:
                       const GDALExtendedDataType& bufferDataType,
                       void* pDstBuffer) const override;
 
+    bool IAdviseRead(const GUInt64* arrayStartIdx,
+                     const size_t* count) const override
+        { return m_poParent->AdviseRead(arrayStartIdx, count); }
+
 public:
     static std::shared_ptr<GDALExtractFieldMDArray> Create(
                     const std::shared_ptr<GDALMDArray>& poParent,
@@ -4188,6 +4192,10 @@ protected:
                       const GDALExtendedDataType& bufferDataType,
                       void* pDstBuffer) const override;
 
+    bool IAdviseRead(const GUInt64* arrayStartIdx,
+                     const size_t* count) const override
+        { return m_poParent->AdviseRead(arrayStartIdx, count); }
+
 public:
     static std::shared_ptr<GDALMDArrayUnscaled> Create(
                     const std::shared_ptr<GDALMDArray>& poParent)
@@ -4456,6 +4464,10 @@ protected:
                       const GPtrDiff_t* bufferStride,
                       const GDALExtendedDataType& bufferDataType,
                       void* pDstBuffer) const override;
+
+    bool IAdviseRead(const GUInt64* arrayStartIdx,
+                     const size_t* count) const override
+        { return m_poParent->AdviseRead(arrayStartIdx, count); }
 
 public:
     static std::shared_ptr<GDALMDArrayMask> Create(
