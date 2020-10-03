@@ -168,7 +168,7 @@ jobs:
             cmake -G $env:VS_VERSION -A $env:CMAKE_ARCHITECTURE .. $env:CMAKE_INSTALL_PREFIX -DPROJ_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBPROJ_SHARED=ON -DCMAKE_TOOLCHAIN_FILE=c:/vcpkg/scripts/buildsystems/vcpkg.cmake -DBUILD_SHARED_LIBS=ON -DENABLE_CURL=OFF -DENABLE_TIFF=OFF -DBUILD_PROJSYNC=OFF
             exec { cmake --build . --config Release --target install }
             cd $env:GITHUB_WORKSPACE\install-proj\share\proj
-            Invoke-WebRequest "https://download.osgeo.org/proj/proj-datumgrid-1.8.zip" -OutFile "proj-datumgrid-1.8.zip"
+            Invoke-WebRequest "http://download.osgeo.org/proj/proj-datumgrid-1.8.zip" -OutFile "proj-datumgrid-1.8.zip"
             7z x proj-datumgrid-1.8.zip -aoa
             #
             cd $env:GITHUB_WORKSPACE\gdal
