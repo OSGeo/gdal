@@ -150,8 +150,12 @@ void GRIBRasterBand::FindPDSTemplate()
 
     // Read section 0
     GByte abySection0[16];
-    VSIFSeekL(poGDS->fp, start, SEEK_SET);
-    VSIFReadL(abySection0, 16, 1, poGDS->fp);
+    if( VSIFSeekL(poGDS->fp, start, SEEK_SET) != 0 ||
+        VSIFReadL(abySection0, 16, 1, poGDS->fp) != 1 )
+    {
+        CPLDebug("GRIB", "Cannot read leading bytes of section 0");
+        return;
+    }
     GByte nDiscipline = abySection0[7 - 1];
     CPLString osDiscipline;
     osDiscipline = CPLString().Printf("%d", nDiscipline);
@@ -179,7 +183,12 @@ void GRIBRasterBand::FindPDSTemplate()
     SetMetadataItem("GRIB_DISCIPLINE", osDiscipline.c_str());
 
     GByte abyHead[5] = { 0 };
-    VSIFReadL(abyHead, 5, 1, poGDS->fp);
+
+    if( VSIFReadL(abyHead, 5, 1, poGDS->fp) != 1 )
+    {
+        CPLDebug("GRIB", "Cannot read 5 leading bytes past section 0");
+        return;
+    }
 
     GUInt32 nSectSize = 0;
     if( abyHead[4] == 1 )
@@ -305,7 +314,53 @@ void GRIBRasterBand::FindPDSTemplate()
             CPLFree(pabyBody);
         }
 
-        VSIFReadL(abyHead, 5, 1, poGDS->fp);
+        if( VSIFReadL(abyHead, 5, 1, poGDS->fp) != 1 )
+        {
+            CPLDebug("GRIB", "Cannot read 5 leading bytes past section 1");
+            return;
+        }
+    }
+
+    if( subgNum > 0 )
+    {
+        // If we are a subgrid, then iterate over all preceding subgrids
+        for( int iSubMessage = 0; iSubMessage < subgNum; )
+        {
+            memcpy(&nSectSize, abyHead, 4);
+            CPL_MSBPTR32(&nSectSize);
+            if( nSectSize < 5 )
+            {
+                CPLDebug("GRIB",
+                         "Invalid section size for iSubMessage = %d",
+                         iSubMessage);
+                return;
+            }
+            if( VSIFSeekL(poGDS->fp, nSectSize - 5, SEEK_CUR) != 0 )
+            {
+                CPLDebug("GRIB",
+                         "Cannot read past section for iSubMessage = %d",
+                         iSubMessage);
+                return;
+            }
+            if( abyHead[4] < 2 || abyHead[4] > 7 )
+            {
+                CPLDebug("GRIB",
+                         "Invalid section number for iSubMessage = %d",
+                         iSubMessage);
+                return;
+            }
+            if( abyHead[4] == 7 )
+            {
+                ++iSubMessage;
+            }
+            if( VSIFReadL(abyHead, 5, 1, poGDS->fp) != 1 )
+            {
+                CPLDebug("GRIB",
+                         "Cannot read 5 leading bytes for iSubMessage = %d",
+                         iSubMessage);
+                return;
+            }
+        }
     }
 
     // Skip to section 4
@@ -314,10 +369,19 @@ void GRIBRasterBand::FindPDSTemplate()
         memcpy(&nSectSize, abyHead, 4);
         CPL_MSBPTR32(&nSectSize);
 
-        if( nSectSize < 5 ||
-            VSIFSeekL(poGDS->fp, nSectSize - 5, SEEK_CUR) != 0 ||
+        const int nCurSection = abyHead[4];
+        if( nSectSize < 5 )
+        {
+            CPLDebug("GRIB", "Invalid section size for section %d",
+                     nCurSection);
+            return;
+        }
+        if( VSIFSeekL(poGDS->fp, nSectSize - 5, SEEK_CUR) != 0 ||
             VSIFReadL(abyHead, 5, 1, poGDS->fp) != 1 )
-            break;
+        {
+            CPLDebug("GRIB", "Cannot read section %d", nCurSection);
+            return;
+        }
     }
 
     // Collect section 4 octet information.  We read the file
@@ -335,6 +399,7 @@ void GRIBRasterBand::FindPDSTemplate()
             if( VSIFReadL(pabyBody + 5, 1, nSectSize - 5, poGDS->fp) !=
                     nSectSize - 5 )
             {
+                CPLDebug("GRIB", "Cannot read section 4");
                 CPLFree(pabyBody);
                 return;
             }
@@ -437,6 +502,10 @@ void GRIBRasterBand::FindPDSTemplate()
             CPLFree(pabyBody);
 
             FindNoDataGrib2(false);
+        }
+        else
+        {
+            CPLDebug("GRIB", "Invalid section size for section %d", 4);
         }
     }
 }
