@@ -1,14 +1,14 @@
 .. _rfc-10:
 
 ================================================================================
-RFC 10: OGR Open Parameters
+RFC 10: OGR Open Parameters (not implemented)
 ================================================================================
 
 Author: Andrey Kiselev
 
 Contact: dron@ak4719.spb.edu
 
-Status: Development
+Status: Development, *not* implemented
 
 Summary
 -------
