@@ -1193,7 +1193,9 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize,
     size_t nRemaining = nBufferRequestSize;
 
     AcquireMutex();
-    const int bHasComputedFileSizeLocal = bHasComputedFileSize;
+    // fileSize might be set wrongly to 0, such as
+    // /vsicurl_streaming/https://query.data.world/s/jgsghstpphjhicstradhy5kpjwrnfy
+    const int bHasComputedFileSizeLocal = bHasComputedFileSize && fileSize > 0;
     const vsi_l_offset fileSizeLocal = fileSize;
     ReleaseMutex();
 
