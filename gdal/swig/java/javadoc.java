@@ -8790,7 +8790,7 @@ public class Geometry:public String GetGeometryName()
 /**
  * Fetch geometry from a geometry container.
  * <p>
- * This function returns an handle to a geometry within the container.
+ * This function returns a handle to a geometry within the container.
  * The returned geometry remains owned by the container, and should not be
  * modified.  The handle is only valid until the next change to the
  * geometry container.  Use Clone() to make a copy.

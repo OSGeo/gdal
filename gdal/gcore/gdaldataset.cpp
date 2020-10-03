@@ -4508,7 +4508,7 @@ OGRLayerH GDALDatasetCreateLayer( GDALDatasetH hDS,
  @param papszOptions a StringList of name=value options.  Options are driver
                      specific.
 
- @return an handle to the layer, or NULL if an error occurs.
+ @return a handle to the layer, or NULL if an error occurs.
 */
 OGRLayerH GDALDatasetCopyLayer( GDALDatasetH hDS,
                                 OGRLayerH hSrcLayer, const char *pszNewName,
@@ -4848,7 +4848,7 @@ OGRLayer *GDALDataset::ICreateLayer( CPL_UNUSED const char * pszName,
                      spatial reference: DST_SRSWKT. The option should be in
                      WKT format.
 
- @return an handle to the layer, or NULL if an error occurs.
+ @return a handle to the layer, or NULL if an error occurs.
 */
 
 OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,

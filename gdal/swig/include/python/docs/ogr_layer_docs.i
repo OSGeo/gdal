@@ -186,7 +186,7 @@ hLayer:  handle to the layer that owned the feature.
 
 nFeatureId:  the feature id of the feature to read.
 
-an handle to a feature now owned by the caller, or NULL on failure. ";
+a handle to a feature now owned by the caller, or NULL on failure. ";
 
 %feature("docstring")  SetNextByIndex "OGRErr
 OGR_L_SetNextByIndex(OGRLayerH hLayer, GIntBig nIndex)
@@ -254,7 +254,7 @@ Parameters:
 
 hLayer:  handle to the layer from which feature are read.
 
-an handle to a feature, or NULL if no more features are available. ";
+a handle to a feature, or NULL if no more features are available. ";
 
 %feature("docstring")  SetFeature "OGRErr OGR_L_SetFeature(OGRLayerH
 hLayer, OGRFeatureH hFeat)
@@ -634,7 +634,7 @@ Parameters:
 
 hLayer:  handle to the layer to get the schema information.
 
-an handle to the feature definition. ";
+a handle to the feature definition. ";
 
 %feature("docstring")  FindFieldIndex "int
 OGR_L_FindFieldIndex(OGRLayerH hLayer, const char *pszFieldName, int
@@ -778,7 +778,7 @@ Parameters:
 
 hLayer:  handle to the layer to get the spatial filter from.
 
-an handle to the spatial filter geometry. ";
+a handle to the spatial filter geometry. ";
 
 %feature("docstring")  SetSpatialFilter "void
 OGR_L_SetSpatialFilter(OGRLayerH hLayer, OGRGeometryH hGeom)

@@ -1284,7 +1284,7 @@ int OGR_G_GetGeometryCount( OGRGeometryH hGeom )
 /**
  * \brief Fetch geometry from a geometry container.
  *
- * This function returns an handle to a geometry within the container.
+ * This function returns a handle to a geometry within the container.
  * The returned geometry remains owned by the container, and should not be
  * modified.  The handle is only valid until the next change to the
  * geometry container.  Use OGR_G_Clone() to make a copy.
