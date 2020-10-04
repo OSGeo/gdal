@@ -134,6 +134,7 @@ def test_mem_md_array_nodim():
     assert myarray.GetDimensionCount() == 0
     assert myarray.GetTotalElementsCount() == 1
     assert not myarray.GetDimensions()
+    assert myarray.shape is None
     assert myarray.GetDataType().GetClass() == gdal.GEDTC_NUMERIC
     assert myarray.GetDataType().GetNumericDataType() == gdal.GDT_UInt16
     got_data = myarray.Read()
@@ -171,6 +172,7 @@ def test_mem_md_array_single_dim():
     assert myarray.GetTotalElementsCount() == 2
     got_dims = myarray.GetDimensions()
     assert len(got_dims) == 1
+    assert myarray.shape == (2, )
     assert got_dims[0].GetName() == 'dim0'
     assert got_dims[0].GetType() == 'unspecified type'
     assert got_dims[0].GetDirection() == 'unspecified direction'
@@ -418,6 +420,7 @@ def test_mem_md_array_3_dim():
     assert rg.OpenMDArray('myarray')
     assert myarray.GetDimensionCount() == 3
     assert myarray.GetTotalElementsCount() == 24
+    assert myarray.shape == (2, 3, 4)
 
     assert not myarray.GetSpatialRef()
     assert myarray.SetSpatialRef(None) == gdal.CE_None
@@ -1662,6 +1665,17 @@ def test_mem_md_array_get_mask():
     expected_data[23] = 0
     assert [x for x in struct.unpack('B' * 24, mask.Read())] == expected_data
 
+    try:
+        import numpy
+        has_numpy = True
+    except ImportError:
+        has_numpy = False
+
+    if has_numpy:
+        ma = myarray.ReadAsMaskedArray()
+        assert ma[0,0,0] is numpy.ma.masked
+        assert ma[0,0,1] is not numpy.ma.masked
+
     # Test array with nan
     myarray = rg.CreateMDArray("myarray_with_nan", [ dim0 ],
                                gdal.ExtendedDataType.Create(gdal.GDT_Float32))
@@ -1669,7 +1683,6 @@ def test_mem_md_array_get_mask():
 
     mask = myarray.GetMask()
     assert [x for x in struct.unpack('B' * 2, mask.Read())] == [1, 0]
-
 
     # Test all data types
     for dt, v, nv, expected in [ (gdal.GDT_Byte, 1, 1,[1, 0]),
