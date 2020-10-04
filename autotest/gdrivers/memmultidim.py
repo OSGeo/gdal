@@ -1590,6 +1590,11 @@ def test_mem_md_array_get_mask():
     mask = myarray.GetMask()
     assert mask is not None
     assert struct.unpack('B', mask.Read())[0] == 1
+    assert struct.unpack('H', mask.Read(buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_Int16)))[0] == 1
+
+    myarray.SetNoDataValueDouble(0)
+    assert struct.unpack('B', mask.Read())[0] == 0
+    assert struct.unpack('H', mask.Read(buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_Int16)))[0] == 0
 
     dim0 = rg.CreateDimension("dim0", None, None, 2)
     dim1 = rg.CreateDimension("dim1", None, None, 3)
@@ -1620,14 +1625,20 @@ def test_mem_md_array_get_mask():
     assert mask.GetBlockSize() == myarray.GetBlockSize()
     assert [x.GetSize() for x in mask.GetDimensions()] == [x.GetSize() for x in myarray.GetDimensions() ]
     assert mask.GetDataType().GetNumericDataType() == gdal.GDT_Byte
+    # Case when we don't need to read the underlying array at all: the mask is always valid
     assert [x for x in struct.unpack('B' * 24, mask.Read())] == [ 1 ] * 24
+    assert [x for x in struct.unpack('B' * 24, mask.Read(buffer_stride = [1, 2, 6]))] == [ 1 ] * 24
     assert [x for x in struct.unpack('H' * 24, mask.Read(buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_Int16)))] == [ 1 ] * 24
+    assert [x for x in struct.unpack('H' * 24, mask.Read(
+        buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_Int16), buffer_stride = [1, 2, 6]))] == [ 1 ] * 24
 
     # Test no data value
     myarray.SetNoDataValueDouble(10)
     expected_data = [ 1 ] * 24
     expected_data[10] = 0
     assert [x for x in struct.unpack('B' * 24, mask.Read())] == expected_data
+    assert [x for x in struct.unpack('B' * 24, mask.Read(buffer_stride = [1, 2, 6]))] == [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1]
+    assert [x for x in struct.unpack('H' * 24, mask.Read(buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_Int16)))] == expected_data
 
     # Test missing_value, _FillValue, valid_min, valid_max
     bytedt = gdal.ExtendedDataType.Create(gdal.GDT_Byte)
