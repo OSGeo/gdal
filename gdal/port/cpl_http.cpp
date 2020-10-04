@@ -1421,10 +1421,24 @@ bool CPLMultiPerformWait(void* hCurlMultiHandleIn, int& repeats)
     CURLM* hCurlMultiHandle = static_cast<CURLM*>(hCurlMultiHandleIn);
 
     // Wait for events on the sockets
+
+    // 7.66.0
+#if LIBCURL_VERSION_NUM >= 0x074200
+    // Using curl_multi_poll() is preferred to avoid hitting the 1024 file
+    // descriptor limit
+    (void)repeats;
+
+    int numfds = 0;
+    if( curl_multi_poll(hCurlMultiHandle, nullptr, 0, 1000, &numfds) != CURLM_OK )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "curl_multi_poll() failed");
+        return false;
+    }
+
+    // 7.28.0
+#elif LIBCURL_VERSION_NUM >= 0x071C00
     // Using curl_multi_wait() is preferred to avoid hitting the 1024 file
     // descriptor limit
-    // 7.28.0
-#if LIBCURL_VERSION_NUM >= 0x071C00
     int numfds = 0;
     if( curl_multi_wait(hCurlMultiHandle, nullptr, 0, 1000, &numfds) != CURLM_OK )
     {
