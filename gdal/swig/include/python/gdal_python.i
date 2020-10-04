@@ -1127,6 +1127,32 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
       from osgeo import gdalnumeric
       return gdalnumeric.MDArrayWriteArray(self, array, array_start_idx, array_step)
 
+  def ReadAsMaskedArray(self,
+                  array_start_idx = None,
+                  count = None,
+                  array_step = None):
+      """ Return a numpy masked array of ReadAsArray() with GetMask() """
+      import numpy
+      mask = self.GetMask()
+      if mask is not None:
+          array = self.ReadAsArray(array_start_idx, count, array_step)
+          mask_array = mask.ReadAsArray(array_start_idx, count, array_step)
+          bool_array = ~mask_array.astype(numpy.bool)
+          return numpy.ma.array(array, mask=bool_array)
+      else:
+          return numpy.ma.array(self.ReadAsArray(array_start_idx, count, array_step), mask=None)
+
+  def GetShape(self):
+    """ Return the shape of the array """
+    if not self.GetDimensionCount():
+      return None
+    shp = ()
+    for dim in self.GetDimensions():
+      shp += (dim.GetSize(),)
+    return shp
+
+  shape = property(fget=GetShape, doc='Returns the shape of the array.')
+
 %}
 }
 
