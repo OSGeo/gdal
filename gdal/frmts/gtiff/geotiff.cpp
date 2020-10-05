@@ -286,6 +286,7 @@ private:
 
     friend void  GTIFFSetJpegQuality( GDALDatasetH hGTIFFDS, int nJpegQuality );
     friend void  GTIFFSetJpegTablesMode( GDALDatasetH hGTIFFDS, int nJpegTablesMode );
+    friend void  GTIFFSetWebPLevel( GDALDatasetH hGTIFFDS, int nWebPLevel );
 
     TIFF                 *m_hTIFF = nullptr;
     VSILFILE             *m_fpL = nullptr;
@@ -489,7 +490,8 @@ private:
     void          LoadEXIFMetadata();
     void          LoadICCProfile();
 
-    CPLErr        RegisterNewOverviewDataset( toff_t nOverviewOffset, int l_nJpegQuality );
+    CPLErr        RegisterNewOverviewDataset( toff_t nOverviewOffset, int l_nJpegQuality,
+                                              int l_nWebPLevel );
     CPLErr        CreateOverviewsFromSrcOverviews( GDALDataset* poSrcDS,
                                                    GDALDataset* poOvrDS );
     CPLErr        CreateInternalMaskOverviews( int nOvrBlockXSize,
@@ -1112,6 +1114,26 @@ void GTIFFSetJpegQuality( GDALDatasetH hGTIFFDS, int nJpegQuality )
 
     for( int i = 0; i < poDS->m_nOverviewCount; ++i )
         poDS->m_papoOverviewDS[i]->m_nJpegQuality = poDS->m_nJpegQuality;
+}
+
+/************************************************************************/
+/*                        GTIFFSetWebPLevel()                         */
+/* Called by GTIFFBuildOverviews() to set the jpeg quality on the IFD   */
+/* of the .ovr file.                                                    */
+/************************************************************************/
+
+void GTIFFSetWebPLevel( GDALDatasetH hGTIFFDS, int nWebpLevel )
+{
+    CPLAssert(
+        EQUAL(GDALGetDriverShortName(GDALGetDatasetDriver(hGTIFFDS)), "GTIFF"));
+
+    GTiffDataset* const poDS = static_cast<GTiffDataset *>(hGTIFFDS);
+    poDS->m_nWebPLevel = static_cast<signed char>(nWebpLevel);
+
+    poDS->ScanDirectories();
+
+    for( int i = 0; i < poDS->m_nOverviewCount; ++i )
+        poDS->m_papoOverviewDS[i]->m_nWebPLevel = poDS->m_nWebPLevel;
 }
 
 /************************************************************************/
@@ -10063,7 +10085,8 @@ CPLErr GTiffDataset::CleanOverviews()
 /************************************************************************/
 
 CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
-                                                int l_nJpegQuality)
+                                                int l_nJpegQuality,
+                                                int l_nWebPLevel)
 {
     if( m_nOverviewCount == 127 )
         return CE_Failure;
@@ -10072,10 +10095,10 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
     poODS->ShareLockWithParentDataset(this);
     poODS->m_pszFilename = CPLStrdup(m_pszFilename);
     poODS->m_nJpegQuality = static_cast<signed char>(l_nJpegQuality);
+    poODS->m_nWebPLevel = static_cast<signed char>(l_nWebPLevel);
     poODS->m_nZLevel = m_nZLevel;
     poODS->m_nLZMAPreset = m_nLZMAPreset;
     poODS->m_nZSTDLevel = m_nZSTDLevel;
-    poODS->m_nWebPLevel = m_nWebPLevel;
     poODS->m_bWebPLossless = m_bWebPLossless;
     poODS->m_nJpegTablesMode = m_nJpegTablesMode;
 #if HAVE_LERC
@@ -10251,6 +10274,13 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
             nOvrJpegQuality =
                 atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75"));
         }
+        int nOvrWebpLevel = m_nWebPLevel;
+        if( m_nCompression == COMPRESSION_WEBP &&
+            CPLGetConfigOption( "WEBP_LEVEL_OVERVIEW", nullptr ) != nullptr )
+        {
+            nOvrWebpLevel =
+                atoi(CPLGetConfigOption("WEBP_LEVEL_OVERVIEW","75"));
+        }
 
         CPLString osNoData; // don't move this in inner scope
         const char* pszNoData = nullptr;
@@ -10282,13 +10312,15 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
 #else
                                     nullptr,
 #endif
-                                    m_bWriteCOGLayout
+                                    m_bWriteCOGLayout,
+                                    nOvrWebpLevel >= 0 ?
+                                        CPLSPrintf("%d", nOvrWebpLevel) : nullptr
                                    );
 
         if( nOverviewOffset == 0 )
             eErr = CE_Failure;
         else
-            eErr = RegisterNewOverviewDataset(nOverviewOffset, nOvrJpegQuality);
+            eErr = RegisterNewOverviewDataset(nOverviewOffset, nOvrJpegQuality, nOvrWebpLevel);
     }
 
     // For directory reloading, so that the chaining to the next directory is
@@ -10355,7 +10387,8 @@ CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
                         nullptr, nullptr, nullptr, 0, nullptr,
                         "",
                         nullptr, nullptr, nullptr, nullptr,
-                        m_bWriteCOGLayout );
+                        m_bWriteCOGLayout,
+                        nullptr );
 
                 if( nOverviewOffset == 0 )
                 {
@@ -10641,6 +10674,13 @@ CPLErr GTiffDataset::IBuildOverviews(
                 nOvrJpegQuality =
                     atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75"));
             }
+            int nOvrWebpLevel = m_nWebPLevel;
+            if( m_nCompression == COMPRESSION_WEBP &&
+                CPLGetConfigOption( "WEBP_LEVEL_OVERVIEW", nullptr ) != nullptr )
+            {
+                nOvrWebpLevel =
+                    atoi(CPLGetConfigOption("WEBP_LEVEL_OVERVIEW","75"));
+            }
 
             CPLString osNoData; // don't move this in inner scope
             const char* pszNoData = nullptr;
@@ -10670,14 +10710,17 @@ CPLErr GTiffDataset::IBuildOverviews(
 #else
                     nullptr,
 #endif
-                    false
+                    false,
+                    nOvrWebpLevel >= 0 ?
+                                CPLSPrintf("%d", nOvrWebpLevel) : nullptr
             );
 
             if( nOverviewOffset == 0 )
                 eErr = CE_Failure;
             else
                 eErr = RegisterNewOverviewDataset(nOverviewOffset,
-                                                  nOvrJpegQuality);
+                                                  nOvrJpegQuality,
+                                                  nOvrWebpLevel);
         }
     }
 
@@ -19370,7 +19413,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
                 bIsTiled, l_nCompression,
                 PHOTOMETRIC_MASK, PREDICTOR_NONE,
                 SAMPLEFORMAT_UINT, nullptr, nullptr, nullptr, 0, nullptr, "", nullptr, nullptr,
-                nullptr, nullptr, m_bWriteCOGLayout );
+                nullptr, nullptr, m_bWriteCOGLayout, nullptr );
 
         ReloadDirectory();
 
