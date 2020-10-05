@@ -970,6 +970,15 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
                       nJpegQuality );
         GTIFFSetJpegQuality(GDALDataset::ToHandle(hODS), nJpegQuality);
     }
+    const char* pszWebpLevel =
+        papszOptions ?
+            CSLFetchNameValue(papszOptions, "WEBP_LEVEL") :
+            CPLGetConfigOption( "WEBP_LEVEL_OVERVIEW", nullptr );
+    if( nCompression == COMPRESSION_WEBP && pszWebpLevel != nullptr )
+    {
+        const int nWebpLevel = atoi(pszWebpLevel);
+        TIFFSetField( hTIFF, TIFFTAG_WEBP_LEVEL, nWebpLevel );
+    }
 
     const char* pszJPEGTablesMode =
         papszOptions ?
