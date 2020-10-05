@@ -657,6 +657,8 @@ the default behavior of the GTiff driver.
    domain to be written to PAM.
 -  :decl_configoption:`JPEG_QUALITY_OVERVIEW` : Integer between 0 and 100. Default value : 75.
    Quality of JPEG compressed overviews, either internal or external.
+-  :decl_configoption:`WEBP_LEVEL_OVERVIEW` : Integer between 1 and 100. Default value : 75.
+   WEBP quality level of overviews, either internal or external.
 -  :decl_configoption:`GDAL_TIFF_INTERNAL_MASK` : See `Internal nodata
    masks <#internal_mask>`__ section. Default value : FALSE.
 -  :decl_configoption:`GDAL_TIFF_INTERNAL_MASK_TO_8BIT` : See `Internal nodata

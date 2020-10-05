@@ -3126,6 +3126,60 @@ def test_tiff_write_90():
     assert checksums[75][1] != checksums[30][1]
     assert checksums[75][2] != checksums[30][2]
 
+    assert checksums[90][0] != checksums[30][0]
+    assert checksums[90][1] != checksums[30][1]
+    assert checksums[90][2] != checksums[30][2]
+
+###############################################################################
+# Test WEBP_LEVEL propagation and overriding while creating (internal) overviews
+# on a newly created dataset
+
+def test_tiff_write_90_webp():
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('WEBP') == -1:
+        pytest.skip()
+
+    checksums = {}
+    qualities = [90,75,75]
+    for i, quality in enumerate(qualities):
+        src_ds = gdal.Open('../gdrivers/data/utm.tif')
+        fname = 'tmp/tiff_write_91_webp_%d' % i
+
+        ds = gdal.GetDriverByName('GTiff').Create(fname, 1024, 1024, 3,
+                                                  options=['COMPRESS=WEBP', 'WEBP_LEVEL=%d' % quality])
+
+        data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
+        ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
+        ds.GetRasterBand(2).WriteRaster(0, 0, 1024, 1024, data)
+        ds.GetRasterBand(3).WriteRaster(0, 0, 1024, 1024, data)
+        if i == 2:
+            quality = 30
+        with gdaltest.config_option('WEBP_LEVEL_OVERVIEW', '%d'%quality):
+            ds.BuildOverviews('AVERAGE', overviewlist=[2, 4])
+
+        src_ds = None
+        ds = None
+
+        ds = gdal.Open(fname)
+        checksums[i] = [ ds.GetRasterBand(1).Checksum(),
+                               ds.GetRasterBand(1).GetOverview(0).Checksum(),
+                               ds.GetRasterBand(1).GetOverview(1).Checksum() ]
+        ds = None
+        gdaltest.tiff_drv.Delete(fname)
+
+    assert checksums[0][0] != checksums[1][0]
+    assert checksums[0][1] != checksums[1][1]
+    assert checksums[0][2] != checksums[1][2]
+
+    assert checksums[0][0] != checksums[2][0]
+    assert checksums[0][1] != checksums[2][1]
+    assert checksums[0][2] != checksums[2][2]
+
+    assert checksums[1][0] == checksums[2][0]
+    assert checksums[1][1] != checksums[2][1]
+    assert checksums[1][2] != checksums[2][2]
+
+
 
 ###############################################################################
 # Test JPEG_QUALITY propagation while creating (internal) overviews after re-opening
@@ -3172,6 +3226,58 @@ def test_tiff_write_91():
     assert checksums[75][1] != checksums[30][1]
     assert checksums[75][2] != checksums[30][2]
 
+    assert checksums[90][0] != checksums[30][0]
+    assert checksums[90][1] != checksums[30][1]
+    assert checksums[90][2] != checksums[30][2]
+
+###############################################################################
+# Test WEBP_LEVEL_OVERVIEW while creating (internal) overviews after re-opening
+
+def test_tiff_write_91_webp():
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('WEBP') == -1:
+        pytest.skip()
+
+    checksums = {}
+    for quality in [90, 75, 30]:
+        src_ds = gdal.Open('../gdrivers/data/utm.tif')
+        fname = 'tmp/tiff_write_91_webp_%d' % quality
+
+        ds = gdal.GetDriverByName('GTiff').Create(fname, 1024, 1024, 3,
+                                                  options=['COMPRESS=WEBP'])
+
+        data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
+        ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
+        ds.GetRasterBand(2).WriteRaster(0, 0, 1024, 1024, data)
+        ds.GetRasterBand(3).WriteRaster(0, 0, 1024, 1024, data)
+        ds = None
+        src_ds = None
+
+        ds = gdal.Open(fname, gdal.GA_Update)
+        with gdaltest.config_option('WEBP_LEVEL_OVERVIEW', '%d'%quality):
+            ds.BuildOverviews('AVERAGE', overviewlist=[2, 4])
+
+        ds = None
+
+        ds = gdal.Open(fname)
+        checksums[quality] = [ ds.GetRasterBand(1).Checksum(),
+                               ds.GetRasterBand(1).GetOverview(0).Checksum(),
+                               ds.GetRasterBand(1).GetOverview(1).Checksum() ]
+
+        ds = None
+        gdaltest.tiff_drv.Delete(fname)
+
+    assert checksums[75][0] == checksums[90][0]
+    assert checksums[75][1] != checksums[90][1]
+    assert checksums[75][2] != checksums[90][2]
+
+    assert checksums[75][0] == checksums[30][0]
+    assert checksums[75][1] != checksums[30][1]
+    assert checksums[75][2] != checksums[30][2]
+
+    assert checksums[90][0] == checksums[30][0]
+    assert checksums[90][1] != checksums[30][1]
+    assert checksums[90][2] != checksums[30][2]
 
 ###############################################################################
 # Test the effect of JPEG_QUALITY_OVERVIEW while creating (internal) overviews after re-opening
