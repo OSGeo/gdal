@@ -1372,7 +1372,8 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult ) const
 /************************************************************************/
 
 static PJ* GDAL_proj_crs_create_bound_crs_to_WGS84(PJ_CONTEXT* ctx, PJ* pj,
-                                                   bool onlyIfEPSGCode)
+                                                   bool onlyIfEPSGCode,
+                                                   bool canModifyHorizPart)
 {
     PJ* ret = nullptr;
     if( proj_get_type(pj) == PJ_TYPE_COMPOUND_CRS )
@@ -1382,16 +1383,20 @@ static PJ* GDAL_proj_crs_create_bound_crs_to_WGS84(PJ_CONTEXT* ctx, PJ* pj,
         if( horizCRS && proj_get_type(horizCRS) != PJ_TYPE_BOUND_CRS && vertCRS &&
             (!onlyIfEPSGCode || proj_get_id_auth_name(horizCRS, 0) != nullptr) )
         {
-            auto boundHoriz = proj_crs_create_bound_crs_to_WGS84(
-                ctx, horizCRS, nullptr);
-            if( boundHoriz )
+            auto boundHoriz = canModifyHorizPart ?
+                proj_crs_create_bound_crs_to_WGS84(ctx, horizCRS, nullptr) :
+                proj_clone(ctx, horizCRS);
+            auto boundVert = proj_crs_create_bound_crs_to_WGS84(
+                ctx, vertCRS, nullptr);
+            if( boundHoriz && boundVert )
             {
                 ret = proj_create_compound_crs(
                         ctx, proj_get_name(pj),
                         boundHoriz,
-                        vertCRS);
+                        boundVert);
             }
             proj_destroy(boundHoriz);
+            proj_destroy(boundVert);
         }
         proj_destroy(horizCRS);
         proj_destroy(vertCRS);
@@ -1521,7 +1526,7 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
                                     CPLGetConfigOption("OSR_ADD_TOWGS84_ON_EXPORT_TO_WKT1", "NO"))) )
     {
         boundCRS = GDAL_proj_crs_create_bound_crs_to_WGS84(
-            d->getPROJContext(), d->m_pj_crs, true);
+            d->getPROJContext(), d->m_pj_crs, true, true);
     }
 
     const char* pszWKT = proj_as_wkt(
@@ -10237,12 +10242,14 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     PJ* boundCRS = nullptr;
     if( projString &&
-        strstr(projString, "+datum=") == nullptr &&
+        (strstr(projString, "+datum=") == nullptr ||
+         d->m_pjType == PJ_TYPE_COMPOUND_CRS) &&
         CPLTestBool(
             CPLGetConfigOption("OSR_ADD_TOWGS84_ON_EXPORT_TO_PROJ4", "YES")) )
     {
         boundCRS = GDAL_proj_crs_create_bound_crs_to_WGS84(
-            d->getPROJContext(), d->m_pj_crs, true);
+            d->getPROJContext(), d->m_pj_crs, true,
+            strstr(projString, "+datum=") == nullptr);
         if( boundCRS )
         {
             projString = proj_as_proj_string(d->getPROJContext(),
@@ -10568,7 +10575,7 @@ OGRErr OGRSpatialReference::AddGuessedTOWGS84()
     if( !d->m_pj_crs )
         return OGRERR_FAILURE;
     auto boundCRS = GDAL_proj_crs_create_bound_crs_to_WGS84(
-        d->getPROJContext(), d->m_pj_crs, false);
+        d->getPROJContext(), d->m_pj_crs, false, true);
     if( !boundCRS )
     {
         return OGRERR_FAILURE;
