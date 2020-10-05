@@ -2840,6 +2840,72 @@ def test_nitf_80():
     assert data == expected_data
 
 ###############################################################################
+# Test parsing MSTGTA TRE (STDI-0002-1-v5.0 App E)
+
+def test_nitf_81():
+    tre_data = "FILE_TRE=MSTGTA=012340123456789AB0123456789ABCDE0120123456789AB0123456789AB000123401234560123450TGT_LOC=             "
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_81.ntf', 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_81.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_81.ntf')
+
+    expected_data = """<tres>
+  <tre name="MSTGTA" location="file">
+    <field name="TGT_NUM" value="01234" />
+    <field name="TGT_ID" value="0123456789AB" />
+    <field name="TGT_BE" value="0123456789ABCDE" />
+    <field name="TGT_PRI" value="012" />
+    <field name="TGT_REQ" value="0123456789AB" />
+    <field name="TGT_LTIOV" value="0123456789AB" />
+    <field name="TGT_TYPE" value="0" />
+    <field name="TGT_COLL" value="0" />
+    <field name="TGT_CAT" value="01234" />
+    <field name="TGT_UTC" value="0123456" />
+    <field name="TGT_ELEV" value="012345" />
+    <field name="TGT_ELEV_UNIT" value="0" />
+    <field name="TGT_LOC" value="TGT_LOC=" />
+  </tre>
+</tres>
+"""
+    assert data == expected_data
+
+###############################################################################
+# Test parsing PIATGB TRE (STDI-0002-1-v5.0 App C)
+
+def test_nitf_82():
+    tre_data = "FILE_TRE=PIATGB=0123456789ABCDE0123456789ABCDE01012340123456789ABCDE012" \
+               "TGTNAME=                              012+01.234567-012.345678"
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_82.ntf', 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_82.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_82.ntf')
+
+    expected_data = """<tres>
+  <tre name="PIATGB" location="file">
+    <field name="TGTUTM" value="0123456789ABCDE" />
+    <field name="PIATGAID" value="0123456789ABCDE" />
+    <field name="PIACTRY" value="01" />
+    <field name="PIACAT" value="01234" />
+    <field name="TGTGEO" value="0123456789ABCDE" />
+    <field name="DATUM" value="012" />
+    <field name="TGTNAME" value="TGTNAME=" />
+    <field name="PERCOVER" value="012" />
+    <field name="TGTLAT" value="+01.234567" />
+    <field name="TGTLON" value="-012.345678" />
+  </tre>
+</tres>
+"""
+    assert data == expected_data
+
+###############################################################################
 # Test reading C4 compressed file
 
 
