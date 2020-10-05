@@ -1568,24 +1568,8 @@ yyreduce:
     {
             (yyval) = new swq_expr_node( SWQ_AND );
             (yyval)->field_type = SWQ_BOOLEAN;
-
-            if ( (yyvsp[-2])->eNodeType == SNT_OPERATION &&
-                 (yyvsp[-2])->nOperation == SWQ_AND )
-            {
-                // Temporary non-binary formulation
-                (yyval)->nSubExprCount = (yyvsp[-2])->nSubExprCount;
-                (yyval)->papoSubExpr = (yyvsp[-2])->papoSubExpr;
-                (yyval)->PushSubExpression( (yyvsp[0]) );
-
-                (yyvsp[-2])->nSubExprCount = 0;
-                (yyvsp[-2])->papoSubExpr= nullptr;
-                delete (yyvsp[-2]);
-            }
-            else
-            {
-                (yyval)->PushSubExpression( (yyvsp[-2]) );
-                (yyval)->PushSubExpression( (yyvsp[0]) );
-            }
+            (yyval)->PushSubExpression( (yyvsp[-2]) );
+            (yyval)->PushSubExpression( (yyvsp[0]) );
         }
 #line 1575 "swq_parser.cpp" /* yacc.c:1646  */
     break;
