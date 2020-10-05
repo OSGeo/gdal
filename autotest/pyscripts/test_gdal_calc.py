@@ -200,24 +200,30 @@ def test_gdal_calc_py_5():
     gdal_calc.Calc('A', A='tmp/test_gdal_calc_py.tif', overwrite=True, quiet=True, outfile='tmp/test_gdal_calc_py_5_1.tif')
     gdal_calc.Calc('A', A='tmp/test_gdal_calc_py.tif', A_band=2, overwrite=True, quiet=True, outfile='tmp/test_gdal_calc_py_5_2.tif')
     gdal_calc.Calc('Z', Z='tmp/test_gdal_calc_py.tif', Z_band=2, overwrite=True, quiet=True, outfile='tmp/test_gdal_calc_py_5_3.tif')
+    gdal_calc.Calc(['A', 'Z'], A='tmp/test_gdal_calc_py.tif', Z='tmp/test_gdal_calc_py.tif', Z_band=2, overwrite=True, quiet=True, outfile='tmp/test_gdal_calc_py_5_4.tif')
 
     sys.path = backup_sys_path
 
     ds1 = gdal.Open('tmp/test_gdal_calc_py_5_1.tif')
     ds2 = gdal.Open('tmp/test_gdal_calc_py_5_2.tif')
     ds3 = gdal.Open('tmp/test_gdal_calc_py_5_3.tif')
+    ds4 = gdal.Open('tmp/test_gdal_calc_py_5_4.tif')
 
     assert ds1 is not None, 'ds1 not found'
     assert ds2 is not None, 'ds2 not found'
     assert ds3 is not None, 'ds3 not found'
+    assert ds4 is not None, 'ds4 not found'
 
     assert ds1.GetRasterBand(1).Checksum() == 12603, 'ds1 wrong checksum'
     assert ds2.GetRasterBand(1).Checksum() == 58561, 'ds2 wrong checksum'
     assert ds3.GetRasterBand(1).Checksum() == 58561, 'ds3 wrong checksum'
+    assert ds4.GetRasterBand(1).Checksum() == 12603, 'ds4#1 wrong checksum'
+    assert ds4.GetRasterBand(2).Checksum() == 58561, 'ds4#2 wrong checksum'
 
     ds1 = None
     ds2 = None
     ds3 = None
+    ds4 = None
 
 ###############################################################################
 # test nodata
@@ -306,6 +312,32 @@ def test_gdal_calc_py_7():
     ds3 = None
     ds4 = None
 
+
+###############################################################################
+# test multiple calcs
+
+def test_gdal_calc_py_8():
+
+    if gdalnumeric_not_available:
+        pytest.skip()
+
+    script_path = test_py_scripts.get_py_script('gdal_calc')
+    if script_path is None:
+        pytest.skip()
+
+    test_py_scripts.run_py_script(
+        script_path, 'gdal_calc', '-A tmp/test_gdal_calc_py.tif --A_band=1 -B tmp/test_gdal_calc_py.tif --B_band=2 -Z tmp/test_gdal_calc_py.tif --Z_band=2 --calc=A --calc=B --calc=Z --overwrite --outfile tmp/test_gdal_calc_py_8_1.tif')
+
+    ds1 = gdal.Open('tmp/test_gdal_calc_py_8_1.tif')
+
+    assert ds1 is not None, 'ds1 not found'
+
+    assert ds1.GetRasterBand(1).Checksum() == 12603, 'ds1#1 wrong checksum'
+    assert ds1.GetRasterBand(2).Checksum() == 58561, 'ds1#2 wrong checksum'
+    assert ds1.GetRasterBand(3).Checksum() == 58561, 'ds1#3 wrong checksum'
+
+    ds1 = None
+
 def test_gdal_calc_py_cleanup():
 
     lst = ['tmp/test_gdal_calc_py.tif',
@@ -322,11 +354,13 @@ def test_gdal_calc_py_cleanup():
            'tmp/test_gdal_calc_py_5_1.tif',
            'tmp/test_gdal_calc_py_5_2.tif',
            'tmp/test_gdal_calc_py_5_3.tif',
+           'tmp/test_gdal_calc_py_5_4.tif',
            'tmp/test_gdal_calc_py_6.tif',
            'tmp/test_gdal_calc_py_7_1.tif',
            'tmp/test_gdal_calc_py_7_2.tif',
            'tmp/test_gdal_calc_py_7_3.tif',
            'tmp/test_gdal_calc_py_7_4.tif',
+           'tmp/test_gdal_calc_py_8_1.tif',
            'tmp/opt1',
            'tmp/opt2',
            'tmp/opt3',

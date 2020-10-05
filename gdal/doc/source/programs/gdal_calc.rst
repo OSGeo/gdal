@@ -38,6 +38,7 @@ performed.
 .. option:: --calc=expression
 
     Calculation in gdalnumeric syntax using ``+``, ``-``, ``/``, ``*``, or any numpy array functions (i.e. ``log10()``).
+    Multiple ``--calc`` options can be listed to produce a multiband file (GDAL >= 3.2).
 
 .. option:: -A <filename>
 
@@ -83,7 +84,7 @@ performed.
 
 .. option:: --allBands=[A-Z]
 
-    Process all bands of given raster (A-Z).
+    Process all bands of given raster (A-Z). Requires a single calc for all bands.
 
 .. option:: --overwrite
 
@@ -132,3 +133,9 @@ Using logical operator to keep a range of values from input:
 .. code-block::
 
     gdal_calc.py -A input.tif --outfile=result.tif --calc="A*logical_and(A>100,A<150)"
+
+Work with multiple bands:
+
+.. code-block::
+
+    gdal_calc.py -A input.tif --A_band=1 -B input.tif --B_band=2 --outfile=result.tif --calc="(A+B)/2" --calc="B*logical_and(A>100,A<150)"
