@@ -449,7 +449,7 @@ const char* CPLGetWineVersion()
         return nullptr;
     }
 
-    static const char * (CDECL *pwine_get_version)(void);
+    const char * (CDECL *pwine_get_version)(void);
     pwine_get_version = reinterpret_cast<const char* (*)(void)>(GetProcAddress(hntdll, "wine_get_version"));
     if( pwine_get_version == nullptr )
     {
