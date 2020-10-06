@@ -101,6 +101,15 @@ command
     git clone https://github.com/OSGeo/GDAL.git
 
 
+Build requirements
+..................
+
+To build GDAL 3 or later, you need *at a minimum* a C++11 compatible compiler, and
+`PROJ 6 or later <https://proj.org>`_.
+This will only give you a minimum build which will lack a lot of drivers.
+Consult :ref:`raster_drivers` and :ref:`vector_drivers` pages for additional optional
+dependencies.
+
 Binaries
 ------------------------------------------------------------------------------
 
