@@ -3494,8 +3494,12 @@ int GDALBandGetBestOverviewLevel2( GDALRasterBand* poBand,
     for( int iOverview = 0; iOverview < nOverviewCount; iOverview++ )
     {
         GDALRasterBand *poOverview = poBand->GetOverview( iOverview );
-        if (poOverview == nullptr)
+        if (poOverview == nullptr ||
+            poOverview->GetXSize() > poBand->GetXSize() ||
+            poOverview->GetYSize() > poBand->GetYSize() )
+        {
             continue;
+        }
 
         double dfResolution = 0.0;
 
