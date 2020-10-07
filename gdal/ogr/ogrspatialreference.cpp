@@ -7198,6 +7198,17 @@ OGRErr OSRSetUTM( OGRSpatialReferenceH hSRS, int nZone, int bNorth )
 int OGRSpatialReference::GetUTMZone( int * pbNorth ) const
 
 {
+#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
+     if( IsProjected() && GetAxesCount() == 3 )
+     {
+         OGRSpatialReference* poSRSTmp = Clone();
+         poSRSTmp->DemoteTo2D(nullptr);
+         const int nZone = poSRSTmp->GetUTMZone(pbNorth);
+         delete poSRSTmp;
+         return nZone;
+     }
+#endif
+
     const char *pszProjection = GetAttrValue( "PROJECTION" );
 
     if( pszProjection == nullptr
@@ -11479,4 +11490,49 @@ OGRErr OSRPromoteTo3D( OGRSpatialReferenceH hSRS, const char* pszName  )
     VALIDATE_POINTER1( hSRS, "OSRPromoteTo3D", OGRERR_FAILURE );
 
     return OGRSpatialReference::FromHandle(hSRS)->PromoteTo3D(pszName);
+}
+
+/************************************************************************/
+/*                             DemoteTo2D()                             */
+/************************************************************************/
+
+/** \brief "Demote" a 3D CRS to a 2D CRS one.
+ *
+ * @param pszName New name for the CRS. If set to NULL, the previous name will be used.
+ * @return OGRERR_NONE if no error occurred.
+ * @since GDAL 3.2 and PROJ 6.3
+ */
+OGRErr OGRSpatialReference::DemoteTo2D(const char* pszName)
+{
+#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
+    d->refreshProjObj();
+    if( !d->m_pj_crs )
+        return OGRERR_FAILURE;
+    auto newPj = proj_crs_demote_to_2D( d->getPROJContext(), pszName, d->m_pj_crs );
+    if( !newPj )
+        return OGRERR_FAILURE;
+    d->setPjCRS(newPj);
+    return OGRERR_NONE;
+#else
+    CPL_IGNORE_RET_VAL(pszName);
+    CPLError(CE_Failure, CPLE_NotSupported, "PROJ 6.3 required");
+    return OGRERR_UNSUPPORTED_OPERATION;
+#endif
+}
+
+/************************************************************************/
+/*                             OSRDemoteTo2D()                          */
+/************************************************************************/
+
+/** \brief "Demote" a 3D CRS to a 2D CRS one.
+ *
+ * See OGRSpatialReference::DemoteTo2D()
+ *
+ * @since GDAL 3.2 and PROJ 6.3
+ */
+OGRErr OSRDemoteTo2D( OGRSpatialReferenceH hSRS, const char* pszName  )
+{
+    VALIDATE_POINTER1( hSRS, "OSRDemoteTo2D", OGRERR_FAILURE );
+
+    return OGRSpatialReference::FromHandle(hSRS)->DemoteTo2D(pszName);
 }

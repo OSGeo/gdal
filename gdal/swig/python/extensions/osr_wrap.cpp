@@ -4381,6 +4381,9 @@ SWIGINTERN OSRSpatialReferenceShadow *OSRSpatialReferenceShadow_ConvertToOtherPr
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_PromoteTo3D(OSRSpatialReferenceShadow *self,char const *name=NULL){
     return OSRPromoteTo3D(self, name);
   }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_DemoteTo2D(OSRSpatialReferenceShadow *self,char const *name=NULL){
+    return OSRDemoteTo2D(self, name);
+  }
 SWIGINTERN OGRCoordinateTransformationOptions *new_OGRCoordinateTransformationOptions(){
     return OCTNewCoordinateTransformationOptions();
   }
@@ -15171,6 +15174,72 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_SpatialReference_DemoteTo2D(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  char *arg2 = (char *) NULL ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  OGRErr result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O|O:SpatialReference_DemoteTo2D",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_DemoteTo2D" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  if (obj1) {
+    res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "SpatialReference_DemoteTo2D" "', argument " "2"" of type '" "char const *""'");
+    }
+    arg2 = reinterpret_cast< char * >(buf2);
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (OGRErr)OSRSpatialReferenceShadow_DemoteTo2D(arg1,(char const *)arg2);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  {
+    /* %typemap(ret) OGRErr */
+    if ( ReturnSame(resultobj == Py_None || resultobj == 0) ) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *SpatialReference_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *obj;
   if (!PyArg_ParseTuple(args,(char *)"O:swigregister", &obj)) return NULL;
@@ -17693,6 +17762,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_MorphFromESRI", _wrap_SpatialReference_MorphFromESRI, METH_VARARGS, (char *)"SpatialReference_MorphFromESRI(SpatialReference self) -> OGRErr"},
 	 { (char *)"SpatialReference_ConvertToOtherProjection", _wrap_SpatialReference_ConvertToOtherProjection, METH_VARARGS, (char *)"SpatialReference_ConvertToOtherProjection(SpatialReference self, char const * other_projection, char ** options=None) -> SpatialReference"},
 	 { (char *)"SpatialReference_PromoteTo3D", _wrap_SpatialReference_PromoteTo3D, METH_VARARGS, (char *)"SpatialReference_PromoteTo3D(SpatialReference self, char const * name=None) -> OGRErr"},
+	 { (char *)"SpatialReference_DemoteTo2D", _wrap_SpatialReference_DemoteTo2D, METH_VARARGS, (char *)"SpatialReference_DemoteTo2D(SpatialReference self, char const * name=None) -> OGRErr"},
 	 { (char *)"SpatialReference_swigregister", SpatialReference_swigregister, METH_VARARGS, NULL},
 	 { (char *)"new_CoordinateTransformationOptions", _wrap_new_CoordinateTransformationOptions, METH_VARARGS, (char *)"new_CoordinateTransformationOptions() -> CoordinateTransformationOptions"},
 	 { (char *)"delete_CoordinateTransformationOptions", _wrap_delete_CoordinateTransformationOptions, METH_VARARGS, (char *)"delete_CoordinateTransformationOptions(CoordinateTransformationOptions self)"},
