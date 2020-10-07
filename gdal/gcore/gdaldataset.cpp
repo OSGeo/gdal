@@ -1978,7 +1978,6 @@ CPLErr CPL_STDCALL GDALBuildOverviews( GDALDatasetH hDataset,
 
 {
     VALIDATE_POINTER1(hDataset, "GDALBuildOverviews", CE_Failure);
-
     return GDALDataset::FromHandle(hDataset)
         ->BuildOverviews(pszResampling, nOverviews, panOverviewList, nListBands,
                          panBandList, pfnProgress, pProgressData);
@@ -1998,6 +1997,7 @@ CPLErr GDALDataset::IBuildOverviews( const char *pszResampling,
                                      void * pProgressData )
 
 {
+    fprintf(stderr,"GDALDataset::IBuildOverviews called\n");
     if( oOvManager.IsInitialized() )
         return oOvManager.BuildOverviews(
             nullptr, pszResampling, nOverviews, panOverviewList, nListBands,

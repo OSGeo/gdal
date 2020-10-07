@@ -176,8 +176,9 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
     if (nCompressFlag == COMPRESSION_WEBP  && pszWebpLevel != nullptr)
     {
         const int nWebpLevel = atoi(pszWebpLevel);
-        if ( nWebpLevel >= 1 )
+        if ( nWebpLevel >= 1 ) {
             TIFFSetField( hTIFF, TIFFTAG_WEBP_LEVEL, nWebpLevel );
+        }
     }
 
 #ifdef HAVE_LERC
@@ -471,6 +472,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
     const char *pszCompress = papszOptions ?
         CSLFetchNameValue(papszOptions, "COMPRESS") :
         CPLGetConfigOption( "COMPRESS_OVERVIEW", nullptr );
+    fprintf(stderr,"GTIFFBuildOverviewsEx COMPRESSION: %s\n", CSLFetchNameValue(papszOptions, "COMPRESS"));
 
     if( pszCompress != nullptr && pszCompress[0] != '\0' )
     {

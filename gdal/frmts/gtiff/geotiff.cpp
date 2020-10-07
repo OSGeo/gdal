@@ -8682,6 +8682,9 @@ bool GTiffDataset::WriteEncodedTile( uint32 tile, GByte *pabyData,
 #if TIFFLIB_VERSION <= 20150912
     const CPLErr eBefore = CPLGetLastErrorType();
 #endif
+int nQ;
+TIFFGetField(m_hTIFF,TIFFTAG_WEBP_LEVEL,&nQ);
+fprintf(stderr,"before TIFFWriteEncodedTile: %d\n",nQ);
     const bool bRet =
         TIFFWriteEncodedTile(m_hTIFF, tile, pabyData, cc) == cc;
 #if TIFFLIB_VERSION <= 20150912

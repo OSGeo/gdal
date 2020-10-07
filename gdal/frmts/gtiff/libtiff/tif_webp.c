@@ -355,6 +355,7 @@ TWebPSetupEncode(TIFF* tif)
     return 0;
   }
 
+  fprintf(stderr,"setting webp level to %d\n",sp->quality_level);
   if (!WebPConfigInitInternal(&sp->sEncoderConfig, WEBP_PRESET_DEFAULT,
                               sp->quality_level,
                               WEBP_ENCODER_ABI_VERSION)) {
@@ -574,6 +575,7 @@ TWebPVSetField(TIFF* tif, uint32 tag, va_list ap)
       TIFFWarningExt(tif->tif_clientdata, module,
                      "WEBP_LEVEL should be between 1 and 100");
     }
+    fprintf(stderr,"tifwebpsetfield set level %d\n",sp->quality_level);
     return 1;
   case TIFFTAG_WEBP_LOSSLESS:
     #if WEBP_ENCODER_ABI_VERSION >= 0x0100
