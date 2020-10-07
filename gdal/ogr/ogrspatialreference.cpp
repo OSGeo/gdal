@@ -1435,6 +1435,7 @@ static PJ* GDAL_proj_crs_create_bound_crs_to_WGS84(PJ_CONTEXT* ctx, PJ* pj,
  *     node is returned.
  *     WKT1 is an alias of WKT1_GDAL.
  *     WKT2 will default to the latest revision implemented (currently WKT2_2018)
+ *     WKT2_2019 can be used as an alias of WKT2_2018 since GDAL 3.2
  * </li>
  * </ul>
  *
@@ -1487,7 +1488,8 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
         wktFormat = PJ_WKT2_2015;
     }
     else if( EQUAL(pszFormat, "WKT2" ) ||
-             EQUAL(pszFormat, "WKT2_2018" ) )
+             EQUAL(pszFormat, "WKT2_2018" ) ||
+             EQUAL(pszFormat, "WKT2_2019" ) )
     {
         wktFormat = PJ_WKT2_2018;
     }
