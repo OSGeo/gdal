@@ -209,9 +209,6 @@ gdalmove.py [-s_srs <srs_defn>] -t_srs <srs_defn>
 """)
     sys.exit(1)
 
-#############################################################################
-# Main
-
 
 def main():
     # Default GDAL argument parsing.

@@ -34,51 +34,52 @@ import sys
 
 from osgeo import gdal
 
-gdal.AllRegister()
-argv = gdal.GeneralCmdLineProcessor(sys.argv)
-if argv is None:
-    sys.exit(0)
-
-if len(argv) < 2:
-    print("Usage: gdalimport.py [--help-general] source_file [newfile]")
-    sys.exit(1)
-
 
 def progress_cb(complete, message, cb_data):
     print('%s %d' % (cb_data, complete))
 
 
-filename = argv[1]
-dataset = gdal.Open(filename)
-if dataset is None:
-    print('Unable to open %s' % filename)
-    sys.exit(1)
+if __name__ == '__main__':
+    gdal.AllRegister()
+    argv = gdal.GeneralCmdLineProcessor(sys.argv)
+    if argv is None:
+        sys.exit(0)
 
-geotiff = gdal.GetDriverByName("GTiff")
-if geotiff is None:
-    print('GeoTIFF driver not registered.')
-    sys.exit(1)
+    if len(argv) < 2:
+        print("Usage: gdalimport.py [--help-general] source_file [newfile]")
+        sys.exit(1)
 
-if len(argv) < 3:
-    newbase, ext = os.path.splitext(os.path.basename(filename))
-    newfile = newbase + ".tif"
-    i = 0
-    while os.path.isfile(newfile):
-        i = i + 1
-        newfile = newbase + "_" + str(i) + ".tif"
-else:
-    newfile = argv[2]
+    filename = argv[1]
+    dataset = gdal.Open(filename)
+    if dataset is None:
+        print('Unable to open %s' % filename)
+        sys.exit(1)
 
-print('Importing to Tiled GeoTIFF file: %s' % newfile)
-new_dataset = geotiff.CreateCopy(newfile, dataset, 0,
-                                 ['TILED=YES', ],
-                                 callback=progress_cb,
-                                 callback_data='Translate: ')
-dataset = None
+    geotiff = gdal.GetDriverByName("GTiff")
+    if geotiff is None:
+        print('GeoTIFF driver not registered.')
+        sys.exit(1)
 
-print('Building overviews')
-new_dataset.BuildOverviews("average", callback=progress_cb,
-                           callback_data='Overviews: ')
-new_dataset = None
+    if len(argv) < 3:
+        newbase, ext = os.path.splitext(os.path.basename(filename))
+        newfile = newbase + ".tif"
+        i = 0
+        while os.path.isfile(newfile):
+            i = i + 1
+            newfile = newbase + "_" + str(i) + ".tif"
+    else:
+        newfile = argv[2]
 
-print('Done')
+    print('Importing to Tiled GeoTIFF file: %s' % newfile)
+    new_dataset = geotiff.CreateCopy(newfile, dataset, 0,
+                                     ['TILED=YES', ],
+                                     callback=progress_cb,
+                                     callback_data='Translate: ')
+    dataset = None
+
+    print('Building overviews')
+    new_dataset.BuildOverviews("average", callback=progress_cb,
+                               callback_data='Overviews: ')
+    new_dataset = None
+
+    print('Done')

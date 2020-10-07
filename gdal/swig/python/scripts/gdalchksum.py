@@ -37,67 +37,63 @@ def Usage():
     print('Usage: gdalchksum.py [-b band] [-srcwin xoff yoff xsize ysize] file')
     sys.exit(1)
 
-# =============================================================================
-# 	Mainline
-# =============================================================================
+if __name__ == '__main__':
+    srcwin = None
+    bands = []
 
+    filename = None
 
-srcwin = None
-bands = []
+    gdal.AllRegister()
+    argv = gdal.GeneralCmdLineProcessor(sys.argv)
+    if argv is None:
+        sys.exit(0)
 
-filename = None
+    # Parse command line arguments.
+    i = 1
+    while i < len(argv):
+        arg = argv[i]
 
-gdal.AllRegister()
-argv = gdal.GeneralCmdLineProcessor(sys.argv)
-if argv is None:
-    sys.exit(0)
+        if arg == '-b':
+            i = i + 1
+            bands.append(int(argv[i]))
 
-# Parse command line arguments.
-i = 1
-while i < len(argv):
-    arg = argv[i]
+        elif arg == '-srcwin':
+            srcwin = [int(argv[i + 1]), int(argv[i + 2]),
+                      int(argv[i + 3]), int(argv[i + 3])]
+            i = i + 4
 
-    if arg == '-b':
+        elif filename is None:
+            filename = argv[i]
+
+        else:
+            Usage()
+
         i = i + 1
-        bands.append(int(argv[i]))
 
-    elif arg == '-srcwin':
-        srcwin = [int(argv[i + 1]), int(argv[i + 2]),
-                  int(argv[i + 3]), int(argv[i + 3])]
-        i = i + 4
-
-    elif filename is None:
-        filename = argv[i]
-
-    else:
+    if filename is None:
         Usage()
 
-    i = i + 1
+    # Open source file
 
-if filename is None:
-    Usage()
+    ds = gdal.Open(filename)
+    if ds is None:
+        print('Unable to open %s' % filename)
+        sys.exit(1)
 
-# Open source file
+    # Default values
 
-ds = gdal.Open(filename)
-if ds is None:
-    print('Unable to open %s' % filename)
-    sys.exit(1)
+    if srcwin is None:
+        srcwin = [0, 0, ds.RasterXSize, ds.RasterYSize]
 
-# Default values
-
-if srcwin is None:
-    srcwin = [0, 0, ds.RasterXSize, ds.RasterYSize]
-
-if not bands:
-    bands = list(range(1, (ds.RasterCount + 1)))
+    if not bands:
+        bands = list(range(1, (ds.RasterCount + 1)))
 
 
-# Generate checksums
+    # Generate checksums
 
-for band_num in bands:
-    oBand = ds.GetRasterBand(band_num)
-    result = oBand.Checksum(srcwin[0], srcwin[1], srcwin[2], srcwin[3])
-    print(result)
+    for band_num in bands:
+        oBand = ds.GetRasterBand(band_num)
+        result = oBand.Checksum(srcwin[0], srcwin[1], srcwin[2], srcwin[3])
+        print(result)
 
-ds = None
+    ds = None

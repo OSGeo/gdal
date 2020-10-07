@@ -88,128 +88,125 @@ def GetOutputDriverFor(filename):
         print("Several drivers matching %s extension. Using %s" % (ext if ext else '', drv_list[0]))
     return drv_list[0]
 
-# =============================================================================
-#      Mainline
-# =============================================================================
 
+if __name__ == '__main__':
+    color_count = 256
+    frmt = None
+    src_filename = None
+    dst_filename = None
+    pct_filename = None
 
-color_count = 256
-frmt = None
-src_filename = None
-dst_filename = None
-pct_filename = None
+    gdal.AllRegister()
+    argv = gdal.GeneralCmdLineProcessor(sys.argv)
+    if argv is None:
+        sys.exit(0)
 
-gdal.AllRegister()
-argv = gdal.GeneralCmdLineProcessor(sys.argv)
-if argv is None:
-    sys.exit(0)
+    # Parse command line arguments.
+    i = 1
+    while i < len(argv):
+        arg = argv[i]
 
-# Parse command line arguments.
-i = 1
-while i < len(argv):
-    arg = argv[i]
+        if arg == '-of' or arg == '-f':
+            i = i + 1
+            frmt = argv[i]
 
-    if arg == '-of' or arg == '-f':
+        elif arg == '-n':
+            i = i + 1
+            color_count = int(argv[i])
+
+        elif arg == '-pct':
+            i = i + 1
+            pct_filename = argv[i]
+
+        elif src_filename is None:
+            src_filename = argv[i]
+
+        elif dst_filename is None:
+            dst_filename = argv[i]
+
+        else:
+            Usage()
+
         i = i + 1
-        frmt = argv[i]
 
-    elif arg == '-n':
-        i = i + 1
-        color_count = int(argv[i])
-
-    elif arg == '-pct':
-        i = i + 1
-        pct_filename = argv[i]
-
-    elif src_filename is None:
-        src_filename = argv[i]
-
-    elif dst_filename is None:
-        dst_filename = argv[i]
-
-    else:
+    if dst_filename is None:
         Usage()
 
-    i = i + 1
+    # Open source file
 
-if dst_filename is None:
-    Usage()
+    src_ds = gdal.Open(src_filename)
+    if src_ds is None:
+        print('Unable to open %s' % src_filename)
+        sys.exit(1)
 
-# Open source file
+    if src_ds.RasterCount < 3:
+        print('%s has %d band(s), need 3 for inputs red, green and blue.'
+              % (src_filename, src_ds.RasterCount))
+        sys.exit(1)
 
-src_ds = gdal.Open(src_filename)
-if src_ds is None:
-    print('Unable to open %s' % src_filename)
-    sys.exit(1)
+    # Ensure we recognise the driver.
 
-if src_ds.RasterCount < 3:
-    print('%s has %d band(s), need 3 for inputs red, green and blue.'
-          % (src_filename, src_ds.RasterCount))
-    sys.exit(1)
+    if frmt is None:
+        frmt = GetOutputDriverFor(dst_filename)
 
-# Ensure we recognise the driver.
+    dst_driver = gdal.GetDriverByName(frmt)
+    if dst_driver is None:
+        print('"%s" driver not registered.' % frmt)
+        sys.exit(1)
 
-if frmt is None:
-    frmt = GetOutputDriverFor(dst_filename)
+    # Generate palette
 
-dst_driver = gdal.GetDriverByName(frmt)
-if dst_driver is None:
-    print('"%s" driver not registered.' % frmt)
-    sys.exit(1)
+    ct = gdal.ColorTable()
+    if pct_filename is None:
+        err = gdal.ComputeMedianCutPCT(src_ds.GetRasterBand(1),
+                                       src_ds.GetRasterBand(2),
+                                       src_ds.GetRasterBand(3),
+                                       color_count, ct,
+                                       callback=gdal.TermProgress_nocb)
+    else:
+        pct_ds = gdal.Open(pct_filename)
+        ct = pct_ds.GetRasterBand(1).GetRasterColorTable().Clone()
 
-# Generate palette
+    # Create the working file.  We have to use TIFF since there are few formats
+    # that allow setting the color table after creation.
 
-ct = gdal.ColorTable()
-if pct_filename is None:
-    err = gdal.ComputeMedianCutPCT(src_ds.GetRasterBand(1),
-                                   src_ds.GetRasterBand(2),
-                                   src_ds.GetRasterBand(3),
-                                   color_count, ct,
-                                   callback=gdal.TermProgress_nocb)
-else:
-    pct_ds = gdal.Open(pct_filename)
-    ct = pct_ds.GetRasterBand(1).GetRasterColorTable().Clone()
+    if format == 'GTiff':
+        tif_filename = dst_filename
+    else:
+        import tempfile
+        tif_filedesc, tif_filename = tempfile.mkstemp(suffix='.tif')
 
-# Create the working file.  We have to use TIFF since there are few formats
-# that allow setting the color table after creation.
+    gtiff_driver = gdal.GetDriverByName('GTiff')
 
-if format == 'GTiff':
-    tif_filename = dst_filename
-else:
-    import tempfile
-    tif_filedesc, tif_filename = tempfile.mkstemp(suffix='.tif')
+    tif_ds = gtiff_driver.Create(tif_filename,
+                                 src_ds.RasterXSize, src_ds.RasterYSize, 1)
 
-gtiff_driver = gdal.GetDriverByName('GTiff')
+    tif_ds.GetRasterBand(1).SetRasterColorTable(ct)
 
-tif_ds = gtiff_driver.Create(tif_filename,
-                             src_ds.RasterXSize, src_ds.RasterYSize, 1)
+    # ----------------------------------------------------------------------------
+    # We should copy projection information and so forth at this point.
 
-tif_ds.GetRasterBand(1).SetRasterColorTable(ct)
+    tif_ds.SetProjection(src_ds.GetProjection())
+    tif_ds.SetGeoTransform(src_ds.GetGeoTransform())
+    if src_ds.GetGCPCount() > 0:
+        tif_ds.SetGCPs(src_ds.GetGCPs(), src_ds.GetGCPProjection())
 
-# ----------------------------------------------------------------------------
-# We should copy projection information and so forth at this point.
+    # ----------------------------------------------------------------------------
+    # Actually transfer and dither the data.
 
-tif_ds.SetProjection(src_ds.GetProjection())
-tif_ds.SetGeoTransform(src_ds.GetGeoTransform())
-if src_ds.GetGCPCount() > 0:
-    tif_ds.SetGCPs(src_ds.GetGCPs(), src_ds.GetGCPProjection())
+    err = gdal.DitherRGB2PCT(src_ds.GetRasterBand(1),
+                             src_ds.GetRasterBand(2),
+                             src_ds.GetRasterBand(3),
+                             tif_ds.GetRasterBand(1),
+                             ct,
+                             callback=gdal.TermProgress_nocb)
 
-# ----------------------------------------------------------------------------
-# Actually transfer and dither the data.
-
-err = gdal.DitherRGB2PCT(src_ds.GetRasterBand(1),
-                         src_ds.GetRasterBand(2),
-                         src_ds.GetRasterBand(3),
-                         tif_ds.GetRasterBand(1),
-                         ct,
-                         callback=gdal.TermProgress_nocb)
-
-tif_ds = None
-
-if tif_filename != dst_filename:
-    tif_ds = gdal.Open(tif_filename)
-    dst_driver.CreateCopy(dst_filename, tif_ds)
     tif_ds = None
 
-    os.close(tif_filedesc)
-    gtiff_driver.Delete(tif_filename)
+    if tif_filename != dst_filename:
+        tif_ds = gdal.Open(tif_filename)
+        dst_driver.CreateCopy(dst_filename, tif_ds)
+        tif_ds = None
+
+        os.close(tif_filedesc)
+        gtiff_driver.Delete(tif_filename)
