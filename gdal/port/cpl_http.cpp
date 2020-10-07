@@ -931,10 +931,12 @@ int CPLHTTPPopFetchCallback(void)
  *                 Default is 30. (GDAL >= 2.0)</li>
  * <li>MAX_FILE_SIZE=val, where val is a number of bytes (GDAL >= 2.2)</li>
  * <li>CAINFO=/path/to/bundle.crt. This is path to Certificate Authority (CA)
- *     bundle file. By default, it will be looked in a system location. If
- *     the CAINFO options is not defined, GDAL will also look if the CURL_CA_BUNDLE
- *     environment variable is defined to use it as the CAINFO value, and as a
- *     fallback to the SSL_CERT_FILE environment variable. (GDAL >= 2.1.3)</li>
+ *     bundle file. By default, it will be looked for in a system location. If
+ *     the CAINFO option is not defined, GDAL will also look in the the
+ *     CURL_CA_BUNDLE and SSL_CERT_FILE environment variables respectively
+ *     and use the first one found as the CAINFO value (GDAL >= 2.1.3). The
+ *     GDAL_CURL_CA_BUNDLE environment variable may also be used to set the
+ *     CAINFO value in GDAL >= 3.2.</li>
  * <li>HTTP_VERSION=1.0/1.1/2/2TLS (GDAL >= 2.3). Specify HTTP version to use.
  *     Will default to 1.1 generally (except on some controlled environments,
  *     like Google Compute Engine VMs, where 2TLS will be the default).
