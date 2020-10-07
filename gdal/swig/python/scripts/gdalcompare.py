@@ -298,10 +298,9 @@ def Usage():
 #
 
 
-if __name__ == '__main__':
-
+def main(argv):
     # Default GDAL argument parsing.
-    argv = gdal.GeneralCmdLineProcessor(sys.argv)
+    argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         sys.exit(0)
 
@@ -335,3 +334,7 @@ if __name__ == '__main__':
     found_diff = find_diff(golden_file, new_file, check_sds)
     print('Differences Found: ' + str(found_diff))
     sys.exit(found_diff)
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

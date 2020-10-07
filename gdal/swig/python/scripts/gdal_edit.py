@@ -420,9 +420,9 @@ def gdal_edit(argv):
     return 0
 
 
-def main():
-    return gdal_edit(sys.argv)
+def main(argv):
+    return gdal_edit(argv)
 
 
 if __name__ == '__main__':
-    sys.exit(gdal_edit(sys.argv))
+    sys.exit(main(sys.argv))

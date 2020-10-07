@@ -47,14 +47,8 @@ def Usage():
     print('')
     sys.exit(1)
 
-# =============================================================================
-#
-# Program mainline.
-#
 
-
-if __name__ == '__main__':
-
+def main(argv):
     srcwin = None
     skip = 1
     srcfile = None
@@ -63,7 +57,7 @@ if __name__ == '__main__':
     delim = ' '
 
     gdal.AllRegister()
-    argv = gdal.GeneralCmdLineProcessor(sys.argv)
+    argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         sys.exit(0)
 
@@ -174,3 +168,7 @@ if __name__ == '__main__':
             line = frmt % (float(geo_x), float(geo_y), band_str)
 
             dst_fh.write(line)
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

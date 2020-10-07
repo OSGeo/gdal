@@ -299,9 +299,9 @@ def gdal_pansharpen(argv):
     return 0
 
 
-def main():
-    return gdal_pansharpen(sys.argv)
+def main(argv):
+    return gdal_pansharpen(argv)
 
 
 if __name__ == '__main__':
-    sys.exit(gdal_pansharpen(sys.argv))
+    sys.exit(main(sys.argv))

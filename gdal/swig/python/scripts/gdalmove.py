@@ -209,14 +209,11 @@ gdalmove.py [-s_srs <srs_defn>] -t_srs <srs_defn>
 """)
     sys.exit(1)
 
-#############################################################################
-# Main
 
-
-def main():
+def main(argv):
     # Default GDAL argument parsing.
 
-    argv = gdal.GeneralCmdLineProcessor(sys.argv)
+    argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         sys.exit(0)
 
@@ -268,4 +265,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main(sys.argv))

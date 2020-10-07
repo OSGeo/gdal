@@ -91,147 +91,148 @@ def GetOutputDriverFor(filename):
         print("Several drivers matching %s extension. Using %s" % (ext if ext else '', drv_list[0]))
     return drv_list[0]
 
-# =============================================================================
-# 	Mainline
-# =============================================================================
 
+def main(argv):
+    threshold = 2
+    connectedness = 4
+    quiet_flag = 0
+    src_filename = None
 
-threshold = 2
-connectedness = 4
-options = []
-quiet_flag = 0
-src_filename = None
+    dst_filename = None
+    frmt = None
 
-dst_filename = None
-frmt = None
+    mask = 'default'
 
-mask = 'default'
+    gdal.AllRegister()
+    argv = gdal.GeneralCmdLineProcessor(argv)
+    if argv is None:
+        sys.exit(0)
 
-gdal.AllRegister()
-argv = gdal.GeneralCmdLineProcessor(sys.argv)
-if argv is None:
-    sys.exit(0)
+    # Parse command line arguments.
+    i = 1
+    while i < len(argv):
+        arg = argv[i]
 
-# Parse command line arguments.
-i = 1
-while i < len(argv):
-    arg = argv[i]
+        if arg == '-of' or arg == '-f':
+            i = i + 1
+            frmt = argv[i]
 
-    if arg == '-of' or arg == '-f':
+        elif arg == '-4':
+            connectedness = 4
+
+        elif arg == '-8':
+            connectedness = 8
+
+        elif arg == '-q' or arg == '-quiet':
+            quiet_flag = 1
+
+        elif arg == '-st':
+            i = i + 1
+            threshold = int(argv[i])
+
+        elif arg == '-nomask':
+            mask = 'none'
+
+        elif arg == '-mask':
+            i = i + 1
+            mask = argv[i]
+
+        elif arg == '-mask':
+            i = i + 1
+            mask = argv[i]
+
+        elif arg[:2] == '-h':
+            Usage()
+
+        elif src_filename is None:
+            src_filename = argv[i]
+
+        elif dst_filename is None:
+            dst_filename = argv[i]
+
+        else:
+            Usage()
+
         i = i + 1
-        frmt = argv[i]
 
-    elif arg == '-4':
-        connectedness = 4
-
-    elif arg == '-8':
-        connectedness = 8
-
-    elif arg == '-q' or arg == '-quiet':
-        quiet_flag = 1
-
-    elif arg == '-st':
-        i = i + 1
-        threshold = int(argv[i])
-
-    elif arg == '-nomask':
-        mask = 'none'
-
-    elif arg == '-mask':
-        i = i + 1
-        mask = argv[i]
-
-    elif arg == '-mask':
-        i = i + 1
-        mask = argv[i]
-
-    elif arg[:2] == '-h':
+    if src_filename is None:
         Usage()
 
-    elif src_filename is None:
-        src_filename = argv[i]
+    # =============================================================================
+    # 	Verify we have next gen bindings with the sievefilter method.
+    # =============================================================================
+    try:
+        gdal.SieveFilter
+    except AttributeError:
+        print('')
+        print('gdal.SieveFilter() not available.  You are likely using "old gen"')
+        print('bindings or an older version of the next gen bindings.')
+        print('')
+        sys.exit(1)
 
-    elif dst_filename is None:
-        dst_filename = argv[i]
+    # =============================================================================
+    # Open source file
+    # =============================================================================
 
+    if dst_filename is None:
+        src_ds = gdal.Open(src_filename, gdal.GA_Update)
     else:
-        Usage()
+        src_ds = gdal.Open(src_filename, gdal.GA_ReadOnly)
 
-    i = i + 1
+    if src_ds is None:
+        print('Unable to open %s ' % src_filename)
+        sys.exit(1)
 
-if src_filename is None:
-    Usage()
+    srcband = src_ds.GetRasterBand(1)
 
-# =============================================================================
-# 	Verify we have next gen bindings with the sievefilter method.
-# =============================================================================
-try:
-    gdal.SieveFilter
-except AttributeError:
-    print('')
-    print('gdal.SieveFilter() not available.  You are likely using "old gen"')
-    print('bindings or an older version of the next gen bindings.')
-    print('')
-    sys.exit(1)
+    if mask == 'default':
+        maskband = srcband.GetMaskBand()
+    elif mask == 'none':
+        maskband = None
+    else:
+        mask_ds = gdal.Open(mask)
+        maskband = mask_ds.GetRasterBand(1)
 
-# =============================================================================
-# Open source file
-# =============================================================================
+    # =============================================================================
+    #       Create output file if one is specified.
+    # =============================================================================
 
-if dst_filename is None:
-    src_ds = gdal.Open(src_filename, gdal.GA_Update)
-else:
-    src_ds = gdal.Open(src_filename, gdal.GA_ReadOnly)
+    if dst_filename is not None:
+        if frmt is None:
+            frmt = GetOutputDriverFor(dst_filename)
 
-if src_ds is None:
-    print('Unable to open %s ' % src_filename)
-    sys.exit(1)
+        drv = gdal.GetDriverByName(frmt)
+        dst_ds = drv.Create(dst_filename, src_ds.RasterXSize, src_ds.RasterYSize, 1,
+                            srcband.DataType)
+        wkt = src_ds.GetProjection()
+        if wkt != '':
+            dst_ds.SetProjection(wkt)
+        gt = src_ds.GetGeoTransform(can_return_null=True)
+        if gt is not None:
+            dst_ds.SetGeoTransform(gt)
 
-srcband = src_ds.GetRasterBand(1)
+        dstband = dst_ds.GetRasterBand(1)
+    else:
+        dstband = srcband
 
-if mask == 'default':
-    maskband = srcband.GetMaskBand()
-elif mask == 'none':
-    maskband = None
-else:
-    mask_ds = gdal.Open(mask)
-    maskband = mask_ds.GetRasterBand(1)
+    # =============================================================================
+    # Invoke algorithm.
+    # =============================================================================
 
-# =============================================================================
-#       Create output file if one is specified.
-# =============================================================================
+    if quiet_flag:
+        prog_func = None
+    else:
+        prog_func = gdal.TermProgress_nocb
 
-if dst_filename is not None:
-    if frmt is None:
-        frmt = GetOutputDriverFor(dst_filename)
+    result = gdal.SieveFilter(srcband, maskband, dstband,
+                              threshold, connectedness,
+                              callback=prog_func)
 
-    drv = gdal.GetDriverByName(frmt)
-    dst_ds = drv.Create(dst_filename, src_ds.RasterXSize, src_ds.RasterYSize, 1,
-                        srcband.DataType)
-    wkt = src_ds.GetProjection()
-    if wkt != '':
-        dst_ds.SetProjection(wkt)
-    gt = src_ds.GetGeoTransform(can_return_null=True)
-    if gt is not None:
-        dst_ds.SetGeoTransform(gt)
+    src_ds = None
+    dst_ds = None
+    mask_ds = None
 
-    dstband = dst_ds.GetRasterBand(1)
-else:
-    dstband = srcband
+    return result
 
-# =============================================================================
-# Invoke algorithm.
-# =============================================================================
-
-if quiet_flag:
-    prog_func = None
-else:
-    prog_func = gdal.TermProgress_nocb
-
-result = gdal.SieveFilter(srcband, maskband, dstband,
-                          threshold, connectedness,
-                          callback=prog_func)
-
-src_ds = None
-dst_ds = None
-mask_ds = None
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

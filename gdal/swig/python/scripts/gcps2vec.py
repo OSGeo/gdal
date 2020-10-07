@@ -39,135 +39,136 @@ def Usage():
     print('Usage: gcps2vec.py [-of <ogr_drivername>] [-p] <raster_file> <vector_file>')
     sys.exit(1)
 
-# =============================================================================
-# 	Mainline
-# =============================================================================
 
+def main(argv):
+    out_format = 'GML'
+    in_file = None
+    out_file = None
+    pixel_out = 0
 
-out_format = 'GML'
-in_file = None
-out_file = None
-pixel_out = 0
+    gdal.AllRegister()
+    argv = gdal.GeneralCmdLineProcessor(argv)
+    if argv is None:
+        sys.exit(0)
 
-gdal.AllRegister()
-argv = gdal.GeneralCmdLineProcessor(sys.argv)
-if argv is None:
-    sys.exit(0)
+    # Parse command line arguments.
+    i = 1
+    while i < len(argv):
+        arg = argv[i]
 
-# Parse command line arguments.
-i = 1
-while i < len(argv):
-    arg = argv[i]
+        if arg == '-of':
+            i = i + 1
+            out_format = argv[i]
 
-    if arg == '-of':
+        elif arg == '-p':
+            pixel_out = 1
+
+        elif in_file is None:
+            in_file = argv[i]
+
+        elif out_file is None:
+            out_file = argv[i]
+
+        else:
+            Usage()
+
         i = i + 1
-        out_format = argv[i]
 
-    elif arg == '-p':
-        pixel_out = 1
-
-    elif in_file is None:
-        in_file = argv[i]
-
-    elif out_file is None:
-        out_file = argv[i]
-
-    else:
+    if out_file is None:
         Usage()
 
-    i = i + 1
+    # ----------------------------------------------------------------------------
+    # Open input file, and fetch GCPs.
+    # ----------------------------------------------------------------------------
+    ds = gdal.Open(in_file)
+    if ds is None:
+        print('Unable to open %s' % in_file)
+        sys.exit(1)
 
-if out_file is None:
-    Usage()
+    gcp_srs = ds.GetGCPProjection()
+    gcps = ds.GetGCPs()
 
-# ----------------------------------------------------------------------------
-# Open input file, and fetch GCPs.
-# ----------------------------------------------------------------------------
-ds = gdal.Open(in_file)
-if ds is None:
-    print('Unable to open %s' % in_file)
-    sys.exit(1)
+    ds = None
 
-gcp_srs = ds.GetGCPProjection()
-gcps = ds.GetGCPs()
+    if gcps is None or not gcps:
+        print('No GCPs on file %s!' % in_file)
+        sys.exit(1)
 
-ds = None
+    # ----------------------------------------------------------------------------
+    # Create output file, and layer.
+    # ----------------------------------------------------------------------------
 
-if gcps is None or not gcps:
-    print('No GCPs on file %s!' % in_file)
-    sys.exit(1)
+    drv = ogr.GetDriverByName(out_format)
+    if drv is None:
+        print('No driver named %s available.' % out_format)
+        sys.exit(1)
 
-# ----------------------------------------------------------------------------
-# Create output file, and layer.
-# ----------------------------------------------------------------------------
+    ds = drv.CreateDataSource(out_file)
 
-drv = ogr.GetDriverByName(out_format)
-if drv is None:
-    print('No driver named %s available.' % out_format)
-    sys.exit(1)
-
-ds = drv.CreateDataSource(out_file)
-
-if pixel_out == 0 and gcp_srs != "":
-    srs = osr.SpatialReference()
-    srs.ImportFromWkt(gcp_srs)
-else:
-    srs = None
-
-if pixel_out == 0:
-    geom_type = ogr.wkbPoint25D
-else:
-    geom_type = ogr.wkbPoint
-
-layer = ds.CreateLayer('gcps', srs, geom_type=geom_type)
-
-if pixel_out == 0:
-    fd = ogr.FieldDefn('Pixel', ogr.OFTReal)
-    layer.CreateField(fd)
-
-    fd = ogr.FieldDefn('Line', ogr.OFTReal)
-    layer.CreateField(fd)
-else:
-    fd = ogr.FieldDefn('X', ogr.OFTReal)
-    layer.CreateField(fd)
-
-    fd = ogr.FieldDefn('Y', ogr.OFTReal)
-    layer.CreateField(fd)
-
-    fd = ogr.FieldDefn('Z', ogr.OFTReal)
-    layer.CreateField(fd)
-
-fd = ogr.FieldDefn('Id', ogr.OFTString)
-layer.CreateField(fd)
-
-fd = ogr.FieldDefn('Info', ogr.OFTString)
-layer.CreateField(fd)
-
-# ----------------------------------------------------------------------------
-# Write GCPs.
-# ----------------------------------------------------------------------------
-
-for gcp in gcps:
-
-    feat = ogr.Feature(layer.GetLayerDefn())
+    if pixel_out == 0 and gcp_srs != "":
+        srs = osr.SpatialReference()
+        srs.ImportFromWkt(gcp_srs)
+    else:
+        srs = None
 
     if pixel_out == 0:
-        geom = ogr.Geometry(geom_type)
-        feat.SetField('Pixel', gcp.GCPPixel)
-        feat.SetField('Line', gcp.GCPLine)
-        geom.SetPoint(0, gcp.GCPX, gcp.GCPY, gcp.GCPZ)
+        geom_type = ogr.wkbPoint25D
     else:
-        geom = ogr.Geometry(geom_type)
-        feat.SetField('X', gcp.GCPX)
-        feat.SetField('Y', gcp.GCPY)
-        feat.SetField('Z', gcp.GCPZ)
-        geom.SetPoint(0, gcp.GCPPixel, gcp.GCPLine)
+        geom_type = ogr.wkbPoint
 
-    feat.SetField('Id', gcp.Id)
-    feat.SetField('Info', gcp.Info)
+    layer = ds.CreateLayer('gcps', srs, geom_type=geom_type)
 
-    feat.SetGeometryDirectly(geom)
-    layer.CreateFeature(feat)
+    if pixel_out == 0:
+        fd = ogr.FieldDefn('Pixel', ogr.OFTReal)
+        layer.CreateField(fd)
 
-feat = None
-ds.Destroy()
+        fd = ogr.FieldDefn('Line', ogr.OFTReal)
+        layer.CreateField(fd)
+    else:
+        fd = ogr.FieldDefn('X', ogr.OFTReal)
+        layer.CreateField(fd)
+
+        fd = ogr.FieldDefn('Y', ogr.OFTReal)
+        layer.CreateField(fd)
+
+        fd = ogr.FieldDefn('Z', ogr.OFTReal)
+        layer.CreateField(fd)
+
+    fd = ogr.FieldDefn('Id', ogr.OFTString)
+    layer.CreateField(fd)
+
+    fd = ogr.FieldDefn('Info', ogr.OFTString)
+    layer.CreateField(fd)
+
+    # ----------------------------------------------------------------------------
+    # Write GCPs.
+    # ----------------------------------------------------------------------------
+
+    for gcp in gcps:
+
+        feat = ogr.Feature(layer.GetLayerDefn())
+
+        if pixel_out == 0:
+            geom = ogr.Geometry(geom_type)
+            feat.SetField('Pixel', gcp.GCPPixel)
+            feat.SetField('Line', gcp.GCPLine)
+            geom.SetPoint(0, gcp.GCPX, gcp.GCPY, gcp.GCPZ)
+        else:
+            geom = ogr.Geometry(geom_type)
+            feat.SetField('X', gcp.GCPX)
+            feat.SetField('Y', gcp.GCPY)
+            feat.SetField('Z', gcp.GCPZ)
+            geom.SetPoint(0, gcp.GCPPixel, gcp.GCPLine)
+
+        feat.SetField('Id', gcp.Id)
+        feat.SetField('Info', gcp.Info)
+
+        feat.SetGeometryDirectly(geom)
+        layer.CreateFeature(feat)
+
+    feat = None
+    ds.Destroy()
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

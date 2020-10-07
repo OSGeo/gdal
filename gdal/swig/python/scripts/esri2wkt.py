@@ -33,21 +33,25 @@ import sys
 
 from osgeo import osr
 
+def main(argv):
+    if len(argv) < 2:
+        print('Usage: esri2wkt.py <esri .prj file>')
+        sys.exit(1)
 
-if len(sys.argv) < 2:
-    print('Usage: esri2wkt.py <esri .prj file>')
-    sys.exit(1)
+    prj_fd = open(argv[1])
+    prj_lines = prj_fd.readlines()
+    prj_fd.close()
 
-prj_fd = open(sys.argv[1])
-prj_lines = prj_fd.readlines()
-prj_fd.close()
+    for i, prj_line in enumerate(prj_lines):
+        prj_lines[i] = prj_line.rstrip()
 
-for i, prj_line in enumerate(prj_lines):
-    prj_lines[i] = prj_line.rstrip()
+    prj_srs = osr.SpatialReference()
+    err = prj_srs.ImportFromESRI(prj_lines)
+    if err != 0:
+        print('Error = %d' % err)
+    else:
+        print(prj_srs.ExportToPrettyWkt())
 
-prj_srs = osr.SpatialReference()
-err = prj_srs.ImportFromESRI(prj_lines)
-if err != 0:
-    print('Error = %d' % err)
-else:
-    print(prj_srs.ExportToPrettyWkt())
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

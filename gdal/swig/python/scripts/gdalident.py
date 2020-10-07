@@ -72,38 +72,39 @@ def ProcessTarget(target, recursive, report_failure, filelist=None):
                 subtarget = os.path.join(target, item)
                 ProcessTarget(subtarget, 1, report_failure, subfilelist)
 
-# =============================================================================
-# 	Mainline
-# =============================================================================
+
+def main(argv):
+    recursive = 0
+    report_failure = 0
+    files = []
+
+    gdal.AllRegister()
+    argv = gdal.GeneralCmdLineProcessor(argv)
+    if argv is None:
+        sys.exit(0)
+
+    # Parse command line arguments.
+    i = 1
+    while i < len(argv):
+        arg = argv[i]
+
+        if arg == '-r':
+            recursive = 1
+
+        elif arg == '-f':
+            report_failure = 1
+
+        else:
+            files.append(arg)
+
+        i = i + 1
+
+    if not files:
+        Usage()
+
+    for f in files:
+        ProcessTarget(f, recursive, report_failure)
 
 
-recursive = 0
-report_failure = 0
-files = []
-
-gdal.AllRegister()
-argv = gdal.GeneralCmdLineProcessor(sys.argv)
-if argv is None:
-    sys.exit(0)
-
-# Parse command line arguments.
-i = 1
-while i < len(argv):
-    arg = argv[i]
-
-    if arg == '-r':
-        recursive = 1
-
-    elif arg == '-f':
-        report_failure = 1
-
-    else:
-        files.append(arg)
-
-    i = i + 1
-
-if not files:
-    Usage()
-
-for f in files:
-    ProcessTarget(f, recursive, report_failure)
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

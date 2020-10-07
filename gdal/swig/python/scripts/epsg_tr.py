@@ -116,13 +116,11 @@ def trHandleCode(set_srid, srs, auth_name, code, deprecated, output_format):
 
 # =============================================================================
 
-
-if __name__ == '__main__':
-
+def main(argv):
     output_format = '-pretty_wkt'
     authority = None
 
-    argv = gdal.GeneralCmdLineProcessor(sys.argv)
+    argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         sys.exit(0)
 
@@ -153,7 +151,7 @@ if __name__ == '__main__':
         print('BEGIN;')
 
     # loop over all codes to generate output
-    
+
     if authority:
         authorities = [ authority ]
     elif output_format == '-postgis' :
@@ -220,3 +218,8 @@ if __name__ == '__main__':
     if output_format == '-postgis':
         print('COMMIT;')
         print('VACUUM ANALYZE spatial_ref_sys;')
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
+

@@ -40,8 +40,6 @@ from osgeo import gdal
 progress = gdal.TermProgress_nocb
 
 __version__ = '$id$'[5:-1]
-verbose = 0
-quiet = 0
 
 
 def DoesDriverHandleExtension(drv, ext):
@@ -96,7 +94,7 @@ def GetOutputDriverFor(filename):
 # =============================================================================
 def raster_copy(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
                 t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
-                nodata=None):
+                nodata=None, verbose=0):
 
     if verbose != 0:
         print('Copy %d,%d,%d,%d to %d,%d,%d,%d.'
@@ -271,7 +269,7 @@ class file_info(object):
         print('UL:(%f,%f)   LR:(%f,%f)'
               % (self.ulx, self.uly, self.lrx, self.lry))
 
-    def copy_into(self, t_fh, s_band=1, t_band=1, nodata_arg=None):
+    def copy_into(self, t_fh, s_band=1, t_band=1, nodata_arg=None, verbose=0):
         """
         Copy this files image into target file.
 
@@ -340,7 +338,7 @@ class file_info(object):
 
         return raster_copy(s_fh, sw_xoff, sw_yoff, sw_xsize, sw_ysize, s_band,
                            t_fh, tw_xoff, tw_yoff, tw_xsize, tw_ysize, t_band,
-                           nodata_arg)
+                           nodata_arg, verbose)
 
 
 # =============================================================================
@@ -353,15 +351,8 @@ def Usage():
     print('                     [--help-general]')
     print('')
 
-# =============================================================================
-#
-# Program mainline.
-#
-
 
 def main(argv=None):
-
-    global verbose, quiet
     verbose = 0
     quiet = 0
     names = []
@@ -383,7 +374,7 @@ def main(argv=None):
 
     gdal.AllRegister()
     if argv is None:
-        argv = sys.argv
+        argv = argv
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         sys.exit(0)
@@ -593,10 +584,10 @@ def main(argv=None):
 
         if separate == 0:
             for band in range(1, bands + 1):
-                fi.copy_into(t_fh, band, band, nodata)
+                fi.copy_into(t_fh, band, band, nodata, verbose)
         else:
             for band in range(1, fi.bands + 1):
-                fi.copy_into(t_fh, band, t_band, nodata)
+                fi.copy_into(t_fh, band, t_band, nodata, verbose)
                 t_band = t_band + 1
 
         fi_processed = fi_processed + 1
@@ -608,4 +599,4 @@ def main(argv=None):
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    sys.exit(main(sys.argv))

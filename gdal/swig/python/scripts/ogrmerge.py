@@ -609,8 +609,7 @@ def process(argv, progress=None, progress_arg=None):
 # Entry point
 
 
-def main():
-    argv = sys.argv
+def main(argv):
     if sys.version_info < (3,0,0):
         argv = [fn.decode(sys.getfilesystemencoding()) for fn in argv]
     argv = ogr.GeneralCmdLineProcessor(argv)
@@ -620,4 +619,4 @@ def main():
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    sys.exit(main(sys.argv))

@@ -869,7 +869,7 @@ def setup_input_srs(input_dataset, options):
 
     if input_srs is not None:
         input_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-    
+
     return input_srs, input_srs_wkt
 
 
@@ -3193,18 +3193,18 @@ def multi_threaded_tiling(input_file, output_folder, options):
     shutil.rmtree(os.path.dirname(conf.src_file))
 
 
-def main():
+def main(argv):
     # TODO: gbataille - use mkdtemp to work in a temp directory
     # TODO: gbataille - debug intermediate tiles.vrt not produced anymore?
     # TODO: gbataille - Refactor generate overview tiles to not depend on self variables
 
     # For multiprocessing, we need to propagate the configuration options to
     # the environment, so that forked processes can inherit them.
-    for i in range(len(sys.argv)):
-        if sys.argv[i] == '--config' and i + 2 < len(sys.argv):
-            os.environ[sys.argv[i+1]] = sys.argv[i+2]
+    for i in range(len(argv)):
+        if argv[i] == '--config' and i + 2 < len(argv):
+            os.environ[argv[i+1]] = argv[i+2]
 
-    argv = gdal.GeneralCmdLineProcessor(sys.argv)
+    argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return
     input_file, output_folder, options = process_args(argv[1:])
@@ -3216,7 +3216,7 @@ def main():
         multi_threaded_tiling(input_file, output_folder, options)
 
 
-if __name__ == '__main__':
-    main()
-
 # vim: set tabstop=4 shiftwidth=4 expandtab:
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

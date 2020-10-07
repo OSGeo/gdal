@@ -283,7 +283,7 @@ def doit(opts, args):
         ################################################################
         # start looping through blocks of data
         ################################################################
-        
+
         # store these numbers in variables that may change later
         nXValid = myBlockSize[0]
         nYValid = myBlockSize[1]
@@ -446,14 +446,14 @@ def add_alpha_args(parser, argv):
             pass
 
 
-def main():
+def main(argv):
     usage = """usage: %prog --calc=expression --outfile=out_filename [-A filename]
                     [--A_band=n] [-B...-Z filename] [other_options]"""
     parser = OptionParser(usage)
 
     # define options
     parser.add_option("--calc", dest="calc", action="append", help="calculation in gdalnumeric syntax using +-/* or any numpy array functions (i.e. log10()). May appear multiple times to produce a multi-band file", metavar="expression")
-    add_alpha_args(parser, sys.argv)
+    add_alpha_args(parser, argv)
 
     parser.add_option("--outfile", dest="outF", help="output file to generate or fill", metavar="filename")
     parser.add_option("--NoDataValue", dest="NoDataValue", type=float, help="output nodata value (default datatype specific value)", metavar="value")
@@ -470,7 +470,7 @@ def main():
     parser.add_option("--quiet", dest="quiet", action="store_true", help="suppress progress messages")
     parser.add_option("--optfile", dest="optfile", metavar="optfile", help="Read the named file and substitute the contents into the command line options list.")
 
-    (opts, args) = parser.parse_args()
+    (opts, args) = parser.parse_args(argv[1:])
 
     if not hasattr(opts, "input_files"):
         opts.input_files = {}
@@ -490,7 +490,7 @@ def main():
         opts.input_files = input_files
         args = args + ofargs
 
-    if len(sys.argv) == 1:
+    if len(argv) == 1:
         parser.print_help()
         sys.exit(1)
     elif not opts.calc:
@@ -509,5 +509,5 @@ def main():
             sys.exit(1)
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

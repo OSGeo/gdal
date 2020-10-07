@@ -97,136 +97,137 @@ def GetOutputDriverFor(filename):
         print("Several drivers matching %s extension. Using %s" % (ext if ext else '', drv_list[0]))
     return drv_list[0]
 
-# =============================================================================
-# 	Mainline
-# =============================================================================
 
+def main(argv):
+    frmt = None
+    src_filename = None
+    dst_filename = None
+    out_bands = 3
+    band_number = 1
 
-frmt = None
-src_filename = None
-dst_filename = None
-out_bands = 3
-band_number = 1
+    gdal.AllRegister()
+    argv = gdal.GeneralCmdLineProcessor(argv)
+    if argv is None:
+        sys.exit(0)
 
-gdal.AllRegister()
-argv = gdal.GeneralCmdLineProcessor(sys.argv)
-if argv is None:
-    sys.exit(0)
+    # Parse command line arguments.
+    i = 1
+    while i < len(argv):
+        arg = argv[i]
 
-# Parse command line arguments.
-i = 1
-while i < len(argv):
-    arg = argv[i]
+        if arg == '-of' or arg == '-f':
+            i = i + 1
+            frmt = argv[i]
 
-    if arg == '-of' or arg == '-f':
+        elif arg == '-b':
+            i = i + 1
+            band_number = int(argv[i])
+
+        elif arg == '-rgba':
+            out_bands = 4
+
+        elif src_filename is None:
+            src_filename = argv[i]
+
+        elif dst_filename is None:
+            dst_filename = argv[i]
+
+        else:
+            Usage()
+
         i = i + 1
-        frmt = argv[i]
 
-    elif arg == '-b':
-        i = i + 1
-        band_number = int(argv[i])
-
-    elif arg == '-rgba':
-        out_bands = 4
-
-    elif src_filename is None:
-        src_filename = argv[i]
-
-    elif dst_filename is None:
-        dst_filename = argv[i]
-
-    else:
+    if dst_filename is None:
         Usage()
 
-    i = i + 1
+    # ----------------------------------------------------------------------------
+    # Open source file
 
-if dst_filename is None:
-    Usage()
+    src_ds = gdal.Open(src_filename)
+    if src_ds is None:
+        print('Unable to open %s ' % src_filename)
+        sys.exit(1)
 
-# ----------------------------------------------------------------------------
-# Open source file
+    src_band = src_ds.GetRasterBand(band_number)
 
-src_ds = gdal.Open(src_filename)
-if src_ds is None:
-    print('Unable to open %s ' % src_filename)
-    sys.exit(1)
+    # ----------------------------------------------------------------------------
+    # Ensure we recognise the driver.
 
-src_band = src_ds.GetRasterBand(band_number)
+    if frmt is None:
+        frmt = GetOutputDriverFor(dst_filename)
 
-# ----------------------------------------------------------------------------
-# Ensure we recognise the driver.
+    dst_driver = gdal.GetDriverByName(frmt)
+    if dst_driver is None:
+        print('"%s" driver not registered.' % frmt)
+        sys.exit(1)
 
-if frmt is None:
-    frmt = GetOutputDriverFor(dst_filename)
+    # ----------------------------------------------------------------------------
+    # Build color table.
 
-dst_driver = gdal.GetDriverByName(frmt)
-if dst_driver is None:
-    print('"%s" driver not registered.' % frmt)
-    sys.exit(1)
+    ct = src_band.GetRasterColorTable()
 
-# ----------------------------------------------------------------------------
-# Build color table.
+    ct_size = ct.GetCount()
+    lookup = [Numeric.arrayrange(ct_size),
+              Numeric.arrayrange(ct_size),
+              Numeric.arrayrange(ct_size),
+              Numeric.ones(ct_size) * 255]
 
-ct = src_band.GetRasterColorTable()
+    if ct is not None:
+        for i in range(ct_size):
+            entry = ct.GetColorEntry(i)
+            for c in range(4):
+                lookup[c][i] = entry[c]
 
-ct_size = ct.GetCount()
-lookup = [Numeric.arrayrange(ct_size),
-          Numeric.arrayrange(ct_size),
-          Numeric.arrayrange(ct_size),
-          Numeric.ones(ct_size) * 255]
+    # ----------------------------------------------------------------------------
+    # Create the working file.
 
-if ct is not None:
-    for i in range(ct_size):
-        entry = ct.GetColorEntry(i)
-        for c in range(4):
-            lookup[c][i] = entry[c]
+    if frmt == 'GTiff':
+        tif_filename = dst_filename
+    else:
+        tif_filename = 'temp.tif'
 
-# ----------------------------------------------------------------------------
-# Create the working file.
+    gtiff_driver = gdal.GetDriverByName('GTiff')
 
-if frmt == 'GTiff':
-    tif_filename = dst_filename
-else:
-    tif_filename = 'temp.tif'
-
-gtiff_driver = gdal.GetDriverByName('GTiff')
-
-tif_ds = gtiff_driver.Create(tif_filename,
-                             src_ds.RasterXSize, src_ds.RasterYSize, out_bands)
+    tif_ds = gtiff_driver.Create(tif_filename,
+                                 src_ds.RasterXSize, src_ds.RasterYSize, out_bands)
 
 
-# ----------------------------------------------------------------------------
-# We should copy projection information and so forth at this point.
+    # ----------------------------------------------------------------------------
+    # We should copy projection information and so forth at this point.
 
-tif_ds.SetProjection(src_ds.GetProjection())
-tif_ds.SetGeoTransform(src_ds.GetGeoTransform())
-if src_ds.GetGCPCount() > 0:
-    tif_ds.SetGCPs(src_ds.GetGCPs(), src_ds.GetGCPProjection())
+    tif_ds.SetProjection(src_ds.GetProjection())
+    tif_ds.SetGeoTransform(src_ds.GetGeoTransform())
+    if src_ds.GetGCPCount() > 0:
+        tif_ds.SetGCPs(src_ds.GetGCPs(), src_ds.GetGCPProjection())
 
-# ----------------------------------------------------------------------------
-# Do the processing one scanline at a time.
+    # ----------------------------------------------------------------------------
+    # Do the processing one scanline at a time.
 
-progress(0.0)
-for iY in range(src_ds.RasterYSize):
-    src_data = src_band.ReadAsArray(0, iY, src_ds.RasterXSize, 1)
+    progress(0.0)
+    for iY in range(src_ds.RasterYSize):
+        src_data = src_band.ReadAsArray(0, iY, src_ds.RasterXSize, 1)
 
-    for iBand in range(out_bands):
-        band_lookup = lookup[iBand]
+        for iBand in range(out_bands):
+            band_lookup = lookup[iBand]
 
-        dst_data = Numeric.take(band_lookup, src_data)
-        tif_ds.GetRasterBand(iBand + 1).WriteArray(dst_data, 0, iY)
+            dst_data = Numeric.take(band_lookup, src_data)
+            tif_ds.GetRasterBand(iBand + 1).WriteArray(dst_data, 0, iY)
 
-    progress((iY + 1.0) / src_ds.RasterYSize)
+        progress((iY + 1.0) / src_ds.RasterYSize)
 
 
-tif_ds = None
-
-# ----------------------------------------------------------------------------
-# Translate intermediate file to output format if desired format is not TIFF.
-
-if tif_filename != dst_filename:
-    tif_ds = gdal.Open(tif_filename)
-    dst_driver.CreateCopy(dst_filename, tif_ds)
     tif_ds = None
 
-    gtiff_driver.Delete(tif_filename)
+    # ----------------------------------------------------------------------------
+    # Translate intermediate file to output format if desired format is not TIFF.
+
+    if tif_filename != dst_filename:
+        tif_ds = gdal.Open(tif_filename)
+        dst_driver.CreateCopy(dst_filename, tif_ds)
+        tif_ds = None
+
+        gtiff_driver.Delete(tif_filename)
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
