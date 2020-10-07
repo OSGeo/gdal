@@ -514,6 +514,7 @@ constexpr TupleEnvVarOptionName asAssocEnvVarOptionName[] =
     { "GDAL_HTTP_NETRC", "NETRC" },
     { "GDAL_HTTP_MAX_RETRY", "MAX_RETRY" },
     { "GDAL_HTTP_RETRY_DELAY", "RETRY_DELAY" },
+    { "GDAL_CURL_CA_BUNDLE", "CAINFO" },
     { "CURL_CA_BUNDLE", "CAINFO" },
     { "SSL_CERT_FILE", "CAINFO" },
     { "GDAL_HTTP_HEADER_FILE", "HEADER_FILE" },
@@ -2122,6 +2123,9 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
 
     // Custom path to SSL certificates.
     const char* pszCAInfo = CSLFetchNameValue( papszOptions, "CAINFO" );
+    if( pszCAInfo == nullptr )
+        // Name of GDAL environment variable for the CA Bundle path
+        pszCAInfo = CPLGetConfigOption("GDAL_CURL_CA_BUNDLE", nullptr);
     if( pszCAInfo == nullptr )
         // Name of environment variable used by the curl binary
         pszCAInfo = CPLGetConfigOption("CURL_CA_BUNDLE", nullptr);
