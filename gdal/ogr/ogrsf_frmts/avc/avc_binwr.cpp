@@ -1516,7 +1516,7 @@ int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
      * fixed by forcing a VSIFSeek() before the first fwrite()... we've
      * added it below.
      *----------------------------------------------------------------*/
-    FILE *fp;
+    VSILFILE *fp;
     if ((fp = VSIFOpenL(pszArcDirFile, "r")) != nullptr)
     {
         char buf[380];
