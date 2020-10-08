@@ -472,7 +472,6 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
     const char *pszCompress = papszOptions ?
         CSLFetchNameValue(papszOptions, "COMPRESS") :
         CPLGetConfigOption( "COMPRESS_OVERVIEW", nullptr );
-    fprintf(stderr,"GTIFFBuildOverviewsEx COMPRESSION: %s\n", CSLFetchNameValue(papszOptions, "COMPRESS"));
 
     if( pszCompress != nullptr && pszCompress[0] != '\0' )
     {

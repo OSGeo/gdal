@@ -620,7 +620,6 @@ GDALDefaultOverviews::BuildOverviews(
     GDALProgressFunc pfnProgress, void * pProgressData)
 
 {
-    fprintf(stderr,"GDALDefaultOverviews::BuildOverviews called\n");
     if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 

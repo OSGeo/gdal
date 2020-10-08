@@ -3086,12 +3086,12 @@ def test_tiff_write_89():
     gdaltest.tiff_drv.Delete('tmp/tiff_write_89.tif')
 
 ###############################################################################
-# Test JPEG_QUALITY propagation while creating (internal) overviews
+# Test JPEG_QUALITY propagation/override while creating (internal) overviews
 
 
 def test_tiff_write_90():
     md = gdaltest.tiff_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('WEBP') == -1:
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
     checksums = {}
