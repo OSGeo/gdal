@@ -3264,7 +3264,17 @@ OGRErr OGRSpatialReference::CopyGeogCSFrom(
     {
         auto datum = proj_crs_get_datum(
             d->getPROJContext(), geodCRS);
-        CPLAssert(datum);
+#if PROJ_VERSION_MAJOR > 7 || (PROJ_VERSION_MAJOR == 7 && PROJ_VERSION_MINOR >= 2)
+        if( datum == nullptr )
+        {
+            datum = proj_crs_get_datum_ensemble(d->getPROJContext(), geodCRS);
+        }
+#endif
+        if( datum == nullptr )
+        {
+            proj_destroy(geodCRS);
+            return OGRERR_FAILURE;
+        }
 
         const char* pszUnitName = nullptr;
         double unitConvFactor = GetLinearUnits(&pszUnitName);
@@ -4559,7 +4569,17 @@ OGRErr OGRSpatialReference::SetGeocCS( const char * pszName )
     {
         auto datum = proj_crs_get_datum(
             d->getPROJContext(), d->m_pj_crs);
-        CPLAssert(datum);
+#if PROJ_VERSION_MAJOR > 7 || (PROJ_VERSION_MAJOR == 7 && PROJ_VERSION_MINOR >= 2)
+        if( datum == nullptr )
+        {
+            datum = proj_crs_get_datum_ensemble(d->getPROJContext(), d->m_pj_crs);
+        }
+#endif
+        if( datum == nullptr )
+        {
+            d->undoDemoteFromBoundCRS();
+            return OGRERR_FAILURE;
+        }
 
         auto pj_crs = proj_create_geocentric_crs_from_datum(
             d->getPROJContext(),
@@ -7985,6 +8005,12 @@ bool OGRSpatialReference::StripTOWGS84IfKnownDatum()
     }
 
     auto datum = proj_crs_get_datum(ctxt, baseCRS);
+#if PROJ_VERSION_MAJOR > 7 || (PROJ_VERSION_MAJOR == 7 && PROJ_VERSION_MINOR >= 2)
+    if( datum == nullptr )
+    {
+        datum = proj_crs_get_datum_ensemble(ctxt, baseCRS);
+    }
+#endif
     if( !datum )
     {
         proj_destroy(baseCRS);
@@ -8450,6 +8476,12 @@ OGRSpatialReference *OGRSpatialReference::CloneGeogCS() const
             {
                 auto datum = proj_crs_get_datum(
                     d->getPROJContext(), geodCRS);
+#if PROJ_VERSION_MAJOR > 7 || (PROJ_VERSION_MAJOR == 7 && PROJ_VERSION_MINOR >= 2)
+                if( datum == nullptr )
+                {
+                    datum = proj_crs_get_datum_ensemble(d->getPROJContext(), geodCRS);
+                }
+#endif
                 if( datum )
                 {
                     auto cs = proj_create_ellipsoidal_2D_cs(
