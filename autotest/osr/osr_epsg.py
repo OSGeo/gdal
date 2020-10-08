@@ -386,7 +386,7 @@ def test_osr_epsg_area_of_use():
     assert area.south_lat_degree == 41.15
     assert area.east_lon_degree == 10.38
     assert area.north_lat_degree == 51.56
-    assert 'France 'in area.name
+    assert 'France' in area.name
 
 ###############################################################################
 
