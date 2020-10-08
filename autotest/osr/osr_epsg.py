@@ -386,7 +386,7 @@ def test_osr_epsg_area_of_use():
     assert area.south_lat_degree == 41.15
     assert area.east_lon_degree == 10.38
     assert area.north_lat_degree == 51.56
-    assert area.name == 'France'
+    assert 'France 'in area.name
 
 ###############################################################################
 
@@ -405,7 +405,7 @@ def test_osr_GetCRSInfoListFromDatabase():
             assert record.south_lat_degree == 41.15
             assert record.east_lon_degree == 10.38
             assert record.north_lat_degree == 51.56
-            assert record.area_name == 'France'
+            assert 'France' in record.area_name
             assert record.projection_method == 'Lambert Conic Conformal (2SP)'
             found = True
     assert found
