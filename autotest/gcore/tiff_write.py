@@ -3098,7 +3098,7 @@ def test_tiff_write_90():
     qualities = [90,75,75]
     for i, quality in enumerate(qualities):
         src_ds = gdal.Open('../gdrivers/data/utm.tif')
-        fname = 'tmp/tiff_write_91_%d' % i
+        fname = 'tmp/tiff_write_90_%d' % i
 
         ds = gdal.GetDriverByName('GTiff').Create(fname, 1024, 1024, 3,
                                                   options=['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEG_QUALITY=%d' % quality])
@@ -3147,7 +3147,7 @@ def test_tiff_write_90_webp():
     qualities = [90,75,75]
     for i, quality in enumerate(qualities):
         src_ds = gdal.Open('../gdrivers/data/utm.tif')
-        fname = 'tmp/tiff_write_91_webp_%d' % i
+        fname = 'tmp/tiff_write_90_webp_%d' % i
 
         ds = gdal.GetDriverByName('GTiff').Create(fname, 1024, 1024, 3,
                                                   options=['COMPRESS=WEBP', 'WEBP_LEVEL=%d' % quality])
@@ -3158,7 +3158,7 @@ def test_tiff_write_90_webp():
         ds.GetRasterBand(3).WriteRaster(0, 0, 1024, 1024, data)
         if i == 2:
             quality = 30
-        with gdaltest.config_option('WEBP_LEVEL_OVERVIEW', '%d'%quality):
+        with gdaltest.config_options({'WEBP_LEVEL_OVERVIEW':'%d'%quality,'GDAL_NUM_THREADS':"2"}):
             ds.BuildOverviews('AVERAGE', overviewlist=[2, 4])
 
         src_ds = None
@@ -3258,7 +3258,7 @@ def test_tiff_write_91_webp():
         src_ds = None
 
         ds = gdal.Open(fname, gdal.GA_Update)
-        with gdaltest.config_option('WEBP_LEVEL_OVERVIEW', '%d'%quality):
+        with gdaltest.config_options({'WEBP_LEVEL_OVERVIEW':'%d'%quality,'GDAL_NUM_THREADS':"2"}):
             ds.BuildOverviews('AVERAGE', overviewlist=[2, 4])
 
         ds = None
