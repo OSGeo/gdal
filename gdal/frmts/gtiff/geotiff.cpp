@@ -10098,6 +10098,9 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
         return CE_Failure;
     }
 
+    // Do that now that m_nCompression is set
+    poODS->RestoreVolatileParameters( poODS->m_hTIFF );
+
     ++m_nOverviewCount;
     m_papoOverviewDS = static_cast<GTiffDataset **>(
         CPLRealloc( m_papoOverviewDS,
