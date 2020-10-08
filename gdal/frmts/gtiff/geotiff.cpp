@@ -8931,6 +8931,13 @@ void GTiffDataset::ThreadCompressionFunc( void* pData )
     TIFFSetField(hTIFFTmp, TIFFTAG_PLANARCONFIG, poDS->m_nPlanarConfig);
     if( psJob->nPredictor != PREDICTOR_NONE )
         TIFFSetField(hTIFFTmp, TIFFTAG_PREDICTOR, psJob->nPredictor);
+#if HAVE_LERC
+    if( poDS->m_nCompression == COMPRESSION_LERC )
+    {
+        TIFFSetField(hTIFFTmp, TIFFTAG_LERC_PARAMETERS, 2,
+                    poDS->m_anLercAddCompressionAndVersion);
+    }
+#endif
 
     TIFFSetField(hTIFFTmp, TIFFTAG_PHOTOMETRIC, poDS->m_nPhotometric);
     TIFFSetField(hTIFFTmp, TIFFTAG_SAMPLEFORMAT, poDS->m_nSampleFormat);
@@ -12087,8 +12094,6 @@ void GTiffDataset::RestoreVolatileParameters(TIFF* hTIFF)
         if( m_nCompression == COMPRESSION_LERC )
         {
             TIFFSetField(hTIFF, TIFFTAG_LERC_MAXZERROR, m_dfMaxZError);
-            TIFFSetField(hTIFF, TIFFTAG_LERC_PARAMETERS, 2,
-                         m_anLercAddCompressionAndVersion);
         }
 #endif
         if( m_nWebPLevel > 0 && m_nCompression == COMPRESSION_WEBP)
