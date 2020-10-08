@@ -344,7 +344,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                      GDALProgressFunc callback = NULL,
                      void* callback_data=NULL) {
     // This check is a bit too late. resample_alg should already have been
-    // validated, so we are a bit in undefined behaviour land, but compilers
+    // validated, so we are a bit in undefined behavior land, but compilers
     // should hopefully do the right thing
     if( static_cast<int>(resample_alg) < 0 ||
         static_cast<int>(resample_alg) > static_cast<int>(GRIORA_LAST) )
@@ -662,7 +662,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
                     void* callback_data=NULL )
 {
     // This check is a bit too late. resample_alg should already have been
-    // validated, so we are a bit in undefined behaviour land, but compilers
+    // validated, so we are a bit in undefined behavior land, but compilers
     // should hopefully do the right thing
     if( static_cast<int>(resample_alg) < 0 ||
         static_cast<int>(resample_alg) > static_cast<int>(GRIORA_LAST) )
@@ -1126,6 +1126,32 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
 
       from osgeo import gdalnumeric
       return gdalnumeric.MDArrayWriteArray(self, array, array_start_idx, array_step)
+
+  def ReadAsMaskedArray(self,
+                  array_start_idx = None,
+                  count = None,
+                  array_step = None):
+      """ Return a numpy masked array of ReadAsArray() with GetMask() """
+      import numpy
+      mask = self.GetMask()
+      if mask is not None:
+          array = self.ReadAsArray(array_start_idx, count, array_step)
+          mask_array = mask.ReadAsArray(array_start_idx, count, array_step)
+          bool_array = ~mask_array.astype(numpy.bool)
+          return numpy.ma.array(array, mask=bool_array)
+      else:
+          return numpy.ma.array(self.ReadAsArray(array_start_idx, count, array_step), mask=None)
+
+  def GetShape(self):
+    """ Return the shape of the array """
+    if not self.GetDimensionCount():
+      return None
+    shp = ()
+    for dim in self.GetDimensions():
+      shp += (dim.GetSize(),)
+    return shp
+
+  shape = property(fget=GetShape, doc='Returns the shape of the array.')
 
 %}
 }

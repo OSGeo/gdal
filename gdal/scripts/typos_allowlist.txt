@@ -148,3 +148,5 @@ float32*gridwidth offset in arcseconds (or in metres for geoids)
    FIRMA_EIERType.setElement(2, "adresse", OFTString);
 .. include:: options/ot.rst
     fl = gdal.ReadDir('/vsicurl/http://ortho.linz.govt.nz/tifs/2005_06')
+        nGeometryElementDepth == 0 && EQUAL("objecten:geometrie", pszName) )
+  Generate XYZ tiles (OSM Slippy Map standard) instead of TMS.

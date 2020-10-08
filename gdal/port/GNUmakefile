@@ -31,7 +31,7 @@ OBJ =	cpl_conv.o cpl_error.o cpl_string.o cplgetsymbol.o cplstringlist.o \
 	cpl_vsil_swift.o cpl_vsil_webhdfs.o \
 	cpl_vsil_cache.o cpl_xml_validate.o cpl_spawn.o \
 	cpl_google_oauth2.o cpl_progress.o cpl_virtualmem.o cpl_worker_thread_pool.o \
-	cpl_sha1.o cpl_aws.o cpl_vsi_error.o cpl_cpu_features.o \
+	cpl_sha1.o cpl_aws.o cpl_aws_win32.cpp cpl_vsi_error.o cpl_cpu_features.o \
 	cpl_google_cloud.o cpl_azure.o cpl_alibaba_oss.o cpl_json_streaming_parser.o \
 	cpl_json.o cpl_md5.o cpl_swift.o cpl_vsil_plugin.o \
 	cpl_vsil_hdfs.o cpl_userfaultfd.o cpl_json_streaming_writer.o \

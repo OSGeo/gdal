@@ -139,7 +139,7 @@ char **VSIReadDirEx( const char *pszPath, int nMaxFiles )
  * Filenames are returned in UTF-8 encoding.
  * Most implementations will return NULL, and a subsequent ReadDir will
  * list all files available in the file's directory. This function will be
- * overriden by VSI FilesystemHandlers that wish to force e.g. an empty list
+ * overridden by VSI FilesystemHandlers that wish to force e.g. an empty list
  * to avoid opening non-existant files on slow filesystems. The return value shall be destroyed with CSLDestroy()
  * @since GDAL 3.2
  */

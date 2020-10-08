@@ -2699,7 +2699,7 @@ def test_nitf_78():
     float_data = r"\0\0\0\0"
     bit_mask = r"\0\0\0\0"
 
-    tre_data = "FILE_TRE=BANDSB=00001RADIANCE                S" + float_data*2 + \
+    tre_data = "TRE=BANDSB=00001RADIANCE                S" + float_data*2 + \
                 "0030.00M0030.00M-------M-------M                                                " + \
                 bit_mask + "DETECTOR                " + float_data
 
@@ -2713,7 +2713,7 @@ def test_nitf_78():
     gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_78.ntf')
 
     expected_data = """<tres>
-  <tre name="BANDSB" location="file">
+  <tre name="BANDSB" location="image">
     <field name="COUNT" value="00001" />
     <field name="RADIOMETRIC_QUANTITY" value="RADIANCE" />
     <field name="RADIOMETRIC_QUANTITY_UNIT" value="S" />
@@ -2732,6 +2732,260 @@ def test_nitf_78():
     <repeated name="BANDS" number="1">
       <group index="0" />
     </repeated>
+  </tre>
+</tres>
+"""
+    assert data == expected_data
+
+###############################################################################
+# Test parsing ACCHZB TRE (STDI-0002-1-v5.0 Appendix P)
+
+def test_nitf_79():
+    tre_data = "TRE=ACCHZB=01M  00129M  00129004+044.4130499724+33.69234401034+044.4945572008" \
+               "+33.67855217830+044.1731373448+32.79106350687+044.2538103407+32.77733592314"
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_79.ntf', 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_79.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_79.ntf')
+
+    expected_data = """<tres>
+  <tre name="ACCHZB" location="image">
+    <field name="NUM_ACHZ" value="01" />
+    <repeated number="1">
+      <group index="0">
+        <field name="UNIAAH" value="M" />
+        <field name="AAH" value="00129" />
+        <field name="UNIAPH" value="M" />
+        <field name="APH" value="00129" />
+        <field name="NUM_PTS" value="004" />
+        <repeated number="4">
+          <group index="0">
+            <field name="LON" value="+044.4130499724" />
+            <field name="LAT" value="+33.69234401034" />
+          </group>
+          <group index="1">
+            <field name="LON" value="+044.4945572008" />
+            <field name="LAT" value="+33.67855217830" />
+          </group>
+          <group index="2">
+            <field name="LON" value="+044.1731373448" />
+            <field name="LAT" value="+32.79106350687" />
+          </group>
+          <group index="3">
+            <field name="LON" value="+044.2538103407" />
+            <field name="LAT" value="+32.77733592314" />
+          </group>
+        </repeated>
+      </group>
+    </repeated>
+  </tre>
+</tres>
+"""
+    assert data == expected_data
+
+###############################################################################
+# Test parsing ACCVTB TRE (STDI-0002-1-v5.0 Appendix P)
+
+def test_nitf_80():
+    tre_data = "TRE=ACCVTB=01M  00095M  00095004+044.4130499724+33.69234401034+044.4945572008" \
+               "+33.67855217830+044.1731373448+32.79106350687+044.2538103407+32.77733592314"
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_80.ntf', 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_80.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_80.ntf')
+
+    expected_data = """<tres>
+  <tre name="ACCVTB" location="image">
+    <field name="NUM_ACVT" value="01" />
+    <repeated number="1">
+      <group index="0">
+        <field name="UNIAAV" value="M" />
+        <field name="AAV" value="00095" />
+        <field name="UNIAPV" value="M" />
+        <field name="APV" value="00095" />
+        <field name="NUM_PTS" value="004" />
+        <repeated number="4">
+          <group index="0">
+            <field name="LON" value="+044.4130499724" />
+            <field name="LAT" value="+33.69234401034" />
+          </group>
+          <group index="1">
+            <field name="LON" value="+044.4945572008" />
+            <field name="LAT" value="+33.67855217830" />
+          </group>
+          <group index="2">
+            <field name="LON" value="+044.1731373448" />
+            <field name="LAT" value="+32.79106350687" />
+          </group>
+          <group index="3">
+            <field name="LON" value="+044.2538103407" />
+            <field name="LAT" value="+32.77733592314" />
+          </group>
+        </repeated>
+      </group>
+    </repeated>
+  </tre>
+</tres>
+"""
+    assert data == expected_data
+
+###############################################################################
+# Test parsing MSTGTA TRE (STDI-0002-1-v5.0 App E)
+
+def test_nitf_81():
+    tre_data = "TRE=MSTGTA=012340123456789AB0123456789ABCDE0120123456789AB0123456789AB000123401234560123450TGT_LOC=             "
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_81.ntf', 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_81.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_81.ntf')
+
+    expected_data = """<tres>
+  <tre name="MSTGTA" location="image">
+    <field name="TGT_NUM" value="01234" />
+    <field name="TGT_ID" value="0123456789AB" />
+    <field name="TGT_BE" value="0123456789ABCDE" />
+    <field name="TGT_PRI" value="012" />
+    <field name="TGT_REQ" value="0123456789AB" />
+    <field name="TGT_LTIOV" value="0123456789AB" />
+    <field name="TGT_TYPE" value="0" />
+    <field name="TGT_COLL" value="0" />
+    <field name="TGT_CAT" value="01234" />
+    <field name="TGT_UTC" value="0123456" />
+    <field name="TGT_ELEV" value="012345" />
+    <field name="TGT_ELEV_UNIT" value="0" />
+    <field name="TGT_LOC" value="TGT_LOC=" />
+  </tre>
+</tres>
+"""
+    assert data == expected_data
+
+###############################################################################
+# Test parsing PIATGB TRE (STDI-0002-1-v5.0 App C)
+
+def test_nitf_82():
+    tre_data = "TRE=PIATGB=0123456789ABCDE0123456789ABCDE01012340123456789ABCDE012" \
+               "TGTNAME=                              012+01.234567-012.345678"
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_82.ntf', 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_82.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_82.ntf')
+
+    expected_data = """<tres>
+  <tre name="PIATGB" location="image">
+    <field name="TGTUTM" value="0123456789ABCDE" />
+    <field name="PIATGAID" value="0123456789ABCDE" />
+    <field name="PIACTRY" value="01" />
+    <field name="PIACAT" value="01234" />
+    <field name="TGTGEO" value="0123456789ABCDE" />
+    <field name="DATUM" value="012" />
+    <field name="TGTNAME" value="TGTNAME=" />
+    <field name="PERCOVER" value="012" />
+    <field name="TGTLAT" value="+01.234567" />
+    <field name="TGTLON" value="-012.345678" />
+  </tre>
+</tres>
+"""
+    assert data == expected_data
+
+###############################################################################
+# Test parsing PIXQLA TRE (STDI-0002-1-v5.0 App AA)
+
+def test_nitf_83():
+    tre_data = "TRE=PIXQLA=00100200031Dead                                    " \
+               "Saturated                               Bad                                     "
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_83.ntf', 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_83.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_83.ntf')
+
+    expected_data = """<tres>
+  <tre name="PIXQLA" location="image">
+    <field name="NUMAIS" value="001" />
+    <repeated number="1">
+      <group index="0">
+        <field name="AISDLVL" value="002" />
+      </group>
+    </repeated>
+    <field name="NPIXQUAL" value="0003" />
+    <field name="PQ_BIT_VALUE" value="1" />
+    <repeated number="3">
+      <group index="0">
+        <field name="PQ_CONDITION" value="Dead" />
+      </group>
+      <group index="1">
+        <field name="PQ_CONDITION" value="Saturated" />
+      </group>
+      <group index="2">
+        <field name="PQ_CONDITION" value="Bad" />
+      </group>
+    </repeated>
+  </tre>
+</tres>
+"""
+    assert data == expected_data
+
+###############################################################################
+# Test parsing PIXMTA TRE (STDI-0002-1-v5.0 App AJ)
+
+def test_nitf_84():
+    tre_data = "TRE=PIXMTA=0010020.00000000E+000.00000000E+001.00000000E+003.35200000E+03F00001P" \
+               "BAND_WAVELENGTH                         micron                                  D00000"
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_84.ntf', 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_84.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_84.ntf')
+
+    expected_data = """<tres>
+  <tre name="PIXMTA" location="image">
+    <field name="NUMAIS" value="001" />
+    <repeated number="1">
+      <group index="0">
+        <field name="AISDLVL" value="002" />
+      </group>
+    </repeated>
+    <field name="ORIGIN_X" value="0.00000000E+00" />
+    <field name="ORIGIN_Y" value="0.00000000E+00" />
+    <field name="SCALE_X" value="1.00000000E+00" />
+    <field name="SCALE_Y" value="3.35200000E+03" />
+    <field name="SAMPLE_MODE" value="F" />
+    <field name="NUMMETRICS" value="00001" />
+    <field name="PERBAND" value="P" />
+    <repeated number="1">
+      <group index="0">
+        <field name="DESCRIPTION" value="BAND_WAVELENGTH" />
+        <field name="UNIT" value="micron" />
+        <field name="FITTYPE" value="D" />
+      </group>
+    </repeated>
+    <field name="RESERVED_LEN" value="00000" />
   </tre>
 </tres>
 """

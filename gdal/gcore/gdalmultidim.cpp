@@ -4414,6 +4414,100 @@ bool GDALMDArrayMask::IRead(const GUInt64* arrayStartIdx,
         }
     }
 
+    /* Optimized case: if we are an integer data type and that there is no */
+    /* attribute that can be used to set mask = 0, then fill the mask buffer */
+    /* directly */
+    if( !bHasMissingValue && !bHasFillValue && !bHasValidMin && !bHasValidMax &&
+        m_poParent->GetRawNoDataValue() == nullptr &&
+        GDALDataTypeIsInteger(m_poParent->GetDataType().GetNumericDataType()) )
+    {
+        if( bufferDataType == m_dt ) // Byte case
+        {
+            bool bContiguous = true;
+            for( size_t i = 0; i < nDims; i++)
+            {
+                if( bufferStride[i] != tmpBufferStrideVector[i] )
+                {
+                    bContiguous = false;
+                    break;
+                }
+            }
+            if( bContiguous )
+            {
+                // CPLDebug("GDAL", "GetMask(): contiguous case");
+                memset(pDstBuffer, 1, nElts);
+                return true;
+            }
+        }
+
+        struct Stack
+        {
+            size_t       nIters = 0;
+            GByte*       dst_ptr = nullptr;
+            GPtrDiff_t   dst_inc_offset = 0;
+        };
+        std::vector<Stack> stack(std::max(static_cast<size_t>(1), nDims));
+        const size_t nBufferDTSize = bufferDataType.GetSize();
+        for( size_t i = 0; i < nDims; i++ )
+        {
+            stack[i].dst_inc_offset = static_cast<GPtrDiff_t>(
+                bufferStride[i] * nBufferDTSize);
+        }
+        stack[0].dst_ptr = static_cast<GByte*>(pDstBuffer);
+
+        size_t dimIdx = 0;
+        const size_t nDimsMinus1 = nDims > 0 ? nDims - 1 : 0;
+        const bool bBufferDataTypeIsByte = bufferDataType == m_dt;
+        GByte abyOne[16]; // 16 is sizeof GDT_CFloat64
+        CPLAssert(nBufferDTSize <= 16);
+        const GByte flag = 1;
+        // Coverity misses that m_dt is of type Byte
+        // coverity[overrun-buffer-val]
+        GDALExtendedDataType::CopyValue(&flag, m_dt, abyOne, bufferDataType);
+
+lbl_next_depth:
+        if( dimIdx == nDimsMinus1 )
+        {
+            auto nIters = nDims > 0 ? count[dimIdx] : 1;
+            GByte* dst_ptr = stack[dimIdx].dst_ptr;
+
+            while(true)
+            {
+                if( bBufferDataTypeIsByte )
+                {
+                    *dst_ptr = flag;
+                }
+                else
+                {
+                    memcpy(dst_ptr, abyOne, nBufferDTSize);
+                }
+
+                if( (--nIters) == 0 )
+                    break;
+                dst_ptr += stack[dimIdx].dst_inc_offset;
+            }
+        }
+        else
+        {
+            stack[dimIdx].nIters = count[dimIdx];
+            while(true)
+            {
+                dimIdx ++;
+                stack[dimIdx].dst_ptr = stack[dimIdx-1].dst_ptr;
+                goto lbl_next_depth;
+lbl_return_to_caller:
+                dimIdx --;
+                if( (--stack[dimIdx].nIters) == 0 )
+                    break;
+                stack[dimIdx].dst_ptr += stack[dimIdx].dst_inc_offset;
+            }
+        }
+        if( dimIdx > 0 )
+            goto lbl_return_to_caller;
+
+        return true;
+    }
+
     const auto oTmpBufferDT = GDALDataTypeIsComplex(
             m_poParent->GetDataType().GetNumericDataType()) ?
                 GDALExtendedDataType::Create(GDT_Float64) :
@@ -4563,6 +4657,67 @@ template<typename Type> void GDALMDArrayMask::ReadInternal(
                                           bool bHasValidMax, double dfValidMax) const
 {
     const size_t nDims = GetDimensionCount();
+
+    const auto castValue = [](bool& bHasVal, double dfVal) -> Type
+    {
+        if( bHasVal )
+        {
+            if( IsValidForDT<Type>(dfVal) )
+            {
+                return static_cast<Type>(dfVal);
+            }
+            else
+            {
+                bHasVal = false;
+            }
+        }
+        return 0;
+    };
+
+    const void* pSrcRawNoDataValue = m_poParent->GetRawNoDataValue();
+    bool bHasNodataValue = pSrcRawNoDataValue != nullptr;
+    const Type nNoDataValue = castValue(bHasNodataValue, m_poParent->GetNoDataValueAsDouble());
+    const Type nMissingValue = castValue(bHasMissingValue, dfMissingValue);
+    const Type nFillValue = castValue(bHasFillValue, dfFillValue);
+    const Type nValidMin = castValue(bHasValidMin, dfValidMin);
+    const Type nValidMax = castValue(bHasValidMax, dfValidMax);
+
+#define GET_MASK_FOR_SAMPLE(v) \
+    static_cast<GByte>( !IsNan(v) && \
+      !(bHasNodataValue && v == nNoDataValue) && \
+      !(bHasMissingValue && v == nMissingValue) && \
+      !(bHasFillValue && v == nFillValue) && \
+      !(bHasValidMin && v < nValidMin) && \
+      !(bHasValidMax && v > nValidMax) )
+
+    const bool bBufferDataTypeIsByte = bufferDataType == m_dt;
+    /* Optimized case: Byte output and output buffer is contiguous */
+    if( bBufferDataTypeIsByte )
+    {
+        bool bContiguous = true;
+        for( size_t i = 0; i < nDims; i++)
+        {
+            if( bufferStride[i] != tmpBufferStrideVector[i] )
+            {
+                bContiguous = false;
+                break;
+            }
+        }
+        if( bContiguous )
+        {
+            size_t nElts = 1;
+            for( size_t i = 0; i < nDims; i++ )
+                nElts *= count[i];
+
+            for( size_t i = 0; i < nElts; i++)
+            {
+                const Type* pSrc = static_cast<const Type*>(pTempBuffer) + i;
+                static_cast<GByte*>(pDstBuffer)[i] = GET_MASK_FOR_SAMPLE(*pSrc);
+            }
+            return;
+        }
+    }
+
     const size_t nTmpBufferDTSize = oTmpBufferDT.GetSize();
     struct Stack
     {
@@ -4586,8 +4741,6 @@ template<typename Type> void GDALMDArrayMask::ReadInternal(
 
     size_t dimIdx = 0;
     const size_t nDimsMinus1 = nDims > 0 ? nDims - 1 : 0;
-    const void* pSrcRawNoDataValue = m_poParent->GetRawNoDataValue();
-    const bool bBufferDataTypeIsDT = bufferDataType == m_dt;
     GByte abyZeroOrOne[2][16]; // 16 is sizeof GDT_CFloat64
     CPLAssert(nBufferDTSize <= 16);
     for( GByte flag = 0; flag <= 1; flag++ )
@@ -4598,29 +4751,6 @@ template<typename Type> void GDALMDArrayMask::ReadInternal(
                                         abyZeroOrOne[flag], bufferDataType);
     }
 
-    const auto castValue = [](bool& bHasVal, double dfVal) -> Type
-    {
-        if( bHasVal )
-        {
-            if( IsValidForDT<Type>(dfVal) )
-            {
-                return static_cast<Type>(dfVal);
-            }
-            else
-            {
-                bHasVal = false;
-            }
-        }
-        return 0;
-    };
-
-    bool bHasNodataValue = pSrcRawNoDataValue != nullptr;
-    const Type nNoDataValue = castValue(bHasNodataValue, m_poParent->GetNoDataValueAsDouble());
-    const Type nMissingValue = castValue(bHasMissingValue, dfMissingValue);
-    const Type nFillValue = castValue(bHasFillValue, dfFillValue);
-    const Type nValidMin = castValue(bHasValidMin, dfValidMin);
-    const Type nValidMax = castValue(bHasValidMax, dfValidMax);
-
 lbl_next_depth:
     if( dimIdx == nDimsMinus1 )
     {
@@ -4630,34 +4760,10 @@ lbl_next_depth:
 
         while(true)
         {
-            GByte flag = 1;
             const Type* pSrc = reinterpret_cast<const Type*>(src_ptr);
-            if( IsNan(*pSrc) )
-            {
-                flag = 0;
-            }
-            else if( bHasNodataValue && *pSrc == nNoDataValue)
-            {
-                flag = 0;
-            }
-            else if( bHasMissingValue && *pSrc == nMissingValue )
-            {
-                flag = 0;
-            }
-            else if( bHasFillValue && *pSrc == nFillValue )
-            {
-                flag = 0;
-            }
-            else if( bHasValidMin && *pSrc < nValidMin )
-            {
-                flag = 0;
-            }
-            else if( bHasValidMax && *pSrc > nValidMax )
-            {
-                flag = 0;
-            }
+            const GByte flag = GET_MASK_FOR_SAMPLE(*pSrc);
 
-            if( bBufferDataTypeIsDT )
+            if( bBufferDataTypeIsByte )
             {
                 *dst_ptr = flag;
             }

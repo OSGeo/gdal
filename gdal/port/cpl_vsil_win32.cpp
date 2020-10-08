@@ -438,16 +438,23 @@ VSIRangeStatus VSIWin32Handle::GetRangeStatus( vsi_l_offset
 /*                          CPLGetWineVersion()                         */
 /************************************************************************/
 
-static const char* CPLGetWineVersion()
+const char* CPLGetWineVersion(); // also used by cpl_aws.cpp
+
+const char* CPLGetWineVersion()
 {
     HMODULE hntdll = GetModuleHandle("ntdll.dll");
     if( hntdll == nullptr )
+    {
+        CPLDebug("CPLGetWineVersion", "Can't get handle to ntdll.dll.");
         return nullptr;
+    }
 
-    static const char * (CDECL *pwine_get_version)(void);
+    const char * (CDECL *pwine_get_version)(void);
     pwine_get_version = reinterpret_cast<const char* (*)(void)>(GetProcAddress(hntdll, "wine_get_version"));
     if( pwine_get_version == nullptr )
+    {
         return nullptr;
+    }
 
     return pwine_get_version();
 }

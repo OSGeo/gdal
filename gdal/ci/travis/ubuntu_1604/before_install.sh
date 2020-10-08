@@ -56,8 +56,8 @@ sudo cp FileGDB_API-64gcc51/lib/* "$chroot/usr/lib"
 sudo chroot "$chroot" ldconfig
 
 # PDFium
-wget https://github.com/rouault/pdfium_build_gdal_3_1/releases/download/v1_pdfium_3922/install-ubuntu1604-rev3922.tar.gz
-tar xzf install-ubuntu1604-rev3922.tar.gz
+wget https://github.com/rouault/pdfium_build_gdal_3_2/releases/download/v1_pdfium_4272/install-ubuntu1604-rev4272.tar.gz
+tar xzf install-ubuntu1604-rev4272.tar.gz
 sudo cp -r install/* "$chroot/usr/"
 rm -rf install
 

@@ -2011,12 +2011,12 @@ def test_gdalwarp_lib_xscale_antimeridian():
     src2_ds = None
 
     source = gdal.BuildVRT('', ['/vsimem/src1.tif', '/vsimem/src2.tif'])
-    # Wrap to UTM zone 1 accross the antimeridian
+    # Wrap to UTM zone 1 across the antimeridian
     ds = gdal.Warp('', source, options="-of MEM -t_srs EPSG:32601 -te 276000 5464000 290000 5510000 -tr 1000 1000 -r cubic")
     vals = struct.unpack('B' * ds.RasterXSize * ds.RasterYSize, ds.ReadRaster())
     assert vals[0] == 100
     assert vals[ds.RasterXSize - 1] == 200
-    # Check that the set of values is jsut 100 and 200. If the xscale was wrong,
+    # Check that the set of values is just 100 and 200. If the xscale was wrong,
     # we would take intou account 0 values outsize of the 2 tiles.
     assert set(vals) == set([100, 200])
 

@@ -74,7 +74,7 @@ RUN if test "${HDF5_VERSION}" != ""; then ( \
     && tar xzf hdf5-${HDF5_VERSION}.tar.gz \
     && rm -f hdf5-${HDF5_VERSION}.tar.gz \
     && cd hdf5-${HDF5_VERSION} \
-    && CFLAGS=-O2 CXXFLAGS=-O2 ./configure --prefix=/usr --disable-static --with-szlib=/usr --enable-cxx \
+    && CFLAGS=-O2 CXXFLAGS=-O2 ./configure --prefix=/usr --disable-static --with-szlib=/usr --enable-cxx --enable-threadsafe --enable-unsupported \
     && make -j$(nproc) \
     && make install \
     && cp -P /usr/lib/libhdf5*.so* /build_thirdparty/usr/lib \
@@ -314,6 +314,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     --with-python \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
+    && (cd apps && make -j$(nproc) multireadtest && cp multireadtest /build/usr/bin) \
     && if test "${RSYNC_REMOTE}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \

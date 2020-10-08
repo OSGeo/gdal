@@ -403,7 +403,7 @@ static void ThreadFuncAdapter(void* pData)
     }
     CPLReleaseMutex(psThreadData->hCondMutex);
 
-    // If no transformer assigned to current thread, instanciate one
+    // If no transformer assigned to current thread, instantiate one
     if( pTransformerArg == nullptr )
     {
         // This somehow assumes that GDALCloneTransformer() is thread-safe

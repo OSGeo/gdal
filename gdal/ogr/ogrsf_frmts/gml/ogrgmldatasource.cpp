@@ -1273,28 +1273,61 @@ bool OGRGMLDataSource::Open( GDALOpenInfo *poOpenInfo )
 
     // Save the schema file if possible.  Don't make a fuss if we
     // can't.  It could be read-only directory or something.
-    if( !bHaveSchema && !poReader->HasStoppedParsing() &&
-        !STARTS_WITH_CI(pszFilename, "/vsitar/") &&
-        !STARTS_WITH_CI(pszFilename, "/vsizip/") &&
-        !STARTS_WITH_CI(pszFilename, "/vsigzip/vsi") &&
-        !STARTS_WITH_CI(pszFilename, "/vsigzip//vsi") &&
-        !STARTS_WITH_CI(pszFilename, "/vsicurl/") &&
-        !STARTS_WITH_CI(pszFilename, "/vsicurl_streaming/"))
+    const char* pszWriteGFS = CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "WRITE_GFS", "AUTO");
+    bool bWriteGFS = false;
+    if( EQUAL(pszWriteGFS, "AUTO") )
     {
-        VSILFILE *l_fp = nullptr;
-
-        VSIStatBufL sGFSStatBuf;
-        if( VSIStatExL(osGFSFilename, &sGFSStatBuf, VSI_STAT_EXISTS_FLAG) != 0 &&
-            (l_fp = VSIFOpenL(osGFSFilename, "wt")) != nullptr )
+        if( !bHaveSchema && !poReader->HasStoppedParsing() &&
+            !STARTS_WITH_CI(pszFilename, "/vsitar/") &&
+            !STARTS_WITH_CI(pszFilename, "/vsizip/") &&
+            !STARTS_WITH_CI(pszFilename, "/vsigzip/vsi") &&
+            !STARTS_WITH_CI(pszFilename, "/vsigzip//vsi") &&
+            !STARTS_WITH_CI(pszFilename, "/vsicurl") &&
+            !STARTS_WITH_CI(pszFilename, "/vsis3") &&
+            !STARTS_WITH_CI(pszFilename, "/vsigs") &&
+            !STARTS_WITH_CI(pszFilename, "/vsiaz") &&
+            !STARTS_WITH_CI(pszFilename, "/vsioss") )
         {
-            VSIFCloseL(l_fp);
-            poReader->SaveClasses(osGFSFilename);
+            VSIStatBufL sGFSStatBuf;
+            if( VSIStatExL(osGFSFilename, &sGFSStatBuf, VSI_STAT_EXISTS_FLAG) != 0 )
+            {
+                bWriteGFS = true;
+            }
+            else
+            {
+                CPLDebug("GML", "Not saving %s file: already exists.",
+                         osGFSFilename.c_str());
+            }
+        }
+    }
+    else if( CPLTestBool(pszWriteGFS) )
+    {
+        if( bHaveSchema || !poReader->HasStoppedParsing() )
+        {
+            bWriteGFS = true;
         }
         else
         {
-            CPLDebug("GML",
-                     "Not saving %s files already exists or can't be created.",
-                     osGFSFilename.c_str());
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "GFS file saving asked, but cannot be done");
+        }
+    }
+
+    if( bWriteGFS )
+    {
+        if( !poReader->SaveClasses(osGFSFilename) )
+        {
+            if( CPLTestBool(pszWriteGFS) )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                     "GFS file saving asked, but failed");
+            }
+            else
+            {
+                CPLDebug("GML", "Not saving %s file: can't be created.",
+                        osGFSFilename.c_str());
+            }
         }
     }
 

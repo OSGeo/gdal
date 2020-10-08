@@ -113,6 +113,11 @@ class OGCAPIDataset final: public GDALDataset
                               double dfXMin, double dfYMin,
                               double dfXMax, double dfYMax,
                               const CPLJSONObject& oJsonCollection);
+        bool InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
+                              const CPLString& osTilesURL,
+                              double dfXMin, double dfYMin,
+                              double dfXMax, double dfYMax,
+                              const CPLJSONObject& oJsonCollection);
 
   protected:
         CPLErr      IRasterIO( GDALRWFlag eRWFlag,
@@ -654,8 +659,16 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo* poOpenInfo,
         dfRes = dfScaleDenominator / ((HALF_CIRCUMFERENCE / 180) / 0.28e-3);
     }
 
-    nRasterXSize = std::max(1, static_cast<int>(0.5 + (dfXMax - dfXMin) / dfRes));
-    nRasterYSize = std::max(1, static_cast<int>(0.5 + (dfYMax - dfYMin) / dfRes));
+    double dfXSize = (dfXMax - dfXMin) / dfRes;
+    double dfYSize = (dfYMax - dfYMin) / dfRes;
+    while( dfXSize > INT_MAX || dfYSize > INT_MAX )
+    {
+        dfXSize /= 2;
+        dfYSize /= 2;
+    }
+
+    nRasterXSize = std::max(1, static_cast<int>(0+5 + dfXSize));
+    nRasterYSize = std::max(1, static_cast<int>(0.5 + dfYSize));
     m_adfGeoTransform[0] = dfXMin;
     m_adfGeoTransform[1] = (dfXMax - dfXMin) / nRasterXSize;
     m_adfGeoTransform[3] = dfYMax;
@@ -663,29 +676,42 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo* poOpenInfo,
 
     CPLString osMapURL;
     CPLString osTilesURL;
+    CPLString osCoverageURL;
     for( const auto& oLink: oLinks )
     {
-        if( oLink["rel"].ToString() == "http://www.opengis.net/def/rel/ogc/1.0/map" &&
-            oLink["type"].ToString() == "application/json" )
+        const auto osRel = oLink.GetString("rel");
+        const auto osType = oLink.GetString("type");
+        if( osRel == "http://www.opengis.net/def/rel/ogc/1.0/map" &&
+            osType == "application/json" )
         {
             osMapURL = BuildURL(oLink["href"].ToString());
         }
-        else if( oLink["rel"].ToString() == "http://www.opengis.net/def/rel/ogc/1.0/tilesets" &&
-                 oLink["type"].ToString() == "application/json" )
+        else if( osRel == "http://www.opengis.net/def/rel/ogc/1.0/tilesets" &&
+                 osType == "application/json" )
         {
             osTilesURL = BuildURL(oLink["href"].ToString());
         }
+        else if( osRel == "http://www.opengis.net/def/rel/ogc/1.0/coverage" &&
+                 (osType == "image/tiff; application=geotiff" ||
+                  osType == "application/x-geotiff") )
+        {
+            osCoverageURL = BuildURL(oLink["href"].ToString());
+        }
     }
 
-    if( osMapURL.empty() && osTilesURL.empty() )
+    if( osMapURL.empty() && osTilesURL.empty() && osCoverageURL.empty() )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Missing map or tilesets relation in links");
+        CPLError(CE_Failure, CPLE_AppDefined, "Missing map, tilesets or coverage relation in links");
         return false;
     }
 
     const char* pszAPI = CSLFetchNameValueDef(
         poOpenInfo->papszOpenOptions, "API", "AUTO");
-    if( (EQUAL(pszAPI, "AUTO") || EQUAL(pszAPI, "TILES")) && !osTilesURL.empty() )
+    if( (EQUAL(pszAPI, "AUTO") || EQUAL(pszAPI, "COVERAGE")) && !osCoverageURL.empty() )
+    {
+        return InitWithCoverageAPI(poOpenInfo, osCoverageURL, dfXMin, dfYMin, dfXMax, dfYMax, oDoc.GetRoot());
+    }
+    else if( (EQUAL(pszAPI, "AUTO") || EQUAL(pszAPI, "TILES")) && !osTilesURL.empty() )
     {
         return InitWithTilesAPI(poOpenInfo, osTilesURL, dfXMin, dfYMin, dfXMax, dfYMax, oDoc.GetRoot());
     }
@@ -752,8 +778,10 @@ bool OGCAPIDataset::InitFromURL(GDALOpenInfo* poOpenInfo)
     {
         const auto osTitle = oCollection.GetString("title");
         const auto osLayerDataType = oCollection.GetString("layerDataType");
+        // CPLDebug("OGCAPI", "%s: %s", osTitle.c_str(), osLayerDataType.c_str());
         if( !osLayerDataType.empty() &&
-            EQUAL(osLayerDataType.c_str(), "Raster") &&
+            (EQUAL(osLayerDataType.c_str(), "Raster") ||
+             EQUAL(osLayerDataType.c_str(), "Coverage")) &&
             (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 )
         {
             continue;
@@ -952,6 +980,233 @@ bool OGCAPIDataset::InitWithMapAPI(GDALOpenInfo* poOpenInfo,
         nRasterYSize,
         nOverviewCount,
         l_nBands,
+        nMaxConnections,
+        bCache ? "<Cache />" : "");
+    CPLFree(pszEscapedURL);
+    CPLDebug("OGCAPI", "%s", osWMS_XML.c_str());
+    m_poWMSDS.reset(GDALDataset::Open(osWMS_XML, GDAL_OF_RASTER | GDAL_OF_INTERNAL));
+    if( m_poWMSDS == nullptr )
+        return false;
+
+    for( int i = 1; i <= m_poWMSDS->GetRasterCount(); i++ )
+    {
+        SetBand(i, new OGCAPIMapWrapperBand(this, i));
+    }
+    SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+
+    return true;
+}
+
+/************************************************************************/
+/*                        InitWithCoverageAPI()                         */
+/************************************************************************/
+
+bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo* poOpenInfo,
+                                        const CPLString& osCoverageURL,
+                                        double dfXMin, double dfYMin,
+                                        double dfXMax, double dfYMax,
+                                        const CPLJSONObject& oJsonCollection
+                                        )
+{
+    int l_nBands = 1;
+    GDALDataType eDT = GDT_Float32;
+
+    auto oRangeType = oJsonCollection["rangeType"];
+    if( !oRangeType.IsValid() )
+        oRangeType = oJsonCollection["rangetype"];
+
+    auto oDomainSet = oJsonCollection["domainset"];
+    if( !oDomainSet.IsValid() )
+        oDomainSet = oJsonCollection["domainSet"];
+
+    if( !oRangeType.IsValid() || !oDomainSet.IsValid() )
+    {
+        auto oLinks = oJsonCollection.GetArray("links");
+        for( const auto& oLink: oLinks )
+        {
+            const auto osRel = oLink.GetString("rel");
+            const auto osType = oLink.GetString("type");
+            if( osRel == "http://www.opengis.net/def/rel/ogc/1.0/coverage-domainset" &&
+                osType == "application/json" )
+            {
+                CPLString osURL = BuildURL(oLink["href"].ToString());
+                CPLJSONDocument oDoc;
+                if( DownloadJSon(osURL.c_str(), oDoc) )
+                {
+                    oDomainSet = oDoc.GetRoot();
+                }
+            }
+            else if( osRel == "http://www.opengis.net/def/rel/ogc/1.0/coverage-rangetype" &&
+                     osType == "application/json" )
+            {
+                CPLString osURL = BuildURL(oLink["href"].ToString());
+                CPLJSONDocument oDoc;
+                if( DownloadJSon(osURL.c_str(), oDoc) )
+                {
+                    oRangeType = oDoc.GetRoot();
+                }
+            }
+        }
+    }
+
+    if( oRangeType.IsValid() )
+    {
+        auto oField = oRangeType.GetArray("field");
+        if( oField.IsValid() )
+        {
+            l_nBands = oField.Size();
+            const auto osDefinition = oField[0].GetString("definition");
+            static const std::map<CPLString, GDALDataType> oMapTypes = {
+                // https://edc-oapi.dev.hub.eox.at/oapi/collections/S2L2A
+                { "UINT8", GDT_Byte },
+                { "INT16", GDT_Int16 },
+                { "UINT16", GDT_UInt16 },
+                { "INT32", GDT_Int32 },
+                { "UINT32", GDT_UInt32 },
+                { "FLOAT32", GDT_Float32 },
+                { "FLOAT64", GDT_Float64 },
+                // https://test.cubewerx.com/cubewerx/cubeserv/demo/ogcapi/Daraa/collections/Daraa_DTED/coverage/rangetype?f=json
+                { "ogcType:unsignedByte", GDT_Byte },
+                { "ogcType:signedShort", GDT_Int16 },
+                { "ogcType:unsignedShort", GDT_UInt16 },
+                { "ogcType:signedInt", GDT_Int32 },
+                { "ogcType:unsignedInt", GDT_UInt32 },
+                { "ogcType:float32", GDT_Float32 },
+                { "ogcType:float64", GDT_Float64 },
+                { "ogcType:double", GDT_Float64 },
+            };
+            // 08-094r1_SWE_Common_Data_Model_2.0_Submission_Package.pdf page 112
+            auto oIter = oMapTypes.find(
+                CPLString(osDefinition).replaceAll("http://www.opengis.net/ def/dataType/OGC/0/", "ogcType:"));
+            if( oIter != oMapTypes.end() )
+            {
+                eDT = oIter->second;
+            }
+            else
+            {
+                CPLDebug("OGCAPI", "Unhandled field definition: %s",
+                         osDefinition.c_str());
+            }
+        }
+    }
+
+    CPLString osXAxisName;
+    CPLString osYAxisName;
+    if( oDomainSet.IsValid() )
+    {
+        auto oAxis = oDomainSet["generalGrid"]["axis"].ToArray();
+        if( oAxis.IsValid() && oAxis.Size() >= 2 )
+        {
+            double dfXRes = oAxis[0].GetDouble("resolution");
+            double dfYRes = oAxis[1].GetDouble("resolution");
+
+            double dfXSize = (dfXMax - dfXMin) / dfXRes;
+            double dfYSize = (dfYMax - dfYMin) / dfYRes;
+            while( dfXSize > INT_MAX || dfYSize > INT_MAX )
+            {
+                dfXSize /= 2;
+                dfYSize /= 2;
+            }
+
+            nRasterXSize = std::max(1, static_cast<int>(0.5 + dfXSize));
+            nRasterYSize = std::max(1, static_cast<int>(0.5 + dfYSize));
+            m_adfGeoTransform[0] = dfXMin;
+            m_adfGeoTransform[1] = (dfXMax - dfXMin) / nRasterXSize;
+            m_adfGeoTransform[3] = dfYMax;
+            m_adfGeoTransform[5] = -(dfYMax - dfYMin) / nRasterYSize;
+        }
+
+        auto oAxisLabels = oDomainSet["generalGrid"]["axisLabels"].ToArray();
+        if( oAxisLabels.IsValid() && oAxisLabels.Size() >= 2 )
+        {
+            osXAxisName = oAxisLabels[0].ToString();
+            osYAxisName = oAxisLabels[1].ToString();
+        }
+
+        OGRSpatialReference oSRS;
+        if( oSRS.SetFromUserInput( oDomainSet["generalGrid"].GetString("srsName").c_str() ) == OGRERR_NONE )
+        {
+            if( oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting() )
+            {
+                std::swap( osXAxisName, osYAxisName );
+            }
+        }
+
+    }
+
+    int nOverviewCount = 0;
+    int nLargestDim = std::max(nRasterXSize, nRasterYSize);
+    while( nLargestDim > 256 )
+    {
+        nOverviewCount ++;
+        nLargestDim /= 2;
+    }
+
+    m_oSRS.importFromEPSG(4326);
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+    CPLString osCoverageURLModified(osCoverageURL);
+    if( osCoverageURLModified.find('&') == std::string::npos &&
+        osCoverageURLModified.find('?') == std::string::npos )
+    {
+        osCoverageURLModified += '?';
+    }
+    else
+    {
+        osCoverageURLModified += '&';
+    }
+
+    if( !osXAxisName.empty() && !osYAxisName.empty() )
+    {
+        osCoverageURLModified += CPLSPrintf(
+            "subset=%s(${minx}:${maxx}),%s(${miny}:${maxy})&scaleSize=%s(${width}),%s(${height})",
+            osXAxisName.c_str(),
+            osYAxisName.c_str(),
+            osXAxisName.c_str(),
+            osYAxisName.c_str());
+    }
+    else
+    {
+        // FIXME
+        osCoverageURLModified += "bbox=${minx},${miny},${maxx},${maxy}&scaleSize=Lat(${height}),Long(${width})";
+    }
+
+    const bool bCache = CPLTestBool(CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "CACHE", "YES"));
+    const int nMaxConnections = atoi(CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "MAX_CONNECTIONS",
+        CPLGetConfigOption("GDAL_MAX_CONNECTIONS", "5")));
+    CPLString osWMS_XML;
+    char* pszEscapedURL = CPLEscapeString(osCoverageURLModified, -1, CPLES_XML);
+    osWMS_XML.Printf(
+        "<GDAL_WMS>"
+        "    <Service name=\"OGCAPICoverage\">"
+        "        <ServerUrl>%s</ServerUrl>"
+        "    </Service>"
+        "    <DataWindow>"
+        "        <UpperLeftX>%.18g</UpperLeftX>"
+        "        <UpperLeftY>%.18g</UpperLeftY>"
+        "        <LowerRightX>%.18g</LowerRightX>"
+        "        <LowerRightY>%.18g</LowerRightY>"
+        "        <SizeX>%d</SizeX>"
+        "        <SizeY>%d</SizeY>"
+        "    </DataWindow>"
+        "    <OverviewCount>%d</OverviewCount>"
+        "    <BlockSizeX>256</BlockSizeX>"
+        "    <BlockSizeY>256</BlockSizeY>"
+        "    <BandsCount>%d</BandsCount>"
+        "    <DataType>%s</DataType>"
+        "    <MaxConnections>%d</MaxConnections>"
+        "    %s"
+        "</GDAL_WMS>",
+        pszEscapedURL,
+        dfXMin, dfYMax,
+        dfXMax, dfYMin,
+        nRasterXSize,
+        nRasterYSize,
+        nOverviewCount,
+        l_nBands,
+        GDALGetDataTypeName(eDT),
         nMaxConnections,
         bCache ? "<Cache />" : "");
     CPLFree(pszEscapedURL);
@@ -2234,6 +2489,7 @@ void GDALRegister_OGCAPI()
 "       <Value>AUTO</Value>"
 "       <Value>MAP</Value>"
 "       <Value>TILES</Value>"
+"       <Value>COVERAGE</Value>"
 "  </Option>"
 "  <Option name='IMAGE_FORMAT' type='string-select' "
         "description='Which format to use for pixel acquisition' default='AUTO'>"

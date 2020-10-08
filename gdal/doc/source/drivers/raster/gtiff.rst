@@ -666,7 +666,7 @@ the default behavior of the GTiff driver.
 -  :decl_configoption:`TIFF_USE_OVR` : Can be set to TRUE to force external overviews in the
    GeoTIFF (.ovr) format. Default value : FALSE
 -  :decl_configoption:`GTIFF_POINT_GEO_IGNORE` : Can be set to TRUE to revert back to the
-   behaviour of ancient GDAL versions regarding how PixelIsPoint is interpreted
+   behavior of ancient GDAL versions regarding how PixelIsPoint is interpreted
    w.r.t geotransform. See :ref:`rfc-33` for more details. Default value : FALSE
 -  :decl_configoption:`GTIFF_REPORT_COMPD_CS` : Can be set to TRUE to avoid
    stripping the vertical CRS of compound CRS when reading the SRS of a

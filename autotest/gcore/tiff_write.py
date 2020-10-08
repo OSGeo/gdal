@@ -3094,7 +3094,7 @@ def test_tiff_write_90():
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
-    last_size = 0
+    checksums = {}
     for quality in [90, 75, 30]:
         src_ds = gdal.Open('../gdrivers/data/utm.tif')
 
@@ -3110,19 +3110,21 @@ def test_tiff_write_90():
         src_ds = None
         ds = None
 
-        f = open('tmp/tiff_write_90.tif', 'rb')
-        f.seek(0, os.SEEK_END)
-        size = f.tell()
-        f.close()
+        ds = gdal.Open('tmp/tiff_write_90.tif')
+        checksums[quality] = [ ds.GetRasterBand(1).Checksum(),
+                               ds.GetRasterBand(1).GetOverview(0).Checksum(),
+                               ds.GetRasterBand(1).GetOverview(1).Checksum() ]
 
-        # print('quality = %d, size = %d' % (quality, size))
-
-        if quality != 90:
-            assert size < last_size, 'did not get decreasing file sizes'
-
-        last_size = size
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_90.tif')
+
+    assert checksums[75][0] != checksums[90][0]
+    assert checksums[75][1] != checksums[90][1]
+    assert checksums[75][2] != checksums[90][2]
+
+    assert checksums[75][0] != checksums[30][0]
+    assert checksums[75][1] != checksums[30][1]
+    assert checksums[75][2] != checksums[30][2]
 
 
 ###############################################################################
@@ -3133,7 +3135,7 @@ def test_tiff_write_91():
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         pytest.skip()
 
-    last_size = 0
+    checksums = {}
     for quality in [90, 75, 30]:
         src_ds = gdal.Open('../gdrivers/data/utm.tif')
 
@@ -3154,19 +3156,21 @@ def test_tiff_write_91():
         src_ds = None
         ds = None
 
-        f = open('tmp/tiff_write_91.tif', 'rb')
-        f.seek(0, os.SEEK_END)
-        size = f.tell()
-        f.close()
+        ds = gdal.Open('tmp/tiff_write_91.tif')
+        checksums[quality] = [ ds.GetRasterBand(1).Checksum(),
+                               ds.GetRasterBand(1).GetOverview(0).Checksum(),
+                               ds.GetRasterBand(1).GetOverview(1).Checksum() ]
 
-        # print('quality = %d, size = %d' % (quality, size))
-
-        if quality != 90:
-            assert size < last_size, 'did not get decreasing file sizes'
-
-        last_size = size
 
     gdaltest.tiff_drv.Delete('tmp/tiff_write_91.tif')
+
+    assert checksums[75][0] != checksums[90][0]
+    assert checksums[75][1] != checksums[90][1]
+    assert checksums[75][2] != checksums[90][2]
+
+    assert checksums[75][0] != checksums[30][0]
+    assert checksums[75][1] != checksums[30][1]
+    assert checksums[75][2] != checksums[30][2]
 
 
 ###############################################################################

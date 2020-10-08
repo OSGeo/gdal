@@ -62,6 +62,7 @@ OBJ	=	cpl_conv.obj \
 		cpl_sha1.obj \
 		cpl_sha256.obj \
 		cpl_aws.obj \
+		cpl_aws_win32.obj \
 		cpl_vsi_error.obj \
 		cpl_cpu_features.obj \
 		cpl_google_cloud.obj \

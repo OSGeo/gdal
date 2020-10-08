@@ -2389,75 +2389,6 @@ static bool WriteSection4( VSILFILE* fp,
 }
 
 /************************************************************************/
-/*                            WriteBand()                               */
-/************************************************************************/
-
-static bool WriteBand( VSILFILE* fp, GDALDataset *poSrcDS, int nBand,
-                       char** papszOptions,
-                       GDALProgressFunc pfnProgress, void * pProgressData )
-{
-    // Section 0: Indicator section
-    vsi_l_offset nStartOffset = VSIFTellL(fp);
-    VSIFWriteL( "GRIB", 4, 1, fp );
-    WriteByte(fp, 0); // reserved
-    WriteByte(fp, 0); // reserved
-    int nDiscipline = atoi(GetBandOption(
-            papszOptions, poSrcDS, nBand, "DISCIPLINE", "0")); // 0 = Meteorological
-    WriteByte(fp, nDiscipline); // discipline
-    WriteByte(fp, 2); // GRIB edition number
-    vsi_l_offset nTotalSizeOffset = VSIFTellL(fp);
-    WriteUInt32(fp, GRIB2MISSING_u4); // dummy file size (high 32 bits)
-    WriteUInt32(fp, GRIB2MISSING_u4); // dummy file size (low 32 bits)
-
-    // Section 1: Identification Section
-    WriteSection1( fp, poSrcDS, nBand, papszOptions );
-
-    // Section 2: Local use section
-    WriteUInt32(fp, 5); // section size
-    WriteByte(fp, 2); // section number
-
-    // Section 3: Grid Definition Section
-    if( !GRIB2Section3Writer(fp, poSrcDS).Write() )
-    {
-        return false;
-    }
-
-    // Section 4: Product Definition Section
-    float fValOffset = 0.0f;
-    if( !WriteSection4( fp, poSrcDS, nBand, papszOptions, fValOffset ) )
-    {
-        return false;
-    }
-
-    // Section 5, 6 and 7
-    if( !GRIB2Section567Writer(fp, poSrcDS, nBand).
-            Write(fValOffset, papszOptions, pfnProgress, pProgressData) )
-    {
-        return false;
-    }
-
-    // Section 8: End section
-    VSIFWriteL( "7777", 4, 1, fp );
-
-    // Patch total message size at end of section 0
-    vsi_l_offset nCurOffset = VSIFTellL(fp);
-    if( nCurOffset - nStartOffset > INT_MAX )
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "GRIB message larger than 2 GB");
-        return false;
-    }
-    GUInt32 nTotalSize = static_cast<GUInt32>(nCurOffset - nStartOffset);
-    VSIFSeekL(fp, nTotalSizeOffset, SEEK_SET );
-    WriteUInt32(fp, 0); // file size (high 32 bits)
-    WriteUInt32(fp, nTotalSize); // file size (low 32 bits)
-
-    VSIFSeekL(fp, nCurOffset, SEEK_SET );
-
-    return true;
-}
-
-/************************************************************************/
 /*                             CreateCopy()                             */
 /************************************************************************/
 
@@ -2529,17 +2460,85 @@ GRIBDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
     VSIFSeekL(fp, 0, SEEK_END);
 
-    for( int i = 0; i < poSrcDS->GetRasterCount(); i++ )
+    vsi_l_offset nStartOffset = 0;
+    vsi_l_offset nTotalSizeOffset = 0;
+    // Note: WRITE_SUBGRIDS=YES should not be used blindly currently, as it
+    // does not check that the content of the DISCIPLINE and IDS are the same.
+    // A smarter behaviour would be to break into separate messages if needed
+    const bool bWriteSubGrids = CPLTestBool(CSLFetchNameValueDef(
+            papszOptions, "WRITE_SUBGRIDS", "NO"));
+    for( int nBand = 1; nBand <= poSrcDS->GetRasterCount(); nBand++ )
     {
-        if( !WriteBand( fp, poSrcDS, i + 1, papszOptions,
-                         pfnProgress, pProgressData ) )
+        if( nBand == 1 || !bWriteSubGrids )
+        {
+            // Section 0: Indicator section
+            nStartOffset = VSIFTellL(fp);
+            VSIFWriteL( "GRIB", 4, 1, fp );
+            WriteByte(fp, 0); // reserved
+            WriteByte(fp, 0); // reserved
+            int nDiscipline = atoi(GetBandOption(
+                    papszOptions, poSrcDS, nBand, "DISCIPLINE", "0")); // 0 = Meteorological
+            WriteByte(fp, nDiscipline); // discipline
+            WriteByte(fp, 2); // GRIB edition number
+            nTotalSizeOffset = VSIFTellL(fp);
+            WriteUInt32(fp, GRIB2MISSING_u4); // dummy file size (high 32 bits)
+            WriteUInt32(fp, GRIB2MISSING_u4); // dummy file size (low 32 bits)
+
+            // Section 1: Identification Section
+            WriteSection1( fp, poSrcDS, nBand, papszOptions );
+
+            // Section 2: Local use section
+            WriteUInt32(fp, 5); // section size
+            WriteByte(fp, 2); // section number
+
+            // Section 3: Grid Definition Section
+            if( !GRIB2Section3Writer(fp, poSrcDS).Write() )
+            {
+                VSIFCloseL(fp);
+                return nullptr;
+            }
+        }
+
+        // Section 4: Product Definition Section
+        float fValOffset = 0.0f;
+        if( !WriteSection4( fp, poSrcDS, nBand, papszOptions, fValOffset ) )
         {
             VSIFCloseL(fp);
             return nullptr;
         }
 
+        // Section 5, 6 and 7
+        if( !GRIB2Section567Writer(fp, poSrcDS, nBand).
+                Write(fValOffset, papszOptions, pfnProgress, pProgressData) )
+        {
+            VSIFCloseL(fp);
+            return nullptr;
+        }
+
+        if( nBand == poSrcDS->GetRasterCount() || !bWriteSubGrids )
+        {
+            // Section 8: End section
+            VSIFWriteL( "7777", 4, 1, fp );
+
+            // Patch total message size at end of section 0
+            vsi_l_offset nCurOffset = VSIFTellL(fp);
+            if( nCurOffset - nStartOffset > INT_MAX )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                        "GRIB message larger than 2 GB");
+                VSIFCloseL(fp);
+                return nullptr;
+            }
+            GUInt32 nTotalSize = static_cast<GUInt32>(nCurOffset - nStartOffset);
+            VSIFSeekL(fp, nTotalSizeOffset, SEEK_SET );
+            WriteUInt32(fp, 0); // file size (high 32 bits)
+            WriteUInt32(fp, nTotalSize); // file size (low 32 bits)
+
+            VSIFSeekL(fp, nCurOffset, SEEK_SET );
+        }
+
         if( pfnProgress &&
-            !pfnProgress(static_cast<double>(i+1) / poSrcDS->GetRasterCount(),
+            !pfnProgress(static_cast<double>(nBand) / poSrcDS->GetRasterCount(),
                     nullptr, pProgressData ) )
         {
             VSIFCloseL(fp);
