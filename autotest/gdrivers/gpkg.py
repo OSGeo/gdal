@@ -3341,6 +3341,31 @@ def test_gpkg_50000_50000_uint16():
     ref_ds = gdal.Open('../gcore/data/uint16.tif')
     assert data == ref_ds.ReadRaster()
 
+
+###############################################################################
+# Test writing PNG tiles with negative values
+
+
+def test_gpkg_float32_png_negative_values():
+
+    if gdaltest.gpkg_dr is None:
+        pytest.skip()
+    if gdaltest.png_dr is None:
+        pytest.skip()
+
+    gdal.Unlink('/vsimem/tmp.gpkg')
+
+    ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg', 1, 1, 1, gdal.GDT_Float32, options=['TILE_FORMAT=PNG'])
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    ds.GetRasterBand(1).SetNoDataValue(-32768)
+    ds.GetRasterBand(1).Fill(-10)
+    ds = None
+    ds = gdal.Open('/vsimem/tmp.gpkg')
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == (-10, -10)
+    ds = None
+
+    gdal.Unlink('/vsimem/tmp.gpkg')
+
 ###############################################################################
 #
 
