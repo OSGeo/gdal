@@ -7335,8 +7335,6 @@ def test_tiff_write_jpeg_incompatible_of_paletted():
 # on a newly created dataset
 
 def test_tiff_write_186_blocksize():
-    md = gdaltest.tiff_drv.GetMetadata()
-
     blockSizes = [64,256]
     for blockSize in blockSizes:
         src_ds = gdal.Open('../gdrivers/data/utm.tif')
