@@ -54,7 +54,8 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                             const char* pszJPEGTablesMode,
                             const char* pszNoData,
                             const uint32* panLercAddCompressionAndVersion,
-                            bool DeferStrileArrayWriting );
+                            bool DeferStrileArrayWriting,
+                            const char * pszWebpLevel );
 
 void GTIFFBuildOverviewMetadata( const char *pszResampling,
                                  GDALDataset *poBaseDS,

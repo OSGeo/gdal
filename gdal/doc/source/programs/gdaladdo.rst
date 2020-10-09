@@ -130,6 +130,9 @@ and the interleaving with the :decl_configoption:`INTERLEAVE_OVERVIEW` =PIXEL/BA
 For JPEG compressed external overviews, the JPEG quality can be set with
 ``--config JPEG_QUALITY_OVERVIEW value``.
 
+For WEBP compressed external and internal overviews, the WEBP quality level can be set with
+``--config WEBP_LEVEL_OVERVIEW value``. If not set, will default to 75.
+
 For LZW or DEFLATE compressed external overviews, the predictor value can be set
 with ``--config PREDICTOR_OVERVIEW 1|2|3``.
 
