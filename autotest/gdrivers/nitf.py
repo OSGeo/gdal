@@ -43,10 +43,6 @@ from osgeo import osr
 import gdaltest
 import pytest
 
-###############################################################################
-# Write/Read test of simple byte reference data.
-
-
 @pytest.fixture(scope='module')
 def not_jpeg_9b():
     import jpeg
@@ -54,6 +50,11 @@ def not_jpeg_9b():
     if gdaltest.jpeg_version == '9b':
         pytest.skip()
 
+def hex_string(s):
+    return "".join(hex(ord(c))[2:] for c in s)
+
+###############################################################################
+# Write/Read test of simple byte reference data.
 
 def test_nitf_1():
 
@@ -2695,13 +2696,12 @@ def test_nitf_77():
 # Test parsing BANDSB TRE (STDI-0002 App X)
 
 def test_nitf_78():
-    # Fill non-character fields with zero
-    float_data = r"\0\0\0\0"
-    bit_mask = r"\0\0\0\0"
+    float_data = struct.pack(">f", 2.1).hex()
+    bit_mask = "80000000" # Set bit 31 only
 
-    tre_data = "TRE=BANDSB=00001RADIANCE                S" + float_data*2 + \
-                "0030.00M0030.00M-------M-------M                                                " + \
-                bit_mask + "DETECTOR                " + float_data
+    tre_data = "TRE=HEX/BANDSB=" + hex_string("00001RADIANCE                S") + float_data*2 + \
+                hex_string("0030.00M0030.00M-------M-------M                                                ") + \
+                bit_mask + hex_string("DETECTOR                ") + float_data
 
     ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_78.ntf', 1, 1, options=[tre_data])
     ds = None
@@ -2717,8 +2717,8 @@ def test_nitf_78():
     <field name="COUNT" value="00001" />
     <field name="RADIOMETRIC_QUANTITY" value="RADIANCE" />
     <field name="RADIOMETRIC_QUANTITY_UNIT" value="S" />
-    <field name="SCALE_FACTOR" value="0.000000" />
-    <field name="ADDITIVE_FACTOR" value="0.000000" />
+    <field name="SCALE_FACTOR" value="2.100000" />
+    <field name="ADDITIVE_FACTOR" value="2.100000" />
     <field name="ROW_GSD" value="0030.00" />
     <field name="ROW_GSD_UNIT" value="M" />
     <field name="COL_GSD" value="0030.00" />
@@ -2728,7 +2728,9 @@ def test_nitf_78():
     <field name="SPT_RESP_COL" value="-------" />
     <field name="SPT_RESP_UNIT_COL" value="M" />
     <field name="DATA_FLD_1" value="" />
-    <field name="EXISTENCE_MASK" value="0" />
+    <field name="EXISTENCE_MASK" value="2147483648" />
+    <field name="RADIOMETRIC_ADJUSTMENT_SURFACE" value="DETECTOR" />
+    <field name="ATMOSPHERIC_ADJUSTMENT_ALTITUDE" value="2.100000" />
     <repeated name="BANDS" number="1">
       <group index="0" />
     </repeated>
@@ -2989,6 +2991,22 @@ def test_nitf_84():
   </tre>
 </tres>
 """
+    assert data == expected_data
+
+###############################################################################
+# Test creating a TRE with a hexadecimal string
+
+def test_nitf_85():
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_85.ntf', 1, 1, options=["TRE=HEX/TSTTRE=414243"])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_85.ntf')
+    data = ds.GetMetadata('TRE')['TSTTRE']
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_85.ntf')
+
+    expected_data = "ABC"
     assert data == expected_data
 
 ###############################################################################

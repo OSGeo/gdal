@@ -1306,6 +1306,7 @@ static int NITFWriteTREsFromOptions(
         char *pszTREName;
         int  nContentLength;
         const char* pszSpace;
+        int bIsHex = FALSE;
 
         if( !EQUALN(papszOptions[iOption], pszTREPrefix, nTREPrefixLen) )
             continue;
@@ -1313,6 +1314,12 @@ static int NITFWriteTREsFromOptions(
         if( STARTS_WITH_CI(papszOptions[iOption]+nTREPrefixLen, "BLOCKA=")
             && bIgnoreBLOCKA )
             continue;
+
+        if( STARTS_WITH_CI(papszOptions[iOption]+nTREPrefixLen, "HEX/") )
+        {
+            bIsHex = TRUE;
+            nTREPrefixLen += 4;
+        }
 
         /* We do no longer use CPLParseNameValue() as it removes leading spaces */
         /* from the value (see #3088) */
@@ -1331,6 +1338,27 @@ static int NITFWriteTREsFromOptions(
         pszUnescapedContents =
             CPLUnescapeString( pszEscapedContents, &nContentLength,
                                CPLES_BackslashQuotable );
+
+        if (bIsHex)
+        {
+            int i;
+            char pszSubStr[2];
+
+            if (nContentLength % 2)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                     "Could not parse creation options %s: invalid hex data", papszOptions[iOption]+nTREPrefixLen);
+                return FALSE;
+            }
+            
+            nContentLength = nContentLength / 2;
+            for (i = 0; i < nContentLength; i++)
+            {
+                CPLStrlcpy(pszSubStr, pszUnescapedContents + 2*i, 3);
+                pszUnescapedContents[i] = (char)strtoul(pszSubStr, NULL, 16);
+            }
+            pszUnescapedContents[nContentLength] = '\0';
+        }
 
         if( !NITFWriteTRE( fp,
                            nOffsetUDIDL,
