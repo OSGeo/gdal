@@ -67,13 +67,16 @@ the GDAL_NUM_THREADS configuration option that defaults to ALL_CPUS in
 that context. In case RAM is limited, it can be needed to set this
 configuration option to 1 to disable multi-threading
 
-Starting with OpenJPEG 2.2.0, multi-threading decoding can also be
-enabld at the code-block level. This must be enabled with the
+Starting with OpenJPEG 2.2.0, multi-threaded decoding can also be
+enabled at the code-block level. This must be enabled with the
 OPJ_NUM_THREADS environment variable (note: this is a system environment
 variable, not a GDAL configuration option), which can be set to a
 numeric value or NUM_CPUS. Its default value is 1. Starting with GDAL
 2.3, this multi-threading at code-block level is automatically enabled
-by GDAL
+by GDAL.
+Starting with GDAL 3.0.1 and OpenJPEG 2.3.2, multi-threaded encoding is
+automatically enabled and can be controlled with the OPJ_NUM_THREADS environment
+variable or the GDAL_NUM_THREADS configuration option.
 
 Both multi-threading mechanism can be combined together.
 
@@ -257,6 +260,9 @@ Creation Options
    By default, none of them are enabled. Enabling them will generally
    increase codestream size, but improve either coding/decoding speed or
    resilience/error detection.
+
+-  **PLT=YES/NO**: (GDAL >= 3.1.1 and OpenJPEG > 2.3.1) Whether to write a
+   PLT (Packet Length) marker segments in tile-part headers. Defaults to NO.
 
 -  **WRITE_METADATA=YES/NO**: Whether metadata should be
    written, in a dedicated JP2 'xml ' box. Defaults to NO. The content
