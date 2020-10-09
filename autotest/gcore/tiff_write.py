@@ -7331,6 +7331,42 @@ def test_tiff_write_jpeg_incompatible_of_paletted():
 
 
 ###############################################################################
+# Test blocksize overriding while creating (internal) overviews
+# on a newly created dataset
+
+def test_tiff_write_186_blocksize():
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('WEBP') == -1:
+        pytest.skip()
+
+    blockSizes = [128,256]
+    for blockSize in blockSizes:
+        src_ds = gdal.Open('../gdrivers/data/utm.tif')
+        fname = 'tmp/tiff_write_186_bs%d.tif' % blockSize
+
+        ds = gdal.GetDriverByName('GTiff').Create(fname, 1024, 1024, 3,
+                                                  options=['COMPRESS=WEBP', 'TILED=YES',
+                                                      'BLOCKXSIZE=512', 'BLOCKYSIZE=512'])
+
+        data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
+        ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
+        ds.GetRasterBand(2).WriteRaster(0, 0, 1024, 1024, data)
+        ds.GetRasterBand(3).WriteRaster(0, 0, 1024, 1024, data)
+        with gdaltest.config_options({
+            'GDAL_TIFF_OVR_BLOCKSIZE':'%d'%blockSize,
+            'WEBP_LEVEL_OVERVIEW':'30',
+            'GDAL_NUM_THREADS':'8'}):
+            ds.BuildOverviews('AVERAGE', overviewlist=[2])
+
+        src_ds = None
+        ds = None
+
+        ds = gdal.Open(fname)
+        (bsx,bsy) = ds.GetRasterBand(1).GetOverview(0).GetBlockSize()
+        assert bsx == blockSize
+        assert bsy == blockSize
+        ds = None
+        gdaltest.tiff_drv.Delete(fname)
 
 
 def test_tiff_write_cleanup():
