@@ -6952,6 +6952,15 @@ def test_tiff_write_185_lerc_create_and_overview():
     gdal.Unlink(filename)
     assert (cs, cs_ovr) == (4672, 1087)
 
+    filename2 = '/vsimem/test_tiff_write_185_lerc_create_and_overview_copy.tif'
+    gdaltest.tiff_drv.CreateCopy(filename2, ds, options=['COMPRESS=LERC_DEFLATE', 'COPY_SRC_OVERVIEWS=YES'])
+    assert gdal.GetLastErrorMsg() == ''
+    ds = gdal.Open(filename2)
+    cs = ds.GetRasterBand(1).Checksum()
+    cs_ovr = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    gdal.Unlink(filename2)
+    assert (cs, cs_ovr) == (4672, 1087)
+
 
 ###############################################################################
 
