@@ -3010,6 +3010,95 @@ def test_nitf_85():
     assert data == expected_data
 
 ###############################################################################
+# Test parsing CSEXRB TRE (STDI-0002-1-v5.0 App AH)
+
+def test_nitf_86():
+    tre_data = "TRE=HEX/CSEXRB=" + hex_string("824ecf8e-1041-4cce-9edb-bc92d88624ca0047308e4b1-80e4-4777-b70f-f6e4a6881de9") + \
+               hex_string("17261ee9-2175-4ff2-86ad-dddda1f8270ccf306a0b-c47c-44fa-af63-463549f6bf98fd99a346-770e-4048-94d8-5a8b2e832b32") + \
+               hex_string("EO-1  HYPERNHYPERNF+03819809.03+03731961.77+03475785.73000000000120201012145900.000000000") + \
+               "0100000000000000" + "05" + "0000000100000001" "FFFFFFFFFF" + \
+               hex_string("                                    1181.1                                               65535000335200256250.000") + \
+               hex_string("             0000132.812+54.861             9991000000")
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_86.ntf', 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_86.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_86.ntf')
+
+    expected_data = """<tres>
+  <tre name="CSEXRB" location="image">
+    <field name="IMAGE_UUID" value="824ecf8e-1041-4cce-9edb-bc92d88624ca" />
+    <field name="NUM_ASSOC_DES" value="004" />
+    <repeated number="4">
+      <group index="0">
+        <field name="ASSOC_DES_ID" value="7308e4b1-80e4-4777-b70f-f6e4a6881de9" />
+      </group>
+      <group index="1">
+        <field name="ASSOC_DES_ID" value="17261ee9-2175-4ff2-86ad-dddda1f8270c" />
+      </group>
+      <group index="2">
+        <field name="ASSOC_DES_ID" value="cf306a0b-c47c-44fa-af63-463549f6bf98" />
+      </group>
+      <group index="3">
+        <field name="ASSOC_DES_ID" value="fd99a346-770e-4048-94d8-5a8b2e832b32" />
+      </group>
+    </repeated>
+    <field name="PLATFORM_ID" value="EO-1" />
+    <field name="PAYLOAD_ID" value="HYPERN" />
+    <field name="SENSOR_ID" value="HYPERN" />
+    <field name="SENSOR_TYPE" value="F" />
+    <field name="GROUND_REF_POINT_X" value="+03819809.03" />
+    <field name="GROUND_REF_POINT_Y" value="+03731961.77" />
+    <field name="GROUND_REF_POINT_Z" value="+03475785.73" />
+    <field name="TIME_STAMP_LOC" value="0" />
+    <field name="REFERENCE_FRAME_NUM" value="000000001" />
+    <field name="BASE_TIMESTAMP" value="20201012145900.000000000" />
+    <field name="DT_MULTIPLIER" value="72057594037927936" />
+    <field name="DT_SIZE" value="5" />
+    <field name="NUMBER_FRAMES" value="1" />
+    <field name="NUMBER_DT" value="1" />
+    <repeated number="1">
+      <group index="0">
+        <field name="DT" value="1099511627775" />
+      </group>
+    </repeated>
+    <field name="MAX_GSD" value="" />
+    <field name="ALONG_SCAN_GSD" value="" />
+    <field name="CROSS_SCAN_GSD" value="" />
+    <field name="GEO_MEAN_GSD" value="1181.1" />
+    <field name="A_S_VERT_GSD" value="" />
+    <field name="C_S_VERT_GSD" value="" />
+    <field name="GEO_MEAN_VERT_GSD" value="" />
+    <field name="GSD_BETA_ANGLE" value="" />
+    <field name="DYNAMIC_RANGE" value="65535" />
+    <field name="NUM_LINES" value="0003352" />
+    <field name="NUM_SAMPLES" value="00256" />
+    <field name="ANGLE_TO_NORTH" value="250.000" />
+    <field name="OBLIQUITY_ANGLE" value="" />
+    <field name="AZ_OF_OBLIQUITY" value="" />
+    <field name="ATM_REFR_FLAG" value="0" />
+    <field name="VEL_ABER_FLAG" value="0" />
+    <field name="GRD_COVER" value="0" />
+    <field name="SNOW_DEPTH_CATEGORY" value="0" />
+    <field name="SUN_AZIMUTH" value="132.812" />
+    <field name="SUN_ELEVATION" value="+54.861" />
+    <field name="PREDICTED_NIIRS" value="" />
+    <field name="CIRCL_ERR" value="" />
+    <field name="LINEAR_ERR" value="" />
+    <field name="CLOUD_COVER" value="999" />
+    <field name="ROLLING_SHUTTER_FLAG" value="1" />
+    <field name="UE_TIME_FLAG" value="0" />
+    <field name="RESERVED_LEN" value="00000" />
+  </tre>
+</tres>
+"""
+    assert data == expected_data
+
+###############################################################################
 # Test reading C4 compressed file
 
 
