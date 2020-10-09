@@ -590,7 +590,7 @@ Parameters:
 
 hGeom:  handle on the geometry to clone from.
 
-an handle on the copy of the geometry with the spatial reference
+a handle on the copy of the geometry with the spatial reference
 system as the original. ";
 
 %feature("docstring")  GetSpatialReference "OGRSpatialReferenceH

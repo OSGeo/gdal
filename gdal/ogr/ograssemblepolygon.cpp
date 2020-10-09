@@ -134,7 +134,7 @@ static void AddEdgeToRing( OGRLinearRing * poRing, OGRLineString * poLine,
  * @param dfTolerance tolerance into which two arcs are considered
  * close enough to be joined.
  * @param peErr OGRERR_NONE on success, or OGRERR_FAILURE on failure.
- * @return an handle to the new geometry, a polygon.
+ * @return a handle to the new geometry, a polygon.
  *
  */
 
