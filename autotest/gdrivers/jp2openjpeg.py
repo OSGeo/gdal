@@ -42,15 +42,17 @@ import gdaltest
 pytestmark = pytest.mark.require_driver('JP2OpenJPEG')
 
 ###############################################################################
-# Verify we have the driver.
-
-
-def test_jp2openjpeg_1():
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
 
     gdaltest.jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
     assert gdaltest.jp2openjpeg_drv is not None
 
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2OpenJPEG')
+
+    yield
+
+    gdaltest.reregister_all_jpeg2000_drivers()
 
 ###############################################################################
 # Open byte.jp2
@@ -2977,9 +2979,6 @@ def test_jp2openjpeg_image_origin_not_zero():
 
 def test_jp2openjpeg_tilesize_16():
 
-    if gdaltest.jp2openjpeg_drv is None:
-        pytest.skip()
-
     # Generated with gdal_translate byte.tif foo.jp2 -of jp2openjpeg -outsize 256 256 -co blockxsize=16 -co blockysize=16 -co BLOCKSIZE_STRICT=true -co resolutions=3
     ds = gdal.Open('data/jpeg2000/tile_size_16.jp2')
     assert ds.GetRasterBand(1).Checksum() == 44216
@@ -3011,10 +3010,3 @@ def test_jp2openjpeg_generate_PLT():
 
     gdaltest.jp2openjpeg_drv.Delete(filename)
 
-
-###############################################################################
-
-
-def test_jp2openjpeg_cleanup():
-
-    gdaltest.reregister_all_jpeg2000_drivers()
