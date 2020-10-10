@@ -7341,7 +7341,7 @@ def test_tiff_write_186_blocksize():
         fname = 'tmp/tiff_write_186_bs%d.tif' % blockSize
 
         ds = gdal.GetDriverByName('GTiff').Create(fname, 1024, 1024, 1,
-                                                  options=['TILED=YES',
+                                                  options=['TILED=YES','COMPRESS=LZW',
                                                       'BLOCKXSIZE=512', 'BLOCKYSIZE=512'])
 
         data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
