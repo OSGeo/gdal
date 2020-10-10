@@ -7338,33 +7338,33 @@ def test_tiff_write_jpeg_incompatible_of_paletted():
 # Test blocksize overriding while creating (internal) overviews
 # on a newly created dataset
 
-def test_tiff_write_186_blocksize():
-    blockSizes = [64,256]
-    for blockSize in blockSizes:
-        src_ds = gdal.Open('../gdrivers/data/utm.tif')
-        fname = 'tmp/tiff_write_186_bs%d.tif' % blockSize
+@pytest.mark.parametrize("blockSize", [64, 256])
+def test_tiff_write_186_blocksize(blockSize):
 
-        ds = gdal.GetDriverByName('GTiff').Create(fname, 1024, 1024, 1,
-                                                  options=['TILED=YES','COMPRESS=LZW',
-                                                      'BLOCKXSIZE=512', 'BLOCKYSIZE=512'])
+    src_ds = gdal.Open('../gdrivers/data/utm.tif')
+    fname = 'tmp/tiff_write_186_bs%d.tif' % blockSize
 
-        data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
-        ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
-        opts = {'GDAL_TIFF_OVR_BLOCKSIZE':'%d'%blockSize}
-        if blockSizes == 256:
-            opts['GDAL_NUM_THREADS']='8'
-        with gdaltest.config_options(opts):
-            ds.BuildOverviews('AVERAGE', overviewlist=[2])
+    ds = gdal.GetDriverByName('GTiff').Create(fname, 1024, 1024, 1,
+                                                options=['TILED=YES','COMPRESS=LZW',
+                                                    'BLOCKXSIZE=512', 'BLOCKYSIZE=512'])
 
-        src_ds = None
-        ds = None
+    data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
+    ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
+    opts = {'GDAL_TIFF_OVR_BLOCKSIZE':'%d'%blockSize}
+    if blockSize == 256:
+        opts['GDAL_NUM_THREADS']='8'
+    with gdaltest.config_options(opts):
+        ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
-        ds = gdal.Open(fname)
-        (bsx,bsy) = ds.GetRasterBand(1).GetOverview(0).GetBlockSize()
-        assert bsx == blockSize
-        assert bsy == blockSize
-        ds = None
-        gdaltest.tiff_drv.Delete(fname)
+    src_ds = None
+    ds = None
+
+    ds = gdal.Open(fname)
+    (bsx,bsy) = ds.GetRasterBand(1).GetOverview(0).GetBlockSize()
+    assert bsx == blockSize
+    assert bsy == blockSize
+    ds = None
+    gdaltest.tiff_drv.Delete(fname)
 
 
 def test_tiff_write_cleanup():
