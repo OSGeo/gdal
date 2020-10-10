@@ -62,7 +62,7 @@ static void Usage(const char* pszErrorMsg, int bShort)
             "       |-colorinterp {red|green|blue|alpha|gray|undefined},...]\n"
             "       [-mo \"META-TAG=VALUE\"]* [-q] [-sds]\n"
             "       [-co \"NAME=VALUE\"]* [-stats] [-norat]\n"
-            "       [-oo NAME=VALUE]*\n"
+            "       [-oo NAME=VALUE]* [-noxmp]\n"
             "       src_dataset dst_dataset\n" );
 
     if( !bShort )

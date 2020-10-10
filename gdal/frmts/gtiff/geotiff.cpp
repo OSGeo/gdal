@@ -18011,6 +18011,15 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Copy xml:XMP data                                               */
+/* -------------------------------------------------------------------- */
+    char **papszXMP = poSrcDS->GetMetadata("xml:XMP");
+    if( papszXMP != nullptr && papszXMP[0] != nullptr )
+    {
+        poDS->SetMetadata( papszXMP, "xml:XMP");
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Second chance: now that we have a PAM dataset, it is possible   */
 /*      to write metadata that we could not write as a TIFF tag.        */
 /* -------------------------------------------------------------------- */

@@ -33,7 +33,7 @@ Synopsis
         |-colorinterp {red|green|blue|alpha|gray|undefined},...]
         [-mo "META-TAG=VALUE"]* [-q] [-sds]
         [-co "NAME=VALUE"]* [-stats] [-norat]
-        [-oo NAME=VALUE]*
+        [-oo NAME=VALUE]* [-noxmp]
         src_dataset dst_dataset
 
 Description
@@ -249,6 +249,10 @@ resampling, and rescaling pixels in the process.
 .. option:: -oo NAME=VALUE
 
     Dataset open option (format specific)
+
+.. option:: -noxmp
+
+    Do not copy the XMP metadata in the source dataset to the output dataset when driver is able to copy it.
 
 .. option:: <src_dataset>
 
