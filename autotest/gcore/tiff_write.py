@@ -7338,11 +7338,11 @@ def test_tiff_write_jpeg_incompatible_of_paletted():
 # Test blocksize overriding while creating (internal) overviews
 # on a newly created dataset
 
-@pytest.mark.parametrize("blockSize", [64, 256])
-def test_tiff_write_186_blocksize(blockSize):
+@pytest.mark.parametrize("blockSize,numThreads", [[64, None], [256, 8]])
+def test_tiff_write_internal_ovr_blocksize(blockSize, numThreads):
 
     src_ds = gdal.Open('../gdrivers/data/utm.tif')
-    fname = 'tmp/tiff_write_186_bs%d.tif' % blockSize
+    fname = 'tmp/tiff_write_internal_ovr_bs%d.tif' % blockSize
 
     ds = gdal.GetDriverByName('GTiff').Create(fname, 1024, 1024, 1,
                                                 options=['TILED=YES','COMPRESS=LZW',
@@ -7351,8 +7351,8 @@ def test_tiff_write_186_blocksize(blockSize):
     data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
     ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
     opts = {'GDAL_TIFF_OVR_BLOCKSIZE':'%d'%blockSize}
-    if blockSize == 256:
-        opts['GDAL_NUM_THREADS']='8'
+    if numThreads:
+        opts['GDAL_NUM_THREADS'] = str(numThreads)
     with gdaltest.config_options(opts):
         ds.BuildOverviews('AVERAGE', overviewlist=[2])
 
