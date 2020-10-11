@@ -6980,14 +6980,22 @@ def test_tiff_write_181_xmp_copy():
 
     src_ds = gdal.Open('../gdrivers/data/gtiff/byte_with_xmp.tif')
 
-    new_ds = gdaltest.tiff_drv.CreateCopy('tmp/test_181_copy.tif', src_ds)
+    filename = 'tmp/test_181_copy.tif'
+    new_ds = gdaltest.tiff_drv.CreateCopy(filename, src_ds)
+    assert new_ds is not None
     src_ds = None
+
+    new_ds = None
+    new_ds = gdal.Open(filename)
+
+    assert int(new_ds.GetRasterBand(1).GetMetadataItem('IFD_OFFSET', 'TIFF')) == 8, 'TIFF directory not at the beginning'
 
     xmp = new_ds.GetMetadata('xml:XMP')
     new_ds = None
     assert 'W5M0MpCehiHzreSzNTczkc9d' in xmp[0], 'Wrong input file without XMP'
 
-    gdaltest.tiff_drv.Delete('tmp/test_181_copy.tif')
+    gdaltest.tiff_drv.Delete(filename)
+
 
 ###############################################################################
 # Test delete XMP from a dataset

@@ -481,6 +481,8 @@ def test_gdal_translate_lib_111():
     # codepath if some other options are set is different, creating a VRTdataset
     new_ds = gdal.Translate('tmp/test111notcopied.tif', ds, nogcp='True')
     assert new_ds is not None
+    new_ds = None
+    new_ds = gdal.Open('tmp/test111notcopied.tif')
     xmp = new_ds.GetMetadata('xml:XMP')
     new_ds = None
     assert 'W5M0MpCehiHzreSzNTczkc9d' in xmp[0], 'Wrong output file without XMP'
@@ -488,6 +490,8 @@ def test_gdal_translate_lib_111():
     # normal codepath calling CreateCopy directly
     new_ds = gdal.Translate('tmp/test111.tif', ds)
     assert new_ds is not None
+    new_ds = None
+    new_ds = gdal.Open('tmp/test111.tif')
     xmp = new_ds.GetMetadata('xml:XMP')
     new_ds = None
     assert 'W5M0MpCehiHzreSzNTczkc9d' in xmp[0], 'Wrong output file without XMP'
@@ -498,7 +502,7 @@ def test_gdal_translate_lib_111():
 def test_gdal_translate_lib_112():
 
     ds = gdal.Open('../gdrivers/data/gtiff/byte_with_xmp.tif')
-    new_ds = gdal.Translate('tmp/test112noxmp.tif', ds, options='-noxmp', format='COG')
+    new_ds = gdal.Translate('tmp/test112noxmp.tif', ds, options='-of COG -noxmp')
     assert new_ds is not None
     xmp = new_ds.GetMetadata('xml:XMP')
     new_ds = None
@@ -506,6 +510,8 @@ def test_gdal_translate_lib_112():
 
     new_ds = gdal.Translate('tmp/test112.tif', ds, format='COG')
     assert new_ds is not None
+    new_ds = None
+    new_ds = gdal.Open('tmp/test112.tif')
     xmp = new_ds.GetMetadata('xml:XMP')
     new_ds = None
     assert 'W5M0MpCehiHzreSzNTczkc9d' in xmp[0], 'Wrong output file without XMP'

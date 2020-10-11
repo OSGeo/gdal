@@ -1546,7 +1546,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     if( !psOptions->bNoXMP )
     {
         char** papszXMP = poSrcDS->GetMetadata("xml:XMP");
-        if (papszXMP != nullptr && papszXMP[0] != nullptr)
+        if (papszXMP != nullptr && *papszXMP != nullptr)
         {
             poVDS->SetMetadata(papszXMP, "xml:XMP");
         }

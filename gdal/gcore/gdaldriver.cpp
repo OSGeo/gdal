@@ -745,7 +745,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
 /*      Copy XMPmetadata.                                               */
 /* -------------------------------------------------------------------- */
     char** papszXMP = poSrcDS->GetMetadata("xml:XMP");
-    if (papszXMP != nullptr && papszXMP[0] != nullptr)
+    if (papszXMP != nullptr && *papszXMP != nullptr)
     {
         poDstDS->SetMetadata(papszXMP, "xml:XMP");
     }
