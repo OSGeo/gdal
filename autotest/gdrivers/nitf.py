@@ -2696,7 +2696,7 @@ def test_nitf_77():
 # Test parsing BANDSB TRE (STDI-0002 App X)
 
 def test_nitf_78():
-    float_data = struct.pack(">f", 2.1).hex()
+    float_data = "40066666" # == struct.pack(">f", 2.1).hex()
     bit_mask = "80000000" # Set bit 31 only
 
     tre_data = "TRE=HEX/BANDSB=" + hex_string("00001RADIANCE                S") + float_data*2 + \

@@ -1348,6 +1348,8 @@ static int NITFWriteTREsFromOptions(
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                      "Could not parse creation options %s: invalid hex data", papszOptions[iOption]+nTREPrefixLen);
+                CPLFree(pszTREName);
+                CPLFree(pszUnescapedContents);
                 return FALSE;
             }
             
