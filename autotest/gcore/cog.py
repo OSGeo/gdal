@@ -1013,3 +1013,23 @@ def test_cog_float32_color_table():
     assert struct.unpack('f', ds.ReadRaster(0,0,1,1))[0] == 1.0
     assert struct.unpack('f', ds.GetRasterBand(1).GetOverview(0).ReadRaster(0,0,1,1))[0] == 1.0
     gdal.Unlink(filename)
+
+###############################################################################
+# Test copy XMP
+
+
+def test_cog_copy_xmp():
+
+    filename = '/vsimem/cog_xmp.tif'
+    src_ds = gdal.Open('../gdrivers/data/gtiff/byte_with_xmp.tif')
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds)
+    assert ds
+    ds = None
+
+    ds = gdal.Open(filename)
+    xmp = ds.GetMetadata('xml:XMP')
+    ds = None
+    assert 'W5M0MpCehiHzreSzNTczkc9d' in xmp[0], 'Wrong input file without XMP'
+    _check_cog(filename)
+
+    gdal.Unlink(filename)

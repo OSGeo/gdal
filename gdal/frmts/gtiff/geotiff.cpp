@@ -17742,6 +17742,16 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Copy xml:XMP data                                               */
+/* -------------------------------------------------------------------- */
+    char **papszXMP = poSrcDS->GetMetadata("xml:XMP");
+    if( papszXMP != nullptr && *papszXMP != nullptr )
+    {
+        int nTagSize = static_cast<int>(strlen(*papszXMP));
+        TIFFSetField( l_hTIFF, TIFFTAG_XMLPACKET, nTagSize, *papszXMP );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Write the projection information, if possible.                  */
 /* -------------------------------------------------------------------- */
     const bool bHasProjection = l_poSRS != nullptr;

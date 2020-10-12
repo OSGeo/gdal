@@ -742,6 +742,15 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
         poDstDS->SetMetadata( papszMD, "RPC" );
 
 /* -------------------------------------------------------------------- */
+/*      Copy XMPmetadata.                                               */
+/* -------------------------------------------------------------------- */
+    char** papszXMP = poSrcDS->GetMetadata("xml:XMP");
+    if (papszXMP != nullptr && *papszXMP != nullptr)
+    {
+        poDstDS->SetMetadata(papszXMP, "xml:XMP");
+    }
+    
+/* -------------------------------------------------------------------- */
 /*      Loop copying bands.                                             */
 /* -------------------------------------------------------------------- */
     for( int iBand = 0;
