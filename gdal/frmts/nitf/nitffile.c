@@ -1342,7 +1342,7 @@ static int NITFWriteTREsFromOptions(
         if (bIsHex)
         {
             int i;
-            char pszSubStr[2];
+            char pszSubStr[3];
 
             if (nContentLength % 2)
             {
