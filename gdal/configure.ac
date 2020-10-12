@@ -1166,6 +1166,58 @@ fi
 AC_SUBST(LIBZ_SETTING,$LIBZ_SETTING)
 
 dnl ---------------------------------------------------------------------------
+dnl Check for libdeflate.
+dnl ---------------------------------------------------------------------------
+
+LIBDEFLATE_SETTING=no
+
+AC_ARG_WITH(libdeflate,
+            AS_HELP_STRING([--with-libdeflate],
+                            [enable libdeflate usage (optional for faster Deflate support (still requires zlib, only used for internal libtiff for now) (ARG=yes/no/prefix), enabled by default)]),,)
+
+if test "$with_libdeflate" != "no" ; then
+
+  if test "$with_libdeflate" != "" -a "$with_libdeflate" != "yes"; then
+    AC_CHECK_LIB(deflate, libdeflate_zlib_decompress, [libdeflate_lib=yes], [libdeflate_lib=no],-L$with_libdeflate/lib)
+  else
+    AC_CHECK_LIB(deflate, libdeflate_zlib_decompress, [libdeflate_lib=yes], [libdeflate_lib=no])
+  fi
+
+  if test "$libdeflate_lib" = "no" -a "$with_libdeflate" = "yes"; then
+    AC_MSG_ERROR([libdeflate library not found])
+  fi
+
+  if test "$with_libdeflate" != "" -a "$with_libdeflate" != "yes"; then
+    if test -r "$with_libdeflate/include/libdeflate.h" ; then
+      libdeflate_h=yes
+    else
+      libdeflate_h=no
+    fi
+  else
+    AC_CHECK_HEADER(libdeflate.h, [libdeflate_h=yes], [libdeflate_h=no])
+  fi
+  if test "$libdeflate_h" = "no" -a "$with_libdeflate" = "yes"; then
+    AC_MSG_ERROR([libdeflate headers not found])
+  fi
+
+  if test "$libdeflate_lib" = "yes" -a "$libdeflate_h" = "yes" ; then
+    LIBDEFLATE_SETTING=yes
+  fi
+
+fi
+
+if test "$LIBDEFLATE_SETTING" = "yes" ; then
+  if test "$with_libdeflate" != "" -a "$with_libdeflate" != "yes"; then
+    EXTRA_INCLUDES="-I$with_libdeflate/include $EXTRA_INCLUDES"
+    LIBS="-L$with_libdeflate/lib -ldeflate $LIBS"
+  else
+    LIBS="-ldeflate $LIBS"
+  fi
+fi
+
+AC_SUBST(LIBDEFLATE_SETTING,$LIBDEFLATE_SETTING)
+
+dnl ---------------------------------------------------------------------------
 dnl Check for iconv/libiconv.
 dnl A rationale for this macro is described in "GNU `gettext' utilities"
 dnl manual at
@@ -5979,6 +6031,7 @@ LOC_MSG()
 LOC_MSG([  LIBTOOL support:           ${with_libtool}])
 LOC_MSG()
 LOC_MSG([  LIBZ support:              ${LIBZ_SETTING}])
+LOC_MSG([  libdeflate support:        ${LIBDEFLATE_SETTING}])
 LOC_MSG([  LIBLZMA support:           ${LIBLZMA_SETTING}])
 LOC_MSG([  ZSTD support:              ${ZSTD_SETTING}])
 LOC_MSG([  cryptopp support:          ${HAVE_CRYPTOPP}])

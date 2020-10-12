@@ -952,6 +952,9 @@ LERCVSetField(TIFF* tif, uint32 tag, va_list ap)
 	case TIFFTAG_ZIPQUALITY:
         {
                 sp->zipquality = (int) va_arg(ap, int);
+                /* For now we don't support libdeflate extra comprssion levels */
+                if( sp->zipquality > Z_BEST_COMPRESSION )
+                    sp->zipquality = Z_BEST_COMPRESSION;
                 return (1);
         }
         default:

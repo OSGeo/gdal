@@ -5969,9 +5969,10 @@ def test_tiff_write_154():
     ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_154.tif', src_ds, options=['BLOCKYSIZE=256', 'COMPRESS=DEFLATE'])
     ds.FlushCache()
     # With compression, empty blocks are written right away
-    assert gdal.VSIStatL('/vsimem/tiff_write_154.tif').size == 462
+    # 461 is with libdeflate, 462 with zlib
+    assert gdal.VSIStatL('/vsimem/tiff_write_154.tif').size in (461, 462)
     ds = None
-    assert gdal.VSIStatL('/vsimem/tiff_write_154.tif').size == 462
+    assert gdal.VSIStatL('/vsimem/tiff_write_154.tif').size in (461, 462)
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_154.tif')
 
     # SPARSE_OK in CreateCopy(): blocks are not written

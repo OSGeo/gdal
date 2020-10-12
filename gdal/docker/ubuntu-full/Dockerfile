@@ -38,6 +38,7 @@ RUN apt-get update -y \
        libpq-dev libssl-dev libboost-dev \
        autoconf automake bash-completion libarmadillo-dev \
        libopenexr-dev libheif-dev \
+       libdeflate-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Build likbkea
@@ -199,6 +200,7 @@ RUN apt-get update \
         libmysqlclient21 libogdi4.1 libcfitsio8 openjdk-"$JAVA_VERSION"-jre \
         libzstd1 bash bash-completion libpq5 libssl1.1 \
         libarmadillo9 libpython3.8 libopenexr24 libheif1 \
+        libdeflate0 \
         python-is-python3 \
     # Workaround bug in ogdi packaging
     && ln -s /usr/lib/ogdi/libvrf.so /usr/lib \

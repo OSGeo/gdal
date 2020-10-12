@@ -29,6 +29,11 @@ TIFF_OPTS 	:=	-DZSTD_SUPPORT $(TIFF_OPTS)
 endif
 
 endif
+
+ifeq ($(LIBDEFLATE_SETTING),yes)
+TIFF_OPTS 	:=	$(TIFF_OPTS) -DLIBDEFLATE_SUPPORT
+endif
+
 endif
 
 ifeq ($(GEOTIFF_SETTING),internal)
@@ -39,17 +44,15 @@ TIFF_OPTS	:=	-DRENAME_INTERNAL_LIBGEOTIFF_SYMBOLS $(TIFF_OPTS)
 endif
 endif
 
-JPEG_FLAGS =
-
 ifneq ($(JPEG_SETTING),no)
-JPEG_FLAGS 	:=	$(JPEG_FLAGS) -I../jpeg -DHAVE_LIBJPEG
+TIFF_OPTS 	:=	$(TIFF_OPTS) -I../jpeg -DHAVE_LIBJPEG
 endif
 
 ifeq ($(JPEG_SETTING),internal)
-JPEG_FLAGS 	:=	$(JPEG_FLAGS) -I../jpeg/libjpeg
+TIFF_OPTS 	:=	$(TIFF_OPTS) -I../jpeg/libjpeg
 endif
 
-CPPFLAGS	:=	 -I.. $(JPEG_FLAGS) $(ZSTD_FLAGS) $(WEBP_FLAGS) $(GEOTIFF_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(TIFF_OPTS) $(CPPFLAGS)
+CPPFLAGS	:=	 -I.. $(GEOTIFF_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(TIFF_OPTS) $(CPPFLAGS)
 
 CXXFLAGS        :=      $(WARN_EFFCPLUSPLUS)  $(CXXFLAGS)
 # issue with $(WARN_OLD_STYLE_CAST) with x86_64-w64-mingw32-g++. See https://travis-ci.org/OSGeo/gdal/jobs/375654138
