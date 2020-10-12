@@ -3104,6 +3104,79 @@ def test_nitf_86():
     assert data == expected_data
 
 ###############################################################################
+# Test parsing ILLUMB TRE (STDI-0002-1-v5.0 App AL)
+
+def test_nitf_87():
+    bit_mask = "7A0000"
+    tre_data = "TRE=HEX/ILLUMB=" + hex_string("0001mm                                      8.5192000000E-01") + \
+        hex_string("2.5770800000E+00001NUM_BANDS=1 because ILLUMB has no band-dependent content                        ") + \
+        hex_string("World Geodetic System 1984                                                      ") + \
+        hex_string("WGE World Geodetic System 1984                                                      ") + \
+        hex_string("WE Geodetic                                                                        ") + \
+        hex_string("GEOD") + \
+        bit_mask + hex_string("00120050407072410+33.234974+044.333405+27.8100000E+0132.8+54.9167.5+52.5") + \
+        hex_string("-163.4004099.2+84.0")
+               
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_87.ntf', 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_87.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_87.ntf')
+
+    expected_data = """<tres>
+  <tre name="ILLUMB" location="image">
+    <field name="NUM_BANDS" value="0001" />
+    <field name="BAND_UNIT" value="mm" />
+    <repeated number="1">
+      <group index="0">
+        <field name="LBOUND" value="8.5192000000E-01" />
+        <field name="UBOUND" value="2.5770800000E+00" />
+      </group>
+    </repeated>
+    <field name="NUM_OTHERS" value="00" />
+    <field name="NUM_COMS" value="1" />
+    <repeated number="1">
+      <group index="0">
+        <field name="COMMENT" value="NUM_BANDS=1 because ILLUMB has no band-dependent content" />
+      </group>
+    </repeated>
+    <field name="GEO_DATUM" value="World Geodetic System 1984" />
+    <field name="GEO_DATUM_CODE" value="WGE" />
+    <field name="ELLIPSOID_NAME" value="World Geodetic System 1984" />
+    <field name="ELLIPSOID_CODE" value="WE" />
+    <field name="VERTICAL_DATUM_REF" value="Geodetic" />
+    <field name="VERTICAL_REF_CODE" value="GEOD" />
+    <field name="EXISTENCE_MASK" value="7995392" />
+    <field name="NUM_ILLUM_SETS" value="001" />
+    <repeated number="1">
+      <group index="0">
+        <field name="DATETIME" value="20050407072410" />
+        <field name="TARGET_LAT" value="+33.234974" />
+        <field name="TARGET_LON" value="+044.333405" />
+        <field name="TARGET_HGT" value="+27.8100000E+0" />
+        <field name="SUN_AZIMUTH" value="132.8" />
+        <field name="SUN_ELEV" value="+54.9" />
+        <field name="MOON_AZIMUTH" value="167.5" />
+        <field name="MOON_ELEV" value="+52.5" />
+        <field name="MOON_PHASE_ANGLE" value="-163.4" />
+        <field name="MOON_ILLUM_PERCENT" value="004" />
+        <field name="SENSOR_AZIMUTH" value="099.2" />
+        <field name="SENSOR_ELEV" value="+84.0" />
+        <repeated number="1">
+          <group index="0" />
+        </repeated>
+      </group>
+    </repeated>
+  </tre>
+</tres>
+"""
+    assert data == expected_data
+
+
+###############################################################################
 # Test reading C4 compressed file
 
 
