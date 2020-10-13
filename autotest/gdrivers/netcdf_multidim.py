@@ -1422,3 +1422,50 @@ def test_netcdf_multidim_stats(netcdf_setup):  # noqa
         clear_stats()
     finally:
         drv.Delete(tmpfilename)
+
+
+def test_netcdf_multidim_advise_read(netcdf_setup):  # noqa
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    ds = gdal.OpenEx('data/netcdf/byte_no_cf.nc', gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    var = rg.OpenMDArray('Band1')
+    ref_data_whole = struct.unpack('B' * 20 * 20, var.Read())
+    ref_data = struct.unpack('B' * 4 * 5, var.Read(array_start_idx = [2, 3], count = [4, 5]))
+
+    sliced = var[1]
+    ref_data_line = struct.unpack('B' * 20, sliced.Read())
+
+    transposed = var.Transpose([1, 0])
+    ref_data_transposed = struct.unpack('B' * 20 * 20, transposed.Read())
+
+    # AdviseRead on all
+    assert var.AdviseRead() == gdal.CE_None
+
+    # Can use AdviseRead
+    got_data = struct.unpack('B' * 4 * 5, var.Read(array_start_idx = [2, 3], count = [4, 5]))
+    assert got_data == ref_data
+
+    # AdviseRead on portion
+    assert var.AdviseRead(array_start_idx = [2, 3], count = [4, 5]) == gdal.CE_None
+    got_data = struct.unpack('B' * 4 * 5, var.Read(array_start_idx = [2, 3], count = [4, 5]))
+    assert got_data == ref_data
+
+    # Cannot use AdviseRead as we read outside of it
+    got_data = struct.unpack('B' * 20 * 20, var.Read())
+    assert got_data == ref_data_whole
+
+    # On a slice
+    assert sliced.AdviseRead() == gdal.CE_None
+    got_data = struct.unpack('B' * 20, sliced.Read())
+    assert got_data == ref_data_line
+
+    # On transposed array
+    assert transposed.AdviseRead() == gdal.CE_None
+    got_data = struct.unpack('B' * 20 * 20, transposed.Read())
+    assert got_data == ref_data_transposed
+
+    with gdaltest.error_handler():
+        assert var.AdviseRead(array_start_idx = [2, 3], count = [20, 5]) == gdal.CE_Failure
