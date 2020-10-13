@@ -437,6 +437,73 @@
         <field name="LINEAR_ERR" length="3"/>
     </tre>
 
+    <!-- STDI-0002-1-v5.0 Appendix AH, Section AH.6.1, Table AH.6-1-->
+    <tre name="CSEXRB" md_prefix="NITF_CSEXRB_" location="image">
+        <field name="IMAGE_UUID" length="36" type="string"/>
+        <field name="NUM_ASSOC_DES" length="3" type="integer" minval="000" maxval="999"/>
+        <loop counter="NUM_ASSOC_DES" md_prefix="DES_%03d_">
+            <field name="ASSOC_DES_ID" length="36" type="string"/>
+        </loop>
+        <field name="PLATFORM_ID" length="6" type="string"/>
+        <field name="PAYLOAD_ID" length="6" type="string"/>
+        <field name="SENSOR_ID" length="6" type="string"/>
+        <field name="SENSOR_TYPE" length="1" type="string"/>
+        <field name="GROUND_REF_POINT_X" length="12" type="real" minval="-99999999.99" maxval="+99999999.99"/>
+        <field name="GROUND_REF_POINT_Y" length="12" type="real" minval="-99999999.99" maxval="+99999999.99"/>
+        <field name="GROUND_REF_POINT_Z" length="12" type="real" minval="-99999999.99" maxval="+99999999.99"/>
+        <if cond="SENSOR_TYPE=S">
+            <field name="DAY_FIRST_LINE_IMAGE" length="8" type="string" />
+            <field name="TIME_FIRST_LINE_IMAGE" length="15" type="real" minval="0.0" maxval="86400.0"/>
+            <field name="TIME_IMAGE_DURATION" length="16" type="real" minval="-86400.0" maxval="86400.0"/>
+        </if>
+        <if cond="SENSOR_TYPE=F">
+            <field name="TIME_STAMP_LOC" length="1" type="integer" minval="0" maxval="1"/>
+            <if cond="TIME_STAMP_LOC=0">
+                <field name="REFERENCE_FRAME_NUM" length="9" type="integer" minval="1" maxval="999999999"/>
+                <field name="BASE_TIMESTAMP" length="24" type="string"/>
+                <field name="DT_MULTIPLIER" length="8" type="UnsignedInt_BigEndian" />
+                <field name="DT_SIZE" length="1" type="UnsignedInt_BigEndian" minval="1" maxval="8"/>
+                <field name="NUMBER_FRAMES" length="4" type="UnsignedInt_BigEndian"/>
+                <field name="NUMBER_DT" length="4" type="UnsignedInt_BigEndian" minval="0" maxval="2147483647"/> <!-- Value will be cast to signed integer -->
+                <loop counter="NUMBER_DT" md_prefix="DT_%04d">
+                    <field name="DT" length_var="DT_SIZE" type="UnsignedInt_BigEndian" />
+                </loop>
+            </if>
+        </if>
+        <field name="MAX_GSD" length="12" type="real"/>
+        <field name="ALONG_SCAN_GSD" length="12" type="real"/>
+        <field name="CROSS_SCAN_GSD" length="12" type="real"/>
+        <field name="GEO_MEAN_GSD" length="12" type="real"/>
+        <field name="A_S_VERT_GSD" length="12" type="real"/>
+        <field name="C_S_VERT_GSD" length="12" type="real"/>
+        <field name="GEO_MEAN_VERT_GSD" length="12" type="real"/>
+        <field name="GSD_BETA_ANGLE" length="5" type="real"/>
+        <field name="DYNAMIC_RANGE" length="5" type="integer"/>
+        <field name="NUM_LINES" length="7" type="integer"/>
+        <field name="NUM_SAMPLES" length="5" type="integer"/>
+        <field name="ANGLE_TO_NORTH" length="7" type="real"/>
+        <field name="OBLIQUITY_ANGLE" length="6" type="real"/>
+        <field name="AZ_OF_OBLIQUITY" length="7" type="real"/>
+        <field name="ATM_REFR_FLAG" length="1" type="integer" minval="0" maxval="1"/>
+        <field name="VEL_ABER_FLAG" length="1" type="integer" minval="0" maxval="1"/>
+        <field name="GRD_COVER" length="1" type="integer" minval="0" maxval="1" />
+        <field name="SNOW_DEPTH_CATEGORY" length="1" type="integer"/>
+        <field name="SUN_AZIMUTH" length="7" type="real"/>
+        <field name="SUN_ELEVATION" length="7" type="real"/>
+        <field name="PREDICTED_NIIRS" length="3" type="real"/>
+        <field name="CIRCL_ERR" length="5" type="real"/>
+        <field name="LINEAR_ERR" length="5" type="real"/>
+        <field name="CLOUD_COVER" length="3" type="integer"/>
+        <if cond="SENSOR_TYPE=F">
+            <field name="ROLLING_SHUTTER_FLAG" length="1" type="integer" minval="0" maxval="1"/>
+        </if>
+        <field name="UE_TIME_FLAG" length="1" type="integer" minval="0" maxval="1"/>
+        <field name="RESERVED_LEN" length="5" type="integer" fixed_value="00000"/>
+        <if cond="RESERVED_LEN!=00000">
+            <field name="RESERVED" length_var="RESERVED_LEN" type="string" />
+        </if>
+    </tre>
+
     <tre name="CSPROA" length="120" location="image">
         <field length="12"/>
         <field length="12"/>
@@ -949,7 +1016,7 @@
             </if>
         </if>
         <field name="NPIXQUAL" length="4" type="integer"/>
-        <field name="PQ_BIT_VALUE" length="1" type="integer"/>
+        <field name="PQ_BIT_VALUE" length="1" type="integer" fixed_value="1" />
         <loop counter="NPIXQUAL" md_prefix="PIXQUAL_%04d_">
             <field name="PQ_CONDITION" length="40" type="string"/>
         </loop>

@@ -2301,23 +2301,30 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                         break;
                     }
                 }
-                else if (strcmp(pszType, "bitmask") == 0)
+                else if (strcmp(pszType, "UnsignedInt_BigEndian") == 0 || strcmp(pszType, "bitmask") == 0)
                 {
-                    if( nLength == 4 )
+                    if (nLength <= 8)
                     {
-                        const size_t nBufferSize = 11;
-                        unsigned int nVal;
-                        memcpy(&nVal, pachTRE + *pnTreOffset, 4);
-                        CPL_MSBPTR32(&nVal);
+                        const size_t nBufferSize = 21;
+                        unsigned long long nVal = 0;
+                        GByte byData;
+
+                        int i;
+                        for (i = 0; i < nLength; ++i)
+                        {
+                            memcpy(&byData, pachTRE + *pnTreOffset + i, 1);
+                            nVal += (unsigned long long)byData << 8*(nLength - i - 1);
+                        }
+
                         pszValue = (char*)CPLMalloc(nBufferSize);
-                        CPLsnprintf(pszValue, nBufferSize, "%u", nVal);
+                        CPLsnprintf(pszValue, nBufferSize, CPL_FRMT_GUIB, (GUIntBig)nVal);
                         papszTmp = CSLSetNameValue(papszTmp, pszMDItemName, pszValue);
                     }
                     else
                     {
                         *pbError = TRUE;
                         CPLError( CE_Warning, CPLE_AppDefined,
-                                  "bitmask field must be 4 bytes in %s TRE ", pszTREName);
+                                  "UnsignedInt/bitmask field must be <= 8 bytes in %s TRE ", pszTREName);
                         break;
                     }
                 }
