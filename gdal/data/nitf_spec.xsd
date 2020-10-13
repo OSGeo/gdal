@@ -90,7 +90,7 @@
         <xs:attribute name="md_prefix" use="optional">
             <xs:simpleType>
                 <xs:restriction base="xs:string">
-                    <xs:pattern value="([a-z]|[A-Z]|[0-9]|_)*(%[0-9]*lu)?([a-z]|[A-Z]|[0-9]|_)*"/>
+                    <xs:pattern value="([a-z]|[A-Z]|[0-9]|_)*(%[0-9]*d)?([a-z]|[A-Z]|[0-9]|_)*"/>
                 </xs:restriction>
             </xs:simpleType>
         </xs:attribute>

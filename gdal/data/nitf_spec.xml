@@ -36,7 +36,7 @@
     <!-- STDI-0002-1-v5.0 Appendix P, Section P.3.2.6.2, Table P-11 -->
     <tre name="ACCHZB" md_prefix="NITF_ACCHZB_" minlength="11" maxlength="99985" location="image">
         <field name="NUM_ACHZ" length="2" type="integer" minval="1" maxval="99"/>
-        <loop counter="NUM_ACHZ" md_prefix="ACHZ_%02lu_">
+        <loop counter="NUM_ACHZ" md_prefix="ACHZ_%02d_">
             <field name="UNIAAH" length="3" type="string"/>
             <if cond="UNIAAH!=   ">
                 <field name="AAH" length="5" type="integer"/>
@@ -46,7 +46,7 @@
                 <field name="APH" length="5" type="integer"/>
             </if>
             <field name="NUM_PTS" length="3" type="integer" minval="0" maxval="999"/>
-            <loop counter="NUM_PTS" md_prefix="POINT_%03lu_">
+            <loop counter="NUM_PTS" md_prefix="POINT_%03d_">
                 <field name="LON" length="15" type="string"/>
                 <field name="LAT" length="15" type="string"/>
             </loop>
@@ -55,7 +55,7 @@
 
     <tre name="ACCPOB" minlength="17" maxlength="99985" location="image">
         <field name="NUM_ACPO" length="2" type="integer" minval="1" maxval="99"/>
-        <loop counter="NUM_ACPO" md_prefix="ACCPO_%02lu_" name="ACCPO">
+        <loop counter="NUM_ACPO" md_prefix="ACCPO_%02d_" name="ACCPO">
             <field name="UNIAAH" length="3" type="string"/>
             <if cond="UNIAAH!=">
                 <field name="AAH" length="5" type="integer"/>
@@ -73,7 +73,7 @@
                 <field name="APV" length="5" type="integer"/>
             </if>
             <field name="NUM_PTS" length="3" type="integer"/>
-            <loop counter="NUM_PTS" md_prefix="POINT_%03lu_" name="POINT">
+            <loop counter="NUM_PTS" md_prefix="POINT_%03d_" name="POINT">
                 <field name="LON" length="15" type="real"/>
                 <field name="LAT" length="15" type="real"/>
             </loop>
@@ -83,7 +83,7 @@
     <!-- STDI-0002-1-v5.0 Appendix P, Section P.3.2.6.3, Table P-12 -->
     <tre name="ACCVTB" md_prefix="NITF_ACCVTB_" minlength="11" maxlength="99985" location="image">
         <field name="NUM_ACVT" length="2" type="integer" minval="1" maxval="99"/>
-        <loop counter="NUM_ACVT" md_prefix="ACVT_%02lu_">
+        <loop counter="NUM_ACVT" md_prefix="ACVT_%02d_">
             <field name="UNIAAV" length="3" type="string"/>
             <if cond="UNIAAV!=   ">
                 <field name="AAV" length="5" type="integer"/>
@@ -93,7 +93,7 @@
                 <field name="APV" length="5" type="integer"/>
             </if>
             <field name="NUM_PTS" length="3" type="integer" minval="0" maxval="999"/>
-            <loop counter="NUM_PTS" md_prefix="POINT_%03lu_">
+            <loop counter="NUM_PTS" md_prefix="POINT_%03d_">
                 <field name="LON" length="15" type="string"/>
                 <field name="LAT" length="15" type="string"/>
             </loop>
@@ -182,7 +182,7 @@
         <if cond="EXISTENCE_MASK:24">
             <field name="WAVE_LENGTH_UNIT" length="1" type="string"/>
         </if>
-        <loop counter="COUNT" name="BANDS" md_prefix="BAND_%05lu_">
+        <loop counter="COUNT" name="BANDS" md_prefix="BAND_%05d_">
             <if cond="EXISTENCE_MASK:28">
                 <field name="BANDID" length="50" type="string"/>
             </if>
@@ -280,10 +280,10 @@
         <if cond="EXISTENCE_MASK:0">
             <field name="NUM_AUX_B" length="2" type="integer"/>
             <field name="NUM_AUX_C" length="2" type="integer"/>
-            <loop counter="NUM_AUX_B" name="BAND_AUX" md_prefix="BAND_AUX_%02lu_">
+            <loop counter="NUM_AUX_B" name="BAND_AUX" md_prefix="BAND_AUX_%02d_">
                 <field name="BAPF" length="1" type="string"/>
                 <field name="UBAP" length="7" type="string"/>
-                <loop counter="COUNT" name="BAND" md_prefix="BAND_%05lu">
+                <loop counter="COUNT" name="BAND" md_prefix="BAND_%05d">
                     <if cond="BAPF=I">
                         <field name="APN" length="10" type="integer"/>
                     </if>
@@ -295,7 +295,7 @@
                     </if>
                 </loop>
             </loop>
-            <loop counter="NUM_AUX_C" name="CUBE_AUX" md_prefix="CUBE_AUX_%02lu_">
+            <loop counter="NUM_AUX_C" name="CUBE_AUX" md_prefix="CUBE_AUX_%02d_">
                 <field name="CAPF" length="1" type="string"/>
                 <field name="UCAP" length="7" type="string"/>
                 <if cond="CAPF=I">
@@ -327,7 +327,7 @@
 
     <tre name="BNDPLB" minlength="124" maxlength="99964" location="image">
         <field name="NUM_PTS" length="4" type="integer" minval="4" maxval="3332"/>
-        <loop counter="NUM_PTS" md_prefix="POINT_%04lu_" name="POINT">
+        <loop counter="NUM_PTS" md_prefix="POINT_%04d_" name="POINT">
             <field name="LON" length="15" type="real"/>
             <field name="LAT" length="15" type="real"/>
         </loop>
@@ -336,7 +336,7 @@
     <!-- STDI-0002-1 Appendix AG: CCINFA (from RFC-084) -->
     <tre name="CCINFA">
         <field name="NUMCODE" length="3" type="integer" minval="1" maxval="999"/>
-        <loop counter="NUMCODE" md_prefix="CODE_%03lu_" name="CODES">
+        <loop counter="NUMCODE" md_prefix="CODE_%03d_" name="CODES">
             <field name="CODE_LEN" length="1" type="integer" minval="1" maxval="9"/>
             <field name="CODE" length_var="CODE_LEN"/>
             <field name="EQTYPE" length="1"/>
@@ -376,7 +376,7 @@
         <field name="DATE_EPHEM" length="8"/>
         <field name="T0_EPHEM" length="13"/>
         <field name="NUM_EPHEM" length="3"/>
-        <loop counter="NUM_EPHEM" md_prefix="EPHEM_%03lu_" name="EPHEM">
+        <loop counter="NUM_EPHEM" md_prefix="EPHEM_%03d_" name="EPHEM">
             <field name="X" longname="EPHEM_X" length="12"/>
             <field name="Y" longname="EPHEM_Y" length="12"/>
             <field name="Z" longname="EPHEM_Z" length="12"/>
@@ -441,7 +441,7 @@
     <tre name="CSEXRB" md_prefix="NITF_CSEXRB_" location="image">
         <field name="IMAGE_UUID" length="36" type="string"/>
         <field name="NUM_ASSOC_DES" length="3" type="integer" minval="000" maxval="999"/>
-        <loop counter="NUM_ASSOC_DES" md_prefix="DES_%03lu_">
+        <loop counter="NUM_ASSOC_DES" md_prefix="DES_%03d_">
             <field name="ASSOC_DES_ID" length="36" type="string"/>
         </loop>
         <field name="PLATFORM_ID" length="6" type="string"/>
@@ -464,8 +464,8 @@
                 <field name="DT_MULTIPLIER" length="8" type="UnsignedInt_BigEndian" />
                 <field name="DT_SIZE" length="1" type="UnsignedInt_BigEndian" minval="1" maxval="8"/>
                 <field name="NUMBER_FRAMES" length="4" type="UnsignedInt_BigEndian"/>
-                <field name="NUMBER_DT" length="4" type="UnsignedInt_BigEndian"/>
-                <loop counter="NUMBER_DT" md_prefix="DT_%04lu">
+                <field name="NUMBER_DT" length="4" type="UnsignedInt_BigEndian" minval="0" maxval="2147483647"/> <!-- Value will be cast to signed integer -->
+                <loop counter="NUMBER_DT" md_prefix="DT_%04d">
                     <field name="DT" length_var="DT_SIZE" type="UnsignedInt_BigEndian" />
                 </loop>
             </if>
@@ -519,7 +519,7 @@
 
     <tre name="CSSFAA" minlength="107" maxlength="425" location="image">
         <field name="NUM_BANDS" length="1"/>
-        <loop counter="NUM_BANDS" md_prefix="BAND_%lu_" name="BAND">
+        <loop counter="NUM_BANDS" md_prefix="BAND_%d_" name="BAND">
             <field name="BAND_TYPE" length="1"/>
             <field name="BAND_ID" length="6"/>
             <field name="FOC_LENGTH" length="11"/>
@@ -540,7 +540,7 @@
     <tre name="ENGRDA">
         <field name="RESRC" length="20" type="string"/>
         <field name="RECNT" length="3" type="integer" minval="1"/>
-        <loop counter="RECNT" md_prefix="RECORD_%lu_" name="RECORDS">
+        <loop counter="RECNT" md_prefix="RECORD_%d_" name="RECORDS">
             <field name="ENGLN" length="2" type="integer" minval="1"/>
             <field name="ENGLBL" length_var="ENGLN" type="string"/>
             <field name="ENGMTXC" length="4" type="integer" minval="1"/>
@@ -603,7 +603,7 @@
     <!-- STDI-0002-1, App. P Table P-4 Grid Reference Data (GRDPSB) TRE -->
     <tre name="GRDPSB" location="image">
         <field name="NUM_GRDS" length="2" minval="1" type="integer"/>
-        <loop counter="NUM_GRDS" md_prefix="GRD_%02lu_" name="GRDS">
+        <loop counter="NUM_GRDS" md_prefix="GRD_%02d_" name="GRDS">
             <field name="ZVL" length="10" unit="m" type="real"/>
             <field name="BAD" length="10" type="string"/>
             <field name="LOD" length="12" type="real"/>
@@ -620,12 +620,12 @@
         <field name="REMAP_FLAG" length="1"/>
         <field name="LUTID" length="2"/>
         <field name="NEVENTS" length="2"/>
-        <loop counter="NEVENTS" md_prefix="EVENT_%02lu_" name="EVENT">
+        <loop counter="NEVENTS" md_prefix="EVENT_%02d_" name="EVENT">
             <field name="PDATE" length="14"/>
             <field name="PSITE" length="10"/>
             <field name="PAS" length="10"/>
             <field name="NIPCOM" length="1"/>
-            <loop counter="NIPCOM" md_prefix="IPCOM_%lu" name="IPCOM">
+            <loop counter="NIPCOM" md_prefix="IPCOM_%d" name="IPCOM">
                 <field name="" longname="IPCOM" length="80"/>
             </loop>
             <field name="IBPP" length="2"/>
@@ -698,7 +698,7 @@
         <field name="NLEVELS_O" length="2"/>
         <field name="NBANDS_O" length="5"/>
         <field name="NLAYERS_O" length="3"/>
-        <loop counter="NLAYERS_O" md_prefix="LAYER_%03lu_" name="LAYER">
+        <loop counter="NLAYERS_O" md_prefix="LAYER_%03d_" name="LAYER">
             <field name="LAYER_ID" length="3"/>
             <field name="BITRATE" length="9"/>
         </loop>
@@ -724,10 +724,10 @@
         <field name="CUR_FILE_ID_LEN" length="4" type="integer" minval="1" maxval="9999"/>
         <field name="CUR_FILE_ID" length_var="CUR_FILE_ID_LEN" type="string"/>
         <field name="NUM_GROUPS" length="4" type="integer" minval="1" maxval="9999"/>
-        <loop counter="NUM_GROUPS" md_prefix="GROUP_%lu" name="GROUPS">
+        <loop counter="NUM_GROUPS" md_prefix="GROUP_%d" name="GROUPS">
             <field name="RELATIONSHIP" length="24" type="string"/>
             <field name="NUM_MATES" length="4" type="integer" minval="1" maxval="9999"/>
-            <loop counter="NUM_MATES" md_prefix="MATE_%lu" name="MATES">
+            <loop counter="NUM_MATES" md_prefix="MATE_%d" name="MATES">
                  <field name="SOURCE" length="42" type="string"/>
                  <field name="MATE_TYPE" length="16" type="string"/>
                  <field name="MATE_ID_LEN" length="4" type="integer" minval="1" maxval="9999"/>
@@ -796,7 +796,7 @@
         <field name="SQUINT_ANGLE" length="6" minval="-60.0" maxval="85.00" type="real"/>
         <field name="COSGRZ" length="7" minval="0" maxval="9.99999" type="real"/>
         <field name="NO_VALID_TARGETS" length="3" minval="1" maxval="999" type="integer"/>
-        <loop counter="NO_VALID_TARGETS" md_prefix="TGT_%03lu_" name="TARGETS">
+        <loop counter="NO_VALID_TARGETS" md_prefix="TGT_%03d_" name="TARGETS">
             <field name="TGT_LOC" length="23" type="string"/>
             <field name="TGT_LOC_ACCY" length="6" minval="0" maxval="999.99" type="real"/>
             <field name="TGT_VEL_R" length="4" minval="-200" maxval="200" type="string"/>
@@ -899,25 +899,25 @@
         <field name="PRODCRTIME" length="14" type="string"/>
         <field name="MAPID" length="40" type="string"/>
         <field name="SECTITLEREP" length="2" type="integer" minval="0" maxval="99"/>
-        <loop counter="SECTITLEREP" md_prefix="SECTITLE_%02lu_" name="SECTITLE">
+        <loop counter="SECTITLEREP" md_prefix="SECTITLE_%02d_" name="SECTITLE">
             <field name="SECTITLE" length="40" type="string"/>
             <field name="PPNUM" length="5" type="string"/>
             <field name="TPP" length="3" type="integer" minval="1" maxval="999"/>
         </loop>
         <field name="REQORGREP" length="2" type="integer" minval="0" maxval="99"/>
-        <loop counter="REQORGREP" md_prefix="REQORG_%02lu" name="REQORG">
+        <loop counter="REQORGREP" md_prefix="REQORG_%02d" name="REQORG">
             <field name="" longname="REQORG" length="64" type="string"/>
         </loop>
         <field name="KEYWORDREP" length="2" type="integer" minval="0" maxval="99"/>
-        <loop counter="KEYWORDREP" md_prefix="KEYWORD_%02lu" name="KEYWORD">
+        <loop counter="KEYWORDREP" md_prefix="KEYWORD_%02d" name="KEYWORD">
             <field name="" longname="KEYWORD" length="255" type="string"/>
         </loop>
         <field name="ASSRPTREP" length="2" type="integer" minval="0" maxval="99"/>
-        <loop counter="ASSRPTREP" md_prefix="ASSRPT_%02lu" name="ASSRPT">
+        <loop counter="ASSRPTREP" md_prefix="ASSRPT_%02d" name="ASSRPT">
             <field name="" longname="ASSRPT" length="20" type="string"/>
         </loop>
         <field name="ATEXTREP" length="2" type="integer" minval="0" maxval="99"/>
-        <loop counter="ATEXTREP" md_prefix="ATEXT_%02lu" name="ATEXT">
+        <loop counter="ATEXTREP" md_prefix="ATEXT_%02d" name="ATEXT">
             <field name="" longname="ATEXT" length="255" type="string"/>
         </loop>
     </tre>
@@ -934,25 +934,25 @@
         <field name="PRODCRTIME" length="14" type="string"/>
         <field name="MAPID" length="40" type="string"/>
         <field name="SECTITLEREP" length="2" type="integer" minval="0" maxval="99"/>
-        <loop counter="SECTITLEREP" md_prefix="SECTITLE_%02lu_" name="SECTITLE">
+        <loop counter="SECTITLEREP" md_prefix="SECTITLE_%02d_" name="SECTITLE">
             <field name="SECTITLE" length="40" type="string"/>
             <field name="PPNUM" length="5" type="string"/>
             <field name="TPP" length="3" type="integer" minval="1" maxval="999"/>
         </loop>
         <field name="REQORGREP" length="2" type="integer" minval="0" maxval="99"/>
-        <loop counter="REQORGREP" md_prefix="REQORG_%02lu" name="REQORG">
+        <loop counter="REQORGREP" md_prefix="REQORG_%02d" name="REQORG">
             <field name="" longname="REQORG" length="64" type="string"/>
         </loop>
         <field name="KEYWORDREP" length="2" type="integer" minval="0" maxval="99"/>
-        <loop counter="KEYWORDREP" md_prefix="KEYWORD_%02lu" name="KEYWORD">
+        <loop counter="KEYWORDREP" md_prefix="KEYWORD_%02d" name="KEYWORD">
             <field name="" longname="KEYWORD" length="255" type="string"/>
         </loop>
         <field name="ASSRPTREP" length="2" type="integer" minval="0" maxval="99"/>
-        <loop counter="ASSRPTREP" md_prefix="ASSRPT_%02lu" name="ASSRPT">
+        <loop counter="ASSRPTREP" md_prefix="ASSRPT_%02d" name="ASSRPT">
             <field name="" longname="ASSRPT" length="20" type="string"/>
         </loop>
         <field name="ATEXTREP" length="2" type="integer" minval="0" maxval="99"/>
-        <loop counter="ATEXTREP" md_prefix="ATEXT_%02lu" name="ATEXT">
+        <loop counter="ATEXTREP" md_prefix="ATEXT_%02d" name="ATEXT">
             <field name="" longname="ATEXT" length="255" type="string"/>
         </loop>
     </tre>
@@ -976,7 +976,7 @@
         <field name="NUMAIS" length="3" type="integer"/>
         <if cond="NUMAIS!=ALL">
             <if cond="NUMAIS!=000">
-                <loop counter="NUMAIS" md_prefix = "AIS_%03lu_">
+                <loop counter="NUMAIS" md_prefix = "AIS_%03d_">
                     <field name="AISDLVL" length="3" type="integer"/>
                 </loop>
             </if>
@@ -988,13 +988,13 @@
         <field name="SAMPLE_MODE" length="1" type="string"/>
         <field name="NUMMETRICS" length="5" type="integer"/>
         <field name="PERBAND" length="1" type="string"/>
-        <loop counter="NUMMETRICS" md_prefix="METRIC_%05lu_">
+        <loop counter="NUMMETRICS" md_prefix="METRIC_%05d_">
             <field name="DESCRIPTION" length="40" type="string"/>
             <field name="UNIT" length="40" type="string"/>
             <field name="FITTYPE" length="1" type="string"/>
             <if cond="FITTYPE=P">
                 <field name="NUMCOEF" length="1" type="integer"/>
-                <loop counter="NUMCOEF" md_prefix="COEF_%01lu_">
+                <loop counter="NUMCOEF" md_prefix="COEF_%01d_">
                     <field name="COEF" length="15" type="real"/>
                 </loop>
             </if>
@@ -1010,14 +1010,14 @@
         <field name="NUMAIS" length="3" type="integer"/>
         <if cond="NUMAIS!=ALL">
             <if cond="NUMAIS!=000">
-                <loop counter="NUMAIS" md_prefix = "AIS_%03lu_">
+                <loop counter="NUMAIS" md_prefix = "AIS_%03d_">
                     <field name="AISDLVL" length="3" type="integer"/>
                 </loop>
             </if>
         </if>
         <field name="NPIXQUAL" length="4" type="integer"/>
         <field name="PQ_BIT_VALUE" length="1" type="integer" fixed_value="1" />
-        <loop counter="NPIXQUAL" md_prefix="PIXQUAL_%04lu_">
+        <loop counter="NPIXQUAL" md_prefix="PIXQUAL_%04d_">
             <field name="PQ_CONDITION" length="40" type="string"/>
         </loop>
     </tre>
@@ -1026,7 +1026,7 @@
         <field name="PRN" length="80" type="string"/>
         <field name="PCO" length="2" type="string"/>
         <field name="NUM_PRJ" length="1" type="integer" minval="0" maxval="9"/>
-        <loop counter="NUM_PRJ" md_prefix="PRJ%lu" name="PRJ">
+        <loop counter="NUM_PRJ" md_prefix="PRJ%d" name="PRJ">
             <field name="" longname="PRJ" length="15" type="string"/>
         </loop>
         <field name="XOR" length="15" type="integer" minval="0"/>
@@ -1048,16 +1048,16 @@
         <field name="LAT_SCALE" length="8" unit="degrees" type="real" minval="-90.0" maxval="90.0"/>
         <field name="LONG_SCALE" length="9" unit="degrees" type="real" minval="-180.0" maxval="180.0"/>
         <field name="HEIGHT_SCALE" length="5" unit="meters" type="integer" minval="-9999" maxval="9999"/>
-        <loop iterations="20" md_prefix="LINE_NUM_COEFF_%02lu" name="LINE_NUM_COEFF">
+        <loop iterations="20" md_prefix="LINE_NUM_COEFF_%02d" name="LINE_NUM_COEFF">
             <field name="" longname="LINE_NUM_COEFF" length="12" type="real"/>
         </loop>
-        <loop iterations="20" md_prefix="LINE_DEN_COEFF_%02lu" name="LINE_DEN_COEFF">
+        <loop iterations="20" md_prefix="LINE_DEN_COEFF_%02d" name="LINE_DEN_COEFF">
             <field name="" longname="LINE_DEN_COEFF" length="12" type="real"/>
         </loop>
-        <loop iterations="20" md_prefix="SAMP_NUM_COEFF_%02lu" name="SAMP_NUM_COEFF">
+        <loop iterations="20" md_prefix="SAMP_NUM_COEFF_%02d" name="SAMP_NUM_COEFF">
             <field name="" longname="SAMP_NUM_COEFF" length="12" type="real"/>
         </loop>
-        <loop iterations="20" md_prefix="SAMP_DEN_COEFF_%02lu" name="SAMP_DEN_COEFF">
+        <loop iterations="20" md_prefix="SAMP_DEN_COEFF_%02d" name="SAMP_DEN_COEFF">
             <field name="" longname="SAMP_DEN_COEFF" length="12" type="real"/>
         </loop>
     </tre>
@@ -1076,16 +1076,16 @@
         <field name="LAT_SCALE" length="8" unit="degrees" type="real" minval="-90.0" maxval="90.0"/>
         <field name="LONG_SCALE" length="9" unit="degrees" type="real" minval="-180.0" maxval="180.0"/>
         <field name="HEIGHT_SCALE" length="5" unit="meters" type="integer" minval="-9999" maxval="9999"/>
-        <loop iterations="20" md_prefix="LINE_NUM_COEFF_%02lu" name="LINE_NUM_COEFF">
+        <loop iterations="20" md_prefix="LINE_NUM_COEFF_%02d" name="LINE_NUM_COEFF">
             <field name="" longname="LINE_NUM_COEFF" length="12" type="real"/>
         </loop>
-        <loop iterations="20" md_prefix="LINE_DEN_COEFF_%02lu" name="LINE_DEN_COEFF">
+        <loop iterations="20" md_prefix="LINE_DEN_COEFF_%02d" name="LINE_DEN_COEFF">
             <field name="" longname="LINE_DEN_COEFF" length="12" type="real"/>
         </loop>
-        <loop iterations="20" md_prefix="SAMP_NUM_COEFF_%02lu" name="SAMP_NUM_COEFF">
+        <loop iterations="20" md_prefix="SAMP_NUM_COEFF_%02d" name="SAMP_NUM_COEFF">
             <field name="" longname="SAMP_NUM_COEFF" length="12" type="real"/>
         </loop>
-        <loop iterations="20" md_prefix="SAMP_DEN_COEFF_%02lu" name="SAMP_DEN_COEFF">
+        <loop iterations="20" md_prefix="SAMP_DEN_COEFF_%02d" name="SAMP_DEN_COEFF">
             <field name="" longname="SAMP_DEN_COEFF" length="12" type="real"/>
         </loop>
     </tre>
@@ -1174,7 +1174,7 @@
         <field name="GZX" length="2" type="integer" minval="1" maxval="36"/>
         <field name="GZY" length="2" type="integer" minval="1" maxval="36"/>
         <field name="GZZ" length="2" type="integer" minval="1" maxval="36"/>
-        <loop counter="NPAR" md_prefix="PAR_%02lu_" name="PAR">
+        <loop counter="NPAR" md_prefix="PAR_%02d_" name="PAR">
             <field name="PARVAL" length="21" type="real"/>
         </loop>
     </tre>
@@ -1186,7 +1186,7 @@
         <field name="NPAR" length="2" type="integer" minval="1" maxval="36"/>
         <field name="NIMGE" length="3" type="integer" minval="1" maxval="999"/>
         <field name="NPART" length="5" type="integer" minval="1" maxval="99999"/>
-        <loop counter="NIMGE" md_prefix="IMAGEF_%03lu_" name="IMAGE">
+        <loop counter="NIMGE" md_prefix="IMAGEF_%03d_" name="IMAGE">
             <field name="IID" length="80" type="string"/>
             <field name="NPARI" length="2" type="integer" minval="1" maxval="36"/>
         </loop>
@@ -1238,7 +1238,7 @@
         <field name="GZX" length="2" type="integer" minval="1" maxval="36"/>
         <field name="GZY" length="2" type="integer" minval="1" maxval="36"/>
         <field name="GZZ" length="2" type="integer" minval="1" maxval="36"/>
-        <loop formula="(NPART+1)*(NPART)/2" name="DERCOV" md_prefix="DERCOV_%05lu"> <!--Warning: this condition is currently hardcoded in the interpreter -->
+        <loop formula="(NPART+1)*(NPART)/2" name="DERCOV" md_prefix="DERCOV_%05d"> <!--Warning: this condition is currently hardcoded in the interpreter -->
             <field name="" longname="DERCOV" length="21" type="real"/>
         </loop>
     </tre>
@@ -1302,19 +1302,19 @@
             <field name="GZX" length="2" type="integer" minval="1" maxval="36"/>
             <field name="GZY" length="2" type="integer" minval="1" maxval="36"/>
             <field name="GZZ" length="2" type="integer" minval="1" maxval="36"/>
-            <loop counter="IGN" name="IG" md_prefix="IG_%02lu_">
+            <loop counter="IGN" name="IG" md_prefix="IG_%02d_">
                 <field name="NUMOPG" length="2" type="integer" minval="1" maxval="36"/>
-                <loop formula="(NUMOPG+1)*(NUMOPG)/2" name="EG" md_prefix="EG_%02lu"> <!--Warning: this condition is currently hardcoded in the interpreter -->
+                <loop formula="(NUMOPG+1)*(NUMOPG)/2" name="EG" md_prefix="EG_%02d"> <!--Warning: this condition is currently hardcoded in the interpreter -->
                     <field name="" longname="ERRCVG" length="21" type="real"/>
                 </loop>
                 <field name="TCDF" length="1" type="integer" minval="0" maxval="2"/>
                 <field name="NCSEG" length="1" type="integer" minval="2" maxval="9"/>
-                <loop counter="NCSEG" name="CORSEG" md_prefix="CORSEG_%lu_">
+                <loop counter="NCSEG" name="CORSEG" md_prefix="CORSEG_%d_">
                     <field name="CORSEG" length="21" type="real"/>
                     <field name="TAUSEG" length="21" type="real" unit="seconds"/>
                 </loop>
             </loop>
-            <loop formula="NPAR*NPARO" name="MAP" md_prefix="MAP_%04lu"> <!--Warning: this condition is currently hardcoded in the interpreter -->
+            <loop formula="NPAR*NPARO" name="MAP" md_prefix="MAP_%04d"> <!--Warning: this condition is currently hardcoded in the interpreter -->
                 <field name="" longname="MAP" length="21" type="real"/>
             </loop>
         </if>
@@ -1323,12 +1323,12 @@
             <field name="URC" length="21" type="real" unit="pixel^2"/>
             <field name="UCC" length="21" type="real" unit="pixel^2"/>
             <field name="UNCSR" length="1" type="integer" minval="2" maxval="9"/>
-            <loop counter="UNCSR" name="CORSR" md_prefix="CORSR_%lu_">
+            <loop counter="UNCSR" name="CORSR" md_prefix="CORSR_%d_">
                 <field name="UCORSR" length="21" type="real"/>
                 <field name="UTAUSR" length="21" type="real" unit="pixels"/>
             </loop>
             <field name="UNCSC" length="1" type="integer" minval="2" maxval="9"/>
-            <loop counter="UNCSC" name="CORSC" md_prefix="CORSC_%lu_">
+            <loop counter="UNCSC" name="CORSC" md_prefix="CORSC_%d_">
                 <field name="UCORSC" length="21" type="real"/>
                 <field name="UTAUSC" length="21" type="real" unit="pixels"/>
             </loop>
@@ -1356,14 +1356,14 @@
         <field name="TNUMCD" length="2" type="integer" minval="3" maxval="31"/>
         <field name="FNUMRD" length="1" type="integer" minval="1" maxval="3"/>
         <field name="FNUMCD" length="1" type="integer" minval="1" maxval="3"/>
-        <loop formula="NPLN-1" name="IG" md_prefix="IG_%03lu_"> <!--Warning: this condition is currently hardcoded in the interpreter -->
+        <loop formula="NPLN-1" name="IG" md_prefix="IG_%03d_"> <!--Warning: this condition is currently hardcoded in the interpreter -->
             <field name="IXO" length="4" type="integer"/>
             <field name="IYO" length="4" type="integer"/>
         </loop>
-        <loop counter="NPLN" name="GP" md_prefix="GP_%03lu_">
+        <loop counter="NPLN" name="GP" md_prefix="GP_%03d_">
             <field name="NXPTS" length="3" type="integer" minval="2"/>
             <field name="NYPTS" length="3" type="integer" minval="2"/>
-            <loop formula="NXPTS*NYPTS" name="GPCOORD" md_prefix="GPCOORD_%06lu_"> <!--Warning: this condition is currently hardcoded in the interpreter -->
+            <loop formula="NXPTS*NYPTS" name="GPCOORD" md_prefix="GPCOORD_%06d_"> <!--Warning: this condition is currently hardcoded in the interpreter -->
                 <field name="RCOORD" length_var="TNUMRD" type="integer"/>
                 <field name="CCOORD" length_var="TNUMCD" type="integer"/>
             </loop>
@@ -1506,28 +1506,28 @@
         <field name="RNPWRY" length="1" type="integer" minval="0" maxval="5"/>
         <field name="RNPWRZ" length="1" type="integer" minval="0" maxval="5"/>
         <field name="RNTRMS" length="3" type="integer" minval="1" maxval="216"/>
-        <loop counter="RNTRMS" name="RNPCF" md_prefix="RNPCF_%03lu">
+        <loop counter="RNTRMS" name="RNPCF" md_prefix="RNPCF_%03d">
             <field name="" longname="RNPCF" length="21" type="real"/>
         </loop>
         <field name="RDPWRX" length="1" type="integer" minval="0" maxval="5"/>
         <field name="RDPWRY" length="1" type="integer" minval="0" maxval="5"/>
         <field name="RDPWRZ" length="1" type="integer" minval="0" maxval="5"/>
         <field name="RDTRMS" length="3" type="integer" minval="1" maxval="216"/>
-        <loop counter="RDTRMS" name="RDPCF" md_prefix="RDPCF_%03lu">
+        <loop counter="RDTRMS" name="RDPCF" md_prefix="RDPCF_%03d">
             <field name="" longname="RDPCF" length="21" type="real"/>
         </loop>
         <field name="CNPWRX" length="1" type="integer" minval="0" maxval="5"/>
         <field name="CNPWRY" length="1" type="integer" minval="0" maxval="5"/>
         <field name="CNPWRZ" length="1" type="integer" minval="0" maxval="5"/>
         <field name="CNTRMS" length="3" type="integer" minval="1" maxval="216"/>
-        <loop counter="CNTRMS" name="CNPCF" md_prefix="CNPCF_%03lu">
+        <loop counter="CNTRMS" name="CNPCF" md_prefix="CNPCF_%03d">
             <field name="" longname="CNPCF" length="21" type="real"/>
         </loop>
         <field name="CDPWRX" length="1" type="integer" minval="0" maxval="5"/>
         <field name="CDPWRY" length="1" type="integer" minval="0" maxval="5"/>
         <field name="CDPWRZ" length="1" type="integer" minval="0" maxval="5"/>
         <field name="CDTRMS" length="3" type="integer" minval="1" maxval="216"/>
-        <loop counter="CDTRMS" name="CDPCF" md_prefix="CDPCF_%03lu">
+        <loop counter="CDTRMS" name="CDPCF" md_prefix="CDPCF_%03d">
             <field name="" longname="CDPCF" length="21" type="real"/>
         </loop>
     </tre>
@@ -1624,7 +1624,7 @@
             <field name="FIRST_PIXEL_ROW" length="8" type="integer" minval="0" maxval="99999999"/>
             <field name="FIRST_PIXEL_COLUMN" length="8" type="integer" minval="0" maxval="99999999"/>
             <field name="TRANSFORM_PARAMS" length="1" type="integer" minval="0" maxval="8"/>
-            <loop counter="TRANSFORM_PARAMS" name="TRANSFORM_PARAM" md_prefix="TRANSFORM_PARAM_%lu_">
+            <loop counter="TRANSFORM_PARAMS" name="TRANSFORM_PARAM" md_prefix="TRANSFORM_PARAM_%d_">
                 <field name="" longname="TRANSFORM_PARAM" length="12" type="string"/>
             </loop>
         </if>
@@ -1674,10 +1674,10 @@
             <field name="VELOCITY_DOWN_OR_Z" length="9" type="real"/>
         </if>
         <field name="POINT_SET_DATA" length="2" type="integer"/>
-        <loop counter="POINT_SET_DATA" name="POINT_SETS" md_prefix="POINT_SET_%02lu_">
+        <loop counter="POINT_SET_DATA" name="POINT_SETS" md_prefix="POINT_SET_%02d_">
             <field name="POINT_SET_TYPE_MM" length="25" type="string"/>
             <field name="POINT_COUNT_MM" length="3" type="integer"/>
-            <loop counter="POINT_COUNT_MM" name="POINT" md_prefix="POINT_%03lu_">
+            <loop counter="POINT_COUNT_MM" name="POINT" md_prefix="POINT_%03d_">
                 <field name="P_ROW_NNN" length="8" type="integer"/>
                 <field name="P_COLUMN_NNN" length="8" type="integer"/>
                 <field name="P_LATITUDE_NNN" length="10" type="string"/>
@@ -1687,10 +1687,10 @@
             </loop>
         </loop>
         <field name="TIME_STAMPED_DATA_SETS" length="2" type="integer"/>
-        <loop counter="TIME_STAMPED_DATA_SETS" name="TIME_STAMPED_SET" md_prefix="TIME_STAMPED_SET_%02lu_">
+        <loop counter="TIME_STAMPED_DATA_SETS" name="TIME_STAMPED_SET" md_prefix="TIME_STAMPED_SET_%02d_">
             <field name="TIME_STAMP_TYPE_MM" length="3" type="string"/>
             <field name="TIME_STAMP_COUNT_MM" length="4" type="integer"/>
-            <loop counter="TIME_STAMP_COUNT_MM" name="TIME_STAMP_COUNTS" md_prefix="TIME_STAMP_COUNT_%04lu_">
+            <loop counter="TIME_STAMP_COUNT_MM" name="TIME_STAMP_COUNTS" md_prefix="TIME_STAMP_COUNT_%04d_">
                 <field name="TIME_STAMP_TIME_NNNN" length="12" type="real"/>
                 <if cond="TIME_STAMP_TYPE_MM=05a">
                     <field name="TIME_STAMP_VALUE_NNNN" length="12" type="real"/>
@@ -1794,10 +1794,10 @@
             </loop>
         </loop>
         <field name="PIXEL_REFERENCED_DATA_SETS" length="2" type="integer"/>
-        <loop counter="PIXEL_REFERENCED_DATA_SETS" name="PIXEL_REFERENCE_DATA_SET" md_prefix="PIXEL_REFERENCE_DATA_SET_%02lu_">
+        <loop counter="PIXEL_REFERENCED_DATA_SETS" name="PIXEL_REFERENCE_DATA_SET" md_prefix="PIXEL_REFERENCE_DATA_SET_%02d_">
             <field name="PIXEL_REFERENCE_TYPE_MM" length="3" type="string"/>
             <field name="PIXEL_REFERENCE_COUNT_MM" length="4" type="integer"/>
-            <loop counter="PIXEL_REFERENCE_COUNT_MM" name="PIXEL_REFERENCE_COUNTS" md_prefix="PIXEL_REFERENCE_COUNT_%04lu_">
+            <loop counter="PIXEL_REFERENCE_COUNT_MM" name="PIXEL_REFERENCE_COUNTS" md_prefix="PIXEL_REFERENCE_COUNT_%04d_">
                 <field name="PIXEL_REFERENCE_ROW_NNNN" length="8" type="integer"/>
                 <field name="PIXEL_REFERENCE_COLUMN_NNNN" length="8" type="integer"/>
                 <if cond="PIXEL_REFERENCE_TYPE_MM=05a">
@@ -1902,17 +1902,17 @@
             </loop>
         </loop>
         <field name="UNCERTAINTY_DATA" length="3" type="integer"/>
-        <loop counter="UNCERTAINTY_DATA" name="UNCERTAINTY_DATA_SETS" md_prefix="UNCERTAINTY_DATA_%03lu_">
+        <loop counter="UNCERTAINTY_DATA" name="UNCERTAINTY_DATA_SETS" md_prefix="UNCERTAINTY_DATA_%03d_">
             <field name="UNCERTAINTY_FIRST_TYPE_NNN" length="11" type="string"/>
             <field name="UNCERTAINTY_SECOND_TYPE_NNN" length="11" type="string"/>
             <field name="UNCERTAINTY_VALUE_NNN" length="10" type="string"/>
         </loop>
         <field name="ADDITIONAL_PARAMETER_DATA" length="3" type="integer"/>
-        <loop counter="ADDITIONAL_PARAMETER_DATA" name="ADDITIONAL_PARAMETER_DATA_SETS" md_prefix="ADDITIONAL_PARAMETER_DATA_%03lu_">
+        <loop counter="ADDITIONAL_PARAMETER_DATA" name="ADDITIONAL_PARAMETER_DATA_SETS" md_prefix="ADDITIONAL_PARAMETER_DATA_%03d_">
             <field name="PARAMETER_NAME_MMM" length="25" type="string"/>
             <field name="PARAMETER_SIZE_MMM" length="3" type="integer"/>
             <field name="PARAMETER_COUNT_MMM" length="4" type="integer"/>
-            <loop counter="PARAMETER_COUNT_MMM" name="ADDITIONAL_PARAMETER_VALUES" md_prefix="PARAMETER_VALUE_%04lu">
+            <loop counter="PARAMETER_COUNT_MMM" name="ADDITIONAL_PARAMETER_VALUES" md_prefix="PARAMETER_VALUE_%04d">
                 <field name="PARAMETER_VALUE_NNNN" length_var="PARAMETER_SIZE_MMM" type="string"/>
             </loop>
         </loop>
@@ -1922,11 +1922,11 @@
         <field name="IS_SCA" length="9" type="integer"/>
         <field name="CPATCH" length="10" type="string"/>
         <field name="NUM_SOUR" length="2" type="integer" minval="1"/>
-        <loop counter="NUM_SOUR" name="SOURCE" md_prefix="SOURCE_%02lu_">
+        <loop counter="NUM_SOUR" name="SOURCE" md_prefix="SOURCE_%02d_">
             <field name="NUM_BP" length="2" type="integer"/>
-            <loop counter="NUM_BP" name="BP" md_prefix="BP_%02lu_">
+            <loop counter="NUM_BP" name="BP" md_prefix="BP_%02d_">
                 <field name="NUM_PTS" length="3" type="integer"/>
-                <loop counter="NUM_PTS" md_prefix="POINT_%03lu_" name="POINT">
+                <loop counter="NUM_PTS" md_prefix="POINT_%03d_" name="POINT">
                     <field name="LON" length="15" type="real"/>
                     <field name="LAT" length="15" type="real"/>
                 </loop>
@@ -1964,7 +1964,7 @@
             <field name="QLE" length="80" type="string"/>
             <field name="CPY" length="80" type="string"/>
             <field name="NMI" length="2" type="integer"/>
-            <loop counter="NMI" name="MI" md_prefix="MI_%02lu_">
+            <loop counter="NMI" name="MI" md_prefix="MI_%02d_">
                 <field name="CDV30" length="8" type="string"/>
                 <field name="UNIRAT" length="3" type="string"/>
                 <field name="RAT" length="8" type="real"/>
@@ -1978,7 +1978,7 @@
                 </if>
             </loop>
             <field name="NLI" length="2" type="integer"/>
-            <loop counter="NLI" name="LI" md_prefix="LI_%02lu_">
+            <loop counter="NLI" name="LI" md_prefix="LI_%02d_">
                 <field name="BAD" length="10" type="string"/>
             </loop>
             <field name="DAG" length="80" type="string"/>
@@ -1992,7 +1992,7 @@
             <field name="PRN" length="80" type="string"/>
             <field name="PCO" length="2" type="string"/>
             <field name="NUM_PRJ" length="1" type="integer"/>
-            <loop counter="NUM_PRJ" name="PRJ" md_prefix="PRJ_%lu">
+            <loop counter="NUM_PRJ" name="PRJ" md_prefix="PRJ_%d">
                 <field name="" longname="PRJ" length="15" type="real"/>
             </loop>
             <field name="XOR" length="15" type="integer" minval="0"/>
@@ -2001,7 +2001,7 @@
             <field name="GRN" length="80" type="string"/>
             <field name="ZNA" length="4" type="integer" minval="0"/>
             <field name="NIN" length="2" type="integer"/>
-            <loop counter="NIN" name="IN" md_prefix="IN_%02lu_">
+            <loop counter="NIN" name="IN" md_prefix="IN_%02d_">
                 <field name="INT" length="10" type="string"/>
                 <field name="INS_SCA" length="9" type="integer"/>
                 <field name="NTL" length="15" type="real"/>

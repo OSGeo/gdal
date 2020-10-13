@@ -33,7 +33,6 @@
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
-#include "errno.h"
 
 CPL_CVSID("$Id$")
 
@@ -2394,13 +2393,12 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
             const char* pszIterations = CPLGetXMLValue(psIter, "iterations", NULL);
             const char* pszFormula = CPLGetXMLValue(psIter, "formula", NULL);
             const char* pszMDSubPrefix = CPLGetXMLValue(psIter, "md_prefix", NULL);
-            unsigned long nIterations = 0;
-            errno = 0;  // Track overflow in strtoul()
+            int nIterations = -1;
 
             if (pszCounter != NULL)
             {
                 const char* pszIterationsVal = NITFFindValRecursive(papszMD, *pnMDSize, pszMDPrefix, pszCounter);
-                if (pszIterationsVal == NULL)
+                if (pszIterationsVal == NULL || (nIterations = atoi(pszIterationsVal)) < 0)
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
                             "Invalid loop construct in %s TRE in XML resource : "
@@ -2409,11 +2407,10 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                     *pbError = TRUE;
                     break;
                 }
-                nIterations = strtoul(pszIterationsVal, NULL, 10);
             }
             else if (pszIterations != NULL)
             {
-                nIterations = strtoul(pszIterations, NULL, 10);
+                nIterations = atoi(pszIterations);
             }
             else if (pszFormula != NULL &&
                      strcmp(pszFormula, "(NPART+1)*(NPART)/2") == 0)
@@ -2431,7 +2428,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                     *pbError = TRUE;
                     break;
                 }
-                nIterations = (unsigned long)(NPART * (NPART + 1) / 2);
+                nIterations = NPART * (NPART + 1) / 2;
             }
             else if (pszFormula != NULL &&
                      strcmp(pszFormula, "(NUMOPG+1)*(NUMOPG)/2") == 0)
@@ -2449,7 +2446,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                     *pbError = TRUE;
                     break;
                 }
-                nIterations = (unsigned long)(NUMOPG * (NUMOPG + 1) / 2);
+                nIterations = NUMOPG * (NUMOPG + 1) / 2;
             }
             else if (pszFormula != NULL &&
                      strcmp(pszFormula, "NPAR*NPARO") == 0)
@@ -2480,7 +2477,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                     *pbError = TRUE;
                     break;
                 }
-                nIterations = (unsigned long)(NPAR*NPARO);
+                nIterations = NPAR*NPARO;
             }
             else if (pszFormula != NULL &&
                      strcmp(pszFormula, "NPLN-1") == 0)
@@ -2489,7 +2486,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                             CPLSPrintf("%s%s", pszMDPrefix, "NPLN"));
                 int NPLN = atoi(NITFFindValFromEnd(papszMD, *pnMDSize, pszMDItemName, "-1"));
                 CPLFree(pszMDItemName);
-                if (NPLN < 1)
+                if (NPLN < 0)
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
                             "Invalid loop construct in %s TRE in XML resource : "
@@ -2498,7 +2495,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                     *pbError = TRUE;
                     break;
                 }
-                nIterations = (unsigned long)(NPLN-1);
+                nIterations = NPLN-1;
             }
             else if (pszFormula != NULL &&
                      strcmp(pszFormula, "NXPTS*NYPTS") == 0)
@@ -2529,7 +2526,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                     *pbError = TRUE;
                     break;
                 }
-                nIterations = (unsigned long)(NXPTS*NYPTS);
+                nIterations = NXPTS*NYPTS;
             }
             else
             {
@@ -2540,26 +2537,16 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 *pbError = TRUE;
                 break;
             }
-            
-            if (errno == ERANGE)
-            {
-                CPLError( CE_Warning, CPLE_AppDefined,
-                          "Invalid loop construct in %s TRE in XML resource : "
-                          "loop count out of range",
-                          pszTREName );
-                *pbError = TRUE;
-                break;
-            }
 
             if (nIterations > 0)
             {
-                unsigned long iIter;
+                int iIter;
                 const char* pszPercent;
-                int bHasValidPercentLU = FALSE;
+                int bHasValidPercentD = FALSE;
                 CPLXMLNode* psRepeatedNode = NULL;
                 CPLXMLNode* psLastChild = NULL;
 
-                /* Check that md_prefix has one and only %XXXXlu pattern */
+                /* Check that md_prefix has one and only %XXXXd pattern */
                 if (pszMDSubPrefix != NULL &&
                     (pszPercent = strchr(pszMDSubPrefix, '%')) != NULL &&
                     strchr(pszPercent+1,'%') == NULL)
@@ -2569,9 +2556,9 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                     {
                         if (*pszIter >= '0' && *pszIter <= '9')
                             pszIter ++;
-                        else if (*pszIter == 'l' && *(pszIter + 1) == 'u')
+                        else if (*pszIter == 'd')
                         {
-                            bHasValidPercentLU = atoi(pszPercent + 1) <= 10;
+                            bHasValidPercentD = atoi(pszPercent + 1) <= 10;
                             break;
                         }
                         else
@@ -2591,7 +2578,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                         CPLCreateXMLNode(psNameNode, CXT_Text, pszName);
                     }
                     psNumberNode = CPLCreateXMLNode(psRepeatedNode, CXT_Attribute, "number");
-                    CPLCreateXMLNode(psNumberNode, CXT_Text, CPLSPrintf("%lu", nIterations));
+                    CPLCreateXMLNode(psNumberNode, CXT_Text, CPLSPrintf("%d", nIterations));
 
                     psLastChild = psRepeatedNode->psChild;
                     while(psLastChild->psNext != NULL)
@@ -2604,9 +2591,9 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                     CPLXMLNode* psGroupNode = NULL;
                     if (pszMDSubPrefix != NULL)
                     {
-                        if (bHasValidPercentLU)
+                        if (bHasValidPercentD)
                         {
-                            const size_t nTmpLen = strlen(pszMDSubPrefix) + 20 + 1;
+                            const size_t nTmpLen = strlen(pszMDSubPrefix) + 10 + 1;
                             char* szTmp = (char*)CPLMalloc(nTmpLen);
                             snprintf(szTmp, nTmpLen, pszMDSubPrefix, iIter + 1);
                             pszMDNewPrefix = CPLStrdup(CPLSPrintf("%s%s",
@@ -2614,11 +2601,11 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                             CPLFree(szTmp);
                         }
                         else
-                            pszMDNewPrefix = CPLStrdup(CPLSPrintf("%s%s%04lu_",
+                            pszMDNewPrefix = CPLStrdup(CPLSPrintf("%s%s%04d_",
                                       pszMDPrefix, pszMDSubPrefix, iIter + 1));
                     }
                     else
-                        pszMDNewPrefix = CPLStrdup(CPLSPrintf("%s%04lu_",
+                        pszMDNewPrefix = CPLStrdup(CPLSPrintf("%s%04d_",
                                                    pszMDPrefix, iIter + 1));
 
                     if (psRepeatedNode != NULL)
@@ -2629,7 +2616,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                         psLastChild->psNext = psGroupNode;
                         psLastChild = psGroupNode;
                         psIndexNode = CPLCreateXMLNode(psGroupNode, CXT_Attribute, "index");
-                        CPLCreateXMLNode(psIndexNode, CXT_Text, CPLSPrintf("%lu", iIter));
+                        CPLCreateXMLNode(psIndexNode, CXT_Text, CPLSPrintf("%d", iIter));
                     }
 
                     papszMD = NITFGenericMetadataReadTREInternal(papszMD,
