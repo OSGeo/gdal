@@ -7366,6 +7366,40 @@ def test_tiff_write_internal_ovr_blocksize(blockSize, numThreads):
     ds = None
     gdaltest.tiff_drv.Delete(fname)
 
+###############################################################################
+# Test blocksize propagation while creating (internal) overviews
+# on a newly created dataset
+
+@pytest.mark.parametrize("blockSize,numThreads", [[64, None], [256, 8]])
+def test_tiff_write_internal_ovr_default_blocksize(blockSize, numThreads):
+
+    src_ds = gdal.Open('../gdrivers/data/utm.tif')
+    fname = 'tmp/tiff_write_internal_ovr_default_bs%d.tif' % blockSize
+
+    ds = gdal.GetDriverByName('GTiff').Create(fname, 1024, 1024, 1,
+                                                options=['TILED=YES','COMPRESS=LZW',
+                                                    'BLOCKXSIZE=%d'%blockSize,
+                                                    'BLOCKYSIZE=%d'%blockSize])
+
+    data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
+    ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
+    opts = {}
+    if numThreads:
+        opts['GDAL_NUM_THREADS'] = str(numThreads)
+    with gdaltest.config_options(opts):
+        ds.BuildOverviews('AVERAGE', overviewlist=[2])
+
+    src_ds = None
+    ds = None
+
+    ds = gdal.Open(fname)
+    (bsx,bsy) = ds.GetRasterBand(1).GetOverview(0).GetBlockSize()
+    assert bsx == blockSize
+    assert bsy == blockSize
+    ds = None
+    gdaltest.tiff_drv.Delete(fname)
+
+
 
 def test_tiff_write_cleanup():
     gdaltest.tiff_drv = None
