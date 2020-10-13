@@ -66,6 +66,8 @@ class GDALAsyncReader;
 #include "cpl_multiproc.h"
 #include "cpl_atomic_ops.h"
 
+#include <stdarg.h>
+
 #include <cmath>
 #include <cstdint>
 #include <iterator>
@@ -350,6 +352,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     CPL_INTERNAL void AddToDatasetOpenList();
 
+    CPL_INTERNAL static void ReportErrorV(
+                                     const char* pszDSName,
+                                     CPLErr eErrClass, CPLErrorNum err_no,
+                                     const char *fmt, va_list args);
   protected:
 //! @cond Doxygen_Suppress
     GDALDriver  *poDriver = nullptr;
@@ -606,6 +612,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
 #ifndef DOXYGEN_XML
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (4, 5);
+
+    static void ReportError(const char* pszDSName,
+                            CPLErr eErrClass, CPLErrorNum err_no,
+                            const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (4, 5);
 #endif
 
     char ** GetMetadata(const char * pszDomain = "") override;
