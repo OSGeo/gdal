@@ -71,6 +71,9 @@ class OGCAPIDataset final: public GDALDataset
 
         OGRSpatialReference m_oSRS{};
 
+        // Classic OGC API features /items access
+        std::unique_ptr<GDALDataset> m_poOAPIFDS{};
+
         // Map API
         std::unique_ptr<GDALDataset> m_poWMSDS{};
 
@@ -138,8 +141,11 @@ class OGCAPIDataset final: public GDALDataset
         CPLErr GetGeoTransform(double* padfGeoTransform) override;
         const OGRSpatialReference* GetSpatialRef() const override;
 
-        int GetLayerCount() override { return static_cast<int>(m_apoLayers.size()); }
-        OGRLayer* GetLayer(int idx) override { return idx >= 0 && idx < GetLayerCount() ? m_apoLayers[idx].get() : nullptr; }
+        int GetLayerCount() override {
+            return m_poOAPIFDS ? m_poOAPIFDS->GetLayerCount() : static_cast<int>(m_apoLayers.size()); }
+        OGRLayer* GetLayer(int idx) override {
+            return m_poOAPIFDS ? m_poOAPIFDS->GetLayer(idx) :
+                   idx >= 0 && idx < GetLayerCount() ? m_apoLayers[idx].get() : nullptr; }
 
         static int Identify(GDALOpenInfo* poOpenInfo);
         static GDALDataset* Open(GDALOpenInfo* poOpenInfo);
@@ -677,6 +683,8 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo* poOpenInfo,
     CPLString osMapURL;
     CPLString osTilesURL;
     CPLString osCoverageURL;
+    CPLString osItemsJsonURL;
+    CPLString osSelfURL;
     for( const auto& oLink: oLinks )
     {
         const auto osRel = oLink.GetString("rel");
@@ -697,11 +705,22 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo* poOpenInfo,
         {
             osCoverageURL = BuildURL(oLink["href"].ToString());
         }
+        else if( osRel == "items" &&
+                 (osType == "application/geo+json" ||
+                  osType == "application/json") )
+        {
+            osItemsJsonURL = BuildURL(oLink["href"].ToString());
+        }
+        else if( osRel == "self" && osType == "application/json" )
+        {
+            osSelfURL = BuildURL(oLink["href"].ToString());
+        }
     }
 
-    if( osMapURL.empty() && osTilesURL.empty() && osCoverageURL.empty() )
+    if( osMapURL.empty() && osTilesURL.empty() && osCoverageURL.empty() &&
+        osSelfURL.empty() && osItemsJsonURL.empty() )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Missing map, tilesets or coverage relation in links");
+        CPLError(CE_Failure, CPLE_AppDefined, "Missing map, tilesets, coverage or items relation in links");
         return false;
     }
 
@@ -718,6 +737,15 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo* poOpenInfo,
     else if( (EQUAL(pszAPI, "AUTO") || EQUAL(pszAPI, "MAP")) && !osMapURL.empty() )
     {
         return InitWithMapAPI(poOpenInfo, osMapURL, dfXMin, dfYMin, dfXMax, dfYMax);
+    }
+    else if( (EQUAL(pszAPI, "AUTO") || EQUAL(pszAPI, "ITEMS")) &&
+             !osSelfURL.empty() && !osItemsJsonURL.empty() &&
+             (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 )
+    {
+        m_poOAPIFDS = std::unique_ptr<GDALDataset>(
+            GDALDataset::Open(("OAPIF_COLLECTION:" + osSelfURL).c_str(), GDAL_OF_VECTOR));
+        if( m_poOAPIFDS )
+            return true;
     }
 
     CPLError(CE_Failure, CPLE_AppDefined, "API %s requested, but not available",
@@ -2485,11 +2513,12 @@ void GDALRegister_OGCAPI()
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='API' type='string-select' "
-        "description='Which API to use for pixel acquisition' default='AUTO'>"
+        "description='Which API to use to access data' default='AUTO'>"
 "       <Value>AUTO</Value>"
 "       <Value>MAP</Value>"
 "       <Value>TILES</Value>"
 "       <Value>COVERAGE</Value>"
+"       <Value>ITEMS</Value>"
 "  </Option>"
 "  <Option name='IMAGE_FORMAT' type='string-select' "
         "description='Which format to use for pixel acquisition' default='AUTO'>"
