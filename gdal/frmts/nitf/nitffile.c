@@ -2317,7 +2317,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                         }
 
                         pszValue = (char*)CPLMalloc(nBufferSize);
-                        CPLsnprintf(pszValue, nBufferSize, "%llu", nVal);
+                        CPLsnprintf(pszValue, nBufferSize, CPL_FRMT_GUIB, (GUIntBig)nVal);
                         papszTmp = CSLSetNameValue(papszTmp, pszMDItemName, pszValue);
                     }
                     else
