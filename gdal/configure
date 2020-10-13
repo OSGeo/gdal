@@ -2142,9 +2142,8 @@ Optional Packages:
   --with-threads=ARG    Include thread safe support (ARG=yes(default), no or linkopt)
   --with-libz=ARG       Include libz support (ARG=internal or libz directory)
   --with-libdeflate       enable libdeflate usage (optional for faster Deflate
-                          support (still requires zlib, only used for internal
-                          libtiff for now) (ARG=yes/no/prefix), enabled by
-                          default)
+                          support (still requires zlib) (ARG=yes/no/prefix),
+                          enabled by default)
   --with-gnu-ld           assume the C compiler uses GNU ld default=no
   --with-libiconv-prefix[=DIR]  search for libiconv in DIR/include and DIR/lib
   --without-libiconv-prefix     don't search for libiconv in includedir and libdir

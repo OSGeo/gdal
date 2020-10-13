@@ -76,6 +76,10 @@ ifeq ($(ENABLE_UFFD),yes)
 CPPFLAGS	:=	$(CPPFLAGS) -DENABLE_UFFD
 endif
 
+ifeq ($(LIBDEFLATE_SETTING),yes)
+CPPFLAGS 	:=	$(CPPFLAGS) -DHAVE_LIBDEFLATE
+endif
+
 default:	$(OBJ:.o=.$(OBJ_EXT)) cpl_sha256.$(OBJ_EXT) cpl_vsil_crypt.$(OBJ_EXT)
 
 # cpl_sha256.cpp and cpl_vsil_crypt.cpp uses cryptocpp headers which make use of

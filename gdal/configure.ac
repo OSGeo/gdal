@@ -1173,7 +1173,7 @@ LIBDEFLATE_SETTING=no
 
 AC_ARG_WITH(libdeflate,
             AS_HELP_STRING([--with-libdeflate],
-                            [enable libdeflate usage (optional for faster Deflate support (still requires zlib, only used for internal libtiff for now) (ARG=yes/no/prefix), enabled by default)]),,)
+                            [enable libdeflate usage (optional for faster Deflate support (still requires zlib) (ARG=yes/no/prefix), enabled by default)]),,)
 
 if test "$with_libdeflate" != "no" ; then
 
