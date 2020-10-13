@@ -1412,7 +1412,7 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDSIn, int nBandIn ):
                 nBand == nExpectedBaseSamples + 1 &&
                 nBaseSamples != nExpectedBaseSamples )
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
+                ReportError(CE_Warning, CPLE_AppDefined,
                          "Wrong number of ExtraSamples : %d. %d were expected",
                          count, m_poGDS->m_nSamplesPerPixel - nExpectedBaseSamples);
             }
@@ -1449,7 +1449,7 @@ GTiffRasterBand::~GTiffRasterBand()
     // contract.
     if( !m_aSetPSelf.empty() )
     {
-        CPLError( CE_Warning, CPLE_AppDefined,
+        ReportError( CE_Warning, CPLE_AppDefined,
                   "Virtual memory objects still exist at GTiffRasterBand "
                   "destruction" );
         std::set<GTiffRasterBand**>::iterator oIter = m_aSetPSelf.begin();
@@ -4847,7 +4847,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         if( nOffset < VSIFTellL(m_poGDS->m_fpL) )
         {
-            CPLError( CE_Failure, CPLE_NotSupported,
+            ReportError( CE_Failure, CPLE_NotSupported,
                       "Trying to load block %d at offset " CPL_FRMT_GUIB
                       " whereas current pos is " CPL_FRMT_GUIB
                       " (backward read not supported)",
@@ -5308,7 +5308,7 @@ CPLErr GTiffRasterBand::SetMetadata( char ** papszMD, const char *pszDomain )
 
     if( m_poGDS->m_bStreamingOut && m_poGDS->m_bCrystalized )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
+        ReportError( CE_Failure, CPLE_NotSupported,
                   "Cannot modify metadata at that point in a streamed "
                   "output file" );
         return CE_Failure;
@@ -5439,7 +5439,7 @@ CPLErr GTiffRasterBand::SetMetadataItem( const char *pszName,
 
     if( m_poGDS->m_bStreamingOut && m_poGDS->m_bCrystalized )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
+        ReportError( CE_Failure, CPLE_NotSupported,
                   "Cannot modify metadata at that point in a streamed "
                   "output file" );
         return CE_Failure;
@@ -5623,7 +5623,7 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
                             CSLFetchNameValue( m_poGDS->m_papszCreationOptions,
                                             "ALPHA" ) != nullptr )
                         {
-                            CPLError(
+                            ReportError(
                                 CE_Warning, CPLE_AppDefined,
                                 "Band %d was already identified as alpha band, "
                                 "and band %d is now marked as alpha too. "
@@ -5632,7 +5632,7 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
                         }
                         else
                         {
-                            CPLError(
+                            ReportError(
                                 CE_Warning, CPLE_AppDefined,
                                 "Band %d was already identified as alpha band, "
                                 "and band %d is now marked as alpha too",
@@ -5713,14 +5713,14 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
 /* -------------------------------------------------------------------- */
     if( nBand != 1)
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
+        ReportError( CE_Failure, CPLE_NotSupported,
                   "SetColorTable() can only be called on band 1." );
         return CE_Failure;
     }
 
     if( m_poGDS->m_nSamplesPerPixel != 1 && m_poGDS->m_nSamplesPerPixel != 2)
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
+        ReportError( CE_Failure, CPLE_NotSupported,
                   "SetColorTable() not supported for multi-sample TIFF "
                   "files." );
         return CE_Failure;
@@ -5728,7 +5728,7 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
 
     if( eDataType != GDT_Byte && eDataType != GDT_UInt16 )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
+        ReportError( CE_Failure, CPLE_NotSupported,
                   "SetColorTable() only supported for Byte or UInt16 bands "
                   "in TIFF format." );
         return CE_Failure;
@@ -5861,7 +5861,7 @@ CPLErr GTiffRasterBand::SetNoDataValue( double dfNoData )
                                     GetNoDataValue(&bOtherBandHasNoData);
         if( bOtherBandHasNoData && dfOtherNoData != dfNoData )
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
+            ReportError(CE_Warning, CPLE_AppDefined,
                  "Setting nodata to %.18g on band %d, but band %d has nodata "
                  "at %.18g. The TIFFTAG_GDAL_NODATA only support one value "
                  "per dataset. This value of %.18g will be used for all bands "
@@ -5872,7 +5872,7 @@ CPLErr GTiffRasterBand::SetNoDataValue( double dfNoData )
 
     if( m_poGDS->m_bStreamingOut && m_poGDS->m_bCrystalized )
     {
-        CPLError(
+        ReportError(
             CE_Failure, CPLE_NotSupported,
             "Cannot modify nodata at that point in a streamed output file" );
         return CE_Failure;
@@ -5902,7 +5902,7 @@ CPLErr GTiffRasterBand::DeleteNoDataValue()
 
     if( m_poGDS->m_bStreamingOut && m_poGDS->m_bCrystalized )
     {
-        CPLError(
+        ReportError(
             CE_Failure, CPLE_NotSupported,
             "Cannot modify nodata at that point in a streamed output file" );
         return CE_Failure;
@@ -6193,7 +6193,7 @@ CPLErr GTiffSplitBand::IReadBlock( int /* nBlockXOff */, int nBlockYOff,
                  static_cast<uint16>(nBand - 1) : 0 ) == -1
             && !m_poGDS->m_bIgnoreReadErrors )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
+            ReportError( CE_Failure, CPLE_AppDefined,
                       "TIFFReadScanline() failed." );
             m_poGDS->m_nLoadedBlock = -1;
             return CE_Failure;
@@ -6226,7 +6226,7 @@ CPLErr GTiffSplitBand::IWriteBlock( int /* nBlockXOff */, int /* nBlockYOff */,
                                     void * /* pImage */ )
 
 {
-    CPLError( CE_Failure, CPLE_AppDefined,
+    ReportError( CE_Failure, CPLE_AppDefined,
               "Split bands are read-only." );
     return CE_Failure;
 }
@@ -6286,7 +6286,7 @@ int GTiffRGBABand::IGetDataCoverageStatus( int , int ,
 CPLErr GTiffRGBABand::IWriteBlock( int, int, void * )
 
 {
-    CPLError( CE_Failure, CPLE_AppDefined,
+    ReportError( CE_Failure, CPLE_AppDefined,
               "RGBA interpreted raster bands are read-only." );
     return CE_Failure;
 }
@@ -6359,7 +6359,7 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
 #endif
             {
                 // Once TIFFError() is properly hooked, this can go away.
-                CPLError( CE_Failure, CPLE_AppDefined,
+                ReportError( CE_Failure, CPLE_AppDefined,
                           "TIFFReadRGBATile() failed." );
 
                 memset( m_poGDS->m_pabyBlockBuf, 0, nBlockBufSize );
@@ -6385,7 +6385,7 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
 #endif
             {
                 // Once TIFFError() is properly hooked, this can go away.
-                CPLError( CE_Failure, CPLE_AppDefined,
+                ReportError( CE_Failure, CPLE_AppDefined,
                           "TIFFReadRGBAStrip() failed." );
 
                 memset( m_poGDS->m_pabyBlockBuf, 0, nBlockBufSize );
@@ -6585,7 +6585,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
     if( eDataType == GDT_Float32 && m_poGDS->m_nBitsPerSample != 16 )
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
+        ReportError(CE_Failure, CPLE_NotSupported,
                  "Writing float data with nBitsPerSample = %d is unsupported",
                  m_poGDS->m_nBitsPerSample);
         return CE_Failure;
@@ -6705,7 +6705,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                         if( !m_poGDS->m_bClipWarn )
                         {
                             m_poGDS->m_bClipWarn = true;
-                            CPLError(
+                            ReportError(
                                 CE_Warning, CPLE_AppDefined,
                                 "One or more pixels clipped to fit %d bit "
                                 "domain.", m_poGDS->m_nBitsPerSample );
@@ -6762,7 +6762,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                     if( !m_poGDS->m_bClipWarn )
                     {
                         m_poGDS->m_bClipWarn = true;
-                        CPLError(
+                        ReportError(
                             CE_Warning, CPLE_AppDefined,
                             "One or more pixels clipped to fit %d bit domain.",
                             m_poGDS->m_nBitsPerSample );
@@ -6896,7 +6896,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                         if( !m_poGDS->m_bClipWarn )
                         {
                             m_poGDS->m_bClipWarn = true;
-                            CPLError(
+                            ReportError(
                                 CE_Warning, CPLE_AppDefined,
                                 "One or more pixels clipped to fit %d bit "
                                 "domain.", m_poGDS->m_nBitsPerSample );
@@ -6958,7 +6958,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                     if( !m_poGDS->m_bClipWarn )
                     {
                         m_poGDS->m_bClipWarn = true;
-                        CPLError(
+                        ReportError(
                             CE_Warning, CPLE_AppDefined,
                             "One or more pixels clipped to fit %d bit domain.",
                             m_poGDS->m_nBitsPerSample );
@@ -7598,7 +7598,7 @@ CPLErr GTiffSplitBitmapBand::IReadBlock( int /* nBlockXOff */, int nBlockYOff,
 
         for( size_t iError = 0; iError < aoErrors.size(); ++iError )
         {
-            CPLError( aoErrors[iError].type,
+            ReportError( aoErrors[iError].type,
                       aoErrors[iError].no,
                       "%s",
                       aoErrors[iError].msg.c_str() );
@@ -7617,7 +7617,7 @@ CPLErr GTiffSplitBitmapBand::IReadBlock( int /* nBlockXOff */, int nBlockYOff,
         if( nRet == -1
             && !m_poGDS->m_bIgnoreReadErrors )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
+            ReportError( CE_Failure, CPLE_AppDefined,
                       "TIFFReadScanline() failed." );
             m_poGDS->m_nLoadedBlock = -1;
             return CE_Failure;
@@ -7650,7 +7650,7 @@ CPLErr GTiffSplitBitmapBand::IWriteBlock( int /* nBlockXOff */,
                                           void * /* pImage */ )
 
 {
-    CPLError( CE_Failure, CPLE_AppDefined,
+    ReportError( CE_Failure, CPLE_AppDefined,
               "Split bitmap bands are read-only." );
     return CE_Failure;
 }
@@ -7902,7 +7902,7 @@ int GTiffDataset::Finalize()
             }
             if( VSIFCloseL( m_fpL ) != 0 )
             {
-                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+                ReportError(CE_Failure, CPLE_FileIO, "I/O error");
             }
             m_fpL = nullptr;
         }
@@ -7912,7 +7912,7 @@ int GTiffDataset::Finalize()
     {
         if( VSIFCloseL( m_fpToWrite ) != 0 )
         {
-            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+            ReportError(CE_Failure, CPLE_FileIO, "I/O error");
         }
         m_fpToWrite = nullptr;
     }
@@ -8076,7 +8076,7 @@ void GTiffDataset::FillEmptyTiles()
     if( panByteCounts == nullptr )
     {
         // Got here with libtiff 3.9.3 and tiff_write_8 test.
-        CPLError( CE_Failure, CPLE_AppDefined,
+        ReportError( CE_Failure, CPLE_AppDefined,
                   "FillEmptyTiles() failed because panByteCounts == NULL" );
         return;
     }
@@ -8217,7 +8217,7 @@ void GTiffDataset::FillEmptyTiles()
 
             if( panByteOffsets == nullptr )
             {
-                CPLError(
+                ReportError(
                     CE_Failure, CPLE_AppDefined,
                     "FillEmptyTiles() failed because panByteOffsets == NULL");
                 return;
@@ -8244,7 +8244,7 @@ void GTiffDataset::FillEmptyTiles()
             if( VSIFTruncateL( fpTIF,
                                nOffset + iBlockToZero * nBlockBytes ) != 0 )
             {
-                CPLError(CE_Failure, CPLE_FileIO,
+                ReportError(CE_Failure, CPLE_FileIO,
                          "Cannot initialize empty blocks");
             }
         }
@@ -8657,14 +8657,14 @@ bool GTiffDataset::WriteEncodedTile( uint32 tile, GByte *pabyData,
     {
         if( tile != static_cast<uint32>(m_nLastWrittenBlockId + 1) )
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
+            ReportError(CE_Failure, CPLE_NotSupported,
                      "Attempt to write block %d whereas %d was expected",
                      tile, m_nLastWrittenBlockId + 1);
             return false;
         }
         if( static_cast<GPtrDiff_t>( VSIFWriteL(pabyData, 1, cc, m_fpToWrite) ) != cc )
         {
-            CPLError( CE_Failure, CPLE_FileIO, "Could not write " CPL_FRMT_GUIB " bytes",
+            ReportError( CE_Failure, CPLE_FileIO, "Could not write " CPL_FRMT_GUIB " bytes",
                       static_cast<GUIntBig>(cc) );
             return false;
         }
@@ -8764,14 +8764,14 @@ bool GTiffDataset::WriteEncodedStrip( uint32 strip, GByte* pabyData,
     {
         if( strip != static_cast<uint32>(m_nLastWrittenBlockId + 1) )
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
+            ReportError(CE_Failure, CPLE_NotSupported,
                      "Attempt to write block %d whereas %d was expected",
                      strip, m_nLastWrittenBlockId + 1);
             return false;
         }
         if( static_cast<GPtrDiff_t>(VSIFWriteL(pabyData, 1, cc, m_fpToWrite)) != cc )
         {
-            CPLError(CE_Failure, CPLE_FileIO, "Could not write " CPL_FRMT_GUIB " bytes",
+            ReportError(CE_Failure, CPLE_FileIO, "Could not write " CPL_FRMT_GUIB " bytes",
                      static_cast<GUIntBig>(cc));
             return false;
         }
@@ -8867,7 +8867,7 @@ void GTiffDataset::InitCompressionThreads( char** papszOptions )
                   !EQUAL(pszValue, "1") &&
                   !EQUAL(pszValue, "ALL_CPUS")) )
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
+            ReportError(CE_Warning, CPLE_AppDefined,
                      "Invalid value for NUM_THREADS: %s", pszValue);
         }
     }
@@ -9055,7 +9055,7 @@ void GTiffDataset::WriteRawStripOrTile( int nStripOrTile,
                     if( !poRootDS->m_bKnownIncompatibleEdition &&
                         !poRootDS->m_bWriteKnownIncompatibleEdition )
                     {
-                        CPLError(CE_Warning, CPLE_AppDefined,
+                        ReportError(CE_Warning, CPLE_AppDefined,
                             "A strile cannot be rewritten in place, which "
                             "invalidates the BLOCK_ORDER optimization.");
                         poRootDS->m_bKnownIncompatibleEdition = true;
@@ -9073,7 +9073,7 @@ void GTiffDataset::WriteRawStripOrTile( int nStripOrTile,
                     if( !poRootDS->m_bKnownIncompatibleEdition &&
                         !poRootDS->m_bWriteKnownIncompatibleEdition )
                     {
-                        CPLError(CE_Warning, CPLE_AppDefined,
+                        ReportError(CE_Warning, CPLE_AppDefined,
                             "A strile cannot be rewritten in place, which "
                             "invalidates the MASK_INTERLEAVED_WITH_IMAGERY "
                             "optimization.");
@@ -9484,7 +9484,7 @@ CPLErr GTiffDataset::FlushBlockBuf()
         WriteEncodedTileOrStrip(m_nLoadedBlock, m_pabyBlockBuf, true);
     if( eErr != CE_None )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
+        ReportError( CE_Failure, CPLE_AppDefined,
                     "WriteEncodedTile/Strip() failed." );
         m_bWriteError = true;
     }
@@ -9522,7 +9522,7 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId, bool bReadFromDisk )
             TIFFIsTiled(m_hTIFF) ? TIFFTileSize(m_hTIFF) : TIFFStripSize(m_hTIFF));
     if( !nBlockBufSize )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
+        ReportError( CE_Failure, CPLE_AppDefined,
                   "Bogus block size; unable to allocate a buffer." );
         return CE_Failure;
     }
@@ -9720,7 +9720,7 @@ void GTiffDataset::Crystalize()
 
         if( VSIFSeekL( m_fpL, 0, SEEK_END ) != 0 )
         {
-            CPLError(CE_Failure, CPLE_FileIO, "Could not seek");
+            ReportError(CE_Failure, CPLE_FileIO, "Could not seek");
         }
         const int nSize = static_cast<int>( VSIFTellL(m_fpL) );
 
@@ -9736,7 +9736,7 @@ void GTiffDataset::Crystalize()
                             static_cast<int>(nDataLength), m_fpToWrite ) ) !=
             static_cast<int>(nDataLength) )
         {
-            CPLError( CE_Failure, CPLE_FileIO, "Could not write %d bytes",
+            ReportError( CE_Failure, CPLE_FileIO, "Could not write %d bytes",
                       static_cast<int>(nDataLength) );
         }
         // In case of single strip file, there's a libtiff check that would
@@ -9977,7 +9977,7 @@ void GTiffDataset::FlushDirectory()
                     !m_bKnownIncompatibleEdition &&
                     !m_bWriteKnownIncompatibleEdition )
                 {
-                    CPLError(CE_Warning, CPLE_AppDefined,
+                    ReportError(CE_Warning, CPLE_AppDefined,
                                 "The IFD has been rewritten at the end of "
                                 "the file, which breaks COG layout.");
                     m_bKnownIncompatibleEdition = true;
@@ -10489,7 +10489,7 @@ CPLErr GTiffDataset::IBuildOverviews(
     {
         if( m_nOverviewCount != 0 )
         {
-            CPLError(
+            ReportError(
                 CE_Failure, CPLE_NotSupported,
                 "Cannot add external overviews when there are already "
                 "internal overviews" );
@@ -10501,7 +10501,7 @@ CPLErr GTiffDataset::IBuildOverviews(
             nBandsIn, panBandList, pfnProgress, pProgressData );
         if( eErr == CE_None && m_poMaskDS )
         {
-            CPLError(CE_Warning, CPLE_NotSupported,
+            ReportError(CE_Warning, CPLE_NotSupported,
                      "Building external overviews whereas there is an internal "
                      "mask is not fully supported. "
                      "The overviews of the non-mask bands will be created, "
@@ -10516,7 +10516,7 @@ CPLErr GTiffDataset::IBuildOverviews(
 /* -------------------------------------------------------------------- */
     if( nBandsIn != GetRasterCount() )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
+        ReportError( CE_Failure, CPLE_NotSupported,
                   "Generation of overviews in TIFF currently only "
                   "supported when operating on all bands.  "
                   "Operation failed." );
@@ -10544,7 +10544,7 @@ CPLErr GTiffDataset::IBuildOverviews(
 /* -------------------------------------------------------------------- */
     if( !pfnProgress( 0.0, nullptr, pProgressData ) )
     {
-        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        ReportError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
         return CE_Failure;
     }
 
@@ -10663,7 +10663,7 @@ CPLErr GTiffDataset::IBuildOverviews(
             if( m_bLayoutIFDSBeforeData && !m_bKnownIncompatibleEdition &&
                 !m_bWriteKnownIncompatibleEdition )
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
+                ReportError(CE_Warning, CPLE_AppDefined,
                          "Adding new overviews invalidates the "
                          "LAYOUT=IFDS_BEFORE_DATA property");
                 m_bKnownIncompatibleEdition = true;
@@ -11776,8 +11776,8 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
                     if( cpl::down_cast<GTiffDataset *>(
                            poSrcDS)->GetPamFlags() & GPF_DISABLED )
                     {
-                        CPLError(
-                            CE_Warning, CPLE_AppDefined,
+                        ReportError(
+                            pszTIFFFilename, CE_Warning, CPLE_AppDefined,
                             "Metadata exceeding 32000 bytes cannot be written "
                             "into GeoTIFF." );
                     }
@@ -11785,8 +11785,8 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
                     {
                         cpl::down_cast<GTiffDataset *>(poSrcDS)->
                             PushMetadataToPam();
-                        CPLError(
-                            CE_Warning, CPLE_AppDefined,
+                        ReportError(
+                            pszTIFFFilename, CE_Warning, CPLE_AppDefined,
                             "Metadata exceeding 32000 bytes cannot be written "
                             "into GeoTIFF. Transferred to PAM instead." );
                     }
@@ -12568,7 +12568,8 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     // Otherwise it makes Python bindings unhappy (#5616).
     for( size_t iError = 0; iError < aoErrors.size(); ++iError )
     {
-        CPLError( (l_hTIFF == nullptr && aoErrors[iError].type == CE_Failure) ?
+        ReportError( pszFilename,
+                  (l_hTIFF == nullptr && aoErrors[iError].type == CE_Failure) ?
                   CE_Failure : CE_Warning,
                   aoErrors[iError].no,
                   "%s",
@@ -12587,9 +12588,9 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     if( nXSize > INT_MAX || nYSize > INT_MAX )
     {
         // GDAL only supports signed 32bit dimensions.
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Too large image size: %u x %u",
-                 nXSize, nYSize);
+        ReportError(pszFilename, CE_Failure, CPLE_NotSupported,
+                    "Too large image size: %u x %u",
+                    nXSize, nYSize);
         XTIFFClose( l_hTIFF );
         return nullptr;
     }
@@ -12636,7 +12637,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
                             "KNOWN_INCOMPATIBLE_EDITION=YES") != nullptr;
         if( poDS->m_bKnownIncompatibleEdition )
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
+            poDS->ReportError(CE_Warning, CPLE_AppDefined,
                      "This file used to have optimizations in its layout, "
                      "but those have been, at least partly, invalidated by "
                      "later changes");
@@ -12759,7 +12760,7 @@ void GTiffDataset::LoadMDAreaOrPoint()
 
     if( !hGTIF )
     {
-        CPLError( CE_Warning, CPLE_AppDefined,
+        ReportError( CE_Warning, CPLE_AppDefined,
                   "GeoTIFF tags apparently corrupt, they are being ignored." );
     }
     else
@@ -12795,7 +12796,7 @@ void GTiffDataset::LookForProjection()
 
     if( !hGTIF )
     {
-        CPLError( CE_Warning, CPLE_AppDefined,
+        ReportError( CE_Warning, CPLE_AppDefined,
                   "GeoTIFF tags apparently corrupt, they are being ignored." );
     }
     else
@@ -13153,8 +13154,7 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
 
     if( *pszFilename == '\0' || nOffset == 0 )
     {
-        CPLError(
-            CE_Failure, CPLE_OpenFailed,
+        ReportError(pszFilename, CE_Failure, CPLE_OpenFailed,
             "Unable to extract offset or filename, should take the form:\n"
             "GTIFF_DIR:<dir>:filename or GTIFF_DIR:off:<dir_offset>:filename" );
         return nullptr;
@@ -13162,8 +13162,8 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
 
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError(
-            CE_Warning, CPLE_AppDefined,
+        ReportError(
+            pszFilename, CE_Warning, CPLE_AppDefined,
             "Opening a specific TIFF directory is not supported in "
             "update mode. Switching to read-only" );
     }
@@ -13196,8 +13196,8 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
             if( TIFFReadDirectory( l_hTIFF ) == 0 )
             {
                 XTIFFClose( l_hTIFF );
-                CPLError(
-                    CE_Failure, CPLE_OpenFailed,
+                ReportError(
+                    pszFilename, CE_Failure, CPLE_OpenFailed,
                     "Requested directory %lu not found.",
                     static_cast<long unsigned int>(nOffsetRequested));
                 CPL_IGNORE_RET_VAL(VSIFCloseL(l_fpL));
@@ -13730,7 +13730,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     if( nXSize > INT_MAX || nYSize > INT_MAX )
     {
         // GDAL only supports signed 32bit dimensions.
-        CPLError(CE_Failure, CPLE_NotSupported,
+        ReportError(CE_Failure, CPLE_NotSupported,
                  "Too large image size: %u x %u",
                  nXSize, nYSize);
         return CE_Failure;
@@ -13761,7 +13761,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     if( m_nCompression != COMPRESSION_NONE &&
         !TIFFIsCODECConfigured(m_nCompression) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
+        ReportError( CE_Failure, CPLE_AppDefined,
                   "Cannot open TIFF file due to missing codec." );
         return CE_Failure;
     }
@@ -13796,7 +13796,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         TIFFGetField( m_hTIFF, TIFFTAG_TILELENGTH, &(l_nBlockYSize) );
         if( l_nBlockXSize > INT_MAX || l_nBlockYSize > INT_MAX )
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
+            ReportError(CE_Failure, CPLE_NotSupported,
                      "Too large block size: %u x %u",
                      l_nBlockXSize, l_nBlockYSize);
             return CE_Failure;
@@ -13809,7 +13809,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         if( !TIFFGetField( m_hTIFF, TIFFTAG_ROWSPERSTRIP,
                            &(m_nRowsPerStrip) ) )
         {
-            CPLError( CE_Warning, CPLE_AppDefined,
+            ReportError( CE_Warning, CPLE_AppDefined,
                       "RowsPerStrip not defined ... assuming all one strip." );
             m_nRowsPerStrip = nYSize;  // Dummy value.
         }
@@ -13828,7 +13828,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     const int l_nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
     if( l_nBlocksPerColumn > INT_MAX / l_nBlocksPerRow )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
+        ReportError( CE_Failure, CPLE_AppDefined,
                   "Too many blocks: %d x %d",
                   l_nBlocksPerRow, l_nBlocksPerColumn );
         return CE_Failure;
@@ -13840,7 +13840,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     if( m_nPlanarConfig == PLANARCONFIG_SEPARATE &&
         m_nBlocksPerBand > INT_MAX / nBands )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
+        ReportError( CE_Failure, CPLE_AppDefined,
                   "Too many blocks: %d x %d x %d bands",
                   l_nBlocksPerRow, l_nBlocksPerColumn, nBands );
         return CE_Failure;
@@ -13928,7 +13928,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     if( m_nCompression == COMPRESSION_OJPEG &&
         !bTreatAsRGBA )
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
+        ReportError(CE_Failure, CPLE_NotSupported,
                  "Old-JPEG compression only supported through RGBA interface, "
                  "which cannot be used probably because the file is corrupted");
         return CE_Failure;
@@ -13946,7 +13946,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         TIFFGetFieldDefaulted(m_hTIFF,TIFFTAG_YCBCRSUBSAMPLING,&nF1,&nF2);
         if( nF1 != 1 || nF2 != 1 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
+            ReportError( CE_Failure, CPLE_AppDefined,
                       "Cannot open TIFF file with YCbCr, subsampling and "
                       "BitsPerSample > 8 that is not JPEG compressed" );
             return CE_Failure;
@@ -14024,7 +14024,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     }
     if( nChunkSize > static_cast<uint64>(INT_MAX) )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
+        ReportError( CE_Failure, CPLE_NotSupported,
                   "Scanline/tile/strip size bigger than 2GB unsupported "
                   "on 32-bit builds." );
         return CE_Failure;
@@ -14161,7 +14161,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 
     if( GetRasterBand(1)->GetRasterDataType() == GDT_Unknown )
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
+        ReportError(CE_Failure, CPLE_NotSupported,
                  "Unsupported TIFF configuration: BitsPerSample(=%d) and "
                  "SampleType(=%d)",
                  m_nBitsPerSample,
@@ -14396,7 +14396,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
             }
             else
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
+                ReportError(CE_Warning, CPLE_AppDefined,
                          "Unknown Lerc version: %d", nLercVersion);
             }
         }
@@ -14710,7 +14710,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                                                nullptr);
                         if( pszOptionVal == nullptr )
                         {
-                            CPLError(CE_Warning, CPLE_AppDefined,
+                            ReportError(CE_Warning, CPLE_AppDefined,
                                 "File with negative value for ScaleY in "
                                 "GeoPixelScale tag. This is rather "
                                 "unusual. GDAL, contrary to the GeoTIFF "
@@ -15446,13 +15446,13 @@ void GTiffDataset::GetDiscardLsbOption(char** papszOptions)
 
     if( m_nPhotometric == PHOTOMETRIC_PALETTE )
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
+        ReportError(CE_Warning, CPLE_AppDefined,
                  "DISCARD_LSB ignored on a paletted image");
         return;
     }
     if( !(m_nBitsPerSample == 8 || m_nBitsPerSample == 16 || m_nBitsPerSample == 32) )
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
+        ReportError(CE_Warning, CPLE_AppDefined,
                  "DISCARD_LSB ignored on non 8, 16 or 32 bits integer images");
         return;
     }
@@ -15472,7 +15472,7 @@ void GTiffDataset::GetDiscardLsbOption(char** papszOptions)
     }
     else
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
+        ReportError(CE_Warning, CPLE_AppDefined,
                  "DISCARD_LSB ignored: wrong number of components");
     }
     CSLDestroy(papszTokens);
@@ -15525,8 +15525,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     if( nXSize < 1 || nYSize < 1 || l_nBands < 1 )
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
+        ReportError( pszFilename, CE_Failure, CPLE_AppDefined,
             "Attempt to create %dx%dx%d TIFF file, but width, height and bands"
             "must be positive.",
             nXSize, nYSize, l_nBands );
@@ -15536,7 +15535,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 
     if( l_nBands > 65535 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
+        ReportError(pszFilename, CE_Failure, CPLE_AppDefined,
                   "Attempt to create %dx%dx%d TIFF file, but bands "
                   "must be lesser or equal to 65535.",
                   nXSize, nYSize, l_nBands );
@@ -15559,7 +15558,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         l_nBlockXSize = atoi( pszValue );
         if( l_nBlockXSize < 0 )
         {
-            CPLError(CE_Failure, CPLE_IllegalArg,
+            ReportError( pszFilename,CE_Failure, CPLE_IllegalArg,
                      "Invalid value for BLOCKXSIZE");
             return nullptr;
         }
@@ -15572,7 +15571,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         l_nBlockYSize = atoi( pszValue );
         if( l_nBlockYSize < 0 )
         {
-            CPLError(CE_Failure, CPLE_IllegalArg,
+            ReportError( pszFilename, CE_Failure, CPLE_IllegalArg,
                      "Invalid value for BLOCKYSIZE");
             return nullptr;
         }
@@ -15599,7 +15598,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         }
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
+            ReportError( pszFilename,CE_Failure, CPLE_IllegalArg, 
                       "INTERLEAVE=%s unsupported, value must be PIXEL or BAND.",
                       pszValue );
             return nullptr;
@@ -15658,23 +15657,20 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         !EQUAL( "NONE",
                 CSLFetchNameValueDef(papszParmList, "COMPRESS", "NONE")) )
     {
-        CPLError(
-            CE_Failure, CPLE_NotSupported,
+        ReportError( pszFilename, CE_Failure, CPLE_NotSupported,
             "Streaming only supported to uncompressed TIFF" );
         return nullptr;
     }
     if( bStreaming && CPLFetchBool(papszParmList, "SPARSE_OK", false) )
     {
-        CPLError(
-            CE_Failure, CPLE_NotSupported,
+        ReportError( pszFilename, CE_Failure, CPLE_NotSupported,
             "Streaming not supported with SPARSE_OK" );
         return nullptr;
     }
     const bool bCopySrcOverviews = CPLFetchBool(papszParmList, "COPY_SRC_OVERVIEWS", false);
     if( bStreaming && bCopySrcOverviews )
     {
-        CPLError(
-            CE_Failure, CPLE_NotSupported,
+        ReportError( pszFilename, CE_Failure, CPLE_NotSupported,
             "Streaming not supported with COPY_SRC_OVERVIEWS" );
         return nullptr;
     }
@@ -15719,8 +15715,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         if( !bCreateBigTIFF && l_nCompression == COMPRESSION_NONE &&
              dfUncompressedImageSize > 4200000000.0 )
         {
-            CPLError(
-                CE_Failure, CPLE_NotSupported,
+            ReportError( pszFilename, CE_Failure, CPLE_NotSupported,
                 "The TIFF file will be larger than 4GB, so BigTIFF is "
                 "necessary.  Creation failed.");
             return nullptr;
@@ -15740,7 +15735,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         // libtiff implementation limitation
         if( nTileXCount > 0x80000000U / (bCreateBigTIFF ? 8 : 4) / nTileYCount )
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
+            ReportError( pszFilename, CE_Failure, CPLE_NotSupported,
                      "File too large regarding tile size. This would result "
                      "in a file with tile arrays larger than 2GB");
             return nullptr;
@@ -15762,7 +15757,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         if( nFreeDiskSpace >= 0 &&
             nFreeDiskSpace < dfUncompressedImageSize )
         {
-            CPLError( CE_Failure, CPLE_FileIO,
+            ReportError( pszFilename, CE_Failure, CPLE_FileIO,
                       "Free disk space available is " CPL_FRMT_GIB " bytes, "
                       "whereas " CPL_FRMT_GIB " are at least necessary. "
                       "You can disable this check by defining the "
@@ -15801,8 +15796,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         }
         else if( !EQUAL(pszValue, "NATIVE") )
         {
-            CPLError(
-                CE_Warning, CPLE_NotSupported,
+            ReportError( pszFilename, CE_Warning, CPLE_NotSupported,
                 "ENDIANNESS=%s not supported. Defaulting to NATIVE", pszValue );
         }
     }
@@ -15880,14 +15874,14 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         {
             if( l_nBitsPerSample != 16 && l_nBitsPerSample != 32 )
             {
-                CPLError(CE_Warning, CPLE_NotSupported,
+                ReportError( pszFilename, CE_Warning, CPLE_NotSupported,
                      "Only NBITS=16 is supported for data type Float32");
                 l_nBitsPerSample = GDALGetDataTypeSizeBits(eType);
             }
         }
         else
         {
-            CPLError(CE_Warning, CPLE_NotSupported,
+            ReportError( pszFilename, CE_Warning, CPLE_NotSupported,
                      "NBITS is not supported for data type %s",
                      GDALGetDataTypeName(eType));
             l_nBitsPerSample = GDALGetDataTypeSizeBits(eType);
@@ -15897,7 +15891,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         {
             if( l_nBitsPerSample < nMinBits )
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
+                ReportError( pszFilename,CE_Warning, CPLE_AppDefined,
                          "NBITS=%d is invalid for data type %s. Using NBITS=%d",
                          l_nBitsPerSample, GDALGetDataTypeName(eType),
                          nMinBits);
@@ -15905,7 +15899,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
             }
             else if( l_nBitsPerSample > nMaxBits )
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
+                ReportError( pszFilename,CE_Warning, CPLE_AppDefined,
                          "NBITS=%d is invalid for data type %s. Using NBITS=%d",
                          l_nBitsPerSample, GDALGetDataTypeName(eType),
                          nMaxBits);
@@ -15974,8 +15968,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
             }
             else
             {
-                CPLError(
-                    CE_Warning, CPLE_AppDefined,
+                ReportError( pszFilename,CE_Warning, CPLE_AppDefined,
                     "PHOTOMETRIC=PALETTE only compatible with Byte or UInt16" );
             }
         }
@@ -15997,7 +15990,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
             // doesn't overrun buffer size returned by libtiff.
             if( l_nCompression != COMPRESSION_JPEG )
             {
-                CPLError(CE_Failure, CPLE_NotSupported,
+                ReportError( pszFilename, CE_Failure, CPLE_NotSupported,
                          "Currently, PHOTOMETRIC=YCBCR requires COMPRESS=JPEG");
                 XTIFFClose(l_hTIFF);
                 CPL_IGNORE_RET_VAL(VSIFCloseL(l_fpL));
@@ -16006,7 +15999,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 
             if( nPlanar == PLANARCONFIG_SEPARATE )
             {
-                CPLError(CE_Failure, CPLE_NotSupported,
+                ReportError( pszFilename, CE_Failure, CPLE_NotSupported,
                          "PHOTOMETRIC=YCBCR requires INTERLEAVE=PIXEL");
                 XTIFFClose(l_hTIFF);
                 CPL_IGNORE_RET_VAL(VSIFCloseL(l_fpL));
@@ -16018,8 +16011,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
             // TIFFVStripSize64:Invalid td_samplesperpixel value.
             if( l_nBands != 3 )
             {
-                CPLError(
-                    CE_Failure, CPLE_NotSupported,
+                ReportError( pszFilename, CE_Failure, CPLE_NotSupported,
                     "PHOTOMETRIC=YCBCR not supported on a %d-band raster: "
                     "only compatible of a 3-band (RGB) raster", l_nBands );
                 XTIFFClose(l_hTIFF);
@@ -16051,7 +16043,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         }
         else
         {
-            CPLError( CE_Warning, CPLE_IllegalArg,
+            ReportError( pszFilename,CE_Warning, CPLE_IllegalArg,
                       "PHOTOMETRIC=%s value not recognised, ignoring.  "
                       "Set the Photometric Interpretation as MINISBLACK.",
                       pszValue );
@@ -16060,7 +16052,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 
         if( l_nBands < nSamplesAccountedFor )
         {
-            CPLError( CE_Warning, CPLE_IllegalArg,
+            ReportError( pszFilename,CE_Warning, CPLE_IllegalArg,
                       "PHOTOMETRIC=%s value does not correspond to number "
                       "of bands (%d), ignoring.  "
                       "Set the Photometric Interpretation as MINISBLACK.",
@@ -17058,7 +17050,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 {
     if( poSrcDS->GetRasterCount() == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
+        ReportError( pszFilename, CE_Failure, CPLE_AppDefined,
                   "Unable to export GeoTIFF files with zero bands." );
         return nullptr;
     }
@@ -17076,8 +17068,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             if( bStrict )
             {
-                CPLError(
-                    CE_Failure, CPLE_AppDefined,
+                ReportError( pszFilename, CE_Failure, CPLE_AppDefined,
                     "Unable to export GeoTIFF file with different datatypes "
                     "per different bands. All bands should have the same "
                     "types in TIFF." );
@@ -17085,8 +17076,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             }
             else
             {
-                CPLError(
-                    CE_Warning, CPLE_AppDefined,
+                ReportError( pszFilename,CE_Warning, CPLE_AppDefined,
                     "Unable to export GeoTIFF file with different datatypes "
                     "per different bands. All bands should have the same "
                     "types in TIFF." );
@@ -17211,8 +17201,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     poSrcDS->GetRasterBand(j)->GetOverviewCount();
                 if( nOtherBandOverviewCount != nSrcOverviews )
                 {
-                    CPLError(
-                        CE_Failure, CPLE_NotSupported,
+                    ReportError( pszFilename, CE_Failure, CPLE_NotSupported,
                         "COPY_SRC_OVERVIEWS cannot be used when the bands have "
                         "not the same number of overview levels." );
                     CSLDestroy(papszCreateOptions);
@@ -17226,8 +17215,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                         poSrcDS->GetRasterBand(j)->GetOverview(i);
                     if( poOvrBand == nullptr )
                     {
-                        CPLError(
-                            CE_Failure, CPLE_NotSupported,
+                        ReportError( pszFilename, CE_Failure, CPLE_NotSupported,
                             "COPY_SRC_OVERVIEWS cannot be used when one "
                             "overview band is NULL." );
                         CSLDestroy(papszCreateOptions);
@@ -17240,8 +17228,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     if( poOvrBand->GetXSize() != poOvrFirstBand->GetXSize() ||
                         poOvrBand->GetYSize() != poOvrFirstBand->GetYSize() )
                     {
-                        CPLError(
-                            CE_Failure, CPLE_NotSupported,
+                        ReportError( pszFilename, CE_Failure, CPLE_NotSupported,
                             "COPY_SRC_OVERVIEWS cannot be used when the "
                             "overview bands have not the same dimensions "
                             "among bands." );
@@ -17500,8 +17487,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLFree( panTBlue );
     }
     else if( poSrcDS->GetRasterBand(1)->GetColorTable() != nullptr )
-        CPLError(
-            CE_Warning, CPLE_AppDefined,
+        ReportError( pszFilename, CE_Failure, CPLE_AppDefined,
             "Unable to export color table to GeoTIFF file.  Color tables "
             "can only be written to 1 band or 2 bands Byte or "
             "UInt16 GeoTIFF files." );
@@ -17513,7 +17499,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         // Check done in tif_jpeg.c later, but not with a very clear error message
         if( l_nPhotometric == PHOTOMETRIC_PALETTE )
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
+            ReportError( pszFilename, CE_Failure, CPLE_NotSupported,
                      "JPEG compression not supported with paletted image");
             XTIFFClose( l_hTIFF );
             VSIUnlink(l_osTmpFilename);
@@ -17730,8 +17716,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if( CPLFetchBool( papszOptions, "TFW", false )
             || CPLFetchBool( papszOptions, "WORLDFILE", false ) )
         {
-            CPLError(
-                CE_Warning, CPLE_AppDefined,
+            ReportError( pszFilename,CE_Warning, CPLE_AppDefined,
                 "TFW=ON or WORLDFILE=ON creation options are ignored when "
                 "GCPs are available" );
         }
@@ -17822,7 +17807,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         TIFFWriteDirectory( l_hTIFF );
 
         if( VSIFSeekL( l_fpL, 0, SEEK_END ) != 0 )
-            CPLError(CE_Failure, CPLE_FileIO, "Cannot seek");
+            ReportError(pszFilename, CE_Failure, CPLE_FileIO, "Cannot seek");
         const int nSize = static_cast<int>( VSIFTellL(l_fpL) );
 
         vsi_l_offset nDataLength = 0;
@@ -17857,8 +17842,9 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 VSIFWriteL( pabyBuffer, 1, static_cast<int>(nDataLength),
                             fpStreaming ) ) != nDataLength )
         {
-            CPLError( CE_Failure, CPLE_FileIO, "Could not write %d bytes",
-                      static_cast<int>(nDataLength) );
+            ReportError(pszFilename, CE_Failure, CPLE_FileIO,
+                        "Could not write %d bytes",
+                        static_cast<int>(nDataLength) );
             CPL_IGNORE_RET_VAL(VSIFCloseL( fpStreaming ));
             VSIUnlink(l_osTmpFilename);
             CPL_IGNORE_RET_VAL( VSIFCloseL(l_fpL) );
@@ -18244,7 +18230,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             if( poDS->m_nOverviewCount != nSrcOverviews )
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
+                ReportError( pszFilename, CE_Failure, CPLE_AppDefined,
                         "Did only manage to instantiate %d overview levels, "
                         "whereas source contains %d",
                         poDS->m_nOverviewCount, nSrcOverviews);
@@ -18268,7 +18254,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 else if( i == 0 &&
                          poDS->GetRasterBand(1)->GetMaskFlags() == GMF_PER_DATASET )
                 {
-                    CPLError(CE_Warning, CPLE_AppDefined,
+                    ReportError( pszFilename, CE_Warning, CPLE_AppDefined,
                              "Source dataset has a mask band on full "
                              "resolution, overviews on the regular bands, "
                              "but lacks overviews on the mask band.");
@@ -18461,7 +18447,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 if( eErr == CE_None &&
                     TIFFWriteScanline( l_hTIFF, pabyScanline, j, 0) == -1 )
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined,
+                    ReportError( pszFilename, CE_Failure, CPLE_AppDefined,
                               "TIFFWriteScanline() failed." );
                     eErr = CE_Failure;
                 }
@@ -18503,7 +18489,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                             l_hTIFF, pabyScanline, j,
                             static_cast<uint16>(iBand - 1)) == -1 )
                     {
-                        CPLError( CE_Failure, CPLE_AppDefined,
+                        ReportError( pszFilename, CE_Failure, CPLE_AppDefined,
                                   "TIFFWriteScanline() failed." );
                         eErr = CE_Failure;
                     }
@@ -18670,7 +18656,7 @@ CPLErr GTiffDataset::SetSpatialRef( const OGRSpatialReference * poSRS )
 {
     if( m_bStreamingOut && m_bCrystalized )
     {
-        CPLError(
+        ReportError(
             CE_Failure, CPLE_NotSupported,
             "Cannot modify projection at that point in "
             "a streamed output file" );
@@ -18725,7 +18711,7 @@ CPLErr GTiffDataset::SetGeoTransform( double * padfTransform )
 {
     if( m_bStreamingOut && m_bCrystalized )
     {
-        CPLError(
+        ReportError(
             CE_Failure, CPLE_NotSupported,
             "Cannot modify geotransform at that point in a "
             "streamed output file" );
@@ -18738,7 +18724,7 @@ CPLErr GTiffDataset::SetGeoTransform( double * padfTransform )
     {
         if( m_nGCPCount > 0 )
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
+            ReportError(CE_Warning, CPLE_AppDefined,
                      "GCPs previously set are going to be cleared "
                      "due to the setting of a geotransform.");
             m_bForceUnsetGTOrGCPs = true;
@@ -18772,7 +18758,7 @@ CPLErr GTiffDataset::SetGeoTransform( double * padfTransform )
     }
     else
     {
-        CPLError(
+        ReportError(
             CE_Failure, CPLE_NotSupported,
             "Attempt to call SetGeoTransform() on a read-only GeoTIFF file." );
         return CE_Failure;
@@ -18842,7 +18828,7 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
         else if( nGCPCountIn > 0 &&
                  m_bGeoTransformValid )
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
+            ReportError(CE_Warning, CPLE_AppDefined,
                      "A geotransform previously set is going to be cleared "
                      "due to the setting of GCPs.");
             m_adfGeoTransform[0] = 0.0;
@@ -18884,7 +18870,7 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
     }
     else
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
+        ReportError(CE_Failure, CPLE_NotSupported,
                  "SetGCPs() is only supported on newly created GeoTIFF files.");
         return CE_Failure;
     }
@@ -18971,7 +18957,7 @@ CPLErr GTiffDataset::SetMetadata( char ** papszMD, const char *pszDomain )
 
     if( m_bStreamingOut && m_bCrystalized )
     {
-        CPLError(
+        ReportError(
             CE_Failure, CPLE_NotSupported,
             "Cannot modify metadata at that point in a streamed output file" );
         return CE_Failure;
@@ -19183,7 +19169,7 @@ CPLErr GTiffDataset::SetMetadataItem( const char *pszName,
 
     if( m_bStreamingOut && m_bCrystalized )
     {
-        CPLError(
+        ReportError(
             CE_Failure, CPLE_NotSupported,
             "Cannot modify metadata at that point in a streamed output file" );
         return CE_Failure;
@@ -19359,7 +19345,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
 
     if( m_poMaskDS != nullptr )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
+        ReportError( CE_Failure, CPLE_AppDefined,
                   "This TIFF dataset has already an internal mask band" );
         return CE_Failure;
     }
@@ -19367,7 +19353,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
     {
         if( nFlagsIn != GMF_PER_DATASET )
         {
-            CPLError(
+            ReportError(
                 CE_Failure, CPLE_AppDefined,
                 "The only flag value supported for internal mask is "
                 "GMF_PER_DATASET" );
@@ -19385,7 +19371,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
     /* -------------------------------------------------------------------- */
         if( GetAccess() != GA_Update )
         {
-            CPLError( CE_Warning, CPLE_AppDefined,
+            ReportError( CE_Warning, CPLE_AppDefined,
                       "File open for read-only accessing, "
                       "creating mask externally." );
 
@@ -19395,7 +19381,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
         if( m_bLayoutIFDSBeforeData && !m_bKnownIncompatibleEdition &&
             !m_bWriteKnownIncompatibleEdition )
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
+            ReportError(CE_Warning, CPLE_AppDefined,
                         "Adding a mask invalidates the "
                         "LAYOUT=IFDS_BEFORE_DATA property");
             m_bKnownIncompatibleEdition = true;
@@ -19410,7 +19396,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
 
             if( (nSubType & FILETYPE_MASK) != 0 )
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
+                ReportError( CE_Failure, CPLE_AppDefined,
                           "Cannot create a mask on a TIFF mask IFD !" );
                 return CE_Failure;
             }
@@ -19478,7 +19464,7 @@ CPLErr GTiffRasterBand::CreateMaskBand( int nFlagsIn )
 
     if( m_poGDS->m_poMaskDS != nullptr )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
+        ReportError( CE_Failure, CPLE_AppDefined,
                   "This TIFF dataset has already an internal mask band" );
         return CE_Failure;
     }

@@ -7184,7 +7184,7 @@ def test_tiff_write_overviews_mask_no_ovr_on_mask():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds.BuildOverviews('NEAR', overviewlist=[2])
-    assert gdal.GetLastErrorMsg() == 'Building external overviews whereas there is an internal mask is not fully supported. The overviews of the non-mask bands will be created, but not the overviews of the mask band.'
+    assert 'Building external overviews whereas there is an internal mask is not fully supported. The overviews of the non-mask bands will be created, but not the overviews of the mask band.' in gdal.GetLastErrorMsg()
     # No overview on the mask
     assert ds.GetRasterBand(1).GetOverview(0).GetMaskFlags() == gdal.GMF_ALL_VALID
     ds = None
@@ -7194,7 +7194,7 @@ def test_tiff_write_overviews_mask_no_ovr_on_mask():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = gdaltest.tiff_drv.CreateCopy(tmpfile2, src_ds, options=['COPY_SRC_OVERVIEWS=YES'])
-    assert gdal.GetLastErrorMsg() == 'Source dataset has a mask band on full resolution, overviews on the regular bands, but lacks overviews on the mask band.'
+    assert 'Source dataset has a mask band on full resolution, overviews on the regular bands, but lacks overviews on the mask band.' in gdal.GetLastErrorMsg()
     assert ds
     ds = None
     src_ds = None

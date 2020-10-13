@@ -4020,11 +4020,43 @@ void GDALDataset::ReportError(CPLErr eErrClass, CPLErrorNum err_no,
                               const char *fmt, ...)
 {
     va_list args;
-
     va_start(args, fmt);
+    ReportErrorV(GetDescription(), eErrClass, err_no, fmt, args);
+    va_end(args);
+}
 
+/**
+ * \brief Emits an error related to a dataset (static method)
+ *
+ * This function is a wrapper for regular CPLError(). The only difference
+ * with CPLError() is that it prepends the error message with the dataset
+ * name.
+ *
+ * @param pszDSName dataset name.
+ * @param eErrClass one of CE_Warning, CE_Failure or CE_Fatal.
+ * @param err_no the error number (CPLE_*) from cpl_error.h.
+ * @param fmt a printf() style format string.  Any additional arguments
+ * will be treated as arguments to fill in this format in a manner
+ * similar to printf().
+ *
+ * @since GDAL 3.2.0
+ */
+
+void GDALDataset::ReportError(const char* pszDSName,
+                              CPLErr eErrClass, CPLErrorNum err_no,
+                              const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    ReportErrorV(pszDSName, eErrClass, err_no, fmt, args);
+    va_end(args);
+}
+
+void GDALDataset::ReportErrorV(const char* pszDSName,
+                               CPLErr eErrClass, CPLErrorNum err_no,
+                               const char *fmt, va_list args)
+{
     char szNewFmt[256] = {};
-    const char *pszDSName = GetDescription();
     if (strlen(fmt) + strlen(pszDSName) + 3 >= sizeof(szNewFmt) - 1)
         pszDSName = CPLGetFilename(pszDSName);
     if (pszDSName[0] != '\0' && strchr(pszDSName, '%') == nullptr &&
@@ -4037,7 +4069,6 @@ void GDALDataset::ReportError(CPLErr eErrClass, CPLErrorNum err_no,
     {
         CPLErrorV(eErrClass, err_no, fmt, args);
     }
-    va_end(args);
 }
 
 /************************************************************************/
