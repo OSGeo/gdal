@@ -100,9 +100,6 @@
 #include "tiffio.h"
 #ifdef INTERNAL_LIBTIFF
 #  include "tif_lerc.h"
-#    ifdef WEBP_SUPPORT
-#      include "webp/encode.h"
-#    endif
 #endif
 #include "tiffvers.h"
 #include "tifvsi.h"

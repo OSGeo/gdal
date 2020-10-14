@@ -17,6 +17,17 @@ endif
 ifeq ($(HAVE_LERC),yes)
 OBJ := $(OBJ) tif_lerc.o
 TIFF_OPTS	:=	-DHAVE_LERC -I../../third_party/LercLib $(TIFF_OPTS)
+
+# Still LERC specific
+ifeq ($(LIBZ_SETTING),internal)
+TIFF_OPTS :=      -I../zlib  $(TIFF_OPTS)
+endif
+
+# Still LERC specific
+ifeq ($(ZSTD_SETTING),yes)
+TIFF_OPTS 	:=	-DZSTD_SUPPORT $(TIFF_OPTS)
+endif
+
 endif
 endif
 
@@ -26,10 +37,6 @@ TIFF_OPTS	:=	-DINTERNAL_LIBGEOTIFF -Ilibgeotiff $(TIFF_OPTS)
 ifeq ($(RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS),yes)
 TIFF_OPTS	:=	-DRENAME_INTERNAL_LIBGEOTIFF_SYMBOLS $(TIFF_OPTS)
 endif
-ifeq ($(LIBZ_SETTING),internal)
-TIFF_OPTS :=      -I../zlib  $(TIFF_OPTS)
-endif
-
 endif
 
 JPEG_FLAGS =
@@ -40,16 +47,6 @@ endif
 
 ifeq ($(JPEG_SETTING),internal)
 JPEG_FLAGS 	:=	$(JPEG_FLAGS) -I../jpeg/libjpeg
-endif
-
-ZSTD_FLAGS =
-ifeq ($(ZSTD_SETTING),yes)
-ZSTD_FLAGS 	:=	-DZSTD_SUPPORT
-endif
-
-WEBP_FLAGS =
-ifeq ($(WEBP_SETTING),yes)
-WEBP_FLAGS 	:=	-DWEBP_SUPPORT
 endif
 
 CPPFLAGS	:=	 -I.. $(JPEG_FLAGS) $(ZSTD_FLAGS) $(WEBP_FLAGS) $(GEOTIFF_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(TIFF_OPTS) $(CPPFLAGS)
