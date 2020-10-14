@@ -420,6 +420,7 @@ TIFFInitLZMA(TIFF* tif, int scheme)
 	LZMAState* sp;
 	lzma_stream tmp_stream = LZMA_STREAM_INIT;
 
+        (void)scheme;
 	assert( scheme == COMPRESSION_LZMA );
 
 	/*

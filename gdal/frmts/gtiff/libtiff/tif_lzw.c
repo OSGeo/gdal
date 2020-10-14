@@ -1161,6 +1161,7 @@ int
 TIFFInitLZW(TIFF* tif, int scheme)
 {
 	static const char module[] = "TIFFInitLZW";
+        (void)scheme;
 	assert(scheme == COMPRESSION_LZW);
 	/*
 	 * Allocate state block so tag methods have storage to record values.

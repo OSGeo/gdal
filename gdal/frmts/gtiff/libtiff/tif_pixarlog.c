@@ -1400,6 +1400,7 @@ TIFFInitPixarLog(TIFF* tif, int scheme)
 
 	PixarLogState* sp;
 
+        (void)scheme;
 	assert(scheme == COMPRESSION_PIXARLOG);
 
 	/*

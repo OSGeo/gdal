@@ -628,6 +628,7 @@ TIFFInitWebP(TIFF* tif, int scheme)
   static const char module[] = "TIFFInitWebP";
   WebPState* sp;
 
+  (void)scheme;
   assert( scheme == COMPRESSION_WEBP );
 
   /*
