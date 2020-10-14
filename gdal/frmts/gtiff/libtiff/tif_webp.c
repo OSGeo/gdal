@@ -356,7 +356,7 @@ TWebPSetupEncode(TIFF* tif)
   }
 
   if (!WebPConfigInitInternal(&sp->sEncoderConfig, WEBP_PRESET_DEFAULT,
-                              sp->quality_level,
+                              (float)sp->quality_level,
                               WEBP_ENCODER_ABI_VERSION)) {
     TIFFErrorExt(tif->tif_clientdata, module,
       "Error creating WebP encoder configuration.");
@@ -579,7 +579,7 @@ TWebPVSetField(TIFF* tif, uint32 tag, va_list ap)
     #if WEBP_ENCODER_ABI_VERSION >= 0x0100
     sp->lossless = va_arg(ap, int);
     if (sp->lossless){
-      sp->quality_level = 100.0f;      
+      sp->quality_level = 100;
     }
     return 1;
     #else
@@ -657,7 +657,7 @@ TIFFInitWebP(TIFF* tif, int scheme)
   tif->tif_tagmethods.vsetfield = TWebPVSetField;	/* hook for codec tags */
 
   /* Default values for codec-specific fields */
-  sp->quality_level = 75.0f;		/* default comp. level */
+  sp->quality_level = 75;		/* default comp. level */
   sp->lossless = 0; /* default to false */
   sp->state = 0;
   sp->nSamples = 0;
