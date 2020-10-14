@@ -4521,12 +4521,15 @@ bool GDALMDArrayMask::IRead(const GUInt64* arrayStartIdx,
         (const char* pszAttrName, bool& bHasVal, double& dfVal)
     {
         auto poAttr = m_poParent->GetAttribute(pszAttrName);
-        if( poAttr && poAttr->GetDimensionsSize().size() == 1 &&
-            poAttr->GetDimensionsSize()[0] == 1 &&
-            poAttr->GetDataType().GetClass() == GEDTC_NUMERIC )
+        if( poAttr && poAttr->GetDataType().GetClass() == GEDTC_NUMERIC )
         {
-            bHasVal = true;
-            dfVal = poAttr->ReadAsDouble();
+            const auto anDimSizes = poAttr->GetDimensionsSize();
+            if( anDimSizes.empty() ||
+                (anDimSizes.size() == 1 && anDimSizes[0] == 1) )
+            {
+                bHasVal = true;
+                dfVal = poAttr->ReadAsDouble();
+            }
         }
     };
 

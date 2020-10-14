@@ -1469,3 +1469,38 @@ def test_netcdf_multidim_advise_read(netcdf_setup):  # noqa
 
     with gdaltest.error_handler():
         assert var.AdviseRead(array_start_idx = [2, 3], count = [20, 5]) == gdal.CE_Failure
+
+
+
+def test_netcdf_multidim_get_mask(netcdf_setup):  # noqa
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    tmpfilename = 'tmp/test_netcdf_multidim_get_mask.nc'
+    drv = gdal.GetDriverByName('netCDF')
+    def create():
+        ds = drv.CreateMultiDimensional(tmpfilename)
+        rg = ds.GetRootGroup()
+        dim0 = rg.CreateDimension("dim0", "unspecified type", "unspecified direction", 2)
+        dim1 = rg.CreateDimension("dim1", "unspecified type", "unspecified direction", 3)
+        bytedt = gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        ar = rg.CreateMDArray("myarray", [dim0, dim1], bytedt)
+        ar.SetNoDataValueDouble(6)
+        data = struct.pack('B' * 6, 1, 2, 3, 4, 5, 6)
+        ar.Write(data)
+        attr = ar.CreateAttribute('missing_value', [1], bytedt)
+        assert attr.Write(1) == gdal.CE_None
+
+    def check():
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray('myarray')
+        maskdata = struct.unpack('B' * 6, ar.GetMask().Read())
+        assert maskdata == (0, 1, 1, 1, 1, 0)
+
+    try:
+        create()
+        check()
+    finally:
+        drv.Delete(tmpfilename)
