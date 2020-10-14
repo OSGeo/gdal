@@ -32,6 +32,8 @@
 
 #include "HdfEosDef.h"
 
+#include "cpl_string.h"
+
 #include <algorithm>
 #include <map>
 #include <set>
@@ -48,6 +50,7 @@ class HDF4SharedResources
     friend class ::HDF4Dataset;
     int32       m_hSD;
     std::string m_osFilename;
+    CPLStringList m_aosOpenOptions;
 
 public:
     HDF4SharedResources() = default;
@@ -55,6 +58,9 @@ public:
 
     int32       GetSDHandle() const { return m_hSD; }
     const std::string& GetFilename() const { return m_osFilename; }
+    const char*        FetchOpenOption(const char* pszName, const char* pszDefault) const {
+        return m_aosOpenOptions.FetchNameValueDef(pszName, pszDefault);
+    }
 };
 
 /************************************************************************/
@@ -1026,7 +1032,10 @@ std::vector<std::string> HDF4Group::GetGroupNames(CSLConstList) const
         GDclose( gd_handle );
     }
 
-    if( res.empty() )
+    const char* pszListSDS =
+        m_poShared->FetchOpenOption("LIST_SDS", "AUTO");
+    if( (res.empty() && EQUAL(pszListSDS, "AUTO")) ||
+        (!EQUAL(pszListSDS, "AUTO") && CPLTestBool(pszListSDS)) )
     {
         int32 nDatasets = 0;
         int32 nAttrs = 0;
@@ -3138,13 +3147,16 @@ bool HDF4GRPalette::IRead(const GUInt64* arrayStartIdx,
 /*                           OpenMultiDim()                             */
 /************************************************************************/
 
-void HDF4Dataset::OpenMultiDim(const char* pszFilename)
+void HDF4Dataset::OpenMultiDim(const char* pszFilename,
+                               CSLConstList papszOpenOptionsIn)
 {
     // under hHDF4Mutex
 
     auto poShared = std::make_shared<HDF4SharedResources>();
     poShared->m_osFilename = pszFilename;
     poShared->m_hSD = hSD;
+    poShared->m_aosOpenOptions = papszOpenOptionsIn;
+
     hSD = -1;
 
     m_poRootGroup = std::make_shared<HDF4Group>(std::string(), "/", poShared);
