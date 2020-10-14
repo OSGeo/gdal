@@ -74,9 +74,11 @@ Open options
 
 The following open options are available:
 
-- **API=AUTO/MAPS/TILES/COVERAGE**: Which API to use for pixel acquisition. Default is
-  AUTO, which uses coverage if available, and fallback first to tiles and 
-  finally maps otherwise.
+- **API=AUTO/MAPS/TILES/COVERAGE/ITEMS**: Which API to use for data acquisition. Default is
+  AUTO. In AUTO mode, for raster access, coverage is used if available, and
+  fallback first to tiles and finally maps otherwise.
+  In AUTO mode, for vector access, tiles is used if available, and fallback to
+  GeoJSON items otherwise.
 
 - **IMAGE_FORMAT=AUTO/PNG/PNG_PREFERRED/JPEG/JPEG_PREFERRED**:
   Which format to use for pixel acquisition, for tiles or map API.
