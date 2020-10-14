@@ -78,8 +78,8 @@ def test_webp_3():
     gdal.Unlink('/vsimem/webp_3.webp.aux.xml')
 
     # 21502 is for libwebp 0.3.0
-    assert cs1 == 21464 or cs1 == 21502 or cs1 == 21695 or cs1 == 21700, \
-        'did not get expected checksum on band 1'
+    # 21787 is for libwebp 1.0.3
+    assert cs1 in (21464, 21502, 21695, 21700, 21787)
 
 ###############################################################################
 # CreateCopy() on RGBA
@@ -103,7 +103,8 @@ def test_webp_4():
     gdal.Unlink('/vsimem/webp_4.webp')
 
     # 22849 is for libwebp 0.3.0
-    assert cs1 in (22001, 22849, 34422, 36652, 36658, 45319), \
+    # 29229 is for libwebp 1.0.3
+    assert cs1 in (22001, 22849, 34422, 36652, 36658, 45319, 29229), \
         'did not get expected checksum on band 1'
 
     assert cs4 == 10807, 'did not get expected checksum on band 4'
