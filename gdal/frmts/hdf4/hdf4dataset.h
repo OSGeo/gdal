@@ -75,7 +75,7 @@ class HDF4Dataset CPL_NON_FINAL: public GDALPamDataset
     static char **HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,
                                     char **ppszAttrClass, char **ppszAttrValue );
 
-    void OpenMultiDim(const char* pszFilename);
+    void OpenMultiDim(const char* pszFilename, CSLConstList papszOpenOptionsIn);
 
   protected:
 
