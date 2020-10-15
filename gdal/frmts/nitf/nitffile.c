@@ -2915,6 +2915,7 @@ CPLXMLNode* NITFCreateXMLTre(NITFFile* psFile,
     CPLXMLNode* psTreNode;
     CPLXMLNode* psOutXMLNode = NULL;
     int nMDSize = 0, nMDAlloc = 0;
+    const char* pszMDPrefix;
 
     psTreNode = NITFFindTREXMLDescFromName(psFile, pszTREName);
     if (psTreNode == NULL)
@@ -2943,6 +2944,7 @@ CPLXMLNode* NITFCreateXMLTre(NITFFile* psFile,
     CPLCreateXMLNode(CPLCreateXMLNode(psOutXMLNode, CXT_Attribute, "name"),
                      CXT_Text, pszTREName);
 
+    pszMDPrefix = CPLGetXMLValue(psTreNode, "md_prefix", "");
     CSLDestroy(NITFGenericMetadataReadTREInternal(NULL,
                                                   &nMDSize,
                                                   &nMDAlloc,
@@ -2952,7 +2954,7 @@ CPLXMLNode* NITFCreateXMLTre(NITFFile* psFile,
                                                   nTRESize,
                                                   psTreNode,
                                                   &nTreOffset,
-                                                  "",
+                                                  pszMDPrefix,
                                                   &bError));
 
     if (bError == FALSE && nTreLength > 0 && nTreOffset != nTreLength)
