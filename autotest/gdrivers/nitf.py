@@ -2697,11 +2697,11 @@ def test_nitf_77():
 
 def test_nitf_78():
     float_data = "40066666" # == struct.pack(">f", 2.1).hex()
-    bit_mask = "80000000" # Set bit 31 only
+    bit_mask = "89800000" # Set bits 31, 27, 24, 23
 
     tre_data = "TRE=HEX/BANDSB=" + hex_string("00001RADIANCE                S") + float_data*2 + \
                 hex_string("0030.00M0030.00M-------M-------M                                                ") + \
-                bit_mask + hex_string("DETECTOR                ") + float_data
+                bit_mask + hex_string("DETECTOR                ") + float_data + hex_string("U00.851920.01105")
 
     ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_78.ntf', 1, 1, options=[tre_data])
     ds = None
@@ -2728,11 +2728,16 @@ def test_nitf_78():
     <field name="SPT_RESP_COL" value="-------" />
     <field name="SPT_RESP_UNIT_COL" value="M" />
     <field name="DATA_FLD_1" value="" />
-    <field name="EXISTENCE_MASK" value="2147483648" />
+    <field name="EXISTENCE_MASK" value="2306867200" />
     <field name="RADIOMETRIC_ADJUSTMENT_SURFACE" value="DETECTOR" />
     <field name="ATMOSPHERIC_ADJUSTMENT_ALTITUDE" value="2.100000" />
+    <field name="WAVE_LENGTH_UNIT" value="U" />
     <repeated name="BANDS" number="1">
-      <group index="0" />
+      <group index="0">
+        <field name="BAD_BAND" value="0" />
+        <field name="CWAVE" value="0.85192" />
+        <field name="FWHM" value="0.01105" />
+      </group>
     </repeated>
   </tre>
 </tres>
