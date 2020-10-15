@@ -35,6 +35,10 @@ ifeq ($(HAVE_MYSQL),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DMYSQL_ENABLED
 endif
 
+ifeq ($(HAVE_HANA),yes)
+CXXFLAGS := $(CXXFLAGS) -DHANA_ENABLED
+endif
+
 ifeq ($(HAVE_INGRES),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DINGRES_ENABLED
 endif

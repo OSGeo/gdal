@@ -9,6 +9,7 @@ SUBDIRS-$(HAVE_FME)	+= fme
 SUBDIRS-$(HAVE_GRASS)	+= grass
 SUBDIRS-$(HAVE_IDB)	+= idb
 SUBDIRS-$(HAVE_MYSQL)	+= mysql
+SUBDIRS-$(HAVE_HANA)    += hana
 SUBDIRS-$(HAVE_OGDI)	+= ogdi
 SUBDIRS-$(HAVE_OCI)	+= oci
 SUBDIRS-$(HAVE_OGR_PG)	+= pg

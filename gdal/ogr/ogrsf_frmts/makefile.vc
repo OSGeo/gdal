@@ -12,7 +12,7 @@ DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			$(ARCOBJECTS_DIR) \
 			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
 			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
-			$(IDB_DIR) $(NAS_DIR) $(DODSDIR) \
+			$(IDB_DIR) $(NAS_DIR) $(DODSDIR) $(HANA_DIR) \
 			$(LIBKMLDIR) $(WFSDIR) $(SOSIDIR) \
 			$(COUCHDBDIR) $(CLOUDANTDIR) $(FGDB_DIR) $(XLSDIR) $(ODSDIR) $(XLSXDIR) $(LVBAGDIR) \
 			$(INGRESDIR) $(ELASTICDIR) $(GPKGDIR) $(OSMDIR) $(VFKDIR) $(CARTODIR) $(AMIGOCLOUD_DIR) \
@@ -29,7 +29,8 @@ PLUGINDIRLIST	=	$(PLUGIN_ARCOBJECTS_DIR) \
 			$(PLUGIN_LIBKMLDIR) \
 			$(PLUGIN_MONGODBDIR) \
 			$(PLUGIN_MONGODBV3DIR) \
-			$(PLUGIN_MSSPATIALDIR)
+			$(PLUGIN_MSSPATIALDIR) \
+                        $(PLUGIN_HANA_DIR)  
 
 !IFDEF OGDIDIR
 OGDIDIR	=	ogdi
@@ -113,6 +114,15 @@ PLUGIN_ARCOBJECTS_DIR = arcobjects
 !IFDEF MYSQL_INC_DIR
 MYSQL_DIR = mysql
 MYSQL_OBJ = mysql\*.obj
+!ENDIF
+
+!IFDEF HANA_ENABLED
+!IF "$(HANA_PLUGIN)" != "YES"
+HANA_DIR = hana
+HANA_OBJ = hana\*.obj
+!ELSE
+PLUGIN_HANA_DIR = hana
+!ENDIF
 !ENDIF
 
 !IFDEF ILI_ENABLED
@@ -278,7 +288,7 @@ default:
 				 openfilegdb\*.obj wasp\*.obj selafin\*.obj jml\*.obj \
 				 vdv\*.obj mvt\*.obj flatgeobuf\*.obj mapml\*.obj \
 				$(OGDIOBJ) $(ODBCOBJ) $(SQLITE_OBJ) \
-				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ) $(MYSQL_OBJ) \
+				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ) $(MYSQL_OBJ) $(HANA_OBJ) \
 				$(ILI_OBJ) $(DWG_OBJ) $(FGDB_OBJ) $(ARCDRIVER_OBJ) $(IDB_OBJ) \
 				$(DODS_OBJ) $(NAS_OBJ) $(LIBKMLOBJ) $(WFS_OBJ) \
 				$(SOSI_OBJ) $(COUCHDB_OBJ) $(CLOUDANT_OBJ) $(XLS_OBJ) $(ODS_OBJ) $(XLSX_OBJ) $(LVBAG_OBJ)  \

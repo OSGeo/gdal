@@ -736,6 +736,9 @@ INGRES_INC
 INGRES_LIB
 II_SYSTEM
 HAVE_INGRES
+ODBCCPP_LIB
+ODBCCPP_INC
+HAVE_HANA
 MYSQL_LIB
 MYSQL_INC
 HAVE_MYSQL
@@ -1180,6 +1183,7 @@ with_oci_include
 with_oci_lib
 with_gnm
 with_mysql
+with_hana
 with_ingres
 with_xerces
 with_xerces_inc
@@ -2203,6 +2207,8 @@ Optional Packages:
   --with-oci-lib=[DIR]    use Oracle OCI API libraries from given path
   --with-gnm            Build GNM into shared library
   --with-mysql=ARG      Include MySQL (ARG=path to mysql_config) [default=no]
+  --with-hana=ARG Include SAP HANA (ARG=no(default), yes or path to odbc-cpp-wrapper)
+
   --with-ingres=ARG     Include Ingres (ARG=$II_SYSTEM)
   --with-xerces=[ARG]     use Xerces C++ Parser from given prefix (ARG=path);
                           check standard prefixes (ARG=yes); disable (ARG=no)
@@ -3141,6 +3147,124 @@ $as_echo "$ac_res" >&6; }
   eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
 
 } # ac_fn_c_check_decl
+
+# ac_fn_cxx_check_header_compile LINENO HEADER VAR INCLUDES
+# ---------------------------------------------------------
+# Tests whether HEADER exists and can be compiled using the include files in
+# INCLUDES, setting the cache variable VAR accordingly.
+ac_fn_cxx_check_header_compile ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
+$as_echo_n "checking for $2... " >&6; }
+if eval \${$3+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+#include <$2>
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  eval "$3=yes"
+else
+  eval "$3=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_cxx_check_header_compile
+
+# ac_fn_cxx_check_header_mongrel LINENO HEADER VAR INCLUDES
+# ---------------------------------------------------------
+# Tests whether HEADER exists, giving a warning if it cannot be compiled using
+# the include files in INCLUDES and setting the cache variable VAR
+# accordingly.
+ac_fn_cxx_check_header_mongrel ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  if eval \${$3+:} false; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
+$as_echo_n "checking for $2... " >&6; }
+if eval \${$3+:} false; then :
+  $as_echo_n "(cached) " >&6
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+else
+  # Is the header compilable?
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking $2 usability" >&5
+$as_echo_n "checking $2 usability... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+#include <$2>
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ac_header_compiler=yes
+else
+  ac_header_compiler=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_header_compiler" >&5
+$as_echo "$ac_header_compiler" >&6; }
+
+# Is the header present?
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking $2 presence" >&5
+$as_echo_n "checking $2 presence... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <$2>
+_ACEOF
+if ac_fn_cxx_try_cpp "$LINENO"; then :
+  ac_header_preproc=yes
+else
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.i conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_header_preproc" >&5
+$as_echo "$ac_header_preproc" >&6; }
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_cxx_preproc_warn_flag in #((
+  yes:no: )
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: accepted by the compiler, rejected by the preprocessor!" >&5
+$as_echo "$as_me: WARNING: $2: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: proceeding with the compiler's result" >&5
+$as_echo "$as_me: WARNING: $2: proceeding with the compiler's result" >&2;}
+    ;;
+  no:yes:* )
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: present but cannot be compiled" >&5
+$as_echo "$as_me: WARNING: $2: present but cannot be compiled" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2:     check for missing prerequisite headers?" >&5
+$as_echo "$as_me: WARNING: $2:     check for missing prerequisite headers?" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: see the Autoconf documentation" >&5
+$as_echo "$as_me: WARNING: $2: see the Autoconf documentation" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2:     section \"Present But Cannot Be Compiled\"" >&5
+$as_echo "$as_me: WARNING: $2:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: proceeding with the compiler's result" >&5
+$as_echo "$as_me: WARNING: $2: proceeding with the compiler's result" >&2;}
+    ;;
+esac
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
+$as_echo_n "checking for $2... " >&6; }
+if eval \${$3+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  eval "$3=\$ac_header_compiler"
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+fi
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_cxx_check_header_mongrel
 cat >config.log <<_ACEOF
 This file contains any messages produced by compilers while
 running configure, to aid debugging if configure makes a mistake.
@@ -35725,6 +35849,92 @@ MYSQL_LIB=$MYSQL_LIB
 
 
 
+# Check whether --with-hana was given.
+if test "${with_hana+set}" = set; then :
+  withval=$with_hana;
+fi
+
+
+HAVE_HANA=no
+ODBCCPP_LIB=
+ODBCCPP_INC=
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for SAP HANA" >&5
+$as_echo_n "checking for SAP HANA... " >&6; }
+
+if test "$ODBC_SETTING" = "no" ; then
+    as_fn_error $? "SAP HANA driver requires odbc driver to be installed." "$LINENO" 5
+fi
+
+if test "x$with_hana" = "xno" -o "x$with_hana" = "x" ; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+else
+  ODBCCPP_PATH=
+
+  if test "$with_hana" = "yes" ; then
+      ODBCCPP_PATH=/usr/local
+  else
+      ODBCCPP_PATH=$with_hana
+  fi
+
+  if test -d ${ODBCCPP_PATH} ; then
+     ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+           #include<dlfcn.h>
+int
+main ()
+{
+
+             void* handle = dlopen("libodbccpp.so", RTLD_LAZY);
+             dlclose(handle);
+
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ODBCCPP_LIBS="$ODBCCPP_LIBS -lodbccpp" HAVE_HANA="yes"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Cannot find libodbccpp." >&5
+$as_echo "$as_me: WARNING: Cannot find libodbccpp." >&2;}
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+     LIBS="$ODBCCPP_LIBS $LIBS"
+     EXTRA_INCLUDES="-I$ODBCCPP_PATH/include $EXTRA_INCLUDES"
+
+     if test "${HAVE_HANA}" = "yes" ; then
+         ODBCCPP_LIB=-L"$ODBCCPP_PATH/lib"
+         ODBCCPP_INC=-I"$ODBCCPP_PATH/include"
+         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+     else
+         as_fn_error $? "--with-hana argument points to a directory which does not contain the odbc-cpp-wrapper library." "$LINENO" 5
+     fi
+  else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+      as_fn_error $? "--with-hana argument is not a directory. It should be the path to the odbc-cpp-wrapper library, often somewhere like /usr/local." "$LINENO" 5
+  fi
+fi
+
+HAVE_HANA=$HAVE_HANA
+
+ODBCCPP_INC=$ODBCCPP_INC
+
+ODBCCPP_LIB=$ODBCCPP_LIB
+
+
+
+
 # Check whether --with-ingres was given.
 if test "${with_ingres+set}" = set; then :
   withval=$with_ingres;
@@ -35890,11 +36100,11 @@ $as_echo "not found" >&6; }
 
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-        ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
+        ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 
                                 if test "$xerces_header_found" = "yes"; then
@@ -35946,11 +36156,11 @@ $as_echo "not found" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-            ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
+            ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
         fi
 
@@ -36185,7 +36395,7 @@ return XML_ParserCreate ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_expat_XML_ParserCreate=yes
 else
   ac_cv_lib_expat_XML_ParserCreate=no
@@ -36229,7 +36439,7 @@ return XML_ParserCreate ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_expat_XML_ParserCreate=yes
 else
   ac_cv_lib_expat_XML_ParserCreate=no
@@ -36275,7 +36485,7 @@ return XML_ParserCreate ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_expat_XML_ParserCreate=yes
 else
   ac_cv_lib_expat_XML_ParserCreate=no
@@ -36347,11 +36557,11 @@ $as_echo "not found" >&6; }
 
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-        ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
+        ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 
         CPPFLAGS="$saved_CPPFLAGS"
@@ -36765,11 +36975,11 @@ $as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-        ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
+        ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 
         CPPFLAGS="$saved_CPPFLAGS"
@@ -36874,11 +37084,11 @@ $as_echo "not found" >&6; }
 
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-            ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
+            ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 
                                                 if test "$libkml_header_found" = "yes"; then
@@ -36926,11 +37136,11 @@ $as_echo "not found" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-                ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
+                ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
             fi
 
@@ -37076,7 +37286,7 @@ return SQLConnect ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_odbc_SQLConnect=yes
 else
   ac_cv_lib_odbc_SQLConnect=no
@@ -37116,7 +37326,7 @@ return SQLInstallDriverEx ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_odbcinst_SQLInstallDriverEx=yes
 else
   ac_cv_lib_odbcinst_SQLInstallDriverEx=no
@@ -37153,7 +37363,7 @@ return main ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_odbc32_main=yes
 else
   ac_cv_lib_odbc32_main=no
@@ -37193,7 +37403,7 @@ return SQLInstallDriverEx ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_odbccp32_SQLInstallDriverEx=yes
 else
   ac_cv_lib_odbccp32_SQLInstallDriverEx=no
@@ -37213,7 +37423,7 @@ fi
   if test "$ODBC_SETTING" = "yes" ; then
     for ac_header in sql.h
 do :
-  ac_fn_c_check_header_compile "$LINENO" "sql.h" "ac_cv_header_sql_h" "#ifdef _WIN32
+  ac_fn_cxx_check_header_compile "$LINENO" "sql.h" "ac_cv_header_sql_h" "#ifdef _WIN32
 # include <windows.h>
 #endif
 
@@ -37275,7 +37485,7 @@ return SQLConnect ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_odbc_SQLConnect=yes
 else
   ac_cv_lib_odbc_SQLConnect=no
@@ -37309,7 +37519,7 @@ return main ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_odbc32_main=yes
 else
   ac_cv_lib_odbc32_main=no
@@ -37557,11 +37767,11 @@ $as_echo " header not found" >&6; }
 
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-        ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
+        ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 
                                 if test "$oci_header_found" = "yes"; then
@@ -37609,11 +37819,11 @@ $as_echo "library not found" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-            ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
+            ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
         fi
 
@@ -38041,7 +38251,7 @@ return xmlParseDoc ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_xml2_xmlParseDoc=yes
 else
   ac_cv_lib_xml2_xmlParseDoc=no
@@ -38095,9 +38305,10 @@ if test -z "$with_rasterlite2" -o "$with_rasterlite2" = "no"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: rasterlite2 support disabled" >&5
 $as_echo "$as_me: rasterlite2 support disabled" >&6;}
 elif test "$with_rasterlite2" = "yes"; then
-    for ac_header in rasterlite2/rasterlite2.h
+
+for ac_header in rasterlite2/rasterlite2.h
 do :
-  ac_fn_c_check_header_mongrel "$LINENO" "rasterlite2/rasterlite2.h" "ac_cv_header_rasterlite2_rasterlite2_h" "$ac_includes_default"
+  ac_fn_cxx_check_header_mongrel "$LINENO" "rasterlite2/rasterlite2.h" "ac_cv_header_rasterlite2_rasterlite2_h" "$ac_includes_default"
 if test "x$ac_cv_header_rasterlite2_rasterlite2_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_RASTERLITE2_RASTERLITE2_H 1
@@ -38133,7 +38344,7 @@ return rl2_load_raw_tiles_into_dbms ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms=yes
 else
   ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms=no
@@ -38189,7 +38400,7 @@ return rl2_load_raw_tiles_into_dbms ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms=yes
 else
   ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms=no
@@ -38239,7 +38450,7 @@ $as_echo "disabled" >&6; }
 else
     for ac_header in pcre.h
 do :
-  ac_fn_c_check_header_mongrel "$LINENO" "pcre.h" "ac_cv_header_pcre_h" "$ac_includes_default"
+  ac_fn_cxx_check_header_mongrel "$LINENO" "pcre.h" "ac_cv_header_pcre_h" "$ac_includes_default"
 if test "x$ac_cv_header_pcre_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_PCRE_H 1
@@ -38279,7 +38490,7 @@ return pcre_compile ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_pcre_pcre_compile=yes
 else
   ac_cv_lib_pcre_pcre_compile=no
@@ -38432,7 +38643,7 @@ return ifx_srvinfo ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_ifsql_ifx_srvinfo=yes
 else
   ac_cv_lib_ifsql_ifx_srvinfo=no
@@ -38507,7 +38718,7 @@ return eps_read_block_header ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_epsilon_eps_read_block_header=yes
 else
   ac_cv_lib_epsilon_eps_read_block_header=no
@@ -38558,7 +38769,7 @@ return eps_read_block_header ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_epsilon_eps_read_block_header=yes
 else
   ac_cv_lib_epsilon_eps_read_block_header=no
@@ -38626,7 +38837,7 @@ return WebPDecodeRGB ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_webp_WebPDecodeRGB=yes
 else
   ac_cv_lib_webp_WebPDecodeRGB=no
@@ -38677,7 +38888,7 @@ return WebPDecodeRGB ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_webp_WebPDecodeRGB=yes
 else
   ac_cv_lib_webp_WebPDecodeRGB=no
@@ -38951,7 +39162,7 @@ return GEOSversion ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_geos_c_GEOSversion=yes
 else
   ac_cv_lib_geos_c_GEOSversion=no
@@ -39254,7 +39465,7 @@ return sfcgal_version ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_SFCGAL_sfcgal_version=yes
 else
   ac_cv_lib_SFCGAL_sfcgal_version=no
@@ -39338,7 +39549,7 @@ elif test "$with_qhull" = "yes" -o "$with_qhull" = "" ; then
   # qhull/qhull.h
   for ac_header in qhull/libqhull.h
 do :
-  ac_fn_c_check_header_mongrel "$LINENO" "qhull/libqhull.h" "ac_cv_header_qhull_libqhull_h" "$ac_includes_default"
+  ac_fn_cxx_check_header_mongrel "$LINENO" "qhull/libqhull.h" "ac_cv_header_qhull_libqhull_h" "$ac_includes_default"
 if test "x$ac_cv_header_qhull_libqhull_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_QHULL_LIBQHULL_H 1
@@ -39374,7 +39585,7 @@ return qh_new_qhull ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_qhull_qh_new_qhull=yes
 else
   ac_cv_lib_qhull_qh_new_qhull=no
@@ -39399,7 +39610,7 @@ fi
   fi
   for ac_header in libqhull/libqhull.h
 do :
-  ac_fn_c_check_header_mongrel "$LINENO" "libqhull/libqhull.h" "ac_cv_header_libqhull_libqhull_h" "$ac_includes_default"
+  ac_fn_cxx_check_header_mongrel "$LINENO" "libqhull/libqhull.h" "ac_cv_header_libqhull_libqhull_h" "$ac_includes_default"
 if test "x$ac_cv_header_libqhull_libqhull_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_LIBQHULL_LIBQHULL_H 1
@@ -39435,7 +39646,7 @@ return qh_new_qhull ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_qhull_qh_new_qhull=yes
 else
   ac_cv_lib_qhull_qh_new_qhull=no
@@ -39508,7 +39719,7 @@ fi
     if test -z "`uname | grep Darwin`" ; then
         for ac_header in CL/opencl.h
 do :
-  ac_fn_c_check_header_mongrel "$LINENO" "CL/opencl.h" "ac_cv_header_CL_opencl_h" "$ac_includes_default"
+  ac_fn_cxx_check_header_mongrel "$LINENO" "CL/opencl.h" "ac_cv_header_CL_opencl_h" "$ac_includes_default"
 if test "x$ac_cv_header_CL_opencl_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_CL_OPENCL_H 1
@@ -39562,7 +39773,7 @@ return clGetPlatformIDs ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_OpenCL_clGetPlatformIDs=yes
 else
   ac_cv_lib_OpenCL_clGetPlatformIDs=no
@@ -39615,7 +39826,7 @@ FREEXL_INCLUDE=
 if test "$with_freexl" = "" -o "$with_freexl" = "yes" ; then
   for ac_header in freexl.h
 do :
-  ac_fn_c_check_header_mongrel "$LINENO" "freexl.h" "ac_cv_header_freexl_h" "$ac_includes_default"
+  ac_fn_cxx_check_header_mongrel "$LINENO" "freexl.h" "ac_cv_header_freexl_h" "$ac_includes_default"
 if test "x$ac_cv_header_freexl_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_FREEXL_H 1
@@ -39650,7 +39861,7 @@ return freexl_open ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_freexl_freexl_open=yes
 else
   ac_cv_lib_freexl_freexl_open=no
@@ -39695,7 +39906,7 @@ return freexl_open ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_freexl_freexl_open=yes
 else
   ac_cv_lib_freexl_freexl_open=no
@@ -39741,7 +39952,7 @@ return freexl_open ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_freexl_freexl_open=yes
 else
   ac_cv_lib_freexl_freexl_open=no
@@ -39787,7 +39998,7 @@ return freexl_open ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_freexl_freexl_open=yes
 else
   ac_cv_lib_freexl_freexl_open=no
@@ -39833,7 +40044,7 @@ return freexl_open ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_freexl_freexl_open=yes
 else
   ac_cv_lib_freexl_freexl_open=no
@@ -39900,7 +40111,7 @@ return freexl_open ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_freexl_freexl_open=yes
 else
   ac_cv_lib_freexl_freexl_open=no
@@ -39945,7 +40156,7 @@ return freexl_open ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_freexl_freexl_open=yes
 else
   ac_cv_lib_freexl_freexl_open=no
@@ -39991,7 +40202,7 @@ return freexl_open ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_freexl_freexl_open=yes
 else
   ac_cv_lib_freexl_freexl_open=no
@@ -40037,7 +40248,7 @@ return freexl_open ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_freexl_freexl_open=yes
 else
   ac_cv_lib_freexl_freexl_open=no
@@ -40083,7 +40294,7 @@ return freexl_open ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_freexl_freexl_open=yes
 else
   ac_cv_lib_freexl_freexl_open=no
@@ -40166,7 +40377,7 @@ return json_object_set_serializer ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_json_c_json_object_set_serializer=yes
 else
   ac_cv_lib_json_c_json_object_set_serializer=no
@@ -40212,7 +40423,7 @@ return json_object_set_serializer ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_json_c_json_object_set_serializer=yes
 else
   ac_cv_lib_json_c_json_object_set_serializer=no
@@ -41133,7 +41344,7 @@ return hdfsConnect ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_hdfs_hdfsConnect=yes
 else
   ac_cv_lib_hdfs_hdfsConnect=no
@@ -41233,7 +41444,7 @@ return tiledb_coords ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_tiledb_tiledb_coords=yes
 else
   ac_cv_lib_tiledb_tiledb_coords=no
@@ -41284,7 +41495,7 @@ return tiledb_coords ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_tiledb_tiledb_coords=yes
 else
   ac_cv_lib_tiledb_tiledb_coords=no
@@ -41389,7 +41600,7 @@ return JNI_CreateJavaVM ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   eval "$as_ac_Lib=yes"
 else
   eval "$as_ac_Lib=no"
@@ -41433,7 +41644,7 @@ return JNI_CreateJavaVM ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_jvm_JNI_CreateJavaVM=yes
 else
   ac_cv_lib_jvm_JNI_CreateJavaVM=no
@@ -41516,7 +41727,7 @@ return JNI_CreateJavaVM ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   eval "$as_ac_Lib=yes"
 else
   eval "$as_ac_Lib=no"
@@ -41560,7 +41771,7 @@ return JNI_CreateJavaVM ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_jvm_JNI_CreateJavaVM=yes
 else
   ac_cv_lib_jvm_JNI_CreateJavaVM=no
@@ -41629,7 +41840,7 @@ return JNI_CreateJavaVM ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_jvm_JNI_CreateJavaVM=yes
 else
   ac_cv_lib_jvm_JNI_CreateJavaVM=no
@@ -41710,7 +41921,7 @@ return main ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_raslib_main=yes
 else
   ac_cv_lib_raslib_main=no
@@ -41802,7 +42013,7 @@ return rdb_library_name ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_rdb_rdb_library_name=yes
 else
   ac_cv_lib_rdb_rdb_library_name=no
@@ -41853,7 +42064,7 @@ return rdb_library_name ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_rdb_rdb_library_name=yes
 else
   ac_cv_lib_rdb_rdb_library_name=no
@@ -42129,7 +42340,7 @@ return EVP_sha256 ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_crypto_EVP_sha256=yes
 else
   ac_cv_lib_crypto_EVP_sha256=no
@@ -42147,7 +42358,7 @@ fi
     if test "$HAVE_OPENSSL_CRYPTO" = "yes"; then
         for ac_header in openssl/bio.h
 do :
-  ac_fn_c_check_header_mongrel "$LINENO" "openssl/bio.h" "ac_cv_header_openssl_bio_h" "$ac_includes_default"
+  ac_fn_cxx_check_header_mongrel "$LINENO" "openssl/bio.h" "ac_cv_header_openssl_bio_h" "$ac_includes_default"
 if test "x$ac_cv_header_openssl_bio_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_OPENSSL_BIO_H 1
@@ -42453,7 +42664,7 @@ return ImfTiledInputReadTile ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_IlmImf_ImfTiledInputReadTile=yes
 else
   ac_cv_lib_IlmImf_ImfTiledInputReadTile=no
@@ -42720,7 +42931,7 @@ return heif_context_get_list_of_top_level_image_IDs ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
+if ac_fn_cxx_try_link "$LINENO"; then :
   ac_cv_lib_heif_heif_context_get_list_of_top_level_image_IDs=yes
 else
   ac_cv_lib_heif_heif_context_get_list_of_top_level_image_IDs=no
@@ -45260,6 +45471,9 @@ echo "  LERC support:              ${HAVE_LERC}"
 
 
 echo "  MySQL support:             ${HAVE_MYSQL}"
+
+
+echo "  SAP HANA support:          ${HAVE_HANA}"
 
 
 echo "  Ingres support:            ${HAVE_INGRES}"

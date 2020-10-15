@@ -314,6 +314,9 @@ void OGRRegisterAllInternal()
 #ifdef MAPML_ENABLED
     RegisterOGRMapML();
 #endif
+#ifdef HANA_ENABLED
+    RegisterOGRHANA();
+#endif
 
 /* Put TIGER and AVCBIN at end since they need poOpenInfo->GetSiblingFiles() */
 #ifdef TIGER_ENABLED

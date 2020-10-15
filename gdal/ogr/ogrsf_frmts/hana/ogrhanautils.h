@@ -1,0 +1,89 @@
+﻿/******************************************************************************
+ *
+ * Project:  SAP HANA Spatial Driver
+ * Purpose:  OGRHanaUtils class declaration
+ * Author:   Maxim Rylov
+ *
+ ******************************************************************************
+ * Copyright (c) 2020, SAP SE
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
+
+#ifndef OGRHANAUTILS_H_INCLUDED
+#define OGRHANAUTILS_H_INCLUDED
+
+#include "ogr_core.h"
+#include "ogr_feature.h"
+
+#include "cpl_string.h"
+
+#include <limits>
+#include <vector>
+
+namespace hana_utils {
+
+constexpr const short UNKNOWN_DATA_TYPE = std::numeric_limits<short>::max();
+constexpr const char* ARRAY_VALUES_DELIMITER = "^%^";
+
+template<typename Type>
+bool CanCastIntBigTo(GIntBig value)
+{
+    return static_cast<GIntBig>(std::numeric_limits<Type>::min()) <= value
+           && value <= static_cast<GIntBig>(std::numeric_limits<Type>::max());
+}
+
+template<typename... Args>
+CPLString StringFormat(const char* format, Args... args)
+{
+    int size = snprintf(nullptr, 0, format, args...) + 1;
+    if (size <= 0)
+        throw std::runtime_error("Error during formatting.");
+    std::unique_ptr<char[]> buf(new char[static_cast<std::size_t>(size)]);
+    char* bufPtr = &buf[0];
+    snprintf(bufPtr, size, format, args...);
+    return CPLString(bufPtr, static_cast<std::size_t>(size - 1));
+}
+
+const char* SkipLeadingSpaces(const char* value);
+CPLString JoinStrings(
+    const std::vector<CPLString>& strs,
+    const char* delimiter,
+    CPLString (*decorator)(const CPLString& str) = nullptr);
+std::vector<CPLString> SplitStrings(const char* str, const char* delimiter);
+
+CPLString GetFullColumnNameQuoted(
+    const CPLString& schemaName,
+    const CPLString& tableName,
+    const CPLString& columnName);
+CPLString GetFullTableName(
+    const CPLString& schemaName, const CPLString& tableName);
+CPLString GetFullTableNameQuoted(
+    const CPLString& schemaName, const CPLString& tableName);
+CPLString LaunderName(const char* name);
+CPLString Literal(const CPLString& value);
+CPLString QuotedIdentifier(const CPLString& value);
+
+bool IsGeometryTypeSupported(OGRwkbGeometryType wkbType);
+OGRwkbGeometryType ToWkbType(const char* type, bool hasZ, bool hasM);
+int ToPlanarSRID(int srid);
+
+} // namespace hana_utils
+
+#endif /* ndef OGRHANAUTILS_H_INCLUDED */
