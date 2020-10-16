@@ -3357,9 +3357,8 @@ def test_tiff_read_cog_with_mask_vsicurl():
     try:
         src_ds = gdal.GetDriverByName('GTIFF').Create(in_filename, 1024, 1024, options = ['BIGTIFF=YES', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16', 'SPARSE_OK=YES'])
         src_ds.BuildOverviews('NEAR', [256])
-        with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+        with gdaltest.config_options({'GDAL_TIFF_INTERNAL_MASK': 'YES', 'GDAL_TIFF_DEFLATE_SUBCODEC': 'ZLIB'}):
             src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-        with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
             gdal.GetDriverByName('GTIFF').CreateCopy(cog_filename, src_ds, options = ['BIGTIFF=YES', 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16', 'COPY_SRC_OVERVIEWS=YES', 'COMPRESS=LZW'])
 
         filesize = gdal.VSIStatL(cog_filename).size

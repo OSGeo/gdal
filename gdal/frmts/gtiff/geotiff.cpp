@@ -12096,6 +12096,24 @@ bool GTiffDataset::SetDirectory()
 }
 
 /************************************************************************/
+/*                     GTiffSetDeflateSubCodec()                        */
+/************************************************************************/
+
+static void GTiffSetDeflateSubCodec(TIFF* hTIFF)
+{
+    (void)hTIFF;
+
+#if defined(TIFFTAG_DEFLATE_SUBCODEC) && defined(LIBDEFLATE_SUPPORT)
+    // Mostly for strict reproducability purposes
+    if( EQUAL(CPLGetConfigOption("GDAL_TIFF_DEFLATE_SUBCODEC", ""), "ZLIB") )
+    {
+        TIFFSetField(hTIFF, TIFFTAG_DEFLATE_SUBCODEC,
+                     DEFLATE_SUBCODEC_ZLIB);
+    }
+#endif
+}
+
+/************************************************************************/
 /*                     RestoreVolatileParameters()                      */
 /************************************************************************/
 
@@ -12119,6 +12137,12 @@ void GTiffDataset::RestoreVolatileParameters(TIFF* hTIFF)
         {
             TIFFSetField(hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
         }
+    }
+
+    if( m_nCompression == COMPRESSION_ADOBE_DEFLATE ||
+        m_nCompression == COMPRESSION_LERC )
+    {
+        GTiffSetDeflateSubCodec(hTIFF);
     }
 
 /* -------------------------------------------------------------------- */
@@ -15394,7 +15418,22 @@ static signed char GTiffGetZLevel(char** papszOptions)
     if( pszValue != nullptr )
     {
         nZLevel = atoi( pszValue );
-        if( nZLevel < 1 || nZLevel > 9 )
+#ifdef TIFFTAG_DEFLATE_SUBCODEC
+        constexpr int nMaxLevel = 12;
+#ifndef LIBDEFLATE_SUPPORT
+        if( nZLevel > 9 && nZLevel <= nMaxLevel )
+        {
+            CPLDebug("GTiff",
+                     "ZLEVEL=%d not supported in a non-libdeflate enabled "
+                     "libtiff build. Capping to 9",
+                     nZLevel);
+            nZLevel = 9;
+        }
+#endif
+#else
+        constexpr int nMaxLevel = 9;
+#endif
+        if( nZLevel < 1 || nZLevel > nMaxLevel )
         {
             CPLError( CE_Warning, CPLE_IllegalArg,
                       "ZLEVEL=%s value not recognised, ignoring.",
@@ -16171,9 +16210,14 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
          l_nCompression == COMPRESSION_ADOBE_DEFLATE ||
          l_nCompression == COMPRESSION_ZSTD )
         TIFFSetField( l_hTIFF, TIFFTAG_PREDICTOR, nPredictor );
-    if( (l_nCompression == COMPRESSION_ADOBE_DEFLATE ||
-         l_nCompression == COMPRESSION_LERC) && l_nZLevel != -1 )
-        TIFFSetField( l_hTIFF, TIFFTAG_ZIPQUALITY, l_nZLevel );
+    if( l_nCompression == COMPRESSION_ADOBE_DEFLATE ||
+        l_nCompression == COMPRESSION_LERC )
+    {
+        GTiffSetDeflateSubCodec(l_hTIFF);
+
+        if( l_nZLevel != -1 )
+            TIFFSetField( l_hTIFF, TIFFTAG_ZIPQUALITY, l_nZLevel );
+    }
     if( l_nCompression == COMPRESSION_JPEG && l_nJpegQuality != -1 )
         TIFFSetField( l_hTIFF, TIFFTAG_JPEGQUALITY, l_nJpegQuality );
     if( l_nCompression == COMPRESSION_LZMA && l_nLZMAPreset != -1)
@@ -18066,6 +18110,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( l_nCompression == COMPRESSION_ADOBE_DEFLATE ||
         l_nCompression == COMPRESSION_LERC )
     {
+        GTiffSetDeflateSubCodec(l_hTIFF);
+
         if( poDS->m_nZLevel != -1 )
         {
             TIFFSetField( l_hTIFF, TIFFTAG_ZIPQUALITY, poDS->m_nZLevel );
@@ -20002,8 +20048,15 @@ void GDALRegister_GTiff()
 #endif
     }
     if( bHasDEFLATE )
+    {
+#ifdef LIBDEFLATE_SUPPORT
+        osOptions += ""
+"   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-12' default='6'/>";
+#else
         osOptions += ""
 "   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9' default='6'/>";
+#endif
+    }
     if( bHasLZMA )
         osOptions += ""
 "   <Option name='LZMA_PRESET' type='int' description='LZMA compression level 0(fast)-9(slow)' default='6'/>";
