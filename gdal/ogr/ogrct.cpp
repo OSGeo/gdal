@@ -1246,6 +1246,12 @@ bool OGRProjCT::ListCoordinateOperations(const char* pszSrcSRS,
         geodetic_crs_type == PJ_TYPE_GEOGRAPHIC_3D_CRS )
     {
         auto datum = proj_crs_get_datum(ctx, geodetic_crs);
+#if PROJ_VERSION_MAJOR > 7 || (PROJ_VERSION_MAJOR == 7 && PROJ_VERSION_MINOR >= 2)
+        if( datum == nullptr )
+        {
+            datum = proj_crs_get_datum_ensemble(ctx, geodetic_crs);
+        }
+#endif
         if( datum )
         {
             auto cs = proj_create_ellipsoidal_2D_cs(
