@@ -39,7 +39,7 @@ See [alpine-small/Dockerfile](alpine-small/Dockerfile)
 * Raster drivers: small + netCDF, HDF5, BAG
 * Vector drivers: small + Spatialite, XLS
 * External libraries enabled: small + libgeos, libhdf5, libhdf5, libkea, libnetcdf, libfreexl,
-  libspatialite, libxml2, libpoppler, openexr, libheif
+  libspatialite, libxml2, libpoppler, openexr, libheif, libdeflate
 * GDAL Python (Python 3.7)
 * Base PROJ grid package
 * Overall licensing terms of the GDAL build: copy-left (GPL) + LGPL + permissive
@@ -68,7 +68,7 @@ See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
 * Vector drivers: all based on almost all possible free and open-source dependencies
 * External libraries enabled: small + libnetcdf, libhdf4, libhdf5, libtiledb, libkea,
   mongocxx 3.4, libspatialite, unixodbc, libxml2, libcfitsio, libmysqlclient,
-  libkml, libpoppler, openexr, libheif
+  libkml, libpoppler, openexr, libheif, libdeflate
 * GDAL Python (Python 3.8)
 * *All* PROJ grid packages
 * Overall licensing terms of the GDAL build: copy-left (GPL) + LGPL + permissive

@@ -177,6 +177,20 @@ RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
     && apk del cmake \
     ); fi
 
+# Build libdeflate
+ARG LIBDEFLATE_VERSION=1.6
+RUN if test "${LIBDEFLATE_VERSION}" != ""; then ( \
+    mkdir libdeflate \
+    && wget -q https://github.com/ebiggers/libdeflate/archive/v${LIBDEFLATE_VERSION}.tar.gz -O - \
+        | tar xz -C libdeflate --strip-components=1 \
+    && cd libdeflate \
+    && make -j$(nproc) PREFIX=/usr install \
+    && cp -P /usr/lib/libdeflate.so* /build_thirdparty/usr/lib \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && cd .. \
+    && rm -rf libdeflate \
+    ); fi
+
 RUN apk add --no-cache rsync ccache
 ARG RSYNC_REMOTE
 
