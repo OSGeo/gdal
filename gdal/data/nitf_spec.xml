@@ -517,6 +517,20 @@
         <field name="BWC" length="12"/>
     </tre>
 
+    <!-- STDI-0002-1-v5.0 Appendix AH, Section AH.6.2, Table AH.6-2 -->
+    <tre name="CSRLSB" md_prefix="NITF_CSRLSB_" location="image">
+        <field name="N_RS_ROW_BLOCKS" length="2" type="integer" minval="1" maxval="99"/>
+        <field name="M_RS_COLUMN_BLOCKS" length="2" type="integer" minval="1" maxval="99"/>
+        <loop counter="N_RS_ROW_BLOCKS" md_prefix="ROWBLOCK_%02d_">
+            <loop counter="M_RS_COLUMN_BLOCKS" md_prefix="COLBLOCK_%02d_">
+                <field name="RS_DT_1" length="12" type="real"/>
+                <field name="RS_DT_2" length="12" type="real"/>
+                <field name="RS_DT_3" length="12" type="real"/>
+                <field name="RS_DT_4" length="12" type="real"/>
+            </loop>
+        </loop>
+    </tre>
+
     <tre name="CSSFAA" minlength="107" maxlength="425" location="image">
         <field name="NUM_BANDS" length="1"/>
         <loop counter="NUM_BANDS" md_prefix="BAND_%d_" name="BAND">
@@ -534,6 +548,46 @@
             <field name="FINISH_X" length="11"/>
             <field name="FINISH_Y" length="11"/>
         </loop>
+    </tre>
+
+    <!-- STDI-0002-1-v5.0 Appendix AH, Section AH.6.3, Table AH.6-3 -->
+    <tre name="CSWRPB" md_prefix="NITF_CSWRPB_" location="image">
+        <field name="NUM_SETS_WARP_DATA" length="1" type="integer" minval="1" maxval="9"/>
+        <field name="SENSOR_TYPE" length="1" type="string"/>
+        <if cond="SENSOR_TYPE=F">
+            <field name="WRP_INTERP" length="1" type="integer" minval="0" maxval="1"/>
+        </if>
+        <loop counter="NUM_SETS_WARP_DATA" md_prefix="WARP_DATA_SET_%01d_">
+            <if cond="SENSOR_TYPE=F">
+                <field name="FL_WARP" length="11" type="real" minval="0" maxval="99.99999999"/>
+            </if>
+            <field name="OFFSET_LINE" length="7" type="integer" minval="1" maxval="9999999"/>
+            <field name="OFFSET_SAMP" length="7" type="integer" minval="1" maxval="9999999"/>
+            <field name="SCALE_LINE" length="7" type="integer" minval="1" maxval="9999999"/>
+            <field name="SCALE_SAMP" length="7" type="integer" minval="1" maxval="9999999"/>
+            <field name="OFFSET_LINE_UNWRP" length="7" type="integer" minval="1" maxval="9999999"/>
+            <field name="OFFSET_SAMP_UNWRP" length="7" type="integer" minval="1" maxval="9999999"/>
+            <field name="SCALE_LINE_UNWRP" length="7" type="integer" minval="1" maxval="9999999"/>
+            <field name="SCALE_SAMP_UNWRP" length="7" type="integer" minval="1" maxval="9999999"/>
+            <field name="LINE_POLY_ORDER_M1" length="1" type="integer"/>
+            <field name="LINE_POLY_ORDER_M2" length="1" type="integer"/>
+            <field name="SAMP_POLY_ORDER_N1" length="1" type="integer"/>
+            <field name="SAMP_POLY_ORDER_N2" length="1" type="integer"/>
+            <loop counter="LINE_POLY_ORDER_M2" md_prefix="M2_%01d_">
+                <loop counter="LINE_POLY_ORDER_M1" md_prefix="M1_%01d_">
+                    <field name="A" length="21" type="real"/>
+                </loop>
+            </loop>
+            <loop counter="SAMP_POLY_ORDER_N2" md_prefix="N2_%01d_">
+                <loop counter="SAMP_POLY_ORDER_N1" md_prefix="N1_%01d_">
+                    <field name="B" length="21" type="real"/>
+                </loop>
+            </loop>
+        </loop>
+        <field name="RESERVED_LEN" length="5" type="integer"/>
+        <if cond="RESERVED_LEN!=00000">
+            <field name="RESERVED" length_var="RESERVED_LEN" type="string"/>
+        </if>
     </tre>
 
     <!-- STDI-0002 Appendix N -->
