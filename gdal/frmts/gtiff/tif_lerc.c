@@ -30,6 +30,11 @@
 #include "zstd.h"
 #endif
 
+#if LIBDEFLATE_SUPPORT
+#include "libdeflate.h"
+#endif
+#define LIBDEFLATE_MAX_COMPRESSION_LEVEL 12
+
 #include <assert.h>
 
 #define LSTATE_INIT_DECODE 0x01
@@ -59,6 +64,11 @@ typedef struct {
 
         unsigned int    compressed_size;
         void           *compressed_buffer;
+
+#if LIBDEFLATE_SUPPORT
+        struct libdeflate_decompressor* libdeflate_dec;
+        struct libdeflate_compressor*   libdeflate_enc;
+#endif
 
         TIFFVGetMethod  vgetparent;            /* super-class method */
         TIFFVSetMethod  vsetparent;            /* super-class method */
@@ -293,6 +303,35 @@ LERCPreDecode(TIFF* tif, uint16 s)
 
         if( sp->additional_compression == LERC_ADD_COMPRESSION_DEFLATE )
         {
+#if LIBDEFLATE_SUPPORT
+            enum libdeflate_result res;
+            size_t lerc_data_sizet = 0;
+            if( sp->libdeflate_dec == NULL )
+            {
+                sp->libdeflate_dec = libdeflate_alloc_decompressor();
+                if( sp->libdeflate_dec == NULL )
+                {
+                    TIFFErrorExt(tif->tif_clientdata, module,
+                                 "Cannot allocate decompressor");
+                    return 0;
+                }
+            }
+
+            res = libdeflate_zlib_decompress(
+                sp->libdeflate_dec, tif->tif_rawcp, (size_t)tif->tif_rawcc,
+                sp->compressed_buffer, sp->compressed_size,
+                &lerc_data_sizet);
+            if( res != LIBDEFLATE_SUCCESS )
+            {
+                TIFFErrorExt(tif->tif_clientdata, module,
+                                "Decoding error at scanline %lu",
+                                (unsigned long) tif->tif_row);
+                return 0;
+            }
+            assert( lerc_data_sizet == (unsigned int)lerc_data_sizet );
+            lerc_data = sp->compressed_buffer;
+            lerc_data_size = (unsigned int)lerc_data_sizet;
+#else
             z_stream strm;
             int zlib_ret;
 
@@ -324,6 +363,7 @@ LERCPreDecode(TIFF* tif, uint16 s)
             lerc_data = sp->compressed_buffer;
             lerc_data_size = sp->compressed_size - strm.avail_out;
             inflateEnd(&strm);
+#endif
         }
         else if( sp->additional_compression == LERC_ADD_COMPRESSION_ZSTD )
         {
@@ -721,14 +761,56 @@ LERCPostEncode(TIFF* tif)
 
         if( sp->additional_compression == LERC_ADD_COMPRESSION_DEFLATE )
         {
+#if LIBDEFLATE_SUPPORT
+            if( sp->libdeflate_enc == NULL )
+            {
+                /* To get results as good as zlib, we ask for an extra */
+                /* level of compression */
+                sp->libdeflate_enc = libdeflate_alloc_compressor(
+                    sp->zipquality == Z_DEFAULT_COMPRESSION ? 7 :
+                    sp->zipquality >= 6 && sp->zipquality <= 9 ? sp->zipquality + 1 :
+                    sp->zipquality);
+                if( sp->libdeflate_enc == NULL )
+                {
+                    TIFFErrorExt(tif->tif_clientdata, module,
+                                 "Cannot allocate compressor");
+                    return 0;
+                }
+            }
+
+            /* Should not happen normally */
+            if( libdeflate_zlib_compress_bound(sp->libdeflate_enc, numBytesWritten) >
+                     sp->uncompressed_alloc )
+            {
+                TIFFErrorExt(tif->tif_clientdata, module,
+                             "Output buffer for libdeflate too small");
+                return 0;
+            }
+
+            tif->tif_rawcc = libdeflate_zlib_compress(
+                sp->libdeflate_enc,
+                sp->compressed_buffer, numBytesWritten,
+                sp->uncompressed_buffer, sp->uncompressed_alloc);
+
+            if( tif->tif_rawcc == 0 )
+            {
+                TIFFErrorExt(tif->tif_clientdata, module,
+                                "Encoder error at scanline %lu",
+                                (unsigned long) tif->tif_row);
+                return 0;
+            }
+#else
             z_stream strm;
             int zlib_ret;
+            int cappedQuality = sp->zipquality;
+            if( cappedQuality > Z_BEST_COMPRESSION )
+                cappedQuality = Z_BEST_COMPRESSION;
 
             memset(&strm, 0, sizeof(strm));
             strm.zalloc = NULL;
             strm.zfree = NULL;
             strm.opaque = NULL;
-            zlib_ret = deflateInit(&strm, sp->zipquality);
+            zlib_ret = deflateInit(&strm, cappedQuality);
             if( zlib_ret != Z_OK )
             {
                 TIFFErrorExt(tif->tif_clientdata, module,
@@ -741,27 +823,29 @@ LERCPostEncode(TIFF* tif)
             strm.avail_out = sp->uncompressed_alloc;
             strm.next_out = sp->uncompressed_buffer;
             zlib_ret = deflate(&strm, Z_FINISH);
+            if( zlib_ret == Z_STREAM_END )
+            {
+                tif->tif_rawcc = sp->uncompressed_alloc - strm.avail_out;
+            }
+            deflateEnd(&strm);
             if( zlib_ret != Z_STREAM_END )
             {
                 TIFFErrorExt(tif->tif_clientdata, module,
                          "deflate() failed");
-                deflateEnd(&strm);
                 return 0;
             }
+#endif
             {
                 int ret;
                 uint8* tif_rawdata_backup = tif->tif_rawdata;
                 tif->tif_rawdata = sp->uncompressed_buffer;
-                tif->tif_rawcc = sp->uncompressed_alloc - strm.avail_out;
                 ret = TIFFFlushData1(tif);
                 tif->tif_rawdata = tif_rawdata_backup;
                 if( !ret )
                 {
-                    deflateEnd(&strm);
                     return 0;
                 }
             }
-            deflateEnd(&strm);
         }
         else if( sp->additional_compression == LERC_ADD_COMPRESSION_ZSTD )
         {
@@ -829,6 +913,13 @@ LERCCleanup(TIFF* tif)
         _TIFFfree(sp->uncompressed_buffer);
         _TIFFfree(sp->compressed_buffer);
         _TIFFfree(sp->mask_buffer);
+
+#if LIBDEFLATE_SUPPORT
+        if( sp->libdeflate_dec )
+            libdeflate_free_decompressor(sp->libdeflate_dec);
+        if( sp->libdeflate_enc )
+            libdeflate_free_compressor(sp->libdeflate_enc);
+#endif
 
         _TIFFfree(sp);
         tif->tif_data = NULL;
@@ -952,9 +1043,22 @@ LERCVSetField(TIFF* tif, uint32 tag, va_list ap)
 	case TIFFTAG_ZIPQUALITY:
         {
                 sp->zipquality = (int) va_arg(ap, int);
-                /* For now we don't support libdeflate extra comprssion levels */
-                if( sp->zipquality > Z_BEST_COMPRESSION )
-                    sp->zipquality = Z_BEST_COMPRESSION;
+                if( sp->zipquality < Z_DEFAULT_COMPRESSION ||
+                    sp->zipquality > LIBDEFLATE_MAX_COMPRESSION_LEVEL ) {
+                    TIFFErrorExt(tif->tif_clientdata, module,
+                                 "Invalid ZipQuality value. Should be in [-1,%d] range",
+                                 LIBDEFLATE_MAX_COMPRESSION_LEVEL);
+                    return 0;
+                }
+
+#if LIBDEFLATE_SUPPORT
+                if( sp->libdeflate_enc )
+                {
+                    libdeflate_free_compressor(sp->libdeflate_enc);
+                    sp->libdeflate_enc = NULL;
+                }
+#endif
+
                 return (1);
         }
         default:
