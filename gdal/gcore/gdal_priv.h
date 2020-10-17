@@ -2003,11 +2003,12 @@ public:
     virtual bool CopyFrom(const std::shared_ptr<GDALGroup>& poDstRootGroup,
                           GDALDataset* poSrcDS,
                           const std::shared_ptr<GDALGroup>& poSrcGroup,
-                            bool bStrict,
-                            GUInt64& nCurCost,
-                            const GUInt64 nTotalCost,
-                            GDALProgressFunc pfnProgress,
-                            void * pProgressData);
+                          bool bStrict,
+                          GUInt64& nCurCost,
+                          const GUInt64 nTotalCost,
+                          GDALProgressFunc pfnProgress,
+                          void * pProgressData,
+                          CSLConstList papszOptions = nullptr);
 
     virtual CSLConstList GetStructuralInfo() const;
 

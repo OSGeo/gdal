@@ -44,7 +44,22 @@ The following command line parameters can appear in any order.
     not specified, the format is guessed when possible from the extension of the
     destination filename.
 
-.. include:: options/co.rst
+.. option:: -co <NAME=VALUE>
+
+    Many formats have one or more optional creation options that can be
+    used to control particulars about the file created.
+
+    The creation options available vary by format driver, and some
+    simple formats have no creation options at all. A list of options
+    supported for a format can be listed with the
+    :ref:`--formats <raster_common_options_formats>`
+    command line option but the documentation for the format is the
+    definitive source of information on driver creation options.
+    See :ref:`raster_drivers` format
+    specific documentation for legal creation options for each format.
+
+    Array-level creation options may be passed by prefixing them with ``ARRAY:``.
+    See :cpp:func:`GDALGroup::CopyFrom` for further details regarding such options.
 
 .. option:: -array <array_spec>
 

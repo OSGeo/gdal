@@ -461,6 +461,14 @@ GUInt64 GDALGroup::GetTotalCopyCost() const
  * @param nTotalCost Total cost from GetTotalCopyCost().
  * @param pfnProgress Progress callback, or nullptr.
  * @param pProgressData Progress user data, or nulptr.
+ * @param papszOptions Creation options. Currently, only array creation
+ *                     options are supported. They must be prefixed with "ARRAY:" .
+ *                     The scope may be further restricted to arrays of a certain
+ *                     dimension by adding "IF(DIM={ndims}):" after "ARRAY:".
+ *                     For example, "ARRAY:IF(DIM=2):BLOCKSIZE=256,256" will
+ *                     restrict BLOCKSIZE=256,256 to arrays of dimension 2.
+ *                     Restriction to arrays of a given name is done with adding
+ *                     "IF(NAME={name}):" after "ARRAY:".
  *
  * @return true in case of success (or partial success if bStrict == false).
  */
@@ -471,7 +479,8 @@ bool GDALGroup::CopyFrom( const std::shared_ptr<GDALGroup>& poDstRootGroup,
                           GUInt64& nCurCost,
                           const GUInt64 nTotalCost,
                           GDALProgressFunc pfnProgress,
-                          void * pProgressData)
+                          void * pProgressData,
+                          CSLConstList papszOptions )
 {
     if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
@@ -579,9 +588,57 @@ bool GDALGroup::CopyFrom( const std::shared_ptr<GDALGroup>& poDstRootGroup,
                     }
                 }
             }
+
+            CPLStringList aosArrayCO;
+            for( CSLConstList papszIter = papszOptions;
+                                        papszIter && *papszIter; ++papszIter )
+            {
+                if( STARTS_WITH_CI(*papszIter, "ARRAY:") )
+                {
+                    const char* pszOption = *papszIter + strlen("ARRAY:");
+                    if( STARTS_WITH_CI(pszOption, "IF(DIM=") )
+                    {
+                        const char* pszNext = strchr(pszOption, ':');
+                        if( pszNext != nullptr )
+                        {
+                            int nDim = atoi(pszOption + strlen("IF(DIM="));
+                            if( static_cast<size_t>(nDim) == dstArrayDims.size() )
+                            {
+                                pszOption = pszNext + 1;
+                            }
+                            else
+                            {
+                                pszOption = nullptr;
+                            }
+                        }
+                    }
+                    else if( STARTS_WITH_CI(pszOption, "IF(NAME=") )
+                    {
+                        const char* pszName = pszOption + strlen("IF(NAME=");
+                        const char* pszNext = strchr(pszName, ':');
+                        if( pszNext != nullptr && pszNext > pszName &&
+                            pszNext[-1] == ')' )
+                        {
+                            CPLString osName;
+                            osName.assign(pszName, pszNext - pszName - 1);
+                            if( osName == srcArray->GetName() )
+                            {
+                                pszOption = pszNext + 1;
+                            }
+                            else
+                            {
+                                pszOption = nullptr;
+                            }
+                        }
+                    }
+                    if( pszOption )
+                        aosArrayCO.AddString(pszOption);
+                }
+            }
             auto dstArray = CreateMDArray(srcArray->GetName(),
-                                                      dstArrayDims,
-                                                      srcArray->GetDataType());
+                                          dstArrayDims,
+                                          srcArray->GetDataType(),
+                                          aosArrayCO.List());
             EXIT_OR_CONTINUE_IF_NULL(dstArray);
 
             if( !dstArray->CopyFrom(poSrcDS,
@@ -615,7 +672,8 @@ bool GDALGroup::CopyFrom( const std::shared_ptr<GDALGroup>& poDstRootGroup,
             if( !dstSubGroup->CopyFrom(poDstRootGroup, poSrcDS,
                                        srcSubGroup, bStrict,
                                        nCurCost, nTotalCost,
-                                       pfnProgress, pProgressData) )
+                                       pfnProgress, pProgressData,
+                                       papszOptions) )
                 return false;
         }
 
