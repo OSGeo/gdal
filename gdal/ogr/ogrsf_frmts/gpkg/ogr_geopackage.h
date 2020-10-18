@@ -288,7 +288,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
 
         int                 GetSrsId( const OGRSpatialReference& oSRS );
         const char*         GetSrsName( const OGRSpatialReference& oSRS );
-        OGRSpatialReference* GetSpatialRef( int iSrsId );
+        OGRSpatialReference* GetSpatialRef( int iSrsId, bool bFallbackToEPSG = false );
         OGRErr              CreateExtensionsTableIfNecessary();
         bool                HasExtensionsTable();
         OGRErr              CreateGDALAspatialExtension();

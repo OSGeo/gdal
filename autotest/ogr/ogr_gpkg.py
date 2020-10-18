@@ -713,6 +713,23 @@ def test_ogr_gpkg_14():
     f = lyr.GetNextFeature()
     assert f is None
 
+
+###############################################################################
+def _has_spatialite_4_3_or_later(ds):
+    has_spatialite_4_3_or_later = False
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL("SELECT spatialite_version()")
+        if sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            version = f.GetField(0)
+            version = '.'.join(version.split('.')[0:2])
+            version = float(version)
+            if version >= 4.3:
+                has_spatialite_4_3_or_later = True
+                # print('Spatialite 4.3 or later found')
+            ds.ReleaseResultSet(sql_lyr)
+    return has_spatialite_4_3_or_later
+
 ###############################################################################
 # Test SQL functions
 
@@ -1051,19 +1068,7 @@ def test_ogr_gpkg_15():
     feat = None
     gpkg_ds.ReleaseResultSet(sql_lyr)
 
-    has_spatialite_4_3_or_later = False
-    with gdaltest.error_handler():
-        sql_lyr = gpkg_ds.ExecuteSQL("SELECT spatialite_version()")
-        if sql_lyr:
-            f = sql_lyr.GetNextFeature()
-            version = f.GetField(0)
-            version = '.'.join(version.split('.')[0:2])
-            version = float(version)
-            if version >= 4.3:
-                has_spatialite_4_3_or_later = True
-                # print('Spatialite 4.3 or later found')
-    gpkg_ds.ReleaseResultSet(sql_lyr)
-    if has_spatialite_4_3_or_later:
+    if _has_spatialite_4_3_or_later(gpkg_ds):
         sql_lyr = gpkg_ds.ExecuteSQL(
             "SELECT ST_Buffer(geom, 1e-10) FROM tbl_linestring_renamed")
         assert sql_lyr.GetGeomType() == ogr.wkbPolygon
@@ -4199,3 +4204,37 @@ def test_abort_sql():
 
     end = time.time()
     assert int(end - start) < 1
+
+
+###############################################################################
+# Test ST_Transform() with no record in gpkg_spatial_ref_sys and thus we
+# fallback to EPSG
+
+def test_ogr_gpkg_st_transform_no_record_spatial_ref_sys():
+
+    if sys.platform == 'win32':
+        # For some reason f.GetGeometryRef() returns None on the current Windows CI
+        pytest.skip('Failure on windows')
+
+    ds = ogr.GetDriverByName('GPKG').CreateDataSource('/vsimem/test.gpkg')
+    lyr = ds.CreateLayer('test')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (500000 0)'))
+    lyr.CreateFeature(f)
+    f = None
+
+    if not _has_spatialite_4_3_or_later(ds):
+        ds = None
+        gdal.Unlink('/vsimem/test.gpkg')
+        pytest.skip('Spatialite missing or too old')
+
+    sql_lyr = ds.ExecuteSQL('SELECT ST_Transform(SetSRID(geom, 32631), 32731) FROM test')
+    # Fails on a number of configs
+    # assert sql_lyr.GetSpatialRef().GetAuthorityCode(None) == '32731'
+    f = sql_lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == 'POINT (500000 10000000)'
+    f = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    ds = None
+    gdal.Unlink('/vsimem/test.gpkg')
