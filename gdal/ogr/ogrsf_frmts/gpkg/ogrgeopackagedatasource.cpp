@@ -5686,6 +5686,9 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
 
     FlushMetadata();
 
+    while( *pszSQLCommand == ' ' )
+        pszSQLCommand ++;
+
     CPLString osSQLCommand(pszSQLCommand);
     if( !osSQLCommand.empty() && osSQLCommand.back() == ';' )
         osSQLCommand.resize(osSQLCommand.size() - 1);
@@ -5880,6 +5883,12 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
 /*      Do we get a resultset?                                          */
 /* -------------------------------------------------------------------- */
     rc = sqlite3_step( hSQLStmt );
+
+    for( int i = 0; i < m_nLayers; i++ )
+    {
+        m_papoLayers[i]->RunDeferredDropRTreeTableIfNecessary();
+    }
+
     if( rc != SQLITE_ROW )
     {
         if ( rc != SQLITE_DONE )

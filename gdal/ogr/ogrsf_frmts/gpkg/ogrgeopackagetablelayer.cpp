@@ -1154,17 +1154,6 @@ OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
 {
     OGRGeoPackageTableLayer::SyncToDisk();
 
-    if( m_bDropRTreeTable )
-    {
-        OGRGeoPackageTableLayer::ResetReading();
-
-        char* pszSQL =
-            sqlite3_mprintf("DROP TABLE \"%w\"", m_osRTreeName.c_str());
-        SQLCommand(m_poDS->GetDB(), pszSQL);
-        sqlite3_free(pszSQL);
-        m_bDropRTreeTable = false;
-    }
-
     /* Clean up resources in memory */
     if ( m_pszTableName )
         CPLFree( m_pszTableName );
@@ -2358,10 +2347,7 @@ OGRErr OGRGeoPackageTableLayer::SyncToDisk()
     CreateTriggers();
 #endif
 
-    if( !m_bDropRTreeTable )
-    {
-        CreateSpatialIndexIfNecessary();
-    }
+    CreateSpatialIndexIfNecessary();
 
     /* Save metadata back to the database */
     SaveExtent();
@@ -2800,6 +2786,13 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
     if( !CheckUpdatableTable("CreateSpatialIndex") )
         return false;
 
+    if( m_bDropRTreeTable )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot run CreateSpatialIndex() after non-completed deferred DropSpatialIndex()");
+        return false;
+    }
+
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return false;
 
@@ -2834,22 +2827,17 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
 
     m_poDS->SoftStartTransaction();
 
-    char* pszSQL;
     /* Create virtual table */
-    if( !m_bDropRTreeTable )
+    char *pszSQL = sqlite3_mprintf(
+                "CREATE VIRTUAL TABLE \"%w\" USING rtree(id, minx, maxx, miny, maxy)",
+                m_osRTreeName.c_str() );
+    err = SQLCommand(m_poDS->GetDB(), pszSQL);
+    sqlite3_free(pszSQL);
+    if( err != OGRERR_NONE )
     {
-        pszSQL = sqlite3_mprintf(
-                    "CREATE VIRTUAL TABLE \"%w\" USING rtree(id, minx, maxx, miny, maxy)",
-                    m_osRTreeName.c_str() );
-        err = SQLCommand(m_poDS->GetDB(), pszSQL);
-        sqlite3_free(pszSQL);
-        if( err != OGRERR_NONE )
-        {
-            m_poDS->SoftRollbackTransaction();
-            return false;
-        }
+        m_poDS->SoftRollbackTransaction();
+        return false;
     }
-    m_bDropRTreeTable = false;
 
     /* Populate the RTree */
 #ifdef NO_PROGRESSIVE_RTREE_INSERTION
@@ -3331,6 +3319,13 @@ bool OGRGeoPackageTableLayer::DropSpatialIndex(bool bCalledFromSQLFunction)
     if( !CheckUpdatableTable("DropSpatialIndex") )
         return false;
 
+    if( m_bDropRTreeTable )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot run DropSpatialIndex() after non-completed deferred DropSpatialIndex()");
+        return false;
+    }
+
     if( !HasSpatialIndex() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Spatial index not existing");
@@ -3339,27 +3334,27 @@ bool OGRGeoPackageTableLayer::DropSpatialIndex(bool bCalledFromSQLFunction)
 
     const char* pszT = m_pszTableName;
     const char* pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
-    char* pszSQL = sqlite3_mprintf(
-        "DELETE FROM gpkg_extensions WHERE lower(table_name)=lower('%q') "
-        "AND lower(column_name)=lower('%q') AND extension_name='gpkg_rtree_index'",
-        pszT, pszC );
-    SQLCommand(m_poDS->GetDB(), pszSQL);
-    sqlite3_free(pszSQL);
+    {
+        char* pszSQL = sqlite3_mprintf(
+            "DELETE FROM gpkg_extensions WHERE lower(table_name)=lower('%q') "
+            "AND lower(column_name)=lower('%q') AND extension_name='gpkg_rtree_index'",
+            pszT, pszC );
+        SQLCommand(m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
+    }
 
     if( bCalledFromSQLFunction )
     {
         /* We cannot drop a table from a SQLite function call, so we just */
-        /* remove the content and memorize that we will have to delete the */
-        /* table later */
+        /* memorize that we will have to delete the table later */
         m_bDropRTreeTable = true;
-        pszSQL = sqlite3_mprintf("DELETE FROM \"%w\"", m_osRTreeName.c_str());
     }
     else
     {
-        pszSQL = sqlite3_mprintf("DROP TABLE \"%w\"", m_osRTreeName.c_str());
+        char* pszSQL = sqlite3_mprintf("DROP TABLE \"%w\"", m_osRTreeName.c_str());
+        SQLCommand(m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
     }
-    SQLCommand(m_poDS->GetDB(), pszSQL);
-    sqlite3_free(pszSQL);
 
     m_poDS->RemoveTableFromSQLiteMasterCache(m_osRTreeName);
 
@@ -3367,6 +3362,26 @@ bool OGRGeoPackageTableLayer::DropSpatialIndex(bool bCalledFromSQLFunction)
 
     m_bHasSpatialIndex = false;
     return true;
+}
+
+/************************************************************************/
+/*               RunDeferredDropRTreeTableIfNecessary()                 */
+/************************************************************************/
+
+bool OGRGeoPackageTableLayer::RunDeferredDropRTreeTableIfNecessary()
+{
+    bool ret = true;
+    if( m_bDropRTreeTable )
+    {
+        OGRGeoPackageTableLayer::ResetReading();
+
+        char* pszSQL =
+            sqlite3_mprintf("DROP TABLE \"%w\"", m_osRTreeName.c_str());
+        ret = SQLCommand(m_poDS->GetDB(), pszSQL) == OGRERR_NONE;
+        sqlite3_free(pszSQL);
+        m_bDropRTreeTable = false;
+    }
+    return ret;
 }
 
 /************************************************************************/
