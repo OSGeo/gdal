@@ -562,6 +562,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     void                SetTruncateFieldsFlag( int bFlag )
                                 { m_bTruncateFields = CPL_TO_BOOL( bFlag ); }
     OGRErr              RunDeferredCreationIfNecessary();
+    bool                RunDeferredDropRTreeTableIfNecessary();
 
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     bool                GetAddOGRFeatureCountTriggers() const
