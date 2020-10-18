@@ -1,0 +1,22 @@
+name: Validate XML
+
+on: [push, pull_request]
+
+jobs:
+  validate_xml:
+    runs-on: ubuntu-18.04
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install requirements
+        run: |
+          sudo apt update
+          sudo apt install -y libxml2-utils
+
+      - name: Run xmllint checks
+        run: |
+          xmllint --schema ./gdal/data/nitf_spec.xsd ./gdal/data/nitf_spec.xml --noout
+          xmllint --schema ./gdal/data/vdv452.xsd ./gdal/data/vdv452.xml --noout
+          xmllint --schema ./gdal/data/gmlasconf.xsd ./gdal/data/gmlasconf.xml --noout
