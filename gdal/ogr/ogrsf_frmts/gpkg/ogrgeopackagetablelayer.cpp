@@ -32,6 +32,8 @@
 #include "ogrsqliteutility.h"
 #include "cpl_time.h"
 #include "ogr_p.h"
+
+#include <algorithm>
 #include <cmath>
 
 CPL_CVSID("$Id$")
@@ -2749,13 +2751,43 @@ void OGRGeoPackageTableLayer::CreateSpatialIndexIfNecessary()
 /*                       CreateSpatialIndex()                           */
 /************************************************************************/
 
+// rtreeValueDown() / rtreeValueUp() come from SQLite3 source code
+// SQLite3 RTree stores min/max values as float. So do the same for our
+// GPKGRTreeEntry
+
+/*
+** Rounding constants for float->double conversion.
+*/
+#define RNDTOWARDS  (1.0 - 1.0/8388608.0)  /* Round towards zero */
+#define RNDAWAY     (1.0 + 1.0/8388608.0)  /* Round away from zero */
+
+/*
+** Convert an sqlite3_value into an RtreeValue (presumably a float)
+** while taking care to round toward negative or positive, respectively.
+*/
+static float rtreeValueDown(double d){
+  float f = static_cast<float>(d);
+  if( f>d ){
+    f = static_cast<float>(d*(d<0 ? RNDAWAY : RNDTOWARDS));
+  }
+  return f;
+}
+
+static float rtreeValueUp(double d){
+  float f = static_cast<float>(d);
+  if( f<d ){
+    f = static_cast<float>(d*(d<0 ? RNDTOWARDS : RNDAWAY));
+  }
+  return f;
+}
+
 typedef struct
 {
     GIntBig nId;
-    double  dfMinX;
-    double  dfMinY;
-    double  dfMaxX;
-    double  dfMaxY;
+    float   fMinX;
+    float   fMinY;
+    float   fMaxX;
+    float   fMaxY;
 } GPKGRTreeEntry;
 
 bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
@@ -2868,10 +2900,17 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
     }
     sqlite3_free(pszSQL);
 
-    // Insert entries in RTree by chunks of 100000
+    // Insert entries in RTree by chunks of 500K features
     std::vector<GPKGRTreeEntry> aoEntries;
     GUIntBig nEntryCount = 0;
-    const size_t nChunkSize = 100000;
+    constexpr size_t nChunkSize = 500 * 1000;
+#ifdef ENABLE_GPKG_OGR_CONTENTS
+    if( m_nTotalFeatureCount > 0 )
+    {
+        aoEntries.reserve(static_cast<size_t>(
+            std::min(m_nTotalFeatureCount, static_cast<GIntBig>(nChunkSize))));
+    }
+#endif
     while( true )
     {
         int sqlite_err = sqlite3_step(hIterStmt);
@@ -2880,10 +2919,10 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
         {
             GPKGRTreeEntry sEntry;
             sEntry.nId = sqlite3_column_int64(hIterStmt, 0);
-            sEntry.dfMinX = sqlite3_column_double(hIterStmt, 1);
-            sEntry.dfMaxX = sqlite3_column_double(hIterStmt, 2);
-            sEntry.dfMinY = sqlite3_column_double(hIterStmt, 3);
-            sEntry.dfMaxY = sqlite3_column_double(hIterStmt, 4);
+            sEntry.fMinX = rtreeValueDown(sqlite3_column_double(hIterStmt, 1));
+            sEntry.fMaxX = rtreeValueUp(sqlite3_column_double(hIterStmt, 2));
+            sEntry.fMinY = rtreeValueDown(sqlite3_column_double(hIterStmt, 3));
+            sEntry.fMaxY = rtreeValueUp(sqlite3_column_double(hIterStmt, 4));
             aoEntries.push_back(sEntry);
         }
         else if( sqlite_err == SQLITE_DONE )
@@ -2909,10 +2948,10 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
                 sqlite3_reset(hInsertStmt);
 
                 sqlite3_bind_int64(hInsertStmt,1,aoEntries[i].nId);
-                sqlite3_bind_double(hInsertStmt,2,aoEntries[i].dfMinX);
-                sqlite3_bind_double(hInsertStmt,3,aoEntries[i].dfMaxX);
-                sqlite3_bind_double(hInsertStmt,4,aoEntries[i].dfMinY);
-                sqlite3_bind_double(hInsertStmt,5,aoEntries[i].dfMaxY);
+                sqlite3_bind_double(hInsertStmt,2,aoEntries[i].fMinX);
+                sqlite3_bind_double(hInsertStmt,3,aoEntries[i].fMaxX);
+                sqlite3_bind_double(hInsertStmt,4,aoEntries[i].fMinY);
+                sqlite3_bind_double(hInsertStmt,5,aoEntries[i].fMaxY);
                 sqlite_err = sqlite3_step(hInsertStmt);
                 if ( sqlite_err != SQLITE_OK && sqlite_err != SQLITE_DONE )
                 {
