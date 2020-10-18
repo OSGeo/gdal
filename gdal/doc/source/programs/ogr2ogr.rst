@@ -233,7 +233,7 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -gt n
 
-    Group n features per transaction (default 20000). Increase the value for
+    Group n features per transaction (default 100 000). Increase the value for
     better performance when writing into DBMS drivers that have transaction
     support. ``n`` can be set to unlimited to load the data into a single
     transaction.
