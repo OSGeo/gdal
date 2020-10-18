@@ -2218,7 +2218,8 @@ OGRFeature* OGRGeoPackageTableLayer::GetNextFeature()
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return nullptr;
 
-    CreateSpatialIndexIfNecessary();
+    if( m_poFilterGeom != nullptr )
+        CreateSpatialIndexIfNecessary();
 
     OGRFeature* poFeature = OGRGeoPackageLayer::GetNextFeature();
     if( poFeature && m_iFIDAsRegularColumnIndex >= 0 )
@@ -2238,8 +2239,6 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
         GetLayerDefn();
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return nullptr;
-
-    CreateSpatialIndexIfNecessary();
 
     if( m_pszFidColumn == nullptr )
         return OGRLayer::GetFeature(nFID);
@@ -4324,7 +4323,6 @@ OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
 
     ResetReading();
     RunDeferredCreationIfNecessary();
-    CreateSpatialIndexIfNecessary();
 
 /* -------------------------------------------------------------------- */
 /*      Build list of old fields, and the list of new fields.           */
@@ -4437,7 +4435,6 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
 /* -------------------------------------------------------------------- */
     ResetReading();
     RunDeferredCreationIfNecessary();
-    CreateSpatialIndexIfNecessary();
 
 /* -------------------------------------------------------------------- */
 /*      Check that the new column name is not a duplicate.              */
@@ -4799,7 +4796,6 @@ OGRErr OGRGeoPackageTableLayer::ReorderFields( int* panMap )
 /* -------------------------------------------------------------------- */
     ResetReading();
     RunDeferredCreationIfNecessary();
-    CreateSpatialIndexIfNecessary();
 
 /* -------------------------------------------------------------------- */
 /*      Drop any iterator since we change the DB structure              */
