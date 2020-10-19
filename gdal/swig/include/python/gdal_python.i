@@ -66,16 +66,20 @@ static void update_buffer_size(void* obj, char* data, char* data_aligned, size_t
 
 
   have_warned = 0
-  def deprecation_warn(module):
+  def deprecation_warn(module, sub_package=None):
     global have_warned
 
     if have_warned == 1:
         return
 
     have_warned = 1
+    if sub_package:
+        new_module = sub_package+'.'+module
+    else:
+        new_module = module
 
     from warnings import warn
-    warn('%s.py was placed in a namespace, it is now available as osgeo.%s' % (module,module),
+    warn('%s.py was placed in a namespace, it is now available as osgeo.%s' % (module, new_module),
          DeprecationWarning)
 
 
