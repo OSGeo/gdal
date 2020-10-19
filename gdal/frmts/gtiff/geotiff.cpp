@@ -12104,7 +12104,7 @@ static void GTiffSetDeflateSubCodec(TIFF* hTIFF)
     (void)hTIFF;
 
 #if defined(TIFFTAG_DEFLATE_SUBCODEC) && defined(LIBDEFLATE_SUPPORT)
-    // Mostly for strict reproducability purposes
+    // Mostly for strict reproducibility purposes
     if( EQUAL(CPLGetConfigOption("GDAL_TIFF_DEFLATE_SUBCODEC", ""), "ZLIB") )
     {
         TIFFSetField(hTIFF, TIFFTAG_DEFLATE_SUBCODEC,

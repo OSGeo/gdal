@@ -409,8 +409,8 @@ def Calc(calc, outfile, NoDataValue=None, type=None, format=None, creation_optio
     """
     opts = Values()
     opts.input_files = input_files
-    # Single calc value compatiblity
-    # (type is overriden in the parameter list)
+    # Single calc value compatibility
+    # (type is overridden in the parameter list)
     if isinstance(calc, list):
         opts.calc = calc
     else:

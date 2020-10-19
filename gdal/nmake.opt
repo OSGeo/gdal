@@ -769,7 +769,7 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #ZLIB_INC = -IC:\projects\zlib
 #ZLIB_LIB = C:\projects\lib\Release\zlib.lib
 
-# Uncommment for libdeflate support (still requires zlib in some cases)
+# Uncomment for libdeflate support (still requires zlib in some cases)
 #LIBDEFLATE_CFLAGS = -Ie:/dev/install-libdeflate-1.6/include
 #LIBDEFLATE_LIB = e:/dev/install-libdeflate-1.6/lib/libdeflate.lib
 

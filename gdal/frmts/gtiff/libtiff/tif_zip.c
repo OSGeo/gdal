@@ -33,7 +33,7 @@
  * Jean-loup Gailly and Mark Adler.  You must use version 1.0 or later
  * of the library.
  *
- * Optionnaly, libdeflate (https://github.com/ebiggers/libdeflate) may be used
+ * Optionally, libdeflate (https://github.com/ebiggers/libdeflate) may be used
  * to do the compression and decompression, but only for whole strips and tiles.
  * For scanline access, zlib will be sued as a fallback.
  */
