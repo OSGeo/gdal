@@ -1404,7 +1404,21 @@ def test_mem_md_array_get_unscaled_0dim():
     unscaled = myarray.GetUnscaled()
     assert unscaled.GetDataType().GetNumericDataType() == gdal.GDT_Float64
     assert struct.unpack('d' * 1, unscaled.Read())[0] == 1 * 200.5 + 1.5
-    assert struct.unpack('f' * 1, unscaled.Read(buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_Float32)))[0] == 1 * 200.5 + 1.5
+
+    float32dt = gdal.ExtendedDataType.Create(gdal.GDT_Float32)
+    assert struct.unpack('f' * 1, unscaled.Read(buffer_datatype = float32dt))[0] == 1 * 200.5 + 1.5
+
+    assert unscaled.Write(struct.pack('d' * 1, 2 * 200.5 + 1.5)) == gdal.CE_None
+    assert struct.unpack('B' * 1, myarray.Read())[0] == 2
+
+    assert unscaled.Write(struct.pack('d' * 1, 2.1 * 200.5 + 1.5)) == gdal.CE_None
+    assert struct.unpack('B' * 1, myarray.Read())[0] == 2
+
+    assert unscaled.Write(struct.pack('d' * 1, 1.9 * 200.5 + 1.5)) == gdal.CE_None
+    assert struct.unpack('B' * 1, myarray.Read())[0] == 2
+
+    assert unscaled.Write(struct.pack('f' * 1, 3 * 200.5 + 1.5), buffer_datatype = float32dt) == gdal.CE_None
+    assert struct.unpack('B' * 1, myarray.Read())[0] == 3
 
 
 def test_mem_md_array_get_unscaled_0dim_complex():
@@ -1429,7 +1443,15 @@ def test_mem_md_array_get_unscaled_0dim_complex():
     unscaled = myarray.GetUnscaled()
     assert unscaled.GetDataType().GetNumericDataType() == gdal.GDT_CFloat64
     assert struct.unpack('d' * 2, unscaled.Read()) == (1 * 200.5 + 1.5,  2 * 200.5 + 1.5)
-    assert struct.unpack('f' * 2, unscaled.Read(buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_CFloat32))) == (1 * 200.5 + 1.5,  2 * 200.5 + 1.5)
+
+    cfloat32dt = gdal.ExtendedDataType.Create(gdal.GDT_CFloat32)
+    assert struct.unpack('f' * 2, unscaled.Read(buffer_datatype = cfloat32dt)) == (1 * 200.5 + 1.5,  2 * 200.5 + 1.5)
+
+    assert unscaled.Write(struct.pack('d' * 2, 3 * 200.5 + 1.5, 4 * 200.5 + 1.5)) == gdal.CE_None
+    assert struct.unpack('H' * 2, myarray.Read()) == (3, 4)
+
+    assert unscaled.Write(struct.pack('f' * 2, 5 * 200.5 + 1.5, 6 * 200.5 + 1.5), buffer_datatype = cfloat32dt) == gdal.CE_None
+    assert struct.unpack('H' * 2, myarray.Read()) == (5, 6)
 
 
 def test_mem_md_array_get_unscaled_0dim_non_matching_nodata():
@@ -1454,9 +1476,13 @@ def test_mem_md_array_get_unscaled_0dim_non_matching_nodata():
 
     unscaled = myarray.GetUnscaled()
     assert unscaled.GetDataType().GetNumericDataType() == gdal.GDT_Float64
-    assert math.isnan(unscaled.GetNoDataValueAsDouble())
+    nodata = unscaled.GetNoDataValueAsDouble()
+    assert math.isnan(nodata)
     assert struct.unpack('d' * 1, unscaled.Read())[0] == 1 * 200.5 + 1.5
     assert struct.unpack('f' * 1, unscaled.Read(buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_Float32)))[0] == 1 * 200.5 + 1.5
+
+    assert unscaled.Write(struct.pack('d' * 1, 2 * 200.5 + 1.5)) == gdal.CE_None
+    assert struct.unpack('B' * 1, myarray.Read())[0] == 2
 
 
 def test_mem_md_array_get_unscaled_0dim_matching_nodata():
@@ -1481,8 +1507,15 @@ def test_mem_md_array_get_unscaled_0dim_matching_nodata():
 
     unscaled = myarray.GetUnscaled()
     assert unscaled.GetDataType().GetNumericDataType() == gdal.GDT_Float64
-    assert math.isnan(unscaled.GetNoDataValueAsDouble())
+    nodata = unscaled.GetNoDataValueAsDouble()
+    assert math.isnan(nodata)
     assert math.isnan(struct.unpack('d' * 1, unscaled.Read())[0])
+
+    assert unscaled.Write(struct.pack('d' * 1, 2 * 200.5 + 1.5)) == gdal.CE_None
+    assert struct.unpack('B' * 1, myarray.Read())[0] == 2
+
+    assert unscaled.Write(struct.pack('d' * 1, nodata)) == gdal.CE_None
+    assert struct.unpack('B' * 1, myarray.Read())[0] == 1
 
 
 def test_mem_md_array_get_unscaled_0dim_matching_nodata_complex():
@@ -1507,9 +1540,13 @@ def test_mem_md_array_get_unscaled_0dim_matching_nodata_complex():
 
     unscaled = myarray.GetUnscaled()
     assert unscaled.GetDataType().GetNumericDataType() == gdal.GDT_CFloat64
-    assert math.isnan(unscaled.GetNoDataValueAsDouble())
+    nodata = unscaled.GetNoDataValueAsDouble()
+    assert math.isnan(nodata)
     assert math.isnan(struct.unpack('d' * 2, unscaled.Read())[0])
     assert math.isnan(struct.unpack('d' * 2, unscaled.Read())[1])
+
+    assert unscaled.Write(struct.pack('d' * 2, nodata, nodata)) == gdal.CE_None
+    assert struct.unpack('H' * 2, myarray.Read()) == (1, 2)
 
 
 def test_mem_md_array_get_unscaled_3dim():
@@ -1539,28 +1576,48 @@ def test_mem_md_array_get_unscaled_3dim():
     unscaled = myarray.GetUnscaled()
     assert unscaled.GetOffset() is None
     assert unscaled.GetScale() is None
-    with gdaltest.error_handler():
-        assert unscaled.Write(unscaled.Read()) == gdal.CE_Failure
     assert unscaled.GetNoDataValueAsRaw() is None
     assert unscaled.GetSpatialRef() is None
     assert unscaled.GetUnit() == myarray.GetUnit()
     assert unscaled.GetBlockSize() == myarray.GetBlockSize()
     assert [x.GetSize() for x in unscaled.GetDimensions()] == [x.GetSize() for x in myarray.GetDimensions() ]
     assert unscaled.GetDataType().GetNumericDataType() == gdal.GDT_Float64
-    expected_data = [x * 200.5 + 1.5 for x in struct.unpack('B' * 24, myarray.Read())]
-    assert [x for x in struct.unpack('d' * 24, unscaled.Read())] == expected_data
-    assert [x for x in struct.unpack('f' * 24, unscaled.Read(buffer_datatype = gdal.ExtendedDataType.Create(gdal.GDT_Float32)))] == expected_data
+    expected_data = [x * 200.5 + 1.5 for x in range(24)]
+    unscaled_data = unscaled.Read()
+    assert [x for x in struct.unpack('d' * 24, unscaled_data)] == expected_data
+    float32_dt = gdal.ExtendedDataType.Create(gdal.GDT_Float32)
+    unscaled_data_float32 = unscaled.Read(buffer_datatype = float32_dt)
+    assert [x for x in struct.unpack('f' * 24, unscaled_data_float32)] == expected_data
+
+    assert myarray.Write(b'\x00' * 24) == gdal.CE_None
+    assert myarray.Read() != data
+
+    assert unscaled.Write(unscaled_data) == gdal.CE_None
+    assert myarray.Read() == data
+
+    assert myarray.Write(b'\x00' * 24) == gdal.CE_None
+    assert myarray.Read() != data
+
+    assert unscaled.Write(unscaled_data_float32, buffer_datatype = float32_dt) == gdal.CE_None
+    assert myarray.Read() == data
 
     myarray.SetNoDataValueDouble(1)
     unscaled = myarray.GetUnscaled()
     assert math.isnan(unscaled.GetNoDataValueAsDouble())
-    got_data = [x for x in struct.unpack('d' * 24, unscaled.Read())]
+    unscaled_data_with_nan = unscaled.Read()
+    got_data = [x for x in struct.unpack('d' * 24, unscaled_data_with_nan)]
     expected_data = [float('nan') if x == 1 else x * 200.5 + 1.5 for x in struct.unpack('B' * 24, myarray.Read())]
     for i in range(24):
         if math.isnan(expected_data[i]):
             assert math.isnan(got_data[i])
         else:
             assert got_data[i] == expected_data[i]
+
+    assert myarray.Write(b'\x00' * 24) == gdal.CE_None
+    assert myarray.Read() != data
+
+    assert unscaled.Write(unscaled_data_with_nan) == gdal.CE_None
+    assert myarray.Read() == data
 
 
 def test_mem_md_array_get_unscaled_1dim_complex():
@@ -1590,11 +1647,15 @@ def test_mem_md_array_get_unscaled_1dim_complex():
 
     unscaled = myarray.GetUnscaled()
     assert unscaled.GetDataType().GetNumericDataType() == gdal.GDT_CFloat64
-    got_data = [x for x in struct.unpack('d' * 4, unscaled.Read())]
+    unscaled_data_with_nan = unscaled.Read()
+    got_data = [x for x in struct.unpack('d' * 4, unscaled_data_with_nan)]
     assert math.isnan(got_data[0])
     assert math.isnan(got_data[1])
     assert got_data[2] == 3 * 200.5 + 1.5
     assert got_data[3] == 4 * 200.5 + 1.5
+
+    assert unscaled.Write(unscaled_data_with_nan) == gdal.CE_None
+    assert myarray.Read() == data
 
 
 def test_mem_md_array_get_mask():

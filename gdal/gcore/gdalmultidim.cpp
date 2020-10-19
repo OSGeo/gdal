@@ -4276,6 +4276,13 @@ protected:
                       const GDALExtendedDataType& bufferDataType,
                       void* pDstBuffer) const override;
 
+    bool IWrite(const GUInt64* arrayStartIdx,
+                      const size_t* count,
+                      const GInt64* arrayStep,
+                      const GPtrDiff_t* bufferStride,
+                      const GDALExtendedDataType& bufferDataType,
+                      const void* pSrcBuffer) override;
+
     bool IAdviseRead(const GUInt64* arrayStartIdx,
                      const size_t* count) const override
         { return m_poParent->AdviseRead(arrayStartIdx, count); }
@@ -4290,7 +4297,7 @@ public:
         return newAr;
     }
 
-    bool IsWritable() const override { return false; }
+    bool IsWritable() const override { return m_poParent->IsWritable(); }
 
     const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_poParent->GetDimensions(); }
 
@@ -4476,6 +4483,171 @@ lbl_return_to_caller:
 }
 
 /************************************************************************/
+/*                             IWrite()                                 */
+/************************************************************************/
+
+bool GDALMDArrayUnscaled::IWrite(const GUInt64* arrayStartIdx,
+                                const size_t* count,
+                                const GInt64* arrayStep,
+                                const GPtrDiff_t* bufferStride,
+                                const GDALExtendedDataType& bufferDataType,
+                                const void* pSrcBuffer)
+{
+    const double dfScale = m_poParent->GetScale();
+    const double dfOffset = m_poParent->GetOffset();
+    const bool bDTIsComplex = m_dt.GetNumericDataType() == GDT_CFloat64;
+    const size_t nDTSize = m_dt.GetSize();
+    CPLAssert( nDTSize == 8 || nDTSize == 16 );
+    const bool bIsBufferDataTypeNativeDataType = ( m_dt == bufferDataType );
+
+    double adfSrcNoData[2] = { 0, 0 };
+    if( m_bHasNoData )
+    {
+        GDALExtendedDataType::CopyValue(m_poParent->GetRawNoDataValue(),
+                                        m_poParent->GetDataType(),
+                                        &adfSrcNoData[0], m_dt);
+    }
+
+    const auto nDims = GetDimensions().size();
+    if( nDims == 0 )
+    {
+        double adfVal[2];
+        GDALExtendedDataType::CopyValue(pSrcBuffer, bufferDataType,
+                                        &adfVal[0], m_dt);
+        if( m_bHasNoData && std::isnan(adfVal[0]) )
+        {
+            return m_poParent->Write(arrayStartIdx, count, arrayStep, bufferStride,
+                                     m_poParent->GetDataType(),
+                                     m_poParent->GetRawNoDataValue());
+        }
+        else
+        {
+            adfVal[0] = (adfVal[0] - dfOffset) / dfScale;
+            if( bDTIsComplex )
+            {
+                adfVal[1] = (adfVal[1] - dfOffset) / dfScale;
+            }
+            return m_poParent->Write(arrayStartIdx, count, arrayStep, bufferStride,
+                                     m_dt, &adfVal[0]);
+        }
+    }
+
+    std::vector<GPtrDiff_t> tmpBufferStrideVector;
+    size_t nElts = 1;
+    tmpBufferStrideVector.resize(nDims);
+    for( size_t i = 0; i < nDims; i++ )
+        nElts *= count[i];
+    tmpBufferStrideVector.back() = 1;
+    for( size_t i = nDims - 1; i > 0; )
+    {
+        --i;
+        tmpBufferStrideVector[i] =
+            tmpBufferStrideVector[i+1] * count[i+1];
+    }
+    const GPtrDiff_t* tmpBufferStridePtr = tmpBufferStrideVector.data();
+    void* pTempBuffer = VSI_MALLOC2_VERBOSE(nDTSize, nElts);
+    if( !pTempBuffer )
+        return false;
+
+    struct Stack
+    {
+        size_t       nIters = 0;
+        double*      dst_ptr = nullptr;
+        const GByte* src_ptr = nullptr;
+        GPtrDiff_t   src_inc_offset = 0;
+        GPtrDiff_t   dst_inc_offset = 0;
+    };
+    std::vector<Stack> stack(nDims);
+    const size_t nBufferDTSize = bufferDataType.GetSize();
+    for( size_t i = 0; i < nDims; i++ )
+    {
+        stack[i].dst_inc_offset = tmpBufferStridePtr[i] *
+                                        (bDTIsComplex ? 2 : 1);
+        stack[i].src_inc_offset = static_cast<GPtrDiff_t>(
+            bufferStride[i] * nBufferDTSize);
+    }
+    stack[0].dst_ptr = static_cast<double*>(pTempBuffer);
+    stack[0].src_ptr = static_cast<const GByte*>(pSrcBuffer);
+
+    size_t dimIdx = 0;
+    const size_t nDimsMinus1 = nDims - 1;
+
+lbl_next_depth:
+    if( dimIdx == nDimsMinus1 )
+    {
+        auto nIters = count[dimIdx];
+        double* dst_ptr = stack[dimIdx].dst_ptr;
+        const GByte* src_ptr = stack[dimIdx].src_ptr;
+        while(true)
+        {
+            double adfVal[2];
+            const double* padfSrcVal;
+            if( bIsBufferDataTypeNativeDataType )
+            {
+                padfSrcVal = reinterpret_cast<const double*>(src_ptr);
+            }
+            else
+            {
+                GDALExtendedDataType::CopyValue(src_ptr, bufferDataType,
+                                                &adfVal[0], m_dt);
+                padfSrcVal = adfVal;
+            }
+
+            if( m_bHasNoData && std::isnan(padfSrcVal[0]) )
+            {
+                dst_ptr[0] = adfSrcNoData[0];
+                if( bDTIsComplex )
+                {
+                    dst_ptr[1] = adfSrcNoData[1];
+                }
+            }
+            else
+            {
+                dst_ptr[0] = (padfSrcVal[0] - dfOffset) / dfScale;
+                if( bDTIsComplex )
+                {
+                    dst_ptr[1] = (padfSrcVal[1] - dfOffset) / dfScale;
+                }
+            }
+
+            if( (--nIters) == 0 )
+                break;
+            dst_ptr += stack[dimIdx].dst_inc_offset;
+            src_ptr += stack[dimIdx].src_inc_offset;
+        }
+    }
+    else
+    {
+        stack[dimIdx].nIters = count[dimIdx];
+        while(true)
+        {
+            dimIdx ++;
+            stack[dimIdx].src_ptr = stack[dimIdx-1].src_ptr;
+            stack[dimIdx].dst_ptr = stack[dimIdx-1].dst_ptr;
+            goto lbl_next_depth;
+lbl_return_to_caller:
+            dimIdx --;
+            if( (--stack[dimIdx].nIters) == 0 )
+                break;
+            stack[dimIdx].src_ptr += stack[dimIdx].src_inc_offset;
+            stack[dimIdx].dst_ptr += stack[dimIdx].dst_inc_offset;
+        }
+    }
+    if( dimIdx > 0 )
+        goto lbl_return_to_caller;
+
+    const bool ret = m_poParent->Write(arrayStartIdx,
+                                       count,
+                                       arrayStep,
+                                       tmpBufferStridePtr,
+                                       m_dt,
+                                       pTempBuffer);
+
+    VSIFree(pTempBuffer);
+    return ret;
+}
+
+/************************************************************************/
 /*                           GetUnscaled()                              */
 /************************************************************************/
 
@@ -4483,6 +4655,9 @@ lbl_return_to_caller:
  *
  * That is each value of the unscaled array will be
  * unscaled_value = raw_value * GetScale() + GetOffset()
+ *
+ * Starting with GDAL 3.3, the Write() method is implemented and will convert
+ * from unscaled values to raw values.
  *
  * This is the same as the C function GDALMDArrayGetUnscaled().
  *
@@ -7924,6 +8099,9 @@ GDALMDArrayH GDALMDArrayTranspose(GDALMDArrayH hArray,
  *
  * That is each value of the unscaled array will be
  * unscaled_value = raw_value * GetScale() + GetOffset()
+ *
+ * Starting with GDAL 3.3, the Write() method is implemented and will convert
+ * from unscaled values to raw values.
  *
  * The returned object should be released with GDALMDArrayRelease().
  *
