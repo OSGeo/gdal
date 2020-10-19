@@ -1580,22 +1580,24 @@ public:
     bool SetUnit(const std::string& osUnit) override {
         m_osUnit = osUnit; return true; }
 
-    double GetOffset(bool* pbHasOffset) const override
+    double GetOffset(bool* pbHasOffset, GDALDataType* peStorageType) const override
     {
         if( pbHasOffset) *pbHasOffset = m_bHasOffset;
+        if( peStorageType ) *peStorageType = GDT_Unknown;
         return m_dfOffset;
     }
 
-    double GetScale(bool* pbHasScale) const override
+    double GetScale(bool* pbHasScale, GDALDataType* peStorageType) const override
     {
         if( pbHasScale) *pbHasScale = m_bHasScale;
+        if( peStorageType ) *peStorageType = GDT_Unknown;
         return m_dfScale;
     }
 
-    bool SetOffset(double dfOffset) override
+    bool SetOffset(double dfOffset, GDALDataType /* eStorageType */ = GDT_Unknown) override
     { SetDirty(); m_bHasOffset = true; m_dfOffset = dfOffset; return true; }
 
-    bool SetScale(double dfScale) override
+    bool SetScale(double dfScale, GDALDataType /* eStorageType */ = GDT_Unknown) override
     { SetDirty(); m_bHasScale = true; m_dfScale = dfScale; return true; }
 
     void AddSource(std::unique_ptr<VRTMDArraySource>&& poSource);

@@ -436,13 +436,13 @@ public:
 
     bool SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
-    double GetOffset(bool* pbHasOffset) const override;
+    double GetOffset(bool* pbHasOffset, GDALDataType* peStorageType) const override;
 
-    double GetScale(bool* pbHasScale) const override;
+    double GetScale(bool* pbHasScale, GDALDataType* peStorageType) const override;
 
-    bool SetOffset(double dfOffset) override;
+    bool SetOffset(double dfOffset, GDALDataType eStorageType) override;
 
-    bool SetScale(double dfScale) override;
+    bool SetScale(double dfScale, GDALDataType eStorageType) override;
 
     int GetGroupId() const { return m_gid; }
     int GetVarId() const { return m_varid; }
@@ -2881,13 +2881,14 @@ bool netCDFVariable::SetRawNoDataValue(const void* pNoData)
 /*                               SetScale()                             */
 /************************************************************************/
 
-bool netCDFVariable::SetScale(double dfScale)
+bool netCDFVariable::SetScale(double dfScale, GDALDataType eStorageType)
 {
     auto poAttr = GetAttribute(CF_SCALE_FACTOR);
     if( !poAttr )
     {
         poAttr = CreateAttribute(CF_SCALE_FACTOR, {},
-                                 GDALExtendedDataType::Create(GDT_Float64),
+                                 GDALExtendedDataType::Create(
+                                     eStorageType == GDT_Unknown ? GDT_Float64 : eStorageType),
                                  nullptr);
     }
     if( !poAttr )
@@ -2896,16 +2897,17 @@ bool netCDFVariable::SetScale(double dfScale)
 }
 
 /************************************************************************/
-/*                               SetOffset)                             */
+/*                              SetOffset()                             */
 /************************************************************************/
 
-bool netCDFVariable::SetOffset(double dfOffset)
+bool netCDFVariable::SetOffset(double dfOffset, GDALDataType eStorageType)
 {
     auto poAttr = GetAttribute(CF_ADD_OFFSET);
     if( !poAttr )
     {
         poAttr = CreateAttribute(CF_ADD_OFFSET, {},
-                                 GDALExtendedDataType::Create(GDT_Float64),
+                                 GDALExtendedDataType::Create(
+                                     eStorageType == GDT_Unknown ? GDT_Float64 : eStorageType),
                                  nullptr);
     }
     if( !poAttr )
@@ -2917,10 +2919,10 @@ bool netCDFVariable::SetOffset(double dfOffset)
 /*                               GetScale()                             */
 /************************************************************************/
 
-double netCDFVariable::GetScale(bool* pbHasScale) const
+double netCDFVariable::GetScale(bool* pbHasScale, GDALDataType* peStorageType) const
 {
     auto poAttr = GetAttribute(CF_SCALE_FACTOR);
-    if( !poAttr )
+    if( !poAttr || poAttr->GetDataType().GetClass() != GEDTC_NUMERIC )
     {
         if( pbHasScale )
             *pbHasScale = false;
@@ -2928,6 +2930,8 @@ double netCDFVariable::GetScale(bool* pbHasScale) const
     }
     if( pbHasScale )
         *pbHasScale = true;
+    if( peStorageType )
+        *peStorageType = poAttr->GetDataType().GetNumericDataType();
     return poAttr->ReadAsDouble();
 }
 
@@ -2935,10 +2939,10 @@ double netCDFVariable::GetScale(bool* pbHasScale) const
 /*                               GetOffset()                            */
 /************************************************************************/
 
-double netCDFVariable::GetOffset(bool* pbHasOffset) const
+double netCDFVariable::GetOffset(bool* pbHasOffset, GDALDataType* peStorageType) const
 {
     auto poAttr = GetAttribute(CF_ADD_OFFSET);
-    if( !poAttr )
+    if( !poAttr || poAttr->GetDataType().GetClass() != GEDTC_NUMERIC )
     {
         if( pbHasOffset )
             *pbHasOffset = false;
@@ -2946,6 +2950,8 @@ double netCDFVariable::GetOffset(bool* pbHasOffset) const
     }
     if( pbHasOffset )
         *pbHasOffset = true;
+    if( peStorageType )
+        *peStorageType = poAttr->GetDataType().GetNumericDataType();
     return poAttr->ReadAsDouble();
 }
 

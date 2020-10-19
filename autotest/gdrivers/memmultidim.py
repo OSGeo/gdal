@@ -200,10 +200,20 @@ def test_mem_md_array_single_dim():
 
     assert myarray.GetScale() is None
     assert myarray.GetOffset() is None
+    assert myarray.GetScaleStorageType() == gdal.GDT_Unknown
+    assert myarray.GetOffsetStorageType() == gdal.GDT_Unknown
+
     assert myarray.SetScale(2.5) == gdal.CE_None
     assert myarray.GetScale() == 2.5
+    assert myarray.GetScaleStorageType() == gdal.GDT_Unknown
+    assert myarray.SetScale(2.5, storageType = gdal.GDT_Float32) == gdal.CE_None
+    assert myarray.GetScaleStorageType() == gdal.GDT_Float32
+
     assert myarray.SetOffset(1.5) == gdal.CE_None
     assert myarray.GetOffset() == 1.5
+    assert myarray.GetOffsetStorageType() == gdal.GDT_Unknown
+    assert myarray.SetOffset(1.5, storageType = gdal.GDT_Float32) == gdal.CE_None
+    assert myarray.GetOffsetStorageType() == gdal.GDT_Float32
 
     def my_cbk(pct, _, arg):
         assert pct >= tab[0]

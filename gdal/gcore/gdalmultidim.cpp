@@ -1914,14 +1914,22 @@ bool GDALMDArray::SetNoDataValue(double dfNoData)
  *
  * unscaled_value = raw_value * GetScale() + GetOffset()
  *
- * This is the same as the C function GDALMDArraySetScale().
+ * This is the same as the C function GDALMDArraySetScale() / GDALMDArraySetScaleEx().
  *
  * @note Driver implementation: this method shall be implemented if setting scale
  * is supported.
  *
+ * @param dfScale scale
+ * @param eStorageType Data type to which create the potential attribute that will store
+ *                     the scale. Added in GDAL 3.3
+ *                     If let to its GDT_Unknown value, the implementation will decide
+ *                     automatically the data type.
+ *                     Note that changing the data type after initial setting might not be
+ *                     supported.
  * @return true in case of success.
  */
-bool GDALMDArray::SetScale(CPL_UNUSED double dfScale)
+bool GDALMDArray::SetScale(CPL_UNUSED double dfScale,
+                           CPL_UNUSED GDALDataType eStorageType)
 {
     CPLError(CE_Failure, CPLE_NotSupported, "SetScale() not implemented");
     return false;
@@ -1935,14 +1943,22 @@ bool GDALMDArray::SetScale(CPL_UNUSED double dfScale)
  *
  * unscaled_value = raw_value * GetScale() + GetOffset()
  *
- * This is the same as the C function GDALMDArraySetOffset().
+ * This is the same as the C function GDALMDArraySetOffset() / GDALMDArraySetOffsetEx().
  *
  * @note Driver implementation: this method shall be implemented if setting offset
  * is supported.
  *
+ * @param dfOffset Offset
+ * @param eStorageType Data type to which create the potential attribute that will store
+ *                     the offset. Added in GDAL 3.3
+ *                     If let to its GDT_Unknown value, the implementation will decide
+ *                     automatically the data type.
+ *                     Note that changing the data type after initial setting might not be
+ *                     supported.
  * @return true in case of success.
  */
-bool GDALMDArray::SetOffset(CPL_UNUSED double dfOffset)
+bool GDALMDArray::SetOffset(CPL_UNUSED double dfOffset,
+                            CPL_UNUSED GDALDataType eStorageType)
 {
     CPLError(CE_Failure, CPLE_NotSupported, "SetOffset() not implemented");
     return false;
@@ -1963,11 +1979,15 @@ bool GDALMDArray::SetOffset(CPL_UNUSED double dfOffset)
  *
  * @param pbHasScale Pointer to a output boolean that will be set to true if
  * a scale value exists. Might be nullptr.
+ * @param peStorageType Pointer to a output GDALDataType that will be set to
+ * the storage type of the scale value, when known/relevant. Otherwise will be
+ * set to GDT_Unknown. Might be nullptr. Since GDAL 3.3
  *
  * @return the scale value. A 1.0 value might also indicate the
  * absence of a scale value.
  */
-double GDALMDArray::GetScale(CPL_UNUSED bool* pbHasScale) const
+double GDALMDArray::GetScale(CPL_UNUSED bool* pbHasScale,
+                             CPL_UNUSED GDALDataType* peStorageType) const
 {
     if( pbHasScale )
         *pbHasScale = false;
@@ -1989,11 +2009,15 @@ double GDALMDArray::GetScale(CPL_UNUSED bool* pbHasScale) const
  *
  * @param pbHasOffset Pointer to a output boolean that will be set to true if
  * a offset value exists. Might be nullptr.
+ * @param peStorageType Pointer to a output GDALDataType that will be set to
+ * the storage type of the offset value, when known/relevant. Otherwise will be
+ * set to GDT_Unknown. Might be nullptr. Since GDAL 3.3
  *
  * @return the offset value. A 0.0 value might also indicate the
  * absence of a offset value.
  */
-double GDALMDArray::GetOffset(CPL_UNUSED bool* pbHasOffset) const
+double GDALMDArray::GetOffset(CPL_UNUSED bool* pbHasOffset,
+                              CPL_UNUSED GDALDataType* peStorageType) const
 {
     if( pbHasOffset )
         *pbHasOffset = false;
@@ -2771,17 +2795,19 @@ bool GDALMDArray::CopyFromAllExceptValues(const GDALMDArray* poSrcArray,
     }
 
     bool bGotValue = false;
-    const double dfOffset = poSrcArray->GetOffset(&bGotValue);
+    GDALDataType eOffsetStorageType = GDT_Unknown;
+    const double dfOffset = poSrcArray->GetOffset(&bGotValue, &eOffsetStorageType);
     if( bGotValue )
     {
-        SetOffset(dfOffset);
+        SetOffset(dfOffset, eOffsetStorageType);
     }
 
     bGotValue = false;
-    const double dfScale = poSrcArray->GetScale(&bGotValue);
+    GDALDataType eScaleStorageType = GDT_Unknown;
+    const double dfScale = poSrcArray->GetScale(&bGotValue, &eScaleStorageType);
     if( bGotValue )
     {
-        SetScale(dfScale);
+        SetScale(dfScale, eScaleStorageType);
     }
 
     return true;
@@ -3204,9 +3230,9 @@ public:
 
     // bool SetRawNoDataValue(const void* pRawNoData) override { return m_poParent->SetRawNoDataValue(pRawNoData); }
 
-    double GetOffset(bool* pbHasOffset) const override { return m_poParent->GetOffset(pbHasOffset); }
+    double GetOffset(bool* pbHasOffset, GDALDataType* peStorageType) const override { return m_poParent->GetOffset(pbHasOffset, peStorageType); }
 
-    double GetScale(bool* pbHasScale) const override { return m_poParent->GetScale(pbHasScale); }
+    double GetScale(bool* pbHasScale, GDALDataType* peStorageType) const override { return m_poParent->GetScale(pbHasScale, peStorageType); }
 
     // bool SetOffset(double dfOffset) override { return m_poParent->SetOffset(dfOffset); }
 
@@ -3634,9 +3660,9 @@ public:
         return &m_pabyNoData[0];
     }
 
-    double GetOffset(bool* pbHasOffset) const override { return m_poParent->GetOffset(pbHasOffset); }
+    double GetOffset(bool* pbHasOffset, GDALDataType* peStorageType) const override { return m_poParent->GetOffset(pbHasOffset, peStorageType); }
 
-    double GetScale(bool* pbHasScale) const override { return m_poParent->GetScale(pbHasScale); }
+    double GetScale(bool* pbHasScale, GDALDataType* peStorageType) const override { return m_poParent->GetScale(pbHasScale, peStorageType); }
 
     std::vector<GUInt64> GetBlockSize() const override { return m_poParent->GetBlockSize(); }
 };
@@ -4039,9 +4065,9 @@ public:
 
     // bool SetRawNoDataValue(const void* pRawNoData) override { return m_poParent->SetRawNoDataValue(pRawNoData); }
 
-    double GetOffset(bool* pbHasOffset) const override { return m_poParent->GetOffset(pbHasOffset); }
+    double GetOffset(bool* pbHasOffset, GDALDataType* peStorageType) const override { return m_poParent->GetOffset(pbHasOffset, peStorageType); }
 
-    double GetScale(bool* pbHasScale) const override { return m_poParent->GetScale(pbHasScale); }
+    double GetScale(bool* pbHasScale, GDALDataType* peStorageType) const override { return m_poParent->GetScale(pbHasScale, peStorageType); }
 
     // bool SetOffset(double dfOffset) override { return m_poParent->SetOffset(dfOffset); }
 
@@ -7598,6 +7624,26 @@ int GDALMDArraySetScale(GDALMDArrayH hArray, double dfScale)
 }
 
 /************************************************************************/
+/*                        GDALMDArraySetScaleEx()                       */
+/************************************************************************/
+
+/** Set the scale value to apply to raw values.
+ *
+ * unscaled_value = raw_value * GetScale() + GetOffset()
+ *
+ * This is the same as the C++ method GDALMDArray::SetScale().
+ *
+ * @return TRUE in case of success.
+ * @since GDAL 3.3
+ */
+int GDALMDArraySetScaleEx(GDALMDArrayH hArray, double dfScale,
+                          GDALDataType eStorageType)
+{
+    VALIDATE_POINTER1( hArray, __func__, FALSE );
+    return hArray->m_poImpl->SetScale(dfScale, eStorageType);
+}
+
+/************************************************************************/
 /*                          GDALMDArraySetOffset()                       */
 /************************************************************************/
 
@@ -7613,6 +7659,26 @@ int GDALMDArraySetOffset(GDALMDArrayH hArray, double dfOffset)
 {
     VALIDATE_POINTER1( hArray, __func__, FALSE );
     return hArray->m_poImpl->SetOffset(dfOffset);
+}
+
+/************************************************************************/
+/*                       GDALMDArraySetOffsetEx()                       */
+/************************************************************************/
+
+/** Set the scale value to apply to raw values.
+ *
+ * unscaled_value = raw_value * GetOffset() + GetOffset()
+ *
+ * This is the same as the C++ method GDALMDArray::SetOffset().
+ *
+ * @return TRUE in case of success.
+ * @since GDAL 3.3
+ */
+int GDALMDArraySetOffsetEx(GDALMDArrayH hArray, double dfOffset,
+                           GDALDataType eStorageType)
+{
+    VALIDATE_POINTER1( hArray, __func__, FALSE );
+    return hArray->m_poImpl->SetOffset(dfOffset, eStorageType);
 }
 
 /************************************************************************/
@@ -7638,6 +7704,30 @@ double GDALMDArrayGetScale(GDALMDArrayH hArray, int* pbHasValue)
 }
 
 /************************************************************************/
+/*                        GDALMDArrayGetScaleEx()                       */
+/************************************************************************/
+
+/** Get the scale value to apply to raw values.
+ *
+ * unscaled_value = raw_value * GetScale() + GetScale()
+ *
+ * This is the same as the C++ method GDALMDArray::GetScale().
+ *
+ * @return the scale value
+ * @since GDAL 3.3
+ */
+double GDALMDArrayGetScaleEx(GDALMDArrayH hArray, int* pbHasValue,
+                             GDALDataType* peStorageType)
+{
+    VALIDATE_POINTER1( hArray, __func__, 0.0 );
+    bool bHasValue = false;
+    double dfRet = hArray->m_poImpl->GetScale(&bHasValue, peStorageType);
+    if( pbHasValue )
+        *pbHasValue = bHasValue;
+    return dfRet;
+}
+
+/************************************************************************/
 /*                          GDALMDArrayGetOffset()                      */
 /************************************************************************/
 
@@ -7654,6 +7744,30 @@ double GDALMDArrayGetOffset(GDALMDArrayH hArray, int* pbHasValue)
     VALIDATE_POINTER1( hArray, __func__, 0.0 );
     bool bHasValue = false;
     double dfRet = hArray->m_poImpl->GetOffset(&bHasValue);
+    if( pbHasValue )
+        *pbHasValue = bHasValue;
+    return dfRet;
+}
+
+/************************************************************************/
+/*                        GDALMDArrayGetOffsetEx()                      */
+/************************************************************************/
+
+/** Get the scale value to apply to raw values.
+ *
+ * unscaled_value = raw_value * GetScale() + GetOffset()
+ *
+ * This is the same as the C++ method GDALMDArray::GetOffset().
+ *
+ * @return the scale value
+ * @since GDAL 3.3
+ */
+double GDALMDArrayGetOffsetEx(GDALMDArrayH hArray, int* pbHasValue,
+                              GDALDataType* peStorageType)
+{
+    VALIDATE_POINTER1( hArray, __func__, 0.0 );
+    bool bHasValue = false;
+    double dfRet = hArray->m_poImpl->GetOffset(&bHasValue, peStorageType);
     if( pbHasValue )
         *pbHasValue = bHasValue;
     return dfRet;
