@@ -1795,24 +1795,24 @@ const char* TABCustomPoint::GetSymbolStyleString(double dfAngle) const
 
     int         nAngle = static_cast<int>(dfAngle);
     const char* pszStyle;
-	const char* pszExt = CPLGetExtension(GetSymbolNameRef());
-	char 		szLowerExt[8] = "";
-	const char*	pszPtr = pszExt;
-	int			i;
+    const char* pszExt = CPLGetExtension(GetSymbolNameRef());
+    char        szLowerExt[8] = "";
+    const char* pszPtr = pszExt;
+    int         i;
 
-	for(i=0; i < 7 && *pszPtr != '\0' && *pszPtr != ' '; i++, pszPtr++)
-	{
-		szLowerExt[i] = (char)tolower(*pszPtr);
-	}
-	szLowerExt[i] = '\0';
+    for(i=0; i < 7 && *pszPtr != '\0' && *pszPtr != ' '; i++, pszPtr++)
+    {
+        szLowerExt[i] = (char)tolower(*pszPtr);
+    }
+    szLowerExt[i] = '\0';
 
     pszStyle=CPLSPrintf("SYMBOL(a:%d%s,s:%dpt,id:\"mapinfo-custom-sym-%d-%s,%s-%s,ogr-sym-9\")",
                         nAngle,
-						color,
+                        color,
                         m_sSymbolDef.nPointSize,
-						m_nCustomStyle,
-						GetSymbolNameRef(),
-						szLowerExt,
+                        m_nCustomStyle,
+                        GetSymbolNameRef(),
+                        szLowerExt,
                         GetSymbolNameRef());
     return pszStyle;
 }
@@ -1834,22 +1834,22 @@ void TABCustomPoint::SetSymbolFromStyle(OGRStyleSymbol* poSymbolStyle)
     {
         const int nSymbolStyle = atoi(pszSymbolId+19);
         SetCustomSymbolStyle(static_cast<GByte>(nSymbolStyle));
-		
-		const char* pszPtr = pszSymbolId+19;
-		while (*pszPtr != '-') 
-		{
-			pszPtr++;
-		}
-		pszPtr++;
-		
-		char 		szSymbolName[256] = "";
-		int			i;
-		for(i=0; i < 255 && *pszPtr != '\0' && *pszPtr != ',' && *pszPtr != '"'; i++, pszPtr++)
-		{
-			szSymbolName[i] = *pszPtr;
-		}
-		szSymbolName[i] = '\0';		
-		SetSymbolName(szSymbolName);
+        
+        const char* pszPtr = pszSymbolId+19;
+        while (*pszPtr != '-') 
+        {
+            pszPtr++;
+        }
+        pszPtr++;
+        
+        char szSymbolName[256] = "";
+        int  i;
+        for(i=0; i < 255 && *pszPtr != '\0' && *pszPtr != ',' && *pszPtr != '"'; i++, pszPtr++)
+        {
+            szSymbolName[i] = *pszPtr;
+        }
+        szSymbolName[i] = '\0';
+        SetSymbolName(szSymbolName);
     }
 }
 
@@ -9144,9 +9144,9 @@ TABFeatureClass ITABFeatureSymbol::GetSymbolFeatureClass(const char *pszStyleStr
     {
         poStylePart = poStyleMgr->GetPart(i);
         if( poStylePart == nullptr )
-		{
+        {
             continue;
-		}
+        }
 
         if(poStylePart->GetType() == OGRSTCSymbol)
         {
@@ -9158,8 +9158,8 @@ TABFeatureClass ITABFeatureSymbol::GetSymbolFeatureClass(const char *pszStyleStr
             poStylePart = nullptr;
         }
     }
-	
-	TABFeatureClass result = TABFCPoint;
+    
+    TABFeatureClass result = TABFCPoint;
 
     // If the no Symbol found, do nothing.
     if(poStylePart == nullptr)
@@ -9181,12 +9181,12 @@ TABFeatureClass ITABFeatureSymbol::GetSymbolFeatureClass(const char *pszStyleStr
         if(STARTS_WITH(pszSymbolId, "font-sym-"))
         {
             result = TABFCFontPoint;
-		}
+        }
         else if(STARTS_WITH(pszSymbolId, "mapinfo-custom-sym-"))
         {
             result = TABFCCustomPoint;
-		}
-	}
+        }
+    }
 
     delete poStyleMgr;
     delete poStylePart;

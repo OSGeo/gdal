@@ -957,7 +957,7 @@ class ITABFeatureSymbol
     void        SetSymbolSize(GInt16 val)   { m_sSymbolDef.nPointSize = val;}
     void        SetSymbolColor(GInt32 clr)  { m_sSymbolDef.rgbColor = clr;}
 
-	static TABFeatureClass GetSymbolFeatureClass(const char *pszStyleString);
+    static TABFeatureClass GetSymbolFeatureClass(const char *pszStyleString);
     virtual const char *GetSymbolStyleString(double dfAngle = 0.0) const;
     void        SetSymbolFromStyleString(const char *pszStyleString);
     virtual void SetSymbolFromStyle(OGRStyleSymbol* poSymbolStyle);
