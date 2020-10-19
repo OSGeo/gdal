@@ -1802,7 +1802,7 @@ const char* TABCustomPoint::GetSymbolStyleString(double dfAngle) const
 
     for(i=0; i < 7 && *pszPtr != '\0' && *pszPtr != ' '; i++, pszPtr++)
     {
-        szLowerExt[i] = (char)tolower(*pszPtr);
+        szLowerExt[i] = static_cast<char>(tolower(*pszPtr));
     }
     szLowerExt[i] = '\0';
 
