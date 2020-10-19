@@ -235,7 +235,7 @@ GPKG driver:
  * fix when writing a tile with uniform negative values or values > 65535 (when nodata is set) in PNG tiles (#3044)
  * fix GDAL 3.0 regression regarding some update scenarios (#2325)
 
-Grass driver:
+GRASS driver:
  * simplified to GRASS GIS 7+ only (#2945)
  * fix reading GRASS groups (#2876)
 
@@ -445,6 +445,9 @@ GPKG driver:
  * add a DATETIME_FORMAT=WITH_TZ/UTC dataset creation option (defaults to WITH_TZ) to specify how to deal with non-UTC datetime values (#2898)
  * hide view "geometry_columns"
  * fix wrong RTree _update3 trigger on existing files (QGIS #36935)
+
+GRASS driver:
+ * simplified to GRASS GIS 7+ only (#2945)
 
 GTM driver:
  * on write, do not consider TZFlag=1 (localtime) as a timezone value (refs #2696)
