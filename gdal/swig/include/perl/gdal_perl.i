@@ -143,8 +143,8 @@ use Geo::GDAL::Const;
 # Note that the 1/100000 digits may be used to create more than one
 # CPAN release from one GDAL release.
 
-our $VERSION = '3.0103';
-our $GDAL_VERSION = '3.1.3';
+our $VERSION = '3.0104';
+our $GDAL_VERSION = '3.1.4';
 
 =pod
 

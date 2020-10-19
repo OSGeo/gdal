@@ -1,3 +1,112 @@
+= GDAL/OGR 3.1.4 Release Notes =
+
+The 3.1.4 release is a bug fix release.
+
+== Build ==
+
+ * Add compatiblity with Jasper 2.0.21 (#3012)
+ * fix build in AVC driver in VSIL_STRICT_ENFORCE mode
+ * mkgdaldist.sh: remove doc/.doxygen_up_to_date from generated tarballs (#3032)
+
+== Port ==
+
+ * CPLIsFilenameRelative(): treat "scheme://.." filenames as absolute
+ * VSIS3FSHandler::SetFileMetadata(): fix memleak.
+ * CPLJSONDocument::LoadUrl(): avoid potential memory leak
+ * VSI_CACHE: do not trust unreliable file size from underlying layer (#3006)
+ * /vsicurl_streaming/: do not trust unreliable file size (#3006)
+ * /vsicurl_streaming/: avoid potential libcurl bug (at least as of 7.47) in multi-threading (#3006)
+
+== GDAL Algorithms ==
+
+ * Warper: emit error message instead of assertion if cutline is not a (multi)polygon (#3037)
+ * TPS transformer : fix handling of duplicated GCPs (#2917)
+
+== GDAL utilities ==
+
+ * gdal2tiles: fix regression of #2808 when tmaxz != nativezoom (#2932)
+ * gdal2tiles.py: make sure configuration options specified with --config are passed to worker processes (#2950)
+ * gdal2tiles: fix --profile=raster on a non-georeferenced image (#2998)
+ * gdalcompare: fix floor division in Python 3
+ * gdalbuildvrt: fix -srcnodata / -vrtnodata handling in -separate mode (#2978)
+
+== GDAL drivers ==
+
+Multiple drivers:
+ * JPEG2000 drivers: extend signature for JPEG2000 codestream to avoid false positive detections.
+
+AAIGRID driver:
+ * Improve search for float data. (#2972)
+
+COG driver:
+ * fix crash when source dataset is non-Byte/non-UInt16 with a color table (#2946)
+
+GPKG driver:
+ * fix when writing a tile with uniform negative values or values > 65535 (when nodata is set) in PNG tiles (#3044)
+
+GRIB driver:
+ * fix retrieval of nodata value for GRIB1 products (GDAL 3.1 regression, #2962)
+ * correctly report PDS template number for messages with subgrids (#3004)
+
+GTiff driver:
+ * LERC codec: do not write TIFFTAG_LERC_PARAMETERS several times as it cause spurious directory rewrites, and breaks for example COG creation
+ * support hidden SHIFT_ORIGIN_IN_MINUS_180_PLUS_180=YES open option used by GDALOpenVerticalShiftGrid()
+ * Internal libtiff: fix out-of-bounds write triggered by GDAL when repeatedly reading a corrupt strip. Fixes ossfuzz#25493
+ * Internal libtiff: tif_fax3.h: fixes for ossfuzz#25552 and ossfuzz#26201
+
+JP2OpenJPEG:
+ * fix reading overviews on Sentinel2 PVI files (343x343 size, with 8x8 tiles) (#2984)
+
+PCRaster driver:
+ * fix Create() mode by propagating eAccess = GA_Update (#2948)
+
+VRT driver:
+ * VRTDataset::IRasterIO(): allow source overviews to be used when non-nearest resampling is used, and the VRT bands don't expose overviews (#2911)
+ * fix VRTRasterBand nodata handling when creating implicit overviews (#2920)
+
+== OGR core ==
+
+ * fix memory leak in OGRGeometry::Crosses
+ * OGR SQL: support constructs 'A AND B AND C ... AND N' with many successive AND (#2989)
+
+== OGR drivers ==
+
+CSV driver:
+ * do not try to read .csvt if CSV filename has no extension (#3006)
+
+ESRIJSON driver:
+ * fix GetFeatureCount() and GetExtent()
+
+FlatGeobuf driver:
+ * metadata extensions backport (#2976)
+
+GML driver:
+ * avoid 'Destination buffer too small' error to be emitted on /vsicurl_streaming/ URLs with filters coming from the WFS driver
+
+LIBKML driver:
+ * do not advertize RandomWrite capability (unless on a update layer, when datasource is created with UPDATE_TARGETHREF creation option) (QIGS #39087)
+
+NAS driver:
+ * do not try to write a .gfs file when NAS_GFS_TEMPLATE is specified
+
+OAPIF driver:
+ * fix memory leak when reading schema from .xsd
+
+OCI driver:
+ * fix server 12.2 version detection
+
+ODS and XLSX drivers:
+ * do not create files with Zip64 extension, to avoid compatibility issue with LibreOffice Calc
+
+PGeo driver:
+ * fix libPath where /usr/local/lib64 or /usr/lib would not have been tried
+
+SEGY driver:
+ * fix potential double free
+
+WFS driver:
+ * avoid /vsicurl_streaming/ URL to be truncated in case of big filter (but the server might reject it)
+
 = GDAL/OGR 3.1.3 Release Notes =
 
 The 3.1.3 release is a bug fix release.
