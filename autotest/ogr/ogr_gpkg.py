@@ -4300,3 +4300,123 @@ def test_ogr_gpkg_deferred_spi_creation():
 
     ds = None
     gdal.Unlink('/vsimem/test.gpkg')
+
+
+###############################################################################
+# Test deferred spatial index update
+
+
+def test_ogr_gpkg_deferred_spi_update():
+
+    def has_spi_triggers(ds):
+        sql_lyr = ds.ExecuteSQL("SELECT * FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'rtree_test_geom%'", dialect='DEBUG')
+        res = sql_lyr.GetFeatureCount()
+        ds.ReleaseResultSet(sql_lyr)
+        return res == 6
+
+    filename = '/vsimem/test.gpkg'
+
+    # Basic test
+    ds = ogr.GetDriverByName('GPKG').CreateDataSource(filename)
+    ds.CreateLayer('test')
+    ds = None
+    with gdaltest.config_option('OGR_GPKG_DEFERRED_SPI_UPDATE_THRESHOLD', '2'):
+        ds = ogr.Open(filename, update = 1)
+        lyr = ds.GetLayer(0)
+
+        ds.StartTransaction()
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (0 0)'))
+        lyr.CreateFeature(f)
+        assert has_spi_triggers(ds)
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 1)'))
+        lyr.CreateFeature(f)
+        assert not has_spi_triggers(ds)
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (2 2)'))
+        lyr.CreateFeature(f)
+        assert not has_spi_triggers(ds)
+
+        sql_lyr = ds.ExecuteSQL("SELECT * FROM rtree_test_geom", dialect='DEBUG')
+        res = sql_lyr.GetFeatureCount()
+        ds.ReleaseResultSet(sql_lyr)
+        assert res == 2
+
+        ds.CommitTransaction()
+        assert has_spi_triggers(ds)
+
+        sql_lyr = ds.ExecuteSQL("SELECT * FROM rtree_test_geom", dialect='DEBUG')
+        res = sql_lyr.GetFeatureCount()
+        ds.ReleaseResultSet(sql_lyr)
+        assert res == 3
+
+        ds = None
+
+    # Check effect of RollbackTransaction()
+    ds = ogr.GetDriverByName('GPKG').CreateDataSource(filename)
+    ds.CreateLayer('test')
+    ds = None
+    with gdaltest.config_option('OGR_GPKG_DEFERRED_SPI_UPDATE_THRESHOLD', '1'):
+        ds = ogr.Open(filename, update = 1)
+        lyr = ds.GetLayer(0)
+
+        ds.StartTransaction()
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (0 0)'))
+        lyr.CreateFeature(f)
+        assert not has_spi_triggers(ds)
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 1)'))
+        lyr.CreateFeature(f)
+        assert not has_spi_triggers(ds)
+
+        sql_lyr = ds.ExecuteSQL("SELECT * FROM rtree_test_geom", dialect='DEBUG')
+        res = sql_lyr.GetFeatureCount()
+        ds.ReleaseResultSet(sql_lyr)
+        assert res == 1
+
+        ds.RollbackTransaction()
+        assert has_spi_triggers(ds)
+
+        sql_lyr = ds.ExecuteSQL("SELECT * FROM rtree_test_geom", dialect='DEBUG')
+        res = sql_lyr.GetFeatureCount()
+        ds.ReleaseResultSet(sql_lyr)
+        assert res == 0
+
+        ds = None
+
+    # Check that GetNextFeature() with a spatial filter causes flushing of
+    # deferred SPI values
+    ds = ogr.GetDriverByName('GPKG').CreateDataSource(filename)
+    ds.CreateLayer('test')
+    ds = None
+    with gdaltest.config_option('OGR_GPKG_DEFERRED_SPI_UPDATE_THRESHOLD', '1'):
+        ds = ogr.Open(filename, update = 1)
+        lyr = ds.GetLayer(0)
+
+        ds.StartTransaction()
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (0 0)'))
+        lyr.CreateFeature(f)
+        assert not has_spi_triggers(ds)
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 1)'))
+        lyr.CreateFeature(f)
+
+        lyr.SetSpatialFilterRect(0,0,1,1)
+        lyr.ResetReading()
+        assert lyr.GetNextFeature() is not None
+        assert has_spi_triggers(ds)
+        assert lyr.GetNextFeature() is not None
+        assert lyr.GetNextFeature() is None
+        ds = None
+
+    gdal.Unlink('/vsimem/test.gpkg')

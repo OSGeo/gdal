@@ -284,7 +284,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         virtual OGRErr      CommitTransaction() override;
         virtual OGRErr      RollbackTransaction() override;
 
-        bool                IsInTransaction() const;
+        inline bool         IsInTransaction() const { return nSoftTransactionLevel > 0; }
 
         int                 GetSrsId( const OGRSpatialReference& oSRS );
         const char*         GetSrsName( const OGRSpatialReference& oSRS );
@@ -452,6 +452,20 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     GPKGASpatialVariant         m_eASPatialVariant;
     std::set<OGRwkbGeometryType> m_eSetBadGeomTypeWarned;
 
+    int                         m_nCountInsertInTransactionThreshold = -1;
+    GIntBig                     m_nCountInsertInTransaction = 0;
+    std::vector<CPLString >     m_aoRTreeTriggersSQL{};
+    typedef struct
+    {
+        GIntBig nId;
+        float   fMinX;
+        float   fMinY;
+        float   fMaxX;
+        float   fMaxY;
+    } GPKGRTreeEntry;
+    std::vector<GPKGRTreeEntry>  m_aoRTreeEntries{};
+
+
     virtual OGRErr      ResetStatement() override;
 
     void                BuildWhere();
@@ -472,6 +486,9 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     void                InitView();
 
     bool                DoSpecialProcessingForColumnCreation(OGRFieldDefn* poField);
+
+    bool                StartDeferredSpatialIndexUpdate();
+    bool                FlushPendingSpatialIndexUpdate();
 
     public:
                         OGRGeoPackageTableLayer( GDALGeoPackageDataset *poDS,
@@ -563,6 +580,9 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
                                 { m_bTruncateFields = CPL_TO_BOOL( bFlag ); }
     OGRErr              RunDeferredCreationIfNecessary();
     bool                RunDeferredDropRTreeTableIfNecessary();
+    bool                DoJobAtTransactionCommit();
+    bool                DoJobAtTransactionRollback();
+    bool                RunDeferredSpatialIndexUpdate();
 
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     bool                GetAddOGRFeatureCountTriggers() const

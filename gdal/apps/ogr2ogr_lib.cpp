@@ -5039,7 +5039,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
     psOptions->bSkipFailures = false;
     psOptions->nLayerTransaction = -1;
     psOptions->bForceTransaction = false;
-    psOptions->nGroupTransactions = 20000;
+    psOptions->nGroupTransactions = 100 * 1000;
     psOptions->nFIDToFetch = OGRNullFID;
     psOptions->bQuiet = false;
     psOptions->pszFormat = nullptr;
