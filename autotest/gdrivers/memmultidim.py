@@ -1890,6 +1890,64 @@ def test_mem_md_array_statistics_float32():
     assert stats.valid_count == 5
 
 
+def test_mem_md_array_copy_autoscale():
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.CreateMultiDimensional('myds')
+    rg = ds.GetRootGroup()
+    dim0 = rg.CreateDimension("dim0", "unspecified type", "unspecified direction", 2)
+    dim1 = rg.CreateDimension("dim1", "unspecified type", "unspecified direction", 3)
+    float32dt = gdal.ExtendedDataType.Create(gdal.GDT_Float32)
+    ar = rg.CreateMDArray("myarray", [dim0, dim1], float32dt)
+    data = struct.pack('f' * 6, 1.5, 2, 3, 4, 5, 6.5)
+    ar.Write(data)
+    attr = ar.CreateAttribute('attr_float64', [1],
+                              gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+    attr.Write(1.25)
+
+    attr = ar.CreateAttribute('valid_min', [1],
+                              gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+    attr.Write(1.25)
+
+    out_ds = drv.CreateCopy('', ds, options = ['ARRAY:AUTOSCALE=YES'])
+    out_rg = out_ds.GetRootGroup()
+    out_ar = out_rg.OpenMDArray('myarray')
+    assert out_ar.GetAttribute('attr_float64') is not None
+    assert out_ar.GetAttribute('valid_min') is None
+    assert out_ar.GetDataType() == gdal.ExtendedDataType.Create(gdal.GDT_UInt16)
+    assert out_ar.GetOffset() == 1.5
+    assert out_ar.GetScale() == (6.5 - 1.5) / 65535.
+    assert struct.unpack('H' * 6, out_ar.Read()) == (0, 6554, 19661, 32768, 45875, 65535)
+    assert struct.unpack('d' * 6, out_ar.GetUnscaled().Read()) == pytest.approx( (1.5, 2, 3, 4, 5, 6.5), abs = out_ar.GetScale() / 2 )
+
+
+def test_mem_md_array_copy_autoscale_with_explicit_data_type_and_nodata():
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.CreateMultiDimensional('myds')
+    rg = ds.GetRootGroup()
+    dim0 = rg.CreateDimension("dim0", "unspecified type", "unspecified direction", 2)
+    dim1 = rg.CreateDimension("dim1", "unspecified type", "unspecified direction", 3)
+    float32dt = gdal.ExtendedDataType.Create(gdal.GDT_Float32)
+    ar = rg.CreateMDArray("myarray", [dim0, dim1], float32dt)
+    ar.SetNoDataValueDouble(5)
+    data = struct.pack('f' * 6, 1.5, 2, 3, 4, 6.5, 5)
+    ar.Write(data)
+
+    out_ds = drv.CreateCopy('', ds, options = ['ARRAY:AUTOSCALE=YES',
+                                               'ARRAY:AUTOSCALE_DATA_TYPE=Int16'])
+    out_rg = out_ds.GetRootGroup()
+    out_ar = out_rg.OpenMDArray('myarray')
+    assert out_ar.GetDataType() == gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+    assert out_ar.GetScale() == (6.5 - 1.5) / (65535. - 1)
+    assert out_ar.GetOffset() == 1.5 - (-32768) * out_ar.GetScale()
+    assert out_ar.GetNoDataValueAsDouble() == 32767.
+    assert struct.unpack('h' * 6, out_ar.Read()) == (-32768, -26215, -13108, -1, 32766, 32767)
+    unscaled = struct.unpack('d' * 6, out_ar.GetUnscaled().Read())
+    assert unscaled[0:5] == pytest.approx( (1.5, 2, 3, 4, 6.5), abs = out_ar.GetScale() / 2 )
+    assert math.isnan(unscaled[5])
+
+
 def XX_test_all_forever():
     while True:
         test_mem_md_basic()

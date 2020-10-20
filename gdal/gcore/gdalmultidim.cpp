@@ -42,6 +42,93 @@
 #endif
 
 /************************************************************************/
+/*                       GDALMDArrayUnscaled                            */
+/************************************************************************/
+
+class GDALMDArrayUnscaled final: public GDALMDArray
+{
+private:
+    std::shared_ptr<GDALMDArray> m_poParent{};
+    GDALExtendedDataType m_dt;
+    bool m_bHasNoData;
+    double m_adfNoData[2]{ std::numeric_limits<double>::quiet_NaN(),
+                           std::numeric_limits<double>::quiet_NaN() };
+
+protected:
+    explicit GDALMDArrayUnscaled(const std::shared_ptr<GDALMDArray>& poParent):
+        GDALAbstractMDArray(std::string(), "Unscaled view of " + poParent->GetFullName()),
+        GDALMDArray(std::string(), "Unscaled view of " + poParent->GetFullName()),
+        m_poParent(std::move(poParent)),
+        m_dt(GDALExtendedDataType::Create(GDALDataTypeIsComplex(
+            m_poParent->GetDataType().GetNumericDataType()) ?
+                GDT_CFloat64 : GDT_Float64)),
+        m_bHasNoData( m_poParent->GetRawNoDataValue() != nullptr )
+    {
+    }
+
+    bool IRead(const GUInt64* arrayStartIdx,
+                      const size_t* count,
+                      const GInt64* arrayStep,
+                      const GPtrDiff_t* bufferStride,
+                      const GDALExtendedDataType& bufferDataType,
+                      void* pDstBuffer) const override;
+
+    bool IWrite(const GUInt64* arrayStartIdx,
+                      const size_t* count,
+                      const GInt64* arrayStep,
+                      const GPtrDiff_t* bufferStride,
+                      const GDALExtendedDataType& bufferDataType,
+                      const void* pSrcBuffer) override;
+
+    bool IAdviseRead(const GUInt64* arrayStartIdx,
+                     const size_t* count) const override
+        { return m_poParent->AdviseRead(arrayStartIdx, count); }
+
+public:
+    static std::shared_ptr<GDALMDArrayUnscaled> Create(
+                    const std::shared_ptr<GDALMDArray>& poParent)
+    {
+        auto newAr(std::shared_ptr<GDALMDArrayUnscaled>(new GDALMDArrayUnscaled(
+            poParent)));
+        newAr->SetSelf(newAr);
+        return newAr;
+    }
+
+    bool IsWritable() const override { return m_poParent->IsWritable(); }
+
+    const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_poParent->GetDimensions(); }
+
+    const GDALExtendedDataType &GetDataType() const override { return m_dt; }
+
+    const std::string& GetUnit() const override { return m_poParent->GetUnit(); }
+
+    std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override { return m_poParent->GetSpatialRef(); }
+
+    const void* GetRawNoDataValue() const override { return m_bHasNoData ? &m_adfNoData[0] : nullptr; }
+
+    bool SetRawNoDataValue(const void* pRawNoData) override {
+        m_bHasNoData = true; memcpy(m_adfNoData, pRawNoData, m_dt.GetSize()); return true; }
+
+    std::vector<GUInt64> GetBlockSize() const override { return m_poParent->GetBlockSize(); }
+
+    std::shared_ptr<GDALAttribute> GetAttribute(const std::string& osName) const override
+        { return m_poParent->GetAttribute(osName); }
+
+    std::vector<std::shared_ptr<GDALAttribute>> GetAttributes(CSLConstList papszOptions = nullptr) const override
+        { return m_poParent->GetAttributes(papszOptions); }
+
+    bool SetUnit(const std::string& osUnit) override { return m_poParent->SetUnit(osUnit); }
+
+    bool SetSpatialRef(const OGRSpatialReference* poSRS) override { return m_poParent->SetSpatialRef(poSRS); }
+
+    std::shared_ptr<GDALAttribute> CreateAttribute(
+        const std::string& osName,
+        const std::vector<GUInt64>& anDimensions,
+        const GDALExtendedDataType& oDataType,
+        CSLConstList papszOptions = nullptr) override {return m_poParent->CreateAttribute(osName, anDimensions, oDataType, papszOptions); }
+};
+
+/************************************************************************/
 /*                         ~GDALIHasAttribute()                         */
 /************************************************************************/
 
@@ -469,6 +556,12 @@ GUInt64 GDALGroup::GetTotalCopyCost() const
  *                     restrict BLOCKSIZE=256,256 to arrays of dimension 2.
  *                     Restriction to arrays of a given name is done with adding
  *                     "IF(NAME={name}):" after "ARRAY:".
+ *                     A non-driver specific ARRAY option, "AUTOSCALE=YES" can be
+ *                     used to ask (non indexing) variables of type Float32 or Float64
+ *                     to be scaled to UInt16 with scale and offset values
+ *                     being computed from the minimum and maximum of the source array.
+ *                     The integer data type used can be set with
+ *                     AUTOSCALE_DATA_TYPE=Byte/UInt16/Int16/UInt32/Int32.
  *
  * @return true in case of success (or partial success if bStrict == false).
  */
@@ -590,6 +683,8 @@ bool GDALGroup::CopyFrom( const std::shared_ptr<GDALGroup>& poDstRootGroup,
             }
 
             CPLStringList aosArrayCO;
+            bool bAutoScale = false;
+            GDALDataType eAutoScaleType = GDT_UInt16;
             for( CSLConstList papszIter = papszOptions;
                                         papszIter && *papszIter; ++papszIter )
             {
@@ -632,24 +727,147 @@ bool GDALGroup::CopyFrom( const std::shared_ptr<GDALGroup>& poDstRootGroup,
                         }
                     }
                     if( pszOption )
-                        aosArrayCO.AddString(pszOption);
+                    {
+                        if( STARTS_WITH_CI(pszOption, "AUTOSCALE=") )
+                        {
+                            bAutoScale = CPLTestBool(pszOption + strlen("AUTOSCALE="));
+                        }
+                        else if( STARTS_WITH_CI(pszOption, "AUTOSCALE_DATA_TYPE=") )
+                        {
+                            const char* pszDataType = pszOption + strlen("AUTOSCALE_DATA_TYPE=");
+                            eAutoScaleType = GDALGetDataTypeByName(pszDataType);
+                            if( eAutoScaleType != GDT_Byte &&
+                                eAutoScaleType != GDT_UInt16 &&
+                                eAutoScaleType != GDT_Int16 &&
+                                eAutoScaleType != GDT_UInt32 &&
+                                eAutoScaleType != GDT_Int32 )
+                            {
+                                CPLError(CE_Failure, CPLE_NotSupported,
+                                         "Unsupported value for AUTOSCALE_DATA_TYPE");
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            aosArrayCO.AddString(pszOption);
+                        }
+                    }
                 }
             }
-            auto dstArray = CreateMDArray(srcArray->GetName(),
-                                          dstArrayDims,
-                                          srcArray->GetDataType(),
-                                          aosArrayCO.List());
-            EXIT_OR_CONTINUE_IF_NULL(dstArray);
 
-            if( !dstArray->CopyFrom(poSrcDS,
-                                    srcArray.get(), bStrict,
-                                    nCurCost, nTotalCost,
-                                    pfnProgress, pProgressData) )
-                return false;
+            auto oIterDimName = mapSrcVariableNameToIndexedDimName.find(srcArray->GetName());
+            const auto& srcArrayType = srcArray->GetDataType();
+
+            std::shared_ptr<GDALMDArray> dstArray;
+
+            // Only autoscale non-indexing variables
+            bool bHasOffset = false;
+            bool bHasScale = false;
+            if( bAutoScale &&
+                srcArrayType.GetClass() == GEDTC_NUMERIC &&
+                (srcArrayType.GetNumericDataType() == GDT_Float32 ||
+                 srcArrayType.GetNumericDataType() == GDT_Float64 ) &&
+                srcArray->GetOffset(&bHasOffset) == 0.0 &&
+                !bHasOffset &&
+                srcArray->GetScale(&bHasScale) == 1.0 &&
+                !bHasScale &&
+                oIterDimName == mapSrcVariableNameToIndexedDimName.end() )
+            {
+                constexpr bool bApproxOK = false;
+                constexpr bool bForce = true;
+                double dfMin = 0.0;
+                double dfMax = 0.0;
+                if( srcArray->GetStatistics(poSrcDS, bApproxOK, bForce,
+                                        &dfMin, &dfMax, nullptr, nullptr,
+                                        nullptr,
+                                        nullptr, nullptr) != CE_None )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Could not retrieve statistics for array %s",
+                             srcArray->GetName().c_str());
+                    return false;
+                }
+                double dfDTMin = 0;
+                double dfDTMax = 0;
+#define setDTMinMax(ctype) do \
+    { dfDTMin = std::numeric_limits<ctype>::min(); dfDTMax = std::numeric_limits<ctype>::max(); } while(0)
+
+                switch( eAutoScaleType )
+                {
+                    case GDT_Byte:   setDTMinMax(GByte); break;
+                    case GDT_UInt16: setDTMinMax(GUInt16); break;
+                    case GDT_Int16:  setDTMinMax(GInt16); break;
+                    case GDT_UInt32: setDTMinMax(GUInt32); break;
+                    case GDT_Int32:  setDTMinMax(GInt32); break;
+                    default:
+                        CPLAssert(false);
+                }
+
+                dstArray = CreateMDArray(srcArray->GetName(),
+                                         dstArrayDims,
+                                         GDALExtendedDataType::Create(eAutoScaleType),
+                                         aosArrayCO.List());
+                EXIT_OR_CONTINUE_IF_NULL(dstArray);
+
+                if( srcArray->GetRawNoDataValue() != nullptr )
+                {
+                    // If there's a nodata value in the source array, reserve
+                    // DTMax for that purpose in the target scaled array
+                    if( !dstArray->SetNoDataValue(dfDTMax) )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Cannot set nodata value");
+                        return false;
+                    }
+                    dfDTMax --;
+                }
+                const double dfScale = dfMax > dfMin ?
+                    (dfMax - dfMin) / (dfDTMax - dfDTMin) : 1.0;
+                const double dfOffset = dfMin - dfDTMin * dfScale;
+
+                if( !dstArray->SetOffset(dfOffset) ||
+                    !dstArray->SetScale(dfScale) )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Cannot set scale/offset");
+                    return false;
+                }
+
+                auto poUnscaled = dstArray->GetUnscaled();
+                if( srcArray->GetRawNoDataValue() != nullptr )
+                {
+                    poUnscaled->SetNoDataValue(
+                        srcArray->GetNoDataValueAsDouble() );
+                }
+
+                // Copy source array into unscaled array
+                if( !poUnscaled->CopyFrom(poSrcDS,
+                                          srcArray.get(), bStrict,
+                                          nCurCost, nTotalCost,
+                                          pfnProgress, pProgressData) )
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                dstArray = CreateMDArray(srcArray->GetName(),
+                                          dstArrayDims,
+                                          srcArrayType,
+                                          aosArrayCO.List());
+                EXIT_OR_CONTINUE_IF_NULL(dstArray);
+
+                if( !dstArray->CopyFrom(poSrcDS,
+                                        srcArray.get(), bStrict,
+                                        nCurCost, nTotalCost,
+                                        pfnProgress, pProgressData) )
+                {
+                    return false;
+                }
+            }
 
             // If this array is the indexing variable of a dimension, link them
             // together.
-            auto oIterDimName = mapSrcVariableNameToIndexedDimName.find(srcArray->GetName());
             if( oIterDimName != mapSrcVariableNameToIndexedDimName.end() )
             {
                 auto oCorrespondingDimIter = mapExistingDstDims.find(oIterDimName->second);
@@ -2751,13 +2969,27 @@ bool GDALMDArray::CopyFromAllExceptValues(const GDALMDArray* poSrcArray,
                                           GDALProgressFunc pfnProgress,
                                           void * pProgressData)
 {
-
+    const bool bThisIsUnscaledArray =
+        dynamic_cast<GDALMDArrayUnscaled*>(this) != nullptr;
     auto attrs = poSrcArray->GetAttributes();
     for( const auto& attr: attrs )
     {
-        auto dstAttr = CreateAttribute(attr->GetName(),
-                                                   attr->GetDimensionsSize(),
-                                                   attr->GetDataType());
+        const auto& osAttrName = attr->GetName();
+        if( bThisIsUnscaledArray )
+        {
+            if( osAttrName == "missing_value" ||
+                osAttrName == "_FillValue" ||
+                osAttrName == "valid_min" ||
+                osAttrName == "valid_max" ||
+                osAttrName == "valid_range" )
+            {
+                continue;
+            }
+        }
+
+        auto dstAttr = CreateAttribute(osAttrName,
+                                       attr->GetDimensionsSize(),
+                                       attr->GetDataType());
         if( !dstAttr )
         {
             if( bStrict )
@@ -4245,74 +4477,6 @@ std::shared_ptr<GDALMDArray> GDALMDArray::Transpose(
 }
 
 /************************************************************************/
-/*                      GDALMDArrayTransposed                           */
-/************************************************************************/
-
-class GDALMDArrayUnscaled final: public GDALMDArray
-{
-private:
-    std::shared_ptr<GDALMDArray> m_poParent{};
-    GDALExtendedDataType m_dt;
-    bool m_bHasNoData;
-    double m_adfNoData[2]{ std::numeric_limits<double>::quiet_NaN(),
-                           std::numeric_limits<double>::quiet_NaN() };
-
-protected:
-    explicit GDALMDArrayUnscaled(const std::shared_ptr<GDALMDArray>& poParent):
-        GDALAbstractMDArray(std::string(), "Unscaled view of " + poParent->GetFullName()),
-        GDALMDArray(std::string(), "Unscaled view of " + poParent->GetFullName()),
-        m_poParent(std::move(poParent)),
-        m_dt(GDALExtendedDataType::Create(GDALDataTypeIsComplex(
-            m_poParent->GetDataType().GetNumericDataType()) ?
-                GDT_CFloat64 : GDT_Float64)),
-        m_bHasNoData( m_poParent->GetRawNoDataValue() != nullptr )
-    {
-    }
-
-    bool IRead(const GUInt64* arrayStartIdx,
-                      const size_t* count,
-                      const GInt64* arrayStep,
-                      const GPtrDiff_t* bufferStride,
-                      const GDALExtendedDataType& bufferDataType,
-                      void* pDstBuffer) const override;
-
-    bool IWrite(const GUInt64* arrayStartIdx,
-                      const size_t* count,
-                      const GInt64* arrayStep,
-                      const GPtrDiff_t* bufferStride,
-                      const GDALExtendedDataType& bufferDataType,
-                      const void* pSrcBuffer) override;
-
-    bool IAdviseRead(const GUInt64* arrayStartIdx,
-                     const size_t* count) const override
-        { return m_poParent->AdviseRead(arrayStartIdx, count); }
-
-public:
-    static std::shared_ptr<GDALMDArrayUnscaled> Create(
-                    const std::shared_ptr<GDALMDArray>& poParent)
-    {
-        auto newAr(std::shared_ptr<GDALMDArrayUnscaled>(new GDALMDArrayUnscaled(
-            poParent)));
-        newAr->SetSelf(newAr);
-        return newAr;
-    }
-
-    bool IsWritable() const override { return m_poParent->IsWritable(); }
-
-    const std::vector<std::shared_ptr<GDALDimension>>& GetDimensions() const override { return m_poParent->GetDimensions(); }
-
-    const GDALExtendedDataType &GetDataType() const override { return m_dt; }
-
-    const std::string& GetUnit() const override { return m_poParent->GetUnit(); }
-
-    std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override { return m_poParent->GetSpatialRef(); }
-
-    const void* GetRawNoDataValue() const override { return m_bHasNoData ? &m_adfNoData[0] : nullptr; }
-
-    std::vector<GUInt64> GetBlockSize() const override { return m_poParent->GetBlockSize(); }
-};
-
-/************************************************************************/
 /*                             IRead()                                  */
 /************************************************************************/
 
@@ -4499,9 +4663,11 @@ bool GDALMDArrayUnscaled::IWrite(const GUInt64* arrayStartIdx,
     const size_t nDTSize = m_dt.GetSize();
     CPLAssert( nDTSize == 8 || nDTSize == 16 );
     const bool bIsBufferDataTypeNativeDataType = ( m_dt == bufferDataType );
+    const bool bSelfAndParentHaveNoData =
+        m_bHasNoData && m_poParent->GetRawNoDataValue() != nullptr; 
 
     double adfSrcNoData[2] = { 0, 0 };
-    if( m_bHasNoData )
+    if( bSelfAndParentHaveNoData )
     {
         GDALExtendedDataType::CopyValue(m_poParent->GetRawNoDataValue(),
                                         m_poParent->GetDataType(),
@@ -4514,7 +4680,8 @@ bool GDALMDArrayUnscaled::IWrite(const GUInt64* arrayStartIdx,
         double adfVal[2];
         GDALExtendedDataType::CopyValue(pSrcBuffer, bufferDataType,
                                         &adfVal[0], m_dt);
-        if( m_bHasNoData && std::isnan(adfVal[0]) )
+        if( bSelfAndParentHaveNoData &&
+            (std::isnan(adfVal[0]) || adfVal[0] == m_adfNoData[0]) )
         {
             return m_poParent->Write(arrayStartIdx, count, arrayStep, bufferStride,
                                      m_poParent->GetDataType(),
@@ -4593,7 +4760,8 @@ lbl_next_depth:
                 padfSrcVal = adfVal;
             }
 
-            if( m_bHasNoData && std::isnan(padfSrcVal[0]) )
+            if( bSelfAndParentHaveNoData &&
+                (std::isnan(padfSrcVal[0]) || padfSrcVal[0] == m_adfNoData[0]) )
             {
                 dst_ptr[0] = adfSrcNoData[0];
                 if( bDTIsComplex )
@@ -4651,8 +4819,9 @@ lbl_return_to_caller:
         {
             std::vector<GByte> abyTemp(nParentDTSize);
             GDALCopyWords64( static_cast<GByte*>(pTempBuffer),
-                             eNumericDT, nDTSize,
-                             &abyTemp[0], eParentNumericDT, nParentDTSize,
+                             eNumericDT, static_cast<int>(nDTSize),
+                             &abyTemp[0],
+                             eParentNumericDT, static_cast<int>(nParentDTSize),
                              1 );
             memcpy( pTempBuffer, abyTemp.data(), abyTemp.size() );
         }
