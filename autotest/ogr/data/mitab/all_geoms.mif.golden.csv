@@ -1,6 +1,6 @@
 WKT,ogr_style
 "POINT (0 1)","SYMBOL(a:0,c:#000000,s:12pt,id:""mapinfo-sym-35,ogr-sym-10"")"
-"POINT (2 3)","SYMBOL(a:0,c:#000000,s:1pt,id:""mapinfo-sym-35,ogr-sym-10"")"
+"POINT (2 3)","SYMBOL(a:0,c:#000000,s:1pt,id:""mapinfo-custom-sym-2-bla,-bla,ogr-sym-9"")"
 "POINT (4 5)","SYMBOL(a:30,c:#000001,s:2pt,id:""font-sym-99,ogr-sym-9"",f:""foo"")"
 "LINESTRING (0 1,2 3)","PEN(w:1px,c:#000000,id:""mapinfo-pen-2,ogr-pen-0"")"
 "LINESTRING (0 1,2 3)","PEN(w:1px,c:#000000,id:""mapinfo-pen-2,ogr-pen-0"")"
