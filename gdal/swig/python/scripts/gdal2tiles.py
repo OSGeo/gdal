@@ -2595,8 +2595,8 @@ class GDAL2Tiles(object):
             <title>%(htmltitle)s</title>
 
             <!-- Leaflet -->
-            <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.css" />
-            <script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@0.7.5/dist/leaflet.css" />
+            <script src="https://unpkg.com/leaflet@0.7.5/dist/leaflet.js"></script>
 
             <style>
                 body { margin:0; padding:0; }
