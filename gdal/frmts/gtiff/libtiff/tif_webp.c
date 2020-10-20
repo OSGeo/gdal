@@ -267,6 +267,12 @@ TWebPPreDecode(TIFF* tif, uint16 s)
       segment_height = td->td_rowsperstrip;
   }
 
+  if( segment_width > 16383 || segment_height > 16383 ) {
+      TIFFErrorExt(tif->tif_clientdata, module,
+                   "WEBP maximum image dimensions are 16383 x 16383.");
+      return 0;
+  }
+
   if( (sp->state & LSTATE_INIT_DECODE) == 0 )
       tif->tif_setupdecode(tif);
       
