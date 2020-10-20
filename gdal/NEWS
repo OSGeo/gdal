@@ -5,6 +5,7 @@ The 3.1.4 release is a bug fix release.
 == Build ==
 
  * Add compatiblity with Jasper 2.0.21 (#3012)
+ * Support CharLS 2.1 on Debian as well (#3083)
  * fix build in AVC driver in VSIL_STRICT_ENFORCE mode
  * mkgdaldist.sh: remove doc/.doxygen_up_to_date from generated tarballs (#3032)
 
