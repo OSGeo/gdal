@@ -183,14 +183,23 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
        nRawXSize == static_cast<GUInt32>(nBlockXSize) &&
        nRawYSize == static_cast<GUInt32>(nBlockYSize))
     {
+        bool bNullTile = false;
         if(CE_None != poGDS->ReadTile(nBlockXOff, nBlockYOff,
                                       reinterpret_cast<GByte*>(pImage),
-                                      nRawBytes, nRawXSize, nRawYSize))
+                                      nRawBytes, nRawXSize, nRawYSize,
+                                      bNullTile))
         {
             CPLError(CE_Failure, CPLE_FileIO,
                      "Failed to read tile xOff %d yOff %d",
                      nBlockXOff, nBlockYOff);
             return CE_Failure;
+        }
+        if(bNullTile)
+        {
+            const int nChunkSize = std::max(1, GDALGetDataTypeSizeBytes(eDataType));
+            const GPtrDiff_t nWords = static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize;
+            GDALCopyWords64(&poGDS->sHeader.dfNoData, GDT_Float64, 0,
+                            pImage, eDataType, nChunkSize, nWords);
         }
         return CE_None;
     }
@@ -227,7 +236,8 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         if(CE_None != poGDS->ReadTile(nBlockXOff, nBlockYOff,
                                       poGDS->pabyCurrentTile, nRawBytes,
-                                      nRawXSize, nRawYSize))
+                                      nRawXSize, nRawYSize,
+                                      poGDS->bCurrentTileIsNull))
         {
             CPLError(CE_Failure, CPLE_FileIO,
                      "Failed to read tile xOff %d yOff %d",
@@ -241,11 +251,19 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*  Deinterleave pixels from input buffer.                              */
 /* -------------------------------------------------------------------- */
 
-    if((poGDS->eRMFType == RMFT_RSW &&
-        (poGDS->sHeader.nBitDepth == 8 ||
-         poGDS->sHeader.nBitDepth == 24 ||
-         poGDS->sHeader.nBitDepth == 32)) ||
-       (poGDS->eRMFType == RMFT_MTW))
+    if(poGDS->bCurrentTileIsNull)
+    {
+        const int nChunkSize = std::max(1, GDALGetDataTypeSizeBytes(eDataType));
+        const GPtrDiff_t nWords = static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize;
+        GDALCopyWords64(&poGDS->sHeader.dfNoData, GDT_Float64, 0,
+                        pImage, eDataType, nChunkSize, nWords);
+        return CE_None;
+    }
+    else if((poGDS->eRMFType == RMFT_RSW &&
+             (poGDS->sHeader.nBitDepth == 8 ||
+              poGDS->sHeader.nBitDepth == 24 ||
+              poGDS->sHeader.nBitDepth == 32)) ||
+            (poGDS->eRMFType == RMFT_MTW))
     {
         size_t  nTilePixelSize = poGDS->sHeader.nBitDepth / 8;
         size_t  nTileLineSize = nTilePixelSize * nRawXSize;
@@ -468,8 +486,9 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             if(poGDS->paiTiles[2 * nTile + 1])
             {
                 CPLErr eRes;
+                bool bNullTile = false;
                 eRes = poGDS->ReadTile(nBlockXOff, nBlockYOff, oTile.oData.data(),
-                                       nTileSize, nRawXSize, nRawYSize);
+                                       nTileSize, nRawXSize, nRawYSize, bNullTile);
                 if(eRes != CE_None)
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
@@ -710,6 +729,7 @@ RMFDataset::RMFDataset() :
     paiTiles(nullptr),
     pabyDecompressBuffer(nullptr),
     pabyCurrentTile(nullptr),
+    bCurrentTileIsNull(false),
     nCurrentTileXOff(-1),
     nCurrentTileYOff(-1),
     nCurrentTileBytes(0),
@@ -2891,8 +2911,11 @@ CPLErr RMFDataset::WriteRawTile(int nBlockXOff, int nBlockYOff,
 
 CPLErr RMFDataset::ReadTile(int nBlockXOff, int nBlockYOff,
                             GByte* pabyData, size_t nRawBytes,
-                            GUInt32 nRawXSize, GUInt32 nRawYSize)
+                            GUInt32 nRawXSize, GUInt32 nRawYSize, 
+                            bool& bNullTile)
 {
+    bNullTile = false;
+
     const GUInt32 nTile = nBlockYOff * nXTiles + nBlockXOff;
     if(2 * nTile + 1 >= sHeader.nTileTblSize / sizeof(GUInt32))
     {
@@ -2918,6 +2941,7 @@ CPLErr RMFDataset::ReadTile(int nBlockXOff, int nBlockYOff,
 
     if(nTileOffset == 0)
     {
+        bNullTile = true;
         return CE_None;
     }
 
