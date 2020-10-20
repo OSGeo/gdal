@@ -31403,6 +31403,63 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
     if test "$HAVE_CHARLS" = "yes"; then
         LIBS="-lcharls $LIBS"
         CHARLS_INC="-DCHARLS_2_1"
+    else
+        ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JpegLsDecode in -lCharLS" >&5
+$as_echo_n "checking for JpegLsDecode in -lCharLS... " >&6; }
+if ${ac_cv_lib_CharLS_JpegLsDecode+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lCharLS  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char JpegLsDecode ();
+int
+main ()
+{
+return JpegLsDecode ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_CharLS_JpegLsDecode=yes
+else
+  ac_cv_lib_CharLS_JpegLsDecode=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_CharLS_JpegLsDecode" >&5
+$as_echo "$ac_cv_lib_CharLS_JpegLsDecode" >&6; }
+if test "x$ac_cv_lib_CharLS_JpegLsDecode" = xyes; then :
+  HAVE_CHARLS=yes
+fi
+
+        ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+        if test "$HAVE_CHARLS" = "yes"; then
+            LIBS="-lCharLS $LIBS"
+            CHARLS_INC="-DCHARLS_2_1"
+        fi
     fi
   else
         for ac_header in CharLS/interface.h
