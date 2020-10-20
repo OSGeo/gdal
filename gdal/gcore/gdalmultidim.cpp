@@ -4636,11 +4636,42 @@ lbl_return_to_caller:
     if( dimIdx > 0 )
         goto lbl_return_to_caller;
 
+    // If the parent array is not double/complex-double, then convert the
+    // values to it, before calling Write(), as some implementations can be
+    // very slow when doing the type conversion.
+    const auto& eParentDT = m_poParent->GetDataType();
+    const size_t nParentDTSize = eParentDT.GetSize();
+    if( nParentDTSize <= nDTSize / 2 )
+    {
+        // Copy in-place by making sure that source and target do not overlap
+        const auto eNumericDT = m_dt.GetNumericDataType();
+        const auto eParentNumericDT = eParentDT.GetNumericDataType();
+
+        // Copy first element
+        {
+            std::vector<GByte> abyTemp(nParentDTSize);
+            GDALCopyWords64( static_cast<GByte*>(pTempBuffer),
+                             eNumericDT, nDTSize,
+                             &abyTemp[0], eParentNumericDT, nParentDTSize,
+                             1 );
+            memcpy( pTempBuffer, abyTemp.data(), abyTemp.size() );
+        }
+        // Remaining elements
+        for( size_t i = 1; i < nElts; ++i )
+        {
+            GDALCopyWords( static_cast<GByte*>(pTempBuffer) + i * nDTSize,
+                           eNumericDT, 0,
+                           static_cast<GByte*>(pTempBuffer) + i * nParentDTSize,
+                           eParentNumericDT, 0,
+                           1 );
+        }
+    }
+
     const bool ret = m_poParent->Write(arrayStartIdx,
                                        count,
                                        arrayStep,
                                        tmpBufferStridePtr,
-                                       m_dt,
+                                       eParentDT,
                                        pTempBuffer);
 
     VSIFree(pTempBuffer);
