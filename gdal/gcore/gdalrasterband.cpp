@@ -6531,6 +6531,7 @@ void GDALRasterBand::IncDirtyBlocks( int nInc )
 /*                            ReportError()                             */
 /************************************************************************/
 
+#ifndef DOXYGEN_XML
 /**
  * \brief Emits an error related to a raster band.
  *
@@ -6571,6 +6572,7 @@ void GDALRasterBand::ReportError( CPLErr eErrClass, CPLErrorNum err_no,
     }
     va_end(args);
 }
+#endif
 
 /************************************************************************/
 /*                           GetVirtualMemAuto()                        */

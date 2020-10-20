@@ -1451,7 +1451,11 @@ int CPLprintf( CPL_FORMAT_STRING(const char* fmt), ... )
   * @return the number of matched patterns;
   * @since GDAL 2.0
   */
+#ifdef DOXYGEN_XML
+int CPLsscanf( const char* str, const char* fmt, ... )
+#else
 int CPLsscanf( const char* str, CPL_SCANF_FORMAT_STRING(const char* fmt), ... )
+#endif
 {
     bool error = false;
     int ret = 0;
