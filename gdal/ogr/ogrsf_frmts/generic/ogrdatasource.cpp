@@ -191,17 +191,17 @@ OGRErr OGR_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer )
 /*                       OGR_DS_GetLayerByName()                        */
 /************************************************************************/
 
-OGRLayerH OGR_DS_GetLayerByName( OGRDataSourceH hDS, const char *pszName )
+OGRLayerH OGR_DS_GetLayerByName( OGRDataSourceH hDS, const char *pszLayerName )
 
 {
     VALIDATE_POINTER1( hDS, "OGR_DS_GetLayerByName", nullptr );
 
     OGRLayerH hLayer = OGRLayer::ToHandle(
-        reinterpret_cast<GDALDataset *>(hDS)->GetLayerByName( pszName ));
+        reinterpret_cast<GDALDataset *>(hDS)->GetLayerByName( pszLayerName ));
 
 #ifdef OGRAPISPY_ENABLED
     if( bOGRAPISpyEnabled )
-        OGRAPISpy_DS_GetLayerByName(hDS, pszName, hLayer);
+        OGRAPISpy_DS_GetLayerByName(hDS, pszLayerName, hLayer);
 #endif
 
     return hLayer;
@@ -253,13 +253,13 @@ void OGR_DS_ReleaseResultSet( OGRDataSourceH hDS, OGRLayerH hLayer )
 /*                       OGR_DS_TestCapability()                        */
 /************************************************************************/
 
-int OGR_DS_TestCapability( OGRDataSourceH hDS, const char *pszCap )
+int OGR_DS_TestCapability( OGRDataSourceH hDS, const char *pszCapability )
 
 {
     VALIDATE_POINTER1( hDS, "OGR_DS_TestCapability", 0 );
-    VALIDATE_POINTER1( pszCap, "OGR_DS_TestCapability", 0 );
+    VALIDATE_POINTER1( pszCapability, "OGR_DS_TestCapability", 0 );
 
-    return reinterpret_cast<GDALDataset *>(hDS)->TestCapability( pszCap );
+    return reinterpret_cast<GDALDataset *>(hDS)->TestCapability( pszCapability );
 }
 
 /************************************************************************/

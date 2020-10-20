@@ -1271,8 +1271,7 @@ GDAL_GCP * CPL_STDCALL GDALDuplicateGCPs( int nCount, const GDAL_GCP *pasGCPList
 /************************************************************************/
 
 /**
- * \fn GDALFindAssociatedFile(const char*, const char*, char**, int)
- * Find file with alternate extension.
+ * \brief Find file with alternate extension.
  *
  * Finds the file with the indicated extension, substituting it in place
  * of the extension of the base filename.  Generally used to search for
@@ -1303,7 +1302,7 @@ GDAL_GCP * CPL_STDCALL GDALDuplicateGCPs( int nCount, const GDAL_GCP *pasGCPList
 CPLString GDALFindAssociatedFile( const char *pszBaseFilename,
                                   const char *pszExt,
                                   CSLConstList papszSiblingFiles,
-                                  int /* nFlags */ )
+                                  CPL_UNUSED int nFlags )
 
 {
     CPLString osTarget = CPLResetExtension( pszBaseFilename, pszExt );
