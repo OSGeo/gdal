@@ -2413,6 +2413,14 @@ if test "$with_charls" = "yes" -o "$with_charls" = "" ; then
     if test "$HAVE_CHARLS" = "yes"; then
         LIBS="-lcharls $LIBS"
         CHARLS_INC="-DCHARLS_2_1"
+    else
+        AC_LANG_PUSH([C++])
+        AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
+        AC_LANG_POP([C++])
+        if test "$HAVE_CHARLS" = "yes"; then
+            LIBS="-lCharLS $LIBS"
+            CHARLS_INC="-DCHARLS_2_1"
+        fi
     fi
   else
     dnl CharLS 1.x
