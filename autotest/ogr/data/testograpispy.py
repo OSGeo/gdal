@@ -8,20 +8,20 @@ os.access
 shutil.copy
 
 gdal.SetConfigOption('FOO', 'BAR')
-ogr.Open('non_existing', update=0)
-ogr.Open('non_existing', update=1)
+gdal.OpenEx('non_existing', gdal.OF_VECTOR)
+gdal.OpenEx('non_existing', gdal.OF_VECTOR | gdal.OF_UPDATE)
 ds1 = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/test.csv', options=['GEOMETRY=AS_WKT'])
 ds1_lyr1 = ds1.CreateLayer('test', srs=None, geom_type=ogr.wkbUnknown, options=[])
 geom_fd = ogr.GeomFieldDefn('geomfield', ogr.wkbPolygon)
-geom_fd.SetSpatialRef(osr.SpatialReference("""GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]"""))
+geom_fd.SetSpatialRef(osr.SpatialReference("""GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]"""))
 geom_fd.SetNullable(0)
 ds1_lyr1.CreateGeomField(geom_fd, approx_ok=1)
 ds1 = None
-ds1 = ogr.Open('/vsimem/test.csv', update=1)
+ds1 = gdal.OpenEx('/vsimem/test.csv', gdal.OF_VECTOR | gdal.OF_UPDATE)
 ds1 = None
 ogr.GetDriverByName('CSV').DeleteDataSource('/vsimem/test.csv')
 ds1 = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/test', options=[])
-ds1_lyr1 = ds1.CreateLayer('test', srs=osr.SpatialReference("""GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]"""), geom_type=ogr.wkbPoint, options=['ENCODING=UTF-8', 'ENCODING=UTF-8'])
+ds1_lyr1 = ds1.CreateLayer('test', srs=osr.SpatialReference("""GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]"""), geom_type=ogr.wkbPoint, options=['ENCODING=UTF-8', 'ENCODING=UTF-8'])
 fdefn1 = ds1_lyr1.GetLayerDefn()
 f = ogr.Feature(fdefn1)
 ds1_lyr1.CreateFeature(f)
