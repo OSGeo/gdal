@@ -3175,6 +3175,103 @@ def test_nitf_87():
 """
     assert data == expected_data
 
+###############################################################################
+# Test parsing CSWRPB TRE (STDI-0002-1-v5.0 App AH)
+
+def test_nitf_88():
+    tre_data = "TRE=CSWRPB=1F199.9999999900000010000002000000300000040000005000000600000070000008" \
+               "1111-9.99999999999999E-99+9.99999999999999E+9900000"
+               
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_88.ntf', 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_88.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_88.ntf')
+
+    expected_data = """<tres>
+  <tre name="CSWRPB" location="image">
+    <field name="NUM_SETS_WARP_DATA" value="1" />
+    <field name="SENSOR_TYPE" value="F" />
+    <field name="WRP_INTERP" value="1" />
+    <repeated number="1">
+      <group index="0">
+        <field name="FL_WARP" value="99.99999999" />
+        <field name="OFFSET_LINE" value="0000001" />
+        <field name="OFFSET_SAMP" value="0000002" />
+        <field name="SCALE_LINE" value="0000003" />
+        <field name="SCALE_SAMP" value="0000004" />
+        <field name="OFFSET_LINE_UNWRP" value="0000005" />
+        <field name="OFFSET_SAMP_UNWRP" value="0000006" />
+        <field name="SCALE_LINE_UNWRP" value="0000007" />
+        <field name="SCALE_SAMP_UNWRP" value="0000008" />
+        <field name="LINE_POLY_ORDER_M1" value="1" />
+        <field name="LINE_POLY_ORDER_M2" value="1" />
+        <field name="SAMP_POLY_ORDER_N1" value="1" />
+        <field name="SAMP_POLY_ORDER_N2" value="1" />
+        <repeated number="1">
+          <group index="0">
+            <repeated number="1">
+              <group index="0">
+                <field name="A" value="-9.99999999999999E-99" />
+              </group>
+            </repeated>
+          </group>
+        </repeated>
+        <repeated number="1">
+          <group index="0">
+            <repeated number="1">
+              <group index="0">
+                <field name="B" value="+9.99999999999999E+99" />
+              </group>
+            </repeated>
+          </group>
+        </repeated>
+      </group>
+    </repeated>
+    <field name="RESERVED_LEN" value="00000" />
+  </tre>
+</tres>
+"""
+    assert data == expected_data
+
+###############################################################################
+# Test parsing CSRLSB TRE (STDI-0002-1-v5.0 App AH)
+
+def test_nitf_89():
+    tre_data = "TRE=CSRLSB=0101+11111111.11-22222222.22+33333333.33-44444444.44"
+               
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_89.ntf', 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_89.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_89.ntf')
+
+    expected_data = """<tres>
+  <tre name="CSRLSB" location="image">
+    <field name="N_RS_ROW_BLOCKS" value="01" />
+    <field name="M_RS_COLUMN_BLOCKS" value="01" />
+    <repeated number="1">
+      <group index="0">
+        <repeated number="1">
+          <group index="0">
+            <field name="RS_DT_1" value="+11111111.11" />
+            <field name="RS_DT_2" value="-22222222.22" />
+            <field name="RS_DT_3" value="+33333333.33" />
+            <field name="RS_DT_4" value="-44444444.44" />
+          </group>
+        </repeated>
+      </group>
+    </repeated>
+  </tre>
+</tres>
+"""
+    assert data == expected_data
 
 ###############################################################################
 # Test reading C4 compressed file
