@@ -343,7 +343,7 @@ success.
 /************************************************************************/
 
 /**
-  \fn void OGR_DS_Destroy( OGRDataSourceH hDataSource )
+  \fn void OGR_DS_Destroy( OGRDataSourceH hDS )
 
   \brief Closes opened datasource and releases allocated resources.
 
@@ -351,7 +351,7 @@ success.
 
   @deprecated Use GDALClose() in GDAL 2.0
 
-  @param hDataSource handle to allocated datasource object.
+  @param hDS handle to allocated datasource object.
 */
 
 /**
@@ -467,7 +467,7 @@ success.
 
 /**
  \fn OGRLayerH OGR_DS_ExecuteSQL( OGRDataSourceH hDS,
-                             const char *pszSQLCommand,
+                             const char *pszStatement,
                              OGRGeometryH hSpatialFilter,
                              const char *pszDialect );
 
@@ -490,7 +490,7 @@ success.
  @deprecated Use GDALDatasetExecuteSQL() in GDAL 2.0
 
  @param hDS handle to the data source on which the SQL query is executed.
- @param pszSQLCommand the SQL statement to execute.
+ @param pszStatement the SQL statement to execute.
  @param hSpatialFilter handle to a geometry which represents a spatial filter. Can be NULL.
  @param pszDialect allows control of the statement dialect. If set to NULL, the
 OGR SQL engine will be used, except for RDBMS drivers that will use their dedicated SQL engine,
@@ -2685,7 +2685,7 @@ form depending on the limitations of the format driver.
  */
 
 /**
- \fn OGRErr OGR_L_SetIgnoredFields( OGRLayerH, const char** papszFields);
+ \fn OGRErr OGR_L_SetIgnoredFields( OGRLayerH hLayer, const char** papszFields);
 
  \brief Set which fields can be omitted when retrieving features from the layer.
 
@@ -2699,6 +2699,7 @@ form depending on the limitations of the format driver.
 
  This method is the same as the C++ method OGRLayer::SetIgnoredFields()
 
+ @param hLayer handle to the layer
  @param papszFields an array of field names terminated by NULL item. If NULL is passed, the ignored list is cleared.
  @return OGRERR_NONE if all field names have been resolved (even if the driver does not support this method)
 
