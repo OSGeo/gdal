@@ -60,16 +60,8 @@ void OGR_DS_Destroy( OGRDataSourceH hDS )
 {
     if( hDS == nullptr )
         return;
-#ifdef OGRAPISPY_ENABLED
-    if( bOGRAPISpyEnabled )
-        OGRAPISpyPreClose(hDS);
-#endif
-    delete reinterpret_cast<GDALDataset *>(hDS);
+    GDALClose( reinterpret_cast<GDALDatasetH>(hDS) );
     //VALIDATE_POINTER0( hDS, "OGR_DS_Destroy" );
-#ifdef OGRAPISPY_ENABLED
-    if( bOGRAPISpyEnabled )
-      OGRAPISpyPostClose();
-#endif
 }
 
 /************************************************************************/
@@ -179,7 +171,7 @@ OGRErr OGR_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer )
 
 #ifdef OGRAPISPY_ENABLED
     if( bOGRAPISpyEnabled )
-        OGRAPISpy_DS_DeleteLayer(hDS, iLayer);
+        OGRAPISpy_DS_DeleteLayer(reinterpret_cast<GDALDatasetH>(hDS), iLayer);
 #endif
 
     OGRErr eErr = reinterpret_cast<GDALDataset *>(hDS)->DeleteLayer( iLayer );
@@ -201,7 +193,7 @@ OGRLayerH OGR_DS_GetLayerByName( OGRDataSourceH hDS, const char *pszLayerName )
 
 #ifdef OGRAPISPY_ENABLED
     if( bOGRAPISpyEnabled )
-        OGRAPISpy_DS_GetLayerByName(hDS, pszLayerName, hLayer);
+        OGRAPISpy_DS_GetLayerByName(reinterpret_cast<GDALDatasetH>(hDS), pszLayerName, hLayer);
 #endif
 
     return hLayer;
@@ -225,7 +217,7 @@ OGRLayerH OGR_DS_ExecuteSQL( OGRDataSourceH hDS,
 
 #ifdef OGRAPISPY_ENABLED
     if( bOGRAPISpyEnabled )
-        OGRAPISpy_DS_ExecuteSQL(hDS, pszStatement, hSpatialFilter, pszDialect, hLayer);
+        OGRAPISpy_DS_ExecuteSQL(reinterpret_cast<GDALDatasetH>(hDS), pszStatement, hSpatialFilter, pszDialect, hLayer);
 #endif
 
     return hLayer;
@@ -243,7 +235,7 @@ void OGR_DS_ReleaseResultSet( OGRDataSourceH hDS, OGRLayerH hLayer )
 
 #ifdef OGRAPISPY_ENABLED
     if( bOGRAPISpyEnabled )
-        OGRAPISpy_DS_ReleaseResultSet(hDS, hLayer);
+        OGRAPISpy_DS_ReleaseResultSet(reinterpret_cast<GDALDatasetH>(hDS), hLayer);
 #endif
 
     reinterpret_cast<GDALDataset *>(hDS)->ReleaseResultSet( OGRLayer::FromHandle(hLayer) );
@@ -273,7 +265,7 @@ int OGR_DS_GetLayerCount( OGRDataSourceH hDS )
 
 #ifdef OGRAPISPY_ENABLED
     if( bOGRAPISpyEnabled )
-        OGRAPISpy_DS_GetLayerCount(hDS);
+        OGRAPISpy_DS_GetLayerCount(reinterpret_cast<GDALDatasetH>(hDS));
 #endif
 
     return reinterpret_cast<GDALDataset *>(hDS)->GetLayerCount();
@@ -293,7 +285,7 @@ OGRLayerH OGR_DS_GetLayer( OGRDataSourceH hDS, int iLayer )
 
 #ifdef OGRAPISPY_ENABLED
     if( bOGRAPISpyEnabled )
-        OGRAPISpy_DS_GetLayer(hDS, iLayer, hLayer);
+        OGRAPISpy_DS_GetLayer(reinterpret_cast<GDALDatasetH>(hDS), iLayer, hLayer);
 #endif
 
     return hLayer;
