@@ -106,18 +106,10 @@ OGRDataSourceH OGROpen( const char *pszName, int bUpdate,
 {
     VALIDATE_POINTER1( pszName, "OGROpen", nullptr );
 
-#ifdef OGRAPISPY_ENABLED
-    int iSnapshot = OGRAPISpyOpenTakeSnapshot(pszName, bUpdate);
-#endif
-
     GDALDatasetH hDS = GDALOpenEx(pszName, GDAL_OF_VECTOR |
                             ((bUpdate) ? GDAL_OF_UPDATE: 0), nullptr, nullptr, nullptr);
     if( hDS != nullptr && pahDriverList != nullptr )
         *pahDriverList = reinterpret_cast<OGRSFDriverH>(GDALGetDatasetDriver(hDS));
-
-#ifdef OGRAPISPY_ENABLED
-    OGRAPISpyOpen(pszName, bUpdate, iSnapshot, &hDS);
-#endif
 
     return reinterpret_cast<OGRDataSourceH>(hDS);
 }
@@ -148,16 +140,7 @@ OGRErr OGRReleaseDataSource( OGRDataSourceH hDS )
 {
     VALIDATE_POINTER1( hDS, "OGRReleaseDataSource", OGRERR_INVALID_HANDLE );
 
-#ifdef OGRAPISPY_ENABLED
-    if( bOGRAPISpyEnabled )
-        OGRAPISpyPreClose(hDS);
-#endif
     GDALClose( reinterpret_cast<GDALDatasetH>(hDS) );
-
-#ifdef OGRAPISPY_ENABLED
-    if( bOGRAPISpyEnabled )
-        OGRAPISpyPostClose();
-#endif
 
     return OGRERR_NONE;
 }
