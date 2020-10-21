@@ -34,6 +34,8 @@
 #include <math.h>
 #include <algorithm>
 
+#include <iomanip>
+
 /* -------------------------------------------------------------------- */
 /*      Line Styles                                                     */
 /* -------------------------------------------------------------------- */
@@ -101,6 +103,23 @@ OGRDGNV8Layer::OGRDGNV8Layer( OGRDGNV8DataSource* poDS,
         pszName = CPLSPrintf("%s", ToUTF8(pModel->getName()).c_str());
     CPLDebug("DGNV8", "%s is %dd", pszName,
              pModel->getModelIs3dFlag() ? 3 : 2);
+
+    const char * pszULinkType = const_cast<char *>(
+        CPLGetConfigOption( "DGN_ULINK_TYPE", "NONE" ) );
+
+    if( !EQUAL(pszULinkType,"NONE") )
+    {
+        char * testULink;
+        iULinkType = strtol( pszULinkType, &testULink, 10 );
+        if( strlen(pszULinkType) == 0 || *testULink != '\0' )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "DGN_ULINK_TYPE=%s, but only numbers in decimal format are "
+                      "accepted.",
+                      pszULinkType );
+            iULinkType = -1;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create the feature definition.                                  */
@@ -174,6 +193,16 @@ OGRDGNV8Layer::OGRDGNV8Layer( OGRDGNV8DataSource* poDS,
     oField.SetPrecision( 0 );
     m_poFeatureDefn->AddFieldDefn( &oField );
     
+
+    if( iULinkType != -1 )
+    {
+        oField.SetName( "ULink" );
+        oField.SetType( OFTIntegerList );
+        oField.SetWidth( 0 );
+        oField.SetPrecision( 0 );
+        m_poFeatureDefn->AddFieldDefn( &oField );
+    }
+
     OGRDGNV8Layer::ResetReading();
 }
 
@@ -754,6 +783,49 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
     {
         nLineWeight = static_cast<int>(uLineWeight);
         poFeature->SetField("Weight", nLineWeight);
+    }
+
+    if( iULinkType != -1 )
+    {
+        const int MAX_LINK = 100;
+        int uLinkCount = 0;
+
+        int anULink[MAX_LINK];
+        anULink[0] = 0;
+
+        OdRxObjectPtrArray linkages;
+        element->getLinkages(linkages);
+        if( linkages.size() > 0 )
+        {
+            for(unsigned i = 0; i < linkages.size(); ++i)
+            {
+                OdDgAttributeLinkagePtr pLinkage = linkages[i];
+                OdUInt16 primaryId = pLinkage->getPrimaryId();
+
+                if( uLinkCount < MAX_LINK && primaryId == iULinkType )
+                {
+                    OdBinaryData pabyData;
+                    pLinkage->getData(pabyData);
+                    if( (OdUInt32)pabyData.size() == 4 )
+                    {
+                        std::stringstream link;
+                        link << std::hex << std::setfill( '0' );
+                        link << std::setw(2) << static_cast<unsigned>( pabyData[1] );
+                        link << std::setw(2) << static_cast<unsigned>( pabyData[0] );
+                        link << std::setw(2) << static_cast<unsigned>( pabyData[3] );
+                        link << std::setw(2) << static_cast<unsigned>( pabyData[2] );
+
+                        anULink[uLinkCount] = std::stoi( link.str(), nullptr, 10 );
+                        uLinkCount++;
+                    }
+                }
+            }
+
+            if ( uLinkCount > 0 )
+            {
+                poFeature->SetField( "ULink", uLinkCount, anULink );
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */

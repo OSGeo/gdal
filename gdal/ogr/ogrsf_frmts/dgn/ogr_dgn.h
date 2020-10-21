@@ -85,6 +85,8 @@ class OGRDGNLayer final: public OGRLayer
     int                 TestCapability( const char * ) override;
 
     OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
+
+    int                 iULinkType;
 };
 
 /************************************************************************/

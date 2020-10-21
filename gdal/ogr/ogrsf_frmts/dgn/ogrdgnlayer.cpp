@@ -35,6 +35,9 @@
 #include <cmath>
 #include <list>
 
+#include <sstream>
+#include <iomanip>
+
 CPL_CVSID("$Id$")
 
 /************************************************************************/
@@ -46,7 +49,8 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGNIn,
     poFeatureDefn(new OGRFeatureDefn( pszName )),
     iNextShapeId(0),
     hDGN(hDGNIn),
-    bUpdate(bUpdateIn)
+    bUpdate(bUpdateIn),
+    iULinkType(-1)
 {
 
 /* -------------------------------------------------------------------- */
@@ -73,6 +77,23 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGNIn,
         eLinkFieldType = OFTInteger;
     }
     pszLinkFormat = CPLStrdup(pszLinkFormat);
+
+    const char * pszULinkType = const_cast<char *>(
+        CPLGetConfigOption( "DGN_ULINK_TYPE", "NONE" ) );
+
+    if( !EQUAL(pszULinkType,"NONE") )
+    {
+        char * testULink;
+        iULinkType = strtol( pszULinkType, &testULink, 10 );
+        if( strlen(pszULinkType) == 0 || *testULink != '\0' )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "DGN_ULINK_TYPE=%s, but only numbers in decimal format are "
+                      "accepted.",
+                      pszULinkType );
+            iULinkType = -1;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create the feature definition.                                  */
@@ -153,6 +174,18 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGNIn,
     oField.SetWidth( 0 );
     oField.SetPrecision( 0 );
     poFeatureDefn->AddFieldDefn( &oField );
+
+/* -------------------------------------------------------------------- */
+/*      ULink                                                           */
+/* -------------------------------------------------------------------- */
+    if( iULinkType != -1 )
+    {
+        oField.SetName( "ULink" );
+        oField.SetType( OFTIntegerList );
+        oField.SetWidth( 0 );
+        oField.SetPrecision( 0 );
+        poFeatureDefn->AddFieldDefn( &oField );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Text                                                            */
@@ -329,13 +362,37 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
     int anMSLink[MAX_LINK];
     anMSLink[0] = 0;
 
+    int anULink[MAX_LINK];
+    anULink[0] = 0;
+
     int iLink = 0;
     int nLinkCount = 0;
+    int uLinkCount = 0;
 
-    unsigned char *pabyData = DGNGetLinkage( hDGN, psElement, iLink, nullptr,
-                              anEntityNum + iLink, anMSLink + iLink, nullptr );
+    int nLinkType = 0;
+    int nLinkSize = 0;
+
+   unsigned char *pabyData = DGNGetLinkage( hDGN, psElement, iLink, &nLinkType,
+                              anEntityNum + iLink, anMSLink + iLink, &nLinkSize);
+
     while( pabyData )
     {
+        if( uLinkCount < MAX_LINK && nLinkType == iULinkType )
+        {
+            if( nLinkSize == 8 )
+            {
+                std::stringstream link;
+                link << std::hex << std::setfill( '0' );
+                link << std::setw(2) << static_cast<unsigned>( pabyData[5] );
+                link << std::setw(2) << static_cast<unsigned>( pabyData[4] );
+                link << std::setw(2) << static_cast<unsigned>( pabyData[7] );
+                link << std::setw(2) << static_cast<unsigned>( pabyData[6] );
+
+                anULink[uLinkCount] = std::stoi( link.str(), nullptr, 10 );
+                uLinkCount++;
+            }
+        }
+
         iLink++;
 
         if( anEntityNum[nLinkCount] != 0 || anMSLink[nLinkCount] != 0 )
@@ -350,14 +407,18 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
         anEntityNum[nLinkCount] = 0;
         anMSLink[nLinkCount] = 0;
 
-        pabyData = DGNGetLinkage( hDGN, psElement, iLink, nullptr,
+        pabyData = DGNGetLinkage( hDGN, psElement, iLink, &nLinkType,
                                   anEntityNum+nLinkCount, anMSLink+nLinkCount,
-                                  nullptr );
+                                  &nLinkSize);
     }
 
 /* -------------------------------------------------------------------- */
 /*      Apply attribute linkage to feature.                             */
 /* -------------------------------------------------------------------- */
+    if( uLinkCount > 0 )
+    {
+        poFeature->SetField( "ULink", uLinkCount, anULink );
+    }
     if( nLinkCount > 0 )
     {
         if( EQUAL(pszLinkFormat,"FIRST") )
