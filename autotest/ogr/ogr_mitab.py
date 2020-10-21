@@ -1846,7 +1846,7 @@ def test_ogr_mitab_43():
     src_ds = None
 
     size = gdal.VSIStatL('/vsimem/all_geoms_block_512.map').size
-    assert size == 6144
+    assert size == 6656
 
     size = gdal.VSIStatL('/vsimem/all_geoms_block_32256.map').size
     assert size == 161280
