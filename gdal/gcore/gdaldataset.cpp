@@ -843,7 +843,7 @@ int CPL_STDCALL GDALGetRasterCount( GDALDatasetH hDS )
  * @return a pointer to an internal projection reference string.  It should
  * not be altered, freed or expected to last for long.
  *
- * @see http://www.gdal.org/osr_tutorial.html
+ * @see https://gdal.org/tutorials/osr_api_tut.html
  */
 
 const char *GDALDataset::GetProjectionRef() const
@@ -903,7 +903,7 @@ const char *GDALDataset::_GetProjectionRef() { return (""); }
  * Its lifetime will be the one of the dataset object, or until the next
  * call to this method.
  *
- * @see http://www.gdal.org/osr_tutorial.html
+ * @see https://gdal.org/tutorials/osr_api_tut.html
  */
 
 const OGRSpatialReference* GDALDataset::GetSpatialRef() const
@@ -916,7 +916,7 @@ const OGRSpatialReference* GDALDataset::GetSpatialRef() const
 /************************************************************************/
 
 /**
- * \brief Fetch the projection definition string for this dataset.
+ * \brief Fetch the spatial reference for this dataset.
  *
  * @since GDAL 3.0
  *
