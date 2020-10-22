@@ -206,7 +206,6 @@ public:
     bool             SaveClasses( const char *pszFile = nullptr ) override;
 
     bool             PrescanForSchema(bool bGetExtents = true,
-                                      bool bAnalyzeSRSPerFeature = true,
                                       bool bOnlyDetectSRS = false) override;
     bool             PrescanForTemplate() override;
     void             ResetReading() override;

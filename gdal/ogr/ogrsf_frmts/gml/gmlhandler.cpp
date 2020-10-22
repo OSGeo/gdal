@@ -1870,8 +1870,11 @@ bool GMLHandler::IsGeometryElement( const char *pszElement )
     } while(nFirst <= nLast);
 
     if (eAppSchemaType == APPSCHEMA_AIXM &&
-        strcmp( pszElement, "ElevatedPoint") == 0)
+        ( strcmp( pszElement, "ElevatedPoint") == 0 ||
+          strcmp( pszElement, "ElevatedSurface") == 0 ) )
+    {
         return true;
+    }
 
     if( eAppSchemaType == APPSCHEMA_MTKGML &&
         ( strcmp( pszElement, "Piste") == 0 ||

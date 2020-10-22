@@ -3376,7 +3376,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
 /* -------------------------------------------------------------------- */
 /*      Surface                                                         */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszBaseGeometry, "Surface") )
+    if( EQUAL(pszBaseGeometry, "Surface") ||
+        EQUAL(pszBaseGeometry, "ElevatedSurface") /* AIXM */ )
     {
         // Find outer ring.
         const CPLXMLNode *psChild = FindBareXMLChild( psNode, "patches" );
