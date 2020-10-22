@@ -685,9 +685,12 @@ def test_ogr_gml_17():
 
     ds = ogr.Open('data/gml/gnis_pop_100.gml')
     lyr = ds.GetLayer(0)
+
     sr = lyr.GetSpatialRef()
     got_wkt = sr.ExportToWkt()
     assert got_wkt.find('GEOGCS["WGS 84"') != -1, 'did not get expected SRS'
+
+    assert lyr.GetExtent() == (-80.17, 76.58, -13.32, 51.0)
 
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
@@ -1931,6 +1934,8 @@ def test_ogr_gml_52():
         assert srs is not None
         wkt = srs.ExportToWkt()
         assert '3067' in wkt
+
+        assert lyr.GetExtent() == (280000,280000,7000000,7000000)
 
         feat = lyr.GetNextFeature()
         if feat.GetField('gid') != '1' or \

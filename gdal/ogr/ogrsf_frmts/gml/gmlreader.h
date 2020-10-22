@@ -319,7 +319,6 @@ class CPL_DLL IGMLReader
                                    int iSqliteCacheMB ) = 0;
 
     virtual bool PrescanForSchema( bool bGetExtents = true,
-                                  bool bAnalyzeSRSPerFeature = true,
                                   bool bOnlyDetectSRS = false ) = 0;
     virtual bool PrescanForTemplate() = 0;
 

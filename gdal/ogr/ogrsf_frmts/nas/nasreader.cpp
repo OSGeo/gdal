@@ -828,7 +828,6 @@ bool NASReader::SaveClasses( const char *pszFile )
 /************************************************************************/
 
 bool NASReader::PrescanForSchema( bool bGetExtents,
-                                  bool /*bAnalyzeSRSPerFeature*/,
                                   bool /*bOnlyDetectSRS*/ )
 {
     if( m_pszFilename == nullptr )
