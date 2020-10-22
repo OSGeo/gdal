@@ -916,7 +916,7 @@ const OGRSpatialReference* GDALDataset::GetSpatialRef() const
 /************************************************************************/
 
 /**
- * \brief Fetch the projection definition string for this dataset.
+ * \brief Fetch the spatial reference for this dataset.
  *
  * @since GDAL 3.0
  *
