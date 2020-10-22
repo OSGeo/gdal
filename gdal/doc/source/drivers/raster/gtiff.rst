@@ -43,7 +43,8 @@ Most GeoTIFF projections should be supported, with the caveat that in
 order to translate uncommon Projected, and Geographic coordinate systems
 into OGC WKT it is necessary to have the PROJ proj.db database
 available. It must be found at the location pointed to by the PROJ_LIB
-environment variable.
+environment variable, or at one of the locations set programmatically
+via OSRSetPROJSearchPaths().
 
 Georeferencing from GeoTIFF is supported in the form of one tiepoint and
 pixel size, a transformation matrix, or a list of GCPs.
