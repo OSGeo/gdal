@@ -1469,10 +1469,10 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
     }
 
     auto ctxt = d->getPROJContext();
-    auto wktFormat = d->m_bMorphToESRI ? PJ_WKT1_ESRI : PJ_WKT1_GDAL;
+    auto wktFormat = PJ_WKT1_GDAL;
     const char* pszFormat = CSLFetchNameValueDef(papszOptions, "FORMAT",
                                     CPLGetConfigOption("OSR_WKT_FORMAT", ""));
-    if( EQUAL(pszFormat, "WKT1_ESRI" ) )
+    if( EQUAL(pszFormat, "WKT1_ESRI" ) || d->m_bMorphToESRI )
     {
         wktFormat = PJ_WKT1_ESRI;
     }
