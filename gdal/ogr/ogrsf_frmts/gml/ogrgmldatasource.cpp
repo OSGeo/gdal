@@ -547,7 +547,6 @@ bool OGRGMLDataSource::Open( GDALOpenInfo *poOpenInfo )
         strstr(szPtr, "xmlns:fme=\"http://www.safe.com/gml/fme\"") != nullptr;
 
     char szSRSName[128] = {};
-    bool bAnalyzeSRSPerFeature = true;
 
     // MTKGML.
     if( strstr(szPtr, "<Maastotiedot") != nullptr )
@@ -560,7 +559,6 @@ bool OGRGMLDataSource::Open( GDALOpenInfo *poOpenInfo )
                 "GML",
                 "Warning: a MTKGML file was detected, "
                 "but its namespace is unknown");
-        bAnalyzeSRSPerFeature = false;
         bUseGlobalSRSName = true;
         if( !ExtractSRSName(szPtr, szSRSName, sizeof(szSRSName)) )
             strcpy(szSRSName, "EPSG:3067");
@@ -1243,8 +1241,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo *poOpenInfo )
                      false) )
     {
         bool bOnlyDetectSRS = bHaveSchema;
-        if( !poReader->PrescanForSchema(true, bAnalyzeSRSPerFeature,
-                                        bOnlyDetectSRS) )
+        if( !poReader->PrescanForSchema(true, bOnlyDetectSRS) )
         {
             // Assume an error was reported.
             return false;
