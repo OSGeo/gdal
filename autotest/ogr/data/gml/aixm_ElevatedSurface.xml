@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<message:AIXMBasicMessage xmlns:message="http://www.aixm.aero/schema/5.1.1/message"
+    xmlns:gts="http://www.isotc211.org/2005/gts" 
+    xmlns:gco="http://www.isotc211.org/2005/gco"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+    xmlns:gml="http://www.opengis.net/gml/3.2"
+    xmlns:gss="http://www.isotc211.org/2005/gss" 
+    xmlns:aixm="http://www.aixm.aero/schema/5.1.1"
+    xmlns:gsr="http://www.isotc211.org/2005/gsr" 
+    xmlns:gmd="http://www.isotc211.org/2005/gmd"
+    xmlns:event="http://www.aixm.aero/schema/5.1.1/event" 
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.aixm.aero/schema/5.1.1/message http://www.aixm.aero/schema/5.1.1/message/AIXM_BasicMessage.xsd 
+    http://www.aixm.aero/schema/5.1/event http://www.aixm.aero/schema/5.1/event/Event_Features.xsd"	
+    gml:id="foo">
+    <message:hasMember>
+            <aixm:TouchDownLiftOff gml:id="foo">
+                    <gml:identifier codeSpace="urn:uuid:">foo</gml:identifier>
+                    <aixm:timeSlice>
+                            <aixm:TouchDownLiftOffTimeSlice gml:id="foo">
+                                    <aixm:extent>
+                                            <aixm:ElevatedSurface srsName="urn:ogc:def:crs:EPSG::4326">
+                                                    <gml:patches>
+                                                            <gml:PolygonPatch>
+                                                                    <gml:exterior>
+                                                                            <gml:Ring>
+                                                                                    <gml:curveMember>
+                                                                                            <gml:Curve gml:id="foo">
+                                                                                            <gml:segments>
+                                                                                            <gml:GeodesicString>
+                                                                                            <gml:posList>49 2 49 3 50 3 49 2</gml:posList>
+                                                                                            </gml:GeodesicString>
+                                                                                            </gml:segments>
+                                                                                            </gml:Curve>
+                                                                                    </gml:curveMember>
+                                                                            </gml:Ring>
+                                                                    </gml:exterior>
+                                                            </gml:PolygonPatch>
+                                                    </gml:patches>
+                                                    <aixm:elevation uom="M">18</aixm:elevation>
+                                            </aixm:ElevatedSurface>
+                                    </aixm:extent>
+                            </aixm:TouchDownLiftOffTimeSlice>
+                    </aixm:timeSlice>
+            </aixm:TouchDownLiftOff>
+    </message:hasMember>
+</message:AIXMBasicMessage>
