@@ -3805,3 +3805,25 @@ def test_ogr_gml_no_gfs_rewriting():
     gdal.Unlink('/vsimem/test.gml')
     gdal.Unlink('/vsimem/test.gfs')
 
+###############################################################################
+# Read AIXM ElevatedSurface
+
+
+def test_ogr_gml_aixm_elevated_surface():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    gdal.Unlink('data/gml/aixm_ElevatedSurface.gfs')
+    ds = ogr.Open('data/gml/aixm_ElevatedSurface.xml')
+    lyr = ds.GetLayer(0)
+
+    assert lyr.GetExtent() == (2, 3, 49, 50)
+
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    got_wkt = geom.ExportToWkt()
+    assert got_wkt == 'POLYGON ((2 49,3 49,3 50,2 49))'
+
+    ds = None
+    gdal.Unlink('data/gml/aixm_ElevatedSurface.gfs')
