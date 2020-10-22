@@ -1889,7 +1889,7 @@ public class Dataset:public Band GetRasterBand(int nBandId)
  *
  * @return the projection string.
  *
- * @see <a href="http://www.gdal.org/ogr/osr_tutorial.html">OSR tutorial</a>
+ * @see <a href="https://gdal.org/tutorials/osr_api_tut.html">OSR tutorial</a>
  */
 public class Dataset:public String GetProjection()
 
@@ -1905,7 +1905,7 @@ public class Dataset:public String GetProjection()
  *
  * @return the projection string.
  *
- * @see <a href="http://www.gdal.org/ogr/osr_tutorial.html">OSR tutorial</a>
+ * @see <a href="https://gdal.org/tutorials/osr_api_tut.html">OSR tutorial</a>
  */
 public class Dataset:public String GetProjectionRef()
 
@@ -10155,7 +10155,7 @@ public class ogr:public static Geometry ForceToMultiLineString(Geometry geom)
  * SRS using GetAttrValue(), but in special cases the underlying parse tree
  * (or OGR_SRSNode objects) can be accessed more directly.
  * <p>
- * See <a href="http://www.gdal.org/ogr/osr_tutorial.html">the tutorial</a> for more information on
+ * See <a href="https://gdal.org/tutorials/osr_api_tut.html">the tutorial</a> for more information on
  * how to use this class.
  */
 public class SpatialReference
