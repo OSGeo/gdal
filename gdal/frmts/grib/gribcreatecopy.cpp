@@ -909,9 +909,34 @@ bool GRIB2Section567Writer::WriteSimplePacking()
     WriteByte(m_fp, GDALDataTypeIsFloating(m_eDT) ? 0 : 1); 
 
     // Section 6: Bitmap section
-    WriteUInt32(m_fp, 6); // section size
-    WriteByte(m_fp, 6); // section number
-    WriteByte(m_fp, GRIB2MISSING_u1); // no bitmap
+#ifdef DEBUG
+    if( CPLTestBool(CPLGetConfigOption("GRIB_WRITE_BITMAP_TEST", "NO")) )
+    {
+        // Just for the purpose of generating a test product !
+        static int counter = 0;
+        counter++;
+        if( counter == 1 )
+        {
+            WriteUInt32(m_fp, 6 + ((m_nDataPoints + 7) / 8)); // section size
+            WriteByte(m_fp, 6); // section number
+            WriteByte(m_fp, 0); // bitmap
+            for( GUInt32 i = 0; i < (m_nDataPoints + 7) / 8; i++)
+                WriteByte(m_fp, 255);
+        }
+        else
+        {
+            WriteUInt32(m_fp, 6); // section size
+            WriteByte(m_fp, 6); // section number
+            WriteByte(m_fp, 254); // reuse previous bitmap
+        }
+    }
+    else
+#endif
+    {
+        WriteUInt32(m_fp, 6); // section size
+        WriteByte(m_fp, 6); // section number
+        WriteByte(m_fp, GRIB2MISSING_u1); // no bitmap
+    }
 
     // Section 7: Data Section
     WriteUInt32(m_fp, 5 + nLengthPacked); // section size
