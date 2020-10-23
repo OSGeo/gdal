@@ -1323,3 +1323,15 @@ def test_grib_grib2_read_subgrids():
     assert ds.GetRasterBand(2).GetMetadataItem('GRIB_IDS') == expected_ids
     assert ds.GetRasterBand(1).GetMetadataItem('GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES') == '2 2 2 0 84 0 0 1 0 220 0 0 255 0 0'
     assert ds.GetRasterBand(2).GetMetadataItem('GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES') == '2 3 2 0 84 0 0 1 0 220 0 0 255 0 0'
+
+
+###############################################################################
+# Test reading message with subgrids with second subgrid reusing the bitmap from the first one
+# Fixes https://github.com/OSGeo/gdal/issues/3099
+
+def test_grib_grib2_read_subgrids_reuse_bitmap():
+
+    # File generated with gdal_translate ../autotest/gdrivers/data/grib/subgrids.grib2 ../autotest/gdrivers/data/grib/subgrids_reuse_bitmap.grib2 --config GRIB_WRITE_BITMAP_TEST YES -co "BAND_1_PDS_TEMPLATE_ASSEMBLED_VALUES=2 2 2 0 84 0 0 1 0 220 0 0 255 0 0" -co "BAND_2_PDS_TEMPLATE_ASSEMBLED_VALUES=2 3 2 0 84 0 0 1 0 220 0 0 255 0 0" -co "IDS=CENTER=7(US-NCEP) SUBCENTER=0 MASTER_TABLE=2 LOCAL_TABLE=1 SIGNF_REF_TIME=1(Start_of_Forecast) REF_TIME=2020-09-26T00:00:00Z PROD_STATUS=0(Operational) TYPE=1(Forecast)" -co WRITE_SUBGRIDS=YES -co "DATA_ENCODING=SIMPLE_PACKING"
+    ds = gdal.Open('data/grib/subgrids_reuse_bitmap.grib2')
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    assert ds.GetRasterBand(2).Checksum() == 4563
