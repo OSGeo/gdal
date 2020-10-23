@@ -2,15 +2,15 @@
 
 set -e
 
-export PYTHONPATH=$PWD/gdal/swig/python/build/lib.macosx-10.13-x86_64-2.7:$PWD/gdal/swig/python/build/lib.macosx-10.15-x86_64-2.7
-export PYTEST="pytest -vv -p no:sugar --color=no"
+export PYTHONPATH=$PWD/gdal/swig/python/build/lib.macosx-10.13-x86_64-2.7:$PWD/gdal/swig/python/build/lib.macosx-10.15-x86_64-3.8
+export PYTEST="python3 -m pytest -vv -p no:sugar --color=no"
 
 echo 'Running CPP unit tests'
 (cd autotest/cpp && make quick_test)
 
 echo 'Running Python unit tests'
 # install test dependencies
-sudo -H pip install -U -r autotest/requirements.txt
+sudo -H pip3 install -U -r autotest/requirements.txt
 
 # Run all the Python autotests
 cd autotest
