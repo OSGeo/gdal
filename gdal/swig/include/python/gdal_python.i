@@ -655,7 +655,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 %apply ( void **outPythonObject ) { (void **buf ) };
 %apply ( int *optional_int ) {(int*)};
 %apply ( GIntBig *optional_GIntBig ) {(GIntBig*)};
-CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
+CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
                     void **buf,
                     int *buf_xsize = 0, int *buf_ysize = 0,
                     GDALDataType *buf_type = 0,
@@ -758,7 +758,22 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
     sExtraArg.eResampleAlg = resample_alg;
     sExtraArg.pfnProgress = callback;
     sExtraArg.pProgressData = callback_data;
-    CPLErr eErr = GDALDatasetRasterIOEx(self, GF_Read, xoff, yoff, xsize, ysize,
+
+    int nXOff = (int)(xoff + 0.5);
+    int nYOff = (int)(yoff + 0.5);
+    int nXSize = (int)(xsize + 0.5);
+    int nYSize = (int)(ysize + 0.5);
+    if( fabs(xoff-nXOff) > 1e-8 || fabs(yoff-nYOff) > 1e-8 ||
+        fabs(xsize-nXSize) > 1e-8 || fabs(ysize-nYSize) > 1e-8 )
+    {
+        sExtraArg.bFloatingPointWindowValidity = TRUE;
+        sExtraArg.dfXOff = xoff;
+        sExtraArg.dfYOff = yoff;
+        sExtraArg.dfXSize = xsize;
+        sExtraArg.dfYSize = ysize;
+    }
+
+    CPLErr eErr = GDALDatasetRasterIOEx(self, GF_Read, nXOff, nYOff, nXSize, nYSize,
                                (void*) data_aligned, nxsize, nysize, ntype,
                                band_list, pband_list, pixel_space, line_space, band_space,
                                &sExtraArg );
