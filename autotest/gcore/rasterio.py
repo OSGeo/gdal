@@ -1049,3 +1049,23 @@ def test_rasterio_floating_point_window_no_resampling():
     ds = None
     gdal.Unlink('/vsimem/test.tif')
     assert data_per_band == data_per_dataset
+
+
+def test_rasterio_floating_point_window_no_resampling_numpy():
+    # Same as above but using ReadAsArray() instead of ReadRaster()
+
+    try:
+        from osgeo import gdalnumeric
+        gdalnumeric.zeros
+        import numpy
+    except (ImportError, AttributeError):
+        pytest.skip()
+
+    ds = gdal.Translate('/vsimem/test.tif', gdal.Open('data/rgbsmall.tif'))
+    assert ds.GetMetadataItem('INTERLEAVE', 'IMAGE_STRUCTURE') == 'PIXEL'
+
+    data_per_band = numpy.stack([ds.GetRasterBand(i+1).ReadAsArray(0.1,0.2,10.4,11.4,buf_xsize=10,buf_ysize=11) for i in range(3)])
+    data_per_dataset = ds.ReadAsArray(0.1,0.2,10.4,11.4,buf_xsize=10,buf_ysize=11)
+    ds = None
+    gdal.Unlink('/vsimem/test.tif')
+    assert numpy.array_equal(data_per_band, data_per_dataset)
