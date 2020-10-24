@@ -12,6 +12,11 @@ echo 'Running Python unit tests'
 # install test dependencies
 sudo -H pip3 install -U -r autotest/requirements.txt
 
+# https://github.com/rouault/gdal/runs/1300694473
+# import issues of ogr_pg from ../ogr
+mv autotest/utilities/test_ogr2ogr.py autotest/utilities/test_ogr2ogr.py.disabled
+mv autotest/pyscripts/test_ogr2ogr_py.py autotest/pyscripts/test_ogr2ogr_py.py.disabled
+
 # Run all the Python autotests
 cd autotest
 $PYTEST
