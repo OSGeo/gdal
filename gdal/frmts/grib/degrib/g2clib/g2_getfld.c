@@ -242,6 +242,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unp
       g2int *bmpsave;
       g2float *newfld;
       gribfield  *lgfld;
+      int iofst_last_sect6 = -1;
 
       have3=0;
       have4=0;
@@ -450,9 +451,27 @@ g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unp
                  if( bmpsave!=0 )
                     lgfld->bmap=bmpsave;
                  else {
-                    printf("g2_getfld: Prev bit-map specified, but none exist.\n");
-                    ierr=17;
-                    return(ierr);
+
+                    if( ifldnum > 1 && iofst_last_sect6 > 0 )
+                    {
+                        /* Unpack the last valid section 6 we read before */
+                        int iofst_backup = iofst;
+                        iofst = iofst_last_sect6 - 40;
+                        jerr=g2_unpack6(cgrib,cgrib_length,&iofst,lgfld->ngrdpts,&lgfld->ibmap,
+                                        &lgfld->bmap);
+                        lgfld->ibmap = 254;
+                        iofst = iofst_backup;
+                        if( jerr != 0 ) {
+                            ierr=13;
+                            return(ierr);
+                        }
+                    }
+                    else
+                    {
+                        printf("g2_getfld: Prev bit-map specified, but none exist.\n");
+                        ierr=17;
+                        return(ierr);
+                    }
                  }
               else                         // get rid of it
                  if( bmpsave!=0 ) free(bmpsave);
@@ -465,6 +484,10 @@ g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unp
           else {    // do not unpack bitmap
             gbit(cgrib,&lgfld->ibmap,iofst,8);      // Get BitMap Indicator
             have6=1;
+            if( lgfld->ibmap == 0 ) {
+                /* Save the offset of this section in case we might need to unpack it later for a later subfield */
+                iofst_last_sect6 = iofst;
+            }
           }
         }
         //
