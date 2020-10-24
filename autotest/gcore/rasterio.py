@@ -1033,3 +1033,19 @@ def test_rasterio_dataset_invalid_resample_alg(resample_alg):
             assert mem_ds.ReadAsArray(buf_xsize=1, buf_ysize=1, resample_alg=resample_alg) is None
         with pytest.raises(Exception):
             assert mem_ds.GetRasterBand(1).ReadAsArray(buf_xsize=1, buf_ysize=1, resample_alg=resample_alg) is None
+
+
+def test_rasterio_floating_point_window_no_resampling():
+    """ Test fix for #3101 """
+
+    ds = gdal.Translate('/vsimem/test.tif', gdal.Open('data/rgbsmall.tif'))
+    assert ds.GetMetadataItem('INTERLEAVE', 'IMAGE_STRUCTURE') == 'PIXEL'
+
+    # Check that GDALDataset::IRasterIO() in block-based strategy behaves the
+    # same as GDALRasterBand::IRasterIO() generic case (ie the one dealing
+    # with floating-point window coordinates)
+    data_per_band = b''.join( ds.GetRasterBand(i+1).ReadRaster(0.1,0.2,10.4,11.4,10,11) for i in range(3) )
+    data_per_dataset = ds.ReadRaster(0.1,0.2,10.4,11.4,10,11)
+    ds = None
+    gdal.Unlink('/vsimem/test.tif')
+    assert data_per_band == data_per_dataset
