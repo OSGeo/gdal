@@ -51,9 +51,9 @@ static int CPL_STDCALL myProgress(double, const char *, void *)
 
 static void CPL_STDCALL myErrorHandler(CPLErr, CPLErrorNum, const char* msg);
 
-static void CPL_STDCALL myErrorHandler(CPLErr eErrClass, CPLErrorNum, const char* msg)
+static void CPL_STDCALL myErrorHandler(CPLErr, CPLErrorNum errorNum, const char* msg)
 {
-    if( eErrClass != CPLE_UserInterrupt && strstr(msg, "User terminated") == nullptr )
+    if( errorNum != CPLE_UserInterrupt && strstr(msg, "User terminated") == nullptr )
     {
         fprintf(stderr, "An error occurred: %s\n", msg);
         fprintf(stderr, "Likely a threading issue !\n");
