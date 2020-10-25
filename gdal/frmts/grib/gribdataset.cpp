@@ -387,7 +387,7 @@ void GRIBRasterBand::FindPDSTemplate()
     // Collect section 4 octet information.  We read the file
     // ourselves since the GRIB API does not appear to preserve all
     // this for us.
-    if( abyHead[4] == 4 )
+    // if( abyHead[4] == 4 )
     {
         memcpy(&nSectSize, abyHead, 4);
         CPL_MSBPTR32(&nSectSize);
