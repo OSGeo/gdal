@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 from osgeo import gdal
 import gdaltest
 import test_cli_utilities
@@ -38,19 +39,27 @@ pytestmark = pytest.mark.skipif(test_cli_utilities.get_gdalwarp_path() is None o
 
 ###############################################################################
 
+viewshed_in = 'tmp/test_gdal_viewshed_in.tif'
+viewshed_out = 'tmp/test_gdal_viewshed_out.tif'
+ox = [621528]
+oy = [4817617]
+oz = [100, 10]
+
+def make_viewshed_input(output=viewshed_in):
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -t_srs EPSG:32617 -overwrite ../gdrivers/data/n43.dt0 '+output)
+
 
 def test_gdal_viewshed():
-
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -t_srs EPSG:32617 -overwrite ../gdrivers/data/n43.dt0 tmp/test_gdal_viewshed_in.tif')
-    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_viewshed_path() + ' -oz 100 -ox 621528 -oy 4817617 tmp/test_gdal_viewshed_in.tif tmp/test_gdal_viewshed_out.tif')
+    make_viewshed_input()
+    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_viewshed_path() + ' -oz {} -ox {} -oy {} {} {}'.format(oz[0], ox[0], oy[0], viewshed_in, viewshed_out))
     assert err is None or err == ''
-    ds = gdal.Open('tmp/test_gdal_viewshed_out.tif')
+    ds = gdal.Open(viewshed_out)
     assert ds
     cs = ds.GetRasterBand(1).Checksum()
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
-    gdal.Unlink('tmp/test_gdal_viewshed_in.tif')
-    gdal.Unlink('tmp/test_gdal_viewshed_out.tif')
+    gdal.Unlink(viewshed_in)
+    gdal.Unlink(viewshed_out)
     assert cs == 42397
     assert nodata is None
 
@@ -59,29 +68,27 @@ def test_gdal_viewshed():
 
 
 def test_gdal_viewshed_alternative_modes():
-
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -t_srs EPSG:32617 -overwrite ../gdrivers/data/n43.dt0 tmp/test_gdal_viewshed_in.tif')
-
-    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_viewshed_path() + ' -om DEM -oz 100 -ox 621528 -oy 4817617 tmp/test_gdal_viewshed_in.tif tmp/test_gdal_viewshed_out.tif')
+    make_viewshed_input()
+    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_viewshed_path() + ' -om DEM -oz {} -ox {} -oy {} {} {}'.format(oz[0], ox[0], oy[0], viewshed_in, viewshed_out))
     assert err is None or err == ''
-    ds = gdal.Open('tmp/test_gdal_viewshed_out.tif')
+    ds = gdal.Open(viewshed_out)
     assert ds
     cs = ds.GetRasterBand(1).Checksum()
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
-    gdal.Unlink('tmp/test_gdal_viewshed_out.tif')
+    gdal.Unlink(viewshed_out)
     assert cs == 48478
     assert nodata is None
 
-    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_viewshed_path() + ' -om GROUND -oz 100 -ox 621528 -oy 4817617 tmp/test_gdal_viewshed_in.tif tmp/test_gdal_viewshed_out.tif')
+    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_viewshed_path() + ' -om GROUND -oz {} -ox {} -oy {} {} {}'.format(oz[0], ox[0], oy[0], viewshed_in, viewshed_out))
     assert err is None or err == ''
-    ds = gdal.Open('tmp/test_gdal_viewshed_out.tif')
+    ds = gdal.Open(viewshed_out)
     assert ds
     cs = ds.GetRasterBand(1).Checksum()
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
-    gdal.Unlink('tmp/test_gdal_viewshed_in.tif')
-    gdal.Unlink('tmp/test_gdal_viewshed_out.tif')
+    gdal.Unlink(viewshed_in)
+    gdal.Unlink(viewshed_out)
     assert cs == 49633
     assert nodata is None
 
@@ -90,17 +97,16 @@ def test_gdal_viewshed_alternative_modes():
 
 
 def test_gdal_viewshed_all_options():
-
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -t_srs EPSG:32617 -overwrite ../gdrivers/data/n43.dt0 tmp/test_gdal_viewshed_in.tif')
-    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_viewshed_path() + ' -om NORMAL -f GTiff -oz 10 -ox 621528 -oy 4817617 -b 1 -a_nodata 0 -tz 5 -md 20000 -cc 0.85714 -iv 127 -vv 254 -ov 0 tmp/test_gdal_viewshed_in.tif tmp/test_gdal_viewshed_out.tif')
+    make_viewshed_input()
+    _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_viewshed_path() + ' -om NORMAL -f GTiff -oz {} -ox {} -oy {} -b 1 -a_nodata 0 -tz 5 -md 20000 -cc 0.85714 -iv 127 -vv 254 -ov 0 {} {}'.format(oz[1], ox[0], oy[0], viewshed_in, viewshed_out))
     assert err is None or err == ''
-    ds = gdal.Open('tmp/test_gdal_viewshed_out.tif')
+    ds = gdal.Open(viewshed_out)
     assert ds
     cs = ds.GetRasterBand(1).Checksum()
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
-    gdal.Unlink('tmp/test_gdal_viewshed_in.tif')
-    gdal.Unlink('tmp/test_gdal_viewshed_out.tif')
+    gdal.Unlink(viewshed_in)
+    gdal.Unlink(viewshed_out)
     assert cs == 24412
     assert nodata == 0
 
@@ -147,7 +153,7 @@ def test_gdal_viewshed_missing_oy():
 def test_gdal_viewshed_invalid_input():
 
     _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_viewshed_path() + ' -ox 0 -oy 0 /dev/null /dev/null')
-    assert 'not recognized as a supported file format' in err
+    assert ('not recognized as a supported file format' in err) or (os.name == 'nt' and 'No such file or directory' in err)
 
 
 ###############################################################################
