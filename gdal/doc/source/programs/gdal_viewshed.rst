@@ -80,13 +80,30 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
 .. option:: -cc <value>
 
    Coefficient to consider the effect of the curvature and refraction.
+   When calculating visibility between two points (i.e. Line Of Sight or Viewshed),
+   One must take into account the type of radio waves and the atmospheric conditions.
+
+   Changes in air density curve the light downward causing an observer to see further and the earth to appear less curved,
+   as if the earth radius is larger then it actually is.
+   The magnitude of this effect varies with atmospheric conditions and depends on the wavelength.
+
+   Different applications for calculating visiblity use different interchangble noations to describe this phenomena.
+   gdal_viewshed uses the CurvCoeff noation.
+
+   .. math::
+
+     {CurvCoeff}=1-{RefractionCoeff}
+     {EarthCurveFactor}=1/{CurvCoeff}=1/(1-{RefractionCoeff})
+
+   For visible light, the standard atmospheric refraction coefficient that is generally used is 1/7.
+   Thus the default value for CurvCoeff that gdal_viewshed uses is 0.85714 (=~ 1-1/7).
+   For radio waves (longer wavelengths), a larger refraction coefficient value, such as 0.25~0.325 (CurvCoeff=0.75~0.675), could be used.
+
    The height of the DEM is corrected according to the following formula:
 
    .. math::
 
       Height_{Corrected}=Height_{DEM}-{CurvCoeff}\frac{{TargetDistance}^2}{SphereDiameter}
-
-   For atmospheric refraction we can use 0.85714
 
 .. option:: -iv <value>
 
