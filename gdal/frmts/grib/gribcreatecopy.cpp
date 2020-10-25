@@ -2489,7 +2489,7 @@ GRIBDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     vsi_l_offset nTotalSizeOffset = 0;
     // Note: WRITE_SUBGRIDS=YES should not be used blindly currently, as it
     // does not check that the content of the DISCIPLINE and IDS are the same.
-    // A smarter behaviour would be to break into separate messages if needed
+    // A smarter behavior would be to break into separate messages if needed
     const bool bWriteSubGrids = CPLTestBool(CSLFetchNameValueDef(
             papszOptions, "WRITE_SUBGRIDS", "NO"));
     for( int nBand = 1; nBand <= poSrcDS->GetRasterCount(); nBand++ )

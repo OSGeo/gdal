@@ -145,7 +145,7 @@ Utilities:
  * gdalwarp: fix crash if warping a dataset without source or target CRS when -ct is specified (#2675)
  * gdalwarp: improve logic for selecting input overview when target bounds and resolution are specified
  * gdalwarp: better guess of target resolution when target extent is specified (#2754)
- * gdalbuildvrt: for easier understanding, and replicate gdal_translate -of VRT behaviour, clamp xSize/ySize of SrcRect/DstRect if outside raster dimensions. Not a fix per se
+ * gdalbuildvrt: for easier understanding, and replicate gdal_translate -of VRT behavior, clamp xSize/ySize of SrcRect/DstRect if outside raster dimensions. Not a fix per se
  * gdalbuildvrt: add support for automatically declaring virtual overviews in very restricted situations
  * gdalbuildvrt: fix -srcnodata / -vrtnodata handling in -separate mode (#2978)
  * gdal_grid: Addition of -tr option (#2839)
@@ -533,7 +533,7 @@ Shapefile driver:
 
 S57 driver:
  * apply update to DSID_EDTN field (#2498)
- * report attributes tagged as list in S57 dictionaries as StringList fields. Add a LIST_AS_STRINGLIST open option that can be set to OFF to restore GDAL < 3.2 behaviour (#2660)
+ * report attributes tagged as list in S57 dictionaries as StringList fields. Add a LIST_AS_STRINGLIST open option that can be set to OFF to restore GDAL < 3.2 behavior (#2660)
 
 SXF driver:
  * fixes for big-endian

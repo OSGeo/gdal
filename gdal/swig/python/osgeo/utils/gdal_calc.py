@@ -538,7 +538,7 @@ def doit(opts, args):
                     # fill in nodata values
                     if myNDV[i] is not None:
                         # myNDVs is a boolean buffer.
-                        # a cell equals to 1 if there is NDV in any of the corresponsing cells in input raster bands.
+                        # a cell equals to 1 if there is NDV in any of the corresponding cells in input raster bands.
                         if myNDVs is None:
                             # this is the first band that has NDV set. we initializes myNDVs to a zero buffer
                             # as we didn't see any NDV value yet.
