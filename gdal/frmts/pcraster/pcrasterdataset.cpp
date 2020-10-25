@@ -66,7 +66,7 @@ GDALDataset* PCRasterDataset::open(
 
     if(map) {
       CPLErrorReset();
-      dataset = new PCRasterDataset(map);
+      dataset = new PCRasterDataset(map, info->eAccess);
       if( CPLGetLastErrorType() != CE_None )
       {
           delete dataset;
@@ -286,7 +286,7 @@ GDALDataset* PCRasterDataset::createCopy(
 /*!
   \param     mapIn PCRaster map handle. It is ours to close.
 */
-PCRasterDataset::PCRasterDataset( MAP* mapIn) :
+PCRasterDataset::PCRasterDataset( MAP* mapIn, GDALAccess eAccessIn ) :
     GDALPamDataset(),
     d_map(mapIn),
     d_west(0.0),
@@ -298,6 +298,7 @@ PCRasterDataset::PCRasterDataset( MAP* mapIn) :
     d_location_changed(false)
 {
   // Read header info.
+  eAccess = eAccessIn;
   nRasterXSize = static_cast<int>(RgetNrCols(d_map));
   nRasterYSize = static_cast<int>(RgetNrRows(d_map));
   if( !GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize) )

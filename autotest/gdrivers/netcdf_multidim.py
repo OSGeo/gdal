@@ -1422,3 +1422,110 @@ def test_netcdf_multidim_stats(netcdf_setup):  # noqa
         clear_stats()
     finally:
         drv.Delete(tmpfilename)
+
+
+def test_netcdf_multidim_advise_read(netcdf_setup):  # noqa
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    ds = gdal.OpenEx('data/netcdf/byte_no_cf.nc', gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    var = rg.OpenMDArray('Band1')
+    ref_data_whole = struct.unpack('B' * 20 * 20, var.Read())
+    ref_data = struct.unpack('B' * 4 * 5, var.Read(array_start_idx = [2, 3], count = [4, 5]))
+
+    sliced = var[1]
+    ref_data_line = struct.unpack('B' * 20, sliced.Read())
+
+    transposed = var.Transpose([1, 0])
+    ref_data_transposed = struct.unpack('B' * 20 * 20, transposed.Read())
+
+    # AdviseRead on all
+    assert var.AdviseRead() == gdal.CE_None
+
+    # Can use AdviseRead
+    got_data = struct.unpack('B' * 4 * 5, var.Read(array_start_idx = [2, 3], count = [4, 5]))
+    assert got_data == ref_data
+
+    # AdviseRead on portion
+    assert var.AdviseRead(array_start_idx = [2, 3], count = [4, 5]) == gdal.CE_None
+    got_data = struct.unpack('B' * 4 * 5, var.Read(array_start_idx = [2, 3], count = [4, 5]))
+    assert got_data == ref_data
+
+    # Cannot use AdviseRead as we read outside of it
+    got_data = struct.unpack('B' * 20 * 20, var.Read())
+    assert got_data == ref_data_whole
+
+    # On a slice
+    assert sliced.AdviseRead() == gdal.CE_None
+    got_data = struct.unpack('B' * 20, sliced.Read())
+    assert got_data == ref_data_line
+
+    # On transposed array
+    assert transposed.AdviseRead() == gdal.CE_None
+    got_data = struct.unpack('B' * 20 * 20, transposed.Read())
+    assert got_data == ref_data_transposed
+
+    with gdaltest.error_handler():
+        assert var.AdviseRead(array_start_idx = [2, 3], count = [20, 5]) == gdal.CE_Failure
+
+
+
+def test_netcdf_multidim_get_mask(netcdf_setup):  # noqa
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    tmpfilename = 'tmp/test_netcdf_multidim_get_mask.nc'
+    drv = gdal.GetDriverByName('netCDF')
+    def create():
+        ds = drv.CreateMultiDimensional(tmpfilename)
+        rg = ds.GetRootGroup()
+        dim0 = rg.CreateDimension("dim0", "unspecified type", "unspecified direction", 2)
+        dim1 = rg.CreateDimension("dim1", "unspecified type", "unspecified direction", 3)
+        bytedt = gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        ar = rg.CreateMDArray("myarray", [dim0, dim1], bytedt)
+        ar.SetNoDataValueDouble(6)
+        data = struct.pack('B' * 6, 1, 2, 3, 4, 5, 6)
+        ar.Write(data)
+        attr = ar.CreateAttribute('missing_value', [1], bytedt)
+        assert attr.Write(1) == gdal.CE_None
+
+    def check():
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray('myarray')
+        maskdata = struct.unpack('B' * 6, ar.GetMask().Read())
+        assert maskdata == (0, 1, 1, 1, 1, 0)
+
+    try:
+        create()
+        check()
+    finally:
+        drv.Delete(tmpfilename)
+
+
+def test_netcdf_multidim_createcopy_array_options(netcdf_setup):  # noqa
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    src_ds = gdal.OpenEx('data/netcdf/byte_no_cf.nc', gdal.OF_MULTIDIM_RASTER)
+    tmpfilename = 'tmp/test_netcdf_multidim_createcopy_array_options.nc'
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('netCDF').CreateCopy(tmpfilename, src_ds,
+            options=['ARRAY:IF(DIM=2):BLOCKSIZE=1,2',
+                     'ARRAY:IF(NAME=Band1):COMPRESS=DEFLATE',
+                     'ARRAY:ZLEVEL=6'])
+
+    def check():
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray('Band1')
+        assert var.GetBlockSize() == [1, 2]
+        assert var.GetStructuralInfo() == { 'COMPRESS': 'DEFLATE' }
+
+    check()
+
+    gdal.Unlink(tmpfilename)

@@ -656,8 +656,11 @@ typedef enum {
 #define     LERC_ADD_COMPRESSION_DEFLATE 1
 #define     LERC_ADD_COMPRESSION_ZSTD    2
 #define TIFFTAG_LERC_MAXZERROR          65567    /* LERC maximum error */
-#define TIFFTAG_WEBP_LEVEL		  65568	/* WebP compression level: WARNING not registered in Adobe-maintained registry */
-#define TIFFTAG_WEBP_LOSSLESS		65569	/* WebP lossless/lossy : WARNING not registered in Adobe-maintained registry */
+#define TIFFTAG_WEBP_LEVEL		  65568	/* WebP compression level */
+#define TIFFTAG_WEBP_LOSSLESS		65569	/* WebP lossless/lossy */
+#define	TIFFTAG_DEFLATE_SUBCODEC	65570	/* ZIP codec: to get/set the sub-codec to use. Will default to libdeflate when available */
+#define     DEFLATE_SUBCODEC_ZLIB       0
+#define     DEFLATE_SUBCODEC_LIBDEFLATE 1
 
 /*
  * EXIF tags

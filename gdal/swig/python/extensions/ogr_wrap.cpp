@@ -4060,6 +4060,9 @@ SWIGINTERN OGRLayerShadow *OGRDataSourceShadow_ExecuteSQL(OGRDataSourceShadow *s
                                                       dialect);
     return layer;
   }
+SWIGINTERN OGRErr OGRDataSourceShadow_AbortSQL(OGRDataSourceShadow *self){
+    return GDALDatasetAbortSQL((OGRDataSourceShadow*)self);
+  }
 SWIGINTERN void OGRDataSourceShadow_ReleaseResultSet(OGRDataSourceShadow *self,OGRLayerShadow *layer){
     OGR_DS_ReleaseResultSet(self, layer);
   }
@@ -8226,6 +8229,62 @@ SWIGINTERN PyObject *_wrap_DataSource_ExecuteSQL(PyObject *SWIGUNUSEDPARM(self),
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   if (alloc4 == SWIG_NEWOBJ) delete[] buf4;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_DataSource_AbortSQL(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OGRErr result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:DataSource_AbortSQL",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRDataSourceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DataSource_AbortSQL" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRDataSourceShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRDataSourceShadow_AbortSQL(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if ( ReturnSame(resultobj == Py_None || resultobj == 0) ) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
   return NULL;
 }
 
@@ -21238,6 +21297,8 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
   char *arg2 = (char *) 0 ;
   OSRSpatialReferenceShadow *arg3 = (OSRSpatialReferenceShadow *) NULL ;
   int alloc1 = 0 ;
+  bool viewIsValid1 = false ;
+  Py_buffer view1 ;
   void *argp3 = 0 ;
   int res3 = 0 ;
   PyObject * obj0 = 0 ;
@@ -21251,17 +21312,19 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
   {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
     {
-      Py_ssize_t safeLen = 0;
-      const void *safeBuf = 0;
-      int res = PyObject_AsReadBuffer(obj0, &safeBuf, &safeLen);
-      if (res == 0) {
-        if( safeLen > INT_MAX ) {
+      if (PyObject_GetBuffer(obj0, &view1, PyBUF_SIMPLE) == 0)
+      {
+        if( view1.len > INT_MAX ) {
+          PyBuffer_Release(&view1);
           SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
         }
-        arg1 = (int) safeLen;
-        arg2 = (char *) safeBuf;
+        viewIsValid1 = true;
+        arg1 = (int) view1.len;
+        arg2 = (char *) view1.buf;
         goto ok;
-      } else {
+      }
+      else
+      {
         PyErr_Clear();
       }
     }
@@ -21340,7 +21403,10 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
+    if( viewIsValid1 ) {
+      PyBuffer_Release(&view1);
+    }
+    else if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
       delete[] arg2;
     }
   }
@@ -21349,7 +21415,10 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
 fail:
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
+    if( viewIsValid1 ) {
+      PyBuffer_Release(&view1);
+    }
+    else if (ReturnSame(alloc1) == SWIG_NEWOBJ ) {
       delete[] arg2;
     }
   }
@@ -22055,6 +22124,8 @@ SWIGINTERN PyObject *_wrap_new_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject
   char *buf2 = 0 ;
   int alloc2 = 0 ;
   int alloc3 = 0 ;
+  bool viewIsValid3 = false ;
+  Py_buffer view3 ;
   int res5 ;
   char *buf5 = 0 ;
   int alloc5 = 0 ;
@@ -22086,17 +22157,19 @@ SWIGINTERN PyObject *_wrap_new_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject
     {
       /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
       {
-        Py_ssize_t safeLen = 0;
-        const void *safeBuf = 0;
-        int res = PyObject_AsReadBuffer(obj2, &safeBuf, &safeLen);
-        if (res == 0) {
-          if( safeLen > INT_MAX ) {
+        if (PyObject_GetBuffer(obj2, &view3, PyBUF_SIMPLE) == 0)
+        {
+          if( view3.len > INT_MAX ) {
+            PyBuffer_Release(&view3);
             SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
           }
-          arg3 = (int) safeLen;
-          arg4 = (char *) safeBuf;
+          viewIsValid3 = true;
+          arg3 = (int) view3.len;
+          arg4 = (char *) view3.buf;
           goto ok;
-        } else {
+        }
+        else
+        {
           PyErr_Clear();
         }
       }
@@ -22177,7 +22250,10 @@ SWIGINTERN PyObject *_wrap_new_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if (ReturnSame(alloc3) == SWIG_NEWOBJ ) {
+    if( viewIsValid3 ) {
+      PyBuffer_Release(&view3);
+    }
+    else if (ReturnSame(alloc3) == SWIG_NEWOBJ ) {
       delete[] arg4;
     }
   }
@@ -22188,7 +22264,10 @@ fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   {
     /* %typemap(freearg) (int *nLen, char *pBuf ) */
-    if (ReturnSame(alloc3) == SWIG_NEWOBJ ) {
+    if( viewIsValid3 ) {
+      PyBuffer_Release(&view3);
+    }
+    else if (ReturnSame(alloc3) == SWIG_NEWOBJ ) {
       delete[] arg4;
     }
   }
@@ -29043,7 +29122,7 @@ static PyMethodDef SwigMethods[] = {
 		"papszOptions:  a StringList of name=value options. Options are driver\n"
 		"specific.\n"
 		"\n"
-		"an handle to the layer, or NULL if an error occurs. \n"
+		"a handle to the layer, or NULL if an error occurs. \n"
 		""},
 	 { (char *)"DataSource_GetLayerByIndex", _wrap_DataSource_GetLayerByIndex, METH_VARARGS, (char *)"DataSource_GetLayerByIndex(DataSource self, int index=0) -> Layer"},
 	 { (char *)"DataSource_GetLayerByName", _wrap_DataSource_GetLayerByName, METH_VARARGS, (char *)"\n"
@@ -29066,7 +29145,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"pszLayerName:  Layer the layer name of the layer to fetch.\n"
 		"\n"
-		"an handle to the layer, or NULL if the layer is not found or an error\n"
+		"a handle to the layer, or NULL if the layer is not found or an error\n"
 		"occurs. \n"
 		""},
 	 { (char *)"DataSource_TestCapability", _wrap_DataSource_TestCapability, METH_VARARGS, (char *)"\n"
@@ -29146,9 +29225,10 @@ static PyMethodDef SwigMethods[] = {
 		"the dialect. Starting with OGR 1.10, the SQLITE dialect can also be\n"
 		"used.\n"
 		"\n"
-		"an handle to a OGRLayer containing the results of the query.\n"
+		"a handle to a OGRLayer containing the results of the query.\n"
 		"Deallocate with OGR_DS_ReleaseResultSet(). \n"
 		""},
+	 { (char *)"DataSource_AbortSQL", _wrap_DataSource_AbortSQL, METH_VARARGS, (char *)"DataSource_AbortSQL(DataSource self) -> OGRErr"},
 	 { (char *)"DataSource_ReleaseResultSet", _wrap_DataSource_ReleaseResultSet, METH_VARARGS, (char *)"\n"
 		"DataSource_ReleaseResultSet(DataSource self, Layer layer)\n"
 		"\n"
@@ -29167,7 +29247,7 @@ static PyMethodDef SwigMethods[] = {
 		"Parameters:\n"
 		"-----------\n"
 		"\n"
-		"hDS:  an handle to the data source on which was executed an SQL query.\n"
+		"hDS:  a handle to the data source on which was executed an SQL query.\n"
 		"\n"
 		"hLayer:  handle to the result of a previous OGR_DS_ExecuteSQL() call.\n"
 		"\n"
@@ -29299,7 +29379,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"hLayer:  handle to the layer to get the spatial filter from.\n"
 		"\n"
-		"an handle to the spatial filter geometry. \n"
+		"a handle to the spatial filter geometry. \n"
 		""},
 	 { (char *)"Layer_SetAttributeFilter", _wrap_Layer_SetAttributeFilter, METH_VARARGS, (char *)"\n"
 		"Layer_SetAttributeFilter(Layer self, char * filter_string) -> OGRErr\n"
@@ -29489,7 +29569,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"nFeatureId:  the feature id of the feature to read.\n"
 		"\n"
-		"an handle to a feature now owned by the caller, or NULL on failure. \n"
+		"a handle to a feature now owned by the caller, or NULL on failure. \n"
 		""},
 	 { (char *)"Layer_GetNextFeature", _wrap_Layer_GetNextFeature, METH_VARARGS, (char *)"\n"
 		"Layer_GetNextFeature(Layer self) -> Feature\n"
@@ -29529,7 +29609,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"hLayer:  handle to the layer from which feature are read.\n"
 		"\n"
-		"an handle to a feature, or NULL if no more features are available. \n"
+		"a handle to a feature, or NULL if no more features are available. \n"
 		""},
 	 { (char *)"Layer_SetNextByIndex", _wrap_Layer_SetNextByIndex, METH_VARARGS, (char *)"\n"
 		"Layer_SetNextByIndex(Layer self, GIntBig new_index) -> OGRErr\n"
@@ -29694,7 +29774,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"hLayer:  handle to the layer to get the schema information.\n"
 		"\n"
-		"an handle to the feature definition. \n"
+		"a handle to the feature definition. \n"
 		""},
 	 { (char *)"Layer_GetFeatureCount", (PyCFunction) _wrap_Layer_GetFeatureCount, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"Layer_GetFeatureCount(Layer self, int force=1) -> GIntBig\n"
@@ -30800,7 +30880,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"hFeat:  handle to the feature to get the feature definition from.\n"
 		"\n"
-		"an handle to the feature definition object on which feature depends.\n"
+		"a handle to the feature definition object on which feature depends.\n"
 		"\n"
 		""},
 	 { (char *)"Feature_SetGeometry", _wrap_Feature_SetGeometry, METH_VARARGS, (char *)"\n"
@@ -30872,7 +30952,7 @@ static PyMethodDef SwigMethods[] = {
 		"OGRGeometryH\n"
 		"OGR_F_GetGeometryRef(OGRFeatureH hFeat)\n"
 		"\n"
-		"Fetch an handle to feature geometry.\n"
+		"Fetch a handle to feature geometry.\n"
 		"\n"
 		"This function is essentially the same as the C++ method\n"
 		"OGRFeature::GetGeometryRef() (the only difference is that this C\n"
@@ -30883,7 +30963,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"hFeat:  handle to the feature to get geometry from.\n"
 		"\n"
-		"an handle to internal feature geometry. This object should not be\n"
+		"a handle to internal feature geometry. This object should not be\n"
 		"modified. \n"
 		""},
 	 { (char *)"Feature_SetGeomField", _wrap_Feature_SetGeomField, METH_VARARGS, (char *)"\n"
@@ -30953,7 +31033,7 @@ static PyMethodDef SwigMethods[] = {
 		"OGRGeometryH\n"
 		"OGR_F_GetGeomFieldRef(OGRFeatureH hFeat, int iField)\n"
 		"\n"
-		"Fetch an handle to feature geometry.\n"
+		"Fetch a handle to feature geometry.\n"
 		"\n"
 		"This function is the same as the C++ method\n"
 		"OGRFeature::GetGeomFieldRef().\n"
@@ -30965,7 +31045,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"iField:  geometry field to get.\n"
 		"\n"
-		"an handle to internal feature geometry. This object should not be\n"
+		"a handle to internal feature geometry. This object should not be\n"
 		"modified.\n"
 		"\n"
 		"GDAL 1.11 \n"
@@ -30988,7 +31068,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"hFeat:  handle to the feature to clone.\n"
 		"\n"
-		"an handle to the new feature, exactly matching this feature. \n"
+		"a handle to the new feature, exactly matching this feature. \n"
 		""},
 	 { (char *)"Feature_Equal", _wrap_Feature_Equal, METH_VARARGS, (char *)"\n"
 		"Feature_Equal(Feature self, Feature feature) -> bool\n"
@@ -31051,7 +31131,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"i:  the field to fetch, from 0 to GetFieldCount()-1.\n"
 		"\n"
-		"an handle to the field definition (from the OGRFeatureDefn). This is\n"
+		"a handle to the field definition (from the OGRFeatureDefn). This is\n"
 		"an internal reference, and should not be deleted or modified. \n"
 		""},
 	 { (char *)"Feature_GetGeomFieldCount", _wrap_Feature_GetGeomFieldCount, METH_VARARGS, (char *)"\n"
@@ -31094,7 +31174,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"i:  the field to fetch, from 0 to GetGeomFieldCount()-1.\n"
 		"\n"
-		"an handle to the field definition (from the OGRFeatureDefn). This is\n"
+		"a handle to the field definition (from the OGRFeatureDefn). This is\n"
 		"an internal reference, and should not be deleted or modified.\n"
 		"\n"
 		"GDAL 1.11 \n"
@@ -32164,7 +32244,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"iField:  the field to fetch, between 0 and GetFieldCount()-1.\n"
 		"\n"
-		"an handle to an internal field definition object or NULL if invalid\n"
+		"a handle to an internal field definition object or NULL if invalid\n"
 		"index. This object should not be modified or freed by the application.\n"
 		"\n"
 		""},
@@ -32257,7 +32337,7 @@ static PyMethodDef SwigMethods[] = {
 		"iGeomField:  the geometry field to fetch, between 0 and\n"
 		"GetGeomFieldCount() - 1.\n"
 		"\n"
-		"an handle to an internal field definition object or NULL if invalid\n"
+		"a handle to an internal field definition object or NULL if invalid\n"
 		"index. This object should not be modified or freed by the application.\n"
 		"\n"
 		"GDAL 1.11 \n"
@@ -33208,7 +33288,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"hGeom:  handle on the geometry to clone from.\n"
 		"\n"
-		"an handle on the copy of the geometry with the spatial reference\n"
+		"a handle on the copy of the geometry with the spatial reference\n"
 		"system as the original. \n"
 		""},
 	 { (char *)"Geometry_GetGeometryType", _wrap_Geometry_GetGeometryType, METH_VARARGS, (char *)"\n"

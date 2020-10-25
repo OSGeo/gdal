@@ -94,7 +94,7 @@ void RegisterOGRAVCE00()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Arc/Info E00 (ASCII) Coverage" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "e00" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_avce00.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/avce00.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnIdentify = OGRAVCE00DriverIdentify;

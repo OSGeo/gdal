@@ -70,7 +70,7 @@ void RegisterOGRPGDump()
     poDriver->SetDescription( "PGDUMP" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "PostgreSQL SQL dump" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_pgdump.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/pgdump.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sql" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,

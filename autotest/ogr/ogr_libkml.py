@@ -330,6 +330,9 @@ def ogr_libkml_write(filename):
         srs.SetWellKnownGeogCS('WGS72')
         lyr = ds.CreateLayer('test_wgs72', srs=srs)
 
+        assert lyr.TestCapability(ogr.OLCSequentialWrite) == 1
+        assert lyr.TestCapability(ogr.OLCRandomWrite) == 0
+
         dst_feat = ogr.Feature(lyr.GetLayerDefn())
         dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))
         assert lyr.CreateFeature(dst_feat) == 0, 'CreateFeature failed.'
@@ -1395,10 +1398,11 @@ def test_ogr_libkml_write_update():
         with gdaltest.error_handler():
             lyr.CreateFeature(feat)
         feat.SetFID(10)
-        lyr.CreateFeature(feat)
+        assert lyr.CreateFeature(feat) == 0
         feat.SetFID(2)
-        lyr.SetFeature(feat)
-        lyr.DeleteFeature(3)
+        assert lyr.TestCapability(ogr.OLCRandomWrite) == 1
+        assert lyr.SetFeature(feat) == 0
+        assert lyr.DeleteFeature(3) == 0
         ds = None
 
         if i == 0:

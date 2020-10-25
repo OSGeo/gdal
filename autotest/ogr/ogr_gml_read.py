@@ -685,9 +685,12 @@ def test_ogr_gml_17():
 
     ds = ogr.Open('data/gml/gnis_pop_100.gml')
     lyr = ds.GetLayer(0)
+
     sr = lyr.GetSpatialRef()
     got_wkt = sr.ExportToWkt()
     assert got_wkt.find('GEOGCS["WGS 84"') != -1, 'did not get expected SRS'
+
+    assert lyr.GetExtent() == (-80.17, 76.58, -13.32, 51.0)
 
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
@@ -1931,6 +1934,8 @@ def test_ogr_gml_52():
         assert srs is not None
         wkt = srs.ExportToWkt()
         assert '3067' in wkt
+
+        assert lyr.GetExtent() == (280000,280000,7000000,7000000)
 
         feat = lyr.GetNextFeature()
         if feat.GetField('gid') != '1' or \
@@ -3718,3 +3723,107 @@ def test_ogr_gml_unique(gml_format, constraint_met):
     finally:
         gdal.Unlink("/vsimem/test_ogr_gml_unique.gml")
         gdal.Unlink("/vsimem/test_ogr_gml_unique.xsd")
+
+###############################################################################
+
+
+def test_ogr_gml_write_gfs_no():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    gdal.Unlink('/vsimem/test.gfs')
+    gdal.Unlink('/vsimem/test.xsd')
+    gdal.FileFromMemBuffer('/vsimem/test.gml',
+                           open('data/gml/expected_gml_gml32.gml', 'rb').read())
+
+    assert gdal.OpenEx('/vsimem/test.gml') is not None
+    assert gdal.VSIStatL('/vsimem/test.gfs') is not None
+    gdal.Unlink('/vsimem/test.gfs')
+
+    assert gdal.OpenEx('/vsimem/test.gml', open_options = ['WRITE_GFS=NO']) is not None
+    assert gdal.VSIStatL('/vsimem/test.gfs') is None
+
+    gdal.Unlink('/vsimem/test.gml')
+
+
+###############################################################################
+
+
+def test_ogr_gml_write_gfs_yes():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    gdal.Unlink('/vsimem/test.gfs')
+    gdal.FileFromMemBuffer('/vsimem/test.gml',
+                           open('data/gml/expected_gml_gml32.gml', 'rb').read())
+    gdal.FileFromMemBuffer('/vsimem/test.xsd',
+                           open('data/gml/expected_gml_gml32.xsd', 'rb').read())
+
+    assert gdal.OpenEx('/vsimem/test.gml') is not None
+    assert gdal.VSIStatL('/vsimem/test.gfs') is None
+
+    assert gdal.OpenEx('/vsimem/test.gml', open_options = ['WRITE_GFS=YES']) is not None
+    assert gdal.VSIStatL('/vsimem/test.gfs') is not None
+
+    gdal.Unlink('/vsimem/test.gml')
+    gdal.Unlink('/vsimem/test.gfs')
+    gdal.Unlink('/vsimem/test.xsd')
+
+###############################################################################
+
+
+def test_ogr_gml_no_gfs_rewriting():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    gdal.Unlink('/vsimem/test.gfs')
+    gdal.Unlink('/vsimem/test.xsd')
+    gdal.FileFromMemBuffer('/vsimem/test.gml',
+                           open('data/gml/expected_gml_gml32.gml', 'rb').read())
+
+    assert gdal.OpenEx('/vsimem/test.gml') is not None
+    assert gdal.VSIStatL('/vsimem/test.gfs') is not None
+
+    f = gdal.VSIFOpenL('/vsimem/test.gfs', 'rb+')
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFSeekL(f, 0, 0)
+    data += b'<!-- mycomment -->'
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFCloseL(f)
+
+    assert gdal.OpenEx('/vsimem/test.gml') is not None
+
+    f = gdal.VSIFOpenL('/vsimem/test.gfs', 'rb+')
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+
+    assert b'<!-- mycomment -->' in data
+
+    gdal.Unlink('/vsimem/test.gml')
+    gdal.Unlink('/vsimem/test.gfs')
+
+###############################################################################
+# Read AIXM ElevatedSurface
+
+
+def test_ogr_gml_aixm_elevated_surface():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    gdal.Unlink('data/gml/aixm_ElevatedSurface.gfs')
+    ds = ogr.Open('data/gml/aixm_ElevatedSurface.xml')
+    lyr = ds.GetLayer(0)
+
+    assert lyr.GetExtent() == (2, 3, 49, 50)
+
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    got_wkt = geom.ExportToWkt()
+    assert got_wkt == 'POLYGON ((2 49,3 49,3 50,2 49))'
+
+    ds = None
+    gdal.Unlink('data/gml/aixm_ElevatedSurface.gfs')

@@ -45,11 +45,15 @@ typedef enum
 typedef char retStringAndCPLFree;
 %}
 
+%apply Pointer NONNULL {const char *message};
 %inline %{
   void Debug( const char *msg_class, const char *message ) {
     CPLDebug( msg_class, "%s", message );
   }
+%}
+%clear (const char *message);
 
+%inline %{
   CPLErr SetErrorHandler( CPLErrorHandler pfnErrorHandler = NULL, void* user_data = NULL )
   {
     if( pfnErrorHandler == NULL )
@@ -187,14 +191,20 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (NetworkStatsReset) VSINetworkStatsReset;
 %rename (NetworkStatsGetAsSerializedJSON) VSINetworkStatsGetAsSerializedJSON;
 
+%apply Pointer NONNULL {const char *pszScope};
 retStringAndCPLFree*
 GOA2GetAuthorizationURL( const char *pszScope );
+%clear (const char *pszScope);
 
+%apply Pointer NONNULL {const char *pszAuthToken};
 retStringAndCPLFree*
 GOA2GetRefreshToken( const char *pszAuthToken, const char *pszScope );
+%clear (const char *pszAuthToken);
 
+%apply Pointer NONNULL {const char *pszRefreshToken};
 retStringAndCPLFree*
 GOA2GetAccessToken( const char *pszRefreshToken, const char *pszScope );
+%clear (const char *pszRefreshToken);
 
 #if !defined(SWIGJAVA) && !defined(SWIGPYTHON)
 void CPLPushErrorHandler( CPLErrorHandler );

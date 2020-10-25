@@ -233,6 +233,10 @@ OGROAPIFDataset::~OGROAPIFDataset()
 CPLString OGROAPIFDataset::ReinjectAuthInURL(const CPLString& osURL) const
 {
     CPLString osRet(osURL);
+
+    if( !osRet.empty() && osRet[0] == '/' )
+        osRet = m_osRootURL + osRet;
+
     const auto nArobaseInURLPos = m_osRootURL.find('@');
     if( !osRet.empty() &&
         STARTS_WITH(m_osRootURL, "https://") &&
@@ -536,6 +540,12 @@ bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject& oCollection)
 {
     if( oCollection.GetType() != CPLJSONObject::Type::Object )
         return false;
+
+    // As used by https://maps.ecere.com/ogcapi/collections?f=json
+    const auto osLayerDataType = oCollection.GetString("layerDataType");
+    if( osLayerDataType == "Raster" || osLayerDataType == "Coverage" )
+        return false;
+
     CPLString osName( oCollection.GetString("id") );
 #ifndef REMOVE_SUPPORT_FOR_OLD_VERSIONS
     if( osName.empty() )
@@ -683,6 +693,8 @@ static std::string ConcatenateURLParts(const std::string& osPart1,
 
 bool OGROAPIFDataset::Open(GDALOpenInfo* poOpenInfo)
 {
+    CPLString osCollectionDescURL;
+
     m_osRootURL =
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "URL",
             poOpenInfo->pszFilename);
@@ -690,19 +702,36 @@ bool OGROAPIFDataset::Open(GDALOpenInfo* poOpenInfo)
         m_osRootURL = m_osRootURL.substr(strlen("WFS3:"));
     else if( STARTS_WITH_CI(m_osRootURL, "OAPIF:") )
         m_osRootURL = m_osRootURL.substr(strlen("OAPIF:"));
-    auto nPosQuotationMark = m_osRootURL.find('?');
-    if( nPosQuotationMark != std::string::npos )
+    else if( STARTS_WITH_CI(m_osRootURL, "OAPIF_COLLECTION:") )
     {
-        m_osUserQueryParams = m_osRootURL.substr(nPosQuotationMark + 1);
-        m_osRootURL.resize(nPosQuotationMark);
+        osCollectionDescURL = m_osRootURL.substr(strlen("OAPIF_COLLECTION:"));
+        m_osRootURL = osCollectionDescURL;
+        const char* pszStr = m_osRootURL.c_str();
+        const char* pszPtr = pszStr;
+        if( STARTS_WITH(pszPtr, "http://") )
+            pszPtr += strlen("http://");
+        else if( STARTS_WITH(pszPtr, "https://") )
+            pszPtr += strlen("https://");
+        pszPtr = strchr(pszPtr, '/');
+        if( pszPtr )
+            m_osRootURL.assign(pszStr, pszPtr - pszStr);
     }
 
-    CPLString osCollectionDescURL;
-    auto nCollectionsPos = m_osRootURL.find("/collections/");
-    if( nCollectionsPos != std::string::npos )
+    if( osCollectionDescURL.empty() )
     {
-        osCollectionDescURL = m_osRootURL;
-        m_osRootURL.resize(nCollectionsPos);
+        auto nPosQuotationMark = m_osRootURL.find('?');
+        if( nPosQuotationMark != std::string::npos )
+        {
+            m_osUserQueryParams = m_osRootURL.substr(nPosQuotationMark + 1);
+            m_osRootURL.resize(nPosQuotationMark);
+        }
+
+        auto nCollectionsPos = m_osRootURL.find("/collections/");
+        if( nCollectionsPos != std::string::npos )
+        {
+            osCollectionDescURL = m_osRootURL;
+            m_osRootURL.resize(nCollectionsPos);
+        }
     }
 
     m_bIgnoreSchema = CPLTestBool(
@@ -764,7 +793,8 @@ static int OGROAPIFDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
     return STARTS_WITH_CI(poOpenInfo->pszFilename, "WFS3:") ||
-           STARTS_WITH_CI(poOpenInfo->pszFilename, "OAPIF:");
+           STARTS_WITH_CI(poOpenInfo->pszFilename, "OAPIF:") ||
+           STARTS_WITH_CI(poOpenInfo->pszFilename, "OAPIF_COLLECTION:");
 }
 
 /************************************************************************/
@@ -821,6 +851,10 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
     m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
     poSRS->Release();
 
+    // Default to what the spec mandates for the /items URL, but check links later
+    m_osURL = ConcatenateURLParts(m_poDS->m_osRootURL, "/collections/" + osName + "/items");
+    m_osPath = "/collections/" + osName + "/items";
+
     if( oLinks.IsValid() )
     {
         for( int i = 0; i < oLinks.Size(); i++ )
@@ -858,6 +892,13 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
                     m_osQueryablesURL = m_poDS->ReinjectAuthInURL(osURL);
                 }
             }
+            else if( osRel == "items" )
+            {
+                if( type == MEDIA_TYPE_GEOJSON )
+                {
+                    m_osURL = m_poDS->ReinjectAuthInURL(osURL);
+                }
+            }
         }
         if( !m_osDescribedByURL.empty() )
         {
@@ -866,10 +907,6 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
     }
 
     m_bIsGeographicCRS = true;
-
-    // We might check in the links, but the spec mandates that construct of URL
-    m_osURL = ConcatenateURLParts(m_poDS->m_osRootURL, "/collections/" + osName + "/items");
-    m_osPath = "/collections/" + osName + "/items";
 
     OGROAPIFLayer::ResetReading();
 }
@@ -1043,14 +1080,14 @@ void OGROAPIFLayer::GetSchema()
 
     if( m_bDescribedByIsXML )
     {
-        std::vector<GMLFeatureClass*> aosClasses;
+        std::vector<GMLFeatureClass*> apoClasses;
         bool bFullyUnderstood = false;
-        bool bHaveSchema = GMLParseXSD( m_osDescribedByURL, aosClasses,
+        bool bHaveSchema = GMLParseXSD( m_osDescribedByURL, apoClasses,
                                         bFullyUnderstood );
-        if (bHaveSchema && aosClasses.size() == 1)
+        if (bHaveSchema && apoClasses.size() == 1)
         {
             CPLDebug("OAPIF", "Using XML schema");
-            const auto poGMLFeatureClass = aosClasses[0];
+            auto poGMLFeatureClass = apoClasses[0];
             if( poGMLFeatureClass->GetGeometryPropertyCount() ==  1 )
             {
                 // Force linear type as we work with GeoJSON data
@@ -1085,6 +1122,9 @@ void OGROAPIFLayer::GetSchema()
                 m_apoFieldsFromSchema.emplace_back(std::move(oField));
             }
         }
+
+        for( auto poFeatureClass: apoClasses )
+            delete poFeatureClass;
     }
     else
     {

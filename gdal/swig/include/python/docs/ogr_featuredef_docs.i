@@ -90,7 +90,7 @@ from.
 
 iField:  the field to fetch, between 0 and GetFieldCount()-1.
 
-an handle to an internal field definition object or NULL if invalid
+a handle to an internal field definition object or NULL if invalid
 index. This object should not be modified or freed by the application.
 ";
 
@@ -204,7 +204,7 @@ from.
 iGeomField:  the geometry field to fetch, between 0 and
 GetGeomFieldCount() - 1.
 
-an handle to an internal field definition object or NULL if invalid
+a handle to an internal field definition object or NULL if invalid
 index. This object should not be modified or freed by the application.
 
 GDAL 1.11 ";

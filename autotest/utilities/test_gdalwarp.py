@@ -1023,6 +1023,8 @@ def test_gdalwarp_40():
 
 ###############################################################################
 # Test source fill ratio heuristics (#3120)
+# Also check that we guess a reasonable resolution (#2754), from the source
+# dataset and target extent
 
 
 def test_gdalwarp_41():
@@ -1055,14 +1057,16 @@ def test_gdalwarp_41():
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_41_src.tif tmp/test_gdalwarp_41.tif -overwrite  -t_srs EPSG:4326 -te -180 -90 180 90  -wo INIT_DEST=127 -wo SKIP_NOSOURCE=YES')
 
     ds = gdal.Open('tmp/test_gdalwarp_41.tif')
-    assert ds.GetRasterBand(1).Checksum() == 25945
+    assert ds.RasterXSize == 2052
+    assert ds.RasterYSize == 1026
+    assert ds.GetRasterBand(1).Checksum() == 57091
     ds = None
 
     # Check when source fill ratio heuristics is OFF
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_41_src.tif tmp/test_gdalwarp_41.tif -overwrite  -t_srs EPSG:4326 -te -180 -90 180 90  -wo INIT_DEST=127 -wo SKIP_NOSOURCE=YES -wo SRC_FILL_RATIO_HEURISTICS=NO')
 
     ds = gdal.Open('tmp/test_gdalwarp_41.tif')
-    assert ds.GetRasterBand(1).Checksum() == 65068
+    assert ds.GetRasterBand(1).Checksum() == 31890
     ds = None
 
 ###############################################################################

@@ -257,13 +257,29 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
        * POINT
        *------------------------------------------------------------*/
       case wkbPoint:
-        poTABFeature = new TABPoint(poFeature->GetDefnRef());
         if(poFeature->GetStyleString())
         {
+            TABFeatureClass featureClass = ITABFeatureSymbol::GetSymbolFeatureClass(poFeature->GetStyleString());
+            if (featureClass == TABFCFontPoint) 
+            {
+                poTABFeature = new TABFontPoint(poFeature->GetDefnRef());
+            }
+            else if (featureClass == TABFCCustomPoint) 
+            {
+                poTABFeature = new TABCustomPoint(poFeature->GetDefnRef());
+            }
+            else 
+            {
+                poTABFeature = new TABPoint(poFeature->GetDefnRef());
+            }
             poTABPointFeature = cpl::down_cast<TABPoint*>(poTABFeature);
             poTABPointFeature->SetSymbolFromStyleString(
                 poFeature->GetStyleString());
         }
+        else 
+        {
+            poTABFeature = new TABPoint(poFeature->GetDefnRef());
+        }        
         break;
       /*-------------------------------------------------------------
        * REGION

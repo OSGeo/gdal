@@ -29,6 +29,8 @@
  ****************************************************************************/
 
 class WMSMiniDriver_TMS : public WMSMiniDriver {
+    int m_nTileXMultiplier = 1;
+
 public:
     WMSMiniDriver_TMS();
     virtual ~WMSMiniDriver_TMS();

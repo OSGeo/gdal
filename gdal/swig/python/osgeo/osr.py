@@ -1021,6 +1021,11 @@ class SpatialReference(_object):
         return _osr.SpatialReference_PromoteTo3D(self, *args)
 
 
+    def DemoteTo2D(self, *args):
+        """DemoteTo2D(SpatialReference self, char const * name=None) -> OGRErr"""
+        return _osr.SpatialReference_DemoteTo2D(self, *args)
+
+
 
     def __init__(self, *args, **kwargs):
         """__init__(OSRSpatialReferenceShadow self, char const * wkt) -> SpatialReference"""

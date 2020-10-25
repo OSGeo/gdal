@@ -218,6 +218,17 @@ All HDF4 attributes are transparently translated as GDAL metadata. In
 the HDF file attributes may be assigned assigned to the whole file as
 well as to particular subdatasets.
 
+Open options
+------------
+
+The following open option is supported:
+
+- **LIST_SDS=AUTO/YES/NO**: (GDAL >= 3.2) Whether to report Scientific Data Sets (SDS).
+  By default, when a HDF file contains EOS_SWATH or EOS_GRID, SDS will not be
+  listed as GDAL subdatasets (as this would cause them to be reported twice).
+  Listing them can be forced by setting LIST_SDS to YES.
+
+
 Multidimensional API support
 ----------------------------
 

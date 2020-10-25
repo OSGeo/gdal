@@ -975,6 +975,11 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
 
 #endif /* defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGPERL) */
 
+
+OGRErr AbortSQL() {
+    return GDALDatasetAbortSQL(self);
+}
+
 #ifndef SWIGJAVA
   %feature( "kwargs" ) StartTransaction;
 #endif

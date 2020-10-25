@@ -115,8 +115,7 @@ void RegisterOGRSUA()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Tim Newport-Peace's Special Use Airspace "
                                "Format" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "drv_sua.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/sua.html" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

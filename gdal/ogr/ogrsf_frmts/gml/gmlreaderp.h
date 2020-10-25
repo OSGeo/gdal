@@ -444,7 +444,6 @@ public:
                                        int iSqliteCacheMB ) override;
 
     bool             PrescanForSchema(bool bGetExtents = true,
-                                      bool bAnalyzeSRSPerFeature = true,
                                       bool bOnlyDetectSRS = false ) override;
     bool             PrescanForTemplate() override;
     bool             ReArrangeTemplateClasses( GFSTemplateList *pCC );

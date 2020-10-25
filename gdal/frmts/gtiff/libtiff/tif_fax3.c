@@ -610,15 +610,19 @@ Fax3SetupState(TIFF* tif)
  */
 
 #define	Fax3FlushBits(tif, sp) {				\
-	if ((tif)->tif_rawcc >= (tif)->tif_rawdatasize)		\
-		(void) TIFFFlushData1(tif);			\
+	if ((tif)->tif_rawcc >= (tif)->tif_rawdatasize) {	\
+		if( !TIFFFlushData1(tif) )			\
+			return 0;				\
+        }							\
 	*(tif)->tif_rawcp++ = (uint8) (sp)->data;		\
 	(tif)->tif_rawcc++;					\
 	(sp)->data = 0, (sp)->bit = 8;				\
 }
 #define	_FlushBits(tif) {					\
-	if ((tif)->tif_rawcc >= (tif)->tif_rawdatasize)		\
-		(void) TIFFFlushData1(tif);			\
+	if ((tif)->tif_rawcc >= (tif)->tif_rawdatasize) {	\
+		if( !TIFFFlushData1(tif) )			\
+			return 0;				\
+        }							\
 	*(tif)->tif_rawcp++ = (uint8) data;		\
 	(tif)->tif_rawcc++;					\
 	data = 0, bit = 8;					\
@@ -643,7 +647,7 @@ static const int _msbmask[9] =
  * the output stream.  Values are
  * assumed to be at most 16 bits.
  */
-static void
+static int
 Fax3PutBits(TIFF* tif, unsigned int bits, unsigned int length)
 {
 	Fax3CodecState* sp = EncoderState(tif);
@@ -654,6 +658,7 @@ Fax3PutBits(TIFF* tif, unsigned int bits, unsigned int length)
 
 	sp->data = data;
 	sp->bit = bit;
+        return 1;
 }
 
 /*
@@ -678,7 +683,7 @@ Fax3PutBits(TIFF* tif, unsigned int bits, unsigned int length)
  * appropriate table that holds the make-up and
  * terminating codes is supplied.
  */
-static void
+static int
 putspan(TIFF* tif, int32 span, const tableentry* tab)
 {
 	Fax3CodecState* sp = EncoderState(tif);
@@ -716,6 +721,8 @@ putspan(TIFF* tif, int32 span, const tableentry* tab)
 
 	sp->data = data;
 	sp->bit = bit;
+
+        return 1;
 }
 
 /*
@@ -724,7 +731,7 @@ putspan(TIFF* tif, int32 span, const tableentry* tab)
  * here.  We also handle writing the tag bit for the next
  * scanline when doing 2d encoding.
  */
-static void
+static int
 Fax3PutEOL(TIFF* tif)
 {
 	Fax3CodecState* sp = EncoderState(tif);
@@ -758,6 +765,8 @@ Fax3PutEOL(TIFF* tif)
 
 	sp->data = data;
 	sp->bit = bit;
+
+        return 1;
 }
 
 /*
@@ -1007,12 +1016,14 @@ Fax3Encode1DRow(TIFF* tif, unsigned char* bp, uint32 bits)
 
 	for (;;) {
 		span = find0span(bp, bs, bits);		/* white span */
-		putspan(tif, span, TIFFFaxWhiteCodes);
+		if( !putspan(tif, span, TIFFFaxWhiteCodes) )
+                    return 0;
 		bs += span;
 		if (bs >= bits)
 			break;
 		span = find1span(bp, bs, bits);		/* black span */
-		putspan(tif, span, TIFFFaxBlackCodes);
+		if( !putspan(tif, span, TIFFFaxBlackCodes) )
+                    return 0;
 		bs += span;
 		if (bs >= bits)
 			break;
@@ -1064,21 +1075,28 @@ Fax3Encode2DRow(TIFF* tif, unsigned char* bp, unsigned char* rp, uint32 bits)
 			          (b1 < a1 && a1 - b1 <= 3U) ? -(int32)(a1 - b1) : 0x7FFFFFFF;
 			if (!(-3 <= d && d <= 3)) {	/* horizontal mode */
 				a2 = finddiff2(bp, a1, bits, PIXEL(bp,a1));
-				putcode(tif, &horizcode);
+				if( !putcode(tif, &horizcode) )
+                                    return 0;
 				if (a0+a1 == 0 || PIXEL(bp, a0) == 0) {
-					putspan(tif, a1-a0, TIFFFaxWhiteCodes);
-					putspan(tif, a2-a1, TIFFFaxBlackCodes);
+					if( !putspan(tif, a1-a0, TIFFFaxWhiteCodes) )
+                                            return 0;
+					if( !putspan(tif, a2-a1, TIFFFaxBlackCodes) )
+                                            return 0;
 				} else {
-					putspan(tif, a1-a0, TIFFFaxBlackCodes);
-					putspan(tif, a2-a1, TIFFFaxWhiteCodes);
+					if( !putspan(tif, a1-a0, TIFFFaxBlackCodes) )
+                                            return 0;
+					if( !putspan(tif, a2-a1, TIFFFaxWhiteCodes) )
+                                            return 0;
 				}
 				a0 = a2;
 			} else {			/* vertical mode */
-				putcode(tif, &vcodes[d+3]);
+				if( !putcode(tif, &vcodes[d+3]) )
+                                    return 0;
 				a0 = a1;
 			}
 		} else {				/* pass mode */
-			putcode(tif, &passcode);
+			if( !putcode(tif, &passcode) )
+                            return 0;
 			a0 = b2;
 		}
 		if (a0 >= bits)
@@ -1107,7 +1125,10 @@ Fax3Encode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 	}
 	while (cc > 0) {
 		if ((sp->b.mode & FAXMODE_NOEOL) == 0)
-			Fax3PutEOL(tif);
+                {
+			if( !Fax3PutEOL(tif) )
+                            return 0;
+                }
 		if (is2DEncoding(sp)) {
 			if (sp->tag == G3_1D) {
 				if (!Fax3Encode1DRow(tif, bp, sp->b.rowpixels))
@@ -1144,8 +1165,8 @@ Fax3PostEncode(TIFF* tif)
 	return (1);
 }
 
-static void
-Fax3Close(TIFF* tif)
+static int
+_Fax3Close(TIFF* tif)
 {
 	if ((Fax3State(tif)->mode & FAXMODE_NORTC) == 0 && tif->tif_rawcp) {
 		Fax3CodecState* sp = EncoderState(tif);
@@ -1161,6 +1182,13 @@ Fax3Close(TIFF* tif)
 			Fax3PutBits(tif, code, length);
 		Fax3FlushBits(tif, sp);
 	}
+	return 1;
+}
+
+static void
+Fax3Close(TIFF* tif)
+{
+    _Fax3Close(tif);
 }
 
 static void

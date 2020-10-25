@@ -1405,19 +1405,18 @@ public:
     virtual DeviceType GetDeviceType() const override { return m_poParent->GetDeviceType(); }
     virtual int         GetDeviceCaps(int caps_id) const override { return m_poParent->GetDeviceCaps(caps_id); }
 
-    virtual bool StartRendering() override { return m_poParent->StartRendering(); }
-    virtual void EndRendering() override { m_poParent->EndRendering(); }
     virtual void        SaveState() override { m_poParent->SaveState(); }
     virtual void        RestoreState(bool bKeepSaved) override { m_poParent->RestoreState(bKeepSaved); }
 
-    virtual bool     SetClip_PathFill(const CFX_PathData* pPathData,
-                                     const CFX_Matrix* pObject2Device,
-                                     int fill_mode
-                                    ) override
+    virtual void SetBaseClip(const FX_RECT& rect) override { m_poParent->SetBaseClip(rect); }
+
+    virtual bool SetClip_PathFill(const CFX_PathData* pPathData,
+                                const CFX_Matrix* pObject2Device,
+                                const CFX_FillRenderOptions& fill_options) override
     {
         if( !bEnableVector && !bTemporaryEnableVectorForTextStroking )
-            return TRUE;
-        return m_poParent->SetClip_PathFill(pPathData, pObject2Device, fill_mode);
+            return true;
+        return m_poParent->SetClip_PathFill(pPathData, pObject2Device, fill_options);
     }
 
     virtual bool     SetClip_PathStroke(const CFX_PathData* pPathData,
@@ -1426,30 +1425,23 @@ public:
                                       ) override
     {
         if( !bEnableVector && !bTemporaryEnableVectorForTextStroking )
-            return TRUE;
+            return true;
         return m_poParent->SetClip_PathStroke(pPathData, pObject2Device, pGraphState);
     }
 
-    virtual bool     DrawPath(const CFX_PathData* pPathData,
+    virtual bool DrawPath(const CFX_PathData* pPathData,
                         const CFX_Matrix* pObject2Device,
                         const CFX_GraphStateData* pGraphState,
                         uint32_t fill_color,
                         uint32_t stroke_color,
-                        int fill_mode,
+                        const CFX_FillRenderOptions& fill_options,
                         BlendMode blend_type)  override
     {
         if( !bEnableVector && !bTemporaryEnableVectorForTextStroking )
-            return TRUE;
+            return true;
         return m_poParent->DrawPath(pPathData, pObject2Device, pGraphState ,
-                                    fill_color, stroke_color, fill_mode,
+                                    fill_color, stroke_color, fill_options,
                                     blend_type);
-    }
-
-    virtual bool     SetPixel(int x, int y, uint32_t color) override
-    {
-        if( !bEnableBitmap && !bTemporaryEnableVectorForTextStroking )
-            return TRUE;
-        return m_poParent->SetPixel(x,y,color);
     }
 
     virtual bool FillRectWithBlend(const FX_RECT& rect,
@@ -1541,7 +1533,8 @@ public:
                               CFX_Font* pFont,
                               const CFX_Matrix& mtObject2Device,
                               float font_size,
-                              uint32_t color) override
+                              uint32_t color,
+                              const CFX_TextRenderOptions& options) override
     {
         if( bEnableText )
         {
@@ -1554,7 +1547,7 @@ public:
             bool bRet = m_pDevice->DrawNormalText(nChars, pCharPos,
                                                      pFont,
                                                      font_size, mtObject2Device,
-                                                     color, 0 /* text_flags */);
+                                                     color, options);
             bTemporaryEnableVectorForTextStroking = FALSE;
             return bRet;
         }
@@ -1567,8 +1560,6 @@ public:
         return m_poParent->GetDriverType();
     }
 
-    virtual void    ClearDriver() override { m_poParent->ClearDriver(); }
-
     virtual bool DrawShading(const CPDF_ShadingPattern* pPattern,
                             const CFX_Matrix* pMatrix,
                             const FX_RECT& clip_rect,
@@ -1580,6 +1571,7 @@ public:
         return m_poParent->DrawShading(pPattern, pMatrix, clip_rect, alpha, bAlphaMode);
     }
 
+#if defined(_SKIA_SUPPORT_)
     virtual bool SetBitsWithMask(const RetainPtr<CFX_DIBBase>& pBitmap,
                                 const RetainPtr<CFX_DIBBase>& pMask,
                                 int left,
@@ -1591,6 +1583,7 @@ public:
             return true;
         return m_poParent->SetBitsWithMask(pBitmap, pMask, left, top, bitmap_alpha, blend_type);
     }
+#endif
 #if defined _SKIA_SUPPORT_ || defined _SKIA_SUPPORT_PATHS_
     virtual void Flush() override { return m_poParent->Flush(); }
 #endif
@@ -1638,10 +1631,11 @@ void myRenderPageImpl(PDFDataset* poDS,
                     const CFX_Matrix& matrix,
                     const FX_RECT& clipping_rect,
                     int flags,
+                    const FPDF_COLORSCHEME* color_scheme,
                     bool bNeedToRestore,
                     CPDFSDK_PauseAdapter* pause) {
   if (!pContext->m_pOptions)
-    pContext->m_pOptions = pdfium::MakeUnique<CPDF_RenderOptions>();
+    pContext->m_pOptions = std::make_unique<CPDF_RenderOptions>();
 
   auto& options = pContext->m_pOptions->GetOptions();
   options.bClearType = !!(flags & FPDF_LCD_TEXT);
@@ -1656,18 +1650,28 @@ void myRenderPageImpl(PDFDataset* poDS,
   if (flags & FPDF_GRAYSCALE)
     pContext->m_pOptions->SetColorMode(CPDF_RenderOptions::kGray);
 
+  if (color_scheme) {
+    pContext->m_pOptions->SetColorMode(CPDF_RenderOptions::kForcedColor);
+    SetColorFromScheme(color_scheme, pContext->m_pOptions.get());
+    options.bConvertFillToStroke = !!(flags & FPDF_CONVERT_FILL_TO_STROKE);
+  }
+
   const CPDF_OCContext::UsageType usage =
       (flags & FPDF_PRINTING) ? CPDF_OCContext::Print : CPDF_OCContext::View;
   pContext->m_pOptions->SetOCContext(
       pdfium::MakeRetain<GDALPDFiumOCContext>(poDS, pPage->GetDocument(), usage));
 
   pContext->m_pDevice->SaveState();
+  pContext->m_pDevice->SetBaseClip(clipping_rect);
   pContext->m_pDevice->SetClip_Rect(clipping_rect);
-  pContext->m_pContext = pdfium::MakeUnique<CPDF_RenderContext>(pPage);
+  pContext->m_pContext = std::make_unique<CPDF_RenderContext>(
+      pPage->GetDocument(), pPage->m_pPageResources.Get(),
+      static_cast<CPDF_PageRenderCache*>(pPage->GetRenderCache()));
+
   pContext->m_pContext->AppendLayer(pPage, &matrix);
 
   if (flags & FPDF_ANNOT) {
-    auto pOwnedList = pdfium::MakeUnique<CPDF_AnnotList>(pPage);
+    auto pOwnedList = std::make_unique<CPDF_AnnotList>(pPage);
     CPDF_AnnotList* pList = pOwnedList.get();
     pContext->m_pAnnots = std::move(pOwnedList);
     bool bPrinting =
@@ -1676,7 +1680,7 @@ void myRenderPageImpl(PDFDataset* poDS,
                          false, nullptr);
   }
 
-  pContext->m_pRenderer = pdfium::MakeUnique<CPDF_ProgressiveRenderer>(
+  pContext->m_pRenderer = std::make_unique<CPDF_ProgressiveRenderer>(
       pContext->m_pContext.get(), pContext->m_pDevice.get(),
       pContext->m_pOptions.get());
   pContext->m_pRenderer->Start(pause);
@@ -1694,6 +1698,7 @@ void myRenderPageWithContext(PDFDataset* poDS,
                            int size_y,
                            int rotate,
                            int flags,
+                           const FPDF_COLORSCHEME* color_scheme,
                            bool bNeedToRestore,
                            CPDFSDK_PauseAdapter* pause) {
   CPDF_Page* pPage = CPDFPageFromFPDFPage(page);
@@ -1702,20 +1707,31 @@ void myRenderPageWithContext(PDFDataset* poDS,
 
   const FX_RECT rect(start_x, start_y, start_x + size_x, start_y + size_y);
   myRenderPageImpl(poDS, pContext, pPage, pPage->GetDisplayMatrix(rect, rotate), rect,
-                 flags, bNeedToRestore, pause);
+                 flags, color_scheme, bNeedToRestore, pause);
 }
 
- // Substitution for CFX_DefaultRenderDevice::Attach
-static bool myDeviceAttach(CFX_DefaultRenderDevice* pDevice,
-                         const RetainPtr<CFX_DIBitmap>& pBitmap,
-              bool bRgbByteOrder,
-              const RetainPtr<CFX_DIBitmap>& pBackdropBitmap,
-              bool bGroupKnockout,
-              const char* pszRenderingOptions)
-{
-  pDevice->SetBitmap(pBitmap);
 
-  std::unique_ptr<RenderDeviceDriverIface> driver = pdfium::MakeUnique<CFX_AggDeviceDriver>(
+class MyRenderDevice final : public CFX_RenderDevice {
+
+    public:
+
+    // Substitution for CFX_DefaultRenderDevice::Attach
+     bool Attach(const RetainPtr<CFX_DIBitmap>& pBitmap,
+                         bool bRgbByteOrder,
+                         const RetainPtr<CFX_DIBitmap>& pBackdropBitmap,
+                         bool bGroupKnockout,
+                         const char* pszRenderingOptions);
+};
+
+bool MyRenderDevice::Attach(const RetainPtr<CFX_DIBitmap>& pBitmap,
+                         bool bRgbByteOrder,
+                         const RetainPtr<CFX_DIBitmap>& pBackdropBitmap,
+                         bool bGroupKnockout,
+                         const char* pszRenderingOptions)
+{
+  SetBitmap(pBitmap);
+
+  std::unique_ptr<RenderDeviceDriverIface> driver = std::make_unique<CFX_AggDeviceDriver>(
       pBitmap, bRgbByteOrder, pBackdropBitmap, bGroupKnockout);
   if (pszRenderingOptions != nullptr)
   {
@@ -1745,7 +1761,7 @@ static bool myDeviceAttach(CFX_DefaultRenderDevice* pDevice,
     if( !bEnableVector || !bEnableText || !bEnableBitmap )
     {
         std::unique_ptr<GDALPDFiumRenderDeviceDriver> poGDALRDDriver =
-            pdfium::MakeUnique<GDALPDFiumRenderDeviceDriver>(std::move(driver), pDevice);
+            std::make_unique<GDALPDFiumRenderDeviceDriver>(std::move(driver), this);
         poGDALRDDriver->SetEnableVector(bEnableVector);
         poGDALRDDriver->SetEnableText(bEnableText);
         poGDALRDDriver->SetEnableBitmap(bEnableBitmap);
@@ -1753,7 +1769,7 @@ static bool myDeviceAttach(CFX_DefaultRenderDevice* pDevice,
     }
   }
 
-  pDevice->SetDeviceDriver(std::move(driver));
+  SetDeviceDriver(std::move(driver));
   return true;
 }
 
@@ -1772,105 +1788,27 @@ void PDFDataset::PDFiumRenderPageBitmap(FPDF_BITMAP bitmap, FPDF_PAGE page,
   if (!pPage)
     return;
 
-  CPDF_PageRenderContext* pContext = new CPDF_PageRenderContext;
-  pPage->SetRenderContext(pdfium::WrapUnique(pContext));
+  auto pOwnedContext = std::make_unique<CPDF_PageRenderContext>();
+  CPDF_PageRenderContext* pContext = pOwnedContext.get();
+  CPDF_Page::RenderContextClearer clearer(pPage);
+  pPage->SetRenderContext(std::move(pOwnedContext));
 
-  CFX_DefaultRenderDevice* pDevice = new CFX_DefaultRenderDevice;
-  pContext->m_pDevice.reset(pDevice);
+  auto pOwnedDevice = std::make_unique<MyRenderDevice>();
+  auto pDevice = pOwnedDevice.get();
+  pContext->m_pDevice = std::move(pOwnedDevice);
 
   RetainPtr<CFX_DIBitmap> pBitmap(CFXDIBitmapFromFPDFBitmap(bitmap));
 
-  // Substitution for pDevice->Attach(pBitmap, !!(flags & FPDF_REVERSE_BYTE_ORDER), nullptr, false);
-  myDeviceAttach(pDevice, pBitmap, !!(flags & FPDF_REVERSE_BYTE_ORDER), nullptr, false, pszRenderingOptions);
+  pDevice->Attach(pBitmap, !!(flags & FPDF_REVERSE_BYTE_ORDER), nullptr, false, pszRenderingOptions);
 
   myRenderPageWithContext(this, pContext, page, start_x, start_y, size_x, size_y,
-                        rotate, flags, true, nullptr);
+                          rotate, flags,
+                          /*color_scheme=*/nullptr,
+                          /*need_to_restore=*/true, /*pause=*/nullptr);
 
 #ifdef _SKIA_SUPPORT_PATHS_
   pDevice->Flush(true);
   pBitmap->UnPreMultiply();
-#endif
-  pPage->SetRenderContext(nullptr);
-
-#if 0
-    CPDF_Page* pPage = (CPDF_Page*)page;
-
-    CRenderContext* pContext = new CRenderContext;
-    pPage->SetPrivateData((void*)1, pContext, DropContext);
-
-    CFX_FxgeDevice* pDevice = new CFX_FxgeDevice;
-
-    // The 3 following lines are basically CFX_FxgeDevice::Attach()
-    // except that we wrap the RenderDeviceDriver with our own class
-    pDevice->SetBitmap((CFX_DIBitmap*)bitmap);
-    IFX_RenderDeviceDriver* pDriver = IFX_RenderDeviceDriver::CreateFxgeDriver((CFX_DIBitmap*)bitmap);
-    if (pszRenderingOptions != nullptr)
-    {
-        int bEnableVector = FALSE;
-        int bEnableText = FALSE;
-        int bEnableBitmap = FALSE;
-
-        char** papszTokens = CSLTokenizeString2( pszRenderingOptions, " ,", 0 );
-        for(int i=0;papszTokens[i] != nullptr;i++)
-        {
-            if (EQUAL(papszTokens[i], "VECTOR"))
-                bEnableVector = TRUE;
-            else if (EQUAL(papszTokens[i], "TEXT"))
-                bEnableText = TRUE;
-            else if (EQUAL(papszTokens[i], "RASTER") ||
-                        EQUAL(papszTokens[i], "BITMAP"))
-                bEnableBitmap = TRUE;
-            else
-            {
-                CPLError(CE_Warning, CPLE_NotSupported,
-                            "Value %s is not a valid value for GDAL_PDF_RENDERING_OPTIONS",
-                            papszTokens[i]);
-            }
-        }
-        CSLDestroy(papszTokens);
-
-        if( !bEnableVector || !bEnableText || !bEnableBitmap )
-        {
-            GDALPDFiumRenderDeviceDriver* poGDALRDDriver = new GDALPDFiumRenderDeviceDriver(pDriver, pDevice);
-            poGDALRDDriver->SetEnableVector(bEnableVector);
-            poGDALRDDriver->SetEnableText(bEnableText);
-            poGDALRDDriver->SetEnableBitmap(bEnableBitmap);
-            pDriver = poGDALRDDriver;
-        }
-    }
-
-    pDevice->SetDeviceDriver(pDriver);
-
-    pContext->m_pDevice = pDevice;
-
-    CPLAssert(pContext->m_pOptions == nullptr);
-    pContext->m_pOptions = new CPDF_RenderOptions;
-
-    pContext->m_pOptions->m_pOCContext = new GDALPDFiumOCContext(
-        poParentDS ? poParentDS: this, pPage->m_pDocument);
-
-    CFX_Matrix matrix;
-    pPage->GetDisplayMatrix(matrix, start_x, start_y, size_x, size_y, 0);
-
-    FX_RECT clip;
-    clip.left = start_x;
-    clip.right = start_x + size_x;
-    clip.top = start_y;
-    clip.bottom = start_y + size_y;
-    pContext->m_pDevice->SaveState();
-    pContext->m_pDevice->SetClip_Rect(&clip);
-
-    pContext->m_pContext = new CPDF_RenderContext;
-    pContext->m_pContext->Create(pPage);
-    pContext->m_pContext->AppendObjectList(pPage, &matrix);
-
-    pContext->m_pRenderer = new CPDF_ProgressiveRenderer(
-        pContext->m_pContext, pContext->m_pDevice, pContext->m_pOptions);
-    pContext->m_pRenderer->Start(nullptr);
-    pContext->m_pDevice->RestoreState();
-
-    delete pContext;
-    pPage->RemovePrivateData((void*)1);
 #endif
 }
 

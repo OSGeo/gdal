@@ -1,7 +1,7 @@
 .. _rfc-47:
 
 =======================================================================================
-RFC 47: Per Dataset Caching and GDALRasterBand Multithreading
+RFC 47: Per Dataset Caching and GDALRasterBand Multithreading (not implemented)
 =======================================================================================
 
 Author: Blake Thompson

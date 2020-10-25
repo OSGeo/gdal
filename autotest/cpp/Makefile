@@ -14,7 +14,7 @@ test check: all
 	make quick_test
 	./testperfcopywords
 
-quick_test: gdal_unit_test testcopywords testclosedondestroydm testthreadcond testvirtualmem testblockcache testblockcachewrite testblockcachelimits testmultithreadedwriting testdestroy bug1488
+quick_test: gdal_unit_test testcopywords testclosedondestroydm testthreadcond testvirtualmem testblockcache testblockcachewrite testblockcachelimits testmultithreadedwriting testdestroy test_osr_set_proj_search_paths bug1488 proj_with_fork
 	./gdal_unit_test
 	./testcopywords
 	./testclosedondestroydm

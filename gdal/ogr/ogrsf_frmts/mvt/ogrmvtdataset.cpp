@@ -276,7 +276,8 @@ class OGRMVTDataset final: public GDALDataset
     GByte                                      *m_pabyData;
     std::vector<std::unique_ptr<OGRLayer>>      m_apoLayers;
     bool                                        m_bGeoreferenced = false;
-    double                                      m_dfTileDim = 0.0;
+    double                                      m_dfTileDimX = 0.0;
+    double                                      m_dfTileDimY = 0.0;
     double                                      m_dfTopX = 0.0;
     double                                      m_dfTopY = 0.0;
     CPLString                                   m_osMetadataMemFilename;
@@ -822,8 +823,8 @@ void OGRMVTLayer::GetXY(int nX, int nY, double& dfX, double& dfY)
 {
     if( m_poDS->m_bGeoreferenced )
     {
-        dfX = m_poDS->m_dfTopX + nX * m_poDS->m_dfTileDim / m_nExtent;
-        dfY = m_poDS->m_dfTopY - nY * m_poDS->m_dfTileDim / m_nExtent;
+        dfX = m_poDS->m_dfTopX + nX * m_poDS->m_dfTileDimX / m_nExtent;
+        dfY = m_poDS->m_dfTopY - nY * m_poDS->m_dfTileDimY / m_nExtent;
     }
     else
     {
@@ -1857,7 +1858,8 @@ OGRMVTDataset::~OGRMVTDataset()
     VSIFree(m_pabyData);
     if( !m_osMetadataMemFilename.empty() )
         VSIUnlink(m_osMetadataMemFilename);
-    m_poSRS->Release();
+    if( m_poSRS )
+        m_poSRS->Release();
 }
 
 /************************************************************************/
@@ -3065,6 +3067,21 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
                      CPLString());
     }
 
+    const char* pszGeorefTopX = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "GEOREF_TOPX");
+    const char* pszGeorefTopY = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "GEOREF_TOPY");
+    const char* pszGeorefTileDimX = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "GEOREF_TILEDIMX");
+    const char* pszGeorefTileDimY = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "GEOREF_TILEDIMY");
+    if( pszGeorefTopX && pszGeorefTopY && pszGeorefTileDimX && pszGeorefTileDimY )
+    {
+        poDS->m_bGeoreferenced = true;
+        poDS->m_dfTileDimX = CPLAtof(pszGeorefTileDimX);
+        poDS->m_dfTileDimY = CPLAtof(pszGeorefTileDimY);
+        poDS->m_dfTopX = CPLAtof(pszGeorefTopX);
+        poDS->m_dfTopY = CPLAtof(pszGeorefTopY);
+        poDS->m_poSRS->Release();
+        poDS->m_poSRS = nullptr;
+    }
+    else
     if( CPLGetValueType(osX) == CPL_VALUE_INTEGER &&
         CPLGetValueType(osY) == CPL_VALUE_INTEGER &&
         CPLGetValueType(osZ) == CPL_VALUE_INTEGER )
@@ -3077,9 +3094,10 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
             nY >= 0 && nY < (1 << nZ) )
         {
             poDS->m_bGeoreferenced = true;
-            poDS->m_dfTileDim = poDS->m_dfTileDim0 / (1 << nZ);
-            poDS->m_dfTopX = poDS->m_dfTopXOrigin + nX * poDS->m_dfTileDim;
-            poDS->m_dfTopY = poDS->m_dfTopYOrigin - nY * poDS->m_dfTileDim;
+            poDS->m_dfTileDimX = poDS->m_dfTileDim0 / (1 << nZ);
+            poDS->m_dfTileDimY = poDS->m_dfTileDimX;
+            poDS->m_dfTopX = poDS->m_dfTopXOrigin + nX * poDS->m_dfTileDimX;
+            poDS->m_dfTopY = poDS->m_dfTopYOrigin - nY * poDS->m_dfTileDimY;
         }
     }
 
@@ -6212,7 +6230,7 @@ void RegisterOGRMVT()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Mapbox Vector Tiles" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_mvt.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/mvt.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "mvt mvt.gz pbf" );
 
@@ -6221,6 +6239,10 @@ void RegisterOGRMVT()
 "  <Option name='X' type='int' description='X coordinate of tile'/>"
 "  <Option name='Y' type='int' description='Y coordinate of tile'/>"
 "  <Option name='Z' type='int' description='Z coordinate of tile'/>"
+//"  <Option name='@GEOREF_TOPX' type='float' description='X coordinate of top-left corner of tile'/>"
+//"  <Option name='@GEOREF_TOPY' type='float' description='Y coordinate of top-left corner of  tile'/>"
+//"  <Option name='@GEOREF_TILEDIMX' type='float' description='Tile width in georeferenced units'/>"
+//"  <Option name='@GEOREF_TILEDIMY' type='float' description='Tile height in georeferenced units'/>"
 "  <Option name='METADATA_FILE' type='string' "
                                 "description='Path to metadata.json'/>"
 "  <Option name='CLIP' type='boolean' "

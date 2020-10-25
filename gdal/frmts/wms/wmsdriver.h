@@ -237,6 +237,7 @@ public:
     virtual GDALDataset* GetDataset(const char *pszKey,
                                     char **papszOpenOptions) const = 0;
     virtual void Clean() = 0;
+    virtual int GetCleanThreadRunTimeout() = 0;
 protected:
     CPLString m_soPath;
 };

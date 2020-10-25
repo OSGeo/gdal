@@ -1166,6 +1166,58 @@ fi
 AC_SUBST(LIBZ_SETTING,$LIBZ_SETTING)
 
 dnl ---------------------------------------------------------------------------
+dnl Check for libdeflate.
+dnl ---------------------------------------------------------------------------
+
+LIBDEFLATE_SETTING=no
+
+AC_ARG_WITH(libdeflate,
+            AS_HELP_STRING([--with-libdeflate],
+                            [enable libdeflate usage (optional for faster Deflate support (still requires zlib) (ARG=yes/no/prefix), enabled by default)]),,)
+
+if test "$with_libdeflate" != "no" ; then
+
+  if test "$with_libdeflate" != "" -a "$with_libdeflate" != "yes"; then
+    AC_CHECK_LIB(deflate, libdeflate_zlib_decompress, [libdeflate_lib=yes], [libdeflate_lib=no],-L$with_libdeflate/lib)
+  else
+    AC_CHECK_LIB(deflate, libdeflate_zlib_decompress, [libdeflate_lib=yes], [libdeflate_lib=no])
+  fi
+
+  if test "$libdeflate_lib" = "no" -a "$with_libdeflate" = "yes"; then
+    AC_MSG_ERROR([libdeflate library not found])
+  fi
+
+  if test "$with_libdeflate" != "" -a "$with_libdeflate" != "yes"; then
+    if test -r "$with_libdeflate/include/libdeflate.h" ; then
+      libdeflate_h=yes
+    else
+      libdeflate_h=no
+    fi
+  else
+    AC_CHECK_HEADER(libdeflate.h, [libdeflate_h=yes], [libdeflate_h=no])
+  fi
+  if test "$libdeflate_h" = "no" -a "$with_libdeflate" = "yes"; then
+    AC_MSG_ERROR([libdeflate headers not found])
+  fi
+
+  if test "$libdeflate_lib" = "yes" -a "$libdeflate_h" = "yes" ; then
+    LIBDEFLATE_SETTING=yes
+  fi
+
+fi
+
+if test "$LIBDEFLATE_SETTING" = "yes" ; then
+  if test "$with_libdeflate" != "" -a "$with_libdeflate" != "yes"; then
+    EXTRA_INCLUDES="-I$with_libdeflate/include $EXTRA_INCLUDES"
+    LIBS="-L$with_libdeflate/lib -ldeflate $LIBS"
+  else
+    LIBS="-ldeflate $LIBS"
+  fi
+fi
+
+AC_SUBST(LIBDEFLATE_SETTING,$LIBDEFLATE_SETTING)
+
+dnl ---------------------------------------------------------------------------
 dnl Check for iconv/libiconv.
 dnl A rationale for this macro is described in "GNU `gettext' utilities"
 dnl manual at
@@ -1581,7 +1633,7 @@ OGRFORMATS_DISABLED=
 AC_DEFUN([INTERNAL_FORMATS],[aaigrid adrg aigrid airsar arg blx bmp bsb cals ceos ceos2 coasp cosar ctg dimap dted e00grid elas envisat ers esric fit gff gsg gxf hf2 idrisi ignfheightasciigrid ilwis ingr iris iso8211 jaxapalsar jdem kmlsuperoverlay l1b leveller map mrf msgn ngsgeoid nitf northwood pds prf r raw rmf rs2 safe saga sdts sentinel2 sgi sigdem srtmhgt terragen tga til tsx usgsdem xpm xyz zmap])
 AC_DEFUN([INTERNAL_OPT_FORMATS],[grib ozi pdf rik])
 AC_DEFUN([INTERNAL_DRIVERS],[aeronavfaa arcgen avc bna cad csv dgn dxf edigeo flatgeobuf geoconcept georss gml gmt gpsbabel gpx gtm htf jml mapml mvt ntf openair openfilegdb pgdump rec s57 segukooa segy selafin shape sua svg sxf tiger vdv wasp xplane])dnl
-AC_DEFUN([CURL_FORMATS],[eeda plmosaic rda wcs wms wmts daas])dnl
+AC_DEFUN([CURL_FORMATS],[eeda plmosaic rda wcs wms wmts daas ogcapi])dnl
 AC_DEFUN([CURL_DRIVERS],[amigocloud carto cloudant couchdb csw elastic ngw plscenes wfs])dnl
 AC_DEFUN([SQLITE_FORMATS],[rasterlite mbtiles])dnl
 AC_DEFUN([SQLITE_DRIVERS],[gpkg vfk osm])dnl
@@ -2361,6 +2413,14 @@ if test "$with_charls" = "yes" -o "$with_charls" = "" ; then
     if test "$HAVE_CHARLS" = "yes"; then
         LIBS="-lcharls $LIBS"
         CHARLS_INC="-DCHARLS_2_1"
+    else
+        AC_LANG_PUSH([C++])
+        AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
+        AC_LANG_POP([C++])
+        if test "$HAVE_CHARLS" = "yes"; then
+            LIBS="-lCharLS $LIBS"
+            CHARLS_INC="-DCHARLS_2_1"
+        fi
     fi
   else
     dnl CharLS 1.x
@@ -4995,12 +5055,13 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
     rm -f testpdfium.*
     echo '#include "public/fpdfview.h"' > testpdfium.cpp
     echo '#include "core/fpdfapi/page/cpdf_page.h"' >> testpdfium.cpp
+    echo '#include "constants/transparency.h"' >> testpdfium.cpp # specific to pdfium_build_gdal_3_2
     echo 'int main(int argc, char** argv) { FPDF_InitLibrary(); FPDF_DestroyLibrary(); return 0; } ' >> testpdfium.cpp
     TEST_CXX_FLAGS=""
     if test ! -z "`uname | grep Darwin`" ; then
         TEST_CXX_FLAGS="$TEST_CXX_FLAGS -stdlib=libstdc++"
     fi
-    if ${CXX} ${CXXFLAGS} ${CPPFLAGS} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${PDFIUM_INC} ${PDFIUM_LIB} >/dev/null 2>/dev/null; then
+    if ${CXX} ${CXXFLAGS} ${CPPFLAGS} $TEST_CXX_FLAGS -std=c++14 testpdfium.cpp -o testpdfium ${PDFIUM_INC} ${PDFIUM_LIB} >/dev/null 2>/dev/null; then
         HAVE_PDFIUM=yes
         CXXFLAGS="$TEST_CXX_FLAGS $CXXFLAGS"
         if test "$PDF_PLUGIN" = "no"; then
@@ -5013,7 +5074,7 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
     rm -f testpdfium
 
     if test "$HAVE_PDFIUM" = "no" -a "$with_pdfium" != ""; then
-        AC_MSG_ERROR([pdfium requested but not found. Must come from https://github.com/rouault/pdfium_build_gdal_3_1])
+        AC_MSG_ERROR([pdfium requested but not found. Must come from https://github.com/rouault/pdfium_build_gdal_3_2])
     fi
 else
     AC_MSG_RESULT([disabled])
@@ -5978,6 +6039,7 @@ LOC_MSG()
 LOC_MSG([  LIBTOOL support:           ${with_libtool}])
 LOC_MSG()
 LOC_MSG([  LIBZ support:              ${LIBZ_SETTING}])
+LOC_MSG([  libdeflate support:        ${LIBDEFLATE_SETTING}])
 LOC_MSG([  LIBLZMA support:           ${LIBLZMA_SETTING}])
 LOC_MSG([  ZSTD support:              ${ZSTD_SETTING}])
 LOC_MSG([  cryptopp support:          ${HAVE_CRYPTOPP}])

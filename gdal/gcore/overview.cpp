@@ -1123,7 +1123,7 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
         return CE_Failure;
     }
 
-    GPtrDiff_t nMaxNumPx = 0;
+    size_t nMaxNumPx = 0;
     float *pafVals = nullptr;
     int *panSums = nullptr;
 
@@ -1208,16 +1208,44 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                 // filter on floating point data, but here it is for the sake
                 // of compatibility. It won't look right on RGB images by the
                 // nature of the filter.
-                GPtrDiff_t nNumPx = static_cast<GPtrDiff_t>(nSrcYOff2-nSrcYOff)*(nSrcXOff2-nSrcXOff);
-                GPtrDiff_t iMaxInd = 0;
-                GPtrDiff_t iMaxVal = -1;
+
+                if( nSrcYOff2 - nSrcYOff <= 0 ||
+                    nSrcXOff2 - nSrcXOff <= 0 ||
+                    nSrcYOff2 - nSrcYOff > INT_MAX / (nSrcXOff2 - nSrcXOff) ||
+                    static_cast<size_t>(nSrcYOff2-nSrcYOff)*
+                        static_cast<size_t>(nSrcXOff2-nSrcXOff) >
+                            std::numeric_limits<size_t>::max() / sizeof(float) )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Too big downsampling factor");
+                    CPLFree( aEntries );
+                    CPLFree( pafVals );
+                    CPLFree( panSums );
+                    return CE_Failure;
+                }
+                const size_t nNumPx = static_cast<size_t>(nSrcYOff2-nSrcYOff)*
+                                      static_cast<size_t>(nSrcXOff2-nSrcXOff);
+                size_t iMaxInd = 0;
+                size_t iMaxVal = 0;
+                bool biMaxValdValid = false;
 
                 if( pafVals == nullptr || nNumPx > nMaxNumPx )
                 {
-                    pafVals = static_cast<float *>(
-                        CPLRealloc(pafVals, nNumPx * sizeof(float)) );
-                    panSums = static_cast<int *>(
-                        CPLRealloc(panSums, nNumPx * sizeof(int)) );
+                    float* pafValsNew = static_cast<float *>(
+                        VSI_REALLOC_VERBOSE(pafVals, nNumPx * sizeof(float)) );
+                    int* panSumsNew = static_cast<int *>(
+                        VSI_REALLOC_VERBOSE(panSums, nNumPx * sizeof(int)) );
+                    if( pafValsNew != nullptr )
+                        pafVals = pafValsNew;
+                    if( panSumsNew != nullptr )
+                        panSums = panSumsNew;
+                    if( pafValsNew == nullptr || panSumsNew == nullptr )
+                    {
+                        CPLFree( aEntries );
+                        CPLFree( pafVals );
+                        CPLFree( panSums );
+                        return CE_Failure;
+                    }
                     nMaxNumPx = nNumPx;
                 }
 
@@ -1230,7 +1258,7 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                             pabySrcScanlineNodataMask[iX+iTotYOff] )
                         {
                             const float fVal = pafSrcScanline[iX+iTotYOff];
-                            GPtrDiff_t i = 0;  // Used after for.
+                            size_t i = 0;  // Used after for.
 
                             // Check array for existing entry.
                             for( ; i < iMaxInd; ++i )
@@ -1238,6 +1266,7 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                                     && ++panSums[i] > panSums[iMaxVal] )
                                 {
                                     iMaxVal = i;
+                                    biMaxValdValid = true;
                                     break;
                                 }
 
@@ -1247,8 +1276,11 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                                 pafVals[iMaxInd] = fVal;
                                 panSums[iMaxInd] = 1;
 
-                                if( iMaxVal < 0 )
+                                if( !biMaxValdValid )
+                                {
                                     iMaxVal = iMaxInd;
+                                    biMaxValdValid = true;
+                                }
 
                                 ++iMaxInd;
                             }
@@ -1256,7 +1288,7 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                     }
                 }
 
-                if( iMaxVal == -1 )
+                if( !biMaxValdValid )
                     pafDstScanline[iDstPixel - nDstXOff] = fNoDataValue;
                 else
                     pafDstScanline[iDstPixel - nDstXOff] = pafVals[iMaxVal];
@@ -3125,7 +3157,10 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     // Only configurable for debug / testing
     const char* pszChunkYSize = CPLGetConfigOption("GDAL_OVR_CHUNKYSIZE", nullptr);
     if( pszChunkYSize )
+    {
+        // coverity[tainted_data]
         nFullResYChunk = atoi(pszChunkYSize);
+    }
 
     const GDALDataType eSrcDataType = poSrcBand->GetRasterDataType();
     const GDALDataType eWrkDataType = GDALDataTypeIsComplex( eSrcDataType )?

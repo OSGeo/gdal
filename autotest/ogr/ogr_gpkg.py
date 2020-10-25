@@ -34,6 +34,8 @@ import os
 import struct
 import sys
 import pytest
+import time
+import threading
 
 from osgeo import gdal
 from osgeo import ogr
@@ -711,6 +713,23 @@ def test_ogr_gpkg_14():
     f = lyr.GetNextFeature()
     assert f is None
 
+
+###############################################################################
+def _has_spatialite_4_3_or_later(ds):
+    has_spatialite_4_3_or_later = False
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL("SELECT spatialite_version()")
+        if sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            version = f.GetField(0)
+            version = '.'.join(version.split('.')[0:2])
+            version = float(version)
+            if version >= 4.3:
+                has_spatialite_4_3_or_later = True
+                # print('Spatialite 4.3 or later found')
+            ds.ReleaseResultSet(sql_lyr)
+    return has_spatialite_4_3_or_later
+
 ###############################################################################
 # Test SQL functions
 
@@ -1049,19 +1068,7 @@ def test_ogr_gpkg_15():
     feat = None
     gpkg_ds.ReleaseResultSet(sql_lyr)
 
-    has_spatialite_4_3_or_later = False
-    with gdaltest.error_handler():
-        sql_lyr = gpkg_ds.ExecuteSQL("SELECT spatialite_version()")
-        if sql_lyr:
-            f = sql_lyr.GetNextFeature()
-            version = f.GetField(0)
-            version = '.'.join(version.split('.')[0:2])
-            version = float(version)
-            if version >= 4.3:
-                has_spatialite_4_3_or_later = True
-                # print('Spatialite 4.3 or later found')
-    gpkg_ds.ReleaseResultSet(sql_lyr)
-    if has_spatialite_4_3_or_later:
+    if _has_spatialite_4_3_or_later(gpkg_ds):
         sql_lyr = gpkg_ds.ExecuteSQL(
             "SELECT ST_Buffer(geom, 1e-10) FROM tbl_linestring_renamed")
         assert sql_lyr.GetGeomType() == ogr.wkbPolygon
@@ -4146,3 +4153,270 @@ def test_ogr_gpkg_datetime_timezones():
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test AbortSQL
+
+def test_abort_sql():
+
+    filename = 'data/gpkg/poly_non_conformant.gpkg'
+    ds = ogr.Open(filename)
+
+    def abortAfterDelay():
+        print("Aborting SQL...")
+        assert ds.AbortSQL() == ogr.OGRERR_NONE
+
+    t = threading.Timer(0.5, abortAfterDelay)
+    t.start()
+
+    start = time.time()
+
+    # Long running query
+    sql = """
+        WITH RECURSIVE r(i) AS (
+            VALUES(0)
+            UNION ALL
+            SELECT i FROM r
+            LIMIT 100000000
+            )
+        SELECT i FROM r WHERE i = 1;"""
+
+    ds.ExecuteSQL(sql)
+
+    end = time.time()
+    assert int(end - start) < 1
+
+    # Same test with a GDAL dataset
+    ds2 = gdal.OpenEx(filename, gdal.OF_VECTOR)
+
+    def abortAfterDelay2():
+        print("Aborting SQL...")
+        assert ds2.AbortSQL() == ogr.OGRERR_NONE
+
+    t = threading.Timer(0.5, abortAfterDelay2)
+    t.start()
+
+    start = time.time()
+
+    # Long running query
+    ds2.ExecuteSQL(sql)
+
+    end = time.time()
+    assert int(end - start) < 1
+
+
+###############################################################################
+# Test ST_Transform() with no record in gpkg_spatial_ref_sys and thus we
+# fallback to EPSG
+
+def test_ogr_gpkg_st_transform_no_record_spatial_ref_sys():
+
+    if sys.platform == 'win32':
+        # For some reason f.GetGeometryRef() returns None on the current Windows CI
+        pytest.skip('Failure on windows')
+
+    ds = ogr.GetDriverByName('GPKG').CreateDataSource('/vsimem/test.gpkg')
+    lyr = ds.CreateLayer('test')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (500000 0)'))
+    lyr.CreateFeature(f)
+    f = None
+
+    if not _has_spatialite_4_3_or_later(ds):
+        ds = None
+        gdal.Unlink('/vsimem/test.gpkg')
+        pytest.skip('Spatialite missing or too old')
+
+    sql_lyr = ds.ExecuteSQL('SELECT ST_Transform(SetSRID(geom, 32631), 32731) FROM test')
+    # Fails on a number of configs
+    # assert sql_lyr.GetSpatialRef().GetAuthorityCode(None) == '32731'
+    f = sql_lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == 'POINT (500000 10000000)'
+    f = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    ds = None
+    gdal.Unlink('/vsimem/test.gpkg')
+
+
+###############################################################################
+# Test deferred spatial index creation
+
+
+def test_ogr_gpkg_deferred_spi_creation():
+
+    def has_spi(ds):
+        sql_lyr = ds.ExecuteSQL("SELECT 1 FROM sqlite_master WHERE name = 'rtree_test_geom'", dialect='DEBUG')
+        res = sql_lyr.GetNextFeature() is not None
+        ds.ReleaseResultSet(sql_lyr)
+        return res
+
+    ds = ogr.GetDriverByName('GPKG').CreateDataSource('/vsimem/test.gpkg')
+
+    lyr = ds.CreateLayer('test')
+    assert not has_spi(ds)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (0 0)'))
+    lyr.CreateFeature(f)
+    fid = f.GetFID()
+    f = None
+    assert not has_spi(ds)
+
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is not None
+    assert not has_spi(ds)
+
+    assert lyr.GetFeature(fid) is not None
+    assert not has_spi(ds)
+
+    assert lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString)) == ogr.OGRERR_NONE
+    assert not has_spi(ds)
+
+    assert lyr.DeleteField(0) == ogr.OGRERR_NONE
+    assert not has_spi(ds)
+
+    ds.ReleaseResultSet(ds.ExecuteSQL('SELECT 1'))
+    assert has_spi(ds)
+
+    # GetNextFeature() with spatial filter should cause SPI creation
+    ds.ExecuteSQL('DELLAYER:test')
+    lyr = ds.CreateLayer('test')
+    assert not has_spi(ds)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (0 0)'))
+    lyr.CreateFeature(f)
+    fid = f.GetFID()
+    f = None
+    assert not has_spi(ds)
+
+    lyr.SetSpatialFilterRect(-1,-1,1,1)
+
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is not None
+    assert has_spi(ds)
+
+    ds = None
+    gdal.Unlink('/vsimem/test.gpkg')
+
+
+###############################################################################
+# Test deferred spatial index update
+
+
+def test_ogr_gpkg_deferred_spi_update():
+
+    def has_spi_triggers(ds):
+        sql_lyr = ds.ExecuteSQL("SELECT * FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'rtree_test_geom%'", dialect='DEBUG')
+        res = sql_lyr.GetFeatureCount()
+        ds.ReleaseResultSet(sql_lyr)
+        return res == 6
+
+    filename = '/vsimem/test.gpkg'
+
+    # Basic test
+    ds = ogr.GetDriverByName('GPKG').CreateDataSource(filename)
+    ds.CreateLayer('test')
+    ds = None
+    with gdaltest.config_option('OGR_GPKG_DEFERRED_SPI_UPDATE_THRESHOLD', '2'):
+        ds = ogr.Open(filename, update = 1)
+        lyr = ds.GetLayer(0)
+
+        ds.StartTransaction()
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (0 0)'))
+        lyr.CreateFeature(f)
+        assert has_spi_triggers(ds)
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 1)'))
+        lyr.CreateFeature(f)
+        assert not has_spi_triggers(ds)
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (2 2)'))
+        lyr.CreateFeature(f)
+        assert not has_spi_triggers(ds)
+
+        sql_lyr = ds.ExecuteSQL("SELECT * FROM rtree_test_geom", dialect='DEBUG')
+        res = sql_lyr.GetFeatureCount()
+        ds.ReleaseResultSet(sql_lyr)
+        assert res == 2
+
+        ds.CommitTransaction()
+        assert has_spi_triggers(ds)
+
+        sql_lyr = ds.ExecuteSQL("SELECT * FROM rtree_test_geom", dialect='DEBUG')
+        res = sql_lyr.GetFeatureCount()
+        ds.ReleaseResultSet(sql_lyr)
+        assert res == 3
+
+        ds = None
+
+    # Check effect of RollbackTransaction()
+    ds = ogr.GetDriverByName('GPKG').CreateDataSource(filename)
+    ds.CreateLayer('test')
+    ds = None
+    with gdaltest.config_option('OGR_GPKG_DEFERRED_SPI_UPDATE_THRESHOLD', '1'):
+        ds = ogr.Open(filename, update = 1)
+        lyr = ds.GetLayer(0)
+
+        ds.StartTransaction()
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (0 0)'))
+        lyr.CreateFeature(f)
+        assert not has_spi_triggers(ds)
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 1)'))
+        lyr.CreateFeature(f)
+        assert not has_spi_triggers(ds)
+
+        sql_lyr = ds.ExecuteSQL("SELECT * FROM rtree_test_geom", dialect='DEBUG')
+        res = sql_lyr.GetFeatureCount()
+        ds.ReleaseResultSet(sql_lyr)
+        assert res == 1
+
+        ds.RollbackTransaction()
+        assert has_spi_triggers(ds)
+
+        sql_lyr = ds.ExecuteSQL("SELECT * FROM rtree_test_geom", dialect='DEBUG')
+        res = sql_lyr.GetFeatureCount()
+        ds.ReleaseResultSet(sql_lyr)
+        assert res == 0
+
+        ds = None
+
+    # Check that GetNextFeature() with a spatial filter causes flushing of
+    # deferred SPI values
+    ds = ogr.GetDriverByName('GPKG').CreateDataSource(filename)
+    ds.CreateLayer('test')
+    ds = None
+    with gdaltest.config_option('OGR_GPKG_DEFERRED_SPI_UPDATE_THRESHOLD', '1'):
+        ds = ogr.Open(filename, update = 1)
+        lyr = ds.GetLayer(0)
+
+        ds.StartTransaction()
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (0 0)'))
+        lyr.CreateFeature(f)
+        assert not has_spi_triggers(ds)
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 1)'))
+        lyr.CreateFeature(f)
+
+        lyr.SetSpatialFilterRect(0,0,1,1)
+        lyr.ResetReading()
+        assert lyr.GetNextFeature() is not None
+        assert has_spi_triggers(ds)
+        assert lyr.GetNextFeature() is not None
+        assert lyr.GetNextFeature() is None
+        ds = None
+
+    gdal.Unlink('/vsimem/test.gpkg')

@@ -322,6 +322,15 @@ char ** VSIPluginFilesystemHandler::ReadDirEx( const char * pszDirname, int nMax
     return nullptr;
 }
 
+char ** VSIPluginFilesystemHandler::SiblingFiles( const char * pszFilename ) {
+    if( !IsValidFilename(pszFilename) )
+        return nullptr;
+    if (m_cb->sibling_files != nullptr) {
+        return m_cb->sibling_files(m_cb->pUserData, GetCallbackFilename(pszFilename));
+    }
+    return nullptr;
+}
+
 int VSIPluginFilesystemHandler::Unlink(const char *pszFilename) {
     if( m_cb->unlink == nullptr || !IsValidFilename(pszFilename) )
         return -1;

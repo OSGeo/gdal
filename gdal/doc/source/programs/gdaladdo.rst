@@ -122,13 +122,16 @@ External overviews in GeoTIFF format
 
 External overviews created in TIFF format may be compressed using the :decl_configoption:`COMPRESS_OVERVIEW`
 configuration option.  All compression methods, supported by the GeoTIFF
-driver, are available here. (e.g. --config COMPRESS_OVERVIEW DEFLATE).
+driver, are available here. (e.g. ``--config COMPRESS_OVERVIEW DEFLATE``).
 The photometric interpretation can be set with the :decl_configoption:`PHOTOMETRIC_OVERVIEW`
 =RGB/YCBCR/... configuration option,
 and the interleaving with the :decl_configoption:`INTERLEAVE_OVERVIEW` =PIXEL/BAND configuration option.
 
 For JPEG compressed external overviews, the JPEG quality can be set with
 ``--config JPEG_QUALITY_OVERVIEW value``.
+
+For WEBP compressed external and internal overviews, the WEBP quality level can be set with
+``--config WEBP_LEVEL_OVERVIEW value``. If not set, will default to 75.
 
 For LZW or DEFLATE compressed external overviews, the predictor value can be set
 with ``--config PREDICTOR_OVERVIEW 1|2|3``.
@@ -158,9 +161,9 @@ See the documentation of the :ref:`raster.gtiff` driver for further explanations
 Setting blocksize in Geotiff overviews
 ---------------------------------------
 
---config GDAL_TIFF_OVR_BLOCKSIZE <size> 
+``--config GDAL_TIFF_OVR_BLOCKSIZE <size>``
 
-Example: --config GDAL_TIFF_OVR_BLOCKSIZE 256
+Example: ``--config GDAL_TIFF_OVR_BLOCKSIZE 256``
 
 Default value is 128, or starting with GDAL 3.1, if creating overviews on a tiled GeoTIFF file, the tile size of the full resolution image.
 Note: without this setting, the file can have the full resoultion image with a blocksize different from overviews blocksize.(e.g. full resolution image at blocksize 256, overviews at blocksize 128)

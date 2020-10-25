@@ -662,10 +662,8 @@ static CPLErr GDALRasterizeOptions( char **papszOptions,
  * needs to transform the geometry locations into pixel/line coordinates
  * on the raster dataset.
  *
- * The output raster may be of any GDAL supported datatype, though currently
- * internally the burning is done either as GDT_Byte or GDT_Float32.  This
- * may be improved in the future.  An explicit list of burn values for
- * each geometry for each band must be passed in.
+ * The output raster may be of any GDAL supported datatype. An explicit list
+ * of burn values for each geometry for each band must be passed in.
  *
  * The papszOption list of options currently only supports one option. The
  * "ALL_TOUCHED" option may be enabled by setting it to "TRUE".
@@ -1129,10 +1127,8 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
  * needs to transform the geometry locations into pixel/line coordinates
  * on the raster dataset.
  *
- * The output raster may be of any GDAL supported datatype, though currently
- * internally the burning is done either as GDT_Byte or GDT_Float32.  This
- * may be improved in the future.  An explicit list of burn values for
- * each layer for each band must be passed in.
+ * The output raster may be of any GDAL supported datatype. An explicit list
+ * of burn values for each layer for each band must be passed in.
  *
  * @param hDS output data, must be opened in update mode.
  * @param nBandCount the number of bands to be updated.

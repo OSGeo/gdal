@@ -529,9 +529,9 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
 /* -------------------------------------------------------------------- */
         const int nSrcBand = atoi(CPLGetXMLValue( psNode, "SourceBand", "1" ) );
 
-        m_apoOverviews.resize( m_apoOverviews.size() + 1 );
-        m_apoOverviews.back().osFilename = pszSrcDSName;
-        m_apoOverviews.back().nBand = nSrcBand;
+        m_aoOverviewInfos.resize( m_aoOverviewInfos.size() + 1 );
+        m_aoOverviewInfos.back().osFilename = pszSrcDSName;
+        m_aoOverviewInfos.back().nBand = nSrcBand;
 
         CPLFree( pszSrcDSName );
     }
@@ -747,7 +747,7 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
 /*      Overviews                                                       */
 /* ==================================================================== */
 
-    for( int iOvr = 0; iOvr < static_cast<int>( m_apoOverviews.size() ); iOvr ++ )
+    for( int iOvr = 0; iOvr < static_cast<int>( m_aoOverviewInfos.size() ); iOvr ++ )
     {
         CPLXMLNode *psOVR_XML = CPLCreateXMLNode( psTree, CXT_Element,
                                                  "Overview" );
@@ -756,15 +756,15 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
         const char *pszRelativePath = nullptr;
         VSIStatBufL sStat;
 
-        if( VSIStatExL( m_apoOverviews[iOvr].osFilename, &sStat, VSI_STAT_EXISTS_FLAG ) != 0 )
+        if( VSIStatExL( m_aoOverviewInfos[iOvr].osFilename, &sStat, VSI_STAT_EXISTS_FLAG ) != 0 )
         {
-            pszRelativePath = m_apoOverviews[iOvr].osFilename;
+            pszRelativePath = m_aoOverviewInfos[iOvr].osFilename;
             bRelativeToVRT = FALSE;
         }
         else
         {
             pszRelativePath =
-                CPLExtractRelativePath( pszVRTPath, m_apoOverviews[iOvr].osFilename,
+                CPLExtractRelativePath( pszVRTPath, m_aoOverviewInfos[iOvr].osFilename,
                                         &bRelativeToVRT );
         }
 
@@ -776,7 +776,7 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
             CXT_Text, bRelativeToVRT ? "1" : "0" );
 
         CPLSetXMLValue( psOVR_XML, "SourceBand",
-                        CPLSPrintf("%d",m_apoOverviews[iOvr].nBand) );
+                        CPLSPrintf("%d",m_aoOverviewInfos[iOvr].nBand) );
     }
 
 /* ==================================================================== */
@@ -1085,9 +1085,9 @@ VRTRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
 void VRTRasterBand::GetFileList(char*** ppapszFileList, int *pnSize,
                                 int *pnMaxSize, CPLHashSet* hSetFiles)
 {
-    for( unsigned int iOver = 0; iOver < m_apoOverviews.size(); iOver++ )
+    for( unsigned int iOver = 0; iOver < m_aoOverviewInfos.size(); iOver++ )
     {
-        const CPLString &osFilename = m_apoOverviews[iOver].osFilename;
+        const CPLString &osFilename = m_aoOverviewInfos[iOver].osFilename;
 
 /* -------------------------------------------------------------------- */
 /*      Is the filename even a real filesystem object?                  */
@@ -1131,8 +1131,8 @@ int VRTRasterBand::GetOverviewCount()
 
 {
     // First: overviews declared in <Overview> element
-    if( !m_apoOverviews.empty() )
-        return static_cast<int>(m_apoOverviews.size());
+    if( !m_aoOverviewInfos.empty() )
+        return static_cast<int>(m_aoOverviewInfos.size());
 
     // If not found, external .ovr overviews
     const int nOverviewCount = GDALRasterBand::GetOverviewCount();
@@ -1156,19 +1156,19 @@ GDALRasterBand *VRTRasterBand::GetOverview( int iOverview )
 
 {
     // First: overviews declared in <Overview> element
-    if( !m_apoOverviews.empty() )
+    if( !m_aoOverviewInfos.empty() )
     {
         if( iOverview < 0
-            || iOverview >= static_cast<int>( m_apoOverviews.size() ) )
+            || iOverview >= static_cast<int>( m_aoOverviewInfos.size() ) )
             return nullptr;
 
-        if( m_apoOverviews[iOverview].poBand == nullptr
-            && !m_apoOverviews[iOverview].bTriedToOpen )
+        if( m_aoOverviewInfos[iOverview].poBand == nullptr
+            && !m_aoOverviewInfos[iOverview].bTriedToOpen )
         {
-            m_apoOverviews[iOverview].bTriedToOpen = TRUE;
+            m_aoOverviewInfos[iOverview].bTriedToOpen = TRUE;
             CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
             GDALDataset *poSrcDS = GDALDataset::FromHandle(
-                GDALOpenShared( m_apoOverviews[iOverview].osFilename,
+                GDALOpenShared( m_aoOverviewInfos[iOverview].osFilename,
                                 GA_ReadOnly ) );
 
             if( poSrcDS == nullptr )
@@ -1181,16 +1181,16 @@ GDALRasterBand *VRTRasterBand::GetOverview( int iOverview )
                 return nullptr;
             }
 
-            m_apoOverviews[iOverview].poBand = poSrcDS->GetRasterBand(
-                m_apoOverviews[iOverview].nBand );
+            m_aoOverviewInfos[iOverview].poBand = poSrcDS->GetRasterBand(
+                m_aoOverviewInfos[iOverview].nBand );
 
-            if (m_apoOverviews[iOverview].poBand == nullptr)
+            if (m_aoOverviewInfos[iOverview].poBand == nullptr)
             {
                 GDALClose( GDALDataset::ToHandle(poSrcDS) );
             }
         }
 
-        return m_apoOverviews[iOverview].poBand;
+        return m_aoOverviewInfos[iOverview].poBand;
     }
 
     // If not found, external .ovr overviews
@@ -1318,7 +1318,7 @@ void VRTRasterBand::SetIsMaskBand()
 int VRTRasterBand::CloseDependentDatasets()
 {
     int ret = FALSE;
-    for( auto& oOverviewInfo: m_apoOverviews )
+    for( auto& oOverviewInfo: m_aoOverviewInfos )
     {
         if( oOverviewInfo.CloseDataset() )
         {

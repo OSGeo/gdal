@@ -590,7 +590,8 @@ bool GMLReader::ResolveXlinks( const char *pszFile,
         bool bTryWithTempFile = false;
         if( STARTS_WITH_CI(pszFile, "/vsitar/") ||
             STARTS_WITH_CI(pszFile, "/vsigzip/") ||
-            STARTS_WITH_CI(pszFile, "/vsizip/") )
+            STARTS_WITH_CI(pszFile, "/vsizip/") ||
+            STARTS_WITH_CI(pszFile, "/vsicurl") )
         {
             bTryWithTempFile = true;
         }

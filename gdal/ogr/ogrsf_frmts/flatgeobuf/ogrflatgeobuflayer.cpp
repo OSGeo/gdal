@@ -223,8 +223,24 @@ const std::vector<Offset<Column>> OGRFlatGeobufLayer::writeColumns(FlatBufferBui
         const auto field = m_poFeatureDefn->GetFieldDefn(i);
         const auto name = field->GetNameRef();
         const auto columnType = toColumnType(field->GetType(), field->GetSubType());
+        auto title = field->GetAlternativeNameRef();
+        if (EQUAL(title, ""))
+            title = nullptr;
+        const char *description = nullptr;
+        auto width = -1;
+        auto precision = -1;
+        auto scale = field->GetPrecision();
+        if (scale == 0)
+            scale = -1;
+        if (columnType == ColumnType::Float || columnType == ColumnType::Double)
+            precision = field->GetWidth();
+        else
+            width = field->GetWidth();
+        auto nullable = CPL_TO_BOOL(field->IsNullable());
+        auto unique = CPL_TO_BOOL(field->IsUnique());
+        auto primaryKey = false;
         //CPLDebugOnly("FlatGeobuf", "Create column %s (index %d)", name, i);
-        const auto column = CreateColumnDirect(fbb, name, columnType);
+        const auto column = CreateColumnDirect(fbb, name, columnType, title, description, width, precision, scale, nullable, unique, primaryKey);
         columns.push_back(column);
         //CPLDebugOnly("FlatGeobuf", "DEBUG writeColumns: Created column %s added as index %d", name, i);
     }
@@ -239,11 +255,26 @@ void OGRFlatGeobufLayer::readColumns()
         return;
     for (uint32_t i = 0; i < columns->size(); i++) {
         const auto column = columns->Get(i);
+        const auto type = column->type();
         const auto name = column->name()->c_str();
+        const auto title = column->title() != nullptr ? column->title()->c_str() : nullptr;
+        const auto width = column->width();
+        const auto precision = column->precision();
+        const auto scale = column->scale();
+        const auto nullable = column->nullable();
+        const auto unique = column->unique();
         OGRFieldSubType eSubType = OFSTNone;
-        const auto type = toOGRFieldType(column->type(), eSubType);
-        OGRFieldDefn field(name, type);
+        const auto ogrType = toOGRFieldType(column->type(), eSubType);
+        OGRFieldDefn field(name, ogrType);
         field.SetSubType(eSubType);
+        field.SetAlternativeName(title);
+        if (width != -1 && type != ColumnType::Float && type != ColumnType::Double)
+            field.SetWidth(width);
+        if (precision != -1)
+            field.SetWidth(precision);
+        field.SetPrecision(scale != -1 ? scale : 0);
+        field.SetNullable(nullable);
+        field.SetUnique(unique);
         m_poFeatureDefn->AddFieldDefn(&field);
         //CPLDebugOnly("FlatGeobuf", "DEBUG readColumns: Read column %s added as index %d", name, i);
     }

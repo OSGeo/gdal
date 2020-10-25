@@ -195,7 +195,7 @@ will cause subdatasets of names of the form 'BAG:"{filename}":georef_metadata:{n
 to be reported. When opening such a subdataset, the ``varres_keys`` dataset will
 be used to populate the GDAL raster value.
 If ``varres_keys`` is absent, record 1 of ``values`` is assumed to be met for
-each elevation point that does not match the nodata value of the variable resultion
+each elevation point that does not match the nodata value of the variable resolution
 elevation band.
 
 Tracking list support

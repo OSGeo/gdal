@@ -668,6 +668,10 @@ TIFFWriteBufferSetup(TIFF* tif, void* bp, tmsize_t size)
 	if (size == (tmsize_t)(-1)) {
 		size = (isTiled(tif) ?
 		    tif->tif_tilesize : TIFFStripSize(tif));
+
+                /* Adds 10% margin for cases where compression would expand a bit */
+                if( size < TIFF_TMSIZE_T_MAX - size / 10 )
+                    size += size / 10;
 		/*
 		 * Make raw data buffer at least 8K
 		 */

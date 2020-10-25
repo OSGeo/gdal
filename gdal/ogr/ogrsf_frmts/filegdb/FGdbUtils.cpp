@@ -492,7 +492,7 @@ bool GDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pGdbGeom
 
 bool GDBToOGRSpatialReference(const string & wkt, OGRSpatialReference** ppSR)
 {
-    if (wkt.size() <= 0)
+    if (wkt.empty())
     {
         CPLError( CE_Warning, CPLE_AppDefined, "ESRI Spatial Reference is NULL");
         return false;

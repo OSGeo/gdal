@@ -1059,7 +1059,7 @@ void RegisterOGRCSW()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "OGC CSW (Catalog  Service for the Web)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_csw.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/csw.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "CSW:" );
 

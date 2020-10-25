@@ -61,9 +61,11 @@ General creation options
 -  **LEVEL=integer_value**: DEFLATE/ZSTD/LERC_DEFLATE/LERC_ZSTD compression level.
    A lower number will
    result in faster compression but less efficient compression rate.
-   1 is the fastest. For DEFLATE, 9 is the slowest/higher compression rate
-   (the default is 6)
-   For ZSTD, 22 is the slowest/higher compression rate (the default is 9)
+   1 is the fastest.
+
+   * For DEFLATE, 9 is the slowest/higher compression rate
+     (or 12 when using a libtiff with libdeflate support). The default is 6.
+   * For ZSTD, 22 is the slowest/higher compression rate. The default is 9.
 
 -  **MAX_Z_ERROR=threshold**: Set the maximum error threshold on values
    for LERC/LERC_DEFLATE/LERC_ZSTD compression. The default is 0

@@ -833,6 +833,7 @@ OGRFeatureH CPL_DLL GDALDatasetGetNextFeature( GDALDatasetH hDS,
 int    CPL_DLL GDALDatasetTestCapability( GDALDatasetH, const char * );
 OGRLayerH CPL_DLL GDALDatasetExecuteSQL( GDALDatasetH, const char *,
                                      OGRGeometryH, const char * );
+OGRErr CPL_DLL GDALDatasetAbortSQL( GDALDatasetH );
 void   CPL_DLL GDALDatasetReleaseResultSet( GDALDatasetH, OGRLayerH );
 OGRStyleTableH CPL_DLL GDALDatasetGetStyleTable( GDALDatasetH );
 void   CPL_DLL GDALDatasetSetStyleTableDirectly( GDALDatasetH, OGRStyleTableH );
@@ -1513,6 +1514,9 @@ int CPL_DLL GDALMDArrayWrite(GDALMDArrayH hArray,
                             const void* pSrcBuffer,
                             const void* psrcBufferAllocStart,
                             size_t nSrcBufferllocSize);
+int CPL_DLL GDALMDArrayAdviseRead(GDALMDArrayH hArray,
+                                  const GUInt64* arrayStartIdx,
+                                  const size_t* count);
 GDALAttributeH CPL_DLL GDALMDArrayGetAttribute(GDALMDArrayH hArray, const char* pszName) CPL_WARN_UNUSED_RESULT;
 GDALAttributeH CPL_DLL *GDALMDArrayGetAttributes(GDALMDArrayH hArray, size_t* pnCount, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 GDALAttributeH CPL_DLL GDALMDArrayCreateAttribute(GDALMDArrayH hArray,

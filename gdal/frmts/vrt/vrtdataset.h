@@ -179,27 +179,33 @@ class CPL_DLL VRTDataset CPL_NON_FINAL: public GDALDataset
 
     OGRSpatialReference* m_poSRS = nullptr;
 
-    int            m_bGeoTransformSet;
+    int            m_bGeoTransformSet = false;
     double         m_adfGeoTransform[6];
 
-    int            m_nGCPCount;
-    GDAL_GCP      *m_pasGCPList;
+    int            m_nGCPCount = 0;
+    GDAL_GCP      *m_pasGCPList = nullptr;
     OGRSpatialReference *m_poGCP_SRS = nullptr;
 
-    int            m_bNeedsFlush;
-    int            m_bWritable;
+    bool           m_bNeedsFlush = false;
+    bool           m_bWritable = true;
+    bool           m_bCanTakeRef = true;
 
-    char          *m_pszVRTPath;
+    char          *m_pszVRTPath = nullptr;
 
-    VRTRasterBand *m_poMaskBand;
+    VRTRasterBand *m_poMaskBand = nullptr;
 
-    int            m_bCompatibleForDatasetIO;
+    int            m_bCompatibleForDatasetIO = -1;
     int            CheckCompatibleForDatasetIO();
     void           ExpandProxyBands();
 
+    // Virtual (ie not materialized) overviews, created either implicitly
+    // when it is cheap to do it, or explicitly.
     std::vector<GDALDataset*> m_apoOverviews{};
     std::vector<GDALDataset*> m_apoOverviewsBak{};
-    char         **m_papszXMLVRTMetadata;
+    CPLString           m_osOverviewResampling{};
+    std::vector<int>    m_anOverviewFactors{};
+
+    char         **m_papszXMLVRTMetadata = nullptr;
 
     std::map<CPLString, GDALDataset*> m_oMapSharedSources{};
     std::shared_ptr<VRTGroup> m_poRootGroup{};
@@ -209,6 +215,8 @@ class CPL_DLL VRTDataset CPL_NON_FINAL: public GDALDataset
     VRTRasterBand*      InitBand(const char* pszSubclass, int nBand,
                                  bool bAllowPansharpened);
     static GDALDataset *OpenVRTProtocol( const char* pszSpec );
+    bool                AddVirtualOverview(int nOvFactor,
+                                           const char* pszResampling);
 
     CPL_DISALLOW_COPY_ASSIGN(VRTDataset)
 
@@ -219,10 +227,10 @@ class CPL_DLL VRTDataset CPL_NON_FINAL: public GDALDataset
                  VRTDataset(int nXSize, int nYSize);
     virtual ~VRTDataset();
 
-    void          SetNeedsFlush() { m_bNeedsFlush = TRUE; }
+    void          SetNeedsFlush() { m_bNeedsFlush = true; }
     virtual void  FlushCache() override;
 
-    void SetWritable(int bWritableIn) { m_bWritable = bWritableIn; }
+    void SetWritable(int bWritableIn) { m_bWritable = CPL_TO_BOOL(bWritableIn); }
 
     virtual CPLErr          CreateMaskBand( int nFlags ) override;
     void SetMaskBand(VRTRasterBand* poMaskBand);
@@ -451,6 +459,8 @@ public:
 class CPL_DLL VRTRasterBand CPL_NON_FINAL: public GDALRasterBand
 {
   protected:
+    friend class VRTDataset;
+
     int            m_bIsMaskBand;
 
     int            m_bNoDataValueSet;
@@ -472,7 +482,7 @@ class CPL_DLL VRTRasterBand CPL_NON_FINAL: public GDALRasterBand
 
     void           Initialize( int nXSize, int nYSize );
 
-    std::vector<VRTOverviewInfo> m_apoOverviews{};
+    std::vector<VRTOverviewInfo> m_aoOverviewInfos{};
 
     VRTRasterBand *m_poMaskBand;
 
@@ -877,6 +887,7 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL: public VRTSource
 
 protected:
     friend class VRTSourcedRasterBand;
+    friend class VRTDataset;
 
     GDALRasterBand      *m_poRasterBand;
 
@@ -903,6 +914,8 @@ protected:
     int                 m_bRelativeToVRTOri;
     CPLString           m_osSourceFileNameOri{};
     int                 m_nExplicitSharedStatus; // -1 unknown, 0 = unshared, 1 = shared
+
+    bool                m_bDropRefOnSrcBand;
 
     int                 NeedMaxValAdjustment() const;
 

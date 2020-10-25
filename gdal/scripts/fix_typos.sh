@@ -52,7 +52,7 @@ if ! test -d fix_typos; then
      git clone https://github.com/rouault/codespell
      (cd codespell && git checkout gdal_improvements)
      # Aggregate base dictionary + QGIS one + Debian Lintian one
-     curl https://raw.githubusercontent.com/qgis/QGIS/master/scripts/spell_check/spelling.dat | sed "s/:/->/" | grep -v "colour->" | grep -v "colours->" > qgis.txt
+     curl https://raw.githubusercontent.com/qgis/QGIS/master/scripts/spell_check/spelling.dat | sed "s/:/->/" | sed "s/:%//" | grep -v "colour->" | grep -v "colours->" > qgis.txt
      curl https://salsa.debian.org/lintian/lintian/-/raw/master/data/spelling/corrections | grep "||" | grep -v "#" | sed "s/||/->/" > debian.txt
      cat codespell/data/dictionary.txt qgis.txt debian.txt | awk 'NF' > gdal_dict.txt
      echo "difered->deferred" >> gdal_dict.txt
@@ -91,6 +91,8 @@ AUTHORIZED_LIST="$AUTHORIZED_LIST,nd"
 AUTHORIZED_LIST="$AUTHORIZED_LIST,iam"
 # NITF
 AUTHORIZED_LIST="$AUTHORIZED_LIST,TRE"
+# cpl_vsil_win32.cpp
+AUTHORIZED_LIST="$AUTHORIZED_LIST,ERROR_FILENAME_EXCED_RANGE"
 # autotest/cpp
 AUTHORIZED_LIST="$AUTHORIZED_LIST,TUT_USE_SEH,SEH_OK,SEH_CTOR,SEH_TEST,SEH_DUMMY,SEH"
 AUTHORIZED_LIST="$AUTHORIZED_LIST,NPY_ARRAY_WRITEABLE"

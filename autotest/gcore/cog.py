@@ -30,6 +30,7 @@
 ###############################################################################
 
 import pytest
+import struct
 import sys
 
 from osgeo import gdal
@@ -990,3 +991,45 @@ def test_cog_overview_size():
     assert (ds.RasterXSize, ds.RasterYSize) == (20480 // 4, 40960 // 4)
     ovr_size = [ (ds.GetRasterBand(1).GetOverview(i).XSize, ds.GetRasterBand(1).GetOverview(i).YSize) for i in range(ds.GetRasterBand(1).GetOverviewCount()) ]
     assert ovr_size == [(2048, 4096), (1024, 2048), (512, 1024), (256, 512), (128, 256)]
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/2946
+
+
+def test_cog_float32_color_table():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1024, 1024, 1, gdal.GDT_Float32) 
+    src_ds.GetRasterBand(1).Fill(1.0)
+    ct = gdal.ColorTable()
+    src_ds.GetRasterBand(1).SetColorTable(ct)
+    filename = '/vsimem/test_cog_float32_color_table.tif'
+    # Silence warning about color table not being copied
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds) # segfault
+    assert ds
+    assert ds.GetRasterBand(1).GetColorTable() is None
+    assert struct.unpack('f', ds.ReadRaster(0,0,1,1))[0] == 1.0
+    assert struct.unpack('f', ds.GetRasterBand(1).GetOverview(0).ReadRaster(0,0,1,1))[0] == 1.0
+    gdal.Unlink(filename)
+
+###############################################################################
+# Test copy XMP
+
+
+def test_cog_copy_xmp():
+
+    filename = '/vsimem/cog_xmp.tif'
+    src_ds = gdal.Open('../gdrivers/data/gtiff/byte_with_xmp.tif')
+    ds = gdal.GetDriverByName('COG').CreateCopy(filename, src_ds)
+    assert ds
+    ds = None
+
+    ds = gdal.Open(filename)
+    xmp = ds.GetMetadata('xml:XMP')
+    ds = None
+    assert 'W5M0MpCehiHzreSzNTczkc9d' in xmp[0], 'Wrong input file without XMP'
+    _check_cog(filename)
+
+    gdal.Unlink(filename)

@@ -2297,6 +2297,8 @@ void OGRXLSXDataSource::FlushCache()
         }
     }
 
+    CPLConfigOptionSetter oZip64Disable("CPL_CREATE_ZIP64", "NO", false);
+
     /* Maintain new ZIP files opened */
     CPLString osTmpFilename(CPLSPrintf("/vsizip/%s", pszName));
     VSILFILE* fpZIP = VSIFOpenExL(osTmpFilename, "wb", true);

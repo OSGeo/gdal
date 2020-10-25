@@ -806,12 +806,14 @@ OGRMapMLWriterDataset::~OGRMapMLWriterDataset()
             if( psExtra )
             {
                 CPLXMLNode* psLastChild = m_psExtent->psChild;
-                while( psLastChild->psNext )
-                    psLastChild = psLastChild->psNext;
                 if( psLastChild == nullptr )
                     m_psExtent->psChild = psExtra;
                 else
+                {
+                    while( psLastChild->psNext )
+                        psLastChild = psLastChild->psNext;
                     psLastChild->psNext = psExtra;
+                }
             }
         }
 
@@ -1348,8 +1350,7 @@ void RegisterOGRMapML()
     poDriver->SetDescription( "MapML" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MapML" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "drivers/vector/mapml.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/mapml.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnIdentify = OGRMapMLReaderDataset::Identify;

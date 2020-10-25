@@ -7270,20 +7270,25 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
             CSLTokenizeString2(poOpenInfo->pszFilename,
                                ":", CSLT_HONOURSTRINGS|CSLT_PRESERVEESCAPES);
 
-        // Check for drive name in windows NETCDF:"D:\...
-        if( CSLCount(papszName) == 4 &&
-            ((strlen(papszName[1]) == 1 &&
-            (papszName[2][0] == '/' || papszName[2][0] == '\\')) ||
-            (STARTS_WITH(papszName[1], "/vsicurl/http"))) )
+        if( CSLCount(papszName) >= 3 &&
+                ((strlen(papszName[1]) == 1 && /* D:\\bla */
+                    (papszName[2][0] == '/' || papszName[2][0] == '\\')) ||
+                 EQUAL(papszName[1], "http") ||
+                 EQUAL(papszName[1], "https") ||
+                 EQUAL(papszName[1], "/vsicurl/http") ||
+                 EQUAL(papszName[1], "/vsicurl/https")) )
         {
-            poDS->osFilename = papszName[1];
-            poDS->osFilename += ':';
-            poDS->osFilename += papszName[2];
-            osSubdatasetName = papszName[3];
-            bTreatAsSubdataset = true;
-            CSLDestroy(papszName);
+            const int nCountBefore = CSLCount(papszName);
+            CPLString osTmp = papszName[1];
+            osTmp += ':';
+            osTmp += papszName[2];
+            CPLFree(papszName[1]);
+            CPLFree(papszName[2]);
+            papszName[1] = CPLStrdup(osTmp);
+            memmove(papszName + 2, papszName + 3, (nCountBefore - 2) * sizeof(char*));
         }
-        else if( CSLCount(papszName) == 3 )
+
+        if( CSLCount(papszName) == 3 )
         {
             poDS->osFilename = papszName[1];
             osSubdatasetName = papszName[2];
@@ -7308,19 +7313,24 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
                      "Failed to parse NETCDF: prefix string into expected 2, 3 or 4 fields.");
             return nullptr;
         }
-        // Identify Format from real file, with bCheckExt=FALSE.
-        GDALOpenInfo *poOpenInfo2 =
-            new GDALOpenInfo(poDS->osFilename.c_str(), GA_ReadOnly);
-        poDS->eFormat = IdentifyFormat(poOpenInfo2, FALSE);
-        delete poOpenInfo2;
-        if( NCDF_FORMAT_NONE == poDS->eFormat ||
-            NCDF_FORMAT_UNKNOWN == poDS->eFormat )
+
+        if( !STARTS_WITH(poDS->osFilename, "http://") &&
+            !STARTS_WITH(poDS->osFilename, "https://") )
         {
-            CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-                                        // deadlock with GDALDataset own mutex.
-            delete poDS;
-            CPLAcquireMutex(hNCMutex, 1000.0);
-            return nullptr;
+            // Identify Format from real file, with bCheckExt=FALSE.
+            GDALOpenInfo *poOpenInfo2 =
+                new GDALOpenInfo(poDS->osFilename.c_str(), GA_ReadOnly);
+            poDS->eFormat = IdentifyFormat(poOpenInfo2, FALSE);
+            delete poOpenInfo2;
+            if( NCDF_FORMAT_NONE == poDS->eFormat ||
+                NCDF_FORMAT_UNKNOWN == poDS->eFormat )
+            {
+                CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
+                                            // deadlock with GDALDataset own mutex.
+                delete poDS;
+                CPLAcquireMutex(hNCMutex, 1000.0);
+                return nullptr;
+            }
         }
     }
     else
@@ -7427,7 +7437,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
         {
             // Warn if file detection conflicts with that from libnetcdf
             // except for NC4C, which we have no way of detecting initially.
-            if( nTmpFormat != NCDF_FORMAT_NC4C )
+            if( nTmpFormat != NCDF_FORMAT_NC4C &&
+                !STARTS_WITH(poDS->osFilename, "http://") &&
+                !STARTS_WITH(poDS->osFilename, "https://") )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "NetCDF driver detected file type=%d, but libnetcdf detected type=%d",
@@ -8045,18 +8057,18 @@ static void CopyMetadata( GDALDataset* poSrcDS,
     char **papszFieldData = nullptr;
 
     // Remove the following band meta but set them later from band data.
-    const char *papszIgnoreBand[] = { CF_ADD_OFFSET, CF_SCALE_FACTOR,
+    const char * const papszIgnoreBand[] = { CF_ADD_OFFSET, CF_SCALE_FACTOR,
                                       "valid_range", "_Unsigned",
                                       _FillValue, "coordinates",
                                       nullptr };
-    const char *papszIgnoreGlobal[] = { "NETCDF_DIM_EXTRA", nullptr };
+    const char * const papszIgnoreGlobal[] = { "NETCDF_DIM_EXTRA", nullptr };
 
     char **papszMetadata = nullptr;
     if( poSrcDS )
     {
         papszMetadata = poSrcDS->GetMetadata();
     }
-    else
+    else if( poSrcBand )
     {
         papszMetadata = poSrcBand->GetMetadata();
     }

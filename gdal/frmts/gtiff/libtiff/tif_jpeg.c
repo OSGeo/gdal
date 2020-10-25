@@ -466,7 +466,8 @@ std_empty_output_buffer(j_compress_ptr cinfo)
        }
 #endif
 
-	TIFFFlushData1(tif);
+	if( !TIFFFlushData1(tif) )
+            return FALSE;
 	sp->dest.next_output_byte = (JOCTET*) tif->tif_rawdata;
 	sp->dest.free_in_buffer = (size_t) tif->tif_rawdatasize;
 
@@ -2481,6 +2482,7 @@ TIFFInitJPEG(TIFF* tif, int scheme)
 {
 	JPEGState* sp;
 
+        (void)scheme;
 	assert(scheme == COMPRESSION_JPEG);
 
 	/*

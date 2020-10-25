@@ -380,6 +380,8 @@ class CPL_DLL OGRSpatialReference
 
     // cppcheck-suppress functionStatic
     OGRErr      PromoteTo3D( const char* pszName );
+    // cppcheck-suppress functionStatic
+    OGRErr      DemoteTo2D( const char* pszName );
 
     OGRErr      SetFromUserInput( const char * );
 

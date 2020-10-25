@@ -349,3 +349,9 @@ def test_hdf4_read_online_11():
 
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 7809, 'did not get expected checksum'
+
+    ds = gdal.Open('tmp/cache/AMSR_E_L2_Ocean_B01_200206182340_A.hdf')
+    assert len(ds.GetSubDatasets()) == 7
+
+    ds = gdal.OpenEx('tmp/cache/AMSR_E_L2_Ocean_B01_200206182340_A.hdf', open_options = ['LIST_SDS=YES'])
+    assert len(ds.GetSubDatasets()) == 16

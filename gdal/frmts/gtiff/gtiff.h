@@ -45,6 +45,7 @@ CPL_C_END
 void    GTIFFSetInExternalOvr( bool b );
 void    GTIFFGetOverviewBlockSize( GDALRasterBandH hBand, int* pnBlockXSize, int* pnBlockYSize );
 void    GTIFFSetJpegQuality( GDALDatasetH hGTIFFDS, int nJpegQuality );
+void    GTIFFSetWebPLevel( GDALDatasetH hGTIFFDS, int nWebPLevel );
 void    GTIFFSetJpegTablesMode( GDALDatasetH hGTIFFDS, int nJpegTablesMode );
 int     GTIFFGetCompressionMethod( const char* pszValue,
                                    const char* pszVariableName );

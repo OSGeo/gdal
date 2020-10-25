@@ -320,6 +320,9 @@ class netCDFVariable final: public GDALMDArray
     mutable std::shared_ptr<OGRSpatialReference> m_poSRS{};
     bool m_bWriteGDALTags = true;
     size_t m_nTextLength = 0;
+    mutable std::vector<GUInt64> m_cachedArrayStartIdx{};
+    mutable std::vector<size_t> m_cachedCount{};
+    mutable std::shared_ptr<GDALMDArray> m_poCachedArray{};
 
     void ConvertNCToGDAL(GByte*) const;
     void ConvertGDALToNC(GByte*) const;
@@ -382,6 +385,9 @@ protected:
                       const GPtrDiff_t* bufferStride, // stride in elements
                       const GDALExtendedDataType& bufferDataType,
                       const void* pSrcBuffer) override;
+
+    bool IAdviseRead(const GUInt64* arrayStartIdx,
+                     const size_t* count) const override;
 
 public:
     static std::shared_ptr<netCDFVariable> Create(
@@ -2581,6 +2587,36 @@ bool netCDFVariable::IRead(const GUInt64* arrayStartIdx,
         return true;
     }
 
+    if( m_poCachedArray )
+    {
+        const auto nDims = GetDimensionCount();
+        std::vector<GUInt64> modifiedArrayStartIdx(nDims);
+        bool canUseCache = true;
+        for( size_t i = 0; i < nDims; i++ )
+        {
+            if( arrayStartIdx[i] >= m_cachedArrayStartIdx[i] &&
+                arrayStartIdx[i] + (count[i] - 1) * arrayStep[i] <=
+                    m_cachedArrayStartIdx[i] + m_cachedCount[i] - 1 )
+            {
+                modifiedArrayStartIdx[i] = arrayStartIdx[i] - m_cachedArrayStartIdx[i];
+            }
+            else
+            {
+                canUseCache = false;
+                break;
+            }
+        }
+        if( canUseCache )
+        {
+            return m_poCachedArray->Read( modifiedArrayStartIdx.data(),
+                                          count,
+                                          arrayStep,
+                                          bufferStride,
+                                          bufferDataType,
+                                          pDstBuffer );
+        }
+    }
+
     return IReadWrite
                 (true,
                  arrayStartIdx, count, arrayStep, bufferStride,
@@ -2589,6 +2625,69 @@ bool netCDFVariable::IRead(const GUInt64* arrayStartIdx,
                  nc_get_vara,
                  nc_get_varm,
                  &netCDFVariable::ReadOneElement);
+}
+
+/************************************************************************/
+/*                             IAdviseRead()                            */
+/************************************************************************/
+
+bool netCDFVariable::IAdviseRead(const GUInt64* arrayStartIdx,
+                                 const size_t* count) const
+{
+    const auto nDims = GetDimensionCount();
+    if( nDims == 0 )
+        return true;
+    const auto& eDT = GetDataType();
+    if( eDT.GetClass() != GEDTC_NUMERIC )
+        return false;
+
+    auto poMemDriver = static_cast<GDALDriver*>(GDALGetDriverByName("MEM"));
+    if( poMemDriver == nullptr )
+        return false;
+
+    m_poCachedArray.reset();
+
+    size_t nElts = 1;
+    for( size_t i = 0; i < nDims; i++ )
+        nElts *= count[i];
+
+    void* pData = VSI_MALLOC2_VERBOSE(nElts, eDT.GetSize());
+    if( pData == nullptr )
+        return false;
+
+    if( !Read(arrayStartIdx, count, nullptr, nullptr, eDT, pData) )
+    {
+        VSIFree(pData);
+        return false;
+    }
+
+    auto poDS = poMemDriver->CreateMultiDimensional("", nullptr, nullptr);
+    auto poGroup = poDS->GetRootGroup();
+    delete poDS;
+
+    std::vector<std::shared_ptr<GDALDimension>> apoMemDims;
+    const auto& poDims = GetDimensions();
+    for( size_t i = 0; i < nDims; i++ )
+    {
+        apoMemDims.emplace_back(poGroup->CreateDimension( poDims[i]->GetName(),
+                                                          std::string(),
+                                                          std::string(),
+                                                          count[i],
+                                                          nullptr ) );
+    }
+    m_poCachedArray = poGroup->CreateMDArray(GetName(), apoMemDims, eDT, nullptr);
+    m_poCachedArray->Write( std::vector<GUInt64>(nDims).data(),
+                            count,
+                            nullptr,
+                            nullptr,
+                            eDT,
+                            pData );
+    m_cachedArrayStartIdx.resize(nDims);
+    memcpy( &m_cachedArrayStartIdx[0], arrayStartIdx, nDims * sizeof(GUInt64) );
+    m_cachedCount.resize(nDims);
+    memcpy( &m_cachedCount[0], count, nDims * sizeof(size_t) );
+    VSIFree(pData);
+    return true;
 }
 
 /************************************************************************/
@@ -2659,6 +2758,8 @@ bool netCDFVariable::IWrite(const GUInt64* arrayStartIdx,
                                const void* pSrcBuffer)
 {
     m_bHasWrittenData = true;
+
+    m_poCachedArray.reset();
 
     if( m_nDims == 2 && m_nVarType == NC_CHAR && GetDimensions().size() == 1 )
     {
@@ -3466,7 +3567,21 @@ GDALDataset *netCDFDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
     CPLAcquireMutex(hNCMutex, 1000.0);
 
     auto poSharedResources(std::make_shared<netCDFSharedResources>());
-    poSharedResources->m_osFilename = poOpenInfo->pszFilename;
+
+    // For example to open DAP datasets
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "NETCDF:") )
+    {
+        poSharedResources->m_osFilename = poOpenInfo->pszFilename + strlen("NETCDF:");
+        if( !poSharedResources->m_osFilename.empty() &&
+            poSharedResources->m_osFilename[0] == '"' &&
+            poSharedResources->m_osFilename.back() == '"' )
+        {
+            poSharedResources->m_osFilename = poSharedResources->m_osFilename.
+                substr(1, poSharedResources->m_osFilename.size() - 2);
+        }
+    }
+    else
+        poSharedResources->m_osFilename = poOpenInfo->pszFilename;
 
     poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->papszOpenOptions = CSLDuplicate(poOpenInfo->papszOpenOptions);

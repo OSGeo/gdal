@@ -78,6 +78,11 @@ static GDALDataset *OGRSEGYDriverOpen( GDALOpenInfo* poOpenInfo )
     {
         return nullptr;
     }
+    const char* fitsID = "SIMPLE  =                    T";
+    if( STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, fitsID))
+    {
+        return nullptr;
+    }
 
 // --------------------------------------------------------------------
 //      Try to decode the header encoded as EBCDIC and then ASCII
@@ -120,8 +125,6 @@ static GDALDataset *OGRSEGYDriverOpen( GDALOpenInfo* poOpenInfo )
 #if DEBUG_VERBOSE
     CPLDebug("SEGY", "Header = \n%s", pabyASCIITextHeader);
 #endif
-    CPLFree(pabyASCIITextHeader);
-    pabyASCIITextHeader = nullptr;
 
 // --------------------------------------------------------------------
 //      Read the next 400 bytes, where the Binary File Header is
@@ -160,7 +163,6 @@ static GDALDataset *OGRSEGYDriverOpen( GDALOpenInfo* poOpenInfo )
     if( !poDS->Open( poOpenInfo->pszFilename,
                      (const char*)pabyASCIITextHeader ) )
     {
-        CPLFree(pabyASCIITextHeader);
         delete poDS;
         poDS = nullptr;
     }
@@ -184,7 +186,7 @@ void RegisterOGRSEGY()
     poDriver->SetDescription( "SEGY" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "SEG-Y" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_segy.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/segy.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = OGRSEGYDriverOpen;

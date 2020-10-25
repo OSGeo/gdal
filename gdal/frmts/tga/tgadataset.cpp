@@ -202,8 +202,9 @@ GDALTGARasterBand::GDALTGARasterBand(GDALTGADataset* poDSIn, int nBandIn,
     {
         VSIFSeekL(poDSIn->m_fpImage, 18 + poDSIn->m_sImageHeader.nIDLength, SEEK_SET);
         m_poColorTable.reset(new GDALColorTable());
-        std::vector<GByte> abyData(poDSIn->m_sImageHeader.nColorMapLength *
-            ((poDSIn->m_sImageHeader.nColorMapEntrySize + 7) / 8));
+        const int nColorTableByteCount = poDSIn->m_sImageHeader.nColorMapLength *
+            ((poDSIn->m_sImageHeader.nColorMapEntrySize + 7) / 8);
+        std::vector<GByte> abyData(nColorTableByteCount);
         VSIFReadL(&abyData[0], 1, abyData.size(), poDSIn->m_fpImage);
         if( poDSIn->m_sImageHeader.nColorMapEntrySize == 24 )
         {

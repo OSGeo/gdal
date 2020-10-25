@@ -33,6 +33,25 @@
 <!-- This file should validate against nitf_spec.xsd -->
 
 <tres>
+    <!-- STDI-0002-1-v5.0 Appendix P, Section P.3.2.6.2, Table P-11 -->
+    <tre name="ACCHZB" md_prefix="NITF_ACCHZB_" minlength="11" maxlength="99985" location="image">
+        <field name="NUM_ACHZ" length="2" type="integer" minval="1" maxval="99"/>
+        <loop counter="NUM_ACHZ" md_prefix="ACHZ_%02d_">
+            <field name="UNIAAH" length="3" type="string"/>
+            <if cond="UNIAAH!=   ">
+                <field name="AAH" length="5" type="integer"/>
+            </if>
+            <field name="UNIAPH" length="3" type="string"/>
+            <if cond="UNIAPH!=   ">
+                <field name="APH" length="5" type="integer"/>
+            </if>
+            <field name="NUM_PTS" length="3" type="integer" minval="0" maxval="999"/>
+            <loop counter="NUM_PTS" md_prefix="POINT_%03d_">
+                <field name="LON" length="15" type="string"/>
+                <field name="LAT" length="15" type="string"/>
+            </loop>
+        </loop>
+    </tre>
 
     <tre name="ACCPOB" minlength="17" maxlength="99985" location="image">
         <field name="NUM_ACPO" length="2" type="integer" minval="1" maxval="99"/>
@@ -59,6 +78,26 @@
                 <field name="LAT" length="15" type="real"/>
             </loop>
         </loop>
+    </tre>
+
+    <!-- STDI-0002-1-v5.0 Appendix P, Section P.3.2.6.3, Table P-12 -->
+    <tre name="ACCVTB" md_prefix="NITF_ACCVTB_" minlength="11" maxlength="99985" location="image">
+        <field name="NUM_ACVT" length="2" type="integer" minval="1" maxval="99"/>
+        <loop counter="NUM_ACVT" md_prefix="ACVT_%02d_">
+            <field name="UNIAAV" length="3" type="string"/>
+            <if cond="UNIAAV!=   ">
+                <field name="AAV" length="5" type="integer"/>
+            </if>
+            <field name="UNIAPV" length="3" type="string"/>
+            <if cond="UNIAPV!=   ">
+                <field name="APV" length="5" type="integer"/>
+            </if>
+            <field name="NUM_PTS" length="3" type="integer" minval="0" maxval="999"/>
+            <loop counter="NUM_PTS" md_prefix="POINT_%03d_">
+                <field name="LON" length="15" type="string"/>
+                <field name="LAT" length="15" type="string"/>
+            </loop>
+         </loop>
     </tre>
 
     <tre name="ACFTB" length="207" location="image">
@@ -111,6 +150,165 @@
         <field name="RESERVED_2" length="4"/>
         <field name="LOCATION" length="11"/>
         <field name="RESERVED_3" length="13"/>
+    </tre>
+
+    <!-- STDI-0002-1 Appendix X: BANDSB -->
+    <tre name="BANDSB" md_prefix="NITF_BANDSB_" location="image">
+        <field name="COUNT" length="5" type="integer"/>
+        <field name="RADIOMETRIC_QUANTITY" length="24" type="string"/>
+        <field name="RADIOMETRIC_QUANTITY_UNIT" length="1" type="string"/>
+        <field name="SCALE_FACTOR" length="4" type="IEEE754_Float32_BigEndian"/>
+        <field name="ADDITIVE_FACTOR" length="4" type="IEEE754_Float32_BigEndian"/>
+        <field name="ROW_GSD" length="7" type="real"/>
+        <field name="ROW_GSD_UNIT" length="1" type="string"/>
+        <field name="COL_GSD" length="7" type="real"/>
+        <field name="COL_GSD_UNIT" length="1" type="string"/>
+        <field name="SPT_RESP_ROW" length="7" type="real"/>
+        <field name="SPT_RESP_UNIT_ROW" length="1" type="string"/>
+        <field name="SPT_RESP_COL" length="7" type="real"/>
+        <field name="SPT_RESP_UNIT_COL" length="1" type="string"/>
+        <field name="DATA_FLD_1" length="48" type="string"/>
+        <field name="EXISTENCE_MASK" length="4" type="bitmask"/>
+        <if cond="EXISTENCE_MASK:31">
+            <field name="RADIOMETRIC_ADJUSTMENT_SURFACE" length="24" type="string"/>
+            <field name="ATMOSPHERIC_ADJUSTMENT_ALTITUDE" length="4" type="IEEE754_Float32_BigEndian"/>
+        </if>
+        <if cond="EXISTENCE_MASK:30">
+            <field name="DIAMETER" length="7" type="real"/>
+        </if>
+        <if cond="EXISTENCE_MASK:29">
+            <field name="DATA_FLD_2" length="32" type="string"/>
+        </if>
+        <if cond="EXISTENCE_MASK:24">
+            <field name="WAVE_LENGTH_UNIT" length="1" type="string"/>
+        </if>
+        <loop counter="COUNT" name="BANDS" md_prefix="BAND_%05d_">
+            <if cond="EXISTENCE_MASK:28">
+                <field name="BANDID" length="50" type="string"/>
+            </if>
+            <if cond="EXISTENCE_MASK:27">
+                <field name="BAD_BAND" length="1" type="integer"/>
+            </if>
+            <if cond="EXISTENCE_MASK:26">
+                <field name="NIIRS" length="3" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:25">
+                <field name="FOCAL_LEN" length="5" type="integer"/>
+            </if>
+            <if cond="EXISTENCE_MASK:24">
+                <field name="CWAVE" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:23">
+                <field name="FWHM" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:22">
+                <field name="FWHM_UNC" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:21">
+                <field name="NOM_WAVE" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:20">
+                <field name="NOM_WAVE_UNC" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:19">
+                <field name="LBOUND" length="7" type="real"/>
+                <field name="UBOUND" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:18">
+                <field name="SCALE_FACTOR" length="4" type="IEEE754_Float32_BigEndian"/>
+                <field name="ADDITIVE_FACTOR" length="4" type="IEEE754_Float32_BigEndian"/>
+            </if>
+            <if cond="EXISTENCE_MASK:17">
+                <field name="START_TIME" length="16" type="string"/>
+            </if>
+            <if cond="EXISTENCE_MASK:16">
+                <field name="INT_TIME" length="6" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:15">
+                <field name="CALDRK" length="6" type="real"/>
+                <field name="CALIBRATION_SENSITIVITY" length="5" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:14">
+                <field name="ROW_GSD" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:13">
+                <field name="ROW_GSD_UNC" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:14">
+                <field name="ROW_GSD_UNIT" length="1" type="string"/>
+                <field name="COL_GSD" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:13">
+                <field name="COL_GSD_UNC" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:14">
+                <field name="COL_GSD_UNIT" length="1" type="string"/>
+            </if>
+            <if cond="EXISTENCE_MASK:12">
+                <field name="BKNOISE" length="5" type="real"/>
+                <field name="SCNNOISE" length="5" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:11">
+                <field name="SPT_RESP_FUNCTION_ROW" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:10">
+                <field name="SPT_RESP_UNC_ROW" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:11">
+                <field name="SPT_RESP_UNIT_ROW" length="1" type="string"/>
+                <field name="SPT_RESP_FUNCTION_COL" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:10">
+                <field name="SPT_RESP_UNC_COL" length="7" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:11">
+                <field name="SPT_RESP_UNIT_COL" length="1" type="string"/>
+            </if>
+            <if cond="EXISTENCE_MASK:9">
+                <field name="DATA_FLD_3" length="16" type="string"/>
+            </if>
+            <if cond="EXISTENCE_MASK:8">
+                <field name="DATA_FLD_4" length="24" type="string"/>
+            </if>
+            <if cond="EXISTENCE_MASK:7">
+                <field name="DATA_FLD_5" length="32" type="string"/>
+            </if>
+            <if cond="EXISTENCE_MASK:6">
+                <field name="DATA_FLD_6" length="48" type="string"/>
+            </if>
+        </loop>
+        <if cond="EXISTENCE_MASK:0">
+            <field name="NUM_AUX_B" length="2" type="integer"/>
+            <field name="NUM_AUX_C" length="2" type="integer"/>
+            <loop counter="NUM_AUX_B" name="BAND_AUX" md_prefix="BAND_AUX_%02d_">
+                <field name="BAPF" length="1" type="string"/>
+                <field name="UBAP" length="7" type="string"/>
+                <loop counter="COUNT" name="BAND" md_prefix="BAND_%05d">
+                    <if cond="BAPF=I">
+                        <field name="APN" length="10" type="integer"/>
+                    </if>
+                    <if cond="BAPF=R">
+                        <field name="APR" length="4" type="IEEE754_Float32_BigEndian"/>
+                    </if>
+                    <if cond="BAPF=A">
+                        <field name="APA" length="20" type="string"/>
+                    </if>
+                </loop>
+            </loop>
+            <loop counter="NUM_AUX_C" name="CUBE_AUX" md_prefix="CUBE_AUX_%02d_">
+                <field name="CAPF" length="1" type="string"/>
+                <field name="UCAP" length="7" type="string"/>
+                <if cond="CAPF=I">
+                    <field name="APN" length="10" type="integer"/>
+                </if>
+                <if cond="CAPF=R">
+                    <field name="APR" length="4" type="IEEE754_Float32_BigEndian"/>
+                </if>
+                <if cond="CAPF=A">
+                    <field name="APA" length="20" type="string"/>
+                </if>
+            </loop>
+        </if>
     </tre>
 
     <tre name="BLOCKA" length="123" location="image">
@@ -239,6 +437,73 @@
         <field name="LINEAR_ERR" length="3"/>
     </tre>
 
+    <!-- STDI-0002-1-v5.0 Appendix AH, Section AH.6.1, Table AH.6-1-->
+    <tre name="CSEXRB" md_prefix="NITF_CSEXRB_" location="image">
+        <field name="IMAGE_UUID" length="36" type="string"/>
+        <field name="NUM_ASSOC_DES" length="3" type="integer" minval="000" maxval="999"/>
+        <loop counter="NUM_ASSOC_DES" md_prefix="DES_%03d_">
+            <field name="ASSOC_DES_ID" length="36" type="string"/>
+        </loop>
+        <field name="PLATFORM_ID" length="6" type="string"/>
+        <field name="PAYLOAD_ID" length="6" type="string"/>
+        <field name="SENSOR_ID" length="6" type="string"/>
+        <field name="SENSOR_TYPE" length="1" type="string"/>
+        <field name="GROUND_REF_POINT_X" length="12" type="real" minval="-99999999.99" maxval="+99999999.99"/>
+        <field name="GROUND_REF_POINT_Y" length="12" type="real" minval="-99999999.99" maxval="+99999999.99"/>
+        <field name="GROUND_REF_POINT_Z" length="12" type="real" minval="-99999999.99" maxval="+99999999.99"/>
+        <if cond="SENSOR_TYPE=S">
+            <field name="DAY_FIRST_LINE_IMAGE" length="8" type="string" />
+            <field name="TIME_FIRST_LINE_IMAGE" length="15" type="real" minval="0.0" maxval="86400.0"/>
+            <field name="TIME_IMAGE_DURATION" length="16" type="real" minval="-86400.0" maxval="86400.0"/>
+        </if>
+        <if cond="SENSOR_TYPE=F">
+            <field name="TIME_STAMP_LOC" length="1" type="integer" minval="0" maxval="1"/>
+            <if cond="TIME_STAMP_LOC=0">
+                <field name="REFERENCE_FRAME_NUM" length="9" type="integer" minval="1" maxval="999999999"/>
+                <field name="BASE_TIMESTAMP" length="24" type="string"/>
+                <field name="DT_MULTIPLIER" length="8" type="UnsignedInt_BigEndian" />
+                <field name="DT_SIZE" length="1" type="UnsignedInt_BigEndian" minval="1" maxval="8"/>
+                <field name="NUMBER_FRAMES" length="4" type="UnsignedInt_BigEndian"/>
+                <field name="NUMBER_DT" length="4" type="UnsignedInt_BigEndian" minval="0" maxval="2147483647"/> <!-- Value will be cast to signed integer -->
+                <loop counter="NUMBER_DT" md_prefix="DT_%04d">
+                    <field name="DT" length_var="DT_SIZE" type="UnsignedInt_BigEndian" />
+                </loop>
+            </if>
+        </if>
+        <field name="MAX_GSD" length="12" type="real"/>
+        <field name="ALONG_SCAN_GSD" length="12" type="real"/>
+        <field name="CROSS_SCAN_GSD" length="12" type="real"/>
+        <field name="GEO_MEAN_GSD" length="12" type="real"/>
+        <field name="A_S_VERT_GSD" length="12" type="real"/>
+        <field name="C_S_VERT_GSD" length="12" type="real"/>
+        <field name="GEO_MEAN_VERT_GSD" length="12" type="real"/>
+        <field name="GSD_BETA_ANGLE" length="5" type="real"/>
+        <field name="DYNAMIC_RANGE" length="5" type="integer"/>
+        <field name="NUM_LINES" length="7" type="integer"/>
+        <field name="NUM_SAMPLES" length="5" type="integer"/>
+        <field name="ANGLE_TO_NORTH" length="7" type="real"/>
+        <field name="OBLIQUITY_ANGLE" length="6" type="real"/>
+        <field name="AZ_OF_OBLIQUITY" length="7" type="real"/>
+        <field name="ATM_REFR_FLAG" length="1" type="integer" minval="0" maxval="1"/>
+        <field name="VEL_ABER_FLAG" length="1" type="integer" minval="0" maxval="1"/>
+        <field name="GRD_COVER" length="1" type="integer" minval="0" maxval="1" />
+        <field name="SNOW_DEPTH_CATEGORY" length="1" type="integer"/>
+        <field name="SUN_AZIMUTH" length="7" type="real"/>
+        <field name="SUN_ELEVATION" length="7" type="real"/>
+        <field name="PREDICTED_NIIRS" length="3" type="real"/>
+        <field name="CIRCL_ERR" length="5" type="real"/>
+        <field name="LINEAR_ERR" length="5" type="real"/>
+        <field name="CLOUD_COVER" length="3" type="integer"/>
+        <if cond="SENSOR_TYPE=F">
+            <field name="ROLLING_SHUTTER_FLAG" length="1" type="integer" minval="0" maxval="1"/>
+        </if>
+        <field name="UE_TIME_FLAG" length="1" type="integer" minval="0" maxval="1"/>
+        <field name="RESERVED_LEN" length="5" type="integer" fixed_value="00000"/>
+        <if cond="RESERVED_LEN!=00000">
+            <field name="RESERVED" length_var="RESERVED_LEN" type="string" />
+        </if>
+    </tre>
+
     <tre name="CSPROA" length="120" location="image">
         <field length="12"/>
         <field length="12"/>
@@ -250,6 +515,20 @@
         <field length="12"/>
         <field length="12"/>
         <field name="BWC" length="12"/>
+    </tre>
+
+    <!-- STDI-0002-1-v5.0 Appendix AH, Section AH.6.2, Table AH.6-2 -->
+    <tre name="CSRLSB" md_prefix="NITF_CSRLSB_" location="image">
+        <field name="N_RS_ROW_BLOCKS" length="2" type="integer" minval="1" maxval="99"/>
+        <field name="M_RS_COLUMN_BLOCKS" length="2" type="integer" minval="1" maxval="99"/>
+        <loop counter="N_RS_ROW_BLOCKS" md_prefix="ROWBLOCK_%02d_">
+            <loop counter="M_RS_COLUMN_BLOCKS" md_prefix="COLBLOCK_%02d_">
+                <field name="RS_DT_1" length="12" type="real"/>
+                <field name="RS_DT_2" length="12" type="real"/>
+                <field name="RS_DT_3" length="12" type="real"/>
+                <field name="RS_DT_4" length="12" type="real"/>
+            </loop>
+        </loop>
     </tre>
 
     <tre name="CSSFAA" minlength="107" maxlength="425" location="image">
@@ -269,6 +548,46 @@
             <field name="FINISH_X" length="11"/>
             <field name="FINISH_Y" length="11"/>
         </loop>
+    </tre>
+
+    <!-- STDI-0002-1-v5.0 Appendix AH, Section AH.6.3, Table AH.6-3 -->
+    <tre name="CSWRPB" md_prefix="NITF_CSWRPB_" location="image">
+        <field name="NUM_SETS_WARP_DATA" length="1" type="integer" minval="1" maxval="9"/>
+        <field name="SENSOR_TYPE" length="1" type="string"/>
+        <if cond="SENSOR_TYPE=F">
+            <field name="WRP_INTERP" length="1" type="integer" minval="0" maxval="1"/>
+        </if>
+        <loop counter="NUM_SETS_WARP_DATA" md_prefix="WARP_DATA_SET_%01d_">
+            <if cond="SENSOR_TYPE=F">
+                <field name="FL_WARP" length="11" type="real" minval="0" maxval="99.99999999"/>
+            </if>
+            <field name="OFFSET_LINE" length="7" type="integer" minval="1" maxval="9999999"/>
+            <field name="OFFSET_SAMP" length="7" type="integer" minval="1" maxval="9999999"/>
+            <field name="SCALE_LINE" length="7" type="integer" minval="1" maxval="9999999"/>
+            <field name="SCALE_SAMP" length="7" type="integer" minval="1" maxval="9999999"/>
+            <field name="OFFSET_LINE_UNWRP" length="7" type="integer" minval="1" maxval="9999999"/>
+            <field name="OFFSET_SAMP_UNWRP" length="7" type="integer" minval="1" maxval="9999999"/>
+            <field name="SCALE_LINE_UNWRP" length="7" type="integer" minval="1" maxval="9999999"/>
+            <field name="SCALE_SAMP_UNWRP" length="7" type="integer" minval="1" maxval="9999999"/>
+            <field name="LINE_POLY_ORDER_M1" length="1" type="integer"/>
+            <field name="LINE_POLY_ORDER_M2" length="1" type="integer"/>
+            <field name="SAMP_POLY_ORDER_N1" length="1" type="integer"/>
+            <field name="SAMP_POLY_ORDER_N2" length="1" type="integer"/>
+            <loop counter="LINE_POLY_ORDER_M2" md_prefix="M2_%01d_">
+                <loop counter="LINE_POLY_ORDER_M1" md_prefix="M1_%01d_">
+                    <field name="A" length="21" type="real"/>
+                </loop>
+            </loop>
+            <loop counter="SAMP_POLY_ORDER_N2" md_prefix="N2_%01d_">
+                <loop counter="SAMP_POLY_ORDER_N1" md_prefix="N1_%01d_">
+                    <field name="B" length="21" type="real"/>
+                </loop>
+            </loop>
+        </loop>
+        <field name="RESERVED_LEN" length="5" type="integer"/>
+        <if cond="RESERVED_LEN!=00000">
+            <field name="RESERVED" length_var="RESERVED_LEN" type="string"/>
+        </if>
     </tre>
 
     <!-- STDI-0002 Appendix N -->
@@ -333,6 +652,19 @@
         <field name="GRD" length="3" type="string"/>
         <field name="GRN" length="80" type="string"/>
         <field name="ZNA" length="4" type="integer" minval="0"/>
+    </tre>
+
+    <!-- STDI-0002-1, App. P Table P-4 Grid Reference Data (GRDPSB) TRE -->
+    <tre name="GRDPSB" location="image">
+        <field name="NUM_GRDS" length="2" minval="1" type="integer"/>
+        <loop counter="NUM_GRDS" md_prefix="GRD_%02d_" name="GRDS">
+            <field name="ZVL" length="10" unit="m" type="real"/>
+            <field name="BAD" length="10" type="string"/>
+            <field name="LOD" length="12" type="real"/>
+            <field name="LAD" length="12" type="real"/>
+            <field name="LSO" length="11" type="real"/>
+            <field name="PSO" length="11" type="real"/>
+        </loop>
     </tre>
 
     <tre name="HISTOA" minlength="115" maxlength="83512" location="image">
@@ -415,6 +747,107 @@
         <field name="FI_COL" length="8" type="integer"/>
     </tre>
 
+    <!-- STDI-0002-1-v5.0 Appendix AL, Section AL.6.2.4, Table AL.6-3 -->
+    <tre name="ILLUMB" minlength="381" maxlength="99985" md_prefix="NITF_ILLUMB_" location="image">
+        <field name="NUM_BANDS" length="4" type="integer"/>
+        <field name="BAND_UNIT" length="40" type="string"/>
+        <loop counter="NUM_BANDS" md_prefix="BAND_%04d_">
+            <field name="LBOUND" length="16" type="real"/>
+            <field name="UBOUND" length="16" type="real"/>
+        </loop>
+        <field name="NUM_OTHERS" length="2" type="integer"/>
+        <loop counter="NUM_OTHERS" md_prefix="OTHER_%02d_">
+            <field name="OTHER_NAME" length="40" type="string"/>
+        </loop>
+        <field name="NUM_COMS" length="1" type="integer"/>
+        <loop counter="NUM_COMS" md_prefix="COMS_%01d_">
+            <field name="COMMENT" length="80" type="string"/>
+        </loop>
+        <field name="GEO_DATUM" length="80" type="string"/>
+        <field name="GEO_DATUM_CODE" length="4" type="string"/>
+        <field name="ELLIPSOID_NAME" length="80" type="string"/>
+        <field name="ELLIPSOID_CODE" length="3" type="string"/>
+        <field name="VERTICAL_DATUM_REF" length="80" type="string"/>
+        <field name="VERTICAL_REF_CODE" length="4" type="string"/>
+        <field name="EXISTENCE_MASK" length="3" type="bitmask"/>
+        <if cond="EXISTENCE_MASK:23">
+            <field name="RAD_QUANTITY" length="40" type="string"/>
+            <field name="RADQ_UNIT" length="40" type="string"/>
+        </if>
+        <field name="NUM_ILLUM_SETS" length="3" type="integer"/>
+        <loop counter="NUM_ILLUM_SETS" md_prefix="ILLUM_SET_%03d_">
+            <field name="DATETIME" length="14" type="string"/>
+            <field name="TARGET_LAT" length="10" type="real"/>
+            <field name="TARGET_LON" length="11" type="real"/>
+            <field name="TARGET_HGT" length="14" type="real"/>
+            <if cond="EXISTENCE_MASK:22">
+                <field name="SUN_AZIMUTH" length="5" type="real"/>
+                <field name="SUN_ELEV" length="5" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:21">
+                <field name="MOON_AZIMUTH" length="5" type="real"/>
+                <field name="MOON_ELEV" length="5" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:20">
+                <field name="MOON_PHASE_ANGLE" length="6" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:19">
+                <field name="MOON_ILLUM_PERCENT" length="3" type="integer"/>
+            </if>
+            <if cond="EXISTENCE_MASK:18">
+                <loop counter="NUM_OTHERS" md_prefix="OTHERS_%02d_">
+                    <field name="OTHER_AZIMUTH" length="5" type="real"/>
+                    <field name="OTHER_ELEV" length="5" type="real"/>
+                </loop>
+            </if>
+            <if cond="EXISTENCE_MASK:17">
+                <field name="SENSOR_AZIMUTH" length="5" type="real"/>
+                <field name="SENSOR_ELEV" length="5" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:16">
+                <field name="CATS_ANGLE" length="5" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:15">
+                <field name="SUN_GLINT_LAT" length="10" type="real"/>
+                <field name="SUN_GLINT_LON" length="11" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:14">
+                <field name="CATM_ANGLE" length="5" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:13">
+                <field name="MOON_GLINT_LAT" length="10" type="real"/>
+                <field name="MOON_GLINT_LON" length="11" type="real"/>
+            </if>
+            <if cond="EXISTENCE_MASK:10">
+                <field name="SOL_LUN_DIST_ADJUST" length="7" type="real"/>
+            </if>
+            <loop counter="NUM_BANDS" md_prefix="BAND_%04d_">
+                <if cond="EXISTENCE_MASK:12">
+                    <field name="SUN_ILLUM_METHOD" length="1" type="string"/>
+                    <field name="SUN_ILLUM" length="16" type="real"/>
+                </if>
+                <if cond="EXISTENCE_MASK:11">
+                    <field name="MOON_ILLUM_METHOD" length="1" type="string"/>
+                    <field name="MOON_ILLUM" length="16" type="real"/>
+                </if>
+                <if cond="EXISTENCE_MASK:10">
+                    <field name="TOT_SUNMOON_ILLUM" length="16" type="real"/>
+                </if>
+                <loop counter="NUM_OTHERS" md_prefix="OTHER_%02d_">
+                    <if cond="EXISTENCE_MASK:9">
+                        <field name="OTHER_ILLUM_METHOD" length="1" type="string"/>
+                        <field name="OTHER_ILLUM" length="16" type="real"/>
+                    </if>
+                </loop>
+                <if cond="EXISTENCE_MASK:8">
+                    <field name="ART_ILLUM_METHOD" length="1" type="string"/>
+                    <field name="ART_ILLUM_MIN" length="16" type="real"/>
+                    <field name="ART_ILLUM_MAX" length="16" type="real"/>
+                </if>
+            </loop>
+        </loop>
+    </tre>
+
     <tre name="J2KLRA" location="image">
         <field name="ORIG" length="1"/>
         <field name="NLEVELS_O" length="2"/>
@@ -437,6 +870,25 @@
         <field name="LAD" length="5" type="integer" minval="1" maxval="99999"/>
         <field name="LSO" length="15" type="real"/>
         <field name="PSO" length="15" type="real"/>
+    </tre>
+
+    <!-- STDI-0002-1 Appendix AK: Table AK.6-5: MATESA -->
+    <tre name="MATESA" location="file">
+        <field name="CUR_SOURCE" length="42" type="string"/>
+        <field name="CUR_MATE_TYPE" length="16" type="string"/>
+        <field name="CUR_FILE_ID_LEN" length="4" type="integer" minval="1" maxval="9999"/>
+        <field name="CUR_FILE_ID" length_var="CUR_FILE_ID_LEN" type="string"/>
+        <field name="NUM_GROUPS" length="4" type="integer" minval="1" maxval="9999"/>
+        <loop counter="NUM_GROUPS" md_prefix="GROUP_%d" name="GROUPS">
+            <field name="RELATIONSHIP" length="24" type="string"/>
+            <field name="NUM_MATES" length="4" type="integer" minval="1" maxval="9999"/>
+            <loop counter="NUM_MATES" md_prefix="MATE_%d" name="MATES">
+                 <field name="SOURCE" length="42" type="string"/>
+                 <field name="MATE_TYPE" length="16" type="string"/>
+                 <field name="MATE_ID_LEN" length="4" type="integer" minval="1" maxval="9999"/>
+                 <field name="MATE_ID" length_var="MATE_ID_LEN" type="string"/>
+            </loop>
+        </loop>
     </tre>
 
     <tre name="MENSRB" location="image">
@@ -464,6 +916,23 @@
         <field name="C_AL_DC" length="9" type="real" minval="-1.0" maxval="1.0"/>
         <field name="TOTAL_TILES_COLS" length="3" type="integer" minval="1" maxval="999"/>
         <field name="TOTAL_TILES_ROWS" length="5" type="integer" minval="1" maxval="99999"/>
+    </tre>
+
+    <!-- STDI-0002-1-v5.0 Appendix E, Section E.3.9, Table E-16-->
+    <tre name="MSTGTA" md_prefix="NITF_MSTGTA_" length="101" location="image">
+        <field name="TGT_NUM" length="5" type="integer" minval="0" maxval="99999"/>
+        <field name="TGT_ID" length="12" type="string"/>
+        <field name="TGT_BE" length="15" type="string"/>
+        <field name="TGT_PRI" length="3" type="integer" minval="1" maxval="999"/>
+        <field name="TGT_REQ" length="12" type="string"/>
+        <field name="TGT_LTIOV" length="12" type="string"/>
+        <field name="TGT_TYPE" length="1" type="integer"/>
+        <field name="TGT_COLL" length="1" type="integer"/>
+        <field name="TGT_CAT" length="5" type="integer" minval="10000" maxval="99999"/>
+        <field name="TGT_UTC" length="7" type="string"/>
+        <field name="TGT_ELEV" length="6" type="integer" minval="-1000" maxval="30000"/>
+        <field name="TGT_ELEV_UNIT" length="1" type="string"/>
+        <field name="TGT_LOC" length="21" type="string"/>
     </tre>
 
     <!-- STDI-0002 Appendix E (ASDE 2.1/CN1), Section 3.10 and Table E-19 -->
@@ -640,6 +1109,71 @@
         <field name="ATEXTREP" length="2" type="integer" minval="0" maxval="99"/>
         <loop counter="ATEXTREP" md_prefix="ATEXT_%02d" name="ATEXT">
             <field name="" longname="ATEXT" length="255" type="string"/>
+        </loop>
+    </tre>
+
+    <!-- STDI-0002-1-v5.0 Appendix C, Section C.3, Tables C-7,C-8,C-9 -->
+    <tre name="PIATGB" md_prefix="NITF_PIATGB_" length="117" location="image">
+      <field name="TGTUTM" length="15" type="string"/>
+      <field name="PIATGAID" length="15" type="string"/>
+      <field name="PIACTRY" length="2" type="string"/>
+      <field name="PIACAT" length="5" type="string"/>
+      <field name="TGTGEO" length="15" type="string"/>
+      <field name="DATUM" length="3" type="string"/>
+      <field name="TGTNAME" length="38" type="string"/>
+      <field name="PERCOVER" length="3" type="integer" minval="0" maxval="100"/>
+      <field name="TGTLAT" length="10" type="string"/>
+      <field name="TGTLON" length="11" type="string"/>
+    </tre>
+
+    <!-- STDI-0002-1-v5.0 Appendix AJ, Section AJ.6.3, Table AJ.6-8 -->
+    <tre name="PIXMTA" md_prefix="NITF_PIXMTA_" minlength="152" maxlength="99985" location="image">
+        <field name="NUMAIS" length="3" type="integer"/>
+        <if cond="NUMAIS!=ALL">
+            <if cond="NUMAIS!=000">
+                <loop counter="NUMAIS" md_prefix = "AIS_%03d_">
+                    <field name="AISDLVL" length="3" type="integer"/>
+                </loop>
+            </if>
+        </if>
+        <field name="ORIGIN_X" length="14" type="real"/>
+        <field name="ORIGIN_Y" length="14" type="real"/>
+        <field name="SCALE_X" length="14" type="real"/>
+        <field name="SCALE_Y" length="14" type="real"/>
+        <field name="SAMPLE_MODE" length="1" type="string"/>
+        <field name="NUMMETRICS" length="5" type="integer"/>
+        <field name="PERBAND" length="1" type="string"/>
+        <loop counter="NUMMETRICS" md_prefix="METRIC_%05d_">
+            <field name="DESCRIPTION" length="40" type="string"/>
+            <field name="UNIT" length="40" type="string"/>
+            <field name="FITTYPE" length="1" type="string"/>
+            <if cond="FITTYPE=P">
+                <field name="NUMCOEF" length="1" type="integer"/>
+                <loop counter="NUMCOEF" md_prefix="COEF_%01d_">
+                    <field name="COEF" length="15" type="real"/>
+                </loop>
+            </if>
+        </loop>
+        <field name="RESERVED_LEN" length="5" type="integer"/>
+        <if cond="RESERVED_LEN!=00000">
+            <field name="RESERVED" length_var="RESERVED_LEN"/>
+        </if>
+    </tre>
+
+    <!-- STDI-0002-1-v5.0 Appendix AA, Section AA.4.1, Table AA-1 -->
+    <tre name="PIXQLA" md_prefix="NITF_PIXQLA_" location="image">
+        <field name="NUMAIS" length="3" type="integer"/>
+        <if cond="NUMAIS!=ALL">
+            <if cond="NUMAIS!=000">
+                <loop counter="NUMAIS" md_prefix = "AIS_%03d_">
+                    <field name="AISDLVL" length="3" type="integer"/>
+                </loop>
+            </if>
+        </if>
+        <field name="NPIXQUAL" length="4" type="integer"/>
+        <field name="PQ_BIT_VALUE" length="1" type="integer" fixed_value="1" />
+        <loop counter="NPIXQUAL" md_prefix="PIXQUAL_%04d_">
+            <field name="PQ_CONDITION" length="40" type="string"/>
         </loop>
     </tre>
 

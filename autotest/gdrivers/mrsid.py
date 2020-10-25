@@ -37,15 +37,32 @@ from osgeo import gdal
 import gdaltest
 import pytest
 
+pytestmark = pytest.mark.require_driver('MrSID')
+
+###############################################################################
+@pytest.fixture(autouse=True, scope='module')
+def startup_and_cleanup():
+
+    gdaltest.mrsid_drv = gdal.GetDriverByName('MrSID')
+    gdaltest.jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
+    if gdaltest.jp2mrsid_drv:
+        gdaltest.deregister_all_jpeg2000_drivers_but('JP2MrSID')
+
+    yield
+
+    gdaltest.reregister_all_jpeg2000_drivers()
+
+    try:
+        os.remove('data/sid/mercator.sid.aux.xml')
+        os.remove('data/sid/mercator_new.sid.aux.xml')
+    except OSError:
+        pass
+
 ###############################################################################
 # Read a simple byte file, checking projections and geotransform.
 
 
 def test_mrsid_1():
-
-    gdaltest.mrsid_drv = gdal.GetDriverByName('MrSID')
-    if gdaltest.mrsid_drv is None:
-        pytest.skip()
 
     tst = gdaltest.GDALTest('MrSID', 'sid/mercator.sid', 1, None)
 
@@ -136,9 +153,6 @@ def test_mrsid_1():
 
 def test_mrsid_2():
 
-    if gdaltest.mrsid_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/sid/mercator.sid')
 
     try:
@@ -168,9 +182,6 @@ def test_mrsid_2():
 
 def test_mrsid_3():
 
-    if gdaltest.mrsid_drv is None:
-        pytest.skip()
-
     ds = gdal.Open('data/sid/mercator.sid')
 
     band = ds.GetRasterBand(1)
@@ -194,9 +205,6 @@ def test_mrsid_3():
 
 
 def test_mrsid_4():
-
-    if gdaltest.mrsid_drv is None:
-        pytest.skip()
 
     try:
         os.remove('data/sid/mercator_new.sid.aux.xml')
@@ -234,17 +242,6 @@ def test_mrsid_4():
         pass
 
     return ret
-
-###############################################################################
-# Test JP2MrSID driver
-
-
-def test_mrsid_5():
-    gdaltest.jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
-    if gdaltest.jp2mrsid_drv is None:
-        pytest.skip()
-
-    gdaltest.deregister_all_jpeg2000_drivers_but('JP2MrSID')
 
 ###############################################################################
 # Open byte.jp2
@@ -310,9 +307,6 @@ def test_mrsid_7():
 
 def test_mrsid_8():
 
-    if gdaltest.mrsid_drv is None:
-        pytest.skip()
-
     new_gt = (10000, 50, 0, 20000, 0, -50)
     new_srs = """PROJCS["OSGB 1936 / British National Grid",GEOGCS["OSGB 1936",DATUM["OSGB_1936",SPHEROID["Airy 1830",6377563.396,299.3249646,AUTHORITY["EPSG","7001"]],AUTHORITY["EPSG","6277"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4277"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",49],PARAMETER["central_meridian",-2],PARAMETER["scale_factor",0.9996012717],PARAMETER["false_easting",400000],PARAMETER["false_northing",-100000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","27700"]]"""
 
@@ -346,9 +340,6 @@ def test_mrsid_8():
 
 
 def test_mrsid_9():
-
-    if gdaltest.mrsid_drv is None:
-        pytest.skip()
 
     f = open('data/sid/mercator.sid', 'rb')
     data = f.read()
@@ -518,21 +509,3 @@ def test_mrsid_online_4():
         print(ds.GetRasterBand(1).Checksum())
         print(ds_ref.GetRasterBand(1).Checksum())
         pytest.fail('Image too different from reference')
-
-    
-###############################################################################
-# Cleanup.
-
-
-def test_mrsid_cleanup():
-
-    try:
-        os.remove('data/sid/mercator.sid.aux.xml')
-        os.remove('data/sid/mercator_new.sid.aux.xml')
-    except OSError:
-        pass
-
-    gdaltest.reregister_all_jpeg2000_drivers()
-
-
-

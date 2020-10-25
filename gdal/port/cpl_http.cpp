@@ -422,6 +422,35 @@ static size_t CPLHdrWriteFct( void *buffer, size_t size, size_t nmemb,
     return nmemb;
 }
 
+#if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
+/************************************************************************/
+/*                        CPLHTTPReadFunction()                         */
+/************************************************************************/
+static size_t CPLHTTPReadFunction(char *buffer, size_t size, size_t nitems, void *arg)
+{
+    return VSIFReadL(buffer, size, nitems, static_cast<VSILFILE*>(arg));
+}
+
+/************************************************************************/
+/*                        CPLHTTPSeekFunction()                         */
+/************************************************************************/
+static int CPLHTTPSeekFunction(void *arg, curl_off_t offset, int origin)
+{
+    if( VSIFSeekL( static_cast<VSILFILE*>(arg), offset, origin ) == 0 )
+        return CURL_SEEKFUNC_OK;
+    else
+        return CURL_SEEKFUNC_FAIL;
+}
+
+/************************************************************************/
+/*                        CPLHTTPFreeFunction()                         */
+/************************************************************************/
+static void CPLHTTPFreeFunction(void *arg)
+{
+    VSIFCloseL(static_cast<VSILFILE*>(arg));
+}
+#endif // LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
+
 typedef struct {
     GDALProgressFunc pfnProgress;
     void *pProgressArg;
@@ -485,6 +514,7 @@ constexpr TupleEnvVarOptionName asAssocEnvVarOptionName[] =
     { "GDAL_HTTP_NETRC", "NETRC" },
     { "GDAL_HTTP_MAX_RETRY", "MAX_RETRY" },
     { "GDAL_HTTP_RETRY_DELAY", "RETRY_DELAY" },
+    { "GDAL_CURL_CA_BUNDLE", "CAINFO" },
     { "CURL_CA_BUNDLE", "CAINFO" },
     { "SSL_CERT_FILE", "CAINFO" },
     { "GDAL_HTTP_HEADER_FILE", "HEADER_FILE" },
@@ -563,6 +593,291 @@ static void CPLHTTPEmitFetchDebug(const char* pszURL,
 
 #endif
 
+#ifdef HAVE_CURL
+
+/************************************************************************/
+/*                      class CPLHTTPPostFields                         */
+/************************************************************************/
+
+class CPLHTTPPostFields
+{
+    public:
+        CPLHTTPPostFields() = default;
+        CPLHTTPPostFields & operator=(const CPLHTTPPostFields&) = delete;
+        CPLHTTPPostFields(const CPLHTTPPostFields&) = delete;
+        CPLErr Fill(CURL *http_handle, CSLConstList papszOptions)
+        {
+            // Fill POST form if present
+            const char* pszFormFilePath = CSLFetchNameValue( papszOptions,
+                "FORM_FILE_PATH" );
+            const char* pszParametersCount = CSLFetchNameValue( papszOptions,
+                "FORM_ITEM_COUNT" );        
+
+            if( pszFormFilePath != nullptr || pszParametersCount != nullptr )
+            {
+        #if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
+                mime = curl_mime_init(http_handle);
+                curl_mimepart *mimepart = curl_mime_addpart(mime);
+        #else // LIBCURL_VERSION_NUM >= 0x073800
+                struct curl_httppost *lastptr = nullptr;
+        #endif // LIBCURL_VERSION_NUM >= 0x073800
+                if( pszFormFilePath != nullptr )
+                {
+                    const char* pszFormFileName = CSLFetchNameValue( papszOptions,
+                        "FORM_FILE_NAME" );
+                    const char* pszFilename = CPLGetFilename( pszFormFilePath );
+                    if( pszFormFileName == nullptr )
+                    {
+                        pszFormFileName = pszFilename;
+                    }
+
+                    VSIStatBufL sStat;
+                    if( VSIStatL( pszFormFilePath, &sStat ) == 0)
+                    {
+        #if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
+                        VSILFILE *mime_fp = VSIFOpenL( pszFormFilePath, "rb" );
+                        if( mime_fp != nullptr )
+                        {
+                            curl_mime_name(mimepart, pszFormFileName);
+                            curl_mime_filename(mimepart, pszFilename);
+                            curl_mime_data_cb(mimepart, sStat.st_size, 
+                                CPLHTTPReadFunction, CPLHTTPSeekFunction, 
+                                CPLHTTPFreeFunction, mime_fp);
+                        } 
+                        else
+                        {
+                            osErrMsg = CPLSPrintf("Failed to open file %s", 
+                                pszFormFilePath);
+                            return CE_Failure;
+                        }
+
+        #else // LIBCURL_VERSION_NUM >= 0x073800
+                        curl_formadd(&formpost, &lastptr,
+                            CURLFORM_COPYNAME, pszFormFileName,
+                            CURLFORM_FILE, pszFormFilePath,
+                            CURLFORM_END);
+        #endif // LIBCURL_VERSION_NUM >= 0x073800
+                        CPLDebug("HTTP", "Send file: %s, COPYNAME: %s", 
+                            pszFormFilePath, pszFormFileName);
+                    }
+                    else
+                    {
+                        osErrMsg = CPLSPrintf("File '%s' not found", 
+                                pszFormFilePath);
+                        return CE_Failure;
+                    }
+                    
+                }
+
+                int nParametersCount = 0;
+                if( pszParametersCount != nullptr )
+                {
+                    nParametersCount = atoi( pszParametersCount );
+                }
+
+                for(int i = 0; i < nParametersCount; ++i)
+                {
+                    const char *pszKey = CSLFetchNameValue( papszOptions,
+                        CPLSPrintf("FORM_KEY_%d", i) );
+                    const char *pszValue = CSLFetchNameValue( papszOptions,
+                        CPLSPrintf("FORM_VALUE_%d", i) );
+
+                    if (nullptr == pszKey) 
+                    {
+                        osErrMsg = CPLSPrintf("Key #%d is not exists. Maybe wrong count of form items", 
+                            i);
+                        return CE_Failure;
+                    }
+
+                    if (nullptr == pszValue) 
+                    {
+                        osErrMsg = CPLSPrintf("Value #%d is not exists. Maybe wrong count of form items", 
+                            i);
+                        return CE_Failure;
+                    }
+
+        #if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
+                    mimepart = curl_mime_addpart(mime);
+                    curl_mime_name(mimepart, pszKey);
+                    curl_mime_data(mimepart, pszValue, CURL_ZERO_TERMINATED);
+        #else // LIBCURL_VERSION_NUM >= 0x073800
+                    curl_formadd(&formpost, &lastptr,
+                        CURLFORM_COPYNAME, pszKey,
+                        CURLFORM_COPYCONTENTS, pszValue,
+                        CURLFORM_END);
+        #endif // LIBCURL_VERSION_NUM >= 0x073800
+
+                    CPLDebug("HTTP", "COPYNAME: %s, COPYCONTENTS: %s", pszKey, pszValue);
+                }
+
+        #if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
+                curl_easy_setopt(http_handle, CURLOPT_MIMEPOST, mime);
+        #else // LIBCURL_VERSION_NUM >= 0x073800
+                curl_easy_setopt(http_handle, CURLOPT_HTTPPOST, formpost);
+        #endif // LIBCURL_VERSION_NUM >= 0x073800
+            }
+            return CE_None;
+        }
+
+        ~CPLHTTPPostFields()
+        {
+        #if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
+            if( mime != nullptr )
+            {
+                curl_mime_free(mime);
+            }
+        #else // LIBCURL_VERSION_NUM >= 0x073800
+            if( formpost != nullptr)
+            {
+                curl_formfree(formpost);
+            }
+        #endif // LIBCURL_VERSION_NUM >= 0x073800
+        }
+
+        std::string GetErrorMessage() const { return osErrMsg; }
+
+    private:
+    #if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
+        curl_mime *mime = nullptr;
+    #else // LIBCURL_VERSION_NUM >= 0x073800
+        struct curl_httppost *formpost = nullptr;
+    #endif // LIBCURL_VERSION_NUM >= 0x073800
+        std::string osErrMsg{};
+};
+
+/************************************************************************/
+/*                       CPLHTTPFetchCleanup()                          */
+/************************************************************************/
+
+static void CPLHTTPFetchCleanup(CURL *http_handle, struct curl_slist* headers, 
+    const char *pszPersistent, CSLConstList papszOptions)
+{
+    if( CSLFetchNameValue(papszOptions, "POSTFIELDS") )
+        curl_easy_setopt(http_handle, CURLOPT_POST, 0 );
+    curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, nullptr);
+
+    if( !pszPersistent )
+        curl_easy_cleanup( http_handle );
+
+    curl_slist_free_all(headers);
+}
+#endif // HAVE_CURL
+
+struct CPLHTTPFetchContext
+{
+    std::vector< std::pair<CPLHTTPFetchCallbackFunc, void*> > stack{};
+};
+
+/************************************************************************/
+/*                        GetHTTPFetchContext()                         */
+/************************************************************************/
+
+static CPLHTTPFetchContext* GetHTTPFetchContext(bool bAlloc)
+{
+    int bError = FALSE;
+    CPLHTTPFetchContext *psCtx =
+        static_cast<CPLHTTPFetchContext *>(
+            CPLGetTLSEx( CTLS_HTTPFETCHCALLBACK, &bError ) );
+    if( bError )
+        return nullptr;
+
+    if( psCtx == nullptr && bAlloc)
+    {
+        const auto FreeFunc = [](void* pData)
+        {
+            delete static_cast<CPLHTTPFetchContext*>(pData);
+        };
+        psCtx = new CPLHTTPFetchContext();
+        CPLSetTLSWithFreeFuncEx( CTLS_HTTPFETCHCALLBACK, psCtx, FreeFunc, &bError );
+        if( bError )
+        {
+            delete psCtx;
+            psCtx = nullptr;
+        }
+    }
+    return psCtx;
+}
+
+/************************************************************************/
+/*                      CPLHTTPSetFetchCallback()                       */
+/************************************************************************/
+
+static CPLHTTPFetchCallbackFunc gpsHTTPFetchCallbackFunc = nullptr;
+static void* gpHTTPFetchCallbackUserData = nullptr;
+
+/** Installs an alternate callback to the default implementation of CPLHTTPFetchEx().
+ *
+ * This callback will be used by all threads, unless contextual callbacks are
+ * installed with CPLHTTPPushFetchCallback().
+ *
+ * It is the responsibility of the caller to make sure this function is not
+ * called concurrently, or during CPLHTTPFetchEx() execution.
+ *
+ * @param pFunc Callback function to be called with CPLHTTPFetchEx() is called
+ *              (or NULL to restore default handler)
+ * @param pUserData Last argument to provide to the pFunc callback.
+ *
+ * @since GDAL 3.2
+ */
+void CPLHTTPSetFetchCallback( CPLHTTPFetchCallbackFunc pFunc, void* pUserData )
+{
+    gpsHTTPFetchCallbackFunc = pFunc;
+    gpHTTPFetchCallbackUserData = pUserData;
+}
+
+/************************************************************************/
+/*                      CPLHTTPPushFetchCallback()                      */
+/************************************************************************/
+
+/** Installs an alternate callback to the default implementation of CPLHTTPFetchEx().
+ *
+ * This callback will only be used in the thread where this function has been
+ * called. It must be un-installed by CPLHTTPPopFetchCallback(), which must also
+ * be called from the same thread.
+ *
+ * @param pFunc Callback function to be called with CPLHTTPFetchEx() is called.
+ * @param pUserData Last argument to provide to the pFunc callback.
+ * @return TRUE in case of success.
+ *
+ * @since GDAL 3.2
+ */
+int CPLHTTPPushFetchCallback( CPLHTTPFetchCallbackFunc pFunc, void* pUserData )
+{
+    auto psCtx = GetHTTPFetchContext(true);
+    if( psCtx == nullptr )
+        return false;
+    psCtx->stack.emplace_back(
+        std::pair<CPLHTTPFetchCallbackFunc, void*>(pFunc, pUserData) );
+    return true;
+}
+
+/************************************************************************/
+/*                       CPLHTTPPopFetchCallback()                      */
+/************************************************************************/
+
+/** Uninstalls a callback set by CPLHTTPPushFetchCallback().
+ *
+ * @see CPLHTTPPushFetchCallback()
+ * @return TRUE in case of success.
+ * @since GDAL 3.2
+ */
+int CPLHTTPPopFetchCallback(void)
+{
+    auto psCtx = GetHTTPFetchContext(false);
+    if( psCtx == nullptr || psCtx->stack.empty() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CPLHTTPPushFetchCallback / CPLHTTPPopFetchCallback not balanced");
+        return false;
+    }
+    else
+    {
+        psCtx->stack.pop_back();
+        return true;
+    }
+}
+
+
 /************************************************************************/
 /*                           CPLHTTPFetch()                             */
 /************************************************************************/
@@ -616,10 +931,12 @@ static void CPLHTTPEmitFetchDebug(const char* pszURL,
  *                 Default is 30. (GDAL >= 2.0)</li>
  * <li>MAX_FILE_SIZE=val, where val is a number of bytes (GDAL >= 2.2)</li>
  * <li>CAINFO=/path/to/bundle.crt. This is path to Certificate Authority (CA)
- *     bundle file. By default, it will be looked in a system location. If
- *     the CAINFO options is not defined, GDAL will also look if the CURL_CA_BUNDLE
- *     environment variable is defined to use it as the CAINFO value, and as a
- *     fallback to the SSL_CERT_FILE environment variable. (GDAL >= 2.1.3)</li>
+ *     bundle file. By default, it will be looked for in a system location. If
+ *     the CAINFO option is not defined, GDAL will also look in the the
+ *     CURL_CA_BUNDLE and SSL_CERT_FILE environment variables respectively
+ *     and use the first one found as the CAINFO value (GDAL >= 2.1.3). The
+ *     GDAL_CURL_CA_BUNDLE environment variable may also be used to set the
+ *     CAINFO value in GDAL >= 3.2.</li>
  * <li>HTTP_VERSION=1.0/1.1/2/2TLS (GDAL >= 2.3). Specify HTTP version to use.
  *     Will default to 1.1 generally (except on some controlled environments,
  *     like Google Compute Engine VMs, where 2TLS will be the default).
@@ -748,14 +1065,50 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
         return psResult;
     }
 
-#ifndef HAVE_CURL
-    (void) papszOptions;
-    (void) pszURL;
-    (void) pfnProgress;
-    (void) pProgressArg;
-    (void) pfnWrite;
-    (void) pWriteArg;
+    // Try to user alternate network layer if set.
+    auto pCtx = GetHTTPFetchContext(false);
+    if( pCtx )
+    {
+        for( size_t i = pCtx->stack.size(); i > 0; )
+        {
+            --i;
+            auto& cbk = pCtx->stack[i];
+            auto cbkFunc = cbk.first;
+            auto pUserData = cbk.second;
+            auto res = cbkFunc( pszURL, papszOptions,
+                                pfnProgress, pProgressArg,
+                                pfnWrite, pWriteArg,
+                                pUserData );
+            if( res )
+            {
+                if( CSLFetchNameValue( papszOptions, "CLOSE_PERSISTENT" ) )
+                {
+                    CPLHTTPDestroyResult(res);
+                    res = nullptr;
+                }
+                return res;
+            }
+        }
+    }
 
+    if( gpsHTTPFetchCallbackFunc )
+    {
+        auto res = gpsHTTPFetchCallbackFunc( pszURL, papszOptions,
+                                pfnProgress, pProgressArg,
+                                pfnWrite, pWriteArg,
+                                gpHTTPFetchCallbackUserData );
+        if( res )
+        {
+            if( CSLFetchNameValue( papszOptions, "CLOSE_PERSISTENT" ) )
+            {
+                CPLHTTPDestroyResult(res);
+                res = nullptr;
+            }
+            return res;
+        }
+    }
+
+#ifndef HAVE_CURL
     CPLError( CE_Failure, CPLE_NotSupported,
               "GDAL/OGR not compiled with libcurl support, "
               "remote requests not supported." );
@@ -917,80 +1270,15 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
         curl_easy_setopt(http_handle, CURLOPT_ENCODING, "gzip");
     }
 
-    // Fill POST form if present
-    const char* pszFormFilePath = CSLFetchNameValue( papszOptions,
-        "FORM_FILE_PATH" );
-    const char* pszParametersCount = CSLFetchNameValue( papszOptions,
-        "FORM_ITEM_COUNT" );
-#if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
-    curl_mime *mime = nullptr;
-#else // LIBCURL_VERSION_NUM >= 0x073800
-    struct curl_httppost *formpost = nullptr;
-#endif // LIBCURL_VERSION_NUM >= 0x073800
-
-    if( pszFormFilePath != nullptr || pszParametersCount != nullptr )
+    CPLHTTPPostFields oPostFields;
+    if (oPostFields.Fill(http_handle, papszOptions) != CE_None)
     {
-#if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
-        mime = curl_mime_init(http_handle);
-        curl_mimepart *mimepart = curl_mime_addpart(mime);
-#else // LIBCURL_VERSION_NUM >= 0x073800
-        struct curl_httppost *lastptr = nullptr;
-#endif // LIBCURL_VERSION_NUM >= 0x073800
-        if( pszFormFilePath != nullptr )
-        {
-            const char* pszFormFileName = CSLFetchNameValue( papszOptions,
-                "FORM_FILE_NAME" );
-            if( pszFormFileName == nullptr )
-            {
-                pszFormFileName = CPLGetFilename( pszFormFilePath );
-            }
-
-#if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
-            curl_mime_name(mimepart, pszFormFileName);
-            curl_mime_filedata(mimepart, pszFormFilePath);
-#else // LIBCURL_VERSION_NUM >= 0x073800
-            curl_formadd(&formpost, &lastptr,
-                CURLFORM_COPYNAME, pszFormFileName,
-                CURLFORM_FILE, pszFormFilePath,
-                CURLFORM_END);
-#endif // LIBCURL_VERSION_NUM >= 0x073800
-
-            CPLDebug("HTTP", "Send file: %s, COPYNAME: %s", pszFormFilePath,
-                pszFormFileName);
-        }
-
-        int nParametersCount = 0;
-        if( pszParametersCount != nullptr )
-        {
-            nParametersCount = atoi( pszParametersCount );
-        }
-
-        for(int i = 0; i < nParametersCount; ++i)
-        {
-            const char *pszKey = CSLFetchNameValue( papszOptions,
-                CPLSPrintf("FORM_KEY_%d", i) );
-            const char *pszValue = CSLFetchNameValue( papszOptions,
-                CPLSPrintf("FORM_VALUE_%d", i) );
-
-#if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
-            mimepart = curl_mime_addpart(mime);
-            curl_mime_name(mimepart, pszKey);
-            curl_mime_data(mimepart, pszValue, CURL_ZERO_TERMINATED);
-#else // LIBCURL_VERSION_NUM >= 0x073800
-            curl_formadd(&formpost, &lastptr,
-                CURLFORM_COPYNAME, pszKey,
-                CURLFORM_COPYCONTENTS, pszValue,
-                CURLFORM_END);
-#endif // LIBCURL_VERSION_NUM >= 0x073800
-
-            CPLDebug("HTTP", "COPYNAME: %s, COPYCONTENTS: %s", pszKey, pszValue);
-        }
-
-#if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
-        curl_easy_setopt(http_handle, CURLOPT_MIMEPOST, mime);
-#else // LIBCURL_VERSION_NUM >= 0x073800
-        curl_easy_setopt(http_handle, CURLOPT_HTTPPOST, formpost);
-#endif // LIBCURL_VERSION_NUM >= 0x073800
+        psResult->nStatus = 34; // CURLE_HTTP_POST_ERROR
+        psResult->pszErrBuf =
+            CPLStrdup(oPostFields.GetErrorMessage().c_str());
+        CPLError( CE_Failure, CPLE_AppDefined, "%s", psResult->pszErrBuf );
+        CPLHTTPFetchCleanup(http_handle, headers, pszPersistent, papszOptions);
+        return psResult;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1120,26 +1408,7 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
         break;
     }
 
-    if( CSLFetchNameValue(papszOptions, "POSTFIELDS") )
-        curl_easy_setopt(http_handle, CURLOPT_POST, 0 );
-    curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, nullptr);
-
-    if( !pszPersistent )
-        curl_easy_cleanup( http_handle );
-
-#if LIBCURL_VERSION_NUM >= 0x073800 /* 7.56.0 */
-    if( mime != nullptr )
-    {
-        curl_mime_free(mime);
-    }
-#else // LIBCURL_VERSION_NUM >= 0x073800
-    if( formpost != nullptr)
-    {
-        curl_formfree(formpost);
-    }
-#endif // LIBCURL_VERSION_NUM >= 0x073800
-
-    curl_slist_free_all(headers);
+    CPLHTTPFetchCleanup(http_handle, headers, pszPersistent, papszOptions);
 
     return psResult;
 #endif /* def HAVE_CURL */
@@ -1155,10 +1424,24 @@ bool CPLMultiPerformWait(void* hCurlMultiHandleIn, int& repeats)
     CURLM* hCurlMultiHandle = static_cast<CURLM*>(hCurlMultiHandleIn);
 
     // Wait for events on the sockets
+
+    // 7.66.0
+#if LIBCURL_VERSION_NUM >= 0x074200
+    // Using curl_multi_poll() is preferred to avoid hitting the 1024 file
+    // descriptor limit
+    (void)repeats;
+
+    int numfds = 0;
+    if( curl_multi_poll(hCurlMultiHandle, nullptr, 0, 1000, &numfds) != CURLM_OK )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "curl_multi_poll() failed");
+        return false;
+    }
+
+    // 7.28.0
+#elif LIBCURL_VERSION_NUM >= 0x071C00
     // Using curl_multi_wait() is preferred to avoid hitting the 1024 file
     // descriptor limit
-    // 7.28.0
-#if LIBCURL_VERSION_NUM >= 0x071C00
     int numfds = 0;
     if( curl_multi_wait(hCurlMultiHandle, nullptr, 0, 1000, &numfds) != CURLM_OK )
     {
@@ -1842,6 +2125,9 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
 
     // Custom path to SSL certificates.
     const char* pszCAInfo = CSLFetchNameValue( papszOptions, "CAINFO" );
+    if( pszCAInfo == nullptr )
+        // Name of GDAL environment variable for the CA Bundle path
+        pszCAInfo = CPLGetConfigOption("GDAL_CURL_CA_BUNDLE", nullptr);
     if( pszCAInfo == nullptr )
         // Name of environment variable used by the curl binary
         pszCAInfo = CPLGetConfigOption("CURL_CA_BUNDLE", nullptr);

@@ -46,9 +46,9 @@ import pytest
 
 def test_ograpispy_1():
 
-    gdal.SetConfigOption('OGR_API_SPY_FILE', 'tmp/ograpispy_1.py')
+    os.environ['OGR_API_SPY_FILE'] = 'tmp/ograpispy_1.py'
     test_py_scripts.run_py_script('data', 'testograpispy', '')
-    gdal.SetConfigOption('OGR_API_SPY_FILE', None)
+    del os.environ['OGR_API_SPY_FILE']
 
     try:
         os.stat('tmp/ograpispy_1.py')

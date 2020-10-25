@@ -104,6 +104,7 @@ TIFFClientOpen(
 		} n;
 		n.a8[0]=1;
 		n.a8[1]=0;
+                (void)n;
 		#ifdef WORDS_BIGENDIAN
 		assert(n.a16==256);
 		#else

@@ -21,6 +21,7 @@ RUN apt-get update -y \
             libtiff5-dev \
     && rm -rf /var/lib/apt/lists/*
 
+ARG JAVA_VERSION=11
 # Setup build env for GDAL
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
@@ -29,14 +30,15 @@ RUN apt-get update -y \
        libpng-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev \
        curl libxml2-dev libexpat-dev libxerces-c-dev \
        libnetcdf-dev libpoppler-dev libpoppler-private-dev \
-       libspatialite-dev swig libhdf4-alt-dev libhdf5-serial-dev \
+       libspatialite-dev swig ant libhdf4-alt-dev libhdf5-serial-dev \
        libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev \
        liblcms2-2 libpcre3-dev libcrypto++-dev libdap-dev libfyba-dev \
        libkml-dev libmysqlclient-dev libogdi-dev \
-       libcfitsio-dev openjdk-8-jdk libzstd-dev \
+       libcfitsio-dev openjdk-"$JAVA_VERSION"-jdk libzstd-dev \
        libpq-dev libssl-dev libboost-dev \
        autoconf automake bash-completion libarmadillo-dev \
        libopenexr-dev libheif-dev \
+       libdeflate-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Build likbkea
@@ -128,6 +130,32 @@ RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
     && rm -rf openjpeg-${OPENJPEG_VERSION} \
     ); fi
 
+# Install MDB Driver Jars
+RUN wget -q https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/mdb-sqlite/mdb-sqlite-1.0.2.tar.bz2 \
+  && tar -xjf mdb-sqlite-1.0.2.tar.bz2 \
+  && mkdir -p /build/usr/share/java \
+  && cp mdb-sqlite-1.0.2/lib/*.jar /build/usr/share/java \
+  && rm -rf mdb-sqlite-1.0.2.tar.bz2 && rm -rf mdb-sqlite-1.0.2
+
+#Set CLASSPATH so jars are found
+ENV CLASSPATH="/build/usr/share/java/jackcess-1.1.14.jar:/build/usr/share/java/commons-logging-1.1.1.jar:/build/usr/share/java/commons-lang-2.4.jar"
+
+#Build File Geodatabase
+
+ARG WITH_FILEGDB=
+RUN if echo "$WITH_FILEGDB" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
+  wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.1/FileGDB_API_1_5_1-64gcc51.tar.gz \
+  && tar -xzf FileGDB_API_1_5_1-64gcc51.tar.gz \
+  && chown -R root:root FileGDB_API-64gcc51 \
+  && mv FileGDB_API-64gcc51 /usr/local/FileGDB_API \
+  && rm -rf /usr/local/FileGDB_API/lib/libstdc++* \
+  && cp /usr/local/FileGDB_API/lib/* /build_thirdparty/usr/lib \
+  && cp /usr/local/FileGDB_API/include/* /usr/include \
+  && rm -rf FileGDB_API_1_5_1-64gcc51.tar.gz \
+  ) ; fi
+
+
+
 RUN apt-get update -y \
     && apt-get install -y --fix-missing --no-install-recommends rsync ccache \
     && rm -rf /var/lib/apt/lists/*
@@ -153,6 +181,7 @@ RUN /buildscripts/bh-gdal.sh
 FROM $BASE_IMAGE as runner
 
 RUN date
+ARG JAVA_VERSION=11
 
 RUN apt-get update \
 # PROJ dependencies
@@ -168,9 +197,10 @@ RUN apt-get update \
         libhdf4-0-alt libhdf5-103 libhdf5-cpp-103 poppler-utils libfreexl1 unixodbc libwebp6 \
         libepsilon1 liblcms2-2 libpcre3 libcrypto++6 libdap25 libdapclient6v5 libfyba0 \
         libkmlbase1 libkmlconvenience1 libkmldom1 libkmlengine1 libkmlregionator1 libkmlxsd1 \
-        libmysqlclient21 libogdi4.1 libcfitsio8 openjdk-8-jre \
+        libmysqlclient21 libogdi4.1 libcfitsio8 openjdk-"$JAVA_VERSION"-jre \
         libzstd1 bash bash-completion libpq5 libssl1.1 \
         libarmadillo9 libpython3.8 libopenexr24 libheif1 \
+        libdeflate0 \
         python-is-python3 \
     # Workaround bug in ogdi packaging
     && ln -s /usr/lib/ogdi/libvrf.so /usr/lib \
@@ -179,6 +209,7 @@ RUN apt-get update \
 # Attempt to order layers starting with less frequently varying ones
 
 COPY --from=builder  /build_thirdparty/usr/ /usr/
+COPY --from=builder  /build/usr/share/java /usr/share/java
 
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 ARG PROJ_INSTALL_PREFIX=/usr/local
@@ -195,3 +226,6 @@ COPY --from=builder  /build_gdal_python/usr/ /usr/
 COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
 
 RUN ldconfig
+
+#Set CLASSPATH so jars are found
+ENV CLASSPATH="/usr/share/java/jackcess-1.1.14.jar:/usr/share/java/commons-logging-1.1.1.jar:/usr/share/java/commons-lang-2.4.jar"

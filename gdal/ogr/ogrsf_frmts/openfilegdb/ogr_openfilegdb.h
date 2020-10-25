@@ -90,7 +90,7 @@ class OGROpenFileGDBLayer final: public OGRLayer
     FileGDBSpatialIndexIterator* m_poSpatialIndexIterator = nullptr;
     FileGDBIterator      *m_poCombinedIterator = nullptr;
 
-    // Legacy behaviour prior to handling of .spx file
+    // Legacy behavior prior to handling of .spx file
     // To remove ultimately.
     SPIState            m_eSpatialIndexState;
     CPLQuadTree        *m_pQuadTree;

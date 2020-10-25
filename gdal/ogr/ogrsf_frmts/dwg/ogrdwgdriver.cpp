@@ -112,8 +112,7 @@ void RegisterOGRDWG()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                 "AutoCAD DWG" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dwg" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                "drv_dwg.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/dwg.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );

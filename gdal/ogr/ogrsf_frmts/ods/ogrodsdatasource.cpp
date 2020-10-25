@@ -1821,6 +1821,8 @@ void OGRODSDataSource::FlushCache()
         }
     }
 
+    CPLConfigOptionSetter oZip64Disable("CPL_CREATE_ZIP64", "NO", false);
+
     /* Maintain new ZIP files opened */
     void *hZIP = CPLCreateZip(pszName, nullptr);
     if (hZIP == nullptr)

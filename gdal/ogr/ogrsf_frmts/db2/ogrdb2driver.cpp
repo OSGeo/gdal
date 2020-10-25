@@ -119,7 +119,7 @@ void RegisterOGRDB2()
     poDriver->SetDescription( "DB2ODBC" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "IBM DB2 Spatial Database" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_db2.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/db2.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 #define COMPRESSION_OPTIONS \
 "  <Option name='TILE_FORMAT' type='string-select' description='Format to use to create tiles' default='PNG_JPEG'>" \

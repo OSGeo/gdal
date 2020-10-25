@@ -213,6 +213,18 @@ metadata domain.
      </tre>
    </tres>
 
+TRE creation from hexadecimal data
+----------------------------------
+
+TRE data can be added to a newly created NITF file in hexadecimal format to encode binary
+data such as unsigned int or floating point types.  The hexadecimal TRE creation option is 
+supplied as "TRE=HEX/<tre_name>=<hex_tre_data>" or "FILE_TRE=HEX/<tre_name>=<hex_tre_data>
+
+.. code-block:: python
+
+    # Encode "ABC" as 3 bytes of hex data, "414243"
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/file.ntf', 1, 1, options=["TRE=HEX/TSTTRE=414243"])
+
 Raw File / Image Headers
 ------------------------
 

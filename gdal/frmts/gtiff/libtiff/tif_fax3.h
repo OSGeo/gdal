@@ -240,6 +240,11 @@ static const char* StateNames[] = {
  * current row and reset decoding state.
  */
 #define SETVALUE(x) do {							\
+    if (pa >= thisrun + sp->nruns) {					\
+        TIFFErrorExt(tif->tif_clientdata, module, "Buffer overflow at line %u of %s %u",	\
+                    sp->line, isTiled(tif) ? "tile" : "strip", isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);	\
+        return (-1);							\
+    }									\
     *pa++ = RunLength + (x);						\
     a0 += (x);								\
     RunLength = 0;							\
@@ -377,6 +382,11 @@ done1d:									\
  */
 #define CHECK_b1 do {							\
     if (pa != thisrun) while (b1 <= a0 && b1 < lastx) {			\
+	if( pb + 1 >= sp->refruns + sp->nruns) { 			\
+	    TIFFErrorExt(tif->tif_clientdata, module, "Buffer overflow at line %u of %s %u",	\
+	                sp->line, isTiled(tif) ? "tile" : "strip", isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);	\
+	    return (-1);						\
+	}								\
 	b1 += pb[0] + pb[1];						\
 	pb += 2;							\
     }									\
@@ -396,6 +406,11 @@ done1d:									\
 	switch (TabEnt->State) {					\
 	case S_Pass:							\
 	    CHECK_b1;							\
+	    if( pb + 1 >= sp->refruns + sp->nruns) { 			\
+	        TIFFErrorExt(tif->tif_clientdata, module, "Buffer overflow at line %u of %s %u",	\
+	                sp->line, isTiled(tif) ? "tile" : "strip", isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);	\
+	        return (-1);						\
+	    }								\
 	    b1 += *pb++;						\
 	    RunLength += b1 - a0;					\
 	    a0 = b1;							\
@@ -474,11 +489,21 @@ done1d:									\
 	case S_V0:							\
 	    CHECK_b1;							\
 	    SETVALUE(b1 - a0);						\
+	    if( pb >= sp->refruns + sp->nruns) { 			\
+	        TIFFErrorExt(tif->tif_clientdata, module, "Buffer overflow at line %u of %s %u",	\
+	                sp->line, isTiled(tif) ? "tile" : "strip", isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);	\
+	        return (-1);						\
+	    }								\
 	    b1 += *pb++;						\
 	    break;							\
 	case S_VR:							\
 	    CHECK_b1;							\
 	    SETVALUE(b1 - a0 + TabEnt->Param);				\
+	    if( pb >= sp->refruns + sp->nruns) { 			\
+	        TIFFErrorExt(tif->tif_clientdata, module, "Buffer overflow at line %u of %s %u",	\
+	                sp->line, isTiled(tif) ? "tile" : "strip", isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);	\
+	        return (-1);						\
+	    }								\
 	    b1 += *pb++;						\
 	    break;							\
 	case S_VL:							\
@@ -514,9 +539,7 @@ done1d:									\
 	    goto eol2d;							\
 	eof2d:								\
 	    prematureEOF(a0);						\
-		if (pa < thisrun + sp->nruns) {				\
-		    CLEANUP_RUNS();					\
-		}							\
+	    CLEANUP_RUNS();						\
 	    goto eoflab;						\
 	}								\
     }									\
@@ -531,9 +554,7 @@ done1d:									\
 	SETVALUE(0);							\
     }									\
 eol2d:									\
-    if (pa < thisrun + sp->nruns) {					\
-	CLEANUP_RUNS();							\
-    }									\
+    CLEANUP_RUNS();							\
 } while (0)
 #endif /* _FAX3_ */
 /* vim: set ts=8 sts=4 sw=4 noet: */

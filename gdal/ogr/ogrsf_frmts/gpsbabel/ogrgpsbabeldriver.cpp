@@ -186,7 +186,7 @@ void RegisterOGRGPSBabel()
     poDriver->SetDescription( "GPSBabel" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GPSBabel" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_gpsbabel.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/gpsbabel.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "GPSBABEL:" );
 

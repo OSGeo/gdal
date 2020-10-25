@@ -119,6 +119,10 @@ Spatialite, are also available :
 -  DisableSpatialIndex(table_name *String*, geom_column_name *String*) :
    drops an existing spatial index (RTree) on the specified
    table/geometry column
+-  ST_Transform(geom *Geometry*, target_srs_id *Integer*): reproject the geometry
+   to the SRS of specified srs_id. If no SRS with that given srs_id is not found
+   in gpkg_spatial_ref_sys, starting with GDAL 3.2, it will be interpreted as
+   a EPSG code.
 
 Link with Spatialite
 ~~~~~~~~~~~~~~~~~~~~

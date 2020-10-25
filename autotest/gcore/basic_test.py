@@ -506,7 +506,7 @@ def test_basic_test_16():
     with gdaltest.error_handler():
         gdal.OpenEx('/vsimem/temp.tif', gdal.OF_UPDATE, open_options=['@NUM_THREADS=INVALID'])
     gdal.Unlink('/vsimem/temp.tif')
-    assert gdal.GetLastErrorMsg() == 'Invalid value for NUM_THREADS: INVALID'
+    assert 'Invalid value for NUM_THREADS: INVALID' in gdal.GetLastErrorMsg()
 
 ###############################################################################
 # Test mix of gdal/ogr.UseExceptions()/DontUseExceptions()

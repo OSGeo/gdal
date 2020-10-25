@@ -122,7 +122,7 @@ OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn ) :
  * @param hDefn handle to the feature class (layer) definition to
  * which the feature will adhere.
  *
- * @return an handle to the new feature object with null fields and no geometry,
+ * @return a handle to the new feature object with null fields and no geometry,
  * or, starting with GDAL 2.1, NULL in case out of memory situation.
  */
 
@@ -321,7 +321,7 @@ void OGRFeature::DestroyFeature( OGRFeature *poFeature )
  *
  * @param hFeat handle to the feature to get the feature definition from.
  *
- * @return an handle to the feature definition object on which feature
+ * @return a handle to the feature definition object on which feature
  * depends.
  */
 
@@ -615,13 +615,13 @@ const OGRGeometry *OGRFeature::GetGeometryRef() const
 /************************************************************************/
 
 /**
- * \brief Fetch an handle to feature geometry.
+ * \brief Fetch a handle to feature geometry.
  *
  * This function is essentially the same as the C++ method OGRFeature::GetGeometryRef()
  * (the only difference is that this C function honours OGRGetNonLinearGeometriesEnabledFlag())
  *
  * @param hFeat handle to the feature to get geometry from.
- * @return an handle to internal feature geometry.  This object should
+ * @return a handle to internal feature geometry.  This object should
  * not be modified.
  */
 
@@ -740,13 +740,13 @@ const OGRGeometry *OGRFeature::GetGeomFieldRef( const char* pszFName ) const
 /************************************************************************/
 
 /**
- * \brief Fetch an handle to feature geometry.
+ * \brief Fetch a handle to feature geometry.
  *
  * This function is the same as the C++ method OGRFeature::GetGeomFieldRef().
  *
  * @param hFeat handle to the feature to get geometry from.
  * @param iField geometry field to get.
- * @return an handle to internal feature geometry.  This object should
+ * @return a handle to internal feature geometry.  This object should
  * not be modified.
  *
  * @since GDAL 1.11
@@ -974,7 +974,7 @@ OGRFeature *OGRFeature::Clone() const
  * This function is the same as the C++ method OGRFeature::Clone().
  *
  * @param hFeat handle to the feature to clone.
- * @return an handle to the new feature, exactly matching this feature.
+ * @return a handle to the new feature, exactly matching this feature.
  */
 
 OGRFeatureH OGR_F_Clone( OGRFeatureH hFeat )
@@ -1138,7 +1138,7 @@ int OGR_F_GetFieldCount( OGRFeatureH hFeat )
  * @param hFeat handle to the feature on which the field is found.
  * @param i the field to fetch, from 0 to GetFieldCount()-1.
  *
- * @return an handle to the field definition (from the OGRFeatureDefn).
+ * @return a handle to the field definition (from the OGRFeatureDefn).
  * This is an internal reference, and should not be deleted or modified.
  */
 
@@ -1285,7 +1285,7 @@ int OGR_F_GetGeomFieldCount( OGRFeatureH hFeat )
  * @param hFeat handle to the feature on which the field is found.
  * @param i the field to fetch, from 0 to GetGeomFieldCount()-1.
  *
- * @return an handle to the field definition (from the OGRFeatureDefn).
+ * @return a handle to the field definition (from the OGRFeatureDefn).
  * This is an internal reference, and should not be deleted or modified.
  *
  * @since GDAL 1.11
@@ -1804,7 +1804,7 @@ OGRFeature::FieldValue OGRFeature::operator[](const char* pszFieldName)
 /************************************************************************/
 
 /**
- * \brief Fetch an handle to the internal field value given the index.
+ * \brief Fetch a handle to the internal field value given the index.
  *
  * This function is the same as the C++ method OGRFeature::GetRawFieldRef().
  *
@@ -3266,7 +3266,7 @@ char* OGRFeature::GetFieldAsSerializedJSon( int iField ) const
     if( eType == OFTStringList )
     {
         json_object* poObj = json_object_new_array();
-        auto&& papszValues = GetFieldAsStringList(iField);
+        char** papszValues = GetFieldAsStringList(iField);
         for( int i=0; papszValues[i] != nullptr; i++)
         {
             json_object_array_add( poObj,

@@ -32,7 +32,7 @@ Synopsis
         |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined}]
         |-colorinterp {red|green|blue|alpha|gray|undefined},...]
         [-mo "META-TAG=VALUE"]* [-q] [-sds]
-        [-co "NAME=VALUE"]* [-stats] [-norat]
+        [-co "NAME=VALUE"]* [-stats] [-norat] [-noxmp]
         [-oo NAME=VALUE]*
         src_dataset dst_dataset
 
@@ -245,6 +245,12 @@ resampling, and rescaling pixels in the process.
 .. option:: -norat
 
     Do not copy source RAT into destination dataset.
+
+.. option:: -noxmp
+
+    Do not copy the XMP metadata in the source dataset to the output dataset when driver is able to copy it.
+
+    .. versionadded:: 3.2
 
 .. option:: -oo NAME=VALUE
 

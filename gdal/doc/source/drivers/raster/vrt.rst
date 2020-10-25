@@ -116,6 +116,22 @@ The **dataAxisToSRSAxisMapping** attribute is allowed since GDAL 3.0 to describe
     </VRTRasterBand>
   </MaskBand>
 
+- **OverviewList**: (GDAL >= 3.2.0, not valid for VRTPansharpenedDataset)
+  This elements contains a list of overview factors, separated by space, to
+  create "virtual overviews". For example ``2 4``. It can be used so that bands
+  of the VRT datasets declare overviews. This only makes sense to use if the
+  sources added in those bands have themselves overviews compatible of the
+  declared factor. It is generally not needed to use this mechanism, since
+  downsampling pixel requests on a VRT dataset/band are able to use  of the
+  sources, even when the VRT bands do not declare them. One situation where
+  explicit overviews are needed at the VRT level is for example warping a VRT
+  to a lower resolution.
+  This element can also be used to an existing VRT dataset by running
+  :cpp:func:`GDALDataset::BuildOverviews` or :program:`gdaladdo` with the
+  :decl_configoption:`VRT_VIRTUAL_OVERVIEWS` configuration option set to ``YES``.
+  Virtual overviews have the least priority compared to the **Overview** element
+  at the **VRTRasterBand** level, or to materialized .vrt.ovr files.
+
 
 - **VRTRasterBand**: This represents one band of a dataset.
 
@@ -436,7 +452,12 @@ Except if (from top priority to lesser priority) :
 
 - The **Overview** element is present in the VRTRasterBand element. See above.
 - or external .vrt.ovr overviews are built
-- (starting with GDAL 2.1) if the VRTRasterBand are made of a single SimpleSource or ComplexSource that has overviews. Those "virtual" overviews will be hidden by external .vrt.ovr overviews that might be built later.
+- (starting with GDAL 3.2) explicit virtual overviews, if a **OverviewList** element
+  is declared in the VRTDataset element (see above).
+  Those virtual overviews will be hidden by external .vrt.ovr overviews that might be built later.
+- (starting with GDAL 2.1) implicit virtual overviews, if the VRTRasterBand are made of
+  a single SimpleSource or ComplexSource that has overviews.
+  Those virtual overviews will be hidden by external .vrt.ovr overviews that might be built later.
 
 .vrt Descriptions for Raw Files
 -------------------------------

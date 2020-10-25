@@ -63,8 +63,8 @@ jobs:
           cp gdal/doc/build/latex/gdal.pdf gdal-docs
           cp gdal/data/gdalicon.png gdal-docs # For GDAL autotest...
           cd gdal-docs
-          wget https://download.osgeo.org/gdal/for_doc/javadoc.zip -O /tmp/javadoc.zip
-          wget https://download.osgeo.org/gdal/for_doc/python-doc.tar.gz -O /tmp/python-doc.tar.gz
+          wget http://download.osgeo.org/gdal/for_doc/javadoc.zip -O /tmp/javadoc.zip
+          wget http://download.osgeo.org/gdal/for_doc/python-doc.tar.gz -O /tmp/python-doc.tar.gz
           unzip -q /tmp/javadoc.zip
           tar xzf /tmp/python-doc.tar.gz
           git init

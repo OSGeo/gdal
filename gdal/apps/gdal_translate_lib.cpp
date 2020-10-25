@@ -281,6 +281,9 @@ struct GDALTranslateOptions
     // value, or -1 if no override.
     int nColorInterpSize;
     int* panColorInterp;
+
+    /*! does not copy source XMP into destination dataset (when TRUE) */
+    bool bNoXMP;
 };
 
 /************************************************************************/
@@ -664,7 +667,7 @@ static double AdjustNoDataValue( double dfInputNoDataValue,
  * @param pszDest the destination dataset path.
  * @param hSrcDataset the source dataset handle.
  * @param psOptionsIn the options struct returned by GDALTranslateOptionsNew() or NULL.
- * @param pbUsageError the pointer to int variable to determine any usage error has occurred or NULL.
+ * @param pbUsageError pointer to a integer output variable to store if any usage error has occurred or NULL.
  * @return the output dataset (new dataset that must be closed using GDALClose()) or NULL in case of error.
  *
  * @since GDAL 2.1
@@ -1117,7 +1120,8 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         && psOptions->nGCPCount == 0 && !bGotBounds
         && psOptions->pszOutputSRS == nullptr && !psOptions->bSetNoData && !psOptions->bUnsetNoData
         && psOptions->nRGBExpand == 0 && !psOptions->bNoRAT
-        && psOptions->panColorInterp == nullptr )
+        && psOptions->panColorInterp == nullptr
+        && !psOptions->bNoXMP )
     {
 
         // For gdal_translate_fuzzer
@@ -1537,6 +1541,17 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         if( papszMD_VICAR != nullptr)
             poVDS->SetMetadata( papszMD_VICAR, "json:VICAR" );
     }
+
+    // Copy XMP metadata
+    if( !psOptions->bNoXMP )
+    {
+        char** papszXMP = poSrcDS->GetMetadata("xml:XMP");
+        if (papszXMP != nullptr && *papszXMP != nullptr)
+        {
+            poVDS->SetMetadata(papszXMP, "xml:XMP");
+        }
+    }
+
 
 /* -------------------------------------------------------------------- */
 /*      Transfer metadata that remains valid if the spatial             */
@@ -2304,6 +2319,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
     psOptions->dfYRes = 0.0;
     psOptions->pszProjSRS = nullptr;
     psOptions->nLimitOutSize = 0;
+    psOptions->bNoXMP = false;
 
     bool bParsedMaskArgument = false;
     bool bOutsideExplicitlySet = false;
@@ -2816,6 +2832,12 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
                     psOptionsForBinary->papszAllowInputDrivers, papszArgv[i] );
             }
         }
+
+        else if (EQUAL(papszArgv[i], "-noxmp"))
+        {
+            psOptions->bNoXMP = true;
+        }
+
 
         else if( papszArgv[i][0] == '-' )
         {

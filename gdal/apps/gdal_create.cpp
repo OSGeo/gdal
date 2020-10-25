@@ -170,9 +170,13 @@ MAIN_START(argc, argv)
         else if( i+4 < argc && EQUAL(argv[i],"-a_ullr") )
         {
             bGeoTransform = true;
+            // coverity[tainted_data]
             dfULX = CPLAtofM(argv[++i]);
+            // coverity[tainted_data]
             dfULY = CPLAtofM(argv[++i]);
+            // coverity[tainted_data]
             dfLRX = CPLAtofM(argv[++i]);
+            // coverity[tainted_data]
             dfLRY = CPLAtofM(argv[++i]);
         }
         else if( i < argc-1 && EQUAL(argv[i],"-a_srs") )
@@ -184,6 +188,7 @@ MAIN_START(argc, argv)
         {
             bSetNoData = true;
             ++i;
+            // coverity[tainted_data]
             dfNoDataValue = CPLAtofM(argv[i]);
         }
 
@@ -200,9 +205,11 @@ MAIN_START(argc, argv)
             }
             else
             {
+                // coverity[tainted_data]
                 while(i < argc-1 && ArgIsNumeric(argv[i+1]))
                 {
                     ++i;
+                    // coverity[tainted_data]
                     adfBurnValues.push_back(CPLAtof(argv[i]));
                 }
             }

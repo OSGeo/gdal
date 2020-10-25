@@ -301,7 +301,6 @@ bool CPLJSONDocument::LoadChunks(const std::string &osPath, size_t nChunkSize,
 typedef struct {
     json_object *pObject;
     json_tokener *pTokener;
-    int nDataLen;
 } JsonContext, *JsonContextL;
 
 static size_t CPLJSONWriteFunction(void *pBuffer, size_t nSize, size_t nMemb,
@@ -309,10 +308,16 @@ static size_t CPLJSONWriteFunction(void *pBuffer, size_t nSize, size_t nMemb,
 {
     size_t nLength = nSize * nMemb;
     JsonContextL ctx = static_cast<JsonContextL>(pUserData);
+    if( ctx->pObject != nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "A complete JSon object had already been parsed before new "
+                 "content is appended to it");
+        return 0;
+    }
     ctx->pObject = json_tokener_parse_ex(ctx->pTokener,
                                          static_cast<const char*>(pBuffer),
                                          static_cast<int>(nLength));
-    ctx->nDataLen = static_cast<int>(nLength);
     switch (json_tokener_get_error(ctx->pTokener)) {
     case json_tokener_continue:
     case json_tokener_success:
@@ -350,7 +355,7 @@ bool CPLJSONDocument::LoadUrl(const std::string & /*osUrl*/, const char* const* 
 {
 #ifdef HAVE_CURL
     int nDepth = atoi( CSLFetchNameValueDef( papszOptions, "JSON_DEPTH", "32") ); // Same as JSON_TOKENER_DEFAULT_DEPTH
-    JsonContext ctx = { nullptr, json_tokener_new_ex(nDepth), 0 };
+    JsonContext ctx = { nullptr, json_tokener_new_ex(nDepth) };
 
     CPLHTTPFetchWriteFunc pWriteFunc = CPLJSONWriteFunction;
     CPLHTTPResult *psResult = CPLHTTPFetchEx( osUrl.c_str(), papszOptions,

@@ -25,11 +25,13 @@ usage()
     echo "--gdal tag|sha1|master: GDAL version to use. Defaults to master"
     echo "--proj tag|sha1|master: PROJ version to use. Defaults to master"
     echo "--release. Whether this is a release build. In which case --gdal tag must be used."
-    echo "--with-debug-symbols/--without-debug-symbols. Whether to include debug symbols. Only applies to ubuntu-full, default is to incude for non-release builds."
+    echo "--with-debug-symbols/--without-debug-symbols. Whether to include debug symbols. Only applies to ubuntu-full, default is to include for non-release builds."
     exit 1
 }
 
 RELEASE=no
+ARCH_PLATFORMS="linux/amd64"
+
 while (( "$#" ));
 do
     case "$1" in
@@ -45,6 +47,12 @@ do
         --gdal)
             shift
             GDAL_VERSION="$1"
+            shift
+        ;;
+
+        --platform)
+            shift
+            ARCH_PLATFORMS="$1"
             shift
         ;;
 
@@ -70,6 +78,12 @@ do
             shift
         ;;
 
+        --with-multi-arch)
+            DOCKER_BUILDKIT=1
+            DOCKER_CLI_EXPERIMENTAL=enabled
+            shift
+        ;;
+
         --without-debug-symbols)
             WITH_DEBUG_SYMBOLS=no
             shift
@@ -88,6 +102,11 @@ do
 
     esac
 done
+
+if test "${DOCKER_BUILDKIT}" = "1" && test "${DOCKER_CLI_EXPERIMENTAL}" = "enabled"; then
+  DOCKER_BUILDX="buildx"
+  DOCKER_BUILDX_ARGS=("--platform" "${ARCH_PLATFORMS}")
+fi
 
 if test "${RELEASE}" = "yes"; then
     if test "${GDAL_VERSION}" = ""; then
@@ -197,6 +216,15 @@ stop_rsync_host()
     fi
 }
 
+build_cmd()
+{
+    if test "${DOCKER_BUILDX}" = "buildx"; then
+        echo "${DOCKER_BUILDX}" build "${DOCKER_BUILDX_ARGS[@]}"
+    else
+        echo build
+    fi
+}
+
 if test "${BASE_IMAGE_NAME}" = "osgeo/gdal:ubuntu-full"; then
     PROJ_DATUMGRID_LATEST_LAST_MODIFIED=$(curl -Is https://cdn.proj.org/index.html | grep -i Last-Modified)
 else
@@ -218,7 +246,6 @@ IMAGE_NAME="${BASE_IMAGE_NAME}-${TAG_NAME}"
 BUILDER_IMAGE_NAME="${IMAGE_NAME}_builder"
 
 if test "${RELEASE}" = "yes"; then
-
     BUILD_ARGS=(
         "--build-arg" "PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
         "--build-arg" "PROJ_VERSION=${PROJ_VERSION}" \
@@ -227,14 +254,19 @@ if test "${RELEASE}" = "yes"; then
         "--build-arg" "WITH_DEBUG_SYMBOLS=${WITH_DEBUG_SYMBOLS}" \
     )
 
-    docker build "${BUILD_ARGS[@]}" --target builder \
-        -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
-    docker build "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
+    docker $(build_cmd) "${BUILD_ARGS[@]}" --target builder -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
+    docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
 
-    check_image "${IMAGE_NAME}"
+    if test "${DOCKER_BUILDX}" != "buildx"; then
+        check_image "${IMAGE_NAME}"
+    fi
 
     if test "x${PUSH_GDAL_DOCKER_IMAGE}" = "xyes"; then
-        docker push "${IMAGE_NAME}"
+        if test "${DOCKER_BUILDX}" = "buildx"; then
+          docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" --push "${SCRIPT_DIR}"
+        else
+          docker push "${IMAGE_NAME}"
+        fi
     fi
 
 else
@@ -259,7 +291,7 @@ else
     if ! docker ps | grep "${RSYNC_DAEMON_CONTAINER}"; then
         RSYNC_DAEMON_IMAGE=osgeo/gdal:gdal_rsync_daemon
         docker rmi "${RSYNC_DAEMON_IMAGE}" 2>/dev/null || true
-        docker build -t "${RSYNC_DAEMON_IMAGE}" - <<EOF
+        docker $(build_cmd) -t "${RSYNC_DAEMON_IMAGE}" - <<EOF
 FROM alpine
 
 VOLUME /opt/gdal-docker-cache
@@ -304,21 +336,32 @@ EOF
         "--build-arg" "WITH_DEBUG_SYMBOLS=${WITH_DEBUG_SYMBOLS}" \
     )
 
-    docker build  --network "${BUILD_NETWORK}" "${BUILD_ARGS[@]}" --target builder \
+    docker $(build_cmd) --network "${BUILD_NETWORK}" "${BUILD_ARGS[@]}" --target builder \
         -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
 
-    docker build "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
+    docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
 
-    check_image "${IMAGE_NAME}"
+    if test "${DOCKER_BUILDX}" != "buildx"; then
+        check_image "${IMAGE_NAME}"
+    fi
 
     if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest"; then
         docker image tag "${IMAGE_NAME}" "osgeo/gdal:latest"
     fi
 
     if test "x${PUSH_GDAL_DOCKER_IMAGE}" = "xyes"; then
-        docker push "${IMAGE_NAME}"
+        if test "${DOCKER_BUILDX}" = "buildx"; then
+            docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" --push "${SCRIPT_DIR}"
+        else
+            docker push "${IMAGE_NAME}"
+        fi
+
         if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest"; then
-            docker push osgeo/gdal:latest
+            if test "${DOCKER_BUILDX}" = "buildx"; then
+                docker $(build_cmd) "${BUILD_ARGS[@]}" -t "osgeo/gdal:latest" --push "${SCRIPT_DIR}"
+            else
+                docker push osgeo/gdal:latest
+            fi
         fi
     fi
 

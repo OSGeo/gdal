@@ -497,22 +497,24 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 }
 
 
-%typemap(in,numinputs=1) (int nLen, char *pBuf ) (int alloc = 0)
+%typemap(in,numinputs=1) (int nLen, char *pBuf ) (int alloc = 0, bool viewIsValid = false, Py_buffer view)
 {
   /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
   {
-    Py_ssize_t safeLen = 0;
-    const void *safeBuf = 0;
-    int res = PyObject_AsReadBuffer($input, &safeBuf, &safeLen);
-    if (res == 0) {
-      if( safeLen > INT_MAX ) {
+    if (PyObject_GetBuffer($input, &view, PyBUF_SIMPLE) == 0)
+    {
+      if( view.len > INT_MAX ) {
+        PyBuffer_Release(&view);
         SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
       }
-      $1 = (int) safeLen;
-      $2 = ($2_ltype) safeBuf;
+      viewIsValid = true;
+      $1 = (int) view.len;
+      $2 = ($2_ltype) view.buf;
       goto ok;
-    } else {
-      PyErr_Clear();
+    }
+    else
+    {
+        PyErr_Clear();
     }
   }
 %#if PY_VERSION_HEX>=0x03000000
@@ -566,7 +568,10 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 %typemap(freearg) (int nLen, char *pBuf )
 {
   /* %typemap(freearg) (int *nLen, char *pBuf ) */
-  if( alloc$argnum == SWIG_NEWOBJ ) {
+  if( viewIsValid$argnum ) {
+    PyBuffer_Release(&view$argnum);
+  }
+  else if( alloc$argnum == SWIG_NEWOBJ ) {
     delete[] $2;
   }
 }

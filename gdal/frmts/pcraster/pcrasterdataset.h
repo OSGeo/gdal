@@ -113,7 +113,7 @@ public:
   // CREATORS
   //----------------------------------------------------------------------------
 
-  explicit          PCRasterDataset     (MAP* map);
+  explicit          PCRasterDataset     (MAP* map, GDALAccess eAccess);
 
   /* virtual */    ~PCRasterDataset    ();
 

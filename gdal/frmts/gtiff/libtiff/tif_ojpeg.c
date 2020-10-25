@@ -421,6 +421,7 @@ TIFFInitOJPEG(TIFF* tif, int scheme)
 	static const char module[]="TIFFInitOJPEG";
 	OJPEGState* sp;
 
+        (void)scheme;
 	assert(scheme==COMPRESSION_OJPEG);
 
         /*

@@ -299,7 +299,7 @@ void RegisterOGRSQLite()
 #else
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "SQLite / Spatialite" );
 #endif
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_sqlite.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/sqlite.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "sqlite db" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,

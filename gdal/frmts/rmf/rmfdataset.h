@@ -199,6 +199,7 @@ private:
     GUInt32         *paiTiles;
     GByte           *pabyDecompressBuffer;
     GByte           *pabyCurrentTile;
+    bool            bCurrentTileIsNull;
     int             nCurrentTileXOff;
     int             nCurrentTileYOff;
     GUInt32         nCurrentTileBytes;
@@ -321,7 +322,8 @@ private:
                                      GByte* pabyData, size_t nBytes);
     CPLErr              ReadTile(int nBlockXOff, int nBlockYOff,
                                  GByte* pabyData, size_t nBytes,
-                                 GUInt32 nRawXSize, GUInt32 nRawYSize);
+                                 GUInt32 nRawXSize, GUInt32 nRawYSize,
+                                 bool& bNullTile);
     void                SetupNBits();
 };
 

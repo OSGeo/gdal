@@ -127,7 +127,7 @@ void RegisterOGRMSSQLSpatial()
                                " (BCP)"
 #endif
                                );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_mssqlspatial.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/mssqlspatial.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
                                "<CreationOptionList/>");
 

@@ -18,7 +18,7 @@ endif
 EXTRA_DIST = org
 
 LINK = $(LD_SHARED)
-LINK_EXTRAFLAGS = 
+LINK_EXTRAFLAGS =
 OBJ_EXT = o
 ifeq ($(HAVE_LIBTOOL),yes)
 LINK = $(LD)
@@ -78,6 +78,12 @@ install: build
 		for f in *.dylib; do $(INSTALL_LIB) $$f $(DESTDIR)$(INST_LIB) ; done ; \
 	fi
 
+	ant maven ; \
+	mkdir -p $(DESTDIR)${datarootdir}/java ; \
+	echo $(DESTDIR)${datarootdir}/java ; \
+	cp build/maven/* $(DESTDIR)${datarootdir}/java ; \
+
+
 JAVA_RUN = java -Djava.library.path=. -cp gdal.jar:build/apps
 
 test:
@@ -104,7 +110,7 @@ ifdef INCLUDE_GDAL_LIB
     LIB_GDAL=$(GDAL_LIB)
 endif
 
-$(JAVA_MODULES): $(JAVA_OBJECTS) 
+$(JAVA_MODULES): $(JAVA_OBJECTS)
 	$(LINK) $(LDFLAGS) $^ $(LIB_GDAL) $(CONFIG_LIBS) -o $@ $(LINK_EXTRAFLAGS)
 
 # Do not remove -fno-strict-aliasing while SWIG generates weird code in upcast methods

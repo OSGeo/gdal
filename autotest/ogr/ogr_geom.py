@@ -2617,7 +2617,8 @@ def test_ogr_geom_getcurvegeometry():
         g1 = ogr.CreateGeometryFromWkt('CIRCULARSTRING (0 0,1 1,2 0))')
         g2 = ogr.CreateGeometryFromWkt('CIRCULARSTRING (2 0,1 -1,0 0))')
         g3 = g1.Union(g2)
-        assert g3.ExportToWkt() == 'MULTICURVE (CIRCULARSTRING (0 0,1 1,2 0),CIRCULARSTRING (2 0,1 -1,0 0))'
+        assert g3.ExportToWkt() == 'MULTICURVE (CIRCULARSTRING (0 0,1 1,2 0),CIRCULARSTRING (2 0,1 -1,0 0))' or \
+               g3.ExportToWkt() == 'MULTICURVE (CIRCULARSTRING (2 0,1 -1,0 0),CIRCULARSTRING (0 0,1 1,2 0))'  # GEOS OverlayNG
 
         g1 = ogr.CreateGeometryFromWkt('POINT(1 2)')
         g1 = g1.Buffer(0.5)
@@ -3364,12 +3365,12 @@ def test_ogr_geom_makevalid():
     # Invalid
     g = ogr.CreateGeometryFromWkt('POLYGON ((0 0,10 10,0 10,10 0,0 0))')
     g = g.MakeValid()
-    assert g is None or g.ExportToWkt() == 'MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))'
+    assert g is None or ogrtest.check_feature_geometry(g, 'MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))') == 0, g.ExportToWkt()
 
     # Invalid
     g = ogr.CreateGeometryFromWkt('CURVEPOLYGON ((0 0,10 10,0 10,10 0,0 0))')
     g = g.MakeValid()
-    assert g is None or g.ExportToWkt() == 'MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))'
+    assert g is None or ogrtest.check_feature_geometry(g, 'MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))') == 0, g.ExportToWkt()
 
     return 'success'
 

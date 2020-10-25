@@ -42,6 +42,13 @@ CPL_CVSID("$Id$")
 
 // #define DEBUG_VERBOSE 1
 
+#ifdef WIN32
+#if defined(_MSC_VER)
+bool CPLFetchWindowsProductUUID(CPLString &osStr); // defined in cpl_aws_win32.cpp
+#endif
+const char* CPLGetWineVersion(); // defined in cpl_vsil_win32.cpp
+#endif
+
 #ifdef HAVE_CURL
 static CPLMutex *ghMutex = nullptr;
 static CPLString gosIAMRole;
@@ -602,21 +609,52 @@ static bool Iso8601ToUnixTime(const char* pszDT, GIntBig* pnUnixTime)
 
 static bool IsMachinePotentiallyEC2Instance()
 {
+#if defined(__linux) || defined(WIN32)
+    const auto IsMachinePotentiallyEC2InstanceFromLinuxHost = []()
+    {
+        // On the newer Nitro Hypervisor (C5, M5, H1, T3), use 
+        // /sys/devices/virtual/dmi/id/sys_vendor = 'Amazon EC2' instead.
+
+        // On older Xen hypervisor EC2 instances, a /sys/hypervisor/uuid file will
+        // exist with a string beginning with 'ec2'.
+
+        // If the files exist but don't contain the correct content, then we're not EC2 and
+        // do not attempt any network access
+
+        // Check for Xen Hypervisor instances
+        // This file doesn't exist on Nitro instances
+        VSILFILE* fp = VSIFOpenL("/sys/hypervisor/uuid", "rb");
+        if( fp != nullptr )
+        {
+            char uuid[36+1] = { 0 };
+            VSIFReadL( uuid, 1, sizeof(uuid)-1, fp );
+            VSIFCloseL(fp);
+            return EQUALN( uuid, "ec2", 3 );
+        }
+
+        // Check for Nitro Hypervisor instances
+        // This file may exist on Xen instances with a value of 'Xen'
+        // (but that doesn't mean we're on EC2)
+        fp = VSIFOpenL("/sys/devices/virtual/dmi/id/sys_vendor", "rb");
+        if( fp != nullptr )
+        {
+            char buf[10+1] = { 0 };
+            VSIFReadL( buf, 1, sizeof(buf)-1, fp );
+            VSIFCloseL(fp);
+            return EQUALN( buf, "Amazon EC2", 10 );
+        }
+
+        // Fallback: Check via the network
+        return true;
+    };
+#endif
+
 #ifdef __linux
     // Optimization on Linux to avoid the network request
     // See http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/identify_ec2_instances.html
     // Skip if either:
     // - CPL_AWS_AUTODETECT_EC2=NO
     // - CPL_AWS_CHECK_HYPERVISOR_UUID=NO (deprecated)
-
-    // On the newer Nitro Hypervisor (C5, M5, H1, T3), use 
-    // /sys/devices/virtual/dmi/id/sys_vendor = 'Amazon EC2' instead.
-
-    // On older Xen hypervisor EC2 instances, a /sys/hypervisor/uuid file will
-    // exist with a string beginning with 'ec2'.
-
-    // If the files exist but don't contain the correct content, then we're not EC2 and
-    // do not attempt any network access
 
     if( ! CPLTestBool(CPLGetConfigOption("CPL_AWS_AUTODETECT_EC2", "YES")) )
     {
@@ -635,35 +673,43 @@ static bool IsMachinePotentiallyEC2Instance()
         }
     }
 
-    // Check for Xen Hypervisor instances
-    // This file doesn't exist on Nitro instances
-    VSILFILE* fp = VSIFOpenL("/sys/hypervisor/uuid", "rb");
-    if( fp != nullptr )
+    return IsMachinePotentiallyEC2InstanceFromLinuxHost();
+
+#elif defined(WIN32)
+    if( ! CPLTestBool(CPLGetConfigOption("CPL_AWS_AUTODETECT_EC2", "YES")) )
     {
-        char uuid[36+1] = { 0 };
-        VSIFReadL( uuid, 1, sizeof(uuid)-1, fp );
-        VSIFCloseL(fp);
-        return EQUALN( uuid, "ec2", 3 );
+        return true;
     }
 
-    // Check for Nitro Hypervisor instances
-    // This file may exist on Xen instances with a value of 'Xen'
-    // (but that doesn't mean we're on EC2)
-    fp = VSIFOpenL("/sys/devices/virtual/dmi/id/sys_vendor", "rb");
-    if( fp != nullptr )
+    // Regular UUID is not valid for WINE, fetch from sysfs instead.
+    if( CPLGetWineVersion() != nullptr )
     {
-        char buf[10+1] = { 0 };
-        VSIFReadL( buf, 1, sizeof(buf)-1, fp );
-        VSIFCloseL(fp);
-        return EQUALN( buf, "Amazon EC2", 10 );
+        return IsMachinePotentiallyEC2InstanceFromLinuxHost();
+    }
+    else
+    {
+#if defined(_MSC_VER)
+        CPLString osMachineUUID;
+        if( CPLFetchWindowsProductUUID(osMachineUUID) )
+        {
+            if( osMachineUUID.length() >= 3 && EQUALN(osMachineUUID.c_str(), "EC2", 3) )
+            {
+                return true;
+            }
+            else if( osMachineUUID.length() >= 8 && osMachineUUID[4] == '2' &&
+                     osMachineUUID[6] == 'E' && osMachineUUID[7] == 'C' )
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+#endif
     }
 
     // Fallback: Check via the network
-    return true;
-#elif defined(WIN32)
-    // We might add later a way of detecting if we run on EC2 using WMI
-    // See http://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/identify_ec2_instances.html
-    // For now, unconditionally try
     return true;
 #else
     // At time of writing EC2 instances can be only Linux or Windows
@@ -694,8 +740,10 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
 
     CPLString osURLRefreshCredentials;
     const CPLString osEC2DefaultURL("http://169.254.169.254");
+    // coverity[tainted_data]
     const CPLString osEC2RootURL(
         CPLGetConfigOption("CPL_AWS_EC2_API_ROOT_URL", osEC2DefaultURL));
+    // coverity[tainted_data]
     const CPLString osECSRelativeURI(
         CPLGetConfigOption("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", ""));
     CPLString osToken;

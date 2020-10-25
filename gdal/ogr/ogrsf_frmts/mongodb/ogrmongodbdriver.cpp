@@ -2818,7 +2818,7 @@ void RegisterOGRMongoDB()
     poDriver->SetDescription( "MongoDB" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MongoDB" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_mongodb.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/mongodb.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "MongoDB:" );
 

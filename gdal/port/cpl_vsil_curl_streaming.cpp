@@ -274,8 +274,6 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     size_t          nCachedSize = 0;
     GByte          *pCachedData = nullptr;
 
-    CURL*           hCurlHandle = nullptr;
-
     volatile int    bDownloadInProgress = FALSE;
     volatile int    bDownloadStopped = FALSE;
     volatile int    bAskDownloadEnd = FALSE;
@@ -374,8 +372,6 @@ VSICurlStreamingHandle::~VSICurlStreamingHandle()
     StopDownload();
 
     CPLFree(m_pszURL);
-    if( hCurlHandle != nullptr )
-        curl_easy_cleanup(hCurlHandle);
     CSLDestroy( m_papszHTTPOptions );
 
     CPLFree(pCachedData);
@@ -538,16 +534,6 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     }
     ReleaseMutex();
 
-#if LIBCURL_VERSION_NUM < 0x070B00
-    // Curl 7.10.X doesn't manage to unset the CURLOPT_RANGE that would have
-    // been previously set, so we have to reinit the connection handle.
-    if( hCurlHandle )
-    {
-        curl_easy_cleanup(hCurlHandle);
-        hCurlHandle = curl_easy_init();
-    }
-#endif
-
     CURL* hLocalHandle = curl_easy_init();
 
     struct curl_slist* headers =
@@ -692,10 +678,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     const vsi_l_offset nRet = fileSize;
     ReleaseMutex();
 
-    if( hCurlHandle == nullptr )
-        hCurlHandle = hLocalHandle;
-    else
-        curl_easy_cleanup(hLocalHandle);
+    curl_easy_cleanup(hLocalHandle);
 
     return nRet;
 }
@@ -1020,6 +1003,8 @@ VSICurlStreamingHandleReceivedBytesHeader( void *buffer, size_t count,
 
 void VSICurlStreamingHandle::DownloadInThread()
 {
+    CURL* hCurlHandle = curl_easy_init();
+
     struct curl_slist* headers =
         VSICurlSetOptions(hCurlHandle, m_pszURL, m_papszHTTPOptions);
     headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET", headers));
@@ -1085,6 +1070,8 @@ void VSICurlStreamingHandle::DownloadInThread()
     // Signal to the consumer that the download has ended.
     CPLCondSignal(hCondProducer);
     ReleaseMutex();
+
+    curl_easy_cleanup(hCurlHandle);
 }
 
 static void VSICurlDownloadInThread( void* pArg )
@@ -1103,8 +1090,6 @@ void VSICurlStreamingHandle::StartDownload()
 
     CPLDebug("VSICURL", "Start download for %s", m_pszURL);
 
-    if( hCurlHandle == nullptr )
-        hCurlHandle = curl_easy_init();
     oRingBuffer.Reset();
     bDownloadInProgress = TRUE;
     nRingBufferFileOffset = 0;
@@ -1136,9 +1121,6 @@ void VSICurlStreamingHandle::StopDownload()
 
         CPLJoinThread(hThread);
         hThread = nullptr;
-
-        curl_easy_cleanup(hCurlHandle);
-        hCurlHandle = nullptr;
     }
 
     oRingBuffer.Reset();
@@ -1193,7 +1175,9 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize,
     size_t nRemaining = nBufferRequestSize;
 
     AcquireMutex();
-    const int bHasComputedFileSizeLocal = bHasComputedFileSize;
+    // fileSize might be set wrongly to 0, such as
+    // /vsicurl_streaming/https://query.data.world/s/jgsghstpphjhicstradhy5kpjwrnfy
+    const int bHasComputedFileSizeLocal = bHasComputedFileSize && fileSize > 0;
     const vsi_l_offset fileSizeLocal = fileSize;
     ReleaseMutex();
 

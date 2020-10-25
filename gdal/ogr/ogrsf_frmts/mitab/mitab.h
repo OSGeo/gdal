@@ -957,6 +957,7 @@ class ITABFeatureSymbol
     void        SetSymbolSize(GInt16 val)   { m_sSymbolDef.nPointSize = val;}
     void        SetSymbolColor(GInt32 clr)  { m_sSymbolDef.rgbColor = clr;}
 
+    static TABFeatureClass GetSymbolFeatureClass(const char *pszStyleString);
     virtual const char *GetSymbolStyleString(double dfAngle = 0.0) const;
     void        SetSymbolFromStyleString(const char *pszStyleString);
     virtual void SetSymbolFromStyle(OGRStyleSymbol* poSymbolStyle);
@@ -1217,9 +1218,11 @@ class TABCustomPoint final : public TABPoint,
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
+    virtual const char *GetSymbolStyleString(double dfAngle = 0.0) const override;
     virtual const char *GetStyleString() const override;
+    virtual void SetSymbolFromStyle(OGRStyleSymbol* poSymbolStyle) override;
 
-    const char *GetSymbolNameRef()      { return GetFontNameRef(); }
+    const char *GetSymbolNameRef() const { return GetFontNameRef(); }
     void        SetSymbolName(const char *pszName) {SetFontName(pszName);}
 
     GByte       GetCustomSymbolStyle()              {return m_nCustomStyle;}

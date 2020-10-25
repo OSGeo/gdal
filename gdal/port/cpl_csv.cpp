@@ -498,7 +498,7 @@ static void CSVIngest( const char *pszFilename )
  * Currently, it can detect comma, semicolon, space or tabulation. In case of
  * ambiguity or no separator found, comma will be considered as the separator.
  *
- * @return ',', ';', ' ' or '\t'
+ * @return ',', ';', ' ' or tabulation character.
  */
 char CSVDetectSeperator( const char* pszLine )
 {
@@ -1421,11 +1421,7 @@ static const char *CSVFileOverride( const char * pszInput )
 {
     static char szPath[1024] = {};
 
-#ifdef WIN32
-    sprintf( szPath, "%s\\%s", CSVDirName, pszInput );
-#else
     sprintf( szPath, "%s/%s", CSVDirName, pszInput );
-#endif
 
     return szPath;
 }

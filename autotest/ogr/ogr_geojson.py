@@ -2001,7 +2001,16 @@ def test_ogr_geojson_56():
 ]
 }
 """
-    assert json.loads(got) == json.loads(expected)
+
+    j_got = json.loads(got)
+    j_expected = json.loads(expected)
+    assert j_got["bbox"] == j_expected["bbox"]
+    assert len(j_expected["features"]) == 5
+    assert ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(json.dumps(j_got["features"][0]["geometry"])), ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][0]["geometry"]))) == 0
+    assert ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(json.dumps(j_got["features"][1]["geometry"])), ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][1]["geometry"]))) == 0
+    assert ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(json.dumps(j_got["features"][2]["geometry"])), ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][2]["geometry"]))) == 0
+    assert ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(json.dumps(j_got["features"][3]["geometry"])), ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][3]["geometry"]))) == 0
+    assert ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(json.dumps(j_got["features"][4]["geometry"])), ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][4]["geometry"]))) == 0
 
 
     # Test polygon geometry that covers the whole world (#2833)
@@ -2082,7 +2091,14 @@ def test_ogr_geojson_57():
 ]
 }
 """
-    assert json.loads(got) == json.loads(expected)
+
+    j_got = json.loads(got)
+    j_expected = json.loads(expected)
+    assert j_got["bbox"] == j_expected["bbox"]
+    assert len(j_expected["features"]) == 2
+    assert ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(json.dumps(j_got["features"][0]["geometry"])), ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][0]["geometry"]))) == 0
+    assert ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(json.dumps(j_got["features"][1]["geometry"])), ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][1]["geometry"]))) == 0
+
 
     # Polar case: slice of spherical cap (not intersecting antimeridian, west hemisphere)
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
@@ -2151,7 +2167,14 @@ def test_ogr_geojson_57():
 ]
 }
 """
-    assert json.loads(got) == json.loads(expected)
+    expected_geos_overlay_ng = """{
+"type": "FeatureCollection",
+"bbox": [ 135.0000000, 88.6984598, -135.0000000, 90.0000000 ],
+"features": [
+{ "type": "Feature", "properties": { }, "bbox": [ 135.0, 88.6984598, -135.0, 90.0 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ -135.0, 88.6984598 ], [ -180.0, 90.0 ], [ -180.0, 89.0796531 ], [ -135.0, 88.6984598 ] ] ], [ [ [ 180.0, 90.0 ], [ 135.0, 88.6984598 ], [ 180.0, 89.0796531 ], [ 180.0, 90.0 ] ] ] ] } }
+]
+}"""
+    assert json.loads(got) == json.loads(expected) or json.loads(got) == json.loads(expected_geos_overlay_ng), got
 
     # Polar case: EPSG:3031: WGS 84 / Antarctic Polar Stereographic
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
@@ -2174,7 +2197,11 @@ def test_ogr_geojson_57():
 ]
 }
 """
-    assert json.loads(got) == json.loads(expected)
+    j_got = json.loads(got)
+    j_expected = json.loads(expected)
+    assert j_got["bbox"] == j_expected["bbox"]
+    assert len(j_expected["features"]) == 1
+    assert ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(json.dumps(j_got["features"][0]["geometry"])), ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][0]["geometry"]))) == 0
 
     # Antimeridian case: EPSG:32660: WGS 84 / UTM zone 60N with polygon and line crossing
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
@@ -2199,26 +2226,19 @@ def test_ogr_geojson_57():
 "type": "FeatureCollection",
 "bbox": [ 178.5275649, 0.0000000, -179.0681936, 37.0308258 ],
 "features": [
-{ "type": "Feature", "properties": { }, "bbox": [ 178.8892102, 36.0816324, -179.0681936, 37.0308258 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 180.0, 36.1071354 ], [ 180.0, 37.0082839 ], [ 178.9112998, 37.0308258 ], [ 178.8892102, 36.1298163 ], [ 180.0, 36.1071354 ] ] ], [ [ [ -179.0681936, 36.9810434 ], [ -180.0, 37.0082839 ], [ -180.0, 36.1071354 ], [ -179.1135277, 36.0816324 ], [ -179.0681936, 36.9810434 ] ] ] ] } },
+{ "type": "Feature", "properties": { }, "bbox": [ 178.8892102, 36.0816324, -179.0681936, 37.0308258 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 180.0, 36.1071354 ], [ 180.0, 36.1071354 ], [ 180.0, 37.0082839 ], [ 180.0, 37.0082839 ], [ 178.9112998, 37.0308258 ], [ 178.8892102, 36.1298163 ], [ 180.0, 36.1071354 ] ] ], [ [ [ -180.0, 37.0082839 ], [ -180.0, 36.1071354 ], [ -180.0, 36.1071354 ], [ -179.1135277, 36.0816324 ], [ -179.0681936, 36.9810434 ], [ -180.0, 37.0082839 ] ] ] ] } },
 { "type": "Feature", "properties": { }, "bbox": [ 178.8892102, 36.1298163, -179.0681936, 36.9810434 ], "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 178.8892102, 36.1298163 ], [ 180.0, 36.5995612 ] ], [ [ -180.0, 36.5995612 ], [ -179.0681936, 36.9810434 ] ] ] } },
 { "type": "Feature", "properties": { }, "bbox": [ 178.5275649, 0.0, -179.8562277, 0.0 ], "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 178.5275649, 0.0 ], [ 180.0, 0.0 ] ], [ [ -180.0, 0.0 ], [ -179.8562277, 0.0 ] ] ] } }
 ]
 }
 """
-
-    # with proj 4.9.3
-    expected2 = """{
-"type": "FeatureCollection",
-"bbox": [ 178.5275649, 0.0000000, -179.0681936, 37.0308258 ],
-"features": [
-{ "type": "Feature", "properties": { }, "bbox": [ 178.8892102, 36.0816324, -179.0681936, 37.0308258 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ -179.0681936, 36.9810434 ], [ -180.0, 37.0082839 ], [ -180.0, 36.1071354 ], [ -179.1135277, 36.0816324 ], [ -179.0681936, 36.9810434 ] ] ], [ [ [ 178.8892102, 36.1298163 ], [ 180.0, 36.1071354 ], [ 180.0, 37.0082839 ], [ 178.9112998, 37.0308258 ], [ 178.8892102, 36.1298163 ] ] ] ] } },
-{ "type": "Feature", "properties": { }, "bbox": [ 178.8892102, 36.1298163, -179.0681936, 36.9810434 ], "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 178.8892102, 36.1298163 ], [ 180.0, 36.5995612 ] ], [ [ -180.0, 36.5995612 ], [ -179.0681936, 36.9810434 ] ] ] } },
-{ "type": "Feature", "properties": { }, "bbox": [ 178.5275649, 0.0, -179.8562277, 0.0 ], "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 178.5275649, 0.0 ], [ 180.0, 0.0 ] ], [ [ -180.0, 0.0 ], [ -179.8562277, 0.0 ] ] ] } }
-]
-}
-"""
-
-    assert json.loads(got) == json.loads(expected) or json.loads(got) == json.loads(expected2)
+    j_got = json.loads(got)
+    j_expected = json.loads(expected)
+    assert j_got["bbox"] == j_expected["bbox"]
+    assert len(j_expected["features"]) == 3
+    assert ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(json.dumps(j_got["features"][0]["geometry"])), ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][0]["geometry"]))) == 0
+    assert ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(json.dumps(j_got["features"][1]["geometry"])), ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][1]["geometry"]))) == 0
+    assert ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(json.dumps(j_got["features"][2]["geometry"])), ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][2]["geometry"]))) == 0
 
     # Antimeridian case: EPSG:32660: WGS 84 / UTM zone 60N wit polygon on west of antimeridian
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)

@@ -1964,7 +1964,7 @@ const char *OGR_G_GetGeometryName( OGRGeometryH hGeom )
  * This function is the same as the CPP method OGRGeometry::clone().
  *
  * @param hGeom handle on the geometry to clone from.
- * @return an handle on the copy of the geometry with the spatial
+ * @return a handle on the copy of the geometry with the spatial
  * reference system as the original.
  */
 

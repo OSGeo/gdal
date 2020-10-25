@@ -84,7 +84,7 @@ void RegisterOGRSDTS()
     poDriver->SetDescription( "OGR_SDTS" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "SDTS" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_sdts.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/sdts.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = OGRSDTSDriverOpen;

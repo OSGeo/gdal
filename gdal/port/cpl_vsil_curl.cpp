@@ -158,7 +158,7 @@ static void VSICURLReadGlobalEnvVariables()
                 static_cast<int>(nCacheSize / DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY));
         }
     };
-    static Initializer initalizer;
+    static Initializer initializer;
 }
 
 /************************************************************************/
@@ -4214,6 +4214,22 @@ char** VSICurlFilesystemHandler::ReadDirEx( const char *pszDirname,
                                             int nMaxFiles )
 {
     return ReadDirInternal(pszDirname, nMaxFiles, nullptr);
+}
+
+/************************************************************************/
+/*                             SiblingFiles()                           */
+/************************************************************************/
+
+char** VSICurlFilesystemHandler::SiblingFiles( const char *pszFilename )
+{
+    /* Small optimization to avoid unnecessary stat'ing from PAux or ENVI */
+    /* drivers. The MBTiles driver needs no companion file. */
+    if( EQUAL(CPLGetExtension( pszFilename ),"mbtiles") )
+    {
+        return static_cast<char**> (CPLCalloc(1,sizeof(char*)));
+    }
+    return nullptr;
+    
 }
 
 /************************************************************************/

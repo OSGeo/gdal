@@ -517,17 +517,22 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
     char **papszFieldTypes = nullptr;
     if( !bNew )
     {
-        char *dname = CPLStrdup(CPLGetDirname(pszFilename));
-        char *fname = CPLStrdup(CPLGetBasename(pszFilename));
-        VSILFILE *fpCSVT =
-            VSIFOpenL(CPLFormFilename(dname, fname, ".csvt"), "r");
-        CPLFree(dname);
-        CPLFree(fname);
-        if( fpCSVT != nullptr )
+        // Only try to read .csvt from files that have an extension
+        const char* pszExt = CPLGetExtension(pszFilename);
+        if( pszExt[0] )
         {
-            VSIRewindL(fpCSVT);
-            papszFieldTypes = OGRCSVReadParseLineL(fpCSVT, ',', false, false);
-            VSIFCloseL(fpCSVT);
+            char *dname = CPLStrdup(CPLGetDirname(pszFilename));
+            char *fname = CPLStrdup(CPLGetBasename(pszFilename));
+            VSILFILE *fpCSVT =
+                VSIFOpenL(CPLFormFilename(dname, fname, ".csvt"), "r");
+            CPLFree(dname);
+            CPLFree(fname);
+            if( fpCSVT != nullptr )
+            {
+                VSIRewindL(fpCSVT);
+                papszFieldTypes = OGRCSVReadParseLineL(fpCSVT, ',', false, false);
+                VSIFCloseL(fpCSVT);
+            }
         }
     }
 

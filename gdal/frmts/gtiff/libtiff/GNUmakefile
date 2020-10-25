@@ -88,6 +88,10 @@ ifeq ($(WEBP_SETTING),yes)
 ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -DWEBP_SUPPORT
 endif
 
+ifeq ($(LIBDEFLATE_SETTING),yes)
+ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -DLIBDEFLATE_SUPPORT
+endif
+
 default:	$(EXTRA_DEP) $(OBJ:.o=.$(OBJ_EXT))
 
 clean:

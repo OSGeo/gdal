@@ -16,6 +16,8 @@ mkdir gdal
 wget -q "https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz" \
     -O - | tar xz -C gdal --strip-components=1
 
+
+
 (
     cd gdal/gdal
     if test "${RSYNC_REMOTE:-}" != ""; then
@@ -34,31 +36,44 @@ wget -q "https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz" \
         ccache -M 1G
     fi
 
+    GDAL_CONFIG_OPTS=""
+
+    if echo "$WITH_FILEGDB" | grep -Eiq "^(y(es)?|1|true)$" ; then
+      GDAL_CONFIG_OPTS="$GDAL_CONFIG_OPTS  --with-fgdb=/usr/local/FileGDB_API "
+    fi
+
     ./configure --prefix=/usr \
-        --without-libtool \
-        --with-hide-internal-symbols \
-        --with-jpeg12 \
-        --with-python \
-        --with-poppler \
-        --with-spatialite \
-        --with-mysql \
-        --with-liblzma \
-        --with-webp \
-        --with-epsilon \
-        --with-proj="/build${PROJ_INSTALL_PREFIX-/usr/local}" \
-        --with-poppler \
-        --with-hdf5 \
-        --with-dods-root=/usr \
-        --with-sosi \
-        --with-libtiff=internal --with-rename-internal-libtiff-symbols \
-        --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
-        --with-kea=/usr/bin/kea-config \
-        --with-mongocxxv3 \
-        --with-tiledb \
-        --with-crypto
+    --without-libtool \
+    --with-hide-internal-symbols \
+    --with-jpeg12 \
+    --with-python \
+    --with-poppler \
+    --with-spatialite \
+    --with-mysql \
+    --with-liblzma \
+    --with-webp \
+    --with-epsilon \
+    --with-proj="/build${PROJ_INSTALL_PREFIX-/usr/local}" \
+    --with-poppler \
+    --with-hdf5 \
+    --with-dods-root=/usr \
+    --with-sosi \
+    --with-libtiff=internal --with-rename-internal-libtiff-symbols \
+    --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
+    --with-kea=/usr/bin/kea-config \
+    --with-mongocxxv3 \
+    --with-tiledb \
+    --with-crypto \
+    --with-java=/usr/lib/jvm/java-"$JAVA_VERSION"-openjdk-amd64 --with-jvm-lib=/usr/lib/jvm/java-"$JAVA_VERSION"-openjdk-amd64/lib/server --with-jvm-lib-add-rpath \
+    --with-mdb $GDAL_CONFIG_OPTS
 
     make "-j$(nproc)"
     make install DESTDIR="/build"
+
+    cd swig/java
+    make "-j$(nproc)"
+    make install DESTDIR="/build"
+    cd ../../
 
     if [ -n "${RSYNC_REMOTE:-}" ]; then
         ccache -s

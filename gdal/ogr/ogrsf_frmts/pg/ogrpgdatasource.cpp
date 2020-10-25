@@ -3005,6 +3005,28 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
     return nullptr;
 }
 
+
+/************************************************************************/
+/*                          AbortSQL()                                  */
+/************************************************************************/
+
+
+OGRErr OGRPGDataSource::AbortSQL()
+{
+  auto cancel = PQgetCancel( hPGConn ) ;
+  int result;
+  if ( cancel )
+  {
+    char errbuf[255];
+    result = PQcancel( cancel, errbuf, 255 );
+    if ( ! result )
+       CPLDebug( "PG", "Error canceling the query: %s", errbuf );
+    PQfreeCancel( cancel );
+    return result ? OGRERR_NONE : OGRERR_FAILURE;
+  }
+  return OGRERR_FAILURE;
+}
+
 /************************************************************************/
 /*                          ReleaseResultSet()                          */
 /************************************************************************/

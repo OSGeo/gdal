@@ -59,27 +59,6 @@ def test_osr_epsg_2():
         print(srs.ExportToPrettyWkt())
         pytest.fail('Wrong TOWGS84, override missed?')
 
-    
-###############################################################################
-# Check that various EPSG lookups based on Pulvoko 1942 have the
-# towgs84 values set properly (#3579)
-
-
-def test_osr_epsg_3():
-
-    for epsg in [3120, 2172, 2173, 2174, 2175, 3328]:
-        srs = osr.SpatialReference()
-        srs.ImportFromEPSG(epsg)
-        srs.AddGuessedTOWGS84()
-
-        expected_towgs84 = [33.4, -146.6, -76.3, -0.359, -0.053, 0.844, -0.84]
-
-        for i in range(6):
-            if float(srs.GetAttrValue('TOWGS84', i)) != pytest.approx(expected_towgs84[i], abs=0.0005):
-                print(srs.ExportToPrettyWkt())
-                pytest.fail('For EPSG:%d. Wrong TOWGS84, override missed?' % epsg)
-
-    
 ###############################################################################
 #   Check that EPSG:4326 is considered as lat/long
 
@@ -407,7 +386,7 @@ def test_osr_epsg_area_of_use():
     assert area.south_lat_degree == 41.15
     assert area.east_lon_degree == 10.38
     assert area.north_lat_degree == 51.56
-    assert area.name == 'France'
+    assert 'France' in area.name
 
 ###############################################################################
 
@@ -426,7 +405,7 @@ def test_osr_GetCRSInfoListFromDatabase():
             assert record.south_lat_degree == 41.15
             assert record.east_lon_degree == 10.38
             assert record.north_lat_degree == 51.56
-            assert record.area_name == 'France'
+            assert 'France' in record.area_name
             assert record.projection_method == 'Lambert Conic Conformal (2SP)'
             found = True
     assert found

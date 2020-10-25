@@ -949,26 +949,22 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 /*      Extract origin location.                                        */
 /* -------------------------------------------------------------------- */
     OGRPoint *poOriginGeometry = nullptr;
-    const char *pszSRSName = nullptr;
 
-    if( psOriginPoint != nullptr )
+    OGRGeometry* poGeom = reinterpret_cast<OGRGeometry*>(
+        OGR_G_CreateFromGMLTree( psOriginPoint ));
+
+    if( poGeom != nullptr
+        && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
     {
-        OGRGeometry* poGeom = reinterpret_cast<OGRGeometry*>(
-            OGR_G_CreateFromGMLTree( psOriginPoint ));
-
-        if( poGeom != nullptr
-            && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
-        {
-            poOriginGeometry = poGeom->toPoint();
-        }
-        else
-        {
-            delete poGeom;
-        }
-
-        // SRS?
-        pszSRSName = CPLGetXMLValue( psOriginPoint, "srsName", nullptr );
+        poOriginGeometry = poGeom->toPoint();
     }
+    else
+    {
+        delete poGeom;
+    }
+
+    // SRS?
+    const char* pszSRSName = CPLGetXMLValue( psOriginPoint, "srsName", nullptr );
 
 /* -------------------------------------------------------------------- */
 /*      Extract offset(s)                                               */

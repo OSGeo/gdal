@@ -1372,7 +1372,8 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult ) const
 /************************************************************************/
 
 static PJ* GDAL_proj_crs_create_bound_crs_to_WGS84(PJ_CONTEXT* ctx, PJ* pj,
-                                                   bool onlyIfEPSGCode)
+                                                   bool onlyIfEPSGCode,
+                                                   bool canModifyHorizPart)
 {
     PJ* ret = nullptr;
     if( proj_get_type(pj) == PJ_TYPE_COMPOUND_CRS )
@@ -1382,16 +1383,20 @@ static PJ* GDAL_proj_crs_create_bound_crs_to_WGS84(PJ_CONTEXT* ctx, PJ* pj,
         if( horizCRS && proj_get_type(horizCRS) != PJ_TYPE_BOUND_CRS && vertCRS &&
             (!onlyIfEPSGCode || proj_get_id_auth_name(horizCRS, 0) != nullptr) )
         {
-            auto boundHoriz = proj_crs_create_bound_crs_to_WGS84(
-                ctx, horizCRS, nullptr);
-            if( boundHoriz )
+            auto boundHoriz = canModifyHorizPart ?
+                proj_crs_create_bound_crs_to_WGS84(ctx, horizCRS, nullptr) :
+                proj_clone(ctx, horizCRS);
+            auto boundVert = proj_crs_create_bound_crs_to_WGS84(
+                ctx, vertCRS, nullptr);
+            if( boundHoriz && boundVert )
             {
                 ret = proj_create_compound_crs(
                         ctx, proj_get_name(pj),
                         boundHoriz,
-                        vertCRS);
+                        boundVert);
             }
             proj_destroy(boundHoriz);
+            proj_destroy(boundVert);
         }
         proj_destroy(horizCRS);
         proj_destroy(vertCRS);
@@ -1430,6 +1435,7 @@ static PJ* GDAL_proj_crs_create_bound_crs_to_WGS84(PJ_CONTEXT* ctx, PJ* pj,
  *     node is returned.
  *     WKT1 is an alias of WKT1_GDAL.
  *     WKT2 will default to the latest revision implemented (currently WKT2_2018)
+ *     WKT2_2019 can be used as an alias of WKT2_2018 since GDAL 3.2
  * </li>
  * </ul>
  *
@@ -1463,10 +1469,10 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
     }
 
     auto ctxt = d->getPROJContext();
-    auto wktFormat = d->m_bMorphToESRI ? PJ_WKT1_ESRI : PJ_WKT1_GDAL;
+    auto wktFormat = PJ_WKT1_GDAL;
     const char* pszFormat = CSLFetchNameValueDef(papszOptions, "FORMAT",
                                     CPLGetConfigOption("OSR_WKT_FORMAT", ""));
-    if( EQUAL(pszFormat, "WKT1_ESRI" ) )
+    if( EQUAL(pszFormat, "WKT1_ESRI" ) || d->m_bMorphToESRI )
     {
         wktFormat = PJ_WKT1_ESRI;
     }
@@ -1482,7 +1488,8 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
         wktFormat = PJ_WKT2_2015;
     }
     else if( EQUAL(pszFormat, "WKT2" ) ||
-             EQUAL(pszFormat, "WKT2_2018" ) )
+             EQUAL(pszFormat, "WKT2_2018" ) ||
+             EQUAL(pszFormat, "WKT2_2019" ) )
     {
         wktFormat = PJ_WKT2_2018;
     }
@@ -1521,7 +1528,7 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
                                     CPLGetConfigOption("OSR_ADD_TOWGS84_ON_EXPORT_TO_WKT1", "NO"))) )
     {
         boundCRS = GDAL_proj_crs_create_bound_crs_to_WGS84(
-            d->getPROJContext(), d->m_pj_crs, true);
+            d->getPROJContext(), d->m_pj_crs, true, true);
     }
 
     const char* pszWKT = proj_as_wkt(
@@ -3257,7 +3264,17 @@ OGRErr OGRSpatialReference::CopyGeogCSFrom(
     {
         auto datum = proj_crs_get_datum(
             d->getPROJContext(), geodCRS);
-        CPLAssert(datum);
+#if PROJ_VERSION_MAJOR > 7 || (PROJ_VERSION_MAJOR == 7 && PROJ_VERSION_MINOR >= 2)
+        if( datum == nullptr )
+        {
+            datum = proj_crs_get_datum_ensemble(d->getPROJContext(), geodCRS);
+        }
+#endif
+        if( datum == nullptr )
+        {
+            proj_destroy(geodCRS);
+            return OGRERR_FAILURE;
+        }
 
         const char* pszUnitName = nullptr;
         double unitConvFactor = GetLinearUnits(&pszUnitName);
@@ -4552,7 +4569,17 @@ OGRErr OGRSpatialReference::SetGeocCS( const char * pszName )
     {
         auto datum = proj_crs_get_datum(
             d->getPROJContext(), d->m_pj_crs);
-        CPLAssert(datum);
+#if PROJ_VERSION_MAJOR > 7 || (PROJ_VERSION_MAJOR == 7 && PROJ_VERSION_MINOR >= 2)
+        if( datum == nullptr )
+        {
+            datum = proj_crs_get_datum_ensemble(d->getPROJContext(), d->m_pj_crs);
+        }
+#endif
+        if( datum == nullptr )
+        {
+            d->undoDemoteFromBoundCRS();
+            return OGRERR_FAILURE;
+        }
 
         auto pj_crs = proj_create_geocentric_crs_from_datum(
             d->getPROJContext(),
@@ -7191,6 +7218,17 @@ OGRErr OSRSetUTM( OGRSpatialReferenceH hSRS, int nZone, int bNorth )
 int OGRSpatialReference::GetUTMZone( int * pbNorth ) const
 
 {
+#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
+     if( IsProjected() && GetAxesCount() == 3 )
+     {
+         OGRSpatialReference* poSRSTmp = Clone();
+         poSRSTmp->DemoteTo2D(nullptr);
+         const int nZone = poSRSTmp->GetUTMZone(pbNorth);
+         delete poSRSTmp;
+         return nZone;
+     }
+#endif
+
     const char *pszProjection = GetAttrValue( "PROJECTION" );
 
     if( pszProjection == nullptr
@@ -7967,6 +8005,12 @@ bool OGRSpatialReference::StripTOWGS84IfKnownDatum()
     }
 
     auto datum = proj_crs_get_datum(ctxt, baseCRS);
+#if PROJ_VERSION_MAJOR > 7 || (PROJ_VERSION_MAJOR == 7 && PROJ_VERSION_MINOR >= 2)
+    if( datum == nullptr )
+    {
+        datum = proj_crs_get_datum_ensemble(ctxt, baseCRS);
+    }
+#endif
     if( !datum )
     {
         proj_destroy(baseCRS);
@@ -8432,6 +8476,12 @@ OGRSpatialReference *OGRSpatialReference::CloneGeogCS() const
             {
                 auto datum = proj_crs_get_datum(
                     d->getPROJContext(), geodCRS);
+#if PROJ_VERSION_MAJOR > 7 || (PROJ_VERSION_MAJOR == 7 && PROJ_VERSION_MINOR >= 2)
+                if( datum == nullptr )
+                {
+                    datum = proj_crs_get_datum_ensemble(d->getPROJContext(), geodCRS);
+                }
+#endif
                 if( datum )
                 {
                     auto cs = proj_create_ellipsoidal_2D_cs(
@@ -10237,12 +10287,14 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     PJ* boundCRS = nullptr;
     if( projString &&
-        strstr(projString, "+datum=") == nullptr &&
+        (strstr(projString, "+datum=") == nullptr ||
+         d->m_pjType == PJ_TYPE_COMPOUND_CRS) &&
         CPLTestBool(
             CPLGetConfigOption("OSR_ADD_TOWGS84_ON_EXPORT_TO_PROJ4", "YES")) )
     {
         boundCRS = GDAL_proj_crs_create_bound_crs_to_WGS84(
-            d->getPROJContext(), d->m_pj_crs, true);
+            d->getPROJContext(), d->m_pj_crs, true,
+            strstr(projString, "+datum=") == nullptr);
         if( boundCRS )
         {
             projString = proj_as_proj_string(d->getPROJContext(),
@@ -10568,7 +10620,7 @@ OGRErr OGRSpatialReference::AddGuessedTOWGS84()
     if( !d->m_pj_crs )
         return OGRERR_FAILURE;
     auto boundCRS = GDAL_proj_crs_create_bound_crs_to_WGS84(
-        d->getPROJContext(), d->m_pj_crs, false);
+        d->getPROJContext(), d->m_pj_crs, false, true);
     if( !boundCRS )
     {
         return OGRERR_FAILURE;
@@ -11470,4 +11522,49 @@ OGRErr OSRPromoteTo3D( OGRSpatialReferenceH hSRS, const char* pszName  )
     VALIDATE_POINTER1( hSRS, "OSRPromoteTo3D", OGRERR_FAILURE );
 
     return OGRSpatialReference::FromHandle(hSRS)->PromoteTo3D(pszName);
+}
+
+/************************************************************************/
+/*                             DemoteTo2D()                             */
+/************************************************************************/
+
+/** \brief "Demote" a 3D CRS to a 2D CRS one.
+ *
+ * @param pszName New name for the CRS. If set to NULL, the previous name will be used.
+ * @return OGRERR_NONE if no error occurred.
+ * @since GDAL 3.2 and PROJ 6.3
+ */
+OGRErr OGRSpatialReference::DemoteTo2D(const char* pszName)
+{
+#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
+    d->refreshProjObj();
+    if( !d->m_pj_crs )
+        return OGRERR_FAILURE;
+    auto newPj = proj_crs_demote_to_2D( d->getPROJContext(), pszName, d->m_pj_crs );
+    if( !newPj )
+        return OGRERR_FAILURE;
+    d->setPjCRS(newPj);
+    return OGRERR_NONE;
+#else
+    CPL_IGNORE_RET_VAL(pszName);
+    CPLError(CE_Failure, CPLE_NotSupported, "PROJ 6.3 required");
+    return OGRERR_UNSUPPORTED_OPERATION;
+#endif
+}
+
+/************************************************************************/
+/*                             OSRDemoteTo2D()                          */
+/************************************************************************/
+
+/** \brief "Demote" a 3D CRS to a 2D CRS one.
+ *
+ * See OGRSpatialReference::DemoteTo2D()
+ *
+ * @since GDAL 3.2 and PROJ 6.3
+ */
+OGRErr OSRDemoteTo2D( OGRSpatialReferenceH hSRS, const char* pszName  )
+{
+    VALIDATE_POINTER1( hSRS, "OSRDemoteTo2D", OGRERR_FAILURE );
+
+    return OGRSpatialReference::FromHandle(hSRS)->DemoteTo2D(pszName);
 }

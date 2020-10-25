@@ -123,7 +123,7 @@ void RegisterOGROGDI()
     OGRSFDriver* poDriver = new OGROGDIDriver;
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "OGDI Vectors (VPF, VMAP, DCW)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_ogdi.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/ogdi.html" );
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }

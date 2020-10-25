@@ -104,6 +104,12 @@ def check_feature_geometry(feat, geom, max_error=0.0001):
         gdaltest.post_reason('point counts do not match')
         return 1
 
+    # ST_Equals(a,b) <==> ST_Within(a,b) && ST_Within(b,a)
+    # We can't use OGRGeometry::Equals() because it doesn't not test spatial
+    # equality, but structural one
+    if have_geos() and f_geom.Within(geom) and geom.Within(f_geom):
+        return 0
+
     if f_geom.GetGeometryCount() > 0:
         count = f_geom.GetGeometryCount()
         for i in range(count):

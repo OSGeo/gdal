@@ -222,7 +222,7 @@ CPLErr ECDataset::Initialize(CPLXMLNode* CacheInfo) {
         gt[5] = -res;
         memcpy(GeoTransform, gt, sizeof(gt));
 
-        // Assume symetric coverage, check custom end
+        // Assume symmetric coverage, check custom end
         double maxx = -gt[0];
         double miny = -gt[3];
         const char* pszmaxx = CPLGetXMLValue(TCI, "TileEnd.X", nullptr);
@@ -301,6 +301,7 @@ Bundle& ECDataset::GetBundle(const char* fname) {
         }
     }
     // No empties, eject one
+    // coverity[dont_call]
     Bundle& bundle = bundles[rand() % bundles.size()];
     bundle.Init(fname);
     return bundle;
@@ -401,9 +402,9 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pData) {
         }
         if (3 == inbands) {
             // Lacking opacity, copy the first three bands
-            usebands = ubands;
             ubands[1] = 2;
             ubands[2] = 3;
+            usebands = ubands;
         }
         else if (1 == inbands) {
             // Grayscale, expecting color

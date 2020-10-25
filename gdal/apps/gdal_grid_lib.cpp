@@ -724,7 +724,7 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
  * @param pszDest the destination dataset path.
  * @param hSrcDataset the source dataset handle.
  * @param psOptionsIn the options struct returned by GDALGridOptionsNew() or NULL.
- * @param pbUsageError the pointer to int variable to determine any usage error has occurred or NULL.
+ * @param pbUsageError pointer to a integer output variable to store if any usage error has occurred or NULL.
  * @return the output dataset (new dataset that must be closed using GDALClose()) or NULL in case of error.
  *
  * @since GDAL 2.1
@@ -839,7 +839,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
     {
         if ((psOptions->dfXMax == psOptions->dfXMin) || (psOptions->dfYMax == psOptions->dfYMin)) {
             CPLError( CE_Failure, CPLE_IllegalArg,
-                    "Invalid txe or tye paramaters detected. Please check your -txe or -tye argument.");
+                    "Invalid txe or tye parameters detected. Please check your -txe or -tye argument.");
 
             if(pbUsageError)
                 *pbUsageError = TRUE;

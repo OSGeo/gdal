@@ -1098,6 +1098,7 @@ int DIMAPDataset::ReadImageInformation2()
          </Data_Files>
     */
     std::map< std::pair<int,int>, CPLString > oMapRowColumnToName;
+    int nImageDSRow=1, nImageDSCol=1;
     if( psDataFiles )
     {
         int nRows = 1;
@@ -1117,9 +1118,12 @@ int DIMAPDataset::ReadImageInformation2()
                 {
                     int nRow = atoi(pszR);
                     int nCol = atoi(pszC);
-                    if( nRow == 1 && nCol == 1 )
+                    if( (nRow == 1 && nCol == 1) || osImageDSFilename.empty() ) {
                         osImageDSFilename =
                             CPLFormCIFilename( osPath, pszHref, nullptr );
+                            nImageDSRow = nRow;
+                            nImageDSCol = nCol;
+                    }
                     if( nRow > nRows ) nRows = nRow;
                     if( nCol > nCols ) nCols = nCol;
                     oMapRowColumnToName[ std::pair<int,int>(nRow, nCol) ] =
@@ -1301,7 +1305,12 @@ int DIMAPDataset::ReadImageInformation2()
         if( poImageDS->GetGeoTransform(adfGeoTransform) == CE_None &&
             !(adfGeoTransform[0] <= 1.5 && fabs(adfGeoTransform[3]) <= 1.5) )
         {
-            bHaveGeoTransform = TRUE;
+                bHaveGeoTransform = TRUE;
+                //fix up the origin if we did not get the geotransform from the top-left tile
+                adfGeoTransform[0] -= (nImageDSCol-1) * adfGeoTransform[1] * nTileWidth +
+                    (nImageDSRow-1) * adfGeoTransform[2] * nTileHeight;
+                adfGeoTransform[3] -= (nImageDSCol-1) * adfGeoTransform[4] * nTileWidth +
+                    (nImageDSRow-1) * adfGeoTransform[5] * nTileHeight;
         }
     }
 

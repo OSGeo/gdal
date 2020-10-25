@@ -70,7 +70,7 @@ install:
   - git clone https://github.com/microsoft/vcpkg
   - cd vcpkg
 # Workaround https://github.com/microsoft/vcpkg/issues/11666
-  - if "%VS_VER%" == "2015" git checkout a64dc07690bc8806e717e190f62eb58e198b599c
+#  - if "%VS_VER%" == "2015" git checkout a64dc07690bc8806e717e190f62eb58e198b599c
   - bootstrap-vcpkg.bat
   - set PATH=%CD%;%PATH%
   - cd ..
@@ -167,7 +167,7 @@ install:
       exec { cmake -G $env:VS_VERSION -A $env:CMAKE_ARCHITECTURE .. $env:CMAKE_INSTALL_PREFIX -DPROJ_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBPROJ_SHARED=ON -DCMAKE_TOOLCHAIN_FILE=c:/projects/gdal/vcpkg/scripts/buildsystems/vcpkg.cmake -DBUILD_SHARED_LIBS=ON -DENABLE_CURL=OFF -DENABLE_TIFF=OFF -DBUILD_PROJSYNC=OFF }
       exec { cmake --build . --config Release --target install }
       cd $env:APPVEYOR_BUILD_FOLDER\install-proj\share\proj
-      appveyor DownloadFile https://download.osgeo.org/proj/proj-datumgrid-1.8.zip
+      appveyor DownloadFile http://download.osgeo.org/proj/proj-datumgrid-1.8.zip
       exec { 7z x proj-datumgrid-1.8.zip -aoa }
       #
       cd $env:APPVEYOR_BUILD_FOLDER\gdal

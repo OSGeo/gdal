@@ -461,6 +461,14 @@ GUInt64 GDALGroup::GetTotalCopyCost() const
  * @param nTotalCost Total cost from GetTotalCopyCost().
  * @param pfnProgress Progress callback, or nullptr.
  * @param pProgressData Progress user data, or nulptr.
+ * @param papszOptions Creation options. Currently, only array creation
+ *                     options are supported. They must be prefixed with "ARRAY:" .
+ *                     The scope may be further restricted to arrays of a certain
+ *                     dimension by adding "IF(DIM={ndims}):" after "ARRAY:".
+ *                     For example, "ARRAY:IF(DIM=2):BLOCKSIZE=256,256" will
+ *                     restrict BLOCKSIZE=256,256 to arrays of dimension 2.
+ *                     Restriction to arrays of a given name is done with adding
+ *                     "IF(NAME={name}):" after "ARRAY:".
  *
  * @return true in case of success (or partial success if bStrict == false).
  */
@@ -471,7 +479,8 @@ bool GDALGroup::CopyFrom( const std::shared_ptr<GDALGroup>& poDstRootGroup,
                           GUInt64& nCurCost,
                           const GUInt64 nTotalCost,
                           GDALProgressFunc pfnProgress,
-                          void * pProgressData)
+                          void * pProgressData,
+                          CSLConstList papszOptions )
 {
     if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
@@ -579,9 +588,57 @@ bool GDALGroup::CopyFrom( const std::shared_ptr<GDALGroup>& poDstRootGroup,
                     }
                 }
             }
+
+            CPLStringList aosArrayCO;
+            for( CSLConstList papszIter = papszOptions;
+                                        papszIter && *papszIter; ++papszIter )
+            {
+                if( STARTS_WITH_CI(*papszIter, "ARRAY:") )
+                {
+                    const char* pszOption = *papszIter + strlen("ARRAY:");
+                    if( STARTS_WITH_CI(pszOption, "IF(DIM=") )
+                    {
+                        const char* pszNext = strchr(pszOption, ':');
+                        if( pszNext != nullptr )
+                        {
+                            int nDim = atoi(pszOption + strlen("IF(DIM="));
+                            if( static_cast<size_t>(nDim) == dstArrayDims.size() )
+                            {
+                                pszOption = pszNext + 1;
+                            }
+                            else
+                            {
+                                pszOption = nullptr;
+                            }
+                        }
+                    }
+                    else if( STARTS_WITH_CI(pszOption, "IF(NAME=") )
+                    {
+                        const char* pszName = pszOption + strlen("IF(NAME=");
+                        const char* pszNext = strchr(pszName, ':');
+                        if( pszNext != nullptr && pszNext > pszName &&
+                            pszNext[-1] == ')' )
+                        {
+                            CPLString osName;
+                            osName.assign(pszName, pszNext - pszName - 1);
+                            if( osName == srcArray->GetName() )
+                            {
+                                pszOption = pszNext + 1;
+                            }
+                            else
+                            {
+                                pszOption = nullptr;
+                            }
+                        }
+                    }
+                    if( pszOption )
+                        aosArrayCO.AddString(pszOption);
+                }
+            }
             auto dstArray = CreateMDArray(srcArray->GetName(),
-                                                      dstArrayDims,
-                                                      srcArray->GetDataType());
+                                          dstArrayDims,
+                                          srcArray->GetDataType(),
+                                          aosArrayCO.List());
             EXIT_OR_CONTINUE_IF_NULL(dstArray);
 
             if( !dstArray->CopyFrom(poSrcDS,
@@ -615,7 +672,8 @@ bool GDALGroup::CopyFrom( const std::shared_ptr<GDALGroup>& poDstRootGroup,
             if( !dstSubGroup->CopyFrom(poDstRootGroup, poSrcDS,
                                        srcSubGroup, bStrict,
                                        nCurCost, nTotalCost,
-                                       pfnProgress, pProgressData) )
+                                       pfnProgress, pProgressData,
+                                       papszOptions) )
                 return false;
         }
 
@@ -2932,6 +2990,100 @@ CSLConstList GDALMDArray::GetStructuralInfo() const
 }
 
 /************************************************************************/
+/*                          AdviseRead()                                */
+/************************************************************************/
+
+/** Advise driver of upcoming read requests.
+ *
+ * Some GDAL drivers operate more efficiently if they know in advance what
+ * set of upcoming read requests will be made.  The AdviseRead() method allows
+ * an application to notify the driver of the region of interest.
+ *
+ * Many drivers just ignore the AdviseRead() call, but it can dramatically
+ * accelerate access via some drivers. One such case is when reading through
+ * a DAP dataset with the netCDF driver (a in-memory cache array is then created
+ * with the region of interest defined by AdviseRead())
+ *
+ * This is the same as the C function GDALMDArrayAdviseRead().
+ *
+ * @param arrayStartIdx Values representing the starting index to read
+ *                      in each dimension (in [0, aoDims[i].GetSize()-1] range).
+ *                      Array of GetDimensionCount() values.
+ *                      Can be nullptr as a synonymous for [0 for i in range(GetDimensionCount() ]
+ *
+ * @param count         Values representing the number of values to extract in
+ *                      each dimension.
+ *                      Array of GetDimensionCount() values.
+ *                      Can be nullptr as a synonymous for
+ *                      [ aoDims[i].GetSize() - arrayStartIdx[i] for i in range(GetDimensionCount() ]
+ * @return true in case of success (ignoring the advice is a success)
+ *
+ * @since GDAL 3.2
+ */
+bool GDALMDArray::AdviseRead(const GUInt64* arrayStartIdx,
+                             const size_t* count) const
+{
+    std::vector<GUInt64> tmp_arrayStartIdx;
+    const auto nDimCount = GetDimensionCount();
+    if( arrayStartIdx == nullptr && nDimCount > 0 )
+    {
+        tmp_arrayStartIdx.resize(nDimCount);
+        arrayStartIdx = tmp_arrayStartIdx.data();
+    }
+
+    std::vector<size_t> tmp_count;
+    if( count == nullptr && nDimCount > 0 )
+    {
+        tmp_count.resize(nDimCount);
+        const auto& dims = GetDimensions();
+        for( size_t i = 0; i < nDimCount; i++ )
+        {
+            const GUInt64 nSize = dims[i]->GetSize() - arrayStartIdx[i];
+#if SIZEOF_VOIDP < 8
+            if( nSize != static_cast<size_t>(nSize) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
+                return false;
+            }
+#endif
+            tmp_count[i] = static_cast<size_t>(nSize);
+        }
+        count = tmp_count.data();
+    }
+
+    std::vector<GInt64> tmp_arrayStep;
+    std::vector<GPtrDiff_t> tmp_bufferStride;
+    const GInt64* arrayStep = nullptr;
+    const GPtrDiff_t* bufferStride = nullptr;
+    if( !CheckReadWriteParams(arrayStartIdx,
+                              count,
+                              arrayStep,
+                              bufferStride,
+                              GDALExtendedDataType::Create(GDT_Unknown),
+                              nullptr,
+                              nullptr,
+                              0,
+                              tmp_arrayStep,
+                              tmp_bufferStride) )
+    {
+        return false;
+    }
+
+    return IAdviseRead(arrayStartIdx, count);
+}
+
+/************************************************************************/
+/*                             IAdviseRead()                            */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+bool GDALMDArray::IAdviseRead(const GUInt64*, const size_t*) const
+{
+    return true;
+}
+//! @endcond
+
+/************************************************************************/
 /*                       GDALSlicedMDArray                              */
 /************************************************************************/
 
@@ -2987,6 +3139,9 @@ protected:
                       const GPtrDiff_t* bufferStride,
                       const GDALExtendedDataType& bufferDataType,
                       const void* pSrcBuffer) override;
+
+    bool IAdviseRead(const GUInt64* arrayStartIdx,
+                     const size_t* count) const override;
 
 public:
     static std::shared_ptr<GDALSlicedMDArray> Create(
@@ -3108,11 +3263,17 @@ void GDALSlicedMDArray::PrepareParentArrays(const GUInt64* arrayStartIdx,
                         arrayStartIdx[i] *
                         static_cast<GUInt64>(-m_parentRanges[iParent].m_nIncr);
             m_parentCount[iParent] = count[i];
-            m_parentStep[iParent] = count[i] == 1 ? 1 :
-                        // other checks should have ensured this does not
-                        // overflow
-                        arrayStep[i] * m_parentRanges[iParent].m_nIncr;
-            m_parentStride[iParent] = bufferStride[i];
+            if( arrayStep )
+            {
+                m_parentStep[iParent] = count[i] == 1 ? 1 :
+                            // other checks should have ensured this does not
+                            // overflow
+                            arrayStep[i] * m_parentRanges[iParent].m_nIncr;
+            }
+            if( bufferStride )
+            {
+                m_parentStride[iParent] = bufferStride[i];
+            }
         }
     }
 }
@@ -3155,6 +3316,18 @@ bool GDALSlicedMDArray::IWrite(const GUInt64* arrayStartIdx,
                              m_parentStride.data(),
                              bufferDataType,
                              pSrcBuffer);
+}
+
+/************************************************************************/
+/*                             IAdviseRead()                            */
+/************************************************************************/
+
+bool GDALSlicedMDArray::IAdviseRead(const GUInt64* arrayStartIdx,
+                                    const size_t* count) const
+{
+    PrepareParentArrays(arrayStartIdx, count, nullptr, nullptr);
+    return m_poParent->AdviseRead(m_parentStart.data(),
+                                  m_parentCount.data());
 }
 
 /************************************************************************/
@@ -3406,6 +3579,10 @@ protected:
                       const GPtrDiff_t* bufferStride,
                       const GDALExtendedDataType& bufferDataType,
                       void* pDstBuffer) const override;
+
+    bool IAdviseRead(const GUInt64* arrayStartIdx,
+                     const size_t* count) const override
+        { return m_poParent->AdviseRead(arrayStartIdx, count); }
 
 public:
     static std::shared_ptr<GDALExtractFieldMDArray> Create(
@@ -3788,6 +3965,8 @@ protected:
                       const GDALExtendedDataType& bufferDataType,
                       const void* pSrcBuffer) override;
 
+    bool IAdviseRead(const GUInt64* arrayStartIdx,
+                     const size_t* count) const override;
 
 public:
     static std::shared_ptr<GDALMDArrayTransposed> Create(
@@ -3906,8 +4085,14 @@ void GDALMDArrayTransposed::PrepareParentArrays(const GUInt64* arrayStartIdx,
         {
             m_parentStart[iOldAxis] = arrayStartIdx[i];
             m_parentCount[iOldAxis] = count[i];
-            m_parentStep[iOldAxis] = arrayStep[i];
-            m_parentStride[iOldAxis] = bufferStride[i];
+            if( arrayStep )
+            {
+                m_parentStep[iOldAxis] = arrayStep[i];
+            }
+            if( bufferStride )
+            {
+                m_parentStride[iOldAxis] = bufferStride[i];
+            }
         }
     }
 }
@@ -3950,6 +4135,18 @@ bool GDALMDArrayTransposed::IWrite(const GUInt64* arrayStartIdx,
                              m_parentStride.data(),
                              bufferDataType,
                              pSrcBuffer);
+}
+
+/************************************************************************/
+/*                             IAdviseRead()                            */
+/************************************************************************/
+
+bool GDALMDArrayTransposed::IAdviseRead(const GUInt64* arrayStartIdx,
+                                        const size_t* count) const
+{
+    PrepareParentArrays(arrayStartIdx, count, nullptr, nullptr);
+    return m_poParent->AdviseRead(m_parentStart.data(),
+                                  m_parentCount.data());
 }
 
 /************************************************************************/
@@ -4052,6 +4249,10 @@ protected:
                       const GPtrDiff_t* bufferStride,
                       const GDALExtendedDataType& bufferDataType,
                       void* pDstBuffer) const override;
+
+    bool IAdviseRead(const GUInt64* arrayStartIdx,
+                     const size_t* count) const override
+        { return m_poParent->AdviseRead(arrayStartIdx, count); }
 
 public:
     static std::shared_ptr<GDALMDArrayUnscaled> Create(
@@ -4322,6 +4523,10 @@ protected:
                       const GDALExtendedDataType& bufferDataType,
                       void* pDstBuffer) const override;
 
+    bool IAdviseRead(const GUInt64* arrayStartIdx,
+                     const size_t* count) const override
+        { return m_poParent->AdviseRead(arrayStartIdx, count); }
+
 public:
     static std::shared_ptr<GDALMDArrayMask> Create(
                     const std::shared_ptr<GDALMDArray>& poParent)
@@ -4374,12 +4579,15 @@ bool GDALMDArrayMask::IRead(const GUInt64* arrayStartIdx,
         (const char* pszAttrName, bool& bHasVal, double& dfVal)
     {
         auto poAttr = m_poParent->GetAttribute(pszAttrName);
-        if( poAttr && poAttr->GetDimensionsSize().size() == 1 &&
-            poAttr->GetDimensionsSize()[0] == 1 &&
-            poAttr->GetDataType().GetClass() == GEDTC_NUMERIC )
+        if( poAttr && poAttr->GetDataType().GetClass() == GEDTC_NUMERIC )
         {
-            bHasVal = true;
-            dfVal = poAttr->ReadAsDouble();
+            const auto anDimSizes = poAttr->GetDimensionsSize();
+            if( anDimSizes.empty() ||
+                (anDimSizes.size() == 1 && anDimSizes[0] == 1) )
+            {
+                bHasVal = true;
+                dfVal = poAttr->ReadAsDouble();
+            }
         }
     };
 
@@ -4412,6 +4620,100 @@ bool GDALMDArrayMask::IRead(const GUInt64* arrayStartIdx,
             dfValidMin = vals[0];
             dfValidMax = vals[1];
         }
+    }
+
+    /* Optimized case: if we are an integer data type and that there is no */
+    /* attribute that can be used to set mask = 0, then fill the mask buffer */
+    /* directly */
+    if( !bHasMissingValue && !bHasFillValue && !bHasValidMin && !bHasValidMax &&
+        m_poParent->GetRawNoDataValue() == nullptr &&
+        GDALDataTypeIsInteger(m_poParent->GetDataType().GetNumericDataType()) )
+    {
+        if( bufferDataType == m_dt ) // Byte case
+        {
+            bool bContiguous = true;
+            for( size_t i = 0; i < nDims; i++)
+            {
+                if( bufferStride[i] != tmpBufferStrideVector[i] )
+                {
+                    bContiguous = false;
+                    break;
+                }
+            }
+            if( bContiguous )
+            {
+                // CPLDebug("GDAL", "GetMask(): contiguous case");
+                memset(pDstBuffer, 1, nElts);
+                return true;
+            }
+        }
+
+        struct Stack
+        {
+            size_t       nIters = 0;
+            GByte*       dst_ptr = nullptr;
+            GPtrDiff_t   dst_inc_offset = 0;
+        };
+        std::vector<Stack> stack(std::max(static_cast<size_t>(1), nDims));
+        const size_t nBufferDTSize = bufferDataType.GetSize();
+        for( size_t i = 0; i < nDims; i++ )
+        {
+            stack[i].dst_inc_offset = static_cast<GPtrDiff_t>(
+                bufferStride[i] * nBufferDTSize);
+        }
+        stack[0].dst_ptr = static_cast<GByte*>(pDstBuffer);
+
+        size_t dimIdx = 0;
+        const size_t nDimsMinus1 = nDims > 0 ? nDims - 1 : 0;
+        const bool bBufferDataTypeIsByte = bufferDataType == m_dt;
+        GByte abyOne[16]; // 16 is sizeof GDT_CFloat64
+        CPLAssert(nBufferDTSize <= 16);
+        const GByte flag = 1;
+        // Coverity misses that m_dt is of type Byte
+        // coverity[overrun-buffer-val]
+        GDALExtendedDataType::CopyValue(&flag, m_dt, abyOne, bufferDataType);
+
+lbl_next_depth:
+        if( dimIdx == nDimsMinus1 )
+        {
+            auto nIters = nDims > 0 ? count[dimIdx] : 1;
+            GByte* dst_ptr = stack[dimIdx].dst_ptr;
+
+            while(true)
+            {
+                if( bBufferDataTypeIsByte )
+                {
+                    *dst_ptr = flag;
+                }
+                else
+                {
+                    memcpy(dst_ptr, abyOne, nBufferDTSize);
+                }
+
+                if( (--nIters) == 0 )
+                    break;
+                dst_ptr += stack[dimIdx].dst_inc_offset;
+            }
+        }
+        else
+        {
+            stack[dimIdx].nIters = count[dimIdx];
+            while(true)
+            {
+                dimIdx ++;
+                stack[dimIdx].dst_ptr = stack[dimIdx-1].dst_ptr;
+                goto lbl_next_depth;
+lbl_return_to_caller:
+                dimIdx --;
+                if( (--stack[dimIdx].nIters) == 0 )
+                    break;
+                stack[dimIdx].dst_ptr += stack[dimIdx].dst_inc_offset;
+            }
+        }
+        if( dimIdx > 0 )
+            goto lbl_return_to_caller;
+
+        return true;
     }
 
     const auto oTmpBufferDT = GDALDataTypeIsComplex(
@@ -4563,6 +4865,67 @@ template<typename Type> void GDALMDArrayMask::ReadInternal(
                                           bool bHasValidMax, double dfValidMax) const
 {
     const size_t nDims = GetDimensionCount();
+
+    const auto castValue = [](bool& bHasVal, double dfVal) -> Type
+    {
+        if( bHasVal )
+        {
+            if( IsValidForDT<Type>(dfVal) )
+            {
+                return static_cast<Type>(dfVal);
+            }
+            else
+            {
+                bHasVal = false;
+            }
+        }
+        return 0;
+    };
+
+    const void* pSrcRawNoDataValue = m_poParent->GetRawNoDataValue();
+    bool bHasNodataValue = pSrcRawNoDataValue != nullptr;
+    const Type nNoDataValue = castValue(bHasNodataValue, m_poParent->GetNoDataValueAsDouble());
+    const Type nMissingValue = castValue(bHasMissingValue, dfMissingValue);
+    const Type nFillValue = castValue(bHasFillValue, dfFillValue);
+    const Type nValidMin = castValue(bHasValidMin, dfValidMin);
+    const Type nValidMax = castValue(bHasValidMax, dfValidMax);
+
+#define GET_MASK_FOR_SAMPLE(v) \
+    static_cast<GByte>( !IsNan(v) && \
+      !(bHasNodataValue && v == nNoDataValue) && \
+      !(bHasMissingValue && v == nMissingValue) && \
+      !(bHasFillValue && v == nFillValue) && \
+      !(bHasValidMin && v < nValidMin) && \
+      !(bHasValidMax && v > nValidMax) )
+
+    const bool bBufferDataTypeIsByte = bufferDataType == m_dt;
+    /* Optimized case: Byte output and output buffer is contiguous */
+    if( bBufferDataTypeIsByte )
+    {
+        bool bContiguous = true;
+        for( size_t i = 0; i < nDims; i++)
+        {
+            if( bufferStride[i] != tmpBufferStrideVector[i] )
+            {
+                bContiguous = false;
+                break;
+            }
+        }
+        if( bContiguous )
+        {
+            size_t nElts = 1;
+            for( size_t i = 0; i < nDims; i++ )
+                nElts *= count[i];
+
+            for( size_t i = 0; i < nElts; i++)
+            {
+                const Type* pSrc = static_cast<const Type*>(pTempBuffer) + i;
+                static_cast<GByte*>(pDstBuffer)[i] = GET_MASK_FOR_SAMPLE(*pSrc);
+            }
+            return;
+        }
+    }
+
     const size_t nTmpBufferDTSize = oTmpBufferDT.GetSize();
     struct Stack
     {
@@ -4586,8 +4949,6 @@ template<typename Type> void GDALMDArrayMask::ReadInternal(
 
     size_t dimIdx = 0;
     const size_t nDimsMinus1 = nDims > 0 ? nDims - 1 : 0;
-    const void* pSrcRawNoDataValue = m_poParent->GetRawNoDataValue();
-    const bool bBufferDataTypeIsDT = bufferDataType == m_dt;
     GByte abyZeroOrOne[2][16]; // 16 is sizeof GDT_CFloat64
     CPLAssert(nBufferDTSize <= 16);
     for( GByte flag = 0; flag <= 1; flag++ )
@@ -4598,29 +4959,6 @@ template<typename Type> void GDALMDArrayMask::ReadInternal(
                                         abyZeroOrOne[flag], bufferDataType);
     }
 
-    const auto castValue = [](bool& bHasVal, double dfVal) -> Type
-    {
-        if( bHasVal )
-        {
-            if( IsValidForDT<Type>(dfVal) )
-            {
-                return static_cast<Type>(dfVal);
-            }
-            else
-            {
-                bHasVal = false;
-            }
-        }
-        return 0;
-    };
-
-    bool bHasNodataValue = pSrcRawNoDataValue != nullptr;
-    const Type nNoDataValue = castValue(bHasNodataValue, m_poParent->GetNoDataValueAsDouble());
-    const Type nMissingValue = castValue(bHasMissingValue, dfMissingValue);
-    const Type nFillValue = castValue(bHasFillValue, dfFillValue);
-    const Type nValidMin = castValue(bHasValidMin, dfValidMin);
-    const Type nValidMax = castValue(bHasValidMax, dfValidMax);
-
 lbl_next_depth:
     if( dimIdx == nDimsMinus1 )
     {
@@ -4630,34 +4968,10 @@ lbl_next_depth:
 
         while(true)
         {
-            GByte flag = 1;
             const Type* pSrc = reinterpret_cast<const Type*>(src_ptr);
-            if( IsNan(*pSrc) )
-            {
-                flag = 0;
-            }
-            else if( bHasNodataValue && *pSrc == nNoDataValue)
-            {
-                flag = 0;
-            }
-            else if( bHasMissingValue && *pSrc == nMissingValue )
-            {
-                flag = 0;
-            }
-            else if( bHasFillValue && *pSrc == nFillValue )
-            {
-                flag = 0;
-            }
-            else if( bHasValidMin && *pSrc < nValidMin )
-            {
-                flag = 0;
-            }
-            else if( bHasValidMax && *pSrc > nValidMax )
-            {
-                flag = 0;
-            }
+            const GByte flag = GET_MASK_FOR_SAMPLE(*pSrc);
 
-            if( bBufferDataTypeIsDT )
+            if( bBufferDataTypeIsByte )
             {
                 *dst_ptr = flag;
             }
@@ -7061,6 +7375,27 @@ int GDALMDArrayWrite(GDALMDArrayH hArray,
                                   pSrcBuffer,
                                   pSrcBufferAllocStart,
                                   nSrcBufferAllocSize);
+}
+
+/************************************************************************/
+/*                       GDALMDArrayAdviseRead()                        */
+/************************************************************************/
+
+/** Advise driver of upcoming read requests.
+ *
+ * This is the same as the C++ method GDALMDArray::AdviseRead()
+ *
+ * @return TRUE in case of success.
+ *
+ * @since GDAL 3.2
+ */
+int GDALMDArrayAdviseRead(GDALMDArrayH hArray,
+                          const GUInt64* arrayStartIdx,
+                          const size_t* count)
+{
+    VALIDATE_POINTER1( hArray, __func__, FALSE );
+    // coverity[var_deref_model]
+    return hArray->m_poImpl->AdviseRead(arrayStartIdx, count);
 }
 
 /************************************************************************/

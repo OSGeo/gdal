@@ -181,7 +181,7 @@ void RegisterOGRSelafin() {
     poDriver->SetDescription( "Selafin" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "Selafin" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Selafin" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_selafin.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/selafin.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"

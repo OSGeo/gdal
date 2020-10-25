@@ -309,7 +309,8 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
     if( wkbFlatten(OGR_G_GetGeometryType(hPolygon)) != wkbPolygon
         && wkbFlatten(OGR_G_GetGeometryType(hPolygon)) != wkbMultiPolygon )
     {
-        CPLAssert( false );
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cutline should be a polygon or a multipolygon");
         return CE_Failure;
     }
 

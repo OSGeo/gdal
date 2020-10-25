@@ -111,3 +111,19 @@ jobs:
             $FLAKE8 autotest
             $FLAKE8 gdal/swig/python/scripts
             $FLAKE8 gdal/swig/python/samples
+
+  doxygen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Requirements
+        run: |
+            sudo apt install doxygen texlive-latex-base
+
+      - name: Run doxygen
+        run: |
+            cd gdal/doc
+            make .doxygen_up_to_date >log.txt 2>&1
+            if grep -i warning log.txt | grep -v -e russian -e brazilian; then echo "Doxygen warnings found" && cat log.txt && /bin/false; else echo "No Doxygen warnings found"; fi

@@ -117,8 +117,9 @@ bool GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
         return true;
     }
 
-    else if( EQUAL(pszBase, "long") )
+    else if( EQUAL(pszBase, "unsignedLong") )
     {
+        // Optimistically map to signed integer...
         *pGMLType = GMLPT_Integer64;
         const char *pszWidth =
             CPLGetXMLValue(psTypeNode, "restriction.totalDigits.value", "0");
@@ -460,6 +461,11 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 gmlType = GMLPT_Integer;
             else if (EQUAL(pszStrippedNSType, "long"))
                 gmlType = GMLPT_Integer64;
+            else if (EQUAL(pszStrippedNSType, "unsignedLong"))
+            {
+                // Optimistically map to signed integer
+                gmlType = GMLPT_Integer64;
+            }
             else if (EQUAL(pszStrippedNSType, "short") )
                 gmlType = GMLPT_Short;
             else if (EQUAL(pszStrippedNSType, "boolean") )

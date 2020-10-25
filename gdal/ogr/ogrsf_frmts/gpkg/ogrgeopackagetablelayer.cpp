@@ -32,6 +32,8 @@
 #include "ogrsqliteutility.h"
 #include "cpl_time.h"
 #include "ogr_p.h"
+
+#include <algorithm>
 #include <cmath>
 
 CPL_CVSID("$Id$")
@@ -1152,17 +1154,6 @@ OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
 {
     OGRGeoPackageTableLayer::SyncToDisk();
 
-    if( m_bDropRTreeTable )
-    {
-        OGRGeoPackageTableLayer::ResetReading();
-
-        char* pszSQL =
-            sqlite3_mprintf("DROP TABLE \"%w\"", m_osRTreeName.c_str());
-        SQLCommand(m_poDS->GetDB(), pszSQL);
-        sqlite3_free(pszSQL);
-        m_bDropRTreeTable = false;
-    }
-
     /* Clean up resources in memory */
     if ( m_pszTableName )
         CPLFree( m_pszTableName );
@@ -1762,6 +1753,36 @@ void OGRGeoPackageTableLayer::CheckGeometryType( OGRFeature *poFeature )
 /*                      ICreateFeature()                                 */
 /************************************************************************/
 
+// rtreeValueDown() / rtreeValueUp() come from SQLite3 source code
+// SQLite3 RTree stores min/max values as float. So do the same for our
+// GPKGRTreeEntry
+
+/*
+** Rounding constants for float->double conversion.
+*/
+#define RNDTOWARDS  (1.0 - 1.0/8388608.0)  /* Round towards zero */
+#define RNDAWAY     (1.0 + 1.0/8388608.0)  /* Round away from zero */
+
+/*
+** Convert an sqlite3_value into an RtreeValue (presumably a float)
+** while taking care to round toward negative or positive, respectively.
+*/
+static float rtreeValueDown(double d){
+  float f = static_cast<float>(d);
+  if( f>d ){
+    f = static_cast<float>(d*(d<0 ? RNDAWAY : RNDTOWARDS));
+  }
+  return f;
+}
+
+static float rtreeValueUp(double d){
+  float f = static_cast<float>(d);
+  if( f<d ){
+    f = static_cast<float>(d*(d<0 ? RNDTOWARDS : RNDAWAY));
+  }
+  return f;
+}
+
 OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
 {
     if( !m_bFeatureDefnCompleted )
@@ -1889,18 +1910,6 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
         m_poInsertStatement = nullptr;
     }
 
-    /* Update the layer extents with this new object */
-    if( IsGeomFieldSet(poFeature) )
-    {
-        OGRGeometry* poGeom = poFeature->GetGeomFieldRef(0);
-        if( !poGeom->IsEmpty() )
-        {
-            OGREnvelope oEnv;
-            poGeom->getEnvelope(&oEnv);
-            UpdateExtent(&oEnv);
-        }
-    }
-
     /* Read the latest FID value */
     GIntBig nFID = sqlite3_last_insert_rowid(m_poDS->GetDB());
     if( nFID || poFeature->GetFID() == 0 )
@@ -1912,6 +1921,47 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
     else
     {
         poFeature->SetFID(OGRNullFID);
+    }
+
+    /* Update the layer extents with this new object */
+    if( IsGeomFieldSet(poFeature) )
+    {
+        OGRGeometry* poGeom = poFeature->GetGeomFieldRef(0);
+        if( !poGeom->IsEmpty() )
+        {
+            OGREnvelope oEnv;
+            poGeom->getEnvelope(&oEnv);
+            UpdateExtent(&oEnv);
+
+            if( !m_bDeferredSpatialIndexCreation && m_poDS->IsInTransaction() )
+            {
+                m_nCountInsertInTransaction ++;
+                if( m_nCountInsertInTransactionThreshold < 0 )
+                {
+                    m_nCountInsertInTransactionThreshold = atoi(
+                        CPLGetConfigOption("OGR_GPKG_DEFERRED_SPI_UPDATE_THRESHOLD", "100"));
+                }
+                if( m_nCountInsertInTransaction == m_nCountInsertInTransactionThreshold )
+                {
+                    StartDeferredSpatialIndexUpdate();
+                }
+                else if( !m_aoRTreeTriggersSQL.empty() )
+                {
+                    if( m_aoRTreeEntries.size() == 1000 * 1000 )
+                    {
+                        if( !FlushPendingSpatialIndexUpdate() )
+                            return OGRERR_FAILURE;
+                    }
+                    GPKGRTreeEntry sEntry;
+                    sEntry.nId = nFID;
+                    sEntry.fMinX = rtreeValueDown(oEnv.MinX);
+                    sEntry.fMaxX = rtreeValueUp(oEnv.MaxX);
+                    sEntry.fMinY = rtreeValueDown(oEnv.MinY);
+                    sEntry.fMaxY = rtreeValueUp(oEnv.MaxY);
+                    m_aoRTreeEntries.push_back(sEntry);
+                }
+            }
+        }
     }
 
 #ifdef ENABLE_GPKG_OGR_CONTENTS
@@ -1962,6 +2012,9 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
     }
 
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
+        return OGRERR_FAILURE;
+
+    if( !RunDeferredSpatialIndexUpdate() )
         return OGRERR_FAILURE;
 
     CheckGeometryType(poFeature);
@@ -2218,7 +2271,13 @@ OGRFeature* OGRGeoPackageTableLayer::GetNextFeature()
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return nullptr;
 
-    CreateSpatialIndexIfNecessary();
+    if( m_poFilterGeom != nullptr )
+    {
+        // Both are exclusive
+        CreateSpatialIndexIfNecessary();
+        if( !RunDeferredSpatialIndexUpdate() )
+            return nullptr;
+    }
 
     OGRFeature* poFeature = OGRGeoPackageLayer::GetNextFeature();
     if( poFeature && m_iFIDAsRegularColumnIndex >= 0 )
@@ -2238,8 +2297,6 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
         GetLayerDefn();
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return nullptr;
-
-    CreateSpatialIndexIfNecessary();
 
     if( m_pszFidColumn == nullptr )
         return OGRLayer::GetFeature(nFID);
@@ -2307,6 +2364,9 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
 
+    if( !RunDeferredSpatialIndexUpdate() )
+        return OGRERR_FAILURE;
+
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     if( m_bOGRFeatureCountTriggersEnabled )
     {
@@ -2342,6 +2402,168 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
 }
 
 /************************************************************************/
+/*                     DoJobAtTransactionCommit()                       */
+/************************************************************************/
+
+bool OGRGeoPackageTableLayer::DoJobAtTransactionCommit()
+{
+    bool ret = RunDeferredCreationIfNecessary() == OGRERR_NONE &&
+               RunDeferredSpatialIndexUpdate();
+    m_nCountInsertInTransaction = 0;
+    m_aoRTreeTriggersSQL.clear();
+    m_aoRTreeEntries.clear();
+    return ret;
+}
+
+/************************************************************************/
+/*                    DoJobAtTransactionRollback()                      */
+/************************************************************************/
+
+bool OGRGeoPackageTableLayer::DoJobAtTransactionRollback()
+{
+    m_nCountInsertInTransaction = 0;
+    m_aoRTreeTriggersSQL.clear();
+    m_aoRTreeEntries.clear();
+    SyncToDisk();
+    ResetReading();
+    return true;
+}
+
+/************************************************************************/
+/*                  StartDeferredSpatialIndexUpdate()                   */
+/************************************************************************/
+
+bool OGRGeoPackageTableLayer::StartDeferredSpatialIndexUpdate()
+{
+    if( m_poFeatureDefn->GetGeomFieldCount() == 0 )
+        return true;
+
+    m_aoRTreeTriggersSQL.clear();
+    m_aoRTreeEntries.clear();
+
+    const char* pszT = m_pszTableName;
+    const char* pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
+    m_osRTreeName = "rtree_";
+    m_osRTreeName += pszT;
+    m_osRTreeName += "_";
+    m_osRTreeName += pszC;
+
+    char* pszSQL = sqlite3_mprintf(
+        "SELECT sql FROM sqlite_master WHERE type = 'trigger' "
+        "AND name IN ('%q', '%q', '%q', '%q', '%q', '%q')",
+       (m_osRTreeName + "_insert").c_str(),
+       (m_osRTreeName + "_update1").c_str(),
+       (m_osRTreeName + "_update2").c_str(),
+       (m_osRTreeName + "_update3").c_str(),
+       (m_osRTreeName + "_update4").c_str(),
+       (m_osRTreeName + "_delete").c_str());
+    SQLResult oResult;
+    OGRErr err = SQLQuery(m_poDS->GetDB(), pszSQL, &oResult);
+    sqlite3_free(pszSQL);
+    if( err == OGRERR_NONE )
+    {
+        for ( int iRecord = 0; iRecord < oResult.nRowCount; iRecord++ )
+        {
+            const char *pszTriggerSQL =
+                SQLResultGetValue(&oResult, 0, iRecord);
+            if( pszTriggerSQL )
+            {
+                m_aoRTreeTriggersSQL.push_back(pszTriggerSQL);
+            }
+        }
+    }
+    SQLResultFree(&oResult);
+    if( m_aoRTreeTriggersSQL.size() != 6 )
+    {
+        CPLDebug("GPKG", "Could not find expected 6 RTree triggers");
+        m_aoRTreeTriggersSQL.clear();
+        return false;
+    }
+
+    SQLCommand(m_poDS->GetDB(), ReturnSQLDropSpatialIndexTriggers());
+
+    return true;
+}
+
+/************************************************************************/
+/*                  FlushPendingSpatialIndexUpdate()                    */
+/************************************************************************/
+
+bool OGRGeoPackageTableLayer::FlushPendingSpatialIndexUpdate()
+{
+    bool ret = true;
+
+    //CPLDebug("GPKG", "Insert %d features in spatial index",
+    //         static_cast<int>(m_aoRTreeEntries.size()));
+
+    const char* pszT = m_pszTableName;
+    const char* pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
+
+    m_osRTreeName = "rtree_";
+    m_osRTreeName += pszT;
+    m_osRTreeName += "_";
+    m_osRTreeName += pszC;
+
+    char* pszSQL = sqlite3_mprintf(
+            "INSERT INTO \"%w\" VALUES (?,?,?,?,?)",
+            m_osRTreeName.c_str());
+    sqlite3_stmt* hInsertStmt = nullptr;
+    if ( sqlite3_prepare_v2(m_poDS->GetDB(), pszSQL, -1, &hInsertStmt, nullptr)
+                                                            != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "failed to prepare SQL: %s", pszSQL);
+        sqlite3_free(pszSQL);
+        m_aoRTreeEntries.clear();
+        return false;
+    }
+    sqlite3_free(pszSQL);
+
+    for( size_t i = 0; i < m_aoRTreeEntries.size(); ++i )
+    {
+        sqlite3_reset(hInsertStmt);
+
+        sqlite3_bind_int64(hInsertStmt,1,m_aoRTreeEntries[i].nId);
+        sqlite3_bind_double(hInsertStmt,2,m_aoRTreeEntries[i].fMinX);
+        sqlite3_bind_double(hInsertStmt,3,m_aoRTreeEntries[i].fMaxX);
+        sqlite3_bind_double(hInsertStmt,4,m_aoRTreeEntries[i].fMinY);
+        sqlite3_bind_double(hInsertStmt,5,m_aoRTreeEntries[i].fMaxY);
+        int sqlite_err = sqlite3_step(hInsertStmt);
+        if ( sqlite_err != SQLITE_OK && sqlite_err != SQLITE_DONE )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "failed to execute insertion in RTree : %s",
+                    sqlite3_errmsg( m_poDS->GetDB() ) );
+            ret = false;
+            break;
+        }
+    }
+    sqlite3_finalize(hInsertStmt);
+    m_aoRTreeEntries.clear();
+    return ret;
+}
+
+/************************************************************************/
+/*                   RunDeferredSpatialIndexUpdate()                    */
+/************************************************************************/
+
+bool OGRGeoPackageTableLayer::RunDeferredSpatialIndexUpdate()
+{
+    m_nCountInsertInTransaction = 0;
+    if( m_aoRTreeTriggersSQL.empty() )
+        return true;
+
+    bool ret = FlushPendingSpatialIndexUpdate();
+
+    for( const auto& osSQL: m_aoRTreeTriggersSQL )
+    {
+        ret &= SQLCommand(m_poDS->GetDB(), osSQL) == OGRERR_NONE;
+    }
+    m_aoRTreeTriggersSQL.clear();
+    return ret;
+}
+
+/************************************************************************/
 /*                        SyncToDisk()                                  */
 /************************************************************************/
 
@@ -2357,10 +2579,10 @@ OGRErr OGRGeoPackageTableLayer::SyncToDisk()
     CreateTriggers();
 #endif
 
-    if( !m_bDropRTreeTable )
-    {
-        CreateSpatialIndexIfNecessary();
-    }
+    // Both are exclusive
+    CreateSpatialIndexIfNecessary();
+    if( !RunDeferredSpatialIndexUpdate() )
+        return OGRERR_FAILURE;
 
     /* Save metadata back to the database */
     SaveExtent();
@@ -2750,15 +2972,6 @@ void OGRGeoPackageTableLayer::CreateSpatialIndexIfNecessary()
 /*                       CreateSpatialIndex()                           */
 /************************************************************************/
 
-typedef struct
-{
-    GIntBig nId;
-    double  dfMinX;
-    double  dfMinY;
-    double  dfMaxX;
-    double  dfMaxY;
-} GPKGRTreeEntry;
-
 bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
 {
     OGRErr err;
@@ -2768,6 +2981,13 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
 
     if( !CheckUpdatableTable("CreateSpatialIndex") )
         return false;
+
+    if( m_bDropRTreeTable )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot run CreateSpatialIndex() after non-completed deferred DropSpatialIndex()");
+        return false;
+    }
 
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return false;
@@ -2803,22 +3023,17 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
 
     m_poDS->SoftStartTransaction();
 
-    char* pszSQL;
     /* Create virtual table */
-    if( !m_bDropRTreeTable )
+    char *pszSQL = sqlite3_mprintf(
+                "CREATE VIRTUAL TABLE \"%w\" USING rtree(id, minx, maxx, miny, maxy)",
+                m_osRTreeName.c_str() );
+    err = SQLCommand(m_poDS->GetDB(), pszSQL);
+    sqlite3_free(pszSQL);
+    if( err != OGRERR_NONE )
     {
-        pszSQL = sqlite3_mprintf(
-                    "CREATE VIRTUAL TABLE \"%w\" USING rtree(id, minx, maxx, miny, maxy)",
-                    m_osRTreeName.c_str() );
-        err = SQLCommand(m_poDS->GetDB(), pszSQL);
-        sqlite3_free(pszSQL);
-        if( err != OGRERR_NONE )
-        {
-            m_poDS->SoftRollbackTransaction();
-            return false;
-        }
+        m_poDS->SoftRollbackTransaction();
+        return false;
     }
-    m_bDropRTreeTable = false;
 
     /* Populate the RTree */
 #ifdef NO_PROGRESSIVE_RTREE_INSERTION
@@ -2869,10 +3084,17 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
     }
     sqlite3_free(pszSQL);
 
-    // Insert entries in RTree by chunks of 100000
+    // Insert entries in RTree by chunks of 500K features
     std::vector<GPKGRTreeEntry> aoEntries;
     GUIntBig nEntryCount = 0;
-    const size_t nChunkSize = 100000;
+    constexpr size_t nChunkSize = 500 * 1000;
+#ifdef ENABLE_GPKG_OGR_CONTENTS
+    if( m_nTotalFeatureCount > 0 )
+    {
+        aoEntries.reserve(static_cast<size_t>(
+            std::min(m_nTotalFeatureCount, static_cast<GIntBig>(nChunkSize))));
+    }
+#endif
     while( true )
     {
         int sqlite_err = sqlite3_step(hIterStmt);
@@ -2881,10 +3103,10 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
         {
             GPKGRTreeEntry sEntry;
             sEntry.nId = sqlite3_column_int64(hIterStmt, 0);
-            sEntry.dfMinX = sqlite3_column_double(hIterStmt, 1);
-            sEntry.dfMaxX = sqlite3_column_double(hIterStmt, 2);
-            sEntry.dfMinY = sqlite3_column_double(hIterStmt, 3);
-            sEntry.dfMaxY = sqlite3_column_double(hIterStmt, 4);
+            sEntry.fMinX = rtreeValueDown(sqlite3_column_double(hIterStmt, 1));
+            sEntry.fMaxX = rtreeValueUp(sqlite3_column_double(hIterStmt, 2));
+            sEntry.fMinY = rtreeValueDown(sqlite3_column_double(hIterStmt, 3));
+            sEntry.fMaxY = rtreeValueUp(sqlite3_column_double(hIterStmt, 4));
             aoEntries.push_back(sEntry);
         }
         else if( sqlite_err == SQLITE_DONE )
@@ -2910,10 +3132,10 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
                 sqlite3_reset(hInsertStmt);
 
                 sqlite3_bind_int64(hInsertStmt,1,aoEntries[i].nId);
-                sqlite3_bind_double(hInsertStmt,2,aoEntries[i].dfMinX);
-                sqlite3_bind_double(hInsertStmt,3,aoEntries[i].dfMaxX);
-                sqlite3_bind_double(hInsertStmt,4,aoEntries[i].dfMinY);
-                sqlite3_bind_double(hInsertStmt,5,aoEntries[i].dfMaxY);
+                sqlite3_bind_double(hInsertStmt,2,aoEntries[i].fMinX);
+                sqlite3_bind_double(hInsertStmt,3,aoEntries[i].fMaxX);
+                sqlite3_bind_double(hInsertStmt,4,aoEntries[i].fMinY);
+                sqlite3_bind_double(hInsertStmt,5,aoEntries[i].fMaxY);
                 sqlite_err = sqlite3_step(hInsertStmt);
                 if ( sqlite_err != SQLITE_OK && sqlite_err != SQLITE_DONE )
                 {
@@ -3293,6 +3515,13 @@ bool OGRGeoPackageTableLayer::DropSpatialIndex(bool bCalledFromSQLFunction)
     if( !CheckUpdatableTable("DropSpatialIndex") )
         return false;
 
+    if( m_bDropRTreeTable )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot run DropSpatialIndex() after non-completed deferred DropSpatialIndex()");
+        return false;
+    }
+
     if( !HasSpatialIndex() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Spatial index not existing");
@@ -3301,27 +3530,27 @@ bool OGRGeoPackageTableLayer::DropSpatialIndex(bool bCalledFromSQLFunction)
 
     const char* pszT = m_pszTableName;
     const char* pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
-    char* pszSQL = sqlite3_mprintf(
-        "DELETE FROM gpkg_extensions WHERE lower(table_name)=lower('%q') "
-        "AND lower(column_name)=lower('%q') AND extension_name='gpkg_rtree_index'",
-        pszT, pszC );
-    SQLCommand(m_poDS->GetDB(), pszSQL);
-    sqlite3_free(pszSQL);
+    {
+        char* pszSQL = sqlite3_mprintf(
+            "DELETE FROM gpkg_extensions WHERE lower(table_name)=lower('%q') "
+            "AND lower(column_name)=lower('%q') AND extension_name='gpkg_rtree_index'",
+            pszT, pszC );
+        SQLCommand(m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
+    }
 
     if( bCalledFromSQLFunction )
     {
         /* We cannot drop a table from a SQLite function call, so we just */
-        /* remove the content and memorize that we will have to delete the */
-        /* table later */
+        /* memorize that we will have to delete the table later */
         m_bDropRTreeTable = true;
-        pszSQL = sqlite3_mprintf("DELETE FROM \"%w\"", m_osRTreeName.c_str());
     }
     else
     {
-        pszSQL = sqlite3_mprintf("DROP TABLE \"%w\"", m_osRTreeName.c_str());
+        char* pszSQL = sqlite3_mprintf("DROP TABLE \"%w\"", m_osRTreeName.c_str());
+        SQLCommand(m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
     }
-    SQLCommand(m_poDS->GetDB(), pszSQL);
-    sqlite3_free(pszSQL);
 
     m_poDS->RemoveTableFromSQLiteMasterCache(m_osRTreeName);
 
@@ -3329,6 +3558,26 @@ bool OGRGeoPackageTableLayer::DropSpatialIndex(bool bCalledFromSQLFunction)
 
     m_bHasSpatialIndex = false;
     return true;
+}
+
+/************************************************************************/
+/*               RunDeferredDropRTreeTableIfNecessary()                 */
+/************************************************************************/
+
+bool OGRGeoPackageTableLayer::RunDeferredDropRTreeTableIfNecessary()
+{
+    bool ret = true;
+    if( m_bDropRTreeTable )
+    {
+        OGRGeoPackageTableLayer::ResetReading();
+
+        char* pszSQL =
+            sqlite3_mprintf("DROP TABLE \"%w\"", m_osRTreeName.c_str());
+        ret = SQLCommand(m_poDS->GetDB(), pszSQL) == OGRERR_NONE;
+        sqlite3_free(pszSQL);
+        m_bDropRTreeTable = false;
+    }
+    return ret;
 }
 
 /************************************************************************/
@@ -4324,7 +4573,8 @@ OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
 
     ResetReading();
     RunDeferredCreationIfNecessary();
-    CreateSpatialIndexIfNecessary();
+    if( !RunDeferredSpatialIndexUpdate() )
+        return OGRERR_FAILURE;
 
 /* -------------------------------------------------------------------- */
 /*      Build list of old fields, and the list of new fields.           */
@@ -4437,7 +4687,8 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
 /* -------------------------------------------------------------------- */
     ResetReading();
     RunDeferredCreationIfNecessary();
-    CreateSpatialIndexIfNecessary();
+    if( !RunDeferredSpatialIndexUpdate() )
+        return OGRERR_FAILURE;
 
 /* -------------------------------------------------------------------- */
 /*      Check that the new column name is not a duplicate.              */
@@ -4799,7 +5050,8 @@ OGRErr OGRGeoPackageTableLayer::ReorderFields( int* panMap )
 /* -------------------------------------------------------------------- */
     ResetReading();
     RunDeferredCreationIfNecessary();
-    CreateSpatialIndexIfNecessary();
+    if( !RunDeferredSpatialIndexUpdate() )
+        return OGRERR_FAILURE;
 
 /* -------------------------------------------------------------------- */
 /*      Drop any iterator since we change the DB structure              */

@@ -324,6 +324,7 @@ char **GDALJP2AbstractDataset::GetFileList()
 
     if( pszWldFilename != nullptr &&
         m_nGeoTransformGeorefSrcIndex == m_nWORLDFILEIndex &&
+        GDALCanReliablyUseSiblingFileList(pszWldFilename) &&
         CSLFindString( papszFileList, pszWldFilename ) == -1 )
     {
         double l_adfGeoTransform[6];

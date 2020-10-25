@@ -70,7 +70,7 @@ namespace PCIDSK
     // Helper functions for working with segments and data types
     int PCIDSK_DLL DataTypeSize( eChanType );
     std::string PCIDSK_DLL DataTypeName( eChanType );
-    std::string PCIDSK_DLL SegmentTypeName( eSegType );
+    std::string PCIDSK_DLL SegmentTypeName( int /* eSegType actually */ );
     eChanType PCIDSK_DLL GetDataTypeFromName(std::string const& type_name);
     bool PCIDSK_DLL IsDataTypeComplex(eChanType type);
 

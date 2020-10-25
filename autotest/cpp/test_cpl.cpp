@@ -2890,4 +2890,160 @@ namespace tut
         }
     }
 
+    // Test CPLHTTPFetch
+    template<>
+    template<>
+    void object::test<41>()
+    {
+#ifdef HAVE_CURL        
+        CPLStringList oOptions;
+        oOptions.AddNameVlue("FORM_ITEM_COUNT", "5");
+        oOptions.AddNameVlue("FORM_KEY_0", "qqq");
+        oOptions.AddNameVlue("FORM_VALUE_0", "www");
+        CPLHTTPResult *pResult = CPLHTTPFetch("http://example.com", oOptions);
+        ensure_equals(pResult->nStatus, 34);
+        CPLHTTPDestroyResult(pResult);
+        pResult = nullptr;
+        oOptions.Clear();
+
+        oOptions.AddNameVlue("FORM_FILE_PATH", "not_existed");
+        pResult = CPLHTTPFetch("http://example.com", oOptions);
+        ensure_equals(pResult->nStatus, 34);
+        CPLHTTPDestroyResult(pResult);
+
+#endif // HAVE_CURL        
+    }    
+
+    // Test CPLHTTPPushFetchCallback
+    template<>
+    template<>
+    void object::test<42>()
+    {
+        struct myCbkUserDataStruct
+        {
+            CPLString osURL{};
+            CSLConstList papszOptions = nullptr;
+            GDALProgressFunc pfnProgress = nullptr;
+            void *pProgressArg = nullptr;
+            CPLHTTPFetchWriteFunc pfnWrite = nullptr;
+            void *pWriteArg = nullptr;
+        };
+
+        const auto myCbk = [](const char *pszURL,
+                              CSLConstList papszOptions,
+                              GDALProgressFunc pfnProgress,
+                              void *pProgressArg,
+                              CPLHTTPFetchWriteFunc pfnWrite,
+                              void *pWriteArg,
+                              void* pUserData )
+        {
+            myCbkUserDataStruct* pCbkUserData = static_cast<myCbkUserDataStruct*>(pUserData);
+            pCbkUserData->osURL = pszURL;
+            pCbkUserData->papszOptions = papszOptions;
+            pCbkUserData->pfnProgress = pfnProgress;
+            pCbkUserData->pProgressArg = pProgressArg;
+            pCbkUserData->pfnWrite = pfnWrite;
+            pCbkUserData->pWriteArg = pWriteArg;
+            auto psResult = static_cast<CPLHTTPResult*>(CPLCalloc(sizeof(CPLHTTPResult), 1));
+            psResult->nStatus = 123;
+            return psResult;
+        };
+
+        myCbkUserDataStruct userData;
+        ensure( CPLHTTPPushFetchCallback(myCbk, &userData) );
+
+        int progressArg = 0;
+        const auto myWriteCbk = [](void *, size_t, size_t, void *) -> size_t { return 0; };
+        int writeCbkArg = 00;
+
+        CPLStringList aosOptions;
+        GDALProgressFunc pfnProgress = GDALTermProgress;
+        CPLHTTPFetchWriteFunc pfnWriteCbk = myWriteCbk;
+        CPLHTTPResult* pResult = CPLHTTPFetchEx("http://example.com",
+                                                aosOptions.List(),
+                                                pfnProgress,
+                                                &progressArg,
+                                                pfnWriteCbk,
+                                                &writeCbkArg);
+        ensure(pResult != nullptr);
+        ensure_equals(pResult->nStatus, 123);
+        CPLHTTPDestroyResult(pResult);
+
+        ensure( CPLHTTPPopFetchCallback() );
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLHTTPPopFetchCallback() );
+        CPLPopErrorHandler();
+
+        ensure_equals( userData.osURL, std::string("http://example.com") );
+        ensure_equals( userData.papszOptions, aosOptions.List() );
+        ensure_equals( userData.pfnProgress, pfnProgress );
+        ensure_equals( userData.pProgressArg, &progressArg );
+        ensure_equals( userData.pfnWrite, pfnWriteCbk );
+        ensure_equals( userData.pWriteArg, &writeCbkArg );
+    }
+
+    // Test CPLHTTPSetFetchCallback
+    template<>
+    template<>
+    void object::test<43>()
+    {
+        struct myCbkUserDataStruct
+        {
+            CPLString osURL{};
+            CSLConstList papszOptions = nullptr;
+            GDALProgressFunc pfnProgress = nullptr;
+            void *pProgressArg = nullptr;
+            CPLHTTPFetchWriteFunc pfnWrite = nullptr;
+            void *pWriteArg = nullptr;
+        };
+
+        const auto myCbk2 = [](const char *pszURL,
+                              CSLConstList papszOptions,
+                              GDALProgressFunc pfnProgress,
+                              void *pProgressArg,
+                              CPLHTTPFetchWriteFunc pfnWrite,
+                              void *pWriteArg,
+                              void* pUserData )
+        {
+            myCbkUserDataStruct* pCbkUserData = static_cast<myCbkUserDataStruct*>(pUserData);
+            pCbkUserData->osURL = pszURL;
+            pCbkUserData->papszOptions = papszOptions;
+            pCbkUserData->pfnProgress = pfnProgress;
+            pCbkUserData->pProgressArg = pProgressArg;
+            pCbkUserData->pfnWrite = pfnWrite;
+            pCbkUserData->pWriteArg = pWriteArg;
+            auto psResult = static_cast<CPLHTTPResult*>(CPLCalloc(sizeof(CPLHTTPResult), 1));
+            psResult->nStatus = 124;
+            return psResult;
+        };
+        myCbkUserDataStruct userData2;
+        CPLHTTPSetFetchCallback(myCbk2, &userData2);
+
+        int progressArg = 0;
+        const auto myWriteCbk = [](void *, size_t, size_t, void *) -> size_t { return 0; };
+        int writeCbkArg = 00;
+
+        CPLStringList aosOptions;
+        GDALProgressFunc pfnProgress = GDALTermProgress;
+        CPLHTTPFetchWriteFunc pfnWriteCbk = myWriteCbk;
+        CPLHTTPResult* pResult = CPLHTTPFetchEx("http://example.com",
+                                                aosOptions.List(),
+                                                pfnProgress,
+                                                &progressArg,
+                                                pfnWriteCbk,
+                                                &writeCbkArg);
+        ensure(pResult != nullptr);
+        ensure_equals(pResult->nStatus, 124);
+        CPLHTTPDestroyResult(pResult);
+
+        CPLHTTPSetFetchCallback(nullptr, nullptr);
+
+        ensure_equals( userData2.osURL, std::string("http://example.com") );
+        ensure_equals( userData2.papszOptions, aosOptions.List() );
+        ensure_equals( userData2.pfnProgress, pfnProgress );
+        ensure_equals( userData2.pProgressArg, &progressArg );
+        ensure_equals( userData2.pfnWrite, pfnWriteCbk );
+        ensure_equals( userData2.pWriteArg, &writeCbkArg );
+    }
+
 } // namespace tut

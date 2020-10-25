@@ -332,7 +332,8 @@ static OGRErr GDALGPKGImportFromEPSG(OGRSpatialReference *poSpatialRef,
     return eErr;
 }
 
-OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId)
+OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId,
+                                                          bool bFallbackToEPSG)
 {
     /* Should we do something special with undefined SRS ? */
     if( iSrsId == 0 || iSrsId == -1 )
@@ -363,10 +364,26 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId)
     if ( err != OGRERR_NONE || oResult.nRowCount != 1 )
     {
         SQLResultFree(&oResult);
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "unable to read srs_id '%d' from gpkg_spatial_ref_sys",
-                  iSrsId);
-        m_oMapSrsIdToSrs[iSrsId] = nullptr;
+        if( bFallbackToEPSG )
+        {
+            CPLDebug("GPKG",
+                     "unable to read srs_id '%d' from gpkg_spatial_ref_sys",
+                     iSrsId);
+            OGRSpatialReference* poSRS = new OGRSpatialReference();
+            if( poSRS->importFromEPSG(iSrsId) == OGRERR_NONE )
+            {
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                return poSRS;
+            }
+            poSRS->Release();
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                        "unable to read srs_id '%d' from gpkg_spatial_ref_sys",
+                        iSrsId);
+            m_oMapSrsIdToSrs[iSrsId] = nullptr;
+        }
         return nullptr;
     }
 
@@ -5669,6 +5686,9 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
 
     FlushMetadata();
 
+    while( *pszSQLCommand == ' ' )
+        pszSQLCommand ++;
+
     CPLString osSQLCommand(pszSQLCommand);
     if( !osSQLCommand.empty() && osSQLCommand.back() == ';' )
         osSQLCommand.resize(osSQLCommand.size() - 1);
@@ -5694,7 +5714,8 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
                 m_papoLayers[i]->DisableFeatureCount();
             }
 #endif
-            m_papoLayers[i]->SyncToDisk();
+            if( m_papoLayers[i]->SyncToDisk() != OGRERR_NONE )
+                return nullptr;
         }
     }
 
@@ -5863,6 +5884,12 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
 /*      Do we get a resultset?                                          */
 /* -------------------------------------------------------------------- */
     rc = sqlite3_step( hSQLStmt );
+
+    for( int i = 0; i < m_nLayers; i++ )
+    {
+        m_papoLayers[i]->RunDeferredDropRTreeTableIfNecessary();
+    }
+
     if( rc != SQLITE_ROW )
     {
         if ( rc != SQLITE_DONE )
@@ -6418,7 +6445,7 @@ void OGRGeoPackageTransform(sqlite3_context* pContext,
     GDALGeoPackageDataset* poDS = static_cast<GDALGeoPackageDataset*>(
                                                 sqlite3_user_data(pContext));
 
-    OGRSpatialReference* poSrcSRS = poDS->GetSpatialRef(sHeader.iSrsId);
+    OGRSpatialReference* poSrcSRS = poDS->GetSpatialRef(sHeader.iSrsId, true);
     if( poSrcSRS == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -6428,7 +6455,7 @@ void OGRGeoPackageTransform(sqlite3_context* pContext,
     }
 
     int nDestSRID = sqlite3_value_int (argv[1]);
-    OGRSpatialReference* poDstSRS = poDS->GetSpatialRef(nDestSRID);
+    OGRSpatialReference* poDstSRS = poDS->GetSpatialRef(nDestSRID, true);
     if( poDstSRS == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -6911,15 +6938,6 @@ std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>
 }
 
 /************************************************************************/
-/*                         IsInTransaction()                            */
-/************************************************************************/
-
-bool GDALGeoPackageDataset::IsInTransaction() const
-{
-    return nSoftTransactionLevel > 0;
-}
-
-/************************************************************************/
 /*                       CommitTransaction()                            */
 /************************************************************************/
 
@@ -6931,7 +6949,7 @@ OGRErr GDALGeoPackageDataset::CommitTransaction()
         FlushMetadata();
         for( int i = 0; i < m_nLayers; i++ )
         {
-            m_papoLayers[i]->RunDeferredCreationIfNecessary();
+            m_papoLayers[i]->DoJobAtTransactionCommit();
         }
     }
 
@@ -6962,8 +6980,7 @@ OGRErr GDALGeoPackageDataset::RollbackTransaction()
                     GetOGRFeatureCountTriggersDeletedInTransaction());
             m_papoLayers[i]->SetAddOGRFeatureCountTriggers(false);
 #endif
-            m_papoLayers[i]->SyncToDisk();
-            m_papoLayers[i]->ResetReading();
+            m_papoLayers[i]->DoJobAtTransactionRollback();
 #ifdef ENABLE_GPKG_OGR_CONTENTS
             m_papoLayers[i]->DisableFeatureCount();
 #endif

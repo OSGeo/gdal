@@ -99,7 +99,7 @@ void RegisterOGRNTF()
     poDriver->SetDescription( "UK .NTF" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "UK .NTF" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_ntf.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/ntf.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = OGRNTFDriverOpen;

@@ -41,6 +41,8 @@
 #include "minidriver_arcgis_server.h"
 #include "minidriver_iip.h"
 #include "minidriver_mrf.h"
+#include "minidriver_ogcapimaps.h"
+#include "minidriver_ogcapicoverage.h"
 
 #include "cpl_json.h"
 
@@ -1057,6 +1059,8 @@ void GDALRegister_WMS()
     RegisterMinidriver(AGS);
     RegisterMinidriver(IIP);
     RegisterMinidriver(MRF);
+    RegisterMinidriver(OGCAPIMaps);
+    RegisterMinidriver(OGCAPICoverage);
 
     GDALDriver *poDriver = new GDALDriver();
 

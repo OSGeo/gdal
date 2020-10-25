@@ -316,7 +316,7 @@ int OGROCISession::EstablishSession( const char *pszUseridIn,
 /*      Set maximun name length (before 12.2 ? 30 : 128)                */
 /* -------------------------------------------------------------------- */
 
-    if( nServerVersion >= 12 && nServerRelease >= 2 )
+    if( nServerVersion > 12 || (nServerVersion == 12 && nServerRelease >= 2) )
     {
         nMaxNameLength = 128;
     }

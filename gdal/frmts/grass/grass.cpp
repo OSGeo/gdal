@@ -2,14 +2,14 @@
  *
  * Project:  GRASS Driver
  * Purpose:  Implement GRASS raster read/write support
- *           This version is for GRASS 5.7+ and uses GRASS libraries
+ *           This version is for GRASS GIS 7+ and uses GRASS libraries
  *           directly instead of using libgrass.
  * Author:   Frank Warmerdam <warmerdam@pobox.com>
  *           Radim Blazek <blazek@itc.it>
  *
  ******************************************************************************
  * Copyright (c) 2000 Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2007-2010, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2007-2020, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,48 +50,14 @@ extern "C" {
 #include <grass/gprojects.h>
 #include <grass/gis.h>
 
-#if GRASS_VERSION_MAJOR  >= 7
 char *GPJ_grass_to_wkt( const struct Key_Value *,
                         const struct Key_Value *,
                         int, int );
-#else
-char *GPJ_grass_to_wkt( struct Key_Value *,
-                        struct Key_Value *,
-                        int, int );
-#endif
 }
 
 #define GRASS_MAX_COLORS 100000  // what is the right value
 
 CPL_CVSID("$Id$")
-
-#if GRASS_VERSION_MAJOR  >= 7
-#define G_get_cellhd             Rast_get_cellhd
-#define G_get_window             Rast_get_window
-#define G_set_window             Rast_set_window
-#define G_raster_map_type        Rast_map_type
-#define G_read_fp_range          Rast_read_fp_range
-#define G_get_fp_range_min_max   Rast_get_fp_range_min_max
-#define G_set_c_null_value       Rast_set_c_null_value
-#define G_set_f_null_value       Rast_set_f_null_value
-#define G_set_d_null_value       Rast_set_d_null_value
-#define G_open_cell_old          Rast_open_old
-#define G_copy                   memcpy
-#define G_read_colors            Rast_read_colors
-#define G_get_color_range        Rast_get_c_color_range
-#define G_colors_count           Rast_colors_count
-#define G_get_f_color_rule       Rast_get_fp_color_rule
-#define G_free_colors            Rast_free_colors
-#define G_close_cell             Rast_close
-#define G_allocate_c_raster_buf  Rast_allocate_c_buf
-#define G_get_c_raster_row       Rast_get_c_row
-#define G_is_c_null_value        Rast_is_c_null_value
-#define G_get_f_raster_row       Rast_get_f_row
-#define G_get_d_raster_row       Rast_get_d_row
-#define G_allocate_f_raster_buf  Rast_allocate_f_buf
-#define G_allocate_d_raster_buf  Rast_allocate_d_buf
-#define G__setenv                G_setenv_nogisrc
-#endif
 
 /************************************************************************/
 /*                         Grass2CPLErrorHook()                         */
@@ -217,15 +183,15 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDSIn, int nBandIn,
     this->pszCellName = G_store ( (char *) pszCellNameIn );
     this->pszMapset = G_store ( (char *) pszMapsetIn );
 
-    G_get_cellhd( (char *) pszCellName, (char *) pszMapset, &sCellInfo );
-    nGRSType = G_raster_map_type( (char *) pszCellName, (char *) pszMapset );
+    Rast_get_cellhd( (char *) pszCellName, (char *) pszMapset, &sCellInfo );
+    nGRSType = Rast_map_type( (char *) pszCellName, (char *) pszMapset );
 
 /* -------------------------------------------------------------------- */
 /*      Get min/max values.                                             */
 /* -------------------------------------------------------------------- */
     struct FPRange sRange;
 
-    if( G_read_fp_range( (char *) pszCellName, (char *) pszMapset,
+    if( Rast_read_fp_range( (char *) pszCellName, (char *) pszMapset,
                          &sRange ) == -1 )
     {
         bHaveMinMax = FALSE;
@@ -233,7 +199,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDSIn, int nBandIn,
     else
     {
         bHaveMinMax = TRUE;
-        G_get_fp_range_min_max( &sRange, &dfCellMin, &dfCellMax );
+        Rast_get_fp_range_min_max( &sRange, &dfCellMin, &dfCellMax );
     }
 
 /* -------------------------------------------------------------------- */
@@ -268,14 +234,14 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDSIn, int nBandIn,
             } else { // maximum is not known or full range is used
                 CELL cval;
                 this->eDataType = GDT_Int32;
-                G_set_c_null_value ( &cval, 1);
+                Rast_set_c_null_value ( &cval, 1);
                 dfNoData = (double) cval;
             }
             nativeNulls = false;
         } else {  // 3-4 bytes
             CELL cval;
             this->eDataType = GDT_Int32;
-            G_set_c_null_value ( &cval, 1);
+            Rast_set_c_null_value ( &cval, 1);
             dfNoData = (double) cval;
             nativeNulls = true;
         }
@@ -283,7 +249,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDSIn, int nBandIn,
     else if( nGRSType == FCELL_TYPE ) {
         FCELL fval;
         this->eDataType = GDT_Float32;
-        G_set_f_null_value ( &fval, 1);
+        Rast_set_f_null_value ( &fval, 1);
         dfNoData = (double) fval;
         nativeNulls = true;
     }
@@ -291,7 +257,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDSIn, int nBandIn,
     {
         DCELL dval;
         this->eDataType = GDT_Float64;
-        G_set_d_null_value ( &dval, 1);
+        Rast_set_d_null_value ( &dval, 1);
         dfNoData = (double) dval;
         nativeNulls = true;
     }
@@ -299,21 +265,21 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDSIn, int nBandIn,
     nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
 
-    G_set_window( &(poDSIn->sCellInfo) );
+    Rast_set_window ( &(poDSIn->sCellInfo) );
     // open the raster only for actual reading
     hCell = -1;
-    G_copy((void *) &sOpenWindow, (void *) &(poDSIn->sCellInfo), sizeof(struct Cell_head));
+    memcpy((void *) &sOpenWindow, (void *) &(poDSIn->sCellInfo), sizeof(struct Cell_head));
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a color table?                                       */
 /* -------------------------------------------------------------------- */
     poCT = NULL;
-    if( G_read_colors( (char *) pszCellName, (char *) pszMapset, &sGrassColors ) == 1 )
+    if( Rast_read_colors( (char *) pszCellName, (char *) pszMapset, &sGrassColors ) == 1 )
     {
         int maxcolor;
         CELL min, max;
 
-        G_get_color_range ( &min, &max, &sGrassColors);
+        Rast_get_c_color_range ( &min, &max, &sGrassColors);
 
         if ( bHaveMinMax ) {
             if ( max < dfCellMax ) {
@@ -340,11 +306,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDSIn, int nBandIn,
             int nRed, nGreen, nBlue;
             GDALColorEntry    sColor;
 
-#if GRASS_VERSION_MAJOR  >= 7
             if( Rast_get_c_color( &iColor, &nRed, &nGreen, &nBlue, &sGrassColors ) )
-#else
-            if( G_get_color( iColor, &nRed, &nGreen, &nBlue, &sGrassColors ) )
-#endif
             {
                 sColor.c1 = nRed;
                 sColor.c2 = nGreen;
@@ -366,7 +328,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDSIn, int nBandIn,
 
         /* Create metadata entries for color table rules */
         char key[200], value[200];
-        int rcount = G_colors_count ( &sGrassColors );
+        int rcount = Rast_colors_count ( &sGrassColors );
 
         snprintf ( value, sizeof(value), "%d", rcount );
         this->SetMetadataItem( "COLOR_TABLE_RULES_COUNT", value );
@@ -376,7 +338,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDSIn, int nBandIn,
             DCELL val1, val2;
             unsigned char r1, g1, b1, r2, g2, b2;
 
-            G_get_f_color_rule ( &val1, &r1, &g1, &b1, &val2, &r2, &g2, &b2, &sGrassColors, i );
+            Rast_get_fp_color_rule ( &val1, &r1, &g1, &b1, &val2, &r2, &g2, &b2, &sGrassColors, i );
 
             snprintf ( key, sizeof(key), "COLOR_TABLE_RULE_RGB_%d", rcount-i-1 );
             snprintf ( value, sizeof(value), "%e %e %d %d %d %d %d %d", val1, val2, r1, g1, b1, r2, g2, b2 );
@@ -396,12 +358,12 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDSIn, int nBandIn,
 GRASSRasterBand::~GRASSRasterBand()
 {
     if( poCT != NULL ) {
-        G_free_colors( &sGrassColors );
+        Rast_free_colors( &sGrassColors );
         delete poCT;
     }
 
     if( hCell >= 0 )
-        G_close_cell( hCell );
+        Rast_close( hCell );
 
     if ( pszCellName )
         G_free ( pszCellName );
@@ -422,17 +384,17 @@ GRASSRasterBand::~GRASSRasterBand()
 void GRASSRasterBand::SetWindow ( struct Cell_head *sNewWindow )
 {
     if( hCell >= 0 ) {
-        G_close_cell( hCell );
+        Rast_close( hCell );
         hCell = -1;
     }
 
     /* Set window */
-    G_set_window( sNewWindow );
+    Rast_set_window( sNewWindow );
 
     /* Set GRASS env to the current raster, don't open the raster */
-    G__setenv( "GISDBASE", ((GRASSDataset *)poDS)->pszGisdbase );
-    G__setenv( "LOCATION_NAME", ((GRASSDataset *)poDS)->pszLocation );
-    G__setenv( "MAPSET", pszMapset);
+    G_setenv_nogisrc( "GISDBASE", ((GRASSDataset *)poDS)->pszGisdbase );
+    G_setenv_nogisrc( "LOCATION_NAME", ((GRASSDataset *)poDS)->pszLocation );
+    G_setenv_nogisrc( "MAPSET", pszMapset);
     G_reset_mapsets();
     G_add_mapset_to_search_path ( pszMapset );
 }
@@ -455,14 +417,14 @@ CPLErr GRASSRasterBand::ResetReading ( struct Cell_head *sNewWindow )
          sNewWindow->rows   != sOpenWindow.rows   || sNewWindow->cols   != sOpenWindow.cols )
     {
         SetWindow ( sNewWindow );
-        G_copy((void *) &sOpenWindow, (void *) sNewWindow, sizeof(struct Cell_head));
+        memcpy((void *) &sOpenWindow, (void *) sNewWindow, sizeof(struct Cell_head));
     }
     else
     {
         /* The windows are identical, check current window */
         struct Cell_head sCurrentWindow;
 
-        G_get_window ( &sCurrentWindow );
+        Rast_get_window ( &sCurrentWindow );
 
         if ( sNewWindow->north  != sCurrentWindow.north  || sNewWindow->south  != sCurrentWindow.south ||
              sNewWindow->east   != sCurrentWindow.east   || sNewWindow->west   != sCurrentWindow.west ||
@@ -494,19 +456,19 @@ CPLErr GRASSRasterBand::IReadBlock( int /*nBlockXOff*/, int nBlockYOff,
     }
     // open for reading
     if (hCell < 0) {
-        if ( (hCell = G_open_cell_old((char *) pszCellName, (char *) pszMapset)) < 0 ) {
+        if ( (hCell = Rast_open_old((char *) pszCellName, (char *) pszMapset)) < 0 ) {
             CPLError( CE_Failure, CPLE_AppDefined, "GRASS: Cannot open raster '%s'", pszCellName );
             return CE_Failure;
         }
     }
 
     if ( eDataType == GDT_Byte || eDataType == GDT_UInt16 ) {
-        CELL *cbuf = G_allocate_c_raster_buf();
-        G_get_c_raster_row ( hCell, cbuf, nBlockYOff );
+        CELL *cbuf = Rast_allocate_c_buf();
+        Rast_get_c_row ( hCell, cbuf, nBlockYOff );
 
         /* Reset NULLs */
         for ( int col = 0; col < nBlockXSize; col++ ) {
-            if ( G_is_c_null_value(&(cbuf[col])) )
+            if ( Rast_is_c_null_value(&(cbuf[col])) )
                 cbuf[col] = (CELL) dfNoData;
         }
 
@@ -518,19 +480,19 @@ CPLErr GRASSRasterBand::IReadBlock( int /*nBlockXOff*/, int nBlockYOff,
     }
     else if ( eDataType == GDT_Int32 )
     {
-        G_get_c_raster_row ( hCell, (CELL *) pImage, nBlockYOff );
+        Rast_get_c_row ( hCell, (CELL *) pImage, nBlockYOff );
     }
     else if ( eDataType == GDT_Float32 )
     {
-        G_get_f_raster_row ( hCell, (FCELL *) pImage, nBlockYOff );
+        Rast_get_f_row ( hCell, (FCELL *) pImage, nBlockYOff );
     }
     else if ( eDataType == GDT_Float64 )
     {
-        G_get_d_raster_row ( hCell, (DCELL *) pImage, nBlockYOff );
+        Rast_get_d_row ( hCell, (DCELL *) pImage, nBlockYOff );
     }
 
     // close to avoid confusion with other GRASS raster bands
-    G_close_cell( hCell );
+    Rast_close( hCell );
     hCell = -1;
 
     return CE_None;
@@ -580,7 +542,7 @@ CPLErr GRASSRasterBand::IRasterIO ( GDALRWFlag eRWFlag,
     }
     // open for reading
     if (hCell < 0) {
-        if ( (hCell = G_open_cell_old((char *) pszCellName, (char *) pszMapset)) < 0 ) {
+        if ( (hCell = Rast_open_old((char *) pszCellName, (char *) pszMapset)) < 0 ) {
             CPLError( CE_Failure, CPLE_AppDefined, "GRASS: Cannot open raster '%s'", pszCellName );
             return CE_Failure;
         }
@@ -602,11 +564,11 @@ CPLErr GRASSRasterBand::IRasterIO ( GDALRWFlag eRWFlag,
     if ( nGRSType == CELL_TYPE && ( !nativeNulls || eBufType != GDT_Int32 || sizeof(CELL) != 4 ||
                                     nPixelSpace != sizeof(CELL) )  )
     {
-        cbuf = G_allocate_c_raster_buf();
+        cbuf = Rast_allocate_c_buf();
     } else if( nGRSType == FCELL_TYPE && ( eBufType != GDT_Float32 || nPixelSpace != sizeof(FCELL) ) ) {
-        fbuf = G_allocate_f_raster_buf();
+        fbuf = Rast_allocate_f_buf();
     } else if( nGRSType == DCELL_TYPE && ( eBufType != GDT_Float64 || nPixelSpace != sizeof(DCELL) ) ) {
-        dbuf = G_allocate_d_raster_buf();
+        dbuf = Rast_allocate_d_buf();
     } else {
         direct = true;
     }
@@ -616,13 +578,13 @@ CPLErr GRASSRasterBand::IRasterIO ( GDALRWFlag eRWFlag,
 
         if ( nGRSType == CELL_TYPE ) {
             if ( direct ) {
-                G_get_c_raster_row ( hCell, (CELL *) pnt, row );
+                Rast_get_c_row ( hCell, (CELL *) pnt, row );
             } else {
-                G_get_c_raster_row ( hCell, cbuf, row );
+                Rast_get_c_row ( hCell, cbuf, row );
 
                 /* Reset NULLs */
                 for ( int col = 0; col < nBufXSize; col++ ) {
-                    if ( G_is_c_null_value(&(cbuf[col])) )
+                    if ( Rast_is_c_null_value(&(cbuf[col])) )
                         cbuf[col] = (CELL) dfNoData;
                 }
 
@@ -632,9 +594,9 @@ CPLErr GRASSRasterBand::IRasterIO ( GDALRWFlag eRWFlag,
             }
         } else if( nGRSType == FCELL_TYPE ) {
             if ( direct ) {
-                G_get_f_raster_row ( hCell, (FCELL *) pnt, row );
+                Rast_get_f_row ( hCell, (FCELL *) pnt, row );
             } else {
-                G_get_f_raster_row ( hCell, fbuf, row );
+                Rast_get_f_row ( hCell, fbuf, row );
 
                 GDALCopyWords ( (void *) fbuf, GDT_Float32, sizeof(FCELL),
                                 (void *)  pnt,  eBufType, nPixelSpace,
@@ -642,9 +604,9 @@ CPLErr GRASSRasterBand::IRasterIO ( GDALRWFlag eRWFlag,
             }
         } else if( nGRSType == DCELL_TYPE ) {
             if ( direct ) {
-                G_get_d_raster_row ( hCell, (DCELL *) pnt, row );
+                Rast_get_d_row ( hCell, (DCELL *) pnt, row );
             } else {
-                G_get_d_raster_row ( hCell, dbuf, row );
+                Rast_get_d_row ( hCell, dbuf, row );
 
                 GDALCopyWords ( (void *) dbuf, GDT_Float64, sizeof(DCELL),
                                 (void *)  pnt,  eBufType, nPixelSpace,
@@ -658,7 +620,7 @@ CPLErr GRASSRasterBand::IRasterIO ( GDALRWFlag eRWFlag,
     if ( dbuf ) G_free ( dbuf );
 
     // close to avoid confusion with other GRASS raster bands
-    G_close_cell( hCell );
+    Rast_close( hCell );
     hCell = -1;
 
     return CE_None;
@@ -866,11 +828,7 @@ bool GRASSDataset::SplitPath( char *path, char **gisdbase, char **location,
 /*                                Open()                                */
 /************************************************************************/
 
-#if (GRASS_VERSION_MAJOR  >= 6 && GRASS_VERSION_MINOR  >= 3) || GRASS_VERSION_MAJOR  >= 7
 typedef int (*GrassErrorHandler)(const char *, int);
-#else
-typedef int (*GrassErrorHandler)(char *, int);
-#endif
 
 GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 
@@ -935,9 +893,9 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Set GRASS variables                                             */
 /* -------------------------------------------------------------------- */
 
-    G__setenv( "GISDBASE", pszGisdb );
-    G__setenv( "LOCATION_NAME", pszLoc );
-    G__setenv( "MAPSET", pszMapset); // group is searched only in current mapset
+    G_setenv_nogisrc( "GISDBASE", pszGisdb );
+    G_setenv_nogisrc( "LOCATION_NAME", pszLoc );
+    G_setenv_nogisrc( "MAPSET", pszMapset); // group is searched only in current mapset
     G_reset_mapsets();
     G_add_mapset_to_search_path ( pszMapset );
 
@@ -995,15 +953,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
 
-#if GRASS_VERSION_MAJOR  >= 7
     Rast_get_cellhd( papszCells[0], papszMapsets[0], &(poDS->sCellInfo) );
-#else
-    if( G_get_cellhd( papszCells[0], papszMapsets[0], &(poDS->sCellInfo) ) != 0 ) {
-        CPLError( CE_Warning, CPLE_AppDefined, "GRASS: Cannot open raster header");
-        delete poDS;
-        return NULL;
-    }
-#endif
 
     poDS->nRasterXSize = poDS->sCellInfo.cols;
     poDS->nRasterYSize = poDS->sCellInfo.rows;
@@ -1068,7 +1018,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 
 void GDALRegister_GRASS()
 {
-    if( !GDAL_CHECK_VERSION( "GDAL/GRASS57 driver" ) )
+    if( !GDAL_CHECK_VERSION( "GDAL/GRASS driver" ) )
         return;
 
     if( GDALGetDriverByName( "GRASS" ) != NULL )
@@ -1078,7 +1028,7 @@ void GDALRegister_GRASS()
 
     poDriver->SetDescription( "GRASS" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GRASS Rasters (5.7+)" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GRASS Rasters (7+)" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/grass.html" );
 
     poDriver->pfnOpen = GRASSDataset::Open;

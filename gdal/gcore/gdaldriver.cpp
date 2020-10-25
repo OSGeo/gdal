@@ -291,7 +291,7 @@ GDALCreate( GDALDriverH hDriver, const char * pszFilename,
 /************************************************************************/
 
 /**
- * \brief Create a new multidimensioanl dataset with this driver.
+ * \brief Create a new multidimensional dataset with this driver.
  * 
  * Only drivers that advertise the GDAL_DCAP_MULTIDIM_RASTER capability and
  * implement the pfnCreateMultiDimensional method might return a non nullptr
@@ -361,7 +361,7 @@ GDALDataset * GDALDriver::CreateMultiDimensional( const char * pszFilename,
 /*                       GDALCreateMultiDimensional()                   */
 /************************************************************************/
 
-/** \brief Create a new multidimensioanl dataset with this driver.
+/** \brief Create a new multidimensional dataset with this driver.
  * 
  * This is the same as the C++ method GDALDriver::CreateMultiDimensional().
  */
@@ -387,7 +387,7 @@ CPLErr GDALDriver::DefaultCreateCopyMultiDimensional(
                                      GDALDataset *poSrcDS,
                                      GDALDataset *poDstDS,
                                      bool bStrict,
-                                     CSLConstList /*papszOptions*/,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void * pProgressData )
 {
@@ -403,7 +403,7 @@ CPLErr GDALDriver::DefaultCreateCopyMultiDimensional(
     GUInt64 nCurCost = 0;
     return poDstRG->CopyFrom(poDstRG, poSrcDS, poSrcRG, bStrict,
                              nCurCost, poSrcRG->GetTotalCopyCost(),
-                             pfnProgress, pProgressData) ?
+                             pfnProgress, pProgressData, papszOptions) ?
                 CE_None : CE_Failure;
 }
 //! @endcond
@@ -543,10 +543,16 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
     auto poSrcGroup = poSrcDS->GetRootGroup();
     if( poSrcGroup != nullptr && GetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER) )
     {
+        CPLStringList aosDatasetCO;
+        for( CSLConstList papszIter = papszOptions; papszIter && *papszIter; ++papszIter )
+        {
+            if( !STARTS_WITH_CI(*papszIter, "ARRAY:") )
+                aosDatasetCO.AddString(*papszIter);
+        }
         auto poDstDS = std::unique_ptr<GDALDataset>(
             CreateMultiDimensional(pszFilename,
                                    nullptr,
-                                   papszOptions));
+                                   aosDatasetCO.List()));
         if( !poDstDS )
             return nullptr;
         auto poDstGroup = poDstDS->GetRootGroup();
@@ -742,6 +748,15 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
         poDstDS->SetMetadata( papszMD, "RPC" );
 
 /* -------------------------------------------------------------------- */
+/*      Copy XMPmetadata.                                               */
+/* -------------------------------------------------------------------- */
+    char** papszXMP = poSrcDS->GetMetadata("xml:XMP");
+    if (papszXMP != nullptr && *papszXMP != nullptr)
+    {
+        poDstDS->SetMetadata(papszXMP, "xml:XMP");
+    }
+    
+/* -------------------------------------------------------------------- */
 /*      Loop copying bands.                                             */
 /* -------------------------------------------------------------------- */
     for( int iBand = 0;
@@ -904,6 +919,10 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
  * file handle, but also ensures that all the data and metadata has been written
  * to the dataset (GDALFlushCache() is not sufficient for that purpose).
  *
+ * For multidimensional datasets, papszOptions can contain array creation options,
+ * if they are prefixed with "ARRAY:". \see GDALGroup::CopyFrom() documentation
+ * for further details regarding such options.
+ *
  * @param pszFilename the name for the new dataset.  UTF-8 encoded.
  * @param poSrcDS the dataset being duplicated.
  * @param bStrict TRUE if the copy must be strictly equivalent, or more
@@ -990,7 +1009,23 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     if( CPLTestBool(
             CPLGetConfigOption("GDAL_VALIDATE_CREATION_OPTIONS", "YES") ) )
-        GDALValidateCreationOptions( this, papszOptions );
+    {
+        auto poSrcGroup = poSrcDS->GetRootGroup();
+        if( poSrcGroup != nullptr && GetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER) )
+        {
+            CPLStringList aosDatasetCO;
+            for( CSLConstList papszIter = papszOptions; papszIter && *papszIter; ++papszIter )
+            {
+                if( !STARTS_WITH_CI(*papszIter, "ARRAY:") )
+                    aosDatasetCO.AddString(*papszIter);
+            }
+            GDALValidateCreationOptions( this, aosDatasetCO.List() );
+        }
+        else
+        {
+            GDALValidateCreationOptions( this, papszOptions );
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Advise the source raster that we are going to read it completely */

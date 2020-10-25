@@ -4411,7 +4411,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
   }
 
 
-  CPLErr DatasetIONumPy( GDALDatasetShadow* ds, int bWrite, int xoff, int yoff, int xsize, int ysize,
+  CPLErr DatasetIONumPy( GDALDatasetShadow* ds, int bWrite, double xoff, double yoff, double xsize, double ysize,
                          PyArrayObject *psArray,
                          int buf_type,
                          GDALRIOResampleAlg resample_alg,
@@ -4461,8 +4461,21 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     sExtraArg.eResampleAlg = resample_alg;
     sExtraArg.pfnProgress = callback;
     sExtraArg.pProgressData = callback_data;
+    int nXOff = (int)(xoff + 0.5);
+    int nYOff = (int)(yoff + 0.5);
+    int nXSize = (int)(xsize + 0.5);
+    int nYSize = (int)(ysize + 0.5);
+    if( fabs(xoff-nXOff) > 1e-8 || fabs(yoff-nYOff) > 1e-8 ||
+        fabs(xsize-nXSize) > 1e-8 || fabs(ysize-nYSize) > 1e-8 )
+    {
+        sExtraArg.bFloatingPointWindowValidity = TRUE;
+        sExtraArg.dfXOff = xoff;
+        sExtraArg.dfYOff = yoff;
+        sExtraArg.dfXSize = xsize;
+        sExtraArg.dfYSize = ysize;
+    }
 
-    return  GDALDatasetRasterIOEx( ds, (bWrite) ? GF_Write : GF_Read, xoff, yoff, xsize, ysize,
+    return  GDALDatasetRasterIOEx( ds, (bWrite) ? GF_Write : GF_Read, nXOff, nYOff, nXSize, nYSize,
                                    PyArray_DATA(psArray), nxsize, nysize,
                                    ntype,
                                    bandsize, NULL,
@@ -5438,7 +5451,7 @@ SWIGINTERN PyObject *_wrap_BandRasterIONumPy(PyObject *SWIGUNUSEDPARM(self), PyO
   {
     // %typemap(check) GDALRIOResampleAlg
     // This check is a bit too late, since arg9 has already been cast
-    // to GDALRIOResampleAlg, so we are a bit in undefined behaviour land,
+    // to GDALRIOResampleAlg, so we are a bit in undefined behavior land,
     // but compilers should hopefully do the right thing
     if( static_cast<int>(arg9) < 0 ||
       static_cast<int>(arg9) > static_cast<int>(GRIORA_LAST) )
@@ -5474,10 +5487,10 @@ SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObje
   PyObject *resultobj = 0;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   int arg2 ;
-  int arg3 ;
-  int arg4 ;
-  int arg5 ;
-  int arg6 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  double arg6 ;
   PyArrayObject *arg7 = (PyArrayObject *) 0 ;
   int arg8 ;
   GDALRIOResampleAlg arg9 ;
@@ -5488,13 +5501,13 @@ SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObje
   int res1 = 0 ;
   int val2 ;
   int ecode2 = 0 ;
-  int val3 ;
+  double val3 ;
   int ecode3 = 0 ;
-  int val4 ;
+  double val4 ;
   int ecode4 = 0 ;
-  int val5 ;
+  double val5 ;
   int ecode5 = 0 ;
-  int val6 ;
+  double val6 ;
   int ecode6 = 0 ;
   int val8 ;
   int ecode8 = 0 ;
@@ -5537,26 +5550,26 @@ SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObje
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "DatasetIONumPy" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
-  ecode3 = SWIG_AsVal_int(obj2, &val3);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "DatasetIONumPy" "', argument " "3"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "DatasetIONumPy" "', argument " "3"" of type '" "double""'");
   } 
-  arg3 = static_cast< int >(val3);
-  ecode4 = SWIG_AsVal_int(obj3, &val4);
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "DatasetIONumPy" "', argument " "4"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "DatasetIONumPy" "', argument " "4"" of type '" "double""'");
   } 
-  arg4 = static_cast< int >(val4);
-  ecode5 = SWIG_AsVal_int(obj4, &val5);
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
   if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "DatasetIONumPy" "', argument " "5"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "DatasetIONumPy" "', argument " "5"" of type '" "double""'");
   } 
-  arg5 = static_cast< int >(val5);
-  ecode6 = SWIG_AsVal_int(obj5, &val6);
+  arg5 = static_cast< double >(val5);
+  ecode6 = SWIG_AsVal_double(obj5, &val6);
   if (!SWIG_IsOK(ecode6)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "DatasetIONumPy" "', argument " "6"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "DatasetIONumPy" "', argument " "6"" of type '" "double""'");
   } 
-  arg6 = static_cast< int >(val6);
+  arg6 = static_cast< double >(val6);
   {
     /* %typemap(in,numinputs=1) (PyArrayObject  *psArray) */
     if (obj6 != NULL && PyArray_Check(obj6))
@@ -5633,7 +5646,7 @@ SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObje
   {
     // %typemap(check) GDALRIOResampleAlg
     // This check is a bit too late, since arg9 has already been cast
-    // to GDALRIOResampleAlg, so we are a bit in undefined behaviour land,
+    // to GDALRIOResampleAlg, so we are a bit in undefined behavior land,
     // but compilers should hopefully do the right thing
     if( static_cast<int>(arg9) < 0 ||
       static_cast<int>(arg9) > static_cast<int>(GRIORA_LAST) )
@@ -6136,7 +6149,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"OpenMultiDimensionalNumPyArray", _wrap_OpenMultiDimensionalNumPyArray, METH_VARARGS, (char *)"OpenMultiDimensionalNumPyArray(PyArrayObject * psArray) -> Dataset"},
 	 { (char *)"GetArrayFilename", _wrap_GetArrayFilename, METH_VARARGS, (char *)"GetArrayFilename(PyArrayObject * psArray) -> retStringAndCPLFree *"},
 	 { (char *)"BandRasterIONumPy", (PyCFunction) _wrap_BandRasterIONumPy, METH_VARARGS | METH_KEYWORDS, (char *)"BandRasterIONumPy(Band band, int bWrite, double xoff, double yoff, double xsize, double ysize, PyArrayObject * psArray, int buf_type, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"},
-	 { (char *)"DatasetIONumPy", (PyCFunction) _wrap_DatasetIONumPy, METH_VARARGS | METH_KEYWORDS, (char *)"DatasetIONumPy(Dataset ds, int bWrite, int xoff, int yoff, int xsize, int ysize, PyArrayObject * psArray, int buf_type, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None, bool binterleave=True) -> CPLErr"},
+	 { (char *)"DatasetIONumPy", (PyCFunction) _wrap_DatasetIONumPy, METH_VARARGS | METH_KEYWORDS, (char *)"DatasetIONumPy(Dataset ds, int bWrite, double xoff, double yoff, double xsize, double ysize, PyArrayObject * psArray, int buf_type, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None, bool binterleave=True) -> CPLErr"},
 	 { (char *)"MDArrayIONumPy", _wrap_MDArrayIONumPy, METH_VARARGS, (char *)"MDArrayIONumPy(bool bWrite, GDALMDArrayHS * mdarray, PyArrayObject * psArray, int nDims1, int nDims3, GDALExtendedDataTypeHS * buffer_datatype) -> CPLErr"},
 	 { (char *)"VirtualMemGetArray", _wrap_VirtualMemGetArray, METH_VARARGS, (char *)"VirtualMemGetArray(VirtualMem virtualmem)"},
 	 { (char *)"RATValuesIONumPyWrite", (PyCFunction) _wrap_RATValuesIONumPyWrite, METH_VARARGS | METH_KEYWORDS, (char *)"RATValuesIONumPyWrite(RasterAttributeTable poRAT, int nField, int nStart, PyArrayObject * psArray) -> CPLErr"},

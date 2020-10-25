@@ -117,6 +117,7 @@ int BitMaskV1::RLEcompress(Byte* dst) const {
     // cppcheck-suppress uselessAssignmentPtrArg
     FLUSH;
     (void)oddrun;
+    (void)dst;
     WRITE_COUNT(EOT); // End marker
     // return compressed output size
     return int(pCnt - start);
@@ -211,7 +212,7 @@ static bool blockread(Byte** ppByte, size_t& size, std::vector<unsigned int>& d)
     Byte numBits = **ppByte;
     Byte n = stib67[numBits >> 6];
     numBits &= 63;  // bits 0-5;
-    if (numBits >= 32 || n == 0 || size < static_cast<size_t>(n))
+    if (numBits >= 32 || n == 0 || size < 1 + static_cast<size_t>(n))
         return false;
     *ppByte += 1;
     size -= 1;
@@ -384,7 +385,7 @@ bool Lerc1Image::write(Byte** ppByte, double maxZError, bool zPart) const
             if (numBytesOpt > 0) // cnt part is binary mask, use fast RLE class
                 numBytesWritten = mask.RLEcompress(*ppByte);
         }
-        else { // encode tiles to buffer, alwasy z part
+        else { // encode tiles to buffer, always z part
             float maxVal;
             if (!writeTiles(maxZError, numTilesVert, numTilesHori,
                 *ppByte, numBytesWritten, maxVal))

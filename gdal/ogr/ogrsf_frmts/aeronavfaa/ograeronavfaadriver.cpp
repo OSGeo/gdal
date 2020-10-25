@@ -75,7 +75,7 @@ void RegisterOGRAeronavFAA()
     poDriver->SetDescription( "AeronavFAA" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Aeronav FAA" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_aeronavfaa.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/aeronavfaa.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = OGRAeronavFAADriverOpen;

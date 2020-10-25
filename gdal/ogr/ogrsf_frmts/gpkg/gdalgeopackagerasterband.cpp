@@ -1908,6 +1908,10 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                         dfTileScale = (dfGlobalMax - dfGlobalMin) / 65535.0;
                     }
                 }
+                else
+                {
+                    dfTileOffset = dfGlobalMin;
+                }
 
                 for( GPtrDiff_t i = 0; i < static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize; i++ )
                 {

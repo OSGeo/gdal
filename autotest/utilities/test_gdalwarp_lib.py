@@ -1988,6 +1988,41 @@ def test_gdalwarp_lib_no_crs():
     out_ds = gdal.Warp('', src_ds, options = '-of MEM -ct "+proj=unitconvert +xy_in=1 +xy_out=2"')
     assert out_ds.GetGeoTransform() == (0.0, 5.0, 0.0, 0.0, 0.0, -5.0)
 
+
+###############################################################################
+# Test that the warp kernel properly computes the resampling kernel xsize
+# when wraping along the antimeridian (related to #2754)
+
+def test_gdalwarp_lib_xscale_antimeridian():
+
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("WGS84")
+
+    src1_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/src1.tif', 1000, 1000)
+    src1_ds.SetGeoTransform([179, 0.001, 0, 50, 0, -0.001])
+    src1_ds.SetProjection(sr.ExportToWkt())
+    src1_ds.GetRasterBand(1).Fill(100)
+    src1_ds = None
+
+    src2_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/src2.tif', 1000, 1000)
+    src2_ds.SetGeoTransform([-180, 0.001, 0, 50, 0, -0.001])
+    src2_ds.SetProjection(sr.ExportToWkt())
+    src2_ds.GetRasterBand(1).Fill(200)
+    src2_ds = None
+
+    source = gdal.BuildVRT('', ['/vsimem/src1.tif', '/vsimem/src2.tif'])
+    # Wrap to UTM zone 1 across the antimeridian
+    ds = gdal.Warp('', source, options="-of MEM -t_srs EPSG:32601 -te 276000 5464000 290000 5510000 -tr 1000 1000 -r cubic")
+    vals = struct.unpack('B' * ds.RasterXSize * ds.RasterYSize, ds.ReadRaster())
+    assert vals[0] == 100
+    assert vals[ds.RasterXSize - 1] == 200
+    # Check that the set of values is just 100 and 200. If the xscale was wrong,
+    # we would take intou account 0 values outsize of the 2 tiles.
+    assert set(vals) == set([100, 200])
+
+    gdal.Unlink('/vsimem/src1.tif')
+    gdal.Unlink('/vsimem/src2.tif')
+
 ###############################################################################
 # Cleanup
 

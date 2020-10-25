@@ -74,7 +74,7 @@ RUN if test "${HDF5_VERSION}" != ""; then ( \
     && tar xzf hdf5-${HDF5_VERSION}.tar.gz \
     && rm -f hdf5-${HDF5_VERSION}.tar.gz \
     && cd hdf5-${HDF5_VERSION} \
-    && CFLAGS=-O2 CXXFLAGS=-O2 ./configure --prefix=/usr --disable-static --with-szlib=/usr --enable-cxx \
+    && CFLAGS=-O2 CXXFLAGS=-O2 ./configure --prefix=/usr --disable-static --with-szlib=/usr --enable-cxx --enable-threadsafe --enable-unsupported \
     && make -j$(nproc) \
     && make install \
     && cp -P /usr/lib/libhdf5*.so* /build_thirdparty/usr/lib \
@@ -177,6 +177,20 @@ RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
     && apk del cmake \
     ); fi
 
+# Build libdeflate
+ARG LIBDEFLATE_VERSION=1.6
+RUN if test "${LIBDEFLATE_VERSION}" != ""; then ( \
+    mkdir libdeflate \
+    && wget -q https://github.com/ebiggers/libdeflate/archive/v${LIBDEFLATE_VERSION}.tar.gz -O - \
+        | tar xz -C libdeflate --strip-components=1 \
+    && cd libdeflate \
+    && make -j$(nproc) PREFIX=/usr install \
+    && cp -P /usr/lib/libdeflate.so* /build_thirdparty/usr/lib \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && cd .. \
+    && rm -rf libdeflate \
+    ); fi
+
 RUN apk add --no-cache rsync ccache
 ARG RSYNC_REMOTE
 
@@ -215,12 +229,13 @@ RUN mkdir proj \
     && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build spatialite
-ARG SPATIALITE_VERSION=4.3.0a
+ARG SPATIALITE_VERSION=5.0.0
 RUN if test "${SPATIALITE_VERSION}" != ""; then ( \
     wget -q http://www.gaia-gis.it/gaia-sins/libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && tar xzf libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && rm -f libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && cd libspatialite-${SPATIALITE_VERSION} \
+    && apk add --no-cache minizip-dev \
     && if test "${RSYNC_REMOTE}" != ""; then \
         echo "Downloading cache..."; \
         rsync -ra ${RSYNC_REMOTE}/spatialite/ $HOME/; \
@@ -229,7 +244,7 @@ RUN if test "${SPATIALITE_VERSION}" != ""; then ( \
         export CXX="ccache g++"; \
         ccache -M 100M; \
     fi \
-    && CFLAGS="-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H -O2" ./configure --prefix=/usr --disable-static \
+    && ./configure --prefix=/usr --disable-static \
     && make -j$(nproc) \
     && make install \
     && if test "${RSYNC_REMOTE}" != ""; then \
@@ -313,6 +328,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     --with-python \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
+    && (cd apps && make -j$(nproc) multireadtest && cp multireadtest /build/usr/bin) \
     && if test "${RSYNC_REMOTE}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \
@@ -357,7 +373,7 @@ RUN apk add --no-cache \
         libjpeg-turbo libpng libwebp expat \
         icu-libs \
         python3 py3-numpy ${POPPLER} pcre libpq libxml2 portablexdr openjpeg \
-        openexr libheif xerces-c geos cfitsio \
+        openexr libheif xerces-c geos cfitsio minizip \
     # Remove /usr/lib/libopenjp2.so.2.3.0 since we are building v2.3.1 manually
     # && rm -f /usr/lib/libopenjp2.so.2.3.0 \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*

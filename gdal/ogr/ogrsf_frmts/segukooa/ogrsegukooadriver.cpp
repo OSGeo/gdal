@@ -72,7 +72,7 @@ void RegisterOGRSEGUKOOA()
     poDriver->SetDescription( "SEGUKOOA" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "SEG-P1 / UKOOA P1/90" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_segukooa.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/segukooa.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = OGRSEGUKOOADriverOpen;

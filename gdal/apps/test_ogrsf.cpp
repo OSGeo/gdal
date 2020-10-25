@@ -3334,11 +3334,7 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
     DestroyFeatureAndNullify(poLayerFeat);
     DestroyFeatureAndNullify(poSQLFeat);
 
-    if( poSQLLyr )
-    {
-        LOG_ACTION(poDS->ReleaseResultSet(poSQLLyr));
-        poSQLLyr = nullptr;
-    }
+    LOG_ACTION(poDS->ReleaseResultSet(poSQLLyr));
 
     /* Try ResetReading(), GetNextFeature(), ResetReading(), GetNextFeature() */
     poSQLLyr = LOG_ACTION(poDS->ExecuteSQL(osSQL.c_str(), nullptr, nullptr));

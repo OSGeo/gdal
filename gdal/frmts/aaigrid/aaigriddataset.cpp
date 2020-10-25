@@ -151,7 +151,7 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     if( poODS->Seek(panLineOffset[nBlockYOff]) != 0 )
     {
-        CPLError(CE_Failure, CPLE_FileIO,
+        ReportError(CE_Failure, CPLE_FileIO,
                  "Can't seek to offset %lu in input file to read data.",
                  static_cast<long unsigned int>(panLineOffset[nBlockYOff]));
         return CE_Failure;
@@ -171,7 +171,7 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             if( iTokenChar == sizeof(szToken) - 2 )
             {
-                CPLError(CE_Failure, CPLE_FileIO,
+                ReportError(CE_Failure, CPLE_FileIO,
                          "Token too long at scanline %d.", nBlockYOff);
                 return CE_Failure;
             }
@@ -184,7 +184,7 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             (iPixel != poODS->nRasterXSize - 1 ||
             nBlockYOff != poODS->nRasterYSize - 1) )
         {
-            CPLError(CE_Failure, CPLE_FileIO, "File short, can't read line %d.",
+            ReportError(CE_Failure, CPLE_FileIO, "File short, can't read line %d.",
                      nBlockYOff);
             return CE_Failure;
         }
@@ -284,7 +284,7 @@ AAIGDataset::~AAIGDataset()
     {
         if( VSIFCloseL(fp) != 0 )
         {
-            CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+            ReportError(CE_Failure, CPLE_FileIO, "I/O error");
         }
     }
 
@@ -694,7 +694,7 @@ int GRASSASCIIDataset::ParseHeader(const char *pszHeader,
             eDataType = GDT_Float64;
         else
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
+            ReportError(CE_Warning, CPLE_AppDefined,
                      "Invalid value for type parameter : %s", pszType);
         }
     }
@@ -926,9 +926,10 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo *poOpenInfo,
         if (!(poDS->eDataType == GDT_Int32 || poDS->eDataType == GDT_Float32 ||
               poDS->eDataType == GDT_Float64))
         {
-            CPLError(CE_Warning, CPLE_NotSupported,
-                     "Unsupported value for %s : %s",
-                     pszDataTypeOption, pszDataType);
+            ReportError(poOpenInfo->pszFilename,
+                        CE_Warning, CPLE_NotSupported,
+                        "Unsupported value for %s : %s",
+                        pszDataTypeOption, pszDataType);
             poDS->eDataType = GDT_Int32;
             pszDataType = nullptr;
         }
@@ -986,8 +987,9 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo *poOpenInfo,
         {
             if( poOpenInfo->pabyHeader[i] == '\0' )
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                        "Couldn't find data values in ASCII Grid file.");
+                ReportError(poOpenInfo->pszFilename,
+                            CE_Failure, CPLE_AppDefined,
+                            "Couldn't find data values in ASCII Grid file.");
                 delete poDS;
                 return nullptr;
             }
@@ -1037,11 +1039,11 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo *poOpenInfo,
         // Scan for dot in subsequent chunks of data.
         while( !VSIFEofL(poDS->fp) )
         {
-            CPL_IGNORE_RET_VAL(VSIFReadL(pabyChunk, nChunkSize, 1, poDS->fp));
+            const size_t nLen = VSIFReadL(pabyChunk, 1, nChunkSize, poDS->fp);
 
-            for( int i = 0; i < static_cast<int>(nChunkSize); i++)
+            for( size_t i = 0; i < nLen; i++)
             {
-                GByte ch = pabyChunk[i];
+                const GByte ch = pabyChunk[i];
                 if (ch == '.' || ch == ',' || ch == 'e' || ch == 'E')
                 {
                     poDS->eDataType = GDT_Float32;
@@ -1161,9 +1163,9 @@ GDALDataset * AAIGDataset::CreateCopy(
     // Some rudimentary checks.
     if( nBands != 1 )
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "AAIG driver doesn't support %d bands.  Must be 1 band.",
-                 nBands);
+        ReportError(pszFilename, CE_Failure, CPLE_NotSupported,
+                    "AAIG driver doesn't support %d bands.  Must be 1 band.",
+                    nBands);
 
         return nullptr;
     }
@@ -1175,9 +1177,8 @@ GDALDataset * AAIGDataset::CreateCopy(
     VSILFILE *fpImage = VSIFOpenL(pszFilename, "wt");
     if( fpImage == nullptr )
     {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Unable to create file %s.",
-                 pszFilename);
+        ReportError(pszFilename, CE_Failure, CPLE_OpenFailed,
+                    "Unable to create file.");
         return nullptr;
     }
 
@@ -1208,7 +1209,7 @@ GDALDataset * AAIGDataset::CreateCopy(
     else
     {
         if( pszForceCellsize == nullptr )
-            CPLError(CE_Warning, CPLE_AppDefined,
+            ReportError(pszFilename, CE_Warning, CPLE_AppDefined,
                      "Producing a Golden Surfer style file with DX and DY "
                      "instead of CELLSIZE since the input pixels are "
                      "non-square.  Use the FORCE_CELLSIZE=TRUE creation "
@@ -1240,7 +1241,7 @@ GDALDataset * AAIGDataset::CreateCopy(
     bool bIgnoreSigDigits = false;
     if( pszDecimalPrecision && pszSignificantDigits )
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
+        ReportError(pszFilename, CE_Warning, CPLE_AppDefined,
                  "Conflicting precision arguments, using DECIMAL_PRECISION");
         bIgnoreSigDigits = true;
     }
@@ -1334,8 +1335,8 @@ GDALDataset * AAIGDataset::CreateCopy(
                                     fpImage) != 1 )
                     {
                         eErr = CE_Failure;
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Write failed, disk full?");
+                        ReportError(pszFilename, CE_Failure, CPLE_AppDefined,
+                                    "Write failed, disk full?");
                         break;
                     }
                     osBuf = "";
@@ -1372,8 +1373,8 @@ GDALDataset * AAIGDataset::CreateCopy(
                                   fpImage) != 1 )
                     {
                         eErr = CE_Failure;
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Write failed, disk full?");
+                        ReportError(pszFilename, CE_Failure, CPLE_AppDefined,
+                                    "Write failed, disk full?");
                         break;
                     }
                     osBuf = "";
@@ -1388,8 +1389,8 @@ GDALDataset * AAIGDataset::CreateCopy(
                          pProgressData) )
         {
             eErr = CE_Failure;
-            CPLError(CE_Failure, CPLE_UserInterrupt,
-                     "User terminated CreateCopy()");
+            ReportError(pszFilename, CE_Failure, CPLE_UserInterrupt,
+                        "User terminated CreateCopy()");
         }
     }
 
@@ -1425,8 +1426,9 @@ GDALDataset * AAIGDataset::CreateCopy(
         }
         else
         {
-            CPLError(CE_Failure, CPLE_FileIO, "Unable to create file %s.",
-                     pszPrjFilename);
+            ReportError(pszFilename, CE_Failure, CPLE_FileIO,
+                        "Unable to create file %s.",
+                        pszPrjFilename);
         }
         CPLFree(pszDirname);
         CPLFree(pszBasename);

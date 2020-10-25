@@ -39,7 +39,7 @@ See [alpine-small/Dockerfile](alpine-small/Dockerfile)
 * Raster drivers: small + netCDF, HDF5, BAG
 * Vector drivers: small + Spatialite, XLS
 * External libraries enabled: small + libgeos, libhdf5, libhdf5, libkea, libnetcdf, libfreexl,
-  libspatialite, libxml2, libpoppler, openexr, libheif
+  libspatialite, libxml2, libpoppler, openexr, libheif, libdeflate
 * GDAL Python (Python 3.7)
 * Base PROJ grid package
 * Overall licensing terms of the GDAL build: copy-left (GPL) + LGPL + permissive
@@ -68,7 +68,7 @@ See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
 * Vector drivers: all based on almost all possible free and open-source dependencies
 * External libraries enabled: small + libnetcdf, libhdf4, libhdf5, libtiledb, libkea,
   mongocxx 3.4, libspatialite, unixodbc, libxml2, libcfitsio, libmysqlclient,
-  libkml, libpoppler, openexr, libheif
+  libkml, libpoppler, openexr, libheif, libdeflate
 * GDAL Python (Python 3.8)
 * *All* PROJ grid packages
 * Overall licensing terms of the GDAL build: copy-left (GPL) + LGPL + permissive
@@ -95,3 +95,41 @@ Tagged images of recent past releases are available. The last ones (at time of w
 * osgeo/alpine-normal-3.1.0
 * osgeo/ubuntu-small-3.1.0
 * osgeo/ubuntu-full-3.1.0
+
+## Multi-arch Images
+
+Each directory contains a `build.sh` shell script that supports building images
+for multiple platforms using an experimental feature called [Docker BuildKit](https://docs.docker.com/buildx/working-with-buildx/).
+
+BuildKit CLI looks like `docker buildx build` vs. `docker build`
+and allows images to build not only for the architecture and operating system
+that the user invoking the build happens to run, but for others as well.
+
+There is a small setup process depending on your operating system. Refer to [Preparation toward running Docker on ARM Mac: Building multi-arch images with Docker BuildX](https://medium.com/nttlabs/buildx-multiarch-2c6c2df00ca2).
+
+#### Example Scenario
+
+If you're running Docker for MacOS with an Intel CPU
+and you wanted to build the `alpine-small` image with support for Raspberry Pi 4,
+adding a couple flags when running `alpine-small/build.sh` can greatly simplify this process
+
+#### Enabling
+
+Use the two script flags in order to leverage BuildKit:
+
+| Flag  | Description | Arguments |
+| ------------- | ------------- | ------------- |
+| --with-multi-arch  | Will build using the `buildx` plugin  | N/A |
+| --platform  | Which architectures to build  | linux/amd64,linux/arm64 |
+
+**Example**
+
+`alpine-small/build.sh --with-multi-arch --release --gdal v3.1.3 --proj master --platform linux/arm64,linux/amd64`
+
+## Custom Image Names
+
+Override the image and repository by setting the environment variable: `BASE_IMAGE_NAME`
+
+**Example**
+
+`BASE_IMAGE_NAME="YOU_DOCKER_USERNAME/gdal" alpine-small/build.sh --release --gdal v3.1.3 --proj master`

@@ -3330,7 +3330,7 @@ static Algorithm GetAlgorithm(const char* pszProcessing)
  * should be NULL otherwise)
  * @param psOptionsIn the options struct returned by
  * GDALDEMProcessingOptionsNew() or NULL.
- * @param pbUsageError the pointer to int variable to determine any usage
+ * @param pbUsageError pointer to a integer output variable to store if any usage
  * error has occurred or NULL.
  * @return the output dataset (new dataset that must be closed using
  * GDALClose()) or NULL in case of error.

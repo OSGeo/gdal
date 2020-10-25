@@ -39,7 +39,7 @@ echo "Show which shared libs got used:"
 otool -L .libs/ogrinfo
 cd ..
 cd swig/python
-python setup.py build
+python3 setup.py build
 cd ../..
 make install
 export PATH=$HOME/install-gdal/bin:$PWD/apps/.libs:$PATH

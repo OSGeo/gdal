@@ -62,7 +62,7 @@
          pointer to the driver which was used to open the data source.
 
   @return NULL on error or if the pass name is not supported by this driver,
-  otherwise an handle to a GDALDataset.  This GDALDataset should be
+  otherwise a handle to a GDALDataset.  This GDALDataset should be
   closed by deleting the object when it is no longer needed.
 
   <b>Example:</b>
@@ -114,7 +114,7 @@
          pointer to the driver which was used to open the data source.
 
   @return NULL on error or if the pass name is not supported by this driver,
-  otherwise an handle to a GDALDataset.  This GDALDataset should be
+  otherwise a handle to a GDALDataset.  This GDALDataset should be
   closed by deleting the object when it is no longer needed.
 
   <b>Example:</b>
@@ -229,7 +229,7 @@
   default).
 
   @return NULL on error or if the pass name is not supported by this driver,
-  otherwise an handle to a GDALDataset.  This GDALDataset should be
+  otherwise a handle to a GDALDataset.  This GDALDataset should be
   closed by deleting the object when it is no longer needed.
 
 */
@@ -343,7 +343,7 @@ success.
 /************************************************************************/
 
 /**
-  \fn void OGR_DS_Destroy( OGRDataSourceH hDataSource )
+  \fn void OGR_DS_Destroy( OGRDataSourceH hDS )
 
   \brief Closes opened datasource and releases allocated resources.
 
@@ -351,7 +351,7 @@ success.
 
   @deprecated Use GDALClose() in GDAL 2.0
 
-  @param hDataSource handle to allocated datasource object.
+  @param hDS handle to allocated datasource object.
 */
 
 /**
@@ -398,7 +398,7 @@ success.
  @param hDS handle to the data source from which to get the layer.
  @param iLayer a layer number between 0 and OGR_DS_GetLayerCount()-1.
 
- @return an handle to the layer, or NULL if iLayer is out of range
+ @return a handle to the layer, or NULL if iLayer is out of range
  or an error occurs.
 
 */
@@ -417,7 +417,7 @@ success.
  @param hDS handle to the data source from which to get the layer.
  @param pszLayerName Layer the layer name of the layer to fetch.
 
- @return an handle to the layer, or NULL if the layer is not found
+ @return a handle to the layer, or NULL if the layer is not found
  or an error occurs.
 
 */
@@ -444,7 +444,7 @@ success.
  @param papszOptions a StringList of name=value options.  Options are driver
                      specific.
 
- @return an handle to the layer, or NULL if an error occurs.
+ @return a handle to the layer, or NULL if an error occurs.
 */
 
 /**
@@ -467,7 +467,7 @@ success.
 
 /**
  \fn OGRLayerH OGR_DS_ExecuteSQL( OGRDataSourceH hDS,
-                             const char *pszSQLCommand,
+                             const char *pszStatement,
                              OGRGeometryH hSpatialFilter,
                              const char *pszDialect );
 
@@ -490,14 +490,14 @@ success.
  @deprecated Use GDALDatasetExecuteSQL() in GDAL 2.0
 
  @param hDS handle to the data source on which the SQL query is executed.
- @param pszSQLCommand the SQL statement to execute.
+ @param pszStatement the SQL statement to execute.
  @param hSpatialFilter handle to a geometry which represents a spatial filter. Can be NULL.
  @param pszDialect allows control of the statement dialect. If set to NULL, the
 OGR SQL engine will be used, except for RDBMS drivers that will use their dedicated SQL engine,
 unless OGRSQL is explicitly passed as the dialect. Starting with OGR 1.10, the SQLITE dialect
 can also be used.
 
- @return an handle to a OGRLayer containing the results of the query.
+ @return a handle to a OGRLayer containing the results of the query.
  Deallocate with OGR_DS_ReleaseResultSet().
 
 */
@@ -515,7 +515,7 @@ can also be used.
 
  @deprecated Use GDALDatasetReleaseResultSet() in GDAL 2.0
 
- @param hDS an handle to the data source on which was executed an
+ @param hDS a handle to the data source on which was executed an
  SQL query.
  @param hLayer handle to the result of a previous OGR_DS_ExecuteSQL() call.
 
@@ -813,7 +813,7 @@ by the OGRSFDriverManager.
  This function is the same as the C++ method OGRLayer::GetNextFeature().
 
  @param hLayer handle to the layer from which feature are read.
- @return an handle to a feature, or NULL if no more features are available.
+ @return a handle to a feature, or NULL if no more features are available.
 
 */
 
@@ -1319,7 +1319,7 @@ by the OGRSFDriverManager.
  This function is the same as the C++ method OGRLayer::GetSpatialFilter().
 
  @param hLayer handle to the layer to get the spatial filter from.
- @return an handle to the spatial filter geometry.
+ @return a handle to the spatial filter geometry.
 
  */
 
@@ -1412,7 +1412,7 @@ by the OGRSFDriverManager.
  This function is the same as the C++ method OGRLayer::GetLayerDefn().
 
  @param hLayer handle to the layer to get the schema information.
- @return an handle to the feature definition.
+ @return a handle to the feature definition.
 
 */
 
@@ -1557,7 +1557,7 @@ by the OGRSFDriverManager.
  @param hLayer handle to the layer that owned the feature.
  @param nFeatureId the feature id of the feature to read.
 
- @return an handle to a feature now owned by the caller, or NULL on failure.
+ @return a handle to a feature now owned by the caller, or NULL on failure.
 
 */
 
@@ -2685,7 +2685,7 @@ form depending on the limitations of the format driver.
  */
 
 /**
- \fn OGRErr OGR_L_SetIgnoredFields( OGRLayerH, const char** papszFields);
+ \fn OGRErr OGR_L_SetIgnoredFields( OGRLayerH hLayer, const char** papszFields);
 
  \brief Set which fields can be omitted when retrieving features from the layer.
 
@@ -2699,6 +2699,7 @@ form depending on the limitations of the format driver.
 
  This method is the same as the C++ method OGRLayer::SetIgnoredFields()
 
+ @param hLayer handle to the layer
  @param papszFields an array of field names terminated by NULL item. If NULL is passed, the ignored list is cleared.
  @return OGRERR_NONE if all field names have been resolved (even if the driver does not support this method)
 

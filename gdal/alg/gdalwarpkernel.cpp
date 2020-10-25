@@ -342,6 +342,8 @@ void* GWKThreadsCreate( char** papszWarpOptions,
         psThreadData->poJobQueue = poThreadPool->CreateJobQueue();
         psThreadData->pTransformerArgInput = pTransformerArg;
     }
+    else if( hCond )
+        CPLDestroyCond(hCond);
 
     return psThreadData;
 }
@@ -401,7 +403,7 @@ static void ThreadFuncAdapter(void* pData)
     }
     CPLReleaseMutex(psThreadData->hCondMutex);
 
-    // If no transformer assigned to current thread, instanciate one
+    // If no transformer assigned to current thread, instantiate one
     if( pTransformerArg == nullptr )
     {
         // This somehow assumes that GDALCloneTransformer() is thread-safe
@@ -681,14 +683,14 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  *
  * \code
  *   float dfPixelValue;
- *   int   nBand = 1;  // Band indexes are zero based.
+ *   int   nBand = 2-1;  // Band indexes are zero based.
  *   int   nPixel = 3; // Zero based.
  *   int   nLine = 4;  // Zero based.
  *
  *   assert( nPixel >= 0 && nPixel < poKern->nSrcXSize );
  *   assert( nLine >= 0 && nLine < poKern->nSrcYSize );
  *   assert( nBand >= 0 && nBand < poKern->nBands );
- *   dfPixelValue = ((float *) poKern->papabySrcImage[nBand-1])
+ *   dfPixelValue = ((float *) poKern->papabySrcImage[nBand])
  *                                  [nPixel + nLine * poKern->nSrcXSize];
  * \endcode
  *
@@ -710,7 +712,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  *
  * \code
  *   int   bIsValid = TRUE;
- *   int   nBand = 1;  // Band indexes are zero based.
+ *   int   nBand = 2-1;  // Band indexes are zero based.
  *   int   nPixel = 3; // Zero based.
  *   int   nLine = 4;  // Zero based.
  *
@@ -804,14 +806,14 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  *
  * \code
  *   float dfPixelValue;
- *   int   nBand = 1;  // Band indexes are zero based.
+ *   int   nBand = 2-1;  // Band indexes are zero based.
  *   int   nPixel = 3; // Zero based.
  *   int   nLine = 4;  // Zero based.
  *
  *   assert( nPixel >= 0 && nPixel < poKern->nDstXSize );
  *   assert( nLine >= 0 && nLine < poKern->nDstYSize );
  *   assert( nBand >= 0 && nBand < poKern->nBands );
- *   dfPixelValue = ((float *) poKern->papabyDstImage[nBand-1])
+ *   dfPixelValue = ((float *) poKern->papabyDstImage[nBand])
  *                                  [nPixel + nLine * poKern->nSrcYSize];
  * \endcode
  *
@@ -1063,11 +1065,94 @@ CPLErr GDALWarpKernel::PerformWarp()
     // XSCALE and YSCALE undocumented for now. Can help in some cases.
     // Best would probably be a per-pixel scale computation.
     const char* pszXScale = CSLFetchNameValue(papszWarpOptions, "XSCALE");
-    if( pszXScale != nullptr )
+    if( pszXScale != nullptr && !EQUAL(pszXScale, "FROM_GRID_SAMPLING") )
         dfXScale = CPLAtof(pszXScale);
     const char* pszYScale = CSLFetchNameValue(papszWarpOptions, "YSCALE");
     if( pszYScale != nullptr )
         dfYScale = CPLAtof(pszYScale);
+
+    // If the xscale is significantly lower than the yscale, this is highly
+    // suspicious of a situation of wrapping a very large virtual file in
+    // geographic coordinates with left and right parts being close to the
+    // antimeridian. In that situation, the xscale computed by the above method
+    // is completely wrong. Prefer doing an average of a few sample points
+    // instead
+    if( (dfYScale / dfXScale > 100 ||
+         (pszXScale != nullptr && EQUAL(pszXScale, "FROM_GRID_SAMPLING"))) )
+    {
+        // Sample points along a grid
+        const int nPointsX = std::min(10, nDstXSize);
+        const int nPointsY = std::min(10, nDstYSize);
+        const int nPoints = 3 * nPointsX * nPointsY;
+        std::vector<double> padfX;
+        std::vector<double> padfY;
+        std::vector<double> padfZ(nPoints);
+        std::vector<int> pabSuccess(nPoints);
+        for(int iY = 0; iY < nPointsY; iY++)
+        {
+            for(int iX = 0; iX < nPointsX; iX++)
+            {
+                const double dfX = nPointsX == 1 ? 0.0 :
+                    static_cast<double>(iX) * nDstXSize / (nPointsX - 1);
+                const double dfY = nPointsY == 1 ? 0.0 :
+                static_cast<double>(iY) * nDstYSize / (nPointsY - 1);
+
+                // Reproject each destination sample point and its neighbours
+                // at (x+1,y) and (x,y+1), so as to get the local scale.
+                padfX.push_back( dfX );
+                padfY.push_back( dfY );
+
+                padfX.push_back( (iX == nPointsX - 1) ? dfX - 1 : dfX + 1 );
+                padfY.push_back( dfY);
+
+                padfX.push_back( dfX );
+                padfY.push_back( (iY == nPointsY - 1) ? dfY - 1 : dfY + 1 );
+            }
+        }
+        pfnTransformer(pTransformerArg, TRUE, nPoints,
+                       &padfX[0], &padfY[0], &padfZ[0], &pabSuccess[0]);
+
+        // Compute the xscale at each sampling point
+        std::vector<double> adfXScales;
+        for( int i = 0; i < nPoints; i+=3 )
+        {
+            if( pabSuccess[i] && pabSuccess[i+1] && pabSuccess[i+2] )
+            {
+                const double dfPointXScale = 1.0 / std::max(
+                    std::abs(padfX[i+1] - padfX[i]), std::abs(padfX[i+2] - padfX[i]) );
+                adfXScales.push_back(dfPointXScale);
+            }
+        }
+
+        // Sort by increasing xcale
+        std::sort(adfXScales.begin(), adfXScales.end());
+
+        if( !adfXScales.empty() )
+        {
+            // Compute the average of scales, but eliminate outliers small
+            // scales, if some samples are just along the discontinuity.
+            const double dfMaxPointXScale = adfXScales.back();
+            double dfSumPointXScale = 0;
+            int nCountPointScale = 0;
+            for( double dfPointXScale : adfXScales )
+            {
+                if( dfPointXScale > dfMaxPointXScale / 10 )
+                {
+                    dfSumPointXScale += dfPointXScale;
+                    nCountPointScale ++;
+                }
+            }
+            if( nCountPointScale > 0 ) // should always be true
+            {
+                const double dfXScaleFromSampling = dfSumPointXScale / nCountPointScale;
+#if DEBUG_VERBOSE
+                CPLDebug("WARP", "Correcting dfXScale from %f to %f",
+                        dfXScale, dfXScaleFromSampling);
+#endif
+                dfXScale = dfXScaleFromSampling;
+            }
+        }
+    }
 
 #if DEBUG_VERBOSE
     CPLDebug("WARP", "dfXScale = %f, dfYScale = %f", dfXScale, dfYScale);

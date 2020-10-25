@@ -13,11 +13,8 @@ sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-testing
 sudo apt-get update
 
 # install test dependencies
-# note: pip 9 is installed on the box, but it hits a strange error after upgrading setuptools.
-# so we install a newer pip first.
-sudo apt-get remove -y python-*
-sudo apt-get install python-minimal
-curl -sSL 'https://bootstrap.pypa.io/get-pip.py' | sudo python
+sudo apt-get install python3.5-dev
+curl -sSL 'https://bootstrap.pypa.io/get-pip.py' | sudo python3.5
 (cd autotest; sudo -H pip install -U -r ./requirements.txt)
 
 sudo pip install lxml flake8 numpy

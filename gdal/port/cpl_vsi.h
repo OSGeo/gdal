@@ -312,6 +312,7 @@ GIntBig CPL_DLL CPLGetUsablePhysicalRAM(void);
 char CPL_DLL **VSIReadDir( const char * );
 char CPL_DLL **VSIReadDirRecursive( const char *pszPath );
 char CPL_DLL **VSIReadDirEx( const char *pszPath, int nMaxFiles );
+char CPL_DLL **VSISiblingFiles( const char *pszPath );
 
 /** Opaque type for a directory iterator */
 typedef struct VSIDIR VSIDIR;
@@ -455,6 +456,15 @@ typedef int            (*VSIFilesystemPluginRmdirCallback)         ( void *pUser
  */
 typedef char**         (*VSIFilesystemPluginReadDirCallback)       ( void *pUserData, const char *pszDirname, int nMaxFiles );
 /** 
+ * List related files. Must return NULL if unknown, or a list of relative filenames
+ * that can be opened along the main file. If no other file than pszFilename needs to
+ * be opened, return static_cast<char**> (CPLCalloc(1,sizeof(char*)));
+ * 
+ * Optional
+ * @since GDAL 3.2
+ */
+typedef char**         (*VSIFilesystemPluginSiblingFilesCallback)       ( void *pUserData, const char *pszDirname );
+/** 
  * Open a handle. Mandatory. Returns an opaque pointer that will be used in subsequent file I/O calls.
  * Should return null and/or set errno if the handle does not exist or the access mode is incorrect.
  * @since GDAL 3.0
@@ -543,6 +553,7 @@ typedef struct {
     VSIFilesystemPluginCloseCallback            close; /**< close handle  (rw) */
     size_t                                      nBufferSize; /**< buffer small reads (makes handler read only) */
     size_t                                      nCacheSize; /**< max mem to use per file when buffering */
+    VSIFilesystemPluginSiblingFilesCallback     sibling_files; /**< list related files*/
 /* 
     Callbacks are defined as a struct allocated by a call to VSIAllocFilesystemPluginCallbacksStruct
     in order to try to maintain ABI stability when eventually adding a new member.

@@ -1150,7 +1150,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
         const char *str = CSLFetchNameValue(papszOptions,"PAGESIZE");
         int newBlockX, newBlockY;
         sscanf(str, "%i,%i", &newBlockX, &newBlockY);
-        if (newBlockX && newBlockY) {
+        if (newBlockX > 0 && newBlockY > 0) {
             blockX = newBlockX;
             blockY = newBlockY;
         }

@@ -564,6 +564,7 @@ class OGRPGDataSource final: public OGRDataSource
     virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect ) override;
+    virtual OGRErr      AbortSQL() override;
     virtual void        ReleaseResultSet( OGRLayer * poLayer ) override;
 
     virtual const char* GetMetadataItem(const char* pszKey,

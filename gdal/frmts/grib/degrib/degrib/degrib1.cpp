@@ -1692,9 +1692,6 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
       meta->gridAttrib.f_miss = 0;
    }
 
-   if( !data )
-       return 0;
-
    if (f_bms) {
 /*
 #ifdef DEBUG
@@ -1716,7 +1713,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
          // cppcheck-suppress nullPointer
          if (!bitmap[i]) {
             meta->gridAttrib.numMiss++;
-            data[newIndex] = UNDEFINED;
+            if( data ) data[newIndex] = UNDEFINED;
          } else {
             if (numBits != 0) {
                 if( ((int)bdsRemainingSize - 1) * 8 + bufLoc < (int)numBits )
@@ -1736,11 +1733,11 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
                if (meta->gridAttrib.max < d_temp) {
                   meta->gridAttrib.max = d_temp;
                }
-               data[newIndex] = d_temp;
+               if( data ) data[newIndex] = d_temp;
             } else {
                /* Assert: d_temp = unitM * refVal / pow (10.0,DSF) + unitB. */
                /* Assert: min = unitM * refVal / pow (10.0, DSF) + unitB. */
-               data[newIndex] = meta->gridAttrib.min;
+               if( data ) data[newIndex] = meta->gridAttrib.min;
             }
          }
       }
@@ -1757,6 +1754,8 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
       }
       if (resetPrim != 0) {
          meta->gridAttrib.missPri = resetPrim;
+      }
+      if (data != nullptr && resetPrim != 0) {
          for (i = 0; i < meta->gds.numPts; i++) {
             /* Find the destination index. */
             if (f_convert) {
@@ -1775,6 +1774,9 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
       }
 
    } else {
+
+      if( !data )
+        return 0;
 
 #ifdef DEBUG
 /*

@@ -193,6 +193,7 @@ LogL16Decode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 	tmsize_t cc;
 	int rc;
 
+        (void)s;
 	assert(s == 0);
 	assert(sp != NULL);
 
@@ -266,6 +267,7 @@ LogLuvDecode24(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 	unsigned char* bp;
 	uint32* tp;
 
+        (void)s;
 	assert(s == 0);
 	assert(sp != NULL);
 
@@ -326,6 +328,7 @@ LogLuvDecode32(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 	tmsize_t cc;
 	int rc;
 
+        (void)s;
 	assert(s == 0);
 	sp = DecoderState(tif);
 	assert(sp != NULL);
@@ -447,6 +450,7 @@ LogL16Encode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 	int rc=0, mask;
 	tmsize_t beg;
 
+        (void)s;
 	assert(s == 0);
 	assert(sp != NULL);
 	npixels = cc / sp->pixel_size;
@@ -541,6 +545,7 @@ LogLuvEncode24(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 	uint8* op;
 	uint32* tp;
 
+        (void)s;
 	assert(s == 0);
 	assert(sp != NULL);
 	npixels = cc / sp->pixel_size;
@@ -598,6 +603,7 @@ LogLuvEncode32(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 	int rc=0, mask;
 	tmsize_t beg;
 
+        (void)s;
 	assert(s == 0);
 	assert(sp != NULL);
 

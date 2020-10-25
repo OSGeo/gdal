@@ -437,6 +437,9 @@ std::string OGRNGWLayer::TranslateSQLToFilter( swq_expr_node *poNode )
             case SWQ_ILIKE:
                 osFieldName += "__ilike";
                 break;
+            default:
+                CPLAssert(false);
+                break;
             }
 
             std::string osVal;

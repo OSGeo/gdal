@@ -139,7 +139,7 @@ static inline const char* XMLTagSplit( const char *pszName )
 void OGRLVBAGLayer::AddSpatialRef( OGRwkbGeometryType eTypeIn )
 {
     OGRGeomFieldDefn *poGeomField = poFeatureDefn->GetGeomFieldDefn(0);
-    OGRSpatialReference* poSRS = new OGRSpatialReference{};
+    OGRSpatialReference* poSRS = new OGRSpatialReference();
     poSRS->importFromURN(pszSpecificationUrn);
     poGeomField->SetSpatialRef(poSRS);
     poGeomField->SetType(eTypeIn);
@@ -466,7 +466,7 @@ void OGRLVBAGLayer::StartElementCbk( const char *pszName, const char **ppszAttr 
             OGRGeomFieldDefn *poGeomField = poFeatureDefn->GetGeomFieldDefn(0);
             if( EQUAL("srsname", papszIter[0]) && poGeomField->GetSpatialRef() == nullptr )
             {
-                OGRSpatialReference* poSRS = new OGRSpatialReference{};
+                OGRSpatialReference* poSRS = new OGRSpatialReference();
                 poSRS->importFromURN(papszIter[1]);
                 poGeomField->SetSpatialRef(poSRS);
                 poSRS->Release();
@@ -647,11 +647,11 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                 }
                 else if( poGeomField->GetType() == wkbMultiPolygon
                     && poGeom->getGeometryType() == wkbGeometryCollection
-                    && dynamic_cast<OGRGeometryCollection*>(poGeom.get())->getNumGeometries() > 0
-                    && dynamic_cast<OGRGeometryCollection*>(poGeom.get())->getGeometryRef(0)->getGeometryType() == wkbPolygon )
+                    && poGeom->toGeometryCollection()->getNumGeometries() > 0
+                    && poGeom->toGeometryCollection()->getGeometryRef(0)->getGeometryType() == wkbPolygon )
                 {
                     std::unique_ptr<OGRMultiPolygon> poMultiPolygon = std::unique_ptr<OGRMultiPolygon>{ new OGRMultiPolygon };
-                    for (auto &poChildGeom : dynamic_cast<OGRGeometryCollection*>(poGeom.get()))
+                    for (auto &poChildGeom : poGeom->toGeometryCollection())
                         poMultiPolygon->addGeometry(poChildGeom);
                     poGeom.reset(poMultiPolygon.release());
                 }

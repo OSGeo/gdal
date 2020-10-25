@@ -1108,6 +1108,10 @@ public:
   OGRErr PromoteTo3D( const char* name = NULL ) {
     return OSRPromoteTo3D(self, name);
   }
+
+  OGRErr DemoteTo2D( const char* name = NULL ) {
+    return OSRDemoteTo2D(self, name);
+  }
 %apply Pointer NONNULL {const char* name};
 
 } /* %extend */
