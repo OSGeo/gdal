@@ -41999,9 +41999,15 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for LERC" >&5
 $as_echo_n "checking for LERC... " >&6; }
 if test "$with_lerc" = yes -o x"$with_lerc" = x ; then
-    HAVE_LERC=yes
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
+    if test "$ac_cv_c_bigendian" = "yes"; then
+        HAVE_LERC=no
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled on big-endian" >&5
+$as_echo "disabled on big-endian" >&6; }
+    else
+        HAVE_LERC=yes
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
 $as_echo "enabled" >&6; }
+    fi
 else
     HAVE_LERC=no
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled by user" >&5

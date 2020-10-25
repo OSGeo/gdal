@@ -5874,8 +5874,13 @@ AC_ARG_WITH([lerc],
 
 AC_MSG_CHECKING([for LERC])
 if test "$with_lerc" = yes -o x"$with_lerc" = x ; then
-    HAVE_LERC=yes
-    AC_MSG_RESULT([enabled])
+    if test "$ac_cv_c_bigendian" = "yes"; then
+        HAVE_LERC=no
+        AC_MSG_RESULT([disabled on big-endian])
+    else
+        HAVE_LERC=yes
+        AC_MSG_RESULT([enabled])
+    fi
 else
     HAVE_LERC=no
     AC_MSG_RESULT([disabled by user])

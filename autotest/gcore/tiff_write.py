@@ -28,6 +28,7 @@
 ###############################################################################
 
 import copy
+import math
 import os
 import sys
 import shutil
@@ -7422,6 +7423,49 @@ def test_tiff_write_internal_ovr_default_blocksize(blockSize, numThreads):
     ds = None
     gdaltest.tiff_drv.Delete(fname)
 
+
+###############################################################################
+# Test LERC compression with Float32/Float64
+
+
+@pytest.mark.parametrize("gdalDataType,structType", [[gdal.GDT_Float32,'f'],[gdal.GDT_Float64,'d']])
+def test_tiff_write_lerc_float(gdalDataType, structType):
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LERC') == -1:
+        pytest.skip()
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 1, 1, gdalDataType)
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, struct.pack(structType * 2, 0.5, 1.5))
+    filename = '/vsimem/test.tif'
+    gdaltest.tiff_drv.CreateCopy(filename, src_ds, options = ['COMPRESS=LERC'])
+    ds = gdal.Open(filename)
+    assert struct.unpack(structType * 2, ds.ReadRaster()) == (0.5, 1.5)
+    ds = None
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test LERC compression withFloat32/Float64 and nan
+
+
+@pytest.mark.parametrize("gdalDataType,structType", [[gdal.GDT_Float32,'f'],[gdal.GDT_Float64,'d']])
+def test_tiff_write_lerc_float_with_nan(gdalDataType, structType):
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LERC') == -1:
+        pytest.skip()
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 1, 1, gdalDataType)
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, struct.pack(structType * 2, 0.5, float('nan')))
+    filename = '/vsimem/test.tif'
+    gdaltest.tiff_drv.CreateCopy(filename, src_ds, options = ['COMPRESS=LERC'])
+    ds = gdal.Open(filename)
+    got_data = struct.unpack(structType * 2, ds.ReadRaster())
+    assert got_data[0] == 0.5
+    assert math.isnan(got_data[1])
+    ds = None
+    gdal.Unlink(filename)
 
 
 def test_tiff_write_cleanup():
