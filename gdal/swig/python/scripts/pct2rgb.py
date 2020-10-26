@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 # import osgeo.utils.pct2rgb as a convenience to use as a script
 from osgeo.utils.pct2rgb import *  # noqa
