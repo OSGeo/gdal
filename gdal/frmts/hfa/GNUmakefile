@@ -6,6 +6,8 @@ OBJ := $(HFAOBJ) hfadataset.o hfa_overviews.o
 
 ALL_C_FLAGS = $(CFLAGS)
 
+CPPFLAGS        :=      $(PROJ_INCLUDE) $(CPPFLAGS)
+
 default: $(OBJ:.o=.$(OBJ_EXT))
 
 clean:
