@@ -1,4 +1,4 @@
-= GDAL/OGR 3.2.0 Release Notes (up to 9e52ad2) =
+= GDAL/OGR 3.2.0 Release Notes =
 
 == In a nutshell... ==
 
@@ -52,6 +52,8 @@ Build(Unix):
  * configure: fix detection of Spatialite 5 build against PROJ >= 6 (#2826)
  * configure: fix detection of libtiff and libjpeg on mingw (fixes #2881)
  * configure: fix linking order for Informix libraries
+ * configure: support CharLS 2.1 on Debian as well. (#3083)
+ * configure: disable LERC on big-endian hosts, as it is not big-endian ready
  * fix compilation issue of gdallinearsystem.cpp on Slackware 14.2 (#2883)
  * Update scripts/gdal-bash-completion.sh
 
@@ -114,6 +116,7 @@ Core:
  * GDALDataset::IRasterIO(): make it try overviews when non-nearest resampling is done before doing RasterIOResampled() on full resolution dataset
  * Workaround issue with UTF-8 precomposed vs decomposed encodings on MacOS filesystems that affect sidecar file discovery (#2903)
  * GDALBuildVRT(): add support for sources such as MEM dataset or non-materialized VRT files
+ * GDALDataset::BlockBasedRasterIO(): make it take into account floating-point window coordinates, as GDALRasterBand::IRasterIO() generic case does  (#3101)
 
 Multidim API:
  * GetMask(): use underlying parent data type as much as possible, instead of double, to avoid potential performance issues
@@ -157,6 +160,7 @@ Utilities:
  * gdal2tiles.py: fix generation of tiles at high zoom levels when input is small (#2896)
  * gdal2tiles.py: make sure configuration options specified with --config are passed to worker processes (#2950)
  * gdal2tiles.py: fix --profile=raster on a non-georeferenced image (#2998)
+ * gdal2tiles: change from cdn.leafletjs.com to unpkg.com for leaflet .css and .js (#3084)
  * gdal_merge.py: fix rounding of source coordinates, when they are very close to an integer, which would otherwise result in a one-pixel shift
  * gdal_calc: support multiple calc arguments to produce a multiband file (#3003)
  * gdal_calc.py: raise exception in case of I/O error. Fixes QGIS #36867
@@ -217,6 +221,9 @@ ENVI driver:
  * write nodata value in 'data ignore value' header field
  * add support for writing south-up / rotation=180 datasets
 
+FIT driver:
+ * reject negative value PAGESIZE creation option (ossfuzz#26596)
+
 FITS driver:
  * add support for reading multiple-extension FITS files through subdatasets
  * add support for reading binary tables
@@ -235,7 +242,7 @@ GPKG driver:
  * fix when writing a tile with uniform negative values or values > 65535 (when nodata is set) in PNG tiles (#3044)
  * fix GDAL 3.0 regression regarding some update scenarios (#2325)
 
-Grass driver:
+GRASS driver:
  * simplified to GRASS GIS 7+ only (#2945)
  * fix reading GRASS groups (#2876)
 
@@ -243,6 +250,7 @@ GRIB driver:
  * correctly report PDS template number for messages with subgrids (#3004)
  * avoid rejecting valid product due to security check
  * fix retrieval of nodata value for GRIB1 products (GDAL 3.1 regression, #2962)
+ * fix reading subfields reusing the bitmap of a previous one (GDAL 3.1 regression,  #3099)
  * Degrib g2clib: rename symbols of our internal modified copy (#2775)
 
 GTiff driver:
@@ -258,6 +266,7 @@ GTiff driver:
  * in CreateCopy() mode, avoid closing and re-opening the file handle
  * add earlier check to bail out when attempting JPEG compression with paletted image
  * LERC codec: do not write TIFFTAG_LERC_PARAMETERS several times as it cause spurious directory rewrites, and breaks for example COG creation
+ * LERC codec: fix encoding of datasets with NaN values (#3055)
  * SRS reader: interpret infinite value in GeogInvFlatteningGeoKey as 0 (fixes PROJ #2317)
  * support hidden SHIFT_ORIGIN_IN_MINUS_180_PLUS_180=YES open option used by GDALOpenVerticalShiftGrid()
  * Internal libtiff: updated to latest upstream master version
@@ -310,7 +319,7 @@ NetCDF driver:
  * multidim: fix retrieval of missing_attribute, etc... when reading mask
 
 NITF driver:
- * add support for various TREs for Spectral NITF Implementation Profile (SNIP): MATESA, GRDPSB, BANDSB, ACCHZB, ACCVTB, MSTGTA, PIATGB, PIXQLA, PIXMTA, CSEXRB, ILLUMB
+ * add support for various TREs for Spectral NITF Implementation Profile (SNIP): MATESA, GRDPSB, BANDSB, ACCHZB, ACCVTB, MSTGTA, PIATGB, PIXQLA, PIXMTA, CSEXRB, ILLUMB, CSRLSB, CSWRPB
  * Add nested variable support in xml:TRE
 
 PAux driver:
@@ -324,6 +333,9 @@ PDF driver:
 
 PDS driver:
  * take into account FIRST_STANDARD_PARALLEL for Mercator projection (#2490)
+
+RMF driver:
+ * Better support for sparse files. Fill null tiles with NoData value.
 
 RS2 driver:
  * remove support for CharLS compression since it is removed from upstream librasterlite2
@@ -381,6 +393,7 @@ OGRSpatialReference:
  * Avoid warnings in GetProjTLSContextHolder() when PROJ resource path is not already set (PROJ #2242)
  * ogr_proj_p.cpp: make sure init() is called in OSRPJContextHolder() constructor to avoid potential use of default NULL PROJ context (#2691)
  * fix issue with PROJ context and OSRCleanup() (#2744)
+ * Fix exportToWkt() after morphToESRI() on Geographic/Projected 3D CRS. But only works with PROJ 7.2
 
 Utilities:
  * ogrinfo: report field unique constraint
@@ -435,6 +448,8 @@ GML driver:
  * when encountering XML issue, defer emission of error message until we return a NULL feature, so as to avoid to confuse ogr2ogr (#2730)
  * XSD parser: recognized unsignedLong data type
  * avoid 'Destination buffer too small' error to be emitted on /vsicurl_streaming/ URLs with filters coming from the WFS driver
+ * fix layer extent with wrong axis order in some cases (#3091)
+ * recognize AIXM ElevatedSurface to be able to proper axis swapping (#3091)
 
 GMLAS driver:
  * avoid running out of file descriptors in case of big number of layers
@@ -445,6 +460,9 @@ GPKG driver:
  * add a DATETIME_FORMAT=WITH_TZ/UTC dataset creation option (defaults to WITH_TZ) to specify how to deal with non-UTC datetime values (#2898)
  * hide view "geometry_columns"
  * fix wrong RTree _update3 trigger on existing files (QGIS #36935)
+
+GRASS driver:
+ * simplified to GRASS GIS 7+ only (#2945)
 
 GTM driver:
  * on write, do not consider TZFlag=1 (localtime) as a timezone value (refs #2696)
@@ -460,6 +478,7 @@ MITAB driver:
  * fix reading and writing of Transverse Mercator projections based on KKJ
  * .tab: fix writing empty/null Time fields (#2612)
  * fix reading and writing of non-metre linear units
+ * Support for font and custom symbols in mitab (#3081)
 
 MVT driver:
  * fix 'random' failures in test_ogr_mvt_point_polygon_clip() by sorting sub-directory names, and also revise logic to attribute FID when reading directories (#2566)
@@ -578,6 +597,7 @@ Python bindings:
  * remove use of deprecated PyObject_AsReadBuffer() function
  * makefile.vc: remove '-modern -new_repr' on python target for SWIG 4 compatibility
  * add GDALMDArray.shape attribute and GDALMDArray.ReadAsMaskedArray() method
+ * make Dataset.ReadRaster() and Dataset.ReadAsArray() accept floating-point coordinates (#3101)
 
 = GDAL/OGR 3.1.0 Release Notes =
 
@@ -963,7 +983,7 @@ RasterLite2 driver:
 RMF driver:
  * Add support for PZ-90.11 and GSK-2011 coordinate systems
  * Read vertical datum info
-* Add translation vertical CS ID to dataset's spatial reference
+ * Add translation vertical CS ID to dataset's spatial reference
 
 RS2 driver:
  * add half-pixel shift to reported GCP line and column numbers (#1666)
