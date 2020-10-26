@@ -1445,8 +1445,16 @@ TIFFStartStrip(TIFF* tif, uint32 strip)
 		else
 			tif->tif_rawcc = (tmsize_t)TIFFGetStrileByteCount(tif, strip);
 	}
-	return ((*tif->tif_predecode)(tif,
-			(uint16)(strip / td->td_stripsperimage)));
+	if ((*tif->tif_predecode)(tif,
+			(uint16)(strip / td->td_stripsperimage)) == 0 ) {
+            /* Needed for example for scanline access, if tif_predecode */
+            /* fails, and we try to read the same strip again. Without invalidating */
+            /* tif_curstrip, we'd call tif_decoderow() on a possibly invalid */
+            /* codec state. */
+            tif->tif_curstrip = NOSTRIP;
+            return 0;
+        }
+        return 1;
 }
 
 /*
