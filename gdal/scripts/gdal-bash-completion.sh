@@ -575,7 +575,7 @@ _gdal_translate()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general --long-usage -ot -strict -if -of -b -mask -expand -outsize -tr -r -unscale -scale -exponent -srcwin -epo -eco -projwin -projwin_srs -a_srs -a_ullr -a_nodata -a_scale -a_offset -nogcp -gcp -colorinterp{_bn} -colorinterp -mo -q -sds -co -stats -norat -oo --version --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general --long-usage -ot -strict -if -of -b -mask -expand -outsize -tr -r -unscale -scale -exponent -srcwin -epo -eco -projwin -projwin_srs -a_srs -a_ullr -a_nodata -a_scale -a_offset -nogcp -gcp -colorinterp{_bn} -colorinterp -mo -q -sds -co -stats -norat -noxmp -oo --version --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
