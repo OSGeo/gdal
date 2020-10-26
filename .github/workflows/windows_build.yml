@@ -16,7 +16,7 @@ jobs:
             SDK: release-1911 # gisinternals SDK version still to 2017
             MSVC_VER: 1920
             platform: x86
-            PROJ_BRANCH: "7.0"
+            PROJ_BRANCH: "7.2"
             LIBWEBP_URL: "https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.0.3-windows-x86.zip"
             LIBZSTD_URL: "https://github.com/facebook/zstd/releases/download/v1.4.5/zstd-v1.4.5-win32.zip"
             LIBDEFLATE_URL: "https://github.com/ebiggers/libdeflate/releases/download/v1.6/libdeflate-1.6-windows-i686-bin.zip"
