@@ -32,9 +32,15 @@
 import os
 import sys
 
-fout = open(sys.argv[1], "wb")
-fout.write('FUZZER_FRIENDLY_ARCHIVE\n'.encode('ascii'))
-for filename in sys.argv[2:]:
-    fout.write(('***NEWFILE***:%s\n' % os.path.basename(filename)).encode('ascii'))
-    fout.write(open(filename, 'rb').read())
-fout.close()
+
+def main(argv):
+    fout = open(argv[1], "wb")
+    fout.write('FUZZER_FRIENDLY_ARCHIVE\n'.encode('ascii'))
+    for filename in argv[2:]:
+        fout.write(('***NEWFILE***:%s\n' % os.path.basename(filename)).encode('ascii'))
+        fout.write(open(filename, 'rb').read())
+    fout.close()
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

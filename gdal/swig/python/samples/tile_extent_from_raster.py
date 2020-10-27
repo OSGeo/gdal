@@ -33,9 +33,9 @@ import os
 import sys
 from osgeo import gdal, ogr
 
+
 def Usage():
     print('Usage:  tile_extent_from_raster.py [-f format] [-ovr level] in.tif out.shp')
-
     return 1
 
 
@@ -86,25 +86,25 @@ def GetOutputDriverFor(filename):
     return drv_list[0]
 
 
-def main():
+def main(argv):
     i = 1
     output_format = None
     in_filename = None
     out_filename = None
     ovr_level = None
-    while i < len(sys.argv):
-        if sys.argv[i] == "-f":
-            output_format = sys.argv[i + 1]
+    while i < len(argv):
+        if argv[i] == "-f":
+            output_format = argv[i + 1]
             i = i + 1
-        elif sys.argv[i] == "-ovr":
-            ovr_level = int(sys.argv[i + 1])
+        elif argv[i] == "-ovr":
+            ovr_level = int(argv[i + 1])
             i = i + 1
-        elif sys.argv[i][0] == '-':
+        elif argv[i][0] == '-':
             return Usage()
         elif in_filename is None:
-            in_filename = sys.argv[i]
+            in_filename = argv[i]
         elif out_filename is None:
-            out_filename = sys.argv[i]
+            out_filename = argv[i]
         else:
             return Usage()
 
@@ -113,7 +113,7 @@ def main():
     if out_filename is None:
         return Usage()
     if output_format is None:
-        output_format = GetOutputDriverFor(out_filename)
+        output_format = GetOutputDriverFor(out_filename, is_raster=False)
 
     src_ds = gdal.Open(in_filename)
     out_ds = gdal.GetDriverByName(output_format).Create(out_filename, 0, 0, 0, gdal.GDT_Unknown)
@@ -143,7 +143,8 @@ def main():
                 f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
                 out_lyr.CreateFeature(f)
     out_ds = None
+    return 0
+
 
 if __name__ == '__main__':
-    sys.exit(main())
-
+    sys.exit(main(sys.argv))

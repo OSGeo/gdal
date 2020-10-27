@@ -223,10 +223,14 @@ def gdal_ls(argv, fout=sys.stdout):
     return 0
 
 
+def main(argv):
+    return gdal_ls(argv)
+
+
 if __name__ == '__main__':
     version_num = int(gdal.VersionInfo('VERSION_NUM'))
     if version_num < 1800:
         sys.stderr.write('ERROR: Python bindings of GDAL 1.8.0 or later required\n')
         sys.exit(1)
 
-    sys.exit(gdal_ls(sys.argv))
+    sys.exit(main(sys.argv))

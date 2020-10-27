@@ -349,7 +349,7 @@ def GetLength(geometry):
     return cumulative
 
 
-def main():
+def main(argv):
     import optparse
 
     options = []
@@ -367,9 +367,9 @@ no further apart than the threshold.  If 'beg' or 'end'
 is chosen, the threshold distance will be used as an absolute value.""",
                              metavar="DISTANCE")
     options.append(o)
-    d = Densify(sys.argv[1:], options=options)
+    d = Densify(argv[1:], options=options)
     d.process()
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main(sys.argv))

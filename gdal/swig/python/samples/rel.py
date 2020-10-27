@@ -67,11 +67,7 @@ def Usage():
     print('  infile	       Name of the input file')
     print('  outfile	       Name of the output file')
     print('')
-    sys.exit(1)
-
-# =============================================================================
-
-# =============================================================================
+    return 1
 
 
 def ParseType(typ):
@@ -98,147 +94,154 @@ def ParseType(typ):
     if typ == 'CFloat64':
         return gdal.GDT_CFloat64
     return gdal.GDT_Byte
-# =============================================================================
 
 
-infile = None
-outfile = None
-iBand = 1	    # The first band will be converted by default
-frmt = 'GTiff'
-typ = gdal.GDT_Byte
+def main(argv):
+    infile = None
+    outfile = None
+    iBand = 1	    # The first band will be converted by default
+    frmt = 'GTiff'
+    typ = gdal.GDT_Byte
 
-lsrcaz = None
-lsrcel = None
-elstep = 1.0
-xsize = None
-ysize = None
-dyn_range = 255.0
+    lsrcaz = None
+    lsrcel = None
+    elstep = 1.0
+    xsize = None
+    ysize = None
+    dyn_range = 255.0
 
-# Parse command line arguments.
-i = 1
-while i < len(sys.argv):
-    arg = sys.argv[i]
+    # Parse command line arguments.
+    i = 1
+    while i < len(argv):
+        arg = argv[i]
 
-    if arg == '-b':
+        if arg == '-b':
+            i += 1
+            iBand = int(argv[i])
+
+        elif arg == '-ot':
+            i += 1
+            typ = ParseType(argv[i])
+
+        elif arg == '-lsrcaz':
+            i += 1
+            lsrcaz = float(argv[i])
+
+        elif arg == '-lsrcel':
+            i += 1
+            lsrcel = float(argv[i])
+
+        elif arg == '-elstep':
+            i += 1
+            elstep = float(argv[i])
+
+        elif arg == '-dx':
+            i += 1
+            xsize = float(argv[i])
+
+        elif arg == '-dy':
+            i += 1
+            ysize = float(argv[i])
+
+        elif arg == '-r':
+            i += 1
+            dyn_range = float(argv[i])
+
+        elif infile is None:
+            infile = arg
+
+        elif outfile is None:
+            outfile = arg
+
+        else:
+            return Usage()
+
         i += 1
-        iBand = int(sys.argv[i])
 
-    elif arg == '-ot':
-        i += 1
-        typ = ParseType(sys.argv[i])
+    if infile is None:
+        return Usage()
+    if outfile is None:
+        return Usage()
+    if lsrcaz is None:
+        return Usage()
+    if lsrcel is None:
+        return Usage()
 
-    elif arg == '-lsrcaz':
-        i += 1
-        lsrcaz = float(sys.argv[i])
+    # translate angles from degrees to radians
+    lsrcaz = lsrcaz / 180.0 * math.pi
+    lsrcel = lsrcel / 180.0 * math.pi
 
-    elif arg == '-lsrcel':
-        i += 1
-        lsrcel = float(sys.argv[i])
+    lx = -math.sin(lsrcaz) * math.cos(lsrcel)
+    ly = math.cos(lsrcaz) * math.cos(lsrcel)
+    lz = math.sin(lsrcel)
+    lxyz = math.sqrt(lx**2 + ly**2 + lz**2)
 
-    elif arg == '-elstep':
-        i += 1
-        elstep = float(sys.argv[i])
+    indataset = gdal.Open(infile, gdal.GA_ReadOnly)
+    if indataset is None:
+        print('Cannot open', infile)
+        return 2
 
-    elif arg == '-dx':
-        i += 1
-        xsize = float(sys.argv[i])
+    if indataset.RasterXSize < 3 or indataset.RasterYSize < 3:
+        print('Input image is too small to process, minimum size is 3x3')
+        return 3
 
-    elif arg == '-dy':
-        i += 1
-        ysize = float(sys.argv[i])
+    out_driver = gdal.GetDriverByName(frmt)
+    outdataset = out_driver.Create(outfile, indataset.RasterXSize, indataset.RasterYSize, indataset.RasterCount, typ)
+    outband = outdataset.GetRasterBand(1)
 
-    elif arg == '-r':
-        i += 1
-        dyn_range = float(sys.argv[i])
+    geotransform = indataset.GetGeoTransform()
+    projection = indataset.GetProjection()
 
-    elif infile is None:
-        infile = arg
+    if xsize is None:
+        xsize = abs(geotransform[1])
+    if ysize is None:
+        ysize = abs(geotransform[5])
 
-    elif outfile is None:
-        outfile = arg
+    inband = indataset.GetRasterBand(iBand)
+    if inband is None:
+        print('Cannot load band', iBand, 'from the', infile)
+        return 2
 
-    else:
-        Usage()
+    numtype = gdalnumeric.GDALTypeCodeToNumericTypeCode(typ)
+    outline = Numeric.empty((1, inband.XSize), numtype)
 
-    i += 1
+    prev = inband.ReadAsArray(0, 0, inband.XSize, 1, inband.XSize, 1)[0]
+    outband.WriteArray(outline, 0, 0)
+    gdal.TermProgress(0.0)
 
-if infile is None:
-    Usage()
-if outfile is None:
-    Usage()
-if lsrcaz is None:
-    Usage()
-if lsrcel is None:
-    Usage()
+    cur = inband.ReadAsArray(0, 1, inband.XSize, 1, inband.XSize, 1)[0]
+    outband.WriteArray(outline, 0, inband.YSize - 1)
+    gdal.TermProgress(1.0 / inband.YSize)
 
-# translate angles from degrees to radians
-lsrcaz = lsrcaz / 180.0 * math.pi
-lsrcel = lsrcel / 180.0 * math.pi
+    dx = 2 * xsize
+    dy = 2 * ysize
 
-lx = -math.sin(lsrcaz) * math.cos(lsrcel)
-ly = math.cos(lsrcaz) * math.cos(lsrcel)
-lz = math.sin(lsrcel)
-lxyz = math.sqrt(lx**2 + ly**2 + lz**2)
+    for i in range(1, inband.YSize - 1):
+        next_ = inband.ReadAsArray(0, i + 1, inband.XSize, 1, inband.XSize, 1)[0]
+        dzx = (cur[0:-2] - cur[2:]) * elstep
+        dzy = (prev[1:-1] - next_[1:-1]) * elstep
+        nx = -dy * dzx
+        ny = dx * dzy
+        nz = dx * dy
+        nxyz = nx * nx + ny * ny + nz * nz
+        nlxyz = nx * lx + ny * ly + nz * lz
+        cosine = dyn_range * (nlxyz / (lxyz * Numeric.sqrt(nxyz)))
+        cosine = Numeric.clip(cosine, 0.0, dyn_range)
+        outline[0, 1:-1] = cosine.astype(numtype)
+        outband.WriteArray(outline, 0, i)
 
-indataset = gdal.Open(infile, gdal.GA_ReadOnly)
-if indataset is None:
-    print('Cannot open', infile)
-    sys.exit(2)
+        prev = cur
+        cur = next_
 
-if indataset.RasterXSize < 3 or indataset.RasterYSize < 3:
-    print('Input image is too small to process, minimum size is 3x3')
-    sys.exit(3)
+        # Display progress report on terminal
+        gdal.TermProgress(float(i + 1) / (inband.YSize - 1))
 
-out_driver = gdal.GetDriverByName(frmt)
-outdataset = out_driver.Create(outfile, indataset.RasterXSize, indataset.RasterYSize, indataset.RasterCount, typ)
-outband = outdataset.GetRasterBand(1)
+    outdataset.SetGeoTransform(geotransform)
+    outdataset.SetProjection(projection)
 
-geotransform = indataset.GetGeoTransform()
-projection = indataset.GetProjection()
+    return 0
 
-if xsize is None:
-    xsize = abs(geotransform[1])
-if ysize is None:
-    ysize = abs(geotransform[5])
 
-inband = indataset.GetRasterBand(iBand)
-if inband is None:
-    print('Cannot load band', iBand, 'from the', infile)
-    sys.exit(2)
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
 
-numtype = gdalnumeric.GDALTypeCodeToNumericTypeCode(typ)
-outline = Numeric.empty((1, inband.XSize), numtype)
-
-prev = inband.ReadAsArray(0, 0, inband.XSize, 1, inband.XSize, 1)[0]
-outband.WriteArray(outline, 0, 0)
-gdal.TermProgress(0.0)
-
-cur = inband.ReadAsArray(0, 1, inband.XSize, 1, inband.XSize, 1)[0]
-outband.WriteArray(outline, 0, inband.YSize - 1)
-gdal.TermProgress(1.0 / inband.YSize)
-
-dx = 2 * xsize
-dy = 2 * ysize
-
-for i in range(1, inband.YSize - 1):
-    next_ = inband.ReadAsArray(0, i + 1, inband.XSize, 1, inband.XSize, 1)[0]
-    dzx = (cur[0:-2] - cur[2:]) * elstep
-    dzy = (prev[1:-1] - next_[1:-1]) * elstep
-    nx = -dy * dzx
-    ny = dx * dzy
-    nz = dx * dy
-    nxyz = nx * nx + ny * ny + nz * nz
-    nlxyz = nx * lx + ny * ly + nz * lz
-    cosine = dyn_range * (nlxyz / (lxyz * Numeric.sqrt(nxyz)))
-    cosine = Numeric.clip(cosine, 0.0, dyn_range)
-    outline[0, 1:-1] = cosine.astype(numtype)
-    outband.WriteArray(outline, 0, i)
-
-    prev = cur
-    cur = next_
-
-    # Display progress report on terminal
-    gdal.TermProgress(float(i + 1) / (inband.YSize - 1))
-
-outdataset.SetGeoTransform(geotransform)
-outdataset.SetProjection(projection)

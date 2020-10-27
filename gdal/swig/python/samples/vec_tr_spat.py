@@ -38,116 +38,120 @@ from osgeo import ogr
 def Usage():
     print('Usage: vec_tr_spat.py [-spat xmin ymin xmax ymax] infile outfile [layer]')
     print('')
-    sys.exit(1)
-
-#############################################################################
-# Argument processing.
+    return 1
 
 
-infile = None
-outfile = None
-layer_name = None
+def main(argv):
+    infile = None
+    outfile = None
+    layer_name = None
 
-i = 1
-while i < len(sys.argv):
-    arg = sys.argv[i]
+    i = 1
+    while i < len(argv):
+        arg = argv[i]
 
-    if arg == '-spat':
-        s_minx = int(sys.argv[i + 1])
-        s_miny = int(sys.argv[i + 2])
-        s_maxx = int(sys.argv[i + 3])
-        s_maxy = int(sys.argv[i + 4])
-        i = i + 4
+        if arg == '-spat':
+            s_minx = int(argv[i + 1])
+            s_miny = int(argv[i + 2])
+            s_maxx = int(argv[i + 3])
+            s_maxy = int(argv[i + 4])
+            i = i + 4
 
-    elif infile is None:
-        infile = arg
+        elif infile is None:
+            infile = arg
 
-    elif outfile is None:
-        outfile = arg
+        elif outfile is None:
+            outfile = arg
 
-    elif layer_name is None:
-        layer_name = arg
+        elif layer_name is None:
+            layer_name = arg
 
-    else:
+        else:
+            Usage()
+
+        i = i + 1
+
+    if outfile is None:
         Usage()
 
-    i = i + 1
+    #############################################################################
+    # Open the datasource to operate on.
 
-if outfile is None:
-    Usage()
+    in_ds = ogr.Open(infile, update=0)
 
-#############################################################################
-# Open the datasource to operate on.
+    if layer_name is not None:
+        in_layer = in_ds.GetLayerByName(layer_name)
+    else:
+        in_layer = in_ds.GetLayer(0)
 
-in_ds = ogr.Open(infile, update=0)
+    in_defn = in_layer.GetLayerDefn()
 
-if layer_name is not None:
-    in_layer = in_ds.GetLayerByName(layer_name)
-else:
-    in_layer = in_ds.GetLayer(0)
+    #############################################################################
+    # Create output file with similar information.
 
-in_defn = in_layer.GetLayerDefn()
+    shp_driver = ogr.GetDriverByName('ESRI Shapefile')
+    shp_driver.DeleteDataSource(outfile)
 
-#############################################################################
-# Create output file with similar information.
+    shp_ds = shp_driver.CreateDataSource(outfile)
 
-shp_driver = ogr.GetDriverByName('ESRI Shapefile')
-shp_driver.DeleteDataSource(outfile)
+    shp_layer = shp_ds.CreateLayer(in_defn.GetName(),
+                                   geom_type=in_defn.GetGeomType(),
+                                   srs=in_layer.GetSpatialRef())
 
-shp_ds = shp_driver.CreateDataSource(outfile)
+    in_field_count = in_defn.GetFieldCount()
 
-shp_layer = shp_ds.CreateLayer(in_defn.GetName(),
-                               geom_type=in_defn.GetGeomType(),
-                               srs=in_layer.GetSpatialRef())
+    for fld_index in range(in_field_count):
+        src_fd = in_defn.GetFieldDefn(fld_index)
 
-in_field_count = in_defn.GetFieldCount()
+        fd = ogr.FieldDefn(src_fd.GetName(), src_fd.GetType())
+        fd.SetWidth(src_fd.GetWidth())
+        fd.SetPrecision(src_fd.GetPrecision())
+        shp_layer.CreateField(fd)
 
-for fld_index in range(in_field_count):
-    src_fd = in_defn.GetFieldDefn(fld_index)
+    #############################################################################
+    # Apply spatial query.
 
-    fd = ogr.FieldDefn(src_fd.GetName(), src_fd.GetType())
-    fd.SetWidth(src_fd.GetWidth())
-    fd.SetPrecision(src_fd.GetPrecision())
-    shp_layer.CreateField(fd)
+    in_layer.SetSpatialFilterRect(s_minx, s_miny, s_maxx, s_maxy)
 
-#############################################################################
-# Apply spatial query.
+    #############################################################################
+    # Setup rect geometry to try intersect with.
 
-in_layer.SetSpatialFilterRect(s_minx, s_miny, s_maxx, s_maxy)
+    ring = ogr.Geometry(ogr.wkbLinearRing)
+    ring.AddPoint_2D(s_minx, s_miny)
+    ring.AddPoint_2D(s_maxx, s_miny)
+    ring.AddPoint_2D(s_maxx, s_maxy)
+    ring.AddPoint_2D(s_minx, s_maxy)
+    ring.AddPoint_2D(s_minx, s_miny)
 
-#############################################################################
-# Setup rect geometry to try intersect with.
+    filt_geom = ogr.Geometry(ogr.wkbPolygon)
+    filt_geom.AddGeometry(ring)
 
-ring = ogr.Geometry(ogr.wkbLinearRing)
-ring.AddPoint_2D(s_minx, s_miny)
-ring.AddPoint_2D(s_maxx, s_miny)
-ring.AddPoint_2D(s_maxx, s_maxy)
-ring.AddPoint_2D(s_minx, s_maxy)
-ring.AddPoint_2D(s_minx, s_miny)
+    #############################################################################
+    # Process all features in input layer.
 
-filt_geom = ogr.Geometry(ogr.wkbPolygon)
-filt_geom.AddGeometry(ring)
-
-#############################################################################
-# Process all features in input layer.
-
-in_feat = in_layer.GetNextFeature()
-while in_feat is not None:
-
-    geom = in_feat.GetGeometryRef()
-
-    if geom.Intersect(filt_geom) != 0:
-        out_feat = ogr.Feature(feature_def=shp_layer.GetLayerDefn())
-        out_feat.SetFrom(in_feat)
-
-        shp_layer.CreateFeature(out_feat)
-        out_feat.Destroy()
-
-    in_feat.Destroy()
     in_feat = in_layer.GetNextFeature()
+    while in_feat is not None:
 
-#############################################################################
-# Cleanup
+        geom = in_feat.GetGeometryRef()
 
-shp_ds.Destroy()
-in_ds.Destroy()
+        if geom.Intersect(filt_geom) != 0:
+            out_feat = ogr.Feature(feature_def=shp_layer.GetLayerDefn())
+            out_feat.SetFrom(in_feat)
+
+            shp_layer.CreateFeature(out_feat)
+            out_feat.Destroy()
+
+        in_feat.Destroy()
+        in_feat = in_layer.GetNextFeature()
+
+    #############################################################################
+    # Cleanup
+
+    shp_ds.Destroy()
+    in_ds.Destroy()
+
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

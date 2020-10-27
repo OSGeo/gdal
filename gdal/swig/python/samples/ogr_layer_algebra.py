@@ -123,6 +123,10 @@ def CreateLayer(output_ds, output_lyr_name, srs, geom_type, lco,
 
 
 def main(argv=None):
+    version_num = int(gdal.VersionInfo('VERSION_NUM'))
+    if version_num < 1100000:
+        print('ERROR: Python bindings of GDAL 1.10 or later required')
+        return 1
 
     frmt = 'ESRI Shapefile'
     quiet_flag = 0
@@ -143,7 +147,7 @@ def main(argv=None):
     srs_name = None
     srs = None
 
-    argv = ogr.GeneralCmdLineProcessor(sys.argv)
+    argv = ogr.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 1
 
@@ -443,13 +447,6 @@ def main(argv=None):
 
     return 0
 
-###############################################################################
-
 
 if __name__ == '__main__':
-    version_num = int(gdal.VersionInfo('VERSION_NUM'))
-    if version_num < 1100000:
-        print('ERROR: Python bindings of GDAL 1.10 or later required')
-        sys.exit(1)
-
     sys.exit(main(sys.argv))

@@ -459,10 +459,11 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname=None, update_mode=DEF
 
     return ret
 
-###############################################################
-# Entry point
+
+def main(argv):
+    argv = ogr.GeneralCmdLineProcessor(argv)
+    return ogrupdate_analyse_args(argv[1:])
 
 
 if __name__ == '__main__':
-    argv = ogr.GeneralCmdLineProcessor(sys.argv)
-    sys.exit(ogrupdate_analyse_args(argv[1:]))
+    sys.exit(main(sys.argv))

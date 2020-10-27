@@ -465,7 +465,10 @@ def write_zero_error():
 
 
 def main_loop():
+    return main()
 
+
+def main(argv):
     server_ds = None
     server_bands = []
     gdal.SetConfigOption('GDAL_API_PROXY', 'NO')
@@ -514,13 +517,13 @@ def main_loop():
             server_bands = []
             write_marker()
             write_int(1)
-            sys.exit(0)
+            return 0
         elif instr == INSTR_EXIT_FAIL:
             server_ds = None
             server_bands = []
             write_marker()
             write_int(1)
-            sys.exit(1)
+            return 1
         elif instr == INSTR_SetConfigOption:
             key = read_str()
             val = read_str()
@@ -864,4 +867,6 @@ def main_loop():
         write_zero_error()
 
 
-main_loop()
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
+
