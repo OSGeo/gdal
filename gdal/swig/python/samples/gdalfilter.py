@@ -41,8 +41,8 @@ def Usage():
 
 
 def main(argv):
-    srcwin = None
-    bands = []
+    # srcwin = None
+    # bands = []
 
     srcfile = None
     dstfile = None
@@ -146,8 +146,7 @@ def main(argv):
     </KernelFilteredSource>''' % (srcfile, normalized, size, coefs_string)
 
     # =============================================================================
-    # Go through all the bands replacing the SimpleSource with a filtered
-    #       source.
+    # Go through all the bands replacing the SimpleSource with a filtered source.
     # =============================================================================
 
     for iBand in range(vrt_ds.RasterCount):
@@ -173,8 +172,11 @@ def main(argv):
 
     out_ds = out_driver.CreateCopy(dstfile, vrt_ds, options=create_options,
                                    callback=gdal.TermProgress)
-    out_ds = None
-    return 0
+    if out_ds is None:
+        return 1
+    else:
+        out_ds = None
+        return 0
 
 
 if __name__ == '__main__':

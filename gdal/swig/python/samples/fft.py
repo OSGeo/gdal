@@ -73,7 +73,7 @@ def ParseType(typ):
 def main(argv):
     infile = None
     outfile = None
-    format = 'GTiff'
+    frmt = 'GTiff'
     typ = None
     transformation = 'forward'
 
@@ -94,7 +94,7 @@ def main(argv):
         elif arg == '-ot':
             i = i + 1
             typ = ParseType(argv[i])
-            set_type = 'yes'
+            # set_type = 'yes'
 
         elif infile is None:
             infile = arg

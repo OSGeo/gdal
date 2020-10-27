@@ -41,6 +41,7 @@ def doit(name):
     ds = ogr.Open(name, update=1)
 
     layer_count = ds.GetLayerCount()
+    print('{}: Layer count: {}'.format(name, layer_count))
 
     # -
     # Establish access to the line and polygon layers.  Eventually we shouldn't

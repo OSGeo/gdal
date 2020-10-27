@@ -194,7 +194,7 @@ def main(argv):
     ulx = None
     psize_x = None
     separate = False
-    pre_init = None
+    # pre_init = None
 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:

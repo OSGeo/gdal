@@ -64,7 +64,7 @@ def main(argv):
         return Usage()
 
     ds = gdal.Open(in_dataset)
-    out_ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(out_dataset)
+    out_ds = ogr.GetDriverByName(out_format).CreateDataSource(out_dataset)
     sr = None
     wkt = ds.GetGCPProjection()
     if wkt != '':
