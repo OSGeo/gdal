@@ -224,6 +224,7 @@ def test_fits_open_raster_only_in_vector_mode():
     assert os.path.exists(filename)
     with gdaltest.error_handler():
         assert ogr.Open(filename) is None
+    assert 'but contains image' in gdal.GetLastErrorMsg()
 
     filename = 'data/fits/image_in_first_and_second_hdu.fits'
     assert os.path.exists(filename)
@@ -241,7 +242,7 @@ def test_fits_open_vector_only_in_raster_mode():
     assert os.path.exists(filename)
     with gdaltest.error_handler():
         assert gdal.Open(filename) is None
-
+    assert 'but contains binary table' in gdal.GetLastErrorMsg()
 
 # Test opening with gdal.OF_RASTER | gdal.OF_VECTOR
 def test_fits_open_mix_mode():
