@@ -33,6 +33,7 @@
 import sys
 
 from osgeo import gdal
+from osgeo.auxiliary.base import GetOutputDriverFor
 
 
 def Usage():
@@ -50,7 +51,7 @@ def main(argv):
     return err
 
 
-def doit(pct_filename, src_filename, dst_filename, frmt='GTiff'):
+def doit(pct_filename, src_filename, dst_filename, frmt=None):
 
     # =============================================================================
     # Get the PCT.
@@ -82,6 +83,9 @@ def doit(pct_filename, src_filename, dst_filename, frmt='GTiff'):
     # =============================================================================
     # Write the dataset to the output file.
     # =============================================================================
+
+    if frmt is None:
+        frmt = GetOutputDriverFor(dst_filename)
 
     out_ds = frmt.CreateCopy(dst_filename, mem_ds)
 

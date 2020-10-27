@@ -40,10 +40,9 @@ from osgeo import gdal
 
 
 def Usage():
-
     print('Usage: epsg_tr.py [-wkt] [-pretty_wkt] [-proj4] [-xml] [-postgis]')
     print('                  [-authority name]')
-    sys.exit(1)
+    return 1
 
 # =============================================================================
 
@@ -122,7 +121,7 @@ def main(argv):
 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
-        sys.exit(0)
+        return 0
 
     # Parse command line arguments.
 
@@ -139,10 +138,10 @@ def main(argv):
             authority = argv[i]
 
         elif arg[0] == '-':
-            Usage()
+            return Usage()
 
         else:
-            Usage()
+            return Usage()
 
         i = i + 1
 

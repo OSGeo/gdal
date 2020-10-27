@@ -36,20 +36,12 @@ import sys
 from osgeo import gdal
 
 
-# =============================================================================
-# 	Usage()
-# =============================================================================
 def Usage():
     print('Usage: gdalident.py [-r] file(s)')
-    sys.exit(1)
-
-# =============================================================================
-# 	ProcessTarget()
-# =============================================================================
+    return 1
 
 
 def ProcessTarget(target, recursive, report_failure, filelist=None):
-
     if filelist is not None:
         driver = gdal.IdentifyDriver(target, filelist)
     else:
@@ -81,7 +73,7 @@ def main(argv):
     gdal.AllRegister()
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
-        sys.exit(0)
+        return 0
 
     # Parse command line arguments.
     i = 1
@@ -100,7 +92,7 @@ def main(argv):
         i = i + 1
 
     if not files:
-        Usage()
+        return Usage()
 
     for f in files:
         ProcessTarget(f, recursive, report_failure)
