@@ -63,6 +63,7 @@ import numpy
 
 from osgeo import gdal
 from osgeo import gdalnumeric
+from osgeo.auxiliary.base import GetOutputDriverFor
 
 # create alphabetic list (lowercase + uppercase) for storing input layers
 AlphaList = list(string.ascii_letters)
@@ -104,63 +105,6 @@ def parse_extent(extent):
     elif isinstance(extent, EXTENT):
         return extent
     raise Exception('Error: Unknown extent %s' % extent)
-
-
-def is_path_like(s):
-    # when GDAL drops Python2 support we can support from pathlib import Path, for now it's just str.
-    # return isinstance(s, (str, Path))
-    return isinstance(s, str)
-
-
-def DoesDriverHandleExtension(drv, ext):
-    exts = drv.GetMetadataItem(gdal.DMD_EXTENSIONS)
-    return exts is not None and exts.lower().find(ext.lower()) >= 0
-
-
-def GetExtension(filename):
-    ext = os.path.splitext(filename)[1]
-    if ext.startswith('.'):
-        ext = ext[1:]
-    return ext
-
-
-def GetOutputDriversFor(filename):
-    drv_list = []
-    ext = GetExtension(filename)
-    for i in range(gdal.GetDriverCount()):
-        drv = gdal.GetDriver(i)
-        if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None or
-            drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
-           drv.GetMetadataItem(gdal.DCAP_RASTER) is not None:
-            if ext and DoesDriverHandleExtension(drv, ext):
-                drv_list.append(drv.ShortName)
-            else:
-                prefix = drv.GetMetadataItem(gdal.DMD_CONNECTION_PREFIX)
-                if prefix is not None and filename.lower().startswith(prefix.lower()):
-                    drv_list.append(drv.ShortName)
-
-    # GMT is registered before netCDF for opening reasons, but we want
-    # netCDF to be used by default for output.
-    if ext.lower() == 'nc' and not drv_list and \
-       drv_list[0].upper() == 'GMT' and drv_list[1].upper() == 'NETCDF':
-        drv_list = ['NETCDF', 'GMT']
-
-    return drv_list
-
-
-def GetOutputDriverFor(filename):
-    if not filename:
-        return 'MEM'
-    drv_list = GetOutputDriversFor(filename)
-    ext = GetExtension(filename)
-    if not drv_list:
-        if not ext:
-            return 'GTiff'
-        else:
-            raise Exception("Cannot guess driver for %s" % filename)
-    elif len(drv_list) > 1:
-        print("Several drivers matching %s extension. Using %s" % (ext if ext else '', drv_list[0]))
-    return drv_list[0]
 
 
 GT_SAME = -1
@@ -734,21 +678,21 @@ def main(argv):
 
     if len(argv) == 1:
         parser.print_help()
-        sys.exit(1)
+        return 1
     elif not opts.calc:
         print("No calculation provided. Nothing to do!")
         parser.print_help()
-        sys.exit(1)
+        return 1
     elif not opts.outF:
         print("No output file provided. Cannot proceed.")
         parser.print_help()
-        sys.exit(1)
+        return 1
     else:
         try:
             doit(opts, args)
         except IOError as e:
             print(e)
-            sys.exit(1)
+            return 1
 
 
 if __name__ == '__main__':

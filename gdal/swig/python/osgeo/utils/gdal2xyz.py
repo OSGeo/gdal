@@ -45,7 +45,7 @@ def Usage():
     print('Usage: gdal2xyz.py [-skip factor] [-srcwin xoff yoff width height]')
     print('                   [-band b] [-csv] srcfile [dstfile]')
     print('')
-    sys.exit(1)
+    return 1
 
 
 def main(argv):
@@ -56,10 +56,9 @@ def main(argv):
     band_nums = []
     delim = ' '
 
-    gdal.AllRegister()
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
-        sys.exit(0)
+        return 0
 
     # Parse command line arguments.
     i = 1
@@ -83,7 +82,7 @@ def main(argv):
             delim = ','
 
         elif arg[0] == '-':
-            Usage()
+            return Usage()
 
         elif srcfile is None:
             srcfile = arg
@@ -92,12 +91,12 @@ def main(argv):
             dstfile = arg
 
         else:
-            Usage()
+            return Usage()
 
         i = i + 1
 
     if srcfile is None:
-        Usage()
+        return Usage()
 
     if band_nums == []:
         band_nums = [1]
@@ -105,14 +104,14 @@ def main(argv):
     srcds = gdal.Open(srcfile)
     if srcds is None:
         print('Could not open %s.' % srcfile)
-        sys.exit(1)
+        return 1
 
     bands = []
     for band_num in band_nums:
         band = srcds.GetRasterBand(band_num)
         if band is None:
             print('Could not get band %d' % band_num)
-            sys.exit(1)
+            return 1
         bands.append(band)
 
     gt = srcds.GetGeoTransform()

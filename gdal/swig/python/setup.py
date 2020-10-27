@@ -402,7 +402,7 @@ if GNM_ENABLED:
 if HAVE_NUMPY:
     ext_modules.append(array_module)
 
-packages = ["osgeo", "osgeo.utils"]
+packages = ["osgeo", "osgeo.utils", "osgeo.auxiliary"]
 
 readme = str(open('README.rst', 'rb').read())
 

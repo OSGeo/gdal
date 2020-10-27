@@ -36,7 +36,7 @@ from osgeo import osr
 def main(argv):
     if len(argv) < 2:
         print('Usage: esri2wkt.py <esri .prj file>')
-        sys.exit(1)
+        return 1
 
     prj_fd = open(argv[1])
     prj_lines = prj_fd.readlines()
