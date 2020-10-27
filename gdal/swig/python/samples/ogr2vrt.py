@@ -84,251 +84,255 @@ def Usage():
     print('Usage: ogr2vrt.py [-relative] [-schema] [-feature_count] [-extent]')
     print('                  in_datasource out_vrtfile [layers]')
     print('')
-    sys.exit(1)
-
-#############################################################################
-# Argument processing.
+    return 1
 
 
-infile = None
-outfile = None
-layer_list = []
-relative = "0"
-schema = 0
-feature_count = 0
-extent = 0
-openoptions = []
-
-argv = gdal.GeneralCmdLineProcessor(sys.argv)
-if argv is None:
-    sys.exit(0)
-
-i = 1
-while i < len(argv):
-    arg = argv[i]
-
-    if arg == '-relative':
-        relative = "1"
-
-    elif arg == '-schema':
-        schema = 1
-
-    elif arg == '-feature_count':
-        feature_count = 1
-
-    elif arg == '-extent':
-        extent = 1
-
-    elif arg == '-oo':
-        i += 1
-        openoptions.append(argv[i])
-
-    elif arg[0] == '-':
-        Usage()
-
-    elif infile is None:
-        infile = arg
-
-    elif outfile is None:
-        outfile = arg
-
-    else:
-        layer_list.append(arg)
-
-    i = i + 1
-
-if outfile is None:
-    Usage()
-
-if schema and feature_count:
-    sys.stderr.write('Ignoring -feature_count when used with -schema.\n')
+def main(argv):
+    infile = None
+    outfile = None
+    layer_list = []
+    relative = "0"
+    schema = 0
     feature_count = 0
-
-if schema and extent:
-    sys.stderr.write('Ignoring -extent when used with -schema.\n')
     extent = 0
+    openoptions = []
 
-#############################################################################
-# Open the datasource to read.
+    argv = gdal.GeneralCmdLineProcessor(argv)
+    if argv is None:
+        return 0
 
-src_ds = gdal.OpenEx(infile, gdal.OF_VECTOR, open_options=openoptions)
+    i = 1
+    while i < len(argv):
+        arg = argv[i]
 
-if schema:
-    infile = '@dummy@'
+        if arg == '-relative':
+            relative = "1"
 
-if not layer_list:
-    for lyr_idx in range(src_ds.GetLayerCount()):
-        layer_list.append(src_ds.GetLayer(lyr_idx).GetLayerDefn().GetName())
+        elif arg == '-schema':
+            schema = 1
 
-#############################################################################
-# Start the VRT file.
+        elif arg == '-feature_count':
+            feature_count = 1
 
-vrt = '<OGRVRTDataSource>\n'
+        elif arg == '-extent':
+            extent = 1
 
+        elif arg == '-oo':
+            i += 1
+            openoptions.append(argv[i])
 
-#############################################################################
-# Metadata
+        elif arg[0] == '-':
+            return Usage()
 
-mdd_list = src_ds.GetMetadataDomainList()
-if mdd_list is not None:
-    for domain in mdd_list:
-        if domain == '':
-            vrt += '  <Metadata>\n'
-        elif len(domain) > 4 and domain[0:4] == 'xml:':
-            vrt += '  <Metadata domain="%s" format="xml">\n' % Esc(domain)
+        elif infile is None:
+            infile = arg
+
+        elif outfile is None:
+            outfile = arg
+
         else:
-            vrt += '  <Metadata domain="%s">\n' % Esc(domain)
-        if len(domain) > 4 and domain[0:4] == 'xml:':
-            vrt += src_ds.GetMetadata_List(domain)[0]
-        else:
-            md = src_ds.GetMetadata(domain)
-            for key in md:
-                vrt += '    <MDI key="%s">%s</MDI>\n' % (Esc(key), Esc(md[key]))
-        vrt += '  </Metadata>\n'
+            layer_list.append(arg)
+
+        i = i + 1
+
+    if outfile is None:
+        return Usage()
+
+    if schema and feature_count:
+        sys.stderr.write('Ignoring -feature_count when used with -schema.\n')
+        feature_count = 0
+
+    if schema and extent:
+        sys.stderr.write('Ignoring -extent when used with -schema.\n')
+        extent = 0
+
+    #############################################################################
+    # Open the datasource to read.
+
+    src_ds = gdal.OpenEx(infile, gdal.OF_VECTOR, open_options=openoptions)
+
+    if schema:
+        infile = '@dummy@'
+
+    if not layer_list:
+        for lyr_idx in range(src_ds.GetLayerCount()):
+            layer_list.append(src_ds.GetLayer(lyr_idx).GetLayerDefn().GetName())
+
+    #############################################################################
+    # Start the VRT file.
+
+    vrt = '<OGRVRTDataSource>\n'
 
 
-#############################################################################
-# Process each source layer.
+    #############################################################################
+    # Metadata
 
-for name in layer_list:
-    layer = src_ds.GetLayerByName(name)
-    layerdef = layer.GetLayerDefn()
-
-    vrt += '  <OGRVRTLayer name="%s">\n' % Esc(name)
-
-    mdd_list = layer.GetMetadataDomainList()
+    mdd_list = src_ds.GetMetadataDomainList()
     if mdd_list is not None:
         for domain in mdd_list:
             if domain == '':
-                vrt += '    <Metadata>\n'
+                vrt += '  <Metadata>\n'
             elif len(domain) > 4 and domain[0:4] == 'xml:':
-                vrt += '    <Metadata domain="%s" format="xml">\n' % Esc(domain)
+                vrt += '  <Metadata domain="%s" format="xml">\n' % Esc(domain)
             else:
-                vrt += '    <Metadata domain="%s">\n' % Esc(domain)
+                vrt += '  <Metadata domain="%s">\n' % Esc(domain)
             if len(domain) > 4 and domain[0:4] == 'xml:':
-                vrt += layer.GetMetadata_List(domain)[0]
+                vrt += src_ds.GetMetadata_List(domain)[0]
             else:
-                md = layer.GetMetadata(domain)
+                md = src_ds.GetMetadata(domain)
                 for key in md:
-                    vrt += '      <MDI key="%s">%s</MDI>\n' % (Esc(key), Esc(md[key]))
-            vrt += '    </Metadata>\n'
+                    vrt += '    <MDI key="%s">%s</MDI>\n' % (Esc(key), Esc(md[key]))
+            vrt += '  </Metadata>\n'
 
-    if not os.path.isabs(outfile) and not os.path.isabs(infile) and \
-       os.path.dirname(outfile) == '' and os.path.dirname(infile) == '':
-        relative = 1
 
-    vrt += '    <SrcDataSource relativeToVRT="%s" shared="%d">%s</SrcDataSource>\n' \
-           % (relative, not schema, Esc(infile))
+    #############################################################################
+    # Process each source layer.
 
-    if openoptions:
-        vrt += '    <OpenOptions>\n'
-        for option in openoptions:
-            (key, value) = option.split('=')
-            vrt += '        <OOI key="%s">%s</OOI>\n' % (Esc(key), Esc(value))
-        vrt += '    </OpenOptions>\n'
+    for name in layer_list:
+        layer = src_ds.GetLayerByName(name)
+        layerdef = layer.GetLayerDefn()
 
-    if schema:
-        vrt += '    <SrcLayer>@dummy@</SrcLayer>\n'
-    else:
-        vrt += '    <SrcLayer>%s</SrcLayer>\n' % Esc(name)
+        vrt += '  <OGRVRTLayer name="%s">\n' % Esc(name)
 
-    # Historic format for mono-geometry layers
-    if layerdef.GetGeomFieldCount() == 0:
-        vrt += '    <GeometryType>wkbNone</GeometryType>\n'
-    elif layerdef.GetGeomFieldCount() == 1 and \
-            layerdef.GetGeomFieldDefn(0).IsNullable():
-        vrt += '    <GeometryType>%s</GeometryType>\n' \
-            % GeomType2Name(layerdef.GetGeomType())
-        srs = layer.GetSpatialRef()
-        if srs is not None:
-            vrt += '    <LayerSRS>%s</LayerSRS>\n' \
-                % (Esc(srs.ExportToWkt()))
-        if extent:
-            (xmin, xmax, ymin, ymax) = layer.GetExtent()
-            vrt += '    <ExtentXMin>%.15g</ExtentXMin>\n' % xmin
-            vrt += '    <ExtentYMin>%.15g</ExtentYMin>\n' % ymin
-            vrt += '    <ExtentXMax>%.15g</ExtentXMax>\n' % xmax
-            vrt += '    <ExtentYMax>%.15g</ExtentYMax>\n' % ymax
+        mdd_list = layer.GetMetadataDomainList()
+        if mdd_list is not None:
+            for domain in mdd_list:
+                if domain == '':
+                    vrt += '    <Metadata>\n'
+                elif len(domain) > 4 and domain[0:4] == 'xml:':
+                    vrt += '    <Metadata domain="%s" format="xml">\n' % Esc(domain)
+                else:
+                    vrt += '    <Metadata domain="%s">\n' % Esc(domain)
+                if len(domain) > 4 and domain[0:4] == 'xml:':
+                    vrt += layer.GetMetadata_List(domain)[0]
+                else:
+                    md = layer.GetMetadata(domain)
+                    for key in md:
+                        vrt += '      <MDI key="%s">%s</MDI>\n' % (Esc(key), Esc(md[key]))
+                vrt += '    </Metadata>\n'
 
-    # New format for multi-geometry field support
-    else:
-        for fld_index in range(layerdef.GetGeomFieldCount()):
-            src_fd = layerdef.GetGeomFieldDefn(fld_index)
-            vrt += '    <GeometryField name="%s"' % src_fd.GetName()
-            if src_fd.IsNullable() == 0:
-                vrt += ' nullable="false"'
-            vrt += '>\n'
-            vrt += '      <GeometryType>%s</GeometryType>\n' \
-                % GeomType2Name(src_fd.GetType())
-            srs = src_fd.GetSpatialRef()
+        if not os.path.isabs(outfile) and not os.path.isabs(infile) and \
+           os.path.dirname(outfile) == '' and os.path.dirname(infile) == '':
+            relative = 1
+
+        vrt += '    <SrcDataSource relativeToVRT="%s" shared="%d">%s</SrcDataSource>\n' \
+               % (relative, not schema, Esc(infile))
+
+        if openoptions:
+            vrt += '    <OpenOptions>\n'
+            for option in openoptions:
+                (key, value) = option.split('=')
+                vrt += '        <OOI key="%s">%s</OOI>\n' % (Esc(key), Esc(value))
+            vrt += '    </OpenOptions>\n'
+
+        if schema:
+            vrt += '    <SrcLayer>@dummy@</SrcLayer>\n'
+        else:
+            vrt += '    <SrcLayer>%s</SrcLayer>\n' % Esc(name)
+
+        # Historic format for mono-geometry layers
+        if layerdef.GetGeomFieldCount() == 0:
+            vrt += '    <GeometryType>wkbNone</GeometryType>\n'
+        elif layerdef.GetGeomFieldCount() == 1 and \
+                layerdef.GetGeomFieldDefn(0).IsNullable():
+            vrt += '    <GeometryType>%s</GeometryType>\n' \
+                % GeomType2Name(layerdef.GetGeomType())
+            srs = layer.GetSpatialRef()
             if srs is not None:
-                vrt += '      <SRS>%s</SRS>\n' \
+                vrt += '    <LayerSRS>%s</LayerSRS>\n' \
                     % (Esc(srs.ExportToWkt()))
             if extent:
-                (xmin, xmax, ymin, ymax) = layer.GetExtent(geom_field=fld_index)
-                vrt += '      <ExtentXMin>%.15g</ExtentXMin>\n' % xmin
-                vrt += '      <ExtentYMin>%.15g</ExtentYMin>\n' % ymin
-                vrt += '      <ExtentXMax>%.15g</ExtentXMax>\n' % xmax
-                vrt += '      <ExtentYMax>%.15g</ExtentYMax>\n' % ymax
-            vrt += '    </GeometryField>\n'
+                (xmin, xmax, ymin, ymax) = layer.GetExtent()
+                vrt += '    <ExtentXMin>%.15g</ExtentXMin>\n' % xmin
+                vrt += '    <ExtentYMin>%.15g</ExtentYMin>\n' % ymin
+                vrt += '    <ExtentXMax>%.15g</ExtentXMax>\n' % xmax
+                vrt += '    <ExtentYMax>%.15g</ExtentYMax>\n' % ymax
 
-    # Process all the fields.
-    for fld_index in range(layerdef.GetFieldCount()):
-        src_fd = layerdef.GetFieldDefn(fld_index)
-        if src_fd.GetType() == ogr.OFTInteger:
-            typ = 'Integer'
-        elif src_fd.GetType() == ogr.OFTInteger64:
-            typ = 'Integer64'
-        elif src_fd.GetType() == ogr.OFTString:
-            typ = 'String'
-        elif src_fd.GetType() == ogr.OFTReal:
-            typ = 'Real'
-        elif src_fd.GetType() == ogr.OFTStringList:
-            typ = 'StringList'
-        elif src_fd.GetType() == ogr.OFTIntegerList:
-            typ = 'IntegerList'
-        elif src_fd.GetType() == ogr.OFTInteger64List:
-            typ = 'Integer64List'
-        elif src_fd.GetType() == ogr.OFTRealList:
-            typ = 'RealList'
-        elif src_fd.GetType() == ogr.OFTBinary:
-            typ = 'Binary'
-        elif src_fd.GetType() == ogr.OFTDate:
-            typ = 'Date'
-        elif src_fd.GetType() == ogr.OFTTime:
-            typ = 'Time'
-        elif src_fd.GetType() == ogr.OFTDateTime:
-            typ = 'DateTime'
+        # New format for multi-geometry field support
         else:
-            typ = 'String'
+            for fld_index in range(layerdef.GetGeomFieldCount()):
+                src_fd = layerdef.GetGeomFieldDefn(fld_index)
+                vrt += '    <GeometryField name="%s"' % src_fd.GetName()
+                if src_fd.IsNullable() == 0:
+                    vrt += ' nullable="false"'
+                vrt += '>\n'
+                vrt += '      <GeometryType>%s</GeometryType>\n' \
+                    % GeomType2Name(src_fd.GetType())
+                srs = src_fd.GetSpatialRef()
+                if srs is not None:
+                    vrt += '      <SRS>%s</SRS>\n' \
+                        % (Esc(srs.ExportToWkt()))
+                if extent:
+                    (xmin, xmax, ymin, ymax) = layer.GetExtent(geom_field=fld_index)
+                    vrt += '      <ExtentXMin>%.15g</ExtentXMin>\n' % xmin
+                    vrt += '      <ExtentYMin>%.15g</ExtentYMin>\n' % ymin
+                    vrt += '      <ExtentXMax>%.15g</ExtentXMax>\n' % xmax
+                    vrt += '      <ExtentYMax>%.15g</ExtentYMax>\n' % ymax
+                vrt += '    </GeometryField>\n'
 
-        vrt += '    <Field name="%s" type="%s"' \
-               % (Esc(src_fd.GetName()), typ)
-        if src_fd.GetSubType() != ogr.OFSTNone:
-            vrt += ' subtype="%s"' % ogr.GetFieldSubTypeName(src_fd.GetSubType())
-        if not schema:
-            vrt += ' src="%s"' % Esc(src_fd.GetName())
-        if src_fd.GetWidth() > 0:
-            vrt += ' width="%d"' % src_fd.GetWidth()
-        if src_fd.GetPrecision() > 0:
-            vrt += ' precision="%d"' % src_fd.GetPrecision()
-        if src_fd.IsNullable() == 0:
-            vrt += ' nullable="false"'
-        try:
-            if src_fd.IsUnique():
-                vrt += ' unique="true"'
-        except AttributeError: # if run with GDAL < 3.2
-            pass
-        vrt += '/>\n'
+        # Process all the fields.
+        for fld_index in range(layerdef.GetFieldCount()):
+            src_fd = layerdef.GetFieldDefn(fld_index)
+            if src_fd.GetType() == ogr.OFTInteger:
+                typ = 'Integer'
+            elif src_fd.GetType() == ogr.OFTInteger64:
+                typ = 'Integer64'
+            elif src_fd.GetType() == ogr.OFTString:
+                typ = 'String'
+            elif src_fd.GetType() == ogr.OFTReal:
+                typ = 'Real'
+            elif src_fd.GetType() == ogr.OFTStringList:
+                typ = 'StringList'
+            elif src_fd.GetType() == ogr.OFTIntegerList:
+                typ = 'IntegerList'
+            elif src_fd.GetType() == ogr.OFTInteger64List:
+                typ = 'Integer64List'
+            elif src_fd.GetType() == ogr.OFTRealList:
+                typ = 'RealList'
+            elif src_fd.GetType() == ogr.OFTBinary:
+                typ = 'Binary'
+            elif src_fd.GetType() == ogr.OFTDate:
+                typ = 'Date'
+            elif src_fd.GetType() == ogr.OFTTime:
+                typ = 'Time'
+            elif src_fd.GetType() == ogr.OFTDateTime:
+                typ = 'DateTime'
+            else:
+                typ = 'String'
 
-    if feature_count:
-        vrt += '    <FeatureCount>%d</FeatureCount>\n' % layer.GetFeatureCount()
+            vrt += '    <Field name="%s" type="%s"' \
+                   % (Esc(src_fd.GetName()), typ)
+            if src_fd.GetSubType() != ogr.OFSTNone:
+                vrt += ' subtype="%s"' % ogr.GetFieldSubTypeName(src_fd.GetSubType())
+            if not schema:
+                vrt += ' src="%s"' % Esc(src_fd.GetName())
+            if src_fd.GetWidth() > 0:
+                vrt += ' width="%d"' % src_fd.GetWidth()
+            if src_fd.GetPrecision() > 0:
+                vrt += ' precision="%d"' % src_fd.GetPrecision()
+            if src_fd.IsNullable() == 0:
+                vrt += ' nullable="false"'
+            try:
+                if src_fd.IsUnique():
+                    vrt += ' unique="true"'
+            except AttributeError: # if run with GDAL < 3.2
+                pass
+            vrt += '/>\n'
 
-    vrt += '  </OGRVRTLayer>\n'
+        if feature_count:
+            vrt += '    <FeatureCount>%d</FeatureCount>\n' % layer.GetFeatureCount()
 
-vrt += '</OGRVRTDataSource>\n'
+        vrt += '  </OGRVRTLayer>\n'
 
-#############################################################################
-# Write vrt
+    vrt += '</OGRVRTDataSource>\n'
 
-open(outfile, 'w').write(vrt)
+    #############################################################################
+    # Write vrt
+
+    open(outfile, 'w').write(vrt)
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
+

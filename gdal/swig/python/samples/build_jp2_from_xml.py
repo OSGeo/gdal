@@ -440,11 +440,11 @@ def build_file(inname, outname):
     return ret
 
 
-def main():
+def main(argv):
     i = 1
     inname = None
     outname = None
-    while i < len(sys.argv):
+    while i < len(argv):
         if sys.argv[i][0] == '-':
             return Usage()
         elif inname is None:
@@ -465,4 +465,4 @@ def main():
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    sys.exit(main(sys.argv))

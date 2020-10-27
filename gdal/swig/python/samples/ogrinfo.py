@@ -55,12 +55,16 @@ def EQUAL(a, b):
 
 
 def main(argv=None):
-
     global bReadOnly
     global bVerbose
     global bSummaryOnly
     global nFetchFID
     global papszOptions
+
+    version_num = int(gdal.VersionInfo('VERSION_NUM'))
+    if version_num < 1800:  # because of ogr.GetFieldTypeName
+        print('ERROR: Python bindings of GDAL 1.8.0 or later required')
+        return 1
 
     pszWHERE = None
     pszDataSource = None
@@ -298,7 +302,6 @@ def main(argv=None):
 
 
 def Usage():
-
     print("Usage: ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]\n"
           "               [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]\n"
           "               [-sql statement] [-al] [-so] [-fields={YES/NO}]\n"
@@ -524,9 +527,4 @@ def DumpReadableGeometry(poGeometry, pszPrefix, options):
 
 
 if __name__ == '__main__':
-    version_num = int(gdal.VersionInfo('VERSION_NUM'))
-    if version_num < 1800:  # because of ogr.GetFieldTypeName
-        print('ERROR: Python bindings of GDAL 1.8.0 or later required')
-        sys.exit(1)
-
     sys.exit(main(sys.argv))

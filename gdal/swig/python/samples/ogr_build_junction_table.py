@@ -43,7 +43,7 @@ def Usage():
     print('This utility is aimed at creating junction tables for layers coming from GML datasources')
     print('that reference other objects in _href fields')
     print('')
-    sys.exit(1)
+    return 1
 
 
 def build_junction_table(ds, lyr, ifield, bAppend, bOverwrite):
@@ -148,57 +148,62 @@ def process_layer(ds, lyr_name, bAppend, bOverwrite):
     return ret
 
 
-argv = sys.argv
-argv = ogr.GeneralCmdLineProcessor(argv)
+def main(argv):
+    argv = ogr.GeneralCmdLineProcessor(argv)
 
-ds_name = None
-lyr_name = None
-bAppend = False
-bOverwrite = False
+    ds_name = None
+    lyr_name = None
+    bAppend = False
+    bOverwrite = False
 
-nArgc = len(argv)
-iArg = 1
-while iArg < nArgc:
+    nArgc = len(argv)
+    iArg = 1
+    while iArg < nArgc:
 
-    if argv[iArg] == '-append':
-        bAppend = True
+        if argv[iArg] == '-append':
+            bAppend = True
 
-    elif argv[iArg] == '-overwrite':
-        bOverwrite = True
+        elif argv[iArg] == '-overwrite':
+            bOverwrite = True
 
-    elif argv[iArg][0] == '-':
-        Usage()
+        elif argv[iArg][0] == '-':
+            return Usage()
 
-    elif ds_name is None:
-        ds_name = argv[iArg]
+        elif ds_name is None:
+            ds_name = argv[iArg]
 
-    elif lyr_name is None:
-        lyr_name = argv[iArg]
+        elif lyr_name is None:
+            lyr_name = argv[iArg]
 
-    iArg = iArg + 1
+        iArg = iArg + 1
 
-if ds_name is None:
-    Usage()
+    if ds_name is None:
+        return Usage()
 
-if bAppend and bOverwrite:
-    print('Only one of -append or -overwrite can be used')
-    sys.exit(1)
+    if bAppend and bOverwrite:
+        print('Only one of -append or -overwrite can be used')
+        return 1
 
-ds = ogr.Open(ds_name, update=1)
-if ds is None:
-    print('Cannot open %s in update mode' % ds_name)
-    sys.exit(1)
+    ds = ogr.Open(ds_name, update=1)
+    if ds is None:
+        print('Cannot open %s in update mode' % ds_name)
+        return 1
 
-ret = True
-if lyr_name is not None:
-    ret = process_layer(ds, lyr_name, bAppend, bOverwrite)
-else:
-    for i in range(ds.GetLayerCount()):
-        if not process_layer(ds, ds.GetLayer(i).GetName(), bAppend, bOverwrite):
-            ret = False
-ds = None
+    ret = True
+    if lyr_name is not None:
+        ret = process_layer(ds, lyr_name, bAppend, bOverwrite)
+    else:
+        for i in range(ds.GetLayerCount()):
+            if not process_layer(ds, ds.GetLayer(i).GetName(), bAppend, bOverwrite):
+                ret = False
+    ds = None
 
-if ret:
-    sys.exit(0)
-else:
-    sys.exit(1)
+    if ret:
+        return 0
+    else:
+        return 1
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
+

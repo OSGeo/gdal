@@ -316,10 +316,13 @@ def gdal_cp(argv, progress=None):
     return gdal_cp_single(srcfile, targetfile, progress)
 
 
-if __name__ == '__main__':
+def main(argv):
     version_num = int(gdal.VersionInfo('VERSION_NUM'))
     if version_num < 1800:
         print('ERROR: Python bindings of GDAL 1.8.0 or later required')
-        sys.exit(1)
+        return 1
+    return gdal_cp(argv)
 
-    sys.exit(gdal_cp(sys.argv))
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

@@ -41,11 +41,7 @@ from osgeo import gdal
 def Usage():
     print('Usage: fft.py [-inv] [-of out_format] [-ot out_type] infile outfile')
     print('')
-    sys.exit(1)
-
-# =============================================================================
-
-# =============================================================================
+    return 1
 
 
 def ParseType(typ):
@@ -72,65 +68,70 @@ def ParseType(typ):
     elif typ == 'CFloat64':
         return gdal.GDT_CFloat64
     return gdal.GDT_Byte
-# =============================================================================
 
 
-infile = None
-outfile = None
-format = 'GTiff'
-typ = None
-transformation = 'forward'
+def main(argv):
+    infile = None
+    outfile = None
+    frmt = 'GTiff'
+    typ = None
+    transformation = 'forward'
 
-# Parse command line arguments.
-i = 1
-while i < len(sys.argv):
-    arg = sys.argv[i]
+    # Parse command line arguments.
+    i = 1
+    while i < len(argv):
+        arg = argv[i]
 
-    if arg == '-inv':
-        transformation = 'inverse'
-        if typ is None:
-            typ = gdal.GDT_Float32
+        if arg == '-inv':
+            transformation = 'inverse'
+            if typ is None:
+                typ = gdal.GDT_Float32
 
-    elif arg == '-of':
+        elif arg == '-of':
+            i = i + 1
+            frmt = argv[i]
+
+        elif arg == '-ot':
+            i = i + 1
+            typ = ParseType(argv[i])
+            # set_type = 'yes'
+
+        elif infile is None:
+            infile = arg
+
+        elif outfile is None:
+            outfile = arg
+
+        else:
+            return Usage()
+
         i = i + 1
-        frmt = sys.argv[i]
 
-    elif arg == '-ot':
-        i = i + 1
-        typ = ParseType(sys.argv[i])
-        set_type = 'yes'
+    if infile is None:
+        return Usage()
+    if outfile is None:
+        return Usage()
 
-    elif infile is None:
-        infile = arg
+    if typ is None:
+        typ = gdal.GDT_CFloat32
 
-    elif outfile is None:
-        outfile = arg
+    indataset = gdal.Open(infile, gdal.GA_ReadOnly)
 
-    else:
-        Usage()
+    out_driver = gdal.GetDriverByName(frmt)
+    outdataset = out_driver.Create(outfile, indataset.RasterXSize, indataset.RasterYSize, indataset.RasterCount, typ)
 
-    i = i + 1
+    for iBand in range(1, indataset.RasterCount + 1):
+        inband = indataset.GetRasterBand(iBand)
+        outband = outdataset.GetRasterBand(iBand)
 
-if infile is None:
-    Usage()
-if outfile is None:
-    Usage()
+        data = inband.ReadAsArray(0, 0)
+        if transformation == 'forward':
+            data_tr = FFT.fft2d(data)
+        else:
+            data_tr = FFT.inverse_fft2d(data)
+        outband.WriteArray(data_tr)
+    return 0
 
-if typ is None:
-    typ = gdal.GDT_CFloat32
 
-indataset = gdal.Open(infile, gdal.GA_ReadOnly)
-
-out_driver = gdal.GetDriverByName(frmt)
-outdataset = out_driver.Create(outfile, indataset.RasterXSize, indataset.RasterYSize, indataset.RasterCount, typ)
-
-for iBand in range(1, indataset.RasterCount + 1):
-    inband = indataset.GetRasterBand(iBand)
-    outband = outdataset.GetRasterBand(iBand)
-
-    data = inband.ReadAsArray(0, 0)
-    if transformation == 'forward':
-        data_tr = FFT.fft2d(data)
-    else:
-        data_tr = FFT.inverse_fft2d(data)
-    outband.WriteArray(data_tr)
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

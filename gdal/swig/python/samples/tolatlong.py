@@ -47,67 +47,73 @@ def Usage():
     print('')
     print('Usage: tolatlong.py pixel line infile')
     print('')
-    sys.exit(1)
-
-# =============================================================================
+    return 1
 
 
-infile = None
-pixel = None
-line = None
+def main(argv):
+    infile = None
+    pixel = None
+    line = None
 
-# =============================================================================
-# Parse command line arguments.
-# =============================================================================
-i = 1
-while i < len(sys.argv):
-    arg = sys.argv[i]
+    # =============================================================================
+    # Parse command line arguments.
+    # =============================================================================
+    i = 1
+    while i < len(argv):
+        arg = argv[i]
 
+        if pixel is None:
+            pixel = float(arg)
+
+        elif line is None:
+            line = float(arg)
+
+        elif infile is None:
+            infile = arg
+
+        else:
+            return Usage()
+
+        i = i + 1
+
+    if infile is None:
+        return Usage()
     if pixel is None:
-        pixel = float(arg)
+        return Usage()
+    if line is None:
+        return Usage()
 
-    elif line is None:
-        line = float(arg)
+    # Open input dataset
+    indataset = gdal.Open(infile, gdal.GA_ReadOnly)
 
-    elif infile is None:
-        infile = arg
+    # Read geotransform matrix and calculate ground coordinates
+    geomatrix = indataset.GetGeoTransform()
+    X = geomatrix[0] + geomatrix[1] * pixel + geomatrix[2] * line
+    Y = geomatrix[3] + geomatrix[4] * pixel + geomatrix[5] * line
 
-    else:
-        Usage()
+    # Shift to the center of the pixel
+    X += geomatrix[1] / 2.0
+    Y += geomatrix[5] / 2.0
 
-    i = i + 1
+    # Build Spatial Reference object based on coordinate system, fetched from the
+    # opened dataset
+    srs = osr.SpatialReference()
+    if srs.ImportFromWkt(indataset.GetProjection()) != 0:
+        print("ERROR: Cannot import projection '%s'" % indataset.GetProjection())
+        return 1
 
-if infile is None:
-    Usage()
-if pixel is None:
-    Usage()
-if line is None:
-    Usage()
+    srsLatLong = srs.CloneGeogCS()
+    ct = osr.CoordinateTransformation(srs, srsLatLong)
+    (lon, lat, height) = ct.TransformPoint(X, Y)
 
-# Open input dataset
-indataset = gdal.Open(infile, gdal.GA_ReadOnly)
+    # Report results
+    print('pixel: %g\t\t\tline: %g' % (pixel, line))
+    print('latitude: %fd\t\tlongitude: %fd' % (lat, lon))
+    print('latitude: %s\t\tlongitude: %s' % (gdal.DecToDMS(lat, 'Lat', 2), gdal.DecToDMS(lon, 'Long', 2)))
 
-# Read geotransform matrix and calculate ground coordinates
-geomatrix = indataset.GetGeoTransform()
-X = geomatrix[0] + geomatrix[1] * pixel + geomatrix[2] * line
-Y = geomatrix[3] + geomatrix[4] * pixel + geomatrix[5] * line
+    return 0
 
-# Shift to the center of the pixel
-X += geomatrix[1] / 2.0
-Y += geomatrix[5] / 2.0
 
-# Build Spatial Reference object based on coordinate system, fetched from the
-# opened dataset
-srs = osr.SpatialReference()
-if srs.ImportFromWkt(indataset.GetProjection()) != 0:
-    print("ERROR: Cannot import projection '%s'" % indataset.GetProjection())
-    sys.exit(1)
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
 
-srsLatLong = srs.CloneGeogCS()
-ct = osr.CoordinateTransformation(srs, srsLatLong)
-(lon, lat, height) = ct.TransformPoint(X, Y)
-
-# Report results
-print('pixel: %g\t\t\tline: %g' % (pixel, line))
-print('latitude: %fd\t\tlongitude: %fd' % (lat, lon))
-print('latitude: %s\t\tlongitude: %s' % (gdal.DecToDMS(lat, 'Lat', 2), gdal.DecToDMS(lon, 'Long', 2)))

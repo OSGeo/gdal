@@ -48,7 +48,6 @@ class Options(object):
 
 
 def Usage():
-
     print('Usage: loslas2ntv2.py  [-a] [-auto] [-sub_name name] [-parent name]')
     print('                       [-created date] [-updated date] [-gs_type name]')
     print('                       [-system_f name] [-system_t name] [-version version]')
@@ -63,7 +62,7 @@ def Usage():
     print('eg.')
     print(' loslas2ntv2.py -auto *.los')
     print(' loslas2ntv2.py -system_f NAD27 -system_t NAD83 -sub_name conus conus.los conus.gsb')
-    sys.exit(1)
+    return 1
 
 
 # =============================================================================
@@ -154,22 +153,19 @@ def auto_noaa(options, loslas_list):
 
         TranslateLOSLAS(los, ntv2_filename, options)
 
-    sys.exit(0)
-
-# =============================================================================
+    return 0
 
 
-if __name__ == '__main__':
-
+def main(argv):
     ntv2_filename = None
     loslas_list = []
     auto_flag = 0
 
     options = Options()
 
-    argv = gdal.GeneralCmdLineProcessor(sys.argv)
+    argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
-        sys.exit(0)
+        return 0
 
     # Parse command line arguments.
 
@@ -238,7 +234,7 @@ if __name__ == '__main__':
             options.append = 1
 
         elif arg[0] == '-':
-            Usage()
+            return Usage()
 
         elif arg[-4:] == '.los' or arg[-4:] == '.las':
             loslas_list.append(arg)
@@ -248,20 +244,20 @@ if __name__ == '__main__':
 
         else:
             print('Unrecognized argument: ', arg)
-            Usage()
+            return Usage()
 
         i = i + 1
 
     if not loslas_list:
         print('No .los/.las files specified as input.')
-        Usage()
+        return Usage()
 
     if auto_flag == 1:
         auto_noaa(options, loslas_list)
 
     if ntv2_filename is None:
         print('No NTv2 file specified.')
-        Usage()
+        return Usage()
 
     # Process loslas files.
 
@@ -269,3 +265,10 @@ if __name__ == '__main__':
 
         TranslateLOSLAS(los, ntv2_filename, options)
         options.append = 1
+
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
+
