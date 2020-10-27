@@ -50,6 +50,7 @@
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_priv.h"
+#include "gdal_alg_priv.h"
 #include "ogr_api.h"
 #include "ogr_core.h"
 
@@ -2577,8 +2578,9 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
 
     bool bUseGrid =
         CPLFetchBool(psOptions->papszWarpOptions, "SAMPLE_GRID", false);
+    bool bTryWithCheckWithInvertProj = false;
 
-  TryAgainWithGrid:
+  TryAgain:
     nSamplePoints = 0;
     if( bUseGrid )
     {
@@ -2674,9 +2676,35 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
 /* -------------------------------------------------------------------- */
 /*      Transform them to the input pixel coordinate space              */
 /* -------------------------------------------------------------------- */
-    if( !psOptions->pfnTransformer( psOptions->pTransformerArg,
+    if( bTryWithCheckWithInvertProj )
+    {
+        CPLSetThreadLocalConfigOption("CHECK_WITH_INVERT_PROJ", "YES");
+        if( psOptions->pfnTransformer == GDALGenImgProjTransform )
+        {
+            GDALRefreshGenImgProjTransformer(psOptions->pTransformerArg);
+        }
+        else if( psOptions->pfnTransformer == GDALApproxTransform )
+        {
+            GDALRefreshApproxTransformer(psOptions->pTransformerArg);
+        }
+    }
+    int ret = psOptions->pfnTransformer( psOptions->pTransformerArg,
                                     TRUE, nSamplePoints,
-                                    padfX, padfY, padfZ, pabSuccess ) )
+                                    padfX, padfY, padfZ, pabSuccess );
+    if( bTryWithCheckWithInvertProj )
+    {
+        CPLSetThreadLocalConfigOption("CHECK_WITH_INVERT_PROJ", nullptr);
+        if( psOptions->pfnTransformer == GDALGenImgProjTransform )
+        {
+            GDALRefreshGenImgProjTransformer(psOptions->pTransformerArg);
+        }
+        else if( psOptions->pfnTransformer == GDALApproxTransform )
+        {
+            GDALRefreshApproxTransformer(psOptions->pTransformerArg);
+        }
+    }
+
+    if( !ret )
     {
         CPLFree( padfX );
         CPLFree( pabSuccess );
@@ -2726,6 +2754,30 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
     CPLFree( padfX );
     CPLFree( pabSuccess );
 
+    const int nRasterXSize = GDALGetRasterXSize(psOptions->hSrcDS);
+    const int nRasterYSize = GDALGetRasterYSize(psOptions->hSrcDS);
+
+    // Try to detect crazy values coming from reprojection that would not
+    // have resulted in a PROJ error. Could happen for example with PROJ <= 4.9.2
+    // with inverse UTM/tmerc (Snyder approximation without sanity check) when
+    // being far away from the central meridian. But might be worth keeping
+    // that even for later versions in case some exotic projection isn't properly
+    // sanitized.
+    if( nFailedCount == 0 &&
+        !bTryWithCheckWithInvertProj &&
+        (dfMinXOut < -1e6 || dfMinYOut < -1e6 ||
+         dfMaxXOut > nRasterXSize + 1e6 || dfMaxYOut > nRasterYSize + 1e6) &&
+        !CPLTestBool(CPLGetConfigOption( "CHECK_WITH_INVERT_PROJ", "NO" )) )
+    {
+        CPLDebug("WARP", "ComputeSourceWindow(): bogus source dataset window "
+                 "returned. Trying again with CHECK_WITH_INVERT_PROJ=YES");
+        bTryWithCheckWithInvertProj = true;
+
+        // We should probably perform the coordinate transformation in the
+        // warp kernel under CHECK_WITH_INVERT_PROJ too...
+        goto TryAgain;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      If we got any failures when not using a grid, we should         */
 /*      really go back and try again with the grid.  Sorry for the      */
@@ -2734,7 +2786,7 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
     if( !bUseGrid && nFailedCount > 0 )
     {
         bUseGrid = true;
-        goto TryAgainWithGrid;
+        goto TryAgain;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2787,8 +2839,6 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
 /*   Early exit to avoid crazy values to cause a huge nResWinSize that  */
 /*   would result in a result window wrongly covering the whole raster. */
 /* -------------------------------------------------------------------- */
-    const int nRasterXSize = GDALGetRasterXSize(psOptions->hSrcDS);
-    const int nRasterYSize = GDALGetRasterYSize(psOptions->hSrcDS);
     if( dfMinXOut > nRasterXSize ||
         dfMaxXOut < 0 ||
         dfMinYOut > nRasterYSize ||
@@ -2817,10 +2867,12 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
     const int nResWinSize = GWKGetFilterRadius(psOptions->eResampleAlg);
 
     // Take scaling into account.
+    // Avoid ridiculous small scaling factors to avoid potential further integer
+    // overflows
     const double dfXScale =
-        static_cast<double>(nDstXSize) / (dfMaxXOut - dfMinXOut);
+        std::max(1e-3, static_cast<double>(nDstXSize) / (dfMaxXOut - dfMinXOut));
     const double dfYScale =
-        static_cast<double>(nDstYSize) / (dfMaxYOut - dfMinYOut);
+        std::max(1e-3, static_cast<double>(nDstYSize) / (dfMaxYOut - dfMinYOut));
     int nXRadius = dfXScale < 0.95 ?
         static_cast<int>(ceil( nResWinSize / dfXScale )) : nResWinSize;
     int nYRadius = dfYScale < 0.95 ?
