@@ -97,6 +97,9 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
                       char chDecimalSep, int nPrecision = 15, char chConversionSpecifier = 'f' );
 std::string OGRFormatDouble(double val, const OGRWktOptions& opts);
 
+int OGRFormatFloat(char *pszBuffer, int nBufferLen, float fVal,
+                   int nPrecision, char chConversionSpecifier);
+
 /* -------------------------------------------------------------------- */
 /*      Date-time parsing and processing functions                      */
 /* -------------------------------------------------------------------- */
