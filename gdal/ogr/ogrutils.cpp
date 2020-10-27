@@ -1762,3 +1762,66 @@ OGRErr OGRReadWKBGeometryType( const unsigned char * pabyData,
 
     return OGRERR_NONE;
 }
+
+/************************************************************************/
+/*                        OGRFormatFloat()                              */
+/************************************************************************/
+
+int  OGRFormatFloat(char *pszBuffer, int nBufferLen,
+                    float fVal, int nPrecision, char chConversionSpecifier)
+{
+    int nSize = 0;
+    char szFormatting[32] = {};
+    constexpr int MAX_SIGNIFICANT_DIGITS_FLOAT32 = 8;
+    const int nInitialSignificantFigures =
+        nPrecision >= 0 ? nPrecision : MAX_SIGNIFICANT_DIGITS_FLOAT32;
+
+    CPLsnprintf(szFormatting, sizeof(szFormatting),
+                "%%.%d%c",
+                nInitialSignificantFigures,
+                chConversionSpecifier);
+    nSize = CPLsnprintf(pszBuffer, nBufferLen, szFormatting, fVal);
+    const char* pszDot = nullptr;
+    if( nSize+2 < static_cast<int>(nBufferLen) &&
+        (pszDot = strchr(pszBuffer, '.')) == nullptr )
+    {
+        nSize += CPLsnprintf(pszBuffer + nSize, nBufferLen - nSize, ".0");
+    }
+
+    // Try to avoid 0.34999999 or 0.15000001 rounding issues by
+    // decreasing a bit precision.
+    if( nInitialSignificantFigures >= 8 &&
+        pszDot != nullptr &&
+        (strstr(pszDot, "99999") != nullptr ||
+         strstr(pszDot, "00000") != nullptr) )
+    {
+        const CPLString osOriBuffer(pszBuffer, nSize);
+
+        bool bOK = false;
+        for( int i = 1; i <= 3; i++ )
+        {
+            CPLsnprintf(szFormatting, sizeof(szFormatting),
+                        "%%.%d%c",
+                        nInitialSignificantFigures - i,
+                        chConversionSpecifier);
+            nSize = CPLsnprintf(pszBuffer, nBufferLen,
+                                szFormatting, fVal);
+            pszDot = strchr(pszBuffer, '.');
+            if( pszDot != nullptr &&
+                strstr(pszDot, "99999") == nullptr &&
+                strstr(pszDot, "00000") == nullptr &&
+                static_cast<float>(CPLAtof(pszBuffer)) == fVal )
+            {
+                bOK = true;
+                break;
+            }
+        }
+        if( !bOK )
+        {
+            memcpy(pszBuffer, osOriBuffer.c_str(), osOriBuffer.size()+1);
+            nSize = static_cast<int>(osOriBuffer.size());
+        }
+    }
+
+    return nSize;
+}

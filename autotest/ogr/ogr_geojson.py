@@ -31,7 +31,7 @@
 import json
 import math
 import os
-
+import struct
 
 from osgeo import osr
 from osgeo import ogr
@@ -3015,3 +3015,50 @@ def test_ogr_geojson_starting_with_geometry_coordinates():
     assert ds is not None
 
     gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test serialization of Float32 values
+
+def test_ogr_geojson_write_float32():
+
+    def cast_as_float(x):
+        return struct.unpack('f', struct.pack('f', x))[0]
+
+    filename = '/vsimem/test_ogr_geojson_write_float32.json'
+    ds = ogr.GetDriverByName('GeoJSON').CreateDataSource(filename)
+    lyr = ds.CreateLayer('foo')
+
+    fldn_defn = ogr.FieldDefn('float32', ogr.OFTReal)
+    fldn_defn.SetSubType(ogr.OFSTFloat32)
+    lyr.CreateField(fldn_defn)
+
+    fldn_defn = ogr.FieldDefn('float32list', ogr.OFTRealList)
+    fldn_defn.SetSubType(ogr.OFSTFloat32)
+    lyr.CreateField(fldn_defn)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['float32'] = cast_as_float(0.35)
+    f['float32list'] = [
+        cast_as_float(123.0),
+        cast_as_float(0.35),
+        cast_as_float(0.15),
+        cast_as_float(0.12345678),
+        cast_as_float(1.2345678e-15),
+        cast_as_float(1.2345678e15),
+        cast_as_float(0.123456789), # more decimals than Float32 can hold
+    ]
+    lyr.CreateFeature(f)
+
+    ds = None
+
+    fp = gdal.VSIFOpenL(filename, 'rb')
+    data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+    gdal.VSIFCloseL(fp)
+
+    gdal.Unlink(filename)
+
+    data = data.replace('e+0', 'e+').replace('e-0', 'e-')
+
+    assert '"float32": 0.35,' in data
+    assert '"float32list": [ 123.0, 0.35, 0.15, 0.12345678, 1.2345678e-15, 1.2345678e+15, 0.12345679 ]' in data
