@@ -1446,6 +1446,7 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
     bool firstHDUIsDummy = false;
     int firstValidHDU = 0;
     CPLStringList aosSubdatasets;
+    bool hasVector = false;
     if( iSelectedHDU == 0 )
     {
         int numHDUs = 0;
@@ -1474,11 +1475,14 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
             if( nExtVer > 0 )
                 osExtname += CPLSPrintf(" %d", nExtVer);
 
-            if( hduType == BINARY_TBL &&
-                (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 )
+            if( hduType == BINARY_TBL )
             {
-                dataset->m_apoLayers.push_back(std::unique_ptr<FITSLayer>(
-                    new FITSLayer(dataset.get(), iHDU, osExtname.c_str())));
+                hasVector = true;
+                if( (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 )
+                {
+                    dataset->m_apoLayers.push_back(std::unique_ptr<FITSLayer>(
+                        new FITSLayer(dataset.get(), iHDU, osExtname.c_str())));
+                }
             }
 
             if( hduType != IMAGE_HDU )
@@ -1558,33 +1562,86 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
         }
         firstValidHDU = iSelectedHDU;
     }
-    const bool rasterFound = 
-        (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 && firstValidHDU > 0;
 
-    if( !rasterFound )
+    const bool hasRaster = firstValidHDU > 0;
+    const bool hasRasterAndIsAllowed = hasRaster &&
+        (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0;
+
+    if( !hasRasterAndIsAllowed &&
+        (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
+        (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) == 0 )
     {
-        if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
-            (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) == 0 )
+        if( hasVector )
+        {
+            std::string osPath;
+            osPath.resize(1024);
+            if( CPLGetExecPath(&osPath[0], static_cast<int>(osPath.size())) )
+            {
+                osPath = CPLGetBasename(osPath.c_str());
+            }
+            if( osPath == "gdalinfo" )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "This FITS dataset does not contain any image, but "
+                         "contains binary table(s) that could be opened "
+                         "in vector mode with ogrinfo.");
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "This FITS dataset does not contain any image, but "
+                         "contains binary table(s) that could be opened "
+                         "in vector mode.");
+            }
+        }
+        else
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                    "Cannot find HDU of image type with 2 or 3 axes");
-            return nullptr;
+                     "Cannot find HDU of image type with 2 or 3 axes.");
         }
+        return nullptr;
     }
-    if( dataset->m_apoLayers.empty() )
+
+    if( dataset->m_apoLayers.empty() &&
+        (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
+        (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 )
     {
-        if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
-            (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 )
+        if( hasRaster )
         {
-            return nullptr;
+            std::string osPath;
+            osPath.resize(1024);
+            if( CPLGetExecPath(&osPath[0], static_cast<int>(osPath.size())) )
+            {
+                osPath = CPLGetBasename(osPath.c_str());
+            }
+            if( osPath == "ogrinfo" )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "This FITS dataset does not contain any binary "
+                         "table, but contains image(s) that could be opened "
+                         "in raster mode with gdalinfo.");
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "This FITS dataset does not contain any binary "
+                         "table, but contains image(s) that could be opened "
+                         "in raster mode.");
+            }
         }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot find binary table(s).");
+        }
+        return nullptr;
     }
 
     dataset->m_aosSubdatasets = aosSubdatasets;
 
     // Set up the description and initialize the dataset
     dataset->SetDescription(poOpenInfo->pszFilename);
-    if( rasterFound )
+    if( hasRasterAndIsAllowed )
     {
         if( aosSubdatasets.size() > 2 )
         {
@@ -1618,7 +1675,7 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
             return nullptr;
         }
     }
-    if( rasterFound )
+    if( hasRasterAndIsAllowed )
     {
         dataset->LoadMetadata(dataset.get());
         dataset->LoadFITSInfo();
