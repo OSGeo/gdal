@@ -48,6 +48,11 @@ static int NITFWriteTREsFromOptions(
     char **papszOptions,
     const char* pszTREPrefix);
 
+static int NITFWriteDESsFromOptions(
+    VSILFILE* fp,
+    vsi_l_offset nOffsetLDSH,
+    char **papszOptions);
+
 static int
 NITFCollectSegmentInfo( NITFFile *psFile, int nFileHeaderLenSize, int nOffset,
                         const char szType[3],
@@ -550,6 +555,9 @@ int NITFCreate( const char *pszFilename,
     const char *pszNUMI;
     int iGS, nGS = 0; // number of graphic segment
     const char *pszNUMS; // graphic segment option string
+    int iDES, nDES = 0;
+    char **papszSubList;
+    vsi_l_offset nOffsetLDSH;
     int bOK;
 
     if (nBands <= 0 || nBands > 99999)
@@ -856,8 +864,23 @@ int NITFCreate( const char *pszFilename,
 
     nHL += 6 + (4+5) * nNUMT;
 
-    PLACE (nHL, NUMDES       ,"000"                           );
+    papszSubList = CSLFetchNameValueMultiple(papszOptions, "DES");
+    nDES = CSLCount(papszSubList);
+    CSLDestroy(papszSubList);
+
+    PLACE (nHL, NUMDES       ,CPLSPrintf("%03d", nDES)                           );
     nHL += 3;
+    nOffsetLDSH = nHL;
+
+    for (iDES = 0; iDES < nDES; iDES++)
+    {
+        // All 9's indicates unknown.  Patched when DESs are written.
+        PLACE(nHL, LDSH      ,"9999"                          );
+        nHL += 4;
+        PLACE(nHL, LD        ,"999999999"                     );
+        nHL += 9;
+    }
+
     PLACE (nHL, NUMRES       ,"000"                           );
     nHL += 3;
     PLACE (nHL, UDHDL        ,"00000"                         );
@@ -1167,6 +1190,23 @@ int NITFCreate( const char *pszFilename,
     nCur += nIHSize + nImageSize;
   }
 
+    /* -------------------------------------------------------------------- */
+    /*      Fill in image data by writing one byte at the end               */
+    /* -------------------------------------------------------------------- */
+    if( EQUAL(pszIC,"NC") )
+    {
+        char cNul = 0;
+        bOK &= VSIFSeekL( fp, nCur-1, SEEK_SET ) == 0;
+        bOK &= VSIFWriteL( &cNul, 1, 1, fp ) == 1;
+    }
+
+    if(nDES > 0)
+    {
+        bOK &= NITFWriteDESsFromOptions(fp, nOffsetLDSH, papszOptions);
+        bOK &= VSIFSeekL(fp, 0, SEEK_END);
+        nCur = VSIFTellL(fp);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Compute and update CLEVEL ("complexity" level).                 */
 /*      See: http://164.214.2.51/ntb/baseline/docs/2500b/2500b_not2.pdf */
@@ -1179,12 +1219,12 @@ int NITFCreate( const char *pszFilename,
         nCLevel = 5;
     }
     if (nPixels > 8192 || nLines > 8192 ||
-        nNPPBH > 8192 || nNPPBV > 8192 || nCur > 1073741833)
+        nNPPBH > 8192 || nNPPBV > 8192 || nCur > 1073741833 || nDES > 10)
     {
         nCLevel = 6;
     }
     if (nBands > 256 || nPixels > 65536 || nLines > 65536 ||
-        nCur > 2147483647)
+        nCur > 2147483647 || nDES > 50)
     {
         nCLevel = 7;
     }
@@ -1206,16 +1246,6 @@ int NITFCreate( const char *pszFilename,
 
     PLACE( 342, FL,
           CPLSPrintf( "%012" CPL_FRMT_GB_WITHOUT_PREFIX "d", nCur) );
-
-/* -------------------------------------------------------------------- */
-/*      Grow file to full required size by writing one byte at the end. */
-/* -------------------------------------------------------------------- */
-    if( EQUAL(pszIC,"NC") )
-    {
-        char cNul = 0;
-        bOK &= VSIFSeekL( fp, nCur-1, SEEK_SET ) == 0;
-        bOK &= VSIFWriteL( &cNul, 1, 1, fp ) == 1;
-    }
 
     if( VSIFCloseL( fp ) != 0 )
         bOK = FALSE;
@@ -1352,7 +1382,7 @@ static int NITFWriteTREsFromOptions(
                 CPLFree(pszUnescapedContents);
                 return FALSE;
             }
-            
+
             nContentLength = nContentLength / 2;
             for (i = 0; i < nContentLength; i++)
             {
@@ -1376,6 +1406,132 @@ static int NITFWriteTREsFromOptions(
         CPLFree( pszTREName );
         CPLFree( pszUnescapedContents );
 
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                            NITFWriteDES()                            */
+/************************************************************************/
+
+static int NITFWriteDES( VSILFILE* fp, vsi_l_offset nOffsetLDSH,
+                         int  iDES, const char *pszDESName,
+                         const GByte* pabyDESData, int nArrayLen)
+{
+    int bOK = TRUE;
+    int nTotalLen = nArrayLen + 27;  // DE(2) + DESID(25) + other data
+    int nSubHeadLen, nDataLen;
+    char pszTemp[5];
+
+    if (nTotalLen < 200)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "DES does not contain enough data");
+        return FALSE;
+    }
+
+    if (strcmp(pszDESName, "TRE_OVERFLOW") == 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "TRE_OVERFLOW DES not supported");
+        return FALSE;
+    }
+
+    memcpy(pszTemp, pabyDESData + 169, 4);
+    pszTemp[4] = '\0';
+    nSubHeadLen = atoi(pszTemp) + 200;
+    nDataLen = nTotalLen - nSubHeadLen;     // Length of DESDATA field only
+
+    if (nSubHeadLen > 9998 || nDataLen > 999999998)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "DES is too big to be written");
+        return FALSE;
+    }
+
+    bOK &= VSIFSeekL(fp, 0, SEEK_END) == 0;
+    bOK &= VSIFWriteL("DE", 1, 2, fp) == 2;
+    bOK &= VSIFWriteL(CPLSPrintf("%-25s", pszDESName), 1, 25, fp) == 25;
+    bOK &= (int)VSIFWriteL(pabyDESData, 1, nArrayLen, fp) == nArrayLen;
+
+    // Update LDSH and LD in the NITF Header
+    bOK &= VSIFSeekL(fp, nOffsetLDSH + iDES * 13, SEEK_SET) == 0;
+    bOK &= VSIFWriteL(CPLSPrintf("%04d", nSubHeadLen), 1, 4, fp) == 4;
+    bOK &= VSIFWriteL(CPLSPrintf("%09d", nDataLen), 1, 9, fp) == 9;
+
+    return bOK;
+}
+
+/************************************************************************/
+/*                          NITFWriteDESsFromOptions()                  */
+/************************************************************************/
+
+static int NITFWriteDESsFromOptions(
+    VSILFILE* fp,
+    vsi_l_offset nOffsetLDSH,
+    char **papszOptions)
+{
+    int iOption;
+    int iDES = 0;
+
+    if( papszOptions == NULL )
+    {
+        return TRUE;
+    }
+
+    for( iOption = 0; papszOptions[iOption] != NULL; iOption++ )
+    {
+        const char *pszEscapedContents;
+        GByte *pabyUnescapedContents;
+        char *pszDESName;
+        int  nContentLength;
+        const char* pszDelim;
+        size_t nNameLength;
+
+        if(!EQUALN(papszOptions[iOption], "DES=", 4))
+        {
+            continue;
+        }
+
+        /* We don't use CPLParseNameValue() as it removes leading spaces */
+        /* from the value (see #3088) */
+        pszDelim = strchr(papszOptions[iOption] + 4, '=');
+        if (pszDelim == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Could not parse creation options %s", papszOptions[iOption] + 4);
+            return FALSE;
+        }
+
+        nNameLength =  strlen(papszOptions[iOption] + 4) - strlen(pszDelim);
+        if (nNameLength > 25)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "Specified DESID is too long %s", papszOptions[iOption] + 4);
+            return FALSE;
+        }
+
+        pszDESName = (char *)CPLMalloc(nNameLength+1);
+        memcpy(pszDESName, papszOptions[iOption] + 4, nNameLength);
+        pszDESName[nNameLength] = '\0';
+
+        pszEscapedContents = pszDelim + 1;
+
+        pabyUnescapedContents =
+            (GByte*)CPLUnescapeString( pszEscapedContents, &nContentLength,
+                                       CPLES_BackslashQuotable );
+
+        if(!NITFWriteDES(fp, nOffsetLDSH, iDES, pszDESName,
+                         pabyUnescapedContents, nContentLength))
+        {
+            CPLFree( pszDESName );
+            CPLFree( pabyUnescapedContents );
+            CPLError(CE_Failure, CPLE_AppDefined, "Could not write DES %d", iDES);
+            return FALSE;
+        }
+
+        CPLFree( pszDESName );
+        CPLFree( pabyUnescapedContents );
+
+        iDES++;
     }
 
     return TRUE;
