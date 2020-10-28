@@ -8,29 +8,28 @@ jobs:
     runs-on: macos-latest
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
 
-      - name: Cache build
-        uses: actions/cache@v2
+      - uses: actions/checkout@v2
+
+      - uses: goanpeca/setup-miniconda@v1
         with:
-          path: ~/.ccache
-          key: ${{ runner.os }}-cache-macos
+            channels: conda-forge
+            auto-update-conda: true
 
       - name: Install Requirements
-        run: ./gdal/ci/travis/osx/before_install.sh
-
-      - name: Additional build requirements
+        shell: bash -l {0}
         run: |
-            brew install pkg-config sqlite3 geos expat xerces-c openjpeg hdf5 netcdf
- 
+          source ./gdal/ci/travis/osx/before_install.sh
+
       - name: Build
-        run: ./gdal/ci/travis/osx/install.sh
-        env:
-            WITH_EXPAT: --with-expat=/usr/local/opt/expat
+        shell: bash -l {0}
+        run: |
+          source ./gdal/ci/travis/osx/install.sh
 
       - name: Run tests
-        run: ./gdal/ci/travis/osx/script.sh
+        shell: bash -l {0}
+        run: |
+          source ./gdal/ci/travis/osx/script.sh
         env:
             # Emulate a few Travis-CI env variable so that some tests get properly skipped
             TRAVIS: true
