@@ -1717,6 +1717,17 @@
         <field name="CSSIZ" length="21" type="real"/>
     </tre>
 
+    <!-- STDI-0002-1-v5.0 Appendix AI, Section AI.4, Table AI-1 -->
+    <tre name="SECURA" md_prefix="NITF_SECURA_" location="file" minlength="251" maxlength="99988">
+        <field name="FDATTIM" length="14" type="string"/>
+        <field name="NITFVER" length="9" type="string"/>
+        <field name="NFSECFLDS" length="207" type="string"/>
+        <field name="SECSTD" length="8" type="string"/>
+        <field name="SECCOMP" length="8" type="string"/>
+        <field name="SECLEN" length="5" type="integer"/>
+        <field name="SECURITY" length_var="SECLEN" type="string"/>
+    </tre>
+
     <tre name="SENSRB" location="image">
         <field name="GENERAL_DATA" length="1" type="string"/>
         <if cond="GENERAL_DATA=Y">
@@ -2069,6 +2080,89 @@
             <field name="PARAMETER_COUNT_MMM" length="4" type="integer"/>
             <loop counter="PARAMETER_COUNT_MMM" name="ADDITIONAL_PARAMETER_VALUES" md_prefix="PARAMETER_VALUE_%04d">
                 <field name="PARAMETER_VALUE_NNNN" length_var="PARAMETER_SIZE_MMM" type="string"/>
+            </loop>
+        </loop>
+    </tre>
+
+    <!-- STDI-0002-1-v5.0 Appendix P, Section P.3.2.7.2, Table P-13 -->
+    <tre name="SNSPSB" md_prefix="NITF_SNSPSB_" location="image" minlength="161" maxlength="99985">
+        <field name="NUM_SNS" length="2" type="integer"/>
+        <loop counter="NUM_SNS" md_prefix="SNS_%02d_">
+            <field name="NUM_BP" length="2" type="integer"/>
+            <loop counter="NUM_BP" md_prefix="BP_%02d_">
+                <field name="NUM_PTS" length="3" type="integer"/>
+                <loop counter="NUM_PTS" md_prefix="PT_%03d_">
+                    <field name="LON" length="15" type="real"/>
+                    <field name="LAT" length="15" type="real"/>
+                </loop>
+            </loop>
+            <field name="NUM_BND" length="2" type="integer"/>
+            <loop counter="NUM_BND" md_prefix="BND_%02d_">
+                <field name="BID" length="5" type="string"/>
+                <field name="WS1" length="5" type="integer"/>
+                <field name="WS2" length="5" type="integer"/>
+            </loop>
+            <field name="UNIRES" length="3" type="string"/>
+            <field name="REX" length="6" type="real"/>
+            <field name="REY" length="6" type="real"/>
+            <field name="GSX" length="6" type="real"/>
+            <field name="GSY" length="6" type="real"/>
+            <field name="GSL" length="12" type="string"/>
+            <field name="PLTFM" length="8" type="string"/>
+            <field name="INS" length="8" type="string"/>
+            <field name="MOD" length="4" type="string"/>
+            <field name="PRL" length="5" type="string"/>
+            <field name="SID" length="10" type="string"/>
+            <field name="ACT" length="18" type="string"/>
+            <field name="UNINOA" length="3" type="string"/>
+            <if cond="UNINOA!=">
+                <field name="NOA" length="7" type="real"/>
+            </if>
+            <field name="UNIANG" length="3" type="string"/>
+            <if cond="UNIANG!=">
+                <field name="ANG" length="7" type="real"/>
+            </if>
+            <field name="UNIALT" length="3" type="string"/>
+            <if cond="UNIALT!=">
+                <field name="ALT" length="9" type="real"/>
+            </if>
+            <field name="LONSCC" length="10" type="real"/>
+            <field name="LATSCC" length="10" type="real"/>
+            <field name="UNISAE" length="3" type="string"/>
+            <if cond="UNISAE!=">
+                <field name="SAZ" length="7" type="real"/>
+                <field name="SEL" length="7" type="real"/>
+            </if>
+            <field name="UNIRPY" length="3" type="string"/>
+            <if cond="UNIRPY!=">
+                <field name="ROL" length="7" type="real"/>
+                <field name="PIT" length="7" type="real"/>
+                <field name="YAW" length="7" type="real"/>
+            </if>
+            <field name="UNIPXT" length="3" type="string"/>
+            <if cond="UNIPXT!=">
+                <field name="PXT" length="14" type="real"/>
+            </if>
+            <field name="UNISPE" length="7" type="string"/>
+            <if cond="UNISPE!=">
+                <field name="ROS" length="22" type="real"/>
+                <field name="PIS" length="22" type="real"/>
+                <field name="YAS" length="22" type="real"/>
+            </if>
+            <field name="NUM_AUX" length="3" type="integer"/>
+            <loop counter="NUM_AUX" md_prefix="AUX_%03d_">
+                <field name="API" length="20" type="string"/>
+                <field name="APF" length="1" type="string"/>
+                <field name="UNIAPX" length="7" type="string"/>
+                <if cond="APF=I">
+                    <field name="APN" length="10" type="integer"/>
+                </if>
+                <if cond="APF=R">
+                    <field name="APR" length="20" type="real"/>
+                </if>
+                <if cond="APF=A">
+                    <field name="APA" length="20" type="string"/>
+                </if>
             </loop>
         </loop>
     </tre>

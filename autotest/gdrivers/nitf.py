@@ -3271,6 +3271,112 @@ def test_nitf_89():
   </tre>
 </tres>
 """
+
+    assert data == expected_data
+
+###############################################################################
+# Test parsing SECURA TRE (STDI-0002-1-v5.0 App AI)
+
+def test_nitf_90():
+    tre_data = "FILE_TRE=SECURA=20201020142500NITF02.10" + " "*207 + "ARH.XML         00068" + \
+               "<?xml version=\"1.0\" encoding=\"UTF-8\"?> <arh:Security></arh:Security>"
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_90.ntf', 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_90.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_90.ntf')
+
+    expected_data = """<tres>
+  <tre name="SECURA" location="file">
+    <field name="FDATTIM" value="20201020142500" />
+    <field name="NITFVER" value="NITF02.10" />
+    <field name="NFSECFLDS" value="" />
+    <field name="SECSTD" value="ARH.XML" />
+    <field name="SECCOMP" value="" />
+    <field name="SECLEN" value="00068" />
+    <field name="SECURITY" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt; &lt;arh:Security&gt;&lt;/arh:Security&gt;" />
+  </tre>
+</tres>
+"""
+
+    assert data == expected_data
+
+###############################################################################
+# Test parsing SNSPSB TRE (STDI-0002-1-v5.0 App P)
+
+def test_nitf_91():
+    tre_data = "TRE=SNSPSB=010001111112222233333M  000001000001000001000001GSL         " + \
+               "PLTFM   INS     MOD PRL  SID       ACT               DEG0000001      +111111.11-222222.22" + \
+               "         meters 000000000000000000000011111111111111111111112222222222222222222222001" + \
+               "API                 Imeters 0123456789"
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_91.ntf', 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_91.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_91.ntf')
+
+    expected_data = """<tres>
+  <tre name="SNSPSB" location="image">
+    <field name="NUM_SNS" value="01" />
+    <repeated number="1">
+      <group index="0">
+        <field name="NUM_BP" value="00" />
+        <field name="NUM_BND" value="01" />
+        <repeated number="1">
+          <group index="0">
+            <field name="BID" value="11111" />
+            <field name="WS1" value="22222" />
+            <field name="WS2" value="33333" />
+          </group>
+        </repeated>
+        <field name="UNIRES" value="M" />
+        <field name="REX" value="000001" />
+        <field name="REY" value="000001" />
+        <field name="GSX" value="000001" />
+        <field name="GSY" value="000001" />
+        <field name="GSL" value="GSL" />
+        <field name="PLTFM" value="PLTFM" />
+        <field name="INS" value="INS" />
+        <field name="MOD" value="MOD" />
+        <field name="PRL" value="PRL" />
+        <field name="SID" value="SID" />
+        <field name="ACT" value="ACT" />
+        <field name="UNINOA" value="DEG" />
+        <field name="NOA" value="0000001" />
+        <field name="UNIANG" value="" />
+        <field name="UNIALT" value="" />
+        <field name="LONSCC" value="+111111.11" />
+        <field name="LATSCC" value="-222222.22" />
+        <field name="UNISAE" value="" />
+        <field name="UNIRPY" value="" />
+        <field name="UNIPXT" value="" />
+        <field name="UNISPE" value="meters" />
+        <field name="ROS" value="0000000000000000000000" />
+        <field name="PIS" value="1111111111111111111111" />
+        <field name="YAS" value="2222222222222222222222" />
+        <field name="NUM_AUX" value="001" />
+        <repeated number="1">
+          <group index="0">
+            <field name="API" value="API" />
+            <field name="APF" value="I" />
+            <field name="UNIAPX" value="meters" />
+            <field name="APN" value="0123456789" />
+          </group>
+        </repeated>
+      </group>
+    </repeated>
+  </tre>
+</tres>
+"""
+
     assert data == expected_data
 
 ###############################################################################
