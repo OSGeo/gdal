@@ -1343,6 +1343,14 @@ def is_travis_branch(name):
             return True
     return False
 
+
+###############################################################################
+# Return True if we run under CI
+
+def is_ci():
+    return 'CI' in os.environ
+
+
 ###############################################################################
 # find_lib_linux()
 # Parse /proc/self/maps to find an occurrence of libXXXXX.so.*
