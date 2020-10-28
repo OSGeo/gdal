@@ -29,7 +29,6 @@
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
 
-import os
 import sys
 from osgeo import gdal, ogr
 from osgeo.auxiliary.base import GetOutputDriverFor
