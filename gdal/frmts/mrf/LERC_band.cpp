@@ -475,7 +475,7 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->eAccess != GA_ReadOnly
         || poOpenInfo->pszFilename == nullptr
         || poOpenInfo->pabyHeader == nullptr
-        || strlen(poOpenInfo->pszFilename) < 2)
+        || strlen(poOpenInfo->pszFilename) < 1)
         // Header of Lerc2 takes 58 bytes, an empty area 62 or more, depending on the subversion.
         // Size of Lerc1 empty file is 67
         // || poOpenInfo->nHeaderBytes < static_cast<int>(Lerc2::ComputeNumBytesHeader()))
@@ -508,17 +508,11 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
         }
     }
 
+    // Try Lerc1
     if (size.x <= 0 && sHeader.size() >= Lerc1Image::computeNumBytesNeededToWriteVoidImage()) {
-        Lerc1Image zImg;
-        size_t nRemainingBytes = poOpenInfo->nHeaderBytes;
-        Lerc1NS::Byte *pb = reinterpret_cast<Lerc1NS::Byte *>(psz);
-        // Read only the header, changes pb
-        if (zImg.read(&pb, nRemainingBytes, 1e12, true))
-        {
-            size.x = zImg.getWidth();
-            size.y = zImg.getHeight();
-
-            // Get the desired type
+        if (Lerc1Image::getwh(reinterpret_cast<Lerc1NS::Byte*>(psz), poOpenInfo->nHeaderBytes,
+            size.x, size.y)) {
+            // Get the desired type, if set by caller
             dt = GDALGetDataTypeByName(
                 CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "DATATYPE", "Byte"));
         }

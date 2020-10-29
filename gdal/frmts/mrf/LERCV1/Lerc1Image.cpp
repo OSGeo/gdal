@@ -402,6 +402,9 @@ bool Lerc1Image::write(Byte** ppByte, double maxZError, bool zPart) const
 #undef WRVAR
 }
 
+// To avoid excessive memory allocation attempts, this is still 1.8GB!!
+static size_t TOO_LARGE = 1800 * 1000 * 1000 / static_cast<int>(sizeof(float));
+
 bool Lerc1Image::read(Byte** ppByte, size_t& nRemainingBytes,
     double maxZError, bool ZPart)
 {
@@ -434,8 +437,7 @@ bool Lerc1Image::read(Byte** ppByte, size_t& nRemainingBytes,
         return false;
     if (width <= 0 || width > 20000 || height <= 0 || height > 20000 || maxZErrorInFile > maxZError)
         return false;
-    // To avoid excessive memory allocation attempts, this is still 1.8GB!!
-    if (width * height > 1800 * 1000 * 1000 / static_cast<int>(sizeof(float)))
+    if (static_cast<size_t>(width) * height > TOO_LARGE)
         return false;
 
     if (ZPart) {
@@ -482,6 +484,41 @@ bool Lerc1Image::read(Byte** ppByte, size_t& nRemainingBytes,
         nRemainingBytes -= numBytes;
         ZPart = !ZPart;
     } while (ZPart); // Stop after writing Z
+    return true;
+}
+
+// Initialize from the given header, return true if it worked
+// It could read more info from the header, if needed
+bool Lerc1Image::getwh(const Byte* pByte, size_t nBytes, int &width, int &height)
+{
+    size_t len = sCntZImage.length();
+    if (nBytes < len)
+        return false;
+
+    std::string typeStr(reinterpret_cast<const char*>(pByte), len);
+    if (typeStr != sCntZImage)
+        return false;
+    pByte += len;
+    nBytes -= len;
+
+    int version = 0, type = 0;
+    double maxZErrorInFile = 0;
+
+    if (nBytes < (4 * sizeof(int) + sizeof(double)))
+        return false;
+    RDVAR(pByte, version);
+    RDVAR(pByte, type);
+    RDVAR(pByte, height);
+    RDVAR(pByte, width);
+    RDVAR(pByte, maxZErrorInFile);
+
+    if (version != CNT_Z_VER || type != CNT_Z)
+        return false;
+    if (width <= 0 || width > 20000 || height <= 0 || height > 20000)
+        return false;
+    if (static_cast<size_t>(width) * height > TOO_LARGE)
+        return false;
+
     return true;
 #undef RDVAR
 }
