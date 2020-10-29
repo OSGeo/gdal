@@ -46,14 +46,14 @@ def Usage():
 def main(argv):
     if len(argv) < 3:
         return Usage()
-    ct_filename = argv[1]
+    pct_filename = argv[1]
     src_filename = argv[2]
     dst_filename = argv[3]
-    _ds, err = doit(ct_filename, src_filename, dst_filename)
+    _ds, err = doit(src_filename, pct_filename, dst_filename)
     return err
 
 
-def doit(pct_filename, src_filename, dst_filename, frmt=None):
+def doit(src_filename, pct_filename, dst_filename=None, driver=None):
 
     # =============================================================================
     # Get the PCT.
@@ -83,10 +83,18 @@ def doit(pct_filename, src_filename, dst_filename, frmt=None):
     # Write the dataset to the output file.
     # =============================================================================
 
-    if frmt is None:
-        frmt = GetOutputDriverFor(dst_filename)
+    if not driver:
+        driver = GetOutputDriverFor(dst_filename)
 
-    out_ds = frmt.CreateCopy(dst_filename, mem_ds)
+    dst_driver = gdal.GetDriverByName(driver)
+    if dst_driver is None:
+        print('"%s" driver not registered.' % driver)
+        return None, 1
+
+    if driver.upper() == 'MEM':
+        out_ds = mem_ds
+    else:
+        out_ds = dst_driver.CreateCopy(dst_filename or '', mem_ds)
 
     mem_ds = None
     src_ds = None

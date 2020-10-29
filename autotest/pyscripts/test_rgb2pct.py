@@ -167,20 +167,19 @@ def test_pct2rgb_4():
 def test_attachpct_1():
     pct_filename = 'tmp/test_rgb2pct_2.tif'
     src_filename = '../gcore/data/rgbsmall.tif'
-    # dst_filename = 'tmp/test_rgb2pct_3.tif'
-    frmt = 'MEM'
 
-    ds1, err = rgb2pct.doit(pct_filename=pct_filename, src_filename=src_filename, frmt=frmt)
+    ds1, err = rgb2pct.doit(src_filename=src_filename, pct_filename=pct_filename)
     ct1 = get_color_table(pct_filename)
     assert err == 0 and ds1 is not None and ct1 is not None
 
-    ds2, err = rgb2pct.doit(pct_filename=None, src_filename=src_filename, frmt=frmt)
+    ds2, err = rgb2pct.doit(src_filename=src_filename, pct_filename=None)
     ct2 = get_color_table(pct_filename)
-    assert err == 0 and ds2 is not None and ct2 is None
+    # todo check that the palette is empty
+    assert err == 0 and ds2 is not None and ct2 is not None
 
-    ds3, err = attachpct.doit(pct_filename=ct1, src_filename=src_filename, frmt=frmt)
+    ds3, err = attachpct.doit(src_filename=src_filename, pct_filename=ct1)
     assert err == 0 and ds3 is not None
-#     todo: finish this test
+    # todo: finish this test
 
 
 ###############################################################################

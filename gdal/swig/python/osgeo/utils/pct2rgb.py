@@ -54,10 +54,10 @@ def Usage():
 
 
 def main(argv):
-    frmt = None
+    driver = None
     src_filename = None
     dst_filename = None
-    ct_filename = None
+    pct_filename = None
     out_bands = 3
     band_number = 1
 
@@ -72,11 +72,11 @@ def main(argv):
 
         if arg == '-of' or arg == '-f':
             i = i + 1
-            frmt = argv[i]
+            driver = argv[i]
 
         if arg == '-ct':
             i = i + 1
-            ct_filename = argv[i]
+            pct_filename = argv[i]
 
         elif arg == '-b':
             i = i + 1
@@ -99,11 +99,11 @@ def main(argv):
     if dst_filename is None:
         return Usage()
 
-    _ds, err = doit(src_filename, dst_filename, ct_filename, band_number, out_bands, frmt)
+    _ds, err = doit(src_filename, pct_filename, dst_filename, band_number, out_bands, driver)
     return err
 
 
-def doit(src_filename, dst_filename, ct_filename, band_number=1, out_bands=3, frmt=None):
+def doit(src_filename, pct_filename, dst_filename, band_number=1, out_bands=3, driver=None):
     # Open source file
     src_ds = gdal.Open(src_filename)
     if src_ds is None:
@@ -115,19 +115,19 @@ def doit(src_filename, dst_filename, ct_filename, band_number=1, out_bands=3, fr
     # ----------------------------------------------------------------------------
     # Ensure we recognise the driver.
 
-    if frmt is None:
-        frmt = GetOutputDriverFor(dst_filename)
+    if driver is None:
+        driver = GetOutputDriverFor(dst_filename)
 
-    dst_driver = gdal.GetDriverByName(frmt)
+    dst_driver = gdal.GetDriverByName(driver)
     if dst_driver is None:
-        print('"%s" driver not registered.' % frmt)
+        print('"%s" driver not registered.' % driver)
         return None, 1
 
     # ----------------------------------------------------------------------------
     # Build color table.
 
-    if ct_filename is not None:
-        pal = get_color_palette(ct_filename)
+    if pct_filename is not None:
+        pal = get_color_palette(pct_filename)
         if pal.has_percents():
             min_val = src_band.GetMinimum()
             max_val = src_band.GetMinimum()
@@ -151,15 +151,14 @@ def doit(src_filename, dst_filename, ct_filename, band_number=1, out_bands=3, fr
     # ----------------------------------------------------------------------------
     # Create the working file.
 
-    if frmt == 'GTiff':
+    if driver.lower() == 'gtiff':
         tif_filename = dst_filename
     else:
         tif_filename = 'temp.tif'
 
     gtiff_driver = gdal.GetDriverByName('GTiff')
 
-    tif_ds = gtiff_driver.Create(tif_filename,
-                                 src_ds.RasterXSize, src_ds.RasterYSize, out_bands)
+    tif_ds = gtiff_driver.Create(tif_filename, src_ds.RasterXSize, src_ds.RasterYSize, out_bands)
 
 
     # ----------------------------------------------------------------------------
@@ -191,7 +190,7 @@ def doit(src_filename, dst_filename, ct_filename, band_number=1, out_bands=3, fr
     if tif_filename == dst_filename:
         dst_ds = tif_ds
     else:
-        dst_ds = dst_driver.CreateCopy(dst_filename, tif_ds)
+        dst_ds = dst_driver.CreateCopy(dst_filename or '', tif_ds)
         tif_ds = None
         gtiff_driver.Delete(tif_filename)
 

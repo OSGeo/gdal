@@ -34,9 +34,8 @@ from osgeo.auxiliary.color_palette import get_color_palette
 
 def get_color_table(color_palette_or_path_or_strings_or_ds, min_key=0, max_key=255, fill_missing_colors=True):
     # def get_color_table(color_palette_or_path_or_strings: ColorPaletteOrPathOrStrings) -> gdal.ColorTable:
-    if color_palette_or_path_or_strings_or_ds is None:
-        return None
-
+    if color_palette_or_path_or_strings_or_ds is None or isinstance(color_palette_or_path_or_strings_or_ds, gdal.ColorTable):
+        return color_palette_or_path_or_strings_or_ds
     ds = gdal.Open(color_palette_or_path_or_strings_or_ds)
     if ds is not None:
         ct = ds.GetRasterBand(1).GetRasterColorTable()
