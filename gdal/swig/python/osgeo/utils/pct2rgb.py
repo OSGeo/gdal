@@ -10,6 +10,7 @@
 # ******************************************************************************
 #  Copyright (c) 2001, Frank Warmerdam
 #  Copyright (c) 2009-2010, Even Rouault <even dot rouault at spatialys.com>
+#  Copyright (c) 2020, Idan Miara <idan@miara.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -35,6 +36,8 @@ import sys
 
 from osgeo import gdal
 from osgeo.auxiliary.base import GetOutputDriverFor
+from osgeo.auxiliary.color_palette import get_color_palette
+from osgeo.auxiliary.color_table import get_color_table
 
 progress = gdal.TermProgress_nocb
 
@@ -54,6 +57,7 @@ def main(argv):
     frmt = None
     src_filename = None
     dst_filename = None
+    ct_filename = None
     out_bands = 3
     band_number = 1
 
@@ -69,6 +73,10 @@ def main(argv):
         if arg == '-of' or arg == '-f':
             i = i + 1
             frmt = argv[i]
+
+        if arg == '-ct':
+            i = i + 1
+            ct_filename = argv[i]
 
         elif arg == '-b':
             i = i + 1
@@ -91,11 +99,11 @@ def main(argv):
     if dst_filename is None:
         return Usage()
 
-    _ds, err = doit(src_filename, dst_filename, band_number, out_bands, frmt)
+    _ds, err = doit(src_filename, dst_filename, ct_filename, band_number, out_bands, frmt)
     return err
 
 
-def doit(src_filename, dst_filename, band_number=1, out_bands=3, frmt=None):
+def doit(src_filename, dst_filename, ct_filename, band_number=1, out_bands=3, frmt=None):
     # Open source file
     src_ds = gdal.Open(src_filename)
     if src_ds is None:
@@ -118,7 +126,15 @@ def doit(src_filename, dst_filename, band_number=1, out_bands=3, frmt=None):
     # ----------------------------------------------------------------------------
     # Build color table.
 
-    ct = src_band.GetRasterColorTable()
+    if ct_filename is not None:
+        pal = get_color_palette(ct_filename)
+        if pal.has_percents():
+            min_val = src_band.GetMinimum()
+            max_val = src_band.GetMinimum()
+            pal.apply_percent(min_val, max_val)
+        ct = get_color_table(pal)
+    else:
+        ct = src_band.GetRasterColorTable()
 
     ct_size = ct.GetCount()
     lookup = [Numeric.arrayrange(ct_size),

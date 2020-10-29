@@ -9,6 +9,7 @@
 #
 # ******************************************************************************
 #  Copyright (c) 2001, Frank Warmerdam
+#  Copyright (c) 2020, Idan Miara <idan@miara.com>
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -34,7 +35,7 @@ import sys
 
 from osgeo import gdal
 from osgeo.auxiliary.base import GetOutputDriverFor
-
+from osgeo.auxiliary.color_table import get_color_table
 
 
 def Usage():
@@ -120,8 +121,7 @@ def doit(pct_filename=None, src_filename=None, dst_filename=None, color_count=25
                                        color_count, ct,
                                        callback=gdal.TermProgress_nocb)
     else:
-        pct_ds = gdal.Open(pct_filename)
-        ct = pct_ds.GetRasterBand(1).GetRasterColorTable().Clone()
+        ct = get_color_table(pct_filename)
 
     # Create the working file.  We have to use TIFF since there are few formats
     # that allow setting the color table after creation.
