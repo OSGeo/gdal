@@ -1353,7 +1353,7 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
  *
  * Important: It allocates the memory for the attributes internally,
  * so the caller must free the returned array after using it.
- * @param pszAttrName Name of the attribute to be read.
+ * @param pszAttrFullPath Name of the attribute to be read.
  *        the attribute name must be the form:
  *            root attribute name
  *            SUBDATASET/subdataset attribute name
