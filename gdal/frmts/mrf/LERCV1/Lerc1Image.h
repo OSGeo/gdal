@@ -148,6 +148,9 @@ public:
 
     static unsigned int computeNumBytesNeededToWriteVoidImage();
 
+    // Only initialize the size from the header, if LERC1
+    static bool getwh(const Byte* ppByte, size_t nBytes, int& w, int& h);
+
     bool resize(int width, int height) {
         setsize(width, height);
         mask.resize(getWidth(), getHeight());
@@ -161,6 +164,7 @@ public:
     // Read and write into a memory buffer
     bool write(Byte** ppByte, double maxZError = 0, bool onlyZPart = false) const;
     bool read(Byte** ppByte, size_t& nRemainingBytes, double maxZError, bool onlyZPart = false);
+
 
     BitMaskV1 mask;
 };
