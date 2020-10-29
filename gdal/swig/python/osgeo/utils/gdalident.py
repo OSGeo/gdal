@@ -70,7 +70,6 @@ def main(argv):
     report_failure = 0
     files = []
 
-    gdal.AllRegister()
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 0

@@ -734,13 +734,10 @@ def Usage():
     print('        -targetDir TileDirectory input_files')
     return 1
 
-# =============================================================================
 
 def main(args=None, g=None):
     if g is None:
         g = RetileGlobals()
-
-    gdal.AllRegister()
 
     if args is None:
         args = sys.argv

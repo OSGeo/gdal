@@ -44,7 +44,6 @@ def main(argv):
 
     filename = None
 
-    gdal.AllRegister()
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 0

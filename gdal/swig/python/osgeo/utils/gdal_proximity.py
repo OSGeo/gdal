@@ -59,7 +59,6 @@ def main(argv):
     creation_type = 'Float32'
     quiet_flag = 0
 
-    gdal.AllRegister()
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 0

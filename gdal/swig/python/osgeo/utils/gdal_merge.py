@@ -325,7 +325,6 @@ def main(argv=None):
     bTargetAlignedPixels = False
     start_time = time.time()
 
-    gdal.AllRegister()
     if argv is None:
         argv = argv
     argv = gdal.GeneralCmdLineProcessor(argv)

@@ -89,10 +89,7 @@ def main(argv):
 
 
 def doit(pct_filename=None, src_filename=None, dst_filename=None, color_count=256, frmt=None):
-    gdal.AllRegister()
-
     # Open source file
-
     src_ds = gdal.Open(src_filename)
     if src_ds is None:
         print('Unable to open %s' % src_filename)
@@ -165,9 +162,8 @@ def doit(pct_filename=None, src_filename=None, dst_filename=None, color_count=25
     else:
         dst_ds = dst_driver.CreateCopy(dst_filename, tif_ds)
         tif_ds = None
-
-        os.close(tif_filedesc)
         gtiff_driver.Delete(tif_filename)
+        os.close(tif_filedesc)
 
     return dst_ds, err
 

@@ -46,7 +46,6 @@ def main(argv):
     out_file = None
     pixel_out = 0
 
-    gdal.AllRegister()
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 0

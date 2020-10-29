@@ -56,7 +56,6 @@ def main(argv):
     band_nums = []
     delim = ' '
 
-    gdal.AllRegister()
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 0

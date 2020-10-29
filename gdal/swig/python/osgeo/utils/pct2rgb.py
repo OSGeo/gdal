@@ -57,7 +57,6 @@ def main(argv):
     out_bands = 3
     band_number = 1
 
-    gdal.AllRegister()
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 0
@@ -143,17 +142,17 @@ def doit(src_filename, dst_filename, band_number=1, out_bands=3, frmt=None):
 
     gtiff_driver = gdal.GetDriverByName('GTiff')
 
-    dst_ds = gtiff_driver.Create(tif_filename,
+    tif_ds = gtiff_driver.Create(tif_filename,
                                  src_ds.RasterXSize, src_ds.RasterYSize, out_bands)
 
 
     # ----------------------------------------------------------------------------
     # We should copy projection information and so forth at this point.
 
-    dst_ds.SetProjection(src_ds.GetProjection())
-    dst_ds.SetGeoTransform(src_ds.GetGeoTransform())
+    tif_ds.SetProjection(src_ds.GetProjection())
+    tif_ds.SetGeoTransform(src_ds.GetGeoTransform())
     if src_ds.GetGCPCount() > 0:
-        dst_ds.SetGCPs(src_ds.GetGCPs(), src_ds.GetGCPProjection())
+        tif_ds.SetGCPs(src_ds.GetGCPs(), src_ds.GetGCPProjection())
 
     # ----------------------------------------------------------------------------
     # Do the processing one scanline at a time.
@@ -166,18 +165,20 @@ def doit(src_filename, dst_filename, band_number=1, out_bands=3, frmt=None):
             band_lookup = lookup[iBand]
 
             dst_data = Numeric.take(band_lookup, src_data)
-            dst_ds.GetRasterBand(iBand + 1).WriteArray(dst_data, 0, iY)
+            tif_ds.GetRasterBand(iBand + 1).WriteArray(dst_data, 0, iY)
 
         progress((iY + 1.0) / src_ds.RasterYSize)
 
     # ----------------------------------------------------------------------------
     # Translate intermediate file to output format if desired format is not TIFF.
 
-    if tif_filename != dst_filename:
-        dst_ds = gdal.Open(tif_filename)
-        dst_driver.CreateCopy(dst_filename, dst_ds)
-
+    if tif_filename == dst_filename:
+        dst_ds = tif_ds
+    else:
+        dst_ds = dst_driver.CreateCopy(dst_filename, tif_ds)
+        tif_ds = None
         gtiff_driver.Delete(tif_filename)
+
     return dst_ds, 0
 
 

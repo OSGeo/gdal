@@ -40,7 +40,6 @@ def progress_cb(complete, message, cb_data):
 
 
 def main(argv):
-    gdal.AllRegister()
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 0
