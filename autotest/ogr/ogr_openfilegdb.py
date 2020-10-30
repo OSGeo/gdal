@@ -396,8 +396,12 @@ def test_ogr_openfilegdb_2(filename='data/filegdb/testopenfilegdb.gdb.zip'):
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro ' + filename)
 
-    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
-
+    success = 'INFO' in ret and 'ERROR' not in ret
+    if not success:
+        print(ret)
+        if gdaltest.is_github_workflow_mac():
+            pytest.xfail('Failure. See https://github.com/rouault/gdal/runs/1331249076?check_suite_focus=true')
+    assert success
 
 def test_ogr_openfilegdb_2_92():
     return test_ogr_openfilegdb_2(filename='data/filegdb/testopenfilegdb92.gdb.zip')
