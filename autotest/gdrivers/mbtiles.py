@@ -493,7 +493,7 @@ def test_mbtiles_10():
 
     ds = gdal.Open('/vsimem/mbtiles_10.mbtiles')
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs in (29925, 30092) # 30092 on Mac
+    assert cs in (29925, 30092, 29957) # 30092 on Mac, 29957 on Mac / Conda
     ds = None
 
     gdal.Unlink('/vsimem/mbtiles_10.mbtiles')
