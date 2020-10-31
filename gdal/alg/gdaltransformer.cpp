@@ -72,8 +72,6 @@ static void *GDALDeserializeReprojectionTransformer( CPLXMLNode *psTree );
 static CPLXMLNode *GDALSerializeGenImgProjTransformer( void *pTransformArg );
 static void *GDALDeserializeGenImgProjTransformer( CPLXMLNode *psTree );
 
-static void GDALRefreshGenImgProjTransformer(void* hTransformArg);
-
 static void *
 GDALCreateApproxTransformer2( GDALTransformerFunc pfnRawTransformer,
                               void *pRawTransformerArg,
@@ -364,11 +362,15 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Setup sample points all around the edge of the input raster.    */
 /* -------------------------------------------------------------------- */
-    if( pfnTransformer == GDALGenImgProjTransform ||
-        pfnTransformer == GDALApproxTransform )
+    if( pfnTransformer == GDALGenImgProjTransform )
     {
         // In case CHECK_WITH_INVERT_PROJ has been modified.
         GDALRefreshGenImgProjTransformer(pTransformArg);
+    }
+    else if( pfnTransformer == GDALApproxTransform )
+    {
+        // In case CHECK_WITH_INVERT_PROJ has been modified.
+        GDALRefreshApproxTransformer(pTransformArg);
     }
 
     const int nInXSize = GDALGetRasterXSize( hSrcDS );
@@ -3306,6 +3308,21 @@ void GDALDestroyApproxTransformer( void * pCBData )
         GDALDestroyTransformer( psATInfo->pBaseCBData );
 
     CPLFree( pCBData );
+}
+
+/************************************************************************/
+/*                  GDALRefreshApproxTransformer()                      */
+/************************************************************************/
+
+void GDALRefreshApproxTransformer( void* hTransformArg )
+{
+    ApproxTransformInfo *psInfo =
+        static_cast<ApproxTransformInfo *>( hTransformArg );
+
+    if( psInfo->pfnBaseTransformer == GDALGenImgProjTransform )
+    {
+        GDALRefreshGenImgProjTransformer( psInfo->pBaseCBData );
+    }
 }
 
 /************************************************************************/

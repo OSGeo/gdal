@@ -167,6 +167,9 @@ void* GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
 
 void CPL_DLL * GDALCloneTransformer( void *pTransformerArg );
 
+void GDALRefreshGenImgProjTransformer(void* hTransformArg);
+void GDALRefreshApproxTransformer(void* hTransformArg);
+
 /************************************************************************/
 /*      Color table related                                             */
 /************************************************************************/
