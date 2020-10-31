@@ -35,7 +35,6 @@ from osgeo import ogr
 
 
 def fix(filename, verbose = 1):
-
     something_done = False
 
     if verbose:
@@ -66,15 +65,19 @@ def fix(filename, verbose = 1):
         print('  Nothing to change')
 
 
-if __name__ == '__main__':
-
-    if len(sys.argv) != 2:
+def main(argv):
+    if len(argv) != 2:
         print('Usage: fix_gpkg.py my.gpkg|*.gpkg')
-        sys.exit(1)
+        return 1
 
-    filename = sys.argv[1]
+    filename = argv[1]
     if '*' in filename:
         for filename in glob.glob(filename):
             fix(filename)
     else:
         fix(filename)
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

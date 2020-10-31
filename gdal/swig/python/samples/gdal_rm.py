@@ -127,5 +127,9 @@ def gdal_rm(argv, progress=None):
     return ret
 
 
+def main(argv):
+    return gdal_rm(argv)
+
+
 if __name__ == '__main__':
-    sys.exit(gdal_rm(sys.argv))
+    sys.exit(main(sys.argv))

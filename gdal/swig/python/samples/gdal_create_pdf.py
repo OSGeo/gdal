@@ -32,9 +32,11 @@ import sys
 
 from osgeo import gdal
 
+
 def Usage():
     print('Usage: gdal_create_pdf composition.xml out.pdf')
     return -1
+
 
 def gdal_create_pdf(argv):
     srcfile = None
@@ -64,5 +66,10 @@ def gdal_create_pdf(argv):
         options = ['COMPOSITION_FILE=' + srcfile])
     return 0 if out_ds else 1
 
+
+def main(argv):
+    gdal_create_pdf(argv)
+
+
 if __name__ == '__main__':
-    sys.exit(gdal_create_pdf(sys.argv))
+    sys.exit(main(sys.argv))

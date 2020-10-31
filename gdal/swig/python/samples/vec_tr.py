@@ -73,88 +73,92 @@ def WalkAndTransform(geom):
 def Usage():
     print('Usage: vec_tr.py infile outfile [layer]')
     print('')
-    sys.exit(1)
-
-#############################################################################
-# Argument processing.
+    return 1
 
 
-infile = None
-outfile = None
-layer_name = None
+def main(argv):
+    infile = None
+    outfile = None
+    layer_name = None
 
-for arg in sys.argv[1:]:
-    if infile is None:
-        infile = arg
+    for arg in argv[1:]:
+        if infile is None:
+            infile = arg
 
-    elif outfile is None:
-        outfile = arg
+        elif outfile is None:
+            outfile = arg
 
-    elif layer_name is None:
-        layer_name = arg
+        elif layer_name is None:
+            layer_name = arg
 
+        else:
+            return Usage()
+
+    if outfile is None:
+        return Usage()
+
+    #############################################################################
+    # Open the datasource to operate on.
+
+    in_ds = ogr.Open(infile, update=0)
+
+    if layer_name is not None:
+        in_layer = in_ds.GetLayerByName(layer_name)
     else:
-        Usage()
+        in_layer = in_ds.GetLayer(0)
 
-if outfile is None:
-    Usage()
+    in_defn = in_layer.GetLayerDefn()
 
-#############################################################################
-# Open the datasource to operate on.
+    #############################################################################
+    # Create output file with similar information.
 
-in_ds = ogr.Open(infile, update=0)
+    shp_driver = ogr.GetDriverByName('ESRI Shapefile')
+    shp_driver.DeleteDataSource(outfile)
 
-if layer_name is not None:
-    in_layer = in_ds.GetLayerByName(layer_name)
-else:
-    in_layer = in_ds.GetLayer(0)
+    shp_ds = shp_driver.CreateDataSource(outfile)
 
-in_defn = in_layer.GetLayerDefn()
+    shp_layer = shp_ds.CreateLayer(in_defn.GetName(),
+                                   geom_type=in_defn.GetGeomType(),
+                                   srs=in_layer.GetSpatialRef())
 
-#############################################################################
-# Create output file with similar information.
+    in_field_count = in_defn.GetFieldCount()
 
-shp_driver = ogr.GetDriverByName('ESRI Shapefile')
-shp_driver.DeleteDataSource(outfile)
+    for fld_index in range(in_field_count):
+        src_fd = in_defn.GetFieldDefn(fld_index)
 
-shp_ds = shp_driver.CreateDataSource(outfile)
+        fd = ogr.FieldDefn(src_fd.GetName(), src_fd.GetType())
+        fd.SetWidth(src_fd.GetWidth())
+        fd.SetPrecision(src_fd.GetPrecision())
+        shp_layer.CreateField(fd)
 
-shp_layer = shp_ds.CreateLayer(in_defn.GetName(),
-                               geom_type=in_defn.GetGeomType(),
-                               srs=in_layer.GetSpatialRef())
+    #############################################################################
+    # Process all features in input layer.
 
-in_field_count = in_defn.GetFieldCount()
-
-for fld_index in range(in_field_count):
-    src_fd = in_defn.GetFieldDefn(fld_index)
-
-    fd = ogr.FieldDefn(src_fd.GetName(), src_fd.GetType())
-    fd.SetWidth(src_fd.GetWidth())
-    fd.SetPrecision(src_fd.GetPrecision())
-    shp_layer.CreateField(fd)
-
-#############################################################################
-# Process all features in input layer.
-
-in_feat = in_layer.GetNextFeature()
-while in_feat is not None:
-
-    geom = in_feat.GetGeometryRef().Clone()
-
-    geom = WalkAndTransform(geom)
-
-    out_feat = ogr.Feature(feature_def=shp_layer.GetLayerDefn())
-    out_feat.SetFrom(in_feat)
-    out_feat.SetGeometryDirectly(geom)
-
-    shp_layer.CreateFeature(out_feat)
-    out_feat.Destroy()
-
-    in_feat.Destroy()
     in_feat = in_layer.GetNextFeature()
+    while in_feat is not None:
 
-#############################################################################
-# Cleanup
+        geom = in_feat.GetGeometryRef().Clone()
 
-shp_ds.Destroy()
-in_ds.Destroy()
+        geom = WalkAndTransform(geom)
+
+        out_feat = ogr.Feature(feature_def=shp_layer.GetLayerDefn())
+        out_feat.SetFrom(in_feat)
+        out_feat.SetGeometryDirectly(geom)
+
+        shp_layer.CreateFeature(out_feat)
+        out_feat.Destroy()
+
+        in_feat.Destroy()
+        in_feat = in_layer.GetNextFeature()
+
+    #############################################################################
+    # Cleanup
+
+    shp_ds.Destroy()
+    in_ds.Destroy()
+
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

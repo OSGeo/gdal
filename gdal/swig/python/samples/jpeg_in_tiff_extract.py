@@ -33,9 +33,6 @@ import sys
 
 from osgeo import gdal
 
-###############################################################
-# Usage()
-
 
 def Usage():
     print('Usage: jpeg_in_tiff_extract.py in.tif out.jpg [tile_x tile_y [band_nbr]]')
@@ -44,7 +41,6 @@ def Usage():
     print('If tile_x tile_y are not specified, then all tiles/strips are extracted')
     print('in filenames out_[bandnbr_]tx_ty.jpg')
     print('')
-
     return 1
 
 ###############################################################
@@ -249,10 +245,12 @@ def jpeg_in_tiff_extract(argv):
                             return ret
         return 0
 
-###############################################################
-# Entry point
+
+def main(argv):
+    gdal.GeneralCmdLineProcessor(argv)
+    return jpeg_in_tiff_extract(argv[1:])
 
 
 if __name__ == '__main__':
-    argv = gdal.GeneralCmdLineProcessor(sys.argv)
-    sys.exit(jpeg_in_tiff_extract(argv[1:]))
+    sys.exit(main(sys.argv))
+

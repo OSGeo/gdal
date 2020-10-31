@@ -1646,17 +1646,16 @@ def Usage():
     print('')
     print('-q: quiet mode')
     print('-k: (try to) keep going when error is encountered')
-    sys.exit(1)
+    return 1
 
 
-if __name__ == '__main__':
-
+def main(argv):
     filename = None
     verbose = False
     abort_at_first_error = True
-    if len(sys.argv) == 1:
-        Usage()
-    for arg in sys.argv[1:]:
+    if len(argv) == 1:
+        return Usage()
+    for arg in argv[1:]:
         if arg == '-k':
             abort_at_first_error = False
         elif arg == '-q':
@@ -1664,20 +1663,26 @@ if __name__ == '__main__':
         elif arg == '-v':
             verbose = True
         elif arg[0] == '-':
-            Usage()
+            return Usage()
         else:
             filename = arg
     if filename is None:
-        Usage()
+        return Usage()
     ret = check(filename, abort_at_first_error=abort_at_first_error,
                 verbose=verbose)
     if not abort_at_first_error:
         if not ret:
-            sys.exit(0)
+            return 0
         else:
             for (req, msg) in ret:
                 if req:
                     print('Req %d: %s' % (req, msg))
                 else:
                     print(msg)
-            sys.exit(1)
+            return 1
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
+

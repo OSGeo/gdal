@@ -83,148 +83,152 @@ Values not mapped by the lut file (for instance values 6-255 in the above
 case) will be left unaltered.  Sixteen bit (UInt16) output values are
 supported as well as luts of more than 256 input values.
 """)
-    sys.exit(1)
-
-# =============================================================================
-# 	Mainline
-# =============================================================================
+    return 1
 
 
-frmt = 'GTiff'
-src_filename = None
-dst_filename = None
-src_band_n = 1
-dst_band_n = 1
-lut_filename = None
-create_options = []
+def main(argv):
+    frmt = 'GTiff'
+    src_filename = None
+    dst_filename = None
+    src_band_n = 1
+    dst_band_n = 1
+    lut_filename = None
+    create_options = []
 
-gdal.AllRegister()
-argv = gdal.GeneralCmdLineProcessor(sys.argv)
-if argv is None:
-    sys.exit(0)
+    gdal.AllRegister()
+    argv = gdal.GeneralCmdLineProcessor(argv)
+    if argv is None:
+        return 0
 
-# Parse command line arguments.
-i = 1
-while i < len(argv):
-    arg = argv[i]
+    # Parse command line arguments.
+    i = 1
+    while i < len(argv):
+        arg = argv[i]
 
-    if arg == '-of':
+        if arg == '-of':
+            i = i + 1
+            frmt = argv[i]
+
+        elif arg == '-co':
+            i = i + 1
+            create_options.append(argv[i])
+
+        elif arg == '-lutfile':
+            i = i + 1
+            lut_filename = argv[i]
+
+        elif arg == '-srcband':
+            i = i + 1
+            src_band_n = int(argv[i])
+
+        elif arg == '-dstband':
+            i = i + 1
+            dst_band_n = int(argv[i])
+
+        elif src_filename is None:
+            src_filename = argv[i]
+
+        elif dst_filename is None:
+            dst_filename = argv[i]
+
+        else:
+            Usage()
+
         i = i + 1
-        frmt = argv[i]
 
-    elif arg == '-co':
-        i = i + 1
-        create_options.append(argv[i])
-
-    elif arg == '-lutfile':
-        i = i + 1
-        lut_filename = argv[i]
-
-    elif arg == '-srcband':
-        i = i + 1
-        src_band_n = int(argv[i])
-
-    elif arg == '-dstband':
-        i = i + 1
-        dst_band_n = int(argv[i])
-
-    elif src_filename is None:
-        src_filename = argv[i]
-
-    elif dst_filename is None:
-        dst_filename = argv[i]
-
-    else:
+    if src_filename is None or lut_filename is None:
         Usage()
 
-    i = i + 1
+    # ----------------------------------------------------------------------------
+    # Load the LUT file.
 
-if src_filename is None or lut_filename is None:
-    Usage()
+    lut = read_lut(lut_filename)
 
-# ----------------------------------------------------------------------------
-# Load the LUT file.
+    max_val = 0
+    for entry in lut:
+        if entry > max_val:
+            max_val = entry
 
-lut = read_lut(lut_filename)
+    if max_val > 255:
+        tc = numpy.uint16
+        gc = gdal.GDT_UInt16
+    else:
+        tc = numpy.uint8
+        gc = gdal.GDT_Byte
 
-max_val = 0
-for entry in lut:
-    if entry > max_val:
-        max_val = entry
+    # ----------------------------------------------------------------------------
+    # Convert the LUT from a normal array to a numpy style array.
 
-if max_val > 255:
-    tc = numpy.uint16
-    gc = gdal.GDT_UInt16
-else:
-    tc = numpy.uint8
-    gc = gdal.GDT_Byte
+    if len(lut) <= 256:
+        lookup = numpy.arange(256)
+        for i in range(min(256, len(lut))):
+            lookup[i] = lut[i]
+    else:
+        lookup = numpy.arange(65536)
+        for i in range(min(65536, len(lut))):
+            lookup[i] = lut[i]
 
-# ----------------------------------------------------------------------------
-# Convert the LUT from a normal array to a numpy style array.
+    lookup = lookup.astype(tc)
 
-if len(lut) <= 256:
-    lookup = numpy.arange(256)
-    for i in range(min(256, len(lut))):
-        lookup[i] = lut[i]
-else:
-    lookup = numpy.arange(65536)
-    for i in range(min(65536, len(lut))):
-        lookup[i] = lut[i]
+    # ----------------------------------------------------------------------------
+    # Open source file
 
-lookup = lookup.astype(tc)
-
-# ----------------------------------------------------------------------------
-# Open source file
-
-if dst_filename is None:
-    src_ds = gdal.Open(src_filename, gdal.GA_Update)
-    dst_ds = src_ds
-else:
-    src_ds = gdal.Open(src_filename)
-    dst_ds = None
-
-if src_ds is None:
-    print('Unable to open ', src_filename)
-    sys.exit(1)
-
-src_band = src_ds.GetRasterBand(src_band_n)
-
-# ----------------------------------------------------------------------------
-# Open or create output file.
-
-dst_driver = gdal.GetDriverByName(frmt)
-if dst_driver is None:
-    print('"%s" driver not registered.' % frmt)
-    sys.exit(1)
-
-if dst_ds is None:
-    try:
-        dst_ds = gdal.Open(dst_filename, gdal.GA_Update)
-    except:
+    if dst_filename is None:
+        src_ds = gdal.Open(src_filename, gdal.GA_Update)
+        dst_ds = src_ds
+    else:
+        src_ds = gdal.Open(src_filename)
         dst_ds = None
 
+    if src_ds is None:
+        print('Unable to open ', src_filename)
+        return 1
+
+    src_band = src_ds.GetRasterBand(src_band_n)
+
+    # ----------------------------------------------------------------------------
+    # Open or create output file.
+
+    dst_driver = gdal.GetDriverByName(frmt)
+    if dst_driver is None:
+        print('"%s" driver not registered.' % frmt)
+        return 1
+
     if dst_ds is None:
-        dst_ds = dst_driver.Create(dst_filename,
-                                   src_ds.RasterXSize,
-                                   src_ds.RasterYSize,
-                                   1, gc, options=create_options)
-        dst_ds.SetProjection(src_ds.GetProjection())
-        dst_ds.SetGeoTransform(src_ds.GetGeoTransform())
+        try:
+            dst_ds = gdal.Open(dst_filename, gdal.GA_Update)
+        except:
+            dst_ds = None
+
+        if dst_ds is None:
+            dst_ds = dst_driver.Create(dst_filename,
+                                       src_ds.RasterXSize,
+                                       src_ds.RasterYSize,
+                                       1, gc, options=create_options)
+            dst_ds.SetProjection(src_ds.GetProjection())
+            dst_ds.SetGeoTransform(src_ds.GetGeoTransform())
 
 
-dst_band = dst_ds.GetRasterBand(dst_band_n)
+    dst_band = dst_ds.GetRasterBand(dst_band_n)
 
-# ----------------------------------------------------------------------------
-# Do the processing one scanline at a time.
+    # ----------------------------------------------------------------------------
+    # Do the processing one scanline at a time.
 
-gdal.TermProgress(0.0)
-for iY in range(src_ds.RasterYSize):
-    src_data = src_band.ReadAsArray(0, iY, src_ds.RasterXSize, 1)
+    gdal.TermProgress(0.0)
+    for iY in range(src_ds.RasterYSize):
+        src_data = src_band.ReadAsArray(0, iY, src_ds.RasterXSize, 1)
 
-    dst_data = numpy.take(lookup, src_data)
-    dst_band.WriteArray(dst_data, 0, iY)
+        dst_data = numpy.take(lookup, src_data)
+        dst_band.WriteArray(dst_data, 0, iY)
 
-    gdal.TermProgress((iY + 1.0) / src_ds.RasterYSize)
+        gdal.TermProgress((iY + 1.0) / src_ds.RasterYSize)
 
-src_ds = None
-dst_ds = None
+    src_ds = None
+    dst_ds = None
+
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
+

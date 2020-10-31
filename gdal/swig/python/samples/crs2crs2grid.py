@@ -96,7 +96,7 @@ def read_grid_crs_to_crs(filename, shape):
     if points_found < shape[0] * shape[1]:
         print('points found:   ', points_found)
         print('points expected:', shape[1] * shape[2])
-        sys.exit(1)
+        return None
 
     return grid
 
@@ -240,22 +240,21 @@ CRS Ids
                                          28...IGS08 = ITRF2008
 """)
 
-    sys.exit(1)
+    return 1
 
 #############################################################################
 # Main
 
 
-if __name__ == '__main__':
-
+def main(argv):
     # Default GDAL argument parsing.
 
-    argv = gdal.GeneralCmdLineProcessor(sys.argv)
+    argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
-        sys.exit(0)
+        return 0
 
     if len(argv) == 1:
-        Usage(brief=0)
+        return Usage(brief=0)
 
     # Script argument defaults
     src_crs_id = None
@@ -301,11 +300,11 @@ if __name__ == '__main__':
             i = i + 1
 
         elif argv[i] == '-h' or argv[i] == '--help':
-            Usage(brief=0)
+            return Usage(brief=0)
 
         elif argv[i][0] == '-':
             print('Urecognised argument: ' + argv[i])
-            Usage()
+            return Usage()
 
         elif src_crs_id is None:
             src_crs_id = int(argv[i])
@@ -321,32 +320,32 @@ if __name__ == '__main__':
 
         else:
             print('Urecognised argument: ' + argv[i])
-            Usage()
+            return Usage()
 
         i = i + 1
         # next argument
 
     if output_grid_name is None:
         print('Missing output grid name (-o)')
-        Usage()
+        return Usage()
 
     if dst_crs_date is None:
         print('Source and Destination CRS Ids and Dates are mandatory, '
               'not all provided.')
-        Usage()
+        return Usage()
 
     # Do a bit of validation of parameters.
     if src_crs_id < 1 or src_crs_id > 32 \
        or dst_crs_id < 1 or dst_crs_id > 32:
         print('Invalid source or destination CRS Id %d and %d.'
               % (src_crs_id, dst_crs_id))
-        Usage(brief=0)
+        return Usage(brief=0)
 
     if float(src_crs_date) < 1700.0 or float(src_crs_date) > 2300.0 \
        or float(dst_crs_date) < 1700.0 or float(dst_crs_date) > 2300.0:
         print('Source or destination CRS date seems odd %s and %s.'
               % (src_crs_date, dst_crs_date))
-        Usage(brief=0)
+        return Usage(brief=0)
 
     # Prepare out set of working file names.
 
@@ -371,11 +370,13 @@ if __name__ == '__main__':
     rc = os.system(htdp_path + ' < ' + control_fn)
     if rc != 0:
         print('htdp run failed!')
-        sys.exit(1)
+        return 1
 
     print('htdp run complete.')
 
     adjustment = read_grid_crs_to_crs(out_grid_fn, grid.shape)
+    if adjustment is None:
+        return 1
 
     # Convert shifts to radians
     adjustment = adjustment * (3.14159265358979323846 / 180.0)
@@ -390,3 +391,8 @@ if __name__ == '__main__':
         os.unlink(control_fn)
 
     print('Processing complete: see ' + output_grid_name)
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
