@@ -133,11 +133,6 @@ Python interface may be used in your applications.
 
     Application for executing OGR layer algebra operations.
 
-`gdalpythonserver.py`
-
-    A Python script that can be used as the value of GDAL_API_PROXY_SERVER config.
-    option Redirects on GDAL implementation, but could be used to implement a Python GDAL driver.
-
 `ogr_dispatch.py`
 
     Dispatch features into layers according to the value of some fields or the geometry type.
