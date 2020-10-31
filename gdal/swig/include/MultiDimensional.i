@@ -849,16 +849,32 @@ public:
     *val = GDALMDArrayGetOffset( self, hasval );
   }
 
+  GDALDataType GetOffsetStorageType() {
+    GDALDataType eDT = GDT_Unknown;
+    int hasval = FALSE;
+    GDALMDArrayGetOffsetEx( self, &hasval, &eDT );
+    return hasval ? eDT : GDT_Unknown;
+  }
+
   void GetScale( double *val, int *hasval ) {
     *val = GDALMDArrayGetScale( self, hasval );
   }
 
-  CPLErr SetOffset( double val ) {
-    return GDALMDArraySetOffset( self, val ) ? CE_None : CE_Failure;
+  GDALDataType GetScaleStorageType() {
+    GDALDataType eDT = GDT_Unknown;
+    int hasval = FALSE;
+    GDALMDArrayGetScaleEx( self, &hasval, &eDT );
+    return hasval ? eDT : GDT_Unknown;
   }
 
-  CPLErr SetScale( double val ) {
-    return GDALMDArraySetScale( self, val ) ? CE_None : CE_Failure;
+%feature ("kwargs") SetOffset;
+  CPLErr SetOffset( double val, GDALDataType storageType = GDT_Unknown ) {
+    return GDALMDArraySetOffsetEx( self, val, storageType ) ? CE_None : CE_Failure;
+  }
+
+%feature ("kwargs") SetScale;
+  CPLErr SetScale( double val, GDALDataType storageType = GDT_Unknown ) {
+    return GDALMDArraySetScaleEx( self, val, storageType ) ? CE_None : CE_Failure;
   }
 
   CPLErr SetUnit(const char* unit) {

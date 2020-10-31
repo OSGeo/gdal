@@ -7232,21 +7232,25 @@ public:
     const void* GetRawNoDataValue() const override
     { return m_pabyNoData.empty() ? nullptr: m_pabyNoData.data(); }
 
-    double GetOffset(bool* pbHasOffset) const override
+    double GetOffset(bool* pbHasOffset, GDALDataType* peStorageType) const override
     {
         int bHasOffset = false;
         double dfRes = m_poBand->GetOffset(&bHasOffset);
         if( pbHasOffset )
             *pbHasOffset = CPL_TO_BOOL(bHasOffset);
+        if( peStorageType )
+            *peStorageType = GDT_Unknown;
         return dfRes;
     }
 
-    double GetScale(bool* pbHasScale) const override
+    double GetScale(bool* pbHasScale, GDALDataType* peStorageType) const override
     {
         int bHasScale = false;
         double dfRes = m_poBand->GetScale(&bHasScale);
         if( pbHasScale )
             *pbHasScale = CPL_TO_BOOL(bHasScale);
+        if( peStorageType )
+            *peStorageType = GDT_Unknown;
         return dfRes;
     }
 

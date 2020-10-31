@@ -1698,6 +1698,8 @@ class MEMMDArray final: public MEMAbstractMDArray, public GDALMDArray
     double m_dfOffset = 0.0;
     bool m_bHasScale = false;
     bool m_bHasOffset = false;
+    GDALDataType m_eOffsetStorageType = GDT_Unknown;
+    GDALDataType m_eScaleStorageType = GDT_Unknown;
 
 protected:
     MEMMDArray(const std::string& osParentName,
@@ -1744,23 +1746,25 @@ public:
 
     bool SetRawNoDataValue(const void*) override;
 
-    double GetOffset(bool* pbHasOffset) const override
+    double GetOffset(bool* pbHasOffset, GDALDataType* peStorageType) const override
     {
         if( pbHasOffset) *pbHasOffset = m_bHasOffset;
+        if( peStorageType ) *peStorageType = m_eOffsetStorageType;
         return m_dfOffset;
     }
 
-    double GetScale(bool* pbHasScale) const override
+    double GetScale(bool* pbHasScale, GDALDataType* peStorageType) const override
     {
         if( pbHasScale) *pbHasScale = m_bHasScale;
+        if( peStorageType ) *peStorageType = m_eScaleStorageType;
         return m_dfScale;
     }
 
-    bool SetOffset(double dfOffset) override
-    { m_bHasOffset = true; m_dfOffset = dfOffset; return true; }
+    bool SetOffset(double dfOffset, GDALDataType eStorageType) override
+    { m_bHasOffset = true; m_dfOffset = dfOffset; m_eOffsetStorageType = eStorageType; return true; }
 
-    bool SetScale(double dfScale) override
-    { m_bHasScale = true; m_dfScale = dfScale; return true; }
+    bool SetScale(double dfScale, GDALDataType eStorageType) override
+    { m_bHasScale = true; m_dfScale = dfScale; m_eScaleStorageType = eStorageType; return true; }
 };
 
 /************************************************************************/

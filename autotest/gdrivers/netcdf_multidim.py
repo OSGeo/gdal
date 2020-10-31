@@ -620,8 +620,10 @@ def test_netcdf_multidim_create_nc3(netcdf_setup):  # noqa
         assert struct.unpack('d', var.Read()) == (1.25125,)
         assert var.SetScale(2.5) == gdal.CE_None
         assert var.GetScale() == 2.5
+        assert var.GetScaleStorageType() == gdal.GDT_Float64
         assert var.SetOffset(1.5) == gdal.CE_None
         assert var.GetOffset() == 1.5
+        assert var.GetOffsetStorageType() == gdal.GDT_Float64
 
         var.SetUnit("foo")
         var = rg.OpenMDArray('my_var_no_dim')
@@ -754,12 +756,14 @@ def test_netcdf_multidim_create_nc4(netcdf_setup):  # noqa
         assert var.GetNoDataValueAsRaw() is None
         assert var.Write(struct.pack('d', 1.25125)) == gdal.CE_None
         assert struct.unpack('d', var.Read()) == (1.25125,)
-        assert var.SetScale(2.5) == gdal.CE_None
+        assert var.SetScale(2.5, gdal.GDT_Float32) == gdal.CE_None
         assert var.GetScale() == 2.5
+        assert var.GetScaleStorageType() == gdal.GDT_Float32
         assert var.SetScale(-2.5) == gdal.CE_None
         assert var.GetScale() == -2.5
-        assert var.SetOffset(1.5) == gdal.CE_None
+        assert var.SetOffset(1.5, gdal.GDT_Float32) == gdal.CE_None
         assert var.GetOffset() == 1.5
+        assert var.GetOffsetStorageType() == gdal.GDT_Float32
         assert var.SetOffset(-1.5) == gdal.CE_None
         assert var.GetOffset() == -1.5
 

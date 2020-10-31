@@ -492,9 +492,9 @@ public:
 
     const void* GetRawNoDataValue() const override;
 
-    double GetOffset(bool* pbHasOffset = nullptr) const override;
+    double GetOffset(bool* pbHasOffset = nullptr, GDALDataType* peStorageType = nullptr) const override;
 
-    double GetScale(bool* pbHasScale = nullptr) const override;
+    double GetScale(bool* pbHasScale = nullptr, GDALDataType* peStorageType = nullptr) const override;
 
     const std::string& GetUnit() const override;
 
@@ -628,9 +628,9 @@ public:
 
     const void* GetRawNoDataValue() const override;
 
-    double GetOffset(bool* pbHasOffset = nullptr) const override;
+    double GetOffset(bool* pbHasOffset = nullptr, GDALDataType* peStorageType = nullptr) const override;
 
-    double GetScale(bool* pbHasScale = nullptr) const override;
+    double GetScale(bool* pbHasScale = nullptr, GDALDataType* peStorageType = nullptr) const override;
 
     const std::string& GetUnit() const override;
 
@@ -2137,65 +2137,67 @@ const void* HDF4EOSGridArray::GetRawNoDataValue() const
 }
 
 /************************************************************************/
-/*                              GetOffset()                             */
+/*                           GetOffsetOrScale()                         */
 /************************************************************************/
 
-static double GetOffset(const GDALMDArray* poArray, bool* pbHasOffset)
+static double GetOffsetOrScale(const GDALMDArray* poArray,
+                               const char* pszAttrName,
+                               double dfDefaultValue,
+                               bool* pbHasVal,
+                               GDALDataType* peStorageType)
 {
-    auto poAttr = poArray->GetAttribute("add_offset");
+    auto poAttr = poArray->GetAttribute(pszAttrName);
     if( poAttr &&
         (poAttr->GetDataType().GetNumericDataType() == GDT_Float32 ||
          poAttr->GetDataType().GetNumericDataType() == GDT_Float64) )
     {
-        if( pbHasOffset )
-            *pbHasOffset = true;
+        if( pbHasVal )
+            *pbHasVal = true;
+        if( *peStorageType )
+            *peStorageType = poAttr->GetDataType().GetNumericDataType();
         return poAttr->ReadAsDouble();
     }
-    if( pbHasOffset )
-        *pbHasOffset = false;
-    return 0;
+    if( pbHasVal )
+        *pbHasVal = false;
+    return dfDefaultValue;
 }
 
 /************************************************************************/
 /*                              GetOffset()                             */
 /************************************************************************/
 
-double HDF4EOSGridArray::GetOffset(bool* pbHasOffset) const
+static double GetOffset(const GDALMDArray* poArray, bool* pbHasOffset,
+                        GDALDataType* peStorageType)
 {
-    return ::GetOffset(this, pbHasOffset);
+    return GetOffsetOrScale(poArray, "add_offset", 0, pbHasOffset, peStorageType);
+}
+
+/************************************************************************/
+/*                              GetOffset()                             */
+/************************************************************************/
+
+double HDF4EOSGridArray::GetOffset(bool* pbHasOffset, GDALDataType* peStorageType) const
+{
+    return ::GetOffset(this, pbHasOffset, peStorageType);
 }
 
 /************************************************************************/
 /*                               GetScale()                             */
 /************************************************************************/
 
-static double GetScale(const GDALMDArray* poArray, bool* pbHasScale)
+static double GetScale(const GDALMDArray* poArray, bool* pbHasScale,
+                       GDALDataType* peStorageType)
 {
-    auto poAttr = poArray->GetAttribute("scale_factor");
-    if( poAttr &&
-        (poAttr->GetDataType().GetNumericDataType() == GDT_Float32 ||
-         poAttr->GetDataType().GetNumericDataType() == GDT_Float64) )
-    {
-        const double dfVal = poAttr->ReadAsDouble();
-        if( dfVal != 0 )
-        {
-            if( pbHasScale )
-                *pbHasScale = true;
-            return dfVal;
-        }
-    }
-    if( pbHasScale )
-        *pbHasScale = false;
-    return 1;
+    return GetOffsetOrScale(poArray, "scale_factor", 1, pbHasScale, peStorageType);
 }
 
 /************************************************************************/
 /*                               GetScale()                             */
 /************************************************************************/
 
-double HDF4EOSGridArray::GetScale(bool* pbHasScale) const
+double HDF4EOSGridArray::GetScale(bool* pbHasScale, GDALDataType* peStorageType) const
 {
-    return ::GetScale(this, pbHasScale);
+    return ::GetScale(this, pbHasScale, peStorageType);
 }
 
 /************************************************************************/
@@ -2681,18 +2683,18 @@ std::vector<std::shared_ptr<GDALAttribute>> HDF4SDSArray::GetAttributes(
 /*                              GetOffset()                             */
 /************************************************************************/
 
-double HDF4SDSArray::GetOffset(bool* pbHasOffset) const
+double HDF4SDSArray::GetOffset(bool* pbHasOffset, GDALDataType* peStorageType) const
 {
-    return ::GetOffset(this, pbHasOffset);
+    return ::GetOffset(this, pbHasOffset, peStorageType);
 }
 
 /************************************************************************/
 /*                               GetScale()                             */
 /************************************************************************/
 
-double HDF4SDSArray::GetScale(bool* pbHasScale) const
+double HDF4SDSArray::GetScale(bool* pbHasScale, GDALDataType* peStorageType) const
 {
-    return ::GetScale(this, pbHasScale);
+    return ::GetScale(this, pbHasScale, peStorageType);
 }
 
 /************************************************************************/

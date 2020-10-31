@@ -2400,13 +2400,13 @@ public:
 
     bool SetNoDataValue(double dfNoData);
 
-    virtual double GetOffset(bool* pbHasOffset = nullptr) const;
+    virtual double GetOffset(bool* pbHasOffset = nullptr, GDALDataType* peStorageType = nullptr) const;
 
-    virtual double GetScale(bool* pbHasScale = nullptr) const;
+    virtual double GetScale(bool* pbHasScale = nullptr, GDALDataType* peStorageType = nullptr) const;
 
-    virtual bool SetOffset(double dfOffset);
+    virtual bool SetOffset(double dfOffset, GDALDataType eStorageType = GDT_Unknown);
 
-    virtual bool SetScale(double dfScale);
+    virtual bool SetScale(double dfScale, GDALDataType eStorageType = GDT_Unknown);
 
     std::shared_ptr<GDALMDArray> GetView(const std::string& viewExpr) const;
 
