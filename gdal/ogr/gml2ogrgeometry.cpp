@@ -851,6 +851,31 @@ bool GML2OGRGeometry_AddToMultiSurface( OGRMultiSurface* poMS,
 }
 
 /************************************************************************/
+/*                        GetDistanceInMetre()                          */
+/************************************************************************/
+
+static double GetDistanceInMetre(double dfDistance, const char* pszUnits)
+{
+    if( EQUAL(pszUnits, "m") )
+        return dfDistance;
+
+    if( EQUAL(pszUnits, "km") )
+        return dfDistance * 1000;
+
+    if( EQUAL(pszUnits, "nm") || EQUAL(pszUnits, "[nmi_i]") )
+        return dfDistance * CPLAtof(SRS_UL_INTL_NAUT_MILE_CONV);
+
+    if( EQUAL(pszUnits, "mi") )
+        return dfDistance * CPLAtof(SRS_UL_INTL_STAT_MILE_CONV);
+
+    if( EQUAL(pszUnits, "ft") )
+        return dfDistance * CPLAtof(SRS_UL_INTL_FOOT_CONV);
+
+    CPLDebug("GML2OGRGeometry", "Unhandled unit: %s", pszUnits);
+    return -1;
+}
+
+/************************************************************************/
 /*                      GML2OGRGeometry_XMLNode()                       */
 /*                                                                      */
 /*      Translates the passed XMLnode and its children into an         */
@@ -1211,19 +1236,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                 }
             }
             if( bSRSUnitIsDegree && pszUnits != nullptr &&
-                (EQUAL(pszUnits, "m") ||
-                 EQUAL(pszUnits, "nm") ||
-                 EQUAL(pszUnits, "[nmi_i]") ||
-                 EQUAL(pszUnits, "mi") ||
-                 EQUAL(pszUnits, "ft")) )
+                (dfRadius = GetDistanceInMetre(dfRadius, pszUnits)) > 0 )
             {
                 bIsApproximateArc = true;
-                if( EQUAL(pszUnits, "nm") || EQUAL(pszUnits, "[nmi_i]"))
-                    dfRadius *= CPLAtof(SRS_UL_INTL_NAUT_MILE_CONV);
-                else if( EQUAL(pszUnits, "mi") )
-                    dfRadius *= CPLAtof(SRS_UL_INTL_STAT_MILE_CONV);
-                else if( EQUAL(pszUnits, "ft") )
-                    dfRadius *= CPLAtof(SRS_UL_INTL_FOOT_CONV);
                 dfLastCurveApproximateArcRadius = dfRadius;
                 bLastCurveWasApproximateArcInvertedAxisOrder =
                     bInvertedAxisOrder;
@@ -1806,24 +1821,14 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         const double dfCenterX = p.getX();
         const double dfCenterY = p.getY();
 
+        double dfDistance;
         if( bSRSUnitIsDegree && pszUnits != nullptr &&
-            (EQUAL(pszUnits, "m") ||
-             EQUAL(pszUnits, "nm") ||
-             EQUAL(pszUnits, "[nmi_i]") ||
-             EQUAL(pszUnits, "mi") ||
-             EQUAL(pszUnits, "ft")) )
+            (dfDistance = GetDistanceInMetre(dfRadius, pszUnits)) > 0 )
         {
             OGRLineString* poLS = new OGRLineString();
             // coverity[tainted_data]
             const double dfStep =
                 CPLAtof(CPLGetConfigOption("OGR_ARC_STEPSIZE", "4"));
-            double dfDistance = dfRadius;
-            if( EQUAL(pszUnits, "nm") || EQUAL(pszUnits, "[nmi_i]") )
-                dfDistance *= CPLAtof(SRS_UL_INTL_NAUT_MILE_CONV);
-            else if( EQUAL(pszUnits, "mi") )
-                dfDistance *= CPLAtof(SRS_UL_INTL_STAT_MILE_CONV);
-            else if( EQUAL(pszUnits, "ft") )
-                dfDistance *= CPLAtof(SRS_UL_INTL_FOOT_CONV);
             const double dfSign = dfStartAngle < dfEndAngle ? 1 : -1;
             for( double dfAngle = dfStartAngle;
                  (dfAngle - dfEndAngle) * dfSign < 0;
@@ -1935,23 +1940,13 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         const double dfCenterX = p.getX();
         const double dfCenterY = p.getY();
 
+        double dfDistance;
         if( bSRSUnitIsDegree && pszUnits != nullptr &&
-            (EQUAL(pszUnits, "m") ||
-             EQUAL(pszUnits, "nm") ||
-             EQUAL(pszUnits, "[nmi_i]") ||
-             EQUAL(pszUnits, "mi") ||
-             EQUAL(pszUnits, "ft")) )
+            (dfDistance = GetDistanceInMetre(dfRadius, pszUnits)) > 0 )
         {
             OGRLineString* poLS = new OGRLineString();
             const double dfStep =
                 CPLAtof(CPLGetConfigOption("OGR_ARC_STEPSIZE", "4"));
-            double dfDistance = dfRadius;
-            if( EQUAL(pszUnits, "nm") || EQUAL(pszUnits, "[nmi_i]") )
-                dfDistance *= CPLAtof(SRS_UL_INTL_NAUT_MILE_CONV);
-            else if( EQUAL(pszUnits, "mi") )
-                dfDistance *= CPLAtof(SRS_UL_INTL_STAT_MILE_CONV);
-            else if( EQUAL(pszUnits, "ft") )
-                dfDistance *= CPLAtof(SRS_UL_INTL_FOOT_CONV);
             for( double dfAngle = 0; dfAngle < 360; dfAngle += dfStep )
             {
                 double dfLong = 0.0;
