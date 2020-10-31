@@ -86,7 +86,7 @@ class DataSetCache(object):
         result = gdal.Open(name)
         if result is None:
             print("Error opening: %s" % NameError)
-            sys.exit(1)
+            return 1
         if len(self.queue) == self.cacheSize:
             toRemove = self.queue.pop(0)
             del self.dict[toRemove]
@@ -452,7 +452,7 @@ def createPyramidTile(g, levelMosaicInfo, offsetX, offsetY, width, height, tileN
 
     if t_fh is None:
         print('Creation failed, terminating gdal_tile.')
-        sys.exit(1)
+        return 1
 
     t_fh.SetGeoTransform(geotransform)
     t_fh.SetProjection(levelMosaicInfo.projection)
@@ -471,7 +471,7 @@ def createPyramidTile(g, levelMosaicInfo, offsetX, offsetY, width, height, tileN
     res = gdal.ReprojectImage(s_fh, t_fh, None, None, g.ResamplingMethod)
     if res != 0:
         print("Reprojection failed for %s, error %d" % (temp_tilename, res))
-        sys.exit(1)
+        return 1
 
     levelMosaicInfo.closeDataSet(s_fh)
 
@@ -533,7 +533,7 @@ def createTile(g, minfo, offsetX, offsetY, width, height, tilename, OGRDS, featu
 
     if t_fh is None:
         print('Creation failed, terminating gdal_tile.')
-        sys.exit(1)
+        return 1
 
     t_fh.SetGeoTransform(geotransform)
     if g.Source_SRS is not None:
@@ -576,7 +576,7 @@ def createTileIndex(Verbose, dsName, fieldName, srs, driverName):
     OGRDriver = ogr.GetDriverByName(driverName)
     if OGRDriver is None:
         print('ESRI Shapefile driver not found')
-        sys.exit(1)
+        return 1
 
     OGRDataSource = OGRDriver.Open(dsName)
     if OGRDataSource is not None:
@@ -588,22 +588,22 @@ def createTileIndex(Verbose, dsName, fieldName, srs, driverName):
     OGRDataSource = OGRDriver.CreateDataSource(dsName)
     if OGRDataSource is None:
         print('Could not open datasource ' + dsName)
-        sys.exit(1)
+        return 1
 
     OGRLayer = OGRDataSource.CreateLayer("index", srs, ogr.wkbPolygon)
     if OGRLayer is None:
         print('Could not create Layer')
-        sys.exit(1)
+        return 1
 
     OGRFieldDefn = ogr.FieldDefn(fieldName, ogr.OFTString)
     if OGRFieldDefn is None:
         print('Could not create FieldDefn for ' + fieldName)
-        sys.exit(1)
+        return 1
 
     OGRFieldDefn.SetWidth(256)
     if OGRLayer.CreateField(OGRFieldDefn) != 0:
         print('Could not create Field for ' + fieldName)
-        sys.exit(1)
+        return 1
 
     return OGRDataSource
 
@@ -613,7 +613,7 @@ def addFeature(TileIndexFieldName, OGRDataSource, location, xlist, ylist):
     OGRFeature = ogr.Feature(OGRLayer.GetLayerDefn())
     if OGRFeature is None:
         print('Could not create Feature')
-        sys.exit(1)
+        return 1
 
     OGRFeature.SetField(TileIndexFieldName, location)
     wkt = 'POLYGON ((%f %f,%f %f,%f %f,%f %f,%f %f ))' % (xlist[0], ylist[0],
@@ -621,7 +621,7 @@ def addFeature(TileIndexFieldName, OGRDataSource, location, xlist, ylist):
     OGRGeometry = ogr.CreateGeometryFromWkt(wkt, OGRLayer.GetSpatialRef())
     if OGRGeometry is None:
         print('Could not create Geometry')
-        sys.exit(1)
+        return 1
 
     OGRFeature.SetGeometryDirectly(OGRGeometry)
 
@@ -714,6 +714,7 @@ def UsageFormat():
     for index in range(count):
         driver = gdal.GetDriver(index)
         print(driver.ShortName)
+    return 1
 
 # =============================================================================
 
@@ -731,14 +732,12 @@ def Usage():
     print('        [-r {near/bilinear/cubic/cubicspline/lanczos}]')
     print('        [-useDirForEachRow] [-resume]')
     print('        -targetDir TileDirectory input_files')
+    return 1
 
-# =============================================================================
 
 def main(args=None, g=None):
     if g is None:
         g = RetileGlobals()
-
-    gdal.AllRegister()
 
     if args is None:
         args = sys.argv
@@ -845,8 +844,7 @@ def main(args=None, g=None):
             g.Resume = True
         elif arg[:1] == '-':
             print('Unrecognized command option: %s' % arg)
-            Usage()
-            return 1
+            return Usage()
 
         else:
             g.Names.append(arg)
@@ -854,8 +852,7 @@ def main(args=None, g=None):
 
     if not g.Names:
         print('No input files selected.')
-        Usage()
-        return 1
+        return Usage()
 
     if (g.TileWidth == 0 or g.TileHeight == 0):
         print("Invalid tile dimension %d,%d" % (g.TileWidth, g.TileHeight))
@@ -866,8 +863,7 @@ def main(args=None, g=None):
 
     if g.TargetDir is None:
         print("Missing Directory for Tiles -targetDir")
-        Usage()
-        return 1
+        return Usage()
 
     # create level 0 directory if needed
     if g.UseDirForEachRow and not g.PyramidOnly:
@@ -891,8 +887,7 @@ def main(args=None, g=None):
     g.Driver = gdal.GetDriverByName(g.Format)
     if g.Driver is None:
         print('Format driver %s not found, pick a supported driver.' % g.Format)
-        UsageFormat()
-        return 1
+        return UsageFormat()
 
     DriverMD = g.Driver.GetMetadata()
     g.Extension = DriverMD.get(gdal.DMD_EXTENSION)

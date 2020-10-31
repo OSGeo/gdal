@@ -42,10 +42,6 @@ SCOPES = {
     'storage-rw': 'https://www.googleapis.com/auth/devstorage.read_write'
 }
 
-# =============================================================================
-# 	Usage()
-# =============================================================================
-
 
 def Usage():
     print('')
@@ -59,7 +55,7 @@ def Usage():
     print('')
     print('scopes: ft/storage/storage-rw/full_url')
     print('')
-    sys.exit(1)
+    return 1
 
 
 def main(argv):
@@ -69,7 +65,7 @@ def main(argv):
 
     argv = gdal.GeneralCmdLineProcessor(sys.argv)
     if argv is None:
-        sys.exit(0)
+        return 0
 
     # Parse command line arguments.
     i = 1
@@ -83,12 +79,11 @@ def main(argv):
                 scope = argv[i + 1]
             else:
                 print('Scope %s not recognised.' % argv[i + 1])
-                Usage()
-                sys.exit(1)
+                return Usage()
             i = i + 1
 
         elif arg[0] == '-':
-            Usage()
+            return Usage()
 
         elif command is None:
             command = arg
@@ -97,7 +92,7 @@ def main(argv):
             token_in = arg
 
         else:
-            Usage()
+            return Usage()
 
         i = i + 1
 
@@ -111,7 +106,7 @@ def main(argv):
     elif command == 'refresh2access':
         print(gdal.GOA2GetAccessToken(token_in, scope))
     elif command != 'interactive':
-        Usage()
+        return Usage()
     else:
         # Interactive case
         print('Authorization requested for scope:')
