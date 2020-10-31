@@ -409,3 +409,27 @@ def test_osr_GetCRSInfoListFromDatabase():
             assert record.projection_method == 'Lambert Conic Conformal (2SP)'
             found = True
     assert found
+
+###############################################################################
+#   Test AutoIdentifyEPSG() on NAD83(CORS96)
+
+
+def test_osr_epsg_auto_identify_epsg_nad83_cors96():
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("""GEOGCRS["NAD83(CORS96)",
+    DATUM["NAD83 (Continuously Operating Reference Station 1996)",
+        ELLIPSOID["GRS 1980",6378137,298.257222101,
+            LENGTHUNIT["metre",1]]],
+    PRIMEM["Greenwich",0,
+        ANGLEUNIT["degree",0.0174532925199433]],
+    CS[ellipsoidal,2],
+        AXIS["geodetic latitude (Lat)",north,
+            ORDER[1],
+            ANGLEUNIT["degree",0.0174532925199433]],
+        AXIS["geodetic longitude (Lon)",east,
+            ORDER[2],
+            ANGLEUNIT["degree",0.0174532925199433]]]""")
+    srs.AutoIdentifyEPSG()
+    assert srs.GetAuthorityCode(None) == '6783'
+
