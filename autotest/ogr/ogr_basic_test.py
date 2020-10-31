@@ -28,6 +28,7 @@
 ###############################################################################
 
 import os
+import struct
 import sys
 
 
@@ -714,6 +715,31 @@ def test_ogr_basic_field_alternative_name():
     field_defn.SetAlternativeName('my alias')
     assert field_defn.GetAlternativeName() == 'my alias'
 
+
+def test_ogr_basic_float32_formatting():
+
+    def cast_as_float(x):
+        return struct.unpack('f', struct.pack('f', x))[0]
+
+    feat_defn = ogr.FeatureDefn('test')
+    fldn_defn = ogr.FieldDefn('float32', ogr.OFTReal)
+    fldn_defn.SetSubType(ogr.OFSTFloat32)
+    feat_defn.AddFieldDefn(fldn_defn)
+
+    f = ogr.Feature(feat_defn)
+    for x in ('0.35', '0.15', '123.0', '0.12345678', '1.2345678e-15'):
+        f['float32'] = cast_as_float(float(x))
+        assert f.GetFieldAsString('float32').replace('e+0', 'e+').replace('e-0', 'e-') == x
+
+
+    feat_defn = ogr.FeatureDefn('test')
+    fldn_defn = ogr.FieldDefn('float32_list', ogr.OFTRealList)
+    fldn_defn.SetSubType(ogr.OFSTFloat32)
+    feat_defn.AddFieldDefn(fldn_defn)
+
+    f = ogr.Feature(feat_defn)
+    f['float32_list'] = [ cast_as_float(0.35) ]
+    assert f.GetFieldAsString('float32_list') == '(1:0.35)'
 
 ###############################################################################
 # cleanup
