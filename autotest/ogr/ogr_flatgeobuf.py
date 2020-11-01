@@ -666,10 +666,10 @@ def test_ogr_flatgeobuf_column_metadata():
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f['int'] = 1
-    f['str1'] = 'test1';
-    f['str2'] = 'test2';
-    f['float1'] = 1.1234;
-    f['float2'] = 12.123;
+    f['str1'] = 'test1'
+    f['str2'] = 'test2'
+    f['float1'] = 1.1234
+    f['float2'] = 12.123
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (0 0)'))
     lyr.CreateFeature(f)
 
@@ -694,6 +694,64 @@ def test_ogr_flatgeobuf_column_metadata():
     assert lyr.GetLayerDefn().GetFieldDefn(4).GetWidth() == 5
     assert lyr.GetLayerDefn().GetFieldDefn(4).GetPrecision() == 3
     ds = None
+
+    ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
+    assert not gdal.VSIStatL('/vsimem/test.fgb')
+
+def test_ogr_flatgeobuf_editing():
+    ds = ogr.GetDriverByName('FlatGeobuf').CreateDataSource('/vsimem/test.fgb')
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint)
+    fld_defn = ogr.FieldDefn('int', ogr.OFTInteger)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn('str1', ogr.OFTString)
+    lyr.CreateField(fld_defn)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (0 0)'))
+    f['int'] = 1
+    f['str1'] = 'test1'
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (1 1)'))
+    f['int'] = 2
+    f['str1'] = 'test2'
+    lyr.CreateFeature(f)
+
+    c = lyr.GetFeatureCount()
+    assert c == 2
+
+    ds = None
+
+    ds = ogr.Open('/vsimem/test.fgb', update=1)
+    lyr = ds.GetLayer(0)
+
+    assert lyr.TestCapability(ogr.OLCDeleteFeature) == 1
+    assert lyr.DeleteFeature(1) == 0
+    assert lyr.DeleteFeature(1) == ogr.OGRERR_NON_EXISTING_FEATURE
+    assert lyr.TestCapability(ogr.OLCReorderFields) == 1
+    #assert lyr.ReorderFields([0, 1]) == 0
+    assert lyr.DeleteField(1) == 0
+    f = lyr.GetFeature(0)
+    f.SetGeomField(0, ogr.CreateGeometryFromWkt('POINT (2 2)'))
+    assert lyr.SetFeature(f) == 0
+    lyr.ResetReading()
+
+    ds = None
+
+    ds = ogr.Open('/vsimem/test.fgb')
+    lyr = ds.GetLayer(0)
+
+    c = lyr.GetFeatureCount()
+    assert c == 1
+
+    f = lyr.GetNextFeature()
+    assert f is not None
+    assert f.GetGeometryRef().ExportToWkt() == 'POINT (2 2)'
+    assert f[0] == 2
+    assert f.GetFieldCount() == 1
+
+    f = lyr.GetNextFeature()
+    assert f is None
 
     ogr.GetDriverByName('FlatGeobuf').DeleteDataSource('/vsimem/test.fgb')
     assert not gdal.VSIStatL('/vsimem/test.fgb')
