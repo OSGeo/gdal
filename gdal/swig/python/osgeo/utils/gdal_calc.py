@@ -58,6 +58,7 @@ import shlex
 import string
 import numbers
 from collections import defaultdict
+from osgeo.auxiliary.base import is_path_like
 
 import numpy
 

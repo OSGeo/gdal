@@ -111,6 +111,8 @@ jobs:
             $FLAKE8 autotest
             $FLAKE8 gdal/swig/python/scripts
             $FLAKE8 gdal/swig/python/samples
+            $FLAKE8 gdal/swig/python/osgeo/utils
+            $FLAKE8 gdal/swig/python/osgeo/auxiliary
 
   doxygen:
     runs-on: ubuntu-latest

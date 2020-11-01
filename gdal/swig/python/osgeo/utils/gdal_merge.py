@@ -31,7 +31,6 @@
 # anssi.pekkarinen@fao.org
 
 import math
-import os.path
 import sys
 import time
 
