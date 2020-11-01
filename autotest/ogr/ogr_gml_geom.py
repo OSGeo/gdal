@@ -1740,16 +1740,16 @@ def test_gml_CircleByCenterPoint():
     assert ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('CIRCULARSTRING (-1 2,3 2,-1 2)')) == 0
 
 ###############################################################################
-# Test GML CircleByCenterPoint with uom="m"
+# Test GML CircleByCenterPoint with uom="m" and uom="km"
 
 
-def test_gml_CircleByCenterPoint_srs_geog_uom_m():
+def test_gml_CircleByCenterPoint_srs_geog_uom_m_km():
 
     gml = '<gml:CircleByCenterPoint srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos><gml:radius uom="m">2000</gml:radius></gml:CircleByCenterPoint>'
     geom1 = ogr.CreateGeometryFromGML(gml)
     geom1.SwapXY()
 
-    gml = '<gml:CircleByCenterPoint srsName="URN:OGC:DEF:CRS:OGC:1.3:CRS84"><gml:pos>2 49</gml:pos><gml:radius uom="m">2000</gml:radius></gml:CircleByCenterPoint>'
+    gml = '<gml:CircleByCenterPoint srsName="URN:OGC:DEF:CRS:OGC:1.3:CRS84"><gml:pos>2 49</gml:pos><gml:radius uom="km">2</gml:radius></gml:CircleByCenterPoint>'
     geom2 = ogr.CreateGeometryFromGML(gml)
 
     assert ogrtest.check_feature_geometry(geom1, geom2) == 0
