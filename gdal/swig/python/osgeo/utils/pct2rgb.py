@@ -33,7 +33,7 @@
 import sys
 
 from osgeo import gdal
-from osgeo.auxiliary.base import GetOutputDriverFor
+from osgeo.utils.auxiliary.util import GetOutputDriverFor
 
 progress = gdal.TermProgress_nocb
 

@@ -58,13 +58,13 @@ import shlex
 import string
 import numbers
 from collections import defaultdict
-from osgeo.auxiliary.base import is_path_like
+from osgeo.utils.auxiliary.base import is_path_like
 
 import numpy
 
 from osgeo import gdal
 from osgeo import gdalnumeric
-from osgeo.auxiliary.base import GetOutputDriverFor
+from osgeo.utils.auxiliary.util import GetOutputDriverFor
 
 # create alphabetic list (lowercase + uppercase) for storing input layers
 AlphaList = list(string.ascii_letters)
