@@ -64,6 +64,8 @@ import numpy
 from osgeo import gdal
 from osgeo import gdalnumeric
 from osgeo.auxiliary.base import GetOutputDriverFor
+from osgeo.auxiliary.base import is_path_like
+from osgeo.auxiliary import extent, color_palette
 
 # create alphabetic list (lowercase + uppercase) for storing input layers
 AlphaList = list(string.ascii_letters)
@@ -296,7 +298,21 @@ def doit(opts, args):
         allBandsCount = len(opts.calc)
 
     if opts.extent not in [EXTENT_IGNORE, EXTENT_FAIL] and (GeoTransformDiffer or not isinstance(opts.extent, EXTENT)):
-        raise Exception('Error! mixing different GeoTransforms/Extents is not supported yet.')
+        GeoTransformCheck, DimensionsCheck, ExtentCheck = extent.calc_geotransform_and_dimensions(
+            GeoTransforms, Dimensions, opts.extent)
+        if GeoTransformCheck is None:
+            raise Exception("Error! The requested extent is empty. Cannot proceed")
+        for i in range(len(myFileNames)):
+            temp_vrt_filename, temp_vrt_ds = extent.make_temp_vrt(myFiles[i], ExtentCheck)
+            myTempFileNames.append(temp_vrt_filename)
+            myFiles[i] = None  # close original ds
+            myFiles[i] = temp_vrt_ds  # replace original ds with vrt_ds
+
+            # update the new precise dimensions and gt from the new ds
+            GeoTransformCheck = temp_vrt_ds.GetGeoTransform()
+            DimensionsCheck = [temp_vrt_ds.RasterXSize, temp_vrt_ds.RasterYSize]
+
+        temp_vrt_ds = None
 
     ################################################################
     # set up output file
@@ -380,7 +396,7 @@ def doit(opts, args):
             if opts.color_table:
                 # set color table and color interpretation
                 if is_path_like(opts.color_table):
-                    raise Exception('Error! reading a color table from a file is not supported yet')
+                    opts.color_table = color_palette.get_color_table(opts.color_table)
                 myOutB.SetRasterColorTable(opts.color_table)
                 myOutB.SetRasterColorInterpretation(gdal.GCI_PaletteIndex)
 
@@ -643,9 +659,10 @@ def main(argv):
     parser.add_option("--quiet", dest="quiet", action="store_true", help="suppress progress messages")
     parser.add_option("--optfile", dest="optfile", metavar="optfile", help="Read the named file and substitute the contents into the command line options list.")
 
-    # parser.add_option("--color_table", dest="color_table", help="color table file name")
+    parser.add_option("--color_table", dest="color_table", help="color table file name")
+    # todo: an appropriate way to input a custom extent i.e. -a_ullr
     parser.add_option("--extent", dest="extent",
-                      choices=['ignore', 'fail'],
+                      choices=['ignore', 'fail', 'union', 'intersect'],
                       help="how to treat mixed geotrasnforms")
     parser.add_option("--projectionCheck", dest="projectionCheck", action="store_true",
                       help="check that all rasters share the same projection")

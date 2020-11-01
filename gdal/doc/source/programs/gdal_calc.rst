@@ -95,6 +95,14 @@ but no projection checking is performed (unless projectionCheck option is used).
     this option determinants how to handle rasters with different extents.
     ``ignore`` (default) - only the dimensions of the rasters are compared. if the dimensions do not agree the operation will fail.
     ``fail`` - the dimensions and the extent (bounds) of the rasters must agree, otherwise the operation will fail.
+    ``union`` - the dimensions and the extent (bounds) of the rasters will be a union of the input extents.
+    ``intersect`` - the dimensions and the extent (bounds) of the rasters will be an intersection of the input extents.
+    a specified custom extent is also supported using the Python interface.
+
+.. option:: color_table=<filename>
+
+    Allows to specify a filename of a color table (or a ColorTable object) (with Palette Index interpretation) to be used for the output raster.
+    Supported formats: txt (i.e. like gdaldem, but color names are not supported), qlr, qml (i.e. exported from QGIS)
 
 .. option:: --projectionCheck
 
@@ -148,9 +156,6 @@ they are not available using the command prompt.
 
     If enabled, the output dataset would be returned from the function and not closed.
 
-.. option:: color_table
-
-    Allows to specify a ColorTable object (with Palette Index interpretation) to be used for the output raster.
 
 Example
 -------
