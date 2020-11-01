@@ -6,7 +6,7 @@ rgb2pct
 
 .. only:: html
 
-    Convert a 24bit RGB image to 8bit paletted. 
+    Convert a 24bit RGB image to 8bit paletted.
 
 .. Index:: rgb2pct
 
@@ -26,7 +26,7 @@ converts the image into a pseudo-colored image using the color table.
 This conversion utilizes Floyd-Steinberg dithering (error diffusion) to
 maximize output image visual quality.
 
-.. program:: gdaladdo
+.. program:: rgb2pct
 
 .. option:: -n <color>
 

@@ -46,7 +46,7 @@ can publish a picture without proper georeferencing too.
     rescale input to the ``Byte`` data type using `gdal_translate` utility.
 
 
-.. program:: gdal_translate
+.. program:: gdal2tiles
 
 .. option:: -p <PROFILE>, --profile=<PROFILE>
 

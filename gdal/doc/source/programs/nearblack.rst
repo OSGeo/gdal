@@ -26,7 +26,7 @@ black, white or one or more custom colors around the collar to black or white.  
 is often used to "fix up" lossy compressed air photos so that color pixels
 can be treated as transparent when mosaicing.
 
-.. program:: ogrtindex
+.. program:: nearblack
 
 .. option:: -o <outfile>
 
