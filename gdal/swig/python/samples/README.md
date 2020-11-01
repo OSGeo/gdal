@@ -13,6 +13,7 @@ Python interface may be used in your applications.
 `attachpct.py`
 
     Simple command line program for copying the color table of a raster into another raster.
+    from (GDAL >= 3.3) the input color table can be read from a color file
 
 `fft.py`
 

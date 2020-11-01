@@ -34,6 +34,8 @@ import struct
 
 
 from osgeo import gdal
+from osgeo.utils import attachpct, rgb2pct
+from osgeo.auxiliary.color_table import get_color_table
 import gdaltest
 import test_py_scripts
 import pytest
@@ -162,6 +164,24 @@ def test_pct2rgb_4():
     ori_ds = None
 
 
+def test_attachpct_1():
+    pct_filename = 'tmp/test_rgb2pct_2.tif'
+    src_filename = '../gcore/data/rgbsmall.tif'
+
+    ds1, err = rgb2pct.doit(src_filename=src_filename, pct_filename=pct_filename)
+    ct1 = get_color_table(pct_filename)
+    assert err == 0 and ds1 is not None and ct1 is not None
+
+    ds2, err = rgb2pct.doit(src_filename=src_filename, pct_filename=None)
+    ct2 = get_color_table(pct_filename)
+    # todo check that the palette is empty
+    assert err == 0 and ds2 is not None and ct2 is not None
+
+    ds3, err = attachpct.doit(src_filename=src_filename, pct_filename=ct1)
+    assert err == 0 and ds3 is not None
+    # todo: finish this test
+
+
 ###############################################################################
 # Cleanup
 
@@ -178,8 +198,3 @@ def test_rgb2pct_cleanup():
             os.remove(filename)
         except OSError:
             pass
-
-    
-
-
-
