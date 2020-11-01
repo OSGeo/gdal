@@ -29,7 +29,7 @@ be in the same coordinate system and have a matching number of bands, but
 they may be overlapping, and at different resolutions. In areas of overlap,
 the last image will be copied over earlier ones.
 
-.. program:: gdaladdo
+.. program:: gdal_merge
 
 .. option:: -o <out_filename>
 

@@ -30,7 +30,7 @@ the distance from the center of each pixel to the center of the nearest
 pixel identified as a target pixel.  Target pixels are those in the source
 raster for which the raster pixel value is in the set of target pixel values.
 
-.. program:: gdaladdo
+.. program:: gdal_proximity
 
 .. option:: <srcfile>
 

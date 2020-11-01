@@ -30,7 +30,7 @@ byte comparison done which will count as one difference. So if it is
 only important that the GDAL visible data is identical a difference
 count of 1 (the binary difference) should be considered acceptable.
 
-.. program:: gdalinfo
+.. program:: gdalcompare
 
 .. option:: -sds
 
