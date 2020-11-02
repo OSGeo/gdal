@@ -2496,6 +2496,15 @@ char *CPLBinaryToHex( int nBytes, const GByte *pabyData )
     return pszHex;
 }
 
+/**
+ * Binary to hexadecimal translation, switching each word order (Big Endian).
+ *
+ * @param nBytes number of bytes of binary data in pabyData.
+ * @param pabyData array of data bytes to translate.
+ *
+ * @return hexadecimal translation, zero terminated.  Free with CPLFree().
+ */
+
 char *CPLBEBinaryToHex( int nBytes, const GByte *pabyData )
 
 {
