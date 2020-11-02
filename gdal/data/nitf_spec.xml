@@ -1334,6 +1334,70 @@
         </loop>
     </tre>
 
+    <!-- STDI-0002-1-v5.0 Appendix U, Section 11.4, Table 8 -->
+    <tre name="RSMAPB" md_prefix="NITF_RSMAPB_" minlength="321" maxlength="28411" location="image">
+        <field name="IID" length="80" type="string"/>
+        <field name="EDITION" length="40" type="string"/>
+        <field name="TID" length="40" type="string"/>
+        <field name="NPAR" length="2" type="integer" minval="1" maxval="36"/>
+        <field name="APTYP" length="1" type="string"/>
+        <field name="LOCTYP" length="1" type="string"/>
+        <field name="NSFX" length="21" type="real"/>
+        <field name="NSFY" length="21" type="real"/>
+        <field name="NSFZ" length="21" type="real"/>
+        <field name="NOFFX" length="21" type="real"/>
+        <field name="NOFFY" length="21" type="real"/>
+        <field name="NOFFZ" length="21" type="real"/>
+        <if cond="LOCTYP=R">
+            <field name="XUOL" length="21" type="real"/>
+            <field name="YUOL" length="21" type="real"/>
+            <field name="ZUOL" length="21" type="real"/>
+            <field name="XUXL" length="21" type="real" minval="-1" maxval="1"/>
+            <field name="XUYL" length="21" type="real" minval="-1" maxval="1"/>
+            <field name="XUZL" length="21" type="real" minval="-1" maxval="1"/>
+            <field name="YUXL" length="21" type="real" minval="-1" maxval="1"/>
+            <field name="YUYL" length="21" type="real" minval="-1" maxval="1"/>
+            <field name="YUZL" length="21" type="real" minval="-1" maxval="1"/>
+            <field name="ZUXL" length="21" type="real" minval="-1" maxval="1"/>
+            <field name="ZUYL" length="21" type="real" minval="-1" maxval="1"/>
+            <field name="ZUZL" length="21" type="real" minval="-1" maxval="1"/>
+        </if>
+        <field name="APBASE" length="1" type="string"/>
+        <if cond="APTYP=I">
+            <field name="NISAP" length="2" type="integer" minval="1" maxval="99"/>
+            <field name="NISAPR" length="2" type="integer" minval="0" maxval="99"/>
+            <loop counter="NISAPR" md_prefix="ISAPR_%02d_">
+                <field name="XPWRR" length="1" type="integer" minval="0" maxval="5"/>
+                <field name="YPWRR" length="1" type="integer" minval="0" maxval="5"/>
+                <field name="ZPWRR" length="1" type="integer" minval="0" maxval="5"/>
+            </loop>
+            <field name="NISAPC" length="2" type="integer" minval="0" maxval="99"/>
+            <loop counter="NISAPC" md_prefix="ISAPC_%02d_">
+                <field name="XPWRC" length="1" type="integer" minval="0" maxval="5"/>
+                <field name="YPWRC" length="1" type="integer" minval="0" maxval="5"/>
+                <field name="ZPWRC" length="1" type="integer" minval="0" maxval="5"/>
+            </loop>
+        </if>
+        <if cond="APTYP=G">
+            <field name="NGSAP" length="2" type="integer" minval="1" maxval="16"/>
+            <loop counter="NGSAP" md_prefix="GSAP_%02d_">
+                <field name="GSAPID" length="4" type="string"/>
+            </loop>
+        </if>
+        <if cond="APBASE=Y">
+            <field name="NBASIS" length="2" type="integer" minval="1" maxval="99"/>
+            <!-- AEL stored in row-major order for NPAR rows and NBASIS columns -->
+            <loop counter="NPAR" md_prefix="PAR_%02d_">
+                <loop counter="NBASIS" md_prefix="BASIS_%02d_">
+                    <field name="AEL" length="21" type="real"/>
+                </loop>
+            </loop>
+        </if>
+        <loop counter="NPAR" md_prefix="PAR_%02d_">
+            <field name="PARVAL" length="21" type="real"/>
+        </loop>
+    </tre>
+
     <tre name="RSMDCA" minlength="597" maxlength="99988" location="image">
         <field name="IID" length="80" type="string"/>
         <field name="EDITION" length="40" type="string"/>
@@ -1395,6 +1459,83 @@
         <field name="GZZ" length="2" type="integer" minval="1" maxval="36"/>
         <loop formula="(NPART+1)*(NPART)/2" name="DERCOV" md_prefix="DERCOV_%05d"> <!--Warning: this condition is currently hardcoded in the interpreter -->
             <field name="" longname="DERCOV" length="21" type="real"/>
+        </loop>
+    </tre>
+
+    <!-- STDI-0002-1-v5.0 Appendix U, Section 9.6, Table 6 -->
+    <tre name="RSMDCB" md_prefix="NITF_RSMDCB_" minlength="269" maxlength="99985" location="image">
+        <field name="IID" length="80" type="string"/>
+        <field name="EDITION" length="40" type="string"/>
+        <field name="TID" length="40" type="string"/>
+        <field name="NROWCB" length="2" type="integer"/>
+        <field name="NIMGE" length="3" type="integer"/>
+        <loop counter="NIMGE" md_prefix="IMGE_%03d_">
+            <field name="IIDI" length="80" type="string"/>
+            <field name="NCOLCB" length="2" type="integer" minval="1" maxval="36"/>
+        </loop>
+        <field name="INCAPD" length="1" type="string"/>
+        <if cond="INCAPD=Y">
+            <field name="NPAR" length="2" type="integer" minval="1" maxval="36"/>
+            <field name="APTYP" length="1" type="string"/>
+            <field name="LOCTYP" length="1" type="string"/>
+            <field name="NSFX" length="21" type="real"/>
+            <field name="NSFY" length="21" type="real"/>
+            <field name="NSFZ" length="21" type="real"/>
+            <field name="NOFFX" length="21" type="real"/>
+            <field name="NOFFY" length="21" type="real"/>
+            <field name="NOFFZ" length="21" type="real"/>
+            <if cond="LOCTYP=R">
+                <field name="XUOL" length="21" type="real"/>
+                <field name="YUOL" length="21" type="real"/>
+                <field name="ZUOL" length="21" type="real"/>
+                <field name="XUXL" length="21" type="real" minval="-1" maxval="1"/>
+                <field name="XUYL" length="21" type="real" minval="-1" maxval="1"/>
+                <field name="XUZL" length="21" type="real" minval="-1" maxval="1"/>
+                <field name="YUXL" length="21" type="real" minval="-1" maxval="1"/>
+                <field name="YUYL" length="21" type="real" minval="-1" maxval="1"/>
+                <field name="YUZL" length="21" type="real" minval="-1" maxval="1"/>
+                <field name="ZUXL" length="21" type="real" minval="-1" maxval="1"/>
+                <field name="ZUYL" length="21" type="real" minval="-1" maxval="1"/>
+                <field name="ZUZL" length="21" type="real" minval="-1" maxval="1"/>
+            </if>
+            <field name="APBASE" length="1" type="string"/>
+            <if cond="APTYP=I">
+                <field name="NISAP" length="2" type="integer" minval="1" maxval="99"/>
+                <field name="NISAPR" length="2" type="integer" minval="0" maxval="99"/>
+                <loop counter="NISAPR" md_prefix="ISAPR_%02d_">
+                    <field name="XPWRR" length="1" type="integer" minval="0" maxval="5"/>
+                    <field name="YPWRR" length="1" type="integer" minval="0" maxval="5"/>
+                    <field name="ZPWRR" length="1" type="integer" minval="0" maxval="5"/>
+                </loop>
+                <field name="NISAPC" length="2" type="integer" minval="0" maxval="99"/>
+                <loop counter="NISAPC" md_prefix="ISAPC_%02d_">
+                    <field name="XPWRC" length="1" type="integer" minval="0" maxval="5"/>
+                    <field name="YPWRC" length="1" type="integer" minval="0" maxval="5"/>
+                    <field name="ZPWRC" length="1" type="integer" minval="0" maxval="5"/>
+                </loop>
+            </if>
+            <if cond="APTYP=G">
+                <field name="NGSAP" length="2" type="integer" minval="1" maxval="16"/>
+                <loop counter="NGSAP" md_prefix="GSAP_%02d_">
+                    <field name="GSAPID" length="4" type="string"/>
+                </loop>
+            </if>
+            <if cond="APBASE=Y">
+                <field name="NBASIS" length="2" type="integer" minval="1" maxval="99"/>
+                <!-- AEL stored in row-major order for NPAR rows and NBASIS columns -->
+                <loop counter="NPAR" md_prefix="PAR_%02d_">
+                    <loop counter="NBASIS" md_prefix="BASIS_%02d_">
+                        <field name="AEL" length="21" type="real"/>
+                    </loop>
+                </loop>
+            </if>
+        </if>
+        <loop counter="NIMGE" md_prefix="IMGE_%03d_">
+            <loop counter="NROWCB" md_prefix="ROW_%02d_">
+                <loop counter="NCOLCB" md_prefix="COL_%02d_">
+                    <field name="CRSCOV" length="21" type="real"/>
+                </loop>
+            </loop>
         </loop>
     </tre>
 
@@ -1487,6 +1628,129 @@
                 <field name="UCORSC" length="21" type="real"/>
                 <field name="UTAUSC" length="21" type="real" unit="pixels"/>
             </loop>
+        </if>
+    </tre>
+
+    <!-- STDI-0002-1-v5.0 Appendix U, Section 13.7, Table 10 -->
+    <tre name="RSMECB" md_prefix="NITF_RSMECB_" minlength="371" maxlength="98487" location="image">
+        <field name="IID" length="80" type="string"/>
+        <field name="EDITION" length="40" type="string"/>
+        <field name="TID" length="40" type="string"/>
+        <field name="INCLIC" length="1" type="string"/>
+        <field name="INCLUC" length="1" type="string"/>
+        <if cond="INCLIC=Y">
+            <field name="NPARO" length="2" type="integer" minval="1" maxval="53"/>
+            <field name="IGN" length="2" type="integer" minval="1" maxval="36"/>
+            <field name="CVDATE" length="8" type="string"/>
+            <field name="NPAR" length="2" type="integer" minval="1" maxval="36"/>
+            <field name="APTYP" length="1" type="string"/>
+            <field name="LOCTYP" length="1" type="string"/>
+            <field name="NSFX" length="21" type="real"/>
+            <field name="NSFY" length="21" type="real"/>
+            <field name="NSFZ" length="21" type="real"/>
+            <field name="NOFFX" length="21" type="real"/>
+            <field name="NOFFY" length="21" type="real"/>
+            <field name="NOFFZ" length="21" type="real"/>
+            <if cond="LOCTYP=R">
+                <field name="XUOL" length="21" type="real"/>
+                <field name="YUOL" length="21" type="real"/>
+                <field name="ZUOL" length="21" type="real"/>
+                <field name="XUXL" length="21" type="real" minval="-1" maxval="1"/>
+                <field name="XUYL" length="21" type="real" minval="-1" maxval="1"/>
+                <field name="XUZL" length="21" type="real" minval="-1" maxval="1"/>
+                <field name="YUXL" length="21" type="real" minval="-1" maxval="1"/>
+                <field name="YUYL" length="21" type="real" minval="-1" maxval="1"/>
+                <field name="YUZL" length="21" type="real" minval="-1" maxval="1"/>
+                <field name="ZUXL" length="21" type="real" minval="-1" maxval="1"/>
+                <field name="ZUYL" length="21" type="real" minval="-1" maxval="1"/>
+                <field name="ZUZL" length="21" type="real" minval="-1" maxval="1"/>
+            </if>
+            <field name="APBASE" length="1" type="string"/>
+            <if cond="APTYP=I">
+                <field name="NISAP" length="2" type="integer"/>
+                <field name="NISAPR" length="2" type="integer"/>
+                <loop counter="NISAPR" md_prefix="ISAPR_%02d_">
+                    <field name="XPWRR" length="1" type="integer"/>
+                    <field name="YPWRR" length="1" type="integer"/>
+                    <field name="ZPWRR" length="1" type="integer"/>
+                </loop>
+                <field name="NISAPC" length="2" type="integer"/>
+                <loop counter="NISAPC" md_prefix="ISAPC_%02d_">
+                    <field name="XPWRC" length="1" type="integer"/>
+                    <field name="YPWRC" length="1" type="integer"/>
+                    <field name="ZPWRC" length="1" type="integer"/>
+                </loop>
+            </if>
+            <if cond="APTYP=G">
+                <field name="NGSAP" length="2" type="integer"/>
+                <loop counter="NGSAP" md_prefix="GSAP_%02d_">
+                    <field name="GSAPID" length="4" type="string"/>
+                </loop>
+            </if>
+            <if cond="APBASE=Y">
+                <field name="NBASIS" length="2" type="integer"/>
+                <!-- AEL stored in row-major order for NPAR rows and NBASIS columns -->
+                <loop counter="NPAR" md_prefix="PAR_%02d_">
+                    <loop counter="NBASIS" md_prefix="BASIS_%02d_">
+                        <field name="AEL" length="21" type="real"/>
+                    </loop>
+                </loop>
+            </if>
+            <loop counter="IGN" md_prefix="IGN_%02d_">
+                <field name="NUMOPG" length="2" type="integer"/>
+                <loop formula="(NUMOPG+1)*(NUMOPG)/2" md_prefix="EG_%04d_"> <!--Warning: this condition is currently hardcoded in the interpreter -->
+                    <field name="ERRCVG" length="21" type="real"/>
+                </loop>
+                <field name="TCDF" length="1" type="integer" minval="0" maxval="2"/>
+                <field name="ACSMC" length="1" type="string"/>
+                <if cond="ACSMC=N">
+                    <field name="NCSEG" length="1" type="integer" minval="2" maxval="9"/>
+                    <loop counter="NCSEG" md_prefix="CSEG_%01d_">
+                        <field name="CORSEG" length="21" type="real" minval="0" maxval="1"/>
+                        <field name="TAUSEG" length="21" type="real" minval="0"/>
+                    </loop>
+                </if>
+                <if cond="ACSMC=Y">
+                    <field name="AC" length="21" type="real" minval="0" maxval="1"/>
+                    <field name="ALPC" length="21" type="real" minval="0" maxval="1"/>
+                    <field name="BETC" length="21" type="real" minval="0" maxval="10"/>
+                    <field name="TC" length="21" type="real" minval="0"/>
+                </if>
+            </loop>
+            <!-- MAP stored in row-major order for NPAR rows and NPARO columns -->
+            <loop counter="NPAR" md_prefix="PAR_%02d_">
+                <loop counter="NPARO" md_prefix="PARO_%02d_">
+                    <field name="MAP" length="21" type="real"/>
+                </loop>
+            </loop>
+        </if>
+        <if cond="INCLUC=Y">
+            <field name="URR" length="21" type="real"/>
+            <field name="URC" length="21" type="real"/>
+            <field name="UCC" length="21" type="real"/>
+            <field name="UACSMC" length="1" type="string"/>
+            <if cond="UACSMC=N">
+                <field name="UNCSR" length="1" type="integer" minval="2" maxval="9"/>
+                <loop counter="UNCSR" md_prefix="CSR_%01d_">
+                    <field name="UCORSR" length="21" type="real" minval="0" maxval="1"/>
+                    <field name="UTAUSR" length="21" type="real" minval="0"/>
+                </loop>
+                <field name="UNCSC" length="1" type="integer" minval="2" maxval="9"/>
+                <loop counter="UNCSC" md_prefix="CSC_%01d_">
+                    <field name="UCORSC" length="21" type="real" minval="0" maxval="1"/>
+                    <field name="UTAUSC" length="21" type="real" minval="0"/>
+                </loop>
+            </if>
+            <if cond="UACSMC=Y">
+                <field name="UACR" length="21" type="real" minval="0" maxval="1"/>
+                <field name="UALPCR" length="21" type="real" minval="0" maxval="1"/>
+                <field name="UBETCR" length="21" type="real" minval="0" maxval="10"/>
+                <field name="UTCR" length="21" type="real" minval="0"/>
+                <field name="UACC" length="21" type="real" minval="0" maxval="1"/>
+                <field name="UALPCC" length="21" type="real" minval="0" maxval="1"/>
+                <field name="UBETCC" length="21" type="real" minval="0" maxval="10"/>
+                <field name="UTCC" length="21" type="real" minval="0"/>
+            </if>
         </if>
     </tre>
 
