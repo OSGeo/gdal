@@ -197,7 +197,8 @@ OGRDGNV8Layer::OGRDGNV8Layer( OGRDGNV8DataSource* poDS,
     if( iULinkType != -1 )
     {
         oField.SetName( "ULink" );
-        oField.SetType( OFTIntegerList );
+        oField.SetType( OFTString );
+        oField.SetSubType( OFSTJSON );
         oField.SetWidth( 0 );
         oField.SetPrecision( 0 );
         m_poFeatureDefn->AddFieldDefn( &oField );
@@ -787,11 +788,8 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
 
     if( iULinkType != -1 )
     {
-        const int MAX_LINK = 100;
-        int uLinkCount = 0;
-
-        int anULink[MAX_LINK];
-        anULink[0] = 0;
+        CPLJSONObject uLinkData;
+        CPLJSONArray previousValues;
 
         OdRxObjectPtrArray linkages;
         element->getLinkages(linkages);
@@ -801,30 +799,128 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
             {
                 OdDgAttributeLinkagePtr pLinkage = linkages[i];
                 OdUInt16 primaryId = pLinkage->getPrimaryId();
+                CPLString primaryIdStr = CPLSPrintf("%d", primaryId );
 
-                if( uLinkCount < MAX_LINK && primaryId == iULinkType )
-                {
-                    OdBinaryData pabyData;
-                    pLinkage->getData(pabyData);
-                    if( (OdUInt32)pabyData.size() == 4 )
-                    {
-                        std::stringstream link;
-                        link << std::hex << std::setfill( '0' );
-                        link << std::setw(2) << static_cast<unsigned>( pabyData[1] );
-                        link << std::setw(2) << static_cast<unsigned>( pabyData[0] );
-                        link << std::setw(2) << static_cast<unsigned>( pabyData[3] );
-                        link << std::setw(2) << static_cast<unsigned>( pabyData[2] );
+                OdBinaryData pabyData;
+                pLinkage->getData(pabyData);
 
-                        anULink[uLinkCount] = std::stoi( link.str(), nullptr, 10 );
-                        uLinkCount++;
-                    }
+                switch( primaryId ) {
+                        case OdDgAttributeLinkage::kFRAMME    : // DB Linkage - FRAMME tag data signature
+                        case OdDgAttributeLinkage::kBSI       : // DB Linkage - secondary id link (BSI radix 50)
+                        case OdDgAttributeLinkage::kXBASE     : // DB Linkage - XBase (DBase)
+                        case OdDgAttributeLinkage::kINFORMIX  : // DB Linkage - Informix
+                        case OdDgAttributeLinkage::kINGRES    : // DB Linkage - INGRES
+                        case OdDgAttributeLinkage::kSYBASE    : // DB Linkage - Sybase
+                        case OdDgAttributeLinkage::kODBC      : // DB Linkage - ODBC
+                        case OdDgAttributeLinkage::kOLEDB     : // DB Linkage - OLEDB
+                        case OdDgAttributeLinkage::kORACLE    : // DB Linkage - Oracle
+                        case OdDgAttributeLinkage::kRIS       : // DB Linkage - RIS
+                        {
+                            OdDgDBLinkagePtr dbLinkage = OdDgDBLinkage::cast( pLinkage );
+                            if( !dbLinkage.isNull() )
+                            {
+                                std::string namedType;
+
+                                switch( dbLinkage->getDBType() )
+                                {
+                                case OdDgDBLinkage::kBSI: 
+                                    namedType.assign("BSI");
+                                break;
+                                case OdDgDBLinkage::kFRAMME: 
+                                    namedType.assign("FRAMME"); 
+                                break;
+                                case OdDgDBLinkage::kInformix: 
+                                    namedType.assign("Informix");
+                                break;
+                                case OdDgDBLinkage::kIngres: 
+                                    namedType.assign("Ingres");
+                                break;
+                                case OdDgDBLinkage::kODBC: 
+                                    namedType.assign("ODBC");
+                                break;
+                                case OdDgDBLinkage::kOLEDB: 
+                                    namedType.assign("OLE DB");
+                                break;
+                                case OdDgDBLinkage::kOracle: 
+                                    namedType.assign("Oracle"); 
+                                break;
+                                case OdDgDBLinkage::kRIS: 
+                                    namedType.assign("RIS"); 
+                                break;
+                                case OdDgDBLinkage::kSybase: 
+                                    namedType.assign("Sybase");
+                                break;
+                                case OdDgDBLinkage::kXbase: 
+                                    namedType.assign("xBase");
+                                break;
+                                default: 
+                                    namedType.assign("Unknown"); 
+                                break;
+                                }
+
+                                previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
+                                if (!previousValues.IsValid() ) 
+                                {
+                                    uLinkData.Add( primaryIdStr.c_str(), CPLJSONArray() );
+                                    previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
+                                } 
+                                CPLJSONObject theNewObject = CPLJSONObject();
+                                theNewObject.Add( "tableId", int( dbLinkage->getTableEntityId() ) );
+                                theNewObject.Add( "MSLink", int( dbLinkage->getMSLink() ) );
+                                theNewObject.Add( "type", namedType );
+                                previousValues.Add( theNewObject );
+                            }
+                        }
+                        break;
+                        case 0x1995: // 0x1995 (6549) Application ID by IPCC/Portugal
+                        {
+                            char *pszAsHex = CPLBEBinaryToHex( (OdUInt32)pabyData.size(), (GByte*) pabyData.asArrayPtr() );
+                            previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
+                            if (!previousValues.IsValid() ) 
+                            {
+                                uLinkData.Add( primaryIdStr.c_str(), CPLJSONArray() );
+                                previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
+                            } 
+                            previousValues.Add( pszAsHex );
+                        }
+                        break;
+                        case OdDgAttributeLinkage::kString: // 0x56d2 or 22226:
+                        {
+                            OdDgStringLinkagePtr pStrLinkage = OdDgStringLinkage::cast( pLinkage );
+                            if ( !pStrLinkage.isNull() )
+                            {
+                                previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
+                                if (!previousValues.IsValid() ) 
+                                {
+                                    uLinkData.Add( primaryIdStr.c_str(), CPLJSONArray() );
+                                    previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
+                                } 
+                                previousValues.Add( pStrLinkage->getString().c_str() );
+                            }
+                        }
+                        break;
+                        default:
+                        {
+                            char *pszAsHex = CPLBEBinaryToHex( (OdUInt32)pabyData.size(), (GByte*) pabyData.asArrayPtr() );
+                            previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
+                            if (!previousValues.IsValid() ) 
+                            {
+                                uLinkData.Add( primaryIdStr.c_str(), CPLJSONArray() );
+                                previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
+                            } 
+                            CPLJSONObject theNewObject = CPLJSONObject();
+                            theNewObject.Add( "raw", pszAsHex );
+                            theNewObject.Add( "type", "unknown" );
+                            theNewObject.Add( "size", (int)pabyData.size() );
+                            previousValues.Add( theNewObject );
+                        }
+                        break;
                 }
+
             }
 
-            if ( uLinkCount > 0 )
-            {
-                poFeature->SetField( "ULink", uLinkCount, anULink );
-            }
+            poFeature->SetField( "ULink", uLinkData.ToString().c_str() );
+
         }
     }
 

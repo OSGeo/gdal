@@ -181,7 +181,9 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGNIn,
     if( iULinkType != -1 )
     {
         oField.SetName( "ULink" );
-        oField.SetType( OFTIntegerList );
+        oField.SetType( OFTString );
+        oField.SetSubType( OFSTJSON );
+        // oField.SetType( OFTIntegerList );
         oField.SetWidth( 0 );
         oField.SetPrecision( 0 );
         poFeatureDefn->AddFieldDefn( &oField );
@@ -362,8 +364,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
     int anMSLink[MAX_LINK];
     anMSLink[0] = 0;
 
-    int anULink[MAX_LINK];
-    anULink[0] = 0;
+    CPLJSONObject uLinkData;
+    CPLJSONArray previousValues;
 
     int iLink = 0;
     int nLinkCount = 0;
@@ -372,26 +374,75 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
     int nLinkType = 0;
     int nLinkSize = 0;
 
-   unsigned char *pabyData = DGNGetLinkage( hDGN, psElement, iLink, &nLinkType,
+    unsigned char *pabyData = DGNGetLinkage( hDGN, psElement, iLink, &nLinkType,
                               anEntityNum + iLink, anMSLink + iLink, &nLinkSize);
 
     while( pabyData )
     {
-        if( uLinkCount < MAX_LINK && nLinkType == iULinkType )
+        switch( nLinkType ) 
         {
-            if( nLinkSize == 8 )
+            case 24721: // OdDgDBLinkage::kOracle
             {
-                std::stringstream link;
-                link << std::hex << std::setfill( '0' );
-                link << std::setw(2) << static_cast<unsigned>( pabyData[5] );
-                link << std::setw(2) << static_cast<unsigned>( pabyData[4] );
-                link << std::setw(2) << static_cast<unsigned>( pabyData[7] );
-                link << std::setw(2) << static_cast<unsigned>( pabyData[6] );
-
-                anULink[uLinkCount] = std::stoi( link.str(), nullptr, 10 );
-                uLinkCount++;
+                char *pszAsHex = CPLBEBinaryToHex( nLinkSize - 4, pabyData + 4 );
+                previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
+                if (!previousValues.IsValid() ) 
+                {
+                    uLinkData.Add( std::to_string(nLinkType), CPLJSONArray() );
+                    previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
+                } 
+                CPLJSONObject theNewObject = CPLJSONObject();
+                theNewObject.Add( "raw", pszAsHex );
+                theNewObject.Add( "type", "Oracle" );
+                theNewObject.Add( "size", nLinkSize );
+                previousValues.Add( theNewObject );
             }
+            break;
+            case 32047: // OdDgDBLinkage::kODBC
+            {
+                char *pszAsHex = CPLBEBinaryToHex( nLinkSize - 4, pabyData + 4 );
+                previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
+                if (!previousValues.IsValid() ) 
+                {
+                    uLinkData.Add( std::to_string(nLinkType), CPLJSONArray() );
+                    previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
+                } 
+                CPLJSONObject theNewObject = CPLJSONObject();
+                theNewObject.Add( "raw", pszAsHex );
+                theNewObject.Add( "type", "ODBC" );
+                theNewObject.Add( "size", nLinkSize );
+                previousValues.Add( theNewObject );
+            }
+            break;
+            case 6549: // 0x1995 Application ID by IPCC/Portugal
+            {
+                char *pszAsHex = CPLBEBinaryToHex( nLinkSize - 4, pabyData + 4);
+                previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
+                if (!previousValues.IsValid() ) 
+                {
+                    uLinkData.Add( std::to_string(nLinkType), CPLJSONArray() );
+                    previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
+                } 
+                previousValues.Add( pszAsHex );
+            }
+            break;
+            default:
+            {
+                char *pszAsHex = CPLBEBinaryToHex( nLinkSize - 4, pabyData + 4 );
+                previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
+                if (!previousValues.IsValid() ) 
+                {
+                    uLinkData.Add( std::to_string(nLinkType), CPLJSONArray() );
+                    previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
+                } 
+                CPLJSONObject theNewObject = CPLJSONObject();
+                theNewObject.Add( "raw", pszAsHex );
+                theNewObject.Add( "type", "unknown" );
+                theNewObject.Add( "size", nLinkSize );
+                previousValues.Add( theNewObject );
+            }
+            break;
         }
+        uLinkCount++;
 
         iLink++;
 
@@ -417,7 +468,19 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
 /* -------------------------------------------------------------------- */
     if( uLinkCount > 0 )
     {
-        poFeature->SetField( "ULink", uLinkCount, anULink );
+        /* CPLJSONObject uLinkData;
+        CPLJSONArray uLinkValues;
+
+        uLinkValues.Add(2010105);
+        uLinkValues.Add(2010106);
+        uLinkValues.Add(2010107);
+        uLinkValues.Add(12010601);
+        uLinkValues.Add(88010104);
+        uLinkData.Add( "6549", uLinkValues);
+        uLinkData.Add( "22226", "Named definition");
+        // uLinkData.ToString(); */
+
+        poFeature->SetField( "ULink", uLinkData.ToString().c_str() );
     }
     if( nLinkCount > 0 )
     {
