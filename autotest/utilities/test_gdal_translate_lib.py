@@ -30,6 +30,7 @@
 ###############################################################################
 
 import os
+import struct
 
 
 from osgeo import gdal
@@ -537,6 +538,67 @@ def test_gdal_translate_lib_generate_ovr():
     ds = None
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/foo.tif')
+
+
+###############################################################################
+# Test gdal_translate -tr with non-nearest resample
+
+def _get_src_ds_test_gdal_translate_lib_tr_non_nearest():
+
+    src_w = 5
+    src_h = 3
+    src_ds = gdal.GetDriverByName('MEM').Create('', src_w, src_h)
+    src_ds.SetGeoTransform([100, 10, 0, 1000, 0, -10])
+    src_ds.WriteRaster(0, 0, src_w, src_h,
+                       struct.pack('B' * src_w * src_h,
+                                   100, 100, 200, 200, 10,
+                                   100, 100, 200, 200, 20,
+                                   30,  30,  30,  30,  30))
+    return src_ds
+
+def test_gdal_translate_lib_tr_non_nearest_case_1():
+
+    ds = gdal.Translate('',
+                        _get_src_ds_test_gdal_translate_lib_tr_non_nearest(),
+                        resampleAlg = gdal.GRA_Average,
+                        format = 'MEM', xRes = 20, yRes = 20)
+    assert ds.RasterXSize == 3 # case where we round up
+    assert ds.RasterYSize == 2
+    assert struct.unpack('B' * 6, ds.ReadRaster()) == (100, 200, 15,
+                                                       30,  30,  30)
+
+def test_gdal_translate_lib_tr_non_nearest_case_2():
+
+    ds = gdal.Translate('',
+                        _get_src_ds_test_gdal_translate_lib_tr_non_nearest(),
+                        resampleAlg = gdal.GRA_Average,
+                        format = 'MEM', xRes = 40, yRes = 20)
+    assert ds.RasterXSize == 1 # case where we round down
+    assert ds.RasterYSize == 2
+    assert struct.unpack('B' * 2, ds.ReadRaster()) == (150, 30)
+
+
+def test_gdal_translate_lib_tr_non_nearest_case_3():
+
+    ds = gdal.Translate('',
+                        _get_src_ds_test_gdal_translate_lib_tr_non_nearest(),
+                        resampleAlg = gdal.GRA_Average,
+                        format = 'MEM', xRes = 25, yRes = 20)
+    assert ds.RasterXSize == 2 # case where src_w * src_res / dst_res is integer
+    assert ds.RasterYSize == 2
+    assert struct.unpack('B' * 4, ds.ReadRaster()) == (120, 126,
+                                                       30, 30)
+
+
+def test_gdal_translate_lib_tr_non_nearest_oversampling():
+
+    ds = gdal.Translate('',
+                        _get_src_ds_test_gdal_translate_lib_tr_non_nearest(),
+                        resampleAlg = gdal.GRA_Bilinear,
+                        format = 'MEM', xRes = 4, yRes = 10)
+    assert ds.RasterXSize == 13
+    assert ds.RasterYSize == 3
+    assert 0 not in struct.unpack('B' * 13 * 3, ds.ReadRaster())
 
 ###############################################################################
 # Cleanup
