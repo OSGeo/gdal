@@ -11,7 +11,6 @@ also known as (pixel, line)
 to the georeferenced coordinate space (projected or geographic coordinates).
 
 A geotransform consists in a set of 6 coefficients:
-----------------------------------------------------
 
 | ``GT(0)`` x-coordinate of the upper-left corner of the upper-left pixel.
 | ``GT(1)`` w-e pixel resolution / pixel width.
