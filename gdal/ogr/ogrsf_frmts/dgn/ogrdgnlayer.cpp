@@ -84,7 +84,7 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGNIn,
     if( !EQUAL(pszULinkType,"NONE") )
     {
         char * testULink;
-        iULinkType = strtol( pszULinkType, &testULink, 10 );
+        iULinkType = (int) strtol( pszULinkType, &testULink, 10 );
         if( strlen(pszULinkType) == 0 || *testULink != '\0' )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
