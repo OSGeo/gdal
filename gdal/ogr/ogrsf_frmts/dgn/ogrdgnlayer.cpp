@@ -379,17 +379,17 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
 
     while( pabyData )
     {
+        previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
+        if (!previousValues.IsValid() ) 
+        {
+            uLinkData.Add( std::to_string(nLinkType), CPLJSONArray() );
+            previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
+        } 
+        char *pszAsHex = CPLBEBinaryToHex( nLinkSize - 4, pabyData + 4 );
         switch( nLinkType ) 
         {
             case 24721: // OdDgDBLinkage::kOracle
             {
-                char *pszAsHex = CPLBEBinaryToHex( nLinkSize - 4, pabyData + 4 );
-                previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
-                if (!previousValues.IsValid() ) 
-                {
-                    uLinkData.Add( std::to_string(nLinkType), CPLJSONArray() );
-                    previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
-                } 
                 CPLJSONObject theNewObject = CPLJSONObject();
                 theNewObject.Add( "raw", pszAsHex );
                 theNewObject.Add( "type", "Oracle" );
@@ -399,13 +399,6 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
             break;
             case 32047: // OdDgDBLinkage::kODBC
             {
-                char *pszAsHex = CPLBEBinaryToHex( nLinkSize - 4, pabyData + 4 );
-                previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
-                if (!previousValues.IsValid() ) 
-                {
-                    uLinkData.Add( std::to_string(nLinkType), CPLJSONArray() );
-                    previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
-                } 
                 CPLJSONObject theNewObject = CPLJSONObject();
                 theNewObject.Add( "raw", pszAsHex );
                 theNewObject.Add( "type", "ODBC" );
@@ -415,25 +408,11 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
             break;
             case 6549: // 0x1995 Application ID by IPCC/Portugal
             {
-                char *pszAsHex = CPLBEBinaryToHex( nLinkSize - 4, pabyData + 4);
-                previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
-                if (!previousValues.IsValid() ) 
-                {
-                    uLinkData.Add( std::to_string(nLinkType), CPLJSONArray() );
-                    previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
-                } 
                 previousValues.Add( pszAsHex );
             }
             break;
             default:
             {
-                char *pszAsHex = CPLBEBinaryToHex( nLinkSize - 4, pabyData + 4 );
-                previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
-                if (!previousValues.IsValid() ) 
-                {
-                    uLinkData.Add( std::to_string(nLinkType), CPLJSONArray() );
-                    previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
-                } 
                 CPLJSONObject theNewObject = CPLJSONObject();
                 theNewObject.Add( "raw", pszAsHex );
                 theNewObject.Add( "type", "unknown" );
@@ -442,6 +421,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
             }
             break;
         }
+        CPLFree( pszAsHex );
+
         uLinkCount++;
 
         iLink++;
@@ -468,18 +449,6 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
 /* -------------------------------------------------------------------- */
     if( uLinkCount > 0 )
     {
-        /* CPLJSONObject uLinkData;
-        CPLJSONArray uLinkValues;
-
-        uLinkValues.Add(2010105);
-        uLinkValues.Add(2010106);
-        uLinkValues.Add(2010107);
-        uLinkValues.Add(12010601);
-        uLinkValues.Add(88010104);
-        uLinkData.Add( "6549", uLinkValues);
-        uLinkData.Add( "22226", "Named definition");
-        // uLinkData.ToString(); */
-
         poFeature->SetField( "ULink", uLinkData.ToString().c_str() );
     }
     if( nLinkCount > 0 )

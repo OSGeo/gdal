@@ -804,6 +804,13 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                 OdBinaryData pabyData;
                 pLinkage->getData(pabyData);
 
+                previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
+                if (!previousValues.IsValid() ) 
+                {
+                    uLinkData.Add( primaryIdStr.c_str(), CPLJSONArray() );
+                    previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
+                } 
+
                 switch( primaryId ) {
                         case OdDgAttributeLinkage::kFRAMME    : // DB Linkage - FRAMME tag data signature
                         case OdDgAttributeLinkage::kBSI       : // DB Linkage - secondary id link (BSI radix 50)
@@ -858,12 +865,6 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                                 break;
                                 }
 
-                                previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
-                                if (!previousValues.IsValid() ) 
-                                {
-                                    uLinkData.Add( primaryIdStr.c_str(), CPLJSONArray() );
-                                    previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
-                                } 
                                 CPLJSONObject theNewObject = CPLJSONObject();
                                 theNewObject.Add( "tableId", int( dbLinkage->getTableEntityId() ) );
                                 theNewObject.Add( "MSLink", int( dbLinkage->getMSLink() ) );
@@ -875,13 +876,8 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                         case 0x1995: // 0x1995 (6549) Application ID by IPCC/Portugal
                         {
                             char *pszAsHex = CPLBEBinaryToHex( (OdUInt32)pabyData.size(), (GByte*) pabyData.asArrayPtr() );
-                            previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
-                            if (!previousValues.IsValid() ) 
-                            {
-                                uLinkData.Add( primaryIdStr.c_str(), CPLJSONArray() );
-                                previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
-                            } 
                             previousValues.Add( pszAsHex );
+                            CPLFree( pszAsHex );
                         }
                         break;
                         case OdDgAttributeLinkage::kString: // 0x56d2 or 22226:
@@ -889,12 +885,6 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                             OdDgStringLinkagePtr pStrLinkage = OdDgStringLinkage::cast( pLinkage );
                             if ( !pStrLinkage.isNull() )
                             {
-                                previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
-                                if (!previousValues.IsValid() ) 
-                                {
-                                    uLinkData.Add( primaryIdStr.c_str(), CPLJSONArray() );
-                                    previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
-                                } 
                                 previousValues.Add( pStrLinkage->getString().c_str() );
                             }
                         }
@@ -902,17 +892,12 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                         default:
                         {
                             char *pszAsHex = CPLBEBinaryToHex( (OdUInt32)pabyData.size(), (GByte*) pabyData.asArrayPtr() );
-                            previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
-                            if (!previousValues.IsValid() ) 
-                            {
-                                uLinkData.Add( primaryIdStr.c_str(), CPLJSONArray() );
-                                previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
-                            } 
                             CPLJSONObject theNewObject = CPLJSONObject();
                             theNewObject.Add( "raw", pszAsHex );
                             theNewObject.Add( "type", "unknown" );
                             theNewObject.Add( "size", (int)pabyData.size() );
                             previousValues.Add( theNewObject );
+                            CPLFree( pszAsHex );
                         }
                         break;
                 }
