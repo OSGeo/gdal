@@ -4,7 +4,7 @@ use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
 
 SKIP: {
-    my $srs1 = Geo::OSR::SpatialReference->new(EPSG=>2936);
+    my $srs1 = Geo::OSR::SpatialReference->new(EPSG=>32631);
     my $srs2 = Geo::OSR::SpatialReference->new(Text=>$srs1->AsText);
     ok($srs1->ExportToProj4 eq $srs2->ExportToProj4, "new EPSG, Text, Proj4");
 
