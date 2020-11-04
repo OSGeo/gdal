@@ -55,8 +55,8 @@ The connection string for a given subdataset/HDU is ``FITS:"filename.fits":hdu_n
 Binary table support
 --------------------
 
-Starting with GDAL 3.2, binary tables will be exposed as vector layers (read-only
-support).
+Starting with GDAL 3.2, binary tables will be exposed as vector layers (update
+and creation support from GDAL 3.2.1).
 
 The FITS data types are mapped to OGR data types as the following:
 
@@ -242,10 +242,33 @@ the value of the TDIMxx header in the layer metadata to recover the dimensionali
 of the field.
 
 Fields that have TSCAL and/or TZERO headers are automatically scaled and offset
-to the physical value (only applieds to numeric data types)
+to the physical value (only applies to numeric data types)
 
 TNULL headers are used for integer numeric data types and for a single-occurence
 field to set a OGR field to NULL.
+
+Layer creation options
+----------------------
+
+The following layer creation options are available:
+
+- **REPEAT_{fieldname}=number**. For a given field (substitute {fieldname} by its
+  name) of type IntegerList, Integer64List
+  or RealList, specify a fixed number of elements. Otherwise those fields will be
+  created as variable-length FITS columns, which can have performance impact on
+  creation.
+
+- **COMPUTE_REPEAT=AT_FIELD_CREATION/AT_FIRST_FEATURE_CREATION**. For fields of
+  type IntegerList, Integer64List or RealList, specifies when they are mapped to
+  a FITS column type. The default is AT_FIELD_CREATION, and implies that they
+  will be created as variable-length FITS columns, unless a REPEAT_{fieldname}
+  option is specified. When AT_FIRST_FEATURE_CREATION is specified, the number of
+  elements in the first feature will be taken into account to create fixed-size
+  FITS columns.
+
+When using ogr2ogr or :cpp:func:`GDALVectorTranslate` with a FITS source, the
+FITS header will be taken into account, in particular to help to determine the
+FITS data type of target columns.
 
 Examples
 --------
@@ -297,6 +320,15 @@ Examples
     ::
 
         $ ogrinfo my.fits
+
+
+* Converting a GeoPackage layer into a FITS binary table:
+
+
+    ::
+
+        $ ogr2ogr out.fits my.gpkg my_table
+
 
 Other
 -----
