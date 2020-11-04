@@ -34,8 +34,6 @@
 #include <math.h>
 #include <algorithm>
 
-#include <iomanip>
-
 /* -------------------------------------------------------------------- */
 /*      Line Styles                                                     */
 /* -------------------------------------------------------------------- */
@@ -103,23 +101,6 @@ OGRDGNV8Layer::OGRDGNV8Layer( OGRDGNV8DataSource* poDS,
         pszName = CPLSPrintf("%s", ToUTF8(pModel->getName()).c_str());
     CPLDebug("DGNV8", "%s is %dd", pszName,
              pModel->getModelIs3dFlag() ? 3 : 2);
-
-    const char * pszULinkType = const_cast<char *>(
-        CPLGetConfigOption( "DGN_ULINK_TYPE", "NONE" ) );
-
-    if( !EQUAL(pszULinkType,"NONE") )
-    {
-        char * testULink;
-        iULinkType = (int) strtol( pszULinkType, &testULink, 10 );
-        if( strlen(pszULinkType) == 0 || *testULink != '\0' )
-        {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "DGN_ULINK_TYPE=%s, but only numbers in decimal format are "
-                      "accepted.",
-                      pszULinkType );
-            iULinkType = -1;
-        }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Create the feature definition.                                  */
@@ -193,16 +174,15 @@ OGRDGNV8Layer::OGRDGNV8Layer( OGRDGNV8DataSource* poDS,
     oField.SetPrecision( 0 );
     m_poFeatureDefn->AddFieldDefn( &oField );
     
-
-    if( iULinkType != -1 )
-    {
-        oField.SetName( "ULink" );
-        oField.SetType( OFTString );
-        oField.SetSubType( OFSTJSON );
-        oField.SetWidth( 0 );
-        oField.SetPrecision( 0 );
-        m_poFeatureDefn->AddFieldDefn( &oField );
-    }
+/* -------------------------------------------------------------------- */
+/*      ULink                                                           */
+/* -------------------------------------------------------------------- */
+    oField.SetName( "ULink" );
+    oField.SetType( OFTString );
+    oField.SetSubType( OFSTJSON );
+    oField.SetWidth( 0 );
+    oField.SetPrecision( 0 );
+    m_poFeatureDefn->AddFieldDefn( &oField );
 
     OGRDGNV8Layer::ResetReading();
 }
@@ -786,127 +766,124 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
         poFeature->SetField("Weight", nLineWeight);
     }
 
-    if( iULinkType != -1 )
+    CPLJSONObject uLinkData;
+    CPLJSONArray previousValues;
+
+    OdRxObjectPtrArray linkages;
+    element->getLinkages(linkages);
+    if( linkages.size() > 0 )
     {
-        CPLJSONObject uLinkData;
-        CPLJSONArray previousValues;
-
-        OdRxObjectPtrArray linkages;
-        element->getLinkages(linkages);
-        if( linkages.size() > 0 )
+        for(unsigned i = 0; i < linkages.size(); ++i)
         {
-            for(unsigned i = 0; i < linkages.size(); ++i)
+            OdDgAttributeLinkagePtr pLinkage = linkages[i];
+            OdUInt16 primaryId = pLinkage->getPrimaryId();
+            CPLString primaryIdStr = CPLSPrintf("%d", primaryId );
+
+            OdBinaryData pabyData;
+            pLinkage->getData(pabyData);
+
+            previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
+            if (!previousValues.IsValid() ) 
             {
-                OdDgAttributeLinkagePtr pLinkage = linkages[i];
-                OdUInt16 primaryId = pLinkage->getPrimaryId();
-                CPLString primaryIdStr = CPLSPrintf("%d", primaryId );
-
-                OdBinaryData pabyData;
-                pLinkage->getData(pabyData);
-
+                uLinkData.Add( primaryIdStr.c_str(), CPLJSONArray() );
                 previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
-                if (!previousValues.IsValid() ) 
-                {
-                    uLinkData.Add( primaryIdStr.c_str(), CPLJSONArray() );
-                    previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
-                } 
+            } 
 
-                switch( primaryId ) {
-                        case OdDgAttributeLinkage::kFRAMME    : // DB Linkage - FRAMME tag data signature
-                        case OdDgAttributeLinkage::kBSI       : // DB Linkage - secondary id link (BSI radix 50)
-                        case OdDgAttributeLinkage::kXBASE     : // DB Linkage - XBase (DBase)
-                        case OdDgAttributeLinkage::kINFORMIX  : // DB Linkage - Informix
-                        case OdDgAttributeLinkage::kINGRES    : // DB Linkage - INGRES
-                        case OdDgAttributeLinkage::kSYBASE    : // DB Linkage - Sybase
-                        case OdDgAttributeLinkage::kODBC      : // DB Linkage - ODBC
-                        case OdDgAttributeLinkage::kOLEDB     : // DB Linkage - OLEDB
-                        case OdDgAttributeLinkage::kORACLE    : // DB Linkage - Oracle
-                        case OdDgAttributeLinkage::kRIS       : // DB Linkage - RIS
+            switch( primaryId ) {
+                    case OdDgAttributeLinkage::kFRAMME    : // DB Linkage - FRAMME tag data signature
+                    case OdDgAttributeLinkage::kBSI       : // DB Linkage - secondary id link (BSI radix 50)
+                    case OdDgAttributeLinkage::kXBASE     : // DB Linkage - XBase (DBase)
+                    case OdDgAttributeLinkage::kINFORMIX  : // DB Linkage - Informix
+                    case OdDgAttributeLinkage::kINGRES    : // DB Linkage - INGRES
+                    case OdDgAttributeLinkage::kSYBASE    : // DB Linkage - Sybase
+                    case OdDgAttributeLinkage::kODBC      : // DB Linkage - ODBC
+                    case OdDgAttributeLinkage::kOLEDB     : // DB Linkage - OLEDB
+                    case OdDgAttributeLinkage::kORACLE    : // DB Linkage - Oracle
+                    case OdDgAttributeLinkage::kRIS       : // DB Linkage - RIS
+                    {
+                        OdDgDBLinkagePtr dbLinkage = OdDgDBLinkage::cast( pLinkage );
+                        if( !dbLinkage.isNull() )
                         {
-                            OdDgDBLinkagePtr dbLinkage = OdDgDBLinkage::cast( pLinkage );
-                            if( !dbLinkage.isNull() )
+                            std::string namedType;
+
+                            switch( dbLinkage->getDBType() )
                             {
-                                std::string namedType;
-
-                                switch( dbLinkage->getDBType() )
-                                {
-                                case OdDgDBLinkage::kBSI: 
-                                    namedType.assign("BSI");
-                                break;
-                                case OdDgDBLinkage::kFRAMME: 
-                                    namedType.assign("FRAMME"); 
-                                break;
-                                case OdDgDBLinkage::kInformix: 
-                                    namedType.assign("Informix");
-                                break;
-                                case OdDgDBLinkage::kIngres: 
-                                    namedType.assign("Ingres");
-                                break;
-                                case OdDgDBLinkage::kODBC: 
-                                    namedType.assign("ODBC");
-                                break;
-                                case OdDgDBLinkage::kOLEDB: 
-                                    namedType.assign("OLE DB");
-                                break;
-                                case OdDgDBLinkage::kOracle: 
-                                    namedType.assign("Oracle"); 
-                                break;
-                                case OdDgDBLinkage::kRIS: 
-                                    namedType.assign("RIS"); 
-                                break;
-                                case OdDgDBLinkage::kSybase: 
-                                    namedType.assign("Sybase");
-                                break;
-                                case OdDgDBLinkage::kXbase: 
-                                    namedType.assign("xBase");
-                                break;
-                                default: 
-                                    namedType.assign("Unknown"); 
-                                break;
-                                }
-
-                                CPLJSONObject theNewObject = CPLJSONObject();
-                                theNewObject.Add( "tableId", int( dbLinkage->getTableEntityId() ) );
-                                theNewObject.Add( "MSLink", int( dbLinkage->getMSLink() ) );
-                                theNewObject.Add( "type", namedType );
-                                previousValues.Add( theNewObject );
+                            case OdDgDBLinkage::kBSI: 
+                                namedType.assign("BSI");
+                            break;
+                            case OdDgDBLinkage::kFRAMME: 
+                                namedType.assign("FRAMME"); 
+                            break;
+                            case OdDgDBLinkage::kInformix: 
+                                namedType.assign("Informix");
+                            break;
+                            case OdDgDBLinkage::kIngres: 
+                                namedType.assign("Ingres");
+                            break;
+                            case OdDgDBLinkage::kODBC: 
+                                namedType.assign("ODBC");
+                            break;
+                            case OdDgDBLinkage::kOLEDB: 
+                                namedType.assign("OLE DB");
+                            break;
+                            case OdDgDBLinkage::kOracle: 
+                                namedType.assign("Oracle"); 
+                            break;
+                            case OdDgDBLinkage::kRIS: 
+                                namedType.assign("RIS"); 
+                            break;
+                            case OdDgDBLinkage::kSybase: 
+                                namedType.assign("Sybase");
+                            break;
+                            case OdDgDBLinkage::kXbase: 
+                                namedType.assign("xBase");
+                            break;
+                            default: 
+                                namedType.assign("Unknown"); 
+                            break;
                             }
-                        }
-                        break;
-                        case 0x1995: // 0x1995 (6549) Application ID by IPCC/Portugal
-                        {
-                            char *pszAsHex = CPLBEBinaryToHex( (OdUInt32)pabyData.size(), (GByte*) pabyData.asArrayPtr() );
-                            previousValues.Add( pszAsHex );
-                            CPLFree( pszAsHex );
-                        }
-                        break;
-                        case OdDgAttributeLinkage::kString: // 0x56d2 or 22226:
-                        {
-                            OdDgStringLinkagePtr pStrLinkage = OdDgStringLinkage::cast( pLinkage );
-                            if ( !pStrLinkage.isNull() )
-                            {
-                                previousValues.Add( pStrLinkage->getString().c_str() );
-                            }
-                        }
-                        break;
-                        default:
-                        {
-                            char *pszAsHex = CPLBEBinaryToHex( (OdUInt32)pabyData.size(), (GByte*) pabyData.asArrayPtr() );
+
                             CPLJSONObject theNewObject = CPLJSONObject();
-                            theNewObject.Add( "raw", pszAsHex );
-                            theNewObject.Add( "type", "unknown" );
-                            theNewObject.Add( "size", (int)pabyData.size() );
+                            theNewObject.Add( "tableId", int( dbLinkage->getTableEntityId() ) );
+                            theNewObject.Add( "MSLink", int( dbLinkage->getMSLink() ) );
+                            theNewObject.Add( "type", namedType );
                             previousValues.Add( theNewObject );
-                            CPLFree( pszAsHex );
                         }
-                        break;
-                }
-
+                    }
+                    break;
+                    case 0x1995: // 0x1995 (6549) Application ID by IPCC/Portugal
+                    {
+                        char *pszAsSwappedHex = CPLBEBinaryToHex( (OdUInt32)pabyData.size(), (GByte*) pabyData.asArrayPtr() );
+                        previousValues.Add( pszAsSwappedHex );
+                        CPLFree( pszAsSwappedHex );
+                    }
+                    break;
+                    case OdDgAttributeLinkage::kString: // 0x56d2 or 22226:
+                    {
+                        OdDgStringLinkagePtr pStrLinkage = OdDgStringLinkage::cast( pLinkage );
+                        if ( !pStrLinkage.isNull() )
+                        {
+                            previousValues.Add( pStrLinkage->getString().c_str() );
+                        }
+                    }
+                    break;
+                    default:
+                    {
+                        char *pszAsHex = CPLBinaryToHex( (OdUInt32)pabyData.size(), (GByte*) pabyData.asArrayPtr() );
+                        CPLJSONObject theNewObject = CPLJSONObject();
+                        theNewObject.Add( "raw", pszAsHex );
+                        theNewObject.Add( "type", "unknown" );
+                        theNewObject.Add( "size", (int)pabyData.size() );
+                        previousValues.Add( theNewObject );
+                        CPLFree( pszAsHex );
+                    }
+                    break;
             }
 
-            poFeature->SetField( "ULink", uLinkData.ToString().c_str() );
-
         }
+
+        poFeature->SetField( "ULink", uLinkData.ToString().c_str() );
+
     }
 
 /* -------------------------------------------------------------------- */

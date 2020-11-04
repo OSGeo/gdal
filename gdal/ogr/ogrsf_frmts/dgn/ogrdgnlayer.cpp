@@ -35,9 +35,6 @@
 #include <cmath>
 #include <list>
 
-#include <sstream>
-#include <iomanip>
-
 CPL_CVSID("$Id$")
 
 /************************************************************************/
@@ -49,8 +46,7 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGNIn,
     poFeatureDefn(new OGRFeatureDefn( pszName )),
     iNextShapeId(0),
     hDGN(hDGNIn),
-    bUpdate(bUpdateIn),
-    iULinkType(-1)
+    bUpdate(bUpdateIn)
 {
 
 /* -------------------------------------------------------------------- */
@@ -77,23 +73,6 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGNIn,
         eLinkFieldType = OFTInteger;
     }
     pszLinkFormat = CPLStrdup(pszLinkFormat);
-
-    const char * pszULinkType = const_cast<char *>(
-        CPLGetConfigOption( "DGN_ULINK_TYPE", "NONE" ) );
-
-    if( !EQUAL(pszULinkType,"NONE") )
-    {
-        char * testULink;
-        iULinkType = (int) strtol( pszULinkType, &testULink, 10 );
-        if( strlen(pszULinkType) == 0 || *testULink != '\0' )
-        {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "DGN_ULINK_TYPE=%s, but only numbers in decimal format are "
-                      "accepted.",
-                      pszULinkType );
-            iULinkType = -1;
-        }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Create the feature definition.                                  */
@@ -178,16 +157,12 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGNIn,
 /* -------------------------------------------------------------------- */
 /*      ULink                                                           */
 /* -------------------------------------------------------------------- */
-    if( iULinkType != -1 )
-    {
-        oField.SetName( "ULink" );
-        oField.SetType( OFTString );
-        oField.SetSubType( OFSTJSON );
-        // oField.SetType( OFTIntegerList );
-        oField.SetWidth( 0 );
-        oField.SetPrecision( 0 );
-        poFeatureDefn->AddFieldDefn( &oField );
-    }
+    oField.SetName( "ULink" );
+    oField.SetType( OFTString );
+    oField.SetSubType( OFSTJSON );
+    oField.SetWidth( 0 );
+    oField.SetPrecision( 0 );
+    poFeatureDefn->AddFieldDefn( &oField );
 
 /* -------------------------------------------------------------------- */
 /*      Text                                                            */
@@ -385,7 +360,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
             uLinkData.Add( std::to_string(nLinkType), CPLJSONArray() );
             previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
         } 
-        char *pszAsHex = CPLBEBinaryToHex( nLinkSize - 4, pabyData + 4 );
+        char *pszAsHex = CPLBinaryToHex( nLinkSize - 4, pabyData + 4 );
         switch( nLinkType ) 
         {
             case 24721: // OdDgDBLinkage::kOracle
@@ -408,7 +383,9 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
             break;
             case 6549: // 0x1995 Application ID by IPCC/Portugal
             {
-                previousValues.Add( pszAsHex );
+                char *pszAsSwappedHex = CPLBEBinaryToHex( nLinkSize - 4, pabyData + 4 );
+                previousValues.Add( pszAsSwappedHex );
+                CPLFree( pszAsSwappedHex );
             }
             break;
             default:
