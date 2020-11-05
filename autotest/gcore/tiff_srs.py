@@ -467,7 +467,8 @@ epsg_list = [
     [5221, True],  # krovak east-north
     [2066, False],  # cass
     [2964, False],  # aea
-    [3410, False],  # cea
+    #[3410, False],  # cea spherical, method=9834. EPSG:3410 is now deprecated
+    [6933, False],  # cea ellipsoidal, method=9835
     #[3786, False],  # eqc spherical, method=9823. EPSG:3786 is now deprecated
     [32663, False],  # eqc elliptical, method=9842
     [4087, False],  # eqc WGS 84 / World Equidistant Cylindrical method=1028
