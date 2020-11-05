@@ -54,4 +54,8 @@ def test_byn_2():
 ###############################################################################
 #
 
+def test_byn_invalid_header_bytes():
+
+    tst = gdaltest.GDALTest('BYN', 'byn/test_invalid_header_bytes.byn', 1, 64764)
+    return tst.testOpen()
 
