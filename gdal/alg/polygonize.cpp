@@ -905,7 +905,8 @@ GBool GDALFloatEquals( float A, float B )
  * @param hOutLayer the vector feature layer to which the polygons should
  * be written.
  * @param iPixValField the attribute field index indicating the feature
- * attribute into which the pixel value of the polygon should be written.
+ * attribute into which the pixel value of the polygon should be written. Or
+ * -1 to indicate that the pixel value must not be written.
  * @param papszOptions a name/value list of additional options
  * <dl>
  * <dt>"8CONNECTED":</dt> May be set to "8" to use 8 connectedness.
@@ -982,6 +983,7 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
  * be written.
  * @param iPixValField the attribute field index indicating the feature
  * attribute into which the pixel value of the polygon should be written.
+ * -1 to indicate that the pixel value must not be written.
  * @param papszOptions a name/value list of additional options
  * <dl>
  * <dt>"8CONNECTED":</dt> May be set to "8" to use 8 connectedness.
