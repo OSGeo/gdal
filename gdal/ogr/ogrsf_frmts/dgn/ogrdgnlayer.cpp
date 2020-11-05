@@ -340,7 +340,6 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
     anMSLink[0] = 0;
 
     CPLJSONObject uLinkData;
-    CPLJSONArray previousValues;
 
     int iLink = 0;
     int nLinkCount = 0;
@@ -354,51 +353,44 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
 
     while( pabyData )
     {
-        previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
+        CPLJSONArray previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
         if (!previousValues.IsValid() ) 
         {
             uLinkData.Add( std::to_string(nLinkType), CPLJSONArray() );
             previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
         } 
         char *pszAsHex = CPLBinaryToHex( nLinkSize - 4, pabyData + 4 );
+        CPLJSONObject theNewObject = CPLJSONObject();
+        theNewObject.Add( "raw", pszAsHex );
+        theNewObject.Add( "size", nLinkSize );
+        previousValues.Add( theNewObject );
+        CPLFree( pszAsHex );
+
         switch( nLinkType ) 
         {
             case 24721: // OdDgDBLinkage::kOracle
             {
-                CPLJSONObject theNewObject = CPLJSONObject();
-                theNewObject.Add( "raw", pszAsHex );
                 theNewObject.Add( "type", "Oracle" );
-                theNewObject.Add( "size", nLinkSize );
-                previousValues.Add( theNewObject );
             }
             break;
             case 32047: // OdDgDBLinkage::kODBC
             {
-                CPLJSONObject theNewObject = CPLJSONObject();
-                theNewObject.Add( "raw", pszAsHex );
+
                 theNewObject.Add( "type", "ODBC" );
-                theNewObject.Add( "size", nLinkSize );
-                previousValues.Add( theNewObject );
+
             }
             break;
             case 6549: // 0x1995 Application ID by IPCC/Portugal
             {
-                char *pszAsSwappedHex = CPLBEBinaryToHex( nLinkSize - 4, pabyData + 4 );
-                previousValues.Add( pszAsSwappedHex );
-                CPLFree( pszAsSwappedHex );
+                theNewObject.Add( "type", "IPCC/Portugal" );
             }
             break;
             default:
             {
-                CPLJSONObject theNewObject = CPLJSONObject();
-                theNewObject.Add( "raw", pszAsHex );
                 theNewObject.Add( "type", "unknown" );
-                theNewObject.Add( "size", nLinkSize );
-                previousValues.Add( theNewObject );
             }
             break;
         }
-        CPLFree( pszAsHex );
 
         uLinkCount++;
 

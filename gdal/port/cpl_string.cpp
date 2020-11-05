@@ -2505,7 +2505,7 @@ char *CPLBinaryToHex( int nBytes, const GByte *pabyData )
  * @return hexadecimal translation, zero terminated.  Free with CPLFree().
  */
 
-char *CPLBEBinaryToHex( int nBytes, const GByte *pabyData )
+char *CPLBigEndianBinaryToHex( int nBytes, const GByte *pabyData )
 
 {
     char *pszHex = static_cast<char *>(CPLMalloc(nBytes * 2 + 1));

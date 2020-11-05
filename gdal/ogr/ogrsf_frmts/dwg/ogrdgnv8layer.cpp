@@ -851,14 +851,14 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                         }
                     }
                     break;
-                    case 0x1995: // 0x1995 (6549) Application ID by IPCC/Portugal
+                    case 0x1995: // 0x1995 (6549) IPCC/Portugal
                     {
-                        char *pszAsSwappedHex = CPLBEBinaryToHex( (OdUInt32)pabyData.size(), (GByte*) pabyData.asArrayPtr() );
+                        char *pszAsSwappedHex = CPLBigEndianBinaryToHex( (OdUInt32)pabyData.size(), (GByte*) pabyData.asArrayPtr() );
                         previousValues.Add( pszAsSwappedHex );
                         CPLFree( pszAsSwappedHex );
                     }
                     break;
-                    case OdDgAttributeLinkage::kString: // 0x56d2 or 22226:
+                    case OdDgAttributeLinkage::kString: // 0x56d2 (22226):
                     {
                         OdDgStringLinkagePtr pStrLinkage = OdDgStringLinkage::cast( pLinkage );
                         if ( !pStrLinkage.isNull() )
