@@ -390,6 +390,11 @@ ext_modules = [gdal_module,
                osr_module,
                ogr_module]
 
+py_modules = ['gdal',
+              'ogr',
+              'osr',
+              'gdalconst']
+
 if os.path.exists('setup_vars.ini'):
     with open('setup_vars.ini') as f:
         lines = f.readlines()
@@ -401,6 +406,7 @@ if GNM_ENABLED:
 
 if HAVE_NUMPY:
     ext_modules.append(array_module)
+    py_modules.append('gdalnumeric')
 
 packages = ["osgeo", "osgeo.utils", "osgeo.auxiliary"]
 
@@ -452,6 +458,7 @@ setup_kwargs = dict(
     description=description,
     license=license_type,
     classifiers=classifiers,
+    py_modules=py_modules,
     packages=packages,
     url=url,
     data_files=data_files,
