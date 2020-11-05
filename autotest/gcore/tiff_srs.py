@@ -423,11 +423,14 @@ def _test_tiff_srs(sr, expect_fail):
     ds.SetSpatialRef(sr)
     ds = None
 
+    # The GeoTIFF driver is smart enough to figure out that a CRS with
+    # '+proj=longlat +datum=WGS84' is EPSG:4326
+    if sr.GetAuthorityCode(None) is None and '+proj=longlat +datum=WGS84' in sr.ExportToProj4():
+        sr.ImportFromEPSG(4326)
+
     ds = gdal.Open('/vsimem/TestTiffSRS.tif')
-    wkt = ds.GetProjectionRef()
-    sr2 = osr.SpatialReference()
-    sr2.SetFromUserInput(wkt)
-    if 'Miller' in wkt:
+    sr2 = ds.GetSpatialRef()
+    if 'Miller' in sr2.ExportToWkt():
         # Trick so that the EXTENSION node with a PROJ string including +R_A is added
         sr2.ImportFromProj4(sr2.ExportToProj4())
     ds = None
@@ -438,6 +441,8 @@ def _test_tiff_srs(sr, expect_fail):
         if expect_fail:
             pytest.xfail('did not get expected SRS. known to be broken currently. FIXME!')
 
+        #print(sr.ExportToWkt(['FORMAT=WKT2_2019']))
+        #print(sr2.ExportToWkt(['FORMAT=WKT2_2019']))
         print(sr)
         print(sr2)
         assert False, 'did not get expected SRS'
@@ -500,6 +505,8 @@ def test_tiff_srs(use_epsg_code, epsg_code, epsg_proj4_broken):
         sr.SetFromUserInput('ESRI:' + str(epsg_code))
     else:
         sr.ImportFromEPSG(epsg_code)
+        sr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
     expect_fail = False
     if use_epsg_code == 0:
         proj4str = sr.ExportToProj4()
