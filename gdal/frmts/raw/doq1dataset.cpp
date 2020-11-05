@@ -63,7 +63,7 @@ static double DOQGetField( unsigned char *pabyData, int nBytes )
 {
     char szWork[128] = { '\0' };
 
-    strncpy( szWork, reinterpret_cast<const char *>( pabyData ), nBytes );
+    memcpy( szWork, reinterpret_cast<const char *>( pabyData ), nBytes );
     szWork[nBytes] = '\0';
 
     for( int i = 0; i < nBytes; i++ )
