@@ -597,22 +597,23 @@ int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
 
 CPLXMLNode* NITFDESGetXml(NITFFile* psFile, int iSegment)
 {
-    CPLXMLNode* psDesNode = CPLCreateXMLNode(NULL, CXT_Element, "des");
+    CPLXMLNode* psDesNode;
+    char** papszTmp;
     NITFDES* psDes = NITFDESAccess(psFile, iSegment);
-    char** papszTmp = psDes->papszMetadata;
 
     if (psDes == NULL)
     {
-        CPLDestroyXMLNode(psDesNode);
         return NULL;
     }
 
-    if (papszTmp == NULL)
+    if (psDes->papszMetadata == NULL)
     {
-        CPLDestroyXMLNode(psDesNode);
         NITFDESDeaccess(psDes);
         return NULL;
     }
+
+    psDesNode = CPLCreateXMLNode(NULL, CXT_Element, "des");
+    papszTmp = psDes->papszMetadata;
 
     while (papszTmp != NULL && *papszTmp != NULL)
     {

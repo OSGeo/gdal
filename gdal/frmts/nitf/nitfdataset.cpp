@@ -6093,7 +6093,7 @@ void GDALRegister_NITF()
 "   <Option name='TRE' type='string' description='Under the format TRE=tre-name,tre-contents'/>"
 "   <Option name='FILE_TRE' type='string' description='Under the format FILE_TRE=tre-name,tre-contents'/>"
 "   <Option name='BLOCKA_BLOCK_COUNT' type='int'/>"
-"   <Option name='DES' type='string' description='Under the format DES=des-name,des-contents'/>";
+"   <Option name='DES' type='string' description='Under the format DES=des-name=des-contents'/>";
 
     for( unsigned int i=0; apszFieldsBLOCKA[i] != nullptr; i+=3 )
     {

@@ -153,7 +153,8 @@ Creation Options:
    be provided to write arbitrary user defined DESs to the NITF file.
    The des-name should be at most 25 characters, and the des-contents
    should be "backslash escaped" if it contains backslashes or zero
-   bytes.  The des-contents must contain standard DES fields, starting
+   bytes, as in CPLEscapeString(str, -1, CPLES_BackslashQuotable).
+   The des-contents must contain standard DES fields, starting
    with DESVER (See MIL-STD-2500C).  DESs are not currently copied in
    CreateCopy(), but may be explicitly added as with Create().
 -  **SDE_TRE=YES/NO**: Write GEOLOB and GEOPSB TREs to
