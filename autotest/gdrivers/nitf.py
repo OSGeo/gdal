@@ -3627,6 +3627,73 @@ def test_nitf_RSMECB():
     assert data == expected_data
 
 ###############################################################################
+# Test creation and reading of Data Extension Segments (DES)
+
+def test_nitf_des():
+    des_data = "02U" + " "*166 + r'0004ABCD1234567\0890'
+
+    ds = gdal.GetDriverByName("NITF").Create("/vsimem/nitf_DES.ntf", 1, 1, options=["DES=DES1=" + des_data, "DES=DES2=" + des_data])
+    ds = None
+
+    # DESDATA portion will be Base64 encoded on output
+    # base64.b64encode(bytes("1234567\x00890", "utf-8")) == b'MTIzNDU2NwA4OTA='
+    ds = gdal.Open("/vsimem/nitf_DES.ntf")
+    data = ds.GetMetadata("xml:DES")[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_DES.ntf')
+
+    expected_data = """<des_list>
+  <des name="DES1">
+    <field name="NITF_DESVER" value="02" />
+    <field name="NITF_DECLAS" value="U" />
+    <field name="NITF_DESCLSY" value="" />
+    <field name="NITF_DESCODE" value="" />
+    <field name="NITF_DESCTLH" value="" />
+    <field name="NITF_DESREL" value="" />
+    <field name="NITF_DESDCTP" value="" />
+    <field name="NITF_DESDCDT" value="" />
+    <field name="NITF_DESDCXM" value="" />
+    <field name="NITF_DESDG" value="" />
+    <field name="NITF_DESDGDT" value="" />
+    <field name="NITF_DESCLTX" value="" />
+    <field name="NITF_DESCATP" value="" />
+    <field name="NITF_DESCAUT" value="" />
+    <field name="NITF_DESCRSN" value="" />
+    <field name="NITF_DESSRDT" value="" />
+    <field name="NITF_DESCTLN" value="" />
+    <field name="NITF_DESSHL" value="0004" />
+    <field name="NITF_DESSHF" value="ABCD" />
+    <field name="NITF_DESDATA" value="MTIzNDU2NwA4OTA=" />
+  </des>
+  <des name="DES2">
+    <field name="NITF_DESVER" value="02" />
+    <field name="NITF_DECLAS" value="U" />
+    <field name="NITF_DESCLSY" value="" />
+    <field name="NITF_DESCODE" value="" />
+    <field name="NITF_DESCTLH" value="" />
+    <field name="NITF_DESREL" value="" />
+    <field name="NITF_DESDCTP" value="" />
+    <field name="NITF_DESDCDT" value="" />
+    <field name="NITF_DESDCXM" value="" />
+    <field name="NITF_DESDG" value="" />
+    <field name="NITF_DESDGDT" value="" />
+    <field name="NITF_DESCLTX" value="" />
+    <field name="NITF_DESCATP" value="" />
+    <field name="NITF_DESCAUT" value="" />
+    <field name="NITF_DESCRSN" value="" />
+    <field name="NITF_DESSRDT" value="" />
+    <field name="NITF_DESCTLN" value="" />
+    <field name="NITF_DESSHL" value="0004" />
+    <field name="NITF_DESSHF" value="ABCD" />
+    <field name="NITF_DESDATA" value="MTIzNDU2NwA4OTA=" />
+  </des>
+</des_list>
+"""
+
+    assert data == expected_data
+
+###############################################################################
 # Test reading C4 compressed file
 
 

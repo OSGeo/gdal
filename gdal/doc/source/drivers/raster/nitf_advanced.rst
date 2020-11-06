@@ -217,13 +217,35 @@ TRE creation from hexadecimal data
 ----------------------------------
 
 TRE data can be added to a newly created NITF file in hexadecimal format to encode binary
-data such as unsigned int or floating point types.  The hexadecimal TRE creation option is 
+data such as unsigned int or floating point types.  The hexadecimal TRE creation option is
 supplied as "TRE=HEX/<tre_name>=<hex_tre_data>" or "FILE_TRE=HEX/<tre_name>=<hex_tre_data>
 
 .. code-block:: python
 
     # Encode "ABC" as 3 bytes of hex data, "414243"
     ds = gdal.GetDriverByName('NITF').Create('/vsimem/file.ntf', 1, 1, options=["TRE=HEX/TSTTRE=414243"])
+
+Data Extension Segments (xml:DES)
+---------------------------------
+Data Extension Segments (DESs) are user-defined metadata extensions to the NITF format.
+The DES metadata is available through the xml\:DES metadata domain.  The xml\:DES domain
+returns an XML string with standard and user-defined DES fields in plain text, and
+the user-defined DES data as Base64 encoded text.  The following is an example XML structure:
+
+::
+
+    <des_list>
+      <des name="TEST">
+        <field name="NITF_DESVER" value="02" />
+        <field name="NITF_DECLAS" value="U" />
+        <field name="NITF_DESCLSY" value="" />
+        [...]
+        <field name="NITF_DESCTLN" value="" />
+        <field name="NITF_DESSHL" value="0004" />
+        <field name="NITF_DESSHF" value="ABCD" />
+        <field name="NITF_DESDATA" value="MTIzNDU2Nzg5MA==" />
+      </des>
+    </des_list>
 
 Raw File / Image Headers
 ------------------------

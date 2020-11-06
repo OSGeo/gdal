@@ -149,6 +149,14 @@ Creation Options:
 -  **FILE_TRE=tre-name=tre-contents**: Similar to above
    options, except that the TREs are written in the file header, instead
    of the image header.
+-  **DES=des-name=des-contents**: One or more DES creation options may
+   be provided to write arbitrary user defined DESs to the NITF file.
+   The des-name should be at most 25 characters, and the des-contents
+   should be "backslash escaped" if it contains backslashes or zero
+   bytes, as in CPLEscapeString(str, -1, CPLES_BackslashQuotable).
+   The des-contents must contain standard DES fields, starting
+   with DESVER (See MIL-STD-2500C).  DESs are not currently copied in
+   CreateCopy(), but may be explicitly added as with Create().
 -  **SDE_TRE=YES/NO**: Write GEOLOB and GEOPSB TREs to
    get more precise georeferencing. This is limited to geographic SRS,
    and to CreateCopy() for now.
