@@ -251,6 +251,8 @@ bool OGRFlatGeobufDataset::OpenFile(const char* pszFilename, VSILFILE* fp, bool 
     CPLDebugOnly("FlatGeobuf", "Opening OGRFlatGeobufLayer");
     auto poLayer = std::unique_ptr<OGRFlatGeobufLayer>(
         OGRFlatGeobufLayer::Open(pszFilename, fp, bVerifyBuffers, m_bUpdate));
+    if( !poLayer )
+        return false;
 
     if (m_bUpdate) {
         CPLDebugOnly("FlatGeobuf", "Creating OGRFlatGeobufEditableLayer");
