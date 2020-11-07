@@ -23,8 +23,13 @@
    - Python bindings: move implementation of scripts (except gdal2tiles) in osgeo.utils package to be reusable
    - Faster GTIFF Deflate compression/decompression through libdeflate (if using internal libtiff or libtiff > 4.1.0)
  * Removed functionality:
+   - Python bindings: old-style "import gdal" is no longer available. Use "from osgeo import gdal" instead
    - API_PROXY mechanism: likely never used for real usage.
    - Removal of GDAL and OGR ArcSDE drivers
+
+== Backward compatibility issues ==
+
+See MIGRATION_GUIDE.txt
 
 == New installed files ==
 
