@@ -511,6 +511,7 @@ bool Lerc1Image::getwh(const Byte* pByte, size_t nBytes, int &width, int &height
     RDVAR(pByte, height);
     RDVAR(pByte, width);
     RDVAR(pByte, maxZErrorInFile);
+    (void)pByte;
 
     if (version != CNT_Z_VER || type != CNT_Z)
         return false;

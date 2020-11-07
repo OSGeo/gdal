@@ -1313,6 +1313,7 @@ template<typename T_FITS, typename T_GDAL, int TYPECODE,
         const auto poFieldDefn = poFeature->GetFieldDefnRef(iField);
         const auto eOGRType = poFieldDefn->GetType();
         int nCount = 0;
+        // cppcheck-suppress constStatement
         const T_GDAL* panList =
           ( eOGRType == OFTIntegerList ||
             eOGRType == OFTInteger64List ||
