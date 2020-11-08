@@ -359,13 +359,16 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
             uLinkData.Add( std::to_string(nLinkType), CPLJSONArray() );
             previousValues = uLinkData.GetArray( std::to_string(nLinkType) );
         } 
-        char *pszAsHex = CPLBinaryToHex( nLinkSize - 4, pabyData + 4 );
+        CPLJSONArray rawWords;
+        for( int i=0; i < nLinkSize-1; i+=2 )
+        {
+            CPLString firstWordAsHex (CPLSPrintf("0x%02x%02x", pabyData[i+1], pabyData[i] ));
+            rawWords.Add( firstWordAsHex );
+        }
         CPLJSONObject theNewObject = CPLJSONObject();
-        theNewObject.Add( "raw", pszAsHex );
+        theNewObject.Add( "raw", rawWords );
         theNewObject.Add( "size", nLinkSize );
         previousValues.Add( theNewObject );
-        CPLFree( pszAsHex );
-
         switch( nLinkType ) 
         {
             case 24721: // OdDgDBLinkage::kOracle
@@ -375,9 +378,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
             break;
             case 32047: // OdDgDBLinkage::kODBC
             {
-
                 theNewObject.Add( "type", "ODBC" );
-
             }
             break;
             case 6549: // 0x1995 Application ID by IPCC/Portugal
@@ -393,7 +394,6 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
         }
 
         uLinkCount++;
-
         iLink++;
 
         if( anEntityNum[nLinkCount] != 0 || anMSLink[nLinkCount] != 0 )

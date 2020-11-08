@@ -821,7 +821,11 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                 uLinkData.Add( primaryIdStr.c_str(), CPLJSONArray() );
                 previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
             } 
-
+            CPLJSONObject theNewObject = CPLJSONObject();
+            GByte* pData = pabyData.asArrayPtr();
+            int nSize = pabyData.size();
+            theNewObject.Add( "size", nSize );
+            previousValues.Add( theNewObject );
             switch( primaryId ) {
                     case OdDgAttributeLinkage::kFRAMME    : // DB Linkage - FRAMME tag data signature
                     case OdDgAttributeLinkage::kBSI       : // DB Linkage - secondary id link (BSI radix 50)
@@ -876,19 +880,20 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                             break;
                             }
 
-                            CPLJSONObject theNewObject = CPLJSONObject();
                             theNewObject.Add( "tableId", int( dbLinkage->getTableEntityId() ) );
                             theNewObject.Add( "MSLink", int( dbLinkage->getMSLink() ) );
                             theNewObject.Add( "type", namedType );
-                            previousValues.Add( theNewObject );
                         }
                     }
                     break;
                     case 0x1995: // 0x1995 (6549) IPCC/Portugal
                     {
-                        char *pszAsSwappedHex = BigEndianBinaryToHex( (OdUInt32)pabyData.size(), (GByte*) pabyData.asArrayPtr() );
-                        previousValues.Add( pszAsSwappedHex );
-                        CPLFree( pszAsSwappedHex );
+                        theNewObject.Add( "domain", CPLSPrintf("0x%02x", pData[1] ) );
+                        theNewObject.Add( "subdomain", CPLSPrintf("0x%02x", pData[0] ) );
+                        theNewObject.Add( "family", CPLSPrintf("0x%02x", pData[3] ) );
+                        theNewObject.Add( "object", CPLSPrintf("0x%02x", pData[2] ) );
+                        theNewObject.Add( "key", CPLSPrintf("%02x%02x%02x%02x", pData[1], pData[0], pData[3], pData[2] ) );
+                        theNewObject.Add( "type", "IPCC/Portugal" );
                     }
                     break;
                     case OdDgAttributeLinkage::kString: // 0x56d2 (22226):
@@ -896,19 +901,20 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                         OdDgStringLinkagePtr pStrLinkage = OdDgStringLinkage::cast( pLinkage );
                         if ( !pStrLinkage.isNull() )
                         {
-                            previousValues.Add( pStrLinkage->getString().c_str() );
+                            theNewObject.Add( "raw", pStrLinkage->getString().c_str() );
+                            theNewObject.Add( "type", "string" );
                         }
                     }
                     break;
                     default:
                     {
-                        char *pszAsHex = CPLBinaryToHex( (OdUInt32)pabyData.size(), (GByte*) pabyData.asArrayPtr() );
-                        CPLJSONObject theNewObject = CPLJSONObject();
-                        theNewObject.Add( "raw", pszAsHex );
+                        CPLJSONArray rawWords;
+                        for( int k=0; k < nSize-1; k+=2 )
+                        {
+                            rawWords.Add( CPLSPrintf("0x%02x%02x", pData[k+1], pData[k] ) );
+                        }
+                        theNewObject.Add( "raw", rawWords );
                         theNewObject.Add( "type", "unknown" );
-                        theNewObject.Add( "size", (int)pabyData.size() );
-                        previousValues.Add( theNewObject );
-                        CPLFree( pszAsHex );
                     }
                     break;
             }
