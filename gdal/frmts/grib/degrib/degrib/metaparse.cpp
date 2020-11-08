@@ -1553,15 +1553,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
       errSprintf ("ERROR IS4 not labeled correctly. %d\n", is4[4]);
       return -2;
    }
-   if (is4[5] != 0) {
-#ifdef DEBUG
-      printf ("Un-supported template.\n  All Supported template "
-              "have 0 coordinate vertical values after template.");
-#endif
-      errSprintf ("Un-supported template.\n  All Supported template "
-                  "have 0 coordinate vertical values after template.");
-      return -4;
-   }
+
    if ((is4[7] != GS4_ANALYSIS) && (is4[7] != GS4_ENSEMBLE) &&
        (is4[7] != GS4_DERIVED) && (is4[7] != GS4_PROBABIL_PNT) &&
        (is4[7] != GS4_PERCENT_PNT) && (is4[7] != GS4_ERROR) &&
@@ -2100,6 +2092,20 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          errSprintf ("Un-supported Template. %ld\n", is4[7]);
          return -4;
    }
+
+   /* Do only that check at the end so that other meta fields are properly set */
+   /* otherwise we might do erroneous unit conversion as in */
+   /* https://github.com/OSGeo/gdal/issues/3158 */
+   if (is4[5] != 0) {
+#ifdef DEBUG
+      printf ("Un-supported template.\n  All Supported template "
+              "have 0 coordinate vertical values after template.");
+#endif
+      errSprintf ("Un-supported template.\n  All Supported template "
+                  "have 0 coordinate vertical values after template.");
+      return -4;
+   }
+
    return 0;
 }
 
