@@ -67,11 +67,9 @@ A DGN element may have multiple user data linkages. Each linkage has
 a user id, application id and a number of words of data. The user 
 data linkage output reports the data for each different application id.
 
-For unknown application ids, the raw data is reported as hexadecimal. 
-Is up to the user how to decode the user data, depending on the 
-application id. Please note that the data might have been stored in 
-big endian format and each pair of hexadecimal digits might have to 
-be swapped. 
+For unknown application ids, the raw data is reported as hexadecimal 
+words (16bit). Is up to the user how to decode the user data, depending 
+on the application id.
 
 Styling Information
 -------------------
