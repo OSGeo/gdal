@@ -78,6 +78,7 @@
 #define TIMESTAMPTZOID          1184
 #define NUMERICOID              1700
 #define NUMERICARRAYOID         1231
+#define UUIDOID                 2950
 #define JSONBOID                3802
 
 CPLString OGRPGEscapeString(void *hPGConn,

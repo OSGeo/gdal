@@ -187,6 +187,7 @@ OFSTBoolean = _ogr.OFSTBoolean
 OFSTInt16 = _ogr.OFSTInt16
 OFSTFloat32 = _ogr.OFSTFloat32
 OFSTJSON = _ogr.OFSTJSON
+OFSTUUID = _ogr.OFSTUUID
 OJUndefined = _ogr.OJUndefined
 OJLeft = _ogr.OJLeft
 OJRight = _ogr.OJRight

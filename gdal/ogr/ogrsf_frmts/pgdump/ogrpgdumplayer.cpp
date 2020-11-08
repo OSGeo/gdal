@@ -1224,6 +1224,8 @@ CPLString OGRPGCommonLayerGetType( OGRFieldDefn& oField,
     {
         if (oField.GetSubType() == OFSTJSON )
             pszFieldType = CPLGetConfigOption("OGR_PG_JSON_TYPE", "JSON");
+        else if (oField.GetSubType() == OFSTUUID )
+            pszFieldType = CPLGetConfigOption("OGR_PG_UUID_TYPE", "UUID");
         else if (oField.GetWidth() > 0 && oField.GetWidth() < 10485760 && bPreservePrecision )
             pszFieldType = CPLSPrintf( "VARCHAR(%d)",  oField.GetWidth() );
         else
@@ -1454,6 +1456,11 @@ bool OGRPGCommonLayerSetType( OGRFieldDefn& oField,
     {
         oField.SetType( OFTString );
         oField.SetSubType( OFSTJSON );
+    }
+    else if( EQUAL(pszType,"uuid") )
+    {
+        oField.SetType( OFTString );
+        oField.SetSubType( OFSTUUID );
     }
     else
     {

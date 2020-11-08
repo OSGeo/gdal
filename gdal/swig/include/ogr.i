@@ -200,6 +200,10 @@ typedef enum
      * @since GDAL 2.4
      */
                                                         OFSTJSON = 4,
+    /** UUID string representation. Only valid for OFTString.
+     * @since GDAL 3.3
+     */
+                                                        OFSTUUID = 5,
 } OGRFieldSubType;
 
 
@@ -376,6 +380,7 @@ typedef void retGetPoints;
 %constant OFSTInt16 = 2;
 %constant OFSTFloat32 = 3;
 %constant OFSTJSON = 4;
+%constant OFSTUUID = 5;
 
 %constant OJUndefined = 0;
 %constant OJLeft = 1;
@@ -2169,6 +2174,7 @@ public:
             case OFSTInt16:
             case OFSTFloat32:
             case OFSTJSON:
+            case OFSTUUID:
                 return TRUE;
             default:
                 CPLError(CE_Failure, CPLE_IllegalArg, "Illegal field subtype value");
