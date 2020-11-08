@@ -4052,6 +4052,7 @@ static const GRIB2SurfTableWithIdx Surface[] = {
    {115, {"RESERVED", "Reserved", "-"}},
    {117, {"unknown", "Mixed layer depth", "m"}}, /* unknown abbrev */
    {118, {"RESERVED", "Reserved", "-"}},
+   {150, {"GVHC", "Generalized Vertical Height Coordinate", "-"}},
    {160, {"DBSL", "Depth below sea level", "m"}},
    {161, {"RESERVED", "Reserved", "-"}},
    {192, {"RESERVED", "Reserved Local use", "-"}},
