@@ -926,7 +926,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
 {
     const bool bCastToLinearTypeIfPossible = true;  // Hard-coded for now.
 
-    if( psNode != nullptr && strcmp(psNode->pszValue, "?xml") == 0 )
+    // We need this nRecLevel == 0 check, otherwise this could result in multiple
+    // revist of the same node, and exponential complexity.
+    if( nRecLevel == 0 && psNode != nullptr && strcmp(psNode->pszValue, "?xml") == 0 )
         psNode = psNode->psNext;
     while( psNode != nullptr && psNode->eType == CXT_Comment )
         psNode = psNode->psNext;
