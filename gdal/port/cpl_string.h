@@ -187,7 +187,6 @@ char CPL_DLL *CPLUnescapeString( const char *pszString, int *pnLength,
 
 char CPL_DLL *CPLBinaryToHex( int nBytes,
                               const GByte *pabyData ) CPL_WARN_UNUSED_RESULT;
-
 GByte CPL_DLL *CPLHexToBinary( const char *pszHex,
                                int *pnBytes ) CPL_WARN_UNUSED_RESULT;
 

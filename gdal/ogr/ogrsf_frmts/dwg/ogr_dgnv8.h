@@ -97,8 +97,6 @@ class OGRDGNV8Layer final: public OGRLayer
     int                         GetColorFromString(const char* pszColor);
     OdDgGraphicsElementPtr      GetFeatureInternal(GIntBig nFID, OdDg::OpenMode openMode);
 
-    char *BigEndianBinaryToHex( int nBytes, const GByte *pabyData );
-
   public:
                         OGRDGNV8Layer( OGRDGNV8DataSource* poDS,
                                        OdDgModelPtr pModel );
