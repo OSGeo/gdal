@@ -73,7 +73,7 @@ data linkage output reports the data for each different application id
 found as raw hexadecimal words (16bits). The application id is the 
 second word of the raw data.
 
-Is up to the user how to decode the user data, depending on the 
+Is up to the user how to decode the user raw data, depending on the 
 application id.
 
 Styling Information

@@ -362,32 +362,38 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
         CPLJSONArray rawWords;
         for( int i=0; i < nLinkSize-1; i+=2 )
         {
-            CPLString firstWordAsHex (CPLSPrintf("0x%02x%02x", pabyData[i+1], pabyData[i] ));
-            rawWords.Add( firstWordAsHex );
+            rawWords.Add( CPLSPrintf("0x%02x%02x", pabyData[i+1], pabyData[i] ) );
         }
         CPLJSONObject theNewObject = CPLJSONObject();
-        theNewObject.Add( "raw", rawWords );
         theNewObject.Add( "size", nLinkSize );
         previousValues.Add( theNewObject );
         switch( nLinkType ) 
         {
             case 24721: // OdDgDBLinkage::kOracle
             {
+                theNewObject.Add( "raw", rawWords );
                 theNewObject.Add( "type", "Oracle" );
             }
             break;
             case 32047: // OdDgDBLinkage::kODBC
             {
+                theNewObject.Add( "raw", rawWords );
                 theNewObject.Add( "type", "ODBC" );
             }
             break;
             case 6549: // 0x1995 Application ID by IPCC/Portugal
             {
+                theNewObject.Add( "domain", CPLSPrintf("0x%02x", pabyData[1] ) );
+                theNewObject.Add( "subdomain", CPLSPrintf("0x%02x", pabyData[0] ) );
+                theNewObject.Add( "family", CPLSPrintf("0x%02x", pabyData[3] ) );
+                theNewObject.Add( "object", CPLSPrintf("0x%02x", pabyData[2] ) );
+                theNewObject.Add( "key", CPLSPrintf("%02x%02x%02x%02x", pabyData[1], pabyData[0], pabyData[3], pabyData[2] ) );
                 theNewObject.Add( "type", "IPCC/Portugal" );
             }
             break;
             default:
             {
+                theNewObject.Add( "raw", rawWords );
                 theNewObject.Add( "type", "unknown" );
             }
             break;
