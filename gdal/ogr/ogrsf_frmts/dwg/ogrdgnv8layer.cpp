@@ -868,7 +868,7 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                         OdDgStringLinkagePtr pStrLinkage = OdDgStringLinkage::cast( pLinkage );
                         if ( !pStrLinkage.isNull() )
                         {
-                            theNewObject.Add( "raw", pStrLinkage->getString().c_str() );
+                            theNewObject.Add( "string", ToUTF8(pStrLinkage->getString()).c_str() );
                             theNewObject.Add( "type", "string" );
                         }
                     }
