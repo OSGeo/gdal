@@ -170,9 +170,14 @@ tiles will be stored as 32-bit PNG.
 Vector creation issues
 ----------------------
 
-Tiles are generated with WebMercator (EPSG:3857) projection. Several
-layers can be written. It is possible to decide at which zoom level
-ranges a given layer is written.
+Tiles are generated with WebMercator (EPSG:3857) projection. It is possible
+to decide at which zoom level ranges a given layer is written. Several
+layers can be written but the driver has only write-once support for
+vector data. For writing several vector datasets into MBTiles file an
+intermediate format like GeoPackage must be used as a container so that
+all layers can be converted at the same time. Write-once support means also
+that existing vector layers can't be edited.
+   
 
 Creation options
 ----------------
