@@ -25,6 +25,7 @@ OGR. Features will all have the following generic attributes:
 -  ColorIndex: The color index from the dgn palette.
 -  Weight: The drawing weight (thickness) for the element.
 -  Style: The style value for the element.
+-  ULink: User data linkage (multiple user data linkages may exist for each element).
 
 Driver capabilities
 -------------------
@@ -58,6 +59,17 @@ The following element types are supported in reading:
 Generally speaking any concept of complex objects, and cells as
 associated components is lost. Each component of a complex object or
 cell is treated as a independent feature.
+
+User data linkage
+-----------------
+
+A DGN element may have multiple user data linkages. Each linkage has 
+a user id, application id and a number of words of data. The user 
+data linkage output reports the data for each different application id.
+
+For unknown application ids, the raw data is reported as hexadecimal 
+words (16bit). Is up to the user how to decode the user data, depending 
+on the application id.
 
 Styling Information
 -------------------

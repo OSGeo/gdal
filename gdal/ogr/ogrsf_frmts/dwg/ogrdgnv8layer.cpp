@@ -174,6 +174,16 @@ OGRDGNV8Layer::OGRDGNV8Layer( OGRDGNV8DataSource* poDS,
     oField.SetPrecision( 0 );
     m_poFeatureDefn->AddFieldDefn( &oField );
     
+/* -------------------------------------------------------------------- */
+/*      ULink                                                           */
+/* -------------------------------------------------------------------- */
+    oField.SetName( "ULink" );
+    oField.SetType( OFTString );
+    oField.SetSubType( OFSTJSON );
+    oField.SetWidth( 0 );
+    oField.SetPrecision( 0 );
+    m_poFeatureDefn->AddFieldDefn( &oField );
+
     OGRDGNV8Layer::ResetReading();
 }
 
@@ -754,6 +764,132 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
     {
         nLineWeight = static_cast<int>(uLineWeight);
         poFeature->SetField("Weight", nLineWeight);
+    }
+
+    CPLJSONObject uLinkData;
+    CPLJSONArray previousValues;
+
+    OdRxObjectPtrArray linkages;
+    element->getLinkages(linkages);
+    if( linkages.size() > 0 )
+    {
+        for(unsigned i = 0; i < linkages.size(); ++i)
+        {
+            OdDgAttributeLinkagePtr pLinkage = linkages[i];
+            OdUInt16 primaryId = pLinkage->getPrimaryId();
+            CPLString primaryIdStr = CPLSPrintf("%d", primaryId );
+
+            OdBinaryData pabyData;
+            pLinkage->getData(pabyData);
+
+            previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
+            if (!previousValues.IsValid() ) 
+            {
+                uLinkData.Add( primaryIdStr.c_str(), CPLJSONArray() );
+                previousValues = uLinkData.GetArray( primaryIdStr.c_str() );
+            } 
+            CPLJSONObject theNewObject = CPLJSONObject();
+            GByte* pData = pabyData.asArrayPtr();
+            int nSize = pabyData.size();
+            theNewObject.Add( "size", nSize );
+            previousValues.Add( theNewObject );
+            switch( primaryId ) {
+                    case OdDgAttributeLinkage::kFRAMME    : // DB Linkage - FRAMME tag data signature
+                    case OdDgAttributeLinkage::kBSI       : // DB Linkage - secondary id link (BSI radix 50)
+                    case OdDgAttributeLinkage::kXBASE     : // DB Linkage - XBase (DBase)
+                    case OdDgAttributeLinkage::kINFORMIX  : // DB Linkage - Informix
+                    case OdDgAttributeLinkage::kINGRES    : // DB Linkage - INGRES
+                    case OdDgAttributeLinkage::kSYBASE    : // DB Linkage - Sybase
+                    case OdDgAttributeLinkage::kODBC      : // DB Linkage - ODBC
+                    case OdDgAttributeLinkage::kOLEDB     : // DB Linkage - OLEDB
+                    case OdDgAttributeLinkage::kORACLE    : // DB Linkage - Oracle
+                    case OdDgAttributeLinkage::kRIS       : // DB Linkage - RIS
+                    {
+                        OdDgDBLinkagePtr dbLinkage = OdDgDBLinkage::cast( pLinkage );
+                        if( !dbLinkage.isNull() )
+                        {
+                            std::string namedType;
+
+                            switch( dbLinkage->getDBType() )
+                            {
+                            case OdDgDBLinkage::kBSI: 
+                                namedType.assign("BSI");
+                            break;
+                            case OdDgDBLinkage::kFRAMME: 
+                                namedType.assign("FRAMME"); 
+                            break;
+                            case OdDgDBLinkage::kInformix: 
+                                namedType.assign("Informix");
+                            break;
+                            case OdDgDBLinkage::kIngres: 
+                                namedType.assign("Ingres");
+                            break;
+                            case OdDgDBLinkage::kODBC: 
+                                namedType.assign("ODBC");
+                            break;
+                            case OdDgDBLinkage::kOLEDB: 
+                                namedType.assign("OLE DB");
+                            break;
+                            case OdDgDBLinkage::kOracle: 
+                                namedType.assign("Oracle"); 
+                            break;
+                            case OdDgDBLinkage::kRIS: 
+                                namedType.assign("RIS"); 
+                            break;
+                            case OdDgDBLinkage::kSybase: 
+                                namedType.assign("Sybase");
+                            break;
+                            case OdDgDBLinkage::kXbase: 
+                                namedType.assign("xBase");
+                            break;
+                            default: 
+                                namedType.assign("Unknown"); 
+                            break;
+                            }
+
+                            theNewObject.Add( "tableId", int( dbLinkage->getTableEntityId() ) );
+                            theNewObject.Add( "MSLink", int( dbLinkage->getMSLink() ) );
+                            theNewObject.Add( "type", namedType );
+                        }
+                    }
+                    break;
+                    case 0x1995: // 0x1995 (6549) IPCC/Portugal
+                    {
+                        theNewObject.Add( "domain", CPLSPrintf("0x%02x", pData[1] ) );
+                        theNewObject.Add( "subdomain", CPLSPrintf("0x%02x", pData[0] ) );
+                        theNewObject.Add( "family", CPLSPrintf("0x%02x", pData[3] ) );
+                        theNewObject.Add( "object", CPLSPrintf("0x%02x", pData[2] ) );
+                        theNewObject.Add( "key", CPLSPrintf("%02x%02x%02x%02x", pData[1], pData[0], pData[3], pData[2] ) );
+                        theNewObject.Add( "type", "IPCC/Portugal" );
+                    }
+                    break;
+                    case OdDgAttributeLinkage::kString: // 0x56d2 (22226):
+                    {
+                        OdDgStringLinkagePtr pStrLinkage = OdDgStringLinkage::cast( pLinkage );
+                        if ( !pStrLinkage.isNull() )
+                        {
+                            theNewObject.Add( "string", ToUTF8(pStrLinkage->getString()).c_str() );
+                            theNewObject.Add( "type", "string" );
+                        }
+                    }
+                    break;
+                    default:
+                    {
+                        CPLJSONArray rawWords;
+                        for( int k=0; k < nSize-1; k+=2 )
+                        {
+                            rawWords.Add( CPLSPrintf("0x%02x%02x", pData[k+1], pData[k] ) );
+                        }
+                        theNewObject.Add( "raw", rawWords );
+                        theNewObject.Add( "type", "unknown" );
+                    }
+                    break;
+            }
+
+        }
+
+        poFeature->SetField( "ULink", uLinkData.ToString().c_str() );
+
     }
 
 /* -------------------------------------------------------------------- */
