@@ -21,7 +21,7 @@ Synopsis
                   [-w webviewer] [-t title] [-c copyright]
                   [--processes=NB_PROCESSES] [--xyz]
                   --tilesize=PIXELS
-                  [-g googlekey] [-b bingkey] input_file [output_dir]
+                  [-g googlekey] [-b bingkey] input_file [output_dir] [COMMON_OPTIONS]
 
 Description
 -----------
@@ -44,6 +44,10 @@ can publish a picture without proper georeferencing too.
     Inputs with non-Byte data type (i.e. ``Int16``, ``UInt16``,...) will be clamped to
     the ``Byte`` data type, causing wrong results. To awoid this it is necessary to
     rescale input to the ``Byte`` data type using `gdal_translate` utility.
+    
+.. note::
+
+    Config options of the input drivers may have an effect on the output of gdal2tiles. An example driver config option is GDAL_PDF_DPI, which can be found at :ref:`configoptions`
 
 
 .. program:: gdal2tiles
