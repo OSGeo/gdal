@@ -55,34 +55,34 @@ content in the EMBEDDED_METADATA metadata domain.
 Configuration options
 ---------------------
 
--  *GDAL_PDF_DPI* : To control the dimensions of the raster by
+-  :decl_configoption:`GDAL_PDF_DPI` : To control the dimensions of the raster by
    specifying the DPI of the rasterization with the Its default value is
    150. The driver will make some effort to
    guess the DPI value either from a specific metadata item contained in
    some PDF files, or from the raster images inside the PDF (in simple
    cases).
--  *GDAL_PDF_NEATLINE* : The name of the neatline to
+-  :decl_configoption:`GDAL_PDF_NEATLINE` : The name of the neatline to
    select (only available for geospatial PDF, encoded according to OGC
    Best Practice). This defaults to "Map Layers" for USGS Topo PDF. If
    not found, the neatline that covers the largest area.
--  *GDAL_USER_PWD* : User password for protected PDFs.
--  *GDAL_PDF_RENDERING_OPTIONS* : a combination of VECTOR, RASTER and
+-  :decl_configoption:`GDAL_USER_PWD` : User password for protected PDFs.
+-  :decl_configoption:`GDAL_PDF_RENDERING_OPTIONS` : a combination of VECTOR, RASTER and
    TEXT separated by comma, to select whether vector, raster or text
    features should be rendered. If the option is not specified, all
    features are rendered (Poppler and PDFium).
--  *GDAL_PDF_BANDS* = 3 or 4 : whether the PDF should be rendered as a
+-  :decl_configoption:`GDAL_PDF_BANDS` = 3 or 4 : whether the PDF should be rendered as a
    RGB (3) or RGBA (4) image. The default value will depend on the PDF rendering
    used (Poppler vs PDFium) and on the content found in the PDF file (if an
    image with transparency is recognized, then 4 will be used). When 3 bands
    is selected, a white background is used.
--  *GDAL_PDF_LAYERS* = list of layers (comma separated) to turn ON (or
+-  :decl_configoption:`GDAL_PDF_LAYERS` = list of layers (comma separated) to turn ON (or
    "ALL" to turn all layers ON). The layer names can be obtained by
    querying the LAYERS metadata domain. When this option is specified,
    layers not explicitly listed will be turned off (Poppler and PDFium).
--  *GDAL_PDF_LAYERS_OFF* = list of layers (comma separated) to turn OFF.
+-  :decl_configoption:`GDAL_PDF_LAYERS_OFF` = list of layers (comma separated) to turn OFF.
    The layer names can be obtained by querying the LAYERS metadata
    domain (Poppler and PDFium).
--  "GDAL_PDF_LAUNDER_LAYER_NAMES* = YES/NO: (GDAL >= 3.1) Can be set to NO
+-  :decl_configoption:`GDAL_PDF_LAUNDER_LAYER_NAMES` = YES/NO: (GDAL >= 3.1) Can be set to NO
    to avoid the layer names reported in the LAYERS metadata domain or as OGR
    layers for the vector part to be "laundered".
 
