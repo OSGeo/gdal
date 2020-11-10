@@ -154,9 +154,10 @@ Thus any "Python 2 only" code that uses GDAL would need to be upgraded to Python
 at the same time the respective Python interpreter would need to be upgraded
 to a supported Python version.
 
-Making GDAL 3.2.0 as a LTS version:
-+++++++++++++++++++++++++++++++++++++
+Will GDAL 3.2 be a LTS?
+++++++++++++++++++++++++++
 
+Currently - No.
 So far, nobody has stepped up to make a LTS, So there won't be one unless someone takes it up upon themselves or raise funds to make it happen.
 GDAL only provide bugfix releases of the current stable branch for 6 months.
 
@@ -164,6 +165,7 @@ CI Impacts:
 ------------
 
 Impacts on our CI should be analyzed.
+It seems that all our CI builds use Python 2.7 or 3.5, so all of them would need to be adjusted.
 In particular, builds that use older Linux distributions would need to be upgraded.
 
 Impacts on GDAL core
@@ -216,6 +218,11 @@ This topic has been discussed in the past in :
 
 - https://github.com/OSGeo/gdal/issues/3114
 - https://github.com/OSGeo/gdal/pull/3142
+
+Related PRs:
+-------------
+
+- https://github.com/OSGeo/gdal/pull/3165
 
 Voting history
 --------------
