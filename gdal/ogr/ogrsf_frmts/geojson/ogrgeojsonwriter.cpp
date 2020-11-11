@@ -1598,13 +1598,7 @@ OGR_json_double_with_significant_figures_to_string( struct json_object *jso,
                     "%%.%dg", nInitialSignificantFigures);
         nSize = CPLsnprintf(szBuffer, sizeof(szBuffer),
                             szFormatting, dfVal);
-        const char* pszDot = nullptr;
-        if( nSize+2 < static_cast<int>(sizeof(szBuffer)) &&
-            (pszDot = strchr(szBuffer, '.')) == nullptr )
-        {
-            nSize += CPLsnprintf(szBuffer + nSize, sizeof(szBuffer) - nSize,
-                                 ".0");
-        }
+        const char* pszDot = strchr(szBuffer, '.');
 
         // Try to avoid .xxxx999999y or .xxxx000000y rounding issues by
         // decreasing a bit precision.
@@ -1635,15 +1629,17 @@ OGR_json_double_with_significant_figures_to_string( struct json_object *jso,
                             "%%.%dg", nInitialSignificantFigures);
                 nSize = CPLsnprintf(szBuffer, sizeof(szBuffer),
                                     szFormatting, dfVal);
-                if( nSize+2 < static_cast<int>(sizeof(szBuffer)) &&
-                    strchr(szBuffer, '.') == nullptr )
-                {
-                    nSize +=
-                        CPLsnprintf(szBuffer + nSize, sizeof(szBuffer) - nSize,
-                                    ".0");
-                }
             }
         }
+
+        if( nSize+2 < static_cast<int>(sizeof(szBuffer)) &&
+            strchr(szBuffer, '.') == nullptr &&
+            strchr(szBuffer, 'e') == nullptr )
+        {
+            nSize += CPLsnprintf(szBuffer + nSize, sizeof(szBuffer) - nSize,
+                                 ".0");
+        }
+
     }
 
     return printbuf_memappend(pb, szBuffer, nSize);
