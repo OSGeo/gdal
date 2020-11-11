@@ -179,7 +179,6 @@ The following profiles are supported:
 - mercator: mapped to OSMTILE MapML tiling scheme
 - geodetic: mapped to WGS84 MapML tiling scheme
 - APSTILE: from the tms_MapML_APSTILE.json data file
-- CBMTILE: from the tms_MapML_CBMTILE.json data file
 
 The generated MapML file in the output directory is ``mapml.mapl``
 
