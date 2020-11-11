@@ -89,12 +89,12 @@ docker run --rm -v /home:/home osgeo/gdal:alpine-small-latest gdalinfo $PWD/my.t
 
 # Images of releases
 
-Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.1.0 and PROJ 7.0.1:
-* osgeo/alpine-ultrasmall-3.1.0
-* osgeo/alpine-small-3.1.0
-* osgeo/alpine-normal-3.1.0
-* osgeo/ubuntu-small-3.1.0
-* osgeo/ubuntu-full-3.1.0
+Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.2.0 and PROJ 7.2.0:
+* osgeo/alpine-ultrasmall-3.2.0
+* osgeo/alpine-small-3.2.0
+* osgeo/alpine-normal-3.2.0
+* osgeo/ubuntu-small-3.2.0
+* osgeo/ubuntu-full-3.2.0
 
 ## Multi-arch Images
 
@@ -124,7 +124,7 @@ Use the two script flags in order to leverage BuildKit:
 
 **Example**
 
-`alpine-small/build.sh --with-multi-arch --release --gdal v3.1.3 --proj master --platform linux/arm64,linux/amd64`
+`alpine-small/build.sh --with-multi-arch --release --gdal v3.2.0 --proj master --platform linux/arm64,linux/amd64`
 
 ## Custom Image Names
 
@@ -132,4 +132,4 @@ Override the image and repository by setting the environment variable: `BASE_IMA
 
 **Example**
 
-`BASE_IMAGE_NAME="YOU_DOCKER_USERNAME/gdal" alpine-small/build.sh --release --gdal v3.1.3 --proj master`
+`BASE_IMAGE_NAME="YOU_DOCKER_USERNAME/gdal" alpine-small/build.sh --release --gdal v3.2.0 --proj master`
