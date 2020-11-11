@@ -3062,3 +3062,36 @@ def test_ogr_geojson_write_float32():
 
     assert '"float32": 0.35,' in data
     assert '"float32list": [ 123.0, 0.35, 0.15, 0.12345678, 1.2345678e-15, 1.2345678e+15, 0.12345679 ]' in data
+
+
+###############################################################################
+# Test bugfix for #3172
+
+def test_ogr_geojson_write_float_exponential_without_dot():
+
+    filename = '/vsimem/test_ogr_geojson_write_float_exponential_without_dot.json'
+    ds = ogr.GetDriverByName('GeoJSON').CreateDataSource(filename)
+    lyr = ds.CreateLayer('foo')
+
+    fldn_defn = ogr.FieldDefn('float32', ogr.OFTReal)
+    fldn_defn.SetSubType(ogr.OFSTFloat32)
+    lyr.CreateField(fldn_defn)
+
+    fldn_defn = ogr.FieldDefn('float64', ogr.OFTReal)
+    lyr.CreateField(fldn_defn)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['float32'] = 1e-7
+    f['float64'] = 1e-8
+    lyr.CreateFeature(f)
+
+    ds = None
+
+    fp = gdal.VSIFOpenL(filename, 'rb')
+    data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+    gdal.VSIFCloseL(fp)
+
+    gdal.Unlink(filename)
+
+    # Check that the json can be parsed
+    json.loads(data)

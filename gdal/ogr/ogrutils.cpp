@@ -1781,12 +1781,7 @@ int  OGRFormatFloat(char *pszBuffer, int nBufferLen,
                 nInitialSignificantFigures,
                 chConversionSpecifier);
     nSize = CPLsnprintf(pszBuffer, nBufferLen, szFormatting, fVal);
-    const char* pszDot = nullptr;
-    if( nSize+2 < static_cast<int>(nBufferLen) &&
-        (pszDot = strchr(pszBuffer, '.')) == nullptr )
-    {
-        nSize += CPLsnprintf(pszBuffer + nSize, nBufferLen - nSize, ".0");
-    }
+    const char* pszDot = strchr(pszBuffer, '.');
 
     // Try to avoid 0.34999999 or 0.15000001 rounding issues by
     // decreasing a bit precision.
@@ -1821,6 +1816,13 @@ int  OGRFormatFloat(char *pszBuffer, int nBufferLen,
             memcpy(pszBuffer, osOriBuffer.c_str(), osOriBuffer.size()+1);
             nSize = static_cast<int>(osOriBuffer.size());
         }
+    }
+
+    if( nSize+2 < static_cast<int>(nBufferLen) &&
+        strchr(pszBuffer, '.') == nullptr &&
+        strchr(pszBuffer, 'e') == nullptr )
+    {
+        nSize += CPLsnprintf(pszBuffer + nSize, nBufferLen - nSize, ".0");
     }
 
     return nSize;
