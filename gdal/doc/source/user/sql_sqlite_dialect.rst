@@ -19,12 +19,14 @@ utility, you must specify the "-dialect SQLITE" option.
 This is mainly aimed to execute SELECT statements, but, for datasources that support
 update, INSERT/UPDATE/DELETE statements can also be run. GDAL is internally using
 `the Virtual Table Mechanism of SQLite <https://sqlite.org/vtab.html>`_
-and therefore operations like ALTER TABLE are not supported.
+and therefore operations like ALTER TABLE are not supported. For executing ALTER TABLE
+or DROP TABLE use :ref:`ogr_sql_dialect`
 
 If the datasource is SQLite database (GeoPackage, SpatiaLite) then SQLite dialect
 acts as native SQL dialect and Virtual Table Mechanism is not used. It is possible to
-force GDAL to use Virtual Tables even in this case by specifying 
-"-dialect INDIRECT_SQLITE". This should be used only when necessary, since going through the virtual table mechanism might affect performance.
+force GDAL to use Virtual Tables even in this case by specifying
+"-dialect INDIRECT_SQLITE". This should be used only when necessary, since going through
+the virtual table mechanism might affect performance.
 
 The syntax of the SQL statements is fully the one of the SQLite SQL engine. You can
 refer to the following pages:
@@ -39,8 +41,8 @@ SELECT statement
 
 The SELECT statement is used to fetch layer features (analogous to table
 rows in an RDBMS) with the result of the query represented as a temporary layer
-of features.   The layers of the datasource are analogous to tables in an
-RDBMS and feature attributes are analogous to column values.  The simplest
+of features. The layers of the datasource are analogous to tables in an
+RDBMS and feature attributes are analogous to column values. The simplest
 form of OGR SQLITE SELECT statement looks like this:
 
 .. code-block::
@@ -69,8 +71,9 @@ be used in joins are searched from the master database.
     ogrinfo jointest.gpkg -dialect INDIRECT_SQLITE -sql "SELECT a.ID,b.ID FROM jointest a JOIN \"jointest2.shp\".\"jointest2\" b ON a.ID=b.ID"
 
 The column names that can be used in the result column list, in WHERE, JOIN, ... clauses
-are the field names of the layers. Expressions, SQLite functions can also be used,
-spatial functions, etc...
+are the field names of the layers. Expressions, SQLite functions, spatial functions, etc...
+can also be used.
+
 
 The conditions on fields expressed in WHERE clauses, or in JOINs are
 translated, as far as possible, as attribute filters that are applied on the
@@ -82,7 +85,7 @@ Delimited identifiers
 
 If names of layers or attributes are reserved keywords in SQL like 'FROM' or they
 begin with a number or underscore they must be handled as "delimited identifiers" and
-enclosed between double quotation marks in queries. Double quotas can be used even when
+enclosed between double quotation marks in queries. Double quotes can be used even when
 they are not strictly needed.
 
 .. code-block::
@@ -107,6 +110,8 @@ in the result column list of a SELECT, and is automatically selected if the
 For OGR layers that have a non-empty geometry column name (generally for RDBMS datasources),
 as returned by OGRLayer::GetGeometryColumn(), the name of the geometry special field
 in the SQL statement will be the name of the geometry column of the underlying OGR layer.
+If the name of the geometry column in the source layer is empty, like with shapefiles etc.,
+the name to use in the SQL statement is always "geometry".
 
 .. code-block::
 
@@ -150,7 +155,7 @@ Spatialite SQL functions
 ++++++++++++++++++++++++
 
 When GDAL/OGR is build with support for the `Spatialite <http://www.gaia-gis.it/spatialite/>`_ library,
-a lot of `extra SQL functions <http://www.gaia-gis.it/gaia-sins/spatialite-sql-4.3.0.html>`_,
+a lot of `extra SQL functions <http://www.gaia-gis.it/gaia-sins/spatialite-sql-latest.html>`_,
 in particular spatial functions, can be used in results column fields, WHERE clauses, etc....
 
 .. code-block::
