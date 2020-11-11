@@ -118,6 +118,7 @@ class OGRElasticLayer final: public OGRLayer {
     bool                                  m_bDotAsNestedField;
 
     bool                                  m_bAddPretty;
+    bool                                  m_bGeoShapeAsGeoJSON;
 
     bool                                  PushIndex();
     CPLString                             BuildMap();
@@ -243,7 +244,8 @@ public:
     int                 m_nFeatureCountToEstablishFeatureDefn;
     bool                m_bJSonField;
     bool                m_bFlattenNestedAttributes;
-    int                 m_nMajorVersion;
+    int                 m_nMajorVersion = 0;
+    int                 m_nMinorVersion = 0;
 
     int Open(GDALOpenInfo* poOpenInfo);
 
