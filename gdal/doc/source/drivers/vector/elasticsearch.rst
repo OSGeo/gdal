@@ -318,6 +318,9 @@ options:
    mapping type, compatible of all geometry types. When using AUTO, for
    geometry fields of type Point, a geo_point is used. In other cases,
    geo_shape is used.
+-  **GEO_SHAPE_ENCODING**\ =GeoJSON/WKT. (GDAL >= 3.2.1)
+   Encoding for geo_shape geometry fields. Defaults to GeoJSON. WKT is possible
+   since Elasticsearch 6.2
 -  **GEOM_PRECISION**\ ={value}{unit}'. Desired geometry precision.
    Number followed by unit. For example 1m. For a geo_point geometry
    field, this causes a compressed geometry format to be used. This
