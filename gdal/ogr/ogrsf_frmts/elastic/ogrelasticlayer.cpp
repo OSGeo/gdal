@@ -87,7 +87,8 @@ OGRElasticLayer::OGRElasticLayer( const char* pszLayerName,
     m_bIgnoreSourceID(false),
     m_bDotAsNestedField(true),
     // Undocumented. Only useful for developers.
-    m_bAddPretty(CPLTestBool(CPLGetConfigOption("ES_ADD_PRETTY", "FALSE")))
+    m_bAddPretty(CPLTestBool(CPLGetConfigOption("ES_ADD_PRETTY", "FALSE"))),
+    m_bGeoShapeAsGeoJSON(EQUAL(CSLFetchNameValueDef(papszOptions, "GEO_SHAPE_ENCODING", "GeoJSON"), "GeoJSON"))
 {
     const char* pszESGeomType = CSLFetchNameValue(papszOptions, "GEOM_MAPPING_TYPE");
     if( pszESGeomType != nullptr )
@@ -97,6 +98,7 @@ OGRElasticLayer::OGRElasticLayer( const char* pszLayerName,
         else if( EQUAL(pszESGeomType, "GEO_SHAPE") )
             m_eGeomTypeMapping = ES_GEOMTYPE_GEO_SHAPE;
     }
+
     if( CPLFetchBool(papszOptions, "BULK_INSERT", true) )
     {
         m_nBulkUpload = atoi(CSLFetchNameValueDef(papszOptions, "BULK_SIZE", "1000000"));
@@ -1451,6 +1453,12 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
                     poGeom = OGRGeoJSONReadGeometry( it.val );
                 }
             }
+            else if( json_object_get_type(it.val) == json_type_string )
+            {
+                // Assume this is WKT
+                OGRGeometryFactory::createFromWkt(
+                    json_object_get_string(it.val), nullptr, &poGeom);
+            }
 
             if( poGeom != nullptr )
             {
@@ -2103,9 +2111,20 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                 }
                 else
                 {
-                    json_object *geometry = json_object_new_object();
-                    json_object_object_add(poContainer, pszLastComponent, geometry);
-                    BuildGeoJSONGeometry(geometry, poGeom);
+                    if( m_bGeoShapeAsGeoJSON )
+                    {
+                        json_object *geometry = json_object_new_object();
+                        json_object_object_add(poContainer, pszLastComponent, geometry);
+                        BuildGeoJSONGeometry(geometry, poGeom);
+                    }
+                    else
+                    {
+                        char* pszWKT = nullptr;
+                        poGeom->exportToWkt(&pszWKT);
+                        json_object_object_add(poContainer, pszLastComponent,
+                                               json_object_new_string(pszWKT));
+                        CPLFree(pszWKT);
+                    }
                 }
             }
         }
@@ -3346,8 +3365,14 @@ OGRErr OGRElasticLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bFo
         return OGRERR_FAILURE;
     }
 
-    if( !m_abIsGeoPoint[iGeomField] )
+    // geo_shape aggregation is only available since ES 7.8, but only with XPack
+    // for now
+    if( !m_abIsGeoPoint[iGeomField] &&
+        !(m_poDS->m_nMajorVersion > 7 ||
+            (m_poDS->m_nMajorVersion == 7 && m_poDS->m_nMinorVersion >= 8)) )
+    {
         return OGRLayer::GetExtentInternal(iGeomField, psExtent, bForce);
+    }
 
     CPLString osFilter = CPLSPrintf("{ \"size\": 0, \"aggs\" : { \"bbox\" : { \"geo_bounds\" : { \"field\" : \"%s\" } } } }",
                                     BuildPathFromArray(m_aaosGeomFieldPaths[iGeomField]).c_str() );
@@ -3355,7 +3380,26 @@ OGRErr OGRElasticLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bFo
     if (m_poDS->m_nMajorVersion < 7)
         osURL += CPLSPrintf("/%s", m_osMappingName.c_str());
     osURL += "/_search?pretty";
+
+    CPLPushErrorHandler(CPLQuietErrorHandler);
     json_object* poResponse = m_poDS->RunRequest(osURL.c_str(), osFilter.c_str());
+    CPLPopErrorHandler();
+    if( poResponse == nullptr )
+    {
+        const char* pszLastErrorMsg = CPLGetLastErrorMsg();
+        if( !m_abIsGeoPoint[iGeomField] &&
+            strstr(pszLastErrorMsg, "Fielddata is not supported on field") != nullptr )
+        {
+            CPLDebug("ES",
+                     "geo_bounds aggregation failed, likely because of lack "
+                     "of XPack. Using client-side method");
+            CPLErrorReset();
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "%s", pszLastErrorMsg);
+        }
+    }
 
     json_object* poBounds = json_ex_get_object_by_path(poResponse, "aggregations.bbox.bounds");
     json_object* poTopLeft = json_ex_get_object_by_path(poBounds, "top_left");

@@ -50,8 +50,7 @@ OGRElasticDataSource::OGRElasticDataSource() :
     m_nBatchSize(100),
     m_nFeatureCountToEstablishFeatureDefn(100),
     m_bJSonField(false),
-    m_bFlattenNestedAttributes(true),
-    m_nMajorVersion(0)
+    m_bFlattenNestedAttributes(true)
 {
     const char* pszWriteMapIn = CPLGetConfigOption("ES_WRITEMAP", nullptr);
     if (pszWriteMapIn != nullptr) {
@@ -696,6 +695,9 @@ bool OGRElasticDataSource::CheckVersion()
             const char* pszVersion = json_object_get_string(poNumber);
             CPLDebug("ES", "Server version: %s", pszVersion);
             m_nMajorVersion = atoi(pszVersion);
+            const char* pszDot = strchr(pszVersion, '.');
+            if( pszDot )
+                m_nMinorVersion = atoi(pszDot+1);
         }
     }
     json_object_put(poMainInfo);

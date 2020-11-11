@@ -2359,3 +2359,53 @@ def test_ogr_elasticsearch_http_headers_from_env():
         f = sql_lyr.GetNextFeature()
         assert f['some_field'] == '5'
         ds.ReleaseResultSet(sql_lyr)
+
+###############################################################################
+# Test GeoShape WKT support
+
+
+def test_ogr_elasticsearch_geo_shape_wkt():
+
+    ogr_elasticsearch_delete_files()
+
+    gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch",
+                           """{"version":{"number":"7.0.0"}}""")
+
+    ds = ogrtest.elasticsearch_drv.CreateDataSource(
+        "/vsimem/fakeelasticsearch")
+    assert ds is not None
+
+    gdal.FileFromMemBuffer(
+        '/vsimem/fakeelasticsearch/geo_shape_wkt&CUSTOMREQUEST=PUT', "{}")
+    lyr = ds.CreateLayer('geo_shape_wkt', srs=ogrtest.srs_wgs84, options=['GEO_SHAPE_ENCODING=WKT'])
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))
+    gdal.FileFromMemBuffer(
+        """/vsimem/fakeelasticsearch/geo_shape_wkt/_mapping&POSTFIELDS={ "properties": { "geometry": { "type": "geo_shape" } }, "_meta": { "fid": "ogc_fid" } }""", '{}')
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_bulk&POSTFIELDS={"index" :{"_index":"geo_shape_wkt"}}
+{ "ogc_fid": 1, "geometry": "POINT (2 49)" }
+
+""", "{}")
+    ret = lyr.CreateFeature(f)
+    assert ret == 0
+
+    lyr.ResetReading()
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/geo_shape_wkt/_search?scroll=1m&size=100""",
+                           """{
+    "_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "geometry": "POINT (2 49)"
+            }
+        }
+        ]
+    }
+}""")
+    gdal.FileFromMemBuffer(
+        '/vsimem/fakeelasticsearch/_search/scroll?scroll_id=my_scrollid&CUSTOMREQUEST=DELETE', '{}')
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == 'POINT (2 49)'
