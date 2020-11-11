@@ -558,7 +558,7 @@ OGR_GEOMETRY
 
 Some of the data sources (like MapInfo tab) can handle geometries of different
 types within the same layer. The ``OGR_GEOMETRY`` special field represents
-the geometry type returned by :cpp_func:`OGRGeometry::getGeometryName` and can be used to
+the geometry type returned by :cpp:func:`OGRGeometry::getGeometryName` and can be used to
 distinguish the various types. By using this field one can select particular
 types of the geometries like:
 
