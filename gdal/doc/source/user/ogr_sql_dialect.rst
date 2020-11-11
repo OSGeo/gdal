@@ -543,7 +543,7 @@ The OGR SQL dialect adds the geometry field of the datasource to the result set
 by default. Users do not need to select the geometry explicitly but it is still
 possible to do so. Common use case is when geometry is the only field that is needed.
 In this case the name of the geometry field to be used in the SQL statement is the
-name returned by :cpp:func:`OGRLayer::getGeometryColumn()`. If the method returns
+name returned by :cpp:func:`OGRLayer::GetGeometryColumn`. If the method returns
 an empty string then a special name "_ogr_geometry_" must be used. The name begins
 with an underscore and SQL syntax requires that it must appear between double quotes.
 In addition the command line interpreter may require that double quotes are escaped
@@ -551,14 +551,14 @@ and the final SELECT statement could look like:
 
 .. code-block::
 
-    SELECT \"_ogr_geometry_\" FROM nation
+    SELECT "_ogr_geometry_" FROM nation
     
 OGR_GEOMETRY
 ++++++++++++
 
 Some of the data sources (like MapInfo tab) can handle geometries of different
 types within the same layer. The ``OGR_GEOMETRY`` special field represents
-the geometry type returned by :cpp_func:`OGRGeometry::getGeometryName()` and can be used to
+the geometry type returned by :cpp_func:`OGRGeometry::getGeometryName` and can be used to
 distinguish the various types. By using this field one can select particular
 types of the geometries like:
 
