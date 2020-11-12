@@ -626,6 +626,7 @@ CPLErr PCIDSK2Band::SetMetadata( char **papszMD,
 /* -------------------------------------------------------------------- */
     CSLDestroy( papszLastMDListValue );
     papszLastMDListValue = nullptr;
+    m_oCacheMetadataItem.clear();
 
     if( GetAccess() == GA_ReadOnly )
     {
@@ -679,6 +680,7 @@ CPLErr PCIDSK2Band::SetMetadataItem( const char *pszName,
 /* -------------------------------------------------------------------- */
     CSLDestroy( papszLastMDListValue );
     papszLastMDListValue = nullptr;
+    m_oCacheMetadataItem.clear();
 
     if( GetAccess() == GA_ReadOnly )
     {
@@ -729,23 +731,27 @@ const char *PCIDSK2Band::GetMetadataItem( const char *pszName,
         return GDALPamRasterBand::GetMetadataItem( pszName, pszDomain );
 
 /* -------------------------------------------------------------------- */
-/*      Try and fetch.                                                  */
+/*      Try and fetch (use cached value if available)                   */
 /* -------------------------------------------------------------------- */
-    try
+    auto oIter = m_oCacheMetadataItem.find(pszName);
+    if( oIter == m_oCacheMetadataItem.end() )
     {
-        osLastMDValue = poChannel->GetMetadataValue( pszName );
-    }
-    catch( const PCIDSKException& ex )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s", ex.what() );
-        return nullptr;
-    }
+        CPLString osValue;
+        try
+        {
+            osValue = poChannel->GetMetadataValue( pszName );
+        }
+        catch( const PCIDSKException& ex )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "%s", ex.what() );
+            return nullptr;
+        }
 
-    if( osLastMDValue == "" )
-        return nullptr;
-
-    return osLastMDValue.c_str();
+        m_oCacheMetadataItem[pszName] = osValue;
+        oIter = m_oCacheMetadataItem.find(pszName);
+    }
+    return oIter->second.empty() ? nullptr : oIter->second.c_str();
 }
 
 /************************************************************************/
@@ -1066,6 +1072,7 @@ CPLErr PCIDSK2Dataset::SetMetadata( char **papszMD,
 /* -------------------------------------------------------------------- */
     CSLDestroy( papszLastMDListValue );
     papszLastMDListValue = nullptr;
+    m_oCacheMetadataItem.clear();
 
     if( GetAccess() == GA_ReadOnly )
     {
@@ -1118,6 +1125,7 @@ CPLErr PCIDSK2Dataset::SetMetadataItem( const char *pszName,
 /* -------------------------------------------------------------------- */
     CSLDestroy( papszLastMDListValue );
     papszLastMDListValue = nullptr;
+    m_oCacheMetadataItem.clear();
 
     if( GetAccess() == GA_ReadOnly )
     {
@@ -1166,23 +1174,27 @@ const char *PCIDSK2Dataset::GetMetadataItem( const char *pszName,
         return GDALPamDataset::GetMetadataItem( pszName, pszDomain );
 
 /* -------------------------------------------------------------------- */
-/*      Try and fetch.                                                  */
+/*      Try and fetch (use cached value if available)                   */
 /* -------------------------------------------------------------------- */
-    try
+    auto oIter = m_oCacheMetadataItem.find(pszName);
+    if( oIter == m_oCacheMetadataItem.end() )
     {
-        osLastMDValue = poFile->GetMetadataValue( pszName );
-    }
-    catch( const PCIDSKException& ex )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s", ex.what() );
-        return nullptr;
-    }
+        CPLString osValue;
+        try
+        {
+            osValue = poFile->GetMetadataValue( pszName );
+        }
+        catch( const PCIDSKException& ex )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "%s", ex.what() );
+            return nullptr;
+        }
 
-    if( osLastMDValue == "" )
-        return nullptr;
-
-    return osLastMDValue.c_str();
+        m_oCacheMetadataItem[pszName] = osValue;
+        oIter = m_oCacheMetadataItem.find(pszName);
+    }
+    return oIter->second.empty() ? nullptr : oIter->second.c_str();
 }
 
 /************************************************************************/

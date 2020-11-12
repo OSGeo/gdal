@@ -117,8 +117,12 @@ def test_pcidsk_5():
         print(mddef)
         gdaltest.post_reason('file default domain metadata broken. ')
 
-    if gdaltest.pcidsk_ds.GetMetadataItem('GHI') != 'JKL':
-        gdaltest.post_reason('GetMetadataItem() in default domain metadata broken. ')
+    assert gdaltest.pcidsk_ds.GetMetadataItem('GHI') == 'JKL'
+    assert gdaltest.pcidsk_ds.GetMetadataItem('GHI') == 'JKL'
+    gdaltest.pcidsk_ds.SetMetadataItem('GHI', 'JKL2')
+    assert gdaltest.pcidsk_ds.GetMetadataItem('GHI') == 'JKL2'
+    assert gdaltest.pcidsk_ds.GetMetadataItem('I_DONT_EXIST') is None
+    assert gdaltest.pcidsk_ds.GetMetadataItem('I_DONT_EXIST') is None
 
     mdalt = gdaltest.pcidsk_ds.GetMetadata('AltDomain')
     if mdalt['XYZ'] != '123':
@@ -154,6 +158,13 @@ def test_pcidsk_6():
     if mddef['GHI'] != 'JKL' or mddef['XXX'] != 'YYY':
         print(mddef)
         gdaltest.post_reason('channel default domain metadata broken. ')
+
+    assert band.GetMetadataItem('GHI') == 'JKL'
+    assert band.GetMetadataItem('GHI') == 'JKL'
+    band.SetMetadataItem('GHI', 'JKL2')
+    assert band.GetMetadataItem('GHI') == 'JKL2'
+    assert band.GetMetadataItem('I_DONT_EXIST') is None
+    assert band.GetMetadataItem('I_DONT_EXIST') is None
 
     mdalt = band.GetMetadata('AltDomain')
     if mdalt['XYZ'] != '123':
