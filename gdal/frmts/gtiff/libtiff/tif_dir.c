@@ -394,7 +394,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 			if (tif->tif_mode != O_RDONLY)
 				goto badvalue32;
 			TIFFWarningExt(tif->tif_clientdata, tif->tif_name,
-				"Nonstandard tile width %d, convert file", v32);
+				"Nonstandard tile width %u, convert file", v32);
 		}
 		td->td_tilewidth = v32;
 		tif->tif_flags |= TIFF_ISTILED;
@@ -405,7 +405,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 			if (tif->tif_mode != O_RDONLY)
 				goto badvalue32;
 			TIFFWarningExt(tif->tif_clientdata, tif->tif_name,
-			    "Nonstandard tile length %d, convert file", v32);
+			    "Nonstandard tile length %u, convert file", v32);
 		}
 		td->td_tilelength = v32;
 		tif->tif_flags |= TIFF_ISTILED;
