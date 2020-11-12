@@ -5,7 +5,7 @@
  * Author:   Björn Harrtell <bjorn at wololo dot org>
  *
  ******************************************************************************
- * Copyright (c) 2018-2019, Björn Harrtell <bjorn at wololo dot org>
+ * Copyright (c) 2018-2020, Björn Harrtell <bjorn at wololo dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -158,8 +158,9 @@ void RegisterOGRFlatGeobuf()
 
 
 OGRFlatGeobufDataset::OGRFlatGeobufDataset(const char *pszName, bool bIsDir,
-                                           bool bCreate):
+                                           bool bCreate, bool bUpdate):
     m_bCreate(bCreate),
+    m_bUpdate(bUpdate),
     m_bIsDir(bIsDir)
 {
     SetDescription(pszName);
@@ -179,18 +180,20 @@ OGRFlatGeobufDataset::~OGRFlatGeobufDataset()
 
 GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo* poOpenInfo)
 {
-    if( OGRFlatGeobufDriverIdentify(poOpenInfo) == FALSE ||
-        poOpenInfo->eAccess == GA_Update )
-    {
+    if (OGRFlatGeobufDriverIdentify(poOpenInfo) == FALSE)
         return nullptr;
-    }
 
     const auto bVerifyBuffers = CPLFetchBool( poOpenInfo->papszOpenOptions, "VERIFY_BUFFERS", true );
 
+    auto isDir = CPL_TO_BOOL(poOpenInfo->bIsDirectory);
+    auto bUpdate = poOpenInfo->eAccess == GA_Update;
+
+    if (isDir && bUpdate) {
+        return nullptr;
+    }
+
     auto poDS = std::unique_ptr<OGRFlatGeobufDataset>(
-        new OGRFlatGeobufDataset(poOpenInfo->pszFilename,
-                                 CPL_TO_BOOL(poOpenInfo->bIsDirectory),
-                                 false));
+        new OGRFlatGeobufDataset(poOpenInfo->pszFilename, isDir, false, bUpdate));
 
     if( poOpenInfo->bIsDirectory )
     {
@@ -245,73 +248,20 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo* poOpenInfo)
 
 bool OGRFlatGeobufDataset::OpenFile(const char* pszFilename, VSILFILE* fp, bool bVerifyBuffers)
 {
-    uint64_t offset = sizeof(magicbytes);
-    CPLDebug("FlatGeobuf", "Start at offset: %lu", static_cast<long unsigned int>(offset));
-    if (VSIFSeekL(fp, offset, SEEK_SET) == -1) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Unable to get seek in file");
-        return false;
-    }
-    uint32_t headerSize;
-    if (VSIFReadL(&headerSize, 4, 1, fp) != 1) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to read header size");
-        return false;
-    }
-    CPL_LSBPTR32(&headerSize);
-    CPLDebug("FlatGeobuf", "headerSize: %d", headerSize);
-    if (headerSize > header_max_buffer_size) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Header size too large (> 10 MB)");
-        return false;
-    }
-    std::unique_ptr<GByte, CPLFreeReleaser> buf(static_cast<GByte*>(VSIMalloc(headerSize)));
-    if (buf == nullptr) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to allocate memory for header");
-        return false;
-    }
-    if (VSIFReadL(buf.get(), 1, headerSize, fp) != headerSize) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to read header");
-        return false;
-    }
-    if (bVerifyBuffers) {
-        Verifier v(buf.get(), headerSize);
-        const auto ok = VerifyHeaderBuffer(v);
-        if (!ok) {
-            CPLError(CE_Failure, CPLE_AppDefined, "Header failed consistency verification");
-            return false;
-        }
-    }
-    const auto header = GetHeader(buf.get());
-    offset += 4 + headerSize;
-    CPLDebug("FlatGeobuf", "Add header size + length prefix to offset (%d)", 4 + headerSize);
-
-    const auto featuresCount = header->features_count();
-
-    if (featuresCount > std::min(
-            static_cast<uint64_t>(std::numeric_limits<size_t>::max() / 8),
-            static_cast<uint64_t>(100) * 1000 * 1000 * 1000)) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Too many features");
-        return false;
-    }
-
-    const auto index_node_size = header->index_node_size();
-    if (index_node_size > 0) {
-        try {
-            const auto treeSize = PackedRTree::size(featuresCount);
-            CPLDebug("FlatGeobuf", "Tree start at offset (%lu)", static_cast<long unsigned int>(offset));
-            offset += treeSize;
-            CPLDebug("FlatGeobuf", "Add tree size to offset (%lu)", static_cast<long unsigned int>(treeSize));
-        } catch (const std::exception& e) {
-            CPLError(CE_Failure, CPLE_AppDefined, "Failed to calculate tree size: %s", e.what());
-            return false;
-        }
-    }
-
-    CPLDebug("FlatGeobuf", "Features start at offset (%lu)", static_cast<long unsigned int>(offset));
-
+    CPLDebugOnly("FlatGeobuf", "Opening OGRFlatGeobufLayer");
     auto poLayer = std::unique_ptr<OGRFlatGeobufLayer>(
-        new OGRFlatGeobufLayer(header, buf.release(), pszFilename, fp, offset));
-    poLayer->VerifyBuffers(bVerifyBuffers);
+        OGRFlatGeobufLayer::Open(pszFilename, fp, bVerifyBuffers, m_bUpdate));
+    if( !poLayer )
+        return false;
 
-    m_apoLayers.push_back(std::move(poLayer));
+    if (m_bUpdate) {
+        CPLDebugOnly("FlatGeobuf", "Creating OGRFlatGeobufEditableLayer");
+        auto poEditableLayer = std::unique_ptr<OGRFlatGeobufEditableLayer>(
+            new OGRFlatGeobufEditableLayer(poLayer.release(), papszOpenOptions));
+        m_apoLayers.push_back(std::move(poEditableLayer));
+    } else {
+        m_apoLayers.push_back(std::move(poLayer));
+    }
 
     return true;
 }
@@ -348,16 +298,16 @@ GDALDataset *OGRFlatGeobufDataset::Create( const char *pszName,
         bIsDir = true;
     }
 
-    return new OGRFlatGeobufDataset(pszName, bIsDir, true);
+    return new OGRFlatGeobufDataset(pszName, bIsDir, true, false);
 }
 
-OGRLayer* OGRFlatGeobufDataset::GetLayer( int iLayer ) {
+OGRLayer *OGRFlatGeobufDataset::GetLayer( int iLayer ) {
     if( iLayer < 0 || iLayer >= GetLayerCount() )
         return nullptr;
     return m_apoLayers[iLayer].get();
 }
 
-int OGRFlatGeobufDataset::TestCapability( const char * pszCap )
+int OGRFlatGeobufDataset::TestCapability(const char *pszCap)
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return m_bCreate && (m_bIsDir || m_apoLayers.empty());
@@ -365,6 +315,8 @@ int OGRFlatGeobufDataset::TestCapability( const char * pszCap )
         return true;
     else if (EQUAL(pszCap, ODsCMeasuredGeometries))
         return true;
+    else if( EQUAL(pszCap, ODsCRandomLayerWrite) )
+        return m_bUpdate;
     else
         return false;
 }
@@ -432,41 +384,8 @@ OGRLayer* OGRFlatGeobufDataset::ICreateLayer( const char *pszLayerName,
 
     bool bCreateSpatialIndexAtClose = CPLFetchBool( papszOptions, "SPATIAL_INDEX", true );
 
-    VSILFILE *poFpWrite;
-    std::string osTempFile;
-    int savedErrno;
-    if (bCreateSpatialIndexAtClose) {
-        CPLDebug("FlatGeobuf", "Spatial index requested will write to temp file and do second pass on close");
-        const CPLString osDirname(CPLGetPath(osFilename.c_str()));
-        const CPLString osBasename(CPLGetBasename(osFilename.c_str()));
-        const char* pszTempDir = CSLFetchNameValue(papszOptions, "TEMPORARY_DIR");
-        osTempFile = pszTempDir ?
-            CPLFormFilename(pszTempDir, osBasename, nullptr) :
-            (STARTS_WITH(osFilename, "/vsi") &&
-            !STARTS_WITH(osFilename, "/vsimem/")) ?
-            CPLGenerateTempFilename(osBasename) :
-            CPLFormFilename(osDirname, osBasename, nullptr);
-        osTempFile += "_temp.fgb";
-        poFpWrite = VSIFOpenL(osTempFile.c_str(), "w+b");
-        savedErrno = errno;
-        // Unlink it now to avoid stale temporary file if killing the process
-        // (only works on Unix)
-        VSIUnlink(osTempFile.c_str());
-    } else {
-        CPLDebug("FlatGeobuf", "No spatial index will write directly to output");
-        poFpWrite = VSIFOpenL(osFilename.c_str(), "wb");
-        savedErrno = errno;
-    }
-    if (poFpWrite == nullptr) {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                    "Failed to create %s:\n%s",
-                    osFilename.c_str(), VSIStrerror(savedErrno));
-        return nullptr;
-    }
-
-    // Create a layer.
     auto poLayer = std::unique_ptr<OGRFlatGeobufLayer>(
-        new OGRFlatGeobufLayer(pszLayerName, osFilename, poSpatialRef, eGType, poFpWrite, osTempFile, bCreateSpatialIndexAtClose));
+        OGRFlatGeobufLayer::Create(pszLayerName, osFilename, poSpatialRef, eGType, bCreateSpatialIndexAtClose, papszOptions));
 
     m_apoLayers.push_back(std::move(poLayer));
 
@@ -477,12 +396,22 @@ OGRLayer* OGRFlatGeobufDataset::ICreateLayer( const char *pszLayerName,
 //                            GetFileList()                             */
 /************************************************************************/
 
+template<typename Base, typename T>
+inline bool instanceof(const T*) {
+   return std::is_base_of<Base, T>::value;
+}
+
 char** OGRFlatGeobufDataset::GetFileList()
 {
     CPLStringList oFileList;
     for( const auto& poLayer: m_apoLayers )
     {
-        oFileList.AddString( poLayer->GetFilename().c_str() );
+        std::string filename;
+        if (instanceof<OGRFlatGeobufEditableLayer>(poLayer.get()))
+            filename = dynamic_cast<OGRFlatGeobufEditableLayer *>(poLayer.get())->GetFilename();
+        else
+            filename = dynamic_cast<OGRFlatGeobufLayer *>(poLayer.get())->GetFilename();
+        oFileList.AddString( filename.c_str() );
     }
     return oFileList.StealList();
 }
