@@ -2265,7 +2265,7 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
     OGRSpatialReference *poSRS = nullptr;
 
     osCommand.Printf(
-             "SELECT srtext FROM spatial_ref_sys "
+             "SELECT srtext, auth_name, auth_srid FROM spatial_ref_sys "
              "WHERE srid = %d",
              nId );
     PGresult* hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
@@ -2275,10 +2275,20 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
         && PQntuples(hResult) == 1 )
     {
         const char *pszWKT = PQgetvalue(hResult,0,0);
+        const char *pszAuthName = PQgetvalue(hResult,0,1);
+        const char *pszAuthSRID = PQgetvalue(hResult,0,2);
         poSRS = new OGRSpatialReference();
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-        if( poSRS->importFromWkt( pszWKT ) != OGRERR_NONE )
+        // Try to import first from EPSG code, and then from WKT
+        if( pszAuthName && pszAuthSRID &&
+            EQUAL(pszAuthName, "EPSG") &&
+            atoi(pszAuthSRID) == nId &&
+            poSRS->importFromEPSG(nId) == OGRERR_NONE )
+        {
+            // do nothing
+        }
+        else if( poSRS->importFromWkt( pszWKT ) != OGRERR_NONE )
         {
             delete poSRS;
             poSRS = nullptr;
@@ -2291,6 +2301,9 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
     }
 
     OGRPGClearResult( hResult );
+
+    if( poSRS )
+        poSRS->StripTOWGS84IfKnownDatumAndAllowed();
 
 /* -------------------------------------------------------------------- */
 /*      Add to the cache.                                               */
