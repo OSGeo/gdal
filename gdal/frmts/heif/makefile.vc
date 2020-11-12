@@ -1,0 +1,13 @@
+OBJ	=	heifdataset.obj
+
+GDAL_ROOT	=	..\..
+
+EXTRAFLAGS = 	$(HEIF_INC)
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj
