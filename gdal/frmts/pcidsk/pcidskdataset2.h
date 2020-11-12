@@ -57,7 +57,8 @@ class PCIDSK2Dataset final: public GDALPamDataset
     friend class PCIDSK2Band;
 
     mutable OGRSpatialReference* m_poSRS = nullptr;
-    CPLString   osLastMDValue;
+
+    std::unordered_map<std::string, std::string> m_oCacheMetadataItem{};
     char      **papszLastMDListValue;
 
     PCIDSK::PCIDSKFile  *poFile;
@@ -122,7 +123,7 @@ class PCIDSK2Band final: public GDALPamRasterBand
     void        RefreshOverviewList();
     std::vector<PCIDSK2Band*> apoOverviews;
 
-    CPLString   osLastMDValue;
+    std::unordered_map<std::string, std::string> m_oCacheMetadataItem{};
     char      **papszLastMDListValue;
 
     bool        CheckForColorTable();

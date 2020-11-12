@@ -1626,4 +1626,60 @@ namespace tut
         }
     }
 
+    // Test that PCIDSK GetMetadataItem() return is stable
+    template<> template<> void object::test<21>()
+    {
+        GDALDatasetUniquePtr poDS(
+            GDALDriver::FromHandle(
+                GDALGetDriverByName("PCIDSK"))->Create("/vsimem/tmp.pix", 1, 1, 1, GDT_Byte, nullptr));
+        ensure( poDS != nullptr );
+        poDS->SetMetadataItem("FOO", "BAR");
+        poDS->SetMetadataItem("BAR", "BAZ");
+        poDS->GetRasterBand(1)->SetMetadataItem("FOO", "BAR");
+        poDS->GetRasterBand(1)->SetMetadataItem("BAR", "BAZ");
+
+        {
+            const char* psz1 = poDS->GetMetadataItem("FOO");
+            const char* psz2 = poDS->GetMetadataItem("BAR");
+            const char* pszNull = poDS->GetMetadataItem("I_DONT_EXIST");
+            const char* psz3 = poDS->GetMetadataItem("FOO");
+            const char* pszNull2 = poDS->GetMetadataItem("I_DONT_EXIST");
+            const char* psz4 = poDS->GetMetadataItem("BAR");
+            ensure( psz1 != nullptr );
+            ensure( psz2 != nullptr );
+            ensure( psz3 != nullptr );
+            ensure( psz4 != nullptr );
+            ensure( pszNull == nullptr );
+            ensure( pszNull2 == nullptr );
+            ensure_equals( psz1, psz3 );
+            ensure( psz1 != psz2 );
+            ensure_equals( psz2, psz4 );
+            ensure_equals( std::string(psz1), "BAR" );
+            ensure_equals( std::string(psz2), "BAZ" );
+        }
+
+        {
+            auto poBand = poDS->GetRasterBand(1);
+            const char* psz1 = poBand->GetMetadataItem("FOO");
+            const char* psz2 = poBand->GetMetadataItem("BAR");
+            const char* pszNull = poBand->GetMetadataItem("I_DONT_EXIST");
+            const char* psz3 = poBand->GetMetadataItem("FOO");
+            const char* pszNull2 = poBand->GetMetadataItem("I_DONT_EXIST");
+            const char* psz4 = poBand->GetMetadataItem("BAR");
+            ensure( psz1 != nullptr );
+            ensure( psz2 != nullptr );
+            ensure( psz3 != nullptr );
+            ensure( psz4 != nullptr );
+            ensure( pszNull == nullptr );
+            ensure( pszNull2 == nullptr );
+            ensure_equals( psz1, psz3 );
+            ensure( psz1 != psz2 );
+            ensure_equals( psz2, psz4 );
+            ensure_equals( std::string(psz1), "BAR" );
+            ensure_equals( std::string(psz2), "BAZ" );
+        }
+
+        poDS.reset();
+        VSIUnlink("/vsimem/tmp.pix");
+    }
 } // namespace tut
