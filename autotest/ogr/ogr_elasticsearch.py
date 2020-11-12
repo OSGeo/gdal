@@ -838,6 +838,7 @@ def test_ogr_elasticsearch_4():
     lyr.SetAttributeFilter("{ 'FOO' : 'BAR' }")
     lyr.ResetReading()
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ 'FOO' : 'BAR' }""", """{
+    "_scroll_id": "invalid",
     "hits":
     {
         "hits":[
@@ -858,6 +859,15 @@ def test_ogr_elasticsearch_4():
 }""")
     f = lyr.GetNextFeature()
     assert f['int_field'] == 5
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?pretty&POSTFIELDS={ "size": 0,  'FOO' : 'BAR' }""", """{
+    "hits":
+    {
+        "total": 1234
+    }
+}""")
+    assert lyr.GetFeatureCount() == 1234
+
     lyr.SetAttributeFilter(None)
 
     sql_lyr = ds.ExecuteSQL("{ 'FOO' : 'BAR' }", dialect='ES')

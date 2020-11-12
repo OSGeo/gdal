@@ -2636,6 +2636,7 @@ GIntBig OGRElasticLayer::GetFeatureCount( int bForce )
         osURL += CPLSPrintf("/%s", m_osIndexName.c_str());
         if (m_poDS->m_nMajorVersion < 7)
             osURL += CPLSPrintf("/%s", m_osMappingName.c_str());
+        osURL += "/_search?pretty";
         osFilter = ("{ \"size\": 0, " + m_osJSONFilter.substr(1));
     }
     else
