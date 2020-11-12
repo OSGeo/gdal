@@ -3261,21 +3261,33 @@ static bool IsPolarToWGS84( OGRCoordinateTransformation* poCT,
         // Surprisingly, pole south projects correctly back &
         // forth for antarctic polar stereographic.  Therefore, check that
         // the projected value is not too big.
-        fabs(x) < 1e10 && fabs(y) < 1e10 &&
-        poCT->Transform(1, &x, &y) &&
-        fabs(y - 90.0) < 1e-10 )
+        fabs(x) < 1e10 && fabs(y) < 1e10 )
     {
-        bIsNorthPolar = true;
+        double x_tab[] = {x, x - 1e5, x + 1e5};
+        double y_tab[] = {y, y - 1e5, y + 1e5};
+        if( poCT->Transform(3, x_tab, y_tab) &&
+            fabs(y_tab[0] - (90.0)) < 1e-10 &&
+            fabs(x_tab[2] - x_tab[1]) > 170 &&
+            fabs(y_tab[2] - y_tab[1]) < 1e-10 )
+        {
+            bIsNorthPolar = true;
+        }
     }
 
     x = 0.0;
     y = -90.0;
     if( poRevCT->Transform( 1, &x, &y ) &&
-        fabs(x) < 1e10 && fabs(y) < 1e10 &&
-        poCT->Transform(1, &x, &y) &&
-        fabs(y - (-90.0)) < 1e-10 )
+        fabs(x) < 1e10 && fabs(y) < 1e10 )
     {
-        bIsSouthPolar = true;
+        double x_tab[] = {x, x - 1e5, x + 1e5};
+        double y_tab[] = {y, y - 1e5, y + 1e5};
+        if( poCT->Transform(3, x_tab, y_tab) &&
+            fabs(y_tab[0] - (-90.0)) < 1e-10 &&
+            fabs(x_tab[2] - x_tab[1]) > 170 &&
+            fabs(y_tab[2] - y_tab[1]) < 1e-10 )
+        {
+            bIsSouthPolar = true;
+        }
     }
 
     poCT->SetEmitErrors(bBackupEmitErrors);
