@@ -511,7 +511,9 @@ private:
     int            GuessJPEGQuality( bool& bOutHasQuantizationTable,
                                      bool& bOutHasHuffmanTable );
 
-    void           SetJPEGQualityAndTablesModeFromFile();
+    void           SetJPEGQualityAndTablesModeFromFile(int nQuality,
+                                                       bool bHasQuantizationTable,
+                                                       bool bHasHuffmanTable);
 
     int            DirectIO( GDALRWFlag eRWFlag,
                              int nXOff, int nYOff, int nXSize, int nYSize,
@@ -14591,9 +14593,31 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         }
     }
 
-    if( m_nCompression == COMPRESSION_JPEG && eAccess == GA_Update )
+    if( m_nCompression == COMPRESSION_JPEG )
     {
-        SetJPEGQualityAndTablesModeFromFile();
+        bool bHasQuantizationTable = false;
+        bool bHasHuffmanTable = false;
+        int nQuality = GuessJPEGQuality( bHasQuantizationTable,
+                                         bHasHuffmanTable );
+        if( nQuality > 0 )
+        {
+            m_oGTiffMDMD.SetMetadataItem( "JPEG_QUALITY",
+                                          CPLSPrintf("%d", nQuality),
+                                          "IMAGE_STRUCTURE" );
+            int nJpegTablesMode = JPEGTABLESMODE_QUANT;
+            if( bHasHuffmanTable )
+            {
+                nJpegTablesMode |= JPEGTABLESMODE_HUFF;
+            }
+            m_oGTiffMDMD.SetMetadataItem( "JPEGTABLESMODE",
+                                          CPLSPrintf("%d", nJpegTablesMode),
+                                          "IMAGE_STRUCTURE" );
+        }
+        if( eAccess == GA_Update )
+        {
+            SetJPEGQualityAndTablesModeFromFile(nQuality, bHasQuantizationTable,
+                                                bHasHuffmanTable);
+        }
     }
 
     CPLAssert(m_bReadGeoTransform == bReadGeoTransform);
@@ -16585,12 +16609,10 @@ int GTiffDataset::GuessJPEGQuality( bool& bOutHasQuantizationTable,
 /*               SetJPEGQualityAndTablesModeFromFile()                  */
 /************************************************************************/
 
-void GTiffDataset::SetJPEGQualityAndTablesModeFromFile()
+void GTiffDataset::SetJPEGQualityAndTablesModeFromFile(int nQuality,
+                                                       bool bHasQuantizationTable,
+                                                       bool bHasHuffmanTable)
 {
-    bool bHasQuantizationTable = false;
-    bool bHasHuffmanTable = false;
-    int nQuality = GuessJPEGQuality( bHasQuantizationTable,
-                                     bHasHuffmanTable );
     if( nQuality > 0 )
     {
         CPLDebug("GTiff", "Guessed JPEG quality to be %d", nQuality);
