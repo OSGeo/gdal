@@ -102,6 +102,18 @@ VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataType eType,
 VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataset *poDSIn, int nBandIn,
                                             GDALDataType eType,
                                             int nXSize, int nYSize ) :
+    VRTSourcedRasterBand(poDSIn, nBandIn, eType, nXSize, nYSize, 0, 0)
+{
+}
+
+/************************************************************************/
+/*                        VRTSourcedRasterBand()                        */
+/************************************************************************/
+
+VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataset *poDSIn, int nBandIn,
+                                            GDALDataType eType,
+                                            int nXSize, int nYSize,
+                                            int nBlockXSizeIn, int nBlockYSizeIn ) :
     m_nRecursionCounter(0),
     m_papszSourceList(nullptr),
     nSources(0),
@@ -114,6 +126,10 @@ VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataset *poDSIn, int nBandIn,
     nBand = nBandIn;
 
     eDataType = eType;
+    if( nBlockXSizeIn > 0 )
+        nBlockXSize = nBlockXSizeIn;
+    if( nBlockYSizeIn > 0 )
+        nBlockYSize = nBlockYSizeIn;
 }
 
 /************************************************************************/

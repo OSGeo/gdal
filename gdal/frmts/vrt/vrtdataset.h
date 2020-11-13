@@ -596,6 +596,10 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL: public VRTRasterBand
                    VRTSourcedRasterBand( GDALDataset *poDS, int nBand,
                                          GDALDataType eType,
                                          int nXSize, int nYSize );
+                   VRTSourcedRasterBand( GDALDataset *poDS, int nBand,
+                                         GDALDataType eType,
+                                         int nXSize, int nYSize,
+                                         int nBlockXSizeIn, int nBlockYSizeIn );
     virtual        ~VRTSourcedRasterBand();
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
