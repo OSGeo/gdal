@@ -2153,7 +2153,7 @@ static double GetOffsetOrScale(const GDALMDArray* poArray,
     {
         if( pbHasVal )
             *pbHasVal = true;
-        if( *peStorageType )
+        if( peStorageType )
             *peStorageType = poAttr->GetDataType().GetNumericDataType();
         return poAttr->ReadAsDouble();
     }
