@@ -3223,6 +3223,8 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
  * VALIDATE_OPEN_OPTIONS can be set to NO to avoid such warnings. Alternatively,
  * since GDAL 2.1, an option name can be preceded by the @ character to indicate
  * that it may not cause a warning if the driver doesn't declare this option.
+ * Starting with GDAL 3.3, OVERVIEW_LEVEL=NONE is supported to indicate that
+ * no overviews should be exposed.
  *
  * @param papszSiblingFiles NULL, or a NULL terminated list of strings that are
  * filenames that are auxiliary to the main filename. If NULL is passed, a
@@ -3486,9 +3488,9 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
             {
                 CPLString osVal(
                     CSLFetchNameValue(papszOpenOptions, "OVERVIEW_LEVEL"));
-                const int nOvrLevel = atoi(osVal);
+                const int nOvrLevel = EQUAL(osVal, "NONE") ? -1 : atoi(osVal);
                 const bool bThisLevelOnly =
-                    osVal.ifind("only") != std::string::npos;
+                    nOvrLevel == -1 || osVal.ifind("only") != std::string::npos;
                 GDALDataset *poOvrDS = GDALCreateOverviewDataset(
                     poDS, nOvrLevel, bThisLevelOnly);
                 poDS->ReleaseRef();

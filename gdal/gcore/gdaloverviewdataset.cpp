@@ -134,10 +134,23 @@ class GDALOverviewBand final: public GDALProxyRasterBand
 };
 
 /************************************************************************/
+/*                           GetOverviewEx()                            */
+/************************************************************************/
+
+static GDALRasterBand* GetOverviewEx(GDALRasterBand* poBand, int nLevel)
+{
+    if( nLevel == -1 )
+        return poBand;
+    return poBand->GetOverview(nLevel);
+}
+
+/************************************************************************/
 /*                       GDALCreateOverviewDataset()                    */
 /************************************************************************/
 
 // Takes a reference on poMainDS in case of success.
+// nOvrLevel=-1 means the full resolution dataset (only useful if
+// bThisLevelOnly = false to expose a dataset without its overviews)
 GDALDataset* GDALCreateOverviewDataset( GDALDataset* poMainDS, int nOvrLevel,
                                         int bThisLevelOnly )
 {
@@ -146,16 +159,16 @@ GDALDataset* GDALCreateOverviewDataset( GDALDataset* poMainDS, int nOvrLevel,
     if( nBands == 0 )
         return nullptr;
 
+    auto poFirstBand = GetOverviewEx(poMainDS->GetRasterBand(1), nOvrLevel);
     for( int i = 1; i<= nBands; ++i )
     {
-        if( poMainDS->GetRasterBand(i)->GetOverview(nOvrLevel) == nullptr )
+        auto poBand = GetOverviewEx(poMainDS->GetRasterBand(i), nOvrLevel);
+        if( poBand == nullptr )
         {
             return nullptr;
         }
-        if( poMainDS->GetRasterBand(i)->GetOverview(nOvrLevel)->GetXSize() !=
-            poMainDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetXSize() ||
-            poMainDS->GetRasterBand(i)->GetOverview(nOvrLevel)->GetYSize() !=
-            poMainDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetYSize() )
+        if( poBand->GetXSize() != poFirstBand->GetXSize() ||
+            poBand->GetYSize() != poFirstBand->GetYSize() )
         {
             return nullptr;
         }
@@ -177,12 +190,11 @@ GDALOverviewDataset::GDALOverviewDataset( GDALDataset* poMainDSIn,
 {
     poMainDSIn->Reference();
     eAccess = poMainDS->GetAccess();
-    nRasterXSize =
-        poMainDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetXSize();
-    nRasterYSize =
-        poMainDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetYSize();
-    poOvrDS = poMainDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetDataset();
-    if( poOvrDS != nullptr && poOvrDS == poMainDS )
+    auto poFirstBand = GetOverviewEx(poMainDS->GetRasterBand(1), nOvrLevel);
+    nRasterXSize = poFirstBand->GetXSize();
+    nRasterYSize = poFirstBand->GetYSize();
+    poOvrDS = poFirstBand->GetDataset();
+    if( nOvrLevel != -1 && poOvrDS != nullptr && poOvrDS == poMainDS )
     {
         CPLDebug( "GDAL",
                   "Dataset of overview is the same as the main band. "
@@ -195,9 +207,9 @@ GDALOverviewDataset::GDALOverviewDataset( GDALDataset* poMainDSIn,
         SetBand(i+1, new GDALOverviewBand(this, i+1));
     }
 
-    if( poMainDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetMaskFlags() == GMF_PER_DATASET )
+    if( poFirstBand->GetMaskFlags() == GMF_PER_DATASET )
     {
-        auto poOvrMaskBand = poMainDS->GetRasterBand(1)->GetOverview(nOvrLevel)->GetMaskBand();
+        auto poOvrMaskBand = poFirstBand->GetMaskBand();
         if( poOvrMaskBand  && poOvrMaskBand->GetXSize() == nRasterXSize &&
             poOvrMaskBand->GetYSize() == nRasterYSize )
         {
@@ -224,7 +236,8 @@ GDALOverviewDataset::GDALOverviewDataset( GDALDataset* poMainDSIn,
     papszOpenOptions = CSLDuplicate(poMainDS->GetOpenOptions());
     // Add OVERVIEW_LEVEL if not called from GDALOpenEx(), but directly.
     papszOpenOptions = CSLSetNameValue(papszOpenOptions, "OVERVIEW_LEVEL",
-                                       CPLSPrintf("%d", nOvrLevel));
+        nOvrLevel == -1 ? "NONE" :
+        CPLSPrintf("%d%s", nOvrLevel, bThisLevelOnly ? " only" :""));
 }
 
 /************************************************************************/
@@ -309,7 +322,7 @@ CPLErr GDALOverviewDataset::IRasterIO( GDALRWFlag eRWFlag,
 {
     // In case the overview bands are really linked to a dataset, then issue
     // the request to that dataset.
-    if( poOvrDS != nullptr )
+    if( nOvrLevel != -1 && poOvrDS != nullptr )
     {
         return poOvrDS->RasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
@@ -558,13 +571,13 @@ GDALOverviewBand::GDALOverviewBand( GDALOverviewDataset* poDSIn, int nBandIn )
     nRasterYSize = poDSIn->nRasterYSize;
     if( nBandIn == 0 )
     {
-        poUnderlyingBand = poDSIn->poMainDS->GetRasterBand(1)->
-                            GetOverview(poDSIn->nOvrLevel)->GetMaskBand();
+        poUnderlyingBand = 
+            GetOverviewEx(poDSIn->poMainDS->GetRasterBand(1), poDSIn->nOvrLevel)->GetMaskBand();
     }
     else
     {
-        poUnderlyingBand = poDSIn->poMainDS->GetRasterBand(nBandIn)->
-                            GetOverview(poDSIn->nOvrLevel);
+        poUnderlyingBand =
+            GetOverviewEx(poDSIn->poMainDS->GetRasterBand(nBandIn), poDSIn->nOvrLevel);
     }
     eDataType = poUnderlyingBand->GetRasterDataType();
     poUnderlyingBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
