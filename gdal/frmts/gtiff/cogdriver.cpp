@@ -151,11 +151,70 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
 
     CPLStringList aosTO;
     aosTO.SetNameValue( "DST_SRS", osTargetSRS );
-    void* hTransformArg =
-            GDALCreateGenImgProjTransformer2( poSrcDS, nullptr, aosTO.List() );
+    void* hTransformArg = nullptr;
+
+    OGRSpatialReference oTargetSRS;
+    oTargetSRS.SetFromUserInput(osTargetSRS);
+    const char* pszAuthCode = oTargetSRS.GetAuthorityCode(nullptr);
+    const int nEPSGCode = pszAuthCode ? atoi(pszAuthCode) : 0;
+
+    // Hack to compensate for GDALSuggestedWarpOutput2() failure (or not
+    // ideal suggestion with PROJ 8) when reprojecting latitude = +/- 90 to
+    // EPSG:3857.
+    double adfSrcGeoTransform[6];
+    std::unique_ptr<GDALDataset> poTmpDS;
+    if( nEPSGCode == 3857 &&
+        poSrcDS->GetGeoTransform(adfSrcGeoTransform) == CE_None &&
+        adfSrcGeoTransform[2] == 0 &&
+        adfSrcGeoTransform[4] == 0 &&
+        adfSrcGeoTransform[5] < 0 )
+    {
+        const auto poSrcSRS = poSrcDS->GetSpatialRef();
+        if( poSrcSRS && poSrcSRS->IsGeographic() )
+        {
+            double maxLat = adfSrcGeoTransform[3];
+            double minLat = adfSrcGeoTransform[3] +
+                                    poSrcDS->GetRasterYSize() *
+                                    adfSrcGeoTransform[5];
+            // Corresponds to the latitude of below MAX_GM
+            constexpr double MAX_LAT = 85.0511287798066;
+            bool bModified = false;
+            if( maxLat > MAX_LAT )
+            {
+                maxLat = MAX_LAT;
+                bModified = true;
+            }
+            if( minLat < -MAX_LAT )
+            {
+                minLat = -MAX_LAT;
+                bModified = true;
+            }
+            if( bModified )
+            {
+                CPLStringList aosOptions;
+                aosOptions.AddString("-of");
+                aosOptions.AddString("VRT");
+                aosOptions.AddString("-projwin");
+                aosOptions.AddString(CPLSPrintf("%.18g", adfSrcGeoTransform[0]));
+                aosOptions.AddString(CPLSPrintf("%.18g", maxLat));
+                aosOptions.AddString(CPLSPrintf("%.18g", adfSrcGeoTransform[0] + poSrcDS->GetRasterXSize() * adfSrcGeoTransform[1]));
+                aosOptions.AddString(CPLSPrintf("%.18g", minLat));
+                auto psOptions = GDALTranslateOptionsNew(aosOptions.List(), nullptr);
+                poTmpDS.reset(GDALDataset::FromHandle(
+                    GDALTranslate("", GDALDataset::ToHandle(poSrcDS), psOptions, nullptr)));
+                GDALTranslateOptionsFree(psOptions);
+                if( poTmpDS )
+                {
+                    hTransformArg = GDALCreateGenImgProjTransformer2(
+                        GDALDataset::FromHandle(poTmpDS.get()), nullptr, aosTO.List() );
+                }
+            }
+        }
+    }
     if( hTransformArg == nullptr )
     {
-        return false;
+        hTransformArg =
+            GDALCreateGenImgProjTransformer2( poSrcDS, nullptr, aosTO.List() );
     }
 
     GDALTransformerInfo* psInfo = static_cast<GDALTransformerInfo*>(hTransformArg);
@@ -174,61 +233,7 @@ bool COGGetWarpingCharacteristics(GDALDataset* poSrcDS,
 
     GDALDestroyGenImgProjTransformer( hTransformArg );
     hTransformArg = nullptr;
-
-
-    // Hack to compensate for GDALSuggestedWarpOutput2() failure when
-    // reprojection latitude = +/- 90 to EPSG:3857.
-    double adfSrcGeoTransform[6];
-    OGRSpatialReference oTargetSRS;
-    oTargetSRS.SetFromUserInput(osTargetSRS);
-    const char* pszAuthCode = oTargetSRS.GetAuthorityCode(nullptr);
-    const int nEPSGCode = pszAuthCode ? atoi(pszAuthCode) : 0;
-    if( nEPSGCode == 3857 && poSrcDS->GetGeoTransform(adfSrcGeoTransform) == CE_None )
-    {
-        const char* pszSrcWKT = poSrcDS->GetProjectionRef();
-        if( pszSrcWKT != nullptr && pszSrcWKT[0] != '\0' )
-        {
-            OGRSpatialReference oSrcSRS;
-            if( oSrcSRS.SetFromUserInput( pszSrcWKT ) == OGRERR_NONE &&
-                oSrcSRS.IsGeographic() )
-            {
-                const double minLat =
-                    std::min(adfSrcGeoTransform[3],
-                             adfSrcGeoTransform[3] +
-                             poSrcDS->GetRasterYSize() *
-                             adfSrcGeoTransform[5]);
-                const double maxLat =
-                    std::max(adfSrcGeoTransform[3],
-                             adfSrcGeoTransform[3] +
-                             poSrcDS->GetRasterYSize() *
-                             adfSrcGeoTransform[5]);
-                double maxNorthing = adfGeoTransform[3];
-                double minNorthing =
-                    adfGeoTransform[3] + adfGeoTransform[5] * nYSize;
-                bool bChanged = false;
-                const double SPHERICAL_RADIUS = 6378137.0;
-                const double MAX_GM =
-                    SPHERICAL_RADIUS * M_PI;  // 20037508.342789244
-                if( maxLat > 89.9999999 )
-                {
-                    bChanged = true;
-                    maxNorthing = MAX_GM;
-                }
-                if( minLat <= -89.9999999 )
-                {
-                    bChanged = true;
-                    minNorthing = -MAX_GM;
-                }
-                if( bChanged )
-                {
-                    adfGeoTransform[3] = maxNorthing;
-                    nYSize = int((maxNorthing - minNorthing) / (-adfGeoTransform[5]) + 0.5);
-                    adfExtent[1] = maxNorthing + nYSize * adfGeoTransform[5];
-                    adfExtent[3] = maxNorthing;
-                }
-            }
-        }
-    }
+    poTmpDS.reset();
 
     dfMinX = adfExtent[0];
     dfMinY = adfExtent[1];

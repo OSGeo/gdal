@@ -599,7 +599,11 @@ def test_gdalwarp_28():
 # Test warping a full EPSG:4326 extent to EPSG:3785 (#2305)
 
 
-def test_gdalwarp_29():
+def DISABLED_test_gdalwarp_29():
+
+    # This test has been disabled since PROJ 8 will reproject a coordinates at
+    # lat=90 to a finite value, due to 90deg being < PI/2 due to numerical
+    # accuracy
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
 
@@ -626,14 +630,16 @@ def test_gdalwarp_30():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
 
+    te = " -te -20037508.343 -16206629.152 20036845.112 16213801.068"
+
     # First run : no parameter
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + " data/w_jpeg.tiff tmp/testgdalwarp30_1.tif  -t_srs EPSG:3785 -co COMPRESS=LZW -wm 500000  --config GDAL_CACHEMAX 1 -ts 1000 500 -co TILED=YES")
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + " data/w_jpeg.tiff tmp/testgdalwarp30_1.tif  -t_srs EPSG:3785 -co COMPRESS=LZW -wm 500000  --config GDAL_CACHEMAX 1 -ts 1000 500 -co TILED=YES" + te)
 
     # Second run : with  -wo OPTIMIZE_SIZE=TRUE
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + " data/w_jpeg.tiff tmp/testgdalwarp30_2.tif  -t_srs EPSG:3785 -co COMPRESS=LZW -wm 500000 -wo OPTIMIZE_SIZE=TRUE  --config GDAL_CACHEMAX 1 -ts 1000 500 -co TILED=YES")
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + " data/w_jpeg.tiff tmp/testgdalwarp30_2.tif  -t_srs EPSG:3785 -co COMPRESS=LZW -wm 500000 -wo OPTIMIZE_SIZE=TRUE  --config GDAL_CACHEMAX 1 -ts 1000 500 -co TILED=YES" + te)
 
     # Third run : with  -wo STREAMABLE_OUTPUT=TRUE
-    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + " data/w_jpeg.tiff tmp/testgdalwarp30_3.tif  -t_srs EPSG:3785 -co COMPRESS=LZW -wm 500000 -wo STREAMABLE_OUTPUT=TRUE  --config GDAL_CACHEMAX 1 -ts 1000 500 -co TILED=YES")
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + " data/w_jpeg.tiff tmp/testgdalwarp30_3.tif  -t_srs EPSG:3785 -co COMPRESS=LZW -wm 500000 -wo STREAMABLE_OUTPUT=TRUE  --config GDAL_CACHEMAX 1 -ts 1000 500 -co TILED=YES" + te)
 
     file_size1 = os.stat('tmp/testgdalwarp30_1.tif')[stat.ST_SIZE]
     file_size2 = os.stat('tmp/testgdalwarp30_2.tif')[stat.ST_SIZE]

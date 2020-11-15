@@ -435,8 +435,10 @@ def test_mbtiles_8():
     out_ds = None
     src_ds = None
 
-    expected_cs = [60844, 7388, 53813]
+    expected_cs = [580, 8742, 54747]
     out_ds = gdal.Open('/vsimem/mbtiles_8.mbtiles')
+    assert out_ds.RasterXSize == 512
+    assert out_ds.RasterYSize == 512
     got_cs = [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     assert got_cs == expected_cs
     got_ct = out_ds.GetRasterBand(1).GetColorTable()
