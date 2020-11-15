@@ -70,7 +70,7 @@ def test_gdal2tiles_py_simple():
 
     _verify_raster_band_checksums(
         'tmp/out_gdal2tiles_smallworld/0/0/0.png',
-        expected_cs = [25314, 28114, 6148, 59026]
+        expected_cs = [31420, 32522, 16314, 17849]
     )
 
     for filename in ['googlemaps.html', 'leaflet.html', 'openlayers.html', 'tilemapresource.xml']:
@@ -97,7 +97,7 @@ def test_gdal2tiles_py_zoom_option():
 
     _verify_raster_band_checksums(
         'tmp/out_gdal2tiles_smallworld/1/0/0.png',
-        expected_cs = [8130, 10496, 65274, 63715]
+        expected_cs = [24063, 23632, 14707, 17849]
     )
 
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/doc.kml')
@@ -164,11 +164,11 @@ def test_gdal2tiles_py_xyz():
 
         _verify_raster_band_checksums(
             'tmp/out_gdal2tiles_smallworld_xyz/0/0/0.png',
-            expected_cs = [30616, 31851, 9392, 63557]
+            expected_cs = [31747, 33381, 18447, 17849]
         )
         _verify_raster_band_checksums(
             'tmp/out_gdal2tiles_smallworld_xyz/1/0/0.png',
-            expected_cs = [25095, 27337, 10068, 63699]
+            expected_cs = [15445, 16942, 13681, 17849]
         )
 
         for filename in ['googlemaps.html', 'leaflet.html', 'openlayers.html']:
