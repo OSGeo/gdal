@@ -257,17 +257,56 @@ def test_xyz_9():
 """
 
     with gdaltest.tempfile('/vsimem/grid.xyz', content):
-        ds = gdal.Open('/vsimem/grid.xyz')
+        with gdaltest.error_handler():
+            ds = gdal.Open('/vsimem/grid.xyz')
         assert ds.RasterXSize == 2 and ds.RasterYSize == 2
         cs = ds.GetRasterBand(1).Checksum()
 
     assert cs == 22
 
 ###############################################################################
-# Cleanup
-
-def test_xyz_cleanup():
-
-    pass
+# Test case of XYZ file where grid points are organized by columns, ascending Y
 
 
+def test_xyz_organized_by_columns_int16():
+
+    content = """X Y Z
+0 0 50
+0 10 100
+0 20 150
+10 0 200
+10 10 250
+10 20 300
+
+"""
+
+    with gdaltest.tempfile('/vsimem/grid.xyz', content):
+        ds = gdal.Open('/vsimem/grid.xyz')
+        assert ds.RasterXSize == 2 and ds.RasterYSize == 3
+        assert ds.GetGeoTransform() == (-5.0, 10.0, 0.0, 25.0, 0.0, -10.0)
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Int16
+        assert struct.unpack('h' * 6, ds.ReadRaster()) == (150, 300, 100, 250, 50, 200)
+
+
+###############################################################################
+# Test case of XYZ file where grid points are organized by columns, descending Y
+
+
+def test_xyz_organized_by_columns_float32():
+
+    content = """X Y Z
+0 20 50.5
+0 10 100
+0 0 150
+10 20 200
+10 10 250
+10 0 300
+
+"""
+
+    with gdaltest.tempfile('/vsimem/grid.xyz', content):
+        ds = gdal.Open('/vsimem/grid.xyz')
+        assert ds.RasterXSize == 2 and ds.RasterYSize == 3
+        assert ds.GetGeoTransform() == (-5.0, 10.0, 0.0, 25.0, 0.0, -10.0)
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
+        assert struct.unpack('f' * 6, ds.ReadRaster()) == (50.5, 200.0, 100.0, 250.0, 150.0, 300.0)
