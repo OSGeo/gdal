@@ -600,6 +600,22 @@ def test_gdal_translate_lib_tr_non_nearest_oversampling():
     assert ds.RasterYSize == 3
     assert 0 not in struct.unpack('B' * 13 * 3, ds.ReadRaster())
 
+
+def test_gdal_translate_lib_preserve_block_size():
+
+    src_ds = gdal.GetDriverByName('GTiff').Create(
+        '/vsimem/tmp.tif', 256, 256, 1, options = ['TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=64'])
+
+    # VRT created by CreateCopy() of VRT driver
+    ds = gdal.Translate('', src_ds, format = 'VRT')
+    assert ds.GetRasterBand(1).GetBlockSize() == [32, 64]
+
+    # VRT created by GDALTranslate()
+    ds = gdal.Translate('', src_ds, format = 'VRT', metadataOptions=['FOO=BAR'])
+    assert ds.GetRasterBand(1).GetBlockSize() == [32, 64]
+    src_ds = None
+    gdal.Unlink('/vsimem/tmp.tif')
+
 ###############################################################################
 # Cleanup
 
@@ -614,8 +630,4 @@ def test_gdal_translate_lib_cleanup():
             os.remove('tmp/test' + str(i + 1) + '.tif.aux.xml')
         except OSError:
             pass
-
-    
-
-
 

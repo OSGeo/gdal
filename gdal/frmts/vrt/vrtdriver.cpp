@@ -311,6 +311,21 @@ VRTCreateCopy( const char * pszFilename,
     if( papszMD )
         poVRTDS->SetMetadata( papszMD, "GEOLOCATION" );
 
+    {
+        const char* pszInterleave = poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+        if (pszInterleave)
+        {
+            poVRTDS->SetMetadataItem("INTERLEAVE", pszInterleave, "IMAGE_STRUCTURE");
+        }
+    }
+    {
+        const char* pszCompression = poSrcDS->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+        if( pszCompression )
+        {
+            poVRTDS->SetMetadataItem("COMPRESSION", pszCompression, "IMAGE_STRUCTURE");
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      GCPs                                                            */
 /* -------------------------------------------------------------------- */
@@ -331,7 +346,12 @@ VRTCreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create the band with the appropriate band type.                 */
 /* -------------------------------------------------------------------- */
-        poVRTDS->AddBand( poSrcBand->GetRasterDataType(), nullptr );
+        CPLStringList aosAddBandOptions;
+        int nSrcBlockXSize, nSrcBlockYSize;
+        poSrcBand->GetBlockSize(&nSrcBlockXSize, &nSrcBlockYSize);
+        aosAddBandOptions.SetNameValue("BLOCKXSIZE", CPLSPrintf("%d", nSrcBlockXSize));
+        aosAddBandOptions.SetNameValue("BLOCKYSIZE", CPLSPrintf("%d", nSrcBlockYSize));
+        poVRTDS->AddBand( poSrcBand->GetRasterDataType(), aosAddBandOptions );
 
         VRTSourcedRasterBand *poVRTBand
             = static_cast<VRTSourcedRasterBand *>(
@@ -346,6 +366,12 @@ VRTCreateCopy( const char * pszFilename,
 /*      Emit various band level metadata.                               */
 /* -------------------------------------------------------------------- */
         poVRTBand->CopyCommonInfoFrom( poSrcBand );
+
+        const char* pszCompression = poSrcBand->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+        if( pszCompression )
+        {
+            poVRTBand->SetMetadataItem("COMPRESSION", pszCompression, "IMAGE_STRUCTURE");
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Add specific mask band.                                         */

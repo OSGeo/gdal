@@ -540,11 +540,26 @@ def test_vrtmisc_mask_implicit_overviews():
     ds = None
     gdal.Unlink('/vsimem/out.tif')
 
+
 ###############################################################################
-# Cleanup.
+# Test setting block size
 
 
-def test_vrtmisc_cleanup():
-    pass
+def test_vrtmisc_blocksize():
+    filename = '/vsimem/test_vrtmisc_blocksize.vrt'
+    vrt_ds = gdal.GetDriverByName('VRT').Create(filename, 50, 50, 0)
+    options = [
+        'subClass=VRTSourcedRasterBand',
+        'blockXSize=32',
+        'blockYSize=48'
+    ]
+    vrt_ds.AddBand(gdal.GDT_Byte, options)
+    vrt_ds = None
 
+    vrt_ds = gdal.Open(filename)
+    blockxsize, blockysize = vrt_ds.GetRasterBand(1).GetBlockSize()
+    assert blockxsize == 32
+    assert blockysize == 48
+    vrt_ds = None
 
+    gdal.Unlink(filename)

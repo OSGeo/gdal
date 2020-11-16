@@ -1527,6 +1527,14 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     if (pszInterleave)
         poVDS->SetMetadataItem("INTERLEAVE", pszInterleave, "IMAGE_STRUCTURE");
 
+    {
+        const char* pszCompression = poSrcDS->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+        if( pszCompression )
+        {
+            poVDS->SetMetadataItem("COMPRESSION", pszCompression, "IMAGE_STRUCTURE");
+        }
+    }
+
     /* ISIS3 metadata preservation */
     char** papszMD_ISIS3 = poSrcDS->GetMetadata("json:ISIS3");
     if( papszMD_ISIS3 != nullptr)
@@ -1793,7 +1801,15 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
 /*      Create this band.                                               */
 /* -------------------------------------------------------------------- */
-        poVDS->AddBand( eBandType, nullptr );
+        CPLStringList aosAddBandOptions;
+        if( bSpatialArrangementPreserved )
+        {
+            int nSrcBlockXSize, nSrcBlockYSize;
+            poSrcBand->GetBlockSize(&nSrcBlockXSize, &nSrcBlockYSize);
+            aosAddBandOptions.SetNameValue("BLOCKXSIZE", CPLSPrintf("%d", nSrcBlockXSize));
+            aosAddBandOptions.SetNameValue("BLOCKYSIZE", CPLSPrintf("%d", nSrcBlockYSize));
+        }
+        poVDS->AddBand( eBandType, aosAddBandOptions.List() );
         VRTSourcedRasterBand *poVRTBand =
             static_cast<VRTSourcedRasterBand *>(poVDS->GetRasterBand( i+1 ));
         if (nSrcBand < 0)
@@ -1820,6 +1836,12 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             !psOptions->bUnscale && psOptions->eOutputType == GDT_Unknown && psOptions->pszResampling == nullptr )
         {
             poVRTBand->SetMetadataItem("PIXELTYPE", pszPixelType, "IMAGE_STRUCTURE");
+        }
+
+        const char* pszCompression = poSrcBand->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+        if( pszCompression )
+        {
+            poVRTBand->SetMetadataItem("COMPRESSION", pszCompression, "IMAGE_STRUCTURE");
         }
 
 /* -------------------------------------------------------------------- */

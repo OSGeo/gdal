@@ -4216,6 +4216,12 @@ static void GDALCopyWholeRasterGetSwathSize(
 
     const char* pszSrcCompression =
         poSrcPrototypeBand->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+    if( pszSrcCompression == nullptr )
+    {
+        auto poSrcDS = poSrcPrototypeBand->GetDataset();
+        if( poSrcDS )
+            pszSrcCompression = poSrcDS->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+    }
 
 /* -------------------------------------------------------------------- */
 /*      What will our swath size be?                                    */
