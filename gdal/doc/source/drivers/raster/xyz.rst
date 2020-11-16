@@ -16,12 +16,22 @@ Those datasets are ASCII files with (at least) 3 columns, each line
 containing the X and Y coordinates of the center of the cell and the
 value of the cell.
 
-The spacing between each cell must be constant and no missing value is
-supported. Cells with same Y coordinates must be placed on consecutive
-lines. For a same Y coordinate value, the lines in the dataset must be
-organized by increasing X values. The value of the Y coordinate can
-increase or decrease however. The supported column separators are space,
-comma, semicolon and tabulations.
+The spacing between each cell must be constant.
+
+The following data organization are supported :
+
+* Cells with same Y coordinates must be placed on consecutive
+  lines. For a same Y coordinate value, the lines in the dataset must be
+  organized by increasing X values. The value of the Y coordinate can
+  increase or decrease however.
+
+* or, starting with GDAL 3.2.1, cells with same X coordinates must be placed
+  on consecutive lines. For a same X coordinate value, the columns must be
+  organized by increasing or decreasing Y values. For that organization, no
+  missing value is supported, and the whole dataset will be ingested into
+  memory (thus the driver will limit to 100 million points).
+
+The supported column separators are space, comma, semicolon and tabulations.
 
 The driver tries to autodetect an header line and will look for 'x',
 'lon' or 'east' names to detect the index of the X column, 'y', 'lat' or
