@@ -8,7 +8,7 @@ RFC 77: Drop Python 2 support in favour of Python 3.6
 Author:        Idan Miara
 Contact:       idan@miara.com
 Started:       2020-Nov-3
-Last updated:  2020-Nov-5
+Last updated:  2020-Nov-16
 Status:        Preliminary, Target GDAL 3.3
 ============== ============================
 
@@ -138,12 +138,14 @@ Projecting from that suggestion, GDAL 3.3.0 should be released around April-May 
 We could potentially synchronize with NEP 29 -
 Recommend Python and Numpy version support as a community policy standard.
 Which suggests when to drop each Python version.
-We could consider a more conservative approach and delay each drop by a few more months.
 
 https://numpy.org/neps/nep-0029-deprecation_policy.html
 
 NEP 29 suggests to drop support for Python 3.6 support on Jun 23, 2020 (in favour of Python 3.7).
-Further discussion on this matter is a subject for another RFC.
+
+We could potentially discuss similar/more conservative approaches and delay each drop by a few more months,
+or only drop Python versions that have reached End Of Life (As of today, Python < 3.6 have reached End Of Life).
+Further discussion on the matter of dropping other Python versions is a subject for another RFC.
 
 Backward compatibility
 ----------------------
@@ -221,6 +223,8 @@ This topic has been discussed in the past in :
 
 Related PRs:
 -------------
+
+Adding a deprecation warning if running a Python version that is known to be unsupported in the the next GDAL version:
 
 - https://github.com/OSGeo/gdal/pull/3165
 
