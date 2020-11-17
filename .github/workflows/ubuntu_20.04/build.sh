@@ -14,7 +14,7 @@ if test -f /build/ccache.tar.gz; then
     (cd $HOME && tar xzf /build/ccache.tar.gz)
 fi
 
-ccache -M 800M
+ccache -M 200M
 
 CXXFLAGS="-std=c++17 -O1" ./configure --prefix=/usr \
     --without-libtool \
