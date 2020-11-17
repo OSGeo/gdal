@@ -87,6 +87,18 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     CPLString osBaseURL = pszBaseURL;
     /* Remove all keywords to get base URL */
 
+    if( osBBOXOrder.empty() && !osCRS.empty() &&
+        VersionStringToInt(osVersion.c_str())>= VersionStringToInt("1.3.0") )
+    {
+        OGRSpatialReference oSRS;
+        oSRS.SetFromUserInput(osCRS);
+        oSRS.AutoIdentifyEPSG();
+        if( oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting() )
+        {
+            osBBOXOrder = "yxYX";
+        }
+    }
+
     osBaseURL = CPLURLAddKVP(osBaseURL, "VERSION", nullptr);
     osBaseURL = CPLURLAddKVP(osBaseURL, "REQUEST", nullptr);
     osBaseURL = CPLURLAddKVP(osBaseURL, "LAYERS", nullptr);
