@@ -22,7 +22,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-rec
     autoconf automake bash-completion libarmadillo-dev \
     libopenexr-dev libheif-dev \
     libdeflate-dev \
-    mono-mcs libmono-system-drawing4.0-cil
+    mono-mcs libmono-system-drawing4.0-cil ccache
 
 # Build likbkea
 KEA_VERSION=1.4.13
