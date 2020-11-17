@@ -1798,6 +1798,42 @@ def test_vrtpansharpen_nodata_multiple_spectral_bands():
     gdal.Unlink('/vsimem/b2.tif')
 
 ###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/3189
+# that is when the spectral bands have no nodata value, but we have one
+# declared in PansharpeningOptions, and when the VRTPansharpenedDataset
+# exposes overviews
+
+def test_vrtpansharpen_nodata_overviews():
+
+    ds = gdal.Translate('/vsimem/pan.tif', 'data/byte.tif')
+    ds.BuildOverviews('NEAR', [2])
+    ds = None
+
+    ds = gdal.Translate('/vsimem/ms.tif', 'data/byte.tif')
+    ds.BuildOverviews('NEAR', [2])
+    ds = None
+
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
+  <PansharpeningOptions>
+      <NoData>0</NoData>
+    <PanchroBand>
+      <SourceFilename>/vsimem/pan.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </PanchroBand>
+    <SpectralBand dstBand="1">
+      <SourceFilename>/vsimem/ms.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SpectralBand>
+  </PansharpeningOptions>
+</VRTDataset>""")
+    assert vrt_ds
+    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
+    vrt_ds = None
+
+    gdal.Unlink('/vsimem/pan.tif')
+    gdal.Unlink('/vsimem/ms.tif')
+
+###############################################################################
 # Cleanup
 
 

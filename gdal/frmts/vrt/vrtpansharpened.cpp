@@ -180,6 +180,15 @@ int VRTPansharpenedDataset::CloseDependentDatasets()
     }
     nBands = 0;
 
+    // Destroy the overviews before m_poPansharpener as they might reference
+    // files that are in m_apoDatasetsToClose.
+    for( size_t i=0; i<m_apoOverviewDatasets.size();i++)
+    {
+        bHasDroppedRef = TRUE;
+        delete m_apoOverviewDatasets[i];
+    }
+    m_apoOverviewDatasets.resize(0);
+
     if( m_poPansharpener != nullptr )
     {
         // Delete the pansharper object before closing the dataset
@@ -197,13 +206,6 @@ int VRTPansharpenedDataset::CloseDependentDatasets()
         }
         m_apoDatasetsToClose.resize(0);
     }
-
-    for( size_t i=0; i<m_apoOverviewDatasets.size();i++)
-    {
-        bHasDroppedRef = TRUE;
-        delete m_apoOverviewDatasets[i];
-    }
-    m_apoOverviewDatasets.resize(0);
 
     if( poMainDatasetLocal != this )
     {
