@@ -254,9 +254,6 @@ void GDALWMSMetaDataset::AddSubDataset( const char* pszLayerName,
     if(VersionStringToInt(osVersion.c_str())>= VersionStringToInt("1.3.0"))
     {
         osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "CRS", pszSRS);
-        /* FIXME: this should apply to all SRS that need axis inversion */
-        if (strcmp(pszSRS, "EPSG:4326") == 0)
-            osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "BBOXORDER", "yxYX");
     }
     else
         osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "SRS", pszSRS);
