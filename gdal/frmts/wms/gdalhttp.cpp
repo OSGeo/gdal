@@ -67,6 +67,29 @@ static size_t WriteFunc(void *buffer, size_t count, size_t nmemb, void *req) {
     return nmemb;
 }
 
+// Process curl errors
+static void ProcessCurlErrors(CURLMsg* msg, WMSHTTPRequest* pasRequest, int nRequestCount)
+{
+    CPLAssert(msg != nullptr);
+    CPLAssert(msg->msg == CURLMSG_DONE);
+
+    // in case of local file error: update status code
+    if (msg->data.result == CURLE_FILE_COULDNT_READ_FILE) {
+        // identify current request
+        for (int current_req_i = 0; current_req_i < nRequestCount; ++current_req_i) {
+            WMSHTTPRequest* const psRequest = &pasRequest[current_req_i];
+            if (psRequest->m_curl_handle != msg->easy_handle)
+                continue;
+
+            // sanity check for local files
+            if (STARTS_WITH(psRequest->URL.c_str(), "file://")) {
+                psRequest->nStatus = 404;
+                break;
+            }
+        }
+    }
+}
+
 // Builds a curl request
 void WMSHTTPInitializeRequest(WMSHTTPRequest *psRequest) {
     psRequest->nStatus = 0;
@@ -177,6 +200,8 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
         do {
             CURLMsg *m = curl_multi_info_read(curl_multi, &msgs_in_queue);
             if (m && (m->msg == CURLMSG_DONE)) {
+                ProcessCurlErrors(m, pasRequest, nRequestCount);
+
                 curl_multi_remove_handle(curl_multi, m->easy_handle);
                 if (conn_i < nRequestCount) {
                     auto psRequest = &pasRequest[conn_i];
@@ -194,6 +219,19 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
             curl_multi_wait(curl_multi, nullptr, 0, 100, &numfds);
         }
     } while (still_running || conn_i != nRequestCount);
+
+    // process any message still in queue
+    CURLMsg* msg;
+    int msgs_in_queue;
+    do {
+        msg = curl_multi_info_read(curl_multi, &msgs_in_queue);
+        if (msg != nullptr) {
+            if (msg->msg == CURLMSG_DONE) {
+                ProcessCurlErrors(msg, pasRequest, nRequestCount);
+            }
+        }
+    } while (msg != nullptr);
+
     CPLHTTPRestoreSigPipeHandler(old_handler);
 
     if (conn_i != nRequestCount) { // something gone really really wrong
@@ -209,7 +247,9 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
 
         long response_code;
         curl_easy_getinfo(psRequest->m_curl_handle, CURLINFO_RESPONSE_CODE, &response_code);
-        psRequest->nStatus = static_cast<int>(response_code);
+        // for local files, don't update the status code if one is already set
+        if(!(psRequest->nStatus != 0 && STARTS_WITH(psRequest->URL.c_str(), "file://")))
+            psRequest->nStatus = static_cast<int>(response_code);
 
         char *content_type = nullptr;
         curl_easy_getinfo(psRequest->m_curl_handle, CURLINFO_CONTENT_TYPE, &content_type);
