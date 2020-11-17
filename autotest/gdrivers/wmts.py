@@ -1807,15 +1807,6 @@ def test_wmts_24():
 </Capabilities>""")
 
     ds = gdal.Open('WMTS:/vsimem/wmts_missing_local_tiles.xml')
-    assert ds is not None
-    assert ds.RasterXSize == 2097152
-    assert ds.RasterYSize == 2097152
-    got_gt = ds.GetGeoTransform()
-    expected_gt = (-548576.0, 1.0000000000004, 0.0, 8388608.0, 0.0, -1.0000000000004)
-    for i in range(6):
-        assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8)
-    assert ds.GetProjectionRef().find('3067') >= 0
-
 #   Read some data from the image
     band = ds.GetRasterBand(1)
     assert band is not None
