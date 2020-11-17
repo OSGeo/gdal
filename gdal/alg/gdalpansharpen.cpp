@@ -326,14 +326,13 @@ GDALPansharpenOperation::Initialize( const GDALPansharpenOptions* psOptionsIn )
             for( int i = 0; i < psOptions->nInputSpectralBands; i++ )
             {
                 GDALRasterBand* poSrcBand = aMSBands[i];
-                int iVRTBand;
+                int iVRTBand = 1;
                 if( anInputBands.empty() || i == 0 )
                 {
                     poVDS = new VRTDataset(poSrcBand->GetXSize(), poSrcBand->GetYSize());
                     aVDS.push_back(poVDS);
-                    iVRTBand = 1;
                 }
-                else
+                if( !anInputBands.empty() )
                 {
                     anInputBands[i] = i + 1;
                     iVRTBand = i + 1;
