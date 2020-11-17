@@ -11,28 +11,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Cache deps
+      - name: Cache
         uses: actions/cache@v2
-        id: cache-deps
+        id: cache
         with:
-          path: /tmp/docker
-          key: ${{ runner.os }}-cache-ubuntu-20.04-deps-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}
+          path: |
+                /tmp/docker
+                ${{ github.workspace }}/ccache.tar.gz
+          key: ${{ runner.os }}-cache-ubuntu-20.04-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-cache-ubuntu-20.04-${{ hashFiles('.github/workflows/ubuntu_20.04/build-deps.sh') }}-
 
-      - name: Build dependencies
-        if: steps.cache-deps.outputs.cache-hit != 'true'
+      - name: Build or restore dependencies
         run: |
-            docker build -f .github/workflows/ubuntu_20.04/Dockerfile.deps -t gdal-deps-ubuntu-20.04 .github/workflows/ubuntu_20.04
-            mkdir /tmp/docker
-            docker image save -o /tmp/docker/gdal-deps-ubuntu-20.04.tar gdal-deps-ubuntu-20.04
-
-      - name: Restore dependencies
-        if: steps.cache-deps.outputs.cache-hit == 'true'
-        run: |
-            docker image load -i /tmp/docker/gdal-deps-ubuntu-20.04.tar
-            docker images
+            if test -f /tmp/docker/gdal-deps-ubuntu-20.04.tar; then
+                docker image load -i /tmp/docker/gdal-deps-ubuntu-20.04.tar
+                docker images
+            else
+                docker build -f .github/workflows/ubuntu_20.04/Dockerfile.deps -t gdal-deps-ubuntu-20.04 .github/workflows/ubuntu_20.04
+                mkdir -p /tmp/docker
+                docker image save -o /tmp/docker/gdal-deps-ubuntu-20.04.tar gdal-deps-ubuntu-20.04
+            fi
 
       - name: Build
         run: docker build -f .github/workflows/ubuntu_20.04/Dockerfile -t gdal .
+
+      - name: Fetching ccache.tar.gz from Docker build
+        run: docker run --rm -v $PWD:/mytmp gdal cp /build/ccache.tar.gz /mytmp
 
       - name: Run pytest
         # --security-opt seccomp=unconfined, so that the userfaulfd syscall is available

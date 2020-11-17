@@ -6,6 +6,16 @@ cd /build
 
 cd gdal
 
+export CC="ccache gcc"
+export CXX="ccache g++"
+
+if test -f /build/ccache.tar.gz; then
+    echo "Restoring ccache..."
+    (cd $HOME && tar xzf /build/ccache.tar.gz)
+fi
+
+ccache -M 800M
+
 CXXFLAGS="-std=c++17 -O1" ./configure --prefix=/usr \
     --without-libtool \
     --with-hide-internal-symbols \
@@ -34,3 +44,9 @@ ldconfig
 (cd ../autotest/cpp && make "-j$(nproc)")
 
 (cd ./swig/csharp && make generate)
+
+ccache -s
+
+echo "Saving ccache..."
+rm -f /build/ccache.tar.gz
+(cd $HOME && tar czf /build/ccache.tar.gz .ccache)
