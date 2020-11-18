@@ -1494,8 +1494,8 @@ namespace tut
             const auto &tm = poTMS->tileMatrixList()[0];
             ensure_equals( tm.mId, "0" );
             ensure_equals( tm.mScaleDenominator, 279541132.014358 );
-            ensure( fabs(tm.mResX - tm.mScaleDenominator * 0.28e-3 / (6378137. * M_PI / 180)) < 1e-14 );
-            ensure( fabs(tm.mResX - 180. / 256) < 1e-14 );
+            ensure( fabs(tm.mResX - tm.mScaleDenominator * 0.28e-3 / (6378137. * M_PI / 180)) < 1e-10 );
+            ensure( fabs(tm.mResX - 180. / 256) < 1e-10 );
             ensure_equals( tm.mResY, tm.mResX );
             ensure_equals( tm.mTopLeftX, -180.0 );
             ensure_equals( tm.mTopLeftY, 90.0 );
