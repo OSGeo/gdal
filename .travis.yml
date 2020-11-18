@@ -22,18 +22,19 @@ matrix:
 #        - BUILD_NAME=ubuntu_1804
 #        - DETAILS=""
 
-    - os: linux
-      compiler: clang
-      language: cpp
-      sudo: required
-      dist: trusty
-      cache:
-        apt: true
-        directories:
-          - $HOME/.ccache
-      env:
-        - BUILD_NAME=trusty_clang
-        - DETAILS="optimized build, no libtool"
+#    - os: linux
+#      compiler: clang
+#      language: cpp
+#      sudo: required
+#      dist: trusty
+#      cache:
+#        apt: true
+#        directories:
+#          - $HOME/.ccache
+#      env:
+#        - BUILD_NAME=trusty_clang
+#        - DETAILS="optimized build, no libtool"
+
     - os: linux
       compiler: clang
       language: cpp
