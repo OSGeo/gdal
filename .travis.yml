@@ -58,21 +58,23 @@ matrix:
       env:
         - BUILD_NAME=python3
         - DETAILS=""
-    - os: linux
-      compiler: gcc
-      language: cpp
-      sudo: false
-      dist: trusty
-      cache:
-        apt: true
-        directories:
-          - $HOME/.ccache
-      apt:
-        packages:
-          - ccache
-      env:
-        - BUILD_NAME=android
-        - DETAILS=""
+
+#    - os: linux
+#      compiler: gcc
+#      language: cpp
+#      sudo: false
+#      dist: trusty
+#      cache:
+#        apt: true
+#        directories:
+#          - $HOME/.ccache
+#      apt:
+#        packages:
+#          - ccache
+#      env:
+#        - BUILD_NAME=android
+#        - DETAILS=""
+
 #    - os: linux
 #      compiler: gcc
 #      language: cpp
