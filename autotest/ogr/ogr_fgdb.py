@@ -31,6 +31,7 @@
 
 import os
 import shutil
+import sys
 
 
 import gdaltest
@@ -757,7 +758,10 @@ def test_ogr_fgdb_13():
     except OSError:
         pass
 
-    name = '/nonexistingdrive:/nonexistingdir/dummy.gdb'
+    if sys.platform == 'win32':
+        name = '/nonexistingdrive:/nonexistingdir/dummy.gdb'
+    else:
+        name = '/proc/dummy.gdb'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogrtest.fgdb_drv.CreateDataSource(name)
