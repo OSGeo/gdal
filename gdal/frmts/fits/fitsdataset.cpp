@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+// So that OFF_T is 64 bits
+#define _FILE_OFFSET_BITS 64
+
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
@@ -1137,6 +1140,7 @@ bool FITSDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
         return false; // are supported as native signed with offset
 
     sLayout.osRawFilename = GetDescription();
+    static_assert( sizeof(OFF_T) == 8, "OFF_T should be 64 bits !" );
     OFF_T headerstart = 0;
     OFF_T datastart = 0;
     OFF_T dataend = 0;
