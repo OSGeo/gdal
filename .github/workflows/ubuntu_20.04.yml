@@ -38,9 +38,18 @@ jobs:
       - name: Fetching ccache.tar.gz from Docker build
         run: docker run --rm -v $PWD:/mytmp gdal cp /build/ccache.tar.gz /mytmp
 
+      - name: Run C++ tests
+        run: docker run -e GITHUB_WORKFLOW --rm gdal sh -c "cd /build/autotest/cpp && make quick_test"
+
+      - name: Run SWIG Perl tests
+        run: docker run --rm gdal sh -c "cd /build/gdal/swig/perl && make test"
+
+      - name: Run SWIG Java tests
+        run: docker run --rm gdal sh -c "cd /build/gdal/swig/java && make test"
+
+      - name: Run SWIG CSharp tests
+        run: docker run --rm gdal sh -c "cd /build/gdal/swig/csharp && make && make && make test"
+
       - name: Run pytest
         # --security-opt seccomp=unconfined, so that the userfaulfd syscall is available
-        run: docker run --security-opt seccomp=unconfined --rm gdal sh -c "cd /build/autotest && pip3 install -U -r requirements.txt && pytest"
-
-      - name: Run SWIG C# tests
-        run: docker run --rm gdal sh -c "cd /build/gdal/swig/csharp && make && make && make test"
+        run: docker run -e GITHUB_WORKFLOW --security-opt seccomp=unconfined --rm gdal sh -c "cd /build/autotest && pip3 install -U -r requirements.txt && pytest"
