@@ -1,0 +1,24 @@
+name: Ubuntu 18.04 build
+
+on: [push, pull_request]
+
+jobs:
+
+  ubuntu_18_04_build:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Cache
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: |
+                ${{ github.workspace }}/ccache.tar.gz
+          key: ${{ runner.os }}-cache-ubuntu-18.04-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-cache-ubuntu-18.04-
+
+      - name: Build
+        run: docker run --privileged=true -e WORK_DIR="$PWD" -v $PWD:$PWD -v /var/run/docker.sock:/var/run/docker.sock ubuntu:18.04 $PWD/.github/workflows/ubuntu_18.04/start.sh
