@@ -43,9 +43,31 @@ ldconfig
 
 (cd ../autotest/cpp && make "-j$(nproc)")
 
+#(cd ../autotest/cpp && \
+#    make vsipreload.so && \
+#    LD_PRELOAD=./vsipreload.so gdalinfo /vsicurl/http://download.osgeo.org/gdal/data/ecw/spif83.ecw && \
+#    LD_PRELOAD=./vsipreload.so sqlite3  /vsicurl/http://download.osgeo.org/gdal/data/sqlite3/polygon.db "select * from polygon limit 10"
+#)
+
 (cd ./swig/csharp && make generate)
 
+# Java bindings
+(cd swig/java
+  cp java.opt java.opt.bak
+  echo "JAVA_HOME = /usr/lib/jvm/java-8-openjdk-amd64/" | cat - java.opt.bak > java.opt
+  java -version
+  make
+  mv java.opt.bak java.opt
+)
+
+# Perl bindings
+(cd swig/perl && make generate && make)
+
 ccache -s
+
+#wget https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/mdb-sqlite/mdb-sqlite-1.0.2.tar.bz2
+#tar xjvf mdb-sqlite-1.0.2.tar.bz2
+#sudo cp mdb-sqlite-1.0.2/lib/*.jar /usr/lib/jvm/java-8-openjdk-amd64/jre/lib/ext
 
 echo "Saving ccache..."
 rm -f /build/ccache.tar.gz
