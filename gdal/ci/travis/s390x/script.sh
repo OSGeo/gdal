@@ -2,13 +2,13 @@
 
 set -e
 
-export PYTEST="pytest -vv -p no:sugar --color=no"
+export PYTEST="python3 -m pytest -vv -p no:sugar --color=no"
 
 (cd "$PWD/autotest/cpp" && make quick_test || echo "error in quick_test")
 
 # install pip and use it to install test dependencies
-sudo sh -c "curl -sSL 'https://bootstrap.pypa.io/get-pip.py' | python"
-sudo pip install -U -r "$PWD/autotest/requirements.txt"
+sudo sh -c "curl -sSL 'https://bootstrap.pypa.io/get-pip.py' | python3"
+sudo pip3 install -U -r "$PWD/autotest/requirements.txt"
 
 # Run all the Python autotests
 
