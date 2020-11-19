@@ -21,4 +21,4 @@ jobs:
           restore-keys: ${{ runner.os }}-cache-ubuntu-18.04-32bit-
 
       - name: Build
-        run: docker run --privileged=true -e WORK_DIR="$PWD" -v $PWD:$PWD -v /var/run/docker.sock:/var/run/docker.sock i386/ubuntu:18.04 $PWD/.github/workflows/ubuntu_18.04_32bit/start.sh
+        run: docker run --privileged=true -e CI -e WORK_DIR="$PWD" -v $PWD:$PWD -v /var/run/docker.sock:/var/run/docker.sock i386/ubuntu:18.04 $PWD/.github/workflows/ubuntu_18.04_32bit/start.sh
