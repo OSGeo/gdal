@@ -445,27 +445,27 @@ int qh_gethash(qhT *qh, int hashsize, setT *set, int size, int firstindex, void 
 
   switch (size-firstindex) {
   case 1:
-    hash= (ptr_intT)(*elemp) - (ptr_intT) skipelem;
+    hash= (ptr_intT)((long long)(ptr_intT)(*elemp) - (ptr_intT) skipelem);
     break;
   case 2:
-    hash= (ptr_intT)(*elemp) + (ptr_intT)elemp[1] - (ptr_intT) skipelem;
+    hash= (ptr_intT)((long long)(ptr_intT)(*elemp) + (ptr_intT)elemp[1] - (ptr_intT) skipelem);
     break;
   case 3:
-    hash= (ptr_intT)(*elemp) + (ptr_intT)elemp[1] + (ptr_intT)elemp[2]
-      - (ptr_intT) skipelem;
+    hash= (ptr_intT)((long long)(ptr_intT)(*elemp) + (ptr_intT)elemp[1] + (ptr_intT)elemp[2]
+      - (ptr_intT) skipelem);
     break;
   case 4:
-    hash= (ptr_intT)(*elemp) + (ptr_intT)elemp[1] + (ptr_intT)elemp[2]
-      + (ptr_intT)elemp[3] - (ptr_intT) skipelem;
+    hash= (ptr_intT)((long long)(ptr_intT)(*elemp) + (ptr_intT)elemp[1] + (ptr_intT)elemp[2]
+      + (ptr_intT)elemp[3] - (ptr_intT) skipelem);
     break;
   case 5:
-    hash= (ptr_intT)(*elemp) + (ptr_intT)elemp[1] + (ptr_intT)elemp[2]
-      + (ptr_intT)elemp[3] + (ptr_intT)elemp[4] - (ptr_intT) skipelem;
+    hash= (ptr_intT)((long long)(ptr_intT)(*elemp) + (ptr_intT)elemp[1] + (ptr_intT)elemp[2]
+      + (ptr_intT)elemp[3] + (ptr_intT)elemp[4] - (ptr_intT) skipelem);
     break;
   case 6:
-    hash= (ptr_intT)(*elemp) + (ptr_intT)elemp[1] + (ptr_intT)elemp[2]
+    hash= (ptr_intT)((long long)(ptr_intT)(*elemp) + (ptr_intT)elemp[1] + (ptr_intT)elemp[2]
       + (ptr_intT)elemp[3] + (ptr_intT)elemp[4]+ (ptr_intT)elemp[5]
-      - (ptr_intT) skipelem;
+      - (ptr_intT) skipelem);
     break;
   default:
     hash= 0;
