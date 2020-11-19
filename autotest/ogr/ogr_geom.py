@@ -670,7 +670,7 @@ def test_ogr_geomtransfomer_wrapdateline_with_ct():
     transformer = ogr.GeomTransformer(ct, ['WRAPDATELINE=YES'])
 
     geom_dst = geom.Transform(transformer)
-    assert geom_dst.ExportToWkt() == 'MULTILINESTRING ((179.9 0.0,180 0),(-180 0,-179.9 0.0))'
+    assert ogrtest.check_feature_geometry(geom_dst, 'MULTILINESTRING ((179.9 0.0,180 0),(-180 0,-179.9 0.0))') == 0
 
 ###############################################################################
 # Test ogr.GeomTransformer()

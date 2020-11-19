@@ -28,6 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import gdaltest
 import pytest
 
 try:
@@ -186,6 +187,9 @@ def test_pixfun_mod_r():
     refds = gdal.Open(reffilename)
     assert refds is not None, ('Unable to open "%s" dataset.' % reffilename)
     refdata = refds.GetRasterBand(1).ReadAsArray()
+
+    if gdaltest.is_travis_branch('sanitize'):
+        pytest.skip()
 
     assert numpy.alltrue(data == numpy.abs(refdata))
 
