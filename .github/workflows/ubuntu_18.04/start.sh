@@ -6,6 +6,9 @@ apt-get update -y
 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     docker.io sudo wget tzdata iproute2
 
+TRAVIS=yes
+export TRAVIS
+
 LANG=en_US.UTF-8
 export LANG
 apt-get install -y locales && \
