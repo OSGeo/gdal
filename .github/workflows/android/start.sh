@@ -30,7 +30,7 @@ export CXX="ccache arm-linux-androideabi-clang++"
 export CFLAGS="-mthumb -Qunused-arguments"
 export CXXFLAGS="-mthumb -Qunused-arguments"
 
-ccache -M 500M
+ccache -M 1G
 ccache -s
 
 SCRIPT_DIR=$(dirname "$0")
