@@ -1528,7 +1528,7 @@ int CPL_STDCALL GDALGetGCPCount( GDALDatasetH hDS )
  *
  * The projection string follows the normal rules from GetProjectionRef().
  *
- * \note Startig with GDAL 3.0, this is a compatibility layer around
+ * \note Starting with GDAL 3.0, this is a compatibility layer around
  * GetGCPSpatialRef()
  *
  * @return internal projection string or "" if there are no GCPs.

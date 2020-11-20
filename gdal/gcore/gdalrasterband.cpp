@@ -323,7 +323,7 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
     }
 
 /* -------------------------------------------------------------------- */
-/*      If pixel and line spaceing are defaulted assign reasonable      */
+/*      If pixel and line spacing are defaulted assign reasonable      */
 /*      value assuming a packed buffer.                                 */
 /* -------------------------------------------------------------------- */
     if( nPixelSpace == 0 )
