@@ -2,19 +2,25 @@
 
 set -eu
 
-cd /build
-
-cd gdal
-
-export CC="ccache gcc"
-export CXX="ccache g++"
-
 if test -f /build/ccache.tar.gz; then
     echo "Restoring ccache..."
     (cd $HOME && tar xzf /build/ccache.tar.gz)
 fi
 
+cd /build
+
+wget -q https://github.com/rouault/libecwj2-3.3-builds/releases/download/v1/install-libecwj2-3.3-ubuntu-20.04.tar.gz
+(cd / && tar xvzf /build/install-libecwj2-3.3-ubuntu-20.04.tar.gz)
+echo "/opt/libecwj2-3.3/lib" > /etc/ld.so.conf.d/libecwj2-3.3.conf
+ldconfig
+
 ccache -M 200M
+ccache -s
+
+cd gdal
+
+export CC="ccache gcc"
+export CXX="ccache g++"
 
 CXXFLAGS="-std=c++17 -O1" ./configure --prefix=/usr \
     --without-libtool \
@@ -34,7 +40,8 @@ CXXFLAGS="-std=c++17 -O1" ./configure --prefix=/usr \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
     --with-kea=/usr/bin/kea-config \
     --with-tiledb \
-    --with-crypto
+    --with-crypto \
+    --with-ecw=/opt/libecwj2-3.3
 
 make "-j$(nproc)" USER_DEFS=-Werror
 (cd apps; make test_ogrsf  USER_DEFS=-Werror)
