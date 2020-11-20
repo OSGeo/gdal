@@ -34,6 +34,7 @@ sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
+import pytest
 
 
 def test_ignfheightasciigrid_1():
@@ -93,6 +94,9 @@ def test_ignfheightasciigrid_7():
 
 
 def test_ignfheightasciigrid_description_multiword_and_lf():
+
+    if gdaltest.is_travis_branch('mingw_w64'):
+        pytest.skip()
 
     filename = '/vsimem/ignfheightasciigrid_invalid'
     ok_content = b'2 3 49 50 1 1 1 0 1 0 -0. MULTI WORD\xC3\xA9\xC3\xA8\n1 2 3 4'
