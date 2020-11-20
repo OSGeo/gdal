@@ -1,13 +1,13 @@
 GDAL - Geospatial Data Abstraction Library
 ====
 
-[![Build Status](https://github.com/OSGeo/gdal/workflows/Ubuntu%2020.04%20build/badge.svg)
-[![Build Status](https://github.com/OSGeo/gdal/workflows/Ubuntu%2018.04%20build/badge.svg)
-[![Build Status](https://github.com/OSGeo/gdal/workflows/Ubuntu%2018.04%2032bit%20build/badge.svg)
-[![Build Status](https://github.com/OSGeo/gdal/workflows/MacOS%20build/badge.svg)
-[![Build Status](https://github.com/OSGeo/gdal/workflows/Windows%20builds/badge.svg)
-[![Build Status](https://github.com/OSGeo/gdal/workflows/Android%20builds/badge.svg)
-[![Build Status](https://github.com/OSGeo/gdal/workflows/ASAN%20build/badge.svg)
+![Build Status](https://github.com/OSGeo/gdal/workflows/Ubuntu%2020.04%20build/badge.svg)
+![Build Status](https://github.com/OSGeo/gdal/workflows/Ubuntu%2018.04%20build/badge.svg)
+![Build Status](https://github.com/OSGeo/gdal/workflows/Ubuntu%2018.04%2032bit%20build/badge.svg)
+![Build Status](https://github.com/OSGeo/gdal/workflows/MacOS%20build/badge.svg)
+![Build Status](https://github.com/OSGeo/gdal/workflows/Windows%20builds/badge.svg)
+![Build Status](https://github.com/OSGeo/gdal/workflows/Android%20build/badge.svg)
+![Build Status](https://github.com/OSGeo/gdal/workflows/ASAN%20build/badge.svg)
 [![Build Status](https://travis-ci.com/OSGeo/gdal.svg?branch=master)](https://travis-ci.com/OSGeo/gdal)
 [![Build status](https://ci.appveyor.com/api/projects/status/jtwx0pcr0y01i17p/branch/master?svg=true)](https://ci.appveyor.com/project/OSGeo/gdal)
 [![Build Status](https://scan.coverity.com/projects/749/badge.svg?flat=1)](https://scan.coverity.com/projects/gdal)
