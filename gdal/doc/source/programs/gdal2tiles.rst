@@ -42,7 +42,7 @@ can publish a picture without proper georeferencing too.
 .. note::
 
     Inputs with non-Byte data type (i.e. ``Int16``, ``UInt16``,...) will be clamped to
-    the ``Byte`` data type, causing wrong results. To awoid this it is necessary to
+    the ``Byte`` data type, causing wrong results. To avoid this it is necessary to
     rescale input to the ``Byte`` data type using `gdal_translate` utility.
     
 .. note::
