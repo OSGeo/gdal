@@ -5,7 +5,7 @@ Vector API tutorial
 ================================================================================
 
 This document is intended to document using the OGR C++ classes to read
-and write data from a file.  It is strongly advised that the read first
+and write data from a file.  It is strongly advised that the reader first
 review the :ref:`vector_data_model` document describing
 the key classes and their roles in OGR.
 
@@ -126,7 +126,7 @@ to call :cpp:func:`OGRLayer::ResetReading` to ensure we are starting at the begi
 the layer.  We iterate through all the features in the layer using
 OGRLayer::GetNextFeature().  It will return NULL when we run out of features.
 
-With GDAL > 2.3 and C++ :
+With GDAL < 2.3 and C++ :
 
 .. code-block:: c++
 
@@ -137,7 +137,7 @@ With GDAL > 2.3 and C++ :
     {
 
 
-With GDAL > 2.3 and C :
+With GDAL < 2.3 and C :
 
 .. code-block:: c
 
@@ -178,7 +178,7 @@ With GDAL 2.3 and C++11:
         }
     }
 
-With GDAL > 2.3 and C++ :
+With GDAL < 2.3 and C++ :
 
 .. code-block:: c
 
@@ -386,7 +386,7 @@ the following.
     OGR_FOR_EACH_FEATURE_END(hFeature)
 
 
-For GDAL > 2.3, as the :cpp:func:`OGRLayer::GetNextFeature` method
+For GDAL < 2.3, as the :cpp:func:`OGRLayer::GetNextFeature` method
 returns a copy of the feature that is now owned by us.  So at the end of
 use we must free the feature.  We could just "delete" it, but this can cause
 problems in windows builds where the GDAL DLL has a different "heap" from the
@@ -1302,8 +1302,6 @@ In Python :
         feat.SetGeomFieldDirectly( "PointField2",
             ogr.CreateGeometryFromWkt( "POINT (500000 4500000)" ) )
 
-        if lyr.CreateFeature( feat ) != 0 )
-        {
+        if lyr.CreateFeature( feat ) != 0:
             print( "Failed to create feature.\n" );
             sys.exit( 1 );
-        }
