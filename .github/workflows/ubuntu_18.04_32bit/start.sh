@@ -6,8 +6,10 @@ apt-get update -y
 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     sudo wget tzdata
 
-TRAVIS=32bit
+TRAVIS=yes
 export TRAVIS
+TRAVIS_BRANCH=32bit
+export TRAVIS_BRANCH
 
 LANG=en_US.UTF-8
 export LANG

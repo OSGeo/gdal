@@ -7,8 +7,10 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     sudo wget tzdata
 
 # Emulate 'sanitize' Travis-CI target for the purpose of test skipping
-TRAVIS=sanitize
+TRAVIS=yes
 export TRAVIS
+TRAVIS_BRANCH=sanitize
+export TRAVIS_BRANCH
 
 LANG=en_US.UTF-8
 export LANG
