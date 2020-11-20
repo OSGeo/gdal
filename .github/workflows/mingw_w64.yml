@@ -21,4 +21,4 @@ jobs:
           restore-keys: ${{ runner.os }}-cache-mingw_w64-
 
       - name: Build
-        run: docker run --privileged=true -e CI -e WORK_DIR="$PWD" -v $PWD:$PWD -v /var/run/docker.sock:/var/run/docker.sock ubuntu:14.04 $PWD/.github/workflows/mingw_w64/start.sh
+        run: docker run --privileged=true -e CI -e WORK_DIR="$PWD" -v $PWD:$PWD -v /var/run/docker.sock:/var/run/docker.sock ubuntu:18.04 $PWD/.github/workflows/mingw_w64/start.sh

@@ -1246,6 +1246,10 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
         return CPLErrorIO("writing feature");
     if (m_bCreateSpatialIndexAtClose) {
         const auto item = std::make_shared<FeatureItem>();
+#if defined(__MINGW32__) && __GNUC__ >= 7
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
         item->size = static_cast<uint32_t>(fbb.GetSize());
         item->offset = m_writeOffset;
         item->nodeItem = {
@@ -1255,6 +1259,9 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
             psEnvelope.MaxY,
             0
         };
+#if defined(__MINGW32__) && __GNUC__ >= 7
+#pragma GCC diagnostic pop
+#endif
         m_featureItems.push_back(item);
     }
     m_writeOffset += c;

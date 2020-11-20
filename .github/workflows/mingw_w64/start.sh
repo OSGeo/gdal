@@ -2,7 +2,24 @@
 
 set -e
 
-dpkg --add-architecture i386
+SCRIPT_DIR=$(dirname "$0")
+case $SCRIPT_DIR in
+    "/"*)
+        ;;
+    ".")
+        SCRIPT_DIR=$(pwd)
+        ;;
+    *)
+        SCRIPT_DIR=$(pwd)/$(dirname "$0")
+        ;;
+esac
+
+# Emulate 'mingw_w64' Travis-CI target for the purpose of test skipping
+TRAVIS=yes
+export TRAVIS
+TRAVIS_BRANCH=mingw_w64
+export TRAVIS_BRANCH
+
 apt-get update -y
 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     sudo wget tzdata
@@ -17,41 +34,35 @@ if test -f "$WORK_DIR/ccache.tar.gz"; then
     (cd $HOME && tar xzf "$WORK_DIR/ccache.tar.gz")
 fi
 
-sudo apt-get install -y \
+# Install python
+sh $SCRIPT_DIR/install-python.sh
+export WINEPREFIX=$HOME/.wine64
+
+sudo apt-get install -y --no-install-recommends \
     ccache \
     binutils-mingw-w64-x86-64 \
     gcc-mingw-w64-x86-64 \
     g++-mingw-w64-x86-64 \
     g++-mingw-w64 \
     mingw-w64-tools \
-    wine1.4-amd64 \
     make sqlite3 \
     curl
-
 
 export CCACHE_CPP2=yes
 export CC="ccache x86_64-w64-mingw32-gcc"
 export CXX="ccache x86_64-w64-mingw32-g++"
 
+# Select posix/pthread for std::mutex
+update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
+update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+
 ccache -M 1G
 ccache -s
 
-wine64 cmd /c dir
-ln -s /usr/lib/gcc/x86_64-w64-mingw32/4.8/libstdc++-6.dll  $HOME/.wine/drive_c/windows
-ln -s /usr/lib/gcc/x86_64-w64-mingw32/4.8/libgcc_s_sjlj-1.dll  $HOME/.wine/drive_c/windows
-ln -s /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll  $HOME/.wine/drive_c/windows
+ln -sf /usr/lib/gcc/x86_64-w64-mingw32/7.3-posix/libstdc++-6.dll $WINEPREFIX/drive_c/windows/
+ln -sf /usr/lib/gcc/x86_64-w64-mingw32/7.3-posix/libgcc_s_seh-1.dll $WINEPREFIX/drive_c/windows/
+ln -sf /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll $WINEPREFIX/drive_c/windows/
 
-SCRIPT_DIR=$(dirname "$0")
-case $SCRIPT_DIR in
-    "/"*)
-        ;;
-    ".")
-        SCRIPT_DIR=$(pwd)
-        ;;
-    *)
-        SCRIPT_DIR=$(pwd)/$(dirname "$0")
-        ;;
-esac
 $SCRIPT_DIR/../common_install.sh
 
 # build sqlite3
@@ -70,16 +81,15 @@ make USER_DEFS="-Wextra -Werror" -j3
 cd apps
 make USER_DEFS="-Wextra -Werror" test_ogrsf.exe
 cd ..
-ln -sf $PWD/.libs/libgdal-*.dll $HOME/.wine/drive_c/windows
-ln -sf /tmp/install/bin/libproj-15.dll $HOME/.wine/drive_c/windows
-ln -sf /tmp/install/bin/libsqlite3-0.dll $HOME/.wine/drive_c/windows
-# Python bindings
-wget https://www.python.org/ftp/python/2.7.15/python-2.7.15.amd64.msi
-wine64 msiexec /i python-2.7.15.amd64.msi
+ln -sf $PWD/.libs/libgdal-*.dll $WINEPREFIX/drive_c/windows
+ln -sf /tmp/install/bin/libproj-15.dll $WINEPREFIX/drive_c/windows
+ln -sf /tmp/install/bin/libsqlite3-0.dll $WINEPREFIX/drive_c/windows
+
 cd swig/python
-gendef $HOME/.wine/drive_c/Python27/python27.dll
-x86_64-w64-mingw32-dlltool --dllname $HOME/.wine/drive_c/Python27/python27.dll --input-def python27.def --output-lib $HOME/.wine/drive_c/Python27/libs/libpython27.a
-CXX=x86_64-w64-mingw32-g++ bash fallback_build_mingw32_under_unix.sh 
+ln -s "$WINEPREFIX/drive_c/users/root/Local Settings/Application Data/Programs/Python/Python37" $WINEPREFIX/drive_c/Python37
+gendef $WINEPREFIX/drive_c/Python37/python37.dll
+x86_64-w64-mingw32-dlltool --dllname $WINEPREFIX/drive_c/Python37/python37.dll --input-def python37.def --output-lib $WINEPREFIX/drive_c/Python37/libs/libpython37.a
+bash fallback_build_mingw32_under_unix_py37.sh 
 cd ../..
 
 ccache -s
@@ -92,27 +102,20 @@ rm -f "$WORK_DIR/ccache.tar.gz"
 wine64 apps/gdalinfo.exe --version
 cd ../autotest
 # Does not work under wine
-rm gcore/rfc30.py
-rm gnm/gnm_test.py
+rm -f gcore/rfc30.py
+rm -f pyscripts/data/test_utf8*
+rm -rf pyscripts/data/漢字
 
-# For some reason this crashes in the matrix .travis.yml but not in standalone branch
-rm pyscripts/test_gdal2tiles.py
-
-export PYTHON_DIR="$HOME/.wine/drive_c/Python27"
+export PYTHON_DIR="$WINEPREFIX/drive_c/Python37"
 
 # install test dependencies
-curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-wine64 "$PYTHON_DIR/python.exe" get-pip.py
-rm get-pip.py
-# running pip2.7.exe doesn't seem to work in wine. workaround is use `-m pip`
-# https://forum.winehq.org/viewtopic.php?f=2&t=22522
-wine64 "$PYTHON_DIR/python.exe" -m pip install -U -r ./requirements.txt
-# same issue with running pytest.exe
+wine64 "$PYTHON_DIR/Scripts/pip.exe" install -U -r ./requirements.txt
+
 export PYTEST="wine64 $PYTHON_DIR/python.exe -m pytest -vv -p no:sugar --color=no"
 
 
 # Run all the Python autotests
 GDAL_DATA=$PWD/../gdal/data \
-    PYTHONPATH=$PWD/../gdal/swig/python/build/lib.win-amd64-2.7 \
+    PYTHONPATH=$PWD/../gdal/swig/python/build/lib.win-amd64-3.7 \
     PATH=$PWD/../gdal:$PWD/../gdal/apps/.libs:$PWD:$PATH \
     $PYTEST
