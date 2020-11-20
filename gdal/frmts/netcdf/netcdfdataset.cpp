@@ -5748,6 +5748,33 @@ CPL_UNUSED
 #endif
     }
 
+    // As a last resort, try opening the file through libnetcdf
+    // and let the library determine if it's a valid file.
+    // For instance, this will handle the case where the netCDF4 file is
+    // encoded as HDF5, and the signature is not at the start of the file.
+
+    // Only do this check for specific file extensions.
+    // Some formats like sqlite3 do not like having their files opened
+    // behind their back (see test_ogr_gpkg_wal for example).
+    const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
+    if( (EQUAL(pszExtension, "nc") || EQUAL(pszExtension, "cdf") ||
+          EQUAL(pszExtension, "nc2") || EQUAL(pszExtension, "nc4") ||
+          EQUAL(pszExtension, "nc3") || EQUAL(pszExtension, "grd")) )
+    {
+        int ncid, fmtid, inq_nc_props;
+        if (nc_open(poOpenInfo->pszFilename, 0, &ncid) == NC_NOERR)
+        {
+            // Only detect netCDF4 for now.
+            inq_nc_props = nc_inq_att (ncid, NC_GLOBAL, "_NCProperties", nullptr, nullptr);
+            nc_inq_format (ncid, &fmtid);
+            if ((inq_nc_props == NC_NOERR) && (fmtid == NC_FORMAT_NETCDF4))
+            {
+                nc_close (ncid);
+                return NCDF_FORMAT_NC4;
+            }
+        }
+    }
+
     return NCDF_FORMAT_NONE;
 }
 
