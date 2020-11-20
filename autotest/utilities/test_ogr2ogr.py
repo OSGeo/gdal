@@ -176,7 +176,10 @@ def check_if_has_ogr_pg():
     path = '../ogr'
     if path not in sys.path:
         sys.path.append(path)
-    import ogr_pg
+    try:
+        import ogr_pg
+    except:
+        pytest.skip()
     ogr_pg.test_ogr_pg_1()
     if gdaltest.pg_ds is None:
         pytest.skip()

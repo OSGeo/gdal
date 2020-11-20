@@ -182,7 +182,10 @@ def test_ogr2ogr_py_5():
 
 def test_ogr2ogr_py_6():
 
-    import ogr_pg
+    try:
+        import ogr_pg
+    except:
+        pytest.skip()
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
@@ -212,7 +215,10 @@ def test_ogr2ogr_py_6():
 
 def test_ogr2ogr_py_7():
 
-    import ogr_pg
+    try:
+        import ogr_pg
+    except:
+        pytest.skip()
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
