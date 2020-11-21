@@ -126,7 +126,11 @@ with control information.
 
 .. option:: -tr <xres> <yres>
 
-    Set output file resolution (in target georeferenced units)
+    Set output file resolution (in target georeferenced units).
+
+    If not specified (or not deduced from -te and -ts), gdalwarp will generate
+    an output raster with xres=yres, and that even when using gdalwarp in scenarios
+    not involving reprojection.
 
 .. option:: -tap
 
