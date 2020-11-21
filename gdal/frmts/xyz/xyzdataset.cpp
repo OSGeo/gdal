@@ -1315,14 +1315,14 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
         dfLastY = dfY;
     }
 
-    if (adfStepX.size() != 1)
+    if (adfStepX.size() != 1 || adfStepX[0] == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Couldn't determine X spacing");
         VSIFCloseL(fp);
         return nullptr;
     }
 
-    if (adfStepY.size() != 1)
+    if (adfStepY.size() != 1 || adfStepY[0] == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Couldn't determine Y spacing");
         VSIFCloseL(fp);
