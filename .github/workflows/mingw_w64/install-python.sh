@@ -34,7 +34,10 @@ add-apt-repository -y ppa:cybermax-dexter/sdl2-backport
 echo "-------- Install wine-dev ------"
 
 apt install -y  --no-install-recommends \
-    winehq-devel \
+    winehq-devel=5.21~bionic \
+    wine-devel=5.21~bionic \
+    wine-devel-i386=5.21~bionic \
+    wine-devel-amd64=5.21~bionic \
     winetricks \
     xvfb        # This is for making a dummy X server disply 
 
