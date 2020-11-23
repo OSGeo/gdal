@@ -6147,7 +6147,7 @@ static void GWKAverageOrModeThread( void* pData)
                                     dfTotalImag += 2. * dfValueRealTmp * dfValueImagTmp * dfWeight;
                                 }
                                 else
-                                    dfTotalReal += dfValueRealTmp * dfWeight;
+                                    dfTotalReal += dfValueRealTmp * dfValueRealTmp * dfWeight;
                             }
                         }
                     }
@@ -6162,7 +6162,7 @@ static void GWKAverageOrModeThread( void* pData)
                             dfValueImag = dfI / fabs(dfI) * sqrt((-dfR + sqrt(dfR * dfR + dfI * dfI)) / 2.);
                         }
                         else
-                            dfValueReal = dfTotalReal / dfTotalWeight;
+                            dfValueReal = sqrt(dfTotalReal / dfTotalWeight);
 
                         dfBandDensity = 1;
                         bHasFoundDensity = true;
