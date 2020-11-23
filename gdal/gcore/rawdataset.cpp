@@ -1389,10 +1389,21 @@ bool RAWDatasetCheckMemoryUsage(int nXSize, int nYSize, int nBands,
     // Currently each RawRasterBand need to allocate nLineSize
     GIntBig nLineSize =
         static_cast<GIntBig>(std::abs(nPixelOffset)) * (nXSize - 1) + nDTSize;
-    constexpr int knMAX_BUFFER_MEM = INT_MAX / 4;
-    if( nBands > 0 && nLineSize > knMAX_BUFFER_MEM / nBands )
+#if SIZEOF_VOIDP == 8
+    const char* pszDefault = "1024";
+#else
+    const char* pszDefault = "512";
+#endif
+    constexpr int MB_IN_BYTES = 1024 * 1024;
+    const GIntBig nMAX_BUFFER_MEM =
+        static_cast<GIntBig>(atoi(CPLGetConfigOption("RAW_MEM_ALLOC_LIMIT_MB", pszDefault))) * MB_IN_BYTES;
+    if( nBands > 0 && nLineSize > nMAX_BUFFER_MEM / nBands )
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Too much memory needed");
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 CPL_FRMT_GIB " MB of RAM would be needed to open the dataset. If you are "
+                 "confortable with this, you can set the RAW_MEM_ALLOC_LIMIT_MB "
+                 "configuration option to that value or above",
+                 (static_cast<GIntBig>(nLineSize) * nBands + MB_IN_BYTES - 1) / MB_IN_BYTES);
         return false;
     }
 
