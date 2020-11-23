@@ -4942,6 +4942,26 @@ def test_netcdf_sg1_8_max_variable_with_max_width_string_field_no_warning():
     gdal.Unlink('tmp/poly.nc')
 
 
+###############################################################################
+# Test opening a netCDF 4 file whose HDF5 signature is not at the beginning
+
+
+def test_netcdf_hdf5_signature_not_at_beginning():
+
+    if gdaltest.netcdf_drv is None:
+        pytest.skip()
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    # Works at least with since netCDF 4.7
+    version = gdaltest.netcdf_drv_version.split('.')
+    if int(version[0]) * 100 + int(version[1]) < 407:
+        pytest.skip()
+
+    ds = gdal.Open('data/netcdf/byte_hdf5_starting_at_offset_1024.nc')
+    assert ds is not None
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.

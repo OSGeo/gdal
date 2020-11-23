@@ -5664,6 +5664,8 @@ CPL_UNUSED
     }
 #endif
 
+    constexpr char achHDF5Signature[] = "\211HDF\r\n\032\n";
+
     if( STARTS_WITH_CI(pszHeader, "CDF\001") )
     {
         // In case the netCDF driver is registered before the GMT driver,
@@ -5694,7 +5696,7 @@ CPL_UNUSED
     {
         return NCDF_FORMAT_NC2;
     }
-    else if( STARTS_WITH_CI(pszHeader, "\211HDF\r\n\032\n") )
+    else if( STARTS_WITH_CI(pszHeader, achHDF5Signature) )
     {
         // Requires netCDF-4/HDF5 support in libnetcdf (not just libnetcdf-v4).
         // If HDF5 is not supported in GDAL, this driver will try to open the
@@ -5746,6 +5748,34 @@ CPL_UNUSED
 #else
         return NCDF_FORMAT_HDF4;
 #endif
+    }
+
+    // The HDF5 signature of netCDF 4 files can be at offsets 512, 1024, 2048,
+    // etc.
+    const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
+    if( poOpenInfo->fpL != nullptr &&
+        (EQUAL(pszExtension, "nc") || EQUAL(pszExtension, "cdf") ||
+         EQUAL(pszExtension, "nc4")) )
+    {
+        vsi_l_offset nOffset = 512;
+        for(int i = 0; i < 64; i++)
+        {
+            GByte abyBuf[8];
+            if( VSIFSeekL(poOpenInfo->fpL, nOffset, SEEK_SET) != 0 ||
+                VSIFReadL(abyBuf, 1, 8, poOpenInfo->fpL) != 8 )
+            {
+                break;
+            }
+            if( memcmp(abyBuf, achHDF5Signature, 8) == 0 )
+            {
+#ifdef NETCDF_HAS_NC4
+                return NCDF_FORMAT_NC4;
+#else
+                return NCDF_FORMAT_HDF5;
+#endif
+            }
+            nOffset *= 2;
+        }
     }
 
     return NCDF_FORMAT_NONE;
