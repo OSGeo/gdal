@@ -1062,6 +1062,8 @@ GDALDatasetH GDALWarpIndirect( const char *pszDest,
             psOptions->papszCreateOptions, "COMPRESS=LZW");
         psOptions->papszCreateOptions = CSLAddString(
             psOptions->papszCreateOptions, "TILED=YES");
+        psOptions->papszCreateOptions = CSLAddString(
+            psOptions->papszCreateOptions, "BIGTIFF=YES");
         psOptions->pfnProgress = myScaledProgress;
         dfStartPctCreateCopy = 2. / 3;
         psOptions->pProgressData = GDALCreateScaledProgress(
