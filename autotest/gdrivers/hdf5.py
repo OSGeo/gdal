@@ -489,3 +489,17 @@ def test_hdf5_single_dim():
     assert b.XSize == 20
     assert b.GetBlockSize() == [20, 1]
     assert b.Checksum() == 231
+
+
+###############################################################################
+# Test opening a file whose HDF5 signature is not at the beginning
+
+
+def test_hdf5_signature_not_at_beginning():
+
+    filename = '/vsimem/test.h5'
+    gdal.FileFromMemBuffer(filename,
+                           open('data/netcdf/byte_hdf5_starting_at_offset_1024.nc', 'rb').read())
+    ds = gdal.Open(filename)
+    assert ds is not None
+    gdal.Unlink(filename)

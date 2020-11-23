@@ -372,10 +372,32 @@ int HDF5Dataset::Identify( GDALOpenInfo * poOpenInfo )
     if( !poOpenInfo->pabyHeader )
         return FALSE;
 
+    const CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
+
+    const auto IsRecognizedByNetCDFDriver = [&osExt, poOpenInfo]()
+    {
+        if( (EQUAL(osExt, "NC") ||
+             EQUAL(osExt, "CDF") ||
+             EQUAL(osExt, "NC4")) &&
+            GDALGetDriverByName("netCDF") != nullptr )
+        {
+            const char *const apszAllowedDriver[] = { "netCDF", nullptr };
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            GDALDatasetH hDS = GDALOpenEx(poOpenInfo->pszFilename,
+                                          GDAL_OF_RASTER | GDAL_OF_VECTOR,
+                                          apszAllowedDriver, nullptr, nullptr);
+            CPLPopErrorHandler();
+            if( hDS )
+            {
+                GDALClose(hDS);
+                return true;
+            }
+        }
+        return false;
+    };
+
     if( memcmp(poOpenInfo->pabyHeader, achSignature, 8) == 0 )
     {
-        CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
-
         // The tests to avoid opening KEA and BAG drivers are not
         // necessary when drivers are built in the core lib, as they
         // are registered after HDF5, but in the case of plugins, we
@@ -395,22 +417,9 @@ int HDF5Dataset::Identify( GDALOpenInfo * poOpenInfo )
 
         // Avoid opening NC files if the netCDF driver is available and
         // they are recognized by it.
-        if( (EQUAL(osExt, "NC") ||
-             EQUAL(osExt, "CDF") ||
-             EQUAL(osExt, "NC4")) &&
-            GDALGetDriverByName("netCDF") != nullptr )
+        if( IsRecognizedByNetCDFDriver() )
         {
-            const char *const apszAllowedDriver[] = { "netCDF", nullptr };
-            CPLPushErrorHandler(CPLQuietErrorHandler);
-            GDALDatasetH hDS = GDALOpenEx(poOpenInfo->pszFilename,
-                                          GDAL_OF_RASTER | GDAL_OF_VECTOR,
-                                          apszAllowedDriver, nullptr, nullptr);
-            CPLPopErrorHandler();
-            if( hDS )
-            {
-                GDALClose(hDS);
-                return FALSE;
-            }
+            return FALSE;
         }
 
         return TRUE;
@@ -420,6 +429,35 @@ int HDF5Dataset::Identify( GDALOpenInfo * poOpenInfo )
     {
         if( H5Fis_hdf5(poOpenInfo->pszFilename) )
           return TRUE;
+    }
+
+    // The HDF5 signature can be at offsets 512, 1024, 2048, etc.
+    if( poOpenInfo->fpL != nullptr &&
+        (EQUAL(osExt, "h5") || EQUAL(osExt, "hdf5") ||
+         EQUAL(osExt, "nc") || EQUAL(osExt, "cdf") || EQUAL(osExt, "nc4")) )
+    {
+        vsi_l_offset nOffset = 512;
+        for(int i = 0; i < 64; i++)
+        {
+            GByte abyBuf[8];
+            if( VSIFSeekL(poOpenInfo->fpL, nOffset, SEEK_SET) != 0 ||
+                VSIFReadL(abyBuf, 1, 8, poOpenInfo->fpL) != 8 )
+            {
+                break;
+            }
+            if( memcmp(abyBuf, achSignature, 8) == 0 )
+            {
+                // Avoid opening NC files if the netCDF driver is available and
+                // they are recognized by it.
+                if( IsRecognizedByNetCDFDriver() )
+                {
+                    return FALSE;
+                }
+
+                return TRUE;
+            }
+            nOffset *= 2;
+        }
     }
 
     return FALSE;
