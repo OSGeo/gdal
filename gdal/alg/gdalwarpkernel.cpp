@@ -602,7 +602,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  * Resampling algorithm.
  *
  * The resampling algorithm to use.  One of GRA_NearestNeighbour, GRA_Bilinear,
- * GRA_Cubic, GRA_CubicSpline, GRA_Lanczos, GRA_Average, GRA_AverageQuadratic,
+ * GRA_Cubic, GRA_CubicSpline, GRA_Lanczos, GRA_Average, GRA_RMS,
  * GRA_Mode or GRA_Sum.
  *
  * This field is required. GDT_NearestNeighbour may be used as a default
@@ -1325,7 +1325,7 @@ CPLErr GDALWarpKernel::PerformWarp()
     if( eResample == GRA_Average )
         return GWKAverageOrMode( this );
 
-    if( eResample == GRA_AverageQuadratic )
+    if( eResample == GRA_RMS )
         return GWKAverageOrMode( this );
 
     if( eResample == GRA_Mode )
@@ -5805,9 +5805,9 @@ static void GWKAverageOrModeThread( void* pData)
     {
         nAlgo = GWKAOM_Average;
     }
-    else if( poWK->eResample == GRA_AverageQuadratic )
+    else if( poWK->eResample == GRA_RMS )
     {
-        nAlgo = GWKAOM_AverageQuadratic;
+        nAlgo = GWKAOM_RMS;
     }
     else if( poWK->eResample == GRA_Mode )
     {
@@ -6110,8 +6110,8 @@ static void GWKAverageOrModeThread( void* pData)
                         bHasFoundDensity = true;
                     }
                 }  // GRA_Average.
-                // poWK->eResample == GRA_AverageQuadratic.
-                if( nAlgo == GWKAOM_AverageQuadratic )
+                // poWK->eResample == GRA_RMS.
+                if( nAlgo == GWKAOM_RMS )
                 {
                     double dfTotalReal = 0.0;
                     double dfTotalImag = 0.0;
@@ -6167,7 +6167,7 @@ static void GWKAverageOrModeThread( void* pData)
                         dfBandDensity = 1;
                         bHasFoundDensity = true;
                     }
-                }  // GRA_AverageQuadratic.
+                }  // GRA_RMS.
                 else if( nAlgo == GWKAOM_Sum )
                 // poWK->eResample == GRA_Sum
                 {

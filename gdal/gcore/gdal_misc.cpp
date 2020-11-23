@@ -3997,8 +3997,8 @@ GDALRIOResampleAlg GDALRasterIOGetResampleAlg(const char* pszResampling)
         eResampleAlg = GRIORA_Lanczos;
     else if( EQUAL(pszResampling, "AVERAGE") )
         eResampleAlg = GRIORA_Average;
-    else if( EQUAL(pszResampling, "AVERAGE_QUADRATIC") )
-        eResampleAlg = GRIORA_AverageQuadratic;
+    else if( EQUAL(pszResampling, "RMS") )
+        eResampleAlg = GRIORA_RMS;
     else if( EQUAL(pszResampling, "MODE") )
         eResampleAlg = GRIORA_Mode;
     else if( EQUAL(pszResampling, "GAUSS") )
@@ -4029,8 +4029,8 @@ const char* GDALRasterIOGetResampleAlg(GDALRIOResampleAlg eResampleAlg)
             return "Lanczos";
         case GRIORA_Average:
             return "Average";
-        case GRIORA_AverageQuadratic:
-            return "AverageQuadratic";
+        case GRIORA_RMS:
+            return "RMS";
         case GRIORA_Mode:
             return "Mode";
         case GRIORA_Gauss:

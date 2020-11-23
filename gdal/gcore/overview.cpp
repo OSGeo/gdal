@@ -2809,7 +2809,7 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                         static_cast<float>(dfRatio);
                 }
             }
-            else if( STARTS_WITH_CI(pszResampling, "AVERAGE_QUADRATIC") )
+            else if( STARTS_WITH_CI(pszResampling, "RMS") )
             {
                 double dfTotalR = 0.0;
                 double dfTotalI = 0.0;

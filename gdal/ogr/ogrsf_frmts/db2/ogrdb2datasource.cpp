@@ -2517,7 +2517,7 @@ static const WarpResamplingAlg asResamplingAlg[] =
     { "LANCZOS", GRA_Lanczos },
     { "MODE", GRA_Mode },
     { "AVERAGE", GRA_Average },
-    { "AVERAGE_QUADRATIC", GRA_AverageQuadratic },
+    { "RMS", GRA_RMS },
 };
 
 static void DumpStringList(char **papszStrList)

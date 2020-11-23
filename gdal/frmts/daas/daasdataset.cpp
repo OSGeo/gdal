@@ -2222,9 +2222,9 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     {
         oTargetModel.Add("sampling-algo", "AVERAGE");
     }
-    else if( poGDS->m_eCurrentResampleAlg == GRIORA_AverageQuadratic )
+    else if( poGDS->m_eCurrentResampleAlg == GRIORA_RMS )
     {
-        oTargetModel.Add("sampling-algo", "AVERAGE_QUADRATIC");
+        oTargetModel.Add("sampling-algo", "RMS");
     }
     else
     {

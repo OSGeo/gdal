@@ -209,7 +209,7 @@ typedef enum
     /*! Cubic B-Spline Approximation */     GRIORA_CubicSpline = 3,
     /*! Lanczos windowed sinc interpolation (6x6 kernel) */ GRIORA_Lanczos = 4,
     /*! Average */                          GRIORA_Average = 5,
-    /*! Average */                          GRIORA_AverageQuadratic = 14,
+    /*! Root Mean Square (quadratic mean) */GRIORA_RMS = 14,
     /*! Mode (selects the value which appears most often of all the sampled points) */
                                             GRIORA_Mode = 6,
     /*! Gauss blurring */                   GRIORA_Gauss = 7
@@ -225,7 +225,7 @@ typedef enum {
   /*! Cubic B-Spline Approximation (4x4 kernel) */     GRA_CubicSpline=3,
   /*! Lanczos windowed sinc interpolation (6x6 kernel) */ GRA_Lanczos=4,
   /*! Average (computes the average of all non-NODATA contributing pixels) */ GRA_Average=5,
-  /*! Average Quadratic(computes the RMS of all non-NODATA contributing pixels) */ GRA_AverageQuadratic=14,
+  /*! Root Mean Square (computes the RMS (Quadratic Mean) of all non-NODATA contributing pixels) */ GRA_RMS=14,
   /*! Mode (selects the value which appears most often of all the sampled points) */ GRA_Mode=6,
   /*  GRA_Gauss=7 reserved. */
   /*! Max (selects maximum of all non-NODATA contributing pixels) */ GRA_Max=8,
@@ -233,6 +233,8 @@ typedef enum {
   /*! Med (selects median of all non-NODATA contributing pixels) */ GRA_Med=10,
   /*! Q1 (selects first quartile of all non-NODATA contributing pixels) */ GRA_Q1=11,
   /*! Q3 (selects third quartile of all non-NODATA contributing pixels) */ GRA_Q3=12
+  /*! NOTE: values 13 is reserved for sum */
+
 } GDALResampleAlg;
 
 %rename (AsyncStatusType) GDALAsyncStatusType;
