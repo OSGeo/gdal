@@ -133,11 +133,11 @@ typedef enum
     /*! Cubic B-Spline Approximation (4x4 kernel) */    GRIORA_CubicSpline = 3,
     /*! Lanczos windowed sinc interpolation (6x6 kernel) */ GRIORA_Lanczos = 4,
     /*! Average */                                      GRIORA_Average = 5,
-    /*! Average */                                      GRIORA_AverageQuadratic = 13,
+    /*! Average Quadratic (RMS) */                      GRIORA_AverageQuadratic = 14,
     /*! Mode (selects the value which appears most often of all the sampled points) */
                                                         GRIORA_Mode = 6,
     /*! Gauss blurring */                               GRIORA_Gauss = 7,
-    /* NOTE: values 8 to 12 are reserved for max,min,med,Q1,Q3 */
+    /* NOTE: values 8 to 13 are reserved for max,min,med,Q1,Q3,sum */
 /*! @cond Doxygen_Suppress */
                                                         GRIORA_LAST = GRIORA_Gauss
 /*! @endcond */

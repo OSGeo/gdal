@@ -62,7 +62,7 @@ typedef enum {
   /*! Q1 (selects first quartile of all non-NODATA contributing pixels) */ GRA_Q1=11,
   /*! Q3 (selects third quartile of all non-NODATA contributing pixels) */ GRA_Q3=12,
   /*! Sum (computes the weighed sum of all non-NODATA contributing pixels). Added in GDAL 3.1 */ GRA_Sum=13,
-  /*! Average (computes the weighted quadratic average of all non-NODATA contributing pixels) */ GRA_AverageQuadratic=14
+  /*! AverageQuadratic (computes the weighted quadratic average of all non-NODATA contributing pixels) */ GRA_AverageQuadratic=14
 } GDALResampleAlg;
 
 /*! GWKAverageOrMode Algorithm */

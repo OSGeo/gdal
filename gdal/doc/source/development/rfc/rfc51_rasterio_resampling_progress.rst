@@ -105,7 +105,6 @@ The following resampling algorithms are available :
        /*! Cubic B-Spline Approximation (4x4 kernel) */    GRIORA_CubicSpline = 3,
        /*! Lanczos windowed sinc interpolation (6x6 kernel) */ GRIORA_Lanczos = 4,
        /*! Average */                                      GRIORA_Average = 5,
-       /*! Average */                                      GRIORA_AverageQuadratic = 13,
        /*! Mode (selects the value which appears most often of all the sampled points) */
                                                            GRIORA_Mode = 6,
        /*! Gauss blurring */                               GRIORA_Gauss = 7
