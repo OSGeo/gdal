@@ -209,6 +209,7 @@ typedef enum
     /*! Cubic B-Spline Approximation */     GRIORA_CubicSpline = 3,
     /*! Lanczos windowed sinc interpolation (6x6 kernel) */ GRIORA_Lanczos = 4,
     /*! Average */                          GRIORA_Average = 5,
+    /*! Average */                          GRIORA_AverageQuadratic = 13,
     /*! Mode (selects the value which appears most often of all the sampled points) */
                                             GRIORA_Mode = 6,
     /*! Gauss blurring */                   GRIORA_Gauss = 7
@@ -223,6 +224,7 @@ typedef enum {
   /*! Cubic B-Spline Approximation (4x4 kernel) */     GRA_CubicSpline=3,
   /*! Lanczos windowed sinc interpolation (6x6 kernel) */ GRA_Lanczos=4,
   /*! Average (computes the average of all non-NODATA contributing pixels) */ GRA_Average=5,
+  /*! Average (computes the average of all non-NODATA contributing pixels) */ GRA_AverageQuadratic=13,
   /*! Mode (selects the value which appears most often of all the sampled points) */ GRA_Mode=6,
   /*  GRA_Gauss=7 reserved. */
   /*! Max (selects maximum of all non-NODATA contributing pixels) */ GRA_Max=8,

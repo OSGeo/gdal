@@ -602,7 +602,8 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  * Resampling algorithm.
  *
  * The resampling algorithm to use.  One of GRA_NearestNeighbour, GRA_Bilinear,
- * GRA_Cubic, GRA_CubicSpline, GRA_Lanczos, GRA_Average, GRA_Mode or GRA_Sum.
+ * GRA_Cubic, GRA_CubicSpline, GRA_Lanczos, GRA_Average, GRA_AverageQuadratic,
+ * GRA_Mode or GRA_Sum.
  *
  * This field is required. GDT_NearestNeighbour may be used as a default
  * value.
@@ -1322,6 +1323,9 @@ CPLErr GDALWarpKernel::PerformWarp()
 #endif
 
     if( eResample == GRA_Average )
+        return GWKAverageOrMode( this );
+
+    if( eResample == GRA_AverageQuadratic )
         return GWKAverageOrMode( this );
 
     if( eResample == GRA_Mode )
@@ -5801,6 +5805,10 @@ static void GWKAverageOrModeThread( void* pData)
     {
         nAlgo = GWKAOM_Average;
     }
+    else if( poWK->eResample == GRA_AverageQuadratic )
+    {
+        nAlgo = GWKAOM_AverageQuadratic;
+    }
     else if( poWK->eResample == GRA_Mode )
     {
         // TODO check color table count > 256.
@@ -6102,6 +6110,64 @@ static void GWKAverageOrModeThread( void* pData)
                         bHasFoundDensity = true;
                     }
                 }  // GRA_Average.
+                // poWK->eResample == GRA_AverageQuadratic.
+                if( nAlgo == GWKAOM_AverageQuadratic )
+                {
+                    double dfTotalReal = 0.0;
+                    double dfTotalImag = 0.0;
+                    double dfTotalWeight = 0.0;
+                    double dfR = 0.0;
+                    double dfI = 0.0;
+                    // This code adapted from GDALDownsampleChunk32R_AverageT()
+                    // in gcore/overview.cpp.
+                    for( int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
+                    {
+                        const double dfWeightY = COMPUTE_WEIGHT_Y(iSrcY);
+                        iSrcOffset = iSrcXMin + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+                        for( int iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++, iSrcOffset++ )
+                        {
+                            if( poWK->panUnifiedSrcValid != nullptr
+                                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
+                                     & (0x01 << (iSrcOffset & 0x1f))) )
+                            {
+                                continue;
+                            }
+
+                            if( GWKGetPixelValue(
+                                    poWK, iBand, iSrcOffset,
+                                    &dfBandDensity, &dfValueRealTmp,
+                                    &dfValueImagTmp ) &&
+                                dfBandDensity > BAND_DENSITY_THRESHOLD )
+                            {
+                                const double dfWeight = COMPUTE_WEIGHT(iSrcX, dfWeightY);
+                                dfTotalWeight += dfWeight;
+                                if (bIsComplex)
+                                {
+                                    dfTotalReal += (dfValueRealTmp * dfValueRealTmp - dfValueImagTmp *dfValueImagTmp) * dfWeight;
+                                    dfTotalImag += 2. * dfValueRealTmp * dfValueImagTmp * dfWeight;
+                                }
+                                else
+                                    dfTotalReal += dfValueRealTmp * dfWeight;
+                            }
+                        }
+                    }
+
+                    if( dfTotalWeight > 0 )
+                    {
+                        if (bIsComplex)
+                        {
+                            dfR = dfTotalReal / dfTotalWeight;
+                            dfI = dfTotalImag / dfTotalWeight;
+                            dfValueReal = sqrt((dfR + sqrt(dfR * dfR + dfI * dfI))/2.);;
+                            dfValueImag = dfI / fabs(dfI) * sqrt((-dfR + sqrt(dfR * dfR + dfI * dfI)) / 2.);
+                        }
+                        else
+                            dfValueReal = dfTotalReal / dfTotalWeight;
+
+                        dfBandDensity = 1;
+                        bHasFoundDensity = true;
+                    }
+                }  // GRA_AverageQuadratic.
                 else if( nAlgo == GWKAOM_Sum )
                 // poWK->eResample == GRA_Sum
                 {

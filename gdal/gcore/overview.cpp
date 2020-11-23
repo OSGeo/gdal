@@ -376,6 +376,8 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
     // AVERAGE_BIT2GRAYSCALE
     const bool bBit2Grayscale =
         CPL_TO_BOOL( STARTS_WITH_CI( pszResampling, "AVERAGE_BIT2G" ) );
+    const bool bQuadraticAverage =
+        CPL_TO_BOOL( STARTS_WITH_CI( pszResampling, "AVERAGE_QUADRA" ) );
     if( bBit2Grayscale )
         poColorTable = nullptr;
 
@@ -519,13 +521,26 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                     static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize;
                 for( int iDstPixel = 0; iDstPixel < nDstXWidth; ++iDstPixel )
                 {
-                    const Tsum nTotal =
-                        pSrcScanlineShifted[0]
-                        + pSrcScanlineShifted[1]
-                        + pSrcScanlineShifted[nChunkXSize]
-                        + pSrcScanlineShifted[1+nChunkXSize];
+                    Tsum nTotal = 0;
+                    T nVal;
+                    if( bQuadraticAverage )
+                        nTotal =
+                            pSrcScanlineShifted[0] * pSrcScanlineShifted[0]
+                            + pSrcScanlineShifted[1] * pSrcScanlineShifted[1]
+                            + pSrcScanlineShifted[nChunkXSize] * pSrcScanlineShifted[nChunkXSize]
+                            + pSrcScanlineShifted[1+nChunkXSize] * pSrcScanlineShifted[1+nChunkXSize];
+                    else
+                        nTotal =
+                            pSrcScanlineShifted[0]
+                            + pSrcScanlineShifted[1]
+                            + pSrcScanlineShifted[nChunkXSize]
+                            + pSrcScanlineShifted[1+nChunkXSize];
 
-                    auto nVal = static_cast<T>((nTotal + 2) / 4);
+                    if( bQuadraticAverage )
+                        nVal = static_cast<T>(sqrt((nTotal + 2) / 4));
+                    else
+                        nVal = static_cast<T>((nTotal + 2) / 4);
+
                     if( bHasNoData && nVal == tNoDataValue )
                         nVal = tReplacementVal;
                     pDstScanline[iDstPixel] = nVal;
@@ -569,7 +584,10 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                                 const double dfWeightX = pasSrcX[iDstPixel].dfLeftWeight;
                                 const double dfWeight = dfWeightX * dfWeightY;
                                 dfTotalWeight += dfWeight;
-                                dfTotal += val * dfWeight;
+                                if( bQuadraticAverage )
+                                    dfTotal += val * val * dfWeight;
+                                else
+                                    dfTotal += val * dfWeight;
                             }
                         }
 
@@ -585,7 +603,10 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                                     nCount ++;
                                     const double dfWeight = dfWeightY;
                                     dfTotalWeight += dfWeight;
-                                    dfTotal += val * dfWeight;
+                                    if( bQuadraticAverage )
+                                        dfTotal += val * val * dfWeight;
+                                    else
+                                        dfTotal += val * dfWeight;
                                 }
                             }
 
@@ -600,7 +621,10 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                                     const double dfWeightX = pasSrcX[iDstPixel].dfRightWeight;
                                     const double dfWeight = dfWeightX * dfWeightY;
                                     dfTotalWeight += dfWeight;
-                                    dfTotal += val * dfWeight;
+                                    if( bQuadraticAverage )
+                                        dfTotal += val * val * dfWeight;
+                                    else
+                                        dfTotal += val * dfWeight;
                                 }
                             }
                         }
@@ -615,14 +639,22 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                     else if( eWrkDataType == GDT_Byte ||
                              eWrkDataType == GDT_UInt16)
                     {
-                        auto nVal = static_cast<T>((dfTotal + dfTotalWeight / 2) / dfTotalWeight);
+                        T nVal;
+                        if( bQuadraticAverage )
+                            nVal = static_cast<T>(sqrt((dfTotal + dfTotalWeight / 2) / dfTotalWeight));
+                        else
+                            nVal = static_cast<T>((dfTotal + dfTotalWeight / 2) / dfTotalWeight);
                         if( bHasNoData && nVal == tNoDataValue )
                             nVal = tReplacementVal;
                         pDstScanline[iDstPixel] = nVal;
                     }
                     else
                     {
-                        auto nVal = static_cast<T>(dfTotal / dfTotalWeight);
+                        T nVal;
+                        if( bQuadraticAverage )
+                            nVal = static_cast<T>(sqrt(dfTotal / dfTotalWeight));
+                        else
+                            nVal = static_cast<T>(dfTotal / dfTotalWeight);
                         if( bHasNoData && nVal == tNoDataValue )
                             nVal = tReplacementVal;
                         pDstScanline[iDstPixel] = nVal;
@@ -654,10 +686,20 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                         if( nVal >= 0 && nVal < nEntryCount &&
                             aEntries[nVal].c4 )
                         {
-                            nTotalR += aEntries[nVal].c1;
-                            nTotalG += aEntries[nVal].c2;
-                            nTotalB += aEntries[nVal].c3;
-                            ++nCount;
+                            if( bQuadraticAverage )
+                            {
+                                nTotalR += aEntries[nVal].c1 * aEntries[nVal].c1;
+                                nTotalG += aEntries[nVal].c2 * aEntries[nVal].c2;
+                                nTotalB += aEntries[nVal].c3 * aEntries[nVal].c3;
+                                ++nCount;
+                            }
+                            else
+                            {
+                                nTotalR += aEntries[nVal].c1;
+                                nTotalG += aEntries[nVal].c2;
+                                nTotalB += aEntries[nVal].c3;
+                                ++nCount;
+                            }
                         }
                     }
                 }
@@ -670,9 +712,19 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                 }
                 else
                 {
-                    int nR = static_cast<int>((nTotalR + nCount / 2) / nCount),
-                        nG = static_cast<int>((nTotalG + nCount / 2) / nCount),
+                    int nR, nG, nB;
+                    if( bQuadraticAverage )
+                    {
+                        nR = static_cast<int>(sqrt((nTotalR + nCount / 2) / nCount));
+                        nG = static_cast<int>(sqrt((nTotalG + nCount / 2) / nCount));
+                        nB = static_cast<int>(sqrt((nTotalB + nCount / 2) / nCount));
+                    }
+                    else
+                    {
+                        nR = static_cast<int>((nTotalR + nCount / 2) / nCount);
+                        nG = static_cast<int>((nTotalG + nCount / 2) / nCount);
                         nB = static_cast<int>((nTotalB + nCount / 2) / nCount);
+                    }
                     pDstScanline[iDstPixel] = static_cast<T>(GDALFindBestEntry(
                         nEntryCount, aEntries, nR, nG, nB));
                 }
@@ -2755,6 +2807,48 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                         static_cast<float>(dfRatio);
                     pafDstScanline[iDstPixel*2+1] *=
                         static_cast<float>(dfRatio);
+                }
+            }
+            else if( STARTS_WITH_CI(pszResampling, "AVERAGE_QUADRATIC") )
+            {
+                double dfTotalR = 0.0;
+                double dfTotalI = 0.0;
+                double dfR = 0.0;
+                double dfI = 0.0;
+                int nCount = 0;
+
+                for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
+                {
+                    for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
+                    {
+                        dfR = pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2];
+                        dfI = pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2+1];
+
+                        // TODO(schwehr): Maybe use std::complex?
+                        dfTotalR += dfR * dfR - dfI *dfI;
+                        dfTotalI +=2. * dfR * dfI;
+
+                        ++nCount;
+                    }
+                }
+
+                CPLAssert( nCount > 0 );
+                if( nCount == 0 )
+                {
+                    pafDstScanline[iDstPixel*2] = 0.0;
+                    pafDstScanline[iDstPixel*2+1] = 0.0;
+                }
+                else
+                {
+                    /* compute mean */
+                    dfTotalR = dfTotalR/nCount;
+                    dfTotalI = dfTotalI/nCount;
+                    /* compute square root of the complex mean */
+                    dfR = sqrt((dfTotalR + sqrt(dfTotalR * dfTotalR + dfTotalI * dfTotalI))/2.);
+                    dfI = dfTotalI / fabs(dfTotalI) * sqrt((-dfTotalR + sqrt(dfTotalR * dfTotalR + dfTotalI * dfTotalI)) / 2.);
+
+                    pafDstScanline[iDstPixel*2  ] = static_cast<float>(dfR);
+                    pafDstScanline[iDstPixel*2+1] = static_cast<float>(dfI);
                 }
             }
             else if( STARTS_WITH_CI(pszResampling, "AVER") )

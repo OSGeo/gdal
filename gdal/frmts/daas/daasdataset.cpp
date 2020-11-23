@@ -2222,6 +2222,10 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     {
         oTargetModel.Add("sampling-algo", "AVERAGE");
     }
+    else if( poGDS->m_eCurrentResampleAlg == GRIORA_AverageQuadratic )
+    {
+        oTargetModel.Add("sampling-algo", "AVERAGE_QUADRATIC");
+    }
     else
     {
         // Defaults to BILINEAR for other GDAL methods not supported by
