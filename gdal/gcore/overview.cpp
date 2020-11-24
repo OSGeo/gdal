@@ -377,7 +377,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
     const bool bBit2Grayscale =
         CPL_TO_BOOL( STARTS_WITH_CI( pszResampling, "AVERAGE_BIT2G" ) );
     const bool bQuadraticMean =
-        CPL_TO_BOOL( STARTS_WITH_CI( pszResampling, "AVERAGE_QUADRA" ) );
+        CPL_TO_BOOL( EQUAL( pszResampling, "RMS" ) );
     if( bBit2Grayscale )
         poColorTable = nullptr;
 
@@ -2809,7 +2809,7 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                         static_cast<float>(dfRatio);
                 }
             }
-            else if( STARTS_WITH_CI(pszResampling, "RMS") )
+            else if( EQUAL(pszResampling, "RMS") )
             {
                 double dfTotalR = 0.0;
                 double dfTotalI = 0.0;
@@ -2991,7 +2991,7 @@ GDALResampleFunction GDALGetResampleFunction( const char* pszResampling,
     if( pnRadius ) *pnRadius = 0;
     if( STARTS_WITH_CI(pszResampling, "NEAR") )
         return GDALResampleChunk32R_Near;
-    else if( STARTS_WITH_CI(pszResampling, "AVER") )
+    else if( STARTS_WITH_CI(pszResampling, "AVER") || EQUAL(pszResampling, "RMS") )
         return GDALResampleChunk32R_Average;
     else if( STARTS_WITH_CI(pszResampling, "GAUSS") )
     {
