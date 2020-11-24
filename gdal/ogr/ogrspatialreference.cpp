@@ -1436,6 +1436,11 @@ static PJ* GDAL_proj_crs_create_bound_crs_to_WGS84(PJ_CONTEXT* ctx, PJ* pj,
  *     WKT1 is an alias of WKT1_GDAL.
  *     WKT2 will default to the latest revision implemented (currently WKT2_2018)
  *     WKT2_2019 can be used as an alias of WKT2_2018 since GDAL 3.2
+ * <li>ALLOW_ELLIPSOIDAL_HEIGHT_AS_VERTICAL_CRS=YES/NO. Default is NO. If set
+ * to YES and FORMAT=WKT1_GDAL, a Geographic 3D CRS or a Projected 3D CRS will
+ * be exported as a compound CRS whose vertical part represents an ellipsoidal
+ * height (for example for use with LAS 1.4 WKT1).
+ * Requires PROJ 7.2.1 and GDAL 3.2.1.</li>
  * </li>
  * </ul>
  *
@@ -1520,6 +1525,13 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
     aosOptions.SetNameValue("MULTILINE",
                     CSLFetchNameValueDef(papszOptions, "MULTILINE", "NO"));
 
+    const char* pszAllowEllpsHeightAsVertCS =
+        CSLFetchNameValue(papszOptions, "ALLOW_ELLIPSOIDAL_HEIGHT_AS_VERTICAL_CRS");
+    if( pszAllowEllpsHeightAsVertCS )
+    {
+        aosOptions.SetNameValue("ALLOW_ELLIPSOIDAL_HEIGHT_AS_VERTICAL_CRS",
+                                pszAllowEllpsHeightAsVertCS);
+    }
 
     PJ* boundCRS = nullptr;
     if( wktFormat == PJ_WKT1_GDAL &&
