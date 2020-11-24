@@ -51,8 +51,8 @@ static std::mutex gMutex;
 static bool gbHasInitializedPython = false;
 static PyThreadState* gphThreadState = nullptr;
 
-static PyGILState_STATE (*PyGILState_Ensure)(void) = nullptr;
-static void (*PyGILState_Release)(PyGILState_STATE) = nullptr;
+static PyGILState_STATE (*PyLibGILState_Ensure)(void) = nullptr;
+static void (*PyLibGILState_Release)(PyGILState_STATE) = nullptr;
 
 // Emulate Py_CompileString with Py_CompileStringExFlags
 // Probably just a temporary measure for a bug of Python 3.8.0 on Windows
@@ -735,8 +735,8 @@ static bool LoadPythonAPI()
     LOAD(libHandle, PySequence_Size);
     LOAD(libHandle, PySequence_GetItem);
     LOAD(libHandle, PyArg_ParseTuple);
-    LOAD(libHandle, PyGILState_Ensure);
-    LOAD(libHandle, PyGILState_Release);
+    LOAD_WITH_NAME(libHandle, PyLibGILState_Ensure, "PyGILState_Ensure");
+    LOAD_WITH_NAME(libHandle, PyLibGILState_Release, "PyGILState_Release");
     LOAD(libHandle, PyErr_Fetch);
     LOAD(libHandle, PyErr_Clear);
     LOAD(libHandle, Py_GetVersion);
@@ -815,7 +815,7 @@ GIL_Holder::GIL_Holder(bool bExclusiveLock):
     {
         gMutex.lock();
     }
-    m_eState = PyGILState_Ensure();
+    m_eState = PyLibGILState_Ensure();
 }
 
 /************************************************************************/
@@ -824,7 +824,7 @@ GIL_Holder::GIL_Holder(bool bExclusiveLock):
 
 GIL_Holder::~GIL_Holder()
 {
-    PyGILState_Release(m_eState);
+    PyLibGILState_Release(m_eState);
     if( m_bExclusiveLock )
     {
         gMutex.unlock();
