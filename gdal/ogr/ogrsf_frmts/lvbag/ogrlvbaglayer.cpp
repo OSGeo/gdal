@@ -218,7 +218,7 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
 {
     if( EQUAL("pnd", pszDataset) )
     {
-        OGRFieldDefn oField0("oorspronkelijkBouwjaar", OFTDate);
+        OGRFieldDefn oField0("oorspronkelijkBouwjaar", OFTInteger);
 
         poFeatureDefn->AddFieldDefn(&oField0);
         
@@ -547,12 +547,6 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                         CPLError(CE_Failure, CPLE_AppDefined, "Parsing boolean failed");
                         XML_StopParser(oParser.get(), XML_FALSE);
                     }
-                }
-                else if( poFieldDefn->GetType() == OFTDate && osElementString.length() == 4 )
-                {
-                    CPLString oFullDate{ pszValue };
-                    oFullDate += "-01-01";
-                    m_poFeature->SetField(iFieldIndex, oFullDate.c_str());
                 }
                 else
                     m_poFeature->SetField(iFieldIndex, pszValue);
