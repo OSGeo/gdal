@@ -376,7 +376,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
     // AVERAGE_BIT2GRAYSCALE
     const bool bBit2Grayscale =
         CPL_TO_BOOL( STARTS_WITH_CI( pszResampling, "AVERAGE_BIT2G" ) );
-    const bool bQuadraticAverage =
+    const bool bQuadraticMean =
         CPL_TO_BOOL( STARTS_WITH_CI( pszResampling, "AVERAGE_QUADRA" ) );
     if( bBit2Grayscale )
         poColorTable = nullptr;
@@ -523,7 +523,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                 {
                     Tsum nTotal = 0;
                     T nVal;
-                    if( bQuadraticAverage )
+                    if( bQuadraticMean )
                         nTotal =
                             pSrcScanlineShifted[0] * pSrcScanlineShifted[0]
                             + pSrcScanlineShifted[1] * pSrcScanlineShifted[1]
@@ -536,7 +536,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                             + pSrcScanlineShifted[nChunkXSize]
                             + pSrcScanlineShifted[1+nChunkXSize];
 
-                    if( bQuadraticAverage )
+                    if( bQuadraticMean )
                         nVal = static_cast<T>(sqrt((nTotal + 2) / 4));
                     else
                         nVal = static_cast<T>((nTotal + 2) / 4);
@@ -584,7 +584,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                                 const double dfWeightX = pasSrcX[iDstPixel].dfLeftWeight;
                                 const double dfWeight = dfWeightX * dfWeightY;
                                 dfTotalWeight += dfWeight;
-                                if( bQuadraticAverage )
+                                if( bQuadraticMean )
                                     dfTotal += val * val * dfWeight;
                                 else
                                     dfTotal += val * dfWeight;
@@ -603,7 +603,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                                     nCount ++;
                                     const double dfWeight = dfWeightY;
                                     dfTotalWeight += dfWeight;
-                                    if( bQuadraticAverage )
+                                    if( bQuadraticMean )
                                         dfTotal += val * val * dfWeight;
                                     else
                                         dfTotal += val * dfWeight;
@@ -621,7 +621,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                                     const double dfWeightX = pasSrcX[iDstPixel].dfRightWeight;
                                     const double dfWeight = dfWeightX * dfWeightY;
                                     dfTotalWeight += dfWeight;
-                                    if( bQuadraticAverage )
+                                    if( bQuadraticMean )
                                         dfTotal += val * val * dfWeight;
                                     else
                                         dfTotal += val * dfWeight;
@@ -640,7 +640,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                              eWrkDataType == GDT_UInt16)
                     {
                         T nVal;
-                        if( bQuadraticAverage )
+                        if( bQuadraticMean )
                             nVal = static_cast<T>(sqrt((dfTotal + dfTotalWeight / 2) / dfTotalWeight));
                         else
                             nVal = static_cast<T>((dfTotal + dfTotalWeight / 2) / dfTotalWeight);
@@ -651,7 +651,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                     else
                     {
                         T nVal;
-                        if( bQuadraticAverage )
+                        if( bQuadraticMean )
                             nVal = static_cast<T>(sqrt(dfTotal / dfTotalWeight));
                         else
                             nVal = static_cast<T>(dfTotal / dfTotalWeight);
@@ -686,7 +686,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                         if( nVal >= 0 && nVal < nEntryCount &&
                             aEntries[nVal].c4 )
                         {
-                            if( bQuadraticAverage )
+                            if( bQuadraticMean )
                             {
                                 nTotalR += aEntries[nVal].c1 * aEntries[nVal].c1;
                                 nTotalG += aEntries[nVal].c2 * aEntries[nVal].c2;
@@ -713,7 +713,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                 else
                 {
                     int nR, nG, nB;
-                    if( bQuadraticAverage )
+                    if( bQuadraticMean )
                     {
                         nR = static_cast<int>(sqrt((nTotalR + nCount / 2) / nCount));
                         nG = static_cast<int>(sqrt((nTotalG + nCount / 2) / nCount));
@@ -2826,7 +2826,7 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
 
                         // TODO(schwehr): Maybe use std::complex?
                         dfTotalR += dfR * dfR - dfI *dfI;
-                        dfTotalI +=2. * dfR * dfI;
+                        dfTotalI += 2. * dfR * dfI;
 
                         ++nCount;
                     }
