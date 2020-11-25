@@ -139,7 +139,7 @@ typedef enum
     /*! Gauss blurring */                               GRIORA_Gauss = 7,
     /* NOTE: values 8 to 13 are reserved for max,min,med,Q1,Q3,sum */
 /*! @cond Doxygen_Suppress */
-                                                        GRIORA_LAST = GRIORA_Gauss
+                                                        GRIORA_LAST = GRIORA_RMS
 /*! @endcond */
 } GDALRIOResampleAlg;
 

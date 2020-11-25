@@ -2222,11 +2222,7 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     {
         oTargetModel.Add("sampling-algo", "AVERAGE");
     }
-    else if( poGDS->m_eCurrentResampleAlg == GRIORA_RMS )
-    {
-        oTargetModel.Add("sampling-algo", "RMS");
-    }
-    else
+     else
     {
         // Defaults to BILINEAR for other GDAL methods not supported by
         // server

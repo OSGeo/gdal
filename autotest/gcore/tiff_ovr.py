@@ -1771,6 +1771,27 @@ def test_tiff_ovr_54():
     assert not (cs0 == 0 or cs1 == 0)
 
 ###############################################################################
+# Test average overview generation with nodata.
+
+def test_tiff_ovr_55(both_endian):
+
+    src_ds = gdal.Open('../gdrivers/data/int16.tif')
+    gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/tiff_ovr_55.tif', src_ds)
+
+    wrk_ds = gdal.Open('/vsimem/tiff_ovr_55.tif')
+    assert wrk_ds is not None, 'Failed to open test dataset.'
+
+    wrk_ds.BuildOverviews('RMS', overviewlist=[2])
+    wrk_ds = None
+
+    wrk_ds = gdal.Open('/vsimem/tiff_ovr_55.tif')
+    cs = wrk_ds.GetRasterBand(1).GetOverview(0).ReadAsArray().sum()
+    exp_cs = 12773
+
+    assert cs == exp_cs, 'got wrong overview checksum.'
+
+
+###############################################################################
 
 
 def test_tiff_ovr_too_many_levels_contig():
