@@ -2222,7 +2222,7 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     {
         oTargetModel.Add("sampling-algo", "AVERAGE");
     }
-     else
+    else
     {
         // Defaults to BILINEAR for other GDAL methods not supported by
         // server
