@@ -479,7 +479,7 @@ def doit(opts, args):
 
                     # convert nodata values to numpy.nan
                     if myNDV[i] is not None:
-                        numpy.where(myval == myNDV[i], numpy.nan, myval)
+                        myval = numpy.where(myval == myNDV[i], numpy.nan, myval)
 
                     # add an array of values for this block to the eval namespace
                     if Alpha in myAlphaFileLists:
@@ -501,7 +501,7 @@ def doit(opts, args):
 
                 # convert numpy.nan to output NDV
                 if myOutNDV is not None:
-                    numpy.where(numpy.isnan(myResult), myOutNDV, myResult)
+                    myResult = numpy.where(numpy.isnan(myResult), myOutNDV, myResult)
 
                 # write data block to the output file
                 myOutB = myOut.GetRasterBand(bandNo)
