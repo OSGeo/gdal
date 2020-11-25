@@ -332,6 +332,14 @@ def test_gdal_calc_py_9():
     * single alpha for multiple datasets
     * extent = 'fail'
     """
+
+    if gdalnumeric_not_available:
+        pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
+
+    script_path = test_py_scripts.get_py_script('gdal_calc')
+    if script_path is None:
+        pytest.skip("gdal_calc script not found, skipping all tests", allow_module_level=True)
+
     infile = get_input_file()
     test_id, test_count = 9, 9
     out = make_temp_filename_list(test_id, test_count)
@@ -356,10 +364,12 @@ def test_gdal_calc_py_9():
         kwargs = copy(common_kwargs)
         kwargs.update(inputs0)
         ds = gdal_calc.Calc(calc='a', outfile=outfile, **kwargs)
-        input_file = ds if return_ds else outfile
-        if not return_ds:
+        if return_ds:
+            input_file = ds
+        else:
             # the dataset must be closed if we are to read it again
             del ds
+            input_file = outfile
         inputs.append(input_file)
 
         check_file(input_file, checksums[i], i+1)
