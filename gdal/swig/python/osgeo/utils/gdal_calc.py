@@ -400,7 +400,6 @@ def doit(opts, args):
     # find total x and y blocks to be read
     nXBlocks = (int)((DimensionsCheck[0] + myBlockSize[0] - 1) / myBlockSize[0])
     nYBlocks = (int)((DimensionsCheck[1] + myBlockSize[1] - 1) / myBlockSize[1])
-    myBufSize = myBlockSize[0] * myBlockSize[1]
 
     if opts.debug:
         print("using blocksize %s x %s" % (myBlockSize[0], myBlockSize[1]))
@@ -437,7 +436,6 @@ def doit(opts, args):
 
             # reset buffer size for start of Y loop
             nYValid = myBlockSize[1]
-            myBufSize = nXValid * nYValid
 
             # loop through Y lines
             for Y in range(0, nYBlocks):
@@ -453,7 +451,6 @@ def doit(opts, args):
                 # change the block size of the final piece
                 if Y == nYBlocks - 1:
                     nYValid = DimensionsCheck[1] - Y * myBlockSize[1]
-                    myBufSize = nXValid * nYValid
 
                 # find Y offset
                 myY = Y * myBlockSize[1]
