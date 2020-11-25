@@ -8,7 +8,7 @@ RFC 77: Drop Python 2 support in favour of Python 3.6
 Author:        Idan Miara
 Contact:       idan@miara.com
 Started:       2020-Nov-3
-Last updated:  2020-Nov-16
+Last updated:  2020-Nov-25
 Status:        Preliminary, Target GDAL 3.3
 ============== ============================
 
@@ -231,7 +231,9 @@ Adding a deprecation warning if running a Python version that is known to be uns
 Voting history
 --------------
 
-* not voted yet
+https://lists.osgeo.org/pipermail/gdal-dev/2020-November/053039.html
+
+* This motion is passed with +1 from PSC members HowardB, KurtS, JukkaR and Even
 
 Credits
 -------
