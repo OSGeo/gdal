@@ -1783,7 +1783,7 @@ def test_warp_rms_1():
     if gdaltest.tiff_drv is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('VRT', 'utmsmall_rms_float.vrt', 1, 29447)
+    tst = gdaltest.GDALTest('VRT', 'utmsmall_rms_float.vrt', 1, 30396)
 
     return tst.testOpen()
 
