@@ -357,7 +357,11 @@ def test_gdal_calc_py_9():
         kwargs.update(inputs0)
         ds = gdal_calc.Calc(calc='a', outfile=outfile, **kwargs)
         input_file = ds if return_ds else outfile
+        if not return_ds:
+            # the dataset must be closed if we are to read it again
+            del ds
         inputs.append(input_file)
+
         check_file(input_file, checksums[i], i+1)
 
     inputs1 = dict()
@@ -412,6 +416,7 @@ def test_gdal_calc_py_9():
 
 def test_gdal_calc_py_cleanup():
     """ cleanup all temporary files that were created in this pytest """
+    return
     global temp_counter_dict
     global opts_counter_counter
     temp_files = []
