@@ -57,6 +57,10 @@ static int OGRLVBAGDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( strstr(pszPtr, "http://www.kadaster.nl/schemas/standlevering-generiek/1.0") == nullptr )
         return FALSE;
 
+    // Pin the driver to XSD version 'v20200601'
+    if( strstr(pszPtr, "http://www.kadaster.nl/schemas/lvbag/extract-deelbestand-lvc/v20200601") == nullptr )
+        return FALSE;
+
     return TRUE;
 }
 
