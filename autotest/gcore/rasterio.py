@@ -1069,3 +1069,33 @@ def test_rasterio_floating_point_window_no_resampling_numpy():
     ds = None
     gdal.Unlink('/vsimem/test.tif')
     assert numpy.array_equal(data_per_band, data_per_dataset)
+
+
+###############################################################################
+# Test rms downsampling by a factor of 2 on exact boundaries
+
+
+def test_rasterio_rms_halfsize_downsampling():
+
+    gdal.FileFromMemBuffer('/vsimem/rasterio_rms_halfsize_downsampling.asc',
+                           """ncols        6
+nrows        6
+xllcorner    0
+yllcorner    0
+cellsize     0
+  0.   0   0   0   0   0
+  2   100 0   0   0   0
+100   100 0   0   0   0
+  0   100 0   0   0   0
+  0   0   0   0   0   0
+  0   0   0   0   0  0""")
+
+    ds = gdal.Translate('/vsimem/rasterio_rms_halfsize_downsampling_out.asc', '/vsimem/rasterio_rms_halfsize_downsampling.asc', options='-ot Float32 -of AAIGRID -r rms -outsize 50% 50%')
+    data = ds.GetRasterBand(1).ReadRaster()
+    assert struct.unpack('f' * 9, data) == (50.0099983215332, 0., 0.,
+                                            86.6025390625, 0., 0.,
+                                            0., 0., 0.)
+
+    gdal.Unlink('/vsimem/rasterio_rms_halfsize_downsampling_out.asc')
+    gdal.Unlink('/vsimem/rasterio_rms_halfsize_downsampling.asc')
+
