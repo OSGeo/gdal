@@ -416,7 +416,6 @@ def test_gdal_calc_py_9():
 
 def test_gdal_calc_py_cleanup():
     """ cleanup all temporary files that were created in this pytest """
-    return
     global temp_counter_dict
     global opts_counter_counter
     temp_files = []
