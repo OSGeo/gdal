@@ -39,6 +39,7 @@ but no projection checking is performed (unless projectionCheck option is used).
 
     Calculation in gdalnumeric syntax using ``+``, ``-``, ``/``, ``*``, or any numpy array functions (i.e. ``log10()``).
     Multiple ``--calc`` options can be listed to produce a multiband file (GDAL >= 3.2).
+    NoDataValue will be mapped to numpy.nan when reading and numpy.nan will be written as NoDataValue in the output file (GDAL >= 3.3).
 
 .. option:: -A <filename>
 
