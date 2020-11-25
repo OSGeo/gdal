@@ -458,9 +458,6 @@ def doit(opts, args):
                 # find Y offset
                 myY = Y * myBlockSize[1]
 
-                # create empty buffer to mark where nodata occurs
-                myNDVs = None
-
                 # make local namespace for calculation
                 local_namespace = {}
 
@@ -480,16 +477,9 @@ def doit(opts, args):
                     if myval is None:
                         raise Exception('Input block reading failed from filename %s' % filename[i])
 
-                    # fill in nodata values
+                    # convert nodata values to numpy.nan
                     if myNDV[i] is not None:
-                        # myNDVs is a boolean buffer.
-                        # a cell equals to 1 if there is NDV in any of the corresponding cells in input raster bands.
-                        if myNDVs is None:
-                            # this is the first band that has NDV set. we initializes myNDVs to a zero buffer
-                            # as we didn't see any NDV value yet.
-                            myNDVs = numpy.zeros(myBufSize)
-                            myNDVs.shape = (nYValid, nXValid)
-                        myNDVs = 1 * numpy.logical_or(myNDVs == 1, myval == myNDV[i])
+                        numpy.where(myval == myNDV[i], numpy.nan, myval)
 
                     # add an array of values for this block to the eval namespace
                     if Alpha in myAlphaFileLists:
@@ -509,12 +499,9 @@ def doit(opts, args):
                     print("evaluation of calculation %s failed" % (calc))
                     raise
 
-                # Propagate nodata values (set nodata cells to zero
-                # then add nodata value to these cells).
-                if myNDVs is not None and myOutNDV is not None:
-                    myResult = ((1 * (myNDVs == 0)) * myResult) + (myOutNDV * myNDVs)
-                elif not isinstance(myResult, numpy.ndarray):
-                    myResult = numpy.ones((nYValid, nXValid)) * myResult
+                # convert numpy.nan to output NDV
+                if myOutNDV is not None:
+                    numpy.where(numpy.isnan(myResult), myOutNDV, myResult)
 
                 # write data block to the output file
                 myOutB = myOut.GetRasterBand(bandNo)

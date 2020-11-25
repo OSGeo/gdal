@@ -424,6 +424,27 @@ def test_gdal_calc_py_9():
     i += 1
 
 
+def test_gdal_calc_py_10():
+    """ test working with numpy.nan """
+    if gdalnumeric_not_available:
+        pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
+
+    script_path = test_py_scripts.get_py_script('gdal_calc')
+    if script_path is None:
+        pytest.skip("gdal_calc script not found, skipping all tests", allow_module_level=True)
+
+    infile = get_input_file()
+    test_id, test_count = 10, 1
+    out = make_temp_filename_list(test_id, test_count)
+
+    test_py_scripts.run_py_script(
+        script_path, 'gdal_calc',
+        '-A {} --A_band=1 -B {} --B_band=2 -Z {} --Z_band=3 --calc="numpy.nanmean([A, B, C], axis=2)" --overwrite --outfile {}'.
+        format(infile, infile, infile, out[0]))
+
+    check_file(out[0], 36074, 1, 1)
+
+
 def test_gdal_calc_py_cleanup():
     """ cleanup all temporary files that were created in this pytest """
     global temp_counter_dict
