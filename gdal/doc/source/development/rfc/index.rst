@@ -84,3 +84,4 @@ RFC list
     rfc74_sphinx
     rfc75_multidimensional_arrays
     rfc76_ogrpythondrivers
+    rfc77_drop_python2_support
