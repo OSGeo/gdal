@@ -440,6 +440,18 @@ static int OGRGeoJSONDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
     {
         return -1;
     }
+
+    // If this looks like a file that can be handled by the STACTA driver,
+    // and that one is available, then don't identify the file.
+    const char* pszHeader = reinterpret_cast<const char*>(poOpenInfo->pabyHeader);
+    if( pszHeader != nullptr &&
+        strstr(pszHeader, "\"stac_extensions\"") != nullptr &&
+        strstr(pszHeader, "\"tiled-assets\"") != nullptr &&
+        GDALGetDriverByName("STACTA") != nullptr )
+    {
+        return FALSE;
+    }
+
     return TRUE;
 }
 
