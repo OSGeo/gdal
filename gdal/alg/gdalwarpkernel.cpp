@@ -6139,26 +6139,18 @@ static void GWKAverageOrModeThread( void* pData)
                             {
                                 const double dfWeight = COMPUTE_WEIGHT(iSrcX, dfWeightY);
                                 dfTotalWeight += dfWeight;
+                                dfTotalReal += dfValueRealTmp * dfValueRealTmp * dfWeight;
                                 if (bIsComplex)
-                                {
-                                    dfTotalReal += (dfValueRealTmp * dfValueRealTmp - dfValueImagTmp *dfValueImagTmp) * dfWeight;
-                                    dfTotalImag += 2. * dfValueRealTmp * dfValueImagTmp * dfWeight;
-                                }
-                                else
-                                    dfTotalReal += dfValueRealTmp * dfValueRealTmp * dfWeight;
+                                    dfTotalImag += dfValueImagTmp * dfValueImagTmp * dfWeight;
                             }
                         }
                     }
 
                     if( dfTotalWeight > 0 )
                     {
+                        dfValueReal = sqrt( dfTotalReal / dfTotalWeight );
                         if (bIsComplex)
-                        {
-                            dfValueReal = sqrt( dfTotalReal / dfTotalWeight );
                             dfValueImag = sqrt( dfTotalImag / dfTotalWeight );
-                        }
-                        else
-                            dfValueReal = sqrt(dfTotalReal / dfTotalWeight);
 
                         dfBandDensity = 1;
                         bHasFoundDensity = true;

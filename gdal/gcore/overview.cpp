@@ -2824,9 +2824,8 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                         dfR = pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2];
                         dfI = pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2+1];
 
-                        // TODO(schwehr): Maybe use std::complex?
-                        dfTotalR += dfR * dfR - dfI *dfI;
-                        dfTotalI += 2. * dfR * dfI;
+                        dfTotalR += dfR * dfR;
+                        dfTotalI += dfI * dfI;
 
                         ++nCount;
                     }
@@ -2841,11 +2840,8 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                 else
                 {
                     /* compute mean */
-                    dfTotalR = dfTotalR/nCount;
-                    dfTotalI = dfTotalI/nCount;
-
-                    pafDstScanline[iDstPixel*2  ] = static_cast<float>(sqrt(dfTotalR));
-                    pafDstScanline[iDstPixel*2+1] = static_cast<float>(sqrt(dfTotalI));
+                    pafDstScanline[iDstPixel*2  ] = static_cast<float>(sqrt(dfTotalR/nCount));
+                    pafDstScanline[iDstPixel*2+1] = static_cast<float>(sqrt(dfTotalI/nCount));
                 }
             }
             else if( STARTS_WITH_CI(pszResampling, "AVER") )
