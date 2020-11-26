@@ -29,7 +29,12 @@ if test -f "$WORK_DIR/ccache.tar.gz"; then
 fi
 
 
-sudo apt-get install -y --allow-unauthenticated python3-dev python3-pip python3-numpy libpng-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libpoppler-private-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev liblcms2-2 libpcre3-dev libcrypto++-dev libdap-dev libfyba-dev libkml-dev libmysqlclient-dev mysql-client-core-5.7 libogdi3.2-dev libcfitsio-dev openjdk-8-jdk libzstd1-dev ccache bash zip curl libpq-dev postgresql-client postgis cmake libssl-dev libboost-dev autoconf automake sqlite3 libopenexr-dev g++ fossil libgeotiff-dev libcharls-dev libopenjp2-7-dev libcairo2-dev
+sudo apt-get install -y --allow-unauthenticated python3-dev python3-pip python3-numpy libpng-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler73 libpoppler-dev libpoppler-private-dev poppler-utils libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev liblcms2-2 libpcre3-dev libcrypto++-dev libdap-dev libfyba-dev libkml-dev libmysqlclient-dev mysql-client-core-5.7 libogdi3.2-dev libcfitsio-dev openjdk-8-jdk libzstd1-dev ccache bash zip curl libpq-dev postgresql-client postgis cmake libssl-dev libboost-dev autoconf automake sqlite3 libopenexr-dev g++ fossil libgeotiff-dev libcharls-dev libopenjp2-7-dev libcairo2-dev wget
+wget http://security.ubuntu.com/ubuntu/pool/main/p/poppler/libpoppler73_0.62.0-2ubuntu2.10_i386.deb
+wget http://security.ubuntu.com/ubuntu/pool/main/p/poppler/libpoppler-dev_0.62.0-2ubuntu2.10_i386.deb
+wget http://security.ubuntu.com/ubuntu/pool/main/p/poppler/libpoppler-private-dev_0.62.0-2ubuntu2.10_i386.deb
+wget http://security.ubuntu.com/ubuntu/pool/main/p/poppler/poppler-utils_0.62.0-2ubuntu2.10_i386.deb
+dpkg -i libpoppler73_0.62.0-2ubuntu2.10_i386.deb libpoppler-dev_0.62.0-2ubuntu2.10_i386.deb libpoppler-private-dev_0.62.0-2ubuntu2.10_i386.deb poppler-utils_0.62.0-2ubuntu2.10_i386.deb
 
 
 SCRIPT_DIR=$(dirname "$0")
