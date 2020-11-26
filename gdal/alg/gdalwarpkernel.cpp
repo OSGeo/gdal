@@ -6116,8 +6116,6 @@ static void GWKAverageOrModeThread( void* pData)
                     double dfTotalReal = 0.0;
                     double dfTotalImag = 0.0;
                     double dfTotalWeight = 0.0;
-                    double dfR = 0.0;
-                    double dfI = 0.0;
                     // This code adapted from GDALDownsampleChunk32R_AverageT()
                     // in gcore/overview.cpp.
                     for( int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
@@ -6156,10 +6154,8 @@ static void GWKAverageOrModeThread( void* pData)
                     {
                         if (bIsComplex)
                         {
-                            dfR = dfTotalReal / dfTotalWeight;
-                            dfI = dfTotalImag / dfTotalWeight;
-                            dfValueReal = sqrt((dfR + sqrt(dfR * dfR + dfI * dfI))/2.);;
-                            dfValueImag = dfI / fabs(dfI) * sqrt((-dfR + sqrt(dfR * dfR + dfI * dfI)) / 2.);
+                            dfValueReal = sqrt( dfTotalReal / dfTotalWeight );
+                            dfValueImag = sqrt( dfTotalImag / dfTotalWeight );
                         }
                         else
                             dfValueReal = sqrt(dfTotalReal / dfTotalWeight);

@@ -2843,12 +2843,9 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                     /* compute mean */
                     dfTotalR = dfTotalR/nCount;
                     dfTotalI = dfTotalI/nCount;
-                    /* compute square root of the complex mean */
-                    dfR = sqrt((dfTotalR + sqrt(dfTotalR * dfTotalR + dfTotalI * dfTotalI))/2.);
-                    dfI = dfTotalI / fabs(dfTotalI) * sqrt((-dfTotalR + sqrt(dfTotalR * dfTotalR + dfTotalI * dfTotalI)) / 2.);
 
-                    pafDstScanline[iDstPixel*2  ] = static_cast<float>(dfR);
-                    pafDstScanline[iDstPixel*2+1] = static_cast<float>(dfI);
+                    pafDstScanline[iDstPixel*2  ] = static_cast<float>(sqrt(dfTotalR));
+                    pafDstScanline[iDstPixel*2+1] = static_cast<float>(sqrt(dfTotalI));
                 }
             }
             else if( STARTS_WITH_CI(pszResampling, "AVER") )
