@@ -777,6 +777,9 @@ def test_numpy_rw_cleanup():
 # Test ReadAsArray RMS subsampling.
 
 def test_numpy_rw_rms_resemple_alg():
+    if gdaltest.numpy_drv is None:
+        pytest.skip()
+
 
     wrk_ds = gdal.Open('../gdrivers/data/int16.tif')
     assert wrk_ds is not None, 'Failed to open test dataset.'

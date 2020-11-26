@@ -1785,8 +1785,8 @@ def test_tiff_ovr_55(both_endian):
     wrk_ds = None
 
     wrk_ds = gdal.Open('/vsimem/tiff_ovr_55.tif')
-    cs = wrk_ds.GetRasterBand(1).GetOverview(0).ReadAsArray().sum()
-    exp_cs = 12773
+    cs = wrk_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    exp_cs = 1172
 
     assert cs == exp_cs, 'got wrong overview checksum.'
 
