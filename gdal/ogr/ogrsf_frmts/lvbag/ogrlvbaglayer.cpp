@@ -52,7 +52,7 @@ OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn, c
     oParser{ nullptr },
     bSchemaOnly{ false },
     bHasReadSchema{ false },
-    bFitInvalidData{ CPLFetchBool(papszOpenOptions, "AUTOCORRECT_INVALID_DATA", true) },
+    bFixInvalidData{ CPLFetchBool(papszOpenOptions, "AUTOCORRECT_INVALID_DATA", false) },
     nCurrentDepth{ 0 },
     nGeometryElementDepth{ 0 },
     nFeatureCollectionDepth{ 0 },
@@ -551,7 +551,7 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                 else
                     m_poFeature->SetField(iFieldIndex, pszValue);
                 
-                if( bFitInvalidData
+                if( bFixInvalidData
                     && (poFieldDefn->GetType() == OFTDate || poFieldDefn->GetType() == OFTDateTime) )
                 {
                     int nYear;
@@ -593,7 +593,7 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
 // GEOS >= 3.8.0 for MakeValid.
 #ifdef HAVE_GEOS
 #if GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 8)
-                if( !poGeom->IsValid() && bFitInvalidData )
+                if( !poGeom->IsValid() && bFixInvalidData )
                 {
                     std::unique_ptr<OGRGeometry> poSubGeom = std::unique_ptr<OGRGeometry>{
                         poGeom->MakeValid() };
