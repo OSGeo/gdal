@@ -667,20 +667,6 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
     else if( nFeatureElementDepth == nCurrentDepth )
     {
         nFeatureElementDepth = 0;
-
-        const int iFieldIndexNamespace = poFeatureDefn->GetFieldIndex("namespace");
-        const int iFieldIndexLocalId = poFeatureDefn->GetFieldIndex("lokaalID");
-
-        CPLAssert(m_poFeature->GetFieldAsString(iFieldIndexNamespace));
-        CPLAssert(m_poFeature->GetFieldAsString(iFieldIndexLocalId));
-
-        CPLString oLvId;
-        oLvId += m_poFeature->GetFieldAsString(iFieldIndexNamespace);
-        oLvId += ".";
-        oLvId += m_poFeature->GetFieldAsString(iFieldIndexLocalId);
-
-        m_poFeature->SetField(poFeatureDefn->GetFieldIndex("lvID"), oLvId.toupper().c_str());
-
         XML_StopParser(oParser.get(), XML_TRUE);
     }
     else if( nFeatureCollectionDepth == nCurrentDepth )
