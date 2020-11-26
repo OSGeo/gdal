@@ -113,7 +113,7 @@ for gdal_ver, py_ver in gdal_version_and_min_supported_python_version:
 if python_version < minimum_supported_python_version_for_this_gdal_version:
     msg = 'Your Python version is {}, which is no longer supported by GDAL {}. ' \
           'Please upgrade your Python version to Python >= {}, ' \
-          'or use GDAL <= {} >, which supports your Python version.'.\
+          'or use GDAL <= {}, which supports your Python version.'.\
         format(ver_str(python_version), ver_str(gdal_version),
                ver_str(minimum_supported_python_version_for_this_gdal_version),
                ver_str(last_gdal_version_to_supported_your_python_version))
