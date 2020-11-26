@@ -837,8 +837,11 @@ OGRFeature* OGRLVBAGLayer::GetNextRawFeature()
     if (nNextFID == 0)
         ConfigureParser();
 
-    delete m_poFeature;
-    m_poFeature = nullptr;
+    if ( m_poFeature )
+    {
+        delete m_poFeature;
+        m_poFeature = nullptr;
+    }
 
     ParseDocument();
     OGRFeature* poFeatureRet = m_poFeature;
