@@ -53,6 +53,7 @@ OGRLVBAGLayer::OGRLVBAGLayer( const char *pszFilename, OGRLayerPool* poPoolIn, c
     bSchemaOnly{ false },
     bHasReadSchema{ false },
     bFixInvalidData{ CPLFetchBool(papszOpenOptions, "AUTOCORRECT_INVALID_DATA", false) },
+    bLegacyId{ CPLFetchBool(papszOpenOptions, "LEGACY_ID", false) },
     nCurrentDepth{ 0 },
     nGeometryElementDepth{ 0 },
     nFeatureCollectionDepth{ 0 },
@@ -152,15 +153,9 @@ void OGRLVBAGLayer::AddSpatialRef( OGRwkbGeometryType eTypeIn )
 
 void OGRLVBAGLayer::AddIdentifierFieldDefn()
 {
-    OGRFieldDefn oField0("lvID", OFTString);
-    OGRFieldDefn oField1("namespace", OFTString);
-    OGRFieldDefn oField2("lokaalID", OFTString);
-    OGRFieldDefn oField3("versie", OFTString);
+    OGRFieldDefn oField0("identificatie", OFTString);
 
     poFeatureDefn->AddFieldDefn(&oField0);
-    poFeatureDefn->AddFieldDefn(&oField1);
-    poFeatureDefn->AddFieldDefn(&oField2);
-    poFeatureDefn->AddFieldDefn(&oField3);
 }
 
 /************************************************************************/
@@ -230,6 +225,8 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         SetDescription(poFeatureDefn->GetName());
 
         AddSpatialRef(wkbMultiPolygon);
+
+        osNamespace = "NL.IMBAG.Pand";
     }
     else if( EQUAL("num", pszDataset) )
     {
@@ -253,6 +250,8 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
 
         poFeatureDefn->SetName("Nummeraanduiding");
         SetDescription(poFeatureDefn->GetName());
+
+        osNamespace = "NL.IMBAG.Nummeraanduiding";
     }
     else if( EQUAL("lig", pszDataset) )
     {
@@ -268,6 +267,8 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         SetDescription(poFeatureDefn->GetName());
 
         AddSpatialRef(wkbPolygon);
+
+        osNamespace = "NL.IMBAG.Ligplaats";
     }
     else if( EQUAL("sta", pszDataset) )
     {
@@ -283,6 +284,8 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         SetDescription(poFeatureDefn->GetName());
 
         AddSpatialRef(wkbPolygon);
+
+        osNamespace = "NL.IMBAG.Standplaats";
     }
     else if( EQUAL("opr", pszDataset) )
     {
@@ -298,8 +301,10 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         AddDocumentFieldDefn();
         AddOccurrenceFieldDefn();
 
-        poFeatureDefn->SetName("OpenbareRuimte");
+        poFeatureDefn->SetName("Openbareruimte");
         SetDescription(poFeatureDefn->GetName());
+
+        osNamespace = "NL.IMBAG.Openbareruimte";
     }
     else if( EQUAL("vbo", pszDataset) )
     {
@@ -321,6 +326,8 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         SetDescription(poFeatureDefn->GetName());
 
         AddSpatialRef(wkbPoint);
+
+        osNamespace = "NL.IMBAG.Verblijfsobject";
     }
     else if( EQUAL("wpl", pszDataset) )
     {
@@ -336,6 +343,8 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         SetDescription(poFeatureDefn->GetName());
 
         AddSpatialRef(wkbMultiPolygon);
+
+        osNamespace = "NL.IMBAG.Woonplaats";
     }
     else
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -521,19 +530,27 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                 const char *pszValue = osElementString.c_str();
                 const size_t nIdLength = osElementString.size();
                 const OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iFieldIndex);
-                if( EQUAL("lokaalid", pszTag)
-                    && nIdLength != nDefaultLokaalIDSize && nIdLength != nWplLokaalIDSize )
+                if( EQUAL("identificatie", pszTag) )
                 {
+                    bool bIsIdInvalid = false;
                     if( nIdLength == nDefaultLokaalIDSize-1 )
                     {
                         osElementString = '0' + osElementString;
-                        m_poFeature->SetField(iFieldIndex, osElementString.c_str());
                     }
-                    else
+                    else if( nIdLength > nDefaultLokaalIDSize )
                     {
+                        bIsIdInvalid = true;
                         m_poFeature->SetFieldNull(iFieldIndex);
                         CPLError(CE_Warning, CPLE_AppDefined, 
-                            "Invalid LokaalID : %s, value set to null", pszValue);
+                            "Invalid identificatie : %s, value set to null", pszValue);
+                    }
+                    if ( !bIsIdInvalid )
+                    {
+                        if ( !bLegacyId )
+                        {
+                            osElementString = osNamespace + '.' + osElementString;
+                        }
+                        m_poFeature->SetField(iFieldIndex, osElementString.c_str());
                     }
                 }
                 else if( poFieldDefn->GetSubType() == OGRFieldSubType::OFSTBoolean )
