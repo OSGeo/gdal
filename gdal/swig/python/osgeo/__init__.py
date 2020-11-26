@@ -76,7 +76,7 @@ python_version = tuple(version_info)[:3]
 # because the core of GDAL Python bindings might still support an older Python version.
 # Hence the default option to just issue a warning.
 # To get complete functionality upgrading to the minimum supported version is needed.
-fail_on_unsupported_version = False
+fail_on_unsupported_version = True
 
 # The following is a Sequence of tuples in the form of (gdal_version, python_version).
 # Each line represents the minimum supported Python version of a given GDAL version.
