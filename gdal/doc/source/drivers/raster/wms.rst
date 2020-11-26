@@ -298,7 +298,7 @@ IIP:http://foo.com/FIF=image_name out.xml -of WMS"
 Examples
 --------
 
--  | `onearth_global_mosaic.xml <frmt_wms_onearth_global_mosaic.xml>`__
+-  | `onearth_global_mosaic.xml <https://github.com/OSGeo/gdal/blob/master/gdal/frmts/wms/frmt_wms_onearth_global_mosaic.xml>`__
      - Landsat mosaic from a `OnEarth <http://onearth.jpl.nasa.gov/>`__
      WMS server
 
