@@ -16,4 +16,4 @@ esac
 GDAL_ROOT=$SCRIPT_DIR/..
 cd "$GDAL_ROOT"
 
-find port alg gcore gnm ogr frmts apps -name "*.c*" -exec python scripts/fix_container_dot_size_zero.py {} \;
+find port alg gcore gnm ogr frmts apps -name "*.c*" -exec python3 scripts/fix_container_dot_size_zero.py {} \;

@@ -36,7 +36,7 @@ For example:
 
 ::
 
-   $ python
+   $ python3
    from osgeo import gdal
    ds = gdal.Open('../autotest/gdrivers/data/test_vicar_truncated.bin')
    print(ds.GetMetadata_List('json:VICAR')[0])

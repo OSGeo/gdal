@@ -478,7 +478,7 @@ not need it.
 
 .. code-block::
 
-    #!/usr/bin/env python
+    #!/usr/bin/env python3
     # -*- coding: utf-8 -*-
     # This code is in the public domain, so as to serve as a template for
     # real-world plugins.

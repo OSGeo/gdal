@@ -232,7 +232,7 @@ GeoRSS feed
 
 ::
 
-       #!/usr/bin/python
+       #!/usr/bin/env python3
        import gdal
        import ogr
        import urllib2

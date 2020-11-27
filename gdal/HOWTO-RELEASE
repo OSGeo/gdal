@@ -209,7 +209,7 @@ password: yourpassword
 
 c) cd swig/python
 
-d) python setup.py sdist
+d) python3 setup.py sdist
 
 e) For trial :
     twine upload dist/GDAL*.gz -r pypitest
