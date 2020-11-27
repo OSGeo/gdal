@@ -2023,6 +2023,26 @@ def test_gdalwarp_lib_xscale_antimeridian():
     gdal.Unlink('/vsimem/src1.tif')
     gdal.Unlink('/vsimem/src2.tif')
 
+
+###############################################################################
+# Test gdalwarp preserves scale & offset of bands
+
+def test_gdalwarp_lib_scale_offset():
+
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("WGS84")
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    src_ds.SetGeoTransform([2,1,0,49,0,-1])
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.GetRasterBand(1).SetScale(1.5)
+    src_ds.GetRasterBand(1).SetOffset(2.5)
+
+    ds = gdal.Warp('', src_ds, format='MEM')
+    assert ds.GetRasterBand(1).GetScale() == 1.5
+    assert ds.GetRasterBand(1).GetOffset() == 2.5
+
+
 ###############################################################################
 # Cleanup
 
