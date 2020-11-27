@@ -8,7 +8,7 @@ two libraries -- GDAL for manipulating geospatial raster data and OGR for
 manipulating geospatial vector data -- but we'll refer to the entire package 
 as the GDAL library for the purposes of this document.
 
-The GDAL project (primarily Even Rouault) maintains SWIG generated Python 
+The GDAL project (primarily Even Rouault) maintains SWIG generated Python 3
 bindings for GDAL and OGR. Generally speaking the classes and methods mostly 
 match those of the GDAL and OGR C++ classes. There is no Python specific 
 reference documentation, but the `GDAL API Tutorial`_ includes Python examples.
@@ -33,12 +33,12 @@ use that to build an egg by default.  If setuptools cannot be imported, a
 simple distutils root install of the GDAL package (and no dependency 
 chaining for numpy) will be made.  
 
-easy_install
-~~~~~~~~~~~~
+Pip
+~~~
 
 GDAL can be installed from the Python CheeseShop::
 
-  $ sudo easy_install GDAL
+  $ pip install GDAL
 
 It may be necessary to have libgdal and its development headers installed 
 if easy_install is expected to do a source build because no egg is available 
@@ -57,12 +57,12 @@ depending on how your packager arranged things.
 After modifying the location of gdal-config, you can build and install 
 with the setup script::
   
-  $ python setup.py build
-  $ python setup.py install
+  $ python3 setup.py build
+  $ python3 setup.py install
 
 If you have setuptools installed, you can also generate an egg::
   
-  $ python setup.py bdist_egg
+  $ python3 setup.py bdist_egg
 
 Building as part of the GDAL library source tree
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -149,26 +149,6 @@ There are five major modules that are included with the GDAL_ Python bindings.::
   >>> from osgeo import osr
   >>> from osgeo import gdal_array
   >>> from osgeo import gdalconst
-
-Additionally, there are five compatibility modules that are included but 
-provide notices to state that they are deprecated and will be going away.  
-If you are using GDAL 1.7 bindings, you should update your imports to utilize 
-the usage above, but the following will work until at least GDAL 2.1. ::
-
-  >>> import gdal
-  >>> import ogr
-  >>> import osr
-  >>> import gdalnumeric
-  >>> import gdalconst
-
-If you have previous code that imported the global module and still need to 
-support the old import, a simple try...except import can silence the 
-deprecation warning and keep things named essentially the same as before::
-
-  >>> try:
-  ...     from osgeo import gdal
-  ... except ImportError:
-  ...     import gdal
 
 Docstrings
 ~~~~~~~~~~
