@@ -40,9 +40,7 @@ if [[ ! "${GDAL_DATA}" =~ $GDAL_ROOT/data ]]; then
     echo "Setting GDAL_DATA=$GDAL_DATA"
 fi
 
-if which python >/dev/null; then
-    GDAL_PYTHONPATH=$(python -c "from distutils.command.build import build;from distutils.dist import Distribution;b = build(Distribution());b.finalize_options();print(b.build_platlib)")
-elif which python3 >/dev/null; then
+if which python3 >/dev/null; then
     GDAL_PYTHONPATH=$(python3 -c "from distutils.command.build import build;from distutils.dist import Distribution;b = build(Distribution());b.finalize_options();print(b.build_platlib)")
 fi
 if test "$GDAL_PYTHONPATH" != ""; then

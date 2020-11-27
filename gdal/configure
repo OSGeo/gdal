@@ -2243,7 +2243,7 @@ Optional Packages:
   --with-gdal-ver=ARG   Override GDAL version
   --with-macosx-framework         Build and install GDAL as a Mac OS X Framework
   --with-perl           Enable perl bindings
-  --with-python=ARG   Enable python bindings (ARG=yes, no, or path to python binary)
+  --with-python=ARG   Enable Python bindings (ARG=yes, no, or path to python3 binary)
   --with-java       Include Java support (ARG=yes, no or JDK home path)  [default=no]
   --with-hdfs=ARG        Include HDFS support (ARG=Path or no)
   --with-tiledb=ARG    Include TileDB support (ARG=no, yes or tiledb install root path)
@@ -40694,7 +40694,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for python bindings" >&5
 $as_echo_n "checking for python bindings... " >&6; }
 if test "$with_python" = "yes" ; then
-        for ac_prog in python python3 python2
+        for ac_prog in python3
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -40737,12 +40737,12 @@ fi
 done
 
   if test "x$PYTHON" = "x"; then
-    as_fn_error $? "--with-python requested, but Python not found!" "$LINENO" 5
+    as_fn_error $? "--with-python requested, but python3 not found!" "$LINENO" 5
   fi
 elif test "x$with_python" != "x" -a "$with_python" != "no" ; then
   PYTHON="$with_python"
   if test "`$PYTHON -c 'print(1)'`" != "1"; then
-    as_fn_error $? "--with-python requested, but Python not found!" "$LINENO" 5
+    as_fn_error $? "--with-python requested, but python3 not found!" "$LINENO" 5
   fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
 $as_echo "enabled" >&6; }
@@ -40755,8 +40755,8 @@ fi
 if test "x$PYTHON" != "x"; then
   BINDINGS="python $BINDINGS"
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for python setuptools" >&5
-$as_echo_n "checking for python setuptools... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Python setuptools" >&5
+$as_echo_n "checking for Python setuptools... " >&6; }
   SETUPTEST='try:
   import setuptools
   print(1)

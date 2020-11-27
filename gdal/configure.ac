@@ -5212,21 +5212,21 @@ dnl ---------------------------------------------------------------------------
 dnl NG Python bindings.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(python,[  --with-python=ARG   Enable python bindings (ARG=yes, no, or path to python binary)],,)
+AC_ARG_WITH(python,[  --with-python=ARG   Enable Python bindings (ARG=yes, no, or path to python3 binary)],,)
 
 AC_MSG_CHECKING([for python bindings])
 if test "$with_python" = "yes" ; then
   dnl
-  dnl Check for Python executable in PATH
+  dnl Check for python3 executable in PATH
   dnl
-  AC_CHECK_PROGS([PYTHON], [python python3 python2])
+  AC_CHECK_PROGS([PYTHON], [python3])
   if test "x$PYTHON" = "x"; then
-    AC_MSG_ERROR([--with-python requested, but Python not found!])
+    AC_MSG_ERROR([--with-python requested, but python3 not found!])
   fi
 elif test "x$with_python" != "x" -a "$with_python" != "no" ; then
   PYTHON="$with_python"
   if test "`$PYTHON -c 'print(1)'`" != "1"; then
-    AC_MSG_ERROR([--with-python requested, but Python not found!])
+    AC_MSG_ERROR([--with-python requested, but python3 not found!])
   fi
   AC_MSG_RESULT([enabled])
 else
@@ -5237,7 +5237,7 @@ fi
 if test "x$PYTHON" != "x"; then
   BINDINGS="python $BINDINGS"
 
-  AC_MSG_CHECKING([for python setuptools])
+  AC_MSG_CHECKING([for Python setuptools])
   SETUPTEST='try:
   import setuptools
   print(1)

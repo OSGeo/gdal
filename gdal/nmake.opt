@@ -94,7 +94,7 @@ PYDIR   =	"C:\Software\Python24"
 # Set this to the name of the python executable in PYDIR. For example "python_d.exe"
 # if building python bindings with a debug build.
 !IFNDEF PYEXEC
-PYEXEC = python.exe
+PYEXEC = python3.exe
 !ENDIF
 
 # Set the location of your SWIG installation
