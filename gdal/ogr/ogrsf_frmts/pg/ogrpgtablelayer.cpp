@@ -2909,7 +2909,9 @@ void OGRPGTableLayer::ResolveSRID(const OGRPGGeomFieldDefn* poGFldDefn)
         osGetSRID += OGRPGEscapeColumnName(poGFldDefn->GetNameRef());
         osGetSRID += ") FROM ";
         osGetSRID += pszSqlTableName;
-        osGetSRID += " LIMIT 1";
+        osGetSRID += " WHERE (";
+        osGetSRID += OGRPGEscapeColumnName(poGFldDefn->GetNameRef());
+        osGetSRID += " IS NOT NULL) LIMIT 1";
 
         hResult = OGRPG_PQexec(poDS->GetPGConn(), osGetSRID );
         if( hResult
