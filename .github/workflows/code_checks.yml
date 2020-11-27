@@ -122,6 +122,7 @@ jobs:
 
       - name: Install Requirements
         run: |
+            sudo apt update
             sudo apt install doxygen texlive-latex-base
 
       - name: Run doxygen
