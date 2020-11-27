@@ -1533,3 +1533,25 @@ def test_netcdf_multidim_createcopy_array_options(netcdf_setup):  # noqa
     check()
 
     gdal.Unlink(tmpfilename)
+
+
+def test_netcdf_multidim_createcopy_array_options_if_name_fullname(netcdf_setup):  # noqa
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    src_ds = gdal.OpenEx('data/netcdf/byte_no_cf.nc', gdal.OF_MULTIDIM_RASTER)
+    tmpfilename = 'tmp/test_netcdf_multidim_createcopy_array_options_if_name_fullname.nc'
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('netCDF').CreateCopy(tmpfilename, src_ds,
+            options=['ARRAY:IF(NAME=/Band1):COMPRESS=DEFLATE'])
+
+    def check():
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray('Band1')
+        assert var.GetStructuralInfo() == { 'COMPRESS': 'DEFLATE' }
+
+    check()
+
+    gdal.Unlink(tmpfilename)

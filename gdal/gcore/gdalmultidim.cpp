@@ -555,7 +555,8 @@ GUInt64 GDALGroup::GetTotalCopyCost() const
  *                     For example, "ARRAY:IF(DIM=2):BLOCKSIZE=256,256" will
  *                     restrict BLOCKSIZE=256,256 to arrays of dimension 2.
  *                     Restriction to arrays of a given name is done with adding
- *                     "IF(NAME={name}):" after "ARRAY:".
+ *                     "IF(NAME={name}):" after "ARRAY:". {name} can also be
+ *                     a full qualified name.
  *                     A non-driver specific ARRAY option, "AUTOSCALE=YES" can be
  *                     used to ask (non indexing) variables of type Float32 or Float64
  *                     to be scaled to UInt16 with scale and offset values
@@ -716,7 +717,8 @@ bool GDALGroup::CopyFrom( const std::shared_ptr<GDALGroup>& poDstRootGroup,
                         {
                             CPLString osName;
                             osName.assign(pszName, pszNext - pszName - 1);
-                            if( osName == srcArray->GetName() )
+                            if( osName == srcArray->GetName() ||
+                                osName == srcArray->GetFullName() )
                             {
                                 pszOption = pszNext + 1;
                             }
