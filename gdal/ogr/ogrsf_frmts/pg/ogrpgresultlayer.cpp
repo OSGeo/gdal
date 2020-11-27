@@ -400,9 +400,11 @@ void OGRPGResultLayer::ResolveSRID(const OGRPGGeomFieldDefn* poGFldDefn)
             osGetSRID += OGRPGEscapeColumnName(poGFldDefn->GetNameRef());
             if (poDS->sPostGISVersion.nMajor > 2 || (poDS->sPostGISVersion.nMajor == 2 && poDS->sPostGISVersion.nMinor >= 2))
                 osGetSRID += "::geometry";
-            osGetSRID += ") FROM(";
+            osGetSRID += ") FROM (";
             osGetSRID += pszRawStatement;
-            osGetSRID += ") AS ogrpggetsrid LIMIT 1";
+            osGetSRID += ") AS ogrpggetsrid WHERE (";
+            osGetSRID += OGRPGEscapeColumnName(poGFldDefn->GetNameRef());
+            osGetSRID += " IS NOT NULL) LIMIT 1";
 
             PGresult* hSRSIdResult = OGRPG_PQexec(poDS->GetPGConn(), osGetSRID );
 
