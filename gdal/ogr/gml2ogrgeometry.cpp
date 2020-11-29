@@ -1012,6 +1012,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         {
             OGRCurve *poCurve = poGeom->toCurve();
             poGeom = OGRCurve::CastToLinearRing(poCurve);
+            if( poGeom == nullptr )
+                return nullptr;
         }
 
         OGRCurvePolygon *poCP = nullptr;
@@ -1085,6 +1087,11 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                         {
                             OGRLineString* poLS = poGeom->toLineString();
                             poGeom = OGRCurve::CastToLinearRing(poLS);
+                            if( poGeom == nullptr )
+                            {
+                                delete poCP;
+                                return nullptr;
+                            }
                         }
                         else
                         {

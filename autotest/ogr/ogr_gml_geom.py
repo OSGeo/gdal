@@ -1086,6 +1086,8 @@ def test_gml_invalid_geoms():
         ('<gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:posList>0 1 2 3 4 5 0 1</gml:posList></gml:LinearRing></gml:outerBoundaryIs><gml:innerBoundaryIs/></gml:Polygon>', None),
         ('<gml:Polygon><gml:outerBoundaryIs><gml:LinearRing/></gml:outerBoundaryIs><gml:innerBoundaryIs/></gml:Polygon>', None),
         ('<gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:posList>0 1 2 3 4 5 0 1</gml:posList></gml:LinearRing></gml:outerBoundaryIs><gml:innerBoundaryIs><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:innerBoundaryIs></gml:Polygon>', None),
+        ('<gml:Polygon><gml:exterior><gml:CompositeCurve/></gml:exterior></gml:Polygon>', None),
+        ('<gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>0 0 4 0 4 4 0 4 0 0<gml:/posList><gml:/LinearRing><gml:/exterior><gml:interior><gml:CompositeCurve/></gml:interior></gml:Polygon>', None),
         ('<gml:Ring/>', None),
         ('<gml:Ring><foo/></gml:Ring>', None),
         ('<gml:Ring><gml:curveMember/></gml:Ring>', None),
@@ -1204,6 +1206,7 @@ def test_gml_invalid_geoms():
         ('<gml:PolyhedralSurface><foo/></gml:PolyhedralSurface>', None),
         ('<gml:PolyhedralSurface><gml:polygonPatches><foo/></gml:polygonPatches></gml:PolyhedralSurface>', None),
         ('<gml:PolyhedralSurface><gml:polygonPatches><gml:PolygonPatch><gml:exterior><foo/></gml:exterior></gml:PolygonPatch></gml:polygonPatches></gml:PolyhedralSurface>', None),
+        ('<gml:Triangle><gml:exterior><gml:CompositeCurve/></gml:exterior></gml:Triangle>', None),
     ]
 
     for (gml, expected_wkt) in gml_expected_wkt_list:
