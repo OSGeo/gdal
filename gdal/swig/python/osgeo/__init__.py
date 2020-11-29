@@ -84,7 +84,9 @@ fail_on_unsupported_version = False
 # when importing osgeo from a Python version which will not be
 # supported in the next version of GDAL.
 gdal_version_and_min_supported_python_version = (
-    ((3, 2), (2, 0)),
+    ((0, 0), (0, 0)),
+    ((1, 0), (2, 0)),
+    ((2, 0), (2, 7)),
     ((3, 3), (3, 6)),
     # ((3, 4), (3, 7)),
     # ((3, 5), (3, 8)),
