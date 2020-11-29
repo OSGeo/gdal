@@ -586,7 +586,10 @@ int STACTADataset::Identify(GDALOpenInfo* poOpenInfo)
         return true;
     }
 
-    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "json") ||
+    if(
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "json") ||
+#endif
         poOpenInfo->nHeaderBytes == 0 )
     {
         return false;
