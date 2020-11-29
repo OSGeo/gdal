@@ -232,10 +232,9 @@ Voting history
 
 https://lists.osgeo.org/pipermail/gdal-dev/2020-November/053039.html
 
-* +1 from EvenR, HowardB, KurtS, JukkaR
+* +1 from EvenR, HowardB, KurtS, JukkaR, DanielM
 
 Credits
 -------
 
 * implemented by Even Rouault, Robert Coup and Idan Miara
-
