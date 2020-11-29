@@ -8,15 +8,14 @@ RFC 77: Drop Python 2 support in favour of Python 3.6
 Author:        Idan Miara
 Contact:       idan@miara.com
 Started:       2020-Nov-3
-Last updated:  2020-Nov-25
-Status:        Preliminary, Target GDAL 3.3
+Last updated:  2020-Nov-29
+Status:        Adopted, implemented in GDAL 3.3
 ============== ============================
 
 Summary
 -------
 
-This RFC drops Python 2 support.
-This RFC sets Python 3.6 as the new minimum supported Python version.
+This RFC drops Python 2 support and sets Python 3.6 as the new minimum supported Python version.
 
 Motivation
 ----------
@@ -233,10 +232,10 @@ Voting history
 
 https://lists.osgeo.org/pipermail/gdal-dev/2020-November/053039.html
 
-* This motion is passed with +1 from PSC members HowardB, KurtS, JukkaR and Even
+* +1 from EvenR, HowardB, KurtS, JukkaR
 
 Credits
 -------
 
-* not implemented yet
+* implemented by Even Rouault, Robert Coup and Idan Miara
 
