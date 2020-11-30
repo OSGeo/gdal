@@ -77,6 +77,7 @@ class STACTADataset final: public GDALPamDataset
         lru11::Cache<std::string, std::shared_ptr<GDALDataset>> m_oCacheTileDS{32};
 
         bool m_bDownloadWholeMetaTile = false;
+        bool m_bSkipMissingMetaTile = false;
 
         bool Open(GDALOpenInfo* poOpenInfo);
 

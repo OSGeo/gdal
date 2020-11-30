@@ -438,108 +438,171 @@ CPLErr STACTARawDataset::IRasterIO( GDALRWFlag eRWFlag,
             const auto osURL = CPLString(m_osURLTemplate)
                 .replaceAll("{TileRow}", CPLSPrintf("%d", iY + m_nMinMetaTileRow))
                 .replaceAll("{TileCol}", CPLSPrintf("%d", iX + m_nMinMetaTileCol));
-            std::shared_ptr<GDALDataset> poTileDS;
-            if( !m_poMasterDS->m_oCacheTileDS.tryGet(osURL, poTileDS) )
-            {
-                CPLStringList aosAllowedDrivers;
-                aosAllowedDrivers.AddString("GTiff");
-                aosAllowedDrivers.AddString("PNG");
-                aosAllowedDrivers.AddString("JPEG");
-                aosAllowedDrivers.AddString("JP2KAK");
-                aosAllowedDrivers.AddString("JP2ECW");
-                aosAllowedDrivers.AddString("JP2MrSID");
-                aosAllowedDrivers.AddString("JP2OpenJPEG");
-                if( bDownloadWholeMetaTile &&
-                    (STARTS_WITH(osURL, "/vsis3/") ||
-                     STARTS_WITH(osURL, "/vsicurl/")) )
-                {
-                    VSILFILE* fp = VSIFOpenL(osURL, "rb");
-                    if( fp == nullptr )
-                    {
-                        CPLError(CE_Failure, CPLE_OpenFailed,
-                                "Cannot open %s", osURL.c_str());
-                        return CE_Failure;
-                    }
-                    GByte* pabyBuf = nullptr;
-                    vsi_l_offset nSize = 0;
-                    if( !VSIIngestFile(fp, nullptr, &pabyBuf, &nSize, -1) )
-                    {
-                        VSIFCloseL(fp);
-                        return CE_Failure;
-                    }
-                    VSIFCloseL(fp);
-                    const CPLString osMEMFilename("/vsimem/stacta/" + osURL);
-                    VSIFCloseL(VSIFileFromMemBuffer(osMEMFilename, pabyBuf, nSize, TRUE));
-                    poTileDS = std::shared_ptr<GDALDataset>(
-                        GDALDataset::Open(osMEMFilename,
-                                          GDAL_OF_INTERNAL | GDAL_OF_RASTER,
-                                          aosAllowedDrivers.List()));
-                    if( poTileDS )
-                        poTileDS->MarkSuppressOnClose();
-                    else
-                        VSIUnlink(osMEMFilename);
-
-                }
-                else if( bDownloadWholeMetaTile ||
-                    (!STARTS_WITH(osURL, "http://") &&
-                     !STARTS_WITH(osURL, "https://")) )
-                {
-                    aosAllowedDrivers.AddString("HTTP");
-                    poTileDS = std::shared_ptr<GDALDataset>(
-                        GDALDataset::Open(osURL,
-                                          GDAL_OF_INTERNAL | GDAL_OF_RASTER,
-                                          aosAllowedDrivers.List()));
-                }
-                else
-                {
-                    poTileDS = std::shared_ptr<GDALDataset>(
-                        GDALDataset::Open(("/vsicurl/" + osURL).c_str(),
-                                          GDAL_OF_INTERNAL | GDAL_OF_RASTER,
-                                          aosAllowedDrivers.List()));
-                }
-                if( poTileDS == nullptr )
-                {
-                    CPLError(CE_Failure, CPLE_OpenFailed,
-                            "Cannot open %s", osURL.c_str());
-                    return CE_Failure;
-                }
-                m_poMasterDS->m_oCacheTileDS.insert(osURL, poTileDS);
-            }
 
             const int nTileXOff = std::max(0, nXOff - iX * m_nMetaTileWidth);
             const int nTileXSize =
                 std::min((iX + 1) * m_nMetaTileWidth, nXOff + nXSize) -
                 std::max(nXOff, iX * m_nMetaTileWidth);
 
-            GDALRasterIOExtraArg sExtraArgs;
-            INIT_RASTERIO_EXTRA_ARG(sExtraArgs);
-            if( bRequestFitsInSingleMetaTile )
+            const int nBufXSizeEffective =
+                bRequestFitsInSingleMetaTile ? nBufXSize : nTileXSize;
+            const int nBufYSizeEffective =
+                bRequestFitsInSingleMetaTile ? nBufYSize : nTileYSize;
+
+            std::shared_ptr<GDALDataset> poTileDS;
+            bool bMissingTile = false;
+            do
             {
-                sExtraArgs.eResampleAlg = psExtraArg->eResampleAlg;
-                if( psExtraArg->bFloatingPointWindowValidity )
+                if( !m_poMasterDS->m_oCacheTileDS.tryGet(osURL, poTileDS) )
                 {
-                    sExtraArgs.bFloatingPointWindowValidity = true;
-                    sExtraArgs.dfXOff = psExtraArg->dfXOff - iX * m_nMetaTileWidth;
-                    sExtraArgs.dfYOff = psExtraArg->dfYOff - iY * m_nMetaTileHeight;
-                    sExtraArgs.dfXSize = psExtraArg->dfXSize;
-                    sExtraArgs.dfYSize = psExtraArg->dfYSize;
+                    CPLStringList aosAllowedDrivers;
+                    aosAllowedDrivers.AddString("GTiff");
+                    aosAllowedDrivers.AddString("PNG");
+                    aosAllowedDrivers.AddString("JPEG");
+                    aosAllowedDrivers.AddString("JP2KAK");
+                    aosAllowedDrivers.AddString("JP2ECW");
+                    aosAllowedDrivers.AddString("JP2MrSID");
+                    aosAllowedDrivers.AddString("JP2OpenJPEG");
+                    if( bDownloadWholeMetaTile &&
+                        (STARTS_WITH(osURL, "/vsis3/") ||
+                        STARTS_WITH(osURL, "/vsicurl/")) )
+                    {
+                        if( m_poMasterDS->m_bSkipMissingMetaTile )
+                            CPLPushErrorHandler(CPLQuietErrorHandler);
+                        VSILFILE* fp = VSIFOpenL(osURL, "rb");
+                        if( m_poMasterDS->m_bSkipMissingMetaTile )
+                            CPLPopErrorHandler();
+                        if( fp == nullptr )
+                        {
+                            if( m_poMasterDS->m_bSkipMissingMetaTile )
+                            {
+                                m_poMasterDS->m_oCacheTileDS.insert(osURL, nullptr);
+                                bMissingTile = true;
+                                break;
+                            }
+                            CPLError(CE_Failure, CPLE_OpenFailed,
+                                    "Cannot open %s", osURL.c_str());
+                            return CE_Failure;
+                        }
+                        GByte* pabyBuf = nullptr;
+                        vsi_l_offset nSize = 0;
+                        if( !VSIIngestFile(fp, nullptr, &pabyBuf, &nSize, -1) )
+                        {
+                            VSIFCloseL(fp);
+                            return CE_Failure;
+                        }
+                        VSIFCloseL(fp);
+                        const CPLString osMEMFilename("/vsimem/stacta/" + osURL);
+                        VSIFCloseL(VSIFileFromMemBuffer(osMEMFilename, pabyBuf, nSize, TRUE));
+                        poTileDS = std::shared_ptr<GDALDataset>(
+                            GDALDataset::Open(osMEMFilename,
+                                            GDAL_OF_INTERNAL | GDAL_OF_RASTER,
+                                            aosAllowedDrivers.List()));
+                        if( poTileDS )
+                            poTileDS->MarkSuppressOnClose();
+                        else
+                            VSIUnlink(osMEMFilename);
+
+                    }
+                    else if( bDownloadWholeMetaTile ||
+                        (!STARTS_WITH(osURL, "http://") &&
+                        !STARTS_WITH(osURL, "https://")) )
+                    {
+                        aosAllowedDrivers.AddString("HTTP");
+                        if( m_poMasterDS->m_bSkipMissingMetaTile )
+                            CPLPushErrorHandler(CPLQuietErrorHandler);
+                        poTileDS = std::shared_ptr<GDALDataset>(
+                            GDALDataset::Open(osURL,
+                                            GDAL_OF_INTERNAL | GDAL_OF_RASTER,
+                                            aosAllowedDrivers.List()));
+                        if( m_poMasterDS->m_bSkipMissingMetaTile )
+                            CPLPopErrorHandler();
+                    }
+                    else
+                    {
+                        if( m_poMasterDS->m_bSkipMissingMetaTile )
+                            CPLPushErrorHandler(CPLQuietErrorHandler);
+                        poTileDS = std::shared_ptr<GDALDataset>(
+                            GDALDataset::Open(("/vsicurl/" + osURL).c_str(),
+                                            GDAL_OF_INTERNAL | GDAL_OF_RASTER,
+                                            aosAllowedDrivers.List()));
+                        if( m_poMasterDS->m_bSkipMissingMetaTile )
+                            CPLPopErrorHandler();
+                    }
+                    if( poTileDS == nullptr )
+                    {
+                        if( m_poMasterDS->m_bSkipMissingMetaTile )
+                        {
+                            m_poMasterDS->m_oCacheTileDS.insert(osURL, nullptr);
+                            bMissingTile = true;
+                            break;
+                        }
+                        CPLError(CE_Failure, CPLE_OpenFailed,
+                                "Cannot open %s", osURL.c_str());
+                        return CE_Failure;
+                    }
+                    m_poMasterDS->m_oCacheTileDS.insert(osURL, poTileDS);
+                }
+                if( poTileDS == nullptr )
+                {
+                    bMissingTile = true;
+                    break;
+                }
+
+                GDALRasterIOExtraArg sExtraArgs;
+                INIT_RASTERIO_EXTRA_ARG(sExtraArgs);
+                if( bRequestFitsInSingleMetaTile )
+                {
+                    sExtraArgs.eResampleAlg = psExtraArg->eResampleAlg;
+                    if( psExtraArg->bFloatingPointWindowValidity )
+                    {
+                        sExtraArgs.bFloatingPointWindowValidity = true;
+                        sExtraArgs.dfXOff = psExtraArg->dfXOff - iX * m_nMetaTileWidth;
+                        sExtraArgs.dfYOff = psExtraArg->dfYOff - iY * m_nMetaTileHeight;
+                        sExtraArgs.dfXSize = psExtraArg->dfXSize;
+                        sExtraArgs.dfYSize = psExtraArg->dfYSize;
+                    }
+                }
+                CPLDebugOnly("STACTA", "Reading %d,%d,%d,%d in %s",
+                            nTileXOff, nTileYOff, nTileXSize, nTileYSize,
+                            osURL.c_str());
+                if( poTileDS->RasterIO(
+                        GF_Read, nTileXOff, nTileYOff, nTileXSize, nTileYSize,
+                        static_cast<GByte*>(pData) + nBufXOff * nPixelSpace +
+                                                    nBufYOff * nLineSpace,
+                        nBufXSizeEffective,
+                        nBufYSizeEffective,
+                        eBufType, 
+                        nBandCount, panBandMap,
+                        nPixelSpace, nLineSpace, nBandSpace,
+                        &sExtraArgs) != CE_None )
+                {
+                    return CE_Failure;
                 }
             }
-            CPLDebugOnly("STACTA", "Reading %d,%d,%d,%d in %s",
-                         nTileXOff, nTileYOff, nTileXSize, nTileYSize,
-                         osURL.c_str());
-            if( poTileDS->RasterIO(
-                    GF_Read, nTileXOff, nTileYOff, nTileXSize, nTileYSize,
-                    static_cast<GByte*>(pData) + nBufXOff * nPixelSpace +
-                                                 nBufYOff * nLineSpace,
-                    bRequestFitsInSingleMetaTile ? nBufXSize : nTileXSize,
-                    bRequestFitsInSingleMetaTile ? nBufYSize : nTileYSize,
-                    eBufType, 
-                    nBandCount, panBandMap,
-                    nPixelSpace, nLineSpace, nBandSpace,
-                    &sExtraArgs) != CE_None )
+            while(false);
+
+            if( bMissingTile )
             {
-                return CE_Failure;
+                CPLDebugOnly("STACTA", "Missing metatile %s", osURL.c_str());
+                for( int iBand = 0; iBand < nBandCount; iBand++ )
+                {
+                    int bHasNoData = FALSE;
+                    double dfNodata = GetRasterBand(panBandMap[iBand])->GetNoDataValue(&bHasNoData);
+                    if( !bHasNoData )
+                        dfNodata = 0;
+                    for( int nYBufOff = 0; nYBufOff < nBufYSizeEffective; nYBufOff ++ )
+                    {
+                        GByte* pabyDest = static_cast<GByte*>(pData) +
+                                                iBand * nBandSpace +
+                                                nBufXOff * nPixelSpace +
+                                                (nBufYOff + nYBufOff) * nLineSpace;
+                        GDALCopyWords(&dfNodata, GDT_Float64, 0,
+                                      pabyDest, eBufType,
+                                      static_cast<int>(nPixelSpace),
+                                      nBufXSizeEffective);
+                    }
+                }
             }
 
             if( iX == nMinBlockX )
@@ -775,6 +838,8 @@ bool STACTADataset::Open(GDALOpenInfo* poOpenInfo)
     if( !STARTS_WITH(osURLTemplate, "http://") &&
         !STARTS_WITH(osURLTemplate, "https://") )
     {
+        if( STARTS_WITH(osURLTemplate, "./") )
+            osURLTemplate = osURLTemplate.substr(2);
         osURLTemplate = CPLProjectRelativeFilename(
             CPLGetDirname(osFilename), osURLTemplate);
     }
@@ -809,29 +874,50 @@ bool STACTADataset::Open(GDALOpenInfo* poOpenInfo)
     if( tmsList.empty() )
         return false;
 
-    // Open a metatile to get mostly its band data type
-    int nProtoTileCol = 0;
-    int nProtoTileRow = 0;
-    auto oIterLimit = oMapLimits.find(tmsList[0].mId);
-    if( oIterLimit != oMapLimits.end() )
+    m_bSkipMissingMetaTile = CPLTestBool(CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "SKIP_MISSING_METATILE",
+            CPLGetConfigOption("GDAL_STACTA_SKIP_MISSING_METATILE", "NO")));
+
+    std::unique_ptr<GDALDataset> poProtoDS;
+    for( int i = 0; i < static_cast<int>(tmsList.size()); i++ )
     {
-        nProtoTileCol = oIterLimit->second.min_tile_col;
-        nProtoTileRow = oIterLimit->second.min_tile_row;
+        // Open a metatile to get mostly its band data type
+        int nProtoTileCol = 0;
+        int nProtoTileRow = 0;
+        auto oIterLimit = oMapLimits.find(tmsList[i].mId);
+        if( oIterLimit != oMapLimits.end() )
+        {
+            nProtoTileCol = oIterLimit->second.min_tile_col;
+            nProtoTileRow = oIterLimit->second.min_tile_row;
+        }
+        const CPLString osURL =
+            CPLString(osURLTemplate)
+                .replaceAll("{TileMatrix}", tmsList[i].mId)
+                .replaceAll("{TileRow}", CPLSPrintf("%d", nProtoTileRow))
+                .replaceAll("{TileCol}", CPLSPrintf("%d", nProtoTileCol));
+        CPLString osProtoDSName =
+            (STARTS_WITH(osURL, "http://") || STARTS_WITH(osURL, "https://")) ?
+                CPLString("/vsicurl/" + osURL) : osURL;
+        if( m_bSkipMissingMetaTile )
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+        poProtoDS.reset(
+            GDALDataset::Open(osProtoDSName.c_str()));
+        if( m_bSkipMissingMetaTile )
+            CPLPopErrorHandler();
+        if( poProtoDS != nullptr )
+        {
+            break;
+        }
+        if( !m_bSkipMissingMetaTile )
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed, "Cannot open %s",
+                    osURL.c_str());
+            return false;
+        }
     }
-    const CPLString osURL =
-        CPLString(osURLTemplate)
-            .replaceAll("{TileMatrix}", tmsList[0].mId)
-            .replaceAll("{TileRow}", CPLSPrintf("%d", nProtoTileRow))
-            .replaceAll("{TileCol}", CPLSPrintf("%d", nProtoTileCol));
-    const CPLString osProtoDSName =
-        (STARTS_WITH(osURL, "http://") || STARTS_WITH(osURL, "https://")) ?
-            CPLString("/vsicurl/" + osURL) : osURL;
-    auto poProtoDS = std::unique_ptr<GDALDataset>(
-        GDALDataset::Open(osProtoDSName.c_str()));
     if( poProtoDS == nullptr )
     {
-        CPLError(CE_Failure, CPLE_OpenFailed, "Cannot open %s",
-                 osURL.c_str());
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find prototype dataset");
         return false;
     }
 
@@ -842,7 +928,7 @@ bool STACTADataset::Open(GDALOpenInfo* poOpenInfo)
         const auto& oTM = tmsList[i];
         int nMatrixWidth = oTM.mMatrixWidth;
         int nMatrixHeight = oTM.mMatrixHeight;
-        oIterLimit = oMapLimits.find(tmsList[i].mId);
+        auto oIterLimit = oMapLimits.find(tmsList[i].mId);
         if( oIterLimit != oMapLimits.end() )
         {
             nMatrixWidth = oIterLimit->second.max_tile_col - oIterLimit->second.min_tile_col + 1;
@@ -1094,6 +1180,8 @@ void GDALRegister_STACTA()
 "<OpenOptionList>"
 "   <Option name='WHOLE_METATILE' type='boolean' "
                         "description='Whether to download whole metatiles'/>"
+"   <Option name='SKIP_MISSING_METATILE' type='boolean' "
+                        "description='Whether to gracefully skip missing metatiles'/>"
 "</OpenOptionList>" );
 
     poDriver->pfnOpen = STACTADataset::OpenStatic;
