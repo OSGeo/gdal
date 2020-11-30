@@ -2042,7 +2042,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             }
             panFIDList = panNewFIDList;
 
-            memset(pasIndexFields + nFeaturesAlloc, 0,
+            memset(pasIndexFields + nFeaturesAlloc * nOrderItems, 0,
                    sizeof(OGRField) * nOrderItems *
                    static_cast<size_t>(nNewFeaturesAlloc - nFeaturesAlloc));
 
