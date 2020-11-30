@@ -259,6 +259,8 @@ public:
                             bool* pbGotFileList );
     void InvalidateDirContent( const char *pszDirname );
 
+    virtual const char* GetDebugKey() const { return "VSICURL"; }
+
     virtual CPLString GetFSPrefix() { return "/vsicurl/"; }
     virtual bool      AllowCachedDataFor(const char* pszFilename);
 
@@ -428,8 +430,6 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
     int Rename( const char *oldpath, const char *newpath ) override;
 
     virtual int      DeleteObject( const char *pszFilename );
-
-    virtual const char* GetDebugKey() const = 0;
 
     virtual void UpdateMapFromHandle(IVSIS3LikeHandleHelper*) {}
     virtual void UpdateHandleFromMap( IVSIS3LikeHandleHelper * ) {}
