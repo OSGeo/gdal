@@ -28,7 +28,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import gdaltest
 import pytest
+import struct
 
 from osgeo import gdal
 
@@ -123,3 +125,43 @@ def test_stacta_subdatasets():
     assert len(ds.GetSubDatasets()) == 2
     subds1 = gdal.Open(ds.GetSubDatasets()[0][0])
     assert subds1 is not None
+
+
+def test_stacta_missing_metatile():
+
+    gdal.FileFromMemBuffer('/vsimem/stacta/test.json', open('data/stacta/test.json', 'rb').read())
+    gdal.FileFromMemBuffer('/vsimem/stacta/WorldCRS84Quad/0/0/0.tif', open('data/stacta/WorldCRS84Quad/0/0/0.tif', 'rb').read())
+    gdal.FileFromMemBuffer('/vsimem/stacta/WorldCRS84Quad/1/0/0.tif', open('data/stacta/WorldCRS84Quad/1/0/0.tif', 'rb').read())
+    gdal.FileFromMemBuffer('/vsimem/stacta/WorldCRS84Quad/2/0/0.tif', open('data/stacta/WorldCRS84Quad/2/0/0.tif', 'rb').read())
+
+    ds = gdal.Open('/vsimem/stacta/test.json')
+    with gdaltest.error_handler():
+        assert ds.ReadRaster() is None
+
+    # Missing right tile
+    with gdaltest.config_option('GDAL_STACTA_SKIP_MISSING_METATILE', 'YES'):
+        ds = gdal.Open('/vsimem/stacta/test.json')
+        got_data = ds.ReadRaster()
+        assert got_data is not None
+        got_data = struct.unpack('B' * len(got_data), got_data)
+        for i in range(3):
+            assert got_data[i * 2048 * 1024 + 2048 * 1000 + 500] != 0
+            assert got_data[i * 2048 * 1024 + 2048 * 1000 + 1500] == 0
+
+    gdal.Unlink('/vsimem/stacta/WorldCRS84Quad/1/0/0.tif')
+    gdal.Unlink('/vsimem/stacta/WorldCRS84Quad/2/0/0.tif')
+    gdal.FileFromMemBuffer('/vsimem/stacta/WorldCRS84Quad/2/0/1.tif', open('data/stacta/WorldCRS84Quad/2/0/1.tif', 'rb').read())
+
+    # Missing left tile
+    with gdaltest.config_option('GDAL_STACTA_SKIP_MISSING_METATILE', 'YES'):
+        ds = gdal.Open('/vsimem/stacta/test.json')
+        got_data = ds.ReadRaster()
+        assert got_data is not None
+        got_data = struct.unpack('B' * len(got_data), got_data)
+        for i in range(3):
+            assert got_data[i * 2048 * 1024 + 2048 * 1000 + 500] == 0
+            assert got_data[i * 2048 * 1024 + 2048 * 1000 + 1500] != 0
+
+    gdal.Unlink('/vsimem/stacta/test.json')
+    gdal.Unlink('/vsimem/stacta/WorldCRS84Quad/1/0/0.tif')
+    gdal.Unlink('/vsimem/stacta/WorldCRS84Quad/2/0/1.tif')
