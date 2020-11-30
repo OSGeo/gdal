@@ -339,7 +339,7 @@ ORDER BY
 ++++++++
 
 The ``ORDER BY`` clause is used force the returned features to be reordered
-into sorted order (ascending or descending) on one of the field values.
+into sorted order (ascending or descending) on one or multiple fields.
 Ascending (increasing) order is the default if neither the ASC or DESC keyword
 is provided.  For example:
 
@@ -349,6 +349,7 @@ is provided.  For example:
     SELECT * FROM property ORDER BY prop_value
     SELECT * FROM property ORDER BY prop_value ASC
     SELECT DISTINCT zip_code FROM property ORDER BY zip_code
+    SELECT * FROM property ORDER BY prop_value ASC, another_field DESC
 
 Note that ORDER BY clauses cause two passes through the feature set.  One to
 build an in-memory table of field values corresponded with feature ids, and
