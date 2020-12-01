@@ -1022,7 +1022,7 @@ def test_vrt_read_28():
 
 
 ###############################################################################
-# Check VRT source sharing and non-sharing situations (#6949)
+# Check VRT source sharing and non-sharing situations (#6939)
 
 def test_vrt_read_29():
 
@@ -1072,10 +1072,17 @@ def test_vrt_read_29():
     # Open a second VRT dataset handle
     ds2 = gdal.Open(vrt_text)
 
-    # Check that it consumes an extra handle
+    # Check that it consumes an extra handle (don't share sources between
+    # different VRT)
     ds2.GetRasterBand(1).Checksum()
     lst = sorted(gdaltest.get_opened_files())
     assert len(lst) == len(lst_before) + 2
+
+    # Close first VRT dataset, and check that the handle it took on the TIFF
+    # is released (https://github.com/OSGeo/gdal/issues/3253)
+    ds = None
+    lst = sorted(gdaltest.get_opened_files())
+    assert len(lst) == len(lst_before) + 1
 
     gdal.Unlink('tmp/vrt_read_29.tif')
 

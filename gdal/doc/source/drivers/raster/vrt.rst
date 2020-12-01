@@ -292,12 +292,6 @@ The relativeToVRT attribute on the SourceFilename indicates whether the
 filename should be interpreted as relative to the .vrt file (value is 1)
 or not relative to the .vrt file (value is 0).  The default is 0.
 
-The shared attribute, on the SourceFilename indicates whether the
-dataset should be shared (value is 1) or not (value is 0). The default is 1.
-If several VRT datasets referring to the same underlying sources are used in a multithreaded context,
-shared should be set to 0. Alternatively, the VRT_SHARED_SOURCE configuration
-option can be set to 0 to force non-shared mode.
-
 Some characteristics of the source band can be specified in the optional
 SourceProperties tag to enable the VRT driver to differ the opening of the source
 dataset until it really needs to read data from it. This is particularly useful
