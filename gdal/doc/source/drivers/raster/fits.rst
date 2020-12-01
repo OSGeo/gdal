@@ -161,7 +161,7 @@ The FITS data types are mapped to OGR data types as the following:
    * - 'K' (64 bit signed integer)
      - other than (1, 0)
      - 1
-     - OFTRealList
+     - OFTReal
      - OFSTNone
    * - 'K' (64 bit signed integer)
      - 1, 0
