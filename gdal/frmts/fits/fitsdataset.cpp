@@ -1443,6 +1443,7 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
     dataset->m_isExistingFile = true;
     dataset->m_hFITS = hFITS;
     dataset->eAccess = poOpenInfo->eAccess;
+    dataset->SetPhysicalFilename(osFilename);
 
 /* -------------------------------------------------------------------- */
 /*      Iterate over HDUs                                               */
