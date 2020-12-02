@@ -28,10 +28,12 @@
 
 #include "cpl_string.h"
 #include "gdal_version.h"
+#include "gdal_priv.h"
 #include "gdal.h"
 #include "commonutils.h"
 #include "ogr_spatialref.h"
 
+#include <memory>
 #include <vector>
 
 CPL_CVSID("$Id$")
@@ -49,6 +51,7 @@ static void Usage()
             "       [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]\n"
             "       [-mo \"META-TAG=VALUE\"]* [-q]\n"
             "       [-co \"NAME=VALUE\"]*\n"
+            "       [-if input_dataset]\n"
             "       out_dataset\n" );
 
     exit(1);
@@ -104,8 +107,9 @@ MAIN_START(argc, argv)
     CPLStringList aosMetadata;
     std::vector<double> adfBurnValues;
     bool bQuiet = false;
-    bool bSetNoData = false;
+    int bSetNoData = false;
     double dfNoDataValue = 0;
+    const char* pszInputFile = nullptr;
     for( int i = 1; argv != nullptr && argv[i] != nullptr; i++ )
     {
         if( EQUAL(argv[i], "--utility_version") )
@@ -214,6 +218,11 @@ MAIN_START(argc, argv)
                 }
             }
         }
+        else if( i < argc-1 && EQUAL(argv[i],"-if") )
+        {
+            ++i;
+            pszInputFile = argv[i];
+        }
         else if( EQUAL(argv[i], "-q") )
         {
             bQuiet = true;
@@ -241,6 +250,57 @@ MAIN_START(argc, argv)
     {
         CSLDestroy( argv );
         Usage();
+    }
+
+    double adfGeoTransform[6] = {0, 1, 0, 0, 0, 1};
+    if( bGeoTransform && nPixels > 0 && nLines > 0 )
+    {
+        adfGeoTransform[0] = dfULX;
+        adfGeoTransform[1] = (dfLRX - dfULX) / nPixels;
+        adfGeoTransform[2] = 0;
+        adfGeoTransform[3] = dfULY;
+        adfGeoTransform[4] = 0;
+        adfGeoTransform[5] = (dfLRY - dfULY) / nLines;
+    }
+
+    std::unique_ptr<GDALDataset> poInputDS;
+    if( pszInputFile )
+    {
+        poInputDS.reset(GDALDataset::Open(pszInputFile, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR));
+        if( poInputDS == nullptr )
+        {
+            CSLDestroy( argv );
+            GDALDestroyDriverManager();
+            exit( 1 );
+        }
+        if( nPixels == 0 )
+        {
+            nPixels = poInputDS->GetRasterXSize();
+            nLines = poInputDS->GetRasterYSize();
+        }
+        if( nBandCount < 0 )
+        {
+            nBandCount = poInputDS->GetRasterCount();
+        }
+        if( eDT == GDT_Unknown && poInputDS->GetRasterCount() > 0 )
+        {
+            eDT = poInputDS->GetRasterBand(1)->GetRasterDataType();
+        }
+        if( pszOutputSRS == nullptr )
+        {
+            pszOutputSRS = poInputDS->GetProjectionRef();
+        }
+        if( ! (bGeoTransform && nPixels > 0 && nLines > 0) )
+        {
+            if( poInputDS->GetGeoTransform(adfGeoTransform) == CE_None )
+            {
+                bGeoTransform = true;
+            }
+        }
+        if( !bSetNoData && poInputDS->GetRasterCount() > 0 )
+        {
+            dfNoDataValue = poInputDS->GetRasterBand(1)->GetNoDataValue(&bSetNoData);
+        }
     }
 
     GDALDriverH hDriver = GDALGetDriverByName(
@@ -291,7 +351,7 @@ MAIN_START(argc, argv)
         exit( 1 );
     }
 
-    if( pszOutputSRS )
+    if( pszOutputSRS && pszOutputSRS[0] != '\0' && !EQUAL(pszOutputSRS, "NONE") )
     {
         OGRSpatialReference oSRS;
         oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -327,13 +387,6 @@ MAIN_START(argc, argv)
             GDALDestroyDriverManager();
             exit( 1 );
         }
-        double adfGeoTransform[6];
-        adfGeoTransform[0] = dfULX;
-        adfGeoTransform[1] = (dfLRX - dfULX) / nPixels;
-        adfGeoTransform[2] = 0;
-        adfGeoTransform[3] = dfULY;
-        adfGeoTransform[4] = 0;
-        adfGeoTransform[5] = (dfLRY - dfULY) / nLines;
         if( GDALSetGeoTransform(hDS, adfGeoTransform) != CE_None )
         {
             GDALClose(hDS);

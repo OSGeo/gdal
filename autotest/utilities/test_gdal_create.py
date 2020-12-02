@@ -129,3 +129,63 @@ def test_gdal_create_not_write_driver():
 
     (_, err) = gdaltest.runexternal_out_and_err(get_gdal_create_path() + ' /vsimem/tmp.tga -of TGA -outsize 1 2')
     assert 'This driver has no creation capabilities' in err
+
+###############################################################################
+
+
+def test_gdal_create_input_file_invalid():
+    if get_gdal_create_path() is None:
+        pytest.skip()
+
+    (_, err) = gdaltest.runexternal_out_and_err(get_gdal_create_path() + ' tmp/tmp.tif -if ../gdrivers/data/i_do_not_exist')
+    assert err != ''
+
+    assert not os.path.exists('tmp/tmp.tif')
+
+###############################################################################
+
+
+def test_gdal_create_input_file():
+    if get_gdal_create_path() is None:
+        pytest.skip()
+
+    (_, err) = gdaltest.runexternal_out_and_err(get_gdal_create_path() + ' tmp/tmp.tif -if ../gdrivers/data/small_world.tif')
+    assert (err is None or err == ''), 'got error/warning'
+
+    assert os.path.exists('tmp/tmp.tif')
+
+    ds = gdal.Open('tmp/tmp.tif')
+    ref_ds = gdal.Open('../gdrivers/data/small_world.tif')
+    assert ds.RasterCount == ref_ds.RasterCount
+    assert ds.RasterXSize == ref_ds.RasterXSize
+    assert ds.RasterYSize == ref_ds.RasterYSize
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
+    assert ds.GetGeoTransform() == ref_ds.GetGeoTransform()
+    assert ds.GetProjectionRef() == ref_ds.GetProjectionRef()
+    ds = None
+
+    os.unlink('tmp/tmp.tif')
+
+###############################################################################
+
+
+def test_gdal_create_input_file_overrrides():
+    if get_gdal_create_path() is None:
+        pytest.skip()
+
+    (_, err) = gdaltest.runexternal_out_and_err(get_gdal_create_path() + ' tmp/tmp.tif -if ../gdrivers/data/small_world.tif -bands 2 -outsize 1 3 -a_nodata 1')
+    assert (err is None or err == ''), 'got error/warning'
+
+    assert os.path.exists('tmp/tmp.tif')
+
+    ds = gdal.Open('tmp/tmp.tif')
+    ref_ds = gdal.Open('../gdrivers/data/small_world.tif')
+    assert ds.RasterCount == 2
+    assert ds.RasterXSize == 1
+    assert ds.RasterYSize == 3
+    assert ds.GetRasterBand(1).GetNoDataValue() == 1
+    assert ds.GetGeoTransform() == ref_ds.GetGeoTransform()
+    assert ds.GetProjectionRef() == ref_ds.GetProjectionRef()
+    ds = None
+
+    os.unlink('tmp/tmp.tif')
