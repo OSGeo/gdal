@@ -39,7 +39,6 @@ but no projection checking is performed (unless projectionCheck option is used).
 
     Calculation in gdalnumeric syntax using ``+``, ``-``, ``/``, ``*``, or any numpy array functions (i.e. ``log10()``).
     Multiple ``--calc`` options can be listed to produce a multiband file (GDAL >= 3.2).
-    NoDataValue will be mapped to ``numpy.nan`` when reading and ``numpy.nan`` will be written as NoDataValue in the output file (GDAL >= 3.3).
 
 .. option:: -A <filename>
 
@@ -75,6 +74,13 @@ but no projection checking is performed (unless projectionCheck option is used).
     By default, the input bands NoDataValue are not participating in the calculation.
     By setting this setting - no special treatment will be performed on the input NoDataValue. and they will be participating in the calculation as any other value.
     The output will not have a set NoDataValue, unless you explicitly specified a specific value by setting --NoDataValue=<value>.
+
+.. option:: --nanNoData
+
+    ..versionadded:: 3.3
+
+    Input NoDataValue will be mapped to ``numpy.nan`` and ``numpy.nan`` results will be transformed to NoDataValue in the output file.
+    Works best with floating point types. Allows explicit calculation with NoDataValue according to ``numpy.nan`` rules.
 
 .. option:: --type=<datatype>
 
@@ -230,3 +236,9 @@ Work with multiple bands:
 .. code-block::
 
     gdal_calc.py -A input.tif --A_band=1 -B input.tif --B_band=2 --outfile=result.tif --calc="(A+B)/2" --calc="B*logical_and(A>100,A<150)"
+
+Mean of three input bands, ignoring NoDataValue:
+
+.. code-block::
+
+    gdal_calc.py -A input.tif --A_band=1 -B input.tif --B_band=2 -C input.tif --C_band=3 --outfile=result.tif --nanNoData --calc="numpy.nanmean([A, B, C], axis=0)"

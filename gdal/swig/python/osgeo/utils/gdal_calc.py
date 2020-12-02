@@ -436,6 +436,7 @@ def doit(opts, args):
 
             # reset buffer size for start of Y loop
             nYValid = myBlockSize[1]
+            myBufSize = nXValid * nYValid
 
             # loop through Y lines
             for Y in range(0, nYBlocks):
@@ -451,9 +452,13 @@ def doit(opts, args):
                 # change the block size of the final piece
                 if Y == nYBlocks - 1:
                     nYValid = DimensionsCheck[1] - Y * myBlockSize[1]
+                    myBufSize = nXValid * nYValid
 
                 # find Y offset
                 myY = Y * myBlockSize[1]
+
+                # create empty buffer to mark where nodata occurs
+                myNDVs = None
 
                 # make local namespace for calculation
                 local_namespace = {}
@@ -474,9 +479,19 @@ def doit(opts, args):
                     if myval is None:
                         raise Exception('Input block reading failed from filename %s' % filename[i])
 
-                    # convert nodata values to numpy.nan
+                    # fill in nodata values
                     if myNDV[i] is not None:
-                        myval = numpy.where(myval == myNDV[i], numpy.nan, myval)
+                        if opts.nanNoData:
+                            # For floating point types, convert NDV to nan
+                            myval = numpy.where(myval == myNDV[i], numpy.nan, myval)
+                        # myNDVs is a boolean buffer.
+                        # a cell equals to 1 if there is NDV in any of the corresponding cells in input raster bands.
+                        elif myNDVs is None:
+                            # this is the first band that has NDV set. we initializes myNDVs to a zero buffer
+                            # as we didn't see any NDV value yet.
+                            myNDVs = numpy.zeros(myBufSize)
+                            myNDVs.shape = (nYValid, nXValid)
+                        myNDVs = 1 * numpy.logical_or(myNDVs == 1, myval == myNDV[i])
 
                     # add an array of values for this block to the eval namespace
                     if Alpha in myAlphaFileLists:
@@ -496,9 +511,16 @@ def doit(opts, args):
                     print("evaluation of calculation %s failed" % (calc))
                     raise
 
-                # convert numpy.nan to output NDV
-                if myOutNDV is not None:
-                    myResult = numpy.where(numpy.isnan(myResult), myOutNDV, myResult)
+                if myNDVs is not None and myOutNDV is not None:
+                    if opts.nanNoData:
+                        # For floating point types, convert nan to NDV, ignoring the mask
+                        myResult = numpy.where(numpy.isnan(myResult), myOutNDV, myResult)
+                    else:
+                        # Propagate nodata values (set nodata cells to zero
+                        # then add nodata value to these cells).
+                        myResult = ((1 * (myNDVs == 0)) * myResult) + (myOutNDV * myNDVs)
+                elif not isinstance(myResult, numpy.ndarray):
+                    myResult = numpy.ones((nYValid, nXValid)) * myResult
 
                 # write data block to the output file
                 myOutB = myOut.GetRasterBand(bandNo)
@@ -525,7 +547,7 @@ def doit(opts, args):
 
 
 def Calc(calc, outfile=None, NoDataValue=None, type=None, format=None, creation_options=None, allBands='', overwrite=False,
-         hideNoData=False, projectionCheck=False, color_table=None, extent=None, user_namespace=None,
+         hideNoData=False, projectionCheck=False, color_table=None, extent=None, user_namespace=None, nanNoData=False,
          debug=False, quiet=False, **input_files):
 
     """ Perform raster calculations with numpy syntax.
@@ -551,6 +573,9 @@ def Calc(calc, outfile=None, NoDataValue=None, type=None, format=None, creation_
 
     sum all files with hidden noDataValue
         Calc(calc="sum(a,axis=0)", a=['0.tif','1.tif','2.tif'], outfile="sum.tif", hideNoData=True)
+
+    mean of three input bands, ignoring NoDataValue:
+        Calc(calc="numpy.nanmean([A, B, C], axis=0)", A="input.tif", B="input.tif", C="input.tif", A_band=1, B_band=2, C_band=3, outfile="mean.tif", nanNoData=True)
     """
     opts = Values()
     opts.input_files = input_files
@@ -562,6 +587,7 @@ def Calc(calc, outfile=None, NoDataValue=None, type=None, format=None, creation_
         opts.calc = [calc]
     opts.outF = outfile
     opts.NoDataValue = NoDataValue
+    opts.nanNoData = nanNoData
     opts.type = type
     opts.format = format
     opts.creation_options = [] if creation_options is None else creation_options
@@ -615,6 +641,7 @@ def main(argv):
     parser.add_option("--outfile", dest="outF", help="output file to generate or fill", metavar="filename")
     parser.add_option("--NoDataValue", dest="NoDataValue", type=float, help="output nodata value (default datatype specific value)", metavar="value")
     parser.add_option("--hideNoData", dest="hideNoData", action="store_true", help="ignores the NoDataValues of the input rasters")
+    parser.add_option("--nanNoData", dest="nanNoData", action="store_true", help="bi-directionnal translation between GDAL NoData and numpy.nan")
     parser.add_option("--type", dest="type", help="output datatype", choices=GDALDataTypeNames, metavar="datatype")
     parser.add_option("--format", dest="format", help="GDAL format for output file", metavar="gdal_format")
     parser.add_option(

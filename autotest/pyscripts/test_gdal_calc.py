@@ -181,7 +181,10 @@ def test_gdal_calc_py_4():
     out = make_temp_filename_list(test_id, test_count)
 
     # some values are clipped to 255, but this doesn't matter... small values were visually checked
+    print('gdal_calc', '-A {} --calc=1 --overwrite --outfile {}'.format(infile, out[0]))
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A {} --calc=1 --overwrite --outfile {}'.format(infile, out[0]))
+    print(script_path, 'gdal_calc', '-A {} -B {} --B_band 1 --allBands A --calc=A+B --NoDataValue=999 --overwrite --outfile {}'.format(
+        infile, out[0], out[1]))
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A {} -B {} --B_band 1 --allBands A --calc=A+B --NoDataValue=999 --overwrite --outfile {}'.format(infile, out[0], out[1]))
 
     bnd_count = 3
@@ -433,19 +436,25 @@ def test_gdal_calc_py_10():
     if script_path is None:
         pytest.skip("gdal_calc script not found, skipping all tests", allow_module_level=True)
 
-    infile = get_input_file()
-    test_id, test_count = 10, 1
+    infile = "../gcore/data/test_nodatavalues.tif"
+    test_id, test_count = 10, 2
     out = make_temp_filename_list(test_id, test_count)
 
     test_py_scripts.run_py_script(
         script_path, 'gdal_calc',
-        '-A {} --A_band=1 -B {} --B_band=2 -Z {} --Z_band=3 --calc="numpy.nanmean([A, B, C], axis=2)" --overwrite --outfile {}'.
-        format(infile, infile, infile, out[0]))
+        '-A {} --A_band=1 -B {} --B_band=2 --type=Float32 --calc="numpy.nanmean([A, B], axis=0)" --nanNoData --NoData=-1e30 --overwrite --outfile {}'.
+        format(infile, infile, out[0]))
+    test_py_scripts.run_py_script(
+        script_path, 'gdal_calc',
+        '-A {} --A_band=1 -B {} --B_band=2 --type=Float32 --calc="numpy.mean([A, B], axis=0)" --nanNoData --NoData=-1e30 --overwrite --outfile {}'.
+        format(infile, infile, out[1]))
 
-    check_file(out[0], 36074, 1, 1)
+    for i, checksum in zip((0, 1), (63287, 52792)):
+        check_file(out[i], checksum)
 
 
 def test_gdal_calc_py_cleanup():
+    return
     """ cleanup all temporary files that were created in this pytest """
     global temp_counter_dict
     global opts_counter_counter
