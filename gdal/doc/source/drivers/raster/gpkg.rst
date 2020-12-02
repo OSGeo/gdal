@@ -102,7 +102,7 @@ The following open options are available:
    existing tiles at the zoom level of the full resolution dataset.
    Defaults to NO.
 -  **TILE_FORMAT**\ =PNG_JPEG/PNG/PNG8/JPEG/WEBP: Format used to store
-   tiles. See `Tile format <#tile_format>`__ section. Only used in
+   tiles. See :ref:`raster.gpkg.tile_formats`. Only used in
    update mode. Defaults to PNG_JPEG.
 -  **QUALITY**\ =1-100: Quality setting for JPEG and WEBP compression.
    Only used in update mode. Default to 75.
@@ -154,6 +154,8 @@ and for all the bands (or the dataset is closed or explicitly flushed
 with FlushCache()), those uncompressed tiles are definitely transferred
 to the GeoPackage file with the appropriate compression. All of this is
 transparent to the user of GDAL API/utilities
+
+.. _raster.gpkg.tile_formats:
 
 Tile formats
 ~~~~~~~~~~~~
@@ -222,6 +224,8 @@ offsetting will be automatically computed for each tile.
     has a few differences that will make GDAL 2.2 datasets not be compliant
     with the final extension. GDAL 2.3 can open those GDAL 2.2-generated
     files.
+
+.. _raster.gpkg.tiling_schemes:
 
 Tiling schemes
 ~~~~~~~~~~~~~~
@@ -370,7 +374,7 @@ The following creation options are available:
 -  **BLOCKYSIZE**\ =integer. Block height in pixels. Defaults to 256.
    Maximum supported is 4096.
 -  **TILE_FORMAT**\ =PNG_JPEG/PNG/PNG8/JPEG/WEBP/TIFF/AUTO: Format used
-   to store tiles. See `Tile formats <#tile_formats>`__ section.
+   to store tiles. See :ref:`raster.gpkg.tile_formats`.
    Defaults to AUTO.
 -  **QUALITY**\ =1-100: Quality setting for JPEG and WEBP compression.
    Default to 75.
@@ -379,7 +383,7 @@ The following creation options are available:
 -  **DITHER**\ =YES/NO: Whether to use Floyd-Steinberg dithering (for
    TILE_FORMAT=PNG8). Defaults to NO.
 -  **TILING_SCHEME**\ =CUSTOM/GoogleCRS84Quad/GoogleMapsCompatible/InspireCRS84Quad/PseudoTMS_GlobalGeodetic/PseudoTMS_GlobalMercator/other.
-   See `Tiling schemes <#tiling_schemes>`__ section. Defaults to CUSTOM.
+   See :ref:`raster.gpkg.tiling_schemes`. Defaults to CUSTOM.
    Starting with GDAL 3.2, the value of TILING_SCHEME can also be the filename
    of a JSON file according to the `OGC Two Dimensional Tile Matrix Set standard`_,
    a URL to such file, the radical of a definition file in the GDAL data directory
