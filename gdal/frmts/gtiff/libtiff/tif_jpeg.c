@@ -938,7 +938,10 @@ JPEGFixupTagsSubsamplingReadByte(struct JPEGFixupTagsSubsamplingData* data, uint
 			return(0);
 		if (!data->filepositioned)
 		{
-			TIFFSeekFile(data->tif,data->fileoffset,SEEK_SET);
+			if (TIFFSeekFile(data->tif,data->fileoffset,SEEK_SET) == (toff_t)-1)
+			{
+			    return 0;
+			}
 			data->filepositioned=1;
 		}
 		m=data->buffersize;
