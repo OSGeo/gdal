@@ -9,6 +9,9 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
 TRAVIS=yes
 export TRAVIS
 
+BUILD_NAME=ubuntu_1804
+export BUILD_NAME
+
 LANG=en_US.UTF-8
 export LANG
 apt-get install -y locales && \

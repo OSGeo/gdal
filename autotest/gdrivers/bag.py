@@ -51,8 +51,8 @@ def check_no_file_leaks():
 
     diff = len(gdaltest.get_opened_files()) - num_files
 
-    if diff != 0 and gdaltest.is_travis_branch('trusty_clang'):
-        print('Mysterious leak of file handle on trusty_clang')
+    if diff != 0 and gdaltest.is_travis_branch('ubuntu_1804'):
+        print('Mysterious leak of file handle on ubuntu_1804')
         return
 
     assert diff == 0, 'Leak of file handles: %d leaked' % diff
