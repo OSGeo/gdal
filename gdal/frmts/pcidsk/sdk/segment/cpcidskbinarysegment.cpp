@@ -4,7 +4,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2010
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,7 +45,7 @@ using namespace PCIDSK;
  * @param[in] segment_pointer the segment pointer
  * @param[in] bLoad true to load the segment, else false (default true)
  */
-CPCIDSKBinarySegment::CPCIDSKBinarySegment(PCIDSKFile *fileIn, 
+CPCIDSKBinarySegment::CPCIDSKBinarySegment(PCIDSKFile *fileIn,
                                            int segmentIn,
                                            const char *segment_pointer,
                                            bool bLoad) :
@@ -110,7 +110,7 @@ void CPCIDSKBinarySegment::Synchronize()
 }
 
 void
-CPCIDSKBinarySegment::SetBuffer(const char* pabyBuf, 
+CPCIDSKBinarySegment::SetBuffer(const char* pabyBuf,
                                 unsigned int nBufSize)
 {
     // Round the buffer size up to the next multiple of 512.
@@ -125,7 +125,7 @@ CPCIDSKBinarySegment::SetBuffer(const char* pabyBuf,
     // Fill unused data at end with zeroes.
     if (nBufSize < nAllocBufSize)
     {
-        memset(seg_data.buffer + nBufSize, 0, 
+        memset(seg_data.buffer + nBufSize, 0,
             nAllocBufSize - nBufSize);
     }
     mbModified = true;

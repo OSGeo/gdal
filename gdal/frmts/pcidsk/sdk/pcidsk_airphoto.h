@@ -2,10 +2,10 @@
  *
  * Purpose: Declaration of the Airphoto segment interface and the helper
  *          storage objects.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2010
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,7 +36,7 @@
 
 namespace PCIDSK {
     /**
-     * Structure for storing interior orientation parameters associated 
+     * Structure for storing interior orientation parameters associated
      * with the APModel
      */
     class PCIDSK_DLL PCIDSKAPModelIOParams
@@ -53,7 +53,7 @@ namespace PCIDSK {
         std::vector<double> const& GetImageToFocalPlaneYCoeffs(void) const;
         std::vector<double> const& GetFocalPlaneToColumnCoeffs(void) const;
         std::vector<double> const& GetFocalPlaneToRowCoeffs(void) const;
-        
+
         double GetFocalLength(void) const;
         std::pair<double, double> const& GetPrincipalPoint(void) const;
         std::vector<double> const& GetRadialDistortionCoeffs(void) const;
@@ -66,7 +66,7 @@ namespace PCIDSK {
         std::pair<double, double> prin_point_;
         std::vector<double> rad_dist_coeff_;
     };
-    
+
     /**
      * Structure for storing exterior orientation parameters associated
      * with the APModel
@@ -88,7 +88,7 @@ namespace PCIDSK {
         std::vector<double> perspective_centre_pos_;
         unsigned int epsg_code_;
     };
-    
+
     class PCIDSK_DLL PCIDSKAPModelMiscParams
     {
     public:
@@ -127,7 +127,7 @@ namespace PCIDSK {
         bool has_decent_;
         bool has_radius_;
     };
-    
+
     /**
      * Interface for accessing the contents of the Airphoto Model
      * segment.
@@ -143,19 +143,19 @@ namespace PCIDSK {
 
         // Interior Orientation Parameters
         virtual PCIDSKAPModelIOParams const& GetInteriorOrientationParams(void) const = 0;
-        
+
         // Exterior Orientation Parameters
         virtual PCIDSKAPModelEOParams const& GetExteriorOrientationParams(void) const = 0;
 
         // ProjInfo
         virtual PCIDSKAPModelMiscParams const& GetAdditionalParams(void) const = 0;
-        
+
         virtual std::string GetMapUnitsString(void) const = 0;
         virtual std::string GetUTMUnitsString(void) const = 0;
         virtual std::vector<double> const& GetProjParams(void) const = 0;
-        
+
     };
-    
+
 } // end namespace PCIDSK
 
 #endif // INCLUDE_PCIDSK_SRC_PCIDSK_AIRPHOTO_H

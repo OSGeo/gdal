@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Declaration of the MetadataSet class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,7 +40,7 @@ namespace PCIDSK
     /*                             MetadataSet                              */
     /************************************************************************/
 
-    class MetadataSet 
+    class MetadataSet
     {
     public:
         MetadataSet();
@@ -50,7 +50,7 @@ namespace PCIDSK
         std::string GetMetadataValue( const std::string& key );
         void        SetMetadataValue( const std::string& key, const std::string& value );
         std::vector<std::string> GetMetadataKeys();
-    
+
     private:
         PCIDSKFile  *file;
 
@@ -62,6 +62,6 @@ namespace PCIDSK
 
         void         Load();
     };
-    
+
 } // end namespace PCIDSK
 #endif // INCLUDE_PRIV_METADATASET_H

@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose: Support for reading and manipulating PCIDSK ADS40 Segments
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,20 +26,20 @@
  ****************************************************************************/
 #ifndef INCLUDE_PCIDSK_SEGMENT_PCIDSKADS40MODEL_H
 #define INCLUDE_PCIDSK_SEGMENT_PCIDSKADS40MODEL_H
- 
+
 #include "pcidsk_ads40.h"
 #include "segment/cpcidsksegment.h"
- 
+
 namespace PCIDSK {
     class PCIDSKFile;
-    
+
     class CPCIDSKADS40ModelSegment : public PCIDSKADS40Segment,
                                      public CPCIDSKSegment
     {
     public:
         CPCIDSKADS40ModelSegment(PCIDSKFile *file, int segment,const char *segment_pointer);
         ~CPCIDSKADS40ModelSegment();
-        
+
         // Get path
         std::string GetPath(void) const override;
         // Set path
@@ -51,7 +51,7 @@ namespace PCIDSK {
         // Helper housekeeping functions
         void Load();
         void Write();
-        
+
         struct PCIDSKADS40Info;
         PCIDSKADS40Info *pimpl_;
         bool loaded_;

@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of the CLinkSegment class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,10 +37,10 @@
 
 using namespace PCIDSK;
 
-CLinkSegment::CLinkSegment(PCIDSKFile *fileIn, 
+CLinkSegment::CLinkSegment(PCIDSKFile *fileIn,
                            int segmentIn,
                            const char *segment_pointer) :
-    CPCIDSKSegment(fileIn, segmentIn, segment_pointer), 
+    CPCIDSKSegment(fileIn, segmentIn, segment_pointer),
     loaded_(false), modified_(false)
 {
     Load();
@@ -58,30 +58,30 @@ void CLinkSegment::Load()
     if (loaded_) {
         return;
     }
-    
+
     assert(data_size - 1024 == 1 * 512);
-    
+
     seg_data.SetSize(static_cast<int>(data_size) - 1024); // should be 1 * 512
-    
+
     ReadFromFile(seg_data.buffer, 0, data_size - 1024);
-    
-    if (!STARTS_WITH(seg_data.buffer, "SysLinkF")) 
+
+    if (!STARTS_WITH(seg_data.buffer, "SysLinkF"))
     {
         seg_data.Put("SysLinkF",0,8);
         return;
     }
-    
+
     path = std::string(&seg_data.buffer[8]);
     // Remove trailing spaces
     size_t nPos = path.size();
     while( nPos > 0 && path[nPos-1] == ' ' )
         nPos --;
     path.resize(nPos);
-    
-    // We've now loaded the structure up with data. Mark it as being loaded 
+
+    // We've now loaded the structure up with data. Mark it as being loaded
     // properly.
     loaded_ = true;
-    
+
 }
 
 void CLinkSegment::Write(void)
@@ -90,7 +90,7 @@ void CLinkSegment::Write(void)
     if (!modified_) {
         return;
     }
-      
+
     seg_data.Put("SysLinkF",0,8);
     seg_data.Put(path.c_str(), 8, static_cast<int>(path.size()), true);
 

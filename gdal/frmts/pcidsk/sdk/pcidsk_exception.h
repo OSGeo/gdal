@@ -2,10 +2,10 @@
  *
  * Purpose:  Declaration of the PCIDSKException class. All exceptions thrown
  *           by the PCIDSK library will be of this type.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),

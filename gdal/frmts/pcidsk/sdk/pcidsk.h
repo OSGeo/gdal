@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Primary public include file for PCIDSK SDK.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -53,10 +53,10 @@ namespace PCIDSK {
 /************************************************************************/
 /*                      PCIDSK Access Functions                         */
 /************************************************************************/
-PCIDSKFile PCIDSK_DLL *Open( std::string filename, std::string access,  
+PCIDSKFile PCIDSK_DLL *Open( std::string filename, std::string access,
                              const PCIDSKInterfaces *interfaces = nullptr );
 PCIDSKFile PCIDSK_DLL *Create( std::string filename, int pixels, int lines,
-                               int channel_count, eChanType *channel_types, 
+                               int channel_count, eChanType *channel_types,
                                std::string options,
                                const PCIDSKInterfaces *interfaces = nullptr );
 

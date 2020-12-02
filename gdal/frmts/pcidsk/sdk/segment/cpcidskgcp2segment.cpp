@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose: Implementation of access to a PCIDSK GCP2 Segment
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,7 +42,7 @@ struct CPCIDSKGCP2Segment::PCIDSKGCP2SegInfo
     std::vector<PCIDSK::GCP> gcps;
     unsigned int num_gcps;
     PCIDSKBuffer seg_data;
-    
+
     std::string map_units;   ///< PCI mapunits string
     std::string proj_parms;  ///< Additional projection parameters
     unsigned int num_proj;
@@ -66,7 +66,7 @@ CPCIDSKGCP2Segment::CPCIDSKGCP2Segment(PCIDSKFile *fileIn, int segmentIn, const 
         throw;
     }
 }
- 
+
 CPCIDSKGCP2Segment::~CPCIDSKGCP2Segment()
 {
     delete pimpl_;
@@ -94,32 +94,32 @@ void CPCIDSKGCP2Segment::Load()
         loaded_ = true;
         return;
     }
-    
+
     // Check the number of blocks field's validity
     unsigned int num_blocks = pimpl_->seg_data.GetInt(8, 8);
-    
+
     if (((data_size - 1024 - 512) / 512) != num_blocks) {
         //ThrowPCIDSKException("Calculated number of blocks (%d) does not match "
-        //    "the value encoded in the GCP2 segment (%d).", ((data_size - 1024 - 512)/512), 
+        //    "the value encoded in the GCP2 segment (%d).", ((data_size - 1024 - 512)/512),
         //    num_blocks);
         // Something is messed up with how GDB generates these segments... nice.
     }
-    
+
     pimpl_->num_gcps = pimpl_->seg_data.GetInt(16, 8);
-    
+
     // Extract the map units string:
     pimpl_->map_units = std::string(pimpl_->seg_data.buffer + 24, 16);
-    
+
     // Extract the projection parameters string
     pimpl_->proj_parms = std::string(pimpl_->seg_data.buffer + 256, 256);
-    
+
     // Get the number of alternative projections (should be 0!)
     pimpl_->num_proj = pimpl_->seg_data.GetInt(40, 8);
     if (pimpl_->num_proj != 0) {
         return ThrowPCIDSKException("There are alternative projections contained in this "
             "GCP2 segment. This functionality is not supported in libpcidsk.");
     }
-    
+
     // Load the GCPs into the vector of PCIDSK::GCPs
     for (unsigned int i = 0; i < pimpl_->num_gcps; i++)
     {
@@ -127,40 +127,40 @@ void CPCIDSKGCP2Segment::Load()
         bool is_cp = pimpl_->seg_data.buffer[offset] == 'C';
         double pixel = pimpl_->seg_data.GetDouble(offset + 6, 14);
         double line = pimpl_->seg_data.GetDouble(offset + 20, 14);
-        
+
         double elev = pimpl_->seg_data.GetDouble(offset + 34, 12);
         double x = pimpl_->seg_data.GetDouble(offset + 48, 22);
         double y = pimpl_->seg_data.GetDouble(offset + 70, 22);
-        
-        PCIDSK::GCP::EElevationDatum elev_datum = pimpl_->seg_data.buffer[offset + 47] != 'M' ? 
+
+        PCIDSK::GCP::EElevationDatum elev_datum = pimpl_->seg_data.buffer[offset + 47] != 'M' ?
             GCP::EEllipsoidal : GCP::EMeanSeaLevel;
-        
+
         char elev_unit_c = pimpl_->seg_data.buffer[offset + 46];
         PCIDSK::GCP::EElevationUnit elev_unit = elev_unit_c == 'M' ? GCP::EMetres :
             elev_unit_c == 'F' ? GCP::EInternationalFeet :
             elev_unit_c == 'A' ? GCP::EAmericanFeet : GCP::EUnknown;
-        
+
         double pix_err = pimpl_->seg_data.GetDouble(offset + 92, 10);
         double line_err = pimpl_->seg_data.GetDouble(offset + 102, 10);
         double elev_err = pimpl_->seg_data.GetDouble(offset + 112, 10);
-        
+
         double x_err = pimpl_->seg_data.GetDouble(offset + 122, 14);
         double y_err = pimpl_->seg_data.GetDouble(offset + 136, 14);
-        
+
         std::string gcp_id(pimpl_->seg_data.buffer + offset + 192, 64);
-        
+
         PCIDSK::GCP gcp(x, y, elev,
-                        line, pixel, gcp_id, pimpl_->map_units, 
+                        line, pixel, gcp_id, pimpl_->map_units,
                         pimpl_->proj_parms,
                         x_err, y_err, elev_err,
                         line_err, pix_err);
         gcp.SetElevationUnit(elev_unit);
-        gcp.SetElevationDatum(elev_datum);  
-        gcp.SetCheckpoint(is_cp);          
-        
+        gcp.SetElevationDatum(elev_datum);
+        gcp.SetCheckpoint(is_cp);
+
         pimpl_->gcps.push_back(gcp);
-    } 
-    
+    }
+
     loaded_ = true;
 }
 
@@ -169,7 +169,7 @@ std::vector<PCIDSK::GCP> const& CPCIDSKGCP2Segment::GetGCPs(void) const
 {
     return pimpl_->gcps;
 }
- 
+
 // Write the given GCPs to the segment. If the segment already
 // exists, it will be replaced with this one.
 void CPCIDSKGCP2Segment::SetGCPs(std::vector<PCIDSK::GCP> const& gcps)
@@ -178,7 +178,7 @@ void CPCIDSKGCP2Segment::SetGCPs(std::vector<PCIDSK::GCP> const& gcps)
     pimpl_->gcps = gcps; // copy them in
     pimpl_->changed = true;
 }
- 
+
 // Return the count of GCPs in the segment
 unsigned int  CPCIDSKGCP2Segment::GetGCPCount(void) const
 {
@@ -199,20 +199,20 @@ void CPCIDSKGCP2Segment::RebuildSegmentData(void)
         return;
     }
     pimpl_->changed = false;
-    
+
     // Rebuild the segment data based on the contents of the struct
     int num_blocks = (pimpl_->num_gcps + 1) / 2;
-    
+
     // This will have to change when we have proper projections support
 
     if (!pimpl_->gcps.empty())
     {
-        pimpl_->gcps[0].GetMapUnits(pimpl_->map_units, 
+        pimpl_->gcps[0].GetMapUnits(pimpl_->map_units,
             pimpl_->proj_parms);
     }
-    
+
     pimpl_->seg_data.SetSize(num_blocks * 512 + 512);
-    
+
     // Write out the first few fields
     pimpl_->seg_data.Put("GCP2    ", 0, 8);
     pimpl_->seg_data.Put(num_blocks, 8, 8);
@@ -220,34 +220,34 @@ void CPCIDSKGCP2Segment::RebuildSegmentData(void)
     pimpl_->seg_data.Put(pimpl_->map_units.c_str(), 24, 16);
     pimpl_->seg_data.Put((int)0, 40, 8);
     pimpl_->seg_data.Put(pimpl_->proj_parms.c_str(), 256, 256);
-    
+
     // Time to write GCPs out:
     std::vector<PCIDSK::GCP>::const_iterator iter =
         pimpl_->gcps.begin();
-    
+
     int id = 0;
     while (iter != pimpl_->gcps.end()) {
         int offset = 512 + id * 256;
-        
+
         if ((*iter).IsCheckPoint()) {
             pimpl_->seg_data.Put("C", offset, 1);
         } else {
             pimpl_->seg_data.Put("G", offset, 1);
         }
-        
+
         pimpl_->seg_data.Put("0", offset + 1, 5);
-        
+
         // Start writing out the GCP values
         pimpl_->seg_data.Put((*iter).GetPixel(), offset + 6, 14, "%14.4f");
         pimpl_->seg_data.Put((*iter).GetLine(), offset + 20, 14, "%14.4f");
         pimpl_->seg_data.Put((*iter).GetZ(), offset + 34, 12, "%12.4f");
-        
+
         GCP::EElevationUnit unit;
         GCP::EElevationDatum datum;
         (*iter).GetElevationInfo(datum, unit);
-        
+
         char unit_c[2];
-        
+
         switch (unit)
         {
         case GCP::EMetres:
@@ -261,9 +261,9 @@ void CPCIDSKGCP2Segment::RebuildSegmentData(void)
             unit_c[0] = 'F';
             break;
         }
-        
+
         char datum_c[2];
-        
+
         switch(datum)
         {
         case GCP::EEllipsoidal:
@@ -273,14 +273,14 @@ void CPCIDSKGCP2Segment::RebuildSegmentData(void)
             datum_c[0] = 'M';
             break;
         }
-      
+
         unit_c[1] = '\0';
         datum_c[1] = '\0';
-        
+
         // Write out elevation information
         pimpl_->seg_data.Put(unit_c, offset + 46, 1);
         pimpl_->seg_data.Put(datum_c, offset + 47, 1);
-        
+
         pimpl_->seg_data.Put((*iter).GetX(), offset + 48, 22, "%22.14e");
         pimpl_->seg_data.Put((*iter).GetY(), offset + 70, 22, "%22.14e");
         pimpl_->seg_data.Put((*iter).GetPixelErr(), offset + 92, 10, "%10.4f");
@@ -289,16 +289,16 @@ void CPCIDSKGCP2Segment::RebuildSegmentData(void)
         pimpl_->seg_data.Put((*iter).GetXErr(), offset + 122, 14, "%14.4e");
         pimpl_->seg_data.Put((*iter).GetYErr(), offset + 136, 14, "%14.4e");
         pimpl_->seg_data.Put((*iter).GetIDString(), offset + 192, 64, true );
-        
+
         ++id;
         ++iter;
     }
-    
+
     WriteToFile(pimpl_->seg_data.buffer, 0, pimpl_->seg_data.buffer_size);
-    
+
     pimpl_->changed = false;
 }
- 
+
 // Clear a GCP Segment
 void  CPCIDSKGCP2Segment::ClearGCPs(void)
 {

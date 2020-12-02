@@ -2,10 +2,10 @@
  *
  * Purpose: Interface. Builder class for constructing a related PCIDSK segment
  *          class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,7 +25,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
- 
+
 #ifndef INCLUDE_SEGMENT_PCIDSKSEGMENTBUILDER_H
 #define INCLUDE_SEGMENT_PCIDSKSEGMENTBUILDER_H
 
@@ -42,18 +42,18 @@ namespace PCIDSK
     struct IPCIDSKSegmentBuilder
     {
         // TODO: Determine required arguments for a segment to be constructed
-        virtual PCIDSKSegment *BuildSegment(PCIDSKFile *poFile, 
+        virtual PCIDSKSegment *BuildSegment(PCIDSKFile *poFile,
             unsigned int nSegmentID, const char *psSegmentPointer) = 0;
-        
+
         // Get a list of segments that this builder can handle
         virtual std::vector<std::string> GetSupportedSegments(void) const = 0;
-        
+
         // Get a copyright string
         virtual std::string GetVendorString(void) const = 0;
-        
+
         // Get a name string
         virtual std::string GetSegmentBuilderName(void) const = 0;
-        
+
         // Virtual destructor
         virtual ~IPCIDSKSegmentBuilder() {}
     };

@@ -3,16 +3,16 @@
  * Purpose:  Declaration of the SysBlockMap class.
  *
  * This class is used to manage access to the SYS virtual block map segment
- * (named SysBMDir).  This segment is used to keep track of one or more 
+ * (named SysBMDir).  This segment is used to keep track of one or more
  * virtual files stored in SysBData segments.  These virtual files are normally
- * used to hold tiled images for primary bands or overviews.  
+ * used to hold tiled images for primary bands or overviews.
  *
  * This class is closely partnered with the SysVirtualFile class, and the
- * primary client is the CTiledChannel class. 
- * 
+ * primary client is the CTiledChannel class.
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,7 +44,7 @@ namespace PCIDSK
 {
     class SysVirtualFile;
     class PCIDSKFile;
-    
+
     /************************************************************************/
     /*                             SysBlockMap                              */
     /************************************************************************/
@@ -61,7 +61,7 @@ namespace PCIDSK
 
         SysVirtualFile *GetVirtualFile( int image );
         int             CreateVirtualFile();
-        int             CreateVirtualImageFile( int width, int height, 
+        int             CreateVirtualImageFile( int width, int height,
                                                 int block_width, int block_height,
                                                 eChanType chan_type,
                                                 std::string compression );
@@ -72,7 +72,7 @@ namespace PCIDSK
         int             GetNextBlockMapEntry( int bm_index,
                                               uint16 &segment,
                                               int &block_in_segment );
-    
+
     private:
         bool         partial_loaded;
         bool         full_loaded;

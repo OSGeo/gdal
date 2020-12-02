@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Declaration of the CPCIDSK_ARRAY class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2010
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,12 +38,12 @@
 namespace PCIDSK
 {
     class PCIDSKFile;
-    
+
     /************************************************************************/
     /*                            CPCIDSK_ARRAY                             */
     /************************************************************************/
 
-    class CPCIDSK_ARRAY : public CPCIDSKSegment, 
+    class CPCIDSK_ARRAY : public CPCIDSKSegment,
                           public PCIDSK_ARRAY
     {
     public:
@@ -67,8 +67,8 @@ namespace PCIDSK
         //private here in case we want to add the feature
         //in the future.
         const std::vector<std::string>&  GetHeaders() const ;
-        void SetHeaders(const std::vector<std::string>& oHeaders) ; 
-        
+        void SetHeaders(const std::vector<std::string>& oHeaders) ;
+
         // Helper housekeeping functions
         void Load();
         void Write();

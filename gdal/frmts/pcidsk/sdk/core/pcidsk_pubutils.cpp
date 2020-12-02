@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Various public (documented) utility functions.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -47,7 +47,7 @@ using namespace PCIDSK;
  *
  * @param chan_type the channel type enumeration value.
  *
- * @return the size of the passed data type in bytes, or zero for unknown 
+ * @return the size of the passed data type in bytes, or zero for unknown
  * values.
  */
 
@@ -124,7 +124,7 @@ std::string PCIDSK::DataTypeName( eChanType chan_type )
 
 /**
  * @brief Return the segment type code based on the contents of type_name
- * 
+ *
  * @param type_name the type name, as a string
  *
  * @return the channel type code
@@ -158,7 +158,7 @@ eChanType PCIDSK::GetDataTypeFromName(std::string const& type_name)
 
 /**
  * @brief Return whether or not the data type is complex
- * 
+ *
  * @param type the type
  *
  * @return true if the data type is complex, false otherwise

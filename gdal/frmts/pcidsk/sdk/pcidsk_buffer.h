@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Declaration of the PCIDSKBuffer class
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,7 +40,7 @@ namespace PCIDSK
 /*      sorts.  Primarily for internal use.                             */
 /************************************************************************/
 
-    class PCIDSKBuffer 
+    class PCIDSKBuffer
     {
         friend class MetadataSegment; // ?
     public:
@@ -64,17 +64,17 @@ namespace PCIDSK
         void        Put( const char *value,  int offset, int size, bool null_term = false );
         void        Put( uint64 value, int offset, int size );
         void        Put( double value, int offset, int size, const char *fmt=nullptr );
-        void        Put( int value, int offset, int size ) 
+        void        Put( int value, int offset, int size )
             { Put( (uint64) value, offset, size ); }
-        void        Put( unsigned int value, int offset, int size ) 
+        void        Put( unsigned int value, int offset, int size )
             { Put( (uint64) value, offset, size ); }
 
         void        PutBin(double value, int offset);
 
         void        SetSize( int size );
-        
+
     private:
         mutable std::string work_field;
     };
 } // end namespace PCIDSK
-#endif // INCLUDE_PCIDSKBUFFER_H 
+#endif // INCLUDE_PCIDSKBUFFER_H

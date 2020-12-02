@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  PCIDSK TEXt segment interface class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2010
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,7 +46,7 @@ namespace PCIDSK
 /**
 \brief Read a text segment (SEG_TEX).
 
-All carriage returns in the file are converted to newlines during reading.  No other processing is done.  
+All carriage returns in the file are converted to newlines during reading.  No other processing is done.
 
 @return a string containing the entire contents of the text segment.
 
@@ -56,10 +56,10 @@ All carriage returns in the file are converted to newlines during reading.  No o
 /**
 \brief Write a text segment.
 
-Writes the text to the text segment.  All newlines will be converted to 
+Writes the text to the text segment.  All newlines will be converted to
 carriage controls for storage in the text segment per the normal text segment
-conventions, and if missing a carriage return will be added to the end of the 
-file.  
+conventions, and if missing a carriage return will be added to the end of the
+file.
 
 @param text the text to write to the segment.  May contain newlines, and other special characters but no embedded \0 characters.
 

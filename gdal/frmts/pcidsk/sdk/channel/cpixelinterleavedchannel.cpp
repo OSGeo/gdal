@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of the CPixelInterleavedChannel class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -67,7 +67,7 @@ CPixelInterleavedChannel::~CPixelInterleavedChannel()
 /************************************************************************/
 
 int CPixelInterleavedChannel::ReadBlock( int block_index, void *buffer,
-                                         int win_xoff, int win_yoff, 
+                                         int win_xoff, int win_yoff,
                                          int win_xsize, int win_ysize )
 
 {
@@ -88,7 +88,7 @@ int CPixelInterleavedChannel::ReadBlock( int block_index, void *buffer,
     if( win_xoff < 0 || win_xoff + win_xsize > GetBlockWidth()
         || win_yoff < 0 || win_yoff + win_ysize > GetBlockHeight() )
     {
-        return ThrowPCIDSKException(0, 
+        return ThrowPCIDSKException(0,
             "Invalid window in ReadBloc(): win_xoff=%d,win_yoff=%d,xsize=%d,ysize=%d",
             win_xoff, win_yoff, win_xsize, win_ysize );
     }
@@ -102,7 +102,7 @@ int CPixelInterleavedChannel::ReadBlock( int block_index, void *buffer,
 /* -------------------------------------------------------------------- */
 /*      Read and lock the scanline.                                     */
 /* -------------------------------------------------------------------- */
-    uint8 *pixel_buffer = (uint8 *) 
+    uint8 *pixel_buffer = (uint8 *)
         file->ReadAndLockBlock( block_index, win_xoff, win_xsize);
 
 /* -------------------------------------------------------------------- */
@@ -150,7 +150,7 @@ int CPixelInterleavedChannel::ReadBlock( int block_index, void *buffer,
         else
             return ThrowPCIDSKException(0, "Unsupported pixel type..." );
     }
-    
+
     file->UnlockBlock( false );
 
 /* -------------------------------------------------------------------- */
@@ -250,7 +250,7 @@ int CPixelInterleavedChannel::WriteBlock( int block_index, void *buffer )
         else
             return ThrowPCIDSKException(0, "Unsupported pixel type..." );
     }
-    
+
     file->UnlockBlock( true );
 
 /* -------------------------------------------------------------------- */

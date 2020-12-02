@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Declaration of the CTiledChannel raster access strategy
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -49,9 +49,9 @@ namespace PCIDSK
     {
 
     public:
-        CTiledChannel( PCIDSKBuffer &image_header, 
+        CTiledChannel( PCIDSKBuffer &image_header,
                        uint64 ih_offset,
-                       PCIDSKBuffer &file_header, 
+                       PCIDSKBuffer &file_header,
                        int channelnum,
                        CPCIDSKFile *file,
                        eChanType pixel_type );
@@ -69,9 +69,9 @@ namespace PCIDSK
         virtual int WriteBlock( int block_index, void *buffer ) override;
 
         virtual void Synchronize() override;
-        
-        
-        
+
+
+
     private:
         int                      image;
         mutable int              tile_count;
@@ -79,7 +79,7 @@ namespace PCIDSK
         mutable int              tiles_per_col;
         mutable SysVirtualFile  *vfile;
         mutable std::string      compression;
-        
+
         void                     EstablishAccess() const;
         void                     RLEDecompressBlock( PCIDSKBuffer &oCompressed,
                                                      PCIDSKBuffer &oDecompressed );

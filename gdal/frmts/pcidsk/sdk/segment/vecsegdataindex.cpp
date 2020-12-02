@@ -1,15 +1,15 @@
 /******************************************************************************
  *
- * Purpose:  Implementation of the VecSegIndex class.  
+ * Purpose:  Implementation of the VecSegIndex class.
  *
  * This class is used to manage a vector segment data block index.  There
  * will be two instances created, one for the record data (sec_record) and
  * one for the vertices (sec_vert).  This class is exclusively a private
  * helper class for VecSegHeader.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2010
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -84,10 +84,10 @@ void VecSegDataIndex::Initialize( CPCIDSKVectorSegment *vsIn, int sectionIn )
 
     if( section == sec_vert )
         offset_on_disk_within_section = 0;
-    else 
+    else
         offset_on_disk_within_section = vs->di[sec_vert].SerializedSize();
 
-    uint32 offset = offset_on_disk_within_section 
+    uint32 offset = offset_on_disk_within_section
         + vs->vh.section_offsets[hsec_shape];
 
     memcpy( &block_count, vs->GetData(sec_raw,offset,nullptr,4), 4);
@@ -147,7 +147,7 @@ const std::vector<uint32> *VecSegDataIndex::GetIndex()
         }
         if( block_count > 0 )
         {
-            vs->ReadFromFile( &(block_index[0]), 
+            vs->ReadFromFile( &(block_index[0]),
                               offset,
                               4 * block_count );
 
@@ -160,7 +160,7 @@ const std::vector<uint32> *VecSegDataIndex::GetIndex()
 
     return &block_index;
 }
-                             
+
 /************************************************************************/
 /*                               Flush()                                */
 /************************************************************************/
@@ -186,7 +186,7 @@ void VecSegDataIndex::Flush()
 
     // Make sure this section of the header is large enough.
     int32 shift = (int32) wbuf.buffer_size - (int32) size_on_disk;
-    
+
     if( shift != 0 )
     {
         uint32 old_section_size = vs->vh.section_sizes[hsec_shape];
@@ -213,9 +213,9 @@ void VecSegDataIndex::Flush()
                           + vs->di[sec_record].size_on_disk,
                           vs->vh.section_offsets[hsec_shape]
                           + vs->di[sec_vert].size_on_disk
-                          + vs->di[sec_record].size_on_disk 
+                          + vs->di[sec_record].size_on_disk
                           + shift,
-                          old_section_size 
+                          old_section_size
                           - vs->di[sec_vert].size_on_disk
                           - vs->di[sec_record].size_on_disk );
         }
@@ -225,9 +225,9 @@ void VecSegDataIndex::Flush()
     }
 
     // Actually write to disk.
-    vs->WriteToFile( wbuf.buffer, 
-                     offset_on_disk_within_section 
-                     + vs->vh.section_offsets[hsec_shape], 
+    vs->WriteToFile( wbuf.buffer,
+                     offset_on_disk_within_section
+                     + vs->vh.section_offsets[hsec_shape],
                      wbuf.buffer_size );
 
     size_on_disk = wbuf.buffer_size;
@@ -263,7 +263,7 @@ void VecSegDataIndex::AddBlockToIndex( uint32 block )
 
 {
     GetIndex(); // force loading.
-        
+
     block_index.push_back( block );
     block_count++;
     dirty = true;
@@ -302,7 +302,7 @@ void VecSegDataIndex::VacateBlockRange( uint32 start, uint32 count )
         if( block_index[i] >= start && block_index[i] < start+count )
         {
             vs->MoveData( block_index[i] * block_page_size,
-                          next_block * block_page_size, 
+                          next_block * block_page_size,
                           block_page_size );
             block_index[i] = next_block;
             dirty = true;

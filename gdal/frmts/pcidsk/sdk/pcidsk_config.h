@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Primary include file for PCIDSK SDK.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -47,8 +47,8 @@ namespace PCIDSK {
     typedef unsigned int   uint32;
     typedef short          int16;
     typedef unsigned short uint16;
-    
-#if defined(_MSC_VER)  
+
+#if defined(_MSC_VER)
     typedef __int64          int64;
     typedef unsigned __int64 uint64;
 #else

@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  PCIDSK Georeferencing information storage class. Declaration.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -63,7 +63,7 @@ the transformation:
 
 where Xpix and Ypix are pixel line locations with (0,0) being the top left
 corner of the top left pixel, and (0.5,0.5) being the center of the top left
-pixel.  For an ungeoreferenced image the values will be 
+pixel.  For an ungeoreferenced image the values will be
 (0.0,1.0,0.0,0.0,0.0,1.0).
 
 @param a1 returns easting of top left corner.
@@ -74,7 +74,7 @@ pixel.  For an ungeoreferenced image the values will be
 @param b3 returns northing pixel size, normally negative indicating north-up.
 
 */
-        virtual void GetTransform( double &a1, double &a2, double &xrot, 
+        virtual void GetTransform( double &a1, double &a2, double &xrot,
             double &b1, double &yrot, double &b3 ) = 0;
 
 /**
@@ -85,21 +85,21 @@ sufficient to document the coordinate system of simple coordinate
 systems (like "UTM    17 S D000"), while other coordinate systems are
 only fully defined with additional projection parameters.
 
-@return the georeferencing string. 
+@return the georeferencing string.
 
-*/        
+*/
         virtual std::string GetGeosys() = 0;
 
 /**
 \brief Fetch projection parameters.
 
 Fetches the list of detailed projection parameters used for projection
-methods not fully described by the Geosys string.  The projection 
+methods not fully described by the Geosys string.  The projection
 parameters are as shown below, though in the future more items might
 be added to the array.  The first 15 are the classic USGS GCTP parameters.
 
 <ul>
-<li> Parm[0]: diameter of earth - major axis (meters). 
+<li> Parm[0]: diameter of earth - major axis (meters).
 <li> Parm[1]: diameter of earth - minor axis (meters).
 <li> Parm[2]: Reference Longitude (degrees)
 <li> Parm[3]: Reference Latitude (degrees)
@@ -114,7 +114,7 @@ be added to the array.  The first 15 are the classic USGS GCTP parameters.
 <li> Parm[12]: Longitude 2 (degrees)
 <li> Parm[13]: Latitude 2 (degrees)
 <li> Parm[14]: Azimuth (degrees)
-<li> Parm[15]: Landsat Number 
+<li> Parm[15]: Landsat Number
 <li> Parm[16]: Landsat Path
 <li> Parm[17]: Unit Code (1=US Foot, 2=Meter, 4=Degree, 5=Intl Foot).
 </ul>
@@ -130,7 +130,7 @@ apply to which projection methods.
 /**
 \brief Write simple georeferencing information
 
-Writes out a georeferencing string and geotransform to the segment. 
+Writes out a georeferencing string and geotransform to the segment.
 
 @param geosys 16 character coordinate system, like "UTM    17 S D000".
 @param a1 easting of top left corner.
@@ -141,16 +141,16 @@ Writes out a georeferencing string and geotransform to the segment.
 @param b3 northing pixel size, normally negative indicating north-up.
 
 */
-        virtual void WriteSimple( std::string const& geosys, 
-            double a1, double a2, double xrot, 
+        virtual void WriteSimple( std::string const& geosys,
+            double a1, double a2, double xrot,
             double b1, double yrot, double b3 ) = 0;
 
 /**
 \brief Write complex projection parameters.
 
-See GetParameters() for the description of the parameters list. 
+See GetParameters() for the description of the parameters list.
 
-@param parameters A list of at least 17 projection parameters. 
+@param parameters A list of at least 17 projection parameters.
 
 */
 

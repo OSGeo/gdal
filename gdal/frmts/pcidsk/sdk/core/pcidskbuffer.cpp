@@ -2,10 +2,10 @@
  *
  * Purpose:  Implementation of the PCIDSKBuffer class.  This class is for
  *           convenient parsing and formatting of PCIDSK ASCII headers.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -262,7 +262,7 @@ void PCIDSKBuffer::Put( uint64 value, int offset, int size )
 /*                             Put(double)                              */
 /************************************************************************/
 
-void PCIDSKBuffer::Put( double value, int offset, int size, 
+void PCIDSKBuffer::Put( double value, int offset, int size,
                         const char *fmt )
 
 {

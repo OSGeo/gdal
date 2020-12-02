@@ -3,19 +3,19 @@
  * Purpose:  Declaration of the SysVirtualFile class.
  *
  * This class is used to manage access to a single virtual file stored in
- * SysBData segments based on a block map stored in the SysBMDir segment 
- * (and managed by SysBlockMap class). 
+ * SysBData segments based on a block map stored in the SysBMDir segment
+ * (and managed by SysBlockMap class).
  *
  * The virtual files are allocated in 8K chunks (block_size) in segments.
  * To minimize IO requests, other overhead, we keep one such 8K block in
- * our working cache for the virtual file stream.  
+ * our working cache for the virtual file stream.
  *
- * This class is primarily used by the CTiledChannel class for access to 
+ * This class is primarily used by the CTiledChannel class for access to
  * tiled images.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -66,9 +66,9 @@ namespace PCIDSK
         void      ReadFromFile( void *buffer, uint64 offset, uint64 size );
 
         uint64    GetLength() { return file_length; }
-    
+
         static const int       block_size;
-    
+
     private:
         CPCIDSKFile           *file;
         void                 **io_handle;

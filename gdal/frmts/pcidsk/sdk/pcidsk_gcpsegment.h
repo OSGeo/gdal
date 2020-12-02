@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose: Interface through which a PCIDSK GCP Segment would be accessed
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,16 +39,16 @@ namespace PCIDSK {
     public:
         //! Return all GCPs in the segment
         virtual std::vector<PCIDSK::GCP> const& GetGCPs(void) const = 0;
-        
+
         //! Write the given GCPs to the segment. If the segment already exists, it will be replaced with this one.
         virtual void SetGCPs(std::vector<PCIDSK::GCP> const& gcps) = 0;
-        
+
         //! Return the count of GCPs in the segment
         virtual unsigned int GetGCPCount(void) const = 0;
-        
+
         //! Clear a GCP Segment
         virtual void ClearGCPs(void) = 0;
-        
+
         //! Virtual Destructor
         virtual ~PCIDSKGCPSegment(void) {}
     };
