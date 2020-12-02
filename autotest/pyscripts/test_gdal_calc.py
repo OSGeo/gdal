@@ -181,10 +181,7 @@ def test_gdal_calc_py_4():
     out = make_temp_filename_list(test_id, test_count)
 
     # some values are clipped to 255, but this doesn't matter... small values were visually checked
-    print('gdal_calc', '-A {} --calc=1 --overwrite --outfile {}'.format(infile, out[0]))
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A {} --calc=1 --overwrite --outfile {}'.format(infile, out[0]))
-    print(script_path, 'gdal_calc', '-A {} -B {} --B_band 1 --allBands A --calc=A+B --NoDataValue=999 --overwrite --outfile {}'.format(
-        infile, out[0], out[1]))
     test_py_scripts.run_py_script(script_path, 'gdal_calc', '-A {} -B {} --B_band 1 --allBands A --calc=A+B --NoDataValue=999 --overwrite --outfile {}'.format(infile, out[0], out[1]))
 
     bnd_count = 3
