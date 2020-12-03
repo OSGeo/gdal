@@ -1,11 +1,11 @@
 /******************************************************************************
  *
- * Purpose:  Implementation of the CPCIDSKVectorSegment class's 
+ * Purpose:  Implementation of the CPCIDSKVectorSegment class's
  *           ConsistencyCheck() method.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2010
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -76,11 +76,11 @@ public:
                 else
                     return middle;
             }
-            
+
             return start;
         }
 
-    bool    AddChunk( uint32 offset, uint32 size ) 
+    bool    AddChunk( uint32 offset, uint32 size )
         {
             uint32 preceding = FindPreceding( offset );
 
@@ -91,7 +91,7 @@ public:
                 sizes.push_back( size );
                 return false;
             }
-                    
+
             // special case for before first.
             if( !offsets.empty() && offset < offsets[0] )
             {
@@ -132,7 +132,7 @@ public:
             }
 
             // can we merge into following entry?
-            if( preceding+1 < offsets.size() 
+            if( preceding+1 < offsets.size()
                 && offsets[preceding+1] == offset+size )
             {
                 offsets[preceding+1] = offset;
@@ -158,7 +158,7 @@ std::string CPCIDSKVectorSegment::ConsistencyCheck()
 
 {
     Synchronize();
-    
+
     std::string report = CPCIDSKSegment::ConsistencyCheck();
 
     report += ConsistencyCheck_Header();
@@ -202,7 +202,7 @@ std::string CPCIDSKVectorSegment::ConsistencyCheck_Header()
         if( smap.AddChunk( vh.section_offsets[i], vh.section_sizes[i] ) )
             report += "A header section overlaps another header section!\n";
 
-        if( vh.section_offsets[i] + vh.section_sizes[i] 
+        if( vh.section_offsets[i] + vh.section_sizes[i]
             > vh.header_blocks * block_page_size )
             report += "A header section goes past end of header.\n";
     }
@@ -274,8 +274,8 @@ std::string CPCIDSKVectorSegment::ConsistencyCheck_ShapeIndices()
             char msg[100];
 
             snprintf( msg, sizeof(msg),
-                      "ShapeID %d is used for shape %u and %u!\n", 
-                     shape_index_ids[toff], 
+                      "ShapeID %d is used for shape %u and %u!\n",
+                     shape_index_ids[toff],
                      toff, id_map[shape_index_ids[toff]]);
             report += msg;
         }
@@ -296,7 +296,7 @@ std::string CPCIDSKVectorSegment::ConsistencyCheck_ShapeIndices()
                 SwapData( &vertex_count, 4, 1 );
                 SwapData( &vertex_size, 4, 1 );
             }
-            
+
             if( vertex_size < vertex_count * 24 + 8 )
             {
                 report += "vertices for shape index seem larger than space allocated.\n";
@@ -326,17 +326,17 @@ std::string CPCIDSKVectorSegment::ConsistencyCheck_ShapeIndices()
 
             offset += 4;
             for( i = 0; i < vh.field_names.size(); i++ )
-                offset = ReadField( offset, wfld, vh.field_types[i], 
+                offset = ReadField( offset, wfld, vh.field_types[i],
                                     sec_record );
 
             if( offset - rec_off > record_size )
                 report += "record actually larger than declared record size.\n";
-            
+
             if( rec_off + record_size > di[sec_record].GetSectionEnd() )
             {
                 report += "record overruns data index bytes.\n";
             }
-            
+
             if( rmap.AddChunk( rec_off, record_size ) )
             {
                 report += "record overlap detected!\n";

@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of the CPCIDSKRPCModelSegment class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -72,22 +72,22 @@ struct CPCIDSKRPCModelSegment::PCIDSKRPCInfo
 
     double line_off;
     double line_scale;
-    
+
     std::vector<double> x_adj; // adjusted X values
     std::vector<double> y_adj; // adjusted Y values
-    
+
     std::string sensor_name; // the name of the sensor
-    
+
     std::string map_units; // the map units string
-    
+
     // TODO: Projection Info
-    
+
     // The raw segment data
     PCIDSKBuffer seg_data;
 };
 
 CPCIDSKRPCModelSegment::CPCIDSKRPCModelSegment(PCIDSKFile *fileIn, int segmentIn,const char *segment_pointer) :
-    CPCIDSKSegment(fileIn, segmentIn, segment_pointer), pimpl_(new CPCIDSKRPCModelSegment::PCIDSKRPCInfo), 
+    CPCIDSKSegment(fileIn, segmentIn, segment_pointer), pimpl_(new CPCIDSKRPCModelSegment::PCIDSKRPCInfo),
     loaded_(false),mbModified(false)
 {
     try
@@ -115,29 +115,29 @@ void CPCIDSKRPCModelSegment::Load()
     if (loaded_) {
         return;
     }
-    
+
     if( data_size - 1024 != 7 * 512 )
     {
         return ThrowPCIDSKException("Wrong data_size in CPCIDSKRPCModelSegment");
     }
-    
+
     pimpl_->seg_data.SetSize((int) (data_size - 1024)); // should be 7 * 512
-    
+
     ReadFromFile(pimpl_->seg_data.buffer, 0, data_size - 1024);
-    
+
     // The RPC Model Segment is defined as follows:
     // RFMODEL Segment: 7 512-byte blocks
-    
+
     // Block 1:
     // Bytes   0-7: 'RFMODEL '
     // Byte      8: User Provided RPC (1: user-provided, 0: computed from GCPs)
-    // Bytes 22-23: 'DS' 
+    // Bytes 22-23: 'DS'
     // Bytes 24-26: Downsample factor used during Epipolar Generation
     // Bytes 27-29: '2ND' -- no clue what this means
     // Bytes 30-35: 'SENSOR'
     // Bytes    36: Sensor Name (NULL terminated)
-    
-    if (!STARTS_WITH(pimpl_->seg_data.buffer, "RFMODEL ")) 
+
+    if (!STARTS_WITH(pimpl_->seg_data.buffer, "RFMODEL "))
     {
         pimpl_->seg_data.Put("RFMODEL",0,8);
         pimpl_->userrpc = false;
@@ -150,37 +150,37 @@ void CPCIDSKRPCModelSegment::Load()
         return;
         // Something has gone terribly wrong!
         /*throw PCIDSKException("A segment that was previously identified as an RFMODEL "
-            "segment does not contain the appropriate data. Found: [%s]", 
+            "segment does not contain the appropriate data. Found: [%s]",
             std::string(pimpl_->seg_data.buffer, 8).c_str());*/
     }
-    
+
     // Determine if this is user-provided
     pimpl_->userrpc = pimpl_->seg_data.buffer[8] == '1' ? true : false;
-    
+
     // Check for the DS characters
     pimpl_->downsample = 1;
-    if (STARTS_WITH(&pimpl_->seg_data.buffer[22], "DS")) 
+    if (STARTS_WITH(&pimpl_->seg_data.buffer[22], "DS"))
     {
         // Read the downsample factor
         pimpl_->downsample = pimpl_->seg_data.GetInt(24, 3);
     }
-    
+
     //This is required if writing with PCIDSKIO
     //and reading with GDBIO (probably because of legacy issue)
     // see Bugzilla 255 and 254.
     bool bSecond = false;
-    if (STARTS_WITH(&pimpl_->seg_data.buffer[27], "2ND")) 
+    if (STARTS_WITH(&pimpl_->seg_data.buffer[27], "2ND"))
     {
         bSecond = true;
     }
-    
+
     // Sensor name:
     if (STARTS_WITH(&pimpl_->seg_data.buffer[30], "SENSOR")) {
         pimpl_->sensor_name = std::string(&pimpl_->seg_data.buffer[36]);
     } else {
         pimpl_->sensor_name = "";
     }
-    
+
     // Block 2:
     // Bytes     0-3: Number of coefficients
     // Bytes    4-13: Number of pixels
@@ -200,7 +200,7 @@ void CPCIDSKRPCModelSegment::Load()
     // if bSecond is false, then the coefficient are stored
     // at others positions
     // every value takes 22 bytes.
-    
+
     if(bSecond)
     {
         pimpl_->num_coeffs = pimpl_->seg_data.GetInt(512, 4);
@@ -227,7 +227,7 @@ void CPCIDSKRPCModelSegment::Load()
 
         pimpl_->adjusted = false;
         // Read in adjusted X coefficients
-        for (unsigned int i = 0; i <= 5; i++) 
+        for (unsigned int i = 0; i <= 5; i++)
         {
             double tmp = pimpl_->seg_data.GetDouble(512 + 244 + (i * 22), 22);
             pimpl_->x_adj.push_back(tmp);
@@ -238,7 +238,7 @@ void CPCIDSKRPCModelSegment::Load()
         }
 
         // Read in adjusted Y coefficients
-        for (unsigned int i = 0; i <= 5; i++) 
+        for (unsigned int i = 0; i <= 5; i++)
         {
             double tmp = pimpl_->seg_data.GetDouble(512 + 376 + (i * 22), 22);
             pimpl_->y_adj.push_back(tmp);
@@ -274,7 +274,7 @@ void CPCIDSKRPCModelSegment::Load()
 
         pimpl_->adjusted = false;
         // Read in adjusted X coefficients
-        for (unsigned int i = 0; i <= 3; i++) 
+        for (unsigned int i = 0; i <= 3; i++)
         {
             double tmp = pimpl_->seg_data.GetDouble(512 + 12*22 + (i * 22), 22);
             pimpl_->x_adj.push_back(tmp);
@@ -288,7 +288,7 @@ void CPCIDSKRPCModelSegment::Load()
         pimpl_->x_adj.push_back(0.0);
 
         // Read in adjusted Y coefficients
-        for (unsigned int i = 0; i <= 3; i++) 
+        for (unsigned int i = 0; i <= 3; i++)
         {
             double tmp = pimpl_->seg_data.GetDouble(512 + 16*22 + (i * 22), 22);
             pimpl_->y_adj.push_back(tmp);
@@ -301,44 +301,44 @@ void CPCIDSKRPCModelSegment::Load()
         pimpl_->y_adj.push_back(0.0);
         pimpl_->y_adj.push_back(0.0);
     }
-    
+
     // Block 3:
     // Block 3 contains the numerator coefficients for the pixel rational polynomial
     // Number of Coefficients * 22 bytes
     for (unsigned int i = 0; i < pimpl_->num_coeffs; i++) {
         pimpl_->pixel_num.push_back(pimpl_->seg_data.GetDouble(2 * 512 + (i * 22), 22));
     }
-    
+
     // Block 4:
     // Block 4 contains the denominator coefficients for the pixel rational polynomial
     // Number of Coefficients * 22 bytes
     for (unsigned int i = 0; i < pimpl_->num_coeffs; i++) {
         pimpl_->pixel_denom.push_back(pimpl_->seg_data.GetDouble(3 * 512 + (i * 22), 22));
     }
-    
+
     // Block 5:
     // Block 5 contains the numerator coefficients for the line rational polynomial
     // Number of Coefficients * 22 bytes
     for (unsigned int i = 0; i < pimpl_->num_coeffs; i++) {
         pimpl_->line_num.push_back(pimpl_->seg_data.GetDouble(4 * 512 + (i * 22), 22));
     }
-    
+
     // Block 6:
     // Block 6 contains the denominator coefficients for the line rational polynomial
     // Number of Coefficients * 22 bytes
     for (unsigned int i = 0; i < pimpl_->num_coeffs; i++) {
         pimpl_->line_denom.push_back(pimpl_->seg_data.GetDouble(5 * 512 + (i * 22), 22));
     }
-    
+
     // Block 7:
     // Bytes    0-15: MapUnits string
     // Bytes 256-511: ProjInfo_t, serialized
     pimpl_->map_units = std::string(&pimpl_->seg_data.buffer[6 * 512], 16);
-    
-    // We've now loaded the structure up with data. Mark it as being loaded 
+
+    // We've now loaded the structure up with data. Mark it as being loaded
     // properly.
     loaded_ = true;
-    
+
 }
 
 void CPCIDSKRPCModelSegment::Write(void)
@@ -347,28 +347,28 @@ void CPCIDSKRPCModelSegment::Write(void)
     if (!loaded_) {
         return;
     }
-      
+
     // The RPC Model Segment is defined as follows:
     // RFMODEL Segment: 7 512-byte blocks
-    
+
     // Block 1:
     // Bytes   0-7: 'RFMODEL '
     // Byte      8: User Provided RPC (1: user-provided, 0: computed from GCPs)
-    // Bytes 22-23: 'DS' 
+    // Bytes 22-23: 'DS'
     // Bytes 24-26: Downsample factor used during Epipolar Generation
     // Bytes 27-29: '2ND' -- no clue what this means
     // Bytes 30-35: 'SENSOR'
     // Bytes    36: Sensor Name (NULL terminated)
     pimpl_->seg_data.Put("RFMODEL",0,8);
-    
+
     // Determine if this is user-provided
     pimpl_->seg_data.buffer[8] = pimpl_->userrpc ? '1' : '0';
-    
+
     // Check for the DS characters
     pimpl_->seg_data.Put("DS",22,2);
     pimpl_->seg_data.Put(pimpl_->downsample,24,3);
 
-    //This is required if writing with PCIDSKIO 
+    //This is required if writing with PCIDSKIO
     //and reading with GDBIO (probably because of legacy issue)
     // see Bugzilla 255 and 254.
     pimpl_->seg_data.Put("2ND",27,3);
@@ -376,7 +376,7 @@ void CPCIDSKRPCModelSegment::Write(void)
     // Sensor name:
     pimpl_->seg_data.Put("SENSOR",30,6);
     pimpl_->seg_data.Put(pimpl_->sensor_name.c_str(),36,static_cast<int>(pimpl_->sensor_name.size()));
-  
+
     // Block 2:
     // Bytes     0-3: Number of coefficients
     // Bytes    4-13: Number of pixels
@@ -400,9 +400,9 @@ void CPCIDSKRPCModelSegment::Write(void)
             "than one block to store. There is an error in this segment. The "
             "number of coefficients according to the segment is %d.", pimpl_->num_coeffs);
     }
-    
+
     pimpl_->seg_data.Put(pimpl_->num_coeffs,512, 4);
-    
+
     pimpl_->seg_data.Put(pimpl_->lines,512 + 4, 10);
     pimpl_->seg_data.Put(pimpl_->pixels,512 + 14, 10);
     pimpl_->seg_data.Put(pimpl_->x_off,512 + 24, 22,"%22.14f");
@@ -415,9 +415,9 @@ void CPCIDSKRPCModelSegment::Write(void)
     pimpl_->seg_data.Put(pimpl_->pix_scale,512 + 178, 22,"%22.14f");
     pimpl_->seg_data.Put(pimpl_->line_off,512 + 200, 22,"%22.14f");
     pimpl_->seg_data.Put(pimpl_->line_scale,512 + 222, 22,"%22.14f");
-    
+
     // Read in adjusted X coefficients
-    for (unsigned int i = 0; i <= 5; i++) 
+    for (unsigned int i = 0; i <= 5; i++)
     {
         pimpl_->seg_data.Put(pimpl_->x_adj[i],512 + 244 + (i * 22), 22,"%22.14f");
         if(pimpl_->x_adj[i] != 0.0)
@@ -425,9 +425,9 @@ void CPCIDSKRPCModelSegment::Write(void)
             pimpl_->adjusted = true;
         }
     }
-    
+
     // Read in adjusted Y coefficients
-    for (unsigned int i = 0; i <= 5; i++) 
+    for (unsigned int i = 0; i <= 5; i++)
     {
         pimpl_->seg_data.Put(pimpl_->y_adj[i],512 + 376 + (i * 22), 22,"%22.14f");
         if(pimpl_->y_adj[i] != 0.0)
@@ -435,44 +435,44 @@ void CPCIDSKRPCModelSegment::Write(void)
             pimpl_->adjusted = true;
         }
     }
-    
+
     // Block 3:
     // Block 3 contains the numerator coefficients for the pixel rational polynomial
     // Number of Coefficients * 22 bytes
-    for (unsigned int i = 0; i < pimpl_->num_coeffs; i++) 
+    for (unsigned int i = 0; i < pimpl_->num_coeffs; i++)
     {
         pimpl_->seg_data.Put(pimpl_->pixel_num[i],2 * 512 + (i * 22), 22,"%22.14f");
     }
-    
+
     // Block 4:
     // Block 4 contains the denominator coefficients for the pixel rational polynomial
     // Number of Coefficients * 22 bytes
-    for (unsigned int i = 0; i < pimpl_->num_coeffs; i++) 
+    for (unsigned int i = 0; i < pimpl_->num_coeffs; i++)
     {
         pimpl_->seg_data.Put(pimpl_->pixel_denom[i],3 * 512 + (i * 22), 22,"%22.14f");
     }
-    
+
     // Block 5:
     // Block 5 contains the numerator coefficients for the line rational polynomial
     // Number of Coefficients * 22 bytes
-    for (unsigned int i = 0; i < pimpl_->num_coeffs; i++) 
+    for (unsigned int i = 0; i < pimpl_->num_coeffs; i++)
     {
         pimpl_->seg_data.Put(pimpl_->line_num[i],4 * 512 + (i * 22), 22,"%22.14f");
     }
-    
+
     // Block 6:
     // Block 6 contains the denominator coefficients for the line rational polynomial
     // Number of Coefficients * 22 bytes
-    for (unsigned int i = 0; i < pimpl_->num_coeffs; i++) 
+    for (unsigned int i = 0; i < pimpl_->num_coeffs; i++)
     {
         pimpl_->seg_data.Put(pimpl_->line_denom[i],5 * 512 + (i * 22), 22,"%22.14f");
     }
-    
+
     // Block 7:
     // Bytes    0-15: MapUnits string
     // Bytes 256-511: ProjInfo_t, serialized
     pimpl_->seg_data.Put(pimpl_->map_units.c_str(),6 * 512, 16);
-   
+
     WriteToFile(pimpl_->seg_data.buffer,0,data_size-1024);
     mbModified = false;
 }
@@ -507,14 +507,14 @@ void CPCIDSKRPCModelSegment::SetCoefficients(
         return ThrowPCIDSKException("All RPC coefficient vectors must be the "
             "same size.");
     }
-    
+
     pimpl_->pixel_num = xnum;
-    pimpl_->pixel_denom = xdenom;   
+    pimpl_->pixel_denom = xdenom;
     pimpl_->line_num = ynum;
     pimpl_->line_denom = ydenom;
     mbModified = true;
 }
-    
+
 // Get the RPC offset/scale Coefficients
 void CPCIDSKRPCModelSegment::GetRPCTranslationCoeffs(double& xoffset, double& xscale,
     double& yoffset, double& yscale, double& zoffset, double& zscale,
@@ -525,28 +525,28 @@ void CPCIDSKRPCModelSegment::GetRPCTranslationCoeffs(double& xoffset, double& xs
 
     yoffset = pimpl_->y_off;
     yscale = pimpl_->y_scale;
-    
+
     zoffset = pimpl_->z_off;
     zscale = pimpl_->z_scale;
-    
+
     pixoffset = pimpl_->pix_off;
     pixscale = pimpl_->pix_scale;
-    
+
     lineoffset = pimpl_->line_off;
     linescale = pimpl_->line_scale;
 }
-    
+
 // Set the RPC offset/scale Coefficients
 void CPCIDSKRPCModelSegment::SetRPCTranslationCoeffs(
     const double xoffset, const double xscale,
-    const double yoffset, const double yscale, 
+    const double yoffset, const double yscale,
     const double zoffset, const double zscale,
-    const double pixoffset, const double pixscale, 
+    const double pixoffset, const double pixscale,
     const double lineoffset, const double linescale)
 {
     pimpl_->x_off = xoffset;
     pimpl_->x_scale = xscale;
-    
+
     pimpl_->y_off = yoffset;
     pimpl_->y_scale = yscale;
 
@@ -582,7 +582,7 @@ void CPCIDSKRPCModelSegment::SetAdjCoordValues(const std::vector<double>& xcoord
         return ThrowPCIDSKException("X and Y adjusted coordinates must have "
             "length 6.");
     }
-    
+
     pimpl_->x_adj = xcoord;
     pimpl_->y_adj = ycoord;
 
@@ -647,7 +647,7 @@ void CPCIDSKRPCModelSegment::SetGeosysString(const std::string& geosys)
 }
 
 // Get number of lines
-unsigned int CPCIDSKRPCModelSegment::GetLines(void) const 
+unsigned int CPCIDSKRPCModelSegment::GetLines(void) const
 {
     return pimpl_->lines;
 }

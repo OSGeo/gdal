@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of the PCIDSKInterfaces class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -55,11 +55,11 @@ PCIDSKInterfaces::PCIDSKInterfaces()
     JPEGDecompressBlock = NULL;
     JPEGCompressBlock = NULL;
 #endif
-    
+
 }
 
 /**
- 
+
 \var const IOInterfaces *PCIDSKInterfaces::io;
 
 \brief Pointer to IO Interfaces.
@@ -80,14 +80,14 @@ PCIDSKInterfaces::PCIDSKInterfaces()
 
 \brief Function to decompress a jpeg block
 
-This function may be NULL if there is no jpeg interface available. 
+This function may be NULL if there is no jpeg interface available.
 
 The default implementation is implemented using libjpeg.
 
-The function decodes the jpeg compressed image in src_data (src_bytes long) 
+The function decodes the jpeg compressed image in src_data (src_bytes long)
 into dst_data (dst_bytes long) as image data.  The result should be exactly
-dst_bytes long, and will be an image of xsize x ysize of type pixel_type 
-(currently on CHN_8U is allowed). 
+dst_bytes long, and will be an image of xsize x ysize of type pixel_type
+(currently on CHN_8U is allowed).
 
 Errors should be thrown as exceptions.
 
@@ -99,14 +99,14 @@ Errors should be thrown as exceptions.
 
 \brief Function to compress a jpeg block
 
-This function may be NULL if there is no jpeg interface available. 
+This function may be NULL if there is no jpeg interface available.
 
 The default implementation is implemented using libjpeg.
 
-The function encodes the image in src_data (src_bytes long) 
+The function encodes the image in src_data (src_bytes long)
 into dst_data as compressed jpeg data.  The passed in value of dst_bytes is the
 size of the passed in dst_data array (it should be large enough to hold
-any compressed result0 and dst_bytes will be returned with the resulting 
+any compressed result0 and dst_bytes will be returned with the resulting
 actual number of bytes used.
 
 Errors should be thrown as exceptions.

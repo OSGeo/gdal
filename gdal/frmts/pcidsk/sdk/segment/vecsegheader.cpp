@@ -1,14 +1,14 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of the VecSegHeader class.
- * 
- * This class is used to manage reading and writing of the vector segment 
+ *
+ * This class is used to manage reading and writing of the vector segment
  * header section, growing them as needed.  It is exclusively a private
  * helper class for the CPCIDSKVectorSegment.
  *
  ******************************************************************************
  * Copyright (c) 2010
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -162,7 +162,7 @@ void VecSegHeader::InitializeExisting()
 /*      Check fixed portion of the header to ensure this is a V6        */
 /*      style vector segment.                                           */
 /* -------------------------------------------------------------------- */
-    static const unsigned char magic[24] = 
+    static const unsigned char magic[24] =
         { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
           0, 0, 0, 21, 0, 0, 0, 4, 0, 0, 0, 19, 0, 0, 0, 69 };
 
@@ -170,7 +170,7 @@ void VecSegHeader::InitializeExisting()
     {
         return ThrowPCIDSKException( "Unexpected vector header values, possibly it is not a V6 vector segment?" );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Establish how big the header is currently.                      */
 /* -------------------------------------------------------------------- */
@@ -190,7 +190,7 @@ void VecSegHeader::InitializeExisting()
 /* -------------------------------------------------------------------- */
     ShapeField work_value;
     uint32 next_off = section_offsets[hsec_proj];
-    
+
     next_off += 32; // xoff/yoff/xsize/ysize values.
 
     next_off = vs->ReadField( next_off, work_value, FieldTypeString, sec_raw );
@@ -208,7 +208,7 @@ void VecSegHeader::InitializeExisting()
     int  field_count, i;
 
     next_off = section_offsets[hsec_record];
-    
+
     next_off = vs->ReadField( next_off, work_value, FieldTypeInteger, sec_raw );
     field_count = work_value.GetValueInteger();
 
@@ -216,19 +216,19 @@ void VecSegHeader::InitializeExisting()
     {
         next_off = vs->ReadField( next_off, work_value, FieldTypeString, sec_raw );
         field_names.push_back( work_value.GetValueString() );
-        
+
         next_off = vs->ReadField( next_off, work_value, FieldTypeString, sec_raw );
         field_descriptions.push_back( work_value.GetValueString() );
-        
+
         next_off = vs->ReadField( next_off, work_value, FieldTypeInteger, sec_raw );
         int field_type = work_value.GetValueInteger();
         if( field_type < 0 || field_type > FieldTypeCountedInt )
             return ThrowPCIDSKException( "Invalid field type: %d", field_type );
         field_types.push_back( static_cast<ShapeFieldType> (field_type) );
-        
+
         next_off = vs->ReadField( next_off, work_value, FieldTypeString, sec_raw );
         field_formats.push_back( work_value.GetValueString() );
-        
+
         next_off = vs->ReadField( next_off, work_value, field_types[i], sec_raw );
         field_defaults.push_back( work_value );
     }
@@ -261,11 +261,11 @@ void VecSegHeader::InitializeExisting()
     next_off += 4;
     vs->shape_index_start = 0;
 
-    uint64 section_size = next_off - section_offsets[hsec_shape] 
+    uint64 section_size = next_off - section_offsets[hsec_shape]
         + static_cast<uint64>(vs->shape_count) * 12;
     if( section_size > std::numeric_limits<uint32>::max() )
         return ThrowPCIDSKException( "Invalid section_size" );
-        
+
     section_sizes[hsec_shape] = static_cast<uint32>(section_size);
 }
 
@@ -279,10 +279,10 @@ void VecSegHeader::WriteFieldDefinitions()
     PCIDSKBuffer hbuf( 1000 );
     uint32  offset = 0, i;
     ShapeField wrkfield;
-    
+
     wrkfield.SetValue( (int32) field_names.size() );
     offset = vs->WriteField( offset, wrkfield, hbuf );
-    
+
     for( i = 0; i < field_names.size(); i++ )
     {
         wrkfield.SetValue( field_names[i] );
@@ -303,7 +303,7 @@ void VecSegHeader::WriteFieldDefinitions()
     hbuf.SetSize( offset );
 
     GrowSection( hsec_record, hbuf.buffer_size );
-    vs->WriteToFile( hbuf.buffer, section_offsets[hsec_record], 
+    vs->WriteToFile( hbuf.buffer, section_offsets[hsec_record],
                      hbuf.buffer_size );
 
     // invalidate the raw buffer.
@@ -342,11 +342,11 @@ bool VecSegHeader::GrowSection( int hsec, uint32 new_size )
     {
         if( ihsec == hsec )
             continue;
-        
+
         if( section_offsets[ihsec] + section_sizes[ihsec] > last_used )
             last_used = section_offsets[ihsec] + section_sizes[ihsec];
 
-        if( section_offsets[hsec] >= 
+        if( section_offsets[hsec] >=
             section_offsets[ihsec] + section_sizes[ihsec] )
             continue;
 
@@ -360,14 +360,14 @@ bool VecSegHeader::GrowSection( int hsec, uint32 new_size )
 /* -------------------------------------------------------------------- */
 /*      If we can grow in place and have space there is nothing to do.  */
 /* -------------------------------------------------------------------- */
-    if( grow_ok 
+    if( grow_ok
         && section_offsets[hsec] + new_size
         < header_blocks * block_page_size )
     {
         section_sizes[hsec] = new_size;
         return false;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Where will the section be positioned after grow?  It might      */
 /*      be nice to search for a big enough hole in the existing area    */
@@ -385,7 +385,7 @@ bool VecSegHeader::GrowSection( int hsec, uint32 new_size )
 /* -------------------------------------------------------------------- */
     if( new_base + new_size > header_blocks * block_page_size )
     {
-        GrowHeader( (new_base+new_size+block_page_size-1) / block_page_size 
+        GrowHeader( (new_base+new_size+block_page_size-1) / block_page_size
                     - header_blocks );
     }
 
@@ -413,7 +413,7 @@ bool VecSegHeader::GrowSection( int hsec, uint32 new_size )
             SwapData( &new_offset, 4, 1 );
         vs->WriteToFile( &new_offset, 72 + hsec * 4, 4 );
     }
-        
+
     return true;
 }
 
@@ -464,13 +464,13 @@ void VecSegHeader::GrowBlockIndex( int section, int new_blocks )
 uint32 VecSegHeader::ShapeIndexPrepare( uint32 size )
 
 {
-    GrowSection( hsec_shape, 
-                 size 
-                 + vs->di[sec_vert].size_on_disk 
+    GrowSection( hsec_shape,
+                 size
+                 + vs->di[sec_vert].size_on_disk
                  + vs->di[sec_record].size_on_disk );
 
     return section_offsets[hsec_shape]
-        + vs->di[sec_vert].size_on_disk 
+        + vs->di[sec_vert].size_on_disk
         + vs->di[sec_record].size_on_disk;
 }
 
@@ -486,7 +486,7 @@ uint32 VecSegHeader::ShapeIndexPrepare( uint32 size )
 void VecSegHeader::GrowHeader( uint32 new_blocks )
 
 {
-//    fprintf( stderr, "GrowHeader(%d) to %d\n", 
+//    fprintf( stderr, "GrowHeader(%d) to %d\n",
 //             new_blocks, header_blocks + new_blocks );
 
 /* -------------------------------------------------------------------- */
@@ -507,10 +507,10 @@ void VecSegHeader::GrowHeader( uint32 new_blocks )
     header_blocks += new_blocks;
 
     uint32 header_block_buf = header_blocks;
-    
+
     if( needs_swap )
         SwapData( &header_block_buf, 4, 1 );
-    
+
     vs->WriteToFile( &header_block_buf, 68, 4 );
 }
 

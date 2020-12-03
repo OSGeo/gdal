@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of the CPCIDSKToutinModelSegment class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,12 +40,12 @@ using namespace PCIDSK;
 
 namespace
 {
-    /** 
+    /**
      * Function to get the minimum value of two values.
-     * 
+     *
      * @param a The first value.
      * @param b The second value.
-     * 
+     *
      * @return The minimum value of the two specified values.
      */
 #if 0  /* Unused */
@@ -56,7 +56,7 @@ namespace
 #endif
 }
 
-CPCIDSKToutinModelSegment::CPCIDSKToutinModelSegment(PCIDSKFile *fileIn, 
+CPCIDSKToutinModelSegment::CPCIDSKToutinModelSegment(PCIDSKFile *fileIn,
                                                    int segmentIn,
                                                    const char *segment_pointer) :
     CPCIDSKEphemerisSegment(fileIn, segmentIn, segment_pointer,false)
@@ -84,7 +84,7 @@ SRITInfo_t CPCIDSKToutinModelSegment::GetInfo() const
 
 /**
  * Set the toutin information in the segment. The segment will be tag
- * as modified and will be synchronize on disk with the next call to 
+ * as modified and will be synchronize on disk with the next call to
  * the function synchronize.
  * @param oInfo the toutin information.
  */
@@ -114,14 +114,14 @@ void CPCIDSKToutinModelSegment::Load()
     }
 
     seg_data.SetSize((int)data_size - 1024);
-    
+
     ReadFromFile(seg_data.buffer, 0, data_size - 1024);
 
     SRITInfo_t* poInfo = BinaryToSRITInfo();
 
     mpoInfo = poInfo;
 
-    // We've now loaded the structure up with data. Mark it as being loaded 
+    // We've now loaded the structure up with data. Mark it as being loaded
     // properly.
     loaded_ = true;
 }
@@ -159,7 +159,7 @@ void CPCIDSKToutinModelSegment::Synchronize()
 /*                           BinaryToSRITInfo()                         */
 /************************************************************************/
 /**
-  * Translate a block of binary data into a SRIT segment. the caller is 
+  * Translate a block of binary data into a SRIT segment. the caller is
   * responsible to free the returned memory with delete.
   *
   * @return Rational Satellite Model structure.
@@ -174,16 +174,16 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
 /* -------------------------------------------------------------------- */
 /*      Read the header block                                           */
 /* -------------------------------------------------------------------- */
-    // We test the name of the binary segment before starting to read 
+    // We test the name of the binary segment before starting to read
     // the buffer.
-    if (!STARTS_WITH(seg_data.buffer, "MODEL   ")) 
+    if (!STARTS_WITH(seg_data.buffer, "MODEL   "))
     {
         seg_data.Put("MODEL   ",0,8);
         return nullptr;
         // Something has gone terribly wrong!
         /*throw PCIDSKException("A segment that was previously "
             "identified as an RFMODEL "
-            "segment does not contain the appropriate data. Found: [%s]", 
+            "segment does not contain the appropriate data. Found: [%s]",
             std::string(seg_data.buffer, 8).c_str());*/
     }
 
@@ -204,7 +204,7 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
         SRITModel->nDownSample = 1;
         if(STARTS_WITH(seg_data.Get(22,2) , "DS"))
         {
-            SRITModel->nDownSample = seg_data.GetInt(24,3); 
+            SRITModel->nDownSample = seg_data.GetInt(24,3);
         }
 
 /* -------------------------------------------------------------------- */
@@ -249,12 +249,12 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
 /*      Read the GCP information in Block 2                             */
 /* -------------------------------------------------------------------- */
 
-        SRITModel->nGCPCount       = seg_data.GetInt(2*512,10); 
-        SRITModel->nEphemerisSegNo = seg_data.GetInt(2*512+10,10); 
-        SRITModel->nAttitudeFlag   = seg_data.GetInt(2*512+20,10); 
+        SRITModel->nGCPCount       = seg_data.GetInt(2*512,10);
+        SRITModel->nEphemerisSegNo = seg_data.GetInt(2*512+10,10);
+        SRITModel->nAttitudeFlag   = seg_data.GetInt(2*512+20,10);
         SRITModel->GCPUnit = seg_data.Get(2*512+30,16);
 
-        SRITModel->dfGCPMeanHt = seg_data.GetDouble(2*512+50,22); 
+        SRITModel->dfGCPMeanHt = seg_data.GetDouble(2*512+50,22);
         SRITModel->dfGCPMinHt  = seg_data.GetDouble(2*512+72,22);
         SRITModel->dfGCPMaxHt  = seg_data.GetDouble(2*512+94,22);
 
@@ -276,14 +276,14 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
         k = 4;
         for (j=0; j<SRITModel->nGCPCount; j++)
         {
-            SRITModel->nGCPIds[j] = 
-                seg_data.GetInt((k-1)*512+10*l,5);  
-            SRITModel->nPixel[j]  = 
-                seg_data.GetInt((k-1)*512+10*(l+1),5);  
-            SRITModel->nLine[j]   = 
-                seg_data.GetInt((k-1)*512+10*(l+1)+5,5);  
-            SRITModel->dfElev[j]  = 
-                seg_data.GetInt((k-1)*512+10*(l+2),10);  
+            SRITModel->nGCPIds[j] =
+                seg_data.GetInt((k-1)*512+10*l,5);
+            SRITModel->nPixel[j]  =
+                seg_data.GetInt((k-1)*512+10*(l+1),5);
+            SRITModel->nLine[j]   =
+                seg_data.GetInt((k-1)*512+10*(l+1)+5,5);
+            SRITModel->dfElev[j]  =
+                seg_data.GetInt((k-1)*512+10*(l+2),10);
             l+=3;
 
             if (l<50)
@@ -464,7 +464,7 @@ CPCIDSKToutinModelSegment::SRITInfoToBinary( SRITInfo_t *SRITModel )
         SRITModel->OrbitPtr->AvhrrSeg != nullptr )
     {
         if (SRITModel->OrbitPtr->Type == OrbAttitude &&
-            SRITModel->OrbitPtr->AttitudeSeg != nullptr) 
+            SRITModel->OrbitPtr->AttitudeSeg != nullptr)
         {
             if (SRITModel->OrbitPtr->AttitudeSeg->NumberOfLine != 0)
                 seg_data.Put("3",nPos+20,1);
@@ -513,10 +513,10 @@ CPCIDSKToutinModelSegment::SRITInfoToBinary( SRITInfo_t *SRITModel )
         seg_data.Put((int)SRITModel->dfElev[j],nPos+10*(l+2),10);
 
         l+=3;
-     
+
         if (l<50)
             continue;
-     
+
         k++;
         nPos = 512*k;
         l = 0;

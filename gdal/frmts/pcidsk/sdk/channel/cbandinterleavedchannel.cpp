@@ -2,13 +2,13 @@
  *
  * Purpose:  Implementation of the CBandInterleavedChannel class.
  *
- * This class is used to implement band interleaved channels within a 
+ * This class is used to implement band interleaved channels within a
  * PCIDSK file (which are always packed, and FILE interleaved data from
- * external raw files which may not be packed. 
- * 
+ * external raw files which may not be packed.
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -93,7 +93,7 @@ CBandInterleavedChannel::CBandInterleavedChannel( PCIDSKBuffer &image_header,
 
     else
         filename = MergeRelativePath( file->GetInterfaces()->io,
-                                      file->GetFilename(), 
+                                      file->GetFilename(),
                                       filename );
 }
 
@@ -111,7 +111,7 @@ CBandInterleavedChannel::~CBandInterleavedChannel()
 /************************************************************************/
 
 int CBandInterleavedChannel::ReadBlock( int block_index, void *buffer,
-                                        int xoff, int yoff, 
+                                        int xoff, int yoff,
                                         int xsize, int ysize )
 
 {
@@ -185,15 +185,15 @@ int CBandInterleavedChannel::ReadBlock( int block_index, void *buffer,
         char *this_pixel;
 
         MutexHolder holder( *io_mutex_p );
-        
+
         interfaces->io->Seek( *io_handle_p, offset, SEEK_SET );
-        interfaces->io->Read( line_from_disk.buffer, 
-                              1, line_from_disk.buffer_size, 
+        interfaces->io->Read( line_from_disk.buffer,
+                              1, line_from_disk.buffer_size,
                               *io_handle_p );
 
         for( i = 0, this_pixel = line_from_disk.buffer; i < xsize; i++ )
         {
-            memcpy( ((char *) buffer) + pixel_size * i, 
+            memcpy( ((char *) buffer) + pixel_size * i,
                     this_pixel, pixel_size );
             this_pixel += pixel_offset;
         }
@@ -265,14 +265,14 @@ int CBandInterleavedChannel::WriteBlock( int block_index, void *buffer )
         char *this_pixel;
 
         MutexHolder holder( *io_mutex_p );
-        
+
         interfaces->io->Seek( *io_handle_p, offset, SEEK_SET );
-        interfaces->io->Read( buffer, 1, line_from_disk.buffer_size, 
+        interfaces->io->Read( buffer, 1, line_from_disk.buffer_size,
                               *io_handle_p );
 
         for( i = 0, this_pixel = line_from_disk.buffer; i < width; i++ )
         {
-            memcpy( this_pixel, ((char *) buffer) + pixel_size * i, 
+            memcpy( this_pixel, ((char *) buffer) + pixel_size * i,
                     pixel_size );
 
             if( needs_swap ) // swap before write.
@@ -282,7 +282,7 @@ int CBandInterleavedChannel::WriteBlock( int block_index, void *buffer )
         }
 
         interfaces->io->Seek( *io_handle_p, offset, SEEK_SET );
-        interfaces->io->Write( buffer, 1, line_from_disk.buffer_size, 
+        interfaces->io->Write( buffer, 1, line_from_disk.buffer_size,
                                *io_handle_p );
     }
 
@@ -297,8 +297,8 @@ int CBandInterleavedChannel::WriteBlock( int block_index, void *buffer )
 /*                            GetChanInfo()                             */
 /************************************************************************/
 void CBandInterleavedChannel
-::GetChanInfo( std::string &filename_ret, uint64 &image_offset, 
-               uint64 &pixel_offsetOut, uint64 &line_offsetOut, 
+::GetChanInfo( std::string &filename_ret, uint64 &image_offset,
+               uint64 &pixel_offsetOut, uint64 &line_offsetOut,
                bool &little_endian ) const
 
 {
@@ -323,8 +323,8 @@ void CBandInterleavedChannel
 /************************************************************************/
 
 void CBandInterleavedChannel
-::SetChanInfo( std::string filenameIn, uint64 image_offset, 
-               uint64 pixel_offsetIn, uint64 line_offsetIn, 
+::SetChanInfo( std::string filenameIn, uint64 image_offset,
+               uint64 pixel_offsetIn, uint64 line_offsetIn,
                bool little_endian )
 
 {
@@ -344,13 +344,13 @@ void CBandInterleavedChannel
 /*      store the filename.                                             */
 /* -------------------------------------------------------------------- */
     std::string IHi2_filename;
-    
+
     if( filenameIn.size() > 64 )
     {
         int link_segment;
-        
+
         ih.Get( 64, 64, IHi2_filename );
-                
+
         if( IHi2_filename.substr(0,3) == "LNK" )
         {
             link_segment = std::atoi( IHi2_filename.c_str() + 4 );
@@ -358,26 +358,26 @@ void CBandInterleavedChannel
         else
         {
             char link_filename[64];
-           
-            link_segment = 
-                file->CreateSegment( "Link    ", 
-                                     "Long external channel filename link.", 
+
+            link_segment =
+                file->CreateSegment( "Link    ",
+                                     "Long external channel filename link.",
                                      SEG_SYS, 1 );
 
             snprintf( link_filename, sizeof(link_filename), "LNK %4d", link_segment );
             IHi2_filename = link_filename;
         }
 
-        CLinkSegment *link = 
+        CLinkSegment *link =
             dynamic_cast<CLinkSegment*>( file->GetSegment( link_segment ) );
-        
+
         if( link != nullptr )
         {
             link->SetPath( filenameIn );
             link->Synchronize();
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      If we used to have a link segment but no longer need it, we     */
 /*      need to delete the link segment.                                */
@@ -385,17 +385,17 @@ void CBandInterleavedChannel
     else
     {
         ih.Get( 64, 64, IHi2_filename );
-                
+
         if( IHi2_filename.substr(0,3) == "LNK" )
         {
             int link_segment = std::atoi( IHi2_filename.c_str() + 4 );
 
             file->DeleteSegment( link_segment );
         }
-        
+
         IHi2_filename = filenameIn;
     }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Update the image header.                                        */
 /* -------------------------------------------------------------------- */
@@ -423,13 +423,13 @@ void CBandInterleavedChannel
 /*      Update local configuration.                                     */
 /* -------------------------------------------------------------------- */
     this->filename = MergeRelativePath( file->GetInterfaces()->io,
-                                        file->GetFilename(), 
+                                        file->GetFilename(),
                                         filenameIn );
 
     start_byte = image_offset;
     this->pixel_offset = pixel_offsetIn;
     this->line_offset = line_offsetIn;
-    
+
     if( little_endian )
         byte_order = 'S';
     else
@@ -444,7 +444,7 @@ void CBandInterleavedChannel
         needs_swap = (byte_order != 'S');
     else
         needs_swap = (byte_order == 'S');
-    
+
     if( pixel_type == CHN_8U )
         needs_swap = 0;
 }
@@ -463,22 +463,22 @@ std::string CBandInterleavedChannel::MassageLink( std::string filename_in ) cons
     {
         std::string seg_str(filename_in, 4, 4);
         unsigned int seg_num = std::atoi(seg_str.c_str());
-        
+
         if (seg_num == 0)
         {
             ThrowPCIDSKException("Unable to find link segment. Link name: %s",
                                   filename_in.c_str());
             return "";
         }
-        
-        CLinkSegment* link_seg = 
+
+        CLinkSegment* link_seg =
             dynamic_cast<CLinkSegment*>(file->GetSegment(seg_num));
         if (link_seg == nullptr)
         {
             ThrowPCIDSKException("Failed to get Link Information Segment.");
             return "";
         }
-        
+
         filename_in = link_seg->GetPath();
     }
 

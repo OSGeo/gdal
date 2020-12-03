@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Declaration of the CPCIDSKSegment class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,7 +40,7 @@ namespace PCIDSK
 {
     class PCIDSKFile;
     class MetadataSet;
-    
+
 /************************************************************************/
 /*                            CPCIDSKSegment                            */
 /*                                                                      */
@@ -76,13 +76,13 @@ namespace PCIDSK
         bool        IsAtEOF() override;
 
         void        SetDescription( const std::string &description) override;
-        
+
         std::string GetMetadataValue( const std::string &key ) const override;
         void        SetMetadataValue( const std::string &key, const std::string &value ) override;
         std::vector<std::string> GetMetadataKeys() const override;
-            
+
         virtual void Synchronize() override {}
-        
+
         std::vector<std::string> GetHistoryEntries() const override;
         void SetHistoryEntries( const std::vector<std::string> &entries ) override;
         void PushHistory(const std::string &app,
@@ -105,12 +105,12 @@ namespace PCIDSK
         PCIDSKBuffer header;
 
         mutable MetadataSet  *metadata;
-        
+
         std::vector<std::string> history_;
 
-        void        MoveData( uint64 src_offset, uint64 dst_offset, 
+        void        MoveData( uint64 src_offset, uint64 dst_offset,
                               uint64 size_in_bytes );
     };
-    
+
 } // end namespace PCIDSK
 #endif // INCLUDE_SEGMENT_PCIDSKSEGMENT_H

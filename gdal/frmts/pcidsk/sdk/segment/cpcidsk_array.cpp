@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of the CPCIDSK_TEX class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2010
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -196,7 +196,7 @@ void CPCIDSK_ARRAY::Synchronize()
  *
  * @return the dimension of the array in [1,8]
  */
-unsigned char CPCIDSK_ARRAY::GetDimensionCount() const 
+unsigned char CPCIDSK_ARRAY::GetDimensionCount() const
 {
     return mnDimension;
 }
@@ -207,7 +207,7 @@ unsigned char CPCIDSK_ARRAY::GetDimensionCount() const
  *
  * @param nDim number of dimension, should be in [1,8]
  */
-void CPCIDSK_ARRAY::SetDimensionCount(unsigned char nDim) 
+void CPCIDSK_ARRAY::SetDimensionCount(unsigned char nDim)
 {
     if(nDim < 1 || nDim > 8)
     {
@@ -224,7 +224,7 @@ void CPCIDSK_ARRAY::SetDimensionCount(unsigned char nDim)
  *
  * @return the size of each dimension.
  */
-const std::vector<unsigned int>& CPCIDSK_ARRAY::GetSizes() const 
+const std::vector<unsigned int>& CPCIDSK_ARRAY::GetSizes() const
 {
     return moSizes;
 }
@@ -234,9 +234,9 @@ const std::vector<unsigned int>& CPCIDSK_ARRAY::GetSizes() const
  * or smaller than GetDimensionCount(), then a pci::Exception is thrown
  * if one of the sizes is 0, then a pci::Exception is thrown.
  *
- * @param oSizes the size of each dimension 
+ * @param oSizes the size of each dimension
  */
-void CPCIDSK_ARRAY::SetSizes(const std::vector<unsigned int>& oSizes) 
+void CPCIDSK_ARRAY::SetSizes(const std::vector<unsigned int>& oSizes)
 {
     if(oSizes.size() != GetDimensionCount())
     {
@@ -264,11 +264,11 @@ void CPCIDSK_ARRAY::SetSizes(const std::vector<unsigned int>& oSizes)
  * p = size of dimension 2
  * h = size of dimension k
  *
- * V1D1 ... VnD1 V1D2 ... VpD2 ... V1Dk ... VhDk 
+ * V1D1 ... VnD1 V1D2 ... VpD2 ... V1Dk ... VhDk
  *
  * @return the array.
  */
-const std::vector<double>& CPCIDSK_ARRAY::GetArray() const 
+const std::vector<double>& CPCIDSK_ARRAY::GetArray() const
 {
     return moArray;
 }
@@ -282,14 +282,14 @@ const std::vector<double>& CPCIDSK_ARRAY::GetArray() const
  * p = size of dimension 2
  * h = size of dimension k
  *
- * V1D1 ... VnD1 V1D2 ... VpD2 ... V1Dk ... VhDk 
+ * V1D1 ... VnD1 V1D2 ... VpD2 ... V1Dk ... VhDk
  *
  * If the size of oArray doesn't match the sizes and dimensions
  * then a pci::Exception is thrown.
  *
  * @param oArray the array.
  */
-void CPCIDSK_ARRAY::SetArray(const std::vector<double>& oArray) 
+void CPCIDSK_ARRAY::SetArray(const std::vector<double>& oArray)
 {
     unsigned int nLength = 1;
     for( unsigned int i=0 ; i < moSizes.size() ; i++)
@@ -315,7 +315,7 @@ void CPCIDSK_ARRAY::SetArray(const std::vector<double>& oArray)
  *
  * @return the headers.
  */
-const std::vector<std::string>&  CPCIDSK_ARRAY::GetHeaders() const 
+const std::vector<std::string>&  CPCIDSK_ARRAY::GetHeaders() const
 {
     return moHeaders;
 }
@@ -328,7 +328,7 @@ const std::vector<std::string>&  CPCIDSK_ARRAY::GetHeaders() const
  *
  * @param oHeaders the headers.
  */
-void CPCIDSK_ARRAY::SetHeaders(const std::vector<std::string>& oHeaders) 
+void CPCIDSK_ARRAY::SetHeaders(const std::vector<std::string>& oHeaders)
 {
     moHeaders = oHeaders;
     mbModified = true;

@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose: Declaration of access to a PCIDSK GCP2 Segment
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,17 +41,17 @@ namespace PCIDSK {
 
         // Return all GCPs in the segment
         std::vector<PCIDSK::GCP> const& GetGCPs(void) const override;
-        
+
         // Write the given GCPs to the segment. If the segment already
         // exists, it will be replaced with this one.
         void SetGCPs(std::vector<PCIDSK::GCP> const& gcps) override;
-        
+
         // Return the count of GCPs in the segment
         unsigned int GetGCPCount(void) const override;
-        
+
         // Clear a GCP Segment
         void ClearGCPs(void) override;
-        
+
         void Synchronize() override;
     private:
         void Load();

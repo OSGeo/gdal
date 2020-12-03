@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose: Support for reading and manipulating PCIDSK RPC Segments
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,50 +26,50 @@
  ****************************************************************************/
 #ifndef INCLUDE_PCIDSK_SEGMENT_PCIDSKRPCMODEL_H
 #define INCLUDE_PCIDSK_SEGMENT_PCIDSKRPCMODEL_H
- 
+
 #include "pcidsk_rpc.h"
 #include "segment/cpcidsksegment.h"
- 
+
 namespace PCIDSK {
     class PCIDSKFile;
-    
+
     class CPCIDSKRPCModelSegment : virtual public PCIDSKRPCSegment,
                                    public CPCIDSKSegment
     {
     public:
         CPCIDSKRPCModelSegment(PCIDSKFile *file, int segment,const char *segment_pointer);
         ~CPCIDSKRPCModelSegment();
-        
+
         // Implementation of PCIDSKRPCSegment
         // Get the X and Y RPC coefficients
         std::vector<double> GetXNumerator(void) const override;
         std::vector<double> GetXDenominator(void) const override;
         std::vector<double> GetYNumerator(void) const override;
         std::vector<double> GetYDenominator(void) const override;
-        
+
         // Set the X and Y RPC Coefficients
         void SetCoefficients(const std::vector<double>& xnum,
             const std::vector<double>& xdenom, const std::vector<double>& ynum,
             const std::vector<double>& ydenom) override;
-            
+
         // Get the RPC offset/scale Coefficients
         void GetRPCTranslationCoeffs(double& xoffset, double& xscale,
             double& yoffset, double& yscale, double& zoffset, double& zscale,
             double& pixoffset, double& pixscale, double& lineoffset, double& linescale) const override;
-            
+
         // Set the RPC offset/scale Coefficients
         void SetRPCTranslationCoeffs(
             const double xoffset, const double xscale,
-            const double yoffset, const double yscale, 
+            const double yoffset, const double yscale,
             const double zoffset, const double zscale,
-            const double pixoffset, const double pixscale, 
+            const double pixoffset, const double pixscale,
             const double lineoffset, const double linescale) override;
 
         // Get the adjusted X values
         std::vector<double> GetAdjXValues(void) const override;
         // Get the adjusted Y values
         std::vector<double> GetAdjYValues(void) const override;
-        
+
         // Set the adjusted X/Y values
         void SetAdjCoordValues(const std::vector<double>& xcoord,
             const std::vector<double>& ycoord) override;
@@ -78,29 +78,29 @@ namespace PCIDSK {
         bool IsUserGenerated(void) const override;
         // Set whether or not this is a user-generated RPC model
         void SetUserGenerated(bool usergen) override;
-        
+
         // Get whether the model has been adjusted
         bool IsNominalModel(void) const override;
         // Set whether the model has been adjusted
         void SetIsNominalModel(bool nominal) override;
-        
+
         // Get sensor name
         std::string GetSensorName(void) const override;
         // Set sensor name
         void SetSensorName(const std::string& name) override;
-        
+
         // Output projection information of RPC Model
         // Get the Geosys String
         std::string GetGeosysString(void) const override;
         // Set the Geosys string
         void SetGeosysString(const std::string& geosys) override;
-        
+
         // Get the number of lines
         unsigned int GetLines(void) const override;
-        
+
         // Get the number of pixels
         unsigned int GetPixels(void) const override;
-        
+
         // Set the number of lines/pixels
         void SetRasterSize(const unsigned int lines, const unsigned int pixels) override;
 
@@ -116,7 +116,7 @@ namespace PCIDSK {
         // Helper housekeeping functions
         void Load();
         void Write();
-        
+
         struct PCIDSKRPCInfo;
         PCIDSKRPCInfo *pimpl_;
         bool loaded_;

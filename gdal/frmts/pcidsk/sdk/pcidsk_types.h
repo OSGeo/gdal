@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Enumerations, data types and related helpers for the PCIDSK SDK
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -48,10 +48,10 @@ namespace PCIDSK
 
     //! Segment types.
     typedef enum {
-        SEG_UNKNOWN = -1, 
+        SEG_UNKNOWN = -1,
 
         SEG_BIT = 101,
-        SEG_VEC = 116, 
+        SEG_VEC = 116,
         SEG_SIG = 121,
         SEG_TEX = 140,
         SEG_GEO = 150,
@@ -66,7 +66,7 @@ namespace PCIDSK
         SEG_GCPOLD = 214,
         SEG_GCP2 = 215
     } eSegType;
-    
+
     // Helper functions for working with segments and data types
     int PCIDSK_DLL DataTypeSize( eChanType );
     std::string PCIDSK_DLL DataTypeName( eChanType );

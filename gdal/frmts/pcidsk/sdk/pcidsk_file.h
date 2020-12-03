@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose: Declaration of the PCIDSKFile Interface
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,7 +41,7 @@ namespace PCIDSK
     class PCIDSKSegment;
     class PCIDSKInterfaces;
     class Mutex;
-    
+
 //! Top interface to PCIDSK (.pix) files.
     class PCIDSK_DLL PCIDSKFile
     {
@@ -54,7 +54,7 @@ namespace PCIDSK
         virtual PCIDSKSegment  *GetSegment( int segment ) = 0;
         virtual std::vector<PCIDSKSegment *> GetSegments() = 0;
 
-        virtual PCIDSK::PCIDSKSegment *GetSegment( int type, 
+        virtual PCIDSK::PCIDSKSegment *GetSegment( int type,
             std::string name, int previous = 0 ) = 0;
 
         virtual int GetWidth() const = 0;
@@ -62,12 +62,12 @@ namespace PCIDSK
         virtual int GetChannels() const = 0;
         virtual std::string GetInterleaving() const = 0;
         virtual bool GetUpdatable() const = 0;
-        virtual uint64 GetFileSize() const = 0; 
+        virtual uint64 GetFileSize() const = 0;
 
         virtual int  CreateSegment( std::string name, std::string description,
             eSegType seg_type, int data_blocks ) = 0;
         virtual void DeleteSegment( int segment ) = 0;
-        virtual void CreateOverviews( int chan_count, int *chan_list, 
+        virtual void CreateOverviews( int chan_count, int *chan_list,
             int factor, std::string resampling ) = 0;
 
     // the following are only for pixel interleaved IO

@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  PCIDSK Vector Shape interface.  Declaration.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,7 +42,7 @@ namespace PCIDSK
     static const ShapeId NullShapeId = -1;
 
     //! Structure for an x,y,z point.
-    typedef struct 
+    typedef struct
     {
         double x;
         double y;
@@ -83,7 +83,7 @@ namespace PCIDSK
         }
         return "";
     }
-    
+
 
 /************************************************************************/
 /*                              ShapeField                              */
@@ -100,7 +100,7 @@ namespace PCIDSK
      double) if the wrong accessor is used.
 
     */
-     
+
     class ShapeField
     {
       private:
@@ -114,17 +114,17 @@ namespace PCIDSK
             int32       integer_val;
             int32      *integer_list_val;
         } v;
-        
+
       public:
         //! Simple constructor.
-        ShapeField() 
+        ShapeField()
             { v.string_val = nullptr; type = FieldTypeNone; }
 
         //! Copy constructor.
         ShapeField( const ShapeField &src )
             { v.string_val = nullptr; type = FieldTypeNone; *this = src; }
 
-        ~ShapeField() 
+        ~ShapeField()
             { Clear(); }
 
         //! Assignment operator.
@@ -132,16 +132,16 @@ namespace PCIDSK
             {
                 switch( src.GetType() )
                 {
-                  case FieldTypeFloat: 
+                  case FieldTypeFloat:
                     SetValue( src.GetValueFloat() );
                     break;
-                  case FieldTypeDouble: 
+                  case FieldTypeDouble:
                     SetValue( src.GetValueDouble() );
                     break;
-                  case FieldTypeInteger: 
+                  case FieldTypeInteger:
                     SetValue( src.GetValueInteger() );
                     break;
-                  case FieldTypeCountedInt: 
+                  case FieldTypeCountedInt:
                     SetValue( src.GetValueCountedInt() );
                     break;
                   case FieldTypeString:
@@ -162,15 +162,15 @@ namespace PCIDSK
 
                 switch( other.GetType() )
                 {
-                  case FieldTypeFloat: 
+                  case FieldTypeFloat:
                     return GetValueFloat() == other.GetValueFloat();
-                  case FieldTypeDouble: 
+                  case FieldTypeDouble:
                     return GetValueDouble() == other.GetValueDouble();
-                  case FieldTypeInteger: 
+                  case FieldTypeInteger:
                     return GetValueInteger() == other.GetValueInteger();
-                  case FieldTypeString: 
+                  case FieldTypeString:
                     return GetValueString() == other.GetValueString();
-                  case FieldTypeCountedInt: 
+                  case FieldTypeCountedInt:
                     return GetValueCountedInt() == other.GetValueCountedInt();
                   case FieldTypeNone:
                     return false;
@@ -181,9 +181,9 @@ namespace PCIDSK
 
         //! Clear field value.
         void Clear()
-            { 
+            {
                 if( (type == FieldTypeString || type == FieldTypeCountedInt)
-                    && v.string_val != nullptr ) 
+                    && v.string_val != nullptr )
                 {
                     free( v.string_val );
                     v.string_val = nullptr;
@@ -196,48 +196,48 @@ namespace PCIDSK
             { return type; }
 
         //! Set integer value on field.
-        void SetValue( int32 val ) 
-            { 
-                Clear(); 
-                type = FieldTypeInteger; 
-                v.integer_val = val; 
+        void SetValue( int32 val )
+            {
+                Clear();
+                type = FieldTypeInteger;
+                v.integer_val = val;
             }
 
         //! Set integer list value on field.
         void SetValue( const std::vector<int32> &val )
-            { 
+            {
                 Clear();
-                type = FieldTypeCountedInt; 
+                type = FieldTypeCountedInt;
                 v.integer_list_val = (int32*)
                     malloc(sizeof(int32) * (val.size()+1) );
                 v.integer_list_val[0] = static_cast<int>(val.size());
                 if( !val.empty() )
-                    memcpy( v.integer_list_val+1, &(val[0]), 
-                            sizeof(int32) * val.size() ); 
+                    memcpy( v.integer_list_val+1, &(val[0]),
+                            sizeof(int32) * val.size() );
             }
 
         //! Set string value on field.
         void SetValue( const std::string &val )
-            { 
-                Clear(); 
-                type = FieldTypeString; 
-                v.string_val = strdup(val.c_str()); 
+            {
+                Clear();
+                type = FieldTypeString;
+                v.string_val = strdup(val.c_str());
             }
 
         //! Set double precision floating point value on field.
         void SetValue( double val )
-            { 
-                Clear(); 
-                type = FieldTypeDouble; 
-                v.double_val = val; 
+            {
+                Clear();
+                type = FieldTypeDouble;
+                v.double_val = val;
             }
 
         //! Set single precision floating point value on field.
         void SetValue( float val )
-            { 
-                Clear(); 
-                type = FieldTypeFloat; 
-                v.float_val = val; 
+            {
+                Clear();
+                type = FieldTypeFloat;
+                v.float_val = val;
             }
 
         //! Fetch value as integer or zero if field not of appropriate type.
@@ -245,13 +245,13 @@ namespace PCIDSK
             { if( type == FieldTypeInteger ) return v.integer_val; else return 0; }
         //! Fetch value as integer list or empty list if field not of appropriate type.
         std::vector<int32> GetValueCountedInt() const
-            { 
+            {
                 std::vector<int32> result;
                 if( type == FieldTypeCountedInt )
                 {
                     result.resize( v.integer_list_val[0] );
                     if( v.integer_list_val[0] > 0 )
-                        memcpy( &(result[0]), &(v.integer_list_val[1]), 
+                        memcpy( &(result[0]), &(v.integer_list_val[1]),
                                 (v.integer_list_val[0]) * sizeof(int32) );
                 }
                 return result;

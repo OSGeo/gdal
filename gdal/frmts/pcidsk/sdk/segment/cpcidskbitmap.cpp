@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of the CPCIDSKBitmap class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2010
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -99,7 +99,7 @@ void CPCIDSKBitmap::Load() const
     if( loaded )
         return;
 
-    // We don't really mean the internals are const, just a lie to 
+    // We don't really mean the internals are const, just a lie to
     // keep the const interfaces happy.
 
     CPCIDSKBitmap *pThis = (CPCIDSKBitmap *) this;
@@ -109,7 +109,7 @@ void CPCIDSKBitmap::Load() const
     pThis->width  = bheader.GetInt( 192,    16 );
     pThis->height = bheader.GetInt( 192+16, 16 );
 
-    // Choosing 8 lines per block ensures that each block 
+    // Choosing 8 lines per block ensures that each block
     // starts on a byte boundary.
     pThis->block_width = pThis->width;
     pThis->block_height = 8;
@@ -199,8 +199,8 @@ eChanType CPCIDSKBitmap::GetType() const
 /*      Copy bit strings - adapted from GDAL.                           */
 /************************************************************************/
 
-static void 
-PCIDSK_CopyBits( const uint8 *pabySrcData, int nSrcOffset, int nSrcStep, 
+static void
+PCIDSK_CopyBits( const uint8 *pabySrcData, int nSrcOffset, int nSrcStep,
                  uint8 *pabyDstData, int nDstOffset, int nDstStep,
                  int nBitCount, int nStepCount )
 
@@ -212,7 +212,7 @@ PCIDSK_CopyBits( const uint8 *pabySrcData, int nSrcOffset, int nSrcStep,
     {
         for( iBit = 0; iBit < nBitCount; iBit++ )
         {
-            if( pabySrcData[nSrcOffset>>3] 
+            if( pabySrcData[nSrcOffset>>3]
                 & (0x80 >>(nSrcOffset & 7)) )
                 pabyDstData[nDstOffset>>3] |= (0x80 >> (nDstOffset & 7));
             else
@@ -221,7 +221,7 @@ PCIDSK_CopyBits( const uint8 *pabySrcData, int nSrcOffset, int nSrcStep,
 
             nSrcOffset++;
             nDstOffset++;
-        } 
+        }
 
         nSrcOffset += (nSrcStep - nBitCount);
         nDstOffset += (nDstStep - nBitCount);
@@ -242,7 +242,7 @@ int CPCIDSKBitmap::ReadBlock( int block_index, void *buffer,
 
     if( block_index < 0 || block_index >= GetBlockCount() )
     {
-        return ThrowPCIDSKException(0, "Requested non-existent block (%d)", 
+        return ThrowPCIDSKException(0, "Requested non-existent block (%d)",
                               block_index );
     }
 /* -------------------------------------------------------------------- */
@@ -264,7 +264,7 @@ int CPCIDSKBitmap::ReadBlock( int block_index, void *buffer,
 
         wrk_buffer = (uint8 *) malloc((size_t) block_size);
         if( wrk_buffer == nullptr )
-            return ThrowPCIDSKException(0, "Out of memory allocating %d bytes in CPCIDSKBitmap::ReadBlock()", 
+            return ThrowPCIDSKException(0, "Out of memory allocating %d bytes in CPCIDSKBitmap::ReadBlock()",
                                   (int) block_size );
     }
 
@@ -277,12 +277,12 @@ int CPCIDSKBitmap::ReadBlock( int block_index, void *buffer,
     else
     {
         uint64 short_block_size;
-        
+
         memset( buffer, 0, (size_t) block_size );
-        
-        short_block_size = 
+
+        short_block_size =
             (static_cast<uint64>(height - block_index*block_height) * block_width + 7) / 8;
-        
+
         ReadFromFile( wrk_buffer, block_size * block_index, short_block_size );
     }
 
@@ -295,9 +295,9 @@ int CPCIDSKBitmap::ReadBlock( int block_index, void *buffer,
 
         for( y_out = 0; y_out <  win_ysize; y_out++ )
         {
-            PCIDSK_CopyBits( wrk_buffer, 
-                             win_xoff + (y_out+win_yoff)*block_width, 0, 
-                             (uint8*) buffer, y_out * win_xsize, 0, 
+            PCIDSK_CopyBits( wrk_buffer,
+                             win_xoff + (y_out+win_yoff)*block_width, 0,
+                             (uint8*) buffer, y_out * win_xsize, 0,
                              win_xsize, 1 );
         }
 
@@ -402,7 +402,7 @@ void CPCIDSKBitmap::SetMetadataValue( const std::string &key,
 std::vector<int> CPCIDSKBitmap::GetOverviewLevelMapping() const
 {
     std::vector<int> ov;
-    
+
     return ov;
 }
 
@@ -423,7 +423,7 @@ std::vector<std::string> CPCIDSKBitmap::GetMetadataKeys() const
 void CPCIDSKBitmap::Synchronize()
 
 {
-    // TODO 
+    // TODO
 
     CPCIDSKSegment::Synchronize();
 }
@@ -472,18 +472,18 @@ void CPCIDSKBitmap::SetHistoryEntries( const std::vector<std::string> &entries )
 /*                            PushHistory()                             */
 /************************************************************************/
 
-void CPCIDSKBitmap::PushHistory( const std::string &app, 
+void CPCIDSKBitmap::PushHistory( const std::string &app,
                                  const std::string &message )
 
 {
     CPCIDSKSegment::PushHistory( app, message );
 }
-                                 
+
 /************************************************************************/
 /*                            GetChanInfo()                             */
 /************************************************************************/
-void CPCIDSKBitmap::GetChanInfo( std::string &filename, uint64 &image_offset, 
-                                 uint64 &pixel_offset, uint64 &line_offset, 
+void CPCIDSKBitmap::GetChanInfo( std::string &filename, uint64 &image_offset,
+                                 uint64 &pixel_offset, uint64 &line_offset,
                                  bool &little_endian ) const
 
 {

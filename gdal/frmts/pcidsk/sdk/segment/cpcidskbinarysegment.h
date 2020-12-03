@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose: Support for reading and manipulating general PCIDSK Binary Segments
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2010
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,7 +26,7 @@
  ****************************************************************************/
 #ifndef INCLUDE_PCIDSK_SEGMENT_PCIDSKBINARY_SEG_H
 #define INCLUDE_PCIDSK_SEGMENT_PCIDSKBINARY_SEG_H
- 
+
 #include "pcidsk_binary.h"
 #include "segment/cpcidsksegment.h"
 
@@ -50,13 +50,13 @@ namespace PCIDSK {
         {
             return seg_data.buffer_size;
         }
-        void SetBuffer(const char* pabyBuf, 
+        void SetBuffer(const char* pabyBuf,
             unsigned int nBufSize) override;
 
         //synchronize the segment on disk.
         void Synchronize() override;
     private:
-        
+
         // Helper housekeeping functions
         void Load();
         void Write();

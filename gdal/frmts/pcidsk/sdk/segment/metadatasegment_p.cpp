@@ -5,11 +5,11 @@
  * This class is used to manage access to the SYS METADATA segment.  This
  * segment holds all the metadata for objects in the PCIDSK file.
  *
- * This class is closely partnered with the MetadataSet class. 
- * 
+ * This class is closely partnered with the MetadataSet class.
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -97,7 +97,7 @@ void MetadataSegment::Load()
     if( loaded )
         return;
 
-    // TODO: this should likely be protected by a mutex. 
+    // TODO: this should likely be protected by a mutex.
 
 /* -------------------------------------------------------------------- */
 /*      Load the segment contents into a buffer.                        */
@@ -146,9 +146,9 @@ void MetadataSegment::FetchGroupMetadata( const char *group, int id,
 /* -------------------------------------------------------------------- */
         int i_split = -1, i;
 
-        for( i=0; 
-             pszNext[i] != 10 && pszNext[i] != 12 && pszNext[i] != 0; 
-             i++) 
+        for( i=0;
+             pszNext[i] != 10 && pszNext[i] != 12 && pszNext[i] != 0;
+             i++)
         {
             if( i_split == -1 && pszNext[i] == ':' )
                 i_split = i;
@@ -230,9 +230,9 @@ void MetadataSegment::Save()
 /* -------------------------------------------------------------------- */
         int i_split = -1, i;
 
-        for( i=0; 
-             pszNext[i] != 10 && pszNext[i] != 12 && pszNext[i] != 0; 
-             i++) 
+        for( i=0;
+             pszNext[i] != 10 && pszNext[i] != 12 && pszNext[i] != 0;
+             i++)
         {
             if( i_split == -1 && pszNext[i] == ':' )
                 i_split = i;
@@ -248,7 +248,7 @@ void MetadataSegment::Save()
         std::string full_key;
 
         full_key.assign( pszNext, i_split );
-        
+
         if( update_list.count(full_key) == 1 )
             /* do not transfer - we will append later */;
         else
@@ -289,7 +289,7 @@ void MetadataSegment::Save()
 /* -------------------------------------------------------------------- */
     if( new_data.size() % 512 != 0 ) // zero fill the last block.
     {
-        new_data.resize( new_data.size() + (512 - (new_data.size() % 512)), 
+        new_data.resize( new_data.size() + (512 - (new_data.size() % 512)),
                          '\0' );
     }
 

@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of the PCIDSKException class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -47,11 +47,11 @@ using PCIDSK::PCIDSKException;
 
 The PCIDSKException class is used for all errors thrown by the PCIDSK
 library.  It includes a formatted message and is derived from std::exception.
-The PCIDSK library throws all exceptions as pointers, and library exceptions 
+The PCIDSK library throws all exceptions as pointers, and library exceptions
 should be caught like this:
 
 @code
-    try 
+    try
     {
          PCIDSKFile *file = PCIDSK::Open( "irvine.pix, "r", NULL );
     }
@@ -120,7 +120,7 @@ PCIDSKException::~PCIDSKException() throw()
  * Format a message.
  *
  * Assigns a message to an exception using printf style formatting
- * and va_list arguments (similar to vfprintf(). 
+ * and va_list arguments (similar to vfprintf().
  *
  * @param fmt printf style format string.
  * @param args additional arguments as required.
@@ -160,8 +160,8 @@ void PCIDSKException::vPrintf( const char *fmt, std::va_list args )
 #else
     wrk_args = args;
 #endif
-    
-    nPR = vsnprintf( szModestBuffer, sizeof(szModestBuffer), fmt, 
+
+    nPR = vsnprintf( szModestBuffer, sizeof(szModestBuffer), fmt,
                      wrk_args );
     if( nPR == -1 || nPR >= (int) sizeof(szModestBuffer)-1 )
     {
@@ -175,11 +175,11 @@ void PCIDSKException::vPrintf( const char *fmt, std::va_list args )
         wrk_args = args;
 #endif
         while( (nPR=vsnprintf( pszWorkBuffer, nWorkBufferSize, fmt, wrk_args))
-               >= nWorkBufferSize-1 
+               >= nWorkBufferSize-1
                || nPR == -1 )
         {
             nWorkBufferSize *= 4;
-            char* pszWorkBufferNew = (char *) realloc(pszWorkBuffer, 
+            char* pszWorkBufferNew = (char *) realloc(pszWorkBuffer,
                                                       nWorkBufferSize );
 #ifdef va_copy
             va_end( wrk_args );
@@ -211,7 +211,7 @@ void PCIDSKException::vPrintf( const char *fmt, std::va_list args )
  * \brief fetch exception message.
  *
  * @return a pointer to the internal message associated with the exception.
- */ 
+ */
 
 #if defined(__clang__) && __clang_major__ == 3 && __clang_minor__ <= 2
 #pragma clang diagnostic push

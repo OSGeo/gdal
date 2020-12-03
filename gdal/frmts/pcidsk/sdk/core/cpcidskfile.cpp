@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of the CPCIDSKFile class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -141,13 +141,13 @@ CPCIDSKFile::~CPCIDSKFile()
         delete channels[i];
         channels[i] = nullptr;
     }
-    
+
     for( i = 0; i < segments.size(); i++ )
     {
         delete segments[i];
         segments[i] = nullptr;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Close and cleanup IO stuff.                                     */
 /* -------------------------------------------------------------------- */
@@ -205,7 +205,7 @@ void CPCIDSKFile::Synchronize()
     size_t i;
     for( i = 0; i < channels.size(); i++ )
         channels[i]->Synchronize();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Synchronize all segments we have instantiated.                  */
 /* -------------------------------------------------------------------- */
@@ -231,7 +231,7 @@ PCIDSKChannel *CPCIDSKFile::GetChannel( int band )
 
 {
     if( band < 1 || band > channel_count )
-        return (PCIDSKChannel*)ThrowPCIDSKExceptionPtr( "Out of range band (%d) requested.", 
+        return (PCIDSKChannel*)ThrowPCIDSKExceptionPtr( "Out of range band (%d) requested.",
                               band );
 
     return channels[band-1];
@@ -299,11 +299,11 @@ PCIDSK::PCIDSKSegment *CPCIDSKFile::GetSegment( int segment )
             segobj = new CPCIDSKSegment( this, segment, segment_pointer );
 
         break;
-        
+
       case SEG_GCP2:
         segobj = new CPCIDSKGCP2Segment(this, segment, segment_pointer);
         break;
-    
+
       case SEG_ORB:
         segobj = new CPCIDSKEphemerisSegment(this, segment, segment_pointer);
         break;
@@ -317,40 +317,40 @@ PCIDSK::PCIDSKSegment *CPCIDSKFile::GetSegment( int segment )
         {
             segobj = new CPCIDSKRPCModelSegment( this, segment, segment_pointer );
         }
-        else if (STARTS_WITH(segment_pointer + 4, "APMODEL ")) 
+        else if (STARTS_WITH(segment_pointer + 4, "APMODEL "))
         {
             segobj = new CPCIDSKAPModelSegment(this, segment, segment_pointer);
         }
-        else if (STARTS_WITH(segment_pointer + 4, "ADSMODEL")) 
+        else if (STARTS_WITH(segment_pointer + 4, "ADSMODEL"))
         {
             segobj = new CPCIDSKADS40ModelSegment(this, segment, segment_pointer);
         }
-        else if (STARTS_WITH(segment_pointer + 4, "POLYMDL ")) 
+        else if (STARTS_WITH(segment_pointer + 4, "POLYMDL "))
         {
             segobj = new CPCIDSKBinarySegment(this, segment, segment_pointer);
         }
-        else if (STARTS_WITH(segment_pointer + 4, "TPSMODEL")) 
+        else if (STARTS_WITH(segment_pointer + 4, "TPSMODEL"))
         {
             segobj = new CPCIDSKGCP2Segment(this, segment, segment_pointer);
         }
-        else if (STARTS_WITH(segment_pointer + 4, "MODEL   ")) 
+        else if (STARTS_WITH(segment_pointer + 4, "MODEL   "))
         {
             segobj = new CPCIDSKToutinModelSegment(this, segment, segment_pointer);
         }
-        else if (STARTS_WITH(segment_pointer + 4, "MMSPB   ")) 
+        else if (STARTS_WITH(segment_pointer + 4, "MMSPB   "))
         {
             segobj = new CPCIDSKBinarySegment(this, segment, segment_pointer);
         }
-        else if (STARTS_WITH(segment_pointer + 4, "MMADS   ")) 
+        else if (STARTS_WITH(segment_pointer + 4, "MMADS   "))
         {
             segobj = new CPCIDSKBinarySegment(this, segment, segment_pointer);
         }
         break;
     }
-    
+
     if (segobj == nullptr)
         segobj = new CPCIDSKSegment( this, segment, segment_pointer );
-        
+
     segments[segment] = segobj;
 
     return segobj;
@@ -362,7 +362,7 @@ PCIDSK::PCIDSKSegment *CPCIDSKFile::GetSegment( int segment )
 /*      Find segment by type/name.                                      */
 /************************************************************************/
 
-PCIDSK::PCIDSKSegment *CPCIDSKFile::GetSegment( int type, std::string name, 
+PCIDSK::PCIDSKSegment *CPCIDSKFile::GetSegment( int type, std::string name,
                                                 int previous )
 
 {
@@ -374,16 +374,16 @@ PCIDSK::PCIDSKSegment *CPCIDSKFile::GetSegment( int type, std::string name,
     //we want the 3 less significant digit only in case type is too big
     // Note : that happen with SEG_VEC_TABLE that is equal to 65652 in GDB.
     //see function BuildChildrenLayer in jtfile.cpp, the call on GDBSegNext
-    //in the loop on gasTypeTable can create issue in PCIDSKSegNext 
+    //in the loop on gasTypeTable can create issue in PCIDSKSegNext
     //(in pcic/gdbfrtms/pcidskopen.cpp)
     CPLsnprintf( type_str, sizeof(type_str), "%03d", (type % 1000) );
     for( i = previous; i < segment_count; i++ )
     {
-        if( type != SEG_UNKNOWN 
+        if( type != SEG_UNKNOWN
             && strncmp(segment_pointers.buffer+i*32+1,type_str,3) != 0 )
             continue;
 
-        if( name != "        " 
+        if( name != "        "
             && strncmp(segment_pointers.buffer+i*32+4,name.c_str(),8) != 0 )
             continue;
 
@@ -436,7 +436,7 @@ void CPCIDSKFile::CheckFileBigEnough( uint64 nBytesToRead )
         }
         if( bTooBig )
         {
-            ThrowPCIDSKException( 
+            ThrowPCIDSKException(
                 "File too short to read " PCIDSK_FRMT_UINT64 " bytes "
                 "of scanline.", nBytesToRead );
         }
@@ -539,13 +539,13 @@ void CPCIDSKFile::InitializeFromHeader()
     {
         first_line_offset = image_offset;
         pixel_group_size = count_8u + count_16s*2 + count_16u*2 + count_32r*4;
-        
+
         block_size = static_cast<PCIDSK::uint64>(pixel_group_size) * width;
         if( block_size % 512 != 0 )
             block_size += 512 - (block_size % 512);
         if( block_size != static_cast<size_t>(block_size) )
         {
-             return ThrowPCIDSKException( 
+             return ThrowPCIDSKException(
                 "Allocating " PCIDSK_FRMT_UINT64 " bytes for scanline "
                 "buffer failed.", block_size );
         }
@@ -554,7 +554,7 @@ void CPCIDSKFile::InitializeFromHeader()
         last_block_data = malloc(static_cast<size_t>(block_size));
         if( last_block_data == nullptr )
         {
-             return ThrowPCIDSKException( 
+             return ThrowPCIDSKException(
                 "Allocating " PCIDSK_FRMT_UINT64 " bytes for scanline "
                 "buffer failed.", block_size );
         }
@@ -593,13 +593,13 @@ void CPCIDSKFile::InitializeFromHeader()
         // work out channel type from header
         eChanType pixel_type;
         const char *pixel_type_string = ih.Get( 160, 8 );
-    
+
         pixel_type = GetDataTypeFromName(pixel_type_string);
 
         // if we didn't get channel type in header, work out from counts (old).
         // Check this only if we don't have complex channels:
-        
-        if (STARTS_WITH(pixel_type_string,"        ")) 
+
+        if (STARTS_WITH(pixel_type_string,"        "))
         {
             if( !( count_c32r == 0 && count_c16u == 0 && count_c16s == 0 ) )
                 return ThrowPCIDSKException("Assertion 'count_c32r == 0 && count_c16u == 0 && count_c16s == 0' failed");
@@ -610,38 +610,38 @@ void CPCIDSKFile::InitializeFromHeader()
                 pixel_type = CHN_16S;
             else if( channelnum <= count_8u + count_16s + count_16u )
                 pixel_type = CHN_16U;
-            else 
+            else
                 pixel_type = CHN_32R;
         }
-            
+
         if( interleaving == "BAND"  )
         {
-            channel = new CBandInterleavedChannel( ih, ih_offset, fh, 
+            channel = new CBandInterleavedChannel( ih, ih_offset, fh,
                                                    channelnum, this,
                                                    image_offset, pixel_type );
 
-            
+
             image_offset += (int64)DataTypeSize(channel->GetType())
                 * (int64)width * (int64)height;
         }
 
         else if( interleaving == "PIXEL" )
         {
-            channel = new CPixelInterleavedChannel( ih, ih_offset, fh, 
+            channel = new CPixelInterleavedChannel( ih, ih_offset, fh,
                                                     channelnum, this,
-                                                    (int) image_offset, 
+                                                    (int) image_offset,
                                                     pixel_type );
             image_offset += DataTypeSize(pixel_type);
         }
 
-        else if( interleaving == "FILE" 
+        else if( interleaving == "FILE"
                  && STARTS_WITH(filename.c_str(),"/SIS=") )
         {
-            channel = new CTiledChannel( ih, ih_offset, fh, 
+            channel = new CTiledChannel( ih, ih_offset, fh,
                                          channelnum, this, pixel_type );
         }
 
-        else if( interleaving == "FILE" 
+        else if( interleaving == "FILE"
                  && filename != ""
                  && !STARTS_WITH(((const char*)ih.buffer)+250, "        ") )
         {
@@ -651,13 +651,13 @@ void CPCIDSKFile::InitializeFromHeader()
 
         else if( interleaving == "FILE" )
         {
-            channel = new CBandInterleavedChannel( ih, ih_offset, fh, 
+            channel = new CBandInterleavedChannel( ih, ih_offset, fh,
                                                    channelnum, this,
                                                    0, pixel_type );
         }
 
         else
-            return ThrowPCIDSKException( "Unsupported interleaving:%s", 
+            return ThrowPCIDSKException( "Unsupported interleaving:%s",
                                        interleaving.c_str() );
 
         channels.push_back( channel );
@@ -675,7 +675,7 @@ void CPCIDSKFile::ReadFromFile( void *buffer, uint64 offset, uint64 size )
 
     interfaces.io->Seek( io_handle, offset, SEEK_SET );
     if( interfaces.io->Read( buffer, 1, size, io_handle ) != size )
-        return ThrowPCIDSKException( "PCIDSKFile:Failed to read %u bytes at %u.", 
+        return ThrowPCIDSKException( "PCIDSKFile:Failed to read %u bytes at %u.",
                                    (unsigned int) size, (unsigned int) offset );
 }
 
@@ -701,7 +701,7 @@ void CPCIDSKFile::WriteToFile( const void *buffer, uint64 offset, uint64 size )
 /*                          ReadAndLockBlock()                          */
 /************************************************************************/
 
-void *CPCIDSKFile::ReadAndLockBlock( int block_index, 
+void *CPCIDSKFile::ReadAndLockBlock( int block_index,
                                      int win_xoff, int win_xsize )
 
 {
@@ -719,11 +719,11 @@ void *CPCIDSKFile::ReadAndLockBlock( int block_index,
 
     if( win_xoff < 0 || win_xoff+win_xsize > GetWidth() )
     {
-        return ThrowPCIDSKExceptionPtr( "CPCIDSKFile::ReadAndLockBlock(): Illegal window - xoff=%d, xsize=%d", 
+        return ThrowPCIDSKExceptionPtr( "CPCIDSKFile::ReadAndLockBlock(): Illegal window - xoff=%d, xsize=%d",
                                    win_xoff, win_xsize );
     }
 
-    if( block_index == last_block_index 
+    if( block_index == last_block_index
         && win_xoff == last_block_xoff
         && win_xsize == last_block_xsize )
     {
@@ -741,14 +741,14 @@ void *CPCIDSKFile::ReadAndLockBlock( int block_index,
 /* -------------------------------------------------------------------- */
     last_block_mutex->Acquire();
 
-    ReadFromFile( last_block_data, 
+    ReadFromFile( last_block_data,
                   first_line_offset + block_index*block_size
                   + win_xoff * pixel_group_size,
                   pixel_group_size * win_xsize );
     last_block_index = block_index;
     last_block_xoff = win_xoff;
     last_block_xsize = win_xsize;
-    
+
     return last_block_data;
 }
 
@@ -791,7 +791,7 @@ void CPCIDSKFile::WriteBlock( int block_index, void *buffer )
 void CPCIDSKFile::FlushBlock()
 
 {
-    if( last_block_dirty ) 
+    if( last_block_dirty )
     {
         last_block_mutex->Acquire();
         if( last_block_dirty ) // is it still dirty?
@@ -807,14 +807,14 @@ void CPCIDSKFile::FlushBlock()
 /*                         GetEDBFileDetails()                          */
 /************************************************************************/
 
-bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p, 
-                                     Mutex **io_mutex_p, 
+bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p,
+                                     Mutex **io_mutex_p,
                                      std::string filename )
 
 {
     *file_p = nullptr;
     *io_mutex_p = nullptr;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Does the file exist already in our file list?                   */
 /* -------------------------------------------------------------------- */
@@ -844,7 +844,7 @@ bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p,
         try {
             new_file.file = interfaces.OpenEDB( filename, "r+" );
             new_file.writable = true;
-        } 
+        }
         catch( const PCIDSK::PCIDSKException& ) {}
         catch( const std::exception& ) {}
     }
@@ -853,7 +853,7 @@ bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p,
         new_file.file = interfaces.OpenEDB( filename, "r" );
 
     if( new_file.file == nullptr )
-        return ThrowPCIDSKException( 0, "Unable to open file '%s'.", 
+        return ThrowPCIDSKException( 0, "Unable to open file '%s'.",
                               filename.c_str() ) != 0;
 
 /* -------------------------------------------------------------------- */
@@ -875,8 +875,8 @@ bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p,
 /*                            GetIODetails()                            */
 /************************************************************************/
 
-void CPCIDSKFile::GetIODetails( void ***io_handle_pp, 
-                                Mutex ***io_mutex_pp, 
+void CPCIDSKFile::GetIODetails( void ***io_handle_pp,
+                                Mutex ***io_mutex_pp,
                                 std::string filename,
                                 bool writable )
 
@@ -915,14 +915,14 @@ void CPCIDSKFile::GetIODetails( void ***io_handle_pp,
 /*      will need better rules about read or update access.             */
 /* -------------------------------------------------------------------- */
     ProtectedFile new_file;
-    
+
     if( writable )
         new_file.io_handle = interfaces.io->Open( filename, "r+" );
     else
         new_file.io_handle = interfaces.io->Open( filename, "r" );
-        
+
     if( new_file.io_handle == nullptr )
-        return ThrowPCIDSKException( "Unable to open file '%s'.", 
+        return ThrowPCIDSKException( "Unable to open file '%s'.",
                               filename.c_str() );
 
 /* -------------------------------------------------------------------- */
@@ -976,9 +976,9 @@ void CPCIDSKFile::DeleteSegment( int segment )
 /* -------------------------------------------------------------------- */
     segment_pointers.buffer[(segment-1)*32] = 'D';
 
-    // write the updated segment pointer back to the file. 
-    WriteToFile( segment_pointers.buffer + (segment-1)*32, 
-                 segment_pointers_offset + (segment-1)*32, 
+    // write the updated segment pointer back to the file.
+    WriteToFile( segment_pointers.buffer + (segment-1)*32,
+                 segment_pointers_offset + (segment-1)*32,
                  32 );
 }
 
@@ -1058,8 +1058,8 @@ int CPCIDSKFile::CreateSegment( std::string name, std::string description,
             uint64 this_seg_size = segptr.GetUInt64(23,9);
             char flag = (char) segptr.buffer[0];
 
-            if( flag == 'D' 
-                && (uint64) data_blocks+2 == this_seg_size 
+            if( flag == 'D'
+                && (uint64) data_blocks+2 == this_seg_size
                 && this_seg_size > 0 )
                 seg_start = segptr.GetUInt64(12,11) - 1;
             else if( flag == ' ' )
@@ -1080,8 +1080,8 @@ int CPCIDSKFile::CreateSegment( std::string name, std::string description,
             uint64 this_seg_size = segptr.GetUInt64(23,9);
             char flag = (char) segptr.buffer[0];
 
-            if( flag == 'D' 
-                && (uint64) data_blocks+2 == this_seg_size 
+            if( flag == 'D'
+                && (uint64) data_blocks+2 == this_seg_size
                 && this_seg_size > 0 )
                 seg_start = segptr.GetUInt64(12,11) - 1;
             else if( flag == ' ' )
@@ -1093,7 +1093,7 @@ int CPCIDSKFile::CreateSegment( std::string name, std::string description,
                 break;
         }
     }
-    
+
     if( segment > segment_count )
         return ThrowPCIDSKException(0, "All %d segment pointers in use.", segment_count);
 
@@ -1119,10 +1119,10 @@ int CPCIDSKFile::CreateSegment( std::string name, std::string description,
 
     // SP1.3 - Name
     segptr.Put( name.c_str(), 4, 8 );
-    
+
     // SP1.4 - start block
     segptr.Put( (uint64) (seg_start + 1), 12, 11 );
-    
+
     // SP1.5 - data blocks.
     segptr.Put( data_blocks+2, 23, 9 );
 
@@ -1130,10 +1130,10 @@ int CPCIDSKFile::CreateSegment( std::string name, std::string description,
     assert(segment >= 1);
     memcpy( segment_pointers.buffer+(segment-1)*32, segptr.buffer, 32);
 
-    // Update on disk. 
-    WriteToFile( segptr.buffer, 
+    // Update on disk.
+    WriteToFile( segptr.buffer,
                  segment_pointers_offset + (segment-1)*32, 32 );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Prepare segment header.                                         */
 /* -------------------------------------------------------------------- */
@@ -1214,18 +1214,18 @@ void CPCIDSKFile::ExtendSegment( int segment, uint64 blocks_requested,
 
 {
     // for now we take it for granted that the segment is valid and at th
-    // end of the file - later we should support moving it. 
+    // end of the file - later we should support moving it.
 
     ExtendFile( blocks_requested, prezero );
 
-    // Update the block count. 
-    segment_pointers.Put( 
+    // Update the block count.
+    segment_pointers.Put(
         segment_pointers.GetUInt64((segment-1)*32+23,9) + blocks_requested,
         (segment-1)*32+23, 9 );
 
-    // write the updated segment pointer back to the file. 
-    WriteToFile( segment_pointers.buffer + (segment-1)*32, 
-                 segment_pointers_offset + (segment-1)*32, 
+    // write the updated segment pointer back to the file.
+    WriteToFile( segment_pointers.buffer + (segment-1)*32,
+                 segment_pointers_offset + (segment-1)*32,
                  32 );
 }
 
@@ -1274,17 +1274,17 @@ void CPCIDSKFile::MoveSegmentToEOF( int segment )
         bytes_to_go -= bytes_this_chunk;
     }
 
-    // Update segment pointer in memory and on disk. 
+    // Update segment pointer in memory and on disk.
     segment_pointers.Put( new_seg_start, segptr_off + 12, 11 );
 
-    WriteToFile( segment_pointers.buffer + segptr_off, 
-                 segment_pointers_offset + segptr_off, 
+    WriteToFile( segment_pointers.buffer + segptr_off,
+                 segment_pointers_offset + segptr_off,
                  32 );
-    
+
     // Update the segments own information.
     if( segments[segment] != nullptr )
     {
-        CPCIDSKSegment *seg = 
+        CPCIDSKSegment *seg =
             dynamic_cast<CPCIDSKSegment *>( segments[segment] );
         if( seg )
             seg->LoadSegmentPointer( segment_pointers.buffer + segptr_off );
@@ -1304,7 +1304,7 @@ void CPCIDSKFile::MoveSegmentToEOF( int segment )
              method.
 */
 
-void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list, 
+void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list,
                                    int factor, std::string resampling )
 
 {
@@ -1346,7 +1346,7 @@ void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list,
 
     if( bm_seg == nullptr )
     {
-        CreateSegment( "SysBMDir", 
+        CreateSegment( "SysBMDir",
                        "System Block Map Directory - Do not modify.",
                        SEG_SYS, 0 );
         bm_seg = GetSegment( SEG_SYS, "SysBMDir" );
@@ -1356,7 +1356,7 @@ void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list,
     }
     else
         bm = dynamic_cast<SysBlockMap *>(bm_seg);
-        
+
 /* ==================================================================== */
 /*      Loop over the channels.                                         */
 /* ==================================================================== */
@@ -1364,7 +1364,7 @@ void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list,
     {
         int channel_number = chan_list[chan_index];
         PCIDSKChannel *channel = GetChannel( channel_number );
-        
+
 /* -------------------------------------------------------------------- */
 /*      Figure out if the given overview level already exists           */
 /*      for a given channel; if it does, skip creating it.              */
@@ -1373,7 +1373,7 @@ void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list,
         for( int i = channel->GetOverviewCount()-1; i >= 0; i-- )
         {
             PCIDSKChannel *overview = channel->GetOverview( i );
- 
+
             if( overview->GetWidth() == channel->GetWidth() / factor
                 && overview->GetHeight() == channel->GetHeight() / factor )
             {
@@ -1386,10 +1386,10 @@ void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list,
 /* -------------------------------------------------------------------- */
 /*      Create the overview as a tiled image layer.                     */
 /* -------------------------------------------------------------------- */
-            int virtual_image = 
-                bm->CreateVirtualImageFile( channel->GetWidth() / factor, 
+            int virtual_image =
+                bm->CreateVirtualImageFile( channel->GetWidth() / factor,
                                             channel->GetHeight() / factor,
-                                            blocksize, blocksize, 
+                                            blocksize, blocksize,
                                             channel->GetType(), compression );
 
 /* -------------------------------------------------------------------- */
@@ -1400,7 +1400,7 @@ void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list,
 
             snprintf( overview_md_key, sizeof(overview_md_key),  "_Overview_%d", factor );
             snprintf( overview_md_value, sizeof(overview_md_value), "%d 0 %s",virtual_image,resampling.c_str());
-                     
+
             channel->SetMetadataValue( overview_md_key, overview_md_value );
         }
 

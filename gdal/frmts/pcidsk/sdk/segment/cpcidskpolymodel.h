@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose: Support for reading and manipulating PCIDSK Polynomial Segments
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,20 +26,20 @@
  ****************************************************************************/
 #ifndef INCLUDE_PCIDSK_SEGMENT_PCIDSKPOLYMODEL_H
 #define INCLUDE_PCIDSK_SEGMENT_PCIDSKPOLYMODEL_H
- 
+
 #include "pcidsk_poly.h"
 #include "segment/cpcidsksegment.h"
- 
+
 namespace PCIDSK {
     class PCIDSKFile;
-    
+
     class CPCIDSKPolyModelSegment : public PCIDSKPolySegment,
                                      public CPCIDSKSegment
     {
     public:
         CPCIDSKPolyModelSegment(PCIDSKFile *file, int segment,const char *segment_pointer);
         ~CPCIDSKPolyModelSegment();
-        
+
         std::vector<double> GetXForwardCoefficients() const override;
         std::vector<double> GetYForwardCoefficients() const override;
         std::vector<double> GetXBackwardCoefficients() const override;
@@ -66,7 +66,7 @@ namespace PCIDSK {
         // Helper housekeeping functions
         void Load();
         void Write();
-        
+
         struct PCIDSKPolyInfo;
         PCIDSKPolyInfo *pimpl_;
         bool loaded_;

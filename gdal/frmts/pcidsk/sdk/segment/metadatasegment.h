@@ -5,11 +5,11 @@
  * This class is used to manage access to the SYS METADATA segment.  This
  * segment holds all the metadata for objects in the PCIDSK file.
  *
- * This class is closely partnered with the MetadataSet class. 
- * 
+ * This class is closely partnered with the MetadataSet class.
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,7 +29,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
- 
+
 #ifndef INCLUDE_SEGMENT_METADATASEGMENT_H
 #define INCLUDE_SEGMENT_METADATASEGMENT_H
 
@@ -53,13 +53,13 @@ namespace PCIDSK
                          const char *segment_pointer );
         virtual     ~MetadataSegment();
 
-        void         FetchGroupMetadata( const char *group, int id, 
+        void         FetchGroupMetadata( const char *group, int id,
                                          std::map<std::string, std::string> &md_set );
         void         SetGroupMetadataValue( const char *group, int id,
                                             const std::string& key, const std::string& value );
 
         void         Synchronize() override;
-                                   
+
     private:
        bool         loaded;
 

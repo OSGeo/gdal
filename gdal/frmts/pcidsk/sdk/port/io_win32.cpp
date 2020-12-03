@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of IO interface using Win32 API.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -87,19 +87,19 @@ Win32IOInterface::Open( std::string filename, std::string access ) const
     else
         dwCreationDisposition = OPEN_EXISTING;
 
-    dwFlagsAndAttributes = (dwDesiredAccess == GENERIC_READ) ? 
-                FILE_ATTRIBUTE_READONLY : FILE_ATTRIBUTE_NORMAL, 
-    
-    hFile = CreateFileA(filename.c_str(), dwDesiredAccess, 
-                        FILE_SHARE_READ | FILE_SHARE_WRITE, 
+    dwFlagsAndAttributes = (dwDesiredAccess == GENERIC_READ) ?
+                FILE_ATTRIBUTE_READONLY : FILE_ATTRIBUTE_NORMAL,
+
+    hFile = CreateFileA(filename.c_str(), dwDesiredAccess,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE,
                         NULL, dwCreationDisposition,  dwFlagsAndAttributes, NULL);
 
     if( hFile == INVALID_HANDLE_VALUE )
     {
-        ThrowPCIDSKException( "Open(%s,%s) failed:\n%s", 
+        ThrowPCIDSKException( "Open(%s,%s) failed:\n%s",
                               filename.c_str(), access.c_str(), LastError() );
     }
-    
+
     FileInfo *fi = new FileInfo();
     fi->hFile = hFile;
     fi->offset = 0;
@@ -111,7 +111,7 @@ Win32IOInterface::Open( std::string filename, std::string access ) const
 /*                                Seek()                                */
 /************************************************************************/
 
-uint64 
+uint64
 Win32IOInterface::Seek( void *io_handle, uint64 offset, int whence ) const
 
 {
@@ -151,20 +151,20 @@ Win32IOInterface::Seek( void *io_handle, uint64 offset, int whence ) const
     {
 #ifdef notdef
         LPVOID      lpMsgBuf = NULL;
-        
-        FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER 
+
+        FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER
                        | FORMAT_MESSAGE_FROM_SYSTEM
                        | FORMAT_MESSAGE_IGNORE_INSERTS,
-                       NULL, GetLastError(), 
-                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
+                       NULL, GetLastError(),
+                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
                        (LPTSTR) &lpMsgBuf, 0, NULL );
- 
+
         printf( "[ERROR %d]\n %s\n", GetLastError(), (char *) lpMsgBuf );/*ok*/
         printf( "nOffset=%u, nMoveLow=%u, dwMoveHigh=%u\n", /*ok*/
                 (GUInt32) nOffset, nMoveLow, dwMoveHigh );
 #endif
-        ThrowPCIDSKException( "Seek(%d,%d): %s (%d)", 
-                              (int) offset, whence, 
+        ThrowPCIDSKException( "Seek(%d,%d): %s (%d)",
+                              (int) offset, whence,
                               LastError(), GetLastError() );
         return -1;
     }
@@ -179,7 +179,7 @@ Win32IOInterface::Seek( void *io_handle, uint64 offset, int whence ) const
         LARGE_INTEGER   li;
 
         li.HighPart = 0;
-        li.LowPart = SetFilePointer( fi->hFile, 0, (PLONG) &(li.HighPart), 
+        li.LowPart = SetFilePointer( fi->hFile, 0, (PLONG) &(li.HighPart),
                                      FILE_CURRENT );
         fi->offset = li.QuadPart;
     }
@@ -205,7 +205,7 @@ uint64 Win32IOInterface::Tell( void *io_handle ) const
 /*                                Read()                                */
 /************************************************************************/
 
-uint64 Win32IOInterface::Read( void *buffer, uint64 size, uint64 nmemb, 
+uint64 Win32IOInterface::Read( void *buffer, uint64 size, uint64 nmemb,
                                void *io_handle ) const
 
 {
@@ -226,7 +226,7 @@ uint64 Win32IOInterface::Read( void *buffer, uint64 size, uint64 nmemb,
         result = (size_t) (dwSizeRead / size);
 
     if( errno != 0 && result == 0 && nmemb != 0 )
-        ThrowPCIDSKException( "Read(%d): %s", 
+        ThrowPCIDSKException( "Read(%d): %s",
                               (int) size * nmemb,
                               LastError() );
 
@@ -239,7 +239,7 @@ uint64 Win32IOInterface::Read( void *buffer, uint64 size, uint64 nmemb,
 /*                               Write()                                */
 /************************************************************************/
 
-uint64 Win32IOInterface::Write( const void *buffer, uint64 size, uint64 nmemb, 
+uint64 Win32IOInterface::Write( const void *buffer, uint64 size, uint64 nmemb,
                                 void *io_handle ) const
 
 {
@@ -260,7 +260,7 @@ uint64 Win32IOInterface::Write( const void *buffer, uint64 size, uint64 nmemb,
         result = (size_t) (dwSizeRead / size);
 
     if( errno != 0 && result == 0 && nmemb != 0 )
-        ThrowPCIDSKException( "Write(%d): %s", 
+        ThrowPCIDSKException( "Write(%d): %s",
                                    (int) size * nmemb,
                                    LastError() );
 

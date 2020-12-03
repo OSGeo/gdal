@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Declaration of the PCIDSKChannel interface.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,7 +39,7 @@ namespace PCIDSK
 
 //! Interface to one PCIDSK channel (band) or bitmap segment.
 
-    class PCIDSK_DLL PCIDSKChannel 
+    class PCIDSK_DLL PCIDSKChannel
     {
     public:
         virtual ~PCIDSKChannel() {}
@@ -75,19 +75,19 @@ namespace PCIDSK
                                  const std::string &message) = 0;
 
         // Only applicable to FILE interleaved raw channels.
-        virtual void GetChanInfo( std::string &filename, uint64 &image_offset, 
-                                  uint64 &pixel_offset, uint64 &line_offset, 
+        virtual void GetChanInfo( std::string &filename, uint64 &image_offset,
+                                  uint64 &pixel_offset, uint64 &line_offset,
                                   bool &little_endian ) const = 0;
-        virtual void SetChanInfo( std::string filename, uint64 image_offset, 
-                                  uint64 pixel_offset, uint64 line_offset, 
+        virtual void SetChanInfo( std::string filename, uint64 image_offset,
+                                  uint64 pixel_offset, uint64 line_offset,
                                   bool little_endian ) = 0;
 
         // Only applicable to CExternalChannels
         virtual void GetEChanInfo( std::string &filename, int &echannel,
-                                   int &exoff, int &eyoff, 
+                                   int &exoff, int &eyoff,
                                    int &exsize, int &eysize ) const = 0;
         virtual void SetEChanInfo( std::string filename, int echannel,
-                                   int exoff, int eyoff, 
+                                   int exoff, int eyoff,
                                    int exsize, int eysize ) = 0;
     };
 } // end namespace PCIDSK

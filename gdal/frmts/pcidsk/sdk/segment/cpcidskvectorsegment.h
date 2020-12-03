@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Declaration of the CPCIDSKVectorSegment class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,7 +41,7 @@
 namespace PCIDSK
 {
     class PCIDSKFile;
-    
+
     const int     sec_vert = 0;
     const int     sec_record = 1;
     const int     sec_raw = 2;
@@ -50,7 +50,7 @@ namespace PCIDSK
     /*                        CPCIDSKVectorSegment                          */
     /************************************************************************/
 
-    class CPCIDSKVectorSegment final: virtual public CPCIDSKSegment, 
+    class CPCIDSKVectorSegment final: virtual public CPCIDSKSegment,
                                       public PCIDSKVectorSegment
     {
         friend class VecSegHeader;
@@ -67,7 +67,7 @@ namespace PCIDSK
 
         std::string     GetRst() override { return ""; }
         std::vector<double> GetProjection( std::string &geosys ) override;
-        void            SetProjection(std::string geosys, 
+        void            SetProjection(std::string geosys,
                                       std::vector<double> parms) override;
 
         int             GetFieldCount() override;
@@ -84,7 +84,7 @@ namespace PCIDSK
         ShapeId         FindNext(ShapeId) override;
 
         int             GetShapeCount() override;
-        
+
         void            GetVertices( ShapeId, std::vector<ShapeVertex>& ) override;
         void            GetFields( ShapeId, std::vector<ShapeField>& ) override;
 
@@ -92,34 +92,34 @@ namespace PCIDSK
                                   std::string description,
                                   std::string format,
                                   ShapeField *default_value ) override;
-        
+
         ShapeId         CreateShape( ShapeId id ) override;
         void            DeleteShape( ShapeId id ) override;
-        void            SetVertices( ShapeId id, 
+        void            SetVertices( ShapeId id,
                                      const std::vector<ShapeVertex>& list ) override;
-        void            SetFields( ShapeId id, 
+        void            SetFields( ShapeId id,
                                    const std::vector<ShapeField>& list ) override;
 
         std::string     ConsistencyCheck() override;
 
         // Essentially internal stuff.
-        char                *GetData( int section, uint32 offset, 
-                                      int *bytes_available = nullptr, 
+        char                *GetData( int section, uint32 offset,
+                                      int *bytes_available = nullptr,
                                       int min_bytes = 0,
                                       bool update = false );
-        uint32               ReadField( uint32 offset, 
-                                        ShapeField& field, 
+        uint32               ReadField( uint32 offset,
+                                        ShapeField& field,
                                         ShapeFieldType field_type,
                                         int section = sec_record );
 
         uint32               WriteField( uint32 offset,
-                                         const ShapeField& field, 
+                                         const ShapeField& field,
                                          PCIDSKBuffer &buffer );
         void                 ReadSecFromFile( int section, char *buffer,
-                                              int block_offset, 
+                                              int block_offset,
                                               int block_count );
         void                 WriteSecToFile( int section, char *buffer,
-                                             int block_offset, 
+                                             int block_offset,
                                              int block_count );
 
      private:
@@ -128,18 +128,18 @@ namespace PCIDSK
 
         VecSegHeader    vh;
         VecSegDataIndex di[2];
-      
+
         int32                shape_count;
         ShapeId              highest_shapeid_used;
         //ShapeId              first_shape_id;
         //ShapeId              last_shape_id;
-        
+
         int32                shape_index_start;       // index of first shape
-        std::vector<int32>   shape_index_ids;         // loaded shape ids. 
+        std::vector<int32>   shape_index_ids;         // loaded shape ids.
         std::vector<uint32>  shape_index_vertex_off;  // loaded vertex offsets
         std::vector<uint32>  shape_index_record_off;  // loaded record offsets.
         bool                 shape_index_page_dirty;
-        
+
         ShapeId              last_shapes_id;
         int                  last_shapes_index;
 
@@ -153,7 +153,7 @@ namespace PCIDSK
         void                 FlushLoadedShapeIndex();
         void                 PushLoadedIndexIntoMap();
         void                 PopulateShapeIdMap();
-        
+
         // Cached buffers for GetData();
         PCIDSKBuffer         raw_loaded_data;
         uint32               raw_loaded_data_offset;
@@ -179,4 +179,4 @@ namespace PCIDSK
     };
 } // end namespace PCIDSK
 
-#endif // __INCLUDE_SEGMENT_VECTORSEGMENT_H
+#endif // INCLUDE_SEGMENT_VECTORSEGMENT_H
