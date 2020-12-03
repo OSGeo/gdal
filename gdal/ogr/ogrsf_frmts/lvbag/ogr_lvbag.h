@@ -90,10 +90,10 @@ class OGRLVBAGLayer final: public OGRAbstractProxiedLayer, public OGRGetNextFeat
     int                 nAttributeElementDepth;
     
     CPLString           osElementString;
+    CPLString           osAttributeString;
     bool                bCollectData;
 
     char                aBuf[BUFSIZ];
-    CPLString           osNamespace;
 
     void                AddSpatialRef(OGRwkbGeometryType eTypeIn);
     void                AddOccurrenceFieldDefn();

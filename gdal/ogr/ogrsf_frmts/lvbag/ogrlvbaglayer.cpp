@@ -32,7 +32,7 @@
 #include "ogr_p.h"
 
 constexpr const char *pszSpecificationUrn = "urn:ogc:def:crs:EPSG::28992";
-constexpr const size_t nDefaultLokaalIDSize = 16;
+constexpr const size_t nDefaultIdentifierSize = 16;
 constexpr const size_t nWplLokaalIDSize = 4;
 
 /************************************************************************/
@@ -225,8 +225,6 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         SetDescription(poFeatureDefn->GetName());
 
         AddSpatialRef(wkbMultiPolygon);
-
-        osNamespace = "NL.IMBAG.Pand";
     }
     else if( EQUAL("num", pszDataset) )
     {
@@ -250,8 +248,6 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
 
         poFeatureDefn->SetName("Nummeraanduiding");
         SetDescription(poFeatureDefn->GetName());
-
-        osNamespace = "NL.IMBAG.Nummeraanduiding";
     }
     else if( EQUAL("lig", pszDataset) )
     {
@@ -267,8 +263,6 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         SetDescription(poFeatureDefn->GetName());
 
         AddSpatialRef(wkbPolygon);
-
-        osNamespace = "NL.IMBAG.Ligplaats";
     }
     else if( EQUAL("sta", pszDataset) )
     {
@@ -284,8 +278,6 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         SetDescription(poFeatureDefn->GetName());
 
         AddSpatialRef(wkbPolygon);
-
-        osNamespace = "NL.IMBAG.Standplaats";
     }
     else if( EQUAL("opr", pszDataset) )
     {
@@ -303,8 +295,6 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
 
         poFeatureDefn->SetName("Openbareruimte");
         SetDescription(poFeatureDefn->GetName());
-
-        osNamespace = "NL.IMBAG.Openbareruimte";
     }
     else if( EQUAL("vbo", pszDataset) )
     {
@@ -326,8 +316,6 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         SetDescription(poFeatureDefn->GetName());
 
         AddSpatialRef(wkbPoint);
-
-        osNamespace = "NL.IMBAG.Verblijfsobject";
     }
     else if( EQUAL("wpl", pszDataset) )
     {
@@ -343,8 +331,6 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
         SetDescription(poFeatureDefn->GetName());
 
         AddSpatialRef(wkbMultiPolygon);
-
-        osNamespace = "NL.IMBAG.Woonplaats";
     }
     else
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -358,6 +344,7 @@ void OGRLVBAGLayer::CreateFeatureDefn( const char *pszDataset )
 void OGRLVBAGLayer::StartDataCollect()
 {
     osElementString.Clear();
+    osAttributeString.Clear();
     bCollectData = true;
 }
 
@@ -369,6 +356,7 @@ void OGRLVBAGLayer::StopDataCollect()
 {
     bCollectData = false;
     osElementString.Trim();
+    osAttributeString.Trim();
 }
 
 /************************************************************************/
@@ -448,15 +436,17 @@ void OGRLVBAGLayer::StartElementCbk( const char *pszName, const char **ppszAttr 
         nGeometryElementDepth == 0 && STARTS_WITH_CI(pszName, "objecten") )
         nAttributeElementDepth = nCurrentDepth;
     else if( nFeatureElementDepth > 0 && nAttributeElementDepth > 0 &&
-             nGeometryElementDepth == 0 && STARTS_WITH_CI(pszName, "objecten-ref")  )
+             nGeometryElementDepth == 0 &&
+             ( EQUAL("objecten:identificatie", pszName) || STARTS_WITH_CI(pszName, "objecten-ref") ) )
     {
+        StartDataCollect();
         const char** papszIter = ppszAttr;
         while( papszIter && *papszIter != nullptr )
         {
-            if( EQUAL("xlink:href", papszIter[0]) )
+            if( EQUAL("domein", papszIter[0]) )
             {
-                osElementString = papszIter[1];
-                osElementString.toupper();
+                osAttributeString = papszIter[1];
+                break;
             }
             papszIter += 2;
         }
@@ -530,14 +520,14 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                 const char *pszValue = osElementString.c_str();
                 const size_t nIdLength = osElementString.size();
                 const OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iFieldIndex);
-                if( EQUAL("identificatie", pszTag) )
+                if( EQUAL("identificatie", pszTag) || STARTS_WITH_CI(pszName, "objecten-ref") )
                 {
                     bool bIsIdInvalid = false;
-                    if( nIdLength == nDefaultLokaalIDSize-1 )
+                    if( nIdLength == nDefaultIdentifierSize-1 )
                     {
                         osElementString = '0' + osElementString;
                     }
-                    else if( nIdLength > nDefaultLokaalIDSize )
+                    else if( nIdLength > nDefaultIdentifierSize )
                     {
                         bIsIdInvalid = true;
                         m_poFeature->SetFieldNull(iFieldIndex);
@@ -546,9 +536,9 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
                     }
                     if ( !bIsIdInvalid )
                     {
-                        if ( !bLegacyId )
+                        if ( !bLegacyId && !osAttributeString.empty() )
                         {
-                            osElementString = osNamespace + '.' + osElementString;
+                            osElementString = osAttributeString + '.' + osElementString;
                         }
                         m_poFeature->SetField(iFieldIndex, osElementString.c_str());
                     }
@@ -679,6 +669,7 @@ void OGRLVBAGLayer::EndElementCbk( const char *pszName )
         }
 
         osElementString.Clear();
+        osAttributeString.Clear();
         nGeometryElementDepth = 0;
     }
     else if( nFeatureElementDepth == nCurrentDepth )
