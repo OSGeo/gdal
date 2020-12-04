@@ -292,6 +292,17 @@ int CPL_DLL OGRGetGenerate_DB2_V72_BYTE_ORDER(void);
 void CPL_DLL OGRSetNonLinearGeometriesEnabledFlag(int bFlag);
 int CPL_DLL OGRGetNonLinearGeometriesEnabledFlag(void);
 
+/** Opaque type for a prepared geometry */
+typedef struct _OGRPreparedGeometry * OGRPreparedGeometryH;
+
+int CPL_DLL OGRHasPreparedGeometrySupport(void);
+OGRPreparedGeometryH CPL_DLL OGRCreatePreparedGeometry( OGRGeometryH hGeom );
+void CPL_DLL OGRDestroyPreparedGeometry( OGRPreparedGeometryH hPreparedGeom );
+int CPL_DLL OGRPreparedGeometryIntersects( OGRPreparedGeometryH hPreparedGeom,
+                                           OGRGeometryH hOtherGeom );
+int CPL_DLL OGRPreparedGeometryContains( OGRPreparedGeometryH hPreparedGeom,
+                                         OGRGeometryH hOtherGeom );
+
 /* -------------------------------------------------------------------- */
 /*      Feature related (ogr_feature.h)                                 */
 /* -------------------------------------------------------------------- */

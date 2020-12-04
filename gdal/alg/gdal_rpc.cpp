@@ -941,7 +941,7 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
             if( OGRHasPreparedGeometrySupport() )
             {
                 psTransform->poRPCFootprintPreparedGeom =
-                    OGRCreatePreparedGeometry(psTransform->poRPCFootprintGeom);
+                    OGRCreatePreparedGeometry(OGRGeometry::ToHandle(psTransform->poRPCFootprintGeom));
             }
             else
             {
@@ -1650,7 +1650,7 @@ static bool RPCIsValidLongLat( const GDALRPCTransformInfo *psTransform,
     OGRPoint p(dfLong, dfLat);
     return CPL_TO_BOOL(
         OGRPreparedGeometryContains(psTransform->poRPCFootprintPreparedGeom,
-                                       &p));
+                                    OGRGeometry::ToHandle(&p)));
 }
 
 /************************************************************************/
