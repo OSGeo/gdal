@@ -2152,7 +2152,7 @@ void VSICurlStreamingClearCache( void )
     // vsicurl/, /vsis3/, /vsigs/ . So each one has its own cache of regions,
     // file size, etc.
     const char* const apszFS[] = { "/vsicurl_streaming/", "/vsis3_streaming/",
-                                   "/vsigs_streaming/", "vsiaz_streaming/",
+                                   "/vsigs_streaming/", "/vsiaz_streaming/",
                                    "/vsioss_streaming/", "/vsiswift_streaming/" };
     for( size_t i = 0; i < CPL_ARRAYSIZE(apszFS); ++i )
     {
