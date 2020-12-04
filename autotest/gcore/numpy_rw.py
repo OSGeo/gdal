@@ -773,4 +773,26 @@ def test_numpy_rw_cleanup():
     gdaltest.numpy_drv = None
 
 
+###############################################################################
+# Test ReadAsArray RMS subsampling.
+
+def test_numpy_rw_rms_resemple_alg():
+    if gdaltest.numpy_drv is None:
+        pytest.skip()
+
+
+    wrk_ds = gdal.Open('../gdrivers/data/int16.tif')
+    assert wrk_ds is not None, 'Failed to open test dataset.'
+
+    res = wrk_ds.ReadAsArray(0, 0,
+                             wrk_ds.RasterXSize,
+                             wrk_ds.RasterYSize,
+                             buf_xsize=wrk_ds.RasterXSize//2,
+                             buf_ysize=wrk_ds.RasterYSize//2,
+                             resample_alg=gdal.GRIORA_RMS)
+    cs = res.sum()
+    exp_cs = 12773
+
+    assert cs == exp_cs, 'got wrong rms sum'
+
 

@@ -1900,9 +1900,9 @@ CPLErr GDALSetGCPs2( GDALDatasetH hDS, int nGCPCount,
  *
  * This method is the same as the C function GDALBuildOverviews().
  *
- * @param pszResampling one of "AVERAGE", "AVERAGE_MAGPHASE", "BILINEAR",
- * "CUBIC", "CUBICSPLINE", "GAUSS", "LANCZOS", "MODE", "NEAREST", or "NONE"
- * controlling the downsampling method applied.
+ * @param pszResampling one of "AVERAGE", "AVERAGE_MAGPHASE", "RMS",
+ * "BILINEAR", "CUBIC", "CUBICSPLINE", "GAUSS", "LANCZOS", "MODE", "NEAREST",
+ * or "NONE" controlling the downsampling method applied.
  * @param nOverviews number of overviews to build, or 0 to clean overviews.
  * @param panOverviewList the list of overview decimation factors to build, or
  *                        NULL if nOverviews == 0.

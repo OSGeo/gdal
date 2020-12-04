@@ -136,9 +136,17 @@ typedef enum
     /*! Mode (selects the value which appears most often of all the sampled points) */
                                                         GRIORA_Mode = 6,
     /*! Gauss blurring */                               GRIORA_Gauss = 7,
-    /* NOTE: values 8 to 12 are reserved for max,min,med,Q1,Q3 */
+    /* NOTE: values 8 to 13 are reserved for max,min,med,Q1,Q3,sum */
 /*! @cond Doxygen_Suppress */
-                                                        GRIORA_LAST = GRIORA_Gauss
+                                                        GRIORA_RESERVED_START = 8,
+                                                        GRIORA_RESERVED_END = 13,
+/*! @endcond */
+    /** RMS: Root Mean Square / Quadratic Mean.
+     * For complex numbers, applies on the real and imaginary part independently.
+     */
+                                                        GRIORA_RMS = 14,
+/*! @cond Doxygen_Suppress */
+                                                        GRIORA_LAST = GRIORA_RMS
 /*! @endcond */
 } GDALRIOResampleAlg;
 

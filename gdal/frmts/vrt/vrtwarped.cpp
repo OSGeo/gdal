@@ -89,7 +89,7 @@ CPL_CVSID("$Id$")
  * of coordinate system will take place.
  *
  * @param eResampleAlg One of GRA_NearestNeighbour, GRA_Bilinear, GRA_Cubic,
- * GRA_CubicSpline, GRA_Lanczos, GRA_Average or GRA_Mode.
+ * GRA_CubicSpline, GRA_Lanczos, GRA_Average, GRA_RMS or GRA_Mode.
  * Controls the sampling method used.
  *
  * @param dfMaxError Maximum error measured in input pixels that is allowed in

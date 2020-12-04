@@ -4367,6 +4367,9 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
         else if( EQUAL(papszArgv[i],"-ra") )
             psOptions->eResampleAlg = GRA_Average;
 
+        else if( EQUAL(papszArgv[i],"-rrms") )
+            psOptions->eResampleAlg = GRA_RMS;
+
         else if( EQUAL(papszArgv[i],"-rm") )
             psOptions->eResampleAlg = GRA_Mode;
 
@@ -4540,6 +4543,8 @@ static bool GetResampleAlg(const char* pszResampling,
         eResampleAlg = GRA_Lanczos;
     else if ( EQUAL(pszResampling, "average") )
         eResampleAlg = GRA_Average;
+    else if ( EQUAL(pszResampling, "rms") )
+        eResampleAlg = GRA_RMS;
     else if ( EQUAL(pszResampling, "mode") )
         eResampleAlg = GRA_Mode;
     else if ( EQUAL(pszResampling, "max") )

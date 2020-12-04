@@ -1069,3 +1069,150 @@ def test_rasterio_floating_point_window_no_resampling_numpy():
     ds = None
     gdal.Unlink('/vsimem/test.tif')
     assert numpy.array_equal(data_per_band, data_per_dataset)
+
+
+###############################################################################
+# Test rms downsampling by a factor of 2 on exact boundaries, with float data type
+
+
+def test_rasterio_rms_halfsize_downsampling_float32():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 6, 6, 1, gdal.GDT_Float32)
+    ds.WriteRaster(0, 0, 6, 6,
+                   struct.pack('f' * 6 * 6,
+                               0,   0,   0, 0, 0, 0,
+                               2,   100, 0, 0, 0, 0,
+                               100, 100, 0, 0, 0, 0,
+                               0,   100, 0, 0, 0, 0,
+                               0,   0,   0, 0, 0, 0,
+                               0,   0,   0, 0, 0, 0))
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 6, 6, 3, 3, resample_alg = gdal.GRIORA_RMS)
+    assert struct.unpack('f' * 9, data) == pytest.approx(
+                                           (50.0099983215332, 0., 0.,
+                                            86.6025390625, 0., 0.,
+                                            0., 0., 0.), rel = 1e-10)
+
+    ds.BuildOverviews('RMS', [2])
+    ovr_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+    assert ovr_data == data
+
+###############################################################################
+# Test rms downsampling by a factor of 2 on exact boundaries, with byte data type
+
+
+def test_rasterio_rms_halfsize_downsampling_byte():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 6, 6, 1, gdal.GDT_Byte)
+    ds.WriteRaster(0, 0, 6, 6,
+                   struct.pack('B' * 6 * 6,
+                               0,   0,   0, 0, 0, 0,
+                               2,   100, 0, 0, 0, 0,
+                               100, 100, 0, 0, 0, 0,
+                               0,   100, 0, 0, 0, 0,
+                               0,   0,   0, 0, 255, 255,
+                               0,   0,   0, 0, 255, 255))
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 6, 6, 3, 3, resample_alg = gdal.GRIORA_RMS)
+    assert struct.unpack('B' * 9, data) == (50, 0, 0,
+                                            87, 0, 0,
+                                            0,  0, 255)
+
+    ds.BuildOverviews('RMS', [2])
+    ovr_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+    assert ovr_data == data
+
+###############################################################################
+# Test rms downsampling by a factor of 2 on exact boundaries, with uint16 data type
+
+
+def test_rasterio_rms_halfsize_downsampling_uint16():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 6, 6, 1, gdal.GDT_UInt16)
+    ds.WriteRaster(0, 0, 6, 6,
+                   struct.pack('H' * 6 * 6,
+                               0,     0,     0, 0, 0,     0,
+                               2,     65535, 0, 0, 0,     0,
+                               65535, 65535, 0, 0, 0,     0,
+                               0,     65535, 0, 0, 0,     0,
+                               0,     0,     0, 0, 65535, 65535,
+                               0,     0,     0, 0, 65535, 65535))
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 6, 6, 3, 3, resample_alg = gdal.GRIORA_RMS)
+    assert struct.unpack('H' * 9, data) == (32768, 0, 0,
+                                            56755, 0, 0,
+                                            0,  0, 65535)
+
+    ds.BuildOverviews('RMS', [2])
+    ovr_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+    assert ovr_data == data
+
+###############################################################################
+# Test rms downsampling by a factor of 2. / 3, with float data type
+
+
+def test_rasterio_rms_two_third_downsampling_float32():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 6, 6, 1, gdal.GDT_Float32)
+    ds.WriteRaster(0, 0, 6, 6,
+                   struct.pack('f' * 6 * 6,
+                               0,   0,   0, 0, 0, 0,
+                               2,   100, 0, 0, 0, 0,
+                               100, 100, 0, 0, 0, 0,
+                               0,   100, 0, 0, 0, 0,
+                               0,   0,   0, 0, 0, 0,
+                               0,   0,   0, 0, 0, 0))
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 6, 6, 4, 4, resample_alg = gdal.GRIORA_RMS)
+    assert struct.unpack('f' * 16, data) == pytest.approx(
+                                            (33.34666442871094, 33.33333206176758, 0.0, 0.0,
+                                             88.19674682617188, 57.73502731323242, 0.0, 0.0,
+                                             47.14045333862305, 47.14045333862305, 0.0, 0.0,
+                                             0.0, 0.0, 0.0, 0.0), rel=1e-10)
+
+###############################################################################
+# Test rms downsampling by a factor of 2 on exact boundaries, with CFloat32
+
+
+def test_rasterio_rms_halfsize_downsampling_cfloat32():
+
+    # Test real part
+    ds = gdal.GetDriverByName('MEM').Create('', 4, 6, 1, gdal.GDT_CFloat32)
+    ds.WriteRaster(0, 0, 4, 6,
+                   struct.pack('f' * 2 * 4 * 6,
+                               0,   0,  0,   0, 0, 0, 0, 0,
+                               2,   0,  100, 0, 0, 0, 0, 0,
+                               100, 0,  100, 0, 0, 0, 0, 0,
+                               0,   0,  100, 0, 0, 0, 0, 0,
+                               0,   0,  0,   0, 0, 0, 0, 0,
+                               0,   0,  0,   0, 0, 0, 0, 0))
+    # This will go through the warping code internally
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 4, 6, 2, 3, resample_alg = gdal.GRIORA_RMS)
+    assert struct.unpack('f' * 2 * 2 * 3, data) == pytest.approx(
+                                           (50.0099983215332, 0., 0., 0.,
+                                            86.6025390625,    0., 0., 0.,
+                                            0.,               0., 0., 0.), rel = 1e-10)
+
+    # This will use the overview code
+    ds.BuildOverviews('RMS', [2])
+    ovr_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+    assert ovr_data == data
+
+
+    # Test imaginary part
+    ds = gdal.GetDriverByName('MEM').Create('', 4, 6, 1, gdal.GDT_CFloat32)
+    ds.WriteRaster(0, 0, 4, 6,
+                   struct.pack('f' * 2 * 4 * 6,
+                               0, 0,   0,  0,   0, 0, 0, 0,
+                               0, 2,   0,  100, 0, 0, 0, 0,
+                               0, 100, 0,  100, 0, 0, 0, 0,
+                               0, 0,   0,  100, 0, 0, 0, 0,
+                               0, 0,   0,  0,   0, 0, 0, 0,
+                               0, 0,   0,  0,   0, 0, 0, 0))
+    # This will go through the warping code internally
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 4, 6, 2, 3, resample_alg = gdal.GRIORA_RMS)
+    assert struct.unpack('f' * 2 * 2 * 3, data) == pytest.approx(
+                                           (0.0, 50.0099983215332, 0., 0.,
+                                            0.0, 86.6025390625,    0., 0.,
+                                            0.0, 0.,               0., 0.), rel = 1e-10)
+
+    # This will use the overview code
+    ds.BuildOverviews('RMS', [2])
+    ovr_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+    assert ovr_data == data

@@ -1763,3 +1763,36 @@ def test_warp_rpc_source_has_geotransform():
                        transformerOptions=['METHOD=RPC', 'RPC_HEIGHT=1118'])
     cs = out_ds.GetRasterBand(1).Checksum()
     assert cs == 60397
+
+###############################################################################
+# Test RMS resampling
+
+def test_warp_ds_rms():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
+    if gdaltest.tiff_drv is None:
+        pytest.skip()
+
+    tst = gdaltest.GDALTest('VRT', 'utmsmall_ds_rms.vrt', 1, 4770)
+
+    return tst.testOpen()
+
+def test_warp_rms_1():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
+    if gdaltest.tiff_drv is None:
+        pytest.skip()
+
+    tst = gdaltest.GDALTest('VRT', 'utmsmall_rms_float.vrt', 1, 30396)
+
+    return tst.testOpen()
+
+def test_warp_rms_2():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName('GTiff')
+    if gdaltest.tiff_drv is None:
+        pytest.skip()
+
+    tst = gdaltest.GDALTest('VRT', 'utmsmall_rms.vrt', 1, 30396)
+
+    return tst.testOpen()

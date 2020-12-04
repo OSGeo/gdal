@@ -404,6 +404,7 @@ GDALPansharpenOperation::Initialize( const GDALPansharpenOptions* psOptionsIn )
             (eResampleAlg == GRIORA_CubicSpline) ? "CUBICSPLINE" :
             (eResampleAlg == GRIORA_Lanczos) ? "LANCZOS" :
             (eResampleAlg == GRIORA_Average) ? "AVERAGE" :
+            (eResampleAlg == GRIORA_RMS) ? "RMS" :
             (eResampleAlg == GRIORA_Mode) ? "MODE" :
             (eResampleAlg == GRIORA_Gauss) ? "GAUSS" : "UNKNOWN";
 

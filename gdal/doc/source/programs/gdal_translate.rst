@@ -22,7 +22,7 @@ Synopsis
         [-if format]* [-of format]
         [-b band]* [-mask band] [-expand {gray|rgb|rgba}]
         [-outsize xsize[%]|0 ysize[%]|0] [-tr xres yres]
-        [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]
+        [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,rms,mode}]
         [-unscale] [-scale[_bn] [src_min src_max [dst_min dst_max]]]* [-exponent[_bn] exp_val]*
         [-srcwin xoff yoff xsize ysize] [-epo] [-eco]
         [-projwin ulx uly lrx lry] [-projwin_srs srs_def]
@@ -95,9 +95,25 @@ resampling, and rescaling pixels in the process.
     Both must be positive values. This is mutually exclusive with
     :option:`-outsize` and :option:`-a_ullr`.
 
-.. option:: -r {nearest (default),bilinear,cubic,cubicspline,lanczos,average,mode}
+.. option:: -r {nearest (default),bilinear,cubic,cubicspline,lanczos,average,rms,mode}
 
     Select a resampling algorithm.
+
+    ``nearest`` applies a nearest neighbour (simple sampling) resampler
+
+    ``average`` computes the average of all non-NODATA contributing pixels. Starting with GDAL 3.1, this is a weighted average taking into account properly the weight of source pixels not contributing fully to the target pixel.
+
+    ``rms`` computes the root mean squared / quadratic mean of all non-NODATA contributing pixels (GDAL >= 3.3)
+
+    ``bilinear`` applies a bilinear convolution kernel.
+
+    ``cubic`` applies a cubic convolution kernel.
+
+    ``cubicspline`` applies a B-Spline convolution kernel.
+
+    ``lanczos`` applies a Lanczos windowed sinc convolution kernel.
+
+    ``mode`` selects the value which appears most often of all the sampled points.
 
 .. option:: -scale [src_min src_max [dst_min dst_max]]
 

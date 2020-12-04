@@ -351,6 +351,8 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
     // validated, so we are a bit in undefined behavior land, but compilers
     // should hopefully do the right thing
     if( static_cast<int>(resample_alg) < 0 ||
+        ( static_cast<int>(resample_alg) >= static_cast<int>(GRIORA_RESERVED_START) &&
+          static_cast<int>(resample_alg) <= static_cast<int>(GRIORA_RESERVED_END) ) ||
         static_cast<int>(resample_alg) > static_cast<int>(GRIORA_LAST) )
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Invalid value for resample_alg");
@@ -669,6 +671,8 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
     // validated, so we are a bit in undefined behavior land, but compilers
     // should hopefully do the right thing
     if( static_cast<int>(resample_alg) < 0 ||
+        ( static_cast<int>(resample_alg) >= static_cast<int>(GRIORA_RESERVED_START) &&
+          static_cast<int>(resample_alg) <= static_cast<int>(GRIORA_RESERVED_END) ) ||
         static_cast<int>(resample_alg) > static_cast<int>(GRIORA_LAST) )
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Invalid value for resample_alg");
@@ -1486,6 +1490,8 @@ def TranslateOptions(options=None, format=None,
                 new_options += ['-r', 'lanczos']
             elif resampleAlg == gdalconst.GRA_Average:
                 new_options += ['-r', 'average']
+            elif resampleAlg == gdalconst.GRA_RMS:
+                new_options += ['-r', 'rms']
             elif resampleAlg == gdalconst.GRA_Mode:
                 new_options += ['-r', 'mode']
             else:
@@ -1626,6 +1632,8 @@ def WarpOptions(options=None, format=None,
                 new_options += ['-r', 'lanczos']
             elif resampleAlg == gdalconst.GRIORA_Average:
                 new_options += ['-r', 'average']
+            elif resampleAlg == gdalconst.GRIORA_RMS:
+                new_options += ['-r', 'rms']
             elif resampleAlg == gdalconst.GRIORA_Mode:
                 new_options += ['-r', 'mode']
             elif resampleAlg == gdalconst.GRIORA_Gauss:
@@ -2360,6 +2368,8 @@ def BuildVRTOptions(options=None,
                 new_options += ['-r', 'lanczos']
             elif resampleAlg == gdalconst.GRIORA_Average:
                 new_options += ['-r', 'average']
+            elif resampleAlg == gdalconst.GRIORA_RMS:
+                new_options += ['-r', 'rms']
             elif resampleAlg == gdalconst.GRIORA_Mode:
                 new_options += ['-r', 'mode']
             elif resampleAlg == gdalconst.GRIORA_Gauss:

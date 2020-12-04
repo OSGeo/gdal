@@ -41,7 +41,7 @@ CPL_CVSID("$Id$")
 static void Usage( const char* pszErrorMsg = nullptr )
 
 {
-    printf("Usage: gdaladdo [-r {nearest,average,gauss,cubic,cubicspline,lanczos,average_mp,average_magphase,mode}]\n"
+    printf("Usage: gdaladdo [-r {nearest,average,rms,gauss,cubic,cubicspline,lanczos,average_mp,average_magphase,mode}]\n"
            "                [-ro] [-clean] [-q] [-oo NAME=VALUE]* [-minsize val]\n"
            "                [--help-general] filename [levels]\n"
            "\n"

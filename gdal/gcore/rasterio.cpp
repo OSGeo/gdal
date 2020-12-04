@@ -969,6 +969,8 @@ CPLErr GDALRasterBand::RasterIOResampled(
                 psWarpOptions->eResampleAlg = GRA_Lanczos; break;
             case GRIORA_Average:
                 psWarpOptions->eResampleAlg = GRA_Average; break;
+            case GRIORA_RMS:
+                psWarpOptions->eResampleAlg = GRA_RMS; break;
             case GRIORA_Mode:
                 psWarpOptions->eResampleAlg = GRA_Mode; break;
             default:
@@ -1032,6 +1034,7 @@ CPLErr GDALRasterBand::RasterIOResampled(
             (psExtraArg->eResampleAlg == GRIORA_CubicSpline) ? "CUBICSPLINE" :
             (psExtraArg->eResampleAlg == GRIORA_Lanczos) ? "LANCZOS" :
             (psExtraArg->eResampleAlg == GRIORA_Average) ? "AVERAGE" :
+            (psExtraArg->eResampleAlg == GRIORA_RMS) ? "RMS" :
             (psExtraArg->eResampleAlg == GRIORA_Mode) ? "MODE" :
             (psExtraArg->eResampleAlg == GRIORA_Gauss) ? "GAUSS" : "UNKNOWN";
 
@@ -1503,6 +1506,7 @@ CPLErr GDALDataset::RasterIOResampled(
             (psExtraArg->eResampleAlg == GRIORA_CubicSpline) ? "CUBICSPLINE" :
             (psExtraArg->eResampleAlg == GRIORA_Lanczos) ? "LANCZOS" :
             (psExtraArg->eResampleAlg == GRIORA_Average) ? "AVERAGE" :
+            (psExtraArg->eResampleAlg == GRIORA_RMS) ? "RMS" :
             (psExtraArg->eResampleAlg == GRIORA_Mode) ? "MODE" :
             (psExtraArg->eResampleAlg == GRIORA_Gauss) ? "GAUSS" : "UNKNOWN";
 

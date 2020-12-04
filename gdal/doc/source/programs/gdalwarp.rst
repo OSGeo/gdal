@@ -183,6 +183,8 @@ with control information.
 
     ``average``: average resampling, computes the weighted average of all non-NODATA contributing pixels.
 
+    ``rms`` root mean square / quadratic mean of all non-NODATA contributing pixels (GDAL >= 3.3)
+
     ``mode``: mode resampling, selects the value which appears most often of all the sampled points.
 
     ``max``: maximum resampling, selects the maximum value from all non-NODATA contributing pixels.

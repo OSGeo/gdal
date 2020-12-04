@@ -455,6 +455,8 @@ def TranslateOptions(options=None, format=None,
                 new_options += ['-r', 'lanczos']
             elif resampleAlg == gdalconst.GRA_Average:
                 new_options += ['-r', 'average']
+            elif resampleAlg == gdalconst.GRA_RMS:
+                new_options += ['-r', 'rms']
             elif resampleAlg == gdalconst.GRA_Mode:
                 new_options += ['-r', 'mode']
             else:
@@ -595,6 +597,8 @@ def WarpOptions(options=None, format=None,
                 new_options += ['-r', 'lanczos']
             elif resampleAlg == gdalconst.GRIORA_Average:
                 new_options += ['-r', 'average']
+            elif resampleAlg == gdalconst.GRIORA_RMS:
+                new_options += ['-r', 'rms']
             elif resampleAlg == gdalconst.GRIORA_Mode:
                 new_options += ['-r', 'mode']
             elif resampleAlg == gdalconst.GRIORA_Gauss:
@@ -1329,6 +1333,8 @@ def BuildVRTOptions(options=None,
                 new_options += ['-r', 'lanczos']
             elif resampleAlg == gdalconst.GRIORA_Average:
                 new_options += ['-r', 'average']
+            elif resampleAlg == gdalconst.GRIORA_RMS:
+                new_options += ['-r', 'rms']
             elif resampleAlg == gdalconst.GRIORA_Mode:
                 new_options += ['-r', 'mode']
             elif resampleAlg == gdalconst.GRIORA_Gauss:

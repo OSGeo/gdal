@@ -4722,6 +4722,7 @@ static const WarpResamplingAlg asResamplingAlg[] =
     { "LANCZOS", GRA_Lanczos },
     { "MODE", GRA_Mode },
     { "AVERAGE", GRA_Average },
+    { "RMS", GRA_RMS },
 };
 
 GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,

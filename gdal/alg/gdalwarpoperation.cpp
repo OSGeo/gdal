@@ -263,6 +263,7 @@ int GDALWarpOperation::ValidateOptions()
         && psOptions->eResampleAlg != GRA_CubicSpline
         && psOptions->eResampleAlg != GRA_Lanczos
         && psOptions->eResampleAlg != GRA_Average
+        && psOptions->eResampleAlg != GRA_RMS
         && psOptions->eResampleAlg != GRA_Mode
         && psOptions->eResampleAlg != GRA_Max
         && psOptions->eResampleAlg != GRA_Min
