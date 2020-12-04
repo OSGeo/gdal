@@ -141,7 +141,10 @@ typedef enum
                                                         GRIORA_RESERVED_START = 8,
                                                         GRIORA_RESERVED_END = 13,
 /*! @endcond */
-    /*! RMS (Quadratic Mean) */                         GRIORA_RMS = 14,
+    /** RMS: Root Mean Square / Quadratic Mean.
+     * For complex numbers, applies on the real and imaginary part independently.
+     */
+                                                        GRIORA_RMS = 14,
 /*! @cond Doxygen_Suppress */
                                                         GRIORA_LAST = GRIORA_RMS
 /*! @endcond */

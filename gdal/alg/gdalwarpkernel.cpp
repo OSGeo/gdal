@@ -95,6 +95,7 @@ static const int anGWKFilterRadius[] =
     0,  // Q1
     0,  // Q3
     0,  // Sum
+    0,  // RMS
 };
 
 static double GWKBilinear(double dfX);
@@ -118,6 +119,7 @@ static const FilterFuncType apfGWKFilter[] =
     nullptr,  // Q1
     nullptr,  // Q3
     nullptr,  // Sum
+    nullptr,  // RMS
 };
 
 // TODO(schwehr): Can we make these functions have a const * const arg?
@@ -142,20 +144,24 @@ static const FilterFunc4ValuesType apfGWKFilter4Values[] =
     nullptr,  // Q1
     nullptr,  // Q3
     nullptr,  // Sum
+    nullptr,  // RMS
 };
 
 int GWKGetFilterRadius(GDALResampleAlg eResampleAlg)
 {
+    static_assert( CPL_ARRAYSIZE(anGWKFilterRadius) == GRA_LAST_VALUE + 1, "Bad size of anGWKFilterRadius" );
     return anGWKFilterRadius[eResampleAlg];
 }
 
 FilterFuncType GWKGetFilterFunc(GDALResampleAlg eResampleAlg)
 {
+    static_assert( CPL_ARRAYSIZE(apfGWKFilter) == GRA_LAST_VALUE + 1, "Bad size of apfGWKFilter" );
     return apfGWKFilter[eResampleAlg];
 }
 
 FilterFunc4ValuesType GWKGetFilterFunc4Values(GDALResampleAlg eResampleAlg)
 {
+    static_assert( CPL_ARRAYSIZE(apfGWKFilter4Values) == GRA_LAST_VALUE + 1, "Bad size of apfGWKFilter4Values" );
     return apfGWKFilter4Values[eResampleAlg];
 }
 

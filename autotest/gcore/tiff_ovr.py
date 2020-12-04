@@ -323,6 +323,28 @@ def test_tiff_ovr_8(both_endian):
     assert cs == exp_cs, 'got wrong overview checksum.'
 
 ###############################################################################
+# Check RMS resampling on a dataset with a raster band that has a color table
+
+
+def test_tiff_ovr_rms_palette(both_endian):
+
+    shutil.copyfile('data/test_average_palette.tif', 'tmp/test_average_palette.tif')
+
+    # This dataset is a black&white chessboard, index 0 is black, index 1 is white.
+    # So the result of averaging (0,0,0) and (255,255,255) is (180.3,180.3,180.3),
+    # and the closest color is (127,127,127) at index 2.
+    # So the result of the averaging is a uniform grey image.
+    ds = gdal.Open('tmp/test_average_palette.tif', gdal.GA_Update)
+    ds.BuildOverviews('RMS', overviewlist=[2])
+
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    exp_cs = 200
+
+    ds = None
+
+    assert cs == exp_cs, 'got wrong overview checksum.'
+
+###############################################################################
 # Test --config COMPRESS_OVERVIEW JPEG --config PHOTOMETRIC_OVERVIEW YCBCR -ro
 # Will also check that pixel interleaving is automatically selected (#3064)
 

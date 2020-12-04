@@ -349,6 +349,15 @@ static float GetReplacementValueIfNoData(GDALDataType dt, int bHasNoData,
 }
 
 /************************************************************************/
+/*                             SQUARE()                                 */
+/************************************************************************/
+
+template <class T, class Tsquare = T> inline Tsquare SQUARE(T val)
+{
+    return static_cast<Tsquare>(val) * val;
+}
+
+/************************************************************************/
 /*                    GDALResampleChunk32R_Average()                    */
 /************************************************************************/
 
@@ -525,10 +534,10 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                     T nVal;
                     if( bQuadraticMean )
                         nTotal =
-                            pSrcScanlineShifted[0] * pSrcScanlineShifted[0]
-                            + pSrcScanlineShifted[1] * pSrcScanlineShifted[1]
-                            + pSrcScanlineShifted[nChunkXSize] * pSrcScanlineShifted[nChunkXSize]
-                            + pSrcScanlineShifted[1+nChunkXSize] * pSrcScanlineShifted[1+nChunkXSize];
+                            SQUARE<Tsum>(pSrcScanlineShifted[0])
+                            + SQUARE<Tsum>(pSrcScanlineShifted[1])
+                            + SQUARE<Tsum>(pSrcScanlineShifted[nChunkXSize])
+                            + SQUARE<Tsum>(pSrcScanlineShifted[1+nChunkXSize]);
                     else
                         nTotal =
                             pSrcScanlineShifted[0]
@@ -537,7 +546,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                             + pSrcScanlineShifted[1+nChunkXSize];
 
                     if( bQuadraticMean )
-                        nVal = static_cast<T>(sqrt((nTotal + 2) / 4));
+                        nVal = static_cast<T>(sqrt(nTotal / 4) + 0.5);
                     else
                         nVal = static_cast<T>((nTotal + 2) / 4);
 
@@ -585,7 +594,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                                 const double dfWeight = dfWeightX * dfWeightY;
                                 dfTotalWeight += dfWeight;
                                 if( bQuadraticMean )
-                                    dfTotal += val * val * dfWeight;
+                                    dfTotal += SQUARE<double>(val) * dfWeight;
                                 else
                                     dfTotal += val * dfWeight;
                             }
@@ -604,7 +613,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                                     const double dfWeight = dfWeightY;
                                     dfTotalWeight += dfWeight;
                                     if( bQuadraticMean )
-                                        dfTotal += val * val * dfWeight;
+                                        dfTotal += SQUARE<double>(val) * dfWeight;
                                     else
                                         dfTotal += val * dfWeight;
                                 }
@@ -622,7 +631,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                                     const double dfWeight = dfWeightX * dfWeightY;
                                     dfTotalWeight += dfWeight;
                                     if( bQuadraticMean )
-                                        dfTotal += val * val * dfWeight;
+                                        dfTotal += SQUARE<double>(val) * dfWeight;
                                     else
                                         dfTotal += val * dfWeight;
                                 }
@@ -641,9 +650,9 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                     {
                         T nVal;
                         if( bQuadraticMean )
-                            nVal = static_cast<T>(sqrt((dfTotal + dfTotalWeight / 2) / dfTotalWeight));
+                            nVal = static_cast<T>(sqrt(dfTotal / dfTotalWeight) + 0.5);
                         else
-                            nVal = static_cast<T>((dfTotal + dfTotalWeight / 2) / dfTotalWeight);
+                            nVal = static_cast<T>(dfTotal / dfTotalWeight + 0.5);
                         if( bHasNoData && nVal == tNoDataValue )
                             nVal = tReplacementVal;
                         pDstScanline[iDstPixel] = nVal;
@@ -688,9 +697,9 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                         {
                             if( bQuadraticMean )
                             {
-                                nTotalR += aEntries[nVal].c1 * aEntries[nVal].c1;
-                                nTotalG += aEntries[nVal].c2 * aEntries[nVal].c2;
-                                nTotalB += aEntries[nVal].c3 * aEntries[nVal].c3;
+                                nTotalR += SQUARE<int>(aEntries[nVal].c1);
+                                nTotalG += SQUARE<int>(aEntries[nVal].c2);
+                                nTotalB += SQUARE<int>(aEntries[nVal].c3);
                                 ++nCount;
                             }
                             else
@@ -715,9 +724,9 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                     int nR, nG, nB;
                     if( bQuadraticMean )
                     {
-                        nR = static_cast<int>(sqrt((nTotalR + nCount / 2) / nCount));
-                        nG = static_cast<int>(sqrt((nTotalG + nCount / 2) / nCount));
-                        nB = static_cast<int>(sqrt((nTotalB + nCount / 2) / nCount));
+                        nR = static_cast<int>(sqrt(nTotalR / nCount) + 0.5);
+                        nG = static_cast<int>(sqrt(nTotalG / nCount) + 0.5);
+                        nB = static_cast<int>(sqrt(nTotalB / nCount) + 0.5);
                     }
                     else
                     {
@@ -2697,6 +2706,39 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                        const char * pszResampling )
 
 {
+    enum Method
+    {
+        NEAR,
+        AVERAGE,
+        AVERAGE_MAGPHASE,
+        RMS,
+    };
+
+    Method eMethod = NEAR;
+    if( STARTS_WITH_CI(pszResampling, "NEAR") )
+    {
+        eMethod = NEAR;
+    }
+    else if( EQUAL(pszResampling, "AVERAGE_MAGPHASE") )
+    {
+        eMethod = AVERAGE_MAGPHASE;
+    }
+    else if( EQUAL(pszResampling, "RMS") )
+    {
+        eMethod = RMS;
+    }
+    else if( STARTS_WITH_CI(pszResampling, "AVER") )
+    {
+        eMethod = AVERAGE;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unsupported resampling method %s for GDALResampleChunkC32R",
+                 pszResampling);
+        return CE_Failure;
+    }
+
     const int nOXSize = poOverview->GetXSize();
     *ppDstBuffer =
         VSI_MALLOC3_VERBOSE(nOXSize,
@@ -2757,12 +2799,12 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                 nSrcXOff2 = nSrcWidth;
             }
 
-            if( STARTS_WITH_CI(pszResampling, "NEAR") )
+            if( eMethod == NEAR )
             {
                 pafDstScanline[iDstPixel*2] = pafSrcScanline[nSrcXOff*2];
                 pafDstScanline[iDstPixel*2+1] = pafSrcScanline[nSrcXOff*2+1];
             }
-            else if( EQUAL(pszResampling, "AVERAGE_MAGPHASE") )
+            else if( eMethod == AVERAGE_MAGPHASE )
             {
                 double dfTotalR = 0.0;
                 double dfTotalI = 0.0;
@@ -2809,23 +2851,21 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                         static_cast<float>(dfRatio);
                 }
             }
-            else if( EQUAL(pszResampling, "RMS") )
+            else if( eMethod == RMS )
             {
                 double dfTotalR = 0.0;
                 double dfTotalI = 0.0;
-                double dfR = 0.0;
-                double dfI = 0.0;
                 int nCount = 0;
 
                 for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
                 {
                     for( int iX = nSrcXOff; iX < nSrcXOff2; ++iX )
                     {
-                        dfR = pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2];
-                        dfI = pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2+1];
+                        const double dfR = pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2];
+                        const double dfI = pafSrcScanline[iX*2+static_cast<GPtrDiff_t>(iY-nSrcYOff)*nSrcWidth*2+1];
 
-                        dfTotalR += dfR * dfR;
-                        dfTotalI += dfI * dfI;
+                        dfTotalR += SQUARE(dfR);
+                        dfTotalI += SQUARE(dfI);
 
                         ++nCount;
                     }
@@ -2839,12 +2879,12 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
                 }
                 else
                 {
-                    /* compute mean */
+                    /* compute RMS */
                     pafDstScanline[iDstPixel*2  ] = static_cast<float>(sqrt(dfTotalR/nCount));
                     pafDstScanline[iDstPixel*2+1] = static_cast<float>(sqrt(dfTotalI/nCount));
                 }
             }
-            else if( STARTS_WITH_CI(pszResampling, "AVER") )
+            else if( eMethod == AVERAGE )
             {
                 double dfTotalR = 0.0;
                 double dfTotalI = 0.0;
@@ -3032,6 +3072,7 @@ GDALDataType GDALGetOvrWorkDataType( const char* pszResampling,
 {
     if( (STARTS_WITH_CI(pszResampling, "NEAR") ||
          STARTS_WITH_CI(pszResampling, "AVER") ||
+         EQUAL(pszResampling, "RMS") ||
          EQUAL(pszResampling, "CUBIC") ||
          EQUAL(pszResampling, "CUBICSPLINE") ||
          EQUAL(pszResampling, "LANCZOS") ||
@@ -3040,6 +3081,9 @@ GDALDataType GDALGetOvrWorkDataType( const char* pszResampling,
     {
         return GDT_Byte;
     }
+    // For RMS, cannot use UInt16 as working datatype, since the accumulation
+    // type chosen in GDALResampleChunk32R_Average() is UInt32, but that could
+    // overflow when adding together several values.
     else if( (STARTS_WITH_CI(pszResampling, "NEAR") ||
          STARTS_WITH_CI(pszResampling, "AVER") ||
          EQUAL(pszResampling, "CUBIC") ||
@@ -3133,6 +3177,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     GDALColorTable* poColorTable = nullptr;
 
     if( (STARTS_WITH_CI(pszResampling, "AVER")
+         || EQUAL(pszResampling, "RMS")
          || STARTS_WITH_CI(pszResampling, "MODE")
          || STARTS_WITH_CI(pszResampling, "GAUSS")) &&
         poSrcBand->GetColorInterpretation() == GCI_PaletteIndex )
@@ -3217,6 +3262,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     // of the band used for the mask band may not have yet occurred (#3033).
     if( (STARTS_WITH_CI(pszResampling, "AVER") |
          STARTS_WITH_CI(pszResampling, "GAUSS") ||
+         EQUAL(pszResampling, "RMS") ||
          EQUAL(pszResampling, "CUBIC") ||
          EQUAL(pszResampling, "CUBICSPLINE") ||
          EQUAL(pszResampling, "LANCZOS") ||
@@ -3757,7 +3803,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
  * @param papapoOverviewBands bidimension array of bands. First dimension is
  *                            indexed by nBands. Second dimension is indexed by
  *                            nOverviews.
- * @param pszResampling Resampling algorithm ("NEAREST", "AVERAGE"
+ * @param pszResampling Resampling algorithm ("NEAREST", "AVERAGE", "RMS",
  * "GAUSS", "CUBIC", "CUBICSPLINE", "LANCZOS" or "BILINEAR").
  * @param pfnProgress progress report function.
  * @param pProgressData progress function callback data.
@@ -3780,6 +3826,7 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
 
     // Sanity checks.
     if( !STARTS_WITH_CI(pszResampling, "NEAR") &&
+        !EQUAL(pszResampling, "RMS") &&
         !EQUAL(pszResampling, "AVERAGE") &&
         !EQUAL(pszResampling, "GAUSS") &&
         !EQUAL(pszResampling, "CUBIC") &&
