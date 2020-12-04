@@ -35,7 +35,7 @@ most supported file formats with one of several downsampling algorithms.
 
     ``average`` computes the average of all non-NODATA contributing pixels. Starting with GDAL 3.1, this is a weighted average taking into account properly the weight of source pixels not contributing fully to the target pixel.
 
-    ``rms`` computes the root mean squared / quadratic average of all non-NODATA contributing pixels (GDAL >= 3.3)
+    ``rms`` computes the root mean squared / quadratic mean of all non-NODATA contributing pixels (GDAL >= 3.3)
 
     ``bilinear`` applies a bilinear convolution kernel.
 
