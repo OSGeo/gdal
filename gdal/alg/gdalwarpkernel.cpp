@@ -4773,10 +4773,14 @@ static CPL_INLINE bool GWKCheckAndComputeSrcOffsets(
         return false;
     }
 
-    const int iSrcX =
+    int iSrcX =
         static_cast<int>(_padfX[_iDstX] + 1.0e-10) - _poWK->nSrcXOff;
-    const int iSrcY =
+    int iSrcY =
         static_cast<int>(_padfY[_iDstX] + 1.0e-10) - _poWK->nSrcYOff;
+    if( iSrcX == _nSrcXSize )
+        iSrcX --;
+    if( iSrcY == _nSrcYSize )
+        iSrcY --;
 
     // Those checks should normally be OK given the previous ones.
     CPLAssert( iSrcX >= 0 );
