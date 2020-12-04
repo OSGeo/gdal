@@ -1465,7 +1465,7 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
                     else if( m_pPreparedFilterGeom != nullptr )
                     {
                         if( OGRPreparedGeometryIntersects(m_pPreparedFilterGeom,
-                                                          poGeometry) )
+                                                          OGRGeometry::ToHandle(poGeometry)) )
                         {
                             nFeatureCount++;
                         }

@@ -1301,7 +1301,7 @@ int OGRLayer::InstallFilter( OGRGeometry * poFilter )
         m_poFilterGeom->getEnvelope( &m_sFilterEnvelope );
 
     /* Compile geometry filter as a prepared geometry */
-    m_pPreparedFilterGeom = OGRCreatePreparedGeometry(m_poFilterGeom);
+    m_pPreparedFilterGeom = OGRCreatePreparedGeometry(OGRGeometry::ToHandle(m_poFilterGeom));
 
 /* -------------------------------------------------------------------- */
 /*      Now try to determine if the filter is really a rectangle.       */
@@ -1456,7 +1456,7 @@ int OGRLayer::FilterGeometry( OGRGeometry *poGeometry )
             //CPLDebug("OGRLayer", "GEOS intersection");
             if( m_pPreparedFilterGeom != nullptr )
                 return OGRPreparedGeometryIntersects(m_pPreparedFilterGeom,
-                                                     poGeometry);
+                                                     OGRGeometry::ToHandle(poGeometry));
             else
                 return m_poFilterGeom->Intersects( poGeometry );
         }
@@ -2157,7 +2157,7 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
 
         OGRPreparedGeometryUniquePtr x_prepared_geom;
         if (bUsePreparedGeometries) {
-            x_prepared_geom.reset(OGRCreatePreparedGeometry(x_geom));
+            x_prepared_geom.reset(OGRCreatePreparedGeometry(OGRGeometry::ToHandle(x_geom)));
             if (!x_prepared_geom) {
                 goto done;
             }
@@ -2171,12 +2171,12 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
             if (x_prepared_geom) {
                 CPLErrorReset();
                 ret = OGRERR_NONE;
-                if (bPretestContainment && OGRPreparedGeometryContains(x_prepared_geom.get(), y_geom))
+                if (bPretestContainment && OGRPreparedGeometryContains(x_prepared_geom.get(), OGRGeometry::ToHandle(y_geom)))
                 {
                     if (CPLGetLastErrorType() == CE_None)
                         z_geom.reset(y_geom->clone());
                 }
-                else if (!(OGRPreparedGeometryIntersects(x_prepared_geom.get(), y_geom)))
+                else if (!(OGRPreparedGeometryIntersects(x_prepared_geom.get(), OGRGeometry::ToHandle(y_geom))))
                 {
                     if (CPLGetLastErrorType() == CE_None) {
                         continue;
@@ -2486,7 +2486,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
 
         OGRPreparedGeometryUniquePtr x_prepared_geom;
         if (bUsePreparedGeometries) {
-            x_prepared_geom.reset(OGRCreatePreparedGeometry(x_geom));
+            x_prepared_geom.reset(OGRCreatePreparedGeometry(OGRGeometry::ToHandle(x_geom)));
             if (!x_prepared_geom) {
                 goto done;
             }
@@ -2498,7 +2498,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
             if (!y_geom) { continue;}
 
             CPLErrorReset();
-            if (x_prepared_geom && !(OGRPreparedGeometryIntersects(x_prepared_geom.get(), y_geom))) {
+            if (x_prepared_geom && !(OGRPreparedGeometryIntersects(x_prepared_geom.get(), OGRGeometry::ToHandle(y_geom)))) {
                 if (CPLGetLastErrorType() == CE_None) {
                     continue;
                 }
@@ -3258,7 +3258,7 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
 
         OGRPreparedGeometryUniquePtr x_prepared_geom;
         if (bUsePreparedGeometries) {
-            x_prepared_geom.reset(OGRCreatePreparedGeometry(x_geom));
+            x_prepared_geom.reset(OGRCreatePreparedGeometry(OGRGeometry::ToHandle(x_geom)));
             if (!x_prepared_geom) {
                 goto done;
             }
@@ -3271,7 +3271,7 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
                 continue;
 
             CPLErrorReset();
-            if (x_prepared_geom && !(OGRPreparedGeometryIntersects(x_prepared_geom.get(), y_geom))) {
+            if (x_prepared_geom && !(OGRPreparedGeometryIntersects(x_prepared_geom.get(), OGRGeometry::ToHandle(y_geom)))) {
                 if (CPLGetLastErrorType() == CE_None) {
                     continue;
                 }
