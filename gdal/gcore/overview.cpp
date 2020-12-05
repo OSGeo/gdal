@@ -358,6 +358,26 @@ template <class T, class Tsquare = T> inline Tsquare SQUARE(T val)
 }
 
 /************************************************************************/
+/*                          ComputeIntegerRMS()                         */
+/************************************************************************/
+// Compute rms = sqrt(sumSquares / weight) in such a way that it is the
+// integer that minimizes abs(rms**2 - sumSquares / weight)
+template <class T, class Tsum, class Tweight> inline T ComputeIntegerRMS(
+                                            Tsum sumSquares, Tweight weight)
+{
+    const double sumDivWeight = static_cast<double>(sumSquares) / weight;
+    T rms = static_cast<T>(sqrt(sumDivWeight));
+
+    // Is rms**2 or (rms+1)**2 closest to sumSquares / weight ?
+    // Naive version:
+    // if( weight * (rms+1)**2 - sumSquares < sumSquares - weight * rms**2 )
+    // Slightly optimized version for the Tsum and Tweight integer case:
+    if( static_cast<Tsum>(weight * (2 * rms * (rms + 1) + 1)) < 2 * sumSquares )
+        rms += 1;
+    return rms;
+}
+
+/************************************************************************/
 /*                    GDALResampleChunk32R_Average()                    */
 /************************************************************************/
 
@@ -545,13 +565,15 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                             + pSrcScanlineShifted[nChunkXSize]
                             + pSrcScanlineShifted[1+nChunkXSize];
 
+                    constexpr int nTotalWeight = 4;
                     if( bQuadraticMean )
-                        nVal = static_cast<T>(sqrt(nTotal / 4) + 0.5);
+                        nVal = ComputeIntegerRMS<T>(nTotal, nTotalWeight);
                     else
-                        nVal = static_cast<T>((nTotal + 2) / 4);
+                        nVal = static_cast<T>((nTotal + nTotalWeight/2) / nTotalWeight);
 
-                    if( bHasNoData && nVal == tNoDataValue )
-                        nVal = tReplacementVal;
+                    // No need to compare nVal against tNoDataValue as we are
+                    // in a case where pabyChunkNodataMask == nullptr implies
+                    // the absence of nodata value.
                     pDstScanline[iDstPixel] = nVal;
                     pSrcScanlineShifted += 2;
                 }
@@ -650,7 +672,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                     {
                         T nVal;
                         if( bQuadraticMean )
-                            nVal = static_cast<T>(sqrt(dfTotal / dfTotalWeight) + 0.5);
+                            nVal = ComputeIntegerRMS<T>(dfTotal, dfTotalWeight);
                         else
                             nVal = static_cast<T>(dfTotal / dfTotalWeight + 0.5);
                         if( bHasNoData && nVal == tNoDataValue )

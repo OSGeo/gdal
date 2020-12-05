@@ -1105,15 +1105,15 @@ def test_rasterio_rms_halfsize_downsampling_byte():
     ds = gdal.GetDriverByName('MEM').Create('', 6, 6, 1, gdal.GDT_Byte)
     ds.WriteRaster(0, 0, 6, 6,
                    struct.pack('B' * 6 * 6,
-                               0,   0,   0, 0, 0, 0,
+                               0,   0,   1, 0, 1, 1,
                                2,   100, 0, 0, 0, 0,
-                               100, 100, 0, 0, 0, 0,
-                               0,   100, 0, 0, 0, 0,
+                               100, 100, 1, 1, 1, 1,
+                               0,   100, 1, 0, 1, 1,
                                0,   0,   0, 0, 255, 255,
                                0,   0,   0, 0, 255, 255))
     data = ds.GetRasterBand(1).ReadRaster(0, 0, 6, 6, 3, 3, resample_alg = gdal.GRIORA_RMS)
     assert struct.unpack('B' * 9, data) == (50, 0, 0,
-                                            87, 0, 0,
+                                            87, 1, 1,
                                             0,  0, 255)
 
     ds.BuildOverviews('RMS', [2])
