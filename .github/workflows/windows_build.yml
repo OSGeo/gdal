@@ -76,6 +76,19 @@ jobs:
             echo ::set-env name=LIB::%LIB%
             echo ::set-env name=LIBPATH::%LIBPATH%
 
+      - name: Detect AVX2
+        shell: bash
+        run: |
+            set -e
+            cl .github/workflows/detect-avx2.c
+            if ./detect-avx2.exe; then
+                    echo "AVX2 available on CPU"
+                    echo "ARCH_FLAGS=/arch:AVX2" >> $GITHUB_ENV
+            else
+                    echo "AVX2 not available on CPU."
+                    echo "ARCH_FLAGS=" >> $GITHUB_ENV
+            fi
+
       - name: Build
         shell: pwsh
         run: |
@@ -86,6 +99,7 @@ jobs:
                 & $ScriptBlock 2>&1 | ForEach-Object -Process { "$_" }
                 if ($LastExitCode -ne 0) { exit $LastExitCode }
             }
+            echo "ARCH_FLAGS = $env:ARCH_FLAGS"
             exec { git clone --depth=1 -b $env:PROJ_BRANCH https://github.com/OSGeo/PROJ proj }
             Import-PackageProvider NuGet -Force
             Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
@@ -199,7 +213,7 @@ jobs:
             #
             cd $env:GITHUB_WORKSPACE\gdal
             copy $env:GITHUB_WORKSPACE\install-proj\bin\*.dll .
-            exec { nmake /f makefile.vc MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS=/WX }
+            exec { nmake /f makefile.vc MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS="/WX $env:ARCH_FLAGS" }
             cd apps
             exec { nmake /f makefile.vc test_ogrsf.exe MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS=/WX }
             $env:DISTUTILS_USE_SDK=1
