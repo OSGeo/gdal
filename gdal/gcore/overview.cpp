@@ -392,9 +392,55 @@ template <class T, class Tsum> inline T ComputeIntegerRMS_4values(Tsum sumSquare
 #ifdef USE_SSE2
 
 /************************************************************************/
-/*                      QuadraticMeanByteSSE2()                         */
+/*                   QuadraticMeanByteSSE2OrAVX2()                      */
 /************************************************************************/
 
+#ifdef __AVX2__
+#define DEST_ELTS       16
+#define set1_epi16      _mm256_set1_epi16
+#define set1_epi32      _mm256_set1_epi32
+#define setzero         _mm256_setzero_si256
+#define set1_ps         _mm256_set1_ps
+#define loadu_int(x)    _mm256_loadu_si256(reinterpret_cast<__m256i const*>(x))
+#define unpacklo_epi8   _mm256_unpacklo_epi8
+#define unpackhi_epi8   _mm256_unpackhi_epi8
+#define madd_epi16      _mm256_madd_epi16
+#define add_epi32       _mm256_add_epi32
+#define mul_ps          _mm256_mul_ps
+#define cvtepi32_ps     _mm256_cvtepi32_ps
+#define sqrt_ps         _mm256_sqrt_ps
+#define cvttps_epi32    _mm256_cvttps_epi32
+#define packs_epi32     _mm256_packs_epi32
+#define packus_epi32    _mm256_packus_epi32
+#define srli_epi32      _mm256_srli_epi32
+#define mullo_epi16     _mm256_mullo_epi16
+#define srli_epi16      _mm256_srli_epi16
+#define cmpgt_epi16     _mm256_cmpgt_epi16
+#define add_epi16       _mm256_add_epi16
+#define packus_epi16    _mm256_packus_epi16
+#define undefined_int   _mm256_undefined_si256
+/* AVX2 operates on 2 separate 128-bit lanes, so we have to do shuffling */
+/* to get the lower 128-bit bits of what would be a true 256-bit vector register */
+#define store_lo(x,y)   _mm_storeu_si128(reinterpret_cast<__m128i*>(x), \
+                            _mm256_extracti128_si256(_mm256_permute4x64_epi64((y), 0 | (2 << 2)), 0))
+#define hadd_epi16      _mm256_hadd_epi16
+#define zeroupper()     _mm256_zeroupper()
+#else
+#define DEST_ELTS       8
+#define set1_epi16      _mm_set1_epi16
+#define set1_epi32      _mm_set1_epi32
+#define setzero         _mm_setzero_si128
+#define set1_ps         _mm_set1_ps
+#define loadu_int(x)    _mm_loadu_si128(reinterpret_cast<__m128i const*>(x))
+#define unpacklo_epi8   _mm_unpacklo_epi8
+#define unpackhi_epi8   _mm_unpackhi_epi8
+#define madd_epi16      _mm_madd_epi16
+#define add_epi32       _mm_add_epi32
+#define mul_ps          _mm_mul_ps
+#define cvtepi32_ps     _mm_cvtepi32_ps
+#define sqrt_ps         _mm_sqrt_ps
+#define cvttps_epi32    _mm_cvttps_epi32
+#define packs_epi32     _mm_packs_epi32
 #ifdef __SSE4_1__
 #define packus_epi32    _mm_packus_epi32
 #else
@@ -409,8 +455,20 @@ inline __m128i packus_epi32(__m128i a, __m128i b)
     return a;
 }
 #endif
+#define srli_epi32      _mm_srli_epi32
+#define mullo_epi16     _mm_mullo_epi16
+#define srli_epi16      _mm_srli_epi16
+#define cmpgt_epi16     _mm_cmpgt_epi16
+#define add_epi16       _mm_add_epi16
+#define packus_epi16    _mm_packus_epi16
+#define undefined_int   _mm_undefined_si128
+#define store_lo(x,y)   _mm_storel_epi64(reinterpret_cast<__m128i*>(x), (y))
+#define hadd_epi16      _mm_hadd_epi16
+#define zeroupper()     (void)0
+#endif
 
-template<class T> static int QuadraticMeanByteSSE2(int nDstXWidth,
+template<class T> static int QuadraticMeanByteSSE2OrAVX2(
+                                                   int nDstXWidth,
                                                    int nChunkXSize,
                                                    const T*& CPL_RESTRICT pSrcScanlineShiftedInOut,
                                                    T* CPL_RESTRICT pDstScanline)
@@ -418,49 +476,47 @@ template<class T> static int QuadraticMeanByteSSE2(int nDstXWidth,
     // Optimized implementation for RMS on Byte by
     // processing by group of 8 output pixels, so as to use
     // a single _mm_sqrt_ps() call for 4 output pixels
-
-    const auto one16 = _mm_set1_epi16(1);
-    const auto one32 = _mm_set1_epi32(1);
-    const auto zero = _mm_setzero_si128();
-    const auto minus32768 = _mm_set1_epi16(-32768);
-    const auto zeroDot25 = _mm_set1_ps(0.25f);
     const T* CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
 
     int iDstPixel = 0;
-    for( ; iDstPixel < nDstXWidth - 7; iDstPixel += 8 )
+    const auto one16 = set1_epi16(1);
+    const auto one32 = set1_epi32(1);
+    const auto zero = setzero();
+    const auto minus32768 = set1_epi16(-32768);
+    const auto zeroDot25 = set1_ps(0.25f);
+
+    for( ; iDstPixel < nDstXWidth - (DEST_ELTS-1); iDstPixel += DEST_ELTS )
     {
-        // Load 16 bytes from each line
-        auto firstLine = _mm_loadu_si128(
-            reinterpret_cast<__m128i const*>(pSrcScanlineShifted));
-        auto secondLine = _mm_loadu_si128(
-            reinterpret_cast<__m128i const*>(pSrcScanlineShifted + nChunkXSize));
+        // Load 2 * DEST_ELTS bytes from each line
+        auto firstLine = loadu_int(pSrcScanlineShifted);
+        auto secondLine = loadu_int(pSrcScanlineShifted + nChunkXSize);
         // Extend those Bytes as UInt16s
-        auto firstLineLo = _mm_unpacklo_epi8(firstLine, zero);
-        auto firstLineHi = _mm_unpackhi_epi8(firstLine, zero);
-        auto secondLineLo = _mm_unpacklo_epi8(secondLine, zero);
-        auto secondLineHi = _mm_unpackhi_epi8(secondLine, zero);
+        auto firstLineLo = unpacklo_epi8(firstLine, zero);
+        auto firstLineHi = unpackhi_epi8(firstLine, zero);
+        auto secondLineLo = unpacklo_epi8(secondLine, zero);
+        auto secondLineHi = unpackhi_epi8(secondLine, zero);
 
         // Multiplication of 16 bit values and horizontal
         // addition of 32 bit results
         // [ src[2*i+0]^2 + src[2*i+1]^2 for i in range(4) ]
-        firstLineLo = _mm_madd_epi16(firstLineLo, firstLineLo);
-        firstLineHi = _mm_madd_epi16(firstLineHi, firstLineHi);
-        secondLineLo = _mm_madd_epi16(secondLineLo, secondLineLo);
-        secondLineHi = _mm_madd_epi16(secondLineHi, secondLineHi);
+        firstLineLo = madd_epi16(firstLineLo, firstLineLo);
+        firstLineHi = madd_epi16(firstLineHi, firstLineHi);
+        secondLineLo = madd_epi16(secondLineLo, secondLineLo);
+        secondLineHi = madd_epi16(secondLineHi, secondLineHi);
 
-        const auto sumSquaresLo = _mm_add_epi32(firstLineLo, secondLineLo);
-        const auto sumSquaresHi = _mm_add_epi32(firstLineHi, secondLineHi);
-        const auto sumDivWeightLo = _mm_mul_ps(
-            _mm_cvtepi32_ps(sumSquaresLo), zeroDot25);
-        const auto sumDivWeightHi = _mm_mul_ps(
-            _mm_cvtepi32_ps(sumSquaresHi), zeroDot25);
+        const auto sumSquaresLo = add_epi32(firstLineLo, secondLineLo);
+        const auto sumSquaresHi = add_epi32(firstLineHi, secondLineHi);
+        const auto sumDivWeightLo = mul_ps(
+            cvtepi32_ps(sumSquaresLo), zeroDot25);
+        const auto sumDivWeightHi = mul_ps(
+            cvtepi32_ps(sumSquaresHi), zeroDot25);
         // Take square root and truncate/floor to int32
-        const auto rmsLo = _mm_cvttps_epi32(_mm_sqrt_ps(sumDivWeightLo));
-        const auto rmsHi = _mm_cvttps_epi32(_mm_sqrt_ps(sumDivWeightHi));
+        const auto rmsLo = cvttps_epi32(sqrt_ps(sumDivWeightLo));
+        const auto rmsHi = cvttps_epi32(sqrt_ps(sumDivWeightHi));
 
         // Merge back low and high registers with each RMS value
         // as a 16 bit value.
-        auto rms = _mm_packs_epi32(rmsLo, rmsHi);
+        auto rms = packs_epi32(rmsLo, rmsHi);
 
         // Round to upper value if it minimizes the
         // error |rms^2 - sumSquares/4|
@@ -471,32 +527,34 @@ template<class T> static int QuadraticMeanByteSSE2(int nDstXWidth,
         //    rms += 1;
         // And both left and right parts fit on 16 (unsigned) bits
         const auto sumSquaresPlusOneDiv4 = packus_epi32(
-            _mm_srli_epi32(_mm_add_epi32(sumSquaresLo, one32), 2),
-            _mm_srli_epi32(_mm_add_epi32(sumSquaresHi, one32), 2));
-        // _mm_cmplt_epi16 operates on signed int16, but here
+            srli_epi32(add_epi32(sumSquaresLo, one32), 2),
+            srli_epi32(add_epi32(sumSquaresHi, one32), 2));
+        // cmpgt_epi16 operates on signed int16, but here
         // we have unsigned values, so shift them by -32768 before
-        auto mask =_mm_cmplt_epi16(
-            _mm_add_epi16(_mm_mullo_epi16(rms, _mm_add_epi16(rms, one16)), minus32768),
-            _mm_add_epi16(sumSquaresPlusOneDiv4, minus32768));
+        auto mask = cmpgt_epi16(
+            add_epi16(sumSquaresPlusOneDiv4, minus32768),
+            add_epi16(mullo_epi16(rms, add_epi16(rms, one16)), minus32768));
         // Just keep one bit of the mask, as the correction value
-        mask = _mm_srli_epi16(mask, 15);
-        rms = _mm_add_epi16(rms, mask);
+        mask = srli_epi16(mask, 15);
+        rms = add_epi16(rms, mask);
 
         // Pack each 16 bit RMS value to 8 bits
-        rms = _mm_packus_epi16(rms, _mm_undefined_si128());
-        _mm_storel_epi64(reinterpret_cast<__m128i*>(&pDstScanline[iDstPixel]), rms);
-        pSrcScanlineShifted += 16;
+        rms = packus_epi16(rms, undefined_int());
+        store_lo(&pDstScanline[iDstPixel], rms);
+        pSrcScanlineShifted += 2 * DEST_ELTS;
     }
+    zeroupper();
 
     pSrcScanlineShiftedInOut = pSrcScanlineShifted;
     return iDstPixel;
 }
 
 /************************************************************************/
-/*                         AverageByteSSE2()                            */
+/*                      AverageByteSSE2OrAVX2()                         */
 /************************************************************************/
 
-template<class T> static int AverageByteSSE2(int nDstXWidth,
+template<class T> static int AverageByteSSE2OrAVX2(
+                                             int nDstXWidth,
                                              int nChunkXSize,
                                              const T*& CPL_RESTRICT pSrcScanlineShiftedInOut,
                                              T* CPL_RESTRICT pDstScanline)
@@ -504,50 +562,49 @@ template<class T> static int AverageByteSSE2(int nDstXWidth,
     // Optimized implementation for average on Byte by
     // processing by group of 8 output pixels.
 
-    const auto zero = _mm_setzero_si128();
-    const auto two16 = _mm_set1_epi16(2);
+    const auto zero = setzero();
+    const auto two16 = set1_epi16(2);
     const T* CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
 
     int iDstPixel = 0;
-    for( ; iDstPixel < nDstXWidth - 7; iDstPixel += 8 )
+    for( ; iDstPixel < nDstXWidth - (DEST_ELTS-1); iDstPixel += DEST_ELTS )
     {
-        // Load 16 bytes from each line
-        auto firstLine = _mm_loadu_si128(
-            reinterpret_cast<__m128i const*>(pSrcScanlineShifted));
-        auto secondLine = _mm_loadu_si128(
-            reinterpret_cast<__m128i const*>(pSrcScanlineShifted + nChunkXSize));
+        // Load 2 * DEST_ELTS bytes from each line
+        auto firstLine = loadu_int(pSrcScanlineShifted);
+        auto secondLine = loadu_int(pSrcScanlineShifted + nChunkXSize);
         // Extend those Bytes as UInt16s
-        auto firstLineLo = _mm_unpacklo_epi8(firstLine, zero);
-        auto firstLineHi = _mm_unpackhi_epi8(firstLine, zero);
-        auto secondLineLo = _mm_unpacklo_epi8(secondLine, zero);
-        auto secondLineHi = _mm_unpackhi_epi8(secondLine, zero);
+        auto firstLineLo = unpacklo_epi8(firstLine, zero);
+        auto firstLineHi = unpackhi_epi8(firstLine, zero);
+        auto secondLineLo = unpacklo_epi8(secondLine, zero);
+        auto secondLineHi = unpackhi_epi8(secondLine, zero);
 
-#ifdef __SSSE3__
+#if defined(__SSSE3__) || defined(__AVX2__)
         // Horizontal addition of adjacent pairs, and recombine low and high parts
-        firstLine = _mm_hadd_epi16(firstLineLo, firstLineHi);
-        secondLine = _mm_hadd_epi16(secondLineLo, secondLineHi);
+        firstLine = hadd_epi16(firstLineLo, firstLineHi);
+        secondLine = hadd_epi16(secondLineLo, secondLineHi);
 #else
         // Horizontal addition of adjacent pairs, and extend to 32 bit
-        const auto one16 = _mm_set1_epi16(1);
-        firstLineLo = _mm_madd_epi16(firstLineLo, one16);
-        firstLineHi = _mm_madd_epi16(firstLineHi, one16);
-        secondLineLo = _mm_madd_epi16(secondLineLo, one16);
-        secondLineHi = _mm_madd_epi16(secondLineHi, one16);
+        const auto one16 = set1_epi16(1);
+        firstLineLo = madd_epi16(firstLineLo, one16);
+        firstLineHi = madd_epi16(firstLineHi, one16);
+        secondLineLo = madd_epi16(secondLineLo, one16);
+        secondLineHi = madd_epi16(secondLineHi, one16);
 
         // Recombine low and high parts, on 16 bit width
-        firstLine = _mm_packs_epi32(firstLineLo, firstLineHi);
-        secondLine = _mm_packs_epi32(secondLineLo, secondLineHi);
+        firstLine = packs_epi32(firstLineLo, firstLineHi);
+        secondLine = packs_epi32(secondLineLo, secondLineHi);
 #endif
 
-        const auto sum = _mm_add_epi16(firstLine, secondLine);
+        const auto sum = add_epi16(firstLine, secondLine);
         // average = (sum + 2) / 4
-        auto average = _mm_srli_epi16(_mm_add_epi16(sum, two16), 2);
+        auto average = srli_epi16(add_epi16(sum, two16), 2);
 
         // Pack each 16 bit average value to 8 bits
-        average = _mm_packus_epi16(average, _mm_undefined_si128());
-        _mm_storel_epi64(reinterpret_cast<__m128i*>(&pDstScanline[iDstPixel]), average);
-        pSrcScanlineShifted += 16;
+        average = packus_epi16(average, undefined_int());
+        store_lo(&pDstScanline[iDstPixel], average);
+        pSrcScanlineShifted += 2 * DEST_ELTS;
     }
+    zeroupper();
 
     pSrcScanlineShiftedInOut = pSrcScanlineShifted;
     return iDstPixel;
@@ -736,17 +793,17 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 #ifdef USE_SSE2
                 if( bQuadraticMean && eWrkDataType == GDT_Byte )
                 {
-                    iDstPixel = QuadraticMeanByteSSE2(nDstXWidth,
-                                                      nChunkXSize,
-                                                      pSrcScanlineShifted,
-                                                      pDstScanline);
+                    iDstPixel = QuadraticMeanByteSSE2OrAVX2(nDstXWidth,
+                                                            nChunkXSize,
+                                                            pSrcScanlineShifted,
+                                                            pDstScanline);
                 }
                 else if( /* !bQuadraticMean && */ eWrkDataType == GDT_Byte )
                 {
-                    iDstPixel = AverageByteSSE2(nDstXWidth,
-                                                nChunkXSize,
-                                                pSrcScanlineShifted,
-                                                pDstScanline);
+                    iDstPixel = AverageByteSSE2OrAVX2(nDstXWidth,
+                                                      nChunkXSize,
+                                                      pSrcScanlineShifted,
+                                                      pDstScanline);
                 }
 #endif
                 for( ; iDstPixel < nDstXWidth; ++iDstPixel )
