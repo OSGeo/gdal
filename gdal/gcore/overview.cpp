@@ -430,6 +430,22 @@ inline __m128i sse2_packus_epi32(__m128i a, __m128i b)
 }
 #endif
 
+#ifdef __SSSE3__
+#define sse2_hadd_epi16     _mm_hadd_epi16
+#else
+inline __m128i sse2_hadd_epi16(__m128i a, __m128i b)
+{
+    // Horizontal addition of adjacent pairs
+    const auto mask = _mm_set1_epi32(0xFFFF);
+    const auto horizLo = _mm_add_epi32(_mm_and_si128(a, mask), _mm_srli_epi32(a, 16));
+    const auto horizHi = _mm_add_epi32(_mm_and_si128(b, mask), _mm_srli_epi32(b, 16));
+
+    // Recombine low and high parts
+    return _mm_packs_epi32(horizLo, horizHi);
+}
+#endif
+
+
 #ifdef __AVX2__
 #define DEST_ELTS       16
 #define set1_epi16      _mm256_set1_epi16
@@ -487,7 +503,7 @@ inline __m128i sse2_packus_epi32(__m128i a, __m128i b)
 #define packus_epi16    _mm_packus_epi16
 #define undefined_int   _mm_undefined_si128
 #define store_lo(x,y)   _mm_storel_epi64(reinterpret_cast<__m128i*>(x), (y))
-#define hadd_epi16      _mm_hadd_epi16
+#define hadd_epi16      sse2_hadd_epi16
 #define zeroupper()     (void)0
 #endif
 
@@ -528,8 +544,10 @@ template<class T> static int QuadraticMeanByteSSE2OrAVX2(
         secondLineLo = madd_epi16(secondLineLo, secondLineLo);
         secondLineHi = madd_epi16(secondLineHi, secondLineHi);
 
+        // Vertical addition
         const auto sumSquaresLo = add_epi32(firstLineLo, secondLineLo);
         const auto sumSquaresHi = add_epi32(firstLineHi, secondLineHi);
+
         const auto sumDivWeightLo = mul_ps(
             cvtepi32_ps(sumSquaresLo), zeroDot25);
         const auto sumDivWeightHi = mul_ps(
@@ -593,32 +611,21 @@ template<class T> static int AverageByteSSE2OrAVX2(
     for( ; iDstPixel < nDstXWidth - (DEST_ELTS-1); iDstPixel += DEST_ELTS )
     {
         // Load 2 * DEST_ELTS bytes from each line
-        auto firstLine = loadu_int(pSrcScanlineShifted);
-        auto secondLine = loadu_int(pSrcScanlineShifted + nChunkXSize);
+        const auto firstLine = loadu_int(pSrcScanlineShifted);
+        const auto secondLine = loadu_int(pSrcScanlineShifted + nChunkXSize);
         // Extend those Bytes as UInt16s
-        auto firstLineLo = unpacklo_epi8(firstLine, zero);
-        auto firstLineHi = unpackhi_epi8(firstLine, zero);
-        auto secondLineLo = unpacklo_epi8(secondLine, zero);
-        auto secondLineHi = unpackhi_epi8(secondLine, zero);
+        const auto firstLineLo = unpacklo_epi8(firstLine, zero);
+        const auto firstLineHi = unpackhi_epi8(firstLine, zero);
+        const auto secondLineLo = unpacklo_epi8(secondLine, zero);
+        const auto secondLineHi = unpackhi_epi8(secondLine, zero);
 
-#if defined(__SSSE3__) || defined(__AVX2__)
+        // Vertical addition
+        const auto sumLo = add_epi16(firstLineLo, secondLineLo);
+        const auto sumHi = add_epi16(firstLineHi, secondLineHi);
+
         // Horizontal addition of adjacent pairs, and recombine low and high parts
-        firstLine = hadd_epi16(firstLineLo, firstLineHi);
-        secondLine = hadd_epi16(secondLineLo, secondLineHi);
-#else
-        // Horizontal addition of adjacent pairs, and extend to 32 bit
-        const auto one16 = set1_epi16(1);
-        firstLineLo = madd_epi16(firstLineLo, one16);
-        firstLineHi = madd_epi16(firstLineHi, one16);
-        secondLineLo = madd_epi16(secondLineLo, one16);
-        secondLineHi = madd_epi16(secondLineHi, one16);
+        const auto sum = hadd_epi16(sumLo, sumHi);
 
-        // Recombine low and high parts, on 16 bit width
-        firstLine = packs_epi32(firstLineLo, firstLineHi);
-        secondLine = packs_epi32(secondLineLo, secondLineHi);
-#endif
-
-        const auto sum = add_epi16(firstLine, secondLine);
         // average = (sum + 2) / 4
         auto average = srli_epi16(add_epi16(sum, two16), 2);
 
@@ -683,8 +690,7 @@ template<class T> static int QuadraticMeanUInt16SSE2(int nDstXWidth,
         const auto secondLineLo = _mm_unpacklo_epi16(secondLine, zero);
         const auto secondLineHi = _mm_unpackhi_epi16(secondLine, zero);
 
-        // Multiplication of 32 bit values and horizontal
-        // addition of squares (as double 64 bit)
+        // Multiplication of 32 bit values previously converted to 64 bit double
         const auto firstLineLoLo = SQUARE(_mm_cvtepi32_pd(firstLineLo));
         const auto firstLineLoHi = SQUARE(_mm_cvtepi32_pd(_mm_srli_si128(firstLineLo,8)));
         const auto firstLineHiLo = SQUARE(_mm_cvtepi32_pd(firstLineHi));
@@ -695,13 +701,16 @@ template<class T> static int QuadraticMeanUInt16SSE2(int nDstXWidth,
         const auto secondLineHiLo = SQUARE(_mm_cvtepi32_pd(secondLineHi));
         const auto secondLineHiHi = SQUARE(_mm_cvtepi32_pd(_mm_srli_si128(secondLineHi,8)));
 
-        const auto firstLineLoDouble = sse2_hadd_pd(firstLineLoLo, firstLineLoHi);
-        const auto firstLineHiDouble = sse2_hadd_pd(firstLineHiLo, firstLineHiHi);
-        const auto secondLineLoDouble = sse2_hadd_pd(secondLineLoLo, secondLineLoHi);
-        const auto secondLineHiDouble = sse2_hadd_pd(secondLineHiLo, secondLineHiHi);
+        // Vertical addition of squares
+        const auto sumSquaresLoLo = _mm_add_pd(firstLineLoLo, secondLineLoLo);
+        const auto sumSquaresLoHi = _mm_add_pd(firstLineLoHi, secondLineLoHi);
+        const auto sumSquaresHiLo = _mm_add_pd(firstLineHiLo, secondLineHiLo);
+        const auto sumSquaresHiHi = _mm_add_pd(firstLineHiHi, secondLineHiHi);
 
-        const auto sumSquaresLo = _mm_add_pd(firstLineLoDouble, secondLineLoDouble);
-        const auto sumSquaresHi = _mm_add_pd(firstLineHiDouble, secondLineHiDouble);
+        // Horizontal addition of squares
+        const auto sumSquaresLo = sse2_hadd_pd(sumSquaresLoLo, sumSquaresLoHi);
+        const auto sumSquaresHi = sse2_hadd_pd(sumSquaresHiLo, sumSquaresHiHi);
+
         const auto sumDivWeightLo = _mm_mul_pd(sumSquaresLo, zeroDot25);
         const auto sumDivWeightHi = _mm_mul_pd(sumSquaresHi, zeroDot25);
         // Take square root and truncate/floor to int32
@@ -765,8 +774,11 @@ template<class T> static int AverageUInt16SSE2(
         const auto firstLine = _mm_loadu_si128(reinterpret_cast<__m128i const*>(pSrcScanlineShifted));
         const auto secondLine = _mm_loadu_si128(reinterpret_cast<__m128i const*>(pSrcScanlineShifted + nChunkXSize));
 
+        // Horizontal addition and extension to 32 bit
         const auto horizAddFirstLine = _mm_add_epi32(_mm_and_si128(firstLine, mask), _mm_srli_epi32(firstLine, 16));
         const auto horizAddSecondLine = _mm_add_epi32(_mm_and_si128(secondLine, mask), _mm_srli_epi32(secondLine, 16));
+
+        // Vertical addition and average computation
         // average = (sum + 2) >> 2
         const auto sum = _mm_add_epi32(_mm_add_epi32(horizAddFirstLine, horizAddSecondLine), two);
         averageLow = _mm_srli_epi32(sum, 2);
@@ -777,8 +789,11 @@ template<class T> static int AverageUInt16SSE2(
         const auto firstLine = _mm_loadu_si128(reinterpret_cast<__m128i const*>(pSrcScanlineShifted + 8));
         const auto secondLine = _mm_loadu_si128(reinterpret_cast<__m128i const*>(pSrcScanlineShifted + 8 + nChunkXSize));
 
+        // Horizontal addition and extension to 32 bit
         const auto horizAddFirstLine = _mm_add_epi32(_mm_and_si128(firstLine, mask), _mm_srli_epi32(firstLine, 16));
         const auto horizAddSecondLine = _mm_add_epi32(_mm_and_si128(secondLine, mask), _mm_srli_epi32(secondLine, 16));
+
+        // Vertical addition and average computation
         // average = (sum + 2) >> 2
         const auto sum = _mm_add_epi32(_mm_add_epi32(horizAddFirstLine, horizAddSecondLine), two);
         averageHigh = _mm_srli_epi32(sum, 2);
@@ -823,13 +838,15 @@ template<class T> static int QuadraticMeanFloatSSE2(int nDstXWidth,
         const auto secondLineLo = SQUARE(_mm_loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + nChunkXSize)));
         const auto secondLineHi = SQUARE(_mm_loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + 4 + nChunkXSize)));
 
+        // Vertical addition
         const auto sumLo = _mm_add_ps(firstLineLo, secondLineLo);
         const auto sumHi = _mm_add_ps(firstLineHi, secondLineHi);
 
+        // Horizontal addition
         const auto A = _mm_shuffle_ps(sumLo, sumHi, 0 | (2 << 2) | (0 << 4) | (2 << 6));
         const auto B = _mm_shuffle_ps(sumLo, sumHi, 1 | (3 << 2) | (1 << 4) | (3 << 6));
-
         const auto sumSquares = _mm_add_ps(A, B);
+
         const auto rms = _mm_sqrt_ps(_mm_mul_ps(sumSquares, zeroDot25));
 
         _mm_storeu_ps(reinterpret_cast<float*>(&pDstScanline[iDstPixel]), rms);
@@ -864,13 +881,15 @@ template<class T> static int AverageFloatSSE2(int nDstXWidth,
         const auto secondLineLo = _mm_loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + nChunkXSize));
         const auto secondLineHi = _mm_loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + 4 + nChunkXSize));
 
+        // Vertical addition
         const auto sumLo = _mm_add_ps(firstLineLo, secondLineLo);
         const auto sumHi = _mm_add_ps(firstLineHi, secondLineHi);
 
+        // Horizontal addition
         const auto A = _mm_shuffle_ps(sumLo, sumHi, 0 | (2 << 2) | (0 << 4) | (2 << 6));
         const auto B = _mm_shuffle_ps(sumLo, sumHi, 1 | (3 << 2) | (1 << 4) | (3 << 6));
-
         const auto sum = _mm_add_ps(A, B);
+
         const auto average = _mm_mul_ps(sum, zeroDot25);
 
         _mm_storeu_ps(reinterpret_cast<float*>(&pDstScanline[iDstPixel]), average);
