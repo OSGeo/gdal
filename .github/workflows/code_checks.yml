@@ -31,7 +31,7 @@ jobs:
             CC="ccache gcc" CXX="ccache g++" CFLAGS=-O0 CXXFLAGS=-O0 ./configure --without-static --prefix=/tmp/projinstall
             make -j$(nproc)
             make install -j$(nproc)
- 
+
       - name: Run configure
         run: (cd gdal && ./configure --with-proj=/tmp/projinstall)
 
@@ -65,7 +65,7 @@ jobs:
             CC="ccache gcc" CXX="ccache g++" CFLAGS=-O0 CXXFLAGS=-O0 ./configure --without-static --prefix=/tmp/projinstall
             make -j$(nproc)
             make install -j$(nproc)
- 
+
       - name: Run configure
         run: (cd gdal && ./configure --with-proj=/tmp/projinstall)
 
@@ -91,7 +91,7 @@ jobs:
         run: ./gdal/scripts/detect_suspicious_char_digit_zero.sh
 
       - name: Shellcheck
-        run: shellcheck -e SC2086,SC2046 $(find gdal -name '*.sh' -a -not -name ltmain.sh)
+        run: shellcheck -e SC2086,SC2046,SC2164 $(find gdal -name '*.sh' -a -not -name ltmain.sh)
 
   flake8:
     runs-on: ubuntu-latest
