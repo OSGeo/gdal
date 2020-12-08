@@ -383,14 +383,18 @@ template <class T, class Tsum> inline T ComputeIntegerRMS_4values(Tsum)
 
 template<> inline GByte ComputeIntegerRMS_4values<GByte, int>(int sumSquares)
 {
-    const float sumDivWeight = static_cast<float>(sumSquares) * 0.25f;
+    // It has been verified that given the correction on rms below, using
+    // sqrt((float)((sumSquares + 1)/ 4)) or sqrt((float)sumSquares * 0.25f)
+    // is equivalent, so use the former as it is used twice.
+    const int sumSquaresPlusOneDiv4 = (sumSquares + 1) / 4;
+    const float sumDivWeight = static_cast<float>(sumSquaresPlusOneDiv4);
     GByte rms = static_cast<GByte>(std::sqrt(sumDivWeight));
 
     // Is rms**2 or (rms+1)**2 closest to sumSquares / weight ?
     // Naive version:
     // if( weight * (rms+1)**2 - sumSquares < sumSquares - weight * rms**2 )
     // Optimized version for integer case and weight == 4
-    if( static_cast<int>(rms) * (rms + 1) < (sumSquares + 1) / 4 )
+    if( static_cast<int>(rms) * (rms + 1) < sumSquaresPlusOneDiv4 )
         rms += 1;
     return rms;
 }
@@ -523,7 +527,6 @@ template<class T> static int QuadraticMeanByteSSE2OrAVX2(
     const auto one32 = set1_epi32(1);
     const auto zero = setzero();
     const auto minus32768 = set1_epi16(-32768);
-    const auto zeroDot25 = set1_ps(0.25f);
 
     for( ; iDstPixel < nDstXWidth - (DEST_ELTS-1); iDstPixel += DEST_ELTS )
     {
@@ -548,13 +551,14 @@ template<class T> static int QuadraticMeanByteSSE2OrAVX2(
         const auto sumSquaresLo = add_epi32(firstLineLo, secondLineLo);
         const auto sumSquaresHi = add_epi32(firstLineHi, secondLineHi);
 
-        const auto sumDivWeightLo = mul_ps(
-            cvtepi32_ps(sumSquaresLo), zeroDot25);
-        const auto sumDivWeightHi = mul_ps(
-            cvtepi32_ps(sumSquaresHi), zeroDot25);
+        const auto sumSquaresPlusOneDiv4Lo =
+            srli_epi32(add_epi32(sumSquaresLo, one32), 2);
+        const auto sumSquaresPlusOneDiv4Hi =
+            srli_epi32(add_epi32(sumSquaresHi, one32), 2);
+
         // Take square root and truncate/floor to int32
-        const auto rmsLo = cvttps_epi32(sqrt_ps(sumDivWeightLo));
-        const auto rmsHi = cvttps_epi32(sqrt_ps(sumDivWeightHi));
+        const auto rmsLo = cvttps_epi32(sqrt_ps(cvtepi32_ps(sumSquaresPlusOneDiv4Lo)));
+        const auto rmsHi = cvttps_epi32(sqrt_ps(cvtepi32_ps(sumSquaresPlusOneDiv4Hi)));
 
         // Merge back low and high registers with each RMS value
         // as a 16 bit value.
@@ -569,8 +573,7 @@ template<class T> static int QuadraticMeanByteSSE2OrAVX2(
         //    rms += 1;
         // And both left and right parts fit on 16 (unsigned) bits
         const auto sumSquaresPlusOneDiv4 = packus_epi32(
-            srli_epi32(add_epi32(sumSquaresLo, one32), 2),
-            srli_epi32(add_epi32(sumSquaresHi, one32), 2));
+            sumSquaresPlusOneDiv4Lo, sumSquaresPlusOneDiv4Hi);
         // cmpgt_epi16 operates on signed int16, but here
         // we have unsigned values, so shift them by -32768 before
         auto mask = cmpgt_epi16(
@@ -679,6 +682,48 @@ template<class T> static int QuadraticMeanUInt16SSE2(int nDstXWidth,
         // Load 8 UInt16 from each line
         const auto firstLine = _mm_loadu_si128(reinterpret_cast<__m128i const*>(pSrcScanlineShifted));
         const auto secondLine = _mm_loadu_si128(reinterpret_cast<__m128i const*>(pSrcScanlineShifted + nChunkXSize));
+
+        // Detect if all of the source values fit in 14 bits.
+        // because if x < 2^14, then 4 * x^2 < 2^30 which fits in a signed int32
+        // and we can do a much faster implementation.
+        const auto nMaskFitsIn14Bits = _mm_cvtsi128_si64(
+            _mm_packus_epi16(_mm_srli_epi16(_mm_or_si128(firstLine, secondLine), 14), _mm_undefined_si128()));
+        if( nMaskFitsIn14Bits == 0 )
+        {
+            // Multiplication of 16 bit values and horizontal
+            // addition of 32 bit results
+            const auto firstLineHSumSquare = _mm_madd_epi16(firstLine, firstLine);
+            const auto secondLineHSumSquare = _mm_madd_epi16(secondLine, secondLine);
+            // Vertical addition
+            const auto sumSquares = _mm_add_epi32(firstLineHSumSquare,
+                                                  secondLineHSumSquare);
+            // In theory we should take sqrt(sumSquares * 0.25f)
+            // but given the rounding we do, this is equivalent to
+            // sqrt((sumSquares + 1)/4). This has been verified exhaustively for
+            // sumSquares <= 4 * 16383^2
+            const auto one32 = _mm_set1_epi32(1);
+            const auto sumSquaresPlusOneDiv4 =
+                _mm_srli_epi32(_mm_add_epi32(sumSquares, one32), 2);
+            // Take square root and truncate/floor to int32
+            auto rms = _mm_cvttps_epi32(_mm_sqrt_ps(_mm_cvtepi32_ps(sumSquaresPlusOneDiv4)));
+
+            // Round to upper value if it minimizes the
+            // error |rms^2 - sumSquares/4|
+            // if( 2 * (2 * rms * (rms + 1) + 1) < sumSquares )
+            //    rms += 1;
+            // which is equivalent to:
+            // if( rms * rms + rms < (sumSquares+1) / 4 )
+            //    rms += 1;
+            auto mask = _mm_cmpgt_epi32(
+                sumSquaresPlusOneDiv4,
+                _mm_add_epi32(_mm_madd_epi16(rms, rms), rms));
+            rms = _mm_sub_epi32(rms, mask);
+            // Pack each 32 bit RMS value to 16 bits
+            rms = _mm_packs_epi32(rms, _mm_undefined_si128());
+            _mm_storel_epi64(reinterpret_cast<__m128i*>(&pDstScanline[iDstPixel]), rms);
+            pSrcScanlineShifted += 8;
+            continue;
+        }
 
         // An approach using _mm_mullo_epi16, _mm_mulhi_epu16 before extending
         // to 32 bit would result in 4 multiplications instead of 8, but mullo/mulhi
