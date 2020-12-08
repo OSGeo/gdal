@@ -32,6 +32,9 @@ jobs:
                 docker image save -o /tmp/docker/gdal-deps-ubuntu-20.04.tar gdal-deps-ubuntu-20.04
             fi
 
+      - name: gcc compilation flags
+        run: docker run --rm gdal-deps-ubuntu-20.04 sh -c "g++ -march=native -dM -E -x c++ - < /dev/null | grep -E 'SSE|AVX'"
+
       - name: Build
         run: docker build -f .github/workflows/ubuntu_20.04/Dockerfile -t gdal .
 

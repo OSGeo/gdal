@@ -362,32 +362,601 @@ template <class T, class Tsquare = T> inline Tsquare SQUARE(T val)
 /************************************************************************/
 // Compute rms = sqrt(sumSquares / weight) in such a way that it is the
 // integer that minimizes abs(rms**2 - sumSquares / weight)
-template <class T, class Tsum, class Tweight> inline T ComputeIntegerRMS(
-                                            Tsum sumSquares, Tweight weight)
+template <class T> inline T ComputeIntegerRMS(double sumSquares, double weight)
 {
-    const double sumDivWeight = static_cast<double>(sumSquares) / weight;
+    const double sumDivWeight = sumSquares / weight;
     T rms = static_cast<T>(sqrt(sumDivWeight));
 
     // Is rms**2 or (rms+1)**2 closest to sumSquares / weight ?
     // Naive version:
     // if( weight * (rms+1)**2 - sumSquares < sumSquares - weight * rms**2 )
-    // Slightly optimized version for the Tsum and Tweight integer case:
-    if( static_cast<Tsum>(weight * (2 * rms * (rms + 1) + 1)) < 2 * sumSquares )
+    if( 2 * rms * (rms + 1) + 1 < 2 * sumDivWeight )
         rms += 1;
     return rms;
 }
+
+template <class T, class Tsum> inline T ComputeIntegerRMS_4values(Tsum)
+{
+    CPLAssert(false);
+    return 0;
+}
+
+template<> inline GByte ComputeIntegerRMS_4values<GByte, int>(int sumSquares)
+{
+    // It has been verified that given the correction on rms below, using
+    // sqrt((float)((sumSquares + 1)/ 4)) or sqrt((float)sumSquares * 0.25f)
+    // is equivalent, so use the former as it is used twice.
+    const int sumSquaresPlusOneDiv4 = (sumSquares + 1) / 4;
+    const float sumDivWeight = static_cast<float>(sumSquaresPlusOneDiv4);
+    GByte rms = static_cast<GByte>(std::sqrt(sumDivWeight));
+
+    // Is rms**2 or (rms+1)**2 closest to sumSquares / weight ?
+    // Naive version:
+    // if( weight * (rms+1)**2 - sumSquares < sumSquares - weight * rms**2 )
+    // Optimized version for integer case and weight == 4
+    if( static_cast<int>(rms) * (rms + 1) < sumSquaresPlusOneDiv4 )
+        rms += 1;
+    return rms;
+}
+
+template<> inline GUInt16 ComputeIntegerRMS_4values<GUInt16, double>(double sumSquares)
+{
+    const double sumDivWeight = sumSquares * 0.25;
+    GUInt16 rms = static_cast<GUInt16>(std::sqrt(sumDivWeight));
+
+    // Is rms**2 or (rms+1)**2 closest to sumSquares / weight ?
+    // Naive version:
+    // if( weight * (rms+1)**2 - sumSquares < sumSquares - weight * rms**2 )
+    // Optimized version for integer case and weight == 4
+    if( static_cast<GUInt32>(rms) * (rms + 1) < static_cast<GUInt32>(sumDivWeight + 0.25) )
+        rms += 1;
+    return rms;
+}
+
+#ifdef USE_SSE2
+
+/************************************************************************/
+/*                   QuadraticMeanByteSSE2OrAVX2()                      */
+/************************************************************************/
+
+#ifdef __SSE4_1__
+#define sse2_packus_epi32    _mm_packus_epi32
+#else
+inline __m128i sse2_packus_epi32(__m128i a, __m128i b)
+{
+    const auto minus32768_32 = _mm_set1_epi32(-32768);
+    const auto minus32768_16 = _mm_set1_epi16(-32768);
+    a = _mm_add_epi32(a, minus32768_32);
+    b = _mm_add_epi32(b, minus32768_32);
+    a = _mm_packs_epi32(a, b);
+    a = _mm_sub_epi16(a, minus32768_16);
+    return a;
+}
+#endif
+
+#ifdef __SSSE3__
+#define sse2_hadd_epi16     _mm_hadd_epi16
+#else
+inline __m128i sse2_hadd_epi16(__m128i a, __m128i b)
+{
+    // Horizontal addition of adjacent pairs
+    const auto mask = _mm_set1_epi32(0xFFFF);
+    const auto horizLo = _mm_add_epi32(_mm_and_si128(a, mask), _mm_srli_epi32(a, 16));
+    const auto horizHi = _mm_add_epi32(_mm_and_si128(b, mask), _mm_srli_epi32(b, 16));
+
+    // Recombine low and high parts
+    return _mm_packs_epi32(horizLo, horizHi);
+}
+#endif
+
+
+#ifdef __AVX2__
+#define DEST_ELTS       16
+#define set1_epi16      _mm256_set1_epi16
+#define set1_epi32      _mm256_set1_epi32
+#define setzero         _mm256_setzero_si256
+#define set1_ps         _mm256_set1_ps
+#define loadu_int(x)    _mm256_loadu_si256(reinterpret_cast<__m256i const*>(x))
+#define unpacklo_epi8   _mm256_unpacklo_epi8
+#define unpackhi_epi8   _mm256_unpackhi_epi8
+#define madd_epi16      _mm256_madd_epi16
+#define add_epi32       _mm256_add_epi32
+#define mul_ps          _mm256_mul_ps
+#define cvtepi32_ps     _mm256_cvtepi32_ps
+#define sqrt_ps         _mm256_sqrt_ps
+#define cvttps_epi32    _mm256_cvttps_epi32
+#define packs_epi32     _mm256_packs_epi32
+#define packus_epi32    _mm256_packus_epi32
+#define srli_epi32      _mm256_srli_epi32
+#define mullo_epi16     _mm256_mullo_epi16
+#define srli_epi16      _mm256_srli_epi16
+#define cmpgt_epi16     _mm256_cmpgt_epi16
+#define add_epi16       _mm256_add_epi16
+#define sub_epi16       _mm256_sub_epi16
+#define packus_epi16    _mm256_packus_epi16
+#define undefined_int   _mm256_undefined_si256
+/* AVX2 operates on 2 separate 128-bit lanes, so we have to do shuffling */
+/* to get the lower 128-bit bits of what would be a true 256-bit vector register */
+#define store_lo(x,y)   _mm_storeu_si128(reinterpret_cast<__m128i*>(x), \
+                            _mm256_extracti128_si256(_mm256_permute4x64_epi64((y), 0 | (2 << 2)), 0))
+#define hadd_epi16      _mm256_hadd_epi16
+#define zeroupper()     _mm256_zeroupper()
+#else
+#define DEST_ELTS       8
+#define set1_epi16      _mm_set1_epi16
+#define set1_epi32      _mm_set1_epi32
+#define setzero         _mm_setzero_si128
+#define set1_ps         _mm_set1_ps
+#define loadu_int(x)    _mm_loadu_si128(reinterpret_cast<__m128i const*>(x))
+#define unpacklo_epi8   _mm_unpacklo_epi8
+#define unpackhi_epi8   _mm_unpackhi_epi8
+#define madd_epi16      _mm_madd_epi16
+#define add_epi32       _mm_add_epi32
+#define mul_ps          _mm_mul_ps
+#define cvtepi32_ps     _mm_cvtepi32_ps
+#define sqrt_ps         _mm_sqrt_ps
+#define cvttps_epi32    _mm_cvttps_epi32
+#define packs_epi32     _mm_packs_epi32
+#define packus_epi32    sse2_packus_epi32
+#define srli_epi32      _mm_srli_epi32
+#define mullo_epi16     _mm_mullo_epi16
+#define srli_epi16      _mm_srli_epi16
+#define cmpgt_epi16     _mm_cmpgt_epi16
+#define add_epi16       _mm_add_epi16
+#define sub_epi16       _mm_sub_epi16
+#define packus_epi16    _mm_packus_epi16
+#define undefined_int   _mm_undefined_si128
+#define store_lo(x,y)   _mm_storel_epi64(reinterpret_cast<__m128i*>(x), (y))
+#define hadd_epi16      sse2_hadd_epi16
+#define zeroupper()     (void)0
+#endif
+
+template<class T> static int QuadraticMeanByteSSE2OrAVX2(
+                                                   int nDstXWidth,
+                                                   int nChunkXSize,
+                                                   const T*& CPL_RESTRICT pSrcScanlineShiftedInOut,
+                                                   T* CPL_RESTRICT pDstScanline)
+{
+    // Optimized implementation for RMS on Byte by
+    // processing by group of 8 output pixels, so as to use
+    // a single _mm_sqrt_ps() call for 4 output pixels
+    const T* CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
+
+    int iDstPixel = 0;
+    const auto one16 = set1_epi16(1);
+    const auto one32 = set1_epi32(1);
+    const auto zero = setzero();
+    const auto minus32768 = set1_epi16(-32768);
+
+    for( ; iDstPixel < nDstXWidth - (DEST_ELTS-1); iDstPixel += DEST_ELTS )
+    {
+        // Load 2 * DEST_ELTS bytes from each line
+        auto firstLine = loadu_int(pSrcScanlineShifted);
+        auto secondLine = loadu_int(pSrcScanlineShifted + nChunkXSize);
+        // Extend those Bytes as UInt16s
+        auto firstLineLo = unpacklo_epi8(firstLine, zero);
+        auto firstLineHi = unpackhi_epi8(firstLine, zero);
+        auto secondLineLo = unpacklo_epi8(secondLine, zero);
+        auto secondLineHi = unpackhi_epi8(secondLine, zero);
+
+        // Multiplication of 16 bit values and horizontal
+        // addition of 32 bit results
+        // [ src[2*i+0]^2 + src[2*i+1]^2 for i in range(4) ]
+        firstLineLo = madd_epi16(firstLineLo, firstLineLo);
+        firstLineHi = madd_epi16(firstLineHi, firstLineHi);
+        secondLineLo = madd_epi16(secondLineLo, secondLineLo);
+        secondLineHi = madd_epi16(secondLineHi, secondLineHi);
+
+        // Vertical addition
+        const auto sumSquaresLo = add_epi32(firstLineLo, secondLineLo);
+        const auto sumSquaresHi = add_epi32(firstLineHi, secondLineHi);
+
+        const auto sumSquaresPlusOneDiv4Lo =
+            srli_epi32(add_epi32(sumSquaresLo, one32), 2);
+        const auto sumSquaresPlusOneDiv4Hi =
+            srli_epi32(add_epi32(sumSquaresHi, one32), 2);
+
+        // Take square root and truncate/floor to int32
+        const auto rmsLo = cvttps_epi32(sqrt_ps(cvtepi32_ps(sumSquaresPlusOneDiv4Lo)));
+        const auto rmsHi = cvttps_epi32(sqrt_ps(cvtepi32_ps(sumSquaresPlusOneDiv4Hi)));
+
+        // Merge back low and high registers with each RMS value
+        // as a 16 bit value.
+        auto rms = packs_epi32(rmsLo, rmsHi);
+
+        // Round to upper value if it minimizes the
+        // error |rms^2 - sumSquares/4|
+        // if( 2 * (2 * rms * (rms + 1) + 1) < sumSquares )
+        //    rms += 1;
+        // which is equivalent to:
+        // if( rms * (rms + 1) < (sumSquares+1) / 4 )
+        //    rms += 1;
+        // And both left and right parts fit on 16 (unsigned) bits
+        const auto sumSquaresPlusOneDiv4 = packus_epi32(
+            sumSquaresPlusOneDiv4Lo, sumSquaresPlusOneDiv4Hi);
+        // cmpgt_epi16 operates on signed int16, but here
+        // we have unsigned values, so shift them by -32768 before
+        auto mask = cmpgt_epi16(
+            add_epi16(sumSquaresPlusOneDiv4, minus32768),
+            add_epi16(mullo_epi16(rms, add_epi16(rms, one16)), minus32768));
+        // The value of the mask will be -1 when the correction needs to be applied
+        rms = sub_epi16(rms, mask);
+
+        // Pack each 16 bit RMS value to 8 bits
+        rms = packus_epi16(rms, undefined_int());
+        store_lo(&pDstScanline[iDstPixel], rms);
+        pSrcScanlineShifted += 2 * DEST_ELTS;
+    }
+    zeroupper();
+
+    pSrcScanlineShiftedInOut = pSrcScanlineShifted;
+    return iDstPixel;
+}
+
+/************************************************************************/
+/*                      AverageByteSSE2OrAVX2()                         */
+/************************************************************************/
+
+template<class T> static int AverageByteSSE2OrAVX2(
+                                             int nDstXWidth,
+                                             int nChunkXSize,
+                                             const T*& CPL_RESTRICT pSrcScanlineShiftedInOut,
+                                             T* CPL_RESTRICT pDstScanline)
+{
+    // Optimized implementation for average on Byte by
+    // processing by group of 8 output pixels.
+
+    const auto zero = setzero();
+    const auto two16 = set1_epi16(2);
+    const T* CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
+
+    int iDstPixel = 0;
+    for( ; iDstPixel < nDstXWidth - (DEST_ELTS-1); iDstPixel += DEST_ELTS )
+    {
+        // Load 2 * DEST_ELTS bytes from each line
+        const auto firstLine = loadu_int(pSrcScanlineShifted);
+        const auto secondLine = loadu_int(pSrcScanlineShifted + nChunkXSize);
+        // Extend those Bytes as UInt16s
+        const auto firstLineLo = unpacklo_epi8(firstLine, zero);
+        const auto firstLineHi = unpackhi_epi8(firstLine, zero);
+        const auto secondLineLo = unpacklo_epi8(secondLine, zero);
+        const auto secondLineHi = unpackhi_epi8(secondLine, zero);
+
+        // Vertical addition
+        const auto sumLo = add_epi16(firstLineLo, secondLineLo);
+        const auto sumHi = add_epi16(firstLineHi, secondLineHi);
+
+        // Horizontal addition of adjacent pairs, and recombine low and high parts
+        const auto sum = hadd_epi16(sumLo, sumHi);
+
+        // average = (sum + 2) / 4
+        auto average = srli_epi16(add_epi16(sum, two16), 2);
+
+        // Pack each 16 bit average value to 8 bits
+        average = packus_epi16(average, undefined_int());
+        store_lo(&pDstScanline[iDstPixel], average);
+        pSrcScanlineShifted += 2 * DEST_ELTS;
+    }
+    zeroupper();
+
+    pSrcScanlineShiftedInOut = pSrcScanlineShifted;
+    return iDstPixel;
+}
+
+/************************************************************************/
+/*                     QuadraticMeanUInt16SSE2()                        */
+/************************************************************************/
+
+#ifdef __SSE3__
+#define sse2_hadd_pd _mm_hadd_pd
+#else
+inline __m128d sse2_hadd_pd(__m128d a, __m128d b)
+{
+    auto aLo_bLo = _mm_castps_pd(_mm_movelh_ps(_mm_castpd_ps(a), _mm_castpd_ps(b)));
+    auto aHi_bHi = _mm_castps_pd(_mm_movehl_ps(_mm_castpd_ps(b), _mm_castpd_ps(a)));
+    return _mm_add_pd(aLo_bLo, aHi_bHi); // (aLo + aHi, bLo + bHi)
+}
+#endif
+
+inline __m128d SQUARE(__m128d x)
+{
+    return _mm_mul_pd(x, x);
+}
+
+template<class T> static int QuadraticMeanUInt16SSE2(int nDstXWidth,
+                                                     int nChunkXSize,
+                                                     const T*& CPL_RESTRICT pSrcScanlineShiftedInOut,
+                                                     T* CPL_RESTRICT pDstScanline)
+{
+    // Optimized implementation for RMS on UInt16 by
+    // processing by group of 4 output pixels.
+    const T* CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
+
+    int iDstPixel = 0;
+    const auto zero = _mm_setzero_si128();
+    const auto zeroDot25 = _mm_set1_pd(0.25);
+    const auto zeroDot5 = _mm_set1_pd(0.5);
+
+    for( ; iDstPixel < nDstXWidth - 3; iDstPixel += 4 )
+    {
+        // Load 8 UInt16 from each line
+        const auto firstLine = _mm_loadu_si128(reinterpret_cast<__m128i const*>(pSrcScanlineShifted));
+        const auto secondLine = _mm_loadu_si128(reinterpret_cast<__m128i const*>(pSrcScanlineShifted + nChunkXSize));
+
+        // Detect if all of the source values fit in 14 bits.
+        // because if x < 2^14, then 4 * x^2 < 2^30 which fits in a signed int32
+        // and we can do a much faster implementation.
+        const auto nMaskFitsIn14Bits = _mm_cvtsi128_si64(
+            _mm_packus_epi16(_mm_srli_epi16(_mm_or_si128(firstLine, secondLine), 14), _mm_undefined_si128()));
+        if( nMaskFitsIn14Bits == 0 )
+        {
+            // Multiplication of 16 bit values and horizontal
+            // addition of 32 bit results
+            const auto firstLineHSumSquare = _mm_madd_epi16(firstLine, firstLine);
+            const auto secondLineHSumSquare = _mm_madd_epi16(secondLine, secondLine);
+            // Vertical addition
+            const auto sumSquares = _mm_add_epi32(firstLineHSumSquare,
+                                                  secondLineHSumSquare);
+            // In theory we should take sqrt(sumSquares * 0.25f)
+            // but given the rounding we do, this is equivalent to
+            // sqrt((sumSquares + 1)/4). This has been verified exhaustively for
+            // sumSquares <= 4 * 16383^2
+            const auto one32 = _mm_set1_epi32(1);
+            const auto sumSquaresPlusOneDiv4 =
+                _mm_srli_epi32(_mm_add_epi32(sumSquares, one32), 2);
+            // Take square root and truncate/floor to int32
+            auto rms = _mm_cvttps_epi32(_mm_sqrt_ps(_mm_cvtepi32_ps(sumSquaresPlusOneDiv4)));
+
+            // Round to upper value if it minimizes the
+            // error |rms^2 - sumSquares/4|
+            // if( 2 * (2 * rms * (rms + 1) + 1) < sumSquares )
+            //    rms += 1;
+            // which is equivalent to:
+            // if( rms * rms + rms < (sumSquares+1) / 4 )
+            //    rms += 1;
+            auto mask = _mm_cmpgt_epi32(
+                sumSquaresPlusOneDiv4,
+                _mm_add_epi32(_mm_madd_epi16(rms, rms), rms));
+            rms = _mm_sub_epi32(rms, mask);
+            // Pack each 32 bit RMS value to 16 bits
+            rms = _mm_packs_epi32(rms, _mm_undefined_si128());
+            _mm_storel_epi64(reinterpret_cast<__m128i*>(&pDstScanline[iDstPixel]), rms);
+            pSrcScanlineShifted += 8;
+            continue;
+        }
+
+        // An approach using _mm_mullo_epi16, _mm_mulhi_epu16 before extending
+        // to 32 bit would result in 4 multiplications instead of 8, but mullo/mulhi
+        // have a worse throughput than mul_pd.
+
+        // Extend those UInt16s as UInt32s
+        const auto firstLineLo = _mm_unpacklo_epi16(firstLine, zero);
+        const auto firstLineHi = _mm_unpackhi_epi16(firstLine, zero);
+        const auto secondLineLo = _mm_unpacklo_epi16(secondLine, zero);
+        const auto secondLineHi = _mm_unpackhi_epi16(secondLine, zero);
+
+        // Multiplication of 32 bit values previously converted to 64 bit double
+        const auto firstLineLoLo = SQUARE(_mm_cvtepi32_pd(firstLineLo));
+        const auto firstLineLoHi = SQUARE(_mm_cvtepi32_pd(_mm_srli_si128(firstLineLo,8)));
+        const auto firstLineHiLo = SQUARE(_mm_cvtepi32_pd(firstLineHi));
+        const auto firstLineHiHi = SQUARE(_mm_cvtepi32_pd(_mm_srli_si128(firstLineHi,8)));
+
+        const auto secondLineLoLo = SQUARE(_mm_cvtepi32_pd(secondLineLo));
+        const auto secondLineLoHi = SQUARE(_mm_cvtepi32_pd(_mm_srli_si128(secondLineLo,8)));
+        const auto secondLineHiLo = SQUARE(_mm_cvtepi32_pd(secondLineHi));
+        const auto secondLineHiHi = SQUARE(_mm_cvtepi32_pd(_mm_srli_si128(secondLineHi,8)));
+
+        // Vertical addition of squares
+        const auto sumSquaresLoLo = _mm_add_pd(firstLineLoLo, secondLineLoLo);
+        const auto sumSquaresLoHi = _mm_add_pd(firstLineLoHi, secondLineLoHi);
+        const auto sumSquaresHiLo = _mm_add_pd(firstLineHiLo, secondLineHiLo);
+        const auto sumSquaresHiHi = _mm_add_pd(firstLineHiHi, secondLineHiHi);
+
+        // Horizontal addition of squares
+        const auto sumSquaresLo = sse2_hadd_pd(sumSquaresLoLo, sumSquaresLoHi);
+        const auto sumSquaresHi = sse2_hadd_pd(sumSquaresHiLo, sumSquaresHiHi);
+
+        const auto sumDivWeightLo = _mm_mul_pd(sumSquaresLo, zeroDot25);
+        const auto sumDivWeightHi = _mm_mul_pd(sumSquaresHi, zeroDot25);
+        // Take square root and truncate/floor to int32
+        const auto rmsLo = _mm_cvttpd_epi32(_mm_sqrt_pd(sumDivWeightLo));
+        const auto rmsHi = _mm_cvttpd_epi32(_mm_sqrt_pd(sumDivWeightHi));
+
+        // Correctly round rms to minimize | rms^2 - sumSquares / 4 |
+        // if( 0.5 < sumDivWeight - (rms * rms + rms) )
+        //     rms += 1;
+        const auto rmsLoDouble = _mm_cvtepi32_pd(rmsLo);
+        const auto rmsHiDouble = _mm_cvtepi32_pd(rmsHi);
+        const auto rightLo = _mm_sub_pd(sumDivWeightLo,
+                                _mm_add_pd(SQUARE(rmsLoDouble), rmsLoDouble));
+        const auto rightHi = _mm_sub_pd(sumDivWeightHi,
+                                _mm_add_pd(SQUARE(rmsHiDouble), rmsHiDouble));
+
+        const auto maskLo = _mm_castpd_ps(_mm_cmplt_pd(zeroDot5, rightLo));
+        const auto maskHi = _mm_castpd_ps(_mm_cmplt_pd(zeroDot5, rightHi));
+        // The value of the mask will be -1 when the correction needs to be applied
+        const auto mask = _mm_castps_si128(_mm_shuffle_ps(
+            maskLo, maskHi, (0 << 0) | (2 << 2) | (0 << 4) | (2 << 6)));
+
+        auto rms = _mm_castps_si128(_mm_movelh_ps(
+            _mm_castsi128_ps(rmsLo), _mm_castsi128_ps(rmsHi)));
+        // Apply the correction
+        rms = _mm_sub_epi32(rms, mask);
+
+        // Pack each 32 bit RMS value to 16 bits
+        rms = sse2_packus_epi32(rms, _mm_undefined_si128());
+        _mm_storel_epi64(reinterpret_cast<__m128i*>(&pDstScanline[iDstPixel]), rms);
+        pSrcScanlineShifted += 8;
+    }
+
+    pSrcScanlineShiftedInOut = pSrcScanlineShifted;
+    return iDstPixel;
+}
+
+/************************************************************************/
+/*                         AverageUInt16SSE2()                          */
+/************************************************************************/
+
+template<class T> static int AverageUInt16SSE2(
+                                             int nDstXWidth,
+                                             int nChunkXSize,
+                                             const T*& CPL_RESTRICT pSrcScanlineShiftedInOut,
+                                             T* CPL_RESTRICT pDstScanline)
+{
+    // Optimized implementation for average on UInt16 by
+    // processing by group of 8 output pixels.
+
+    const auto mask = _mm_set1_epi32(0xFFFF);
+    const auto two = _mm_set1_epi32(2);
+    const T* CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
+
+    int iDstPixel = 0;
+    for( ; iDstPixel < nDstXWidth - 7; iDstPixel += 8 )
+    {
+        __m128i averageLow;
+        // Load 8 UInt16 from each line
+        {
+        const auto firstLine = _mm_loadu_si128(reinterpret_cast<__m128i const*>(pSrcScanlineShifted));
+        const auto secondLine = _mm_loadu_si128(reinterpret_cast<__m128i const*>(pSrcScanlineShifted + nChunkXSize));
+
+        // Horizontal addition and extension to 32 bit
+        const auto horizAddFirstLine = _mm_add_epi32(_mm_and_si128(firstLine, mask), _mm_srli_epi32(firstLine, 16));
+        const auto horizAddSecondLine = _mm_add_epi32(_mm_and_si128(secondLine, mask), _mm_srli_epi32(secondLine, 16));
+
+        // Vertical addition and average computation
+        // average = (sum + 2) >> 2
+        const auto sum = _mm_add_epi32(_mm_add_epi32(horizAddFirstLine, horizAddSecondLine), two);
+        averageLow = _mm_srli_epi32(sum, 2);
+        }
+        // Load 8 UInt16 from each line
+        __m128i averageHigh;
+        {
+        const auto firstLine = _mm_loadu_si128(reinterpret_cast<__m128i const*>(pSrcScanlineShifted + 8));
+        const auto secondLine = _mm_loadu_si128(reinterpret_cast<__m128i const*>(pSrcScanlineShifted + 8 + nChunkXSize));
+
+        // Horizontal addition and extension to 32 bit
+        const auto horizAddFirstLine = _mm_add_epi32(_mm_and_si128(firstLine, mask), _mm_srli_epi32(firstLine, 16));
+        const auto horizAddSecondLine = _mm_add_epi32(_mm_and_si128(secondLine, mask), _mm_srli_epi32(secondLine, 16));
+
+        // Vertical addition and average computation
+        // average = (sum + 2) >> 2
+        const auto sum = _mm_add_epi32(_mm_add_epi32(horizAddFirstLine, horizAddSecondLine), two);
+        averageHigh = _mm_srli_epi32(sum, 2);
+        }
+
+        // Pack each 32 bit average value to 16 bits
+        auto average = sse2_packus_epi32(averageLow, averageHigh);
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(&pDstScanline[iDstPixel]), average);
+        pSrcScanlineShifted += 16;
+    }
+
+    pSrcScanlineShiftedInOut = pSrcScanlineShifted;
+    return iDstPixel;
+}
+
+/************************************************************************/
+/*                      QuadraticMeanFloatSSE2()                        */
+/************************************************************************/
+
+inline __m128 SQUARE(__m128 x)
+{
+    return _mm_mul_ps(x, x);
+}
+
+template<class T> static int QuadraticMeanFloatSSE2(int nDstXWidth,
+                                                    int nChunkXSize,
+                                                    const T*& CPL_RESTRICT pSrcScanlineShiftedInOut,
+                                                    T* CPL_RESTRICT pDstScanline)
+{
+    // Optimized implementation for RMS on Float32 by
+    // processing by group of 4 output pixels.
+    const T* CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
+
+    int iDstPixel = 0;
+    const auto zeroDot25 = _mm_set1_ps(0.25f);
+
+    for( ; iDstPixel < nDstXWidth - 3; iDstPixel += 4 )
+    {
+        // Load 8 Float32 from each line, and take their square
+        const auto firstLineLo = SQUARE(_mm_loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted)));
+        const auto firstLineHi = SQUARE(_mm_loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + 4)));
+        const auto secondLineLo = SQUARE(_mm_loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + nChunkXSize)));
+        const auto secondLineHi = SQUARE(_mm_loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + 4 + nChunkXSize)));
+
+        // Vertical addition
+        const auto sumLo = _mm_add_ps(firstLineLo, secondLineLo);
+        const auto sumHi = _mm_add_ps(firstLineHi, secondLineHi);
+
+        // Horizontal addition
+        const auto A = _mm_shuffle_ps(sumLo, sumHi, 0 | (2 << 2) | (0 << 4) | (2 << 6));
+        const auto B = _mm_shuffle_ps(sumLo, sumHi, 1 | (3 << 2) | (1 << 4) | (3 << 6));
+        const auto sumSquares = _mm_add_ps(A, B);
+
+        const auto rms = _mm_sqrt_ps(_mm_mul_ps(sumSquares, zeroDot25));
+
+        _mm_storeu_ps(reinterpret_cast<float*>(&pDstScanline[iDstPixel]), rms);
+        pSrcScanlineShifted += 8;
+    }
+
+    pSrcScanlineShiftedInOut = pSrcScanlineShifted;
+    return iDstPixel;
+}
+
+/************************************************************************/
+/*                        AverageFloatSSE2()                            */
+/************************************************************************/
+
+template<class T> static int AverageFloatSSE2(int nDstXWidth,
+                                              int nChunkXSize,
+                                              const T*& CPL_RESTRICT pSrcScanlineShiftedInOut,
+                                              T* CPL_RESTRICT pDstScanline)
+{
+    // Optimized implementation for average on Float32 by
+    // processing by group of 4 output pixels.
+    const T* CPL_RESTRICT pSrcScanlineShifted = pSrcScanlineShiftedInOut;
+
+    int iDstPixel = 0;
+    const auto zeroDot25 = _mm_set1_ps(0.25f);
+
+    for( ; iDstPixel < nDstXWidth - 3; iDstPixel += 4 )
+    {
+        // Load 8 Float32 from each line
+        const auto firstLineLo = _mm_loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted));
+        const auto firstLineHi = _mm_loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + 4));
+        const auto secondLineLo = _mm_loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + nChunkXSize));
+        const auto secondLineHi = _mm_loadu_ps(reinterpret_cast<float const*>(pSrcScanlineShifted + 4 + nChunkXSize));
+
+        // Vertical addition
+        const auto sumLo = _mm_add_ps(firstLineLo, secondLineLo);
+        const auto sumHi = _mm_add_ps(firstLineHi, secondLineHi);
+
+        // Horizontal addition
+        const auto A = _mm_shuffle_ps(sumLo, sumHi, 0 | (2 << 2) | (0 << 4) | (2 << 6));
+        const auto B = _mm_shuffle_ps(sumLo, sumHi, 1 | (3 << 2) | (1 << 4) | (3 << 6));
+        const auto sum = _mm_add_ps(A, B);
+
+        const auto average = _mm_mul_ps(sum, zeroDot25);
+
+        _mm_storeu_ps(reinterpret_cast<float*>(&pDstScanline[iDstPixel]), average);
+        pSrcScanlineShifted += 8;
+    }
+
+    pSrcScanlineShiftedInOut = pSrcScanlineShifted;
+    return iDstPixel;
+}
+
+#endif
 
 /************************************************************************/
 /*                    GDALResampleChunk32R_Average()                    */
 /************************************************************************/
 
-template <class T, class Tsum>
+template <class T, class Tsum, GDALDataType eWrkDataType>
 static CPLErr
 GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                                double dfYRatioDstToSrc,
                                double dfSrcXDelta,
                                double dfSrcYDelta,
-                               GDALDataType eWrkDataType,
                                const T* pChunk,
                                const GByte * pabyChunkNodataMask,
                                int nChunkXOff, int nChunkXSize,
@@ -440,6 +1009,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
         int nRightXOffShifted;
         double dfLeftWeight;
         double dfRightWeight;
+        double dfTotalWeightFullLine;
     };
     PrecomputedXValue* pasSrcX = static_cast<PrecomputedXValue *>(
         VSI_MALLOC_VERBOSE(nDstXWidth * sizeof(PrecomputedXValue) ) );
@@ -506,6 +1076,12 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
         pasSrcX[iDstPixel - nDstXOff].nRightXOffShifted = nSrcXOff2 - nChunkXOff;
         pasSrcX[iDstPixel - nDstXOff].dfLeftWeight = ( nSrcXOff2 == nSrcXOff + 1 ) ? 1.0 :  1 - (dfSrcXOff - nSrcXOff);
         pasSrcX[iDstPixel - nDstXOff].dfRightWeight = 1 - (nSrcXOff2 - dfSrcXOff2);
+        pasSrcX[iDstPixel - nDstXOff].dfTotalWeightFullLine = pasSrcX[iDstPixel - nDstXOff].dfLeftWeight;
+        if( nSrcXOff + 1 < nSrcXOff2 )
+        {
+            pasSrcX[iDstPixel - nDstXOff].dfTotalWeightFullLine += nSrcXOff2 - nSrcXOff - 2;
+            pasSrcX[iDstPixel - nDstXOff].dfTotalWeightFullLine += pasSrcX[iDstPixel - nDstXOff].dfRightWeight;
+        }
 
         if( nSrcXOff2 - nSrcXOff != 2 ||
             (nLastSrcXOff2 >= 0 && nLastSrcXOff2 != nSrcXOff) )
@@ -540,15 +1116,47 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
         if( poColorTable == nullptr )
         {
             if( bSrcXSpacingIsTwo && nSrcYOff2 == nSrcYOff + 2 &&
-                pabyChunkNodataMask == nullptr &&
-                (eWrkDataType == GDT_Byte || eWrkDataType == GDT_UInt16) )
+                pabyChunkNodataMask == nullptr )
             {
+              if( eWrkDataType == GDT_Byte || eWrkDataType == GDT_UInt16 )
+              {
                 // Optimized case : no nodata, overview by a factor of 2 and
                 // regular x and y src spacing.
                 const T* pSrcScanlineShifted =
                     pChunk + pasSrcX[0].nLeftXOffShifted +
                     static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize;
-                for( int iDstPixel = 0; iDstPixel < nDstXWidth; ++iDstPixel )
+                int iDstPixel = 0;
+#ifdef USE_SSE2
+                if( bQuadraticMean && eWrkDataType == GDT_Byte )
+                {
+                    iDstPixel = QuadraticMeanByteSSE2OrAVX2(nDstXWidth,
+                                                            nChunkXSize,
+                                                            pSrcScanlineShifted,
+                                                            pDstScanline);
+                }
+                else if( bQuadraticMean /* && eWrkDataType == GDT_UInt16 */ )
+                {
+                    iDstPixel = QuadraticMeanUInt16SSE2(nDstXWidth,
+                                                        nChunkXSize,
+                                                        pSrcScanlineShifted,
+                                                        pDstScanline);
+                }
+                else if( /* !bQuadraticMean && */ eWrkDataType == GDT_Byte )
+                {
+                    iDstPixel = AverageByteSSE2OrAVX2(nDstXWidth,
+                                                      nChunkXSize,
+                                                      pSrcScanlineShifted,
+                                                      pDstScanline);
+                }
+                else /* if( !bQuadraticMean && eWrkDataType == GDT_UInt16 ) */
+                {
+                    iDstPixel = AverageUInt16SSE2(nDstXWidth,
+                                                  nChunkXSize,
+                                                  pSrcScanlineShifted,
+                                                  pDstScanline);
+                }
+#endif
+                for( ; iDstPixel < nDstXWidth; ++iDstPixel )
                 {
                     Tsum nTotal = 0;
                     T nVal;
@@ -567,7 +1175,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 
                     constexpr int nTotalWeight = 4;
                     if( bQuadraticMean )
-                        nVal = ComputeIntegerRMS<T>(nTotal, nTotalWeight);
+                        nVal = ComputeIntegerRMS_4values<T>(nTotal);
                     else
                         nVal = static_cast<T>((nTotal + nTotalWeight/2) / nTotalWeight);
 
@@ -577,6 +1185,60 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                     pDstScanline[iDstPixel] = nVal;
                     pSrcScanlineShifted += 2;
                 }
+              }
+              else
+              {
+                CPLAssert( eWrkDataType == GDT_Float32 );
+                const T* pSrcScanlineShifted =
+                    pChunk + pasSrcX[0].nLeftXOffShifted +
+                    static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize;
+                int iDstPixel = 0;
+#ifdef USE_SSE2
+                if( bQuadraticMean )
+                {
+                    iDstPixel = QuadraticMeanFloatSSE2(nDstXWidth,
+                                                       nChunkXSize,
+                                                       pSrcScanlineShifted,
+                                                       pDstScanline);
+                }
+                else
+                {
+                    iDstPixel = AverageFloatSSE2(nDstXWidth,
+                                                 nChunkXSize,
+                                                 pSrcScanlineShifted,
+                                                 pDstScanline);
+                }
+#endif
+
+                for( ; iDstPixel < nDstXWidth; ++iDstPixel )
+                {
+                    float nTotal = 0;
+                    T nVal;
+                    if( bQuadraticMean )
+                        nTotal =
+                            SQUARE<float>(pSrcScanlineShifted[0])
+                            + SQUARE<float>(pSrcScanlineShifted[1])
+                            + SQUARE<float>(pSrcScanlineShifted[nChunkXSize])
+                            + SQUARE<float>(pSrcScanlineShifted[1+nChunkXSize]);
+                    else
+                        nTotal = static_cast<float>(
+                            pSrcScanlineShifted[0]
+                            + pSrcScanlineShifted[1]
+                            + pSrcScanlineShifted[nChunkXSize]
+                            + pSrcScanlineShifted[1+nChunkXSize]);
+
+                    if( bQuadraticMean )
+                        nVal = static_cast<T>(std::sqrt(nTotal * 0.25f));
+                    else
+                        nVal = static_cast<T>(nTotal * 0.25f);
+
+                    // No need to compare nVal against tNoDataValue as we are
+                    // in a case where pabyChunkNodataMask == nullptr implies
+                    // the absence of nodata value.
+                    pDstScanline[iDstPixel] = nVal;
+                    pSrcScanlineShifted += 2;
+                }
+              }
             }
             else
             {
@@ -586,6 +1248,13 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                 nSrcYOff -= nChunkYOff;
                 nSrcYOff2 -= nChunkYOff;
 
+                double dfTotalWeightFullColumn = dfBottomWeight;
+                if( nSrcYOff + 1 < nSrcYOff2 )
+                {
+                    dfTotalWeightFullColumn += nSrcYOff2 - nSrcYOff - 2;
+                    dfTotalWeightFullColumn += dfTopWeight;
+                }
+
                 for( int iDstPixel = 0; iDstPixel < nDstXWidth; ++iDstPixel )
                 {
                     const int nSrcXOff = pasSrcX[iDstPixel].nLeftXOffShifted;
@@ -593,81 +1262,151 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 
                     double dfTotal = 0;
                     double dfTotalWeight = 0;
-                    GPtrDiff_t nCount = 0;
-
-                    for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
+                    if( pabyChunkNodataMask == nullptr )
                     {
-                        const double dfWeightY =
-                            (iY == nSrcYOff) ? dfBottomWeight :
-                            (iY + 1 == nSrcYOff2) ? dfTopWeight :
-                            1.0;
-
-                        const auto pChunkShifted = pChunk +
-                            static_cast<GPtrDiff_t>(iY) *nChunkXSize;
-                        // Left pixel
+                        auto pChunkShifted = pChunk +
+                                static_cast<GPtrDiff_t>(nSrcYOff) *nChunkXSize;
+                        int nCounterY = nSrcYOff2 - nSrcYOff - 1;
+                        double dfWeightY = dfBottomWeight;
+                        while( true )
                         {
-                            const int iX = nSrcXOff;
-                            const T val = pChunkShifted[iX];
-                            if( pabyChunkNodataMask == nullptr ||
-                                pabyChunkNodataMask[iX + iY *nChunkXSize] )
+                            double dfTotalLine;
+                            if( bQuadraticMean )
                             {
-                                nCount ++;
-                                const double dfWeightX = pasSrcX[iDstPixel].dfLeftWeight;
-                                const double dfWeight = dfWeightX * dfWeightY;
-                                dfTotalWeight += dfWeight;
-                                if( bQuadraticMean )
-                                    dfTotal += SQUARE<double>(val) * dfWeight;
-                                else
-                                    dfTotal += val * dfWeight;
-                            }
-                        }
-
-                        if( nSrcXOff + 1 < nSrcXOff2 )
-                        {
-                            // Middle pixels
-                            for( int iX = nSrcXOff + 1; iX + 1 < nSrcXOff2; ++iX )
-                            {
-                                const T val = pChunkShifted[iX];
-                                if( pabyChunkNodataMask == nullptr ||
-                                    pabyChunkNodataMask[iX + iY *nChunkXSize] )
+                                // Left pixel
                                 {
-                                    nCount ++;
-                                    const double dfWeight = dfWeightY;
-                                    dfTotalWeight += dfWeight;
-                                    if( bQuadraticMean )
-                                        dfTotal += SQUARE<double>(val) * dfWeight;
-                                    else
-                                        dfTotal += val * dfWeight;
+                                    const T val = pChunkShifted[nSrcXOff];
+                                    dfTotalLine = SQUARE<double>(val) * pasSrcX[iDstPixel].dfLeftWeight;
+                                }
+
+                                if( nSrcXOff + 1 < nSrcXOff2 )
+                                {
+                                    // Middle pixels
+                                    for( int iX = nSrcXOff + 1; iX + 1 < nSrcXOff2; ++iX )
+                                    {
+                                        const T val = pChunkShifted[iX];
+                                        dfTotalLine += SQUARE<double>(val);
+                                    }
+
+                                    // Right pixel
+                                    {
+                                        const T val = pChunkShifted[nSrcXOff2 - 1];
+                                        dfTotalLine += SQUARE<double>(val) * pasSrcX[iDstPixel].dfRightWeight;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // Left pixel
+                                {
+                                    const T val = pChunkShifted[nSrcXOff];
+                                    dfTotalLine = val * pasSrcX[iDstPixel].dfLeftWeight;
+                                }
+
+                                if( nSrcXOff + 1 < nSrcXOff2 )
+                                {
+                                    // Middle pixels
+                                    for( int iX = nSrcXOff + 1; iX + 1 < nSrcXOff2; ++iX )
+                                    {
+                                        const T val = pChunkShifted[iX];
+                                        dfTotalLine += val;
+                                    }
+
+                                    // Right pixel
+                                    {
+                                        const T val = pChunkShifted[nSrcXOff2 - 1];
+                                        dfTotalLine += val * pasSrcX[iDstPixel].dfRightWeight;
+                                    }
                                 }
                             }
 
-                            // Right pixel
+                            dfTotal += dfTotalLine * dfWeightY;
+                            --nCounterY;
+                            if( nCounterY < 0 )
+                                break;
+                            pChunkShifted += nChunkXSize;
+                            dfWeightY = (nCounterY == 0) ? dfTopWeight : 1.0;
+                        }
+
+                        dfTotalWeight = pasSrcX[iDstPixel].dfTotalWeightFullLine * dfTotalWeightFullColumn;
+                    }
+                    else
+                    {
+                        GPtrDiff_t nCount = 0;
+                        for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )
+                        {
+                            const auto pChunkShifted = pChunk +
+                                static_cast<GPtrDiff_t>(iY) *nChunkXSize;
+
+                            double dfTotalLine = 0;
+                            double dfTotalWeightLine = 0;
+                            // Left pixel
                             {
-                                const int iX = nSrcXOff2 - 1;
+                                const int iX = nSrcXOff;
                                 const T val = pChunkShifted[iX];
-                                if( pabyChunkNodataMask == nullptr ||
-                                    pabyChunkNodataMask[iX + iY *nChunkXSize] )
+                                if( pabyChunkNodataMask[iX + iY *nChunkXSize] )
                                 {
                                     nCount ++;
-                                    const double dfWeightX = pasSrcX[iDstPixel].dfRightWeight;
-                                    const double dfWeight = dfWeightX * dfWeightY;
-                                    dfTotalWeight += dfWeight;
+                                    const double dfWeightX = pasSrcX[iDstPixel].dfLeftWeight;
+                                    dfTotalWeightLine = dfWeightX;
                                     if( bQuadraticMean )
-                                        dfTotal += SQUARE<double>(val) * dfWeight;
+                                        dfTotalLine = SQUARE<double>(val) * dfWeightX;
                                     else
-                                        dfTotal += val * dfWeight;
+                                        dfTotalLine = val * dfWeightX;
                                 }
                             }
+
+                            if( nSrcXOff + 1 < nSrcXOff2 )
+                            {
+                                // Middle pixels
+                                for( int iX = nSrcXOff + 1; iX + 1 < nSrcXOff2; ++iX )
+                                {
+                                    const T val = pChunkShifted[iX];
+                                    if( pabyChunkNodataMask[iX + iY *nChunkXSize] )
+                                    {
+                                        nCount ++;
+                                        dfTotalWeightLine += 1;
+                                        if( bQuadraticMean )
+                                            dfTotalLine += SQUARE<double>(val);
+                                        else
+                                            dfTotalLine += val;
+                                    }
+                                }
+
+                                // Right pixel
+                                {
+                                    const int iX = nSrcXOff2 - 1;
+                                    const T val = pChunkShifted[iX];
+                                    if( pabyChunkNodataMask[iX + iY *nChunkXSize] )
+                                    {
+                                        nCount ++;
+                                        const double dfWeightX = pasSrcX[iDstPixel].dfRightWeight;
+                                        dfTotalWeightLine += dfWeightX;
+                                        if( bQuadraticMean )
+                                            dfTotalLine += SQUARE<double>(val) * dfWeightX;
+                                        else
+                                            dfTotalLine += val * dfWeightX;
+                                    }
+                                }
+                            }
+
+                            const double dfWeightY =
+                                (iY == nSrcYOff) ? dfBottomWeight :
+                                (iY + 1 == nSrcYOff2) ? dfTopWeight :
+                                1.0;
+                            dfTotal += dfTotalLine * dfWeightY;
+                            dfTotalWeight += dfTotalWeightLine * dfWeightY;
+                        }
+
+                        if( nCount == 0 ||
+                            (bPropagateNoData && nCount <
+                                static_cast<GPtrDiff_t>(nSrcYOff2 - nSrcYOff) * (nSrcXOff2 - nSrcXOff)))
+                        {
+                            pDstScanline[iDstPixel] = tNoDataValue;
+                            continue;
                         }
                     }
-
-                    if( nCount == 0 ||
-                        (bPropagateNoData && nCount <
-                            static_cast<GPtrDiff_t>(nSrcYOff2 - nSrcYOff) * (nSrcXOff2 - nSrcXOff)))
-                    {
-                        pDstScanline[iDstPixel] = tNoDataValue;
-                    }
-                    else if( eWrkDataType == GDT_Byte ||
+                    if( eWrkDataType == GDT_Byte ||
                              eWrkDataType == GDT_UInt16)
                     {
                         T nVal;
@@ -792,10 +1531,9 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
     if( eWrkDataType == GDT_Byte )
     {
         *peDstBufferDataType = eWrkDataType;
-        return GDALResampleChunk32R_AverageT<GByte, int>(
+        return GDALResampleChunk32R_AverageT<GByte, int, GDT_Byte>(
             dfXRatioDstToSrc, dfYRatioDstToSrc,
             dfSrcXDelta, dfSrcYDelta,
-            eWrkDataType,
             static_cast<const GByte *>( pChunk ),
             pabyChunkNodataMask,
             nChunkXOff, nChunkXSize,
@@ -809,34 +1547,53 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             poColorTable,
             bPropagateNoData );
     }
-    else if( eWrkDataType == GDT_UInt16 &&
-             dfXRatioDstToSrc * dfYRatioDstToSrc < 65536 )
+    else if( eWrkDataType == GDT_UInt16  )
     {
         *peDstBufferDataType = eWrkDataType;
-        return GDALResampleChunk32R_AverageT<GUInt16, GUInt32>(
-            dfXRatioDstToSrc, dfYRatioDstToSrc,
-            dfSrcXDelta, dfSrcYDelta,
-            eWrkDataType,
-            static_cast<const GUInt16 *>( pChunk ),
-            pabyChunkNodataMask,
-            nChunkXOff, nChunkXSize,
-            nChunkYOff, nChunkYSize,
-            nDstXOff, nDstXOff2,
-            nDstYOff, nDstYOff2,
-            poOverview,
-            ppDstBuffer,
-            pszResampling,
-            bHasNoData, fNoDataValue,
-            poColorTable,
-            bPropagateNoData );
+        if( EQUAL(pszResampling, "RMS") )
+        {
+            // Use double as accumulation type, because UInt32 could overflow
+            return GDALResampleChunk32R_AverageT<GUInt16, double, GDT_UInt16>(
+                dfXRatioDstToSrc, dfYRatioDstToSrc,
+                dfSrcXDelta, dfSrcYDelta,
+                static_cast<const GUInt16 *>( pChunk ),
+                pabyChunkNodataMask,
+                nChunkXOff, nChunkXSize,
+                nChunkYOff, nChunkYSize,
+                nDstXOff, nDstXOff2,
+                nDstYOff, nDstYOff2,
+                poOverview,
+                ppDstBuffer,
+                pszResampling,
+                bHasNoData, fNoDataValue,
+                poColorTable,
+                bPropagateNoData );
+        }
+        else
+        {
+            return GDALResampleChunk32R_AverageT<GUInt16, GUInt32, GDT_UInt16>(
+                dfXRatioDstToSrc, dfYRatioDstToSrc,
+                dfSrcXDelta, dfSrcYDelta,
+                static_cast<const GUInt16 *>( pChunk ),
+                pabyChunkNodataMask,
+                nChunkXOff, nChunkXSize,
+                nChunkYOff, nChunkYSize,
+                nDstXOff, nDstXOff2,
+                nDstYOff, nDstYOff2,
+                poOverview,
+                ppDstBuffer,
+                pszResampling,
+                bHasNoData, fNoDataValue,
+                poColorTable,
+                bPropagateNoData );
+        }
     }
     else if( eWrkDataType == GDT_Float32 )
     {
         *peDstBufferDataType = eWrkDataType;
-        return GDALResampleChunk32R_AverageT<float, double>(
+        return GDALResampleChunk32R_AverageT<float, double, GDT_Float32>(
             dfXRatioDstToSrc, dfYRatioDstToSrc,
             dfSrcXDelta, dfSrcYDelta,
-            eWrkDataType,
             static_cast<const float *>( pChunk ),
             pabyChunkNodataMask,
             nChunkXOff, nChunkXSize,
@@ -3103,11 +3860,9 @@ GDALDataType GDALGetOvrWorkDataType( const char* pszResampling,
     {
         return GDT_Byte;
     }
-    // For RMS, cannot use UInt16 as working datatype, since the accumulation
-    // type chosen in GDALResampleChunk32R_Average() is UInt32, but that could
-    // overflow when adding together several values.
     else if( (STARTS_WITH_CI(pszResampling, "NEAR") ||
          STARTS_WITH_CI(pszResampling, "AVER") ||
+         EQUAL(pszResampling, "RMS") ||
          EQUAL(pszResampling, "CUBIC") ||
          EQUAL(pszResampling, "CUBICSPLINE") ||
          EQUAL(pszResampling, "LANCZOS") ||

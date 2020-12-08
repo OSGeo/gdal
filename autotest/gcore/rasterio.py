@@ -1072,25 +1072,88 @@ def test_rasterio_floating_point_window_no_resampling_numpy():
 
 
 ###############################################################################
+# Test average downsampling by a factor of 2 on exact boundaries, with uint16 data type
+
+
+def test_rasterio_average_halfsize_downsampling_uint16():
+
+    v1 = 65535
+    v2 = 65535
+    v3 = 65535
+    v4 = 65535
+    m1 = (v1 + v2 + v3 + v4 + 2) >> 2
+
+    v5 = 65535
+    v6 = 2
+    v7 = 0
+    v8 = 0
+    m2 = (v5 + v6 + v7 + v8 + 2) >> 2
+
+    v9 = 32767
+    v10 = 32767
+    v11 = 32767
+    v12 = 32767
+    m3 = (v9 + v10 + v11 + v12 + 2) >> 2
+
+    v13 = 1
+    v14 = 0
+    v15 = 1
+    v16 = 1
+    m4 = (v13 + v14 + v15 + v16 + 2) >> 2
+    ds = gdal.GetDriverByName('MEM').Create('', 18, 2, 1, gdal.GDT_UInt16)
+    ds.WriteRaster(0, 0, 18, 2,
+                   struct.pack('H' * 18 * 2,
+                               v1, v2, v5, v6, v9,  v10, v13, v14, v5, v6, v9,  v10, v13, v14, v1, v2, v5, v6,
+                               v3, v4, v7, v8, v11, v12, v15, v16, v7, v8, v11, v12, v15, v16, v3, v4, v7, v8))
+    # Ask for at least 8 output pixels in width to trigger SSE2 optim
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 18, 2, 9, 1, resample_alg = gdal.GRIORA_Average)
+    assert struct.unpack('H' * 9, data) == (m1, m2, m3, m4, m2, m3, m4, m1, m2)
+
+    ds.BuildOverviews('AVERAGE', [2])
+    ovr_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+    assert ovr_data == data
+
+###############################################################################
+# Test average downsampling by a factor of 2 on exact boundaries, with float32 data type
+
+
+def test_rasterio_average_halfsize_downsampling_float32():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 18, 4, 1, gdal.GDT_Float32)
+    ds.WriteRaster(0, 0, 18, 4,
+                   struct.pack('f' * 18 * 4,
+                               0,     0,     0, 0, 65535, 65535, 0,     0,     0, 0, 65535, 65535, 0,     0,     0, 0, 65535, 65535,
+                               2,     65535, 0, 0, 65535, 65535, 2,     65535, 0, 0, 65535, 65535, 2,     65535, 0, 0, 65535, 65535,
+                               65535, 65535, 0, 0, 0,     0,     65535, 65535, 0, 0, 0,     0,     65535, 65535, 0, 0, 0,     0,
+                               0,     65535, 0, 0, 0,     0,     0,     65535, 0, 0, 0,     0,     0,     65535, 0, 0, 0,     0))
+    # Ask for at least 8 output pixels in width to trigger SSE2 optim
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 18, 4, 9, 2, resample_alg = gdal.GRIORA_Average)
+    assert struct.unpack('f' * 18, data) == pytest.approx(
+                                           (16384.25, 0.0, 65535.0, 16384.25, 0.0, 65535.0, 16384.25, 0.0, 65535.0,
+                                            49151.25, 0.0, 0.0,     49151.25, 0.0, 0.0,     49151.25, 0.0, 0.0), rel=1e-10)
+
+    ds.BuildOverviews('AVERAGE', [2])
+    ovr_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+    assert ovr_data == data
+
+###############################################################################
 # Test rms downsampling by a factor of 2 on exact boundaries, with float data type
 
 
 def test_rasterio_rms_halfsize_downsampling_float32():
 
-    ds = gdal.GetDriverByName('MEM').Create('', 6, 6, 1, gdal.GDT_Float32)
-    ds.WriteRaster(0, 0, 6, 6,
-                   struct.pack('f' * 6 * 6,
-                               0,   0,   0, 0, 0, 0,
-                               2,   100, 0, 0, 0, 0,
-                               100, 100, 0, 0, 0, 0,
-                               0,   100, 0, 0, 0, 0,
-                               0,   0,   0, 0, 0, 0,
-                               0,   0,   0, 0, 0, 0))
-    data = ds.GetRasterBand(1).ReadRaster(0, 0, 6, 6, 3, 3, resample_alg = gdal.GRIORA_RMS)
-    assert struct.unpack('f' * 9, data) == pytest.approx(
-                                           (50.0099983215332, 0., 0.,
-                                            86.6025390625, 0., 0.,
-                                            0., 0., 0.), rel = 1e-10)
+    ds = gdal.GetDriverByName('MEM').Create('', 18, 4, 1, gdal.GDT_Float32)
+    ds.WriteRaster(0, 0, 18, 4,
+                   struct.pack('f' * 18 * 4,
+                               0,     0,     0, 0, 65535, 65535, 0,     0,     0, 0, 65535, 65535, 0,     0,     0, 0, 65535, 65535,
+                               2,     65535, 0, 0, 65535, 65535, 2,     65535, 0, 0, 65535, 65535, 2,     65535, 0, 0, 65535, 65535,
+                               65535, 65535, 0, 0, 0,     0,     65535, 65535, 0, 0, 0,     0,     65535, 65535, 0, 0, 0,     0,
+                               0,     65535, 0, 0, 0,     0,     0,     65535, 0, 0, 0,     0,     0,     65535, 0, 0, 0,     0))
+    # Ask for at least 8 output pixels in width to trigger SSE2 optim
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 18, 4, 9, 2, resample_alg = gdal.GRIORA_RMS)
+    assert struct.unpack('f' * 18, data) == pytest.approx(
+                                           (32767.5,       0, 65535, 32767.5,       0, 65535, 32767.5,       0, 65535,
+                                            56754.9765625, 0, 0,     56754.9765625, 0, 0,     56754.9765625, 0, 0), rel=1e-10)
 
     ds.BuildOverviews('RMS', [2])
     ovr_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster()
@@ -1099,22 +1162,53 @@ def test_rasterio_rms_halfsize_downsampling_float32():
 ###############################################################################
 # Test rms downsampling by a factor of 2 on exact boundaries, with byte data type
 
+def internal_test_rasterio_rms_halfsize_downsampling_byte_content(gdal_dt, struct_type):
+
+    ds = gdal.GetDriverByName('MEM').Create('', 38, 6, 1, gdal_dt)
+    ds.WriteRaster(0, 0, 38, 6,
+        struct.pack(struct_type * 38 * 6,
+        0,   0,   1, 0, 1, 1,     0, 0,   0, 0,    1, 0, 1, 1,     0, 0,   0, 0,   0,   0,   1, 0, 1, 1,     0, 0,   0, 0,    1, 0, 1, 1,     0, 0,   0, 0,   0,   0,
+        2,   100, 0, 0, 0, 0,     2, 100, 2, 100,  0, 0, 0, 0,     2, 100, 2, 100, 2,   100, 0, 0, 0, 0,     2, 100, 2, 100,  0, 0, 0, 0,     2, 100, 2, 100, 2,   100,
+        100, 100, 1, 1, 1, 1,     0, 0,   0, 0,    1, 1, 1, 1,     0, 0,   0, 0,   100, 100, 1, 1, 1, 1,     0, 0,   0, 0,    1, 1, 1, 1,     0, 0,   0, 0,   100, 100,
+        0,   100, 1, 0, 1, 1,     0, 0,   0, 0,    1, 0, 1, 1,     0, 0,   0, 0,   0,   100, 1, 0, 1, 1,     0, 0,   0, 0,    1, 0, 1, 1,     0, 0,   0, 0,   0,   100,
+        188, 229, 0, 0, 255, 255, 0, 0,   0, 0,    0, 0, 255, 255, 0, 0,   0, 0,   0,   0,   0, 0, 255, 255, 0, 0,   0, 0,    0, 0, 255, 255, 0, 0,   0, 0,   188, 229,
+        233, 233, 0, 0, 255, 255, 0, 0,   0, 0,    0, 0, 255, 255, 0, 0,   0, 0,   0,   0,   0, 0, 255, 255, 0, 0,   0, 0,    0, 0, 255, 255, 0, 0,   0, 0,   233, 233 ))
+    # Make sure to request at least 16 pixels in width to test the SSE2 implementation
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 38, 6, 19, 3, resample_alg = gdal.GRIORA_RMS)
+    assert struct.unpack(struct_type * 19 * 3, data) == \
+        (50, 0, 0,   50, 50, 0, 0,   50, 50, 50, 0, 0,   50, 50, 0, 0,   50, 50, 50,
+         87, 1, 1,   0,  0,  1, 1,   0,  0,  87, 1, 1,   0,  0,  1, 1,   0,  0,  87,
+         222,0, 255, 0,  0,  0, 255, 0,  0,  0,  0, 255, 0,  0,  0, 255, 0,  0,  222)
+
+    ds.BuildOverviews('RMS', [2])
+    ovr_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+    assert ovr_data == data
 
 def test_rasterio_rms_halfsize_downsampling_byte():
 
-    ds = gdal.GetDriverByName('MEM').Create('', 6, 6, 1, gdal.GDT_Byte)
-    ds.WriteRaster(0, 0, 6, 6,
-                   struct.pack('B' * 6 * 6,
-                               0,   0,   1, 0, 1, 1,
-                               2,   100, 0, 0, 0, 0,
-                               100, 100, 1, 1, 1, 1,
-                               0,   100, 1, 0, 1, 1,
-                               0,   0,   0, 0, 255, 255,
-                               0,   0,   0, 0, 255, 255))
-    data = ds.GetRasterBand(1).ReadRaster(0, 0, 6, 6, 3, 3, resample_alg = gdal.GRIORA_RMS)
-    assert struct.unpack('B' * 9, data) == (50, 0, 0,
-                                            87, 1, 1,
-                                            0,  0, 255)
+    internal_test_rasterio_rms_halfsize_downsampling_byte_content(gdal.GDT_Byte, 'B')
+
+###############################################################################
+# Test rms downsampling by a factor of 2 on exact boundaries, with byte data type
+# and nodata never hit
+
+def test_rasterio_rms_halfsize_downsampling_byte_nodata_not_hit():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 20, 6, 1, gdal.GDT_Byte)
+    ds.GetRasterBand(1).SetNoDataValue(180)
+    ds.WriteRaster(0, 0, 20, 6,
+                   struct.pack('B' * 20 * 6,
+                               0,   0,   1, 0, 1, 1,     0, 0,   0, 0,    1, 0, 1, 1,     0, 0,   0, 0,   0,   0,
+                               2,   100, 0, 0, 0, 0,     2, 100, 2, 100,  0, 0, 0, 0,     2, 100, 2, 100, 2,   100,
+                               100, 100, 1, 1, 1, 1,     0, 0,   0, 0,    1, 1, 1, 1,     0, 0,   0, 0,   100, 100,
+                               0,   100, 1, 0, 1, 1,     0, 0,   0, 0,    1, 0, 1, 1,     0, 0,   0, 0,   0,   100,
+                               0,   0,   0, 0, 255, 255, 0, 0,   0, 0,    0, 0, 255, 255, 0, 0,   0, 0,   0,   0,
+                               0,   0,   0, 0, 255, 255, 0, 0,   0, 0,    0, 0, 255, 255, 0, 0,   0, 0,   0,   0))
+    # Make sure to request at least 8 pixels in width to test the SSE2 implementation
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 20, 6, 10, 3, resample_alg = gdal.GRIORA_RMS)
+    assert struct.unpack('B' * 30, data) == (50, 0, 0,   50, 50, 0, 0,   50, 50, 50,
+                                             87, 1, 1,   0,  0,  1, 1,   0,  0,  87,
+                                             0,  0, 255, 0,  0,  0, 255, 0,  0,  0)
 
     ds.BuildOverviews('RMS', [2])
     ovr_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster()
@@ -1126,23 +1220,44 @@ def test_rasterio_rms_halfsize_downsampling_byte():
 
 def test_rasterio_rms_halfsize_downsampling_uint16():
 
-    ds = gdal.GetDriverByName('MEM').Create('', 6, 6, 1, gdal.GDT_UInt16)
-    ds.WriteRaster(0, 0, 6, 6,
-                   struct.pack('H' * 6 * 6,
-                               0,     0,     0, 0, 0,     0,
-                               2,     65535, 0, 0, 0,     0,
-                               65535, 65535, 0, 0, 0,     0,
-                               0,     65535, 0, 0, 0,     0,
-                               0,     0,     0, 0, 65535, 65535,
-                               0,     0,     0, 0, 65535, 65535))
-    data = ds.GetRasterBand(1).ReadRaster(0, 0, 6, 6, 3, 3, resample_alg = gdal.GRIORA_RMS)
-    assert struct.unpack('H' * 9, data) == (32768, 0, 0,
-                                            56755, 0, 0,
-                                            0,  0, 65535)
+    ds = gdal.GetDriverByName('MEM').Create('', 18, 4, 1, gdal.GDT_UInt16)
+    ds.WriteRaster(0, 0, 18, 4,
+                   struct.pack('H' * 18 * 4,
+                               0,     0,     0, 0, 65535, 65535, 0,     0,     0, 0, 65535, 65535, 0,     0,     0, 0, 65535, 65535,
+                               2,     65535, 0, 0, 65535, 65535, 2,     65535, 0, 0, 65535, 65535, 2,     65535, 0, 0, 65535, 65535,
+                               65535, 65535, 0, 0, 0,     0,     65535, 65535, 0, 0, 0,     0,     65535, 65535, 0, 0, 0,     0,
+                               0,     65535, 0, 0, 0,     0,     0,     65535, 0, 0, 0,     0,     0,     65535, 0, 0, 0,     0))
+    # Ask for at least 4 output pixels in width to trigger SSE2 optim
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 18, 4, 9, 2, resample_alg = gdal.GRIORA_RMS)
+    assert struct.unpack('H' * 18, data) == (32768, 0, 65535, 32768, 0, 65535, 32768, 0, 65535,
+                                             56755, 0, 0,     56755, 0, 0,     56755, 0, 0)
 
-    ds.BuildOverviews('RMS', [2])
-    ovr_data = ds.GetRasterBand(1).GetOverview(0).ReadRaster()
-    assert ovr_data == data
+
+###############################################################################
+# Test rms downsampling by a factor of 2 on exact boundaries, with uint16 data type
+# and all values fitting on 14 bits
+
+
+def test_rasterio_rms_halfsize_downsampling_uint16_fits_in_14bits():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 8, 2, 1, gdal.GDT_UInt16)
+    ds.WriteRaster(0, 0, 8, 2,
+                   struct.pack('H' * 8 * 2,
+                               10, 9,  16383, 16383, 1, 0, 16380, 16380,
+                               10, 10, 16383, 16383, 1, 1, 16378, 16380))
+    # Ask for at least 4 output pixels in width to trigger SSE2 optim
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 8, 2, 4, 1, resample_alg = gdal.GRIORA_RMS)
+    assert struct.unpack('H' * 4, data) == (10, 16383, 1, 16380)
+
+###############################################################################
+# Test rms downsampling by a factor of 2 on exact boundaries, with uint16 data type
+# but with content as in test_rasterio_rms_halfsize_downsampling_byte to
+# check UInt16 resampling is consistent with Byte one
+
+def test_rasterio_rms_halfsize_downsampling_uint16_with_byte_content():
+
+    internal_test_rasterio_rms_halfsize_downsampling_byte_content(gdal.GDT_UInt16, 'H')
+
 
 ###############################################################################
 # Test rms downsampling by a factor of 2. / 3, with float data type

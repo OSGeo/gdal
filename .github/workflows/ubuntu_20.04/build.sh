@@ -22,7 +22,17 @@ cd gdal
 export CC="ccache gcc"
 export CXX="ccache g++"
 
-CXXFLAGS="-std=c++17 -O1" ./configure --prefix=/usr \
+ARCH_FLAGS=""
+if (g++ -march=native -dM -E -x c++ - < /dev/null | grep AVX2 >/dev/null); then
+    ARCH_FLAGS="-mavx2"
+    echo "-mavx2 enabled"
+    echo "Effective SSE/AVX flags:"
+    g++ -mavx2 -dM -E -x c++ - < /dev/null | grep -E 'SSE|AVX'
+else
+    echo "AVX2 not available"
+fi
+
+CXXFLAGS="-std=c++17 -O1 $ARCH_FLAGS" CFLAGS="-O1 $ARCH_FLAGS" ./configure --prefix=/usr \
     --without-libtool \
     --with-hide-internal-symbols \
     --with-jpeg12 \
