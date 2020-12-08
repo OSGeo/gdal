@@ -62,7 +62,7 @@ Examples:
 
 .kmz, .ods and .xlsx extensions are also detected as valid extensions for zip-compatible archives.
 
-Starting with GDAL 2.2, an alternate syntax is available so as to enable chaining and not being dependent on .zip extension, e.g.: :file:`/vsizip/{/path/to/the/archive}/path/inside/the/zip/file`. Note that :file:`/path/to/the/archive` may also itself use this alternate syntax.
+Starting with GDAL 2.2, an alternate syntax is available so as to enable chaining and not being dependent on .zip extension, e.g.: ``/vsizip/{/path/to/the/archive}/path/inside/the/zip/file``. Note that :file:`/path/to/the/archive` may also itself use this alternate syntax.
 
 Write capabilities are also available. They allow creating a new zip file and adding new files to an already existing (or just created) zip file.
 
