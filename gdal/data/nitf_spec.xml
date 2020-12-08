@@ -750,18 +750,18 @@
     <!-- STDI-0002-1-v5.0 Appendix AL, Section AL.6.2.4, Table AL.6-3 -->
     <tre name="ILLUMB" minlength="381" maxlength="99985" md_prefix="NITF_ILLUMB_" location="image">
         <field name="NUM_BANDS" length="4" type="integer"/>
-        <field name="BAND_UNIT" length="40" type="string"/>
+        <field name="BAND_UNIT" length="40" type="ISO8859-1"/>
         <loop counter="NUM_BANDS" md_prefix="BAND_%04d_">
             <field name="LBOUND" length="16" type="real"/>
             <field name="UBOUND" length="16" type="real"/>
         </loop>
         <field name="NUM_OTHERS" length="2" type="integer"/>
         <loop counter="NUM_OTHERS" md_prefix="OTHER_%02d_">
-            <field name="OTHER_NAME" length="40" type="string"/>
+            <field name="OTHER_NAME" length="40" type="ISO8859-1"/>
         </loop>
         <field name="NUM_COMS" length="1" type="integer"/>
         <loop counter="NUM_COMS" md_prefix="COMS_%01d_">
-            <field name="COMMENT" length="80" type="string"/>
+            <field name="COMMENT" length="80" type="ISO8859-1"/>
         </loop>
         <field name="GEO_DATUM" length="80" type="string"/>
         <field name="GEO_DATUM_CODE" length="4" type="string"/>
@@ -771,8 +771,8 @@
         <field name="VERTICAL_REF_CODE" length="4" type="string"/>
         <field name="EXISTENCE_MASK" length="3" type="bitmask"/>
         <if cond="EXISTENCE_MASK:23">
-            <field name="RAD_QUANTITY" length="40" type="string"/>
-            <field name="RADQ_UNIT" length="40" type="string"/>
+            <field name="RAD_QUANTITY" length="40" type="ISO8859-1"/>
+            <field name="RADQ_UNIT" length="40" type="ISO8859-1"/>
         </if>
         <field name="NUM_ILLUM_SETS" length="3" type="integer"/>
         <loop counter="NUM_ILLUM_SETS" md_prefix="ILLUM_SET_%03d_">
@@ -874,19 +874,19 @@
 
     <!-- STDI-0002-1 Appendix AK: Table AK.6-5: MATESA -->
     <tre name="MATESA" location="file">
-        <field name="CUR_SOURCE" length="42" type="string"/>
-        <field name="CUR_MATE_TYPE" length="16" type="string"/>
+        <field name="CUR_SOURCE" length="42" type="ISO8859-1"/>
+        <field name="CUR_MATE_TYPE" length="16" type="ISO8859-1"/>
         <field name="CUR_FILE_ID_LEN" length="4" type="integer" minval="1" maxval="9999"/>
-        <field name="CUR_FILE_ID" length_var="CUR_FILE_ID_LEN" type="string"/>
+        <field name="CUR_FILE_ID" length_var="CUR_FILE_ID_LEN" type="ISO8859-1"/>
         <field name="NUM_GROUPS" length="4" type="integer" minval="1" maxval="9999"/>
         <loop counter="NUM_GROUPS" md_prefix="GROUP_%d" name="GROUPS">
-            <field name="RELATIONSHIP" length="24" type="string"/>
+            <field name="RELATIONSHIP" length="24" type="ISO8859-1"/>
             <field name="NUM_MATES" length="4" type="integer" minval="1" maxval="9999"/>
             <loop counter="NUM_MATES" md_prefix="MATE_%d" name="MATES">
-                 <field name="SOURCE" length="42" type="string"/>
-                 <field name="MATE_TYPE" length="16" type="string"/>
+                 <field name="SOURCE" length="42" type="ISO8859-1"/>
+                 <field name="MATE_TYPE" length="16" type="ISO8859-1"/>
                  <field name="MATE_ID_LEN" length="4" type="integer" minval="1" maxval="9999"/>
-                 <field name="MATE_ID" length_var="MATE_ID_LEN" type="string"/>
+                 <field name="MATE_ID" length_var="MATE_ID_LEN" type="ISO8859-1"/>
             </loop>
         </loop>
     </tre>
@@ -1145,7 +1145,7 @@
         <field name="PERBAND" length="1" type="string"/>
         <loop counter="NUMMETRICS" md_prefix="METRIC_%05d_">
             <field name="DESCRIPTION" length="40" type="string"/>
-            <field name="UNIT" length="40" type="string"/>
+            <field name="UNIT" length="40" type="ISO8859-1"/>
             <field name="FITTYPE" length="1" type="string"/>
             <if cond="FITTYPE=P">
                 <field name="NUMCOEF" length="1" type="integer"/>
@@ -1985,7 +1985,7 @@
     <tre name="SECURA" md_prefix="NITF_SECURA_" location="file" minlength="251" maxlength="99988">
         <field name="FDATTIM" length="14" type="string"/>
         <field name="NITFVER" length="9" type="string"/>
-        <field name="NFSECFLDS" length="207" type="string"/>
+        <field name="NFSECFLDS" length="207" type="ISO8859-1"/>
         <field name="SECSTD" length="8" type="string"/>
         <field name="SECCOMP" length="8" type="string"/>
         <field name="SECLEN" length="5" type="integer"/>
@@ -2425,7 +2425,7 @@
                     <field name="APR" length="20" type="real"/>
                 </if>
                 <if cond="APF=A">
-                    <field name="APA" length="20" type="string"/>
+                    <field name="APA" length="20" type="ISO8859-1"/>
                 </if>
             </loop>
         </loop>

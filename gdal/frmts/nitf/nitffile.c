@@ -2484,6 +2484,15 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                         break;
                     }
                 }
+                else if (strcmp(pszType, "ISO8859-1") == 0)
+                {
+                    NITFExtractMetadata( &papszTmp, pachTRE, *pnTreOffset,
+                                        nLength, pszMDItemName );
+
+                    pszValue = CPLRecode(strchr(papszTmp[0], '=') + 1, CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
+                    papszTmp = CSLSetNameValue(papszTmp, pszMDItemName, pszValue);
+
+                }
                 else
                 {
                     NITFExtractMetadata( &papszTmp, pachTRE, *pnTreOffset,

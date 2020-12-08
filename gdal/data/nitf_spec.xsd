@@ -132,6 +132,7 @@
                     <xs:enumeration value="real"/>
                     <xs:enumeration value="IEEE754_Float32_BigEndian"/>
                     <xs:enumeration value="UnsignedInt_BigEndian"/>
+                    <xs:enumeration value="ISO8859-1"/>
                     <xs:enumeration value="bitmask"/>
                 </xs:restriction>
             </xs:simpleType>
