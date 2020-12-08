@@ -838,6 +838,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryArrayWithLimit(
 	uint32 datasize;
 	void* data;
         uint64 target_count64;
+        int original_datasize_clamped;
 	typesize=TIFFDataWidth(direntry->tdir_type);
 
         target_count64 = (direntry->tdir_count > maxcount) ?
@@ -849,6 +850,12 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryArrayWithLimit(
 		return(TIFFReadDirEntryErrOk);
 	}
         (void) desttypesize;
+
+        /* We just want to know if the original tag size is more than 4 bytes
+         * (classic TIFF) or 8 bytes (BigTIFF)
+         */
+        original_datasize_clamped =
+            ((direntry->tdir_count > 10) ? 10 : (int)direntry->tdir_count) * typesize;
 
         /* 
          * As a sanity check, make sure we have no more than a 2GB tag array 
@@ -881,7 +888,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryArrayWithLimit(
 	}
 	if (!(tif->tif_flags&TIFF_BIGTIFF))
 	{
-		if (datasize<=4)
+		if (original_datasize_clamped<=4)
 			_TIFFmemcpy(data,&direntry->tdir_offset,datasize);
 		else
 		{
@@ -902,7 +909,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryArrayWithLimit(
 	}
 	else
 	{
-		if (datasize<=8)
+		if (original_datasize_clamped<=8)
 			_TIFFmemcpy(data,&direntry->tdir_offset,datasize);
 		else
 		{
