@@ -474,7 +474,6 @@ inline __m128i sse2_hadd_epi16(__m128i a, __m128i b)
 #define add_epi16       _mm256_add_epi16
 #define sub_epi16       _mm256_sub_epi16
 #define packus_epi16    _mm256_packus_epi16
-#define undefined_int   _mm256_undefined_si256
 /* AVX2 operates on 2 separate 128-bit lanes, so we have to do shuffling */
 /* to get the lower 128-bit bits of what would be a true 256-bit vector register */
 #define store_lo(x,y)   _mm_storeu_si128(reinterpret_cast<__m128i*>(x), \
@@ -505,7 +504,6 @@ inline __m128i sse2_hadd_epi16(__m128i a, __m128i b)
 #define add_epi16       _mm_add_epi16
 #define sub_epi16       _mm_sub_epi16
 #define packus_epi16    _mm_packus_epi16
-#define undefined_int   _mm_undefined_si128
 #define store_lo(x,y)   _mm_storel_epi64(reinterpret_cast<__m128i*>(x), (y))
 #define hadd_epi16      sse2_hadd_epi16
 #define zeroupper()     (void)0
@@ -583,7 +581,7 @@ template<class T> static int QuadraticMeanByteSSE2OrAVX2(
         rms = sub_epi16(rms, mask);
 
         // Pack each 16 bit RMS value to 8 bits
-        rms = packus_epi16(rms, undefined_int());
+        rms = packus_epi16(rms, rms /* could be anything */);
         store_lo(&pDstScanline[iDstPixel], rms);
         pSrcScanlineShifted += 2 * DEST_ELTS;
     }
@@ -633,7 +631,7 @@ template<class T> static int AverageByteSSE2OrAVX2(
         auto average = srli_epi16(add_epi16(sum, two16), 2);
 
         // Pack each 16 bit average value to 8 bits
-        average = packus_epi16(average, undefined_int());
+        average = packus_epi16(average, average /* could be anything */);
         store_lo(&pDstScanline[iDstPixel], average);
         pSrcScanlineShifted += 2 * DEST_ELTS;
     }
@@ -686,8 +684,9 @@ template<class T> static int QuadraticMeanUInt16SSE2(int nDstXWidth,
         // Detect if all of the source values fit in 14 bits.
         // because if x < 2^14, then 4 * x^2 < 2^30 which fits in a signed int32
         // and we can do a much faster implementation.
+        const auto maskTmp = _mm_srli_epi16(_mm_or_si128(firstLine, secondLine), 14);
         const auto nMaskFitsIn14Bits = _mm_cvtsi128_si64(
-            _mm_packus_epi16(_mm_srli_epi16(_mm_or_si128(firstLine, secondLine), 14), _mm_undefined_si128()));
+            _mm_packus_epi16(maskTmp, maskTmp /* could be anything */));
         if( nMaskFitsIn14Bits == 0 )
         {
             // Multiplication of 16 bit values and horizontal
@@ -719,7 +718,7 @@ template<class T> static int QuadraticMeanUInt16SSE2(int nDstXWidth,
                 _mm_add_epi32(_mm_madd_epi16(rms, rms), rms));
             rms = _mm_sub_epi32(rms, mask);
             // Pack each 32 bit RMS value to 16 bits
-            rms = _mm_packs_epi32(rms, _mm_undefined_si128());
+            rms = _mm_packs_epi32(rms, rms /* could be anything */);
             _mm_storel_epi64(reinterpret_cast<__m128i*>(&pDstScanline[iDstPixel]), rms);
             pSrcScanlineShifted += 8;
             continue;
@@ -784,7 +783,7 @@ template<class T> static int QuadraticMeanUInt16SSE2(int nDstXWidth,
         rms = _mm_sub_epi32(rms, mask);
 
         // Pack each 32 bit RMS value to 16 bits
-        rms = sse2_packus_epi32(rms, _mm_undefined_si128());
+        rms = sse2_packus_epi32(rms, rms /* could be anything */);
         _mm_storel_epi64(reinterpret_cast<__m128i*>(&pDstScanline[iDstPixel]), rms);
         pSrcScanlineShifted += 8;
     }
