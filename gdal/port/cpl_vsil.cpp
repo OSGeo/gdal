@@ -663,11 +663,11 @@ int VSIRename( const char * oldpath, const char * newpath )
  *     with the source one.
  * </li>
  * <li>NUM_THREADS=integer. Number of threads to use for parallel file copying.
- *     Only use for when /vsis3/, /vsigs/ or /vsiaz/ is in source or target.
+ *     Only use for when /vsis3/, /vsigs/, /vsiaz/ or /vsiadls/ is in source or target.
  *     Since GDAL 3.1</li>
  * <li>CHUNK_SIZE=integer. Maximum size of chunk (in bytes) to use to split
- *     large objects when downloading them from /vsis3/, /vsigs/ or /vsiaz/ to
- *     local file system, or for upload to /vsis3/ or /vsiaz/ from local file system.
+ *     large objects when downloading them from /vsis3/, /vsigs/, /vsiaz/ or /vsiadls/ to
+ *     local file system, or for upload to /vsis3/, /vsiaz/ or /vsiadls/ from local file system.
  *     Only used if NUM_THREADS > 1.
  *     For upload to /vsis3/, this chunk size must be set at least to 5 MB.
  *     Since GDAL 3.1</li>
@@ -2674,6 +2674,7 @@ VSIFileManager *VSIFileManager::Get()
       VSIInstallGSStreamingFileHandler();
       VSIInstallAzureFileHandler();
       VSIInstallAzureStreamingFileHandler();
+      VSIInstallADLSFileHandler();
       VSIInstallOSSFileHandler();
       VSIInstallOSSStreamingFileHandler();
       VSIInstallSwiftFileHandler();

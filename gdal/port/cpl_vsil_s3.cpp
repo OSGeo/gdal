@@ -544,7 +544,7 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
     IVSIS3LikeHandleHelper* CreateHandleHelper(
     const char* pszURI, bool bAllowNoObject) override;
 
-    CPLString GetFSPrefix() override { return "/vsis3/"; }
+    CPLString GetFSPrefix() const override { return "/vsis3/"; }
 
     void ClearCache() override;
 
@@ -575,6 +575,8 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
                             CSLConstList papszMetadata,
                             const char* pszDomain,
                             CSLConstList papszOptions ) override;
+
+    bool SupportsParallelMultipartUpload() const override { return true; }
 };
 
 /************************************************************************/
@@ -849,6 +851,7 @@ bool VSIS3WriteHandle::UploadPart()
     }
     const CPLString osEtag =
         m_poFS->UploadPart(m_osFilename, m_nPartNumber, m_osUploadID,
+                           static_cast<vsi_l_offset>(m_nBufferSize) * (m_nPartNumber-1),
                            m_pabyBuffer, m_nBufferOff,
                            m_poS3HandleHelper,
                            m_nMaxRetry, m_dfRetryDelay);
@@ -863,6 +866,7 @@ bool VSIS3WriteHandle::UploadPart()
 CPLString IVSIS3LikeFSHandler::UploadPart(const CPLString& osFilename,
                                           int nPartNumber,
                                           const std::string& osUploadID,
+                                          vsi_l_offset /* nPosition */,
                                           const void* pabyBuffer,
                                           size_t nBufferSize,
                                           IVSIS3LikeHandleHelper *poS3HandleHelper,
@@ -1461,6 +1465,7 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
 bool IVSIS3LikeFSHandler::CompleteMultipart(const CPLString& osFilename,
                                             const CPLString& osUploadID,
                                             const std::vector<CPLString>& aosEtags,
+                                            vsi_l_offset /* nTotalSize */,
                                             IVSIS3LikeHandleHelper *poS3HandleHelper,
                                             int nMaxRetry,
                                             double dfRetryDelay)
@@ -1681,7 +1686,8 @@ int VSIS3WriteHandle::Close()
                 nRet = -1;
             else if( m_poFS->CompleteMultipart(
                                      m_osFilename, m_osUploadID,
-                                     m_aosEtags, m_poS3HandleHelper,
+                                     m_aosEtags, m_nCurOffset,
+                                     m_poS3HandleHelper,
                                      m_nMaxRetry, m_dfRetryDelay) )
             {
                 InvalidateParentDirectory();
@@ -2449,7 +2455,7 @@ bool VSIS3FSHandler::SetFileMetadata( const char * pszFilename,
 /*                               Mkdir()                                */
 /************************************************************************/
 
-int IVSIS3LikeFSHandler::MkdirInternal( const char * pszDirname, bool bDoStatCheck )
+int IVSIS3LikeFSHandler::MkdirInternal( const char * pszDirname, long /*nMode*/, bool bDoStatCheck )
 {
     if( !STARTS_WITH_CI(pszDirname, GetFSPrefix()) )
         return -1;
@@ -2465,7 +2471,7 @@ int IVSIS3LikeFSHandler::MkdirInternal( const char * pszDirname, bool bDoStatChe
     {
         VSIStatBufL sStat;
         if( VSIStatL(osDirname, &sStat) == 0 &&
-            sStat.st_mode == S_IFDIR )
+            VSI_ISDIR(sStat.st_mode) )
         {
             CPLDebug(GetDebugKey(), "Directory %s already exists", osDirname.c_str());
             errno = EEXIST;
@@ -2504,9 +2510,9 @@ int IVSIS3LikeFSHandler::MkdirInternal( const char * pszDirname, bool bDoStatChe
     }
 }
 
-int IVSIS3LikeFSHandler::Mkdir( const char * pszDirname, long /* nMode */ )
+int IVSIS3LikeFSHandler::Mkdir( const char * pszDirname, long nMode )
 {
-    return MkdirInternal(pszDirname, true);
+    return MkdirInternal(pszDirname, nMode, true);
 }
 
 /************************************************************************/
@@ -2532,7 +2538,7 @@ int IVSIS3LikeFSHandler::Rmdir( const char * pszDirname )
         errno = ENOENT;
         return -1;
     }
-    else if( sStat.st_mode != S_IFDIR )
+    else if( !VSI_ISDIR(sStat.st_mode) )
     {
         CPLDebug(GetDebugKey(), "%s is not a directory", pszDirname);
         errno = ENOTDIR;
@@ -2721,7 +2727,7 @@ int IVSIS3LikeFSHandler::Unlink( const char *pszFilename )
         errno = ENOENT;
         return -1;
     }
-    else if( sStat.st_mode != S_IFREG )
+    else if( !VSI_ISREG(sStat.st_mode) )
     {
         CPLDebug(GetDebugKey(), "%s is not a file", pszFilename);
         errno = EISDIR;
@@ -2759,7 +2765,7 @@ int IVSIS3LikeFSHandler::Rename( const char *oldpath, const char *newpath )
     if( strcmp(oldpath, newpath) == 0 )
         return 0;
 
-    if( sStat.st_mode == S_IFDIR )
+    if( VSI_ISDIR(sStat.st_mode) )
     {
         CPLStringList aosList(VSIReadDir(oldpath));
         Mkdir(newpath, 0755);
@@ -2777,7 +2783,7 @@ int IVSIS3LikeFSHandler::Rename( const char *oldpath, const char *newpath )
     }
     else
     {
-        if( VSIStatL(newpath, &sStat) == 0 && sStat.st_mode == S_IFDIR )
+        if( VSIStatL(newpath, &sStat) == 0 && VSI_ISDIR(sStat.st_mode) )
         {
             CPLDebug(GetDebugKey(), "%s already exists and is a directory", newpath);
             errno = ENOTEMPTY;
@@ -2975,8 +2981,8 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
 
         NetworkStatisticsLogger::LogDELETE();
 
-        // S3 and GS respond with 204. Azure with 202
-        if( response_code != 204 && response_code != 202)
+        // S3 and GS respond with 204. Azure with 202. ADLS with 200.
+        if( response_code != 204 && response_code != 202 && response_code != 200 )
         {
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
@@ -3174,6 +3180,22 @@ static CPLString ComputeMD5OfLocalFile(VSILFILE* fp)
 }
 
 /************************************************************************/
+/*                         GetStreamingPath()                           */
+/************************************************************************/
+
+CPLString IVSIS3LikeFSHandler::GetStreamingPath( const char* pszFilename ) const
+{
+    const CPLString osPrefix(GetFSPrefix());
+    if( !STARTS_WITH_CI(pszFilename, osPrefix) )
+        return CPLString();
+
+    // Transform /vsis3/foo into /vsis3_streaming/foo
+    const size_t nPrefixLen = osPrefix.size();
+    return osPrefix.substr(0, nPrefixLen-1) + "_streaming/"  +
+                                                (pszFilename + nPrefixLen);
+}
+
+/************************************************************************/
 /*                           CopyFile()                                 */
 /************************************************************************/
 
@@ -3204,22 +3226,26 @@ bool IVSIS3LikeFSHandler::CopyFile(VSILFILE* fpIn,
 
     if( fpIn == nullptr )
     {
-        if( STARTS_WITH(pszSource, osPrefix) &&
-            (EQUAL(osPrefix, "/vsis3/") ||
-             EQUAL(osPrefix, "/vsioss/") ||
-             EQUAL(osPrefix, "/vsigs/") ||
-             EQUAL(osPrefix, "/vsiaz/") ||
-             EQUAL(osPrefix, "/vsiswift/")) )
+        if( STARTS_WITH(pszSource, osPrefix) )
         {
-            // Transform /vsis3/foo insto /vsis3_streaming/foo
-            const size_t nPrefixLen = osPrefix.size();
-            fpIn = VSIFOpenExL(
-                (osPrefix.substr(0, nPrefixLen-1) +
-                    "_streaming/"  +
-                    (pszSource + nPrefixLen)).c_str(), "rb", TRUE);
+            // Try to get a streaming path from the source path
+            auto poSourceFSHandler =
+                dynamic_cast<IVSIS3LikeFSHandler*>(
+                    VSIFileManager::GetHandler( pszSource ));
+            if( poSourceFSHandler )
+            {
+                const CPLString osStreamingPath =
+                        poSourceFSHandler->GetStreamingPath(pszSource);
+                if( !osStreamingPath.empty() )
+                {
+                    fpIn = VSIFOpenExL(osStreamingPath, "rb", TRUE);
+                }
+            }
         }
-        else
+        if( fpIn == nullptr )
+        {
             fpIn = VSIFOpenExL(pszSource, "rb", TRUE);
+        }
     }
     if( fpIn == nullptr )
     {
@@ -3527,14 +3553,17 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
     std::set<CPLString> aoSetDirsToCreate;
     const char* pszChunkSize = CSLFetchNameValue(papszOptions, "CHUNK_SIZE");
     const int nRequestedThreads = atoi(CSLFetchNameValueDef(papszOptions, "NUM_THREADS", "1"));
-    const bool bUploadToS3 = bUploadFromLocalToNetwork && STARTS_WITH(pszTarget, "/vsis3/");
-    const bool bUploadToAZ = bUploadFromLocalToNetwork && STARTS_WITH(pszTarget, "/vsiaz/");
+    auto poTargetFSHandler = dynamic_cast<IVSIS3LikeFSHandler*>(
+                                    VSIFileManager::GetHandler( pszTarget ));
+    const bool bSupportsParallelMultipartUpload =
+        bUploadFromLocalToNetwork && poTargetFSHandler != nullptr &&
+        poTargetFSHandler->SupportsParallelMultipartUpload();
     const bool bSimulateThreading = CPLTestBool(CPLGetConfigOption("VSIS3_SIMULATE_THREADING", "NO"));
-    const int nMinSizeChunk = (bUploadToS3 || bUploadToAZ) && !bSimulateThreading ? 5242880 : 1; // 5242880 defines by S3 API
+    const int nMinSizeChunk = bSupportsParallelMultipartUpload && !bSimulateThreading ? 5242880 : 1; // 5242880 defines by S3 API
     const int nMinThreads = bSimulateThreading ? 0 : 1;
     const size_t nMaxChunkSize =
         pszChunkSize && nRequestedThreads > nMinThreads &&
-        (bDownloadFromNetworkToLocal || bUploadToS3 || bUploadToAZ) ?
+        (bDownloadFromNetworkToLocal || bSupportsParallelMultipartUpload) ?
             static_cast<size_t>(std::min(1024 * 1024 * 1024,
                                 std::max(nMinSizeChunk,
                                             atoi(pszChunkSize)))): 0;
@@ -3548,6 +3577,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
         int nCountValidETags = 0;
         int nExpectedCount = 0;
         std::vector<CPLString> aosEtags{};
+        vsi_l_offset nTotalSize = 0;
     };
     std::map<CPLString, MultiPartDef> oMapMultiPartDefs;
 
@@ -3702,7 +3732,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
         for( const auto& osTargetSubdir: aoSetDirsToCreate )
         {
             const bool ok =
-                (bTargetIsThisFS ? MkdirInternal(osTargetSubdir, false):
+                (bTargetIsThisFS ? MkdirInternal(osTargetSubdir, 0755, false):
                                    VSIMkdir(osTargetSubdir, 0755)) == 0;
             if( !ok )
             {
@@ -3778,7 +3808,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                         // for parallelized writing
                         VSIUnlink(osSubTarget);
                     }
-                    else if( bUploadToS3 || bUploadToAZ )
+                    else if( bSupportsParallelMultipartUpload )
                     {
                         auto poS3HandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
                             CreateHandleHelper(osSubTarget.c_str() + GetFSPrefix().size(), false));
@@ -3798,6 +3828,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                         def.osUploadID = osUploadID;
                         def.nExpectedCount = static_cast<int>(
                             (chunk.nTotalSize + chunk.nSize - 1) / chunk.nSize);
+                        def.nTotalSize = chunk.nTotalSize;
                         oMapMultiPartDefs[osSubTarget] = def;
                     }
                     else
@@ -3959,7 +3990,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                         // for parallelized writing
                         VSIUnlink(osTarget);
                     }
-                    else if( bUploadToS3 || bUploadToAZ )
+                    else if( bSupportsParallelMultipartUpload )
                     {
                         auto poS3HandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
                             CreateHandleHelper(osTarget.c_str() + GetFSPrefix().size(), false));
@@ -3979,6 +4010,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                         def.osUploadID = osUploadID;
                         def.nExpectedCount = static_cast<int>(
                             (chunk.nTotalSize + chunk.nSize - 1) / chunk.nSize);
+                        def.nTotalSize = chunk.nTotalSize;
                         oMapMultiPartDefs[osTarget] = def;
                     }
                     else
@@ -4024,8 +4056,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
         CPLString osTarget{};
         std::mutex sMutex{};
         uint64_t nTotalCopied = 0;
-        bool bUploadToS3 = false;
-        bool bUploadToAZ = false;
+        bool bSupportsParallelMultipartUpload = false;
         size_t nMaxChunkSize = 0;
         int nMaxRetry = 0;
         double dfRetryDelay = 0.0;
@@ -4038,8 +4069,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                     const CPLString& osTargetDirIn,
                     const CPLString& osSourceIn,
                     const CPLString& osTargetIn,
-                    bool bUploadToS3In,
-                    bool bUploadToAZIn,
+                    bool bSupportsParallelMultipartUploadIn,
                     size_t nMaxChunkSizeIn,
                     int nMaxRetryIn,
                     double dfRetryDelayIn):
@@ -4051,8 +4081,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
             osTargetDir(osTargetDirIn),
             osSource(osSourceIn),
             osTarget(osTargetIn),
-            bUploadToS3(bUploadToS3In),
-            bUploadToAZ(bUploadToAZIn),
+            bSupportsParallelMultipartUpload(bSupportsParallelMultipartUploadIn),
             nMaxChunkSize(nMaxChunkSizeIn),
             nMaxRetry(nMaxRetryIn),
             dfRetryDelay(dfRetryDelayIn)
@@ -4106,7 +4135,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
             {
                 const size_t nSizeToRead = static_cast<size_t>(chunk.nSize);
                 bool bSuccess = false;
-                if( queue->bUploadToS3 || queue->bUploadToAZ )
+                if( queue->bSupportsParallelMultipartUpload )
                 {
                     const auto iter = queue->oMapMultiPartDefs.find(osSubTarget);
                     CPLAssert(iter != queue->oMapMultiPartDefs.end());
@@ -4127,6 +4156,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                         const CPLString osEtag = queue->poFS->UploadPart(
                             osSubTarget, nPartNumber,
                             iter->second.osUploadID,
+                            chunk.nStartOffset,
                             pBuffer, nSizeToRead,
                             poS3HandleHelper.get(),
                             queue->nMaxRetry,
@@ -4179,7 +4209,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                         oMapMultiPartDefs,
                         osSourceWithoutSlash, osTargetDir,
                         osSourceWithoutSlash, osTarget,
-                        bUploadToS3, bUploadToAZ, nMaxChunkSize,
+                        bSupportsParallelMultipartUpload, nMaxChunkSize,
                         nMaxRetry, dfRetryDelay);
 
     if( CPLTestBool(CPLGetConfigOption("VSIS3_SYNC_MULTITHREADING", "YES")) )
@@ -4229,7 +4259,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
     }
 
     // Finalize multipart uploads
-    if( sJobQueue.ret && (bUploadToS3 || bUploadToAZ))
+    if( sJobQueue.ret && bSupportsParallelMultipartUpload)
     {
         std::set<CPLString> oSetKeysToRemove;
         for( const auto& kv: oMapMultiPartDefs )
@@ -4243,6 +4273,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
                 UpdateHandleFromMap(poS3HandleHelper.get());
                 if( CompleteMultipart(kv.first, kv.second.osUploadID,
                                         kv.second.aosEtags,
+                                        kv.second.nTotalSize,
                                         poS3HandleHelper.get(),
                                         nMaxRetry, dfRetryDelay) )
                 {
