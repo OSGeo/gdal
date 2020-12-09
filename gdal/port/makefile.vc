@@ -42,6 +42,7 @@ OBJ	=	cpl_conv.obj \
 		cpl_vsil_s3.obj \
 		cpl_vsil_gs.obj \
 		cpl_vsil_az.obj \
+		cpl_vsil_adls.obj \
 		cpl_vsil_oss.obj \
 		cpl_vsil_plugin.obj \
 		cpl_vsil_swift.obj \

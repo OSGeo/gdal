@@ -348,7 +348,7 @@ char **CPLReadDir( const char *pszPath )
  *
  * This function is close to the POSIX opendir() function.
  *
- * For /vsis3/, /vsigs/, /vsioss/ and /vsiaz/, this function has an efficient
+ * For /vsis3/, /vsigs/, /vsioss/, /vsiaz/ and /vsiadls/, this function has an efficient
  * implementation, minimizing the number of network requests, when invoked with
  * nRecurseDepth <= 0.
  *
@@ -877,6 +877,8 @@ int VSIStatExL( const char * pszFilename, VSIStatBufL *psStatBuf, int nFlags )
  * <ul>
  * <li>HEADERS: to get HTTP headers for network-like filesystems (/vsicurl/, /vsis3/, etc)</li>
  * <li>TAGS: specific to /vsis3/: to get S3 Object tagging information</li>
+ * <li>STATUS: specific to /vsiadls/: returns all system defined properties for a path (seems in practice to be a subset of HEADERS)</li>
+ * <li>ACL: specific to /vsiadls/: returns the access control list for a path.</li>
  * </ul>
  * @param papszOptions Unused. Should be set to NULL.
  *
@@ -903,7 +905,7 @@ char** VSIGetFileMetadata( const char * pszFilename, const char* pszDomain,
  *
  * Implemented currently only for /vsis3/
  *
- * @param pszFilename the path of the filesystem object to be queried.
+ * @param pszFilename the path of the filesystem object to be set.
  * UTF-8 encoded.
  * @param papszMetadata NULL-terminated list of key=value strings.
  * @param pszDomain Metadata domain to set. Depends on the file system.
@@ -911,8 +913,14 @@ char** VSIGetFileMetadata( const char * pszFilename, const char* pszDomain,
  * <ul>
  * <li>HEADERS: to set HTTP header</li>
  * <li>TAGS: to set S3 Object tagging information</li>
+ * <li>PROPERTIES: specific to /vsiadls/: to set properties. Refer to https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/update for headers valid for action=setProperties.</li>
+ * <li>ACL: specific to /vsiadls/: to set access control list. Refer to https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/update for headers valid for action=setAccessControl or setAccessControlRecursive. In setAccessControlRecursive, x-ms-acl must be specified in papszMetadata</li>
  * </ul>
- * @param papszOptions Unused. Should be set to NULL.
+ * @param papszOptions NULL or NULL terminated list of options.
+ *                     For /vsiadls/ and pszDomain=ACL, "RECURSIVE=TRUE" can be
+ *                     set to set the access control list recursively. When
+ *                     RECURSIVE=TRUE is set, MODE should also be set to one of
+ *                     "set", "modify" or "remove".
  *
  * @return TRUE in case of success.
  *

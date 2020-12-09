@@ -200,6 +200,9 @@ class SequentialHandler(object):
     def do_GET(self, request):
         self.process('GET', request)
 
+    def do_PATCH(self, request):
+        self.process('PATCH', request)
+
     def do_POST(self, request):
         self.process('POST', request)
 
@@ -235,6 +238,14 @@ class DispatcherHttpHandler(BaseHTTPRequestHandler):
             f.close()
 
         custom_handler.do_DELETE(self)
+
+    def do_PATCH(self):
+        if do_log:
+            f = open('/tmp/log.txt', 'a')
+            f.write('PATCH %s\n' % self.path)
+            f.close()
+
+        custom_handler.do_PATCH(self)
 
     def do_POST(self):
 
@@ -281,6 +292,14 @@ class GDAL_Handler(BaseHTTPRequestHandler):
         if do_log:
             f = open('/tmp/log.txt', 'a')
             f.write('DELETE %s\n' % self.path)
+            f.close()
+
+        self.send_error(404, 'File Not Found: %s' % self.path)
+
+    def do_PATCH(self):
+        if do_log:
+            f = open('/tmp/log.txt', 'a')
+            f.write('PATCH %s\n' % self.path)
             f.close()
 
         self.send_error(404, 'File Not Found: %s' % self.path)
