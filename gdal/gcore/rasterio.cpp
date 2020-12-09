@@ -3112,15 +3112,7 @@ static inline void GDALUnrolledCopy( T* CPL_RESTRICT pDest,
 
 #ifdef HAVE_SSSE3_AT_COMPILE_TIME
 
-void GDALUnrolledCopy_GByte_2_1_SSSE3( GByte* CPL_RESTRICT pDest,
-                                             const GByte* CPL_RESTRICT pSrc,
-                                             GPtrDiff_t nIters );
-
 void GDALUnrolledCopy_GByte_3_1_SSSE3( GByte* CPL_RESTRICT pDest,
-                                             const GByte* CPL_RESTRICT pSrc,
-                                             GPtrDiff_t nIters );
-
-void GDALUnrolledCopy_GByte_4_1_SSSE3( GByte* CPL_RESTRICT pDest,
                                              const GByte* CPL_RESTRICT pSrc,
                                              GPtrDiff_t nIters );
 #endif
@@ -3133,15 +3125,6 @@ template<> void GDALUnrolledCopy<GByte,2,1>( GByte* CPL_RESTRICT pDest,
     decltype(nIters) i = 0;
     if( nIters > 16 )
     {
-#ifdef HAVE_SSSE3_AT_COMPILE_TIME
-        if( CPLHaveRuntimeSSSE3() )
-        {
-            GDALUnrolledCopy_GByte_2_1_SSSE3(pDest, pSrc, nIters);
-            return;
-        }
-#endif
-
-        const __m128i xmm_zero = _mm_setzero_si128();
         const __m128i xmm_mask = _mm_set1_epi16(0xff);
         // If we were sure that there would always be 1 trailing byte, we could
         // check against nIters - 15
@@ -3152,13 +3135,8 @@ template<> void GDALUnrolledCopy<GByte,2,1>( GByte* CPL_RESTRICT pDest,
             // Set higher 8bit of each int16 packed word to 0
             xmm0 = _mm_and_si128(xmm0, xmm_mask);
             xmm1 = _mm_and_si128(xmm1, xmm_mask);
-            // Pack int16 to uint8
-            xmm0 = _mm_packus_epi16(xmm0, xmm_zero);
-            xmm1 = _mm_packus_epi16(xmm1, xmm_zero);
-
-            // Move 64 lower bits of xmm1 to 64 upper bits of xmm0
-            xmm1 = _mm_slli_si128(xmm1, 8);
-            xmm0 = _mm_or_si128(xmm0, xmm1);
+            // Pack int16 to uint8 and merge back both vector
+            xmm0 = _mm_packus_epi16(xmm0, xmm1);
 
             // Store result
             _mm_storeu_si128( reinterpret_cast<__m128i*>(pDest + i), xmm0);
@@ -3199,14 +3177,6 @@ template<> void GDALUnrolledCopy<GByte,4,1>( GByte* CPL_RESTRICT pDest,
     decltype(nIters) i = 0;
     if( nIters > 16 )
     {
-#ifdef HAVE_SSSE3_AT_COMPILE_TIME
-        if( CPLHaveRuntimeSSSE3() )
-        {
-            GDALUnrolledCopy_GByte_4_1_SSSE3(pDest, pSrc, nIters);
-            return;
-        }
-#endif
-
         const __m128i xmm_mask = _mm_set1_epi32(0xff);
         // If we were sure that there would always be 3 trailing bytes, we could
         // check against nIters - 15
@@ -3222,21 +3192,13 @@ template<> void GDALUnrolledCopy<GByte,4,1>( GByte* CPL_RESTRICT pDest,
             xmm2 = _mm_and_si128(xmm2, xmm_mask);
             xmm3 = _mm_and_si128(xmm3, xmm_mask);
             // Pack int32 to int16
-            xmm0 = _mm_packs_epi32(xmm0, xmm0);
-            xmm1 = _mm_packs_epi32(xmm1, xmm1);
-            xmm2 = _mm_packs_epi32(xmm2, xmm2);
-            xmm3 = _mm_packs_epi32(xmm3, xmm3);
+            xmm0 = _mm_packs_epi32(xmm0, xmm1);
+            xmm2 = _mm_packs_epi32(xmm2, xmm3);
             // Pack int16 to uint8
-            xmm0 = _mm_packus_epi16(xmm0, xmm0);
-            xmm1 = _mm_packus_epi16(xmm1, xmm1);
-            xmm2 = _mm_packus_epi16(xmm2, xmm2);
-            xmm3 = _mm_packus_epi16(xmm3, xmm3);
+            xmm0 = _mm_packus_epi16(xmm0, xmm2);
 
-            // Store lower 32 bit word
-            GDALCopyXMMToInt32(xmm0, pDest + i + 0);
-            GDALCopyXMMToInt32(xmm1, pDest + i + 4);
-            GDALCopyXMMToInt32(xmm2, pDest + i + 8);
-            GDALCopyXMMToInt32(xmm3, pDest + i + 12);
+            // Store result
+            _mm_storeu_si128( reinterpret_cast<__m128i*>(pDest + i), xmm0);
 
             pSrc += 4 * 16;
         }
