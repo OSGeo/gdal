@@ -113,7 +113,7 @@ def test_vsiaz_real_server_errors():
 
     for var in ('AZURE_STORAGE_CONNECTION_STRING', 'AZURE_STORAGE_ACCOUNT',
                 'AZURE_STORAGE_ACCESS_KEY'):
-        gdal.SetConfigOption(var, None)
+        gdal.SetConfigOption(var, '')
 
 ###############################################################################
 # Test AZURE_NO_SIGN_REQUEST=YES
