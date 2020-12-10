@@ -31,6 +31,7 @@
 
 #include "cadobjects.h"
 
+#include <limits>
 #include <math.h>
 #include <algorithm>
 
