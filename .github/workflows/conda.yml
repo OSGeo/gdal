@@ -15,6 +15,7 @@ jobs:
 
     env:
       PLATFORM: ${{ matrix.platform }}
+      ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
 
     steps:
     - uses: actions/checkout@v2
@@ -49,7 +50,8 @@ jobs:
 
     - name: Deploy to gdal-master Conda channel
       shell: bash -l {0}
-      if: github.ref == 'refs/heads/master'
       run: |
           source ../gdal/ci/travis/conda/upload.sh
       working-directory: ./gdal-feedstock
+
+      #      if: github.ref == 'refs/heads/master'
