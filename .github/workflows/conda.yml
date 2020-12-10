@@ -1,8 +1,6 @@
 name: Conda
 
-on:
-  push:
-    branches: '*'
+on: [push, pull_request]
 
 jobs:
   build:
@@ -48,3 +46,10 @@ jobs:
       with:
         name: ${{ matrix.platform }}-conda-package
         path: ./gdal-feedstock/packages/
+
+    - name: Deploy to gdal-master Conda channel
+      shell: bash -l {0}
+      if: github.ref == 'refs/heads/master'
+      run: |
+          source ../gdal/ci/travis/conda/upload.sh
+      working-directory: ./gdal-feedstock

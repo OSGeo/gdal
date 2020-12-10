@@ -1,6 +1,5 @@
 #!/bin/bash
 
-mkdir -p packages
 
 CI_PLAT=""
 if [ "$PLATFORM" == "windows-latest" ]; then
@@ -15,7 +14,5 @@ if [ "$PLATFORM" == "macos-latest" ]; then
     CI_PLAT="osx"
 fi
 
-conda build recipe --clobber-file recipe/recipe_clobber.yaml --output-folder packages -m ".ci_support/${CI_PLAT}_64_.yaml"
-conda install -c ./packages libgdal gdal
+anaconda -t $ANACONDA_TOKEN upload -u gdal-master --force packages/$CI_PLAT-64/gdal*.bz2 packages/$CI_PLAT-64/*gdal*.bz2
 
-gdalinfo --version
