@@ -3107,8 +3107,10 @@ def test_nitf_86():
 # Test parsing ILLUMB TRE (STDI-0002-1-v5.0 App AL)
 
 def test_nitf_87():
+    mu = "B5"   # \mu per ISO-8859-1
     bit_mask = "7A0000"
-    tre_data = "TRE=HEX/ILLUMB=" + hex_string("0001mm                                      8.5192000000E-01") + \
+    tre_data = "TRE=HEX/ILLUMB=" + hex_string("0001") + \
+        mu + hex_string("m                                      8.5192000000E-01") + \
         hex_string("2.5770800000E+00001NUM_BANDS=1 because ILLUMB has no band-dependent content                        ") + \
         hex_string("World Geodetic System 1984                                                      ") + \
         hex_string("WGE World Geodetic System 1984                                                      ") + \
@@ -3129,7 +3131,7 @@ def test_nitf_87():
     expected_data = """<tres>
   <tre name="ILLUMB" location="image">
     <field name="NUM_BANDS" value="0001" />
-    <field name="BAND_UNIT" value="mm" />
+    <field name="BAND_UNIT" value="µm" />
     <repeated number="1">
       <group index="0">
         <field name="LBOUND" value="8.5192000000E-01" />
