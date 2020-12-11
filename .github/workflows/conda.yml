@@ -51,6 +51,10 @@ jobs:
 
     - name: Deploy to gdal-master Conda channel
       shell: bash -l {0}
+      env:
+        PLATFORM: ${{ matrix.platform }}
+        ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+        SECRETS_TEST: ${{ secrets.SECRETS_TEST }}
       run: |
           source ../gdal/ci/travis/conda/upload.sh
       working-directory: ./gdal-feedstock

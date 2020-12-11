@@ -17,6 +17,13 @@ fi
 ls
 pwd
 ls packages
-echo "anaconda upload -t \"$SECRETS_TEST\"  -u gdal-master --force packages/$CI_PLAT-64/gdal*.bz2 packages/$CI_PLAT-64/*gdal*.bz2"
-anaconda upload -t "$ANACONDA_TOKEN"  -u gdal-master --force packages/$CI_PLAT-64/gdal*.bz2 packages/$CI_PLAT-64/*gdal*.bz2
+
+if [ -z "$ANACONDA_TOKEN" ]
+then
+    echo "Anaconda token is not available, not uploading"
+    exit 0;
+else
+    echo "Anaconda token is available, attempting to upload"
+    anaconda upload -t "$ANACONDA_TOKEN"  -u gdal-master --force packages/$CI_PLAT-64/gdal*.bz2 packages/$CI_PLAT-64/*gdal*.bz2
+fi
 
