@@ -16,6 +16,7 @@ jobs:
     env:
       PLATFORM: ${{ matrix.platform }}
       ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+      SECRETS_TEST: ${{ secrets.SECRETS_TEST }}
 
     steps:
     - uses: actions/checkout@v2
