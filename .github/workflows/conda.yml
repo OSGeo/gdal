@@ -15,8 +15,6 @@ jobs:
 
     env:
       PLATFORM: ${{ matrix.platform }}
-      ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
-      SECRETS_TEST: ${{ secrets.SECRETS_TEST }}
 
     steps:
     - uses: actions/checkout@v2
@@ -52,7 +50,6 @@ jobs:
     - name: Deploy to gdal-master Conda channel
       shell: bash -l {0}
       env:
-        PLATFORM: ${{ matrix.platform }}
         ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         SECRETS_TEST: ${{ secrets.SECRETS_TEST }}
       run: |
