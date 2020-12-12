@@ -1,9 +1,19 @@
 #!/bin/bash
 
+"before ANACONDA_TOKEN check command status $?"
 
-if [ -z "$ANACONDA_TOKEN" ]
+
+if [ -z "${ANACONDA_TOKEN+x}" ]
 then
-    echo "Anaconda token is not available, not uploading"
+    echo "Anaconda token is not set, not uploading"
+    echo "unset ANACONDA_TOKEN check command status $?"
+    exit 0;
+fi
+
+if [ -z "${ANACONDA_TOKEN}" ]
+then
+    echo "Anaconda token is empty, not uploading"
+    echo "empty ANACONDA_TOKEN check command status $?"
     exit 0;
 fi
 
