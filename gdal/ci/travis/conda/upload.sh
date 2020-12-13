@@ -1,6 +1,6 @@
 #!/bin/bash
 
-"before ANACONDA_TOKEN check command status $?"
+echo "before ANACONDA_TOKEN check command status $?"
 
 
 if [ -z "${ANACONDA_TOKEN+x}" ]
