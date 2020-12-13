@@ -213,7 +213,7 @@ def test_vsiadls_fake_readdir():
 # Test OpenDir() with a fake server
 
 
-def test_vsiaz_opendir():
+def test_vsiadls_opendir():
 
     if gdaltest.webserver_port == 0:
         pytest.skip()
