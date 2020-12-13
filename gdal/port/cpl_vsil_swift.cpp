@@ -227,7 +227,7 @@ protected:
         IVSIS3LikeHandleHelper* CreateHandleHelper(
             const char* pszURI, bool bAllowNoObject) override;
 
-        CPLString GetFSPrefix() override { return "/vsiswift/"; }
+        CPLString GetFSPrefix() const override { return "/vsiswift/"; }
 
         char** GetFileList( const char *pszFilename,
                             int nMaxFiles,

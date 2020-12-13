@@ -93,7 +93,7 @@ public:
         int Rmdir( const char *pszFilename ) override;
         int Mkdir( const char *pszDirname, long nMode ) override;
 
-        CPLString GetFSPrefix() override { return "/vsiwebhdfs/"; }
+        CPLString GetFSPrefix() const override { return "/vsiwebhdfs/"; }
 
         const char* GetOptions() override;
 };

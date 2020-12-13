@@ -311,6 +311,8 @@ Authentication options, and read-only features, are identical to :ref:`/vsigs/ <
 
 /vsiaz/ is a file system handler that allows on-the-fly random reading of (primarily non-public) files available in Microsoft Azure Blob containers, without prior download of the entire file. It requires GDAL to be built against libcurl.
 
+See :ref:`/vsiadls/ </vsiadls/>` for a related filesystem for Azure Data Lake Storage Gen2.
+
 It also allows sequential writing of files. No seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported, unless, if, starting with GDAL 3.2, the :decl_configoption:`CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE` configuration option is set to ``YES``, in which case random-write access is possible (involves the creation of a temporary local file, whose location is controlled by the :decl_configoption:`CPL_TMPDIR` configuration option).
 A block blob will be created if the file size is below 4 MB. Beyond, an append blob will be created (with a maximum file size of 195 GB).
 
@@ -345,6 +347,33 @@ Recognized filenames are of the form :file:`/vsiaz_streaming/container/key` wher
 Authentication options, and read-only features, are identical to :ref:`/vsiaz/ </vsiaz/>`
 
 .. versionadded:: 2.3
+
+.. _`/vsiadls/`:
+
+/vsiadls/ (Microsoft Azure Data Lake Storage Gen2)
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+/vsiadls/ is a file system handler that allows on-the-fly random reading of
+(primarily non-public) files available in Microsoft Azure Data Lake Storage file
+systems, without prior download of the entire file.
+It requires GDAL to be built against libcurl.
+
+It has similar capabilities as :ref:`/vsiaz/ </vsiaz/>`, and in particular uses the same
+configuration options for authentication. Its advantages over /vsiaz/ are a real
+management of directory and Unix-style ACL support. Some features require the Azure
+storage to have hierarchical support turned on. Consult its
+`documentation <https://docs.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-introduction>`__
+
+The main enhancements over /vsiaz/ are:
+
+  * True directory support (no need for the artificial :file:`.gdal_marker_for_dir`
+    empty file that is used for /vsiaz/ to have empty directories)
+  * One-call recursive directory deletion with :cpp:func:`VSIRmdirRecursive`
+  * Atomic renaming with :cpp:func:`VSIRename`
+  * :cpp:func:`VSIGetFileMetadata` support for the "STATUS" and "ACL" metadata domains
+  * :cpp:func:`VSISetFileMetadata` support for the "PROPERTIES" and "ACL" metadata domains
+
+.. versionadded:: 3.3
 
 .. _`/vsioss/`:
 

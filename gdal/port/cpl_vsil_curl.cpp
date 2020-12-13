@@ -48,6 +48,18 @@
 #include "cpl_http.h"
 #include "cpl_mem_cache.h"
 
+#ifndef S_IRUSR
+#define S_IRUSR     00400
+#define S_IWUSR     00200
+#define S_IXUSR     00100
+#define S_IRGRP     00040
+#define S_IWGRP     00020
+#define S_IXGRP     00010
+#define S_IROTH     00004
+#define S_IWOTH     00002
+#define S_IXOTH     00001
+#endif
+
 CPL_CVSID("$Id$")
 
 #ifndef HAVE_CURL
@@ -1043,7 +1055,7 @@ retry:
             oFileProp.eExists = EXIST_YES;
             if( dfSize < 0 )
             {
-                if( osVerb == "HEAD" && !bRetryWithGet )
+                if( osVerb == "HEAD" && !bRetryWithGet && response_code == 200 )
                 {
                     CPLDebug(poFS->GetDebugKey(),
                              "HEAD did not provide file size. Retrying with GET");
@@ -1071,6 +1083,31 @@ retry:
                 if( pszEndOfETag )
                 {
                     oFileProp.ETag.assign(pzETag, pszEndOfETag - pzETag);
+                }
+            }
+
+            // Azure Data Lake Storage
+            const char* pszPermissions = strstr(sWriteFuncHeaderData.pBuffer, "x-ms-permissions: ");
+            if( pszPermissions )
+            {
+                pszPermissions += strlen("x-ms-permissions: ");
+                const char* pszEOL = strstr(pszPermissions, "\r\n");
+                if( pszEOL )
+                {
+                    bool bIsDir = strstr(sWriteFuncHeaderData.pBuffer, "x-ms-resource-type: directory\r\n") != nullptr;
+                    bool bIsFile = strstr(sWriteFuncHeaderData.pBuffer, "x-ms-resource-type: file\r\n") != nullptr;
+                    if( bIsDir || bIsFile )
+                    {
+                        oFileProp.bIsDirectory = bIsDir;
+                        CPLString osPermissions;
+                        osPermissions.assign(pszPermissions,
+                                            pszEOL - pszPermissions);
+                        if( bIsDir )
+                            oFileProp.nMode = S_IFDIR;
+                        else
+                            oFileProp.nMode = S_IFREG;
+                        oFileProp.nMode |= VSICurlParseUnixPermissions(osPermissions);
+                    }
                 }
             }
 
@@ -4067,7 +4104,9 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename,
     const int nRet =
         poHandle->Exists((nFlags & VSI_STAT_SET_ERROR_FLAG) > 0) ? 0 : -1;
     pStatBuf->st_mtime = poHandle->GetMTime();
-    pStatBuf->st_mode = poHandle->IsDirectory() ? S_IFDIR : S_IFREG;
+    pStatBuf->st_mode = static_cast<unsigned short>(poHandle->GetMode());
+    if( pStatBuf->st_mode == 0 )
+        pStatBuf->st_mode = poHandle->IsDirectory() ? S_IFDIR : S_IFREG;
     delete poHandle;
     return nRet;
 }
@@ -4719,6 +4758,36 @@ CPLString NetworkStatisticsLogger::GetReportAsSerializedJSON()
     return oJSON.Format(CPLJSONObject::PrettyFormat::Pretty);
 }
 
+/************************************************************************/
+/*                     VSICurlParseUnixPermissions()                    */
+/************************************************************************/
+
+int VSICurlParseUnixPermissions(const char* pszPermissions)
+{
+    if( strlen(pszPermissions) != 9 )
+        return 0;
+    int nMode = 0;
+    if( pszPermissions[0] == 'r' )
+        nMode |= S_IRUSR;
+    if( pszPermissions[1] == 'w' )
+        nMode |= S_IWUSR;
+    if( pszPermissions[2] == 'x' )
+        nMode |= S_IXUSR;
+    if( pszPermissions[3] == 'r' )
+        nMode |= S_IRGRP;
+    if( pszPermissions[4] == 'w' )
+        nMode |= S_IWGRP;
+    if( pszPermissions[5] == 'x' )
+        nMode |= S_IXGRP;
+    if( pszPermissions[6] == 'r' )
+        nMode |= S_IROTH;
+    if( pszPermissions[7] == 'w' )
+        nMode |= S_IWOTH;
+    if( pszPermissions[8] == 'x' )
+        nMode |= S_IXOTH;
+    return nMode;
+}
+
 
 } /* end of namespace cpl */
 
@@ -4832,14 +4901,12 @@ void VSICurlClearCache( void )
     // FIXME ? Currently we have different filesystem instances for
     // vsicurl/, /vsis3/, /vsigs/ . So each one has its own cache of regions,
     // file size, etc.
-    const char* const apszFS[] = { "/vsicurl/", "/vsis3/", "/vsigs/",
-                                   "/vsiaz/", "/vsioss/", "/vsiswift/",
-                                   "/vsiwebhdfs/" };
-    for( size_t i = 0; i < CPL_ARRAYSIZE(apszFS); ++i )
+    CSLConstList papszPrefix = VSIFileManager::GetPrefixes();
+    for( size_t i = 0; papszPrefix && papszPrefix[i]; ++i )
     {
         auto poFSHandler =
             dynamic_cast<cpl::VSICurlFilesystemHandler*>(
-                VSIFileManager::GetHandler( apszFS[i] ));
+                VSIFileManager::GetHandler( papszPrefix[i] ));
 
         if( poFSHandler )
             poFSHandler->ClearCache();

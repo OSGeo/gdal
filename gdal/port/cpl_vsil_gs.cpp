@@ -71,7 +71,7 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandler
     VSICurlHandle* CreateFileHandle( const char* pszFilename ) override;
     const char* GetDebugKey() const override { return "GS"; }
 
-    CPLString GetFSPrefix() override { return "/vsigs/"; }
+    CPLString GetFSPrefix() const override { return "/vsigs/"; }
     CPLString GetURLFromFilename( const CPLString& osFilename ) override;
 
     IVSIS3LikeHandleHelper* CreateHandleHelper(

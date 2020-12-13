@@ -30,6 +30,7 @@
 ###############################################################################
 
 import os
+import stat
 import sys
 
 from osgeo import gdal
@@ -82,7 +83,9 @@ def display_file(fout, dirname, prefix, filename, longformat, check_open=False):
     if longformat and statBuf is not None:
         import time
         bdt = time.gmtime(statBuf.mtime)
-        if statBuf.IsDirectory():
+        if stat.S_IMODE(statBuf.mode) != 0:
+            permissions = stat.filemode(statBuf.mode)
+        elif statBuf.IsDirectory():
             permissions = "dr-xr-xr-x"
         else:
             permissions = "-r--r--r--"

@@ -395,6 +395,7 @@ void VSIInstallGSFileHandler(void);
 void VSIInstallGSStreamingFileHandler(void);
 void VSIInstallAzureFileHandler(void);
 void VSIInstallAzureStreamingFileHandler(void);
+void VSIInstallADLSFileHandler(void);
 void VSIInstallOSSFileHandler(void);
 void VSIInstallOSSStreamingFileHandler(void);
 void VSIInstallSwiftFileHandler(void);

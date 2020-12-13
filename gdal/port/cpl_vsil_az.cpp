@@ -78,15 +78,11 @@ struct VSIDIRAz: public VSIDIR
     CPLString osBucket{};
     CPLString osObjectKey{};
     IVSIS3LikeFSHandler* poFS = nullptr;
-    IVSIS3LikeHandleHelper* poHandleHelper = nullptr;
+    std::unique_ptr<IVSIS3LikeHandleHelper> poHandleHelper{};
     int nMaxFiles = 0;
     bool bCacheEntries = true;
 
     explicit VSIDIRAz(IVSIS3LikeFSHandler *poFSIn): poFS(poFSIn) {}
-    ~VSIDIRAz()
-    {
-        delete poHandleHelper;
-    }
 
     VSIDIRAz(const VSIDIRAz&) = delete;
     VSIDIRAz& operator=(const VSIDIRAz&) = delete;
@@ -349,7 +345,6 @@ bool VSIDIRAz::IssueListDir()
     poHandleHelper->ResetQueryParameters();
     const CPLString osBaseURL(poHandleHelper->GetURLNoKVP());
 
-    CURLM* hCurlMultiHandle = poFS->GetCurlMultiHandleFor(osBaseURL);
     CURL* hCurlHandle = curl_easy_init();
 
     poHandleHelper->AddQueryParameter("comp", "list");
@@ -371,54 +366,36 @@ bool VSIDIRAz::IssueListDir()
     struct curl_slist* headers =
         VSICurlSetOptions(hCurlHandle, poHandleHelper->GetURL(), nullptr);
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
-
-    VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
-                        VSICurlHandleWriteFunc);
-
-    char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-    curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
-
     headers = VSICurlMergeHeaders(headers,
                             poHandleHelper->GetCurlHeaders("GET", headers));
     curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-    MultiPerform(hCurlMultiHandle, hCurlHandle);
-
-    if( headers != nullptr )
-        curl_slist_free_all(headers);
+    CurlRequestHelper requestHelper;
+    const long response_code =
+        requestHelper.perform(hCurlHandle, headers, poFS, poHandleHelper.get());
 
     NetworkStatisticsLogger::LogGET(sWriteFuncData.nSize);
 
-    if( sWriteFuncData.pBuffer == nullptr)
+    if( requestHelper.sWriteFuncData.pBuffer == nullptr)
     {
         curl_easy_cleanup(hCurlHandle);
         return false;
     }
 
-    long response_code = 0;
-    curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
+    bool ret = false;
     if( response_code != 200 )
     {
         CPLDebug("AZURE", "%s",
-                    sWriteFuncData.pBuffer
-                    ? sWriteFuncData.pBuffer : "(null)");
-        CPLFree(sWriteFuncData.pBuffer);
-        curl_easy_cleanup(hCurlHandle);
-        return false;
+                    requestHelper.sWriteFuncData.pBuffer
+                    ? requestHelper.sWriteFuncData.pBuffer : "(null)");
     }
     else
     {
-        bool ret = AnalyseAzureFileList( osBaseURL,
-                                sWriteFuncData.pBuffer );
-
-        CPLFree(sWriteFuncData.pBuffer);
-
-        curl_easy_cleanup(hCurlHandle);
-        return ret;
+        ret = AnalyseAzureFileList( osBaseURL,
+                                    requestHelper.sWriteFuncData.pBuffer );
     }
+    curl_easy_cleanup(hCurlHandle);
+    return ret;
 }
 
 /************************************************************************/
@@ -469,13 +446,13 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 
     int      CopyObject( const char *oldpath, const char *newpath,
                          CSLConstList papszMetadata ) override;
-    int MkdirInternal( const char *pszDirname, bool bDoStatCheck ) override;
+    int MkdirInternal( const char *pszDirname, long nMode, bool bDoStatCheck ) override;
 
   public:
     VSIAzureFSHandler() = default;
     ~VSIAzureFSHandler() override = default;
 
-    CPLString GetFSPrefix() override { return "/vsiaz/"; }
+    CPLString GetFSPrefix() const override { return "/vsiaz/"; }
     const char* GetDebugKey() const override { return "AZURE"; }
 
     VSIVirtualHandle *Open( const char *pszFilename,
@@ -515,6 +492,9 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
                       double dfRetryDelay);
 
     // Multipart upload (mapping of S3 interface to PutBlock/PutBlockList)
+
+    bool SupportsParallelMultipartUpload() const override { return true; }
+
     CPLString InitiateMultipartUpload(
                                 const std::string& /* osFilename */ ,
                                 IVSIS3LikeHandleHelper *,
@@ -524,6 +504,7 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
     CPLString UploadPart(const CPLString& osFilename,
                          int nPartNumber,
                          const std::string& /* osUploadID */,
+                         vsi_l_offset /* nPosition */,
                          const void* pabyBuffer,
                          size_t nBufferSize,
                          IVSIS3LikeHandleHelper *poS3HandleHelper,
@@ -537,6 +518,7 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
     bool CompleteMultipart(const CPLString& osFilename,
                            const CPLString& /* osUploadID */,
                            const std::vector<CPLString>& aosEtags,
+                           vsi_l_offset /* nTotalSize */,
                            IVSIS3LikeHandleHelper *poS3HandleHelper,
                            int nMaxRetry,
                            double dfRetryDelay) override
@@ -560,7 +542,7 @@ class VSIAzureHandle final : public VSICurlHandle
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIAzureHandle)
 
-    VSIAzureBlobHandleHelper* m_poHandleHelper = nullptr;
+    std::unique_ptr<VSIAzureBlobHandleHelper> m_poHandleHelper{};
 
   protected:
         virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb,
@@ -571,7 +553,6 @@ class VSIAzureHandle final : public VSICurlHandle
     public:
         VSIAzureHandle( VSIAzureFSHandler* poFS, const char* pszFilename,
                      VSIAzureBlobHandleHelper* poHandleHelper);
-        virtual ~VSIAzureHandle();
 };
 
 /************************************************************************/
@@ -613,7 +594,7 @@ class VSIAzureWriteHandle final : public VSIAppendWriteHandle
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIAzureWriteHandle)
 
-    VSIAzureBlobHandleHelper  *m_poHandleHelper = nullptr;
+    std::unique_ptr<VSIAzureBlobHandleHelper> m_poHandleHelper{};
 
     bool                Send(bool bIsLastBlock) override;
     bool                SendInternal(bool bInitOnly, bool bIsLastBlock);
@@ -631,7 +612,7 @@ class VSIAzureWriteHandle final : public VSIAppendWriteHandle
 /*                        GetAzureBufferSize()                          */
 /************************************************************************/
 
-static int GetAzureBufferSize()
+int GetAzureBufferSize()
 {
     int nBufferSize;
     int nChunkSizeMB = atoi(CPLGetConfigOption("VSIAZ_CHUNK_SIZE", "4"));
@@ -669,7 +650,6 @@ VSIAzureWriteHandle::VSIAzureWriteHandle( VSIAzureFSHandler* poFS,
 VSIAzureWriteHandle::~VSIAzureWriteHandle()
 {
     Close();
-    delete m_poHandleHelper;
 }
 
 /************************************************************************/
@@ -780,39 +760,19 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
                         m_poHandleHelper->GetCurlHeaders("PUT", headers));
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        WriteFuncStruct sWriteFuncData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
-                            VSICurlHandleWriteFunc);
-
-        WriteFuncStruct sWriteFuncHeaderData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
-                         VSICurlHandleWriteFunc);
-
-        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-        szCurlErrBuf[0] = '\0';
-        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
-
-        MultiPerform(m_poFS->GetCurlMultiHandleFor(m_poHandleHelper->GetURL()),
-                     hCurlHandle);
-
-        curl_slist_free_all(headers);
+        CurlRequestHelper requestHelper;
+        const long response_code =
+            requestHelper.perform(hCurlHandle, headers, m_poFS, m_poHandleHelper.get());
 
         NetworkStatisticsLogger::LogPUT(m_nBufferOff);
-
-        long response_code = 0;
-        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
 
         if( !bHasAlreadyHandled409 && response_code == 409 )
         {
             bHasAlreadyHandled409 = true;
             CPLDebug(cpl::down_cast<VSIAzureFSHandler*>(m_poFS)->GetDebugKey(),
                      "%s",
-                        sWriteFuncData.pBuffer
-                        ? sWriteFuncData.pBuffer
+                        requestHelper.sWriteFuncData.pBuffer
+                        ? requestHelper.sWriteFuncData.pBuffer
                         : "(null)");
 
             // The blob type is invalid for this operation
@@ -828,7 +788,7 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
+                requestHelper.sWriteFuncHeaderData.pBuffer, requestHelper.szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < nMaxRetry )
             {
@@ -847,8 +807,8 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
             {
                 CPLDebug(cpl::down_cast<VSIAzureFSHandler*>(m_poFS)->GetDebugKey(),
                         "%s",
-                            sWriteFuncData.pBuffer
-                            ? sWriteFuncData.pBuffer
+                            requestHelper.sWriteFuncData.pBuffer
+                            ? requestHelper.sWriteFuncData.pBuffer
                             : "(null)");
                 CPLError(CE_Failure, CPLE_AppDefined,
                             "PUT of %s failed",
@@ -860,9 +820,6 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
         {
             InvalidateParentDirectory();
         }
-
-        CPLFree(sWriteFuncData.pBuffer);
-        CPLFree(sWriteFuncHeaderData.pBuffer);
 
         curl_easy_cleanup(hCurlHandle);
     } while( bRetry );
@@ -972,7 +929,7 @@ int VSIAzureFSHandler::Unlink( const char *pszFilename )
 /*                               Mkdir()                                */
 /************************************************************************/
 
-int VSIAzureFSHandler::MkdirInternal( const char *pszDirname, bool bDoStatCheck )
+int VSIAzureFSHandler::MkdirInternal( const char *pszDirname, long /* nMode */, bool bDoStatCheck )
 {
     if( !STARTS_WITH_CI(pszDirname, GetFSPrefix()) )
         return -1;
@@ -1016,9 +973,9 @@ int VSIAzureFSHandler::MkdirInternal( const char *pszDirname, bool bDoStatCheck 
     }
 }
 
-int VSIAzureFSHandler::Mkdir( const char * pszDirname, long /* nMode */ )
+int VSIAzureFSHandler::Mkdir( const char * pszDirname, long nMode )
 {
-    return MkdirInternal(pszDirname, true);
+    return MkdirInternal(pszDirname, nMode, true);
 }
 
 /************************************************************************/
@@ -1144,39 +1101,18 @@ int VSIAzureFSHandler::CopyObject( const char *oldpath, const char *newpath,
                         poS3HandleHelper->GetCurlHeaders("PUT", headers));
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        WriteFuncStruct sWriteFuncData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
-                         VSICurlHandleWriteFunc);
-
-        WriteFuncStruct sWriteFuncHeaderData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
-                         VSICurlHandleWriteFunc);
-
-        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-        szCurlErrBuf[0] = '\0';
-        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
-
-        MultiPerform(GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
-                     hCurlHandle);
-
-        VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
-
-        curl_slist_free_all(headers);
+        CurlRequestHelper requestHelper;
+        const long response_code =
+            requestHelper.perform(hCurlHandle, headers, this, poS3HandleHelper.get());
 
         NetworkStatisticsLogger::LogPUT(0);
 
-        long response_code = 0;
-        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
         if( response_code != 202)
         {
             // Look if we should attempt a retry
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
+                requestHelper.sWriteFuncHeaderData.pBuffer, requestHelper.szCurlErrBuf);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < nMaxRetry )
             {
@@ -1194,8 +1130,8 @@ int VSIAzureFSHandler::CopyObject( const char *oldpath, const char *newpath,
             else
             {
                 CPLDebug(GetDebugKey(), "%s",
-                         sWriteFuncData.pBuffer
-                         ? sWriteFuncData.pBuffer
+                         requestHelper.sWriteFuncData.pBuffer
+                         ? requestHelper.sWriteFuncData.pBuffer
                          : "(null)");
                 CPLError(CE_Failure, CPLE_AppDefined, "Copy of %s to %s failed",
                          oldpath, newpath);
@@ -1212,9 +1148,6 @@ int VSIAzureFSHandler::CopyObject( const char *oldpath, const char *newpath,
 
             InvalidateDirContent( CPLGetDirname(osFilenameWithoutSlash) );
         }
-
-        CPLFree(sWriteFuncData.pBuffer);
-        CPLFree(sWriteFuncHeaderData.pBuffer);
 
         curl_easy_cleanup(hCurlHandle);
     }
@@ -1573,8 +1506,8 @@ VSIDIR* VSIAzureFSHandler::OpenDir( const char *pszPath,
         osObjectKey = osDirnameWithoutPrefix.substr(nSlashPos+1);
     }
 
-    IVSIS3LikeHandleHelper* poHandleHelper =
-        CreateHandleHelper(osBucket, true);
+    auto poHandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+        CreateHandleHelper(osBucket, true));
     if( poHandleHelper == nullptr )
     {
         return nullptr;
@@ -1583,7 +1516,7 @@ VSIDIR* VSIAzureFSHandler::OpenDir( const char *pszPath,
     VSIDIRAz* dir = new VSIDIRAz(this);
     dir->nRecurseDepth = nRecurseDepth;
     dir->poFS = this;
-    dir->poHandleHelper = poHandleHelper;
+    dir->poHandleHelper = std::move(poHandleHelper);
     dir->osBucket = osBucket;
     dir->osObjectKey = osObjectKey;
     dir->nMaxFiles = atoi(CSLFetchNameValueDef(papszOptions, "MAXFILES", "0"));
@@ -1609,16 +1542,6 @@ VSIAzureHandle::VSIAzureHandle( VSIAzureFSHandler* poFSIn,
         m_poHandleHelper(poHandleHelper)
 {
 }
-
-/************************************************************************/
-/*                          ~VSIAzureHandle()                           */
-/************************************************************************/
-
-VSIAzureHandle::~VSIAzureHandle()
-{
-    delete m_poHandleHelper;
-}
-
 
 /************************************************************************/
 /*                          GetCurlHeaders()                            */

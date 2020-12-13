@@ -41,7 +41,6 @@ class VSIAzureBlobHandleHelper final: public IVSIS3LikeHandleHelper
 {
         CPLString m_osURL;
         CPLString m_osEndpoint;
-        CPLString m_osBlobEndpoint;
         CPLString m_osBucket;
         CPLString m_osObjectKey;
         CPLString m_osStorageAccount;
@@ -49,16 +48,21 @@ class VSIAzureBlobHandleHelper final: public IVSIS3LikeHandleHelper
         CPLString m_osSAS;
         bool      m_bUseHTTPS;
 
+        enum class Service
+        {
+            BLOB,
+            ADLS,
+        };
+
         static bool     GetConfiguration(CSLConstList papszOptions,
+                                         Service eService,
                                          bool& bUseHTTPS,
                                          CPLString& osEndpoint,
-                                         CPLString& osBlobEndpoint,
                                          CPLString& osStorageAccount,
                                          CPLString& osStorageKey,
                                          CPLString& osSAS);
 
         static CPLString BuildURL(const CPLString& osEndpoint,
-                                  const CPLString& osBlobEndpoint,
                                   const CPLString& osStorageAccount,
                                   const CPLString& osBucket,
                                   const CPLString& osObjectKey,
@@ -69,7 +73,6 @@ class VSIAzureBlobHandleHelper final: public IVSIS3LikeHandleHelper
 
     public:
         VSIAzureBlobHandleHelper(const CPLString& osEndpoint,
-                                 const CPLString& osBlobEndpoint,
                                  const CPLString& osBucket,
                                  const CPLString& osObjectKey,
                                  const CPLString& osStorageAccount,
@@ -92,6 +95,10 @@ class VSIAzureBlobHandleHelper final: public IVSIS3LikeHandleHelper
         CPLString GetSignedURL(CSLConstList papszOptions);
 };
 
+namespace cpl
+{
+int GetAzureBufferSize();
+}
 
 #endif /* HAVE_CURL */
 
