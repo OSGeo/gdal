@@ -7809,6 +7809,15 @@ class Geometry(_object):
     def __str__(self):
       return self.ExportToWkt()
 
+    def __copy__(self):
+      return self.Clone()
+
+    def __deepcopy__(self, memo):
+      g = self.Clone()
+      srs = self.GetSpatialReference()
+      if srs:
+          g.AssignSpatialReference(srs.Clone())
+      return g
 
     def __reduce__(self):
       return (self.__class__, (), self.ExportToWkb())
