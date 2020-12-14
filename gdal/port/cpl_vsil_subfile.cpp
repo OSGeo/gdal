@@ -51,7 +51,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class VSISubFileHandle : public VSIVirtualHandle
+class VSISubFileHandle final: public VSIVirtualHandle
 {
     CPL_DISALLOW_COPY_ASSIGN(VSISubFileHandle)
 
@@ -62,7 +62,7 @@ class VSISubFileHandle : public VSIVirtualHandle
     bool          bAtEOF = false;
 
     VSISubFileHandle() = default;
-    ~VSISubFileHandle() override = default;
+    ~VSISubFileHandle() override;
 
     int Seek( vsi_l_offset nOffset, int nWhence ) override;
     vsi_l_offset Tell() override;
@@ -78,7 +78,7 @@ class VSISubFileHandle : public VSIVirtualHandle
 /* ==================================================================== */
 /************************************************************************/
 
-class VSISubFileFilesystemHandler : public VSIFilesystemHandler
+class VSISubFileFilesystemHandler final: public VSIFilesystemHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSISubFileFilesystemHandler)
 
@@ -108,6 +108,11 @@ class VSISubFileFilesystemHandler : public VSIFilesystemHandler
 /* ==================================================================== */
 /************************************************************************/
 
+VSISubFileHandle::~VSISubFileHandle()
+{
+    Close();
+}
+
 /************************************************************************/
 /*                               Close()                                */
 /************************************************************************/
@@ -115,6 +120,8 @@ class VSISubFileFilesystemHandler : public VSIFilesystemHandler
 int VSISubFileHandle::Close()
 
 {
+    if( fp == nullptr )
+        return -1;
     int nRet = VSIFCloseL( fp );
     fp = nullptr;
 
