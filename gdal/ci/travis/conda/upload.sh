@@ -31,5 +31,6 @@ if [ "$PLATFORM" == "macos-latest" ]; then
 fi
 
 echo "Anaconda token is available, attempting to upload"
-anaconda upload -t "$ANACONDA_TOKEN"  -u gdal-master --force packages/$CI_PLAT-64/gdal*.bz2 packages/$CI_PLAT-64/*gdal*.bz2
+
+find . -name "*gdal*.bz2" -exec anaconda -t "$ANACONDA_TOKEN" upload --force --no-progress --user gdal-master  {} \;
 
