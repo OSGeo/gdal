@@ -5454,8 +5454,8 @@ SWIGINTERN PyObject *_wrap_BandRasterIONumPy(PyObject *SWIGUNUSEDPARM(self), PyO
     // to GDALRIOResampleAlg, so we are a bit in undefined behavior land,
     // but compilers should hopefully do the right thing
     if( static_cast<int>(arg9) < 0 ||
-        ( static_cast<int>(arg9) >= static_cast<int>(GRIORA_RESERVED_START) &&
-          static_cast<int>(arg9) <= static_cast<int>(GRIORA_RESERVED_END) ) ||
+      ( static_cast<int>(arg9) >= static_cast<int>(GRIORA_RESERVED_START) &&
+        static_cast<int>(arg9) <= static_cast<int>(GRIORA_RESERVED_END) ) ||
       static_cast<int>(arg9) > static_cast<int>(GRIORA_LAST) )
     {
       SWIG_exception(SWIG_ValueError, "Invalid value for resample_alg");
@@ -5651,8 +5651,8 @@ SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObje
     // to GDALRIOResampleAlg, so we are a bit in undefined behavior land,
     // but compilers should hopefully do the right thing
     if( static_cast<int>(arg9) < 0 ||
-        ( static_cast<int>(arg9) >= static_cast<int>(GRIORA_RESERVED_START) &&
-          static_cast<int>(arg9) <= static_cast<int>(GRIORA_RESERVED_END) ) ||
+      ( static_cast<int>(arg9) >= static_cast<int>(GRIORA_RESERVED_START) &&
+        static_cast<int>(arg9) <= static_cast<int>(GRIORA_RESERVED_END) ) ||
       static_cast<int>(arg9) > static_cast<int>(GRIORA_LAST) )
     {
       SWIG_exception(SWIG_ValueError, "Invalid value for resample_alg");

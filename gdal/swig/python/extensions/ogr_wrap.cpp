@@ -27575,6 +27575,11 @@ SWIGINTERN PyObject *_wrap_PreparedGeometry_Intersects(PyObject *SWIGUNUSEDPARM(
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
   {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
     if ( bUseExceptions ) {
       ClearErrorState();
     }
@@ -27623,6 +27628,11 @@ SWIGINTERN PyObject *_wrap_PreparedGeometry_Contains(PyObject *SWIGUNUSEDPARM(se
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PreparedGeometry_Contains" "', argument " "2"" of type '" "OGRGeometryShadow const *""'"); 
   }
   arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
   {
     if ( bUseExceptions ) {
       ClearErrorState();
