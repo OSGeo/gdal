@@ -53,7 +53,7 @@ jobs:
         ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         SECRETS_TEST: ${{ secrets.SECRETS_TEST }}
       run: |
-          source ../gdal/ci/travis/conda/upload.sh
+          source ../gdal/ci/travis/conda/upload.sh || true
       working-directory: ./gdal-feedstock
 
       #      if: github.ref == 'refs/heads/master'
