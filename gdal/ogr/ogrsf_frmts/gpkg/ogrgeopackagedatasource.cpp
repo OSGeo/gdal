@@ -349,6 +349,7 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId,
     if( iSrsId == 0 || iSrsId == -1 )
     {
         OGRSpatialReference *poSpatialRef = new OGRSpatialReference();
+        poSpatialRef->SetAxisMappingStrategy( OAMS_TRADITIONAL_GIS_ORDER );
 
         if( iSrsId == 0)
         {
