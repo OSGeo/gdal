@@ -22,9 +22,10 @@ Description
 -----------
 
 This utility will scan an image and try to set all pixels that are nearly or exactly
-black, white or one or more custom colors around the collar to black or white.  This
-is often used to "fix up" lossy compressed air photos so that color pixels
-can be treated as transparent when mosaicing.
+black, white or one or more custom colors around the collar to black or white. This
+is often used to "fix up" lossy compressed air photos so that color pixels can be
+treated as transparent when mosaicing. The output format must use lossless compression
+if either alpha band or mask band is not set.
 
 .. program:: nearblack
 
