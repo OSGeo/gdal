@@ -109,6 +109,31 @@ typedef enum
 
 #endif
 
+#ifndef SWIGCSHARP
+#ifdef SWIGJAVA
+%javaconst(1);
+#endif
+%constant PROJ_ERR_INVALID_OP                           =1024;
+%constant PROJ_ERR_INVALID_OP_WRONG_SYNTAX              =1025;
+%constant PROJ_ERR_INVALID_OP_MISSING_ARG               =1026;
+%constant PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE         =1027;
+%constant PROJ_ERR_INVALID_OP_MUTUALLY_EXCLUSIVE_ARGS   =1028;
+%constant PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID =1029;
+%constant PROJ_ERR_COORD_TRANSFM                           =2048;
+%constant PROJ_ERR_COORD_TRANSFM_INVALID_COORD             =2049;
+%constant PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN =2050;
+%constant PROJ_ERR_COORD_TRANSFM_NO_OPERATION              =2051;
+%constant PROJ_ERR_COORD_TRANSFM_OUTSIDE_GRID              =2052;
+%constant PROJ_ERR_COORD_TRANSFM_GRID_AT_NODATA            =2053;
+%constant PROJ_ERR_OTHER                                   =4096;
+%constant PROJ_ERR_OTHER_API_MISUSE                        =4097;
+%constant PROJ_ERR_OTHER_NO_INVERSE_OP                     =4098;
+%constant PROJ_ERR_OTHER_NETWORK_ERROR                     =4099;
+#ifdef SWIGJAVA
+%javaconst(0);
+#endif
+#endif
+
 #if !defined(FROM_GDAL_I) && !defined(FROM_OGR_I)
 %inline %{
 typedef char retStringAndCPLFree;
@@ -1224,6 +1249,18 @@ public:
     argout[3] = t;
     OCTTransform4D( self, 1, &argout[0], &argout[1], &argout[2], &argout[3], NULL );
   }
+
+#if defined(SWIGPYTHON)
+  void TransformPointWithErrorCode( double argout[4], int errorCode[1], double x, double y, double z, double t ) {
+    if (self == NULL)
+        return;
+    argout[0] = x;
+    argout[1] = y;
+    argout[2] = z;
+    argout[3] = t;
+    OCTTransform4DWithErrorCodes( self, 1, &argout[0], &argout[1], &argout[2], &argout[3], errorCode );
+  }
+#endif
 
 #ifdef SWIGCSHARP
   %apply (double *inout) {(double*)};

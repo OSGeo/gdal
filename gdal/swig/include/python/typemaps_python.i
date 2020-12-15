@@ -2468,3 +2468,25 @@ OBJECT_LIST_INPUT(GDALDimensionHS);
 }
 
 OBJECT_LIST_INPUT(GDALEDTComponentHS)
+
+
+
+
+%typemap(in,numinputs=0) (double argout[4], int errorCode[1]) ( double argout[4], int errorCode[1] )
+{
+  /* %typemap(in) (double argout[4], int errorCode[1]) */
+  $1 = argout;
+  $2 = errorCode;
+}
+
+%typemap(argout) (double argout[4], int errorCode[1])
+{
+   /* %typemap(argout) (double argout[4], int errorCode[1])  */
+  PyObject *r = PyTuple_New( 5 );
+  PyTuple_SetItem( r, 0, PyFloat_FromDouble($1[0]));
+  PyTuple_SetItem( r, 1, PyFloat_FromDouble($1[1]));
+  PyTuple_SetItem( r, 2, PyFloat_FromDouble($1[2]));
+  PyTuple_SetItem( r, 3, PyFloat_FromDouble($1[3]));
+  PyTuple_SetItem( r, 4, PyLong_FromLong($2[0]));
+  $result = t_output_helper($result,r);
+}
