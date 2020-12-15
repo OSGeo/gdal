@@ -1206,7 +1206,8 @@ def test_gpkg_15():
 
     # Repeated SetProjection()
     out_ds = gdal.Open('/vsimem/tmp.gpkg', gdal.GA_Update)
-    assert out_ds.GetProjectionRef() == ''
+    assert out_ds.GetSpatialRef().IsLocal()
+    assert out_ds.GetProjectionRef().find('Undefined cartesian SRS') >= 0
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     ret = out_ds.SetProjection(srs.ExportToWkt())
@@ -1220,7 +1221,8 @@ def test_gpkg_15():
     out_ds = None
 
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
-    assert out_ds.GetProjectionRef() == ''
+    assert out_ds.GetSpatialRef().IsLocal()
+    assert out_ds.GetProjectionRef().find('Undefined cartesian SRS') >= 0
     # Test setting on read-only dataset
     gdal.PushErrorHandler()
     ret = out_ds.SetProjection('')

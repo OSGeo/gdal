@@ -27,6 +27,7 @@
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
 
+import sys
 from osgeo import gdal
 import gdalnumeric
 try:
@@ -35,14 +36,34 @@ except ImportError:
     import Numeric as numpy
 
 
-src_ds = gdal.Open('complex.tif')
-xsize = src_ds.RasterXSize
-ysize = src_ds.RasterYSize
+def doit(src_filename, dst_magnitude, dst_phase):
+    src_ds = gdal.Open(src_filename)
+    xsize = src_ds.RasterXSize
+    ysize = src_ds.RasterYSize
+    print('{} x {}'.format(xsize, ysize))
 
-src_image = src_ds.GetRasterBand(1).ReadAsArray()
-mag_image = pow(numpy.real(src_image) * numpy.real(src_image) +
-                numpy.imag(src_image) * numpy.imag(src_image), 0.5)
-gdalnumeric.SaveArray(mag_image, 'magnitude.tif')
+    src_image = src_ds.GetRasterBand(1).ReadAsArray()
+    mag_image = pow(numpy.real(src_image) * numpy.real(src_image) +
+                    numpy.imag(src_image) * numpy.imag(src_image), 0.5)
+    gdalnumeric.SaveArray(mag_image, dst_magnitude)
 
-phase_image = numpy.angle(src_image)
-gdalnumeric.SaveArray(phase_image, 'phase.tif')
+    phase_image = numpy.angle(src_image)
+    gdalnumeric.SaveArray(phase_image, dst_phase)
+    return 0
+
+
+def main(argv):
+    src_filename = 'complex.tif'
+    dst_magnitude = 'magnitude.tif'
+    dst_phase = 'phase.tif'
+    if len(argv) > 1:
+        src_filename = argv[1]
+    if len(argv) > 2:
+        dst_magnitude = argv[2]
+    if len(argv) > 3:
+        dst_phase = argv[3]
+    return doit(src_filename, dst_magnitude, dst_phase)
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

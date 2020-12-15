@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Various private (undocumented) utility functions.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -146,8 +146,8 @@ int64 PCIDSK::atoint64( const char *str_value )
  * @param type the data type of the pixels
  * @param count the count of pixels (not bytes, words, etc.)
  */
-void PCIDSK::SwapPixels(void* const data, 
-                        const eChanType type, 
+void PCIDSK::SwapPixels(void* const data,
+                        const eChanType type,
                         const std::size_t count)
 {
     switch(type) {
@@ -192,7 +192,7 @@ void PCIDSK::SwapData( void* const data, const int size, const int wcount )
         }
     }
     else if( size == 1 )
-        /* do nothing */; 
+        /* do nothing */;
     else if( size == 4 )
     {
         uint8 t;
@@ -263,7 +263,7 @@ bool PCIDSK::BigEndianSystem()
 /*      _DBLayout metadata.                                             */
 /************************************************************************/
 
-void PCIDSK::ParseTileFormat( std::string full_text, 
+void PCIDSK::ParseTileFormat( std::string full_text,
                               int &block_size, std::string &compression )
 
 {
@@ -302,14 +302,14 @@ void PCIDSK::ParseTileFormat( std::string full_text,
         if (compression == "NO_WARNINGS")
             compression = "";
         else if( compression != "RLE"
-            && !STARTS_WITH(compression.c_str(), "JPEG") 
+            && !STARTS_WITH(compression.c_str(), "JPEG")
             && compression != "NONE"
             && compression != "QUADTREE" )
         {
             return ThrowPCIDSKException( "Unsupported tile compression scheme '%s' requested.",
                                   compression.c_str() );
         }
-    }    
+    }
 }
 
 /************************************************************************/
@@ -386,7 +386,7 @@ int PCIDSK::pci_strncasecmp( const char *string1, const char *string2, size_t le
 /*      derived from the geosys string.                                 */
 /************************************************************************/
 
-std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys, 
+std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys,
                                                std::string sparms )
 
 {
@@ -502,7 +502,7 @@ std::string PCIDSK::ExtractPath( std::string filename )
 /************************************************************************/
 
 std::string PCIDSK::MergeRelativePath( const PCIDSK::IOInterfaces *io_interfaces,
-                                       std::string base, 
+                                       std::string base,
                                        std::string src_filename )
 
 {
@@ -514,7 +514,7 @@ std::string PCIDSK::MergeRelativePath( const PCIDSK::IOInterfaces *io_interfaces
     else if( src_filename.size() > 2 && src_filename[1] == ':' )
         return src_filename; // has a drive letter?
     else if( src_filename[0] == '/' || src_filename[0] == '\\' )
-        return src_filename; // has a leading dir marker. 
+        return src_filename; // has a leading dir marker.
 
 /* -------------------------------------------------------------------- */
 /*      Figure out what path split char we want to use.                 */
@@ -541,7 +541,7 @@ std::string PCIDSK::MergeRelativePath( const PCIDSK::IOInterfaces *io_interfaces
 /* -------------------------------------------------------------------- */
 /*      Check if the target exists by this name.                        */
 /* -------------------------------------------------------------------- */
-    try 
+    try
     {
         void *hFile = io_interfaces->Open( result, "r" );
         // should throw an exception on failure.
@@ -621,7 +621,7 @@ static void vDebug( void (*pfnDebug)(const char *),
     wrk_args = args;
 #endif
 
-    nPR = vsnprintf( szModestBuffer, sizeof(szModestBuffer), fmt, 
+    nPR = vsnprintf( szModestBuffer, sizeof(szModestBuffer), fmt,
                      wrk_args );
     if( nPR == -1 || nPR >= (int) sizeof(szModestBuffer)-1 )
     {
@@ -635,11 +635,11 @@ static void vDebug( void (*pfnDebug)(const char *),
         wrk_args = args;
 #endif
         while( (nPR=vsnprintf( pszWorkBuffer, nWorkBufferSize, fmt, wrk_args))
-               >= nWorkBufferSize-1 
+               >= nWorkBufferSize-1
                || nPR == -1 )
         {
             nWorkBufferSize *= 4;
-            char* pszWorkBufferNew = (char *) realloc(pszWorkBuffer, 
+            char* pszWorkBufferNew = (char *) realloc(pszWorkBuffer,
                                                       nWorkBufferSize );
 #ifdef va_copy
             va_end( wrk_args );

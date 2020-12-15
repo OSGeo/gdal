@@ -203,11 +203,9 @@ error threshold so the file has not been updated.""" % max_error)
 
 
 def Usage():
-    print("""
-gdalmove.py [-s_srs <srs_defn>] -t_srs <srs_defn>
-            [-et <max_pixel_err>] target_file
-""")
-    sys.exit(1)
+    print("""gdalmove.py [-s_srs <srs_defn>] -t_srs <srs_defn>
+            [-et <max_pixel_err>] target_file""")
+    return 1
 
 
 def main(argv):
@@ -215,10 +213,10 @@ def main(argv):
 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
-        sys.exit(0)
+        return 0
 
     if len(argv) == 1:
-        Usage()
+        return Usage()
 
     # Script argument defaults
     s_srs = None
@@ -248,18 +246,18 @@ def main(argv):
 
         else:
             print('Urecognised argument: ' + argv[i])
-            Usage()
+            return Usage()
 
         i = i + 1
         # next argument
 
     if filename is None:
         print('Missing name of file to operate on, but required.')
-        Usage()
+        return Usage()
 
     if t_srs is None:
         print('Target SRS (-t_srs) missing, but required.')
-        Usage()
+        return Usage()
 
     move(filename, t_srs, s_srs, pixel_threshold)
 

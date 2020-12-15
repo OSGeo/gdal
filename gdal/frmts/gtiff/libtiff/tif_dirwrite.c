@@ -2826,7 +2826,8 @@ void DoubleToRational(double value, uint32 *num, uint32 *denom)
 	unsigned long long ullNum, ullDenom, ullNum2, ullDenom2;
 
 	/*-- Check for negative values. If so it is an error. */
-	if (value < 0) {
+        /* Test written that way to catch NaN */
+	if (!(value >= 0)) {
 		*num = *denom = 0;
 		TIFFErrorExt(0, "TIFFLib: DoubleToRational()", " Negative Value for Unsigned Rational given.");
 		return;

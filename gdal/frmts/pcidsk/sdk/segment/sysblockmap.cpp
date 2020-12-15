@@ -3,16 +3,16 @@
  * Purpose:  Implementation of the SysBlockMap class.
  *
  * This class is used to manage access to the SYS virtual block map segment
- * (named SysBMDir).  This segment is used to keep track of one or more 
+ * (named SysBMDir).  This segment is used to keep track of one or more
  * virtual files stored in SysBData segments.  These virtual files are normally
- * used to hold tiled images for primary bands or overviews.  
+ * used to hold tiled images for primary bands or overviews.
  *
  * This class is closely partnered with the SysVirtualFile class, and the
- * primary client is the CTiledChannel class. 
- * 
+ * primary client is the CTiledChannel class.
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -73,7 +73,7 @@ SysBlockMap::~SysBlockMap()
 
 {
     size_t i;
-    
+
     for( i = 0; i < virtual_files.size(); i++ )
     {
         delete virtual_files[i];
@@ -160,8 +160,8 @@ void SysBlockMap::PartialLoad()
 /*      Load the layer list definitions.  These are fairly small.       */
 /* -------------------------------------------------------------------- */
     layer_data.SetSize( 24 * layer_count );
-    ReadFromFile( layer_data.buffer, 
-                  512 + 28 * block_count, 
+    ReadFromFile( layer_data.buffer,
+                  512 + 28 * block_count,
                   layer_data.buffer_size);
 
     partial_loaded = true;
@@ -186,7 +186,7 @@ void SysBlockMap::FullLoad()
 //    printf( "<FullLoad>" );
 //    fflush( stdout );
 
-    // TODO: this should likely be protected by a mutex. 
+    // TODO: this should likely be protected by a mutex.
 
 /* -------------------------------------------------------------------- */
 /*      Load the segment contents into a buffer.                        */
@@ -218,7 +218,7 @@ void SysBlockMap::Synchronize()
     WriteToFile( init_data.buffer, 0, init_data.buffer_size );
 
     WriteToFile( blockmap_data.buffer, 512, blockmap_data.buffer_size );
-    WriteToFile( layer_data.buffer, 512 + blockmap_data.buffer_size, 
+    WriteToFile( layer_data.buffer, 512 + blockmap_data.buffer_size,
                  layer_data.buffer_size );
 
     dirty = false;
@@ -256,7 +256,7 @@ void SysBlockMap::AllocateBlocks()
         while( (l_seg=file->GetSegment( SEG_SYS, "SysBData", previous )) != nullptr )
         {
             previous = l_seg->GetSegmentNumber();
-            
+
             if( l_seg->IsAtEOF() )
             {
                 growing_segment = previous;
@@ -270,8 +270,8 @@ void SysBlockMap::AllocateBlocks()
 /* -------------------------------------------------------------------- */
     if( growing_segment == 0 )
     {
-        growing_segment = 
-            file->CreateSegment( "SysBData", 
+        growing_segment =
+            file->CreateSegment( "SysBData",
                                  "System Block Data for Tiles and Overviews "
                                  "- Do not modify",
                                  SEG_SYS, 0L );
@@ -283,15 +283,15 @@ void SysBlockMap::AllocateBlocks()
     uint64 new_big_blocks = 16;
     uint64 new_bytes = new_big_blocks * SysVirtualFile::block_size;
     seg = file->GetSegment( growing_segment );
-    int block_index_in_segment = (int) 
+    int block_index_in_segment = (int)
         (seg->GetContentSize() / SysVirtualFile::block_size);
 
     seg->WriteToFile( "\0", seg->GetContentSize() + new_bytes - 1, 1 );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Resize the memory image of the blockmap.                        */
 /* -------------------------------------------------------------------- */
-    if( 28 * (block_count + new_big_blocks) 
+    if( 28 * (block_count + new_big_blocks)
         > (unsigned int) blockmap_data.buffer_size )
         blockmap_data.SetSize( (int) (28 * (block_count + new_big_blocks)) );
 
@@ -300,7 +300,7 @@ void SysBlockMap::AllocateBlocks()
 /* -------------------------------------------------------------------- */
     uint64 block_index;
 
-    for( block_index = block_count; 
+    for( block_index = block_count;
          block_index < block_count + new_big_blocks;
          block_index++ )
     {
@@ -329,7 +329,7 @@ void SysBlockMap::AllocateBlocks()
 /*      Get one more block for this virtual file.                       */
 /************************************************************************/
 
-int SysBlockMap::GrowVirtualFile( int image, int &last_block, 
+int SysBlockMap::GrowVirtualFile( int image, int &last_block,
                                   int &block_segment_ret )
 
 {
@@ -350,7 +350,7 @@ int SysBlockMap::GrowVirtualFile( int image, int &last_block,
     // update first free block to point to the next free block.
     first_free_block = blockmap_data.GetInt( alloc_block*28+20, 8);
 
-    // mark block as owned by this layer/image. 
+    // mark block as owned by this layer/image.
     blockmap_data.Put( image, alloc_block*28 + 12, 8 );
 
     // clear next free block on allocated block - it is the last in the chain
@@ -402,8 +402,8 @@ SysVirtualFile *SysBlockMap::GetVirtualFile( int image )
     uint64  vfile_length = layer_data.GetUInt64( 24*image + 12, 12 );
     int  start_block = layer_data.GetInt( 24*image + 4, 8 );
 
-    virtual_files[image] = 
-        new SysVirtualFile( dynamic_cast<CPCIDSKFile *>(file), 
+    virtual_files[image] =
+        new SysVirtualFile( dynamic_cast<CPCIDSKFile *>(file),
                             start_block, vfile_length,
                             this, image );
 
@@ -458,7 +458,7 @@ int SysBlockMap::CreateVirtualFile()
 /*                       CreateVirtualImageFile()                       */
 /************************************************************************/
 
-int SysBlockMap::CreateVirtualImageFile( int width, int height, 
+int SysBlockMap::CreateVirtualImageFile( int width, int height,
                                          int block_width, int block_height,
                                          eChanType chan_type,
                                          std::string compression )
@@ -545,7 +545,7 @@ int SysBlockMap::GetNextBlockMapEntry( int bm_index,
     {
         ReadFromFile( bm_entry, bm_index * 28 + 512, 28 );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Parse the values as efficiently as we can.                      */
 /* -------------------------------------------------------------------- */
@@ -558,6 +558,6 @@ int SysBlockMap::GetNextBlockMapEntry( int bm_index,
 
     bm_entry[4] = '\0';
     segmentOut = static_cast<PCIDSK::uint16>(atoi(bm_entry));
-    
+
     return next_block;
 }

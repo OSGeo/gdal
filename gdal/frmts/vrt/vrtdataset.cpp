@@ -1280,10 +1280,15 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
             poBand = poDerivedBand;
         }
         else {
+            int nBlockXSizeIn = atoi(
+                CSLFetchNameValueDef(papszOptions, "BLOCKXSIZE", "0"));
+            int nBlockYSizeIn = atoi(
+                CSLFetchNameValueDef(papszOptions, "BLOCKYSIZE", "0"));
             /* ---- Standard sourced band ---- */
             poBand = new VRTSourcedRasterBand(
                 this, GetRasterCount() + 1, eType,
-                GetRasterXSize(), GetRasterYSize());
+                GetRasterXSize(), GetRasterYSize(),
+                nBlockXSizeIn, nBlockYSizeIn);
         }
 
         SetBand( GetRasterCount() + 1, poBand );

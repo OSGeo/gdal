@@ -210,10 +210,9 @@
         </xs:sequence>
         <xs:attribute name="dataType" type="DataTypeType"/>
         <xs:attribute name="band" type="xs:unsignedInt"/>
+        <xs:attribute name="blockXSize" type="nonNegativeInteger32"/>
+        <xs:attribute name="blockYSize" type="nonNegativeInteger32"/>
         <xs:attribute name="subClass" type="VRTRasterBandSubClassType"/>
-
-        <xs:attribute name="BlockXSize" type="xs:unsignedInt"/> <!-- ignored -->
-        <xs:attribute name="BlockYSize" type="xs:unsignedInt"/> <!-- ignored -->
     </xs:complexType>
 
     <xs:simpleType name="ZeroOrOne">

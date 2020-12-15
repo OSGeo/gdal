@@ -3810,6 +3810,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "GRIORA_CubicSpline",SWIG_From_int((int)(GRIORA_CubicSpline)));
   SWIG_Python_SetConstant(d, "GRIORA_Lanczos",SWIG_From_int((int)(GRIORA_Lanczos)));
   SWIG_Python_SetConstant(d, "GRIORA_Average",SWIG_From_int((int)(GRIORA_Average)));
+  SWIG_Python_SetConstant(d, "GRIORA_RMS",SWIG_From_int((int)(GRIORA_RMS)));
   SWIG_Python_SetConstant(d, "GRIORA_Mode",SWIG_From_int((int)(GRIORA_Mode)));
   SWIG_Python_SetConstant(d, "GRIORA_Gauss",SWIG_From_int((int)(GRIORA_Gauss)));
   SWIG_Python_SetConstant(d, "GCI_Undefined",SWIG_From_int((int)(GCI_Undefined)));
@@ -3835,6 +3836,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "GRA_CubicSpline",SWIG_From_int((int)(GRA_CubicSpline)));
   SWIG_Python_SetConstant(d, "GRA_Lanczos",SWIG_From_int((int)(GRA_Lanczos)));
   SWIG_Python_SetConstant(d, "GRA_Average",SWIG_From_int((int)(GRA_Average)));
+  SWIG_Python_SetConstant(d, "GRA_RMS",SWIG_From_int((int)(GRA_RMS)));
   SWIG_Python_SetConstant(d, "GRA_Mode",SWIG_From_int((int)(GRA_Mode)));
   SWIG_Python_SetConstant(d, "GRA_Max",SWIG_From_int((int)(GRA_Max)));
   SWIG_Python_SetConstant(d, "GRA_Min",SWIG_From_int((int)(GRA_Min)));

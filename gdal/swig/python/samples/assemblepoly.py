@@ -31,84 +31,97 @@
 ###############################################################################
 
 from osgeo import ogr
+import sys
 
-# -
-# Open the datasource to operate on.
 
-# ds = ogr.Open( '/u/data/ntf/bl2000/HALTON.NTF' )
-ds = ogr.Open('PG:dbname=test', update=1)
+def doit(name):
+    # Open the datasource to operate on.
 
-layer_count = ds.GetLayerCount()
+    # ds = ogr.Open( '/u/data/ntf/bl2000/HALTON.NTF' )
+    ds = ogr.Open(name, update=1)
 
-# -
-# Establish access to the line and polygon layers.  Eventually we shouldn't
-# hardcode this.
+    # layer_count = ds.GetLayerCount()
 
-line_layer = ds.GetLayer(0)
-poly_layer = ds.GetLayer(1)
+    # -
+    # Establish access to the line and polygon layers.  Eventually we shouldn't
+    # hardcode this.
 
-#############################################################################
-# Read all features in the line layer, holding just the geometry in a hash
-# for fast lookup by GEOM_ID.
+    line_layer = ds.GetLayer(0)
+    poly_layer = ds.GetLayer(1)
 
-lines_hash = {}
+    #############################################################################
+    # Read all features in the line layer, holding just the geometry in a hash
+    # for fast lookup by GEOM_ID.
 
-feat = line_layer.GetNextFeature()
-geom_id_field = feat.GetFieldIndex('GEOM_ID')
-tile_ref_field = feat.GetFieldIndex('TILE_REF')
-while feat is not None:
-    geom_id = feat.GetField(geom_id_field)
-    tile_ref = feat.GetField(tile_ref_field)
-
-    if tile_ref not in lines_hash:
-        lines_hash[tile_ref] = {}
-
-    sub_hash = lines_hash[tile_ref]
-    sub_hash[geom_id] = feat.GetGeometryRef().Clone()
-
-    feat.Destroy()
+    lines_hash = {}
 
     feat = line_layer.GetNextFeature()
+    geom_id_field = feat.GetFieldIndex('GEOM_ID')
+    tile_ref_field = feat.GetFieldIndex('TILE_REF')
+    while feat is not None:
+        geom_id = feat.GetField(geom_id_field)
+        tile_ref = feat.GetField(tile_ref_field)
 
-print('Got %d lines.' % len(lines_hash))
+        if tile_ref not in lines_hash:
+            lines_hash[tile_ref] = {}
+
+        sub_hash = lines_hash[tile_ref]
+        sub_hash[geom_id] = feat.GetGeometryRef().Clone()
+
+        feat.Destroy()
+
+        feat = line_layer.GetNextFeature()
+
+    print('Got %d lines.' % len(lines_hash))
 
 
-#############################################################################
-# Read all polygon features.
-
-feat = poly_layer.GetNextFeature()
-link_field = feat.GetFieldIndex('GEOM_ID_OF_LINK')
-tile_ref_field = feat.GetFieldIndex('TILE_REF')
-
-while feat is not None:
-    tile_ref = feat.GetField(tile_ref_field)
-    link_list = feat.GetField(link_field)
-
-    # If the list is in string form we need to convert it.
-    if type(link_list).__name__ == 'str':
-        colon = link_list.find(':')
-        items = link_list[colon + 1:-1].split(',')
-        link_list = []
-        for item in items:
-            try:
-                link_list.append(int(item))
-            except:
-                print('item failed to translate: ', item)
-
-    link_coll = ogr.Geometry(type=ogr.wkbGeometryCollection)
-    for geom_id in link_list:
-        geom = lines_hash[tile_ref][geom_id]
-        link_coll.AddGeometry(geom)
-
-    try:
-        poly = ogr.BuildPolygonFromEdges(link_coll)
-        print(poly.ExportToWkt())
-        feat.SetGeometryDirectly(poly)
-    except:
-        print('BuildPolygonFromEdges failed.')
-
-# For now we don't actually write back the assembled polygons.
-#    poly_layer.SetFeature( feat )
-    feat.Destroy()
+    #############################################################################
+    # Read all polygon features.
 
     feat = poly_layer.GetNextFeature()
+    link_field = feat.GetFieldIndex('GEOM_ID_OF_LINK')
+    tile_ref_field = feat.GetFieldIndex('TILE_REF')
+
+    while feat is not None:
+        tile_ref = feat.GetField(tile_ref_field)
+        link_list = feat.GetField(link_field)
+
+        # If the list is in string form we need to convert it.
+        if type(link_list).__name__ == 'str':
+            colon = link_list.find(':')
+            items = link_list[colon + 1:-1].split(',')
+            link_list = []
+            for item in items:
+                try:
+                    link_list.append(int(item))
+                except:
+                    print('item failed to translate: ', item)
+
+        link_coll = ogr.Geometry(type=ogr.wkbGeometryCollection)
+        for geom_id in link_list:
+            geom = lines_hash[tile_ref][geom_id]
+            link_coll.AddGeometry(geom)
+
+        try:
+            poly = ogr.BuildPolygonFromEdges(link_coll)
+            print(poly.ExportToWkt())
+            feat.SetGeometryDirectly(poly)
+        except:
+            print('BuildPolygonFromEdges failed.')
+
+    # For now we don't actually write back the assembled polygons.
+    #    poly_layer.SetFeature( feat )
+        feat.Destroy()
+
+        feat = poly_layer.GetNextFeature()
+
+
+def main(argv):
+    name = 'PG:dbname=test'
+    if len(argv) > 1:
+        name = argv[1]
+    return doit(name)
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

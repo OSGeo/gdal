@@ -7796,6 +7796,11 @@ class Geometry(_object):
         return _ogr.Geometry_Transform(self, *args)
 
 
+    def CreatePreparedGeometry(self, *args):
+        """CreatePreparedGeometry(Geometry self) -> PreparedGeometry"""
+        return _ogr.Geometry_CreatePreparedGeometry(self, *args)
+
+
     def Destroy(self):
       self.__swig_destroy__(self)
       self.__del__()
@@ -7804,6 +7809,15 @@ class Geometry(_object):
     def __str__(self):
       return self.ExportToWkt()
 
+    def __copy__(self):
+      return self.Clone()
+
+    def __deepcopy__(self, memo):
+      g = self.Clone()
+      srs = self.GetSpatialReference()
+      if srs:
+          g.AssignSpatialReference(srs.Clone())
+      return g
 
     def __reduce__(self):
       return (self.__class__, (), self.ExportToWkb())
@@ -7819,6 +7833,32 @@ class Geometry(_object):
 
 Geometry_swigregister = _ogr.Geometry_swigregister
 Geometry_swigregister(Geometry)
+
+class PreparedGeometry(_object):
+    """Proxy of C++ OGRPreparedGeometryShadow class."""
+
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, PreparedGeometry, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, PreparedGeometry, name)
+
+    def __init__(self, *args, **kwargs):
+        raise AttributeError("No constructor defined")
+    __repr__ = _swig_repr
+    __swig_destroy__ = _ogr.delete_PreparedGeometry
+    __del__ = lambda self: None
+
+    def Intersects(self, *args):
+        """Intersects(PreparedGeometry self, Geometry otherGeom) -> bool"""
+        return _ogr.PreparedGeometry_Intersects(self, *args)
+
+
+    def Contains(self, *args):
+        """Contains(PreparedGeometry self, Geometry otherGeom) -> bool"""
+        return _ogr.PreparedGeometry_Contains(self, *args)
+
+PreparedGeometry_swigregister = _ogr.PreparedGeometry_swigregister
+PreparedGeometry_swigregister(PreparedGeometry)
 
 class GeomTransformer(_object):
     """Proxy of C++ OGRGeomTransformerShadow class."""

@@ -29,82 +29,35 @@
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
 
-import os
 import sys
 from osgeo import gdal, ogr
+from osgeo.auxiliary.base import GetOutputDriverFor
+
 
 def Usage():
     print('Usage:  tile_extent_from_raster.py [-f format] [-ovr level] in.tif out.shp')
-
     return 1
 
 
-def DoesDriverHandleExtension(drv, ext):
-    exts = drv.GetMetadataItem(gdal.DMD_EXTENSIONS)
-    return exts is not None and exts.lower().find(ext.lower()) >= 0
-
-
-def GetExtension(filename):
-    if filename.lower().endswith('.shp.zip'):
-        return 'shp.zip'
-    ext = os.path.splitext(filename)[1]
-    if ext.startswith('.'):
-        ext = ext[1:]
-    return ext
-
-
-def GetOutputDriversFor(filename):
-    drv_list = []
-    ext = GetExtension(filename)
-    if ext.lower() == 'vrt':
-        return ['VRT']
-    for i in range(gdal.GetDriverCount()):
-        drv = gdal.GetDriver(i)
-        if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None or
-            drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
-           drv.GetMetadataItem(gdal.DCAP_VECTOR) is not None:
-            if ext and DoesDriverHandleExtension(drv, ext):
-                drv_list.append(drv.ShortName)
-            else:
-                prefix = drv.GetMetadataItem(gdal.DMD_CONNECTION_PREFIX)
-                if prefix is not None and filename.lower().startswith(prefix.lower()):
-                    drv_list.append(drv.ShortName)
-
-    return drv_list
-
-
-def GetOutputDriverFor(filename):
-    drv_list = GetOutputDriversFor(filename)
-    ext = GetExtension(filename)
-    if not drv_list:
-        if not ext:
-            return 'ESRI Shapefile'
-        else:
-            raise Exception("Cannot guess driver for %s" % filename)
-    elif len(drv_list) > 1:
-        print("Several drivers matching %s extension. Using %s" % (ext if ext else '', drv_list[0]))
-    return drv_list[0]
-
-
-def main():
+def main(argv):
     i = 1
     output_format = None
     in_filename = None
     out_filename = None
     ovr_level = None
-    while i < len(sys.argv):
-        if sys.argv[i] == "-f":
-            output_format = sys.argv[i + 1]
+    while i < len(argv):
+        if argv[i] == "-f":
+            output_format = argv[i + 1]
             i = i + 1
-        elif sys.argv[i] == "-ovr":
-            ovr_level = int(sys.argv[i + 1])
+        elif argv[i] == "-ovr":
+            ovr_level = int(argv[i + 1])
             i = i + 1
-        elif sys.argv[i][0] == '-':
+        elif argv[i][0] == '-':
             return Usage()
         elif in_filename is None:
-            in_filename = sys.argv[i]
+            in_filename = argv[i]
         elif out_filename is None:
-            out_filename = sys.argv[i]
+            out_filename = argv[i]
         else:
             return Usage()
 
@@ -113,7 +66,7 @@ def main():
     if out_filename is None:
         return Usage()
     if output_format is None:
-        output_format = GetOutputDriverFor(out_filename)
+        output_format = GetOutputDriverFor(out_filename, is_raster=False)
 
     src_ds = gdal.Open(in_filename)
     out_ds = gdal.GetDriverByName(output_format).Create(out_filename, 0, 0, 0, gdal.GDT_Unknown)
@@ -143,7 +96,8 @@ def main():
                 f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
                 out_lyr.CreateFeature(f)
     out_ds = None
+    return 0
+
 
 if __name__ == '__main__':
-    sys.exit(main())
-
+    sys.exit(main(sys.argv))

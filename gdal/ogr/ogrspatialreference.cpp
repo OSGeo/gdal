@@ -1436,6 +1436,11 @@ static PJ* GDAL_proj_crs_create_bound_crs_to_WGS84(PJ_CONTEXT* ctx, PJ* pj,
  *     WKT1 is an alias of WKT1_GDAL.
  *     WKT2 will default to the latest revision implemented (currently WKT2_2018)
  *     WKT2_2019 can be used as an alias of WKT2_2018 since GDAL 3.2
+ * <li>ALLOW_ELLIPSOIDAL_HEIGHT_AS_VERTICAL_CRS=YES/NO. Default is NO. If set
+ * to YES and FORMAT=WKT1_GDAL, a Geographic 3D CRS or a Projected 3D CRS will
+ * be exported as a compound CRS whose vertical part represents an ellipsoidal
+ * height (for example for use with LAS 1.4 WKT1).
+ * Requires PROJ 7.2.1 and GDAL 3.2.1.</li>
  * </li>
  * </ul>
  *
@@ -1520,6 +1525,13 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult,
     aosOptions.SetNameValue("MULTILINE",
                     CSLFetchNameValueDef(papszOptions, "MULTILINE", "NO"));
 
+    const char* pszAllowEllpsHeightAsVertCS =
+        CSLFetchNameValue(papszOptions, "ALLOW_ELLIPSOIDAL_HEIGHT_AS_VERTICAL_CRS");
+    if( pszAllowEllpsHeightAsVertCS )
+    {
+        aosOptions.SetNameValue("ALLOW_ELLIPSOIDAL_HEIGHT_AS_VERTICAL_CRS",
+                                pszAllowEllpsHeightAsVertCS);
+    }
 
     PJ* boundCRS = nullptr;
     if( wktFormat == PJ_WKT1_GDAL &&
@@ -11567,4 +11579,116 @@ OGRErr OSRDemoteTo2D( OGRSpatialReferenceH hSRS, const char* pszName  )
     VALIDATE_POINTER1( hSRS, "OSRDemoteTo2D", OGRERR_FAILURE );
 
     return OGRSpatialReference::FromHandle(hSRS)->DemoteTo2D(pszName);
+}
+
+/************************************************************************/
+/*                           GetEPSGGeogCS()                            */
+/************************************************************************/
+
+/** Try to establish what the EPSG code for this coordinate systems
+ * GEOGCS might be.  Returns -1 if no reasonable guess can be made.
+ *
+ * @return EPSG code
+ */
+
+int OGRSpatialReference::GetEPSGGeogCS() const
+
+{
+    const char *pszAuthName = GetAuthorityName( "GEOGCS" );
+
+/* -------------------------------------------------------------------- */
+/*      Do we already have it?                                          */
+/* -------------------------------------------------------------------- */
+    if( pszAuthName != nullptr && EQUAL(pszAuthName, "epsg") )
+        return atoi(GetAuthorityCode( "GEOGCS" ));
+
+/* -------------------------------------------------------------------- */
+/*      Get the datum and geogcs names.                                 */
+/* -------------------------------------------------------------------- */
+    const char *pszGEOGCS = GetAttrValue( "GEOGCS" );
+    const char *pszDatum = GetAttrValue( "DATUM" );
+
+    // We can only operate on coordinate systems with a geogcs.
+    if( pszGEOGCS == nullptr || pszDatum == nullptr )
+        return -1;
+
+    // Lookup geographic CRS name
+    const PJ_TYPE type = PJ_TYPE_GEOGRAPHIC_2D_CRS;
+    PJ_OBJ_LIST* list = proj_create_from_name(d->getPROJContext(), nullptr,
+                                              pszGEOGCS,
+                                              &type, 1,
+                                              false,
+                                              1,
+                                              nullptr);
+    if( list )
+    {
+        const auto listSize = proj_list_get_count(list);
+        if( listSize == 1 )
+        {
+            auto crs = proj_list_get(d->getPROJContext(), list, 0);
+            if( crs )
+            {
+                pszAuthName = proj_get_id_auth_name(crs, 0);
+                const char* pszCode = proj_get_id_code(crs, 0);
+                if( pszAuthName && pszCode && EQUAL(pszAuthName, "EPSG") )
+                {
+                    const int nCode = atoi(pszCode);
+                    proj_destroy(crs);
+                    proj_list_destroy(list);
+                    return nCode;
+                }
+                proj_destroy(crs);
+            }
+        }
+        proj_list_destroy(list);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Is this a "well known" geographic coordinate system?            */
+/* -------------------------------------------------------------------- */
+    const bool bWGS = strstr(pszGEOGCS, "WGS") != nullptr
+        || strstr(pszDatum, "WGS")
+        || strstr(pszGEOGCS, "World Geodetic System")
+        || strstr(pszGEOGCS, "World_Geodetic_System")
+        || strstr(pszDatum, "World Geodetic System")
+        || strstr(pszDatum, "World_Geodetic_System");
+
+    const bool bNAD = strstr(pszGEOGCS, "NAD") != nullptr
+        || strstr(pszDatum, "NAD")
+        || strstr(pszGEOGCS, "North American")
+        || strstr(pszGEOGCS, "North_American")
+        || strstr(pszDatum, "North American")
+        || strstr(pszDatum, "North_American");
+
+    if( bWGS && (strstr(pszGEOGCS, "84") || strstr(pszDatum, "84")) )
+        return 4326;
+
+    if( bWGS && (strstr(pszGEOGCS, "72") || strstr(pszDatum, "72")) )
+        return 4322;
+
+    // This is questionable as there are several 'flavors' of NAD83 that
+    // are not the same as 4269
+    if( bNAD && (strstr(pszGEOGCS, "83") || strstr(pszDatum, "83")) )
+        return 4269;
+
+    if( bNAD && (strstr(pszGEOGCS, "27") || strstr(pszDatum, "27")) )
+        return 4267;
+
+/* -------------------------------------------------------------------- */
+/*      If we know the datum, associate the most likely GCS with        */
+/*      it.                                                             */
+/* -------------------------------------------------------------------- */
+    pszAuthName = GetAuthorityName( "GEOGCS|DATUM" );
+
+    if( pszAuthName != nullptr
+        && EQUAL(pszAuthName, "epsg")
+        && GetPrimeMeridian() == 0.0 )
+    {
+        const int nDatum = atoi(GetAuthorityCode("GEOGCS|DATUM"));
+
+        if( nDatum >= 6000 && nDatum <= 6999 )
+            return nDatum - 2000;
+    }
+
+    return -1;
 }

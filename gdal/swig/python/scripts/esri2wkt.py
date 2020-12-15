@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 # import osgeo.utils.esri2wkt as a convenience to use as a script
 from osgeo.utils.esri2wkt import *  # noqa

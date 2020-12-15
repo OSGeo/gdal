@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of pthreads based mutex.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -72,7 +72,7 @@ PThreadMutex::PThreadMutex()
     pthread_mutex_t tmp_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
     *hMutex = tmp_mutex;
 #else
-#error "Recursive mutexes apparently unsupported, configure --without-threads" 
+#error "Recursive mutexes apparently unsupported, configure --without-threads"
 #endif
 }
 

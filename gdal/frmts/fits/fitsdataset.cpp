@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+// So that OFF_T is 64 bits
+#define _FILE_OFFSET_BITS 64
+
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
@@ -37,8 +40,10 @@
 #include <string.h>
 #include <fitsio.h>
 
+#include <algorithm>
 #include <string>
 #include <cstring>
+#include <set>
 #include <vector>
 
 CPL_CVSID("$Id$")
@@ -101,6 +106,8 @@ public:
                               int nXSize, int nYSize, int nBands,
                               GDALDataType eType,
                               char** papszParmList );
+  static CPLErr Delete( const char * pszFilename );
+
   const OGRSpatialReference* GetSpatialRef() const override;
   CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
   virtual CPLErr GetGeoTransform( double * ) override;
@@ -109,6 +116,12 @@ public:
 
   int GetLayerCount() override { return static_cast<int>(m_apoLayers.size()); }
   OGRLayer* GetLayer(int) override;
+
+  OGRLayer* ICreateLayer(const char *pszName,
+                         OGRSpatialReference* poSRS,
+                         OGRwkbGeometryType eGType,
+                         char ** papszOptions ) override;
+  int         TestCapability( const char * pszCap ) override;
 
   bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
 
@@ -186,7 +199,14 @@ class FITSLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<FITSL
 
     std::vector<ColDesc> m_aoColDescs;
 
+    CPLStringList        m_aosCreationOptions{};
+
+    std::vector<int>     m_anDeferredFieldsIndices{};
+
     OGRFeature*     GetNextRawFeature();
+    void            SetActiveHDU();
+    void            RunDeferredFieldCreation(const OGRFeature* poFeature = nullptr);
+    bool            SetOrCreateFeature(const OGRFeature* poFeature, LONGLONG nRow);
 
 public:
 
@@ -198,10 +218,15 @@ public:
         int             TestCapability(const char*) override;
         OGRFeature     *GetFeature(GIntBig) override;
         GIntBig         GetFeatureCount(int bForce) override;
+        OGRErr          CreateField( OGRFieldDefn *poField, int bApproxOK ) override;
+        OGRErr          ICreateFeature(OGRFeature* poFeature) override;
+        OGRErr          ISetFeature(OGRFeature* poFeature) override;
+        OGRErr          DeleteFeature(GIntBig nFID) override;
 
         DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(FITSLayer)
-};
 
+        void            SetCreationOptions(CSLConstList papszOptions) { m_aosCreationOptions = papszOptions; }
+};
 
 /************************************************************************/
 /*                            FITSLayer()                               */
@@ -218,11 +243,11 @@ FITSLayer::FITSLayer(FITSDataset* poDS, int hduNum, const char* pszExtName):
     m_poFeatureDefn->SetGeomType(wkbNone);
     SetDescription(m_poFeatureDefn->GetName());
 
-    int status = 0;
-    fits_movabs_hdu(m_poDS->m_hFITS, hduNum, nullptr, &status);
+    SetActiveHDU();
 
     m_poDS->LoadMetadata(this);
 
+    int status = 0;
     fits_get_num_rowsll(m_poDS->m_hFITS, &m_nRows, &status);
     if( status )
     {
@@ -431,24 +456,29 @@ FITSLayer::FITSLayer(FITSDataset* poDS, int hduNum, const char* pszExtName):
         {
             if( typechar[1] == 'L' )
             {
+                nRepeat = 0;
                 eType = OFTIntegerList;
                 eSubType = OFSTBoolean;
             }
             else if( typechar[1] == 'B' )
             {
+                nRepeat = 0;
                 eType = OFTIntegerList;
             }
             else if( typechar[1] == 'I' )
             {
+                nRepeat = 0;
                 eType = OFTIntegerList;
                 eSubType = OFSTInt16;
             }
             else if( typechar[1] == 'J' )
             {
+                nRepeat = 0;
                 eType = OFTIntegerList;
             }
             else if( typechar[1] == 'K' )
             {
+                nRepeat = 0;
                 eType = OFTInteger64List;
             }
             else if( typechar[1] == 'A' )
@@ -457,6 +487,7 @@ FITSLayer::FITSLayer(FITSDataset* poDS, int hduNum, const char* pszExtName):
             }
             else if( typechar[1] == 'E' )
             {
+                nRepeat = 0;
                 eType = OFTRealList;
                 if( dfOffset == 0 && dfScale == 1 )
                     eSubType = OFSTFloat32;
@@ -466,6 +497,7 @@ FITSLayer::FITSLayer(FITSDataset* poDS, int hduNum, const char* pszExtName):
             }
             else if( typechar[1] == 'D' )
             {
+                nRepeat = 0;
                 eType = OFTRealList;
                 // fits_read_col() automatically scales numeric values
                 dfOffset = 0;
@@ -473,6 +505,7 @@ FITSLayer::FITSLayer(FITSDataset* poDS, int hduNum, const char* pszExtName):
             }
             else if( typechar[1] == 'C' )
             {
+                nRepeat = 0;
                 eType = OFTStringList;
                 // fits_read_col() automatically scales numeric values
                 dfOffset = 0;
@@ -480,6 +513,7 @@ FITSLayer::FITSLayer(FITSDataset* poDS, int hduNum, const char* pszExtName):
             }
             else if( typechar[1] == 'M' )
             {
+                nRepeat = 0;
                 eType = OFTStringList;
                 // fits_read_col() automatically scales numeric values
                 dfOffset = 0;
@@ -530,7 +564,42 @@ FITSLayer::FITSLayer(FITSDataset* poDS, int hduNum, const char* pszExtName):
 
 FITSLayer::~FITSLayer()
 {
+    RunDeferredFieldCreation();
+
+    for( int i = 0; i < m_aosCreationOptions.size(); i++ )
+    {
+        if( STARTS_WITH_CI(m_aosCreationOptions[i], "REPEAT_") )
+        {
+            char* pszKey = nullptr;
+            CPL_IGNORE_RET_VAL(CPLParseNameValue(
+                                    m_aosCreationOptions[i], &pszKey));
+            if( pszKey && m_poFeatureDefn->GetFieldIndex(
+                                    pszKey + strlen("REPEAT_")) < 0 )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Creation option %s ignored as field does not exist",
+                        m_aosCreationOptions[i]);
+            }
+            CPLFree(pszKey);
+        }
+    }
+
     m_poFeatureDefn->Release();
+}
+
+/************************************************************************/
+/*                            SetActiveHDU()                            */
+/************************************************************************/
+
+void FITSLayer::SetActiveHDU()
+{
+    int status = 0;
+    fits_movabs_hdu(m_poDS->m_hFITS, m_hduNum, nullptr, &status);
+    if( status != 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "fits_movabs_hdu() failed: %d", status);
+    }
 }
 
 /************************************************************************/
@@ -605,16 +674,29 @@ template<typename T_FITS, typename T_GDAL, int TYPECODE> struct ReadCol
 
 OGRFeature* FITSLayer::GetNextRawFeature()
 {
-    if( m_nCurRow <= 0 || m_nCurRow > m_nRows )
+    auto poFeature = GetFeature(m_nCurRow);
+    if( poFeature )
+        m_nCurRow ++;
+    return poFeature;
+}
+
+/************************************************************************/
+/*                           GetFeature()                               */
+/************************************************************************/
+
+OGRFeature* FITSLayer::GetFeature(GIntBig nFID)
+{
+    LONGLONG nRow = static_cast<LONGLONG>(nFID);
+    if( nRow <= 0 || nRow > m_nRows )
         return nullptr;
+
+    RunDeferredFieldCreation();
+
     OGRFeature* poFeature = new OGRFeature(m_poFeatureDefn);
 
-    {
-        int status = 0;
-        fits_movabs_hdu(m_poDS->m_hFITS, m_hduNum, nullptr, &status);
-    }
+    SetActiveHDU();
 
-    const auto ReadField = [this, &poFeature](const ColDesc& colDesc,
+    const auto ReadField = [this, &poFeature, nRow](const ColDesc& colDesc,
                                               int iField,
                                               char typechar,
                                               int nRepeat)
@@ -624,7 +706,7 @@ OGRFeature* FITSLayer::GetNextRawFeature()
         {
             std::vector<char> x(nRepeat);
             fits_read_col(m_poDS->m_hFITS, TLOGICAL,
-                          colDesc.iCol, m_nCurRow, 1, nRepeat, nullptr,
+                          colDesc.iCol, nRow, 1, nRepeat, nullptr,
                           &x[0], nullptr, &status);
             if( nRepeat == 1 )
             {
@@ -644,7 +726,7 @@ OGRFeature* FITSLayer::GetNextRawFeature()
         else if( typechar == 'X' )
         {
             char x = 0;
-            fits_read_col_bit(m_poDS->m_hFITS, colDesc.iCol, m_nCurRow,
+            fits_read_col_bit(m_poDS->m_hFITS, colDesc.iCol, nRow,
                               colDesc.iBit, 1, &x, &status);
             poFeature->SetField(iField, x);
         }
@@ -654,13 +736,13 @@ OGRFeature* FITSLayer::GetNextRawFeature()
             {
                 ReadCol<signed char, int, TSBYTE>::Read(
                     m_poDS->m_hFITS, colDesc, iField,
-                    m_nCurRow, poFeature, nRepeat);
+                    nRow, poFeature, nRepeat);
             }
             else
             {
                 ReadCol<GByte, int, TBYTE>::Read(
                     m_poDS->m_hFITS, colDesc, iField,
-                    m_nCurRow, poFeature, nRepeat);
+                    nRow, poFeature, nRepeat);
             }
         }
         else if( typechar == 'I' )
@@ -669,13 +751,13 @@ OGRFeature* FITSLayer::GetNextRawFeature()
             {
                 ReadCol<GUInt16, int, TUSHORT>::Read(
                     m_poDS->m_hFITS, colDesc, iField,
-                    m_nCurRow, poFeature, nRepeat);
+                    nRow, poFeature, nRepeat);
             }
             else
             {
                 ReadCol<GInt16, int, TSHORT>::Read(
                     m_poDS->m_hFITS, colDesc, iField,
-                    m_nCurRow, poFeature, nRepeat);
+                    nRow, poFeature, nRepeat);
             }
         }
         else if( typechar == 'J' )
@@ -684,20 +766,20 @@ OGRFeature* FITSLayer::GetNextRawFeature()
             {
                 ReadCol<GUInt32, GIntBig, TUINT>::Read(
                     m_poDS->m_hFITS, colDesc, iField,
-                    m_nCurRow, poFeature, nRepeat);
+                    nRow, poFeature, nRepeat);
             }
             else
             {
                 ReadCol<GInt32, int, TINT>::Read(
                     m_poDS->m_hFITS, colDesc, iField,
-                    m_nCurRow, poFeature, nRepeat);
+                    nRow, poFeature, nRepeat);
             }
         }
         else if( typechar == 'K' )
         {
             ReadCol<GInt64, GIntBig, TLONGLONG>::Read(
                 m_poDS->m_hFITS, colDesc, iField,
-                m_nCurRow, poFeature, nRepeat);
+                nRow, poFeature, nRepeat);
         }
         else if( typechar == 'A' ) // Character
         {
@@ -709,7 +791,7 @@ OGRFeature* FITSLayer::GetNextRawFeature()
                     std::string osStr;
                     osStr.resize(nRepeat);
                     char* pszStr = &osStr[0];
-                    fits_read_col_str(m_poDS->m_hFITS, colDesc.iCol, m_nCurRow, iItem, 1,
+                    fits_read_col_str(m_poDS->m_hFITS, colDesc.iCol, nRow, iItem, 1,
                                     nullptr, &pszStr, nullptr, &status);
                     aosList.AddString(pszStr);
                 }
@@ -720,7 +802,7 @@ OGRFeature* FITSLayer::GetNextRawFeature()
                 std::string osStr;
                 osStr.resize(nRepeat);
                 char* pszStr = &osStr[0];
-                fits_read_col_str(m_poDS->m_hFITS, colDesc.iCol, m_nCurRow, 1, 1,
+                fits_read_col_str(m_poDS->m_hFITS, colDesc.iCol, nRow, 1, 1,
                                 nullptr, &pszStr, nullptr, &status);
                 poFeature->SetField(iField, osStr.c_str());
             }
@@ -728,13 +810,13 @@ OGRFeature* FITSLayer::GetNextRawFeature()
         else if( typechar == 'E' ) // IEEE754 32bit
         {
             ReadCol<float, double, TFLOAT>::Read(m_poDS->m_hFITS, colDesc, iField,
-                                                 m_nCurRow, poFeature, nRepeat);
+                                                 nRow, poFeature, nRepeat);
         }
         else if( typechar == 'D' ) // IEEE754 64bit
         {
             std::vector<double> x(nRepeat);
             fits_read_col(m_poDS->m_hFITS, TDOUBLE,
-                            colDesc.iCol, m_nCurRow, 1, nRepeat, nullptr,
+                            colDesc.iCol, nRow, 1, nRepeat, nullptr,
                             &x[0], nullptr, &status);
             if( nRepeat == 1 )
                 poFeature->SetField(iField, x[0]);
@@ -745,7 +827,7 @@ OGRFeature* FITSLayer::GetNextRawFeature()
         {
             std::vector<float> x(2 * nRepeat);
             fits_read_col(m_poDS->m_hFITS, TCOMPLEX,
-                          colDesc.iCol, m_nCurRow, 1, nRepeat, nullptr,
+                          colDesc.iCol, nRow, 1, nRepeat, nullptr,
                           &x[0], nullptr, &status);
             CPLStringList aosList;
             for( int i = 0; i < nRepeat; ++i )
@@ -760,7 +842,7 @@ OGRFeature* FITSLayer::GetNextRawFeature()
         {
             std::vector<double> x(2 * nRepeat);
             fits_read_col(m_poDS->m_hFITS, TDBLCOMPLEX,
-                          colDesc.iCol, m_nCurRow, 1, nRepeat, nullptr,
+                          colDesc.iCol, nRow, 1, nRepeat, nullptr,
                           &x[0], nullptr, &status);
             CPLStringList aosList;
             for( int i = 0; i < nRepeat; ++i )
@@ -793,7 +875,7 @@ OGRFeature* FITSLayer::GetNextRawFeature()
         {
             int status = 0;
             LONGLONG nRepeat = 0;
-            fits_read_descriptll(m_poDS->m_hFITS,colDesc.iCol, m_nCurRow,
+            fits_read_descriptll(m_poDS->m_hFITS,colDesc.iCol, nRow,
                                  &nRepeat, nullptr, &status);
             ReadField(colDesc, iField, colDesc.typechar[1],
                       static_cast<int>(nRepeat));
@@ -803,19 +885,8 @@ OGRFeature* FITSLayer::GetNextRawFeature()
             ReadField(colDesc, iField, colDesc.typechar[0], colDesc.nRepeat);
         }
     }
-    poFeature->SetFID(m_nCurRow);
-    m_nCurRow ++;
+    poFeature->SetFID(nRow);
     return poFeature;
-}
-
-/************************************************************************/
-/*                           GetFeature()                               */
-/************************************************************************/
-
-OGRFeature* FITSLayer::GetFeature(GIntBig nFID)
-{
-    m_nCurRow = nFID;
-    return GetNextRawFeature();
 }
 
 /************************************************************************/
@@ -830,9 +901,814 @@ int FITSLayer::TestCapability(const char* pszCap)
     if( EQUAL(pszCap, OLCRandomRead) )
         return true;
 
+    if( EQUAL(pszCap, OLCCreateField) ||
+        EQUAL(pszCap, OLCSequentialWrite) ||
+        EQUAL(pszCap, OLCRandomWrite) ||
+        EQUAL(pszCap, OLCDeleteFeature) )
+    {
+        return m_poDS->GetAccess() == GA_Update;
+    }
+
     return false;
 }
 
+/************************************************************************/
+/*                        RunDeferredFieldCreation()                    */
+/************************************************************************/
+
+void FITSLayer::RunDeferredFieldCreation(const OGRFeature* poFeature)
+{
+    if( m_anDeferredFieldsIndices.empty() )
+        return;
+
+    SetActiveHDU();
+
+    CPLString            osPendingBitFieldName{};
+    int                  nPendingBitFieldSize = 0;
+    std::set<CPLString>  oSetBitFieldNames{};
+
+    const auto FlushCreationPendingBitField =
+        [this, &osPendingBitFieldName, &nPendingBitFieldSize, &oSetBitFieldNames]()
+    {
+        if( osPendingBitFieldName.empty() )
+            return;
+
+        const int iCol = m_aoColDescs.empty() ? 1 : m_aoColDescs.back().iCol + 1;
+        for( int iBit = 1; iBit <= nPendingBitFieldSize; iBit++ )
+        {
+            ColDesc oCol;
+            oCol.iCol = iCol;
+            oCol.iBit = iBit;
+            oCol.typechar = 'X';
+            m_aoColDescs.emplace_back(oCol);
+        }
+
+        int status = 0;
+        CPLString osTForm;
+        osTForm.Printf("%dX", nPendingBitFieldSize);
+        fits_insert_col(m_poDS->m_hFITS, iCol,
+                        &osPendingBitFieldName[0], &osTForm[0], &status);
+        if( status != 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "fits_insert_col() failed: %d", status);
+        }
+
+        oSetBitFieldNames.insert(osPendingBitFieldName);
+        osPendingBitFieldName.clear();
+        nPendingBitFieldSize = 0;
+    };
+
+    const bool bRepeatFromFirstFeature =
+        poFeature != nullptr &&
+        EQUAL(m_aosCreationOptions.FetchNameValueDef(
+            "COMPUTE_REPEAT", "AT_FIELD_CREATION"), "AT_FIRST_FEATURE_CREATION");
+
+    char** papszMD = GetMetadata();
+    bool bFirstMD = true;
+
+    std::map<CPLString, std::map<CPLString, CPLString>> oMapColNameToMetadata;
+
+    // Remap column related metadata (likely coming from source FITS) to
+    // actual column numbers
+    std::map<int, CPLString> oMapFITSMDColToName;
+    for( auto papszIter = papszMD; papszIter && *papszIter; ++papszIter )
+    {
+        char* pszKey = nullptr;
+        const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
+        if( pszKey && pszValue )
+        {
+            bool bIgnore = false;
+            for( const char* pszPrefix : {
+                    "TTYPE", "TFORM", "TUNIT", "TNULL", "TSCAL", "TZERO",
+                    "TDISP", "TDIM", "TBCOL", "TCTYP", "TCUNI", "TCRPX",
+                    "TCRVL", "TCDLT", "TRPOS" } )
+            {
+                if( STARTS_WITH(pszKey, pszPrefix) )
+                {
+                    const char* pszCol = pszKey + strlen(pszPrefix);
+                    const int nCol = atoi(pszCol);
+                    if( !EQUAL(pszPrefix, "TTYPE") )
+                    {
+                        auto oIter = oMapFITSMDColToName.find(nCol);
+                        CPLString osColName;
+                        if( oIter == oMapFITSMDColToName.end() )
+                        {
+                            const char* pszColName = CSLFetchNameValue(papszMD,
+                                              (std::string("TTYPE") + pszCol).c_str());
+                            if( pszColName )
+                            {
+                                osColName = pszColName;
+                                osColName.Trim();
+                                oMapFITSMDColToName[nCol] = osColName;
+                            }
+                        }
+                        else
+                        {
+                            osColName = oIter->second;
+                        }
+                        if( !osColName.empty() )
+                        {
+                            oMapColNameToMetadata[osColName][pszPrefix] = CPLString(pszValue).Trim();
+                        }
+                    }
+                    bIgnore = true;
+                    break;
+                }
+            }
+
+            if( !bIgnore && strlen(pszKey) <= 8 &&
+                !EQUAL(pszKey, "TFIELDS") && !EQUAL(pszKey, "EXTNAME") )
+            {
+                if( bFirstMD )
+                {
+                    int status = 0;
+                    fits_write_key_longwarn(m_poDS->m_hFITS, &status);
+                    bFirstMD = false;
+                }
+
+                char* pszValueNonConst = const_cast<char*>(pszValue);
+                int status = 0;
+                fits_update_key_longstr(m_poDS->m_hFITS, pszKey,
+                                        pszValueNonConst, nullptr, &status);
+            }
+        }
+        CPLFree(pszKey);
+    }
+
+    for( const int nFieldIdx: m_anDeferredFieldsIndices )
+    {
+        const auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(nFieldIdx);
+        const auto& oFieldDefn = *poFieldDefn;
+        const char* pszFieldName = oFieldDefn.GetNameRef();
+        const OGRFieldType eType = oFieldDefn.GetType();
+        const OGRFieldSubType eSubType = oFieldDefn.GetSubType();
+
+        if( eType == OFTInteger )
+        {
+            const char* pszBit = strstr(pszFieldName, "_bit");
+            long iBit = 0;
+            char* pszEndPtr = nullptr;
+            if( pszBit && (iBit = strtol(pszBit + strlen("_bit"),
+                                         &pszEndPtr, 10)) > 0 &&
+                pszEndPtr && *pszEndPtr == '\0' )
+            {
+                CPLString osName;
+                osName.assign( pszFieldName, pszBit - pszFieldName );
+                if( oSetBitFieldNames.find(osName) == oSetBitFieldNames.end() )
+                {
+                    if( !osPendingBitFieldName.empty() &&
+                        osPendingBitFieldName != osName )
+                    {
+                        FlushCreationPendingBitField();
+                    }
+
+                    if( osPendingBitFieldName.empty() )
+                    {
+                        osPendingBitFieldName = osName;
+                        nPendingBitFieldSize = 1;
+                        continue;
+                    }
+                    else if( iBit == nPendingBitFieldSize + 1 )
+                    {
+                        nPendingBitFieldSize ++;
+                        continue;
+                    }
+                }
+            }
+        }
+
+        FlushCreationPendingBitField();
+
+        CPLString osTForm;
+        ColDesc oCol;
+        oCol.iCol = m_aoColDescs.empty() ? 1 : m_aoColDescs.back().iCol + 1;
+        oCol.nRepeat = 1;
+
+        CPLString osRepeat;
+        const char* pszRepeat = m_aosCreationOptions.FetchNameValue(
+            (CPLString("REPEAT_") + pszFieldName).c_str());
+
+        const auto osTFormFromMD = oMapColNameToMetadata[pszFieldName]["TFORM"];
+
+        // For fields of type list, determine if we can know if it has a fixed
+        // number of elements
+        if( eType == OFTIntegerList || eType == OFTInteger64List ||
+            eType == OFTRealList )
+        {
+            // First take into account the REPEAT_{FIELD_NAME} creatin option
+            if( pszRepeat )
+            {
+                osRepeat = pszRepeat;
+                oCol.nRepeat = atoi(pszRepeat);
+            }
+            // Then if COMPUTE_REPEAT=AT_FIRST_FEATURE_CREATION was specified
+            // and we have a feature, then look at the number of items in the
+            // field
+            else if( bRepeatFromFirstFeature &&
+                     poFeature->IsFieldSetAndNotNull(nFieldIdx) )
+            {
+                int nCount = 0;
+                if( eType == OFTIntegerList )
+                {
+                    CPL_IGNORE_RET_VAL(poFeature->GetFieldAsIntegerList(nFieldIdx, &nCount));
+                }
+                else if( eType == OFTInteger64List )
+                {
+                    CPL_IGNORE_RET_VAL(poFeature->GetFieldAsInteger64List(nFieldIdx, &nCount));
+                }
+                else if( eType == OFTRealList )
+                {
+                    CPL_IGNORE_RET_VAL(poFeature->GetFieldAsDoubleList(nFieldIdx, &nCount));
+                }
+                else
+                {
+                    CPLAssert(false);
+                }
+                osRepeat.Printf("%d", nCount);
+                oCol.nRepeat = nCount;
+            }
+            else
+            {
+                if( !osTFormFromMD.empty() && osTFormFromMD[0] >= '1' && osTFormFromMD[0] <= '9' )
+                {
+                    oCol.nRepeat = atoi(osTFormFromMD.c_str());
+                    osRepeat.Printf("%d", oCol.nRepeat);
+                }
+                else
+                {
+                    oCol.nRepeat = 0;
+                    oCol.typechar = 'P';
+                }
+            }
+        }
+        else if( pszRepeat )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "%s ignored on a non-List data type",
+                    (CPLString("REPEAT_") + pszFieldName).c_str());
+        }
+
+        switch( eType )
+        {
+            case OFTIntegerList:
+            case OFTInteger:
+                if( eSubType == OFSTInt16 )
+                {
+                    oCol.typechar += 'I';
+                    oCol.nTypeCode = TSHORT;
+                }
+                else
+                {
+                    oCol.typechar += 'J';
+                    oCol.nTypeCode = TINT;
+                }
+                break;
+
+            case OFTInteger64List:
+            case OFTInteger64:
+                oCol.typechar += 'K';
+                oCol.nTypeCode = TLONGLONG;
+                break;
+
+            case OFTRealList:
+            case OFTReal:
+                if( eSubType == OFSTFloat32 )
+                {
+                    oCol.typechar += 'E';
+                    oCol.nTypeCode = TFLOAT;
+                }
+                else
+                {
+                    oCol.typechar += 'D';
+                    oCol.nTypeCode = TDOUBLE;
+                }
+                break;
+
+            case OFTString:
+                if( osTFormFromMD == "C" )
+                {
+                    oCol.typechar = "C";
+                    oCol.nTypeCode = TCOMPLEX;
+                }
+                else if( osTFormFromMD == "M" )
+                {
+                    oCol.typechar = "M";
+                    oCol.nTypeCode = TDBLCOMPLEX;
+                }
+                else
+                {
+                    if( oFieldDefn.GetWidth() == 0 )
+                    {
+                        oCol.typechar = "PA";
+                    }
+                    else
+                    {
+                        oCol.typechar = "A";
+                        oCol.nRepeat = oFieldDefn.GetWidth();
+                        osTForm = CPLSPrintf("%dA", oCol.nRepeat);
+                    }
+                    oCol.nTypeCode = TSTRING;
+                }
+                break;
+
+            default:
+                CPLError(CE_Failure, CPLE_NotSupported,
+                        "Unsupported field type: should not happen");
+                break;
+        }
+
+        CPLString osTType(pszFieldName);
+        if( osTForm.empty() )
+        {
+            if( (eType == OFTIntegerList || eType == OFTInteger64List ||
+                eType == OFTRealList) && !osRepeat.empty() )
+            {
+                osTForm = osRepeat;
+                osTForm += oCol.typechar;
+            }
+            else
+            {
+                osTForm = oCol.typechar;
+            }
+        }
+        int status = 0;
+        fits_insert_col(m_poDS->m_hFITS, oCol.iCol,
+                        &osTType[0], &osTForm[0], &status);
+        if( status != 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "fits_insert_col() failed: %d", status);
+        }
+
+        // Set unit from metadata
+        auto osUnit = oMapColNameToMetadata[pszFieldName]["TUNIT"];
+        if( !osUnit.empty() )
+        {
+            CPLString osKey;
+            osKey.Printf("TUNIT%d", oCol.iCol);
+            fits_update_key_longstr(m_poDS->m_hFITS, &osKey[0],
+                                    &osUnit[0], nullptr, &status);
+        }
+
+        m_aoColDescs.emplace_back(oCol);
+    }
+
+    m_anDeferredFieldsIndices.clear();
+    CPLAssert( static_cast<int>(m_aoColDescs.size()) == m_poFeatureDefn->GetFieldCount() );
+}
+
+/************************************************************************/
+/*                           CreateField()                              */
+/************************************************************************/
+
+OGRErr FITSLayer::CreateField( OGRFieldDefn *poField, int /* bApproxOK */ )
+{
+    if( !TestCapability(OLCCreateField) )
+        return OGRERR_FAILURE;
+    if( m_poFeatureDefn->GetFieldIndex(poField->GetNameRef()) >= 0 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "A field with name %s already exists",
+                 poField->GetNameRef());
+        return OGRERR_FAILURE;
+    }
+    if( poField->GetType() == OFTStringList )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                    "Unsupported field type");
+        return OGRERR_FAILURE;
+    }
+
+    m_anDeferredFieldsIndices.emplace_back(m_poFeatureDefn->GetFieldCount());
+    m_poFeatureDefn->AddFieldDefn(poField);
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                              WriteCol                                */
+/************************************************************************/
+
+template<class T> static T Round(double dfValue)
+{
+    return static_cast<T>(floor(dfValue + 0.5));
+}
+
+template<> double Round<double>(double dfValue)
+{
+    return dfValue;
+}
+
+template<> float Round<float>(double dfValue)
+{
+    return static_cast<float>(dfValue);
+}
+
+template<typename T_FITS, typename T_GDAL, int TYPECODE,
+         T_GDAL (OGRFeature::*GetFieldMethod)(int) const,
+         const T_GDAL* (OGRFeature::*GetFieldListMethod)(int, int*) const> struct WriteCol
+{
+    static int Write(fitsfile* hFITS, const ColDesc& colDesc,
+                     int iField, LONGLONG irow, const OGRFeature* poFeature)
+    {
+        int status = 0;
+        int nRepeat = colDesc.nRepeat;
+        const auto poFieldDefn = poFeature->GetFieldDefnRef(iField);
+        const auto eOGRType = poFieldDefn->GetType();
+        int nCount = 0;
+        // cppcheck-suppress constStatement
+        const T_GDAL* panList =
+          ( eOGRType == OFTIntegerList ||
+            eOGRType == OFTInteger64List ||
+            eOGRType == OFTRealList ) ?
+                (poFeature->*GetFieldListMethod)(iField, &nCount) : nullptr;
+        if( panList )
+        {
+            nRepeat = nRepeat == 0 ? nCount : std::min(nRepeat, nCount);
+            if( nCount > nRepeat )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Field %s of feature " CPL_FRMT_GIB " had %d "
+                         "elements, but had to be truncated to %d",
+                         poFieldDefn->GetNameRef(),
+                         static_cast<GIntBig>(irow),
+                         nCount,
+                         nRepeat);
+            }
+        }
+        else
+        {
+            nRepeat = 1;
+        }
+
+        if( nRepeat == 0 )
+            return 0;
+
+        if( colDesc.bHasNull && nRepeat == 1 &&
+            poFeature->IsFieldNull(iField) )
+        {
+            T_FITS x = static_cast<T_FITS>(colDesc.nNullValue);
+            fits_write_col(hFITS, TYPECODE,
+                           colDesc.iCol, irow, 1, nRepeat, &x, &status);
+        }
+        else if( nRepeat == 1 )
+        {
+            const auto val =
+                panList ? panList[0] : (poFeature->*GetFieldMethod)(iField);
+            if( colDesc.dfScale != 1.0 || colDesc.dfOffset != 0.0 )
+            {
+                T_FITS x = Round<T_FITS>(
+                                (val - colDesc.dfOffset) / colDesc.dfScale);
+                fits_write_col(hFITS, TYPECODE,
+                               colDesc.iCol, irow, 1, nRepeat, &x, &status);
+            }
+            else
+            {
+                T_FITS x = static_cast<T_FITS>(val);
+                fits_write_col(hFITS, TYPECODE,
+                                colDesc.iCol, irow, 1, nRepeat, &x, &status);
+            }
+        }
+        else
+        {
+            CPLAssert(panList);
+
+            std::vector<T_FITS> x;
+            x.reserve(nRepeat);
+            if( colDesc.dfScale != 1.0 || colDesc.dfOffset != 0.0 )
+            {
+                for( int i = 0; i < nRepeat; i++ )
+                {
+                    x.push_back(Round<T_FITS>(
+                        (panList[i] - colDesc.dfOffset) / colDesc.dfScale));
+                }
+                fits_write_col(hFITS, TYPECODE,
+                               colDesc.iCol, irow, 1, nRepeat, &x[0], &status);
+            }
+            else
+            {
+                for( int i = 0; i < nRepeat; i++ )
+                {
+                    x.push_back(static_cast<T_FITS>(panList[i]));
+                }
+                fits_write_col(hFITS, TYPECODE,
+                               colDesc.iCol, irow, 1, nRepeat, &x[0], &status);
+            }
+        }
+        return status;
+    }
+};
+
+/************************************************************************/
+/*                            WriteComplex                              */
+/************************************************************************/
+
+template<typename T, int TYPECODE> struct WriteComplex
+{
+    static int Write(fitsfile* hFITS, const ColDesc& colDesc,
+                     int iField, LONGLONG irow, const OGRFeature* poFeature)
+    {
+        int status = 0;
+        const auto poFieldDefn = poFeature->GetFieldDefnRef(iField);
+        if( poFieldDefn->GetType() == OFTStringList )
+        {
+            auto papszStrings = poFeature->GetFieldAsStringList(iField);
+            const int nCount = CSLCount(papszStrings);
+            int nRepeat = colDesc.nRepeat;
+            nRepeat = nRepeat == 0 ? nCount : std::min(nRepeat, nCount);
+            if( nRepeat > nCount )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Field %s of feature " CPL_FRMT_GIB " had %d "
+                        "elements, but had to be truncated to %d",
+                        poFieldDefn->GetNameRef(),
+                        static_cast<GIntBig>(irow),
+                        nRepeat,
+                        nCount);
+            }
+            std::vector<T> x(2 * nRepeat);
+            for( int i = 0; i < nRepeat; i ++ )
+            {
+                double re = 0;
+                double im = 0;
+                CPLsscanf(papszStrings[i], "%lf + %lfj", &re, &im);
+                x[2 * i] = static_cast<T>(re);
+                x[2 * i + 1] = static_cast<T>(im);
+            }
+            fits_write_col(hFITS, TYPECODE, colDesc.iCol, irow,
+                           1, nRepeat, &x[0], &status);
+        }
+        else
+        {
+            std::vector<T> x(2);
+            double re = 0;
+            double im = 0;
+            CPLsscanf(poFeature->GetFieldAsString(iField),
+                        "%lf + %lfj", &re, &im);
+            x[0] = static_cast<T>(re);
+            x[1] = static_cast<T>(im);
+            fits_write_col(hFITS, TYPECODE, colDesc.iCol, irow,
+                           1, 1, &x[0], &status);
+        }
+        return status;
+    }
+};
+
+/************************************************************************/
+/*                        SetOrCreateFeature()                          */
+/************************************************************************/
+
+bool FITSLayer::SetOrCreateFeature(const OGRFeature* poFeature, LONGLONG nRow)
+{
+    SetActiveHDU();
+
+    const auto WriteField = [this, &poFeature, nRow](int iField)
+    {
+        const auto poFieldDefn = poFeature->GetFieldDefnRef(iField);
+        const auto& colDesc = m_aoColDescs[iField];
+        const char typechar = (colDesc.typechar[0] == 'P' ||
+                               colDesc.typechar[0] == 'Q') ?
+                                    colDesc.typechar[1] : colDesc.typechar[0];
+        int nRepeat = colDesc.nRepeat;
+        int status = 0;
+        if( typechar == 'L' )
+        {
+            const auto ToLogical = [](int x) -> char { return x ? '1' : '0'; };
+
+            if( poFieldDefn->GetType() == OFTIntegerList )
+            {
+                int nCount = 0;
+                const int* panVals = poFeature->GetFieldAsIntegerList(iField, &nCount);
+                nRepeat = nRepeat == 0 ? nCount : std::min(nRepeat, nCount);
+                if( nRepeat > nCount )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                            "Field %s of feature " CPL_FRMT_GIB " had %d "
+                            "elements, but had to be truncated to %d",
+                            poFieldDefn->GetNameRef(),
+                            static_cast<GIntBig>(nRow),
+                            nRepeat,
+                            nCount);
+                }
+                std::vector<char> x(nRepeat);
+                for( int i = 0; i < nRepeat; i++ )
+                {
+                    x[i] = ToLogical(panVals[i]);
+                }
+                fits_write_col(m_poDS->m_hFITS, TLOGICAL,
+                               colDesc.iCol, nRow, 1, nRepeat, &x[0],
+                               &status);
+            }
+            else
+            {
+                char x = ToLogical(poFeature->GetFieldAsInteger(iField));
+                fits_write_col(m_poDS->m_hFITS, TLOGICAL,
+                               colDesc.iCol, nRow, 1, nRepeat, &x, &status);
+            }
+        }
+        else if( typechar == 'X' ) // bit array
+        {
+            char flag = poFeature->GetFieldAsInteger(iField) ? 0x80 : 0;
+            fits_write_col_bit(m_poDS->m_hFITS, colDesc.iCol, nRow,
+                               colDesc.iBit, 1, &flag, &status);
+        }
+        else if( typechar == 'B' )
+        {
+            if( colDesc.nTypeCode == TSBYTE )
+            {
+                status = WriteCol<signed char, int, TSBYTE,
+                                  &OGRFeature::GetFieldAsInteger,
+                                  &OGRFeature::GetFieldAsIntegerList>::Write(
+                    m_poDS->m_hFITS, colDesc, iField,
+                    nRow, poFeature);
+            }
+            else
+            {
+                status = WriteCol<GByte, int, TBYTE,
+                                  &OGRFeature::GetFieldAsInteger,
+                                  &OGRFeature::GetFieldAsIntegerList>::Write(
+                    m_poDS->m_hFITS, colDesc, iField,
+                    nRow, poFeature);
+            }
+        }
+        else if( typechar == 'I' )
+        {
+            if( colDesc.nTypeCode == TUSHORT )
+            {
+                status = WriteCol<GUInt16, int, TUSHORT,
+                                  &OGRFeature::GetFieldAsInteger,
+                                  &OGRFeature::GetFieldAsIntegerList>::Write(
+                    m_poDS->m_hFITS, colDesc, iField,
+                    nRow, poFeature);
+            }
+            else
+            {
+                status = WriteCol<GInt16, int, TSHORT,
+                                  &OGRFeature::GetFieldAsInteger,
+                                  &OGRFeature::GetFieldAsIntegerList>::Write(
+                    m_poDS->m_hFITS, colDesc, iField,
+                    nRow, poFeature);
+            }
+        }
+        else if( typechar == 'J' )
+        {
+            if( colDesc.nTypeCode == TUINT )
+            {
+                status = WriteCol<GUInt32, GIntBig, TUINT,
+                                  &OGRFeature::GetFieldAsInteger64,
+                                  &OGRFeature::GetFieldAsInteger64List>::Write(
+                    m_poDS->m_hFITS, colDesc, iField,
+                    nRow, poFeature);
+            }
+            else
+            {
+                status = WriteCol<GInt32, int, TINT,
+                                  &OGRFeature::GetFieldAsInteger,
+                                  &OGRFeature::GetFieldAsIntegerList>::Write(
+                    m_poDS->m_hFITS, colDesc, iField,
+                    nRow, poFeature);
+            }
+        }
+        else if( typechar == 'K' )
+        {
+            status = WriteCol<GInt64, GIntBig, TLONGLONG,
+                              &OGRFeature::GetFieldAsInteger64,
+                              &OGRFeature::GetFieldAsInteger64List>::Write(
+                m_poDS->m_hFITS, colDesc, iField,
+                nRow, poFeature);
+        }
+        else if( typechar == 'A' ) // Character
+        {
+            if( poFieldDefn->GetType() == OFTStringList )
+            {
+                auto papszStrings = poFeature->GetFieldAsStringList(iField);
+                const int nStringCount = CSLCount(papszStrings);
+                const int nItems = std::min(colDesc.nItems, nStringCount);
+                if( nItems > nStringCount )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                            "Field %s of feature " CPL_FRMT_GIB " had %d "
+                            "elements, but had to be truncated to %d",
+                            poFieldDefn->GetNameRef(),
+                            static_cast<GIntBig>(nRow),
+                            nItems,
+                            nStringCount);
+                }
+                fits_write_col_str(m_poDS->m_hFITS, colDesc.iCol, nRow,
+                                   1, nItems, papszStrings, &status);
+            }
+            else
+            {
+                char* pszStr = const_cast<char*>(
+                    poFeature->GetFieldAsString(iField));
+                fits_write_col_str(m_poDS->m_hFITS, colDesc.iCol, nRow,
+                                   1, 1, &pszStr, &status);
+            }
+        }
+        else if( typechar == 'E' ) // IEEE754 32bit
+        {
+            status = WriteCol<float, double, TFLOAT,
+                              &OGRFeature::GetFieldAsDouble,
+                              &OGRFeature::GetFieldAsDoubleList>::Write(
+                m_poDS->m_hFITS, colDesc, iField, nRow, poFeature);
+        }
+        else if( typechar == 'D' ) // IEEE754 64bit
+        {
+            status = WriteCol<double, double, TDOUBLE,
+                              &OGRFeature::GetFieldAsDouble,
+                              &OGRFeature::GetFieldAsDoubleList>::Write(
+                m_poDS->m_hFITS, colDesc, iField, nRow, poFeature);
+        }
+        else if( typechar == 'C' ) // IEEE754 32bit complex
+        {
+            status = WriteComplex<float, TCOMPLEX>::Write(
+                m_poDS->m_hFITS, colDesc, iField, nRow, poFeature);
+        }
+        else if( typechar == 'M' ) // IEEE754 64bit complex
+        {
+            status = WriteComplex<double, TDBLCOMPLEX>::Write(
+                m_poDS->m_hFITS, colDesc, iField, nRow, poFeature);
+        }
+        else
+        {
+            CPLDebug("FITS", "Unhandled typechar %c", typechar);
+        }
+        if( status )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "fits_write_col() failed");
+        }
+        return status == 0;
+    };
+
+    bool bOK = true;
+    const int nFieldCount = poFeature->GetFieldCount();
+    for( int iField = 0; iField < nFieldCount; iField++ )
+    {
+        if( !WriteField(iField) )
+            bOK = false;
+    }
+    return bOK;
+}
+
+/************************************************************************/
+/*                           ICreateFeature()                           */
+/************************************************************************/
+
+OGRErr FITSLayer::ICreateFeature(OGRFeature* poFeature)
+{
+    if( !TestCapability(OLCSequentialWrite) )
+        return OGRERR_FAILURE;
+
+    RunDeferredFieldCreation(poFeature);
+
+    m_nRows ++;
+    SetActiveHDU();
+    const bool bOK = SetOrCreateFeature(poFeature, m_nRows);
+    poFeature->SetFID(m_nRows);
+
+    return bOK ? OGRERR_NONE : OGRERR_FAILURE;
+}
+
+/************************************************************************/
+/*                           ISetFeature()                              */
+/************************************************************************/
+
+OGRErr FITSLayer::ISetFeature(OGRFeature* poFeature)
+{
+    if( !TestCapability(OLCRandomWrite) )
+        return OGRERR_FAILURE;
+
+    RunDeferredFieldCreation();
+
+    const GIntBig nRow = poFeature->GetFID();
+    if( nRow <= 0 || nRow > m_nRows )
+        return OGRERR_NON_EXISTING_FEATURE;
+
+    SetActiveHDU();
+    const bool bOK = SetOrCreateFeature(poFeature, nRow);
+    return bOK ? OGRERR_NONE : OGRERR_FAILURE;
+}
+
+/************************************************************************/
+/*                          DeleteFeature()                             */
+/************************************************************************/
+
+OGRErr FITSLayer::DeleteFeature(GIntBig nFID)
+{
+    if( !TestCapability(OLCDeleteFeature) )
+        return OGRERR_FAILURE;
+
+    if( nFID <= 0 || nFID > m_nRows )
+        return OGRERR_NON_EXISTING_FEATURE;
+
+    SetActiveHDU();
+
+    int status = 0;
+    fits_delete_rows(m_poDS->m_hFITS, nFID, 1, &status);
+    m_nRows --;
+    return status == 0 ? OGRERR_NONE : OGRERR_FAILURE;
+}
 
 /************************************************************************/
 /*                          FITSRasterBand()                           */
@@ -998,21 +1874,22 @@ FITSDataset::FITSDataset()
 
 FITSDataset::~FITSDataset() {
 
-  int status;
+  int status = 0;
   if( m_hFITS )
   {
+    m_apoLayers.clear();
+
     if(m_hduNum > 0 && eAccess == GA_Update)
     {
       // Only do this if we've successfully opened the file and update
       // capability.  Write any meta data to the file that's compatible with
       // FITS.
-      status = 0;
       fits_movabs_hdu(m_hFITS, m_hduNum, nullptr, &status);
       fits_write_key_longwarn(m_hFITS, &status);
       if (status) {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Couldn't move to first HDU in FITS file %s (%d).\n",
-                 GetDescription(), status);
+                 "Couldn't move to HDU %d in FITS file %s (%d).\n",
+                 m_hduNum, GetDescription(), status);
       }
       char** metaData = GetMetadata();
       int count = CSLCount(metaData);
@@ -1117,6 +1994,11 @@ FITSDataset::~FITSDataset() {
 
     // Close the FITS handle
     fits_close_file(m_hFITS, &status);
+    if( status != 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "fits_close_file() failed with %d", status);
+    }
   }
 }
 
@@ -1137,6 +2019,7 @@ bool FITSDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
         return false; // are supported as native signed with offset
 
     sLayout.osRawFilename = GetDescription();
+    static_assert( sizeof(OFF_T) == 8, "OFF_T should be 64 bits !" );
     OFF_T headerstart = 0;
     OFF_T datastart = 0;
     OFF_T dataend = 0;
@@ -1390,6 +2273,76 @@ OGRLayer* FITSDataset::GetLayer(int idx)
     return m_apoLayers[idx].get();
 }
 
+
+/************************************************************************/
+/*                            ICreateLayer()                            */
+/************************************************************************/
+
+OGRLayer* FITSDataset::ICreateLayer(const char *pszName,
+                         OGRSpatialReference* /* poSRS */,
+                         OGRwkbGeometryType eGType,
+                         char ** papszOptions )
+{
+    if( !TestCapability(ODsCCreateLayer) )
+        return nullptr;
+    if( eGType != wkbNone )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Spatial tables not supported");
+        return nullptr;
+    }
+
+    int status = 0;
+    int numHDUs = 0;
+    fits_get_num_hdus(m_hFITS, &numHDUs, &status);
+    if( status != 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "fits_get_num_hdus() failed: %d", status);
+        return nullptr;
+    }
+
+    fits_create_tbl(m_hFITS, BINARY_TBL,
+                    0, // number of initial rows
+                    0, // nfields,
+                    nullptr, // ttype,
+                    nullptr, // tform
+                    nullptr, // tunits
+                    pszName,
+                    &status);
+    if( status != 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot create layer");
+        return nullptr;
+    }
+
+    // If calling fits_get_num_hdus() here on a freshly new created file,
+    // it reports only one HDU, missing the initial dummy HDU
+    if( numHDUs == 0 )
+    {
+        numHDUs = 2;
+    }
+    else
+    {
+        numHDUs++;
+    }
+
+    auto poLayer = new FITSLayer(this, numHDUs, pszName);
+    poLayer->SetCreationOptions(papszOptions);
+    m_apoLayers.emplace_back(std::unique_ptr<FITSLayer>(poLayer));
+    return m_apoLayers.back().get();
+}
+
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int FITSDataset::TestCapability( const char * pszCap )
+{
+    if( EQUAL(pszCap, ODsCCreateLayer) )
+        return eAccess == GA_Update;
+    return false;
+}
+
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -1439,6 +2392,7 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
     dataset->m_isExistingFile = true;
     dataset->m_hFITS = hFITS;
     dataset->eAccess = poOpenInfo->eAccess;
+    dataset->SetPhysicalFilename(osFilename);
 
 /* -------------------------------------------------------------------- */
 /*      Iterate over HDUs                                               */
@@ -1446,6 +2400,7 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
     bool firstHDUIsDummy = false;
     int firstValidHDU = 0;
     CPLStringList aosSubdatasets;
+    bool hasVector = false;
     if( iSelectedHDU == 0 )
     {
         int numHDUs = 0;
@@ -1474,11 +2429,14 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
             if( nExtVer > 0 )
                 osExtname += CPLSPrintf(" %d", nExtVer);
 
-            if( hduType == BINARY_TBL &&
-                (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 )
+            if( hduType == BINARY_TBL )
             {
-                dataset->m_apoLayers.push_back(std::unique_ptr<FITSLayer>(
-                    new FITSLayer(dataset.get(), iHDU, osExtname.c_str())));
+                hasVector = true;
+                if( (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 )
+                {
+                    dataset->m_apoLayers.push_back(std::unique_ptr<FITSLayer>(
+                        new FITSLayer(dataset.get(), iHDU, osExtname.c_str())));
+                }
             }
 
             if( hduType != IMAGE_HDU )
@@ -1558,33 +2516,86 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
         }
         firstValidHDU = iSelectedHDU;
     }
-    const bool rasterFound = 
-        (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 && firstValidHDU > 0;
 
-    if( !rasterFound )
+    const bool hasRaster = firstValidHDU > 0;
+    const bool hasRasterAndIsAllowed = hasRaster &&
+        (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0;
+
+    if( !hasRasterAndIsAllowed &&
+        (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
+        (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) == 0 )
     {
-        if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
-            (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) == 0 )
+        if( hasVector )
+        {
+            std::string osPath;
+            osPath.resize(1024);
+            if( CPLGetExecPath(&osPath[0], static_cast<int>(osPath.size())) )
+            {
+                osPath = CPLGetBasename(osPath.c_str());
+            }
+            if( osPath == "gdalinfo" )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "This FITS dataset does not contain any image, but "
+                         "contains binary table(s) that could be opened "
+                         "in vector mode with ogrinfo.");
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "This FITS dataset does not contain any image, but "
+                         "contains binary table(s) that could be opened "
+                         "in vector mode.");
+            }
+        }
+        else
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                    "Cannot find HDU of image type with 2 or 3 axes");
-            return nullptr;
+                     "Cannot find HDU of image type with 2 or 3 axes.");
         }
+        return nullptr;
     }
-    if( dataset->m_apoLayers.empty() )
+
+    if( dataset->m_apoLayers.empty() &&
+        (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
+        (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 )
     {
-        if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
-            (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 )
+        if( hasRaster )
         {
-            return nullptr;
+            std::string osPath;
+            osPath.resize(1024);
+            if( CPLGetExecPath(&osPath[0], static_cast<int>(osPath.size())) )
+            {
+                osPath = CPLGetBasename(osPath.c_str());
+            }
+            if( osPath == "ogrinfo" )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "This FITS dataset does not contain any binary "
+                         "table, but contains image(s) that could be opened "
+                         "in raster mode with gdalinfo.");
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "This FITS dataset does not contain any binary "
+                         "table, but contains image(s) that could be opened "
+                         "in raster mode.");
+            }
         }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot find binary table(s).");
+        }
+        return nullptr;
     }
 
     dataset->m_aosSubdatasets = aosSubdatasets;
 
     // Set up the description and initialize the dataset
     dataset->SetDescription(poOpenInfo->pszFilename);
-    if( rasterFound )
+    if( hasRasterAndIsAllowed )
     {
         if( aosSubdatasets.size() > 2 )
         {
@@ -1618,7 +2629,7 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
             return nullptr;
         }
     }
-    if( rasterFound )
+    if( hasRasterAndIsAllowed )
     {
         dataset->LoadMetadata(dataset.get());
         dataset->LoadFITSInfo();
@@ -1650,6 +2661,27 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
                                   CPL_UNUSED char** papszParmList )
 {
   int status = 0;
+
+  if( nXSize == 0 && nYSize == 0 && nBands == 0 && eType == GDT_Unknown )
+  {
+      // Create the file - to force creation, we prepend the name with '!'
+      CPLString extFilename("!");
+      extFilename += pszFilename;
+      fitsfile* hFITS = nullptr;
+      fits_create_file(&hFITS, extFilename, &status);
+      if (status) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Couldn't create FITS file %s (%d).\n", pszFilename, status);
+        return nullptr;
+      }
+
+      // Likely vector creation mode
+      FITSDataset* dataset = new FITSDataset();
+      dataset->m_hFITS = hFITS;
+      dataset->eAccess = GA_Update;
+      dataset->SetDescription(pszFilename);
+      return dataset;
+  }
 
   // No creation options are defined. The BSCALE/BZERO options were
   // removed on 2002-07-02 by Simon Perkins because they introduced
@@ -1729,6 +2761,15 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
   else {
     return dataset;
   }
+}
+
+/************************************************************************/
+/*                              Delete()                                */
+/************************************************************************/
+
+CPLErr FITSDataset::Delete( const char * pszFilename )
+{
+    return VSIUnlink( pszFilename) == 0 ? CE_None : CE_Failure;
 }
 
 /************************************************************************/
@@ -2532,10 +3573,24 @@ void GDALRegister_FITS()
                                "Byte UInt16 Int16 UInt32 Int32 Float32 Float64" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "fits" );
 
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String IntegerList "
+                               "Integer64List RealList" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean Int16 Float32" );
+
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+"<LayerCreationOptionList>"
+"  <Option name='REPEAT_*' type='int' description='Repeat value for fields of type List'/>"
+"  <Option name='COMPUTE_REPEAT' type='string-select' description='Determine when the repeat value for fields is computed'>"
+"    <Value>AT_FIELD_CREATION</Value>"
+"    <Value>AT_FIRST_FEATURE_CREATION</Value>"
+"  </Option>"
+"</LayerCreationOptionList>");
     poDriver->pfnOpen = FITSDataset::Open;
     poDriver->pfnIdentify = FITSDataset::Identify;
     poDriver->pfnCreate = FITSDataset::Create;
     poDriver->pfnCreateCopy = nullptr;
+    poDriver->pfnDelete = FITSDataset::Delete;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

@@ -59,7 +59,6 @@ struct curl_slist* VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL,
                        const char * const* papszOptions);
 struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
                                         struct curl_slist* poSrcToDestroy );
-
 namespace cpl {
 
 typedef enum
@@ -80,6 +79,7 @@ class FileProp
     CPLString       osRedirectURL{};
     bool            bHasComputedFileSize = false;
     bool            bIsDirectory = false;
+    int             nMode = 0; // st_mode member of struct stat
     bool            bS3LikeRedirect = false;
     CPLString       ETag{};
 };
@@ -259,7 +259,9 @@ public:
                             bool* pbGotFileList );
     void InvalidateDirContent( const char *pszDirname );
 
-    virtual CPLString GetFSPrefix() { return "/vsicurl/"; }
+    virtual const char* GetDebugKey() const { return "VSICURL"; }
+
+    virtual CPLString GetFSPrefix() const { return "/vsicurl/"; }
     virtual bool      AllowCachedDataFor(const char* pszFilename);
 
     std::shared_ptr<std::string> GetRegion( const char* pszURL,
@@ -379,6 +381,7 @@ class VSICurlHandle : public VSIVirtualHandle
     virtual vsi_l_offset GetFileSize( bool bSetError ) { return GetFileSizeOrHeaders(bSetError, false); }
     bool                 Exists( bool bSetError );
     bool                 IsDirectory() const { return oFileProp.bIsDirectory; }
+    int                  GetMode() const { return oFileProp.nMode; }
     time_t               GetMTime() const { return oFileProp.mTime; }
     const CPLStringList& GetHeaders() { return m_aosHeaders; }
 
@@ -404,7 +407,7 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
                      const char* pszTarget,
                      GDALProgressFunc pProgressFunc,
                      void *pProgressData);
-    virtual int MkdirInternal( const char *pszDirname, bool bDoStatCheck );
+    virtual int MkdirInternal( const char *pszDirname, long nMode, bool bDoStatCheck );
 
   protected:
     char** GetFileList( const char *pszFilename,
@@ -429,10 +432,10 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
 
     virtual int      DeleteObject( const char *pszFilename );
 
-    virtual const char* GetDebugKey() const = 0;
-
     virtual void UpdateMapFromHandle(IVSIS3LikeHandleHelper*) {}
     virtual void UpdateHandleFromMap( IVSIS3LikeHandleHelper * ) {}
+
+    virtual CPLString GetStreamingPath( const char* pszFilename ) const;
 
     bool Sync( const char* pszSource, const char* pszTarget,
                 const char* const * papszOptions,
@@ -444,6 +447,8 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
                              const char* const *papszOptions) override;
 
     // Multipart upload
+    virtual bool SupportsParallelMultipartUpload() const { return false; }
+
     virtual CPLString InitiateMultipartUpload(
                                 const std::string& osFilename,
                                 IVSIS3LikeHandleHelper *poS3HandleHelper,
@@ -452,6 +457,7 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
     virtual CPLString UploadPart(const CPLString& osFilename,
                          int nPartNumber,
                          const std::string& osUploadID,
+                         vsi_l_offset nPosition,
                          const void* pabyBuffer,
                          size_t nBufferSize,
                          IVSIS3LikeHandleHelper *poS3HandleHelper,
@@ -460,6 +466,7 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
     virtual bool CompleteMultipart(const CPLString& osFilename,
                            const CPLString& osUploadID,
                            const std::vector<CPLString>& aosEtags,
+                           vsi_l_offset nTotalSize,
                            IVSIS3LikeHandleHelper *poS3HandleHelper,
                            int nMaxRetry,
                            double dfRetryDelay);
@@ -777,6 +784,8 @@ size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
 void MultiPerform(CURLM* hCurlMultiHandle,
                          CURL* hEasyHandle = nullptr);
 void VSICURLResetHeaderAndWriterFunctions(CURL* hCurlHandle);
+
+int VSICurlParseUnixPermissions(const char* pszPermissions);
 
 } // namespace cpl
 

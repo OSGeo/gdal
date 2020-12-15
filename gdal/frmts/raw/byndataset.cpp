@@ -202,10 +202,20 @@ int BYNDataset::Identify( GDALOpenInfo *poOpenInfo )
         hHeader.nDatum     < 0 || hHeader.nDatum     > 1 ||
         hHeader.nEllipsoid < 0 || hHeader.nEllipsoid > 7 ||
         hHeader.nByteOrder < 0 || hHeader.nByteOrder > 1 ||
-        hHeader.nScale     < 0 || hHeader.nScale     > 1 ||
-        hHeader.nTideSys   < 0 || hHeader.nTideSys   > 2 ||
-        hHeader.nPtType    < 0 || hHeader.nPtType    > 1 )
+        hHeader.nScale     < 0 || hHeader.nScale     > 1 )
         return FALSE;
+
+    if((hHeader.nTideSys   < 0 || hHeader.nTideSys   > 2 ||
+        hHeader.nPtType    < 0 || hHeader.nPtType    > 1 ))
+    {
+        // Some datasets use 0xCC as a marker for invalidity for
+        // records starting from Geopotential Wo
+        for( int i = 52; i < 78; i++ )
+        {
+            if( poOpenInfo->pabyHeader[i] != 0xCC )
+                return FALSE;
+        }
+    }
 
     if( hHeader.nScale == 0 )
     {

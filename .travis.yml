@@ -9,70 +9,74 @@ matrix:
   fast_finish: true
   include:
 
-    - os: linux
-      compiler: gcc
-      language: cpp
-      sudo: required
-      dist: bionic
-      cache:
-        apt: true
-        directories:
-          - $HOME/.ccache
-      env:
-        - BUILD_NAME=ubuntu_1804
-        - DETAILS=""
+#    - os: linux
+#      compiler: gcc
+#      language: cpp
+#      sudo: required
+#      dist: bionic
+#      cache:
+#        apt: true
+#        directories:
+#          - $HOME/.ccache
+#      env:
+#        - BUILD_NAME=ubuntu_1804
+#        - DETAILS=""
 
-    - os: linux
-      compiler: clang
-      language: cpp
-      sudo: required
-      dist: trusty
-      cache:
-        apt: true
-        directories:
-          - $HOME/.ccache
-      env:
-        - BUILD_NAME=trusty_clang
-        - DETAILS="optimized build, no libtool"
-    - os: linux
-      compiler: clang
-      language: cpp
-      sudo: required
-      dist: trusty
-      cache:
-        apt: true
-        directories:
-          - $HOME/.ccache
-      env:
-        - BUILD_NAME=mingw_w64
-        - DETAILS="optimized build, libtool"
-    - os: linux
-      compiler: gcc
-      language: cpp
-      sudo: required
-      dist: xenial
-      cache:
-        apt: true
-        directories:
-          - $HOME/.ccache
-      env:
-        - BUILD_NAME=python3
-        - DETAILS=""
-    - os: linux
-      compiler: gcc
-      language: cpp
-      sudo: false
-      dist: trusty
-      cache:
-        apt: true
-        directories:
-          - $HOME/.ccache
-      apt:
-        packages:
-          - ccache
-      env:
-        - BUILD_NAME=android
-        - DETAILS=""
+#    - os: linux
+#      compiler: clang
+#      language: cpp
+#      sudo: required
+#      dist: trusty
+#      cache:
+#        apt: true
+#        directories:
+#          - $HOME/.ccache
+#      env:
+#        - BUILD_NAME=trusty_clang
+#        - DETAILS="optimized build, no libtool"
+
+#    - os: linux
+#      compiler: clang
+#      language: cpp
+#      sudo: required
+#      dist: trusty
+#      cache:
+#        apt: true
+#        directories:
+#          - $HOME/.ccache
+#      env:
+#        - BUILD_NAME=mingw_w64
+#        - DETAILS="optimized build, libtool"
+
+#    - os: linux
+#      compiler: gcc
+#      language: cpp
+#      sudo: required
+#      dist: xenial
+#      cache:
+#        apt: true
+#        directories:
+#          - $HOME/.ccache
+#      env:
+#        - BUILD_NAME=python3
+#        - DETAILS=""
+
+#    - os: linux
+#      compiler: gcc
+#      language: cpp
+#      sudo: false
+#      dist: trusty
+#      cache:
+#        apt: true
+#        directories:
+#          - $HOME/.ccache
+#      apt:
+#        packages:
+#          - ccache
+#      env:
+#        - BUILD_NAME=android
+#        - DETAILS=""
+
 #    - os: linux
 #      compiler: gcc
 #      language: cpp
@@ -88,6 +92,7 @@ matrix:
 #      env:
 #        - BUILD_NAME=big_endian
 #        - DETAILS=""
+
     - os: linux
       arch: s390x
       compiler: gcc
@@ -104,42 +109,45 @@ matrix:
       env:
         - BUILD_NAME=s390x
         - DETAILS=""
-    - os: linux
-      compiler: gcc
-      language: cpp
-      sudo: required
-      dist: xenial
-      cache:
-        apt: true
-        directories:
-          - $HOME/.ccache
-      env:
-        - BUILD_NAME=sanitize
-        - DETAILS=""
-    - os: linux
-      compiler: gcc
-      language: cpp
-      sudo: required
-      dist: trusty
-      cache:
-        apt: true
-        directories:
-          - $HOME/.ccache
-      env:
-        - BUILD_NAME=ubuntu_1604
-        - DETAILS=""
-    - os: linux
-      compiler: gcc
-      language: cpp
-      sudo: required
-      dist: trusty
-      cache:
-        apt: true
-        directories:
-          - $HOME/.ccache
-      env:
-        - BUILD_NAME=trusty_32bit
-        - DETAILS=""
+
+#    - os: linux
+#      compiler: gcc
+#      language: cpp
+#      sudo: required
+#      dist: xenial
+#      cache:
+#        apt: true
+#        directories:
+#          - $HOME/.ccache
+#      env:
+#        - BUILD_NAME=sanitize
+#        - DETAILS=""
+
+#    - os: linux
+#      compiler: gcc
+#      language: cpp
+#      sudo: required
+#      dist: trusty
+#      cache:
+#        apt: true
+#        directories:
+#          - $HOME/.ccache
+#      env:
+#        - BUILD_NAME=ubuntu_1604
+#        - DETAILS=""
+
+#    - os: linux
+#      compiler: gcc
+#      language: cpp
+#      sudo: required
+#      dist: trusty
+#      cache:
+#        apt: true
+#        directories:
+#          - $HOME/.ccache
+#      env:
+#        - BUILD_NAME=trusty_32bit
+#        - DETAILS=""
 
 #    - os: osx
 #      language: objective-c

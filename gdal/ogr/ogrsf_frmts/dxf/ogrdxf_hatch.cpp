@@ -681,8 +681,12 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC,
         return OGRERR_FAILURE;
     }
 
-    oSmoothPolyline.SetUseMaxGapWhenTessellatingArcs( poDS->InlineBlocks() );
-    poGC->addGeometryDirectly( oSmoothPolyline.Tessellate() );
+    // Only process polylines with at least 2 vertices
+    if( nVertexCount >= 2 )
+    {
+        oSmoothPolyline.SetUseMaxGapWhenTessellatingArcs( poDS->InlineBlocks() );
+        poGC->addGeometryDirectly( oSmoothPolyline.Tessellate() );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Skip through source boundary objects if present.                */

@@ -132,7 +132,7 @@ class VSIMemHandle final : public VSIVirtualHandle
     bool          bExtendFileAtNextWrite = false;
 
     VSIMemHandle() = default;
-    ~VSIMemHandle() override = default;
+    ~VSIMemHandle() override;
 
     int Seek( vsi_l_offset nOffset, int nWhence ) override;
     vsi_l_offset Tell() override;
@@ -286,16 +286,32 @@ bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
 /************************************************************************/
 
 /************************************************************************/
+/*                            ~VSIMemHandle()                           */
+/************************************************************************/
+
+VSIMemHandle::~VSIMemHandle()
+{
+    Close();
+}
+
+/************************************************************************/
 /*                               Close()                                */
 /************************************************************************/
 
 int VSIMemHandle::Close()
 
 {
-    if( CPLAtomicDec(&(poFile->nRefCount)) == 0 )
-        delete poFile;
+    if( poFile )
+    {
+#ifdef DEBUG_VERBOSE
+        CPLDebug("VSIMEM", "Closing handle %p on %s: ref_count=%d (before)",
+                 this, poFile->osFilename.c_str(), poFile->nRefCount);
+#endif
+        if( CPLAtomicDec(&(poFile->nRefCount)) == 0 )
+            delete poFile;
 
-    poFile = nullptr;
+        poFile = nullptr;
+    }
 
     return 0;
 }
@@ -535,6 +551,10 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
         poFile->osFilename = osFilename;
         oFileList[poFile->osFilename] = poFile;
         CPLAtomicInc(&(poFile->nRefCount));  // For file list.
+#ifdef DEBUG_VERBOSE
+        CPLDebug("VSIMEM", "Creating file %s: ref_count=%d",
+                 pszFilename, poFile->nRefCount);
+#endif
         poFile->nMaxLength = nMaxLength;
     }
     // Overwrite
@@ -564,7 +584,10 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
         strstr(pszAccess, "a");
 
     CPLAtomicInc(&(poFile->nRefCount));
-
+#ifdef DEBUG_VERBOSE
+    CPLDebug("VSIMEM", "Opening handle %p on %s: ref_count=%d",
+             poHandle, pszFilename, poFile->nRefCount);
+#endif
     if( strstr(pszAccess, "a") )
         poHandle->m_nOffset = poFile->nLength;
 
@@ -645,7 +668,10 @@ int VSIMemFilesystemHandler::Unlink_unlocked( const char * pszFilename )
     }
 
     VSIMemFile *poFile = oFileList[osFilename];
-
+#ifdef DEBUG_VERBOSE
+    CPLDebug("VSIMEM", "Unlink %s: ref_count=%d (before)",
+             pszFilename, poFile->nRefCount);
+#endif
     if( CPLAtomicDec(&(poFile->nRefCount)) == 0 )
         delete poFile;
 
@@ -678,7 +704,10 @@ int VSIMemFilesystemHandler::Mkdir( const char * pszPathname,
     poFile->bIsDirectory = true;
     oFileList[osPathname] = poFile;
     CPLAtomicInc(&(poFile->nRefCount));  // Referenced by file list.
-
+#ifdef DEBUG_VERBOSE
+    CPLDebug("VSIMEM", "Mkdir on %s: ref_count=%d",
+             pszPathname, poFile->nRefCount);
+#endif
     return 0;
 }
 
@@ -935,6 +964,10 @@ VSILFILE *VSIFileFromMemBuffer( const char *pszFilename,
         poHandler->Unlink_unlocked(osFilename);
         poHandler->oFileList[poFile->osFilename] = poFile;
         CPLAtomicInc(&(poFile->nRefCount));
+#ifdef DEBUG_VERBOSE
+        CPLDebug("VSIMEM", "VSIFileFromMemBuffer() %s: ref_count=%d (after)",
+                 poFile->osFilename.c_str(), poFile->nRefCount);
+#endif
     }
 
     // TODO(schwehr): Fix this so that the using statement is not needed.
@@ -995,6 +1028,10 @@ GByte *VSIGetMemFileBuffer( const char *pszFilename,
             poFile->bOwnData = false;
 
         poHandler->oFileList.erase( poHandler->oFileList.find(osFilename) );
+#ifdef DEBUG_VERBOSE
+        CPLDebug("VSIMEM", "VSIGetMemFileBuffer() %s: ref_count=%d (before)",
+                 poFile->osFilename.c_str(), poFile->nRefCount);
+#endif
         CPLAtomicDec(&(poFile->nRefCount));
         delete poFile;
     }

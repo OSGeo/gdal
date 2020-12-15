@@ -3543,20 +3543,17 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                 }
             }
 
-            const int nSpacingBegin = static_cast<int>(
-                poDS->rint((pdfXCoord[1] - pdfXCoord[0]) * 1000));
-
-            const int nSpacingMiddle = static_cast<int>(poDS->rint(
-                (pdfXCoord[xdim / 2 + 1] - pdfXCoord[xdim / 2]) * 1000));
-
-            const int nSpacingLast = static_cast<int>(
-                poDS->rint((pdfXCoord[xdim - 1] - pdfXCoord[xdim - 2]) * 1000));
+            const double dfSpacingBegin = pdfXCoord[1] - pdfXCoord[0];
+            const double dfSpacingMiddle =
+                    pdfXCoord[xdim / 2 + 1] - pdfXCoord[xdim / 2];
+            const double dfSpacingLast =
+                    pdfXCoord[xdim - 1] - pdfXCoord[xdim - 2];
 
             CPLDebug("GDAL_netCDF",
-                     "xdim: %ld nSpacingBegin: %d nSpacingMiddle: %d "
-                     "nSpacingLast: %d",
+                     "xdim: %ld dfSpacingBegin: %f dfSpacingMiddle: %f "
+                     "dfSpacingLast: %f",
                      static_cast<long>(xdim),
-                     nSpacingBegin, nSpacingMiddle, nSpacingLast);
+                     dfSpacingBegin, dfSpacingMiddle, dfSpacingLast);
 #ifdef NCDF_DEBUG
             CPLDebug("GDAL_netCDF",
                      "xcoords: %f %f %f %f %f %f",
@@ -3565,22 +3562,34 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                      pdfXCoord[xdim - 2], pdfXCoord[xdim - 1]);
 #endif
 
-            const double dfSpacingBegin = nSpacingBegin;
-            const double dfSpacingMiddle = nSpacingMiddle;
-            const double dfSpacingLast = nSpacingLast;
-            // ftp://data.knmi.nl/download/KNW-NetCDF-3D/1.0/noversion/2013/11/14/KNW-1.0_H37-ERA_NL_20131114.nc
-            // requires a 2/1000 tolerance.
-            if( IsDifferenceBelow(dfSpacingBegin, dfSpacingLast, 2) &&
-                IsDifferenceBelow(dfSpacingBegin, dfSpacingMiddle, 2) &&
-                IsDifferenceBelow(dfSpacingMiddle, dfSpacingLast, 2) )
+            // ftp://ftp.cdc.noaa.gov/Datasets/NARR/Dailies/monolevel/vwnd.10m.2015.nc
+            // requires a 0.02% tolerance, so let's settle for 0.05%
+            const double dfEps = 0.0005 * std::max(fabs(dfSpacingBegin),
+                        std::max(fabs(dfSpacingMiddle), fabs(dfSpacingLast)));
+            if( IsDifferenceBelow(dfSpacingBegin, dfSpacingLast, dfEps) &&
+                IsDifferenceBelow(dfSpacingBegin, dfSpacingMiddle, dfEps) &&
+                IsDifferenceBelow(dfSpacingMiddle, dfSpacingLast, dfEps) )
             {
                 bLonSpacingOK = true;
+            }
+            else if( CPLTestBool(CPLGetConfigOption(
+                "GDAL_NETCDF_IGNORE_EQUALLY_SPACED_XY_CHECK", "NO")) )
+            {
+                bLonSpacingOK = true;
+                CPLDebug("GDAL_netCDF",
+                     "Longitude/X is not equally spaced, but will be considered "
+                     "as such because of GDAL_NETCDF_IGNORE_EQUALLY_SPACED_XY_CHECK");
             }
         }
 
         if( bLonSpacingOK == false )
         {
-            CPLDebug("GDAL_netCDF", "Longitude is not equally spaced.");
+            CPLDebug("GDAL_netCDF",
+                     "%s",
+                     "Longitude/X is not equally spaced (with a 0.05% tolerance). "
+                     "You may set the "
+                     "GDAL_NETCDF_IGNORE_EQUALLY_SPACED_XY_CHECK configuration "
+                     "option to YES to ignore this check");
         }
 
         // Check Latitude.
@@ -3592,18 +3601,16 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
         }
         else
         {
-            const int nSpacingBegin = static_cast<int>(
-                poDS->rint((pdfYCoord[1] - pdfYCoord[0]) * 1000));
+            const double dfSpacingBegin = pdfYCoord[1] - pdfYCoord[0];
+            const double dfSpacingMiddle =
+                pdfYCoord[ydim / 2 + 1] - pdfYCoord[ydim / 2];
 
-            const int nSpacingMiddle = static_cast<int>(poDS->rint(
-                (pdfYCoord[ydim / 2 + 1] - pdfYCoord[ydim / 2]) * 1000));
-
-            const int nSpacingLast = static_cast<int>(
-                poDS->rint((pdfYCoord[ydim - 1] - pdfYCoord[ydim - 2]) * 1000));
+            const double dfSpacingLast =
+                pdfYCoord[ydim - 1] - pdfYCoord[ydim - 2];
 
             CPLDebug("GDAL_netCDF",
-                     "ydim: %ld nSpacingBegin: %d nSpacingMiddle: %d nSpacingLast: %d",
-                     (long)ydim, nSpacingBegin, nSpacingMiddle, nSpacingLast);
+                     "ydim: %ld dfSpacingBegin: %f dfSpacingMiddle: %f dfSpacingLast: %f",
+                     (long)ydim, dfSpacingBegin, dfSpacingMiddle, dfSpacingLast);
 #ifdef NCDF_DEBUG
             CPLDebug("GDAL_netCDF",
                      "ycoords: %f %f %f %f %f %f",
@@ -3613,21 +3620,26 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
 
             // For Latitude we allow an error of 0.1 degrees for gaussian
             // gridding (only if this is not a projected SRS).
-            // Note: we use fabs() instead of abs() to avoid int32 overflow
-            // issues.
-            const double dfSpacingBegin = nSpacingBegin;
-            const double dfSpacingMiddle = nSpacingMiddle;
-            const double dfSpacingLast = nSpacingLast;
-            if( IsDifferenceBelow(dfSpacingBegin, dfSpacingLast, 2) &&
-                IsDifferenceBelow(dfSpacingBegin, dfSpacingMiddle, 2) &&
-                IsDifferenceBelow(dfSpacingMiddle, dfSpacingLast, 2) )
+            const double dfEps = 0.0005 * std::max(fabs(dfSpacingBegin),
+                        std::max(fabs(dfSpacingMiddle), fabs(dfSpacingLast)));
+            if( IsDifferenceBelow(dfSpacingBegin, dfSpacingLast, dfEps) &&
+                IsDifferenceBelow(dfSpacingBegin, dfSpacingMiddle, dfEps) &&
+                IsDifferenceBelow(dfSpacingMiddle, dfSpacingLast, dfEps) )
             {
                 bLatSpacingOK = true;
             }
+            else if( CPLTestBool(CPLGetConfigOption(
+                "GDAL_NETCDF_IGNORE_EQUALLY_SPACED_XY_CHECK", "NO")) )
+            {
+                bLatSpacingOK = true;
+                CPLDebug("GDAL_netCDF",
+                     "Latitude/Y is not equally spaced, but will be considered "
+                     "as such because of GDAL_NETCDF_IGNORE_EQUALLY_SPACED_XY_CHECK");
+            }
             else if( !oSRS.IsProjected() &&
-                     (((fabs(fabs(dfSpacingBegin) - fabs(dfSpacingLast))) <= 100) &&
-                      ((fabs(fabs(dfSpacingBegin) - fabs(dfSpacingMiddle))) <= 100) &&
-                      ((fabs(fabs(dfSpacingMiddle) - fabs(dfSpacingLast))) <= 100)) )
+                     fabs(dfSpacingBegin - dfSpacingLast) <= 0.1 &&
+                     fabs(dfSpacingBegin - dfSpacingMiddle) <= 0.1 &&
+                     fabs(dfSpacingMiddle - dfSpacingLast) <= 0.1 )
             {
                 bLatSpacingOK = true;
                 CPLError(CE_Warning, CPLE_AppDefined,
@@ -3645,7 +3657,12 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
 
             if( bLatSpacingOK == false )
             {
-                CPLDebug("GDAL_netCDF", "Latitude is not equally spaced.");
+                CPLDebug("GDAL_netCDF",
+                     "%s",
+                     "Latitude/Y is not equally spaced (with a 0.05% tolerance). "
+                     "You may set the "
+                     "GDAL_NETCDF_IGNORE_EQUALLY_SPACED_XY_CHECK configuration "
+                     "option to YES to ignore this check");
             }
         }
 
@@ -5664,6 +5681,8 @@ CPL_UNUSED
     }
 #endif
 
+    constexpr char achHDF5Signature[] = "\211HDF\r\n\032\n";
+
     if( STARTS_WITH_CI(pszHeader, "CDF\001") )
     {
         // In case the netCDF driver is registered before the GMT driver,
@@ -5694,7 +5713,7 @@ CPL_UNUSED
     {
         return NCDF_FORMAT_NC2;
     }
-    else if( STARTS_WITH_CI(pszHeader, "\211HDF\r\n\032\n") )
+    else if( STARTS_WITH_CI(pszHeader, achHDF5Signature) )
     {
         // Requires netCDF-4/HDF5 support in libnetcdf (not just libnetcdf-v4).
         // If HDF5 is not supported in GDAL, this driver will try to open the
@@ -5746,6 +5765,34 @@ CPL_UNUSED
 #else
         return NCDF_FORMAT_HDF4;
 #endif
+    }
+
+    // The HDF5 signature of netCDF 4 files can be at offsets 512, 1024, 2048,
+    // etc.
+    const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
+    if( poOpenInfo->fpL != nullptr &&
+        (EQUAL(pszExtension, "nc") || EQUAL(pszExtension, "cdf") ||
+         EQUAL(pszExtension, "nc4")) )
+    {
+        vsi_l_offset nOffset = 512;
+        for(int i = 0; i < 64; i++)
+        {
+            GByte abyBuf[8];
+            if( VSIFSeekL(poOpenInfo->fpL, nOffset, SEEK_SET) != 0 ||
+                VSIFReadL(abyBuf, 1, 8, poOpenInfo->fpL) != 8 )
+            {
+                break;
+            }
+            if( memcmp(abyBuf, achHDF5Signature, 8) == 0 )
+            {
+#ifdef NETCDF_HAS_NC4
+                return NCDF_FORMAT_NC4;
+#else
+                return NCDF_FORMAT_HDF5;
+#endif
+            }
+            nOffset *= 2;
+        }
     }
 
     return NCDF_FORMAT_NONE;

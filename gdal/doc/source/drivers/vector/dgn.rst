@@ -21,6 +21,8 @@ OGR. Features will all have the following generic attributes:
 -  ColorIndex: The color index from the dgn palette.
 -  Weight: The drawing weight (thickness) for the element.
 -  Style: The style value for the element.
+-  EntityNum and MSLink: The Entity ID and MSLINK values in database linkage.
+-  ULink: User data linkage (multiple user data linkages may exist for each element).
 
 DGN files do not contain spatial indexes; however, the DGN driver does
 take advantage of the extents information at the beginning of each
@@ -53,6 +55,26 @@ The following element types are supported:
 Generally speaking any concept of complex objects, and cells as
 associated components is lost. Each component of a complex object or
 cell is treated as a independent feature.
+
+MSLINK
+------
+
+A DGN element can have a correspondence to a row in a database table,
+known as database linkage or database attribute. The EntityNum 
+refers to the database table. The MSLink is the key to find the
+row in that table.
+
+User data linkage
+-----------------
+
+A DGN element may have multiple user data linkages. Each linkage has 
+a user id, application id and a number of words of data. The user 
+data linkage output reports the data for each different application id
+found as raw hexadecimal words (16bits). The application id is the 
+second word of the raw data.
+
+Is up to the user how to decode the user raw data, depending on the 
+application id.
 
 Styling Information
 -------------------

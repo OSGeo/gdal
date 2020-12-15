@@ -351,6 +351,8 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
     // validated, so we are a bit in undefined behavior land, but compilers
     // should hopefully do the right thing
     if( static_cast<int>(resample_alg) < 0 ||
+        ( static_cast<int>(resample_alg) >= static_cast<int>(GRIORA_RESERVED_START) &&
+          static_cast<int>(resample_alg) <= static_cast<int>(GRIORA_RESERVED_END) ) ||
         static_cast<int>(resample_alg) > static_cast<int>(GRIORA_LAST) )
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Invalid value for resample_alg");
@@ -669,6 +671,8 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
     // validated, so we are a bit in undefined behavior land, but compilers
     // should hopefully do the right thing
     if( static_cast<int>(resample_alg) < 0 ||
+        ( static_cast<int>(resample_alg) >= static_cast<int>(GRIORA_RESERVED_START) &&
+          static_cast<int>(resample_alg) <= static_cast<int>(GRIORA_RESERVED_END) ) ||
         static_cast<int>(resample_alg) > static_cast<int>(GRIORA_LAST) )
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Invalid value for resample_alg");
@@ -1486,6 +1490,8 @@ def TranslateOptions(options=None, format=None,
                 new_options += ['-r', 'lanczos']
             elif resampleAlg == gdalconst.GRA_Average:
                 new_options += ['-r', 'average']
+            elif resampleAlg == gdalconst.GRA_RMS:
+                new_options += ['-r', 'rms']
             elif resampleAlg == gdalconst.GRA_Mode:
                 new_options += ['-r', 'mode']
             else:
@@ -1626,6 +1632,8 @@ def WarpOptions(options=None, format=None,
                 new_options += ['-r', 'lanczos']
             elif resampleAlg == gdalconst.GRIORA_Average:
                 new_options += ['-r', 'average']
+            elif resampleAlg == gdalconst.GRIORA_RMS:
+                new_options += ['-r', 'rms']
             elif resampleAlg == gdalconst.GRIORA_Mode:
                 new_options += ['-r', 'mode']
             elif resampleAlg == gdalconst.GRIORA_Gauss:
@@ -1727,6 +1735,7 @@ def VectorTranslateOptions(options=None, format=None,
          SQLStatement=None, SQLDialect=None, where=None, selectFields=None,
          addFields=False,
          forceNullable=False,
+         emptyStrAsNull=False,
          spatFilter=None, spatSRS=None,
          datasetCreationOptions=None,
          layerCreationOptions=None,
@@ -1755,6 +1764,7 @@ def VectorTranslateOptions(options=None, format=None,
           selectFields --- list of fields to select
           addFields --- whether to add new fields found in source layers (to be used with accessMode == 'append')
           forceNullable --- whether to drop NOT NULL constraints on newly created fields
+          emptyStrAsNull --- whether to treat empty string values as NULL
           spatFilter --- spatial filter as (minX, minY, maxX, maxY) bounding box
           spatSRS --- SRS in which the spatFilter is expressed. If not specified, it is assumed to be the one of the layer(s)
           datasetCreationOptions --- list of dataset creation options
@@ -1807,6 +1817,8 @@ def VectorTranslateOptions(options=None, format=None,
             new_options += ['-addfields']
         if forceNullable:
             new_options += ['-forceNullable']
+        if emptyStrAsNull:
+            new_options += ['-emptyStrAsNull']
         if selectFields is not None:
             val = ''
             for item in selectFields:
@@ -2356,6 +2368,8 @@ def BuildVRTOptions(options=None,
                 new_options += ['-r', 'lanczos']
             elif resampleAlg == gdalconst.GRIORA_Average:
                 new_options += ['-r', 'average']
+            elif resampleAlg == gdalconst.GRIORA_RMS:
+                new_options += ['-r', 'rms']
             elif resampleAlg == gdalconst.GRIORA_Mode:
                 new_options += ['-r', 'mode']
             elif resampleAlg == gdalconst.GRIORA_Gauss:

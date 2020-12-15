@@ -42,12 +42,12 @@ def do(sqlite3name, gdalname):
         import ctypes
     except ImportError:
         print('skip')
-        sys.exit(0)
+        return 0
 
     sqlite_handle = ctypes.cdll.LoadLibrary(sqlite3name)
     if sqlite_handle is None:
         print('skip')
-        sys.exit(0)
+        return 0
 
     db = ctypes.c_void_p(0)
     pdb = ctypes.pointer(db)
@@ -57,10 +57,10 @@ def do(sqlite3name, gdalname):
         ret = sqlite_handle.SPLite3_open(':memory:'.encode('ascii'), pdb)
     else:
         print('skip')
-        sys.exit(0)
+        return 0
     if ret != 0:
         print('Error sqlite3_open ret = %d' % ret)
-        sys.exit(1)
+        return 1
 
     if hasattr(sqlite_handle, 'sqlite3_enable_load_extension'):
         ret = sqlite_handle.sqlite3_enable_load_extension(db, 1)
@@ -68,10 +68,10 @@ def do(sqlite3name, gdalname):
         ret = sqlite_handle.SPLite3_enable_load_extension(db, 1)
     else:
         print('skip')
-        sys.exit(0)
+        return 0
     if ret != 0:
         print('skip')
-        sys.exit(0)
+        return 0
 
     gdalname = gdalname.encode('ascii')
 
@@ -81,7 +81,7 @@ def do(sqlite3name, gdalname):
         ret = sqlite_handle.SPLite3_load_extension(db, gdalname, None, None)
     if ret != 0:
         print('Error sqlite3_load_extension ret = %d' % ret)
-        sys.exit(1)
+        return 1
 
     tab = ctypes.c_void_p()
     ptab = ctypes.pointer(tab)
@@ -96,7 +96,7 @@ def do(sqlite3name, gdalname):
         ret = sqlite_handle.SPLite3_get_table(db, 'SELECT ogr_version()'.encode('ascii'), ptab, pnrow, pncol, None)
     if ret != 0:
         print('Error sqlite3_get_table ret = %d' % ret)
-        sys.exit(1)
+        return 1
 
     cast_tab = ctypes.cast(tab, ctypes.POINTER(ctypes.c_char_p))
     sys.stdout.write(cast_tab[1].decode('ascii'))
@@ -107,12 +107,16 @@ def do(sqlite3name, gdalname):
     else:
         ret = sqlite_handle.SPLite3_close(db)
     if ret != 0:
-        sys.exit(1)
+        return 1
+
+
+def main(argv):
+    if len(argv) != 3:
+        print('python ogr_as_sqlite_extension name_of_libsqlite3 name_of_libgdal')
+        return 1
+
+    return do(argv[1], argv[2])
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print('python ogr_as_sqlite_extension name_of_libsqlite3 name_of_libgdal')
-        sys.exit(1)
-
-    do(sys.argv[1], sys.argv[2])
+    sys.exit(main(sys.argv))

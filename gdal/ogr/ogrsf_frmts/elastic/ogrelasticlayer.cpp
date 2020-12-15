@@ -42,6 +42,41 @@
 #include <cstdlib>
 #include <set>
 
+
+/************************************************************************/
+/*                        CPLGettimeofday()                             */
+/************************************************************************/
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  include <sys/timeb.h>
+
+struct CPLTimeVal
+{
+  time_t  tv_sec;         /* seconds */
+  long    tv_usec;        /* and microseconds */
+};
+
+static void CPLGettimeofday(struct CPLTimeVal* tp, void* /* timezonep*/ )
+{
+  struct _timeb theTime;
+
+  _ftime(&theTime);
+  tp->tv_sec = static_cast<time_t>(theTime.time);
+  tp->tv_usec = theTime.millitm * 1000;
+}
+#else
+#  include <sys/time.h>     /* for gettimeofday() */
+#  define  CPLTimeVal timeval
+#  define  CPLGettimeofday(t,u) gettimeofday(t,u)
+#endif
+
+static double GetTimestamp()
+{
+    struct CPLTimeVal tv;
+    CPLGettimeofday(&tv, nullptr);
+    return tv.tv_sec + tv.tv_usec * 1e-6;
+}
+
 CPL_CVSID("$Id$")
 
 /************************************************************************/
@@ -87,7 +122,8 @@ OGRElasticLayer::OGRElasticLayer( const char* pszLayerName,
     m_bIgnoreSourceID(false),
     m_bDotAsNestedField(true),
     // Undocumented. Only useful for developers.
-    m_bAddPretty(CPLTestBool(CPLGetConfigOption("ES_ADD_PRETTY", "FALSE")))
+    m_bAddPretty(CPLTestBool(CPLGetConfigOption("ES_ADD_PRETTY", "FALSE"))),
+    m_bGeoShapeAsGeoJSON(EQUAL(CSLFetchNameValueDef(papszOptions, "GEO_SHAPE_ENCODING", "GeoJSON"), "GeoJSON"))
 {
     const char* pszESGeomType = CSLFetchNameValue(papszOptions, "GEOM_MAPPING_TYPE");
     if( pszESGeomType != nullptr )
@@ -97,6 +133,7 @@ OGRElasticLayer::OGRElasticLayer( const char* pszLayerName,
         else if( EQUAL(pszESGeomType, "GEO_SHAPE") )
             m_eGeomTypeMapping = ES_GEOMTYPE_GEO_SHAPE;
     }
+
     if( CPLFetchBool(papszOptions, "BULK_INSERT", true) )
     {
         m_nBulkUpload = atoi(CSLFetchNameValueDef(papszOptions, "BULK_SIZE", "1000000"));
@@ -119,6 +156,28 @@ OGRElasticLayer::OGRElasticLayer( const char* pszLayerName,
     if( pszFieldsWithRawValue )
         m_papszFieldsWithRawValue = CSLTokenizeString2(
                                             pszFieldsWithRawValue, ",", 0);
+
+    const char* pszSingleQueryTimeout = CSLFetchNameValue(papszOptions, "SINGLE_QUERY_TIMEOUT");
+    if( pszSingleQueryTimeout )
+    {
+        m_dfSingleQueryTimeout = CPLAtof(pszSingleQueryTimeout);
+        if( m_dfSingleQueryTimeout < 1 && m_dfSingleQueryTimeout >= 1e-3 )
+            m_osSingleQueryTimeout = CPLSPrintf("%dms", static_cast<int>(m_dfSingleQueryTimeout * 1000));
+        else if( m_dfSingleQueryTimeout >= 1 )
+            m_osSingleQueryTimeout = CPLSPrintf("%ds", static_cast<int>(m_dfSingleQueryTimeout));
+    }
+
+    m_osSingleQueryTerminateAfter = CSLFetchNameValueDef(
+        papszOptions, "SINGLE_QUERY_TERMINATE_AFTER", "");
+    m_nSingleQueryTerminateAfter = CPLAtoGIntBig(m_osSingleQueryTerminateAfter);
+
+    const char* pszFeatureIterationTimeout = CSLFetchNameValue(papszOptions, "FEATURE_ITERATION_TIMEOUT");
+    if( pszFeatureIterationTimeout )
+    {
+        m_dfFeatureIterationTimeout = CPLAtof(pszFeatureIterationTimeout);
+    }
+    m_nFeatureIterationTerminateAfter = CPLAtoGIntBig(CSLFetchNameValueDef(
+        papszOptions, "FEATURE_ITERATION_TERMINATE_AFTER", ""));
 
     SetDescription( m_poFeatureDefn->GetName() );
     m_poFeatureDefn->Reference();
@@ -164,6 +223,13 @@ OGRElasticLayer* OGRElasticLayer::Clone() const
     poNew->m_papszNotAnalyzedFields = CSLDuplicate(m_papszNotAnalyzedFields);
     poNew->m_papszNotIndexedFields = CSLDuplicate(m_papszNotIndexedFields);
     poNew->m_papszFieldsWithRawValue = CSLDuplicate(m_papszFieldsWithRawValue);
+    poNew->m_bGeoShapeAsGeoJSON = m_bGeoShapeAsGeoJSON;
+    poNew->m_osSingleQueryTimeout = m_osSingleQueryTimeout;
+    poNew->m_dfSingleQueryTimeout = m_dfSingleQueryTimeout;
+    poNew->m_dfFeatureIterationTimeout = m_dfFeatureIterationTimeout;
+    poNew->m_nSingleQueryTerminateAfter = m_nSingleQueryTerminateAfter;
+    poNew->m_nFeatureIterationTerminateAfter = m_nFeatureIterationTerminateAfter;
+    poNew->m_osSingleQueryTerminateAfter = m_osSingleQueryTerminateAfter;
     return poNew;
 }
 
@@ -906,6 +972,13 @@ void OGRElasticLayer::ResetReading()
     m_iCurID = 0;
     m_iCurFeatureInPage = 0;
     m_bEOF = false;
+
+    m_nReadFeaturesSinceResetReading = 0;
+    m_dfEndTimeStamp = 0;
+    const double dfTimeout =
+        m_bUseSingleQueryParams ? m_dfSingleQueryTimeout : m_dfFeatureIterationTimeout;
+    if( dfTimeout > 0 )
+        m_dfEndTimeStamp = GetTimestamp() + dfTimeout;
 }
 
 /************************************************************************/
@@ -968,7 +1041,8 @@ json_object* OGRElasticLayer::BuildSort()
 CPLString OGRElasticLayer::BuildQuery(bool bCountOnly)
 {
     CPLString osRet = "{ ";
-    if( bCountOnly && m_poDS->m_nMajorVersion < 5 )
+    if( bCountOnly &&
+        (m_poDS->m_nMajorVersion < 5 || !m_osSingleQueryTimeout.empty()) )
     {
         osRet += "\"size\": 0, ";
     }
@@ -1006,6 +1080,19 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
 {
     json_object* poResponse = nullptr;
 
+    if( m_dfEndTimeStamp > 0 && GetTimestamp() >= m_dfEndTimeStamp )
+    {
+        CPLDebug("ES", "Terminating request due to timeout");
+        return nullptr;
+    }
+    const auto nTerminateAfter =
+        m_bUseSingleQueryParams ? m_nSingleQueryTerminateAfter : m_nFeatureIterationTerminateAfter;
+    if( nTerminateAfter > 0 && m_nReadFeaturesSinceResetReading >= nTerminateAfter )
+    {
+        CPLDebug("ES", "Terminating request due to terminate_after reached");
+        return nullptr;
+    }
+
     if( m_bEOF )
         return nullptr;
 
@@ -1014,6 +1101,7 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
         OGRFeature* poRet = m_apoCachedFeatures[m_iCurFeatureInPage];
         m_apoCachedFeatures[m_iCurFeatureInPage] = nullptr;
         m_iCurFeatureInPage ++;
+        m_nReadFeaturesSinceResetReading ++;
         return poRet;
     }
 
@@ -1023,7 +1111,7 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
     m_iCurFeatureInPage = 0;
 
     CPLString osRequest, osPostData;
-    if( m_osScrollID.empty() )
+    if( m_nReadFeaturesSinceResetReading == 0 )
     {
         if( !m_osESSearch.empty() )
         {
@@ -1056,6 +1144,11 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
     }
     else
     {
+        if( m_osScrollID.empty() )
+        {
+            m_bEOF = true;
+            return nullptr;
+        }
         osRequest =
             CPLSPrintf("%s/_search/scroll?scroll=1m&scroll_id=%s",
                        m_poDS->GetURL(), m_osScrollID.c_str());
@@ -1069,6 +1162,7 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
         m_bEOF = true;
         return nullptr;
     }
+    m_osScrollID.clear();
     json_object* poScrollID = CPL_json_object_object_get(poResponse, "_scroll_id");
     if( poScrollID )
     {
@@ -1147,6 +1241,7 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
         OGRFeature* poRet = m_apoCachedFeatures[ 0 ];
         m_apoCachedFeatures[ 0 ] = nullptr;
         m_iCurFeatureInPage ++;
+        m_nReadFeaturesSinceResetReading ++;
         return poRet;
     }
     return nullptr;
@@ -1450,6 +1545,12 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
                 {
                     poGeom = OGRGeoJSONReadGeometry( it.val );
                 }
+            }
+            else if( json_object_get_type(it.val) == json_type_string )
+            {
+                // Assume this is WKT
+                OGRGeometryFactory::createFromWkt(
+                    json_object_get_string(it.val), nullptr, &poGeom);
             }
 
             if( poGeom != nullptr )
@@ -2103,9 +2204,20 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                 }
                 else
                 {
-                    json_object *geometry = json_object_new_object();
-                    json_object_object_add(poContainer, pszLastComponent, geometry);
-                    BuildGeoJSONGeometry(geometry, poGeom);
+                    if( m_bGeoShapeAsGeoJSON )
+                    {
+                        json_object *geometry = json_object_new_object();
+                        json_object_object_add(poContainer, pszLastComponent, geometry);
+                        BuildGeoJSONGeometry(geometry, poGeom);
+                    }
+                    else
+                    {
+                        char* pszWKT = nullptr;
+                        poGeom->exportToWkt(&pszWKT);
+                        json_object_object_add(poContainer, pszLastComponent,
+                                               json_object_new_string(pszWKT));
+                        CPLFree(pszWKT);
+                    }
                 }
             }
         }
@@ -2579,13 +2691,30 @@ int OGRElasticLayer::TestCapability(const char * pszCap) {
 }
 
 /************************************************************************/
+/*                   AddTimeoutTerminateAfterToURL()                    */
+/************************************************************************/
+
+void OGRElasticLayer::AddTimeoutTerminateAfterToURL( CPLString& osURL )
+{
+    if( !m_osSingleQueryTimeout.empty() )
+        osURL += "&timeout=" + m_osSingleQueryTimeout;
+    if( !m_osSingleQueryTerminateAfter.empty() )
+        osURL += "&terminate_after=" + m_osSingleQueryTerminateAfter;
+}
+
+/************************************************************************/
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRElasticLayer::GetFeatureCount( int bForce )
 {
     if( m_bFilterMustBeClientSideEvaluated )
-        return OGRLayer::GetFeatureCount(bForce);
+    {
+        m_bUseSingleQueryParams = true;
+        const auto nRet = OGRLayer::GetFeatureCount(bForce);
+        m_bUseSingleQueryParams = false;
+        return nRet;
+    }
 
     json_object* poResponse = nullptr;
     CPLString osURL(CPLSPrintf("%s", m_poDS->GetURL()));
@@ -2595,21 +2724,25 @@ GIntBig OGRElasticLayer::GetFeatureCount( int bForce )
         if( m_osESSearch[0] != '{' )
             return OGRLayer::GetFeatureCount(bForce);
         osURL += "/_search?pretty";
-        osFilter = ("{ \"size\": 0, " + m_osESSearch.substr(1)).c_str();
+        osFilter = "{ \"size\": 0 ";
+        if( m_osESSearch == "{}" )
+            osFilter += '}';
+        else
+            osFilter += ", " + m_osESSearch.substr(1);
     }
     else if( (m_poSpatialFilter && m_osJSONFilter.empty()) || m_poJSONFilter )
     {
         osFilter = BuildQuery(true);
         osURL += CPLSPrintf("/%s", m_osIndexName.c_str());
-        if( m_poDS->m_nMajorVersion >= 5)
+        if (m_poDS->m_nMajorVersion < 7)
+            osURL += CPLSPrintf("/%s", m_osMappingName.c_str());
+        if( m_poDS->m_nMajorVersion >= 5 && m_osSingleQueryTimeout.empty() )
         {
-            if (m_poDS->m_nMajorVersion < 7)
-                osURL += CPLSPrintf("/%s", m_osMappingName.c_str());
             osURL += "/_count?pretty";
         }
         else
         {
-            osURL += CPLSPrintf("/%s/_search?pretty", m_osMappingName.c_str());
+            osURL += "/_search?pretty";
         }
     }
     else if( !m_osJSONFilter.empty() )
@@ -2617,6 +2750,7 @@ GIntBig OGRElasticLayer::GetFeatureCount( int bForce )
         osURL += CPLSPrintf("/%s", m_osIndexName.c_str());
         if (m_poDS->m_nMajorVersion < 7)
             osURL += CPLSPrintf("/%s", m_osMappingName.c_str());
+        osURL += "/_search?pretty";
         osFilter = ("{ \"size\": 0, " + m_osJSONFilter.substr(1));
     }
     else
@@ -2624,19 +2758,46 @@ GIntBig OGRElasticLayer::GetFeatureCount( int bForce )
         osURL += CPLSPrintf("/%s", m_osIndexName.c_str());
         if (m_poDS->m_nMajorVersion < 7)
             osURL += CPLSPrintf("/%s", m_osMappingName.c_str());
-        osURL += "/_count?pretty";
+        if( m_osSingleQueryTimeout.empty() )
+        {
+            osURL += "/_count?pretty";
+        }
+        else
+        {
+            osFilter = "{ \"size\": 0 }";
+            osURL += CPLSPrintf("/_search?pretty");
+        }
     }
+    AddTimeoutTerminateAfterToURL(osURL);
+
     poResponse = m_poDS->RunRequest(osURL.c_str(), osFilter.c_str());
 
     json_object* poCount = json_ex_get_object_by_path(poResponse, "hits.count");
     if( poCount == nullptr )
+    {
+        // For _search request
         poCount = json_ex_get_object_by_path(poResponse, "hits.total");
+        if( poCount && json_object_get_type(poCount) == json_type_object )
+        {
+            // Since ES 7.0
+            poCount = json_ex_get_object_by_path(poCount, "value");
+        }
+    }
     if( poCount == nullptr )
+    {
+        // For _count request
         poCount = json_ex_get_object_by_path(poResponse, "count");
+    }
     if( poCount == nullptr || json_object_get_type(poCount) != json_type_int )
     {
         json_object_put(poResponse);
-        return OGRLayer::GetFeatureCount(bForce);
+        CPLDebug("ES",
+                 "Cannot find hits in GetFeatureCount() response. "
+                 "Falling back to slow implementation");
+        m_bUseSingleQueryParams = true;
+        const auto nRet = OGRLayer::GetFeatureCount(bForce);
+        m_bUseSingleQueryParams = false;
+        return nRet;
     }
 
     GIntBig nCount = json_object_get_int64(poCount);
@@ -3346,8 +3507,22 @@ OGRErr OGRElasticLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bFo
         return OGRERR_FAILURE;
     }
 
-    if( !m_abIsGeoPoint[iGeomField] )
-        return OGRLayer::GetExtentInternal(iGeomField, psExtent, bForce);
+    const auto DefaultGetExtent = [this, iGeomField, psExtent, bForce]()
+    {
+        m_bUseSingleQueryParams = true;
+        const auto eRet = OGRLayer::GetExtentInternal(iGeomField, psExtent, bForce);
+        m_bUseSingleQueryParams = false;
+        return eRet;
+    };
+
+    // geo_shape aggregation is only available since ES 7.8, but only with XPack
+    // for now
+    if( !m_abIsGeoPoint[iGeomField] &&
+        !(m_poDS->m_nMajorVersion > 7 ||
+            (m_poDS->m_nMajorVersion == 7 && m_poDS->m_nMinorVersion >= 8)) )
+    {
+        return DefaultGetExtent();
+    }
 
     CPLString osFilter = CPLSPrintf("{ \"size\": 0, \"aggs\" : { \"bbox\" : { \"geo_bounds\" : { \"field\" : \"%s\" } } } }",
                                     BuildPathFromArray(m_aaosGeomFieldPaths[iGeomField]).c_str() );
@@ -3355,7 +3530,27 @@ OGRErr OGRElasticLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bFo
     if (m_poDS->m_nMajorVersion < 7)
         osURL += CPLSPrintf("/%s", m_osMappingName.c_str());
     osURL += "/_search?pretty";
+    AddTimeoutTerminateAfterToURL(osURL);
+
+    CPLPushErrorHandler(CPLQuietErrorHandler);
     json_object* poResponse = m_poDS->RunRequest(osURL.c_str(), osFilter.c_str());
+    CPLPopErrorHandler();
+    if( poResponse == nullptr )
+    {
+        const char* pszLastErrorMsg = CPLGetLastErrorMsg();
+        if( !m_abIsGeoPoint[iGeomField] &&
+            strstr(pszLastErrorMsg, "Fielddata is not supported on field") != nullptr )
+        {
+            CPLDebug("ES",
+                     "geo_bounds aggregation failed, likely because of lack "
+                     "of XPack. Using client-side method");
+            CPLErrorReset();
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "%s", pszLastErrorMsg);
+        }
+    }
 
     json_object* poBounds = json_ex_get_object_by_path(poResponse, "aggregations.bbox.bounds");
     json_object* poTopLeft = json_ex_get_object_by_path(poBounds, "top_left");
@@ -3369,7 +3564,7 @@ OGRErr OGRElasticLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bFo
     if( poTopLeftLon == nullptr || poTopLeftLat == nullptr ||
         poBottomRightLon == nullptr || poBottomRightLat == nullptr )
     {
-        eErr = OGRLayer::GetExtentInternal(iGeomField, psExtent, bForce);
+        eErr = DefaultGetExtent();
     }
     else
     {

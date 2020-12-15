@@ -27,6 +27,7 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
+import copy
 import math
 import pickle
 import random
@@ -670,7 +671,7 @@ def test_ogr_geomtransfomer_wrapdateline_with_ct():
     transformer = ogr.GeomTransformer(ct, ['WRAPDATELINE=YES'])
 
     geom_dst = geom.Transform(transformer)
-    assert geom_dst.ExportToWkt() == 'MULTILINESTRING ((179.9 0.0,180 0),(-180 0,-179.9 0.0))'
+    assert ogrtest.check_feature_geometry(geom_dst, 'MULTILINESTRING ((179.9 0.0,180 0),(-180 0,-179.9 0.0))') == 0
 
 ###############################################################################
 # Test ogr.GeomTransformer()
@@ -3413,3 +3414,35 @@ def test_ogr_geom_removeLowerDimensionSubGeoms(input_wkt, expected_wkt):
     g = ogr.CreateGeometryFromWkt(input_wkt)
     g = g.RemoveLowerDimensionSubGeoms()
     assert g.ExportToIsoWkt() == expected_wkt
+
+
+###############################################################################
+
+def test_ogr_geom_copy():
+
+    g = ogr.CreateGeometryFromWkt('POINT (0 1)')
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    g.AssignSpatialReference(sr)
+
+    g2 = copy.copy(g)
+    assert g2.ExportToWkt() == g.ExportToWkt()
+    assert g2.GetSpatialReference().IsSame(sr)
+    sr.ImportFromEPSG(32631)
+    assert g2.GetSpatialReference().IsSame(sr)
+
+
+###############################################################################
+
+def test_ogr_geom_deepcopy():
+
+    g = ogr.CreateGeometryFromWkt('POINT (0 1)')
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    g.AssignSpatialReference(sr)
+
+    g2 = copy.deepcopy(g)
+    assert g2.ExportToWkt() == g.ExportToWkt()
+    assert g2.GetSpatialReference().IsSame(sr)
+    sr.ImportFromEPSG(32631)
+    assert not g2.GetSpatialReference().IsSame(sr)

@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose: Interface representing access to a PCIDSK ADS40 Segment
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,14 +32,14 @@
 
 namespace PCIDSK {
 //! Interface to PCIDSK RPC segment.
-    class PCIDSKADS40Segment 
+    class PCIDSKADS40Segment
     {
     public:
         // Get path
         virtual std::string GetPath(void) const = 0;
         // Set path
         virtual void SetPath(const std::string& oPath) = 0;
-        
+
         // Virtual destructor
         virtual ~PCIDSKADS40Segment() {}
     };

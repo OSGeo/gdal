@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Declaration of the CPCIDSKBitmap class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2010
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,7 +39,7 @@
 namespace PCIDSK
 {
     class PCIDSKFile;
-    
+
     /************************************************************************/
     /*                            CPCIDSKGeoref                             */
     /************************************************************************/
@@ -85,17 +85,17 @@ namespace PCIDSK
         virtual void PushHistory(const std::string &app,
                                  const std::string &message) override;
 
-        virtual void GetChanInfo( std::string &filename, uint64 &image_offset, 
-                                  uint64 &pixel_offset, uint64 &line_offset, 
+        virtual void GetChanInfo( std::string &filename, uint64 &image_offset,
+                                  uint64 &pixel_offset, uint64 &line_offset,
                                   bool &little_endian ) const override;
-        virtual void SetChanInfo( std::string filename, uint64 image_offset, 
-                                  uint64 pixel_offset, uint64 line_offset, 
+        virtual void SetChanInfo( std::string filename, uint64 image_offset,
+                                  uint64 pixel_offset, uint64 line_offset,
                                   bool little_endian ) override;
         virtual void GetEChanInfo( std::string &filename, int &echannel,
-                                   int &exoff, int &eyoff, 
+                                   int &exoff, int &eyoff,
                                    int &exsize, int &eysize ) const override;
         virtual void SetEChanInfo( std::string filename, int echannel,
-                                   int exoff, int eyoff, 
+                                   int exoff, int eyoff,
                                    int exsize, int eysize ) override;
 
     private:

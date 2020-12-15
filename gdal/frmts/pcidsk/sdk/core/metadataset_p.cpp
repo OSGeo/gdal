@@ -4,10 +4,10 @@
  *           for a set of metadata, and used by the file, channel and segment
  *           classes to manage metadata for themselves.  It is not public
  *           to SDK users.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),

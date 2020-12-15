@@ -40,7 +40,7 @@ configuration option to parallelize the processing. The value to specify is
 the number of worker threads, or ``ALL_CPUS`` to use all the cores/CPUs of the
 computer.
 
-.. program:: gdaladdo
+.. program:: gdal_grid
 
 .. include:: options/ot.rst
 
@@ -71,7 +71,7 @@ computer.
     Override the projection for the
     output file.  The <i>srs_def> may be any of the usual GDAL/OGR forms,
     complete WKT, PROJ.4, EPSG:n or a file containing the WKT.
-    No reprojection is done. 
+    No reprojection is done.
 
 .. option:: -zfield <field_name>
 
@@ -138,7 +138,7 @@ computer.
 .. option:: -where <expression>
 
     An optional SQL WHERE style query expression to be applied to select features
-    to process from the input layer(s). 
+    to process from the input layer(s).
 
 .. option:: -sql <select_statement>
 

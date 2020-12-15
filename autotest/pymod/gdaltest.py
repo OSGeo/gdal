@@ -1343,6 +1343,21 @@ def is_travis_branch(name):
             return True
     return False
 
+
+###############################################################################
+# Return True if we run under CI
+
+def is_ci():
+    return 'CI' in os.environ
+
+
+###############################################################################
+# Return True if we run under Github Workflow 'MacOS build'
+
+
+def is_github_workflow_mac():
+    return 'GITHUB_WORKFLOW' in os.environ and os.environ['GITHUB_WORKFLOW'] == 'MacOS build'
+
 ###############################################################################
 # find_lib_linux()
 # Parse /proc/self/maps to find an occurrence of libXXXXX.so.*

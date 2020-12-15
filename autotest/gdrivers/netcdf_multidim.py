@@ -620,8 +620,10 @@ def test_netcdf_multidim_create_nc3(netcdf_setup):  # noqa
         assert struct.unpack('d', var.Read()) == (1.25125,)
         assert var.SetScale(2.5) == gdal.CE_None
         assert var.GetScale() == 2.5
+        assert var.GetScaleStorageType() == gdal.GDT_Float64
         assert var.SetOffset(1.5) == gdal.CE_None
         assert var.GetOffset() == 1.5
+        assert var.GetOffsetStorageType() == gdal.GDT_Float64
 
         var.SetUnit("foo")
         var = rg.OpenMDArray('my_var_no_dim')
@@ -754,12 +756,14 @@ def test_netcdf_multidim_create_nc4(netcdf_setup):  # noqa
         assert var.GetNoDataValueAsRaw() is None
         assert var.Write(struct.pack('d', 1.25125)) == gdal.CE_None
         assert struct.unpack('d', var.Read()) == (1.25125,)
-        assert var.SetScale(2.5) == gdal.CE_None
+        assert var.SetScale(2.5, gdal.GDT_Float32) == gdal.CE_None
         assert var.GetScale() == 2.5
+        assert var.GetScaleStorageType() == gdal.GDT_Float32
         assert var.SetScale(-2.5) == gdal.CE_None
         assert var.GetScale() == -2.5
-        assert var.SetOffset(1.5) == gdal.CE_None
+        assert var.SetOffset(1.5, gdal.GDT_Float32) == gdal.CE_None
         assert var.GetOffset() == 1.5
+        assert var.GetOffsetStorageType() == gdal.GDT_Float32
         assert var.SetOffset(-1.5) == gdal.CE_None
         assert var.GetOffset() == -1.5
 
@@ -1524,6 +1528,28 @@ def test_netcdf_multidim_createcopy_array_options(netcdf_setup):  # noqa
         rg = ds.GetRootGroup()
         var = rg.OpenMDArray('Band1')
         assert var.GetBlockSize() == [1, 2]
+        assert var.GetStructuralInfo() == { 'COMPRESS': 'DEFLATE' }
+
+    check()
+
+    gdal.Unlink(tmpfilename)
+
+
+def test_netcdf_multidim_createcopy_array_options_if_name_fullname(netcdf_setup):  # noqa
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip()
+
+    src_ds = gdal.OpenEx('data/netcdf/byte_no_cf.nc', gdal.OF_MULTIDIM_RASTER)
+    tmpfilename = 'tmp/test_netcdf_multidim_createcopy_array_options_if_name_fullname.nc'
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('netCDF').CreateCopy(tmpfilename, src_ds,
+            options=['ARRAY:IF(NAME=/Band1):COMPRESS=DEFLATE'])
+
+    def check():
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray('Band1')
         assert var.GetStructuralInfo() == { 'COMPRESS': 'DEFLATE' }
 
     check()

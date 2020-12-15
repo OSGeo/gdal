@@ -290,7 +290,7 @@ def find_diff(golden_file, new_file, check_sds=False):
 
 def Usage():
     print('Usage: gdalcompare.py [-sds] <golden_file> <new_file>')
-    sys.exit(1)
+    return 1
 
 #######################################################
 #
@@ -302,10 +302,10 @@ def main(argv):
     # Default GDAL argument parsing.
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
-        sys.exit(0)
+        return 0
 
     if len(argv) == 1:
-        Usage()
+        return Usage()
 
     # Script argument parsing.
     golden_file = None
@@ -326,7 +326,7 @@ def main(argv):
 
         else:
             print('Unrecognised argument: ' + argv[i])
-            Usage()
+            return Usage()
 
         i = i + 1
         # next argument

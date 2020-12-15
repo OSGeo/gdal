@@ -47,6 +47,18 @@ The open options available are :
 -  **FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN**\ =number. Number of
    features to retrieve to establish feature definition. -1 = unlimited.
    Defaults to 100.
+-  **SINGLE_QUERY_TIMEOUT**\ =number. (GDAL >= 3.2.1)
+   Timeout in second (as floating point number) for requests such as
+   GetFeatureCount() or GetExtent(). Defaults to unlimited.
+-  **SINGLE_QUERY_TERMINATE_AFTER**\ =number. (GDAL >= 3.2.1)
+   Maximum number of documents to collect for requests such as
+   GetFeatureCount() or GetExtent(). Defaults to unlimited.
+-  **FEATURE_ITERATION_TIMEOUT**\ =number. (GDAL >= 3.2.1)
+   Timeout in second (as floating point number) for feature iteration,
+   starting from the time of ResetReading(). Defaults to unlimited.
+-  **FEATURE_ITERATION_TERMINATE_AFTER**\ =number. (GDAL >= 3.2.1)
+   Maximum number of documents to collect for feature iteration.
+   Defaults to unlimited.
 -  **JSON_FIELD**\ =YES/NO. Whether to include a field called "_json"
    with the full document as JSON. Defaults to NO.
 -  **FLATTEN_NESTED_ATTRIBUTE**\ =YES/NO. Whether to recursively explore
@@ -318,6 +330,9 @@ options:
    mapping type, compatible of all geometry types. When using AUTO, for
    geometry fields of type Point, a geo_point is used. In other cases,
    geo_shape is used.
+-  **GEO_SHAPE_ENCODING**\ =GeoJSON/WKT. (GDAL >= 3.2.1)
+   Encoding for geo_shape geometry fields. Defaults to GeoJSON. WKT is possible
+   since Elasticsearch 6.2
 -  **GEOM_PRECISION**\ ={value}{unit}'. Desired geometry precision.
    Number followed by unit. For example 1m. For a geo_point geometry
    field, this causes a compressed geometry format to be used. This

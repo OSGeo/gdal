@@ -1,4 +1,4 @@
-.. configoptions:
+.. _configoptions:
 
 ================================================================================
 Configuration options

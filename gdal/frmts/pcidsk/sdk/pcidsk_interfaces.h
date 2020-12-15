@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Declaration of hookable interfaces for the library
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,7 +40,7 @@ namespace PCIDSK
 
     //! Collection of PCIDSK hookable interfaces.
 
-    class PCIDSK_DLL PCIDSKInterfaces 
+    class PCIDSK_DLL PCIDSKInterfaces
     {
       public:
         PCIDSKInterfaces();

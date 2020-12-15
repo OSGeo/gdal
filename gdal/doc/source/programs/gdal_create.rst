@@ -28,6 +28,7 @@ Synopsis
        [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]
        [-mo "META-TAG=VALUE"]* [-q]
        [-co "NAME=VALUE"]*
+       [-if input_dataset]
        out_dataset
 
 Description
@@ -82,6 +83,14 @@ like creating a PDF file from a XML composition file.
 
     Suppress progress monitor and other non-error output.
 
+.. option:: -if <input_dataset>
+
+    .. versionadded:: 3.3
+
+    Name of GDAL input dataset that serves as a template for default values of
+    options -outsize, -bands, -ot, -a_srs, -a_ullr and -a_nodata.
+    Note that the pixel values will *not* be copied.
+
 .. option:: <out_dataset>
 
     The destination file name.
@@ -102,4 +111,11 @@ Examples
 
         gdal_create -co COMPOSITION_FILE=composition.xml out.pdf
 
+
+
+- Initialize a blank GeoTIFF file from an input one:
+
+    ::
+
+        gdal_create -if prototype.tif output.tif
 

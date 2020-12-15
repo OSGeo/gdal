@@ -1153,6 +1153,18 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
         if (newBlockX > 0 && newBlockY > 0) {
             blockX = newBlockX;
             blockY = newBlockY;
+            try
+            {
+                CPL_IGNORE_RET_VAL(
+                    CPLSM(blockX) * CPLSM(blockY) * CPLSM(nDTSize) * CPLSM(nBands));
+            }
+            catch( ... )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Too big values in PAGESIZE");
+                CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
+                return nullptr;
+            }
         }
         else {
             CPLError(CE_Failure, CPLE_OpenFailed,

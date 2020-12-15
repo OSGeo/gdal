@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Declaration of the APMODEL segment.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2010
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,7 +41,7 @@ namespace PCIDSK {
     public:
         CPCIDSKAPModelSegment(PCIDSKFile *file, int segment,
             const char *segment_pointer);
-            
+
         ~CPCIDSKAPModelSegment();
 
         unsigned int GetWidth(void) const override;
@@ -50,20 +50,20 @@ namespace PCIDSK {
 
         // Interior Orientation Parameters
         PCIDSKAPModelIOParams const& GetInteriorOrientationParams(void) const override;
-        
+
         // Exterior Orientation Parameters
         PCIDSKAPModelEOParams const& GetExteriorOrientationParams(void) const override;
 
         // ProjInfo
         PCIDSKAPModelMiscParams const& GetAdditionalParams(void) const override;
-        
+
         std::string GetMapUnitsString(void) const override;
         std::string GetUTMUnitsString(void) const override;
         std::vector<double> const& GetProjParams(void) const override;
 
     private:
         void UpdateFromDisk();
-        
+
         PCIDSKBuffer buf;
         std::string map_units_, utm_units_;
         std::vector<double> proj_parms_;

@@ -2289,7 +2289,7 @@ CPLErr NITFDataset::_SetProjection(const char* _pszProjection)
 void NITFDataset::InitializeNITFDESMetadata()
 {
     static const char   * const pszDESMetadataDomain       = "NITF_DES_METADATA";
-    static const char   * const pszDESsDomain              = "NITF_DES";
+    static const char   * const pszDESsDomain              = "xml:DES";
     static const char   * const pszMDXmlDataContentDESDATA = "NITF_DES_XML_DATA_CONTENT_DESDATA";
     static const char   * const pszXmlDataContent          = "XML_DATA_CONTENT";
     constexpr int     idxXmlDataContentDESDATA   = 973;
@@ -2349,93 +2349,6 @@ void NITFDataset::InitializeNITFDESMetadata()
         pachNITFDES   = NULL;
         ppszDESsList += 1;
     }
-}
-
-/************************************************************************/
-/*                       InitializeNITFDESs()                           */
-/************************************************************************/
-
-void NITFDataset::InitializeNITFDESs()
-{
-    static const char * const pszDESsDomain = "NITF_DES";
-
-    char **ppszDESsList = oSpecialMD.GetMetadata( pszDESsDomain );
-
-    if( ppszDESsList != NULL ) return;
-
-/* -------------------------------------------------------------------- */
-/*  Go through all the segments and process all DES segments.           */
-/* -------------------------------------------------------------------- */
-
-    char               *pachDESData  = NULL;
-    int                 nDESDataSize = 0;
-    std::string         encodedDESData("");
-    CPLStringList       aosList;
-
-    for( int iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
-    {
-        NITFSegmentInfo *psSegInfo = psFile->pasSegmentInfo + iSegment;
-
-        if( EQUAL(psSegInfo->szSegmentType,"DE") )
-        {
-            nDESDataSize = psSegInfo->nSegmentHeaderSize + psSegInfo->nSegmentSize;
-            pachDESData  = reinterpret_cast<char *>(
-                VSI_MALLOC_VERBOSE( nDESDataSize + 1 ) );
-
-            if (pachDESData == NULL)
-            {
-                return;
-            }
-
-            if( VSIFSeekL( psFile->fp, psSegInfo->nSegmentHeaderStart,
-                          SEEK_SET ) != 0
-                || static_cast<int>( VSIFReadL( pachDESData, 1, nDESDataSize,
-                                                psFile->fp ) ) != nDESDataSize )
-            {
-                CPLError( CE_Failure, CPLE_FileIO,
-                          "Failed to read %d byte DES subheader from " CPL_FRMT_GUIB ".",
-                          nDESDataSize,
-                          psSegInfo->nSegmentHeaderStart );
-                CPLFree( pachDESData );
-                return;
-            }
-
-            pachDESData[nDESDataSize] = '\0';
-
-/* -------------------------------------------------------------------- */
-/*          Accumulate all the DES segments.                            */
-/* -------------------------------------------------------------------- */
-
-            char* pszBase64 = CPLBase64Encode( nDESDataSize, (const GByte *)pachDESData );
-            encodedDESData = pszBase64;
-            CPLFree(pszBase64);
-
-            CPLFree( pachDESData );
-            pachDESData = NULL;
-
-            if( encodedDESData.empty() )
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "Failed to encode DES subheader data!");
-                return;
-            }
-
-            // The length of the DES subheader data plus a space is append to the beginning of the encoded
-            // string so that we can recover the actual length of the image subheader when we decode it.
-
-            char buffer[20];
-
-            snprintf(buffer, sizeof(buffer), "%d", nDESDataSize);
-
-            std::string desSubheaderStr(buffer);
-            desSubheaderStr.append(" ");
-            desSubheaderStr.append(encodedDESData);
-
-            aosList.AddString(desSubheaderStr.c_str() );
-        }
-    }
-
-    if (!aosList.empty())
-        oSpecialMD.SetMetadata( aosList.List(), pszDESsDomain );
 }
 
 /************************************************************************/
@@ -2549,6 +2462,46 @@ void NITFDataset::InitializeNITFTREs()
     }
 }
 #endif
+
+/************************************************************************/
+/*                       InitializeNITFDESs()                           */
+/************************************************************************/
+
+void NITFDataset::InitializeNITFDESs()
+{
+    char** papszDESsList = oSpecialMD.GetMetadata( "xml:DES" );
+
+    if( papszDESsList != nullptr )
+    {
+        return;
+    }
+
+    CPLXMLNode* psDesListNode = CPLCreateXMLNode(nullptr, CXT_Element, "des_list");
+
+    for( int iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
+    {
+        NITFSegmentInfo *psSegInfo = psFile->pasSegmentInfo + iSegment;
+
+        if (EQUAL(psSegInfo->szSegmentType, "DE"))
+        {
+            CPLXMLNode* psDesNode = NITFDESGetXml(psFile, iSegment);
+
+            if (psDesNode != nullptr)
+            {
+                CPLAddXMLChild(psDesListNode, psDesNode);
+            }
+        }
+    }
+
+    if (psDesListNode->psChild != nullptr)
+    {
+        char* pszXML = CPLSerializeXMLTree(psDesListNode);
+        char* apszMD[2] = { pszXML, nullptr };
+        oSpecialMD.SetMetadata( apszMD, "xml:DES" );
+        CPLFree(pszXML);
+    }
+    CPLDestroyXMLNode(psDesListNode);
+}
 
 /************************************************************************/
 /*                       InitializeNITFMetadata()                        */
@@ -3045,7 +2998,7 @@ char **NITFDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "NITF_METADATA", "NITF_DES", "NITF_DES_METADATA",
+                                   "NITF_METADATA", "xml:DES", "NITF_DES_METADATA",
                                    "NITF_FILE_HEADER_TRES", "NITF_IMAGE_SEGMENT_TRES",
                                    "CGM", "TEXT", "TRE", "xml:TRE", "OVERVIEWS", nullptr);
 }
@@ -3065,8 +3018,7 @@ char **NITFDataset::GetMetadata( const char * pszDomain )
         return oSpecialMD.GetMetadata( pszDomain );
     }
 
-#ifdef ESRI_BUILD
-    if( pszDomain != NULL && EQUAL(pszDomain,"NITF_DES") )
+    if( pszDomain != nullptr && EQUAL(pszDomain,"xml:DES") )
     {
         // InitializeNITFDESs retrieves all the DES file headers (NOTE: The returned strings are base64-encoded).
 
@@ -3074,6 +3026,7 @@ char **NITFDataset::GetMetadata( const char * pszDomain )
         return oSpecialMD.GetMetadata( pszDomain );
     }
 
+#ifdef ESRI_BUILD
     if( pszDomain != NULL && EQUAL(pszDomain,"NITF_DES_METADATA") )
     {
         // InitializeNITFDESs retrieves all the DES file headers (NOTE: The returned strings are base64-encoded).
@@ -4290,7 +4243,7 @@ NITFDataset::NITFCreateCopy(
         else if( STARTS_WITH_CI(papszSrcMD[iMD], "NITF_FHDR") )
         {
             bPreserveSrcMDAsCreationOption =
-                CSLFetchNameValue(papszOptions, "FHDR") == nullptr; 
+                CSLFetchNameValue(papszOptions, "FHDR") == nullptr;
         }
         if( bPreserveSrcMDAsCreationOption )
         {
@@ -4336,7 +4289,7 @@ NITFDataset::NITFCreateCopy(
 
         char *pszName = nullptr;
         CPLParseNameValue( papszSrcMD[iMD], &pszName );
-        if( pszName != nullptr && 
+        if( pszName != nullptr &&
             CSLPartialFindString(papszOptions, CPLSPrintf("TRE=%s", pszName)) < 0 )
         {
             papszFullOptions = CSLAddString( papszFullOptions, osTRE );
@@ -6139,7 +6092,8 @@ void GDALRegister_NITF()
     osCreationOptions +=
 "   <Option name='TRE' type='string' description='Under the format TRE=tre-name,tre-contents'/>"
 "   <Option name='FILE_TRE' type='string' description='Under the format FILE_TRE=tre-name,tre-contents'/>"
-"   <Option name='BLOCKA_BLOCK_COUNT' type='int'/>";
+"   <Option name='BLOCKA_BLOCK_COUNT' type='int'/>"
+"   <Option name='DES' type='string' description='Under the format DES=des-name=des-contents'/>";
 
     for( unsigned int i=0; apszFieldsBLOCKA[i] != nullptr; i+=3 )
     {

@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of a stdio based IO layer.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -88,7 +88,7 @@ StdioIOInterface::Open( std::string filename, std::string access ) const
     FILE *fp = fopen( filename.c_str(), adjusted_access.c_str() );
 
     if( fp == nullptr )
-        ThrowPCIDSKException( "Failed to open %s: %s", 
+        ThrowPCIDSKException( "Failed to open %s: %s",
                               filename.c_str(), LastError() );
 
     FileInfo *fi = new FileInfo();
@@ -103,7 +103,7 @@ StdioIOInterface::Open( std::string filename, std::string access ) const
 /*                                Seek()                                */
 /************************************************************************/
 
-uint64 
+uint64
 StdioIOInterface::Seek( void *io_handle, uint64 offset, int whence ) const
 
 {
@@ -117,8 +117,8 @@ StdioIOInterface::Seek( void *io_handle, uint64 offset, int whence ) const
     uint64 result = fseek( fi->fp, offset, whence );
 
     if( result == (uint64) -1 )
-        ThrowPCIDSKException( "Seek(%d,%d): %s", 
-                              (int) offset, whence, 
+        ThrowPCIDSKException( "Seek(%d,%d): %s",
+                              (int) offset, whence,
                               LastError() );
 
     if( whence == SEEK_SET )
@@ -149,7 +149,7 @@ uint64 StdioIOInterface::Tell( void *io_handle ) const
 /*                                Read()                                */
 /************************************************************************/
 
-uint64 StdioIOInterface::Read( void *buffer, uint64 size, uint64 nmemb, 
+uint64 StdioIOInterface::Read( void *buffer, uint64 size, uint64 nmemb,
                                void *io_handle ) const
 
 {
@@ -173,7 +173,7 @@ uint64 StdioIOInterface::Read( void *buffer, uint64 size, uint64 nmemb,
     uint64 result = fread( buffer, size, nmemb, fi->fp );
 
     if( errno != 0 && result == 0 && nmemb != 0 )
-        ThrowPCIDSKException( "Read(%d): %s", 
+        ThrowPCIDSKException( "Read(%d): %s",
                               (int) size * nmemb,
                               LastError() );
 
@@ -187,7 +187,7 @@ uint64 StdioIOInterface::Read( void *buffer, uint64 size, uint64 nmemb,
 /*                               Write()                                */
 /************************************************************************/
 
-uint64 StdioIOInterface::Write( const void *buffer, uint64 size, uint64 nmemb, 
+uint64 StdioIOInterface::Write( const void *buffer, uint64 size, uint64 nmemb,
                                 void *io_handle ) const
 
 {
@@ -198,7 +198,7 @@ uint64 StdioIOInterface::Write( const void *buffer, uint64 size, uint64 nmemb,
     uint64 result = fwrite( buffer, size, nmemb, fi->fp );
 
     if( errno != 0 && result == 0 && nmemb != 0 )
-        ThrowPCIDSKException( "Write(%d): %s", 
+        ThrowPCIDSKException( "Write(%d): %s",
                               (int) size * nmemb,
                               LastError() );
 

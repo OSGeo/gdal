@@ -258,6 +258,7 @@ typedef void OGRFieldDefnShadow;
 typedef struct OGRStyleTableHS OGRStyleTableShadow;
 typedef struct OGRGeomFieldDefnHS OGRGeomFieldDefnShadow;
 typedef struct OGRGeomTransformer OGRGeomTransformerShadow;
+typedef struct _OGRPreparedGeometry OGRPreparedGeometryShadow;
 %}
 
 #ifdef SWIGJAVA
@@ -3263,10 +3264,43 @@ public:
   {
     return (OGRGeometryShadow*)OGR_GeomTransformer_Transform(transformer, self);
   }
+
+  %newobject CreatePreparedGeometry;
+  OGRPreparedGeometryShadow* CreatePreparedGeometry()
+  {
+    return (OGRPreparedGeometryShadow*)OGRCreatePreparedGeometry(self);
+  }
 } /* %extend */
 
 }; /* class OGRGeometryShadow */
 
+
+/************************************************************************/
+/*                        OGRPreparedGeometry                           */
+/************************************************************************/
+
+%rename (PreparedGeometry) OGRPreparedGeometryShadow;
+class OGRPreparedGeometryShadow {
+  OGRPreparedGeometryShadow();
+public:
+%extend {
+
+  ~OGRPreparedGeometryShadow() {
+    OGRDestroyPreparedGeometry( self );
+  }
+
+  %apply Pointer NONNULL {const OGRGeometryShadow* otherGeom};
+  bool Intersects(const OGRGeometryShadow* otherGeom) {
+    return OGRPreparedGeometryIntersects(self, (OGRGeometryH)otherGeom);
+  }
+
+  bool Contains(const OGRGeometryShadow* otherGeom) {
+    return OGRPreparedGeometryContains(self, (OGRGeometryH)otherGeom);
+  }
+
+} /* %extend */
+
+}; /* class OGRPreparedGeometryShadow */
 
 
 #ifdef SWIGPYTHON

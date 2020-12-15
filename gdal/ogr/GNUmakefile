@@ -94,6 +94,7 @@ parser:
 	sed -i.bak "s/(unsigned int) (YYX)/static_cast<unsigned int>(YYX)/" swq_parser.cpp
 	sed -i.bak "s/(char \*) YYSTACK_ALLOC (yymsg_alloc)/static_cast<char *>(YYSTACK_ALLOC (yymsg_alloc))/" swq_parser.cpp
 	sed -i.bak "s/(union yyalloc \*) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize))/static_cast<union yyalloc *>(YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize)))/" swq_parser.cpp
+	sed -i.bak "s/const char \*yyformat = YY_NULLPTR;/const char *yyformat = \"\";/" swq_parser.cpp
 	rm swq_parser.cpp.bak
 
 swq_parser.$(OBJ_EXT):   swq_parser.cpp

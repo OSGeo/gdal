@@ -51,12 +51,6 @@ try:
 except (ImportError, AttributeError):
     gdalnumeric_not_available = True
 
-if gdalnumeric_not_available:
-    pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
-script_path = test_py_scripts.get_py_script('gdal_calc')
-if script_path is None:
-    pytest.skip("gdal_calc script not found, skipping all tests", allow_module_level=True)
-
 # Usage: gdal_calc.py [-A <filename>] [--A_band] [-B...-Z filename] [other_options]
 
 
@@ -113,6 +107,13 @@ def make_temp_filename_list(test_id, test_count, is_opt=False):
 
 def test_gdal_calc_py_1():
     """ test basic copy """
+    if gdalnumeric_not_available:
+        pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
+
+    script_path = test_py_scripts.get_py_script('gdal_calc')
+    if script_path is None:
+        pytest.skip("gdal_calc script not found, skipping all tests", allow_module_level=True)
+
     infile = get_input_file()
     test_id, test_count = 1, 3
     out = make_temp_filename_list(test_id, test_count)
@@ -127,6 +128,13 @@ def test_gdal_calc_py_1():
 
 def test_gdal_calc_py_2():
     """ test simple formulas """
+    if gdalnumeric_not_available:
+        pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
+
+    script_path = test_py_scripts.get_py_script('gdal_calc')
+    if script_path is None:
+        pytest.skip("gdal_calc script not found, skipping all tests", allow_module_level=True)
+
     infile = get_input_file()
     test_id, test_count = 2, 3
     out = make_temp_filename_list(test_id, test_count)
@@ -141,6 +149,13 @@ def test_gdal_calc_py_2():
 
 def test_gdal_calc_py_3():
     """ test --allBands option (simple copy) """
+    if gdalnumeric_not_available:
+        pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
+
+    script_path = test_py_scripts.get_py_script('gdal_calc')
+    if script_path is None:
+        pytest.skip("gdal_calc script not found, skipping all tests", allow_module_level=True)
+
     infile = get_input_file()
     test_id, test_count = 3, 1
     out = make_temp_filename_list(test_id, test_count)
@@ -154,6 +169,13 @@ def test_gdal_calc_py_3():
 
 def test_gdal_calc_py_4():
     """ test --allBands option (simple calc) """
+    if gdalnumeric_not_available:
+        pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
+
+    script_path = test_py_scripts.get_py_script('gdal_calc')
+    if script_path is None:
+        pytest.skip("gdal_calc script not found, skipping all tests", allow_module_level=True)
+
     infile = get_input_file()
     test_id, test_count = 4, 3
     out = make_temp_filename_list(test_id, test_count)
@@ -176,6 +198,13 @@ def test_gdal_calc_py_4():
 
 def test_gdal_calc_py_5():
     """ test python interface, basic copy """
+    if gdalnumeric_not_available:
+        pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
+
+    script_path = test_py_scripts.get_py_script('gdal_calc')
+    if script_path is None:
+        pytest.skip("gdal_calc script not found, skipping all tests", allow_module_level=True)
+
     infile = get_input_file()
     test_id, test_count = 5, 4
     out = make_temp_filename_list(test_id, test_count)
@@ -195,6 +224,13 @@ def test_gdal_calc_py_5():
 
 def test_gdal_calc_py_6():
     """ test nodata """
+    if gdalnumeric_not_available:
+        pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
+
+    script_path = test_py_scripts.get_py_script('gdal_calc')
+    if script_path is None:
+        pytest.skip("gdal_calc script not found, skipping all tests", allow_module_level=True)
+
     test_id, test_count = 6, 2
     out = make_temp_filename_list(test_id, test_count)
 
@@ -211,6 +247,13 @@ def test_gdal_calc_py_6():
 
 def test_gdal_calc_py_7():
     """ test --optfile """
+    if gdalnumeric_not_available:
+        pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
+
+    script_path = test_py_scripts.get_py_script('gdal_calc')
+    if script_path is None:
+        pytest.skip("gdal_calc script not found, skipping all tests", allow_module_level=True)
+
     infile = get_input_file()
     test_id, test_count = 7, 4
     out = make_temp_filename_list(test_id, test_count)
@@ -243,6 +286,13 @@ def test_gdal_calc_py_7():
 
 def test_gdal_calc_py_8():
     """ test multiple calcs """
+    if gdalnumeric_not_available:
+        pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
+
+    script_path = test_py_scripts.get_py_script('gdal_calc')
+    if script_path is None:
+        pytest.skip("gdal_calc script not found, skipping all tests", allow_module_level=True)
+
     infile = get_input_file()
     test_id, test_count = 8, 1
     out = make_temp_filename_list(test_id, test_count)
@@ -282,6 +332,14 @@ def test_gdal_calc_py_9():
     * single alpha for multiple datasets
     * extent = 'fail'
     """
+
+    if gdalnumeric_not_available:
+        pytest.skip("gdalnumeric is not available, skipping all tests", allow_module_level=True)
+
+    script_path = test_py_scripts.get_py_script('gdal_calc')
+    if script_path is None:
+        pytest.skip("gdal_calc script not found, skipping all tests", allow_module_level=True)
+
     infile = get_input_file()
     test_id, test_count = 9, 9
     out = make_temp_filename_list(test_id, test_count)
@@ -306,8 +364,14 @@ def test_gdal_calc_py_9():
         kwargs = copy(common_kwargs)
         kwargs.update(inputs0)
         ds = gdal_calc.Calc(calc='a', outfile=outfile, **kwargs)
-        input_file = ds if return_ds else outfile
+        if return_ds:
+            input_file = ds
+        else:
+            # the dataset must be closed if we are to read it again
+            del ds
+            input_file = outfile
         inputs.append(input_file)
+
         check_file(input_file, checksums[i], i+1)
 
     inputs1 = dict()

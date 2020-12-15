@@ -231,17 +231,20 @@ static int SetupUncompressedBuffer(TIFF* tif, LERCState* sp,
         sp->uncompressed_alloc = new_alloc;
     }
 
-    if( td->td_planarconfig == PLANARCONFIG_CONTIG &&
-        td->td_extrasamples > 0 &&
-        td->td_sampleinfo[td->td_extrasamples-1] == EXTRASAMPLE_UNASSALPHA &&
-        GetLercDataType(tif) == 1 )
+    if( (td->td_planarconfig == PLANARCONFIG_CONTIG &&
+         td->td_extrasamples > 0 &&
+         td->td_sampleinfo[td->td_extrasamples-1] == EXTRASAMPLE_UNASSALPHA &&
+         GetLercDataType(tif) == 1 ) ||
+        (td->td_sampleformat == SAMPLEFORMAT_IEEEFP &&
+         (td->td_planarconfig == PLANARCONFIG_SEPARATE ||
+         td->td_samplesperpixel == 1) &&
+         (td->td_bitspersample == 32 || td->td_bitspersample == 64 )) )
     {
         unsigned int mask_size = sp->segment_width * sp->segment_height;
         if( sp->mask_size < mask_size )
         {
-            _TIFFfree(sp->mask_buffer);
-            sp->mask_buffer = _TIFFmalloc(mask_size);
-            if( !sp->mask_buffer )
+            void* mask_buffer = _TIFFrealloc(sp->mask_buffer, mask_size);
+            if( mask_buffer == NULL )
             {
                 TIFFErrorExt(tif->tif_clientdata, module,
                                 "Cannot allocate buffer");
@@ -251,6 +254,7 @@ static int SetupUncompressedBuffer(TIFF* tif, LERCState* sp,
                 sp->uncompressed_alloc = 0;
                 return 0;
             }
+            sp->mask_buffer = (uint8*)mask_buffer;
             sp->mask_size = mask_size;
         }
     }
@@ -421,6 +425,13 @@ LERCPreDecode(TIFF* tif, uint16 s)
             use_mask = 1;
             nomask_bands --;
         }
+        else if( td->td_sampleformat == SAMPLEFORMAT_IEEEFP &&
+                 (td->td_planarconfig == PLANARCONFIG_SEPARATE ||
+                  td->td_samplesperpixel == 1) &&
+                 (td->td_bitspersample == 32 || td->td_bitspersample == 64) )
+        {
+            use_mask = 1;
+        }
 
         ndims = td->td_planarconfig == PLANARCONFIG_CONTIG ?
                                                 nomask_bands : 1;
@@ -495,7 +506,7 @@ LERCPreDecode(TIFF* tif, uint16 s)
         }
 
         /* Interleave alpha mask with other samples. */
-        if( use_mask )
+        if( use_mask && GetLercDataType(tif) == 1 )
         {
             unsigned src_stride =
                 (td->td_samplesperpixel - 1) * (td->td_bitspersample / 8);
@@ -523,6 +534,36 @@ LERCPreDecode(TIFF* tif, uint16 s)
                 memmove( sp->uncompressed_buffer + i * dst_stride,
                         sp->uncompressed_buffer + i * src_stride,
                         src_stride );
+            }
+        }
+        else if( use_mask && td->td_sampleformat == SAMPLEFORMAT_IEEEFP )
+        {
+            const unsigned nb_pixels = sp->segment_width * sp->segment_height;
+            unsigned i;
+#if HOST_BIGENDIAN
+            const unsigned char nan_bytes[] = {  0x7f, 0xc0, 0, 0 };
+#else
+            const unsigned char nan_bytes[] = {  0, 0, 0xc0, 0x7f };
+#endif
+            float nan_float32;
+            memcpy(&nan_float32, nan_bytes, 4);
+
+            if( td->td_bitspersample == 32 )
+            {
+                for( i = 0; i < nb_pixels; i++ )
+                {
+                    if( sp->mask_buffer[i] == 0 )
+                        ((float*)sp->uncompressed_buffer)[i] = nan_float32;
+                }
+            }
+            else
+            {
+                const double nan_float64 = nan_float32;
+                for( i = 0; i < nb_pixels; i++ )
+                {
+                    if( sp->mask_buffer[i] == 0 )
+                        ((double*)sp->uncompressed_buffer)[i] = nan_float64;
+                }
             }
         }
 
@@ -660,12 +701,12 @@ LERCPostEncode(TIFF* tif)
             td->td_sampleinfo[td->td_extrasamples-1] == EXTRASAMPLE_UNASSALPHA &&
             GetLercDataType(tif) == 1 )
         {
-            unsigned dst_stride = (td->td_samplesperpixel - 1) *
+            const unsigned dst_stride = (td->td_samplesperpixel - 1) *
                                             (td->td_bitspersample / 8);
-            unsigned src_stride = td->td_samplesperpixel *
+            const unsigned src_stride = td->td_samplesperpixel *
                                             (td->td_bitspersample / 8);
             unsigned i = 0;
-            unsigned nb_pixels = sp->segment_width * sp->segment_height;
+            const unsigned nb_pixels = sp->segment_width * sp->segment_height;
 
             use_mask = 1;
             for( i = 0 ; i < nb_pixels; i++)
@@ -701,6 +742,60 @@ LERCPostEncode(TIFF* tif)
                 }
             }
         }
+        else if( td->td_sampleformat == SAMPLEFORMAT_IEEEFP &&
+                 (td->td_planarconfig == PLANARCONFIG_SEPARATE ||
+                  dst_nbands == 1) &&
+                 (td->td_bitspersample == 32 || td->td_bitspersample == 64 ) )
+        {
+            /* Check for NaN values */
+            unsigned i;
+            const unsigned nb_pixels = sp->segment_width * sp->segment_height;
+            if( td->td_bitspersample == 32 )
+            {
+                for( i = 0; i < nb_pixels; i++ )
+                {
+                    const float val = ((float*)sp->uncompressed_buffer)[i];
+                    if( val != val )
+                    {
+                        use_mask = 1;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                for( i = 0; i < nb_pixels; i++ )
+                {
+                    const double val = ((double*)sp->uncompressed_buffer)[i];
+                    if( val != val )
+                    {
+                        use_mask = 1;
+                        break;
+                    }
+                }
+            }
+
+            if( use_mask )
+            {
+                if( td->td_bitspersample == 32 )
+                {
+                    for( i = 0; i < nb_pixels; i++ )
+                    {
+                        const float val = ((float*)sp->uncompressed_buffer)[i];
+                        sp->mask_buffer[i] = ( val == val ) ? 255 : 0;
+                    }
+                }
+                else
+                {
+                    for( i = 0; i < nb_pixels; i++ )
+                    {
+                        const double val = ((double*)sp->uncompressed_buffer)[i];
+                        sp->mask_buffer[i] = ( val == val ) ? 255 : 0;
+                    }
+                }
+            }
+        }
+
 
 #if 0
         lerc_ret = lerc_computeCompressedSize(

@@ -362,6 +362,27 @@ def test_mrf_lerc_with_huffman():
     gdal.Unlink('/vsimem/out.lrc')
     gdal.Unlink('/vsimem/out.til')
 
+def test_raw_lerc():
+    if 'LERC' not in gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST'):
+        pytest.skip()
+
+    # Defaults to LERC2
+    for opt in 'OPTIONS=V1:1', None:
+        co = ['COMPRESS=LERC']
+        if opt:
+            co.append(opt)
+        gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format='MRF',
+                        creationOptions = co)
+        ds = gdal.Open('/vsimem/out.lrc')
+        with gdaltest.error_handler():
+            cs = ds.GetRasterBand(1).Checksum()
+        expected_cs = 4819
+        assert cs == expected_cs
+        ds = None
+        gdal.Unlink('/vsimem/out.mrf')
+        gdal.Unlink('/vsimem/out.mrf.aux.xml')
+        gdal.Unlink('/vsimem/out.idx')
+        gdal.Unlink('/vsimem/out.lrc')
 
 def test_mrf_cached_source():
 

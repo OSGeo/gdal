@@ -32,14 +32,14 @@ init:
   - ps: |
       if($env:platform -eq "x86")
       {
-        $env:PATH="c:\Python27;c:\Python27\Scripts;$env:PATH"
+        $env:PATH="c:\Python36;c:\Python36\Scripts;$env:PATH"
         $env:ARCHITECTURE="x86"
         $env:WIN64_ARG=""
         $env:CMAKE_ARCHITECTURE="Win32"
       }
       else
       {
-        $env:PATH="c:\Python27-x64;c:\Python27-x64\Scripts;$env:PATH"
+        $env:PATH="c:\Python36-x64;c:\Python36-x64\Scripts;$env:PATH"
         $env:ARCHITECTURE="amd64"
         $env:WIN64_ARG="WIN64=YES"
         $env:CMAKE_ARCHITECTURE="x64"
@@ -67,10 +67,11 @@ init:
 
 install:
   - if "%VS_VER%" == "2019" CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\VsDevCmd.bat" -arch=%ARCHITECTURE%
+  - python --version
   - git clone https://github.com/microsoft/vcpkg
   - cd vcpkg
 # Workaround https://github.com/microsoft/vcpkg/issues/11666
-#  - if "%VS_VER%" == "2015" git checkout a64dc07690bc8806e717e190f62eb58e198b599c
+  - if "%VS_VER%" == "2015" git checkout a64dc07690bc8806e717e190f62eb58e198b599c
   - bootstrap-vcpkg.bat
   - set PATH=%CD%;%PATH%
   - cd ..
@@ -80,9 +81,8 @@ install:
       Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
       Install-Module Pscx -AllowClobber
       Install-Module VSSetup -Scope CurrentUser
-      # Install SWIG and VC for Python2.7 by Choco
+      # Install SWIG by Choco
       cinst -y --no-progress --version 3.0.12 --force swig
-      cinst -y --no-progress vcpython27
       if($env:VS_VER -eq "2019")
       {
       }

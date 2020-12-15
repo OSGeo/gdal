@@ -70,7 +70,7 @@ def test_gdal2tiles_py_simple():
 
     _verify_raster_band_checksums(
         'tmp/out_gdal2tiles_smallworld/0/0/0.png',
-        expected_cs = [25314, 28114, 6148, 59026]
+        expected_cs = [31420, 32522, 16314, 17849]
     )
 
     for filename in ['googlemaps.html', 'leaflet.html', 'openlayers.html', 'tilemapresource.xml']:
@@ -97,7 +97,7 @@ def test_gdal2tiles_py_zoom_option():
 
     _verify_raster_band_checksums(
         'tmp/out_gdal2tiles_smallworld/1/0/0.png',
-        expected_cs = [8130, 10496, 65274, 63715]
+        expected_cs = [24063, 23632, 14707, 17849]
     )
 
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/doc.kml')
@@ -164,11 +164,11 @@ def test_gdal2tiles_py_xyz():
 
         _verify_raster_band_checksums(
             'tmp/out_gdal2tiles_smallworld_xyz/0/0/0.png',
-            expected_cs = [30616, 31851, 9392, 63557]
+            expected_cs = [31747, 33381, 18447, 17849]
         )
         _verify_raster_band_checksums(
             'tmp/out_gdal2tiles_smallworld_xyz/1/0/0.png',
-            expected_cs = [25095, 27337, 10068, 63699]
+            expected_cs = [15445, 16942, 13681, 17849]
         )
 
         for filename in ['googlemaps.html', 'leaflet.html', 'openlayers.html']:
@@ -521,21 +521,21 @@ def test_gdal2tiles_py_mapml():
 
     shutil.rmtree('tmp/out_gdal2tiles_mapml', ignore_errors=True)
 
-    gdal.Translate('tmp/byte_CBM.tif', '../gcore/data/byte.tif',
-                   options='-a_srs EPSG:3978 -a_ullr 0 7928380 40 7928300')
+    gdal.Translate('tmp/byte_APS.tif', '../gcore/data/byte.tif',
+                   options='-a_srs EPSG:5936 -a_ullr 0 40 40 0')
 
     test_py_scripts.run_py_script_as_external_script(
         script_path,
         'gdal2tiles',
-        '-q -p CBMTILE -w mapml -z 16-18 --url "https://foo" tmp/byte_CBM.tif tmp/out_gdal2tiles_mapml')
+        '-q -p APSTILE -w mapml -z 16-18 --url "https://foo" tmp/byte_APS.tif tmp/out_gdal2tiles_mapml')
 
     mapml = open('tmp/out_gdal2tiles_mapml/mapml.mapml', 'rb').read().decode('utf-8')
-    print(mapml)
-    assert '<extent units="CBMTILE">' in mapml
+    #print(mapml)
+    assert '<extent units="APSTILE">' in mapml
     assert '<input name="z" type="zoom" value="18" min="16" max="18" />' in mapml
-    assert '<input name="x" type="location" axis="column" units="tilematrix" min="925005" max="925007" />' in mapml
-    assert '<input name="y" type="location" axis="row" units="tilematrix" min="837614" max="837615" />' in mapml
+    assert '<input name="x" type="location" axis="column" units="tilematrix" min="122496" max="122496" />' in mapml
+    assert '<input name="y" type="location" axis="row" units="tilematrix" min="139647" max="139647" />' in mapml
     assert '<link tref="https://foo/out_gdal2tiles_mapml/{z}/{x}/{y}.png" rel="tile" />' in mapml
 
     shutil.rmtree('tmp/out_gdal2tiles_mapml', ignore_errors=True)
-    gdal.Unlink('tmp/byte_CBM.tif')
+    gdal.Unlink('tmp/byte_APS.tif')

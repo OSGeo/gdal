@@ -3497,6 +3497,9 @@ def test_tiff_read_geodetic_tiff_grid():
 
 def test_tiff_read_utf8_encoding_issue_2903():
 
+    if gdaltest.is_travis_branch('mingw_w64'):
+        pytest.skip()
+
     precomposed_utf8 = b'\xc3\xa4'.decode('utf-8')
     tmp_tif_filename = 'tmp/%s.tif' % precomposed_utf8
     tmp_tfw_filename = 'tmp/%s.tfw' % precomposed_utf8

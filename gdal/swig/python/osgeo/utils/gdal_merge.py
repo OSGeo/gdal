@@ -31,64 +31,15 @@
 # anssi.pekkarinen@fao.org
 
 import math
-import os.path
 import sys
 import time
 
 from osgeo import gdal
+from osgeo.auxiliary.base import GetOutputDriverFor
 
 progress = gdal.TermProgress_nocb
 
 __version__ = '$id$'[5:-1]
-
-
-def DoesDriverHandleExtension(drv, ext):
-    exts = drv.GetMetadataItem(gdal.DMD_EXTENSIONS)
-    return exts is not None and exts.lower().find(ext.lower()) >= 0
-
-
-def GetExtension(filename):
-    ext = os.path.splitext(filename)[1]
-    if ext.startswith('.'):
-        ext = ext[1:]
-    return ext
-
-
-def GetOutputDriversFor(filename):
-    drv_list = []
-    ext = GetExtension(filename)
-    for i in range(gdal.GetDriverCount()):
-        drv = gdal.GetDriver(i)
-        if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None or
-            drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
-           drv.GetMetadataItem(gdal.DCAP_RASTER) is not None:
-            if ext and DoesDriverHandleExtension(drv, ext):
-                drv_list.append(drv.ShortName)
-            else:
-                prefix = drv.GetMetadataItem(gdal.DMD_CONNECTION_PREFIX)
-                if prefix is not None and filename.lower().startswith(prefix.lower()):
-                    drv_list.append(drv.ShortName)
-
-    # GMT is registered before netCDF for opening reasons, but we want
-    # netCDF to be used by default for output.
-    if ext.lower() == 'nc' and not drv_list and \
-       drv_list[0].upper() == 'GMT' and drv_list[1].upper() == 'NETCDF':
-        drv_list = ['NETCDF', 'GMT']
-
-    return drv_list
-
-
-def GetOutputDriverFor(filename):
-    drv_list = GetOutputDriversFor(filename)
-    ext = GetExtension(filename)
-    if not drv_list:
-        if not ext:
-            return 'GTiff'
-        else:
-            raise Exception("Cannot guess driver for %s" % filename)
-    elif len(drv_list) > 1:
-        print("Several drivers matching %s extension. Using %s" % (ext if ext else '', drv_list[0]))
-    return drv_list[0]
 
 
 # =============================================================================
@@ -350,6 +301,7 @@ def Usage():
     print('                     [-ot datatype] [-createonly] input_files')
     print('                     [--help-general]')
     print('')
+    return 1
 
 
 def main(argv=None):
@@ -372,12 +324,11 @@ def main(argv=None):
     bTargetAlignedPixels = False
     start_time = time.time()
 
-    gdal.AllRegister()
     if argv is None:
         argv = argv
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
-        sys.exit(0)
+        return 0
 
     # Parse command line arguments.
     i = 1
@@ -411,7 +362,7 @@ def main(argv=None):
             band_type = gdal.GetDataTypeByName(argv[i])
             if band_type == gdal.GDT_Unknown:
                 print('Unknown GDAL data type: %s' % argv[i])
-                sys.exit(1)
+                return 1
 
         elif arg == '-init':
             i = i + 1
@@ -452,8 +403,7 @@ def main(argv=None):
 
         elif arg[:1] == '-':
             print('Unrecognized command option: %s' % arg)
-            Usage()
-            sys.exit(1)
+            return Usage()
 
         else:
             names.append(arg)
@@ -462,8 +412,7 @@ def main(argv=None):
 
     if not names:
         print('No input files selected.')
-        Usage()
-        sys.exit(1)
+        return Usage()
 
     if frmt is None:
         frmt = GetOutputDriverFor(out_file)
@@ -471,12 +420,12 @@ def main(argv=None):
     Driver = gdal.GetDriverByName(frmt)
     if Driver is None:
         print('Format driver %s not found, pick a supported driver.' % frmt)
-        sys.exit(1)
+        return 1
 
     DriverMD = Driver.GetMetadata()
     if 'DCAP_CREATE' not in DriverMD:
         print('Format driver %s does not support creation and piecewise writing.\nPlease select a format that does, such as GTiff (the default) or HFA (Erdas Imagine).' % frmt)
-        sys.exit(1)
+        return 1
 
     # Collect information on all the source files.
     file_infos = names_to_fileinfos(names)
@@ -531,7 +480,7 @@ def main(argv=None):
                              band_type, create_options)
         if t_fh is None:
             print('Creation failed, terminating gdal_merge.')
-            sys.exit(1)
+            return 1
 
         t_fh.SetGeoTransform(geotransform)
         t_fh.SetProjection(file_infos[0].projection)
@@ -545,7 +494,7 @@ def main(argv=None):
                 bands = bands + fi.bands
             if t_fh.RasterCount < bands:
                 print('Existing output file has less bands than the input files. You should delete it before. Terminating gdal_merge.')
-                sys.exit(1)
+                return 1
         else:
             bands = min(file_infos[0].bands, t_fh.RasterCount)
 

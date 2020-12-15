@@ -481,10 +481,10 @@ success.
  (destroyed).
 
  For more information on the SQL dialect supported internally by OGR
- review the <a href="ogr_sql.html">OGR SQL</a> document.  Some drivers (i.e.
+ review the <a href="https://gdal.org/user/ogr_sql_dialect.html">OGR SQL</a> document.  Some drivers (i.e.
  Oracle and PostGIS) pass the SQL directly through to the underlying RDBMS.
 
- Starting with OGR 1.10, the <a href="ogr_sql_sqlite.html">SQLITE dialect</a>
+ The <a href="https://gdal.org/user/sql_sqlite_dialect.html">SQLITE dialect</a>
  can also be used.
 
  @deprecated Use GDALDatasetExecuteSQL() in GDAL 2.0
@@ -494,7 +494,7 @@ success.
  @param hSpatialFilter handle to a geometry which represents a spatial filter. Can be NULL.
  @param pszDialect allows control of the statement dialect. If set to NULL, the
 OGR SQL engine will be used, except for RDBMS drivers that will use their dedicated SQL engine,
-unless OGRSQL is explicitly passed as the dialect. Starting with OGR 1.10, the SQLITE dialect
+unless OGRSQL is explicitly passed as the dialect. The SQLITE dialect
 can also be used.
 
  @return a handle to a OGRLayer containing the results of the query.
@@ -1336,7 +1336,7 @@ by the OGRSFDriverManager.
  instance "population > 1000000 and population < 5000000" where population
  is an attribute in the layer.  The query format is normally a restricted
  form of SQL  WHERE clause as described in the "WHERE" section of the
- <a href="ogr_sql.html">OGR SQL</a> tutorial.  In some cases (RDBMS
+ <a href="https://gdal.org/user/ogr_sql_dialect.html">OGR SQL</a> tutorial.  In some cases (RDBMS
  backed drivers) the native capabilities of the database may be used to
  interpret the WHERE clause in which case the capabilities will be broader
  than those of OGR SQL.

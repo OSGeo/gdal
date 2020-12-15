@@ -1,15 +1,15 @@
 /******************************************************************************
  *
- * Purpose:  Declaration of the VecSegIndex class.  
+ * Purpose:  Declaration of the VecSegIndex class.
  *
  * This class is used to manage a vector segment data block index.  There
  * will be two instances created, one for the record data (sec_record) and
  * one for the vertices (sec_vert).  This class is exclusively a private
  * helper class for VecSegHeader.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,7 +42,7 @@
 
 namespace PCIDSK
 {
-    class VecSegDataIndex 
+    class VecSegDataIndex
     {
         friend class CPCIDSKVectorSegment;
         friend class VecSegHeader;

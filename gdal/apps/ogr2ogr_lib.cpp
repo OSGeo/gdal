@@ -298,6 +298,9 @@ struct GDALVectorTranslateOptions
         in source layer */
     bool bForceNullable;
 
+    /*! If set to true, empty string values will be treated as null */
+    bool bEmptyStrAsNull;
+
     /*! If set to true, does not propagate default field values to target layer if they exist in
         source layer */
     bool bUnsetDefault;
@@ -1781,6 +1784,11 @@ static GDALDataset* GDALVectorTranslateCreateCopy(
     if( psOptions->bForceNullable )
     {
         CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-forceNullable");
+        return nullptr;
+    }
+    if( psOptions->bEmptyStrAsNull )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-emptyStrAsNull");
         return nullptr;
     }
     if( psOptions->bUnsetDefault )
@@ -4671,6 +4679,20 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                 return false;
             }
 
+            if (psOptions->bEmptyStrAsNull) {
+                for( int i=0; i < poDstFeature->GetFieldCount(); i++ )
+                {
+                    if (!poDstFeature->IsFieldSetAndNotNull(i))
+                        continue;
+                    auto fieldDef = poDstFeature->GetFieldDefnRef(i);
+                    if (fieldDef->GetType() != OGRFieldType::OFTString)
+                        continue;
+                    auto str = poDstFeature->GetFieldAsString(i);
+                    if (strcmp(str, "") == 0)
+                        poDstFeature->SetFieldNull(i);
+                }
+            }
+
             /* ... and now we can attach the stolen geometry */
             if( poStolenGeometry )
             {
@@ -5692,6 +5714,10 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
             CSLDestroy(psOptions->papszFieldMap);
             psOptions->papszFieldMap = CSLTokenizeStringComplex(papszArgv[++i], ",",
                                                       FALSE, FALSE );
+        }
+        else if( EQUAL(papszArgv[i],"-emptyStrAsNull") )
+        {
+            psOptions->bEmptyStrAsNull = true;
         }
         else if( EQUAL(papszArgv[i],"-forceNullable") )
         {

@@ -266,7 +266,7 @@ def test_gdalwarp_lib_15():
 
     assert ds.GetRasterBand(1).GetNoDataValue() == 1, 'Bad nodata value'
 
-    assert ds.GetRasterBand(1).Checksum() == 4523, 'Bad checksum'
+    assert ds.GetRasterBand(1).Checksum() in (4523, 4547) # 4547 on Mac / Conda
 
     ds = None
 
@@ -1887,7 +1887,7 @@ def test_gdalwarp_lib_to_cog_reprojection_options():
     ds = gdal.Warp(tmpfilename, '../gcore/data/byte.tif',
               options = '-f COG -co TILING_SCHEME=GoogleMapsCompatible')
     assert ds.RasterCount == 2
-    assert ds.GetRasterBand(1).Checksum() in (4187, 4300) # 4300 on Mac
+    assert ds.GetRasterBand(1).Checksum() in (4187, 4300, 4186) # 4300 on Mac, 4186 on Mac / Conda
     assert ds.GetRasterBand(2).Checksum() == 4415
     ds = None
     gdal.Unlink(tmpfilename)
@@ -1928,7 +1928,7 @@ def test_gdalwarp_lib_multiple_source_compatible_buildvrt_to_cog_reprojection_op
     ds = gdal.Warp(tmpfilename, [left_ds, right_ds],
                    options = '-f COG -co TILING_SCHEME=GoogleMapsCompatible')
     assert ds.RasterCount == 2
-    assert ds.GetRasterBand(1).Checksum() in (4187, 4300) # 4300 on Mac
+    assert ds.GetRasterBand(1).Checksum() in (4187, 4300, 4186) # 4300 on Mac, 4186 on Mac / Conda
     assert ds.GetRasterBand(2).Checksum() == 4415
     ds = None
     gdal.Unlink(tmpfilename)
@@ -1972,7 +1972,7 @@ def test_gdalwarp_lib_multiple_source_incompatible_buildvrt_to_cog_reprojection_
     ds = gdal.Warp(tmpfilename, [left_ds, right_ds],
                    options = '-f COG -co TILING_SCHEME=GoogleMapsCompatible')
     assert ds.RasterCount == 2
-    assert ds.GetRasterBand(1).Checksum() in (4207, 4315) # 4300 on Mac
+    assert ds.GetRasterBand(1).Checksum() in (4207, 4315, 4206) # 4300 on Mac, 4206 on Mac / Conda
     assert ds.GetRasterBand(2).Checksum() == 4415
     ds = None
     gdal.Unlink(tmpfilename)
@@ -2022,6 +2022,26 @@ def test_gdalwarp_lib_xscale_antimeridian():
 
     gdal.Unlink('/vsimem/src1.tif')
     gdal.Unlink('/vsimem/src2.tif')
+
+
+###############################################################################
+# Test gdalwarp preserves scale & offset of bands
+
+def test_gdalwarp_lib_scale_offset():
+
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("WGS84")
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    src_ds.SetGeoTransform([2,1,0,49,0,-1])
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.GetRasterBand(1).SetScale(1.5)
+    src_ds.GetRasterBand(1).SetOffset(2.5)
+
+    ds = gdal.Warp('', src_ds, format='MEM')
+    assert ds.GetRasterBand(1).GetScale() == 1.5
+    assert ds.GetRasterBand(1).GetOffset() == 2.5
+
 
 ###############################################################################
 # Cleanup

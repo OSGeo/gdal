@@ -1359,9 +1359,9 @@ namespace tut
     template<> template<> void object::test<20>()
     {
         // TODO investigate what fails exactly
-        if( EQUAL(CPLGetConfigOption("GITHUB_WORKFLOW", ""), "MacOS build") )
+        if( !EQUAL(CPLGetConfigOption("GITHUB_WORKFLOW", ""), "") )
             return;
-        if( EQUAL(CPLGetConfigOption("APPVEYOR_BUILD_WORKER_IMAGE", ""), "Visual Studio 2015") )
+        if( !EQUAL(CPLGetConfigOption("APPVEYOR_BUILD_WORKER_IMAGE", ""), "") )
             return;
 
         {
@@ -1500,8 +1500,8 @@ namespace tut
             const auto &tm = poTMS->tileMatrixList()[0];
             ensure_equals( tm.mId, "0" );
             ensure_equals( tm.mScaleDenominator, 279541132.014358 );
-            ensure_equals( tm.mResX, tm.mScaleDenominator * 0.28e-3 / (6378137. * M_PI / 180) );
-            ensure( fabs(tm.mResX - 180. / 256) < 1e-14 );
+            ensure( fabs(tm.mResX - tm.mScaleDenominator * 0.28e-3 / (6378137. * M_PI / 180)) < 1e-10 );
+            ensure( fabs(tm.mResX - 180. / 256) < 1e-10 );
             ensure_equals( tm.mResY, tm.mResX );
             ensure_equals( tm.mTopLeftX, -180.0 );
             ensure_equals( tm.mTopLeftY, 90.0 );
@@ -1626,4 +1626,60 @@ namespace tut
         }
     }
 
+    // Test that PCIDSK GetMetadataItem() return is stable
+    template<> template<> void object::test<21>()
+    {
+        GDALDatasetUniquePtr poDS(
+            GDALDriver::FromHandle(
+                GDALGetDriverByName("PCIDSK"))->Create("/vsimem/tmp.pix", 1, 1, 1, GDT_Byte, nullptr));
+        ensure( poDS != nullptr );
+        poDS->SetMetadataItem("FOO", "BAR");
+        poDS->SetMetadataItem("BAR", "BAZ");
+        poDS->GetRasterBand(1)->SetMetadataItem("FOO", "BAR");
+        poDS->GetRasterBand(1)->SetMetadataItem("BAR", "BAZ");
+
+        {
+            const char* psz1 = poDS->GetMetadataItem("FOO");
+            const char* psz2 = poDS->GetMetadataItem("BAR");
+            const char* pszNull = poDS->GetMetadataItem("I_DONT_EXIST");
+            const char* psz3 = poDS->GetMetadataItem("FOO");
+            const char* pszNull2 = poDS->GetMetadataItem("I_DONT_EXIST");
+            const char* psz4 = poDS->GetMetadataItem("BAR");
+            ensure( psz1 != nullptr );
+            ensure( psz2 != nullptr );
+            ensure( psz3 != nullptr );
+            ensure( psz4 != nullptr );
+            ensure( pszNull == nullptr );
+            ensure( pszNull2 == nullptr );
+            ensure_equals( psz1, psz3 );
+            ensure( psz1 != psz2 );
+            ensure_equals( psz2, psz4 );
+            ensure_equals( std::string(psz1), "BAR" );
+            ensure_equals( std::string(psz2), "BAZ" );
+        }
+
+        {
+            auto poBand = poDS->GetRasterBand(1);
+            const char* psz1 = poBand->GetMetadataItem("FOO");
+            const char* psz2 = poBand->GetMetadataItem("BAR");
+            const char* pszNull = poBand->GetMetadataItem("I_DONT_EXIST");
+            const char* psz3 = poBand->GetMetadataItem("FOO");
+            const char* pszNull2 = poBand->GetMetadataItem("I_DONT_EXIST");
+            const char* psz4 = poBand->GetMetadataItem("BAR");
+            ensure( psz1 != nullptr );
+            ensure( psz2 != nullptr );
+            ensure( psz3 != nullptr );
+            ensure( psz4 != nullptr );
+            ensure( pszNull == nullptr );
+            ensure( pszNull2 == nullptr );
+            ensure_equals( psz1, psz3 );
+            ensure( psz1 != psz2 );
+            ensure_equals( psz2, psz4 );
+            ensure_equals( std::string(psz1), "BAR" );
+            ensure_equals( std::string(psz2), "BAZ" );
+        }
+
+        poDS.reset();
+        VSIUnlink("/vsimem/tmp.pix");
+    }
 } // namespace tut

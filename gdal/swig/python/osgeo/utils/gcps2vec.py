@@ -37,7 +37,7 @@ from osgeo import osr
 
 def Usage():
     print('Usage: gcps2vec.py [-of <ogr_drivername>] [-p] <raster_file> <vector_file>')
-    sys.exit(1)
+    return 1
 
 
 def main(argv):
@@ -46,10 +46,9 @@ def main(argv):
     out_file = None
     pixel_out = 0
 
-    gdal.AllRegister()
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
-        sys.exit(0)
+        return 0
 
     # Parse command line arguments.
     i = 1
@@ -70,12 +69,12 @@ def main(argv):
             out_file = argv[i]
 
         else:
-            Usage()
+            return Usage()
 
         i = i + 1
 
     if out_file is None:
-        Usage()
+        return Usage()
 
     # ----------------------------------------------------------------------------
     # Open input file, and fetch GCPs.
@@ -83,7 +82,7 @@ def main(argv):
     ds = gdal.Open(in_file)
     if ds is None:
         print('Unable to open %s' % in_file)
-        sys.exit(1)
+        return 1
 
     gcp_srs = ds.GetGCPProjection()
     gcps = ds.GetGCPs()
@@ -92,7 +91,7 @@ def main(argv):
 
     if gcps is None or not gcps:
         print('No GCPs on file %s!' % in_file)
-        sys.exit(1)
+        return 1
 
     # ----------------------------------------------------------------------------
     # Create output file, and layer.
@@ -101,7 +100,7 @@ def main(argv):
     drv = ogr.GetDriverByName(out_format)
     if drv is None:
         print('No driver named %s available.' % out_format)
-        sys.exit(1)
+        return 1
 
     ds = drv.CreateDataSource(out_file)
 

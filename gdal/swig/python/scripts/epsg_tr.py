@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 # import osgeo.utils.epsg_tr as a convenience to use as a script
 from osgeo.utils.epsg_tr import *  # noqa

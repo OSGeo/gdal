@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Declaration of the CPCIDSK_PCT class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,12 +38,12 @@
 namespace PCIDSK
 {
     class PCIDSKFile;
-    
+
     /************************************************************************/
     /*                            CPCIDSK_PCT                               */
     /************************************************************************/
 
-    class CPCIDSK_PCT : virtual public CPCIDSKSegment, 
+    class CPCIDSK_PCT : virtual public CPCIDSKSegment,
                         public PCIDSK_PCT
     {
     public:
@@ -56,4 +56,4 @@ namespace PCIDSK
     };
 } // end namespace PCIDSK
 
-#endif // __INCLUDE_SEGMENT_PCIDSKGEOREF_H
+#endif // INCLUDE_SEGMENT_PCIDSKGEOREF_H

@@ -7,7 +7,7 @@
 # Howard Butler hobu.inc@gmail.com
 
 
-gdal_version = '3.1.0'
+gdal_version = '3.2.0'
 
 import sys
 import os
@@ -402,7 +402,7 @@ if GNM_ENABLED:
 if HAVE_NUMPY:
     ext_modules.append(array_module)
 
-packages = ["osgeo", "osgeo.utils"]
+packages = ["osgeo", "osgeo.utils", "osgeo.auxiliary"]
 
 readme = str(open('README.rst', 'rb').read())
 

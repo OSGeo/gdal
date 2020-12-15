@@ -337,26 +337,26 @@ def validate(ds, check_tiled=True, full_check=False):
     return warnings, errors, details
 
 
-def main():
+def main(argv):
     """Return 0 in case of success, 1 for failure."""
 
     i = 1
     filename = None
     quiet = False
     full_check = None
-    while i < len(sys.argv):
-        if sys.argv[i] == '-q':
+    while i < len(argv):
+        if argv[i] == '-q':
             quiet = True
-        elif sys.argv[i] == '--full-check=yes':
+        elif argv[i] == '--full-check=yes':
             full_check = True
-        elif sys.argv[i] == '--full-check=no':
+        elif argv[i] == '--full-check=no':
             full_check = False
-        elif sys.argv[i] == '--full-check=auto':
+        elif argv[i] == '--full-check=auto':
             full_check = None
-        elif sys.argv[i][0] == '-':
+        elif argv[i][0] == '-':
             return Usage()
         elif filename is None:
-            filename = sys.argv[i]
+            filename = argv[i]
         else:
             return Usage()
 
@@ -404,4 +404,4 @@ def main():
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    sys.exit(main(sys.argv))

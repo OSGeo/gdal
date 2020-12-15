@@ -27,6 +27,7 @@ Contributors:  Thomas Maurer
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
+#include <limits>
 #include <string>
 #include <typeinfo>
 #include "Defines.h"

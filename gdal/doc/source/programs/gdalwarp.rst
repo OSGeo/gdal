@@ -126,7 +126,11 @@ with control information.
 
 .. option:: -tr <xres> <yres>
 
-    Set output file resolution (in target georeferenced units)
+    Set output file resolution (in target georeferenced units).
+
+    If not specified (or not deduced from -te and -ts), gdalwarp will generate
+    an output raster with xres=yres, and that even when using gdalwarp in scenarios
+    not involving reprojection.
 
 .. option:: -tap
 
@@ -178,6 +182,8 @@ with control information.
     ``lanczos``: Lanczos windowed sinc resampling.
 
     ``average``: average resampling, computes the weighted average of all non-NODATA contributing pixels.
+
+    ``rms`` root mean square / quadratic mean of all non-NODATA contributing pixels (GDAL >= 3.3)
 
     ``mode``: mode resampling, selects the value which appears most often of all the sampled points.
 

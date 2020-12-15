@@ -1030,6 +1030,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
          papoBandList[0]->GetColorTable() == nullptr &&
          (STARTS_WITH_CI(pszResampling, "NEAR") ||
           EQUAL(pszResampling, "AVERAGE") ||
+          EQUAL(pszResampling, "RMS") ||
           EQUAL(pszResampling, "GAUSS") ||
           EQUAL(pszResampling, "CUBIC") ||
           EQUAL(pszResampling, "CUBICSPLINE") ||

@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  PCIDSK PCT segment interface class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -48,7 +48,7 @@ namespace PCIDSK
 
 @param pct  Pseudo-Color Table buffer (768 entries) into which the
 pseudo-color table is read.  It consists of the red gun output
-values (pct[0-255]), followed by the green gun output values (pct[256-511]) 
+values (pct[0-255]), followed by the green gun output values (pct[256-511])
 and ends with the blue gun output values (pct[512-767]).
 
 */
@@ -59,7 +59,7 @@ and ends with the blue gun output values (pct[512-767]).
 
 @param pct  Pseudo-Color Table buffer (768 entries) from which the
 pseudo-color table is written.  It consists of the red gun output
-values (pct[0-255]), followed by the green gun output values (pct[256-511]) 
+values (pct[0-255]), followed by the green gun output values (pct[256-511])
 and ends with the blue gun output values (pct[512-767]).
 
 */

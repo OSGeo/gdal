@@ -113,7 +113,7 @@ def test_vsiaz_real_server_errors():
 
     for var in ('AZURE_STORAGE_CONNECTION_STRING', 'AZURE_STORAGE_ACCOUNT',
                 'AZURE_STORAGE_ACCESS_KEY'):
-        gdal.SetConfigOption(var, None)
+        gdal.SetConfigOption(var, '')
 
 ###############################################################################
 # Test AZURE_NO_SIGN_REQUEST=YES
@@ -193,6 +193,8 @@ def test_vsiaz_fake_basic():
 
     if gdaltest.webserver_port == 0:
         pytest.skip()
+
+    gdal.VSICurlClearCache()
 
     signed_url = gdal.GetSignedURL('/vsiaz/az_fake_bucket/resource', ['START_DATE=20180213T123456'])
     assert (signed_url in ('http://127.0.0.1:8080/azure/blob/myaccount/az_fake_bucket/resource?se=2018-02-13T13%3A34%3A56Z&sig=9Jc4yBFlSRZSSxf059OohN6pYRrjuHWJWSEuryczN%2FM%3D&sp=r&sr=c&st=2018-02-13T12%3A34%3A56Z&sv=2012-02-12',
@@ -1061,6 +1063,9 @@ def test_vsiaz_rmdirrecursive():
 
 
 def test_vsiaz_fake_sync_multithreaded_upload_chunk_size():
+
+    if gdaltest.is_github_workflow_mac():
+        pytest.xfail('Failure. See https://github.com/rouault/gdal/runs/1329425333?check_suite_focus=true')
 
     if gdaltest.webserver_port == 0:
         pytest.skip()

@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of the CPCIDSKGeoref class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -92,7 +92,7 @@ void CPCIDSKGeoref::Load()
     if( loaded )
         return;
 
-    // TODO: this should likely be protected by a mutex. 
+    // TODO: this should likely be protected by a mutex.
 
 /* -------------------------------------------------------------------- */
 /*      Load the segment contents into a buffer.                        */
@@ -109,7 +109,7 @@ void CPCIDSKGeoref::Load()
         STARTS_WITH(seg_data.buffer, "POLYNOMIAL") )
     {
         seg_data.Get(32,16,geosys);
-        
+
         if( seg_data.GetInt(48,8) != 3 || seg_data.GetInt(56,8) != 3 )
             return ThrowPCIDSKException( "Unexpected number of coefficients in POLYNOMIAL GEO segment." );
 
@@ -130,7 +130,7 @@ void CPCIDSKGeoref::Load()
              STARTS_WITH(seg_data.buffer, "PROJECTION") )
     {
         seg_data.Get(32,16,geosys);
-        
+
         if( seg_data.GetInt(48,8) != 3 || seg_data.GetInt(56,8) != 3 )
             return ThrowPCIDSKException( "Unexpected number of coefficients in PROJECTION GEO segment." );
 
@@ -150,7 +150,7 @@ void CPCIDSKGeoref::Load()
                     "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",16) == 0 )
     {
         geosys = "";
-        
+
         a1 = 0.0;
         a2 = 1.0;
         xrot = 0.0;
@@ -161,7 +161,7 @@ void CPCIDSKGeoref::Load()
 
     else
     {
-        return ThrowPCIDSKException( "Unexpected GEO segment type: %s", 
+        return ThrowPCIDSKException( "Unexpected GEO segment type: %s",
                               seg_data.Get(0,16) );
     }
 
@@ -183,7 +183,7 @@ std::string CPCIDSKGeoref::GetGeosys()
 /*                            GetTransform()                            */
 /************************************************************************/
 
-void CPCIDSKGeoref::GetTransform( double &a1Out, double &a2Out, double &xrotOut, 
+void CPCIDSKGeoref::GetTransform( double &a1Out, double &a2Out, double &xrotOut,
                                   double &b1Out, double &yrotOut, double &b3Out )
 
 {
@@ -246,8 +246,8 @@ std::vector<double> CPCIDSKGeoref::GetParameters()
 /*                            WriteSimple()                             */
 /************************************************************************/
 
-void CPCIDSKGeoref::WriteSimple( std::string const& geosysIn, 
-                                 double a1In, double a2In, double xrotIn, 
+void CPCIDSKGeoref::WriteSimple( std::string const& geosysIn,
+                                 double a1In, double a2In, double xrotIn,
                                  double b1In, double yrotIn, double b3In )
 
 {
@@ -278,26 +278,26 @@ void CPCIDSKGeoref::WriteSimple( std::string const& geosysIn,
 
     // SD.PRO.P1
     seg_data.Put( "PROJECTION", 0, 16 );
-    
+
     // SD.PRO.P2
     seg_data.Put( "PIXEL", 16, 16 );
-    
+
     // SD.PRO.P3
     seg_data.Put( geosys_clean.c_str(), 32, 16 );
 
     // SD.PRO.P4
     seg_data.Put( 3, 48, 8 );
-    
+
     // SD.PRO.P5
     seg_data.Put( 3, 56, 8 );
 
-    // SD.PRO.P6 
+    // SD.PRO.P6
     seg_data.Put( units_code.c_str(), 64, 16 );
 
     // SD.PRO.P7 - P22
     for( int i = 0; i < 17; i++ )
         seg_data.Put( 0.0,   80 + i*26, 26, "%26.18E" );
-    
+
     // SD.PRO.P24
     PrepareGCTPFields();
 
@@ -335,7 +335,7 @@ void CPCIDSKGeoref::WriteParameters( std::vector<double> const& parms )
 
     if( parms.size() >= 18 )
     {
-        switch( (UnitCode) (int) parms[17] ) 
+        switch( (UnitCode) (int) parms[17] )
         {
           case UNIT_DEGREE:
             seg_data.Put( "DEGREE", 64, 16 );
@@ -409,7 +409,7 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosysIn )
     local_buf[16] = '\0';
     strcat( local_buf, "                " );
     local_buf[16] = '\0';
-    
+
 /* -------------------------------------------------------------------- */
 /*      Extract the earth model from the geosys string.                 */
 /* -------------------------------------------------------------------- */
@@ -426,7 +426,7 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosysIn )
         cp--;
 
     last = '\0';
-    while( cp > local_buf 
+    while( cp > local_buf
            && (isdigit((unsigned char)*cp)
                || *cp == '-' || *cp == '+' ) )
     {
@@ -439,7 +439,7 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosysIn )
           *cp == 'E' || *cp == 'e'    ) )
     {
         i = atoi( cp+1 );
-        if(    i > -100 && i < 1000 
+        if(    i > -100 && i < 1000
                && (cp == local_buf
                    || ( cp >  local_buf && isspace( *(cp-1) ) )
                    )
@@ -480,8 +480,8 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosysIn )
             zone = atoi(ptr);
             for( ; isdigit((unsigned char)*ptr) || *ptr == '-'; ptr++ ) {}
             for( ; isspace(*ptr); ptr++ ) {}
-            if( isalpha(*ptr) 
-                && !isdigit((unsigned char)*(ptr+1)) 
+            if( isalpha(*ptr)
+                && !isdigit((unsigned char)*(ptr+1))
                 && ptr[1] != '-' )
                 zone_code = *(ptr++);
         }
@@ -499,13 +499,13 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosysIn )
             zone = ABS(zone);
 
             snprintf( local_buf, sizeof(local_buf),
-                     "UTM   %3d %c %4s", 
+                     "UTM   %3d %c %4s",
                      zone, zone_code, earthmodel );
         }
         else
         {
-            snprintf( local_buf, sizeof(local_buf), 
-                     "UTM         %4s", 
+            snprintf( local_buf, sizeof(local_buf),
+                     "UTM         %4s",
                      earthmodel );
         }
         if( local_buf[14] == ' ' )
@@ -524,7 +524,7 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosysIn )
     else if( STARTS_WITH_CI(local_buf, "LAT") ||
              STARTS_WITH_CI(local_buf, "LON") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "LONG/LAT    %4s",
                  earthmodel );
     }
@@ -537,9 +537,9 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosysIn )
         for( ptr=local_buf+4; isspace(*ptr); ptr++ ) {}
         nSPZone = atoi(ptr);
 
-        if      ( STARTS_WITH_CI(local_buf, "SPCS ") ) 
+        if      ( STARTS_WITH_CI(local_buf, "SPCS ") )
             strcpy( local_buf, "SPCS " );
-        else if ( STARTS_WITH_CI(local_buf, "SPAF ") ) 
+        else if ( STARTS_WITH_CI(local_buf, "SPAF ") )
             strcpy( local_buf, "SPAF " );
         else
             strcpy( local_buf, "SPIF " );
@@ -552,145 +552,145 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosysIn )
     }
     else if( STARTS_WITH_CI(local_buf, "ACEA ") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "ACEA        %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "AE ") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "AE          %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "EC ") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "EC          %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "ER ") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "ER          %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "GNO ") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "GNO         %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "GVNP") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "GVNP        %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "LAEA_ELL") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "LAEA_ELL    %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "LAEA") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "LAEA        %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "LCC_1SP") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "LCC_1SP     %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "LCC ") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "LCC         %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "MC ") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "MC          %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "MER ") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "MER         %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "MSC ") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "MSC         %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "OG ") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "OG          %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "OM ") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "OM          %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "PC ") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "PC          %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "PS ") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "PS          %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "ROB ") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "ROB         %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "SG ") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "SG          %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "SIN ") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "SIN         %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "SOM ") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "SOM         %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "TM ") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "TM          %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "VDG ") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "VDG         %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "UPSA") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "UPSA        %4s",
                  earthmodel );
     }
@@ -705,19 +705,19 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosysIn )
         else
             ups_zone = ' ';
 
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "UPS       %c %4s",
                  ups_zone, earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "GOOD") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "GOOD        %4s",
                  earthmodel );
     }
     else if( STARTS_WITH_CI(local_buf, "NZMG") )
     {
-        snprintf( local_buf, sizeof(local_buf), 
+        snprintf( local_buf, sizeof(local_buf),
                  "NZMG        %4s",
                  earthmodel );
     }
@@ -813,17 +813,17 @@ C       CALL SEQUENCE
 C
 C       double = PACK2PCI (degrees, function)
 C
-C       degrees  - (double) Latitude or Longitude value in decimal 
+C       degrees  - (double) Latitude or Longitude value in decimal
 C                           degrees.
 C
-C       function - (Int)    Function to perform                            
+C       function - (Int)    Function to perform
 C                           1, convert decimal degrees to DDDMMMSSS.SSS
 C                           0, convert DDDMMMSSS.SSS to decimal degrees
 C
 C
 C       EXAMPLE
 C
-C       double              degrees, packed, unpack 
+C       double              degrees, packed, unpack
 C
 C       degrees = -125.425              ! Same as 125d 25' 30" W
 C       packed = PACK2PCI (degrees, 1)  ! PACKED will equal -125025030.000
@@ -940,7 +940,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
     }
     else if( STARTS_WITH_CI(grid_units.c_str(), "DEGREE") )
         UnitsCode = GCTP_UNIT_DEGREE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Extract the non-GCTP style parameters.                          */
 /* -------------------------------------------------------------------- */
@@ -973,9 +973,9 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
     int ProjectionZone = 0;
 
-    if( STARTS_WITH(geosys_clean.c_str(), "UTM ") 
-        || STARTS_WITH(geosys_clean.c_str(), "SPCS ") 
-        || STARTS_WITH(geosys_clean.c_str(), "SPAF ") 
+    if( STARTS_WITH(geosys_clean.c_str(), "UTM ")
+        || STARTS_WITH(geosys_clean.c_str(), "SPCS ")
+        || STARTS_WITH(geosys_clean.c_str(), "SPAF ")
         || STARTS_WITH(geosys_clean.c_str(), "SPIF ") )
     {
         ProjectionZone = atoi(geosys_clean.c_str() + 5);
@@ -992,7 +992,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
     int Spheroid = -1;
     if( geosys_clean[12] == 'E' )
         Spheroid = atoi(geosys_clean.c_str() + 13);
-    
+
     if( Spheroid < 0 || Spheroid > 19 )
         Spheroid = -1;
 
@@ -1000,7 +1000,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /*      Initialize the USGS Parameters.                                 */
 /* -------------------------------------------------------------------- */
     double USGSParms[15];
-    int gsys; 
+    int gsys;
 
     for ( i = 0; i < 15; i++ )
         USGSParms[i] = 0;
@@ -1008,7 +1008,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
 /* -------------------------------------------------------------------- */
 /*      Projection 0: Geographic (no projection)                        */
 /* -------------------------------------------------------------------- */
-    if( STARTS_WITH(geosys_clean.c_str(), "LON") 
+    if( STARTS_WITH(geosys_clean.c_str(), "LON")
         || STARTS_WITH(geosys_clean.c_str(), "LAT") )
     {
         gsys = 0;
@@ -1093,7 +1093,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Projection 4: Lambert Conformal Conic                           */ 
+/*      Projection 4: Lambert Conformal Conic                           */
 /* -------------------------------------------------------------------- */
     else if( STARTS_WITH(geosys_clean.c_str(), "LCC  ") )
     {
@@ -1109,14 +1109,14 @@ void CPCIDSKGeoref::PrepareGCTPFields()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Projection 5: Mercator                                          */ 
+/*      Projection 5: Mercator                                          */
 /* -------------------------------------------------------------------- */
     else if( STARTS_WITH(geosys_clean.c_str(), "MER  ") )
     {
         gsys = 5;
         USGSParms[0] = Dearth0;
         USGSParms[1] = Dearth1;
-        
+
         USGSParms[4] = PAK2PCI(RefLong, 1);
         USGSParms[5] = PAK2PCI(RefLat, 1);
         USGSParms[6] = FalseEasting * IOmultiply;
@@ -1131,7 +1131,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
         gsys = 6;
         USGSParms[0] = Dearth0;
         USGSParms[1] = Dearth1;
-        
+
         USGSParms[4] = PAK2PCI(RefLong, 1);
         USGSParms[5] = PAK2PCI(RefLat, 1);
         USGSParms[6] = FalseEasting * IOmultiply;
@@ -1146,7 +1146,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
         gsys = 7;
         USGSParms[0] = Dearth0;
         USGSParms[1] = Dearth1;
-        
+
         USGSParms[4] = PAK2PCI(RefLong, 1);
         USGSParms[5] = PAK2PCI(RefLat, 1);
         USGSParms[6] = FalseEasting * IOmultiply;
@@ -1177,7 +1177,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Projection 9: Transverse Mercator                               */ 
+/*      Projection 9: Transverse Mercator                               */
 /* -------------------------------------------------------------------- */
     else if( STARTS_WITH(geosys_clean.c_str(), "TM   ") )
     {
@@ -1185,7 +1185,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
         USGSParms[0] = Dearth0;
         USGSParms[1] = Dearth1;
         USGSParms[2] = Scale;
-        
+
         USGSParms[4] = PAK2PCI(RefLong, 1);
         USGSParms[5] = PAK2PCI(RefLat, 1);
         USGSParms[6] = FalseEasting * IOmultiply;
@@ -1199,22 +1199,22 @@ void CPCIDSKGeoref::PrepareGCTPFields()
     {
         gsys = 10;
         USGSParms[0] = Dearth0;
-        
+
         USGSParms[4] = PAK2PCI(RefLong, 1);
         USGSParms[5] = PAK2PCI(RefLat, 1);
         USGSParms[6] = FalseEasting * IOmultiply;
         USGSParms[7] = FalseNorthing * IOmultiply;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Projection 11: Lambert Azimuthal Equal-Area                     */
 /* -------------------------------------------------------------------- */
     else if( STARTS_WITH(geosys_clean.c_str(), "LAEA ") )
     {
         gsys = 11;
-        
+
         USGSParms[0] = Dearth0;
-        
+
         USGSParms[4] = PAK2PCI(RefLong, 1);
         USGSParms[5] = PAK2PCI(RefLat, 1);
         USGSParms[6] = FalseEasting * IOmultiply;
@@ -1228,7 +1228,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
     {
         gsys = 12;
         USGSParms[0] = Dearth0;
-        
+
         USGSParms[4] = PAK2PCI(RefLong, 1);
         USGSParms[5] = PAK2PCI(RefLat, 1);
         USGSParms[6] = FalseEasting * IOmultiply;
@@ -1242,7 +1242,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
     {
         gsys = 13;
         USGSParms[0] = Dearth0;
-        
+
         USGSParms[4] = PAK2PCI(RefLong, 1);
         USGSParms[5] = PAK2PCI(RefLat, 1);
         USGSParms[6] = FalseEasting * IOmultiply;
@@ -1250,13 +1250,13 @@ void CPCIDSKGeoref::PrepareGCTPFields()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Projection 14: Orthographic                                     */ 
+/*      Projection 14: Orthographic                                     */
 /* -------------------------------------------------------------------- */
     else if( STARTS_WITH(geosys_clean.c_str(), "OG   ") )
     {
         gsys = 14;
         USGSParms[0] = Dearth0;
-        
+
         USGSParms[4] = PAK2PCI(RefLong, 1);
         USGSParms[5] = PAK2PCI(RefLat, 1);
         USGSParms[6] = FalseEasting * IOmultiply;
@@ -1270,9 +1270,9 @@ void CPCIDSKGeoref::PrepareGCTPFields()
     {
         gsys = 15;
         USGSParms[0] = Dearth0;
-        
+
         USGSParms[2] = Height;
-        
+
         USGSParms[4] = PAK2PCI(RefLong, 1);
         USGSParms[5] = PAK2PCI(RefLat, 1);
         USGSParms[6] = FalseEasting * IOmultiply;
@@ -1310,9 +1310,9 @@ void CPCIDSKGeoref::PrepareGCTPFields()
     {
         gsys = 18;
         USGSParms[0] = Dearth0;
-        
+
         USGSParms[4] = PAK2PCI(RefLong, 1);
-        
+
         USGSParms[6] = FalseEasting * IOmultiply;
         USGSParms[7] = FalseNorthing * IOmultiply;
     }
@@ -1324,9 +1324,9 @@ void CPCIDSKGeoref::PrepareGCTPFields()
     {
         gsys = 19;
         USGSParms[0] = Dearth0;
-        
+
         USGSParms[4] = PAK2PCI(RefLong, 1);
-        
+
         USGSParms[6] = FalseEasting * IOmultiply;
         USGSParms[7] = FalseNorthing * IOmultiply;
     }
@@ -1345,12 +1345,12 @@ void CPCIDSKGeoref::PrepareGCTPFields()
         USGSParms[1] = Dearth1;
         USGSParms[2] = Scale;
         USGSParms[3] = PAK2PCI(Azimuth ,1);
-        
+
         USGSParms[4] = PAK2PCI(RefLong, 1);
         USGSParms[5] = PAK2PCI(RefLat, 1);
         USGSParms[6] = FalseEasting * IOmultiply;
         USGSParms[7] = FalseNorthing * IOmultiply;
-        
+
         USGSParms[8] = PAK2PCI(Long1, 1);
         USGSParms[9] = PAK2PCI(Lat1, 1);
         USGSParms[10] = PAK2PCI(Long2, 1);
@@ -1392,7 +1392,7 @@ void CPCIDSKGeoref::PrepareGCTPFields()
               * IOmultiply;
     }
 /* -------------------------------------------------------------------- */
-/*      Projection 23: Modified Stereographic Conformal (Alaska)        */ 
+/*      Projection 23: Modified Stereographic Conformal (Alaska)        */
 /* -------------------------------------------------------------------- */
     else if( STARTS_WITH(geosys_clean.c_str(), "MSC  ") )
     {

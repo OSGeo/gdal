@@ -4656,6 +4656,7 @@ def test_ogr_shape_114_shz():
 ###############################################################################
 
 
+@pytest.mark.skipif(gdaltest.is_ci(), reason='test skipped on CI due to random stalls on it')
 def test_ogr_shape_115_shp_zip():
 
     dirname = 'tmp/test_ogr_shape_115'

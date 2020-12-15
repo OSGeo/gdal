@@ -348,7 +348,7 @@ char **CPLReadDir( const char *pszPath )
  *
  * This function is close to the POSIX opendir() function.
  *
- * For /vsis3/, /vsigs/, /vsioss/ and /vsiaz/, this function has an efficient
+ * For /vsis3/, /vsigs/, /vsioss/, /vsiaz/ and /vsiadls/, this function has an efficient
  * implementation, minimizing the number of network requests, when invoked with
  * nRecurseDepth <= 0.
  *
@@ -663,11 +663,11 @@ int VSIRename( const char * oldpath, const char * newpath )
  *     with the source one.
  * </li>
  * <li>NUM_THREADS=integer. Number of threads to use for parallel file copying.
- *     Only use for when /vsis3/, /vsigs/ or /vsiaz/ is in source or target.
+ *     Only use for when /vsis3/, /vsigs/, /vsiaz/ or /vsiadls/ is in source or target.
  *     Since GDAL 3.1</li>
  * <li>CHUNK_SIZE=integer. Maximum size of chunk (in bytes) to use to split
- *     large objects when downloading them from /vsis3/, /vsigs/ or /vsiaz/ to
- *     local file system, or for upload to /vsis3/ or /vsiaz/ from local file system.
+ *     large objects when downloading them from /vsis3/, /vsigs/, /vsiaz/ or /vsiadls/ to
+ *     local file system, or for upload to /vsis3/, /vsiaz/ or /vsiadls/ from local file system.
  *     Only used if NUM_THREADS > 1.
  *     For upload to /vsis3/, this chunk size must be set at least to 5 MB.
  *     Since GDAL 3.1</li>
@@ -877,6 +877,8 @@ int VSIStatExL( const char * pszFilename, VSIStatBufL *psStatBuf, int nFlags )
  * <ul>
  * <li>HEADERS: to get HTTP headers for network-like filesystems (/vsicurl/, /vsis3/, etc)</li>
  * <li>TAGS: specific to /vsis3/: to get S3 Object tagging information</li>
+ * <li>STATUS: specific to /vsiadls/: returns all system defined properties for a path (seems in practice to be a subset of HEADERS)</li>
+ * <li>ACL: specific to /vsiadls/: returns the access control list for a path.</li>
  * </ul>
  * @param papszOptions Unused. Should be set to NULL.
  *
@@ -901,9 +903,9 @@ char** VSIGetFileMetadata( const char * pszFilename, const char* pszDomain,
 /**
  * \brief Set metadata on files.
  *
- * Implemented currently only for /vsis3/
+ * Implemented currently only for /vsis3/ and /vsiadls/
  *
- * @param pszFilename the path of the filesystem object to be queried.
+ * @param pszFilename the path of the filesystem object to be set.
  * UTF-8 encoded.
  * @param papszMetadata NULL-terminated list of key=value strings.
  * @param pszDomain Metadata domain to set. Depends on the file system.
@@ -911,8 +913,14 @@ char** VSIGetFileMetadata( const char * pszFilename, const char* pszDomain,
  * <ul>
  * <li>HEADERS: to set HTTP header</li>
  * <li>TAGS: to set S3 Object tagging information</li>
+ * <li>PROPERTIES: specific to /vsiadls/: to set properties. Refer to https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/update for headers valid for action=setProperties.</li>
+ * <li>ACL: specific to /vsiadls/: to set access control list. Refer to https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/update for headers valid for action=setAccessControl or setAccessControlRecursive. In setAccessControlRecursive, x-ms-acl must be specified in papszMetadata</li>
  * </ul>
- * @param papszOptions Unused. Should be set to NULL.
+ * @param papszOptions NULL or NULL terminated list of options.
+ *                     For /vsiadls/ and pszDomain=ACL, "RECURSIVE=TRUE" can be
+ *                     set to set the access control list recursively. When
+ *                     RECURSIVE=TRUE is set, MODE should also be set to one of
+ *                     "set", "modify" or "remove".
  *
  * @return TRUE in case of success.
  *
@@ -2674,6 +2682,7 @@ VSIFileManager *VSIFileManager::Get()
       VSIInstallGSStreamingFileHandler();
       VSIInstallAzureFileHandler();
       VSIInstallAzureStreamingFileHandler();
+      VSIInstallADLSFileHandler();
       VSIInstallOSSFileHandler();
       VSIInstallOSSStreamingFileHandler();
       VSIInstallSwiftFileHandler();

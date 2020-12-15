@@ -52,6 +52,7 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_userfaultfd.h"
+#include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "cpl_multiproc.h"
 
@@ -343,7 +344,15 @@ bool CPLIsUserFaultMappingSupported()
   sscanf(utsname.release, "%d.%d", &major, &minor);
   if (major < 4) return false;
   if (major == 4 && minor < 3) return false;
-  return true;
+
+  static int nEnableUserFaultFD = -1;
+  if( nEnableUserFaultFD < 0 )
+  {
+      nEnableUserFaultFD =
+        CPLTestBool(CPLGetConfigOption("CPL_ENABLE_USERFAULTFD", "YES"));
+  }
+
+  return nEnableUserFaultFD != FALSE;
 }
 
 /*

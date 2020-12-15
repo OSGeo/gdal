@@ -30,6 +30,7 @@
 ###############################################################################
 
 import os
+import stat
 import sys
 
 from osgeo import gdal
@@ -82,7 +83,9 @@ def display_file(fout, dirname, prefix, filename, longformat, check_open=False):
     if longformat and statBuf is not None:
         import time
         bdt = time.gmtime(statBuf.mtime)
-        if statBuf.IsDirectory():
+        if stat.S_IMODE(statBuf.mode) != 0:
+            permissions = stat.filemode(statBuf.mode)
+        elif statBuf.IsDirectory():
             permissions = "dr-xr-xr-x"
         else:
             permissions = "-r--r--r--"
@@ -223,10 +226,14 @@ def gdal_ls(argv, fout=sys.stdout):
     return 0
 
 
+def main(argv):
+    return gdal_ls(argv)
+
+
 if __name__ == '__main__':
     version_num = int(gdal.VersionInfo('VERSION_NUM'))
     if version_num < 1800:
         sys.stderr.write('ERROR: Python bindings of GDAL 1.8.0 or later required\n')
         sys.exit(1)
 
-    sys.exit(gdal_ls(sys.argv))
+    sys.exit(main(sys.argv))

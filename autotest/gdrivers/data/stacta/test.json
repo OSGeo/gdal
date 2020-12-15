@@ -1,0 +1,155 @@
+{
+    "stac_version": "1.0.0-beta.2",
+    "stac_extensions": [
+        "eo",
+        "tiled-assets"
+    ],
+    "id": "test",
+    "type": "Feature",
+    "bbox": [
+        -180,
+        90,
+        180,
+        90
+    ],
+    "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+            [
+                [
+                    180,
+                    90
+                ],
+                [
+                    -180,
+                    90
+                ],
+                [
+                    -180,
+                    -90
+                ],
+                [
+                    180,
+                    -90
+                ],
+                [
+                    180,
+                    90
+                ]
+            ]
+        ]
+    },
+    "properties": {
+        "collection": "collection",
+        "datetime": "2019-01-01T00:00:00Z",
+        "start_datetime": "2019-01-01T00:00:00Z",
+        "end_datetime": "2019-12-31T23:59:59Z",
+        "tiles:tile_matrix_links": {
+            "WorldCRS84Quad": {
+                "url": "http://schemas.opengis.net/tms/1.0/json/examples/WorldCRS84Quad.json",
+                "limits": {
+                    "0": {
+                        "min_tile_col": 0,
+                        "max_tile_col": 0,
+                        "min_tile_row": 0,
+                        "max_tile_row": 0
+                    },
+                    "1": {
+                        "min_tile_col": 0,
+                        "max_tile_col": 0,
+                        "min_tile_row": 0,
+                        "max_tile_row": 0
+                    },
+                    "2": {
+                        "min_tile_col": 0,
+                        "max_tile_col": 1,
+                        "min_tile_row": 0,
+                        "max_tile_row": 0
+                    }
+                }
+            }
+        },
+        "tiles:tile_matrix_sets": {
+            "WorldCRS84Quad": {
+                "type": "TileMatrixSetType",
+                "title": "WGS84 World",
+                "identifier": "WorldCRS84Quad",
+                "boundingBox": {
+                    "type": "BoundingBoxType",
+                    "crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+                    "lowerCorner": [
+                        -180,
+                        -90
+                    ],
+                    "upperCorner": [
+                        180,
+                        90
+                    ]
+                },
+                "supportedCRS": "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+                "wellKnownScaleSet": "http://www.opengis.net/def/wkss/OGC/1.0/GoogleCRS84Quad",
+                "tileMatrix": [
+                    {
+                        "type": "TileMatrixType",
+                        "identifier": "0",
+                        "scaleDenominator": 279541132.014358,
+                        "topLeftCorner": [
+                            -180,
+                            90
+                        ],
+                        "tileWidth": 512,
+                        "tileHeight": 256,
+                        "matrixWidth": 1,
+                        "matrixHeight": 1
+                    },
+                    {
+                        "type": "TileMatrixType",
+                        "identifier": "1",
+                        "scaleDenominator": 139770566.007179,
+                        "topLeftCorner": [
+                            -180,
+                            90
+                        ],
+                        "tileWidth": 1024,
+                        "tileHeight": 512,
+                        "matrixWidth": 1,
+                        "matrixHeight": 1
+                    },
+                    {
+                        "type": "TileMatrixType",
+                        "identifier": "2",
+                        "scaleDenominator": 69885283.0035897,
+                        "topLeftCorner": [
+                            -180,
+                            90
+                        ],
+                        "tileWidth": 1024,
+                        "tileHeight": 1024,
+                        "matrixWidth": 2,
+                        "matrixHeight": 1
+                    },
+                ]
+            }
+        }
+    },
+    "asset_templates": {
+        "bands": {
+            "href": "./{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.tif",
+            "type": "image/tiff; application=geotiff",
+            "eo:bands": [
+                {
+                    "name": "B4",
+                    "common_name": "red"
+                },
+                {
+                    "name": "B3",
+                    "common_name": "green"
+                },
+                {
+                    "name": "B2",
+                    "common_name": "blue"
+                }
+            ]
+        }
+    }
+}

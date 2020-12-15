@@ -39,7 +39,7 @@ Synopsis
             [-wrapdateline] [-datelineoffset val]
             [[-simplify tolerance] | [-segmentize max_dist]]
             [-makevalid]
-            [-addfields] [-unsetFid]
+            [-addfields] [-unsetFid] [-emptyStrAsNull]
             [-relaxedFieldNameMatch] [-forceNullable] [-unsetDefault]
             [-fieldTypeToString All|(type1[,type2]*)] [-unsetFieldWidth]
             [-mapFieldType type1|All=type2[,type3=type4]*]
@@ -102,9 +102,10 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -dialect <dialect>
 
-    SQL dialect. In some cases can be used to use (unoptimized) OGR SQL instead
-    of the native SQL of an RDBMS by passing OGRSQL. The "SQLITE" dialect can
-    also be used with any datasource.
+    SQL dialect. In some cases can be used to use (unoptimized) :ref:`ogr_sql_dialect` instead
+    of the native SQL of an RDBMS by passing the ``OGRSQL`` dialect value.
+    The :ref:`sql_sqlite_dialect` dialect can be select with the ``SQLITE``
+    and ``INDIRECT_SQLITE`` dialect values, and this can be used with any datasource.
 
 .. option:: -where restricted_where
 
@@ -410,6 +411,12 @@ output coordinate system or even reprojecting the features during translation.
     Can be specified to prevent the name of the source FID column and source
     feature IDs from being re-used for the target layer. This option can for
     example be useful if selecting source features with a ORDER BY clause.
+
+.. option:: -emptyStrAsNull
+
+    Treat empty string values as null.
+
+    .. versionadded:: 3.3
 
 .. option:: -nomd
 

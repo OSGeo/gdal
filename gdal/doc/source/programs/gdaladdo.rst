@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    gdaladdo [-r {nearest,average,gauss,cubic,cubicspline,lanczos,average_magphase,mode}]
+    gdaladdo [-r {nearest,average,rms,gauss,cubic,cubicspline,lanczos,average_magphase,mode}]
             [-b band]* [-minsize val]
             [-ro] [-clean] [-oo NAME=VALUE]* [--help-general] filename [levels]
 
@@ -27,13 +27,15 @@ most supported file formats with one of several downsampling algorithms.
 
 .. program:: gdaladdo
 
-.. option:: -r {nearest (default),average,gauss,cubic,cubicspline,lanczos,average_magphase,mode}
+.. option:: -r {nearest (default),average,rms,gauss,cubic,cubicspline,lanczos,average_magphase,mode}
 
     Select a resampling algorithm.
 
     ``nearest`` applies a nearest neighbour (simple sampling) resampler
 
     ``average`` computes the average of all non-NODATA contributing pixels. Starting with GDAL 3.1, this is a weighted average taking into account properly the weight of source pixels not contributing fully to the target pixel.
+
+    ``rms`` computes the root mean squared / quadratic mean of all non-NODATA contributing pixels (GDAL >= 3.3)
 
     ``bilinear`` applies a bilinear convolution kernel.
 

@@ -209,9 +209,11 @@ typedef enum
     /*! Cubic B-Spline Approximation */     GRIORA_CubicSpline = 3,
     /*! Lanczos windowed sinc interpolation (6x6 kernel) */ GRIORA_Lanczos = 4,
     /*! Average */                          GRIORA_Average = 5,
+    /*! Root Mean Square (quadratic mean) */GRIORA_RMS = 14,
     /*! Mode (selects the value which appears most often of all the sampled points) */
                                             GRIORA_Mode = 6,
     /*! Gauss blurring */                   GRIORA_Gauss = 7
+    /*! NOTE: values 8 to 13 are reserved for max,min,med,Q1,Q3,sum */
 } GDALRIOResampleAlg;
 
 /*! Warp Resampling Algorithm */
@@ -223,6 +225,7 @@ typedef enum {
   /*! Cubic B-Spline Approximation (4x4 kernel) */     GRA_CubicSpline=3,
   /*! Lanczos windowed sinc interpolation (6x6 kernel) */ GRA_Lanczos=4,
   /*! Average (computes the average of all non-NODATA contributing pixels) */ GRA_Average=5,
+  /*! Root Mean Square (computes the RMS (Quadratic Mean) of all non-NODATA contributing pixels) */ GRA_RMS=14,
   /*! Mode (selects the value which appears most often of all the sampled points) */ GRA_Mode=6,
   /*  GRA_Gauss=7 reserved. */
   /*! Max (selects maximum of all non-NODATA contributing pixels) */ GRA_Max=8,
@@ -230,6 +233,8 @@ typedef enum {
   /*! Med (selects median of all non-NODATA contributing pixels) */ GRA_Med=10,
   /*! Q1 (selects first quartile of all non-NODATA contributing pixels) */ GRA_Q1=11,
   /*! Q3 (selects third quartile of all non-NODATA contributing pixels) */ GRA_Q3=12
+  /*! NOTE: values 13 is reserved for sum */
+
 } GDALResampleAlg;
 
 %rename (AsyncStatusType) GDALAsyncStatusType;
@@ -260,6 +265,8 @@ typedef enum {
     // to GDALRIOResampleAlg, so we are a bit in undefined behavior land,
     // but compilers should hopefully do the right thing
     if( static_cast<int>($1) < 0 ||
+        ( static_cast<int>($1) >= static_cast<int>(GRIORA_RESERVED_START) &&
+          static_cast<int>($1) <= static_cast<int>(GRIORA_RESERVED_END) ) ||
         static_cast<int>($1) > static_cast<int>(GRIORA_LAST) )
     {
         SWIG_exception(SWIG_ValueError, "Invalid value for resample_alg");

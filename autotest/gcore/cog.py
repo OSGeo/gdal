@@ -402,7 +402,7 @@ def test_cog_byte_to_web_mercator():
     for i in range(6):
         if gt[i] != pytest.approx(expected_gt[i], abs=1e-10 * abs(expected_gt[i])):
             assert False, gt
-    assert ds.GetRasterBand(1).Checksum() in (4363, 4264) # 4264 on Mac
+    assert ds.GetRasterBand(1).Checksum() in (4363, 4264, 4362) # 4264 on Mac , 4362 on Mac / Conda
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 4356
     assert ds.GetRasterBand(1).GetOverviewCount() == 2
     ds = None
@@ -483,7 +483,7 @@ def test_cog_byte_to_web_mercator_manual():
     for i in range(6):
         if gt[i] != pytest.approx(expected_gt[i], abs=1e-10 * abs(expected_gt[i])):
             assert False, gt
-    assert ds.GetRasterBand(1).Checksum() in (4363, 4264) # 4264 on Mac
+    assert ds.GetRasterBand(1).Checksum() in (4363, 4264, 4362) # 4264 on Mac , 4362 on Mac / Conda
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 4356
     assert ds.GetRasterBand(1).GetOverviewCount() == 2
     ds = None

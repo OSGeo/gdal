@@ -7,8 +7,6 @@ HEADERS = Lerc1Image.h
 
 LERCV1 = LERCV1.obj
 
-GDAL_ROOT	=	..\..\..
-
 EXTRAFLAGS      = -DLERC
 
 default:    $(LERCV1)

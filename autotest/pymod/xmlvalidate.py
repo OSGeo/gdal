@@ -458,18 +458,22 @@ def has_local_inspire_schemas(path):
     except OSError:
         return False
 
-###############################################################################
-# Usage function
-
 
 def Usage():
-    print('Usage: validate.py [-target_dir dir] [-download_ogc_schemas] [-ogc_schemas_location path]')
-    print('                   [-download_inspire_schemas] [-inspire_schemas_location path]')
-    print('                   [-app_schema_ns ns] [-schema some.xsd]')
-    print('                   some.xml')
-    sys.exit(255)
-
-###############################################################################
-# Main
+    print('Usage: xmlvalidate.py [-target_dir dir] [-download_ogc_schemas] [-ogc_schemas_location path]')
+    print('                      [-download_inspire_schemas] [-inspire_schemas_location path]')
+    print('                      [-app_schema_ns ns] [-schema some.xsd]')
+    print('                      some.xml')
+    return 255
 
 
+def main(argv):
+    if len(argv) < 2:
+        return Usage()
+    else:
+        print('command line usage is not implemented yet')
+        return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

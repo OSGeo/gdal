@@ -33,48 +33,67 @@
 import sys
 
 from osgeo import gdal
+from osgeo.auxiliary.base import GetOutputDriverFor
 
-if len(sys.argv) < 3:
+
+def Usage():
     print('Usage: attachpct.py <pctfile> <infile> <outfile>')
-    sys.exit(1)
+    return 1
 
-# =============================================================================
-# Get the PCT.
-# =============================================================================
-ds = gdal.Open(sys.argv[1])
-ct = ds.GetRasterBand(1).GetRasterColorTable()
 
-if ct is None:
-    print('No color table on file ', sys.argv[1])
-    sys.exit(1)
+def main(argv):
+    if len(argv) < 3:
+        return Usage()
+    ct_filename = argv[1]
+    src_filename = argv[2]
+    dst_filename = argv[3]
+    _ds, err = doit(ct_filename, src_filename, dst_filename)
+    return err
 
-ct = ct.Clone()
 
-ds = None
+def doit(pct_filename, src_filename, dst_filename, frmt=None):
 
-# =============================================================================
-# Create a MEM clone of the source file.
-# =============================================================================
+    # =============================================================================
+    # Get the PCT.
+    # =============================================================================
+    ds = gdal.Open(pct_filename)
+    ct = ds.GetRasterBand(1).GetRasterColorTable()
 
-src_ds = gdal.Open(sys.argv[2])
+    if ct is None:
+        print('No color table on file ', pct_filename)
+        return None, 1
 
-mem_ds = gdal.GetDriverByName('MEM').CreateCopy('mem', src_ds)
+    ct = ct.Clone()
 
-# =============================================================================
-# Assign the color table in memory.
-# =============================================================================
+    # =============================================================================
+    # Create a MEM clone of the source file.
+    # =============================================================================
 
-mem_ds.GetRasterBand(1).SetRasterColorTable(ct)
-mem_ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_PaletteIndex)
+    src_ds = gdal.Open(src_filename)
 
-# =============================================================================
-# Write the dataset to the output file.
-# =============================================================================
+    mem_ds = gdal.GetDriverByName('MEM').CreateCopy('mem', src_ds)
 
-drv = gdal.GetDriverByName('GTiff')
+    # =============================================================================
+    # Assign the color table in memory.
+    # =============================================================================
 
-out_ds = drv.CreateCopy(sys.argv[3], mem_ds)
+    mem_ds.GetRasterBand(1).SetRasterColorTable(ct)
+    mem_ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_PaletteIndex)
 
-out_ds = None
-mem_ds = None
-src_ds = None
+    # =============================================================================
+    # Write the dataset to the output file.
+    # =============================================================================
+
+    if frmt is None:
+        frmt = GetOutputDriverFor(dst_filename)
+
+    out_ds = frmt.CreateCopy(dst_filename, mem_ds)
+
+    mem_ds = None
+    src_ds = None
+
+    return out_ds, 0
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

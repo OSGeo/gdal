@@ -62,7 +62,7 @@ Examples:
 
 .kmz, .ods and .xlsx extensions are also detected as valid extensions for zip-compatible archives.
 
-Starting with GDAL 2.2, an alternate syntax is available so as to enable chaining and not being dependent on .zip extension, e.g.: :file:`/vsizip/{/path/to/the/archive}/path/inside/the/zip/file`. Note that :file:`/path/to/the/archive` may also itself use this alternate syntax.
+Starting with GDAL 2.2, an alternate syntax is available so as to enable chaining and not being dependent on .zip extension, e.g.: ``/vsizip/{/path/to/the/archive}/path/inside/the/zip/file``. Note that :file:`/path/to/the/archive` may also itself use this alternate syntax.
 
 Write capabilities are also available. They allow creating a new zip file and adding new files to an already existing (or just created) zip file.
 
@@ -163,7 +163,7 @@ Starting with GDAL 2.3, options can be passed in the filename with the following
 
 Partial downloads (requires the HTTP server to support random reading) are done with a 16 KB granularity by default. Starting with GDAL 2.3, the chunk size can be configured with the :decl_configoption:`CPL_VSIL_CURL_CHUNK_SIZE` configuration option, with a value in bytes. If the driver detects sequential reading it will progressively increase the chunk size up to 2 MB to improve download performance. Starting with GDAL 2.3, the :decl_configoption:`GDAL_INGESTED_BYTES_AT_OPEN` configuration option can be set to impose the number of bytes read in one GET call at file opening (can help performance to read Cloud optimized geotiff with a large header).
 
-The :decl_configoption:`GDAL_HTTP_PROXY`, :decl_configoption:`GDAL_HTTP_PROXYUSERPWD` and :decl_configoption:`GDAL_PROXY_AUTH` configuration options can be used to define a proxy server. The syntax to use is the one of Curl ``CURLOPT_PROXY``, ``CURLOPT_PROXYUSERPWD`` and ``CURLOPT_PROXYAUTH`` options.
+The :decl_configoption:`GDAL_HTTP_PROXY` (for both HTTP and HTTPS protocols), :decl_configoption:`GDAL_HTTPS_PROXY` (for HTTPS protocol only), :decl_configoption:`GDAL_HTTP_PROXYUSERPWD` and :decl_configoption:`GDAL_PROXY_AUTH` configuration options can be used to define a proxy server. The syntax to use is the one of Curl ``CURLOPT_PROXY``, ``CURLOPT_PROXYUSERPWD`` and ``CURLOPT_PROXYAUTH`` options.
 
 Starting with GDAL 2.1.3, the :decl_configoption:`CURL_CA_BUNDLE` or :decl_configoption:`SSL_CERT_FILE` configuration options can be used to set the path to the Certification Authority (CA) bundle file (if not specified, curl will use a file in a system location).
 
@@ -196,7 +196,7 @@ Although this file handler is able seek to random offsets in the file, this will
 
 Recognized filenames are of the form :file:`/vsicurl_streaming/http[s]://path/to/remote/resource` or :file:`/vsicurl_streaming/ftp://path/to/remote/resource`, where :file:`path/to/remote/resource` is the URL of a remote resource.
 
-The :decl_configoption:`GDAL_HTTP_PROXY`, :decl_configoption:`GDAL_HTTP_PROXYUSERPWD` and :decl_configoption:`GDAL_PROXY_AUTH` configuration options can be used to define a proxy server. The syntax to use is the one of Curl ``CURLOPT_PROXY``, ``CURLOPT_PROXYUSERPWD`` and ``CURLOPT_PROXYAUTH`` options.
+The :decl_configoption:`GDAL_HTTP_PROXY` (for both HTTP and HTTPS protocols), :decl_configoption:`GDAL_HTTPS_PROXY` (for HTTPS protocol only), :decl_configoption:`GDAL_HTTP_PROXYUSERPWD` and :decl_configoption:`GDAL_PROXY_AUTH` configuration options can be used to define a proxy server. The syntax to use is the one of Curl ``CURLOPT_PROXY``, ``CURLOPT_PROXYUSERPWD`` and ``CURLOPT_PROXYAUTH`` options.
 
 Starting with GDAL 2.1.3, the :decl_configoption:`CURL_CA_BUNDLE` or :decl_configoption:`SSL_CERT_FILE` configuration options can be used to set the path to the Certification Authority (CA) bundle file (if not specified, curl will use a file in a system location).
 
@@ -311,6 +311,8 @@ Authentication options, and read-only features, are identical to :ref:`/vsigs/ <
 
 /vsiaz/ is a file system handler that allows on-the-fly random reading of (primarily non-public) files available in Microsoft Azure Blob containers, without prior download of the entire file. It requires GDAL to be built against libcurl.
 
+See :ref:`/vsiadls/ </vsiadls/>` for a related filesystem for Azure Data Lake Storage Gen2.
+
 It also allows sequential writing of files. No seeks or read operations are then allowed, so in particular direct writing of GeoTIFF files with the GTiff driver is not supported, unless, if, starting with GDAL 3.2, the :decl_configoption:`CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE` configuration option is set to ``YES``, in which case random-write access is possible (involves the creation of a temporary local file, whose location is controlled by the :decl_configoption:`CPL_TMPDIR` configuration option).
 A block blob will be created if the file size is below 4 MB. Beyond, an append blob will be created (with a maximum file size of 195 GB).
 
@@ -345,6 +347,33 @@ Recognized filenames are of the form :file:`/vsiaz_streaming/container/key` wher
 Authentication options, and read-only features, are identical to :ref:`/vsiaz/ </vsiaz/>`
 
 .. versionadded:: 2.3
+
+.. _`/vsiadls/`:
+
+/vsiadls/ (Microsoft Azure Data Lake Storage Gen2)
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+/vsiadls/ is a file system handler that allows on-the-fly random reading of
+(primarily non-public) files available in Microsoft Azure Data Lake Storage file
+systems, without prior download of the entire file.
+It requires GDAL to be built against libcurl.
+
+It has similar capabilities as :ref:`/vsiaz/ </vsiaz/>`, and in particular uses the same
+configuration options for authentication. Its advantages over /vsiaz/ are a real
+management of directory and Unix-style ACL support. Some features require the Azure
+storage to have hierarchical support turned on. Consult its
+`documentation <https://docs.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-introduction>`__
+
+The main enhancements over /vsiaz/ are:
+
+  * True directory support (no need for the artificial :file:`.gdal_marker_for_dir`
+    empty file that is used for /vsiaz/ to have empty directories)
+  * One-call recursive directory deletion with :cpp:func:`VSIRmdirRecursive`
+  * Atomic renaming with :cpp:func:`VSIRename`
+  * :cpp:func:`VSIGetFileMetadata` support for the "STATUS" and "ACL" metadata domains
+  * :cpp:func:`VSISetFileMetadata` support for the "PROPERTIES" and "ACL" metadata domains
+
+.. versionadded:: 3.3
 
 .. _`/vsioss/`:
 

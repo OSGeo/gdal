@@ -42,12 +42,11 @@ def Usage():
     print('       histrep.py -req <min> <max> <buckets> [-force] [-approxok]')
     print('                  [-ioor] input_file')
     print('')
-    sys.exit(1)
+    return 1
 
 
-# =============================================================================
-if __name__ == '__main__':
-    argv = gdal.GeneralCmdLineProcessor(sys.argv)
+def main(argv):
+    argv = gdal.GeneralCmdLineProcessor(argv)
 
     req = None
     force = 0
@@ -108,3 +107,9 @@ if __name__ == '__main__':
             print('Histogram: ', hist)
 
     ds = None
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
+

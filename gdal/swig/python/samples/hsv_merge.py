@@ -118,122 +118,126 @@ where src_color is a RGB or RGBA dataset,
       dst_color will be a RGB or RGBA dataset using the greyscale as the
       intensity for the color dataset.
 """)
-    sys.exit(1)
-
-# =============================================================================
-# 	Mainline
-# =============================================================================
+    return 1
 
 
-argv = gdal.GeneralCmdLineProcessor(sys.argv)
-if argv is None:
-    sys.exit(0)
+def main(argv):
+    argv = gdal.GeneralCmdLineProcessor(argv)
+    if argv is None:
+        return 0
 
-frmt = 'GTiff'
-src_color_filename = None
-src_greyscale_filename = None
-dst_color_filename = None
-quiet = False
+    frmt = 'GTiff'
+    src_color_filename = None
+    src_greyscale_filename = None
+    dst_color_filename = None
+    quiet = False
 
-# Parse command line arguments.
-i = 1
-while i < len(argv):
-    arg = argv[i]
+    # Parse command line arguments.
+    i = 1
+    while i < len(argv):
+        arg = argv[i]
 
-    if arg == '-of':
+        if arg == '-of':
+            i = i + 1
+            frmt = argv[i]
+
+        elif arg == '-q' or arg == '-quiet':
+            quiet = True
+
+        elif src_color_filename is None:
+            src_color_filename = argv[i]
+
+        elif src_greyscale_filename is None:
+            src_greyscale_filename = argv[i]
+
+        elif dst_color_filename is None:
+            dst_color_filename = argv[i]
+        else:
+            Usage()
+
         i = i + 1
-        frmt = argv[i]
 
-    elif arg == '-q' or arg == '-quiet':
-        quiet = True
-
-    elif src_color_filename is None:
-        src_color_filename = argv[i]
-
-    elif src_greyscale_filename is None:
-        src_greyscale_filename = argv[i]
-
-    elif dst_color_filename is None:
-        dst_color_filename = argv[i]
-    else:
+    if dst_color_filename is None:
         Usage()
 
-    i = i + 1
+    datatype = gdal.GDT_Byte
 
-if dst_color_filename is None:
-    Usage()
+    hilldataset = gdal.Open(src_greyscale_filename, gdal.GA_ReadOnly)
+    colordataset = gdal.Open(src_color_filename, gdal.GA_ReadOnly)
 
-datatype = gdal.GDT_Byte
+    # check for 3 or 4 bands in the color file
+    if (colordataset.RasterCount != 3 and colordataset.RasterCount != 4):
+        print('Source image does not appear to have three or four bands as required.')
+        return 1
 
-hilldataset = gdal.Open(src_greyscale_filename, gdal.GA_ReadOnly)
-colordataset = gdal.Open(src_color_filename, gdal.GA_ReadOnly)
+    # define output format, name, size, type and set projection
+    out_driver = gdal.GetDriverByName(frmt)
+    outdataset = out_driver.Create(dst_color_filename, colordataset.RasterXSize,
+                                   colordataset.RasterYSize, colordataset.RasterCount, datatype)
+    outdataset.SetProjection(hilldataset.GetProjection())
+    outdataset.SetGeoTransform(hilldataset.GetGeoTransform())
 
-# check for 3 or 4 bands in the color file
-if (colordataset.RasterCount != 3 and colordataset.RasterCount != 4):
-    print('Source image does not appear to have three or four bands as required.')
-    sys.exit(1)
-
-# define output format, name, size, type and set projection
-out_driver = gdal.GetDriverByName(frmt)
-outdataset = out_driver.Create(dst_color_filename, colordataset.RasterXSize,
-                               colordataset.RasterYSize, colordataset.RasterCount, datatype)
-outdataset.SetProjection(hilldataset.GetProjection())
-outdataset.SetGeoTransform(hilldataset.GetGeoTransform())
-
-# assign RGB and hillshade bands
-rBand = colordataset.GetRasterBand(1)
-gBand = colordataset.GetRasterBand(2)
-bBand = colordataset.GetRasterBand(3)
-if colordataset.RasterCount == 4:
-    aBand = colordataset.GetRasterBand(4)
-else:
-    aBand = None
-
-hillband = hilldataset.GetRasterBand(1)
-hillbandnodatavalue = hillband.GetNoDataValue()
-
-# check for same file size
-if ((rBand.YSize != hillband.YSize) or (rBand.XSize != hillband.XSize)):
-    print('Color and hillshade must be the same size in pixels.')
-    sys.exit(1)
-
-# loop over lines to apply hillshade
-for i in range(hillband.YSize):
-    # load RGB and Hillshade arrays
-    rScanline = rBand.ReadAsArray(0, i, hillband.XSize, 1, hillband.XSize, 1)
-    gScanline = gBand.ReadAsArray(0, i, hillband.XSize, 1, hillband.XSize, 1)
-    bScanline = bBand.ReadAsArray(0, i, hillband.XSize, 1, hillband.XSize, 1)
-    hillScanline = hillband.ReadAsArray(0, i, hillband.XSize, 1, hillband.XSize, 1)
-
-    # convert to HSV
-    hsv = rgb_to_hsv(rScanline, gScanline, bScanline)
-
-    # if there's nodata on the hillband, use the v value from the color
-    # dataset instead of the hillshade value.
-    if hillbandnodatavalue is not None:
-        equal_to_nodata = numpy.equal(hillScanline, hillbandnodatavalue)
-        v = numpy.choose(equal_to_nodata, (hillScanline, hsv[2]))
+    # assign RGB and hillshade bands
+    rBand = colordataset.GetRasterBand(1)
+    gBand = colordataset.GetRasterBand(2)
+    bBand = colordataset.GetRasterBand(3)
+    if colordataset.RasterCount == 4:
+        aBand = colordataset.GetRasterBand(4)
     else:
-        v = hillScanline
+        aBand = None
 
-    # replace v with hillshade
-    hsv_adjusted = numpy.asarray([hsv[0], hsv[1], v])
+    hillband = hilldataset.GetRasterBand(1)
+    hillbandnodatavalue = hillband.GetNoDataValue()
 
-    # convert back to RGB
-    dst_color = hsv_to_rgb(hsv_adjusted)
+    # check for same file size
+    if ((rBand.YSize != hillband.YSize) or (rBand.XSize != hillband.XSize)):
+        print('Color and hillshade must be the same size in pixels.')
+        return 1
 
-    # write out new RGB bands to output one band at a time
-    outband = outdataset.GetRasterBand(1)
-    outband.WriteArray(dst_color[0], 0, i)
-    outband = outdataset.GetRasterBand(2)
-    outband.WriteArray(dst_color[1], 0, i)
-    outband = outdataset.GetRasterBand(3)
-    outband.WriteArray(dst_color[2], 0, i)
-    if aBand is not None:
-        aScanline = aBand.ReadAsArray(0, i, hillband.XSize, 1, hillband.XSize, 1)
-        outband = outdataset.GetRasterBand(4)
-        outband.WriteArray(aScanline, 0, i)
+    # loop over lines to apply hillshade
+    for i in range(hillband.YSize):
+        # load RGB and Hillshade arrays
+        rScanline = rBand.ReadAsArray(0, i, hillband.XSize, 1, hillband.XSize, 1)
+        gScanline = gBand.ReadAsArray(0, i, hillband.XSize, 1, hillband.XSize, 1)
+        bScanline = bBand.ReadAsArray(0, i, hillband.XSize, 1, hillband.XSize, 1)
+        hillScanline = hillband.ReadAsArray(0, i, hillband.XSize, 1, hillband.XSize, 1)
 
-    # update progress line
-    if not quiet:
-        gdal.TermProgress_nocb((float(i + 1) / hillband.YSize))
+        # convert to HSV
+        hsv = rgb_to_hsv(rScanline, gScanline, bScanline)
+
+        # if there's nodata on the hillband, use the v value from the color
+        # dataset instead of the hillshade value.
+        if hillbandnodatavalue is not None:
+            equal_to_nodata = numpy.equal(hillScanline, hillbandnodatavalue)
+            v = numpy.choose(equal_to_nodata, (hillScanline, hsv[2]))
+        else:
+            v = hillScanline
+
+        # replace v with hillshade
+        hsv_adjusted = numpy.asarray([hsv[0], hsv[1], v])
+
+        # convert back to RGB
+        dst_color = hsv_to_rgb(hsv_adjusted)
+
+        # write out new RGB bands to output one band at a time
+        outband = outdataset.GetRasterBand(1)
+        outband.WriteArray(dst_color[0], 0, i)
+        outband = outdataset.GetRasterBand(2)
+        outband.WriteArray(dst_color[1], 0, i)
+        outband = outdataset.GetRasterBand(3)
+        outband.WriteArray(dst_color[2], 0, i)
+        if aBand is not None:
+            aScanline = aBand.ReadAsArray(0, i, hillband.XSize, 1, hillband.XSize, 1)
+            outband = outdataset.GetRasterBand(4)
+            outband.WriteArray(aScanline, 0, i)
+
+        # update progress line
+        if not quiet:
+            gdal.TermProgress_nocb((float(i + 1) / hillband.YSize))
+
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
+

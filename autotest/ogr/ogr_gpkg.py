@@ -898,20 +898,28 @@ def test_ogr_gpkg_15():
         pytest.fail()
     gpkg_ds.ReleaseResultSet(sql_lyr)
 
-    # Invalid target SRID
+    # Invalid target SRID=0
+    # GeoPackage: The record with an srs_id of 0 SHALL be used for undefined geographic coordinate reference systems.
     with gdaltest.error_handler():
-        sql_lyr = gpkg_ds.ExecuteSQL("SELECT ST_Transform(geom, 0) FROM tbl_linestring_renamed")
+        sql_lyr = gpkg_ds.ExecuteSQL("SELECT ST_Transform(geom, 0), ST_SRID(ST_Transform(geom, 0)) FROM tbl_linestring_renamed")
+    assert sql_lyr.GetSpatialRef().ExportToWkt().find('Undefined geographic SRS') >= 0
     feat = sql_lyr.GetNextFeature()
-    if feat.GetGeometryRef() is not None:
+    if feat.GetGeometryRef() is None or feat.GetField(0) != 0:
         feat.DumpReadable()
         pytest.fail()
     gpkg_ds.ReleaseResultSet(sql_lyr)
 
-    # Invalid source SRID
+    # Invalid source SRID=0
+    # GeoPackage: The record with an srs_id of 0 SHALL be used for undefined geographic coordinate reference systems.
+    # The source is undefined geographic coordinate reference systems (based on WGS84) and the target is WGS84,
+    # and the result is an identity transformation that leaves geometry unchanged.
+    src_lyr = gpkg_ds.GetLayerByName("point-with-spi-and-dashes")
+    assert src_lyr.GetSpatialRef().ExportToWkt().find('Undefined geographic SRS') >= 0
     with gdaltest.error_handler():
-        sql_lyr = gpkg_ds.ExecuteSQL("SELECT ST_Transform(geom, 4326) FROM \"point-with-spi-and-dashes\"")
+        sql_lyr = gpkg_ds.ExecuteSQL("SELECT ST_Transform(geom, 4326), ST_SRID(ST_Transform(geom, 4326)) FROM \"point-with-spi-and-dashes\"")
+    assert sql_lyr.GetSpatialRef().ExportToWkt().find('WGS_1984') >= 0
     feat = sql_lyr.GetNextFeature()
-    if feat.GetGeometryRef() is not None:
+    if feat.GetGeometryRef() is None or feat.GetField(0) != 4326:
         feat.DumpReadable()
         pytest.fail()
     gpkg_ds.ReleaseResultSet(sql_lyr)

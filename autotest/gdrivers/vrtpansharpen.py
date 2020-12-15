@@ -1798,6 +1798,95 @@ def test_vrtpansharpen_nodata_multiple_spectral_bands():
     gdal.Unlink('/vsimem/b2.tif')
 
 ###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/3189
+# that is when the spectral bands have no nodata value, but we have one
+# declared in PansharpeningOptions, and when the VRTPansharpenedDataset
+# exposes overviews
+
+def test_vrtpansharpen_nodata_overviews():
+
+    ds = gdal.Translate('/vsimem/pan.tif', 'data/byte.tif')
+    ds.BuildOverviews('NEAR', [2])
+    ds = None
+
+    ds = gdal.Translate('/vsimem/ms.tif', 'data/byte.tif')
+    ds.BuildOverviews('NEAR', [2])
+    ds = None
+
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
+  <PansharpeningOptions>
+      <NoData>0</NoData>
+    <PanchroBand>
+      <SourceFilename>/vsimem/pan.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </PanchroBand>
+    <SpectralBand dstBand="1">
+      <SourceFilename>/vsimem/ms.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SpectralBand>
+  </PansharpeningOptions>
+</VRTDataset>""")
+    assert vrt_ds
+    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
+    vrt_ds = None
+
+    gdal.Unlink('/vsimem/pan.tif')
+    gdal.Unlink('/vsimem/ms.tif')
+
+###############################################################################
+# Test input multispectral bands not in order 1,2,... and NoData as PansharpeningOptions
+
+def test_vrtpansharpen_out_of_order_input_bands_and_nodata():
+
+    src_ds = gdal.Open('data/small_world.tif')
+    src_data = src_ds.GetRasterBand(1).ReadRaster()
+    gt = src_ds.GetGeoTransform()
+    wkt = src_ds.GetProjectionRef()
+    src_ds = None
+    pan_ds = gdal.GetDriverByName('MEM').Create('', 800, 400)
+    gt = [gt[i] for i in range(len(gt))]
+    gt[1] *= 0.5
+    gt[5] *= 0.5
+    pan_ds.SetGeoTransform(gt)
+    pan_ds.SetProjection(wkt)
+    pan_ds.GetRasterBand(1).WriteRaster(0, 0, 800, 400, src_data, 400, 200)
+
+    ms_ds = gdal.Open('data/small_world.tif')
+
+    vrt_ds = gdal.CreatePansharpenedVRT("""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <AlgorithmOptions>
+                <Weights>0.5,0.5</Weights>
+            </AlgorithmOptions>
+            <NoData>0</NoData>
+            <SpectralBand dstBand="1">
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""", pan_ds.GetRasterBand(1), [ms_ds.GetRasterBand(i + 1) for i in range(2)])
+    assert vrt_ds is not None
+    cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
+
+    # Switches the input multispectral bands
+    vrt_ds = gdal.CreatePansharpenedVRT("""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <AlgorithmOptions>
+                <Weights>0.5,0.5</Weights>
+            </AlgorithmOptions>
+            <NoData>0</NoData>
+            <SpectralBand dstBand="1">
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""", pan_ds.GetRasterBand(1), [ms_ds.GetRasterBand(2 - i) for i in range(2)])
+    assert vrt_ds is not None
+    cs2 = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
+
+    assert cs2 == cs[::-1]
+
+###############################################################################
 # Cleanup
 
 

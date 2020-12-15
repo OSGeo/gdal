@@ -43,7 +43,10 @@
 
 class ARGVDestroyer
 {
-        char** m_papszList;
+        char** m_papszList = nullptr;
+        ARGVDestroyer(const ARGVDestroyer&) = delete;
+        ARGVDestroyer& operator= (const ARGVDestroyer&) = delete;
+
     public:
         explicit ARGVDestroyer(char** papszList) : m_papszList(papszList) {}
         ~ARGVDestroyer() { CSLDestroy(m_papszList); }

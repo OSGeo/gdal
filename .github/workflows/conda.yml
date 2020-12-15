@@ -1,0 +1,57 @@
+name: Conda
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Conda ${{ matrix.platform }}
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
+
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      fail-fast: true
+      matrix:
+        platform: ['ubuntu-latest','windows-latest','macos-latest']
+
+    env:
+      PLATFORM: ${{ matrix.platform }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        channels: conda-forge
+        auto-update-conda: true
+
+    - name: Setup
+      shell: bash -l {0}
+      run: |
+          source ./gdal/ci/travis/conda/setup.sh
+
+    - name: Support longpaths
+      run: git config --system core.longpaths true
+      if: matrix.platform == 'windows-latest'
+
+    - name: Build
+      shell: bash -l {0}
+      run: |
+          source ../gdal/ci/travis/conda/compile.sh
+      working-directory: ./gdal-feedstock
+
+    - uses: ilammy/msvc-dev-cmd@v1
+      if: matrix.platform == 'windows-latest'
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.platform }}-conda-package
+        path: ./gdal-feedstock/packages/
+
+    - name: Deploy to gdal-master Conda channel
+      if: github.ref == 'refs/heads/master'
+      shell: bash -l {0}
+      env:
+        ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+      run: |
+          source ../gdal/ci/travis/conda/upload.sh || true
+      working-directory: ./gdal-feedstock

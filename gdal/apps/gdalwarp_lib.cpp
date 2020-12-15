@@ -1062,6 +1062,8 @@ GDALDatasetH GDALWarpIndirect( const char *pszDest,
             psOptions->papszCreateOptions, "COMPRESS=LZW");
         psOptions->papszCreateOptions = CSLAddString(
             psOptions->papszCreateOptions, "TILED=YES");
+        psOptions->papszCreateOptions = CSLAddString(
+            psOptions->papszCreateOptions, "BIGTIFF=YES");
         psOptions->pfnProgress = myScaledProgress;
         dfStartPctCreateCopy = 2. / 3;
         psOptions->pProgressData = GDALCreateScaledProgress(
@@ -3611,6 +3613,36 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
         GDALDestroyColorTable( hCT );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Copy scale/offset if found on source                            */
+/* -------------------------------------------------------------------- */
+    if( nSrcCount == 1 )
+    {
+        GDALDataset* poSrcDS = GDALDataset::FromHandle(pahSrcDS[0]);
+        GDALDataset* poDstDS = GDALDataset::FromHandle(hDstDS);
+
+        int nBandsToCopy = nDstBandCount;
+        if ( psOptions->bEnableDstAlpha )
+            nBandsToCopy --;
+        nBandsToCopy = std::min(nBandsToCopy, poSrcDS->GetRasterCount());
+
+        for( int i = 0; i < nBandsToCopy; i++ )
+        {
+            auto poSrcBand = poSrcDS->GetRasterBand(i+1);
+            auto poDstBand = poDstDS->GetRasterBand(i+1);
+
+            int bHasScale = FALSE;
+            const double dfScale = poSrcBand->GetScale(&bHasScale);
+            if( bHasScale )
+                poDstBand->SetScale(dfScale);
+
+            int bHasOffset = FALSE;
+            const double dfOffset = poSrcBand->GetOffset(&bHasOffset);
+            if( bHasOffset )
+                poDstBand->SetOffset(dfOffset);
+        }
+    }
+
     return hDstDS;
 }
 
@@ -4335,6 +4367,9 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
         else if( EQUAL(papszArgv[i],"-ra") )
             psOptions->eResampleAlg = GRA_Average;
 
+        else if( EQUAL(papszArgv[i],"-rrms") )
+            psOptions->eResampleAlg = GRA_RMS;
+
         else if( EQUAL(papszArgv[i],"-rm") )
             psOptions->eResampleAlg = GRA_Mode;
 
@@ -4508,6 +4543,8 @@ static bool GetResampleAlg(const char* pszResampling,
         eResampleAlg = GRA_Lanczos;
     else if ( EQUAL(pszResampling, "average") )
         eResampleAlg = GRA_Average;
+    else if ( EQUAL(pszResampling, "rms") )
+        eResampleAlg = GRA_RMS;
     else if ( EQUAL(pszResampling, "mode") )
         eResampleAlg = GRA_Mode;
     else if ( EQUAL(pszResampling, "max") )

@@ -78,7 +78,7 @@ protected:
         IVSIS3LikeHandleHelper* CreateHandleHelper(
             const char* pszURI, bool bAllowNoObject) override;
 
-        CPLString GetFSPrefix() override { return "/vsioss/"; }
+        CPLString GetFSPrefix() const override { return "/vsioss/"; }
 
         void ClearCache() override;
 

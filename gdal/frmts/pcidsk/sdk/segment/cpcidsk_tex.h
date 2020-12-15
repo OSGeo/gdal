@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Declaration of the CPCIDSK_TEX class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2010
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,12 +38,12 @@
 namespace PCIDSK
 {
     class PCIDSKFile;
-    
+
     /************************************************************************/
     /*                            CPCIDSK_TEX                               */
     /************************************************************************/
 
-    class CPCIDSK_TEX : virtual public CPCIDSKSegment, 
+    class CPCIDSK_TEX : virtual public CPCIDSKSegment,
                         public PCIDSK_TEX
     {
     public:

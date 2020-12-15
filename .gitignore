@@ -15,6 +15,11 @@
 .idea
 .vscode
 .vs
+.vim
+
+# clangd lsp
+.clangd
+compile_commands.json
 
 # Python
 __pycache__/
@@ -28,3 +33,5 @@ CMakeLists.txt
 # NuGet package manager storage
 gdal/packages*
 gdal/share
+
+

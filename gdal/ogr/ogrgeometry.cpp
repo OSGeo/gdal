@@ -5863,12 +5863,14 @@ int OGRHasPreparedGeometrySupport()
  *
  * To free with OGRDestroyPreparedGeometry()
  *
- * @param poGeom input geometry to prepare.
+ * @param hGeom input geometry to prepare.
  * @return handle to a prepared geometry.
+ * @since GDAL 3.3
  */
-OGRPreparedGeometry* OGRCreatePreparedGeometry( UNUSED_IF_NO_GEOS const OGRGeometry* poGeom )
+OGRPreparedGeometryH OGRCreatePreparedGeometry( UNUSED_IF_NO_GEOS OGRGeometryH hGeom )
 {
 #ifdef HAVE_GEOS_PREPARED_GEOMETRY
+    OGRGeometry* poGeom = OGRGeometry::FromHandle(hGeom);
     GEOSContextHandle_t hGEOSCtxt = OGRGeometry::createGEOSContext();
     GEOSGeom hGEOSGeom = poGeom->exportToGEOS(hGEOSCtxt);
     if( hGEOSGeom == nullptr )
@@ -5900,17 +5902,18 @@ OGRPreparedGeometry* OGRCreatePreparedGeometry( UNUSED_IF_NO_GEOS const OGRGeome
 /************************************************************************/
 
 /** Destroys a prepared geometry.
- * @param poPreparedGeom preprated geometry.
+ * @param hPreparedGeom preprated geometry.
+ * @since GDAL 3.3
  */
-void OGRDestroyPreparedGeometry( UNUSED_IF_NO_GEOS OGRPreparedGeometry* poPreparedGeom )
+void OGRDestroyPreparedGeometry( UNUSED_IF_NO_GEOS OGRPreparedGeometryH hPreparedGeom )
 {
 #ifdef HAVE_GEOS_PREPARED_GEOMETRY
-    if( poPreparedGeom != nullptr )
+    if( hPreparedGeom != nullptr )
     {
-        GEOSPreparedGeom_destroy_r(poPreparedGeom->hGEOSCtxt, poPreparedGeom->poPreparedGEOSGeom);
-        GEOSGeom_destroy_r( poPreparedGeom->hGEOSCtxt, poPreparedGeom->hGEOSGeom );
-        OGRGeometry::freeGEOSContext( poPreparedGeom->hGEOSCtxt );
-        delete poPreparedGeom;
+        GEOSPreparedGeom_destroy_r(hPreparedGeom->hGEOSCtxt, hPreparedGeom->poPreparedGEOSGeom);
+        GEOSGeom_destroy_r( hPreparedGeom->hGEOSCtxt, hPreparedGeom->hGEOSGeom );
+        OGRGeometry::freeGEOSContext( hPreparedGeom->hGEOSCtxt );
+        delete hPreparedGeom;
     }
 #endif
 }
@@ -5920,28 +5923,30 @@ void OGRDestroyPreparedGeometry( UNUSED_IF_NO_GEOS OGRPreparedGeometry* poPrepar
 /************************************************************************/
 
 /** Returns whether a prepared geometry intersects with a geometry.
- * @param poPreparedGeom prepared geometry.
- * @param poOtherGeom other geometry.
+ * @param hPreparedGeom prepared geometry.
+ * @param hOtherGeom other geometry.
  * @return TRUE or FALSE.
+ * @since GDAL 3.3
  */
 int OGRPreparedGeometryIntersects(
-    UNUSED_IF_NO_GEOS const OGRPreparedGeometry* poPreparedGeom,
-    UNUSED_IF_NO_GEOS const OGRGeometry* poOtherGeom )
+    UNUSED_IF_NO_GEOS const OGRPreparedGeometryH hPreparedGeom,
+    UNUSED_IF_NO_GEOS const OGRGeometryH hOtherGeom )
 {
 #ifdef HAVE_GEOS_PREPARED_GEOMETRY
-    if( poPreparedGeom == nullptr || poOtherGeom == nullptr )
+    OGRGeometry* poOtherGeom = OGRGeometry::FromHandle(hOtherGeom);
+    if( hPreparedGeom == nullptr || poOtherGeom == nullptr )
         return FALSE;
 
     GEOSGeom hGEOSOtherGeom =
-        poOtherGeom->exportToGEOS(poPreparedGeom->hGEOSCtxt);
+        poOtherGeom->exportToGEOS(hPreparedGeom->hGEOSCtxt);
     if( hGEOSOtherGeom == nullptr )
         return FALSE;
 
     const bool bRet = CPL_TO_BOOL(
-        GEOSPreparedIntersects_r(poPreparedGeom->hGEOSCtxt,
-                                 poPreparedGeom->poPreparedGEOSGeom,
+        GEOSPreparedIntersects_r(hPreparedGeom->hGEOSCtxt,
+                                 hPreparedGeom->poPreparedGEOSGeom,
                                  hGEOSOtherGeom));
-    GEOSGeom_destroy_r( poPreparedGeom->hGEOSCtxt, hGEOSOtherGeom );
+    GEOSGeom_destroy_r( hPreparedGeom->hGEOSCtxt, hGEOSOtherGeom );
 
     return bRet;
 #else
@@ -5950,28 +5955,29 @@ int OGRPreparedGeometryIntersects(
 }
 
 /** Returns whether a prepared geometry contains a geometry.
- * @param poPreparedGeom prepared geometry.
- * @param poOtherGeom other geometry.
+ * @param hPreparedGeom prepared geometry.
+ * @param hOtherGeom other geometry.
  * @return TRUE or FALSE.
  */
 int OGRPreparedGeometryContains(
-    UNUSED_IF_NO_GEOS const OGRPreparedGeometry* poPreparedGeom,
-    UNUSED_IF_NO_GEOS const OGRGeometry* poOtherGeom )
+    UNUSED_IF_NO_GEOS const OGRPreparedGeometryH hPreparedGeom,
+    UNUSED_IF_NO_GEOS const OGRGeometryH hOtherGeom )
 {
 #ifdef HAVE_GEOS_PREPARED_GEOMETRY
-    if( poPreparedGeom == nullptr || poOtherGeom == nullptr )
+    OGRGeometry* poOtherGeom = OGRGeometry::FromHandle(hOtherGeom);
+    if( hPreparedGeom == nullptr || poOtherGeom == nullptr )
         return FALSE;
 
     GEOSGeom hGEOSOtherGeom =
-        poOtherGeom->exportToGEOS(poPreparedGeom->hGEOSCtxt);
+        poOtherGeom->exportToGEOS(hPreparedGeom->hGEOSCtxt);
     if( hGEOSOtherGeom == nullptr )
         return FALSE;
 
     const bool bRet = CPL_TO_BOOL(
-        GEOSPreparedContains_r(poPreparedGeom->hGEOSCtxt,
-                               poPreparedGeom->poPreparedGEOSGeom,
+        GEOSPreparedContains_r(hPreparedGeom->hGEOSCtxt,
+                               hPreparedGeom->poPreparedGEOSGeom,
                                hGEOSOtherGeom));
-    GEOSGeom_destroy_r( poPreparedGeom->hGEOSCtxt, hGEOSOtherGeom );
+    GEOSGeom_destroy_r( hPreparedGeom->hGEOSCtxt, hGEOSOtherGeom );
 
     return bRet;
 #else

@@ -3107,8 +3107,10 @@ def test_nitf_86():
 # Test parsing ILLUMB TRE (STDI-0002-1-v5.0 App AL)
 
 def test_nitf_87():
+    mu = "B5"   # \mu per ISO-8859-1
     bit_mask = "7A0000"
-    tre_data = "TRE=HEX/ILLUMB=" + hex_string("0001mm                                      8.5192000000E-01") + \
+    tre_data = "TRE=HEX/ILLUMB=" + hex_string("0001") + \
+        mu + hex_string("m                                      8.5192000000E-01") + \
         hex_string("2.5770800000E+00001NUM_BANDS=1 because ILLUMB has no band-dependent content                        ") + \
         hex_string("World Geodetic System 1984                                                      ") + \
         hex_string("WGE World Geodetic System 1984                                                      ") + \
@@ -3129,7 +3131,7 @@ def test_nitf_87():
     expected_data = """<tres>
   <tre name="ILLUMB" location="image">
     <field name="NUM_BANDS" value="0001" />
-    <field name="BAND_UNIT" value="mm" />
+    <field name="BAND_UNIT" value="µm" />
     <repeated number="1">
       <group index="0">
         <field name="LBOUND" value="8.5192000000E-01" />
@@ -3271,6 +3273,426 @@ def test_nitf_89():
   </tre>
 </tres>
 """
+
+    assert data == expected_data
+
+###############################################################################
+# Test parsing SECURA TRE (STDI-0002-1-v5.0 App AI)
+
+def test_nitf_90():
+    tre_data = "FILE_TRE=SECURA=20201020142500NITF02.10" + " "*207 + "ARH.XML         00068" + \
+               "<?xml version=\"1.0\" encoding=\"UTF-8\"?> <arh:Security></arh:Security>"
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_90.ntf', 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_90.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_90.ntf')
+
+    expected_data = """<tres>
+  <tre name="SECURA" location="file">
+    <field name="FDATTIM" value="20201020142500" />
+    <field name="NITFVER" value="NITF02.10" />
+    <field name="NFSECFLDS" value="" />
+    <field name="SECSTD" value="ARH.XML" />
+    <field name="SECCOMP" value="" />
+    <field name="SECLEN" value="00068" />
+    <field name="SECURITY" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt; &lt;arh:Security&gt;&lt;/arh:Security&gt;" />
+  </tre>
+</tres>
+"""
+
+    assert data == expected_data
+
+###############################################################################
+# Test parsing SNSPSB TRE (STDI-0002-1-v5.0 App P)
+
+def test_nitf_91():
+    tre_data = "TRE=SNSPSB=010001111112222233333M  000001000001000001000001GSL         " + \
+               "PLTFM   INS     MOD PRL  SID       ACT               DEG0000001      +111111.11-222222.22" + \
+               "         meters 000000000000000000000011111111111111111111112222222222222222222222001" + \
+               "API                 Imeters 0123456789"
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_91.ntf', 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_91.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_91.ntf')
+
+    expected_data = """<tres>
+  <tre name="SNSPSB" location="image">
+    <field name="NUM_SNS" value="01" />
+    <repeated number="1">
+      <group index="0">
+        <field name="NUM_BP" value="00" />
+        <field name="NUM_BND" value="01" />
+        <repeated number="1">
+          <group index="0">
+            <field name="BID" value="11111" />
+            <field name="WS1" value="22222" />
+            <field name="WS2" value="33333" />
+          </group>
+        </repeated>
+        <field name="UNIRES" value="M" />
+        <field name="REX" value="000001" />
+        <field name="REY" value="000001" />
+        <field name="GSX" value="000001" />
+        <field name="GSY" value="000001" />
+        <field name="GSL" value="GSL" />
+        <field name="PLTFM" value="PLTFM" />
+        <field name="INS" value="INS" />
+        <field name="MOD" value="MOD" />
+        <field name="PRL" value="PRL" />
+        <field name="SID" value="SID" />
+        <field name="ACT" value="ACT" />
+        <field name="UNINOA" value="DEG" />
+        <field name="NOA" value="0000001" />
+        <field name="UNIANG" value="" />
+        <field name="UNIALT" value="" />
+        <field name="LONSCC" value="+111111.11" />
+        <field name="LATSCC" value="-222222.22" />
+        <field name="UNISAE" value="" />
+        <field name="UNIRPY" value="" />
+        <field name="UNIPXT" value="" />
+        <field name="UNISPE" value="meters" />
+        <field name="ROS" value="0000000000000000000000" />
+        <field name="PIS" value="1111111111111111111111" />
+        <field name="YAS" value="2222222222222222222222" />
+        <field name="NUM_AUX" value="001" />
+        <repeated number="1">
+          <group index="0">
+            <field name="API" value="API" />
+            <field name="APF" value="I" />
+            <field name="UNIAPX" value="meters" />
+            <field name="APN" value="0123456789" />
+          </group>
+        </repeated>
+      </group>
+    </repeated>
+  </tre>
+</tres>
+"""
+
+    assert data == expected_data
+
+###############################################################################
+# Test parsing RSMAPB TRE (STDI-0002-1-v5.0 App U)
+
+def test_nitf_RSMAPB():
+
+    tre_data = "TRE=RSMAPB=iid                                                                             " + \
+        "edition                                 tid                                     01IG+9.99999999999999E+99" + \
+        "+9.99999999999999E+99+9.99999999999999E+99+9.99999999999999E+99+9.99999999999999E+99+9.99999999999999E+99" + \
+        "Y01011230001+9.99999999999999E+99+9.99999999999999E+99"
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_RSMAPB.ntf', 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_RSMAPB.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_RSMAPB.ntf')
+
+    expected_data = """<tres>
+  <tre name="RSMAPB" location="image">
+    <field name="IID" value="iid" />
+    <field name="EDITION" value="edition" />
+    <field name="TID" value="tid" />
+    <field name="NPAR" value="01" />
+    <field name="APTYP" value="I" />
+    <field name="LOCTYP" value="G" />
+    <field name="NSFX" value="+9.99999999999999E+99" />
+    <field name="NSFY" value="+9.99999999999999E+99" />
+    <field name="NSFZ" value="+9.99999999999999E+99" />
+    <field name="NOFFX" value="+9.99999999999999E+99" />
+    <field name="NOFFY" value="+9.99999999999999E+99" />
+    <field name="NOFFZ" value="+9.99999999999999E+99" />
+    <field name="APBASE" value="Y" />
+    <field name="NISAP" value="01" />
+    <field name="NISAPR" value="01" />
+    <repeated number="1">
+      <group index="0">
+        <field name="XPWRR" value="1" />
+        <field name="YPWRR" value="2" />
+        <field name="ZPWRR" value="3" />
+      </group>
+    </repeated>
+    <field name="NISAPC" value="00" />
+    <field name="NBASIS" value="01" />
+    <repeated number="1">
+      <group index="0">
+        <repeated number="1">
+          <group index="0">
+            <field name="AEL" value="+9.99999999999999E+99" />
+          </group>
+        </repeated>
+      </group>
+    </repeated>
+    <repeated number="1">
+      <group index="0">
+        <field name="PARVAL" value="+9.99999999999999E+99" />
+      </group>
+    </repeated>
+  </tre>
+</tres>
+"""
+
+    assert data == expected_data
+
+###############################################################################
+# Test parsing RSMDCB TRE (STDI-0002-1-v5.0 App U)
+
+def test_nitf_RSMDCB():
+
+    tre_data = "TRE=RSMDCB=iid                                                                             " + \
+        "edition                                 tid                                     01001iidi" + " "*76 + \
+        "01Y01GN" + "+9.99999999999999E+99"*6 + "N01ABCD+9.99999999999999E+99"
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_RSMDCB.ntf', 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_RSMDCB.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_RSMDCB.ntf')
+
+    expected_data = """<tres>
+  <tre name="RSMDCB" location="image">
+    <field name="IID" value="iid" />
+    <field name="EDITION" value="edition" />
+    <field name="TID" value="tid" />
+    <field name="NROWCB" value="01" />
+    <field name="NIMGE" value="001" />
+    <repeated number="1">
+      <group index="0">
+        <field name="IIDI" value="iidi" />
+        <field name="NCOLCB" value="01" />
+      </group>
+    </repeated>
+    <field name="INCAPD" value="Y" />
+    <field name="NPAR" value="01" />
+    <field name="APTYP" value="G" />
+    <field name="LOCTYP" value="N" />
+    <field name="NSFX" value="+9.99999999999999E+99" />
+    <field name="NSFY" value="+9.99999999999999E+99" />
+    <field name="NSFZ" value="+9.99999999999999E+99" />
+    <field name="NOFFX" value="+9.99999999999999E+99" />
+    <field name="NOFFY" value="+9.99999999999999E+99" />
+    <field name="NOFFZ" value="+9.99999999999999E+99" />
+    <field name="APBASE" value="N" />
+    <field name="NGSAP" value="01" />
+    <repeated number="1">
+      <group index="0">
+        <field name="GSAPID" value="ABCD" />
+      </group>
+    </repeated>
+    <repeated number="1">
+      <group index="0">
+        <repeated number="1">
+          <group index="0">
+            <repeated number="1">
+              <group index="0">
+                <field name="CRSCOV" value="+9.99999999999999E+99" />
+              </group>
+            </repeated>
+          </group>
+        </repeated>
+      </group>
+    </repeated>
+  </tre>
+</tres>
+"""
+
+    assert data == expected_data
+
+###############################################################################
+# Test parsing RSMECB TRE (STDI-0002-1-v5.0 App U)
+
+def test_nitf_RSMECB():
+
+    tre_data = "TRE=RSMECB=iid                                                                             " + \
+        "edition                                 tid                                     " + \
+        "YY01012020110201GN" + "+9.99999999999999E+99"*6 + "N01ABCD02" + "+9.99999999999999E+99"*3 + \
+        "1N2" + "+9.99999999999999E+99"*8 + "N2" + "+9.99999999999999E+99"*4 + "2" + "+9.99999999999999E+99"*4
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_RSMECB.ntf', 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_RSMECB.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_RSMECB.ntf')
+
+    expected_data = """<tres>
+  <tre name="RSMECB" location="image">
+    <field name="IID" value="iid" />
+    <field name="EDITION" value="edition" />
+    <field name="TID" value="tid" />
+    <field name="INCLIC" value="Y" />
+    <field name="INCLUC" value="Y" />
+    <field name="NPARO" value="01" />
+    <field name="IGN" value="01" />
+    <field name="CVDATE" value="20201102" />
+    <field name="NPAR" value="01" />
+    <field name="APTYP" value="G" />
+    <field name="LOCTYP" value="N" />
+    <field name="NSFX" value="+9.99999999999999E+99" />
+    <field name="NSFY" value="+9.99999999999999E+99" />
+    <field name="NSFZ" value="+9.99999999999999E+99" />
+    <field name="NOFFX" value="+9.99999999999999E+99" />
+    <field name="NOFFY" value="+9.99999999999999E+99" />
+    <field name="NOFFZ" value="+9.99999999999999E+99" />
+    <field name="APBASE" value="N" />
+    <field name="NGSAP" value="01" />
+    <repeated number="1">
+      <group index="0">
+        <field name="GSAPID" value="ABCD" />
+      </group>
+    </repeated>
+    <repeated number="1">
+      <group index="0">
+        <field name="NUMOPG" value="02" />
+        <repeated number="3">
+          <group index="0">
+            <field name="ERRCVG" value="+9.99999999999999E+99" />
+          </group>
+          <group index="1">
+            <field name="ERRCVG" value="+9.99999999999999E+99" />
+          </group>
+          <group index="2">
+            <field name="ERRCVG" value="+9.99999999999999E+99" />
+          </group>
+        </repeated>
+        <field name="TCDF" value="1" />
+        <field name="ACSMC" value="N" />
+        <field name="NCSEG" value="2" />
+        <repeated number="2">
+          <group index="0">
+            <field name="CORSEG" value="+9.99999999999999E+99" />
+            <field name="TAUSEG" value="+9.99999999999999E+99" />
+          </group>
+          <group index="1">
+            <field name="CORSEG" value="+9.99999999999999E+99" />
+            <field name="TAUSEG" value="+9.99999999999999E+99" />
+          </group>
+        </repeated>
+      </group>
+    </repeated>
+    <repeated number="1">
+      <group index="0">
+        <repeated number="1">
+          <group index="0">
+            <field name="MAP" value="+9.99999999999999E+99" />
+          </group>
+        </repeated>
+      </group>
+    </repeated>
+    <field name="URR" value="+9.99999999999999E+99" />
+    <field name="URC" value="+9.99999999999999E+99" />
+    <field name="UCC" value="+9.99999999999999E+99" />
+    <field name="UACSMC" value="N" />
+    <field name="UNCSR" value="2" />
+    <repeated number="2">
+      <group index="0">
+        <field name="UCORSR" value="+9.99999999999999E+99" />
+        <field name="UTAUSR" value="+9.99999999999999E+99" />
+      </group>
+      <group index="1">
+        <field name="UCORSR" value="+9.99999999999999E+99" />
+        <field name="UTAUSR" value="+9.99999999999999E+99" />
+      </group>
+    </repeated>
+    <field name="UNCSC" value="2" />
+    <repeated number="2">
+      <group index="0">
+        <field name="UCORSC" value="+9.99999999999999E+99" />
+        <field name="UTAUSC" value="+9.99999999999999E+99" />
+      </group>
+      <group index="1">
+        <field name="UCORSC" value="+9.99999999999999E+99" />
+        <field name="UTAUSC" value="+9.99999999999999E+99" />
+      </group>
+    </repeated>
+  </tre>
+</tres>
+"""
+
+    assert data == expected_data
+
+###############################################################################
+# Test creation and reading of Data Extension Segments (DES)
+
+def test_nitf_des():
+    des_data = "02U" + " "*166 + r'0004ABCD1234567\0890'
+
+    ds = gdal.GetDriverByName("NITF").Create("/vsimem/nitf_DES.ntf", 1, 1, options=["DES=DES1=" + des_data, "DES=DES2=" + des_data])
+    ds = None
+
+    # DESDATA portion will be Base64 encoded on output
+    # base64.b64encode(bytes("1234567\x00890", "utf-8")) == b'MTIzNDU2NwA4OTA='
+    ds = gdal.Open("/vsimem/nitf_DES.ntf")
+    data = ds.GetMetadata("xml:DES")[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_DES.ntf')
+
+    expected_data = """<des_list>
+  <des name="DES1">
+    <field name="NITF_DESVER" value="02" />
+    <field name="NITF_DECLAS" value="U" />
+    <field name="NITF_DESCLSY" value="" />
+    <field name="NITF_DESCODE" value="" />
+    <field name="NITF_DESCTLH" value="" />
+    <field name="NITF_DESREL" value="" />
+    <field name="NITF_DESDCTP" value="" />
+    <field name="NITF_DESDCDT" value="" />
+    <field name="NITF_DESDCXM" value="" />
+    <field name="NITF_DESDG" value="" />
+    <field name="NITF_DESDGDT" value="" />
+    <field name="NITF_DESCLTX" value="" />
+    <field name="NITF_DESCATP" value="" />
+    <field name="NITF_DESCAUT" value="" />
+    <field name="NITF_DESCRSN" value="" />
+    <field name="NITF_DESSRDT" value="" />
+    <field name="NITF_DESCTLN" value="" />
+    <field name="NITF_DESSHL" value="0004" />
+    <field name="NITF_DESSHF" value="ABCD" />
+    <field name="NITF_DESDATA" value="MTIzNDU2NwA4OTA=" />
+  </des>
+  <des name="DES2">
+    <field name="NITF_DESVER" value="02" />
+    <field name="NITF_DECLAS" value="U" />
+    <field name="NITF_DESCLSY" value="" />
+    <field name="NITF_DESCODE" value="" />
+    <field name="NITF_DESCTLH" value="" />
+    <field name="NITF_DESREL" value="" />
+    <field name="NITF_DESDCTP" value="" />
+    <field name="NITF_DESDCDT" value="" />
+    <field name="NITF_DESDCXM" value="" />
+    <field name="NITF_DESDG" value="" />
+    <field name="NITF_DESDGDT" value="" />
+    <field name="NITF_DESCLTX" value="" />
+    <field name="NITF_DESCATP" value="" />
+    <field name="NITF_DESCAUT" value="" />
+    <field name="NITF_DESCRSN" value="" />
+    <field name="NITF_DESSRDT" value="" />
+    <field name="NITF_DESCTLN" value="" />
+    <field name="NITF_DESSHL" value="0004" />
+    <field name="NITF_DESSHF" value="ABCD" />
+    <field name="NITF_DESDATA" value="MTIzNDU2NwA4OTA=" />
+  </des>
+</des_list>
+"""
+
     assert data == expected_data
 
 ###############################################################################

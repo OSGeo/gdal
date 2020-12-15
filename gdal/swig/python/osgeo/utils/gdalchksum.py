@@ -35,7 +35,7 @@ from osgeo import gdal
 
 def Usage():
     print('Usage: gdalchksum.py [-b band] [-srcwin xoff yoff xsize ysize] file')
-    sys.exit(1)
+    return 1
 
 
 def main(argv):
@@ -44,10 +44,9 @@ def main(argv):
 
     filename = None
 
-    gdal.AllRegister()
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
-        sys.exit(0)
+        return 0
 
     # Parse command line arguments.
     i = 1
@@ -67,19 +66,19 @@ def main(argv):
             filename = argv[i]
 
         else:
-            Usage()
+            return Usage()
 
         i = i + 1
 
     if filename is None:
-        Usage()
+        return Usage()
 
     # Open source file
 
     ds = gdal.Open(filename)
     if ds is None:
         print('Unable to open %s' % filename)
-        sys.exit(1)
+        return 1
 
     # Default values
 

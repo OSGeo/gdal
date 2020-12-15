@@ -186,25 +186,19 @@ def Usage():
     print('           [-ul_lr ulx uly lrx lry] [-ot datatype] [-i input_file_list')
     print('           | input_files]')
 
-# =============================================================================
-#
-# Program mainline.
-#
 
-
-if __name__ == '__main__':
-
+def main(argv):
     names = []
     out_file = 'out.vrt'
 
     ulx = None
     psize_x = None
     separate = False
-    pre_init = None
+    # pre_init = None
 
-    argv = gdal.GeneralCmdLineProcessor(sys.argv)
+    argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
-        sys.exit(0)
+        return 0
 
     # Parse command line arguments.
     i = 1
@@ -233,7 +227,7 @@ if __name__ == '__main__':
         elif arg[:1] == '-':
             print('Unrecognized command option: ', arg)
             Usage()
-            sys.exit(1)
+            return 1
 
         else:
             names.append(arg)
@@ -243,13 +237,13 @@ if __name__ == '__main__':
     if not names:
         print('No input files selected.')
         Usage()
-        sys.exit(1)
+        return 1
 
     # Collect information on all the source files.
     file_infos = names_to_fileinfos(names)
     if not file_infos:
         print('Nothing to process, exiting.')
-        sys.exit(1)
+        return 1
 
     if ulx is None:
         ulx = file_infos[0].ulx
@@ -273,16 +267,16 @@ if __name__ == '__main__':
         if fi.geotransform[1] != psize_x or fi.geotransform[5] != psize_y:
             print("All files must have the same scale; %s does not"
                   % fi.filename)
-            sys.exit(1)
+            return 1
 
         if fi.geotransform[2] != 0 or fi.geotransform[4] != 0:
             print("No file must be rotated; %s is" % fi.filename)
-            sys.exit(1)
+            return 1
 
         if fi.projection != projection:
             print("All files must be in the same projection; %s is not"
                   % fi.filename)
-            sys.exit(1)
+            return 1
 
     geotransform = (ulx, psize_x, 0.0, uly, 0.0, psize_y)
 
@@ -346,3 +340,9 @@ if __name__ == '__main__':
             t_fh.write('\t</VRTRasterBand>\n')
 
     t_fh.write('</VRTDataset>\n')
+
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

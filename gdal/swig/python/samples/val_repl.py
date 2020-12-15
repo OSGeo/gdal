@@ -51,11 +51,7 @@ def Usage():
     print('Usage: val_repl.py -innd in_nodata_value -outnd out_nodata_value')
     print('                   [-of out_format] [-ot out_type] infile outfile')
     print('')
-    sys.exit(1)
-
-# =============================================================================
-
-# =============================================================================
+    return 1
 
 
 def ParseType(typ):
@@ -64,76 +60,81 @@ def ParseType(typ):
         gdal_dt = gdal.GDT_Byte
     return gdal_dt
 
-# =============================================================================
 
+def main(argv):
+    inNoData = None
+    outNoData = None
+    infile = None
+    outfile = None
+    frmt = 'GTiff'
+    typ = gdal.GDT_Byte
 
-inNoData = None
-outNoData = None
-infile = None
-outfile = None
-frmt = 'GTiff'
-typ = gdal.GDT_Byte
+    # Parse command line arguments.
+    i = 1
+    while i < len(argv):
+        arg = argv[i]
 
-# Parse command line arguments.
-i = 1
-while i < len(sys.argv):
-    arg = sys.argv[i]
+        if arg == '-innd':
+            i = i + 1
+            inNoData = float(argv[i])
 
-    if arg == '-innd':
+        elif arg == '-outnd':
+            i = i + 1
+            outNoData = float(argv[i])
+
+        elif arg == '-of':
+            i = i + 1
+            frmt = argv[i]
+
+        elif arg == '-ot':
+            i = i + 1
+            typ = ParseType(argv[i])
+
+        elif infile is None:
+            infile = arg
+
+        elif outfile is None:
+            outfile = arg
+
+        else:
+            return Usage()
+
         i = i + 1
-        inNoData = float(sys.argv[i])
 
-    elif arg == '-outnd':
-        i = i + 1
-        outNoData = float(sys.argv[i])
+    if infile is None:
+        return Usage()
+    if outfile is None:
+        return Usage()
+    if inNoData is None:
+        return Usage()
+    if outNoData is None:
+        return Usage()
 
-    elif arg == '-of':
-        i = i + 1
-        frmt = sys.argv[i]
+    indataset = gdal.Open(infile, gdal.GA_ReadOnly)
 
-    elif arg == '-ot':
-        i = i + 1
-        typ = ParseType(sys.argv[i])
+    out_driver = gdal.GetDriverByName(frmt)
+    outdataset = out_driver.Create(outfile, indataset.RasterXSize, indataset.RasterYSize, indataset.RasterCount, typ)
 
-    elif infile is None:
-        infile = arg
+    gt = indataset.GetGeoTransform()
+    if gt is not None and gt != (0.0, 1.0, 0.0, 0.0, 0.0, 1.0):
+        outdataset.SetGeoTransform(gt)
 
-    elif outfile is None:
-        outfile = arg
+    prj = indataset.GetProjectionRef()
+    if prj:
+        outdataset.SetProjection(prj)
 
-    else:
-        Usage()
+    for iBand in range(1, indataset.RasterCount + 1):
+        inband = indataset.GetRasterBand(iBand)
+        outband = outdataset.GetRasterBand(iBand)
 
-    i = i + 1
+        for i in range(inband.YSize - 1, -1, -1):
+            scanline = inband.ReadAsArray(0, i, inband.XSize, 1, inband.XSize, 1)
+            scanline = numpy.choose(numpy.equal(scanline, inNoData),
+                                    (scanline, outNoData))
+            outband.WriteArray(scanline, 0, i)
+    return 0
 
-if infile is None:
-    Usage()
-if outfile is None:
-    Usage()
-if inNoData is None:
-    Usage()
-if outNoData is None:
-    Usage()
 
-indataset = gdal.Open(infile, gdal.GA_ReadOnly)
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
 
-out_driver = gdal.GetDriverByName(frmt)
-outdataset = out_driver.Create(outfile, indataset.RasterXSize, indataset.RasterYSize, indataset.RasterCount, typ)
-
-gt = indataset.GetGeoTransform()
-if gt is not None and gt != (0.0, 1.0, 0.0, 0.0, 0.0, 1.0):
-    outdataset.SetGeoTransform(gt)
-
-prj = indataset.GetProjectionRef()
-if prj:
-    outdataset.SetProjection(prj)
-
-for iBand in range(1, indataset.RasterCount + 1):
-    inband = indataset.GetRasterBand(iBand)
-    outband = outdataset.GetRasterBand(iBand)
-
-    for i in range(inband.YSize - 1, -1, -1):
-        scanline = inband.ReadAsArray(0, i, inband.XSize, 1, inband.XSize, 1)
-        scanline = numpy.choose(numpy.equal(scanline, inNoData),
-                                (scanline, outNoData))
-        outband.WriteArray(scanline, 0, i)

@@ -1218,8 +1218,19 @@ int DIMAPDataset::ReadImageInformation2()
 
     for( int iBand = 0; iBand < poImageDS->GetRasterCount(); iBand++ )
     {
+        auto poSrcBandFirstImage = poImageDS->GetRasterBand(iBand+1);
+        CPLStringList aosAddBandOptions;
+        int nSrcBlockXSize, nSrcBlockYSize;
+        poSrcBandFirstImage->GetBlockSize(&nSrcBlockXSize, &nSrcBlockYSize);
+        if( oMapRowColumnToName.size() == 1 ||
+            ((nTileWidth % nSrcBlockXSize) == 0 &&
+             (nTileHeight % nSrcBlockYSize) == 0) )
+        {
+            aosAddBandOptions.SetNameValue("BLOCKXSIZE", CPLSPrintf("%d", nSrcBlockXSize));
+            aosAddBandOptions.SetNameValue("BLOCKYSIZE", CPLSPrintf("%d", nSrcBlockYSize));
+        }
         poVRTDS->AddBand(
-            poImageDS->GetRasterBand(iBand+1)->GetRasterDataType(), nullptr );
+            poSrcBandFirstImage->GetRasterDataType(), aosAddBandOptions.List() );
 
         VRTSourcedRasterBand *poVRTBand =
             reinterpret_cast<VRTSourcedRasterBand *>(

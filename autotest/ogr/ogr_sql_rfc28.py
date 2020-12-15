@@ -1381,6 +1381,38 @@ def test_ogr_rfc28_many_and():
     assert f is not None
 
 ###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/3249
+
+def test_ogr_rfc28_order_by_two_columns():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('lyr')
+    fld_defn = ogr.FieldDefn('int_val', ogr.OFTInteger)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn('str_val', ogr.OFTString)
+    lyr.CreateField(fld_defn)
+    for i in range(101):
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetField('int_val', 100 - i)
+        if i < 26:
+            feat.SetField('str_val', chr(ord('a') + i))
+        else:
+            feat.SetField('str_val', chr(ord('a') + (i // 26)) + chr(ord('a') + (i % 26)))
+        lyr.CreateFeature(feat)
+
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM lyr ORDER BY int_val, str_val')
+    for i in range(101):
+        f = sql_lyr.GetNextFeature()
+        assert f['int_val'] == i
+    ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM lyr ORDER BY int_val, str_val LIMIT 1')
+    f = sql_lyr.GetNextFeature()
+    assert f['int_val'] == 0
+    f = None
+    ds.ReleaseResultSet(sql_lyr)
+
+###############################################################################
 
 
 def test_ogr_rfc28_cleanup():

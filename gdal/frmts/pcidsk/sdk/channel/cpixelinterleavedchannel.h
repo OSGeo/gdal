@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Declaration of the CPixelInterleavedChannel class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,7 +35,7 @@
 namespace PCIDSK
 {
     class CPCIDSKFile;
-    
+
 /************************************************************************/
 /*                       CPixelInterleavedChannel                       */
 /************************************************************************/
@@ -44,9 +44,9 @@ namespace PCIDSK
 
 
     public:
-        CPixelInterleavedChannel( PCIDSKBuffer &image_header, 
+        CPixelInterleavedChannel( PCIDSKBuffer &image_header,
             uint64 ih_offset,
-            PCIDSKBuffer &file_header, 
+            PCIDSKBuffer &file_header,
             int channelnum,
             CPCIDSKFile *file,
             int image_offset,

@@ -29,67 +29,16 @@
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
 
-import os.path
 import sys
 
 from osgeo import gdal
+from osgeo.auxiliary.base import GetOutputDriverFor
 
 
 def Usage():
-    print("""
-gdal_sieve [-q] [-st threshold] [-4] [-8] [-o name=value]
-           srcfile [-nomask] [-mask filename] [-of format] [dstfile]
-""")
-    sys.exit(1)
-
-
-def DoesDriverHandleExtension(drv, ext):
-    exts = drv.GetMetadataItem(gdal.DMD_EXTENSIONS)
-    return exts is not None and exts.lower().find(ext.lower()) >= 0
-
-
-def GetExtension(filename):
-    ext = os.path.splitext(filename)[1]
-    if ext.startswith('.'):
-        ext = ext[1:]
-    return ext
-
-
-def GetOutputDriversFor(filename):
-    drv_list = []
-    ext = GetExtension(filename)
-    for i in range(gdal.GetDriverCount()):
-        drv = gdal.GetDriver(i)
-        if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None or
-            drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
-           drv.GetMetadataItem(gdal.DCAP_RASTER) is not None:
-            if ext and DoesDriverHandleExtension(drv, ext):
-                drv_list.append(drv.ShortName)
-            else:
-                prefix = drv.GetMetadataItem(gdal.DMD_CONNECTION_PREFIX)
-                if prefix is not None and filename.lower().startswith(prefix.lower()):
-                    drv_list.append(drv.ShortName)
-
-    # GMT is registered before netCDF for opening reasons, but we want
-    # netCDF to be used by default for output.
-    if ext.lower() == 'nc' and not drv_list and \
-       drv_list[0].upper() == 'GMT' and drv_list[1].upper() == 'NETCDF':
-        drv_list = ['NETCDF', 'GMT']
-
-    return drv_list
-
-
-def GetOutputDriverFor(filename):
-    drv_list = GetOutputDriversFor(filename)
-    ext = GetExtension(filename)
-    if not drv_list:
-        if not ext:
-            return 'GTiff'
-        else:
-            raise Exception("Cannot guess driver for %s" % filename)
-    elif len(drv_list) > 1:
-        print("Several drivers matching %s extension. Using %s" % (ext if ext else '', drv_list[0]))
-    return drv_list[0]
+    print("""gdal_sieve [-q] [-st threshold] [-4] [-8] [-o name=value]
+           srcfile [-nomask] [-mask filename] [-of format] [dstfile]""")
+    return 1
 
 
 def main(argv):
@@ -103,10 +52,9 @@ def main(argv):
 
     mask = 'default'
 
-    gdal.AllRegister()
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
-        sys.exit(0)
+        return 0
 
     # Parse command line arguments.
     i = 1
@@ -142,7 +90,7 @@ def main(argv):
             mask = argv[i]
 
         elif arg[:2] == '-h':
-            Usage()
+            return Usage()
 
         elif src_filename is None:
             src_filename = argv[i]
@@ -151,12 +99,12 @@ def main(argv):
             dst_filename = argv[i]
 
         else:
-            Usage()
+            return Usage()
 
         i = i + 1
 
     if src_filename is None:
-        Usage()
+        return Usage()
 
     # =============================================================================
     # 	Verify we have next gen bindings with the sievefilter method.
@@ -168,7 +116,7 @@ def main(argv):
         print('gdal.SieveFilter() not available.  You are likely using "old gen"')
         print('bindings or an older version of the next gen bindings.')
         print('')
-        sys.exit(1)
+        return 1
 
     # =============================================================================
     # Open source file
@@ -181,7 +129,7 @@ def main(argv):
 
     if src_ds is None:
         print('Unable to open %s ' % src_filename)
-        sys.exit(1)
+        return 1
 
     srcband = src_ds.GetRasterBand(1)
 

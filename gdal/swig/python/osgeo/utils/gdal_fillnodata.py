@@ -42,12 +42,10 @@ def CopyBand(srcband, dstband):
 
 
 def Usage():
-    print("""
-gdal_fillnodata [-q] [-md max_distance] [-si smooth_iterations]
+    print("""gdal_fillnodata [-q] [-md max_distance] [-si smooth_iterations]
                 [-o name=value] [-b band]
-                srcfile [-nomask] [-mask filename] [-of format] [-co name=value]* [dstfile]
-""")
-    sys.exit(1)
+                srcfile [-nomask] [-mask filename] [-of format] [-co name=value]* [dstfile]""")
+    return 1
 
 
 def main(argv):
@@ -64,10 +62,9 @@ def main(argv):
 
     mask = 'default'
 
-    gdal.AllRegister()
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
-        sys.exit(0)
+        return 0
 
     # Parse command line arguments.
     i = 1
@@ -109,7 +106,7 @@ def main(argv):
             mask = argv[i]
 
         elif arg[:2] == '-h':
-            Usage()
+            return Usage()
 
         elif src_filename is None:
             src_filename = argv[i]
@@ -118,12 +115,12 @@ def main(argv):
             dst_filename = argv[i]
 
         else:
-            Usage()
+            return Usage()
 
         i = i + 1
 
     if src_filename is None:
-        Usage()
+        return Usage()
 
     # =============================================================================
     # 	Verify we have next gen bindings with the sievefilter method.
@@ -135,7 +132,7 @@ def main(argv):
         print('gdal.FillNodata() not available.  You are likely using "old gen"')
         print('bindings or an older version of the next gen bindings.')
         print('')
-        sys.exit(1)
+        return 1
 
     # =============================================================================
     # Open source file
@@ -148,7 +145,7 @@ def main(argv):
 
     if src_ds is None:
         print('Unable to open %s' % src_filename)
-        sys.exit(1)
+        return 1
 
     srcband = src_ds.GetRasterBand(src_band)
 

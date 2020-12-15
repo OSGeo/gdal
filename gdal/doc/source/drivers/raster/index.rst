@@ -172,6 +172,7 @@ Raster drivers
    snodas
    srp
    srtmhgt
+   stacta
    terragen
    tga
    til

@@ -48,203 +48,208 @@ class Module(object):
 def Usage():
     print('Usage: tigerpoly.py infile [outfile].shp')
     print('')
-    sys.exit(1)
-
-#############################################################################
-# Argument processing.
+    return 1
 
 
-infile = None
-outfile = None
+def main(argv):
+    infile = None
+    outfile = None
 
-i = 1
-while i < len(sys.argv):
-    arg = sys.argv[i]
+    i = 1
+    while i < len(argv):
+        arg = argv[i]
+
+        if infile is None:
+            infile = arg
+
+        elif outfile is None:
+            outfile = arg
+
+        else:
+            return Usage()
+
+        i = i + 1
+
+    if outfile is None:
+        outfile = 'poly.shp'
 
     if infile is None:
-        infile = arg
+        return Usage()
 
-    elif outfile is None:
-        outfile = arg
+    #############################################################################
+    # Open the datasource to operate on.
 
-    else:
-        Usage()
+    ds = ogr.Open(infile, update=0)
 
-    i = i + 1
+    poly_layer = ds.GetLayerByName('Polygon')
 
-if outfile is None:
-    outfile = 'poly.shp'
+    #############################################################################
+    # Create output file for the composed polygons.
 
-if infile is None:
-    Usage()
+    nad83 = osr.SpatialReference()
+    nad83.SetFromUserInput('NAD83')
 
-#############################################################################
-# Open the datasource to operate on.
+    shp_driver = ogr.GetDriverByName('ESRI Shapefile')
+    shp_driver.DeleteDataSource(outfile)
 
-ds = ogr.Open(infile, update=0)
+    shp_ds = shp_driver.CreateDataSource(outfile)
 
-poly_layer = ds.GetLayerByName('Polygon')
+    shp_layer = shp_ds.CreateLayer('out', geom_type=ogr.wkbPolygon,
+                                   srs=nad83)
 
-#############################################################################
-# Create output file for the composed polygons.
+    src_defn = poly_layer.GetLayerDefn()
+    poly_field_count = src_defn.GetFieldCount()
 
-nad83 = osr.SpatialReference()
-nad83.SetFromUserInput('NAD83')
+    for fld_index in range(poly_field_count):
+        src_fd = src_defn.GetFieldDefn(fld_index)
 
-shp_driver = ogr.GetDriverByName('ESRI Shapefile')
-shp_driver.DeleteDataSource(outfile)
+        fd = ogr.FieldDefn(src_fd.GetName(), src_fd.GetType())
+        fd.SetWidth(src_fd.GetWidth())
+        fd.SetPrecision(src_fd.GetPrecision())
+        shp_layer.CreateField(fd)
 
-shp_ds = shp_driver.CreateDataSource(outfile)
+    #############################################################################
+    # Read all features in the line layer, holding just the geometry in a hash
+    # for fast lookup by TLID.
 
-shp_layer = shp_ds.CreateLayer('out', geom_type=ogr.wkbPolygon,
-                               srs=nad83)
+    line_layer = ds.GetLayerByName('CompleteChain')
+    line_count = 0
 
-src_defn = poly_layer.GetLayerDefn()
-poly_field_count = src_defn.GetFieldCount()
-
-for fld_index in range(poly_field_count):
-    src_fd = src_defn.GetFieldDefn(fld_index)
-
-    fd = ogr.FieldDefn(src_fd.GetName(), src_fd.GetType())
-    fd.SetWidth(src_fd.GetWidth())
-    fd.SetPrecision(src_fd.GetPrecision())
-    shp_layer.CreateField(fd)
-
-#############################################################################
-# Read all features in the line layer, holding just the geometry in a hash
-# for fast lookup by TLID.
-
-line_layer = ds.GetLayerByName('CompleteChain')
-line_count = 0
-
-modules_hash = {}
-
-feat = line_layer.GetNextFeature()
-geom_id_field = feat.GetFieldIndex('TLID')
-tile_ref_field = feat.GetFieldIndex('MODULE')
-while feat is not None:
-    geom_id = feat.GetField(geom_id_field)
-    tile_ref = feat.GetField(tile_ref_field)
-
-    try:
-        module = modules_hash[tile_ref]
-    except KeyError:
-        module = Module()
-        modules_hash[tile_ref] = module
-
-    module.lines[geom_id] = feat.GetGeometryRef().Clone()
-    line_count = line_count + 1
-
-    feat.Destroy()
+    modules_hash = {}
 
     feat = line_layer.GetNextFeature()
+    geom_id_field = feat.GetFieldIndex('TLID')
+    tile_ref_field = feat.GetFieldIndex('MODULE')
+    while feat is not None:
+        geom_id = feat.GetField(geom_id_field)
+        tile_ref = feat.GetField(tile_ref_field)
 
-print('Got %d lines in %d modules.' % (line_count, len(modules_hash)))
+        try:
+            module = modules_hash[tile_ref]
+        except KeyError:
+            module = Module()
+            modules_hash[tile_ref] = module
 
-#############################################################################
-# Read all polygon/chain links and build a hash keyed by POLY_ID listing
-# the chains (by TLID) attached to it.
+        module.lines[geom_id] = feat.GetGeometryRef().Clone()
+        line_count = line_count + 1
 
-link_layer = ds.GetLayerByName('PolyChainLink')
-
-feat = link_layer.GetNextFeature()
-geom_id_field = feat.GetFieldIndex('TLID')
-tile_ref_field = feat.GetFieldIndex('MODULE')
-lpoly_field = feat.GetFieldIndex('POLYIDL')
-rpoly_field = feat.GetFieldIndex('POLYIDR')
-
-link_count = 0
-
-while feat is not None:
-    module = modules_hash[feat.GetField(tile_ref_field)]
-
-    tlid = feat.GetField(geom_id_field)
-
-    lpoly_id = feat.GetField(lpoly_field)
-    rpoly_id = feat.GetField(rpoly_field)
-
-    if lpoly_id == rpoly_id:
         feat.Destroy()
-        feat = link_layer.GetNextFeature()
-        continue
 
-    try:
-        module.poly_line_links[lpoly_id].append(tlid)
-    except KeyError:
-        module.poly_line_links[lpoly_id] = [tlid]
+        feat = line_layer.GetNextFeature()
 
-    try:
-        module.poly_line_links[rpoly_id].append(tlid)
-    except KeyError:
-        module.poly_line_links[rpoly_id] = [tlid]
+    print('Got %d lines in %d modules.' % (line_count, len(modules_hash)))
 
-    link_count = link_count + 1
+    #############################################################################
+    # Read all polygon/chain links and build a hash keyed by POLY_ID listing
+    # the chains (by TLID) attached to it.
 
-    feat.Destroy()
+    link_layer = ds.GetLayerByName('PolyChainLink')
 
     feat = link_layer.GetNextFeature()
+    geom_id_field = feat.GetFieldIndex('TLID')
+    tile_ref_field = feat.GetFieldIndex('MODULE')
+    lpoly_field = feat.GetFieldIndex('POLYIDL')
+    rpoly_field = feat.GetFieldIndex('POLYIDR')
 
-print('Processed %d links.' % link_count)
+    link_count = 0
 
-#############################################################################
-# Process all polygon features.
+    while feat is not None:
+        module = modules_hash[feat.GetField(tile_ref_field)]
 
-feat = poly_layer.GetNextFeature()
-tile_ref_field = feat.GetFieldIndex('MODULE')
-polyid_field = feat.GetFieldIndex('POLYID')
+        tlid = feat.GetField(geom_id_field)
 
-poly_count = 0
-degenerate_count = 0
+        lpoly_id = feat.GetField(lpoly_field)
+        rpoly_id = feat.GetField(rpoly_field)
 
-while feat is not None:
-    module = modules_hash[feat.GetField(tile_ref_field)]
-    polyid = feat.GetField(polyid_field)
-
-    tlid_list = module.poly_line_links[polyid]
-
-    link_coll = ogr.Geometry(type=ogr.wkbGeometryCollection)
-    for tlid in tlid_list:
-        geom = module.lines[tlid]
-        link_coll.AddGeometry(geom)
-
-    try:
-        poly = ogr.BuildPolygonFromEdges(link_coll)
-
-        if poly.GetGeometryRef(0).GetPointCount() < 4:
-            degenerate_count = degenerate_count + 1
-            poly.Destroy()
+        if lpoly_id == rpoly_id:
             feat.Destroy()
-            feat = poly_layer.GetNextFeature()
+            feat = link_layer.GetNextFeature()
             continue
 
-        # print poly.ExportToWkt()
-        # feat.SetGeometryDirectly( poly )
+        try:
+            module.poly_line_links[lpoly_id].append(tlid)
+        except KeyError:
+            module.poly_line_links[lpoly_id] = [tlid]
 
-        feat2 = ogr.Feature(feature_def=shp_layer.GetLayerDefn())
+        try:
+            module.poly_line_links[rpoly_id].append(tlid)
+        except KeyError:
+            module.poly_line_links[rpoly_id] = [tlid]
 
-        for fld_index in range(poly_field_count):
-            feat2.SetField(fld_index, feat.GetField(fld_index))
+        link_count = link_count + 1
 
-        feat2.SetGeometryDirectly(poly)
+        feat.Destroy()
 
-        shp_layer.CreateFeature(feat2)
-        feat2.Destroy()
+        feat = link_layer.GetNextFeature()
 
-        poly_count = poly_count + 1
-    except:
-        print('BuildPolygonFromEdges failed.')
+    print('Processed %d links.' % link_count)
 
-    feat.Destroy()
+    #############################################################################
+    # Process all polygon features.
 
     feat = poly_layer.GetNextFeature()
+    tile_ref_field = feat.GetFieldIndex('MODULE')
+    polyid_field = feat.GetFieldIndex('POLYID')
 
-if degenerate_count:
-    print('Discarded %d degenerate polygons.' % degenerate_count)
+    poly_count = 0
+    degenerate_count = 0
 
-print('Built %d polygons.' % poly_count)
+    while feat is not None:
+        module = modules_hash[feat.GetField(tile_ref_field)]
+        polyid = feat.GetField(polyid_field)
 
-#############################################################################
-# Cleanup
+        tlid_list = module.poly_line_links[polyid]
 
-shp_ds.Destroy()
-ds.Destroy()
+        link_coll = ogr.Geometry(type=ogr.wkbGeometryCollection)
+        for tlid in tlid_list:
+            geom = module.lines[tlid]
+            link_coll.AddGeometry(geom)
+
+        try:
+            poly = ogr.BuildPolygonFromEdges(link_coll)
+
+            if poly.GetGeometryRef(0).GetPointCount() < 4:
+                degenerate_count = degenerate_count + 1
+                poly.Destroy()
+                feat.Destroy()
+                feat = poly_layer.GetNextFeature()
+                continue
+
+            # print poly.ExportToWkt()
+            # feat.SetGeometryDirectly( poly )
+
+            feat2 = ogr.Feature(feature_def=shp_layer.GetLayerDefn())
+
+            for fld_index in range(poly_field_count):
+                feat2.SetField(fld_index, feat.GetField(fld_index))
+
+            feat2.SetGeometryDirectly(poly)
+
+            shp_layer.CreateFeature(feat2)
+            feat2.Destroy()
+
+            poly_count = poly_count + 1
+        except:
+            print('BuildPolygonFromEdges failed.')
+
+        feat.Destroy()
+
+        feat = poly_layer.GetNextFeature()
+
+    if degenerate_count:
+        print('Discarded %d degenerate polygons.' % degenerate_count)
+
+    print('Built %d polygons.' % poly_count)
+
+    #############################################################################
+    # Cleanup
+
+    shp_ds.Destroy()
+    ds.Destroy()
+
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
+

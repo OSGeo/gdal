@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Declaration of the CPCIDSKGeoref class.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,12 +38,12 @@
 namespace PCIDSK
 {
     class PCIDSKFile;
-    
+
     /************************************************************************/
     /*                            CPCIDSKGeoref                             */
     /************************************************************************/
 
-    class CPCIDSKGeoref : virtual public CPCIDSKSegment, 
+    class CPCIDSKGeoref : virtual public CPCIDSKSegment,
                           public PCIDSKGeoref
     {
     public:
@@ -51,20 +51,20 @@ namespace PCIDSK
 
         virtual     ~CPCIDSKGeoref();
 
-        // PCIDSKSegment 
+        // PCIDSKSegment
 
         void        Initialize() override;
 
         // PCIDSKGeoref
 
-        void        GetTransform( double &a1, double &a2, double &xrot, 
+        void        GetTransform( double &a1, double &a2, double &xrot,
                                   double &b1, double &yrot, double &b3 ) override;
         std::string GetGeosys() override;
 
         std::vector<double> GetParameters() override;
 
-        void        WriteSimple( std::string const& geosys, 
-                                 double a1, double a2, double xrot, 
+        void        WriteSimple( std::string const& geosys,
+                                 double a1, double a2, double xrot,
                                  double b1, double yrot, double b3 ) override;
         void        WriteParameters( std::vector<double> const& parameters ) override;
 
@@ -76,7 +76,7 @@ namespace PCIDSK
 
         std::string  geosys;
         double       a1, a2, xrot, b1, yrot, b3;
-        
+
         void         Load();
         void         PrepareGCTPFields();
         std::string  ReformatGeosys( std::string const& geosys );

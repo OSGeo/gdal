@@ -502,5 +502,17 @@ def test_ogr_geos_polygonize():
     got = g.Polygonize()
     assert got is None, ('Got: %s' % got.ExportToWkt())
 
+###############################################################################
 
 
+def test_ogr_geos_prepared_geom():
+
+    g = ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,1 0,0 0))')
+    pg = g.CreatePreparedGeometry()
+
+    assert pg.Contains(ogr.CreateGeometryFromWkt('POINT(0.5 0.5)'))
+    assert not pg.Contains(ogr.CreateGeometryFromWkt('POINT(-0.5 0.5)'))
+
+    g2 = ogr.CreateGeometryFromWkt('POLYGON((0.5 0,0.5 1,1.5 1,1.5 0,0.5 0))')
+    assert pg.Intersects(g2)
+    assert not pg.Intersects(ogr.CreateGeometryFromWkt('POINT(-0.5 0.5)'))

@@ -554,7 +554,10 @@ static bool ProcessError( CPLHTTPResult *psResult )
 /*      sufficient.                                                     */
 /* -------------------------------------------------------------------- */
     if( CPLGetLastErrorNo() != 0 )
+    {
+        CPLHTTPDestroyResult( psResult );
         return TRUE;
+    }
 
     return false;
 }

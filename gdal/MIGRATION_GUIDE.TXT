@@ -1,3 +1,12 @@
+MIGRATION GUIDE FROM GDAL 3.1 to GDAL 3.2
+-----------------------------------------
+
+- Python bindings: old-style, deprecated for many years, import method of
+  importing the gdal module through "import gdal" is no longer available.
+  "from osgeo import gdal" must now be used. This holds true for the ogr, osr,
+  gdalconst and gdalnumeric modules.
+
+
 MIGRATION GUIDE FROM GDAL 3.0 to GDAL 3.1
 -----------------------------------------
 
@@ -45,7 +54,7 @@ Out-of-tree drivers:
 * GDALDataset::SetProjection() made non-virtual.
   Replaced by SetSpatialRef() virtual method.
   Compatibility emulation possible by defining:
-    CPLErr SetProjection(const char*) override; // note leading underscore
+    CPLErr _SetProjection(const char*) override; // note leading underscore
     CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
         return OldSetProjectionFromSetSpatialRef(poSRS);
     }

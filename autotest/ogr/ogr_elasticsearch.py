@@ -28,7 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
+import time
 
 import ogrtest
 import gdaltest
@@ -838,6 +838,7 @@ def test_ogr_elasticsearch_4():
     lyr.SetAttributeFilter("{ 'FOO' : 'BAR' }")
     lyr.ResetReading()
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ 'FOO' : 'BAR' }""", """{
+    "_scroll_id": "invalid",
     "hits":
     {
         "hits":[
@@ -858,6 +859,15 @@ def test_ogr_elasticsearch_4():
 }""")
     f = lyr.GetNextFeature()
     assert f['int_field'] == 5
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?pretty&POSTFIELDS={ "size": 0,  'FOO' : 'BAR' }""", """{
+    "hits":
+    {
+        "total": 1234
+    }
+}""")
+    assert lyr.GetFeatureCount() == 1234
+
     lyr.SetAttributeFilter(None)
 
     sql_lyr = ds.ExecuteSQL("{ 'FOO' : 'BAR' }", dialect='ES')
@@ -2359,3 +2369,249 @@ def test_ogr_elasticsearch_http_headers_from_env():
         f = sql_lyr.GetNextFeature()
         assert f['some_field'] == '5'
         ds.ReleaseResultSet(sql_lyr)
+
+###############################################################################
+# Test GeoShape WKT support
+
+
+def test_ogr_elasticsearch_geo_shape_wkt():
+
+    ogr_elasticsearch_delete_files()
+
+    gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch",
+                           """{"version":{"number":"7.0.0"}}""")
+
+    ds = ogrtest.elasticsearch_drv.CreateDataSource(
+        "/vsimem/fakeelasticsearch")
+    assert ds is not None
+
+    gdal.FileFromMemBuffer(
+        '/vsimem/fakeelasticsearch/geo_shape_wkt&CUSTOMREQUEST=PUT', "{}")
+    lyr = ds.CreateLayer('geo_shape_wkt', srs=ogrtest.srs_wgs84, options=['GEO_SHAPE_ENCODING=WKT'])
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))
+    gdal.FileFromMemBuffer(
+        """/vsimem/fakeelasticsearch/geo_shape_wkt/_mapping&POSTFIELDS={ "properties": { "geometry": { "type": "geo_shape" } }, "_meta": { "fid": "ogc_fid" } }""", '{}')
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_bulk&POSTFIELDS={"index" :{"_index":"geo_shape_wkt"}}
+{ "ogc_fid": 1, "geometry": "POINT (2 49)" }
+
+""", "{}")
+    ret = lyr.CreateFeature(f)
+    assert ret == 0
+
+    lyr.ResetReading()
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/geo_shape_wkt/_search?scroll=1m&size=100""",
+                           """{
+    "_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "geometry": "POINT (2 49)"
+            }
+        }
+        ]
+    }
+}""")
+    gdal.FileFromMemBuffer(
+        '/vsimem/fakeelasticsearch/_search/scroll?scroll_id=my_scrollid&CUSTOMREQUEST=DELETE', '{}')
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == 'POINT (2 49)'
+
+###############################################################################
+# Test _TIMEOUT / _TERMINATE_AFTER
+
+
+def test_ogr_elasticsearch_timeout_terminate_after():
+
+    ogr_elasticsearch_delete_files()
+
+    gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch",
+                           """{"version":{"number":"7.0.0"}}""")
+
+    gdal.FileFromMemBuffer(
+        """/vsimem/fakeelasticsearch/_cat/indices?h=i""", 'some_layer\n')
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search?scroll=1m&size=100&POSTFIELDS={ 'FOO' : 'BAR' }""", """{
+        "hits":
+        {
+            "hits":[
+            {
+                "_index": "some_layer",
+                "_source": {
+                    "some_field": 5,
+                    "geometry": [2, 49]
+                },
+            }
+            ]
+        }
+    }""")
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/some_layer/_mapping?pretty""", """
+    {
+        "some_layer":
+        {
+            "mappings":
+            {
+                "properties":
+                {
+                    "some_field": { "type": "string", "index": "not_analyzed" },
+                    "geometry": { "type": "geo_point" },
+                }
+            }
+        }
+    }
+    """)
+
+    ds = gdal.OpenEx('ES:/vsimem/fakeelasticsearch',
+                     open_options=['SINGLE_QUERY_TERMINATE_AFTER=10', 'SINGLE_QUERY_TIMEOUT=0.5', 'FEATURE_ITERATION_TERMINATE_AFTER=2', 'FEATURE_ITERATION_TIMEOUT=0.1' ])
+    assert ds is not None
+    sql_lyr = ds.ExecuteSQL("{ 'FOO' : 'BAR' }", dialect='ES')
+    f = sql_lyr.GetNextFeature()
+    assert f['some_field'] == '5'
+    assert f.GetGeometryRef().ExportToWkt() == 'POINT (2 49)'
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search?pretty&timeout=500ms&terminate_after=10&POSTFIELDS={ "size": 0 ,  'FOO' : 'BAR' }""", """
+    {
+        "took" : 1,
+        "timed_out" : false,
+        "terminated_early" : true,
+        "hits" : {
+            "total" : {
+            "value" : 4,
+            "relation" : "eq"
+            },
+            "max_score" : null,
+            "hits" : [ ]
+        }
+    }
+    """)
+
+    assert sql_lyr.GetFeatureCount() == 4
+
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = None
+
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/some_layer/_search?scroll=1m&size=100""", """{
+        "hits":
+        {
+            "hits":[
+            {
+                "_source": {
+                    "some_field": 5,
+                    "geometry": [2, 49]
+                },
+            },
+            {
+                "_source": {
+                    "some_field": 7,
+                    "geometry": [2, 49]
+                },
+            },
+            {
+                "_source": {
+                    "some_field": 8,
+                    "geometry": [2, 49]
+                },
+            }
+            ]
+        }
+    }""")
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/some_layer/_search?pretty&timeout=500ms&terminate_after=10&POSTFIELDS={ "size": 0 }""", """
+    {
+        "took" : 1,
+        "timed_out" : false,
+        "terminated_early" : true,
+        "hits" : {
+            "total" : {
+            "value" : 2,
+            "relation" : "eq"
+            },
+            "max_score" : null,
+            "hits" : [ ]
+        }
+    }
+    """)
+
+    assert lyr.GetFeatureCount() == 2
+
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/some_layer/_search?pretty&timeout=500ms&terminate_after=10&POSTFIELDS={ "size": 0, "query": { "constant_score" : { "filter": { "term": { "some_field": "6" } } } } }""", """
+    {
+        "took" : 1,
+        "timed_out" : false,
+        "terminated_early" : true,
+        "hits" : {
+            "total" : {
+            "value" : 3,
+            "relation" : "eq"
+            },
+            "max_score" : null,
+            "hits" : [ ]
+        }
+    }
+    """)
+
+
+    lyr.SetAttributeFilter( "some_field = '6'" )
+    assert lyr.GetFeatureCount() == 3
+    lyr.SetAttributeFilter(None)
+
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/some_layer/_search?pretty&timeout=500ms&terminate_after=10&POSTFIELDS={ "size": 0,  "foo": "bar" }""", """
+    {
+        "took" : 1,
+        "timed_out" : false,
+        "terminated_early" : true,
+        "hits" : {
+            "total" : {
+            "value" : 4,
+            "relation" : "eq"
+            },
+            "max_score" : null,
+            "hits" : [ ]
+        }
+    }
+    """)
+
+
+    lyr.SetAttributeFilter( '{ "foo": "bar" }' )
+    assert lyr.GetFeatureCount() == 4
+    lyr.SetAttributeFilter(None)
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/some_layer/_search?pretty&timeout=500ms&terminate_after=10&POSTFIELDS={ "size": 0, "aggs" : { "bbox" : { "geo_bounds" : { "field" : "geometry" } } } }""", """
+    {
+        "aggregations" : {
+            "bbox" : {
+            "bounds" : {
+                "top_left" : {
+                "lat" : 10,
+                "lon" : 1
+                },
+                "bottom_right" : {
+                "lat" : 9,
+                "lon" : 2
+                }
+            }
+            }
+        }
+    }""")
+    bbox = lyr.GetExtent()
+    assert bbox == (1.0, 2.0, 9.0, 10.0)
+
+    # Check FEATURE_ITERATION_TERMINATE_AFTER
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is not None
+    assert lyr.GetNextFeature() is not None
+    assert lyr.GetNextFeature() is None
+
+    # Check FEATURE_ITERATION_TIMEOUT
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is not None
+    time.sleep(0.15)
+    assert lyr.GetNextFeature() is None

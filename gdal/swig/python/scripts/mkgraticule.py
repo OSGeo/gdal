@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 # import osgeo.utils.mkgraticule as a convenience to use as a script
 from osgeo.utils.mkgraticule import *  # noqa

@@ -16,7 +16,7 @@ EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_kmlsuperoverlay -DFRMT_ozi -DFRMT_ctg -DFRMT_e00grid \
 		-DFRMT_zmap -DFRMT_ngsgeoid -DFRMT_iris -DFRMT_map -DFRMT_cals \
 		-DFRMT_safe -DFRMT_sentinel2 -DFRMT_derived -DFRMT_prf \
-		-DFRMT_sigdem -DFRMT_ignfheightasciigrid -DFRMT_tga
+		-DFRMT_sigdem -DFRMT_ignfheightasciigrid -DFRMT_tga -DFRMT_stacta
 
 MOREEXTRA 	=	
 
@@ -146,7 +146,7 @@ EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_grib
 !ENDIF
 
 !IFDEF CURL_LIB
-EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_wcs -DFRMT_wms -DFRMT_plmosaic -DFRMT_wmts -DFRMT_rda -DFRMT_eeda -DFRMT_daas
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_wcs -DFRMT_wms -DFRMT_plmosaic -DFRMT_wmts -DFRMT_rda -DFRMT_eeda -DFRMT_daas -DFRMT_ogcapi
 !ENDIF
 
 !IFDEF RASDAMAN_ENABLED

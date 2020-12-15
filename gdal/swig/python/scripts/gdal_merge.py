@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 # import osgeo.utils.gdal_merge as a convenience to use as a script
 from osgeo.utils.gdal_merge import *  # noqa

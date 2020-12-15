@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose:  Implementation of the Create() function to create new PCIDSK files.
- * 
+ *
  ******************************************************************************
  * Copyright (c) 2009
- * PCI Geomatics, 50 West Wilmot Street, Richmond Hill, Ont, Canada
+ * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,7 +44,7 @@ using namespace PCIDSK;
 /************************************************************************/
 
 /**
- * Create a PCIDSK (.pix) file. 
+ * Create a PCIDSK (.pix) file.
  *
  * @param filename the name of the PCIDSK file to create.
  * @param pixels the width of the new file in pixels.
@@ -54,9 +54,9 @@ using namespace PCIDSK;
  * all CHN_8U channels.
  * @param options creation options (interleaving, etc)
  * @param interfaces Either NULL to use default interfaces, or a pointer
- * to a populated interfaces object. 
+ * to a populated interfaces object.
  *
- * @return a pointer to a file object for accessing the PCIDSK file. 
+ * @return a pointer to a file object for accessing the PCIDSK file.
  */
 
 PCIDSKFile PCIDSK_DLL *
@@ -140,21 +140,21 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 
     for( chan_index=0; chan_index < channel_count; chan_index++ )
     {
-        if( chan_index > 0 
-            && ((int) channel_types[chan_index]) 
+        if( chan_index > 0
+            && ((int) channel_types[chan_index])
                 < ((int) channel_types[chan_index-1]) )
             regular = false;
-        
+
         channels[((int) channel_types[chan_index])]++;
     }
-    
+
     if( !regular && strcmp(interleaving,"FILE") != 0 )
     {
-        return (PCIDSKFile*)ThrowPCIDSKExceptionPtr( 
+        return (PCIDSKFile*)ThrowPCIDSKExceptionPtr(
            "Requested mixture of band types not supported for interleaving=%s.",
            interleaving );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create the file.                                                */
 /* -------------------------------------------------------------------- */
@@ -177,10 +177,10 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 /* -------------------------------------------------------------------- */
         if( strcmp(interleaving,"PIXEL") == 0 )
         {
-            pixel_group_size = 
+            pixel_group_size =
                 channels[0] + // CHN_8U
-                channels[1] * DataTypeSize(CHN_16U) + 
-                channels[2] * DataTypeSize(CHN_16S) + 
+                channels[1] * DataTypeSize(CHN_16U) +
+                channels[2] * DataTypeSize(CHN_16S) +
                 channels[3] * DataTypeSize(CHN_32R) +
                 channels[4] * DataTypeSize(CHN_C16U) +
                 channels[5] * DataTypeSize(CHN_C16S) +
@@ -197,16 +197,16 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 /* -------------------------------------------------------------------- */
         else if( strcmp(interleaving,"BAND") == 0 )
         {
-            pixel_group_size = 
+            pixel_group_size =
                 channels[0] + // CHN_8U
-                channels[1] * DataTypeSize(CHN_16U) + 
-                channels[2] * DataTypeSize(CHN_16S) + 
+                channels[1] * DataTypeSize(CHN_16U) +
+                channels[2] * DataTypeSize(CHN_16S) +
                 channels[3] * DataTypeSize(CHN_32R) +
                 channels[4] * DataTypeSize(CHN_C16U) +
                 channels[5] * DataTypeSize(CHN_C16S) +
                 channels[6] * DataTypeSize(CHN_C32R);
             // BAND interleaved bands are tightly packed.
-            image_data_size = 
+            image_data_size =
                 (((uint64)pixel_group_size) * pixels * lines + 511) / 512;
 
             // TODO: Old code enforces a 1TB limit for some reason.
@@ -255,7 +255,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 
         // FH3 - file size later.
         fh.Put( (image_data_start + image_data_size), 16, 16 );
-        
+
         // FH4 - 16 characters reserved - spaces.
 
         // FH5 - Description
@@ -334,13 +334,13 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 
         // FH24.4 - 32R bands.
         fh.Put( channels[3], 476, 4 );
-        
+
         // FH24.5 - C16U bands
         fh.Put( channels[4], 480, 4 );
-        
+
         // FH24.6 - C16S bands
         fh.Put( channels[5], 484, 4 );
-        
+
         // FH24.7 - C32R bands
         fh.Put( channels[6], 488, 4 );
 
@@ -362,11 +362,11 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
         // IHi.2 - Filename storing image.
         if( STARTS_WITH(interleaving, "FILE") )
             ih.Put( "<unintialized>", 64, 64 );  // TODO: Spelling?
-        
+
         if( externallink )
         {
             // IHi.6.7 - IHi.6.10
-            ih.Put( 0, 250, 8 ); 
+            ih.Put( 0, 250, 8 );
             ih.Put( 0, 258, 8 );
             ih.Put( pixels, 266, 8 );
             ih.Put( lines, 274, 8 );
@@ -382,7 +382,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 
         for( chan_index = 0; chan_index < channel_count; chan_index++ )
         {
-            ih.Put(DataTypeName(channel_types[chan_index]).c_str(), 160, 8);    
+            ih.Put(DataTypeName(channel_types[chan_index]).c_str(), 160, 8);
 
             if( STARTS_WITH(options.c_str(), "TILED") )
             {
@@ -391,7 +391,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
                 ih.Put( sis_filename, 64, 64 );
 
                 // IHi.6.7 - IHi.6.10
-                ih.Put( 0, 250, 8 ); 
+                ih.Put( 0, 250, 8 );
                 ih.Put( 0, 258, 8 );
                 ih.Put( pixels, 266, 8 );
                 ih.Put( lines, 274, 8 );
@@ -403,8 +403,8 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
             interfaces->io->Write( ih.buffer, 1024, 1, io_handle );
         }
 
-        for( chan_index = channel_count; 
-            chan_index < image_header_count; 
+        for( chan_index = channel_count;
+            chan_index < image_header_count;
             chan_index++ )
         {
             ih.Put( "", 160, 8 );
@@ -421,7 +421,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
         segment_pointers.Put( " ", 0, (int) (segment_ptr_size*512) );
 
         interfaces->io->Seek( io_handle, segment_ptr_start*512, SEEK_SET );
-        interfaces->io->Write( segment_pointers.buffer, segment_ptr_size, 512, 
+        interfaces->io->Write( segment_pointers.buffer, segment_ptr_size, 512,
                             io_handle );
 
 /* -------------------------------------------------------------------- */
@@ -434,7 +434,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
                                 SEEK_SET );
             interfaces->io->Write( "\0", 1, 1, io_handle );
         }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Close the raw file, and reopen as a pcidsk file.                */
 /* -------------------------------------------------------------------- */
@@ -452,7 +452,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 /* -------------------------------------------------------------------- */
 /*      Create a default georeferencing segment.                        */
 /* -------------------------------------------------------------------- */
-        file->CreateSegment( "GEOref", 
+        file->CreateSegment( "GEOref",
                             "Master Georeferencing Segment for File",
                             SEG_GEO, 6 );
 
@@ -461,33 +461,33 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 /* -------------------------------------------------------------------- */
         if( STARTS_WITH(options.c_str(), "TILED") )
         {
-            file->SetMetadataValue( "_DBLayout", options ); 
+            file->SetMetadataValue( "_DBLayout", options );
 
             // For sizing the SysBMDir we want an approximate size of the
             // the imagery.
-            uint64 rough_image_size = 
+            uint64 rough_image_size =
                 (channels[0] + // CHN_8U
-                channels[1] * DataTypeSize(CHN_16U) + 
-                channels[2] * DataTypeSize(CHN_16S) + 
+                channels[1] * DataTypeSize(CHN_16U) +
+                channels[2] * DataTypeSize(CHN_16S) +
                 channels[3] * DataTypeSize(CHN_32R) +
                 channels[4] * DataTypeSize(CHN_C16U) +
                 channels[5] * DataTypeSize(CHN_C16S) +
-                channels[6] * DataTypeSize(CHN_C32R)) 
+                channels[6] * DataTypeSize(CHN_C32R))
                 * (pixels * (uint64) lines);
             uint64 sysbmdir_size = ((rough_image_size / 8192) * 28) / 512;
 
             sysbmdir_size = (int) (sysbmdir_size * 1.1 + 100);
-            int segment = file->CreateSegment( "SysBMDir", 
+            int segment = file->CreateSegment( "SysBMDir",
                                             "System Block Map Directory - Do not modify.",
                                             SEG_SYS, static_cast<int>(sysbmdir_size) );
-            
-            SysBlockMap *bm = 
+
+            SysBlockMap *bm =
                 dynamic_cast<SysBlockMap *>(file->GetSegment( segment ));
 
             for( chan_index = 0; chan_index < channel_count; chan_index++ )
             {
                 bm->CreateVirtualImageFile( pixels, lines, blocksize, blocksize,
-                                            channel_types[chan_index], 
+                                            channel_types[chan_index],
                                             compression );
             }
         }
@@ -496,8 +496,8 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 /*      If we have a non-tiled FILE interleaved file, should we         */
 /*      create external band files now?                                 */
 /* -------------------------------------------------------------------- */
-        if( STARTS_WITH(interleaving, "FILE") 
-            && !STARTS_WITH(options.c_str(), "TILED") 
+        if( STARTS_WITH(interleaving, "FILE")
+            && !STARTS_WITH(options.c_str(), "TILED")
             && !nocreate )
         {
             for( chan_index = 0; chan_index < channel_count; chan_index++ )
@@ -506,13 +506,13 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
                 int pixel_size = DataTypeSize(channel->GetType());
 
                 // build a band filename that uses the basename of the PCIDSK
-                // file, and adds ".nnn" based on the band. 
+                // file, and adds ".nnn" based on the band.
                 std::string band_filename = filename;
                 char ext[5];
                 CPLsnprintf( ext, sizeof(ext), ".%03d", chan_index+1 );
 
                 size_t last_dot = band_filename.find_last_of(".");
-                if( last_dot != std::string::npos 
+                if( last_dot != std::string::npos
                     && (band_filename.find_last_of("/\\:") == std::string::npos
                         || band_filename.find_last_of("/\\:") < last_dot) )
                 {
@@ -521,21 +521,21 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 
                 band_filename += ext;
 
-                // Now build a version without a path. 
+                // Now build a version without a path.
                 std::string relative_band_filename;
                 size_t path_div = band_filename.find_last_of( "/\\:" );
                 if( path_div == std::string::npos )
                     relative_band_filename = band_filename;
                 else
                     relative_band_filename = band_filename.c_str() + path_div + 1;
-                
+
                 // create the file - ought we write the whole file?
                 void *band_io_handle = interfaces->io->Open( band_filename, "w" );
                 interfaces->io->Write( "\0", 1, 1, band_io_handle );
                 interfaces->io->Close( band_io_handle );
 
                 // Set the channel header information.
-                channel->SetChanInfo( relative_band_filename, 0, pixel_size, 
+                channel->SetChanInfo( relative_band_filename, 0, pixel_size,
                                     pixel_size * pixels, true );
             }
         }

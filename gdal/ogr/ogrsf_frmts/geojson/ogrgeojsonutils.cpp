@@ -183,12 +183,14 @@ static bool IsGeoJSONLikeObject( const char* pszText, bool* pbMightBeSequence )
     }
 
     // See https://raw.githubusercontent.com/icepack/icepack-data/master/meshes/larsen/larsen_inflow.geojson
-    if( osWithoutSpace.find("{\"crs\":{") == 0 &&
-        osWithoutSpace.find(",\"features\":[") != std::string::npos )
+    // "{"crs":...,"features":[..."
+    // or https://gist.githubusercontent.com/NiklasDallmann/27e339dd78d1942d524fbcd179f9fdcf/raw/527a8319d75a9e29446a32a19e4c902213b0d668/42XR9nLAh8Poh9Xmniqh3Bs9iisNm74mYMC56v3Wfyo=_isochrones_fails.geojson
+    // "{"bbox":...,"features":[..."
+    if( osWithoutSpace.find(",\"features\":[") != std::string::npos )
     {
         if( pbMightBeSequence )
             *pbMightBeSequence = false;
-        return true;
+        return !ESRIJSONIsObject(pszText);
     }
 
     // See https://github.com/OSGeo/gdal/issues/2720

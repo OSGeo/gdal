@@ -62,6 +62,8 @@
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
+#include "ogr_proj_p.h"
+#include "proj.h"
 
 CPL_CVSID("$Id$")
 
@@ -5042,15 +5044,53 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
             bWellKnownDatum = true;
             oSRS.SetWellKnownGeogCS("NAD27");
         }
-        else if( strstr(pszDatumName, "NAD83") != nullptr
+        else if( EQUAL(pszDatumName, "NAD83")
                  || EQUAL(pszDatumName, "North_American_Datum_1983"))
         {
             bWellKnownDatum = true;
             oSRS.SetWellKnownGeogCS("NAD83");
         }
         else
-            oSRS.SetGeogCS(pszDatumName, pszDatumName, pszEllipsoidName,
+        {
+            CPLString osGeogCRSName(pszDatumName);
+
+            if( oSRS.IsProjected() )
+            {
+                PJ_CONTEXT* ctxt = OSRGetProjTLSContext();
+                const PJ_TYPE type = PJ_TYPE_PROJECTED_CRS;
+                PJ_OBJ_LIST* list = proj_create_from_name(ctxt, nullptr,
+                                                          oSRS.GetName(),
+                                                          &type, 1,
+                                                          false,
+                                                          1,
+                                                          nullptr);
+                if( list )
+                {
+                    const auto listSize = proj_list_get_count(list);
+                    if( listSize == 1 )
+                    {
+                        auto crs = proj_list_get(ctxt, list, 0);
+                        if( crs )
+                        {
+                            auto geogCRS = proj_crs_get_geodetic_crs(ctxt, crs);
+                            if( geogCRS )
+                            {
+                                const char* pszName = proj_get_name(geogCRS);
+                                if( pszName )
+                                    osGeogCRSName = pszName;
+                                proj_destroy(geogCRS);
+                            }
+                            proj_destroy(crs);
+                        }
+                    }
+                    proj_list_destroy(list);
+                }
+
+            }
+
+            oSRS.SetGeogCS(osGeogCRSName, pszDatumName, pszEllipsoidName,
                            psPro->proSpheroid.a, dfInvFlattening);
+        }
 
         if( psDatum != nullptr && psDatum->type == EPRJ_DATUM_PARAMETRIC )
         {

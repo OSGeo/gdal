@@ -29,6 +29,7 @@
  */
 #include "tiffiop.h"
 #include <stdio.h>
+#include <limits.h>
 
 static int gtTileContig(TIFFRGBAImage*, uint32*, uint32, uint32);
 static int gtTileSeparate(TIFFRGBAImage*, uint32*, uint32, uint32);
@@ -645,12 +646,20 @@ gtTileContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 
     flip = setorientation(img);
     if (flip & FLIP_VERTICALLY) {
-	    y = h - 1;
-	    toskew = -(int32)(tw + w);
+        if ((tw + w) > INT_MAX) {
+            TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "%s", "unsupported tile size (too wide)");
+            return (0);
+        }
+        y = h - 1;
+        toskew = -(int32)(tw + w);
     }
     else {
-	    y = 0;
-	    toskew = -(int32)(tw - w);
+        if (tw > (INT_MAX + w)) {
+            TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "%s", "unsupported tile size (too wide)");
+            return (0);
+        }
+        y = 0;
+        toskew = -(int32)(tw - w);
     }
      
     /*
@@ -765,10 +774,18 @@ gtTileSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 
 	flip = setorientation(img);
 	if (flip & FLIP_VERTICALLY) {
+		if ((tw + w) > INT_MAX) {
+            TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "%s", "unsupported tile size (too wide)");
+            return (0);
+        }
 		y = h - 1;
 		toskew = -(int32)(tw + w);
 	}
 	else {
+		if (tw > (INT_MAX + w)) {
+            TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "%s", "unsupported tile size (too wide)");
+            return (0);
+        }
 		y = 0;
 		toskew = -(int32)(tw - w);
 	}
@@ -936,6 +953,10 @@ gtStripContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 
 	flip = setorientation(img);
 	if (flip & FLIP_VERTICALLY) {
+		if ( w > INT_MAX ) {
+        	TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "Width overflow");
+			return (0);
+		}
 		y = h - 1;
 		toskew = -(int32)(w + w);
 	} else {
@@ -1032,6 +1053,10 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 
 	flip = setorientation(img);
 	if (flip & FLIP_VERTICALLY) {
+		if ( w > INT_MAX ) {
+        	TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "Width overflow");
+			return (0);
+		}
 		y = h - 1;
 		toskew = -(int32)(w + w);
 	}

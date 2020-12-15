@@ -156,6 +156,7 @@ static bool CPLDetectRuntimeAVX()
     {
         return false;
     }
+    CPL_IGNORE_RET_VAL(nXCRHigh); // unused
 
     return true;
 }
