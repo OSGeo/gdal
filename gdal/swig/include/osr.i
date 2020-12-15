@@ -1280,6 +1280,21 @@ public:
   }
 #endif
 
+#ifdef SWIGJAVA
+  %apply (int* outIntArray) {int*};
+  int* TransformPointsWithErrorCodes( int nCount, double *x, double *y, double *z, double *t, int* pnCountOut, int** outErrorCodes ) {
+    *pnCountOut = 0;
+    *outErrorCodes = NULL;
+    if (self == NULL)
+        return NULL;
+    *pnCountOut = nCount;
+    *outErrorCodes = (int*)CPLMalloc(sizeof(int) * nCount);
+    OCTTransform4DWithErrorCodes( self, nCount, x, y, z, t, *outErrorCodes );
+    return NULL;
+  }
+  %clear int*;
+#endif
+
 #ifdef SWIGCSHARP
   %clear (double*);
 #endif
