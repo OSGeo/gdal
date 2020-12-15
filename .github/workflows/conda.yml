@@ -48,11 +48,10 @@ jobs:
         path: ./gdal-feedstock/packages/
 
     - name: Deploy to gdal-master Conda channel
+      if: github.ref == 'refs/heads/master'
       shell: bash -l {0}
       env:
         ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
       run: |
           source ../gdal/ci/travis/conda/upload.sh || true
       working-directory: ./gdal-feedstock
-
-      #      if: github.ref == 'refs/heads/master'
