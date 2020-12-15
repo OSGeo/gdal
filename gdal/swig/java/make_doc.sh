@@ -11,7 +11,7 @@ cp -r org org_patched
 
 echo "Patching .java files with Javadoc from javadoc.java"
 gcc -g -Wall add_javadoc.c -o add_javadoc
-./add_javadoc javadoc.java org_patched "$(find org -name "*.java" -not -name "AsyncReader.java")"
+./add_javadoc javadoc.java org_patched $(find org -name "*.java" -not -name "AsyncReader.java")
 
 # Generate the HTML Javadoc
 rm -rf java
