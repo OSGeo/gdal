@@ -192,7 +192,7 @@
 /*                 NO SPLITS OR NEW BOXES. */
 		goto L190;
 	    } else {
-		novl = nov[l];
+		// novl = nov[l];
 
 		m = (nov[l] - 1) / (ibxx2[j] - 1) + 1;
 /*                 M IS FOUND BY SOLVING THE EQUATION BELOW FOR M: */

@@ -1148,7 +1148,7 @@ void qh_getmergeset(facetT *facetlist) {
   ridgeT *ridge, **ridgep;
   int nummerges;
 
-  nummerges= qh_setsize(qh facet_mergeset);
+  /* nummerges= qh_setsize(qh facet_mergeset); */
   trace4((qh ferr, 4026, "qh_getmergeset: started.\n"));
   qh visit_id++;
   FORALLfacet_(facetlist) {
