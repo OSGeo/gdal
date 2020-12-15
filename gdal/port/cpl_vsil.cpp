@@ -903,7 +903,7 @@ char** VSIGetFileMetadata( const char * pszFilename, const char* pszDomain,
 /**
  * \brief Set metadata on files.
  *
- * Implemented currently only for /vsis3/
+ * Implemented currently only for /vsis3/ and /vsiadls/
  *
  * @param pszFilename the path of the filesystem object to be set.
  * UTF-8 encoded.
