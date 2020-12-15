@@ -17,7 +17,7 @@ then
     exit 0;
 fi
 
-CI_PLAT=""
+export CI_PLAT=""
 if [ "$PLATFORM" == "windows-latest" ]; then
     CI_PLAT="win"
 fi
