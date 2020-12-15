@@ -329,16 +329,6 @@ class OGRProjCT : public OGRCoordinateTransformation
     PJ*         m_pj = nullptr;
     bool        m_bReversePj = false;
 
-    int         nMaxCount = 0;
-    double     *padfOriX = nullptr;
-    double     *padfOriY = nullptr;
-    double     *padfOriZ = nullptr;
-    double     *padfOriT = nullptr;
-    double     *padfTargetX = nullptr;
-    double     *padfTargetY = nullptr;
-    double     *padfTargetZ = nullptr;
-    double     *padfTargetT = nullptr;
-
     bool        m_bEmitErrors = true;
 
     bool        bNoTransform = false;
@@ -422,7 +412,11 @@ public:
 
     int Transform( int nCount,
                              double *x, double *y, double *z, double *t,
-                             int *panSuccess ) override;
+                             int *pabSuccess ) override;
+
+    int TransformWithErrorCodes( int nCount,
+                             double *x, double *y, double *z, double *t,
+                             int *panErrorCodes ) override;
 
     bool GetEmitErrors() const override { return m_bEmitErrors; }
     void SetEmitErrors( bool bEmitErrors ) override
@@ -704,15 +698,6 @@ OGRProjCT::~OGRProjCT()
         proj_assign_context(m_pj, OSRGetProjTLSContext());
         proj_destroy(m_pj);
     }
-
-    CPLFree(padfOriX);
-    CPLFree(padfOriY);
-    CPLFree(padfOriZ);
-    CPLFree(padfOriT);
-    CPLFree(padfTargetX);
-    CPLFree(padfTargetY);
-    CPLFree(padfTargetZ);
-    CPLFree(padfTargetT);
 }
 
 /************************************************************************/
@@ -1508,11 +1493,67 @@ int OGRCoordinateTransformation::Transform(
 }
 
 /************************************************************************/
-/*                             Transform()                              */
+/*                      TransformWithErrorCodes()                       */
+/************************************************************************/
+
+int OGRCoordinateTransformation::TransformWithErrorCodes(
+            int nCount, double *x, double *y, double *z, double* t,
+            int *panErrorCodes )
+
+{
+    std::vector<int> abSuccess(nCount+1);
+
+    bool bOverallSuccess =
+        CPL_TO_BOOL(Transform( nCount, x, y, z, t, &abSuccess[0] ));
+
+    if( panErrorCodes )
+    {
+        for( int i = 0; i < nCount; i++ )
+        {
+            panErrorCodes[i] = abSuccess[i] ? 0 : -1;
+        }
+    }
+
+    return bOverallSuccess;
+}
+
+/************************************************************************/
+/*                             Transform()                             */
 /************************************************************************/
 
 int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
                           double *t, int *pabSuccess )
+
+{
+    std::vector<int> anErrorCodes(nCount+1);
+
+    bool bOverallSuccess =
+        CPL_TO_BOOL(TransformWithErrorCodes( nCount, x, y, z, t, &anErrorCodes[0] ));
+
+    if( pabSuccess )
+    {
+        for( int i = 0; i < nCount; i++ )
+        {
+            pabSuccess[i] = ( anErrorCodes[i] == 0 );
+        }
+    }
+
+    return bOverallSuccess;
+}
+
+/************************************************************************/
+/*                       TransformWithErrorCodes()                      */
+/************************************************************************/
+
+#ifndef PROJ_ERR_COORD_TRANSFM_INVALID_COORD
+#define PROJ_ERR_COORD_TRANSFM_INVALID_COORD             2049
+#define PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN 2050
+#define PROJ_ERR_COORD_TRANSFM_NO_OPERATION              2051
+#endif
+
+int OGRProjCT::TransformWithErrorCodes(
+            int nCount, double *x, double *y, double *z, double* t,
+            int *panErrorCodes )
 
 {
     if( nCount == 0 )
@@ -1521,11 +1562,11 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
     // Prevent any coordinate modification when possible
     if ( bNoTransform )
     {
-        if( pabSuccess )
+        if( panErrorCodes )
         {
             for( int i = 0; i < nCount; i++ )
             {
-                 pabSuccess[i] = TRUE;
+                 panErrorCodes[i] = 0;
             }
         }
         return TRUE;
@@ -1686,6 +1727,17 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
             }
         }
 
+        if( panErrorCodes )
+        {
+            for( int i = 0; i < nCount; i++ )
+            {
+                if( x[i] != HUGE_VAL )
+                    panErrorCodes[i] = 0;
+                else
+                    panErrorCodes[i] = PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN;
+            }
+        }
+
         if( poSRSTarget )
         {
             OGRAxisOrientation orientation;
@@ -1835,13 +1887,14 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
                         "Reprojection failed, further errors will be "
                         "suppressed on the transform object.");
             }
+
             for( int i = 0; i < nCount; i++ )
             {
                 x[i] = HUGE_VAL;
                 y[i] = HUGE_VAL;
+                if( panErrorCodes )
+                    panErrorCodes[i] = PROJ_ERR_COORD_TRANSFM_NO_OPERATION;
             }
-            if( pabSuccess )
-                memset( pabSuccess, 0, sizeof(int) * nCount );
             return FALSE;
         }
     }
@@ -1854,99 +1907,59 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
 /*      Do the transformation (or not...) using PROJ                    */
 /* -------------------------------------------------------------------- */
 
-    int err = 0;
-    if( bTransformDone )
+    if( !bTransformDone )
     {
-        // err = 0;
-    }
-    else if( bCheckWithInvertProj )
-    {
-        // For some projections, we cannot detect if we are trying to reproject
-        // coordinates outside the validity area of the projection. So let's do
-        // the reverse reprojection and compare with the source coordinates.
-        if( nCount > nMaxCount )
+        for( int i = 0; i < nCount; i++ )
         {
-            nMaxCount = nCount;
-            padfOriX = static_cast<double*>(
-                CPLRealloc(padfOriX, sizeof(double) * nCount));
-            padfOriY = static_cast<double*>(
-                CPLRealloc(padfOriY, sizeof(double)*nCount));
-            padfOriZ = static_cast<double*>(
-                CPLRealloc(padfOriZ, sizeof(double)*nCount));
-            padfOriT = static_cast<double*>(
-                CPLRealloc(padfOriT, sizeof(double)*nCount));
-            padfTargetX = static_cast<double*>(
-                CPLRealloc(padfTargetX, sizeof(double)*nCount));
-            padfTargetY = static_cast<double*>(
-                CPLRealloc(padfTargetY, sizeof(double)*nCount));
-            padfTargetZ = static_cast<double*>(
-                CPLRealloc(padfTargetZ, sizeof(double)*nCount));
-            padfTargetT = static_cast<double*>(
-                CPLRealloc(padfTargetT, sizeof(double)*nCount));
-        }
-        memcpy(padfOriX, x, sizeof(double) * nCount);
-        memcpy(padfOriY, y, sizeof(double) * nCount);
-        if( z )
-        {
-            memcpy(padfOriZ, z, sizeof(double)*nCount);
-        }
-        if( t )
-        {
-            memcpy(padfOriT, t, sizeof(double)*nCount);
-        }
-
-        size_t nRet = proj_trans_generic (pj, m_bReversePj ? PJ_INV : PJ_FWD,
-                                x, sizeof(double), nCount,
-                                y, sizeof(double), nCount,
-                                z, z ? sizeof(double) : 0, z ? nCount : 0,
-                                t, t ? sizeof(double) : 0, t ? nCount : 0);
-        err = ( static_cast<int>(nRet) == nCount ) ?
-                    0 : proj_context_errno(ctx);
-        if( err == 0 )
-        {
-            memcpy(padfTargetX, x, sizeof(double) * nCount);
-            memcpy(padfTargetY, y, sizeof(double) * nCount);
+            PJ_COORD coord;
+            const double xIn = x[i];
+            const double yIn = y[i];
+            if( !std::isfinite(xIn) )
+            {
+                x[i] = HUGE_VAL;
+                y[i] = HUGE_VAL;
+                if( panErrorCodes )
+                    panErrorCodes[i] = PROJ_ERR_COORD_TRANSFM_INVALID_COORD;
+                continue;
+            }
+            coord.xyzt.x = x[i];
+            coord.xyzt.y = y[i];
+            coord.xyzt.z = z ? z[i] : 0;
+            coord.xyzt.t = t ? t[i] : 0;
+            proj_errno_reset(pj);
+            coord = proj_trans(pj, m_bReversePj ? PJ_INV : PJ_FWD, coord);
+            x[i] = coord.xyzt.x;
+            y[i] = coord.xyzt.y;
             if( z )
-            {
-                memcpy(padfTargetZ, z, sizeof(double) * nCount);
-            }
+                z[i] = coord.xyzt.z;
             if( t )
+                t[i] = coord.xyzt.t;
+            int err = 0;
+            if( coord.xyzt.x == HUGE_VAL )
             {
-                memcpy(padfTargetT, t, sizeof(double) * nCount);
+                err = proj_errno(pj);
+                // PROJ should normally emit an error, but in case it does not
+                // (e.g PROJ 6.3 with the +ortho projection), synthetize one
+                if( err == 0 )
+                    err = PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN;
             }
-
-            nRet = proj_trans_generic (pj, m_bReversePj ? PJ_FWD : PJ_INV,
-                padfTargetX, sizeof(double), nCount,
-                padfTargetY, sizeof(double), nCount,
-                z ? padfTargetZ : nullptr, z ? sizeof(double) : 0, z ? nCount : 0,
-                t ? padfTargetT : nullptr, t ? sizeof(double) : 0, t ? nCount : 0);
-            err = ( static_cast<int>(nRet) == nCount ) ?
-                    0 : proj_context_errno(ctx);
-            if( err == 0 )
+            else if( bCheckWithInvertProj )
             {
-                for( int i = 0; i < nCount; i++ )
+                // For some projections, we cannot detect if we are trying to reproject
+                // coordinates outside the validity area of the projection. So let's do
+                // the reverse reprojection and compare with the source coordinates.
+                coord = proj_trans(pj, m_bReversePj ? PJ_FWD : PJ_INV, coord);
+                if (fabs(coord.xyzt.x - xIn) > dfThreshold ||
+                    fabs(coord.xyzt.y - yIn) > dfThreshold)
                 {
-                    if( x[i] != HUGE_VAL && y[i] != HUGE_VAL &&
-                        (fabs(padfTargetX[i] - padfOriX[i]) > dfThreshold ||
-                         fabs(padfTargetY[i] - padfOriY[i]) > dfThreshold) )
-                    {
-                        x[i] = HUGE_VAL;
-                        y[i] = HUGE_VAL;
-                    }
+                    err  = PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN;
+                    x[i] = HUGE_VAL;
+                    y[i] = HUGE_VAL;
                 }
             }
-        }
-    }
-    else
-    {
-        size_t nRet = proj_trans_generic (pj, m_bReversePj ? PJ_INV : PJ_FWD,
-                                x, sizeof(double), nCount,
-                                y, sizeof(double), nCount,
-                                z, z ? sizeof(double) : 0, z ? nCount : 0,
-                                t, t ? sizeof(double) : 0, t ? nCount : 0);
-        err = ( static_cast<int>(nRet) == nCount ) ?
-                    0 : proj_context_errno(ctx);
-    }
+
+            if( panErrorCodes )
+                panErrorCodes[i] = err;
 
 /* -------------------------------------------------------------------- */
 /*      Try to report an error through CPL.  Get proj error string      */
@@ -1954,29 +1967,51 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
 /*      Suppress further error reporting on this OGRProjCT if we        */
 /*      have already reported 20 errors.                                */
 /* -------------------------------------------------------------------- */
-    if( err != 0 )
-    {
-        if( pabSuccess )
-            memset( pabSuccess, 0, sizeof(int) * nCount );
-
-        if( m_bEmitErrors && ++nErrorCount < 20 )
-        {
-            const char *pszError = proj_errno_string(err);
-            if( pszError == nullptr )
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "Reprojection failed, err = %d",
-                          err );
-            else
-                CPLError( CE_Failure, CPLE_AppDefined, "%s", pszError );
+            if( err != 0 )
+            {
+                if( ++nErrorCount < 20 )
+                {
+#if PROJ_VERSION_MAJOR >= 8
+                    const char *pszError = proj_context_errno_string(ctx, err);
+#else
+                    const char *pszError = proj_errno_string(err);
+#endif
+                    if( m_bEmitErrors )
+                    {
+                        if( pszError == nullptr )
+                            CPLError( CE_Failure, CPLE_AppDefined,
+                                      "Reprojection failed, err = %d", err );
+                        else
+                            CPLError( CE_Failure, CPLE_AppDefined, "%s", pszError );
+                    }
+                    else
+                    {
+                        if( pszError == nullptr )
+                            CPLDebug("OGRCT",
+                                     "Reprojection failed, err = %d", err );
+                        else
+                            CPLDebug("OGRCT", "%s", pszError );
+                    }
+                }
+                else if( nErrorCount == 20 )
+                {
+                    if( m_bEmitErrors )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Reprojection failed, err = %d, further errors will be "
+                                 "suppressed on the transform object.",
+                                 err );
+                    }
+                    else
+                    {
+                        CPLDebug("OGRCT",
+                                 "Reprojection failed, err = %d, further errors will be "
+                                 "suppressed on the transform object.",
+                                 err );
+                    }
+                }
+            }
         }
-        else if( nErrorCount == 20 )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Reprojection failed, err = %d, further errors will be "
-                      "suppressed on the transform object.",
-                      err );
-        }
-        return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2048,20 +2083,6 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
         }
     }
 #endif
-
-/* -------------------------------------------------------------------- */
-/*      Establish error information if pabSuccess provided.             */
-/* -------------------------------------------------------------------- */
-    if( pabSuccess )
-    {
-        for( int i = 0; i < nCount; i++ )
-        {
-            if( x[i] == HUGE_VAL || y[i] == HUGE_VAL )
-                pabSuccess[i] = FALSE;
-            else
-                pabSuccess[i] = TRUE;
-        }
-    }
 
     return TRUE;
 }
@@ -2141,4 +2162,34 @@ int OCTTransform4D( OGRCoordinateTransformationH hTransform,
 
     return OGRCoordinateTransformation::FromHandle(hTransform)->
         Transform( nCount, x, y, z, t, pabSuccess );
+}
+
+/************************************************************************/
+/*                      OCTTransform4DWithErrorCodes()                  */
+/************************************************************************/
+
+/** Transform an array of points
+ *
+ * @param hTransform Transformation object
+ * @param nCount Number of points
+ * @param x Array of nCount x values. Should not be NULL
+ * @param y Array of nCount y values. Should not be NULL
+ * @param z Array of nCount z values. Might be NULL
+ * @param t Array of nCount time values. Might be NULL
+ * @param panErrorCodes Output array of nCount value that will be set to 0 for
+ *                      success, or a non-zero value for failure. Refer to
+ *                      PROJ 8 public error codes. Might be NULL
+ * @since GDAL 3.3, and PROJ 8 to be able to use PROJ public error codes
+ * @return TRUE or FALSE
+ */
+int OCTTransform4DWithErrorCodes( OGRCoordinateTransformationH hTransform,
+                    int nCount, double *x, double *y, double *z,
+                    double *t,
+                    int *panErrorCodes )
+
+{
+    VALIDATE_POINTER1( hTransform, "OCTTransform4DWithErrorCodes", FALSE );
+
+    return OGRCoordinateTransformation::FromHandle(hTransform)->
+        TransformWithErrorCodes( nCount, x, y, z, t, panErrorCodes );
 }

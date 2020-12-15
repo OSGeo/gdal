@@ -1078,6 +1078,12 @@ OCTTransform4D( OGRCoordinateTransformationH hCT,
                 int nCount, double *x, double *y, double *z, double *t,
                 int *pabSuccess );
 
+int CPL_DLL
+OCTTransform4DWithErrorCodes( OGRCoordinateTransformationH hCT,
+                  int nCount, double *x, double *y, double *z, double *t,
+                  int *panErrorCodes );
+
+
 CPL_C_END
 
 #endif /* ndef SWIG */
