@@ -436,10 +436,10 @@ void VSICloseDir(VSIDIR* dir)
 /**
  * \brief Create a directory.
  *
- * Create a new directory with the indicated mode.  The mode is ignored
- * on some platforms.  A reasonable default mode value would be 0666.
- * This method goes through the VSIFileHandler virtualization and may
- * work on unusual filesystems such as in memory.
+ * Create a new directory with the indicated mode. For POSIX-style systems,
+ * the mode is modified by the file creation mask (umask). However, some
+ * file systems and platforms may not use umask, or they may ignore the mode
+ * completely. So a reasonable cross-platform default mode value is 0755.
  *
  * Analog of the POSIX mkdir() function.
  *
