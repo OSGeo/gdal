@@ -1176,6 +1176,14 @@ public:
   bool SetOperation(const char* operation) {
     return OCTCoordinateTransformationOptionsSetOperation(self, operation, false);
   }
+
+  bool SetDesiredAccuracy(double accuracy) {
+    return OCTCoordinateTransformationOptionsSetDesiredAccuracy(self, accuracy);
+  }
+
+  bool SetBallparkAllowed(bool allowBallpark) {
+    return OCTCoordinateTransformationOptionsSetBallparkAllowed(self, allowBallpark);
+  }
 } /*extend */
 };
 

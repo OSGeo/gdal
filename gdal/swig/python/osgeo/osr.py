@@ -1090,6 +1090,16 @@ class CoordinateTransformationOptions(_object):
         """SetOperation(CoordinateTransformationOptions self, char const * operation) -> bool"""
         return _osr.CoordinateTransformationOptions_SetOperation(self, *args)
 
+
+    def SetDesiredAccuracy(self, *args):
+        """SetDesiredAccuracy(CoordinateTransformationOptions self, double accuracy) -> bool"""
+        return _osr.CoordinateTransformationOptions_SetDesiredAccuracy(self, *args)
+
+
+    def SetBallparkAllowed(self, *args):
+        """SetBallparkAllowed(CoordinateTransformationOptions self, bool allowBallpark) -> bool"""
+        return _osr.CoordinateTransformationOptions_SetBallparkAllowed(self, *args)
+
 CoordinateTransformationOptions_swigregister = _osr.CoordinateTransformationOptions_swigregister
 CoordinateTransformationOptions_swigregister(CoordinateTransformationOptions)
 

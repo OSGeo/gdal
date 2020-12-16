@@ -475,3 +475,45 @@ def test_osr_ct_transformpointwitherrorcode():
     x, y, z, t, error_code = ct.TransformPointWithErrorCode(90, 0, 0, 0)
     assert math.isinf(x)
     assert error_code == osr.PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN
+
+###############################################################################
+# Test CoordinateTransformationOptions.SetDesiredAccuracy
+
+
+def test_osr_ct_options_accuracy():
+
+    s = osr.SpatialReference()
+    s.SetFromUserInput("EPSG:4326")
+    t = osr.SpatialReference()
+    t.SetFromUserInput("EPSG:4258") # ETRS89
+    options = osr.CoordinateTransformationOptions()
+    options.SetDesiredAccuracy(0.05)
+    with gdaltest.error_handler():
+        ct = osr.CoordinateTransformation(s, t, options)
+    try:
+        ct.TransformPoint(49, 2, 0)
+        assert False
+    except:
+        pass
+
+
+###############################################################################
+# Test CoordinateTransformationOptions.SetBallparkAllowed
+
+
+def test_osr_ct_options_ballpark_disallowed():
+
+    s = osr.SpatialReference()
+    s.SetFromUserInput("EPSG:4267") # NAD27
+    t = osr.SpatialReference()
+    t.SetFromUserInput("EPSG:4258") # ETRS89
+    options = osr.CoordinateTransformationOptions()
+    options.SetBallparkAllowed(False)
+    with gdaltest.error_handler():
+        ct = osr.CoordinateTransformation(s, t, options)
+    try:
+        ct.TransformPoint(49, 2, 0)
+        assert False
+    except:
+        pass
+

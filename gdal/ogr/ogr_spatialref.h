@@ -862,6 +862,8 @@ public:
                            double dfSouthLatitudeDeg,
                            double dfEastLongitudeDeg,
                            double dfNorthLatitudeDeg);
+    bool SetDesiredAccuracy(double dfAccuracy);
+    bool SetBallparkAllowed(bool bAllowBallpark);
 
     bool SetCoordinateOperation(const char* pszCT, bool bReverseCT);
 /*! @cond Doxygen_Suppress */

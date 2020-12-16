@@ -36,6 +36,7 @@ import java.lang.RuntimeException;
 import org.gdal.osr.osr;
 import org.gdal.osr.SpatialReference;
 import org.gdal.osr.CoordinateTransformation;
+import org.gdal.osr.CoordinateTransformationOptions;
 
 /**
  * <p>Title: GDAL Java OSRTransform example.</p>
@@ -79,6 +80,8 @@ public class OSRTransform {
 		}
 		
 		testTransformPointsWithErrorCodes();
+		testSetDesiredAccuracy();
+		testSetBallparkAllowed();
 	}
 
         public static void check(boolean b)
@@ -127,4 +130,42 @@ public class OSRTransform {
             check(coords[2][0] == Double.POSITIVE_INFINITY);
             check(errorCodes[2] == osr.PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN);
 	}
+
+        public static void testSetDesiredAccuracy()
+        {
+            SpatialReference s = new SpatialReference("");
+            s.SetFromUserInput("EPSG:4326"); // WGS84
+            SpatialReference t = new SpatialReference("");
+            t.SetFromUserInput("EPSG:4258"); // ETRS89
+
+            CoordinateTransformationOptions options = new CoordinateTransformationOptions();
+            options.SetDesiredAccuracy(0.05);
+            try
+            {
+                CoordinateTransformation ct = CoordinateTransformation.CreateCoordinateTransformation(s, t, options);
+                check( false );
+            }
+            catch( RuntimeException e)
+            {
+            }
+        }
+
+        public static void testSetBallparkAllowed()
+        {
+            SpatialReference s = new SpatialReference("");
+            s.SetFromUserInput("EPSG:4267"); // NAD 27
+            SpatialReference t = new SpatialReference("");
+            t.SetFromUserInput("EPSG:4258"); // ETRS89
+
+            CoordinateTransformationOptions options = new CoordinateTransformationOptions();
+            options.SetBallparkAllowed(false);
+            try
+            {
+                CoordinateTransformation ct = CoordinateTransformation.CreateCoordinateTransformation(s, t, options);
+                check( false );
+            }
+            catch( RuntimeException e)
+            {
+            }
+        }
 }

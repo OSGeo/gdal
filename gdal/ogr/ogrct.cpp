@@ -64,6 +64,9 @@ struct OGRCoordinateTransformationOptions::Private
     CPLString osCoordOperation{};
     bool bReverseCO = false;
 
+    bool bAllowBallpark = true;
+    double dfAccuracy = -1; // no constraint
+
     bool bHasSourceCenterLong = false;
     double dfSourceCenterLong = 0.0;
 
@@ -303,6 +306,89 @@ int OCTCoordinateTransformationOptionsSetOperation(
 }
 
 /************************************************************************/
+/*                         SetDesiredAccuracy()                         */
+/************************************************************************/
+
+/** \brief Sets the desired accuracy for coordinate operations.
+ *
+ * Only coordinate operations that offer an accuracy of at leat the one
+ * specified will be considered.
+ *
+ * An accuracy of 0 is valid and means a coordinate operation made only of one or
+ * several conversions (map projections, unit conversion, etc.)
+ * Operations involving ballpark transformations have a unknown accuracy, and
+ * will be filtered out by any dfAccuracy >= 0 value.
+ *
+ * If this option is specified with PROJ < 8, the OGR_CT_OP_SELECTION configuration
+ * option will default to BEST_ACCURACY.
+ *
+ * @param dfAccuracy accuracy in metres (or a negative value to disable this filter)
+ *
+ * @since GDAL 3.3
+ */
+bool OGRCoordinateTransformationOptions::SetDesiredAccuracy(double dfAccuracy)
+{
+    d->dfAccuracy = dfAccuracy;
+    return true;
+}
+
+/************************************************************************/
+/*        OCTCoordinateTransformationOptionsSetDesiredAccuracy()        */
+/************************************************************************/
+
+/** \brief Sets the desired accuracy for coordinate operations.
+ *
+ * See OGRCoordinateTransformationOptions::SetDesiredAccuracy()
+ *
+ * @since GDAL 3.3
+ */
+int OCTCoordinateTransformationOptionsSetDesiredAccuracy(
+    OGRCoordinateTransformationOptionsH hOptions, double dfAccuracy)
+{
+    return hOptions->SetDesiredAccuracy(dfAccuracy);
+}
+
+/************************************************************************/
+/*                       SetBallparkAllowed()                           */
+/************************************************************************/
+
+/** \brief Sets whether ballpark transformations are allowed.
+ *
+ * By default, PROJ may generate "ballpark transformations" (see
+ * https://proj.org/glossary.html) when precise datum transformations are missing.
+ * For high accuracy use cases, such transformations might not be allowed.
+ *
+ * If this option is specified with PROJ < 8, the OGR_CT_OP_SELECTION configuration
+ * option will default to BEST_ACCURACY.
+ *
+ * @param bAllowBallpark false to disable the user of ballpark transformations
+ *
+ * @since GDAL 3.3
+ */
+bool OGRCoordinateTransformationOptions::SetBallparkAllowed(bool bAllowBallpark)
+{
+    d->bAllowBallpark = bAllowBallpark;
+    return true;
+}
+
+/************************************************************************/
+/*        OCTCoordinateTransformationOptionsSetBallparkAllowed()        */
+/************************************************************************/
+
+/** \brief Sets whether ballpark transformations are allowed.
+ *
+ * See OGRCoordinateTransformationOptions::SetDesiredAccuracy()
+ *
+ * @since GDAL 3.3 and PROJ 8
+ */
+int OCTCoordinateTransformationOptionsSetBallparkAllowed(
+    OGRCoordinateTransformationOptionsH hOptions, int bAllowBallpark)
+{
+    return hOptions->SetBallparkAllowed(CPL_TO_BOOL(bAllowBallpark));
+}
+
+
+/************************************************************************/
 /*                              OGRProjCT                               */
 /************************************************************************/
 
@@ -537,7 +623,11 @@ OGRCreateCoordinateTransformation( const OGRSpatialReference *poSource,
  *     evaluated for each point to transform.</li>
  * <li>BEST_ACCURACY means the operation whose accuracy is best. It should be
  *     close to PROJ behavior, except that the operation to select is decided
- *     for the average point of the coordinates passed in a single Transform() call.</li>
+ *     for the average point of the coordinates passed in a single Transform() call.
+ *     Note: if the OGRCoordinateTransformationOptions::SetDesiredAccuracy() or
+ *     OGRCoordinateTransformationOptions::SetBallparkAllowed() methods are called
+ *     with PROJ < 8, this strategy will be selected instead of PROJ.
+ * </li>
  * <li>FIRST_MATCHING is the operation ordered first in the list of candidates:
  *     it will not necessarily have the best accuracy, but generally a larger area of
  *     use.  It is evaluated for the average point of the coordinates passed in a
@@ -911,6 +1001,15 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
             CPLError(CE_Warning, CPLE_NotSupported,
                      "OGR_CT_OP_SELECTION=%s not supported", pszCTOpSelection);
     }
+#if PROJ_VERSION_MAJOR < 8
+    else
+    {
+        if( options.d->dfAccuracy >= 0 || !options.d->bAllowBallpark )
+        {
+            m_eStrategy = Strategy::BEST_ACCURACY;
+        }
+    }
+#endif
     if( m_eStrategy == Strategy::PROJ )
     {
         const char* pszUseApproxTMERC = CPLGetConfigOption("OSR_USE_APPROX_TMERC", nullptr);
@@ -1036,7 +1135,28 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
                     options.d->dfNorthLatitudeDeg);
             }
             auto ctx = OSRGetProjTLSContext();
+#if PROJ_VERSION_MAJOR >= 8
+            auto srcCRS = proj_create(ctx, pszSrcSRS);
+            auto targetCRS = proj_create(ctx, pszTargetSRS);
+            if( srcCRS == nullptr || targetCRS == nullptr )
+            {
+                CPLFree( pszSrcSRS );
+                CPLFree( pszTargetSRS );
+                proj_destroy(srcCRS);
+                proj_destroy(targetCRS);
+                return FALSE;
+            }
+            CPLStringList aosOptions;
+            if( options.d->dfAccuracy >= 0 )
+                aosOptions.SetNameValue("ACCURACY", CPLSPrintf("%.18g", options.d->dfAccuracy));
+            if( !options.d->bAllowBallpark )
+                aosOptions.SetNameValue("ALLOW_BALLPARK", "NO");
+            m_pj = proj_create_crs_to_crs_from_pj(ctx, srcCRS, targetCRS, area, aosOptions.List());
+            proj_destroy(srcCRS);
+            proj_destroy(targetCRS);
+#else
             m_pj = proj_create_crs_to_crs(ctx, pszSrcSRS, pszTargetSRS, area);
+#endif
             if( area )
                 proj_area_destroy(area);
             if( m_pj == nullptr )
@@ -1169,6 +1289,20 @@ bool OGRProjCT::ListCoordinateOperations(const char* pszSrcSRS,
             options.d->dfSouthLatitudeDeg,
             options.d->dfEastLongitudeDeg,
             options.d->dfNorthLatitudeDeg);
+    }
+
+    if( options.d->dfAccuracy >= 0 )
+        proj_operation_factory_context_set_desired_accuracy(ctx ,operation_ctx, options.d->dfAccuracy);
+    if ( !options.d->bAllowBallpark )
+    {
+#if PROJ_VERSION_MAJOR > 7 || (PROJ_VERSION_MAJOR == 7 && PROJ_VERSION_MINOR >= 1)
+        proj_operation_factory_context_set_allow_ballpark_transformations(ctx ,operation_ctx, FALSE);
+#else
+        if( options.d->dfAccuracy < 0 )
+        {
+            proj_operation_factory_context_set_desired_accuracy(ctx ,operation_ctx, HUGE_VAL);
+        }
+#endif
     }
 
     auto op_list = proj_create_operations(ctx, src, dst, operation_ctx);

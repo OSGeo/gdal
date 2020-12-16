@@ -4398,6 +4398,26 @@ SWIGINTERN bool OGRCoordinateTransformationOptions_SetAreaOfInterest(OGRCoordina
 SWIGINTERN bool OGRCoordinateTransformationOptions_SetOperation(OGRCoordinateTransformationOptions *self,char const *operation){
     return OCTCoordinateTransformationOptionsSetOperation(self, operation, false);
   }
+SWIGINTERN bool OGRCoordinateTransformationOptions_SetDesiredAccuracy(OGRCoordinateTransformationOptions *self,double accuracy){
+    return OCTCoordinateTransformationOptionsSetDesiredAccuracy(self, accuracy);
+  }
+
+SWIGINTERN int
+SWIG_AsVal_bool (PyObject *obj, bool *val)
+{
+  int r;
+  if (!PyBool_Check(obj))
+    return SWIG_ERROR;
+  r = PyObject_IsTrue(obj);
+  if (r == -1)
+    return SWIG_ERROR;
+  if (val) *val = r ? true : false;
+  return SWIG_OK;
+}
+
+SWIGINTERN bool OGRCoordinateTransformationOptions_SetBallparkAllowed(OGRCoordinateTransformationOptions *self,bool allowBallpark){
+    return OCTCoordinateTransformationOptionsSetBallparkAllowed(self, allowBallpark);
+  }
 SWIGINTERN OSRCoordinateTransformationShadow *new_OSRCoordinateTransformationShadow__SWIG_0(OSRSpatialReferenceShadow *src,OSRSpatialReferenceShadow *dst){
     return (OSRCoordinateTransformationShadow*) OCTNewCoordinateTransformation(src, dst);
   }
@@ -4549,20 +4569,6 @@ SWIGINTERN void OSRCoordinateTransformationShadow_TransformPoints(OSRCoordinateT
   OSRCoordinateTransformationShadow *CreateCoordinateTransformation( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst, OGRCoordinateTransformationOptions* options = NULL ) {
     return (OSRCoordinateTransformationShadow*) 
         options ? OCTNewCoordinateTransformationEx( src, dst, options ) : OCTNewCoordinateTransformation(src, dst);
-}
-
-
-SWIGINTERN int
-SWIG_AsVal_bool (PyObject *obj, bool *val)
-{
-  int r;
-  if (!PyBool_Check(obj))
-    return SWIG_ERROR;
-  r = PyObject_IsTrue(obj);
-  if (r == -1)
-    return SWIG_ERROR;
-  if (val) *val = r ? true : false;
-  return SWIG_OK;
 }
 
 SWIGINTERN OSRCRSInfo *new_OSRCRSInfo(char const *auth_name,char const *code,char const *name,OSRCRSType type,bool deprecated,bool bbox_valid,double west_lon_degree,double south_lat_degree,double east_lon_degree,double north_lat_degree,char const *area_name,char const *projection_method){
@@ -15438,6 +15444,96 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_CoordinateTransformationOptions_SetDesiredAccuracy(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRCoordinateTransformationOptions *arg1 = (OGRCoordinateTransformationOptions *) 0 ;
+  double arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:CoordinateTransformationOptions_SetDesiredAccuracy",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRCoordinateTransformationOptions, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CoordinateTransformationOptions_SetDesiredAccuracy" "', argument " "1"" of type '" "OGRCoordinateTransformationOptions *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRCoordinateTransformationOptions * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CoordinateTransformationOptions_SetDesiredAccuracy" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (bool)OGRCoordinateTransformationOptions_SetDesiredAccuracy(arg1,arg2);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CoordinateTransformationOptions_SetBallparkAllowed(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRCoordinateTransformationOptions *arg1 = (OGRCoordinateTransformationOptions *) 0 ;
+  bool arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  bool val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  bool result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:CoordinateTransformationOptions_SetBallparkAllowed",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRCoordinateTransformationOptions, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CoordinateTransformationOptions_SetBallparkAllowed" "', argument " "1"" of type '" "OGRCoordinateTransformationOptions *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRCoordinateTransformationOptions * >(argp1);
+  ecode2 = SWIG_AsVal_bool(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "CoordinateTransformationOptions_SetBallparkAllowed" "', argument " "2"" of type '" "bool""'");
+  } 
+  arg2 = static_cast< bool >(val2);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (bool)OGRCoordinateTransformationOptions_SetBallparkAllowed(arg1,arg2);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *CoordinateTransformationOptions_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *obj;
   if (!PyArg_ParseTuple(args,(char *)"O:swigregister", &obj)) return NULL;
@@ -17867,6 +17963,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"delete_CoordinateTransformationOptions", _wrap_delete_CoordinateTransformationOptions, METH_VARARGS, (char *)"delete_CoordinateTransformationOptions(CoordinateTransformationOptions self)"},
 	 { (char *)"CoordinateTransformationOptions_SetAreaOfInterest", _wrap_CoordinateTransformationOptions_SetAreaOfInterest, METH_VARARGS, (char *)"CoordinateTransformationOptions_SetAreaOfInterest(CoordinateTransformationOptions self, double westLongitudeDeg, double southLatitudeDeg, double eastLongitudeDeg, double northLatitudeDeg) -> bool"},
 	 { (char *)"CoordinateTransformationOptions_SetOperation", _wrap_CoordinateTransformationOptions_SetOperation, METH_VARARGS, (char *)"CoordinateTransformationOptions_SetOperation(CoordinateTransformationOptions self, char const * operation) -> bool"},
+	 { (char *)"CoordinateTransformationOptions_SetDesiredAccuracy", _wrap_CoordinateTransformationOptions_SetDesiredAccuracy, METH_VARARGS, (char *)"CoordinateTransformationOptions_SetDesiredAccuracy(CoordinateTransformationOptions self, double accuracy) -> bool"},
+	 { (char *)"CoordinateTransformationOptions_SetBallparkAllowed", _wrap_CoordinateTransformationOptions_SetBallparkAllowed, METH_VARARGS, (char *)"CoordinateTransformationOptions_SetBallparkAllowed(CoordinateTransformationOptions self, bool allowBallpark) -> bool"},
 	 { (char *)"CoordinateTransformationOptions_swigregister", CoordinateTransformationOptions_swigregister, METH_VARARGS, NULL},
 	 { (char *)"new_CoordinateTransformation", _wrap_new_CoordinateTransformation, METH_VARARGS, (char *)"\n"
 		"CoordinateTransformation(SpatialReference src, SpatialReference dst)\n"

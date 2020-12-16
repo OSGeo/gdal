@@ -28,4 +28,8 @@ static void DontUseExceptions() {
   bUseExceptions = 0;
   CPLSetErrorHandler( CPLDefaultErrorHandler );
 }
+
+static bool GetUseExceptions() {
+  return bUseExceptions == 1;
+}
 %}

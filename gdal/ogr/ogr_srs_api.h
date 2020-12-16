@@ -1054,6 +1054,12 @@ int CPL_DLL OCTCoordinateTransformationOptionsSetAreaOfInterest(
     double dfEastLongitudeDeg,
     double dfNorthLatitudeDeg);
 
+int CPL_DLL OCTCoordinateTransformationOptionsSetDesiredAccuracy(
+    OGRCoordinateTransformationOptionsH hOptions, double dfAccuracy);
+
+int CPL_DLL OCTCoordinateTransformationOptionsSetBallparkAllowed(
+    OGRCoordinateTransformationOptionsH hOptions, int bAllowBallpark);
+
 void CPL_DLL OCTDestroyCoordinateTransformationOptions(OGRCoordinateTransformationOptionsH);
 
 OGRCoordinateTransformationH CPL_DLL
