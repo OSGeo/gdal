@@ -4551,8 +4551,8 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
  * The output bands need to exist in advance and share the same characteristics
  * (type, dimensions)
  *
- * The resampling algorithms supported for the moment are "NEAREST", "AVERAGE"
- * "GAUSS", "CUBIC", "CUBICSPLINE", "LANCZOS" and "BILINEAR"
+ * The resampling algorithms supported for the moment are "NEAREST", "AVERAGE",
+ * "RMS", "GAUSS", "CUBIC", "CUBICSPLINE", "LANCZOS" and "BILINEAR"
  *
  * It does not support color tables or complex data types.
  *
