@@ -47,6 +47,7 @@ class VSIAzureBlobHandleHelper final: public IVSIS3LikeHandleHelper
         CPLString m_osStorageKey;
         CPLString m_osSAS;
         bool      m_bUseHTTPS;
+        bool      m_bFromManagedIdendities;
 
         enum class Service
         {
@@ -60,7 +61,11 @@ class VSIAzureBlobHandleHelper final: public IVSIS3LikeHandleHelper
                                          CPLString& osEndpoint,
                                          CPLString& osStorageAccount,
                                          CPLString& osStorageKey,
-                                         CPLString& osSAS);
+                                         CPLString& osSAS,
+                                         bool& bFromManagedIdentities);
+
+        static bool     GetConfigurationFromManagedIdentities(
+                                                    CPLString& osAccessToken);
 
         static CPLString BuildURL(const CPLString& osEndpoint,
                                   const CPLString& osStorageAccount,
@@ -78,7 +83,8 @@ class VSIAzureBlobHandleHelper final: public IVSIS3LikeHandleHelper
                                  const CPLString& osStorageAccount,
                                  const CPLString& osStorageKey,
                                  const CPLString& osSAS,
-                                 bool bUseHTTPS);
+                                 bool bUseHTTPS,
+                                 bool bFromManagedIdentities);
        ~VSIAzureBlobHandleHelper();
 
         static VSIAzureBlobHandleHelper* BuildFromURI(const char* pszURI,
@@ -93,6 +99,8 @@ class VSIAzureBlobHandleHelper final: public IVSIS3LikeHandleHelper
         const CPLString& GetURL() const override { return m_osURL; }
 
         CPLString GetSignedURL(CSLConstList papszOptions);
+
+        static void ClearCache();
 };
 
 namespace cpl
