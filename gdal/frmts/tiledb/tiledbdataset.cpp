@@ -1202,8 +1202,8 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
                                     "TILEDB_CONFIG" );
 
         const char* pszTimestamp = CSLFetchNameValue(
-					poOpenInfo->papszOpenOptions,
-					"TILEDB_TIMESTAMP" );
+                                        poOpenInfo->papszOpenOptions,
+                                        "TILEDB_TIMESTAMP" );
 
         if( pszConfig != nullptr )
         {
