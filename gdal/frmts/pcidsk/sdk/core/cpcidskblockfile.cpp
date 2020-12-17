@@ -63,8 +63,8 @@ SysTileDir * CPCIDSKBlockFile::CreateTileDir(void)
 
     std::string oFileOptions = GetFileOptions();
 
-    std::transform(oFileOptions.begin(), oFileOptions.end(),
-                   oFileOptions.begin(), toupper);
+    for (char & chIter : oFileOptions)
+        chIter = (char) toupper((uchar) chIter);
 
     // Check if we should create a TILEV1 or TILEV2 block directory.
     bool bTileV1 = oFileOptions.find("TILEV1") != std::string::npos;

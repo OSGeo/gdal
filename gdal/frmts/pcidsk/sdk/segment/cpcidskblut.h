@@ -49,8 +49,8 @@ namespace PCIDSK
 
         virtual     ~CPCIDSK_BLUT();
 
-        virtual void ReadBLUT( std::vector<BLUTEntry>& vBLUT );
-        virtual void WriteBLUT( const std::vector<BLUTEntry>& vBLUT );
+        virtual void ReadBLUT( std::vector<BLUTEntry>& vBLUT ) override;
+        virtual void WriteBLUT( const std::vector<BLUTEntry>& vBLUT ) override;
     };
 } // end namespace PCIDSK
 

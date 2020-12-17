@@ -49,8 +49,8 @@ namespace PCIDSK
 
         virtual     ~CPCIDSK_BPCT();
 
-        virtual void ReadBPCT( std::vector<BPCTEntry>& vBPCT );
-        virtual void WriteBPCT( const std::vector<BPCTEntry>& vBPCT );
+        virtual void ReadBPCT( std::vector<BPCTEntry>& vBPCT ) override;
+        virtual void WriteBPCT( const std::vector<BPCTEntry>& vBPCT ) override;
     };
 } // end namespace PCIDSK
 

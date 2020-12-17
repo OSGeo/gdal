@@ -111,10 +111,10 @@ void MetadataSegment::Load()
 }
 
 /************************************************************************/
-/*                           FetchMetadata()                            */
+/*                           FetchGroupMetadata()                       */
 /************************************************************************/
 
-void MetadataSegment::FetchMetadata( const char *group, int id,
+void MetadataSegment::FetchGroupMetadata( const char *group, int id,
                                      std::map<std::string,std::string> &md_set)
 
 {
@@ -183,10 +183,10 @@ void MetadataSegment::FetchMetadata( const char *group, int id,
 }
 
 /************************************************************************/
-/*                          SetMetadataValue()                          */
+/*                         SetGroupMetadataValue()                      */
 /************************************************************************/
 
-void MetadataSegment::SetMetadataValue( const char *group, int id,
+void MetadataSegment::SetGroupMetadataValue( const char *group, int id,
                                         const std::string& key, const std::string& value )
 
 {

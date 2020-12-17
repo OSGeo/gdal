@@ -716,7 +716,7 @@ void CPCIDSKFile::InitializeFromHeader()
 
         // Check for an extended link file
         bool bLinked = false;
-        if (filename.find("LNK") == 0)
+        if (STARTS_WITH(filename.c_str(), "LNK"))
         {
             std::string seg_str(filename, 4, 4);
             unsigned int seg_num = std::atoi(seg_str.c_str());

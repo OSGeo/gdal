@@ -116,8 +116,8 @@ size_t AsciiTileDir::GetOptimizedDirSize(BlockFile * poFile)
 {
     std::string oFileOptions = poFile->GetFileOptions();
 
-    std::transform(oFileOptions.begin(), oFileOptions.end(),
-                   oFileOptions.begin(), toupper);
+    for (char & chIter : oFileOptions)
+        chIter = (char) toupper((uchar) chIter);
 
     // Compute the ratio.
     double dfRatio = 0.0;
@@ -222,7 +222,7 @@ AsciiTileDir::AsciiTileDir(BlockFile * poFile, uint16 nSegment)
  *
  * @param poFile The associated file object.
  * @param nSegment The segment of the block directory.
- * @param nVersion The version of the block directory.
+ * @param nBlockSize The size of the blocks.
  */
 AsciiTileDir::AsciiTileDir(BlockFile * poFile, uint16 nSegment,
                            CPL_UNUSED uint32 nBlockSize)
@@ -629,7 +629,7 @@ void AsciiTileDir::WriteDir(void)
 
     // The first 10 bytes are for the version.
     memcpy(pabyBlockDirIter, "VERSION", 7);
-    snprintf(pabyBlockDirIter + 7, 4, "%3d", mnVersion);
+    snprintf(pabyBlockDirIter + 7, 9, "%3d", mnVersion);
     pabyBlockDirIter += 10;
 
     // Write the block directory info.
@@ -669,7 +669,7 @@ void AsciiTileDir::WriteDir(void)
         {
             BlockInfo * psBlock = &poLayer->moBlockList[iBlock];
 
-            snprintf(pabyBlockDirIter, 5, "%4d", psBlock->nSegment);
+            snprintf(pabyBlockDirIter, 9, "%4d", psBlock->nSegment);
             pabyBlockDirIter += 4;
 
             snprintf(pabyBlockDirIter, 9, "%8d", psBlock->nStartBlock);
@@ -695,7 +695,7 @@ void AsciiTileDir::WriteDir(void)
     {
         BlockInfo * psBlock = &poLayer->moBlockList[iBlock];
 
-        snprintf(pabyBlockDirIter, 5, "%4d", psBlock->nSegment);
+        snprintf(pabyBlockDirIter, 9, "%4d", psBlock->nSegment);
         pabyBlockDirIter += 4;
 
         snprintf(pabyBlockDirIter, 9, "%8d", psBlock->nStartBlock);
@@ -718,7 +718,7 @@ void AsciiTileDir::WriteDir(void)
 
     for (BlockLayerInfo * psLayer : moLayerInfoList)
     {
-        snprintf(pabyBlockDirIter, 5, "%4d", psLayer->nLayerType);
+        snprintf(pabyBlockDirIter, 9, "%4d", psLayer->nLayerType);
         pabyBlockDirIter += 4;
 
         if (psLayer->nBlockCount != 0)

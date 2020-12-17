@@ -44,8 +44,8 @@ uint32 BinaryTileDir::GetOptimizedBlockSize(BlockFile * poFile)
 {
     std::string oFileOptions = poFile->GetFileOptions();
 
-    std::transform(oFileOptions.begin(), oFileOptions.end(),
-                   oFileOptions.begin(), toupper);
+    for (char & chIter : oFileOptions)
+        chIter = (char) toupper((uchar) chIter);
 
     uint32 nTileSize = PCIDSK_DEFAULT_TILE_SIZE;
 
@@ -75,8 +75,8 @@ size_t BinaryTileDir::GetOptimizedDirSize(BlockFile * poFile)
 {
     std::string oFileOptions = poFile->GetFileOptions();
 
-    std::transform(oFileOptions.begin(), oFileOptions.end(),
-                   oFileOptions.begin(), toupper);
+    for (char & chIter : oFileOptions)
+        chIter = (char) toupper((uchar) chIter);
 
     // Compute the ratio.
     double dfRatio = 0.0;
@@ -388,7 +388,7 @@ void BinaryTileDir::WriteDir(void)
 
     // The first 10 bytes are for the version.
     memcpy(pabyBlockDirIter, "VERSION", 7);
-    snprintf(pabyBlockDirIter + 7, 4, "%3d", mnVersion);
+    snprintf(pabyBlockDirIter + 7, 9, "%3d", mnVersion);
     pabyBlockDirIter += 10;
 
     // Write the block directory info.

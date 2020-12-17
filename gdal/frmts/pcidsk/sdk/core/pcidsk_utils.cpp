@@ -27,6 +27,7 @@
 
 #include "pcidsk_config.h"
 #include "pcidsk_types.h"
+#include "pcidsk_buffer.h"
 #include "pcidsk_exception.h"
 #include "pcidsk_georef.h"
 #include "pcidsk_io.h"
@@ -476,7 +477,7 @@ std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys,
             next++;
 
         // move past white space.
-        while( *next != '\0' && *next == ' ' )
+        while( *next == ' ' )
             next++;
     }
 
@@ -701,7 +702,7 @@ static void vDebug( void (*pfnDebug)(const char *),
     if( nPR == -1 || nPR >= (int) sizeof(szModestBuffer)-1 )
     {
         int nWorkBufferSize = 2000;
-        char *pszWorkBuffer = (char *) malloc(nWorkBufferSize);
+        PCIDSKBuffer oWorkBuffer(nWorkBufferSize);
 
 #ifdef va_copy
         va_end( wrk_args );
@@ -709,13 +710,12 @@ static void vDebug( void (*pfnDebug)(const char *),
 #else
         wrk_args = args;
 #endif
-        while( (nPR=vsnprintf( pszWorkBuffer, nWorkBufferSize, fmt, wrk_args))
+        while( (nPR=vsnprintf( oWorkBuffer.buffer, nWorkBufferSize, fmt, wrk_args))
                >= nWorkBufferSize-1
                || nPR == -1 )
         {
             nWorkBufferSize *= 4;
-            pszWorkBuffer = (char *) realloc(pszWorkBuffer,
-                                             nWorkBufferSize );
+            oWorkBuffer.SetSize(nWorkBufferSize);
 #ifdef va_copy
             va_end( wrk_args );
             va_copy( wrk_args, args );
@@ -723,8 +723,7 @@ static void vDebug( void (*pfnDebug)(const char *),
             wrk_args = args;
 #endif
         }
-        message = pszWorkBuffer;
-        free( pszWorkBuffer );
+        message = oWorkBuffer.buffer;
     }
     else
     {

@@ -82,16 +82,15 @@ void AsciiTileLayer::ReadHeader(void)
 
     memcpy(mpsTileLayer->szDataType, pabyHeaderIter, 4);
     pabyHeaderIter += 4;
-
+/*
     std::string oNoDataValue((char *) pabyHeaderIter,
                              (char *) pabyHeaderIter + 18);
-
+*/
     mpsTileLayer->bNoDataValid = false;
     mpsTileLayer->dfNoDataValue = 0.0;
     pabyHeaderIter += 18;
 
     memcpy(mpsTileLayer->szCompress, pabyHeaderIter, 8);
-    pabyHeaderIter += 8;
 }
 
 /************************************************************************/
