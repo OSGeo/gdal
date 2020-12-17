@@ -11914,6 +11914,20 @@ public class CoordinateTransformation:public double[] TransformPoint(double x, d
 public class CoordinateTransformation:public void TransformPoints(double[][] pointArray)
 
 /**
+ * Transform point from source to destination space.
+ *
+ * @param argout array of 4 double values where the transformed coordinates will be put.
+ * @param x input x value
+ * @param y input y value
+ * @param z input z value
+ * @param t input t value
+ * @return the error code. 0 means no error.
+ *         See osrConstants.PROJ_ERR_xxxxx enumerated code for the possible error codes.
+ * @since GDAL 3.3 and PROJ 8
+ */
+public class CoordinateTransformation:public int TransformPointWithErrorCode(double[] argout, double x, double y, double z, double t)
+
+/**
  * Transform points from source to destination space.
  * <p>
  * The provided array will be modified in place.

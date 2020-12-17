@@ -79,6 +79,7 @@ public class OSRTransform {
 			System.exit(-1);
 		}
 		
+		testTransformPointWithErrorCode();
 		testTransformPointsWithErrorCodes();
 		testSetDesiredAccuracy();
 		testSetBallparkAllowed();
@@ -96,6 +97,36 @@ public class OSRTransform {
 
             if( !b )
                 throw new CheckException("failed test");
+        }
+
+        public static void testTransformPointWithErrorCode()
+        {
+            if( osr.GetPROJVersionMajor() < 8 )
+            {
+                System.out.println("Skip testTransformPointWithErrorCode() due to PROJ < 8");
+                return;
+            }
+            SpatialReference s = new SpatialReference("");
+            s.SetFromUserInput("+proj=longlat +ellps=GRS80");
+            SpatialReference t = new SpatialReference("");
+            t.SetFromUserInput("+proj=tmerc +ellps=GRS80");
+            CoordinateTransformation ct = CoordinateTransformation.CreateCoordinateTransformation(s, t);
+
+            {
+                double[] out = new double[4];
+                int errorCode = ct.TransformPointWithErrorCode(out, 1, 2, 0, 0);
+                check(Math.abs(out[0] - 111257.80439304397) < 1e-5);
+                check(Math.abs(out[1] - 221183.3401672801) < 1e-5);
+                check(errorCode == 0);
+            }
+
+            {
+                double[] out = new double[4];
+                int errorCode = ct.TransformPointWithErrorCode(out, 90, 0, 0, 0);
+                check(out[0] == Double.POSITIVE_INFINITY);
+                check(errorCode == osr.PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN);
+            }
+
         }
 
         public static void testTransformPointsWithErrorCodes()

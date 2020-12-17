@@ -1268,6 +1268,18 @@ public:
     argout[3] = t;
     OCTTransform4DWithErrorCodes( self, 1, &argout[0], &argout[1], &argout[2], &argout[3], errorCode );
   }
+#else
+  int TransformPointWithErrorCode( double argout[4], double x, double y, double z, double t ) {
+    if (self == NULL)
+        return -1;
+    argout[0] = x;
+    argout[1] = y;
+    argout[2] = z;
+    argout[3] = t;
+    int errorCode = 0;
+    OCTTransform4DWithErrorCodes( self, 1, &argout[0], &argout[1], &argout[2], &argout[3], &errorCode );
+    return errorCode;
+  }
 #endif
 
 #ifdef SWIGCSHARP
