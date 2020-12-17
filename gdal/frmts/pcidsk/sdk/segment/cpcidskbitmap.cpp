@@ -35,8 +35,6 @@
 #include <cstdio>
 #include <cctype>
 
-#include "cpl_port.h"
-
 using namespace PCIDSK;
 
 /************************************************************************/

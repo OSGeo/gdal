@@ -53,10 +53,10 @@ namespace PCIDSK
                          const char *segment_pointer );
         virtual     ~MetadataSegment();
 
-        void         FetchGroupMetadata( const char *group, int id,
-                                         std::map<std::string, std::string> &md_set );
-        void         SetGroupMetadataValue( const char *group, int id,
-                                            const std::string& key, const std::string& value );
+        void         FetchMetadata( const char *group, int id,
+                                    std::map<std::string,std::string> &md_set );
+        void         SetMetadataValue( const char *group, int id,
+                                       const std::string& key, const std::string& value );
 
         void         Synchronize() override;
 

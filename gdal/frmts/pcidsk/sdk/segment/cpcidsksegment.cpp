@@ -34,7 +34,6 @@
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
-#include <limits>
 #include <vector>
 #include <string>
 
@@ -106,26 +105,17 @@ void CPCIDSKSegment::LoadSegmentPointer( const char *segment_pointer )
     PCIDSKBuffer segptr( segment_pointer, 32 );
 
     segment_flag = segptr.buffer[0];
-    const int segment_type_int = atoi(segptr.Get(1,3));
-    segment_type = SegmentTypeName(segment_type_int) == "UNKNOWN" ?
-        SEG_UNKNOWN : static_cast<eSegType>(segment_type_int);
-    data_offset = atouint64(segptr.Get(12,11));
-    if( data_offset == 0 )
-        data_offset = 0; // throw exception maybe ?
-    else
-    {
-        if( data_offset-1 > std::numeric_limits<uint64>::max() / 512 )
-        {
-            return ThrowPCIDSKException("too large data_offset");
-        }
-        data_offset = (data_offset-1) * 512;
-    }
-    data_size = atouint64(segptr.Get(23,9));
-    if( data_size > std::numeric_limits<uint64>::max() / 512 )
+    segment_type = static_cast<eSegType>(atoi(segptr.Get(1,3)));
+    if (EQUAL(SegmentTypeName(segment_type), "UNKNOWN"))
+        segment_type = SEG_UNKNOWN;
+    data_offset = (atouint64(segptr.Get(12,11))-1) * 512;
+    data_size = atouint64(segptr.Get(23,9)) * 512;
+    data_size_limit = 999999999ULL * 512;
+
+    if( data_size > data_size_limit )
     {
         return ThrowPCIDSKException("too large data_size");
     }
-    data_size *= 512;
 
     segptr.Get(4,8,segment_name);
 }
@@ -184,29 +174,13 @@ void CPCIDSKSegment::ReadFromFile( void *buffer, uint64 offset, uint64 size )
 
 {
     if( offset+size+1024 > data_size )
-        return ThrowPCIDSKException(
-            "Attempt to read past end of segment %d (%u bytes at offset %u)",
-            segment, (unsigned int) offset, (unsigned int) size );
+        return ThrowPCIDSKException("Attempt to read past end of segment %d: "
+                                    "Segment Size: " PCIDSK_FRMT_UINT64 ", "
+                                    "Read Offset: " PCIDSK_FRMT_UINT64 ", "
+                                    "Read Size: " PCIDSK_FRMT_UINT64,
+                                    segment, data_size, offset, size);
+
     file->ReadFromFile( buffer, offset + data_offset + 1024, size );
-}
-
-/************************************************************************/
-/*                        CheckFileBigEnough()                          */
-/************************************************************************/
-
-void CPCIDSKSegment::CheckFileBigEnough( uint64 bytes_to_read )
-
-{
-    file->CheckFileBigEnough( bytes_to_read );
-}
-
-/************************************************************************/
-/*                           GetUpdatable()                             */
-/************************************************************************/
-
-bool CPCIDSKSegment::GetUpdatable() const
-{
-    return file->GetUpdatable();
 }
 
 /************************************************************************/
@@ -224,9 +198,6 @@ void CPCIDSKSegment::WriteToFile( const void *buffer, uint64 offset, uint64 size
                 "to a CPCIDSKFile failed. This is a programmer error, and should "
                 "be reported to your software provider.");
         }
-
-        if( !IsAtEOF() )
-            poFile->MoveSegmentToEOF( segment );
 
         uint64 blocks_to_add =
             ((offset+size+511) - (data_size - 1024)) / 512;
@@ -272,10 +243,15 @@ void CPCIDSKSegment::SetDescription( const std::string &description )
 
 bool CPCIDSKSegment::IsAtEOF()
 {
-    if( 512 * file->GetFileSize() == data_offset + data_size )
-        return true;
-    else
-        return false;
+    return data_offset + data_size == file->GetFileSize() * 512;
+}
+
+/************************************************************************/
+/*                               CanExtend()                            */
+/************************************************************************/
+bool CPCIDSKSegment::CanExtend(uint64 size) const
+{
+    return data_size + size <= data_size_limit;
 }
 
 /************************************************************************/

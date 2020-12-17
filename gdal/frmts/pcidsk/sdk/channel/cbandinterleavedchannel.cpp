@@ -43,8 +43,7 @@
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
-
-#include "cpl_port.h"
+#include <climits>
 
 using namespace PCIDSK;
 
@@ -92,9 +91,9 @@ CBandInterleavedChannel::CBandInterleavedChannel( PCIDSKBuffer &image_header,
         file->GetIODetails( &io_handle_p, &io_mutex_p );
 
     else
-        filename = MergeRelativePath( file->GetInterfaces()->io,
-                                      file->GetFilename(),
-                                      filename );
+        filename = file->GetInterfaces()->MergeRelativePath( file->GetInterfaces()->io,
+                                     file->GetFilename(),
+                                     filename );
 }
 
 /************************************************************************/
@@ -422,7 +421,7 @@ void CBandInterleavedChannel
 /* -------------------------------------------------------------------- */
 /*      Update local configuration.                                     */
 /* -------------------------------------------------------------------- */
-    this->filename = MergeRelativePath( file->GetInterfaces()->io,
+    this->filename = file->GetInterfaces()->MergeRelativePath( file->GetInterfaces()->io,
                                         file->GetFilename(),
                                         filenameIn );
 

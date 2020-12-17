@@ -80,6 +80,7 @@ namespace PCIDSK {
             elevation_unit_ = EMetres;
             elevation_datum_ = EEllipsoidal;
             iscp_ = false; // default to GCPs
+            isactive_ = true;
         }
 
         GCP(GCP const& gcp)
@@ -125,12 +126,25 @@ namespace PCIDSK {
 
         void SetCheckpoint(bool is_checkpoint)
         {
+            if (is_checkpoint)
+                isactive_ = true;  // active doesn't apply to check points
             iscp_ = is_checkpoint;
         }
 
         bool IsCheckPoint(void) const
         {
             return iscp_;
+        }
+
+        void SetActive(bool is_active)
+        {
+            isactive_ = is_active;
+            iscp_ = false; // active doesn't apply to check points
+        }
+
+        bool IsActive(void) const
+        {
+            return isactive_;
         }
 
         double GetX() const { return ground_point_[0]; }
@@ -172,6 +186,7 @@ namespace PCIDSK {
             this->map_units_ = gcp.map_units_;
             this->proj_parms_ = gcp.proj_parms_;
             this->iscp_ = gcp.iscp_;
+            this->isactive_ = gcp.isactive_;
 
             std::strncpy(this->gcp_id_, gcp.gcp_id_, 64);
 
@@ -182,6 +197,7 @@ namespace PCIDSK {
         }
 
         bool iscp_; // true = checkpoint, false = GCP
+        bool isactive_; // true = active, false = inactive
 
         EElevationUnit elevation_unit_;
         EElevationDatum elevation_datum_;

@@ -117,8 +117,8 @@ StdioIOInterface::Seek( void *io_handle, uint64 offset, int whence ) const
     uint64 result = fseek( fi->fp, offset, whence );
 
     if( result == (uint64) -1 )
-        ThrowPCIDSKException( "Seek(%d,%d): %s",
-                              (int) offset, whence,
+        ThrowPCIDSKException( "Seek(" PCIDSK_FRMT_UINT64 ",%d): %s",
+                              offset, whence,
                               LastError() );
 
     if( whence == SEEK_SET )
@@ -173,8 +173,8 @@ uint64 StdioIOInterface::Read( void *buffer, uint64 size, uint64 nmemb,
     uint64 result = fread( buffer, size, nmemb, fi->fp );
 
     if( errno != 0 && result == 0 && nmemb != 0 )
-        ThrowPCIDSKException( "Read(%d): %s",
-                              (int) size * nmemb,
+        ThrowPCIDSKException( "Read(" PCIDSK_FRMT_UINT64 "): %s",
+                              size * nmemb,
                               LastError() );
 
     fi->offset += size*result;
@@ -198,8 +198,8 @@ uint64 StdioIOInterface::Write( const void *buffer, uint64 size, uint64 nmemb,
     uint64 result = fwrite( buffer, size, nmemb, fi->fp );
 
     if( errno != 0 && result == 0 && nmemb != 0 )
-        ThrowPCIDSKException( "Write(%d): %s",
-                              (int) size * nmemb,
+        ThrowPCIDSKException( "Write(" PCIDSK_FRMT_UINT64 "): %s",
+                              size * nmemb,
                               LastError() );
 
     fi->offset += size*result;

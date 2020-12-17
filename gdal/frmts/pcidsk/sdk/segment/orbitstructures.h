@@ -899,19 +899,19 @@ namespace PCIDSK
         int    SPCoeffSg[4];
 
         /// Image record length
-        int        ImageRecordLength;
+        int    ImageRecordLength;
         /// Number of image line
-        int        NumberImageLine;
+        int    NumberImageLine;
         /// Number of bytes per pixel
-        int        NumberBytePerPixel;
+        int    NumberBytePerPixel;
         /// Number of samples per line
-        int        NumberSamplePerLine;
+        int    NumberSamplePerLine;
         /// Number of prefix bytes
-        int        NumberPrefixBytes;
+        int    NumberPrefixBytes;
         /// Number of suffix bytes
-        int        NumberSuffixBytes;
+        int    NumberSuffixBytes;
         /// Number of coefficients for SPOT 1B
-        int        SPNCoeff;
+        int    SPNCoeff;
 
         /// Flag to indicate ascending or descending
         bool  bDescending;
@@ -927,28 +927,51 @@ namespace PCIDSK
      * List of sensor type
      */
     typedef enum {PLA_1, MLA_1, PLA_2, MLA_2, PLA_3, MLA_3, PLA_4, MLA_4,
-                    ASTER, SAR, LISS_1, LISS_2, LISS_3, LISS_L3, LISS_L3_L2,
-                    LISS_L4, LISS_L4_L2, LISS_P3, LISS_P3_L2, LISS_W3, LISS_W3_L2,
-                    LISS_AWF, LISS_AWF_L2, LISS_M3, EOC, IRS_1, RSAT_FIN,
-                    RSAT_STD, ERS_1, ERS_2, TM, ETM, IKO_PAN, IKO_MULTI,
-                    ORBVIEW_PAN, ORBVIEW_MULTI, OV3_PAN_BASIC, OV3_PAN_GEO,
-                    OV3_MULTI_BASIC, OV3_MULTI_GEO, OV5_PAN_BASIC, OV5_PAN_GEO,
-                    OV5_MULTI_BASIC, OV5_MULTI_GEO, QBIRD_PAN, QBIRD_PAN_STD,
-                    QBIRD_PAN_STH, QBIRD_MULTI, QBIRD_MULTI_STD, QBIRD_MULTI_STH,
-                    FORMOSAT_PAN, FORMOSAT_MULTI, FORMOSAT_PAN_L2,
-                    FORMOSAT_MULTIL2, SPOT5_PAN_2_5, SPOT5_PAN_5, SPOT5_HRS,
-                    SPOT5_MULTI, MERIS_FR, MERIS_RR, MERIS_LR, ASAR, EROS,
-                    MODIS_250, MODIS_500, MODIS_1000, CBERS_HRC, CBERS_HRC_L2,
-                    CBERS_CCD, CBERS_CCD_L2, CBERS_IRM_80, CBERS_IRM_80_L2,
-                    CBERS_IRM_160, CBERS_IRM_160_L2, CBERS_WFI, CBERS_WFI_L2,
-                    CARTOSAT1_L1, CARTOSAT1_L2, ALOS_PRISM_L1, ALOS_PRISM_L2,
-                    ALOS_AVNIR_L1, ALOS_AVNIR_L2, PALSAR, DMC_1R, DMC_1T,
-                    KOMPSAT2_PAN, KOMPSAT2_MULTI, TERRASAR, WVIEW_PAN,
-                    WVIEW_PAN_STD, WVIEW_MULTI, WVIEW_MULTI_STD,
-                    RAPIDEYE_L1B, THEOS_PAN_L1, THEOS_PAN_L2,
-                    THEOS_MS_L1, THEOS_MS_L2,
-                    GOSAT_500_L1, GOSAT_500_L2, GOSAT_1500_L1, GOSAT_1500_L2,
-                    HJ_CCD_1A, HJ_CCD_1B, NEW, AVHRR} TypeDeCapteur;
+                  ASTER, SAR, LISS_1, LISS_2, LISS_3, LISS_L3, LISS_L3_L2,
+                  LISS_L4, LISS_L4_L2, LISS_P3, LISS_P3_L2, LISS_W3, LISS_W3_L2,
+                  LISS_AWF, LISS_AWF_L2, LISS_M3, EOC, IRS_1, RSAT_FIN,
+                  RSAT_STD, ERS_1, ERS_2, TM, ETM, IKO_PAN, IKO_MULTI,
+                  ORBVIEW_PAN, ORBVIEW_MULTI, OV3_PAN_BASIC, OV3_PAN_GEO,
+                  OV3_MULTI_BASIC, OV3_MULTI_GEO, OV5_PAN_BASIC, OV5_PAN_GEO,
+                  OV5_MULTI_BASIC, OV5_MULTI_GEO, QBIRD_PAN, QBIRD_PAN_STD,
+                  QBIRD_PAN_STH, QBIRD_MULTI, QBIRD_MULTI_STD, QBIRD_MULTI_STH,
+                  FORMOSAT_PAN, FORMOSAT_MULTI, FORMOSAT_PAN_L2,
+                  FORMOSAT_MULTIL2, SPOT5_PAN_2_5, SPOT5_PAN_5, SPOT5_HRS,
+                  SPOT5_MULTI, MERIS_FR, MERIS_RR, MERIS_LR, ASAR, EROS,
+                  MODIS_250, MODIS_500, MODIS_1000, CBERS_HRC, CBERS_HRC_L2,
+                  CBERS_CCD, CBERS_CCD_L2, CBERS_IRM_80, CBERS_IRM_80_L2,
+                  CBERS_IRM_160, CBERS_IRM_160_L2, CBERS_WFI, CBERS_WFI_L2,
+                  CARTOSAT1_L1, CARTOSAT1_L2, ALOS_PRISM_L1, ALOS_PRISM_L2,
+                  ALOS_AVNIR_L1, ALOS_AVNIR_L2, PALSAR, DMC_1R, DMC_1T,
+                  KOMPSAT2_PAN, KOMPSAT2_MULTI, KOMPSAT3_PAN, KOMPSAT3_MS, KOMPSAT3_PSH,
+                  KOMPSAT3A_PAN, KOMPSAT3A_MS, KOMPSAT3A_PSH,
+                  TERRASAR, WVIEW_PAN, WVIEW_PAN_STD, WVIEW_MULTI,
+                  WVIEW_MULTI_STD, RAPIDEYE_L1B, THEOS_PAN_L1, THEOS_PAN_L2,
+                  THEOS_MS_L1, THEOS_MS_L2,
+                  GOSAT_500_L1, GOSAT_500_L2, GOSAT_1500_L1, GOSAT_1500_L2,
+                  HJ_CCD_1A, HJ_CCD_1B, PLEIADES_PAN_L1, PLEIADES_MS_L1,
+                  PLEIADES_PAN_L2, PLEIADES_MS_L2, SSOT_PAN_L1, SSOT_MS_L1,
+                  SSOT_PAN_L2, SSOT_MS_L2,
+                  SPOT1_PAN, SPOT1_MS, SPOT2_PAN, SPOT2_MS,
+                  SPOT3_PAN, SPOT3_MS, SPOT4_PAN, SPOT4_MS,
+                  SPOT6_PAN, SPOT6_MS, SPOT6_PSH, SPOT7_PAN, SPOT7_MS, SPOT7_PSH,
+                  RASAT_PAN, RASAT_MS, TH01_DGP, TH01_GFB, TH01_SXZ,
+                  ZY1_02C_HRC, ZY1_02C_PMS_PAN, ZY1_02C_PMS_MS,
+                  ZY3_NAD, ZY3_FWD, ZY3_BWD, ZY3_MUX, ZY3_TLC, GK2_PAN, GK2_MS, HRC,
+                  MRC_RED, MRC_GRN, MRC_BLU, MRC_NIR, GF1_PMS_PAN, GF1_PMS_MS, GF1_WFV,
+                  GF2_PMS_PAN, GF2_PMS_MS, GF4_PMS_MS, GF4_PMI_Thermal,
+                  GF6_PMS_PAN, GF6_PMS_MS, SJ9_PAN, SJ9_MUX, SJ9_PMS_PAN, SJ9_PMS_MS,
+                  YG2_1, YG8_1, YG14_1, UAVSAR, HI_RES, MED_RES, ALSAT2_PAN_1A, ALSAT2_MS_1A,
+                  ALSAT2_PAN_2A, ALSAT2_MS_2A, DUBAISAT2_PAN, DUBAISAT2_MS,
+                  KAZEOSAT1_PAN_1A, KAZEOSAT1_MS_1A, KAZEOSAT1_PAN_2A, KAZEOSAT1_MS_2A, KAZEOSAT2_MS_1G,
+                  DEIMOS1_MS_1R, DEIMOS2_PAN_1B, DEIMOS2_MS_1B, DEIMOS2_PSH_1B, HJ1C,
+                  TRIPLESAT_PAN, TRIPLESAT_MS, RESOURCESAT, JL101A_PAN, JL101A_MS,
+                  CBERS4_PAN_1, CBERS4_MS_1, CBERS4_PAN_2, CBERS4_MS_2,
+                  CBERS4_THM_1, CBERS4_THM_2, SV1_PAN_L1, SV1_MS_L1, SV1_PAN_L2, SV1_MS_L2,
+                  PER_PAN_2A, PER_MS_2A, FORMOSAT5_PAN, FORMOSAT5_MS,
+                  GEOEYE_PAN, GEOEYE_MULTI, GEOEYE_PAN_STD, GEOEYE_MULTI_STD,
+                  GOKTURK1_PAN, GOKTURK1_MS,
+                  NEW, AVHRR, MSS} TypeDeCapteur;
 }
 
 #endif // INCLUDE_PCIDSK_ORBIT_INFORMATION_H

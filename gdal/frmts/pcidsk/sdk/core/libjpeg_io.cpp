@@ -34,8 +34,6 @@
 #include <cassert>
 #include <cstdio>
 
-#include "cpl_port.h"
-
 using namespace PCIDSK;
 
 #if defined(HAVE_LIBJPEG)

@@ -33,6 +33,8 @@
 #include <iterator>
 #include "pcidsk_shape.h"
 
+#define ATT_RINGSTART "RingStart"
+
 namespace PCIDSK
 {
     class ShapeIterator;

@@ -59,19 +59,22 @@ namespace PCIDSK
     bool   BigEndianSystem(void);
     void   GetCurrentDateTime( char *out_datetime );
 
-    void   ParseTileFormat( std::string full_text, int &block_size,
-                            std::string &compression );
+    void   ParseTileFormat(std::string oOptions, int & nTileSize,
+                           std::string & oCompress);
+
     void   SwapPixels(void* const data,
                       const eChanType type,
                       const std::size_t count);
+
+    std::string         ParseLinkedFilename(std::string oOptions);
 
     std::vector<double> ProjParmsFromText( std::string geosys,
                                            std::string parms );
     std::string         ProjParmsToText( std::vector<double> );
 
-    std::string         MergeRelativePath( const PCIDSK::IOInterfaces *,
-                                           std::string base,
-                                           std::string src_filename );
+    std::string         DefaultMergeRelativePath(const PCIDSK::IOInterfaces *,
+                                                 const std::string& base,
+                                                 const std::string& src_filename);
     std::string         ExtractPath( std::string );
 
     void LibJPEG_DecompressBlock(
@@ -80,6 +83,18 @@ namespace PCIDSK
     void LibJPEG_CompressBlock(
         uint8 *src_data, int src_bytes, uint8 *dst_data, int &dst_bytes,
         int xsize, int ysize, eChanType pixel_type, int quality );
+
+    void LibKAKADU_DecompressBlock
+        (PCIDSK::eChanType eChanType,
+         uint8 * pabySrcBuffer, int nSrcBufferSize,
+         uint8 * pabyDstBuffer, int nDstBufXSize,
+         int nXSize, int nYSize, int nChanCount);
+    void LibKAKADU_CompressBlock
+        (PCIDSK::eChanType eChanType,
+         uint8 * pabyDstBuffer, int nDstBufferSize,
+         uint8 * pabySrcBuffer, int nSrcBufXSize,
+         int nXSize, int nYSize, int nChanCount,
+         int & nCompressSize, double dfQuality);
 
     void                DefaultDebug( const char * );
     void                Debug( void (*)(const char *), const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(2,3);

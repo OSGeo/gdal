@@ -7,31 +7,59 @@ CXXFLAGS = /nologo /MD /GR /EHsc $(OPTFLAGS) /W3 /I. \
 # /DLIBPCIDSK_EXPORTS 
 
 OBJ = \
-	channel\cbandinterleavedchannel.obj \
-	channel\cpcidskchannel.obj \
-	channel\cpixelinterleavedchannel.obj \
-	channel\ctiledchannel.obj \
-	core\cpcidskfile.obj \
-	core\libjpeg_io.obj \
-	core\metadataset_p.obj \
-	core\pcidskbuffer.obj \
-	core\pcidskcreate.obj \
-	core\pcidskexception.obj \
-	core\pcidskinterfaces.obj \
-	core\pcidskopen.obj \
-	core\pcidsk_pubutils.obj \
-	core\pcidsk_utils.obj \
-	core\sysvirtualfile.obj \
-	port\io_win32.obj \
-	port\win32_mutex.obj \
-	segment\cpcidskgeoref.obj \
-	segment\cpcidsksegment.obj \
-	segment\cpcidskvectorsegment.obj \
-	segment\cpcidskrpcmodel.obj \
-	segment\metadatasegment_p.obj \
-	segment\sysblockmap.obj \
-	segment\cpcidskbitmap.obj \
-	segment\cpcidsk_tex.obj 
+	blockdir/asciitiledir.obj \
+	blockdir/asciitilelayer.obj \
+	blockdir/binarytiledir.obj \
+	blockdir/binarytilelayer.obj \
+	blockdir/blockdir.obj \
+	blockdir/blockfile.obj \
+	blockdir/blocklayer.obj \
+	blockdir/blocktiledir.obj \
+	blockdir/blocktilelayer.obj \
+	channel/cbandinterleavedchannel.obj \
+	channel/cexternalchannel.obj \
+	channel/cpcidskchannel.obj \
+	channel/cpixelinterleavedchannel.obj \
+	channel/ctiledchannel.obj \
+	core/clinksegment.obj \
+	core/cpcidskblockfile.obj \
+	core/cpcidskfile.obj \
+	core/edb_pcidsk.obj \
+	core/libjpeg_io.obj \
+	core/libkakadu_io.obj \
+	core/metadataset_p.obj \
+	core/pcidskbuffer.obj \
+	core/pcidskcreate.obj \
+	core/pcidskexception.obj \
+	core/pcidskinterfaces.obj \
+	core/pcidskopen.obj \
+	core/pcidsk_pubutils.obj \
+	core/pcidsk_raster.obj \
+	core/pcidsk_scanint.obj \
+	core/pcidsk_utils.obj \
+	port/io_win32.obj \
+	port/win32_mutex.obj \
+	segment/cpcidsk_array.obj \
+	segment/cpcidskbinarysegment.obj \
+	segment/cpcidskbitmap.obj \
+	segment/cpcidskblut.obj \
+	segment/cpcidskbpct.obj \
+	segment/cpcidskephemerissegment.obj \
+	segment/cpcidskgcp2segment.obj \
+	segment/cpcidskgeoref.obj \
+	segment/cpcidsklut.obj \
+	segment/cpcidskpct.obj \
+	segment/cpcidskpolymodel.obj \
+	segment/cpcidskrpcmodel.obj \
+	segment/cpcidsksegment.obj \
+	segment/cpcidsk_tex.obj \
+	segment/cpcidsktoutinmodel.obj \
+	segment/cpcidskvectorsegment_consistencycheck.obj \
+	segment/cpcidskvectorsegment.obj \
+	segment/metadatasegment_p.obj \
+	segment/systiledir.obj \
+	segment/vecsegdataindex.obj \
+	segment/vecsegheader.obj
 
 default:	pcidsk.lib
 
@@ -47,8 +75,9 @@ clean:
 components:
 	(cd core; $(MAKE))
 	(cd channel; $(MAKE))
-	(cd port; $(MAKE))
 	(cd segment; $(MAKE))
+	(cd blockdir; $(MAKE))
+	(cd port; $(MAKE))
 
 check:	default	
 	(cd ../tests; $(MAKE) check)

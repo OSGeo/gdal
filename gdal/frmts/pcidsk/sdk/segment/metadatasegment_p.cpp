@@ -83,7 +83,8 @@ MetadataSegment::~MetadataSegment()
 
 void MetadataSegment::Synchronize()
 {
-    if( loaded && !update_list.empty() )
+    if( loaded && !update_list.empty() &&
+        this->file->GetUpdatable())
         Save();
 }
 
@@ -102,10 +103,7 @@ void MetadataSegment::Load()
 /* -------------------------------------------------------------------- */
 /*      Load the segment contents into a buffer.                        */
 /* -------------------------------------------------------------------- */
-    CheckFileBigEnough( data_size );
-
-    // data_size < 1024 will throw an exception in SetSize()
-    seg_data.SetSize( data_size < 1024 ? -1 : (int) (data_size - 1024) );
+    seg_data.SetSize( (int) (data_size - 1024) );
 
     ReadFromFile( seg_data.buffer, 0, data_size - 1024 );
 
@@ -113,11 +111,12 @@ void MetadataSegment::Load()
 }
 
 /************************************************************************/
-/*                           FetchGroupMetadata()                       */
+/*                           FetchMetadata()                            */
 /************************************************************************/
 
-void MetadataSegment::FetchGroupMetadata( const char *group, int id,
-                                          std::map<std::string, std::string> &md_set)
+void MetadataSegment::FetchMetadata( const char *group, int id,
+                                     std::map<std::string,std::string> &md_set)
+
 {
 /* -------------------------------------------------------------------- */
 /*      Load the metadata segment if not already loaded.                */
@@ -184,11 +183,12 @@ void MetadataSegment::FetchGroupMetadata( const char *group, int id,
 }
 
 /************************************************************************/
-/*                          SetGroupMetadataValue()                     */
+/*                          SetMetadataValue()                          */
 /************************************************************************/
 
-void MetadataSegment::SetGroupMetadataValue( const char *group, int id,
-                                             const std::string& key, const std::string& value )
+void MetadataSegment::SetMetadataValue( const char *group, int id,
+                                        const std::string& key, const std::string& value )
+
 {
     Load();
 
@@ -238,21 +238,23 @@ void MetadataSegment::Save()
                 i_split = i;
         }
 
-        if( i_split < 0 || pszNext[i] == '\0' )
+        if( pszNext[i] == '\0' )
             break;
-
 /* -------------------------------------------------------------------- */
 /*      If we have a new value for this key, do not copy over the       */
 /*      old value.  Otherwise append the old value to our new image.    */
 /* -------------------------------------------------------------------- */
-        std::string full_key;
+        if (i_split != -1)
+        {
+            std::string full_key;
 
-        full_key.assign( pszNext, i_split );
+            full_key.assign( pszNext, i_split );
 
-        if( update_list.count(full_key) == 1 )
-            /* do not transfer - we will append later */;
-        else
-            new_data.append( pszNext, i+1 );
+            if( update_list.count(full_key) == 1 )
+                /* do not transfer - we will append later */;
+            else
+                new_data.append( pszNext, i+1 );
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Advance to start of next line.                                  */

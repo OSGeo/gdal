@@ -1,9 +1,9 @@
 /******************************************************************************
  *
- * Purpose: Support for reading and manipulating PCIDSK ADS40 Segments
+ * Purpose:  Block directory API.
  *
  ******************************************************************************
- * Copyright (c) 2009
+ * Copyright (c) 2011
  * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -24,39 +24,43 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#ifndef INCLUDE_PCIDSK_SEGMENT_PCIDSKADS40MODEL_H
-#define INCLUDE_PCIDSK_SEGMENT_PCIDSKADS40MODEL_H
 
-#include "pcidsk_ads40.h"
-#include "segment/cpcidsksegment.h"
+#ifndef PCIDSK_BINARY_TILE_LAYER_H
+#define PCIDSK_BINARY_TILE_LAYER_H
 
-namespace PCIDSK {
-    class PCIDSKFile;
+#include "blockdir/blocktilelayer.h"
+#include "blockdir/binarytiledir.h"
 
-    class CPCIDSKADS40ModelSegment : public PCIDSKADS40Segment,
-                                     public CPCIDSKSegment
-    {
-    public:
-        CPCIDSKADS40ModelSegment(PCIDSKFile *file, int segment,const char *segment_pointer);
-        ~CPCIDSKADS40ModelSegment();
+namespace PCIDSK
+{
 
-        // Get path
-        std::string GetPath(void) const override;
-        // Set path
-        void SetPath(const std::string& oPath) override;
+/************************************************************************/
+/*                          class BinaryTileLayer                       */
+/************************************************************************/
 
-        //synchronize the segment on disk.
-        void Synchronize() override;
-    private:
-        // Helper housekeeping functions
-        void Load();
-        void Write();
+/**
+ * Class used to manage a binary block tile layer.
+ *
+ * @see BlockTileLayer
+ */
+class PCIDSK_DLL BinaryTileLayer : public BlockTileLayer
+{
+protected:
+    virtual void        WriteTileList(void);
+    virtual void        ReadTileList(void);
 
-        struct PCIDSKADS40Info;
-        PCIDSKADS40Info *pimpl_;
-        bool loaded_;
-        bool mbModified;
-    };
-}
+    void                SwapBlockTile(BlockTileInfo * psTile, size_t nCount);
 
-#endif // INCLUDE_PCIDSK_SEGMENT_PCIDSKADS40MODEL_H
+    // We need the tile block directory implementation class to be friend
+    // since it is responsible to fill in the block list.
+    friend class BinaryTileDir;
+
+public:
+    BinaryTileLayer(BlockDir * poBlockDir, uint32 nLayer,
+                    BlockLayerInfo * psBlockLayer,
+                    TileLayerInfo * psTileLayer);
+};
+
+} // namespace PCIDSK
+
+#endif

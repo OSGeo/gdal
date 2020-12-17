@@ -263,7 +263,7 @@ std::string CPCIDSKVectorSegment::ConsistencyCheck_ShapeIndices()
     std::map<ShapeId,uint32> id_map;
     int iShape;
 
-    for( iShape = 0; iShape < shape_count; iShape++ )
+    for( iShape = 0; iShape < total_shape_count; iShape++ )
     {
         AccessShapeByIndex( iShape );
 
@@ -280,7 +280,14 @@ std::string CPCIDSKVectorSegment::ConsistencyCheck_ShapeIndices()
             report += msg;
         }
 
-        id_map[shape_index_ids[toff]] = toff;
+        int32 shape_id = shape_index_ids[toff];
+        if (shape_id == NullShapeId)
+        {
+            // ignore deleted shapes
+            continue;
+        }
+
+        id_map[shape_id] = toff;
 
 
         if( shape_index_vertex_off[toff] != 0xffffffff )
