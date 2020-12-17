@@ -58,30 +58,30 @@ public:
 
     SysTileDir *        CreateTileDir(void);
 
-    virtual std::string GetFilename(void) const;
+    virtual std::string GetFilename(void) const override;
 
-    virtual bool        GetUpdatable(void) const;
+    virtual bool        GetUpdatable(void) const override;
 
-    virtual uint32      GetWidth(void) const;
-    virtual uint32      GetHeight(void) const;
+    virtual uint32      GetWidth(void) const override;
+    virtual uint32      GetHeight(void) const override;
 
-    virtual uint32      GetChannels(void) const;
+    virtual uint32      GetChannels(void) const override;
 
-    virtual std::string GetFileOptions(void) const;
+    virtual std::string GetFileOptions(void) const override;
 
-    virtual uint64      GetImageFileSize(void) const;
+    virtual uint64      GetImageFileSize(void) const override;
 
     virtual uint16      ExtendSegment(const std::string & oName,
                                       const std::string & oDesc,
-                                      uint64 nExtendSize);
+                                      uint64 nExtendSize) override;
 
-    virtual uint64      GetSegmentSize(uint16 nSegment);
+    virtual uint64      GetSegmentSize(uint16 nSegment) override;
 
     virtual void        WriteToSegment(uint16 nSegment, const void * pData,
-                                       uint64 nOffset, uint64 nSize);
+                                       uint64 nOffset, uint64 nSize) override;
 
     virtual void        ReadFromSegment(uint16 nSegment, void * pData,
-                                        uint64 nOffset, uint64 nSize);
+                                        uint64 nOffset, uint64 nSize) override;
 };
 
 } // namespace PCIDSK

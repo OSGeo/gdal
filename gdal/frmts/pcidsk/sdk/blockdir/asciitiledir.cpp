@@ -620,7 +620,7 @@ void AsciiTileDir::WriteDir(void)
         nDirSize = std::max(nDirSize, GetOptimizedDirSize(mpoFile));
 
     // Write the block directory to disk.
-    char * pabyBlockDir = (char *) malloc(nDirSize);
+    char * pabyBlockDir = (char *) malloc(nDirSize + 1); // +1 for '\0'.
 
     char * pabyBlockDirIter = pabyBlockDir;
 
@@ -629,17 +629,17 @@ void AsciiTileDir::WriteDir(void)
 
     // The first 10 bytes are for the version.
     memcpy(pabyBlockDirIter, "VERSION", 7);
-    sprintf(pabyBlockDirIter + 7, "%3d", mnVersion);
+    snprintf(pabyBlockDirIter + 7, 4, "%3d", mnVersion);
     pabyBlockDirIter += 10;
 
     // Write the block directory info.
-    sprintf(pabyBlockDirIter, "%8d", msBlockDir.nLayerCount);
+    snprintf(pabyBlockDirIter, 9, "%8d", msBlockDir.nLayerCount);
     pabyBlockDirIter += 8;
 
-    sprintf(pabyBlockDirIter, "%8d", msBlockDir.nBlockCount);
+    snprintf(pabyBlockDirIter, 9, "%8d", msBlockDir.nBlockCount);
     pabyBlockDirIter += 8;
 
-    sprintf(pabyBlockDirIter, "%8d", msBlockDir.nFirstFreeBlock);
+    snprintf(pabyBlockDirIter, 9, "%8d", msBlockDir.nFirstFreeBlock);
     pabyBlockDirIter += 8;
 
     // The bytes from 128 to 140 are for the subversion.
@@ -669,19 +669,19 @@ void AsciiTileDir::WriteDir(void)
         {
             BlockInfo * psBlock = &poLayer->moBlockList[iBlock];
 
-            sprintf(pabyBlockDirIter, "%4d", psBlock->nSegment);
+            snprintf(pabyBlockDirIter, 5, "%4d", psBlock->nSegment);
             pabyBlockDirIter += 4;
 
-            sprintf(pabyBlockDirIter, "%8d", psBlock->nStartBlock);
+            snprintf(pabyBlockDirIter, 9, "%8d", psBlock->nStartBlock);
             pabyBlockDirIter += 8;
 
-            sprintf(pabyBlockDirIter, "%8d", (uint32) iLayer);
+            snprintf(pabyBlockDirIter, 9, "%8d", (uint32) iLayer);
             pabyBlockDirIter += 8;
 
             if (iBlock != psLayer->nBlockCount - 1)
-                sprintf(pabyBlockDirIter, "%8d", nNextBlock);
+                snprintf(pabyBlockDirIter, 9, "%8d", nNextBlock);
             else
-                sprintf(pabyBlockDirIter, "%8d", -1);
+                snprintf(pabyBlockDirIter, 9, "%8d", -1);
             pabyBlockDirIter += 8;
 
             nNextBlock++;
@@ -689,27 +689,25 @@ void AsciiTileDir::WriteDir(void)
     }
 
     // Write the free block info list.
-    BlockLayerInfo * psFreeBlockLayer = &msFreeBlockLayer;
-
     AsciiTileLayer * poLayer = (AsciiTileLayer *) mpoFreeBlockLayer;
 
-    for (size_t iBlock = 0; iBlock < psFreeBlockLayer->nBlockCount; iBlock++)
+    for (size_t iBlock = 0; iBlock < msFreeBlockLayer.nBlockCount; iBlock++)
     {
         BlockInfo * psBlock = &poLayer->moBlockList[iBlock];
 
-        sprintf(pabyBlockDirIter, "%4d", psBlock->nSegment);
+        snprintf(pabyBlockDirIter, 5, "%4d", psBlock->nSegment);
         pabyBlockDirIter += 4;
 
-        sprintf(pabyBlockDirIter, "%8d", psBlock->nStartBlock);
+        snprintf(pabyBlockDirIter, 9, "%8d", psBlock->nStartBlock);
         pabyBlockDirIter += 8;
 
-        sprintf(pabyBlockDirIter, "%8d", -1);
+        snprintf(pabyBlockDirIter, 9, "%8d", -1);
         pabyBlockDirIter += 8;
 
-        if (iBlock != psFreeBlockLayer->nBlockCount - 1)
-            sprintf(pabyBlockDirIter, "%8d", nNextBlock);
+        if (iBlock != msFreeBlockLayer.nBlockCount - 1)
+            snprintf(pabyBlockDirIter, 9, "%8d", nNextBlock);
         else
-            sprintf(pabyBlockDirIter, "%8d", -1);
+            snprintf(pabyBlockDirIter, 9, "%8d", -1);
         pabyBlockDirIter += 8;
 
         nNextBlock++;
@@ -720,16 +718,16 @@ void AsciiTileDir::WriteDir(void)
 
     for (BlockLayerInfo * psLayer : moLayerInfoList)
     {
-        sprintf(pabyBlockDirIter, "%4d", psLayer->nLayerType);
+        snprintf(pabyBlockDirIter, 5, "%4d", psLayer->nLayerType);
         pabyBlockDirIter += 4;
 
         if (psLayer->nBlockCount != 0)
-            sprintf(pabyBlockDirIter, "%8d", nStartBlock);
+            snprintf(pabyBlockDirIter, 9, "%8d", nStartBlock);
         else
-            sprintf(pabyBlockDirIter, "%8d", -1);
+            snprintf(pabyBlockDirIter, 9, "%8d", -1);
         pabyBlockDirIter += 8;
 
-        sprintf(pabyBlockDirIter, "%12" PCIDSK_FRMT_64_WITHOUT_PREFIX "u", psLayer->nLayerSize);
+        snprintf(pabyBlockDirIter, 13, "%12" PCIDSK_FRMT_64_WITHOUT_PREFIX "u", psLayer->nLayerSize);
         pabyBlockDirIter += 12;
 
         nStartBlock += psLayer->nBlockCount;

@@ -114,23 +114,23 @@ void AsciiTileLayer::WriteTileList(void)
 
     memset(pabyHeaderIter, ' ', 128);
 
-    sprintf(pabyHeaderIter, "%8d", mpsTileLayer->nXSize);
+    snprintf(pabyHeaderIter, 9, "%8d", mpsTileLayer->nXSize);
     pabyHeaderIter += 8;
 
-    sprintf(pabyHeaderIter, "%8d", mpsTileLayer->nYSize);
+    snprintf(pabyHeaderIter, 9, "%8d", mpsTileLayer->nYSize);
     pabyHeaderIter += 8;
 
-    sprintf(pabyHeaderIter, "%8d", mpsTileLayer->nTileXSize);
+    snprintf(pabyHeaderIter, 9, "%8d", mpsTileLayer->nTileXSize);
     pabyHeaderIter += 8;
 
-    sprintf(pabyHeaderIter, "%8d", mpsTileLayer->nTileYSize);
+    snprintf(pabyHeaderIter, 9, "%8d", mpsTileLayer->nTileYSize);
     pabyHeaderIter += 8;
 
     memcpy(pabyHeaderIter, mpsTileLayer->szDataType, 4);
     pabyHeaderIter += 4;
 
     if (mpsTileLayer->bNoDataValid)
-        sprintf(pabyHeaderIter, "%18.10E", mpsTileLayer->dfNoDataValue);
+        snprintf(pabyHeaderIter, 19, "%18.10E", mpsTileLayer->dfNoDataValue);
     pabyHeaderIter += 18;
 
     memcpy(pabyHeaderIter, mpsTileLayer->szCompress, 8);
@@ -143,17 +143,17 @@ void AsciiTileLayer::WriteTileList(void)
     {
         BlockTileInfo * psTile = &moTileList[iTile];
 
-        sprintf(pabyTileListIter, "%12" PCIDSK_FRMT_64_WITHOUT_PREFIX "u", psTile->nOffset);
+        snprintf(pabyTileListIter, 13, "%12" PCIDSK_FRMT_64_WITHOUT_PREFIX "u", psTile->nOffset);
         pabyTileListIter += 12;
     }
 
     // We cannot write the offset and the size at the same time because
-    // sprintf() inserts a '\0' in the first character of the first size.
+    // snprintf() inserts a '\0' in the first character of the first size.
     for (uint32 iTile = 0; iTile < nTileCount; iTile++)
     {
         BlockTileInfo * psTile = &moTileList[iTile];
 
-        sprintf(pabyTileListIter, "%8d", psTile->nSize);
+        snprintf(pabyTileListIter, 9, "%8d", psTile->nSize);
         pabyTileListIter += 8;
     }
 

@@ -388,7 +388,7 @@ void BinaryTileDir::WriteDir(void)
 
     // The first 10 bytes are for the version.
     memcpy(pabyBlockDirIter, "VERSION", 7);
-    sprintf(pabyBlockDirIter + 7, "%3d", mnVersion);
+    snprintf(pabyBlockDirIter + 7, 4, "%3d", mnVersion);
     pabyBlockDirIter += 10;
 
     // Write the block directory info.
