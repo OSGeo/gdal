@@ -689,11 +689,11 @@ void AsciiTileDir::WriteDir(void)
     }
 
     // Write the free block info list.
-    BlockLayerInfo * psLayer = &msFreeBlockLayer;
+    BlockLayerInfo * psFreeBlockLayer = &msFreeBlockLayer;
 
     AsciiTileLayer * poLayer = (AsciiTileLayer *) mpoFreeBlockLayer;
 
-    for (size_t iBlock = 0; iBlock < psLayer->nBlockCount; iBlock++)
+    for (size_t iBlock = 0; iBlock < psFreeBlockLayer->nBlockCount; iBlock++)
     {
         BlockInfo * psBlock = &poLayer->moBlockList[iBlock];
 
@@ -706,7 +706,7 @@ void AsciiTileDir::WriteDir(void)
         sprintf(pabyBlockDirIter, "%8d", -1);
         pabyBlockDirIter += 8;
 
-        if (iBlock != psLayer->nBlockCount - 1)
+        if (iBlock != psFreeBlockLayer->nBlockCount - 1)
             sprintf(pabyBlockDirIter, "%8d", nNextBlock);
         else
             sprintf(pabyBlockDirIter, "%8d", -1);
@@ -718,10 +718,8 @@ void AsciiTileDir::WriteDir(void)
     // Write the block layers.
     uint32 nStartBlock = 0;
 
-    for (size_t iLayer = 0; iLayer < moLayerInfoList.size(); iLayer++)
+    for (BlockLayerInfo * psLayer : moLayerInfoList)
     {
-        psLayer = moLayerInfoList[iLayer];
-
         sprintf(pabyBlockDirIter, "%4d", psLayer->nLayerType);
         pabyBlockDirIter += 4;
 
@@ -731,7 +729,7 @@ void AsciiTileDir::WriteDir(void)
             sprintf(pabyBlockDirIter, "%8d", -1);
         pabyBlockDirIter += 8;
 
-        sprintf(pabyBlockDirIter, "%12lld", (long long) psLayer->nLayerSize);
+        sprintf(pabyBlockDirIter, "%12" PCIDSK_FRMT_64_WITHOUT_PREFIX "u", psLayer->nLayerSize);
         pabyBlockDirIter += 12;
 
         nStartBlock += psLayer->nBlockCount;

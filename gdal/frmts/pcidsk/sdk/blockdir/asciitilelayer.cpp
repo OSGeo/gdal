@@ -143,7 +143,7 @@ void AsciiTileLayer::WriteTileList(void)
     {
         BlockTileInfo * psTile = &moTileList[iTile];
 
-        sprintf(pabyTileListIter, "%12lld", (long long) psTile->nOffset);
+        sprintf(pabyTileListIter, "%12" PCIDSK_FRMT_64_WITHOUT_PREFIX "u", psTile->nOffset);
         pabyTileListIter += 12;
     }
 
