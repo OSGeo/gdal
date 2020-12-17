@@ -81,7 +81,7 @@ static BlockInfoList GetBlockList(const SysBlockInfoList & oBlockInfoList,
     // file is corrupted so look for a loop in the block list.
     if (oBlockList.size() > oBlockInfoList.size())
     {
-        uint32 iBlock = iStartBlock;
+        iBlock = iStartBlock;
 
         std::set<uint32> oBlockSet;
 
@@ -225,7 +225,7 @@ AsciiTileDir::AsciiTileDir(BlockFile * poFile, uint16 nSegment)
  * @param nVersion The version of the block directory.
  */
 AsciiTileDir::AsciiTileDir(BlockFile * poFile, uint16 nSegment,
-                           uint32 nBlockSize)
+                           CPL_UNUSED uint32 nBlockSize)
     : BlockTileDir(poFile, nSegment, 1)
 {
     // Initialize the directory info.
@@ -720,7 +720,7 @@ void AsciiTileDir::WriteDir(void)
 
     for (size_t iLayer = 0; iLayer < moLayerInfoList.size(); iLayer++)
     {
-        BlockLayerInfo * psLayer = moLayerInfoList[iLayer];
+        psLayer = moLayerInfoList[iLayer];
 
         sprintf(pabyBlockDirIter, "%4d", psLayer->nLayerType);
         pabyBlockDirIter += 4;

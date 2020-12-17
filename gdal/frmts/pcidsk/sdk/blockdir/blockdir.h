@@ -112,8 +112,8 @@ protected:
     virtual std::string GetDataSegmentName(void) const = 0;
     virtual std::string GetDataSegmentDesc(void) const = 0;
 
-    virtual void        ValidateNewBlocks(uint32 & nBlockCount,
-                                          bool bFreeBlocks) { }
+    virtual void        ValidateNewBlocks(CPL_UNUSED uint32 & nBlockCount,
+                                          CPL_UNUSED bool bFreeBlocks) { }
 
     void                SwapValue(uint16 * pnValue) const;
 

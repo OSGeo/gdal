@@ -71,18 +71,18 @@ protected:
 
     void                InitBlockList(AsciiTileLayer * poLayer);
 
-    virtual void        ReadLayerBlocks(uint32 iLayer);
-    virtual void        ReadFreeBlockLayer(void);
-    virtual void        WriteDir(void);
+    virtual void        ReadLayerBlocks(uint32 iLayer) override;
+    virtual void        ReadFreeBlockLayer(void) override;
+    virtual void        WriteDir(void) override;
 
-    virtual BlockLayer *_CreateLayer(uint16 nLayerType, uint32 iLayer);
-    virtual void        _DeleteLayer(uint32 iLayer);
+    virtual BlockLayer *_CreateLayer(uint16 nLayerType, uint32 iLayer) override;
+    virtual void        _DeleteLayer(uint32 iLayer) override;
 
-    virtual std::string GetDataSegmentName(void) const;
-    virtual std::string GetDataSegmentDesc(void) const;
+    virtual std::string GetDataSegmentName(void) const override;
+    virtual std::string GetDataSegmentDesc(void) const override;
 
     virtual void        ValidateNewBlocks(uint32 & nNewBlockCount,
-                                          bool bFreeBlocks);
+                                          bool bFreeBlocks) override;
 
 public:
     static size_t       GetOptimizedDirSize(BlockFile * poFile);
@@ -92,7 +92,7 @@ public:
 
     AsciiTileLayer *    GetTileLayer(uint32 iLayer);
 
-    virtual uint32      GetBlockSize(void) const;
+    virtual uint32      GetBlockSize(void) const override;
 };
 
 } // namespace PCIDSK
