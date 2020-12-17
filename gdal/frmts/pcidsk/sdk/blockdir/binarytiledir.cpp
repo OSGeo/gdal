@@ -206,7 +206,7 @@ BinaryTileDir::BinaryTileDir(BlockFile * poFile, uint16 nSegment)
  *
  * @param poFile The associated file object.
  * @param nSegment The segment of the block directory.
- * @param nVersion The version of the block directory.
+ * @param nBlockSize The size of the blocks.
  */
 BinaryTileDir::BinaryTileDir(BlockFile * poFile, uint16 nSegment,
                              uint32 nBlockSize)

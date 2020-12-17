@@ -507,7 +507,7 @@ std::vector<unsigned> CPCIDSKFile::GetSegmentIDs(int type,
 
         vnSegments.push_back(i + 1);
     }
-    return std::move(vnSegments);
+    return vnSegments;
 }
 
 /************************************************************************/
