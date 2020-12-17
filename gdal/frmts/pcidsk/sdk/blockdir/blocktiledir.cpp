@@ -119,7 +119,7 @@ uint32 BlockTileDir::GetNewBlockCount(void) const
 /**
  * Swaps the specified block layer info.
  *
- * @param psBlockDir The block layer info to swap.
+ * @param psBlockLayer The block layer info to swap.
  */
 void BlockTileDir::SwapBlockLayer(BlockLayerInfo * psBlockLayer)
 {
@@ -139,7 +139,7 @@ void BlockTileDir::SwapBlockLayer(BlockLayerInfo * psBlockLayer)
 /**
  * Swaps the specified tile layer info.
  *
- * @param psBlockDir The tile layer info to swap.
+ * @param psTileLayer The tile layer info to swap.
  */
 void BlockTileDir::SwapTileLayer(TileLayerInfo * psTileLayer)
 {
@@ -161,7 +161,7 @@ void BlockTileDir::SwapTileLayer(TileLayerInfo * psTileLayer)
 /**
  * Swaps the specified block info array.
  *
- * @param psBlockDir The block info array to swap.
+ * @param psBlock The block info array to swap.
  * @param nCount The number of block info.
  */
 void BlockTileDir::SwapBlock(BlockInfo * psBlock, size_t nCount)

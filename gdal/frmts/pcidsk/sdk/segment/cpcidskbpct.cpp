@@ -5,7 +5,7 @@
  ******************************************************************************
  * Copyright (c) 2015
  * PCI Geomatics, 90 Allstate Parkway, Markham, Ontario, Canada.
- *
+*
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -39,9 +39,9 @@ using namespace PCIDSK;
 /************************************************************************/
 /*                            CPCIDSK_BPCT()                            */
 /************************************************************************/
-CPCIDSK_BPCT::CPCIDSK_BPCT( PCIDSKFile *file, int segment,
+CPCIDSK_BPCT::CPCIDSK_BPCT( PCIDSKFile *fileIn, int segmentIn,
                           const char *segment_pointer )
-        : CPCIDSKSegment( file, segment, segment_pointer )
+        : CPCIDSKSegment( fileIn, segmentIn, segment_pointer )
 
 {
 }
