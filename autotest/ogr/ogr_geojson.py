@@ -3095,3 +3095,15 @@ def test_ogr_geojson_write_float_exponential_without_dot():
 
     # Check that the json can be parsed
     json.loads(data)
+
+
+###############################################################################
+# Test bugfix for #3280
+
+def test_ogr_geojson_feature_starting_with_big_properties():
+
+    filename = '/vsimem/test_ogr_geojson_feature_starting_with_big_properties.json'
+    gdal.FileFromMemBuffer(filename,
+                           '{"properties":{"foo":"%s"},"type":"Feature","geometry":null}' % ('x' * 10000))
+    assert ogr.Open(filename) is not None
+    gdal.Unlink(filename)
