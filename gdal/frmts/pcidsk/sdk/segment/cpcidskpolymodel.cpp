@@ -67,10 +67,10 @@ struct CPCIDSKPolyModelSegment::PCIDSKPolyInfo
     PCIDSKBuffer seg_data;
 };
 
-CPCIDSKPolyModelSegment::CPCIDSKPolyModelSegment(PCIDSKFile *file,
-                                                 int segment,
+CPCIDSKPolyModelSegment::CPCIDSKPolyModelSegment(PCIDSKFile *fileIn,
+                                                 int segmentIn,
                                                  const char *segment_pointer) :
-    CPCIDSKSegment(file, segment, segment_pointer),
+    CPCIDSKSegment(fileIn, segmentIn, segment_pointer),
     pimpl_(new CPCIDSKPolyModelSegment::PCIDSKPolyInfo),
     loaded_(false),mbModified(false)
 {

@@ -1,6 +1,8 @@
 
 include ../../GDALmake.opt
 
+CXXFLAGS := -msse3
+
 ifeq ($(JPEG_SETTING),internal)
 JPEG_INCLUDE	=	-I../jpeg/libjpeg
 endif

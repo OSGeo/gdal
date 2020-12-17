@@ -187,7 +187,7 @@ void CPCIDSKChannel::EstablishOverviewInfo() const
 /** Update the in-memory information for an overview.
   * This method will add overview information to the in-memory arrays
   *
-  * @param  pszOverviewMDvalue  Overview value
+  * @param  pszOverviewMDValue  Overview value
   *
   * @param  nFactor             Overview factor i.e. 2, 4, etc
   */
