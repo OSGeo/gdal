@@ -206,6 +206,8 @@ class GDALRead {
         byte[] g = new byte[width * height];
         byte[] b = new byte[width * height];
 
+        // Reading each band individually can sometimes cause a System.AccessViolationException for larger images.
+        // Using the ReadRaster() method on the Dataset instead (as in GDALDatasetRasterIO.cs and GDALDatasetRasterIOEx.cs) may fix this.
         redBand.ReadRaster(0, 0, width, height, r, width, height, 0, 0);
         greenBand.ReadRaster(0, 0, width, height, g, width, height, 0, 0);
         blueBand.ReadRaster(0, 0, width, height, b, width, height, 0, 0);
