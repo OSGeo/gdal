@@ -48,7 +48,7 @@ namespace PCIDSK
 /**
 \brief Read a LUT Segment (SEG_BLUT).
 
-@param pct  Breakpoint Pseudo-Color Table buffer into which the breakpoint
+@param vBLUT  Breakpoint Pseudo-Color Table buffer into which the breakpoint
 pseudo-color table is read.  It consists of a vector of BLUTEntry.
 
 */
@@ -57,7 +57,7 @@ pseudo-color table is read.  It consists of a vector of BLUTEntry.
 /**
 \brief Write a BLUT Segment.
 
-@param pct  Breakpoint Pseudo-Color Table buffer from which the breakpoint
+@param vBLUT  Breakpoint Pseudo-Color Table buffer from which the breakpoint
 pseudo-color table is written.  It consists of a vector of BLUTEntry.
 
 */

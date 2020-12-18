@@ -65,7 +65,7 @@ namespace PCIDSK
 /**
 \brief Read a PCT Segment (SEG_BPCT).
 
-@param pct  Breakpoint Pseudo-Color Table buffer into which the breakpoint
+@param vBPCT  Breakpoint Pseudo-Color Table buffer into which the breakpoint
 pseudo-color table is read.  It consists of a vector of BPCTEntry.
 
 */
@@ -74,7 +74,7 @@ pseudo-color table is read.  It consists of a vector of BPCTEntry.
 /**
 \brief Write a BPCT Segment.
 
-@param pct  Breakpoint Pseudo-Color Table buffer from which the breakpoint
+@param vBPCT  Breakpoint Pseudo-Color Table buffer from which the breakpoint
 pseudo-color table is written.  It consists of a vector of BPCTEntry.
 
 */

@@ -33,9 +33,7 @@
 #include <sstream>
 #include <cstring>
 #include <cassert>
-#if defined(SYSTEM_NT) && _MSC_VER > 1500
 #include <algorithm>
-#endif
 
 using namespace PCIDSK;
 

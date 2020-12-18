@@ -36,8 +36,10 @@
 #include <cstring>
 #include <cassert>
 
+#ifdef PCIMAJORVERSION
 #include "raster/memcmp.hh"
 #include "raster/memset.hh"
+#endif
 
 namespace PCIDSK
 {
@@ -284,14 +286,40 @@ bool BlockTileLayer::WriteSparseTile(const void * pData,
 
         nValue = *pnIter;
 
-        bIsSparse = raster::memcmp32(pnIter, nValue, nTileSize / 4);
+#ifdef PCIMAJORVERSION
+        bIsSparse = raster::memcmp32(pnIter, nValue,
+                                     nTileSize / sizeof(uint32));
+#else
+        uint32 * pnEnd = pnIter + nTileSize / sizeof(uint32);
+        for (; pnIter < pnEnd; ++pnIter)
+        {
+            if (*pnIter != nValue)
+            {
+                bIsSparse = false;
+                break;
+            }
+        }
+#endif
     }
     // Check if we can use a sparse tile with a value of 0.
     else
     {
         nValue = 0;
 
+#ifdef PCIMAJORVERSION
         bIsSparse = raster::memcmp8((uchar *) pData, 0, nTileSize);
+#else
+        uchar * pnIter = (uchar *) pData;
+        uchar * pnEnd = pnIter + nTileSize;
+        for (; pnIter < pnEnd; ++pnIter)
+        {
+            if (*pnIter != nValue)
+            {
+                bIsSparse = false;
+                break;
+            }
+        }
+#endif
     }
 
     // If the tile data is sparse store the sparse value in the nSize member
@@ -402,7 +430,15 @@ bool BlockTileLayer::ReadSparseTile(void * pData, uint32 nCol, uint32 nRow)
     // Check if we can use a sparse tile with a 4 byte value.
     if (dynamic_cast<BinaryTileDir *>(mpoBlockDir) && nTileSize % 4 == 0)
     {
-        raster::memset32((uint32 *) pData, psTile->nSize, nTileSize / 4);
+#ifdef PCIMAJORVERSION
+        raster::memset32((uint32 *) pData, psTile->nSize,
+                         nTileSize / sizeof(uint32));
+#else
+        uint32 * pnIter = (uint32 *) pData;
+        uint32 * pnEnd = pnIter + nTileSize / sizeof(uint32);
+        for (; pnIter < pnEnd; ++pnIter)
+            *pnIter = psTile->nSize;
+#endif
     }
     // Check if we can use a sparse tile with a value of 0.
     else
@@ -497,9 +533,16 @@ bool BlockTileLayer::ReadPartialSparseTile(void * pData,
             nValue = (nValue << nBitOffset) | (nValue >> (32 - nBitOffset));
         }
 
-        uint32 nAlign = nSize / 4;
+        uint32 nAlign = nSize / sizeof(uint32);
 
+#ifdef PCIMAJORVERSION
         raster::memset32((uint32 *) pData, nValue, nAlign);
+#else
+        uint32 * pnIter = (uint32 *) pData;
+        uint32 * pnEnd = pnIter + nAlign;
+        for (; pnIter < pnEnd; ++pnIter)
+            *pnIter = nValue;
+#endif
 
         uint32 nRemaining = nSize % 4;
 
