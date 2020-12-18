@@ -52,8 +52,8 @@ public:
 
     virtual             ~SysTileDir(void);
 
-    virtual void        Initialize(void) override;
-    virtual void        Synchronize(void) override;
+    virtual void        Initialize(void) final;
+    virtual void        Synchronize(void) final;
 
     void                LoadTileDir(void);
     void                CreateTileDir(void);

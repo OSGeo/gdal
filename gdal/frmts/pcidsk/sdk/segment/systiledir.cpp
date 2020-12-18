@@ -97,7 +97,8 @@ void SysTileDir::LoadTileDir(void)
     }
     else
     {
-        ThrowPCIDSKException("Unknown block tile directory name.");
+        delete poBlockFile;
+        return ThrowPCIDSKException("Unknown block tile directory name.");
     }
 }
 

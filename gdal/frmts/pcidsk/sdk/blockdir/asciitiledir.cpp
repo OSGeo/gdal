@@ -31,6 +31,7 @@
 #include "core/pcidsk_utils.h"
 #include "core/pcidsk_scanint.h"
 #include "pcidsk_exception.h"
+#include "pcidsk_buffer.h"
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -283,11 +284,11 @@ void AsciiTileDir::ReadFullDir(void)
                     msBlockDir.nLayerCount * SYS_BLOCK_LAYER_INFO_SIZE);
 
     // Read the block layers from disk.
-    uint8 * pabyBlockDir = (uint8 *) malloc(nSize);
+    PCIDSKBuffer oBlockDir(nSize);
 
-    uint8 * pabyBlockDirIter = pabyBlockDir;
+    uint8 * pabyBlockDirIter = (uint8 *) oBlockDir.buffer;
 
-    mpoFile->ReadFromSegment(mnSegment, pabyBlockDir, 512, nSize);
+    mpoFile->ReadFromSegment(mnSegment, oBlockDir.buffer, 512, nSize);
 
     // Read the block list.
     SysBlockInfoList oBlockInfoList(msBlockDir.nBlockCount);
@@ -353,8 +354,6 @@ void AsciiTileDir::ReadFullDir(void)
     // We need to validate the block count field.
     msFreeBlockLayer.nBlockCount = (uint32)
         ((AsciiTileLayer *) mpoFreeBlockLayer)->moBlockList.size();
-
-    free(pabyBlockDir);
 }
 
 /************************************************************************/
@@ -370,11 +369,11 @@ void AsciiTileDir::ReadPartialDir(void)
                     msBlockDir.nLayerCount * sizeof(TileLayerInfo));
 
     // Read the block layers from disk.
-    uint8 * pabyBlockDir = (uint8 *) malloc(nSize);
+    PCIDSKBuffer oBlockDir(nSize);
 
-    uint8 * pabyBlockDirIter = pabyBlockDir;
+    uint8 * pabyBlockDirIter = (uint8 *) oBlockDir.buffer;
 
-    mpoFile->ReadFromSegment(mnSegment, pabyBlockDir, 512 + nOffset, nSize);
+    mpoFile->ReadFromSegment(mnSegment, oBlockDir.buffer, 512 + nOffset, nSize);
 
     // Read the block layers.
     BlockLayerInfo * psPreviousLayer = nullptr;
@@ -444,8 +443,6 @@ void AsciiTileDir::ReadPartialDir(void)
 
         msFreeBlockLayer.nBlockCount = 0;
     }
-
-    free(pabyBlockDir);
 }
 
 /************************************************************************/
@@ -543,11 +540,11 @@ void AsciiTileDir::InitBlockList(AsciiTileLayer * poLayer)
     size_t nSize = psLayer->nBlockCount * SYS_BLOCK_INFO_SIZE;
 
     // Read the blocks from disk.
-    uint8 * pabyBlockDir = (uint8 *) malloc(nSize);
+    PCIDSKBuffer oBlockDir(nSize);
 
-    uint8 * pabyBlockDirIter = pabyBlockDir;
+    uint8 * pabyBlockDirIter = (uint8 *) oBlockDir.buffer;
 
-    mpoFile->ReadFromSegment(mnSegment, pabyBlockDir, 512 + nOffset, nSize);
+    mpoFile->ReadFromSegment(mnSegment, oBlockDir.buffer, 512 + nOffset, nSize);
 
     // Setup the block list.
     poLayer->moBlockList.resize(psLayer->nBlockCount);
@@ -568,8 +565,6 @@ void AsciiTileDir::InitBlockList(AsciiTileLayer * poLayer)
         //psBlock->nNextBlock  = ScanInt8(pabyBlockDirIter);
         pabyBlockDirIter += 8;
     }
-
-    free(pabyBlockDir);
 }
 
 /************************************************************************/
@@ -620,12 +615,12 @@ void AsciiTileDir::WriteDir(void)
         nDirSize = std::max(nDirSize, GetOptimizedDirSize(mpoFile));
 
     // Write the block directory to disk.
-    char * pabyBlockDir = (char *) malloc(nDirSize + 1); // +1 for '\0'.
+    PCIDSKBuffer oBlockDir(nDirSize);
 
-    char * pabyBlockDirIter = pabyBlockDir;
+    char * pabyBlockDirIter = oBlockDir.buffer;
 
     // Initialize the header.
-    memset(pabyBlockDir, ' ', 512);
+    memset(oBlockDir.buffer, ' ', 512);
 
     // The first 10 bytes are for the version.
     memcpy(pabyBlockDirIter, "VERSION", 7);
@@ -643,18 +638,18 @@ void AsciiTileDir::WriteDir(void)
     pabyBlockDirIter += 8;
 
     // The bytes from 128 to 140 are for the subversion.
-    memcpy(pabyBlockDir + 128, "SUBVERSION 1", 12);
+    memcpy(oBlockDir.buffer + 128, "SUBVERSION 1", 12);
 
     // The third last byte is for the endianness.
-    pabyBlockDir[512 - 3] = mchEndianness;
+    oBlockDir.buffer[512 - 3] = mchEndianness;
 
     // The last 2 bytes of the header are for the validity info.
     uint16 nValidInfo = ++mnValidInfo;
     SwapValue(&nValidInfo);
-    memcpy(pabyBlockDir + 512 - 2, &nValidInfo, 2);
+    memcpy(oBlockDir.buffer + 512 - 2, &nValidInfo, 2);
 
     // The header is 512 bytes.
-    pabyBlockDirIter = pabyBlockDir + 512;
+    pabyBlockDirIter = oBlockDir.buffer + 512;
 
     // Write the block info list.
     uint32 nNextBlock = 1;
@@ -743,15 +738,13 @@ void AsciiTileDir::WriteDir(void)
     }
 
     // Initialize the remaining bytes so that Valgrind doesn't complain.
-    size_t nRemainingBytes = pabyBlockDir + nDirSize - pabyBlockDirIter;
+    size_t nRemainingBytes = oBlockDir.buffer + nDirSize - pabyBlockDirIter;
 
     if (nRemainingBytes)
         memset(pabyBlockDirIter, 0, nRemainingBytes);
 
     // Write the block directory to disk.
-    mpoFile->WriteToSegment(mnSegment, pabyBlockDir, 0, nDirSize);
-
-    free(pabyBlockDir);
+    mpoFile->WriteToSegment(mnSegment, oBlockDir.buffer, 0, nDirSize);
 }
 
 /************************************************************************/

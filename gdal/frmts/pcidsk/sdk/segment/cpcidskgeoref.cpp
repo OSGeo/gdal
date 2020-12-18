@@ -1031,7 +1031,6 @@ void CPCIDSKGeoref::PrepareGCTPFields()
     else if( STARTS_WITH(geosys_clean.c_str(), "UTM ") )
     {
         char row_char = geosys_clean[10];
-        gsys = 1;
 
         // Southern hemisphere?
         if( (row_char >= 'C') && (row_char <= 'M') && ProjectionZone > 0 )

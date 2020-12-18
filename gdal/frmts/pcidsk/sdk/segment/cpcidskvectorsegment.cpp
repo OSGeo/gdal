@@ -308,7 +308,7 @@ uint32 CPCIDSKVectorSegment::ReadField( uint32 offset, ShapeField& field,
       }
 
       default:
-          return ThrowPCIDSKException(0, "Unhandled field type %d", field_type);
+        return ThrowPCIDSKException(0, "Unhandled field type %d", field_type);
     }
 }
 

@@ -1596,8 +1596,8 @@ void CPCIDSKFile::ExtendSegment( int segment, uint64 blocks_requested,
 
     if (!poSegment)
     {
-        ThrowPCIDSKException("ExtendSegment(%d) failed, "
-                             "segment does not exist.", segment);
+        return ThrowPCIDSKException("ExtendSegment(%d) failed, "
+                                    "segment does not exist.", segment);
     }
 
     // Move the segment at the end of file if necessary.
@@ -1633,8 +1633,8 @@ void CPCIDSKFile::MoveSegmentToEOF( int segment )
 
     if (!poSegment)
     {
-        ThrowPCIDSKException("MoveSegmentToEOF(%d) failed, "
-                             "segment does not exist.", segment);
+        return ThrowPCIDSKException("MoveSegmentToEOF(%d) failed, "
+                                    "segment does not exist.", segment);
     }
 
     int segptr_off = (segment - 1) * 32;

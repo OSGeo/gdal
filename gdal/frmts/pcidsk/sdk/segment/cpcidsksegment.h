@@ -56,7 +56,7 @@ namespace PCIDSK
             const char *segment_pointer );
         virtual ~CPCIDSKSegment();
 
-        void        LoadSegmentPointer( const char *segment_pointer ) override;
+        void        LoadSegmentPointer( const char *segment_pointer ) final;
         void        LoadSegmentHeader();
 
         PCIDSKBuffer &GetHeader() { return header; }

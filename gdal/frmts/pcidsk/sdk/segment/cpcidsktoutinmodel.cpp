@@ -63,7 +63,15 @@ CPCIDSKToutinModelSegment::~CPCIDSKToutinModelSegment()
 SRITInfo_t CPCIDSKToutinModelSegment::GetInfo() const
 {
     if (!mpoInfo)
+    {
         const_cast<CPCIDSKToutinModelSegment *>(this)->Load();
+
+        if (!mpoInfo)
+        {
+            ThrowPCIDSKException("Unable to load toutin segment.");
+            return SRITInfo_t();
+        }
+    }
 
     return (*mpoInfo);
 }
@@ -1073,9 +1081,7 @@ int  CPCIDSKToutinModelSegment::GetSensor( EphemerisSeg_t *OrbitPtr)
  */
 int CPCIDSKToutinModelSegment::GetModel( int nSensor )
 {
-    int  nModel;
-
-    nModel = -999;
+    int nModel = -999;
 
     switch (nSensor)
     {
