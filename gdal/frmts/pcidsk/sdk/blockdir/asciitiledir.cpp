@@ -727,7 +727,7 @@ void AsciiTileDir::WriteDir(void)
             snprintf(pabyBlockDirIter, 9, "%8d", -1);
         pabyBlockDirIter += 8;
 
-        snprintf(pabyBlockDirIter, 13, "%12" PCIDSK_FRMT_64_WITHOUT_PREFIX "u", psLayer->nLayerSize);
+        snprintf(pabyBlockDirIter, 13, "%12" PCIDSK_FRMT_64_WITHOUT_PREFIX "d", psLayer->nLayerSize);
         pabyBlockDirIter += 12;
 
         nStartBlock += psLayer->nBlockCount;

@@ -57,8 +57,8 @@ CPCIDSKChannel::CPCIDSKChannel( PCIDSKBuffer &image_header,
     this->channel_number = channel_numberIn;
     this->ih_offset = ih_offsetIn;
     is_locked = false;
-    byte_order = 'S';
-    needs_swap = false;
+    byte_order = 'N';
+    needs_swap = !BigEndianSystem();
 
     width = file->GetWidth();
     height = file->GetHeight();

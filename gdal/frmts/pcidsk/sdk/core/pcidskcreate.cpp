@@ -614,6 +614,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
             file->WriteToFile( ih.buffer, ih_offset, 1024 );
         }
 
+        oFileAutoPtr.reset(nullptr);
         file = Open( filename, "r+", interfaces );
         oFileAutoPtr.reset(file);
     }
