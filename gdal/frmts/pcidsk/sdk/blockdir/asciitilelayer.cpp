@@ -28,7 +28,6 @@
 #include "blockdir/asciitilelayer.h"
 #include "blockdir/blockfile.h"
 #include "core/pcidsk_scanint.h"
-#include "pcidsk_buffer.h"
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -107,12 +106,12 @@ void AsciiTileLayer::WriteTileList(void)
 
     size_t nSize = 128 + nTileCount * 20;
 
-    PCIDSKBuffer oTileLayer(nSize);
+    char * pabyTileLayer = (char *) malloc(nSize + 1); // +1 for '\0'.
 
     // Write the tile layer header to disk.
-    char * pabyHeaderIter = oTileLayer.buffer;
+    char * pabyHeaderIter = pabyTileLayer;
 
-    memset(oTileLayer.buffer, ' ', 128);
+    memset(pabyTileLayer, ' ', 128);
 
     snprintf(pabyHeaderIter, 9, "%8d", mpsTileLayer->nXSize);
     pabyHeaderIter += 8;
@@ -136,7 +135,7 @@ void AsciiTileLayer::WriteTileList(void)
     memcpy(pabyHeaderIter, mpsTileLayer->szCompress, 8);
 
     // Write the tile list to disk.
-    char * pabyTileListIter = oTileLayer.buffer + 128;
+    char * pabyTileListIter = pabyTileLayer + 128;
 
     for (uint32 iTile = 0; iTile < nTileCount; iTile++)
     {
@@ -156,7 +155,9 @@ void AsciiTileLayer::WriteTileList(void)
         pabyTileListIter += 8;
     }
 
-    WriteToLayer(oTileLayer.buffer, 0, nSize);
+    WriteToLayer(pabyTileLayer, 0, nSize);
+
+    free(pabyTileLayer);
 }
 
 /************************************************************************/
@@ -172,12 +173,12 @@ void AsciiTileLayer::ReadTileList(void)
 
     size_t nSize = nTileCount * 20;
 
-    PCIDSKBuffer oTileList(nSize);
+    uint8 * pabyTileList = (uint8 *) malloc(nSize);
 
-    ReadFromLayer(oTileList.buffer, 128, nSize);
+    ReadFromLayer(pabyTileList, 128, nSize);
 
-    uint8 * pabyTileOffsetIter = (uint8 *) oTileList.buffer;
-    uint8 * pabyTileSizeIter = pabyTileOffsetIter + nTileCount * 12;
+    uint8 * pabyTileOffsetIter = pabyTileList;
+    uint8 * pabyTileSizeIter = pabyTileList + nTileCount * 12;
 
     moTileList.resize(nTileCount);
 
@@ -191,4 +192,6 @@ void AsciiTileLayer::ReadTileList(void)
         psTile->nSize = ScanInt8(pabyTileSizeIter);
         pabyTileSizeIter += 8;
     }
+
+    free(pabyTileList);
 }
