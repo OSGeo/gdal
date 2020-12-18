@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-CXXFLAGS := -msse3
+EXTRA_CXXFLAGS = -msse3
 
 ifeq ($(JPEG_SETTING),internal)
 JPEG_INCLUDE	=	-I../jpeg/libjpeg
@@ -82,40 +82,40 @@ clean:
 	rm -f *.o $(O_OBJ)
 
 ../o/%.$(OBJ_EXT):	sdk/%.cpp
-	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(EXTRA_CXXFLAGS) $< -o $@
 
 ../o/%.$(OBJ_EXT):	sdk/blockdir/%.cpp
-	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(EXTRA_CXXFLAGS) $< -o $@
 
 ../o/%.$(OBJ_EXT):	sdk/channel/%.cpp
-	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(EXTRA_CXXFLAGS) $< -o $@
 
 ../o/%.$(OBJ_EXT):	sdk/core/%.cpp
-	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(EXTRA_CXXFLAGS) $< -o $@
 
 ../o/%.$(OBJ_EXT):	sdk/port/%.cpp
-	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(EXTRA_CXXFLAGS) $< -o $@
 
 ../o/%.$(OBJ_EXT):	sdk/segment/%.cpp
-	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(EXTRA_CXXFLAGS) $< -o $@
 
 %.$(OBJ_EXT):	sdk/%.cpp
-	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(EXTRA_CXXFLAGS) $< -o $@
 
 %.$(OBJ_EXT):	sdk/blockdir/%.cpp
-	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(EXTRA_CXXFLAGS) $< -o $@
 
 %.$(OBJ_EXT):	sdk/channel/%.cpp
-	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(EXTRA_CXXFLAGS) $< -o $@
 
 %.$(OBJ_EXT):	sdk/core/%.cpp
-	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(EXTRA_CXXFLAGS) $< -o $@
 
 %.$(OBJ_EXT):	sdk/port/%.cpp
-	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(EXTRA_CXXFLAGS) $< -o $@
 
 %.$(OBJ_EXT):	sdk/segment/%.cpp
-	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(EXTRA_CXXFLAGS) $< -o $@
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
