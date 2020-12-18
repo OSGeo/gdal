@@ -43,7 +43,7 @@ CPL_CVSID("$Id$")
 static void Usage(const char* pszErrorMsg = nullptr)
 
 {
-    printf( "Usage: gdalinfo [--help-general] [-json] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n"
+    printf( "Usage: gdalinfo [--help-general] [-json] [-mm] [-stats | -approx_stats] [-hist] [-nogcp] [-nomd]\n"
             "                [-norat] [-noct] [-nofl] [-checksum] [-proj4]\n"
             "                [-listmdd] [-mdd domain|`all`] [-wkt_format WKT1|WKT2|...]*\n"
             "                [-sd subdataset] [-oo NAME=VALUE]* [-if format]* datasetname\n" );
