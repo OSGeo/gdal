@@ -206,7 +206,7 @@ void CPCIDSKSegment::WriteToFile( const void *buffer, uint64 offset, uint64 size
         poFile->ExtendSegment( segment, blocks_to_add,
                              !(offset == data_size - 1024
                                && size == blocks_to_add * 512) );
-        data_size += blocks_to_add * 512;
+        // ExtendSegment() will call LoadSegmentPointer() to update data_size.
     }
 
     assert(file); // avoid CLang Static Analyzer false positive
