@@ -277,3 +277,43 @@ def test_gdalbuildvrt_lib_separate_nodata_4():
 
     assert b'<NoDataValue>' not in data
     assert b'<NODATA>' not in data
+
+
+###############################################################################
+def test_gdalbuildvrt_lib_usemaskband_on_mask_band():
+
+    src1_ds = gdal.GetDriverByName('MEM').Create('src1', 3, 1)
+    src1_ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    src1_ds.GetRasterBand(1).Fill(255)
+    src1_ds.CreateMaskBand(0)
+    src1_ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 1, 1, b'\xff')
+
+    src2_ds = gdal.GetDriverByName('MEM').Create('src2', 3, 1)
+    src2_ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    src2_ds.GetRasterBand(1).Fill(127)
+    src2_ds.CreateMaskBand(0)
+    src2_ds.GetRasterBand(1).GetMaskBand().WriteRaster(1, 0, 1, 1, b'\xff')
+
+    ds = gdal.BuildVRT('', [src1_ds, src2_ds])
+    assert struct.unpack('B' * 3, ds.ReadRaster()) == (255, 127, 0)
+    assert struct.unpack('B' * 3, ds.GetRasterBand(1).GetMaskBand().ReadRaster()) == (255, 255, 0)
+
+
+###############################################################################
+def test_gdalbuildvrt_lib_usemaskband_on_alpha_band():
+
+    src1_ds = gdal.GetDriverByName('MEM').Create('src1', 3, 1, 2)
+    src1_ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    src1_ds.GetRasterBand(1).Fill(255)
+    src1_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+    src1_ds.GetRasterBand(2).WriteRaster(0, 0, 1, 1, b'\xff')
+
+    src2_ds = gdal.GetDriverByName('MEM').Create('src2', 3, 1, 2)
+    src2_ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    src2_ds.GetRasterBand(1).Fill(127)
+    src2_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+    src2_ds.GetRasterBand(2).WriteRaster(1, 0, 1, 1, b'\xff')
+
+    ds = gdal.BuildVRT('', [src1_ds, src2_ds])
+    assert struct.unpack('B' * 3, ds.GetRasterBand(1).ReadRaster()) == (255, 127, 0)
+    assert struct.unpack('B' * 3, ds.GetRasterBand(2).ReadRaster()) == (255, 255, 0)

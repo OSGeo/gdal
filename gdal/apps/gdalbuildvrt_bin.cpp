@@ -51,6 +51,7 @@ static void Usage(const char* pszErrorMsg)
             "                    [-allow_projection_difference] [-q]\n"
             "                    [-addalpha] [-hidenodata]\n"
             "                    [-srcnodata \"value [value...]\"] [-vrtnodata \"value [value...]\"] \n"
+            "                    [-ignore_srcmaskband]\n"
             "                    [-a_srs srs_def]\n"
             "                    [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]\n"
             "                    [-oo NAME=VALUE]*\n"

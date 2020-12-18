@@ -162,7 +162,7 @@ The allowed subelements for VRTRasterBand are :
 
   <ColorInterp>Gray</ColorInterp>:
 
-- **NoDataValue**: If this element exists a raster band has a nodata value associated with, of the value given as data in the element.
+- **NoDataValue**: If this element exists a raster band has a nodata value associated with, of the value given as data in the element. This must not be confused with the NODATA element of a VRTComplexSource element.
 
 .. code-block:: xml
 
@@ -271,7 +271,7 @@ The allowed subelements for VRTRasterBand are :
 
 - **AveragedSource**: The AveragedSource is derived from the SimpleSource and shares the same properties except that it uses an averaging resampling instead of a nearest neighbour algorithm as in SimpleSource, when the size of the destination rectangle is not the same as the size of the source rectangle. Note: a more general mechanism to specify resampling algorithms can be used. See above paragraph about the 'resampling' attribute.
 
-- **ComplexSource**: The ComplexSource_ is derived from the SimpleSource (so it shares the SourceFilename, SourceBand, SrcRect and DestRect elements), but it provides support to rescale and offset the range of the source values. Certain regions of the source can be masked by specifying the NODATA value.
+- **ComplexSource**: The ComplexSource_ is derived from the SimpleSource (so it shares the SourceFilename, SourceBand, SrcRect and DestRect elements), but it provides support to rescale and offset the range of the source values. Certain regions of the source can be masked by specifying the NODATA value, or starting with GDAL 3.3, with the <UseMaskBand>true</UseMaskBand> element.
 
 - **KernelFilteredSource**: The KernelFilteredSource_ is a pixel source derived from the Simple Source (so it shares the SourceFilename, SourceBand, SrcRect and DestRect elements, but it also passes the data through a simple filtering kernel specified with the Kernel element.
 
@@ -375,7 +375,10 @@ the blue band or 4 for the alpha band.
 When transforming the source values the operations are executed
 in the following order:
 
-- Nodata masking
+- Masking, if the NODATA element is set or, starting with GDAL 3.3,
+  if the UseMaskBand is set to true and the source band has a mask band.
+  Note that this is binary masking only, so no alpha blending is done if the
+  mask band is actually an alpha band with non-0 or non-255 values.
 - Color table expansion
 - For linear scaling, applying the scale ratio, then scale offset
 - For non-linear scaling, apply (DstMax-DstMin) * pow( (SrcValue-SrcMin) / (SrcMax-SrcMin), Exponent) + DstMin
@@ -390,7 +393,7 @@ in the following order:
       <ScaleRatio>1</ScaleRatio>
       <ColorTableComponent>1</ColorTableComponent>
       <LUT>0:0,2345.12:64,56789.5:128,2364753.02:255</LUT>
-      <NODATA>0</NODATA>
+      <NODATA>0</NODATA>  <!-- if the mask is a mask or alpha band, use <UseMaskBand>true</UseMaskBand> -->
       <SrcRect xOff="0" yOff="0" xSize="512" ySize="512"/>
       <DstRect xOff="0" yOff="0" xSize="512" ySize="512"/>
     </ComplexSource>
