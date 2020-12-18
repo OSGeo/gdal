@@ -639,8 +639,12 @@ def test_tiff_srs_write_epsg26711_3855_geotiff1_1():
 def test_tiff_srs_read_epsg32631_4979_geotiff1_1():
     ds = gdal.Open('data/epsg32631_4979_geotiff1_1.tif')
     sr = ds.GetSpatialRef()
-    # PROJ 6.0 didn't include the ID of the base CRS
-    assert sr.ExportToWkt().replace(',ID["EPSG",4979]','') == 'PROJCRS["WGS 84 / UTM zone 31N",BASEGEOGCRS["WGS 84",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433]],ID["EPSG",4979]],CONVERSION["UTM zone 31N",METHOD["Transverse Mercator",ID["EPSG",9807]],PARAMETER["Latitude of natural origin",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8801]],PARAMETER["Longitude of natural origin",3,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8802]],PARAMETER["Scale factor at natural origin",0.9996,SCALEUNIT["unity",1],ID["EPSG",8805]],PARAMETER["False easting",500000,LENGTHUNIT["metre",1],ID["EPSG",8806]],PARAMETER["False northing",0,LENGTHUNIT["metre",1],ID["EPSG",8807]],ID["EPSG",16031]],CS[Cartesian,3],AXIS["(E)",east,ORDER[1],LENGTHUNIT["metre",1]],AXIS["(N)",north,ORDER[2],LENGTHUNIT["metre",1]],AXIS["ellipsoidal height (h)",up,ORDER[3],LENGTHUNIT["metre",1]]]'.replace(',ID["EPSG",4979]','')
+    assert sr.IsProjected()
+    assert sr.GetAxesCount() == 3
+    assert sr.GetName() == 'WGS 84 / UTM zone 31N'
+    sr_geog = osr.SpatialReference()
+    sr_geog.CopyGeogCSFrom(sr)
+    assert sr_geog.GetAuthorityCode(None) == '4979'
 
 
 def test_tiff_srs_write_vertical_perspective():

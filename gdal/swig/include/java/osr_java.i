@@ -149,7 +149,18 @@ import org.gdal.gdal.gdalJNI;
   /* New in GDAL 1.10 */
   public static CoordinateTransformation CreateCoordinateTransformation(SpatialReference src, SpatialReference dst)
   {
-      return osr.CreateCoordinateTransformation(src, dst);
+      CoordinateTransformation ct = osr.CreateCoordinateTransformation(src, dst);
+      if( ct == null && osr.GetUseExceptions() )
+        throw new RuntimeException("Cannot create CoordinateTransformation: " + org.gdal.gdal.gdal.GetLastErrorMsg());
+      return ct;
+  }
+
+  public static CoordinateTransformation CreateCoordinateTransformation(SpatialReference src, SpatialReference dst, CoordinateTransformationOptions options)
+  {
+      CoordinateTransformation ct = osr.CreateCoordinateTransformation(src, dst, options);
+      if( ct == null && osr.GetUseExceptions() )
+        throw new RuntimeException("Cannot create CoordinateTransformation: " + org.gdal.gdal.gdal.GetLastErrorMsg());
+      return ct;
   }
 %}
 
