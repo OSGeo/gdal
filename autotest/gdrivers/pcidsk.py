@@ -299,6 +299,24 @@ def test_pcidsk_11():
 
     return tst.testCreate()
 
+def test_pcidsk_11_v1():
+    if gdaltest.pcidsk_new == 0:
+        pytest.skip()
+
+    tst = gdaltest.GDALTest('PCIDSK', 'png/rgba16.png', 2, 2042,
+                            options=['INTERLEAVING=TILED', 'TILESIZE=32', 'TILEVERSION=1'])
+
+    return tst.testCreate()
+
+def test_pcidsk_11_v2():
+    if gdaltest.pcidsk_new == 0:
+        pytest.skip()
+
+    tst = gdaltest.GDALTest('PCIDSK', 'png/rgba16.png', 2, 2042,
+                            options=['INTERLEAVING=TILED', 'TILESIZE=32', 'TILEVERSION=2'])
+
+    return tst.testCreate()
+
 ###############################################################################
 # Test INTERLEAVING=TILED interleaving and COMPRESSION=RLE
 
@@ -309,6 +327,24 @@ def test_pcidsk_12():
 
     tst = gdaltest.GDALTest('PCIDSK', 'png/rgba16.png', 2, 2042,
                             options=['INTERLEAVING=TILED', 'TILESIZE=32', 'COMPRESSION=RLE'])
+
+    return tst.testCreate()
+
+def test_pcidsk_12_v1():
+    if gdaltest.pcidsk_new == 0:
+        pytest.skip()
+
+    tst = gdaltest.GDALTest('PCIDSK', 'png/rgba16.png', 2, 2042,
+                            options=['INTERLEAVING=TILED', 'TILESIZE=32', 'COMPRESSION=RLE', 'TILEVERSION=1'])
+
+    return tst.testCreate()
+
+def test_pcidsk_12_v2():
+    if gdaltest.pcidsk_new == 0:
+        pytest.skip()
+
+    tst = gdaltest.GDALTest('PCIDSK', 'png/rgba16.png', 2, 2042,
+                            options=['INTERLEAVING=TILED', 'TILESIZE=32', 'COMPRESSION=RLE', 'TILEVERSION=2'])
 
     return tst.testCreate()
 
