@@ -111,7 +111,7 @@ void AsciiTileLayer::WriteTileList(void)
     // Write the tile layer header to disk.
     char * pabyHeaderIter = pabyTileLayer;
 
-    memset(pabyHeaderIter, ' ', 128);
+    memset(pabyTileLayer, ' ', 128);
 
     snprintf(pabyHeaderIter, 9, "%8d", mpsTileLayer->nXSize);
     pabyHeaderIter += 8;

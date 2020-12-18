@@ -384,7 +384,7 @@ void BinaryTileDir::WriteDir(void)
     char * pabyBlockDirIter = pabyBlockDir;
 
     // Initialize the header.
-    memset(pabyBlockDirIter, 0, 512);
+    memset(pabyBlockDir, 0, 512);
 
     // The first 10 bytes are for the version.
     memcpy(pabyBlockDirIter, "VERSION", 7);

@@ -625,7 +625,7 @@ void AsciiTileDir::WriteDir(void)
     char * pabyBlockDirIter = pabyBlockDir;
 
     // Initialize the header.
-    memset(pabyBlockDirIter, ' ', 512);
+    memset(pabyBlockDir, ' ', 512);
 
     // The first 10 bytes are for the version.
     memcpy(pabyBlockDirIter, "VERSION", 7);

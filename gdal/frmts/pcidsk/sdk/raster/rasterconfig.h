@@ -28,13 +28,6 @@
 #ifndef RASTER_CONFIG_H
 #define RASTER_CONFIG_H
 
-// SSE intrinsics.
-#ifdef _MSC_VER
-#include <intrin.h>
-#else
-#include <emmintrin.h>
-#endif
-
 // Use raster namespace.
 #define USE_RASTER_NAMESPACE
 

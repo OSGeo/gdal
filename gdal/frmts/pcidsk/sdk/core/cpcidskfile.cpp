@@ -874,7 +874,8 @@ void CPCIDSKFile::ReadFromFile( void *buffer, uint64 offset, uint64 size )
 
         // If we were not able to read the requested size, initialize
         // the remaining bytes to 0.
-        std::memset((char *) buffer + nReadSize, 0, size - nReadSize);
+        std::memset((char *) buffer + nReadSize, 0,
+                    static_cast<size_t>(size - nReadSize));
     }
 }
 
