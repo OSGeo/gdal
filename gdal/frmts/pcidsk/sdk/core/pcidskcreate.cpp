@@ -560,7 +560,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
             size_t nWriteBlocks = nBufSize;
             if(nBlocksRest < nBufSize)
             {
-                nWriteBlocks = nBlocksRest;
+                nWriteBlocks = static_cast<size_t>(nBlocksRest);
                 nBlocksRest = 0;
             }
             interfaces->io->Seek( io_handle, nOff*512, SEEK_SET );
