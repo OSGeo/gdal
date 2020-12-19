@@ -35,16 +35,18 @@ quick_test: gdal_unit_test testcopywords testclosedondestroydm testthreadcond te
 	./bug1488
 	./proj_with_fork
 
-test_sse:
+testsse2:
 	$(CXX) -g -O2  testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
 	./testsse
+	$(CXX) -g -O2 -DUSE_SSE2_EMULATION -DNO_WARN_USE_SSE2_EMULATION testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
+	./testsse
+
+testavx2: testsse2
 	$(CXX) -g -O2 -mssse3 testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
 	./testsse
 	$(CXX) -g -O2 -mssse3 -msse4.1 testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
 	./testsse
 	$(CXX) -g -O2 -mavx2 testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
-	./testsse
-	$(CXX) -g -O2 -DUSE_SSE2_EMULATION testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
 	./testsse
 
 OBJ = \
