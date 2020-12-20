@@ -95,6 +95,7 @@ int OGRNASDataSource::Open( const char * pszNewName )
     pszName = CPLStrdup( pszNewName );
 
     bool bHaveSchema = false;
+    bool bHaveTemplate = false;
     const char *pszGFSFilename;
     VSIStatBufL sGFSStatBuf;
 
@@ -110,7 +111,8 @@ int OGRNASDataSource::Open( const char * pszNewName )
                      pszNASTemplateName );
             return FALSE;
         }
-        bHaveSchema = true;
+
+        bHaveTemplate = true;
 
         CPLDebug("NAS", "Schema loaded.");
     }
@@ -160,7 +162,8 @@ int OGRNASDataSource::Open( const char * pszNewName )
 /*      Save the schema file if possible.  Do not make a fuss if we     */
 /*      cannot.  It could be read-only directory or something.          */
 /* -------------------------------------------------------------------- */
-    if( !bHaveSchema && poReader->GetClassCount() > 0 &&
+    if( !bHaveTemplate && !bHaveSchema &&
+        poReader->GetClassCount() > 0 &&
         !STARTS_WITH_CI(pszNewName, "/vsitar/") &&
         !STARTS_WITH_CI(pszNewName, "/vsizip/") &&
         !STARTS_WITH_CI(pszNewName, "/vsigzip/vsi") &&
