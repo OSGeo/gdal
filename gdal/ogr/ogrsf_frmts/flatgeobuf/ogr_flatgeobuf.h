@@ -203,6 +203,5 @@ class OGRFlatGeobufDataset final: public GDALDataset
         char** GetFileList() override;
 };
 
-
 #endif /* ndef OGR_FLATGEOBUF_H_INCLUDED */
 
