@@ -1601,6 +1601,79 @@ def test_ogr_gpkg_srs_non_consistent_with_official_definition():
     gdal.Unlink('/vsimem/ogr_gpkg_20.gpkg')
 
 
+def test_ogr_gpkg_write_srs_undefined_geographic():
+
+    gdal.Unlink('tmp/ogr_gpkg_srs_undefined_geographic.gpkg')
+
+    gpkg_ds = gdaltest.gpkg_dr.CreateDataSource('tmp/ogr_gpkg_srs_undefined_geographic.gpkg')
+    assert gpkg_ds is not None
+
+    # Check initial default SRS entries in gpkg_spatial_ref_sys
+    sql_lyr = gpkg_ds.ExecuteSQL("SELECT COUNT(*) FROM gpkg_spatial_ref_sys")
+    gpkg_spatial_ref_sys_total = sql_lyr.GetNextFeature().GetField(0)
+    assert gpkg_spatial_ref_sys_total == 3 # entries with SRS IDs: -1, 0, 4326
+    gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    srs= osr.SpatialReference()
+    srs.SetFromUserInput('GEOGCS["Undefined geographic SRS",DATUM["unknown",SPHEROID["unknown",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST]]')
+    lyr = gpkg_ds.CreateLayer('srs_test_geographic_layer', geom_type=ogr.wkbPoint, srs=srs)
+    srs_wkt = lyr.GetSpatialRef().ExportToWkt()
+    assert srs_wkt.find('Undefined geographic SRS') >= 0, srs_wkt
+    assert lyr.GetSpatialRef().IsGeographic()
+
+    gpkg_ds = None
+    gpkg_ds = ogr.Open('tmp/ogr_gpkg_srs_undefined_geographic.gpkg')
+
+    # Check no new SRS entries have been inserted into gpkg_spatial_ref_sys
+    sql_lyr = gpkg_ds.ExecuteSQL("SELECT COUNT(*) FROM gpkg_spatial_ref_sys")
+    assert gpkg_spatial_ref_sys_total == sql_lyr.GetNextFeature().GetField(0)
+    gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    lyr = gpkg_ds.GetLayer(0)
+    srs_wkt = lyr.GetSpatialRef().ExportToWkt()
+    assert srs_wkt.find('Undefined geographic SRS') >= 0, srs_wkt
+    assert lyr.GetSpatialRef().IsGeographic()
+
+    gpkg_ds = None
+    gdal.Unlink('tmp/ogr_gpkg_srs_undefined_geographic.gpkg')
+
+
+def test_ogr_gpkg_write_srs_undefined_cartesian():
+
+    gdal.Unlink('tmp/ogr_gpkg_srs_cartesian.gpkg')
+
+    gpkg_ds = gdaltest.gpkg_dr.CreateDataSource('tmp/ogr_gpkg_srs_cartesian.gpkg')
+    assert gpkg_ds is not None
+
+    # Check initial default SRS entries in gpkg_spatial_ref_sys
+    sql_lyr = gpkg_ds.ExecuteSQL("SELECT COUNT(*) FROM gpkg_spatial_ref_sys")
+    gpkg_spatial_ref_sys_total = sql_lyr.GetNextFeature().GetField(0)
+    assert gpkg_spatial_ref_sys_total == 3 # SRS with IDs: -1, 0, 4326
+    gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    srs= osr.SpatialReference()
+    srs.SetFromUserInput('LOCAL_CS["Undefined cartesian SRS"]') 
+    lyr = gpkg_ds.CreateLayer('srs_test_cartesian_layer', geom_type=ogr.wkbPoint, srs=srs)
+    srs_wkt = lyr.GetSpatialRef().ExportToWkt()
+    assert srs_wkt.find('Undefined cartesian SRS') >= 0
+    assert lyr.GetSpatialRef().IsLocal()
+
+    gpkg_ds = None
+    gpkg_ds = ogr.Open('tmp/ogr_gpkg_srs_cartesian.gpkg')
+
+    # Check no new SRS entries have been inserted into gpkg_spatial_ref_sys
+    sql_lyr = gpkg_ds.ExecuteSQL("SELECT COUNT(*) FROM gpkg_spatial_ref_sys")
+    assert gpkg_spatial_ref_sys_total == sql_lyr.GetNextFeature().GetField(0)
+    gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    lyr = gpkg_ds.GetLayer(0)
+    srs_wkt = lyr.GetSpatialRef().ExportToWkt()
+    assert srs_wkt.find('Undefined cartesian SRS') >= 0, srs_wkt
+    assert lyr.GetSpatialRef().IsLocal()
+
+    gpkg_ds = None
+    gdal.Unlink('tmp/ogr_gpkg_srs_cartesian.gpkg')
+
 ###############################################################################
 # Test maximum width of text fields
 
