@@ -368,9 +368,9 @@ public:
   }
   %clear char const *prj;
 
-  void SetSpatialRef(OSRSpatialReferenceShadow* srs)
+  CPLErr SetSpatialRef(OSRSpatialReferenceShadow* srs)
   {
-     GDALSetSpatialRef( self, (OGRSpatialReferenceH)srs );
+     return GDALSetSpatialRef( self, (OGRSpatialReferenceH)srs );
   }
 
 #ifdef SWIGPYTHON
