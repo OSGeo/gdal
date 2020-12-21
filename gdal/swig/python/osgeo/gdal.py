@@ -2276,7 +2276,7 @@ class Dataset(MajorObject):
 
 
     def SetSpatialRef(self, *args):
-        """SetSpatialRef(Dataset self, SpatialReference srs)"""
+        """SetSpatialRef(Dataset self, SpatialReference srs) -> CPLErr"""
         return _gdal.Dataset_SetSpatialRef(self, *args)
 
 
