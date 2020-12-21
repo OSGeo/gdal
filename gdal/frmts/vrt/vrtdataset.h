@@ -909,8 +909,8 @@ protected:
     double              m_dfDstXSize;
     double              m_dfDstYSize;
 
-    int                 m_bNoDataSet;
-    double              m_dfNoDataValue;
+    int                 m_bNoDataSet;       // should really be a member of VRTComplexSource as only taken into account by it
+    double              m_dfNoDataValue;    // same as above
     CPLString           m_osResampling{};
 
     int                 m_nMaxValue;
@@ -937,7 +937,7 @@ public:
     void           SetSrcMaskBand( GDALRasterBand * );
     void           SetSrcWindow( double, double, double, double );
     void           SetDstWindow( double, double, double, double );
-    void           SetNoDataValue( double dfNoDataValue );
+    void           SetNoDataValue( double dfNoDataValue );  // should really be a member of VRTComplexSource
     const CPLString& GetResampling() const { return m_osResampling; }
     void           SetResampling( const char* pszResampling );
 
@@ -1070,6 +1070,8 @@ protected:
 
     int            m_nColorTableComponent;
 
+    bool           m_bUseMaskBand = false;
+
     template <class WorkingDT>
     CPLErr          RasterIOInternal( int nReqXOff, int nReqYOff,
                                       int nReqXSize, int nReqYSize,
@@ -1115,6 +1117,8 @@ public:
     virtual const char* GetType() override { return "ComplexSource"; }
 
     double  LookupValue( double dfInput );
+
+    void    SetUseMaskBand(bool bUseMaskBand) { m_bUseMaskBand = bUseMaskBand; }
 
     void    SetLinearScaling( double dfOffset, double dfScale );
     void    SetPowerScaling( double dfExponent,

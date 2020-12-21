@@ -1529,3 +1529,118 @@ def test_vrt_implicit_ovr_with_hidenodatavalue():
     assert got_data[32*64+32] == 10
 
     gdal.Unlink('/vsimem/src.tif')
+
+
+def test_vrt_usemaskband():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/src1.tif', 3, 1)
+    ds.GetRasterBand(1).Fill(255)
+    ds.CreateMaskBand(0)
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 1, 1, b'\xff')
+    ds = None
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/src2.tif', 3, 1)
+    ds.GetRasterBand(1).Fill(127)
+    ds.CreateMaskBand(0)
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(1, 0, 1, 1, b'\xff')
+    ds = None
+
+    vrt_text = """<VRTDataset rasterXSize="3" rasterYSize="1">
+  <VRTRasterBand dataType="Byte" band="1">
+    <ComplexSource>
+      <SourceFilename>/vsimem/src1.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="3" ySize="1" />
+      <DstRect xOff="0" yOff="0" xSize="3" ySize="1" />
+      <UseMaskBand>true</UseMaskBand>
+    </ComplexSource>
+    <ComplexSource>
+      <SourceFilename>/vsimem/src2.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="3" ySize="1" />
+      <DstRect xOff="0" yOff="0" xSize="3" ySize="1" />
+      <UseMaskBand>true</UseMaskBand>
+    </ComplexSource>
+  </VRTRasterBand>
+  <MaskBand>
+    <VRTRasterBand dataType="Byte">
+        <ComplexSource>
+            <SourceFilename>/vsimem/src1.tif</SourceFilename>
+            <SourceBand>mask,1</SourceBand>
+            <SrcRect xOff="0" yOff="0" xSize="3" ySize="1" />
+            <DstRect xOff="0" yOff="0" xSize="3" ySize="1" />
+            <UseMaskBand>true</UseMaskBand>
+        </ComplexSource>
+        <ComplexSource>
+            <SourceFilename>/vsimem/src2.tif</SourceFilename>
+            <SourceBand>mask,1</SourceBand>
+            <SrcRect xOff="0" yOff="0" xSize="3" ySize="1" />
+            <DstRect xOff="0" yOff="0" xSize="3" ySize="1" />
+            <UseMaskBand>true</UseMaskBand>
+        </ComplexSource>
+    </VRTRasterBand>
+  </MaskBand>
+</VRTDataset>"""
+    ds = gdal.Open(vrt_text)
+    assert struct.unpack('B' * 3, ds.ReadRaster()) == (255, 127, 0)
+    assert struct.unpack('B' * 3, ds.GetRasterBand(1).GetMaskBand().ReadRaster()) == (255, 255, 0)
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/src1.tif')
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/src2.tif')
+
+
+def test_vrt_usemaskband_alpha():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/src1.tif', 3, 1, 2)
+    ds.GetRasterBand(1).Fill(255)
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 1, 1, b'\xff')
+    ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+    ds.GetRasterBand(2).WriteRaster(0, 0, 1, 1, b'\xff')
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/src2.tif', 3, 1, 2)
+    ds.GetRasterBand(1).Fill(127)
+    ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+    ds.GetRasterBand(2).WriteRaster(1, 0, 1, 1, b'\xff')
+    ds = None
+
+    vrt_text = """<VRTDataset rasterXSize="3" rasterYSize="1">
+  <VRTRasterBand dataType="Byte" band="1">
+    <ComplexSource>
+      <SourceFilename>/vsimem/src1.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="3" ySize="1" />
+      <DstRect xOff="0" yOff="0" xSize="3" ySize="1" />
+      <UseMaskBand>true</UseMaskBand>
+    </ComplexSource>
+    <ComplexSource>
+      <SourceFilename>/vsimem/src2.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="3" ySize="1" />
+      <DstRect xOff="0" yOff="0" xSize="3" ySize="1" />
+      <UseMaskBand>true</UseMaskBand>
+    </ComplexSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2">
+    <ColorInterp>Alpha</ColorInterp>
+    <ComplexSource>
+        <SourceFilename>/vsimem/src1.tif</SourceFilename>
+        <SourceBand>2</SourceBand>
+        <SrcRect xOff="0" yOff="0" xSize="3" ySize="1" />
+        <DstRect xOff="0" yOff="0" xSize="3" ySize="1" />
+        <UseMaskBand>true</UseMaskBand>
+    </ComplexSource>
+    <ComplexSource>
+        <SourceFilename>/vsimem/src2.tif</SourceFilename>
+        <SourceBand>2</SourceBand>
+        <SrcRect xOff="0" yOff="0" xSize="3" ySize="1" />
+        <DstRect xOff="0" yOff="0" xSize="3" ySize="1" />
+        <UseMaskBand>true</UseMaskBand>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+    ds = gdal.Open(vrt_text)
+    assert struct.unpack('B' * 3, ds.GetRasterBand(1).ReadRaster()) == (255, 127, 0)
+    assert struct.unpack('B' * 3, ds.GetRasterBand(2).ReadRaster()) == (255, 255, 0)
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/src1.tif')
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/src2.tif')

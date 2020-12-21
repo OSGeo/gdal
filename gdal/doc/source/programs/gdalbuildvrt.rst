@@ -23,6 +23,7 @@ Synopsis
                 [-optim {[AUTO]/VECTOR/RASTER}]
                 [-addalpha] [-hidenodata]
                 [-srcnodata "value [value...]"] [-vrtnodata "value [value...]"]
+                [-ignore_srcmaskband]
                 [-a_srs srs_def]
                 [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]
                 [-oo NAME=VALUE]*
@@ -119,6 +120,19 @@ changed in later versions.
     intrinsic nodata settings on the source datasets will be used (if they exist). The value set by this option
     is written in the NODATA element of each ComplexSource element. Use a value of
     `None` to ignore intrinsic nodata settings on the source datasets.
+
+.. option:: -ignore_srcmaskband
+
+    .. versionadded:: 3.3
+
+    Starting with GDAL 3.3, if a source has a mask band (internal/external mask
+    band, or alpha band), a <ComplexSource> element is created by default with
+    a <UseMaskBand>true</UseMaskBand> child element, to instruct the VRT driver
+    to use the mask band of the source to mask pixels being composited. This is
+    a generalization of the NODATA element.
+    When specifying the -ignore_srcmaskband option, the mask band of sources will
+    not be taken into account, and in case of overlapping between sources, the
+    last one will override previous ones in areas of overlap.
 
 .. option:: -b <band>
 
