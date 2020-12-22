@@ -3,15 +3,15 @@
 mkdir -p packages
 
 CI_PLAT=""
-if [ "$PLATFORM" == *"windows"* ]; then
+if [ "$PLATFORM" == "*windows*" ]; then
     CI_PLAT="win"
 fi
 
-if [ "$PLATFORM" == *"ubuntu"* ]; then
+if [ "$PLATFORM" == "*ubuntu*" ]; then
     CI_PLAT="linux"
 fi
 
-if [ "$PLATFORM" == *"macos"* ]; then
+if [ "$PLATFORM" == "*macos*" ]; then
     CI_PLAT="osx"
 fi
 
