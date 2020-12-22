@@ -18,17 +18,19 @@ then
 fi
 
 CI_PLAT=""
-if [ "$PLATFORM" == "*windows*" ]; then
+if grep -q "windows" <<< "$PLATFORM"; then
     CI_PLAT="win"
 fi
 
-if [ "$PLATFORM" == "*ubuntu*" ]; then
+if grep -q "ubuntu" <<< "$PLATFORM"; then
     CI_PLAT="linux"
 fi
 
-if [ "$PLATFORM" == "*macos*" ]; then
+if grep -q "macos" <<< "$PLATFORM"; then
     CI_PLAT="osx"
 fi
+
+
 
 echo "Anaconda token is available, attempting to upload"
 
