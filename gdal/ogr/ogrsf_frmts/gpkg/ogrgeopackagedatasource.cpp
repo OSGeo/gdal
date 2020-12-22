@@ -351,6 +351,7 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId,
         OGRSpatialReference *poSpatialRef = new OGRSpatialReference();
         poSpatialRef->SetAxisMappingStrategy( OAMS_TRADITIONAL_GIS_ORDER );
 
+        // See corresponding tests in GDALGeoPackageDataset::GetSrsId
         if( iSrsId == 0)
         {
             poSpatialRef->SetGeogCS("Undefined geographic SRS",
@@ -574,6 +575,20 @@ bool GDALGeoPackageDataset::ConvertGpkgSpatialRefSysToExtensionWkt2()
 int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
 {
     std::unique_ptr<OGRSpatialReference> poSRS(oSRS.Clone());
+
+    if (poSRS->IsGeographic() || poSRS->IsLocal())
+    {
+        // See corresponding tests in GDALGeoPackageDataset::GetSpatialRef
+        const char* pszName = poSRS->GetName();
+        if ( pszName != nullptr && strlen(pszName) > 0 )
+        {
+            if (EQUAL(pszName, "Undefined geographic SRS"))
+                return 0;
+
+            if (EQUAL(pszName, "Undefined cartesian SRS"))
+                return -1;
+        }
+    }
 
     const char* pszAuthorityName = poSRS->GetAuthorityName( nullptr );
 
