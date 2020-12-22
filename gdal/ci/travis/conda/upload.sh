@@ -17,16 +17,16 @@ then
     exit 0;
 fi
 
-export CI_PLAT=""
-if [ "$PLATFORM" == "windows-latest" ]; then
+CI_PLAT=""
+if [ "$PLATFORM" == *"windows"* ]; then
     CI_PLAT="win"
 fi
 
-if [ "$PLATFORM" == "ubuntu-latest" ]; then
+if [ "$PLATFORM" == *"ubuntu"* ]; then
     CI_PLAT="linux"
 fi
 
-if [ "$PLATFORM" == "macos-latest" ]; then
+if [ "$PLATFORM" == *"macos"* ]; then
     CI_PLAT="osx"
 fi
 
