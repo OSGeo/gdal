@@ -48,7 +48,8 @@ except ImportError:
 
 def Usage():
     print('Usage: gdal2xyz.py [-skip factor] [-srcwin xoff yoff width height]')
-    print('                   [-band b] [--allBands] [-csv] [--skipNoData]')
+    print('                   [-band b] [--allBands] [-csv]')
+    print('                   [--skipNoData] [-noDataValue value]')
     print('                   srcfile [dstfile]')
     print('')
     return 1
@@ -60,8 +61,10 @@ def main(argv):
     srcfile = None
     dstfile = None
     band_nums = []
+    all_bands = False
     delim = ' '
-    skip_ndv = False
+    skip_no_data = False
+    no_data_value = []
 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
@@ -86,13 +89,17 @@ def main(argv):
             i = i + 1
 
         elif arg == '--allBands':
-            band_nums = None
+            all_bands = True
 
         elif arg == '-csv':
             delim = ','
 
         elif arg == '--skipNoData':
-            skip_ndv = True
+            skip_no_data = True
+
+        elif arg == '-noDataValue':
+            no_data_value.append(num(argv[i + 1]))
+            i = i + 1
 
         elif arg[0] == '-':
             return Usage()
@@ -111,13 +118,20 @@ def main(argv):
     if srcfile is None:
         return Usage()
 
-    return gdal2xyz(srcfile, dstfile, srcwin, skip, band_nums, delim, skip_ndv)
+    if all_bands:
+        band_nums = None
+    elif not band_nums:
+        band_nums = 1
+    return gdal2xyz(srcfile=srcfile, dstfile=dstfile, srcwin=srcwin, skip=skip,
+                    band_nums=band_nums, delim=delim,
+                    skip_no_data=skip_no_data, no_data_value=no_data_value)
 
 
 def gdal2xyz(srcfile: Union[str, Path, gdal.Dataset], dstfile: Union[str, Path] = None,
              srcwin: Optional[Sequence[int]] = None,
              skip: Union[int, Sequence[int]] = 1,
-             band_nums: Optional[Sequence[int]] = None, delim=' ', skip_ndv: Union[Sequence, bool, Number] = False):
+             band_nums: Optional[Sequence[int]] = None, delim=' ',
+             skip_no_data: bool = False, no_data_value: Optional[Union[Sequence, Number]] = None):
     """
     translates a raster file (or dataset) into xyz format
 
@@ -127,9 +141,10 @@ def gdal2xyz(srcfile: Union[str, Path, gdal.Dataset], dstfile: Union[str, Path] 
     skip - how many rows/cols to skip each iteration
     band_nums - number of the bands to include in the output. None to include all bands.
     delim - delimiter to use to separate columns
-    skip_ndv - allow to skip lines with uninteresting data values
-        True/False - skip lines with NDV data points;
-        Sequence/Number - skip lines with given value (per band or per ds)
+    skip_no_data - `True` will skip lines with uninteresting data values (NoDataValue or a given value)
+    no_data_value - determinates which values to skip
+        `None` - skip lines which have the dataset NoDataValue;
+        Sequence/Number - skip lines with a given value (per band or per dataset)
     """
 
     # Open source file.
@@ -138,12 +153,10 @@ def gdal2xyz(srcfile: Union[str, Path, gdal.Dataset], dstfile: Union[str, Path] 
         print('Could not open %s.' % srcfile)
         return 1
 
-    if band_nums is None or band_nums == 0:
+    if not band_nums:
         band_nums = list(range(1, srcds.RasterCount + 1))
     elif isinstance(band_nums, int):
         band_nums = [band_nums]
-    elif not band_nums:
-        band_nums = [1]
     bands = []
     for band_num in band_nums:
         band = srcds.GetRasterBand(band_num)
@@ -178,10 +191,11 @@ def gdal2xyz(srcfile: Union[str, Path, gdal.Dataset], dstfile: Union[str, Path] 
     else:
         frmt = '%.3f' + delim + '%.3f' + delim + '%s'
 
-    if skip_ndv == True:
-        skip_ndv = list(band.GetNoDataValue() for band in bands)
-        if all(ndv is None for ndv in skip_ndv):
-            skip_ndv = False
+    if skip_no_data:
+        no_data_value = \
+            [no_data_value] if isinstance(no_data_value, Number) else \
+            list(band.GetNoDataValue() for band in bands) if not no_data_value else \
+            list(no_data_value)
 
     if isinstance(skip, Sequence):
         x_skip, y_skip = skip
@@ -206,7 +220,7 @@ def gdal2xyz(srcfile: Union[str, Path, gdal.Dataset], dstfile: Union[str, Path] 
             x_i_data = []
             for i in range(len(bands)):
                 x_i_data.append(data[i][x_i])
-            if skip_ndv == x_i_data:
+            if no_data_value == x_i_data:
                 continue
 
             x = x_i + x_off
@@ -219,6 +233,13 @@ def gdal2xyz(srcfile: Union[str, Path, gdal.Dataset], dstfile: Union[str, Path] 
             line = frmt % (float(geo_x), float(geo_y), band_str)
 
             dst_fh.write(line)
+
+
+def num(s: str) -> Number:
+    try:
+        return int(s)
+    except ValueError:
+        return float(s)
 
 
 if __name__ == '__main__':
