@@ -368,7 +368,7 @@ def test_ecw_9():
 
     ds.SetProjection('GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]')
 
-    raw_data = array.array('h', list(range(200))).tostring()
+    raw_data = array.array('h', list(range(200))).tobytes()
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
@@ -413,7 +413,7 @@ def test_ecw_11():
     ds.SetGeoTransform((100, 0.1, 0.0, 30.0, 0.0, -0.1))
 
     my_list = list(range(200)) + list(range(20, 220)) + list(range(30, 230))
-    raw_data = array.array('h', my_list).tostring()
+    raw_data = array.array('h', my_list).tobytes()
 
     for line in range(100):
         ds.WriteRaster(0, line, 200, 1, raw_data,
@@ -722,7 +722,7 @@ def test_ecw_23():
     except OSError:
         pass
 
-    
+
 ###############################################################################
 # Test that we can alter geotransform on existing ECW
 
@@ -748,7 +748,7 @@ def test_ecw_24():
 
     with pytest.raises(OSError):
         os.stat('tmp/spif83.ecw.aux.xml')
-    
+
 
     ds = gdal.Open('tmp/spif83.ecw')
     got_gt = ds.GetGeoTransform()
@@ -762,7 +762,7 @@ def test_ecw_24():
     except OSError:
         pass
 
-    
+
 ###############################################################################
 # Test that we can alter projection info on existing ECW (through SetProjection())
 
@@ -794,7 +794,7 @@ def test_ecw_25():
 
     with pytest.raises(OSError):
         os.stat('tmp/spif83.ecw.aux.xml')
-    
+
 
     ds = gdal.Open('tmp/spif83.ecw')
     got_proj = ds.GetMetadataItem("PROJ", "ECW")
@@ -814,7 +814,7 @@ def test_ecw_25():
     except OSError:
         pass
 
-    
+
 ###############################################################################
 # Test that we can alter projection info on existing ECW (through SetMetadataItem())
 
@@ -845,7 +845,7 @@ def test_ecw_26():
 
     with pytest.raises(OSError):
         os.stat('tmp/spif83.ecw.aux.xml')
-    
+
 
     ds = gdal.Open('tmp/spif83.ecw')
     got_proj = ds.GetMetadataItem("PROJ", "ECW")
@@ -869,7 +869,7 @@ def test_ecw_26():
     except OSError:
         pass
 
-    
+
 ###############################################################################
 # Check that we can use .j2w world files (#4651)
 
@@ -1386,7 +1386,7 @@ def test_ecw_40():
         got_cs = ds.GetRasterBand(i + 1).Checksum()
         assert got_cs == expected_cs_list[i]
 
-    
+
 ###############################################################################
 # Check generating statistics & histogram for a ECW v3 file
 
@@ -1421,7 +1421,7 @@ def test_ecw_41():
     # Check that there's no .aux.xml file
     with pytest.raises(OSError):
         os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
-    
+
 
     ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
     assert ds.GetRasterBand(1).GetMinimum() == 0
@@ -1455,9 +1455,9 @@ def test_ecw_41():
     # Check that there's no .aux.xml file
     with pytest.raises(OSError):
         os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
-    
 
-    
+
+
 ###############################################################################
 # Test setting/unsetting file metadata of a ECW v3 file
 
@@ -1491,7 +1491,7 @@ def test_ecw_42():
     # Check that there's no .aux.xml file
     with pytest.raises(OSError):
         os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
-    
+
 
     # Check item values
     ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
@@ -1519,7 +1519,7 @@ def test_ecw_42():
     # Check that there's no .aux.xml file
     with pytest.raises(OSError):
         os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
-    
+
 
     # Check item values
     ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
@@ -1602,7 +1602,7 @@ def test_ecw_44():
     for (key, value) in expected_md:
         assert key in got_md and got_md[key] == value
 
-    
+
 ###############################################################################
 # Test metadata reading & writing
 
@@ -1686,7 +1686,7 @@ def test_ecw_45():
         assert ds.GetMetadata('xml:XMP')[0] == '<fake_xmp_box/>'
         gdal.Unlink('/vsimem/ecw_45.jp2')
 
-    
+
 ###############################################################################
 # Test non nearest upsampling
 
