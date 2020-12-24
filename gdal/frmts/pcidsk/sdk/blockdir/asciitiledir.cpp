@@ -292,18 +292,21 @@ uint32 AsciiTileDir::GetBlockSize(void) const
 void AsciiTileDir::ReadFullDir(void)
 {
     // The size of the block layers.
-    uint64 nSize = (static_cast<uint64>(msBlockDir.nBlockCount) * SYS_BLOCK_INFO_SIZE +
-                    static_cast<uint64>(msBlockDir.nLayerCount) * SYS_BLOCK_LAYER_INFO_SIZE);
+    uint64 nReadSize = (static_cast<uint64>(msBlockDir.nBlockCount) * SYS_BLOCK_INFO_SIZE +
+                        static_cast<uint64>(msBlockDir.nLayerCount) * SYS_BLOCK_LAYER_INFO_SIZE);
+
+    if (nReadSize > std::numeric_limits<size_t>::max())
+        return ThrowPCIDSKException("Unable to open extremely large file on 32-bit system or the tile directory is corrupted.");
 
     // Read the block layers from disk.
-    uint8 * pabyBlockDir = (uint8 *) malloc(nSize);
+    uint8 * pabyBlockDir = (uint8 *) malloc(static_cast<size_t>(nReadSize));
 
-    if (!pabyBlockDir)
+    if (pabyBlockDir == nullptr)
         return ThrowPCIDSKException("Out of memory in AsciiTileDir::ReadFullDir().");
 
     uint8 * pabyBlockDirIter = pabyBlockDir;
 
-    mpoFile->ReadFromSegment(mnSegment, pabyBlockDir, 512, nSize);
+    mpoFile->ReadFromSegment(mnSegment, pabyBlockDir, 512, nReadSize);
 
     // Read the block list.
     SysBlockInfoList oBlockInfoList(msBlockDir.nBlockCount);
@@ -382,18 +385,21 @@ void AsciiTileDir::ReadPartialDir(void)
     uint64 nOffset = static_cast<uint64>(msBlockDir.nBlockCount) * SYS_BLOCK_INFO_SIZE;
 
     // The size of the block layers.
-    uint64 nSize = (static_cast<uint64>(msBlockDir.nLayerCount) * SYS_BLOCK_LAYER_INFO_SIZE +
-                    static_cast<uint64>(msBlockDir.nLayerCount) * sizeof(TileLayerInfo));
+    uint64 nReadSize = (static_cast<uint64>(msBlockDir.nLayerCount) * SYS_BLOCK_LAYER_INFO_SIZE +
+                        static_cast<uint64>(msBlockDir.nLayerCount) * sizeof(TileLayerInfo));
+
+    if (nReadSize > std::numeric_limits<size_t>::max())
+        return ThrowPCIDSKException("Unable to open extremely large file on 32-bit system or the tile directory is corrupted.");
 
     // Read the block layers from disk.
-    uint8 * pabyBlockDir = (uint8 *) malloc(nSize);
+    uint8 * pabyBlockDir = (uint8 *) malloc(static_cast<size_t>(nReadSize));
 
-    if (!pabyBlockDir)
+    if (pabyBlockDir == nullptr)
         return ThrowPCIDSKException("Out of memory in AsciiTileDir::ReadPartialDir().");
 
     uint8 * pabyBlockDirIter = pabyBlockDir;
 
-    mpoFile->ReadFromSegment(mnSegment, pabyBlockDir, 512 + nOffset, nSize);
+    mpoFile->ReadFromSegment(mnSegment, pabyBlockDir, 512 + nOffset, nReadSize);
 
     // Read the block layers.
     BlockLayerInfo * psPreviousLayer = nullptr;
@@ -430,7 +436,7 @@ void AsciiTileDir::ReadPartialDir(void)
     // Read the tile layers.
     for (uint32 iLayer = 0; iLayer < msBlockDir.nLayerCount; iLayer++)
     {
-        nSize = sizeof(TileLayerInfo);
+        size_t nSize = sizeof(TileLayerInfo);
         SwapTileLayer((TileLayerInfo *) pabyBlockDirIter);
         memcpy(moTileLayerInfoList[iLayer], pabyBlockDirIter, nSize);
         pabyBlockDirIter += nSize;
@@ -562,17 +568,20 @@ void AsciiTileDir::InitBlockList(AsciiTileLayer * poLayer)
     uint64 nOffset = static_cast<uint64>(psLayer->nStartBlock) * SYS_BLOCK_INFO_SIZE;
 
     // The size of the blocks.
-    uint64 nSize = static_cast<uint64>(psLayer->nBlockCount) * SYS_BLOCK_INFO_SIZE;
+    uint64 nReadSize = static_cast<uint64>(psLayer->nBlockCount) * SYS_BLOCK_INFO_SIZE;
+
+    if (nReadSize > std::numeric_limits<size_t>::max())
+        return ThrowPCIDSKException("Unable to open extremely large file on 32-bit system or the tile directory is corrupted.");
 
     // Read the blocks from disk.
-    uint8 * pabyBlockDir = (uint8 *) malloc(static_cast<size_t>(nSize));
+    uint8 * pabyBlockDir = (uint8 *) malloc(static_cast<size_t>(nReadSize));
 
-    if (!pabyBlockDir)
+    if (pabyBlockDir == nullptr)
         return ThrowPCIDSKException("Out of memory in AsciiTileDir::InitBlockList().");
 
     uint8 * pabyBlockDirIter = pabyBlockDir;
 
-    mpoFile->ReadFromSegment(mnSegment, pabyBlockDir, 512 + nOffset, nSize);
+    mpoFile->ReadFromSegment(mnSegment, pabyBlockDir, 512 + nOffset, nReadSize);
 
     // Setup the block list.
     try
@@ -628,8 +637,6 @@ void AsciiTileDir::ReadFreeBlockLayer(void)
 /************************************************************************/
 void AsciiTileDir::WriteDir(void)
 {
-    size_t nSize;
-
     UpdateBlockDirInfo();
 
     // Make sure all the layer's block list are valid.
@@ -654,7 +661,7 @@ void AsciiTileDir::WriteDir(void)
     // Write the block directory to disk.
     char * pabyBlockDir = (char *) malloc(nDirSize + 1); // +1 for '\0'.
 
-    if (!pabyBlockDir)
+    if (pabyBlockDir == nullptr)
         return ThrowPCIDSKException("Out of memory in AsciiTileDir::WriteDir().");
 
     char * pabyBlockDirIter = pabyBlockDir;
@@ -675,7 +682,6 @@ void AsciiTileDir::WriteDir(void)
     pabyBlockDirIter += 8;
 
     snprintf(pabyBlockDirIter, 9, "%8d", msBlockDir.nFirstFreeBlock);
-    pabyBlockDirIter += 8;
 
     // The bytes from 128 to 140 are for the subversion.
     memcpy(pabyBlockDir + 128, "SUBVERSION 1", 12);
@@ -771,7 +777,7 @@ void AsciiTileDir::WriteDir(void)
     // Write the tile layers.
     for (uint32 iLayer = 0; iLayer < msBlockDir.nLayerCount; iLayer++)
     {
-        nSize = sizeof(TileLayerInfo);
+        size_t nSize = sizeof(TileLayerInfo);
         memcpy(pabyBlockDirIter, moTileLayerInfoList[iLayer], nSize);
         SwapTileLayer((TileLayerInfo *) pabyBlockDirIter);
         pabyBlockDirIter += nSize;
