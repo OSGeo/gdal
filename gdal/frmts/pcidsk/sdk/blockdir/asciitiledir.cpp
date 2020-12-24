@@ -135,16 +135,22 @@ size_t AsciiTileDir::GetOptimizedDirSize(BlockFile * poFile)
 
     uint32 nBlockSize = SYS_BLOCK_SIZE;
 
-    size_t nBlockCount = (size_t) (dfFileSize / nBlockSize);
+    uint64 nBlockCount = (uint64) (dfFileSize / nBlockSize);
 
-    size_t nLayerCount = poFile->GetChannels();
+    uint64 nLayerCount = poFile->GetChannels();
 
     // The 12 is for the overviews.
     nLayerCount *= 12;
 
-    return 512 + (nBlockCount * SYS_BLOCK_INFO_SIZE +
-                  nLayerCount * SYS_BLOCK_LAYER_INFO_SIZE +
-                  nLayerCount * sizeof(TileLayerInfo));
+    uint64 nDirSize = 512 +
+        (nBlockCount * SYS_BLOCK_INFO_SIZE +
+         nLayerCount * SYS_BLOCK_LAYER_INFO_SIZE +
+         nLayerCount * sizeof(TileLayerInfo));
+
+    if (nDirSize > std::numeric_limits<size_t>::max())
+        return ThrowPCIDSKException(0, "Unable to create extremely large file on 32-bit system or file is corrupted.");
+
+    return static_cast<size_t>(nDirSize);
 }
 
 /************************************************************************/
@@ -286,8 +292,8 @@ uint32 AsciiTileDir::GetBlockSize(void) const
 void AsciiTileDir::ReadFullDir(void)
 {
     // The size of the block layers.
-    size_t nSize = (msBlockDir.nBlockCount * SYS_BLOCK_INFO_SIZE +
-                    msBlockDir.nLayerCount * SYS_BLOCK_LAYER_INFO_SIZE);
+    uint64 nSize = (static_cast<uint64>(msBlockDir.nBlockCount) * SYS_BLOCK_INFO_SIZE +
+                    static_cast<uint64>(msBlockDir.nLayerCount) * SYS_BLOCK_LAYER_INFO_SIZE);
 
     // Read the block layers from disk.
     uint8 * pabyBlockDir = (uint8 *) malloc(nSize);
@@ -373,11 +379,11 @@ void AsciiTileDir::ReadFullDir(void)
 void AsciiTileDir::ReadPartialDir(void)
 {
     // The offset of the block layers.
-    size_t nOffset = msBlockDir.nBlockCount * SYS_BLOCK_INFO_SIZE;
+    uint64 nOffset = static_cast<uint64>(msBlockDir.nBlockCount) * SYS_BLOCK_INFO_SIZE;
 
     // The size of the block layers.
-    size_t nSize = (msBlockDir.nLayerCount * SYS_BLOCK_LAYER_INFO_SIZE +
-                    msBlockDir.nLayerCount * sizeof(TileLayerInfo));
+    uint64 nSize = (static_cast<uint64>(msBlockDir.nLayerCount) * SYS_BLOCK_LAYER_INFO_SIZE +
+                    static_cast<uint64>(msBlockDir.nLayerCount) * sizeof(TileLayerInfo));
 
     // Read the block layers from disk.
     uint8 * pabyBlockDir = (uint8 *) malloc(nSize);
@@ -472,7 +478,7 @@ void AsciiTileDir::ReadPartialDir(void)
  */
 size_t AsciiTileDir::GetDirSize(void) const
 {
-    size_t nDirSize = 0;
+    uint64 nDirSize = 0;
 
     // Add the size of the header.
     nDirSize += 512;
@@ -482,19 +488,22 @@ size_t AsciiTileDir::GetDirSize(void) const
     {
         const BlockLayerInfo * psLayer = moLayerInfoList[iLayer];
 
-        nDirSize += psLayer->nBlockCount * SYS_BLOCK_INFO_SIZE;
+        nDirSize += static_cast<uint64>(psLayer->nBlockCount) * SYS_BLOCK_INFO_SIZE;
     }
 
     // Add the size of the free blocks.
-    nDirSize += msFreeBlockLayer.nBlockCount * SYS_BLOCK_INFO_SIZE;
+    nDirSize += static_cast<uint64>(msFreeBlockLayer.nBlockCount) * SYS_BLOCK_INFO_SIZE;
 
     // Add the size of the block layers.
-    nDirSize += moLayerInfoList.size() * SYS_BLOCK_LAYER_INFO_SIZE;
+    nDirSize += static_cast<uint64>(moLayerInfoList.size()) * SYS_BLOCK_LAYER_INFO_SIZE;
 
     // Add the size of the tile layers.
-    nDirSize += moTileLayerInfoList.size() * sizeof(TileLayerInfo);
+    nDirSize += static_cast<uint64>(moTileLayerInfoList.size()) * sizeof(TileLayerInfo);
 
-    return nDirSize;
+    if (nDirSize > std::numeric_limits<size_t>::max())
+        return ThrowPCIDSKException(0, "Unable to open extremely large file on 32-bit system or the tile directory is corrupted.");
+
+    return static_cast<size_t>(nDirSize);
 }
 
 /************************************************************************/
@@ -550,13 +559,13 @@ void AsciiTileDir::InitBlockList(AsciiTileLayer * poLayer)
     BlockLayerInfo * psLayer = poLayer->mpsBlockLayer;
 
     // The offset of the blocks.
-    size_t nOffset = psLayer->nStartBlock * SYS_BLOCK_INFO_SIZE;
+    uint64 nOffset = static_cast<uint64>(psLayer->nStartBlock) * SYS_BLOCK_INFO_SIZE;
 
     // The size of the blocks.
-    size_t nSize = psLayer->nBlockCount * SYS_BLOCK_INFO_SIZE;
+    uint64 nSize = static_cast<uint64>(psLayer->nBlockCount) * SYS_BLOCK_INFO_SIZE;
 
     // Read the blocks from disk.
-    uint8 * pabyBlockDir = (uint8 *) malloc(nSize);
+    uint8 * pabyBlockDir = (uint8 *) malloc(static_cast<size_t>(nSize));
 
     if (!pabyBlockDir)
         return ThrowPCIDSKException("Out of memory in AsciiTileDir::InitBlockList().");

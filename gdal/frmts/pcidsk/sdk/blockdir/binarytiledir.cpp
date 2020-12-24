@@ -93,19 +93,25 @@ size_t BinaryTileDir::GetOptimizedDirSize(BlockFile * poFile)
 
     double dfFileSize = poFile->GetImageFileSize() * dfRatio;
 
-    uint32 nBlockSize = GetOptimizedBlockSize(poFile);
+    uint64 nBlockSize = GetOptimizedBlockSize(poFile);
 
-    size_t nBlockCount = (size_t) (dfFileSize / nBlockSize);
+    uint64 nBlockCount = (uint64) (dfFileSize / nBlockSize);
 
-    size_t nLayerCount = poFile->GetChannels();
+    uint64 nLayerCount = poFile->GetChannels();
 
     // The 12 is for the overviews.
     nLayerCount *= 12;
 
-    return 512 + (nBlockCount * sizeof(BlockInfo) +
-                  nLayerCount * sizeof(BlockLayerInfo) +
-                  nLayerCount * sizeof(TileLayerInfo) +
-                  sizeof(BlockLayerInfo));
+    uint64 nDirSize = 512 +
+        (nBlockCount * sizeof(BlockInfo) +
+         nLayerCount * sizeof(BlockLayerInfo) +
+         nLayerCount * sizeof(TileLayerInfo) +
+         sizeof(BlockLayerInfo));
+
+    if (nDirSize > std::numeric_limits<size_t>::max())
+        return ThrowPCIDSKException(0, "Unable to create extremely large file on 32-bit system or file is corrupted.");
+
+    return static_cast<size_t>(nDirSize);
 }
 
 /************************************************************************/
@@ -167,8 +173,8 @@ BinaryTileDir::BinaryTileDir(BlockFile * poFile, uint16 nSegment)
     }
 
     // The size of the block layers.
-    size_t nSize = (msBlockDir.nLayerCount * sizeof(BlockLayerInfo) +
-                    msBlockDir.nLayerCount * sizeof(TileLayerInfo) +
+    uint64 nSize = (static_cast<uint64>(msBlockDir.nLayerCount) * sizeof(BlockLayerInfo) +
+                    static_cast<uint64>(msBlockDir.nLayerCount) * sizeof(TileLayerInfo) +
                     sizeof(BlockLayerInfo));
 
     // Read the block layers from disk.
@@ -277,7 +283,7 @@ uint32 BinaryTileDir::GetBlockSize(void) const
  */
 size_t BinaryTileDir::GetDirSize(void) const
 {
-    size_t nDirSize = 0;
+    uint64 nDirSize = 0;
 
     // Add the size of the header.
     nDirSize += 512;
@@ -302,7 +308,10 @@ size_t BinaryTileDir::GetDirSize(void) const
     // Add the size of the free blocks.
     nDirSize += msFreeBlockLayer.nBlockCount * sizeof(BlockInfo);
 
-    return nDirSize;
+    if (nDirSize > std::numeric_limits<size_t>::max())
+        return ThrowPCIDSKException(0, "Unable to open extremely large file on 32-bit system or the tile directory is corrupted.");
+
+    return static_cast<size_t>(nDirSize);
 }
 
 /************************************************************************/
@@ -320,16 +329,19 @@ void BinaryTileDir::InitBlockList(BinaryTileLayer * poLayer)
     BlockLayerInfo * psLayer = poLayer->mpsBlockLayer;
 
     // The offset of the blocks.
-    size_t nOffset = (psLayer->nStartBlock * sizeof(BlockInfo) +
-                      msBlockDir.nLayerCount * sizeof(BlockLayerInfo) +
-                      msBlockDir.nLayerCount * sizeof(TileLayerInfo) +
+    uint64 nOffset = (static_cast<uint64>(psLayer->nStartBlock) * sizeof(BlockInfo) +
+                      static_cast<uint64>(msBlockDir.nLayerCount) * sizeof(BlockLayerInfo) +
+                      static_cast<uint64>(msBlockDir.nLayerCount) * sizeof(TileLayerInfo) +
                       sizeof(BlockLayerInfo));
 
     // The size of the blocks.
-    size_t nSize = psLayer->nBlockCount * sizeof(BlockInfo);
+    uint64 nSize = static_cast<uint64>(psLayer->nBlockCount) * sizeof(BlockInfo);
+
+    if (nSize > std::numeric_limits<size_t>::max())
+        return ThrowPCIDSKException("Unable to open extremely large file on 32-bit system or the tile directory is corrupted.");
 
     // Read the blocks from disk.
-    uint8 * pabyBlockDir = (uint8 *) malloc(nSize);
+    uint8 * pabyBlockDir = (uint8 *) malloc(static_cast<size_t>(nSize));
 
     if (!pabyBlockDir)
         return ThrowPCIDSKException("Out of memory in BinaryTileDir::InitBlockList().");
