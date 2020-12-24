@@ -142,7 +142,8 @@ void RegisterOGRLVBAG()
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
-"  <Option name='AUTOCORRECT_INVALID_DATA' type='boolean' description='whether driver should try to fix invalid data' default='YES'/>"
+"  <Option name='AUTOCORRECT_INVALID_DATA' type='boolean' description='whether driver should try to fix invalid data' default='NO'/>"
+"  <Option name='LEGACY_ID' type='boolean' description='whether driver should use the BAG 1.0 identifiers' default='NO'/>"
 "</OpenOptionList>" );
 
     poDriver->pfnOpen = OGRLVBAGDriverOpen;
