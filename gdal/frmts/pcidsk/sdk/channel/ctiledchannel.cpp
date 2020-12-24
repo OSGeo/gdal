@@ -389,6 +389,12 @@ int CTiledChannel::WriteBlock( int iBlock, void *buffer )
 /* -------------------------------------------------------------------- */
     PCIDSKBuffer oUncompressedData(mpoTileLayer->GetTileSize());
 
+    memcpy(oUncompressedData.buffer, buffer,
+           oUncompressedData.buffer_size);
+
+    if( needs_swap )
+        SwapPixels( buffer, nDataType, nPixelCount );
+
 /* -------------------------------------------------------------------- */
 /*      Compress the imagery.                                           */
 /* -------------------------------------------------------------------- */
@@ -415,9 +421,6 @@ int CTiledChannel::WriteBlock( int iBlock, void *buffer )
 
     mpoTileLayer->WriteTile(oCompressedData.buffer, nCol, nRow,
                             oCompressedData.buffer_size);
-
-    if( needs_swap )
-        SwapPixels( buffer, nDataType, nPixelCount );
 
     return 1;
 }
