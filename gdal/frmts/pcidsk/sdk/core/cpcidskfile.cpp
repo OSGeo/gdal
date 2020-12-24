@@ -1437,7 +1437,7 @@ int CPCIDSKFile::CreateSegment( std::string name, std::string description,
         }
     }
 
-    if( segment > segment_count )
+    if( segment <= 0 || segment > segment_count )
         return ThrowPCIDSKException(0, "All %d segment pointers in use.", segment_count);
 
 /* -------------------------------------------------------------------- */
