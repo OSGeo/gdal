@@ -331,8 +331,11 @@ void BinaryTileDir::InitBlockList(BinaryTileLayer * poLayer)
     if (!poLayer || !poLayer->mpsBlockLayer ||
         poLayer->mpsBlockLayer->nBlockCount == 0)
     {
-        BlockInfoList oNewBlockList;
-        std::swap(poLayer->moBlockList, oNewBlockList);
+        if (poLayer)
+        {
+            BlockInfoList oNewBlockList;
+            std::swap(poLayer->moBlockList, oNewBlockList);
+        }
         return;
     }
 
